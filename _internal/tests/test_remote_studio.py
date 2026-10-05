@@ -227,6 +227,60 @@ def test_a_whole_book_sent_from_a_phone_can_be_split_into_chapters(studio, tmp_p
     assert status == 403
 
 
+def _send(port: int, cookie: dict, folder: str, name: str, data: bytes) -> tuple[int, dict]:
+    status, raw, _ = _sync_request(port, "POST", "/api/sources/upload", headers=cookie, body={
+        "folder": folder, "name": name, "data": base64.b64encode(data).decode("ascii")})
+    return status, json.loads(raw)
+
+
+def test_a_picked_folder_keeps_its_name_inside_its_own_upload(studio) -> None:
+    # Soát UX mục 7: chọn cả thư mục truyện trong trình duyệt - tên thư mục là tên sách máy gợi ý, nên nó phải còn nguyên;
+    # mỗi lần gửi vẫn nằm riêng một chỗ (không ghi đè nguồn của cuốn đã tạo). Thứ tự chương theo tên file như khi chọn đường dẫn.
+    app, _project = studio
+    app.set_remote_studio(True)
+    port = app.sync_server.port
+    cookie = {"Cookie": _pair_browser(app)}
+    root = Path(app.preferences.get()["libraryRoot"]) / "Nguồn tải lên"
+    for name in ("10.txt", "2.txt", "1.txt"):
+        status, data = _send(port, cookie, "Lần gửi a1/Truyện Thử", name, f"Chương {name}\n\nTrời sáng.".encode())
+        assert status == 200, data
+    folder = Path(data["folder"])
+    assert folder == root / "Lần gửi a1" / "Truyện Thử"
+    status, raw, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [str(folder)]})
+    scan = json.loads(raw)
+    assert status == 200 and [row["name"] for row in scan["files"]] == ["1.txt", "2.txt", "10.txt"]
+    assert scan["suggestedTitle"] == "Truyện Thử", "tên thư mục đã chọn, không phải tên lần gửi"
+    # Lần gửi khác cùng thư mục: chỗ riêng, không đụng nguồn đã có.
+    status, data = _send(port, cookie, "Lần gửi b2/Truyện Thử", "1.txt", b"khac")
+    assert status == 200 and Path(data["folder"]) == root / "Lần gửi b2" / "Truyện Thử"
+    # Mỗi tầng bị làm sạch như tên một thư mục: "..", tầng rỗng, ký tự lạ không đưa ra ngoài; tối đa ba tầng.
+    status, data = _send(port, cookie, "../..//x:/../Tập 1\\..\\a/b/c", "1.txt", b"a")
+    assert status == 200 and Path(data["folder"]) == root / "x" / "Tập 1" / "a"
+    status, data = _send(port, cookie, "Lần gửi c3/NUL/Tập 1", "1.txt", b"a")
+    assert status == 400, "tên thiết bị ở tầng nào cũng không nhận"
+
+
+def test_a_browser_on_the_computer_uploads_too(studio) -> None:
+    # Studio mở trong trình duyệt ngay trên máy tính (không có hộp chọn file của app): cũng gửi file lên như từ xa; tách
+    # chương thì vào "Nguồn tách chương" như với file trên máy. File quá giới hạn bị từ chối, nói rõ giới hạn.
+    app, _project = studio
+    local = {"X-Ebook-Token": "phien", "Host": f"127.0.0.1:{app.local_port}"}
+    book = "Chương 1\n\nTrời đã sáng.\n\nChương 2\n\nTrời tối.\n".encode()
+    status, raw, _ = _request(app.local_port, "POST", "/api/sources/upload", headers=local, body={
+        "folder": "Lần gửi d4", "name": "tron bo.txt", "data": base64.b64encode(book).decode("ascii")})
+    assert status == 200, raw
+    whole = json.loads(raw)["path"]
+    assert Path(whole) == Path(json.loads(raw)["folder"]) / "tron bo.txt", "file lẻ quét như khi chọn từng file"
+    status, raw, _ = _request(app.local_port, "POST", "/api/sources/split", headers=local, body={"path": whole})
+    assert status == 200, raw
+    folder = Path(json.loads(raw)["folder"])
+    assert folder.parent.parent == Path(app.preferences.get()["libraryRoot"]) / "Nguồn tách chương"
+    big = base64.b64encode(b"a" * (8 * 1024 * 1024 + 1)).decode("ascii")
+    status, raw, _ = _request(app.local_port, "POST", "/api/sources/upload", headers=local, body={
+        "folder": "Lần gửi d4", "name": "to.txt", "data": big})
+    assert status == 400 and "8 MB" in json.loads(raw)["error"]
+
+
 # ---- soát bảo mật 28-09: mỗi test tái hiện đúng một cách tấn công của báo cáo ------------------------------------------
 
 

@@ -46,7 +46,19 @@ import {
 import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
 import { samePath } from "@/studio/samePath";
-import { uploadChapters } from "@/studio/upload";
+import {
+  UPLOAD_ACCEPT,
+  batchName,
+  canPickFolder,
+  pickedFromDrop,
+  pickedFromInput,
+  planNotice,
+  planUpload,
+  progressLabel,
+  sendPlan,
+  type Picked,
+  type UploadProgress,
+} from "@/studio/upload";
 import { AnalysisModelPicker, modelLabel, useAnalysisModels } from "@/studio/AnalysisModelPicker";
 import { DEFAULT_LABEL, applyTemplate, type BookTemplate, type Profile } from "@/studio/bookTemplates";
 import { TemplateBar } from "@/studio/TemplateBar";
@@ -293,20 +305,41 @@ function SourceStep({
 }) {
   const { data: info } = useAppInfo();
   const [typed, setTyped] = useState("");
-  // Studio từ xa: máy đang xem không có đường dẫn nào trên máy tính - nó gửi các chương đi (studio/upload.ts).
-  const uploadInput = useRef<HTMLInputElement | null>(null);
-  const [uploading, setUploading] = useState<{ done: number; total: number } | null>(null);
-  const upload = async (list: FileList | null) => {
-    if (!list?.length) return;
-    setUploading({ done: 0, total: list.length });
+  // Studio trong trình duyệt (từ xa, hay ngay trên máy tính mà không có hộp chọn file của app): máy đang xem không có đường
+  // dẫn nào trên máy tính để gõ - nó gửi các chương đi (studio/upload.ts). Ô dán đường dẫn lui vào "Nâng cao".
+  const browser = Boolean(info) && !info?.dialogs;
+  const filesInput = useRef<HTMLInputElement | null>(null);
+  const folderInput = useRef<HTMLInputElement | null>(null);
+  const appending = useRef(false);
+  const folderPick = useMemo(canPickFolder, []);
+  const [uploading, setUploading] = useState<UploadProgress | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [advanced, setAdvanced] = useState(false);
+  const upload = async (picked: (Picked & { file: File })[], append: boolean) => {
+    if (!picked.length || uploading) return;
+    const plan = planUpload(picked, batchName(new Date(), Math.random().toString(36).slice(2, 6)));
+    const notice = planNotice(plan);
+    if (!plan.groups.length) {
+      toast.error("Không có file truyện nào để gửi", {
+        description: notice ?? "Chọn các file .txt (mỗi file là một chương) hay một file .epub / .docx / .pdf. Trong thư mục chỉ lấy file nằm ngay bên trong.",
+      });
+      return;
+    }
+    if (notice) toast.warning("Có file không gửi", { description: notice });
     try {
-      onPaths([await uploadChapters([...list], (done, total) => setUploading({ done, total }))]);
+      const paths = await sendPlan(plan, setUploading);
+      (append ? onAddFiles : onPaths)(paths);
     } catch (error) {
       toast.error("Không gửi được các chương", { description: (error as Error).message });
     } finally {
       setUploading(null);
     }
   };
+  const browse = (input: HTMLInputElement | null, append: boolean) => {
+    appending.current = append;
+    input?.click();
+  };
+  const percent = uploading?.totalBytes ? Math.round((uploading.bytes / uploading.totalBytes) * 100) : 0;
   const chooseFolder = async () => {
     const path = await pickFolder("Chọn thư mục chứa các chương TXT").catch((error: Error) => {
       toast.error(error.message);
@@ -322,8 +355,39 @@ function SourceStep({
     if (chosen.length) (append ? onAddFiles : onPaths)(chosen);
   };
   const files = scan?.files ?? [];
+  const onPicked = (event: { target: HTMLInputElement }) => {
+    if (event.target.files) void upload(pickedFromInput(event.target.files), appending.current);
+    event.target.value = "";
+  };
   return (
     <div>
+      {browser && (
+        <>
+          <input
+            ref={filesInput}
+            type="file"
+            multiple
+            accept={UPLOAD_ACCEPT}
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden
+            onChange={onPicked}
+          />
+          <input
+            // Chọn cả thư mục: thuộc tính chưa có trong kiểu của React, gắn thẳng vào thẻ.
+            ref={(node) => {
+              folderInput.current = node;
+              node?.setAttribute("webkitdirectory", "");
+            }}
+            type="file"
+            multiple
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden
+            onChange={onPicked}
+          />
+        </>
+      )}
       <h2 className="text-xl font-semibold">Chọn các chương của truyện</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg-2">
         <li>Mỗi file TXT là một chương, xếp theo tên file (2 đứng trước 10).</li>
@@ -331,36 +395,73 @@ function SourceStep({
         <li>Cả truyện nằm trong một file TXT thì máy gợi ý tách theo các dòng “Chương N”.</li>
       </ul>
       {!files.length ? (
-        <div className="mt-6 rounded-2xl border-2 border-dashed border-line-strong bg-panel px-8 py-10 text-center">
+        <div
+          className={cn(
+            "mt-6 rounded-2xl border-2 border-dashed bg-panel px-8 py-10 text-center transition-colors max-sm:px-4",
+            dragging ? "border-accent bg-accent-soft" : "border-line-strong",
+          )}
+          // Kéo thả file hay cả thư mục truyện vào khung (trình duyệt; cửa sổ app có hộp chọn của Windows).
+          onDragOver={(event) => {
+            if (!browser || uploading || !event.dataTransfer.types.includes("Files")) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "copy";
+            setDragging(true);
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+          }}
+          onDrop={(event) => {
+            if (!browser || uploading) return;
+            event.preventDefault();
+            setDragging(false);
+            pickedFromDrop(event.dataTransfer).then(
+              (picked) => upload(picked, false),
+              (error: Error) => toast.error("Không đọc được các file vừa thả", { description: error.message }),
+            );
+          }}
+        >
           <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent-text">
-            {scanning ? <Loader2 className="size-7 animate-spin" /> : <FolderInput className="size-7" strokeWidth={1.75} />}
+            {scanning || uploading ? <Loader2 className="size-7 animate-spin" /> : <FolderInput className="size-7" strokeWidth={1.75} />}
           </div>
           <p className="mt-4 font-medium">
-            {scanning ? "Đang đọc các chương…" : info?.remote ? "Gửi các chương từ máy này" : "Chọn thư mục truyện hay một file EPUB, DOCX, PDF"}
+            {scanning
+              ? "Đang đọc các chương…"
+              : browser
+                ? folderPick
+                  ? "Chọn hay kéo thả vào đây các chương của truyện"
+                  : "Gửi các chương từ máy này"
+                : "Chọn thư mục truyện hay một file EPUB, DOCX, PDF"}
           </p>
-          <p className="mt-1 text-sm text-fg-2">
-            {info?.remote
-              ? "Chọn cùng lúc mọi file .txt của truyện, hay một file .epub / .docx / .pdf. Máy tính giữ chúng trong mục “Nguồn tải lên”."
+          <p className="mt-1 text-sm text-fg-2 text-pretty">
+            {browser
+              ? `Mọi file .txt của truyện (chọn cùng lúc${folderPick ? ", hay cả thư mục truyện" : ""}), hay một file .epub / .docx / .pdf - tối đa 8 MB mỗi file. Máy tính giữ chúng trong mục “Nguồn tải lên” của thư viện.`
               : "Chỉ lấy file nằm ngay trong thư mục, không quét thư mục con."}
           </p>
-          {info?.remote && (
-            <div className="mt-6 flex justify-center">
-              <input
-                ref={uploadInput}
-                type="file"
-                multiple
-                accept=".txt,.epub,.docx,.pdf,text/plain,application/epub+zip,application/pdf"
-                className="sr-only"
-                tabIndex={-1}
-                aria-hidden
-                onChange={(event) => {
-                  void upload(event.target.files);
-                  event.target.value = "";
-                }}
-              />
-              <Button variant="primary" icon={Upload} loading={Boolean(uploading)} onClick={() => uploadInput.current?.click()}>
-                {uploading ? `Đang gửi ${uploading.done}/${uploading.total} chương` : "Chọn các file TXT"}
+          {browser && (
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <Button variant="primary" icon={Upload} disabled={Boolean(uploading)} onClick={() => browse(filesInput.current, false)}>
+                Chọn file
               </Button>
+              {folderPick && (
+                <Button icon={Folder} disabled={Boolean(uploading)} onClick={() => browse(folderInput.current, false)}>
+                  Chọn thư mục
+                </Button>
+              )}
+            </div>
+          )}
+          {uploading && (
+            <div className="mx-auto mt-4 max-w-xs" role="status">
+              <div
+                role="progressbar"
+                aria-label="Đang gửi các chương"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={percent}
+                className="h-1.5 overflow-hidden rounded-full bg-hover"
+              >
+                <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${percent}%` }} />
+              </div>
+              <p className="tabular mt-1.5 text-xs text-fg-2">{progressLabel(uploading)}</p>
             </div>
           )}
           {info?.dialogs && (
@@ -373,31 +474,45 @@ function SourceStep({
               </Button>
             </div>
           )}
-          <form
-            className="mx-auto mt-5 flex max-w-lg gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const path = cleanPath(typed);
-              if (path) onPaths([path]);
-            }}
-          >
-            <input
-              value={typed}
-              onChange={(event) => setTyped(event.target.value)}
-              aria-label="Đường dẫn thư mục"
-              aria-invalid={Boolean(problem)}
-              aria-describedby={problem ? "source-problem" : undefined}
-              placeholder={info?.dialogs ? "…hoặc dán đường dẫn" : "Dán đường dẫn thư mục hay file"}
-              className={cn(
-                "h-10 min-w-0 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent",
-                problem ? "border-danger" : "border-line",
-              )}
-            />
-            <Button type="submit" disabled={!cleanPath(typed) || scanning}>
-              Lấy chương
-            </Button>
-          </form>
-          {!info?.dialogs && <p className="mx-auto mt-1.5 max-w-lg break-all text-left text-xs text-fg-3">Ví dụ: D:\Truyện\Tên truyện</p>}
+          {browser && !advanced ? (
+            // Đường dẫn trên máy tính chỉ người rành máy mới cần (thư mục đã có sẵn trên máy tính, file quá 8 MB).
+            <button
+              type="button"
+              aria-expanded={false}
+              onClick={() => setAdvanced(true)}
+              className="mt-5 text-[13px] text-fg-2 underline-offset-2 hover:text-fg hover:underline"
+            >
+              Nâng cao: dán đường dẫn của một thư mục trên máy tính
+            </button>
+          ) : (
+            <>
+              <form
+                className="mx-auto mt-5 flex max-w-lg gap-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const path = cleanPath(typed);
+                  if (path) onPaths([path]);
+                }}
+              >
+                <input
+                  value={typed}
+                  onChange={(event) => setTyped(event.target.value)}
+                  aria-label="Đường dẫn thư mục"
+                  aria-invalid={Boolean(problem)}
+                  aria-describedby={problem ? "source-problem" : undefined}
+                  placeholder={info?.dialogs ? "…hoặc dán đường dẫn" : "Dán đường dẫn thư mục hay file"}
+                  className={cn(
+                    "h-10 min-w-0 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent",
+                    problem ? "border-danger" : "border-line",
+                  )}
+                />
+                <Button type="submit" disabled={!cleanPath(typed) || scanning}>
+                  Lấy chương
+                </Button>
+              </form>
+              {!info?.dialogs && <p className="mx-auto mt-1.5 max-w-lg break-all text-left text-xs text-fg-3">Ví dụ: D:\Truyện\Tên truyện</p>}
+            </>
+          )}
           {problem && (
             <div id="source-problem" role="alert" className="mx-auto mt-3 max-w-lg text-left text-sm text-danger">
               {problem.text}
@@ -517,6 +632,11 @@ function SourceStep({
               {info?.dialogs && (
                 <Button size="sm" variant="ghost" icon={FileText} onClick={() => void chooseFiles(true)}>
                   Thêm file
+                </Button>
+              )}
+              {browser && (
+                <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(uploading)} onClick={() => browse(filesInput.current, true)}>
+                  {uploading ? progressLabel(uploading) : "Thêm file"}
                 </Button>
               )}
               <Button size="sm" variant="ghost" onClick={() => onPaths([])}>
