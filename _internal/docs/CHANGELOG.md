@@ -13,6 +13,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   vui / buồn đúng không khí truyện hơn. Bài nhập vào vẫn dùng được và có số ngay; việc nghe kỹ chạy ngầm vài giây mỗi bài, nhẹ máy, bài chưa tới lượt giữ số cũ, tắt máy giữa chừng thì mở lại làm tiếp.
 - Bài nhập đo vui / buồn khớp thang của nhạc có sẵn hơn: ABook cập nhật bộ nghe nhạc ("Phân tích nhạc" báo có bản mới, chỉ tải phần đổi), bài đã phân tích bằng bản cũ vẫn dùng được và bạn bấm "Phân tích lại" khi muốn. Máy có Studio và điện thoại dùng chung một bộ như nhau.
 
+### Studio
+
+- Truyện dịch quên dấu đóng ngoặc không còn làm cả quãng lời kể phía sau bị đọc bằng giọng nhân vật: câu nghĩ thầm mở bằng ‘ mà đóng bằng dấu ' thẳng,
+  câu thoại thiếu dấu ” hay " giờ dừng ở cuối đoạn của nó, nên những câu kể tiếp theo lại về giọng người kể (có chương bị đảo thoại và lời kể gần hết).
+  Lời nói dài trải nhiều đoạn vẫn đọc liền một giọng như trước.
+- Câu nói có ngoặc lồng bên trong ("“Haha! “Cậu sẽ bị phạt” chứ gì? Cứ làm đi!”") giờ do một người đọc trọn, không còn nửa sau rơi sang giọng người kể;
+  và câu nói thật kẹp giữa câu kể ("Minh nói “Bố mẹ tớ đến rồi, nên nhà tớ ăn cùng nhau” và…") giữ đúng người nói thay vì bị đưa cho người kể.
+
 ## [0.4.28] - 2026-10-05
 
 ### Giọng đọc

@@ -1722,6 +1722,11 @@ def _repair_addressee_speakers(
 
 
 IN_SENTENCE_QUOTE_OPEN_ENDINGS = tuple(".!?…:;\"”’)")
+# Câu nói thật nằm giữa câu kể ("Kanata nói “Bố mẹ tớ đến rồi, nên nhà tớ ăn cùng nhau” và vì vậy...", "Benito cười lớn
+# “HAHAHA, gặp lại sau nha”"): thuật ngữ / mẩu trích không ngắt vế bằng dấu phẩy, chấm than... ở giữa. Đo 05-10 trên đáp án
+# chuẩn: không đoạn nào trong 31 cụm trích giữa câu có dấu như thế. Động từ nói đứng trước thì KHÔNG đủ: "Ai lại nói “chắc em
+# sẽ thử nín thở” chứ…" vẫn là chữ người kể (5 đoạn đáp án như thế).
+IN_SENTENCE_UTTERANCE_MARKS = (",", ";", "!", "?", "…")
 
 
 def _is_quoted_inside_a_sentence(
@@ -1741,6 +1746,8 @@ def _is_quoted_inside_a_sentence(
     row = group[index]
     quoted = str(row["text"]).strip().strip("“”\"'‘’").rstrip()
     if not quoted or quoted.endswith((",", ".", "!", "?", "…")):
+        return False
+    if any(mark in quoted for mark in IN_SENTENCE_UTTERANCE_MARKS):
         return False
     before = group[index - 1] if index > 0 else None
     after = group[index + 1] if index + 1 < len(group) else None
