@@ -36,8 +36,8 @@ REPO_ID = "NGDtuanh/abook-music-student"
 # Đường tải luôn ghim cứng một commit (như studio_setup.py). Trống thì mô-đun KHÔNG tải gói model, chỉ dùng gói đã có sẵn trong thư mục /
 # ABOOK_MUSIC_STUDENT_DIR. 03-10: gói đầu c6e1485f (tháp âm thanh CLAP fp16 + đầu trò, 97,4% AUC thầy - docs/MUSIC_RESEARCH.md);
 # 60e11bce thêm đường ONNX (tháp .onnx + đầu A); aaa54805 thêm thư viện ONNX Runtime của điện thoại (ort/1.30.0/<abi>/*.so.gz). 05-10: 332e7552 thay đầu A bằng đầu A mới (thang V có phần
-# MuQ) cho MỌI máy, bỏ đầu torch cũ, thêm muq/ (tháp MuQ ONNX CC BY-NC 4.0 + vector chữ + hằng số, đường V hợp). Các file còn lại trùng từng byte với ba commit đầu, nên một ghim cho mọi đường.
-REVISION = "332e7552f61c8b225ea2a97bafe46349ed7c434b"
+# MuQ) cho MỌI máy, bỏ đầu torch cũ, thêm muq/ (tháp MuQ ONNX CC BY-NC 4.0 + vector chữ + hằng số, đường V hợp); 143bea3d: đầu A + vhop_scale dựng lại bằng cửa sổ âm thanh của chính app, hiệu chỉnh mới. Các file còn lại trùng từng byte với ba commit đầu, nên một ghim cho mọi đường.
+REVISION = "143bea3d538587a88d40127103ac72c6501df54d"
 # Mỗi đường cần những file nào; chung preprocessor_config.json (torch đọc, onnx kiểm music_mel còn đúng cấu hình đã chép).
 PACKAGE_FILES = {
     "torch": ("model.safetensors", "config.json", "preprocessor_config.json", "student_head_A.npz"),
@@ -51,10 +51,10 @@ PACKAGE_HASHES = {
     "config.json": ("3ec6edfeb47a45e9e86810eb5a3ba74a0023bd3b7f8db9c3d9e0aaa5ae7cef98", 1_556),
     "preprocessor_config.json": ("b089fad772ef3242a3ff8b9e4a6449083253d28d83a1ad8aa346cea116bfe514", 524),
     "clap_audio_fp16.onnx": ("484bebfc9f42d3a22fc75e35c9027d543cc6c191031abf510a55392d5c1dbdd9", 58_989_719),
-    "student_head_A.npz": ("a63e224fabc58d8d9fb114e8ab22262473d20667b18793967ebdabd2fd5970c8", 53_588),
+    "student_head_A.npz": ("3fcb54b598dd9b3c42cdacd68bb9938ceb68e65c4895a8133c75066aec7080f7", 53_577),
     "muq/muq_mulan_audio.onnx": ("5bacc509e048720fe7e45178ce6a4e4d2a15a83d550510818399f4f7e6e9b1c8", 1_273_217_311),
     "muq/valence_text.npz": ("d07deac228b7b561bac016f610340f1f68ec05321abc813d9cb29478dd50847f", 34_394),
-    "muq/vhop_scale.json": ("7ee6cdb2d3cd52efa24f8a4f104bf06de62724b29af3b278d018334b38767f78", 1_781),
+    "muq/vhop_scale.json": ("e9516c95ee81bd983eaed7d9e2c21ba1cc46f26eb6df5bbdf13e28b61ff717d7", 1_789),
 }
 ENV_DIR = "ABOOK_MUSIC_STUDENT_DIR"
 ENV_BACKEND = "ABOOK_MUSIC_STUDENT_BACKEND"  # "onnx" | "torch" = ép đường ấy; trống = tự chọn
@@ -179,7 +179,7 @@ def register() -> bool:
 # VET_VAR_WEIGHT * var vào tử số. Khớp F2 trên dự đoán chéo 5 phần của đầu A mới so với danh mục 33e5202f6cda (docs/MUSIC_RESEARCH.md "F2"),
 # bằng nhúng torch (lệch onnx < 0,001): một bảng cho mọi đường. Phương sai dư của V (0,073, trước 0,041) lớn hơn vì thang V mới có phần MuQ mà
 # CLAP không thấy - bài nhập ít bị chọn quá đà. Bài mang V hợp (music_valence) bỏ bảng này ở trục V: nó đã cùng thang với danh mục.
-_HEAD_A_CALIBRATION = {"valence": (-0.057, 1.264, 0.0728), "arousal": (-0.012, 1.100, 0.0316), "tension": (0.001, 1.264, 0.0402)}
+_HEAD_A_CALIBRATION = {"valence": (-0.057, 1.251, 0.0727), "arousal": (-0.013, 1.098, 0.0322), "tension": (-0.003, 1.283, 0.0412)}
 CALIBRATION = {"torch": _HEAD_A_CALIBRATION, "onnx": _HEAD_A_CALIBRATION}
 
 

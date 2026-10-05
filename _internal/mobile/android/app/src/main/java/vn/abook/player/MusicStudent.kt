@@ -155,9 +155,9 @@ class StudentHead(arrays: Map<String, NpyArray>) {
          * v' = kẹp(a + b*v, -1, 1) và `vetVar` = var.
          */
         val CALIBRATION = mapOf(
-            "valence" to Triple(-0.057, 1.264, 0.0728),
-            "arousal" to Triple(-0.012, 1.100, 0.0316),
-            "tension" to Triple(0.001, 1.264, 0.0402),
+            "valence" to Triple(-0.057, 1.251, 0.0727),
+            "arousal" to Triple(-0.013, 1.098, 0.0322),
+            "tension" to Triple(-0.003, 1.283, 0.0412),
         )
 
         fun load(file: File): StudentHead = StudentHead(Npz.read(file))
