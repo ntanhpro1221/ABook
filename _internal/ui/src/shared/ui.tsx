@@ -1,7 +1,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { Loader2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, ReactNode, Ref } from "react";
 import { cn } from "@/shared/cn";
@@ -152,6 +152,7 @@ export function Progress({
   size = "md",
   className,
   label,
+  indeterminate = false,
 }: {
   value: number;
   tone?: Tone;
@@ -159,6 +160,8 @@ export function Progress({
   size?: "xs" | "sm" | "md" | "lg";
   className?: string;
   label?: string;
+  /** Việc chạy mà không báo được tiến độ (đóng gói file): vạch chạy qua lại thay vì phần trăm. */
+  indeterminate?: boolean;
 }) {
   const height = { xs: "h-1", sm: "h-1.5", md: "h-2", lg: "h-2.5" }[size];
   const clamped = Math.max(0, Math.min(1, value));
@@ -168,13 +171,17 @@ export function Progress({
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={Math.round(clamped * 100)}
+      aria-valuenow={indeterminate ? undefined : Math.round(clamped * 100)}
       className={cn("relative w-full overflow-hidden rounded-full bg-line", height, className)}
     >
-      <div
-        className={cn("relative h-full overflow-hidden rounded-full transition-[width] duration-700 ease-out", BAR[tone], running && "sheen")}
-        style={{ width: `${clamped * 100}%` }}
-      />
+      {indeterminate ? (
+        <div className={cn("indeterminate-bar h-full w-2/5 rounded-full", BAR[tone])} />
+      ) : (
+        <div
+          className={cn("relative h-full overflow-hidden rounded-full transition-[width] duration-700 ease-out", BAR[tone], running && "sheen")}
+          style={{ width: `${clamped * 100}%` }}
+        />
+      )}
     </div>
   );
 }
@@ -230,7 +237,7 @@ export function StatusPill({
 export const Tabs = TabsPrimitive.Root;
 export const TabsContent = TabsPrimitive.Content;
 
-const FADE = 28;
+const FADE = 36;
 
 export function TabsList({ children, className }: { children: ReactNode; className?: string }) {
   // Hàng tab không vừa (điện thoại, hay cửa sổ hẹp có thanh bên) thì cuộn ngang thay vì tràn ra ngoài trang, và mép nào
@@ -254,20 +261,47 @@ export function TabsList({ children, className }: { children: ReactNode; classNa
       observer?.disconnect();
     };
   }, []);
+  // Tab đang chọn (mở bằng địa chỉ ?tab=cast, hay bấm nhảy từ nơi khác) nằm ngoài vùng thấy thì cuộn ngang tới nó.
+  const lastActive = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const element = list.current;
+    const active = element?.querySelector<HTMLElement>("[data-state=active]");
+    // Chỉ khi tab đang chọn ĐỔI - người dùng tự cuộn hàng tab đi chỗ khác thì không kéo lại.
+    if (!element || !active || active === lastActive.current) return;
+    lastActive.current = active;
+    if (active.offsetLeft < element.scrollLeft) element.scrollLeft = Math.max(0, active.offsetLeft - FADE);
+    else if (active.offsetLeft + active.offsetWidth > element.scrollLeft + element.clientWidth) {
+      element.scrollLeft = active.offsetLeft + active.offsetWidth - element.clientWidth + FADE;
+    }
+  });
   const mask = edges.left || edges.right
     ? `linear-gradient(to right, ${edges.left ? `transparent, black ${FADE}px` : "black"}, ${
         edges.right ? `black calc(100% - ${FADE}px), transparent` : "black"
       })`
     : undefined;
   const style: CSSProperties | undefined = mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined;
+  const nudge = (direction: -1 | 1) => list.current?.scrollBy({ left: direction * list.current.clientWidth * 0.7, behavior: "smooth" });
   return (
-    <TabsPrimitive.List
-      ref={list}
-      style={style}
-      className={cn("flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none]", className)}
-    >
-      {children}
-    </TabsPrimitive.List>
+    <div className="relative">
+      <TabsPrimitive.List
+        ref={list}
+        style={style}
+        className={cn("flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none]", className)}
+      >
+        {children}
+      </TabsPrimitive.List>
+      {/* Mũi tên báo còn tab ngoài mép (chỉ màn cảm ứng / hẹp; bàn phím đã có phím mũi tên của hàng tab). */}
+      {edges.left && (
+        <button type="button" tabIndex={-1} aria-label="Xem các tab trước" onClick={() => nudge(-1)} className="absolute left-0 top-0 grid h-11 w-7 place-items-center text-fg-2 sm:hidden">
+          <ChevronLeft className="size-4" />
+        </button>
+      )}
+      {edges.right && (
+        <button type="button" tabIndex={-1} aria-label="Xem các tab sau" onClick={() => nudge(1)} className="absolute right-0 top-0 grid h-11 w-7 place-items-center text-fg-2 sm:hidden">
+          <ChevronRight className="size-4" />
+        </button>
+      )}
+    </div>
   );
 }
 

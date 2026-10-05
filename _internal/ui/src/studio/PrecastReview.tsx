@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ClipboardCheck, Mic2, MessageSquareQuote, SpellCheck, Users } from "lucide-react";
-import { useEffect } from "react";
+import { Check, ClipboardCheck, MessageSquareQuote, SpellCheck, Users } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Switch } from "@/desktop/PhoneSync";
@@ -11,7 +11,6 @@ import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, EmptyState } from "@/shared/ui";
 import { api, type BookSummary, type PrecastView } from "./api";
-import { usePause } from "./data";
 import { NameReadings } from "./NameReadings";
 import {
   castItems,
@@ -39,6 +38,18 @@ export function usePrecast(bookId: string, enabled = true) {
     queryFn: () => api<PrecastView>(`/api/books/${bookId}/precast`),
     refetchInterval: 15_000,
   });
+}
+
+/** Mã các thẻ việc đang nằm trong màn "Duyệt trước khi thu" (người và giọng, cách đọc tên, người nói ở chương sắp thu) - hộp "Việc
+ *  cần duyệt" không hiện lại chúng (soát UX a8 05-10, mục 12: cùng một thẻ ở hai tab). Rỗng khi không có màn duyệt. */
+export function usePrecastKeys(bookId: string, enabled: boolean): Set<string> | undefined {
+  const { data: view } = usePrecast(bookId, enabled);
+  const { data: work } = useWork(bookId);
+  return useMemo(() => {
+    if (!enabled || !view || !work) return undefined;
+    const shown = [...castItems(work.items), ...nameItems(work.items), ...lineItems(work.items, view.upcoming.map((chapter) => chapter.id))];
+    return new Set(shown.map((item) => item.key));
+  }, [enabled, view, work]);
 }
 
 /** Công tắc "Chờ tôi duyệt trước khi thu" của một cuốn - ở trang dự án (trước mốc) và trên màn duyệt. */
@@ -73,16 +84,8 @@ export function PrecastWaitSwitch({ book, className }: { book: BookSummary; clas
   );
 }
 
-/** Nút "Thu âm": sách Studio đang giữ chờ duyệt làm tiếp đúng chỗ (tạm dừng -> tiếp tục, không chạy lại gì). */
-function RecordButton({ book, size = "md" }: { book: BookSummary; size?: "md" | "lg" }) {
-  const pause = usePause();
-  if (!book.precast?.held || !book.running) return null;
-  return (
-    <Button variant="primary" size={size} icon={Mic2} loading={pause.isPending} onClick={() => pause.mutate({ id: book.id, paused: false })}>
-      Thu âm
-    </Button>
-  );
-}
+// Nút "Thu âm" (tạm dừng -> tiếp tục, không chạy lại gì) là nút chính ở đầu trang dự án (ProjectScreen Actions): màn này không
+// thêm nút thứ hai cùng làm một việc (soát UX a8 05-10, mục 12).
 
 const STEP_TITLE: Record<PrecastStep, string> = {
   cast: "Nhân vật và giọng",
@@ -140,10 +143,9 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
               máy áp ở chương kế tiếp. {freeNote(view)}
             </p>
             {book.precast?.held && book.running && (
-              <p className="mt-2 text-sm font-medium text-warning">Sách đang tạm dừng chờ bạn duyệt - duyệt xong bấm “Thu âm”.</p>
+              <p className="mt-2 text-sm font-medium text-warning">Sách đang tạm dừng chờ bạn duyệt - duyệt xong bấm “Thu âm” ở đầu trang.</p>
             )}
           </div>
-          <RecordButton book={book} />
         </div>
         {/* Công tắc chỉ có nghĩa trước mốc (Studio mở màn này cả khi chưa kịp báo, vd app đóng lúc phân tích xong). */}
         {!book.precast?.announcedAt && !view.recordedChapters && <PrecastWaitSwitch book={book} className="mt-4 border-none bg-panel-2" />}
@@ -242,14 +244,13 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
         {step === "done" && (
           <EmptyState icon={ClipboardCheck} title="Xong lượt duyệt" className="py-10" action={
             <div className="flex flex-wrap justify-center gap-2">
-              <RecordButton book={book} size="lg" />
               <Button variant={book.precast?.held && book.running ? "ghost" : "secondary"} size="lg" onClick={open.onClose}>
                 Về danh sách chương
               </Button>
             </div>
           }>
             {book.precast?.held && book.running
-              ? "Sửa nào cũng đã ghi lại. Bấm “Thu âm” để sách làm tiếp - máy áp các sửa ấy trước khi thu chương đầu tiên."
+              ? "Sửa nào cũng đã ghi lại. Bấm “Thu âm” ở đầu trang để sách làm tiếp - máy áp các sửa ấy trước khi thu chương đầu tiên."
               : book.running
                 ? "Sửa nào cũng đã ghi lại; máy áp ở chương kế tiếp. Những chỗ khác máy chưa chắc vẫn ở “Việc cần duyệt”."
                 : "Sửa nào cũng đã ghi lại; máy áp khi sách chạy tiếp. Những chỗ khác máy chưa chắc vẫn ở “Việc cần duyệt”."}
@@ -317,11 +318,11 @@ export function PrecastBanner({ book, onOpen }: { book: BookSummary; onOpen: () 
         <div className="font-semibold">{held ? "Phân tích xong - sách đang chờ bạn duyệt" : "Phân tích xong - duyệt trước khi thu?"}</div>
         <div className="text-fg-2">Giọng nhân vật, cách đọc tên, người nói ở các chương đầu: sửa bây giờ thì không phải thu lại.</div>
       </div>
+      {/* Chờ duyệt: nút "Thu âm" đã là nút chính ở đầu trang (ProjectScreen Actions) - dải này chỉ mời duyệt, không thêm nút thứ hai. */}
       <div className="flex gap-2">
         <Button variant={held ? "secondary" : "primary"} onClick={onOpen}>
           Duyệt ngay
         </Button>
-        <RecordButton book={book} />
       </div>
     </div>
   );

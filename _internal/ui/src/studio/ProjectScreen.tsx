@@ -83,7 +83,7 @@ import type { CastMember } from "@/listen/model";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { ExportDialog } from "@/studio/ExportBook";
-import { PrecastBanner, PrecastReview, PrecastWaitSwitch } from "./PrecastReview";
+import { PrecastBanner, PrecastReview, PrecastWaitSwitch, usePrecastKeys } from "./PrecastReview";
 import { canReview } from "./precast";
 
 /** Phát một chương ngay trong Studio (nghe kiểm tra) bằng chính trình phát của phía Nghe - ở chế độ "nghe kiểm":
@@ -473,7 +473,7 @@ function Actions({ book }: { book: BookSummary }) {
   const analyzed = book.segments.total > 0 && book.segments.analyzed === book.segments.total;
   const next = useContinuation(book.id, analyzed).data?.paths.length ?? 0;
   return (
-    <div className="mt-5 flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 sm:mt-5">
       {book.chapters.completed > 0 && (
         // Một nút chính mỗi lúc: sách xong mà còn thay đổi chờ áp thì "Áp dụng" là việc chính, không phải hai nút cam cạnh nhau
         // (soát UX 29-09).
@@ -481,6 +481,7 @@ function Actions({ book }: { book: BookSummary }) {
           variant={book.phase === "done" && !book.pendingChanges ? "primary" : "secondary"}
           size="lg"
           icon={Headphones}
+          className="max-sm:flex-1"
           onClick={() => navigate(`/book/${book.id}`)}
         >
           Nghe trong Thư viện
@@ -510,8 +511,15 @@ function Actions({ book }: { book: BookSummary }) {
         // Tạm dừng giữ tiến trình sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích; "Dừng" kết thúc lượt chạy.
         <>
           {book.paused ? (
-            <Button variant="primary" size="lg" icon={Play} loading={pause.isPending} onClick={() => pause.mutate({ id: book.id, paused: false })}>
-              Tiếp tục
+            // Giữ chờ duyệt: "Tiếp tục" và "Thu âm" là MỘT việc - chỉ có nút này, tên là "Thu âm" (soát UX a8 05-10, mục 12).
+            <Button
+              variant="primary"
+              size="lg"
+              icon={book.precast?.held ? Mic2 : Play}
+              loading={pause.isPending}
+              onClick={() => pause.mutate({ id: book.id, paused: false })}
+            >
+              {book.precast?.held ? "Thu âm" : "Tiếp tục"}
             </Button>
           ) : book.canPause ? (
             <Button variant="outline" size="lg" icon={Pause} loading={pause.isPending} onClick={() => pause.mutate({ id: book.id, paused: true })}>
@@ -911,8 +919,10 @@ export function ProjectScreen() {
   const reviewCount = useReviewCount(id ?? "");
   const remoteStudio = Boolean(useAppInfo().data?.remote);
   // Việc từ điện thoại chờ duyệt (webui/edits_inbox.py) cộng vào số của tab: chỉ trên chính máy tính (Studio từ xa không có đường này).
-  const workCount = useWorkCount(id ?? "") + useInboxCount(id ?? "", !remoteStudio);
   const { data, isLoading, error } = useBook(id);
+  // Thẻ đã nằm ở "Duyệt trước khi thu" thì "Việc cần duyệt" không hiện lại và không đếm lại.
+  const precastKeys = usePrecastKeys(id ?? "", Boolean(data && canReview(data.book)));
+  const workCount = Math.max(0, useWorkCount(id ?? "") - (precastKeys?.size ?? 0)) + useInboxCount(id ?? "", !remoteStudio);
   const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
   const [merging, setMerging] = useState<CastMember | null>(null);
   const [renaming, setRenaming] = useState<CastMember | null>(null);
@@ -985,12 +995,15 @@ export function ProjectScreen() {
       <button type="button" onClick={() => navigate("/studio")} className="inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
-      {/* Màn hẹp (Studio từ xa trên điện thoại): bìa trên, tên và nút dưới - cạnh nhau thì nút tràn mép. */}
-      <header className="mt-5 flex flex-col gap-5 sm:flex-row sm:gap-7">
+      {/* Màn hẹp (điện thoại): bìa nhỏ cạnh tên sách, hàng nút nằm dưới cả hai (soát UX a8 05-10: bìa to + tên + 3 hàng nút
+          chiếm ~590 px, tab bắt đầu ở cuối màn). Từ sm trở lên: bìa bên trái, tên và nút bên phải. `contents` làm cột phải biến
+          mất khỏi lưới ở màn hẹp để hàng nút tự chiếm cả hai cột mà vẫn chỉ có một bản của các nút. */}
+      <header className="mt-5 grid grid-cols-[6rem_minmax(0,1fr)] gap-x-4 gap-y-4 sm:flex sm:gap-7">
         <CoverEditor book={book} />
-        <div className="min-w-0 flex-1 pt-1">
+        <div className="contents sm:block sm:min-w-0 sm:flex-1 sm:pt-1">
+          <div className="min-w-0 sm:contents">
           <StatusPill
-            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.statusLabel}
+            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.paused && book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
             tone={book.paused ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused}
           />
@@ -1008,7 +1021,10 @@ export function ProjectScreen() {
               )}
             </p>
           ) : null}
-          <Actions book={book} />
+          </div>
+          <div className="col-span-2 sm:col-auto">
+            <Actions book={book} />
+          </div>
         </div>
       </header>
 
@@ -1080,6 +1096,8 @@ export function ProjectScreen() {
             book={book}
             kind={params.get("kind")}
             focus={params.get("card")}
+            inPrecast={precastKeys}
+            onOpenPrecast={() => setParams({ tab: "precast" })}
             onKind={(value) =>
               setParams(
                 (previous) => {

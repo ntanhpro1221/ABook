@@ -53,6 +53,8 @@ AGE_LABELS = {
 
 _STABLE_ID = re.compile(r"\bc(\d{5})_s(\d{7})_[0-9a-f]+")
 _NUMERIC_TITLE = re.compile(r"^\s*0*(\d+)\s*$")
+# Số thứ tự đệm số 0 đầu tên file ("0000 Mở đầu", "001 - Chương 1"): chỉ khi bắt đầu bằng 0, để không cắt "100 ngày" hay "1984".
+_FILE_ORDER_PREFIX = re.compile(r"^\s*0\d*(?:\s*[-_.:]+\s*|\s+)(\S.*)$")
 
 
 def phase_of(status: str, stage: str) -> str:
@@ -91,9 +93,13 @@ def pause_label(reason: str, *, reached: bool) -> str:
 
 
 def chapter_title(title: str) -> str:
-    """Tên file chương là số ("645") thì đọc thành "Chương 645"; còn lại giữ nguyên."""
+    """Tên file chương là số ("645") thì đọc thành "Chương 645"; số thứ tự đánh đầu file ("0000 Mở đầu") là để xếp thứ tự,
+    không phải tên - bỏ đi; còn lại giữ nguyên."""
     match = _NUMERIC_TITLE.match(title)
-    return f"Chương {match.group(1)}" if match else title.strip()
+    if match:
+        return f"Chương {match.group(1)}"
+    prefixed = _FILE_ORDER_PREFIX.match(title)
+    return prefixed.group(1).strip() if prefixed else title.strip()
 
 
 _HEADING = re.compile(

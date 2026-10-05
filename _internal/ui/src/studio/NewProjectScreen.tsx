@@ -45,6 +45,7 @@ import {
 } from "@/studio/data";
 import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
+import { samePath } from "@/studio/samePath";
 import { uploadChapters } from "@/studio/upload";
 import { AnalysisModelPicker, modelLabel, useAnalysisModels } from "@/studio/AnalysisModelPicker";
 import { DEFAULT_LABEL, applyTemplate, type BookTemplate, type Profile } from "@/studio/bookTemplates";
@@ -324,12 +325,11 @@ function SourceStep({
   return (
     <div>
       <h2 className="text-xl font-semibold">Chọn các chương của truyện</h2>
-      <p className="mt-1 text-sm text-fg-2 text-pretty">
-        Mỗi file TXT là một chương. Chương được xếp theo tên file như người đọc mong đợi: 2 đứng trước 10. Có sẵn file EPUB,
-        Word (DOCX) hay PDF thì chọn nó: máy tách thành các chương theo mục lục hay các tiêu đề “Chương N”, bạn xem danh sách
-        chương trước khi tạo. PDF phải có chữ (PDF chụp từ máy quét thì chưa đọc được). Cả truyện nằm trong một file TXT thì máy
-        đề nghị tách theo các dòng “Chương N”.
-      </p>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg-2">
+        <li>Mỗi file TXT là một chương, xếp theo tên file (2 đứng trước 10).</li>
+        <li>Có file EPUB, Word hay PDF thì chọn thẳng nó - máy tách chương, bạn xem lại danh sách trước khi tạo. PDF phải có chữ.</li>
+        <li>Cả truyện nằm trong một file TXT thì máy gợi ý tách theo các dòng “Chương N”.</li>
+      </ul>
       {!files.length ? (
         <div className="mt-6 rounded-2xl border-2 border-dashed border-line-strong bg-panel px-8 py-10 text-center">
           <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent-text">
@@ -340,8 +340,8 @@ function SourceStep({
           </p>
           <p className="mt-1 text-sm text-fg-2">
             {info?.remote
-              ? "Chọn cùng lúc mọi file .txt của truyện, hay một file .epub / .docx / .pdf. Máy tính giữ chúng trong thư viện, mục “Nguồn tải lên”."
-              : "Thư mục: lấy các file .txt nằm ngay bên trong (không quét thư mục con). File .epub, .docx, .pdf: máy tách thành các chương."}
+              ? "Chọn cùng lúc mọi file .txt của truyện, hay một file .epub / .docx / .pdf. Máy tính giữ chúng trong mục “Nguồn tải lên”."
+              : "Chỉ lấy file nằm ngay trong thư mục, không quét thư mục con."}
           </p>
           {info?.remote && (
             <div className="mt-6 flex justify-center">
@@ -387,16 +387,17 @@ function SourceStep({
               aria-label="Đường dẫn thư mục"
               aria-invalid={Boolean(problem)}
               aria-describedby={problem ? "source-problem" : undefined}
-              placeholder={info?.dialogs ? "…hoặc dán đường dẫn thư mục hay file sách" : "Dán đường dẫn thư mục hay file sách, ví dụ D:\\Truyện\\Tên truyện"}
+              placeholder={info?.dialogs ? "…hoặc dán đường dẫn" : "Dán đường dẫn thư mục hay file"}
               className={cn(
-                "h-10 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent",
+                "h-10 min-w-0 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent",
                 problem ? "border-danger" : "border-line",
               )}
             />
             <Button type="submit" disabled={!cleanPath(typed) || scanning}>
-              Mở
+              Lấy chương
             </Button>
           </form>
+          {!info?.dialogs && <p className="mx-auto mt-1.5 max-w-lg break-all text-left text-xs text-fg-3">Ví dụ: D:\Truyện\Tên truyện</p>}
           {problem && (
             <div id="source-problem" role="alert" className="mx-auto mt-3 max-w-lg text-left text-sm text-danger">
               {problem.text}
@@ -1696,13 +1697,17 @@ export function NewProjectScreen() {
                   const { folder } = await api<{ folder: string }>("/api/sources/split", { method: "POST", body: { path } });
                   // File đã chọn thẳng: thư mục chương thay chỗ nó. File nằm trong một thư mục đã chọn: thêm thư mục chương,
                   // bỏ file cả truyện khỏi danh sách (vẫn hoàn tác được như mọi chương bỏ tay).
-                  const replaced = draft.paths.includes(path);
+                  // Đường người dùng gõ ("D:/Truyện/a.txt") khác dạng đường máy quét ("D:\Truyện\a.txt"): so bằng samePath.
+                  const replaced = draft.paths.some((item) => samePath(item, path));
                   update(
                     replaced
-                      ? { paths: draft.paths.map((item) => (item === path ? folder : item)), excluded: [], limit: null, volumeStarts: null }
+                      ? { paths: draft.paths.map((item) => (samePath(item, path) ? folder : item)), excluded: [], limit: null, volumeStarts: null }
                       : { paths: [...draft.paths, folder], excluded: [...draft.excluded, path], limit: null, volumeStarts: null },
                   );
-                  toast.success("Đã tách thành các chương", { description: folder });
+                  const chapters = scan?.files.find((file) => samePath(file.path, path))?.split?.chapters;
+                  toast.success(chapters ? `Đã tách thành ${formatNumber(chapters)} chương` : "Đã tách thành các chương", {
+                    description: "File gốc vẫn giữ nguyên.",
+                  });
                 } catch (error) {
                   toast.error("Không tách được", { description: (error as Error).message });
                 }

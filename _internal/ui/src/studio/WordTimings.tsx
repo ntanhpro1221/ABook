@@ -29,27 +29,27 @@ export function WordTimingsRow({ bookId, running }: { bookId: string; running: b
   const start = useMutation({
     mutationFn: () => api<WordTimingsStatus>(`/api/books/${bookId}/word-timings`, { method: "POST" }),
     onSuccess: (data) => client.setQueryData(key, data),
-    onError: (error) => toast.error("Chưa căn được từng chữ", { description: (error as Error).message }),
+    onError: (error) => toast.error("Chưa thêm được chữ sáng", { description: (error as Error).message }),
   });
   const data = status.data;
   const busy = data?.state === "running" || start.isPending;
   const finished = data?.state === "done" && data.file;
   const lines = data?.lines ?? 0;
   const aligned = data?.words ?? 0;
-  let note = "Khi nghe, chữ đang đọc sáng lên trong câu. Sách làm từ trước cần căn một lần trên máy này.";
-  if (data?.state === "running") note = `Đang căn từng chữ… ${data.total ? Math.round(((data.done ?? 0) / data.total) * 100) : 0}%`;
-  else if (data?.state === "error") note = data.error ?? "Không căn được.";
-  else if (finished) note = "Đã căn xong; file sách của dự án đã được làm lại kèm chữ sáng theo giọng đọc.";
-  else if (lines > 0) note = `${formatNumber(aligned)}/${formatNumber(lines)} câu đã sáng được từng chữ.`;
+  let note = "Tuỳ chọn: khi nghe, từng chữ sáng lên đúng lúc được đọc. Sách làm từ trước chưa có - thêm một lần, chạy ngầm, thường mất vài phút.";
+  if (data?.state === "running") note = `Đang thêm chữ sáng… ${data.total ? Math.round(((data.done ?? 0) / data.total) * 100) : 0}%`;
+  else if (data?.state === "error") note = data.error ?? "Chưa thêm được chữ sáng.";
+  else if (finished) note = "Xong - file sách của dự án đã được làm lại kèm chữ sáng theo giọng đọc.";
+  else if (lines > 0) note = `${formatNumber(aligned)}/${formatNumber(lines)} câu đã có chữ sáng theo giọng đọc.`;
   return (
-    <div className="mt-3 flex items-center gap-3 rounded-xl border border-line p-3 text-sm">
+    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line p-3 text-sm">
       <Captions className="size-4 shrink-0 text-accent-text" />
-      <span className="min-w-0 flex-1">
-        <span className="block font-semibold">Chữ sáng theo giọng đọc</span>
+      <span className="min-w-0 flex-1 basis-48">
+        <span className="block font-semibold">Chữ sáng theo giọng đọc (tuỳ chọn)</span>
         <span className="block text-fg-2 text-pretty">{note}</span>
       </span>
       <Button size="sm" variant="secondary" loading={busy} disabled={running || (lines > 0 && aligned === lines && !finished)} onClick={() => start.mutate()}>
-        Căn từ cho sách đã làm
+        Thêm chữ sáng
       </Button>
     </div>
   );

@@ -185,3 +185,18 @@ def test_the_narrator_of_each_chapter_points_at_their_chip(tmp_path: Path) -> No
     (project / "book_settings.json").write_text(json.dumps(settings), encoding="utf-8")
     assert casting_chapter(project, 1)["firstPerson"] is None, "chương kể ngôi ba: không có người kể"
 
+
+
+def test_script_names_a_person_the_way_the_cast_tab_does(tmp_path: Path) -> None:
+    """Soát UX a8, mục 20: Kịch bản và Nhân vật gọi một người bằng cùng kiểu chữ - tên hiển thị của sổ nhân vật."""
+    project = make_book(tmp_path)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("UPDATE characters SET display_name = 'Heidi Bé Nhỏ' WHERE canonical_name = 'HEIDI'")
+    db.commit()
+    db.close()
+    view = casting_chapter(project, 1)
+    assert view is not None
+    assert {line["label"] for line in view["lines"] if line["speaker"] == "HEIDI"} == {"Heidi Bé Nhỏ"}
+    assert "Heidi Bé Nhỏ" in [person["label"] for person in view["cast"]]
+    # Vai phụ cục bộ vẫn theo tên trong câu, không theo "NPC ..." của sổ.
+    assert next(line for line in view["lines"] if line["stableId"] == "e")["label"] == "người gác"

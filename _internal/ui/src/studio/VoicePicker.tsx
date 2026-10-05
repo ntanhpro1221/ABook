@@ -9,7 +9,7 @@ import { Button, Dialog, Progress, Segmented, Skeleton, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { modulePercent } from "./musicLocal";
-import { groupByEngine, moduleNote, sharedText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
+import { groupByEngine, moduleNote, plainGroupLabels, sharedText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
 
 // "Đổi giọng" một nhân vật (webui/voice_picker.py): mọi giọng dùng được cho nhân vật, nghe thử từng giọng, giọng đang dùng,
 // giọng máy gợi ý cho từng giới, và ai đang dùng giọng ấy cùng mấy chương. Chọn xong đi đúng đường của thẻ "Nam hay nữ"
@@ -45,7 +45,7 @@ interface VoiceChoices {
 
 function voiceMeta(voice: VoiceOption): string {
   const about = voice.description || [voice.region ? `Miền ${voice.region}` : "", voice.style].filter(Boolean).join(" · ");
-  return `${about} · ${sharedText(voice)}`;
+  return `${about} · ${sharedText(voice, voice.current)}`;
 }
 
 /** Tên nhóm của một máy đọc, và - khi máy chưa có giọng ấy - lời nhắn + nút tải (tiến độ hỏi lại mỗi giây). */
@@ -71,7 +71,7 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
   return (
     <div className="sticky top-0 z-10 bg-panel pb-1 pt-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-fg-3">{label}</span>
+        <span className="text-xs font-semibold tracking-wide text-fg-3">{label}</span>
         {current && ["missing", "error", "outdated"].includes(current.state) && (
           <Button size="sm" variant="secondary" loading={start.isPending} onClick={() => start.mutate()}>
             {current.state === "error" ? "Tải lại" : "Tải giọng"}
@@ -173,6 +173,7 @@ export function VoicePicker({
   });
   const voices = (data?.voices ?? []).filter((voice) => voice.gender === shown);
   const groups = groupByEngine(voices);
+  const groupLabels = plainGroupLabels(groups);
   const reload = () => client.invalidateQueries({ queryKey: ["voice-choices", bookId, person?.name] });
   return (
     <Dialog
@@ -218,10 +219,10 @@ export function VoicePicker({
             ]}
           />
           <div className="mt-3 max-h-[min(60vh,460px)] overflow-y-auto pr-1">
-            {groups.map((group) => (
-              <section key={group.engine} aria-label={`Giọng ${group.label}`}>
+            {groups.map((group, index) => (
+              <section key={group.engine} aria-label={groupLabels[index]}>
                 {groups.length > 1 || group.engine !== "vieneu" ? (
-                  <EngineHeader engine={group.engine} label={group.label} status={data.modules?.[group.engine]} onReady={reload} />
+                  <EngineHeader engine={group.engine} label={groupLabels[index]} status={data.modules?.[group.engine]} onReady={reload} />
                 ) : null}
                 <ul className="space-y-1">
             {group.voices.map((voice) => (
@@ -263,8 +264,8 @@ export function VoicePicker({
           </div>
           <p className="mt-3 text-xs leading-relaxed text-fg-3">
             Giọng đang có người dùng vẫn chọn được: máy lấy bậc âm sắc khác để hai người không nghe giống nhau trong cùng
-            chương. Chọn giọng khác giới là đổi luôn giới của nhân vật. Giọng ZeroTTS và Supertonic chỉ có một âm sắc: hai người
-            cùng chương chung giọng ấy sẽ nghe giống hệt nhau.
+            chương. Chọn giọng khác giới là đổi luôn giới của nhân vật. Các giọng thêm chỉ có một âm sắc: hai người cùng chương
+            chung giọng ấy sẽ nghe giống hệt nhau.
           </p>
         </>
       )}
