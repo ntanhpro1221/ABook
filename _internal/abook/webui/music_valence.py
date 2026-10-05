@@ -109,7 +109,7 @@ def muq_clips(y: Any) -> list[Any]:
     for clip in music_student.audio_windows(y, MUQ_RATE):
         clip = np.asarray(clip, dtype=np.float32)
         if len(clip) < MUQ_SAMPLES:
-            clip = np.concatenate([clip, clip[:MUQ_SAMPLES - len(clip)]])
+            clip = np.resize(clip, MUQ_SAMPLES)  # nối vòng từ đầu bao nhiêu lần cũng được (cửa sổ 3-5 giây cần hơn một lần)
         clips.append(clip)
     return clips
 
