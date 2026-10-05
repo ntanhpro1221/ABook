@@ -23,8 +23,8 @@ describe("việc cần Studio vẫn hiện, nói rõ thiếu gì", () => {
     expect(studioNeed(caps({ workshop: true }))).toBe("cần cài Studio");
   });
 
-  it("máy có Studio nhưng cuốn nhập từ file: cần dựng xưởng", () => {
-    expect(studioNeed(caps({ toolchain: true }))).toMatch(/dựng xưởng/);
+  it("máy có Studio nhưng cuốn nhập từ file: chưa có dự án Studio", () => {
+    expect(studioNeed(caps({ toolchain: true }))).toMatch(/chưa có dự án Studio/);
   });
 
   it("máy có Studio và cuốn có xưởng: làm được ngay, không có gì mờ", () => {

@@ -25,6 +25,7 @@ import { NewProjectScreen } from "@/studio/NewProjectScreen";
 import { ProjectScreen } from "@/studio/ProjectScreen";
 import { ProjectsScreen } from "@/studio/ProjectsScreen";
 import { desktopTextImport, httpSource } from "./httpSource";
+import { exportWhereHint, packingText } from "./bookFileExport";
 import { SettingsScreen } from "./SettingsScreen";
 import { Shell } from "./Shell";
 
@@ -51,6 +52,7 @@ function EmptyLibrary() {
   // Người mới mở app thường có sẵn một file truyện: nghe ngay là việc chính, làm sách nói (Studio) là việc kế. Máy điều khiển từ xa không
   // thêm file được thì Studio vẫn là nút chính.
   const canAdd = Boolean(useSource().textImport);
+  const openBookPath = useOpenBookPath();
   return (
     <EmptyState
       icon={Headphones}
@@ -58,7 +60,7 @@ function EmptyLibrary() {
       className="mt-12 rounded-2xl border border-dashed border-line"
       action={
         <div className="flex flex-wrap justify-center gap-2">
-          <AddBookButton variant="primary" size="lg" />
+          <AddBookButton variant="primary" size="lg" onBookFile={openBookPath} />
           <Button variant={canAdd ? "secondary" : "primary"} size={canAdd ? "md" : "lg"} icon={Clapperboard} onClick={() => navigate("/studio/new")}>
             Tạo sách nói
           </Button>
@@ -191,6 +193,7 @@ function RemoveImportedHost() {
 /** Một cuốn trong một file của app (webui/bookfile.py): bìa, chữ có tag, audio, nhân vật - mở bằng app ở máy khác. */
 function BookFileMenuItem({ book }: { book: ListenBook }) {
   const { data: info } = useAppInfo();
+  const { data: preferences } = usePreferences();
   const run = async () => {
     let target = "";
     if (info?.dialogs) {
@@ -198,7 +201,13 @@ function BookFileMenuItem({ book }: { book: ListenBook }) {
       if (!picked) return;
       target = picked;
     }
-    const pending = toast.loading("Đang đóng gói sách…", { description: `${book.chaptersAvailable} chương` });
+    const pending = toast.loading("Đang đóng gói sách…", { description: packingText(book.chaptersAvailable, 0) });
+    // Máy chủ đóng gói trong một yêu cầu dài và không báo tiến độ từng chương: thông báo đếm thời gian để biết máy vẫn đang làm.
+    const started = Date.now();
+    const ticker = window.setInterval(
+      () => toast.loading("Đang đóng gói sách…", { id: pending, description: packingText(book.chaptersAvailable, (Date.now() - started) / 1000), duration: Infinity }),
+      1000,
+    );
     try {
       const result = await api<{ file: string; folder: string; size: number }>(`/api/books/${book.id}/bookfile`, {
         method: "POST",
@@ -214,6 +223,8 @@ function BookFileMenuItem({ book }: { book: ListenBook }) {
       });
     } catch (error) {
       toast.error("Không xuất được file sách", { id: pending, description: (error as Error).message });
+    } finally {
+      window.clearInterval(ticker);
     }
   };
   return (
@@ -221,9 +232,13 @@ function BookFileMenuItem({ book }: { book: ListenBook }) {
       // Chưa có chương nào nghe được thì không có gì để xuất (soát UX 29-09: bấm được rồi nhận lỗi 409).
       disabled={!book.chaptersAvailable}
       onSelect={() => void run()}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
+      className="flex h-auto cursor-default items-center gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
-      <FileAudio className="size-4" /> Xuất file sách (mở bằng app ở máy khác)
+      <FileAudio className="mt-0.5 size-4 shrink-0 self-start" />
+      <span className="min-w-0">
+        <span className="block">Xuất file sách (mở bằng app ở máy khác)</span>
+        <span className="block truncate text-xs text-fg-3">{exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot)}</span>
+      </span>
     </DropdownMenu.Item>
   );
 }
@@ -374,6 +389,15 @@ function UpdateListener() {
   return null;
 }
 
+/** Hộp "Thêm sách từ file…" nhận được .abook / .abookproj (dán đường dẫn, kể cả từ trình duyệt): mở như "Mở file sách". */
+function useOpenBookPath() {
+  const opened = useOpenedBook();
+  return useCallback(
+    async (path: string) => opened(await api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: { path } })),
+    [opened],
+  );
+}
+
 /** "Mở file sách": hộp chọn file của Windows (chỉ có trong cửa sổ app), nhập vào thư viện, mở trang sách. */
 function OpenBookFileButton({ variant = "secondary" }: { variant?: "secondary" | "ghost" }) {
   const { data: info } = useAppInfo();
@@ -409,12 +433,13 @@ function StudioChipLink({ id }: { id: string }) {
 function LibraryRoute() {
   const navigate = useNavigate();
   const { data: info } = useAppInfo();
+  const openBookPath = useOpenBookPath();
   return (
     <LibraryScreen
       empty={<EmptyLibrary />}
       header={
         <div className="flex flex-wrap justify-end gap-2">
-          <AddBookButton />
+          <AddBookButton onBookFile={openBookPath} />
           <OpenBookFileButton />
         </div>
       }

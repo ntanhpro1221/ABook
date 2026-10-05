@@ -545,14 +545,46 @@ def book_progress(state: dict[str, Any], chapters: list[dict[str, Any]], *, comp
         else:
             heard += min(length, float(record.get("heard") or 0.0))
     all_heard = bool(chapters) and done_chapters == len(chapters)
+    marked = bool(state.get("finished"))
+    # Nghe hết rồi quay lại nghe một đoạn (chỗ nghe sau cùng không còn ở đuôi chương cuối, và mới hơn lần tự đánh dấu
+    # nghe xong): cờ "done" của các chương vẫn còn, nhưng cuốn đang được NGHE LẠI - tiến độ theo chỗ đang nghe, không
+    # còn "nghe xong" (soát UX 05-10: trang sách chỉ còn "Nghe lại từ đầu", thẻ "Đang nghe dở" mất cuốn này).
+    rewound = (marked or all_heard) and _rewound(state, chapters)
+    if rewound:
+        heard = _position_seconds(state["last"], chapters)
     return {
         "heardSeconds": round(heard, 1),
         "totalSeconds": round(total, 1),
         "fraction": round(heard / total, 4) if total else 0.0,
         "chaptersDone": done_chapters,
-        "finished": bool(state.get("finished")) or (complete and all_heard),
-        "caughtUp": not complete and all_heard and not state.get("finished"),
+        "finished": not rewound and (marked or (complete and all_heard)),
+        "caughtUp": not rewound and not complete and all_heard and not marked,
+        "rewound": rewound,
     }
+
+
+def _rewound(state: dict[str, Any], chapters: list[dict[str, Any]]) -> bool:
+    last = state.get("last") or {}
+    if not chapters or "chapterId" not in last:
+        return False
+    if state.get("finished") and float(state.get("finishedAt") or 0.0) >= float(last.get("at") or 0.0):
+        return False
+    final = chapters[-1]
+    if int(last["chapterId"]) != int(final["id"]):
+        return any(int(chapter["id"]) == int(last["chapterId"]) for chapter in chapters)
+    length = float(final.get("duration") or 0.0)
+    return length > 0 and length - float(last.get("seconds") or 0.0) > DONE_TAIL_SECONDS
+
+
+def _position_seconds(last: dict[str, Any], chapters: list[dict[str, Any]]) -> float:
+    """Chỗ đang nghe tính từ đầu cuốn: các chương trước nó cộng số giây đã tới trong chương ấy."""
+    before = 0.0
+    for chapter in chapters:
+        length = float(chapter.get("duration") or 0.0)
+        if int(chapter["id"]) == int(last["chapterId"]):
+            return before + min(length, float(last.get("seconds") or 0.0))
+        before += length
+    return before
 
 
 def _clean_night(night: dict[str, Any]) -> dict[str, Any]:

@@ -108,3 +108,13 @@ describe("credit-line suggestions", () => {
     expect(pickedSuggestions(suggestions, CHAPTERS, new Set([2, 4]))).toEqual([]);
   });
 });
+
+describe("isBookFile", () => {
+  it("nhận file sách / dự án ABook, không nhận sách để nhập chữ", async () => {
+    const { isBookFile } = await import("./AddBook");
+    expect(isBookFile("D:\Sách\Chuyến phà.abook")).toBe(true);
+    expect(isBookFile(" C:/x/Du an.ABOOKPROJ ")).toBe(true);
+    expect(isBookFile("D:\Truyện\Tên truyện.epub")).toBe(false);
+    expect(isBookFile("D:\abook\chuong 1.txt")).toBe(false);
+  });
+});

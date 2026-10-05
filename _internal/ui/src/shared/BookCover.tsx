@@ -15,6 +15,7 @@ export function BookCover({
   playing = false,
   image,
   part,
+  badge,
   className,
 }: {
   title: string;
@@ -24,6 +25,8 @@ export function BookCover({
   image?: CoverImage | null;
   /** Thứ tự phần trong chuỗi "Làm tiếp cuốn này" - phần đổi tên vẫn ghi "Phần N" (cover.splitTitle). */
   part?: number | null;
+  /** Nhãn tập khi tên sách không mang số ("Tập 1" của cuốn không số trong một bộ) - chỉ dùng khi tên và `part` không cho nhãn. */
+  badge?: string;
   className?: string;
 }) {
   const [failed, setFailed] = useState<string | null>(null);
@@ -31,20 +34,23 @@ export function BookCover({
     return <PhotoCover image={image} playing={playing} className={className} onError={() => setFailed(image.url)} />;
   }
   const style = coverStyle(title);
-  const [main, sub] = splitTitle(title, part);
+  const [main, titled] = splitTitle(title, part);
+  const sub = titled || badge || "";
   const small = size === "xs" || size === "sm";
+  // Chữ và lề của bìa vẽ co theo CHIỀU RỘNG bìa (đơn vị cqw của khung `@container` bên dưới), có sàn và trần theo cỡ: cùng cỡ "md" mà
+  // ô 80 px (thẻ "Đang nghe dở") và ô 178 px (kệ sách) đều vừa chữ, không cắt tên giữa chừng hay đè nhãn tập (soát UX 05-10).
   const text = {
-    xs: "",
-    sm: "",
-    md: "text-[15px] leading-[1.15]",
-    lg: "text-[19px] leading-[1.12]",
-    xl: "text-[24px] leading-[1.1]",
+    xs: { fontSize: 0, padding: 4 },
+    sm: { fontSize: 0, padding: 6 },
+    md: { fontSize: "clamp(11px, 14cqw, 15px)", padding: "clamp(6px, 8cqw, 14px)" },
+    lg: { fontSize: "clamp(11px, 14cqw, 19px)", padding: "clamp(6px, 9cqw, 16px)" },
+    xl: { fontSize: "clamp(12px, 10cqw, 24px)", padding: "clamp(8px, 7cqw, 20px)" },
   }[size];
-  const pad = { xs: "p-1", sm: "p-1.5", md: "p-3.5", lg: "p-4", xl: "p-5" }[size];
+  const leading = { xs: "", sm: "", md: "leading-[1.15]", lg: "leading-[1.12]", xl: "leading-[1.1]" }[size];
   const rings = [0.28, 0.46, 0.64, 0.82, 1.0];
   return (
     <div
-      className={cn("relative aspect-square shrink-0 overflow-hidden rounded-lg text-left shadow-card", className)}
+      className={cn("@container relative aspect-square shrink-0 self-start overflow-hidden rounded-lg text-left shadow-card", className)}
       style={{ background: `linear-gradient(155deg, ${style.from} 0%, ${style.to} 100%)` }}
       aria-hidden
     >
@@ -62,21 +68,23 @@ export function BookCover({
           />
         ))}
       </svg>
-      <div className={cn("relative flex h-full flex-col justify-between", pad)}>
+      <div className="relative flex h-full flex-col justify-between gap-1" style={{ padding: text.padding }}>
         {small ? (
           <span
             className="m-auto font-bold leading-none tracking-tight"
             style={{ color: style.ink, fontSize: size === "xs" ? 12 : 17 }}
           >
-            {coverLabel(title, part)}
+            {titled || !badge ? coverLabel(title, part) : (badge.match(/\d+/)?.[0] ?? coverLabel(title, part))}
           </span>
         ) : (
           <>
-            <span className={cn("line-clamp-4 font-bold tracking-tight text-white", text)}>{main}</span>
+            <span className={cn("line-clamp-4 min-h-0 overflow-hidden font-bold tracking-tight text-white", leading)} style={{ fontSize: text.fontSize }}>
+              {main}
+            </span>
             {sub ? (
               <span
-                className="self-start rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider"
-                style={{ color: style.ink, background: "rgb(0 0 0 / 0.28)" }}
+                className="shrink-0 self-start rounded-md px-1.5 py-0.5 font-semibold uppercase tracking-wider"
+                style={{ color: style.ink, background: "rgb(0 0 0 / 0.28)", fontSize: "clamp(8px, 6cqw, 11px)" }}
               >
                 {sub}
               </span>
@@ -114,7 +122,7 @@ function PhotoCover({
   const square = Math.abs(ratio - 1) < 0.08;
   return (
     <div
-      className={cn("relative aspect-square shrink-0 overflow-hidden rounded-lg shadow-card", className)}
+      className={cn("relative aspect-square shrink-0 self-start overflow-hidden rounded-lg shadow-card", className)}
       style={{ background: image.color || "var(--color-hover)" }}
       aria-hidden
     >
