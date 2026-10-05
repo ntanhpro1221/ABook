@@ -2606,3 +2606,17 @@ freesound/freepd/jamendo/opengameart/fma/scottbuckley), hạng V tính bằng ON
 - HF `NGDtuanh/abook-music-student` @ `332e7552`: `student_head_A.npz` mới, `muq/muq_mulan_audio.onnx`, `muq/valence_text.npz`, `muq/vhop_scale.json`.
 - Tháp MuQ giữ giấy phép CC BY-NC 4.0 của OpenMuQ (ghi trong `LICENSE.md`).
 - Đặc tả cho agent app: `Corpus/research/music/APP_SPEC_path_a.md`.
+
+### 05-10 — Danh mục cắt cửa sổ đúng như app (ghi trước khi có kết quả)
+
+Lead: app là chuẩn. Danh mục cũ cắt cửa sổ khác app ở hai chỗ:
+- CLAP tua `ffmpeg -ss` theo thời lượng ghi trong header, còn app giải mã cả bài (`-t 1800`) rồi cắt trên mẫu (`music_student.audio_windows`).
+- 1.443 bài Incompetech chỉ có ba cửa sổ đọc sẵn qua mạng, nên cả CLAP lẫn MuQ của chúng không theo cách app.
+
+Làm: tải đủ bài, phân tích lại CLAP + MuQ (tháp ONNX = đường app) bằng đúng hàm của app, rồi dựng lại mọi thứ phụ thuộc: trục,
+cảm xúc, thầy, danh mục ký, `vhop_scale`, đầu trò A + hiệu chỉnh F2, bộ vàng. Bản cũ lùi thành `*.v1_ss`.
+
+Ghi trước:
+- Số tạm trên 1.254 bài: r giữa V thô cũ và mới là 0,996 (CLAP) và 0,998 (MuQ); |Δhạng V hợp| TB 0,022, p95 0,065.
+- Dự đoán: đầu A mới giữ AUC so thầy và r phim trong ±0,01 của bản 332e7552. Lệch quá thì báo, không phát hành.
+- Bộ vàng mới phải khớp app tới 0,0000 hạng (cùng hàm cắt, cùng tháp).
