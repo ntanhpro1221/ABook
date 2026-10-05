@@ -16,6 +16,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Truyện dịch dùng ngoặc vuông cho lời nói - "[Về thôi.]", câu nghĩ thầm, bảng thông báo game "[Bạn nhận được 30 điểm kinh nghiệm]", tiếng quái vật "[GDESAAAAA!!]" -
   nay mỗi dòng như thế là một giọng riêng thay vì bị người kể đọc hết (có cuốn gần như cả quyển bị đọc bằng một giọng); ai nói thì máy phân tích đoán như với lời thoại
   thường. Dòng bảng hệ thống trong 【…】 cũng vậy. Dấu ngoặc ấy không được đọc thành tiếng. Ngoặc nằm giữa câu kể ("kỹ năng [Hỏa Cầu]") vẫn là lời người kể.
+- Máy phân tích thấy ai vừa nói ở 9 đoạn ngay trước mỗi lượt nó đọc, nên đối đáp không lời dẫn vắt qua hai lượt ít bị gán nhầm người
+  hơn (đo trên truyện Nhật: ít hơn hẳn lỗi "câu sau lặp người nói câu trước"); thời gian phân tích như cũ.
 
 ## [0.4.27] - 2026-10-04
 
