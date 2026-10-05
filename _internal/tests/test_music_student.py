@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import math
 import shutil
-import subprocess
 import urllib.request
 from pathlib import Path
 
@@ -13,7 +12,6 @@ import numpy as np
 import pytest
 import soundfile
 
-from abook.io_utils import ffmpeg_executable
 from abook.webui import music_local, music_mel, music_student
 
 MUSIC = Path("D:/Novels/LLM_Train/music")
@@ -174,20 +172,10 @@ def _calibrated(raw: np.ndarray, backend: str) -> np.ndarray:
                      for axis, value in zip(("valence", "arousal", "tension"), raw)])
 
 
-def _ffmpeg_duration(path: Path) -> float:
-    """Độ dài ffmpeg ghi trong đầu file - đúng số bản nghiên cứu dùng để nhảy `-ss`. Không dùng `read_tags` (tinytag lệch tới 0,03 giây ở mp3
-    VBR, đủ làm cửa sổ trượt và cos nhúng tụt dưới 0,999 trong phép so tuyệt đối này; với app, 0,03 giây độ dài bài không đáng kể)."""
-    import re
-
-    stderr = subprocess.run([ffmpeg_executable(), "-hide_banner", "-nostdin", "-i", str(path)], capture_output=True, check=False).stderr.decode("utf-8", "replace")
-    hours, minutes, seconds = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", stderr).groups()
-    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
-
-
 def test_the_head_and_the_tower_reproduce_the_research_numbers(package: Path) -> None:
     """Hai nửa của đường chạy, mỗi nửa đối chiếu với bản nghiên cứu ở mức gần như tuyệt đối: (1) đầu A cho cùng V/E/T khi
-    nhận đúng vector nhúng của bản nghiên cứu; (2) tháp fp16 của gói cho gần như đúng vector nhúng ấy khi nhận đúng ba cửa sổ mà
-    analyze_clap cắt (ffmpeg nhảy tới chỗ, không giải mã cả bài)."""
+    nhận đúng vector nhúng của bản nghiên cứu; (2) tháp fp16 của gói cho gần như đúng vector nhúng ấy trên đúng ba cửa sổ của app
+    (giải mã cả bài rồi audio_windows - danh mục dựng lại bằng chính cách cắt này từ 05-10)."""
     ids, stem = _reference_ids()
     student = music_student._load()
     assert student is not None
@@ -196,12 +184,7 @@ def test_the_head_and_the_tower_reproduce_the_research_numbers(package: Path) ->
         got = student.predict(embedding.astype(np.float64))
         assert np.abs(_vet(got) - _calibrated(expected, "torch")).max() < 1e-3, track
         path = MUSIC / "audio_incompetech" / (stem(track) + ".mp3")
-        duration = _ffmpeg_duration(path)
-        clips = []
-        for fraction in (0.2, 0.5, 0.8):
-            raw = subprocess.run([ffmpeg_executable(), "-v", "error", "-ss", f"{max(0.0, duration * fraction - 5):.2f}", "-t", "10",
-                                  "-i", str(path), "-ac", "1", "-ar", "48000", "-f", "f32le", "-"], capture_output=True, check=False).stdout
-            clips.append(np.frombuffer(raw, dtype=np.float32))
+        clips = music_student._clips(path)
         assert float(student.embed(clips) @ embedding) > 0.999, track
 
 
@@ -249,7 +232,7 @@ def test_the_head_calibrates_the_means_drops_sd_and_reports_the_residual_varianc
 
 
 def test_the_constants_come_from_the_f2_fit() -> None:
-    assert music_student.CALIBRATION["onnx"] == {"valence": (-0.057, 1.264, 0.0728), "arousal": (-0.012, 1.100, 0.0316), "tension": (0.001, 1.264, 0.0402)}
+    assert music_student.CALIBRATION["onnx"] == {"valence": (-0.057, 1.251, 0.0727), "arousal": (-0.013, 1.098, 0.0322), "tension": (-0.003, 1.283, 0.0412)}
     assert music_student.CALIBRATION["torch"] == music_student.CALIBRATION["onnx"], "MỘT bảng cho mọi đường (đầu A cho mọi máy)"
     assert all(len(v) == 3 for table in music_student.CALIBRATION.values() for v in table.values())
     raw = _FakeHead("", (0.1, 0.2, 0.3)).predict(np.eye(512)[0])
