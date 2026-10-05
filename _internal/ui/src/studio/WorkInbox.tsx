@@ -168,6 +168,7 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
           {example.chapterTitle} · {example.seq === 0 ? "tiêu đề chương" : `câu ${example.seq}`}
           {example.speaker && ` · máy gán: ${example.speaker}`}
           {example.changes && <span className="font-semibold text-accent-text"> · sẽ đổi</span>}
+          {!example.hasAudio && " · chưa thu"}
         </div>
         <p className="text-fg">{example.text}</p>
       </div>
@@ -710,6 +711,9 @@ interface InboxProps {
   kind?: string | null;
   focus?: string | null;
   onKind?: (kind: WorkKind | "all") => void;
+  /** Thẻ đang nằm ở màn "Duyệt trước khi thu": không hiện lại ở đây, chỉ nói còn bao nhiêu và đường mở màn ấy. */
+  inPrecast?: Set<string>;
+  onOpenPrecast?: () => void;
 }
 
 /** Một nhóm thẻ việc chọn sẵn (màn "Duyệt trước khi thu"): đúng thẻ của hộp việc, sửa ngay trên thẻ như ở đó. */
@@ -741,7 +745,7 @@ export function WorkInbox(props: InboxProps) {
   );
 }
 
-function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: kindParam, focus, onKind }: InboxProps) {
+function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: kindParam, focus, onKind, inPrecast, onOpenPrecast }: InboxProps) {
   const bookId = book.id;
   const hint = useContext(PendingHint);
   const [kind, setKindState] = useState<WorkKind | "all">(
@@ -811,7 +815,9 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
     );
   }
   // Việc đã quyết (chờ áp dụng) xuống mục thu gọn cuối trang và không tính vào số đếm.
-  const open = data.items.filter((item) => !item.requested);
+  const undecided = data.items.filter((item) => !item.requested);
+  const open = inPrecast ? undecided.filter((item) => !inPrecast.has(item.key)) : undecided;
+  const atReview = undecided.length - open.length;
   const decided = data.items.filter((item) => item.requested);
   // "Giữ" cách đang đọc là đã quyết mà không có gì chờ áp dụng - không đếm vào "chờ áp dụng" (soát UX 29-09).
   const waiting = decided.filter((item) => item.requested !== item.current).length;
@@ -838,6 +844,18 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
         trên sửa một lần được nhiều câu nhất. Cách đọc tên, người nói từng câu, hai tên của một người, giới và giọng nhân
         vật đều sửa được ngay tại đây, không phải dừng sách.
       </p>
+      {atReview > 0 && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
+          <span className="min-w-0 text-pretty">
+            {atReview} việc về giọng, cách đọc tên và người nói ở các chương đầu đang nằm ở “Duyệt trước khi thu” - duyệt ở đó, không hiện lặp ở đây.
+          </span>
+          {onOpenPrecast && (
+            <Button size="sm" variant="secondary" onClick={onOpenPrecast}>
+              Mở màn duyệt
+            </Button>
+          )}
+        </div>
+      )}
       <div className="mt-4">
         <Segmented<WorkKind | "all">
           wrap
@@ -868,7 +886,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
           Xem thêm {Math.min(PAGE, items.length - shown)} việc
         </Button>
       )}
-      {!open.length && (
+      {!open.length && atReview === 0 && (
         <p className="mt-4 text-sm text-fg-2">
           Mọi việc đã có quyết định - {hint}.
         </p>

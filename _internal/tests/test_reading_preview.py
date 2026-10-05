@@ -133,17 +133,20 @@ def test_the_preview_reads_the_new_name_in_the_speakers_own_voice(tmp_path: Path
     assert kwargs["style"] == "tu_nhien"
 
 
-def test_a_thought_is_read_by_the_narrator_like_the_real_take(tmp_path: Path, monkeypatch) -> None:
+@pytest.mark.parametrize("thinker_named, voice, style", [(True, "v_lucien", "tu_nhien"), (False, "narrator", "doc_truyen")])
+def test_a_thought_is_read_like_the_real_take(tmp_path: Path, monkeypatch, thinker_named: bool, voice: str, style: str) -> None:
+    """Người nghĩ có tên thì đọc bằng giọng họ; chỉ câu nội tâm không rõ ai nghĩ mới về người kể."""
     paths, db = _book_with_names(tmp_path)
     with db.connect() as conn:
-        conn.execute("UPDATE segments SET kind='thought' WHERE stable_id='c1s1'")
+        conn.execute("UPDATE segments SET kind='thought', speaker=? WHERE stable_id='c1s1'",
+                     ("Lucien" if thinker_named else "NARRATOR",))
     runtime = FakeVieNeuRuntime()
     _voices(runtime, monkeypatch)
 
     result = _script()["run_job"](_job(paths, _segment_id(db, "c1s1"), "Natasha", "Na-ta-xa", tmp_path / "t.wav"), {}, lambda _m: None)
 
     assert result["ok"]
-    assert runtime.calls[0][1]["voice"] == "narrator" and runtime.calls[0][1]["style"] == "doc_truyen"
+    assert runtime.calls[0][1]["voice"] == voice and runtime.calls[0][1]["style"] == style
 
 
 def test_the_seed_is_the_one_the_first_real_take_would_use(tmp_path: Path, monkeypatch) -> None:

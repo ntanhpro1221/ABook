@@ -104,6 +104,8 @@ def test_a_pronunciation_card_has_lines_to_hear_and_shows_a_waiting_request(tmp_
     db.execute("UPDATE segments SET wav_path='chunks/8.wav' WHERE id=8")
     db.commit()
     db.close()
+    (project / "chunks").mkdir()
+    (project / "chunks" / "8.wav").write_bytes(b"RIFF")
     card = next(item for item in work_items(project)["items"] if item["kind"] == "pronunciation")
     assert card["surface"] == "Hailkes" and card["requested"] is None
     assert card["examples"][0]["text"].startswith("Hailkes") and card["examples"][0]["hasAudio"] is True
@@ -521,3 +523,39 @@ def test_a_title_the_book_writes_next_to_one_name_asks_to_join_that_voice(tmp_pa
     assert [line["stableId"] for line in card["lines"]] == ["e1"] and card["affected"] == 1
     assert card["choices"] == [{"label": "Gộp vào Krai Andrey", "value": "KRAI ANDREY", "name": "Krai Andrey"}]
     assert "sát nhau 3 lần" in card["problem"] and card["keepLabel"] == "Hai người khác nhau"
+
+
+def test_a_sample_line_is_playable_only_when_its_recording_exists(tmp_path: Path) -> None:
+    """Soát UX a8: nút ▶ của câu mẫu nào cũng 404 vì ví dụ mặc định "có audio" - nay hasAudio nói đúng thực tế."""
+    project = make_book(tmp_path)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("UPDATE segments SET wav_path='chunks/4.wav' WHERE id=4")  # có đường dẫn nhưng file không còn
+    db.execute("UPDATE segments SET wav_path='chunks/5.wav' WHERE id=5")  # có file thật
+    db.commit()
+    db.close()
+    (project / "chunks").mkdir()
+    (project / "chunks" / "5.wav").write_bytes(b"RIFF")
+    gender = next(item for item in work_items(project)["items"] if item["kind"] == "gender")
+    audio = {example["segmentId"]: example["hasAudio"] for example in gender["examples"]}
+    assert audio == {4: False, 5: True}
+
+
+def test_the_reserved_unknown_speaker_never_shows_as_a_name_or_gets_a_gender_card(tmp_path: Path) -> None:
+    """Soát UX a8: "Unknown là nam hay nữ?" / "máy gán: Unknown" - UNKNOWN là nhãn "vai phụ không tên", tab Kịch bản gọi nó thế."""
+    project = make_book(tmp_path)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (9, 'UNKNOWN', 'Unknown', 'unknown', 0)")
+    db.executemany(
+        "INSERT INTO segments (id, stable_id, chapter_id, seq, text, kind, speaker, voice_profile_id,"
+        " canonical_character_id, status, text_sha256) VALUES (?,?,?,?,?,?,?,?,?, 'verified', ?)",
+        [(20, "u1", 1, 20, "“Ai đó?”", "dialogue", "UNKNOWN", 6, 9, "sha-u1"),
+         (21, "u2", 1, 21, "“Là tôi.”", "dialogue", "UNKNOWN", 6, 9, "sha-u2")])
+    db.commit()
+    db.close()
+    items = work_items(project)["items"]
+    assert not [item for item in items if item["kind"] == "gender" and "nknown" in item["title"]]
+    texts = json.dumps(items, ensure_ascii=False)
+    assert "Unknown" not in texts and "UNKNOWN" not in texts.replace("stableId", "")
+    from abook.webui.reviews import speaker_label
+
+    assert [speaker_label(raw) for raw in ("UNKNOWN", "Unknown", "UNNAMED", "ANONYMOUS_1")] == ["Vai phụ không tên"] * 4

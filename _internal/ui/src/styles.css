@@ -277,6 +277,19 @@
   animation: run-sheen 1.8s ease-in-out infinite;
 }
 
+/* Thanh không biết tiến độ (Progress indeterminate): đoạn sáng chạy qua lại. */
+@keyframes indeterminate {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+.indeterminate-bar {
+  animation: indeterminate 1.4s ease-in-out infinite;
+}
+
 /* Cột VU nhảy khi đang thu/đang phát. */
 @keyframes vu {
   0%,
@@ -363,6 +376,7 @@
     animation: none !important;
   }
   .sheen::after,
+  .indeterminate-bar,
   .vu > span,
   .now-playing {
     animation: none;

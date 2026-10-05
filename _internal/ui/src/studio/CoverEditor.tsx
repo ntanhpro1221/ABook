@@ -7,6 +7,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { CoverSearchDialog } from "@/shared/CoverSearch";
 import type { CoverImage } from "@/shared/cover";
+import { useMediaQuery } from "@/shared/media";
 import { api, type BookSummary } from "./api";
 
 // Ảnh bìa thật cho một cuốn (webui/covers.py): chọn file, kéo thả ảnh vào bìa, hoặc dán (Ctrl+V) khi đang ở trang
@@ -79,8 +80,10 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
 
   const [searching, setSearching] = useState(false);
   const busy = upload.isPending || remove.isPending;
+  // Điện thoại: bìa nhỏ nằm cạnh tên sách (trang dự án chiếm ~590 px đầu màn nếu bìa to nằm trên tên), nút chỉ còn biểu tượng.
+  const narrow = useMediaQuery("(max-width: 639px)");
   return (
-    <div className="w-44 shrink-0">
+    <div className="w-24 shrink-0 sm:w-44">
       <div
         className={cn("relative rounded-lg", dragging && "ring-2 ring-accent ring-offset-2 ring-offset-bg")}
         onDragOver={(event) => {
@@ -97,7 +100,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           else toast.error("Chỉ thả được file ảnh (PNG, JPEG, WebP…)");
         }}
       >
-        <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} className="w-44" />
+        <BookCover title={book.title} part={book.series?.part} size={narrow ? "sm" : "lg"} image={book.cover} className="w-24 sm:w-44" />
         {busy && (
           <div className="absolute inset-0 grid place-items-center rounded-lg bg-black/40 text-white">
             <Loader2 className="size-6 animate-spin" />
@@ -109,9 +112,10 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           type="button"
           disabled={busy}
           onClick={() => input.current?.click()}
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-[13px] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
+          aria-label={book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg px-1.5 text-[13px] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 sm:px-2"
         >
-          <ImagePlus className="size-4" /> {book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}
+          <ImagePlus className="size-4" /> <span className="max-sm:hidden">{book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}</span>
         </button>
         <button
           type="button"
@@ -136,7 +140,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           </button>
         )}
       </div>
-      <p className="px-2 text-xs text-fg-3">Hoặc kéo thả / dán ảnh vào đây.</p>
+      <p className="px-2 text-xs text-fg-3 max-sm:hidden">Hoặc kéo thả / dán ảnh vào đây.</p>
       <CoverSearchDialog
         bookId={book.id}
         defaultQuery={seriesOf(book.title).series || book.title}
