@@ -82,6 +82,14 @@ def test_the_rank_clamps_at_both_ends_like_np_interp(reference) -> None:
     assert -0.2 < middle < 0.2
 
 
+def test_a_muq_window_under_half_the_length_wraps_more_than_once() -> None:
+    import numpy as np
+
+    tiny = np.arange(music_valence.MUQ_RATE * 4, dtype=np.float32)
+    (clip,) = music_valence.muq_clips(tiny)
+    assert len(clip) == music_valence.MUQ_SAMPLES and np.array_equal(clip, np.resize(tiny, music_valence.MUQ_SAMPLES))
+
+
 def test_muq_windows_follow_the_clap_cut_at_24_khz_and_wrap_short_ones() -> None:
     rate, size = music_valence.MUQ_RATE, music_valence.MUQ_SAMPLES
     assert music_valence.muq_clips(np.zeros(rate * 2, dtype=np.float32)) == [], "dưới 3 giây: bỏ"
