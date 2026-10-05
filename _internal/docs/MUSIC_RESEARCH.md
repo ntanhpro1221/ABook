@@ -2620,3 +2620,12 @@ Ghi trước:
 - Số tạm trên 1.254 bài: r giữa V thô cũ và mới là 0,996 (CLAP) và 0,998 (MuQ); |Δhạng V hợp| TB 0,022, p95 0,065.
 - Dự đoán: đầu A mới giữ AUC so thầy và r phim trong ±0,01 của bản 332e7552. Lệch quá thì báo, không phát hành.
 - Bộ vàng mới phải khớp app tới 0,0000 hạng (cùng hàm cắt, cùng tháp).
+
+**Kết quả (05-10 16:36).** Dự đoán ghi trước ĐẠT.
+- So cũ/mới trên 4.762 bài: r V thô CLAP 0,997, MuQ 0,999. |Δ hạng V hợp| TB 0,020, p95 0,060, max 0,397; 1,1% bài lệch > 0,1.
+  - Incompetech lệch nhiều nhất (max 0,397), đúng chỗ cũ chỉ có ba cửa sổ đọc sẵn.
+  - cos CLAP < 0,99 ở 28% bài nguồn khác: tua `-ss` theo header lệch thật.
+- Đầu trò A mới: 97,7% AUC của thầy; r phim V/E/T 0,664/0,740/0,767 (bản 332e7552: 0,665/0,744/0,767); MTG V hợp 0,558 (cũ 0,562).
+- Hiệu chỉnh F2: V (−0,057, 1,251, 0,0727), E (−0,013, 1,098, 0,0322), T (−0,003, 1,283, 0,0412).
+- Bộ vàng chọn lại (8 bài): CLAP cos 1,00000 cả 8 bài (trước có bài lệch 0,28 điểm thô); `interp` lệch hạng ≤ 0,003.
+- Đăng: danh mục `5880ea7b1098` (chờ Lead deploy), HF `143bea3d`. Đặc tả: Corpus b5539916.
