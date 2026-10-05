@@ -156,6 +156,17 @@ B8 con trỏ, B8 tách việc. E1 (ii) (ép gold trong lô, HF) xếp sau.
   (model 5.248 MiB, đỉnh card 5.932 MiB), RAM đỉnh 18,8 GB.
 - Lead 05-10: RỘNG = ứng viên mặc định, chốt nếu Hàn (e2wkr, 8 ch) không tụt quá 1 điểm F1. Từ nay B8/B9 đo ở cửa sổ rộng
   (cây ghim ABook_pin_wide a40231f3), mốc a_rộng = e2wv8; dữ liệu huấn luyện giữ hẹp (đã kiểm: v8 train hẹp, đo rộng tốt hơn).
+- **Hàn (05-10 07:16, 8 ch đợt 3, gold bản 1): F1 giọng +0,9 [KTC -3,3; +4,8], người nói chặt +0,5, cảm xúc +0,3; hơn 3 / thua 5
+  chương -> KHÔNG tụt quá 1 điểm -> RỘNG QUA CỔNG, là ứng viên mặc định.** Lỗi lặp 48 -> 47 (Hàn vốn ít lỗi lặp, lợi của rộng nằm ở
+  Nhật). Cặp cùng máy meke/demonking (v8home): -1,9 [-6,1; +1,5], 2 chương, trong nhiễu.
+
+**Gold Hàn bản 2 (05-10, nhánh dev/gold-kr-brackets 1a51a90f) - CHỈ cho lượt đo trên main >= e926ed12** (dòng nguyên vẹn [..] /
+【..】 là đơn vị giọng). zenith/058: 34 dòng "[...]" của hồn ma N -> D SHINCHEOL (LÃO SHIN~); ke_yeu/26 seq 62 (thông báo hệ thống)
+và nhan_vien/170 seq 146 (tên sổ) N -> D NARRATOR. seq không đổi. Mọi lượt trên cây ghim cũ (kể cả E2/E8/B8/B9 hiện tại) dùng bản 1.
+
+**E8 sửa đường đo (05-10 07:4x).** Thăm dò: Ollama 0.33.2 /api/generate với think + format nhét JSON vào "thinking", không nghĩ
+(21 ký tự, đáp rỗng); /api/chat cùng mẫu chat thì nghĩ rồi trả JSON. Hook nhánh think đổi sang /api/chat (08e12992, cây ghim
+ABook_pin_think2); nhánh think=false giữ /api/generate như app.
 
 **Kết quả O1+O2 (05-10 03:37, thước 04-10, chạy lại trên cây ghim 1808bdf7 = o12cv8).** Dump prompt + raw khớp TỪNG BYTE với lượt
 nghi ngờ o12v8 (612/612 lô) -> lượt cũ không bị nhiễm. Khối oracle "có mặt" (O1) + "xưng hô" (O2) chèn vào prompt v8: F1 giọng
