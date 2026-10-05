@@ -79,10 +79,11 @@ export function ExportDialog({
   const estimate = useQuery({
     queryKey: ["export-size", book.id, wholeSeries],
     enabled: open && kind === "abook",
-    queryFn: () => api<{ bytes: number; parts: number }>(`/api/books/${book.id}/export-size${wholeSeries ? "?series=1" : ""}`),
+    queryFn: () => api<{ bytes: number; parts: number; musicPending?: number }>(`/api/books/${book.id}/export-size${wholeSeries ? "?series=1" : ""}`),
     staleTime: 10_000,
   });
   const bytes = estimate.data?.bytes ?? 0;
+  const musicPending = estimate.data?.musicPending ?? 0;
   const run = async () => {
     let target = "";
     if (info?.dialogs) {
@@ -245,7 +246,12 @@ export function ExportDialog({
           </p>
         </>
       )}
-      {kind === "abook" && bytes > 0 && <p className="mt-2 text-sm text-fg-2">Cỡ ước tính: khoảng {formatSize(bytes)}.</p>}
+      {kind === "abook" && bytes > 0 && (
+        <p className="mt-2 text-sm text-fg-2">
+          Cỡ ước tính: khoảng {formatSize(bytes)}.
+          {musicPending > 0 && ` Còn ${musicPending} bài nhạc nền chưa tải về máy - khi xuất sẽ tải và cộng thêm.`}
+        </p>
+      )}
       {kind === "abook" && !info?.remote && <WordTimingsRow bookId={book.id} running={Boolean(book.running)} />}
       {wholeSeries && kind === "mp3" && (
         <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần một thư mục con (“Phần 1 - …”, “Phần 2 - …”), cùng nằm trong một thư mục của bộ.</p>

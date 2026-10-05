@@ -32,13 +32,18 @@ function describe(model: AnalysisModel): string {
   return [modelLabel(model.name), parameters, size].filter(Boolean).join(" · ");
 }
 
-/** Ô chọn ở bước Chất lượng; không có model nào khác mặc định (hay Ollama tắt) thì không hiện gì - không có gì để chọn. */
-export function AnalysisModelPicker({ value, onChange }: { value: string; onChange: (model: string) => void }) {
-  const { data } = useQuery({
+/** Model mặc định + các model đang có (bước Chất lượng và bước Xác nhận dùng chung một lần hỏi). */
+export function useAnalysisModels() {
+  return useQuery({
     queryKey: ["analysis-models"],
     queryFn: () => api<AnalysisModels>("/api/analysis-models"),
     staleTime: 60_000,
   });
+}
+
+/** Ô chọn ở bước Chất lượng; không có model nào khác mặc định (hay Ollama tắt) thì không hiện gì - không có gì để chọn. */
+export function AnalysisModelPicker({ value, onChange }: { value: string; onChange: (model: string) => void }) {
+  const { data } = useAnalysisModels();
   if (!data) return null;
   const others = data.models.filter((model) => modelLabel(model.name) !== modelLabel(data.default));
   if (!others.length) return null;

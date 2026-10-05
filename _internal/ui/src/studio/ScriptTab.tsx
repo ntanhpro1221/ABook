@@ -1167,6 +1167,11 @@ export function ScriptTab({ bookId }: { bookId: string }) {
         Đọc từng chương như kịch bản và sửa người nói của bất kỳ câu nào - bấm tên ở đầu câu. Sửa không dừng sách: sửa được áp
         khi sách chạy tiếp (sách đã xong: nút “Áp dụng thay đổi”), câu đã thu thì thu lại bằng giọng của người mới. Câu máy nghi có dấu vàng.
       </p>
+      {data && data.lines.length > 0 && !data.lines.some((line) => line.hasAudio) && (
+        <p className="mt-1 max-w-3xl text-sm text-fg-2">
+          Chương này chưa thu âm nên chưa có nút ▶ cạnh câu - thu xong mới nghe lại được từng câu ở đây.
+        </p>
+      )}
       {/* Chương + chú giải người nói DÍNH khi cuộn (soát UX a6 01-10: cuộn xuống giữa chương là quên phím 4 là ai, muốn sang
           chương sau phải cuộn ngược lên đầu). */}
       <div className="sticky top-0 z-10 -mx-2 mt-2 bg-bg/95 px-2 pb-2 pt-2 backdrop-blur">

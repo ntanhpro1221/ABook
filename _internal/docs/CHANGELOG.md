@@ -16,6 +16,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Truyện dịch dùng ngoặc vuông cho lời nói - "[Về thôi.]", câu nghĩ thầm, bảng thông báo game "[Bạn nhận được 30 điểm kinh nghiệm]", tiếng quái vật "[GDESAAAAA!!]" -
   nay mỗi dòng như thế là một giọng riêng thay vì bị người kể đọc hết (có cuốn gần như cả quyển bị đọc bằng một giọng); ai nói thì máy phân tích đoán như với lời thoại
   thường. Dòng bảng hệ thống trong 【…】 cũng vậy. Dấu ngoặc ấy không được đọc thành tiếng. Ngoặc nằm giữa câu kể ("kỹ năng [Hỏa Cầu]") vẫn là lời người kể.
+- Phân tích bị ngắt giữa chừng (bấm Dừng, tắt máy): trang dự án nay đưa "Làm lại phân tích từ đầu" làm nút chính - chạy tiếp từ chỗ ngắt ra một
+  cuốn sách khác so với chạy liền một mạch (người nói và giọng đoạn sau có thể đổi). "Tiếp tục" vẫn còn, kèm lời cảnh báo; hộp "Dừng" nói thẳng là dừng
+  giữa lúc phân tích thì mất phần đã phân tích, còn "Tạm dừng" thì giữ.
+- Bước "Xác nhận" khi tạo sách ghi rõ model sẽ đọc hiểu truyện (cả khi là mặc định), nói truyện dài có thể mất nhiều giờ, và nhắc nếu còn gợi ý bỏ dòng ghi công chưa chọn.
+- "Duyệt trước khi thu": câu mẫu chưa thu không còn nút ▶ báo lỗi - ghi "chưa thu" thay vào đó. Tab "Kịch bản" của chương chưa thu nói rõ vì sao chưa có nút ▶ cạnh câu.
+- Hộp "Xuất" ghi cỡ file .abook đã tính cả nhạc nền đi kèm (trước đây báo "khoảng 0 MB" trong khi file thật hàng chục MB); nhạc chưa tải về máy thì nói còn bao nhiêu bài.
+- Người nói không tên không còn hiện chữ "Unknown" trong các thẻ "Việc cần duyệt" - gọi là "Vai phụ không tên" như tab Kịch bản - và không bị hỏi "nam hay nữ?".
+- Bảng chương: cột "Độ dài" giải thích khi rê chuột là số phút (chương đã thu) hay số câu (chưa thu).
 
 ## [0.4.27] - 2026-10-04
 

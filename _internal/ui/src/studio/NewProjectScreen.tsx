@@ -46,7 +46,7 @@ import {
 import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
 import { uploadChapters } from "@/studio/upload";
-import { AnalysisModelPicker, modelLabel } from "@/studio/AnalysisModelPicker";
+import { AnalysisModelPicker, modelLabel, useAnalysisModels } from "@/studio/AnalysisModelPicker";
 import { DEFAULT_LABEL, applyTemplate, type BookTemplate, type Profile } from "@/studio/bookTemplates";
 import { TemplateBar } from "@/studio/TemplateBar";
 import { VolumeSplit } from "@/studio/VolumeSplit";
@@ -138,7 +138,7 @@ interface Draft {
   /** Tên mẫu thiết lập đang theo (studio/bookTemplates.ts); không có = mặc định của app. Mẫu bị xoá/đổi tên thì coi như không có. */
   template?: string;
   /** "Sửa thiết lập" (?redo=<id>): cuốn chưa bắt đầu sẽ được thay bằng cuốn này; phần trước của nó nếu là phần nối tiếp. */
-  replaces?: { id: string; title: string; seedFrom?: string };
+  replaces?: { id: string; title: string; seedFrom?: string; restart?: boolean };
 }
 
 interface Seed {
@@ -267,7 +267,7 @@ function SourceStep({
   volumeSplit?: ReactNode;
   splitting?: boolean;
   /** "Sửa thiết lập": cuốn đang được làm lại - không nhắc "đã có dự án" về chính nó. */
-  replaces?: { id: string; title: string };
+  replaces?: { id: string; title: string; restart?: boolean };
   scan: ScanResult | null;
   title: string;
   onTitle: (title: string) => void;
@@ -461,8 +461,9 @@ function SourceStep({
             <div className="mt-4 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
               <Info className="mt-0.5 size-4 shrink-0 text-info" />
               <p className="min-w-0 text-pretty">
-                Đang sửa thiết lập của <span className="font-semibold">“{replaces.title}”</span>: mọi lựa chọn cũ đã điền sẵn, đổi
-                gì cũng được. Tạo xong, bản cũ vào Thùng rác (bìa đi theo).
+                {replaces.restart ? "Đang làm lại phân tích của " : "Đang sửa thiết lập của "}
+                <span className="font-semibold">“{replaces.title}”</span>: mọi lựa chọn cũ đã điền sẵn, đổi gì cũng được. Tạo xong,
+                bản cũ vào Thùng rác (bìa đi theo).
               </p>
             </div>
           )}
@@ -1193,7 +1194,10 @@ function ConfirmStep({
   precastWait,
   setPrecastWait,
   dropCredits,
+  creditLines,
   analysisModel,
+  restart,
+  onReview,
 }: {
   /** "Chia thành nhiều tập": các tập sẽ tạo (số chương mỗi tập), hay không có khi là một sách. */
   volumes?: { chapters: number }[];
@@ -1210,8 +1214,15 @@ function ConfirmStep({
   setPrecastWait: (value: boolean) => void;
   /** Người dùng đã đồng ý bỏ dòng ghi công khỏi phần đọc. */
   dropCredits: boolean;
+  /** Số dòng ghi công người dịch phát hiện ở các chương đã chọn (gợi ý chưa áp nếu `dropCredits` tắt). */
+  creditLines: number;
   analysisModel: string;
+  /** "Làm lại phân tích": bản dở của cuốn này vào Thùng rác khi cuốn mới tạo xong. */
+  restart?: { title: string };
+  /** Quay lại bước đầu (chọn file, gợi ý dòng ghi công). */
+  onReview: () => void;
 }) {
+  const models = useAnalysisModels().data;
   const option = PROFILES.find((item) => item.value === profile)!;
   const guess = estimate(scan.totals.words, scan.files.length);
   const measured = profile === "high_quality";
@@ -1244,9 +1255,12 @@ function ConfirmStep({
       : []),
     ["Nhân vật", seed ? `Giữ ${carriedText(seed.carries)}; người mới được phân vai sau khi phân tích` : "Tự động phân vai sau khi phân tích"],
     ["Chất lượng", option.title],
+    // Luôn nói model nào sẽ đọc hiểu truyện - cả khi là mặc định - vì phân tích là bước dài nhất và không ngắt được.
     ...(analysisModel
       ? ([["Model đọc hiểu", `${modelLabel(analysisModel)} (${seed?.analysisModel === analysisModel ? "như phần trước" : "chỉ cuốn này"})`]] as [string, string][])
-      : []),
+      : models?.default
+        ? ([["Model đọc hiểu", `${modelLabel(models.default)} (mặc định)`]] as [string, string][])
+        : []),
     ...(measured
       ? ([
           ["Thời gian làm", lengthRange(guess.totalLow, guess.totalHigh)],
@@ -1277,11 +1291,32 @@ function ConfirmStep({
         <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
         <p className="text-pretty">
           <span className="font-semibold">Giai đoạn đầu là phân tích cả truyện</span>
-          {measured ? ` (khoảng ${formatLength(guess.analysis)})` : ""}: trong lúc đó đừng tắt máy, đừng cho máy ngủ và đừng bấm
+          {measured ? ` (khoảng ${formatLength(guess.analysis)})` : " (truyện dài có thể mất nhiều giờ)"}: trong lúc đó đừng tắt máy, đừng cho máy ngủ và đừng bấm
           Dừng. Dừng giữa chừng rồi chạy tiếp sẽ ra cách phân vai khác với chạy liền một mạch - cần máy rảnh một lúc thì bấm{" "}
           <span className="font-semibold">Tạm dừng</span>, an toàn mọi lúc. Qua giai đoạn này thì dừng lúc nào cũng được.
         </p>
       </div>
+      {restart && (
+        <div className="mt-3 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
+          <Info className="mt-0.5 size-4 shrink-0 text-info" />
+          <p className="text-pretty">
+            Phân tích làm lại từ đầu, như một cuốn mới. Bản dở “{restart.title}” vào Thùng rác khi cuốn mới tạo xong (bìa đi
+            theo); file truyện gốc không bị đụng.
+          </p>
+        </div>
+      )}
+      {creditLines > 0 && !dropCredits && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-panel p-4 text-sm">
+          <Sparkles className="size-4 shrink-0 text-accent-text" />
+          <p className="min-w-0 flex-1 text-pretty">
+            Còn một gợi ý chưa áp: {formatNumber(creditLines)} dòng ghi công người dịch ở đầu chương sẽ vẫn được đọc như lời kể.
+            Đổi sau khi đã phân tích là đổi cả quyển, nên chọn ngay bây giờ.
+          </p>
+          <Button variant="secondary" size="sm" onClick={onReview}>
+            Xem gợi ý
+          </Button>
+        </div>
+      )}
       <label className="mt-4 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="start-now">
         <Switch id="start-now" checked={startNow} onCheckedChange={setStartNow} />
         <span>
@@ -1359,9 +1394,15 @@ export function NewProjectScreen() {
       ...(redo.analysisModel ? { analysisModel: redo.analysisModel } : {}),
       profile: (PROFILE_VALUES as string[]).includes(redo.profile) ? (redo.profile as Profile) : "high_quality",
       dropCredits: redo.dropCreditLines,
-      replaces: { id: redoId, title: redo.title, ...(redo.seedFrom ? { seedFrom: redo.seedFrom } : {}) },
+      replaces: {
+        id: redoId,
+        title: redo.title,
+        ...(redo.seedFrom ? { seedFrom: redo.seedFrom } : {}),
+        ...(redo.analysisInterrupted ? { restart: true } : {}),
+      },
     });
-    setParams({}, { replace: true });
+    // Làm lại phân tích: không có gì để chọn lại - thẳng bước Xác nhận (lựa chọn cũ đã điền sẵn, vẫn đổi được ở các bước trước).
+    setParams(redo.analysisInterrupted ? { step: "3" } : {}, { replace: true });
   }, [redoId, redo, setParams, navigate]);
   useEffect(() => {
     if (redoError) toast.error("Không đọc được thiết lập của sách", { description: (redoError as Error).message });
@@ -1536,9 +1577,11 @@ export function NewProjectScreen() {
               ? "Không có thiết lập nào thay đổi"
               : volumes > 1
                 ? `Đã tạo ${volumes} phần`
-                : draft.replaces
-                  ? "Đã tạo lại sách với thiết lập mới"
-                  : "Đã tạo sách",
+                : draft.replaces?.restart
+                  ? "Đã làm lại sách từ đầu"
+                  : draft.replaces
+                    ? "Đã tạo lại sách với thiết lập mới"
+                    : "Đã tạo sách",
             {
               description:
                 [
@@ -1698,7 +1741,10 @@ export function NewProjectScreen() {
               precastWait={Boolean(draft.precastWait)}
               setPrecastWait={(precastWait) => update({ precastWait })}
               dropCredits={Boolean(draft.dropCredits)}
+              creditLines={creditSummary(scan.files).lines}
               analysisModel={draft.analysisModel ?? ""}
+              restart={draft.replaces?.restart ? { title: draft.replaces.title } : undefined}
+              onReview={() => go(0)}
             />
           )}
           {/* Ghim ở đáy vùng cuộn: bước xác nhận dài (thêm dòng "Dòng ghi công"...) đẩy nút tạo xuống dưới nếp màn hình - soát
