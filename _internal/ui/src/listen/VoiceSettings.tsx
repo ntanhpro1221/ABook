@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, KeyRound, Play, Square, Trash2 } from "lucide-react";
+import { Check, ChevronDown, KeyRound, Play, Square, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button, StatusPill } from "@/shared/ui";
 import { cn } from "@/shared/cn";
@@ -106,6 +106,8 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
   const [region, setRegion] = useState(info.region);
   const [busy, setBusy] = useState<"" | "check" | "remove">("");
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+  // Gập sẵn (soát UX 05-10: bốn khung dài chiếm hơn nửa Cài đặt trên điện thoại); đã có khóa thì mở sẵn để thấy trạng thái.
+  const [open, setOpen] = useState(info.hasKey);
   useEffect(() => setRegion(info.region), [info.region]);
   const check = async () => {
     setBusy("check");
@@ -143,10 +145,19 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
   const status = info.valid ? <StatusPill tone="success" label={`Dùng được · ${info.voices} giọng`} /> : info.hasKey ? <StatusPill tone="warning" label="Chưa dùng được" /> : null;
   return (
     <div className="rounded-xl border border-line p-3.5" data-provider={info.id}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-sm font-semibold">{info.name}</div>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((now) => !now)}
+        className="flex w-full flex-wrap items-center justify-between gap-2 text-left"
+      >
+        <span className="flex items-center gap-1.5 text-sm font-semibold">
+          <ChevronDown className={cn("size-4 shrink-0 text-fg-3 transition-transform", !open && "-rotate-90")} aria-hidden />
+          {info.name}
+        </span>
         {status}
-      </div>
+      </button>
+      {open && <div>
       <p className="mt-1 text-[13px] text-fg-2 text-pretty">
         {info.limits.free}. {info.limits.timings === "exact" ? "Tô đúng từng chữ đang đọc." : "Tô từng chữ đang đọc theo ước lượng."}
       </p>
@@ -186,6 +197,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
         )}
       </div>
       {result && <p className={cn("mt-2 text-[13px] text-pretty", result.ok ? "text-success" : "text-danger")} role="status">{result.text}</p>}
+      </div>}
     </div>
   );
 }

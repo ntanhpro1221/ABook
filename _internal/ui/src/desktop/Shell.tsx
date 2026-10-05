@@ -243,7 +243,8 @@ export function Shell({ children }: { children: ReactNode }) {
             Cài đặt
           </TabItem>
         </nav>
-        <NowPlaying mobile={phoneWidth} />
+        {/* Cùng nút "Phát trên thiết bị khác" như thanh dưới: cửa sổ hẹp dùng thanh gọn không có nó (soát UX 05-10). */}
+        <NowPlaying mobile={phoneWidth} actions={remote ? undefined : <HandOffButton className="max-sm:size-11" />} />
       </div>
     </div>
   );
