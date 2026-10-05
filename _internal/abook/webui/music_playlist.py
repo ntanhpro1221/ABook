@@ -154,7 +154,7 @@ def usable_picker(manifest: dict[str, Any] | None) -> tuple[dict[str, Any] | Non
 
 
 def words(text: str) -> str:
-    """Các từ (\w+, NFC, chữ thường) nối bằng một dấu cách, có dấu cách hai đầu - để tìm cụm nguyên từ bằng ` cụm `."""
+    """Các từ (`\\w+`, NFC, chữ thường) nối bằng một dấu cách, có dấu cách hai đầu - để tìm cụm nguyên từ bằng ` cụm `."""
     return " " + " ".join(_WORD.findall(unicodedata.normalize("NFC", text).lower())) + " "
 
 
