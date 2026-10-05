@@ -7503,6 +7503,8 @@ class OllamaBookAnalyzer:
         if _eval_hooks.think_mode():  # E8: model gốc nghĩ trước khi trả JSON; ngân sách nghĩ cộng vào num_predict
             request["think"] = True
             request["options"]["num_predict"] += _eval_hooks.think_extra_tokens()
+            # E8 thử lại 05-10: phần nghĩ ăn vào ngữ cảnh (7168 của project đo không đủ cho prompt + 8k token nghĩ)
+            request["options"]["num_ctx"] = max(int(request["options"]["num_ctx"]), _eval_hooks.think_num_ctx())
         self._verify_locked_model_digest("before generator request")
         self._last_raw_response = ""
         try:

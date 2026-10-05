@@ -64,6 +64,11 @@ def think_extra_tokens() -> int:
     return int(eval_settings().get("think_extra_tokens", 1024))
 
 
+def think_num_ctx() -> int:
+    """Ngữ cảnh tối thiểu của lượt sinh khi nghĩ (mặc định 0 = giữ của project); E8 thử lại 05-10 dùng 16384."""
+    return int(eval_settings().get("think_num_ctx", 0))
+
+
 def think_chat_body(request: dict) -> dict:
     """E8: Ollama 0.33.2 /api/generate với think + format nhét JSON vào phần "thinking", không nghĩ gì (thăm dò 05-10:
     21 ký tự, đáp rỗng); /api/chat cùng mẫu chat thì nghĩ rồi mới trả JSON. Đổi system + prompt thành tin nhắn chat."""
