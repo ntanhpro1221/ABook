@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.28] - 2026-10-05
+
 ### Giọng đọc
 
 - Câu nội tâm (nghĩ thầm) giờ đọc bằng giọng của chính người đang nghĩ, như chủ sách đã quyết; chỉ câu nào không rõ ai nghĩ mới do người kể đọc.
