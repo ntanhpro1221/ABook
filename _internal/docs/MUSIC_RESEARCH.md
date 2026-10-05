@@ -2629,3 +2629,15 @@ Ghi trước:
 - Hiệu chỉnh F2: V (−0,057, 1,251, 0,0727), E (−0,013, 1,098, 0,0322), T (−0,003, 1,283, 0,0412).
 - Bộ vàng chọn lại (8 bài): CLAP cos 1,00000 cả 8 bài (trước có bài lệch 0,28 điểm thô); `interp` lệch hạng ≤ 0,003.
 - Đăng: danh mục `5880ea7b1098` (chờ Lead deploy), HF `143bea3d`. Đặc tả: Corpus b5539916.
+
+**GHI TRƯỚC - DANH MỤC V HỢP so DANH MỤC CLAP-V bằng thước nghe (05-10 tối; trước khi dựng clip):**
+- **Câu hỏi:** phía bài vừa đổi trục vui/buồn (V hợp CLAP + MuQ, cắt cửa sổ như app: danh mục `5880ea7b1098`). Nhạc chọn có hợp
+  tai hơn danh mục cũ (`8ad5cd60adfb`, V chỉ CLAP) không? Thước đọc (MTG r 0,511 → 0,672) đã thắng; thước nghe chưa đo.
+- **Đoạn:** đúng 115 đoạn của phép llmVT (ranh giới app bộ 6, tóm tắt tiếng Anh đã chốt).
+  - B = nhạc chọn với llmVT trên `8ad5cd60adfb` (đúng B cũ; dựng lại để kiểm, phải trùng bài ở cả 115 đoạn).
+  - D = cùng không khí đoạn (llmVT), cùng `music_select.choose` của main (không đổi từ 4e311875), `book_key` = chương, chỉ khác danh mục `5880ea7b1098`.
+- **Cặp chính:** D so B trên các đoạn D ≠ B, cả hai không im lặng.
+- **Thước:** đúng giao thức llmVT/oracle (Qwen3-Omni-EN, clip cắt như E1, điểm = trung bình prompt a/b, hoà < 0,02). Điểm clip đã chấm được dùng lại.
+- **Luật (M2):** V hợp thắng nếu tỉ lệ thắng ≥ 0,60 VÀ cận dưới Wilson > 0,5. Thua rõ (cận trên < 0,5) → báo Lead xét lùi danh mục.
+  Còn lại → "không phân biệt được bằng tai", giữ V hợp vì thước đọc thắng.
+- **Chạy:** ghép vào lượt Kaggle thứ Bảy 10-10 cùng oracle nếu còn hạn mức; số đoạn D ≠ B ghi ở đây trước khi chấm.
