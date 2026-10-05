@@ -2641,3 +2641,6 @@ Ghi trước:
 - **Luật (M2):** V hợp thắng nếu tỉ lệ thắng ≥ 0,60 VÀ cận dưới Wilson > 0,5. Thua rõ (cận trên < 0,5) → báo Lead xét lùi danh mục.
   Còn lại → "không phân biệt được bằng tai", giữ V hợp vì thước đọc thắng.
 - **Chạy:** ghép vào lượt Kaggle thứ Bảy 10-10 cùng oracle nếu còn hạn mức; số đoạn D ≠ B ghi ở đây trước khi chấm.
+- **Dựng xong (05-10 tối, trước khi chấm):** B dựng lại trùng B cũ ở 115/115 đoạn. D ≠ B ở **89 đoạn**, 22 clip mới (Corpus 24419a00,
+  `build_vhop_listen.py`). Dataset Kaggle `abook-music-llmvt-listen` đã lên bản mới; lượt thứ Bảy chấm cả oracle lẫn V hợp:
+  192 cặp (đoạn, clip) mới, 384 lượt, khoảng 50 phút (trong `BUDGET_H` 1,45).
