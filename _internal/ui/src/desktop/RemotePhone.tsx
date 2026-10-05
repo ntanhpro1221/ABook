@@ -415,6 +415,7 @@ export function HandOffButton({ className }: { className?: string }) {
               <div role="status" className="px-2 py-1.5 text-sm text-fg-2">
                 {searching ? "Đang tìm loa / TV trong mạng…" : "Không thấy loa / TV nào trong mạng"}
               </div>
+              <p className="px-2 pb-1 text-xs text-fg-3">Máy kia cần bật và cùng Wi-Fi với máy này.</p>
               <DropdownMenu.Item
                 disabled={searching}
                 onSelect={(event) => {

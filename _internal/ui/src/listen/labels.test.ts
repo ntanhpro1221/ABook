@@ -34,6 +34,10 @@ describe("dòng tiến độ ở màn Đang nghe", () => {
     const text = bookProgressText({ ...base, rate: 1.5, speed: "1,5×" });
     expect(text).toBe("Đã nghe 10% phần đã có · còn khoảng 33 phút ở tốc độ 1,5×");
   });
+
+  it("hết sách: nói đã hết, không để một con số như 98%", () => {
+    expect(bookProgressText({ ...base, whole: true, heard: 3234, finished: true })).toBe("Đã nghe hết cả cuốn");
+  });
 });
 
 describe("nút phát", () => {
