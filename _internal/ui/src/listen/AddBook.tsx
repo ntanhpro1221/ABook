@@ -30,7 +30,21 @@ function cleanPath(value: string): string {
 }
 
 /** Nút mở hộp "Thêm sách từ file…"; không hiện khi nguồn này không nhập được (`source.textImport` trống). */
-export function AddBookButton({ variant = "secondary", size }: { variant?: "secondary" | "ghost" | "primary"; size?: "sm" | "md" | "lg" }) {
+/** File sách / dự án của ABook (.abook, .abookproj): không phải sách để nhập chữ mà mở thẳng như "Mở file sách". */
+export function isBookFile(path: string): boolean {
+  return /\.abook(proj)?$/i.test(path.trim());
+}
+
+export function AddBookButton({
+  variant = "secondary",
+  size,
+  onBookFile,
+}: {
+  variant?: "secondary" | "ghost" | "primary";
+  size?: "sm" | "md" | "lg";
+  /** Chọn hay dán một file .abook / .abookproj: mở nó (máy có đường mở file sách) thay vì báo "chưa đọc được". */
+  onBookFile?: (path: string) => Promise<void>;
+}) {
   const source = useSource();
   const [open, setOpen] = useState(false);
   if (!source.textImport) return null;
@@ -39,12 +53,20 @@ export function AddBookButton({ variant = "secondary", size }: { variant?: "seco
       <Button variant={variant} size={size} icon={BookPlus} onClick={() => setOpen(true)}>
         Thêm sách từ file…
       </Button>
-      <AddBookDialog open={open} onOpenChange={setOpen} />
+      <AddBookDialog open={open} onOpenChange={setOpen} onBookFile={onBookFile} />
     </>
   );
 }
 
-export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function AddBookDialog({
+  open,
+  onOpenChange,
+  onBookFile,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onBookFile?: (path: string) => Promise<void>;
+}) {
   const source = useSource();
   const importer = source.textImport;
   const client = useQueryClient();
@@ -94,6 +116,21 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     onOpenChange(next);
   };
   const read = async (picked: ImportChoice) => {
+    if (onBookFile && isBookFile(picked.ref)) {
+      // Soát UX 05-10: dán đường dẫn .abook vào đây từng báo "Chưa đọc được file .abook" mà không chỉ sang "Mở file sách".
+      setProblem("");
+      setBusy("reading");
+      try {
+        await onBookFile(picked.ref);
+        clear();
+        onOpenChange(false);
+      } catch (error) {
+        setProblem((error as Error).message);
+      } finally {
+        setBusy(null);
+      }
+      return;
+    }
     setChoice(picked);
     setProblem("");
     setBusy("reading");
