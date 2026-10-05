@@ -2567,3 +2567,42 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
     z theo trung bình / độ lệch của danh mục.
   - Máy yếu: dùng trò mới. Trò học trên thang mới nên cùng thang, chỉ yếu hơn.
   - Đầu trò mới vẫn tốt hơn đầu cũ ở cả MTG lẫn nhạc phim → đề xuất thay đầu cũ.
+
+### Đường (a) chuẩn bị cho app: tháp MuQ ra ONNX, một đầu trò cho mọi máy (05-10)
+
+Lead duyệt hai việc. Cổng ghi trước của Lead: trên 8 bài vàng (`Corpus/research/music/vhop_golden.json`, V −0,95…+0,95, nguồn
+freesound/freepd/jamendo/opengameart/fma/scottbuckley), hạng V tính bằng ONNX lệch torch ≤ 0,02.
+
+**Bộ vàng.**
+- Tính lại từ mp3 ra đúng số danh mục 33e5202f6cda: MuQ khớp 4 chữ số; CLAP khớp 7/8 bài.
+- Bài opengameart lệch 0,28 điểm thô (cos 0,9997), do ffmpeg đọc thời lượng file ogg.
+- Ánh xạ hạng `interp(v_raw, 101 phân vị)` lệch hạng danh mục ≤ 0,002.
+
+**ONNX tháp âm thanh MuQ-MuLan-large** (334,6 M tham số; đầu vào sóng 10 giây 24 kHz; mel nằm trong đồ thị).
+- Đường xuất cũ của torch hỏng ở STFT (số phức). Bộ xuất dynamo (opset 18) xuất được.
+
+| bản | cỡ | lệch hạng V tối đa | cos tệ nhất | giây/cửa sổ (4 luồng) | kết luận |
+|---|---|---|---|---|---|
+| fp32 | 1,27 GB | **0,0000** | 1,00000 | 0,93 | **ĐẠT** |
+| fp16 | 608 MiB | 0,031 | 0,950 | 1,05 | trượt |
+| int8 động (thường và theo kênh) | 442 MiB | 0,58 | −0,08 | 0,70 | hỏng |
+
+- fp32: RAM đỉnh 1,52 GiB cả tiến trình (torch 5,6 GiB). 2 luồng: 1,68 giây/cửa sổ.
+- Một bài 3 cửa sổ: 2,8 giây ở 4 luồng (torch 3,5–3,7), khoảng 5 giây ở 2 luồng.
+- App không cần torch, transformers hay gói `muq`. Gói `muq` chỉ chạy với transformers 4.46.3, còn runtime app là 5.16.1.
+
+**Đầu trò A, thang mới.** Khớp lại hiệu chỉnh F2 trên dự đoán chéo 5 phần, so với `catalog_out`:
+
+| trục | a | b | var dư |
+|---|---|---|---|
+| V | −0,057 | 1,264 | 0,0728 |
+| E | −0,012 | 1,100 | 0,0316 |
+| T | 0,001 | 1,264 | 0,0402 |
+
+- Phương sai dư của V cũ là 0,041. Nó tăng lên vì thang mới có phần MuQ mà CLAP không thấy.
+- Theo Lead: mọi máy dùng đầu A này; bỏ đầu torch CLAP + âm học.
+
+**Đăng.**
+- HF `NGDtuanh/abook-music-student` @ `332e7552`: `student_head_A.npz` mới, `muq/muq_mulan_audio.onnx`, `muq/valence_text.npz`, `muq/vhop_scale.json`.
+- Tháp MuQ giữ giấy phép CC BY-NC 4.0 của OpenMuQ (ghi trong `LICENSE.md`).
+- Đặc tả cho agent app: `Corpus/research/music/APP_SPEC_path_a.md`.
