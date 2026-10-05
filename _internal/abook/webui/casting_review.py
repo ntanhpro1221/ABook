@@ -37,10 +37,6 @@ REFUSED = {
 
 
 def label(raw: str) -> str:
-    if raw == NARRATOR:
-        return "Người kể"
-    if raw == UNNAMED or raw == "UNKNOWN" or raw.startswith("ANONYMOUS"):
-        return "Vai phụ không tên"
     return speaker_label(raw)
 
 

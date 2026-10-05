@@ -15,6 +15,7 @@ import {
   Play,
   SlidersHorizontal,
   RefreshCw,
+  RotateCcw,
   Square,
   Trash2,
   Users,
@@ -240,8 +241,9 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
           <div className="text-pretty">
             <p>
-              Phân tích là bước duy nhất không nên ngắt. Chạy tiếp sau khi dừng sẽ ra <span className="font-semibold">một cuốn
-              sách khác</span> so với chạy liền một mạch: đoạn sau chỗ dừng có thể đổi người nói, kéo theo đổi giọng.
+              <span className="font-semibold">Dừng giữa lúc phân tích là mất phần phân tích đã làm.</span> Chạy tiếp sau đó sẽ ra{" "}
+              <span className="font-semibold">một cuốn sách khác</span> so với chạy liền một mạch: đoạn sau chỗ dừng có thể đổi
+              người nói, kéo theo đổi giọng.
             </p>
             <p className="mt-2 text-fg-2">
               Nên để chạy hết bước này{book.eta ? ` (${formatEta(book.eta.seconds)})` : ""}.
@@ -249,10 +251,10 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
                 <>
                   {" "}
                   Muốn nghỉ giữa chừng thì bấm <span className="font-medium text-fg">Tạm dừng</span>: sách đứng yên (sau phần
-                  đang làm dở) và làm tiếp đúng chỗ, không đổi gì - nhưng vẫn giữ bộ nhớ card đồ hoạ.
+                  đang làm dở) và làm tiếp đúng chỗ, giữ nguyên phần đã phân tích - nhưng vẫn giữ bộ nhớ card đồ hoạ.
                 </>
               )}{" "}
-              Nếu buộc phải dừng hẳn (tắt máy), hãy tạo lại sách từ đầu thay vì chạy tiếp bản dở.
+              Nếu buộc phải dừng hẳn (tắt máy), trang sách sẽ có nút “Làm lại phân tích từ đầu” - nên dùng nó thay vì chạy tiếp bản dở.
             </p>
           </div>
         </div>
@@ -534,6 +536,26 @@ function Actions({ book }: { book: BookSummary }) {
             </Button>
           )}
         </>
+      ) : book.phase !== "done" && book.analysisInterrupted ? (
+        // Phân tích bị ngắt: chạy tiếp ra MỘT CUỐN KHÁC (AGENTS.md) - nút chính là làm lại từ đầu, "Tiếp tục" lùi xuống kèm
+        // lời cảnh báo. Làm lại = dự án mới thay bản dở (cần máy tính: Studio từ xa không tạo lại sách được).
+        <>
+          {!remote && (
+            <Button variant="primary" size="lg" icon={RotateCcw} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
+              Làm lại phân tích từ đầu
+            </Button>
+          )}
+          <Button variant={remote ? "primary" : "outline"} size="lg" icon={Play} loading={start.isPending} onClick={() => begin(book.id)}>
+            Tiếp tục
+          </Button>
+          <p className="basis-full text-pretty text-sm text-fg-2">
+            Phân tích đã bị ngắt giữa chừng
+            {book.segments.total ? ` (còn ${formatNumber(book.segments.pending ?? book.segments.total - book.segments.analyzed)}/${formatNumber(book.segments.total)} câu chưa phân tích)` : ""}.
+            {remote ? " " : " Làm lại từ đầu cho kết quả như chạy liền một mạch (bản dở vào Thùng rác). "}
+            “Tiếp tục” vẫn chạy được nhưng ra một cuốn sách khác so với chạy liền mạch: đoạn sau chỗ ngắt có thể đổi người nói và
+            giọng đọc{remote ? ". Muốn làm lại từ đầu, mở trang này trên máy tính." : "."}
+          </p>
+        </>
       ) : book.phase !== "done" ? (
         <Button variant="primary" size="lg" icon={Play} loading={start.isPending} onClick={() => begin(book.id)}>
           Tiếp tục tạo
@@ -783,7 +805,7 @@ function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[
         <span>Chương</span>
         <span>Trạng thái</span>
         {/* Màn hẹp (điện thoại, Studio từ xa) chỉ còn #, chương, trạng thái - soát UX 29-09: 5 cột cố định vỡ ở 375px. */}
-        <span className="hidden text-right lg:block">Độ dài</span>
+        <span className="hidden text-right lg:block" title="Số phút khi chương đã có audio; chưa có thì số câu của chương">Độ dài</span>
         <span className="hidden text-right lg:block">Xong lúc</span>
         <span />
       </div>

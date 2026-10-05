@@ -64,7 +64,7 @@ def name_readings(project_root: Path) -> dict[str, Any]:
                 "confidence": round(float(row["confidence"]), 2) if row is not None else None,
                 "lines": lines.get(key, 0),
                 "requested": wish["spoken_form"] if waiting else None,
-                "example": _example(examples[key], names) if key in examples else None,
+                "example": _example(examples[key], names, project_root=project_root) if key in examples else None,
             })
     # Bảng mang cả tên của những chương khác trong cuốn (hạt giống từ phần trước): tên máy đoán mà phần này không có câu nào
     # thì không đổi gì ở đây - chỉ đếm (lô 18: 997/1136 dòng).

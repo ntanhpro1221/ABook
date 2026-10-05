@@ -168,6 +168,7 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
           {example.chapterTitle} · {example.seq === 0 ? "tiêu đề chương" : `câu ${example.seq}`}
           {example.speaker && ` · máy gán: ${example.speaker}`}
           {example.changes && <span className="font-semibold text-accent-text"> · sẽ đổi</span>}
+          {!example.hasAudio && " · chưa thu"}
         </div>
         <p className="text-fg">{example.text}</p>
       </div>
