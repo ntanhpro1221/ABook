@@ -1,11 +1,11 @@
-import { AlertTriangle, FileAudio, FolderArchive, FolderDown, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileAudio, FolderArchive, FolderDown, FolderOpen, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/shared/cn";
 import { coverArtwork } from "@/shared/cover";
 import { formatNumber, formatSize } from "@/shared/format";
-import { Button, Dialog, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { api, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
 import { WordTimingsRow } from "./WordTimings";
@@ -52,6 +52,11 @@ const SAVING: Record<Kind, [string, string, string]> = {
   abookproj: ["Chọn nơi lưu file dự án", "Đang đóng gói dự án…", "Không gói được dự án"],
 };
 
+/** Bản xuất đã xong, hiện ngay trong hộp: nói đã lưu ở đâu và cho mở thư mục (trước đây chỉ có một thông báo thoáng qua). */
+type Finished = { title: string; detail: string; folder: string };
+
+const revealFolder = (folder: string) => void api("/api/reveal-export", { method: "POST", body: { folder } });
+
 export function ExportDialog({
   book,
   open,
@@ -69,6 +74,11 @@ export function ExportDialog({
   const [busy, setBusy] = useState(false);
   const [scope, setScope] = useState<Scope>("part");
   const [layout, setLayout] = useState<Layout>("single");
+  const [finished, setFinished] = useState<Finished | null>(null);
+  // Đóng hộp giữa lúc đang đóng gói: việc vẫn chạy, báo bằng thông báo nổi; hộp còn mở lúc xong thì báo ngay trong hộp.
+  const openRef = useRef(open);
+  openRef.current = open;
+  const loadingToast = useRef<string | number | null>(null);
   const parts = useParts(book.id).data?.parts ?? [];
   const missing = book.chapters.missingAudio ?? 0;
   const ready = Math.max(0, book.chapters.completed - missing);
@@ -84,6 +94,28 @@ export function ExportDialog({
   });
   const bytes = estimate.data?.bytes ?? 0;
   const musicPending = estimate.data?.musicPending ?? 0;
+  const countText = kind === "abookproj" ? undefined : wholeSeries ? `${parts.length} phần` : `${ready} chương`;
+  // Chỗ lưu nói trước khi bấm "Xuất": có hộp chọn thư mục của máy thì người dùng tự chọn, không thì vào thư mục "Đã xuất" của thư viện.
+  const root = info?.libraryRoot ?? "";
+  const savePlace = info?.dialogs
+    ? "Bấm nút bên dưới rồi chọn thư mục để lưu."
+    : root
+      ? `Sẽ lưu vào thư mục “Đã xuất” trong thư viện: ${root}${root.includes("\\") ? "\\" : "/"}Đã xuất`
+      : "Sẽ lưu vào thư mục “Đã xuất” trong thư viện.";
+  const handleOpenChange = (next: boolean) => {
+    if (!next && busy && loadingToast.current === null) {
+      loadingToast.current = toast.loading(SAVING[kind][1], { description: countText });
+    }
+    if (!next) setFinished(null);
+    onOpenChange(next);
+  };
+  useEffect(() => {
+    if (open && loadingToast.current !== null) {
+      toast.dismiss(loadingToast.current);
+      loadingToast.current = null;
+    }
+    if (!open) setFinished(null);
+  }, [open]);
   const run = async () => {
     let target = "";
     if (info?.dialogs) {
@@ -92,9 +124,7 @@ export function ExportDialog({
       target = picked;
     }
     setBusy(true);
-    const pending = toast.loading(SAVING[kind][1], {
-      description: kind === "abookproj" ? undefined : wholeSeries ? `${parts.length} phần` : `${ready} chương`,
-    });
+    setFinished(null);
     try {
       const result =
         kind === "mp3"
@@ -121,23 +151,29 @@ export function ExportDialog({
           : kind === "abook"
             ? "Đã xuất file sách"
             : "Đã gói dự án";
-      toast.success(title, {
-        id: pending,
-        description:
-          (result.parts && kind === "abook" && !single
-            ? `${result.folder} · mỗi phần một file .abook riêng`
-            : single
-              ? `${result.file} · ${formatSize(result.size ?? 0)}`
-              : result.folder) +
-          skipped +
-          (lost ? ` · ${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : ""),
-        action: info?.remote
-          ? undefined
-          : { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder: result.folder } }) },
-      });
-      onOpenChange(false);
+      const detail =
+        (result.parts && kind === "abook" && !single
+          ? `${result.folder} · mỗi phần một file .abook riêng`
+          : single
+            ? `${result.file} · ${formatSize(result.size ?? 0)}`
+            : result.folder) +
+        skipped +
+        (lost ? ` · ${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "");
+      const pending = loadingToast.current;
+      loadingToast.current = null;
+      if (openRef.current) {
+        setFinished({ title, detail, folder: result.folder });
+      } else {
+        toast.success(title, {
+          id: pending ?? undefined,
+          description: detail,
+          action: info?.remote ? undefined : { label: "Mở thư mục", onClick: () => revealFolder(result.folder) },
+        });
+      }
     } catch (error) {
-      toast.error(SAVING[kind][2], { id: pending, description: (error as Error).message });
+      const pending = loadingToast.current;
+      loadingToast.current = null;
+      toast.error(SAVING[kind][2], { id: pending ?? undefined, description: (error as Error).message });
     } finally {
       setBusy(false);
     }
@@ -161,8 +197,41 @@ export function ExportDialog({
   const scopeValues: Scope[] = ["part", "series"];
   const layoutValues: Layout[] = ["single", "perPart"];
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} width="max-w-lg" title={`Xuất “${book.title}”`}
+    <Dialog open={open} onOpenChange={handleOpenChange} width="max-w-lg" title={`Xuất “${book.title}”`}
       description={wholeSeries ? `Các chương nghe được của cả ${parts.length} phần sẽ vào bản xuất.` : `${formatNumber(ready)} chương nghe được sẽ vào bản xuất.`}>
+      {busy ? (
+        <div className="py-2" role="status">
+          <Progress value={0} indeterminate size="md" label={SAVING[kind][1]} />
+          <p className="mt-3 text-sm font-semibold">{SAVING[kind][1]}</p>
+          <p className="mt-1 text-sm text-fg-2 text-pretty">
+            {countText ? `${countText}. ` : ""}Sách dài thì có thể mất vài phút. Đóng hộp này cũng được - việc vẫn chạy và báo khi xong.
+          </p>
+          <div className="mt-5 flex justify-end">
+            <Button variant="ghost" onClick={() => handleOpenChange(false)}>
+              Đóng, cứ để chạy
+            </Button>
+          </div>
+        </div>
+      ) : finished ? (
+        <div className="py-2">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <CheckCircle2 className="size-4 shrink-0 text-success" />
+            {finished.title}
+          </p>
+          <p className="mt-2 break-all rounded-xl bg-sunken p-3 text-sm text-fg-2">{finished.detail}</p>
+          <div className="mt-5 flex justify-end gap-2">
+            {!info?.remote && (
+              <Button variant="secondary" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>
+                Mở thư mục
+              </Button>
+            )}
+            <Button variant="primary" onClick={() => handleOpenChange(false)}>
+              Xong
+            </Button>
+          </div>
+        </div>
+      ) : (
+      <>
       {parts.length > 1 && !whole && (
         <div
           className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm"
@@ -246,6 +315,7 @@ export function ExportDialog({
           </p>
         </>
       )}
+      <p className="mt-3 text-sm text-fg-2 text-pretty">{savePlace}</p>
       {kind === "abook" && bytes > 0 && (
         <p className="mt-2 text-sm text-fg-2">
           Cỡ ước tính: khoảng {formatSize(bytes)}.
@@ -278,7 +348,7 @@ export function ExportDialog({
         </div>
       )}
       <div className="mt-5 flex justify-end gap-2">
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
+        <Button variant="ghost" onClick={() => handleOpenChange(false)}>
           Thôi
         </Button>
         <Button
@@ -291,6 +361,8 @@ export function ExportDialog({
           {info?.dialogs ? "Chọn nơi lưu và xuất" : "Xuất"}
         </Button>
       </div>
+      </>
+      )}
     </Dialog>
   );
 }

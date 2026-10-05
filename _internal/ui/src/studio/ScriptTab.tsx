@@ -457,6 +457,7 @@ function DeliveryChip({
   onOpenChange,
   onSave,
   quiet,
+  active,
 }: {
   bookId: string;
   line: Line;
@@ -465,6 +466,8 @@ function DeliveryChip({
   onOpenChange: (open: boolean) => void;
   onSave: (change: Delivery) => void;
   quiet: boolean;
+  /** Câu đang được chọn: chip "mặc định" chỉ hiện ở câu này (hay khi rê chuột). */
+  active: boolean;
 }) {
   const phone = useMediaQuery("(max-width: 639px)");
   if (line.emotion === null) return null;
@@ -472,6 +475,10 @@ function DeliveryChip({
   const text = waiting
     ? deliveryText(waiting.emotion || line.emotion, waiting.intensity ?? line.intensity)
     : deliveryText(line.emotion, line.intensity);
+  // "Bình thường · vừa" là mặc định, không phải thông tin - lặp dưới mọi câu chỉ làm rối (soát UX a8, mục 20). Chỉ hiện khi khác
+  // mặc định, hay khi chọn / rê vào câu (vẫn là lối vào sửa cách đọc).
+  const plain = !waiting && line.emotion === "neutral" && (!line.intensity || line.intensity === 1);
+  const hidden = plain ? !active : quiet;
   const trigger = (
     <button
       type="button"
@@ -480,7 +487,7 @@ function DeliveryChip({
       className={cn(
         // Màn cảm ứng: nút chỉ 24 px - nới vùng chạm theo chiều dọc lên ~44 px (soát UX 29-09).
         "relative inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
-        quiet && !open && "opacity-0 group-hover:opacity-100",
+        hidden && !open && "opacity-0 group-hover:opacity-100",
         waiting && "text-fg-2",
       )}
     >
@@ -762,7 +769,7 @@ function ScriptRow({
           </p>
         )}
         {script.castReady && (
-          <DeliveryChip bookId={bookId} line={line} script={script} open={deliveryOpen} onOpenChange={onDelivery} onSave={onSaveDelivery} quiet={!speech && !active} />
+          <DeliveryChip bookId={bookId} line={line} script={script} open={deliveryOpen} onOpenChange={onDelivery} onSave={onSaveDelivery} quiet={!speech && !active} active={active} />
         )}
         {line.lineWish?.state === "pending" && (
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-fg-2">
