@@ -78,7 +78,7 @@ function PairPanel() {
           </div>
         </div>
         <ol className="mt-4 space-y-1.5 text-sm text-fg-2">
-          <li>1. Trên máy tính: mở ABook → Cài đặt → bật “Cho phép điện thoại kết nối qua Wi-Fi” → bấm “Ghép thiết bị mới”.</li>
+          <li>1. Trên máy tính: mở ABook → Cài đặt → bật “Cho phép thiết bị khác kết nối qua Wi-Fi” → bấm “Ghép thiết bị mới”.</li>
           <li>2. Chọn máy tính bên dưới và nhập mã 6 số vừa hiện trên máy tính.</li>
         </ol>
       </div>

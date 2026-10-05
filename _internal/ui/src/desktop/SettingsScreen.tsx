@@ -1,6 +1,7 @@
 import { Check, Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { useMediaQuery } from "@/shared/media";
 import { Button, Kbd, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { api } from "@/studio/api";
@@ -174,13 +175,46 @@ const desktopVoices: VoiceSettingsApi = {
 
 function Section({ id, title, description, children }: { id?: string; title: string; description?: string; children: ReactNode }) {
   return (
-    <section id={id} className="grid gap-4 border-b border-line py-7 last:border-b-0 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-8">
+    <section id={id} className="grid scroll-mt-4 gap-4 border-b border-line py-7 last:border-b-0 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-8">
       <div>
         <h2 className="text-base font-semibold">{title}</h2>
         {description && <p className="mt-1 text-[13px] leading-relaxed text-fg-2 text-pretty">{description}</p>}
       </div>
       <div className="min-w-0">{children}</div>
     </section>
+  );
+}
+
+/** Mục lục của trang: đọc thẳng các mục (`<section id>` + tiêu đề) đang có trên trang, nên mục nào ẩn theo máy / chế độ thì tự không có
+ *  trong mục lục - không phải giữ một danh sách thứ hai khớp với các điều kiện bên dưới. */
+function SectionIndex({ root }: { root: { current: HTMLElement | null } }) {
+  const [items, setItems] = useState<{ id: string; title: string }[]>([]);
+  useEffect(() => {
+    // Chạy sau mỗi lần dựng: thông tin máy / tuỳ chọn tới muộn làm mục xuất hiện hay biến mất; chỉ đặt lại khi danh sách thật sự đổi.
+    const found = [...(root.current?.querySelectorAll<HTMLElement>("section[id]") ?? [])].map((section) => ({
+      id: section.id,
+      title: section.querySelector("h2")?.textContent ?? "",
+    }));
+    setItems((now) => (now.length === found.length && now.every((item, index) => item.id === found[index].id && item.title === found[index].title) ? now : found));
+  });
+  if (items.length < 4) return null;
+  const jump = (id: string) => {
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById(id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  };
+  return (
+    <nav aria-label="Các mục của Cài đặt" className="mt-4 flex flex-wrap gap-1.5">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => jump(item.id)}
+          className="h-8 rounded-full border border-line bg-panel px-3 text-[13px] font-medium text-fg-2 transition-colors hover:border-line-strong hover:text-fg"
+        >
+          {item.title}
+        </button>
+      ))}
+    </nav>
   );
 }
 
@@ -265,15 +299,19 @@ export function SettingsScreen() {
     }
   };
   const remote = Boolean(info?.remote);
+  const page = useRef<HTMLDivElement | null>(null);
+  // Phím tắt vô nghĩa trên màn chỉ có cảm ứng (điện thoại, máy tính bảng không bàn phím): ẩn cả mục.
+  const touchOnly = useMediaQuery("(hover: none) and (pointer: coarse)");
   const fade = String(preferences?.sleepFadeSeconds ?? 30) as "10" | "30" | "60";
   const extend = String(preferences?.sleepExtendMinutes ?? 10) as "5" | "10" | "15";
   return (
-    <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
+    <div ref={page} className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
       <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">Cài đặt</h1>
-      <div className="mt-2 max-w-[980px]">
+      <div className="max-w-[980px]">
+        <SectionIndex root={page} />
         {!remote && info?.update && <UpdateSection update={info.update} current={info.version} />}
         {remote && (
-          <Section title="Điều khiển từ xa" description="Đang dùng ABook của máy tính qua mạng.">
+          <Section id="remote" title="Điều khiển từ xa" description="Đang dùng ABook của máy tính qua mạng.">
             <p className="max-w-xl text-sm text-fg-2 text-pretty">
               {info?.listenOnly
                 ? "Thiết bị này nghe được mọi sách của máy tính. Muốn làm sách từ đây: trên máy tính, Cài đặt → Điện thoại và thiết bị → bật “Cho phép điều khiển sản xuất từ thiết bị đã ghép” và “Điều khiển sản xuất” ở dòng của thiết bị này."
@@ -283,7 +321,7 @@ export function SettingsScreen() {
           </Section>
         )}
         {!info?.listenOnly && (
-        <Section title="Thư viện" description="Thư mục chứa các sách. Sách mới được tạo trong thư mục này.">
+        <Section id="library" title="Thư viện" description="Thư mục chứa sách của bạn. Sách thêm vào hay mới làm đều nằm ở đây.">
           <div className="flex items-center gap-2">
             <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg bg-sunken px-3 text-sm text-fg-2">
               <FolderOpen className="size-4 shrink-0" />
@@ -299,7 +337,7 @@ export function SettingsScreen() {
         )}
         {!remote && (
         <>
-        <Section title="Giao diện" description="Màu sáng hay tối. Theo Windows sẽ tự đổi cùng hệ thống.">
+        <Section id="theme" title="Giao diện" description="Màu sáng hay tối. Theo Windows sẽ tự đổi cùng hệ thống.">
           <div
             role="radiogroup"
             aria-label="Giao diện"
@@ -330,6 +368,7 @@ export function SettingsScreen() {
           </div>
         </Section>
         <Section
+          id="listen"
           title="Nghe"
           description="Trình phát nhớ vị trí và tốc độ của từng cuốn. Hết một chương tự sang chương kế tiếp (nếu đã có audio)."
         >
@@ -491,7 +530,8 @@ export function SettingsScreen() {
         </Section>
         </>
         )}
-        <Section title="Phím tắt" description="Dùng được ở mọi màn hình, trừ khi đang gõ chữ.">
+        {!touchOnly && (
+        <Section id="shortcuts" title="Phím tắt" description="Dùng được ở mọi màn hình, trừ khi đang gõ chữ.">
           <dl className="max-w-md space-y-2.5 text-sm">
             {SHORTCUTS.map(([keys, label]) => (
               <div key={label} className="flex items-center justify-between gap-4">
@@ -501,7 +541,8 @@ export function SettingsScreen() {
             ))}
           </dl>
         </Section>
-        <Section title="Giới thiệu">
+        )}
+        <Section id="about" title="Giới thiệu">
           <p className="text-sm text-fg-2 text-pretty">
             ABook {info?.version} - studio sách nói tiếng Việt chạy hoàn toàn trên máy này: phân tích truyện, phân vai, thu âm và
             kiểm tra từng câu.

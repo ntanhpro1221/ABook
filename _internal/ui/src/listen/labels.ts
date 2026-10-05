@@ -99,3 +99,8 @@ export function readerHint(state: {
   if (state.tapped) return null;
   return `${verb} vào một chữ để nghe từ đúng chữ ấy${state.wish ? "; “Sửa câu này” để đổi người nói, cách đọc, tên hay thu lại câu" : ""}.`;
 }
+
+/** "Chương 1" không gãy dòng giữa chữ và số (thẻ hẹp ở 1280 px từng gãy "từ Chương / 1"): dấu cách không ngắt thay cho dấu cách thường. */
+export function keepTogether(title: string): string {
+  return title.replace(/^(Chương|Tập|Phần|Hồi|Quyển)\s+(\S+)/i, "$1\u00a0$2");
+}

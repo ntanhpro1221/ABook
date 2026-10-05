@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, type BookPart, type ListenBook, type ListenChapter } from "./model";
+import { chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
@@ -39,6 +39,47 @@ describe("seriesIndex", () => {
     expect(seriesIndex([{ id: "x", title: "Nageki" }]).get("x")?.volume).toBeNull();
   });
 
+  // Soát UX 05-10: ba bản cùng tên không số + "Tập 2" từng gom thành "4 tập" mà chỉ một cuốn có nhãn.
+  it("does not guess volume 1 among look-alike unnumbered copies", () => {
+    const places = seriesIndex([
+      { id: "a", title: "Chuyến phà" },
+      { id: "b", title: "Chuyến phà" },
+      { id: "c", title: "Chuyến phà · Tập 2" },
+    ]);
+    expect(places.get("a")?.volume).toBeNull();
+    expect(places.get("b")?.volume).toBeNull();
+    expect(places.get("c")?.volume).toBe(2);
+  });
+
+  it("gives volume 1 to the audiobook, not to its text-only copy", () => {
+    const places = seriesIndex([
+      { id: "text", title: "Chuyến phà", stage: "text" },
+      { id: "audio", title: "Chuyến phà", stage: null },
+      { id: "two", title: "Chuyến phà · Tập 2" },
+    ]);
+    expect(places.get("audio")?.volume).toBe(1);
+    expect(places.get("text")?.volume).toBeNull();
+    expect(places.get("two")?.key).toBe(places.get("audio")?.key);
+  });
+
+  it("lets a lone text-only book be volume 1 when nothing else claims it", () => {
+    const places = seriesIndex([
+      { id: "text", title: "Chuyến phà", stage: "text" },
+      { id: "two", title: "Chuyến phà · Tập 2" },
+    ]);
+    expect(places.get("text")?.volume).toBe(1);
+  });
+
+  it("does not pick between two audiobooks of the same title even if a text copy exists", () => {
+    const places = seriesIndex([
+      { id: "x", title: "Chuyến phà" },
+      { id: "y", title: "Chuyến phà" },
+      { id: "text", title: "Chuyến phà", stage: "text" },
+      { id: "two", title: "Chuyến phà · Tập 2" },
+    ]);
+    expect(["x", "y", "text"].map((id) => places.get(id)?.volume)).toEqual([null, null, null]);
+  });
+
   // Soát UX 29-09 (N10): các phần của "Làm tiếp cuốn này" đi theo chuỗi máy chủ biết (continues.json), không theo tên.
   it("keeps a renamed part with its book and leaves a look-alike title out", () => {
     const places = seriesIndex([
@@ -49,6 +90,16 @@ describe("seriesIndex", () => {
     expect(places.get("p2")).toEqual({ key: "chain:p1", series: "lo18", volume: 2, unit: "phần" });
     expect(places.get("p1")).toEqual({ key: "chain:p1", series: "lo18", volume: 1, unit: "phần" });
     expect(places.get("stray")?.key, "dự án lạ không nối gì: nhóm theo tên, tách khỏi chuỗi").toBe("title:lo18");
+  });
+});
+
+describe("volumeBadge", () => {
+  it("labels the unnumbered volume 1 of a series, and nothing the cover already labels", () => {
+    expect(volumeBadge({ title: "Chuyến phà" }, 1, "tập")).toBe("Tập 1");
+    expect(volumeBadge({ title: "Nageki" }, 1, "phần")).toBe("Phần 1");
+    expect(volumeBadge({ title: "Chuyến phà · Tập 2" }, 2, "tập"), "tên đã có số").toBeNull();
+    expect(volumeBadge({ title: "Phần đã đổi tên", series: { root: "p1", part: 2 } }, 2, "phần"), "phần nối tiếp có nhãn riêng").toBeNull();
+    expect(volumeBadge({ title: "Sách lẻ" }, null, "tập")).toBeNull();
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookProgressText, nextChapterLabel, otherBookLine, PREPARING_VOICE, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, keepTogether, nextChapterLabel, otherBookLine, PREPARING_VOICE, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -90,5 +90,13 @@ describe("dòng dưới tên cuốn trong 'Nghe cuốn khác'", () => {
     expect(otherBookLine(book(720))).toBe("Đã nghe 10% cả cuốn · còn 1 giờ 48 phút");
     expect(otherBookLine(book(0))).toBe("Chưa nghe · 2 giờ");
     expect(otherBookLine({ ...book(0), duration: 0 })).toBe("Chưa nghe · 12 chương");
+  });
+});
+
+describe("keepTogether", () => {
+  it("keeps the word and the number of a chapter on one line", () => {
+    expect(keepTogether("Chương 1")).toBe("Chương\u00a01");
+    expect(keepTogether("Chương 12 · Bến phà")).toBe("Chương\u00a012 · Bến phà");
+    expect(keepTogether("Bến phà lúc bình minh")).toBe("Bến phà lúc bình minh");
   });
 });
