@@ -32,6 +32,9 @@ ACCEPTED_SEGMENT_STATUSES = ("verified", "warning")
 ANALYSIS_WEIGHT = 0.47
 RATE_WINDOW_SECONDS = 30 * 60.0
 MIN_RATE_SAMPLES = 12
+# Giây làm lại một câu đã thu khi cuốn chưa có chương nào xong để đo (thu + nghe kiểm + đôi lần thu lại): cố ý dư tay trên card
+# 8 GB - hứa lâu rồi xong sớm hơn là hứa nhanh rồi bắt chờ. Có số đo của chính cuốn thì luôn dùng số đo (`seconds_per_line`).
+FALLBACK_SECONDS_PER_LINE = 12.0
 LEASE_FRESH_SECONDS = 120.0
 STABLE_ID = re.compile(r"^c(\d+)_s(\d+)_")
 
@@ -92,22 +95,40 @@ def voice_request_problem(project_root: Path, character: str, *, preset: str = "
                           avoid: str = "") -> str | None:
     """Mã lý do dây chuyền sẽ từ chối yêu cầu giọng/giới của một nhân vật, hoặc None - hỏi bằng ĐÚNG phép dây chuyền dùng
     (`listener_overrides.voice_target`), trên SQLite chỉ đọc."""
-    from ..config import build_settings
     from ..listener_overrides import voice_target
 
-    stored = read_settings(project_root).get("voices")
-    voices = {**build_settings()["voices"], **(stored if isinstance(stored, dict) else {})}
     with closing(connect(project_root)) as connection:
-        _target, problem = voice_target(connection, voices, character=character, preset=preset, gender=gender,
-                                        avoid=avoid)
+        _target, problem = voice_target(connection, book_voices(project_root), character=character, preset=preset,
+                                        gender=gender, avoid=avoid)
     return problem
+
+
+def book_voices(project_root: Path) -> dict[str, Any]:
+    """Phần `voices` của cài đặt cuốn (giọng người kể, người kể khác) chồng lên mặc định - thứ `voice_target` cần."""
+    from ..config import build_settings
+
+    stored = read_settings(project_root).get("voices")
+    return {**build_settings()["voices"], **(stored if isinstance(stored, dict) else {})}
+
+
+def seconds_per_line(connection: sqlite3.Connection) -> tuple[float, bool]:
+    """(giây làm một câu, có phải số đo không): tốc độ THẬT của chính cuốn này - thời gian các chương đã xong (bắt đầu -> xong)
+    chia số câu của chúng; chưa chương nào xong thì FALLBACK_SECONDS_PER_LINE."""
+    done = connection.execute(
+        "SELECT started_at, completed_at, total_segments FROM chapters "
+        "WHERE status='completed' AND started_at IS NOT NULL AND completed_at > started_at AND total_segments > 0"
+    ).fetchall()
+    spent = sum(float(row["completed_at"]) - float(row["started_at"]) for row in done)
+    lines_done = sum(int(row["total_segments"]) for row in done)
+    if lines_done and spent > 0:
+        return spent / lines_done, True
+    return FALLBACK_SECONDS_PER_LINE, False
 
 
 def already_applied(project_root: Path, section: str, entries: dict[str, dict[str, Any]]) -> bool:
     """Dây chuyền đã đưa một trong các yêu cầu này vào sách chưa (ranh giới chương vừa qua): áp lại bây giờ không còn
     đổi gì - hỏi bằng ĐÚNG phép các bước áp dùng để bỏ qua yêu cầu đã áp (database.apply_listener_*), trên SQLite chỉ
     đọc. Chỉ có nghĩa với quyết định ĐỔI: "giữ nguyên" thì áp hay chưa, sách vẫn như cũ."""
-    from ..config import build_settings
     from ..database import LISTENER_PRONUNCIATION_SOURCE
     from ..listener_overrides import (pronunciation_requests, speaker_requests, speaker_target, surface_key,
                                       voice_requests, voice_target)
@@ -132,8 +153,7 @@ def already_applied(project_root: Path, section: str, entries: dict[str, dict[st
                         and str(row["spoken_form"]) == wish["spoken_form"]):
                     return True
         elif section == "voices":
-            stored = read_settings(project_root).get("voices")
-            voices = {**build_settings()["voices"], **(stored if isinstance(stored, dict) else {})}
+            voices = book_voices(project_root)
             for wish in voice_requests({"voices": entries}):
                 target, _problem = voice_target(connection, voices, character=wish["character"], preset=wish["preset"],
                                                 gender=wish["gender"], avoid=wish["avoid"])
@@ -584,7 +604,7 @@ def person_label(project_root: Path, raw: Any) -> str:
 def pending_details(project_root: Path, since: float) -> dict[str, Any]:
     """Nút "Áp dụng N thay đổi" mở hộp xem trước (soát UX a6 01-10: bấm là chạy ngay, không nói sẽ thu lại gì, hết bao lâu):
     từng thay đổi nói bằng lời, số câu sẽ thu lại, ở những chương nào, và thời gian ước theo TỐC ĐỘ THẬT của chính cuốn này
-    (giây làm một câu = thời gian các chương đã xong / số câu của chúng). Cùng cách chọn như `pending_changes` (yêu cầu ghi
+    (`seconds_per_line`; chưa đo được thì số ước dư tay, `measured` False). Cùng cách chọn như `pending_changes` (yêu cầu ghi
     sau `since`, bỏ yêu cầu giữ nguyên) để số mục khớp số trên nút. Câu chưa thu không tốn thêm gì nên không tính."""
     from ..listener_overrides import character_key, read_overrides, surface_key
 
@@ -599,9 +619,8 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     affected: set[str] = set()
     chapters_hit: set[int] = set()
-    seconds_per_line = 0.0
     if not (Path(project_root) / DB_NAME).is_file():
-        return {"items": items, "lines": 0, "chapters": [], "seconds": 0.0}
+        return {"items": items, "lines": 0, "chapters": [], "seconds": 0.0, "measured": False}
     titles = {chapter["id"]: chapter["displayTitle"] for chapter in chapters(project_root)}
 
     def same(left: Any, right: Any) -> bool:
@@ -676,7 +695,9 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             ids = [str(row["stable_id"]) for row in recorded if character_key(str(row["speaker"] or "")) == key]
             # Khoá giọng là tên đã hạ chữ thường - lấy lại cách viết trong sách từ một câu của người ấy.
             name = next((who(row["speaker"]) for row in rows if character_key(str(row["speaker"] or "")) == key), who(key))
-            items.append({"kind": "voice", "label": label_voice(name, entry), "lines": hit(ids),
+            # Đủ để "Nghe thử" đúng giọng sẽ áp trên một câu của người ấy (POST …/voice/preview, reading_preview.py).
+            wish = {"character": key, **{field: str(entry.get(field) or "") for field in ("preset", "gender", "avoid")}}
+            items.append({"kind": "voice", "label": label_voice(name, entry), "lines": hit(ids), "voice": wish,
                           **handle("voices", key, entry)})
         clicks: dict[float, list[str]] = {}
         for stable_id, entry in fresh["retakes"].items():
@@ -695,20 +716,14 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
                 items.append({"kind": "retake", "label": label_retake("", len(stable_ids)), "chapter": chapter,
                               "lines": hit(known), "section": "retakes", "key": stable_ids[0], "keys": stable_ids,
                               "requestedAt": at})
-        # Tốc độ thật: các chương đã xong của chính cuốn này (bắt đầu -> xong, chia số câu).
-        done = connection.execute(
-            "SELECT started_at, completed_at, total_segments FROM chapters "
-            "WHERE status='completed' AND started_at IS NOT NULL AND completed_at > started_at AND total_segments > 0"
-        ).fetchall()
-        spent = sum(float(row["completed_at"]) - float(row["started_at"]) for row in done)
-        lines_done = sum(int(row["total_segments"]) for row in done)
-        if lines_done:
-            seconds_per_line = spent / lines_done
+        each, measured = seconds_per_line(connection)
     return {
         "items": items,
         "lines": len(affected),
         "chapters": [titles.get(chapter, str(chapter)) for chapter in sorted(chapters_hit)],
-        "seconds": round(len(affected) * seconds_per_line, 1),
+        "seconds": round(len(affected) * each, 1),
+        # False: chưa chương nào xong để đo - thời gian là số ước dư tay (FALLBACK_SECONDS_PER_LINE), giao diện nói vậy.
+        "measured": measured,
     }
 
 

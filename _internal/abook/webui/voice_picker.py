@@ -82,11 +82,10 @@ def _key(name: str) -> str:
 
 def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
     from ..character_registry import listener_voice_choice
-    from ..config import build_settings
     from ..voice_catalog import ENGINE_LABELS, ENGINE_VIENEU, castable_engine_voices, casting_presets
+    from .reading_preview import PreviewError, character_line, line_text
 
-    stored = store.read_settings(project_root).get("voices")
-    voices = {**build_settings()["voices"], **(stored if isinstance(stored, dict) else {})}
+    voices = store.book_voices(project_root)
     not_for_characters = {str(voices.get("narrator_voice") or ""), *map(str, voices.get("other_narrators", ()))}
     key = _key(character)
     renamed = renames.load(project_root)
@@ -128,6 +127,17 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
             for gender in ("male", "female")
         }
         book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
+        # Câu "Nghe thử bằng câu của sách" sẽ đọc (reading_preview.character_line); None: chỉ có bản nghe thử chung.
+        try:
+            line = character_line(connection, key)
+            try_line = {"segmentId": int(line["id"]), "text": line_text(line)}
+        except PreviewError:
+            try_line = None
+        # Đổi giọng là thu lại mọi câu ĐÃ THU của người ấy (như hộp "Áp dụng" - store.pending_details), theo tốc độ của cuốn.
+        recorded = int(connection.execute(
+            "SELECT COUNT(*) FROM segments WHERE canonical_character_id=? AND wav_path IS NOT NULL AND wav_path <> ''",
+            (int(row["id"]),)).fetchone()[0])
+        each, measured = store.seconds_per_line(connection)
     pending = _pending_request(project_root, key, suggested,
                                float(book_row["updated_at"] or 0) if book_row is not None else 0.0)
     mine = chapters.get(key, set())
@@ -188,6 +198,8 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
             "requestedAt": pending["requestedAt"],
         },
         "voices": entries,
+        "tryLine": try_line,
+        "rerecord": {"lines": recorded, "seconds": round(recorded * each, 1), "measured": measured},
         # Mô-đun tải thêm của máy đọc khác (engine_module_status): hộp hiện nút tải và tiến độ.
         "modules": {engine: engine_module_status(engine) for engine in engines},
     }

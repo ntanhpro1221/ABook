@@ -1,15 +1,18 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioLines, BookOpenCheck, Mic2, RefreshCw, UserRound, X } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { formatLength, formatNumber } from "@/shared/format";
+import { formatNumber } from "@/shared/format";
 import { Button, Dialog, IconButton } from "@/shared/ui";
 import { api } from "./api";
+import { useVoiceTry } from "./VoiceTry";
+import { estimateText, type VoiceRequest } from "./voiceTryText";
 
 // "Áp dụng N thay đổi" mở hộp này thay vì chạy ngay (soát UX a6 01-10: bấm là chạy, không nói sẽ thu lại gì, hết bao lâu; số
 // trên nút còn lệch với "chờ áp dụng" ở Việc cần duyệt vì sửa ở Kịch bản / đổi giọng không được liệt kê ở đâu). Máy chủ
 // (store.pending_details) liệt kê đủ từng thay đổi bằng lời, số câu ĐÃ THU sẽ thu lại, ở chương nào, và thời gian ước theo
-// tốc độ thật của chính cuốn này.
+// tốc độ thật của chính cuốn này (chưa đo được thì số ước, nói rõ là ước). Đổi giọng nghe thử được ngay trong hộp, trên một câu
+// của chính người ấy (VoiceTry.tsx) - soát UX Studio mục 15: áp là thu lại mà chưa nghe giọng mới lần nào.
 
 export interface PendingItem {
   kind: "pronunciation" | "speaker" | "line" | "voice" | "retake";
@@ -22,6 +25,8 @@ export interface PendingItem {
   /** "Thu lại cả chương": mọi câu của một lần bấm - bỏ thì bỏ cả nhóm. */
   keys?: string[];
   requestedAt: number;
+  /** Đổi giọng: đủ để nghe thử đúng giọng sẽ áp (POST …/voice/preview). */
+  voice?: VoiceRequest;
 }
 
 export interface PendingDetails {
@@ -29,22 +34,27 @@ export interface PendingDetails {
   lines: number;
   chapters: string[];
   seconds: number;
+  /** False: cuốn chưa xong chương nào để đo - `seconds` là số ước dư tay. */
+  measured?: boolean;
 }
 
 export const KIND_ICON = { pronunciation: BookOpenCheck, speaker: UserRound, line: AudioLines, voice: Mic2, retake: RefreshCw } as const;
 
 /** Danh sách từng thay đổi đang chờ, mỗi dòng có nút "Bỏ thay đổi này" - dùng cho cả hộp "Áp dụng" (dự án) lẫn hộp "Việc đang chờ
- *  Studio" của sách không có xưởng (listen/WishesDialog.tsx). `dropping` = id đang bỏ dở; `showLines`: hiện số câu thu lại. */
+ *  Studio" của sách không có xưởng (listen/WishesDialog.tsx). `dropping` = id đang bỏ dở; `showLines`: hiện số câu thu lại;
+ *  `extra`: nút thêm của một dòng (nghe thử giọng chờ áp). */
 export function PendingList({
   items,
   dropping,
   onDrop,
   showLines = true,
+  extra,
 }: {
   items: PendingItem[];
   dropping: string | null;
   onDrop: (item: PendingItem) => void;
   showLines?: boolean;
+  extra?: (item: PendingItem) => ReactNode;
 }) {
   return (
     <ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line">
@@ -62,6 +72,7 @@ export function PendingList({
                 {item.lines ? `${formatNumber(item.lines)} câu thu lại` : "chưa thu - không tốn gì"}
               </span>
             )}
+            {extra && <span className="-my-1 shrink-0">{extra(item)}</span>}
             <IconButton
               size="sm"
               icon={X}
@@ -92,6 +103,7 @@ export function ApplyChangesDialog({
 }) {
   const client = useQueryClient();
   const [dropping, setDropping] = useState<string | null>(null);
+  const tryVoice = useVoiceTry(bookId);
   // Bỏ một mục ngay tại đây (soát UX a6 01-10: muốn bỏ thì phải đi tìm lại đúng thẻ ở ba tab). Lựa chọn trước đó, nếu có,
   // trở lại; mọi màn đọc lại (số trên nút, Việc cần duyệt, Kịch bản).
   const drop = async (item: PendingItem) => {
@@ -129,13 +141,19 @@ export function ApplyChangesDialog({
         <p className="text-sm text-fg-2">Đang xem các thay đổi…</p>
       ) : (
         <>
-          <PendingList items={data.items} dropping={dropping} onDrop={(item) => void drop(item)} />
+          <PendingList
+            items={data.items}
+            dropping={dropping}
+            onDrop={(item) => void drop(item)}
+            extra={(item) => (item.voice ? tryVoice.button(item.voice, item.voice.preset || "mới") : null)}
+          />
+          {tryVoice.note && <div className="mt-2">{tryVoice.note}</div>}
           <p className="mt-3 text-sm text-pretty">
             {data.lines ? (
               <>
                 Thu lại <span className="font-semibold">{formatNumber(data.lines)} câu</span> ở {chapters.length} chương (
                 {shownChapters})
-                {data.seconds > 0 && <> - khoảng <span className="font-semibold">{formatLength(data.seconds)}</span> trên máy này</>}.
+                {data.seconds > 0 && <> - {estimateText(data.seconds, data.measured)}</>}.
               </>
             ) : (
               "Không câu đã thu nào phải thu lại - máy chỉ ghi các thay đổi vào sách, vài giây là xong."
