@@ -13,7 +13,7 @@ TAGS = {"models": [
     {"name": "qwen3-8b-qlora-v6-e1-q4:latest", "size": 5_027_784_160,
      "details": {"family": "qwen3", "parameter_size": "8.2B", "quantization_level": "Q4_K_M"}},
     {"name": "nomic-embed-text:latest", "size": 274_000_000, "details": {"family": "nomic-bert"}},
-    {"name": "abook-analyzer:v3", "size": 4_280_000_000, "details": {"family": "qwen3", "parameter_size": "4.0B"}},
+    {"name": "abook-analyzer:v4", "size": 4_280_000_000, "details": {"family": "qwen3", "parameter_size": "4.0B"}},
 ]}
 
 
@@ -66,8 +66,8 @@ def _settings(application, created: dict) -> dict:
 def test_the_wizard_lists_the_models_in_ollama_with_the_default_first(app) -> None:
     application, _chapter = app
     view = application.analysis_models()
-    assert view["reachable"] and view["default"] == "abook-analyzer:v3"
-    assert [model["name"] for model in view["models"]] == ["abook-analyzer:v3", "qwen3-8b-qlora-v6-e1-q4:latest"], \
+    assert view["reachable"] and view["default"] == "abook-analyzer:v4"
+    assert [model["name"] for model in view["models"]] == ["abook-analyzer:v4", "qwen3-8b-qlora-v6-e1-q4:latest"], \
         "mặc định đứng đầu, model nhúng (embedding) không phải model đọc hiểu"
     assert view["models"][1]["parameters"] == "8.2B" and view["models"][1]["quantization"] == "Q4_K_M"
 
@@ -82,7 +82,7 @@ def test_a_book_keeps_the_model_chosen_for_it_and_the_studio_ollama(app) -> None
     assert analysis["model"] == "qwen3-8b-qlora-v6-e1-q4:latest"
     assert analysis["base_url"] == application.studio.base_url
     plain = application.create({"paths": [str(chapter)], "title": "Thử mặc định", "profile": "high_quality"})
-    assert _settings(application, plain)["analysis"]["model"] == "abook-analyzer:v3"
+    assert _settings(application, plain)["analysis"]["model"] == "abook-analyzer:v4"
     with pytest.raises(ApiError) as missing:
         application.create({"paths": [str(chapter)], "title": "Thử lạ", "profile": "high_quality",
                             "analysisModel": "khong-co:latest"})

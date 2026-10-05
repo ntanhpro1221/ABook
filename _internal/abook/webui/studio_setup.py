@@ -140,6 +140,16 @@ PUBLISHED_MODELS: dict[str, PublishedModel] = {
         "9545ce0bf921f3b771a796272b736d043dc4082cb14d1a51fcc93c55e4c53778",
         4_280_403_328,
     ),
+    # docs/models/abook-analyzer-v4.md - Qwen3-4B-Instruct-2507 + LoRA (lora29v8-4b), GGUF Q8_0; mặc định từ 0.4.28.
+    "abook-analyzer:v4": PublishedModel(
+        "abook-analyzer:v4",
+        (Download("abook-analyzer-v4.Q8_0.gguf",
+                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/917d6b875882ecd71bfebe5c83b2bb680df5e3d2/"
+                  "abook-analyzer-v4.Q8_0.gguf",
+                  "1ecd40a6b6839fc986f1095001110ebbfd9043608d0e69b30be762a85673feeb", 4_280_403_328),),
+        "1ecd40a6b6839fc986f1095001110ebbfd9043608d0e69b30be762a85673feeb",
+        4_280_403_328,
+    ),
 }
 
 # (mã, nhãn cho người dùng, ước lượng cho người dùng)
@@ -1115,11 +1125,11 @@ class StudioSetup:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Máy dev (scripts/setup_windows.ps1): `python -m abook.webui.studio_setup --install-model abook-analyzer:v3`."""
+    """Máy dev (scripts/setup_windows.ps1): `python -m abook.webui.studio_setup --install-model abook-analyzer:v4`."""
     import tempfile
 
     parser = argparse.ArgumentParser(description="Nạp model phân tích của dự án vào Ollama.")
-    parser.add_argument("--install-model", required=True, help="tên trong PUBLISHED_MODELS, vd abook-analyzer:v3")
+    parser.add_argument("--install-model", required=True, help="tên trong PUBLISHED_MODELS, vd abook-analyzer:v4")
     parser.add_argument("--ollama", default="http://127.0.0.1:11434")
     parser.add_argument("--downloads", type=Path, default=Path(tempfile.gettempdir()) / "abook-model-install")
     args = parser.parse_args(argv)

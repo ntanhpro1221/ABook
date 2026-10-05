@@ -14,6 +14,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
+- Model đọc hiểu truyện mặc định đổi sang `abook-analyzer:v4`: gán đúng người nói hơn hẳn bản cũ - đo trên 11 chương truyện Nhật F1 giọng
+  56,0 -> 61,8, 8 chương truyện Hàn 61,4 -> 68,5 (cùng cỡ 4,3 GB). Sách tạo trước giữ model của nó; sách mới tự tải bản mới.
 - Truyện dịch dùng ngoặc vuông cho lời nói - "[Về thôi.]", câu nghĩ thầm, bảng thông báo game "[Bạn nhận được 30 điểm kinh nghiệm]", tiếng quái vật "[GDESAAAAA!!]" -
   nay mỗi dòng như thế là một giọng riêng thay vì bị người kể đọc hết (có cuốn gần như cả quyển bị đọc bằng một giọng); ai nói thì máy phân tích đoán như với lời thoại
   thường. Dòng bảng hệ thống trong 【…】 cũng vậy. Dấu ngoặc ấy không được đọc thành tiếng. Ngoặc nằm giữa câu kể ("kỹ năng [Hỏa Cầu]") vẫn là lời người kể.
