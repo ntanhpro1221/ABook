@@ -82,6 +82,36 @@ SPEECH_VERB_PATTERN = re.compile(
     r"\b(?:nói|hỏi|đáp|trả lời|quát|hét|gào|thì thầm|lẩm bẩm|kêu|bảo|ra lệnh|cười)\b",
     re.IGNORECASE,
 )
+# Dòng mở bằng gạch là lượt thoại ở chương viết thoại bằng gạch (Tắt đèn, Tam quốc). Ở chương viết thoại trong ngoặc kép,
+# một dòng gạch hiếm hoi thường là gạch ngang của LỜI KỂ ("-Hoặc không, vì hắn đã nhảy tránh được."): thầy gán nhãn a2w4
+# (06-10) và đáp án gold (evil_lord 02:57, re_zero 065a:130, eiyuu_to_majo 05:56) đều trả lời lời kể cho những dòng như
+# thế. Chỉ đổi khi cả chương lẫn dòng cùng nói vậy (`_dash_line_is_narration`, thận trọng: hai dòng gold sau vẫn khoá
+# thoại). Quét Corpus 06-10: 1.069 đoạn đổi sang lời kể; dòng gạch có lời nói thật ở chương ngoặc kép (Villain 22: 11 dòng
+# gạch của một nhân vật) đều giữ thoại.
+DASH_LINE_PATTERN = re.compile(r"^[—–-]+\s*(?=\S)")
+QUOTE_LED_LINE_PATTERN = re.compile(r"^[“\"‘「『]")
+QUOTED_CHAPTER_MIN_QUOTE_LINES = 10
+QUOTED_CHAPTER_MAX_DASH_LINES = 3
+_THIRD_PERSON = r"(?:hắn|họ|gã|lão|(?:anh|cô|ông|bà|cậu|nàng|chàng)\s+(?:ta|ấy))"
+THIRD_PERSON_PATTERN = re.compile(rf"(?<!\w){_THIRD_PERSON}(?!\w)", re.IGNORECASE)
+# Chủ ngữ ngôi ba + đã/đang/vừa/liền/bèn + động từ: "hắn đã nhảy", "Silk đã kháng cự" - không phải "Đợi đã.".
+NARRATIVE_SUBJECT_PATTERN = re.compile(
+    rf"(?<!\w)(?:{_THIRD_PERSON}"
+    r"|(?!(?:Tôi|Mình|Ta|Chúng|Bọn|Cô|Nó|Anh|Em|Cậu|Ngài|Bạn|Người|Hãy|Đừng)(?!\w))[A-ZĐ]\w*(?:[\s-][A-ZĐ]\w*)*)"
+    r"\s+(?:đã|đang|vừa|liền|bèn)\s+\w"
+)
+# Dấu hiệu lời nói: xưng hô ngôi một/hai (sau khi bỏ "cậu ta", "cô ấy"...), câu hỏi/cảm thán, tiểu từ cuối câu nói.
+SPEECH_PRONOUN_PATTERN = re.compile(
+    r"(?<!\w)(?:ta|ngươi|tớ|mày|tao|ngài|tui|mi|cậu|nàng|anh|em|con|tôi|mình|bạn|ông|bà|cháu|chị|chúng|bọn)(?!\w)",
+    re.IGNORECASE,
+)
+# Ngôi một/hai chỉ có trong lời nói - kể cả dòng viết thường ("--giờ mới nhớ, cái đó là kỹ thuật gì mà ta.").
+SPEECH_ONLY_PRONOUN_PATTERN = re.compile(r"(?<!\w)(?:ta|ngươi|tớ|mày|tao|ngài|tui|mi)(?!\w)", re.IGNORECASE)
+SPEECH_MARK_PATTERN = re.compile(r"[?!~…*“”\"‘’「」『』\[\]〔〕()]|\.\.")
+SPEECH_FINAL_PARTICLE_PATTERN = re.compile(
+    r"(?<!\w)(?:chăng|à|ư|nhỉ|hả|nhé|nha|chứ|vậy|đấy|đâu|nào|ạ|mà|rồi|sao|thôi)\W*$",
+    re.IGNORECASE,
+)
 # Từ dẫn một THUẬT NGỮ trong ngoặc (không phải lời nói): "gọi là “bang hội,”", "mang danh “thợ săn,”".
 TERM_INTRODUCER_PATTERN = re.compile(
     r"\b(?:là|gọi|tên|chữ|từ|cụm|câu|hiệu|danh|như|kiểu|thành|mệnh danh|xưng)$",
@@ -1008,6 +1038,33 @@ def _fresh_quote_opening(line: str, quote_state: tuple[str, str]) -> int:
     return next((index for index, char in enumerate(before_closing) if char in openers), -1)
 
 
+def _chapter_writes_dialogue_in_quotes(paragraphs: list[str]) -> bool:
+    """Thoại của chương nằm trong ngoặc kép và dòng mở bằng gạch chỉ lác đác vài dòng."""
+    lines = [line.strip() for paragraph in paragraphs for line in paragraph.splitlines() if line.strip()]
+    quote_led = sum(1 for line in lines if QUOTE_LED_LINE_PATTERN.match(line))
+    dash_led = sum(1 for line in lines if DASH_LINE_PATTERN.match(line))
+    return quote_led >= QUOTED_CHAPTER_MIN_QUOTE_LINES and dash_led <= QUOTED_CHAPTER_MAX_DASH_LINES
+
+
+def _dash_line_is_narration(line: str) -> bool:
+    """Dòng gạch đọc như lời kể: viết thường nối câu trước ("-bởi vì..."), hay chủ ngữ ngôi ba kể việc đã xảy ra,
+    và không có dấu hiệu lời nói nào. Chỉ dùng ở chương viết thoại trong ngoặc kép."""
+    dash = DASH_LINE_PATTERN.match(line)
+    if dash is None:
+        return False
+    body = line[dash.end() :]
+    if not has_spoken_content(body) or SPEECH_MARK_PATTERN.search(body) or SPEECH_FINAL_PARTICLE_PATTERN.search(body):
+        return False
+    without_third_person = THIRD_PERSON_PATTERN.sub(" ", body)
+    if SPEECH_ONLY_PRONOUN_PATTERN.search(without_third_person):
+        return False
+    if body[:1].islower():
+        return True
+    if SPEECH_PRONOUN_PATTERN.search(without_third_person):
+        return False
+    return NARRATIVE_SUBJECT_PATTERN.search(body) is not None
+
+
 def _punctuation_break_ms(text: str) -> int:
     return max(
         (duration for mark, duration in PUNCTUATION_BREAK_MS.items() if mark in text),
@@ -1020,12 +1077,15 @@ def _walk_paragraphs(
     paragraphs: list[str],
     max_chars: int,
     close_at_end_of: frozenset[int],
+    dialogue_in_quotes: bool = False,
 ) -> tuple[list[dict[str, Any]], tuple[str, str] | None, int | None]:
     """One pass over the chapter, returning its rows and how the quote state ended.
 
     ``close_at_end_of`` names the paragraphs whose quote is forced shut when the paragraph
     ends - the recovery lever. The third return value is the paragraph that opened whatever
     quote is still hanging at the end, which is the paragraph that needs the lever next.
+    ``dialogue_in_quotes`` (`_chapter_writes_dialogue_in_quotes`) lets a dash-led line that
+    reads as narration stay narration instead of opening a dash turn.
     """
     rows: list[dict[str, Any]] = []
 
@@ -1068,7 +1128,10 @@ def _walk_paragraphs(
                     return rows, quote_state, opened_at
                 if fresh_opening < 0:
                     ran_on_unmarked = True
-            pieces, quote_state = _line_pieces_with_quote_state(line, quote_state)
+            if quote_state is None and dialogue_in_quotes and _dash_line_is_narration(line):
+                pieces = [(line, "narration")]
+            else:
+                pieces, quote_state = _line_pieces_with_quote_state(line, quote_state)
             if quote_state is None:
                 opened_at = None
             elif not was_open:
@@ -1153,8 +1216,9 @@ def segment_chapter_text(
     paragraphs = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
 
     close_at_end_of: frozenset[int] = frozenset()
+    dialogue_in_quotes = _chapter_writes_dialogue_in_quotes(paragraphs)
     rows, quote_state, opened_at = _walk_paragraphs(
-        chapter_index, paragraphs, max_chars, close_at_end_of
+        chapter_index, paragraphs, max_chars, close_at_end_of, dialogue_in_quotes
     )
     while quote_state is not None:
         if opened_at is None or opened_at in close_at_end_of:
@@ -1162,7 +1226,7 @@ def segment_chapter_text(
         else:
             close_at_end_of = close_at_end_of | {opened_at}
         rows, quote_state, opened_at = _walk_paragraphs(
-            chapter_index, paragraphs, max_chars, close_at_end_of
+            chapter_index, paragraphs, max_chars, close_at_end_of, dialogue_in_quotes
         )
         if quote_state is not None and len(close_at_end_of) >= len(paragraphs):
             raise RuntimeError(
