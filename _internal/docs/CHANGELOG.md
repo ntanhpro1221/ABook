@@ -13,6 +13,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   vui / buồn đúng không khí truyện hơn. Bài nhập vào vẫn dùng được và có số ngay; việc nghe kỹ chạy ngầm vài giây mỗi bài, nhẹ máy, bài chưa tới lượt giữ số cũ, tắt máy giữa chừng thì mở lại làm tiếp.
 - Bài nhập đo vui / buồn khớp thang của nhạc có sẵn hơn: ABook cập nhật bộ nghe nhạc ("Phân tích nhạc" báo có bản mới, chỉ tải phần đổi), bài đã phân tích bằng bản cũ vẫn dùng được và bạn bấm "Phân tích lại" khi muốn. Máy có Studio và điện thoại dùng chung một bộ như nhau.
 
+### Studio
+
+- Mở Studio trong trình duyệt hay từ điện thoại, bước "Nội dung" của "Tạo sách nói" có nút "Chọn file", "Chọn thư mục" (trình duyệt máy tính) và kéo thả
+  file hay cả thư mục truyện vào khung - thay cho ô dán đường dẫn, ô ấy lui vào "Nâng cao". File gửi lên máy tính, có thanh tiến độ và dung lượng; file không
+  phải truyện hay quá 8 MB được nói rõ tên. Chọn cả thư mục thì tên thư mục thành tên sách gợi ý; thư mục chỉ có các thư mục tập con thì mỗi thư mục là một tập.
+
 ## [0.4.28] - 2026-10-05
 
 ### Giọng đọc
