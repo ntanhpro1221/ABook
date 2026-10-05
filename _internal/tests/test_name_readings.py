@@ -23,6 +23,7 @@ def _pronounce(db, surface: str, spoken: str, *, confidence: float = 0.95, sourc
 
 def test_every_reading_is_listed_with_who_decided_and_how_many_lines(tmp_path: Path) -> None:
     paths, db = _book(tmp_path)
+    (paths.root / "take.wav").write_bytes(b"RIFF")  # bản thu thật nằm trong thư mục sách
     _pronounce(db, "Lucien", "Lu-si-en", confidence=0.98)  # máy chắc: hộp việc không bao giờ hỏi
     _pronounce(db, "Natasha", "Na-ta-sa", source=LISTENER_PRONUNCIATION_SOURCE)
     _pronounce(db, "Rhine", "Rai", confidence=0.6)  # tên của chương khác: không câu nào ở phần này

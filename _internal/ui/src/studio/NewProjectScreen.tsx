@@ -45,8 +45,9 @@ import {
 } from "@/studio/data";
 import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
+import { samePath } from "@/studio/samePath";
 import { uploadChapters } from "@/studio/upload";
-import { AnalysisModelPicker, modelLabel } from "@/studio/AnalysisModelPicker";
+import { AnalysisModelPicker, modelLabel, useAnalysisModels } from "@/studio/AnalysisModelPicker";
 import { DEFAULT_LABEL, applyTemplate, type BookTemplate, type Profile } from "@/studio/bookTemplates";
 import { TemplateBar } from "@/studio/TemplateBar";
 import { VolumeSplit } from "@/studio/VolumeSplit";
@@ -138,7 +139,7 @@ interface Draft {
   /** Tên mẫu thiết lập đang theo (studio/bookTemplates.ts); không có = mặc định của app. Mẫu bị xoá/đổi tên thì coi như không có. */
   template?: string;
   /** "Sửa thiết lập" (?redo=<id>): cuốn chưa bắt đầu sẽ được thay bằng cuốn này; phần trước của nó nếu là phần nối tiếp. */
-  replaces?: { id: string; title: string; seedFrom?: string };
+  replaces?: { id: string; title: string; seedFrom?: string; restart?: boolean };
 }
 
 interface Seed {
@@ -267,7 +268,7 @@ function SourceStep({
   volumeSplit?: ReactNode;
   splitting?: boolean;
   /** "Sửa thiết lập": cuốn đang được làm lại - không nhắc "đã có dự án" về chính nó. */
-  replaces?: { id: string; title: string };
+  replaces?: { id: string; title: string; restart?: boolean };
   scan: ScanResult | null;
   title: string;
   onTitle: (title: string) => void;
@@ -324,12 +325,11 @@ function SourceStep({
   return (
     <div>
       <h2 className="text-xl font-semibold">Chọn các chương của truyện</h2>
-      <p className="mt-1 text-sm text-fg-2 text-pretty">
-        Mỗi file TXT là một chương. Chương được xếp theo tên file như người đọc mong đợi: 2 đứng trước 10. Có sẵn file EPUB,
-        Word (DOCX) hay PDF thì chọn nó: máy tách thành các chương theo mục lục hay các tiêu đề “Chương N”, bạn xem danh sách
-        chương trước khi tạo. PDF phải có chữ (PDF chụp từ máy quét thì chưa đọc được). Cả truyện nằm trong một file TXT thì máy
-        đề nghị tách theo các dòng “Chương N”.
-      </p>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg-2">
+        <li>Mỗi file TXT là một chương, xếp theo tên file (2 đứng trước 10).</li>
+        <li>Có file EPUB, Word hay PDF thì chọn thẳng nó - máy tách chương, bạn xem lại danh sách trước khi tạo. PDF phải có chữ.</li>
+        <li>Cả truyện nằm trong một file TXT thì máy gợi ý tách theo các dòng “Chương N”.</li>
+      </ul>
       {!files.length ? (
         <div className="mt-6 rounded-2xl border-2 border-dashed border-line-strong bg-panel px-8 py-10 text-center">
           <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent-text">
@@ -340,8 +340,8 @@ function SourceStep({
           </p>
           <p className="mt-1 text-sm text-fg-2">
             {info?.remote
-              ? "Chọn cùng lúc mọi file .txt của truyện, hay một file .epub / .docx / .pdf. Máy tính giữ chúng trong thư viện, mục “Nguồn tải lên”."
-              : "Thư mục: lấy các file .txt nằm ngay bên trong (không quét thư mục con). File .epub, .docx, .pdf: máy tách thành các chương."}
+              ? "Chọn cùng lúc mọi file .txt của truyện, hay một file .epub / .docx / .pdf. Máy tính giữ chúng trong mục “Nguồn tải lên”."
+              : "Chỉ lấy file nằm ngay trong thư mục, không quét thư mục con."}
           </p>
           {info?.remote && (
             <div className="mt-6 flex justify-center">
@@ -387,16 +387,17 @@ function SourceStep({
               aria-label="Đường dẫn thư mục"
               aria-invalid={Boolean(problem)}
               aria-describedby={problem ? "source-problem" : undefined}
-              placeholder={info?.dialogs ? "…hoặc dán đường dẫn thư mục hay file sách" : "Dán đường dẫn thư mục hay file sách, ví dụ D:\\Truyện\\Tên truyện"}
+              placeholder={info?.dialogs ? "…hoặc dán đường dẫn" : "Dán đường dẫn thư mục hay file"}
               className={cn(
-                "h-10 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent",
+                "h-10 min-w-0 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent",
                 problem ? "border-danger" : "border-line",
               )}
             />
             <Button type="submit" disabled={!cleanPath(typed) || scanning}>
-              Mở
+              Lấy chương
             </Button>
           </form>
+          {!info?.dialogs && <p className="mx-auto mt-1.5 max-w-lg break-all text-left text-xs text-fg-3">Ví dụ: D:\Truyện\Tên truyện</p>}
           {problem && (
             <div id="source-problem" role="alert" className="mx-auto mt-3 max-w-lg text-left text-sm text-danger">
               {problem.text}
@@ -461,8 +462,9 @@ function SourceStep({
             <div className="mt-4 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
               <Info className="mt-0.5 size-4 shrink-0 text-info" />
               <p className="min-w-0 text-pretty">
-                Đang sửa thiết lập của <span className="font-semibold">“{replaces.title}”</span>: mọi lựa chọn cũ đã điền sẵn, đổi
-                gì cũng được. Tạo xong, bản cũ vào Thùng rác (bìa đi theo).
+                {replaces.restart ? "Đang làm lại phân tích của " : "Đang sửa thiết lập của "}
+                <span className="font-semibold">“{replaces.title}”</span>: mọi lựa chọn cũ đã điền sẵn, đổi gì cũng được. Tạo xong,
+                bản cũ vào Thùng rác (bìa đi theo).
               </p>
             </div>
           )}
@@ -1193,7 +1195,10 @@ function ConfirmStep({
   precastWait,
   setPrecastWait,
   dropCredits,
+  creditLines,
   analysisModel,
+  restart,
+  onReview,
 }: {
   /** "Chia thành nhiều tập": các tập sẽ tạo (số chương mỗi tập), hay không có khi là một sách. */
   volumes?: { chapters: number }[];
@@ -1210,8 +1215,15 @@ function ConfirmStep({
   setPrecastWait: (value: boolean) => void;
   /** Người dùng đã đồng ý bỏ dòng ghi công khỏi phần đọc. */
   dropCredits: boolean;
+  /** Số dòng ghi công người dịch phát hiện ở các chương đã chọn (gợi ý chưa áp nếu `dropCredits` tắt). */
+  creditLines: number;
   analysisModel: string;
+  /** "Làm lại phân tích": bản dở của cuốn này vào Thùng rác khi cuốn mới tạo xong. */
+  restart?: { title: string };
+  /** Quay lại bước đầu (chọn file, gợi ý dòng ghi công). */
+  onReview: () => void;
 }) {
+  const models = useAnalysisModels().data;
   const option = PROFILES.find((item) => item.value === profile)!;
   const guess = estimate(scan.totals.words, scan.files.length);
   const measured = profile === "high_quality";
@@ -1244,9 +1256,12 @@ function ConfirmStep({
       : []),
     ["Nhân vật", seed ? `Giữ ${carriedText(seed.carries)}; người mới được phân vai sau khi phân tích` : "Tự động phân vai sau khi phân tích"],
     ["Chất lượng", option.title],
+    // Luôn nói model nào sẽ đọc hiểu truyện - cả khi là mặc định - vì phân tích là bước dài nhất và không ngắt được.
     ...(analysisModel
       ? ([["Model đọc hiểu", `${modelLabel(analysisModel)} (${seed?.analysisModel === analysisModel ? "như phần trước" : "chỉ cuốn này"})`]] as [string, string][])
-      : []),
+      : models?.default
+        ? ([["Model đọc hiểu", `${modelLabel(models.default)} (mặc định)`]] as [string, string][])
+        : []),
     ...(measured
       ? ([
           ["Thời gian làm", lengthRange(guess.totalLow, guess.totalHigh)],
@@ -1277,11 +1292,32 @@ function ConfirmStep({
         <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
         <p className="text-pretty">
           <span className="font-semibold">Giai đoạn đầu là phân tích cả truyện</span>
-          {measured ? ` (khoảng ${formatLength(guess.analysis)})` : ""}: trong lúc đó đừng tắt máy, đừng cho máy ngủ và đừng bấm
+          {measured ? ` (khoảng ${formatLength(guess.analysis)})` : " (truyện dài có thể mất nhiều giờ)"}: trong lúc đó đừng tắt máy, đừng cho máy ngủ và đừng bấm
           Dừng. Dừng giữa chừng rồi chạy tiếp sẽ ra cách phân vai khác với chạy liền một mạch - cần máy rảnh một lúc thì bấm{" "}
           <span className="font-semibold">Tạm dừng</span>, an toàn mọi lúc. Qua giai đoạn này thì dừng lúc nào cũng được.
         </p>
       </div>
+      {restart && (
+        <div className="mt-3 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
+          <Info className="mt-0.5 size-4 shrink-0 text-info" />
+          <p className="text-pretty">
+            Phân tích làm lại từ đầu, như một cuốn mới. Bản dở “{restart.title}” vào Thùng rác khi cuốn mới tạo xong (bìa đi
+            theo); file truyện gốc không bị đụng.
+          </p>
+        </div>
+      )}
+      {creditLines > 0 && !dropCredits && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-panel p-4 text-sm">
+          <Sparkles className="size-4 shrink-0 text-accent-text" />
+          <p className="min-w-0 flex-1 text-pretty">
+            Còn một gợi ý chưa áp: {formatNumber(creditLines)} dòng ghi công người dịch ở đầu chương sẽ vẫn được đọc như lời kể.
+            Đổi sau khi đã phân tích là đổi cả quyển, nên chọn ngay bây giờ.
+          </p>
+          <Button variant="secondary" size="sm" onClick={onReview}>
+            Xem gợi ý
+          </Button>
+        </div>
+      )}
       <label className="mt-4 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="start-now">
         <Switch id="start-now" checked={startNow} onCheckedChange={setStartNow} />
         <span>
@@ -1359,9 +1395,15 @@ export function NewProjectScreen() {
       ...(redo.analysisModel ? { analysisModel: redo.analysisModel } : {}),
       profile: (PROFILE_VALUES as string[]).includes(redo.profile) ? (redo.profile as Profile) : "high_quality",
       dropCredits: redo.dropCreditLines,
-      replaces: { id: redoId, title: redo.title, ...(redo.seedFrom ? { seedFrom: redo.seedFrom } : {}) },
+      replaces: {
+        id: redoId,
+        title: redo.title,
+        ...(redo.seedFrom ? { seedFrom: redo.seedFrom } : {}),
+        ...(redo.analysisInterrupted ? { restart: true } : {}),
+      },
     });
-    setParams({}, { replace: true });
+    // Làm lại phân tích: không có gì để chọn lại - thẳng bước Xác nhận (lựa chọn cũ đã điền sẵn, vẫn đổi được ở các bước trước).
+    setParams(redo.analysisInterrupted ? { step: "3" } : {}, { replace: true });
   }, [redoId, redo, setParams, navigate]);
   useEffect(() => {
     if (redoError) toast.error("Không đọc được thiết lập của sách", { description: (redoError as Error).message });
@@ -1536,9 +1578,11 @@ export function NewProjectScreen() {
               ? "Không có thiết lập nào thay đổi"
               : volumes > 1
                 ? `Đã tạo ${volumes} phần`
-                : draft.replaces
-                  ? "Đã tạo lại sách với thiết lập mới"
-                  : "Đã tạo sách",
+                : draft.replaces?.restart
+                  ? "Đã làm lại sách từ đầu"
+                  : draft.replaces
+                    ? "Đã tạo lại sách với thiết lập mới"
+                    : "Đã tạo sách",
             {
               description:
                 [
@@ -1653,13 +1697,17 @@ export function NewProjectScreen() {
                   const { folder } = await api<{ folder: string }>("/api/sources/split", { method: "POST", body: { path } });
                   // File đã chọn thẳng: thư mục chương thay chỗ nó. File nằm trong một thư mục đã chọn: thêm thư mục chương,
                   // bỏ file cả truyện khỏi danh sách (vẫn hoàn tác được như mọi chương bỏ tay).
-                  const replaced = draft.paths.includes(path);
+                  // Đường người dùng gõ ("D:/Truyện/a.txt") khác dạng đường máy quét ("D:\Truyện\a.txt"): so bằng samePath.
+                  const replaced = draft.paths.some((item) => samePath(item, path));
                   update(
                     replaced
-                      ? { paths: draft.paths.map((item) => (item === path ? folder : item)), excluded: [], limit: null, volumeStarts: null }
+                      ? { paths: draft.paths.map((item) => (samePath(item, path) ? folder : item)), excluded: [], limit: null, volumeStarts: null }
                       : { paths: [...draft.paths, folder], excluded: [...draft.excluded, path], limit: null, volumeStarts: null },
                   );
-                  toast.success("Đã tách thành các chương", { description: folder });
+                  const chapters = scan?.files.find((file) => samePath(file.path, path))?.split?.chapters;
+                  toast.success(chapters ? `Đã tách thành ${formatNumber(chapters)} chương` : "Đã tách thành các chương", {
+                    description: "File gốc vẫn giữ nguyên.",
+                  });
                 } catch (error) {
                   toast.error("Không tách được", { description: (error as Error).message });
                 }
@@ -1698,7 +1746,10 @@ export function NewProjectScreen() {
               precastWait={Boolean(draft.precastWait)}
               setPrecastWait={(precastWait) => update({ precastWait })}
               dropCredits={Boolean(draft.dropCredits)}
+              creditLines={creditSummary(scan.files).lines}
               analysisModel={draft.analysisModel ?? ""}
+              restart={draft.replaces?.restart ? { title: draft.replaces.title } : undefined}
+              onReview={() => go(0)}
             />
           )}
           {/* Ghim ở đáy vùng cuộn: bước xác nhận dài (thêm dòng "Dòng ghi công"...) đẩy nút tạo xuống dưới nếp màn hình - soát

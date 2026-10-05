@@ -19,6 +19,31 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   thường. Dòng bảng hệ thống trong 【…】 cũng vậy. Dấu ngoặc ấy không được đọc thành tiếng. Ngoặc nằm giữa câu kể ("kỹ năng [Hỏa Cầu]") vẫn là lời người kể.
 - Máy phân tích thấy ai vừa nói ở 9 đoạn ngay trước mỗi lượt nó đọc, nên đối đáp không lời dẫn vắt qua hai lượt ít bị gán nhầm người
   hơn (đo trên truyện Nhật: ít hơn hẳn lỗi "câu sau lặp người nói câu trước"); thời gian phân tích như cũ.
+- Phân tích bị ngắt giữa chừng (bấm Dừng, tắt máy): trang dự án nay đưa "Làm lại phân tích từ đầu" làm nút chính - chạy tiếp từ chỗ ngắt ra một
+  cuốn sách khác so với chạy liền một mạch (người nói và giọng đoạn sau có thể đổi). "Tiếp tục" vẫn còn, kèm lời cảnh báo; hộp "Dừng" nói thẳng là dừng
+  giữa lúc phân tích thì mất phần đã phân tích, còn "Tạm dừng" thì giữ.
+- Bước "Xác nhận" khi tạo sách ghi rõ model sẽ đọc hiểu truyện (cả khi là mặc định), nói truyện dài có thể mất nhiều giờ, và nhắc nếu còn gợi ý bỏ dòng ghi công chưa chọn.
+- "Duyệt trước khi thu": câu mẫu chưa thu không còn nút ▶ báo lỗi - ghi "chưa thu" thay vào đó. Tab "Kịch bản" của chương chưa thu nói rõ vì sao chưa có nút ▶ cạnh câu.
+- Hộp "Xuất" ghi cỡ file .abook đã tính cả nhạc nền đi kèm (trước đây báo "khoảng 0 MB" trong khi file thật hàng chục MB); nhạc chưa tải về máy thì nói còn bao nhiêu bài.
+- Người nói không tên không còn hiện chữ "Unknown" trong các thẻ "Việc cần duyệt" - gọi là "Vai phụ không tên" như tab Kịch bản - và không bị hỏi "nam hay nữ?".
+- Bảng chương: cột "Độ dài" giải thích khi rê chuột là số phút (chương đã thu) hay số câu (chưa thu).
+- Hộp "Xuất": nói trước file sẽ lưu ở đâu; lúc đóng gói hiện thanh chạy kèm số chương ngay trong hộp (đóng hộp vẫn được, việc chạy tiếp và báo
+  khi xong); xong thì hộp ghi đường file đã lưu và có nút "Mở thư mục". "Chữ sáng theo giọng đọc" nói rõ là tuỳ chọn, mất khoảng vài phút, nút
+  đổi thành "Thêm chữ sáng".
+- Tạo sách, bước chọn file: gõ đường dẫn có dấu "/" (hay khác dạng với đường máy quét) vẫn nhận ra file đã tách chương - không còn giữ cả file
+  lẫn thư mục tách ("0000 Mở đầu", "2 tập") - và thông báo sau khi tách không còn hiện đường dẫn hệ thống. Ô đường dẫn ngắn gọn hơn ở điện
+  thoại, nút "Lấy chương" thay cho "Mở"; phần hướng dẫn thành ba gạch đầu dòng, bỏ đoạn lặp trong khung thả file.
+- "Nâng cao: model đọc hiểu truyện": model mặc định đứng đầu kèm một dòng giải thích; các model khác nằm riêng dưới "Model khác (thử nghiệm)",
+  mỗi cái ghi cỡ tham số, bộ nhớ card cần và nặng / nhẹ hơn mặc định.
+- Trang dự án trên điện thoại gọn lại: bìa nhỏ nằm cạnh tên sách, nút gom ít hàng hơn, hàng tab có mũi tên báo còn tab ("Nhân vật", "Nhạc
+  nền", "Nhật ký"...) và tự cuộn tới tab đang mở. Giữ chờ duyệt: chỉ còn MỘT nút "Thu âm" ở đầu trang (trước đây "Tiếp tục" và "Thu âm"
+  cùng làm một việc), chip ghi "Chờ bạn duyệt"; thẻ đã nằm ở "Duyệt trước khi thu" không hiện lặp ở "Việc cần duyệt".
+- Chọn giọng: giọng đang dùng không còn ghi "Chưa ai dùng"; nhóm giọng gọi "Giọng chính" / "Giọng thêm" thay vì tên máy đọc.
+- Tên sách gợi ý lấy từ dòng tiêu đề của truyện khi cả truyện nằm trong một file (thay vì tên file); tên chương bỏ số thứ tự đầu file ("0000 Mở
+  đầu" thành "Mở đầu").
+- Danh sách dự án không ghi tên thư mục thư viện; cùng trạng thái thì chip cùng màu ở danh sách và trang dự án. Tab Nhạc nền: ô chọn không còn
+  bị cắt chữ. Tab Kịch bản: không lặp "Bình thường · vừa" dưới mọi câu (chỉ hiện khi khác mặc định hay khi chọn câu), tên người viết giống tab
+  Nhân vật. Thông báo nổi dời lên góc trên bên phải, không che nút ở đáy trang.
 
 ## [0.4.27] - 2026-10-04
 

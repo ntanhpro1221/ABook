@@ -94,3 +94,41 @@ def test_changing_nothing_keeps_the_book_instead_of_throwing_it_away(studio, tmp
         "firstPerson": plan["firstPerson"], "replaces": old, "start": False})
     assert status == 201 and created["id"] == old and created.get("unchanged") is True
     assert recycled == [] and old_root.is_dir()
+
+
+def test_an_analysis_cut_short_is_flagged_and_can_be_restarted_from_scratch(studio, tmp_path: Path,  # noqa: F811
+                                                                             recycled: list[Path]) -> None:
+    """Soát UX a8: sau Dừng giữa phân tích chỉ còn "Tiếp tục" - mà chạy tiếp ra MỘT CUỐN KHÁC (AGENTS.md). Trang dự án biết
+    phân tích dở dang (`analysisInterrupted`, số câu chờ) và "Làm lại phân tích" thay bản dở bằng dự án mới, bìa đi theo."""
+    import sqlite3
+    from contextlib import closing
+
+    _paths, app, server, _runner = studio
+    old = _created(server, tmp_path)
+    old_root = app.library.resolve(old)
+    (old_root / "cover.jpg").write_bytes(b"\xff\xd8bia")
+    status, fresh = _call(server, "GET", f"/api/books/{old}")
+    fresh = fresh["book"]
+    assert fresh["analysisInterrupted"] is False and fresh["segments"]["pending"] == 0, "chưa bắt đầu: không có gì dở dang"
+
+    with closing(sqlite3.connect(old_root / "project.sqlite3")) as db:  # phân tích tách 3 câu, mới xong 1 thì bị ngắt
+        chapter = db.execute("SELECT MIN(id) FROM chapters").fetchone()[0]
+        for seq, status in enumerate(("analyzed", "pending", "pending")):
+            db.execute("INSERT INTO segments(stable_id, chapter_id, seq, text, text_sha256, kind_hint, status, updated_at)"
+                       " VALUES (?, ?, ?, 'Câu.', 'x', 'narration', ?, 0)", (f"s{seq}", chapter, seq, status))
+        db.commit()
+    status, cut = _call(server, "GET", f"/api/books/{old}")
+    cut = cut["book"]
+    assert cut["analysisInterrupted"] is True and 0 < cut["segments"]["pending"] == 2 < cut["segments"]["total"]
+    status, plan = _call(server, "GET", f"/api/books/{old}/redo")
+    assert plan["started"] is False and plan["analysisInterrupted"] is True
+
+    status, created = _call(server, "POST", "/api/books", {
+        "paths": plan["paths"], "title": plan["title"], "profile": plan["profile"], "narrator": plan["narrator"],
+        "firstPerson": plan["firstPerson"], "replaces": old, "start": False})
+    assert status == 201, created
+    assert recycled == [old_root.resolve()], "bản dở vào Thùng rác TRƯỚC, nên dự án mới không mở lại nó"
+    status, again = _call(server, "GET", f"/api/books/{created['id']}")
+    again = again["book"]
+    assert again["analysisInterrupted"] is False and again["segments"]["analyzed"] == 0, "bắt đầu lại từ câu đầu"
+    assert (app.library.resolve(created["id"]) / "cover.jpg").read_bytes() == b"\xff\xd8bia"

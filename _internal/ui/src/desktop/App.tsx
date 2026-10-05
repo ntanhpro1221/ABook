@@ -543,9 +543,11 @@ export function App() {
         </PlayerProvider>
       </SourceProvider>
       <Toaster
-        position={narrow || modalOpen ? "top-center" : "bottom-right"}
-        // Đáy nâng lên khi có thanh "Đang phát trên điện thoại" (RemotePhone.tsx đặt --toast-bottom).
-        offset={{ top: modalOpen ? 16 : 96, right: 96, left: 96, bottom: "var(--toast-bottom, 96px)" }}
+        // Góc trên bên phải: nút chính của các trang Studio nằm ở giữa / bên trái và thanh dưới (thanh phát, thanh Tạo sách) ở đáy -
+        // thông báo ở góc dưới phải từng che nút "Tiếp tục" / "Tạo" ngay sau khi bấm (soát UX a8 05-10, mục 22).
+        position={narrow || modalOpen ? "top-center" : "top-right"}
+        offset={{ top: narrow && !modalOpen ? 96 : 16, right: 16, left: 96, bottom: "var(--toast-bottom, 96px)" }}
+        visibleToasts={2}
         containerAriaLabel="Thông báo"
         // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.
         className="pointer-events-auto"
