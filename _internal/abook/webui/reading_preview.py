@@ -29,7 +29,7 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Callable
 
-from ..database import LISTENER_PRONUNCIATION_SOURCE
+from ..database import LISTENER_PRONUNCIATION_SOURCE, thought_reads_as_narrator
 from ..listener_overrides import surface_key
 from ..tts_pool import ReadOnlyVoiceDB
 from . import store
@@ -316,7 +316,8 @@ class ReadingPreviews:
         code_id, code_root = self._code(studio, Path(project))
         key = self._key(overlay, line, code_id, key_name, spoken)
         view = {"segmentId": int(line["id"]), "text": line_text(line),
-                "speaker": speaker_label("NARRATOR" if str(line["kind"]) == "thought" else str(line["speaker"] or ""))}
+                "speaker": speaker_label("NARRATOR" if thought_reads_as_narrator(line["kind"], line["speaker"], line["voice_profile_id"])
+                                      else str(line["speaker"] or ""))}
         url = f"/media/books/{book}/reading-previews/{key}.wav"
         target = self.root / book / f"{key}.wav"
         if self._reuse(target):
@@ -413,7 +414,7 @@ class ReadingPreviews:
             settings_hash = connection.execute("SELECT settings_hash FROM book WHERE id=1").fetchone()
         profiles = [dict(overlay.voice_profile(int(line["voice_profile_id"])))]
         try:
-            profiles.append(dict(overlay.voice_profile_by_key("narrator")))  # câu nội tâm đọc bằng giọng người kể
+            profiles.append(dict(overlay.voice_profile_by_key("narrator")))  # câu nội tâm không rõ người nghĩ đọc bằng giọng người kể
         except KeyError:
             pass
         material = [code_id, str(settings_hash[0]) if settings_hash else "", int(line["id"]),

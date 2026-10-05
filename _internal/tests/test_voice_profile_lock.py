@@ -854,9 +854,11 @@ def test_repair_uses_effective_frame_cap_for_inference_and_ceiling_detection(
     assert metrics["generation_endpoint_active"] == 1.0
 
 
-def test_thought_always_uses_narrator_profile_even_if_row_contains_character_cast(
+@pytest.mark.parametrize("speaker", ["Lucien", "NARRATOR", "unknown", ""])
+def test_a_thought_uses_its_thinkers_profile_and_only_an_unattributed_one_the_narrator(
     tmp_path: Path,
     monkeypatch,
+    speaker: str,
 ) -> None:
     db = ProjectDB(tmp_path / "project.sqlite3")
     narrator_profile_id = db.upsert_voice_profile({
@@ -883,7 +885,7 @@ def test_thought_always_uses_narrator_profile_even_if_row_contains_character_cas
         "stable_id": "thought_1",
         "text": "‘Mình phải làm gì đây?’",
         "kind": "thought",
-        "speaker": "Lucien",
+        "speaker": speaker,
     }
     generated: dict[str, object] = {}
 
@@ -904,9 +906,14 @@ def test_thought_always_uses_narrator_profile_even_if_row_contains_character_cas
 
     spoken_row = generated["row"]
     profile = generated["profile"]
-    assert spoken_row["speaker"] == "NARRATOR"
-    assert int(spoken_row["voice_profile_id"]) == narrator_profile_id
-    assert str(profile["voice_key"]) == "narrator"
+    if speaker == "Lucien":
+        assert spoken_row["speaker"] == "Lucien"
+        assert int(spoken_row["voice_profile_id"]) == character_profile_id
+        assert str(profile["voice_key"]) == "lucien"
+    else:
+        assert spoken_row["speaker"] == "NARRATOR"
+        assert int(spoken_row["voice_profile_id"]) == narrator_profile_id
+        assert str(profile["voice_key"]) == "narrator"
 
 
 def test_every_sampling_cap_can_actually_bind() -> None:
