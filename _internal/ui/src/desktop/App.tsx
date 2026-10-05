@@ -51,6 +51,7 @@ function EmptyLibrary() {
   // Người mới mở app thường có sẵn một file truyện: nghe ngay là việc chính, làm sách nói (Studio) là việc kế. Máy điều khiển từ xa không
   // thêm file được thì Studio vẫn là nút chính.
   const canAdd = Boolean(useSource().textImport);
+  const openBookPath = useOpenBookPath();
   return (
     <EmptyState
       icon={Headphones}
@@ -58,7 +59,7 @@ function EmptyLibrary() {
       className="mt-12 rounded-2xl border border-dashed border-line"
       action={
         <div className="flex flex-wrap justify-center gap-2">
-          <AddBookButton variant="primary" size="lg" />
+          <AddBookButton variant="primary" size="lg" onBookFile={openBookPath} />
           <Button variant={canAdd ? "secondary" : "primary"} size={canAdd ? "md" : "lg"} icon={Clapperboard} onClick={() => navigate("/studio/new")}>
             Tạo sách nói
           </Button>
@@ -374,6 +375,15 @@ function UpdateListener() {
   return null;
 }
 
+/** Hộp "Thêm sách từ file…" nhận được .abook / .abookproj (dán đường dẫn, kể cả từ trình duyệt): mở như "Mở file sách". */
+function useOpenBookPath() {
+  const opened = useOpenedBook();
+  return useCallback(
+    async (path: string) => opened(await api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: { path } })),
+    [opened],
+  );
+}
+
 /** "Mở file sách": hộp chọn file của Windows (chỉ có trong cửa sổ app), nhập vào thư viện, mở trang sách. */
 function OpenBookFileButton({ variant = "secondary" }: { variant?: "secondary" | "ghost" }) {
   const { data: info } = useAppInfo();
@@ -409,12 +419,13 @@ function StudioChipLink({ id }: { id: string }) {
 function LibraryRoute() {
   const navigate = useNavigate();
   const { data: info } = useAppInfo();
+  const openBookPath = useOpenBookPath();
   return (
     <LibraryScreen
       empty={<EmptyLibrary />}
       header={
         <div className="flex flex-wrap justify-end gap-2">
-          <AddBookButton />
+          <AddBookButton onBookFile={openBookPath} />
           <OpenBookFileButton />
         </div>
       }
