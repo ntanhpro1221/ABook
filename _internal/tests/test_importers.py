@@ -300,7 +300,7 @@ def test_remote_upload_accepts_the_new_book_types(tmp_path: Path) -> None:
     library = tmp_path / "lib"
     library.mkdir()
     for name in ("sach.docx", "sach.pdf", "sach.epub", "1.txt"):
-        assert actions.upload_source(library, "Tải", name, b"x").is_dir()
+        assert actions.upload_source(library, "Tải", name, b"x").is_file()
     with pytest.raises(ValueError, match=r"\.docx"):
         actions.upload_source(library, "Tải", "sach.mobi", b"x")
 
