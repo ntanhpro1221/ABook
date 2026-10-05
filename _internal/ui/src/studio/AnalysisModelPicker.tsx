@@ -22,26 +22,42 @@ interface AnalysisModels {
 /** Tên model như người đọc thấy: bỏ đuôi ":latest" (Ollama tự thêm). */
 export const modelLabel = (name: string) => name.replace(/:latest$/, "");
 
-function describe(model: AnalysisModel): string {
-  const size = model.size ? `${(model.size / 1e9).toFixed(1).replace(".", ",")} GB` : "";
+const gigabytes = (bytes: number) => `${(bytes / 1e9).toFixed(1).replace(".", ",")} GB`;
+
+/** Gợi ý một dòng cho model khác (chỉ từ những gì Ollama báo): cỡ và nặng nhẹ so với mặc định. Model nặng hơn = cần card đồ hoạ
+ *  nhiều bộ nhớ hơn và chạy chậm hơn; "bộ nhớ card" ước theo cỡ file model, chưa tính phần ngữ cảnh. */
+export function modelHint(model: AnalysisModel, defaultSize = 0): string {
+  const parts: string[] = [];
   // "4.0B" -> "4 tỉ tham số": người đọc không cần biết ký hiệu B (soát UX a5 01-10).
   const billions = Number.parseFloat(model.parameters);
-  const parameters = Number.isFinite(billions) && /b$/i.test(model.parameters.trim())
-    ? `${String(Math.round(billions * 10) / 10).replace(".", ",")} tỉ tham số`
-    : model.parameters;
-  return [modelLabel(model.name), parameters, size].filter(Boolean).join(" · ");
+  if (Number.isFinite(billions) && /b$/i.test(model.parameters.trim())) parts.push(`${String(Math.round(billions * 10) / 10).replace(".", ",")} tỉ tham số`);
+  else if (model.parameters) parts.push(model.parameters);
+  if (model.size) {
+    parts.push(`khoảng ${gigabytes(model.size)} bộ nhớ card`);
+    if (defaultSize > 0) {
+      if (model.size > defaultSize * 1.3) parts.push("nặng và chậm hơn mặc định");
+      else if (model.size < defaultSize * 0.75) parts.push("nhẹ và nhanh hơn mặc định");
+    }
+  }
+  return parts.join(" · ");
 }
 
-/** Ô chọn ở bước Chất lượng; không có model nào khác mặc định (hay Ollama tắt) thì không hiện gì - không có gì để chọn. */
-export function AnalysisModelPicker({ value, onChange }: { value: string; onChange: (model: string) => void }) {
-  const { data } = useQuery({
+/** Model mặc định + các model đang có (bước Chất lượng và bước Xác nhận dùng chung một lần hỏi). */
+export function useAnalysisModels() {
+  return useQuery({
     queryKey: ["analysis-models"],
     queryFn: () => api<AnalysisModels>("/api/analysis-models"),
     staleTime: 60_000,
   });
+}
+
+/** Ô chọn ở bước Chất lượng; không có model nào khác mặc định (hay Ollama tắt) thì không hiện gì - không có gì để chọn. */
+export function AnalysisModelPicker({ value, onChange }: { value: string; onChange: (model: string) => void }) {
+  const { data } = useAnalysisModels();
   if (!data) return null;
   const others = data.models.filter((model) => modelLabel(model.name) !== modelLabel(data.default));
   if (!others.length) return null;
+  const defaultSize = data.models.find((model) => modelLabel(model.name) === modelLabel(data.default))?.size ?? 0;
   return (
     <details className="group mt-8 max-w-2xl" open={Boolean(value)}>
       <summary className="cursor-pointer text-sm font-medium text-fg-2 hover:text-fg">
@@ -60,13 +76,23 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 h-9 w-full max-w-lg rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
       >
-        <option value="">{modelLabel(data.default)} (mặc định)</option>
-        {others.map((model) => (
-          <option key={model.name} value={model.name}>
-            {describe(model)}
-          </option>
-        ))}
+        <option value="">Mặc định - {modelLabel(data.default)}</option>
+        <optgroup label="Model khác (thử nghiệm)">
+          {others.map((model) => {
+            const hint = modelHint(model, defaultSize);
+            return (
+              <option key={model.name} value={model.name}>
+                {hint ? `${modelLabel(model.name)} - ${hint}` : modelLabel(model.name)}
+              </option>
+            );
+          })}
+        </optgroup>
       </select>
+      <p className="mt-1.5 text-[13px] text-fg-2 text-pretty">
+        {value
+          ? "Model thử nghiệm: chưa được kiểm trên nhiều truyện, kết quả có thể kém hơn mặc định."
+          : "Mặc định: máy đề xuất cho hầu hết các truyện, không cần chỉnh gì."}
+      </p>
     </details>
   );
 }

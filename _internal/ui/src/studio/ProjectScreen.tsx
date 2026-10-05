@@ -15,6 +15,7 @@ import {
   Play,
   SlidersHorizontal,
   RefreshCw,
+  RotateCcw,
   Square,
   Trash2,
   Users,
@@ -82,7 +83,7 @@ import type { CastMember } from "@/listen/model";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { ExportDialog } from "@/studio/ExportBook";
-import { PrecastBanner, PrecastReview, PrecastWaitSwitch } from "./PrecastReview";
+import { PrecastBanner, PrecastReview, PrecastWaitSwitch, usePrecastKeys } from "./PrecastReview";
 import { canReview } from "./precast";
 
 /** Phát một chương ngay trong Studio (nghe kiểm tra) bằng chính trình phát của phía Nghe - ở chế độ "nghe kiểm":
@@ -240,8 +241,9 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
           <div className="text-pretty">
             <p>
-              Phân tích là bước duy nhất không nên ngắt. Chạy tiếp sau khi dừng sẽ ra <span className="font-semibold">một cuốn
-              sách khác</span> so với chạy liền một mạch: đoạn sau chỗ dừng có thể đổi người nói, kéo theo đổi giọng.
+              <span className="font-semibold">Dừng giữa lúc phân tích là mất phần phân tích đã làm.</span> Chạy tiếp sau đó sẽ ra{" "}
+              <span className="font-semibold">một cuốn sách khác</span> so với chạy liền một mạch: đoạn sau chỗ dừng có thể đổi
+              người nói, kéo theo đổi giọng.
             </p>
             <p className="mt-2 text-fg-2">
               Nên để chạy hết bước này{book.eta ? ` (${formatEta(book.eta.seconds)})` : ""}.
@@ -249,10 +251,10 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
                 <>
                   {" "}
                   Muốn nghỉ giữa chừng thì bấm <span className="font-medium text-fg">Tạm dừng</span>: sách đứng yên (sau phần
-                  đang làm dở) và làm tiếp đúng chỗ, không đổi gì - nhưng vẫn giữ bộ nhớ card đồ hoạ.
+                  đang làm dở) và làm tiếp đúng chỗ, giữ nguyên phần đã phân tích - nhưng vẫn giữ bộ nhớ card đồ hoạ.
                 </>
               )}{" "}
-              Nếu buộc phải dừng hẳn (tắt máy), hãy tạo lại sách từ đầu thay vì chạy tiếp bản dở.
+              Nếu buộc phải dừng hẳn (tắt máy), trang sách sẽ có nút “Làm lại phân tích từ đầu” - nên dùng nó thay vì chạy tiếp bản dở.
             </p>
           </div>
         </div>
@@ -471,7 +473,7 @@ function Actions({ book }: { book: BookSummary }) {
   const analyzed = book.segments.total > 0 && book.segments.analyzed === book.segments.total;
   const next = useContinuation(book.id, analyzed).data?.paths.length ?? 0;
   return (
-    <div className="mt-5 flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 sm:mt-5">
       {book.chapters.completed > 0 && (
         // Một nút chính mỗi lúc: sách xong mà còn thay đổi chờ áp thì "Áp dụng" là việc chính, không phải hai nút cam cạnh nhau
         // (soát UX 29-09).
@@ -479,6 +481,7 @@ function Actions({ book }: { book: BookSummary }) {
           variant={book.phase === "done" && !book.pendingChanges ? "primary" : "secondary"}
           size="lg"
           icon={Headphones}
+          className="max-sm:flex-1"
           onClick={() => navigate(`/book/${book.id}`)}
         >
           Nghe trong Thư viện
@@ -508,8 +511,15 @@ function Actions({ book }: { book: BookSummary }) {
         // Tạm dừng giữ tiến trình sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích; "Dừng" kết thúc lượt chạy.
         <>
           {book.paused ? (
-            <Button variant="primary" size="lg" icon={Play} loading={pause.isPending} onClick={() => pause.mutate({ id: book.id, paused: false })}>
-              Tiếp tục
+            // Giữ chờ duyệt: "Tiếp tục" và "Thu âm" là MỘT việc - chỉ có nút này, tên là "Thu âm" (soát UX a8 05-10, mục 12).
+            <Button
+              variant="primary"
+              size="lg"
+              icon={book.precast?.held ? Mic2 : Play}
+              loading={pause.isPending}
+              onClick={() => pause.mutate({ id: book.id, paused: false })}
+            >
+              {book.precast?.held ? "Thu âm" : "Tiếp tục"}
             </Button>
           ) : book.canPause ? (
             <Button variant="outline" size="lg" icon={Pause} loading={pause.isPending} onClick={() => pause.mutate({ id: book.id, paused: true })}>
@@ -533,6 +543,26 @@ function Actions({ book }: { book: BookSummary }) {
               Sửa thiết lập
             </Button>
           )}
+        </>
+      ) : book.phase !== "done" && book.analysisInterrupted ? (
+        // Phân tích bị ngắt: chạy tiếp ra MỘT CUỐN KHÁC (AGENTS.md) - nút chính là làm lại từ đầu, "Tiếp tục" lùi xuống kèm
+        // lời cảnh báo. Làm lại = dự án mới thay bản dở (cần máy tính: Studio từ xa không tạo lại sách được).
+        <>
+          {!remote && (
+            <Button variant="primary" size="lg" icon={RotateCcw} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
+              Làm lại phân tích từ đầu
+            </Button>
+          )}
+          <Button variant={remote ? "primary" : "outline"} size="lg" icon={Play} loading={start.isPending} onClick={() => begin(book.id)}>
+            Tiếp tục
+          </Button>
+          <p className="basis-full text-pretty text-sm text-fg-2">
+            Phân tích đã bị ngắt giữa chừng
+            {book.segments.total ? ` (còn ${formatNumber(book.segments.pending ?? book.segments.total - book.segments.analyzed)}/${formatNumber(book.segments.total)} câu chưa phân tích)` : ""}.
+            {remote ? " " : " Làm lại từ đầu cho kết quả như chạy liền một mạch (bản dở vào Thùng rác). "}
+            “Tiếp tục” vẫn chạy được nhưng ra một cuốn sách khác so với chạy liền mạch: đoạn sau chỗ ngắt có thể đổi người nói và
+            giọng đọc{remote ? ". Muốn làm lại từ đầu, mở trang này trên máy tính." : "."}
+          </p>
         </>
       ) : book.phase !== "done" ? (
         <Button variant="primary" size="lg" icon={Play} loading={start.isPending} onClick={() => begin(book.id)}>
@@ -783,7 +813,7 @@ function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[
         <span>Chương</span>
         <span>Trạng thái</span>
         {/* Màn hẹp (điện thoại, Studio từ xa) chỉ còn #, chương, trạng thái - soát UX 29-09: 5 cột cố định vỡ ở 375px. */}
-        <span className="hidden text-right lg:block">Độ dài</span>
+        <span className="hidden text-right lg:block" title="Số phút khi chương đã có audio; chưa có thì số câu của chương">Độ dài</span>
         <span className="hidden text-right lg:block">Xong lúc</span>
         <span />
       </div>
@@ -889,8 +919,10 @@ export function ProjectScreen() {
   const reviewCount = useReviewCount(id ?? "");
   const remoteStudio = Boolean(useAppInfo().data?.remote);
   // Việc từ điện thoại chờ duyệt (webui/edits_inbox.py) cộng vào số của tab: chỉ trên chính máy tính (Studio từ xa không có đường này).
-  const workCount = useWorkCount(id ?? "") + useInboxCount(id ?? "", !remoteStudio);
   const { data, isLoading, error } = useBook(id);
+  // Thẻ đã nằm ở "Duyệt trước khi thu" thì "Việc cần duyệt" không hiện lại và không đếm lại.
+  const precastKeys = usePrecastKeys(id ?? "", Boolean(data && canReview(data.book)));
+  const workCount = Math.max(0, useWorkCount(id ?? "") - (precastKeys?.size ?? 0)) + useInboxCount(id ?? "", !remoteStudio);
   const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
   const [merging, setMerging] = useState<CastMember | null>(null);
   const [renaming, setRenaming] = useState<CastMember | null>(null);
@@ -963,12 +995,15 @@ export function ProjectScreen() {
       <button type="button" onClick={() => navigate("/studio")} className="inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
-      {/* Màn hẹp (Studio từ xa trên điện thoại): bìa trên, tên và nút dưới - cạnh nhau thì nút tràn mép. */}
-      <header className="mt-5 flex flex-col gap-5 sm:flex-row sm:gap-7">
+      {/* Màn hẹp (điện thoại): bìa nhỏ cạnh tên sách, hàng nút nằm dưới cả hai (soát UX a8 05-10: bìa to + tên + 3 hàng nút
+          chiếm ~590 px, tab bắt đầu ở cuối màn). Từ sm trở lên: bìa bên trái, tên và nút bên phải. `contents` làm cột phải biến
+          mất khỏi lưới ở màn hẹp để hàng nút tự chiếm cả hai cột mà vẫn chỉ có một bản của các nút. */}
+      <header className="mt-5 grid grid-cols-[6rem_minmax(0,1fr)] gap-x-4 gap-y-4 sm:flex sm:gap-7">
         <CoverEditor book={book} />
-        <div className="min-w-0 flex-1 pt-1">
+        <div className="contents sm:block sm:min-w-0 sm:flex-1 sm:pt-1">
+          <div className="min-w-0 sm:contents">
           <StatusPill
-            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.statusLabel}
+            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.paused && book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
             tone={book.paused ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused}
           />
@@ -986,7 +1021,10 @@ export function ProjectScreen() {
               )}
             </p>
           ) : null}
-          <Actions book={book} />
+          </div>
+          <div className="col-span-2 sm:col-auto">
+            <Actions book={book} />
+          </div>
         </div>
       </header>
 
@@ -1058,6 +1096,8 @@ export function ProjectScreen() {
             book={book}
             kind={params.get("kind")}
             focus={params.get("card")}
+            inPrecast={precastKeys}
+            onOpenPrecast={() => setParams({ tab: "precast" })}
             onKind={(value) =>
               setParams(
                 (previous) => {

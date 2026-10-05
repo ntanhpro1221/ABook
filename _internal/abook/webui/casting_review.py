@@ -36,12 +36,20 @@ REFUSED = {
 }
 
 
-def label(raw: str) -> str:
-    if raw == NARRATOR:
-        return "Người kể"
-    if raw == UNNAMED or raw == "UNKNOWN" or raw.startswith("ANONYMOUS"):
-        return "Vai phụ không tên"
-    return speaker_label(raw)
+def display_names(connection: Any) -> dict[str, str]:
+    """canonical_name -> display_name của sổ nhân vật: tên như tab Nhân vật viết ("Người Khách"), không phải khoá sổ ("người khách")."""
+    try:
+        return {str(row["canonical_name"]): str(row["display_name"] or "")
+                for row in connection.execute("SELECT canonical_name, display_name FROM characters")}
+    except Exception:  # sách chưa qua bước phân tích nào: chưa có bảng nhân vật
+        return {}
+
+
+def label(raw: str, display: dict[str, str] | None = None) -> str:
+    """Tên người nói cho người đọc. `display` (display_names): cùng cách viết với tab Nhân vật - hai tab gọi một người bằng hai
+    kiểu chữ hoa là lỗi (soát UX a8, mục 20)."""
+    named = display.get(raw) if display and _is_person(raw) and not raw.startswith("NPC_LOCAL") else None
+    return speaker_label(named or raw)
 
 
 def choice_value(raw: str) -> str:
@@ -54,21 +62,22 @@ def _is_person(raw: str) -> bool:
     return bool(raw) and raw != NARRATOR and raw != "UNKNOWN" and not raw.startswith("ANONYMOUS")
 
 
-def _hints(connection: Any, project_root: Path, rows: list[Any], chapter_id: int | None) -> dict[str, dict[str, Any]]:
+def _hints(connection: Any, project_root: Path, rows: list[Any], chapter_id: int | None,
+           display: dict[str, str] | None = None) -> dict[str, dict[str, Any]]:
     """stable_id -> vì sao máy nghi người nói của câu ấy. Một câu nhiều tín hiệu thì giữ tín hiệu mạnh nhất: bộ chấm thứ hai
     (đo được) > hai câu liền nhau cùng người (38/42 sai) > lời gọi."""
     hints: dict[str, dict[str, Any]] = {}
     speech = [row for row in rows if str(row["kind"]) != "narration"]
     for row in speech:
         if calls_themselves(row):
-            name = label(str(row["speaker"]))
+            name = label(str(row["speaker"]), display)
             hints[str(row["stable_id"])] = {
                 "kind": "vocative",
                 "note": f"Câu mở đầu bằng lời gọi {name} - người được gọi thường là người nghe, không phải người nói.",
             }
     order = {str(row["stable_id"]): index for index, row in enumerate(speech)}
     for first, second in merged_turns(connection, chapter_id):
-        name = label(str(second["speaker"]))
+        name = label(str(second["speaker"]), display)
         hint: dict[str, Any] = {
             "kind": "turn",
             "note": f"Câu liền trước cũng của {name}, đoạn này không có lời dẫn - thường là người kia đáp lại.",
@@ -86,19 +95,20 @@ def _hints(connection: Any, project_root: Path, rows: list[Any], chapter_id: int
         choice = str(doubt.get("choice") or "")
         hints[str(row["stable_id"])] = {
             "kind": "speaker",
-            "note": f"Bộ chấm thứ hai chắc {round(certainty * 100)}% là {label(choice)}.",
+            "note": f"Bộ chấm thứ hai chắc {round(certainty * 100)}% là {label(choice, display)}.",
             "suggest": choice,
         }
     return hints
 
 
-def _wish(connection: Any, row: Any, wish: dict[str, str] | None, as_kind: str = "") -> dict[str, Any] | None:
+def _wish(connection: Any, row: Any, wish: dict[str, str] | None, as_kind: str = "",
+          display: dict[str, str] | None = None) -> dict[str, Any] | None:
     """Yêu cầu của người nghe cho câu này và nó đang ở đâu: chờ ranh giới chương, đã áp, hay dây chuyền sẽ từ chối (hỏi
     bằng đúng phép dây chuyền dùng - `speaker_target`). Câu đã đổi chữ thì yêu cầu tự rơi: không có gì để hiện."""
     if wish is None or wish["text_sha256"] != str(row["text_sha256"] or ""):
         return None
     value = wish["speaker"]
-    view: dict[str, Any] = {"value": value, "label": label(value)}
+    view: dict[str, Any] = {"value": value, "label": label(value, display)}
     # `as_kind`: câu đang chờ đổi từ lời kể thành lời thoại (yêu cầu `lines`) - xét như dây chuyền sẽ xét sau bước ấy.
     target, problem = speaker_target(
         connection, stable_id=str(row["stable_id"]), text_sha256=wish["text_sha256"], speaker=value, as_kind=as_kind
@@ -143,7 +153,7 @@ def casting_chapters(project_root: Path) -> dict[str, Any]:
             "SELECT id, stable_id, chapter_id, seq, text, text_sha256, speaker, kind FROM segments"
             " WHERE kind != 'narration' ORDER BY chapter_id, seq"
         ).fetchall()
-        hints = _hints(connection, project_root, speech, None)
+        hints = _hints(connection, project_root, speech, None, display_names(connection))
         cast_ready = connection.execute(
             "SELECT 1 FROM segments WHERE voice_profile_id IS NOT NULL LIMIT 1"
         ).fetchone() is not None
@@ -183,13 +193,14 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
             + " FROM segments WHERE chapter_id = ? ORDER BY seq",
             (chapter_id,),
         ).fetchall()
-        hints = _hints(connection, project_root, rows, chapter_id)
+        display = display_names(connection)
+        hints = _hints(connection, project_root, rows, chapter_id, display)
         wishes = {entry["stable_id"]: entry for entry in speaker_requests(read_overrides(project_root))}
         line_wishes = {entry["stable_id"]: entry for entry in line_requests(read_overrides(project_root))}
         decided = {
             str(row["stable_id"]): _wish(
                 connection, row, wishes.get(str(row["stable_id"])),
-                as_kind=str((line_wishes.get(str(row["stable_id"])) or {}).get("kind") or ""),
+                as_kind=str((line_wishes.get(str(row["stable_id"])) or {}).get("kind") or ""), display=display,
             )
             for row in rows
         }
@@ -214,14 +225,14 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         chapter_name = store.chapter_names(connection, project_root).get(chapter_id, {})
     here = Counter(str(row["speaker"]) for row in rows if str(row["kind"]) in SPEECH_KINDS)
     cast = [
-        {"value": raw, "label": label(raw), "lines": count}
-        for raw, count in sorted(here.items(), key=lambda item: (-item[1], label(item[0]).casefold()))
+        {"value": raw, "label": label(raw, display), "lines": count}
+        for raw, count in sorted(here.items(), key=lambda item: (-item[1], label(item[0], display).casefold()))
         if _is_person(raw) and raw in voiced
     ]
     # Vai phụ cục bộ của chương khác không phải người của cảnh này: ô tìm chỉ có người có tên.
     others = [
-        {"value": raw, "label": label(raw), "lines": count}
-        for raw, count in sorted(voiced.items(), key=lambda item: (-item[1], label(item[0]).casefold()))
+        {"value": raw, "label": label(raw, display), "lines": count}
+        for raw, count in sorted(voiced.items(), key=lambda item: (-item[1], label(item[0], display).casefold()))
         if _is_person(raw) and not raw.startswith("NPC_LOCAL") and raw not in here
     ][:OTHERS]
     voices = store.read_settings(project_root).get("voices")
@@ -252,7 +263,7 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
             "kind": kind,
             "speaker": raw,
             "current": choice_value(raw),
-            "label": label(raw),
+            "label": label(raw, display),
             "editable": kind in SPEECH_KINDS and bool(row["text_sha256"]),
             "hasAudio": bool(row["wav_path"]) if "wav_path" in extra else False,
             "hint": hints.get(stable_id),
@@ -270,7 +281,7 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         "previous": order[position - 1] if position > 0 else None,
         "next": order[position + 1] if 0 <= position < len(order) - 1 else None,
         "castReady": bool(voiced),
-        "firstPerson": {"value": first_person, "label": label(first_person), "chip": narrator_chip} if first_person else None,
+        "firstPerson": {"value": first_person, "label": label(first_person, display), "chip": narrator_chip} if first_person else None,
         "cast": cast,
         "others": others,
         "lines": lines,

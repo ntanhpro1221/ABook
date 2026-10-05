@@ -210,6 +210,17 @@ def _first_line(path: Path) -> str:
     return ""
 
 
+def _title_line(path: Path) -> str:
+    """Dòng đầu của file nếu trông là TIÊU ĐỀ truyện (ngắn, không kết bằng dấu câu, không phải "Chương N" hay lời thoại) - tên
+    sách gợi ý khi cả truyện nằm trong một file ("whole.txt" mà dòng đầu là "Chuyến phà cuối ngày"); "" nếu không."""
+    first = _first_line(path).lstrip("#").strip()
+    if not first or len(first) > 80 or len(first.split()) > 12:
+        return ""
+    if humanize.is_heading(first) or first[0] in "-–—“\"‘'«(" or first[-1] in ".!?…,;:\"”’»)":
+        return ""
+    return first if any(ch.isalpha() for ch in first) else ""
+
+
 def _credits_at_top(path: Path) -> list[str]:
     """Dòng ghi công người dịch / biên tập ở đầu chương (text_processing.credit_lines) - để trình tạo sách ĐỀ XUẤT bỏ
     chúng khỏi phần đọc; chỉ áp dụng khi người dùng đồng ý. Chỉ đọc 8 KB đầu file."""
@@ -345,7 +356,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
     if files and not title:
         from ..project import infer_book_title
 
-        title = _shared_folder_name(files) or infer_book_title(files)
+        title = _shared_folder_name(files) or (_title_line(files[0]) if len(files) == 1 else "") or infer_book_title(files)
     return {
         "files": rows,
         "skipped": skipped,

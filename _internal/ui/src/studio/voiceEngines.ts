@@ -44,9 +44,18 @@ export function groupByEngine<V extends EngineVoice>(voices: readonly V[]): Engi
   return groups;
 }
 
-export function sharedText(voice: EngineVoice): string {
+/** Tên nhóm cho người nghe: máy đọc chính (VieNeu) là "Giọng chính", các máy khác là "Giọng thêm" (đánh số khi có hai nhóm thêm
+ *  trở lên) - tên máy đọc là chuyện nội bộ. Trả về nhãn theo thứ tự `groups`. */
+export function plainGroupLabels(groups: readonly { engine: string }[]): string[] {
+  const extras = groups.filter((group) => group.engine !== "vieneu").length;
+  let seen = 0;
+  return groups.map((group) => (group.engine === "vieneu" ? "Giọng chính" : extras > 1 ? `Giọng thêm ${++seen}` : "Giọng thêm"));
+}
+
+/** `current`: giọng người này đang đọc - không nói "Chưa ai dùng" về một giọng đang được dùng. */
+export function sharedText(voice: EngineVoice, current = false): string {
   const others = voice.otherUsers ? `${voice.otherUsers} người khác dùng, không cùng chương` : "";
-  if (!voice.sharedWith.length) return others || "Chưa ai dùng";
+  if (!voice.sharedWith.length) return others || (current ? "Giọng đang đọc cho người này" : "Chưa ai dùng");
   const people = voice.sharedWith.map((person) => `${person.label} (${person.chapters} chương)`).join(", ");
   const after = voice.oneStep ? "hai người sẽ nghe giống hệt nhau" : "máy lấy bậc âm sắc khác";
   return `Cùng chương với ${people} - ${after}${others ? ` · ${others}` : ""}`;
