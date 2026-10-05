@@ -75,3 +75,11 @@ def test_long_turns_are_shortened() -> None:
     rows = [_row(1, "dialogue", "LUCIEN", "“" + "a" * 300 + "”"), _row(2, "dialogue", "", "“Ừ.”", status="pending")]
     line = _analyzer(rows)._previous_turns([rows[1]]).strip().splitlines()[1]
     assert line.endswith("...") and len(line) < 200
+
+
+def test_eval_branch_zero_turns_is_the_app_before_the_block(monkeypatch) -> None:
+    rows = [_row(1, "dialogue", "LUCIEN", "“Đi.”"), _row(2, "dialogue", "", "“Ừ.”", status="pending")]
+    monkeypatch.setenv("ABOOK_PREVIOUS_TURNS", "0")
+    assert _analyzer(rows)._previous_turns([rows[1]]) == ""
+    monkeypatch.setenv("ABOOK_PREVIOUS_TURNS", "4")
+    assert len(_analyzer(rows)._previous_turns([rows[1]]).strip().splitlines()) == 2
