@@ -20,6 +20,24 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   vui / buồn đúng không khí truyện hơn. Bài nhập vào vẫn dùng được và có số ngay; việc nghe kỹ chạy ngầm vài giây mỗi bài, nhẹ máy, bài chưa tới lượt giữ số cũ, tắt máy giữa chừng thì mở lại làm tiếp.
 - Bài nhập đo vui / buồn khớp thang của nhạc có sẵn hơn: ABook cập nhật bộ nghe nhạc ("Phân tích nhạc" báo có bản mới, chỉ tải phần đổi), bài đã phân tích bằng bản cũ vẫn dùng được và bạn bấm "Phân tích lại" khi muốn. Máy có Studio và điện thoại dùng chung một bộ như nhau.
 
+### Nghe
+
+- Nghe hết một cuốn rồi quay lại nghe một đoạn: trang sách giờ có "Nghe tiếp" đúng chỗ bạn dừng (trước đây chỉ còn "Nghe lại từ đầu"), cuốn ấy trở lại thẻ "Đang nghe dở", và thanh tiến độ theo chỗ đang nghe thay vì đứng ở 100%. Máy tính và điện thoại như nhau.
+- Màn "Đã nghe hết" không còn mời tập kế hai lần.
+- Sách nói có nhạc nền: nút nhạc ♪ ở trình phát (thanh dưới và màn "Đang nghe") bật/tắt nhạc và chọn mức nhạc dưới giọng đọc ngay lúc nghe, khỏi vào "Sửa tên, bìa, nhạc nền…"; trong hộp sửa sách, công tắc ghi rõ "Nhạc nền: Bật" / "Nhạc nền: Tắt".
+- "Phát trên thiết bị khác" có cả ở màn "Đang nghe", nên cửa sổ hẹp hay trình duyệt điện thoại cũng chuyển được sang loa / TV / máy khác; khi chưa thấy máy nào, menu nhắc máy kia cần bật và cùng Wi-Fi.
+- Màn "Đang nghe" ở cửa sổ thấp: bìa co lại vừa chỗ, không còn đè lên chữ "ĐANG NGHE" và tên chương; nghe hết sách thì dòng tiến độ ghi "Đã nghe hết cả cuốn" thay vì "98%".
+- Hẹn giờ tắt: lúc mở lại, tiêu điểm nằm ở mức đang đặt (và mức ấy được tô sáng), không nhảy về "5′" như thể đang chọn; ghi chú trong Cài đặt nói đúng cách nghe thêm trên màn cảm ứng ("chạm màn hình").
+- Dấu trang: giờ trong thông báo "Đã thêm dấu trang" trùng với giờ trong danh sách dấu trang (trước đây có thể lệch 1 giây).
+- Hộp "Thêm sách từ file…" (máy tính) giờ mở được cả file sách .abook / dự án .abookproj, kể cả khi dán đường dẫn từ trình duyệt; trước đây nó báo "Chưa đọc được file .abook" mà không chỉ sang "Mở file sách".
+- Cài đặt gọn hơn trên điện thoại: đầu trang có hàng mục lục bấm nhảy tới từng mục, bốn khung khoá giọng trực tuyến (Azure, Google Cloud, FPT.AI, Viettel AI) gập sẵn - đã dán khoá thì tự mở -, mục "Phím tắt" không hiện trên màn chỉ có cảm ứng. Lời mô tả mục Thư viện nói theo người nghe ("sách thêm vào hay mới làm đều nằm ở đây"), và nút bật kết nối đổi thành "Cho phép thiết bị khác kết nối qua Wi-Fi" - đúng với cả điện thoại lẫn máy tính khác cần ghép.
+- Menu "…" của trang sách: mục "Đổi giọng, sửa lời đọc, thu lại chương" bị mờ chỉ còn một dòng nói thiếu gì ("Cần cài Studio", "Cuốn này chưa có dự án Studio"), không còn ba dòng chữ nội bộ.
+- Tab Nhân vật: "Gộp vào người khác…" nằm trong menu "…" của từng người với chữ rõ ràng thay cho nút chỉ có biểu tượng; "từ Chương 1" không còn gãy dòng giữa chữ và số.
+- Thư viện: hai bản cùng tên không số (bản chỉ-chữ và bản sách nói của một truyện, hay một file nhập hai lần) không còn bị gom thành "4 tập" không số - chỉ cuốn nghe được duy nhất mới tính là Tập 1 của bộ. Tập 1 không đánh số trong tên giờ cũng có nhãn "TẬP 1" trên bìa như Tập 2.
+- Thư viện trên điện thoại: tiêu đề "Thư viện" luôn một dòng, hai nút "Thêm sách từ file…" và "Mở file sách" xuống dòng dưới.
+- Bìa tự vẽ co chữ theo cỡ bìa: bìa nhỏ (thẻ "Đang nghe dở", hộp "Sửa sách") hiện đủ tên, không cắt chữ giữa chừng hay đè nhãn "TẬP"; bìa sách chỉ-chữ không còn bị kéo dài thành hình chữ nhật dọc.
+- "Xuất file sách": menu ghi sẵn file sẽ nằm ở đâu (hay "Bạn chọn thư mục lưu ở bước kế"), và lúc đóng gói thông báo đếm thời gian đã trôi để biết máy chưa treo.
+
 ## [0.4.28] - 2026-10-05
 
 ### Giọng đọc

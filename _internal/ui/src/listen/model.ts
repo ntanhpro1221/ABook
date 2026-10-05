@@ -62,6 +62,8 @@ export interface ListeningState {
   chapters: Record<string, ChapterState>;
   rate?: number;
   finished?: boolean;
+  /** Lúc tự đánh dấu (chưa) nghe xong - nghe tiếp sau mốc này nghĩa là đang nghe lại. */
+  finishedAt?: number;
   bookmarks: Bookmark[];
   /** Chỗ đọc dở ở chế độ đọc (câu thứ `index` của chương). */
   reading?: { chapterId: number; index: number; at: number };
@@ -76,6 +78,8 @@ export interface BookProgress {
   finished: boolean;
   /** Sách đang làm dở, đã nghe hết phần đã có - chưa phải "nghe xong". */
   caughtUp?: boolean;
+  /** Đã nghe hết rồi quay lại nghe một đoạn: tiến độ theo chỗ đang nghe, không còn "nghe xong". */
+  rewound?: boolean;
 }
 
 /** Một hồ sơ nghe gắn với cuốn: dữ liệu nghe độc lập với sách, app giữ liên kết - một cuốn nhiều hồ sơ
@@ -174,8 +178,10 @@ export function seriesOf(title: string): SeriesPlace {
 /** Bộ và số tập của mọi cuốn trong thư viện. Phần của một cuốn làm nhiều đợt ("Làm tiếp cuốn này") đi theo chuỗi máy chủ
  * biết (`series`) - đổi tên một phần không làm mất nhóm; nhóm mang tên phần đầu. Còn lại theo tên (`seriesOf`), thêm một
  * luật: cuốn KHÔNG đánh số mà tên đúng bằng tên một bộ có tập đánh số là tập 1 của bộ ấy (sách nhập từ file .abook, máy chủ
- * cũ không gửi chuỗi). */
-export function seriesIndex(books: { id: string; title: string; series?: SeriesLink | null }[]): Map<string, SeriesPlace> {
+ * cũ không gửi chuỗi) - nhưng chỉ khi có ĐÚNG MỘT cuốn như thế. Hai bản cùng tên không số (bản sách nói và bản chỉ-chữ của một
+ * truyện, bản nhập hai lần) thì không biết bản nào là tập 1: để cả hai đứng lẻ, đừng gom thành "4 tập" không số (soát UX 05-10).
+ * Có cả bản nghe được lẫn bản chỉ-chữ thì bản chỉ-chữ không tranh chỗ tập 1. */
+export function seriesIndex(books: { id: string; title: string; series?: SeriesLink | null; stage?: string | null }[]): Map<string, SeriesPlace> {
   const titles = new Map(books.map((book) => [book.id, book.title]));
   const places = new Map<string, SeriesPlace>();
   for (const book of books) {
@@ -193,11 +199,29 @@ export function seriesIndex(books: { id: string; title: string; series?: SeriesL
   const byTitle = new Map(books.filter((book) => !places.has(book.id)).map((book) => [book.id, seriesOf(book.title)]));
   const units = new Map<string, string>();
   for (const place of byTitle.values()) if (place.volume !== null && !units.has(place.key)) units.set(place.key, place.unit);
+  // Ứng viên tập 1 của mỗi bộ: các cuốn không số mà bộ có tập đánh số; chọn trong số cuốn nghe được trước, chỉ-chữ sau.
+  const stages = new Map(books.map((book) => [book.id, book.stage]));
+  const candidates = new Map<string, string[]>();
   for (const [id, place] of byTitle) {
-    const unit = units.get(place.key);
-    places.set(id, place.volume === null && unit ? { ...place, volume: 1, unit } : place);
+    if (place.volume === null && units.has(place.key)) candidates.set(place.key, [...(candidates.get(place.key) ?? []), id]);
+  }
+  const first = new Set<string>();
+  for (const ids of candidates.values()) {
+    const heard = ids.filter((id) => stages.get(id) !== "text");
+    const pool = heard.length ? heard : ids;
+    if (pool.length === 1) first.add(pool[0]);
+  }
+  for (const [id, place] of byTitle) {
+    places.set(id, first.has(id) ? { ...place, volume: 1, unit: units.get(place.key)! } : place);
   }
   return places;
+}
+
+/** Nhãn tập cho cuốn trong bộ mà bìa không tự có: tên không mang số và không phải phần nối tiếp ("Tập 1" của cuốn không số - soát UX 05-10:
+ *  Tập 2 có nhãn mà Tập 1 thì không). Tên có số / phần nối tiếp đã có nhãn riêng trên bìa. */
+export function volumeBadge(book: { title: string; series?: SeriesLink | null }, volume: number | null, unit: string): string | null {
+  if (volume === null || seriesOf(book.title).volume !== null || (book.series?.part ?? 0) > 1) return null;
+  return `${unit.charAt(0).toUpperCase()}${unit.slice(1)} ${volume}`;
 }
 
 /** Một phiên nghe: bấm phát tới lúc dừng. */

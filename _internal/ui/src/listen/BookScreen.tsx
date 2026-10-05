@@ -16,7 +16,7 @@ import { useClip } from "./clip";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
-import { primaryListenLabel, textBookLine, textChapterLine } from "./labels";
+import { keepTogether, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerViews";
 import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
@@ -230,6 +230,8 @@ export function PersonRow({
 }) {
   const source = useSource();
   const name = cleanName(person.displayName);
+  // "Gộp vào người khác…" nằm trong menu "…" của người (chữ hiện sẵn) - nút chỉ-biểu-tượng cạnh các nút khác không ai đoán được.
+  const canMerge = Boolean(onMerge) && person.lines > 0;
   const initials = name
     .split(/\s+/)
     .filter((word) => !/^[IVXLCDM]+$/.test(word))
@@ -269,7 +271,7 @@ export function PersonRow({
         <div className="tabular mt-1 text-xs text-fg-2">
           {formatNumber(person.lines)} câu
           {person.seconds > 0 ? ` · ${formatLength(person.seconds)}` : ""}
-          {person.firstChapter ? ` · từ ${person.firstChapter}` : ""}
+          {person.firstChapter ? ` · từ ${keepTogether(person.firstChapter)}` : ""}
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -277,10 +279,7 @@ export function PersonRow({
         {onPickVoice && person.voice && person.lines > 0 ? (
           <IconButton label={`Đổi giọng ${name}`} icon={SlidersHorizontal} size="sm" onClick={() => onPickVoice(person)} />
         ) : null}
-        {onMerge && person.lines > 0 ? (
-          <IconButton label={`Gộp ${name} vào người khác`} icon={GitMerge} size="sm" onClick={() => onMerge(person)} />
-        ) : null}
-        {onRename || onGender ? (
+        {onRename || onGender || canMerge ? (
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
@@ -293,6 +292,11 @@ export function PersonRow({
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
               <DropdownMenu.Content align="end" sideOffset={4} className="z-50 min-w-48 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+                {canMerge && (
+                  <DropdownMenu.Item onSelect={() => onMerge?.(person)} className={MENU_ITEM}>
+                    <GitMerge className="size-4" /> Gộp vào người khác…
+                  </DropdownMenu.Item>
+                )}
                 {onRename && (
                   <DropdownMenu.Item onSelect={() => onRename(person)} className={MENU_ITEM}>
                     <Pencil className="size-4" /> Đổi tên

@@ -7,7 +7,7 @@ import { cn } from "@/shared/cn";
 import { formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { resumeWhere } from "./labels";
-import { foldVietnamese, listeningBook, resumePoint, seriesIndex, type ListenBook } from "./model";
+import { foldVietnamese, listeningBook, resumePoint, seriesIndex, volumeBadge, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
 import type { ReadAloudVoice } from "./readAloud";
 import { chosenVoice, resolveVoice, voiceCaption } from "./readAloudVoice";
@@ -99,7 +99,7 @@ export function useRestoreLastListening() {
   }, [books, player, source]);
 }
 
-function BookTile({ book }: { book: ListenBook }) {
+function BookTile({ book, badge }: { book: ListenBook; badge?: string }) {
   const navigate = useNavigate();
   const playBook = usePlayListenBook();
   const player = usePlayer();
@@ -114,7 +114,7 @@ function BookTile({ book }: { book: ListenBook }) {
     <div className="group">
       <div className="relative">
         <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`}>
-          <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-full" />
+          <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full" />
         </button>
         <button
           type="button"
@@ -246,16 +246,25 @@ function UpcomingCard({ book, onOpen }: { book: ListenBook; onOpen?: (book: List
   );
 }
 
-function Shelf({ books }: { books: ListenBook[] }) {
+function Shelf({ books, badges }: { books: ListenBook[]; badges?: Map<string, string> }) {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-6">
       {books.map((book, index) => (
         <div key={book.id} className="rise-in" style={{ "--i": index } as CSSProperties}>
-          <BookTile book={book} />
+          <BookTile book={book} badge={badges?.get(book.id)} />
         </div>
       ))}
     </div>
   );
+}
+
+function badgesOf(items: { book: ListenBook; volume: number | null; unit: string }[]): Map<string, string> {
+  const badges = new Map<string, string>();
+  for (const { book, volume, unit } of items) {
+    const badge = volumeBadge(book, volume, unit);
+    if (badge) badges.set(book.id, badge);
+  }
+  return badges;
 }
 
 /** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
@@ -267,7 +276,9 @@ function SeriesShelves({ books }: { books: ListenBook[] }) {
     const key = volume === null ? `\u0000${book.id}` : series;
     groups.set(key, [...(groups.get(key) ?? []), { book, volume, unit, name }]);
   }
-  const series = [...groups.entries()].filter(([key, items]) => !key.startsWith("\u0000") && items.length > 1);
+  const series = [...groups.entries()]
+    .filter(([key, items]) => !key.startsWith("\u0000") && items.length > 1)
+    .map(([key, items]) => [key, [...items].sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0))] as const);
   const singles = books.filter((book) => !series.some(([, items]) => items.some((item) => item.book.id === book.id)));
   return (
     <div className="mt-6 space-y-10">
@@ -276,7 +287,7 @@ function SeriesShelves({ books }: { books: ListenBook[] }) {
           <h2 className="mb-3 flex items-baseline gap-2 text-base font-semibold">
             {items[0].name} <span className="text-sm font-normal text-fg-2">· {items.length} {items[0].unit}</span>
           </h2>
-          <Shelf books={items.sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0)).map((item) => item.book)} />
+          <Shelf books={items.map((item) => item.book)} badges={badgesOf(items)} />
         </section>
       ))}
       {singles.length > 0 && (
@@ -326,9 +337,10 @@ export function LibraryScreen({
   );
   return (
     <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
-      <header className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">Thư viện</h1>
+      {/* Hai nút cạnh tiêu đề không được bóp tiêu đề thành "Thư / viện" ở 390 px (soát UX 05-10): tiêu đề giữ một dòng, nút xuống dưới. */}
+      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="shrink-0">
+          <h1 className="whitespace-nowrap text-2xl font-bold tracking-tight sm:text-[28px]">Thư viện</h1>
           <p className="mt-1 text-sm text-fg-2">{books?.length ? `${books.length} cuốn` : ""}</p>
         </div>
         {header}

@@ -27,7 +27,7 @@ export function studioNeed(caps: Capabilities | null | undefined): string | null
   if (!caps || caps.link) return null;
   if (caps.workshop && caps.toolchain) return null;
   if (!caps.toolchain) return "cần cài Studio";
-  return "cần dựng xưởng cho cuốn này (sắp có)";
+  return "cuốn này chưa có dự án Studio";
 }
 
 /** Việc cần Studio có nên hiện (bị mờ) không: mọi cuốn của máy này trừ cuốn đã làm được ngay. */

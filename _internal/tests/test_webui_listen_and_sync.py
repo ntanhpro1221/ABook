@@ -156,6 +156,24 @@ def test_hearing_everything_produced_so_far_is_caught_up_not_finished() -> None:
     assert marked["finished"] and not marked["caughtUp"], "người dùng tự đánh dấu nghe xong thì tôn trọng"
 
 
+def test_listening_again_after_the_end_resumes_where_it_stopped() -> None:
+    """Nghe hết cả cuốn rồi quay lại nghe chương 1 tới 2:44: cuốn đang nghe lại - không còn "nghe xong", tiến độ theo
+    chỗ đang nghe (soát UX 05-10); dừng ở đuôi chương cuối thì vẫn là nghe xong."""
+    chapters = [{"id": 1, "duration": 600.0}, {"id": 2, "duration": 600.0}]
+    done = {"1": {"heard": 600, "done": True}, "2": {"heard": 600, "done": True}}
+    again = book_progress({"chapters": done, "last": {"chapterId": 1, "seconds": 164.8, "at": 500}}, chapters)
+    assert not again["finished"] and not again["caughtUp"] and again["rewound"]
+    assert again["heardSeconds"] == 164.8
+    later = book_progress({"chapters": done, "last": {"chapterId": 2, "seconds": 300, "at": 500}}, chapters, complete=False)
+    assert later["heardSeconds"] == 900.0 and not later["caughtUp"]
+    at_end = book_progress({"chapters": done, "last": {"chapterId": 2, "seconds": 595, "at": 500}}, chapters)
+    assert at_end["finished"] and not at_end["rewound"]
+    marked_after = {"chapters": done, "last": {"chapterId": 1, "seconds": 30, "at": 500}, "finished": True, "finishedAt": 600}
+    assert book_progress(marked_after, chapters)["finished"], "tự đánh dấu nghe xong SAU lần nghe ấy thì tôn trọng"
+    listened_after_mark = {**marked_after, "finishedAt": 400}
+    assert not book_progress(listened_after_mark, chapters)["finished"]
+
+
 def test_two_bookmarks_at_the_same_spot_are_one(tmp_path: Path) -> None:
     listening = Listening(tmp_path / "listening.json")
     first = listening.add_bookmark("b", 3, 64.0)
