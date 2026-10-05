@@ -2747,3 +2747,14 @@ Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCE
   - dấu chuyển cảnh mà không khí không đổi có bắt buộc cắt không; không có độ dài tối đa;
   - lời dịch giả ở ĐẦU chương: guide chỉ nói chú thích cuối chương.
 - **Chưa phân xử thành nhãn dạy:** chờ oracle thứ Bảy và phép prompt mốc. Cả hai có thể đổi dạng đầu ra (chữ số) hoặc bỏ hướng này.
+
+**GHI TRƯỚC - Hướng dẫn chấm cảnh bản 3 + lô dữ liệu dạy 2 (05-10 chiều, Corpus a1780f6a):**
+- **Bản 3** (`scene_train_pilot/GUIDE_V3.md`, phụ lục, không sửa bản gốc) giải bốn chỗ mơ hồ cả hai người chấm lô thử cùng nêu, theo câu hỏi "nhạc phim làm gì ở đây":
+  - L1 phản diện đang thắng thế: chấm như mối đe doạ nhìn từ phía nhân vật người nghe đồng cảm (V ≤ 0); bị bẽ mà văn cười -> V+ `tone=mia`; bị bẽ mà văn không cười -> theo màu văn;
+  - L2 khúc lặng 15 giây-1 phút giữa cao trào -> `duck` (không tính vào V/E/T đoạn chứa nó); `accent` chỉ ≤ ~3 câu / 15 giây;
+  - L3 dấu chuyển cảnh / nhảy thời gian / đổi POV chỉ bắt buộc cắt khi màu nhạc cũng đổi (≥ 1 bậc một trục hoặc đổi nhóm gems), không thì `start=soft`; không có trần độ dài đoạn; "đổi hẳn" = ≥ 1 bậc hoặc đổi nhóm gems;
+  - L4 lời người dịch/tác giả ở bất kỳ vị trí nào là `chu_thich`; chữ thuộc thế giới truyện (bảng chỉ số, thư, truyện-trong-truyện) là truyện.
+- **Lô thử đã phân xử** thành nhãn dạy (`adjudicate_pilot.py`, luật phân xử 02-10; thời lượng = tiếng/3,5): 104 đoạn (101 truyện), `train_labels.jsonl` giữ cả V/E/T riêng của A và B (nhãn mềm, GOLD_AUDIT 5.3.1); 22 đoạn lệch A-B ≥ 1, 8 đoạn ≥ 1,5.
+- **Lô 2** (`scene_train_v3/`, `pick.py` hạt 20261006, cùng luật chọn lô thử, bỏ mọi truyện của bộ đáp án và lô thử): 20 chương (14 Nhật, 6 Hàn). Hai agent Opus chấm mù A/B theo bản 3, mỗi chương một file + PROGRESS (chịu ngắt).
+- **Thước (CHÍNH):** `scene_train_v3/agreement.py` (= `pilot_agreement.py`), r TB chương A-B so lô thử (V .77 E .85 T .75). Bản 3 CÓ ÍCH nếu ≥ 2 trục tăng ≥ 0,03 và không trục nào giảm > 0,03. Nhiễu lấy mẫu một lô 20 chương ~±0,05 -> trong vùng ấy ghi "không phân biệt được"; bản 3 vẫn giữ vì chỉ lấp chỗ trống. Ghi lại thêm: số chỗ phân vân trong PROGRESS thuộc bốn loại L1-L4 (lô thử: cả hai người, gần mọi chương).
+- **Dù kết quả nào:** lô 2 phân xử thành nhãn dạy, cộng lô thử = 40 chương cho LoRA 4B (làm sau oracle 10-10).
