@@ -1203,6 +1203,25 @@ def _canonical_speaker(value: Any) -> str:
     return RESERVED_SPEAKERS.get(speaker.casefold(), speaker)
 
 
+# Kính ngữ Nhật đứng SAU tên, bản dịch giữ nguyên ("Hina-sama", "Kazuma-san"): model chép cả cụm làm nhãn người nói, và
+# "HINA-SAMA" thành nhân vật thứ hai - giọng thứ hai - của Hina. Dùng chung cho sổ nhân vật
+# (`character_registry`) và lời dẫn tên (`_repair_explicit_attribution`); `first_person.py` có cùng danh sách cho việc đoán
+# người kể.
+JAPANESE_HONORIFIC_SUFFIX_PATTERN = re.compile(
+    r"^(?P<name>.*\S)[\s-]+(?:san|sama|kun|chan|sensei|senpai|dono|tan|han|nii|nee|niisan|neesan)$",
+    flags=re.IGNORECASE,
+)
+
+
+def strip_japanese_honorific(label: str) -> str:
+    """"HINA-SAMA" -> "HINA". Nhãn chỉ có kính ngữ ("SENSEI") hay phần còn lại quá ngắn thì giữ nguyên."""
+    match = JAPANESE_HONORIFIC_SUFFIX_PATTERN.fullmatch(" ".join(label.split()))
+    if match is None:
+        return label
+    name = match.group("name").strip(" -")
+    return name if len(name) >= 2 and any(character.isalpha() for character in name) else label
+
+
 def is_local_speaker(value: Any) -> bool:
     return str(value or "").startswith(LOCAL_SPEAKER_STORED_PREFIX)
 
@@ -1575,12 +1594,13 @@ def _explicit_speaker_attribution(
     group: list[Any],
     index: int,
     result: dict[str, dict[str, Any]],
+    original_context: dict[str, dict[str, Any]] | None = None,
 ) -> str | None:
     row = group[index]
     data = result.get(str(row["stable_id"]))
     if data is None or data["kind"] != "dialogue":
         return None
-    if _is_quoted_inside_a_sentence(group, index, result):
+    if _is_quoted_inside_a_sentence(group, index, result, original_context):
         # Chữ của người kể trích giữa câu ("Sơn Ca” Samantha rảo bước...") - không phải câu thoại của ai.
         return None
     attributed_speaker: str | None = None
@@ -1624,13 +1644,14 @@ def _repair_explicit_attribution(
     group: list[Any],
     result: dict[str, dict[str, Any]],
     local_scope: str,
+    original_context: dict[str, dict[str, Any]] | None = None,
 ) -> None:
     for index, row in enumerate(group):
         seg_id = str(row["stable_id"])
         data = result.get(seg_id)
         if data is None:
             continue
-        attributed_speaker = _explicit_speaker_attribution(group, index, result)
+        attributed_speaker = _explicit_speaker_attribution(group, index, result, original_context)
         if attributed_speaker is None:
             continue
         attributed_speaker = _canonical_speaker(attributed_speaker)
@@ -1639,6 +1660,10 @@ def _repair_explicit_attribution(
             label = attributed_speaker[len(LOCAL_SPEAKER_REQUEST_PREFIX) :]
             attributed_traits = GENERIC_SPEAKER_TRAITS.get(label, attributed_traits)
             attributed_speaker = _scope_local_speaker(attributed_speaker, row, local_scope)
+        else:
+            # Tên chép từ câu kể giữ cả kính ngữ ("Yuzuki-chan bước vào..."): không bỏ thì đè "Yuzuki" của model bằng
+            # một nhân vật mới chưa rõ giới, và tên ấy lọt vào danh sách "Nhân vật đã biết" của mọi lô sau.
+            attributed_speaker = strip_japanese_honorific(attributed_speaker)
         previous_speaker = str(data["speaker"])
         known_rows = [
             candidate
@@ -1728,6 +1753,7 @@ def _is_quoted_inside_a_sentence(
     group: list[Any],
     index: int,
     result: dict[str, dict[str, Any]],
+    original_context: dict[str, dict[str, Any]] | None = None,
 ) -> bool:
     """Cụm trích nằm GIỮA một câu kể: "Arthur không hiểu “dây chuyền lắp ráp” hay ...".
 
@@ -1746,6 +1772,10 @@ def _is_quoted_inside_a_sentence(
     after = group[index + 1] if index + 1 < len(group) else None
     if before is None and after is None:
         return False
+    if before is None and _opens_its_paragraph_before_the_batch(row, original_context):
+        # Mép trái lô: cụm trích mở đầu đoạn văn thì không có nửa câu kể nào trước nó. “Ừn”, chị ấy đáp lại... là
+        # câu thoại có lời dẫn nối bằng dấu phẩy, không phải thuật ngữ giữa câu.
+        return False
     for neighbour in (before, after):
         if neighbour is None:
             continue
@@ -1760,6 +1790,23 @@ def _is_quoted_inside_a_sentence(
         return True
     first = str(after["text"]).lstrip()[:1]
     return bool(first.islower() or first in ",;.)?!…")
+
+
+def _opens_its_paragraph_before_the_batch(
+    row: Any,
+    original_context: dict[str, dict[str, Any]] | None,
+) -> bool:
+    """Đoạn đầu lô mà đoạn liền trước nó trong chương (ngoài lô) thuộc đoạn văn khác, hay không có: nó mở đoạn văn."""
+    if original_context is None:
+        return False
+    context = original_context.get(str(row["stable_id"]))
+    if context is None:
+        return False
+    if not context.get("previous_stable_id"):
+        return True
+    paragraph = _row_optional_int(row, "paragraph_index")
+    previous_paragraph = context.get("previous_paragraph_index")
+    return paragraph is not None and previous_paragraph is not None and previous_paragraph != paragraph
 
 
 def _has_its_own_speech_tag(
@@ -1783,6 +1830,7 @@ def _has_its_own_speech_tag(
 def _repair_in_sentence_quote_speakers(
     group: list[Any],
     result: dict[str, dict[str, Any]],
+    original_context: dict[str, dict[str, Any]] | None = None,
 ) -> None:
     """Cụm trích giữa một câu kể là chữ của NGƯỜI KỂ: "...không thể bảo đây là “Khoa Học” thì đòi hỏi...".
 
@@ -1795,7 +1843,7 @@ def _repair_in_sentence_quote_speakers(
             continue
         if normalize_speaker_name(str(data["speaker"])) == "narrator":
             continue
-        if not _is_quoted_inside_a_sentence(group, index, result):
+        if not _is_quoted_inside_a_sentence(group, index, result, original_context):
             continue
         data["speaker"] = "NARRATOR"
         _record_host_note_marker(data, IN_SENTENCE_QUOTE_NARRATOR_NOTE)
@@ -1804,13 +1852,14 @@ def _repair_in_sentence_quote_speakers(
 def _repair_same_paragraph_speakers(
     group: list[Any],
     result: dict[str, dict[str, Any]],
+    original_context: dict[str, dict[str, Any]] | None = None,
 ) -> None:
     by_paragraph: dict[tuple[int, int], list[tuple[Any, dict[str, Any]]]] = defaultdict(list)
     for index, row in enumerate(group):
         data = result.get(str(row["stable_id"]))
         if data is None or data["kind"] != "dialogue":
             continue
-        if _is_quoted_inside_a_sentence(group, index, result):
+        if _is_quoted_inside_a_sentence(group, index, result, original_context):
             # Chữ của người kể trích giữa câu (quy tắc 8 của đáp án chuẩn) - không phải câu của người nói trong đoạn.
             continue
         if _has_its_own_speech_tag(group, index, result):
@@ -1996,12 +2045,12 @@ def _validate(
             "personality_hint": "",
             "notes": "",
         }
-    _repair_explicit_attribution(group, result, local_scope)
+    _repair_explicit_attribution(group, result, local_scope, original_context)
     _repair_addressee_speakers(group, result, local_scope)
-    _repair_same_paragraph_speakers(group, result)
+    _repair_same_paragraph_speakers(group, result, original_context)
     _repair_continued_dialogue_speakers(group, result)
     # CUỐI chuỗi sửa: hai khoá trên (đoạn văn, thoại nối tiếp) sẽ ghi đè nếu chạy sau.
-    _repair_in_sentence_quote_speakers(group, result)
+    _repair_in_sentence_quote_speakers(group, result, original_context)
     _canonicalize_analysis_notes(result)
     return result
 
