@@ -24,6 +24,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Nghe hết một cuốn rồi quay lại nghe một đoạn: trang sách giờ có "Nghe tiếp" đúng chỗ bạn dừng (trước đây chỉ còn "Nghe lại từ đầu"), cuốn ấy trở lại thẻ "Đang nghe dở", và thanh tiến độ theo chỗ đang nghe thay vì đứng ở 100%. Máy tính và điện thoại như nhau.
 - Màn "Đã nghe hết" không còn mời tập kế hai lần.
+- "Xuất file sách" chạy ngầm: bấm là máy đóng gói ở nền, thông báo đếm thời gian; tải lại trang giữa chừng thì mở lại trang sách vẫn thấy nó đang đóng gói, xong rồi thì báo "Đã xuất" kèm nơi file nằm (và nút "Mở thư mục"), mục trong menu "…" ghi lần xuất gần nhất.
 - Sách nói có nhạc nền: nút nhạc ♪ ở trình phát (thanh dưới và màn "Đang nghe") bật/tắt nhạc và chọn mức nhạc dưới giọng đọc ngay lúc nghe, khỏi vào "Sửa tên, bìa, nhạc nền…"; trong hộp sửa sách, công tắc ghi rõ "Nhạc nền: Bật" / "Nhạc nền: Tắt".
 - "Phát trên thiết bị khác" có cả ở màn "Đang nghe", nên cửa sổ hẹp hay trình duyệt điện thoại cũng chuyển được sang loa / TV / máy khác; khi chưa thấy máy nào, menu nhắc máy kia cần bật và cùng Wi-Fi.
 - Màn "Đang nghe" ở cửa sổ thấp: bìa co lại vừa chỗ, không còn đè lên chữ "ĐANG NGHE" và tên chương; nghe hết sách thì dòng tiến độ ghi "Đã nghe hết cả cuốn" thay vì "98%".

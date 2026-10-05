@@ -35,7 +35,7 @@ from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
-from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
+from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, ffmpeg_setup, humanize, listen_view,
                music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_select, music_student, music_valence, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
@@ -247,6 +247,8 @@ class App:
             self._adopt_new_book_ids()
         # Thư mục đã xuất trong phiên này - chỉ những thư mục này được mở bằng "Mở thư mục" sau khi xuất.
         self.exports: set[str] = set()
+        # "Xuất file sách" chạy nền, mỗi cuốn nhớ lần xuất gần nhất (export_jobs.py) - tải lại trang vẫn thấy tiến độ / kết quả.
+        self.bookfile_jobs = export_jobs.BookFileJobs()
         # Hàng đợi sản xuất: hai cuốn chạy cùng lúc tranh nhau GPU (phân tích cần ~6,2 GB trên card 8 GB), nên cuốn
         # thứ hai xếp hàng và tự bắt đầu khi cuốn đang chạy xong. Hàng đợi sống cùng app (đóng app là bỏ hàng).
         self.queue: list[str] = []
@@ -2691,7 +2693,9 @@ class Handler(BaseHTTPRequestHandler):
         self.app.exports.add(result["folder"])
         self._send_json(HTTPStatus.OK, result)
 
-    def post_bookfile(self, _query: dict[str, list[str]], value: str) -> None:
+    def _bookfile_packer(self, value: str) -> Callable[[], dict[str, Any]]:
+        """Đọc yêu cầu xuất `.abook` (thuộc luồng yêu cầu: thân, `target`, các phần của bộ) và trả việc đóng gói chưa chạy: gọi nó
+        thì ghi file, trả {file, folder, size...} và ghi nhớ thư mục cho "Mở thư mục". Lỗi đóng gói/đầu vào ném ApiError 409."""
         # Một cuốn trong một file (bookfile.py) - mở bằng app ở máy khác, gửi cho người khác. Cả bộ: `single` (mặc định của
         # giao diện) gộp mọi phần vào MỘT file phiên bản 3 (bookfile.pack_series); không thì mỗi phần một file trong thư
         # mục bộ - cần khi thẻ nhớ / USB FAT32 không chứa nổi file trên 4 GiB.
@@ -2702,25 +2706,42 @@ class Handler(BaseHTTPRequestHandler):
         target = self._target(body)
         root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
         parts = self._series_parts(value, body)
+        single = bool(body.get("single"))
+        app = self.app
 
         def pack(part: Path, folder: Path, name: str) -> dict[str, Any]:
-            path = bookfile.pack(part, folder / bookfile.default_name(name), music_track=self.app.music_export_source())
+            path = bookfile.pack(part, folder / bookfile.default_name(name), music_track=app.music_export_source())
             return {"file": str(path), "size": path.stat().st_size}
 
-        try:
-            if parts is None:
-                path = pack(project, root, store.summarize(project)["title"] or project.name)
-                result = {**path, "folder": str(Path(path["file"]).parent)}
-            elif body.get("single"):
-                result = export_series_file(parts, root, lambda listed, file: bookfile.pack_series(
-                    listed, file, music_track=self.app.music_export_source()))
-            else:
-                result = export_series(parts, root, pack)
-                result["size"] = sum(part["size"] for part in result["parts"])
-        except (bookfile.BookFileError, ValueError) as error:
-            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
-        self.app.exports.add(result["folder"])
-        self._send_json(HTTPStatus.OK, result)
+        def run() -> dict[str, Any]:
+            try:
+                if parts is None:
+                    path = pack(project, root, store.summarize(project)["title"] or project.name)
+                    result = {**path, "folder": str(Path(path["file"]).parent)}
+                elif single:
+                    result = export_series_file(parts, root, lambda listed, file: bookfile.pack_series(
+                        listed, file, music_track=app.music_export_source()))
+                else:
+                    result = export_series(parts, root, pack)
+                    result["size"] = sum(part["size"] for part in result["parts"])
+            except (bookfile.BookFileError, ValueError) as error:
+                raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+            app.exports.add(result["folder"])
+            return result
+
+        return run
+
+    def post_bookfile(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self._bookfile_packer(value)())
+
+    def post_bookfile_job(self, _query: dict[str, list[str]], value: str) -> None:
+        # Cùng việc đóng gói của `post_bookfile` nhưng chạy nền: trả ngay trạng thái (có mã), `get_bookfile_job` hỏi tiếp - tải lại
+        # trang giữa chừng hay sau khi xong vẫn hỏi lại được (export_jobs.py). Đang có lượt chạy cho cuốn này thì trả lượt ấy.
+        run = self._bookfile_packer(value)
+        self._send_json(HTTPStatus.ACCEPTED, self.app.bookfile_jobs.start(str(self.app._book(value)), run))
+
+    def get_bookfile_job(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.bookfile_jobs.status(str(self.app._book(value))))
 
     def get_word_timings(self, _query: dict[str, list[str]], value: str) -> None:
         # "Căn từ cho sách đã làm": tiến độ + số câu đã có mốc chữ (word_timing.Job.status).
@@ -3931,6 +3952,8 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/analysis-models"), Handler.get_analysis_models),
     ("POST", re.compile(r"/api/readings"), Handler.post_shared_readings),
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
+    ("POST", re.compile(BOOK + r"/bookfile-job"), Handler.post_bookfile_job),
+    ("GET", re.compile(BOOK + r"/bookfile-job"), Handler.get_bookfile_job),
     ("GET", re.compile(BOOK + r"/export-size"), Handler.get_export_size),
     ("GET", re.compile(BOOK + r"/word-timings"), Handler.get_word_timings),
     ("POST", re.compile(BOOK + r"/word-timings"), Handler.post_word_timings),
