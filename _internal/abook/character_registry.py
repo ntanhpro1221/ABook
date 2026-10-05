@@ -16,6 +16,7 @@ from .analysis import (
     is_vietnamese_syllable,
     local_speaker_display,
     local_speaker_label,
+    strip_japanese_honorific,
 )
 from .database import (
     ProjectDB,
@@ -613,14 +614,6 @@ def _family_first_name(name: str) -> bool:
     return _vietnamese_order_name(name) or _japanese_order_name(name)
 
 
-# Kính ngữ Nhật đứng SAU tên, bản dịch giữ nguyên ("Hina-sama", "Kazuma-san"): model chép cả cụm làm nhãn người nói, và
-# "HINA-SAMA" thành nhân vật thứ hai - giọng thứ hai - của Hina. `first_person.py` có cùng danh sách cho việc đoán người kể.
-JAPANESE_HONORIFIC_SUFFIX_PATTERN = re.compile(
-    r"^(?P<name>.*\S)[\s-]+(?:san|sama|kun|chan|sensei|senpai|dono|tan|han|nii|nee|niisan|neesan)$",
-    flags=re.IGNORECASE,
-)
-
-
 # Hai chữ viết hoa liền nhau (một dấu cách) - ứng viên "Họ Tên" trong văn bản sách.
 TWO_CAPITALIZED_WORDS_PATTERN = re.compile(r"\b([A-Z][a-z]+) ([A-Z][a-z]+)\b")
 # Một cặp phải gặp ít nhất ngần này lần mới là tên của ai đó, không phải hai chữ tình cờ đứng cạnh nhau.
@@ -665,15 +658,6 @@ def merge_into_book_full_names(representatives: dict[str, str], source: str) -> 
         full = next(iter(candidates))
         redirected[key] = by_identity.get(identity_key(full), full.upper())
     return redirected
-
-
-def strip_japanese_honorific(label: str) -> str:
-    """"HINA-SAMA" -> "HINA". Nhãn chỉ có kính ngữ ("SENSEI") hay phần còn lại quá ngắn thì giữ nguyên."""
-    match = JAPANESE_HONORIFIC_SUFFIX_PATTERN.fullmatch(" ".join(label.split()))
-    if match is None:
-        return label
-    name = match.group("name").strip(" -")
-    return name if len(name) >= 2 and any(character.isalpha() for character in name) else label
 
 
 def _bare_word(word: str) -> str:
