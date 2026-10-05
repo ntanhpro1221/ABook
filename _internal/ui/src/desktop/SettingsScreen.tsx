@@ -18,6 +18,7 @@ import {
 } from "@/studio/bookTemplates";
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
 import { SupertonicModuleCard, VieneuModuleCard } from "@/listen/VieneuModuleCard";
+import { EXTEND_GESTURE } from "@/listen/extendGesture";
 import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
@@ -385,7 +386,7 @@ export function SettingsScreen() {
                 ]}
               />
             </Field>
-            <Field label="Mỗi lần nghe thêm" hint="Lúc đang nhỏ dần, chạm phím hoặc chuột là được nghe thêm chừng này.">
+            <Field label="Mỗi lần nghe thêm" hint={`Lúc đang nhỏ dần, ${EXTEND_GESTURE} là được nghe thêm chừng này.`}>
               <Segmented<"5" | "10" | "15">
                 label="Số phút nghe thêm"
                 value={extend}
