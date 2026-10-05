@@ -122,6 +122,8 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("PUT", _BOOK + r"/precast"),
     ("POST", _BOOK + r"/export"),
     ("POST", _BOOK + r"/bookfile"),
+    ("POST", _BOOK + r"/bookfile-job"),  # xuất file sách chạy nền (export_jobs.py): bắt đầu + hỏi trạng thái
+    ("GET", _BOOK + r"/bookfile-job"),
     ("GET", _BOOK + r"/export-size"),
     ("GET", _BOOK + r"/review"),
     ("POST", _BOOK + r"/review"),
