@@ -4,18 +4,22 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
-import { formatNumber } from "@/shared/format";
+import { excerpt, formatNumber } from "@/shared/format";
 import { Button, Dialog, Progress, Segmented, Skeleton, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { modulePercent } from "./musicLocal";
 import { groupByEngine, moduleNote, plainGroupLabels, sharedText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
+import { useVoiceTry } from "./VoiceTry";
+import { byGender, rerecordText, type GenderFilter, type Rerecord } from "./voiceTryText";
 
 // "Đổi giọng" một nhân vật (webui/voice_picker.py): mọi giọng dùng được cho nhân vật, nghe thử từng giọng, giọng đang dùng,
 // giọng máy gợi ý cho từng giới, và ai đang dùng giọng ấy cùng mấy chương. Chọn xong đi đúng đường của thẻ "Nam hay nữ"
 // (POST /voice): dây chuyền áp ở ranh giới chương kế tiếp, bậc âm sắc do bộ cấp giọng của bước phân vai quyết (không trùng
 // người cùng chương), câu đã thu của người ấy được thu lại. Không phải dừng sách. Giọng nhóm theo máy đọc: VieNeu (mọi giọng phân vai
-// tự động) rồi máy khác chỉ chọn tay (ZeroTTS, Supertonic - tải thêm một lần, nút tải ngay trong hộp).
+// tự động) rồi máy khác chỉ chọn tay (ZeroTTS, Supertonic - tải thêm một lần, nút tải ngay trong hộp). Soát UX Studio mục 13:
+// mỗi giọng nghe được cả câu mẫu chung (▶) lẫn một câu của chính nhân vật đọc bằng giọng ấy (VoiceTry.tsx), lọc Nam / Nữ / Tất
+// cả, và hộp nói trước đổi giọng sẽ thu lại bao nhiêu câu, hết chừng bao lâu.
 
 type Gender = "male" | "female";
 
@@ -41,10 +45,17 @@ interface VoiceChoices {
   voices: VoiceOption[];
   /** Mô-đun tải thêm của máy đọc khác, theo tên máy. */
   modules?: Record<string, EngineModuleStatus>;
+  /** Câu "Nghe thử bằng câu của sách" sẽ đọc; null: người này chưa có câu nào - chỉ có câu mẫu chung. */
+  tryLine?: { segmentId: number; text: string } | null;
+  /** Đổi giọng là thu lại mọi câu đã thu của người này. */
+  rerecord?: Rerecord;
 }
 
-function voiceMeta(voice: VoiceOption): string {
-  const about = voice.description || [voice.region ? `Miền ${voice.region}` : "", voice.style].filter(Boolean).join(" · ");
+/** `withGender`: lọc "Tất cả" - giọng nam và nữ chung một danh sách, nên nói giới ra. */
+function voiceMeta(voice: VoiceOption, withGender = false): string {
+  const parts = voice.description ? [voice.description] : [voice.region ? `Miền ${voice.region}` : "", voice.style];
+  // Chất giọng của máy khác đã mở đầu bằng giới ("Nữ · Trưởng thành"): không nói hai lần.
+  const about = [withGender && !voice.description ? voice.genderLabel : "", ...parts].filter(Boolean).join(" · ");
   return `${about} · ${sharedText(voice, voice.current)}`;
 }
 
@@ -120,10 +131,11 @@ export function VoicePicker({
     queryFn: () => api<VoiceChoices>(`/api/books/${bookId}/voices?character=${encodeURIComponent(person!.name)}`),
     enabled: person !== null,
   });
-  const [gender, setGender] = useState<Gender | null>(null);
+  const [gender, setGender] = useState<GenderFilter | null>(null);
   useEffect(() => setGender(null), [person?.name]);
   const currentGender = data?.voices.find((voice) => voice.current)?.gender;
-  const shown: Gender = gender ?? currentGender ?? (data?.character.gender === "female" ? "female" : "male");
+  const shown: GenderFilter = gender ?? currentGender ?? (data?.character.gender === "female" ? "female" : "male");
+  const tryVoice = useVoiceTry(bookId);
   const close = () => {
     clip.stop();
     onClose();
@@ -171,7 +183,7 @@ export function VoicePicker({
     },
     onError: (failure: Error) => toast.error("Chưa bỏ được lựa chọn", { description: failure.message }),
   });
-  const voices = (data?.voices ?? []).filter((voice) => voice.gender === shown);
+  const voices = byGender(data?.voices ?? [], shown);
   const groups = groupByEngine(voices);
   const groupLabels = plainGroupLabels(groups);
   const reload = () => client.invalidateQueries({ queryKey: ["voice-choices", bookId, person?.name] });
@@ -209,15 +221,25 @@ export function VoicePicker({
               </Button>
             </div>
           )}
-          <Segmented<Gender>
-            label="Giọng nam hay nữ"
+          {data.rerecord && <p className="mb-2 text-sm text-pretty text-fg-2">{rerecordText(name, data.rerecord)}</p>}
+          <Segmented<GenderFilter>
+            label="Lọc giọng theo giới"
             value={shown}
             onChange={setGender}
             options={[
-              { value: "male", label: "Giọng nam" },
-              { value: "female", label: "Giọng nữ" },
+              { value: "male", label: "Nam" },
+              { value: "female", label: "Nữ" },
+              { value: "all", label: "Tất cả" },
             ]}
           />
+          <div className="mt-2 space-y-0.5">
+            <p className="text-xs text-pretty text-fg-3">
+              {data.tryLine
+                ? `Nút sách đọc câu “${excerpt(data.tryLine.text, 70)}” của ${name} bằng giọng ấy; nút ▶ là câu mẫu chung.`
+                : `${name} chưa có câu nào để đọc thử - nút ▶ là câu mẫu chung của giọng.`}
+            </p>
+            {tryVoice.note}
+          </div>
           <div className="mt-3 max-h-[min(60vh,460px)] overflow-y-auto pr-1">
             {groups.map((group, index) => (
               <section key={group.engine} aria-label={groupLabels[index]}>
@@ -228,6 +250,12 @@ export function VoicePicker({
             {group.voices.map((voice) => (
               <li key={voice.name} className={cn("flex items-center gap-3 rounded-xl px-2 py-2", voice.current ? "bg-accent-soft" : "hover:bg-hover")}>
                 <PreviewButton voice={voice} />
+                {data.tryLine &&
+                  tryVoice.button({ character: data.character.value, preset: voice.name }, voice.name, {
+                    fallbackUrl: voice.preview ? urls.voice(voice.name) : undefined,
+                    compact: true,
+                    disabled: !voice.installed,
+                  })}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="font-medium">{voice.name}</span>
@@ -239,7 +267,9 @@ export function VoicePicker({
                       <span className="rounded-full bg-info-soft px-2 py-px text-[11px] font-medium text-info">Máy gợi ý</span>
                     )}
                   </div>
-                  <div className={cn("mt-0.5 text-xs", voice.sharedWith.length ? "text-warning" : "text-fg-2")}>{voiceMeta(voice)}</div>
+                  <div className={cn("mt-0.5 text-xs", voice.sharedWith.length ? "text-warning" : "text-fg-2")}>
+                    {voiceMeta(voice, shown === "all")}
+                  </div>
                 </div>
                 {voice.current && data.pending ? (
                   // Đã chọn giọng khác mà chưa vào sách: giọng đang dùng chọn lại được - là bỏ lựa chọn kia.
