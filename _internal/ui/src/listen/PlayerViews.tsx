@@ -1,5 +1,4 @@
 import * as Popover from "@radix-ui/react-popover";
-import { Capacitor } from "@capacitor/core";
 import { coverStyle } from "@/shared/cover";
 import * as Slider from "@radix-ui/react-slider";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,8 +40,12 @@ import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
 import { excerpt, formatClock, formatLength, formatWhen, licenseLabel, spokenClock } from "@/shared/format";
 import { IconButton, Tooltip, Vu } from "@/shared/ui";
+import { Switch } from "@/desktop/PhoneSync";
+import { levelOptions } from "@/shared/musicLevels";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
+import { COARSE, EXTEND_GESTURE } from "./extendGesture";
+import { useBookMusic } from "./EditBook";
 import { canPlay, otherBooksToHear, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
@@ -241,12 +244,15 @@ function MenuShell({
   children,
   active,
   width = "w-56",
+  focusSelector,
 }: {
   trigger: ReactNode;
   label: string;
   children: ReactNode;
   active?: boolean;
   width?: string;
+  /** Khi mở, đưa tiêu điểm tới phần tử khớp (lựa chọn đang áp dụng) thay vì phần tử đầu tiên - viền tiêu điểm ở nút đầu trông như "đang chọn". */
+  focusSelector?: string;
 }) {
   return (
     <Popover.Root>
@@ -271,6 +277,12 @@ function MenuShell({
           sideOffset={8}
           collisionPadding={12}
           onCloseAutoFocus={(event) => event.preventDefault()}
+          onOpenAutoFocus={(event) => {
+            const current = focusSelector ? (event.currentTarget as HTMLElement).querySelector<HTMLElement>(focusSelector) : null;
+            if (!current) return;
+            event.preventDefault();
+            current.focus();
+          }}
           className={cn("z-50 rounded-xl border border-line bg-panel p-1.5 shadow-float", width)}
         >
           {children}
@@ -311,13 +323,64 @@ export function SpeedMenu() {
   );
 }
 
-/** Nhạc nền của "Nghe ngay" (chương chỉ-có-chữ đang nghe): một danh sách phát cho cả cuốn, "Nhạc của tôi" hay tắt - cùng lựa chọn với
- *  menu của sách (PlaylistChoice.tsx), lưu vào phần sửa của sách. Không hiện khi đang nghe chương có audio. */
+/** Nhạc nền ở trình phát. Chương chỉ-có-chữ ("Nghe ngay"): một danh sách phát cho cả cuốn, "Nhạc của tôi" hay tắt - cùng lựa chọn với
+ *  menu của sách (PlaylistChoice.tsx), lưu vào phần sửa của sách. Chương có audio của sách nói có nhạc người làm sách gắn: bật/tắt và mức
+ *  (cùng lệnh với hộp "Sửa sách"); sách không gắn nhạc thì không hiện nút. */
 export function MusicMenu() {
   const { track, queue } = usePlayer();
-  const speaking = queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
-  if (!track || !speaking) return null;
-  return <MusicMenuFor bookId={track.bookId} />;
+  if (!track) return null;
+  const speaking = queue.find((chapter) => chapter.id === track.chapterId)?.state === "text";
+  return speaking ? <MusicMenuFor bookId={track.bookId} /> : <PackagedMusicMenu bookId={track.bookId} />;
+}
+
+function PackagedMusicMenu({ bookId }: { bookId: string }) {
+  const { view, change } = useBookMusic(bookId);
+  const music = view.data;
+  if (!music?.hasMusic) return null;
+  const id = `player-music-${bookId}`;
+  return (
+    <MenuShell
+      label="Nhạc nền"
+      active={music.enabled}
+      width="w-64"
+      trigger={
+        // Tắt: gạch chéo trên nốt nhạc (lucide không có biểu tượng "nhạc tắt").
+        <span className="relative">
+          <Music2 className="size-4" />
+          {!music.enabled && <span aria-hidden="true" className="absolute left-1/2 top-1/2 h-0.5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-current" />}
+        </span>
+      }
+    >
+      <div className="flex items-center justify-between gap-3 px-2 py-2">
+        <label htmlFor={id} className="text-sm font-medium">
+          Nhạc nền: <span className="font-semibold">{music.enabled ? "Bật" : "Tắt"}</span>
+        </label>
+        <Switch id={id} label="Nhạc nền" checked={music.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
+      </div>
+      <div className={cn("transition-opacity", !music.enabled && "opacity-50")}>
+        <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Mức nhạc dưới giọng đọc</div>
+        <div className="flex flex-col gap-0.5 p-1">
+          {levelOptions(music.levelDb).map(([value, name]) => (
+            <button
+              key={value}
+              type="button"
+              disabled={!music.enabled || change.isPending}
+              aria-pressed={value === music.levelDb}
+              onClick={() => change.mutate({ levelDb: value })}
+              className={cn(
+                "flex h-9 items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover disabled:hover:bg-transparent",
+                value === music.levelDb ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
+              )}
+            >
+              <Check className={cn("size-4 shrink-0", value === music.levelDb ? "text-accent-text" : "invisible")} />
+              {name}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này.</p>
+    </MenuShell>
+  );
 }
 
 function MusicMenuFor({ bookId }: { bookId: string }) {
@@ -602,6 +665,7 @@ export function SleepMenu() {
       label={active ? sleepSpoken(sleep, now) : "Hẹn giờ tắt"}
       active={active}
       width="w-64"
+      focusSelector="[data-current-choice]"
       trigger={
         <>
           <SleepRing fraction={sleep.kind === "minutes" && sleep.minutes > 0 && left !== null ? left / (sleep.minutes * 60_000) : null}>
@@ -662,7 +726,12 @@ export function SleepMenu() {
               type="button"
               disabled={!track}
               onClick={() => setSleep({ kind: "minutes", minutes })}
-              className="tabular h-9 rounded-lg text-sm hover:bg-hover disabled:opacity-40"
+              aria-pressed={sleep.kind === "minutes" && sleep.minutes === minutes}
+              data-current-choice={sleep.kind === "minutes" && sleep.minutes === minutes ? "" : undefined}
+              className={cn(
+                "tabular h-9 rounded-lg text-sm hover:bg-hover disabled:opacity-40",
+                sleep.kind === "minutes" && sleep.minutes === minutes && "bg-accent-soft font-semibold text-accent-text",
+              )}
             >
               {minutes}′
             </button>
@@ -790,10 +859,8 @@ export function useAddBookmark() {
   const { setExpanded } = useNowPlaying();
   const source = useSource();
   const client = useQueryClient();
-  const readClock = useClockReader();
   return useCallback(async () => {
     if (!track) return;
-    const at = readClock().time;
     const mark = await addBookmark().catch(() => null);
     if (!mark) {
       toast.error("Chưa thêm được dấu trang");
@@ -807,7 +874,8 @@ export function useAddBookmark() {
     toast.success("Đã thêm dấu trang", {
       id: "bookmark",
       duration: 8000,
-      description: `${track.chapterTitle} · ${formatClock(at)}`,
+      // Giờ ghi trong dấu trang (đã làm tròn ở nơi lưu) - cùng con số danh sách dấu trang hiện, không đọc lại đồng hồ phát.
+      description: `${track.chapterTitle} · ${formatClock(mark.seconds)}`,
       action: {
         label: "Ghi chú",
         onClick: () => {
@@ -824,7 +892,7 @@ export function useAddBookmark() {
         },
       },
     });
-  }, [addBookmark, client, readClock, setExpanded, source, track]);
+  }, [addBookmark, client, setExpanded, source, track]);
 }
 
 function BookmarkButton() {
@@ -870,13 +938,6 @@ function SleepRing({ fraction, children }: { fraction: number | null; children: 
     </span>
   );
 }
-
-// Cách gia hạn khác nhau theo máy: máy tính bắt phím/chuột; điện thoại bắt cú LẮC (SleepTimer.kt) và nút "Nghe thêm"
-// trên thông báo - chạm màn hình ở đó chỉ ghi nhận cho tính năng tự dừng, không gia hạn (27-09, thấy trên máy ảo).
-const COARSE = typeof window !== "undefined" && Boolean(window.matchMedia?.("(pointer: coarse)").matches);
-const EXTEND_GESTURE = Capacitor.isNativePlatform()
-  ? "lắc máy hoặc bấm “Nghe thêm” trên thông báo"
-  : COARSE ? "chạm màn hình" : "chạm phím hoặc chuột";
 
 /** Đang nhỏ dần trước khi tắt: nói rõ và cho nghe thêm bằng một chạm. */
 function FadingNotice({ className }: { className?: string }) {
@@ -1489,7 +1550,7 @@ function initialPanel(): Panel {
 
 /** Tiến độ cả cuốn (phần đã có audio): "Đã nghe 42% cả cuốn · còn khoảng 2 giờ 32 phút ở tốc độ 1,5×". */
 function BookProgressLine() {
-  const { queue, track, rate } = usePlayer();
+  const { queue, track, rate, atEnd } = usePlayer();
   const tens = useClock((time) => Math.floor(time / 10));
   const { before, total } = useMemo(() => {
     let heardBefore = 0;
@@ -1509,7 +1570,7 @@ function BookProgressLine() {
   const whole = queue.every((chapter) => chapter.available);
   return (
     <p className="tabular mt-1 text-xs text-fg-2">
-      {bookProgressText({ whole, heard, total, rate, speed: speedLabel(rate) })}
+      {bookProgressText({ whole, heard, total, rate, speed: speedLabel(rate), finished: atEnd === "finished" })}
     </p>
   );
 }
@@ -1742,13 +1803,15 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
         {mobile && showPanel ? (
           <div className="-mx-6 mt-2 min-h-0 flex-1 border-y border-line">{panelBody}</div>
         ) : (
-          <div className="mt-4 flex min-h-0 flex-1 flex-col items-center justify-center">
+          // Bìa vuông, to nhất 300px nhưng co theo chỗ còn lại của khung (cả chiều cao): cqw/cqh là cỡ của chính khung này (container-type:size) - nút bìa
+          // w-full max-w-[300px] cũ không co theo chiều cao nên đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10).
+          <div className="mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
             {/* Chạm bìa để phát/dừng (SABP): mục tiêu lớn nhất màn hình, dễ trúng khi đang nằm và mắt nhắm mắt mở. */}
             <button
               type="button"
               onClick={toggle}
               aria-label={`${toggleLabel(playing, buffering, speaking)} (chạm bìa)`}
-              className="w-full max-w-[300px] rounded-lg transition-transform active:scale-[0.98]"
+              className="size-[min(300px,100cqw,100cqh)] shrink-0 rounded-lg transition-transform active:scale-[0.98]"
             >
               <BookCover title={track.bookTitle} image={track.bookCover} size="xl" className="cover-morph w-full" />
             </button>
