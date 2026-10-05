@@ -130,7 +130,7 @@ mời nghe tiếp phần sau.
 ## Trạng thái
 
 ABook đang ở giai đoạn alpha: dùng hằng ngày được, nhưng còn thay đổi nhiều giữa các bản. Model phân tích của Studio
-(`abook-analyzer`, tự huấn luyện trên nền Qwen3) đoán đúng người nói khoảng hai phần ba số câu thoại ở truyện mạng và
+(`abook-analyzer`, tự huấn luyện trên nền Qwen3) đoán đúng người nói khoảng 70% số câu thoại ở truyện mạng và
 light novel khó - đó là lý do có "Việc cần duyệt" và tab Kịch bản.
 
 ## Dành cho người phát triển
