@@ -168,6 +168,15 @@ và nhan_vien/170 seq 146 (tên sổ) N -> D NARRATOR. seq không đổi. Mọi 
 (21 ký tự, đáp rỗng); /api/chat cùng mẫu chat thì nghĩ rồi trả JSON. Hook nhánh think đổi sang /api/chat (08e12992, cây ghim
 ABook_pin_think2); nhánh think=false giữ /api/generate như app.
 
+**E8 kết quả lượt 1 (05-10 09:46) - CHƯA KẾT LUẬN.** qwen3:4b gốc, cửa sổ 9, 6 chương (rk 014/015/122a, sm 195, villain 22,
+nhanvien 170). think=false: F1 giọng 47,3 % (688 câu) - thua v8 8,9 điểm [KTC -14,7; -4,7], người nói chặt -16,7, như dự kiến
+(nền vs LoRA). think=true: HỎNG 6/6 chương - ngay lô 1 đoạn model nghĩ hết 2.048 token (~8.500 ký tự, lặp "Wait, but...") mà
+chưa trả JSON; ngân sách nghĩ 1.024/lô và ngữ cảnh 7.168 của project đo quá nhỏ. Thử lại thí điểm (E8P): 2 chương (sm 195,
+nhanvien 170), ngân sách nghĩ 8.192, ngữ cảnh 16.384 (hook think_num_ctx, ABook_pin_think3 b3deb76a), sau OmniVoice. Giá ước:
+~60 token/s, 2-8k token nghĩ/lô -> 1-2 phút/lô, ~1,5-3 giờ cho 2 chương (think=false: 4-12 phút/chương) - nghĩa là dù thắng,
+suy nghĩ lúc chạy KHÔNG dùng được trong app trên card nhà (x10-30 thời gian); câu hỏi chỉ là có đáng làm RLVR có suy nghĩ không.
+Nếu thí điểm vẫn không trả JSON trong 8k token phần lớn lô -> nhánh nghĩ của 4B gốc coi như âm.
+
 **Kết quả O1+O2 (05-10 03:37, thước 04-10, chạy lại trên cây ghim 1808bdf7 = o12cv8).** Dump prompt + raw khớp TỪNG BYTE với lượt
 nghi ngờ o12v8 (612/612 lô) -> lượt cũ không bị nhiễm. Khối oracle "có mặt" (O1) + "xưng hô" (O2) chèn vào prompt v8: F1 giọng
 59,5 -> 60,2 (+0,7, trong nhiễu hạt), lỗi lặp 69 -> 23, nhưng đúng chặt 71,8 -> 63,0 % (model lấy tên/biến thể tên trong khối
