@@ -2662,3 +2662,18 @@ Ghi trước:
 - **Ghi lại, không quyết:** chỉ TRỘN, chỉ MƯỢT; cùng phép với `qwen3.5:9b` (bộ 5 + bộ 6); `oracle` ranh giới làm trần.
 - **Lưu ý trước:** nhãn câu của bộ 6 đến từ 9B-v8. Nếu 9B-v8 đã học chương nào của bộ 6 thì phần nhãn câu ở chương ấy đẹp hơn thật; sẽ ghi số khi bỏ chương ấy.
 - **Thắng thì:** đề xuất Lead đưa vào `music_scenes` (vài dòng, không model mới), mặc định theo tham số học trên 20 chương. **Thua thì:** ghi lại, giữ `app+llmVT`.
+
+**KẾT QUẢ (05-10 tối, `segment_mix.py`, Corpus):** **KHÔNG THẮNG.** Giữ `app+llmVT`.
+
+| | gốc `app+llmVT` | trộn + mượt | chỉ trộn | chỉ mượt |
+|---|---|---|---|---|
+| **4b, bộ 6 (CHÍNH)** | 0,253 | **0,285 (+0,032), 13/20** | 0,278 (+0,025), 13/20 | 0,264 (+0,011), 11/20 |
+| 9b, bộ 6 | 0,256 | 0,222 (−0,034), 6/20 | 0,252 (−0,004), 11/20 | 0,269 (+0,013), 11/20 |
+| 9b, bộ 5 (9 chương) | 0,343 | 0,365 (+0,022), 7/9 | 0,368 (+0,025), 7/9 | 0,332 (−0,010), 0/9 |
+
+- Cần +0,05 và 14/20; đạt +0,032 và 13/20. Bỏ-một-chương nên số trên đã là ngoài mẫu.
+- Không bền: cùng phép với 9b trên bộ 6 thì THUA (−0,034). Lợi nhỏ của trộn ở 4b có lẽ chỉ vì 4b đọc kém hơn 9b, nên nhãn câu bù được phần nào.
+- Ranh giới đáp án (`oracle`): trộn/mượt quanh 0 (−0,011 … +0,033). Làm mượt không giúp: không khí người chấm đổi theo cảnh, không trôi chậm.
+- Tham số học trên cả 20 chương (4b): α 0,3, w(llm) V/E/T 0,6/0,4/0,9. Không đưa vào app.
+- Lưu ý rò rỉ 9B-v8 không cần kiểm, vì phép đã thua.
+- Bài học: hậu xử lý không khí đoạn (trộn, mượt) gần hết đất. Muốn tiến phải đọc tốt hơn (model / dữ liệu dạy), và thứ tự đúng vẫn là chờ oracle thứ Bảy xem đoán không khí đoạn có phải nút thắt khi NGHE không.
