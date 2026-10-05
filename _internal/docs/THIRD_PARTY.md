@@ -103,6 +103,12 @@ khi cần, KHÔNG nằm trong bộ cài. Kèm giấy phép Apache-2.0 và ghi ch
 chính tháp âm thanh ấy (`clap_audio_fp16.onnx`, ~59 MB, cùng trọng số fp16, xuất bằng torch.onnx - Apache-2.0 như model gốc) và
 đầu hồi quy A (`student_head_A.npz`) cho đường chạy bằng ONNX Runtime trên máy không có torch.
 
+Tuỳ chọn "Đo cảm xúc nhạc chính xác hơn" của máy tính (`webui/music_valence.py`; mặc định tắt, người dùng bật mới tải, KHÔNG nằm trong bộ cài) dùng thêm tháp âm thanh của
+MuQ-MuLan (`OpenMuQ/MuQ-MuLan-large`; OpenMuQ, Zhu et al. 2025, "MuQ: Self-Supervised Music Representation Learning with Mel Residual Vector
+Quantization") - **CC BY-NC 4.0** (Ghi công - Phi thương mại; trọng số của model, mã MuQ là MIT). Gói đăng cùng repo Hugging Face của dự án
+(`muq/muq_mulan_audio.onnx`, ~1,27 GB, tháp âm thanh xuất sang ONNX fp32 và vector chữ / hằng số tính sẵn: `muq/valence_text.npz`, `muq/vhop_scale.json`);
+chỉ chạy trên máy người dùng để đo bài nhạc họ tự nhập. Khi phân phối gói: kèm giấy phép CC BY-NC 4.0, ghi công OpenMuQ và nói rõ đã chuyển định dạng sang ONNX.
+
 Căn từng chữ khi đóng gói sách (`webui/word_timing.py`) dùng model nhận dạng tiếng Việt `dragonSwing/wav2vec2-base-vietnamese`
 (Apache-2.0; tinh chỉnh từ facebook/wav2vec2-base, Apache-2.0), xuất sang ONNX và lượng tử hoá int8 (~122 MB) bằng onnxruntime; cùng từ
 điển ký tự và cấu hình tiền xử lý của model gốc. Gói đăng ở huggingface.co/NGDtuanh/abook-analyzer (thư mục `word-align`), tải về
