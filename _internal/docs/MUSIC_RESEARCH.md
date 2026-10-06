@@ -3095,3 +3095,15 @@ UIST 2014, Sonus Texere 2022) ghi vào kế hoạch sau bộ 7.
 trạng thái | không khí mang theo`, nhiệt độ 0, không chấm số; (2) prompt mức chương của CF, thay chương bằng thẻ cảnh -> V/E/T
 chữ số kỳ vọng. Code `chapter_level.py run <bộ> CS` (Corpus 60d92ac). Luật thắng y như CF (5b+6, MAE <= .35 VÀ r V,T >= .6).
 CF và CS cùng thắng -> chọn MAE thấp hơn; chỉ một thắng -> nó. Ghi lại: trục E (mức chương E so đáp án, góp ý mục c) cho CF/CH/CS.
+
+**ĐỌC GÓP Ý NGOÀI mục (e) (06-10 17:0x; Corpus `research/music/READING_EXTERNAL_06-10.md`, agent Sonnet, Music duyệt):** Won 2021
+(ISMIR), Rubin & Agrawala 2014 (UIST), Sonus Texere 2022, Bagdon 2024 (NAACL), Liusie 2024 (EACL, so cặp hơn chấm tuyệt đối ở model
+3-13B), Licht 2025 (chấm dồn cục; kỳ vọng xác suất token + ví dụ cố định gỡ phần lớn - khi đó chấm ngang so cặp), Lawrence 2025
+(điểm tuyệt đối bằng so với bộ neo). Không bài nào có số cho mức cảm xúc cả chương hay hiệu chỉnh thang giữa tài liệu. Music xét:
+- "Đo trần trước": ĐÃ CÓ - hai người chấm mù đồng thuận trong chương r V .87 E .84 T .91 (lô 2, bản 3), mức chương r .95-.96 (lô 4):
+  trần xa trên r .3-.4 của model, nên khoảng cách là thật, không phải nhiễu nhãn.
+- "Kỳ vọng xác suất + ví dụ cố định": ĐÃ CÓ - P2 (kỳ vọng chữ số + bảng mốc) không thắng (611859b5).
+- NHẬN làm ứng viên lớp 3 sau bộ 7: chấm SO SÁNH trong chương (so cặp hai chiều / bộ 4 best-worst, log-prob, chỉnh thiên vị vị trí)
+  so với P0 trên cùng 4B, thước r trong chương; ghi trước khi làm.
+- NHẬN làm ứng viên lớp 2 (ghi lại cùng CS): so chương với bộ chương neo đáp án (thang tuyệt đối bằng neo, Lawrence 2025).
+- Reward-model nhỏ trên cặp so sánh: xếp sau, chỉ khi so sánh có tín hiệu.
