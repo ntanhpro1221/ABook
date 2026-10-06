@@ -13,6 +13,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   3 dòng “Chương N” (thêm phần Mở đầu - 4 chương)"); trước đây nó gộp cả phần ấy vào số chương nên trông như đếm sai. Máy tính và điện thoại như nhau.
 - Bớt chữ "Studio" ở những chỗ người nghe hay gặp: thay đổi chưa áp ghi "Đang chờ máy làm sách" (hay "chờ gửi về máy tính" với sách tải từ máy tính), nghe hết phần đã có thì
   "Chương tiếp theo sẽ nghe được khi máy làm xong chương ấy", và sách đọc bằng giọng có sẵn của máy ghi "Giọng đọc của máy" như trong Cài đặt.
+- Sách chỉ có chữ: giọng đọc đọc sai một tên hay một từ thì giữ ngón tay vào chữ ấy ở màn đọc (máy tính: bấm chuột phải) và chọn "Đọc từ này là…": gõ cách đọc
+  (vd "Ha ru tô"), bấm "Nghe thử" để nghe bằng giọng đang đọc cuốn này, rồi "Lưu cho cả cuốn" - mọi chỗ có đúng từ ấy đọc theo cách mới, chữ trong sách giữ
+  nguyên và chữ đang đọc vẫn sáng đúng chỗ. Danh sách "Cách đọc tên" trong hộp "Sửa sách" để xem, sửa, nghe thử hay bỏ từng từ; cách đọc đi theo file sách khi
+  xuất. Hộp "Sửa câu này" của sách nói chưa có Studio cũng nghe thử được cách đọc tên bằng giọng đọc của máy. Máy tính và điện thoại như nhau.
+- Hồ sơ nghe chuyển được sang cuốn khác ("Chuyển sang cuốn khác…" trong menu hồ sơ nghe; cuốn chỉ có một hồ sơ thì "Chuyển chỗ nghe sang cuốn khác…" ở menu "…"):
+  chỗ nghe, dấu trang và lịch sử đi theo, thành hồ sơ đang dùng ở cuốn kia - tiện khi có bản làm lại của cùng truyện. Máy tính và điện thoại như nhau.
 
 ### Điện thoại
 
@@ -21,12 +27,27 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - "Chia sẻ…" trong menu "…" của trang sách: gửi file sách (.abook, kèm những thay đổi của bạn) qua Zalo, Drive, email hay bất kỳ app nào trong bảng chia sẻ của điện thoại.
 - Mở được file EPUB, Word (DOCX), PDF và TXT từ app khác: chọn ABook trong "Mở bằng" hay chia sẻ file tới ABook là hộp "Thêm sách từ file" mở sẵn danh sách chương để xem
   trước rồi thêm.
-- Sách chỉ có chữ: giọng đọc đọc sai một tên hay một từ thì giữ ngón tay vào chữ ấy ở màn đọc (máy tính: bấm chuột phải) và chọn "Đọc từ này là…": gõ cách đọc
-  (vd "Ha ru tô"), bấm "Nghe thử" để nghe bằng giọng đang đọc cuốn này, rồi "Lưu cho cả cuốn" - mọi chỗ có đúng từ ấy đọc theo cách mới, chữ trong sách giữ
-  nguyên và chữ đang đọc vẫn sáng đúng chỗ. Danh sách "Cách đọc tên" trong hộp "Sửa sách" để xem, sửa, nghe thử hay bỏ từng từ; cách đọc đi theo file sách khi
-  xuất. Hộp "Sửa câu này" của sách nói chưa có Studio cũng nghe thử được cách đọc tên bằng giọng đọc của máy. Máy tính và điện thoại như nhau.
-- Hồ sơ nghe chuyển được sang cuốn khác ("Chuyển sang cuốn khác…" trong menu hồ sơ nghe; cuốn chỉ có một hồ sơ thì "Chuyển chỗ nghe sang cuốn khác…" ở menu "…"):
-  chỗ nghe, dấu trang và lịch sử đi theo, thành hồ sơ đang dùng ở cuốn kia - tiện khi có bản làm lại của cùng truyện. Máy tính và điện thoại như nhau.
+- Cài đặt có nhóm "Giới thiệu": phiên bản đang cài, mã nguồn mở (giấy phép MIT, mở trang GitHub) và danh sách thành phần bên thứ ba cùng giấy phép của từng thứ.
+  Máy tính có cùng danh sách ở mục "Giới thiệu" của Cài đặt (nút "Thành phần bên thứ ba").
+
+### Máy tính
+
+- Menu "…" của trang sách có thêm "Xuất M4B cho app sách nói": cả cuốn thành một file `.m4b` mà Apple Books, Smart AudioBook Player, BookPlayer... mở là thấy
+  đủ danh sách chương (tên chương thật, nhảy đúng đầu chương), có bìa, tên sách và giọng kể. Máy làm ở nền như "Xuất file sách" - sách dài mất vài phút, tải
+  lại trang vẫn thấy tiến độ, xong thì báo nơi file nằm. Chỉ chương đã làm xong được đưa vào; thiếu chương thì thông báo nói rõ có bao nhiêu chương trong file.
+- Sách "Trên máy khác" (máy tính): menu "…" của sách có "Tải về máy", như trên điện thoại - máy tải cả cuốn ở nền, tiến độ hiện ngay dưới tên sách, dừng được; xong thì nghe trọn cả khi máy kia đã tắt. Máy kia tắt hay mất mạng giữa chừng thì phần đã tải vẫn giữ, bấm "Tải tiếp" chỉ lấy phần còn thiếu; máy kia thu lại một chương thì "Tải nốt về máy" lấy đúng chương ấy.
+- Sách của một máy tính khác giờ sửa được ngay ở máy tính đang nghe (tên sách, bìa, tên nhân vật, tên chương, nhạc nền, cách đọc, người nói...), như điện thoại với máy tính: phần sửa tự gửi về máy giữ sách (hay bấm "Gửi về máy tính"), sửa áp ngay thì máy ấy áp liền, việc cần Studio vào hộp "Thay đổi từ máy khác" (trước đây "Thay đổi từ điện thoại") trong Studio của máy ấy, chờ chủ máy duyệt. Máy kia đang tắt thì phần sửa nằm chờ ở máy này, gửi khi tới được.
+
+### Phát trên loa / TV
+
+- Phát trên loa / TV có hẹn giờ tắt: thanh "Đang phát trên <thiết bị>" (máy tính và điện thoại) có nút trăng như trình phát trong app - chọn 5 tới 90 phút, số phút tự đặt,
+  hay "Dừng khi hết chương này"; nút đếm ngược, thêm được 10 phút, tắt được. Đồng hồ chỉ chạy khi loa / TV đang phát. Hết giờ thì thiết bị tạm dừng và chỗ đang nghe
+  được lưu; hẹn "hết chương" thì dừng ở cuối chương và lần nghe sau vào thẳng chương kế.
+- Điện thoại phát lên loa / TV: màn hình khoá, nút tai nghe / Bluetooth và đồng hồ điều khiển được thiết bị - phát / tạm dừng, lùi / tới 15 giây, chương trước / sau -
+  và hiện tên chương, tên sách. Phím âm lượng và thanh âm lượng ở màn hình khoá chỉnh âm lượng của chính loa / TV (khi thiết bị cho chỉnh từ xa; loa, TV giữ
+  âm lượng riêng thì phím vẫn chỉnh điện thoại).
+- Máy tính phát lên loa / TV mà điện thoại đang hiện thanh "Đang phát trên…": màn hình khoá, tai nghe của điện thoại cũng điều khiển được - phát / tạm dừng, lùi / tới,
+  chương trước / sau, dừng. Hết khi máy tính thôi phát.
 
 ### Nhạc nền
 
@@ -37,25 +58,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - "Cần nghe lại": câu có bản thu riêng đã được dọn sau khi ghép chương giờ vẫn nghe được - máy phát đúng đoạn ấy trong file chương rồi dừng ở cuối câu, nên bấm
   được "Ổn" hay "Cần thu lại", và "Nghe liền" cũng đi qua những câu ấy. Trước đây nút nghe bị tắt.
-
-
-- Cài đặt có nhóm "Giới thiệu": phiên bản đang cài, mã nguồn mở (giấy phép MIT, mở trang GitHub) và danh sách thành phần bên thứ ba cùng giấy phép của từng thứ.
-  Máy tính có cùng danh sách ở mục "Giới thiệu" của Cài đặt (nút "Thành phần bên thứ ba").
-### Máy tính
-
-- Menu "…" của trang sách có thêm "Xuất M4B cho app sách nói": cả cuốn thành một file `.m4b` mà Apple Books, Smart AudioBook Player, BookPlayer... mở là thấy
-  đủ danh sách chương (tên chương thật, nhảy đúng đầu chương), có bìa, tên sách và giọng kể. Máy làm ở nền như "Xuất file sách" - sách dài mất vài phút, tải
-  lại trang vẫn thấy tiến độ, xong thì báo nơi file nằm. Chỉ chương đã làm xong được đưa vào; thiếu chương thì thông báo nói rõ có bao nhiêu chương trong file.
-- Phát trên loa / TV có hẹn giờ tắt: thanh "Đang phát trên <thiết bị>" (máy tính và điện thoại) có nút trăng như trình phát trong app - chọn 5 tới 90 phút, số phút tự đặt,
-  hay "Dừng khi hết chương này"; nút đếm ngược, thêm được 10 phút, tắt được. Đồng hồ chỉ chạy khi loa / TV đang phát. Hết giờ thì thiết bị tạm dừng và chỗ đang nghe
-  được lưu; hẹn "hết chương" thì dừng ở cuối chương và lần nghe sau vào thẳng chương kế.
-- Điện thoại phát lên loa / TV: màn hình khoá, nút tai nghe / Bluetooth và đồng hồ điều khiển được thiết bị - phát / tạm dừng, lùi / tới 15 giây, chương trước / sau -
-  và hiện tên chương, tên sách. Phím âm lượng và thanh âm lượng ở màn hình khoá chỉnh âm lượng của chính loa / TV (khi thiết bị cho chỉnh từ xa; loa, TV giữ
-  âm lượng riêng thì phím vẫn chỉnh điện thoại).
-- Máy tính phát lên loa / TV mà điện thoại đang hiện thanh "Đang phát trên…": màn hình khoá, tai nghe của điện thoại cũng điều khiển được - phát / tạm dừng, lùi / tới,
-  chương trước / sau, dừng. Hết khi máy tính thôi phát.
-- Sách "Trên máy khác" (máy tính): menu "…" của sách có "Tải về máy", như trên điện thoại - máy tải cả cuốn ở nền, tiến độ hiện ngay dưới tên sách, dừng được; xong thì nghe trọn cả khi máy kia đã tắt. Máy kia tắt hay mất mạng giữa chừng thì phần đã tải vẫn giữ, bấm "Tải tiếp" chỉ lấy phần còn thiếu; máy kia thu lại một chương thì "Tải nốt về máy" lấy đúng chương ấy.
-- Sách của một máy tính khác giờ sửa được ngay ở máy tính đang nghe (tên sách, bìa, tên nhân vật, tên chương, nhạc nền, cách đọc, người nói...), như điện thoại với máy tính: phần sửa tự gửi về máy giữ sách (hay bấm "Gửi về máy tính"), sửa áp ngay thì máy ấy áp liền, việc cần Studio vào hộp "Thay đổi từ máy khác" (trước đây "Thay đổi từ điện thoại") trong Studio của máy ấy, chờ chủ máy duyệt. Máy kia đang tắt thì phần sửa nằm chờ ở máy này, gửi khi tới được.
 
 ## [0.4.29] - 2026-10-06
 
