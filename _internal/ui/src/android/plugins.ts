@@ -376,6 +376,11 @@ export interface ReadAloudPlugin {
   vieneuStart(options: { choices?: VieneuChoiceId[] }): Promise<VieneuStatus>;
   vieneuMeasure(): Promise<VieneuStatus>;
   vieneuRemove(options: { choice: VieneuChoiceId }): Promise<VieneuStatus>;
+  /** Mô-đun "Giọng Supertonic" (readaloud/SupertonicModule.kt): cùng hình trạng thái, cùng lệnh. */
+  supertonicStatus(): Promise<VieneuStatus>;
+  supertonicStart(options: { choices?: VieneuChoiceId[] }): Promise<VieneuStatus>;
+  supertonicMeasure(): Promise<VieneuStatus>;
+  supertonicRemove(options: { choice: VieneuChoiceId }): Promise<VieneuStatus>;
   /** "Làm trước" (PrepareAhead.kt): việc nền của WorkManager đọc sẵn các chương này bằng đúng giọng ấy vào bộ đệm - chạy cả khi app đã đóng. */
   preparePlan(options: { bookId: string; voice: string; chapterIds: number[] }): Promise<PreparePlan>;
   prepareStart(options: { bookId: string; voice: string; chapterIds: number[]; label: string; chargingOnly?: boolean }): Promise<PrepareStatus>;

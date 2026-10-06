@@ -47,14 +47,17 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
     /** `sea_g2p.punc_norm`: one final "." (short sentences always end in "."). */
     fun puncNorm(text: String): String = SeaG2pNative.nativePuncNorm(text)
 
+    /** Text of ONE unit made of [sentences], `vieneu_engine.normalize`: each sentence normalised without the final-punctuation rule, joined with
+     *  spaces - what a voice that reads text (Supertonic) is given. */
+    fun normalizeUnit(sentences: List<String>): String = sentences.map { normalize(it, false) }.filter { it.isNotEmpty() }.joinToString(" ")
+
     /**
      * Phonemes of ONE unit made of [sentences], exactly `vieneu_engine.phonemize` (= vieneu 3.8.1 for that unit): each sentence normalised
      * without the final-punctuation rule, joined with spaces, the unit's final punctuation settled, then the pipeline (normalise with
      * punc_norm + G2P). "" when nothing is left to read.
      */
     fun phonemize(sentences: List<String>): String {
-        val normalized = sentences.map { normalize(it, false) }.filter { it.isNotEmpty() }.joinToString(" ")
-        val chunk = puncNorm(normalized)
+        val chunk = puncNorm(normalizeUnit(sentences))
         return if (chunk.isBlank()) "" else g2p(normalize(chunk, true))
     }
 
@@ -62,5 +65,14 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
     override fun close() {
         if (handle != 0L) SeaG2pNative.nativeClose(handle)
         handle = 0L
+    }
+
+    companion object {
+        private var shared: SeaG2p? = null
+
+        /** The reader of this process, opened from [library] + [dictionary] the first time: the JNI library stays mapped from its first path, so
+         *  "Giọng VieNeu" and "Giọng Supertonic" share one reader (both pin the same files) whichever module's copy came first. */
+        @Synchronized
+        fun shared(library: File, dictionary: File): SeaG2p = shared ?: SeaG2p(library, dictionary).also { shared = it }
     }
 }

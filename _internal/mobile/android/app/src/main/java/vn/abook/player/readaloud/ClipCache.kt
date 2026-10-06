@@ -30,9 +30,9 @@ class ClipCache(
             MessageDigest.getInstance("SHA-256").digest("$provider|$voice|$text${if (reading.isEmpty()) "" else "|$reading"}".toByteArray(Charsets.UTF_8))
                 .joinToString("") { "%02x".format(it) }
 
-        /** Dấu cách đọc riêng của cuốn trong khoá (`VieneuProvider.reading_tag`): chỉ giọng VieNeu, và chỉ đoạn mà gốc làm nghe khác. */
+        /** Dấu cách đọc riêng của cuốn trong khoá (`reading_tag`): chỉ giọng đọc tên theo gốc cuốn (VieNeu, Supertonic), và chỉ đoạn mà gốc làm nghe khác. */
         fun reading(voiceId: String, text: String, origin: String?): String =
-            if (origin != null && voiceId.startsWith("vieneu:")) VieneuUnits.readingTag(text, origin) else ""
+            if (origin != null && (voiceId.startsWith("vieneu:") || voiceId.startsWith("supertonic:"))) VieneuUnits.readingTag(text, origin) else ""
 
         /** "edge:vi-VN-X" -> ("edge", "vi-VN-X"). */
         fun split(voiceId: String): Pair<String, String> = voiceId.substringBefore(':') to voiceId.substringAfter(':', "")

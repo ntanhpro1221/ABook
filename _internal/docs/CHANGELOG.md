@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại
+
+- Giọng Supertonic có cả trên điện thoại, đọc như trên máy tính: 10 giọng nam nữ, âm thanh 44 kHz, số và ngày giờ được đọc thành chữ. Giọng không có sẵn
+  trong app: vào Cài đặt › Nghe, bấm tải "Giọng Supertonic" (khoảng 400 MB, dùng lại phần đã tải của VieNeu nếu có), có thanh tiến độ và nút gỡ. Tải xong
+  máy tự đo xem điện thoại đọc kịp không; đọc chậm hơn tốc độ nghe thì app nói rõ và gợi ý dùng giọng trực tuyến.
+
 ## [0.4.29] - 2026-10-06
 
 ### Studio

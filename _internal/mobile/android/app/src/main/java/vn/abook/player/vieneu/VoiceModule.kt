@@ -1,0 +1,295 @@
+package vn.abook.player.vieneu
+
+import org.json.JSONArray
+import org.json.JSONObject
+import vn.abook.player.PinnedFiles
+import vn.abook.player.PinnedFiles.Part
+import vn.abook.player.Store
+import java.io.File
+import java.io.IOException
+
+/**
+ * The frame of a voice the listener downloads on a tap (the phone's `voice_module.ModuleCore`), shared by "Giọng VieNeu" ([VieneuModule]) and
+ * "Giọng Supertonic" ([vn.abook.player.readaloud.SupertonicModule]): pinned parts in [dir] (SHA-256 + size each, a newer pin makes a part
+ * "outdated" and only it is fetched again), parts another module already has on this phone used where they are ([shared]) and not counted,
+ * sizes shown = what this phone still lacks, the download on a background thread with progress, a self-benchmark of a few seconds after it,
+ * removal of each choice. Same status shape as the desktop (ui/src/listen/vieneuModule.ts). The subclass gives the parts, choices and words.
+ */
+abstract class VoiceModule(
+    protected val dir: File,
+    /** Part id -> its files (paths inside [dir]). */
+    protected val groups: Map<String, List<Part>>,
+    protected val facts: Facts,
+    /** Measure a tier just downloaded; null in tests that do not measure. */
+    private val benchmark: ((String) -> Benchmark)?,
+    /** Drop loaded engines before files are replaced or removed. */
+    private val forget: () -> Unit,
+    private val metered: () -> Boolean,
+) {
+    class Facts(val cores: Int, val ramGb: Double)
+
+    class Benchmark(val rtf: Double, val firstAudioMs: Long, val loadMs: Long, val audioSeconds: Double) {
+        fun json(): JSONObject = JSONObject().put("rtf", rtf).put("firstAudioMs", firstAudioMs).put("loadMs", loadMs).put("audioSeconds", audioSeconds)
+
+        companion object {
+            /** From the clock of a self-benchmark: [began] -> engine loaded + warmed at [loaded] -> paragraph of [samples] at [rate] done at [done] (ns). */
+            fun of(began: Long, loaded: Long, done: Long, samples: Int, rate: Int): Benchmark {
+                val seconds = samples.toDouble() / rate
+                return Benchmark(Math.round((done - loaded) / 1e9 / seconds * 1000) / 1000.0, (done - loaded) / 1_000_000, (loaded - began) / 1_000_000,
+                    Math.round(seconds * 100) / 100.0)
+            }
+        }
+    }
+
+    /** "giọng VieNeu": the module in the middle of a sentence (error messages); thread names use [threadName]. */
+    protected abstract val name: String
+    protected abstract val threadName: String
+    /** Choices in the order the card shows them, and the tiers measured after a download (in measuring order). */
+    abstract val choices: List<String>
+    protected abstract val tiers: List<String>
+    abstract fun needs(choice: String): List<String>
+    protected abstract fun partLabel(id: String): String
+    /** (label, detail) of a choice for this phone. */
+    protected abstract fun choiceText(choice: String): Pair<String, String>
+    /** Why this phone cannot have the module ("" = it can). */
+    protected abstract val unsupported: String
+    /** The choice "Khuyên dùng" for this phone given the self-benchmarks [bench]. */
+    abstract fun recommended(bench: JSONObject = readBench()): String
+    /** A downloaded voice slower than listening -> what to offer (the listener decides), null when none is slow. */
+    protected abstract fun suggestion(bench: JSONObject, tiers: List<String>): JSONObject?
+    /** (recommended, ticked at first) of a choice. */
+    protected open fun marks(choice: String, best: String): Pair<Boolean, Boolean> = (choice == best) to (choice == best)
+    /** The folder outside [dir] that already holds part [id] (another module's copy, used in place and not counted), or null. */
+    protected open fun shared(id: String): File? = null
+
+    protected val pinned = PinnedFiles(dir, "", STAMP)
+    private val lock = Any()
+    private var downloading = false
+    private var benchmarking = false
+    private var error = ""
+    private var finished = 0L
+    private var current = 0L
+    private var total = 0L
+    private var worker: Thread? = null
+    private val benchFile = File(dir, BENCH)
+
+    /** Whether [folder] holds every file of part [id] at its pinned size (a module that keeps the same pins). */
+    protected fun holds(folder: File?, id: String): Boolean = folder != null && groups.getValue(id).let { parts ->
+        parts.isNotEmpty() && parts.all { part -> File(folder, part.name).let { it.isFile && it.length() == part.size } }
+    }
+
+    /** Folder whose `<part path>` files are used for part [id]: the other module's when it has them, else this module's. */
+    fun folderFor(id: String): File = shared(id) ?: dir
+
+    // ---- what is here -----------------------------------------------------------------------------------------------------------
+    private fun partState(id: String, stamp: Map<String, String>): String {
+        if (shared(id) != null) return "current"
+        val files = groups.getValue(id)
+        if (files.isEmpty() || !files.all { pinned.present(it) }) return "missing"
+        return if (files.all { pinned.isCurrent(it, stamp) }) "current" else "outdated"
+    }
+
+    protected fun states(): Map<String, String> {
+        val stamp = pinned.readStamp()
+        return groups.keys.associateWith { partState(it, stamp) }
+    }
+
+    private fun bytes(id: String, states: Map<String, String>): Long =
+        if (states[id] == "current") 0L else groups.getValue(id).filter { !pinned.isCurrent(it) }.sumOf { it.wireSize }
+
+    /** Choices whose parts are all on this phone (an older version counts). */
+    protected fun have(states: Map<String, String>) = choices.filter { choice -> needs(choice).all { states[it] != "missing" } }
+
+    /** Parts (each once) that [wanted] still lack or have in an older version. */
+    private fun lacking(wanted: List<String>, states: Map<String, String>): List<String> =
+        wanted.flatMap { needs(it) }.distinct().filter { states[it] != "current" }
+
+    /** Every file [wanted] use (shared ones once), as pinned by this app. */
+    fun parts(wanted: List<String>): List<Part> = wanted.flatMap { needs(it) }.distinct().flatMap { groups.getValue(it) }
+
+    /** Runtime libraries ([Part.blocking]) must match the APK's code (ONNX Runtime's Java API, JNI functions): true when one of the parts [used]
+     *  (this module's own copies) is older than this app's pin - the voice then waits for the update. */
+    protected fun runtimeBehind(used: List<String>): Boolean {
+        val stamp = pinned.readStamp()
+        return used.filter { shared(it) == null }.flatMap { groups.getValue(it) }.any { it.blocking && !pinned.isCurrent(it, stamp) }
+    }
+
+    // ---- benchmark --------------------------------------------------------------------------------------------------------------
+    protected fun readBench(): JSONObject = try {
+        JSONObject(benchFile.readText(Charsets.UTF_8))
+    } catch (_: Exception) {
+        JSONObject()
+    }
+
+    /** Self-measured RTF of [tier] on this phone; null when not measured. */
+    protected fun tierRtf(tier: String): Double? = readBench().optJSONObject(tier)?.optDouble("rtf")?.takeIf { !it.isNaN() }
+
+    // ---- status -----------------------------------------------------------------------------------------------------------------
+    /** For the module's card (same shape as the desktop's status, ui/src/listen/vieneuModule.ts). */
+    fun status(): JSONObject = synchronized(lock) {
+        val states = states()
+        val installedTiers = have(states)
+        val behind = lacking(installedTiers, states).filter { states[it] == "outdated" }
+        val bench = readBench()
+        val best = recommended(bench)
+        val state = when {
+            downloading -> "downloading"
+            error.isNotEmpty() -> "error"
+            installedTiers.isNotEmpty() -> if (behind.isNotEmpty()) "outdated" else "ready"
+            unsupported.isNotEmpty() -> "unsupported"
+            else -> "missing"
+        }
+        val shown = JSONArray()
+        for (choice in choices) {
+            val (label, detail) = choiceText(choice)
+            val (recommended, ticked) = marks(choice, best)
+            shown.put(JSONObject().put("id", choice).put("label", label).put("detail", detail).put("needs", JSONArray(needs(choice)))
+                .put("bytes", lacking(listOf(choice), states).sumOf { bytes(it, states) }).put("installed", choice in installedTiers)
+                .put("recommended", recommended).put("default", ticked).put("removable", choice in installedTiers))
+        }
+        val parts = JSONArray()
+        for (id in groups.keys) {
+            parts.put(JSONObject().put("id", id).put("label", partLabel(id)).put("bytes", groups.getValue(id).sumOf { it.wireSize })
+                .put("state", states.getValue(id)).put("external", shared(id) != null))
+        }
+        val shownBench = JSONObject()
+        for (tier in installedTiers) bench.optJSONObject(tier)?.let { shownBench.put(tier, it) }
+        JSONObject().put("state", state).put("done", if (downloading) finished + current else 0).put("total", if (downloading) total else 0)
+            .put("error", error).put("supported", unsupported.isEmpty()).put("reason", unsupported).put("choices", shown).put("parts", parts)
+            .put("outdatedParts", JSONArray(behind.map { partLabel(it) })).put("outdatedBytes", behind.sumOf { bytes(it, states) })
+            .put("benchmark", shownBench).put("benchmarking", benchmarking)
+            .put("suggestion", if (benchmarking) JSONObject.NULL else suggestion(bench, installedTiers) ?: JSONObject.NULL)
+            .put("device", JSONObject().put("cores", facts.cores).put("ramGb", facts.ramGb).put("gpu", "").put("runs", "cpu"))
+            .put("recommended", best).put("slowRtf", SLOW_RTF).put("metered", runCatching { metered() }.getOrDefault(false)).put("removable", true)
+    }
+
+    // ---- download / remove / measure -------------------------------------------------------------------------------------------
+    /** Download what [wanted] lack (null: update the outdated parts of what is installed), on a background thread. */
+    fun start(wanted: List<String>?) {
+        synchronized(lock) {
+            if (downloading || benchmarking) return
+            val unknown = wanted?.firstOrNull { it !in choices }
+            require(unknown == null) { "Không có lựa chọn $unknown" }
+            val states = states()
+            val needed = lacking(wanted ?: have(states), states)
+            error = ""
+            if (needed.isEmpty()) return
+            if (unsupported.isNotEmpty()) {
+                error = unsupported.replaceFirstChar { it.uppercase() } + "."
+                return
+            }
+            downloading = true
+            finished = 0
+            current = 0
+            total = needed.sumOf { bytes(it, states) }
+            val files = needed.flatMap { id -> groups.getValue(id) }
+            worker = Thread({ run(files, needed) }, "abook-$threadName-module").apply {
+                isDaemon = true
+                priority = Thread.MIN_PRIORITY
+                start()
+            }
+        }
+    }
+
+    private fun run(files: List<Part>, needed: List<String>) {
+        try {
+            forget() // a loaded engine must not read files being replaced
+            pinned.download(files, object : PinnedFiles.Progress {
+                override fun current(bytes: Long) = synchronized(lock) { current = bytes }
+                override fun done(part: Part) = synchronized(lock) {
+                    finished += part.wireSize
+                    current = 0
+                }
+            })
+            forget()
+            synchronized(lock) {
+                downloading = false
+                error = ""
+                benchmarking = true
+            }
+            val installedTiers = have(states())
+            measure(tiers.filter { tier -> tier in installedTiers && needs(tier).any { it in needed } })
+        } catch (failure: Exception) {
+            synchronized(lock) { error = describe(failure) }
+        } finally {
+            synchronized(lock) { downloading = false }
+        }
+    }
+
+    private fun describe(failure: Exception): String {
+        val title = name.replaceFirstChar { it.uppercase() }
+        return when (failure) {
+            is PinnedFiles.ChecksumError -> "$title tải về bị hỏng (không khớp mã kiểm) - bấm Thử lại để tải lại."
+            is IOException -> "Không tải được $name (${failure.message ?: "mất kết nối"}). Bấm Thử lại - phần đã tải được giữ."
+            else -> "Không tải được $name (${failure.message ?: failure.javaClass.simpleName})."
+        }
+    }
+
+    /** Whether a just-downloaded voice can be measured at all (the voice's files are usable). */
+    protected abstract fun measurable(): Boolean
+
+    /** Measure [measured] (a few seconds each; the caller has set `benchmarking`); a failed measurement never spoils the download. */
+    private fun measure(measured: List<String>) {
+        try {
+            val run = benchmark ?: return
+            if (measured.isEmpty() || !measurable()) return
+            val results = readBench()
+            for (tier in measured) {
+                try {
+                    results.put(tier, run(tier).json())
+                } catch (_: Throwable) { // UnsatisfiedLinkError, OutOfMemoryError: say nothing about the speed rather than crash
+                    results.remove(tier)
+                }
+            }
+            dir.mkdirs()
+            Store.writeAtomic(benchFile, results.toString())
+        } finally {
+            synchronized(lock) { benchmarking = false }
+        }
+    }
+
+    /** "Thử lại tốc độ": measure every installed tier again, on a background thread. */
+    fun measureAgain() {
+        synchronized(lock) {
+            if (downloading || benchmarking) return
+            val installedTiers = have(states())
+            if (installedTiers.isEmpty()) return
+            benchmarking = true
+            worker = Thread({ measure(tiers.filter { it in installedTiers }) }, "abook-$threadName-bench").apply {
+                isDaemon = true
+                priority = Thread.MIN_PRIORITY
+                start()
+            }
+        }
+    }
+
+    /** Remove one choice; parts another installed choice still needs stay, the last one takes every part of this module (never another module's). */
+    fun remove(choice: String) {
+        require(choice in choices) { "Không có lựa chọn $choice" }
+        synchronized(lock) {
+            if (downloading || benchmarking) return
+            forget()
+            val others = have(states()).filter { it != choice }
+            val keep = others.flatMap { needs(it) }.toSet()
+            val drop = needs(choice).filter { it !in keep }
+            val files = drop.flatMap { groups.getValue(it) }
+            pinned.remove(files)
+            files.map { it.name.substringBefore('/') }.distinct().forEach { File(dir, it).deleteRecursively() }
+            val bench = readBench().apply { remove(choice) }
+            if (bench.length() == 0) benchFile.delete() else Store.writeAtomic(benchFile, bench.toString())
+            error = ""
+        }
+    }
+
+    /** Wait for the download / measurement thread (tests). */
+    fun join(millis: Long = 60_000) {
+        worker?.join(millis)
+    }
+
+    companion object {
+        const val STAMP = "module.json"
+        private const val BENCH = "benchmark.json"
+        /** At or above this a voice cannot be listened to live (desktop vieneu_module.SLOW_RTF). */
+        const val SLOW_RTF = 0.8
+    }
+}
