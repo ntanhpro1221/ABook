@@ -4112,3 +4112,23 @@ Cổng (ghi trước, chưa xem số của bộ xác nhận nào trên thước 
 
   Qua thì bộ xác nhận thứ hai cần LLM chạy trên 8 + 9 (GPU, sau hàng model phân tích, Lead duyệt khe).
 - Lệnh chạy: `llm_nt_combo.py c1`, `llm_nt_combo.py c2`. Mã không sửa sau khi chạy.
+
+**LLM-NT - KẾT QUẢ** (mã đóng băng, chạy một lần). Bộ 7 + 8 + 9 có 50 NT; ghi trước lỡ chép 49.
+
+| | /giờ | R_NT | P_NT | F1_NT | sai CHẶT |
+|---|---|---|---|---|---|
+| X, bộ 7+8+9 | 5,3 | .36 (18) | .27 | .308 | 3,8 |
+| **C1**, bộ 7+8+9 | 3,7 | .40 (20) | .43 | **.412** | **2,1** |
+| X, bộ 7 | 7,5 | .48 (10) | .30 | - | 5,2 |
+| C2, bộ 7 | 6,4 | .52 (11) | .39 | - | 3,9 |
+
+- **C1 QUA:** sai CHẶT còn 0,55 × X, F1_NT +.10. Bỏ hai nguồn yếu mà R_NT không giảm.
+- **C2 KHÔNG QUA:** cổng "trúng >= X + 2" trượt, chỉ thêm 1 NT. Phần LLM không thêm đáng kể so với C1.
+  Không cần khe GPU 8 + 9.
+
+Đề xuất app (nhánh dev/music-scene, Lead cài):
+- `cue_kind`: ngoặc chỉ là subhead khi `bracket_is_subhead` (bao gạch hoặc nói POV/góc nhìn).
+- Bỏ loại `time_place` khỏi ranh giới đổi bài: không còn là `sceneBreak`. Cờ sách thì vẫn giữ.
+
+Đặc tả: `Corpus/research/music/SPEC_bracket_cue.md` (đã sửa cho C1).
+Ghi chú: luật ngoặc từng trượt bộ 9 trên thước cũ. Thước cũ trộn đổi nhịp vào, mà ngoặc lại hay rơi đúng chỗ đổi nhịp.
