@@ -2903,3 +2903,15 @@ Phân xử (`adjudicate.py`): 84 đoạn (77 truyện), lệch A-B lớn nhất 
 - E từ LLM vẫn kém nhãn câu ở mọi biến thể (P2+E -.000, P1+E -.154).
 - Cùng P2 nhưng MLX 4-bit trên Mac (số nền LoRA, 18e10386) cho T +.180, còn Ollama ở đây +.368. Khác lượng tử/runtime đổi T nhiều, nên phép LoRA trên Mac chỉ so trong MLX (đúng như ghi trước).
 - Dữ liệu dạy vẫn dùng đầu ra chữ số P2 (mẫu đã dựng), vì luật "thua thì giữ prompt cũ" chỉ nói về prompt app; LoRA (Mac, musicvt) có luật riêng.
+
+**GHI TRƯỚC - lỗi P2 theo loại cảnh + độ phủ dữ liệu dạy (06-10 12:4x, trước khi nhìn số; chỉ CPU):**
+- **Câu hỏi:** musicvt (60 chương) có thiếu loại cảnh nào mà llmVT đang sai nhiều không, để lô dữ liệu kế (nếu có) chọn đúng loại.
+- **Dữ liệu:** `results/pm_P2_*` (qwen3.5:4b, Ollama) trên bộ 4+5+5b (chưa dùng viết prompt) và bộ 6 (ghi lại riêng).
+  Mỗi câu nhận V/T dự đoán của khúc app chứa nó, và V/T đáp án của đoạn đáp án chứa nó; trọng số = thời lượng; bỏ `chu_thich`.
+- **Thước lỗi** (khớp với thước r trong chương): trừ trung bình theo thời lượng của CHƯƠNG ở cả đáp án lẫn dự đoán, rồi lấy
+  |dự đoán − đáp án| và dấu (lệch hệ thống). Gom theo: gems chính (nhãn đầu), `function`, `tone=hai` (văn cười) có/không.
+- **Độ phủ:** tỉ phần số tiếng của mỗi loại trong `train_labels.jsonl` 60 chương (pilot + v3 + v31) so tỉ phần thời lượng trong
+  bộ đo 4+5+5b.
+- **Luật gọi "cần thêm":** loại có >= 3 % thời lượng bộ đo, lỗi tuyệt đối trung bình (V hoặc T) >= 1,3 x mức chung, VÀ tỉ phần
+  trong dữ liệu dạy < tỉ phần trong bộ đo. Loại lỗi cao nhưng đã đủ phủ -> ghi "lỗi không do thiếu dữ liệu".
+- **Không quyết gì về app;** chỉ dùng để chọn chương cho lô dữ liệu kế và đọc kết quả musicvt theo loại.
