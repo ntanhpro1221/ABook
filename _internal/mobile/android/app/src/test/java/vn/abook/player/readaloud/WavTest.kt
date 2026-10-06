@@ -111,6 +111,23 @@ class WavTest {
     }
 
     @Test
+    fun silenceIsAValidWavOfTheWantedLengthMadeOfZeros() {
+        val file = File(dir, "silence.wav")
+        val written = Wav.silence(file, 1500)
+        val format = Wav.format(file)!!
+        assertEquals(Wav.SILENCE_RATE, format.sampleRate)
+        assertEquals(1, format.channels)
+        assertEquals(16, format.bitsPerSample)
+        assertEquals(written.dataOffset, format.dataOffset)
+        assertEquals(1500L, format.durationMs(file.length()))
+        assertEquals(true, file.readBytes().drop(format.dataOffset).all { it == 0.toByte() })
+        // nối được với mảnh khác cùng định dạng (cùng đầu file với bộ nối)
+        val joined = File(dir, "joined.wav")
+        Wav.concat(listOf(file, file), joined)
+        assertEquals(3000L, Wav.format(joined)!!.durationMs(joined.length()))
+    }
+
+    @Test
     fun voiceGainIsTheMeasuredLufsOffsetPerVoice() {
         assertEquals(-1.7, VoiceGain.db("edge:vi-VN-HoaiMyNeural"), 0.0)
         assertEquals(-0.3, VoiceGain.db("edge:vi-VN-NamMinhNeural"), 0.0)

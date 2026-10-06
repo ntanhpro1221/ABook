@@ -1,0 +1,105 @@
+{
+  "_comment": "Shared by pytest (tests/test_a_listen_scene_break_rule_is_shared.py), vitest (ui/src/listen/textScript.test.ts) and the JVM test (SceneBreakTest.kt): the scene-break line rule of abook/text_processing.py (is_scene_break_line, with its `alone` flag) and its read-aloud port (textScript.ts splitParagraphs / sceneBreakGaps, Paragraphs.kt). `alone` = the line is a whole paragraph (blank lines around it, one line in the paragraph); a file with no blank line at all is ONE paragraph there. Change one side, change the others and this file.",
+  "ms": 1500,
+  "ruleGlyphs": "*~-=_#+·•‧・—–―‒─━═┄┈╌",
+  "aloneGlyphs": "*~-=#",
+  "ornamentGlyphs": "◆◇◈○●◎□■▪▫▲△▽▼★☆✦✧✱✲✶✷✻✽❖❀✿❁※⁂⁕⋆◦♦♢◊⸻§",
+  "minRuleGlyphs": 3,
+  "maxGlyphs": 40,
+  "separators": ["***", "* * *", "◆", "◇◇◇", "———", "---", "~~~", "○", "＊＊＊", "◆ ◇ ◆", "※", "-----", "= = =", "###", "· · ·", "⁂", "  ***  "],
+  "loneSeparators": ["-", "--", "*", "~", "=", "#", "＊"],
+  "notSeparators": ["...", ". . .", "…", "……", "“", "”", "\"", "—", "– –", "Chương 1", "Chương 1: ***", "***hay***", "0 0 0", "ooo", "?", "?!", "!!!", "(…)", "[***]", "", "   "],
+  "paragraphs": [
+    {
+      "name": "a separator between two paragraphs",
+      "text": "Gió thổi qua đồi.\n\n***\n\nSáng hôm sau, mưa tạnh.",
+      "paragraphs": ["Gió thổi qua đồi.", "***", "Sáng hôm sau, mưa tạnh."],
+      "breaks": [false, true, false],
+      "gapsMs": [0, 1500, 0]
+    },
+    {
+      "name": "a separator line inside a block with no blank line around it",
+      "text": "Cô đi về.\n***\nAnh ở lại.\n\nTrời tối.",
+      "paragraphs": ["Cô đi về.", "***", "Anh ở lại.", "Trời tối."],
+      "breaks": [false, true, false, false],
+      "gapsMs": [0, 1500, 0, 0]
+    },
+    {
+      "name": "lines the typesetter broke are still joined on each side of a separator",
+      "text": "Một dòng bị\nbẻ giữa.\n◆\nTiếp theo\nvẫn thế.\n\nHết.",
+      "paragraphs": ["Một dòng bị bẻ giữa.", "◆", "Tiếp theo vẫn thế.", "Hết."],
+      "breaks": [false, true, false, false],
+      "gapsMs": [0, 1500, 0, 0]
+    },
+    {
+      "name": "repeated separators pause once",
+      "text": "Cô đi về.\n***\n***\nAnh ở lại.\n\nTrời tối.",
+      "paragraphs": ["Cô đi về.", "***", "***", "Anh ở lại.", "Trời tối."],
+      "breaks": [false, true, true, false, false],
+      "gapsMs": [0, 1500, 0, 0, 0]
+    },
+    {
+      "name": "a separator with nothing before it or closing the chapter pauses nothing",
+      "text": "***\n\nTrời tối.\n\n***",
+      "paragraphs": ["***", "Trời tối.", "***"],
+      "breaks": [true, false, true],
+      "gapsMs": [0, 0, 0]
+    },
+    {
+      "name": "a file with one paragraph per line",
+      "text": "Dòng một.\n* * *\nDòng hai.\n———\nDòng ba.",
+      "paragraphs": ["Dòng một.", "* * *", "Dòng hai.", "———", "Dòng ba."],
+      "breaks": [false, true, false, true, false],
+      "gapsMs": [0, 1500, 0, 1500, 0]
+    },
+    {
+      "name": "an ellipsis, a quote mark or a chapter heading is not a scene break",
+      "text": "Gió thổi.\n\n...\n\n“\n\nChương 2\n\nSáng.",
+      "paragraphs": ["Gió thổi.", "...", "“", "Chương 2", "Sáng."],
+      "breaks": [false, false, false, false, false],
+      "gapsMs": [0, 0, 0, 0, 0]
+    },
+    {
+      "name": "a full-width run of stars",
+      "text": "Gió thổi.\n\n＊＊＊\n\nSáng.",
+      "paragraphs": ["Gió thổi.", "＊＊＊", "Sáng."],
+      "breaks": [false, true, false],
+      "gapsMs": [0, 1500, 0]
+    },
+    {
+      "name": "a lone star or dash that is a whole paragraph is a scene break",
+      "text": "Gió thổi.\n\n*\n\nSáng.\n\n-\n\nTối.",
+      "paragraphs": ["Gió thổi.", "*", "Sáng.", "-", "Tối."],
+      "breaks": [false, true, false, true, false],
+      "gapsMs": [0, 1500, 0, 1500, 0]
+    },
+    {
+      "name": "a lone star inside a multi-line paragraph is ordinary text",
+      "text": "Gió thổi.\n*\nSáng.\n\nHết.",
+      "paragraphs": ["Gió thổi. * Sáng.", "Hết."],
+      "breaks": [false, false],
+      "gapsMs": [0, 0]
+    },
+    {
+      "name": "a lone em dash may be a silent line of dialogue",
+      "text": "Gió thổi.\n\n—\n\nSáng.",
+      "paragraphs": ["Gió thổi.", "—", "Sáng."],
+      "breaks": [false, false, false],
+      "gapsMs": [0, 0, 0]
+    },
+    {
+      "name": "in a file with no blank line (one paragraph for the Python rule) a lone star line is ordinary, a full separator is not",
+      "text": "Dòng một.\n*\nDòng hai.\n***\nDòng ba.",
+      "paragraphs": ["Dòng một.", "*", "Dòng hai.", "***", "Dòng ba."],
+      "breaks": [false, false, false, true, false],
+      "gapsMs": [0, 0, 0, 1500, 0]
+    },
+    {
+      "name": "a one-line file that is a lone star",
+      "text": "*",
+      "paragraphs": ["*"],
+      "breaks": [true],
+      "gapsMs": [0]
+    }
+  ]
+}
