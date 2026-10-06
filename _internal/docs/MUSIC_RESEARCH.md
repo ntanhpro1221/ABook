@@ -2864,3 +2864,24 @@ Incompetech có feel người gắn và có Essentia; cùng logistic C=1, cùng 
 
 Kết luận: không có lý do đổi bộ mã hoá vì Essentia; Essentia giữ vai chỉ để so. Dè dặt: EffNet chưa chỉnh C (1.280 chiều,
 1.270 bài - có thể quá khớp); nhãn chỉ của một nhà soạn (Kevin MacLeod).
+
+### 06-10 12:2x - KẾT QUẢ lô 3 / bản 3.1: TRƯỢT luật không kém -> quay về bản 3; lô 3 vẫn làm dữ liệu dạy
+
+Hai agent Opus chấm mù xong 20/20 chương mỗi người (`scene_train_v31/{A,B}`). Đồng thuận A-B (r TB chương, `agreement.py`):
+
+| trục | lô 2 (bản 3) | lô 3 (bản 3.1) | đổi | luật (giảm <= 0,03) |
+|---|---|---|---|---|
+| V | .872 | .867 | -.005 | đạt |
+| E | .840 | .732 | **-.108** | trượt |
+| T | .911 | .852 | **-.059** | trượt |
+
+-> Theo luật ghi trước: **quay về bản 3**; mục 3.1 trong GUIDE_V3 ghi là đã thử và bị loại.
+Ghi lại:
+- r gộp gần như không đổi (V .93 -> .91, E .86 -> .85, T .94 -> .93). Trung bình chương bị kéo bởi vài chương (E cac_ranker -.15, ousama .41, chuyen_sinh .42; T maigo .43, khong_muon .46). Chương khác lô nên không tách được hiệu ứng hướng dẫn với hiệu ứng chương.
+- Số đoạn A/B 82/83 (lô 2 68/64), accent A/B **56/32** (lô 2 31/29), duck 2/1, soft 8/12. 3.1b ("khúc < 1 phút mạnh hơn -> accent") làm hai người tách nhau ở accent - đúng chỗ đáng ngờ nhất.
+- Hai người cùng nêu (độc lập): (a) L4 chẻ đôi đoạn vì một dòng lời dịch ngắn giữa đoạn (eikoku 85, lazy 150) - nên có ngưỡng ~5 giây; (b) phản diện đắc thế nhưng văn cười (ousama, isekai) - L1 hay "văn cười" thắng; (c) A: L3 "leo thang cùng nhóm = accent" va 3.1c "lệch 1 bậc hai trục = bắt buộc"; nhóm gems của nostalgia/wonder/transcendence chưa định.
+
+Phân xử (`adjudicate.py`): 84 đoạn (77 truyện), lệch A-B lớn nhất TB .43, >= 1,5 ở 2 đoạn -> `train_labels.jsonl`.
+**Dữ liệu musicvt (ghi theo docs 24cf8f78, trước khi chuỗi bắt đầu):** `mlx_lora/sft` dựng lại 60 chương (pilot + v3 + v31,
+`build_mood_sft.py --prompt P2 --seed 7`): **train 1.238, val 72** (cảnh 554, cửa sổ 756, bỏ 6); token dài nhất 2.312, p99
+2.239, không mẫu nào > 3.072. Bản 40 chương cũ giữ ở `mlx_lora/sft_40ch_0610/` (770/62).
