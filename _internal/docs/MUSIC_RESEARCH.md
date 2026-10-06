@@ -3758,3 +3758,27 @@ vì dấu CUE của nguồn bộ 7 nhiễu (P .36). Đó là việc riêng: CUE 
 Với app: nguồn `llm` vẫn TẮT (chế độ X). Ngay cả bộ lọc mới cũng chỉ đạt P .34-.39, còn xa cổng P .70 của việc đổi bài. Nếu sau này
 mở lại chế độ Y thì dùng `later_drop` thay `hysteresis` cho ranh giới LLM. Kết quả này cần ghi trước và xác nhận trên một bộ mới
 trước khi đưa vào app.
+
+### 07-10 06:3x - FRAME (thăm dò, KHÔNG ghi trước): khung hộp làm chế độ X đổi bài sai chỗ
+
+Vì sao CUE bộ 7 chỉ đạt P .36: truyện gacha (`full_truyen_2532`) dùng dòng `===` làm khung bảng trạng thái, có chương 20-36 dòng.
+`is_scene_break_line` (text_processing.py, file khoá) coi chúng là dòng ngắt cảnh, nên cờ `scene_break` bắn ở cả hai mép mỗi hộp.
+Subhead dạng ngoặc thì phần lớn là thoại hệ thống, thực đơn (`【Súp Mây • 90 Eso】`), đếm ngược (`【5】【4】…`) hay vật phẩm.
+
+`research/music/frame_filter.py` thử lọc trong PHA NHẠC, không đụng file khoá. Đo bằng đúng phép đo đổi bài của X (z .8, phạt ngắn 1.0):
+
+| | 4+5 | 5b+6 | bộ 7 |
+|---|---|---|---|
+| X hiện tại: đổi/giờ, P, F1, sai chỗ/giờ | 5,1 · .79 · .264 · 1,1 | 4,8 · .70 · .236 · 1,4 | 7,7 · .38 · .286 · 4,8 |
+| **+ lọc khung K = 8** (hai cờ/dấu tách cách nhau <= 8 câu thì bỏ cả hai) | 4,9 · .79 · .254 · 1,1 | 4,3 · .74 · .229 · **1,1** | 5,5 · .54 · .321 · **2,5** |
+| + bỏ mọi subhead ngoặc | 4,9 · .79 · .254 · 1,1 | 3,2 · .70 · .167 · 1,0 | 5,9 · .46 · .289 · 3,2 |
+| + bỏ ngoặc thành chuỗi (K = 8) | 4,9 · .79 · .254 · 1,1 | 4,0 · .68 · .197 · 1,3 | 6,1 · .44 · .286 · 3,4 |
+| + khung + ngoặc chuỗi | 4,8 · .78 · .244 · 1,1 | 3,5 · .73 · .188 · 1,0 | 3,9 · .71 · .324 · 1,1 |
+
+Đọc:
+- Lọc khung là thay đổi duy nhất không mất gì đáng kể. Đổi sai chỗ giảm ở cả hai bộ đo (1,4 -> 1,1; 4,8 -> 2,5). F1 đi ngang trên
+  5b+6 và 4+5 (mất 1 lần trúng), tăng trên bộ 7.
+- Luật ngoặc không tổng quát được: trên 5b+6 mất recall mà P không tăng. Bỏ.
+- Bộ 7 đã dùng cho xác nhận X/Y, nên số này chỉ là thăm dò. Luật khung là luật cơ học, dựa trên định dạng dữ liệu. Muốn đưa vào app
+  thì ghi trước và xác nhận trên bộ mới, hoặc Lead quyết vì rủi ro thấp: chỉ bỏ ranh giới, không thêm ranh giới nào.
+- Ngoài phạm vi nhạc: cùng khung ấy làm câu trước mỗi mép hộp mang quãng nghỉ cảnh 1.500 ms khi đọc (text_processing, file khoá).
