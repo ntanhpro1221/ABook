@@ -4078,3 +4078,37 @@ Kết luận:
    ở ▶; cắt giữa các mặt trận cùng lúc. Lần gắn nhãn sau cần nói rõ ba chỗ này.
 
 Nhãn: `Corpus/research/music/scene_types/types_gold.json` (khoá `types_key.json`). Nhãn của A và B nằm ở `types_A/`, `types_B/`.
+
+### 07-10 05:5x - LLM-NT (GHI TRƯỚC, Lead duyệt cổng): làm thước NT tốt lên
+Chọn CHỈ trên 4+5 / 5b+6 (73 NT, 11,9 giờ). Mã đóng băng: `research/music/llm_nt_combo.py` (Corpus 48ffed9).
+Thăm dò trên bộ học:
+- Lọc LLM rồi CHỈ THÊM vào X: không có biến thể nào qua cổng Lead ngay trên bộ học.
+  - Tốt nhất: LLM ∩ "trong lúc / mốc thời gian ±1". R_NT .37 → .41, nhưng sai CHẶT 2,4 → 3,1.
+  - Thêm vào thì không giảm được sai.
+- Theo nguồn của X, trên thước NT:
+  - cờ sách: P_NT .53;
+  - ngoặc (subhead dạng ngoặc): P_NT .11, n 9;
+  - time_place: P_NT .17, n 6;
+  - subhead chữ / separator: 1.00 (n nhỏ).
+
+  Ngoặc trúng ranh giới đáp án nhưng đó là đổi nhịp (P bất kỳ .67), không phải đổi cảnh.
+
+| bộ học (gộp) | /giờ | R_NT | P_NT | F1_NT | sai CHẶT |
+|---|---|---|---|---|---|
+| X | 4,7 | .37 (27) | .48 | .419 | 2,4 |
+| **C1** = X − ngoặc (`keep_bracket` sai) − time_place | 3,7 | .36 (26) | .59 | .444 | **1,5** |
+| **C2** = C1 + LLM later_drop 30 s ∩ "trong lúc / mốc thời gian ±1" | 4,7 | .41 (30) | .54 | .465 | 2,2 |
+
+Cổng (ghi trước, chưa xem số của bộ xác nhận nào trên thước NT):
+- **C1** không cần LLM, nên xác nhận trên GỘP bộ 7 + 8 + 9 (49 NT). QUA khi cả hai đều đúng:
+  - sai CHẶT <= 0,8 × X;
+  - F1_NT >= X − .02.
+
+  Bộ 8, 9 đã từng đo luật ngoặc trên thước cũ, nhưng chưa bao giờ trên thước NT.
+- **C2** xác nhận trên bộ 7, vì chỉ bộ 7 có LLM mà chưa dùng để chọn. Đây là cổng của Lead. QUA khi cả ba đều đúng:
+  - số NT trúng >= X + 2;
+  - P_NT >= .37;
+  - sai CHẶT <= X.
+
+  Qua thì bộ xác nhận thứ hai cần LLM chạy trên 8 + 9 (GPU, sau hàng model phân tích, Lead duyệt khe).
+- Lệnh chạy: `llm_nt_combo.py c1`, `llm_nt_combo.py c2`. Mã không sửa sau khi chạy.
