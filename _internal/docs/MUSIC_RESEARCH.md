@@ -3107,3 +3107,29 @@ CF và CS cùng thắng -> chọn MAE thấp hơn; chỉ một thắng -> nó. G
   so với P0 trên cùng 4B, thước r trong chương; ghi trước khi làm.
 - NHẬN làm ứng viên lớp 2 (ghi lại cùng CS): so chương với bộ chương neo đáp án (thang tuyệt đối bằng neo, Lawrence 2025).
 - Reward-model nhỏ trên cặp so sánh: xếp sau, chỉ khi so sánh có tín hiệu.
+
+**GÓP Ý NGOÀI ĐỢT 3 (Lead 06-10 17:3x). Mục (1) đo ngay: đồng thuận NGƯỜI-NGƯỜI theo mức tuyệt đối** (`Corpus research/music/
+human_agreement.py`, a4..; thang nửa, số tiếng, bỏ chu_thich, TB chương, TB(V,T)):
+
+| bộ | chương | MAE A-B | lệch mức chương | MAE trong chương (trừ TB) | r trong chương |
+|---|---|---|---|---|---|
+| 4 (hướng dẫn cũ) | 10 | .163 | .076 | .161 | .79 |
+| 5 | 9 | .127 | .060 | .142 | .85 |
+| 5b | 3 | .167 | .068 | .180 | .80 |
+| 6 | 20 | .144 | .081 | .149 | .80 |
+| lô 4 (bản 3) | 20 | .140 | .104 | .095 | .76 |
+
+So model trên 5b+6 (mục a): MAE tổng .43-.46, lệch mức .31-.38, trong chương .26-.28. Người khớp nhau CẢ về mức (Bland-Altman: lệch
+mức ~.07-.10, gấp 3-5 lần nhỏ hơn model) lẫn hình dạng; đáp án là trung bình A, B nên sai số người-so-đáp-án còn nhỏ hơn (~một nửa).
+Khoảng cách model-người là thật ở cả hai lớp; ngưỡng .35 chỉ là mốc đầu, đích dài hạn ~.15-.20.
+
+Mục (2) đã có một nửa: P0 vốn chấm cả KHÚC app (nhiều câu) chứ không từng câu; so với nhãn câu app gộp lại, lỗi trong chương chỉ
+.268 so .280 (mục a) -> chỉ đổi độ phân giải KHÔNG đủ. Kế hoạch sau bộ 7 (chưa ghi trước, chờ duyệt thứ tự; tuần 88%):
+- (2') chấm cụm thang 3 bậc yên / vừa / căng có neo cố định so với P0 thang 9 chữ số (cùng khúc app, cùng 4B).
+- (3) luật đổi bài: kiểm lại `music_scenes` của app (độ trễ / ngưỡng; chỉ đổi ở điểm nghỉ khi mood đổi rõ), tiền lệ Chen et al.
+  Interspeech 2022 "An Automatic Soundtracking System for Text-to-Speech Audiobooks" (chia chương thành plot, đã kiểm có thật) và
+  Sonus Texere. Đo bằng số lần đổi bài / giờ và tỉ lệ đổi ở ranh giới cảnh đáp án.
+- (4) so cặp: ghi trước theo khuôn Lead (cho hoà, đảo A/B, so với vài khúc neo thay vì mọi cặp, chi phí lượt/chương, đối chứng P0
+  bỏ phiếu cùng chi phí).
+- Đích cuối A/B "nhạc nào hợp cảnh + dễ nghe cùng giọng": máy chấm bằng thước nghe Qwen3-Omni đã nhận làm thước chính (chủ sách
+  không chấm); cần ghi trước riêng khi tới bước đó.
