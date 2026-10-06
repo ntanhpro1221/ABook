@@ -3194,3 +3194,30 @@ chọn (danh sách dấu hiệu viết sẵn dưới đây, không sửa sau khi
 - **Thắng:** F1 >= app + 0,10 trên 5b+6(+7) VÀ số ranh giới / giờ trong [0,7 ; 1,3] × TB hai người chấm. **Chọn cho app:** trong các
   cách thắng, CUE được chọn nếu F1(CUE) >= F1(tốt nhất) - 0,05 (rẻ, tất định); LLM / CUE∪LLM chỉ khi hơn CUE > 0,05.
 - Ghi lại: F1 riêng từng loại dấu hiệu CUE; P0 chấm trên khúc cắt bởi cách thắng (sau, khi có khe GPU) so P0 trên khúc app.
+
+### 06-10 18:1x - Kết quả: LoRA nhạc trên Mac (MLX) và CS-SEG phần CUE (CPU)
+
+**LoRA MLX Qwen3.5-4B (ghi trước: lora1_P2 thắng base_P0 ở >= 16/22 chương bộ 4+5+5b) -> KHÔNG THẮNG, thiếu 1 chương.**
+r trong chương VET +0,334 so +0,259 (+0,076), thắng 15/22; V +0,331 (base P0 +0,089, base P2 +0,284), T +0,363 (+0,379 / +0,180).
+Bộ 6 (ghi lại): +0,287 so +0,242, 13/20. LoRA giãn thang: hệ số co trong chương V 0,23 T 0,43 (base .10-.12), MAE tuyệt đối V
+0,346 / T 0,361 (base P0 0,385 / 0,445), không câu hỏng. Đọc: học được thật (V gấp ~3,7 lần base P0, MAE tuyệt đối tốt hơn), nhưng
+chưa qua cổng ghi trước; T không hơn P0. Không đổi mặc định.
+
+**CS-SEG - phát hiện lỗi app trước khi chấm:** dòng ngắt cảnh (`***`, `◆`, `———`) KHÔNG có chữ đọc nên `_walk_paragraphs` bỏ, chỉ
+nâng break_ms câu trước lên mặc định 230 ms (bằng một dấu chấm câu thường). Vì vậy luật `SEPARATOR` của `music_scenes.hard_break`
+(kiểm trên chữ câu) KHÔNG BAO GIỜ kích hoạt, và audio cũng không có quãng nghỉ dài ở chỗ đổi cảnh. CUE đo ở đây đọc dòng ngắt từ
+file nguồn chương (`resolve_inputs.py` tìm lại 41/42 file theo sha256 sau khi Corpus/_full đổi tên thư mục; 1 chương Creepypasta
+thiếu nguồn), dóng câu vào nguồn bằng 20 ký tự đầu (98% câu dóng được).
+
+**CUE (CPU, luật cố định đã ghi trước) - ĐO 5b+6 (6,2 giờ; người chấm TB 22,5 ranh giới/giờ, cửa sổ 15,7-29,2):**
+
+| cách | F1 | P | R | ranh giới/giờ |
+|---|---|---|---|---|
+| app (thô, đã có lọc riêng) | 0,130 | 0,15 | 0,11 | 18,4 |
+| CUE thô | 0,255 | 0,46 | 0,18 | 9,0 |
+| CUE sau lọc trễ 60 s (CHÍNH) | 0,192 | 0,59 | 0,11 | 4,7 -> KHÔNG THẮNG (thiếu số ranh giới; F1 +0,06 < +0,10) |
+
+Từng loại (ghi lại, 5b+6): dòng ngắt F1 0,207 (P 0,69 R 0,12, 4,2/giờ); tiêu đề con 0,104 (P 0,23 - ô vuông [hệ thống] trong
+truyện game kích sai); mốc thời gian/nơi chốn 0,000 (0,6/giờ); heading 0. Bộ 4+5 (ghi lại): CUE thô 0,307 (P 0,66), sau lọc 0,257.
+Đọc: CUE chính xác (P 0,5-0,7, gấp 3-4 lần app) nhưng chỉ bắt ~1/5 ranh giới người chấm; người chấm cắt cảnh theo nội dung nhiều hơn
+theo dấu hiệu. Bộ lọc trễ 60 s làm CUE MẤT F1 (bỏ ranh giới đúng giữa hai cảnh ngắn). LLM và CUE ∪ LLM chờ suất GPU (Model).
