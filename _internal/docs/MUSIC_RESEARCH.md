@@ -3719,7 +3719,7 @@ R .23 F1 .283, anh em 4,8/giờ (mô phỏng 7,7 / .38 / .286 / 4,8). Khớp tro
 - Bài học: hiệu chỉnh mức (hệ số chặn) học từ một bộ không đứng được sang bộ khác; thứ tự (r) thì đứng được. Lớp mức chương nên
   dùng r / thứ hạng trong cuốn, hoặc hiệu chỉnh theo cuốn, không dùng hằng toàn cục.
 
-### 07-10 05:3x - ĐÍNH CHÍNH: kết quả "CL bộ 7 KHÔNG THẮNG" ở trên KHÔNG HỢP LỆ
+### 07-10 04:5x - ĐÍNH CHÍNH: kết quả "CL bộ 7 KHÔNG THẮNG" ở trên KHÔNG HỢP LỆ
 
 `spans7.py p0` gọi cứng `PM.ask("P2", …)`, nên file `pm_P0_set7` thực ra là đầu ra của prompt P2 (thang chữ số, có logprobs):
 ba dòng đầu trùng `pm_P2_set7`. Công thức ghi trước (T = 1,066·P0 − 0,490) vì vậy đã được áp lên một thang khác. Đó là lý do
@@ -3727,7 +3727,7 @@ P0 "bộ 7" có T TB −0,39, sd 0,08, trong khi bộ 4/5 là +0,56/+0,69, sd 0,
 sai thành `*.WRONG_was_P2_prompt.jsonl`. P0 bộ 7 sẽ chạy lại trên GPU (hàng Model), rồi chấm lại đúng công thức ghi trước fff35839.
 Bảng và "bài học về hệ số chặn" ở mục trên bỏ hết. Cột V (C0) không dùng P0 nên MAE V .276 vẫn đúng.
 
-### 07-10 06:0x - SEG-P (thăm dò, KHÔNG ghi trước): bộ lọc ranh giới LLM cũ bỏ nhầm phía
+### 07-10 05:0x - SEG-P (thăm dò, KHÔNG ghi trước): bộ lọc ranh giới LLM cũ bỏ nhầm phía
 
 `research/music/seg_precision.py` tính độ chính xác của từng ranh giới LLM (qwen3.5:4b, kết quả SEG đã có, CPU) theo đặc trưng rẻ:
 
@@ -3759,7 +3759,7 @@ Với app: nguồn `llm` vẫn TẮT (chế độ X). Ngay cả bộ lọc mới
 mở lại chế độ Y thì dùng `later_drop` thay `hysteresis` cho ranh giới LLM. Kết quả này cần ghi trước và xác nhận trên một bộ mới
 trước khi đưa vào app.
 
-### 07-10 06:3x - FRAME (thăm dò, KHÔNG ghi trước): khung hộp làm chế độ X đổi bài sai chỗ
+### 07-10 05:0x - FRAME (thăm dò, KHÔNG ghi trước): khung hộp làm chế độ X đổi bài sai chỗ
 
 Vì sao CUE bộ 7 chỉ đạt P .36: truyện gacha (`full_truyen_2532`) dùng dòng `===` làm khung bảng trạng thái, có chương 20-36 dòng.
 `is_scene_break_line` (text_processing.py, file khoá) coi chúng là dòng ngắt cảnh, nên cờ `scene_break` bắn ở cả hai mép mỗi hộp.
@@ -3783,7 +3783,7 @@ Subhead dạng ngoặc thì phần lớn là thoại hệ thống, thực đơn 
   thì ghi trước và xác nhận trên bộ mới, hoặc Lead quyết vì rủi ro thấp: chỉ bỏ ranh giới, không thêm ranh giới nào.
 - Ngoài phạm vi nhạc: cùng khung ấy làm câu trước mỗi mép hộp mang quãng nghỉ cảnh 1.500 ms khi đọc (text_processing, file khoá).
 
-### 07-10 07:0x - FRAME-BOX: nhận hộp theo nội dung thắng luật "<= 8 câu"; GHI TRƯỚC luật xác nhận cho bộ 8
+### 07-10 05:1x - FRAME-BOX: nhận hộp theo nội dung thắng luật "<= 8 câu"; GHI TRƯỚC luật xác nhận cho bộ 8
 
 Lead (07-10) chọn sửa từ gốc ở chỗ nhận dạng dòng ngăn cảnh (text_processing, nhánh dev, 0.4.32), không lọc riêng ở pha nhạc.
 Vì thế cần một luật nhận hộp không bỏ nhầm ranh giới thật. `research/music/frame_box.py` chạy trên FILE NGUỒN như text_processing:
@@ -3815,7 +3815,7 @@ BOX_LINES 12, BOX_SHARE .5, STATUS + HEADER như trên.
   3. số ranh giới bị bỏ trùng đáp án <= 10% số bị bỏ.
 - Qua thì Lead cài vào text_processing (nhận hộp trước khi gắn `scene_break`; sửa luôn quãng nghỉ 1,5 s), đo lại bằng `verify_app_x.py`.
 
-### 07-10 07:3x - SỬA GHI TRƯỚC bộ 8 (trước khi chọn truyện): đo ở mức RANH GIỚI trên câu trơn, không cần GPU
+### 07-10 05:1x - SỬA GHI TRƯỚC bộ 8 (trước khi chọn truyện): đo ở mức RANH GIỚI trên câu trơn, không cần GPU
 
 Lead hỏi bộ 8 có cần khe phân tích 6 giờ không. Đổi bài cần nhãn cảm xúc từng câu (pha phân tích GPU), nhưng (ii) chỉ đổi TẬP ranh
 giới. Vậy đo thẳng ranh giới có lý do của `music_scenes.chapter_scenes` (đầu đoạn reason != length), trên câu TRƠN của
@@ -3831,7 +3831,7 @@ trên ba bộ cũ (câu đã có, bỏ nhãn):
 Cùng bức tranh với mức đổi bài. Bỏ nhãn làm 15-20% chương đổi ranh giới, vì gộp đoạn ngắn chọn phía theo không khí. Hai vế so sánh
 đều chịu điều đó như nhau.
 
-**Ghi trước bộ 8, thay mục 07:0x:**
+**Ghi trước bộ 8, thay mục FRAME-BOX:**
 - Đo = mức ranh giới trên câu trơn (`frame_box.py bounds`, cách tính như bảng trên). Đáp án cảnh chấm trên chính các câu ấy (id = seq).
 - (ii) QUA khi cả ba đều đúng:
   1. sai/giờ (ii) <= 0,8 x X;
@@ -3840,7 +3840,7 @@ Cùng bức tranh với mức đổi bài. Bỏ nhãn làm 15-20% chương đổ
 - Điều kiện chọn truyện giữ nguyên.
 - Không cần GPU. Lớp mức chương / L2 trên bộ 8 thì xin khe phân tích sau, xếp sau hàng model phân tích.
 
-### 07-10 08:0x - BỘ 8 chọn xong, 2 người chấm mù đang chạy
+### 07-10 05:1x - BỘ 8 chọn xong, 2 người chấm mù đang chạy
 
 - Chọn bằng `research/music/select_set8.py`, hạt 20261010, nguồn `_full/truyen` (Hako), loại mọi truyện đã dùng.
 - **Lệch ghi trước rồi sửa (trước khi có đáp án):** lần chạy đầu lỡ dùng tiêu chí cấu trúc (>= 5 cặp dòng ngắt cách nhau <= 12 dòng)
@@ -3855,3 +3855,38 @@ Cùng bức tranh với mức đổi bài. Bỏ nhãn làm 15-20% chương đổ
   - Tổng 20 chương, 333 KB.
 - Câu = `segment_chapter_text` (`research/music/export_set8.py`, id = seq). Người chấm chỉ thấy `seq<TAB>chữ`, không thấy cờ.
 - Đề PROMPT_A/B như bộ 7: A xuôi, B ngược, cấm đọc cờ/segments.
+
+(Ghi chú: các mục 07-10 từ ĐÍNH CHÍNH tới BỘ 8 ở trên lúc đầu bị đề nhầm giờ 05:3x-08:0x; đã sửa theo đồng hồ máy. Thứ tự không đổi.)
+
+### 07-10 05:2x - XÁC NHẬN BỘ 8: (ii) KHÔNG QUA - không sửa text_processing
+
+Đáp án `scene_set8/gold_scene8` (phân xử A+B; hai người chấm khớp ranh giới F1 **.817**). Đo `frame_box.py set8`, đúng ghi trước:
+
+| mức ranh giới, câu trơn | ranh giới/giờ | P | R | F1 | sai/giờ | bỏ (trùng đáp án) |
+|---|---|---|---|---|---|---|
+| X hiện tại (toàn bộ 8) | 5,9 | .27 | .15 | .194 | 4,3 | - |
+| (i) <= 8 câu | 6,2 | .33 | .20 | .247 | 4,1 | 14 (2) |
+| **(ii) hộp theo nội dung** | 6,6 | .28 | .17 | .213 | **4,8** | 16 (**2**) |
+| X, chỉ truyện khung (diễn đàn) | 12,1 | .12 | .17 | .138 | 10,7 | - |
+| (ii), chỉ truyện khung | 14,2 | .15 | .25 | .187 | 12,1 | 16 (2) |
+| 3 truyện thường (cả ba cách) | 3,0 | .56 | .15 | .233 | 1,3 | 0 |
+
+**-> (ii) KHÔNG QUA.** Trượt 2/3 điều kiện:
+- sai/giờ 4,8 > 0,8 × 4,3;
+- bỏ trùng đáp án 2/16 = 12,5% > 10%.
+
+F1 thì có tăng (.213 so với .194). Theo luật đã ghi: không cài vào text_processing.
+
+Chẩn đoán (thăm dò), truyện diễn đàn, theo loại dấu, ✓ = trúng đáp án:
+- subhead ngoặc (`[Tiêu đề: …]`, bình luận trong ngoặc): ✗ 39, ✓ 3;
+- cờ khung `◇ ◇ ◇` mà (ii) nhận là hộp: ✗ 14, ✓ 2;
+- cờ khác: ✗ 7, ✓ 3.
+
+Đọc:
+- Đáp án coi bài đăng diễn đàn là một phần cảnh đang diễn ra (nhân vật đọc diễn đàn), không phải cảnh mới.
+- (ii) bỏ đúng phần lớn cờ khung. Nhưng khi dòng khung không còn, dòng `[Tiêu đề…]` sát bên tự thành ranh giới riêng (trước đó chúng gộp
+  với đoạn ngắn của khung). Nên số ranh giới, và số sai, lại TĂNG. Nguồn nhiễu chính của X ở thể loại này là CUE subhead dạng ngoặc
+  (`music_scenes.CUE_BRACKETED`), không phải dòng khung.
+- Cũng dấu ấy: P .27 ở 5b+6, .24 ở bộ 7, .78 ở 4+5 (n = 9). Nhưng bỏ hẳn nó làm 5b+6 mất recall (mục FRAME). Chưa có luật sạch;
+  nếu làm tiếp thì là một giả thuyết mới về `CUE_BRACKETED`, ghi trước riêng.
+- Lỗi khung hộp vốn hiếm (2/790 truyện đạt >= 5 hộp). Quãng nghỉ 1,5 s ở mép hộp khi đọc vẫn còn; đó là việc của phía đọc, ngoài phạm vi nhạc.
