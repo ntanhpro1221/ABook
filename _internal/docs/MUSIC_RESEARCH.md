@@ -3479,3 +3479,62 @@ Mã: Corpus research/music/seg_split.py.
    - (b) Lần cắt đều nên là thay đổi NHẸ trong cùng bài (đổi lớp / cường độ / đoạn của cùng bản nhạc), không đổi bài. Như vậy vẫn bám
      được không khí trong chương (lý do có `_split_long`) mà không đổi bài ở chỗ ngẫu nhiên.
    - (c) Chọn VỊ TRÍ cắt đúng hơn là việc của CS-SEG (LLM), đang chờ GPU.
+
+### 07-10 01:xx - ĐẶC TẢ APP (Lead duyệt (a)+(b), làm trên nhánh dev SAU 0.4.31): đổi bài chỉ ở ranh giới có lý do, cắt đều = biến đổi nhẹ cùng bài
+
+Căn cứ: SPLIT (a20f5b93) - ranh giới `reason="length"` là 87% ranh giới app, P .14 (ngẫu nhiên); ranh giới có lý do P .81.
+File nhạc KHÔNG nằm trong `QUALITY_IMPLEMENTATION_FILES` (kiểm 07-10: 32 mục, không mục nào `webui/music_*`) -> không đụng hash
+chất lượng; vẫn chạy `quality_implementation_hash()` trước-sau theo AGENTS.md.
+
+**Số đo làm nền cho thiết kế (5b+6, ranh giới 0.4.31 có cờ scene_break, bỏ cắt đều):** 6,3 cảnh có lý do/giờ; độ dài cảnh trung
+vị 7,4 phút, p75 14,5, p90 18,2 (4+5: 6,4 / 10,2 / 16,5). Bài trong danh mục (catalog_e1, 2016 bài): trung vị 3,1 phút, p75 4,0.
+=> Bỏ cắt đều thì một bài phải chơi ~2-5 vòng trong một cảnh. Cắt đều 180 s hôm nay vô tình che việc lặp bài. Đặc tả phải lo lặp.
+
+**Chỗ sửa (đường dẫn trong `_internal/abook/`):**
+
+1. `webui/music_scenes.py` - GIỮ `_split_long` (dòng ~281, gọi trong `chapter_scenes` ~259) và các mảnh `reason="length"`: mảnh vẫn
+   có valence/tension riêng (`_view`), là chỗ đo biến đổi nhẹ. Không đổi gì ngoài việc chắc `reason` đi vào plan (đã có: `_view`
+   trả `reason`, `scenes_of` không bỏ nó).
+2. `webui/music_select.py::choose` - thêm nhánh sau ghim/keep, trước `rank`: đoạn có `reason == "length"`, cùng `chapterId` với
+   đoạn trước, đoạn trước có `link` -> **chơi tiếp bài ấy** (`link` = bài đoạn trước, `distance` None, `continued: True`), TRỪ khi
+   luật lặp (mục 4) bật. Ghim / keep / im lặng của người dùng vẫn thắng (ghim một mảnh = người dùng muốn đổi ở đó).
+   `continued` vào `CHOICE_FIELDS` của `music_plan.py`.
+3. `webui/music_plan.py::chapter_cues` - đã gộp hai đoạn liền cùng bài thành một mốc (khe < 5 s), nên mốc tự dài ra. Thêm vào mốc
+   `steps: [{at, db}]`: mỗi mảnh nối tiếp (`continued`) cho một bước `at = start của mảnh`,
+   `db = clamp(K * (tension_mảnh - tension_đầu_mốc), -3, +3)` với **K = 6 dB / đơn vị tension (thang nửa)**; bước cách bước trước
+   < 40 s thì bỏ (như hold của bộ dò đổi tâm trạng). `packaged_cues` (~436) và `package` mang `steps` theo mốc như `gainDb`;
+   mục `music` của book.json thêm `steps` (định dạng .abook: ghi vào tài liệu định dạng, không giữ tương thích cũ).
+   Âm lượng cuối = `min(0, gainDb + db)` (volume tối đa 1) -> bài đã ở trần thì bước lên bị mất: ĐO tỉ lệ này (mục đo M4).
+4. **Luật lặp (lớp thứ hai của biến đổi nhẹ):** khi đoạn `length` bắt đầu sau khi bài hiện tại đã chơi >= 1 vòng (tính từ
+   `duration` trong `plan["tracks"]`; thiếu `duration` thì không bật), cho đổi sang **bài anh em**: `rank` của chính mảnh ấy, chỉ
+   lấy ứng viên có khoảng cách tâm trạng tới BÀI ĐANG CHƠI (`z_distance` trên đích của bài) <= ngưỡng `SIBLING_Z` (bắt đầu 0,5,
+   đo lại ở M2), loại bài đã dùng trong chương; không có thì chơi tiếp (lặp). Đổi bài anh em dùng mờ chéo dài **6 s** (thay 2 s)
+   để không nghe như đổi cảnh; mốc mới mang `sibling: true`.
+5. Trình phát - `ui/src/listen/musicBed.ts` (`FADE_SECONDS`, mục tiêu âm lượng ~dòng 118) và
+   `mobile/android/.../player/MusicBed.kt` (`FADE_MS`, ~dòng 344): âm lượng mục tiêu = `gainDb` + bước `steps` đang hiệu lực tại
+   thời điểm giọng đọc; đổi bước thì trượt dần **4 s** (dùng chung vòng `STEP_MS` sẵn có); tua thì tính thẳng bước tại chỗ tua,
+   không trượt. Mốc `sibling` dùng mờ chéo 6 s. `music_plan.cue_gain_db` vẫn là chỗ tính duy nhất của `gainDb`; `db` của bước
+   cũng chỉ tính ở máy chủ (hai trình phát chỉ cộng).
+6. UI "Đổi bài" trên một mảnh `continued`: đổi bài của CẢ mốc (đoạn đầu + các mảnh nối tiếp), vì người nghe nghe một bài. Ghim
+   vào đoạn đầu; các mảnh nối tiếp theo luật 2.
+
+**Đo trước-sau** (script nghiên cứu `music/track_changes.py`, CPU, trên 5b+6 có đáp án; app 0.4.31 = TRƯỚC, nhánh dev = SAU;
+chọn bài bằng `choose` thật với danh mục catalog_e1 - không cần GPU):
+
+- **M1 điểm đổi bài** (đổi `link`, không kể `sibling`): số lần/giờ; P/R/F1 so ranh giới đáp án (TOL 2 câu, `rule_switch.f1`).
+  Kỳ vọng SAU: ~6/giờ, P ~.8. **Cổng: P SAU >= .70 và F1 SAU >= F1 TRƯỚC.**
+- **M2 lặp bài**: % thời lượng nhạc nằm ở vòng thứ 2 trở đi của cùng bài trong một mốc; số lần đổi `sibling`/giờ. Đo với
+  SIBLING_Z ∈ {0,3; 0,5; 0,8; tắt}. **Cổng: lặp SAU <= 25% thời lượng** (TRƯỚC ghi lại để so); chọn SIBLING_Z nhỏ nhất qua cổng,
+  chọn trên 4+5, báo 5b+6.
+- **M3 hình dạng cường độ**: r trong chương (trọng số thời lượng, như L3-EST) giữa đường âm lượng theo câu (`gainDb` + bước) và
+  đáp án T. Ghi lại TRƯỚC (âm lượng từng bài) và SAU. **Cổng: r SAU >= r TRƯỚC - .02** (không làm tệ hơn); con số này sẽ lên khi
+  L3 cho tension mảnh tốt hơn (bước dùng chính `tension` của mảnh).
+- **M4 an toàn bước**: phân bố |db|, % bước bị cắt ở trần 0 dB, số bước/giờ. Báo, không cổng; cắt > 30% thì xét hạ `gainDb` gốc
+  1,5 dB cho mốc có bước (dành chỗ).
+- **Nghe**: Lead/agent dựng 3 chương (1 cảnh dài nhất, 1 nhiều bước, 1 có sibling) trước-sau ra file để chủ sách nghe bất chợt
+  nếu muốn; không chờ ai chấm (chủ sách không gắn nhãn).
+- Test đơn vị: `choose` (mảnh length chơi tiếp, ghim thắng, luật lặp), `chapter_cues` (gộp + steps + hold 40 s),
+  `packaged_cues` (steps đi qua gói), `musicBed.test.ts` + test Kotlin (mục tiêu âm lượng theo bước, tua).
+
+Tôi (Music) viết `track_changes.py` ngay (CPU, đọc ABook_scene, không sửa app) để có số TRƯỚC sẵn khi Lead mở nhánh dev.
+(c) chờ CS-SEG.
