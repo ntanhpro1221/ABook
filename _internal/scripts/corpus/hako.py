@@ -6,6 +6,7 @@ Chạy bằng Python của máy có `cloudscraper` + `lxml` (`py`, 3.13) - KHÔN
     py scripts/corpus/hako.py survey --kind convert            # mục AI dịch (/ai-dich)
     py scripts/corpus/hako.py survey --kind sangtac            # sáng tác gốc tiếng Việt (/sang-tac)
     py scripts/corpus/hako.py download /truyen/259-toi-la-nhen-thi-sao --title "Kumo Desu Ga Nani Ka"
+    py scripts/corpus/hako.py download /truyen/8252-... --title "Kurakon" --max-chapters 12   # chỉ 12 chương đầu
 
 Viết lại từ `D:/Novels/Tools/NovelDownloader_Docln_MultiThread_MultiSource.py` của chủ sách (chỉ tham khảo,
 không sửa bản ấy - 19-09). Khác bản gốc ở những chỗ một kho dữ liệu cần:
@@ -194,13 +195,14 @@ def survey(pages: int, sort: str, kind: str = "truyendich", status: str = "hoant
     return results
 
 
-def download(path: str, title: str | None, workers: int) -> Path:
+def download(path: str, title: str | None, workers: int, max_chapters: int = 0) -> Path:
     sources = Sources()
     info = series_info(sources, path)
     name = title or info["title"]
     folder = CORPUS / re.sub(r'[<>:"/\\|?*]', "_", name).strip()
     folder.mkdir(parents=True, exist_ok=True)
-    chapters = info["chapters"]
+    # --max-chapters N: chỉ N chương đầu theo mục lục (lấy mẫu đầu tập 1 thay vì cả bộ); 0 = tất cả.
+    chapters = info["chapters"][:max_chapters] if max_chapters > 0 else info["chapters"]
     digits = max(3, len(str(len(chapters))))
     missing: list[str] = []
     lock = threading.Lock()
@@ -231,6 +233,7 @@ def download(path: str, title: str | None, workers: int) -> Path:
         **{key: value for key, value in info.items() if key != "chapters"},
         "chapters": [chapter["title"] for chapter in chapters],
         "source": "hako",
+        "max_chapters": max_chapters or None,
         "folder": str(folder),
         "missing": sorted(missing),
         "downloaded_at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -253,11 +256,12 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("path", help="đường dẫn truyện, vd /truyen/259-toi-la-nhen-thi-sao")
     d.add_argument("--title")
     d.add_argument("--workers", type=int, default=6)
+    d.add_argument("--max-chapters", type=int, default=0, help="chỉ tải N chương đầu của mục lục (0 = cả bộ)")
     args = parser.parse_args(argv)
     if args.command == "survey":
         survey(args.pages, args.sort, args.kind, args.status)
     else:
-        download(args.path, args.title, args.workers)
+        download(args.path, args.title, args.workers, args.max_chapters)
     return 0
 
 
