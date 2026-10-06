@@ -79,16 +79,29 @@ TIME_JUMP = re.compile(
     re.IGNORECASE,
 )
 # Dấu hiệu đổi cảnh trong chữ (CUE - docs/MUSIC_RESEARCH.md 06-10, `seg_scenes.cue_kind` của nghiên cứu): dòng chỉ ký hiệu,
-# tiêu đề phụ ("Góc nhìn của...", "【...】"), dòng thời gian / nơi chốn ("Trong khi đó", "Vài giờ sau"). Thành cờ `sceneBreak`
-# như dòng ngăn cảnh của sách (chapter_scenes) - ranh giới CÓ LÝ DO, chỗ duy nhất nhạc được đổi bài.
+# tiêu đề phụ ("Góc nhìn của...", "[Yuki POV]", "— Phần hai —"). Thành cờ `sceneBreak` như dòng ngăn cảnh của sách
+# (chapter_scenes) - ranh giới CÓ LÝ DO, chỗ duy nhất nhạc được đổi bài. Dòng thời gian / nơi chốn ("Trong khi đó") vẫn được
+# `cue_kind` nhận ra nhưng `cue_bounds` bỏ qua (xem ở đó).
 CUE_SYMBOLS = re.compile(r"^\s*(?:(?:[*~#=_\-·•◇◆○●♦※✦＊]\s*){1,}|o\s*O\s*o)\s*$")
 CUE_SUBHEAD = re.compile(r"^\s*(?:góc nhìn|pov\b|phần\b|interlude|side\b|phía\b)", re.IGNORECASE)
+# Ngoặc [..], 「..」, 【..】 mặc định là CHỮ TRONG TRUYỆN (bảng hệ thống, thực đơn, tiêu đề diễn đàn, thần giao cách cảm), không phải
+# đổi cảnh: đo trên 82 chương (docs/MUSIC_RESEARCH.md 07-10 BRACKET, LLM-NT) ngoặc kiểu ấy sai nhiều hơn trúng. Chỉ dạng bao gạch
+# ("-o0o-", "— Phần hai —") hay ngoặc nói góc nhìn mới (`bracket_is_subhead`) là tiêu đề phụ.
 CUE_BRACKETED = re.compile(r"^\s*(?:【[^】]*】|\[[^\]]*\]|「[^」]*」|[—–-]{1,2}\s*[^—–-]{1,40}\s*[—–-]{1,2})\s*$")
+CUE_BRACKET_POV = re.compile(r"\bPOV\b|góc nhìn|side", re.IGNORECASE)  # y regex đã đóng băng (cue_bracket.keep_bracket): "side" không \b
 CUE_SUBHEAD_WORDS = 10
 CUE_TIME_PLACE = re.compile(
     r"^\W*(?:trong\s+khi\s+đó|cùng\s+lúc\s+(?:đó|ấy)|lúc\s+(?:ấy|đó)\s+ở|(?:vài|mấy|một|hai|ba)\s+(?:giờ|tiếng|phút)\s+sau|"
     r"(?:sáng|trưa|chiều|tối|đêm)\s+(?:hôm|ngày)\s+(?:ấy|đó)|ngày\s+hôm\s+đó|quay\s+lại|trở\s+lại\s+với|(?:ở|tại)\s+một\s+nơi\s+khác)",
     re.IGNORECASE)
+
+
+def bracket_is_subhead(text: str) -> bool:
+    """Câu dạng ngoặc (`CUE_BRACKETED`) chỉ là tiêu đề phụ khi bao bằng gạch ("-o0o-", "— Phần hai —") hoặc bên trong nói góc nhìn
+    (POV / góc nhìn / side). Luật đóng băng của nghiên cứu (`LLM_Train/music/cue_bracket.py::keep_bracket`)."""
+    text = text.strip()
+    inner = re.sub(r"^\s*[\[【「(—–-]+\s*|\s*[\]】」)—–-]+\s*$", "", text)
+    return text[:1] in "-–—" or bool(CUE_BRACKET_POV.search(inner))
 
 
 def cue_kind(segment: dict[str, Any]) -> str | None:
@@ -98,7 +111,8 @@ def cue_kind(segment: dict[str, Any]) -> str | None:
         return "heading"
     if CUE_SYMBOLS.match(text):
         return "separator"
-    if len(text.split()) <= CUE_SUBHEAD_WORDS and (CUE_SUBHEAD.match(text) or CUE_BRACKETED.match(text)):
+    if len(text.split()) <= CUE_SUBHEAD_WORDS and (
+            CUE_SUBHEAD.match(text) or (CUE_BRACKETED.match(text) and bracket_is_subhead(text))):
         return "subhead"
     if TIME_JUMP.match(text) or CUE_TIME_PLACE.match(text):
         return "time_place"
@@ -106,16 +120,16 @@ def cue_kind(segment: dict[str, Any]) -> str | None:
 
 
 def cue_bounds(segments: list[dict[str, Any]]) -> dict[Any, str]:
-    """{id câu BẮT ĐẦU cảnh mới: loại dấu hiệu}. Dòng ký hiệu thì cảnh mới bắt đầu ở câu SAU nó; tiêu đề, tiêu đề phụ, dòng
-    thời gian / nơi chốn thì ở chính câu ấy. Câu đầu chương không tính (đầu chương đã là ranh giới)."""
+    """{id câu BẮT ĐẦU cảnh mới: loại dấu hiệu}. Dòng ký hiệu thì cảnh mới bắt đầu ở câu SAU nó; tiêu đề, tiêu đề phụ thì ở
+    chính câu ấy. Câu đầu chương không tính (đầu chương đã là ranh giới)."""
     out: dict[Any, str] = {}
     for index, segment in enumerate(segments[1:], 1):
         kind = cue_kind(segment)
         if kind in ("separator", "heading", "subhead"):
             if index + 1 < len(segments):
                 out.setdefault(segments[index + 1].get("id") if kind == "separator" else segment.get("id"), kind)
-        elif kind:
-            out.setdefault(segment.get("id"), kind)
+        # "time_place" (dòng thời gian / nơi chốn mở câu) KHÔNG còn là ranh giới: P .17 trúng đổi nơi/thời gian thật (MUSIC_RESEARCH
+        # 07-10 BRACKET). Câu "Sáng hôm sau…" (TIME_JUMP) vẫn ngắt ở `hard_break`.
     return out
 
 

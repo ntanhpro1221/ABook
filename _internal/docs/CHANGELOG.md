@@ -45,10 +45,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nhạc nền
 
 - Nhạc nền đổi bài khi truyện đổi cảnh, không còn cứ vài phút lại đổi: ở dòng ngăn cảnh, tiêu đề, tiêu đề phụ ("Góc nhìn
-  của…", "【…】") hay câu chuyển thời gian / nơi chốn ("Trong khi đó…", "Vài giờ sau…"). Trong một cảnh dài, bài đang chơi
+  của…", "— Phần hai —") hay câu chuyển thời gian ("Sáng hôm sau…", "Vài ngày sau…"). Trong một cảnh dài, bài đang chơi
   chơi tiếp; hết bài thì chuyển êm sang một bài cùng không khí đúng lúc bài kết thúc, và máy ưu tiên bài đủ dài cho cả
   cảnh, nên ít phải nghe lại một bài. Trong cảnh, nhạc nhích to hay nhỏ dần theo độ căng của truyện. Sách xuất ra mang
   theo các thay đổi ấy, nghe trên máy tính hay điện thoại đều như nhau.
+- Nhạc nền đổi bài ít sai chỗ hơn: không còn đổi ở dòng hệ thống / thông báo trong ngoặc (`[…]`, `【…】`) hay ở câu mở đầu
+  bằng "trong khi đó", "lúc ấy"; chỉ tiêu đề góc nhìn, dòng bao gạch và dòng ngắt cảnh của sách mới đánh dấu cảnh mới.
 - Nghe trên máy tính: một bài nhạc không tải được (mất mạng) thì 5 phút sau máy tự thử lại như trên
   điện thoại, không còn im đến khi sang đoạn khác.
 
