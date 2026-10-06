@@ -6,4 +6,5 @@ cộng mốc từng chữ (một cặp [bắt đầu_ms, kết thúc_ms] cho m�
 - `websocket`, `edge`: giọng trực tuyến của dịch vụ đọc to Edge, chỉ dùng thư viện chuẩn (gói đóng sẵn không có websockets / aiohttp).
 - `windows`: giọng của chính máy Windows (Windows.Media.SpeechSynthesis, nơi giọng tiếng Việt "An" nằm).
 - `cache`: bộ nhớ đệm trên đĩa; `service`: ghép giọng + đệm + mốc chữ thành `ReadAloud.clip()` cho máy chủ giao diện.
+- `readings`: cách đọc riêng người nghe đặt cho một cuốn ("Đọc từ này là…") - áp theo từng chữ hiện cho mọi giọng.
 """
