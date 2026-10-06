@@ -372,6 +372,27 @@ class FilesTests(unittest.TestCase):
             (directory / "000.txt").write_text("Một\n\nSửa\n", encoding="utf-8")
             self.assertFalse(hako.verify_book(directory, "/truyen/1-a"))
 
+    def test_a_series_folder_is_named_after_its_link(self):
+        self.assertEqual(hako.series_folder("/truyen/259-con-nhen"), "truyen-259-con-nhen")
+        self.assertEqual(hako.series_folder("https://docln.net/ai-dich/77-mot-bo"), "ai-dich-77-mot-bo")
+        self.assertEqual(hako.series_folder("/sang-tac/5-ten/c9-chuong"), "sang-tac-5-ten")
+        with self.assertRaises(ValueError):
+            hako.series_folder("/tim-kiem?keywords=x")
+
+    def test_an_old_folder_of_the_same_series_is_renamed_to_the_link(self):
+        with tempfile.TemporaryDirectory() as root:
+            full = Path(root)
+            old = full / "Ten Cu"
+            old.mkdir()
+            hako.write_json(old / "metadata.json", {"url": "https://docln.net/truyen/259-ten-cu-tren-web"})
+            (old / "000.txt").write_text("Một\n\nA\n", encoding="utf-8")
+            info = {"title": "T", "chapters": [{"path": "/truyen/259-ten-moi/c1-x", "title": "Một", "filename": "000.txt"}]}
+            with patch.object(hako, "FULL", full):
+                folder = hako.download("/truyen/259-ten-moi", None, 1, Mock(), info, comments=False)
+            self.assertEqual(folder.name, "truyen-259-ten-moi")
+            self.assertEqual(sorted(p.name for p in full.iterdir()), ["truyen-259-ten-moi"])
+            self.assertEqual((folder / "000.txt").read_text(encoding="utf-8"), "Một\n\nA\n")
+
     def test_a_tools_folder_is_renamed_in_place_even_with_repeated_titles(self):
         with tempfile.TemporaryDirectory() as folder:
             directory = Path(folder)
