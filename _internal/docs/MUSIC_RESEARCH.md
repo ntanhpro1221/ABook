@@ -3930,3 +3930,15 @@ bao bằng gạch, hoặc bên trong nói góc nhìn (POV/góc nhìn/side).
   1. sai/giờ (X + luật) <= 0,8 × X;
   2. F1 (X + luật) >= F1 X − .02.
 - Qua thì đề xuất Lead sửa `music_scenes.cue_kind`: ngoặc chỉ là subhead khi bao gạch hoặc có POV/góc nhìn. Không đụng file khoá.
+
+**Bộ 9 đã chọn** (`select_set9.py` chạy một lần, đúng ghi trước, không lệch). Có 215 truyện >= 3 ngoặc và 621 truyện còn lại.
+| truyện | dòng ngoặc trong 5 chương | KB |
+|---|---|---|
+| Nữ Phản Phái Muốn Thôi Miên Thao Túng Tôi? | 7 | 59 |
+| Ác Nữ Tôi Phụng Sự Suốt 13 Năm Đã Gục Ngã | 4 | 67 |
+| Tôi phải làm gì khi toàn bộ bạn cùng phòng đều hóa gái? (ngẫu nhiên) | 0 | 68 |
+| Overlord WN (ngẫu nhiên) | 0 | 102 |
+
+Overlord WN là bản web novel, chữ khác hẳn bản LN của bộ 5. Bộ lọc tên không bắt được vì tên khác, nên vẫn giữ: không trùng
+chương nào với đáp án cũ. 20 chương, câu trơn ở `scene_set9/scene9_segments`. Hai người chấm mù A/B (Opus, đề sao từ bộ 8)
+đang chấm.
