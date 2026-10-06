@@ -3411,7 +3411,7 @@ Cờ thêm khoảng 1,4 ranh giới/giờ, hầu hết trúng: F1 +0,08. Nhưng 
 là cảnh người chấm cắt theo NỘI DUNG mà không có dấu hiệu chữ nào, cộng các lần cắt đều 180 s của app (vẫn là phần lớn ranh giới).
 Đây là việc CS-SEG (LLM) phải trả lời.
 
-### 07-10 00:1x - L3-PAIR / P0-VOTE6 / L3-3B: script sẵn sàng (ghi trước 33c0f58f), chờ GPU
+### 06-10 23:1x - L3-PAIR / P0-VOTE6 / L3-3B: script sẵn sàng (ghi trước 33c0f58f), chờ GPU
 Mã: Corpus research/music/l3_runs.py (`run <PAIR|VOTE6|3B|P0> <bộ>`, `score`). Chi tiết thực thi chốt TRƯỚC khi chạy:
 - **Neo L3-PAIR:**
   - khúc đầu, khúc chứa điểm giữa thời lượng, khúc cuối;
@@ -3435,7 +3435,7 @@ Mã: Corpus research/music/l3_runs.py (`run <PAIR|VOTE6|3B|P0> <bộ>`, `score`)
 - Được 498 cặp train, 126 valid. Nhãn train: V A/B/H 153/153/192, E 122/122/254, T 153/153/192.
 - Nhỏ: nếu thử LoRA so cặp thì nên ghép thêm mọi cặp trong chương, kèm lô 4 bản 3 (scene_book_var).
 
-### 07-10 00:2x - GHI TRƯỚC: SPLIT, phần cắt đều 180 s trong ranh giới app (Lead 00:1x; CPU)
+### 06-10 23:1x - GHI TRƯỚC: SPLIT, phần cắt đều 180 s trong ranh giới app (Lead 23:1x; CPU)
 - **Nền:** app 0.4.31, tức có cờ scene_break (`music_scenes` của dev/scene-break fc3e6486, cờ từ seg_flags.json).
 - **Đo riêng:**
   - ranh giới do `_split_long` sinh = ranh giới có ở MAX 180 s mà không có ở MAX ∞;
@@ -3448,7 +3448,7 @@ Mã: Corpus research/music/l3_runs.py (`run <PAIR|VOTE6|3B|P0> <bộ>`, `score`)
   với khúc ~3 phút), không phải để khớp ranh giới cảnh. Bỏ nó có thể tăng P ranh giới nhưng làm mất hình dạng lớp 3. Nếu biến thể nào
   qua cổng, phải đo lại r trong chương (P2 trên khúc mới, GPU) trước khi đổi app.
 
-### 07-10 00:3x - Kết quả SPLIT (ghi trước eb32a4ef): KHÔNG QUA. Cắt đều là phần lớn ranh giới, và trúng ngang ngẫu nhiên
+### 06-10 23:1x - Kết quả SPLIT (ghi trước eb32a4ef): KHÔNG QUA. Cắt đều là phần lớn ranh giới, và trúng ngang ngẫu nhiên
 Mã: Corpus research/music/seg_split.py.
 
 **Riêng từng nhóm ranh giới của app 0.4.31:**
@@ -3480,7 +3480,7 @@ Mã: Corpus research/music/seg_split.py.
      được không khí trong chương (lý do có `_split_long`) mà không đổi bài ở chỗ ngẫu nhiên.
    - (c) Chọn VỊ TRÍ cắt đúng hơn là việc của CS-SEG (LLM), đang chờ GPU.
 
-### 07-10 01:xx - ĐẶC TẢ APP (Lead duyệt (a)+(b), làm trên nhánh dev SAU 0.4.31): đổi bài chỉ ở ranh giới có lý do, cắt đều = biến đổi nhẹ cùng bài
+### 06-10 23:2x - ĐẶC TẢ APP (Lead duyệt (a)+(b), làm trên nhánh dev SAU 0.4.31): đổi bài chỉ ở ranh giới có lý do, cắt đều = biến đổi nhẹ cùng bài
 
 Căn cứ: SPLIT (a20f5b93) - ranh giới `reason="length"` là 87% ranh giới app, P .14 (ngẫu nhiên); ranh giới có lý do P .81.
 File nhạc KHÔNG nằm trong `QUALITY_IMPLEMENTATION_FILES` (kiểm 07-10: 32 mục, không mục nào `webui/music_*`) -> không đụng hash
@@ -3539,7 +3539,7 @@ chọn bài bằng `choose` thật với danh mục catalog_e1 - không cần GP
 Tôi (Music) viết `track_changes.py` ngay (CPU, đọc ABook_scene, không sửa app) để có số TRƯỚC sẵn khi Lead mở nhánh dev.
 (c) chờ CS-SEG.
 
-### 07-10 02:xx - Số TRƯỚC-SAU của đặc tả b31ebce1 (`music/track_changes.py`, CPU): (a)+(b) MỘT MÌNH KHÔNG QUA - chính xác lên, độ phủ sập
+### 06-10 23:2x - Số TRƯỚC-SAU của đặc tả b31ebce1 (`music/track_changes.py`, CPU): (a)+(b) MỘT MÌNH KHÔNG QUA - chính xác lên, độ phủ sập
 
 Mô phỏng đúng đặc tả trên `choose`/`rank` thật của ABook_scene, danh mục catalog_e1, đường nhãn câu; chọn SIBLING_Z trên 4+5, báo 5b+6:
 
