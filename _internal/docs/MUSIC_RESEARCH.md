@@ -3366,3 +3366,6 @@ Sau 76aa32e9 (nhãn câu app không có hình dạng: 0,280 so với phẳng 0,2
   - đường phẳng;
   - người A-B (0,153; r 0,76-0,85).
 - Không dò biến thể sau khi thấy số.
+- **Sửa ghi trước (23:2x, TRƯỚC khi tính bất kỳ số nào):** alpha = 1 là sai thang. Phương sai độ lệch trong chương chỉ ~0,01-0,05,
+  nên alpha 1 ép mọi hệ số về ~0. Đổi thành **alpha = 0,001** (cùng thang: XᵀWX/Σw + alpha·I), tức phạt nhẹ chỉ để ổn định khi các
+  nguồn tương quan nhau. Mọi điều khác giữ nguyên.
