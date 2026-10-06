@@ -3109,7 +3109,7 @@ CF và CS cùng thắng -> chọn MAE thấp hơn; chỉ một thắng -> nó. G
 - Reward-model nhỏ trên cặp so sánh: xếp sau, chỉ khi so sánh có tín hiệu.
 
 **GÓP Ý NGOÀI ĐỢT 3 (Lead 06-10 17:3x). Mục (1) đo ngay: đồng thuận NGƯỜI-NGƯỜI theo mức tuyệt đối** (`Corpus research/music/
-human_agreement.py`, a4..; thang nửa, số tiếng, bỏ chu_thich, TB chương, TB(V,T)):
+human_agreement.py`, Corpus 137591b; thang nửa, số tiếng, bỏ chu_thich, TB chương, TB(V,T)):
 
 | bộ | chương | MAE A-B | lệch mức chương | MAE trong chương (trừ TB) | r trong chương |
 |---|---|---|---|---|---|
