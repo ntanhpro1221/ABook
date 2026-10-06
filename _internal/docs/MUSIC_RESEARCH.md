@@ -3961,3 +3961,39 @@ A và B khớp nhau F1 .796 (bộ 8 là .817). Đáp án có 57 ranh giới trê
 Kết luận: không đề xuất sửa `cue_kind`. Đặc tả soạn sẵn `research/music/SPEC_bracket_cue.md` để nguyên, không dùng.
 Gộp cả 5 bộ: luật bỏ 133 dòng ngoặc, 23 dòng (17%) trùng đáp án. Ngoặc phần lớn là nhiễu, nhưng bỏ hết thì mất đúng những
 chỗ thông báo hệ thống mở cảnh.
+
+### 07-10 06:0x - MISS (thăm dò, KHÔNG ghi trước): X bỏ lỡ ranh giới nào, và chữ có báo được không
+Lead hỏi: X chỉ trúng 4/57 ở bộ 9, vậy nút thắt là độ phủ. Mã: `LLM_Train/music/miss_types.py`. Đo trên 4+5 / 5b+6 / 7 / 8 / 9
+(câu trơn, mức ranh giới): 453 ranh giới đáp án, 24,6 giờ. X ra 5,0 ranh giới/giờ, P .53, F1 .226, trượt 388.
+
+**Loại chỗ trượt.** Trường `setting` trong đáp án trộn cả nơi chốn lẫn việc đang làm, nên đếm theo chữ không tin được.
+Tôi đọc tay 30 chỗ trượt đầu cảnh cứng chọn ngẫu nhiên (hạt 7):
+- ~50%: đổi nhịp trong cùng cảnh (ai đó lên tiếng, một hành động mới, suy nghĩ bị cắt ngang). Chữ không có dấu gì.
+- ~37%: đổi nơi hay thời gian thật. Khoảng một nửa có dấu chữ ở câu mở: "Tôi mở cánh cửa lớp học", "1 phút sau",
+  "hơn nửa ngày sau", "Chúng tôi tạm biệt… tiến đến". Nửa còn lại mở bằng lời thoại hay tên người, không có dấu.
+- ~7%: lời tác giả / người dịch. X trượt cả 18/18 ranh giới loại này.
+- ~3%: dòng hệ thống.
+- Đầu cảnh mềm (`start=soft`): X trượt 141/150.
+
+**Tín hiệu chữ ứng viên.** "P gần" = tỉ lệ câu bắn nằm trong ±2 câu của một ranh giới đáp án. Một câu kể bất kỳ có P gần .13.
+
+| tín hiệu | bắn/giờ | P gần | phủ chỗ trượt | X + nó: F1 | sai/giờ |
+|---|---|---|---|---|---|
+| X | - | - | - | .226 | 2,4 |
+| "trong lúc / trong khi / lúc này" mở câu | 3,2 | .33 | 21 | .254 | 3,6 |
+| động từ di chuyển (bước vào, mở cửa, tiến đến…) | 11,5 | .24 | 47 | .263 | 6,3 |
+| "sau khi / lát sau…" mở câu | 6,3 | .17 | 22 | .233 | 5,3 |
+| đổi ngôi kể (tỉ lệ "tôi" 6 câu trước/sau) | 9,3 | .17 | 18 | .211 | 4,6 |
+| câu kể dài sau >= 4 câu thoại | 4,1 | .12 | 11 | .218 | 4,8 |
+| ghi chú + mốc thời gian trong câu | 2,4 | .32 | 14 | .241 | 2,6 |
+| gộp mọi tín hiệu mở cảnh, cách >= 20 câu | 9,9 | .23 | 55 | .282 | 8,4 |
+
+Kết luận:
+1. Không tín hiệu chữ nào chắc. P gần tốt nhất là .33, so với .13 của câu bất kỳ. Cổng đổi bài là P .70.
+   Phủ được thì sai/giờ tăng gấp 2-3 lần.
+2. Ghi chú + mốc thời gian là thứ duy nhất không làm tăng sai, nhưng F1 chỉ thêm .015. Không đáng một bộ 10.
+3. Phân nửa chỗ trượt là đổi nhịp trong cảnh. Đổi bài ở những chỗ đó vốn không đúng việc. Chúng thuộc về lớp mức trong bài
+   (L2: cường độ / ramp), không thuộc ranh giới đổi bài.
+   Vì vậy F1 ranh giới so với toàn bộ đáp án đánh giá thấp chế độ X: X chỉ nên trúng phần đổi nơi/thời gian.
+   Nên đo X theo đáp án cứng có đổi nơi/thời gian (cần nhãn), và đo đổi nhịp bằng L2.
+4. Chưa ghi trước giả thuyết nào, chưa dùng bộ 10.
