@@ -2915,3 +2915,22 @@ Phân xử (`adjudicate.py`): 84 đoạn (77 truyện), lệch A-B lớn nhất 
 - **Luật gọi "cần thêm":** loại có >= 3 % thời lượng bộ đo, lỗi tuyệt đối trung bình (V hoặc T) >= 1,3 x mức chung, VÀ tỉ phần
   trong dữ liệu dạy < tỉ phần trong bộ đo. Loại lỗi cao nhưng đã đủ phủ -> ghi "lỗi không do thiếu dữ liệu".
 - **Không quyết gì về app;** chỉ dùng để chọn chương cho lô dữ liệu kế và đọc kết quả musicvt theo loại.
+
+### 06-10 13:0x - KẾT QUẢ lỗi P2 theo loại cảnh (ghi trước 8ea7a1d6; `error_by_type.py`)
+
+Bộ 4+5+5b (354 phút): lỗi chung sau khi trừ trung bình chương |V| .303, |T| .278 (nửa thang). Theo luật ghi trước:
+- **Gọi "CẦN THÊM": `sadness`** - lỗi V 1,65x, lệch V +.50 (đoán cảnh buồn quá sáng), 6,6 % bộ đo so 5,1 % dữ liệu dạy.
+  Bộ 6 cũng gọi (1,36x, 7,6 % so 5,1 %).
+- "Lỗi không do thiếu dữ liệu": `hanh_dong` T 1,40x (T đoán quá thấp, -.26), `ket` V/T 1,25x/1,46x (bộ 6 thì gọi CẦN THÊM).
+- Thiếu phủ nhưng lỗi chưa tới ngưỡng: `cao_trao` 14,2 % bộ đo so 6,8 % dạy (lỗi 1,22x/1,17x); `wonder`/`power` ít trong dạy
+  nhưng lỗi thấp. Văn cười không khác (1,03x/1,09x).
+
+**Ghi lại (sau khi thấy số, không thuộc luật) - nguyên nhân chính là CO THANG, không phải loại cảnh:**
+- Hồi quy dự đoán (đã trừ trung bình chương) theo đáp án: hệ số co b = .12 (V) / .16 (T) ở bộ 4+5+5b, .14 / .15 ở bộ 6.
+  Trong một chương, P2 chỉ dao động ~1/7 so với đáp án. Mọi "lệch" theo loại ở bảng trên đúng chiều co về giữa
+  (cảnh buồn V quá cao, cảnh vui V quá thấp, hành động T quá thấp).
+- Giãn dự đoán 1/b rồi đo lại: không loại nào >= 1,3x ở CẢ HAI nhóm bộ (sadness V 1,33x ở 4+5+5b nhưng .84x ở bộ 6;
+  tenderness V 1,54x chỉ ở bộ 6). Tức thiếu loại cảnh không phải điểm nghẽn.
+- Đọc cho musicvt: điều LoRA phải sửa là biên độ trong chương (nhãn mềm A/B có biên độ thật), không phải thêm thể loại.
+  Lô dữ liệu kế (nếu có) chỉ cần ưu tiên nhẹ chương buồn và chương có cao trào dài.
+- Thêm một thước ghi lại cho Mac LoRA / musicvt: hệ số co b trong chương (base P2 Ollama .12/.16) - kỳ vọng tăng rõ nếu LoRA học được.
