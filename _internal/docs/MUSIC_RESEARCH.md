@@ -3998,7 +3998,7 @@ Kết luận:
    Nên đo X theo đáp án cứng có đổi nơi/thời gian (cần nhãn), và đo đổi nhịp bằng L2.
 4. Chưa ghi trước giả thuyết nào, chưa dùng bộ 10.
 
-### 07-10 05:4x - TYPES (GHI TRƯỚC, Lead duyệt): gắn loại cho mọi ranh giới đáp án, đo X bằng thước "đổi nơi/thời gian"
+### 07-10 05:3x - TYPES (GHI TRƯỚC, Lead duyệt): gắn loại cho mọi ranh giới đáp án, đo X bằng thước "đổi nơi/thời gian"
 Ghi trước khi tạo đề và trước khi có nhãn nào.
 
 **Đối tượng.** Mọi ranh giới đáp án (đầu mỗi `scene` trừ cảnh đầu) của các bộ 4, 5, 5b, 6, 7, 8, 9: 453 ranh giới.
