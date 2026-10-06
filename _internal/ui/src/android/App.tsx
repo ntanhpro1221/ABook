@@ -9,7 +9,8 @@ import type { ListenBook } from "@/listen/model";
 import { EbookLibrary } from "./plugins";
 import { BookScreen } from "@/listen/BookScreen";
 import { ClipProvider } from "@/listen/clip";
-import { AddBookButton } from "@/listen/AddBook";
+import { AddBookButton, AddBookDialog } from "@/listen/AddBook";
+import type { ImportChoice } from "@/listen/textImport";
 import { LibraryScreen, useRestoreLastListening } from "@/listen/LibraryScreen";
 import { ReaderScreen } from "@/listen/ReaderScreen";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
@@ -43,12 +44,14 @@ function DownloadWatcher() {
   return null;
 }
 
-/** Mở file sách .abook từ ngoài app (android/imports.ts): báo "Đã thêm sách", nút mở trang sách. */
+/** Mở file từ ngoài app (android/imports.ts): file sách .abook báo "Đã thêm sách" kèm nút mở trang sách; file EPUB / DOCX / PDF / TXT mở
+ *  hộp "Thêm sách từ file" ở bước xem trước. */
 function ImportWatcher() {
   const client = useQueryClient();
   const navigate = useNavigate();
-  useEffect(() => watchImports(client, (bookId) => navigate(`/book/${bookId}`)), [client, navigate]);
-  return null;
+  const [incoming, setIncoming] = useState<ImportChoice | null>(null);
+  useEffect(() => watchImports(client, (bookId) => navigate(`/book/${bookId}`), setIncoming), [client, navigate]);
+  return <AddBookDialog open={incoming !== null} initial={incoming} onOpenChange={(open) => !open && setIncoming(null)} />;
 }
 
 function BackButton() {

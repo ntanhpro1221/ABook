@@ -7,6 +7,7 @@ import {
   pickedTotals,
   renameChapter,
   shownTitle,
+  splitLabel,
   type ImportPreviewChapter,
 } from "./textImport";
 
@@ -116,5 +117,15 @@ describe("isBookFile", () => {
     expect(isBookFile(" C:/x/Du an.ABOOKPROJ ")).toBe(true);
     expect(isBookFile("D:\Truyện\Tên truyện.epub")).toBe(false);
     expect(isBookFile("D:\abook\chuong 1.txt")).toBe(false);
+  });
+});
+
+describe("split label", () => {
+  // whole.txt của bộ ví dụ chung: chữ dẫn trước chương đầu + 3 dòng "Chương N" (importers.py / BookImport.kt: splitOffer 4, splitHeadings 3).
+  it("counts the heading lines and names the preamble apart", () => {
+    expect(splitLabel({ splitOffer: 4, splitHeadings: 3 })).toBe("Tách theo 3 dòng “Chương N” (thêm phần Mở đầu - 4 chương)");
+  });
+  it("says nothing extra when the file starts at its first heading", () => {
+    expect(splitLabel({ splitOffer: 3, splitHeadings: 3 })).toBe("Tách theo 3 dòng “Chương N”");
   });
 });
