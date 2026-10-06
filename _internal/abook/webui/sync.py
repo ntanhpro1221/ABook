@@ -43,7 +43,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
-from . import covers, edits_inbox, listen_view, music_plan, remote_studio, store, tls, word_timing
+from . import covers, edits_inbox, listen_view, music_plan, precast, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
@@ -64,7 +64,10 @@ COMMAND_SECONDS = 15  # lệnh chưa tới tay điện thoại sau ngần này t
 # đứt giữa lúc hỏi dài - máy chủ không biết, lần hỏi mồ côi vẫn nhận lệnh). Máy nhận bỏ qua lệnh trùng mã.
 REDELIVER_SECONDS = 5
 # "stop": dừng hẳn và trả thiết bị (Google Cast: đóng ứng dụng phát) - chỉ "Nghe trên máy này" gửi cho loa / TV Cast.
-REMOTE_ACTIONS = frozenset({"play", "pause", "toggle", "skip", "seek", "next", "previous", "jump", "rate", "load", "stop"})
+# "sleep": hẹn giờ tắt - chỉ loa / TV (webui/cast.py đếm theo đồng hồ của phiên phát); máy khác tự có hẹn giờ của nó.
+REMOTE_ACTIONS = frozenset({"play", "pause", "toggle", "skip", "seek", "next", "previous", "jump", "rate", "load", "stop",
+                            "sleep"})
+CAST_ONLY_ACTIONS = frozenset({"sleep"})
 # Mã sách: library.book_id (24 hex), hay mã kiểu cũ của điện thoại chưa đổi khoá (đường dẫn base64, tới ~700 ký tự).
 BOOK_ID = re.compile(r"[A-Za-z0-9_-]{1,700}")
 LOCAL_PLAYER = "local"  # trình phát trong giao diện của chính máy này, một "thiết bị" của Remote riêng
@@ -112,11 +115,13 @@ def _presence(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def remote_command(body: dict[str, Any]) -> dict[str, Any]:
-    """Lệnh máy tính gửi điện thoại, kiểm và rút gọn: chỉ lệnh biết, đúng kiểu, mới đi qua mạng."""
+def remote_command(body: dict[str, Any], *, cast: bool = False) -> dict[str, Any]:
+    """Lệnh máy tính gửi điện thoại, kiểm và rút gọn: chỉ lệnh biết, đúng kiểu, mới đi qua mạng. `cast`: lệnh cho loa / TV."""
     action = body.get("action")
     if action not in REMOTE_ACTIONS:
         raise ValueError("Lệnh không hỗ trợ")
+    if action in CAST_ONLY_ACTIONS and not cast:
+        raise ValueError("Hẹn giờ tắt từ xa chỉ dùng cho loa, TV")
     command: dict[str, Any] = {"action": action}
     if action in ("skip", "seek", "jump", "load"):
         command["seconds"] = _number(body.get("seconds"), -3600.0 if action == "skip" else 0.0, 86_400.0)
@@ -132,6 +137,12 @@ def remote_command(body: dict[str, Any]) -> dict[str, Any]:
         command["bookId"] = book
     if action == "rate":
         command["rate"] = _number(body.get("rate"), 0.5, 3.0)
+    if action == "sleep":
+        # Một trong hai: `minutes` > 0 (đếm khi đang phát) hay `endOfChapter`; không có gì = tắt hẹn giờ.
+        if body.get("endOfChapter") is True:
+            command["endOfChapter"] = True
+        else:
+            command["minutes"] = _number(body.get("minutes"), 0.0, 1440.0)
     return command
 
 
@@ -477,7 +488,7 @@ class SyncApp:
         return [{"id": item["device"], "name": item["name"], "kind": item["kind"], "protocol": item["protocol"],
                  "stream": True, "books": [],
                  "state": {key: item[key] for key in PLAYER_STATE} if item["bookId"] else None, "acks": [],
-                 "age": item["age"]} for item in self.cast.view()]
+                 "age": item["age"], "sleep": item["sleep"]} for item in self.cast.view()]
 
     def cast_send(self, device: str, command: dict[str, Any]) -> dict[str, Any]:
         if self.cast is None or not self.cast.owns(device):
@@ -533,7 +544,13 @@ class SyncApp:
             except Exception:  # noqa: BLE001 - một sách hỏng không được làm mất cả danh sách
                 continue
             work = work_of(path)
+            paused = paused_of(path)
             chapters = summary.get("chapters") or {}
+            try:
+                # `summary` dựng với running=False nên không mang lý do tạm dừng - gắn vào để `held` đúng như ở thư viện.
+                hold = precast.flags(path, {**summary, "paused": paused})
+            except Exception:  # noqa: BLE001
+                hold = {"ready": False, "held": False}
             books.append({
                 "id": summary["id"],
                 "title": str(summary.get("title") or path.name),
@@ -541,7 +558,9 @@ class SyncApp:
                 "statusLabel": str(summary.get("statusLabel") or ""),
                 "running": bool(summary.get("running")),
                 # "battery": máy tính rút sạc nên tự tạm dừng (power_source) - điện thoại báo để người ta biết máy tuột sạc.
-                "paused": paused_of(path),
+                "paused": paused,
+                # Phân tích xong và đang giữ chờ duyệt trước khi thu: điện thoại báo "Sẵn sàng duyệt".
+                "precast": {"ready": bool(hold["ready"]), "held": bool(hold["held"])},
                 "chapters": {"completed": int(chapters.get("completed") or 0), "total": int(chapters.get("total") or 0)},
                 "work": work,
                 "lastError": str(summary.get("lastError") or "")[:300],
@@ -881,7 +900,7 @@ class SyncHandler(BaseHTTPRequestHandler):
             if method == "POST" and (cast := re.fullmatch(r"/sync/v1/cast/([0-9a-f]{12})", path)):
                 # Điện thoại bấm "Phát trên <TV>" hay điều khiển thanh "Đang phát trên <TV>": lệnh chạy ngay ở máy này.
                 try:
-                    reply = self.app.cast_send(cast.group(1), remote_command(self._body()))
+                    reply = self.app.cast_send(cast.group(1), remote_command(self._body(), cast=True))
                 except ValueError as error:
                     self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
                 except LookupError:
@@ -909,7 +928,9 @@ class SyncHandler(BaseHTTPRequestHandler):
             if method == "GET" and path == "/sync/v1/library":
                 # `routes` như lời đáp ghép: điện thoại học lại các đường mỗi lần mở thư viện - địa chỉ có SAU lúc ghép
                 # (cài Tailscale/ZeroTier sau khi ghép, đổi mạng nhà) vẫn tới được điện thoại trước khi nó ra khỏi nhà.
-                self._json(HTTPStatus.OK, {"name": self.app.name, "books": self.app.library_view(), "routes": self.app.routes()})
+                # `kind`: máy tính khác đã ghép biết đây là máy tính - nó gửi phần sửa các cuốn về đây như điện thoại (remote_books).
+                self._json(HTTPStatus.OK, {"name": self.app.name, "kind": "computer", "books": self.app.library_view(),
+                                           "routes": self.app.routes()})
                 return
             if method == "POST" and path == "/sync/v1/match":
                 self._json(HTTPStatus.OK, {"matches": self.app.match(self._body().get("books"))})
@@ -941,7 +962,7 @@ class SyncHandler(BaseHTTPRequestHandler):
                     reply = self.app.listening.merge_record(
                         key, record, state, name=str(body.get("recordName") or ""),
                         name_at=float(body.get("nameAt") or 0), active_at=float(body.get("activeAt") or 0),
-                        deleted=deleted if isinstance(deleted, dict) else None)
+                        moved_at=float(body.get("movedAt") or 0), deleted=deleted if isinstance(deleted, dict) else None)
                     if reply.get("book") == key:
                         reply["book"] = book
                     self._json(HTTPStatus.OK, reply)

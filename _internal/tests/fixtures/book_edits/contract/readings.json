@@ -1,0 +1,186 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/readings",
+   "status": 200,
+   "response": {
+    "readings": []
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/readings",
+   "body": {
+    "surface": "Hailkes",
+    "spoken": "Hên khơ"
+   },
+   "status": 200,
+   "response": {
+    "readings": [
+     {
+      "surface": "Hailkes",
+      "spoken": "Hên khơ"
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/readings",
+   "body": {
+    "surface": "“Hailkes,”",
+    "spoken": "  Hên-khơ \n"
+   },
+   "status": 200,
+   "response": {
+    "readings": [
+     {
+      "surface": "Hailkes",
+      "spoken": "Hên-khơ"
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/readings",
+   "body": {
+    "surface": "Lucien",
+    "spoken": "Lu xi en"
+   },
+   "status": 200,
+   "response": {
+    "readings": [
+     {
+      "surface": "Hailkes",
+      "spoken": "Hên-khơ"
+     },
+     {
+      "surface": "Lucien",
+      "spoken": "Lu xi en"
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/readings",
+   "body": {
+    "surface": "Hai kes",
+    "spoken": "Hên-khơ"
+   },
+   "status": 400,
+   "response": {
+    "error": "Chỉ đặt được cách đọc cho MỘT từ."
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/readings",
+   "body": {
+    "surface": "...",
+    "spoken": "chấm"
+   },
+   "status": 400,
+   "response": {
+    "error": "Chỉ đặt được cách đọc cho MỘT từ."
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/readings",
+   "body": {
+    "surface": 3,
+    "spoken": "ba"
+   },
+   "status": 400,
+   "response": {
+    "error": "Thiếu từ hoặc cách đọc"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/readings",
+   "body": {
+    "surface": "Heidi",
+    "spoken": "Heidi"
+   },
+   "status": 200,
+   "response": {
+    "readings": [
+     {
+      "surface": "Hailkes",
+      "spoken": "Hên-khơ"
+     },
+     {
+      "surface": "Lucien",
+      "spoken": "Lu xi en"
+     }
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 2,
+    "waiting": 0,
+    "wishes": 0
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/readings",
+   "body": {
+    "surface": "Hailkes",
+    "spoken": ""
+   },
+   "status": 200,
+   "response": {
+    "readings": [
+     {
+      "surface": "Lucien",
+      "spoken": "Lu xi en"
+     }
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/readings",
+   "status": 200,
+   "response": {
+    "readings": [
+     {
+      "surface": "Lucien",
+      "spoken": "Lu xi en"
+     }
+    ]
+   }
+  },
+  {
+   "method": "DELETE",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/readings",
+   "status": 200,
+   "response": {
+    "readings": []
+   }
+  }
+ ]
+}

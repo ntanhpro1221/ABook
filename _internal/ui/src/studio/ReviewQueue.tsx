@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Clock, Ear, FileText, ListMusic, Loader2, PenLine, Play, RotateCcw, ShieldCheck, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useClip } from "@/listen/clip";
+import { useClip, type ClipSource } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatPercent } from "@/shared/format";
 import { Button, EmptyState, Kbd, Segmented, Vu } from "@/shared/ui";
@@ -28,6 +28,8 @@ interface ReviewItem {
   kind: Kind;
   reason: string;
   playable: boolean;
+  /** WAV riêng đã dọn nhưng câu có mốc trong file chương: nghe đoạn [start, end] giây của chương. */
+  chapterClip: { start: number; end: number } | null;
   verdict: "ok" | "redo" | null;
   /** Băm chữ câu (rỗng ở sách rất cũ: không sửa chữ đem đọc được). */
   textSha256: string;
@@ -35,6 +37,12 @@ interface ReviewItem {
   spoken: string | null;
   pendingSpoken: string | null;
 }
+
+/** Thứ để nghe một câu: bản thu riêng, hay đúng đoạn ấy trong file chương; null = chưa có gì để nghe. */
+const clipOf = (bookId: string, item: ReviewItem): ClipSource | null =>
+  item.playable
+    ? { src: urls.sample(bookId, item.segmentId) }
+    : item.chapterClip && { src: urls.chapterAudio(bookId, item.chapterId), ...item.chapterClip };
 
 /** Câu đã có cách xử lý: phán quyết, hay chữ đem đọc mới đang chờ áp. */
 const handled = (item: ReviewItem) => Boolean(item.verdict) || item.pendingSpoken !== null;
@@ -169,6 +177,7 @@ function Row({
   const [editing, setEditing] = useState(false);
   const id = `review-${item.segmentId}`;
   const playing = clip.current === id;
+  const source = clipOf(bookId, item);
   // Câu hỏng chưa từng có bản thu; câu khác có thể đã mất WAV riêng khi dọn dẹp. Nút tắt thì phải nói vì sao.
   const unplayable = item.kind === "failed" ? "Câu này chưa thu được, chưa có gì để nghe" : "Bản thu riêng của câu này đã được dọn sau khi ghép chương - nghe câu này trong chương";
   return (
@@ -178,10 +187,10 @@ function Row({
     >
       <button
         type="button"
-        disabled={!item.playable}
-        title={item.playable ? undefined : unplayable}
-        aria-label={!item.playable ? `${unplayable}: ${item.text}` : playing ? "Dừng" : `Nghe câu: ${item.text}`}
-        onClick={() => clip.toggle(id, urls.sample(bookId, item.segmentId))}
+        disabled={!source}
+        title={source ? undefined : unplayable}
+        aria-label={!source ? `${unplayable}: ${item.text}` : playing ? "Dừng" : `Nghe câu: ${item.text}`}
+        onClick={() => source && clip.toggle(id, source)}
         className={cn(
           "grid size-10 place-items-center rounded-full transition-colors disabled:opacity-40",
           playing ? "bg-accent text-accent-ink" : "bg-hover text-fg hover:bg-line",
@@ -208,7 +217,7 @@ function Row({
           </p>
         )}
         <p className="mt-1 text-xs text-fg-2">{item.reason}</p>
-        {!item.playable && <p className="mt-1 text-xs text-fg-2">{unplayable}.</p>}
+        {!source && <p className="mt-1 text-xs text-fg-2">{unplayable}.</p>}
         {item.pendingSpoken !== null ? (
           <p className="mt-1 flex items-start gap-1.5 text-xs text-fg-2">
             <Clock className="mt-px size-3.5 shrink-0" />
@@ -257,7 +266,7 @@ function Row({
       </div>
       <div className="flex gap-1.5">
         {/* Không có gì để nghe thì không phán "Ổn" được - chỉ còn thu lại (soát UX 29-09). */}
-        {item.playable && (
+        {source && (
           <button
             type="button"
             aria-pressed={item.verdict === "ok"}
@@ -279,7 +288,7 @@ function Row({
             item.verdict === "redo" ? "bg-danger-soft text-danger" : "border border-line hover:bg-hover",
           )}
         >
-          <RotateCcw className="size-4" /> {item.playable ? "Cần thu lại" : "Thu lại câu này"}
+          <RotateCcw className="size-4" /> {source ? "Cần thu lại" : "Thu lại câu này"}
         </button>
       </div>
     </li>
@@ -307,13 +316,14 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
   });
   const playing = useRef<{ id: string | null; index: number }>({ id: null, index: 0 });
   const playAt = (from: number) => {
-    const next = live.current.items.slice(Math.max(from, 0)).find((item) => item.playable);
-    if (!next) {
+    const next = live.current.items.slice(Math.max(from, 0)).find((item) => clipOf(bookId, item));
+    const source = next && clipOf(bookId, next);
+    if (!next || !source) {
       setContinuous(false);
       toast.success("Đã nghe hết các câu trong danh sách");
       return;
     }
-    clip.toggle(`review-${next.segmentId}`, urls.sample(bookId, next.segmentId));
+    clip.toggle(`review-${next.segmentId}`, source);
     document.querySelector(`[data-review-row="${CSS.escape(next.stableId)}"]`)?.scrollIntoView({ block: "nearest" });
   };
   useEffect(() => {
@@ -390,7 +400,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
   };
   const minor = data.counts.name;
   live.current = { items, judge };
-  const playableCount = items.filter((item) => item.playable).length;
+  const playableCount = items.filter((item) => clipOf(bookId, item)).length;
   return (
     <div className="mt-4">
       <div className="flex flex-wrap items-center justify-between gap-3">

@@ -72,7 +72,7 @@ export function textBookLine(speaks: boolean): string {
 /** Dòng phụ của một chương chỉ có chữ trong danh sách chương. Cố định: không đổi sang độ dài khi giọng máy đã đọc một phần - độ dài ấy là
  *  ước, đổi theo giọng và theo phần đã đọc sẵn, nên nhãn nhảy qua lại làm người nghe tưởng chương vừa đổi. Tiến độ nghe đã có thanh riêng. */
 export function textChapterLine(speaks: boolean): string {
-  return speaks ? "Giọng máy đọc" : "Chỉ có chữ";
+  return speaks ? "Giọng đọc của máy" : "Chỉ có chữ";
 }
 
 /** "Bấm" với chuột, "Chạm" với màn cảm ứng. */
@@ -91,11 +91,14 @@ export function readerHint(state: {
   coarse: boolean;
   /** Sửa câu ghi thành ý muốn chờ Studio. */
   wish: boolean;
+  /** Giữ / bấm chuột phải một chữ để sửa cách đọc nó ("Đọc từ này là…", cuốn chỉ có chữ của máy này). */
+  readings?: boolean;
 }): string | null {
   const verb = tapVerb(state.coarse);
   if (state.textOnly) {
     if (!state.canSpeak) return `${textBookLine(false)}.`;
-    return state.tapped ? `${textBookLine(true)}.` : `${textBookLine(true)}. ${verb} vào một chữ để nghe từ chữ ấy.`;
+    const reading = state.readings ? ` ${state.coarse ? "Giữ" : "Bấm chuột phải"} vào một chữ đọc sai để sửa cách đọc.` : "";
+    return state.tapped ? `${textBookLine(true)}.${reading}` : `${textBookLine(true)}. ${verb} vào một chữ để nghe từ chữ ấy.${reading}`;
   }
   if (!state.timed) return "Chương này chưa thu thành sách nói - chữ vẫn đọc được. Thu xong thì “Nghe từ đây” hiện ra.";
   if (state.tapped) return null;

@@ -77,10 +77,10 @@ export async function paragraphsFor(chapters: Pick<ListenChapter, "id" | "skip">
   return out;
 }
 
-/** Giọng nào có "Làm trước": VieNeu (chậm hơn tốc độ nghe trên máy yếu) ở mọi nơi; giọng trực tuyến khi nguồn làm trước được để nghe không cần
- *  mạng (điện thoại). Giọng của máy đã đọc nhanh, không cần mạng - không có. */
+/** Giọng nào có "Làm trước": giọng tải về đọc trên máy (VieNeu, Supertonic - chậm hơn tốc độ nghe trên máy yếu) ở mọi nơi; giọng trực tuyến khi
+ *  nguồn làm trước được để nghe không cần mạng (điện thoại). Giọng của máy đã đọc nhanh, không cần mạng - không có. */
 export function canPrepare(voice: Pick<ReadAloudVoice, "provider" | "online">, onlineToo: boolean): boolean {
-  return voice.provider === "vieneu" || (onlineToo && voice.online);
+  return voice.provider === "vieneu" || voice.provider === "supertonic" || (onlineToo && voice.online);
 }
 
 /** Câu mời khi chưa có việc: nói đúng cái lợi người nghe nhận được với giọng này. */

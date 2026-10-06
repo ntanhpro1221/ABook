@@ -1,0 +1,32 @@
+[
+ {
+  "name": "vietnamese_drawn_cover",
+  "title": "Chương 1: Mở đầu",
+  "album": "Sách thử",
+  "narrator": "Đức Trí",
+  "number": 1,
+  "total": 2,
+  "cover": "cover.png",
+  "expected": "expected/vietnamese_drawn_cover.mp3"
+ },
+ {
+  "name": "long_titles_real_cover",
+  "title": "Chương mười hai: Người đàn ông bí ẩn ở cuối con đường 🌙",
+  "album": "Tên sách rất dài để thử cắt ID3v1 xem sao nhé",
+  "narrator": "",
+  "number": 12,
+  "total": 120,
+  "cover": "cover.jpg",
+  "expected": "expected/long_titles_real_cover.mp3"
+ },
+ {
+  "name": "ascii_no_cover",
+  "title": "Plain",
+  "album": "Book",
+  "narrator": "Narr",
+  "number": 300,
+  "total": 300,
+  "cover": null,
+  "expected": "expected/ascii_no_cover.mp3"
+ }
+]

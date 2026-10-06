@@ -125,6 +125,7 @@ class BookImportTest {
         assertEquals(expectedText("whole"), dump(plain))
         assertEquals(1, plain.chapters.size)
         assertEquals(4, plain.splitOffer)
+        assertEquals("3 dòng \"Chương N\" + phần \"Mở đầu\" = 4 chương, như Python", 3, plain.splitHeadings)
         val split = BookImport.importFile(file, splitChapters = true)
         assertEquals(expectedText("whole.split"), dump(split))
         assertEquals(listOf("Mở đầu", "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3"), titles(split))

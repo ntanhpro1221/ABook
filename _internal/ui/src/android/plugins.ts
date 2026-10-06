@@ -2,6 +2,7 @@ import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
 import type { PreparePlan, PrepareStatus } from "@/listen/prepareAhead";
 import type { MusicCredit } from "@/listen/musicBed";
+import type { RemoteSleep, RemoteSleepCommand } from "@/listen/sleep";
 import type { ReadAloudTimings, ReadAloudVoice } from "@/listen/readAloud";
 import type { KeyCheck, OnlineProviderInfo } from "@/listen/VoiceSettings";
 import type { Capabilities } from "@/shared/capabilities";
@@ -150,12 +151,15 @@ export interface RemotePlayer {
   /** Cuốn ấy ở điện thoại này: mã máy tính chính (nghe thẳng/đã tải) hoặc `p<key>_<mã>` của thiết bị ghép. */
   localBookId: string;
   known: boolean;
+  /** Hẹn giờ tắt của loa / TV (`via` cast): máy giữ phiên phát đếm - máy tính chính hay chính điện thoại (DlnaPlayers.kt). */
+  sleep?: RemoteSleep | null;
 }
 
 export type RemotePlayerCommand =
   | { action: "play" | "pause" | "toggle" | "next" | "previous" | "stop" }
   | { action: "skip" | "seek"; seconds: number }
-  | { action: "load"; bookId: string; chapterId: number; seconds: number };
+  | { action: "load"; bookId: string; chapterId: number; seconds: number }
+  | RemoteSleepCommand;
 
 export interface PeerLibrary {
   key: string;
@@ -236,6 +240,20 @@ export interface DownloadEvent {
   error?: string;
 }
 
+/** Tin của một lượt "Xuất MP3" (Mp3ExportWorker.kt): tiến độ (`done`/`total`), xong (`finished`), dừng (`stopped`) hay lỗi (`error`). */
+export interface Mp3ExportEvent {
+  bookId: string;
+  run: string;
+  done?: number;
+  total?: number;
+  finished?: boolean;
+  files?: number;
+  chaptersTotal?: number;
+  folder?: string;
+  stopped?: boolean;
+  error?: string;
+}
+
 /** "Cho máy khác nghe thư viện này" (LibraryServer.kt, mạng trạm bước 2): điện thoại phục vụ sách đã tải cho máy đã ghép. */
 export interface ShareStatus {
   running: boolean;
@@ -311,6 +329,14 @@ export interface EbookLibraryPlugin {
   /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file mới - hộp thoại "tạo file" của hệ thống hỏi chỗ lưu. `as` không nói:
    *  giữ loại file cuốn đã đến (`.abookproj` hay `.abook`). */
   saveBook(options: { id: string; as?: "abook" | "abookproj" }): Promise<{ saved: boolean; name?: string; size?: number; edits?: number }>;
+  /** "Chia sẻ…": đóng cuốn (kèm thay đổi của người nghe) thành file rồi mở bảng chia sẻ của hệ thống (Zalo, Drive, email…). `as` không nói:
+   *  sách nghe `.abook`. `shared: true` khi bảng chia sẻ đã mở. */
+  shareBook(options: { id: string; as?: "abook" | "abookproj" }): Promise<{ shared: boolean; name?: string }>;
+  /** "Xuất MP3 để nghe ở app khác" (Mp3Export.kt): thư mục MP3 như máy tính, chạy nền. Lần đầu (hay `pick`) hỏi chỗ lưu bằng bộ
+   *  chọn thư mục của hệ thống rồi nhớ lại. `cover`: bìa tự vẽ (data URL PNG) khi sách không có bìa. Tiến độ / kết quả: sự kiện
+   *  "mp3Export" mang cùng `run`. `started: false` khi không chọn thư mục. */
+  exportMp3(options: { bookId: string; cover?: string; pick?: boolean }): Promise<{ started: boolean; run?: string; folder?: string; chapters?: number }>;
+  addListener(event: "mp3Export", handler: (event: Mp3ExportEvent) => void): Promise<PluginListenerHandle>;
   deleteBook(options: { id: string }): Promise<void>;
   storage(): Promise<{ bytes: number; free: number }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number }): Promise<ListeningState>;
@@ -325,10 +351,14 @@ export interface EbookLibraryPlugin {
   activateRecord(options: { id: string; record: string }): Promise<{ records: ListeningRecord[] }>;
   renameRecord(options: { id: string; record: string; name: string }): Promise<{ records: ListeningRecord[] }>;
   deleteRecord(options: { id: string; record: string }): Promise<{ records: ListeningRecord[] }>;
+  moveRecord(options: { id: string; record: string; book: string }): Promise<{ records: ListeningRecord[] }>;
   addListener(event: "download", handler: (event: DownloadEvent) => void): Promise<PluginListenerHandle>;
   /** Bộ chọn file của hệ thống để mở một file sách .abook; kết quả về qua sự kiện "import". */
   pickBook(): Promise<{ picked: boolean }>;
   addListener(event: "import", handler: (event: ImportEvent) => void): Promise<PluginListenerHandle>;
+  /** App khác gửi tới một file EPUB / DOCX / PDF / TXT ("Mở bằng", chia sẻ): native đã chép nó như `pickSource` - giao diện mở bước
+   *  xem trước của "Thêm sách từ file…". `error`: không chép được, câu cho người dùng. */
+  addListener(event: "textPicked", handler: (event: { ref?: string; name?: string; pdf?: string; error?: string }) => void): Promise<PluginListenerHandle>;
   /** "Nhập nhạc của tôi…": hộp chọn file của hệ thống (nhiều bản một lúc), nhập từng bản vào kho nhạc của điện thoại (MusicStore.kt);
    *  trả khi nhập xong - cùng JSON như `/api/music/local/import` của máy tính - hay `{picked: false}` khi không chọn gì. */
   pickMusic(): Promise<{ picked: boolean } & Partial<ImportResult>>;
@@ -365,7 +395,8 @@ export interface ReadAloudPlugin {
   /** Một đoạn vừa được đọc tạm bằng giọng kế (khoá bị từ chối / hết hạn mức / mất mạng): câu nói một lần cho người nghe. */
   addListener(event: "readAloudNotice", handler: (event: { message: string }) => void): Promise<PluginListenerHandle>;
   /** "Thử giọng" (Cài đặt): đọc `text` bằng giọng này, trả đường dẫn file trên máy (phát qua `Capacitor.convertFileSrc`). */
-  sample(options: { voice: string; text: string }): Promise<{ path: string }>;
+  /** `bookId`: cách đọc riêng của cuốn ấy; `readings`: cách đọc đem nghe thử (chưa lưu - thắng của cuốn). */
+  sample(options: { voice: string; text: string; bookId?: string; readings?: Record<string, string> }): Promise<{ path: string }>;
   /** Giọng dùng khoá của người dùng (OnlineVoices.kt): mô tả từng nhà cung cấp - khoá chỉ ở dạng che. */
   onlineProviders(): Promise<{ providers: OnlineProviderInfo[] }>;
   setOnlineKey(options: { provider: string; key: string; region: string }): Promise<OnlineProviderInfo>;
@@ -376,6 +407,11 @@ export interface ReadAloudPlugin {
   vieneuStart(options: { choices?: VieneuChoiceId[] }): Promise<VieneuStatus>;
   vieneuMeasure(): Promise<VieneuStatus>;
   vieneuRemove(options: { choice: VieneuChoiceId }): Promise<VieneuStatus>;
+  /** Mô-đun "Giọng Supertonic" (readaloud/SupertonicModule.kt): cùng hình trạng thái, cùng lệnh. */
+  supertonicStatus(): Promise<VieneuStatus>;
+  supertonicStart(options: { choices?: VieneuChoiceId[] }): Promise<VieneuStatus>;
+  supertonicMeasure(): Promise<VieneuStatus>;
+  supertonicRemove(options: { choice: VieneuChoiceId }): Promise<VieneuStatus>;
   /** "Làm trước" (PrepareAhead.kt): việc nền của WorkManager đọc sẵn các chương này bằng đúng giọng ấy vào bộ đệm - chạy cả khi app đã đóng. */
   preparePlan(options: { bookId: string; voice: string; chapterIds: number[] }): Promise<PreparePlan>;
   prepareStart(options: { bookId: string; voice: string; chapterIds: number[]; label: string; chargingOnly?: boolean }): Promise<PrepareStatus>;

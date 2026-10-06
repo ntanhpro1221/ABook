@@ -51,11 +51,11 @@ export function WishesDialog({
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-xl"
-      title="Việc đang chờ Studio"
+      title={syncs ? "Việc chờ gửi về máy tính" : "Việc đang chờ máy làm sách"}
       description={
         syncs
-          ? "Bạn đã ghi những thay đổi này, nhưng chỉ Studio trên máy tính mới đưa được vào giọng đọc. Chúng được gửi về máy tính (tự động khi tới được máy tính); ở đó bạn xem và chọn Áp dụng hay Bỏ qua từng việc - không việc nào tự áp."
-          : "Bạn đã ghi những thay đổi này, nhưng chỉ Studio mới đưa được vào giọng đọc. Chúng đi cùng file sách khi bạn lưu; mở file bằng Studio, ABook sẽ hỏi có áp vào dự án không."
+          ? "Bạn đã ghi những thay đổi này; giọng đọc chỉ đổi khi máy tính làm lại sách. Chúng được gửi về máy tính (tự động khi tới được máy tính); ở đó bạn xem và chọn Áp dụng hay Bỏ qua từng việc - không việc nào tự áp."
+          : "Bạn đã ghi những thay đổi này; giọng đọc chỉ đổi khi một máy làm sách (ABook Studio trên máy tính) làm lại. Chúng đi cùng file sách khi bạn lưu; mở file ở máy ấy, ABook sẽ hỏi có áp vào dự án không."
       }
     >
       {!data ? (

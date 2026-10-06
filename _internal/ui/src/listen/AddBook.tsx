@@ -15,6 +15,7 @@ import {
   pickedSuggestions,
   pickedTotals,
   renameChapter,
+  splitLabel,
   type ChapterNames,
   type ImportChoice,
   type ImportKind,
@@ -62,10 +63,13 @@ export function AddBookDialog({
   open,
   onOpenChange,
   onBookFile,
+  initial,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onBookFile?: (path: string) => Promise<void>;
+  /** Thứ đã chọn sẵn (điện thoại: file app khác gửi tới - android/imports.ts): hộp mở thẳng ở bước đọc file / xem trước. */
+  initial?: ImportChoice | null;
 }) {
   const source = useSource();
   const importer = source.textImport;
@@ -93,6 +97,14 @@ export function AddBookDialog({
     titleField.current?.focus();
     titleField.current?.select();
   }, [hasPreview]);
+  // Đọc thứ chọn sẵn đúng một lần (`read` dựng ở dưới, sau chỗ trả sớm khi nguồn không nhập được).
+  const readInitial = useRef<((picked: ImportChoice) => Promise<void>) | null>(null);
+  const initialRead = useRef<ImportChoice | null>(null);
+  useEffect(() => {
+    if (!open || !initial || initialRead.current === initial) return;
+    initialRead.current = initial;
+    void readInitial.current?.(initial);
+  }, [open, initial]);
   if (!importer) return null;
 
   const clear = () => {
@@ -147,6 +159,7 @@ export function AddBookDialog({
       setBusy(null);
     }
   };
+  readInitial.current = read;
   // Tích / bỏ tích "Tách thành N chương": đọc lại file với lựa chọn mới, danh sách chương xem trước đổi theo. Tên sách người dùng đã sửa giữ
   // nguyên; gợi ý ghi công, chương đã bỏ tích và tên chương đã đổi đặt lại vì danh sách chương đã khác.
   const changeSplit = async (on: boolean) => {
@@ -322,7 +335,7 @@ export function AddBookDialog({
               />
               <span className="min-w-0">
                 <span className="block font-medium">
-                  Tách thành {formatNumber(preview.splitOffer)} chương theo các dòng “Chương N”
+                  {splitLabel(preview)}
                 </span>
                 <span className="block text-xs text-fg-2">
                   {split

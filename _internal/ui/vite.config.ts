@@ -17,6 +17,8 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+    // Danh sách thành phần bên thứ ba đọc thẳng docs/THIRD_PARTY.md (shared/thirdParty.ts) - nằm ngoài thư mục ui.
+    fs: { allow: [import.meta.dirname, path.resolve(import.meta.dirname, "../docs/THIRD_PARTY.md")] },
     proxy: {
       "/api": { target: "http://127.0.0.1:8765", changeOrigin: true },
       "/media": { target: "http://127.0.0.1:8765", changeOrigin: true },

@@ -261,4 +261,148 @@ class DlnaTest {
         }
         assertNotNull(players.view())
     }
+
+    // ---- hẹn giờ tắt (như cast.py của máy tính: điện thoại giữ phiên phát nên điện thoại đếm) ----------------------------
+
+    private fun sleepPausesAndKeepsThePlace(pause: Boolean) {
+        val device = renderer(pause = pause)
+        val (chosen, saved) = book(30.0)
+        val players = players(device, chosen, saved)
+        val id = players.found()
+        players.send(id, command("load", "bookId" to "sach", "chapterId" to 1, "seconds" to 0.0))
+        until { players.only().now()?.takeIf { it.getBoolean("playing") && !it.getBoolean("buffering") } }
+        players.send(id, command("sleep", "minutes" to 0.04)) // 2,4 giây
+        val sleep = players.only().getJSONObject("sleep")
+        assertEquals("minutes", sleep.getString("kind"))
+        assertTrue(sleep.getBoolean("counting") && sleep.getDouble("left") in 2.0..2.4)
+        // Dừng thì đồng hồ dừng theo, phát lại thì chạy tiếp.
+        players.send(id, command("pause"))
+        val frozen = players.only().getJSONObject("sleep")
+        assertFalse(frozen.getBoolean("counting"))
+        Thread.sleep(500)
+        assertEquals(frozen.getDouble("left"), players.only().getJSONObject("sleep").getDouble("left"), 0.0)
+        players.send(id, command("play"))
+        assertTrue(players.only().getJSONObject("sleep").getBoolean("counting"))
+
+        until(6.0) { players.only().takeIf { it.isNull("sleep") && !it.now()!!.getBoolean("playing") } }
+        assertEquals(if (pause) "PAUSED_PLAYBACK" else "STOPPED", device.state())
+        val stopped = players.only().now()!!
+        assertEquals(1, stopped.getInt("chapterId"))
+        assertTrue(stopped.getDouble("position") >= 1.5)
+        val last = synchronized(saved) { saved.last() }
+        assertEquals(listOf("sach", 1), last.take(2))
+        assertTrue((last[2] as Double) >= 1.5)
+        Thread.sleep(500) // vài lượt hỏi sau: vẫn dừng ở đó, không phải hết chương
+        assertFalse(players.only().now()!!.getBoolean("playing"))
+        players.send(id, command("play"))
+        until { players.only().now()?.takeIf { it.getBoolean("playing") } }
+        assertTrue("nghe tiếp đúng chỗ hẹn giờ đã dừng", device.position() >= 1.5)
+    }
+
+    @Test
+    fun aSleepTimerPausesTheRendererAndKeepsThePlace() = sleepPausesAndKeepsThePlace(pause = true)
+
+    @Test
+    fun aSleepTimerStopsARendererWithoutPauseAndComesBackToTheSamePlace() = sleepPausesAndKeepsThePlace(pause = false)
+
+    @Test
+    fun aSleepTimerAtTheEndOfTheChapterWaitsAtTheNextOne() {
+        val device = renderer(speed = 5.0)
+        val (chosen, saved) = book()
+        val players = players(device, chosen, saved)
+        val id = players.found()
+        players.send(id, command("load", "bookId" to "sach", "chapterId" to 1, "seconds" to 0.0))
+        players.send(id, command("sleep", "endOfChapter" to true))
+        assertEquals("chapter", players.only().getJSONObject("sleep").getString("kind"))
+        val parked = until(10.0) { players.only().takeIf { it.now()?.getInt("chapterId") == 2 } }
+        assertTrue(parked.isNull("sleep"))
+        assertFalse(parked.now()!!.getBoolean("playing"))
+        assertEquals(0.0, parked.now()!!.getDouble("position"), 0.0)
+        assertEquals("Chương 2: Phần 2", parked.now()!!.getString("chapterTitle"))
+        assertTrue(synchronized(saved) { saved.contains(listOf("sach", 1, 10.0, 10.0)) && saved.last() == listOf("sach", 2, 0.0, 10.0) })
+        Thread.sleep(600) // thiết bị nằm yên ở STOPPED: không tự đưa chương 2
+        assertEquals(1, device.calls("SetAVTransportURI").size)
+        players.send(id, command("play"))
+        assertEquals(2, device.calls("SetAVTransportURI").size)
+        until { players.only().now()?.takeIf { it.getBoolean("playing") && it.getInt("chapterId") == 2 } }
+    }
+
+    @Test
+    fun aSleepTimerIsCancelledAndNotCarriedToTheNextCast() {
+        val device = renderer()
+        val (chosen, saved) = book(30.0)
+        val players = players(device, chosen, saved)
+        val id = players.found()
+        try {
+            players.send(id, command("sleep", "minutes" to 15))
+            fail("chưa phát gì")
+        } catch (_: Dlna.Failure) {
+        }
+        players.send(id, command("sleep", "minutes" to 0)) // tắt khi chưa có gì: không lỗi
+        players.send(id, command("load", "bookId" to "sach", "chapterId" to 1, "seconds" to 0.0))
+        players.send(id, command("sleep", "minutes" to 15))
+        assertEquals(15.0, players.only().getJSONObject("sleep").getDouble("minutes"), 0.0)
+        players.send(id, command("next")) // sang chương: vẫn đếm
+        assertEquals(15.0, players.only().getJSONObject("sleep").getDouble("minutes"), 0.0)
+        players.send(id, command("sleep", "minutes" to 0))
+        assertTrue(players.only().isNull("sleep"))
+        players.send(id, command("sleep", "minutes" to 15))
+        players.send(id, command("load", "bookId" to "sach", "chapterId" to 1, "seconds" to 0.0))
+        assertTrue("một lần “Phát trên…” mới bắt đầu không hẹn giờ", players.only().isNull("sleep"))
+    }
+
+    @Test
+    fun theLockScreenSeesTheSessionThatIsPlaying() {
+        val device = renderer()
+        val (chosen, saved) = book(30.0)
+        val players = players(device, chosen, saved)
+        val id = players.found()
+        assertNull(players.now())
+        players.send(id, command("load", "bookId" to "sach", "chapterId" to 2, "seconds" to 0.0))
+        val now = until { players.now()?.takeIf { it.playing && !it.buffering } }
+        assertEquals(id, now.id)
+        assertEquals("Loa phòng khách", now.device)
+        assertEquals("Sách thử", now.bookTitle)
+        assertEquals(2, now.chapterId)
+        assertEquals(listOf(1, 2, 3), now.chapters.map { it.id })
+        players.send(id, command("pause"))
+        assertFalse(players.now()!!.playing)
+        players.end(id)
+        assertNull(players.now())
+    }
+
+    @Test
+    fun theVolumeKeysMoveTheRendererVolume() {
+        val device = renderer()
+        val (chosen, saved) = book(30.0)
+        val players = players(device, chosen, saved).apply { volumeEveryMs = 200 }
+        val id = players.found()
+        players.send(id, command("load", "bookId" to "sach", "chapterId" to 1, "seconds" to 0.0))
+        assertEquals("âm lượng thiết bị có ngay từ lúc đưa chương", 30, players.now()!!.volume)
+        players.send(id, command("volume", "level" to 55))
+        assertEquals(55, device.volume)
+        assertEquals(55, players.now()!!.volume)
+        device.volume = 12 // ai đó vặn trên điều khiển TV
+        until { players.now()?.takeIf { it.volume == 12 } }
+        assertTrue(device.calls("SetVolume").single().let { it["DesiredVolume"] == "55" && it["Channel"] == "Master" })
+        for (bad in listOf(-1, 101)) {
+            assertTrue(runCatching { players.send(id, command("volume", "level" to bad)) }.exceptionOrNull() is Dlna.Failure)
+        }
+        assertEquals(12, device.volume)
+    }
+
+    @Test
+    fun aRendererWithoutVolumeControlLeavesThePhoneVolume() {
+        val device = FakeRenderer("Loa cũ", volumeControl = false).start().also { cleanups += it::stop }
+        val (chosen, saved) = book(30.0)
+        val players = players(device, chosen, saved).apply { volumeEveryMs = 100 }
+        val id = players.found()
+        players.send(id, command("load", "bookId" to "sach", "chapterId" to 1, "seconds" to 0.0))
+        until { players.now()?.takeIf { it.playing } }
+        Thread.sleep(400)
+        assertNull("không có RenderingControl: phím âm lượng vẫn chỉnh điện thoại", players.now()!!.volume)
+        assertTrue(device.calls("GetVolume").isEmpty())
+        assertTrue(runCatching { players.send(id, command("volume", "level" to 40)) }.exceptionOrNull() is Dlna.Failure)
+        assertTrue(device.calls("SetVolume").isEmpty())
+    }
 }

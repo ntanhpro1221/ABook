@@ -1,0 +1,244 @@
+{
+ "readings": {
+  "Haruto": "Ha ru tô",
+  "Kate": "Kết",
+  "Lucien": "Lu-xi-en",
+  "Tôkyô": "Tô ky ô",
+  "MP": "ma lực"
+ },
+ "cases": [
+  {
+   "voice": "edge:vi-VN-HoaiMyNeural",
+   "text": "“Haruto,” Kate nói.",
+   "origin": null,
+   "tokens": [
+    "“Haruto,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": null,
+   "spokenText": "“Ha-ru-tô,” Kết nói.",
+   "tag": "r8c771f618eb8ec75",
+   "key": "f7007c8561c0d8618cb5e11b3b69482b6487dcde55fd0b80201abf4ffa60631e"
+  },
+  {
+   "voice": "vieneu:turbo/Thường",
+   "text": "“Haruto,” Kate nói.",
+   "origin": null,
+   "tokens": [
+    "“Haruto,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": [
+    "“Ha-ru-tô,”",
+    "Kết",
+    "nói."
+   ],
+   "spokenText": null,
+   "tag": "r8c771f618eb8ec75",
+   "key": "dbe3e3cabe5c4ad8a30f67e87141d19d8de1b092f882ae1a33b404c17115b417"
+  },
+  {
+   "voice": "vieneu:turbo/Thường",
+   "text": "“Haruto,” Kate nói.",
+   "origin": "ja",
+   "tokens": [
+    "“Haruto,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": [
+    "“Ha-ru-tô,”",
+    "Kết",
+    "nói."
+   ],
+   "spokenText": null,
+   "tag": "r8c771f618eb8ec75",
+   "key": "69fa35ef2bdb6f6e398977221b1a602ed5d024cec8ea1d7a5b6bb3ab02bc506f"
+  },
+  {
+   "voice": "edge:vi-VN-NamMinhNeural",
+   "text": "Kate gặp Kate ở Tôkyô - còn haruto, Harutoo và Haruto-kun thì không.",
+   "origin": null,
+   "tokens": [
+    "Kate",
+    "gặp",
+    "Kate",
+    "ở",
+    "Tôkyô",
+    "-",
+    "còn",
+    "haruto,",
+    "Harutoo",
+    "và",
+    "Haruto-kun",
+    "thì",
+    "không."
+   ],
+   "spokenTokens": null,
+   "spokenText": "Kết gặp Kết ở Tô-ky-ô - còn haruto, Harutoo và Haruto-kun thì không.",
+   "tag": "r669e9aea4c533d44",
+   "key": "8a24d36d6ec73304bf78fc0f9b91df3deac9f5b08b54736b076d7ed989cee2f8"
+  },
+  {
+   "voice": "vieneu:nano/Nhẹ",
+   "text": "Kate gặp Kate ở Tôkyô - còn haruto, Harutoo và Haruto-kun thì không.",
+   "origin": "ja",
+   "tokens": [
+    "Kate",
+    "gặp",
+    "Kate",
+    "ở",
+    "Tôkyô",
+    "-",
+    "còn",
+    "haruto,",
+    "Harutoo",
+    "và",
+    "Haruto-kun",
+    "thì",
+    "không."
+   ],
+   "spokenTokens": [
+    "Kết",
+    "gặp",
+    "Kết",
+    "ở",
+    "Tô-ky-ô",
+    "-",
+    "còn",
+    "haruto,",
+    "Ha-ru-tô",
+    "và",
+    "Ha-ru-tô-cun",
+    "thì",
+    "không."
+   ],
+   "spokenText": null,
+   "tag": "r669e9aea4c533d44",
+   "key": "30914f427e6ac7c2e1cf89aee7e1b58651a0ef93d374bb62e5fae8e14d00a9c8"
+  },
+  {
+   "voice": "edge:vi-VN-HoaiMyNeural",
+   "text": "Không có tên nào cả.",
+   "origin": null,
+   "tokens": [
+    "Không",
+    "có",
+    "tên",
+    "nào",
+    "cả."
+   ],
+   "spokenTokens": null,
+   "spokenText": "Không có tên nào cả.",
+   "tag": "",
+   "key": "c33ea22c47498cffc941e09a61960af0d1f41eee5ecc4cc23a4340a89c101e26"
+  },
+  {
+   "voice": "vieneu:turbo/Thường",
+   "text": "Lucien còn 30 MP… (Lucien!)",
+   "origin": "ko",
+   "tokens": [
+    "Lucien",
+    "còn",
+    "30",
+    "MP…",
+    "(Lucien!)"
+   ],
+   "spokenTokens": [
+    "Lu-xi-en",
+    "còn",
+    "30",
+    "ma-lực…",
+    "(Lu-xi-en!)"
+   ],
+   "spokenText": null,
+   "tag": "r2370bda33939e04a",
+   "key": "e46f862aeae4a11ffe55f2a93ed868364e14bc1dd1383cea239dc0caa70f9762"
+  },
+  {
+   "voice": "azure:vi-VN-HoaiMyNeural",
+   "text": "[Lucien]\nKate\tđi tiếp.",
+   "origin": null,
+   "tokens": [
+    "[Lucien]",
+    "Kate",
+    "đi",
+    "tiếp."
+   ],
+   "spokenTokens": null,
+   "spokenText": "[Lu-xi-en]\nKết\tđi tiếp.",
+   "tag": "r6e74ef10f0bb4e8c",
+   "key": "b15145907cd1314d057a7af037781d370909dfe55cb1024912318b1e5e068e67"
+  },
+  {
+   "voice": "supertonic:F1",
+   "text": "“Haruto,” Kate nói.",
+   "origin": "ja",
+   "tokens": [
+    "“Haruto,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": [
+    "“Ha-ru-tô,”",
+    "Kết",
+    "nói."
+   ],
+   "spokenText": null,
+   "tag": "r8c771f618eb8ec75",
+   "key": "283bafbd1cd0a778a9aaf28cb46a6f991970041675d851d1323a1df6bcfdaf67"
+  },
+  {
+   "voice": "supertonic:M4",
+   "text": "Haruto gặp Kyouko ở Tôkyô, còn 30 MP.",
+   "origin": "ja",
+   "tokens": [
+    "Haruto",
+    "gặp",
+    "Kyouko",
+    "ở",
+    "Tôkyô,",
+    "còn",
+    "30",
+    "MP."
+   ],
+   "spokenTokens": [
+    "Ha-ru-tô",
+    "gặp",
+    "Ki-âu-cô",
+    "ở",
+    "Tô-ky-ô,",
+    "còn",
+    "30",
+    "ma-lực."
+   ],
+   "spokenText": null,
+   "tag": "r633c865c060faef6",
+   "key": "3ff6ac7c2cdb3e99dd3455a50352ba180a89b877cdf613d57ec14dc28ef4c74f"
+  },
+  {
+   "voice": "supertonic:F3",
+   "text": "Không có tên nào cả.",
+   "origin": "ja",
+   "tokens": [
+    "Không",
+    "có",
+    "tên",
+    "nào",
+    "cả."
+   ],
+   "spokenTokens": [
+    "Không",
+    "có",
+    "tên",
+    "nào",
+    "cả."
+   ],
+   "spokenText": null,
+   "tag": "",
+   "key": "24c07dbdc360575561b847d00ccec5eae0629deb98bf444d65b6f061cd6367fd"
+  }
+ ]
+}

@@ -1,316 +1,113 @@
 package vn.abook.player.vieneu
 
-import org.json.JSONArray
 import org.json.JSONObject
-import vn.abook.player.PinnedFiles
 import vn.abook.player.PinnedFiles.Packed
 import vn.abook.player.PinnedFiles.Part
-import vn.abook.player.Store
+import vn.abook.player.SharedRuntime
 import java.io.File
-import java.io.IOException
 
 /**
  * "Giọng VieNeu" on the phone (docs/LISTEN_ANYTHING.md section 3): the same voices the desktop module (`abook/webui/vieneu_module.py`) offers,
  * downloaded only when the listener taps, never shipped in the APK. The same pinned upstream files as the desktop (Hugging Face commits, the
- * PyPI wheels of sea-g2p and vieneu 3.8.3, SHA-256 + size each), plus what only the phone needs: ONNX Runtime's native libraries (shared with
- * "Gói nhạc": when that is on the phone it is used and not counted) and sea-g2p built as a JNI library (scripts/prepare_sea_g2p_android.py).
+ * PyPI wheels of sea-g2p and vieneu 3.8.3, SHA-256 + size each), plus what only the phone needs: ONNX Runtime's native libraries and sea-g2p
+ * built as a JNI library (scripts/prepare_sea_g2p_android.py) - both kept once for "Gói nhạc" and every voice ([SharedRuntime]), so whichever
+ * comes first, the others do not download them again.
  *
  * Choices: Nano ("Khuyên dùng" on phones: measured 03-10 neither tier keeps up live on a mid-range phone, Nano is lighter) and Turbo (only
  * recommended once a self-benchmark says this phone is fast enough). After a download the phone measures itself for a few seconds
- * ([benchmark]); a voice slower than [SLOW_RTF] is offered "Làm trước" (prepare ahead) or a switch - never switched silently.
- * Sizes shown are what THIS phone still lacks. Each choice can be removed again.
+ * ([VoiceModule.Benchmark]); a voice slower than [VoiceModule.SLOW_RTF] is offered "Làm trước" (prepare ahead) or a switch - never switched
+ * silently. Sizes shown are what THIS phone still lacks. Each choice can be removed again. Download, measuring and removal: [VoiceModule].
  */
 class VieneuModule(
-    private val dir: File,
-    /** "Gói nhạc"'s folder: its `ort/` libraries are used when present (same pinned version), so they are not downloaded twice. */
-    private val sharedOrt: File?,
+    dir: File,
+    /** ONNX Runtime and sea-g2p, shared with "Gói nhạc" and the other voices. */
+    runtime: SharedRuntime,
     abi: String?,
-    private val facts: Facts,
+    facts: VoiceModule.Facts,
     /** Measure a tier just downloaded ([VieneuVoices.benchmark]); null in tests that do not measure. */
-    private val benchmark: ((String) -> Benchmark)? = null,
+    benchmark: ((String) -> VoiceModule.Benchmark)? = null,
     /** Drop loaded engines before files are replaced or removed. */
-    private val forget: () -> Unit = {},
-    private val metered: () -> Boolean = { false },
+    forget: () -> Unit = {},
+    metered: () -> Boolean = { false },
     groups: Map<String, List<Part>>? = null,
     /** Why this phone cannot have the module ("" = it can); null = decided from the ABI and the pins. */
     blocked: String? = null,
-) {
-    class Facts(val cores: Int, val ramGb: Double)
-
-    class Benchmark(val rtf: Double, val firstAudioMs: Long, val loadMs: Long, val audioSeconds: Double) {
-        fun json(): JSONObject = JSONObject().put("rtf", rtf).put("firstAudioMs", firstAudioMs).put("loadMs", loadMs).put("audioSeconds", audioSeconds)
-    }
-
-    private val pinned = PinnedFiles(dir, "", STAMP)
+) : VoiceModule(dir, runtime, groups ?: defaultGroups(abi), facts, benchmark, forget, metered) {
     private val g2pLib = abi?.let { G2P_LIBRARIES[it] }
-    /** Part id -> its files (paths inside [dir]). "ort" is empty when this ABI has no ONNX Runtime build. */
-    private val groups: Map<String, List<Part>> = groups ?: linkedMapOf(
-        "ort" to vn.abook.player.OrtRuntime.parts(abi).map { Part(it.name, it.sha256, it.size, MUSIC_BASE + it.remote, it.packed, true, "Thư viện chạy model") },
-        "g2p" to listOfNotNull(g2pLib, DICTIONARY),
-        "voices" to listOf(VOICES),
-        "turbo" to TURBO_FILES,
-        "nano" to NANO_FILES,
-    )
-    private val unsupported: String = blocked ?: when {
+    override val name = "giọng VieNeu"
+    override val key = "vieneu"
+    override val choices = CHOICES
+    override val tiers = TIERS
+    override fun needs(choice: String) = NEEDS.getValue(choice)
+    override fun partLabel(id: String) = PART_LABEL.getValue(id)
+    override val unsupported: String = blocked ?: when {
         abi == null || g2pLib == null || this.groups["ort"].isNullOrEmpty() -> "điện thoại này chưa chạy được giọng VieNeu (kiến trúc máy chưa hỗ trợ)"
         G2P_REVISION.isEmpty() -> "bản giọng VieNeu cho điện thoại chưa được đăng"
         else -> ""
     }
 
-    private val lock = Any()
-    private var downloading = false
-    private var benchmarking = false
-    private var error = ""
-    private var finished = 0L
-    private var current = 0L
-    private var total = 0L
-    private var worker: Thread? = null
-    private val benchFile = File(dir, BENCH)
-
-    /** ONNX Runtime is already in "Gói nhạc"'s folder (same pinned files): use it there, do not count or download it again. */
-    private fun ortShared(): Boolean = sharedOrt != null && groups.getValue("ort").let { parts ->
-        parts.isNotEmpty() && parts.all { part -> File(sharedOrt, part.name).let { it.isFile && it.length() == part.size } }
-    }
-
     /** Folder holding `ort/` for [vn.abook.player.OrtRuntime.load]. */
-    fun ortFolder(): File = if (ortShared()) sharedOrt!! else dir
+    fun ortFolder(): File = folderFor("ort")
 
-    // ---- what is here -----------------------------------------------------------------------------------------------------------
-    private fun partState(id: String, stamp: Map<String, String>): String {
-        if (id == "ort" && ortShared()) return "current"
-        val files = groups.getValue(id)
-        if (files.isEmpty() || !files.all { pinned.present(it) }) return "missing"
-        return if (files.all { pinned.isCurrent(it, stamp) }) "current" else "outdated"
+    override fun choiceText(choice: String): Pair<String, String> {
+        val (label, text) = CHOICE_TEXT.getValue(choice)
+        // Turbo trên máy ít RAM: vẫn tải được (người dùng quyết), nhưng nói trước vì sao Nano hợp hơn.
+        val detail = if (choice == "turbo" && facts.ramGb < TURBO_MIN_RAM_GB)
+            "$text. Máy này có khoảng ${"%.0f".format(java.util.Locale.ROOT, facts.ramGb)} GB RAM, mà Turbo cần khoảng 1,3 GB khi đọc nên Android dễ tắt nó - Nano hợp hơn"
+        else text
+        return label to detail
     }
-
-    private fun states(): Map<String, String> {
-        val stamp = pinned.readStamp()
-        return groups.keys.associateWith { partState(it, stamp) }
-    }
-
-    private fun bytes(id: String, states: Map<String, String>): Long =
-        if (states[id] == "current") 0L else groups.getValue(id).filter { !pinned.isCurrent(it) }.sumOf { it.wireSize }
-
-    private fun have(states: Map<String, String>) = CHOICES.filter { choice -> NEEDS.getValue(choice).all { states[it] != "missing" } }
-
-    /** Parts (each once) that [choices] still lack or have in an older version. */
-    private fun lacking(choices: List<String>, states: Map<String, String>): List<String> =
-        choices.flatMap { NEEDS.getValue(it) }.distinct().filter { states[it] != "current" }
-
-    /** Every file [choices] use (shared ones once), as pinned by this app. */
-    fun parts(choices: List<String>): List<Part> = choices.flatMap { NEEDS.getValue(it) }.distinct().flatMap { groups.getValue(it) }
 
     /** Where the parts are, for [VieneuVoices]; null when no voice is usable yet (an older version stays usable until updated). */
     fun installed(): VieneuInstalled? {
-        val states = states()
-        val tiers = have(states)
+        val tiers = have(states())
         if (tiers.isEmpty() || g2pLib == null) return null
-        // runtime libraries must match the APK's code (ONNX Runtime's Java API, the JNI functions): an old one waits for the update
-        val stamp = pinned.readStamp()
-        val used = tiers.flatMap { NEEDS.getValue(it) }.distinct().filter { !(it == "ort" && ortShared()) }
-        if (used.flatMap { groups.getValue(it) }.any { it.blocking && !pinned.isCurrent(it, stamp) }) return null
-        return VieneuInstalled(pinned.file(g2pLib), pinned.file(DICTIONARY), pinned.file(VOICES),
+        if (runtimeBehind(tiers.flatMap { needs(it) }.distinct())) return null // an old runtime library waits for the update
+        val g2p = folderFor("g2p")
+        return VieneuInstalled(File(g2p, g2pLib.name), File(g2p, DICTIONARY.name), pinned.file(VOICES),
             if ("turbo" in tiers) File(dir, "turbo") to File(dir, "turbo") else null, if ("nano" in tiers) File(dir, "nano") else null)
     }
 
-    // ---- benchmark --------------------------------------------------------------------------------------------------------------
-    private fun readBench(): JSONObject = try {
-        JSONObject(benchFile.readText(Charsets.UTF_8))
-    } catch (_: Exception) {
-        JSONObject()
-    }
+    override fun measurable() = installed() != null
 
     /** Self-measured speed of a VieNeu voice ("vieneu:nano/...") on this phone, for "Làm trước" estimates; null when not measured. */
     fun rtf(voiceId: String): Double? {
         if (!voiceId.startsWith("vieneu:")) return null
-        val tier = voiceId.removePrefix("vieneu:").substringBefore('/')
-        return readBench().optJSONObject(tier)?.optDouble("rtf")?.takeIf { !it.isNaN() }
+        return tierRtf(voiceId.removePrefix("vieneu:").substringBefore('/'))
     }
 
     /** Before any measurement Nano; Turbo once a measurement says this phone keeps up with it (or Nano runs well under the limit) - and only with
      *  enough memory for it ([TURBO_MIN_RAM_GB]). */
-    fun recommended(bench: JSONObject = readBench()): String {
+    override fun recommended(bench: JSONObject): String {
         if (facts.ramGb < TURBO_MIN_RAM_GB) return "nano"
         val turbo = bench.optJSONObject("turbo")?.optDouble("rtf") ?: Double.NaN
         val nano = bench.optJSONObject("nano")?.optDouble("rtf") ?: Double.NaN
         return if ((!turbo.isNaN() && turbo < SLOW_RTF) || (turbo.isNaN() && !nano.isNaN() && nano < TURBO_HEADROOM_RTF)) "turbo" else "nano"
     }
 
-    // ---- status -----------------------------------------------------------------------------------------------------------------
-    /** For the "Giọng VieNeu" card (same shape as the desktop's `vieneu_module.status`, ui/src/listen/vieneuModule.ts). */
-    fun status(): JSONObject = synchronized(lock) {
-        val states = states()
-        val tiers = have(states)
-        val behind = lacking(tiers, states).filter { states[it] == "outdated" }
-        val bench = readBench()
-        val best = recommended(bench)
-        val state = when {
-            downloading -> "downloading"
-            error.isNotEmpty() -> "error"
-            tiers.isNotEmpty() -> if (behind.isNotEmpty()) "outdated" else "ready"
-            unsupported.isNotEmpty() -> "unsupported"
-            else -> "missing"
-        }
-        val choices = JSONArray()
-        for (choice in CHOICES) {
-            val (label, text) = CHOICE_TEXT.getValue(choice)
-            // Turbo trên máy ít RAM: vẫn tải được (người dùng quyết), nhưng nói trước vì sao Nano hợp hơn.
-            val detail = if (choice == "turbo" && facts.ramGb < TURBO_MIN_RAM_GB)
-                "$text. Máy này có khoảng ${"%.0f".format(java.util.Locale.ROOT, facts.ramGb)} GB RAM, mà Turbo cần khoảng 1,3 GB khi đọc nên Android dễ tắt nó - Nano hợp hơn"
-            else text
-            choices.put(JSONObject().put("id", choice).put("label", label).put("detail", detail).put("needs", JSONArray(NEEDS.getValue(choice)))
-                .put("bytes", lacking(listOf(choice), states).sumOf { bytes(it, states) }).put("installed", choice in tiers)
-                .put("recommended", choice == best).put("default", choice == best).put("removable", choice in tiers))
-        }
-        val parts = JSONArray()
-        for (id in groups.keys) {
-            parts.put(JSONObject().put("id", id).put("label", PART_LABEL.getValue(id)).put("bytes", groups.getValue(id).sumOf { it.wireSize })
-                .put("state", states.getValue(id)).put("external", id == "ort" && ortShared()))
-        }
-        val shownBench = JSONObject()
-        for (tier in tiers) bench.optJSONObject(tier)?.let { shownBench.put(tier, it) }
-        JSONObject().put("state", state).put("done", if (downloading) finished + current else 0).put("total", if (downloading) total else 0)
-            .put("error", error).put("supported", unsupported.isEmpty()).put("reason", unsupported).put("choices", choices).put("parts", parts)
-            .put("outdatedParts", JSONArray(behind.map { PART_LABEL.getValue(it) })).put("outdatedBytes", behind.sumOf { bytes(it, states) })
-            .put("benchmark", shownBench).put("benchmarking", benchmarking)
-            .put("suggestion", if (benchmarking) JSONObject.NULL else suggestion(bench, tiers) ?: JSONObject.NULL)
-            .put("device", JSONObject().put("cores", facts.cores).put("ramGb", facts.ramGb).put("gpu", "").put("runs", "cpu"))
-            .put("recommended", best).put("slowRtf", SLOW_RTF).put("metered", runCatching { metered() }.getOrDefault(false)).put("removable", true)
-    }
-
     /** A downloaded voice slower than listening -> what to offer (the listener decides): Turbo -> Nano when Nano keeps up, else an online voice. */
-    private fun suggestion(bench: JSONObject, tiers: List<String>): JSONObject? {
-        val slow = tiers.filter { (bench.optJSONObject(it)?.optDouble("rtf") ?: 0.0) >= SLOW_RTF }
+    override fun suggestion(bench: JSONObject, tiers: List<String>): JSONObject? {
+        val slow = tiers.filter { slowRtf(bench, it) != null }
         if (slow.isEmpty()) return null
         val tier = if ("turbo" in slow) "turbo" else slow[0]
-        val rtf = bench.getJSONObject(tier).getDouble("rtf")
+        val rtf = slowRtf(bench, tier)!!
         return if (tier == "turbo" && "nano" !in slow) JSONObject().put("tier", tier).put("rtf", rtf).put("switchTo", "nano").put("installed", "nano" in tiers)
         else JSONObject().put("tier", tier).put("rtf", rtf).put("switchTo", "online").put("installed", true)
     }
 
-    // ---- download / remove / measure -------------------------------------------------------------------------------------------
-    /** Download what [choices] lack (null: update the outdated parts of what is installed), on a background thread. */
-    fun start(choices: List<String>?) {
-        synchronized(lock) {
-            if (downloading || benchmarking) return
-            val unknown = choices?.firstOrNull { it !in CHOICES }
-            require(unknown == null) { "Không có lựa chọn $unknown" }
-            val states = states()
-            val wanted = choices ?: have(states)
-            val needed = lacking(wanted, states)
-            error = ""
-            if (needed.isEmpty()) return
-            if (unsupported.isNotEmpty()) {
-                error = unsupported.replaceFirstChar { it.uppercase() } + "."
-                return
-            }
-            downloading = true
-            finished = 0
-            current = 0
-            total = needed.sumOf { bytes(it, states) }
-            val files = needed.flatMap { id -> groups.getValue(id) }
-            worker = Thread({ run(files, needed) }, "abook-vieneu-module").apply {
-                isDaemon = true
-                priority = Thread.MIN_PRIORITY
-                start()
-            }
-        }
-    }
-
-    private fun run(files: List<Part>, needed: List<String>) {
-        try {
-            forget() // a loaded engine must not read files being replaced
-            pinned.download(files, object : PinnedFiles.Progress {
-                override fun current(bytes: Long) = synchronized(lock) { current = bytes }
-                override fun done(part: Part) = synchronized(lock) {
-                    finished += part.wireSize
-                    current = 0
-                }
-            })
-            forget()
-            synchronized(lock) {
-                downloading = false
-                error = ""
-                benchmarking = true
-            }
-            val installedTiers = have(states())
-            measure(TIERS.filter { tier -> tier in installedTiers && NEEDS.getValue(tier).any { it in needed } })
-        } catch (failure: Exception) {
-            synchronized(lock) { error = describe(failure) }
-        } finally {
-            synchronized(lock) { downloading = false }
-        }
-    }
-
-    private fun describe(failure: Exception): String = when (failure) {
-        is PinnedFiles.ChecksumError -> "Giọng VieNeu tải về bị hỏng (không khớp mã kiểm) - bấm Thử lại để tải lại."
-        is IOException -> "Không tải được giọng VieNeu (${failure.message ?: "mất kết nối"}). Bấm Thử lại - phần đã tải được giữ."
-        else -> "Không tải được giọng VieNeu (${failure.message ?: failure.javaClass.simpleName})."
-    }
-
-    /** Measure [tiers] (a few seconds each; the caller has set `benchmarking`); a failed measurement never spoils the download. */
-    private fun measure(tiers: List<String>) {
-        try {
-            val run = benchmark ?: return
-            if (tiers.isEmpty() || installed() == null) return
-            val results = readBench()
-            for (tier in tiers) {
-                try {
-                    results.put(tier, run(tier).json())
-                } catch (_: Throwable) { // UnsatisfiedLinkError, OutOfMemoryError: say nothing about the speed rather than crash
-                    results.remove(tier)
-                }
-            }
-            dir.mkdirs()
-            Store.writeAtomic(benchFile, results.toString())
-        } finally {
-            synchronized(lock) { benchmarking = false }
-        }
-    }
-
-    /** "Thử lại tốc độ": measure every installed tier again, on a background thread. */
-    fun measureAgain() {
-        synchronized(lock) {
-            if (downloading || benchmarking) return
-            val tiers = have(states())
-            if (tiers.isEmpty()) return
-            benchmarking = true
-            worker = Thread({ measure(tiers) }, "abook-vieneu-bench").apply {
-                isDaemon = true
-                priority = Thread.MIN_PRIORITY
-                start()
-            }
-        }
-    }
-
-    /** Remove one voice ([choice]); the shared parts (text reader, voice list, own ONNX Runtime) go with the last one. */
-    fun remove(choice: String) {
-        require(choice in CHOICES) { "Không có lựa chọn $choice" }
-        synchronized(lock) {
-            if (downloading || benchmarking) return
-            forget()
-            val others = have(states()).filter { it != choice }
-            val keep = others.flatMap { NEEDS.getValue(it) }.toSet()
-            val drop = NEEDS.getValue(choice).filter { it !in keep }
-            pinned.remove(drop.flatMap { groups.getValue(it) })
-            drop.forEach { id -> if (id != "ort") File(dir, id).deleteRecursively() }
-            if (others.isEmpty()) File(dir, "ort").deleteRecursively()
-            val bench = readBench().apply { remove(choice) }
-            if (bench.length() == 0) benchFile.delete() else Store.writeAtomic(benchFile, bench.toString())
-            error = ""
-        }
-    }
-
-    /** Wait for the download / measurement thread (tests). */
-    fun join(millis: Long = 60_000) {
-        worker?.join(millis)
-    }
-
     companion object {
-        const val STAMP = "module.json"
-        private const val BENCH = "benchmark.json"
-        /** At or above this a voice cannot be listened to live (desktop vieneu_module.SLOW_RTF). */
-        const val SLOW_RTF = 0.8
+        /** The parts of the module for [abi] as pinned by this app. */
+        private fun defaultGroups(abi: String?): Map<String, List<Part>> = linkedMapOf(
+            "ort" to SharedRuntime.ortParts(abi),
+            "g2p" to listOfNotNull(abi?.let { G2P_LIBRARIES[it] }, DICTIONARY),
+            "voices" to listOf(VOICES),
+            "turbo" to TURBO_FILES,
+            "nano" to NANO_FILES,
+        )
+
+        /** Its own folder in the app's files. */
+        const val FOLDER = "vieneu"
+
         /** Nano this much faster than listening -> Turbo (about as fast on a phone, measured 03-10) is worth recommending. */
         const val TURBO_HEADROOM_RTF = 0.6
         /** Turbo peaks at about 1.25-1.3 GB while reading (PSS, OPPO A93 and the emulator 03-10); under a 6 GB phone (Android reports ~5.5) it is
@@ -330,7 +127,6 @@ class VieneuModule(
         private const val TURBO_BASE = "https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo/resolve/61b85e3d937fbbacb387714180e8182823512523/onnx_int8/"
         private const val CODEC_BASE = "https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX/resolve/ceff0d0749bfb3fa2d61149794ec6feef0d1e1ae/"
         private const val NANO_BASE = "https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Nano/resolve/aba295eb96a6fa6003ebe417cc1f2802a7adc1dc/"
-        private const val MUSIC_BASE = vn.abook.player.MusicStudentSetup.BASE
 
         /** Commit of NGDtuanh/abook-music-student that holds `sea-g2p/0.9.1/` (scripts/prepare_sea_g2p_android.py). Empty = not uploaded yet. */
         const val G2P_REVISION = "a8446407cc4f4775b0f0029da63a24756ebc966f"

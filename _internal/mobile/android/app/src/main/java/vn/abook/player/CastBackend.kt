@@ -40,6 +40,13 @@ interface CastBackend {
 
     /** Bỏ kết nối; [release]: trả luôn thiết bị về nguyên trạng (Cast: đóng ứng dụng phát nếu máy này đã mở nó). */
     fun close(release: Boolean = false) {}
+
+    /** Âm lượng của thiết bị 0-100; null: thiết bị không cho chỉnh từ xa (hay chưa nói) - phím âm lượng để yên cho điện thoại. */
+    fun volume(): Int? = null
+
+    fun setVolume(percent: Int) {
+        throw Dlna.Failure("thiết bị không chỉnh được âm lượng từ xa")
+    }
 }
 
 /** DLNA / UPnP AV: SOAP AVTransport tới địa chỉ điều khiển của thiết bị; không giữ kết nối nên `close` không việc gì. */
@@ -101,6 +108,21 @@ class DlnaBackend(private val renderer: Dlna.Renderer) : CastBackend {
     override fun seek(seconds: Double) {
         call("Seek", "Unit" to "REL_TIME", "Target" to Dlna.clock(seconds))
     }
+
+    /** RenderingControl GetVolume (kênh Master) - chỉ khi thiết bị có dịch vụ ấy; hỏi một lượt qua mạng. */
+    override fun volume(): Int? {
+        if (renderer.rcUrl.isEmpty()) return null
+        val value = rendering("GetVolume")["CurrentVolume"]?.trim()?.toIntOrNull() ?: return null
+        return value.coerceIn(0, 100)
+    }
+
+    override fun setVolume(percent: Int) {
+        if (renderer.rcUrl.isEmpty()) super.setVolume(percent)
+        rendering("SetVolume", "DesiredVolume" to percent.coerceIn(0, 100))
+    }
+
+    private fun rendering(action: String, vararg arguments: Pair<String, Any>): Map<String, String> =
+        Dlna.soap(renderer.rcUrl, renderer.rcType, action, listOf<Pair<String, Any>>("InstanceID" to 0, "Channel" to "Master") + arguments)
 
     override fun status(): CastStatus {
         val state = call("GetTransportInfo")["CurrentTransportState"].orEmpty().trim().uppercase()
