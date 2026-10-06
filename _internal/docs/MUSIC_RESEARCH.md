@@ -3697,3 +3697,24 @@ Ghi lại cho đúng:
 **Kiểm bản cài X (dev/music-scene ee468863, `music/verify_app_x.py`)**: chạy chính `chapter_scenes` + `choose` của app (CUE trên câu,
 không đọc file nguồn) - 5b+6: đổi 4,7/giờ P .69 R .14 F1 .226, anh em 5,8/giờ (mô phỏng 4,8 / .70 / .236 / 5,2); bộ 7: 8,0/giờ P .37
 R .23 F1 .283, anh em 4,8/giờ (mô phỏng 7,7 / .38 / .286 / 4,8). Khớp trong ~.01 F1; lệch nhỏ do CUE trên câu thay vì trên file nguồn.
+
+### 07-10 05:1x - XÁC NHẬN mức chương trên bộ 7 (ghi trước fff35839; P0 bộ 7 GPU 04:46-04:50): **KHÔNG THẮNG**
+
+`chapter_level.py confirm set7` (20 chương), cổng MAE <= .35:
+
+| bộ 7 | MAE | V | T | r V | r T |
+|---|---|---|---|---|---|
+| [mốc] hằng 0 | .352 | .360 | .345 | - | - |
+| [mốc] nhãn câu app thô | .334 | .333 | .335 | .49 | .65 |
+| [mốc] trần (mức đáp án) | .094 | .092 | .097 | 1 | 1 |
+| **[CHÍNH] V = C0 hc, T = P0 hc** | **.502** | .276 | **.728** | .49 | .85 |
+| [ghi lại] C0 hc cả hai trục | .324 | .276 | .371 | .49 | .65 |
+| [ghi lại] P0 thô | .288 | .315 | .260 | .64 | .81 |
+
+Đọc:
+- Công thức CHÍNH hỏng ở T. Hệ số chặn T = -0,49 học trên 4+5 không chuyển sang bộ 7: thứ tự giữa các chương vẫn tốt (r T .85)
+  nhưng mức lệch hẳn (MAE T .728).
+- Bộ 7 có trần rất thấp (.094, so với .286 ở 5b+6): đáp án bộ 7 ít cảnh mỗi chương, nên mức chương gần như nói hết. Vì thế cổng .35
+  dễ hơn: hằng 0 đã .352, nhãn app thô .334. Không dùng điều này để đổi kết luận.
+- Bài học: hiệu chỉnh mức (hệ số chặn) học từ một bộ không đứng được sang bộ khác; thứ tự (r) thì đứng được. Lớp mức chương nên
+  dùng r / thứ hạng trong cuốn, hoặc hiệu chỉnh theo cuốn, không dùng hằng toàn cục.
