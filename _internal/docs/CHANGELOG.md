@@ -58,6 +58,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - "Cần nghe lại": câu có bản thu riêng đã được dọn sau khi ghép chương giờ vẫn nghe được - máy phát đúng đoạn ấy trong file chương rồi dừng ở cuối câu, nên bấm
   được "Ổn" hay "Cần thu lại", và "Nghe liền" cũng đi qua những câu ấy. Trước đây nút nghe bị tắt.
+- "Việc cần duyệt": một vai phụ không tên xuất hiện ở nhiều chương (như "lính gác" ở bốn chương, mỗi chỗ một giọng) giờ
+  là một thẻ cho cả cuốn thay vì một thẻ mỗi chương. Thẻ liệt kê mọi câu kèm chương; bỏ chọn câu nào không phải rồi chọn
+  một lần: một nhân vật có sẵn, người kể, hay người mới (gõ tên + giới). "Mỗi chỗ một người" giữ nguyên như máy đang làm.
+  Một nút "Hoàn tác" lấy lại cả nhóm; sách vẫn chạy tiếp, không phải chờ.
 
 ## [0.4.29] - 2026-10-06
 
