@@ -64,8 +64,9 @@ class LibraryPlugin : Plugin() {
         LocalStudio.bundledPicker = DeviceMusic.bundledPicker(context)
         // Bộ phân tích nhạc: "Gói nhạc" (model + thư viện ONNX Runtime) tải khi người dùng bấm (không bao giờ tự tải); đã có từ lần trước thì cắm luôn, ở luồng nền.
         val abi = OrtRuntime.deviceAbi()
-        val student = MusicStudentSetup(File(context.filesDir, "music/student"), musicStore, { AndroidMusicStudent.open(it, context.cacheDir) },
-            files = MusicStudentSetup.PACKAGE + OrtRuntime.parts(abi), supported = abi != null, metered = { AndroidMusicStudent.metered(context) })
+        val runtime = SharedRuntime.of(context)
+        val student = MusicStudentSetup(File(context.filesDir, MusicStudentSetup.FOLDER), musicStore, { AndroidMusicStudent.open(it, runtime.dir, context.cacheDir) },
+            runtime, files = MusicStudentSetup.PACKAGE + OrtRuntime.parts(abi), supported = abi != null, metered = { AndroidMusicStudent.metered(context) })
         LocalStudio.student = student
         musicImports.execute { runCatching { student.attachIfPresent() } }
         // Gửi phần sửa về máy tính xong: tải lại sách từ máy tính (không báo "Đã tải xong") và báo giao diện làm mới.

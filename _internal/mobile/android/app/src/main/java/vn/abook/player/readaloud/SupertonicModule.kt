@@ -2,7 +2,7 @@ package vn.abook.player.readaloud
 
 import org.json.JSONObject
 import vn.abook.player.PinnedFiles.Part
-import vn.abook.player.vieneu.SharedRuntime
+import vn.abook.player.SharedRuntime
 import vn.abook.player.vieneu.VieneuModule
 import vn.abook.player.vieneu.VoiceModule
 import java.io.File
@@ -15,12 +15,13 @@ class SupertonicInstalled(val model: File, val ortFolder: File, val g2p: Pair<Fi
  * "Giọng Supertonic" on the phone: the ten Supertonic 3 voices the desktop module (`abook/webui/supertonic_module.py`) offers, downloaded only when
  * the listener taps, never shipped in the APK - the same pinned files (Hugging Face `Supertone/supertonic-3` at one commit, SHA-256 + size each;
  * tests/test_supertonic_android.py compares the two tables). Parts: ONNX Runtime's libraries and sea-g2p (numbers, dates, times read as words),
- * kept once for every voice ([SharedRuntime]: "Giọng VieNeu" downloaded first -> already here and not counted), and the model itself. After a download the phone measures itself for a few seconds; slower than listening -> the card offers an online voice
- * (never a silent switch). Removing it takes its model, and the shared runtime only when no other voice uses it.
+ * kept once for "Gói nhạc" and every voice ([SharedRuntime]: one of those downloaded first -> already here and not counted), and the model
+ * itself. After a download the phone measures itself for a few seconds; slower than listening -> the card points to "Làm trước" or an online
+ * voice (never a silent switch). Removing it takes its model, and the shared runtime only when no installed module needs it.
  */
 class SupertonicModule(
     dir: File,
-    /** ONNX Runtime and sea-g2p, shared with the other voices. */
+    /** ONNX Runtime and sea-g2p, shared with "Gói nhạc" and the other voices. */
     runtime: SharedRuntime,
     abi: String?,
     facts: VoiceModule.Facts,
@@ -72,6 +73,8 @@ class SupertonicModule(
 
     companion object {
         const val CHOICE = "supertonic"
+        /** Its own folder in the app's files. */
+        const val FOLDER = "supertonic"
         val NEEDS = listOf("ort", "g2p", CHOICE)
         private const val MODEL = "model"
         private const val LABEL = "Giọng Supertonic"
@@ -79,7 +82,7 @@ class SupertonicModule(
         val PART_LABEL = mapOf("ort" to "Thư viện chạy model", "g2p" to "Bộ đọc chữ tiếng Việt", CHOICE to "Giọng Supertonic")
 
         private fun defaultGroups(abi: String?): Map<String, List<Part>> = linkedMapOf(
-            "ort" to VieneuModule.ortParts(abi),
+            "ort" to SharedRuntime.ortParts(abi),
             "g2p" to if (abi == null || VieneuModule.G2P_LIBRARIES[abi] == null) emptyList() else listOf(VieneuModule.G2P_LIBRARIES.getValue(abi), VieneuModule.DICTIONARY),
             CHOICE to FILES,
         )
