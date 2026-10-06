@@ -3047,3 +3047,9 @@ ngưỡng .35 nhưng là chọn sau khi đã xem nhiều tổ hợp, nên chỉ 
 là một lượt LLM theo khúc thì trung bình chương của chính nó + hằng hiệu chỉnh cho lớp 2 MIỄN PHÍ, không cần lượt riêng.
 Xác nhận cần chương đáp án MỚI (chưa ai xem) có cả nhãn câu app lẫn P0 theo khúc; công thức và hằng số trên giữ cố định.
 CF/CH: Model chen khe ngay sau rel430b (~18 h), log `music/cl_chain.log`, dấu "HẾT MỨC CHƯƠNG CL 06-10".
+
+**GHI TRƯỚC (06-10, trước khi có số musicvt) - mức chương "miễn phí" từ lớp 3:** khi musicvt (LoRA toàn bộ 4B, ~10-10) chấm xong
+theo khúc trên 4/5/5b/6: mức chương = trung bình dự đoán của nó theo khúc trong chương (thời lượng), hiệu chỉnh tuyến tính mỗi trục
+học trên 4+5 (như C0), đo 5b+6, cùng luật thắng (MAE <= .35 VÀ r V,T >= .6). Ghi lại thêm: musicvt thô (không hiệu chỉnh); tổ hợp
+cố định V = C0 hc, T = P0 hc (hằng trong mục khám phá trên) - không phải phép thử mới vì 5b+6 đã xem. Nếu musicvt thắng ở đây và
+ở phép trong chương (docs 24cf8f78), lớp 2 + lớp 3 là MỘT lượt; CF chỉ còn cần nếu musicvt trượt mức chương.
