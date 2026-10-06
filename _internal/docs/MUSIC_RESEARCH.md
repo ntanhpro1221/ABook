@@ -3942,3 +3942,22 @@ bao bằng gạch, hoặc bên trong nói góc nhìn (POV/góc nhìn/side).
 Overlord WN là bản web novel, chữ khác hẳn bản LN của bộ 5. Bộ lọc tên không bắt được vì tên khác, nên vẫn giữ: không trùng
 chương nào với đáp án cũ. 20 chương, câu trơn ở `scene_set9/scene9_segments`. Hai người chấm mù A/B (Opus, đề sao từ bộ 8)
 đang chấm.
+
+**Bộ 9: KẾT QUẢ - KHÔNG QUA.** Đáp án `gold_scene9` lấy từ hai người chấm mù A/B qua `adjudicate_scenes.py`.
+A và B khớp nhau F1 .796 (bộ 8 là .817). Đáp án có 57 ranh giới trên 4,0 giờ.
+
+| | ranh giới/giờ | P | R | F1 | sai/giờ | bỏ (trùng đáp án) |
+|---|---|---|---|---|---|---|
+| X hiện tại | 2,0 | .50 | .07 | .123 | 1,0 | - |
+| X + luật ngoặc | 1,3 | .40 | .04 | .065 | 0,8 | 11 (2) |
+
+- Cổng 1 (sai/giờ <= 0,8 × X) qua sát nút: 0,8 so với 0,8.
+- Cổng 2 (F1 >= X − .02) trượt.
+- Luật bỏ 11 dòng ngoặc, 9 dòng là chữ hệ thống thật (`[Phần thưởng: …]`, `[Đánh giá: C]`, `[Histania Lowen]`).
+- 2 dòng bị bỏ lại trùng đáp án: `[Hộ phù truyền tin]` và `['Thiên tài Vũ khí' đã nhận diện…]`. Đó là thông báo hệ thống rơi
+  đúng đầu một cảnh mới, nên vẫn là chữ trong thế giới truyện, chỉ tình cờ trùng vị trí.
+- X ở bộ này chỉ trúng 4 ranh giới, nên mất 2 là F1 giảm một nửa. Phép thử ít lực, nhưng cổng đã ghi trước thì theo cổng.
+
+Kết luận: không đề xuất sửa `cue_kind`. Đặc tả soạn sẵn `research/music/SPEC_bracket_cue.md` để nguyên, không dùng.
+Gộp cả 5 bộ: luật bỏ 133 dòng ngoặc, 23 dòng (17%) trùng đáp án. Ngoặc phần lớn là nhiễu, nhưng bỏ hết thì mất đúng những
+chỗ thông báo hệ thống mở cảnh.
