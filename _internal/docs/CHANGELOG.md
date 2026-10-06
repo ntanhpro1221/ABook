@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Máy tính
+
+- Menu "…" của trang sách có thêm "Xuất M4B cho app sách nói": cả cuốn thành một file `.m4b` mà Apple Books, Smart AudioBook Player, BookPlayer... mở là thấy
+  đủ danh sách chương (tên chương thật, nhảy đúng đầu chương), có bìa, tên sách và giọng kể. Máy làm ở nền như "Xuất file sách" - sách dài mất vài phút, tải
+  lại trang vẫn thấy tiến độ, xong thì báo nơi file nằm. Chỉ chương đã làm xong được đưa vào; thiếu chương thì thông báo nói rõ có bao nhiêu chương trong file.
+
 ## [0.4.29] - 2026-10-06
 
 ### Studio
