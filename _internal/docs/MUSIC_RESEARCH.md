@@ -3640,3 +3640,25 @@ lặp 7% / 4% / 4%, độ hợp z TB .54 / .62 / .65 (P, F1 không đổi). Đư
 - Ghi lại thêm: z TB, lặp, anh em/giờ.
 - Cách làm trong app nếu Y thắng: LLM chia cảnh chạy một lần mỗi chương trong pha nhạc, cùng model phân tích hay 4B, ~7 s/chương
   trên card 8 GB (SEG: 42 chương trong 5 phút), seed theo digest. Ranh giới vào thành cờ `sceneBreak`, rồi đi đúng đường của X.
+
+### 07-10 00:1x - Kết quả mức chương zero-shot CF / CH / CS (GPU 06-10 23:48-07-10 00:03; `chapter_level.py score`): KHÔNG THẮNG
+
+Cổng (đã ghi): 5b+6, MAE <= .35 VÀ r V,T >= .6. Mốc: hằng .462; nhãn câu app .432; trần (mức chương đáp án) .286.
+
+| 5b+6 (23 chương) | MAE | r V | r T |
+|---|---|---|---|
+| C0 nhãn câu app + hiệu chỉnh (CHÍNH) | .395 | .73 | .75 |
+| CF cả chương (CHÍNH) | .451 | .59 | **.89** |
+| CF + hiệu chỉnh | .380 | .59 | .89 |
+| (CF hc + C0)/2 | .382 | .79 | .92 |
+| CH đầu-giữa-cuối | .459 | .58 | .86 |
+| CS thẻ cảnh | .445 | .61 | .48 |
+
+Không ứng viên nào xuống dưới .35: trần chỉ cách .35 có .064, và mọi cách đều kẹt ở ~.38. CS (thẻ cảnh) không hơn CF, còn T kém hơn
+hẳn. Đáng giữ: CF cho thứ tự T giữa các chương rất tốt (r .89 trên 5b+6, .78 trên 4+5).
+
+**GHI TRƯỚC - L2-EST+CL (trước khi tính; CPU):** `l2_est.py` thêm mức chương CF (và CH, CS) làm đặc trưng.
+- CHÍNH: ridge + khớp phương sai trên 4 mô hình cũ + CF (không đặc trưng chữ), alpha 4, bỏ-một-truyện trên 4+5+5b+6, báo 5b+6.
+  Cổng y như L2-EST: MAE mức < .20 VÀ r >= .80 cả V, T.
+- Ghi lại: + CH + CS; chỉ CF + hiệu chỉnh tuyến tính; 4 mô hình cũ (mốc L2-EST: r V .77).
+- Xác nhận bộ 7 dùng đúng cấu hình CHÍNH (`confirm`), sau khi đã có đáp án bộ 7 và CF bộ 7 (cần thêm lượt CF bộ 7 trên GPU, ~2 phút).
