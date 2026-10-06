@@ -200,9 +200,9 @@ def survey(pages: int, sort: str, kind: str = "truyendich", status: str = "hoant
     return results
 
 
-def download(path: str, title: str | None, workers: int, sources: Sources | None = None) -> Path:
+def download(path: str, title: str | None, workers: int, sources: Sources | None = None, info: dict | None = None) -> Path:
     sources = sources or Sources()
-    info = series_info(sources, path)
+    info = info or series_info(sources, path)
     name = title or info["title"]
     folder = FULL / re.sub(r'[<>:"/\\|?*]', "_", name).strip().rstrip(".")
     folder.mkdir(parents=True, exist_ok=True)
@@ -268,23 +268,31 @@ def known_ids() -> set[str]:
 
 
 STATUSES = ("hoanthanh", "dangtienhanh", "tamngung")
+# Hako gắn nhãn nguồn cho truyện Hàn/Trung/Anh; LN Nhật KHÔNG có nhãn nào. Bộ phân tích nhắm LN Nhật > Hàn, Trung gần
+# như không đọc, văn Việt gốc không phải mục tiêu (bộ nhớ analysis-diversity) -> mặc định bỏ Trung + Anh.
+EXCLUDE_TAGS = ("Chinese Novel", "English Novel")
 
 
-def fetch_all(workers: int, pause: float, max_pages: int, kinds: tuple[str, ...] = KINDS, skip_ids: Path | None = None) -> None:
+def fetch_all(workers: int, pause: float, max_pages: int, kinds: tuple[str, ...] = ("truyendich",),
+              skip_ids: Path | None = None, statuses: tuple[str, ...] = STATUSES,
+              exclude_tags: tuple[str, ...] = EXCLUDE_TAGS) -> None:
     """Đi hết các trang danh sách Hako, tải CẢ BỘ mọi truyện chưa có trong `_full`. Chạy lại = làm tiếp.
 
     Mỗi bộ xong ghi một dòng vào `_full/_fetch_log.tsv`; `STOP_FILE` có mặt thì dừng sau bộ đang tải.
-    Thứ tự mặc định: người dịch trước (LN Nhật/Hàn - trọng số cao nhất của bộ phân tích), rồi AI dịch, rồi sáng tác.
-    Hai máy chia việc bằng `kinds` (06-10: máy nhà truyendich, Mac convert + sangtac); `skip_ids` = số truyện
-    máy kia đã có (`known-ids` của máy ấy), để không tải trùng những bộ đã nằm trong kho chính.
+    Mặc định chỉ truyện NGƯỜI dịch, bỏ bộ mang nhãn `exclude_tags` (chủ sách 06-10 hỏi "không filter gì à?"); bộ bị
+    bỏ ghi vào `_full/_fetch_skipped.tsv` để chạy lại khỏi mở trang của nó lần nữa. Hai máy chia việc bằng `statuses`
+    (06-10: máy nhà hoanthanh, Mac dangtienhanh + tamngung); `skip_ids` = số truyện máy kia đã có (`known-ids`).
     """
     sources = Sources()
     have = known_ids()
     if skip_ids:
         have |= set(skip_ids.read_text(encoding="utf-8").split())
     log = FULL / "_fetch_log.tsv"
+    skipped_log = FULL / "_fetch_skipped.tsv"
+    if skipped_log.exists():
+        have |= {line.split("\t")[1] for line in skipped_log.read_text(encoding="utf-8").splitlines() if "\t" in line}
     fetched = 0
-    for kind, status in [(kind, status) for kind in kinds for status in STATUSES]:
+    for kind, status in [(kind, status) for kind in kinds for status in statuses]:
         for page in range(1, max_pages + 1):
             tree = html.fromstring(sources.get(f"/danh-sach?{kind}=1&{status}=1&sapxep=top&page={page}"))
             paths = [urlparse(a.get("href")).path for a in tree.xpath('//div[contains(@class,"series-title")]/a')]
@@ -298,7 +306,14 @@ def fetch_all(workers: int, pause: float, max_pages: int, kinds: tuple[str, ...]
                 if not number or number in have:
                     continue
                 try:
-                    folder = download(path, None, workers, sources)
+                    info = series_info(sources, path)
+                    excluded = sorted(set(info["genres"]) & set(exclude_tags))
+                    if excluded:
+                        have.add(number)
+                        with skipped_log.open("a", encoding="utf-8") as out:
+                            out.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}\t{number}\t{','.join(excluded)}\t{info['title']}\n")
+                        continue
+                    folder = download(path, None, workers, sources, info)
                 except Exception as exc:  # noqa: BLE001 - một bộ hỏng không dừng cả lượt
                     print(f"  bỏ {path}: {exc}", file=sys.stderr, flush=True)
                     continue
@@ -329,7 +344,9 @@ def main(argv: list[str] | None = None) -> int:
     f.add_argument("--workers", type=int, default=6)
     f.add_argument("--pause", type=float, default=5.0, help="giây nghỉ giữa hai bộ")
     f.add_argument("--max-pages", type=int, default=1000)
-    f.add_argument("--kinds", default=",".join(KINDS), help="loại danh sách, cách nhau dấu phẩy: " + ",".join(KINDS))
+    f.add_argument("--kinds", default="truyendich", help="loại danh sách, cách nhau dấu phẩy: " + ",".join(KINDS))
+    f.add_argument("--statuses", default=",".join(STATUSES), help="tình trạng, cách nhau dấu phẩy: " + ",".join(STATUSES))
+    f.add_argument("--exclude-tags", default=",".join(EXCLUDE_TAGS), help="bỏ bộ mang một trong các nhãn này ('' = không bỏ)")
     f.add_argument("--out", type=Path, help="thư mục bộ đầy đủ (mặc định Corpus/_full) - máy khác ngoài máy nhà")
     f.add_argument("--skip-ids", type=Path, help="file số truyện (mỗi dòng một số) đã có ở máy khác")
     sub.add_parser("known-ids", help="in số truyện đã có trong _full, mỗi dòng một số")
@@ -342,11 +359,13 @@ def main(argv: list[str] | None = None) -> int:
         survey(args.pages, args.sort, args.kind, args.status)
     elif args.command == "fetch-all":
         kinds = tuple(kind for kind in args.kinds.split(",") if kind)
-        unknown = set(kinds) - set(KINDS)
+        statuses = tuple(status for status in args.statuses.split(",") if status)
+        unknown = (set(kinds) - set(KINDS)) | (set(statuses) - set(STATUSES))
         if unknown:
-            parser.error(f"loại không có: {sorted(unknown)}")
+            parser.error(f"loại / tình trạng không có: {sorted(unknown)}")
         FULL.mkdir(parents=True, exist_ok=True)
-        fetch_all(args.workers, args.pause, args.max_pages, kinds, args.skip_ids)
+        fetch_all(args.workers, args.pause, args.max_pages, kinds, args.skip_ids, statuses,
+                  tuple(tag.strip() for tag in args.exclude_tags.split(",") if tag.strip()))
     elif args.command == "known-ids":
         print("\n".join(sorted(known_ids(), key=int)))
     else:
