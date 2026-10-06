@@ -46,7 +46,8 @@ object RemotePlayers {
             out.put(reply.put("device", key).put("localBookId", local).put("known", known))
         }
         // Máy tính chính bản cũ (trước khi có loa / TV) không có /sync/v1/cast: bỏ qua lặng lẽ.
-        val cast = renderers?.let { runCatching { it.get(4, TimeUnit.SECONDS) }.getOrNull() } ?: JSONArray()
+        val reached = renderers?.let { runCatching { it.get(4, TimeUnit.SECONDS) }.getOrNull() }
+        val cast = reached ?: JSONArray()
         val direct = runCatching { PhoneCast.players.view() }.getOrDefault(JSONArray())
         // Cùng một thiết bị cả máy tính lẫn điện thoại đều thấy (mã theo UDN trùng nhau): một mục thôi - mục đang có sách,
         // không thì mục của điện thoại (phát được cả khi máy tính tắt). Đường phát thật chọn lúc bấm (`command`).
@@ -63,6 +64,9 @@ object RemotePlayers {
             val book = renderer.optJSONObject("state")?.optString("bookId").orEmpty()
             out.put(renderer.put("device", prefix + id).put("via", "cast").put("localBookId", book).put("known", book.isNotEmpty()))
         }
+        // Thanh "Đang phát trên…" của loa / TV máy tính đang hiện: màn hình khoá điều khiển được chúng (ComputerCasts).
+        // Chưa ghép máy tính: không có phiên nào (mảng rỗng); có ghép mà lượt này không tới được: null - giữ bản cũ một lúc.
+        ComputerCasts.observe(context, if (renderers == null) JSONArray() else reached)
         return out
     }
 
