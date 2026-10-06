@@ -47,6 +47,38 @@ object Wav {
         return parse(head)
     }
 
+    /** Đầu 44 byte của một file WAV PCM có `dataSize` byte dữ liệu. */
+    private fun header(format: Format, dataSize: Long): ByteArray {
+        val head = ByteArrayOutputStream(44)
+        fun put32(v: Long) { for (i in 0 until 4) head.write(((v shr (8 * i)) and 0xFF).toInt()) }
+        fun put16(v: Int) { head.write(v and 0xFF); head.write((v shr 8) and 0xFF) }
+        head.write("RIFF".toByteArray()); put32(36 + dataSize); head.write("WAVEfmt ".toByteArray()); put32(16)
+        put16(1); put16(format.channels); put32(format.sampleRate.toLong()); put32(format.bytesPerSecond)
+        put16(format.channels * format.bitsPerSample / 8); put16(format.bitsPerSample)
+        head.write("data".toByteArray()); put32(dataSize)
+        return head.toByteArray()
+    }
+
+    /** Tần số của file lặng: thấp cho nhỏ (1,5 s = 48 KB); ExoPlayer phát được mọi tần số. */
+    const val SILENCE_RATE = 16000
+
+    /** Ghi `ms` mili giây im lặng (PCM 16 bit, một kênh) vào `out`; độ dài tính tròn xuống theo mẫu. Trả định dạng đã ghi. */
+    fun silence(out: File, ms: Long): Format {
+        val format = Format(SILENCE_RATE, 1, 16, 44)
+        val dataSize = ms.coerceAtLeast(0) * SILENCE_RATE / 1000 * 2
+        out.outputStream().buffered().use { sink ->
+            sink.write(header(format, dataSize))
+            val zeros = ByteArray(8192)
+            var left = dataSize
+            while (left > 0) {
+                val n = minOf(left, zeros.size.toLong()).toInt()
+                sink.write(zeros, 0, n)
+                left -= n
+            }
+        }
+        return format
+    }
+
     /** Nối các file WAV cùng định dạng thành `out` (một đầu 44 byte + dữ liệu của từng mảnh). */
     fun concat(parts: List<File>, out: File): Format {
         val formats = parts.map { format(it) ?: throw IOException("không đọc được WAV: ${it.name}") }
@@ -56,14 +88,7 @@ object Wav {
         }
         val dataSize = parts.indices.sumOf { parts[it].length() - formats[it].dataOffset }
         out.outputStream().buffered().use { sink ->
-            val head = ByteArrayOutputStream(44)
-            fun put32(v: Long) { for (i in 0 until 4) head.write(((v shr (8 * i)) and 0xFF).toInt()) }
-            fun put16(v: Int) { head.write(v and 0xFF); head.write((v shr 8) and 0xFF) }
-            head.write("RIFF".toByteArray()); put32(36 + dataSize); head.write("WAVEfmt ".toByteArray()); put32(16)
-            put16(1); put16(first.channels); put32(first.sampleRate.toLong()); put32(first.bytesPerSecond)
-            put16(first.channels * first.bitsPerSample / 8); put16(first.bitsPerSample)
-            head.write("data".toByteArray()); put32(dataSize)
-            sink.write(head.toByteArray())
+            sink.write(header(first, dataSize))
             for ((index, part) in parts.withIndex()) {
                 part.inputStream().use { input ->
                     var left = formats[index].dataOffset.toLong()

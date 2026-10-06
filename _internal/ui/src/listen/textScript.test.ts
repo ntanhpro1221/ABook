@@ -1,5 +1,71 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { paragraphsOf, textScript, withFreshSkips, withoutLines } from "./textScript";
+import {
+  SCENE_BREAK_ALONE_GLYPHS,
+  SCENE_BREAK_MAX_GLYPHS,
+  SCENE_BREAK_MIN_RULE_GLYPHS,
+  SCENE_BREAK_MS,
+  SCENE_BREAK_ORNAMENT_GLYPHS,
+  SCENE_BREAK_RULE_GLYPHS,
+  isSceneBreakLine,
+  paragraphsOf,
+  sceneBreakGaps,
+  splitParagraphs,
+  textScript,
+  withFreshSkips,
+  withoutLines,
+} from "./textScript";
+
+// Bộ ví dụ DÙNG CHUNG với pytest (test_a_listen_scene_break_rule_is_shared.py) và test JVM (SceneBreakTest.kt): luật dòng ngăn cảnh của
+// text_processing.is_scene_break_line và cách đọc to chia / lặng ở đó.
+const SCENE = JSON.parse(readFileSync(new URL("../../../tests/fixtures/scene_break/cases.json", import.meta.url), "utf8")) as {
+  ms: number;
+  ruleGlyphs: string;
+  aloneGlyphs: string;
+  ornamentGlyphs: string;
+  minRuleGlyphs: number;
+  maxGlyphs: number;
+  separators: string[];
+  loneSeparators: string[];
+  notSeparators: string[];
+  paragraphs: { name: string; text: string; paragraphs: string[]; breaks: boolean[]; gapsMs: number[] }[];
+};
+
+describe("dòng ngăn cảnh (bộ ví dụ dùng chung)", () => {
+  it("has the constants of the Python rule", () => {
+    expect(SCENE_BREAK_MS).toBe(SCENE.ms);
+    expect(SCENE_BREAK_RULE_GLYPHS).toBe(SCENE.ruleGlyphs);
+    expect(SCENE_BREAK_ALONE_GLYPHS).toBe(SCENE.aloneGlyphs);
+    expect(SCENE_BREAK_ORNAMENT_GLYPHS).toBe(SCENE.ornamentGlyphs);
+    expect(SCENE_BREAK_MIN_RULE_GLYPHS).toBe(SCENE.minRuleGlyphs);
+    expect(SCENE_BREAK_MAX_GLYPHS).toBe(SCENE.maxGlyphs);
+  });
+
+  it("classifies the shared lines", () => {
+    expect(SCENE.separators.filter((line) => !isSceneBreakLine(line))).toEqual([]);
+    expect(SCENE.separators.filter((line) => !isSceneBreakLine(line, true))).toEqual([]);
+    expect(SCENE.notSeparators.filter((line) => isSceneBreakLine(line))).toEqual([]);
+    expect(SCENE.notSeparators.filter((line) => isSceneBreakLine(line, true))).toEqual([]);
+    // một-hai dấu kẻ chỉ là ngăn cảnh khi đứng riêng một đoạn
+    expect(SCENE.loneSeparators.filter((line) => isSceneBreakLine(line))).toEqual([]);
+    expect(SCENE.loneSeparators.filter((line) => !isSceneBreakLine(line, true))).toEqual([]);
+    expect(isSceneBreakLine("*".repeat(SCENE.maxGlyphs))).toBe(true);
+    expect(isSceneBreakLine("*".repeat(SCENE.maxGlyphs + 1))).toBe(false);
+  });
+
+  it.each(SCENE.paragraphs)("splits and pauses: $name", ({ text, paragraphs, breaks, gapsMs }) => {
+    const split = splitParagraphs(text);
+    expect(paragraphsOf(text)).toEqual(paragraphs);
+    expect(split.map((paragraph) => paragraph.sceneBreak)).toEqual(breaks);
+    expect(sceneBreakGaps(split)).toEqual(gapsMs);
+    // the flag rides on the reader's segments (the player reads it from there)
+    expect(textScript(1, "t", text).segments.map((segment) => segment.sceneBreak === true)).toEqual(breaks);
+  });
+
+  it("does not let an unreadable non-separator line (an ellipsis) cut a run of separators", () => {
+    expect(sceneBreakGaps(["A.", "***", "...", "◆", "B."].map((text) => ({ text })))).toEqual([0, SCENE_BREAK_MS, 0, 0, 0]);
+  });
+});
 
 // Cùng các ca với ParagraphsTest.kt (Paragraphs.withoutLines): lõi đọc to của điện thoại phải chia ra đúng các đoạn như màn đọc.
 describe("withoutLines", () => {

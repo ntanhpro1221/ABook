@@ -1,6 +1,9 @@
 import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
 import type { Script, ScriptSegment } from "./model";
+import { isSpeakable, sceneBreakGaps } from "./textScript";
 import { usableWords, type WordSpan } from "./words";
+
+export { isSpeakable };
 
 // "Nghe ngay" cho chương CHỈ-CÓ-CHỮ (docs/LISTEN_ANYTHING.md mục 1 và 3): giọng máy đọc từng đoạn của chương thành một "clip" (audio ở tốc độ 1,0
 // + mốc từng chữ, `abook/readaloud`), bộ máy này ghép các clip thành một chương có đồng hồ riêng và điền thời gian vào kịch bản chữ - màn đọc
@@ -88,24 +91,22 @@ export const VOICE_CHANGED_EVENT = "abook:readaloud-voice";
 // Máy tính: đọc trước 3 đoạn (rẻ - clip chỉ vài chục KB; đoạn ngắn liên tiếp không còn bắt người nghe chờ). Điện thoại tự đọc trước (ReadAloud.AHEAD).
 const READ_AHEAD = 3;
 const RESTORE_LIMIT = 400;
+/** Nhịp đồng hồ của quãng lặng ở dòng ngăn cảnh (ms). */
+const SILENCE_TICK_MS = 100;
 
-const SPEAKABLE = /[\p{L}\p{N}]/u;
-
-export function isSpeakable(text: string): boolean {
-  return SPEAKABLE.test(text);
-}
-
-/** Ước thời gian đọc một đoạn khi chưa có clip. Đoạn không có chữ nào đọc được ("* * *") không tốn thời gian. */
+/** Ước thời gian đọc một đoạn khi chưa có clip. Đoạn không có chữ nào đọc được ("* * *") không tốn thời gian (quãng lặng của dòng ngăn cảnh
+ *  tính riêng - [sceneBreakGaps]). */
 export function estimateSeconds(text: string): number {
   return isSpeakable(text) ? Math.max(MIN_SEGMENT_SECONDS, text.length / CHARS_PER_SECOND) : 0;
 }
 
 /** Giây bắt đầu ước của từng đoạn khi chưa có clip nào (màn đọc dùng để "Nghe từ đây" trước khi bộ máy chạy). */
-export function estimatedStarts(segments: { text: string }[]): number[] {
+export function estimatedStarts(segments: { text: string; sceneBreak?: boolean }[]): number[] {
+  const gaps = sceneBreakGaps(segments);
   let at = 0;
-  return segments.map((segment) => {
+  return segments.map((segment, i) => {
     const start = at;
-    at += estimateSeconds(segment.text);
+    at += estimateSeconds(segment.text) + gaps[i] / 1000;
     return start;
   });
 }
@@ -152,6 +153,8 @@ export const CLIP_RETRIES = 2;
 interface Slot {
   text: string;
   speakable: boolean;
+  /** Quãng lặng cố định (giây) của dòng ngăn cảnh: không clip, không gửi giọng đọc; > 0 thì phát bằng đồng hồ ([startSilence]). */
+  silence: number;
   estimate: number;
   /** Giây; clip về thì là độ dài thật. */
   duration: number;
@@ -203,6 +206,8 @@ export class ReadAloudEngine implements AudioEngine {
   private readonly createAudio: (url: string) => AudioLike;
   private readonly muted: boolean;
   private readonly readAhead: number;
+  private silenceTimer: ReturnType<typeof setInterval> | null = null;
+  private silenceAt = 0;
   private onVoice = () => this.voiceChanged();
 
   constructor(options: ReadAloudOptions = {}) {
@@ -255,6 +260,7 @@ export class ReadAloudEngine implements AudioEngine {
   pause(): void {
     if (!this.wanted) return;
     this.wanted = false;
+    this.stopSilence();
     this.slots[this.target.index]?.audio?.pause();
     this.fire("pause");
   }
@@ -344,7 +350,8 @@ export class ReadAloudEngine implements AudioEngine {
 
   private async init(script: Script, startAt: number, id: number): Promise<void> {
     this.base = script;
-    this.slots = script.segments.map((segment) => this.slotFrom(segment));
+    const gaps = sceneBreakGaps(script.segments);
+    this.slots = script.segments.map((segment, i) => this.slotFrom(segment, gaps[i] / 1000));
     this.layout();
     if (startAt > 1) await this.restore(startAt, id);
     if (id !== this.loadId) return;
@@ -365,17 +372,18 @@ export class ReadAloudEngine implements AudioEngine {
     if (this.wanted) this.playCurrent();
   }
 
-  private slotFrom(segment: ScriptSegment): Slot {
+  private slotFrom(segment: ScriptSegment, silence: number): Slot {
     const speakable = isSpeakable(segment.text);
-    const estimate = estimateSeconds(segment.text);
+    const estimate = speakable ? estimateSeconds(segment.text) : silence;
     // Kịch bản đã có mốc (lần nghe trước ghi vào bộ nhớ): giữ độ dài và mốc chữ đã biết để đồng hồ nhất quán với `start` màn đọc đang dùng.
     const known = segment.start !== null && segment.end !== null && segment.end > segment.start && usableWords(segment.text, segment.words);
     const words = known && segment.words ? segment.words.map(([a, b]) => [a - segment.start! * 1000, b - segment.start! * 1000] as WordSpan) : null;
     return {
       text: segment.text,
       speakable,
+      silence,
       estimate,
-      duration: speakable ? (known ? segment.end! - segment.start! : estimate) : 0,
+      duration: speakable && known ? segment.end! - segment.start! : estimate,
       start: 0,
       clip: null,
       words,
@@ -472,6 +480,7 @@ export class ReadAloudEngine implements AudioEngine {
   // ---- phát -----------------------------------------------------------------------------------------------------
 
   private moveTo(target: Target): void {
+    this.stopSilence();
     const current = this.slots[this.target.index];
     current?.audio?.pause();
     this.finished = false;
@@ -490,7 +499,13 @@ export class ReadAloudEngine implements AudioEngine {
     const slot = this.slots[index];
     if (!slot) return;
     if (!slot.speakable) {
-      this.advance();
+      if (slot.silence > 0) {
+        // Dòng ngăn cảnh: không có clip, chỉ lặng; clip của các đoạn sau vẫn được đọc trước trong lúc lặng.
+        this.prefetch(index);
+        this.startSilence(slot);
+      } else {
+        this.advance();
+      }
       return;
     }
     this.prefetch(index);
@@ -515,6 +530,53 @@ export class ReadAloudEngine implements AudioEngine {
         }
       },
     );
+  }
+
+  /** Lặng ở dòng ngăn cảnh: không có phần tử audio nên một bộ hẹn giờ đẩy `target.offset` đi theo tốc độ nghe (lặng cũng nhanh lên khi nghe nhanh,
+   *  như mọi đoạn khác), tới hết quãng thì sang đoạn kế. Tạm dừng / tua dừng nó ([stopSilence]) và giữ nguyên chỗ đã tới. */
+  private startSilence(slot: Slot): void {
+    this.stopSilence();
+    const target = this.target;
+    if (target.fraction !== undefined) {
+      target.offset = target.fraction * slot.duration;
+      target.fraction = undefined;
+    }
+    target.word = undefined;
+    slot.started = true;
+    this.silenceAt = Date.now();
+    this.silenceTimer = setInterval(() => this.silenceTick(slot), SILENCE_TICK_MS);
+    this.fire("playing");
+  }
+
+  private silenceTick(slot: Slot): void {
+    if (this.slots[this.target.index] !== slot || !this.wanted) {
+      this.stopSilence(false);
+      return;
+    }
+    this.target.offset = Math.min(slot.duration, this.target.offset + this.silenceElapsed());
+    if (this.target.offset + 1e-6 < slot.duration) {
+      this.fire("time");
+      return;
+    }
+    this.stopSilence(false);
+    this.advance();
+  }
+
+  /** Giây nghe đã trôi từ lần đồng hồ lặng đo trước. */
+  private silenceElapsed(): number {
+    const now = Date.now();
+    const seconds = ((now - this.silenceAt) / 1000) * this.rate;
+    this.silenceAt = now;
+    return seconds;
+  }
+
+  /** Dừng đồng hồ lặng; `settle`: ghi nốt phần đã trôi vào `target.offset` (tạm dừng giữa chừng). */
+  private stopSilence(settle = true): void {
+    if (this.silenceTimer === null) return;
+    clearInterval(this.silenceTimer);
+    this.silenceTimer = null;
+    const slot = this.slots[this.target.index];
+    if (settle && slot) this.target.offset = Math.min(slot.duration, this.target.offset + this.silenceElapsed());
   }
 
   /** Lấy clip cho đoạn `index` và vài đoạn kế (đọc trước). */
@@ -695,6 +757,7 @@ export class ReadAloudEngine implements AudioEngine {
     const was = this.wanted;
     this.wanted = false;
     const slot = this.slots[this.target.index];
+    this.stopSilence();
     // Người nghe bấm phát lại thì được thử lại từ đầu.
     if (slot) slot.failures = 0;
     slot?.audio?.pause();
@@ -703,6 +766,7 @@ export class ReadAloudEngine implements AudioEngine {
   }
 
   private dispose(): void {
+    this.stopSilence(false);
     this.loadId += 1;
     if (typeof window !== "undefined") window.removeEventListener(VOICE_CHANGED_EVENT, this.onVoice);
     for (const slot of this.slots) this.releaseSlot(slot);
