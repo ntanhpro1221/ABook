@@ -141,6 +141,7 @@ class MusicStudentSetupTest {
         assertTrue(updated.attachIfPresent())
         val status = updated.status()
         assertEquals(status.toString(), "outdated", status.getString("state"))
+        assertFalse("bản cũ vẫn chạy", status.getBoolean("stopped"))
         assertEquals(listOf("Model nghe nhạc"), (0 until status.getJSONArray("outdatedParts").length()).map { status.getJSONArray("outdatedParts").getString(it) })
         assertEquals(small.size.toLong(), status.getLong("outdatedBytes"))
         assertEquals(small.size.toLong(), status.getLong("total"))
@@ -334,6 +335,32 @@ class MusicStudentSetupTest {
         assertTrue(status.getString("error").contains("hop_length"))
         assertFalse(File(root, "music/student/big.bin").exists())
         assertNull(store.analyzer)
+    }
+
+    @Test
+    fun a_package_from_before_the_shared_folder_says_analysis_is_off_until_the_runtime_is_fetched_again() {
+        // gói cũ: model + thư viện cùng nằm trong thư mục riêng của gói, thư mục dùng chung còn trống
+        val dir = File(root, MusicStudentSetup.FOLDER)
+        File(dir, "ort").mkdirs()
+        File(dir, "big.bin").writeBytes(big)
+        File(dir, "small.json").writeBytes(small)
+        File(dir, "ort/lib.so").writeBytes(lib)
+        PinnedFiles(dir, "").writeStamp((parts + libPart).associate { it.name to it.sha256 })
+        val store = store()
+        val setup = setup(store, files = parts + libPart)
+        assertFalse("không cắm được: thư viện không ở chỗ mới", setup.attachIfPresent())
+        assertNull(store.analyzer)
+        val status = setup.status()
+        assertEquals("outdated", status.getString("state"))
+        assertTrue("thẻ phải nói phân tích nhạc đang tắt", status.getBoolean("stopped"))
+        assertEquals(libGz.size.toLong(), status.getLong("outdatedBytes"))
+        setup.start()
+        setup.join()
+        assertEquals(listOf("ort/1/lib.so.gz"), requests.toList())
+        assertEquals("ready", setup.status().getString("state"))
+        assertFalse(setup.status().getBoolean("stopped"))
+        assertNotNull(store.analyzer)
+        assertFalse("bản cũ trong thư mục riêng được xoá", File(dir, "ort").exists())
     }
 
     @Test

@@ -82,7 +82,14 @@ class MusicStudentSetup(
             .put("metered", runCatching { metered() }.getOrDefault(false)).put("supported", supported)
             .put("outdatedParts", org.json.JSONArray(behind.map { it.label }.distinct())).put("outdatedBytes", wireBytes(behind))
             .put("stale", store.staleCount())
+            // có bản mới mà bản trên máy KHÔNG chạy được (thiếu / cũ thư viện chạy model, vd. gói tải trước khi có thư mục dùng chung): phân tích
+            // nhạc đang tắt cho tới khi tải lại - giao diện không được nói "bản đang dùng vẫn chạy"
+            .put("stopped", shown == OUTDATED && state != READY && !runnable())
     }
+
+    /** Gói trên đĩa chạy được ngay: đủ file (ở thư mục riêng và thư mục dùng chung) và không thư viện nào cũ hơn phần Java trong APK. */
+    private fun runnable(): Boolean =
+        complete() && own.none { it.blocking && !pinned.isCurrent(it) } && libs.none { it.blocking && !shared.isCurrent(it) }
 
     /**
      * Gói đã có sẵn (lần chạy trước tải xong) thì cắm luôn và phân tích nốt bài chưa phân tích; chưa có thì không làm gì (không tải).
@@ -90,8 +97,7 @@ class MusicStudentSetup(
      * Gọi ở luồng nền. Trả true khi bộ phân tích đã cắm.
      */
     fun attachIfPresent(): Boolean {
-        if (!complete()) return false
-        if (own.any { it.blocking && !pinned.isCurrent(it) } || libs.any { it.blocking && !shared.isCurrent(it) }) return false
+        if (!runnable()) return false
         if (!attach()) return false
         analysePending()
         return true
