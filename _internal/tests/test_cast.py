@@ -310,6 +310,81 @@ def test_a_renderer_that_keeps_its_position_to_itself_is_followed_by_the_clock(t
         _until(lambda: _now(players)["chapterId"] == 2, 10)
 
 
+# ---- hẹn giờ tắt --------------------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("pause", [True, False])
+def test_a_sleep_timer_pauses_the_renderer_and_keeps_the_place(tmp_path: Path, fast: None, pause: bool) -> None:
+    """Hẹn giờ đếm ở máy giữ phiên phát (thiết bị không biết gì về nó), chỉ trôi khi đang phát; hết giờ thì tạm dừng như
+    nút dừng - thiết bị không có Pause thì dừng hẳn, nhớ chỗ, "phát" đưa lại đúng chỗ - và chỗ nghe được lưu."""
+    book = Book(tmp_path, seconds=30.0)
+    with _renderer(pause=pause) as device, _players(book, device) as players:
+        speaker = _found(players)["device"]
+        players.send(speaker, {"action": "load", "bookId": "sach", "chapterId": 1, "seconds": 0.0})
+        _until(lambda: _now(players)["playing"] and not _now(players)["buffering"])
+        players.send(speaker, {"action": "sleep", "minutes": 0.04})  # 2,4 giây
+        sleep = _now(players)["sleep"]
+        assert sleep["kind"] == "minutes" and sleep["counting"] and 2.0 <= sleep["left"] <= 2.4
+
+        # Dừng thì đồng hồ dừng theo, phát lại thì chạy tiếp.
+        players.send(speaker, {"action": "pause"})
+        frozen = _now(players)["sleep"]
+        assert not frozen["counting"]
+        time.sleep(0.5)
+        assert _now(players)["sleep"]["left"] == frozen["left"]
+        players.send(speaker, {"action": "play"})
+        assert _now(players)["sleep"]["counting"]
+
+        _until(lambda: _now(players)["sleep"] is None and not _now(players)["playing"], 6)
+        assert device.state == ("PAUSED_PLAYBACK" if pause else "STOPPED")
+        assert pause or _calls(device, "Stop")
+        stopped = _now(players)
+        assert stopped["chapterId"] == 1 and stopped["position"] >= 1.5
+        assert book.saved[-1][:2] == ("sach", 1) and book.saved[-1][2] >= 1.5
+        time.sleep(0.5)  # vài lượt hỏi sau: vẫn dừng ở đó, không phải hết chương
+        assert not _now(players)["playing"] and _now(players)["chapterId"] == 1
+        players.send(speaker, {"action": "play"})
+        _until(lambda: _now(players)["playing"])
+        assert device.position() >= 1.5, "nghe tiếp đúng chỗ hẹn giờ đã dừng"
+
+
+def test_a_sleep_timer_at_the_end_of_the_chapter_waits_at_the_next_one(tmp_path: Path, fast: None) -> None:
+    """Như trình phát trong app: dừng khi hết chương, nhưng chỗ nghe tiếp là chương kế ở 0:00 - bấm phát là vào chương mới."""
+    book = Book(tmp_path)
+    with _renderer(speed=5.0) as device, _players(book, device) as players:
+        speaker = _found(players)["device"]
+        players.send(speaker, {"action": "load", "bookId": "sach", "chapterId": 1, "seconds": 0.0})
+        players.send(speaker, {"action": "sleep", "endOfChapter": True})
+        assert _now(players)["sleep"] == {"kind": "chapter"}
+        parked = _until(lambda: (now := _now(players))["chapterId"] == 2 and now, 10)
+        assert not parked["playing"] and parked["position"] == 0 and parked["sleep"] is None
+        assert parked["chapterTitle"] == "Chương 2: Phần 2" and parked["duration"] == 10.0
+        assert ("sach", 1, 10.0, 10.0) in book.saved and book.saved[-1] == ("sach", 2, 0.0, 10.0)
+        time.sleep(0.6)  # thiết bị nằm yên ở STOPPED: không tự đưa chương 2
+        assert len(_calls(device, "SetAVTransportURI")) == 1 and not _now(players)["playing"]
+        players.send(speaker, {"action": "play"})
+        assert len(_calls(device, "SetAVTransportURI")) == 2
+        _until(lambda: _now(players)["playing"] and _now(players)["chapterId"] == 2)
+
+
+def test_a_sleep_timer_is_cancelled_and_not_carried_to_the_next_cast(tmp_path: Path, fast: None) -> None:
+    with _renderer() as device, _players(Book(tmp_path, seconds=30.0), device) as players:
+        speaker = _found(players)["device"]
+        with pytest.raises(CastError):
+            players.send(speaker, {"action": "sleep", "minutes": 15})  # chưa phát gì
+        players.send(speaker, {"action": "sleep", "minutes": 0})  # tắt khi chưa có gì: không lỗi
+        players.send(speaker, {"action": "load", "bookId": "sach", "chapterId": 1, "seconds": 0.0})
+        players.send(speaker, {"action": "sleep", "minutes": 15})
+        assert _now(players)["sleep"]["minutes"] == 15
+        players.send(speaker, {"action": "next"})  # sang chương: vẫn đếm
+        assert _now(players)["sleep"]["minutes"] == 15
+        players.send(speaker, {"action": "sleep", "minutes": 0})
+        assert _now(players)["sleep"] is None
+        players.send(speaker, {"action": "sleep", "minutes": 15})
+        players.send(speaker, {"action": "load", "bookId": "sach", "chapterId": 1, "seconds": 0.0})
+        assert _now(players)["sleep"] is None, "một lần “Phát trên…” mới bắt đầu không hẹn giờ"
+
+
 # ---- qua app ------------------------------------------------------------------------------------------------------
 
 
@@ -352,6 +427,9 @@ def test_the_app_lists_a_speaker_and_casts_a_real_chapter(tmp_path: Path, fast: 
                                         body={"action": "pause"})
             assert status == 200 and device.state == "PAUSED_PLAYBACK"
             _until(lambda: (listening.get(identifier).get("last") or {}).get("chapterId") == 1)
+            status, _data, _ = _request(ui.port, "POST", f"/api/remote/{speaker['device']}", headers=headers,
+                                        body={"action": "sleep", "endOfChapter": True})
+            assert status == 200 and speakers()[0]["sleep"] == {"kind": "chapter"}
         finally:
             ui.stop()
             app.close()
@@ -391,6 +469,11 @@ def test_a_paired_phone_sees_and_drives_the_speakers_of_this_computer(tmp_path: 
             _until(lambda: device.fetches)
             playing = _until(lambda: [item for item in renderers() if item["state"] and item["state"]["playing"]])[0]
             assert playing["state"]["bookId"] == book_id(project) and playing["state"]["chapterId"] == 1
+            status, _data, _ = _sync_request(port, "POST", f"/sync/v1/cast/{tv['id']}", token,
+                                             body={"action": "sleep", "minutes": 30})
+            assert status == 200 and renderers()[0]["sleep"]["minutes"] == 30
+            status, _data, _ = _sync_request(port, "POST", "/sync/v1/player", token, body={"action": "sleep", "minutes": 30})
+            assert status == 400, "hẹn giờ tắt từ xa chỉ cho loa / TV"
             status, data, _ = _sync_request(port, "POST", f"/sync/v1/cast/{tv['id']}", token, body={"action": "rate", "rate": 2})
             assert status == 409 and "1x" in json.loads(data)["error"]
             status, _data, _ = _sync_request(port, "POST", "/sync/v1/cast/0123456789ab", token, body={"action": "pause"})

@@ -650,6 +650,33 @@ class _Session:
         return min(at, self.duration) if self.duration > 0 else at
 
 
+@dataclass
+class _Sleep:
+    """Hẹn giờ tắt của một thiết bị - đếm ở đây vì chỉ máy này biết thiết bị đang phát hay dừng (hỏi mỗi giây), như hẹn
+    giờ của trình phát trong app (ui/src/listen/sleep.ts): thời gian chỉ trôi khi ĐANG PHÁT. Theo thiết bị, không theo
+    phiên: sang chương vẫn đếm tiếp."""
+
+    minutes: float = 0.0  # 0: dừng khi hết chương này
+    left: float = 0.0  # giây còn lại tính tới `since`
+    since: float = 0.0  # lúc bắt đầu đếm (đang phát); 0 khi đang dừng
+
+    def remaining(self, now: float) -> float:
+        return max(0.0, self.left - (max(0.0, now - self.since) if self.since else 0.0))
+
+    def follow(self, playing: bool, now: float) -> None:
+        """Đồng hồ ngừng khi thiết bị dừng, chạy tiếp khi nó phát."""
+        if playing and not self.since:
+            self.since = now
+        elif not playing and self.since:
+            self.left, self.since = self.remaining(now), 0.0
+
+    def view(self, now: float) -> dict[str, Any]:
+        if not self.minutes:
+            return {"kind": "chapter"}
+        return {"kind": "minutes", "minutes": self.minutes, "left": round(self.remaining(now), 1),
+                "counting": bool(self.since)}
+
+
 class CastPlayers:
     """Thiết bị phát trong mạng nhà và những gì máy này đang phát trên chúng.
 
@@ -675,6 +702,7 @@ class CastPlayers:
         self._described: dict[str, tuple[float, Renderer | None]] = {}  # LOCATION -> (lúc đọc, mô tả)
         self._backends: dict[str, Backend] = {}  # thiết bị -> backend đang giữ kết nối (có phiên) hay vừa dùng
         self._sessions: dict[str, _Session] = {}
+        self._sleeps: dict[str, _Sleep] = {}  # thiết bị -> hẹn giờ tắt đang đặt
         self._device_locks: dict[str, threading.Lock] = {}
         self._wanted = 0.0
         self._searched = 0.0
@@ -688,8 +716,9 @@ class CastPlayers:
         with self._lock:
             self._wanted = now
             self._ensure_thread()
-            items = [(renderer, self._sessions.get(renderer.id)) for renderer, _seen in self._renderers.values()]
-        return [self._presence(renderer, session, now) for renderer, session in items]
+            items = [(renderer, self._sessions.get(renderer.id), self._sleeps.get(renderer.id))
+                     for renderer, _seen in self._renderers.values()]
+            return [self._presence(renderer, session, sleep, now) for renderer, session, sleep in items]
 
     def scan(self) -> None:
         """Người dùng mở "Phát trên…": tìm lại ngay, không đợi nhịp 30 giây."""
@@ -709,6 +738,7 @@ class CastPlayers:
         with self._lock:
             active = [(self._renderers[device][0], session) for device, session in self._sessions.items()
                       if not session.ended and device in self._renderers]
+            self._sleeps.clear()
         for renderer, session in active:
             session.ended = True
             self._store(session, session.estimate(time.time()))
@@ -731,16 +761,19 @@ class CastPlayers:
             pass
         backend.close(release=True)
 
-    def _presence(self, renderer: Renderer, session: _Session | None, now: float) -> dict[str, Any]:
+    @staticmethod
+    def _presence(renderer: Renderer, session: _Session | None, sleep: _Sleep | None, now: float) -> dict[str, Any]:
+        """Gọi khi giữ self._lock (hẹn giờ đổi trong luồng nền)."""
         base = {"device": renderer.id, "name": renderer.name, "kind": renderer.kind, "via": "cast",
                 "protocol": renderer.protocol, "rate": 1.0, "books": [], "stream": True, "acks": []}
         if session is None or session.ended:
             return {**base, "bookId": "", "bookTitle": "", "chapterId": None, "chapterTitle": "", "position": 0.0,
-                    "duration": 0.0, "playing": False, "buffering": False, "age": 0.0}
+                    "duration": 0.0, "playing": False, "buffering": False, "age": 0.0, "sleep": None}
         return {**base, "bookId": session.book_id, "bookTitle": session.book_title, "chapterId": session.chapter_id,
                 "chapterTitle": session.chapter_title, "position": round(session.position, 2),
                 "duration": round(session.duration, 1), "playing": session.playing, "buffering": session.buffering,
-                "age": round(max(0.0, now - session.polled), 2) if session.polled else 0.0}
+                "age": round(max(0.0, now - session.polled), 2) if session.polled else 0.0,
+                "sleep": sleep.view(now) if sleep is not None else None}
 
     # -- lệnh ---------------------------------------------------------------------------------------------------
 
@@ -757,6 +790,7 @@ class CastPlayers:
                 self._apply(renderer, session if session is not None and not session.ended else None, command)
         except CastError as error:
             raise CastError(f"{renderer.name}: {error}", error.code) from None
+        self._follow_sleep(device)
         self._wake.set()
         return {"id": secrets.token_hex(6)}
 
@@ -771,38 +805,49 @@ class CastPlayers:
             if chapter is None:
                 raise CastError("chương này chưa nghe được")
             self._load(renderer, command["bookId"], str(view.get("title") or ""), chapters, chapter, command["seconds"])
+            with self._lock:
+                self._sleeps.pop(renderer.id, None)  # một lần "Phát trên…" mới: không mang hẹn giờ của lần trước
             return
         if action == "rate":
             if abs(command["rate"] - 1.0) > 0.01:
                 raise CastError("loa, TV chỉ phát ở tốc độ 1x")
             return
         if session is None:
-            if action == "stop":
-                return  # "Nghe trên máy này" sau khi thiết bị đã bị chiếm hay tự hết: không còn gì để dừng
+            if action == "stop" or action == "sleep" and not command.get("minutes") and not command.get("endOfChapter"):
+                return  # "Nghe trên máy này" / tắt hẹn giờ sau khi thiết bị đã bị chiếm hay tự hết: không còn gì để làm
             raise CastError("chưa phát gì từ máy này - bấm “Phát trên…” ở thanh phát")
         backend = self._backend(renderer)
         now = time.time()
         if action == "stop":
             # Người nghe chuyển về máy này: dừng hẳn, trả thiết bị về nguyên trạng, chỗ nghe lưu đúng chỗ dừng.
             session.ended = True
+            with self._lock:
+                self._sleeps.pop(renderer.id, None)
             self._store(session, session.estimate(now))
             self._stop(renderer, 5.0)
             return
+        if action == "sleep":
+            minutes = command.get("minutes") or 0.0
+            with self._lock:
+                if command.get("endOfChapter"):
+                    self._sleeps[renderer.id] = _Sleep()
+                elif minutes > 0:
+                    self._sleeps[renderer.id] = _Sleep(minutes, minutes * 60.0, now if session.playing else 0.0)
+                else:
+                    self._sleeps.pop(renderer.id, None)
+            return
         if action in ("play", "pause", "toggle"):
             want = not session.playing if action == "toggle" else action == "play"
-            if want:
-                if session.held or session.state in ("STOPPED", "NO_MEDIA_PRESENT"):
-                    chapter = self._chapter(session, session.chapter_id)
-                    self._load(renderer, session.book_id, session.book_title, session.chapters, chapter,
-                               session.position)
-                    return
-                backend.play()
-                session.grace = now + GRACE_SECONDS
-            else:
-                session.position = session.estimate(now)
-                session.held = backend.pause() or session.held
-                self._store(session, session.position)
-            session.playing, session.buffering, session.polled = want, want, now
+            if not want:
+                self._pause(backend, session, now)
+                return
+            if session.held or session.state in ("STOPPED", "NO_MEDIA_PRESENT"):
+                chapter = self._chapter(session, session.chapter_id)
+                self._load(renderer, session.book_id, session.book_title, session.chapters, chapter, session.position)
+                return
+            backend.play()
+            session.grace = now + GRACE_SECONDS
+            session.playing, session.buffering, session.polled = True, True, now
             return
         if action in ("seek", "skip"):
             target = command["seconds"] + (session.estimate(now) if action == "skip" else 0.0)
@@ -826,6 +871,24 @@ class CastPlayers:
                        command.get("seconds", 0.0) if action == "jump" else 0.0)
             return
         raise CastError("thiết bị chưa làm được lệnh này")
+
+    def _pause(self, backend: Backend, session: _Session, now: float) -> None:
+        """Tạm dừng (nút, hẹn giờ tắt): thiết bị không có Pause thì dừng hẳn và nhớ chỗ; chỗ nghe lưu ngay. Giữ khoá thiết bị."""
+        session.position = session.estimate(now)
+        session.held = backend.pause() or session.held
+        self._store(session, session.position)
+        session.playing, session.buffering, session.polled = False, False, now
+
+    def _follow_sleep(self, device: str) -> float | None:
+        """Cho đồng hồ hẹn giờ theo thiết bị đang phát hay dừng -> số giây còn lại (None: không hẹn, hay hẹn hết chương)."""
+        with self._lock:
+            sleep = self._sleeps.get(device)
+            session = self._sessions.get(device)
+            if sleep is None or not sleep.minutes or session is None:
+                return None
+            now = time.time()
+            sleep.follow(session.playing and not session.ended, now)
+            return sleep.remaining(now)
 
     def _load(self, renderer: Renderer, book_id: str, book_title: str, chapters: list[dict[str, Any]],
               chapter: dict[str, Any], seconds: float) -> None:
@@ -880,6 +943,8 @@ class CastPlayers:
         session.ended = True
         with self._lock:
             current = self._sessions.get(device) is session
+            if current:
+                self._sleeps.pop(device, None)
         if current:
             self._release(device)
 
@@ -1017,12 +1082,40 @@ class CastPlayers:
                 if following is None:
                     self._end(device, session)
                     return
+                with self._lock:
+                    sleep = self._sleeps.get(device)
+                    asleep = sleep is not None and not sleep.minutes
+                    if asleep:
+                        del self._sleeps[device]
+                if asleep:
+                    self._park(session, following)
+                    return
                 try:
                     self._load(renderer, session.book_id, session.book_title, session.chapters, following, 0.0)
                 except CastError:
                     self._end(device, session)
+                return
+            left = self._follow_sleep(device)
+            if left is not None and left <= 0 and session.playing:
+                try:
+                    self._pause(backend, session, time.time())
+                except CastError:
+                    return  # thiết bị không nhận lệnh lượt này: hẹn giờ còn đó, lượt hỏi sau thử lại
+                with self._lock:
+                    self._sleeps.pop(device, None)
         finally:
             lock.release()
+
+    def _park(self, session: _Session, following: dict[str, Any]) -> None:
+        """Hẹn "hết chương" đã tới: dừng ở đây nhưng trỏ phiên sang chương kế ở 0:00 và lưu nó làm chỗ nghe tiếp - như
+        trình phát trong app, sáng mai bấm phát là vào chương mới (thiết bị đã dừng: "phát" đưa chương ấy cho nó)."""
+        session.chapter_id, session.chapter_title = following["id"], following["title"]
+        session.duration = following["duration"]
+        session.position = session.peak = 0.0
+        session.playing = session.buffering = False
+        session.held = True
+        session.polled = time.time()
+        self._store(session, 0.0)
 
     def _observe(self, session: _Session, status: Status) -> bool:
         """Cập nhật phiên theo lời thiết bị; True khi vừa hết chương (thiết bị báo hết, hay đã tới cuối rồi về STOPPED)."""
@@ -1035,8 +1128,10 @@ class CastPlayers:
         if status.reason in ("interrupted", "error"):
             session.ended = True  # bị chiếm máy, hay thiết bị không phát được file
             return False
-        if status.duration > 1 and abs(status.duration - session.duration) > 1:
-            session.duration = status.duration  # độ dài thật của file (độ dài trong sách là tổng câu + khoảng lặng)
+        if not session.held and status.duration > 1 and abs(status.duration - session.duration) > 1:
+            # độ dài thật của file (độ dài trong sách là tổng câu + khoảng lặng); đang dừng hẳn thì thiết bị có thể còn
+            # báo chương trước (hẹn "hết chương" đã trỏ phiên sang chương kế)
+            session.duration = status.duration
         reported = status.position
         before = session.state
         session.state = state

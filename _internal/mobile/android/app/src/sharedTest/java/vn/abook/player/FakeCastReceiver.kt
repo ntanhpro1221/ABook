@@ -45,6 +45,10 @@ class FakeCastReceiver(
 
     @Volatile var refuseLoad = false
 
+    @Volatile var volume = 1.0 // âm lượng 0-1 của thiết bị (SET_VOLUME đổi)
+
+    @Volatile var fixedVolume = false // thiết bị không cho chỉnh âm lượng từ xa (controlType "fixed")
+
     @Volatile var failFetch = false // không tải được URL (tường lửa chặn): LOAD vẫn nhận, rồi IDLE / ERROR
     val actions = mutableListOf<Pair<String, JSONObject>>()
     val fetches = mutableListOf<Fetch>()
@@ -256,7 +260,7 @@ class FakeCastReceiver(
     private fun entry(includeMedia: Boolean = false): JSONObject {
         val out = JSONObject().put("mediaSessionId", msid).put("playbackRate", speed).put("playerState", state)
             .put("currentTime", Math.round(position0() * 1000) / 1000.0).put("supportedMediaCommands", 274447)
-            .put("volume", JSONObject().put("level", 1.0).put("muted", false)).put("currentItemId", 1).put("repeatMode", "REPEAT_OFF")
+            .put("volume", volumeStatus()).put("currentItemId", 1).put("repeatMode", "REPEAT_OFF")
         if (state == "IDLE" && idle.isNotEmpty()) out.put("idleReason", idle)
         if (includeMedia) {
             out.put("media", JSONObject().put("contentId", content).put("streamType", "BUFFERED").put("contentType", type)
@@ -275,11 +279,14 @@ class FakeCastReceiver(
     }
 
     private fun pushReceiver(only: Client? = null, request: Int = 0) {
-        val status = JSONObject().put("isActiveInput", true).put("volume", JSONObject().put("level", 1.0).put("muted", false))
+        val status = JSONObject().put("isActiveInput", true).put("volume", volumeStatus())
         app?.let { status.put("applications", JSONArray().put(it)) }
         val payload = JSONObject().put("type", "RECEIVER_STATUS").put("requestId", request).put("status", status)
         for (client in clients.toList()) if ("receiver-0" in client.connected && (only == null || client === only)) client.send("receiver-0", NS_RECEIVER, payload)
     }
+
+    private fun volumeStatus() = JSONObject().put("level", volume).put("muted", false)
+        .put("controlType", if (fixedVolume) "fixed" else "attenuation").put("stepInterval", 0.05)
 
     private fun tick() {
         while (!stopping) {
@@ -358,6 +365,16 @@ class FakeCastReceiver(
                     return
                 }
                 launchApp()
+                pushReceiver(client, request)
+                pushReceiver()
+            }
+            "SET_VOLUME" -> {
+                val level = payload.optJSONObject("volume")?.optDouble("level", Double.NaN) ?: Double.NaN
+                if (fixedVolume || level.isNaN()) {
+                    client.send("receiver-0", NS_RECEIVER, JSONObject().put("type", "INVALID_REQUEST").put("requestId", request).put("reason", "INVALID_PARAMS"))
+                    return
+                }
+                volume = level.coerceIn(0.0, 1.0)
                 pushReceiver(client, request)
                 pushReceiver()
             }
