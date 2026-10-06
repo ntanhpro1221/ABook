@@ -3662,3 +3662,9 @@ hẳn. Đáng giữ: CF cho thứ tự T giữa các chương rất tốt (r .89
   Cổng y như L2-EST: MAE mức < .20 VÀ r >= .80 cả V, T.
 - Ghi lại: + CH + CS; chỉ CF + hiệu chỉnh tuyến tính; 4 mô hình cũ (mốc L2-EST: r V .77).
 - Xác nhận bộ 7 dùng đúng cấu hình CHÍNH (`confirm`), sau khi đã có đáp án bộ 7 và CF bộ 7 (cần thêm lượt CF bộ 7 trên GPU, ~2 phút).
+
+**Kết quả L2-EST+CL (ghi trước 641160e1; `l2_est.py cl`, 42 chương, báo 23 chương 5b+6): KHÔNG THẮNG - CF không thêm gì.**
+CHÍNH (4 mô hình + CF, khớp phương sai): MAE mức .173, r V .78, T .91 (cổng r >= .80, kẹt ở V). Ghi lại: thêm CH, CS .182 / .76 / .91;
+ridge thường .175 / .75 / .91; chỉ CF + hiệu chỉnh .215 / .52 / .87; mốc 4 mô hình cũ (không đặc trưng chữ) .175 / .79 / .90.
+Đọc: T giữa các chương đã tốt (~.9) và bão hoà; nút thắt của mức chương là **V** (~.78-.79), mọi nguồn zero-shot đều không gỡ được.
+Không cần lượt CF bộ 7. L2-EST cũ vẫn chờ xác nhận trên bộ 7 như đã ghi (ae425cdc).
