@@ -3,14 +3,15 @@ package vn.abook.player.vieneu
 import org.json.JSONObject
 import vn.abook.player.PinnedFiles.Packed
 import vn.abook.player.PinnedFiles.Part
+import vn.abook.player.SharedRuntime
 import java.io.File
 
 /**
  * "Giọng VieNeu" on the phone (docs/LISTEN_ANYTHING.md section 3): the same voices the desktop module (`abook/webui/vieneu_module.py`) offers,
  * downloaded only when the listener taps, never shipped in the APK. The same pinned upstream files as the desktop (Hugging Face commits, the
  * PyPI wheels of sea-g2p and vieneu 3.8.3, SHA-256 + size each), plus what only the phone needs: ONNX Runtime's native libraries and sea-g2p
- * built as a JNI library (scripts/prepare_sea_g2p_android.py) - both kept once for every voice ([SharedRuntime]; "Gói nhạc"'s ONNX Runtime is
- * used where it is), so whichever voice comes first, the other does not download them again.
+ * built as a JNI library (scripts/prepare_sea_g2p_android.py) - both kept once for "Gói nhạc" and every voice ([SharedRuntime]), so whichever
+ * comes first, the others do not download them again.
  *
  * Choices: Nano ("Khuyên dùng" on phones: measured 03-10 neither tier keeps up live on a mid-range phone, Nano is lighter) and Turbo (only
  * recommended once a self-benchmark says this phone is fast enough). After a download the phone measures itself for a few seconds
@@ -19,7 +20,7 @@ import java.io.File
  */
 class VieneuModule(
     dir: File,
-    /** ONNX Runtime and sea-g2p, shared with the other voices. */
+    /** ONNX Runtime and sea-g2p, shared with "Gói nhạc" and the other voices. */
     runtime: SharedRuntime,
     abi: String?,
     facts: VoiceModule.Facts,
@@ -97,16 +98,15 @@ class VieneuModule(
     companion object {
         /** The parts of the module for [abi] as pinned by this app. */
         private fun defaultGroups(abi: String?): Map<String, List<Part>> = linkedMapOf(
-            "ort" to ortParts(abi),
+            "ort" to SharedRuntime.ortParts(abi),
             "g2p" to listOfNotNull(abi?.let { G2P_LIBRARIES[it] }, DICTIONARY),
             "voices" to listOf(VOICES),
             "turbo" to TURBO_FILES,
             "nano" to NANO_FILES,
         )
 
-        /** ONNX Runtime's two libraries for [abi] from "Gói nhạc"'s server (empty when this ABI has no build) - the same files every voice module uses. */
-        fun ortParts(abi: String?): List<Part> =
-            vn.abook.player.OrtRuntime.parts(abi).map { Part(it.name, it.sha256, it.size, MUSIC_BASE + it.remote, it.packed, true, "Thư viện chạy model") }
+        /** Its own folder in the app's files. */
+        const val FOLDER = "vieneu"
 
         /** Nano this much faster than listening -> Turbo (about as fast on a phone, measured 03-10) is worth recommending. */
         const val TURBO_HEADROOM_RTF = 0.6
@@ -127,7 +127,6 @@ class VieneuModule(
         private const val TURBO_BASE = "https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo/resolve/61b85e3d937fbbacb387714180e8182823512523/onnx_int8/"
         private const val CODEC_BASE = "https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX/resolve/ceff0d0749bfb3fa2d61149794ec6feef0d1e1ae/"
         private const val NANO_BASE = "https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Nano/resolve/aba295eb96a6fa6003ebe417cc1f2802a7adc1dc/"
-        private const val MUSIC_BASE = vn.abook.player.MusicStudentSetup.BASE
 
         /** Commit of NGDtuanh/abook-music-student that holds `sea-g2p/0.9.1/` (scripts/prepare_sea_g2p_android.py). Empty = not uploaded yet. */
         const val G2P_REVISION = "a8446407cc4f4775b0f0029da63a24756ebc966f"
