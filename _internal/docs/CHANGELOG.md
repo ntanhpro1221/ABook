@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.30] - 2026-10-07
+
 ### Studio
 
 - Dự án mở từ `.abookproj` ở máy cài Studio chỗ khác (hay sau khi thư mục app đổi chỗ) **làm tiếp được**: app tìm model
