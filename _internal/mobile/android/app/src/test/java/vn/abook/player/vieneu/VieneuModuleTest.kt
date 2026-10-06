@@ -9,8 +9,14 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import vn.abook.player.FakeTags
+import vn.abook.player.MusicStore
+import vn.abook.player.MusicStudentSetup
+import vn.abook.player.PinnedFiles
 import vn.abook.player.PinnedFiles.Packed
 import vn.abook.player.PinnedFiles.Part
+import vn.abook.player.SharedRuntime
+import vn.abook.player.readaloud.SupertonicModule
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.net.InetAddress
@@ -27,6 +33,8 @@ import java.util.zip.ZipOutputStream
  * The phone's "Giọng VieNeu" module with tiny stand-in files on a local server: nothing is fetched until a tap, the size shown is what this phone
  * lacks (shared parts once, "Gói nhạc"'s ONNX Runtime not at all), the dictionary comes out of its wheel, the self-benchmark runs after a
  * download and turns into a suggestion, a newer pin makes the module "outdated" and only that file is fetched, and each voice can be removed.
+ * With "Giọng Supertonic" and "Gói nhạc": the runtime they need is downloaded once in any install order, and removing any of them keeps what
+ * the modules still installed need - decided from what is on disk, with no record that could be lost.
  */
 class VieneuModuleTest {
     private lateinit var server: ServerSocket
@@ -51,9 +59,12 @@ class VieneuModuleTest {
     private val voices = "voices".repeat(1000).toByteArray()
     private val turbo = ByteArray(90_000) { (it % 251).toByte() }
     private var nano = ByteArray(70_000) { (it % 241).toByte() }
+    private val supertonic = ByteArray(50_000) { (it % 233).toByte() }
+    private val clap = ByteArray(60_000) { (it % 227).toByte() }
 
     private val files get() = mapOf(
         "ort.gz" to ortGz, "g2p.gz" to g2pGz, "sea.whl" to wheel, "vieneu.whl" to voices, "turbo.bin" to turbo, "nano.bin" to nano,
+        "supertonic.bin" to supertonic, "clap.bin" to clap,
     )
 
     private val base get() = "http://127.0.0.1:${server.localPort}/"
@@ -106,9 +117,10 @@ class VieneuModuleTest {
         root.deleteRecursively()
     }
 
-    private fun module(shared: File? = null, blocked: String = "", parts: Map<String, List<Part>> = groups, ramGb: Double = 7.6) = VieneuModule(
-        File(root, "vieneu"), shared, "arm64-v8a", VieneuModule.Facts(8, ramGb),
-        benchmark = { tier -> benched.add(tier); VieneuModule.Benchmark(rtf.getValue(tier), 6000, 2000, 5.0) },
+    /** Modules laid out under [files] as under the app's `files/` ([SharedRuntime.inFiles]). */
+    private fun module(blocked: String = "", parts: Map<String, List<Part>> = groups, ramGb: Double = 7.6, files: File = root) = VieneuModule(
+        File(files, VieneuModule.FOLDER), SharedRuntime.inFiles(files), "arm64-v8a", VoiceModule.Facts(8, ramGb),
+        benchmark = { tier -> benched.add(tier); VoiceModule.Benchmark(rtf.getValue(tier), 6000, 2000, 5.0) },
         groups = parts, blocked = blocked,
     )
 
@@ -142,7 +154,8 @@ class VieneuModuleTest {
         assertNotNull(installed)
         assertNull(installed!!.turbo)
         assertEquals(digest(dictionary), digest(installed.dictionary.readBytes()))
-        assertFalse("the wheel is not kept", File(root, "vieneu/g2p/sea_g2p.bin.zip").exists())
+        assertFalse("the wheel is not kept", File(root, "runtime/g2p/sea_g2p.bin.zip").exists())
+        assertEquals("the runtime is kept for every voice", File(root, "runtime"), module.ortFolder())
         assertEquals(listOf("nano"), benched)
         assertEquals(1.84, status.getJSONObject("benchmark").getJSONObject("nano").getDouble("rtf"), 0.0)
         assertEquals("online", status.getJSONObject("suggestion").getString("switchTo"))
@@ -151,6 +164,20 @@ class VieneuModuleTest {
         // Turbo now only lacks its own files: the shared parts are counted once
         assertEquals(wire("turbo"), choice(status, "turbo").getLong("bytes"))
         assertTrue(choice(status, "nano").getBoolean("installed"))
+    }
+
+    /** At [VoiceModule.SLOW_RTF] a voice cannot be read live (the card points to "Làm trước"), just under it it can - the line Supertonic shares. */
+    @Test
+    fun theSlowLineIsSlowRtfForEveryVoice() {
+        val module = module()
+        rtf = mapOf("turbo" to VoiceModule.SLOW_RTF, "nano" to VoiceModule.SLOW_RTF)
+        module.start(listOf("nano"))
+        module.join()
+        assertEquals("online", module.status().getJSONObject("suggestion").getString("switchTo"))
+        rtf = mapOf("turbo" to VoiceModule.SLOW_RTF - 0.01, "nano" to VoiceModule.SLOW_RTF - 0.01)
+        module.measureAgain()
+        module.join()
+        assertTrue(module.status().isNull("suggestion"))
     }
 
     @Test
@@ -173,20 +200,6 @@ class VieneuModuleTest {
         assertEquals("nano", status.getString("recommended"))
         assertTrue(choice(status, "turbo").getString("detail").contains("4 GB RAM"))
         assertFalse(choice(status, "nano").getString("detail").contains("RAM"))
-    }
-
-    @Test
-    fun theMusicPackagesOnnxRuntimeIsUsedAndNotCounted() {
-        val shared = File(root, "music/student").also { File(it, "ort").mkdirs() }
-        File(shared, "ort/libonnxruntime.so").writeBytes(ortLib)
-        val module = module(shared)
-        val status = module.status()
-        assertEquals(wire("g2p", "voices", "nano"), choice(status, "nano").getLong("bytes"))
-        module.start(listOf("nano"))
-        module.join()
-        assertFalse(requests.contains("ort.gz"))
-        assertEquals(shared, module.ortFolder())
-        assertNotNull(module.installed())
     }
 
     @Test
@@ -220,8 +233,143 @@ class VieneuModuleTest {
         module.remove("turbo")
         assertNull(module.installed())
         assertEquals("missing", module.status().getString("state"))
-        assertFalse(File(root, "vieneu/g2p/sea_g2p.bin").exists())
-        assertFalse(File(root, "vieneu/ort").exists())
+        assertFalse(File(root, "vieneu").exists())
+        assertFalse("no other voice uses the runtime", File(root, "runtime/g2p").exists() || File(root, "runtime/ort").exists())
+    }
+
+    // ---- with "Giọng Supertonic" and "Gói nhạc": one runtime for all ------------------------------------------------------------------
+    private val supertonicGroups get() = linkedMapOf(
+        "ort" to groups.getValue("ort"), "g2p" to groups.getValue("g2p"),
+        SupertonicModule.CHOICE to listOf(Part("model/onnx/vocoder.onnx", digest(supertonic), supertonic.size.toLong(), base + "supertonic.bin")),
+    )
+
+    private fun supertonic(files: File = root) = SupertonicModule(File(files, SupertonicModule.FOLDER), SharedRuntime.inFiles(files), "arm64-v8a",
+        VoiceModule.Facts(8, 7.6), groups = supertonicGroups)
+
+    /** "Gói nhạc" with a stand-in model and the same ONNX Runtime pin as the voices; [open] throwing = a package that cannot be opened (wiped). */
+    private fun music(files: File = root, open: (File) -> ((File) -> JSONObject?) = { { null } }) = MusicStudentSetup(
+        File(files, MusicStudentSetup.FOLDER), MusicStore(File(files, "mine"), FakeTags), open, SharedRuntime.inFiles(files), base,
+        listOf(Part("clap.bin", digest(clap), clap.size.toLong())) + groups.getValue("ort"))
+
+    private fun bytesOf(status: JSONObject) = status.getJSONArray("choices").getJSONObject(0).getLong("bytes")
+
+    private val all = listOf("music", "vieneu", "supertonic")
+
+    private fun <T> orders(items: List<T>): List<List<T>> =
+        if (items.size <= 1) listOf(items) else items.flatMap { first -> orders(items - first).map { listOf(first) + it } }
+
+    private fun install(name: String, files: File) {
+        when (name) {
+            "music" -> music(files).apply { start(); join() }
+            "vieneu" -> module(files = files).apply { start(listOf("nano")); join() }
+            else -> supertonic(files).apply { start(listOf(SupertonicModule.CHOICE)); join() }
+        }
+    }
+
+    private fun installed(name: String, files: File): Boolean = when (name) {
+        "music" -> music(files).complete()
+        "vieneu" -> module(files = files).installed() != null
+        else -> supertonic(files).installed() != null
+    }
+
+    /** Removing "Gói nhạc" = its package cannot be opened and is wiped (the phone has no other way to take it). */
+    private fun remove(name: String, files: File) {
+        when (name) {
+            "music" -> assertFalse(music(files, open = { throw IllegalStateException("hỏng") }).attachIfPresent())
+            "vieneu" -> module(files = files).remove("nano")
+            else -> supertonic(files).remove(SupertonicModule.CHOICE)
+        }
+    }
+
+    @Test
+    fun everyInstallOrderFetchesTheRuntimeOnce() {
+        for ((n, order) in orders(all).withIndex()) {
+            val files = File(root, "order$n")
+            requests.clear()
+            order.forEach { install(it, files) }
+            assertEquals("$order", 1, requests.count { it == "ort.gz" })
+            assertEquals("$order", 1, requests.count { it == "g2p.gz" })
+            assertTrue("$order", all.all { installed(it, files) })
+            for (folder in listOf(MusicStudentSetup.FOLDER, VieneuModule.FOLDER, SupertonicModule.FOLDER)) {
+                assertFalse("$order: no copy in $folder", File(files, "$folder/ort").exists() || File(files, "$folder/g2p").exists())
+            }
+        }
+    }
+
+    @Test
+    fun theSizeShownIsOnlyWhatTheModuleItselfLacks() {
+        install("vieneu", root)
+        assertEquals(supertonicGroups.getValue(SupertonicModule.CHOICE).sumOf { it.wireSize }, bytesOf(supertonic().status()))
+        assertEquals(clap.size.toLong(), music().status().getLong("total"))
+        install("music", root)
+        assertEquals(supertonic().folderFor("ort"), File(root, "runtime"))
+        val fresh = File(root, "other").also { install("music", it) }
+        assertEquals(wire("g2p", "voices", "nano"), choice(module(files = fresh).status(), "nano").getLong("bytes"))
+    }
+
+    @Test
+    fun removingAnyModuleInAnyOrderKeepsWhatTheOthersStillNeed() {
+        for ((n, order) in orders(all).withIndex()) {
+            val files = File(root, "remove$n")
+            all.forEach { install(it, files) }
+            val left = all.toMutableList()
+            for (name in order) {
+                remove(name, files)
+                left -= name
+                assertFalse("$order: $name gone", installed(name, files))
+                assertTrue("$order: $left still work after $name", left.all { installed(it, files) })
+                assertEquals("$order after $name: ONNX Runtime", left.isNotEmpty(), File(files, "runtime/ort/libonnxruntime.so").isFile)
+                assertEquals("$order after $name: sea-g2p", left.any { it != "music" }, File(files, "runtime/g2p/sea_g2p.bin").isFile)
+            }
+        }
+    }
+
+    @Test
+    fun aModuleThatNothingRecordedIsStillKeptWorking() {
+        // VieNeu's own files put in place by hand: no download ran, no claim, nothing written anywhere but its own folder
+        val vieneu = File(root, VieneuModule.FOLDER)
+        val own = listOf("voices", "nano").flatMap { groups.getValue(it) }
+        val bytes = mapOf("voices" to voices, "nano" to nano)
+        for (id in listOf("voices", "nano")) for (part in groups.getValue(id)) File(vieneu, part.name).apply { parentFile.mkdirs() }.writeBytes(bytes.getValue(id))
+        PinnedFiles(vieneu, "", VoiceModule.STAMP).writeStamp(own.associate { it.name to it.sha256 })
+        install("supertonic", root) // brings the runtime
+        assertNotNull(module().installed())
+        remove("supertonic", root)
+        assertNotNull("VieNeu still reads", module().installed())
+        assertEquals("nothing but the files and their stamp in the runtime folder", setOf("ort", "g2p", VoiceModule.STAMP),
+            File(root, "runtime").list()!!.toSet())
+        remove("vieneu", root)
+        assertFalse(File(root, "runtime/ort").exists() || File(root, "runtime/g2p").exists())
+    }
+
+    @Test
+    fun allTappedAtOnceFetchTheRuntimeOnce() {
+        val vieneu = module()
+        val supertonic = supertonic()
+        val music = music()
+        vieneu.start(listOf("nano"))
+        supertonic.start(listOf(SupertonicModule.CHOICE))
+        music.start()
+        vieneu.join()
+        supertonic.join()
+        music.join()
+        assertEquals(1, requests.count { it == "ort.gz" })
+        assertEquals(1, requests.count { it == "g2p.gz" })
+        assertTrue(all.all { installed(it, root) })
+    }
+
+    @Test
+    fun aRuntimeCopyInTheVoicesOwnFolderIsDroppedOnceTheSharedOneIsHere() {
+        File(root, "vieneu/ort").mkdirs()
+        File(root, "vieneu/ort/libonnxruntime.so").writeBytes(ortLib)
+        File(root, "vieneu/g2p").mkdirs()
+        File(root, "vieneu/g2p/sea_g2p.bin").writeBytes(dictionary)
+        val module = module()
+        module.start(listOf("nano"))
+        module.join()
+        assertNotNull(module.installed())
+        assertFalse(File(root, "vieneu/ort").exists() || File(root, "vieneu/g2p").exists())
+        assertTrue(File(root, "runtime/ort/libonnxruntime.so").isFile)
     }
 
     @Test
@@ -244,6 +392,6 @@ class VieneuModuleTest {
         val status = module.status()
         assertEquals("error", status.getString("state"))
         assertTrue(status.getString("error"), status.getString("error").startsWith("Không tải được giọng VieNeu"))
-        assertTrue("finished parts are kept", File(root, "vieneu/g2p/sea_g2p.bin").isFile)
+        assertTrue("finished parts are kept", File(root, "runtime/g2p/sea_g2p.bin").isFile)
     }
 }
