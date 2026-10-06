@@ -12,6 +12,7 @@ import org.junit.runner.RunWith
 import vn.abook.player.vieneu.SeaG2p
 import vn.abook.player.vieneu.VieneuModule
 import vn.abook.player.vieneu.VieneuVoices
+import vn.abook.player.vieneu.VoiceModule
 import java.io.File
 import java.io.RandomAccessFile
 import java.security.MessageDigest
@@ -63,7 +64,7 @@ class VieneuOnDeviceTest {
         }
         val module = VieneuVoices.module(context)
         // Same check as a real download: every file hashed against this app's pins (nothing fetched: they are all here already).
-        PinnedFiles(dir, "", VieneuModule.STAMP).download(module.parts(tiers), object : PinnedFiles.Progress {
+        PinnedFiles(dir, "", VoiceModule.STAMP).download(module.parts(tiers), object : PinnedFiles.Progress {
             override fun current(bytes: Long) = Unit
             override fun done(part: PinnedFiles.Part) = Unit
         })

@@ -3,6 +3,7 @@ import { Download } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button, Segmented, TimeSelect } from "@/shared/ui";
 import { VieneuModuleCard, type VieneuBackend } from "@/listen/VieneuModuleCard";
+import { SUPERTONIC_COPY } from "@/listen/vieneuModule";
 import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { androidSource } from "./androidSource";
 import { notificationState, openNotificationSettings, type NotificationState } from "./notifications";
@@ -37,6 +38,15 @@ const phoneVieneu: VieneuBackend = {
   measure: () => ReadAloud.vieneuMeasure(),
   remove: (choice) => ReadAloud.vieneuRemove({ choice }),
   voices: async () => (await ReadAloud.voices()).voices,
+};
+
+/** "Giọng Supertonic" trên điện thoại (SupertonicModule.kt): cùng thẻ, lời riêng. */
+const phoneSupertonic: VieneuBackend = {
+  status: () => ReadAloud.supertonicStatus(),
+  start: (choices) => ReadAloud.supertonicStart(choices ? { choices } : {}),
+  measure: () => ReadAloud.supertonicMeasure(),
+  remove: (choice) => ReadAloud.supertonicRemove({ choice }),
+  voices: phoneVieneu.voices,
 };
 
 function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
@@ -238,10 +248,13 @@ export function SettingsScreen() {
             api={phoneVoices}
             deviceHint="Máy chưa có giọng tiếng Việt. Cài trong Cài đặt của điện thoại → Chuyển văn bản thành giọng nói → tải dữ liệu giọng Tiếng Việt."
             modules={(reload) => (
-              // Mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ này (PlayerViews.PlayerAlert).
-              <div id="vieneu-module" className="scroll-mt-4">
-                <VieneuModuleCard backend={phoneVieneu} onChanged={reload} />
-              </div>
+              <>
+                {/* Mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ này (PlayerViews.PlayerAlert). */}
+                <div id="vieneu-module" className="scroll-mt-4">
+                  <VieneuModuleCard backend={phoneVieneu} onChanged={reload} />
+                </div>
+                <VieneuModuleCard backend={phoneSupertonic} copy={SUPERTONIC_COPY} onChanged={reload} />
+              </>
             )}
           />
         </div>

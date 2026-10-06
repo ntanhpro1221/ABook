@@ -107,8 +107,8 @@ class VieneuModuleTest {
     }
 
     private fun module(shared: File? = null, blocked: String = "", parts: Map<String, List<Part>> = groups, ramGb: Double = 7.6) = VieneuModule(
-        File(root, "vieneu"), shared, "arm64-v8a", VieneuModule.Facts(8, ramGb),
-        benchmark = { tier -> benched.add(tier); VieneuModule.Benchmark(rtf.getValue(tier), 6000, 2000, 5.0) },
+        File(root, "vieneu"), shared, "arm64-v8a", VoiceModule.Facts(8, ramGb),
+        benchmark = { tier -> benched.add(tier); VoiceModule.Benchmark(rtf.getValue(tier), 6000, 2000, 5.0) },
         groups = parts, blocked = blocked,
     )
 

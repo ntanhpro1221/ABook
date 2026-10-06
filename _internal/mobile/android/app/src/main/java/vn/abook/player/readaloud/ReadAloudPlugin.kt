@@ -23,6 +23,8 @@ import vn.abook.player.vieneu.VieneuVoices
  *   `removeOnlineKey({provider})`, `checkOnlineKey({provider})` -> `{ok, reason?, message?, voices?, provider}`. Khoá đi vào qua lệnh plugin, không bao giờ ra lại.
  * - Mô-đun "Giọng VieNeu" (vieneu/VieneuModule.kt, cùng hình trạng thái với máy tính - ui/src/listen/vieneuModule.ts): `vieneuStatus()`,
  *   `vieneuStart({choices?})` (không có `choices`: cập nhật phần cũ), `vieneuMeasure()` (đo lại tốc độ), `vieneuRemove({choice})` - đều trả trạng thái mới.
+ * - Mô-đun "Giọng Supertonic" (readaloud/SupertonicModule.kt, cùng hình): `supertonicStatus()`, `supertonicStart({choices?})`, `supertonicMeasure()`,
+ *   `supertonicRemove({choice})`.
  * - "Làm trước" (PrepareAhead.kt): `preparePlan({bookId, voice, chapterIds})` -> `{chapters, offered, audioSeconds, secondsEstimate}` (ước trước khi bấm);
  *   `prepareStart({bookId, voice, chapterIds, label, chargingOnly})`, `prepareStatus()`, `prepareCancel()`, `prepareOptions({chargingOnly})` -> trạng thái
  *   (`PrepareStatus` của ui/src/listen/prepareAhead.ts). Sự kiện `readAloudPrepare` (trạng thái) sau mỗi đoạn và mỗi lần đổi.
@@ -178,6 +180,40 @@ class ReadAloudPlugin : Plugin() {
     fun vieneuMeasure(call: PluginCall) {
         VieneuVoices.module(context).measureAgain()
         resolveVieneu(call)
+    }
+
+    private fun resolveSupertonic(call: PluginCall) = call.resolve(JSObject.fromJSONObject(SupertonicVoices.module(context).status()))
+
+    @PluginMethod
+    fun supertonicStatus(call: PluginCall) = resolveSupertonic(call)
+
+    @PluginMethod
+    fun supertonicStart(call: PluginCall) {
+        val picked = call.getArray("choices")?.toList<String>()
+        try {
+            SupertonicVoices.module(context).start(picked)
+            resolveSupertonic(call)
+        } catch (error: IllegalArgumentException) {
+            call.reject(error.message ?: "Lựa chọn lạ")
+        }
+    }
+
+    @PluginMethod
+    fun supertonicMeasure(call: PluginCall) {
+        SupertonicVoices.module(context).measureAgain()
+        resolveSupertonic(call)
+    }
+
+    @PluginMethod
+    fun supertonicRemove(call: PluginCall) {
+        val choice = call.getString("choice") ?: return call.reject("thiếu choice")
+        try {
+            SupertonicVoices.module(context).remove(choice)
+            Playback.onMain { ReadAloud.voicesChanged() }
+            resolveSupertonic(call)
+        } catch (error: IllegalArgumentException) {
+            call.reject(error.message ?: "Lựa chọn lạ")
+        }
     }
 
     @PluginMethod
