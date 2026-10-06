@@ -2,6 +2,7 @@ import type { MusicCredit, MusicCue } from "@/listen/musicBed";
 import type { PlaylistQueue } from "@/listen/playlistBed";
 import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
 import type { ListenSource } from "@/listen/source";
+import type { EditsSyncState } from "@/shared/editsSync";
 import type { AddedBook, ImportPreview, TextImport } from "@/listen/textImport";
 import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
 import { ApiError, api, mediaUrl } from "@/studio/api";
@@ -63,7 +64,7 @@ export const httpSource: ListenSource = {
     try {
       clip = await api<typeof clip>("/api/readaloud/clip", {
         method: "POST",
-        body: { voice, text, cachedOnly: options?.cachedOnly, bookId: options?.bookId },
+        body: { voice, text, cachedOnly: options?.cachedOnly, bookId: options?.bookId, readings: options?.readings },
       });
     } catch (error) {
       // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
@@ -74,7 +75,7 @@ export const httpSource: ListenSource = {
     if ("cached" in clip) throw new ReadAloudError("Chưa đọc đoạn này.", clip.reason || "uncached");
     return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words } satisfies ReadAloudClip;
   },
-  readAloudSample: async (voice, text) => (await httpSource.readAloudClip!(voice, text)).url,
+  readAloudSample: async (voice, text, options) => (await httpSource.readAloudClip!(voice, text, options)).url,
   // Máy chủ nhận chữ từng đoạn, chia đúng như trình phát (cùng khoá bộ đệm với lúc nghe).
   readAloudPrepare: async ({ voice, bookId, chapters, label }) => {
     const texts = await paragraphsFor(chapters, (id) => httpSource.chapterText(bookId, id));
@@ -137,6 +138,8 @@ export const httpSource: ListenSource = {
   saveNight: async (bookId, night) => {
     await api(`/api/listen/books/${bookId}/night`, { method: "POST", body: night });
   },
+  // Cuốn của máy tính khác (webui/remote_books.py): phần sửa về máy ấy như điện thoại gửi về máy tính.
+  sendEdits: (bookId) => api<EditsSyncState>(`/api/listen/books/${bookId}/edits/send`, { method: "POST" }),
   saveBook: async (bookId, options) => {
     const result = await api<{ file: string; folder: string; size: number; edits: number }>(`/api/books/${bookId}/save`, {
       method: "POST",
@@ -153,5 +156,8 @@ export const httpSource: ListenSource = {
       (await api<{ records: ListeningRecord[] }>(`/api/listen/books/${bookId}/records/${recordId}`, { method: "PUT", body: { name } })).records,
     remove: async (bookId, recordId) =>
       (await api<{ records: ListeningRecord[] }>(`/api/listen/books/${bookId}/records/${recordId}`, { method: "DELETE" })).records,
+    move: async (bookId, recordId, toBook) =>
+      (await api<{ records: ListeningRecord[] }>(`/api/listen/books/${bookId}/records/${recordId}/move`, { method: "POST", body: { book: toBook } }))
+        .records,
   },
 };

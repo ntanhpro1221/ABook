@@ -7,6 +7,78 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe
+
+- File TXT cả truyện: ô tách chương giờ ghi đúng số dòng "Chương N" có trong file, và nói riêng khi phần chữ trước chương đầu thành một chương "Mở đầu" (ví dụ "Tách theo
+  3 dòng “Chương N” (thêm phần Mở đầu - 4 chương)"); trước đây nó gộp cả phần ấy vào số chương nên trông như đếm sai. Máy tính và điện thoại như nhau.
+- Bớt chữ "Studio" ở những chỗ người nghe hay gặp: thay đổi chưa áp ghi "Đang chờ máy làm sách" (hay "chờ gửi về máy tính" với sách tải từ máy tính), nghe hết phần đã có thì
+  "Chương tiếp theo sẽ nghe được khi máy làm xong chương ấy", và sách đọc bằng giọng có sẵn của máy ghi "Giọng đọc của máy" như trong Cài đặt.
+- Sách chỉ có chữ: giọng đọc đọc sai một tên hay một từ thì giữ ngón tay vào chữ ấy ở màn đọc (máy tính: bấm chuột phải) và chọn "Đọc từ này là…": gõ cách đọc
+  (vd "Ha ru tô"), bấm "Nghe thử" để nghe bằng giọng đang đọc cuốn này, rồi "Lưu cho cả cuốn" - mọi chỗ có đúng từ ấy đọc theo cách mới, chữ trong sách giữ
+  nguyên và chữ đang đọc vẫn sáng đúng chỗ. Danh sách "Cách đọc tên" trong hộp "Sửa sách" để xem, sửa, nghe thử hay bỏ từng từ; cách đọc đi theo file sách khi
+  xuất. Hộp "Sửa câu này" của sách nói chưa có Studio cũng nghe thử được cách đọc tên bằng giọng đọc của máy. Máy tính và điện thoại như nhau.
+- Hồ sơ nghe chuyển được sang cuốn khác ("Chuyển sang cuốn khác…" trong menu hồ sơ nghe; cuốn chỉ có một hồ sơ thì "Chuyển chỗ nghe sang cuốn khác…" ở menu "…"):
+  chỗ nghe, dấu trang và lịch sử đi theo, thành hồ sơ đang dùng ở cuốn kia - tiện khi có bản làm lại của cùng truyện. Máy tính và điện thoại như nhau.
+
+### Điện thoại
+
+- Giọng Supertonic có cả trên điện thoại, đọc như trên máy tính: 10 giọng nam nữ, âm thanh 44 kHz, số và ngày giờ được đọc thành chữ. Giọng không có sẵn
+  trong app: vào Cài đặt › Nghe, bấm tải "Giọng Supertonic" (khoảng 400 MB), có thanh tiến độ và nút gỡ. Tải xong máy tự đo xem điện thoại đọc kịp
+  không; không kịp thì thẻ nói rõ và chỉ sang "Làm trước" (máy làm sẵn trước khi nghe), hay giọng trực tuyến. Máy tính cũng vậy khi máy chậm.
+- Giọng VieNeu, giọng Supertonic và Phân tích nhạc dùng chung phần chạy model (giọng đọc còn dùng chung bộ đọc số, ngày giờ): tải cái nào trước thì
+  cái sau không tải lại phần ấy, và gỡ một cái không làm hỏng cái còn lại. Ai đã có Giọng VieNeu hay Phân tích nhạc thì sau khi cập nhật bấm tải lại
+  phần dùng chung một lần (khoảng 40 MB với VieNeu, 12 MB với Phân tích nhạc); bản cũ của phần ấy được xoá khỏi máy.
+- "Xuất MP3 để nghe ở app khác" có ở điện thoại (menu "…" của trang sách), ra đúng bản xuất của máy tính: một thư mục mang tên sách, mỗi chương đã xong một file
+  MP3 có tên sách, tên chương, giọng kể, số thứ tự và ảnh bìa, kèm danh sách phát. Lần đầu bạn chọn thư mục lưu (vd Music), lần sau máy nhớ; muốn đổi thì bấm
+  "Đổi thư mục" lúc đang xuất. Việc chạy nền - ra khỏi app vẫn tiếp, tiến độ và nút "Dừng" ở thông báo. Chương chưa làm xong không có trong bản xuất.
+- Báo "Sẵn sàng duyệt" khi máy tính phân tích xong một cuốn và đang chờ bạn duyệt giọng, tên lạ, câu chưa chắc trước khi thu; bấm thông báo là mở thẳng màn duyệt. Cuốn đứng
+  chờ duyệt không bị báo nhầm là "Đã dừng".
+- "Chia sẻ…" trong menu "…" của trang sách: gửi file sách (.abook, kèm những thay đổi của bạn) qua Zalo, Drive, email hay bất kỳ app nào trong bảng chia sẻ của điện thoại.
+- Mở được file EPUB, Word (DOCX), PDF và TXT từ app khác: chọn ABook trong "Mở bằng" hay chia sẻ file tới ABook là hộp "Thêm sách từ file" mở sẵn danh sách chương để xem
+  trước rồi thêm.
+- Cài đặt có nhóm "Giới thiệu": phiên bản đang cài, mã nguồn mở (giấy phép MIT, mở trang GitHub) và danh sách thành phần bên thứ ba cùng giấy phép của từng thứ.
+  Máy tính có cùng danh sách ở mục "Giới thiệu" của Cài đặt (nút "Thành phần bên thứ ba").
+
+### Máy tính
+
+- Menu "…" của trang sách có thêm "Xuất M4B cho app sách nói": cả cuốn thành một file `.m4b` mà Apple Books, Smart AudioBook Player, BookPlayer... mở là thấy
+  đủ danh sách chương (tên chương thật, nhảy đúng đầu chương), có bìa, tên sách và giọng kể. Máy làm ở nền như "Xuất file sách" - sách dài mất vài phút, tải
+  lại trang vẫn thấy tiến độ, xong thì báo nơi file nằm. Chỉ chương đã làm xong được đưa vào; thiếu chương thì thông báo nói rõ có bao nhiêu chương trong file.
+- Sách "Trên máy khác" (máy tính): menu "…" của sách có "Tải về máy", như trên điện thoại - máy tải cả cuốn ở nền, tiến độ hiện ngay dưới tên sách, dừng được; xong thì nghe trọn cả khi máy kia đã tắt. Máy kia tắt hay mất mạng giữa chừng thì phần đã tải vẫn giữ, bấm "Tải tiếp" chỉ lấy phần còn thiếu; máy kia thu lại một chương thì "Tải nốt về máy" lấy đúng chương ấy.
+- Sách của một máy tính khác giờ sửa được ngay ở máy tính đang nghe (tên sách, bìa, tên nhân vật, tên chương, nhạc nền, cách đọc, người nói...), như điện thoại với máy tính: phần sửa tự gửi về máy giữ sách (hay bấm "Gửi về máy tính"), sửa áp ngay thì máy ấy áp liền, việc cần Studio vào hộp "Thay đổi từ máy khác" (trước đây "Thay đổi từ điện thoại") trong Studio của máy ấy, chờ chủ máy duyệt. Máy kia đang tắt thì phần sửa nằm chờ ở máy này, gửi khi tới được.
+
+### Phát trên loa / TV
+
+- Phát trên loa / TV có hẹn giờ tắt: thanh "Đang phát trên <thiết bị>" (máy tính và điện thoại) có nút trăng như trình phát trong app - chọn 5 tới 90 phút, số phút tự đặt,
+  hay "Dừng khi hết chương này"; nút đếm ngược, thêm được 10 phút, tắt được. Đồng hồ chỉ chạy khi loa / TV đang phát. Hết giờ thì thiết bị tạm dừng và chỗ đang nghe
+  được lưu; hẹn "hết chương" thì dừng ở cuối chương và lần nghe sau vào thẳng chương kế.
+- Điện thoại phát lên loa / TV: màn hình khoá, nút tai nghe / Bluetooth và đồng hồ điều khiển được thiết bị - phát / tạm dừng, lùi / tới 15 giây, chương trước / sau -
+  và hiện tên chương, tên sách. Phím âm lượng và thanh âm lượng ở màn hình khoá chỉnh âm lượng của chính loa / TV (khi thiết bị cho chỉnh từ xa; loa, TV giữ
+  âm lượng riêng thì phím vẫn chỉnh điện thoại).
+- Máy tính phát lên loa / TV mà điện thoại đang hiện thanh "Đang phát trên…": màn hình khoá, tai nghe của điện thoại cũng điều khiển được - phát / tạm dừng, lùi / tới,
+  chương trước / sau, dừng. Hết khi máy tính thôi phát.
+
+### Nhạc nền
+
+- Cài đặt có mục "Nhạc nền": kho "Nhạc của tôi" (nhập, xoá, "Phân tích nhạc") dùng chung cho mọi cuốn nên giờ mở thẳng từ đây, trước chỉ có trong hộp "Sửa sách"
+  của từng cuốn. Máy tính và điện thoại như nhau.
+- Nhạc nền đổi bài khi truyện đổi cảnh, không còn cứ vài phút lại đổi: ở dòng ngăn cảnh, tiêu đề, tiêu đề phụ ("Góc nhìn
+  của…", "【…】") hay câu chuyển thời gian / nơi chốn ("Trong khi đó…", "Vài giờ sau…"). Trong một cảnh dài, bài đang chơi
+  chơi tiếp; hết bài thì chuyển êm sang một bài cùng không khí đúng lúc bài kết thúc, và máy ưu tiên bài đủ dài cho cả
+  cảnh, nên ít phải nghe lại một bài. Trong cảnh, nhạc nhích to hay nhỏ dần theo độ căng của truyện. Sách xuất ra mang
+  theo các thay đổi ấy, nghe trên máy tính hay điện thoại đều như nhau.
+- Nghe trên máy tính: một bài nhạc không tải được (mất mạng) thì 5 phút sau máy tự thử lại như trên
+  điện thoại, không còn im đến khi sang đoạn khác.
+
+### Làm sách
+
+- "Cần nghe lại": câu có bản thu riêng đã được dọn sau khi ghép chương giờ vẫn nghe được - máy phát đúng đoạn ấy trong file chương rồi dừng ở cuối câu, nên bấm
+  được "Ổn" hay "Cần thu lại", và "Nghe liền" cũng đi qua những câu ấy. Trước đây nút nghe bị tắt.
+- "Việc cần duyệt": một vai phụ không tên xuất hiện ở nhiều chương (như "lính gác" ở bốn chương, mỗi chỗ một giọng) giờ
+  là một thẻ cho cả cuốn thay vì một thẻ mỗi chương. Thẻ liệt kê mọi câu kèm chương; bỏ chọn câu nào không phải rồi chọn
+  một lần: một nhân vật có sẵn, người kể, hay người mới (gõ tên + giới). "Mỗi chỗ một người" giữ nguyên như máy đang làm.
+  Một nút "Hoàn tác" lấy lại cả nhóm; sách vẫn chạy tiếp, không phải chờ.
+
 ### Studio
 
 - Câu hỏi "'Tôi' là ai?" lúc tạo sách gợi ý đúng người kể ở vị trí đầu thường hơn hẳn: 16/17 truyện ngôi thứ nhất
@@ -27,16 +99,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   khi đổi cảnh thay vì nghỉ ngắn như hết một câu, và nhạc nền đổi đoạn đúng chỗ ấy. Chữ của truyện không bị đổi.
   Nghe ngay (máy tính và điện thoại) cũng vậy: ở dòng ngăn cảnh, trình phát im 1,5 giây thay vì đi tiếp ngay.
   Một dấu "*" hay "-" đứng riêng một đoạn cũng được tính là ngăn cảnh.
-
-### Nhạc nền
-
-- Nhạc nền đổi bài khi truyện đổi cảnh, không còn cứ vài phút lại đổi: ở dòng ngăn cảnh, tiêu đề, tiêu đề phụ ("Góc nhìn
-  của…", "【…】") hay câu chuyển thời gian / nơi chốn ("Trong khi đó…", "Vài giờ sau…"). Trong một cảnh dài, bài đang chơi
-  chơi tiếp; hết bài thì chuyển êm sang một bài cùng không khí đúng lúc bài kết thúc, và máy ưu tiên bài đủ dài cho cả
-  cảnh, nên ít phải nghe lại một bài. Trong cảnh, nhạc nhích to hay nhỏ dần theo độ căng của truyện. Sách xuất ra mang
-  theo các thay đổi ấy, nghe trên máy tính hay điện thoại đều như nhau.
-- Nghe trên máy tính: một bài nhạc không tải được (mất mạng) thì 5 phút sau máy tự thử lại như trên
-  điện thoại, không còn im đến khi sang đoạn khác.
 
 ## [0.4.30] - 2026-10-07
 

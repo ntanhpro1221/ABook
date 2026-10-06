@@ -2,6 +2,7 @@ package vn.abook.player
 
 import org.json.JSONArray
 import org.json.JSONObject
+import vn.abook.player.readaloud.Readings
 import java.io.File
 import java.io.IOException
 import java.math.BigDecimal
@@ -40,10 +41,13 @@ object BookEdits {
     private const val MAX_SKIP_LINES = 20 // dòng bỏ khỏi phần đọc, mỗi chương (book_edits.MAX_SKIP_LINES)
     private const val SKIP_LINE_MAX = 300
     private const val TRACK_TEXT_MAX = 200 // tên bài / nghệ sĩ trong thẻ file nhạc (music_local._TAG_MAX)
+    const val MAX_READINGS = 2000 // cách đọc riêng của một cuốn
+    private const val READING_WORD_MAX = NAME_MAX // chữ hiện của một cách đọc (một từ)
+    private const val READING_SPOKEN_MAX = 200 // chữ đọc
     private const val LEVEL_MIN = -40.0
     private const val LEVEL_MAX = -6.0
     private const val DEFAULT_LEVEL_DB = -20.0 // music_plan.DEFAULT_LEVEL_DB
-    private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "skip", "music", "wishes")
+    private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "skip", "readings", "music", "wishes")
     const val TOO_BIG = "Quá nhiều thay đổi đang chờ trong cuốn này - hãy lưu, áp bớt vào dự án rồi làm tiếp."
     private val COVER_KEYS = setOf("color", "width", "height", "version")
     private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced", "pins", "tracks", "playlist")
@@ -69,7 +73,7 @@ object BookEdits {
         else -> false
     }
 
-    private fun isSpace(char: Char) = Character.isWhitespace(char) || Character.isSpaceChar(char)
+    internal fun isSpace(char: Char) = Character.isWhitespace(char) || Character.isSpaceChar(char)
 
     private fun codePoints(text: String): List<Int> = text.codePoints().toArray().toList()
 
@@ -145,6 +149,7 @@ object BookEdits {
             (edits.optJSONObject("characters")?.length() ?: 0) + (edits.optJSONObject("chapters")?.length() ?: 0) +
             // Một dòng bỏ ở trăm chương: một thay đổi.
             (edits.optJSONObject("skip")?.let { skip -> names(skip).flatMap { skipLines(skip, it) }.toSet().size } ?: 0) +
+            (edits.optJSONObject("readings")?.length() ?: 0) +
             (if (music?.has("enabled") == true) 1 else 0) + (if (music?.has("levelDb") == true) 1 else 0) +
             (music?.optJSONArray("silenced")?.length() ?: 0) + (music?.optJSONObject("pins")?.length() ?: 0) +
             (if (music?.has("playlist") == true) 1 else 0)
@@ -216,6 +221,7 @@ object BookEdits {
             out.put("chapters", kept)
         }
         if (raw.has("skip")) out.put("skip", validateSkip(raw.opt("skip")))
+        if (raw.has("readings")) out.put("readings", validateReadings(raw.opt("readings")))
         if (raw.has("music")) out.put("music", validateMusic(raw.opt("music")))
         if (raw.has("wishes")) out.put("wishes", BookWishes.validate(raw.opt("wishes")))
         return out
@@ -237,6 +243,31 @@ object BookEdits {
         }
         return out
     }
+
+    /**
+     * `readings` {chữ hiện: chữ đọc} (`book_edits.validate_readings`): chữ hiện là MỘT từ đã sạch ([Readings.isWord]), chữ đọc sạch,
+     * không rỗng, khác chữ hiện. Dùng cả cho cách đọc gửi kèm lần "Nghe thử" (chưa lưu).
+     */
+    fun validateReadings(readings: Any?): JSONObject {
+        if (readings !is JSONObject || readings.length() == 0 || readings.length() > MAX_READINGS) {
+            throw EditsError("Phần cách đọc riêng không hợp lệ hay quá dài.")
+        }
+        val out = JSONObject()
+        for (shown in names(readings).sortedWith { a, b -> byCodePoints(a, b) }) {
+            val spoken = readings.opt(shown)
+            if (!isClean(shown, READING_WORD_MAX) || !Readings.isWord(shown) || spoken !is String || spoken.isEmpty() ||
+                !isClean(spoken, READING_SPOKEN_MAX) || spoken == shown
+            ) {
+                throw EditsError("Một cách đọc riêng trong phần sửa không hợp lệ.")
+            }
+            out.put(shown, spoken)
+        }
+        return out
+    }
+
+    /** Cách đọc riêng của cuốn dưới dạng bảng (để đọc to). */
+    fun readingsOf(edits: JSONObject): Map<String, String> =
+        edits.optJSONObject("readings")?.let { readings -> names(readings).associateWith { readings.getString(it) } } ?: emptyMap()
 
     private fun validateCover(cover: Any?): Any {
         if (cover === JSONObject.NULL) return JSONObject.NULL
@@ -372,6 +403,9 @@ object BookEdits {
         edits.optJSONObject("skip")?.takeIf { it.length() > 0 }?.let { skip ->
             out["skip"] = names(skip).sortedBy { it.toLong() }.associateWith { key -> skipLines(skip, key) }
         }
+        edits.optJSONObject("readings")?.takeIf { it.length() > 0 }?.let { readings ->
+            out["readings"] = names(readings).sortedWith { a, b -> byCodePoints(a, b) }.associateWith { readings.opt(it) }
+        }
         edits.optJSONObject("music")?.takeIf { it.length() > 0 }?.let { music ->
             val shown = LinkedHashMap<String, Any?>()
             for (key in listOf("enabled", "levelDb", "playlist", "silenced")) if (music.has(key)) shown[key] = music.opt(key)
@@ -473,6 +507,16 @@ object BookEdits {
             skip.put(key, JSONArray((skipLines(theirSkip, key) + skipLines(ourSkip, key)).distinct().sortedWith { a, b -> byCodePoints(a, b) }))
         }
         if (skip.length() > 0) out.put("skip", skip)
+        // Cách đọc riêng: như tên nhân vật - từ nào cả hai cùng đặt thì cách của máy này thắng.
+        val ourReadings = local.optJSONObject("readings") ?: JSONObject()
+        val theirReadings = incoming.optJSONObject("readings") ?: JSONObject()
+        val readings = JSONObject()
+        for (word in names(theirReadings)) readings.put(word, theirReadings.opt(word))
+        for (word in names(ourReadings)) {
+            readings.put(word, ourReadings.opt(word))
+            if (theirReadings.has(word) && theirReadings.opt(word) != ourReadings.opt(word)) conflicts++
+        }
+        if (readings.length() > 0) out.put("readings", readings)
         val music = JSONObject()
         val ourMusic = local.optJSONObject("music") ?: JSONObject()
         val theirMusic = incoming.optJSONObject("music") ?: JSONObject()
@@ -980,6 +1024,49 @@ object BookEdits {
             write(folder, edits)
         }
         return out
+    }
+
+    /** Danh sách "Cách đọc tên" của hộp sửa sách: {readings: [{surface, spoken}]} theo thứ tự chữ hiện (`book_edits.readings_view`). */
+    fun readingsView(edits: JSONObject): JSONObject {
+        val readings = edits.optJSONObject("readings") ?: JSONObject()
+        val list = JSONArray()
+        for (shown in names(readings).sortedWith { a, b -> byCodePoints(a, b) }) {
+            list.put(JSONObject().put("surface", shown).put("spoken", readings.opt(shown)))
+        }
+        return JSONObject().put("readings", list)
+    }
+
+    /** Chữ người gõ ở "Đọc từ này là…" -> (chữ hiện, chữ đọc) đã làm sạch; chữ hiện không phải MỘT từ: [EditsError]. Chữ đọc rỗng là bỏ. */
+    fun cleanReading(shown: Any?, spoken: Any?): Pair<String, String> {
+        var word = cleanText(shown, READING_WORD_MAX)
+        if (!Readings.isWord(word)) {
+            // Người chạm vào "Haruto," - cách đọc đặt cho chính từ ấy, không dính dấu câu.
+            val (start, end) = Readings.coreSpan(word)
+            word = word.substring(start, end)
+        }
+        if (word.isEmpty() || !Readings.isWord(word)) throw EditsError("Chỉ đặt được cách đọc cho MỘT từ.")
+        return word to cleanText(spoken, READING_SPOKEN_MAX)
+    }
+
+    /**
+     * Đặt (hay bỏ - chữ đọc rỗng / đúng chữ hiện) cách đọc riêng của một từ cho cả cuốn (`book_edits.set_reading`): chỉ giọng đọc của
+     * "Nghe ngay" đổi, chữ của sách không đổi. Trả [readingsView].
+     */
+    fun setReading(folder: File, shown: Any?, spoken: Any?): JSONObject {
+        val (word, said) = cleanReading(shown, spoken)
+        synchronized(lock) {
+            val edits = load(folder)
+            val readings = edits.optJSONObject("readings")?.let { deepCopy(it) as JSONObject } ?: JSONObject()
+            if (said.isEmpty() || said == word) {
+                readings.remove(word)
+            } else {
+                if (!readings.has(word) && readings.length() >= MAX_READINGS) throw EditsError("Mỗi cuốn đặt được tối đa $MAX_READINGS cách đọc.")
+                readings.put(word, said)
+            }
+            if (readings.length() > 0) edits.put("readings", readings) else edits.remove("readings")
+            write(folder, edits)
+            return readingsView(edits)
+        }
     }
 
     fun setChapterTitle(folder: File, chapterId: Long, title: String?, subtitle: String? = null): JSONObject {

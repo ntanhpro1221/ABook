@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsC
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
-import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook } from "./EditBook";
+import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { keepTogether, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
@@ -24,7 +24,7 @@ import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
-import { useCast, useListenBook, useListenMutations, useSource } from "./source";
+import { useCast, useListenBook, useListenLibrary, useListenMutations, useSource } from "./source";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
@@ -262,7 +262,7 @@ export function PersonRow({
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
         {person.pendingVoice && (onPickVoice || waiting) && (
           <div className="mt-0.5 truncate text-xs font-medium text-accent-text">
-            {waiting ? "Đang chờ Studio" : "Chờ áp dụng"}:{" "}
+            {waiting ? "Đang chờ máy làm sách" : "Chờ áp dụng"}:{" "}
             {[person.pendingVoice.preset && `giọng ${person.pendingVoice.preset}`, person.pendingVoice.gender.toLowerCase()]
               .filter(Boolean)
               .join(" · ")}
@@ -494,11 +494,40 @@ function HistoryTab({ book }: { book: ListenBook }) {
   );
 }
 
-type RecordDialog = { kind: "create" | "rename" | "delete"; name: string } | null;
+type RecordDialog = { kind: "create" | "rename" | "delete" | "move"; name: string; target?: { id: string; title: string } } | null;
 
 /** Hộp "Nghe lại từ đầu (hồ sơ mới)" mở sẵn tên gợi ý. */
 function newRecordDialog(book: ListenBook): RecordDialog {
   return { kind: "create", name: `Lần nghe ${(book.records?.length ?? 0) + 1}` };
+}
+
+/** Chọn cuốn nhận hồ sơ: mọi cuốn trong thư viện trừ cuốn này. Chỉ hỏi thư viện lúc hộp đang mở. */
+function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string; onChange: (target: { id: string; title: string }) => void }) {
+  const { data, isLoading } = useListenLibrary();
+  const others = (data ?? []).filter((item) => item.id !== book.id);
+  if (isLoading) return <p className="text-sm text-fg-2">Đang mở thư viện…</p>;
+  if (!others.length) return <p className="text-sm text-fg-2">Thư viện chưa có cuốn nào khác.</p>;
+  return (
+    <select
+      aria-label="Chuyển sang cuốn"
+      autoFocus
+      value={value}
+      onChange={(event) => {
+        const chosen = others.find((item) => item.id === event.target.value);
+        if (chosen) onChange({ id: chosen.id, title: chosen.title });
+      }}
+      className="h-10 rounded-lg border border-line bg-panel px-2 text-sm outline-none focus:border-accent"
+    >
+      <option value="" disabled>
+        Chọn cuốn…
+      </option>
+      {others.map((item) => (
+        <option key={item.id} value={item.id}>
+          {item.title}
+        </option>
+      ))}
+    </select>
+  );
 }
 
 /**
@@ -510,6 +539,7 @@ function newRecordDialog(book: ListenBook): RecordDialog {
 function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: RecordDialog; setDialog: Dispatch<SetStateAction<RecordDialog>> }) {
   const source = useSource();
   const player = usePlayer();
+  const navigate = useNavigate();
   const mutations = useListenMutations(book.id);
   const records = book.records ?? [];
   const active = records.find((record) => record.active);
@@ -524,6 +554,18 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
     if (dialog.kind === "create") switchTo(() => mutations.createRecord.mutateAsync(name), `Hồ sơ mới “${name || "không tên"}” - nghe từ chương đầu`, true);
     if (dialog.kind === "rename" && name) void done("Đã đổi tên hồ sơ")(mutations.renameRecord.mutateAsync({ recordId: active.id, name }));
     if (dialog.kind === "delete") switchTo(() => mutations.removeRecord.mutateAsync(active.id), `Đã xoá hồ sơ “${active.name}”`);
+    // Bản làm lại của cùng truyện, hay lỡ nghe nhầm cuốn: hồ sơ (chỗ nghe, dấu trang, lịch sử) sang cuốn kia, thành hồ sơ đang dùng ở đó.
+    const target = dialog.target;
+    if (dialog.kind === "move" && target) {
+      void player
+        .switchRecord(book.id, () => mutations.moveRecord.mutateAsync({ recordId: active.id, toBook: target.id }))
+        .then(() =>
+          toast(`Đã chuyển hồ sơ “${active.name}” sang “${target.title}”`, {
+            action: { label: "Mở cuốn ấy", onClick: () => navigate(`/book/${target.id}`) },
+          }),
+        )
+        .catch((error: unknown) => toast.error(error instanceof Error ? error.message : String(error)));
+    }
     setDialog(null);
   };
   return (
@@ -573,6 +615,9 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "rename", name: active.name })} className={MENU_ITEM}>
               <Pencil className="size-4" /> Đổi tên hồ sơ này…
             </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => setDialog({ kind: "move", name: active.name })} className={MENU_ITEM}>
+              <ArrowRightLeft className="size-4" /> Chuyển sang cuốn khác…
+            </DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "delete", name: active.name })} className={cn(MENU_ITEM, "text-danger")}>
               <Trash2 className="size-4" /> Xoá hồ sơ này…
             </DropdownMenu.Item>
@@ -583,10 +628,22 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
       <Dialog
         open={dialog !== null}
         onOpenChange={(open) => !open && setDialog(null)}
-        title={dialog?.kind === "create" ? "Nghe lại từ đầu" : dialog?.kind === "rename" ? "Đổi tên hồ sơ" : `Xoá hồ sơ “${active.name}”?`}
+        title={
+          dialog?.kind === "create"
+            ? "Nghe lại từ đầu"
+            : dialog?.kind === "rename"
+              ? "Đổi tên hồ sơ"
+              : dialog?.kind === "move"
+                ? `Chuyển hồ sơ “${active.name}” sang cuốn khác`
+                : `Xoá hồ sơ “${active.name}”?`
+        }
         description={
           dialog?.kind === "create"
             ? "Hồ sơ mới bắt đầu từ chương đầu; hồ sơ đang dùng giữ nguyên chỗ nghe, dấu trang, lịch sử - quay lại lúc nào cũng được."
+            : dialog?.kind === "move"
+              ? `Chỗ nghe, dấu trang và lịch sử đi theo hồ sơ, thành hồ sơ đang dùng ở cuốn kia - vd khi có bản làm lại của cùng truyện.${
+                  records.length > 1 ? " Cuốn này chuyển sang hồ sơ nghe gần nhất còn lại." : " Cuốn này sẽ như chưa nghe lần nào."
+                }`
             : dialog?.kind === "delete"
               ? `Chỗ nghe, dấu trang và lịch sử của hồ sơ này mất hẳn, trên mọi máy đã ghép nối. Sách không bị ảnh hưởng${
                   records.length > 1 ? " - cuốn chuyển sang hồ sơ nghe gần nhất còn lại." : "; đây là hồ sơ duy nhất nên cuốn sẽ như chưa nghe lần nào."
@@ -602,7 +659,14 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
           }}
           className="flex flex-col gap-4"
         >
-          {dialog?.kind !== "delete" && (
+          {dialog?.kind === "move" && (
+            <MoveTarget
+              book={book}
+              value={dialog.target?.id ?? ""}
+              onChange={(target) => setDialog((current) => (current ? { ...current, target } : current))}
+            />
+          )}
+          {dialog?.kind !== "delete" && dialog?.kind !== "move" && (
             <input
               id="record-name"
               data-autofocus
@@ -619,8 +683,12 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
             <Button type="button" variant="ghost" onClick={() => setDialog(null)}>
               Huỷ
             </Button>
-            <Button type="submit" variant={dialog?.kind === "delete" ? "danger" : "primary"} disabled={dialog?.kind === "rename" && !dialog.name.trim()}>
-              {dialog?.kind === "create" ? "Tạo và nghe từ đầu" : dialog?.kind === "delete" ? "Xoá hồ sơ" : "Lưu"}
+            <Button
+              type="submit"
+              variant={dialog?.kind === "delete" ? "danger" : "primary"}
+              disabled={(dialog?.kind === "rename" && !dialog.name.trim()) || (dialog?.kind === "move" && !dialog.target)}
+            >
+              {dialog?.kind === "create" ? "Tạo và nghe từ đầu" : dialog?.kind === "delete" ? "Xoá hồ sơ" : dialog?.kind === "move" ? "Chuyển" : "Lưu"}
             </Button>
           </div>
         </form>
@@ -640,11 +708,14 @@ export interface EditingOptions {
 export function BookScreen({
   extraActions,
   studioLink,
+  notice,
   editing = {},
 }: {
   extraActions?: (book: ListenBook) => ReactNode;
   /** Máy tính: lối sang Studio ngay trên dòng trạng thái của sách đang làm. */
   studioLink?: (book: ListenBook) => ReactNode;
+  /** Dòng tình trạng riêng của nền tảng dưới tên sách (máy tính: tải sách của máy khác về máy). */
+  notice?: (book: ListenBook) => ReactNode;
   editing?: false | EditingOptions;
 }) {
   const { id } = useParams();
@@ -671,6 +742,7 @@ export function BookScreen({
   const { data: castView } = useCast(id);
   // Hook không được đặt sau `return` sớm: cuốn chưa nạp xong thì dùng một cuốn rỗng (nút lưu chưa hiện lúc ấy).
   const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
+  const sharer = useShareBook(book ?? ({ id: id ?? "" } as ListenBook));
   // Chương đã "Làm trước" (điện thoại, PrepareAhead.kt): dấu "Đã làm sẵn" ở danh sách chương.
   const prepared = usePreparedChapters(id ?? "", Boolean(book?.chapters?.some((chapter) => chapter.state === "text" && chapter.speech)));
   // Điện thoại: mở sách là hỏi máy tính đã ghép bản mới nhất của hồ sơ nghe (chỗ nghe, tên, hồ sơ vừa chọn bên ấy) -
@@ -788,6 +860,7 @@ export function BookScreen({
                 : "Nghe thẳng từ máy tính - tải về để nghe cả khi không có mạng"}
             </p>
           )}
+          {notice?.(book)}
           {syncs && <EditsSyncBanner book={book} />}
           {textOnly && editable && <BookSuggestions book={book} />}
           <div className="mt-4 max-w-md max-sm:mx-auto">
@@ -849,6 +922,12 @@ export function BookScreen({
                       <Plus className="size-4" /> Nghe lại từ đầu (hồ sơ mới)…
                     </DropdownMenu.Item>
                   )}
+                  {/* Một hồ sơ thì không có nút hồ sơ nghe: chuyển chỗ nghe sang cuốn khác (bản làm lại của cùng truyện) nằm ở đây. */}
+                  {source.records && book.records?.length === 1 && (
+                    <DropdownMenu.Item onSelect={() => setRecordDialog({ kind: "move", name: book.records![0].name })} className={MENU_ITEM}>
+                      <ArrowRightLeft className="size-4" /> Chuyển chỗ nghe sang cuốn khác…
+                    </DropdownMenu.Item>
+                  )}
                   {!textOnly && (
                     <DropdownMenu.Item onSelect={() => mutations.finished.mutate(!book.progress.finished)} className={MENU_ITEM}>
                       <CheckCheck className="size-4" />
@@ -875,11 +954,20 @@ export function BookScreen({
                           <DropdownMenu.Item onSelect={() => setSaveAsOpen(true)} className={MENU_ITEM}>
                             <FileDown className="size-4" /> Lưu thành…
                           </DropdownMenu.Item>
+                          {sharer.available && (
+                            <DropdownMenu.Item
+                              disabled={sharer.busy}
+                              onSelect={() => void sharer.share()}
+                              className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
+                            >
+                              <Share2 className="size-4" /> Chia sẻ…
+                            </DropdownMenu.Item>
+                          )}
                         </>
                       )}
                       {!workshop && Boolean(book.wishes) && (
                         <DropdownMenu.Item onSelect={() => setWishesOpen(true)} className={MENU_ITEM}>
-                          <Hourglass className="size-4" /> Việc đang chờ {syncs ? "gửi về máy tính" : "Studio"} ({book.wishes})
+                          <Hourglass className="size-4" /> Việc đang chờ {syncs ? "gửi về máy tính" : "máy làm sách"} ({book.wishes})
                         </DropdownMenu.Item>
                       )}
                     </>

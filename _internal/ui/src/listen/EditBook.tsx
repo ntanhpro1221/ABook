@@ -16,6 +16,7 @@ import { MUSIC_CHANGED_EVENT } from "./musicBed";
 import { MyMusicSection, SwapTrack } from "./MyMusic";
 import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
+import { BookReadingsSection } from "./WordReadings";
 
 // Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
 // màn hình cho máy tính và điện thoại - lệnh đi tới `/api/books/<mã>/...`; máy tính là server Python, điện thoại là lõi native
@@ -350,6 +351,11 @@ export function EditBookDialog({
           title={book.stage === "text" ? "Tên chương" : "Tên chương và tên nhân vật"}
           hint={book.stage === "text" ? "Bấm “…” ở dòng chương để đổi tên chương." : "Bấm “…” ở dòng chương để đổi tên chương, “…” ở tab Nhân vật để đổi tên người."}
         />
+        {book.stage === "text" && !workshop && (
+          <Section title="Cách đọc tên" hint="Từ giọng đọc đọc sai (thường là tên riêng) và cách bạn dạy nó đọc - áp cho cả cuốn, chữ trong sách giữ nguyên.">
+            <BookReadingsSection bookId={book.id} />
+          </Section>
+        )}
         {!workshop && (book.edits ?? 0) > 0 && (
           <Section title={`Bỏ mọi thay đổi (${book.edits})`} hint="Sách trở về đúng như người làm sách đã đóng gói.">
             {confirmRevert ? (
@@ -471,6 +477,24 @@ export function useSaveBook(book: ListenBook) {
   return { save, busy, available: Boolean(source.saveBook) };
 }
 
+/** "Chia sẻ…" (điện thoại): gửi file sách của cuốn, kèm thay đổi của người nghe, qua bảng chia sẻ của hệ thống. */
+export function useShareBook(book: ListenBook) {
+  const source = useSource();
+  const [busy, setBusy] = useState(false);
+  const share = async () => {
+    if (!source.shareBook) return;
+    setBusy(true);
+    try {
+      await source.shareBook(book.id);
+    } catch (error) {
+      toast.error("Chưa chia sẻ được sách", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return { share, busy, available: Boolean(source.shareBook) };
+}
+
 type SaveKind = "abook" | "abookproj";
 
 /** "Lưu thành…": chọn loại file. `.abookproj` mang cả xưởng nếu cuốn đến từ một file dự án; không thì là file "chờ dựng xưởng"
@@ -516,7 +540,7 @@ export function SaveAsDialog({
       ) : (
         <p className="mt-3 text-sm text-fg-2">
           Sách nghe mở được bằng ABook trên máy tính và điện thoại, mang theo tên, bìa, tên nhân vật, tên chương, nhạc bạn đã sửa
-          {book.wishes ? `, cùng ${book.wishes} việc đang chờ Studio (chưa làm gì trong giọng đọc)` : ""}.
+          {book.wishes ? `, cùng ${book.wishes} việc đang chờ máy làm sách (chưa làm gì trong giọng đọc)` : ""}.
         </p>
       )}
       {pickFolder && (

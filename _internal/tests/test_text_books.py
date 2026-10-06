@@ -325,6 +325,7 @@ def test_a_whole_story_txt_is_split_into_chapters_only_when_the_listener_ticks_i
     finally:
         server.stop()
     assert plain["totals"]["chapters"] == 1 and plain["splitOffer"] == 4, "mặc định một chương, và cho biết tách sẽ ra bao nhiêu"
+    assert plain["splitHeadings"] == 3, "nhãn: 3 dòng 'Chương N', thêm phần 'Mở đầu' thành 4 chương"
     assert split["totals"]["chapters"] == 4 and split["splitOffer"] == 4
     assert [row["title"] for row in split["chapters"]][:2] == ["Mở đầu", "Chương 1: Bến phà lúc bình minh"]
     assert added["chapters"] == 4 and len(studio.listen_book(added["id"])["chapters"]) == 4

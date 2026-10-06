@@ -112,8 +112,9 @@ class VieneuSpeaker(
 ) {
     class Spoken(val samples: FloatArray, val rate: Int, val durationMs: Long, val words: List<Span>, val spans: List<IntArray>)
 
-    fun speak(tier: String, tierEngine: VieneuTier, name: String, preset: VieneuPreset, text: String, origin: String? = null): Spoken {
-        val (tokens, units) = VieneuUnits.units(text, MAX_CHARS.getValue(tier), origin)
+    fun speak(tier: String, tierEngine: VieneuTier, name: String, preset: VieneuPreset, text: String, origin: String? = null,
+              readings: Map<String, String>? = null): Spoken {
+        val (tokens, units) = VieneuUnits.units(text, MAX_CHARS.getValue(tier), origin, readings)
         val waves = ArrayList<FloatArray>()
         val pauses = ArrayList<Double>()
         for (unit in units) {
@@ -124,31 +125,38 @@ class VieneuSpeaker(
             pauses.add(VieneuAudio.GAP_SECONDS.getValue(if (last == null || last in ".!?") "sentence" else "minor"))
         }
         val (joined, spans) = VieneuAudio.join(waves, tierEngine.rate, pauses.dropLast(1))
-        val rate = tierEngine.rate
-        val duration = joined.size * 1000L / rate
-        val words = ArrayList<Span>()
-        for ((unit, span) in units.zip(spans)) {
-            val count = unit.last - unit.first + 1
-            val startMs = span[0] * 1000L / rate
-            if (span[1] <= span[0]) {
-                repeat(count) { words.add(Span(startMs, startMs)) } // a unit with no sound: its words sit where it is
-                continue
-            }
-            val unitText = unit.text(tokens)
-            val unitMs = (span[1] - span[0]) * 1000L / rate
-            WordTokens.map(unitText, SyllableSpread.boundaries(unitText, unitMs), unitMs).forEach { words.add(Span(it.start + startMs, it.end + startMs)) }
-        }
-        var previous = 0L
-        val clamped = words.map { pair -> // never backwards, never past the clip
-            val start = minOf(maxOf(pair.start, previous), duration)
-            previous = start
-            Span(start, minOf(maxOf(pair.end, start), duration))
-        }
-        return Spoken(joined, rate, duration, clamped, spans)
+        return timed(tokens, units, joined, spans, tierEngine.rate)
     }
 
     companion object {
         val MAX_CHARS = mapOf("turbo" to 256, "nano" to 140)
+
+        /**
+         * The joined clip of a paragraph with its word timings (`vieneu.timed_synthesis` without the aligner): the model gives none, so each unit's
+         * words are spread over ITS exact span of the clip by syllables. Shared by every voice that reads by [VieneuUnits] (VieNeu, Supertonic).
+         */
+        fun timed(tokens: List<String>, units: List<VieneuUnits.Unit>, joined: FloatArray, spans: List<IntArray>, rate: Int): Spoken {
+            val duration = joined.size * 1000L / rate
+            val words = ArrayList<Span>()
+            for ((unit, span) in units.zip(spans)) {
+                val count = unit.last - unit.first + 1
+                val startMs = span[0] * 1000L / rate
+                if (span[1] <= span[0]) {
+                    repeat(count) { words.add(Span(startMs, startMs)) } // a unit with no sound: its words sit where it is
+                    continue
+                }
+                val unitText = unit.text(tokens)
+                val unitMs = (span[1] - span[0]) * 1000L / rate
+                WordTokens.map(unitText, SyllableSpread.boundaries(unitText, unitMs), unitMs).forEach { words.add(Span(it.start + startMs, it.end + startMs)) }
+            }
+            var previous = 0L
+            val clamped = words.map { pair -> // never backwards, never past the clip
+                val start = minOf(maxOf(pair.start, previous), duration)
+                previous = start
+                Span(start, minOf(maxOf(pair.end, start), duration))
+            }
+            return Spoken(joined, rate, duration, clamped, spans)
+        }
 
         /** `vieneu.seed_of`: the first 8 hex digits of SHA-256 of the parts joined by "|". */
         fun seedOf(vararg parts: String): Long {

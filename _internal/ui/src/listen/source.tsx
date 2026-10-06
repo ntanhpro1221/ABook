@@ -37,8 +37,9 @@ export interface ListenSource {
    *  thì chương chỉ-có-chữ chỉ đọc được bằng mắt. Android: lõi native tự đọc (plugin ReadAloud, android/readAloud.ts) nên không có `readAloudClip`. */
   readAloudVoices?(): Promise<ReadAloudVoice[]>;
   readAloudClip?(voice: string, text: string, options?: ClipOptions): Promise<ReadAloudClip>;
-  /** Nghe thử một giọng (Cài đặt › Giọng đọc, menu giọng của trình phát): đọc `text` bằng giọng ấy, trả địa chỉ phát được. */
-  readAloudSample?(voice: string, text: string): Promise<string>;
+  /** Nghe thử một giọng (Cài đặt › Giọng đọc, menu giọng của trình phát) hay một cách đọc ("Đọc từ này là…" - `options.readings`, cách đọc
+   *  của cuốn `options.bookId`): đọc `text` bằng giọng ấy, trả địa chỉ phát được. */
+  readAloudSample?(voice: string, text: string, options?: Pick<ClipOptions, "bookId" | "readings">): Promise<string>;
   /** "Làm trước" (prepareAhead.ts): đọc sẵn các chương này vào bộ đệm ở nền; nguồn nào chưa có thì giao diện ẩn nút. */
   readAloudPrepare?(request: PrepareRequest): Promise<PrepareStatus>;
   readAloudPrepareStatus?(): Promise<PrepareStatus>;
@@ -87,6 +88,8 @@ export interface ListenSource {
   /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file `.abook` mới: máy tính ghi vào thư mục xuất (hay
    *  `folder`), điện thoại hỏi chỗ lưu bằng hộp thoại của hệ thống. `saved: false` khi người dùng bỏ qua. */
   saveBook?(bookId: string, options?: { folder?: string; as?: "abook" | "abookproj" }): Promise<SavedBook>;
+  /** Điện thoại: gửi file sách `.abook` của cuốn (kèm thay đổi của người nghe) qua bảng chia sẻ của hệ thống. */
+  shareBook?(bookId: string): Promise<void>;
   /** Điện thoại: gửi ngay phần sửa của cuốn tải từ máy tính về máy tính (EditsSync.kt); trả trạng thái mới, lỗi thì nói lý do. */
   sendEdits?(bookId: string): Promise<EditsSyncState>;
   /** Hồ sơ nghe (nguồn nào chưa có thì giao diện ẩn đi); mỗi lệnh trả danh sách hồ sơ mới của cuốn. */
@@ -95,6 +98,8 @@ export interface ListenSource {
     activate(bookId: string, recordId: string): Promise<ListeningRecord[]>;
     rename(bookId: string, recordId: string, name: string): Promise<ListeningRecord[]>;
     remove(bookId: string, recordId: string): Promise<ListeningRecord[]>;
+    /** Gắn hồ sơ sang cuốn `toBook` (bản làm lại của cùng truyện…), thành hồ sơ đang dùng ở đó; trả hồ sơ còn lại của cuốn này. */
+    move(bookId: string, recordId: string, toBook: string): Promise<ListeningRecord[]>;
   };
 }
 
@@ -269,6 +274,13 @@ export function useListenMutations(bookId: string) {
     removeRecord: useMutation({
       mutationFn: (recordId: string) => source.records!.remove(bookId, recordId),
       onSuccess: refresh,
+    }),
+    moveRecord: useMutation({
+      mutationFn: ({ recordId, toBook }: { recordId: string; toBook: string }) => source.records!.move(bookId, recordId, toBook),
+      onSuccess: (_records, { toBook }) => {
+        refresh();
+        void client.invalidateQueries({ queryKey: ["listen", "book", toBook] });
+      },
     }),
   };
 }

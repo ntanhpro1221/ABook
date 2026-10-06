@@ -152,7 +152,6 @@ export const LIVE_RTF = 0.8;
 export function benchmarkLabel(tier: ModuleTier, result: VieneuBenchmark, live = LIVE_RTF): string {
   const name = tierName(tier);
   if (result.rtf >= live) {
-    if (tier === "supertonic") return `${name}: máy này không kịp đọc trực tiếp (${seconds(result.rtf)} giây cho mỗi giây nghe), nghe có thể phải chờ giữa các đoạn.`;
     const hour = Math.max(1, Math.round(result.rtf * 60));
     return `${name}: máy này không kịp đọc trực tiếp (${seconds(result.rtf)} giây cho mỗi giây nghe). Vẫn nghe được bằng “Làm trước” trong nút Giọng đọc: mỗi giờ nghe máy cần làm trước khoảng ${hour} phút.`;
   }
@@ -163,7 +162,7 @@ export function benchmarkLabel(tier: ModuleTier, result: VieneuBenchmark, live =
 /** Lời đề nghị đổi giọng (không bao giờ tự đổi) và chữ trên nút. */
 export function suggestionText(suggestion: VieneuSuggestion): { message: string; action: string } {
   const slow = tierName(suggestion.tier);
-  const lead = `${slow} không theo kịp người nghe trên máy này (${seconds(suggestion.rtf)} giây cho mỗi giây nghe) - nghe trực tiếp có thể phải chờ giữa các đoạn.${suggestion.tier === "supertonic" ? "" : " Giữ giọng này thì dùng “Làm trước”."}`;
+  const lead = `${slow} không theo kịp người nghe trên máy này (${seconds(suggestion.rtf)} giây cho mỗi giây nghe) - nghe trực tiếp có thể phải chờ giữa các đoạn. Giữ giọng này thì dùng “Làm trước”.`;
   if (suggestion.switchTo === "nano") {
     return suggestion.installed
       ? { message: `${lead} Giọng VieNeu Nano đọc nhẹ máy hơn và đã có trên máy.`, action: "Dùng giọng VieNeu Nano" }

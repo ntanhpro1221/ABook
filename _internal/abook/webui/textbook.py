@@ -138,7 +138,8 @@ def preview(book: importers.ImportedBook) -> dict[str, Any]:
         "title": _title(book.title, "Sách"), "author": book.author, "language": book.language,
         "hasCover": bool(book.cover_bytes), "chapters": rows, "notes": list(book.notes),
         # File TXT cả truyện: số chương nếu tách theo các dòng "Chương N" - giao diện đề xuất (ô KHÔNG tích sẵn). Không có gì để tách thì không có khoá.
-        **({"splitOffer": book.split_offer} if book.split_offer else {}),
+        # `splitHeadings`: số dòng "Chương N"; nhãn nói thêm phần "Mở đầu" khi chữ trước tiêu đề đầu thành một chương riêng.
+        **({"splitOffer": book.split_offer, "splitHeadings": book.split_headings} if book.split_offer else {}),
         # Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
         "suggestions": [{"chapter": number, "line": line} for number, line in book.credits],
         "totals": {"chapters": len(kept), "words": sum(row["words"] for row in kept)},

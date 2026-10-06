@@ -53,6 +53,7 @@ describe("Làm trước trên điện thoại", () => {
 
   it("giọng nào làm trước được", () => {
     expect(canPrepare({ provider: "vieneu", online: false }, false)).toBe(true);
+    expect(canPrepare({ provider: "supertonic", online: false }, false)).toBe(true);
     expect(canPrepare({ provider: "edge", online: true }, false)).toBe(false);
     expect(canPrepare({ provider: "edge", online: true }, true)).toBe(true);
     expect(canPrepare({ provider: "device", online: false }, true)).toBe(false);

@@ -40,6 +40,7 @@ object Dlna {
     const val MEDIA_RENDERER = "urn:schemas-upnp-org:device:MediaRenderer:1"
     const val FEATURES = "DLNA.ORG_OP=01;DLNA.ORG_FLAGS=01700000000000000000000000000000"
     private const val AV_TRANSPORT = "urn:schemas-upnp-org:service:AVTransport:"
+    private const val RENDERING_CONTROL = "urn:schemas-upnp-org:service:RenderingControl:"
     private const val AGENT = "ABook UPnP/1.0 DLNADOC/1.50"
     private const val MAX_XML = 256 * 1024
     private val GROUP = InetSocketAddress("239.255.255.250", 1900)
@@ -70,6 +71,8 @@ object Dlna {
         val avType: String = "",
         val protocol: String = "dlna", // "dlna" | "gcast" (Google Cast, GCast.kt): chọn backend
         val port: Int = 0, // Cast: cổng SRV (thường 8009); DLNA đi theo avUrl
+        val rcUrl: String = "", // RenderingControl (âm lượng); "" khi thiết bị không có
+        val rcType: String = "",
     )
 
     class Failure(message: String, val code: Int = 0) : Exception(message)
@@ -267,11 +270,14 @@ object Dlna {
         while (queue.isNotEmpty()) {
             val device = queue.removeFirst()
             var av: Pair<String, String>? = null
+            var rc: Pair<String, String>? = null
             for (list in children(device, "serviceList")) for (service in children(list, "service")) {
                 val type = text(service, "serviceType")
                 val url = runCatching { URI(base).resolve(text(service, "controlURL")).toString() }.getOrNull() ?: continue
                 val target = runCatching { URI(url) }.getOrNull() ?: continue
-                if (av == null && type.startsWith(AV_TRANSPORT) && target.scheme == "http" && target.host == host) av = type to url
+                if (target.scheme != "http" || target.host != host) continue
+                if (av == null && type.startsWith(AV_TRANSPORT)) av = type to url
+                if (rc == null && type.startsWith(RENDERING_CONTROL)) rc = type to url
             }
             if (av == null) {
                 for (list in children(device, "deviceList")) queue.addAll(children(list, "device"))
@@ -284,7 +290,8 @@ object Dlna {
                 MEDIA.containsMatchIn(model) -> "media"
                 else -> "speaker"
             }
-            return Renderer(sha1(text(device, "UDN").ifEmpty { location }).take(12), name, kind, host, location, av.second, av.first)
+            return Renderer(sha1(text(device, "UDN").ifEmpty { location }).take(12), name, kind, host, location, av.second, av.first,
+                rcUrl = rc?.second.orEmpty(), rcType = rc?.first.orEmpty())
         }
         return null
     }

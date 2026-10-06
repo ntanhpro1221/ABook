@@ -5,6 +5,8 @@ nguồn ("645"). Mở bằng trình phát khác thì thấy sách "lo16" với c
 ghi MP3 nằm trong các file bị khoá của dây chuyền, nên sửa ở đây: chép nguyên luồng âm thanh (không mã hoá lại - nhanh,
 không mất chất lượng) sang thư mục mới với tag đúng - tên sách, tên chương thật, giọng kể, số thứ tự, ảnh bìa - kèm
 danh sách phát `.m3u8`. File chưa xong ghi ra `.part` rồi mới đổi tên, như mọi file âm thanh khác của dự án.
+
+`export_m4b`: cả cuốn trong MỘT file `.m4b` có mục lục chương - kiểu trình phát sách nói quen dùng (xem phần M4B bên dưới).
 """
 from __future__ import annotations
 
@@ -12,12 +14,14 @@ import base64
 import os
 import re
 import shutil
+import subprocess
+import tempfile
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 from .. import continuation
-from ..io_utils import ffmpeg_executable, run_hidden
+from ..io_utils import ffmpeg_available, ffmpeg_executable, run_hidden
 from . import covers, listen_view, music_plan, store
 
 _UNSAFE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
@@ -58,6 +62,47 @@ def _listenable(project_root: Path) -> list[dict[str, Any]]:
     return [chapter for chapter in listen_view.chapters(project_root) if chapter["available"]]
 
 
+def chapter_file_name(number: int, total: int, full_title: str) -> str:
+    """Tên file MP3 của chương thứ `number` trong `total` chương được xuất. Điện thoại (Mp3Export.kt) đặt đúng tên này -
+    bộ ví dụ chung tests/fixtures/mp3_export."""
+    width = max(2, len(str(total)))
+    return f"{number:0{width}d} - {safe_name(full_title, 90)}.mp3"
+
+
+def write_chapter(ffmpeg: str, source: Path, final: Path, cover_path: Path | None, *, title: str, album: str,
+                  narrator: str, number: int, total: int) -> None:
+    """Chép nguyên luồng âm thanh của `source` sang `final` với tag mới: ID3v2.3 + ID3v1, kèm bìa nếu có. Điện thoại ghi tag
+    bằng tay (Id3Tag.kt) cho ra đúng những byte này, trừ khung TSSE (tên phiên bản ffmpeg)."""
+    partial = final.with_name(f"{final.name}.part")
+    command = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(source)]
+    if cover_path:
+        command += ["-i", str(cover_path), "-map", "0:a", "-map", "1:v", "-c:v", "copy",
+                    "-disposition:v", "attached_pic", "-metadata:s:v", "title=Album cover",
+                    "-metadata:s:v", "comment=Cover (front)"]
+    else:
+        command += ["-map", "0:a"]
+    command += [
+        "-c:a", "copy", "-map_metadata", "-1", "-id3v2_version", "3", "-write_id3v1", "1",
+        "-metadata", f"title={title}",
+        "-metadata", f"album={album}",
+        "-metadata", f"artist={narrator}",
+        "-metadata", f"album_artist={narrator}",
+        "-metadata", f"track={number}/{total}",
+        "-metadata", "genre=Audiobook",
+        "-f", "mp3", str(partial),
+    ]
+    run_hidden(command, timeout=300)
+    os.replace(partial, final)
+
+
+def playlist_text(title: str, entries: list[tuple[float, str, str]]) -> str:
+    """Danh sách phát `.m3u8` của bản xuất; `entries`: (thời lượng giây, tên chương, tên file)."""
+    lines = ["#EXTM3U", f"#PLAYLIST:{title}"]
+    for duration, full_title, name in entries:
+        lines += [f"#EXTINF:{int(round(duration))},{full_title}", name]
+    return "\n".join(lines) + "\n"
+
+
 def export_book(project_root: Path, target_root: Path, *, cover: str | None = None,
                 folder_name: str | None = None) -> dict[str, Any]:
     """`folder_name`: tên thư mục thay cho tên sách - bản xuất cả bộ đặt mỗi phần vào "Phần N - ..."."""
@@ -72,39 +117,157 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     cover_path = _real_cover(project_root, folder) or _cover_file(folder, cover)
     ffmpeg = ffmpeg_executable()
     total = len(chapters)
-    width = max(2, len(str(total)))
-    playlist = ["#EXTM3U", f"#PLAYLIST:{title}"]
-    written: list[str] = []
+    entries: list[tuple[float, str, str]] = []
     for number, chapter in enumerate(chapters, start=1):
         source = store.chapter_audio_path(project_root, chapter["id"])
         if source is None:
             continue
-        name = f"{number:0{width}d} - {safe_name(chapter['fullTitle'], 90)}.mp3"
-        final = folder / name
-        partial = folder / f"{name}.part"
-        command = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(source)]
+        name = chapter_file_name(number, total, chapter["fullTitle"])
+        write_chapter(ffmpeg, source, folder / name, cover_path, title=chapter["fullTitle"], album=title,
+                      narrator=narrator, number=number, total=total)
+        entries.append((chapter["duration"], chapter["fullTitle"], name))
+    (folder / f"{safe_name(title)}.m3u8").write_text(playlist_text(title, entries), encoding="utf-8")
+    return {"folder": str(folder), "files": len(entries),"chaptersTotal": summary["chapters"]["total"]}
+
+
+# ---- M4B: cả cuốn trong một file, có mục lục chương ------------------------------------------------------------------
+# Trình phát sách nói (Apple Books, Smart AudioBook Player, BookPlayer...) đọc `.m4b` là MỘT cuốn có danh sách chương, nhớ chỗ
+# nghe theo cuốn. Ghép là giải mã từng chương ra PCM rồi đổ liên tục vào MỘT bộ mã hoá AAC: đếm mẫu đi qua nên mốc chương đúng
+# tới từng mẫu (không tin thời lượng ước của DB hay của container), không có khoảng câm/lệch như nối các đoạn AAC mã hoá riêng.
+# Lượt hai chỉ chép luồng (không mã hoá lại) để gắn mục lục chương, bìa và tag.
+
+M4B_EXTENSION = ".m4b"
+# AAC-LC 64 kb/s cho giọng đọc mono đã nghe như bản gốc (MP3 chương của dây chuyền là giọng nói, không phải nhạc) và chỉ
+# ~29 MB một giờ - cuốn 20 giờ vừa ~600 MB. Nguồn stereo (hai kênh khác nhau) mới cần 96 kb/s để không vỡ tiếng.
+_AAC_BITRATE = {1: "64k", 2: "96k"}
+_CHUNK = 1 << 16
+_HIDDEN = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
+
+
+def _audio_layout(ffmpeg: str, source: Path) -> tuple[int, int]:
+    """(tần số mẫu, số kênh 1|2) của một file, đọc từ dòng "Audio:" ffmpeg in khi chỉ mở file (app không mang ffprobe)."""
+    probe = run_hidden([ffmpeg, "-hide_banner", "-i", str(source)], timeout=60, check=False)
+    match = re.search(r"Audio: [^\n]*?(\d+) Hz, ([^,\n]+)", probe.stderr)
+    if not match:
+        raise ValueError(f"Không đọc được âm thanh của {source.name}")
+    return int(match.group(1)), 1 if match.group(2).strip() in ("mono", "1 channels") else 2
+
+
+def _ffmetadata(text: str) -> str:
+    """Giá trị trong file ffmetadata: `=`, `;`, `#`, `\\` và xuống dòng phải có `\\` đứng trước."""
+    return re.sub(r"([=;#\\\n])", r"\\\1", text)
+
+
+def _chapter_marks(chapters: list[tuple[str, int, int]], rate: int) -> str:
+    """Mục lục chương dạng ffmetadata: (tên, mẫu đầu, mẫu cuối) đổi ra mili giây."""
+    lines = [";FFMETADATA1"]
+    for title, start, end in chapters:
+        lines += ["", "[CHAPTER]", "TIMEBASE=1/1000", f"START={round(start * 1000 / rate)}",
+                  f"END={round(end * 1000 / rate)}", f"title={_ffmetadata(title)}"]
+    return "\n".join(lines) + "\n"
+
+
+def _tail(errors: Any) -> str:
+    """Đuôi lời ffmpeg in ra (file tạm hứng stderr) - đủ để biết vì sao hỏng."""
+    errors.seek(0)
+    return errors.read().decode("utf-8", "replace").strip()[-300:]
+
+
+def _pump(ffmpeg: str, source: Path, rate: int, channels: int, sink: Any) -> int:
+    """Giải mã một chương ra PCM 16-bit (đổi về `rate`/`channels` chung của cuốn) đổ vào `sink`; trả số byte đã đổ."""
+    with tempfile.TemporaryFile() as errors:
+        decoder = subprocess.Popen([ffmpeg, "-hide_banner", "-loglevel", "error", "-i", str(source), "-map", "0:a:0",
+                                    "-f", "s16le", "-ar", str(rate), "-ac", str(channels), "pipe:1"],
+                                   stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=errors, creationflags=_HIDDEN)
+        assert decoder.stdout is not None
+        size = 0
+        try:
+            while block := decoder.stdout.read(_CHUNK):
+                sink.write(block)
+                size += len(block)
+        finally:
+            decoder.stdout.close()
+            code = decoder.wait()
+        if code != 0:
+            raise ValueError(f"Không đọc được {source.name}: {_tail(errors)}")
+    return size
+
+
+def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = None) -> dict[str, Any]:
+    """Cả cuốn thành một file `<tên sách>.m4b` trong `target_root`: AAC, mỗi chương một mục (tên chương thật), bìa và tag như
+    bản xuất MP3. Chỉ chương đã nghe được, như mọi kiểu xuất; `chaptersTotal` để giao diện nói chương nào chưa có."""
+    summary = store.summarize(project_root)
+    title = summary["title"] or project_root.name
+    narrator = summary["settings"]["narrator"] or ""
+    chapters = [(chapter, path) for chapter in _listenable(project_root)
+                if (path := store.chapter_audio_path(project_root, chapter["id"])) is not None]
+    if not chapters:
+        raise ValueError("Sách chưa có chương nào nghe được để xuất")
+    if not ffmpeg_available():
+        raise ValueError("Máy này chưa có ffmpeg để làm file M4B")
+    ffmpeg = ffmpeg_executable()
+    # Định dạng chung theo chương đầu; chương khác tần số / số kênh được ffmpeg đổi theo lúc giải mã - mốc vẫn đúng.
+    rate, channels = _audio_layout(ffmpeg, chapters[0][1])
+    target_root.mkdir(parents=True, exist_ok=True)
+    final = target_root / f"{safe_name(title)}{M4B_EXTENSION}"
+    # File trung gian nằm cạnh file đích (cùng ổ - cuốn dài ra vài trăm MB), thư mục tạm tự dọn kể cả khi hỏng.
+    with tempfile.TemporaryDirectory(prefix=".m4b-", dir=target_root) as scratch:
+        work = Path(scratch)
+        audio = work / "audio.m4a"
+        with tempfile.TemporaryFile() as errors:
+            encoder = subprocess.Popen([ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-f", "s16le", "-ar", str(rate),
+                                        "-ac", str(channels), "-i", "pipe:0", "-c:a", "aac", "-b:a", _AAC_BITRATE[channels],
+                                        "-f", "mp4", str(audio)],
+                                       stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=errors, creationflags=_HIDDEN)
+            assert encoder.stdin is not None
+            marks: list[tuple[str, int, int]] = []
+            frame = 2 * channels
+            position = 0
+            fed = False
+            try:
+                for chapter, source in chapters:
+                    length = _pump(ffmpeg, source, rate, channels, encoder.stdin) // frame
+                    marks.append((chapter["fullTitle"], position, position + length))
+                    position += length
+                encoder.stdin.close()
+                fed = True
+            except OSError as error:
+                # Bộ mã hoá chết giữa chừng thì ống bị đóng (Windows báo EINVAL); lý do thật nằm trong lời nó in.
+                raise ValueError(f"Không mã hoá được AAC: {_tail(errors)}") from error
+            finally:
+                if not fed:
+                    encoder.kill()
+                    encoder.wait()
+            if encoder.wait() != 0:
+                raise ValueError(f"Không mã hoá được AAC: {_tail(errors)}")
+        meta = work / "chapters.txt"
+        meta.write_bytes(_chapter_marks(marks, rate).encode("utf-8"))
+        cover_path = covers.cover_file(project_root) or _cover_file(work, cover)
+        partial = final.with_name(final.name + ".part")
+        command = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(audio), "-f", "ffmetadata", "-i", str(meta)]
         if cover_path:
-            command += ["-i", str(cover_path), "-map", "0:a", "-map", "1:v", "-c:v", "copy",
-                        "-disposition:v", "attached_pic", "-metadata:s:v", "title=Album cover",
-                        "-metadata:s:v", "comment=Cover (front)"]
+            command += ["-i", str(cover_path), "-map", "0:a", "-map", "2:v", "-c:v", "copy", "-disposition:v", "attached_pic"]
         else:
             command += ["-map", "0:a"]
         command += [
-            "-c:a", "copy", "-map_metadata", "-1", "-id3v2_version", "3", "-write_id3v1", "1",
-            "-metadata", f"title={chapter['fullTitle']}",
+            # Tag chung lấy từ file mục lục (không có gì) thay vì từ file trung gian; `-map_metadata -1` thì ffmpeg bỏ luôn tên chương.
+            "-c:a", "copy", "-map_metadata", "1", "-map_chapters", "1",
+            "-metadata", f"title={title}",
             "-metadata", f"album={title}",
             "-metadata", f"artist={narrator}",
             "-metadata", f"album_artist={narrator}",
-            "-metadata", f"track={number}/{total}",
             "-metadata", "genre=Audiobook",
-            "-f", "mp3", str(partial),
+            # Bộ ghi "ipod" là bộ ffmpeg dùng cho .m4b; nhãn "M4B " để Apple Books / iTunes xếp vào sách nói, không phải nhạc.
+            "-brand", "M4B ", "-f", "ipod", str(partial),
         ]
-        run_hidden(command, timeout=300)
+        try:
+            run_hidden(command, timeout=3600)
+        except subprocess.CalledProcessError as error:
+            partial.unlink(missing_ok=True)
+            raise ValueError(f"Không ghép được file M4B: {(error.stderr or '').strip()[-300:]}") from error
         os.replace(partial, final)
-        written.append(name)
-        playlist += [f"#EXTINF:{int(round(chapter['duration']))},{chapter['fullTitle']}", name]
-    (folder / f"{safe_name(title)}.m3u8").write_text("\n".join(playlist) + "\n", encoding="utf-8")
-    return {"folder": str(folder), "files": len(written), "chaptersTotal": summary["chapters"]["total"]}
+    return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size,
+            "chapters": len(marks), "chaptersTotal": summary["chapters"]["total"]}
 
 
 def _title_of(project: Path) -> str:

@@ -1086,7 +1086,7 @@ export function PlayerProvider({
         }
         const caughtUp = refs.current.book?.complete === false;
         setAtEnd(caughtUp ? "caughtUp" : "finished");
-        if (caughtUp) caughtUpToast("Chương tiếp theo sẽ nghe được khi Studio làm xong.");
+        if (caughtUp) caughtUpToast("Chương tiếp theo sẽ nghe được khi máy làm xong chương ấy.");
         else finishedToast();
       }),
       engine.on("error", () => {

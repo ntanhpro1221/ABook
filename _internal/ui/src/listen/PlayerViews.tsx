@@ -48,7 +48,7 @@ import { COARSE, EXTEND_GESTURE } from "./extendGesture";
 import { useBookMusic } from "./EditBook";
 import { canPlay, otherBooksToHear, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
-import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
+import { SLEEP_CHOICES, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, voiceSections } from "./voiceGroups";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, voiceCaption } from "./readAloudVoice";
@@ -652,17 +652,105 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
 
 export function SleepMenu() {
   const { sleep, setSleep, extendSleep, options, sleepStoppedAt, lastSleepMinutes, track } = usePlayer();
-  const [custom, setCustom] = useState(lastSleepMinutes || 20);
   // Thẻ "Tối qua" chỉ đáng nhắc khi người nghe đã từng có đêm nào được ghi lại (chưa có thì nhắc là nhắc một thứ họ chưa thấy bao giờ).
   const hadNight = Boolean(useLastNight().data);
-  const counting = sleep.kind === "minutes" && sleep.since !== null;
-  const now = useTicker(counting);
+  const now = useTicker(sleep.kind === "minutes" && sleep.since !== null);
+  const recentlyStopped = sleep.kind === "off" && sleepStoppedAt !== null && now - sleepStoppedAt < 30 * 60_000;
+  return (
+    <SleepPicker
+      sleep={sleep}
+      now={now}
+      disabled={!track}
+      customStart={lastSleepMinutes || 20}
+      extendMinutes={options.extendMinutes}
+      onExtend={() => extendSleep()}
+      onSet={setSleep}
+      idle={
+        recentlyStopped ? (
+          <div className="px-2 pb-2 pt-1.5">
+            <div className="text-sm">
+              Hẹn giờ đã tắt tiếng lúc{" "}
+              <span className="tabular font-semibold">{new Date(sleepStoppedAt!).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>.
+            </div>
+            <Popover.Close asChild>
+              <button
+                type="button"
+                onClick={() => setSleep({ kind: "minutes", minutes: lastSleepMinutes })}
+                className="mt-2 h-9 w-full rounded-lg bg-accent-soft text-sm font-semibold text-accent-text"
+              >
+                Bật lại {lastSleepMinutes} phút
+              </button>
+            </Popover.Close>
+          </div>
+        ) : null
+      }
+      note={
+        <>
+          Tiếng nhỏ dần {options.fadeSeconds} giây trước khi dừng. Lúc đó {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút.
+          {hadNight && " Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ."}
+        </>
+      }
+    />
+  );
+}
+
+/**
+ * Hẹn giờ tắt cho loa / TV đang phát (thanh "Đang phát trên…" của máy tính và điện thoại): cùng nút, cùng lựa chọn với hẹn
+ * giờ của trình phát ở đây, nhưng máy giữ phiên phát mới là bên đếm - nút chỉ đọc lại và gửi lệnh.
+ */
+export function RemoteSleepMenu({ sleep, name, onSet }: { sleep: SleepMode; name: string; onSet: (request: SleepRequest) => void }) {
+  const { options } = usePlayer();
+  const now = useTicker(sleep.kind === "minutes" && sleep.since !== null);
+  return (
+    <SleepPicker
+      sleep={sleep}
+      now={now}
+      name={name}
+      customStart={20}
+      extendMinutes={options.extendMinutes}
+      onExtend={() => {
+        const longer = sleepExtended(sleep, options.extendMinutes, sleep.kind === "minutes" && sleep.since !== null, now);
+        if (longer.kind === "minutes") onSet({ kind: "minutes", minutes: (sleepLeftMs(longer, now) ?? 0) / 60_000 });
+      }}
+      onSet={onSet}
+      note={`Hết giờ thì ${name} tạm dừng, chỗ đang nghe được lưu.`}
+    />
+  );
+}
+
+/** Nút hẹn giờ và bảng chọn giờ: dùng chung cho trình phát ở đây (SleepMenu) và loa / TV (RemoteSleepMenu). */
+function SleepPicker({
+  sleep,
+  now,
+  name,
+  disabled = false,
+  customStart,
+  extendMinutes,
+  onExtend,
+  onSet,
+  idle = null,
+  note,
+}: {
+  sleep: SleepMode;
+  now: number;
+  /** Thiết bị đang phát (loa / TV): tên đi vào nhãn đọc màn hình. */
+  name?: string;
+  disabled?: boolean;
+  customStart: number;
+  extendMinutes: number;
+  onExtend: () => void;
+  onSet: (request: SleepRequest) => void;
+  /** Hiện thay phần "đang hẹn" khi chưa hẹn gì. */
+  idle?: ReactNode;
+  note: ReactNode;
+}) {
+  const [custom, setCustom] = useState(customStart);
   const active = sleep.kind !== "off";
-  const recentlyStopped = !active && sleepStoppedAt !== null && now - sleepStoppedAt < 30 * 60_000;
   const left = sleepLeftMs(sleep, now);
+  const spoken = active ? sleepSpoken(sleep, now) : "Hẹn giờ tắt";
   return (
     <MenuShell
-      label={active ? sleepSpoken(sleep, now) : "Hẹn giờ tắt"}
+      label={name ? `${spoken} trên ${name}` : spoken}
       active={active}
       width="w-64"
       focusSelector="[data-current-choice]"
@@ -688,44 +776,30 @@ export function SleepMenu() {
             <Popover.Close asChild>
               <button
                 type="button"
-                onClick={() => extendSleep()}
+                onClick={onExtend}
                 className="h-9 flex-1 rounded-lg bg-accent-soft text-sm font-semibold text-accent-text hover:brightness-95"
               >
-                +{options.extendMinutes} phút
+                +{extendMinutes} phút
               </button>
             </Popover.Close>
             <Popover.Close asChild>
-              <button type="button" onClick={() => setSleep({ kind: "off" })} className="h-9 flex-1 rounded-lg text-sm font-medium text-danger hover:bg-hover">
+              <button type="button" onClick={() => onSet({ kind: "off" })} className="h-9 flex-1 rounded-lg text-sm font-medium text-danger hover:bg-hover">
                 Tắt hẹn giờ
               </button>
             </Popover.Close>
           </div>
         </div>
-      ) : recentlyStopped ? (
-        <div className="px-2 pb-2 pt-1.5">
-          <div className="text-sm">
-            Hẹn giờ đã tắt tiếng lúc{" "}
-            <span className="tabular font-semibold">{new Date(sleepStoppedAt!).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>.
-          </div>
-          <Popover.Close asChild>
-            <button
-              type="button"
-              onClick={() => setSleep({ kind: "minutes", minutes: lastSleepMinutes })}
-              className="mt-2 h-9 w-full rounded-lg bg-accent-soft text-sm font-semibold text-accent-text"
-            >
-              Bật lại {lastSleepMinutes} phút
-            </button>
-          </Popover.Close>
-        </div>
-      ) : null}
+      ) : (
+        idle
+      )}
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? "Đặt lại" : "Dừng phát sau"}</div>
       <div className="grid grid-cols-4 gap-1 p-1">
         {SLEEP_CHOICES.map((minutes) => (
           <Popover.Close asChild key={minutes}>
             <button
               type="button"
-              disabled={!track}
-              onClick={() => setSleep({ kind: "minutes", minutes })}
+              disabled={disabled}
+              onClick={() => onSet({ kind: "minutes", minutes })}
               aria-pressed={sleep.kind === "minutes" && sleep.minutes === minutes}
               data-current-choice={sleep.kind === "minutes" && sleep.minutes === minutes ? "" : undefined}
               className={cn(
@@ -761,8 +835,8 @@ export function SleepMenu() {
         <Popover.Close asChild>
           <button
             type="button"
-            disabled={!track}
-            onClick={() => setSleep({ kind: "minutes", minutes: custom })}
+            disabled={disabled}
+            onClick={() => onSet({ kind: "minutes", minutes: custom })}
             className="h-9 rounded-lg bg-hover px-3 text-sm font-medium hover:bg-line disabled:opacity-40"
           >
             Đặt
@@ -773,18 +847,15 @@ export function SleepMenu() {
         <Popover.Close asChild>
           <button
             type="button"
-            disabled={!track}
-            onClick={() => setSleep({ kind: "chapter" })}
+            disabled={disabled}
+            onClick={() => onSet({ kind: "chapter" })}
             className="h-9 w-full rounded-lg bg-hover text-sm font-medium hover:bg-line disabled:opacity-40"
           >
             Dừng khi hết chương này
           </button>
         </Popover.Close>
       </div>
-      <p className="px-2 pb-1 pt-2 text-xs leading-snug text-fg-2">
-        Tiếng nhỏ dần {options.fadeSeconds} giây trước khi dừng. Lúc đó {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút.
-        {hadNight && " Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ."}
-      </p>
+      <p className="px-2 pb-1 pt-2 text-xs leading-snug text-fg-2">{note}</p>
     </MenuShell>
   );
 }
@@ -1681,7 +1752,7 @@ function CaughtUpNotice() {
   if (atEnd !== "caughtUp") return null;
   return (
     <p className="mt-3 rounded-xl bg-hover px-3 py-2 text-center text-sm text-fg-2">
-      Đã nghe hết phần đã có. Chương tiếp theo nghe được khi Studio làm xong.
+      Đã nghe hết phần đã có. Chương tiếp theo nghe được khi máy làm xong chương ấy.
     </p>
   );
 }

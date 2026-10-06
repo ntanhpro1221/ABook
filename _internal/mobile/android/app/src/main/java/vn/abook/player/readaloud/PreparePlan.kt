@@ -98,17 +98,18 @@ object PreparePlan {
     /** Như trình phát ước đoạn chưa đọc (readAloud.ts, prepare.py). */
     const val CHARS_PER_SECOND = 14.0
     /** Giọng chạy trên máy (không cần mạng): không đòi Wi-Fi. */
-    private val LOCAL = setOf("device", "vieneu")
+    private val LOCAL = setOf("device", "vieneu", "supertonic")
 
     fun online(voice: String): Boolean = voice.substringBefore(':') !in LOCAL
 
     /**
-     * Byte bộ đệm cho mỗi giây nghe. Giọng chạy trên máy ghi WAV 16-bit đơn kênh: VieNeu Turbo 48 kHz, Nano 24 kHz, giọng của máy ~24 kHz (VieNeu chưa rõ loại thì
-     * tính như Turbo cho chắc). Giọng trực tuyến ghi MP3 48 kbit/s.
+     * Byte bộ đệm cho mỗi giây nghe. Giọng chạy trên máy ghi WAV 16-bit đơn kênh: VieNeu Turbo 48 kHz, Nano 24 kHz, Supertonic 44,1 kHz, giọng của máy ~24 kHz
+     * (VieNeu chưa rõ loại thì tính như Turbo cho chắc). Giọng trực tuyến ghi MP3 48 kbit/s.
      */
     fun bytesPerSecond(voice: String): Int = when {
         voice.startsWith("vieneu:nano") -> 48_000
         voice.startsWith("vieneu:") -> 96_000
+        voice.startsWith("supertonic:") -> 88_200
         voice.startsWith("device:") -> 48_000
         else -> 6_000
     }

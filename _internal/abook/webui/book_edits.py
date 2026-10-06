@@ -19,6 +19,9 @@ và độ dài, không ký tự điều khiển - và file sai thì bị từ ch
      "chapters": {"<mã chương>": {"title": "Chương 12", "subtitle": "Hồi kết"}},   (mỗi trường tuỳ chọn)
      "skip": {"<mã chương>": ["Dịch: Nhóm Lục Bình"]},          (dòng người nghe chọn bỏ khỏi phần đọc - gợi ý dòng ghi công của bộ
                                                                  nhập sách; màn đọc và đọc to bỏ qua, chữ của sách KHÔNG đổi)
+     "readings": {"Haruto": "Ha-ru-tô"},                         (cách đọc riêng của "Nghe ngay": chữ hiện -> chữ đọc, mỗi khoá MỘT
+                                                                 từ, khớp cả từ, phân biệt hoa thường - readaloud/readings.py;
+                                                                 chỉ giọng đọc đổi, chữ của sách KHÔNG đổi)
      "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<mã chương>:<mili giây đầu mốc>"],
                "pins": {"<mã chương>:<mili giây đầu mốc>": "local:<sha1>"},          (đổi bài một mốc sang bài "Nhạc của tôi")
                "tracks": {"<sha1>": {"ext": "mp3", "title": "...", "creator": "...", "duration": 184.0, "lufs": -14.2}},
@@ -49,6 +52,7 @@ from typing import Any, Callable, Iterable
 from .. import listener_overrides
 from .. import names as renames
 from ..io_utils import atomic_write_bytes
+from ..readaloud import readings as book_readings
 from . import covers, music_plan, store
 
 EDITS_FILE = "edits.json"
@@ -66,8 +70,11 @@ MAX_PINS = 5000
 MAX_SKIP_LINES = 20  # dòng bỏ khỏi phần đọc, mỗi chương
 SKIP_LINE_MAX = 300
 TRACK_TEXT_MAX = 200  # tên bài / nghệ sĩ trong thẻ file nhạc (music_local._TAG_MAX)
+MAX_READINGS = 2000  # cách đọc riêng của một cuốn
+READING_WORD_MAX = NAME_MAX  # chữ hiện của một cách đọc (một từ)
+READING_SPOKEN_MAX = 200  # chữ đọc
 LEVEL_RANGE = (-40.0, -6.0)
-_TOP_KEYS = {"format", "version", "title", "cover", "characters", "chapters", "skip", "music", "wishes"}
+_TOP_KEYS = {"format", "version", "title", "cover", "characters", "chapters", "skip", "readings", "music", "wishes"}
 _COVER_KEYS = {"color", "width", "height", "version"}
 _MUSIC_KEYS = {"enabled", "levelDb", "silenced", "pins", "tracks", "playlist"}
 _TRACK_KEYS = {"ext", "title", "creator", "duration", "lufs"}
@@ -115,12 +122,13 @@ def is_empty(edits: dict[str, Any]) -> bool:
 
 
 def count_applied(edits: dict[str, Any]) -> int:
-    """Số thay đổi "áp ngay" người nghe đã làm: tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt nhạc, mức nhạc,
-    mỗi đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe, danh sách phát đã chọn. Không kể ý muốn chờ Studio (`wishes`) - chúng chưa áp
-    vào đâu cả."""
+    """Số thay đổi "áp ngay" người nghe đã làm: tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, mỗi cách đọc riêng, bật/tắt nhạc, mức
+    nhạc, mỗi đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe, danh sách phát đã chọn. Không kể ý muốn chờ Studio (`wishes`) -
+    chúng chưa áp vào đâu cả."""
     music = edits.get("music") or {}
     return (("title" in edits) + ("cover" in edits) + len(edits.get("characters") or {}) + len(edits.get("chapters") or {})
             + len({line for lines in (edits.get("skip") or {}).values() for line in lines})  # một dòng bỏ ở trăm chương: một thay đổi
+            + len(edits.get("readings") or {})
             + ("enabled" in music) + ("levelDb" in music) + len(music.get("silenced") or []) + len(music.get("pins") or {})
             + ("playlist" in music))
 
@@ -181,6 +189,8 @@ def validate(raw: Any) -> dict[str, Any]:
         out["chapters"] = kept
     if "skip" in raw:
         out["skip"] = _validate_skip(raw["skip"])
+    if "readings" in raw:
+        out["readings"] = validate_readings(raw["readings"])
     if "music" in raw:
         out["music"] = _validate_music(raw["music"])
     if "wishes" in raw:
@@ -218,6 +228,18 @@ def _validate_skip(skip: Any) -> dict[str, list[str]]:
             raise EditsError("Một dòng bỏ khỏi phần đọc trong phần sửa không hợp lệ.")
         out[key] = sorted(lines)
     return out
+
+
+def validate_readings(readings: Any) -> dict[str, str]:
+    """`readings` {chữ hiện: chữ đọc}: chữ hiện là MỘT từ đã sạch (không dấu câu hai đầu, NFC - `readings.is_word`), chữ đọc sạch, không
+    rỗng, khác chữ hiện. Dùng cả cho cách đọc gửi kèm lần "Nghe thử" (chưa lưu)."""
+    if not isinstance(readings, dict) or not readings or len(readings) > MAX_READINGS:
+        raise EditsError("Phần cách đọc riêng không hợp lệ hay quá dài.")
+    for shown, spoken in readings.items():
+        if (not isinstance(shown, str) or not _is_clean(shown, READING_WORD_MAX) or not book_readings.is_word(shown)
+                or not isinstance(spoken, str) or not spoken or not _is_clean(spoken, READING_SPOKEN_MAX) or spoken == shown):
+            raise EditsError("Một cách đọc riêng trong phần sửa không hợp lệ.")
+    return {shown: readings[shown] for shown in sorted(readings)}
 
 
 def _validate_music(music: Any) -> dict[str, Any]:
@@ -313,6 +335,8 @@ def _ordered(edits: dict[str, Any]) -> dict[str, Any]:
         out["chapters"] = {key: edits["chapters"][key] for key in sorted(edits["chapters"], key=int)}
     if edits.get("skip"):
         out["skip"] = {key: sorted(edits["skip"][key]) for key in sorted(edits["skip"], key=int)}
+    if edits.get("readings"):
+        out["readings"] = dict(sorted(edits["readings"].items()))
     if edits.get("music"):
         music = edits["music"]
         out["music"] = {key: music[key] for key in ("enabled", "levelDb", "playlist", "silenced") if key in music}
@@ -393,6 +417,12 @@ def merge(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, An
     skip = {key: sorted({*incoming_skip.get(key, []), *local_skip.get(key, [])}) for key in {*incoming_skip, *local_skip}}
     if skip:
         out["skip"] = skip
+    # Cách đọc riêng: như tên nhân vật - từ nào cả hai cùng đặt thì cách của máy này thắng.
+    readings = {**(incoming.get("readings") or {}), **(local.get("readings") or {})}
+    conflicts += sum(1 for shown, spoken in (local.get("readings") or {}).items()
+                     if shown in (incoming.get("readings") or {}) and incoming["readings"][shown] != spoken)
+    if readings:
+        out["readings"] = dict(sorted(readings.items()))
     music: dict[str, Any] = {}
     local_music, incoming_music = local.get("music") or {}, incoming.get("music") or {}
     for field in ("enabled", "levelDb", "playlist"):
@@ -801,6 +831,43 @@ def set_skip_line(folder: Path, chapter_ids: Iterable[int], line: str, skip: boo
     return out
 
 
+def readings_view(edits: dict[str, Any]) -> dict[str, Any]:
+    """Danh sách "Cách đọc tên" của hộp sửa sách: [{surface, spoken}] theo thứ tự chữ hiện."""
+    return {"readings": [{"surface": shown, "spoken": spoken} for shown, spoken in sorted((edits.get("readings") or {}).items())]}
+
+
+def clean_reading(shown: Any, spoken: Any) -> tuple[str, str]:
+    """Chữ người gõ ở "Đọc từ này là…" -> (chữ hiện, chữ đọc) đã làm sạch; chữ hiện không phải MỘT từ: `EditsError`. Chữ đọc rỗng là bỏ."""
+    word = clean_text(shown, READING_WORD_MAX)
+    if not book_readings.is_word(word):
+        start, end = book_readings.core_span(word)
+        word = word[start:end]  # người chạm vào "Haruto," - cách đọc đặt cho chính từ ấy, không dính dấu câu
+    if not word or not book_readings.is_word(word):
+        raise EditsError("Chỉ đặt được cách đọc cho MỘT từ.")
+    return word, clean_text(spoken, READING_SPOKEN_MAX)
+
+
+def set_reading(folder: Path, shown: Any, spoken: Any) -> dict[str, Any]:
+    """Đặt (hay bỏ - chữ đọc rỗng / đúng chữ hiện) cách đọc riêng của một từ cho cả cuốn: chỉ giọng đọc của "Nghe ngay" đổi, chữ của
+    sách không đổi. Trả `readings_view`."""
+    word, said = clean_reading(shown, spoken)
+    with _LOCK:
+        edits = load(folder)
+        readings = dict(edits.get("readings") or {})
+        if not said or said == word:
+            readings.pop(word, None)
+        else:
+            if word not in readings and len(readings) >= MAX_READINGS:
+                raise EditsError(f"Mỗi cuốn đặt được tối đa {MAX_READINGS} cách đọc.")
+            readings[word] = said
+        if readings:
+            edits["readings"] = dict(sorted(readings.items()))
+        else:
+            edits.pop("readings", None)
+        _write(folder, edits)
+    return readings_view(edits)
+
+
 def set_chapter_title(folder: Path, chapter_id: int, title: str | None, subtitle: str | None = None) -> dict[str, Any]:
     """Đặt lại tên chương `chapter_id`: `title` (nhãn như "Chương 12") và/hoặc `subtitle` (tên phụ, "" là bỏ tên phụ).
     Cả hai trống (`title` rỗng/None và `subtitle` None) là trở về tên của người làm sách. Trả {chapterId, title, subtitle,
@@ -987,6 +1054,102 @@ def set_music(folder: Path, body: dict[str, Any],
         return music_view(book, edits)
 
 
+def subtract(folder: Path, sent: dict[str, Any], sent_cover: bytes | None) -> int:
+    """Gỡ khỏi lớp sửa của `folder` đúng những gì đã gửi đi (`sent`, chụp lúc đóng gói; `sent_cover`: byte bìa đã gửi) - máy nhận
+    đã giữ chúng. Khoá người dùng đổi tiếp SAU lúc chụp (giá trị khác) thì ở lại, lần sau gửi tiếp. Cùng luật với BookEdits.subtract
+    (Kotlin), cộng dòng bỏ khỏi phần đọc. Trả số thay đổi còn lại."""
+    folder = Path(folder)
+    with _LOCK:
+        edits = load(folder)
+        before = pinned_files(edits)
+        for key in ("title", "cover"):
+            if key not in sent or key not in edits or edits[key] != sent[key]:
+                continue
+            if key == "cover" and isinstance(sent[key], dict):
+                mine = folder / EDITS_COVER
+                if sent_cover is None or not mine.is_file() or mine.read_bytes() != sent_cover:
+                    continue
+            edits.pop(key)
+
+        def remove_equal(mine: dict[str, Any] | None, theirs: dict[str, Any] | None) -> None:
+            for key in list(mine or {}):
+                if key in (theirs or {}) and mine[key] == theirs[key]:
+                    del mine[key]
+
+        remove_equal(edits.get("characters"), sent.get("characters"))
+        for key in list(edits.get("chapters") or {}):
+            remove_equal(edits["chapters"][key], (sent.get("chapters") or {}).get(key))
+            if not edits["chapters"][key]:
+                del edits["chapters"][key]
+        for key in list(edits.get("skip") or {}):
+            gone = set((sent.get("skip") or {}).get(key) or [])
+            edits["skip"][key] = [line for line in edits["skip"][key] if line not in gone]
+            if not edits["skip"][key]:
+                del edits["skip"][key]
+        music, sent_music = edits.get("music"), sent.get("music")
+        if music and sent_music:
+            for field in ("enabled", "levelDb", "playlist"):
+                if field in sent_music and field in music and music[field] == sent_music[field]:
+                    del music[field]
+            kept = [key for key in music.get("silenced") or [] if key not in set(sent_music.get("silenced") or [])]
+            if kept:
+                music["silenced"] = kept
+            else:
+                music.pop("silenced", None)
+            remove_equal(music.get("pins"), sent_music.get("pins"))
+            if music.get("pins"):
+                used = {link[len(music_plan.LOCAL_PREFIX):] for link in music["pins"].values()}
+                music["tracks"] = {sha: info for sha, info in (music.get("tracks") or {}).items() if sha in used}
+            else:
+                music.pop("pins", None)
+                music.pop("tracks", None)
+            if not music:
+                edits.pop("music")
+        wishes = edits.get("wishes")
+        if wishes:
+            from . import book_wishes
+
+            sent_wishes = sent.get("wishes") or {}
+            for section in book_wishes.SECTIONS:
+                remove_equal(wishes.get(section), sent_wishes.get(section))
+                if section in wishes and not wishes[section]:
+                    del wishes[section]
+            if book_wishes.ALIASES in wishes:
+                gone_aliases = sent_wishes.get(book_wishes.ALIASES) or []
+                wishes[book_wishes.ALIASES] = [item for item in wishes[book_wishes.ALIASES] if item not in gone_aliases]
+                if not wishes[book_wishes.ALIASES]:
+                    del wishes[book_wishes.ALIASES]
+            if not wishes:
+                edits.pop("wishes")
+        for key in ("characters", "chapters", "skip"):
+            if key in edits and not edits[key]:
+                del edits[key]
+        save(folder, edits)
+        after = set(pinned_files(edits))
+        dropped = [name for name in before if name not in after]
+        if dropped:
+            _drop_unused(folder, _base(folder), dropped)
+        return count(edits)
+
+
+def layer_files(folder: Path, edits: dict[str, Any]) -> dict[str, Path | bytes]:
+    """Các mục của lớp sửa khi đóng vào một file zip (file `.abook` v4, hay gói gửi về máy giữ sách): `edits.json` (byte), bìa sửa
+    và file các bài nhạc người nghe đã ghim (đường dẫn trong thư mục sách). Lớp sửa rỗng: không mục nào. Thiếu file: `EditsError`."""
+    folder = Path(folder)
+    if is_empty(edits):
+        return {}
+    files: dict[str, Path | bytes] = {EDITS_FILE: dump(edits)}
+    if isinstance(edits.get("cover"), dict):
+        files[EDITS_COVER] = folder / EDITS_COVER
+        if not files[EDITS_COVER].is_file():
+            raise EditsError("Thiếu ảnh bìa trong phần sửa của sách.")
+    for name in pinned_files(edits):
+        files[name] = folder.joinpath(*name.split("/"))
+        if not files[name].is_file():
+            raise EditsError("Thiếu file bài nhạc người nghe đã chọn trong thư mục sách.")
+    return files
+
+
 def clear(folder: Path) -> None:
     """Bỏ mọi thay đổi của người nghe: sách trở về đúng như người làm sách đã đóng gói (kể cả file các bài đã ghim)."""
     with _LOCK:
@@ -1136,7 +1299,8 @@ def fold_edits(project: Path, edits: dict[str, Any], *, cover: bytes | None = No
                my_music: Any = None) -> dict[str, Any]:
     """Áp phần sửa `edits` (đã `validate`) vào dự án bằng ĐÚNG những hàm Studio dùng: tên sách (store.set_display_title), bìa
     (covers), tên nhân vật (names.set_name), tên chương (store.set_chapter_title), nhạc nền (music_plan.write_overrides).
-    Thay đổi nào không còn chỗ (nhân vật / chương không có trong dự án, nhạc chưa dựng) thì bỏ qua và đếm. Ý muốn chờ Studio
+    Thay đổi nào không còn chỗ (nhân vật / chương không có trong dự án, nhạc chưa dựng; cách đọc riêng của "Nghe ngay" - dự án đọc tên ở
+    Studio) thì bỏ qua và đếm. Ý muốn chờ Studio
     (`wishes`) thành yêu cầu của dự án qua `book_wishes.fold`, không áp. Trả {"applied", "skipped",
     "music": có đổi lựa chọn nhạc không (người gọi dựng lại rãnh nhạc), "requests": số ý muốn đã thành yêu cầu, "reasons":
     lý do từng bài ghim bị bỏ qua (chỉ có khi có)}. `cover`: byte ảnh bìa mới (khi `edits["cover"]` là đối tượng). Bài nhạc
@@ -1169,6 +1333,7 @@ def fold_edits(project: Path, edits: dict[str, Any], *, cover: bytes | None = No
             continue
         renames.set_name(project, name, shown, original)
         applied += 1
+    skipped += len(edits.get("readings") or {})
     local = chapter_resolver(project)
     for key, entry in (edits.get("chapters") or {}).items():
         target = local(key)

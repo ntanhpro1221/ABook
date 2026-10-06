@@ -96,7 +96,7 @@ export const androidSource: ListenSource = {
   // "Nghe ngay": lõi native tự đọc chương chữ bằng giọng của máy (TextToSpeech); JS chỉ hỏi giọng và mốc (android/readAloud.ts).
   readAloudVoices: async () => (await ReadAloud.voices()).voices,
   readAloudTimings: (bookId, chapterId) => ReadAloud.script({ bookId, chapterId }),
-  readAloudSample: async (voice, text) => Capacitor.convertFileSrc((await ReadAloud.sample({ voice, text })).path),
+  readAloudSample: async (voice, text, options) => Capacitor.convertFileSrc((await ReadAloud.sample({ voice, text, ...options })).path),
   // "Làm trước": việc nền native đọc sẵn các chương tới (khi đang sạc, Wi-Fi) để nghe không cần mạng hay không phải chờ giọng chậm.
   ...phonePrepare(),
   textImport: phoneTextImport,
@@ -139,10 +139,14 @@ export const androidSource: ListenSource = {
     const reply = await EbookLibrary.saveBook({ id, as: options?.as });
     return { saved: reply.saved, file: reply.name, size: reply.size, edits: reply.edits };
   },
+  shareBook: async (id) => {
+    await EbookLibrary.shareBook({ id });
+  },
   records: {
     create: async (id, name) => (await EbookLibrary.createRecord({ id, name })).records,
     activate: async (id, record) => (await EbookLibrary.activateRecord({ id, record })).records,
     rename: async (id, record, name) => (await EbookLibrary.renameRecord({ id, record, name })).records,
     remove: async (id, record) => (await EbookLibrary.deleteRecord({ id, record })).records,
+    move: async (id, record, book) => (await EbookLibrary.moveRecord({ id, record, book })).records,
   },
 };

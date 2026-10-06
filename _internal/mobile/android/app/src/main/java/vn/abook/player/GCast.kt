@@ -63,6 +63,13 @@ object GCast {
         val tick: Int = 250, // luồng đọc tỉnh dậy mỗi chừng ấy để gửi PING, xem còn nghe được không
     )
 
+    /** `volume` của RECEIVER_STATUS -> 0-100; null khi thiết bị không cho chỉnh ("fixed": loa ngoài, TV giữ âm lượng riêng). */
+    fun volumeOf(volume: JSONObject): Int? {
+        if (volume.optString("controlType") == "fixed") return null
+        val level = volume.optDouble("level", Double.NaN)
+        return if (level.isNaN()) null else Math.round(level.coerceIn(0.0, 1.0) * 100).toInt()
+    }
+
     // ---- CastMessage (protobuf viết tay) -----------------------------------------------------------------------------
 
     private fun varint(number: Int): ByteArray {
@@ -369,6 +376,9 @@ class GoogleCast(renderer: Dlna.Renderer, private val timing: GCast.Timing = GCa
     private var entry: JSONObject? = null
     private var entryAt = 0L
 
+    // âm lượng thiết bị (RECEIVER_STATUS): 0-100; null khi thiết bị không cho chỉnh ("fixed") hay chưa báo
+    private var level: Int? = null
+
     private fun now() = System.nanoTime() / 1_000_000
 
     // -- kết nối --------------------------------------------------------------------------------------------------------
@@ -542,6 +552,7 @@ class GoogleCast(renderer: Dlna.Renderer, private val timing: GCast.Timing = GCa
         lock.withLock {
             if (request != null) inbox[request]?.add(payload)
             if (message.namespace == GCast.NS_RECEIVER && kind == "RECEIVER_STATUS") {
+                (payload.optJSONObject("status") ?: JSONObject()).optJSONObject("volume")?.let { level = GCast.volumeOf(it) }
                 reattach = onReceiver(payload.optJSONObject("status") ?: JSONObject())
             } else if (message.namespace == GCast.NS_MEDIA && kind == "MEDIA_STATUS") {
                 val list = payload.optJSONArray("status") ?: JSONArray()
@@ -719,6 +730,19 @@ class GoogleCast(renderer: Dlna.Renderer, private val timing: GCast.Timing = GCa
     }
 
     override fun seek(seconds: Double) = media("SEEK", extra = JSONObject().put("currentTime", Math.round(seconds * 100) / 100.0))
+
+    /** Âm lượng thiết bị báo trong RECEIVER_STATUS lần cuối (không hỏi mạng). */
+    override fun volume(): Int? = lock.withLock { level }
+
+    /** SET_VOLUME cho cả thiết bị (kênh receiver), như nút âm lượng của ứng dụng Google Home. */
+    override fun setVolume(percent: Int) {
+        if (lock.withLock { level } == null) super.setVolume(percent)
+        val body = JSONObject().put("type", "SET_VOLUME").put("volume", JSONObject().put("level", percent.coerceIn(0, 100) / 100.0))
+        ask(GCast.NS_RECEIVER, "receiver-0", body, timing.reply) { replies ->
+            for (reply in replies) if (reply.text("type") == "INVALID_REQUEST") throw Dlna.Failure(Dlna.error(402))
+            replies.any { it.text("type") == "RECEIVER_STATUS" }
+        }
+    }
 
     override fun status(): CastStatus = lock.withLock {
         val moment = now()
