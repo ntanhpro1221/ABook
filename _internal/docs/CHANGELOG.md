@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- "Việc cần duyệt": một vai phụ không tên xuất hiện ở nhiều chương (như "lính gác" ở bốn chương, mỗi chỗ một giọng) giờ
+  là một thẻ cho cả cuốn thay vì một thẻ mỗi chương. Thẻ liệt kê mọi câu kèm chương; bỏ chọn câu nào không phải rồi chọn
+  một lần: một nhân vật có sẵn, người kể, hay người mới (gõ tên + giới). "Mỗi chỗ một người" giữ nguyên như máy đang làm.
+  Một nút "Hoàn tác" lấy lại cả nhóm; sách vẫn chạy tiếp, không phải chờ.
+
 ## [0.4.29] - 2026-10-06
 
 ### Studio
