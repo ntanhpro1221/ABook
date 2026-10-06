@@ -39,6 +39,33 @@ class NumpyRandomState(seed: Long) : UniformSource {
     }
 
     override fun next(): Double = randomSample()
+
+    private var gauss = 0.0
+    private var hasGauss = false
+
+    /** `standard_normal()` of the legacy generator (`legacy_gauss`: the polar method, the second value of each pair kept for the next call) - the
+     *  start noise of the desktop's Supertonic. */
+    fun standardNormal(): Double {
+        if (hasGauss) {
+            hasGauss = false
+            return gauss
+        }
+        var x1: Double
+        var x2: Double
+        var r2: Double
+        do {
+            x1 = 2.0 * randomSample() - 1.0
+            x2 = 2.0 * randomSample() - 1.0
+            r2 = x1 * x1 + x2 * x2
+        } while (r2 >= 1.0 || r2 == 0.0)
+        val f = Math.sqrt(-2.0 * Math.log(r2) / r2)
+        gauss = f * x1
+        hasGauss = true
+        return f * x2
+    }
+
+    /** `standard_normal(count).astype(float32)`. */
+    fun standardNormalFloats(count: Int): FloatArray = FloatArray(count) { standardNormal().toFloat() }
 }
 
 /**

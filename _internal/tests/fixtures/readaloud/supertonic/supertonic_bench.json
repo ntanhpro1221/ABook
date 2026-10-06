@@ -1,0 +1,9 @@
+{
+  "about": "Ba đoạn cố định (viết riêng cho bài đo, không lấy từ sách) để đo tốc độ giọng Supertonic: máy tính (scripts/supertonic_bench.py) và điện thoại (androidTest SupertonicBench.kt) đọc đúng các đoạn này. Mỗi đoạn dưới 300 ký tự nên là một khúc, không có số nên không cần bộ chuẩn hoá.",
+  "voice": "F1",
+  "paragraphs": [
+    "Buổi sáng hôm ấy, sương mù phủ kín cả thung lũng. Bà cụ bán xôi đầu ngõ đã dọn hàng từ sớm, tiếng rao vang lên giữa không gian tĩnh lặng của làng quê.",
+    "Anh đứng lặng bên cửa sổ, nhìn những hạt mưa lăn dài trên mặt kính. Lá thư cô gửi vẫn nằm trên bàn, chưa ai mở ra, và anh chẳng biết bắt đầu từ đâu.",
+    "Con đường dẫn lên núi quanh co và dốc đứng. Người dẫn đường kể rằng ngày xưa nơi đây từng có một ngôi làng nhỏ, giờ chỉ còn mấy bức tường đá phủ rêu."
+  ]
+}

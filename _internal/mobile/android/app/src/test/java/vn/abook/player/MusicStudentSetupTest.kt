@@ -21,7 +21,8 @@ import org.junit.Test
 /**
  * Tải gói model của bộ phân tích nhạc (MusicStudentSetup): chỉ tải khi được bấm, ghim cỡ + SHA-256, `.part` rồi mới đổi tên, tải
  * tiếp bằng Range, hỏng thì nói rõ và cho thử lại; tải xong thì cắm bộ phân tích và phân tích nốt bài đã nhập. Máy chủ giả trên
- * localhost (HTTP) với gói nhỏ - cùng đường mã với HTTPS thật.
+ * localhost (HTTP) với gói nhỏ - cùng đường mã với HTTPS thật. Thư viện `ort/...` nằm ở thư mục dùng chung với các giọng (`runtime/`, xem
+ * VieneuModuleTest cho các thứ tự cài / gỡ cùng giọng đọc).
  */
 class MusicStudentSetupTest {
     private lateinit var server: ServerSocket
@@ -104,7 +105,7 @@ class MusicStudentSetupTest {
         open: (File) -> ((File) -> JSONObject?) = { { JSONObject().put("valence", 0.25).put("arousal", -0.5) } },
         files: List<PinnedFiles.Part> = parts,
         supported: Boolean = true,
-    ) = MusicStudentSetup(File(root, "student"), store, open, base, files, supported)
+    ) = MusicStudentSetup(File(root, MusicStudentSetup.FOLDER), store, open, SharedRuntime.inFiles(root), base, files, supported)
 
     private val libPart get() = PinnedFiles.Part("ort/lib.so", digest(lib), lib.size.toLong(), remote = "ort/1/lib.so.gz",
         packed = PinnedFiles.Packed(digest(libGz), libGz.size.toLong()))
@@ -114,7 +115,7 @@ class MusicStudentSetupTest {
         val first = setup(store())
         first.start()
         first.join()
-        assertTrue(File(root, "student/bundle.json").isFile)
+        assertTrue(File(root, "music/student/bundle.json").isFile)
         assertTrue(first.outdatedParts().isEmpty())
         requests.clear()
         val again = setup(store())
@@ -140,6 +141,7 @@ class MusicStudentSetupTest {
         assertTrue(updated.attachIfPresent())
         val status = updated.status()
         assertEquals(status.toString(), "outdated", status.getString("state"))
+        assertFalse("bản cũ vẫn chạy", status.getBoolean("stopped"))
         assertEquals(listOf("Model nghe nhạc"), (0 until status.getJSONArray("outdatedParts").length()).map { status.getJSONArray("outdatedParts").getString(it) })
         assertEquals(small.size.toLong(), status.getLong("outdatedBytes"))
         assertEquals(small.size.toLong(), status.getLong("total"))
@@ -148,8 +150,8 @@ class MusicStudentSetupTest {
         updated.start()
         updated.join()
         assertEquals(listOf("small.json"), requests.toList())
-        assertEquals(small.toList(), File(root, "student/small.json").readBytes().toList())
-        assertEquals(big.toList(), File(root, "student/big.bin").readBytes().toList())
+        assertEquals(small.toList(), File(root, "music/student/small.json").readBytes().toList())
+        assertEquals(big.toList(), File(root, "music/student/big.bin").readBytes().toList())
         assertEquals("ready", updated.status().getString("state"))
         assertTrue(updated.outdatedParts().isEmpty())
     }
@@ -204,9 +206,9 @@ class MusicStudentSetupTest {
         val status = setup.status()
         assertEquals(status.toString(), "ready", status.getString("state"))
         assertEquals(status.getLong("total"), status.getLong("done"))
-        val unpacked = File(root, "student/ort/lib.so")
+        val unpacked = File(root, "runtime/ort/lib.so")
         assertEquals(lib.toList(), unpacked.readBytes().toList())
-        assertFalse("file nén và .part không được để lại", File(root, "student/ort/lib.so.gz").exists() || File(root, "student/ort/lib.so.part").exists() || File(root, "student/ort/lib.so.gz.part").exists())
+        assertFalse("file nén và .part không được để lại", File(root, "runtime/ort/lib.so.gz").exists() || File(root, "runtime/ort/lib.so.part").exists() || File(root, "runtime/ort/lib.so.gz.part").exists())
         assertFalse(".so chỉ-đọc (Android 14+ đòi cho mã nạp động)", unpacked.canWrite())
         assertTrue(setup.complete())
     }
@@ -218,12 +220,12 @@ class MusicStudentSetupTest {
         setup.start()
         setup.join()
         assertEquals("error", setup.status().getString("state"))
-        assertFalse(File(root, "student/ort/lib.so").exists())
+        assertFalse(File(root, "runtime/ort/lib.so").exists())
         broken = false
         setup.start()
         setup.join()
         assertEquals(setup.status().toString(), "ready", setup.status().getString("state"))
-        assertEquals(lib.toList(), File(root, "student/ort/lib.so").readBytes().toList())
+        assertEquals(lib.toList(), File(root, "runtime/ort/lib.so").readBytes().toList())
     }
 
     @Test
@@ -260,8 +262,8 @@ class MusicStudentSetupTest {
         val status = setup.status()
         assertEquals(status.toString(), "ready", status.getString("state"))
         assertEquals(status.getLong("total"), status.getLong("done"))
-        assertEquals(big.toList(), File(root, "student/big.bin").readBytes().toList())
-        assertFalse("không để .part lại", File(root, "student/big.bin.part").exists())
+        assertEquals(big.toList(), File(root, "music/student/big.bin").readBytes().toList())
+        assertFalse("không để .part lại", File(root, "music/student/big.bin.part").exists())
         assertNotNull(store.analyzer)
         assertTrue(store.entries().single().getBoolean("analysed"))
         assertTrue(setup.complete())
@@ -278,7 +280,7 @@ class MusicStudentSetupTest {
 
     @Test
     fun a_partial_download_resumes_with_a_range_request() {
-        val dir = File(root, "student").apply { mkdirs() }
+        val dir = File(root, MusicStudentSetup.FOLDER).apply { mkdirs() }
         File(dir, "big.bin.part").writeBytes(big.copyOf(100_000))
         val setup = setup(store())
         setup.start()
@@ -298,8 +300,8 @@ class MusicStudentSetupTest {
         var status = setup.status()
         assertEquals("error", status.getString("state"))
         assertTrue(status.getString("error"), status.getString("error").contains("mã kiểm"))
-        assertFalse(File(root, "student/big.bin").exists())
-        assertFalse("bản hỏng không được giữ để tải tiếp", File(root, "student/big.bin.part").exists())
+        assertFalse(File(root, "music/student/big.bin").exists())
+        assertFalse("bản hỏng không được giữ để tải tiếp", File(root, "music/student/big.bin.part").exists())
         assertNull("không cắm bộ phân tích từ bản hỏng", store.analyzer)
         broken = false
         setup.start() // "Thử lại"
@@ -331,8 +333,47 @@ class MusicStudentSetupTest {
         val status = setup.status()
         assertEquals("error", status.getString("state"))
         assertTrue(status.getString("error").contains("hop_length"))
-        assertFalse(File(root, "student/big.bin").exists())
+        assertFalse(File(root, "music/student/big.bin").exists())
         assertNull(store.analyzer)
+    }
+
+    @Test
+    fun a_package_from_before_the_shared_folder_says_analysis_is_off_until_the_runtime_is_fetched_again() {
+        // gói cũ: model + thư viện cùng nằm trong thư mục riêng của gói, thư mục dùng chung còn trống
+        val dir = File(root, MusicStudentSetup.FOLDER)
+        File(dir, "ort").mkdirs()
+        File(dir, "big.bin").writeBytes(big)
+        File(dir, "small.json").writeBytes(small)
+        File(dir, "ort/lib.so").writeBytes(lib)
+        PinnedFiles(dir, "").writeStamp((parts + libPart).associate { it.name to it.sha256 })
+        val store = store()
+        val setup = setup(store, files = parts + libPart)
+        assertFalse("không cắm được: thư viện không ở chỗ mới", setup.attachIfPresent())
+        assertNull(store.analyzer)
+        val status = setup.status()
+        assertEquals("outdated", status.getString("state"))
+        assertTrue("thẻ phải nói phân tích nhạc đang tắt", status.getBoolean("stopped"))
+        assertEquals(libGz.size.toLong(), status.getLong("outdatedBytes"))
+        setup.start()
+        setup.join()
+        assertEquals(listOf("ort/1/lib.so.gz"), requests.toList())
+        assertEquals("ready", setup.status().getString("state"))
+        assertFalse(setup.status().getBoolean("stopped"))
+        assertNotNull(store.analyzer)
+        assertFalse("bản cũ trong thư mục riêng được xoá", File(dir, "ort").exists())
+    }
+
+    @Test
+    fun a_package_that_cannot_be_opened_takes_the_shared_runtime_only_when_no_installed_voice_needs_it() {
+        val broken: (File) -> ((File) -> JSONObject?) = { throw IllegalArgumentException("hỏng") }
+        setup(store(), open = broken, files = parts + libPart).apply { start(); join() }
+        assertFalse("không ai cần thì đi", File(root, "runtime/ort/lib.so").exists())
+        // một giọng đọc đang cài (file riêng + dấu của nó trên đĩa) cần thư viện: gói nhạc hỏng bị xoá, thư viện ở lại
+        File(root, "vieneu/voices/v.whl").apply { parentFile.mkdirs() }.writeBytes(ByteArray(10))
+        PinnedFiles(File(root, "vieneu"), "", "module.json").writeStamp(mapOf("voices/v.whl" to "0".repeat(64)))
+        setup(store(), open = broken, files = parts + libPart).apply { start(); join() }
+        assertFalse(File(root, "music/student/big.bin").exists())
+        assertTrue(File(root, "runtime/ort/lib.so").isFile)
     }
 
     @Test

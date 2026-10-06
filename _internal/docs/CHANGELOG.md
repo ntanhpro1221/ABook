@@ -22,6 +22,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Điện thoại
 
+- Giọng Supertonic có cả trên điện thoại, đọc như trên máy tính: 10 giọng nam nữ, âm thanh 44 kHz, số và ngày giờ được đọc thành chữ. Giọng không có sẵn
+  trong app: vào Cài đặt › Nghe, bấm tải "Giọng Supertonic" (khoảng 400 MB), có thanh tiến độ và nút gỡ. Tải xong máy tự đo xem điện thoại đọc kịp
+  không; không kịp thì thẻ nói rõ và chỉ sang "Làm trước" (máy làm sẵn trước khi nghe), hay giọng trực tuyến. Máy tính cũng vậy khi máy chậm.
+- Giọng VieNeu, giọng Supertonic và Phân tích nhạc dùng chung phần chạy model (giọng đọc còn dùng chung bộ đọc số, ngày giờ): tải cái nào trước thì
+  cái sau không tải lại phần ấy, và gỡ một cái không làm hỏng cái còn lại. Ai đã có Giọng VieNeu hay Phân tích nhạc thì sau khi cập nhật bấm tải lại
+  phần dùng chung một lần (khoảng 40 MB với VieNeu, 12 MB với Phân tích nhạc); bản cũ của phần ấy được xoá khỏi máy.
 - "Xuất MP3 để nghe ở app khác" có ở điện thoại (menu "…" của trang sách), ra đúng bản xuất của máy tính: một thư mục mang tên sách, mỗi chương đã xong một file
   MP3 có tên sách, tên chương, giọng kể, số thứ tự và ảnh bìa, kèm danh sách phát. Lần đầu bạn chọn thư mục lưu (vd Music), lần sau máy nhớ; muốn đổi thì bấm
   "Đổi thư mục" lúc đang xuất. Việc chạy nền - ra khỏi app vẫn tiếp, tiến độ và nút "Dừng" ở thông báo. Chương chưa làm xong không có trong bản xuất.
