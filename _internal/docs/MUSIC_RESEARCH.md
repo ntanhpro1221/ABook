@@ -3271,3 +3271,26 @@ Mã + hình: Corpus research/music/level_shape.py, figs/bland_altman_5b6.png, bl
      phải từ nhãn cảm xúc câu của phân tích.
 4. Hệ quả cho thiết kế: hiệu chỉnh chỉ là bước rẻ cho lớp 2. Cả hai lớp đều cần model tốt hơn. Lớp 3 cần nhiều hơn: hiện tại nhãn
    câu app thua cả việc không làm gì có ý nghĩa.
+
+### 06-10 19:5x - GHI TRƯỚC: L2-EST, ước lượng mức chương từ đầu ra đã có + chống nén (Lead 19:4x; CPU)
+- **Đầu vào mỗi chương, mỗi trục V/T** (đều là mức chương = TB theo thời lượng trên khúc app, thang nửa, bỏ chu_thich; đều đã có cho
+  cả 4 bộ 4/5/5b/6):
+  - mô hình: nhãn câu app; P2 Ollama qwen3.5:4b; MLX base_P0; MLX lora1_P2;
+  - chữ (rẻ, từ segments): tỉ lệ thời lượng thoại, số "!" / câu, số "?" / câu, số "…"/"..." / câu.
+- **Mô hình:** ridge, đặc trưng chuẩn hoá theo tập train, alpha = 4 (cố định, không dò), mỗi trục riêng.
+- **Chống nén (CHÍNH):** sau ridge, giãn độ lệch quanh TB train sao cho SD dự đoán TRÊN TRAIN = SD mức đáp án train (khớp phương sai).
+  Kẹp [−1, 1].
+- **Kiểm định:** bỏ-một-truyện (truyện = thư mục sách). Huấn luyện trên mọi chương 4+5+5b+6 trừ các chương cùng truyện, dự đoán chương
+  bị bỏ. Chỉ báo trên các chương 5b+6.
+- **Thước:**
+  - MAE mức: |dự đoán − mức đáp án|, TB chương, TB (V, T);
+  - r mức qua các chương, từng trục;
+  - tỉ số SD dự đoán / SD đáp án.
+- **Cổng thắng (Lead):** MAE mức < 0,20 VÀ r >= 0,80 ở CẢ V và T.
+- **Ghi lại:**
+  - ridge không chống nén;
+  - chỉ nhãn app + hiệu chỉnh tuyến tính (C0, cùng bỏ-một-truyện);
+  - chỉ 4 đầu ra mô hình (bỏ đặc trưng chữ);
+  - từng đầu vào riêng + hiệu chỉnh;
+  - người A-B (trần).
+- Không dò thêm biến thể sau khi thấy số.
