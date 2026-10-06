@@ -3434,3 +3434,16 @@ Mã: Corpus research/music/l3_runs.py (`run <PAIR|VOTE6|3B|P0> <bộ>`, `score`)
 - Valid tách theo truyện: 3/17 truyện.
 - Được 498 cặp train, 126 valid. Nhãn train: V A/B/H 153/153/192, E 122/122/254, T 153/153/192.
 - Nhỏ: nếu thử LoRA so cặp thì nên ghép thêm mọi cặp trong chương, kèm lô 4 bản 3 (scene_book_var).
+
+### 07-10 00:2x - GHI TRƯỚC: SPLIT, phần cắt đều 180 s trong ranh giới app (Lead 00:1x; CPU)
+- **Nền:** app 0.4.31, tức có cờ scene_break (`music_scenes` của dev/scene-break fc3e6486, cờ từ seg_flags.json).
+- **Đo riêng:**
+  - ranh giới do `_split_long` sinh = ranh giới có ở MAX 180 s mà không có ở MAX ∞;
+  - báo số / giờ và độ chính xác P (trúng đáp án, lệch <= 2 câu) của riêng nhóm ấy, so với P của các ranh giới còn lại.
+- **Biến thể:** MAX_SCENE_SECONDS ∈ {180 (app), 240, 300, 420, 600, ∞}, chia đều như cũ.
+- **Chọn và đo:** chọn trên 4+5 theo F1, đo 5b+6.
+- **Cổng "đổi app":** F1 >= app + 0,05 VÀ P >= P app.
+- **Ghi lại:** F1 / P / R / ranh giới/giờ mọi biến thể.
+- **Cảnh báo trước:** `_split_long` vốn để bám thay đổi không khí trong chương (docstring: r trong chương 0,15-0,43 lên 0,39-0,76
+  với khúc ~3 phút), không phải để khớp ranh giới cảnh. Bỏ nó có thể tăng P ranh giới nhưng làm mất hình dạng lớp 3. Nếu biến thể nào
+  qua cổng, phải đo lại r trong chương (P2 trên khúc mới, GPU) trước khi đổi app.
