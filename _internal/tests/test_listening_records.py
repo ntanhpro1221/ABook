@@ -7,13 +7,20 @@ from __future__ import annotations
 
 import json
 import shutil
+import time
 from pathlib import Path
+
+import pytest
 
 from abook.webui.actions import FakeRunner
 from abook.webui.library import book_id
-from abook.webui.listening import DEFAULT_RECORD_NAME, Listening, default_record_id
+from abook.webui.listening import DEFAULT_RECORD_NAME, SYNC_KEYS, Listening, default_record_id
 from abook.webui.server import App, Server
-from tests.test_webui_listen_and_sync import _request, library  # noqa: F401 - library là fixture
+from abook.webui.sync import Devices, SyncApp, SyncServer
+from tests.test_webui_listen_and_sync import _request, _sync_request, library  # noqa: F401 - library là fixture
+
+# Bộ ví dụ dùng chung với test JVM (StoreRecordSyncTest.kt): chuyển hồ sơ rồi đồng bộ, lần chuyển sau thắng.
+MOVE_SYNC = json.loads((Path(__file__).parent / "fixtures" / "listening_records" / "move_sync.json").read_text(encoding="utf-8"))
 
 
 def test_the_old_file_becomes_one_default_record_per_book(tmp_path: Path) -> None:
@@ -126,6 +133,75 @@ def test_old_phones_still_sync_into_the_active_record(tmp_path: Path) -> None:
     listening = Listening(tmp_path / "listening.json")
     listening.merge("sach", {"last": {"chapterId": 1, "seconds": 9.0, "at": 3.0}})
     assert listening.get("sach")["last"]["seconds"] == 9.0 and len(listening.records("sach")) == 1
+
+
+def _listening_from(path: Path, side: dict) -> Listening:
+    """Sổ nghe của máy tính dựng từ một phía của bộ ví dụ: liên kết sách - hồ sơ + lúc chuyển của từng hồ sơ."""
+    records = {record: {"name": name, "createdAt": 0.0, "nameAt": 0.0, "state": {"chapters": {}, "bookmarks": []},
+                        **({"movedAt": side["movedAt"][record]} if record in side["movedAt"] else {})}
+               for record, name in MOVE_SYNC["names"].items()}
+    path.write_text(json.dumps({"version": 2, "records": records, "links": side["links"], "deleted": {}}), encoding="utf-8")
+    return Listening(path)
+
+
+@pytest.mark.parametrize("case", sorted(MOVE_SYNC["cases"]))
+def test_the_later_move_wins_when_the_phone_syncs(tmp_path: Path, case: str) -> None:
+    """Điện thoại chuyển hồ sơ sau lần chuyển máy tính biết: máy tính theo (trước đây máy tính giữ chỗ cũ và lời đáp kéo hồ
+    sơ về cuốn cũ trên điện thoại). Máy tính chuyển sau: lời đáp nói cuốn mới cho điện thoại theo."""
+    spec = MOVE_SYNC["cases"][case]
+    path = tmp_path / "listening.json"
+    listening = _listening_from(path, spec["computer"])
+    body = spec["push"]["body"]
+
+    reply = listening.merge_record(spec["push"]["book"], body["record"], {k: v for k, v in body.items() if k not in SYNC_KEYS},
+                                   name=body["recordName"], name_at=body["nameAt"], active_at=body["activeAt"],
+                                   moved_at=body["movedAt"], deleted=body["deletedRecords"])
+
+    assert {key: reply[key] for key in spec["reply"]} == spec["reply"]
+    assert {book: [record["id"] for record in listening.records(book)] for book in spec["computerAfter"]} == spec["computerAfter"]
+    assert Listening(path).book_of(body["record"]) == spec["reply"]["book"], "lưu xuống đĩa"
+    if case == "phone_moved_later":
+        assert listening.get("sach-moi")["last"]["chapterId"] == 7 and "movedAt" not in listening.get("sach-moi")
+
+
+def test_a_move_here_stamps_the_record_and_its_choice(tmp_path: Path) -> None:
+    listening = Listening(tmp_path / "listening.json")
+    listening.progress("ban-cu", 1, 5.0, 100.0)
+    record = listening.records("ban-cu")[0]["id"]
+    before = time.time()
+
+    listening.move_record(record, "ban-moi")
+
+    reply = listening.merge_record("ban-moi", record, {})
+    assert reply["movedAt"] >= before and reply["active"] == {"record": record, "at": reply["movedAt"]}
+    assert [item["movedAt"] for item in reply["records"]] == [reply["movedAt"]]
+
+
+def test_a_phone_move_reaches_the_computer_through_sync(library, tmp_path: Path) -> None:  # noqa: F811 - fixture
+    """Qua cổng đồng bộ thật: `movedAt` của điện thoại tới merge_record, không lẫn vào trạng thái nghe."""
+    lib, project, listening = library
+    other = project.parent / "sach_hai"
+    shutil.copytree(project, other)
+    listening.progress(book_id(project), 1, 30.0, 100.0)
+    record = listening.records(book_id(project))[0]["id"]
+    devices = Devices(tmp_path / "devices.json")
+    server = SyncServer(SyncApp(lib, listening, devices, "Máy thử"), host="127.0.0.1", port=0).start()
+    try:
+        code = devices.start_pairing()["code"]
+        _status, data, _ = _sync_request(server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        token = json.loads(data)["token"]
+        moved = time.time() + 5
+        body = {"record": record, "recordName": DEFAULT_RECORD_NAME, "nameAt": 0.0, "activeAt": moved, "movedAt": moved,
+                "deletedRecords": {}, "chapters": {}, "bookmarks": []}
+
+        status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{book_id(other)}/state", token, body=body)
+
+        reply = json.loads(data)
+        assert status == 200 and (reply["book"], reply["movedAt"]) == (book_id(other), moved)
+        assert listening.book_of(record) == book_id(other) and listening.records(book_id(project)) == []
+        assert listening.get(book_id(other))["last"]["seconds"] == 30.0 and "movedAt" not in listening.get(book_id(other))
+    finally:
+        server.stop()
 
 
 def test_a_record_moved_here_tells_the_phone_its_new_book(tmp_path: Path) -> None:
