@@ -3447,3 +3447,35 @@ Mã: Corpus research/music/l3_runs.py (`run <PAIR|VOTE6|3B|P0> <bộ>`, `score`)
 - **Cảnh báo trước:** `_split_long` vốn để bám thay đổi không khí trong chương (docstring: r trong chương 0,15-0,43 lên 0,39-0,76
   với khúc ~3 phút), không phải để khớp ranh giới cảnh. Bỏ nó có thể tăng P ranh giới nhưng làm mất hình dạng lớp 3. Nếu biến thể nào
   qua cổng, phải đo lại r trong chương (P2 trên khúc mới, GPU) trước khi đổi app.
+
+### 07-10 00:3x - Kết quả SPLIT (ghi trước eb32a4ef): KHÔNG QUA. Cắt đều là phần lớn ranh giới, và trúng ngang ngẫu nhiên
+Mã: Corpus research/music/seg_split.py.
+
+**Riêng từng nhóm ranh giới của app 0.4.31:**
+
+| nhóm | 5b+6 ranh giới/giờ | P (trúng) | 4+5 /giờ | P |
+|---|---|---|---|---|
+| cắt đều `_split_long` | 17,2 | **0,14** (15/107) | 15,9 | 0,16 (14/90) |
+| còn lại (cờ ngắt, heading, đổi không khí) | 2,6 | **0,81** (13/16) | 3,9 | 0,73 (16/22) |
+
+**Đổi MAX_SCENE_SECONDS (5b+6):**
+
+| MAX | F1 | P | R | /giờ |
+|---|---|---|---|---|
+| 180 (app) | 0,207 | 0,23 | 0,19 | 19,8 |
+| 240 (chọn trên 4+5) | 0,220 | 0,30 | 0,18 | 14,2 -> KHÔNG QUA (+0,013 < +0,05) |
+| 300 | 0,190 | 0,29 | 0,14 | 11,8 |
+| 420 | 0,212 | 0,42 | 0,14 | 8,1 |
+| 600 | 0,207 | 0,53 | 0,13 | 5,8 |
+| ∞ (không cắt đều) | 0,159 | 0,81 | 0,09 | 2,6 |
+
+Đọc:
+1. 87% ranh giới app là cắt đều, và chúng trúng ranh giới cảnh chỉ 14-16%, tức ngẫu nhiên. 13% còn lại (chủ yếu cờ ngắt cảnh) trúng
+   73-81%.
+2. Đổi MAX chỉ đổi P lấy R, F1 gần như đứng yên (0,16-0,22). Không luật đồng hồ nào sửa được phần này, vì vấn đề là VỊ TRÍ cắt, không
+   phải tần suất.
+3. Hệ quả cho app (đề xuất, không tự áp):
+   - (a) Ranh giới có lý do (cờ, heading, đổi không khí) đáng tin: nên ĐỔI BÀI ở đó.
+   - (b) Lần cắt đều nên là thay đổi NHẸ trong cùng bài (đổi lớp / cường độ / đoạn của cùng bản nhạc), không đổi bài. Như vậy vẫn bám
+     được không khí trong chương (lý do có `_split_long`) mà không đổi bài ở chỗ ngẫu nhiên.
+   - (c) Chọn VỊ TRÍ cắt đúng hơn là việc của CS-SEG (LLM), đang chờ GPU.
