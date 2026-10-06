@@ -56,9 +56,9 @@ class ClipReader(
         if (told.add("${provider(failed)}:$kind")) runCatching { notice(noticeFor(failed, problem, next)) }
     }
 
-    fun read(text: String, voiceId: String, origin: String? = null): Clip {
+    fun read(text: String, voiceId: String, origin: String? = null, readings: Map<String, String>? = null): Clip {
         val primary = voiceFor(voiceId)
-        cache.get(primary.id, text, origin)?.let { return it }
+        cache.get(primary.id, text, origin, readings)?.let { return it }
         val chain = ArrayList<Voice>().apply {
             add(primary)
             if (online(primary)) {
@@ -75,7 +75,7 @@ class ClipReader(
         var failed: Voice? = null
         var problem: VoiceException? = null
         for ((index, voice) in chain.withIndex()) {
-            if (index > 0) cache.get(voice.id, text, origin)?.let { clip ->
+            if (index > 0) cache.get(voice.id, text, origin, readings)?.let { clip ->
                 if (failed != null && problem != null) tell(failed!!, problem!!, voice)
                 return clip
             }
@@ -90,7 +90,7 @@ class ClipReader(
             }
             if (failed != null && problem != null) tell(failed!!, problem!!, voice)
             try {
-                return synthesize(voice, text, origin)
+                return synthesize(voice, text, origin, readings)
             } catch (error: VoiceException) {
                 val earlier = first
                 if (!(online(voice) || local(voice)) || index == chain.lastIndex) {
@@ -113,16 +113,16 @@ class ClipReader(
     }
 
     /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng" trong Cài đặt: người nghe muốn nghe chính giọng ấy, hỏng thì phải thấy lỗi). */
-    fun readExactly(text: String, voiceId: String, origin: String? = null): Clip {
+    fun readExactly(text: String, voiceId: String, origin: String? = null, readings: Map<String, String>? = null): Clip {
         val voice = voiceFor(voiceId)
-        return cache.get(voice.id, text, origin) ?: synthesize(voice, text, origin)
+        return cache.get(voice.id, text, origin, readings) ?: synthesize(voice, text, origin, readings)
     }
 
-    private fun synthesize(voice: Voice, text: String, origin: String?): Clip {
+    private fun synthesize(voice: Voice, text: String, origin: String?, readings: Map<String, String>?): Clip {
         val tmp = cache.temp(voice.extension)
         try {
-            val clip = voice.synthesize(text, tmp, origin)
-            return cache.put(voice.id, text, tmp, voice.extension, clip.durationMs, clip.words, origin)
+            val clip = voice.synthesize(text, tmp, origin, readings)
+            return cache.put(voice.id, text, tmp, voice.extension, clip.durationMs, clip.words, origin, readings)
         } catch (error: VoiceException) {
             tmp.delete()
             throw error

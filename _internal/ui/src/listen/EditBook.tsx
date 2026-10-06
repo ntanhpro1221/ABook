@@ -16,6 +16,7 @@ import { MUSIC_CHANGED_EVENT } from "./musicBed";
 import { MyMusicSection, SwapTrack } from "./MyMusic";
 import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
+import { BookReadingsSection } from "./WordReadings";
 
 // Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
 // màn hình cho máy tính và điện thoại - lệnh đi tới `/api/books/<mã>/...`; máy tính là server Python, điện thoại là lõi native
@@ -350,6 +351,11 @@ export function EditBookDialog({
           title={book.stage === "text" ? "Tên chương" : "Tên chương và tên nhân vật"}
           hint={book.stage === "text" ? "Bấm “…” ở dòng chương để đổi tên chương." : "Bấm “…” ở dòng chương để đổi tên chương, “…” ở tab Nhân vật để đổi tên người."}
         />
+        {book.stage === "text" && !workshop && (
+          <Section title="Cách đọc tên" hint="Từ giọng đọc đọc sai (thường là tên riêng) và cách bạn dạy nó đọc - áp cho cả cuốn, chữ trong sách giữ nguyên.">
+            <BookReadingsSection bookId={book.id} />
+          </Section>
+        )}
         {!workshop && (book.edits ?? 0) > 0 && (
           <Section title={`Bỏ mọi thay đổi (${book.edits})`} hint="Sách trở về đúng như người làm sách đã đóng gói.">
             {confirmRevert ? (

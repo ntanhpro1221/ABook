@@ -1,5 +1,5 @@
 import { Locate } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject, type TouchEvent } from "react";
 import { cn } from "@/shared/cn";
 import { excerpt } from "@/shared/format";
 import { useClock } from "./clock";
@@ -192,6 +192,11 @@ export function JumpToPlaying({ onClick, className }: { onClick: () => void; cla
   );
 }
 
+/** Giữ ngón tay trên một chữ chừng này (ms) là mở menu của chữ ấy ("Đọc từ này là…"), như bấm chuột phải trên máy tính. */
+export const LONG_PRESS_MS = 500;
+/** Ngón tay trượt quá chừng này (px) thì là cuộn, không phải giữ. */
+const PRESS_SLOP = 10;
+
 /** Câu đang nghe, chữ đang đọc sáng lên. Một component riêng: đồng hồ khung hình chỉ làm render lại MỘT câu, và chỉ khi sang chữ khác. */
 function LitWords({ text, words }: { text: string; words: WordSpan[] }) {
   const wordIndex = useClock((time) => wordIndexAt(words, time * 1000));
@@ -214,6 +219,7 @@ export function ReadAlongText({
   script,
   playingIndex,
   onTap,
+  onWordMenu,
   focusIndex,
   selected = null,
   speakers = false,
@@ -227,6 +233,8 @@ export function ReadAlongText({
   playingIndex: number;
   /** Bấm vào câu (chuột / chạm: `word` = chữ dưới chỗ bấm, -1 nếu không biết) hay Enter trên câu (`word` -1). Không có: câu không bấm được. */
   onTap?: (index: number, word: number) => void;
+  /** Giữ ngón tay (điện thoại) hay bấm chuột phải (máy tính) vào chữ thứ `word` của câu `index`. Không có: giữ / chuột phải như thường. */
+  onWordMenu?: (index: number, word: number) => void;
   /** Câu nhận Tab khi người dùng chưa tự đi qua câu nào (thường là câu đang đọc / đang nghe). */
   focusIndex: number;
   selected?: number | null;
@@ -255,8 +263,50 @@ export function ReadAlongText({
     else paragraphs.push({ key: segment.paragraph, items: [{ index, segment }] });
   });
 
+  // Giữ ngón tay: hẹn giờ; trượt / nhấc tay sớm thì huỷ. Menu vừa mở thì cú chạm (click) và menu của hệ thống ngay sau đó không tính.
+  const press = useRef<{ timer: number; x: number; y: number } | null>(null);
+  const menuAt = useRef(0);
+  const release = () => {
+    if (press.current) window.clearTimeout(press.current.timer);
+    press.current = null;
+  };
+  useEffect(() => release, []);
+  const justOpened = () => Date.now() - menuAt.current < LONG_PRESS_MS + 300;
+  const openMenu = (element: HTMLElement, index: number, x: number, y: number): boolean => {
+    const word = onWordMenu ? wordAtPoint(element, script.segments[index].text, x, y) : -1;
+    if (word < 0) return false;
+    menuAt.current = Date.now();
+    onWordMenu!(index, word);
+    return true;
+  };
+  const wordMenu = (index: number) =>
+    onWordMenu
+      ? {
+          onContextMenu: (event: MouseEvent<HTMLElement>) => {
+            if (justOpened() || openMenu(event.currentTarget, index, event.clientX, event.clientY)) event.preventDefault();
+          },
+          onTouchStart: (event: TouchEvent<HTMLElement>) => {
+            release();
+            if (event.touches.length !== 1) return;
+            const { clientX: x, clientY: y } = event.touches[0];
+            const element = event.currentTarget;
+            const timer = window.setTimeout(() => {
+              press.current = null;
+              openMenu(element, index, x, y);
+            }, LONG_PRESS_MS);
+            press.current = { x, y, timer };
+          },
+          onTouchMove: (event: TouchEvent<HTMLElement>) => {
+            const touch = event.touches[0];
+            if (press.current && touch && Math.hypot(touch.clientX - press.current.x, touch.clientY - press.current.y) > PRESS_SLOP) release();
+          },
+          onTouchEnd: release,
+          onTouchCancel: release,
+        }
+      : {};
+
   const click = (event: MouseEvent<HTMLElement>, index: number) => {
-    if (!onTap) return;
+    if (!onTap || justOpened()) return;
     // Đang bôi chữ để chép: không nghe.
     if (window.getSelection()?.isCollapsed === false) return;
     onTap(index, wordAtPoint(event.currentTarget, script.segments[index].text, event.clientX, event.clientY));
@@ -284,6 +334,7 @@ export function ReadAlongText({
     "aria-current": index === playingIndex ? ("true" as const) : undefined,
     onFocus: () => setFocused(index),
     onClick: (event: MouseEvent<HTMLElement>) => click(event, index),
+    ...wordMenu(index),
     className: cn(
       // scroll-mt: câu được cuộn tới không nằm khuất dưới thanh đầu dính (soát UX 29-09).
       "scroll-mt-20 rounded-[4px] outline-none [box-decoration-break:clone] focus-visible:ring-2 focus-visible:ring-accent",

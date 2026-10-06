@@ -3,6 +3,7 @@ import { Pause, Play, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
+import type { ReadAloudTry } from "@/listen/readings";
 import { useCast } from "@/listen/source";
 import { cn } from "@/shared/cn";
 import { formatNumber, shownReading } from "@/shared/format";
@@ -250,7 +251,15 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
 
 /** `waiting`: cuốn không có xưởng (file .abook) - chỉ ghi ý muốn chờ Studio; giá trị là lý do chưa nghe thử / chưa dùng chung được
  *  (nút và ô vẫn hiện, mờ đi kèm lý do). */
-export function EditReading({ bookId, item, onDone, fresh, waiting }: { bookId: string; item: NameReading; onDone: () => void; fresh: boolean; waiting?: string }) {
+/** `aloud`: trang nghe, cuốn chưa có xưởng (`waiting`) - "Nghe thử" bằng giọng đọc của máy (listen/readings.ts). */
+export function EditReading({ bookId, item, onDone, fresh, waiting, aloud }: {
+  bookId: string;
+  item: NameReading;
+  onDone: () => void;
+  fresh: boolean;
+  waiting?: string;
+  aloud?: ReadAloudTry;
+}) {
   const client = useQueryClient();
   const when = useWhenApplied(bookId);
   // Ô sửa hiện như dòng bên cạnh (“Rên-ta-rô”, chữ đầu mỗi từ viết hoa - soát UX 30-09); lưu mà chỉ khác hoa thường thì
@@ -335,6 +344,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting }: { bookId: 
     spoken: typed,
     disabled: Boolean(problem),
     unavailable: waiting,
+    aloud,
     onRejected: (message, suggestionText) => {
       setProblem(message);
       setSuggestion(suggestionText);

@@ -181,6 +181,8 @@ object LocalStudio {
             "GET" to "/music" -> { dir, _ -> withAutoPlaylist(dir, BookEdits.musicView(BookEdits.rawBook(dir), BookEdits.load(dir))) }
             "GET" to "/suggestions" -> { dir, _ -> suggestions(dir) }
             "PUT" to "/skip" -> { dir, body -> skipLine(dir, body) }
+            "GET" to "/readings" -> { dir, _ -> BookEdits.readingsView(BookEdits.load(dir)) }
+            "PUT" to "/readings" -> ::reading
             "PUT" to "/music" -> ::music
             "GET" to "/edits" -> { dir, _ ->
                 val edits = BookEdits.load(dir)
@@ -272,6 +274,15 @@ object LocalStudio {
             }
         }
         return JSONObject().put("suggestions", out)
+    }
+
+    /** PUT /readings {surface, spoken}: "Đọc từ này là…" - đặt (hay bỏ, `spoken` rỗng) cách đọc riêng của một từ cho cả cuốn; chỉ giọng đọc
+     *  đổi, chữ của sách không đổi (`server.put_readings`). */
+    private fun reading(dir: java.io.File, body: JSONObject): JSONObject {
+        val surface = body.opt("surface")
+        val spoken = if (body.has("spoken")) body.opt("spoken") else ""
+        if (surface !is String || spoken !is String) throw BookEdits.EditsError("Thiếu từ hoặc cách đọc")
+        return BookEdits.setReading(dir, surface, spoken)
     }
 
     /** PUT /skip {line, chapters, skip}: người nghe chấp nhận (hay bỏ chấp nhận) một gợi ý - dòng bị bỏ khỏi phần đọc của các chương ấy,

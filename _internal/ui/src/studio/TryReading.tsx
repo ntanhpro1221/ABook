@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Pause, Volume2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useClip } from "@/listen/clip";
+import type { ReadAloudTry } from "@/listen/readings";
 import { Button } from "@/shared/ui";
 import { api, ApiError, suggestionOf, urls } from "./api";
 import { previewCaption, refusalText } from "./previewText";
@@ -20,7 +21,8 @@ interface ReadingPreview {
 /** Nút "Nghe thử" (`button`, đặt trước nút "Lưu") và dòng nói máy đang làm gì / đã đọc câu nào / vì sao không nghe được (`note`,
  *  đặt dưới hàng nút - nó rộng hơn nút nên không để chung hàng). `spoken`: cách đọc đang gõ. `disabled`: ô đang báo lỗi.
  *  `onRejected`: máy chủ chê cách đọc (sai chính tả, nhiều từ) - cùng lời báo và cách sửa như khi bấm "Lưu".
- *  `unavailable`: lý do không nghe thử được ở cuốn này (không có xưởng để thu thử) - nút vẫn hiện, mờ đi, kèm câu ấy. */
+ *  `unavailable`: lý do không nghe thử được ở cuốn này (không có xưởng để thu thử) - nút vẫn hiện, mờ đi, kèm câu ấy; có `aloud` (trang nghe,
+ *  máy có giọng đọc) thì nút nghe thử bằng giọng đọc của "Nghe ngay" thay vì mờ đi (listen/readings.ts). */
 export function useTryReading({
   bookId,
   surface,
@@ -28,6 +30,7 @@ export function useTryReading({
   disabled,
   onRejected,
   unavailable,
+  aloud,
 }: {
   bookId: string;
   surface: string;
@@ -35,6 +38,7 @@ export function useTryReading({
   disabled: boolean;
   onRejected: (message: string, suggestion: string) => void;
   unavailable?: string;
+  aloud?: ReadAloudTry;
 }): { button: ReactNode; note: ReactNode } {
   const clip = useClip();
   const [heard, setHeard] = useState<{ surface: string; spoken: string; preview: ReadingPreview } | null>(null);
@@ -59,6 +63,30 @@ export function useTryReading({
   // Đã nghe đúng cách đọc này rồi thì bấm lại là phát lại, không hỏi máy chủ.
   const same = heard !== null && heard.surface === surface && heard.spoken === spoken;
   const playing = same && clip.current === `try-${heard.preview.url}`;
+  if (unavailable && aloud?.available) {
+    const speaking = aloud.playing(surface, spoken);
+    return {
+      button: (
+        <Button
+          size="sm"
+          variant="secondary"
+          type="button"
+          disabled={disabled || !spoken}
+          loading={aloud.loading(surface, spoken)}
+          onClick={() => void aloud.play(surface, spoken)}
+          aria-label={speaking ? "Dừng nghe thử" : `Nghe thử ${surface} đọc là ${spoken}`}
+        >
+          {speaking ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Volume2 className="size-4" strokeWidth={2} />}
+          {speaking ? "Dừng" : "Nghe thử"}
+        </Button>
+      ),
+      note: aloud.failed ? (
+        <p role="status" className="text-xs text-fg-2">{aloud.failed}</p>
+      ) : (
+        <p className="text-xs text-fg-3">Nghe thử bằng giọng đọc của máy - giọng trong sách nói có thể đọc hơi khác.</p>
+      ),
+    };
+  }
   const button = (
     <Button
       size="sm"
