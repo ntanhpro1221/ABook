@@ -197,6 +197,12 @@ def test_the_strict_check_refuses_a_rule_reading_with_a_broken_syllable() -> Non
     assert not studio_names.lockable("Haruto Smith", "Ha-ru-tô")
 
 
+def test_a_stutter_split_into_its_own_group_is_still_lockable() -> None:
+    # yamiyo 225 (06-10): the rules read the stutter "A-" as its own group, one word became two.
+    assert studio_names.lockable("A-Azuma-san", studio_names.rule_reading("A-Azuma-san", "ja"))
+    assert not studio_names.lockable("A-Azuma-san", "A A-dxu-ma-xan")
+
+
 # Bản nghe thật (Whisper, VieNeu Studio trên CPU, 04-10) của chữ Anh để nguyên.
 HEARD = [("Kate", "Kết"), ("Kate", "Kat"), ("Shadow", "Sado"), ("Portal", "Porto")]
 

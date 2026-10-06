@@ -72,6 +72,28 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   một lần: một nhân vật có sẵn, người kể, hay người mới (gõ tên + giới). "Mỗi chỗ một người" giữ nguyên như máy đang làm.
   Một nút "Hoàn tác" lấy lại cả nhóm; sách vẫn chạy tiếp, không phải chờ.
 
+## [0.4.30] - 2026-10-07
+
+### Studio
+
+- Dự án mở từ `.abookproj` ở máy cài Studio chỗ khác (hay sau khi thư mục app đổi chỗ) **làm tiếp được**: app tìm model
+  cùng tên trong Studio của máy này thay vì báo thiếu model / từ chối làm tiếp. Cài đặt khoá theo sách không đổi.
+
+### Phân vai giọng đọc
+
+- Ngoặc mở mà truyện quên đóng không còn kéo cả đoạn lời kể phía sau thành lời thoại hay nội tâm: ngoặc ‘ đóng bằng
+  dấu ' thẳng được nhận, và ngoặc thiếu dấu đóng tự đóng ở cuối đoạn của nó khi đoạn sau mở ngoặc mới.
+- Cả dòng bọc trong cặp ' thẳng ('Chắc mình phải chăm chỉ thêm thôi.') đọc bằng giọng nội tâm của người đang nghĩ,
+  như ‘…’ - trước đây đọc bằng giọng người kể.
+- Câu nói có dấu chấm đặt ngoài ngoặc (“…”.), hai lời thoại liền nhau trên một dòng, và câu nói có ngoặc lồng
+  (“… “…” …”) được tách và gán giọng đúng; "vui lòng" không còn bị hiểu là giọng vui, lời tự giới thiệu ("Tôi, Liz, ...")
+  không bị nhầm là đang gọi người khác.
+
+### Cách đọc tên
+
+- Tên viết kiểu nói lắp ("A-Azuma-san") không còn làm dừng cả lượt phân tích sách: cách đọc "A A-du-ma-xan" được
+  khoá như mọi tên khác. Một cách đọc tên nào đó không khoá được thì app ghi cảnh báo và đọc tiếp cuốn, không dừng.
+
 ## [0.4.29] - 2026-10-06
 
 ### Studio

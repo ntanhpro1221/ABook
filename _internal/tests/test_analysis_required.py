@@ -13,6 +13,7 @@ import pytest
 import requests
 
 from abook import database as database_module
+from abook import studio_names as studio_names_module
 from abook.analysis import (
     LOCAL_NAME_FALLBACK_CONFIDENCE,
     ADDRESSEE_REPAIR_NOTE,
@@ -3335,6 +3336,33 @@ def test_invalid_aderon_boundary_is_repaired_without_repeating_the_request(monke
     assert attempts == 1
     assert db.pronunciations[0]["spoken_form"] == "A-đe-ron"
     assert any(event[1] == "NAME_PRONUNCIATION_BOUNDARY_REPAIRED" for event in db.events)
+
+
+def test_a_rule_reading_that_fails_the_lock_check_warns_instead_of_aborting_the_book(monkeypatch) -> None:
+    # yamiyo 225 (06-10): one refused name raised ValueError and the whole analysis died with exit 1.
+    db = FakeDB()
+    db.rows = [
+        {
+            "id": 1,
+            "stable_id": "c1s1",
+            "chapter_id": 1,
+            "text": "Haruto gọi Azuma-san.",
+            "kind_hint": "narration",
+            "status": "analyzed",
+            "speaker": "NARRATOR",
+        }
+    ]
+    analyzer = OllamaBookAnalyzer(build_settings(), db, lambda _message: None)
+    monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
+    _trust_locked_test_digest(analyzer, monkeypatch)
+    monkeypatch.setattr(studio_names_module, "book_origin_for_project", lambda _db: "ja")
+    readings = {"Haruto": ("Ha-rut-tô", "rule_romanization"), "Azuma-san": ("A-du-ma-xan", "rule_romanization")}
+    monkeypatch.setattr(studio_names_module, "planned_reading", lambda surface, _origin: readings.get(surface))
+
+    analyzer.reconcile_name_pronunciations()
+
+    assert {row["surface"] for row in db.pronunciations} == {"Azuma-san"}
+    assert any(event[1] == "NAME_PRONUNCIATION_NOT_LOCKED" and event[3]["surface"] == "Haruto" for event in db.events)
 
 
 def test_name_pronunciation_digest_drift_is_fatal_without_fallback(monkeypatch) -> None:
