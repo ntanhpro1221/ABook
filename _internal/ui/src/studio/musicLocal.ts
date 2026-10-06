@@ -43,6 +43,8 @@ export interface MusicModuleStatus {
   /** Tên các phần có bản mới (state outdated) và số byte phải tải để cập nhật. */
   outdatedParts?: string[];
   outdatedBytes?: number;
+  /** Có bản mới mà bản trên máy không chạy được (thiếu phần chạy model): phân tích nhạc đang tắt cho tới khi tải lại (điện thoại). */
+  stopped?: boolean;
   /** Số bài đã phân tích bằng bản model cũ hơn: người dùng tự quyết có phân tích lại không. */
   stale?: number;
   /** Đang phân tích các bài đã nhập. */
@@ -99,6 +101,8 @@ export function moduleLabel(module: MusicModuleStatus): string {
   if (module.state === "downloading") return `Đang tải Phân tích nhạc (${formatSize(module.total)}, một lần) ${modulePercent(module)}%`;
   if (module.analysing) return "Đang nghe các bài bạn đã nhập để hiểu không khí của chúng…";
   if (module.state === "unsupported") return module.reason ? `Máy này chưa phân tích được nhạc: ${module.reason}.` : "Máy này chưa phân tích được nhạc.";
+  if (module.state === "outdated" && module.stopped)
+    return `Phân tích nhạc đang tắt: cần tải lại phần chạy (${formatSize(module.outdatedBytes ?? module.total)}) để phân tích nhạc. Bài của bạn vẫn nhập, nghe và ghim tay được.`;
   if (module.state === "outdated") return `Phân tích nhạc có bản mới - ${formatSize(module.outdatedBytes ?? module.total)}. Bản đang dùng vẫn chạy bình thường.`;
   if (module.state === "ready") {
     if (module.restart) return "Phân tích nhạc đã cập nhật - mở lại ABook để dùng thư viện mới.";
