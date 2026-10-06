@@ -1,0 +1,33 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "readings": {
+   "Haruto": "Ha-ru-tô",
+   "Kate": "Kết"
+  }
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "readings": {
+   "Haruto": "Ha-ru-to",
+   "Lucien": "Lu-xi-en"
+  }
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "readings": {
+   "Haruto": "Ha-ru-tô",
+   "Kate": "Kết",
+   "Lucien": "Lu-xi-en"
+  }
+ },
+ "report": {
+  "adopted": 1,
+  "kept": 2,
+  "conflicts": 1,
+  "cover": null
+ }
+}

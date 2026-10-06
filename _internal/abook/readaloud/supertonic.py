@@ -19,7 +19,7 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 from unicodedata import normalize as unicode_normalize
 
 from .model import Synthesis, Voice, VoiceError
@@ -223,15 +223,16 @@ class SupertonicProvider:
         with self._engine_lock:
             self._engine = None
 
-    def _speak(self, installed: Installed, name: str, text: str, origin: str | None = None,
+    def _speak(self, installed: Installed, name: str, text: str, origin: str | None = None, readings: Mapping[str, str] | None = None,
                ) -> tuple[Any, int, list[str], list[Unit], list[tuple[int, int]]]:
-        """Đọc cả đoạn: (sóng âm, tần số mẫu, chữ hiện, các khúc, [đầu, cuối) của từng khúc theo mẫu). `origin`: gốc của cuốn, xem `vieneu.spoken_tokens`."""
+        """Đọc cả đoạn: (sóng âm, tần số mẫu, chữ hiện, các khúc, [đầu, cuối) của từng khúc theo mẫu). `origin`, `readings`: gốc và cách đọc
+        riêng của cuốn, xem `vieneu.spoken_tokens`."""
         import numpy as np
 
         from . import vieneu_engine as ve
 
         engine = self.engine(installed)
-        toks, parts = units(text, MAX_CHARS, origin, self.speaks_english)
+        toks, parts = units(text, MAX_CHARS, origin, self.speaks_english, readings)
         waves, pauses = [], []
         for unit in parts:
             spoken = self._normalize(unit.pieces)
@@ -253,9 +254,9 @@ class SupertonicProvider:
     def reading_tag(self, text: str, origin: str | None) -> str:
         return reading_tag(text, origin, self.speaks_english)
 
-    def synthesize(self, text: str, native_voice: str, origin: str | None = None) -> Synthesis:
+    def synthesize(self, text: str, native_voice: str, origin: str | None = None, readings: Mapping[str, str] | None = None) -> Synthesis:
         installed = self._installed(native_voice)
-        audio, rate, toks, parts, spans = self._speak(installed, native_voice, text, origin)
+        audio, rate, toks, parts, spans = self._speak(installed, native_voice, text, origin, readings)
         return timed_synthesis(audio, rate, toks, parts, spans, self._aligner() if installed.aligner else None)
 
     def benchmark(self, tier: str = TIER) -> dict[str, Any]:

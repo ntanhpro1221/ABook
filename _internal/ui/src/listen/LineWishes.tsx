@@ -12,6 +12,7 @@ import { DeliveryMenu, deliveryText, KINDS, LineQuote, NARRATOR, SpeakerMenu, ty
 import { cleanName } from "./BookScreen";
 import { refreshAfterEdit } from "./EditBook";
 import type { Cast, CastMember, ListenBook, Script, ScriptSegment } from "./model";
+import { useReadAloudTry } from "./readings";
 import { useCast } from "./source";
 
 // Sửa MỘT CÂU từ trang đọc, trên cuốn không có xưởng (file .abook trên máy tính hay điện thoại - docs/EDITING.md, P2a). Cùng
@@ -160,6 +161,8 @@ function WordView({ bookId, text, names, need, onBack }: { bookId: string; text:
   const [word, setWord] = useState<string | null>(null);
   const words = useMemo(() => wordsOf(text), [text]);
   const pending = word ? names.find((item) => sameWord(item.surface, word)) : undefined;
+  // Chưa có xưởng để thu thử: "Nghe thử" bằng giọng đọc của máy.
+  const aloud = useReadAloudTry(bookId);
   return (
     <div className="space-y-3">
       <p className="text-sm text-fg-2">Chạm vào từ máy đọc sai (thường là tên riêng). Cách đọc lưu cho cả cuốn: mọi câu có từ ấy.</p>
@@ -200,6 +203,7 @@ function WordView({ bookId, text, names, need, onBack }: { bookId: string; text:
             item={{ surface: word, spoken: "", byListener: false, lines: 0, requested: pending?.spokenForm ?? null, example: null }}
             fresh={!pending}
             waiting={need}
+            aloud={aloud}
             onDone={() => setWord(null)}
           />
         </div>
