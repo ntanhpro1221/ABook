@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MusicBed, SIBLING_FADE_SECONDS, STEP_RAMP_SECONDS, stepDbAt, type MusicCue } from "./musicBed";
+import { MusicBed, RETRY_MS, SIBLING_FADE_SECONDS, STEP_RAMP_SECONDS, stepDbAt, type MusicCue } from "./musicBed";
 
 const cues: MusicCue[] = [
   { start: 0, end: 120, link: "a", key: "1:1", src: "/a" },
@@ -199,5 +199,85 @@ describe("bước âm lượng trong cảnh và nối bài anh em", () => {
     vi.advanceTimersByTime(SIBLING_FADE_SECONDS * 1000 - 3000 + 200);
     expect(made["/a"].volume).toBe(0);
     expect(made["/c"].volume).toBeCloseTo(db(-10), 3);
+  });
+});
+
+describe("bài tải hỏng thử lại sau RETRY_MS (như MusicBed.kt)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  type Fake = { volume: number; loop: boolean; paused: boolean; fire: (type: "loadedmetadata" | "error") => void };
+  function bedWithEvents() {
+    const made: Record<string, Fake[]> = {};
+    const bed = new MusicBed((src) => {
+      const listeners: Record<string, (() => void)[]> = {};
+      const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration: 200 };
+      const audio = Object.assign(fake, {
+        play: () => { fake.paused = false; return Promise.resolve(); },
+        pause: () => { fake.paused = true; },
+        addEventListener: (type: string, listener: () => void) => { (listeners[type] ??= []).push(listener); },
+        fire: (type: "loadedmetadata" | "error") => listeners[type]?.forEach((listener) => listener()),
+      });
+      (made[src] ??= []).push(audio);
+      return audio;
+    });
+    return { bed, made };
+  }
+
+  it("hỏng thì im lặng, chưa tới 5 phút không thử lại, tới hạn thì thử lại; tải được thì xoá", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithEvents();
+    bed.setCues([{ start: 0, end: 1000, link: "a", key: "1:1", src: "/a", gainDb: -10 }], -20);
+    bed.sync(10, true);
+    expect(bed.activeLink).toBe("a");
+    made["/a"][0].fire("error");
+    expect(bed.activeLink).toBeNull();
+    expect(made["/a"][0].paused).toBe(true);
+    vi.advanceTimersByTime(RETRY_MS - 1000);
+    bed.sync(20, true);
+    bed.sync(30, true, true);
+    expect(bed.activeLink).toBeNull();
+    expect(made["/a"]).toHaveLength(1);
+    vi.advanceTimersByTime(1000);
+    bed.sync(40, true);
+    expect(bed.activeLink).toBe("a");
+    expect(made["/a"]).toHaveLength(2);
+    made["/a"][1].fire("loadedmetadata");
+    // Đã tải được: lần hỏng sau lại chờ trọn RETRY_MS, đếm từ lúc ấy.
+    vi.advanceTimersByTime(60_000);
+    made["/a"][1].fire("error");
+    vi.advanceTimersByTime(RETRY_MS - 1000);
+    bed.sync(50, true);
+    expect(bed.activeLink).toBeNull();
+    vi.advanceTimersByTime(1000);
+    bed.sync(51, true);
+    expect(bed.activeLink).toBe("a");
+    expect(made["/a"]).toHaveLength(3);
+  });
+
+  it("chỉ bài hỏng im lặng: mốc khác vẫn phát, nối bài anh em vẫn mờ chéo", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithEvents();
+    bed.setCues([
+      { start: 0, end: 100, link: "x", key: "1:1", src: "/x", gainDb: -10 },
+      { start: 100, end: 250, link: "a", key: "1:5", src: "/a", gainDb: -10 },
+      { start: 250, end: 400, link: "c", key: "1:5", src: "/c", gainDb: -10, sibling: true },
+    ], -20);
+    bed.sync(10, true);
+    made["/x"][0].fire("error");
+    bed.sync(110, true);
+    expect(bed.activeLink).toBe("a");
+    vi.advanceTimersByTime(3000);
+    bed.sync(251, true);
+    expect(bed.activeLink).toBe("c");
+    expect(made["/a"][0].loop).toBe(false);
+    vi.advanceTimersByTime(3000);
+    expect(made["/a"][0].volume).toBeGreaterThan(0.05);
+    expect(made["/c"][0].volume).toBeGreaterThan(0.05);
+    // Bài cũ đang mờ đi mà hỏng: thôi hẳn, bài anh em vẫn lên đủ mức.
+    made["/a"][0].fire("error");
+    vi.advanceTimersByTime(SIBLING_FADE_SECONDS * 1000);
+    expect(made["/a"][0].paused).toBe(true);
+    expect(made["/c"][0].volume).toBeCloseTo(Math.pow(10, -10 / 20), 3);
+    expect(bed.activeLink).toBe("c");
   });
 });
