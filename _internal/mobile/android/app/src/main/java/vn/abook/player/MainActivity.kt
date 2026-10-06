@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import com.getcapacitor.BridgeActivity
 import vn.abook.player.readaloud.ReadAloudPlugin
 
@@ -21,7 +22,8 @@ class MainActivity : BridgeActivity() {
         open(intent)
     }
 
-    /** "Mở bằng ABook" / chia sẻ một file sách tới app: nhập vào thư viện (LibraryPlugin.importFrom). */
+    /** "Mở bằng ABook" / chia sẻ một file tới app: file sách nhập vào thư viện, EPUB / DOCX / PDF / TXT mở bước xem trước của
+     *  "Thêm sách từ file…" (LibraryPlugin.openFrom). */
     private fun open(intent: Intent?) {
         val uri: Uri? = when (intent?.action) {
             Intent.ACTION_VIEW -> intent.data
@@ -33,9 +35,16 @@ class MainActivity : BridgeActivity() {
             }
             else -> null
         }
-        if (uri == null) return
+        if (uri == null) {
+            // Chia sẻ chữ trần (vd một đường link) cũng tới đây vì app nhận SEND text/plain cho file .txt: nói rõ thay vì im lặng.
+            if (intent?.action == Intent.ACTION_SEND && intent.getStringExtra(Intent.EXTRA_TEXT) != null) {
+                Toast.makeText(this, "ABook chỉ nhận file truyện (EPUB, Word, PDF, TXT) - đoạn chữ được chia sẻ không phải file.",
+                    Toast.LENGTH_LONG).show()
+            }
+            return
+        }
         val plugin = bridge?.getPlugin("EbookLibrary")?.instance as? LibraryPlugin ?: return
-        plugin.importFrom(uri)
+        plugin.openFrom(uri, intent?.type)
     }
 
     // Mở app là máy tính thấy điện thoại (để "Phát trên điện thoại" được cả khi chưa nghe gì) - Remote.

@@ -24,5 +24,6 @@
  "notes": [
   "Gợi ý: chương 3 có dòng ghi công ở đầu - “Dịch: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ."
  ],
- "splitOffer": 4
+ "splitOffer": 4,
+ "splitHeadings": 3
 }

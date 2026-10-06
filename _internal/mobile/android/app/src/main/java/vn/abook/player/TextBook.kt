@@ -113,6 +113,7 @@ object TextBook {
             .put("suggestions", JSONArray(book.credits.map { (chapter, line) -> JSONObject().put("chapter", chapter).put("line", line) }))
             .put("totals", JSONObject().put("chapters", chapters).put("words", words))
             // File TXT cả truyện: số chương nếu tách theo "Chương N" - giao diện đề xuất (ô KHÔNG tích sẵn). Không có gì để tách thì không có khoá.
-            .also { if (book.splitOffer > 0) it.put("splitOffer", book.splitOffer) }
+            // `splitHeadings`: số dòng "Chương N"; nhãn nói thêm phần "Mở đầu" khi chữ trước tiêu đề đầu thành một chương riêng.
+            .also { if (book.splitOffer > 0) it.put("splitOffer", book.splitOffer).put("splitHeadings", book.splitHeadings) }
     }
 }

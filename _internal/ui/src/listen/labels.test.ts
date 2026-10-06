@@ -59,7 +59,7 @@ describe("sách chỉ có chữ", () => {
   it("một dòng nhất quán, không 'chưa có âm thanh' cạnh nút Nghe ngay", () => {
     expect(textBookLine(true)).toBe("Chỉ có chữ · nghe bằng giọng đọc");
     expect(textBookLine(false)).toBe("Chỉ có chữ · máy này chưa có giọng đọc");
-    expect(textChapterLine(true)).toBe("Giọng máy đọc");
+    expect(textChapterLine(true)).toBe("Giọng đọc của máy");
     expect(textChapterLine(false)).toBe("Chỉ có chữ");
   });
 });

@@ -2,6 +2,8 @@
 // Máy tính: máy chủ cục bộ chạy `abook/importers.py` (webui/textbook.py). Điện thoại: `BookImport.kt` ở native; PDF thì pdf.js trong
 // WebView lấy chữ từng trang rồi đưa sang Kotlin (android/textImport.ts).
 
+import { formatNumber } from "@/shared/format";
+
 /** Một hàng của danh sách chương xem trước. `index` là số thứ tự (từ 1) trong CHÍNH danh sách này - cũng là số mà `suggestions[].chapter`
  *  và `ChapterPick.index` dùng, không phải mã chương trong sách. */
 export interface ImportPreviewChapter {
@@ -34,6 +36,8 @@ export interface ImportPreview {
   totals: { chapters: number; words: number };
   /** File TXT cả truyện (>= 2 dòng "Chương N"): số chương nếu tách theo các dòng ấy. Giao diện đề xuất (ô KHÔNG tích sẵn); không có khoá = không có gì để tách. */
   splitOffer?: number;
+  /** Số dòng "Chương N" ấy; ít hơn `splitOffer` khi chữ trước tiêu đề đầu thành chương "Mở đầu". */
+  splitHeadings?: number;
 }
 
 /** Một chương người dùng giữ lại, kèm tên mới nếu họ đổi (chỉ đổi TÊN; chữ của chương không đổi). */
@@ -89,6 +93,14 @@ export interface TextImport {
 
 /** Tên chương người dùng đã đổi, theo số thứ tự hàng; hàng không có trong đây giữ tên của file. */
 export type ChapterNames = Readonly<Record<number, string>>;
+
+/** Nhãn ô "Tách" của file TXT cả truyện: đếm các dòng "Chương N" người nghe thấy trong file, nói riêng phần "Mở đầu" thêm vào. */
+export function splitLabel(preview: Pick<ImportPreview, "splitOffer" | "splitHeadings">): string {
+  const offer = preview.splitOffer ?? 0;
+  const headings = preview.splitHeadings ?? offer;
+  const base = `Tách theo ${formatNumber(headings)} dòng “Chương N”`;
+  return offer > headings ? `${base} (thêm phần Mở đầu - ${formatNumber(offer)} chương)` : base;
+}
 
 /** Các hàng tích sẵn: mọi hàng trừ mục rất ngắn. */
 export function defaultPicked(chapters: readonly ImportPreviewChapter[]): ReadonlySet<number> {

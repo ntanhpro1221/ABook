@@ -89,14 +89,27 @@ object StudioAlerts {
                 .put("phase", book.optString("phase"))
                 .put("running", book.optBoolean("running"))
                 .put("paused", pausedOf(book))
+                .put("held", heldOf(book))
                 .put("work", if (book.isNull("work")) JSONObject.NULL else book.optInt("work")))
             val old = before.optJSONObject(id)
-            if (seeded && old != null) alert(context, book, old)
+            if (seeded && old != null) {
+                for (note in alerts(book, old, prefs.getBoolean("onBattery", false))) {
+                    post(context, note.key, note.title, note.text, note.path)
+                }
+            }
         }
         prefs.edit().putString("snapshot", after.toString()).putBoolean("seeded", true).apply()
     }
 
-    private fun alert(context: Context, book: JSONObject, old: JSONObject) {
+    /** Một tin sắp đăng: `key` = (cuốn, loại tin) - tin mới cùng loại thay tin cũ. */
+    data class Alert(val key: String, val title: String, val text: String, val path: String)
+
+    /**
+     * Những tin cần báo khi so trạng thái một cuốn với ảnh chụp lần trước (`old`). Hàm thuần (không Context) để test JVM.
+     * `machineOnBattery`: máy tính đã được báo "đang chạy pin" ở cấp máy - không báo lại cho từng cuốn.
+     */
+    fun alerts(book: JSONObject, old: JSONObject, machineOnBattery: Boolean): List<Alert> {
+        val out = mutableListOf<Alert>()
         val id = book.optString("id")
         val title = book.optString("title").ifBlank { "Sách" }
         val phase = book.optString("phase")
@@ -105,27 +118,37 @@ object StudioAlerts {
         val wasPhase = old.optString("phase")
         when {
             phase == "done" && wasPhase != "done" ->
-                post(context, "$id:done", "Đã xong: $title", "$progress nghe được. Bấm để mở Studio.", "/#/studio/$id")
+                out += Alert("$id:done", "Đã xong: $title", "$progress nghe được. Bấm để mở Studio.", "/#/studio/$id")
             phase == "error" && wasPhase != "error" ->
-                post(context, "$id:error", "Dừng vì lỗi: $title",
+                out += Alert("$id:error", "Dừng vì lỗi: $title",
                     book.optString("lastError").ifBlank { book.optString("statusLabel") }.take(160), "/#/studio/$id?tab=activity")
-            old.optBoolean("running") && !book.optBoolean("running") && phase != "done" && phase != "error" ->
-                post(context, "$id:stopped", "Đã dừng: $title", "${book.optString("statusLabel")} · $progress", "/#/studio/$id")
+            // Phân tích xong, máy giữ cuốn chờ duyệt trước khi thu (webui/precast.py). Đứng trước "Đã dừng": cuốn đứng chờ
+            // người duyệt không phải là dừng.
+            heldOf(book) && !old.optBoolean("held") ->
+                out += Alert("$id:precast", "Sẵn sàng duyệt: $title",
+                    "Phân tích xong - duyệt giọng, tên lạ, câu chưa chắc trước khi thu.", "/#/studio/$id?tab=precast")
+            old.optBoolean("running") && !book.optBoolean("running") && phase != "done" && phase != "error" &&
+                !heldOf(book) ->
+                out += Alert("$id:stopped", "Đã dừng: $title", "${book.optString("statusLabel")} · $progress", "/#/studio/$id")
             // Máy tính rút sạc nên Studio tự tạm dừng (power_source.py): báo để người ta biết máy tuột sạc - 24-09 sạc tuột
             // 22:50 mà 00:07 mới có người thấy.
-            pausedOf(book) == "battery" && pausedOf(old) != "battery" && !state(context).getBoolean("onBattery", false) ->
-                post(context, "$id:battery", "Máy tính đang chạy pin",
+            pausedOf(book) == "battery" && pausedOf(old) != "battery" && !machineOnBattery ->
+                out += Alert("$id:battery", "Máy tính đang chạy pin",
                     "Đã tạm dừng $title · $progress. Cắm sạc là tự làm tiếp.", "/#/studio/$id")
         }
         if (!book.isNull("work") && !old.isNull("work")) {
             val now = book.optInt("work")
             val was = old.optInt("work")
             if (now > was) {
-                post(context, "$id:work", "$title: $now việc cần duyệt",
+                out += Alert("$id:work", "$title: $now việc cần duyệt",
                     "Thêm ${now - was} chỗ máy chưa chắc. Sửa không phải dừng sách.", "/#/studio/$id?tab=work")
             }
         }
+        return out
     }
+
+    /** Máy tính đang giữ cuốn chờ duyệt trước khi thu (`precast.held`); máy tính đời cũ không gửi = không giữ. */
+    private fun heldOf(book: JSONObject): Boolean = book.optJSONObject("precast")?.optBoolean("held") == true
 
     /** "battery" / "listener" / "" - JSON null của máy tính đọc bằng optString ra chữ "null", nên đọc riêng. */
     private fun pausedOf(book: JSONObject): String = if (book.isNull("paused")) "" else book.optString("paused")
