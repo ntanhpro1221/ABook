@@ -3017,3 +3017,18 @@ Hai agent Opus chấm mù xong 20/20 mỗi người (bản 3); phân xử 83 đo
 *Đính chính giờ (06-10 12:5x):* các mục 06-10 ghi "12:4x/13:0x/13:3x/13:5x/14:xx/15:xx" thực ra đều xảy ra trong khoảng
 12:15-12:50 (đồng hồ máy); thứ tự đúng như ghi. Mac LoRA lớp cuối: 620/1.540 bước lúc 12:48 (val .366), ~30 phút/100 bước
 -> chuỗi xong ~17:45.
+
+**GHI TRƯỚC - mô-đun MỨC CHƯƠNG (lớp 2 của hướng ba lớp, Lead duyệt 06-10 12:5x; ghi trước mọi số của ứng viên):**
+- **Thước (khớp mốc Lead):** trên bộ 5b+6 (23 chương), mọi câu nhận hằng = mức chương dự đoán; MAE theo câu (thời lượng, bỏ
+  `chu_thich`, thang nửa), TB chương, TB(V,T). Mốc: hằng 0 .462; mức chương nhãn câu app (thô) .432; trần (mức đáp án) .286.
+  r = tương quan mức chương dự đoán với mức chương đáp án qua 23 chương (đã đo cho mốc: nhãn câu app thô r V .73, T .75).
+- **Luật thắng (mỗi ứng viên):** MAE <= .35 VÀ r >= .6 ở CẢ V lẫn T.
+- **Ứng viên C0 (CPU, rẻ nhất):** mức chương nhãn câu app (thô) qua hiệu chỉnh tuyến tính mỗi trục a + b·m, học (bình phương nhỏ
+  nhất trên mức chương, trọng số như nhau) trên bộ 4+5 (19 chương), áp nguyên lên 5b+6. Lý do: thứ hạng đã đúng (r .73/.75),
+  MAE cao vì lệch/co thang.
+- **Ứng viên CF (GPU, một lượt LLM):** `chapter_level.py` - qwen3.5:4b zero-shot đọc cả chương (cắt 30.000 ký tự), prompt =
+  bản "mức chương" của P1 (cùng bảng mốc), đầu ra chữ số kỳ vọng như P2. Chạy cả 4 bộ (42 lượt, vài phút) qua hàng Model.
+  Ghi lại: CH (đầu-giữa-cuối, 3 × ~600 tiếng); CF hiệu chỉnh tuyến tính (học 4+5) như C0; CF + C0 trung bình.
+- **Chọn:** chỉ một thắng -> nó. Cả hai thắng -> C0 (không cần GPU, không thêm lượt), trừ khi CF thấp hơn C0 >= .03 MAE.
+  Không ứng viên nào thắng -> ghi lại, nghĩ tiếp (vd LoRA có nhãn mức chương).
+- Thắng thì Lead giao agent cắm vào app (lớp riêng của cuốn, bật mặc định), hằng hiệu chỉnh ghi trong code kèm nguồn.
