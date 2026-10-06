@@ -50,6 +50,10 @@ object MusicCues {
         }
     }
 
+    /** Mốc tại giây `seconds`; mốc của bài đang hỏng ([MusicFailures]) tính như khoảng không nhạc - tới hạn thử lại thì lại là mốc. */
+    fun at(cues: List<Cue>, seconds: Double, failures: MusicFailures): Cue? =
+        cues.firstOrNull { seconds >= it.start && seconds < it.end }?.takeUnless { failures.isFailed(it.track) }
+
     private fun stepsOf(cue: JSONObject): List<Step> {
         val list = cue.optJSONArray("steps") ?: return emptyList()
         return (0 until list.length()).mapNotNull { index ->
