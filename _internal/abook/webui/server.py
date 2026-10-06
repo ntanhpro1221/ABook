@@ -249,6 +249,8 @@ class App:
         self.exports: set[str] = set()
         # "Xuất file sách" chạy nền, mỗi cuốn nhớ lần xuất gần nhất (export_jobs.py) - tải lại trang vẫn thấy tiến độ / kết quả.
         self.bookfile_jobs = export_jobs.BookFileJobs()
+        # "Xuất M4B" cũng chạy nền, bản ghi riêng: đang đóng gói file sách vẫn xuất M4B được và ngược lại.
+        self.m4b_jobs = export_jobs.BookFileJobs()
         # Hàng đợi sản xuất: hai cuốn chạy cùng lúc tranh nhau GPU (phân tích cần ~6,2 GB trên card 8 GB), nên cuốn
         # thứ hai xếp hàng và tự bắt đầu khi cuốn đang chạy xong. Hàng đợi sống cùng app (đóng app là bỏ hàng).
         self.queue: list[str] = []
@@ -2247,6 +2249,11 @@ class Handler(BaseHTTPRequestHandler):
         """Nơi xuất: từ xa luôn là thư mục mặc định trong thư viện, không bao giờ một đường do thiết bị ở xa chỉ."""
         return "" if self._remote() else str(body.get("target") or "").strip()
 
+    def _export_root(self, body: dict[str, Any]) -> Path:
+        """Thư mục mọi kiểu xuất ghi vào: nơi người dùng chọn (`target`), không thì "Đã xuất" trong thư viện."""
+        target = self._target(body)
+        return Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+
     def _static(self, path_text: str) -> None:
         root = self.app.static_dir
         relative = unquote(path_text).lstrip("/") or "index.html"
@@ -2643,8 +2650,7 @@ class Handler(BaseHTTPRequestHandler):
         kind = str(body.get("as") or ("abookproj" if packages.workshop_state(path) else "abook"))
         if kind not in ("abook", "abookproj"):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Loại file không biết")
-        target = self._target(body)
-        root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        root = self._export_root(body)
         title = str(packages.edited_manifest(path).get("title") or path.name)
         try:
             if kind == "abookproj":
@@ -2678,8 +2684,7 @@ class Handler(BaseHTTPRequestHandler):
 
         project = self.app._book(value)
         body = self._body()
-        target = self._target(body)
-        root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        root = self._export_root(body)
         parts = self._series_parts(value, body)
         try:
             if parts is None:
@@ -2703,8 +2708,7 @@ class Handler(BaseHTTPRequestHandler):
 
         project = self.app._book(value)
         body = self._body()
-        target = self._target(body)
-        root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        root = self._export_root(body)
         parts = self._series_parts(value, body)
         single = bool(body.get("single"))
         app = self.app
@@ -2743,6 +2747,26 @@ class Handler(BaseHTTPRequestHandler):
     def get_bookfile_job(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.bookfile_jobs.status(str(self.app._book(value))))
 
+    def post_m4b_job(self, _query: dict[str, list[str]], value: str) -> None:
+        # Cả cuốn thành một file `.m4b` có mục lục chương (export.export_m4b) - việc nền như "Xuất file sách": giải mã và mã
+        # hoá lại cả cuốn mất vài phút với sách dài. Hỏi trạng thái bằng GET; đang có lượt chạy cho cuốn này thì trả lượt ấy.
+        from .export import export_m4b
+
+        project = self.app._book(value)
+        body = self._body()
+        root = self._export_root(body)
+        app = self.app
+
+        def run() -> dict[str, Any]:
+            result = export_m4b(project, root, cover=body.get("cover"))
+            app.exports.add(result["folder"])
+            return result
+
+        self._send_json(HTTPStatus.ACCEPTED, self.app.m4b_jobs.start(str(project), run))
+
+    def get_m4b_job(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.m4b_jobs.status(str(self.app._book(value))))
+
     def get_word_timings(self, _query: dict[str, list[str]], value: str) -> None:
         # "Căn từ cho sách đã làm": tiến độ + số câu đã có mốc chữ (word_timing.Job.status).
         self._send_json(HTTPStatus.OK, self.app.word_jobs.status(self.app._book(value)))
@@ -2774,8 +2798,7 @@ class Handler(BaseHTTPRequestHandler):
     def post_projectfile(self, _query: dict[str, list[str]], value: str) -> None:
         # Cả dự án trong một file (projectfile.py) - chuyển máy, sao lưu, làm tiếp ở chỗ khác.
         project = self.app._book(value)
-        target = self._target(self._body())
-        root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        root = self._export_root(self._body())
         title = store.summarize(project)["title"] or project.name
         try:
             path = projectfile.pack(project, root / projectfile.default_name(title),
@@ -3954,6 +3977,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
     ("POST", re.compile(BOOK + r"/bookfile-job"), Handler.post_bookfile_job),
     ("GET", re.compile(BOOK + r"/bookfile-job"), Handler.get_bookfile_job),
+    ("POST", re.compile(BOOK + r"/m4b-job"), Handler.post_m4b_job),
+    ("GET", re.compile(BOOK + r"/m4b-job"), Handler.get_m4b_job),
     ("GET", re.compile(BOOK + r"/export-size"), Handler.get_export_size),
     ("GET", re.compile(BOOK + r"/word-timings"), Handler.get_word_timings),
     ("POST", re.compile(BOOK + r"/word-timings"), Handler.post_word_timings),

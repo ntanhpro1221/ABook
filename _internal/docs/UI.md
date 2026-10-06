@@ -42,6 +42,9 @@ Studio (máy tính):
 - "Cần nghe lại" (`webui/reviews.py`): câu hỏng / chưa kiểm được / tên riêng lệch nhiều, nghe từng câu, bấm Ổn hoặc
   Cần thu lại; phán quyết ở `reviews.json` (không ghi vào SQLite của sách).
 - "Xuất MP3 để nghe ở app khác" (`webui/export.py`): chép luồng âm thanh kèm tag ID3 đúng + bìa + `.m3u8`.
+- "Xuất M4B cho app sách nói" (`webui/export.export_m4b`, việc nền `POST/GET /api/books/<id>/m4b-job`): giải mã từng chương
+  ra PCM đổ liên tục vào một bộ mã hoá AAC (64 kb/s mono, 96 kb/s stereo), đếm mẫu để mốc chương đúng từng mẫu, rồi chép luồng
+  sang `.m4b` kèm mục lục chương, bìa và tag như bản MP3. Chỉ chương đã xong.
 - Cài đặt: điện thoại (ghép bằng mã 6 số, huỷ mã sau 5 lần sai), hẹn giờ ngủ, lịch đêm, lưới an toàn.
 
 ## Máy tính: web trong Qt WebEngine
