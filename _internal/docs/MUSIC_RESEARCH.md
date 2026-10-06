@@ -2934,3 +2934,15 @@ Bộ 4+5+5b (354 phút): lỗi chung sau khi trừ trung bình chương |V| .303
 - Đọc cho musicvt: điều LoRA phải sửa là biên độ trong chương (nhãn mềm A/B có biên độ thật), không phải thêm thể loại.
   Lô dữ liệu kế (nếu có) chỉ cần ưu tiên nhẹ chương buồn và chương có cao trào dài.
 - Thêm một thước ghi lại cho Mac LoRA / musicvt: hệ số co b trong chương (base P2 Ollama .12/.16) - kỳ vọng tăng rõ nếu LoRA học được.
+
+**GHI TRƯỚC - "P2 + giãn biên độ trong chương" (Lead đề xuất 06-10 13:2x; ghi 13:3x trước khi đo; chỉ CPU):**
+- **Vì sao không dùng thước r:** r theo chương bất biến khi dự đoán của chương bị co giãn/dịch tuyến tính. Kiểm: giãn z mọi
+  chương của P2 bộ 4+5+5b cho VET +.315 -> +.328; phần +.013 chỉ đến từ các khúc LLM không trả số (app lấy nhãn câu thay).
+  Nên với thước CHÍNH cũ, giãn không thể là bản sửa; nó chỉ có ý nghĩa ở MỨC TUYỆT ĐỐI mà app dùng để chọn bài nhạc.
+- **Biến thể:** p' = m + k·(p - m), m = trung bình (theo thời lượng) dự đoán của chương, k riêng V và T, chọn trên lưới
+  1..10 bước 0,5 cho sai số nhỏ nhất ở bộ 4+5 (học); đo trên bộ 5b + 6 (giữ ngoài; bộ 6 dùng viết prompt nhưng không dùng chọn k).
+- **Thước:** MAE theo thời lượng giữa V/T dự đoán và V/T đáp án (thang nửa sau parse_gold), từng chương, bỏ `chu_thich`.
+- **CHÍNH:** P2+giãn so P0 (prompt app hiện tại) trên 5b + 6. THẮNG nếu MAE (TB V,T) giảm >= 10 % VÀ thấp hơn ở >= ⌈0,7 n⌉ chương.
+- **Ghi lại:** P2+giãn so P2 thô; k chọn được; MAE từng trục; r (để chắc không tụt).
+- **Thắng thì:** đề xuất app dùng P2 + giãn (một hằng k mỗi trục) - nhưng P2 đã KHÔNG THẮNG ở thước r (611859b5), nên đổi prompt
+  app vẫn cần Lead quyết; LoRA Mac / musicvt chấm thêm cùng thước MAE này. **Thua thì:** ghi lại.
