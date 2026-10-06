@@ -2966,3 +2966,22 @@ k chọn trên bộ 4+5: V 1,5, T 1,5 (lưới 1..10; giãn mạnh hơn chỉ l�
   đã gắn vào `score_mlx_lora.py` (ghi lại; nền MLX bộ 4+5+5b: P0 V .385 T .445, P2 V .380 T .481).
 - App: thước CHÍNH lâu nay (r trong chương) không thấy lỗi này. Việc chọn bài nhạc dùng mức tuyệt đối, nên phép nghe
   oracle 10-10 mới là nơi lỗi mức chương lộ ra.
+
+**GHI TRƯỚC - Lô 4: mức chương dao động TRONG cuốn bao nhiêu (06-10 14:xx; Lead nêu 2 hướng; kiêm dữ liệu dạy):**
+- **Vì sao:** không ước lượng nào hiện có đoán được mức chương (5b+6: nhãn câu app .432, LLM P0 .423, hằng 0 .462, mức đáp án
+  .286). Hai hướng gốc:
+  - (1) app chọn bài theo vị trí TƯƠNG ĐỐI trong cuốn (phân vị V/T của đoạn trong cả cuốn) + giọng chung của cuốn từ một ước
+    lượng cấp cuốn; lỗi mức chương thôi hại.
+  - (2) giữ mức tuyệt đối, ước mức chương bằng một lượt riêng (tóm tắt cả chương -> một số).
+  (1) chỉ đúng nếu mức chương ít dao động giữa các chương CÙNG cuốn. Đáp án hiện có chỉ 3 cuốn có 2 chương - không đủ.
+- **Dữ liệu:** `scene_book_var/` - 4 truyện chưa dùng (3 Nhật, 1 Hàn, hạt 20261008, >= 25 chương 8-40 KB), mỗi truyện 5 chương
+  rải đều (giữa 5 phần bằng nhau). Hai agent Opus chấm mù A/B theo BẢN 3 (L1–L4; 3.1 đã loại), phân xử như lô 2.
+- **Thước:** mức chương = trung bình V, T theo số tiếng (bỏ `chu_thich`) trên nhãn phân xử. SD_trong = căn của trung bình
+  phương sai trong từng cuốn (16 bậc tự do). SD_tổng = độ lệch chuẩn mức chương trên 42 chương đáp án bộ 4/5/5b/6 (gần như mỗi
+  chương một cuốn): V .33, T .40 (gộp hai nhóm bộ đã đo; tính lại đúng cách ở lúc chấm).
+- **Luật (mỗi trục, rồi lấy trục xấu hơn):**
+  - SD_trong <= 0,5 × SD_tổng (cuốn giải thích >= 75 % phương sai) -> chọn hướng (1);
+  - SD_trong >= 0,8 × SD_tổng -> chọn hướng (2);
+  - ở giữa -> cả hai: phân vị trong cuốn + hiệu chỉnh mức chương (ghi rõ phần nào lớn hơn).
+- **Ghi lại:** đồng thuận A-B (so lô 2 .87/.84/.91); mức chương A so B (người chấm có đồng ý về mức chương không); số mẫu dạy thêm.
+- **Dè dặt trước:** 4 cuốn là ít - kết luận chỉ chọn hướng làm kế, không tự đổi app.
