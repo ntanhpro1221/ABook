@@ -3596,3 +3596,6 @@ lại `resolve_inputs.py`: lại được 41/42 như trước (thiếu creepypas
 2. `music_select.rank`/`choose` nhận độ dài cảnh có lý do (đoạn đầu + các mảnh `length` nối sau) và cộng phạt bài ngắn (1.0).
 3. CUE vào app thành cờ `sceneBreak`, cùng chỗ với dòng ngắt của 0.4.31: chính là `cue_kind` trong `seg_scenes.py`. LLM (SEG) có
    số thì đo lại bằng `track_changes2.py`: script tự thêm biến thể "cờ+CUE+LLM" khi có `results/seg_<bộ>_<tag>.jsonl`.
+
+Ghi lại (đo trên 5b+6 sau khi đã chọn, KHÔNG dùng để chọn): cờ+CUE, z .8, LEN_PEN .25 / .5 / 1.0 -> anh em 10,3 / 6,1 / 5,2 lần/giờ,
+lặp 7% / 4% / 4%, độ hợp z TB .54 / .62 / .65 (P, F1 không đổi). Đường cong cho Lead chọn khi nghe: .5 giữ gần hết lợi ích của 1.0.
