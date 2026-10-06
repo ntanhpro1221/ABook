@@ -11,7 +11,7 @@ import pytest
 
 from abook.io_utils import atomic_write_json
 from abook.webui import music_plan, music_select
-from abook.webui.music_scenes import book_scenes, chapter_scenes, cue_bounds, cue_kind, with_scene_breaks
+from abook.webui.music_scenes import book_scenes, chapter_scenes, cue_bounds, cue_kind, hard_break, with_scene_breaks
 from abook.webui.music_select import choose, scene_key
 from tests.test_music_scenes import _battle, _calm, _script
 
@@ -31,16 +31,18 @@ def _near(tracks: list[dict]):
 
 
 def _chapter() -> list[dict]:
-    """Một cảnh êm ~9 phút (ba mảnh chia đều), rồi một dòng thời gian / nơi chốn mở cảnh trận (hai mảnh)."""
-    lines = _calm(85) + [("Trong khi đó, ở kinh thành phía nam.", "neutral", 0, 4.0)] + _battle(40)
+    """Một cảnh êm ~9 phút (ba mảnh chia đều), rồi một tiêu đề phụ mở cảnh trận (hai mảnh)."""
+    lines = _calm(85) + [(SUBHEAD, "neutral", 0, 4.0)] + _battle(40)
     return chapter_scenes(_script(lines))
+
+
+SUBHEAD = "[Góc nhìn của Lâm]"
 
 
 def test_cue_lines_are_recognised_like_the_research_rule() -> None:
     assert cue_kind({"text": "Trong khi đó, ở kinh thành."}) == "time_place"
     assert cue_kind({"text": "Sáng hôm sau, trời trong."}) == "time_place"
     assert cue_kind({"text": "Góc nhìn của Lâm"}) == "subhead"
-    assert cue_kind({"text": "【Ngoại truyện】"}) == "subhead"
     assert cue_kind({"text": "◇ ◇ ◇"}) == "separator"
     assert cue_kind({"text": "Chương 2", "kind": "heading"}) == "heading"
     assert cue_kind({"text": "Phần lớn mọi người đã về nhà từ sớm, chỉ còn vài người ở lại dọn dẹp sân."}) is None
@@ -49,14 +51,29 @@ def test_cue_lines_are_recognised_like_the_research_rule() -> None:
     assert cue_bounds(segments) == {4: "separator", 5: "subhead"}
 
 
+def test_a_bracket_is_world_text_unless_it_is_dashed_or_names_a_point_of_view() -> None:
+    """docs/MUSIC_RESEARCH.md 07-10 BRACKET: [..], 【..】, 「..」 mặc định là chữ trong truyện, không phải đổi cảnh."""
+    for text in ("[Nhiệm vụ hoàn thành]", "【Hệ thống】", "「Anh nghe thấy không?」"):
+        assert cue_kind({"text": text}) is None, text
+    for text in ("[Góc nhìn của Aria]", "【Yuki POV】", "[Shiro side]", "— Phần hai —", "-o0o-", "Góc nhìn của Aria"):
+        assert cue_kind({"text": text}) == "subhead", text
+
+
+def test_a_time_or_place_line_is_no_longer_a_boundary_but_a_time_jump_still_breaks() -> None:
+    segments = [{"id": i, "text": text} for i, text in enumerate(["Mở.", "Một.", "Trong khi đó, ở thành phố phía nam.", "Hai."], 1)]
+    assert 3 not in cue_bounds(segments) and cue_bounds(segments) == {}
+    assert hard_break({"text": "Sáng hôm sau, trời trong."}) == "time_jump"
+    assert hard_break({"text": "Trong khi đó, ở thành phố phía nam."}) is None
+
+
 def test_a_cue_line_starts_a_new_scene_flagged_like_a_scene_break_line() -> None:
     scenes = _chapter()
-    assert [scene["reason"] for scene in scenes] == ["chapter_start", "length", "length", "time_place", "length"]
+    assert [scene["reason"] for scene in scenes] == ["chapter_start", "length", "length", "subhead", "length"]
     assert scenes[3]["firstSegment"] == 86
 
 
 def test_a_third_boundary_source_plugs_in_as_the_same_flag_with_its_source() -> None:
-    lines = _calm(85) + [("Trong khi đó, ở kinh thành phía nam.", "neutral", 0, 4.0)] + _battle(40)
+    lines = _calm(85) + [(SUBHEAD, "neutral", 0, 4.0)] + _battle(40)
     script = _script(lines)
     flagged = with_scene_breaks(script["segments"], {"llm": {40: "llm", 86: "llm"}})
     assert flagged[38]["sceneBreak"] and flagged[38]["sceneSource"] == "llm"
