@@ -7112,8 +7112,13 @@ class OllamaBookAnalyzer:
                 with ollama_log_path.open("ab", buffering=0) as ollama_log:
                     started_at = time.strftime("%Y-%m-%d %H:%M:%S")
                     ollama_log.write(f"\n--- ABook started Ollama at {started_at} ---\n".encode())
+                    server_env = None
+                    if self.settings.get("ollama_cache_ram_off", False):
+                        # No saved-prompt cache: a request can only reuse the slot's last prompt.
+                        server_env = {**os.environ, "LLAMA_ARG_CACHE_RAM": "0"}
                     self._managed_ollama_process = subprocess.Popen(
                         [executable, "serve"],
+                        env=server_env,
                         stdout=ollama_log,
                         stderr=subprocess.STDOUT,
                         creationflags=(
@@ -7501,6 +7506,8 @@ class OllamaBookAnalyzer:
                 },
             )
         else:
+            if self.settings.get("prompt_cache_lineage", False):
+                self._prime_prompt_cache(body)
             raw_text, completion_reason, evaluation_count, usage = self._ollama_stream(
                 body,
                 stop_requested=stop_requested,
@@ -7543,6 +7550,36 @@ class OllamaBookAnalyzer:
             )
             decoded = strip_lone_surrogates(decoded)
         return decoded
+
+    def _prime_prompt_cache(self, body: dict[str, Any]) -> None:
+        """Send the request's system prompt with a one-character prompt (one output token) right before it.
+
+        llama-server keeps the last prompt's KV and evaluates only what follows the longest
+        shared prefix. A warm request therefore starts evaluating at a different position than
+        the first request after a load, the micro-batches differ, and so do the floats and,
+        with sampling, the answer (resume_determinism/AUDIT.md). With this prime the request
+        always reuses exactly its shared prefix with the prime, and that prefix was always
+        computed the same way, so warm, cold and resumed runs see the same numbers.
+        """
+        options = dict(body.get("options") or {})
+        options["num_predict"] = 1
+        prime = {
+            "model": body.get("model", self.model),
+            "system": body.get("system", ""),
+            # Not "": Ollama treats an empty prompt as "just load the model" and evaluates nothing.
+            "prompt": ".",
+            "think": False,
+            "stream": False,
+            "keep_alive": body.get("keep_alive", "30m"),
+            "options": options,
+        }
+        if "format" in body:
+            prime["format"] = body["format"]
+        try:
+            self.session.post(f"{self.base_url}/api/generate", json=prime, timeout=(10.0, 300.0)).raise_for_status()
+        except (requests.RequestException, *OLLAMA_TRANSPORT_EXCEPTIONS) as exc:
+            # Without the prime the request still runs; it is only less reproducible.
+            self.log(f"Không mồi được bộ đệm prompt của Ollama ({exc}); vẫn chạy tiếp.")
 
     def _ollama_stream(
         self,
