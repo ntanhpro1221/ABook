@@ -3089,3 +3089,9 @@ một phần (C0 .395 tổng) nhưng thứ hạng chương mới là trần. (2)
 .282): hình dạng trong chương gần như chưa có đóng góp tuyệt đối - khớp hệ số co b V .12 T .16. Nghĩa là lớp 3 (alpha) cũng cần
 đột phá, không chỉ lớp 2. Các mục còn lại (b thẻ cảnh cho mức nền, c tách V/E/T, d hiệu chỉnh giữa cuốn / BWS, e đọc ISMIR 2021,
 UIST 2014, Sonus Texere 2022) ghi vào kế hoạch sau bộ 7.
+
+**GHI TRƯỚC - ứng viên CS "thẻ cảnh" cho mức nền (góp ý ngoài mục b; 06-10 16:4x, trước mọi số CF/CS):** hai lượt qwen3.5:4b:
+(1) cả chương (như CF) -> THẺ CẢNH, tối đa 8 dòng `cảnh k (~p%) | mục tiêu | nguy cơ treo | mất/được | cảnh kết` + dòng `KẾT CHƯƠNG |
+trạng thái | không khí mang theo`, nhiệt độ 0, không chấm số; (2) prompt mức chương của CF, thay chương bằng thẻ cảnh -> V/E/T
+chữ số kỳ vọng. Code `chapter_level.py run <bộ> CS` (Corpus 60d92ac). Luật thắng y như CF (5b+6, MAE <= .35 VÀ r V,T >= .6).
+CF và CS cùng thắng -> chọn MAE thấp hơn; chỉ một thắng -> nó. Ghi lại: trục E (mức chương E so đáp án, góp ý mục c) cho CF/CH/CS.
