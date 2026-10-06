@@ -3890,3 +3890,43 @@ Chẩn đoán (thăm dò), truyện diễn đàn, theo loại dấu, ✓ = trún
 - Cũng dấu ấy: P .27 ở 5b+6, .24 ở bộ 7, .78 ở 4+5 (n = 9). Nhưng bỏ hẳn nó làm 5b+6 mất recall (mục FRAME). Chưa có luật sạch;
   nếu làm tiếp thì là một giả thuyết mới về `CUE_BRACKETED`, ghi trước riêng.
 - Lỗi khung hộp vốn hiếm (2/790 truyện đạt >= 5 hộp). Quãng nghỉ 1,5 s ở mép hộp khi đọc vẫn còn; đó là việc của phía đọc, ngoài phạm vi nhạc.
+
+### 07-10 05:4x - BRACKET: luật CUE ngoặc, học trên 4+5/5b+6/7/8; GHI TRƯỚC xác nhận bộ 9
+
+Lead: CUE subhead dạng ngoặc (`music_scenes.CUE_BRACKETED`) là nguồn nhiễu lớn nhất của X. `research/music/cue_bracket.py`, CPU,
+mức ranh giới trên câu trơn (bỏ nhãn).
+
+`dump` - độ chính xác của dấu ngoặc theo đặc trưng:
+- Dạng gạch bao (`-o0o-`): P .83. `[… POV]`: 2/2 trúng.
+- Ngoặc đứng lẻ (P .57-.62) hơn ngoặc thành chuỗi trong 8 câu (.13-.22). `【…】`: P .06. Có `:`: P .00-.12.
+- Bộ 8 (diễn đàn): mọi loại ~.10, vì dòng ngoặc ở đó là bình luận/thông báo trong thế giới truyện.
+
+`rules` - gộp 82 chương:
+
+| luật | ranh giới/giờ | P | F1 | sai/giờ | bỏ (trùng đáp án) |
+|---|---|---|---|---|---|
+| X (giữ mọi ngoặc) | 5,6 | .53 | .239 | 2,6 | - |
+| bỏ mọi ngoặc | 4,3 | .61 | .223 | 1,7 | 132 (28) |
+| bỏ ngoặc thành chuỗi | 4,9 | .55 | .225 | 2,2 | 93 (16) |
+| bỏ lời nói + chuỗi + `:`/số | 4,5 | .61 | .230 | 1,7 | 120 (25) |
+| **chỉ giữ gạch-bao + POV** | 4,4 | **.62** | .230 | **1,7** | 122 (21) |
+| giữ gạch-bao + POV + lẻ không `:` | 4,7 | .59 | .235 | 1,9 | 105 (16) |
+
+Tiêu chí chọn, viết trước khi xem bảng: ít sai/giờ nhất với điều kiện F1 gộp >= X − .02. Hoà thì F1 cao hơn, rồi P cao hơn.
+Kết quả: **"chỉ giữ gạch-bao + POV"**. Từng nhóm (F1; sai/giờ), X → luật:
+- 4+5: .266 → .256; 0,9 → 0,9.
+- 5b+6: .205 → .176; 1,6 → 1,1.
+- bộ 7: .289 → .293; 4,6 → 3,0.
+- bộ 8: .194 → .222; 4,3 → 2,3.
+
+Cái giá: 5b+6 mất F1, vì vài ngoặc lời nói (thần giao cách cảm) tình cờ mở đầu cảnh.
+
+**GHI TRƯỚC - bộ 9.** Luật đóng băng là `cue_bracket.keep_bracket` ở commit này: một câu subhead dạng ngoặc chỉ là ranh giới khi nó
+bao bằng gạch, hoặc bên trong nói góc nhìn (POV/góc nhìn/side).
+- Chọn truyện: `research/music/select_set9.py`, hạt 20261011, Hako `_full/truyen`, loại mọi truyện đã dùng kể cả bộ 7/8.
+  2 truyện có >= 3 dòng ngoặc (CUE_BRACKETED, <= 10 tiếng) trong 5 chương rải đều, cộng 2 truyện ngẫu nhiên.
+  Câu trơn `segment_chapter_text`; 2 người chấm mù A/B như bộ 8.
+- Đo `cue_bracket.py confirm set9`. QUA khi cả hai đều đúng:
+  1. sai/giờ (X + luật) <= 0,8 × X;
+  2. F1 (X + luật) >= F1 X − .02.
+- Qua thì đề xuất Lead sửa `music_scenes.cue_kind`: ngoặc chỉ là subhead khi bao gạch hoặc có POV/góc nhìn. Không đụng file khoá.
