@@ -73,6 +73,34 @@ export function sleepSpoken(mode: SleepMode, now: number): string {
   return left < 60_000 ? `Hẹn giờ tắt: còn ${Math.ceil(left / 1000)} giây` : `Hẹn giờ tắt: còn ${minutes} phút`;
 }
 
+/**
+ * Hẹn giờ tắt của loa / TV: máy giữ phiên phát đếm (webui/cast.py, DlnaPlayers.kt - chỉ nó biết thiết bị đang phát hay
+ * dừng), cùng luật với hẹn giờ ở đây: chỉ trôi khi đang phát. `left`: giây còn lại lúc máy ấy trả lời.
+ */
+export type RemoteSleep = { kind: "minutes"; minutes: number; left: number; counting: boolean } | { kind: "chapter" };
+
+/** Lệnh hẹn giờ gửi loa / TV qua đường điều khiển từ xa (`/api/remote`, RemotePlayers): không phút nào = tắt hẹn giờ. */
+export type RemoteSleepCommand = { action: "sleep"; minutes?: number; endOfChapter?: boolean };
+
+/** Hẹn giờ của loa / TV theo cách nút hẹn giờ ở đây đọc; `receivedAt`: lúc nhận câu trả lời ấy. */
+export function remoteSleepMode(sleep: RemoteSleep | null | undefined, receivedAt: number): SleepMode {
+  if (!sleep) return { kind: "off" };
+  if (sleep.kind === "chapter") return { kind: "chapter" };
+  return { kind: "minutes", minutes: sleep.minutes, leftMs: sleep.left * 1000, since: sleep.counting ? receivedAt : null };
+}
+
+export function remoteSleepCommand(request: SleepRequest): RemoteSleepCommand {
+  if (request.kind === "chapter") return { action: "sleep", endOfChapter: true };
+  return { action: "sleep", minutes: request.kind === "minutes" ? request.minutes : 0 };
+}
+
+/** Nút đổi ngay dưới tay người bấm, trước khi loa / TV trả lời. */
+export function remoteSleepAfter(command: RemoteSleepCommand, playing: boolean): RemoteSleep | null {
+  if (command.endOfChapter) return { kind: "chapter" };
+  const minutes = command.minutes ?? 0;
+  return minutes > 0 ? { kind: "minutes", minutes, left: minutes * 60, counting: playing } : null;
+}
+
 /** Tự lùi khi nghe lại, theo độ dài lần dừng: vừa dừng thì thôi; vài phút thì lùi một câu; ngủ dậy thì lùi hẳn. */
 export function rewindAfter(pausedMs: number): number {
   if (pausedMs < 5 * 60_000) return 0;
