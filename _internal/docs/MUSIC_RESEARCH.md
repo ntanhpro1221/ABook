@@ -2885,3 +2885,21 @@ Phân xử (`adjudicate.py`): 84 đoạn (77 truyện), lệch A-B lớn nhất 
 **Dữ liệu musicvt (ghi theo docs 24cf8f78, trước khi chuỗi bắt đầu):** `mlx_lora/sft` dựng lại 60 chương (pilot + v3 + v31,
 `build_mood_sft.py --prompt P2 --seed 7`): **train 1.238, val 72** (cảnh 554, cửa sổ 756, bỏ 6); token dài nhất 2.312, p99
 2.239, không mẫu nào > 3.072. Bản 40 chương cũ giữ ở `mlx_lora/sft_40ch_0610/` (770/62).
+
+### 06-10 12:2x - KẾT QUẢ prompt có mốc + chữ số (ghi trước 05-10 19:0x): KHÔNG THẮNG -> giữ prompt cũ
+
+`run_prompt_mood.sh` qua hàng GPU (11:46-12:15, mã 0); `results/prompt_mood_score.txt`. qwen3.5:4b, app+llmVT, `SCORE_SKIP_NOTES=1`.
+
+| bộ 4+5+5b (22 chương) | VET | so P0 | thắng | V | T | V = 0 |
+|---|---|---|---|---|---|---|
+| P0 (cũ) | +.287 | - | - | +.220 | +.333 | 85 % |
+| P1 (mốc, JSON) | +.279 | -.009 | 10/22 | +.353 | +.174 | 43 % |
+| **P2 (mốc + chữ số kỳ vọng) - CHÍNH** | +.315 | **+.028** | **14/22** | +.267 | +.368 | 0 % |
+| P2 chữ số cao nhất | +.281 | -.006 | 13/22 | +.272 | +.262 | - |
+
+-> CHÍNH cần +0,05 và >= 16/22: **KHÔNG THẮNG**, giữ prompt cũ của app. Ghi lại:
+- Bộ 6 (ghi lại): P2 +.038, 12/20. Hướng dương ở cả hai nhóm bộ nhưng dưới ngưỡng.
+- Đầu ra chữ số xoá hẳn bệnh V = 0 hằng (85 % -> 0 %) mà không mất T; prompt mốc dạng JSON (P1) đổi T lấy V.
+- E từ LLM vẫn kém nhãn câu ở mọi biến thể (P2+E -.000, P1+E -.154).
+- Cùng P2 nhưng MLX 4-bit trên Mac (số nền LoRA, 18e10386) cho T +.180, còn Ollama ở đây +.368. Khác lượng tử/runtime đổi T nhiều, nên phép LoRA trên Mac chỉ so trong MLX (đúng như ghi trước).
+- Dữ liệu dạy vẫn dùng đầu ra chữ số P2 (mẫu đã dựng), vì luật "thua thì giữ prompt cũ" chỉ nói về prompt app; LoRA (Mac, musicvt) có luật riêng.
