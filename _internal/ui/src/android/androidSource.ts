@@ -139,6 +139,9 @@ export const androidSource: ListenSource = {
     const reply = await EbookLibrary.saveBook({ id, as: options?.as });
     return { saved: reply.saved, file: reply.name, size: reply.size, edits: reply.edits };
   },
+  shareBook: async (id) => {
+    await EbookLibrary.shareBook({ id });
+  },
   records: {
     create: async (id, name) => (await EbookLibrary.createRecord({ id, name })).records,
     activate: async (id, record) => (await EbookLibrary.activateRecord({ id, record })).records,
