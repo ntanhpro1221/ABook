@@ -3163,3 +3163,15 @@ học trên 4+5.
 ĐỔI BÀI thật qua `appwin` (cùng danh mục) mỗi giờ.
 
 Thứ tự chạy khi GPU có khe: RULE (CPU, làm ngay khi giờ êm quạt qua) -> L2-ANCH và L3-3B (rẻ) -> L3-PAIR + P0-VOTE6.
+
+**KẾT QUẢ RULE (06-10 17:4x, CPU; `rule_switch.py`, ghi trước 33c0f58f): KHÔNG THẮNG - và lộ một lỗi gốc của lớp đoạn.**
+F1 ranh giới (lệch <= 2 câu) so đáp án, 5b+6: app .130 (P .15, R .11), 18,4 ranh giới/giờ; biến thể chọn trên 4+5 (SHIFT 0,75) .137.
+Người chấm 22-24 ranh giới/giờ. BỎ chia đều thì app còn 0-0,5 ranh giới/giờ ở MỌI ngưỡng: bộ dò "đổi không khí" (SHIFT_DISTANCE trên
+mặt phẳng VA trượt 45 s) gần như KHÔNG BAO GIỜ nổ - ranh giới app hầu hết là `_split_long` cắt đều mỗi <= 180 s. F1 .13 ~ mức NGẪU NHIÊN
+(ước: ~840 câu/giờ, cửa sổ 5 câu, 24 ranh giới/giờ -> P trúng ~.14). Hệ quả:
+- Khúc app = khúc theo đồng hồ, không theo cảnh; mọi phép đo lớp 3 trên khúc app (P0, llmVT, musicvt) đều chấm trên ranh giới gần
+  ngẫu nhiên. Nhãn câu co thang (b .12/.16) làm điểm VA trượt gần như đứng yên nên bộ dò không thấy đổi.
+- Nhạc đổi ~18 lần/giờ nhưng không trúng chỗ cảnh đổi - đúng điều Sonus Texere / Chen 2022 cảnh báo.
+- Hướng đúng: ranh giới CẢNH là một bài toán riêng (lớp 2,5): thẻ cảnh của CS đã sinh danh sách cảnh có tỉ lệ thời lượng - đề xuất ghi
+  trước một ứng viên "CS-SEG": LLM chia cảnh (trả số câu bắt đầu mỗi cảnh) so app bằng F1 ranh giới, cùng luật thắng RULE.
+  Chờ Lead duyệt (hướng mới).
