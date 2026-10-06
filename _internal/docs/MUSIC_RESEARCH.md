@@ -3668,3 +3668,28 @@ CHÍNH (4 mô hình + CF, khớp phương sai): MAE mức .173, r V .78, T .91 (
 ridge thường .175 / .75 / .91; chỉ CF + hiệu chỉnh .215 / .52 / .87; mốc 4 mô hình cũ (không đặc trưng chữ) .175 / .79 / .90.
 Đọc: T giữa các chương đã tốt (~.9) và bão hoà; nút thắt của mức chương là **V** (~.78-.79), mọi nguồn zero-shot đều không gỡ được.
 Không cần lượt CF bộ 7. L2-EST cũ vẫn chờ xác nhận trên bộ 7 như đã ghi (ae425cdc).
+
+### 07-10 05:0x - Đáp án bộ 7 + KẾT QUẢ XÁC NHẬN X/Y (ghi trước b71d62c1): **X** - Y trượt cả ba điều kiện
+
+Đáp án bộ 7: 2 agent Opus chấm mù A (xuôi) / B (ngược) theo PROMPT_A/B (hướng dẫn bản 3), phân xử tự động `adjudicate_scenes.py`
+-> `scene_set7/gold_scene7` (20 chương, 4 truyện, 4,4 giờ). Đáp án 13,0 ranh giới/giờ (thưa hơn bộ 4-6, ~22). **Người A so B:
+P .68 R .76 F1 .72** (y như các bộ trước). Cả hai người chấm cùng nêu một chỗ mơ hồ: tiêu đề trước lời người dịch (L4) buộc thành
+`scene 0-0` riêng ở ~10 chương.
+
+`track_changes2.py confirm set7` (cờ scene_break bộ 7 dựng lại bằng `seg_flag_build.py`, cờ bộ cũ giữ nguyên; SEG bộ 7 GPU 04:44):
+
+| bộ 7 | đổi bài/giờ | P | R | F1 | lặp | anh em/giờ | z TB | đổi sai chỗ/giờ |
+|---|---|---|---|---|---|---|---|---|
+| TRƯỚC 0.4.31 | 20,0 | .19 | .30 | .234 | 14% | - | - | 16,2 |
+| **X: cờ+CUE** | 7,7 | .38 | .23 | **.286** | 2% | 4,8 | .42 | **4,8** |
+| Y: cờ+CUE+LLM | 20,0 | .31 | .47 | .372 | 0% | 2,5 | .28 | 13,9 |
+
+Điều kiện Y: F1 Y >= X + .10 -> .372 < .386 KHÔNG; P Y >= .35 -> .31 KHÔNG; sai chỗ Y <= 0,8 x 16,2 = 13,0 -> 13,9 KHÔNG.
+**=> App làm X** (đặc tả b796ae8e, nguồn 'llm' giữ TẮT).
+
+Ghi lại cho đúng:
+- X trên bộ 7 chỉ đạt P .38, không phải .70 như trên 5b+6. Ranh giới cờ+CUE tổng quát hoá kém hơn mức đo trên 5b+6 (đáp án bộ 7
+  thưa hơn, và truyện bộ 7 nhiều dòng `-o0o-` / tiêu đề phụ). Nhưng X vẫn hơn 0.4.31 ở mọi trục: F1 .286 so với .234, đổi sai chỗ
+  giảm 3,4 lần (16,2 -> 4,8/giờ), lặp 14% -> 2%.
+- Y đứng thứ hai về mọi mặt trừ R, và gần đạt F1. Cái giá của nó là đổi sai chỗ gần bằng hôm nay. LLM chia cảnh vẫn là hướng có
+  trần cao nhất (người .72); việc kế là làm P của nó lên, chưa phải cắm vào app.
