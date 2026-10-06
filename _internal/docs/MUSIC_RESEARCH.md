@@ -3038,3 +3038,12 @@ Hai agent Opus chấm mù xong 20/20 mỗi người (bản 3); phân xử 83 đo
 <= .35). Giảm .432 -> .395 (-9 %) chỉ nhờ giãn thang; thứ hạng giữ nguyên nên r không đổi. Ghi lại 4+5 (tập học): .419 -> .390.
 Trần (mức đáp án) .286, nên ngưỡng .35 đòi mức chương dự đoán sát hơn hẳn: C0 thiếu ở thứ hạng chứ không ở thang. Kế: CF (một lượt
 LLM đọc cả chương) qua hàng GPU của Model.
+
+**KHÁM PHÁ SAU (không ghi trước, KHÔNG tính thắng) - mức chương lấy từ dự đoán theo khúc đã có (06-10):** trung bình P0/P2 theo khúc
+trong chương (thời lượng), hiệu chỉnh tuyến tính học 4+5, đo 5b+6. P0 cho mức chương T rất tốt: r T **.95** (thô), MAE T .348
+sau hiệu chỉnh (hệ số 1,07 - gần như chỉ dời gốc -0,49). V: C0 (nhãn câu app) tốt nhất trên tập học (.392). Chọn theo TẬP HỌC từng
+trục -> V = C0 hc (1,876·m + 0,068), T = P0 hc (1,066·m - 0,490): 5b+6 MAE **.349** (V .350, T .348), r V .74 T .95 - chạm
+ngưỡng .35 nhưng là chọn sau khi đã xem nhiều tổ hợp, nên chỉ là ứng viên. Ý nghĩa cho app: nếu lớp 3 (thứ hạng trong chương)
+là một lượt LLM theo khúc thì trung bình chương của chính nó + hằng hiệu chỉnh cho lớp 2 MIỄN PHÍ, không cần lượt riêng.
+Xác nhận cần chương đáp án MỚI (chưa ai xem) có cả nhãn câu app lẫn P0 theo khúc; công thức và hằng số trên giữ cố định.
+CF/CH: Model chen khe ngay sau rel430b (~18 h), log `music/cl_chain.log`, dấu "HẾT MỨC CHƯƠNG CL 06-10".
