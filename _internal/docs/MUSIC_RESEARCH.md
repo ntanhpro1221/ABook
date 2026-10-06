@@ -3321,3 +3321,25 @@ Bỏ-một-truyện; 42 chương, 39 truyện; báo 23 chương 5b+6. SD mức �
    chờ xác nhận ở bộ 7.
 5. Kế: bộ 7 (độc lập) là nơi xác nhận. CF/CH/CS (một lượt đọc cả chương) khi có số sẽ thêm vào ridge như nguồn thứ 5 - ghi trước
    riêng khi đó.
+
+### 06-10 20:1x - GHI TRƯỚC: xác nhận L2-EST trên bộ 7 (Lead duyệt 20:0x)
+- **CHÍNH (đổi so với 2137d6d0):** ridge (alpha 4, chuẩn hoá theo train) trên 4 nguồn mô hình - nhãn câu app, P2 Ollama qwen3.5:4b,
+  MLX base_P0, MLX lora1_P2 - KHÔNG đặc trưng chữ, + khớp phương sai trên train, kẹp [−1, 1].
+  - Lý do đổi: trên 5b+6 đặc trưng chữ làm xấu đi (MAE 0,175 -> 0,190).
+  - Được phép đổi vì bộ 7 là dữ liệu mới chưa ai nhìn. Lựa chọn này dựa trên 5b+6, nên 5b+6 không còn là bằng chứng độc lập cho nó;
+    bộ 7 là bằng chứng.
+- **Huấn luyện:** toàn bộ 42 chương 4+5+5b+6 (bỏ chương nào cùng truyện với chương bộ 7 đang dự đoán, nếu có). Dự đoán từng chương bộ 7.
+- **Cổng (giữ nguyên):** MAE mức < 0,20 VÀ r >= 0,80 ở CẢ V và T.
+- **Đối chứng ghi lại:**
+  - CHÍNH cũ (thêm 4 đặc trưng chữ);
+  - nhãn app + hiệu chỉnh tuyến tính (C0);
+  - từng nguồn + hiệu chỉnh;
+  - hằng TB train.
+- **Nguồn thứ 5 (ghi lại, chỉ khi CF/CH/CS có số cho cả 5 bộ):** CHÍNH + từng biến thể CF/CH/CS làm cột thêm, báo riêng từng biến
+  thể. Không thay CHÍNH ở lượt này.
+- **Cần cho bộ 7:**
+  - phân tích app 9B-v8 (hàng Model, đang chạy tới ~03:30 07-10);
+  - P2 Ollama trên khúc app (hàng Model);
+  - MLX base_P0 + lora1_P2 trên Mac;
+  - đáp án gold_scene7.
+  Lệnh: `SCORE_SKIP_NOTES=1 python l2_est.py confirm set7`.
