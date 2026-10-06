@@ -888,11 +888,13 @@ class LibraryPlugin : Plugin() {
     // ---- hồ sơ nghe (độc lập với sách, app giữ liên kết - Store) -----------------------------------------------
 
     /** Trả danh sách hồ sơ mới, rồi báo máy tính: hồ sơ vừa rời trước (`left` - chỗ nghe cuối của nó, lưu lúc đổi, chưa
-     *  tới máy tính: điện thoại chỉ đẩy hồ sơ đang dùng), rồi hồ sơ đang dùng (lựa chọn, tên, bia mộ). */
-    private fun resolveRecords(call: PluginCall, records: JSONArray, left: String? = null) {
+     *  tới máy tính: điện thoại chỉ đẩy hồ sơ đang dùng), rồi hồ sơ đang dùng (lựa chọn, tên, bia mộ). `first`: cuốn đẩy
+     *  trước tiên (cuốn vừa nhận hồ sơ chuyển tới - máy tính gắn lại hồ sơ theo lần chuyển ấy trước khi nghe cuốn cũ). */
+    private fun resolveRecords(call: PluginCall, records: JSONArray, left: String? = null, first: String? = null) {
         call.resolve(JSObject().put("records", records))
         val id = call.getString("id") ?: return
         io.execute {
+            if (first != null) runCatching { pushState(first) }
             if (left != null && left != Store.knownActiveRecord(id) && Store.hasRecord(left)) {
                 runCatching { StateSync.pushNow(context, id, left) }
             }
@@ -939,7 +941,7 @@ class LibraryPlugin : Plugin() {
         val change = { Store.moveRecord(id, call.getString("record")!!, to) }
         // Cuốn nhận đang nạp trong trình phát: cũng qua Playback - lưu chỗ của hồ sơ đang dùng ở đó trước, rồi theo sang hồ
         // sơ vừa chuyển tới (không thì lần lưu kế ghi chỗ của cuốn ấy đè lên hồ sơ vừa tới).
-        resolveRecords(call, if (Playback.bookId == to) switching(to, change) else switching(id, change))
+        resolveRecords(call, if (Playback.bookId == to) switching(to, change) else switching(id, change), first = to)
     }
 
     @PluginMethod
