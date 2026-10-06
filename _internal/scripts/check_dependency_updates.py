@@ -61,22 +61,32 @@ def local_version(name: str) -> str:
 def _supports_running_python(release_files: list[dict[str, Any]]) -> bool:
     """Whether any file in a release accepts the interpreter this project runs on."""
     from packaging.specifiers import InvalidSpecifier, SpecifierSet
+    from packaging.tags import sys_tags
+    from packaging.utils import InvalidWheelFilename, parse_wheel_filename
 
     running = f"{sys.version_info.major}.{sys.version_info.minor}"
-    saw_constraint = False
+    # pyworld 0.3.6 shipped only cp36-cp38 wheels and no sdist: no requires_python, so it read as
+    # installable and was reported as an update every day. A wheel counts only if one of its tags fits.
+    supported = set(sys_tags())
     for item in release_files:
         if item.get("yanked"):
             continue
+        filename = str(item.get("filename") or "")
+        if filename.endswith(".whl"):
+            try:
+                if not supported.intersection(parse_wheel_filename(filename)[3]):
+                    continue
+            except InvalidWheelFilename:
+                pass
         requires = item.get("requires_python") or ""
         if not requires:
             return True
-        saw_constraint = True
         try:
             if SpecifierSet(requires).contains(running, prereleases=True):
                 return True
         except InvalidSpecifier:
             return True
-    return not saw_constraint
+    return False
 
 
 def _latest_installable(name: str) -> tuple[str, str]:
