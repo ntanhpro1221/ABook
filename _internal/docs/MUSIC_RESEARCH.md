@@ -3013,3 +3013,7 @@ Hai agent Opus chấm mù xong 20/20 mỗi người (bản 3); phân xử 83 đo
 `mlx_lora/sft` = 80 chương (pilot + v3 + v31 + book_var, `build_mood_sft.py --prompt P2 --seed 7`): **train 1.768, val 72**
 (cảnh 762, cửa sổ 1.078, bỏ 8; val không đổi vì không chương lô 4 nào rơi vào phần val theo hash); token dài nhất 2.351, p99
 2.283. Bản 60 chương giữ ở `mlx_lora/sft_60ch_0610/`. Luật CHÍNH của musicvt không đổi.
+
+*Đính chính giờ (06-10 12:5x):* các mục 06-10 ghi "12:4x/13:0x/13:3x/13:5x/14:xx/15:xx" thực ra đều xảy ra trong khoảng
+12:15-12:50 (đồng hồ máy); thứ tự đúng như ghi. Mac LoRA lớp cuối: 620/1.540 bước lúc 12:48 (val .366), ~30 phút/100 bước
+-> chuỗi xong ~17:45.
