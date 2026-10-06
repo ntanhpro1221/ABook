@@ -9,12 +9,20 @@ from .io_utils import decode_text_bytes, natural_key, sha256_bytes, sha256_file,
 
 
 QUOTE_PATTERN = re.compile(r"([“\"][^”\"]{1,1600}[”\"])", re.DOTALL)
-THOUGHT_QUOTE_PATTERN = re.compile(r"(‘[^’]{1,1600}’)", re.DOTALL)
+# Bản dịch hay mở ‘ rồi đóng bằng dấu ' thẳng ("được gọi là ‘tổng hợp ý kiến'."): dấu ' bám cuối chữ và theo sau là khoảng
+# trắng / dấu câu / hết dòng thì đóng ‘. Dấu ' nằm GIỮA chữ (tên phiên âm "Ma'at", "I'm") không đóng gì. Không nhận nó
+# thì nội tâm không bao giờ đóng và khoá giọng nội tâm tràn sang mọi câu kể phía sau.
+THOUGHT_CLOSING_PATTERN = re.compile(r"’|(?<=\S)'(?!\w)")
+THOUGHT_QUOTE_PATTERN = re.compile(
+    rf"(‘[^’]{{1,1600}}?(?:{THOUGHT_CLOSING_PATTERN.pattern}))",
+    re.DOTALL,
+)
 CURLY_QUOTE_SPECS = (
     ("“", "”", "dialogue"),
     ("‘", "’", "thought"),
 )
 QUOTE_CLOSING_MARKS = {"”", "’", '"'}
+QUOTE_CLOSING_PATTERNS = {"’": THOUGHT_CLOSING_PATTERN}
 # Một dòng NGUYÊN VẸN trong 『…』 là một giọng nói: kẻ nhập xác (Yamiyo no Hotaru), bảng thông báo game (Năng lực bá
 # đạo), tiếng qua loa/điện thoại (Two Childhood Friends). Cụm 『…』 nằm GIỮA câu kể là thuật ngữ - để yên, vì đổi giọng
 # giữa một câu kể là sai. 『 cố ý KHÔNG vào CURLY_QUOTE_SPECS: theo lối Nhật nó là ngoặc lồng trong 「…」 (nay là “”).
@@ -72,6 +80,36 @@ SPLIT_MAX_CHARS_BY_STRATEGY = {
 }
 SPEECH_VERB_PATTERN = re.compile(
     r"\b(?:nói|hỏi|đáp|trả lời|quát|hét|gào|thì thầm|lẩm bẩm|kêu|bảo|ra lệnh|cười)\b",
+    re.IGNORECASE,
+)
+# Dòng mở bằng gạch là lượt thoại ở chương viết thoại bằng gạch (Tắt đèn, Tam quốc). Ở chương viết thoại trong ngoặc kép,
+# một dòng gạch hiếm hoi thường là gạch ngang của LỜI KỂ ("-Hoặc không, vì hắn đã nhảy tránh được."): thầy gán nhãn a2w4
+# (06-10) và đáp án gold (evil_lord 02:57, re_zero 065a:130, eiyuu_to_majo 05:56) đều trả lời lời kể cho những dòng như
+# thế. Chỉ đổi khi cả chương lẫn dòng cùng nói vậy (`_dash_line_is_narration`, thận trọng: hai dòng gold sau vẫn khoá
+# thoại). Quét Corpus 06-10: 1.069 đoạn đổi sang lời kể; dòng gạch có lời nói thật ở chương ngoặc kép (Villain 22: 11 dòng
+# gạch của một nhân vật) đều giữ thoại.
+DASH_LINE_PATTERN = re.compile(r"^[—–-]+\s*(?=\S)")
+QUOTE_LED_LINE_PATTERN = re.compile(r"^[“\"‘「『]")
+QUOTED_CHAPTER_MIN_QUOTE_LINES = 10
+QUOTED_CHAPTER_MAX_DASH_LINES = 3
+_THIRD_PERSON = r"(?:hắn|họ|gã|lão|(?:anh|cô|ông|bà|cậu|nàng|chàng)\s+(?:ta|ấy))"
+THIRD_PERSON_PATTERN = re.compile(rf"(?<!\w){_THIRD_PERSON}(?!\w)", re.IGNORECASE)
+# Chủ ngữ ngôi ba + đã/đang/vừa/liền/bèn + động từ: "hắn đã nhảy", "Silk đã kháng cự" - không phải "Đợi đã.".
+NARRATIVE_SUBJECT_PATTERN = re.compile(
+    rf"(?<!\w)(?:{_THIRD_PERSON}"
+    r"|(?!(?:Tôi|Mình|Ta|Chúng|Bọn|Cô|Nó|Anh|Em|Cậu|Ngài|Bạn|Người|Hãy|Đừng)(?!\w))[A-ZĐ]\w*(?:[\s-][A-ZĐ]\w*)*)"
+    r"\s+(?:đã|đang|vừa|liền|bèn)\s+\w"
+)
+# Dấu hiệu lời nói: xưng hô ngôi một/hai (sau khi bỏ "cậu ta", "cô ấy"...), câu hỏi/cảm thán, tiểu từ cuối câu nói.
+SPEECH_PRONOUN_PATTERN = re.compile(
+    r"(?<!\w)(?:ta|ngươi|tớ|mày|tao|ngài|tui|mi|cậu|nàng|anh|em|con|tôi|mình|bạn|ông|bà|cháu|chị|chúng|bọn)(?!\w)",
+    re.IGNORECASE,
+)
+# Ngôi một/hai chỉ có trong lời nói - kể cả dòng viết thường ("--giờ mới nhớ, cái đó là kỹ thuật gì mà ta.").
+SPEECH_ONLY_PRONOUN_PATTERN = re.compile(r"(?<!\w)(?:ta|ngươi|tớ|mày|tao|ngài|tui|mi)(?!\w)", re.IGNORECASE)
+SPEECH_MARK_PATTERN = re.compile(r"[?!~…*“”\"‘’「」『』\[\]〔〕()]|\.\.")
+SPEECH_FINAL_PARTICLE_PATTERN = re.compile(
+    r"(?<!\w)(?:chăng|à|ư|nhỉ|hả|nhé|nha|chứ|vậy|đấy|đâu|nào|ạ|mà|rồi|sao|thôi)\W*$",
     re.IGNORECASE,
 )
 # Từ dẫn một THUẬT NGỮ trong ngoặc (không phải lời nói): "gọi là “bang hội,”", "mang danh “thợ săn,”".
@@ -719,7 +757,9 @@ def _quoted_span_is_dialogue(line: str, match: re.Match[str]) -> bool:
     inner = quoted[1:-1].strip()
     if not has_spoken_content(inner):
         return False
-    if line.strip() == quoted:
+    # Cả dòng là câu trong ngoặc, chỉ thêm dấu chấm đặt ngoài ngoặc (“...an toàn”.): vẫn là nguyên một câu nói (thầy gán
+    # nhãn 06-10). Dấu hỏi ngoài ngoặc thì không (“Cơ hội hoàn hảo”? - người kể ngẫm lại một chữ).
+    if not line[: match.start(1)].strip() and line[match.end(1) :].strip() in ("", "."):
         return True
     if any(mark in inner for mark in ("?", "!", "…")) or inner.endswith("."):
         return True
@@ -747,6 +787,52 @@ def _join_fragments(left: str, right: str) -> str:
     return f"{left} {right}"
 
 
+_WHOLE_SPAN_PATTERN = re.compile(r"(.+)", re.DOTALL)
+
+
+def _nested_dialogue_quote_spans(line: str) -> list[tuple[int, int]]:
+    """Cặp “…” có “…” lồng bên trong, khi cả dòng cân dấu: “Haha! “Cậu sẽ bị phạt” chứ gì? Cứ làm đi!”.
+
+    QUOTE_PATTERN dừng ở dấu ” đầu tiên, nên nửa sau câu nói của người ấy thành lời kể. Chỉ khi mọi “ ” trên dòng
+    khớp thành cặp lồng nhau - dòng gõ nhầm dấu thì để luật cũ lo.
+    """
+    spans: list[tuple[int, int]] = []
+    depth = 0
+    start = 0
+    nested = False
+    for index, char in enumerate(line):
+        if char == "“":
+            if depth == 0:
+                start, nested = index, False
+            else:
+                nested = True
+            depth += 1
+        elif char == "”":
+            depth -= 1
+            if depth < 0:
+                return []
+            if depth == 0 and nested:
+                spans.append((start, index + 1))
+    return spans if depth == 0 else []
+
+
+def _dialogue_quote_matches(line: str) -> list[re.Match[str]]:
+    matches = list(QUOTE_PATTERN.finditer(line))
+    nested = _nested_dialogue_quote_spans(line)
+    if not nested:
+        return matches
+    matches = [
+        match
+        for match in matches
+        if not any(start <= match.start() < end for start, end in nested)
+    ]
+    for start, end in nested:
+        span = _WHOLE_SPAN_PATTERN.match(line, start, end)
+        if span is not None:
+            matches.append(span)
+    return sorted(matches, key=lambda match: match.start())
+
+
 def _line_pieces(line: str) -> list[tuple[str, str]]:
     if re.match(r"^[—–-]\s*\S", line):
         return [(line, "dialogue")]
@@ -754,7 +840,7 @@ def _line_pieces(line: str) -> list[tuple[str, str]]:
         return [(line, "dialogue")]
     matches = [
         (match, "dialogue" if _quoted_span_is_dialogue(line, match) else "narration")
-        for match in QUOTE_PATTERN.finditer(line)
+        for match in _dialogue_quote_matches(line)
     ]
     matches.extend((match, "thought") for match in THOUGHT_QUOTE_PATTERN.finditer(line))
     matches.sort(key=lambda item: (item[0].start(), -item[0].end()))
@@ -770,19 +856,21 @@ def _line_pieces(line: str) -> list[tuple[str, str]]:
         hint = "thought" if line.startswith("(") and line.endswith(")") else "narration"
         return [(line, hint)]
 
-    raw: list[tuple[str, str]] = []
+    raw: list[tuple[str, str, bool]] = []
     cursor = 0
     for match, hint in matches:
         if match.start() > cursor:
-            raw.append((line[cursor : match.start()], "narration"))
-        raw.append((match.group(1), hint))
+            raw.append((line[cursor : match.start()], "narration", False))
+        raw.append((match.group(1), hint, True))
         cursor = match.end()
     if cursor < len(line):
-        raw.append((line[cursor:], "narration"))
+        raw.append((line[cursor:], "narration", False))
 
     merged: list[tuple[str, str]] = []
+    # Mảnh cuối của `merged` là trọn một câu thoại trong ngoặc: câu thoại trong ngoặc liền sau nó là một lượt riêng.
+    last_is_quoted_dialogue = False
     pending_prefix = ""
-    for text, hint in raw:
+    for text, hint, quoted in raw:
         text = text.strip()
         if not text:
             continue
@@ -790,18 +878,34 @@ def _line_pieces(line: str) -> list[tuple[str, str]]:
             if merged:
                 previous_text, previous_hint = merged[-1]
                 merged[-1] = (_join_fragments(previous_text, text), previous_hint)
+                # “a”, “b”, “c” hay “thuật ngữ”: “câu nói” là MỘT câu kể liệt kê / dẫn lời, không phải hai lượt thoại.
+                last_is_quoted_dialogue = last_is_quoted_dialogue and text == "."
             else:
                 pending_prefix = _join_fragments(pending_prefix, text)
             continue
         if pending_prefix:
             text = _join_fragments(pending_prefix, text)
             pending_prefix = ""
-        if merged and merged[-1][1] == hint:
+        quoted_dialogue = quoted and hint == "dialogue"
+        # Hai câu trong ngoặc liền nhau trên một dòng ("...nữa." "Cô chắc chứ?") thường là hai người nói (thầy gán nhãn
+        # 06-10): tách thành hai đoạn để mỗi câu có người nói riêng, thay vì gộp làm một.
+        if merged and merged[-1][1] == hint and not (quoted_dialogue and last_is_quoted_dialogue):
             previous_text, _ = merged[-1]
             merged[-1] = (_join_fragments(previous_text, text), hint)
+            last_is_quoted_dialogue = False
         else:
             merged.append((text, hint))
+            last_is_quoted_dialogue = quoted_dialogue
     return merged
+
+
+def _find_quote_closing(line: str, closing_mark: str, start: int = 0) -> int:
+    """Where `closing_mark` closes in `line` from `start`, counting the closers it accepts in its place (‘…')."""
+    pattern = QUOTE_CLOSING_PATTERNS.get(closing_mark)
+    if pattern is None:
+        return line.find(closing_mark, start)
+    match = pattern.search(line, start)
+    return match.start() if match is not None else -1
 
 
 def _balanced_quote_spans(line: str) -> list[tuple[int, int]]:
@@ -812,7 +916,7 @@ def _balanced_quote_spans(line: str) -> list[tuple[int, int]]:
             opening_index = line.find(opening_mark, cursor)
             if opening_index < 0:
                 break
-            closing_index = line.find(closing_mark, opening_index + 1)
+            closing_index = _find_quote_closing(line, closing_mark, opening_index + 1)
             if closing_index < 0:
                 cursor = opening_index + 1
                 continue
@@ -838,7 +942,7 @@ def _unmatched_curly_quote_openings(line: str) -> list[tuple[int, str, str]]:
             opening_index = line.find(opening_mark, cursor)
             if opening_index < 0:
                 break
-            closing_index = line.find(closing_mark, opening_index + 1)
+            closing_index = _find_quote_closing(line, closing_mark, opening_index + 1)
             if closing_index >= 0:
                 cursor = closing_index + 1
                 continue
@@ -859,6 +963,12 @@ def _terminal_alternative_quote_closing(line: str, expected_closing_mark: str) -
     terminal_mark = stripped[-1]
     if terminal_mark == expected_closing_mark or terminal_mark not in QUOTE_CLOSING_MARKS:
         return -1
+    if any(
+        end == len(stripped) and stripped[start] in "“‘"
+        for start, end in _balanced_quote_spans(stripped)
+    ):
+        # Dấu cuối dòng đóng cặp của chính nó ("...cô gái vẫn thì thầm, ‘ba’"): không phải dấu đóng nhầm của ngoặc đang mở.
+        return -1
     return len(stripped) - 1
 
 
@@ -868,7 +978,7 @@ def _line_pieces_with_quote_state(
 ) -> tuple[list[tuple[str, str]], tuple[str, str] | None]:
     if quote_state is not None:
         hint, closing_mark = quote_state
-        closing_index = line.find(closing_mark)
+        closing_index = _find_quote_closing(line, closing_mark)
         if closing_index < 0:
             alternative_closing_index = _terminal_alternative_quote_closing(
                 line,
@@ -918,6 +1028,54 @@ def _line_pieces_with_quote_state(
     return pieces, (hint, closing_mark)
 
 
+def _fresh_quote_opening(line: str, quote_state: tuple[str, str]) -> int:
+    """Where a later paragraph opens a NEW quote although `quote_state` is still open, or -1.
+
+    A quote that really runs on either carries on without a mark until its closer, or (the
+    English convention) starts each further paragraph with the opener again. A paragraph that
+    opens a fresh “ in the middle of its text before closing anything, or starts with an opener
+    after a paragraph that did not, shows the earlier quote never ran on: its closer is missing.
+    """
+    _hint, closing_mark = quote_state
+    if line.startswith("“") or (closing_mark == "’" and line.startswith("‘")):
+        return 0
+    if line.startswith('"') and len(line) > 1 and not line[1].isspace():
+        return 0
+    if closing_mark == '"':
+        return -1
+    openers = "“‘" if closing_mark == "’" else "“"
+    closing_index = _find_quote_closing(line, closing_mark)
+    before_closing = line if closing_index < 0 else line[:closing_index]
+    return next((index for index, char in enumerate(before_closing) if char in openers), -1)
+
+
+def _chapter_writes_dialogue_in_quotes(paragraphs: list[str]) -> bool:
+    """Thoại của chương nằm trong ngoặc kép và dòng mở bằng gạch chỉ lác đác vài dòng."""
+    lines = [line.strip() for paragraph in paragraphs for line in paragraph.splitlines() if line.strip()]
+    quote_led = sum(1 for line in lines if QUOTE_LED_LINE_PATTERN.match(line))
+    dash_led = sum(1 for line in lines if DASH_LINE_PATTERN.match(line))
+    return quote_led >= QUOTED_CHAPTER_MIN_QUOTE_LINES and dash_led <= QUOTED_CHAPTER_MAX_DASH_LINES
+
+
+def _dash_line_is_narration(line: str) -> bool:
+    """Dòng gạch đọc như lời kể: viết thường nối câu trước ("-bởi vì..."), hay chủ ngữ ngôi ba kể việc đã xảy ra,
+    và không có dấu hiệu lời nói nào. Chỉ dùng ở chương viết thoại trong ngoặc kép."""
+    dash = DASH_LINE_PATTERN.match(line)
+    if dash is None:
+        return False
+    body = line[dash.end() :]
+    if not has_spoken_content(body) or SPEECH_MARK_PATTERN.search(body) or SPEECH_FINAL_PARTICLE_PATTERN.search(body):
+        return False
+    without_third_person = THIRD_PERSON_PATTERN.sub(" ", body)
+    if SPEECH_ONLY_PRONOUN_PATTERN.search(without_third_person):
+        return False
+    if body[:1].islower():
+        return True
+    if SPEECH_PRONOUN_PATTERN.search(without_third_person):
+        return False
+    return NARRATIVE_SUBJECT_PATTERN.search(body) is not None
+
+
 def _punctuation_break_ms(text: str) -> int:
     return max(
         (duration for mark, duration in PUNCTUATION_BREAK_MS.items() if mark in text),
@@ -930,12 +1088,15 @@ def _walk_paragraphs(
     paragraphs: list[str],
     max_chars: int,
     close_at_end_of: frozenset[int],
+    dialogue_in_quotes: bool = False,
 ) -> tuple[list[dict[str, Any]], tuple[str, str] | None, int | None]:
     """One pass over the chapter, returning its rows and how the quote state ended.
 
     ``close_at_end_of`` names the paragraphs whose quote is forced shut when the paragraph
     ends - the recovery lever. The third return value is the paragraph that opened whatever
     quote is still hanging at the end, which is the paragraph that needs the lever next.
+    ``dialogue_in_quotes`` (`_chapter_writes_dialogue_in_quotes`) lets a dash-led line that
+    reads as narration stay narration instead of opening a dash turn.
     """
     rows: list[dict[str, Any]] = []
 
@@ -964,15 +1125,29 @@ def _walk_paragraphs(
 
     quote_state: tuple[str, str] | None = None
     opened_at: int | None = None
+    # Có đoạn nào từ chỗ mở tới đây KHÔNG mở lại bằng dấu ngoặc (lối viết một ngoặc cho cả lời nói dài).
+    ran_on_unmarked = False
     for paragraph_index, paragraph in enumerate(paragraphs):
         lines = [line.strip() for line in paragraph.splitlines() if line.strip()]
         for line in lines:
             was_open = quote_state is not None
-            pieces, quote_state = _line_pieces_with_quote_state(line, quote_state)
+            if quote_state is not None and paragraph_index != opened_at:
+                fresh_opening = _fresh_quote_opening(line, quote_state)
+                if fresh_opening > 0 or (fresh_opening == 0 and ran_on_unmarked):
+                    # Ngoặc mở ở `opened_at` thiếu dấu đóng; để nó trôi tới đây thì lời kể ở giữa thành lời
+                    # thoại/nội tâm. Trả về khi vẫn mở: vòng hồi phục đóng nó ở cuối đoạn đã mở rồi chia lại.
+                    return rows, quote_state, opened_at
+                if fresh_opening < 0:
+                    ran_on_unmarked = True
+            if quote_state is None and dialogue_in_quotes and _dash_line_is_narration(line):
+                pieces = [(line, "narration")]
+            else:
+                pieces, quote_state = _line_pieces_with_quote_state(line, quote_state)
             if quote_state is None:
                 opened_at = None
             elif not was_open:
                 opened_at = paragraph_index
+                ran_on_unmarked = False
             if not pieces and rows:
                 rows[-1]["break_ms"] = max(int(rows[-1]["break_ms"]), _punctuation_break_ms(line))
             for piece, hint in pieces:
@@ -1032,7 +1207,10 @@ def segment_chapter_text(
     So it recovers. The paragraph that opened the hanging quote has its quote forced shut
     where that paragraph ends, and the chapter is parsed again; if that is not enough the
     next culprit is added, and the last resort closes every paragraph at its own end, which
-    cannot leave anything open. Recovery may read a stretch as dialogue that was narration
+    cannot leave anything open. The same lever pulls earlier when a later paragraph shows the
+    quote never ran on (`_fresh_quote_opening`): left alone, the missing closer would be
+    found at the NEXT quote's closer and every narration line in between would be locked as
+    dialogue or thought. Recovery may read a stretch as dialogue that was narration
     or the reverse, which costs a voice. It cannot lose or reorder a word - the token check
     at the bottom of this function still proves that on every chapter, recovered or not.
 
@@ -1049,8 +1227,9 @@ def segment_chapter_text(
     paragraphs = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
 
     close_at_end_of: frozenset[int] = frozenset()
+    dialogue_in_quotes = _chapter_writes_dialogue_in_quotes(paragraphs)
     rows, quote_state, opened_at = _walk_paragraphs(
-        chapter_index, paragraphs, max_chars, close_at_end_of
+        chapter_index, paragraphs, max_chars, close_at_end_of, dialogue_in_quotes
     )
     while quote_state is not None:
         if opened_at is None or opened_at in close_at_end_of:
@@ -1058,7 +1237,7 @@ def segment_chapter_text(
         else:
             close_at_end_of = close_at_end_of | {opened_at}
         rows, quote_state, opened_at = _walk_paragraphs(
-            chapter_index, paragraphs, max_chars, close_at_end_of
+            chapter_index, paragraphs, max_chars, close_at_end_of, dialogue_in_quotes
         )
         if quote_state is not None and len(close_at_end_of) >= len(paragraphs):
             raise RuntimeError(
