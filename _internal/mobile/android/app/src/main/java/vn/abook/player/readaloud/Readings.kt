@@ -11,7 +11,7 @@ import java.text.Normalizer
  * đúng một khoá (phân biệt hoa thường, chỉ cả từ) thì lõi ấy được thay bằng chữ đọc, dấu câu hai đầu giữ nguyên. Chữ đọc nhiều từ nối
  * bằng [JOINER] để vẫn là MỘT chữ: số chữ hiện không đổi nên mốc từng chữ vẫn khớp chữ hiện (một vùng sáng cho cả cụm).
  *
- * Giọng VieNeu áp trong `VieneuUnits.spokenTokens` (sau bước đọc tên); giọng khác (Edge, giọng dùng khoá riêng, giọng của máy) nhận
+ * Giọng đọc trên máy (VieNeu, Supertonic) áp trong `VieneuUnits.spokenTokens` (sau bước đọc tên); giọng khác (Edge, giọng dùng khoá riêng, giọng của máy) nhận
  * [spokenText]. Khoá bộ đệm clip thêm [tag]: chỉ những cách đọc có mặt trong đoạn, nên đổi một cách đọc chỉ đọc lại đoạn có từ ấy.
  */
 object Readings {

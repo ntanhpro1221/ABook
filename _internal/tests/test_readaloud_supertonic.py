@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 from abook import english_vi
-from abook.readaloud import prepare, supertonic
+from abook.readaloud import cache, prepare, readings, supertonic
 from abook.readaloud.service import ReadAloud
 from abook.readaloud.supertonic import Installed, SupertonicEngine, SupertonicProvider
 from abook.webui import music_module, studio_setup, supertonic_module, vieneu_module, word_timing
@@ -397,3 +397,18 @@ def test_the_clip_key_follows_the_reading(fake_voices, tmp_path: Path) -> None:
     assert service.clip("supertonic:F1", "Kyouko gặp Rose.", origin="ja", cached_only=True) == named
     provider.speaks_english = True  # cùng đoạn, giọng khác cách đọc: khoá phải khác
     assert service.clip("supertonic:F1", "Tôi gặp Rose.")["file"] != english["file"]
+
+
+def test_the_books_own_readings_come_after_the_names(fake_voices, tmp_path: Path) -> None:
+    """"Đọc từ này là…" (readings.py) như VieNeu: áp sau bước đọc tên nên thắng luật phiên âm; khoá có gốc cuốn lẫn dấu cách đọc. Bản điện thoại:
+    SupertonicSpeakerTest + bộ ví dụ chung tests/fixtures/book_edits/readings/speech.json."""
+    provider, engine = fake_voices
+    service = ReadAloud(tmp_path / "cache", [provider])
+    text = "Haruto gặp Kyouko."
+    table = {"Haruto": "Ha-ru-to"}
+    clip = service.clip("supertonic:F1", text, origin="ja", readings=table)
+    assert engine.calls[-1] == ("F1", "ha-ru-to gặp ki-âu-cô."), "cách đọc của người nghe thắng luật phiên âm, tên khác vẫn theo gốc cuốn"
+    assert len(clip["words"]) == len(text.split())
+    tag = f"{provider.reading_tag(text, 'ja')}+{readings.tag(text, table)}"
+    assert tag.startswith("ja+r") and clip["file"].startswith(cache.clip_key("supertonic", "F1", text, tag))
+    assert service.clip("supertonic:F1", text, origin="ja")["file"] != clip["file"], "bỏ cách đọc: clip khác"
