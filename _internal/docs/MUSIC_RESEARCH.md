@@ -4132,3 +4132,20 @@ Cổng (ghi trước, chưa xem số của bộ xác nhận nào trên thước 
 
 Đặc tả: `Corpus/research/music/SPEC_bracket_cue.md` (đã sửa cho C1).
 Ghi chú: luật ngoặc từng trượt bộ 9 trên thước cũ. Thước cũ trộn đổi nhịp vào, mà ngoặc lại hay rơi đúng chỗ đổi nhịp.
+
+### 07-10 06:4x - CL bộ 7: chạy lại P0 đúng prompt -> THẮNG
+Thay kết quả không hợp lệ ở mục 04:5x. P0 bộ 7 được chạy lại trong hàng GPU của Model sau PRIME (06:40-06:44), 100 khúc, 0 lỗi.
+Đầu ra là JSON `{"V","E","T"}` đúng khuôn P0 như bộ 4/5/5b. File chạy nhầm prompt P2 đã đổi tên `.WRONG_was_P2_prompt`.
+Lệnh: `chapter_level.py confirm set7`, công thức cố định docs fff35839, cổng MAE <= .35.
+
+| bộ 7, 20 chương | MAE | V | T | r V | r T |
+|---|---|---|---|---|---|
+| [mốc] hằng 0 | .352 | .360 | .345 | - | - |
+| [mốc] nhãn câu app thô | .334 | .333 | .335 | .49 | .65 |
+| **[CHÍNH] V = C0 hc, T = P0 hc** | **.233** | .276 | .191 | .49 | **.86** |
+| C0 hc cả hai trục | .324 | .276 | .371 | .49 | .65 |
+| P0 thô | .403 | .310 | .496 | .46 | .86 |
+| [mốc] trần | .094 | | | | |
+
+**THẮNG:** MAE .233 <= .35. Công thức chính hơn cả hai mốc. Phần lớn nhờ trục T: P0 hiệu chỉnh cho r .86 và MAE .191.
+Trục V còn yếu (r .49), V chỉ nhỉnh hơn hằng 0 một chút. Mức chương bộ 7 đã xác nhận công thức V = C0 hc, T = P0 hc.
