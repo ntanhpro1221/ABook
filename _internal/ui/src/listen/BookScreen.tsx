@@ -640,11 +640,14 @@ export interface EditingOptions {
 export function BookScreen({
   extraActions,
   studioLink,
+  notice,
   editing = {},
 }: {
   extraActions?: (book: ListenBook) => ReactNode;
   /** Máy tính: lối sang Studio ngay trên dòng trạng thái của sách đang làm. */
   studioLink?: (book: ListenBook) => ReactNode;
+  /** Dòng tình trạng riêng của nền tảng dưới tên sách (máy tính: tải sách của máy khác về máy). */
+  notice?: (book: ListenBook) => ReactNode;
   editing?: false | EditingOptions;
 }) {
   const { id } = useParams();
@@ -788,6 +791,7 @@ export function BookScreen({
                 : "Nghe thẳng từ máy tính - tải về để nghe cả khi không có mạng"}
             </p>
           )}
+          {notice?.(book)}
           {syncs && <EditsSyncBanner book={book} />}
           {textOnly && editable && <BookSuggestions book={book} />}
           <div className="mt-4 max-w-md max-sm:mx-auto">

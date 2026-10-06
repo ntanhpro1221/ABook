@@ -3,8 +3,8 @@
  * - `toolchain`: Studio dùng được trên máy này (bản dev luôn có; app Windows đóng gói khi đã cài và không cũ; điện thoại không).
  * - `workshop`: cuốn có dự án sản xuất trên máy này (điện thoại không bao giờ có - nó không mở sổ dự án).
  * - `link`: cuốn nghe thẳng từ máy tính khác ("Trên máy khác"), hay của thiết bị ghép khác - chưa phải của máy này, sửa ở máy ấy.
- * - `sync`: cuốn đã tải từ máy tính chính (chỉ điện thoại): sửa được ngay ở đây, và phần sửa gửi về máy tính (EditsSync.kt,
- *   docs/EDITING.md P2b). Máy tính không có.
+ * - `sync`: cuốn của máy tính khác - điện thoại: đã tải từ máy tính chính; máy tính: cuốn "Trên máy khác" của một máy tính đã ghép
+ *   (webui/remote_books.py). Sửa được ngay ở đây, và phần sửa gửi về máy ấy (EditsSync.kt, docs/EDITING.md P2b).
  *
  * Máy tính trả ở `/api/app` và trên từng sách (`ListenBook.capabilities`); Android ở `EbookLibrary.capabilities` và trên từng
  * sách plugin trả về. */
