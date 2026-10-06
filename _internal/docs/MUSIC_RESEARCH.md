@@ -4034,3 +4034,8 @@ Báo độ khớp A-B: tỉ lệ trùng và kappa.
    đầu ra LLM), và chế độ Y (đổi cảm xúc theo nhãn câu app, bộ có nhãn). Kèm báo động sai/giờ, tức không gần ranh giới đáp
    án nào. Đây là đo mô tả, chưa có cổng.
 3. Từ nay cổng đổi bài cho mọi thay đổi chế độ X dùng thước 1: F1_NT và sai/giờ CHẶT.
+
+*Sửa ghi trước, trước khi có nhãn nào (người chấm vừa bắt đầu):* mục 2 ghi sai chế độ Y. Y trong `track_changes2` là
+"cờ + CUE + LLM", không phải đổi cảm xúc theo nhãn câu app. Nguồn động đo ở thước `NH` nay là ranh giới LLM
+(`results/seg_<bộ>_qwen3.5_4b.jsonl`, có cho bộ 4/5/5b/6/7) ở hai dạng: thô, và sau `later_drop` g = 30 s.
+Đề: `Corpus/research/music/scene_types/batch_01..10.md`, 453 mục. Khoá: `LLM_Train/music/results/types_key.json`.
