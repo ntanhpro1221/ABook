@@ -218,7 +218,7 @@ class SupertonicEngine(private val folder: File, threads: Int) : SupertonicSynth
 
 /**
  * Paragraph -> one clip, the phone's `SupertonicProvider._speak` + `synthesize`: the units of VieNeu ([VieneuUnits], up to
- * [SupertonicText.MAX_CHARS] characters), each unit's text through sea-g2p's normaliser ([normalize]: numbers, dates, times spelled out),
+ * [SupertonicText.MAX_CHARS] characters; the book's origin and own readings applied as for VieNeu - readings after the names), each unit's text through sea-g2p's normaliser ([normalize]: numbers, dates, times spelled out),
  * one take per unit seeded from voice + text, raised [SupertonicText.louder], joined with the desktop's minimum pauses; word timings spread
  * by syllables ([VieneuSpeaker.timed]).
  */
@@ -226,8 +226,8 @@ class SupertonicSpeaker(
     /** Sentences of one unit -> the text to read ([SeaG2p.normalizeUnit]; the sentences joined when sea-g2p is not on the phone). */
     private val normalize: (List<String>) -> String,
 ) {
-    fun speak(engine: SupertonicSynth, name: String, text: String, origin: String? = null): VieneuSpeaker.Spoken {
-        val (tokens, units) = VieneuUnits.units(text, SupertonicText.MAX_CHARS, origin)
+    fun speak(engine: SupertonicSynth, name: String, text: String, origin: String? = null, readings: Map<String, String>? = null): VieneuSpeaker.Spoken {
+        val (tokens, units) = VieneuUnits.units(text, SupertonicText.MAX_CHARS, origin, readings)
         val waves = ArrayList<FloatArray>()
         val pauses = ArrayList<Double>()
         for (unit in units) {
@@ -306,12 +306,12 @@ object SupertonicVoices {
 
     /** One paragraph -> [out] (16-bit WAV at 44.1 kHz) + words. */
     @Synchronized
-    fun synthesize(id: String, text: String, out: File, origin: String? = null): Clip {
+    fun synthesize(id: String, text: String, out: File, origin: String? = null, readings: Map<String, String>? = null): Clip {
         val name = id.removePrefix("$PREFIX:")
         if (name !in NAMES) throw VoiceException("Không có giọng Supertonic này.", reason = "voice")
         val (loaded, speaker) = ready()
         val spoken = try {
-            speaker.speak(loaded, name, text, origin)
+            speaker.speak(loaded, name, text, origin, readings)
         } catch (failure: OutOfMemoryError) {
             forget()
             throw VoiceException("Điện thoại không đủ bộ nhớ cho giọng Supertonic lúc này.", cause = failure, reason = "voice")
@@ -338,4 +338,6 @@ class SupertonicVoice(override val id: String) : Voice {
     override val extension = "wav"
     override fun synthesize(text: String, out: File): Clip = SupertonicVoices.synthesize(id, text, out)
     override fun synthesize(text: String, out: File, origin: String?): Clip = SupertonicVoices.synthesize(id, text, out, origin)
+    override fun synthesize(text: String, out: File, origin: String?, readings: Map<String, String>?): Clip =
+        SupertonicVoices.synthesize(id, text, out, origin, readings)
 }

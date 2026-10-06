@@ -529,22 +529,27 @@ SPEECH_CASES = [
     ("edge:vi-VN-HoaiMyNeural", "Không có tên nào cả.", None),
     ("vieneu:turbo/Thường", "Lucien còn 30 MP… (Lucien!)", "ko"),
     ("azure:vi-VN-HoaiMyNeural", "[Lucien]\nKate\tđi tiếp.", None),
+    # Supertonic (giọng trên máy như VieNeu): cách đọc riêng sau bước đọc tên, khoá có cả gốc cuốn lẫn dấu cách đọc.
+    ("supertonic:F1", "“Haruto,” Kate nói.", "ja"),
+    ("supertonic:M4", "Haruto gặp Kyouko ở Tôkyô, còn 30 MP.", "ja"),
+    ("supertonic:F3", "Không có tên nào cả.", "ja"),
 ]
 
 
 def speech_cases() -> dict[str, Any]:
     """Bộ ví dụ `readings/speech.json`: cùng chữ + cùng cách đọc riêng -> cùng chữ hiện, chữ đem đọc, dấu và khoá clip ở Python và Kotlin."""
-    from abook.readaloud import cache, readings, vieneu
+    from abook.readaloud import cache, readings, supertonic, vieneu
     from abook.webui.word_timing import tokens
 
+    on_this_computer = {provider.id: provider for provider in (vieneu.VieneuProvider, supertonic.SupertonicProvider)}  # giọng có `reading_tag`
     cases = []
     for voice, text, origin in SPEECH_CASES:
         provider, _, native = voice.partition(":")
-        local = provider == "vieneu"
+        local = on_this_computer.get(provider)
         tag = readings.tag(text, READINGS)
-        reading = "+".join(part for part in ((vieneu.reading_tag(text, origin) if local else ""), tag) if part)
+        reading = "+".join(part for part in ((vieneu.reading_tag(text, origin, local.speaks_english) if local else ""), tag) if part)
         cases.append({"voice": voice, "text": text, "origin": origin, "tokens": tokens(text),
-                      "spokenTokens": vieneu.spoken_tokens(tokens(text), origin, True, READINGS) if local else None,
+                      "spokenTokens": vieneu.spoken_tokens(tokens(text), origin, local.speaks_english, READINGS) if local else None,
                       "spokenText": None if local else readings.spoken_text(text, READINGS),
                       "tag": tag, "key": cache.clip_key(provider, native, text, reading)})
     return {"readings": READINGS, "cases": cases}

@@ -45,6 +45,16 @@ class SupertonicSpeakerTest {
         }
     }
 
+    /** The book's own readings ([Readings]) come after the names, as on the computer (`test_the_books_own_readings_come_after_the_names`). */
+    @Test
+    fun theBooksOwnReadingsComeAfterTheNames() {
+        val engine = FakeEngine()
+        val text = "Haruto gặp Kyouko."
+        val spoken = SupertonicSpeaker { pieces -> pieces.joinToString(" ").lowercase() }.speak(engine, "F1", text, "ja", mapOf("Haruto" to "Ha-ru-to"))
+        assertEquals(listOf("ha-ru-to gặp ki-âu-cô."), engine.calls.map { it.first })
+        assertEquals(WordTokens.count(text), spoken.words.size)
+    }
+
     @Test
     fun aUnitEndingOnACommaGetsTheShortPauseAndASentenceTheLongOne() {
         val first = "Một hai ba bốn năm sáu bảy tám chín mười ".repeat(7).trim()
