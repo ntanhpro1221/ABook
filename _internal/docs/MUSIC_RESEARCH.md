@@ -3294,3 +3294,30 @@ Mã + hình: Corpus research/music/level_shape.py, figs/bland_altman_5b6.png, bl
   - từng đầu vào riêng + hiệu chỉnh;
   - người A-B (trần).
 - Không dò thêm biến thể sau khi thấy số.
+
+### 06-10 20:0x - Kết quả L2-EST (ghi trước 2137d6d0): KHÔNG THẮNG, sát cổng (r V 0,77 < 0,80)
+Bỏ-một-truyện; 42 chương, 39 truyện; báo 23 chương 5b+6. SD mức đáp án V 0,37, T 0,44. Mã: Corpus research/music/l2_est.py.
+
+| cách | MAE mức | r V | r T | SD dự đoán / đáp án V, T |
+|---|---|---|---|---|
+| **CHÍNH: ridge (4 mô hình + chữ) + khớp phương sai** | **0,190** | **0,77** | **0,86** | 0,93 / 0,86 -> KHÔNG THẮNG |
+| ridge (đủ), không chống nén | 0,193 | 0,74 | 0,86 | 0,77 / 0,72 |
+| ridge + khớp p.sai, chỉ 4 mô hình | 0,175 | 0,79 | 0,90 | 0,93 / 0,86 |
+| ridge, chỉ 4 mô hình | 0,177 | 0,76 | 0,90 | 0,76 / 0,72 |
+| nhãn app + hiệu chỉnh tuyến tính | 0,247 | 0,70 | 0,71 | 0,56 / 0,48 |
+| P2 + hiệu chỉnh | 0,212 | 0,72 | 0,78 | 0,64 / 0,68 |
+| MLX base_P0 + hiệu chỉnh | 0,212 | 0,48 | 0,91 | 0,47 / 0,73 |
+| MLX lora1_P2 + hiệu chỉnh | 0,241 | 0,65 | 0,70 | 0,65 / 0,72 |
+| hằng TB train | 0,334 | - | - | - |
+| trần: người A-B | 0,078 | 0,97 | 0,98 | ~1 |
+
+Đọc:
+1. Gộp các nguồn hạ MAE mức từ 0,25 (nhãn app hiệu chỉnh, tương đương C0) xuống 0,19. Qua ngưỡng MAE và r T, trượt r V (0,77).
+2. Khớp phương sai hết nén (SD 0,86-0,93 so với 0,48-0,56 của nhãn app hiệu chỉnh) mà KHÔNG làm tăng MAE (0,190 so với 0,193).
+   "Chống nén không tăng nhiễu" đạt.
+3. Đặc trưng chữ rẻ làm HƠI XẤU đi (0,175 -> 0,190, r V 0,79 -> 0,77): 4 đặc trưng thêm cho ~40 mẫu là nhiễu. (Bản bỏ chữ không
+   phải CHÍNH, không đổi kết luận.)
+4. Mỗi nguồn có trục mạnh riêng: P0 rất tốt cho T (r 0,91) nhưng kém V (0,48). Gộp lấy được cả hai, khớp thiết kế V=C0 / T=P0 đang
+   chờ xác nhận ở bộ 7.
+5. Kế: bộ 7 (độc lập) là nơi xác nhận. CF/CH/CS (một lượt đọc cả chương) khi có số sẽ thêm vào ridge như nguồn thứ 5 - ghi trước
+   riêng khi đó.
