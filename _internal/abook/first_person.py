@@ -7,16 +7,15 @@ phản thân sau "của/tự") là chương kể ngôi thứ nhất; truyện c�
 chương đầu): truyện ngôi thứ nhất 40-100% chương, ngôi thứ ba 0-15%. Tỉ lệ gộp cả cuốn (cách cũ, ngưỡng 30%) bỏ sót hai
 truyện ngôi thứ nhất: HDST 29,6%, Nageki 24,1% - Nageki chen chương ngoại truyện kể ngôi ba, Yamiyo mở đầu bằng nhiều
 chương ngôi ba. Còn "tôi" LÀ AI thì chỉ gợi ý để người dùng chọn: đoán tự động từ văn bản thô từng nhận "Portal" cho
-YMP, vì 40 chương đầu của truyện ấy nhắc "Samael" 103 lần ngay trong lời kể. Gợi ý xen kẽ tên hay gặp nhất với tên hay
-được GỌI trong lời thoại mà lời kể hiếm nhắc (`_suggestions`): người kể xưng "tôi" nên gần như không có tên trong lời kể,
-nhưng người đối diện gọi tên họ luôn.
+YMP, vì 40 chương đầu của truyện ấy nhắc "Samael" 103 lần ngay trong lời kể. Gợi ý xếp tên theo độ giống người kể
+(`_suggestions`): người kể xưng "tôi" gần như không có tên cạnh chữ "tôi" trong lời kể, nhưng người đối diện gọi tên họ luôn.
 """
 
 from __future__ import annotations
 
+import math
 import re
 from collections import Counter
-from itertools import zip_longest
 from pathlib import Path
 from typing import Any
 
@@ -35,36 +34,132 @@ _UPPER = "A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾ
 _WORD = rf"[{_UPPER}][\w'-]*"
 # Cụm viết hoa 1-3 chữ KHÔNG đứng đầu câu (sau chữ thường hoặc dấu phẩy): gần như luôn là tên riêng.
 _NAME = re.compile(rf"(?<=[\w,;]\s)({_WORD}(?:\s{_WORD}){{0,2}})")
-_HONORIFIC = re.compile(r"-(san|sama|kun|chan|sensei|senpai|dono|nii|nee)$", re.IGNORECASE)
+_HONORIFIC = re.compile(r"-(san|sama|kun|chan|sensei|senpai|dono|nii|nee|nim|ssi|yah|hyung|nuna|noona|oppa|unnie)$", re.IGNORECASE)
 # Chữ viết hoa giữa câu mà không phải tên (danh xưng, từ Hán-Việt hay viết hoa) - không gợi ý chúng.
 _NOT_NAMES = {
     "Người", "Thần", "Chủ", "Cậu", "Tôn", "Học", "Tiểu", "Công", "Cổng", "Thẻ", "Ngài", "Anh", "Chị", "Em", "Cô",
     "Ông", "Bà", "Đại", "Thánh", "Vương", "Hoàng", "Thiếu", "Lão", "Sư", "Tộc", "Hội", "Viện", "Học Viện", "Portal",
 }
+# Đại từ và tiếng gọi người thân hay đứng một mình ở đầu/cuối câu thoại: được GỌI nhiều và lời kể không nhắc, nhìn như người
+# kể nhưng không phải tên ai (chỉ lọc ở bước gợi ý, `pov_chapters` không dùng).
+_NOT_NARRATOR = {
+    "Ngươi", "Mày", "Hyung", "Oppa", "Noona", "Nuna", "Unnie", "Onii", "Onee", "Nii", "Nee", "Aniki", "Aneki", "Senpai",
+    "Sensei", "Master",
+}
+
+
+def _bare(word: str) -> str:
+    """Bỏ hậu tố kính ngữ chồng nhau ("Kin-chan-sama" -> "Kin") và dấu gạch cuối chữ."""
+    while True:
+        bare = _HONORIFIC.sub("", word.rstrip("-'"))
+        if bare == word:
+            return bare
+        word = bare
 
 
 def _names(text: str) -> list[str]:
     names = []
     for match in _NAME.finditer(text):
-        name = _HONORIFIC.sub("", match.group(1))
+        name = " ".join(_bare(word) for word in match.group(1).split())
         if len(name) >= 3 and name not in _NOT_NAMES and name.split()[0] not in _NOT_NAMES:
             names.append(name)
     return names
 
 
-def _suggestions(names: Counter, spoken: Counter, limit: int) -> list[str]:
-    """Xen kẽ tên hay được GỌI trong lời thoại mà lời kể hiếm nhắc (điểm = số lần trong lời thoại² / tổng số lần) với tên
-    hay gặp nhất. Kho 29-09, 20 chương đầu: tên người kể lên ĐẦU ở Yamiyo ("Tomobe": 6 lần trong lời thoại, 0 trong lời kể -
-    trước đó không lọt 6 gợi ý), Nageki ("Krai", trước ở thứ 4), Love Unseen ("Sorano"), TCF ("Kuchinashi"); thứ 2 ở YMP
-    ("Samael") và thứ 3 ở HDST ("Rostailer")."""
-    called = sorted((name for name in spoken if spoken[name] >= 3),
-                    key=lambda name: (-spoken[name] * spoken[name] / names[name], name))
-    merged: list[str] = []
-    for pair in zip_longest(called, (name for name, _count in names.most_common())):
-        for name in pair:
-            if name and name not in merged and len(merged) < limit:
-                merged.append(name)
-    return merged
+# Người kể xưng "tôi" gần như không có tên trong lời kể, nhưng người đối diện GỌI tên họ - đúng chỗ `_NAME` bỏ sót: tên đứng
+# ĐẦU câu thoại ("“Samael, cậu đến muộn rồi.”") không có chữ thường hay dấu phẩy phía trước. Nên sau khi lấy danh sách tên
+# (`_names`), đếm lại từng tên THEO VỊ TRÍ: GỌI = tên kẹp giữa ngoặc/dấu câu hoặc sau danh xưng ("Ê, Kazuma-dono!").
+_NAME_SUFFIX = r"(?:-[a-z]+)?(?![\w-])"
+_CALL_BEFORE = "“\"‘'«(-–—,.!?…~:["
+_CALL_AFTER = ",.!?…~;:”\"’')]»"
+_CALL_TITLE = re.compile(r"(?<!\w)(?:ngài|anh|chị|cậu|em|cô|ông|bà|thầy|tiểu thư|công chúa|hoàng tử|điện hạ|đại nhân|sư phụ)$",
+                         re.IGNORECASE)
+# "tên tôi là X", "tôi là X", "gọi tôi là X": tự giới thiệu.
+_SELF_INTRO = re.compile(
+    rf"(?i:tên (?:của )?(?:tôi|mình|tớ) là|(?:tôi|tớ|mình)(?: tên)? là|gọi (?:tôi|tớ|mình) là|(?:tôi|tớ|mình) tên)"
+    rf"\s+({_WORD}(?:\s{_WORD}){{0,2}})"
+)
+_TOKEN = re.compile(r"\w+(?:-\w+)*")
+# Điểm = tổng có trọng số của log(1 + số lần), trọng số khớp (logit có điều kiện, 20 chương đầu, 25 truyện ngôi thứ nhất,
+# 2026-10-06): gọi và nhắc trong lời thoại là dương; nhắc trong LỜI KỂ, nhất là câu lời kể có cả "tôi" ("Aqua nhìn tôi") là
+# âm - người kể không nằm cạnh chính mình; tên trùng từ thường ("Quỷ", "Thịt") chỉ bị trừ nhẹ, không cấm (có thể là biệt danh).
+_W_CALLED, _W_SPOKEN, _W_NARRATED, _W_WITH_I, _W_INTRO, _W_COMMON_WORD = 2.0, 1.2, -0.2, -0.8, 1.5, -0.5
+
+
+def _count_names(rows: list[tuple[str, str]], names: set[str]) -> dict[str, Counter]:
+    """{tên: Counter(called, spoken, narrated, with_i)} - `rows` là (kind, text) mỗi đoạn."""
+    stats: dict[str, Counter] = {name: Counter() for name in names}
+    pattern = re.compile(rf"(?<![\w-])({'|'.join(re.escape(name) for name in sorted(names, key=lambda n: (-len(n), n)))}){_NAME_SUFFIX}")
+    for kind, text in rows:
+        dialogue = kind == "dialogue"
+        with_i = not dialogue and bool(NARRATOR_I.search(text))
+        for match in pattern.finditer(text):
+            found = stats[match.group(1)]
+            if not dialogue:
+                found["narrated"] += 1
+                found["with_i"] += with_i
+                continue
+            found["spoken"] += 1
+            before, after = text[:match.start(1)].rstrip(" "), text[match.end():].lstrip(" ")
+            if (not before or before[-1] in _CALL_BEFORE or _CALL_TITLE.search(before)) and (not after or after[0] in _CALL_AFTER):
+                found["called"] += 1
+    return stats
+
+
+def _merge_forms(stats: dict[str, Counter]) -> dict[str, list[str]]:
+    """Gộp các dạng của một người: tên một chữ là họ/tên của cụm dài hơn ("Yangcheon" -> "Gu Yangcheon"; chọn cụm dài hay
+    gặp nhất), hoặc là dạng gọi tắt đầu chữ ("Juli" -> "Juliana"). Trả {tên đại diện: các dạng}; đại diện là dạng hay gặp nhất."""
+    def total(name: str) -> int:
+        return stats[name]["spoken"] + stats[name]["narrated"]
+
+    order = sorted(stats, key=lambda name: (-total(name), name))
+    phrases = [name for name in order if " " in name]
+    parent: dict[str, str] = {}
+    for name in order:
+        if " " in name:
+            continue
+        parent_name = next((phrase for phrase in phrases if name in (phrase.split()[0], phrase.split()[-1])), None)
+        if parent_name is None:
+            parent_name = next((other for other in order if other != name and " " not in other and other.startswith(name)
+                                and len(other) - len(name) <= 4 and 2 * total(other) >= total(name)), None)
+        if parent_name is not None:
+            parent[name] = parent_name
+    groups: dict[str, list[str]] = {}
+    for name in order:
+        root, hops = name, 0
+        while root in parent and hops < 5:
+            root, hops = parent[root], hops + 1
+        groups.setdefault(root, []).append(name)
+    return {max(forms, key=lambda name: (total(name), name)): forms for forms in groups.values()}
+
+
+def _suggestions(rows: list[tuple[str, str]], limit: int) -> list[str]:
+    """Xếp hạng tên theo độ giống người kể "tôi". Tên mà người khác GỌI nhiều và lời kể ít nhắc (nhất là cạnh chữ "tôi")
+    lên đầu. Top-1 đúng: 72% -> 96% trên 25 truyện dò tham số, 71% -> 94% trên 17 truyện để riêng
+    (top-3 94% -> 100%). Zenith: "Yangcheon" trước không lọt 6 gợi ý vì tên đứng đầu câu thoại không được đếm; YMP: "Samael"
+    trước "Juli" (gọi tắt của Juliana). Chỉ là gợi ý, người dùng vẫn xác nhận - tên bằng chứng yếu vẫn có thể đứng đầu."""
+    counts = Counter(name for _kind, text in rows for name in _names(text))
+    names = {name for name, count in counts.items() if count >= 2 and name not in _NOT_NARRATOR}
+    if not names:
+        return []
+    stats = _count_names(rows, names)
+    # Chữ thường nào xuất hiện nhiều ("quỷ", "thịt") thì viết hoa giữa câu chỉ là danh xưng/thuật ngữ, không phải tên.
+    lower: Counter = Counter(word for _kind, text in rows for word in _TOKEN.findall(text) if word[0].islower())
+    intros: Counter = Counter()
+    for _kind, text in rows:
+        intros.update(" ".join(_bare(word) for word in match.group(1).split()) for match in _SELF_INTRO.finditer(text))
+    scored = []
+    for label, forms in _merge_forms(stats).items():
+        total: Counter = Counter()
+        for form in forms:
+            total.update(stats[form])
+        intro = sum(count for who, count in intros.items() if who in forms or label in who.split())
+        common = min(lower[word.lower()] for word in label.split()) >= 3
+        called, spoken = total["called"], total["spoken"] - total["called"]
+        score = (_W_CALLED * math.log1p(called) + _W_SPOKEN * math.log1p(spoken) + _W_NARRATED * math.log1p(total["narrated"])
+                 + _W_WITH_I * math.log1p(total["with_i"]) + _W_INTRO * math.log1p(intro) + _W_COMMON_WORD * common)
+        scored.append((-score, label))
+    return [label for _score, label in sorted(scored)[:limit]]
 
 
 # "Chương 11: Yuuko Hayase" - tiêu đề chương là TÊN một nhân vật (2-3 chữ viết hoa, không số): light novel đặt thế cho
@@ -120,8 +215,7 @@ def first_person_hint(files: list[Path], chapters: int = 20, limit: int = 6) -> 
     "'Tôi' là ai?" lúc tạo sách, và "chapters": các chương đổi góc kể trên CẢ cuốn (`pov_chapters`)."""
     narration = with_i = 0
     sampled = told_with_i = 0
-    names: Counter = Counter()
-    spoken: Counter = Counter()
+    rows: list[tuple[str, str]] = []
     for index, path in enumerate(files[:chapters], 1):
         chapter_narration = chapter_with_i = 0
         for row in segment_chapter_text(index, decode_text_bytes(Path(path).read_bytes())):
@@ -129,10 +223,7 @@ def first_person_hint(files: list[Path], chapters: int = 20, limit: int = 6) -> 
             if row["kind_hint"] != "dialogue":
                 chapter_narration += 1
                 chapter_with_i += bool(NARRATOR_I.search(text))
-            found = _names(text)
-            names.update(found)
-            if row["kind_hint"] == "dialogue":
-                spoken.update(found)
+            rows.append((str(row["kind_hint"]), text))
         narration += chapter_narration
         with_i += chapter_with_i
         if chapter_narration >= MIN_NARRATION:
@@ -145,6 +236,6 @@ def first_person_hint(files: list[Path], chapters: int = 20, limit: int = 6) -> 
         "firstPerson": rate >= FIRST_PERSON_RATE or share >= FIRST_PERSON_SHARE,
         "chaptersWithI": told_with_i,
         "chaptersSampled": sampled,
-        "suggestions": _suggestions(names, spoken, limit),
+        "suggestions": _suggestions(rows, limit),
         "chapters": pov_chapters(files),
     }
