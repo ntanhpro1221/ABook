@@ -4039,3 +4039,42 @@ Báo độ khớp A-B: tỉ lệ trùng và kappa.
 "cờ + CUE + LLM", không phải đổi cảm xúc theo nhãn câu app. Nguồn động đo ở thước `NH` nay là ranh giới LLM
 (`results/seg_<bộ>_qwen3.5_4b.jsonl`, có cho bộ 4/5/5b/6/7) ở hai dạng: thô, và sau `later_drop` g = 30 s.
 Đề: `Corpus/research/music/scene_types/batch_01..10.md`, 453 mục. Khoá: `LLM_Train/music/results/types_key.json`.
+
+**TYPES - KẾT QUẢ.** Hai người chấm mù khớp nhau: trùng .96, kappa .90.
+- A: NT 119, NH 313, GC 21. B: NT 122, NH 303, GC 28.
+- Lệch nhau chủ yếu ở NH/GC (7 mục) và NH/NT (13 mục).
+
+Sau phân xử: **NT 123 (27%), NH 306 (68%), GC 24 (5%)**. Ba phần tư ranh giới đáp án không phải chỗ đổi cảnh thật.
+
+Thước 1, đổi bài (X) so với NT (`score_types.py`):
+
+| | NT | X/giờ | R_NT | P_NT | F1_NT | sai CHẶT/giờ | sai NỚI/giờ |
+|---|---|---|---|---|---|---|---|
+| 4+5 | 36 | 4,9 | .50 | .64 | .563 | 1,8 | 0,9 |
+| 5b+6 | 37 | 4,5 | .24 | .32 | .277 | 3,1 | 1,6 |
+| bộ 7 | 21 | 7,5 | .48 | .30 | .370 | 5,2 | 4,6 |
+| bộ 8 | 16 | 5,9 | .38 | .23 | .286 | 4,6 | 4,3 |
+| bộ 9 | 13 | 2,0 | .15 | .25 | .190 | 1,5 | 1,0 |
+| **gộp** | 123 | 5,0 | **.37** | **.37** | **.366** | **3,2** | 2,4 |
+
+- So với toàn bộ đáp án, X chỉ có F1 .226. Đo theo đúng việc đổi bài thì F1 là .366.
+- X vẫn trượt 63% chỗ đổi nơi/thời gian thật.
+- Ranh giới X rơi vào NH chiếm 0,8/giờ (hiệu CHẶT − NỚI).
+- X trượt cả 24 GC.
+
+Thước 2, mô tả: ranh giới LLM so với NH.
+- LLM sau `later_drop` g = 30 s chỉ phủ 33-50% NH, nhưng phủ NT tốt hơn hẳn: 56-81%.
+- Giá phải trả là 23-30 ranh giới/giờ, trong đó 12-16/giờ không gần ranh giới đáp án nào.
+- LLM thô phủ NH 34-54%, NT 66-81%.
+
+LLM bắt được phần lớn chỗ đổi nơi/thời gian mà X trượt. Vấn đề của nó là bắn quá nhiều chứ không phải mù.
+
+Kết luận:
+1. Từ nay cổng X dùng thước 1. Mốc gộp: F1_NT .366, sai CHẶT 3,2/giờ.
+2. Việc đáng làm tiếp cho độ phủ: lọc LLM theo thước NT. Ví dụ chỉ giữ ranh giới LLM có thêm một dấu chữ mở cảnh, hay có đổi
+   nơi trong lời kể. Mục tiêu là tăng R_NT mà P_NT không tụt. Muốn làm thì phải ghi trước trên 4+5/5b+6, rồi xác nhận
+   bằng bộ 7 (NT đã có nhãn).
+3. Người chấm chỉ ra ba chỗ định nghĩa còn mơ hồ: nhảy thời gian rất ngắn ("lát sau"); đến nơi mới nhưng việc đi không nằm
+   ở ▶; cắt giữa các mặt trận cùng lúc. Lần gắn nhãn sau cần nói rõ ba chỗ này.
+
+Nhãn: `Corpus/research/music/scene_types/types_gold.json` (khoá `types_key.json`). Nhãn của A và B nằm ở `types_A/`, `types_B/`.
