@@ -39,6 +39,20 @@ def test_a_real_line_keeps_its_speaker() -> None:
     assert "_host_note_markers" not in result["b"]
 
 
+def test_a_whole_utterance_quoted_mid_sentence_keeps_its_speaker() -> None:
+    # Hai thầy gán nhãn 05-10: câu nói có dấu phẩy giữa câu kể vẫn là lời của người nói, không phải thuật ngữ.
+    group = [
+        row("a", 7, "Minh nói"),
+        row("b", 7, "“Bố mẹ tớ đến xem rồi, nên nhà tớ sẽ ăn cùng nhau”"),
+        row("c", 7, "và vì vậy chúng tôi ăn riêng."),
+    ]
+    result = {"a": data("narration", "NARRATOR"), "b": data("dialogue", "MINH"),
+              "c": data("narration", "NARRATOR")}
+    _repair_in_sentence_quote_speakers(group, result)
+    assert result["b"]["speaker"] == "MINH"
+    assert "_host_note_markers" not in result["b"]
+
+
 def test_a_term_in_another_paragraph_is_not_touched() -> None:
     group = [
         row("a", 3, "Lucien không thể bảo rằng nếu là"),
