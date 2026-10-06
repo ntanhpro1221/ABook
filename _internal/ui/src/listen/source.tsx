@@ -37,8 +37,9 @@ export interface ListenSource {
    *  thì chương chỉ-có-chữ chỉ đọc được bằng mắt. Android: lõi native tự đọc (plugin ReadAloud, android/readAloud.ts) nên không có `readAloudClip`. */
   readAloudVoices?(): Promise<ReadAloudVoice[]>;
   readAloudClip?(voice: string, text: string, options?: ClipOptions): Promise<ReadAloudClip>;
-  /** Nghe thử một giọng (Cài đặt › Giọng đọc, menu giọng của trình phát): đọc `text` bằng giọng ấy, trả địa chỉ phát được. */
-  readAloudSample?(voice: string, text: string): Promise<string>;
+  /** Nghe thử một giọng (Cài đặt › Giọng đọc, menu giọng của trình phát) hay một cách đọc ("Đọc từ này là…" - `options.readings`, cách đọc
+   *  của cuốn `options.bookId`): đọc `text` bằng giọng ấy, trả địa chỉ phát được. */
+  readAloudSample?(voice: string, text: string, options?: Pick<ClipOptions, "bookId" | "readings">): Promise<string>;
   /** "Làm trước" (prepareAhead.ts): đọc sẵn các chương này vào bộ đệm ở nền; nguồn nào chưa có thì giao diện ẩn nút. */
   readAloudPrepare?(request: PrepareRequest): Promise<PrepareStatus>;
   readAloudPrepareStatus?(): Promise<PrepareStatus>;

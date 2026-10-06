@@ -25,6 +25,12 @@ interface Voice {
     fun synthesize(text: String, out: File): Clip
     /** Như trên cho cuốn có gốc Nhật / Hàn ([Names]): giọng đọc trên máy (VieNeu) đọc tên theo luật phiên âm, giọng khác bỏ qua `origin`. */
     fun synthesize(text: String, out: File, origin: String?): Clip = synthesize(text, out)
+    /**
+     * Như trên với cách đọc riêng người nghe đặt cho cuốn ([Readings]): giọng nhận chữ đem đọc đã thay ([Readings.spokenText] - cùng số chữ nên `words` vẫn
+     * khớp chữ hiện); VieNeu áp trong `VieneuUnits.spokenTokens`, sau bước đọc tên.
+     */
+    fun synthesize(text: String, out: File, origin: String?, readings: Map<String, String>?): Clip =
+        if (readings.isNullOrEmpty()) synthesize(text, out, origin) else synthesize(Readings.spokenText(text, readings), out, origin)
 }
 
 /** Một giọng cho người dùng chọn (plugin `voices()`). `gender`: "female" / "male" / "" - gợi ý trong Cài đặt. */

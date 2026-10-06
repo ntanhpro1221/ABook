@@ -7,12 +7,15 @@ import { lineEditing } from "@/shared/capabilities";
 import { useMediaQuery } from "@/shared/media";
 import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
+import { canEditBook } from "./EditBook";
 import { chapterToFollow, firstVisibleIndex } from "./follow";
 import { readerHint } from "./labels";
 import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { usePlayer } from "./player";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
+import { wordOf } from "./readings";
 import { useChapterScript, useListenBook, useSource } from "./source";
+import { WordReadingDialog } from "./WordReadings";
 
 // Chế độ ĐỌC: văn bản chương như một cuốn ebook, đi cùng chỗ đang nghe.
 //
@@ -85,6 +88,9 @@ export function ReaderScreen({
   // nghe thẳng từ máy khác hay chưa cài Studio: nút vẫn hiện, mờ đi, kèm lý do.
   const lineEdit = editing && !textOnly ? lineEditing(book?.capabilities) : null;
   const wishes = useWishes(id, lineEdit?.mode === "wish");
+  // "Đọc từ này là…": cuốn chỉ có chữ của máy này - giữ (hay bấm chuột phải) một chữ để dạy giọng đọc cách đọc nó cho cả cuốn.
+  const readingEdit = editing && textOnly && canEditBook(book);
+  const [readingWord, setReadingWord] = useState<string | null>(null);
   const coarse = useMediaQuery("(pointer: coarse)");
   const [prefs, setPrefs] = useState<ReaderPrefs>(loadPrefs);
   const [selected, setSelected] = useState<number | null>(null);
@@ -214,7 +220,7 @@ export function ReaderScreen({
     const next = chapters[index + step];
     if (next) navigate(`/book/${id}/read/${next.id}`, { replace: true });
   };
-  const hint = readerHint({ textOnly, canSpeak, timed: script.timed, tapped: Boolean(prefs.tapped), coarse, wish: lineEdit?.mode === "wish" });
+  const hint = readerHint({ textOnly, canSpeak, timed: script.timed, tapped: Boolean(prefs.tapped), coarse, wish: lineEdit?.mode === "wish", readings: readingEdit });
   const name = chapter.subtitle || chapter.title;
 
   return (
@@ -289,6 +295,7 @@ export function ReaderScreen({
             script={script}
             playingIndex={playingIndex}
             onTap={selectable ? tapSentence : undefined}
+            onWordMenu={readingEdit ? (sentence, word) => setReadingWord(wordOf(script.segments[sentence].text, word) || null) : undefined}
             focusIndex={playingIndex >= 0 ? playingIndex : current}
             selected={selected}
             heading="h1"
@@ -352,6 +359,7 @@ export function ReaderScreen({
           </div>
         )}
       </div>
+      {readingEdit && <WordReadingDialog bookId={id} word={readingWord} onClose={() => setReadingWord(null)} />}
       {lineEdit?.mode === "wish" && (
         <LineWishDialog book={book} script={script} segmentIndex={editingLine} wishes={wishes.data} onClose={() => setEditingLine(null)} />
       )}

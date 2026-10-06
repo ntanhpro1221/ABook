@@ -3369,6 +3369,22 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Không có chương này trong sách")
         self._send_json(HTTPStatus.OK, {"skip": book_edits.set_skip_line(path, chapters, body["line"], body.get("skip") is not False)})
 
+    def get_readings(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Cách đọc tên" của hộp sửa sách: cách đọc riêng người nghe đặt cho cuốn nhập từ file (lớp sửa `readings`).
+        path = self.app._listenable(value)
+        self._send_json(HTTPStatus.OK, book_edits.readings_view(book_edits.load(path) if packages.is_package(path) else {}))
+
+    def put_readings(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Đọc từ này là…": đặt (hay bỏ - `spoken` rỗng) cách đọc riêng của một từ cho cả cuốn. Chỉ giọng đọc đổi, chữ của sách không đổi.
+        self.app._mutating()
+        path = self.app._editable(value)
+        body = self._body()
+        if not packages.is_package(path):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Cuốn có xưởng sửa cách đọc tên ở Studio.")
+        if not isinstance(body.get("surface"), str) or not isinstance(body.get("spoken", ""), str):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu từ hoặc cách đọc")
+        self._send_json(HTTPStatus.OK, book_edits.set_reading(path, body["surface"], body.get("spoken", "")))
+
     def get_listen_book(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.listen_book(value))
 
@@ -3583,6 +3599,20 @@ class Handler(BaseHTTPRequestHandler):
         except ApiError:
             return None
 
+    def _book_readings(self, body: dict[str, Any]) -> dict[str, str]:
+        """Cách đọc riêng cho lần đọc này: `readings` trong yêu cầu ("Nghe thử" một cách đọc chưa lưu - kiểm như lớp sửa) thắng; không có thì
+        của cuốn `bookId` (lớp sửa `readings` của cuốn nhập từ file)."""
+        if "readings" in body:  # {} = nghe chữ của sách, không cách đọc riêng nào ("Nghe thử" khi ô cách đọc trống)
+            return book_edits.validate_readings(body["readings"]) if body["readings"] != {} else {}
+        book = body.get("bookId")
+        if not isinstance(book, str) or not book:
+            return {}
+        try:
+            path = self.app._listenable(book)
+        except ApiError:
+            return {}
+        return dict(book_edits.load(path).get("readings") or {}) if packages.is_package(path) else {}
+
     def post_readaloud_clip(self, _query: dict[str, list[str]]) -> None:
         # Một đoạn chữ -> một clip (audio tốc độ 1,0 + mốc từng chữ). Lỗi nói đúng lý do (`reason`) để trình phát đổi sang giọng máy hay báo người nghe.
         body = self._body()
@@ -3590,7 +3620,8 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(text, str) or not isinstance(voice, str):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hay chữ")
         try:
-            clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")), origin=self._reading_origin(body))
+            clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")), origin=self._reading_origin(body),
+                                           readings=self._book_readings(body))
         except VoiceError as error:
             if error.reason == "uncached":
                 # Chỉ tra bộ đệm mà chưa có là câu trả lời bình thường (trình phát hỏi hàng loạt lúc nạp chương), không phải lỗi: 200 để
@@ -3677,7 +3708,8 @@ class Handler(BaseHTTPRequestHandler):
         except VoiceError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error), reason=error.reason) from error
         texts = [text for text in texts if len(text) <= readaloud.MAX_TEXT]
-        self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.start(voice, texts, str(body.get("label") or "")[:200], self._reading_origin(body)))
+        self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.start(voice, texts, str(body.get("label") or "")[:200], self._reading_origin(body),
+                                                                         self._book_readings(body)))
 
     def delete_readaloud_prepare(self, _query: dict[str, list[str]]) -> None:
         self.app._mutating()
@@ -3902,6 +3934,8 @@ ROUTES: list[Route] = [
     ("PUT", re.compile(BOOK + r"/chapters/(\d+)/title"), Handler.put_chapter_title),
     ("GET", re.compile(BOOK + r"/suggestions"), Handler.get_suggestions),
     ("PUT", re.compile(BOOK + r"/skip"), Handler.put_skip_line),
+    ("GET", re.compile(BOOK + r"/readings"), Handler.get_readings),
+    ("PUT", re.compile(BOOK + r"/readings"), Handler.put_readings),
     ("GET", re.compile(BOOK + r"/edits"), Handler.get_edits),
     ("DELETE", re.compile(BOOK + r"/edits"), Handler.delete_edits),
     ("POST", re.compile(BOOK + r"/edits/fold"), Handler.post_edits_fold),

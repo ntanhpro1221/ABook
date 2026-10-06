@@ -2,6 +2,7 @@ package vn.abook.player.vieneu
 
 import vn.abook.player.readaloud.Abbreviations
 import vn.abook.player.readaloud.Names
+import vn.abook.player.readaloud.Readings
 import vn.abook.player.readaloud.Shouts
 import vn.abook.player.readaloud.Symbols
 import vn.abook.player.readaloud.WordTokens
@@ -528,13 +529,15 @@ object VieneuUnits {
      * start, an "I" after punctuation and abbreviations (CV, MC, VIP) never become numbers. In a book with a Japanese / Korean [origin] ("ja" / "ko") romaji / RR names are read by the
      * romanization rules ("Haruto" -> "Ha-ru-tô", [Names.readNames]); real English words are left to sea-g2p. In every book: stretched sounds ("Aaaa" -> "a… a", [Shouts]),
      * capital abbreviations by their letter names ("HP" -> "hát pê", [Abbreviations]) and hyphenated honorifics ("Ariel-sama" -> "Ariel-xa-ma", [Names.readHonorifics]). Last `readingMarks` fixes "~", English thousands,
-     * <angle brackets> and " / ". `spoken_tokens` of vieneu.py.
+     * <angle brackets> and " / ". The listener's own [readings] of the book ("Đọc từ này là…", [Readings]) come after the names and win over them.
+     * `spoken_tokens` of vieneu.py.
      */
-    fun spokenTokens(toks: List<String>, origin: String? = null): List<String> {
+    fun spokenTokens(toks: List<String>, origin: String? = null, readings: Map<String, String>? = null): List<String> {
         val out = toks.toMutableList()
         stutters(toks, out, origin)
         Shouts.readShouts(toks, out)
         readWords(toks, out, origin)
+        Readings.applyTokens(toks, out, readings)
         readingMarks(out, toks)
         return out
     }
@@ -576,11 +579,11 @@ object VieneuUnits {
         return out
     }
 
-    /** The paragraph's shown words and its units (every shown word in exactly one unit, in order). [origin]: the book's origin, see [spokenTokens]. */
-    fun units(text: String, maxChars: Int, origin: String? = null): Pair<List<String>, List<Unit>> {
+    /** The paragraph's shown words and its units (every shown word in exactly one unit, in order). [origin], [readings]: see [spokenTokens]. */
+    fun units(text: String, maxChars: Int, origin: String? = null, readings: Map<String, String>? = null): Pair<List<String>, List<Unit>> {
         val toks = tokens(text)
         if (toks.isEmpty()) return toks to emptyList()
-        val said = spokenTokens(toks, origin)
+        val said = spokenTokens(toks, origin, readings)
         val pieces = ArrayList<IntArray>()
         for (sentence in groups(toks, 0, toks.size - 1, SENTENCE_END)) {
             if (length(toks, sentence[0], sentence[1]) <= maxChars) {
