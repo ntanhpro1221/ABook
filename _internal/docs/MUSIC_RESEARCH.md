@@ -3228,3 +3228,9 @@ theo dấu hiệu. Bộ lọc trễ 60 s làm CUE MẤT F1 (bỏ ranh giới đ�
 - Cùng cổng thắng; trong luật chọn, nó tính như họ LLM (chỉ chọn khi hơn CUE > 0,05). Không dò thêm biến thể nào sau khi thấy số.
 - Lead giao nhánh dev/scene-break (dòng chỉ ký hiệu -> nghỉ 1500 ms + cột segments.scene_break); khi có, đo lại CUE trên cờ ấy
   (ghi lại, để xác nhận cờ app khớp với cách đọc file nguồn ở đây).
+
+### 06-10 18:5x - CUE trên cờ scene_break của app (dev/scene-break 4fb57726, ghi lại)
+Tách lại 41 file nguồn bằng `segment_chapter_text` của nhánh (33/41 chương trùng khít DB đo; 53 cờ). Dòng ngắt: 5b+6 F1 0,194
+(P 0,63) so đọc nguồn 0,207 (P 0,69); 4+5 0,164 so 0,225. CUE sau lọc trên cờ: 5b+6 0,190 (đọc nguồn 0,192). Chỗ sót: 10 dòng chỉ
+MỘT ký hiệu ("*", "-") bị `SCENE_BREAK_MIN_RULE_GLYPHS = 3` loại, nhưng 9/10 trúng ranh giới đáp án (nhóm cả hai bắt: 29/49). Đề
+xuất cho app: nhận dòng một ký hiệu kẻ khi nó là cả một đoạn (dòng trống trước và sau). Mã: Corpus research/music/seg_flag_build.py.
