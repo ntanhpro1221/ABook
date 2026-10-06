@@ -2,6 +2,7 @@ package vn.abook.player.readaloud
 
 import org.json.JSONObject
 import vn.abook.player.PinnedFiles.Part
+import vn.abook.player.vieneu.SharedRuntime
 import vn.abook.player.vieneu.VieneuModule
 import vn.abook.player.vieneu.VoiceModule
 import java.io.File
@@ -14,16 +15,13 @@ class SupertonicInstalled(val model: File, val ortFolder: File, val g2p: Pair<Fi
  * "Giọng Supertonic" on the phone: the ten Supertonic 3 voices the desktop module (`abook/webui/supertonic_module.py`) offers, downloaded only when
  * the listener taps, never shipped in the APK - the same pinned files (Hugging Face `Supertone/supertonic-3` at one commit, SHA-256 + size each;
  * tests/test_supertonic_android.py compares the two tables). Parts: ONNX Runtime's libraries and sea-g2p (numbers, dates, times read as words),
- * both the very files of "Giọng VieNeu" - when "Gói nhạc" or "Giọng VieNeu" already has them they are used where they are and not counted - and
- * the model itself. After a download the phone measures itself for a few seconds; slower than listening -> the card offers an online voice
- * (never a silent switch). Removing it takes only this module's own files.
+ * kept once for every voice ([SharedRuntime]: "Giọng VieNeu" downloaded first -> already here and not counted), and the model itself. After a download the phone measures itself for a few seconds; slower than listening -> the card offers an online voice
+ * (never a silent switch). Removing it takes its model, and the shared runtime only when no other voice uses it.
  */
 class SupertonicModule(
     dir: File,
-    /** Folders that may already hold ONNX Runtime's `ort/` ("Gói nhạc", "Giọng VieNeu"), first match used. */
-    private val ortElsewhere: List<File>,
-    /** "Giọng VieNeu"'s folder: its `g2p/` is used when present. */
-    private val g2pElsewhere: File?,
+    /** ONNX Runtime and sea-g2p, shared with the other voices. */
+    runtime: SharedRuntime,
     abi: String?,
     facts: VoiceModule.Facts,
     benchmark: ((String) -> VoiceModule.Benchmark)? = null,
@@ -31,9 +29,9 @@ class SupertonicModule(
     metered: () -> Boolean = { false },
     groups: Map<String, List<Part>>? = null,
     blocked: String? = null,
-) : VoiceModule(dir, groups ?: defaultGroups(abi), facts, benchmark, forget, metered) {
+) : VoiceModule(dir, runtime, groups ?: defaultGroups(abi), facts, benchmark, forget, metered) {
     override val name = "giọng Supertonic"
-    override val threadName = "supertonic"
+    override val key = "supertonic"
     override val choices = listOf(CHOICE)
     override val tiers = listOf(CHOICE)
     override fun needs(choice: String) = NEEDS
@@ -42,21 +40,15 @@ class SupertonicModule(
     override val unsupported: String = blocked ?: if (abi == null || this.groups["ort"].isNullOrEmpty())
         "điện thoại này chưa chạy được giọng Supertonic (kiến trúc máy chưa hỗ trợ)" else ""
 
-    override fun shared(id: String): File? = when (id) {
-        "ort" -> ortElsewhere.firstOrNull { holds(it, id) }
-        "g2p" -> g2pElsewhere?.takeIf { holds(it, id) }
-        else -> null
-    }
-
     /** The desktop's card: one choice, not "Khuyên dùng" but ticked. */
     override fun marks(choice: String, best: String) = false to true
 
     override fun recommended(bench: JSONObject) = CHOICE
 
-    /** Slower than listening on this phone -> offer an online voice (desktop `supertonic_module.suggestion`). */
+    /** Slower than listening on this phone -> "Làm trước", or an online voice (desktop `supertonic_module.suggestion`). */
     override fun suggestion(bench: JSONObject, tiers: List<String>): JSONObject? {
-        val rtf = bench.optJSONObject(CHOICE)?.optDouble("rtf") ?: 0.0
-        if (CHOICE !in tiers || rtf.isNaN() || rtf < SLOW_RTF) return null
+        if (CHOICE !in tiers) return null
+        val rtf = slowRtf(bench, CHOICE) ?: return null
         return JSONObject().put("tier", CHOICE).put("rtf", rtf).put("switchTo", "online").put("installed", true)
     }
 

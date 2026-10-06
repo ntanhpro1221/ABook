@@ -10,6 +10,7 @@ import vn.abook.player.AndroidMusicStudent
 import vn.abook.player.OrtRuntime
 import vn.abook.player.vieneu.NumpyRandomState
 import vn.abook.player.vieneu.SeaG2p
+import vn.abook.player.vieneu.SharedRuntime
 import vn.abook.player.vieneu.Tensors
 import vn.abook.player.vieneu.VieneuAudio
 import vn.abook.player.vieneu.VieneuSpeaker
@@ -262,10 +263,8 @@ object SupertonicVoices {
     fun module(appContext: Context): SupertonicModule = module ?: run {
         val ctx = appContext.applicationContext
         context = ctx
-        val files = ctx.filesDir
-        SupertonicModule(File(files, "supertonic"), listOf(File(files, "music/student"), File(files, "vieneu")), File(files, "vieneu"),
-            OrtRuntime.deviceAbi(), VieneuVoices.facts(ctx), benchmark = { benchmark() }, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) })
-            .also { module = it }
+        SupertonicModule(File(ctx.filesDir, "supertonic"), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), VieneuVoices.facts(ctx),
+            benchmark = { benchmark() }, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) }).also { module = it }
     }
 
     /** Drop the loaded engine (the module is about to replace or remove files). */
