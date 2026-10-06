@@ -3133,3 +3133,33 @@ Mục (2) đã có một nửa: P0 vốn chấm cả KHÚC app (nhiều câu) ch
   bỏ phiếu cùng chi phí).
 - Đích cuối A/B "nhạc nào hợp cảnh + dễ nghe cùng giọng": máy chấm bằng thước nghe Qwen3-Omni đã nhận làm thước chính (chủ sách
   không chấm); cần ghi trước riêng khi tới bước đó.
+
+**GHI TRƯỚC - 4 ỨNG VIÊN SAU BỘ 7 (Lead 06-10 17:1x giao; tài khoản mới, tuần 46 %; viết trước mọi lượt chạy, mọi số).**
+Chung: model qwen3.5:4b qua Ollama, nhiệt độ 0 (trừ đối chứng bỏ phiếu), think=false; đơn vị = khúc app (`music_scenes`, như P0);
+HỌC/CHỌN hằng số chỉ trên 4+5; ĐO trên 5b+6+7 (bộ 7 khi có đáp án; nếu bộ 7 trễ quá 09-10 thì đo 5b+6 và ghi rõ). Thước r trong
+chương = `prompt_mood.chapter_rs` (r TB chương, thời lượng); thước MAE = như mục mức chương. GPU chỉ qua hàng Model.
+
+(L3-PAIR) **So với neo trong chương (lớp 3, góp ý (4) của Lead).** Mỗi chương chọn 3 khúc NEO theo vị trí (khúc đầu, giữa, cuối theo
+thời lượng). Mỗi khúc i (kể cả neo, so với 2 neo còn lại) so với từng neo, CẢ HAI thứ tự A/B: prompt hỏi một dòng `V=A|B|= T=A|B|=`
+(cho hoà), đọc xác suất ba token mỗi trục; điểm s_i = TB qua neo và thứ tự của P(i hơn) + 0,5·P(hoà). Chi phí: 6 lượt/khúc (P0: 1).
+Đối chứng cùng chi phí: P0-VOTE6 = P0 lấy mẫu 6 lần nhiệt độ 0,7 (hạt 1..6), TB. **Thắng:** r VT TB chương >= P0 + 0,05 VÀ cao hơn
+P0 ở >= ceil(0,7 n) chương, VÀ cùng luật so với P0-VOTE6. Ghi lại: E; chỉ thứ tự (Spearman); hoà chiếm bao nhiêu.
+
+(L2-ANCH) **Mức chương bằng chương neo (lớp 2, Lawrence 2025).** 5 chương NEO từ 4+5 chọn tất định: tham lam maximin trên (V,T)
+mức đáp án, bắt đầu từ chương gần (0,0) nhất. Chương đích và neo đều đưa dạng CH (đầu-giữa-cuối, 3 × ~600 tiếng). Mỗi neo hai thứ
+tự, hỏi `V=A|B|= T=A|B|=`; p_k = P(đích hơn neo k) + 0,5·P(hoà). Mức = nội suy tuyến tính trên các neo xếp theo mức đáp án, tại điểm
+p cắt 0,5 (hồi quy đơn điệu p theo mức; ngoài khoảng thì cắt ở neo biên). 10 lượt/chương. **Thắng:** như CF (MAE <= .35 VÀ r V,T
+>= .6), đo trên 5b+6+7; cùng thắng với CF/CS -> chọn MAE thấp nhất, rồi lượt ít hơn.
+
+(L3-3B) **Ba bậc có neo (góp ý (2')).** Mỗi khúc: prompt mô tả 3 bậc mỗi trục (V: buồn / bình / vui; T: yên / vừa / căng) kèm 1 ví dụ
+ngắn (~60 tiếng) mỗi bậc lấy từ đáp án 4+5 (khúc có nhãn rõ nhất mỗi bậc, chọn tất định); đáp `V=1..3 T=1..3`, kỳ vọng xác suất.
+1 lượt/khúc như P0. **Thắng:** r VT TB chương >= P0 + 0,05 VÀ >= ceil(0,7 n) chương. Ghi lại: MAE trong chương sau khi nhân alpha
+học trên 4+5.
+
+(RULE) **Luật đổi bài (góp ý (3); CPU, không GPU).** App hiện có trễ (SHIFT_DISTANCE 0,5 + giữ 40 s, đoạn 60-180 s) nhưng CHIA ĐỀU
+đoạn > 180 s (`_split_long`) - có thể đổi bài không vì mood. Đo trên ranh giới khúc app vs ranh giới cảnh đáp án (A, B, phân xử):
+(i) số ranh giới / giờ; (ii) F1 ranh giới (lệch <= 2 câu là trúng). Biến thể: bỏ chia đều; SHIFT_DISTANCE ∈ {0,5; 0,75; 1,0} chọn trên
+4+5 theo F1. **Thắng:** F1 >= app + 0,10 trên 5b+6(+7) VÀ số ranh giới / giờ nằm trong khoảng của hai người chấm. Ghi lại: số lần
+ĐỔI BÀI thật qua `appwin` (cùng danh mục) mỗi giờ.
+
+Thứ tự chạy khi GPU có khe: RULE (CPU, làm ngay khi giờ êm quạt qua) -> L2-ANCH và L3-3B (rẻ) -> L3-PAIR + P0-VOTE6.
