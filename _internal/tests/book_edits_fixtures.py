@@ -18,6 +18,8 @@ những file này.
                                           dự án có xưởng (bí danh, views/, sources/) và một cuốn "chờ dựng xưởng" mang lớp sửa;
                                           kotlin_workshop.abookproj / kotlin_pending.abookproj là bản Kotlin ghi lại từ chúng
     fixtures/book_edits/track/tone.wav    một bài nhạc nhỏ ("Nhạc của tôi") cho các ca ghim bài: nhập vào kho nhạc của máy rồi ghim
+    fixtures/book_edits/readings/speech.json  cách đọc riêng (`readings`) khi đọc to: cùng đoạn chữ -> cùng chữ đem đọc (giọng trên máy:
+                                          `vieneu.spoken_tokens`; giọng khác: `readings.spoken_text`) và cùng khoá bộ đệm clip ở hai bên
 
 Sinh lại (chỉ khi cố ý đổi hành vi hay giao ước):  runtime/.venv/Scripts/python.exe -m tests.book_edits_fixtures
 (thêm --rebuild-base để dựng lại cả `base`; không thì giữ nguyên nó và chỉ sinh lại các file mong đợi)
@@ -74,6 +76,7 @@ CASES: dict[str, dict[str, Any]] = {
     "music_playlist": {"music": {"playlist": "fantasy_calm"}},
     "cover_removed": {"cover": None},
     "skip_lines": {"skip": {"1": ["Dịch: Nhóm Thử", "Biên tập: Ai Đó"], "2": ["Trans: Tôi"]}},
+    "readings": {"readings": {"Lucien": "Lu-xi-en", "Hailkes": "Hên khơ", "Tôkyô": "Tô ky ô"}},
     "cover_set": {"cover": {"color": "#aa5522", "width": 96, "height": 128, "version": 1759400000}},
     "everything": {
         "title": "Sách của tôi",
@@ -210,6 +213,18 @@ INVALID: dict[str, Any] = {
     "skip_line_twice": {**HEAD, "skip": {"1": ["Dịch: A", "Dịch: A"]}},
     "skip_line_too_long": {**HEAD, "skip": {"1": ["a" * 301]}},
     "skip_bad_chapter": {**HEAD, "skip": {"một": ["Dịch: A"]}},
+    "readings_not_an_object": {**HEAD, "readings": [["Haruto", "Ha-ru-tô"]]},
+    "readings_empty": {**HEAD, "readings": {}},
+    "reading_two_words": {**HEAD, "readings": {"Hai kes": "Hên-khơ"}},
+    "reading_word_with_punctuation": {**HEAD, "readings": {"Haruto,": "Ha-ru-tô"}},
+    "reading_word_not_nfc": {**HEAD, "readings": {"To\u0302kyo\u0302": "Tô-ky-ô"}},
+    "reading_word_too_long": {**HEAD, "readings": {"a" * 81: "a"}},
+    "reading_spoken_empty": {**HEAD, "readings": {"Haruto": ""}},
+    "reading_spoken_padded": {**HEAD, "readings": {"Haruto": " Ha-ru-tô"}},
+    "reading_spoken_double_space": {**HEAD, "readings": {"Haruto": "Ha  ru tô"}},
+    "reading_spoken_too_long": {**HEAD, "readings": {"Haruto": "a" * 201}},
+    "reading_spoken_not_text": {**HEAD, "readings": {"Haruto": 3}},
+    "reading_same_as_word": {**HEAD, "readings": {"Haruto": "Haruto"}},
 }
 INVALID_RAW = {  # văn bản thô: không phải JSON hợp lệ hay chứa hằng số JSON không chuẩn
     "not_json": "{",
@@ -241,6 +256,10 @@ MERGE_CASES = {
     "playlist_local_wins": (
         {**HEAD, "music": {"playlist": "fantasy_calm"}},
         {**HEAD, "music": {"playlist": "mine", "levelDb": -24.0}},
+    ),
+    "readings_local_wins": (
+        {**HEAD, "readings": {"Haruto": "Ha-ru-tô", "Kate": "Kết"}},
+        {**HEAD, "readings": {"Haruto": "Ha-ru-to", "Lucien": "Lu-xi-en"}},
     ),
     "cover_follows_the_winner": (
         {**HEAD, "title": "Của tôi"},
@@ -469,6 +488,22 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "DELETE", "path": "/edits"},
         {"method": "GET", "path": "/wishes"},
     ],
+    # "Đọc từ này là…" (cách đọc riêng của Nghe ngay - readaloud/readings.py): đặt, làm sạch, từ chối, bỏ.
+    "readings": [
+        {"method": "GET", "path": "/readings"},
+        {"method": "PUT", "path": "/readings", "body": {"surface": "Hailkes", "spoken": "Hên khơ"}},
+        {"method": "PUT", "path": "/readings", "body": {"surface": "“Hailkes,”", "spoken": "  Hên-khơ \n"}},
+        {"method": "PUT", "path": "/readings", "body": {"surface": "Lucien", "spoken": "Lu xi en"}},
+        {"method": "PUT", "path": "/readings", "body": {"surface": "Hai kes", "spoken": "Hên-khơ"}},
+        {"method": "PUT", "path": "/readings", "body": {"surface": "...", "spoken": "chấm"}},
+        {"method": "PUT", "path": "/readings", "body": {"surface": 3, "spoken": "ba"}},
+        {"method": "PUT", "path": "/readings", "body": {"surface": "Heidi", "spoken": "Heidi"}},
+        {"method": "GET", "path": "/edits"},
+        {"method": "PUT", "path": "/readings", "body": {"surface": "Hailkes", "spoken": ""}},
+        {"method": "GET", "path": "/readings"},
+        {"method": "DELETE", "path": "/edits"},
+        {"method": "GET", "path": "/readings"},
+    ],
     "wishes_beside_other_edits": [
         {"method": "PUT", "path": "/title", "body": {"title": "Tên khác"}},
         {"method": "POST", "path": "/voice", "body": {"character": "LUCIEN", "gender": "female"}},
@@ -480,6 +515,39 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "GET", "path": "/pending-changes"},
     ],
 }
+
+
+READINGS = {"Haruto": "Ha ru tô", "Kate": "Kết", "Lucien": "Lu-xi-en", "Tôkyô": "Tô ky ô", "MP": "ma lực"}
+# (giọng, chữ, gốc của cuốn): mỗi ca so chữ đem đọc và khoá clip. Có dấu câu dính hai đầu, từ lặp, chữ thường không khớp (phân biệt hoa
+# thường), từ dài hơn ("Harutoo", "Haruto-kun" - chỉ khớp cả từ), chữ NFD, đoạn không có từ nào (khoá như trước).
+SPEECH_CASES = [
+    ("edge:vi-VN-HoaiMyNeural", "“Haruto,” Kate nói.", None),
+    ("vieneu:turbo/Thường", "“Haruto,” Kate nói.", None),
+    ("vieneu:turbo/Thường", "“Haruto,” Kate nói.", "ja"),
+    ("edge:vi-VN-NamMinhNeural", "Kate gặp Kate ở To\u0302kyo\u0302 - còn haruto, Harutoo và Haruto-kun thì không.", None),
+    ("vieneu:nano/Nhẹ", "Kate gặp Kate ở To\u0302kyo\u0302 - còn haruto, Harutoo và Haruto-kun thì không.", "ja"),
+    ("edge:vi-VN-HoaiMyNeural", "Không có tên nào cả.", None),
+    ("vieneu:turbo/Thường", "Lucien còn 30 MP… (Lucien!)", "ko"),
+    ("azure:vi-VN-HoaiMyNeural", "[Lucien]\nKate\tđi tiếp.", None),
+]
+
+
+def speech_cases() -> dict[str, Any]:
+    """Bộ ví dụ `readings/speech.json`: cùng chữ + cùng cách đọc riêng -> cùng chữ hiện, chữ đem đọc, dấu và khoá clip ở Python và Kotlin."""
+    from abook.readaloud import cache, readings, vieneu
+    from abook.webui.word_timing import tokens
+
+    cases = []
+    for voice, text, origin in SPEECH_CASES:
+        provider, _, native = voice.partition(":")
+        local = provider == "vieneu"
+        tag = readings.tag(text, READINGS)
+        reading = "+".join(part for part in ((vieneu.reading_tag(text, origin) if local else ""), tag) if part)
+        cases.append({"voice": voice, "text": text, "origin": origin, "tokens": tokens(text),
+                      "spokenTokens": vieneu.spoken_tokens(tokens(text), origin, True, READINGS) if local else None,
+                      "spokenText": None if local else readings.spoken_text(text, READINGS),
+                      "tag": tag, "key": cache.clip_key(provider, native, text, reading)})
+    return {"readings": READINGS, "cases": cases}
 
 
 def tiny_cover() -> bytes:
@@ -628,7 +696,7 @@ def generate(*, rebuild_base: bool = False) -> None:
             shutil.copytree(folder, BASE)
             # Readium manifest sinh lại được từ book.json, nên bỏ khỏi bộ ví dụ
             (BASE / "manifest.json").unlink(missing_ok=True)
-    for old in ("edits", "invalid", "expected", "merge", "contract", "series", "track"):
+    for old in ("edits", "invalid", "expected", "merge", "contract", "series", "track", "readings"):
         shutil.rmtree(FIXTURES / old, ignore_errors=True)
     (FIXTURES / "track").mkdir(parents=True)
     (FIXTURES / "track" / "tone.wav").write_bytes(tone_wav())
@@ -656,6 +724,7 @@ def generate(*, rebuild_base: bool = False) -> None:
                                                      "merged": book_edits._ordered(merged), "report": report})
     for name, steps in CONTRACT.items():
         _write(FIXTURES / "contract" / f"{name}.json", {"volatile": VOLATILE, "steps": record_contract(BASE, steps)})
+    _write(FIXTURES / "readings" / "speech.json", speech_cases())
     python_file = FIXTURES / "written" / "python_v4.abook"
     if rebuild_base or not python_file.exists():
         write_python_v4(python_file)

@@ -8,6 +8,7 @@ import androidx.media3.common.Player
 import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.Artwork
+import vn.abook.player.BookEdits
 import vn.abook.player.Playback
 import vn.abook.player.SleepTimer
 import vn.abook.player.Store
@@ -130,11 +131,28 @@ object ReadAloud {
     fun removeNoticeListener(listener: (String) -> Unit) { noticeListeners -= listener }
     private fun notice(message: String) = Playback.onMain { noticeListeners.toList().forEach { runCatching { it(message) } } }
 
-    /** "Thử giọng" (Cài đặt): đúng giọng này đọc `text` (qua bộ đệm), trả file âm thanh. Chạy ở luồng nền. */
-    fun sample(id: String, text: String): File = readExactly(id, text).file
+    /**
+     * Đúng giọng này, không rơi sang giọng khác ("Thử giọng", "Làm trước"); qua bộ đệm. `origin`: gốc của cuốn ([originOf] / [originNow]); `readings`: cách
+     * đọc riêng của cuốn ([readingsOf]). Chạy ở luồng nền.
+     */
+    fun readExactly(id: String, text: String, origin: String? = null, readings: Map<String, String>? = null): Clip =
+        reader().readExactly(text, id, origin, readings)
 
-    /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng", "Làm trước"); qua bộ đệm. `origin`: gốc của cuốn ([originOf] / [originNow]). Chạy ở luồng nền. */
-    fun readExactly(id: String, text: String, origin: String? = null): Clip = reader().readExactly(text, id, origin)
+    private val bookReadings = ConcurrentHashMap<String, Pair<Pair<Long, Long>, Map<String, String>>>()
+
+    /**
+     * Cách đọc riêng người nghe đặt cho cuốn ("Đọc từ này là…", lớp sửa `readings` - [BookEdits]). Nhớ theo giờ sửa + cỡ của `edits.json`: lưu một cách đọc
+     * thì đoạn đọc sau đó dùng ngay cách mới. Đọc file nhỏ - gọi được ở luồng chính.
+     */
+    fun readingsOf(bookId: String): Map<String, String> {
+        if (bookId.isBlank()) return emptyMap()
+        val file = File(Store.bookDir(bookId), BookEdits.EDITS_FILE)
+        val stamp = if (file.isFile) file.lastModified() to file.length() else 0L to -1L
+        bookReadings[bookId]?.takeIf { it.first == stamp }?.let { return it.second }
+        val found = if (stamp.second < 0) emptyMap() else runCatching { BookEdits.readingsOf(BookEdits.load(Store.bookDir(bookId))) }.getOrDefault(emptyMap())
+        bookReadings[bookId] = stamp to found
+        return found
+    }
 
     private val origins = ConcurrentHashMap<String, String>()
 
@@ -357,7 +375,7 @@ object ReadAloud {
         return try {
             val text = Store.file(Playback.bookId, chapter.text).readText(Charsets.UTF_8)
             Chap(index, Paragraphs.of(Paragraphs.withoutLines(text, skipOf(Store.manifest(Playback.bookId), chapter.id)))).also {
-                fromCache(it, originOf(Playback.bookId))
+                fromCache(it, originOf(Playback.bookId), readingsOf(Playback.bookId))
                 chaps[index] = it
             }
         } catch (error: Exception) {
@@ -512,14 +530,15 @@ object ReadAloud {
         worker.execute {
             val began = System.nanoTime()
             val origin = originOf(bookId)
+            val readings = readingsOf(bookId)
             val result = try {
-                runCatching { reader().read(text, voice, origin) }
+                runCatching { reader().read(text, voice, origin, readings) }
             } finally {
                 live.decrementAndGet()
             }
             result.getOrNull()?.let { clip ->
                 // Người nghe đã tới đoạn này: đoạn làm trước thôi được ghim. Đọc thật (không phải lấy từ bộ đệm) bằng đúng giọng đã chọn thì ghi tốc độ.
-                runCatching { cache().unpin(clip.voice, text, origin) }
+                runCatching { cache().unpin(clip.voice, text, origin, readings) }
                 val seconds = (System.nanoTime() - began) / 1e9
                 if (clip.voice == voice && seconds * 1000 > PrepareRunner.CACHED_MS) runCatching { speeds().record(voice, text.length, seconds) }
             }
@@ -735,9 +754,9 @@ object ReadAloud {
      * Đoạn nào đã đọc bằng giọng đang chọn (còn trong bộ nhớ đệm) thì đồng hồ ảo dùng độ dài thật ngay từ lúc nạp chương: nghe tiếp từ giây đã lưu (widget, xe
      * hơi, mở lại app) rơi đúng đoạn đã nghe, không lệch theo ước lượng 14 ký tự/giây.
      */
-    private fun fromCache(chap: Chap, origin: String?) {
+    private fun fromCache(chap: Chap, origin: String?, readings: Map<String, String>) {
         val cache = runCatching { cache() }.getOrNull() ?: return
-        for (i in chap.paragraphs.indices) cache.get(voiceId, chap.paragraphs[i], origin)?.let {
+        for (i in chap.paragraphs.indices) cache.get(voiceId, chap.paragraphs[i], origin, readings)?.let {
             chap.clips[i] = it
             chap.timeline.setDuration(i, it.durationMs)
         }
@@ -745,7 +764,7 @@ object ReadAloud {
 
     /** Chương của một cuốn không đang nạp: chữ từ gói sách, mốc từ bộ nhớ đệm (nếu đoạn đã từng được đọc bằng giọng đang chọn). */
     private fun peek(bookId: String, chapterId: Int): Chap? =
-        textChapters(bookId, listOf(chapterId))[chapterId]?.let { Chap(-1, it.second).also { chap -> fromCache(chap, originOf(bookId)) } }
+        textChapters(bookId, listOf(chapterId))[chapterId]?.let { Chap(-1, it.second).also { chap -> fromCache(chap, originOf(bookId), readingsOf(bookId)) } }
 
     /**
      * Các chương chỉ-có-chữ `ids` của một cuốn trên máy: mã -> (tên chương người nghe thấy, các đoạn đúng như lúc nghe). Chương không có chữ hay không đọc được

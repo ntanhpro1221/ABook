@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe
+
+- Sách chỉ có chữ: giọng đọc đọc sai một tên hay một từ thì giữ ngón tay vào chữ ấy ở màn đọc (máy tính: bấm chuột phải) và chọn "Đọc từ này là…": gõ cách đọc
+  (vd "Ha ru tô"), bấm "Nghe thử" để nghe bằng giọng đang đọc cuốn này, rồi "Lưu cho cả cuốn" - mọi chỗ có đúng từ ấy đọc theo cách mới, chữ trong sách giữ
+  nguyên và chữ đang đọc vẫn sáng đúng chỗ. Danh sách "Cách đọc tên" trong hộp "Sửa sách" để xem, sửa, nghe thử hay bỏ từng từ; cách đọc đi theo file sách khi
+  xuất. Hộp "Sửa câu này" của sách nói chưa có Studio cũng nghe thử được cách đọc tên bằng giọng đọc của máy. Máy tính và điện thoại như nhau.
+
 ## [0.4.29] - 2026-10-06
 
 ### Studio

@@ -6,6 +6,8 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
+import org.json.JSONObject
+import vn.abook.player.BookEdits
 import vn.abook.player.Playback
 import vn.abook.player.vieneu.VieneuVoices
 
@@ -72,8 +74,22 @@ class ReadAloudPlugin : Plugin() {
     fun sample(call: PluginCall) {
         val voice = call.getString("voice") ?: return call.reject("thiếu voice")
         val text = call.getString("text") ?: return call.reject("thiếu text")
+        // "Thử giọng" (Cài đặt) và "Nghe thử" một cách đọc - đúng giọng này, qua bộ đệm. Cách đọc: `readings` gửi kèm (chưa lưu - kiểm như lớp sửa) thắng; không có thì của cuốn `bookId` (`server._book_readings`).
+        val book = call.getString("bookId").orEmpty()
+        val readings = try {
+            if (call.data.has("readings")) {
+                val trial = call.data.opt("readings")
+                // {} = chữ của sách, không cách đọc riêng nào ("Nghe thử" khi ô cách đọc trống).
+                if (trial is JSONObject && trial.length() == 0) emptyMap()
+                else BookEdits.readingsOf(JSONObject().put("readings", BookEdits.validateReadings(trial)))
+            } else {
+                ReadAloud.readingsOf(book)
+            }
+        } catch (error: BookEdits.EditsError) {
+            return call.reject(error.message)
+        }
         try {
-            call.resolve(JSObject().put("path", ReadAloud.sample(voice, text).absolutePath))
+            call.resolve(JSObject().put("path", ReadAloud.readExactly(voice, text, ReadAloud.originOf(book), readings).file.absolutePath))
         } catch (error: VoiceException) {
             call.reject(error.message ?: "Không đọc thử được", error.reason)
         }

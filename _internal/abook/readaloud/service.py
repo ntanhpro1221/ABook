@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Mapping, Protocol
 
-from . import azure, edge, fpt, google, loudness, names, supertonic, vieneu, viettel, windows
+from . import azure, edge, fpt, google, loudness, names, readings as book_readings, supertonic, vieneu, viettel, windows
 from .byok import KeyedProvider
 from .cache import ClipCache, clip_key
 from .keys import KeyStore
@@ -92,8 +92,8 @@ class ReadAloud:
         self._live = 0  # clip của người đang nghe đang được đọc: "Làm trước" nhường
         # Gốc Nhật / Hàn của từng cuốn (máy đoán + người dùng ghi đè); cạnh thư mục bộ đệm, không nằm trong đó (bộ đệm dọn mọi file .json lâu không dùng).
         self.origins = names.BookOrigins(self.folder.with_name(self.folder.name + "-book-origins.json"))
-        self.prepare = Prepare(lambda voice, text, origin: self.clip(voice, text, background=True, origin=origin), lambda: self._live,
-                               int(self.cache.limit * PREPARE_SHARE), rtf)
+        self.prepare = Prepare(lambda voice, text, origin, readings: self.clip(voice, text, background=True, origin=origin, readings=readings),
+                               lambda: self._live, int(self.cache.limit * PREPARE_SHARE), rtf)
 
     def warm(self) -> None:
         """Liệt kê giọng của máy ở luồng nền (hỏi PowerShell mất ~1 giây): lúc người nghe mở một cuốn chỉ-có-chữ, danh sách đã sẵn."""
@@ -154,17 +154,21 @@ class ReadAloud:
         provider = self.keyed(provider_id)
         return {**provider.check(), "provider": provider.describe()}
 
-    def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False, origin: str | None = None) -> dict[str, Any]:
+    def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False, origin: str | None = None,
+             readings: Mapping[str, str] | None = None) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
         `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ. `origin`: gốc của cuốn ("ja" / "ko", `names.BookOrigins`) - giọng đọc
-        trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); giọng khác bỏ qua."""
+        trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); giọng khác bỏ qua.
+        `readings`: cách đọc riêng của cuốn ({chữ hiện: chữ đọc}, readings.py) - MỌI giọng: giọng trên máy áp sau bước đọc tên, giọng khác nhận chữ
+        đem đọc đã thay (cùng số chữ, nên mốc từng chữ vẫn khớp chữ hiện); khoá bộ đệm có dấu của những cách đọc có trong đoạn."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
             raise ValueError("Đoạn chữ quá dài để đọc một lượt")
         provider, native = self._resolve(voice_id)
         reads_names = hasattr(provider, "reading_tag")
-        key = clip_key(provider.id, native, text, provider.reading_tag(text, origin) if reads_names else "")
+        tags = (provider.reading_tag(text, origin) if reads_names else "", book_readings.tag(text, readings))
+        key = clip_key(provider.id, native, text, "+".join(tag for tag in tags if tag))
         hit = self.cache.get(key)
         if hit is None:
             if cached_only:
@@ -176,8 +180,14 @@ class ReadAloud:
                 with lock:  # hai yêu cầu cùng đoạn (đọc trước + bấm nghe) chỉ đọc một lần
                     hit = self.cache.get(key)
                     if hit is None:
-                        made = provider.synthesize(text, native, origin) if reads_names else provider.synthesize(text, native)
-                        words = made.words if made.words is not None else map_boundaries(text, made.boundaries, made.duration_ms)
+                        said = text if reads_names else book_readings.spoken_text(text, readings)
+                        if not reads_names:
+                            made = provider.synthesize(said, native)
+                        elif tags[1]:
+                            made = provider.synthesize(text, native, origin, readings)
+                        else:
+                            made = provider.synthesize(text, native, origin)
+                        words = made.words if made.words is not None else map_boundaries(said, made.boundaries, made.duration_ms)
                         hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
             finally:
                 with self._locks_guard:
