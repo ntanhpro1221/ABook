@@ -370,4 +370,39 @@ class DlnaTest {
         players.end(id)
         assertNull(players.now())
     }
+
+    @Test
+    fun theVolumeKeysMoveTheRendererVolume() {
+        val device = renderer()
+        val (chosen, saved) = book(30.0)
+        val players = players(device, chosen, saved).apply { volumeEveryMs = 200 }
+        val id = players.found()
+        players.send(id, command("load", "bookId" to "sach", "chapterId" to 1, "seconds" to 0.0))
+        assertEquals("âm lượng thiết bị có ngay từ lúc đưa chương", 30, players.now()!!.volume)
+        players.send(id, command("volume", "level" to 55))
+        assertEquals(55, device.volume)
+        assertEquals(55, players.now()!!.volume)
+        device.volume = 12 // ai đó vặn trên điều khiển TV
+        until { players.now()?.takeIf { it.volume == 12 } }
+        assertTrue(device.calls("SetVolume").single().let { it["DesiredVolume"] == "55" && it["Channel"] == "Master" })
+        for (bad in listOf(-1, 101)) {
+            assertTrue(runCatching { players.send(id, command("volume", "level" to bad)) }.exceptionOrNull() is Dlna.Failure)
+        }
+        assertEquals(12, device.volume)
+    }
+
+    @Test
+    fun aRendererWithoutVolumeControlLeavesThePhoneVolume() {
+        val device = FakeRenderer("Loa cũ", volumeControl = false).start().also { cleanups += it::stop }
+        val (chosen, saved) = book(30.0)
+        val players = players(device, chosen, saved).apply { volumeEveryMs = 100 }
+        val id = players.found()
+        players.send(id, command("load", "bookId" to "sach", "chapterId" to 1, "seconds" to 0.0))
+        until { players.now()?.takeIf { it.playing } }
+        Thread.sleep(400)
+        assertNull("không có RenderingControl: phím âm lượng vẫn chỉnh điện thoại", players.now()!!.volume)
+        assertTrue(device.calls("GetVolume").isEmpty())
+        assertTrue(runCatching { players.send(id, command("volume", "level" to 40)) }.exceptionOrNull() is Dlna.Failure)
+        assertTrue(device.calls("SetVolume").isEmpty())
+    }
 }
