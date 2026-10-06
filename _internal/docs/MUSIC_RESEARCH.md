@@ -2778,3 +2778,893 @@ Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCE
   - lệch đúng 1 bậc ở một trục -> `soft`;
   - `ramp` không kèm `soft` cho ranh giới bắt buộc mà vị trí mờ.
 - **Tiếp:** kế hoạch LoRA 4B (`scene_train_v3/LORA_PLAN.md`) ghi trước sau phép prompt mốc 06-10 (để chốt dạng đầu ra) và oracle 10-10.
+
+**GHI TRƯỚC - LoRA LỚP CUỐI cho llmVT, học trên Mac (06-10 09:3x; trước mọi số của base hay LoRA trên MLX):**
+- **Vì sao lớp cuối:** `qwen3.5:4b` của app đọc gần như hằng số (V0 E1 T2, ERROR_ANALYSIS_4B), tức lỗi nằm ở khâu đọc ra.
+  Mac mini 16 GB không học nổi toàn bộ: mlx-lm lan ngược qua lớp gated-delta của Qwen3.5 theo từng token, một lớp ~4 GB ở
+  1.024 token, kể cả khi vá checkpoint theo khúc. Lớp 31 là full attention, lan ngược không qua gated-delta.
+  LoRA toàn bộ (PyTorch + kernel chunk) là việc sau, ở GPU nhà hoặc Kaggle.
+- **Model:** `mlx-community/Qwen3.5-4B-4bit` (rev 0e7ffd5c), mlx-lm 0.32.0. LoRA r 16, scale 2, chỉ lớp 31, lr 2e-4 cosine,
+  1.540 bước (2 epoch), loss chỉ trên câu trả lời, think tắt (khối think rỗng như Ollama).
+- **Dữ liệu:** 40 chương nhãn dạy (lô thử + lô 2, hướng dẫn bản 3), `build_mood_sft.py --prompt P2`, nhãn mềm A/B:
+  770 mẫu train + 62 val. Không truyện nào của bộ đáp án 4/5/5b/6.
+- **Đo:** `mlx_mood_eval.py` trên Mac, cùng 260 khúc ranh giới app (`export_mood_eval.py`).
+  - P2 = kỳ vọng chữ số theo xác suất; P0 = JSON tham lam.
+  - Chấm bằng `prompt_mood.chapter_rs` như llmVT của app: V, T từ LLM; E từ nhãn câu; `SCORE_SKIP_NOTES=1`.
+- **CHÍNH:** LoRA-P2 so base-P0 (prompt app hiện nay), CÙNG MLX 4-bit, bộ 4 + 5 + 5b (22 chương). THẮNG nếu VET hơn
+  ≥ 0,05 VÀ hơn ở ≥ 16/22 chương.
+- **Ghi lại, không quyết:**
+  - LoRA-P2 so base-P2 (phần của việc học);
+  - bộ 6;
+  - độ lệch chuẩn đầu ra trong chương (hết trả hằng chưa);
+  - tỉ lệ V = 0;
+  - E từ LLM.
+- **Lưu ý trước:** MLX 4-bit (affine, nhóm 64) khác Q4_K_M của Ollama, nên số base ở đây không so thẳng với số Ollama của phép prompt mốc.
+- **Thắng thì:**
+  - đề xuất Model học LoRA TOÀN BỘ trên GPU (cùng dữ liệu), đo lại bằng Ollama;
+  - app tải biến thể model llmVT như một runtime tuỳ chọn.
+
+  **Thua thì:** lớp cuối không đủ; vẫn đề xuất LoRA toàn bộ một lần trước khi đóng hướng.
+
+**GHI TRƯỚC - Lô dữ liệu dạy 3, hướng dẫn bản 3.1 (06-10 09:4x):**
+- **Bản 3.1** (`GUIDE_V3.md` mục 3.1, cả hai người chấm lô 2 cùng nêu):
+  - tiêu đề trước lời dịch giả thuộc đoạn chú thích;
+  - khúc < 1 phút trong một đoạn: mạnh hơn -> `accent`, lặng hơn -> `duck`;
+  - lệch đúng 1 bậc ở một trục -> `soft`;
+  - `ramp` không kèm `soft` cho ranh giới bắt buộc mà vị trí mờ.
+- **Lô 3** (`scene_train_v31/`, hạt 20261007, cùng luật chọn): 20 chương (14 Nhật, 6 Hàn), không trùng truyện nào của bộ đáp án, lô thử, lô 2. `_full` nay là repo ABook-Hako; ánh xạ tên cũ qua `metadata.json` (`tools_folder`). Hai agent Opus chấm mù A/B, chịu ngắt.
+- **Thước:** đồng thuận A-B r TB chương (`agreement.py`) so lô 2 (V .87, E .84, T .91).
+  - Ở mức này trần gần sát, nên luật là KHÔNG KÉM: giữ 3.1 nếu không trục nào giảm > 0,03. Trục nào giảm > 0,03 thì quay về bản 3, và lô 3 vẫn dùng làm dữ liệu dạy.
+  - Ghi lại: Pk ranh giới, số đoạn, số `duck`/`accent`.
+- **Mục đích chính:** thêm dữ liệu dạy, 40 -> 60 chương, cho LoRA llmVT.
+
+**GHI TRƯỚC - LoRA TOÀN BỘ Qwen3.5-4B cho llmVT trên GPU nhà (06-10 10:xx; Model xếp sau B10, trước mọi số):**
+- **Học:** `music/musicvt/train_q35_qlora.py` (Model), Qwen/Qwen3.5-4B phần chữ, QLoRA nf4 r16 alpha32, 12 loại phép chiếu
+  (gồm gated-delta), lr 1e-4 cosine, 2 epoch, loss chỉ trên câu trả lời, think tắt.
+  - Ra: GGUF -> Ollama Q4_K_M (như qwen3.5:4b), tag `qwen35-4b-musicvt`.
+- **Dữ liệu:** `mlx_lora/sft/{train,val}.jsonl` lúc chuỗi BẮT ĐẦU. Nếu lô 3 (bản 3.1) phân xử xong trước đó, tôi dựng lại file này với 60 chương (cùng `build_mood_sft.py --prompt P2`, hạt 7) và ghi số mẫu ở đây. Không đổi gì sau khi chuỗi đã bắt đầu.
+- **Đo:** `prompt_mood.py run ... P2 qwen35-4b-musicvt` trên bộ 4, 5, 5b, 6 (Ollama, ranh giới app). Chấm như llmVT của app: V, T từ LLM; E nhãn câu; `SCORE_SKIP_NOTES=1`.
+- **CHÍNH:** musicvt-P2 so `qwen3.5:4b`-P0 (prompt app hiện nay, số của phép prompt mốc) trên bộ 4 + 5 + 5b (22 chương). THẮNG nếu VET hơn ≥ 0,05 VÀ hơn ở ≥ 16/22 chương.
+- **Ghi lại:**
+  - so `qwen3.5:4b`-P2 (phần của việc học);
+  - bộ 6;
+  - E từ LLM;
+  - SD đầu ra trong chương;
+  - tỉ lệ V = 0;
+  - giây/lượt (phải ngang bản gốc).
+- **Thắng thì:** đề xuất Lead thay model llmVT của app bằng `qwen35-4b-musicvt` (cùng cỡ tải 3,2 GB, runtime tuỳ chọn như cũ), cùng prompt P2 và đọc chữ số; nghe kiểm bằng oracle như lần trước nếu Lead muốn. **Thua thì:** ghi lại; hướng dữ liệu dạy dừng ở cỡ này.
+
+### 06-10 10:3x - LoRA lớp cuối trên Mac: số nền (ghi lại, chưa phải kết quả CHÍNH)
+
+Hai lượt nền MLX (Qwen3.5-4B-4bit, không adapter) xong; bộ 4+5+5b 22 chương, thước app+llmVT, `SCORE_SKIP_NOTES=1`:
+
+| lượt | VET | V | E (nhãn câu) | T | SD trong chương V/E/T | V=0 |
+|---|---|---|---|---|---|---|
+| base_P0 (JSON) | +.259 | +.089 | +.310 | +.379 | .18/.40/.48 | 91 % |
+| base_P2 (chữ số, kỳ vọng) | +.258 | +.284 | +.310 | +.180 | .22/.18/.12 | 0 % |
+| base_P2 argmax | +.231 | +.249 | +.310 | +.133 | - | - |
+
+Bộ 6 (ghi lại): P0 +.242, P2 +.239. Nhận xét SAU KHI THẤY SỐ (không dùng để quyết): P2 sửa hẳn V (hết V=0 hằng) nhưng
+T kém P0; ghép V của P2 + T của P0 sẽ ra ~+.32 - đây là phép chọn sau dữ liệu, chỉ được kiểm bằng lượt đo ghi trước
+khác (prompt mốc trên Ollama đang chờ trong hàng GPU). Học LoRA: ~37 phút / 100 bước -> 1.540 bước xong ~19:15,
+lượt lora1_P2 xong ~19:35 06-10. Luật CHÍNH giữ nguyên như ghi trước (lora1_P2 so base_P0, +0,05 và >= 16/22).
+
+### 06-10 10:5x - Essentia so CLAP ở lớp cảm xúc bài (ghi lại, KHÔNG ghi trước; `LLM_Train/music/compare_essentia.py`)
+
+Câu hỏi: đầu dò cảm xúc trên CLAP (đang dùng, Apache-2.0) có thua bộ mã hoá nhạc chuyên dụng không? Cùng 1.270 bài
+Incompetech có feel người gắn và có Essentia; cùng logistic C=1, cùng 5 phần kiểm chéo (seed 7). AUC trung bình 10 lớp:
+
+| đặc trưng | AUC TB | ghi chú |
+|---|---|---|
+| đầu dò CLAP 512 chiều | **.848** | thắng cả 10 lớp |
+| đầu dò Discogs-EffNet 1.280 chiều (Essentia, NC) | .797 | |
+| đầu mood/theme MTG có sẵn của Essentia (zero-shot theo bảng tag) | .762 | |
+| đầu V/A DEAM của Essentia | .605 | arousal ngược hướng với fear/wonder |
+| ghép CLAP + EffNet | .862 | +.014, nhưng NC - không ship |
+
+Kết luận: không có lý do đổi bộ mã hoá vì Essentia; Essentia giữ vai chỉ để so. Dè dặt: EffNet chưa chỉnh C (1.280 chiều,
+1.270 bài - có thể quá khớp); nhãn chỉ của một nhà soạn (Kevin MacLeod).
+
+### 06-10 12:2x - KẾT QUẢ lô 3 / bản 3.1: TRƯỢT luật không kém -> quay về bản 3; lô 3 vẫn làm dữ liệu dạy
+
+Hai agent Opus chấm mù xong 20/20 chương mỗi người (`scene_train_v31/{A,B}`). Đồng thuận A-B (r TB chương, `agreement.py`):
+
+| trục | lô 2 (bản 3) | lô 3 (bản 3.1) | đổi | luật (giảm <= 0,03) |
+|---|---|---|---|---|
+| V | .872 | .867 | -.005 | đạt |
+| E | .840 | .732 | **-.108** | trượt |
+| T | .911 | .852 | **-.059** | trượt |
+
+-> Theo luật ghi trước: **quay về bản 3**; mục 3.1 trong GUIDE_V3 ghi là đã thử và bị loại.
+Ghi lại:
+- r gộp gần như không đổi (V .93 -> .91, E .86 -> .85, T .94 -> .93). Trung bình chương bị kéo bởi vài chương (E cac_ranker -.15, ousama .41, chuyen_sinh .42; T maigo .43, khong_muon .46). Chương khác lô nên không tách được hiệu ứng hướng dẫn với hiệu ứng chương.
+- Số đoạn A/B 82/83 (lô 2 68/64), accent A/B **56/32** (lô 2 31/29), duck 2/1, soft 8/12. 3.1b ("khúc < 1 phút mạnh hơn -> accent") làm hai người tách nhau ở accent - đúng chỗ đáng ngờ nhất.
+- Hai người cùng nêu (độc lập): (a) L4 chẻ đôi đoạn vì một dòng lời dịch ngắn giữa đoạn (eikoku 85, lazy 150) - nên có ngưỡng ~5 giây; (b) phản diện đắc thế nhưng văn cười (ousama, isekai) - L1 hay "văn cười" thắng; (c) A: L3 "leo thang cùng nhóm = accent" va 3.1c "lệch 1 bậc hai trục = bắt buộc"; nhóm gems của nostalgia/wonder/transcendence chưa định.
+
+Phân xử (`adjudicate.py`): 84 đoạn (77 truyện), lệch A-B lớn nhất TB .43, >= 1,5 ở 2 đoạn -> `train_labels.jsonl`.
+**Dữ liệu musicvt (ghi theo docs 24cf8f78, trước khi chuỗi bắt đầu):** `mlx_lora/sft` dựng lại 60 chương (pilot + v3 + v31,
+`build_mood_sft.py --prompt P2 --seed 7`): **train 1.238, val 72** (cảnh 554, cửa sổ 756, bỏ 6); token dài nhất 2.312, p99
+2.239, không mẫu nào > 3.072. Bản 40 chương cũ giữ ở `mlx_lora/sft_40ch_0610/` (770/62).
+
+### 06-10 12:2x - KẾT QUẢ prompt có mốc + chữ số (ghi trước 05-10 19:0x): KHÔNG THẮNG -> giữ prompt cũ
+
+`run_prompt_mood.sh` qua hàng GPU (11:46-12:15, mã 0); `results/prompt_mood_score.txt`. qwen3.5:4b, app+llmVT, `SCORE_SKIP_NOTES=1`.
+
+| bộ 4+5+5b (22 chương) | VET | so P0 | thắng | V | T | V = 0 |
+|---|---|---|---|---|---|---|
+| P0 (cũ) | +.287 | - | - | +.220 | +.333 | 85 % |
+| P1 (mốc, JSON) | +.279 | -.009 | 10/22 | +.353 | +.174 | 43 % |
+| **P2 (mốc + chữ số kỳ vọng) - CHÍNH** | +.315 | **+.028** | **14/22** | +.267 | +.368 | 0 % |
+| P2 chữ số cao nhất | +.281 | -.006 | 13/22 | +.272 | +.262 | - |
+
+-> CHÍNH cần +0,05 và >= 16/22: **KHÔNG THẮNG**, giữ prompt cũ của app. Ghi lại:
+- Bộ 6 (ghi lại): P2 +.038, 12/20. Hướng dương ở cả hai nhóm bộ nhưng dưới ngưỡng.
+- Đầu ra chữ số xoá hẳn bệnh V = 0 hằng (85 % -> 0 %) mà không mất T; prompt mốc dạng JSON (P1) đổi T lấy V.
+- E từ LLM vẫn kém nhãn câu ở mọi biến thể (P2+E -.000, P1+E -.154).
+- Cùng P2 nhưng MLX 4-bit trên Mac (số nền LoRA, 18e10386) cho T +.180, còn Ollama ở đây +.368. Khác lượng tử/runtime đổi T nhiều, nên phép LoRA trên Mac chỉ so trong MLX (đúng như ghi trước).
+- Dữ liệu dạy vẫn dùng đầu ra chữ số P2 (mẫu đã dựng), vì luật "thua thì giữ prompt cũ" chỉ nói về prompt app; LoRA (Mac, musicvt) có luật riêng.
+
+**GHI TRƯỚC - lỗi P2 theo loại cảnh + độ phủ dữ liệu dạy (06-10 12:4x, trước khi nhìn số; chỉ CPU):**
+- **Câu hỏi:** musicvt (60 chương) có thiếu loại cảnh nào mà llmVT đang sai nhiều không, để lô dữ liệu kế (nếu có) chọn đúng loại.
+- **Dữ liệu:** `results/pm_P2_*` (qwen3.5:4b, Ollama) trên bộ 4+5+5b (chưa dùng viết prompt) và bộ 6 (ghi lại riêng).
+  Mỗi câu nhận V/T dự đoán của khúc app chứa nó, và V/T đáp án của đoạn đáp án chứa nó; trọng số = thời lượng; bỏ `chu_thich`.
+- **Thước lỗi** (khớp với thước r trong chương): trừ trung bình theo thời lượng của CHƯƠNG ở cả đáp án lẫn dự đoán, rồi lấy
+  |dự đoán − đáp án| và dấu (lệch hệ thống). Gom theo: gems chính (nhãn đầu), `function`, `tone=hai` (văn cười) có/không.
+- **Độ phủ:** tỉ phần số tiếng của mỗi loại trong `train_labels.jsonl` 60 chương (pilot + v3 + v31) so tỉ phần thời lượng trong
+  bộ đo 4+5+5b.
+- **Luật gọi "cần thêm":** loại có >= 3 % thời lượng bộ đo, lỗi tuyệt đối trung bình (V hoặc T) >= 1,3 x mức chung, VÀ tỉ phần
+  trong dữ liệu dạy < tỉ phần trong bộ đo. Loại lỗi cao nhưng đã đủ phủ -> ghi "lỗi không do thiếu dữ liệu".
+- **Không quyết gì về app;** chỉ dùng để chọn chương cho lô dữ liệu kế và đọc kết quả musicvt theo loại.
+
+### 06-10 13:0x - KẾT QUẢ lỗi P2 theo loại cảnh (ghi trước 8ea7a1d6; `error_by_type.py`)
+
+Bộ 4+5+5b (354 phút): lỗi chung sau khi trừ trung bình chương |V| .303, |T| .278 (nửa thang). Theo luật ghi trước:
+- **Gọi "CẦN THÊM": `sadness`** - lỗi V 1,65x, lệch V +.50 (đoán cảnh buồn quá sáng), 6,6 % bộ đo so 5,1 % dữ liệu dạy.
+  Bộ 6 cũng gọi (1,36x, 7,6 % so 5,1 %).
+- "Lỗi không do thiếu dữ liệu": `hanh_dong` T 1,40x (T đoán quá thấp, -.26), `ket` V/T 1,25x/1,46x (bộ 6 thì gọi CẦN THÊM).
+- Thiếu phủ nhưng lỗi chưa tới ngưỡng: `cao_trao` 14,2 % bộ đo so 6,8 % dạy (lỗi 1,22x/1,17x); `wonder`/`power` ít trong dạy
+  nhưng lỗi thấp. Văn cười không khác (1,03x/1,09x).
+
+**Ghi lại (sau khi thấy số, không thuộc luật) - nguyên nhân chính là CO THANG, không phải loại cảnh:**
+- Hồi quy dự đoán (đã trừ trung bình chương) theo đáp án: hệ số co b = .12 (V) / .16 (T) ở bộ 4+5+5b, .14 / .15 ở bộ 6.
+  Trong một chương, P2 chỉ dao động ~1/7 so với đáp án. Mọi "lệch" theo loại ở bảng trên đúng chiều co về giữa
+  (cảnh buồn V quá cao, cảnh vui V quá thấp, hành động T quá thấp).
+- Giãn dự đoán 1/b rồi đo lại: không loại nào >= 1,3x ở CẢ HAI nhóm bộ (sadness V 1,33x ở 4+5+5b nhưng .84x ở bộ 6;
+  tenderness V 1,54x chỉ ở bộ 6). Tức thiếu loại cảnh không phải điểm nghẽn.
+- Đọc cho musicvt: điều LoRA phải sửa là biên độ trong chương (nhãn mềm A/B có biên độ thật), không phải thêm thể loại.
+  Lô dữ liệu kế (nếu có) chỉ cần ưu tiên nhẹ chương buồn và chương có cao trào dài.
+- Thêm một thước ghi lại cho Mac LoRA / musicvt: hệ số co b trong chương (base P2 Ollama .12/.16) - kỳ vọng tăng rõ nếu LoRA học được.
+
+**GHI TRƯỚC - "P2 + giãn biên độ trong chương" (Lead đề xuất 06-10 13:2x; ghi 13:3x trước khi đo; chỉ CPU):**
+- **Vì sao không dùng thước r:** r theo chương bất biến khi dự đoán của chương bị co giãn/dịch tuyến tính. Kiểm: giãn z mọi
+  chương của P2 bộ 4+5+5b cho VET +.315 -> +.328; phần +.013 chỉ đến từ các khúc LLM không trả số (app lấy nhãn câu thay).
+  Nên với thước CHÍNH cũ, giãn không thể là bản sửa; nó chỉ có ý nghĩa ở MỨC TUYỆT ĐỐI mà app dùng để chọn bài nhạc.
+- **Biến thể:** p' = m + k·(p - m), m = trung bình (theo thời lượng) dự đoán của chương, k riêng V và T, chọn trên lưới
+  1..10 bước 0,5 cho sai số nhỏ nhất ở bộ 4+5 (học); đo trên bộ 5b + 6 (giữ ngoài; bộ 6 dùng viết prompt nhưng không dùng chọn k).
+- **Thước:** MAE theo thời lượng giữa V/T dự đoán và V/T đáp án (thang nửa sau parse_gold), từng chương, bỏ `chu_thich`.
+- **CHÍNH:** P2+giãn so P0 (prompt app hiện tại) trên 5b + 6. THẮNG nếu MAE (TB V,T) giảm >= 10 % VÀ thấp hơn ở >= ⌈0,7 n⌉ chương.
+- **Ghi lại:** P2+giãn so P2 thô; k chọn được; MAE từng trục; r (để chắc không tụt).
+- **Thắng thì:** đề xuất app dùng P2 + giãn (một hằng k mỗi trục) - nhưng P2 đã KHÔNG THẮNG ở thước r (611859b5), nên đổi prompt
+  app vẫn cần Lead quyết; LoRA Mac / musicvt chấm thêm cùng thước MAE này. **Thua thì:** ghi lại.
+
+### 06-10 13:5x - KẾT QUẢ "P2 + giãn biên độ" (ghi trước 67edb817; `rescale_mae.py`): KHÔNG THẮNG - lỗi nằm ở MỨC CHƯƠNG
+
+k chọn trên bộ 4+5: V 1,5, T 1,5 (lưới 1..10; giãn mạnh hơn chỉ làm MAE tăng). Đo trên 5b+6, 23 chương, MAE thang nửa:
+
+| biến thể | MAE TB | so P0 | thấp hơn P0 | V | T |
+|---|---|---|---|---|---|
+| P0 (prompt app) | .425 | - | - | .362 | .487 |
+| P2 thô | .457 | +7,6 % | 12/23 | .348 | .566 |
+| **P2 + giãn - CHÍNH** | .454 | +7,0 % | 12/23 | .350 | .558 |
+
+-> Cần giảm >= 10 % và >= 17/23: **KHÔNG THẮNG**. Ghi lại (sau khi thấy số), tách lỗi trên 5b+6:
+- Hằng = mức chương của P2: MAE .475; hằng 0 cho mọi câu: .466; hằng = mức chương ĐÁP ÁN: **.282**;
+  P2 thô dời về mức đáp án: **.255**.
+- Tức gần hết sai số tuyệt đối là đoán sai MỨC CHUNG của chương (nhất là T: .589 so .310). Mức chương P2 đoán còn không
+  hơn hằng 0. Biến thiên trong chương của P2 có ích thật nhưng nhỏ (.282 -> .255).
+- Đọc cho LoRA (Mac, musicvt): ngoài r (thứ hạng trong chương), cái đáng sửa nhất là hiệu chỉnh mức chương. Thước MAE tuyệt đối
+  đã gắn vào `score_mlx_lora.py` (ghi lại; nền MLX bộ 4+5+5b: P0 V .385 T .445, P2 V .380 T .481).
+- App: thước CHÍNH lâu nay (r trong chương) không thấy lỗi này. Việc chọn bài nhạc dùng mức tuyệt đối, nên phép nghe
+  oracle 10-10 mới là nơi lỗi mức chương lộ ra.
+
+**GHI TRƯỚC - Lô 4: mức chương dao động TRONG cuốn bao nhiêu (06-10 14:xx; Lead nêu 2 hướng; kiêm dữ liệu dạy):**
+- **Vì sao:** không ước lượng nào hiện có đoán được mức chương (5b+6: nhãn câu app .432, LLM P0 .423, hằng 0 .462, mức đáp án
+  .286). Hai hướng gốc:
+  - (1) app chọn bài theo vị trí TƯƠNG ĐỐI trong cuốn (phân vị V/T của đoạn trong cả cuốn) + giọng chung của cuốn từ một ước
+    lượng cấp cuốn; lỗi mức chương thôi hại.
+  - (2) giữ mức tuyệt đối, ước mức chương bằng một lượt riêng (tóm tắt cả chương -> một số).
+  (1) chỉ đúng nếu mức chương ít dao động giữa các chương CÙNG cuốn. Đáp án hiện có chỉ 3 cuốn có 2 chương - không đủ.
+- **Dữ liệu:** `scene_book_var/` - 4 truyện chưa dùng (3 Nhật, 1 Hàn, hạt 20261008, >= 25 chương 8-40 KB), mỗi truyện 5 chương
+  rải đều (giữa 5 phần bằng nhau). Hai agent Opus chấm mù A/B theo BẢN 3 (L1–L4; 3.1 đã loại), phân xử như lô 2.
+- **Thước:** mức chương = trung bình V, T theo số tiếng (bỏ `chu_thich`) trên nhãn phân xử. SD_trong = căn của trung bình
+  phương sai trong từng cuốn (16 bậc tự do). SD_tổng = độ lệch chuẩn mức chương trên 42 chương đáp án bộ 4/5/5b/6 (gần như mỗi
+  chương một cuốn): V .33, T .40 (gộp hai nhóm bộ đã đo; tính lại đúng cách ở lúc chấm).
+- **Luật (mỗi trục, rồi lấy trục xấu hơn):**
+  - SD_trong <= 0,5 × SD_tổng (cuốn giải thích >= 75 % phương sai) -> chọn hướng (1);
+  - SD_trong >= 0,8 × SD_tổng -> chọn hướng (2);
+  - ở giữa -> cả hai: phân vị trong cuốn + hiệu chỉnh mức chương (ghi rõ phần nào lớn hơn).
+- **Ghi lại:** đồng thuận A-B (so lô 2 .87/.84/.91); mức chương A so B (người chấm có đồng ý về mức chương không); số mẫu dạy thêm.
+- **Dè dặt trước:** 4 cuốn là ít - kết luận chỉ chọn hướng làm kế, không tự đổi app.
+
+### 06-10 15:xx - KẾT QUẢ lô 4 (ghi trước 5a64e319): mức chương dao động mạnh TRONG cuốn -> làm CẢ HAI, phần mức chương lớn hơn
+
+Hai agent Opus chấm mù xong 20/20 mỗi người (bản 3); phân xử 83 đoạn (`scene_book_var/`, `book_var.py`). Mức chương (V, T thang
+-2..2, theo số tiếng, bỏ chu_thich), nhãn phân xử:
+
+| truyện | V 5 chương | T 5 chương |
+|---|---|---|
+| Kou 2 ni Timeleap | +1.02 +0.72 +1.00 +0.18 +1.07 | +0.08 -0.85 -0.34 +0.39 -0.32 |
+| Arifureta | -0.11 +1.43 +0.75 +0.90 +1.30 | +0.37 -1.32 -0.75 -0.50 -0.90 |
+| Strongest Survival (Otome) | -0.69 -0.40 +0.64 -0.14 +0.39 | +0.91 +1.38 -0.99 +0.82 -0.16 |
+| Mạc Trần Vương (Hàn) | -0.89 -0.30 +0.10 -0.68 -0.20 | +1.00 +0.93 +0.25 +1.04 +1.01 |
+
+- SD_trong V .490, T .640; SD_tổng (42 chương đáp án) V .680, T .817 -> tỉ số **V .72, T .78** -> theo luật: **CẢ HAI**
+  (phân vị/giọng cấp cuốn + hiệu chỉnh mức chương), và phần mức chương LỚN HƠN: cuốn chỉ giải thích ~48 % (V) / ~39 % (T)
+  phương sai mức chương. A riêng .77/.80, B riêng .75/.76 - cùng kết luận.
+- **Người chấm đồng ý cao về mức chương:** r A-B trên 20 mức chương V .961 (MAE .18), T .954 (MAE .24). Mức chương là đích đo
+  được, học được - trong khi mọi ước lượng hiện có của app không hơn hằng 0.
+- Ghi lại: đồng thuận A-B trong chương V .73 E .82 T .78 (gộp .92/.89/.92) - thấp hơn lô 2 ở r TB chương, gộp ngang. Hai người
+  cùng nêu: L4 tạo `scene 0-0` cho tiêu đề trước dòng người dịch; leo thang dài cùng nhóm (1-10 phút) không có chỗ (accent <= 15 s).
+- **Kế:** (a) thước MAE tuyệt đối thành thước kèm cho mọi model đọc không khí (đã có trong `score_mlx_lora.py`); (b) thử ước mức
+  chương một lượt (đọc/tóm tắt cả chương -> một V, T) - cần GPU/Mac, ghi trước riêng khi có chỗ; (c) app: giọng cấp cuốn
+  (bảng thể loại có sẵn) + mức chương + thứ hạng trong chương - đề xuất cho Lead, chưa làm.
+
+**SỬA dữ liệu musicvt (ghi TRƯỚC khi chuỗi bắt đầu; Lead 06-10: B7c chen trước, musicvt lùi ~10-10):** thêm lô 4 ->
+`mlx_lora/sft` = 80 chương (pilot + v3 + v31 + book_var, `build_mood_sft.py --prompt P2 --seed 7`): **train 1.768, val 72**
+(cảnh 762, cửa sổ 1.078, bỏ 8; val không đổi vì không chương lô 4 nào rơi vào phần val theo hash); token dài nhất 2.351, p99
+2.283. Bản 60 chương giữ ở `mlx_lora/sft_60ch_0610/`. Luật CHÍNH của musicvt không đổi.
+
+*Đính chính giờ (06-10 12:5x):* các mục 06-10 ghi "12:4x/13:0x/13:3x/13:5x/14:xx/15:xx" thực ra đều xảy ra trong khoảng
+12:15-12:50 (đồng hồ máy); thứ tự đúng như ghi. Mac LoRA lớp cuối: 620/1.540 bước lúc 12:48 (val .366), ~30 phút/100 bước
+-> chuỗi xong ~17:45.
+
+**GHI TRƯỚC - mô-đun MỨC CHƯƠNG (lớp 2 của hướng ba lớp, Lead duyệt 06-10 12:5x; ghi trước mọi số của ứng viên):**
+- **Thước (khớp mốc Lead):** trên bộ 5b+6 (23 chương), mọi câu nhận hằng = mức chương dự đoán; MAE theo câu (thời lượng, bỏ
+  `chu_thich`, thang nửa), TB chương, TB(V,T). Mốc: hằng 0 .462; mức chương nhãn câu app (thô) .432; trần (mức đáp án) .286.
+  r = tương quan mức chương dự đoán với mức chương đáp án qua 23 chương (đã đo cho mốc: nhãn câu app thô r V .73, T .75).
+- **Luật thắng (mỗi ứng viên):** MAE <= .35 VÀ r >= .6 ở CẢ V lẫn T.
+- **Ứng viên C0 (CPU, rẻ nhất):** mức chương nhãn câu app (thô) qua hiệu chỉnh tuyến tính mỗi trục a + b·m, học (bình phương nhỏ
+  nhất trên mức chương, trọng số như nhau) trên bộ 4+5 (19 chương), áp nguyên lên 5b+6. Lý do: thứ hạng đã đúng (r .73/.75),
+  MAE cao vì lệch/co thang.
+- **Ứng viên CF (GPU, một lượt LLM):** `chapter_level.py` - qwen3.5:4b zero-shot đọc cả chương (cắt 30.000 ký tự), prompt =
+  bản "mức chương" của P1 (cùng bảng mốc), đầu ra chữ số kỳ vọng như P2. Chạy cả 4 bộ (42 lượt, vài phút) qua hàng Model.
+  Ghi lại: CH (đầu-giữa-cuối, 3 × ~600 tiếng); CF hiệu chỉnh tuyến tính (học 4+5) như C0; CF + C0 trung bình.
+- **Chọn:** chỉ một thắng -> nó. Cả hai thắng -> C0 (không cần GPU, không thêm lượt), trừ khi CF thấp hơn C0 >= .03 MAE.
+  Không ứng viên nào thắng -> ghi lại, nghĩ tiếp (vd LoRA có nhãn mức chương).
+- Thắng thì Lead giao agent cắm vào app (lớp riêng của cuốn, bật mặc định), hằng hiệu chỉnh ghi trong code kèm nguồn.
+
+**KẾT QUẢ C0 (mức chương nhãn câu app + hiệu chỉnh tuyến tính, CPU, 06-10):** hệ số học trên 4+5: V 1,95·m + 0,080; T 2,57·m + 0,047
+(nhãn câu app co thang mức chương ~2-2,5 lần). Trên 5b+6: MAE **.395** (V .348, T .443), r V .73 T .75 -> **KHÔNG THẮNG** (cần
+<= .35). Giảm .432 -> .395 (-9 %) chỉ nhờ giãn thang; thứ hạng giữ nguyên nên r không đổi. Ghi lại 4+5 (tập học): .419 -> .390.
+Trần (mức đáp án) .286, nên ngưỡng .35 đòi mức chương dự đoán sát hơn hẳn: C0 thiếu ở thứ hạng chứ không ở thang. Kế: CF (một lượt
+LLM đọc cả chương) qua hàng GPU của Model.
+
+**KHÁM PHÁ SAU (không ghi trước, KHÔNG tính thắng) - mức chương lấy từ dự đoán theo khúc đã có (06-10):** trung bình P0/P2 theo khúc
+trong chương (thời lượng), hiệu chỉnh tuyến tính học 4+5, đo 5b+6. P0 cho mức chương T rất tốt: r T **.95** (thô), MAE T .348
+sau hiệu chỉnh (hệ số 1,07 - gần như chỉ dời gốc -0,49). V: C0 (nhãn câu app) tốt nhất trên tập học (.392). Chọn theo TẬP HỌC từng
+trục -> V = C0 hc (1,876·m + 0,068), T = P0 hc (1,066·m - 0,490): 5b+6 MAE **.349** (V .350, T .348), r V .74 T .95 - chạm
+ngưỡng .35 nhưng là chọn sau khi đã xem nhiều tổ hợp, nên chỉ là ứng viên. Ý nghĩa cho app: nếu lớp 3 (thứ hạng trong chương)
+là một lượt LLM theo khúc thì trung bình chương của chính nó + hằng hiệu chỉnh cho lớp 2 MIỄN PHÍ, không cần lượt riêng.
+Xác nhận cần chương đáp án MỚI (chưa ai xem) có cả nhãn câu app lẫn P0 theo khúc; công thức và hằng số trên giữ cố định.
+CF/CH: Model chen khe ngay sau rel430b (~18 h), log `music/cl_chain.log`, dấu "HẾT MỨC CHƯƠNG CL 06-10".
+
+**GHI TRƯỚC (06-10, trước khi có số musicvt) - mức chương "miễn phí" từ lớp 3:** khi musicvt (LoRA toàn bộ 4B, ~10-10) chấm xong
+theo khúc trên 4/5/5b/6: mức chương = trung bình dự đoán của nó theo khúc trong chương (thời lượng), hiệu chỉnh tuyến tính mỗi trục
+học trên 4+5 (như C0), đo 5b+6, cùng luật thắng (MAE <= .35 VÀ r V,T >= .6). Ghi lại thêm: musicvt thô (không hiệu chỉnh); tổ hợp
+cố định V = C0 hc, T = P0 hc (hằng trong mục khám phá trên) - không phải phép thử mới vì 5b+6 đã xem. Nếu musicvt thắng ở đây và
+ở phép trong chương (docs 24cf8f78), lớp 2 + lớp 3 là MỘT lượt; CF chỉ còn cần nếu musicvt trượt mức chương.
+
+**GHI TRƯỚC - BỘ 7: XÁC NHẬN "LỚP 2 SUY TỪ LỚP 3" (Lead duyệt 06-10 13:xx; trước khi chọn chương và trước mọi số):**
+- **Chọn chương** (`Corpus/research/music/select_set7.py`, hạt 20261009; chỉ đọc tên file, cỡ, dòng đầu): 4 truyện MỚI (3 Nhật + 1
+  Hàn theo `scene_set6/strata.json`), mỗi truyện 5 chương rải đều theo thứ tự file, cỡ 8-30 KB. Loại mọi cuốn đã dùng ở bộ
+  4/5/5b/6, lô dạy pilot/v3/v31/lô 4, và cuốn có thư mục đáp án phân tích ở gốc Corpus.
+- **Phân tích app:** 9B-v8 (`qwen35-9b-lora-v8-q4`) như bộ 6 (run `06-10-music7-9bv8-sNN`, hàng GPU của Model) -> nhãn câu app
+  + ranh giới khúc app. Xuất `seq<TAB>chữ` bằng `export_scene_chapters.py`.
+- **Đáp án:** 2 agent Opus chấm mù theo bản 3 (lời giao như lô 4), phân xử `adjudicate_scenes`. Không ai xem số máy trước khi xong.
+- **P0 theo khúc app:** `prompt_mood.py run ... set7 P0 qwen3.5:4b` (như bộ 4/5). CF/CH chạy trên bộ 7 để đối chứng (ghi lại).
+- **Công thức CỐ ĐỊNH (hằng từ 4+5, không chọn lại):** thang nửa, cắt [-1, 1];
+  V = 1,876 · m_C0 + 0,068 (m_C0 = trung bình nhãn câu app theo thời lượng, bỏ chu_thich);
+  T = 1,066 · m_P0 − 0,490 (m_P0 = trung bình dự đoán P0 theo khúc, theo thời lượng).
+- **Thắng:** MAE TB(V,T) <= .35 trên bộ 7 (thước như mục mức chương: mọi câu nhận hằng = mức chương, TB chương). Ghi lại: r V, T;
+  mốc hằng 0, nhãn câu app thô, trần (mức đáp án); C0 hc riêng, P0 hc riêng; CF/CH thô.
+- **Hệ quả:** thắng -> kiến trúc app chốt "lớp 2 suy từ lớp 3" (Lead giao cắm). Trượt -> ghi lại, so CF xem lượt riêng có hơn.
+
+**GÓP Ý NGOÀI 06-10 (chủ sách chuyển, Lead giao; `LLM_Train/EXTERNAL_REVIEW_06-10.md`) - y = mu_c + alpha·(s - mean_s) trùng thiết
+kế ba lớp. Mục (a) đo ngay (CPU, thang nửa, TB chương và TB(V,T)):** tách MAE thành lỗi mức chương |m_p - m_g| và MAE trong chương
+sau khi trừ trung bình chương của mỗi bên.
+
+| bộ | dự đoán | lỗi mức chương | MAE trong chương | MAE tổng |
+|---|---|---|---|---|
+| 5b+6 | hằng 0 | .344 | .282 | .466 |
+| 5b+6 | nhãn câu app | .308 | .280 | .429 |
+| 5b+6 | P0 | .345 | .268 | .425 |
+| 5b+6 | P2 | .377 | .255 | .457 |
+| 4+5 | hằng 0 | .276 | .316 | .446 |
+| 4+5 | nhãn câu app | .243 | .298 | .403 |
+| 4+5 | P0 | .326 | .306 | .452 |
+| 4+5 | P2 | .357 | .287 | .478 |
+
+Đọc: CẢ HAI phần đều hỏng. (1) Mức chương thô của mọi dự đoán không hơn hằng 0 (lệch/co thang); hiệu chỉnh tuyến tính kéo về được
+một phần (C0 .395 tổng) nhưng thứ hạng chương mới là trần. (2) Trong chương, mọi dự đoán chỉ bớt 1-10 % so với hằng (.255-.280 so
+.282): hình dạng trong chương gần như chưa có đóng góp tuyệt đối - khớp hệ số co b V .12 T .16. Nghĩa là lớp 3 (alpha) cũng cần
+đột phá, không chỉ lớp 2. Các mục còn lại (b thẻ cảnh cho mức nền, c tách V/E/T, d hiệu chỉnh giữa cuốn / BWS, e đọc ISMIR 2021,
+UIST 2014, Sonus Texere 2022) ghi vào kế hoạch sau bộ 7.
+
+**GHI TRƯỚC - ứng viên CS "thẻ cảnh" cho mức nền (góp ý ngoài mục b; 06-10 16:4x, trước mọi số CF/CS):** hai lượt qwen3.5:4b:
+(1) cả chương (như CF) -> THẺ CẢNH, tối đa 8 dòng `cảnh k (~p%) | mục tiêu | nguy cơ treo | mất/được | cảnh kết` + dòng `KẾT CHƯƠNG |
+trạng thái | không khí mang theo`, nhiệt độ 0, không chấm số; (2) prompt mức chương của CF, thay chương bằng thẻ cảnh -> V/E/T
+chữ số kỳ vọng. Code `chapter_level.py run <bộ> CS` (Corpus 60d92ac). Luật thắng y như CF (5b+6, MAE <= .35 VÀ r V,T >= .6).
+CF và CS cùng thắng -> chọn MAE thấp hơn; chỉ một thắng -> nó. Ghi lại: trục E (mức chương E so đáp án, góp ý mục c) cho CF/CH/CS.
+
+**ĐỌC GÓP Ý NGOÀI mục (e) (06-10 17:0x; Corpus `research/music/READING_EXTERNAL_06-10.md`, agent Sonnet, Music duyệt):** Won 2021
+(ISMIR), Rubin & Agrawala 2014 (UIST), Sonus Texere 2022, Bagdon 2024 (NAACL), Liusie 2024 (EACL, so cặp hơn chấm tuyệt đối ở model
+3-13B), Licht 2025 (chấm dồn cục; kỳ vọng xác suất token + ví dụ cố định gỡ phần lớn - khi đó chấm ngang so cặp), Lawrence 2025
+(điểm tuyệt đối bằng so với bộ neo). Không bài nào có số cho mức cảm xúc cả chương hay hiệu chỉnh thang giữa tài liệu. Music xét:
+- "Đo trần trước": ĐÃ CÓ - hai người chấm mù đồng thuận trong chương r V .87 E .84 T .91 (lô 2, bản 3), mức chương r .95-.96 (lô 4):
+  trần xa trên r .3-.4 của model, nên khoảng cách là thật, không phải nhiễu nhãn.
+- "Kỳ vọng xác suất + ví dụ cố định": ĐÃ CÓ - P2 (kỳ vọng chữ số + bảng mốc) không thắng (611859b5).
+- NHẬN làm ứng viên lớp 3 sau bộ 7: chấm SO SÁNH trong chương (so cặp hai chiều / bộ 4 best-worst, log-prob, chỉnh thiên vị vị trí)
+  so với P0 trên cùng 4B, thước r trong chương; ghi trước khi làm.
+- NHẬN làm ứng viên lớp 2 (ghi lại cùng CS): so chương với bộ chương neo đáp án (thang tuyệt đối bằng neo, Lawrence 2025).
+- Reward-model nhỏ trên cặp so sánh: xếp sau, chỉ khi so sánh có tín hiệu.
+
+**GÓP Ý NGOÀI ĐỢT 3 (Lead 06-10 17:3x). Mục (1) đo ngay: đồng thuận NGƯỜI-NGƯỜI theo mức tuyệt đối** (`Corpus research/music/
+human_agreement.py`, Corpus 137591b; thang nửa, số tiếng, bỏ chu_thich, TB chương, TB(V,T)):
+
+| bộ | chương | MAE A-B | lệch mức chương | MAE trong chương (trừ TB) | r trong chương |
+|---|---|---|---|---|---|
+| 4 (hướng dẫn cũ) | 10 | .163 | .076 | .161 | .79 |
+| 5 | 9 | .127 | .060 | .142 | .85 |
+| 5b | 3 | .167 | .068 | .180 | .80 |
+| 6 | 20 | .144 | .081 | .149 | .80 |
+| lô 4 (bản 3) | 20 | .140 | .104 | .095 | .76 |
+
+So model trên 5b+6 (mục a): MAE tổng .43-.46, lệch mức .31-.38, trong chương .26-.28. Người khớp nhau CẢ về mức (Bland-Altman: lệch
+mức ~.07-.10, gấp 3-5 lần nhỏ hơn model) lẫn hình dạng; đáp án là trung bình A, B nên sai số người-so-đáp-án còn nhỏ hơn (~một nửa).
+Khoảng cách model-người là thật ở cả hai lớp; ngưỡng .35 chỉ là mốc đầu, đích dài hạn ~.15-.20.
+
+Mục (2) đã có một nửa: P0 vốn chấm cả KHÚC app (nhiều câu) chứ không từng câu; so với nhãn câu app gộp lại, lỗi trong chương chỉ
+.268 so .280 (mục a) -> chỉ đổi độ phân giải KHÔNG đủ. Kế hoạch sau bộ 7 (chưa ghi trước, chờ duyệt thứ tự; tuần 88%):
+- (2') chấm cụm thang 3 bậc yên / vừa / căng có neo cố định so với P0 thang 9 chữ số (cùng khúc app, cùng 4B).
+- (3) luật đổi bài: kiểm lại `music_scenes` của app (độ trễ / ngưỡng; chỉ đổi ở điểm nghỉ khi mood đổi rõ), tiền lệ Chen et al.
+  Interspeech 2022 "An Automatic Soundtracking System for Text-to-Speech Audiobooks" (chia chương thành plot, đã kiểm có thật) và
+  Sonus Texere. Đo bằng số lần đổi bài / giờ và tỉ lệ đổi ở ranh giới cảnh đáp án.
+- (4) so cặp: ghi trước theo khuôn Lead (cho hoà, đảo A/B, so với vài khúc neo thay vì mọi cặp, chi phí lượt/chương, đối chứng P0
+  bỏ phiếu cùng chi phí).
+- Đích cuối A/B "nhạc nào hợp cảnh + dễ nghe cùng giọng": máy chấm bằng thước nghe Qwen3-Omni đã nhận làm thước chính (chủ sách
+  không chấm); cần ghi trước riêng khi tới bước đó.
+
+**GHI TRƯỚC - 4 ỨNG VIÊN SAU BỘ 7 (Lead 06-10 17:1x giao; tài khoản mới, tuần 46 %; viết trước mọi lượt chạy, mọi số).**
+Chung: model qwen3.5:4b qua Ollama, nhiệt độ 0 (trừ đối chứng bỏ phiếu), think=false; đơn vị = khúc app (`music_scenes`, như P0);
+HỌC/CHỌN hằng số chỉ trên 4+5; ĐO trên 5b+6+7 (bộ 7 khi có đáp án; nếu bộ 7 trễ quá 09-10 thì đo 5b+6 và ghi rõ). Thước r trong
+chương = `prompt_mood.chapter_rs` (r TB chương, thời lượng); thước MAE = như mục mức chương. GPU chỉ qua hàng Model.
+
+(L3-PAIR) **So với neo trong chương (lớp 3, góp ý (4) của Lead).** Mỗi chương chọn 3 khúc NEO theo vị trí (khúc đầu, giữa, cuối theo
+thời lượng). Mỗi khúc i (kể cả neo, so với 2 neo còn lại) so với từng neo, CẢ HAI thứ tự A/B: prompt hỏi một dòng `V=A|B|= T=A|B|=`
+(cho hoà), đọc xác suất ba token mỗi trục; điểm s_i = TB qua neo và thứ tự của P(i hơn) + 0,5·P(hoà). Chi phí: 6 lượt/khúc (P0: 1).
+Đối chứng cùng chi phí: P0-VOTE6 = P0 lấy mẫu 6 lần nhiệt độ 0,7 (hạt 1..6), TB. **Thắng:** r VT TB chương >= P0 + 0,05 VÀ cao hơn
+P0 ở >= ceil(0,7 n) chương, VÀ cùng luật so với P0-VOTE6. Ghi lại: E; chỉ thứ tự (Spearman); hoà chiếm bao nhiêu.
+
+(L2-ANCH) **Mức chương bằng chương neo (lớp 2, Lawrence 2025).** 5 chương NEO từ 4+5 chọn tất định: tham lam maximin trên (V,T)
+mức đáp án, bắt đầu từ chương gần (0,0) nhất. Chương đích và neo đều đưa dạng CH (đầu-giữa-cuối, 3 × ~600 tiếng). Mỗi neo hai thứ
+tự, hỏi `V=A|B|= T=A|B|=`; p_k = P(đích hơn neo k) + 0,5·P(hoà). Mức = nội suy tuyến tính trên các neo xếp theo mức đáp án, tại điểm
+p cắt 0,5 (hồi quy đơn điệu p theo mức; ngoài khoảng thì cắt ở neo biên). 10 lượt/chương. **Thắng:** như CF (MAE <= .35 VÀ r V,T
+>= .6), đo trên 5b+6+7; cùng thắng với CF/CS -> chọn MAE thấp nhất, rồi lượt ít hơn.
+
+(L3-3B) **Ba bậc có neo (góp ý (2')).** Mỗi khúc: prompt mô tả 3 bậc mỗi trục (V: buồn / bình / vui; T: yên / vừa / căng) kèm 1 ví dụ
+ngắn (~60 tiếng) mỗi bậc lấy từ đáp án 4+5 (khúc có nhãn rõ nhất mỗi bậc, chọn tất định); đáp `V=1..3 T=1..3`, kỳ vọng xác suất.
+1 lượt/khúc như P0. **Thắng:** r VT TB chương >= P0 + 0,05 VÀ >= ceil(0,7 n) chương. Ghi lại: MAE trong chương sau khi nhân alpha
+học trên 4+5.
+
+(RULE) **Luật đổi bài (góp ý (3); CPU, không GPU).** App hiện có trễ (SHIFT_DISTANCE 0,5 + giữ 40 s, đoạn 60-180 s) nhưng CHIA ĐỀU
+đoạn > 180 s (`_split_long`) - có thể đổi bài không vì mood. Đo trên ranh giới khúc app vs ranh giới cảnh đáp án (A, B, phân xử):
+(i) số ranh giới / giờ; (ii) F1 ranh giới (lệch <= 2 câu là trúng). Biến thể: bỏ chia đều; SHIFT_DISTANCE ∈ {0,5; 0,75; 1,0} chọn trên
+4+5 theo F1. **Thắng:** F1 >= app + 0,10 trên 5b+6(+7) VÀ số ranh giới / giờ nằm trong khoảng của hai người chấm. Ghi lại: số lần
+ĐỔI BÀI thật qua `appwin` (cùng danh mục) mỗi giờ.
+
+Thứ tự chạy khi GPU có khe: RULE (CPU, làm ngay khi giờ êm quạt qua) -> L2-ANCH và L3-3B (rẻ) -> L3-PAIR + P0-VOTE6.
+
+**KẾT QUẢ RULE (06-10 17:4x, CPU; `rule_switch.py`, ghi trước 33c0f58f): KHÔNG THẮNG - và lộ một lỗi gốc của lớp đoạn.**
+F1 ranh giới (lệch <= 2 câu) so đáp án, 5b+6: app .130 (P .15, R .11), 18,4 ranh giới/giờ; biến thể chọn trên 4+5 (SHIFT 0,75) .137.
+Người chấm 22-24 ranh giới/giờ. BỎ chia đều thì app còn 0-0,5 ranh giới/giờ ở MỌI ngưỡng: bộ dò "đổi không khí" (SHIFT_DISTANCE trên
+mặt phẳng VA trượt 45 s) gần như KHÔNG BAO GIỜ nổ - ranh giới app hầu hết là `_split_long` cắt đều mỗi <= 180 s. F1 .13 ~ mức NGẪU NHIÊN
+(ước: ~840 câu/giờ, cửa sổ 5 câu, 24 ranh giới/giờ -> P trúng ~.14). Hệ quả:
+- Khúc app = khúc theo đồng hồ, không theo cảnh; mọi phép đo lớp 3 trên khúc app (P0, llmVT, musicvt) đều chấm trên ranh giới gần
+  ngẫu nhiên. Nhãn câu co thang (b .12/.16) làm điểm VA trượt gần như đứng yên nên bộ dò không thấy đổi.
+- Nhạc đổi ~18 lần/giờ nhưng không trúng chỗ cảnh đổi - đúng điều Sonus Texere / Chen 2022 cảnh báo.
+- Hướng đúng: ranh giới CẢNH là một bài toán riêng (lớp 2,5): thẻ cảnh của CS đã sinh danh sách cảnh có tỉ lệ thời lượng - đề xuất ghi
+  trước một ứng viên "CS-SEG": LLM chia cảnh (trả số câu bắt đầu mỗi cảnh) so app bằng F1 ranh giới, cùng luật thắng RULE.
+  Chờ Lead duyệt (hướng mới).
+
+**GHI TRƯỚC - CS-SEG: RANH GIỚI CẢNH (Lead duyệt 06-10 17:5x, ƯU TIÊN trước L3-PAIR / L2-ANCH; trước mọi số):**
+Ba ứng viên + mốc app, cùng thước RULE: F1 ranh giới, lệch <= 2 câu là trúng (ghép tham lam), và BÁO RIÊNG số ranh giới / giờ
+(người chấm 22-24). Mọi cách đều qua CÙNG bộ lọc trễ: cảnh < 60 s (ước thời lượng của app) gộp vào cảnh trước (bỏ ranh giới đầu
+của nó) - không đổi bài vì một cảnh quá ngắn. Báo cả trước và sau bộ lọc; số CHÍNH là SAU bộ lọc. Học/chọn: không có hằng nào để
+chọn (danh sách dấu hiệu viết sẵn dưới đây, không sửa sau khi xem số). Đo: 5b+6 (+7 khi có đáp án); 4+5 ghi lại.
+- **CUE (CPU, tất định):** ranh giới trước câu i nếu câu i (hoặc dòng ngay trước nó trong văn bản) là: (1) dòng ngắt chỉ gồm ký hiệu
+  (`***`, `---`, `~~~`, `◇◆○●♦※✦＊` lặp >= 1, `oOo`) hoặc tiêu đề (`kind == heading`); (2) tiêu đề phụ / đổi góc kể: dòng <= 10 chữ
+  bắt đầu bằng `Góc nhìn`, `POV`, `Phần`, `Interlude`, `Side`, `Phía`, hoặc nằm trọn trong `【】`, `[]`, `「」` đứng riêng, hoặc
+  dạng `— X —`; (3) cụm thời gian / nơi chốn ở ĐẦU câu: TIME_JUMP của app + `trong khi đó`, `cùng lúc đó`, `cùng lúc ấy`, `lúc ấy ở`,
+  `lúc đó ở`, `(vài|mấy|một|hai|ba) (giờ|tiếng|phút) sau`, `(sáng|trưa|chiều|tối|đêm) (hôm|ngày) (ấy|đó)`, `ngày hôm đó`, `quay lại`,
+  `trở lại với`, `ở một nơi khác`, `tại một nơi khác`.
+- **LLM (GPU, qwen3.5:4b):** chương đánh số câu `seq<TAB>câu`, cắt cửa sổ ~12.000 ký tự chồng 2.000; prompt: "liệt kê số câu BẮT
+  ĐẦU mỗi cảnh mới (đổi thời gian, nơi chốn, nhóm nhân vật, hay mạch cảm xúc rõ), cảnh thường dài 1-4 phút đọc"; đáp JSON danh sách
+  số; nhiệt độ 0, think=false. Gộp các cửa sổ: hợp, ranh giới cách nhau <= 2 câu coi là một (giữ cái đầu).
+- **CUE ∪ LLM:** hợp hai danh sách, gộp <= 2 câu như trên.
+- **Thắng:** F1 >= app + 0,10 trên 5b+6(+7) VÀ số ranh giới / giờ trong [0,7 ; 1,3] × TB hai người chấm. **Chọn cho app:** trong các
+  cách thắng, CUE được chọn nếu F1(CUE) >= F1(tốt nhất) - 0,05 (rẻ, tất định); LLM / CUE∪LLM chỉ khi hơn CUE > 0,05.
+- Ghi lại: F1 riêng từng loại dấu hiệu CUE; P0 chấm trên khúc cắt bởi cách thắng (sau, khi có khe GPU) so P0 trên khúc app.
+
+### 06-10 18:1x - Kết quả: LoRA nhạc trên Mac (MLX) và CS-SEG phần CUE (CPU)
+
+**LoRA MLX Qwen3.5-4B (ghi trước: lora1_P2 thắng base_P0 ở >= 16/22 chương bộ 4+5+5b) -> KHÔNG THẮNG, thiếu 1 chương.**
+r trong chương VET +0,334 so +0,259 (+0,076), thắng 15/22; V +0,331 (base P0 +0,089, base P2 +0,284), T +0,363 (+0,379 / +0,180).
+Bộ 6 (ghi lại): +0,287 so +0,242, 13/20. LoRA giãn thang: hệ số co trong chương V 0,23 T 0,43 (base .10-.12), MAE tuyệt đối V
+0,346 / T 0,361 (base P0 0,385 / 0,445), không câu hỏng. Đọc: học được thật (V gấp ~3,7 lần base P0, MAE tuyệt đối tốt hơn), nhưng
+chưa qua cổng ghi trước; T không hơn P0. Không đổi mặc định.
+
+**CS-SEG - phát hiện lỗi app trước khi chấm:** dòng ngắt cảnh (`***`, `◆`, `———`) KHÔNG có chữ đọc nên `_walk_paragraphs` bỏ, chỉ
+nâng break_ms câu trước lên mặc định 230 ms (bằng một dấu chấm câu thường). Vì vậy luật `SEPARATOR` của `music_scenes.hard_break`
+(kiểm trên chữ câu) KHÔNG BAO GIỜ kích hoạt, và audio cũng không có quãng nghỉ dài ở chỗ đổi cảnh. CUE đo ở đây đọc dòng ngắt từ
+file nguồn chương (`resolve_inputs.py` tìm lại 41/42 file theo sha256 sau khi Corpus/_full đổi tên thư mục; 1 chương Creepypasta
+thiếu nguồn), dóng câu vào nguồn bằng 20 ký tự đầu (98% câu dóng được).
+
+**CUE (CPU, luật cố định đã ghi trước) - ĐO 5b+6 (6,2 giờ; người chấm TB 22,5 ranh giới/giờ, cửa sổ 15,7-29,2):**
+
+| cách | F1 | P | R | ranh giới/giờ |
+|---|---|---|---|---|
+| app (thô, đã có lọc riêng) | 0,130 | 0,15 | 0,11 | 18,4 |
+| CUE thô | 0,255 | 0,46 | 0,18 | 9,0 |
+| CUE sau lọc trễ 60 s (CHÍNH) | 0,192 | 0,59 | 0,11 | 4,7 -> KHÔNG THẮNG (thiếu số ranh giới; F1 +0,06 < +0,10) |
+
+Từng loại (ghi lại, 5b+6): dòng ngắt F1 0,207 (P 0,69 R 0,12, 4,2/giờ); tiêu đề con 0,104 (P 0,23 - ô vuông [hệ thống] trong
+truyện game kích sai); mốc thời gian/nơi chốn 0,000 (0,6/giờ); heading 0. Bộ 4+5 (ghi lại): CUE thô 0,307 (P 0,66), sau lọc 0,257.
+Đọc: CUE chính xác (P 0,5-0,7, gấp 3-4 lần app) nhưng chỉ bắt ~1/5 ranh giới người chấm; người chấm cắt cảnh theo nội dung nhiều hơn
+theo dấu hiệu. Bộ lọc trễ 60 s làm CUE MẤT F1 (bỏ ranh giới đúng giữa hai cảnh ngắn). LLM và CUE ∪ LLM chờ suất GPU (Model).
+
+### 06-10 18:3x - Ghi trước thêm (Lead gợi ý, TRƯỚC khi có số LLM): CUE cứng + LLM mềm
+- **CUEcứng+LLM:** hợp CUE ∪ LLM như trên, nhưng bộ lọc trễ 60 s KHÔNG bao giờ bỏ ranh giới CUE. Khi gặp cảnh ngắn: mở đầu là ranh
+  giới mềm (LLM) thì bỏ nó như cũ; mở đầu cứng thì bỏ ranh giới kết cảnh nếu mềm; cả hai cứng thì giữ cảnh ngắn. Chỉ báo bản sau lọc.
+- Cùng cổng thắng; trong luật chọn, nó tính như họ LLM (chỉ chọn khi hơn CUE > 0,05). Không dò thêm biến thể nào sau khi thấy số.
+- Lead giao nhánh dev/scene-break (dòng chỉ ký hiệu -> nghỉ 1500 ms + cột segments.scene_break); khi có, đo lại CUE trên cờ ấy
+  (ghi lại, để xác nhận cờ app khớp với cách đọc file nguồn ở đây).
+
+### 06-10 18:5x - CUE trên cờ scene_break của app (dev/scene-break 4fb57726, ghi lại)
+Tách lại 41 file nguồn bằng `segment_chapter_text` của nhánh (33/41 chương trùng khít DB đo; 53 cờ). Dòng ngắt: 5b+6 F1 0,194
+(P 0,63) so đọc nguồn 0,207 (P 0,69); 4+5 0,164 so 0,225. CUE sau lọc trên cờ: 5b+6 0,190 (đọc nguồn 0,192). Chỗ sót: 10 dòng chỉ
+MỘT ký hiệu ("*", "-") bị `SCENE_BREAK_MIN_RULE_GLYPHS = 3` loại, nhưng 9/10 trúng ranh giới đáp án (nhóm cả hai bắt: 29/49). Đề
+xuất cho app: nhận dòng một ký hiệu kẻ khi nó là cả một đoạn (dòng trống trước và sau). Mã: Corpus research/music/seg_flag_build.py.
+
+### 06-10 19:4x - Lệch MỨC hay lệch HÌNH DẠNG? (Lead 19:2x, góp ý ngoài đợt 3; CPU)
+Cùng một tập câu (khúc app, bỏ chu_thich, trọng số thời lượng, thang nửa, TB chương rồi TB V/T); model = nhãn câu app (mốc .43).
+Mã + hình: Corpus research/music/level_shape.py, figs/bland_altman_5b6.png, bland_altman_45.png.
+
+**ĐO 5b+6 (23 chương có đủ A, B, đáp án):**
+
+| cặp | MAE | lệch mức | MAE trong chương (trừ TB) | trong, co giãn α tối ưu | MAE nếu sửa mức hoàn hảo |
+|---|---|---|---|---|---|
+| A-B (người-người) | 0,147 | 0,078 | 0,153 | 0,146 | 0,153 |
+| model-A | 0,444 | 0,319 | 0,294 | 0,294 | 0,294 |
+| model-B | 0,435 | 0,301 | 0,296 | 0,297 | 0,296 |
+| model-đáp án | 0,429 | 0,308 | 0,280 | 0,281 | 0,280 |
+| *dự đoán PHẲNG (mốc)* | | | *0,286* | | |
+
+**Bland-Altman (bias, giới hạn đồng thuận 95% = bias ± 1,96 SD):**
+- Mức chương: model-đáp án V bias −0,08, LoA ±0,61; T −0,04, ±0,79. A-B: V ±0,19, T ±0,19.
+- Trong chương: model V ±0,61, T ±0,76; A-B V ±0,38, T ±0,44.
+- Mọi ô model đều có dốc âm rõ (chênh lệch giảm theo trung bình) = **thiên lệch tỉ lệ**: model nén về 0.
+  - SD mức chương: model 0,06-0,08, người 0,37-0,45 (nén ~5 lần).
+  - SD trong chương: model 0,07-0,08, người 0,30-0,39.
+
+**Kết luận:**
+1. **Khoảng cách 0,43 so với 0,15 còn lại 0,28 so với 0,15 sau khi sửa mức hoàn hảo.** Mức chiếm khoảng một nửa phần thừa, hình dạng
+   nửa kia.
+2. **Phần mức không phải lệch hệ thống** (bias chỉ −0,04 đến −0,08), nên một hằng số không sửa được.
+   - Nó là nén cộng nhiễu: thứ tự mức chương khá (r 0,73-0,75, người 0,97-0,98) nhưng biên độ chỉ bằng 1/5.
+   - Hiệu chỉnh tuyến tính chữa được phần nén. Phần nhiễu thì không (C0 đã hiệu chỉnh vẫn còn lệch mức 0,31-0,38). Vì vậy lớp 2 cần
+     một bộ ước lượng mức chương tốt hơn (CF/CS/LoRA), không chỉ hiệu chỉnh.
+3. **Phần hình dạng: nhãn câu app gần như KHÔNG có hình dạng.**
+   - MAE trong chương 0,280 so với 0,286 của đường phẳng.
+   - r trong chương TB 0,09-0,12.
+   - Co giãn α tối ưu (1,3 / 0,9) không đổi gì. Tức không phải thiếu biên độ mà là thiếu tín hiệu.
+   - Lớp 3 (hạng trong chương) phải đến từ model khác: P2/LoRA có r trong chương 0,29-0,33, ranh giới cảnh tốt hơn (CS-SEG), không
+     phải từ nhãn cảm xúc câu của phân tích.
+4. Hệ quả cho thiết kế: hiệu chỉnh chỉ là bước rẻ cho lớp 2. Cả hai lớp đều cần model tốt hơn. Lớp 3 cần nhiều hơn: hiện tại nhãn
+   câu app thua cả việc không làm gì có ý nghĩa.
+
+### 06-10 19:5x - GHI TRƯỚC: L2-EST, ước lượng mức chương từ đầu ra đã có + chống nén (Lead 19:4x; CPU)
+- **Đầu vào mỗi chương, mỗi trục V/T** (đều là mức chương = TB theo thời lượng trên khúc app, thang nửa, bỏ chu_thich; đều đã có cho
+  cả 4 bộ 4/5/5b/6):
+  - mô hình: nhãn câu app; P2 Ollama qwen3.5:4b; MLX base_P0; MLX lora1_P2;
+  - chữ (rẻ, từ segments): tỉ lệ thời lượng thoại, số "!" / câu, số "?" / câu, số "…"/"..." / câu.
+- **Mô hình:** ridge, đặc trưng chuẩn hoá theo tập train, alpha = 4 (cố định, không dò), mỗi trục riêng.
+- **Chống nén (CHÍNH):** sau ridge, giãn độ lệch quanh TB train sao cho SD dự đoán TRÊN TRAIN = SD mức đáp án train (khớp phương sai).
+  Kẹp [−1, 1].
+- **Kiểm định:** bỏ-một-truyện (truyện = thư mục sách). Huấn luyện trên mọi chương 4+5+5b+6 trừ các chương cùng truyện, dự đoán chương
+  bị bỏ. Chỉ báo trên các chương 5b+6.
+- **Thước:**
+  - MAE mức: |dự đoán − mức đáp án|, TB chương, TB (V, T);
+  - r mức qua các chương, từng trục;
+  - tỉ số SD dự đoán / SD đáp án.
+- **Cổng thắng (Lead):** MAE mức < 0,20 VÀ r >= 0,80 ở CẢ V và T.
+- **Ghi lại:**
+  - ridge không chống nén;
+  - chỉ nhãn app + hiệu chỉnh tuyến tính (C0, cùng bỏ-một-truyện);
+  - chỉ 4 đầu ra mô hình (bỏ đặc trưng chữ);
+  - từng đầu vào riêng + hiệu chỉnh;
+  - người A-B (trần).
+- Không dò thêm biến thể sau khi thấy số.
+
+### 06-10 20:0x - Kết quả L2-EST (ghi trước 2137d6d0): KHÔNG THẮNG, sát cổng (r V 0,77 < 0,80)
+Bỏ-một-truyện; 42 chương, 39 truyện; báo 23 chương 5b+6. SD mức đáp án V 0,37, T 0,44. Mã: Corpus research/music/l2_est.py.
+
+| cách | MAE mức | r V | r T | SD dự đoán / đáp án V, T |
+|---|---|---|---|---|
+| **CHÍNH: ridge (4 mô hình + chữ) + khớp phương sai** | **0,190** | **0,77** | **0,86** | 0,93 / 0,86 -> KHÔNG THẮNG |
+| ridge (đủ), không chống nén | 0,193 | 0,74 | 0,86 | 0,77 / 0,72 |
+| ridge + khớp p.sai, chỉ 4 mô hình | 0,175 | 0,79 | 0,90 | 0,93 / 0,86 |
+| ridge, chỉ 4 mô hình | 0,177 | 0,76 | 0,90 | 0,76 / 0,72 |
+| nhãn app + hiệu chỉnh tuyến tính | 0,247 | 0,70 | 0,71 | 0,56 / 0,48 |
+| P2 + hiệu chỉnh | 0,212 | 0,72 | 0,78 | 0,64 / 0,68 |
+| MLX base_P0 + hiệu chỉnh | 0,212 | 0,48 | 0,91 | 0,47 / 0,73 |
+| MLX lora1_P2 + hiệu chỉnh | 0,241 | 0,65 | 0,70 | 0,65 / 0,72 |
+| hằng TB train | 0,334 | - | - | - |
+| trần: người A-B | 0,078 | 0,97 | 0,98 | ~1 |
+
+Đọc:
+1. Gộp các nguồn hạ MAE mức từ 0,25 (nhãn app hiệu chỉnh, tương đương C0) xuống 0,19. Qua ngưỡng MAE và r T, trượt r V (0,77).
+2. Khớp phương sai hết nén (SD 0,86-0,93 so với 0,48-0,56 của nhãn app hiệu chỉnh) mà KHÔNG làm tăng MAE (0,190 so với 0,193).
+   "Chống nén không tăng nhiễu" đạt.
+3. Đặc trưng chữ rẻ làm HƠI XẤU đi (0,175 -> 0,190, r V 0,79 -> 0,77): 4 đặc trưng thêm cho ~40 mẫu là nhiễu. (Bản bỏ chữ không
+   phải CHÍNH, không đổi kết luận.)
+4. Mỗi nguồn có trục mạnh riêng: P0 rất tốt cho T (r 0,91) nhưng kém V (0,48). Gộp lấy được cả hai, khớp thiết kế V=C0 / T=P0 đang
+   chờ xác nhận ở bộ 7.
+5. Kế: bộ 7 (độc lập) là nơi xác nhận. CF/CH/CS (một lượt đọc cả chương) khi có số sẽ thêm vào ridge như nguồn thứ 5 - ghi trước
+   riêng khi đó.
+
+### 06-10 20:1x - GHI TRƯỚC: xác nhận L2-EST trên bộ 7 (Lead duyệt 20:0x)
+- **CHÍNH (đổi so với 2137d6d0):** ridge (alpha 4, chuẩn hoá theo train) trên 4 nguồn mô hình - nhãn câu app, P2 Ollama qwen3.5:4b,
+  MLX base_P0, MLX lora1_P2 - KHÔNG đặc trưng chữ, + khớp phương sai trên train, kẹp [−1, 1].
+  - Lý do đổi: trên 5b+6 đặc trưng chữ làm xấu đi (MAE 0,175 -> 0,190).
+  - Được phép đổi vì bộ 7 là dữ liệu mới chưa ai nhìn. Lựa chọn này dựa trên 5b+6, nên 5b+6 không còn là bằng chứng độc lập cho nó;
+    bộ 7 là bằng chứng.
+- **Huấn luyện:** toàn bộ 42 chương 4+5+5b+6 (bỏ chương nào cùng truyện với chương bộ 7 đang dự đoán, nếu có). Dự đoán từng chương bộ 7.
+- **Cổng (giữ nguyên):** MAE mức < 0,20 VÀ r >= 0,80 ở CẢ V và T.
+- **Đối chứng ghi lại:**
+  - CHÍNH cũ (thêm 4 đặc trưng chữ);
+  - nhãn app + hiệu chỉnh tuyến tính (C0);
+  - từng nguồn + hiệu chỉnh;
+  - hằng TB train.
+- **Nguồn thứ 5 (ghi lại, chỉ khi CF/CH/CS có số cho cả 5 bộ):** CHÍNH + từng biến thể CF/CH/CS làm cột thêm, báo riêng từng biến
+  thể. Không thay CHÍNH ở lượt này.
+- **Cần cho bộ 7:**
+  - phân tích app 9B-v8 (hàng Model, đang chạy tới ~03:30 07-10);
+  - P2 Ollama trên khúc app (hàng Model);
+  - MLX base_P0 + lora1_P2 trên Mac;
+  - đáp án gold_scene7.
+  Lệnh: `SCORE_SKIP_NOTES=1 python l2_est.py confirm set7`.
+
+### 06-10 23:1x - GHI TRƯỚC: L3-EST, hình dạng trong chương từ đầu ra theo khúc đã có (CPU)
+Sau 76aa32e9 (nhãn câu app không có hình dạng: 0,280 so với phẳng 0,286).
+- **Đầu vào:** mỗi câu (khúc app, bỏ chu_thich, trọng số thời lượng, thang nửa), mỗi trục V/T. Bốn nguồn là giá trị khúc chứa câu:
+  - P2 Ollama qwen3.5:4b;
+  - MLX base_P0;
+  - MLX lora1_P2;
+  - nhãn câu app.
+  Mỗi nguồn trừ TB chương của chính nó (theo thời lượng).
+- **Mục tiêu:** đáp án câu trừ TB chương đáp án.
+- **Mô hình:** hồi quy ridge KHÔNG hệ số chặn, alpha = 1 trên tổng trọng số chuẩn hoá. Gộp mọi câu của train, trọng số = thời lượng, mỗi
+  trục riêng. Không chuẩn hoá đặc trưng: hệ số chính là độ giãn.
+- **Kiểm định:** bỏ-một-truyện trên 4+5+5b+6, báo các chương 5b+6.
+- **Thước:**
+  - MAE trong chương: |dự đoán lệch − đáp án lệch|, TB câu theo thời lượng, TB chương, TB (V, T);
+  - r trong chương: Pearson có trọng số, TB chương, từng trục.
+- **Cổng thắng:** MAE trong chương <= 0,256 (đường phẳng 0,286 − 0,03) VÀ r trong chương >= 0,40 ở CẢ V và T.
+- **Ghi lại:**
+  - từng nguồn riêng với hệ số giãn học bỏ-một-truyện;
+  - bộ ba nguồn LLM (bỏ nhãn app);
+  - đường phẳng;
+  - người A-B (0,153; r 0,76-0,85).
+- Không dò biến thể sau khi thấy số.
+- **Sửa ghi trước (23:2x, TRƯỚC khi tính bất kỳ số nào):** alpha = 1 là sai thang. Phương sai độ lệch trong chương chỉ ~0,01-0,05,
+  nên alpha 1 ép mọi hệ số về ~0. Đổi thành **alpha = 0,001** (cùng thang: XᵀWX/Σw + alpha·I), tức phạt nhẹ chỉ để ổn định khi các
+  nguồn tương quan nhau. Mọi điều khác giữ nguyên.
+
+### 06-10 23:1x - Kết quả L3-EST (ghi trước 33953738 + ca75b94a): KHÔNG THẮNG (r V 0,27 < 0,40)
+Bỏ-một-truyện; 42 chương; báo 23 chương 5b+6. Đường phẳng 0,283. Mã: Corpus research/music/l3_est.py.
+
+| cách | MAE trong chương | r V | r T | hệ số V / T |
+|---|---|---|---|---|
+| **CHÍNH: 4 nguồn** | **0,247** | **0,27** | **0,44** | V: P2 −0,05, P0 +0,22, LoRA +0,56, app +0,36 / T: P2 +0,78, P0 +0,37, LoRA +0,15, app +0,09 -> KHÔNG THẮNG |
+| 3 nguồn LLM (bỏ app) | 0,246 | 0,28 | 0,44 | |
+| chỉ P2 | 0,256 | 0,27 | 0,37 | giãn V 0,87, T 1,41 |
+| chỉ MLX base_P0 | 0,258 | 0,52* | 0,46* | |
+| chỉ LoRA | 0,260 | 0,25 | 0,35 | |
+| chỉ nhãn app | 0,280 | 0,10 | 0,10 | |
+| đường phẳng | 0,283 | - | - | |
+| người A-B | 0,153 | 0,76-0,85 | | |
+
+\* base_P0 trả V hằng (thường 0) cho mọi khúc ở 16/23 chương. r 0,52 chỉ tính trên 7 chương còn lại; tính chương phẳng là r = 0
+thì V 0,16, T 0,40. Các dòng khác có biến thiên ở 23/23 chương.
+
+Đọc:
+1. Gộp nguồn qua MAE (0,247 <= 0,256) và r T (0,44), trượt r V (0,27). Hình dạng T đọc được phần nào; hình dạng V thì các LLM 4B hiện
+   có gần như không đọc được.
+2. Phần thắng so với đường phẳng chỉ 0,036. Khoảng cách tới người (0,153) gần như nguyên: 0,094 trên 0,130.
+3. Nhãn app gần như vô dụng một mình (r 0,10), nhưng vẫn nhận hệ số V +0,36 khi gộp: nó mang một ít tín hiệu bổ sung.
+4. Hệ quả: lớp 3 cần một model đọc hình dạng V tốt hơn (L3-PAIR so cặp / L3-3B có neo), không thể có chỉ bằng gộp đầu ra sẵn có.
+   Ranh giới cảnh đúng hơn (CS-SEG) cũng ảnh hưởng: mọi khúc ở đây là khúc app, mà ranh giới khúc app chỉ ngang ngẫu nhiên.
+- **Ghi rõ về L3-EST (Lead 23:5x):** alpha của ridge đã đổi từ 1 sang 0,001 SAU khi ghi trước (33953738) nhưng TRƯỚC khi tính bất kỳ
+  số nào (ca75b94a), vì alpha 1 sai thang. Kết quả trên dùng alpha 0,001.
+
+### 06-10 23:1x - Ranh giới khúc app CÓ cờ scene_break (0.4.31, dev/scene-break fc3e6486) so với người (CPU, ghi lại)
+`music_scenes` của nhánh (chỉ đọc), cờ đặt lên câu trước dòng ngắt như `store.chapter_script`. F1 lệch <= 2 câu. Mã: Corpus
+research/music/app_flag_seg.py.
+
+| | 5b+6 F1 (P / R) | ranh giới/giờ | 4+5 F1 |
+|---|---|---|---|
+| app trước 0.4.31 (không cờ) | 0,130 (0,15 / 0,11) | 18,4 | 0,161 |
+| app 0.4.31 (có cờ) | **0,207** (0,23 / 0,19) | 19,8 | 0,233 |
+| người A so với người B (trần) | **0,724** (0,72 / 0,73) | 22,5 | 0,767 |
+
+Cờ thêm khoảng 1,4 ranh giới/giờ, hầu hết trúng: F1 +0,08. Nhưng app vẫn chỉ đạt khoảng 1/3 mức đồng thuận người-người. Phần còn lại
+là cảnh người chấm cắt theo NỘI DUNG mà không có dấu hiệu chữ nào, cộng các lần cắt đều 180 s của app (vẫn là phần lớn ranh giới).
+Đây là việc CS-SEG (LLM) phải trả lời.
+
+### 06-10 23:1x - L3-PAIR / P0-VOTE6 / L3-3B: script sẵn sàng (ghi trước 33c0f58f), chờ GPU
+Mã: Corpus research/music/l3_runs.py (`run <PAIR|VOTE6|3B|P0> <bộ>`, `score`). Chi tiết thực thi chốt TRƯỚC khi chạy:
+- **Neo L3-PAIR:**
+  - khúc đầu, khúc chứa điểm giữa thời lượng, khúc cuối;
+  - ký hiệu hoà là **H** (không dùng "=", vì "V==" có thể gộp token);
+  - prompt hỏi cả V, E, T, mỗi trục là đoạn nào vui hơn / dồn dập hơn / căng hơn;
+  - điểm [0,1] đổi sang −2..2 (chỉ thứ tự có nghĩa với r trong chương);
+  - ghi P(H) mỗi trục.
+- **Ví dụ L3-3B:** mỗi trục, mỗi bậc là cảnh đáp án 4+5 có nhãn gần −1/0/+1 (thang nửa) nhất. Hoà thì chọn cảnh có số tiếng gần 60 nhất,
+  rồi theo khoá. Trích 60 tiếng đầu cảnh. Kỳ vọng xác suất trên 1/2/3.
+- **Mốc P0:** P0 Ollama đã có cho 4/5/5b; bộ 6 và 7 chạy thêm P0 cùng prompt.
+- **Cổng** như 33c0f58f, đo trên 5b+6, cộng bộ 7 khi có đáp án.
+- **Ước chi phí (lượt gọi):**
+  - bộ 6: PAIR 618, VOTE6 738, 3B 123, P0 123;
+  - 5b tương tự;
+  - tổng ~3.000-3.500 lượt cho 5b+6, ~4-6 giờ GPU.
+
+**Dữ liệu cặp từ nhãn người (Lead 23:5x; cho một bản có huấn luyện về sau, CHƯA ghi trước lượt chạy):** `build_pairs.py`.
+- Chỉ dùng 4+5. Cặp (khúc, neo) cả hai thứ tự, cùng PAIR_PROMPT.
+- Nhãn A/B/H theo chênh TB đáp án, |Δ| < 0,25 thang nửa thì là H.
+- Valid tách theo truyện: 3/17 truyện.
+- Được 498 cặp train, 126 valid. Nhãn train: V A/B/H 153/153/192, E 122/122/254, T 153/153/192.
+- Nhỏ: nếu thử LoRA so cặp thì nên ghép thêm mọi cặp trong chương, kèm lô 4 bản 3 (scene_book_var).
+
+### 06-10 23:1x - GHI TRƯỚC: SPLIT, phần cắt đều 180 s trong ranh giới app (Lead 23:1x; CPU)
+- **Nền:** app 0.4.31, tức có cờ scene_break (`music_scenes` của dev/scene-break fc3e6486, cờ từ seg_flags.json).
+- **Đo riêng:**
+  - ranh giới do `_split_long` sinh = ranh giới có ở MAX 180 s mà không có ở MAX ∞;
+  - báo số / giờ và độ chính xác P (trúng đáp án, lệch <= 2 câu) của riêng nhóm ấy, so với P của các ranh giới còn lại.
+- **Biến thể:** MAX_SCENE_SECONDS ∈ {180 (app), 240, 300, 420, 600, ∞}, chia đều như cũ.
+- **Chọn và đo:** chọn trên 4+5 theo F1, đo 5b+6.
+- **Cổng "đổi app":** F1 >= app + 0,05 VÀ P >= P app.
+- **Ghi lại:** F1 / P / R / ranh giới/giờ mọi biến thể.
+- **Cảnh báo trước:** `_split_long` vốn để bám thay đổi không khí trong chương (docstring: r trong chương 0,15-0,43 lên 0,39-0,76
+  với khúc ~3 phút), không phải để khớp ranh giới cảnh. Bỏ nó có thể tăng P ranh giới nhưng làm mất hình dạng lớp 3. Nếu biến thể nào
+  qua cổng, phải đo lại r trong chương (P2 trên khúc mới, GPU) trước khi đổi app.
+
+### 06-10 23:1x - Kết quả SPLIT (ghi trước eb32a4ef): KHÔNG QUA. Cắt đều là phần lớn ranh giới, và trúng ngang ngẫu nhiên
+Mã: Corpus research/music/seg_split.py.
+
+**Riêng từng nhóm ranh giới của app 0.4.31:**
+
+| nhóm | 5b+6 ranh giới/giờ | P (trúng) | 4+5 /giờ | P |
+|---|---|---|---|---|
+| cắt đều `_split_long` | 17,2 | **0,14** (15/107) | 15,9 | 0,16 (14/90) |
+| còn lại (cờ ngắt, heading, đổi không khí) | 2,6 | **0,81** (13/16) | 3,9 | 0,73 (16/22) |
+
+**Đổi MAX_SCENE_SECONDS (5b+6):**
+
+| MAX | F1 | P | R | /giờ |
+|---|---|---|---|---|
+| 180 (app) | 0,207 | 0,23 | 0,19 | 19,8 |
+| 240 (chọn trên 4+5) | 0,220 | 0,30 | 0,18 | 14,2 -> KHÔNG QUA (+0,013 < +0,05) |
+| 300 | 0,190 | 0,29 | 0,14 | 11,8 |
+| 420 | 0,212 | 0,42 | 0,14 | 8,1 |
+| 600 | 0,207 | 0,53 | 0,13 | 5,8 |
+| ∞ (không cắt đều) | 0,159 | 0,81 | 0,09 | 2,6 |
+
+Đọc:
+1. 87% ranh giới app là cắt đều, và chúng trúng ranh giới cảnh chỉ 14-16%, tức ngẫu nhiên. 13% còn lại (chủ yếu cờ ngắt cảnh) trúng
+   73-81%.
+2. Đổi MAX chỉ đổi P lấy R, F1 gần như đứng yên (0,16-0,22). Không luật đồng hồ nào sửa được phần này, vì vấn đề là VỊ TRÍ cắt, không
+   phải tần suất.
+3. Hệ quả cho app (đề xuất, không tự áp):
+   - (a) Ranh giới có lý do (cờ, heading, đổi không khí) đáng tin: nên ĐỔI BÀI ở đó.
+   - (b) Lần cắt đều nên là thay đổi NHẸ trong cùng bài (đổi lớp / cường độ / đoạn của cùng bản nhạc), không đổi bài. Như vậy vẫn bám
+     được không khí trong chương (lý do có `_split_long`) mà không đổi bài ở chỗ ngẫu nhiên.
+   - (c) Chọn VỊ TRÍ cắt đúng hơn là việc của CS-SEG (LLM), đang chờ GPU.
+
+### 06-10 23:2x - ĐẶC TẢ APP (Lead duyệt (a)+(b), làm trên nhánh dev SAU 0.4.31): đổi bài chỉ ở ranh giới có lý do, cắt đều = biến đổi nhẹ cùng bài
+
+Căn cứ: SPLIT (a20f5b93) - ranh giới `reason="length"` là 87% ranh giới app, P .14 (ngẫu nhiên); ranh giới có lý do P .81.
+File nhạc KHÔNG nằm trong `QUALITY_IMPLEMENTATION_FILES` (kiểm 07-10: 32 mục, không mục nào `webui/music_*`) -> không đụng hash
+chất lượng; vẫn chạy `quality_implementation_hash()` trước-sau theo AGENTS.md.
+
+**Số đo làm nền cho thiết kế (5b+6, ranh giới 0.4.31 có cờ scene_break, bỏ cắt đều):** 6,3 cảnh có lý do/giờ; độ dài cảnh trung
+vị 7,4 phút, p75 14,5, p90 18,2 (4+5: 6,4 / 10,2 / 16,5). Bài trong danh mục (catalog_e1, 2016 bài): trung vị 3,1 phút, p75 4,0.
+=> Bỏ cắt đều thì một bài phải chơi ~2-5 vòng trong một cảnh. Cắt đều 180 s hôm nay vô tình che việc lặp bài. Đặc tả phải lo lặp.
+
+**Chỗ sửa (đường dẫn trong `_internal/abook/`):**
+
+1. `webui/music_scenes.py` - GIỮ `_split_long` (dòng ~281, gọi trong `chapter_scenes` ~259) và các mảnh `reason="length"`: mảnh vẫn
+   có valence/tension riêng (`_view`), là chỗ đo biến đổi nhẹ. Không đổi gì ngoài việc chắc `reason` đi vào plan (đã có: `_view`
+   trả `reason`, `scenes_of` không bỏ nó).
+2. `webui/music_select.py::choose` - thêm nhánh sau ghim/keep, trước `rank`: đoạn có `reason == "length"`, cùng `chapterId` với
+   đoạn trước, đoạn trước có `link` -> **chơi tiếp bài ấy** (`link` = bài đoạn trước, `distance` None, `continued: True`), TRỪ khi
+   luật lặp (mục 4) bật. Ghim / keep / im lặng của người dùng vẫn thắng (ghim một mảnh = người dùng muốn đổi ở đó).
+   `continued` vào `CHOICE_FIELDS` của `music_plan.py`.
+3. `webui/music_plan.py::chapter_cues` - đã gộp hai đoạn liền cùng bài thành một mốc (khe < 5 s), nên mốc tự dài ra. Thêm vào mốc
+   `steps: [{at, db}]`: mỗi mảnh nối tiếp (`continued`) cho một bước `at = start của mảnh`,
+   `db = clamp(K * (tension_mảnh - tension_đầu_mốc), -3, +3)` với **K = 6 dB / đơn vị tension (thang nửa)**; bước cách bước trước
+   < 40 s thì bỏ (như hold của bộ dò đổi tâm trạng). `packaged_cues` (~436) và `package` mang `steps` theo mốc như `gainDb`;
+   mục `music` của book.json thêm `steps` (định dạng .abook: ghi vào tài liệu định dạng, không giữ tương thích cũ).
+   Âm lượng cuối = `min(0, gainDb + db)` (volume tối đa 1) -> bài đã ở trần thì bước lên bị mất: ĐO tỉ lệ này (mục đo M4).
+4. **Luật lặp (lớp thứ hai của biến đổi nhẹ):** khi đoạn `length` bắt đầu sau khi bài hiện tại đã chơi >= 1 vòng (tính từ
+   `duration` trong `plan["tracks"]`; thiếu `duration` thì không bật), cho đổi sang **bài anh em**: `rank` của chính mảnh ấy, chỉ
+   lấy ứng viên có khoảng cách tâm trạng tới BÀI ĐANG CHƠI (`z_distance` trên đích của bài) <= ngưỡng `SIBLING_Z` (bắt đầu 0,5,
+   đo lại ở M2), loại bài đã dùng trong chương; không có thì chơi tiếp (lặp). Đổi bài anh em dùng mờ chéo dài **6 s** (thay 2 s)
+   để không nghe như đổi cảnh; mốc mới mang `sibling: true`.
+5. Trình phát - `ui/src/listen/musicBed.ts` (`FADE_SECONDS`, mục tiêu âm lượng ~dòng 118) và
+   `mobile/android/.../player/MusicBed.kt` (`FADE_MS`, ~dòng 344): âm lượng mục tiêu = `gainDb` + bước `steps` đang hiệu lực tại
+   thời điểm giọng đọc; đổi bước thì trượt dần **4 s** (dùng chung vòng `STEP_MS` sẵn có); tua thì tính thẳng bước tại chỗ tua,
+   không trượt. Mốc `sibling` dùng mờ chéo 6 s. `music_plan.cue_gain_db` vẫn là chỗ tính duy nhất của `gainDb`; `db` của bước
+   cũng chỉ tính ở máy chủ (hai trình phát chỉ cộng).
+6. UI "Đổi bài" trên một mảnh `continued`: đổi bài của CẢ mốc (đoạn đầu + các mảnh nối tiếp), vì người nghe nghe một bài. Ghim
+   vào đoạn đầu; các mảnh nối tiếp theo luật 2.
+
+**Đo trước-sau** (script nghiên cứu `music/track_changes.py`, CPU, trên 5b+6 có đáp án; app 0.4.31 = TRƯỚC, nhánh dev = SAU;
+chọn bài bằng `choose` thật với danh mục catalog_e1 - không cần GPU):
+
+- **M1 điểm đổi bài** (đổi `link`, không kể `sibling`): số lần/giờ; P/R/F1 so ranh giới đáp án (TOL 2 câu, `rule_switch.f1`).
+  Kỳ vọng SAU: ~6/giờ, P ~.8. **Cổng: P SAU >= .70 và F1 SAU >= F1 TRƯỚC.**
+- **M2 lặp bài**: % thời lượng nhạc nằm ở vòng thứ 2 trở đi của cùng bài trong một mốc; số lần đổi `sibling`/giờ. Đo với
+  SIBLING_Z ∈ {0,3; 0,5; 0,8; tắt}. **Cổng: lặp SAU <= 25% thời lượng** (TRƯỚC ghi lại để so); chọn SIBLING_Z nhỏ nhất qua cổng,
+  chọn trên 4+5, báo 5b+6.
+- **M3 hình dạng cường độ**: r trong chương (trọng số thời lượng, như L3-EST) giữa đường âm lượng theo câu (`gainDb` + bước) và
+  đáp án T. Ghi lại TRƯỚC (âm lượng từng bài) và SAU. **Cổng: r SAU >= r TRƯỚC - .02** (không làm tệ hơn); con số này sẽ lên khi
+  L3 cho tension mảnh tốt hơn (bước dùng chính `tension` của mảnh).
+- **M4 an toàn bước**: phân bố |db|, % bước bị cắt ở trần 0 dB, số bước/giờ. Báo, không cổng; cắt > 30% thì xét hạ `gainDb` gốc
+  1,5 dB cho mốc có bước (dành chỗ).
+- **Nghe**: Lead/agent dựng 3 chương (1 cảnh dài nhất, 1 nhiều bước, 1 có sibling) trước-sau ra file để chủ sách nghe bất chợt
+  nếu muốn; không chờ ai chấm (chủ sách không gắn nhãn).
+- Test đơn vị: `choose` (mảnh length chơi tiếp, ghim thắng, luật lặp), `chapter_cues` (gộp + steps + hold 40 s),
+  `packaged_cues` (steps đi qua gói), `musicBed.test.ts` + test Kotlin (mục tiêu âm lượng theo bước, tua).
+
+Tôi (Music) viết `track_changes.py` ngay (CPU, đọc ABook_scene, không sửa app) để có số TRƯỚC sẵn khi Lead mở nhánh dev.
+(c) chờ CS-SEG.
+
+### 06-10 23:2x - Số TRƯỚC-SAU của đặc tả b31ebce1 (`music/track_changes.py`, CPU): (a)+(b) MỘT MÌNH KHÔNG QUA - chính xác lên, độ phủ sập
+
+Mô phỏng đúng đặc tả trên `choose`/`rank` thật của ABook_scene, danh mục catalog_e1, đường nhãn câu; chọn SIBLING_Z trên 4+5, báo 5b+6:
+
+| 5b+6 | đổi bài/giờ | P | R | F1 | lặp bài | anh em/giờ | r trong chương âm lượng~T |
+|---|---|---|---|---|---|---|---|
+| TRƯỚC 0.4.31 | 19,8 | .23 | .19 | **.207** | 14% | - | phẳng (gainDb không đổi trong chương) |
+| SAU, không luật lặp | 2,6 | **.81** | .09 | .159 | **69%** | - | +.08 |
+| SAU, anh em khi đã lặp, z .8 | 2,6 | .81 | .09 | .159 | 28% | 8,4 | -.03 |
+| SAU, anh em SỚM (mảnh kế sẽ lặp), z .5 (chọn 4+5) | 2,6 | .81 | .09 | .159 | 20% | 12,7 | +.10 |
+
+Cổng (ghi trong đặc tả): P >= .70 QUA; **F1 >= trước KHÔNG QUA** (.159 < .207); lặp <= 25% chỉ qua với đổi sớm (khi ấy anh em
+12,7/giờ - lại gần nhịp đổi cũ, chỉ êm hơn); r âm lượng không xấu đi QUA (bước rất nhỏ: |db| TB .6-.7, vì tension nhãn câu
+của app bị nén - đúng như L3-EST đã thấy; bước sẽ chỉ có ý nghĩa khi có tension mảnh tốt hơn).
+
+Đọc:
+- Đáp án có ~24 ranh giới/giờ; ranh giới có lý do của app chỉ 6,3/giờ, và chỉ 2,6/giờ thật sự đổi bài (cảnh kề cùng tâm trạng
+  chọn trùng bài). Bỏ cắt đều làm đúng việc nó hứa (P .23 -> .81) nhưng độ phủ phải đến từ chỗ khác: **(c) CS-SEG**.
+- Lặp là thật: cảnh có lý do trung vị 7,4 phút, bài trung vị 3,1 phút. Đổi anh em ở mảnh `length` là cắt giữa bài ở chỗ tuỳ ý.
+  Hướng tốt hơn (chưa đo): **nối anh em ở điểm kết TỰ NHIÊN của bài** (mốc tách đúng ở `duration`, mờ chéo 6 s) + `rank` phạt
+  bài ngắn hơn cảnh (độ dài cảnh có lý do biết lúc dựng plan; danh mục có bài tới 13 phút, p90 5,5).
+
+Kết luận cho app: **không làm (a)+(b) một mình.** Làm cùng (c) khi CS-SEG có số: ranh giới có lý do = cứng + CUE + LLM; đổi bài
+chỉ ở đó; trong cảnh: nối anh em ở điểm kết bài + bước âm lượng. Đo lại bằng `track_changes.py` thêm ranh giới SEG làm lý do
+(cổng giữ nguyên: P >= .70, F1 >= .207, lặp <= 25%, r không xấu đi).
+
+### 06-10 23:4x - Đặc tả gộp, đo trước (`music/track_changes2.py`, CPU): cờ + CUE làm lý do, nối anh em ở điểm kết bài, phạt bài ngắn -> QUA
+
+Ba thay đổi so với b31ebce1:
+- Bài anh em chỉ nối ở điểm kết TỰ NHIÊN của bài: mốc tách đúng ở `duration`, không cắt ở mảnh `length`.
+- `rank` của đoạn đầu cảnh cộng `LEN_PEN x max(0, 1 - độ dài bài / độ dài cảnh)`, với độ dài cảnh kẹp ở 15 phút.
+- Ranh giới có lý do thêm CUE (`seg_scenes.cue_bounds`: tiêu đề phụ, dòng thời gian/địa điểm), chèn vào thành cờ `sceneBreak` trước
+  khi `music_scenes` chia cảnh.
+
+Cách chọn: (z, LEN_PEN) chọn trên 4+5 (lặp <= 25%, ít lần đổi anh em nhất) ra (.8, 1.0); số dưới là trên 5b+6.
+
+| 5b+6 | đổi bài/giờ | P | R | F1 | lặp | anh em/giờ | độ hợp z TB |
+|---|---|---|---|---|---|---|---|
+| TRƯỚC 0.4.31 | 19,8 | .23 | .19 | .207 | 14% | - | - |
+| chỉ cờ, z .8, phạt 1 | 2,6 | .81 | .09 | .159 | 4% | 8,2 | .67 |
+| **cờ+CUE, z .8, phạt 1 (CHÍNH)** | 4,8 | **.70** | .14 | **.236** | **4%** | 5,2 | .65 |
+| cờ+CUE, z .8, không phạt | 4,8 | .70 | .14 | .236 | 4% | 13,7 | .54 |
+| cờ+CUE, không anh em, phạt 1 | 4,8 | .70 | .14 | .236 | 22% | - | .68 |
+
+Kết quả: cổng P >= .70 qua sát nút; F1 .236 >= .207; lặp 4% <= 25%. r âm lượng~T không xấu đi (TRƯỚC phẳng; SAU ~0, vì bước nhỏ).
+**QUA.** Cái giá là độ hợp tâm trạng: z TB .54 lên .65 (trần im lặng MAX_Z là 2,0). Phạt bài ngắn đổi 8,5 lần đổi anh em/giờ lấy
++.11 z. Nếu nghe thấy bài kém hợp thì hạ LEN_PEN xuống .5.
+
+Thêm: Corpus/_full vừa sắp lại thư mục (`truyen/<số>-<tên>`), làm 19/42 đường nguồn trong `results/seg_inputs.json` chết. Đã chạy
+lại `resolve_inputs.py`: lại được 41/42 như trước (thiếu creepypasta 484 như cũ).
+
+**Đặc tả app thay mục 4 của b31ebce1 như sau:**
+1. Luật lặp = nối anh em ở `duration` của bài. Việc này cần `chapter_cues` tách mốc ở điểm kết bài: mốc mới mang `sibling: true`,
+   mờ chéo 6 s. z tới bài đang chơi <= .8, loại bài đã dùng trong chương; không có bài nào thì cho lặp.
+2. `music_select.rank`/`choose` nhận độ dài cảnh có lý do (đoạn đầu + các mảnh `length` nối sau) và cộng phạt bài ngắn (1.0).
+3. CUE vào app thành cờ `sceneBreak`, cùng chỗ với dòng ngắt của 0.4.31: chính là `cue_kind` trong `seg_scenes.py`. LLM (SEG) có
+   số thì đo lại bằng `track_changes2.py`: script tự thêm biến thể "cờ+CUE+LLM" khi có `results/seg_<bộ>_<tag>.jsonl`.
+
+Ghi lại (đo trên 5b+6 sau khi đã chọn, KHÔNG dùng để chọn): cờ+CUE, z .8, LEN_PEN .25 / .5 / 1.0 -> anh em 10,3 / 6,1 / 5,2 lần/giờ,
+lặp 7% / 4% / 4%, độ hợp z TB .54 / .62 / .65 (P, F1 không đổi). Đường cong cho Lead chọn khi nghe: .5 giữ gần hết lợi ích của 1.0.
+
+### 06-10 23:5x - Kết quả CS-SEG (qwen3.5:4b, GPU 23:43-23:48, 42 chương): LLM THẮNG, F1 ranh giới gấp 3 app
+
+`seg_scenes.py score`, TOL 2 câu, 5b+6 CHÍNH (6,2 giờ; người chấm TB 22,5 ranh giới/giờ; **người A so B: P .72 R .73 F1 .72**):
+
+| 5b+6 | F1 | P | R | /giờ |
+|---|---|---|---|---|
+| app 0.4.31 (không cờ) | .130 | .15 | .11 | 18,4 |
+| cờ scene_break (dòng ngắt) | .194 | .63 | .11 | 4,3 |
+| CUE lọc | .192 | .59 | .11 | 4,7 |
+| LLM lọc | .314 | .33 | .30 | 21,3 |
+| **CUE cứng + LLM lọc (CHỌN)** | **.388** | .37 | .41 | 25,9 |
+
+4+5 (ghi lại): CUEcứng+LLM .471 (P .47 R .47). Dấu hiệu `subhead` của CUE trên 5b+6 chỉ P .23 (4+5 P .78) - ghi lại.
+
+### 06-10 23:5x - Đặc tả gộp với ranh giới LLM (`track_changes2.py`): hai chế độ, cổng P >= .70 chỉ chế độ thưa qua
+
+| 5b+6 | đổi bài/giờ | P | R | F1 | lặp | anh em/giờ | độ hợp z TB | đổi SAI chỗ/giờ |
+|---|---|---|---|---|---|---|---|---|
+| TRƯỚC 0.4.31 | 19,8 | .23 | .19 | .207 | 14% | - | - | 15,2 |
+| X: cờ+CUE, z .8, phạt 1 (b796ae8e) | 4,8 | .70 | .14 | .236 | 4% | 5,2 | .65 | 1,4 |
+| **Y: cờ+CUE+LLM, z .8, phạt 1** | 20,9 | .44 | **.39** | **.410** | 1% | 1,9 | **.29** | 11,7 |
+
+- Luật chọn đã ghi (lặp <= 25%, ít anh em nhất, trên 4+5) chọn ra z None / phạt 0 cho Y: lặp 19%, F1 .410, P .44.
+  Phạt 1 thì lặp còn 1% mà không mất gì; ghi z .8 / phạt 1 làm cấu hình Y.
+- Thử thêm núm KEEP_Z (giữ bài đang chơi nếu nó vẫn hợp cảnh mới, z <= .3/.5/.8/1.2). P đứng yên ~.39-.44 trên 5b+6, .52-.55 trên
+  4+5, còn R và F1 tụt. => **Độ chính xác do chính vị trí ranh giới quyết định; lọc theo tâm trạng không cứu được.**
+- Theo cổng đã ghi (P >= .70): **Y KHÔNG QUA, X QUA.** Nhưng Y gấp đôi F1, đúng nhịp đổi của người (~21/giờ so với người 22,5),
+  độ hợp tâm trạng tốt gấp đôi (z .29 so với .65), và đổi sai chỗ giảm từ 15,2 xuống 11,7/giờ so với hôm nay. X gần như không đổi
+  bài: cứ 12 phút một lần, và bỏ lỡ 86% ranh giới.
+- Cổng P >= .70 được đặt khi chỉ có (a)+(b), để chặn cắt tuỳ tiện. Tôi KHÔNG tự hạ cổng sau khi thấy số. Thay vào đó ghi trước một
+  phép xác nhận độc lập dưới đây.
+
+**GHI TRƯỚC - XÁC NHẬN TRÊN BỘ 7** (đáp án gold_scene7 chưa ai thấy; bộ 7 = 20 chương, 4 truyện mới):
+- So X và Y, cấu hình cố định như trên. Ranh giới LLM của bộ 7 chạy bằng `seg_scenes.py run set7 qwen3.5:4b`, ~3 phút GPU qua
+  hàng Model.
+- **Y thắng nếu cả ba điều sau cùng đúng:** F1 Y >= F1 X + .10; P Y >= .35; đổi sai chỗ Y <= 0,8 x TRƯỚC (0.4.31 trên chính bộ 7).
+  Không đạt thì app làm X.
+- Ghi lại thêm: z TB, lặp, anh em/giờ.
+- Cách làm trong app nếu Y thắng: LLM chia cảnh chạy một lần mỗi chương trong pha nhạc, cùng model phân tích hay 4B, ~7 s/chương
+  trên card 8 GB (SEG: 42 chương trong 5 phút), seed theo digest. Ranh giới vào thành cờ `sceneBreak`, rồi đi đúng đường của X.
+
+### 07-10 00:1x - Kết quả mức chương zero-shot CF / CH / CS (GPU 06-10 23:48-07-10 00:03; `chapter_level.py score`): KHÔNG THẮNG
+
+Cổng (đã ghi): 5b+6, MAE <= .35 VÀ r V,T >= .6. Mốc: hằng .462; nhãn câu app .432; trần (mức chương đáp án) .286.
+
+| 5b+6 (23 chương) | MAE | r V | r T |
+|---|---|---|---|
+| C0 nhãn câu app + hiệu chỉnh (CHÍNH) | .395 | .73 | .75 |
+| CF cả chương (CHÍNH) | .451 | .59 | **.89** |
+| CF + hiệu chỉnh | .380 | .59 | .89 |
+| (CF hc + C0)/2 | .382 | .79 | .92 |
+| CH đầu-giữa-cuối | .459 | .58 | .86 |
+| CS thẻ cảnh | .445 | .61 | .48 |
+
+Không ứng viên nào xuống dưới .35: trần chỉ cách .35 có .064, và mọi cách đều kẹt ở ~.38. CS (thẻ cảnh) không hơn CF, còn T kém hơn
+hẳn. Đáng giữ: CF cho thứ tự T giữa các chương rất tốt (r .89 trên 5b+6, .78 trên 4+5).
+
+**GHI TRƯỚC - L2-EST+CL (trước khi tính; CPU):** `l2_est.py` thêm mức chương CF (và CH, CS) làm đặc trưng.
+- CHÍNH: ridge + khớp phương sai trên 4 mô hình cũ + CF (không đặc trưng chữ), alpha 4, bỏ-một-truyện trên 4+5+5b+6, báo 5b+6.
+  Cổng y như L2-EST: MAE mức < .20 VÀ r >= .80 cả V, T.
+- Ghi lại: + CH + CS; chỉ CF + hiệu chỉnh tuyến tính; 4 mô hình cũ (mốc L2-EST: r V .77).
+- Xác nhận bộ 7 dùng đúng cấu hình CHÍNH (`confirm`), sau khi đã có đáp án bộ 7 và CF bộ 7 (cần thêm lượt CF bộ 7 trên GPU, ~2 phút).
+
+**Kết quả L2-EST+CL (ghi trước 641160e1; `l2_est.py cl`, 42 chương, báo 23 chương 5b+6): KHÔNG THẮNG - CF không thêm gì.**
+CHÍNH (4 mô hình + CF, khớp phương sai): MAE mức .173, r V .78, T .91 (cổng r >= .80, kẹt ở V). Ghi lại: thêm CH, CS .182 / .76 / .91;
+ridge thường .175 / .75 / .91; chỉ CF + hiệu chỉnh .215 / .52 / .87; mốc 4 mô hình cũ (không đặc trưng chữ) .175 / .79 / .90.
+Đọc: T giữa các chương đã tốt (~.9) và bão hoà; nút thắt của mức chương là **V** (~.78-.79), mọi nguồn zero-shot đều không gỡ được.
+Không cần lượt CF bộ 7. L2-EST cũ vẫn chờ xác nhận trên bộ 7 như đã ghi (ae425cdc).
