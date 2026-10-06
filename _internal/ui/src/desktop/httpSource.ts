@@ -63,7 +63,7 @@ export const httpSource: ListenSource = {
     try {
       clip = await api<typeof clip>("/api/readaloud/clip", {
         method: "POST",
-        body: { voice, text, cachedOnly: options?.cachedOnly, bookId: options?.bookId },
+        body: { voice, text, cachedOnly: options?.cachedOnly, bookId: options?.bookId, readings: options?.readings },
       });
     } catch (error) {
       // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
@@ -74,7 +74,7 @@ export const httpSource: ListenSource = {
     if ("cached" in clip) throw new ReadAloudError("Chưa đọc đoạn này.", clip.reason || "uncached");
     return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words } satisfies ReadAloudClip;
   },
-  readAloudSample: async (voice, text) => (await httpSource.readAloudClip!(voice, text)).url,
+  readAloudSample: async (voice, text, options) => (await httpSource.readAloudClip!(voice, text, options)).url,
   // Máy chủ nhận chữ từng đoạn, chia đúng như trình phát (cùng khoá bộ đệm với lúc nghe).
   readAloudPrepare: async ({ voice, bookId, chapters, label }) => {
     const texts = await paragraphsFor(chapters, (id) => httpSource.chapterText(bookId, id));

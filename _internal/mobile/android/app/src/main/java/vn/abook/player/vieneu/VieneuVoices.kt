@@ -109,11 +109,11 @@ object VieneuVoices {
 
     /** One paragraph -> [out] (16-bit WAV at the tier's rate) + words. */
     @Synchronized
-    fun synthesize(id: String, text: String, out: File, origin: String? = null): Clip {
+    fun synthesize(id: String, text: String, out: File, origin: String? = null, readings: Map<String, String>? = null): Clip {
         val (tier, name) = id.removePrefix("$PREFIX:").let { it.substringBefore('/') to it.substringAfter('/', "") }
         val ready = ready(tier, name)
         val spoken = try {
-            VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin)
+            VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin, readings)
         } catch (failure: OutOfMemoryError) {
             forget()
             throw VoiceException("Điện thoại không đủ bộ nhớ cho giọng VieNeu lúc này.", cause = failure, reason = "voice")
@@ -146,4 +146,6 @@ class VieneuVoice(override val id: String) : Voice {
     override val extension = "wav"
     override fun synthesize(text: String, out: File): Clip = VieneuVoices.synthesize(id, text, out)
     override fun synthesize(text: String, out: File, origin: String?): Clip = VieneuVoices.synthesize(id, text, out, origin)
+    override fun synthesize(text: String, out: File, origin: String?, readings: Map<String, String>?): Clip =
+        VieneuVoices.synthesize(id, text, out, origin, readings)
 }
