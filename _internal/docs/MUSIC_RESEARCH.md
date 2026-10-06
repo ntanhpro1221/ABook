@@ -3343,3 +3343,26 @@ Bỏ-một-truyện; 42 chương, 39 truyện; báo 23 chương 5b+6. SD mức �
   - MLX base_P0 + lora1_P2 trên Mac;
   - đáp án gold_scene7.
   Lệnh: `SCORE_SKIP_NOTES=1 python l2_est.py confirm set7`.
+
+### 06-10 23:1x - GHI TRƯỚC: L3-EST, hình dạng trong chương từ đầu ra theo khúc đã có (CPU)
+Sau 76aa32e9 (nhãn câu app không có hình dạng: 0,280 so với phẳng 0,286).
+- **Đầu vào:** mỗi câu (khúc app, bỏ chu_thich, trọng số thời lượng, thang nửa), mỗi trục V/T. Bốn nguồn là giá trị khúc chứa câu:
+  - P2 Ollama qwen3.5:4b;
+  - MLX base_P0;
+  - MLX lora1_P2;
+  - nhãn câu app.
+  Mỗi nguồn trừ TB chương của chính nó (theo thời lượng).
+- **Mục tiêu:** đáp án câu trừ TB chương đáp án.
+- **Mô hình:** hồi quy ridge KHÔNG hệ số chặn, alpha = 1 trên tổng trọng số chuẩn hoá. Gộp mọi câu của train, trọng số = thời lượng, mỗi
+  trục riêng. Không chuẩn hoá đặc trưng: hệ số chính là độ giãn.
+- **Kiểm định:** bỏ-một-truyện trên 4+5+5b+6, báo các chương 5b+6.
+- **Thước:**
+  - MAE trong chương: |dự đoán lệch − đáp án lệch|, TB câu theo thời lượng, TB chương, TB (V, T);
+  - r trong chương: Pearson có trọng số, TB chương, từng trục.
+- **Cổng thắng:** MAE trong chương <= 0,256 (đường phẳng 0,286 − 0,03) VÀ r trong chương >= 0,40 ở CẢ V và T.
+- **Ghi lại:**
+  - từng nguồn riêng với hệ số giãn học bỏ-một-truyện;
+  - bộ ba nguồn LLM (bỏ nhãn app);
+  - đường phẳng;
+  - người A-B (0,153; r 0,76-0,85).
+- Không dò biến thể sau khi thấy số.
