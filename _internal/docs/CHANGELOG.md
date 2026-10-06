@@ -22,6 +22,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Điện thoại
 
+- "Xuất MP3 để nghe ở app khác" có ở điện thoại (menu "…" của trang sách), ra đúng bản xuất của máy tính: một thư mục mang tên sách, mỗi chương đã xong một file
+  MP3 có tên sách, tên chương, giọng kể, số thứ tự và ảnh bìa, kèm danh sách phát. Lần đầu bạn chọn thư mục lưu (vd Music), lần sau máy nhớ; muốn đổi thì bấm
+  "Đổi thư mục" lúc đang xuất. Việc chạy nền - ra khỏi app vẫn tiếp, tiến độ và nút "Dừng" ở thông báo. Chương chưa làm xong không có trong bản xuất.
 - Báo "Sẵn sàng duyệt" khi máy tính phân tích xong một cuốn và đang chờ bạn duyệt giọng, tên lạ, câu chưa chắc trước khi thu; bấm thông báo là mở thẳng màn duyệt. Cuốn đứng
   chờ duyệt không bị báo nhầm là "Đã dừng".
 - "Chia sẻ…" trong menu "…" của trang sách: gửi file sách (.abook, kèm những thay đổi của bạn) qua Zalo, Drive, email hay bất kỳ app nào trong bảng chia sẻ của điện thoại.
