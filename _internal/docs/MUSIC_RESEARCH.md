@@ -3962,7 +3962,7 @@ Kết luận: không đề xuất sửa `cue_kind`. Đặc tả soạn sẵn `re
 Gộp cả 5 bộ: luật bỏ 133 dòng ngoặc, 23 dòng (17%) trùng đáp án. Ngoặc phần lớn là nhiễu, nhưng bỏ hết thì mất đúng những
 chỗ thông báo hệ thống mở cảnh.
 
-### 07-10 06:0x - MISS (thăm dò, KHÔNG ghi trước): X bỏ lỡ ranh giới nào, và chữ có báo được không
+### 07-10 05:3x - MISS (thăm dò, KHÔNG ghi trước): X bỏ lỡ ranh giới nào, và chữ có báo được không
 Lead hỏi: X chỉ trúng 4/57 ở bộ 9, vậy nút thắt là độ phủ. Mã: `LLM_Train/music/miss_types.py`. Đo trên 4+5 / 5b+6 / 7 / 8 / 9
 (câu trơn, mức ranh giới): 453 ranh giới đáp án, 24,6 giờ. X ra 5,0 ranh giới/giờ, P .53, F1 .226, trượt 388.
 
