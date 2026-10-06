@@ -1812,6 +1812,7 @@ CREATE TABLE IF NOT EXISTS segments (
     seq INTEGER NOT NULL,
     paragraph_index INTEGER NOT NULL DEFAULT 0,
     break_ms INTEGER NOT NULL DEFAULT 220,
+    scene_break INTEGER NOT NULL DEFAULT 0,
     text TEXT NOT NULL,
     text_sha256 TEXT NOT NULL,
     kind_hint TEXT NOT NULL,
@@ -2343,6 +2344,8 @@ class ProjectDB:
         segment_columns = {str(row[1]) for row in conn.execute("PRAGMA table_info(segments)")}
         if "break_ms" not in segment_columns:
             conn.execute("ALTER TABLE segments ADD COLUMN break_ms INTEGER NOT NULL DEFAULT 220")
+        if "scene_break" not in segment_columns:
+            conn.execute("ALTER TABLE segments ADD COLUMN scene_break INTEGER NOT NULL DEFAULT 0")
         if "generation_frame_cap" not in segment_columns:
             conn.execute(
                 """
@@ -3223,10 +3226,10 @@ class ProjectDB:
             conn.executemany(
                 """
                 INSERT INTO segments(
-                    stable_id,chapter_id,seq,paragraph_index,break_ms,text,text_sha256,kind_hint,
+                    stable_id,chapter_id,seq,paragraph_index,break_ms,scene_break,text,text_sha256,kind_hint,
                     kind,speaker,gender,age,emotion,intensity,pace,volume,confidence,
                     analysis_notes,status,updated_at
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 [
                     (
@@ -3235,6 +3238,7 @@ class ProjectDB:
                         int(row["seq"]),
                         int(row.get("paragraph_index", 0)),
                         int(row.get("break_ms", 220)),
+                        1 if row.get("scene_break") else 0,
                         row["text"],
                         row["text_sha256"],
                         row.get("kind_hint", "narration"),

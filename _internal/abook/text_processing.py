@@ -126,6 +126,17 @@ PUNCTUATION_BREAK_MS = {
     ".": 320,
     "…": 600,
 }
+# Dòng chỉ gồm ký hiệu ngăn cảnh ("***", "◆", "———") không có chữ để đọc nên không thành câu; nó để lại một quãng nghỉ dài sau
+# câu đứng trước. Sách nói thường nghỉ ~1,5-2 giây ở chỗ đổi cảnh (dài hơn hẳn dấu chấm 230-320 ms), người nghe nhờ đó biết
+# cảnh đã đổi. Quãng nghỉ này không bị `expression.narrative_break_ms` hay trần PAUSE_CEILING_MS bào ngắn.
+SCENE_BREAK_MS = 1500
+# Ký hiệu kiểu đường kẻ: một dấu đơn lẻ có thể là dấu câu / gạch thoại / tiêu đề markdown, nên cần >= SCENE_BREAK_MIN_RULE_GLYPHS dấu.
+SCENE_BREAK_RULE_GLYPHS = frozenset("*~-=_#+·•‧・—–―‒─━═┄┈╌")
+SCENE_BREAK_MIN_RULE_GLYPHS = 3
+# Ký hiệu trang trí: một dấu đã đủ là ngăn cảnh ("◆", "※", "○"). Không có dấu chấm, "…", ngoặc, nháy hay ?! ở đây - dòng "..." hay
+# dòng chỉ có dấu ngoặc kép không phải ngăn cảnh.
+SCENE_BREAK_ORNAMENT_GLYPHS = frozenset("◆◇◈○●◎□■▪▫▲△▽▼★☆✦✧✱✲✶✷✻✽❖❀✿❁※⁂⁕⋆◦♦♢◊⸻§")
+SCENE_BREAK_MAX_GLYPHS = 40
 VOCAL_CUE_SPOKEN_FORMS = {
     "cười": "Ha ha...",
     "chuckle": "Ha ha...",
@@ -1090,6 +1101,18 @@ def _punctuation_break_ms(text: str) -> int:
     )
 
 
+def is_scene_break_line(line: str) -> bool:
+    """Dòng chỉ có ký hiệu ngăn cảnh ("***", "* * *", "◆", "◇◇◇", "———", "---", "~~~", "＊＊＊"), không chữ không số."""
+    glyphs = [char for char in unicodedata.normalize("NFKC", line) if not char.isspace()]
+    if not glyphs or len(glyphs) > SCENE_BREAK_MAX_GLYPHS:
+        return False
+    if not all(char in SCENE_BREAK_RULE_GLYPHS or char in SCENE_BREAK_ORNAMENT_GLYPHS for char in glyphs):
+        return False
+    if any(char in SCENE_BREAK_RULE_GLYPHS for char in glyphs):
+        return len(glyphs) >= SCENE_BREAK_MIN_RULE_GLYPHS
+    return True
+
+
 def _walk_paragraphs(
     chapter_index: int,
     paragraphs: list[str],
@@ -1121,6 +1144,7 @@ def _walk_paragraphs(
                     "seq": seq,
                     "paragraph_index": paragraph_index,
                     "break_ms": 170 if hint == "dialogue" else (210 if hint == "thought" else 230),
+                    "scene_break": False,
                     "text": chunk,
                     "text_sha256": sha256_text(chunk),
                     "kind_hint": hint,
@@ -1137,6 +1161,11 @@ def _walk_paragraphs(
     for paragraph_index, paragraph in enumerate(paragraphs):
         lines = [line.strip() for line in paragraph.splitlines() if line.strip()]
         for line in lines:
+            if quote_state is None and rows and is_scene_break_line(line):
+                # Dòng ngăn cảnh không có chữ nên không thành câu; câu trước nó mang quãng nghỉ dài và cờ `scene_break`.
+                rows[-1]["break_ms"] = max(int(rows[-1]["break_ms"]), SCENE_BREAK_MS)
+                rows[-1]["scene_break"] = True
+                continue
             was_open = quote_state is not None
             if quote_state is not None and paragraph_index != opened_at:
                 fresh_opening = _fresh_quote_opening(line, quote_state)
@@ -1261,7 +1290,9 @@ def segment_chapter_text(
 
     for index, row in enumerate(rows):
         if index + 1 >= len(rows):
+            # Hết chương: không có cảnh nào sau đó để ngăn, nên không nghỉ và không đánh dấu.
             row["break_ms"] = 0
+            row["scene_break"] = False
         elif rows[index + 1]["paragraph_index"] != row["paragraph_index"]:
             row["break_ms"] = max(int(row["break_ms"]), 380)
     source_tokens = _speakable_tokens(text)

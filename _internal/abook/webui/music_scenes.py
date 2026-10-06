@@ -122,11 +122,13 @@ def _durations(segments: list[dict[str, Any]]) -> list[float]:
     return [max(0.3, len(str(segment.get("text") or "")) * UNTIMED_SECONDS_PER_CHAR) for segment in segments]
 
 
-def hard_break(segment: dict[str, Any]) -> str | None:
+def hard_break(segment: dict[str, Any], previous: dict[str, Any] | None = None) -> str | None:
+    """Lý do đoạn nhạc mới phải bắt đầu ở `segment`. `previous`: câu ngay trước nó - dòng ngăn cảnh ("***", "◆") không có chữ
+    nên không thành câu, mà đánh dấu câu đứng trước (`sceneBreak`, từ cột `segments.scene_break`)."""
     text = str(segment.get("text") or "")
     if segment.get("kind") == "heading":
         return "heading"
-    if SEPARATOR.match(text):
+    if (previous is not None and previous.get("sceneBreak")) or SEPARATOR.match(text):
         return "separator"
     if TIME_JUMP.match(text):
         return "time_jump"
@@ -226,7 +228,7 @@ def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = 
     current = open_scene(0, "chapter_start")
     pending_shift: int | None = None
     for index in range(len(segments)):
-        reason = hard_break(segments[index]) if index else None
+        reason = hard_break(segments[index], segments[index - 1]) if index else None
         if reason and current["acc"].seconds > 0:
             scenes.append(current)
             current = open_scene(index, reason)

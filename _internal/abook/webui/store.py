@@ -1013,9 +1013,11 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
         # Mã ổn định + băm chữ: định danh câu qua các lần sản xuất lại - lớp sửa của người nghe (docs/EDITING.md) và yêu
         # cầu "ai nói câu này" trỏ tới câu bằng cặp này, nên sách xuất ra mang chúng theo (cộng thêm, không đổi phiên bản).
         identity = [column for column in ("stable_id", "text_sha256") if column in columns]
+        # Câu đứng ngay trước một dòng ngăn cảnh ("***"): nhạc nền đổi cảnh ở câu kế (webui/music_scenes.hard_break).
+        scene_break = ["scene_break"] if "scene_break" in columns else []
         rows = connection.execute(
             "SELECT id, seq, paragraph_index, text, kind, speaker, wav_duration, break_ms, status"
-            + "".join(f", {column}" for column in (*identity, *tags))
+            + "".join(f", {column}" for column in (*identity, *scene_break, *tags))
             + " FROM segments WHERE chapter_id = ? ORDER BY seq",
             (chapter_id,),
         ).fetchall()
@@ -1054,6 +1056,7 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
             "status": str(row["status"]),
             **({"stableId": str(row["stable_id"])} if "stable_id" in identity and row["stable_id"] else {}),
             **({"textSha256": str(row["text_sha256"])} if "text_sha256" in identity and row["text_sha256"] else {}),
+            **({"sceneBreak": True} if scene_break and row["scene_break"] else {}),
             **{column: row[column] for column in tags if row[column] is not None},
         })
     if timed and mp3:  # mốc từng chữ đã căn lúc đóng gói (word_timing.py): thêm `words` cho câu nào còn khớp bộ nhớ đệm

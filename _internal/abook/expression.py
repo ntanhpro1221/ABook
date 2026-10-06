@@ -331,6 +331,10 @@ def narrative_break_ms(
         # A zero break is a deliberate join - a clause split mid-sentence - and opening a
         # gap there would break the sentence rather than shape it.
         return 0
+    if segment.get("scene_break"):
+        # A scene change is a fixed structural pause (text_processing.SCENE_BREAK_MS): feeling
+        # does not stretch it and the ceiling that keeps ordinary pauses short must not clip it.
+        return base
     adjusted = base
     if _carries_feeling(segment):
         adjusted += NARRATIVE_PAUSE_AFTER_MS
