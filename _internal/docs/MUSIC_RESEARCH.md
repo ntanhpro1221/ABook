@@ -3068,3 +3068,24 @@ cố định V = C0 hc, T = P0 hc (hằng trong mục khám phá trên) - không
 - **Thắng:** MAE TB(V,T) <= .35 trên bộ 7 (thước như mục mức chương: mọi câu nhận hằng = mức chương, TB chương). Ghi lại: r V, T;
   mốc hằng 0, nhãn câu app thô, trần (mức đáp án); C0 hc riêng, P0 hc riêng; CF/CH thô.
 - **Hệ quả:** thắng -> kiến trúc app chốt "lớp 2 suy từ lớp 3" (Lead giao cắm). Trượt -> ghi lại, so CF xem lượt riêng có hơn.
+
+**GÓP Ý NGOÀI 06-10 (chủ sách chuyển, Lead giao; `LLM_Train/EXTERNAL_REVIEW_06-10.md`) - y = mu_c + alpha·(s - mean_s) trùng thiết
+kế ba lớp. Mục (a) đo ngay (CPU, thang nửa, TB chương và TB(V,T)):** tách MAE thành lỗi mức chương |m_p - m_g| và MAE trong chương
+sau khi trừ trung bình chương của mỗi bên.
+
+| bộ | dự đoán | lỗi mức chương | MAE trong chương | MAE tổng |
+|---|---|---|---|---|
+| 5b+6 | hằng 0 | .344 | .282 | .466 |
+| 5b+6 | nhãn câu app | .308 | .280 | .429 |
+| 5b+6 | P0 | .345 | .268 | .425 |
+| 5b+6 | P2 | .377 | .255 | .457 |
+| 4+5 | hằng 0 | .276 | .316 | .446 |
+| 4+5 | nhãn câu app | .243 | .298 | .403 |
+| 4+5 | P0 | .326 | .306 | .452 |
+| 4+5 | P2 | .357 | .287 | .478 |
+
+Đọc: CẢ HAI phần đều hỏng. (1) Mức chương thô của mọi dự đoán không hơn hằng 0 (lệch/co thang); hiệu chỉnh tuyến tính kéo về được
+một phần (C0 .395 tổng) nhưng thứ hạng chương mới là trần. (2) Trong chương, mọi dự đoán chỉ bớt 1-10 % so với hằng (.255-.280 so
+.282): hình dạng trong chương gần như chưa có đóng góp tuyệt đối - khớp hệ số co b V .12 T .16. Nghĩa là lớp 3 (alpha) cũng cần
+đột phá, không chỉ lớp 2. Các mục còn lại (b thẻ cảnh cho mức nền, c tách V/E/T, d hiệu chỉnh giữa cuốn / BWS, e đọc ISMIR 2021,
+UIST 2014, Sonus Texere 2022) ghi vào kế hoạch sau bộ 7.
