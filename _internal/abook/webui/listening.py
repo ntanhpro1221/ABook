@@ -53,8 +53,8 @@ FORMAT_VERSION = 2
 DEFAULT_RECORD_NAME = "Mặc định"
 MAX_RECORD_NAME = 60
 RECORD_ID = re.compile(r"r-[0-9a-f]{16}")
-SYNC_KEYS = ("record", "recordName", "nameAt", "activeAt", "book", "records", "active", "activeState", "deleted",
-             "deletedRecords")
+SYNC_KEYS = ("record", "recordName", "nameAt", "activeAt", "movedAt", "book", "records", "active", "activeState",
+             "deleted", "deletedRecords")
 
 
 def listening_path() -> Path:
@@ -205,7 +205,8 @@ class Listening:
             return self._owner(record_id)
 
     def move_record(self, record_id: str, to_book: str) -> bool:
-        """Gắn hồ sơ sang sách khác (vd. bản sản xuất mới của cùng truyện), thành hồ sơ đang dùng ở đó."""
+        """Gắn hồ sơ sang sách khác (vd. bản sản xuất mới của cùng truyện), thành hồ sơ đang dùng ở đó. `movedAt` của hồ sơ
+        là lúc chuyển: đồng bộ với điện thoại theo "lần chuyển sau thắng" (merge_record), như tên theo `nameAt`."""
         with self._lock:
             if record_id not in self._data["records"]:
                 return False
@@ -213,6 +214,7 @@ class Listening:
             link = self._data["links"].setdefault(to_book, {"records": []})
             link["records"] = [*link.get("records", []), record_id]
             link["active"] = record_id
+            link["activeAt"] = self._data["records"][record_id]["movedAt"] = time.time()
             self._save()
             return True
 
@@ -459,16 +461,17 @@ class Listening:
             return json.loads(json.dumps(merged))
 
     def merge_record(self, book: str, record_id: str, incoming: dict[str, Any], *, name: str = "",
-                     name_at: float = 0.0, active_at: float = 0.0,
+                     name_at: float = 0.0, active_at: float = 0.0, moved_at: float = 0.0,
                      deleted: dict[str, Any] | None = None) -> dict[str, Any]:
         """Gộp MỘT hồ sơ từ thiết bị khác - đúng hồ sơ ấy, không phải hồ sơ đang dùng ở đây (đổi hồ sơ ở máy này đúng
         lúc điện thoại gửi lên thì không trộn hai hồ sơ). Hồ sơ lạ (tạo trên điện thoại) được nhận, cùng mã, gắn vào
         `book`. Hồ sơ đang dùng: bên chọn sau thắng (`active_at` là lúc điện thoại chọn hồ sơ này); tên: bên đổi sau
-        thắng (`name_at`). `deleted`: bia mộ của những hồ sơ điện thoại đã xoá - ở đây xoá theo; hồ sơ vừa gửi đã bị xoá
-        ở đây thì không sống lại (trả `deleted: true`).
+        thắng (`name_at`). Hồ sơ gắn ở sách nào: lần chuyển sau thắng (`moved_at` là lúc điện thoại chuyển hồ sơ sang
+        `book`; chuyển ở đây sau đó thì `book` trong lời đáp nói sách mới cho điện thoại theo). `deleted`: bia mộ của những
+        hồ sơ điện thoại đã xoá - ở đây xoá theo; hồ sơ vừa gửi đã bị xoá ở đây thì không sống lại (trả `deleted: true`).
 
-        Trả trạng thái đã gộp, kèm `record`, `book` (sách hồ sơ gắn ở đây - có thể đã được chuyển), danh sách hồ sơ của
-        sách (tên + lúc đặt tên), `active` {record, at}, mọi bia mộ đã biết (`deletedRecords`); hồ sơ đang dùng ở đây
+        Trả trạng thái đã gộp, kèm `record`, `book` (sách hồ sơ gắn ở đây - có thể đã được chuyển), `movedAt` của hồ sơ,
+        danh sách hồ sơ của sách (tên + lúc đặt tên + lúc chuyển), `active` {record, at}, mọi bia mộ đã biết (`deletedRecords`); hồ sơ đang dùng ở đây
         khác hồ sơ vừa gộp thì kèm luôn `activeState` của nó."""
         with self._lock:
             for gone, at in (deleted or {}).items():
@@ -489,12 +492,17 @@ class Listening:
                 record["name"] = name.strip()[:MAX_RECORD_NAME]
                 record["nameAt"] = float(name_at)
             owner = self._owner(record_id)
+            if owner is not None and owner != book and float(moved_at or 0) > float(record.get("movedAt") or 0):
+                self._unlink(record_id)  # điện thoại chuyển hồ sơ sang `book` sau lần chuyển ở đây: theo nó
+                owner = None
             if owner is None:
                 owner = book
                 link = self._data["links"].setdefault(book, {"records": []})
                 link["records"] = [*link.get("records", []), record_id]
                 if not link.get("active") or link["active"] not in self._data["records"]:
                     link["active"] = record_id
+            if owner == book:  # hai bên cùng chỗ gắn: giữ lần chuyển muộn nhất mà bên nào biết
+                record["movedAt"] = max(float(record.get("movedAt") or 0), float(moved_at or 0))
             link = self._data["links"][owner]
             if active_at and float(active_at) > float(link.get("activeAt") or 0):
                 link["active"] = record_id
@@ -506,9 +514,11 @@ class Listening:
             self._save()
             reply = json.loads(json.dumps(merged))
             reply.update({"record": record_id, "recordName": record.get("name") or DEFAULT_RECORD_NAME, "book": owner,
+                          "movedAt": float(record.get("movedAt") or 0),
                           "records": [{"id": item,
                                        "name": self._data["records"][item].get("name") or DEFAULT_RECORD_NAME,
-                                       "nameAt": float(self._data["records"][item].get("nameAt") or 0)}
+                                       "nameAt": float(self._data["records"][item].get("nameAt") or 0),
+                                       "movedAt": float(self._data["records"][item].get("movedAt") or 0)}
                                       for item in link.get("records", []) if item in self._data["records"]],
                           "active": {"record": link.get("active"), "at": float(link.get("activeAt") or 0)},
                           "deletedRecords": dict(self._data["deleted"])})
