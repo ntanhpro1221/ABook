@@ -30,7 +30,7 @@ class ClipReader(
 
         private fun provider(voice: Voice) = voice.id.substringBefore(':')
         /** Đọc trên máy nhưng có thể chưa sẵn sàng (mô-đun tải thêm): hỏng thì đỡ bằng giọng của máy. */
-        private fun local(voice: Voice) = provider(voice) == "vieneu"
+        private fun local(voice: Voice) = provider(voice) == "vieneu" || provider(voice) == "supertonic"
         private fun online(voice: Voice) = provider(voice) != "device" && !local(voice)
 
         /** Câu cho người nghe khi đoạn này đọc tạm bằng `next` thay cho `failed` (cùng lời với giao diện máy tính, readAloudVoice.ts). */
@@ -38,7 +38,7 @@ class ClipReader(
             val keyed = OnlineVoices.NAMES[provider(failed)]
             val instead = if (provider(next) == "edge") "giọng Edge" else "giọng của máy"
             return when {
-                local(failed) -> "Giọng VieNeu chưa đọc được lúc này - tạm đọc bằng $instead."
+                local(failed) -> "Giọng ${if (provider(failed) == "supertonic") "Supertonic" else "VieNeu"} chưa đọc được lúc này - tạm đọc bằng $instead."
                 keyed == null -> "Không dùng được giọng trực tuyến - tạm đọc bằng $instead."
                 problem.reason == "auth" -> "Khóa $keyed không dùng được - tạm đọc bằng $instead. Kiểm tra lại khóa trong Cài đặt."
                 problem.reason == "quota" -> "Khóa $keyed đã hết hạn mức - tạm đọc bằng $instead."

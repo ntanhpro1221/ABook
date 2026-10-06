@@ -80,6 +80,14 @@ describe("mô-đun Phân tích nhạc", () => {
     const outdated = status({ state: "outdated", ready: true, outdatedParts: ["Model nghe nhạc"], outdatedBytes: 59_000_000 });
     expect(moduleLabel(outdated)).toContain(`có bản mới - ${formatSize(59_000_000)}`);
     expect(moduleLabel(outdated)).not.toContain(formatSize(92_000_000));
+    expect(moduleLabel(outdated)).toContain("vẫn chạy bình thường");
+  });
+  it("bản trên máy không chạy được (thiếu phần chạy) thì nói thật là đang tắt, không nói “vẫn chạy”", () => {
+    const stopped = status({ state: "outdated", ready: false, stopped: true, outdatedParts: ["Thư viện chạy model"], outdatedBytes: 12_413_472 });
+    expect(moduleLabel(stopped)).toBe(
+      `Phân tích nhạc đang tắt: cần tải lại phần chạy (${formatSize(12_413_472)}) để phân tích nhạc. Bài của bạn vẫn nhập, nghe và ghim tay được.`,
+    );
+    expect(moduleLabel(stopped)).not.toContain("vẫn chạy bình thường");
   });
   it("sau khi cập nhật chỉ đề nghị phân tích lại, không tự làm; yên thì không nói gì", () => {
     expect(moduleLabel(status({ state: "ready", ready: true, stale: 3 }))).toContain("3 bài được phân tích bằng bản cũ");

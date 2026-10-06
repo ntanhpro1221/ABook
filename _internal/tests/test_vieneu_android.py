@@ -88,7 +88,7 @@ def test_the_phone_cuts_and_measures_like_the_computer():
         assert f'"{name}" to {seconds:.2f}' in audio
     voices = _kotlin("vieneu/VieneuVoices.kt")
     assert f'const val BENCH_TEXT = "{vieneu.BENCH_TEXT}"' in voices
-    assert f"const val SLOW_RTF = {vieneu_module.SLOW_RTF}" in _kotlin("vieneu/VieneuModule.kt")
+    assert f"const val SLOW_RTF = {vieneu_module.SLOW_RTF}" in _kotlin("vieneu/VoiceModule.kt")
     assert f"MAX_NEW_FRAMES = {vieneu_engine.MAX_NEW_FRAMES}" in speaker
 
 

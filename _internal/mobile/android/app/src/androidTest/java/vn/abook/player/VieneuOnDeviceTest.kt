@@ -12,6 +12,7 @@ import org.junit.runner.RunWith
 import vn.abook.player.vieneu.SeaG2p
 import vn.abook.player.vieneu.VieneuModule
 import vn.abook.player.vieneu.VieneuVoices
+import vn.abook.player.vieneu.VoiceModule
 import java.io.File
 import java.io.RandomAccessFile
 import java.security.MessageDigest
@@ -52,8 +53,12 @@ class VieneuOnDeviceTest {
         val tiers = VieneuModule.TIERS.filter { File(staged, "$it/config.json").isFile }
         assumeTrue("mô-đun đẩy lên chưa có giọng nào", tiers.isNotEmpty())
         val dir = File(context.filesDir, "vieneu")
+        val runtime = SharedRuntime.of(context)
+        // the runtime parts (ort/, g2p/) live in the folder every voice shares, the rest in VieNeu's own
+        fun home(path: String) = if (path.substringBefore('/') in SharedRuntime.PARTS) runtime.dir else dir
         staged.walkTopDown().filter { it.isFile }.forEach { source ->
-            val target = File(dir, source.relativeTo(staged).path)
+            val path = source.relativeTo(staged).invariantSeparatorsPath
+            val target = File(home(path), path)
             if (target.length() != source.length()) {
                 target.parentFile!!.mkdirs()
                 target.delete()
@@ -63,7 +68,7 @@ class VieneuOnDeviceTest {
         }
         val module = VieneuVoices.module(context)
         // Same check as a real download: every file hashed against this app's pins (nothing fetched: they are all here already).
-        PinnedFiles(dir, "", VieneuModule.STAMP).download(module.parts(tiers), object : PinnedFiles.Progress {
+        for ((folder, parts) in module.parts(tiers).groupBy { home(it.name) }) PinnedFiles(folder, "", VoiceModule.STAMP).download(parts, object : PinnedFiles.Progress {
             override fun current(bytes: Long) = Unit
             override fun done(part: PinnedFiles.Part) = Unit
         })

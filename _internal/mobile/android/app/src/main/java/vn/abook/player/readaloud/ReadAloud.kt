@@ -116,6 +116,7 @@ object ReadAloud {
             "edge" -> EdgeTts(name.ifEmpty { "vi-VN-HoaiMyNeural" })
             "device" -> DeviceTts(context ?: throw VoiceException("Chưa khởi động"), name)
             VieneuVoices.PREFIX -> VieneuVoices.voice(context ?: throw VoiceException("Chưa khởi động"), id)
+            SupertonicVoices.PREFIX -> SupertonicVoices.voice(context ?: throw VoiceException("Chưa khởi động"), id)
             else -> OnlineVoices.voiceFor(context ?: throw VoiceException("Chưa khởi động"), id) ?: throw VoiceException("Giọng lạ: $id")
         }
     }
@@ -201,6 +202,7 @@ object ReadAloud {
         list.add(VoiceInfo("edge:vi-VN-HoaiMyNeural", "Hoài My (Edge)", "edge", true, true, "female"))
         list.add(VoiceInfo("edge:vi-VN-NamMinhNeural", "Nam Minh (Edge)", "edge", true, false, "male"))
         list.addAll(VieneuVoices.voices(ctx)) // giọng VieNeu: chỉ khi mô-đun đã tải về điện thoại
+        list.addAll(SupertonicVoices.voices(ctx)) // giọng Supertonic: như vậy
         list.addAll(OnlineVoices.voices(ctx)) // giọng dùng khoá của người dùng: chỉ khi khoá đã kiểm tra được
         list.addAll(DeviceTts.voices(ctx))
         return list.map {
@@ -227,6 +229,7 @@ object ReadAloud {
         when {
             ctx == null -> true
             id.substringBefore(':') == VieneuVoices.PREFIX -> VieneuVoices.voices(ctx).any { it.id == id }
+            id.substringBefore(':') == SupertonicVoices.PREFIX -> SupertonicVoices.voices(ctx).any { it.id == id }
             id.substringBefore(':') in OnlineVoices.NAMES -> OnlineVoices.voices(ctx).any { it.id == id }
             else -> true
         }
@@ -248,10 +251,10 @@ object ReadAloud {
         pump()
     }
 
-    /** Giọng đang chọn là giọng trực tuyến mà người nghe chưa đồng ý gửi chữ tới (giọng của máy, VieNeu: không gửi gì đi). */
+    /** Giọng đang chọn là giọng trực tuyến mà người nghe chưa đồng ý gửi chữ tới (giọng của máy, VieNeu, Supertonic: không gửi gì đi). */
     private fun needsConsent(): Boolean {
         val provider = ClipCache.split(voiceId).first
-        return provider != "device" && provider != VieneuVoices.PREFIX && choices?.onlineAllowed(provider) != true
+        return PreparePlan.online(voiceId) && choices?.onlineAllowed(provider) != true
     }
 
     /** Đổi giọng: các đoạn đã đọc sẵn mà chưa tới thì bỏ, đoạn kế đọc bằng giọng mới. */
