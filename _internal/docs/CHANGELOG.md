@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại
+
+- "Xuất MP3 để nghe ở app khác" có ở điện thoại (menu "…" của trang sách), ra đúng bản xuất của máy tính: một thư mục mang tên sách, mỗi chương đã xong một file
+  MP3 có tên sách, tên chương, giọng kể, số thứ tự và ảnh bìa, kèm danh sách phát. Lần đầu bạn chọn thư mục lưu (vd Music), lần sau máy nhớ; muốn đổi thì bấm
+  "Đổi thư mục" lúc đang xuất. Việc chạy nền - ra khỏi app vẫn tiếp, tiến độ và nút "Dừng" ở thông báo. Chương chưa làm xong không có trong bản xuất.
+
 ## [0.4.29] - 2026-10-06
 
 ### Studio

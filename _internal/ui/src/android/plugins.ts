@@ -236,6 +236,20 @@ export interface DownloadEvent {
   error?: string;
 }
 
+/** Tin của một lượt "Xuất MP3" (Mp3ExportWorker.kt): tiến độ (`done`/`total`), xong (`finished`), dừng (`stopped`) hay lỗi (`error`). */
+export interface Mp3ExportEvent {
+  bookId: string;
+  run: string;
+  done?: number;
+  total?: number;
+  finished?: boolean;
+  files?: number;
+  chaptersTotal?: number;
+  folder?: string;
+  stopped?: boolean;
+  error?: string;
+}
+
 /** "Cho máy khác nghe thư viện này" (LibraryServer.kt, mạng trạm bước 2): điện thoại phục vụ sách đã tải cho máy đã ghép. */
 export interface ShareStatus {
   running: boolean;
@@ -311,6 +325,11 @@ export interface EbookLibraryPlugin {
   /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file mới - hộp thoại "tạo file" của hệ thống hỏi chỗ lưu. `as` không nói:
    *  giữ loại file cuốn đã đến (`.abookproj` hay `.abook`). */
   saveBook(options: { id: string; as?: "abook" | "abookproj" }): Promise<{ saved: boolean; name?: string; size?: number; edits?: number }>;
+  /** "Xuất MP3 để nghe ở app khác" (Mp3Export.kt): thư mục MP3 như máy tính, chạy nền. Lần đầu (hay `pick`) hỏi chỗ lưu bằng bộ
+   *  chọn thư mục của hệ thống rồi nhớ lại. `cover`: bìa tự vẽ (data URL PNG) khi sách không có bìa. Tiến độ / kết quả: sự kiện
+   *  "mp3Export" mang cùng `run`. `started: false` khi không chọn thư mục. */
+  exportMp3(options: { bookId: string; cover?: string; pick?: boolean }): Promise<{ started: boolean; run?: string; folder?: string; chapters?: number }>;
+  addListener(event: "mp3Export", handler: (event: Mp3ExportEvent) => void): Promise<PluginListenerHandle>;
   deleteBook(options: { id: string }): Promise<void>;
   storage(): Promise<{ bytes: number; free: number }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number }): Promise<ListeningState>;

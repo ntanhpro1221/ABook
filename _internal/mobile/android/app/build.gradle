@@ -38,6 +38,8 @@ android {
         androidTest.assets.srcDirs += "../../../tests/fixtures/music_student"
         // Số của máy tính cho giọng VieNeu (scripts/vieneu_android_fixtures.py): VieneuOnDeviceTest so phoneme + clip trên máy thật.
         androidTest.assets.srcDirs += "../../../tests/fixtures/vieneu/android"
+        // "Xuất MP3" (tests/mp3_export_fixtures.py): Mp3ExportOnDeviceTest so tag điện thoại ghi với file ffmpeg của máy tính.
+        androidTest.assets.srcDirs += "../../../tests/fixtures/mp3_export"
     }
     signingConfigs {
         if (releaseSigning.getProperty("storeFile")) {

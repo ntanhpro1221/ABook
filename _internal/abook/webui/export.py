@@ -58,6 +58,47 @@ def _listenable(project_root: Path) -> list[dict[str, Any]]:
     return [chapter for chapter in listen_view.chapters(project_root) if chapter["available"]]
 
 
+def chapter_file_name(number: int, total: int, full_title: str) -> str:
+    """Tên file MP3 của chương thứ `number` trong `total` chương được xuất. Điện thoại (Mp3Export.kt) đặt đúng tên này -
+    bộ ví dụ chung tests/fixtures/mp3_export."""
+    width = max(2, len(str(total)))
+    return f"{number:0{width}d} - {safe_name(full_title, 90)}.mp3"
+
+
+def write_chapter(ffmpeg: str, source: Path, final: Path, cover_path: Path | None, *, title: str, album: str,
+                  narrator: str, number: int, total: int) -> None:
+    """Chép nguyên luồng âm thanh của `source` sang `final` với tag mới: ID3v2.3 + ID3v1, kèm bìa nếu có. Điện thoại ghi tag
+    bằng tay (Id3Tag.kt) cho ra đúng những byte này, trừ khung TSSE (tên phiên bản ffmpeg)."""
+    partial = final.with_name(f"{final.name}.part")
+    command = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(source)]
+    if cover_path:
+        command += ["-i", str(cover_path), "-map", "0:a", "-map", "1:v", "-c:v", "copy",
+                    "-disposition:v", "attached_pic", "-metadata:s:v", "title=Album cover",
+                    "-metadata:s:v", "comment=Cover (front)"]
+    else:
+        command += ["-map", "0:a"]
+    command += [
+        "-c:a", "copy", "-map_metadata", "-1", "-id3v2_version", "3", "-write_id3v1", "1",
+        "-metadata", f"title={title}",
+        "-metadata", f"album={album}",
+        "-metadata", f"artist={narrator}",
+        "-metadata", f"album_artist={narrator}",
+        "-metadata", f"track={number}/{total}",
+        "-metadata", "genre=Audiobook",
+        "-f", "mp3", str(partial),
+    ]
+    run_hidden(command, timeout=300)
+    os.replace(partial, final)
+
+
+def playlist_text(title: str, entries: list[tuple[float, str, str]]) -> str:
+    """Danh sách phát `.m3u8` của bản xuất; `entries`: (thời lượng giây, tên chương, tên file)."""
+    lines = ["#EXTM3U", f"#PLAYLIST:{title}"]
+    for duration, full_title, name in entries:
+        lines += [f"#EXTINF:{int(round(duration))},{full_title}", name]
+    return "\n".join(lines) + "\n"
+
+
 def export_book(project_root: Path, target_root: Path, *, cover: str | None = None,
                 folder_name: str | None = None) -> dict[str, Any]:
     """`folder_name`: tên thư mục thay cho tên sách - bản xuất cả bộ đặt mỗi phần vào "Phần N - ..."."""
@@ -72,39 +113,17 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     cover_path = _real_cover(project_root, folder) or _cover_file(folder, cover)
     ffmpeg = ffmpeg_executable()
     total = len(chapters)
-    width = max(2, len(str(total)))
-    playlist = ["#EXTM3U", f"#PLAYLIST:{title}"]
-    written: list[str] = []
+    entries: list[tuple[float, str, str]] = []
     for number, chapter in enumerate(chapters, start=1):
         source = store.chapter_audio_path(project_root, chapter["id"])
         if source is None:
             continue
-        name = f"{number:0{width}d} - {safe_name(chapter['fullTitle'], 90)}.mp3"
-        final = folder / name
-        partial = folder / f"{name}.part"
-        command = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(source)]
-        if cover_path:
-            command += ["-i", str(cover_path), "-map", "0:a", "-map", "1:v", "-c:v", "copy",
-                        "-disposition:v", "attached_pic", "-metadata:s:v", "title=Album cover",
-                        "-metadata:s:v", "comment=Cover (front)"]
-        else:
-            command += ["-map", "0:a"]
-        command += [
-            "-c:a", "copy", "-map_metadata", "-1", "-id3v2_version", "3", "-write_id3v1", "1",
-            "-metadata", f"title={chapter['fullTitle']}",
-            "-metadata", f"album={title}",
-            "-metadata", f"artist={narrator}",
-            "-metadata", f"album_artist={narrator}",
-            "-metadata", f"track={number}/{total}",
-            "-metadata", "genre=Audiobook",
-            "-f", "mp3", str(partial),
-        ]
-        run_hidden(command, timeout=300)
-        os.replace(partial, final)
-        written.append(name)
-        playlist += [f"#EXTINF:{int(round(chapter['duration']))},{chapter['fullTitle']}", name]
-    (folder / f"{safe_name(title)}.m3u8").write_text("\n".join(playlist) + "\n", encoding="utf-8")
-    return {"folder": str(folder), "files": len(written), "chaptersTotal": summary["chapters"]["total"]}
+        name = chapter_file_name(number, total, chapter["fullTitle"])
+        write_chapter(ffmpeg, source, folder / name, cover_path, title=chapter["fullTitle"], album=title,
+                      narrator=narrator, number=number, total=total)
+        entries.append((chapter["duration"], chapter["fullTitle"], name))
+    (folder / f"{safe_name(title)}.m3u8").write_text(playlist_text(title, entries), encoding="utf-8")
+    return {"folder": str(folder), "files": len(entries),"chaptersTotal": summary["chapters"]["total"]}
 
 
 def _title_of(project: Path) -> str:
