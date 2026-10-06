@@ -1752,6 +1752,15 @@ IN_SENTENCE_QUOTE_OPEN_ENDINGS = tuple(".!?…:;\"”’)")
 # chuẩn: không đoạn nào trong 31 cụm trích giữa câu có dấu như thế. Động từ nói đứng trước thì KHÔNG đủ: "Ai lại nói “chắc em
 # sẽ thử nín thở” chứ…" vẫn là chữ người kể (5 đoạn đáp án như thế).
 IN_SENTENCE_UTTERANCE_MARKS = (",", ";", "!", "?", "…")
+# Câu kể dừng ngay ở động từ phát ra tiếng ("Mai khẽ thốt lên một tiếng “à”, rồi..."): tiếng kêu sau nó là của người
+# vừa được nêu tên (GOLD_GUIDE quy tắc 8: tiếng kêu của người vẫn là của người ấy). Hai thầy gán nhãn 06-10 cùng trả lời tên
+# người ấy. "Cậu chỉ khẽ “hừm”" (không động từ, không tên) thì vẫn về người kể.
+VOICED_SOUND_LEAD_IN_PATTERN = re.compile(
+    r"(?<![\wÀ-ỹĐđ])(?:nói|hỏi|đáp|trả lời|lên tiếng|thì thầm|lẩm bẩm|quát|kêu|thốt|gào|hét|hô|rên|reo|bật|buột|phát)"
+    r"(?:\s+(?:lên|ra|khẽ|nhỏ|thầm|miệng))*"
+    r"(?:\s+(?:một|vài))?(?:\s+(?:tiếng|câu|từ))?\s*$",
+    re.IGNORECASE,
+)
 
 
 def _is_quoted_inside_a_sentence(
@@ -1834,6 +1843,27 @@ def _has_its_own_speech_tag(
     )
 
 
+def _is_voiced_sound_of_the_named_speaker(group: list[Any], index: int, speaker: str) -> bool:
+    """Tiếng kêu trong ngoặc ngay sau câu kể nêu tên `speaker` và dừng ở động từ phát ra tiếng.
+
+    "Nói đến đó, Mai khẽ bật ra một tiếng “à”, sau đó mỉm cười." - “à” là của Mai, không phải chữ người kể trích lại.
+    Chỉ tiếng kêu (`is_vocalization_only`); thuật ngữ, câu trích (“Ma Vương”, “gan dạ”) vẫn về người kể.
+    """
+    if index == 0 or is_local_speaker(speaker):
+        return False
+    quoted = str(group[index]["text"]).strip().strip("“”\"'‘’").strip()
+    if not quoted or not is_vocalization_only(quoted):
+        return False
+    lead_in = re.split(r"[.!?…:;]", str(group[index - 1]["text"]))[-1]
+    if VOICED_SOUND_LEAD_IN_PATTERN.search(lead_in) is None:
+        return False
+    words = [speaker, *(word for word in speaker.split() if len(word) >= 3 and not is_vietnamese_syllable(word))]
+    return any(
+        re.search(rf"(?<![\wÀ-ỹĐđ]){re.escape(word)}(?![\wÀ-ỹĐđ])", lead_in, flags=re.IGNORECASE)
+        for word in words
+    )
+
+
 def _repair_in_sentence_quote_speakers(
     group: list[Any],
     result: dict[str, dict[str, Any]],
@@ -1842,7 +1872,8 @@ def _repair_in_sentence_quote_speakers(
     """Cụm trích giữa một câu kể là chữ của NGƯỜI KỂ: "...không thể bảo đây là “Khoa Học” thì đòi hỏi...".
 
     Đo trên 41 chương đáp án chuẩn: 29 đoạn bị chạm, đáp án nhận NARRATOR đủ điểm cả 29, không đoạn nào từ chối.
-    Loại đoạn để nguyên - bộ tách đoạn đã khoá là thoại, và đáp án ghi đúng thế.
+    Loại đoạn để nguyên - bộ tách đoạn đã khoá là thoại, và đáp án ghi đúng thế. Trừ tiếng kêu của người được nêu tên
+    ngay trong lời dẫn (`_is_voiced_sound_of_the_named_speaker`): model nói là của người ấy thì giữ.
     """
     for index, row in enumerate(group):
         data = result.get(str(row["stable_id"]))
@@ -1851,6 +1882,8 @@ def _repair_in_sentence_quote_speakers(
         if normalize_speaker_name(str(data["speaker"])) == "narrator":
             continue
         if not _is_quoted_inside_a_sentence(group, index, result, original_context):
+            continue
+        if _is_voiced_sound_of_the_named_speaker(group, index, str(data["speaker"])):
             continue
         data["speaker"] = "NARRATOR"
         _record_host_note_marker(data, IN_SENTENCE_QUOTE_NARRATOR_NOTE)
