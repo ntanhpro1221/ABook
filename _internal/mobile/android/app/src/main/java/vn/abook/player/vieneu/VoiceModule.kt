@@ -11,13 +11,15 @@ import java.io.IOException
 /**
  * The frame of a voice the listener downloads on a tap (the phone's `voice_module.ModuleCore`), shared by "Giọng VieNeu" ([VieneuModule]) and
  * "Giọng Supertonic" ([vn.abook.player.readaloud.SupertonicModule]): pinned parts in [dir] (SHA-256 + size each, a newer pin makes a part
- * "outdated" and only it is fetched again), parts another module already has on this phone used where they are ([shared]) and not counted,
- * sizes shown = what this phone still lacks, the download on a background thread with progress, a self-benchmark of a few seconds after it,
+ * "outdated" and only it is fetched again), the runtime parts every voice needs ([SharedRuntime.PARTS]) kept once for all of them in [runtime]
+ * (or used where "Gói nhạc" has them, [shared]) and not counted again, sizes shown = what this phone still lacks, the download on a background thread with progress, a self-benchmark of a few seconds after it,
  * removal of each choice. Same status shape as the desktop (ui/src/listen/vieneuModule.ts). The subclass gives the parts, choices and words.
  */
 abstract class VoiceModule(
     protected val dir: File,
-    /** Part id -> its files (paths inside [dir]). */
+    /** Where the runtime parts ([SharedRuntime.PARTS]) are, for every voice module. */
+    private val runtime: SharedRuntime,
+    /** Part id -> its files (paths inside [dir], or inside [runtime]'s folder for a runtime part). */
     protected val groups: Map<String, List<Part>>,
     protected val facts: Facts,
     /** Measure a tier just downloaded; null in tests that do not measure. */
@@ -41,9 +43,10 @@ abstract class VoiceModule(
         }
     }
 
-    /** "giọng VieNeu": the module in the middle of a sentence (error messages); thread names use [threadName]. */
+    /** "giọng VieNeu": the module in the middle of a sentence (error messages). */
     protected abstract val name: String
-    protected abstract val threadName: String
+    /** "vieneu": thread names, and this module's name among the users of [runtime]. */
+    protected abstract val key: String
     /** Choices in the order the card shows them, and the tiers measured after a download (in measuring order). */
     abstract val choices: List<String>
     protected abstract val tiers: List<String>
@@ -59,8 +62,14 @@ abstract class VoiceModule(
     protected abstract fun suggestion(bench: JSONObject, tiers: List<String>): JSONObject?
     /** (recommended, ticked at first) of a choice. */
     protected open fun marks(choice: String, best: String): Pair<Boolean, Boolean> = (choice == best) to (choice == best)
-    /** The folder outside [dir] that already holds part [id] (another module's copy, used in place and not counted), or null. */
-    protected open fun shared(id: String): File? = null
+    /** Whether part [id] is one of the runtime parts kept in [runtime] for every voice. */
+    private fun common(id: String) = id in SharedRuntime.PARTS
+
+    /** The folder outside this module and [runtime] that holds part [id] ("Gói nhạc"'s copy, used in place and not counted), or null. */
+    protected fun shared(id: String): File? = if (common(id)) runtime.elsewhere(groups.getValue(id)) else null
+
+    /** Where part [id]'s files are kept (and downloaded to). */
+    private fun store(id: String): PinnedFiles = if (common(id)) runtime.pinned else pinned
 
     protected val pinned = PinnedFiles(dir, "", STAMP)
     private val lock = Any()
@@ -73,29 +82,26 @@ abstract class VoiceModule(
     private var worker: Thread? = null
     private val benchFile = File(dir, BENCH)
 
-    /** Whether [folder] holds every file of part [id] at its pinned size (a module that keeps the same pins). */
-    protected fun holds(folder: File?, id: String): Boolean = folder != null && groups.getValue(id).let { parts ->
-        parts.isNotEmpty() && parts.all { part -> File(folder, part.name).let { it.isFile && it.length() == part.size } }
-    }
-
-    /** Folder whose `<part path>` files are used for part [id]: the other module's when it has them, else this module's. */
-    fun folderFor(id: String): File = shared(id) ?: dir
+    /** Folder whose `<part path>` files are used for part [id]: "Gói nhạc"'s when only it has them, else [runtime]'s for a runtime part, else this
+     *  module's. */
+    fun folderFor(id: String): File = shared(id) ?: if (common(id)) runtime.dir else dir
 
     // ---- what is here -----------------------------------------------------------------------------------------------------------
-    private fun partState(id: String, stamp: Map<String, String>): String {
+    private fun partState(id: String, stamps: Map<PinnedFiles, Map<String, String>>): String {
         if (shared(id) != null) return "current"
         val files = groups.getValue(id)
-        if (files.isEmpty() || !files.all { pinned.present(it) }) return "missing"
-        return if (files.all { pinned.isCurrent(it, stamp) }) "current" else "outdated"
+        val store = store(id)
+        if (files.isEmpty() || !files.all { store.present(it) }) return "missing"
+        return if (files.all { store.isCurrent(it, stamps.getValue(store)) }) "current" else "outdated"
     }
 
     protected fun states(): Map<String, String> {
-        val stamp = pinned.readStamp()
-        return groups.keys.associateWith { partState(it, stamp) }
+        val stamps = listOf(pinned, runtime.pinned).associateWith { it.readStamp() }
+        return groups.keys.associateWith { partState(it, stamps) }
     }
 
     private fun bytes(id: String, states: Map<String, String>): Long =
-        if (states[id] == "current") 0L else groups.getValue(id).filter { !pinned.isCurrent(it) }.sumOf { it.wireSize }
+        if (states[id] == "current") 0L else groups.getValue(id).filter { !store(id).isCurrent(it) }.sumOf { it.wireSize }
 
     /** Choices whose parts are all on this phone (an older version counts). */
     protected fun have(states: Map<String, String>) = choices.filter { choice -> needs(choice).all { states[it] != "missing" } }
@@ -108,11 +114,9 @@ abstract class VoiceModule(
     fun parts(wanted: List<String>): List<Part> = wanted.flatMap { needs(it) }.distinct().flatMap { groups.getValue(it) }
 
     /** Runtime libraries ([Part.blocking]) must match the APK's code (ONNX Runtime's Java API, JNI functions): true when one of the parts [used]
-     *  (this module's own copies) is older than this app's pin - the voice then waits for the update. */
-    protected fun runtimeBehind(used: List<String>): Boolean {
-        val stamp = pinned.readStamp()
-        return used.filter { shared(it) == null }.flatMap { groups.getValue(it) }.any { it.blocking && !pinned.isCurrent(it, stamp) }
-    }
+     *  (the copies this module or [runtime] keeps) is older than this app's pin - the voice then waits for the update. */
+    protected fun runtimeBehind(used: List<String>): Boolean =
+        used.filter { shared(it) == null }.any { id -> groups.getValue(id).any { it.blocking && !store(id).isCurrent(it) } }
 
     // ---- benchmark --------------------------------------------------------------------------------------------------------------
     protected fun readBench(): JSONObject = try {
@@ -123,6 +127,10 @@ abstract class VoiceModule(
 
     /** Self-measured RTF of [tier] on this phone; null when not measured. */
     protected fun tierRtf(tier: String): Double? = readBench().optJSONObject(tier)?.optDouble("rtf")?.takeIf { !it.isNaN() }
+
+    /** The RTF of [tier] in [bench] when this phone cannot read it live (at or above [SLOW_RTF]: the card then says so and points to "Làm trước",
+     *  ui/src/listen/vieneuModule.ts), else null - the one rule of every voice module. */
+    protected fun slowRtf(bench: JSONObject, tier: String): Double? = bench.optJSONObject(tier)?.optDouble("rtf")?.takeIf { !it.isNaN() && it >= SLOW_RTF }
 
     // ---- status -----------------------------------------------------------------------------------------------------------------
     /** For the module's card (same shape as the desktop's status, ui/src/listen/vieneuModule.ts). */
@@ -150,7 +158,7 @@ abstract class VoiceModule(
         val parts = JSONArray()
         for (id in groups.keys) {
             parts.put(JSONObject().put("id", id).put("label", partLabel(id)).put("bytes", groups.getValue(id).sumOf { it.wireSize })
-                .put("state", states.getValue(id)).put("external", shared(id) != null))
+                .put("state", states.getValue(id)).put("external", common(id)))
         }
         val shownBench = JSONObject()
         for (tier in installedTiers) bench.optJSONObject(tier)?.let { shownBench.put(tier, it) }
@@ -182,8 +190,9 @@ abstract class VoiceModule(
             finished = 0
             current = 0
             total = needed.sumOf { bytes(it, states) }
-            val files = needed.flatMap { id -> groups.getValue(id) }
-            worker = Thread({ run(files, needed) }, "abook-$threadName-module").apply {
+            // claimed before the download: another voice removed meanwhile must not take runtime files this one is about to use
+            runtime.use(key, (wanted ?: have(states)).flatMap { needs(it) }.filter(::common).distinct())
+            worker = Thread({ run(needed) }, "abook-$key-module").apply {
                 isDaemon = true
                 priority = Thread.MIN_PRIORITY
                 start()
@@ -191,16 +200,22 @@ abstract class VoiceModule(
         }
     }
 
-    private fun run(files: List<Part>, needed: List<String>) {
+    private fun run(needed: List<String>) {
         try {
             forget() // a loaded engine must not read files being replaced
-            pinned.download(files, object : PinnedFiles.Progress {
+            val progress = object : PinnedFiles.Progress {
                 override fun current(bytes: Long) = synchronized(lock) { current = bytes }
                 override fun done(part: Part) = synchronized(lock) {
                     finished += part.wireSize
                     current = 0
                 }
-            })
+            }
+            val (common, own) = needed.partition(::common)
+            // another voice may be fetching the same runtime files: one at a time, the second then finds them current
+            if (common.isNotEmpty()) synchronized(runtime.fetching) { runtime.pinned.download(common.flatMap { groups.getValue(it) }, progress) }
+            // a copy in this module's own folder (where versions before the shared folder put it) is never read again
+            common.flatMap { groups.getValue(it) }.map { it.name.substringBefore('/') }.distinct().forEach { File(dir, it).deleteRecursively() }
+            pinned.download(own.flatMap { groups.getValue(it) }, progress)
             forget()
             synchronized(lock) {
                 downloading = false
@@ -255,7 +270,7 @@ abstract class VoiceModule(
             val installedTiers = have(states())
             if (installedTiers.isEmpty()) return
             benchmarking = true
-            worker = Thread({ measure(tiers.filter { it in installedTiers }) }, "abook-$threadName-bench").apply {
+            worker = Thread({ measure(tiers.filter { it in installedTiers }) }, "abook-$key-bench").apply {
                 isDaemon = true
                 priority = Thread.MIN_PRIORITY
                 start()
@@ -263,7 +278,8 @@ abstract class VoiceModule(
         }
     }
 
-    /** Remove one choice; parts another installed choice still needs stay, the last one takes every part of this module (never another module's). */
+    /** Remove one choice; parts another installed choice still needs stay, the last one takes this module's folder. A runtime part goes only when
+     *  no other voice uses it ([SharedRuntime.release]); "Gói nhạc"'s files are never touched. */
     fun remove(choice: String) {
         require(choice in choices) { "Không có lựa chọn $choice" }
         synchronized(lock) {
@@ -271,12 +287,17 @@ abstract class VoiceModule(
             forget()
             val others = have(states()).filter { it != choice }
             val keep = others.flatMap { needs(it) }.toSet()
-            val drop = needs(choice).filter { it !in keep }
-            val files = drop.flatMap { groups.getValue(it) }
-            pinned.remove(files)
-            files.map { it.name.substringBefore('/') }.distinct().forEach { File(dir, it).deleteRecursively() }
-            val bench = readBench().apply { remove(choice) }
-            if (bench.length() == 0) benchFile.delete() else Store.writeAtomic(benchFile, bench.toString())
+            val (common, own) = needs(choice).filter { it !in keep }.partition(::common)
+            runtime.release(key, common.associateWith { groups.getValue(it) })
+            if (others.isEmpty()) {
+                dir.deleteRecursively()
+            } else {
+                val files = own.flatMap { groups.getValue(it) }
+                pinned.remove(files)
+                files.map { it.name.substringBefore('/') }.distinct().forEach { File(dir, it).deleteRecursively() }
+                val bench = readBench().apply { remove(choice) }
+                if (bench.length() == 0) benchFile.delete() else Store.writeAtomic(benchFile, bench.toString())
+            }
             error = ""
         }
     }

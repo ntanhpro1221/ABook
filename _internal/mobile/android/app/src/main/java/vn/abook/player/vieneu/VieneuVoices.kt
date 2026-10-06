@@ -31,7 +31,7 @@ object VieneuVoices {
     fun module(appContext: Context): VieneuModule = module ?: run {
         val ctx = appContext.applicationContext
         context = ctx
-        VieneuModule(File(ctx.filesDir, "vieneu"), File(ctx.filesDir, "music/student"), OrtRuntime.deviceAbi(), facts(ctx),
+        VieneuModule(File(ctx.filesDir, "vieneu"), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), facts(ctx),
             benchmark = ::benchmark, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) }).also { module = it }
     }
 

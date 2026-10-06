@@ -8,8 +8,9 @@ import java.io.File
 /**
  * "Giọng VieNeu" on the phone (docs/LISTEN_ANYTHING.md section 3): the same voices the desktop module (`abook/webui/vieneu_module.py`) offers,
  * downloaded only when the listener taps, never shipped in the APK. The same pinned upstream files as the desktop (Hugging Face commits, the
- * PyPI wheels of sea-g2p and vieneu 3.8.3, SHA-256 + size each), plus what only the phone needs: ONNX Runtime's native libraries (shared with
- * "Gói nhạc": when that is on the phone it is used and not counted) and sea-g2p built as a JNI library (scripts/prepare_sea_g2p_android.py).
+ * PyPI wheels of sea-g2p and vieneu 3.8.3, SHA-256 + size each), plus what only the phone needs: ONNX Runtime's native libraries and sea-g2p
+ * built as a JNI library (scripts/prepare_sea_g2p_android.py) - both kept once for every voice ([SharedRuntime]; "Gói nhạc"'s ONNX Runtime is
+ * used where it is), so whichever voice comes first, the other does not download them again.
  *
  * Choices: Nano ("Khuyên dùng" on phones: measured 03-10 neither tier keeps up live on a mid-range phone, Nano is lighter) and Turbo (only
  * recommended once a self-benchmark says this phone is fast enough). After a download the phone measures itself for a few seconds
@@ -18,8 +19,8 @@ import java.io.File
  */
 class VieneuModule(
     dir: File,
-    /** "Gói nhạc"'s folder: its `ort/` libraries are used when present (same pinned version), so they are not downloaded twice. */
-    private val sharedOrt: File?,
+    /** ONNX Runtime and sea-g2p, shared with the other voices. */
+    runtime: SharedRuntime,
     abi: String?,
     facts: VoiceModule.Facts,
     /** Measure a tier just downloaded ([VieneuVoices.benchmark]); null in tests that do not measure. */
@@ -30,10 +31,10 @@ class VieneuModule(
     groups: Map<String, List<Part>>? = null,
     /** Why this phone cannot have the module ("" = it can); null = decided from the ABI and the pins. */
     blocked: String? = null,
-) : VoiceModule(dir, groups ?: defaultGroups(abi), facts, benchmark, forget, metered) {
+) : VoiceModule(dir, runtime, groups ?: defaultGroups(abi), facts, benchmark, forget, metered) {
     private val g2pLib = abi?.let { G2P_LIBRARIES[it] }
     override val name = "giọng VieNeu"
-    override val threadName = "vieneu"
+    override val key = "vieneu"
     override val choices = CHOICES
     override val tiers = TIERS
     override fun needs(choice: String) = NEEDS.getValue(choice)
@@ -43,9 +44,6 @@ class VieneuModule(
         G2P_REVISION.isEmpty() -> "bản giọng VieNeu cho điện thoại chưa được đăng"
         else -> ""
     }
-
-    /** ONNX Runtime is already in "Gói nhạc"'s folder (same pinned files): use it there, do not count or download it again. */
-    override fun shared(id: String): File? = sharedOrt?.takeIf { id == "ort" && holds(it, id) }
 
     /** Folder holding `ort/` for [vn.abook.player.OrtRuntime.load]. */
     fun ortFolder(): File = folderFor("ort")
@@ -64,7 +62,8 @@ class VieneuModule(
         val tiers = have(states())
         if (tiers.isEmpty() || g2pLib == null) return null
         if (runtimeBehind(tiers.flatMap { needs(it) }.distinct())) return null // an old runtime library waits for the update
-        return VieneuInstalled(pinned.file(g2pLib), pinned.file(DICTIONARY), pinned.file(VOICES),
+        val g2p = folderFor("g2p")
+        return VieneuInstalled(File(g2p, g2pLib.name), File(g2p, DICTIONARY.name), pinned.file(VOICES),
             if ("turbo" in tiers) File(dir, "turbo") to File(dir, "turbo") else null, if ("nano" in tiers) File(dir, "nano") else null)
     }
 
@@ -87,10 +86,10 @@ class VieneuModule(
 
     /** A downloaded voice slower than listening -> what to offer (the listener decides): Turbo -> Nano when Nano keeps up, else an online voice. */
     override fun suggestion(bench: JSONObject, tiers: List<String>): JSONObject? {
-        val slow = tiers.filter { (bench.optJSONObject(it)?.optDouble("rtf") ?: 0.0) >= SLOW_RTF }
+        val slow = tiers.filter { slowRtf(bench, it) != null }
         if (slow.isEmpty()) return null
         val tier = if ("turbo" in slow) "turbo" else slow[0]
-        val rtf = bench.getJSONObject(tier).getDouble("rtf")
+        val rtf = slowRtf(bench, tier)!!
         return if (tier == "turbo" && "nano" !in slow) JSONObject().put("tier", tier).put("rtf", rtf).put("switchTo", "nano").put("installed", "nano" in tiers)
         else JSONObject().put("tier", tier).put("rtf", rtf).put("switchTo", "online").put("installed", true)
     }
