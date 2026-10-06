@@ -3221,3 +3221,10 @@ Từng loại (ghi lại, 5b+6): dòng ngắt F1 0,207 (P 0,69 R 0,12, 4,2/giờ
 truyện game kích sai); mốc thời gian/nơi chốn 0,000 (0,6/giờ); heading 0. Bộ 4+5 (ghi lại): CUE thô 0,307 (P 0,66), sau lọc 0,257.
 Đọc: CUE chính xác (P 0,5-0,7, gấp 3-4 lần app) nhưng chỉ bắt ~1/5 ranh giới người chấm; người chấm cắt cảnh theo nội dung nhiều hơn
 theo dấu hiệu. Bộ lọc trễ 60 s làm CUE MẤT F1 (bỏ ranh giới đúng giữa hai cảnh ngắn). LLM và CUE ∪ LLM chờ suất GPU (Model).
+
+### 06-10 18:3x - Ghi trước thêm (Lead gợi ý, TRƯỚC khi có số LLM): CUE cứng + LLM mềm
+- **CUEcứng+LLM:** hợp CUE ∪ LLM như trên, nhưng bộ lọc trễ 60 s KHÔNG bao giờ bỏ ranh giới CUE. Khi gặp cảnh ngắn: mở đầu là ranh
+  giới mềm (LLM) thì bỏ nó như cũ; mở đầu cứng thì bỏ ranh giới kết cảnh nếu mềm; cả hai cứng thì giữ cảnh ngắn. Chỉ báo bản sau lọc.
+- Cùng cổng thắng; trong luật chọn, nó tính như họ LLM (chỉ chọn khi hơn CUE > 0,05). Không dò thêm biến thể nào sau khi thấy số.
+- Lead giao nhánh dev/scene-break (dòng chỉ ký hiệu -> nghỉ 1500 ms + cột segments.scene_break); khi có, đo lại CUE trên cờ ấy
+  (ghi lại, để xác nhận cờ app khớp với cách đọc file nguồn ở đây).
