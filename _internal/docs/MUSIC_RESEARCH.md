@@ -3668,3 +3668,93 @@ CHÍNH (4 mô hình + CF, khớp phương sai): MAE mức .173, r V .78, T .91 (
 ridge thường .175 / .75 / .91; chỉ CF + hiệu chỉnh .215 / .52 / .87; mốc 4 mô hình cũ (không đặc trưng chữ) .175 / .79 / .90.
 Đọc: T giữa các chương đã tốt (~.9) và bão hoà; nút thắt của mức chương là **V** (~.78-.79), mọi nguồn zero-shot đều không gỡ được.
 Không cần lượt CF bộ 7. L2-EST cũ vẫn chờ xác nhận trên bộ 7 như đã ghi (ae425cdc).
+
+### 07-10 05:0x - Đáp án bộ 7 + KẾT QUẢ XÁC NHẬN X/Y (ghi trước b71d62c1): **X** - Y trượt cả ba điều kiện
+
+Đáp án bộ 7: 2 agent Opus chấm mù A (xuôi) / B (ngược) theo PROMPT_A/B (hướng dẫn bản 3), phân xử tự động `adjudicate_scenes.py`
+-> `scene_set7/gold_scene7` (20 chương, 4 truyện, 4,4 giờ). Đáp án 13,0 ranh giới/giờ (thưa hơn bộ 4-6, ~22). **Người A so B:
+P .68 R .76 F1 .72** (y như các bộ trước). Cả hai người chấm cùng nêu một chỗ mơ hồ: tiêu đề trước lời người dịch (L4) buộc thành
+`scene 0-0` riêng ở ~10 chương.
+
+`track_changes2.py confirm set7` (cờ scene_break bộ 7 dựng lại bằng `seg_flag_build.py`, cờ bộ cũ giữ nguyên; SEG bộ 7 GPU 04:44):
+
+| bộ 7 | đổi bài/giờ | P | R | F1 | lặp | anh em/giờ | z TB | đổi sai chỗ/giờ |
+|---|---|---|---|---|---|---|---|---|
+| TRƯỚC 0.4.31 | 20,0 | .19 | .30 | .234 | 14% | - | - | 16,2 |
+| **X: cờ+CUE** | 7,7 | .38 | .23 | **.286** | 2% | 4,8 | .42 | **4,8** |
+| Y: cờ+CUE+LLM | 20,0 | .31 | .47 | .372 | 0% | 2,5 | .28 | 13,9 |
+
+Điều kiện Y: F1 Y >= X + .10 -> .372 < .386 KHÔNG; P Y >= .35 -> .31 KHÔNG; sai chỗ Y <= 0,8 x 16,2 = 13,0 -> 13,9 KHÔNG.
+**=> App làm X** (đặc tả b796ae8e, nguồn 'llm' giữ TẮT).
+
+Ghi lại cho đúng:
+- X trên bộ 7 chỉ đạt P .38, không phải .70 như trên 5b+6. Ranh giới cờ+CUE tổng quát hoá kém hơn mức đo trên 5b+6 (đáp án bộ 7
+  thưa hơn, và truyện bộ 7 nhiều dòng `-o0o-` / tiêu đề phụ). Nhưng X vẫn hơn 0.4.31 ở mọi trục: F1 .286 so với .234, đổi sai chỗ
+  giảm 3,4 lần (16,2 -> 4,8/giờ), lặp 14% -> 2%.
+- Y đứng thứ hai về mọi mặt trừ R, và gần đạt F1. Cái giá của nó là đổi sai chỗ gần bằng hôm nay. LLM chia cảnh vẫn là hướng có
+  trần cao nhất (người .72); việc kế là làm P của nó lên, chưa phải cắm vào app.
+
+**Kiểm bản cài X (dev/music-scene ee468863, `music/verify_app_x.py`)**: chạy chính `chapter_scenes` + `choose` của app (CUE trên câu,
+không đọc file nguồn) - 5b+6: đổi 4,7/giờ P .69 R .14 F1 .226, anh em 5,8/giờ (mô phỏng 4,8 / .70 / .236 / 5,2); bộ 7: 8,0/giờ P .37
+R .23 F1 .283, anh em 4,8/giờ (mô phỏng 7,7 / .38 / .286 / 4,8). Khớp trong ~.01 F1; lệch nhỏ do CUE trên câu thay vì trên file nguồn.
+
+### 07-10 05:1x - XÁC NHẬN mức chương trên bộ 7 (ghi trước fff35839; P0 bộ 7 GPU 04:46-04:50): **KHÔNG THẮNG**
+
+`chapter_level.py confirm set7` (20 chương), cổng MAE <= .35:
+
+| bộ 7 | MAE | V | T | r V | r T |
+|---|---|---|---|---|---|
+| [mốc] hằng 0 | .352 | .360 | .345 | - | - |
+| [mốc] nhãn câu app thô | .334 | .333 | .335 | .49 | .65 |
+| [mốc] trần (mức đáp án) | .094 | .092 | .097 | 1 | 1 |
+| **[CHÍNH] V = C0 hc, T = P0 hc** | **.502** | .276 | **.728** | .49 | .85 |
+| [ghi lại] C0 hc cả hai trục | .324 | .276 | .371 | .49 | .65 |
+| [ghi lại] P0 thô | .288 | .315 | .260 | .64 | .81 |
+
+Đọc:
+- Công thức CHÍNH hỏng ở T. Hệ số chặn T = -0,49 học trên 4+5 không chuyển sang bộ 7: thứ tự giữa các chương vẫn tốt (r T .85)
+  nhưng mức lệch hẳn (MAE T .728).
+- Bộ 7 có trần rất thấp (.094, so với .286 ở 5b+6): đáp án bộ 7 ít cảnh mỗi chương, nên mức chương gần như nói hết. Vì thế cổng .35
+  dễ hơn: hằng 0 đã .352, nhãn app thô .334. Không dùng điều này để đổi kết luận.
+- Bài học: hiệu chỉnh mức (hệ số chặn) học từ một bộ không đứng được sang bộ khác; thứ tự (r) thì đứng được. Lớp mức chương nên
+  dùng r / thứ hạng trong cuốn, hoặc hiệu chỉnh theo cuốn, không dùng hằng toàn cục.
+
+### 07-10 05:3x - ĐÍNH CHÍNH: kết quả "CL bộ 7 KHÔNG THẮNG" ở trên KHÔNG HỢP LỆ
+
+`spans7.py p0` gọi cứng `PM.ask("P2", …)`, nên file `pm_P0_set7` thực ra là đầu ra của prompt P2 (thang chữ số, có logprobs):
+ba dòng đầu trùng `pm_P2_set7`. Công thức ghi trước (T = 1,066·P0 − 0,490) vì vậy đã được áp lên một thang khác. Đó là lý do
+P0 "bộ 7" có T TB −0,39, sd 0,08, trong khi bộ 4/5 là +0,56/+0,69, sd 0,29. Đã sửa `spans7.py` (`PM.ask(variant, …)`) và cất file
+sai thành `*.WRONG_was_P2_prompt.jsonl`. P0 bộ 7 sẽ chạy lại trên GPU (hàng Model), rồi chấm lại đúng công thức ghi trước fff35839.
+Bảng và "bài học về hệ số chặn" ở mục trên bỏ hết. Cột V (C0) không dùng P0 nên MAE V .276 vẫn đúng.
+
+### 07-10 06:0x - SEG-P (thăm dò, KHÔNG ghi trước): bộ lọc ranh giới LLM cũ bỏ nhầm phía
+
+`research/music/seg_precision.py` tính độ chính xác của từng ranh giới LLM (qwen3.5:4b, kết quả SEG đã có, CPU) theo đặc trưng rẻ:
+
+| đặc trưng | P 4+5 | P 5b+6 | P bộ 7 |
+|---|---|---|---|
+| tất cả | .42 | .33 | .27 |
+| cách ranh giới TRƯỚC < 60 s | .32 | .23 | .14 |
+| cách ranh giới SAU < 60 s | .43 | .33 | .30 (trung tính) |
+| là câu đầu cửa sổ 12k ký tự | - | .22 | .09 |
+| trùng dấu CUE (±1 câu) | .79 | .79 | .36 |
+
+Khi hai ranh giới gần nhau, cái SAU hay sai. Bộ lọc trễ cũ (`hysteresis`, cảnh < 60 s thì bỏ ranh giới đầu cảnh ấy) lại bỏ cái
+TRƯỚC. Bộ lọc mới `later_drop`: bỏ ranh giới là câu đầu cửa sổ, rồi đi xuôi và bỏ ranh giới cách cái đã giữ < g giây.
+g được chọn trên 4+5 theo F1 cao nhất (luật chọn viết trong mã trước khi chạy), đo trên 5b+6 và bộ 7:
+
+| LLM một mình | 4+5 (học) | 5b+6 | bộ 7 |
+|---|---|---|---|
+| lọc cũ (bỏ TRƯỚC, 60 s) | .393 (P .42) | .314 (P .33) | .335 (P .27) |
+| **mới, g = 30 s (chọn)** | .457 (P .47) | **.393** (P .39) | **.435** (P .34) |
+| chỉ bỏ SAU 30 s | .456 | .387 | .414 |
+| chỉ bỏ đầu cửa sổ | .443 | .370 | .383 |
+
+Hai phần đều góp. Mức tăng +.08 đến +.10 F1 đứng được trên cả hai bộ đo.
+
+Có CUE làm dấu cứng: trên 5b+6, g = 60 s tăng từ .388 lên .424. Trên bộ 7 thì CUE kéo xuống: cũ .246, mới .291, P ~.19, 39 ranh giới/giờ,
+vì dấu CUE của nguồn bộ 7 nhiễu (P .36). Đó là việc riêng: CUE cần lọc theo nguồn.
+
+Với app: nguồn `llm` vẫn TẮT (chế độ X). Ngay cả bộ lọc mới cũng chỉ đạt P .34-.39, còn xa cổng P .70 của việc đổi bài. Nếu sau này
+mở lại chế độ Y thì dùng `later_drop` thay `hysteresis` cho ranh giới LLM. Kết quả này cần ghi trước và xác nhận trên một bộ mới
+trước khi đưa vào app.
