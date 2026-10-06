@@ -26,6 +26,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Tên viết kiểu nói lắp ("A-Azuma-san") không còn làm dừng cả lượt phân tích sách: cách đọc "A A-du-ma-xan" được
   khoá như mọi tên khác. Một cách đọc tên nào đó không khoá được thì app ghi cảnh báo và đọc tiếp cuốn, không dừng.
+- Tên bị máy tách thành từng âm tiết ("Kim Jae Hun") trong khi sách viết liền ("Kim Jaehun") không còn thành hai nhân vật hai
+  giọng: app gộp về cách viết của sách, nhưng chỉ khi sách viết liền như thế ít nhất ba lần và không chỗ nào viết đúng như máy.
 
 ## [0.4.29] - 2026-10-06
 
