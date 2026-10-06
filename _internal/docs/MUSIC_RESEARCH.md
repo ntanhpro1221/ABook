@@ -3410,3 +3410,27 @@ research/music/app_flag_seg.py.
 Cờ thêm khoảng 1,4 ranh giới/giờ, hầu hết trúng: F1 +0,08. Nhưng app vẫn chỉ đạt khoảng 1/3 mức đồng thuận người-người. Phần còn lại
 là cảnh người chấm cắt theo NỘI DUNG mà không có dấu hiệu chữ nào, cộng các lần cắt đều 180 s của app (vẫn là phần lớn ranh giới).
 Đây là việc CS-SEG (LLM) phải trả lời.
+
+### 07-10 00:1x - L3-PAIR / P0-VOTE6 / L3-3B: script sẵn sàng (ghi trước 33c0f58f), chờ GPU
+Mã: Corpus research/music/l3_runs.py (`run <PAIR|VOTE6|3B|P0> <bộ>`, `score`). Chi tiết thực thi chốt TRƯỚC khi chạy:
+- **Neo L3-PAIR:**
+  - khúc đầu, khúc chứa điểm giữa thời lượng, khúc cuối;
+  - ký hiệu hoà là **H** (không dùng "=", vì "V==" có thể gộp token);
+  - prompt hỏi cả V, E, T, mỗi trục là đoạn nào vui hơn / dồn dập hơn / căng hơn;
+  - điểm [0,1] đổi sang −2..2 (chỉ thứ tự có nghĩa với r trong chương);
+  - ghi P(H) mỗi trục.
+- **Ví dụ L3-3B:** mỗi trục, mỗi bậc là cảnh đáp án 4+5 có nhãn gần −1/0/+1 (thang nửa) nhất. Hoà thì chọn cảnh có số tiếng gần 60 nhất,
+  rồi theo khoá. Trích 60 tiếng đầu cảnh. Kỳ vọng xác suất trên 1/2/3.
+- **Mốc P0:** P0 Ollama đã có cho 4/5/5b; bộ 6 và 7 chạy thêm P0 cùng prompt.
+- **Cổng** như 33c0f58f, đo trên 5b+6, cộng bộ 7 khi có đáp án.
+- **Ước chi phí (lượt gọi):**
+  - bộ 6: PAIR 618, VOTE6 738, 3B 123, P0 123;
+  - 5b tương tự;
+  - tổng ~3.000-3.500 lượt cho 5b+6, ~4-6 giờ GPU.
+
+**Dữ liệu cặp từ nhãn người (Lead 23:5x; cho một bản có huấn luyện về sau, CHƯA ghi trước lượt chạy):** `build_pairs.py`.
+- Chỉ dùng 4+5. Cặp (khúc, neo) cả hai thứ tự, cùng PAIR_PROMPT.
+- Nhãn A/B/H theo chênh TB đáp án, |Δ| < 0,25 thang nửa thì là H.
+- Valid tách theo truyện: 3/17 truyện.
+- Được 498 cặp train, 126 valid. Nhãn train: V A/B/H 153/153/192, E 122/122/254, T 153/153/192.
+- Nhỏ: nếu thử LoRA so cặp thì nên ghép thêm mọi cặp trong chương, kèm lô 4 bản 3 (scene_book_var).
