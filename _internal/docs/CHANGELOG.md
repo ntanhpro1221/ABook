@@ -14,6 +14,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Câu hỏi "'Tôi' là ai?" lúc tạo sách gợi ý đúng người kể ở vị trí đầu thường hơn hẳn: 16/17 truyện ngôi thứ nhất
   để riêng không dùng khi chỉnh (trước 12/17), và người kể luôn nằm trong ba gợi ý đầu. Trước đây gợi ý đầu hay là tước
   hiệu hay tên người khác ("Quỷ Vương", "Lôi Long").
+- Dừng giữa lúc phân tích rồi làm tiếp (hay app tắt đột ngột) không còn tự đổi cách app hỏi model: mỗi câu trả lời của
+  model được ghi lại, làm tiếp thì dùng lại đúng câu trả lời cũ, và danh sách nhân vật, lượt thử, lời góp ý mang sang
+  được dựng lại y như lúc chưa dừng. Phần còn lệch là do chính Ollama tính hơi khác sau khi khởi động lại (đang đo).
 
 ### Phân vai giọng đọc
 
