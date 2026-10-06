@@ -2805,3 +2805,15 @@ Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCE
   - app tải biến thể model llmVT như một runtime tuỳ chọn.
 
   **Thua thì:** lớp cuối không đủ; vẫn đề xuất LoRA toàn bộ một lần trước khi đóng hướng.
+
+**GHI TRƯỚC - Lô dữ liệu dạy 3, hướng dẫn bản 3.1 (06-10 09:4x):**
+- **Bản 3.1** (`GUIDE_V3.md` mục 3.1, cả hai người chấm lô 2 cùng nêu):
+  - tiêu đề trước lời dịch giả thuộc đoạn chú thích;
+  - khúc < 1 phút trong một đoạn: mạnh hơn -> `accent`, lặng hơn -> `duck`;
+  - lệch đúng 1 bậc ở một trục -> `soft`;
+  - `ramp` không kèm `soft` cho ranh giới bắt buộc mà vị trí mờ.
+- **Lô 3** (`scene_train_v31/`, hạt 20261007, cùng luật chọn): 20 chương (14 Nhật, 6 Hàn), không trùng truyện nào của bộ đáp án, lô thử, lô 2. `_full` nay là repo ABook-Hako; ánh xạ tên cũ qua `metadata.json` (`tools_folder`). Hai agent Opus chấm mù A/B, chịu ngắt.
+- **Thước:** đồng thuận A-B r TB chương (`agreement.py`) so lô 2 (V .87, E .84, T .91).
+  - Ở mức này trần gần sát, nên luật là KHÔNG KÉM: giữ 3.1 nếu không trục nào giảm > 0,03. Trục nào giảm > 0,03 thì quay về bản 3, và lô 3 vẫn dùng làm dữ liệu dạy.
+  - Ghi lại: Pk ranh giới, số đoạn, số `duck`/`accent`.
+- **Mục đích chính:** thêm dữ liệu dạy, 40 -> 60 chương, cho LoRA llmVT.
