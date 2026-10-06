@@ -3693,3 +3693,7 @@ Ghi lại cho đúng:
   giảm 3,4 lần (16,2 -> 4,8/giờ), lặp 14% -> 2%.
 - Y đứng thứ hai về mọi mặt trừ R, và gần đạt F1. Cái giá của nó là đổi sai chỗ gần bằng hôm nay. LLM chia cảnh vẫn là hướng có
   trần cao nhất (người .72); việc kế là làm P của nó lên, chưa phải cắm vào app.
+
+**Kiểm bản cài X (dev/music-scene ee468863, `music/verify_app_x.py`)**: chạy chính `chapter_scenes` + `choose` của app (CUE trên câu,
+không đọc file nguồn) - 5b+6: đổi 4,7/giờ P .69 R .14 F1 .226, anh em 5,8/giờ (mô phỏng 4,8 / .70 / .236 / 5,2); bộ 7: 8,0/giờ P .37
+R .23 F1 .283, anh em 4,8/giờ (mô phỏng 7,7 / .38 / .286 / 4,8). Khớp trong ~.01 F1; lệch nhỏ do CUE trên câu thay vì trên file nguồn.
