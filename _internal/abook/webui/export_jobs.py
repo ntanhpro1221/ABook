@@ -1,6 +1,6 @@
 """Xuất file sách (`.abook`) thành việc nền có trạng thái: bấm là có ngay một mã, đóng gói chạy trong luồng của máy chủ,
 giao diện hỏi trạng thái - tải lại trang giữa chừng hay sau khi xong vẫn hỏi lại được. Bản ghi sống trong bộ nhớ (hết khi
-máy chủ khởi động lại), mỗi cuốn nhớ lần xuất gần nhất."""
+máy chủ khởi động lại), mỗi cuốn nhớ lần xuất gần nhất. "Xuất M4B" dùng cùng lớp, bản ghi riêng (server.py `m4b_jobs`)."""
 from __future__ import annotations
 
 import threading

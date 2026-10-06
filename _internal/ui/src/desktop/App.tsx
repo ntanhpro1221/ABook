@@ -25,7 +25,7 @@ import { NewProjectScreen } from "@/studio/NewProjectScreen";
 import { ProjectScreen } from "@/studio/ProjectScreen";
 import { ProjectsScreen } from "@/studio/ProjectsScreen";
 import { desktopTextImport, httpSource } from "./httpSource";
-import { BookFileExportHost, BookFileMenuItem } from "./ExportBookFileJob";
+import { BookFileMenuItem, ExportJobHost, M4bMenuItem } from "./ExportBookFileJob";
 import { SettingsScreen } from "./SettingsScreen";
 import { Shell } from "./Shell";
 
@@ -461,7 +461,8 @@ export function App() {
               <UpdateListener />
               {!info.remote && <VolumeSaver />}
               {!info.remote && <RemoveImportedHost />}
-              <BookFileExportHost />
+              <ExportJobHost kind="bookfile" />
+              <ExportJobHost kind="m4b" />
               <Shell>
                 <Routes>
                   <Route path="/" element={<LibraryRoute />} />
@@ -477,6 +478,7 @@ export function App() {
                             <>
                               <BookFileMenuItem book={book} />
                               <ExportMenuItem book={book} />
+                              <M4bMenuItem book={book} />
                               <StudioMenuItem id={book.id} />
                             </>
                           )
