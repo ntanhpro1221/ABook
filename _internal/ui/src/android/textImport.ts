@@ -17,13 +17,18 @@ interface PickedPdf extends ImportChoice {
   pdf?: string;
 }
 
+/** Thứ native đã chép (bộ chọn, hay file app khác gửi tới - android/imports.ts) thành lựa chọn của bước xem trước. */
+export function stagedChoice(picked: { ref: string; name?: string; pdf?: string }): ImportChoice {
+  const choice: PickedPdf = { ref: picked.ref, name: picked.name ?? "Sách" };
+  if (picked.pdf) choice.pdf = picked.pdf;
+  return choice;
+}
+
 export const phoneTextImport: TextImport = {
   async choose(kind) {
     const picked = await EbookLibrary.pickSource({ kind });
     if (!picked.picked || !picked.ref) return null;
-    const choice: PickedPdf = { ref: picked.ref, name: picked.name ?? "Sách" };
-    if (picked.pdf) choice.pdf = picked.pdf;
-    return choice;
+    return stagedChoice({ ref: picked.ref, name: picked.name, pdf: picked.pdf });
   },
   async preview(choice, options) {
     const pdf = (choice as PickedPdf).pdf;

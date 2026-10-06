@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsC
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
-import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook } from "./EditBook";
+import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { keepTogether, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
@@ -262,7 +262,7 @@ export function PersonRow({
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
         {person.pendingVoice && (onPickVoice || waiting) && (
           <div className="mt-0.5 truncate text-xs font-medium text-accent-text">
-            {waiting ? "Đang chờ Studio" : "Chờ áp dụng"}:{" "}
+            {waiting ? "Đang chờ máy làm sách" : "Chờ áp dụng"}:{" "}
             {[person.pendingVoice.preset && `giọng ${person.pendingVoice.preset}`, person.pendingVoice.gender.toLowerCase()]
               .filter(Boolean)
               .join(" · ")}
@@ -671,6 +671,7 @@ export function BookScreen({
   const { data: castView } = useCast(id);
   // Hook không được đặt sau `return` sớm: cuốn chưa nạp xong thì dùng một cuốn rỗng (nút lưu chưa hiện lúc ấy).
   const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
+  const sharer = useShareBook(book ?? ({ id: id ?? "" } as ListenBook));
   // Chương đã "Làm trước" (điện thoại, PrepareAhead.kt): dấu "Đã làm sẵn" ở danh sách chương.
   const prepared = usePreparedChapters(id ?? "", Boolean(book?.chapters?.some((chapter) => chapter.state === "text" && chapter.speech)));
   // Điện thoại: mở sách là hỏi máy tính đã ghép bản mới nhất của hồ sơ nghe (chỗ nghe, tên, hồ sơ vừa chọn bên ấy) -
@@ -875,11 +876,20 @@ export function BookScreen({
                           <DropdownMenu.Item onSelect={() => setSaveAsOpen(true)} className={MENU_ITEM}>
                             <FileDown className="size-4" /> Lưu thành…
                           </DropdownMenu.Item>
+                          {sharer.available && (
+                            <DropdownMenu.Item
+                              disabled={sharer.busy}
+                              onSelect={() => void sharer.share()}
+                              className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
+                            >
+                              <Share2 className="size-4" /> Chia sẻ…
+                            </DropdownMenu.Item>
+                          )}
                         </>
                       )}
                       {!workshop && Boolean(book.wishes) && (
                         <DropdownMenu.Item onSelect={() => setWishesOpen(true)} className={MENU_ITEM}>
-                          <Hourglass className="size-4" /> Việc đang chờ {syncs ? "gửi về máy tính" : "Studio"} ({book.wishes})
+                          <Hourglass className="size-4" /> Việc đang chờ {syncs ? "gửi về máy tính" : "máy làm sách"} ({book.wishes})
                         </DropdownMenu.Item>
                       )}
                     </>

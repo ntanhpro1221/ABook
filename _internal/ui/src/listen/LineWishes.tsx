@@ -120,7 +120,7 @@ function waitingItems(wish: LineWish | undefined): { key: string; text: string; 
 
 /** Dấu "đang chờ Studio" cạnh một câu trong trang đọc. */
 export function WaitingMark({ className }: { className?: string }) {
-  return <Clock aria-label="Đang chờ Studio" role="img" className={cn("ml-1 inline size-[0.7em] align-[-0.05em] text-fg-3", className)} />;
+  return <Clock aria-label="Đang chờ máy làm sách" role="img" className={cn("ml-1 inline size-[0.7em] align-[-0.05em] text-fg-3", className)} />;
 }
 
 type View = "menu" | "speaker" | "delivery" | "word";
@@ -190,7 +190,7 @@ function WordView({ bookId, text, names, need, onBack }: { bookId: string; text:
             {pending && (
               <span className="text-xs font-medium text-accent-text">
                 {" "}
-                · đang chờ Studio: <span className="whitespace-nowrap">“{pending.spokenForm}”</span>
+                · đang chờ máy làm sách: <span className="whitespace-nowrap">“{pending.spokenForm}”</span>
               </span>
             )}
           </div>
@@ -322,7 +322,7 @@ export function LineWishDialog({
           <LineQuote line={line} />
           {!identified && (
             <p className="rounded-lg bg-hover px-3 py-2 text-sm text-fg-2">
-              Câu này chưa có mã trong file sách (sách đóng gói bằng bản cũ của Studio) nên chưa ghi được yêu cầu cho riêng câu. Cách đọc một tên vẫn ghi được.
+              Câu này chưa có mã trong file sách (sách đóng gói bằng bản cũ của ABook) nên chưa ghi được yêu cầu cho riêng câu. Cách đọc một tên vẫn ghi được.
             </p>
           )}
           {view === "menu" && (
@@ -330,7 +330,7 @@ export function LineWishDialog({
               {items.length > 0 && (
                 <div className="rounded-xl bg-info-soft px-3 py-2 text-sm" role="status">
                   <p className="flex items-center gap-1.5 font-medium">
-                    <Clock className="size-4 shrink-0 text-info" /> Đang chờ Studio
+                    <Clock className="size-4 shrink-0 text-info" /> Đang chờ máy làm sách
                   </p>
                   <ul className="mt-1 space-y-1">
                     {items.map((item) => (
@@ -361,7 +361,7 @@ export function LineWishDialog({
                       : !speech
                         ? "Lời kể không có người nói - muốn gán người, đổi câu thành lời thoại ở “Cách đọc câu”"
                         : wish?.speaker
-                          ? `Đang chờ Studio: ${wish.speaker.shown}`
+                          ? `Đang chờ máy làm sách: ${wish.speaker.shown}`
                           : `Hiện là ${line.label}`
                   }
                   disabled={!identified || !speech}
@@ -378,7 +378,7 @@ export function LineWishDialog({
                 <MenuRow
                   icon={RefreshCw}
                   title="Thu lại câu này"
-                  note={!identified ? "chưa có mã câu trong file sách" : !hasAudio ? "Chương này chưa có audio - chưa có gì để thu lại" : wish?.retake ? "Đã ghi - đang chờ Studio" : "Đọc lại bằng hạt giống mới, giọng như cũ"}
+                  note={!identified ? "chưa có mã câu trong file sách" : !hasAudio ? "Chương này chưa có audio - chưa có gì để thu lại" : wish?.retake ? "Đã ghi - đang chờ máy làm sách" : "Đọc lại bằng hạt giống mới, giọng như cũ"}
                   disabled={!identified || !hasAudio || Boolean(wish?.retake) || retake.isPending}
                   onClick={() => retake.mutate()}
                   trailing={null}

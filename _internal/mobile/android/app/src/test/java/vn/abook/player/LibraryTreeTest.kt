@@ -61,7 +61,7 @@ class LibraryTreeTest {
         val listening = state(2, 42.5, at = 10.0)
         assertEquals(listOf("book/t1"), LibraryTree.books(listOf(manifest to listening)).map { it.id })
         assertEquals(LibraryTree.Start("t1", 2, 42.5), LibraryTree.start("book/t1", manifest, listening))
-        assertEquals(listOf("Giọng máy đọc", "Đang nghe dở", "10 phút"), LibraryTree.chapterNodes(manifest, listening).map { it.subtitle })
+        assertEquals(listOf("Giọng đọc của máy", "Đang nghe dở", "10 phút"), LibraryTree.chapterNodes(manifest, listening).map { it.subtitle })
     }
 
     @Test

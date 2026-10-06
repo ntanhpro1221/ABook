@@ -7,6 +7,21 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe
+
+- File TXT cả truyện: ô tách chương giờ ghi đúng số dòng "Chương N" có trong file, và nói riêng khi phần chữ trước chương đầu thành một chương "Mở đầu" (ví dụ "Tách theo
+  3 dòng “Chương N” (thêm phần Mở đầu - 4 chương)"); trước đây nó gộp cả phần ấy vào số chương nên trông như đếm sai. Máy tính và điện thoại như nhau.
+- Bớt chữ "Studio" ở những chỗ người nghe hay gặp: thay đổi chưa áp ghi "Đang chờ máy làm sách" (hay "chờ gửi về máy tính" với sách tải từ máy tính), nghe hết phần đã có thì
+  "Chương tiếp theo sẽ nghe được khi máy làm xong chương ấy", và sách đọc bằng giọng có sẵn của máy ghi "Giọng đọc của máy" như trong Cài đặt.
+
+### Điện thoại
+
+- Báo "Sẵn sàng duyệt" khi máy tính phân tích xong một cuốn và đang chờ bạn duyệt giọng, tên lạ, câu chưa chắc trước khi thu; bấm thông báo là mở thẳng màn duyệt. Cuốn đứng
+  chờ duyệt không bị báo nhầm là "Đã dừng".
+- "Chia sẻ…" trong menu "…" của trang sách: gửi file sách (.abook, kèm những thay đổi của bạn) qua Zalo, Drive, email hay bất kỳ app nào trong bảng chia sẻ của điện thoại.
+- Mở được file EPUB, Word (DOCX), PDF và TXT từ app khác: chọn ABook trong "Mở bằng" hay chia sẻ file tới ABook là hộp "Thêm sách từ file" mở sẵn danh sách chương để xem
+  trước rồi thêm.
+
 ## [0.4.29] - 2026-10-06
 
 ### Studio
