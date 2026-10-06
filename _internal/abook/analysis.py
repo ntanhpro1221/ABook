@@ -105,6 +105,8 @@ ALLOWED_VOLUMES = {"soft", "normal", "loud"}
 HIGH_AROUSAL_EMOTIONS = {"angry", "afraid", "excited"}
 LOW_AROUSAL_EMOTIONS = {"neutral", "tender", "tired", "whispering"}
 RESERVED_SPEAKERS = {"narrator": "NARRATOR", "unknown": "UNKNOWN"}
+# Segment statuses whose speaker already counts toward "Nhân vật đã biết" in the prompt.
+ANALYSIS_COUNTED_STATUSES = ("analyzed", "warning", "signal_passed", "asr_passed", "verified")
 BATCH_ID_PREFIX = "S"
 BATCH_ID_WIDTH = 3
 LOCAL_SPEAKER_REQUEST_PREFIX = "NPC_LOCAL:"
@@ -2363,6 +2365,37 @@ class AnalysisFeedbackIssue:
         if suggested_values:
             payload["suggested_values"] = dict(suggested_values)
         return payload
+
+    def checkpoint_payload(self) -> dict[str, Any]:
+        """Every field, losslessly, for the analysis checkpoint (`from_checkpoint` reverses it)."""
+        self.canonical_payload()
+        return {
+            "stable_id": self.stable_id,
+            "code": self.code,
+            "fields": list(self.fields),
+            "allowed_emotions": list(self.allowed_emotions),
+            "rule": self.rule,
+            "observed_confidence": self.observed_confidence,
+            "minimum_confidence": self.minimum_confidence,
+            "suggested_values": [list(item) for item in self.suggested_values],
+        }
+
+    @classmethod
+    def from_checkpoint(cls, payload: dict[str, Any]) -> "AnalysisFeedbackIssue":
+        issue = cls(
+            stable_id=str(payload["stable_id"]),
+            code=str(payload["code"]),
+            fields=tuple(str(field) for field in payload["fields"]),
+            allowed_emotions=tuple(str(emotion) for emotion in payload["allowed_emotions"]),
+            rule=str(payload["rule"]),
+            observed_confidence=payload["observed_confidence"],
+            minimum_confidence=payload["minimum_confidence"],
+            suggested_values=tuple(
+                (str(field), value) for field, value in payload["suggested_values"]
+            ),
+        )
+        issue.canonical_payload()
+        return issue
 
 
 @dataclass(frozen=True)
@@ -5942,6 +5975,13 @@ def _analysis_feedback_hash(
     )
 
 
+def analysis_request_hash(body: dict[str, Any]) -> str:
+    """sha256 of the canonical JSON of one Ollama request body - the analysis ledger key."""
+    return sha256_text(
+        json.dumps(body, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    )
+
+
 def _analysis_retry_seed(
     *,
     retry_policy_version: str,
@@ -7001,48 +7041,7 @@ class OllamaBookAnalyzer:
         self.session = requests.Session()
         self._managed_ollama_process: subprocess.Popen[bytes] | None = None
         self._managed_ollama_log_path: Path | None = None
-        existing = self.db.list_segments(statuses=("analyzed", "warning", "signal_passed", "asr_passed", "verified"))
-        self._speaker_counts = Counter(
-            str(row["speaker"])
-            for row in existing
-            if str(row["speaker"]).casefold() not in RESERVED_SPEAKERS
-            and not is_local_speaker(row["speaker"])
-        )
-        self._speaker_genders: dict[str, Counter[str]] = defaultdict(Counter)
-        for row in existing:
-            speaker = str(row["speaker"])
-            gender = str(row["gender"])
-            if (
-                speaker.casefold() not in RESERVED_SPEAKERS
-                and not is_local_speaker(speaker)
-                and gender in {"male", "female"}
-            ):
-                self._speaker_genders[speaker][gender] += 1
-        # A batch that starts at chapter 307 has no analysed segments yet, so everything
-        # above finds nothing and the prompt opens with "(Chưa có nhân vật đã biết)" - the
-        # model re-guesses a cast the previous batch already worked out. Measured on this
-        # book's own text: from the second batch onward, 80% of the proper nouns in a batch
-        # have already appeared in an earlier one, and by the ninth it is 95%. An empty list
-        # at a seam is not a small loss; it is most of the cast.
-        #
-        # port_casting.py carries those characters into the new project before `run`, the
-        # same way pronunciations and voices are carried. This is where they are picked up.
-        # Segments win where both exist: a count this project measured is worth more than a
-        # count it was told, and adding them would double-count the overlap.
-        for row in self.db.list_characters():
-            name = str(row["canonical_name"])
-            gender = str(row["gender"])
-            mentions = int(row["mention_count"] or 0)
-            if (
-                mentions <= 0
-                or gender not in {"male", "female"}
-                or name.casefold() in RESERVED_SPEAKERS
-                or is_local_speaker(name)
-                or name in self._speaker_counts
-            ):
-                continue
-            self._speaker_counts[name] = mentions
-            self._speaker_genders[name][gender] = mentions
+        self._speaker_counts, self._speaker_genders = self._derive_speaker_state()
 
         chapters = list(self.db.list_chapters())
         self._chapter_titles = {int(row["id"]): str(row["title"]) for row in chapters}
@@ -7287,6 +7286,161 @@ class OllamaBookAnalyzer:
             + "\n\n"
         )
 
+    @staticmethod
+    def _tally_speaker(
+        counts: Counter[str],
+        genders: dict[str, Counter[str]],
+        speaker: str,
+        gender: str,
+    ) -> None:
+        """Count one analysed line toward the known-characters list - the one rule for it."""
+        if not speaker or speaker.casefold() in RESERVED_SPEAKERS or is_local_speaker(speaker):
+            return
+        counts[speaker] += 1
+        if gender in {"male", "female"}:
+            genders[speaker][gender] += 1
+
+    def _derive_speaker_state(
+        self,
+        exclude_stable_ids: frozenset[str] = frozenset(),
+    ) -> tuple[Counter[str], dict[str, Counter[str]]]:
+        """Rebuild the known-characters counters the way an uninterrupted run grew them.
+
+        A batch that starts at chapter 307 has no analysed segments yet, so without a carry
+        the prompt opens with "(Chưa có nhân vật đã biết)" - the model re-guesses a cast the
+        previous batch already worked out. Measured on this book's own text: from the second
+        batch onward, 80% of the proper nouns in a batch have already appeared in an earlier
+        one, and by the ninth it is 95%. port_casting.py carries those characters into the
+        new project before `run`; this is where they are picked up.
+
+        Order and arithmetic copy the uninterrupted run exactly, because the prompt shows
+        `most_common(80)` and ties go to whoever was inserted first: the carried characters
+        come first, at their carried count, and every analysed line then adds one in segment
+        order. The old rebuild let a measured count replace a carried one, which a run that
+        never stopped does not do - so a resume of a port_casting book counted JULIANA 1 where
+        the same run unstopped counted 56 (AUDIT resume_determinism R4).
+
+        `exclude_stable_ids` leaves out rows about to be analysed again (a whole stable
+        group re-sent on resume): the uninterrupted run had not counted them yet (R3).
+        """
+        counts: Counter[str] = Counter()
+        genders: dict[str, Counter[str]] = defaultdict(Counter)
+        for row in self.db.list_characters():
+            name = str(row["canonical_name"])
+            gender = str(row["gender"])
+            mentions = int(row["mention_count"] or 0)
+            if (
+                mentions <= 0
+                or gender not in {"male", "female"}
+                or name.casefold() in RESERVED_SPEAKERS
+                or is_local_speaker(name)
+                or name in counts
+            ):
+                continue
+            counts[name] = mentions
+            genders[name][gender] = mentions
+        for row in self.db.list_segments(statuses=ANALYSIS_COUNTED_STATUSES):
+            if exclude_stable_ids and str(row["stable_id"]) in exclude_stable_ids:
+                continue
+            self._tally_speaker(counts, genders, str(row["speaker"]), str(row["gender"]))
+        return counts, genders
+
+    def _resume_analysis_state(
+        self,
+        all_rows: list[Any],
+        groups: list[tuple[list[Any], str]],
+    ) -> tuple[
+        list[tuple[list[Any], str]],
+        dict[tuple[str, ...], tuple[AnalysisFeedbackIssue, ...]],
+        int,
+    ]:
+        """Carry on from the last committed batch: queue, carried feedback, counters.
+
+        The checkpoint is used when its queue is exactly the rows still pending - then it is
+        the state the next prompt of an uninterrupted run would have been built from, split
+        children and their feedback included. The counters are also rebuilt from the rows
+        and a disagreement is reported, never silently preferred. Without a usable
+        checkpoint the rebuild is all there is, and that is said too.
+        """
+        resent = frozenset(
+            str(row["stable_id"])
+            for group, _scope in groups
+            for row in group
+            if str(row["status"]) != "pending"
+        )
+        if resent:
+            self._speaker_counts, self._speaker_genders = self._derive_speaker_state(resent)
+        load = getattr(self.db, "analysis_state", None)
+        if not callable(load):
+            return groups, {}, 0
+        pending_ids = [str(row["stable_id"]) for row in all_rows if str(row["status"]) == "pending"]
+        resumed = len(pending_ids) != len(all_rows)
+        problem = ""
+        try:
+            state = load()
+        except RuntimeError as exc:
+            state, problem = None, str(exc)
+        if state is None:
+            if resumed:
+                self.db.event(
+                    "warning",
+                    "ANALYSIS_STATE_UNUSABLE",
+                    "Không có checkpoint phân tích dùng được; dựng lại trạng thái từ các đoạn đã phân tích",
+                    {"problem": problem or "missing"},
+                )
+            return groups, {}, 0
+        queue_ids = [str(stable_id) for ids, _scope in state["queue"] for stable_id in ids]
+        if state["policy_fingerprint"] != self.analysis_policy_fingerprint:
+            problem = "policy fingerprint differs"
+        elif queue_ids != pending_ids:
+            problem = "queue differs from the pending rows"
+        if problem:
+            self.db.event(
+                "warning",
+                "ANALYSIS_STATE_UNUSABLE",
+                "Checkpoint phân tích không khớp sách hiện tại; dựng lại trạng thái từ các đoạn đã phân tích",
+                {"problem": problem, "committed_batches": state["committed_batches"]},
+            )
+            return groups, {}, int(state["committed_batches"])
+        rows_by_id = {str(row["stable_id"]): row for row in all_rows}
+        restored_groups = [
+            ([rows_by_id[str(stable_id)] for stable_id in ids], str(scope))
+            for ids, scope in state["queue"]
+        ]
+        carried = {
+            tuple(str(stable_id) for stable_id in ids): tuple(
+                AnalysisFeedbackIssue.from_checkpoint(payload) for payload in payloads
+            )
+            for ids, payloads in state["carried_feedback"]
+        }
+        counts: Counter[str] = Counter()
+        for name, count in state["speaker_counts"]:
+            counts[str(name)] = int(count)
+        genders: dict[str, Counter[str]] = defaultdict(Counter)
+        for name, pairs in state["speaker_genders"]:
+            for gender, count in pairs:
+                genders[str(name)][str(gender)] = int(count)
+        derived_counts, derived_genders = self._derive_speaker_state()
+        if list(counts.items()) != list(derived_counts.items()) or {
+            name: list(by_gender.items()) for name, by_gender in genders.items() if by_gender
+        } != {
+            name: list(by_gender.items())
+            for name, by_gender in derived_genders.items()
+            if by_gender
+        }:
+            self.db.event(
+                "warning",
+                "ANALYSIS_STATE_REDERIVE_MISMATCH",
+                "Checkpoint phân tích khác với trạng thái dựng lại từ các đoạn; dùng checkpoint",
+                {
+                    "checkpoint_counts": list(counts.most_common(12)),
+                    "rederived_counts": list(derived_counts.most_common(12)),
+                    "committed_batches": state["committed_batches"],
+                },
+            )
+        self._speaker_counts, self._speaker_genders = counts, genders
+        return restored_groups, carried, int(state["committed_batches"])
+
     def _known_summary(self) -> str:
         if not self._speaker_counts:
             return "(Chưa có nhân vật đã biết)"
@@ -7304,9 +7458,100 @@ class OllamaBookAnalyzer:
         stop_requested: Callable[[], bool] | None = None,
         activity: Callable[[int, int], None] | None = None,
         stop_checked: bool = False,
+        ledger_role: str = "other",
+        ledger_group_fingerprint: str = "",
+        ledger_attempt: int | None = None,
     ) -> dict[str, Any]:
         if not stop_checked and stop_requested is not None and stop_requested():
             raise AnalysisRequestStopped("Stop requested before Ollama request")
+        request["stream"] = True
+        # Không "suy nghĩ": Ollama 0.34.x cho qwen3 suy nghĩ trước khi trả JSON dù request có `format` - thử Studio
+        # 28-09, cùng prompt sinh 360 token thay vì 61 rồi hết ngân sách đầu ra, cuốn hỏng. Mọi lượt đo và mọi cuốn đã
+        # làm chạy không suy nghĩ (Ollama 0.33.2): khoá hành vi ấy ở đây, để Ollama tự cập nhật trên máy người dùng
+        # không đổi được nó.
+        body = {"think": False, **request}
+        # The ledger key is the exact body sent - it already holds the known-characters list,
+        # the feedback and the seed, so any drift in state gives a different key, never a
+        # stale answer. A key seen before is answered from the ledger without the model:
+        # resume then walks the same path the uninterrupted run walked, attempt by attempt.
+        request_hash = analysis_request_hash(body)
+        lookup = getattr(self.db, "analysis_response", None)
+        stored = lookup(request_hash) if callable(lookup) else None
+        if stored is not None:
+            raw_value = stored["raw_response"]
+            raw_text = (
+                raw_value.decode("utf-8", "surrogatepass")
+                if isinstance(raw_value, bytes)
+                else str(raw_value)
+            )
+            completion_reason = str(stored["done_reason"] or "")
+            evaluation_count = (
+                int(stored["eval_tokens"]) if stored["eval_tokens"] is not None else None
+            )
+            usage = json.loads(str(stored["usage_json"])) if stored["usage_json"] else None
+            self.db.event(
+                "info",
+                "ANALYSIS_RESPONSE_REPLAYED",
+                "Phản hồi phân tích lấy lại từ sổ, không hỏi lại model (replayed from ledger)",
+                {
+                    "request_hash": request_hash,
+                    "role": ledger_role,
+                    "group_fingerprint": ledger_group_fingerprint,
+                    "attempt": ledger_attempt,
+                },
+            )
+        else:
+            raw_text, completion_reason, evaluation_count, usage = self._ollama_stream(
+                body,
+                stop_requested=stop_requested,
+                activity=activity,
+            )
+            record = getattr(self.db, "record_analysis_response", None)
+            if callable(record):
+                options = request.get("options", {})
+                record(
+                    request_hash=request_hash,
+                    role=ledger_role,
+                    group_fingerprint=ledger_group_fingerprint,
+                    attempt=ledger_attempt,
+                    seed=options.get("seed"),
+                    model_name=str(request.get("model", self.model)),
+                    model_digest=str(self._model_digest or ""),
+                    prompt_tokens=(usage or {}).get("prompt_eval_count"),
+                    eval_tokens=evaluation_count,
+                    done_reason=completion_reason,
+                    usage=usage,
+                    raw_response=raw_text,
+                )
+        decoded = self._decoded_analysis_response(
+            request,
+            raw_text,
+            completion_reason=completion_reason,
+            evaluation_count=evaluation_count,
+            usage=usage,
+        )
+        # Dọn trước khi trả về, nên không có gì hạ nguồn phải biết chuyện này tồn tại.
+        if contains_lone_surrogate(decoded):
+            self.log(
+                "Model phân tích trả về nửa cặp surrogate lạc (emoji vỡ); đã bỏ chúng đi. "
+                "Không dọn thì `sha256_text` nổ và cả cuốn sách dừng."
+            )
+            self.db.event(
+                "warning",
+                "ANALYSIS_LONE_SURROGATE_STRIPPED",
+                "Bỏ nửa cặp surrogate lạc khỏi phản hồi phân tích",
+            )
+            decoded = strip_lone_surrogates(decoded)
+        return decoded
+
+    def _ollama_stream(
+        self,
+        body: dict[str, Any],
+        *,
+        stop_requested: Callable[[], bool] | None,
+        activity: Callable[[int, int], None] | None,
+    ) -> tuple[str, str, int | None, dict[str, int] | None]:
+        """One streamed model call: raw text, done_reason, eval_count, usage."""
         wall_timeout = min(
             float(self.settings.get("timeout_seconds", ANALYSIS_REQUEST_MAX_SECONDS)),
             ANALYSIS_REQUEST_MAX_SECONDS,
@@ -7317,7 +7562,6 @@ class OllamaBookAnalyzer:
         completed = False
         completion_reason = ""
         evaluation_count: int | None = None
-        request["stream"] = True
         # A connection that dies before delivering a single response character produced
         # nothing the caller could have observed, so re-issuing it is idempotent for the
         # durable ledger. Once any character has arrived the stream is no longer safe to
@@ -7332,11 +7576,7 @@ class OllamaBookAnalyzer:
             try:
                 response = self.session.post(
                     f"{self.base_url}/api/generate",
-                    # Không "suy nghĩ": Ollama 0.34.x cho qwen3 suy nghĩ trước khi trả JSON dù request có `format` -
-                    # thử Studio 28-09, cùng prompt sinh 360 token thay vì 61 rồi hết ngân sách đầu ra, cuốn hỏng. Mọi
-                    # lượt đo và mọi cuốn đã làm chạy không suy nghĩ (Ollama 0.33.2): khoá hành vi ấy ở đây, để Ollama
-                    # tự cập nhật trên máy người dùng không đổi được nó.
-                    json={"think": False, **request},
+                    json=body,
                     timeout=(10.0, min(ANALYSIS_STREAM_IDLE_SECONDS, wall_timeout)),
                     stream=True,
                 )
@@ -7400,7 +7640,19 @@ class OllamaBookAnalyzer:
             finally:
                 if response is not None:
                     response.close()
-        response_text = "".join(parts) or "{}"
+        return "".join(parts), completion_reason, evaluation_count, usage
+
+    def _decoded_analysis_response(
+        self,
+        request: dict[str, Any],
+        raw_text: str,
+        *,
+        completion_reason: str,
+        evaluation_count: int | None,
+        usage: dict[str, int] | None,
+    ) -> dict[str, Any]:
+        """Everything after the raw text - the same for a live answer and a replayed one."""
+        response_text = raw_text or "{}"
         if usage is not None:
             options = request.get("options", {})
             request_num_ctx = int(options.get("num_ctx", 0))
@@ -7411,7 +7663,7 @@ class OllamaBookAnalyzer:
                 "Ollama analysis exhausted its output-token budget before completing the JSON response"
             )
         try:
-            decoded = json.loads(response_text)
+            return json.loads(response_text)
         except json.JSONDecodeError as exc:
             output_limit = int(request.get("options", {}).get("num_predict", 0))
             if output_limit > 0 and evaluation_count is not None and evaluation_count >= output_limit:
@@ -7419,19 +7671,6 @@ class OllamaBookAnalyzer:
                     "Ollama analysis exhausted its output-token budget before completing the JSON response"
                 ) from exc
             raise
-        # Dọn trước khi trả về, nên không có gì hạ nguồn phải biết chuyện này tồn tại.
-        if contains_lone_surrogate(decoded):
-            self.log(
-                "Model phân tích trả về nửa cặp surrogate lạc (emoji vỡ); đã bỏ chúng đi. "
-                "Không dọn thì `sha256_text` nổ và cả cuốn sách dừng."
-            )
-            self.db.event(
-                "warning",
-                "ANALYSIS_LONE_SURROGATE_STRIPPED",
-                "Bỏ nửa cặp surrogate lạc khỏi phản hồi phân tích",
-            )
-            decoded = strip_lone_surrogates(decoded)
-        return decoded
 
     def _request(
         self,
@@ -7589,6 +7828,9 @@ class OllamaBookAnalyzer:
             stop_requested=stop_requested,
             activity=activity,
             stop_checked=True,
+            ledger_role="generator",
+            ledger_group_fingerprint=str(request_contract["group_fingerprint"]),
+            ledger_attempt=int(request_contract["attempt"]),
         )
         self._verify_locked_model_digest("after generator request")
         segments = payload.get("segments", [])
@@ -7829,6 +8071,9 @@ class OllamaBookAnalyzer:
             stop_requested=stop_requested,
             activity=activity,
             stop_checked=True,
+            ledger_role="director_critic",
+            ledger_group_fingerprint=str(request_contract["group_fingerprint"]),
+            ledger_attempt=int(request_contract["attempt"]),
         )
         self._verify_locked_model_digest("after director critic request")
         return payload, candidate_hash
@@ -7919,6 +8164,7 @@ class OllamaBookAnalyzer:
             "list_analysis_critic_attempts",
             "record_analysis_candidate_generator_contract",
             "reserve_analysis_critic_attempt",
+            "release_analysis_critic_attempt",
             "analysis_model_lock",
             "update_analysis_batch_with_event",
         )
@@ -8121,7 +8367,19 @@ class OllamaBookAnalyzer:
                     rejected_emotions_by_id=rejected_emotions_by_id,
                     original_context=original_context,
                 )
-            except (AnalysisRequestStopped, AnalysisModelDigestError):
+            except AnalysisRequestStopped:
+                # A stop observed nothing, so it must not spend the attempt: resume re-runs
+                # this attempt number with this seed. Consuming it here made a stopped run
+                # answer with attempt 2's seed where the unstopped run used attempt 1's
+                # (AUDIT resume_determinism R2). Transport faults below still consume it.
+                self.db.release_analysis_critic_attempt(
+                    candidate_id,
+                    int(reserved["attempt_number"]),
+                    expected_intent_hash=str(reserved["intent_hash"]),
+                    restore_state=state,
+                )
+                raise
+            except AnalysisModelDigestError:
                 raise
             except BaseException as exc:
                 if not is_ollama_transport_fault(exc):
@@ -8329,6 +8587,40 @@ class OllamaBookAnalyzer:
                         child_feedback
                     )
 
+        durable_state = callable(getattr(self.db, "analysis_state", None))
+        groups, restored_feedback, committed_batches = self._resume_analysis_state(
+            all_rows,
+            groups,
+        )
+        carried_feedback_by_group.update(restored_feedback)
+
+        def checkpoint_state(
+            counts: Counter[str],
+            genders: dict[str, Counter[str]],
+            committed_rows: list[Any],
+            committed_offset: int,
+        ) -> dict[str, Any]:
+            """What a resume needs to carry on as if never stopped, after this batch."""
+            return {
+                "policy_fingerprint": self.analysis_policy_fingerprint,
+                "committed_batches": committed_batches + 1,
+                "committed_through_segment_id": int(committed_rows[-1]["id"]),
+                "speaker_counts": [[name, count] for name, count in counts.items()],
+                "speaker_genders": [
+                    [name, [[gender, count] for gender, count in by_gender.items()]]
+                    for name, by_gender in genders.items()
+                    if by_gender
+                ],
+                "carried_feedback": [
+                    [list(key), [issue.checkpoint_payload() for issue in issues]]
+                    for key, issues in carried_feedback_by_group.items()
+                ],
+                "queue": [
+                    [list(group_feedback_key(rows)), scope]
+                    for rows, scope in groups[committed_offset + 1 :]
+                ],
+            }
+
         done = len(all_rows) - len(pending)
         total = len(all_rows)
         director_confidence_cap = float(
@@ -8360,6 +8652,7 @@ class OllamaBookAnalyzer:
             split_scalable_failure = False
             repeated_host_candidate = False
             repeated_director_candidate = False
+            rejected_candidate_hashes: set[str] = set()
             # The durable row and the model's own schema-valid answer for a batch the
             # director critic threw out. Kept because the last-resort path below has to
             # publish *something*, and the alternative the commit loop falls back to is
@@ -8412,21 +8705,14 @@ class OllamaBookAnalyzer:
                         confidence_cap=director_confidence_cap,
                         confidence_floor=director_confidence_floor,
                     )
-                    if durable_issues:
-                        validation_feedback = _merge_feedback_issues(
-                            validation_feedback,
-                            _director_feedback_issues(
-                                durable_issues,
-                                durable_evidence,
-                            ),
-                        )
-                        received_director_critic_issues = True
-                        last_error = "durable director critic rejected the candidate"
-                    elif str(resumable_candidate["state"]) == ANALYSIS_CANDIDATE_TERMINAL:
-                        durable_critic_exhausted = True
-                        received_director_critic_issues = True
-                        last_error = "durable director critic attempt budget is exhausted"
-                    elif durable_validated:
+                    # A rejected or exhausted candidate is not acted on here. The attempt
+                    # loop below walks the batch again from attempt 1 with the feedback it
+                    # started with; every generator answer it already got comes back from
+                    # the response ledger, it meets this candidate at the same attempt, reads
+                    # the critic's durable verdict and carries on exactly where the run that
+                    # was stopped would have. Acting here started over at attempt 1 with the
+                    # verdict already merged - a different request, seed and book.
+                    if not durable_issues and durable_validated:
                         validated = durable_validated
                         accepted_director_evidence = durable_evidence
                 if str(resumable_candidate["state"]) == ANALYSIS_CANDIDATE_CRITIC_ACCEPTED:
@@ -8766,9 +9052,12 @@ class OllamaBookAnalyzer:
                                     candidate_hash=candidate_hash,
                                 )
                                 if analysis_candidate is not None:
+                                    # "Repeated" means an earlier attempt of THIS walk produced
+                                    # it and the critic threw it out - not that the row is
+                                    # rejected in the database. A resume re-walks attempts it
+                                    # already made, and meets its own earlier candidates there.
                                     repeated_director_candidate = (
-                                        str(analysis_candidate["state"])
-                                        == ANALYSIS_CANDIDATE_CRITIC_REJECTED
+                                        candidate_hash in rejected_candidate_hashes
                                     )
                                     analysis_candidate = (
                                         self.db.record_analysis_candidate_generator_contract(
@@ -8854,6 +9143,7 @@ class OllamaBookAnalyzer:
                                         "durable director critic attempt budget is exhausted"
                                     )
                                 else:
+                                    rejected_candidate_hashes.add(candidate_hash)
                                     received_director_critic_issues = True
                                     validation_feedback = _merge_feedback_issues(
                                         validation_feedback,
@@ -9286,8 +9576,11 @@ class OllamaBookAnalyzer:
                     },
                 )
                 raise RuntimeError(message)
-            for row in group:
-                data = validated.get(str(row["stable_id"])) or _heuristic(row)
+            batch_data = [
+                (row, validated.get(str(row["stable_id"])) or _heuristic(row))
+                for row in group
+            ]
+            for row, data in batch_data:
                 if (
                     float(data.get("confidence", 0.0)) < confidence_threshold
                     and self.settings.get("low_confidence_policy") == "fail"
@@ -9299,6 +9592,25 @@ class OllamaBookAnalyzer:
                 raise RuntimeError(
                     f"Phản biện đạo diễn bắt buộc thiếu evidence ở batch {group_index}"
                 )
+            # The counters after this batch, written in the batch's own transaction so a
+            # resume reads back exactly what the next prompt would have been built from.
+            next_counts: Counter[str] = Counter(self._speaker_counts)
+            next_genders: dict[str, Counter[str]] = defaultdict(
+                Counter,
+                {name: Counter(by_gender) for name, by_gender in self._speaker_genders.items()},
+            )
+            for _row, data in batch_data:
+                self._tally_speaker(
+                    next_counts,
+                    next_genders,
+                    _canonical_speaker(data.get("speaker", "UNKNOWN")),
+                    str(data.get("gender", "unknown")),
+                )
+            analysis_state = (
+                checkpoint_state(next_counts, next_genders, group, group_offset)
+                if durable_state
+                else None
+            )
             if accepted_director_evidence is not None:
                 if accepted_generator_contract is None:
                     raise RuntimeError(
@@ -9373,26 +9685,28 @@ class OllamaBookAnalyzer:
                         if accepted_analysis_candidate_id is not None
                         else {}
                     ),
+                    **(
+                        {"analysis_state": analysis_state}
+                        if analysis_state is not None
+                        else {}
+                    ),
                 )
-            for row in group:
-                data = validated.get(str(row["stable_id"])) or _heuristic(row)
-                if accepted_director_evidence is None:
-                    checkpoint_data = copy.deepcopy(data)
+            elif analysis_state is not None:
+                self.db.update_analysis_rows(
+                    [(int(row["id"]), copy.deepcopy(data)) for row, data in batch_data],
+                    low_confidence_threshold=confidence_threshold,
+                    analysis_state=analysis_state,
+                )
+            else:
+                for row, data in batch_data:
                     self.db.update_analysis(
                         int(row["id"]),
-                        checkpoint_data,
+                        copy.deepcopy(data),
                         low_confidence_threshold=confidence_threshold,
                     )
-                speaker = _canonical_speaker(data.get("speaker", "UNKNOWN"))
-                if (
-                    speaker.casefold() not in RESERVED_SPEAKERS
-                    and not is_local_speaker(speaker)
-                    and speaker
-                ):
-                    self._speaker_counts[speaker] += 1
-                    gender = str(data.get("gender", "unknown"))
-                    if gender in {"male", "female"}:
-                        self._speaker_genders[speaker][gender] += 1
+            self._speaker_counts, self._speaker_genders = next_counts, next_genders
+            committed_batches += 1
+            for _row in group:
                 done += 1
                 if progress:
                     progress(done, total)
@@ -9520,7 +9834,12 @@ class OllamaBookAnalyzer:
             if stop_requested is not None and stop_requested():
                 raise AnalysisRequestStopped("Stop requested before identity request")
             try:
-                payload = self._stream_json_response(request, stop_requested=stop_requested)
+                payload = self._stream_json_response(
+                    request,
+                    stop_requested=stop_requested,
+                    ledger_role="local_identity",
+                    ledger_group_fingerprint=f"chapter:{chapter_id}",
+                )
             except Exception as exc:  # noqa: BLE001
                 # Identity resolution is an improvement, never a gate: a book that cannot
                 # reach the model keeps the local labels it already had.
@@ -9823,6 +10142,9 @@ class OllamaBookAnalyzer:
                             f"Chuẩn hóa tên batch {batch_no} lần {current}/{retry_count} "
                             f"vẫn đang chạy: {elapsed}s, đã nhận {chars:,} ký tự JSON."
                         ),
+                        ledger_role="name_pronunciation",
+                        ledger_group_fingerprint=f"batch:{batch_index}",
+                        ledger_attempt=attempt_number,
                     )
                     self._verify_locked_model_digest(
                         "after name pronunciation request"
