@@ -66,3 +66,37 @@ def test_the_naming_passes_read_the_teacher_in_his_own_voice() -> None:
     names = canonical_speaker_names({"GAST": 21, "ED ROSTAILER": 30, "YENNICA": 5}, BOOK)
     assert names["GAST"] == "GLAST"
     assert names["YENNICA"] == "YENNICA"
+
+
+# Nhãn bị TÁCH âm tiết ("Kim Jae Hun") mà sách viết liền ("Kim Jaehun", 755 lần, phiên Model đo B9 06-10).
+KOREAN_BOOK = (
+    "Hôm ấy Kim Jaehun đến văn phòng. Cô nhìn Kim Jaehun rất lâu, rồi nói với Kim Jaehun một câu.\n"
+    "Ở nhánh khác, Gu Yangcheon đứng chờ. Ai cũng sợ Gu Yangcheon. Gu Yangcheon không nói gì.\n"
+)
+
+
+def test_a_name_split_into_syllables_takes_the_book_spelling() -> None:
+    assert snap(["KIM JAE HUN"], KOREAN_BOOK) == {"KIM JAE HUN": "KIM JAEHUN"}
+    assert snap(["Kim Jae Hun"], KOREAN_BOOK) == {"Kim Jae Hun": "Kim Jaehun"}
+    assert snap(["Gu Yang Cheon"], KOREAN_BOOK) == {"Gu Yang Cheon": "Gu Yangcheon"}
+
+
+def test_a_split_name_the_book_itself_writes_is_left_alone() -> None:
+    book = KOREAN_BOOK + "Kim Jae Hun cười. Kim Jae Hun đi.\n"
+    assert snap(["Kim Jae Hun"], book) == {}
+
+
+def test_a_merged_spelling_under_the_threshold_is_not_taken() -> None:
+    book = "Kim Jaehun đến. Kim Jaehun đi.\n"
+    assert snap(["Kim Jae Hun"], book) == {}
+
+
+def test_vietnamese_names_are_not_touched() -> None:
+    book = "Hôm ấy Tào Tháo đến. Tào Tháo cười. Tào Tháo đi. Lưu Bị nghe.\n"
+    assert snap(["Tào Tháo", "TÀO THÁO"], book) == {}  # sách viết đúng như nhãn
+    assert snap(["Lưu Biên"], book) == {}  # vắng mặt, nhưng không có cách gộp nào trong sách
+    assert snap(["TƯƠNG TỬ"], book) == {}
+
+
+def test_a_name_one_letter_short_still_snaps_as_before() -> None:
+    assert snap(["Gu Yangchen"], KOREAN_BOOK) == {"Gu Yangchen": "Gu Yangcheon"}
