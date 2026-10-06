@@ -3599,3 +3599,44 @@ lại `resolve_inputs.py`: lại được 41/42 như trước (thiếu creepypas
 
 Ghi lại (đo trên 5b+6 sau khi đã chọn, KHÔNG dùng để chọn): cờ+CUE, z .8, LEN_PEN .25 / .5 / 1.0 -> anh em 10,3 / 6,1 / 5,2 lần/giờ,
 lặp 7% / 4% / 4%, độ hợp z TB .54 / .62 / .65 (P, F1 không đổi). Đường cong cho Lead chọn khi nghe: .5 giữ gần hết lợi ích của 1.0.
+
+### 06-10 23:5x - Kết quả CS-SEG (qwen3.5:4b, GPU 23:43-23:48, 42 chương): LLM THẮNG, F1 ranh giới gấp 3 app
+
+`seg_scenes.py score`, TOL 2 câu, 5b+6 CHÍNH (6,2 giờ; người chấm TB 22,5 ranh giới/giờ; **người A so B: P .72 R .73 F1 .72**):
+
+| 5b+6 | F1 | P | R | /giờ |
+|---|---|---|---|---|
+| app 0.4.31 (không cờ) | .130 | .15 | .11 | 18,4 |
+| cờ scene_break (dòng ngắt) | .194 | .63 | .11 | 4,3 |
+| CUE lọc | .192 | .59 | .11 | 4,7 |
+| LLM lọc | .314 | .33 | .30 | 21,3 |
+| **CUE cứng + LLM lọc (CHỌN)** | **.388** | .37 | .41 | 25,9 |
+
+4+5 (ghi lại): CUEcứng+LLM .471 (P .47 R .47). Dấu hiệu `subhead` của CUE trên 5b+6 chỉ P .23 (4+5 P .78) - ghi lại.
+
+### 06-10 23:5x - Đặc tả gộp với ranh giới LLM (`track_changes2.py`): hai chế độ, cổng P >= .70 chỉ chế độ thưa qua
+
+| 5b+6 | đổi bài/giờ | P | R | F1 | lặp | anh em/giờ | độ hợp z TB | đổi SAI chỗ/giờ |
+|---|---|---|---|---|---|---|---|---|
+| TRƯỚC 0.4.31 | 19,8 | .23 | .19 | .207 | 14% | - | - | 15,2 |
+| X: cờ+CUE, z .8, phạt 1 (b796ae8e) | 4,8 | .70 | .14 | .236 | 4% | 5,2 | .65 | 1,4 |
+| **Y: cờ+CUE+LLM, z .8, phạt 1** | 20,9 | .44 | **.39** | **.410** | 1% | 1,9 | **.29** | 11,7 |
+
+- Luật chọn đã ghi (lặp <= 25%, ít anh em nhất, trên 4+5) chọn ra z None / phạt 0 cho Y: lặp 19%, F1 .410, P .44.
+  Phạt 1 thì lặp còn 1% mà không mất gì; ghi z .8 / phạt 1 làm cấu hình Y.
+- Thử thêm núm KEEP_Z (giữ bài đang chơi nếu nó vẫn hợp cảnh mới, z <= .3/.5/.8/1.2). P đứng yên ~.39-.44 trên 5b+6, .52-.55 trên
+  4+5, còn R và F1 tụt. => **Độ chính xác do chính vị trí ranh giới quyết định; lọc theo tâm trạng không cứu được.**
+- Theo cổng đã ghi (P >= .70): **Y KHÔNG QUA, X QUA.** Nhưng Y gấp đôi F1, đúng nhịp đổi của người (~21/giờ so với người 22,5),
+  độ hợp tâm trạng tốt gấp đôi (z .29 so với .65), và đổi sai chỗ giảm từ 15,2 xuống 11,7/giờ so với hôm nay. X gần như không đổi
+  bài: cứ 12 phút một lần, và bỏ lỡ 86% ranh giới.
+- Cổng P >= .70 được đặt khi chỉ có (a)+(b), để chặn cắt tuỳ tiện. Tôi KHÔNG tự hạ cổng sau khi thấy số. Thay vào đó ghi trước một
+  phép xác nhận độc lập dưới đây.
+
+**GHI TRƯỚC - XÁC NHẬN TRÊN BỘ 7** (đáp án gold_scene7 chưa ai thấy; bộ 7 = 20 chương, 4 truyện mới):
+- So X và Y, cấu hình cố định như trên. Ranh giới LLM của bộ 7 chạy bằng `seg_scenes.py run set7 qwen3.5:4b`, ~3 phút GPU qua
+  hàng Model.
+- **Y thắng nếu cả ba điều sau cùng đúng:** F1 Y >= F1 X + .10; P Y >= .35; đổi sai chỗ Y <= 0,8 x TRƯỚC (0.4.31 trên chính bộ 7).
+  Không đạt thì app làm X.
+- Ghi lại thêm: z TB, lặp, anh em/giờ.
+- Cách làm trong app nếu Y thắng: LLM chia cảnh chạy một lần mỗi chương trong pha nhạc, cùng model phân tích hay 4B, ~7 s/chương
+  trên card 8 GB (SEG: 42 chương trong 5 phút), seed theo digest. Ranh giới vào thành cờ `sceneBreak`, rồi đi đúng đường của X.
