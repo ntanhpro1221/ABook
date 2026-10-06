@@ -2946,3 +2946,23 @@ Bộ 4+5+5b (354 phút): lỗi chung sau khi trừ trung bình chương |V| .303
 - **Ghi lại:** P2+giãn so P2 thô; k chọn được; MAE từng trục; r (để chắc không tụt).
 - **Thắng thì:** đề xuất app dùng P2 + giãn (một hằng k mỗi trục) - nhưng P2 đã KHÔNG THẮNG ở thước r (611859b5), nên đổi prompt
   app vẫn cần Lead quyết; LoRA Mac / musicvt chấm thêm cùng thước MAE này. **Thua thì:** ghi lại.
+
+### 06-10 13:5x - KẾT QUẢ "P2 + giãn biên độ" (ghi trước 67edb817; `rescale_mae.py`): KHÔNG THẮNG - lỗi nằm ở MỨC CHƯƠNG
+
+k chọn trên bộ 4+5: V 1,5, T 1,5 (lưới 1..10; giãn mạnh hơn chỉ làm MAE tăng). Đo trên 5b+6, 23 chương, MAE thang nửa:
+
+| biến thể | MAE TB | so P0 | thấp hơn P0 | V | T |
+|---|---|---|---|---|---|
+| P0 (prompt app) | .425 | - | - | .362 | .487 |
+| P2 thô | .457 | +7,6 % | 12/23 | .348 | .566 |
+| **P2 + giãn - CHÍNH** | .454 | +7,0 % | 12/23 | .350 | .558 |
+
+-> Cần giảm >= 10 % và >= 17/23: **KHÔNG THẮNG**. Ghi lại (sau khi thấy số), tách lỗi trên 5b+6:
+- Hằng = mức chương của P2: MAE .475; hằng 0 cho mọi câu: .466; hằng = mức chương ĐÁP ÁN: **.282**;
+  P2 thô dời về mức đáp án: **.255**.
+- Tức gần hết sai số tuyệt đối là đoán sai MỨC CHUNG của chương (nhất là T: .589 so .310). Mức chương P2 đoán còn không
+  hơn hằng 0. Biến thiên trong chương của P2 có ích thật nhưng nhỏ (.282 -> .255).
+- Đọc cho LoRA (Mac, musicvt): ngoài r (thứ hạng trong chương), cái đáng sửa nhất là hiệu chỉnh mức chương. Thước MAE tuyệt đối
+  đã gắn vào `score_mlx_lora.py` (ghi lại; nền MLX bộ 4+5+5b: P0 V .385 T .445, P2 V .380 T .481).
+- App: thước CHÍNH lâu nay (r trong chương) không thấy lỗi này. Việc chọn bài nhạc dùng mức tuyệt đối, nên phép nghe
+  oracle 10-10 mới là nơi lỗi mức chương lộ ra.
