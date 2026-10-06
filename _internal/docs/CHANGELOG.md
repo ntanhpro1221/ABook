@@ -11,6 +11,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Dự án mở từ `.abookproj` ở máy cài Studio chỗ khác (hay sau khi thư mục app đổi chỗ) **làm tiếp được**: app tìm model
   cùng tên trong Studio của máy này thay vì báo thiếu model / từ chối làm tiếp. Cài đặt khoá theo sách không đổi.
+- Câu hỏi "'Tôi' là ai?" lúc tạo sách gợi ý đúng người kể ở vị trí đầu thường hơn hẳn: 16/17 truyện ngôi thứ nhất
+  để riêng không dùng khi chỉnh (trước 12/17), và người kể luôn nằm trong ba gợi ý đầu. Trước đây gợi ý đầu hay là tước
+  hiệu hay tên người khác ("Quỷ Vương", "Lôi Long").
 
 ### Phân vai giọng đọc
 
