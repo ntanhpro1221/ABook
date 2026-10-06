@@ -403,8 +403,10 @@ MIXED_AFFECT_BRIDGE_PATTERN = re.compile(
     r")\s*$",
     flags=re.IGNORECASE,
 )
+# "vui lòng" là công thức lịch sự ("Cô vui lòng rời khỏi đây được không?"), không phải niềm vui: lời từ chối lạnh lùng từng
+# bị ép happy (thầy gán nhãn 06-10).
 HAPPY_EVIDENCE_PATTERN = re.compile(
-    r"\b(?:vui\s+mừng(?:\s+rỡ)?|vui(?:\s+vẻ|\s+sướng)?|mừng(?:\s+rỡ)?|"
+    r"\b(?:vui\s+mừng(?:\s+rỡ)?|vui(?:\s+vẻ|\s+sướng|(?!\s+lòng))|mừng(?:\s+rỡ)?|"
     r"hạnh\s+phúc|hân\s+hoan|"
     r"nhẹ\s+nhõm|sung\s+sướng|khoái\s+chí|"
     rf"{ANALYSIS_ACTIVE_PRIDE_CUE_FRAGMENT})\b",
@@ -1203,6 +1205,25 @@ def _canonical_speaker(value: Any) -> str:
     return RESERVED_SPEAKERS.get(speaker.casefold(), speaker)
 
 
+# Kính ngữ Nhật đứng SAU tên, bản dịch giữ nguyên ("Hina-sama", "Kazuma-san"): model chép cả cụm làm nhãn người nói, và
+# "HINA-SAMA" thành nhân vật thứ hai - giọng thứ hai - của Hina. Dùng chung cho sổ nhân vật
+# (`character_registry`) và lời dẫn tên (`_repair_explicit_attribution`); `first_person.py` có cùng danh sách cho việc đoán
+# người kể.
+JAPANESE_HONORIFIC_SUFFIX_PATTERN = re.compile(
+    r"^(?P<name>.*\S)[\s-]+(?:san|sama|kun|chan|sensei|senpai|dono|tan|han|nii|nee|niisan|neesan)$",
+    flags=re.IGNORECASE,
+)
+
+
+def strip_japanese_honorific(label: str) -> str:
+    """"HINA-SAMA" -> "HINA". Nhãn chỉ có kính ngữ ("SENSEI") hay phần còn lại quá ngắn thì giữ nguyên."""
+    match = JAPANESE_HONORIFIC_SUFFIX_PATTERN.fullmatch(" ".join(label.split()))
+    if match is None:
+        return label
+    name = match.group("name").strip(" -")
+    return name if len(name) >= 2 and any(character.isalpha() for character in name) else label
+
+
 def is_local_speaker(value: Any) -> bool:
     return str(value or "").startswith(LOCAL_SPEAKER_STORED_PREFIX)
 
@@ -1438,6 +1459,15 @@ def _split_analysis_group(
     return group[:split_at], group[split_at:]
 
 
+# "“Lugar, con trai của Roxar. Bắt đầu thôi.”" là người nói TỰ GIỚI THIỆU (tên + dòng dõi/thân phận, hết câu), không phải gọi
+# Lugar (thầy gán nhãn 06-10). Câu gọi thật thì sau tên là lời nói ("Lugar, đi thôi.") hay ngắt bằng dấu phẩy ("Lugar, con
+# trai của ta, nghe đây").
+SELF_INTRODUCTION_APPOSITIVE_PATTERN = re.compile(
+    r"\s*(?!(?:tôi|ta|tao|tớ|mình|em|anh|chị|ngươi|mày|cậu|bạn)\s)(?:[a-zà-ỹđ]+\s+){1,3}của\s+(?:[a-zà-ỹđ]+\s+){0,2}"
+    r"[A-ZĐ][\wÀ-ỹĐđ'’-]*(?:\s+[A-ZĐ][\wÀ-ỹĐđ'’-]*)*\s*[.!](?:\s|[\"”’]|$)"
+)
+
+
 def _speaker_is_directly_addressed(text: str, speaker: str) -> bool:
     if speaker.casefold() in RESERVED_SPEAKERS:
         return False
@@ -1447,8 +1477,9 @@ def _speaker_is_directly_addressed(text: str, speaker: str) -> bool:
         return False
     escaped_label = re.escape(label).replace(r"\ ", r"\s+")
     quoted_start = rf"^[\s\"“”'‘’(\[]*{escaped_label}\s*[,!?:…]"
-    if re.search(quoted_start, text, flags=re.IGNORECASE):
-        return True
+    opening = re.search(quoted_start, text, flags=re.IGNORECASE)
+    if opening is not None:
+        return SELF_INTRODUCTION_APPOSITIVE_PATTERN.match(text, opening.end()) is None
     title_pattern = "|".join(
         re.escape(title).replace(r"\ ", r"\s+")
         for title in DIRECT_ADDRESS_TITLES
@@ -1575,12 +1606,13 @@ def _explicit_speaker_attribution(
     group: list[Any],
     index: int,
     result: dict[str, dict[str, Any]],
+    original_context: dict[str, dict[str, Any]] | None = None,
 ) -> str | None:
     row = group[index]
     data = result.get(str(row["stable_id"]))
     if data is None or data["kind"] != "dialogue":
         return None
-    if _is_quoted_inside_a_sentence(group, index, result):
+    if _is_quoted_inside_a_sentence(group, index, result, original_context):
         # Chữ của người kể trích giữa câu ("Sơn Ca” Samantha rảo bước...") - không phải câu thoại của ai.
         return None
     attributed_speaker: str | None = None
@@ -1624,13 +1656,14 @@ def _repair_explicit_attribution(
     group: list[Any],
     result: dict[str, dict[str, Any]],
     local_scope: str,
+    original_context: dict[str, dict[str, Any]] | None = None,
 ) -> None:
     for index, row in enumerate(group):
         seg_id = str(row["stable_id"])
         data = result.get(seg_id)
         if data is None:
             continue
-        attributed_speaker = _explicit_speaker_attribution(group, index, result)
+        attributed_speaker = _explicit_speaker_attribution(group, index, result, original_context)
         if attributed_speaker is None:
             continue
         attributed_speaker = _canonical_speaker(attributed_speaker)
@@ -1639,6 +1672,10 @@ def _repair_explicit_attribution(
             label = attributed_speaker[len(LOCAL_SPEAKER_REQUEST_PREFIX) :]
             attributed_traits = GENERIC_SPEAKER_TRAITS.get(label, attributed_traits)
             attributed_speaker = _scope_local_speaker(attributed_speaker, row, local_scope)
+        else:
+            # Tên chép từ câu kể giữ cả kính ngữ ("Yuzuki-chan bước vào..."): không bỏ thì đè "Yuzuki" của model bằng
+            # một nhân vật mới chưa rõ giới, và tên ấy lọt vào danh sách "Nhân vật đã biết" của mọi lô sau.
+            attributed_speaker = strip_japanese_honorific(attributed_speaker)
         previous_speaker = str(data["speaker"])
         known_rows = [
             candidate
@@ -1722,12 +1759,27 @@ def _repair_addressee_speakers(
 
 
 IN_SENTENCE_QUOTE_OPEN_ENDINGS = tuple(".!?…:;\"”’)")
+# Câu nói thật nằm giữa câu kể ("Kanata nói “Bố mẹ tớ đến rồi, nên nhà tớ ăn cùng nhau” và vì vậy...", "Benito cười lớn
+# “HAHAHA, gặp lại sau nha”"): thuật ngữ / mẩu trích không ngắt vế bằng dấu phẩy, chấm than... ở giữa. Đo 05-10 trên đáp án
+# chuẩn: không đoạn nào trong 31 cụm trích giữa câu có dấu như thế. Động từ nói đứng trước thì KHÔNG đủ: "Ai lại nói “chắc em
+# sẽ thử nín thở” chứ…" vẫn là chữ người kể (5 đoạn đáp án như thế).
+IN_SENTENCE_UTTERANCE_MARKS = (",", ";", "!", "?", "…")
+# Câu kể dừng ngay ở động từ phát ra tiếng ("Mai khẽ thốt lên một tiếng “à”, rồi..."): tiếng kêu sau nó là của người
+# vừa được nêu tên (GOLD_GUIDE quy tắc 8: tiếng kêu của người vẫn là của người ấy). Hai thầy gán nhãn 06-10 cùng trả lời tên
+# người ấy. "Cậu chỉ khẽ “hừm”" (không động từ, không tên) thì vẫn về người kể.
+VOICED_SOUND_LEAD_IN_PATTERN = re.compile(
+    r"(?<![\wÀ-ỹĐđ])(?:nói|hỏi|đáp|trả lời|lên tiếng|thì thầm|lẩm bẩm|quát|kêu|thốt|gào|hét|hô|rên|reo|bật|buột|phát)"
+    r"(?:\s+(?:lên|ra|khẽ|nhỏ|thầm|miệng))*"
+    r"(?:\s+(?:một|vài))?(?:\s+(?:tiếng|câu|từ))?\s*$",
+    re.IGNORECASE,
+)
 
 
 def _is_quoted_inside_a_sentence(
     group: list[Any],
     index: int,
     result: dict[str, dict[str, Any]],
+    original_context: dict[str, dict[str, Any]] | None = None,
 ) -> bool:
     """Cụm trích nằm GIỮA một câu kể: "Arthur không hiểu “dây chuyền lắp ráp” hay ...".
 
@@ -1742,9 +1794,15 @@ def _is_quoted_inside_a_sentence(
     quoted = str(row["text"]).strip().strip("“”\"'‘’").rstrip()
     if not quoted or quoted.endswith((",", ".", "!", "?", "…")):
         return False
+    if any(mark in quoted for mark in IN_SENTENCE_UTTERANCE_MARKS):
+        return False
     before = group[index - 1] if index > 0 else None
     after = group[index + 1] if index + 1 < len(group) else None
     if before is None and after is None:
+        return False
+    if before is None and _opens_its_paragraph_before_the_batch(row, original_context):
+        # Mép trái lô: cụm trích mở đầu đoạn văn thì không có nửa câu kể nào trước nó. “Ừn”, chị ấy đáp lại... là
+        # câu thoại có lời dẫn nối bằng dấu phẩy, không phải thuật ngữ giữa câu.
         return False
     for neighbour in (before, after):
         if neighbour is None:
@@ -1760,6 +1818,23 @@ def _is_quoted_inside_a_sentence(
         return True
     first = str(after["text"]).lstrip()[:1]
     return bool(first.islower() or first in ",;.)?!…")
+
+
+def _opens_its_paragraph_before_the_batch(
+    row: Any,
+    original_context: dict[str, dict[str, Any]] | None,
+) -> bool:
+    """Đoạn đầu lô mà đoạn liền trước nó trong chương (ngoài lô) thuộc đoạn văn khác, hay không có: nó mở đoạn văn."""
+    if original_context is None:
+        return False
+    context = original_context.get(str(row["stable_id"]))
+    if context is None:
+        return False
+    if not context.get("previous_stable_id"):
+        return True
+    paragraph = _row_optional_int(row, "paragraph_index")
+    previous_paragraph = context.get("previous_paragraph_index")
+    return paragraph is not None and previous_paragraph is not None and previous_paragraph != paragraph
 
 
 def _has_its_own_speech_tag(
@@ -1780,14 +1855,37 @@ def _has_its_own_speech_tag(
     )
 
 
+def _is_voiced_sound_of_the_named_speaker(group: list[Any], index: int, speaker: str) -> bool:
+    """Tiếng kêu trong ngoặc ngay sau câu kể nêu tên `speaker` và dừng ở động từ phát ra tiếng.
+
+    "Nói đến đó, Mai khẽ bật ra một tiếng “à”, sau đó mỉm cười." - “à” là của Mai, không phải chữ người kể trích lại.
+    Chỉ tiếng kêu (`is_vocalization_only`); thuật ngữ, câu trích (“Ma Vương”, “gan dạ”) vẫn về người kể.
+    """
+    if index == 0 or is_local_speaker(speaker):
+        return False
+    quoted = str(group[index]["text"]).strip().strip("“”\"'‘’").strip()
+    if not quoted or not is_vocalization_only(quoted):
+        return False
+    lead_in = re.split(r"[.!?…:;]", str(group[index - 1]["text"]))[-1]
+    if VOICED_SOUND_LEAD_IN_PATTERN.search(lead_in) is None:
+        return False
+    words = [speaker, *(word for word in speaker.split() if len(word) >= 3 and not is_vietnamese_syllable(word))]
+    return any(
+        re.search(rf"(?<![\wÀ-ỹĐđ]){re.escape(word)}(?![\wÀ-ỹĐđ])", lead_in, flags=re.IGNORECASE)
+        for word in words
+    )
+
+
 def _repair_in_sentence_quote_speakers(
     group: list[Any],
     result: dict[str, dict[str, Any]],
+    original_context: dict[str, dict[str, Any]] | None = None,
 ) -> None:
     """Cụm trích giữa một câu kể là chữ của NGƯỜI KỂ: "...không thể bảo đây là “Khoa Học” thì đòi hỏi...".
 
     Đo trên 41 chương đáp án chuẩn: 29 đoạn bị chạm, đáp án nhận NARRATOR đủ điểm cả 29, không đoạn nào từ chối.
-    Loại đoạn để nguyên - bộ tách đoạn đã khoá là thoại, và đáp án ghi đúng thế.
+    Loại đoạn để nguyên - bộ tách đoạn đã khoá là thoại, và đáp án ghi đúng thế. Trừ tiếng kêu của người được nêu tên
+    ngay trong lời dẫn (`_is_voiced_sound_of_the_named_speaker`): model nói là của người ấy thì giữ.
     """
     for index, row in enumerate(group):
         data = result.get(str(row["stable_id"]))
@@ -1795,7 +1893,9 @@ def _repair_in_sentence_quote_speakers(
             continue
         if normalize_speaker_name(str(data["speaker"])) == "narrator":
             continue
-        if not _is_quoted_inside_a_sentence(group, index, result):
+        if not _is_quoted_inside_a_sentence(group, index, result, original_context):
+            continue
+        if _is_voiced_sound_of_the_named_speaker(group, index, str(data["speaker"])):
             continue
         data["speaker"] = "NARRATOR"
         _record_host_note_marker(data, IN_SENTENCE_QUOTE_NARRATOR_NOTE)
@@ -1804,13 +1904,14 @@ def _repair_in_sentence_quote_speakers(
 def _repair_same_paragraph_speakers(
     group: list[Any],
     result: dict[str, dict[str, Any]],
+    original_context: dict[str, dict[str, Any]] | None = None,
 ) -> None:
     by_paragraph: dict[tuple[int, int], list[tuple[Any, dict[str, Any]]]] = defaultdict(list)
     for index, row in enumerate(group):
         data = result.get(str(row["stable_id"]))
         if data is None or data["kind"] != "dialogue":
             continue
-        if _is_quoted_inside_a_sentence(group, index, result):
+        if _is_quoted_inside_a_sentence(group, index, result, original_context):
             # Chữ của người kể trích giữa câu (quy tắc 8 của đáp án chuẩn) - không phải câu của người nói trong đoạn.
             continue
         if _has_its_own_speech_tag(group, index, result):
@@ -1996,12 +2097,12 @@ def _validate(
             "personality_hint": "",
             "notes": "",
         }
-    _repair_explicit_attribution(group, result, local_scope)
+    _repair_explicit_attribution(group, result, local_scope, original_context)
     _repair_addressee_speakers(group, result, local_scope)
-    _repair_same_paragraph_speakers(group, result)
+    _repair_same_paragraph_speakers(group, result, original_context)
     _repair_continued_dialogue_speakers(group, result)
     # CUỐI chuỗi sửa: hai khoá trên (đoạn văn, thoại nối tiếp) sẽ ghi đè nếu chạy sau.
-    _repair_in_sentence_quote_speakers(group, result)
+    _repair_in_sentence_quote_speakers(group, result, original_context)
     _canonicalize_analysis_notes(result)
     return result
 
@@ -9556,17 +9657,22 @@ class OllamaBookAnalyzer:
             # syllable has - and stayed broken across every run because a locked row cannot
             # be rewritten. A name kept in English is a decision, not a reading, so it is
             # not judged here. A reading the rules made gets the strict syllable check.
-            if source and not studio_names.lockable(surface, spoken_form):
-                raise ValueError(
-                    f"refusing to lock a rule reading for {surface!r}: {spoken_form!r}"
+            # A refused reading is left unlocked with a warning, never raised: one odd name
+            # ("A-Azuma-san", yamiyo 225, 06-10) used to abort the whole book's analysis.
+            if (source and not studio_names.lockable(surface, spoken_form)) or (
+                not source
+                and _name_candidate_key(spoken_form) != _name_candidate_key(surface)
+                and not _valid_vietnamese_spoken_form(surface, spoken_form)
+            ):
+                message = f"Không khoá cách đọc {spoken_form!r} cho {surface}: có âm tiết không hợp lệ"
+                self.log(message)
+                self.db.event(
+                    "warning",
+                    "NAME_PRONUNCIATION_NOT_LOCKED",
+                    message,
+                    {"surface": surface, "spoken_form": spoken_form, "source": source},
                 )
-            if not source and _name_candidate_key(spoken_form) != _name_candidate_key(
-                surface
-            ) and not _valid_vietnamese_spoken_form(surface, spoken_form):
-                raise ValueError(
-                    f"refusing to lock an unpronounceable reading for {surface!r}: "
-                    f"{spoken_form!r}"
-                )
+                return
             self.db.upsert_pronunciation(
                 surface=surface,
                 normalized_surface=_name_candidate_key(surface),

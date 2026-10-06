@@ -99,9 +99,15 @@ def planned_reading(surface: str, origin: str | None, engine_speaks_english: boo
 
 def lockable(surface: str, spoken_form: str) -> bool:
     """Bộ kiểm chặt cho cách đọc do luật sinh, trước khi khoá: từng chữ giữ nguyên mặt chữ (tiếng Anh), hoặc mọi âm tiết hợp lệ
-    (`vietnamese_syllable.valid_spoken_form`)."""
+    (`vietnamese_syllable.valid_spoken_form`). Cách đọc NHIỀU nhóm hơn số chữ - luật tách tiếng nói lắp ra thành nhóm riêng,
+    "A-Azuma-san" -> "A A-du-ma-xan" (yamiyo 225, 06-10) - thì không ghép được chữ với nhóm: mọi nhóm phải là âm tiết hợp
+    lệ. Ít nhóm hơn số chữ là cách đọc bỏ mất chữ: không khoá."""
     words, spoken = surface.split(), spoken_form.split()
-    return len(words) == len(spoken) and all(said == word or valid_spoken_form(said) for word, said in zip(words, spoken))
+    if len(spoken) > len(words):
+        return all(valid_spoken_form(said) for said in spoken)
+    if len(spoken) < len(words):
+        return False
+    return all(said == word or valid_spoken_form(said) for word, said in zip(words, spoken))
 
 
 def rule_word_corrections(pronunciations: list[Any]) -> dict[str, str]:
