@@ -2817,3 +2817,19 @@ Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCE
   - Ở mức này trần gần sát, nên luật là KHÔNG KÉM: giữ 3.1 nếu không trục nào giảm > 0,03. Trục nào giảm > 0,03 thì quay về bản 3, và lô 3 vẫn dùng làm dữ liệu dạy.
   - Ghi lại: Pk ranh giới, số đoạn, số `duck`/`accent`.
 - **Mục đích chính:** thêm dữ liệu dạy, 40 -> 60 chương, cho LoRA llmVT.
+
+**GHI TRƯỚC - LoRA TOÀN BỘ Qwen3.5-4B cho llmVT trên GPU nhà (06-10 10:xx; Model xếp sau B10, trước mọi số):**
+- **Học:** `music/musicvt/train_q35_qlora.py` (Model), Qwen/Qwen3.5-4B phần chữ, QLoRA nf4 r16 alpha32, 12 loại phép chiếu
+  (gồm gated-delta), lr 1e-4 cosine, 2 epoch, loss chỉ trên câu trả lời, think tắt.
+  - Ra: GGUF -> Ollama Q4_K_M (như qwen3.5:4b), tag `qwen35-4b-musicvt`.
+- **Dữ liệu:** `mlx_lora/sft/{train,val}.jsonl` lúc chuỗi BẮT ĐẦU. Nếu lô 3 (bản 3.1) phân xử xong trước đó, tôi dựng lại file này với 60 chương (cùng `build_mood_sft.py --prompt P2`, hạt 7) và ghi số mẫu ở đây. Không đổi gì sau khi chuỗi đã bắt đầu.
+- **Đo:** `prompt_mood.py run ... P2 qwen35-4b-musicvt` trên bộ 4, 5, 5b, 6 (Ollama, ranh giới app). Chấm như llmVT của app: V, T từ LLM; E nhãn câu; `SCORE_SKIP_NOTES=1`.
+- **CHÍNH:** musicvt-P2 so `qwen3.5:4b`-P0 (prompt app hiện nay, số của phép prompt mốc) trên bộ 4 + 5 + 5b (22 chương). THẮNG nếu VET hơn ≥ 0,05 VÀ hơn ở ≥ 16/22 chương.
+- **Ghi lại:**
+  - so `qwen3.5:4b`-P2 (phần của việc học);
+  - bộ 6;
+  - E từ LLM;
+  - SD đầu ra trong chương;
+  - tỉ lệ V = 0;
+  - giây/lượt (phải ngang bản gốc).
+- **Thắng thì:** đề xuất Lead thay model llmVT của app bằng `qwen35-4b-musicvt` (cùng cỡ tải 3,2 GB, runtime tuỳ chọn như cũ), cùng prompt P2 và đọc chữ số; nghe kiểm bằng oracle như lần trước nếu Lead muốn. **Thua thì:** ghi lại; hướng dữ liệu dạy dừng ở cỡ này.
