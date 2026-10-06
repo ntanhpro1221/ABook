@@ -3997,3 +3997,40 @@ Kết luận:
    Vì vậy F1 ranh giới so với toàn bộ đáp án đánh giá thấp chế độ X: X chỉ nên trúng phần đổi nơi/thời gian.
    Nên đo X theo đáp án cứng có đổi nơi/thời gian (cần nhãn), và đo đổi nhịp bằng L2.
 4. Chưa ghi trước giả thuyết nào, chưa dùng bộ 10.
+
+### 07-10 05:4x - TYPES (GHI TRƯỚC, Lead duyệt): gắn loại cho mọi ranh giới đáp án, đo X bằng thước "đổi nơi/thời gian"
+Ghi trước khi tạo đề và trước khi có nhãn nào.
+
+**Đối tượng.** Mọi ranh giới đáp án (đầu mỗi `scene` trừ cảnh đầu) của các bộ 4, 5, 5b, 6, 7, 8, 9: 453 ranh giới.
+
+**Nhãn.** Chọn đúng một nhãn. Xét ±1 câu quanh dấu ▶ của đề.
+- `NT` (đổi nơi / thời gian): sau ranh giới, câu chuyện ở nơi khác, hoặc thời gian đứt quãng. Gồm các trường hợp:
+  - nhảy thời gian ("hôm sau", "1 phút sau", "sau bữa tối" khi bỏ qua một quãng);
+  - cắt sang nhóm nhân vật khác ở chỗ khác ("trong khi đó, tại…");
+  - mở hay đóng một hồi tưởng / giấc mơ / ký ức;
+  - đến nơi mới sau khi di chuyển (bước vào lớp, tới thành phố), kể cả khi việc di chuyển được kể liền.
+- `NH` (đổi nhịp): cùng nơi, thời gian liền mạch, cùng cảnh. Ranh giới là đổi không khí, đổi việc, đổi đề tài, có người
+  đến hay lên tiếng, suy nghĩ bị cắt ngang, trận đánh chuyển pha. Đổi người kể mà vẫn cùng nơi, cùng lúc cũng là `NH`.
+- `GC` (ngoài truyện): bước vào hoặc ra khỏi chữ không thuộc truyện: lời tác giả, lời người dịch, ghi chú, quảng cáo.
+- Kèm độ chắc 1-3 và một câu lý do.
+
+**Cách chấm.** Hai người chấm mù A/B (Opus), đề giống nhau, A đi xuôi, B đi ngược. Người chấm chỉ thấy chữ quanh ranh giới
+(7 câu trước, 6 câu sau). Không thấy dự đoán của X, không thấy nhãn đáp án (setting, mood).
+Phân xử:
+- A = B: lấy nhãn chung.
+- Khác nhau: lấy nhãn của người chắc hơn.
+- Bằng độ chắc: theo thứ tự `GC` > `NT` > `NH`, vì thước đổi bài nên thận trọng khi bỏ một ranh giới thật.
+Báo độ khớp A-B: tỉ lệ trùng và kappa.
+
+**Thước đo** (TOL ±2 câu, mức ranh giới, câu trơn như `cue_bracket`):
+1. Đổi bài (X) so với `NT`:
+   - R_NT = số `NT` được trúng / tổng `NT`;
+   - P_NT = số ranh giới X gần một `NT` / tổng ranh giới X;
+   - F1_NT.
+   - Sai/giờ CHẶT: ranh giới X không gần `NT` nào. Ranh giới X rơi vào `NH` tính là đổi bài sai chỗ.
+   - Báo thêm sai/giờ NỚI: chỉ tính ranh giới X không gần ranh giới đáp án nào.
+   - `GC`: báo riêng, không tính vào thước nào. Ghi chú nên tắt nhạc hay giữ nhạc là chuyện khác.
+2. Đổi nhịp so với `NH`: R_NH của các nguồn động trong chương hiện có: ranh giới LLM sau `later_drop` g = 30 s (bộ có
+   đầu ra LLM), và chế độ Y (đổi cảm xúc theo nhãn câu app, bộ có nhãn). Kèm báo động sai/giờ, tức không gần ranh giới đáp
+   án nào. Đây là đo mô tả, chưa có cổng.
+3. Từ nay cổng đổi bài cho mọi thay đổi chế độ X dùng thước 1: F1_NT và sai/giờ CHẶT.
