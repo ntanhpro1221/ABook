@@ -2,6 +2,7 @@ import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
 import type { PreparePlan, PrepareStatus } from "@/listen/prepareAhead";
 import type { MusicCredit } from "@/listen/musicBed";
+import type { RemoteSleep, RemoteSleepCommand } from "@/listen/sleep";
 import type { ReadAloudTimings, ReadAloudVoice } from "@/listen/readAloud";
 import type { KeyCheck, OnlineProviderInfo } from "@/listen/VoiceSettings";
 import type { Capabilities } from "@/shared/capabilities";
@@ -150,12 +151,15 @@ export interface RemotePlayer {
   /** Cuốn ấy ở điện thoại này: mã máy tính chính (nghe thẳng/đã tải) hoặc `p<key>_<mã>` của thiết bị ghép. */
   localBookId: string;
   known: boolean;
+  /** Hẹn giờ tắt của loa / TV (`via` cast): máy giữ phiên phát đếm - máy tính chính hay chính điện thoại (DlnaPlayers.kt). */
+  sleep?: RemoteSleep | null;
 }
 
 export type RemotePlayerCommand =
   | { action: "play" | "pause" | "toggle" | "next" | "previous" | "stop" }
   | { action: "skip" | "seek"; seconds: number }
-  | { action: "load"; bookId: string; chapterId: number; seconds: number };
+  | { action: "load"; bookId: string; chapterId: number; seconds: number }
+  | RemoteSleepCommand;
 
 export interface PeerLibrary {
   key: string;

@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe
+
+- Phát trên loa / TV có hẹn giờ tắt: thanh "Đang phát trên <thiết bị>" (máy tính và điện thoại) có nút trăng như trình phát trong app - chọn 5 tới 90 phút, số phút tự đặt,
+  hay "Dừng khi hết chương này"; nút đếm ngược, thêm được 10 phút, tắt được. Đồng hồ chỉ chạy khi loa / TV đang phát. Hết giờ thì thiết bị tạm dừng và chỗ đang nghe
+  được lưu; hẹn "hết chương" thì dừng ở cuối chương và lần nghe sau vào thẳng chương kế.
+- Điện thoại phát lên loa / TV: màn hình khoá, nút tai nghe / Bluetooth và đồng hồ điều khiển được thiết bị - phát / tạm dừng, lùi / tới 15 giây, chương trước / sau -
+  và hiện tên chương, tên sách. Phím âm lượng vẫn chỉnh âm lượng điện thoại.
+
 ## [0.4.29] - 2026-10-06
 
 ### Studio

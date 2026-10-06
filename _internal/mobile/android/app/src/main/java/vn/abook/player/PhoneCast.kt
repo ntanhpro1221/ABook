@@ -17,6 +17,8 @@ import android.os.Looper
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaStyleNotificationHelper
 import org.json.JSONObject
 
 /**
@@ -60,11 +62,23 @@ object PhoneCast {
  * Giữ điện thoại thức khi nó đang phục vụ audio cho loa / TV: màn hình tắt thì Android ngủ sâu - cổng audio ngừng trả lời
  * giữa chương, hết lượt hỏi thiết bị nên không lưu chỗ nghe, không sang chương sau. Dịch vụ chạy nền (mediaPlayback) có
  * thông báo "Đang phát trên <TV>", giữ khoá CPU + khoá Wi-Fi, và tự dừng khi không còn phiên nào (hỏi mỗi 15 giây).
+ *
+ * Kèm một phiên media ([CastPlayer], 07-10): màn hình khoá, nút tai nghe / Bluetooth, đồng hồ điều khiển loa / TV như
+ * trình phát trong app - phát / dừng, lùi / tới 15 giây, chương trước / sau. Thông báo dùng kiểu media gắn phiên ấy.
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class CastService : Service() {
     private var wake: PowerManager.WakeLock? = null
     private var wifi: WifiManager.WifiLock? = null
+    private var player: CastPlayer? = null
+    private var session: MediaSession? = null
     private val handler = Handler(Looper.getMainLooper())
+    private val tick = object : Runnable {
+        override fun run() {
+            player?.refresh() // vị trí, phát / dừng, chương trên màn hình khoá theo bản chụp mới nhất
+            handler.postDelayed(this, 1_000)
+        }
+    }
     private val check = object : Runnable {
         override fun run() {
             val names = PhoneCast.players.active()
@@ -85,6 +99,10 @@ class CastService : Service() {
         if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(CHANNEL) == null) {
             manager.createNotificationChannel(NotificationChannel(CHANNEL, "Phát trên loa / TV", NotificationManager.IMPORTANCE_LOW))
         }
+        val cast = CastPlayer(PhoneCast.players)
+        player = cast
+        // Mã riêng: phiên của trình phát trong app (PlaybackService) giữ mã mặc định.
+        session = MediaSession.Builder(this, cast).setId("cast").setSessionActivity(openApp()).build()
         val notification = notification(PhoneCast.players.active())
         try {
             if (Build.VERSION.SDK_INT >= 29) {
@@ -98,6 +116,7 @@ class CastService : Service() {
             stopSelf()
             return
         }
+        handler.post(tick)
         wake = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "abook:cast")
             .apply { acquire() }
         wifi = (applicationContext.getSystemService(WIFI_SERVICE) as WifiManager)
@@ -130,6 +149,11 @@ class CastService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(check)
+        handler.removeCallbacks(tick)
+        session?.release()
+        session = null
+        player?.release()
+        player = null
         wake?.takeIf { it.isHeld }?.release()
         wifi?.takeIf { it.isHeld }?.release()
         super.onDestroy()
@@ -137,21 +161,25 @@ class CastService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    private fun openApp(): PendingIntent = PendingIntent.getActivity(this, 0,
+        Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE)
+
     private fun notification(names: List<String>): Notification {
-        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_IMMUTABLE)
         val playing = PhoneCast.players.playing().any { it.second }
         val toggle = if (playing) ACTION_PAUSE else ACTION_PLAY
-        return NotificationCompat.Builder(this, CHANNEL)
+        val builder = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(applicationInfo.icon)
             .setContentTitle("${if (playing) "Đang phát" else "Đang dừng"} trên ${names.joinToString(", ").ifEmpty { "loa / TV" }}")
             .setContentText("Điện thoại đang phục vụ audio - giữ Wi-Fi bật")
-            .setContentIntent(open)
+            .setContentIntent(openApp())
             .addAction(0, if (playing) "Tạm dừng" else "Phát tiếp", command(toggle))
             .addAction(0, "Dừng", command(ACTION_STOP))
             .setOngoing(true)
             .setSilent(true)
-            .build()
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+        // Kiểu media gắn phiên: điều khiển hiện ở màn hình khoá và khung media của hệ thống.
+        session?.let { builder.setStyle(MediaStyleNotificationHelper.MediaStyle(it).setShowActionsInCompactView(0, 1)) }
+        return builder.build()
     }
 
     private fun command(action: String): PendingIntent = PendingIntent.getService(this, action.hashCode(),
