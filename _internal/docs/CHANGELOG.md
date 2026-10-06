@@ -9,14 +9,31 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
-- Dự án mở từ `.abookproj` ở máy cài Studio chỗ khác (hay sau khi thư mục app đổi chỗ) **làm tiếp được**: app tìm model
-  cùng tên trong Studio của máy này thay vì báo thiếu model / từ chối làm tiếp. Cài đặt khoá theo sách không đổi.
 - Câu hỏi "'Tôi' là ai?" lúc tạo sách gợi ý đúng người kể ở vị trí đầu thường hơn hẳn: 16/17 truyện ngôi thứ nhất
   để riêng không dùng khi chỉnh (trước 12/17), và người kể luôn nằm trong ba gợi ý đầu. Trước đây gợi ý đầu hay là tước
   hiệu hay tên người khác ("Quỷ Vương", "Lôi Long").
 - Dừng giữa lúc phân tích rồi làm tiếp (hay app tắt đột ngột) không còn tự đổi cách app hỏi model: mỗi câu trả lời của
   model được ghi lại, làm tiếp thì dùng lại đúng câu trả lời cũ, và danh sách nhân vật, lượt thử, lời góp ý mang sang
   được dựng lại y như lúc chưa dừng. Phần còn lệch là do chính Ollama tính hơi khác sau khi khởi động lại (đang đo).
+
+### Cách đọc tên
+
+- Tên bị máy tách thành từng âm tiết ("Kim Jae Hun") trong khi sách viết liền ("Kim Jaehun") không còn thành hai nhân vật hai
+  giọng: app gộp về cách viết của sách, nhưng chỉ khi sách viết liền như thế ít nhất ba lần và không chỗ nào viết đúng như máy.
+
+### Âm thanh
+
+- Dòng chỉ có ký hiệu ngăn cảnh trong truyện ("***", "◆", "———", "~~~") giờ là chỗ nghỉ thật: sách nói dừng khoảng 1,5 giây
+  khi đổi cảnh thay vì nghỉ ngắn như hết một câu, và nhạc nền đổi đoạn đúng chỗ ấy. Chữ của truyện không bị đổi.
+  Nghe ngay (máy tính và điện thoại) cũng vậy: ở dòng ngăn cảnh, trình phát im 1,5 giây thay vì đi tiếp ngay.
+  Một dấu "*" hay "-" đứng riêng một đoạn cũng được tính là ngăn cảnh.
+
+## [0.4.30] - 2026-10-07
+
+### Studio
+
+- Dự án mở từ `.abookproj` ở máy cài Studio chỗ khác (hay sau khi thư mục app đổi chỗ) **làm tiếp được**: app tìm model
+  cùng tên trong Studio của máy này thay vì báo thiếu model / từ chối làm tiếp. Cài đặt khoá theo sách không đổi.
 
 ### Phân vai giọng đọc
 
@@ -32,15 +49,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Tên viết kiểu nói lắp ("A-Azuma-san") không còn làm dừng cả lượt phân tích sách: cách đọc "A A-du-ma-xan" được
   khoá như mọi tên khác. Một cách đọc tên nào đó không khoá được thì app ghi cảnh báo và đọc tiếp cuốn, không dừng.
-- Tên bị máy tách thành từng âm tiết ("Kim Jae Hun") trong khi sách viết liền ("Kim Jaehun") không còn thành hai nhân vật hai
-  giọng: app gộp về cách viết của sách, nhưng chỉ khi sách viết liền như thế ít nhất ba lần và không chỗ nào viết đúng như máy.
-
-### Âm thanh
-
-- Dòng chỉ có ký hiệu ngăn cảnh trong truyện ("***", "◆", "———", "~~~") giờ là chỗ nghỉ thật: sách nói dừng khoảng 1,5 giây
-  khi đổi cảnh thay vì nghỉ ngắn như hết một câu, và nhạc nền đổi đoạn đúng chỗ ấy. Chữ của truyện không bị đổi.
-  Nghe ngay (máy tính và điện thoại) cũng vậy: ở dòng ngăn cảnh, trình phát im 1,5 giây thay vì đi tiếp ngay.
-  Một dấu "*" hay "-" đứng riêng một đoạn cũng được tính là ngăn cảnh.
 
 ## [0.4.29] - 2026-10-06
 
