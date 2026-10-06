@@ -9657,17 +9657,22 @@ class OllamaBookAnalyzer:
             # syllable has - and stayed broken across every run because a locked row cannot
             # be rewritten. A name kept in English is a decision, not a reading, so it is
             # not judged here. A reading the rules made gets the strict syllable check.
-            if source and not studio_names.lockable(surface, spoken_form):
-                raise ValueError(
-                    f"refusing to lock a rule reading for {surface!r}: {spoken_form!r}"
+            # A refused reading is left unlocked with a warning, never raised: one odd name
+            # ("A-Azuma-san", yamiyo 225, 06-10) used to abort the whole book's analysis.
+            if (source and not studio_names.lockable(surface, spoken_form)) or (
+                not source
+                and _name_candidate_key(spoken_form) != _name_candidate_key(surface)
+                and not _valid_vietnamese_spoken_form(surface, spoken_form)
+            ):
+                message = f"Không khoá cách đọc {spoken_form!r} cho {surface}: có âm tiết không hợp lệ"
+                self.log(message)
+                self.db.event(
+                    "warning",
+                    "NAME_PRONUNCIATION_NOT_LOCKED",
+                    message,
+                    {"surface": surface, "spoken_form": spoken_form, "source": source},
                 )
-            if not source and _name_candidate_key(spoken_form) != _name_candidate_key(
-                surface
-            ) and not _valid_vietnamese_spoken_form(surface, spoken_form):
-                raise ValueError(
-                    f"refusing to lock an unpronounceable reading for {surface!r}: "
-                    f"{spoken_form!r}"
-                )
+                return
             self.db.upsert_pronunciation(
                 surface=surface,
                 normalized_surface=_name_candidate_key(surface),
