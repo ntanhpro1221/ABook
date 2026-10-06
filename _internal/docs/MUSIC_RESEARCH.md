@@ -3032,3 +3032,9 @@ Hai agent Opus chấm mù xong 20/20 mỗi người (bản 3); phân xử 83 đo
 - **Chọn:** chỉ một thắng -> nó. Cả hai thắng -> C0 (không cần GPU, không thêm lượt), trừ khi CF thấp hơn C0 >= .03 MAE.
   Không ứng viên nào thắng -> ghi lại, nghĩ tiếp (vd LoRA có nhãn mức chương).
 - Thắng thì Lead giao agent cắm vào app (lớp riêng của cuốn, bật mặc định), hằng hiệu chỉnh ghi trong code kèm nguồn.
+
+**KẾT QUẢ C0 (mức chương nhãn câu app + hiệu chỉnh tuyến tính, CPU, 06-10):** hệ số học trên 4+5: V 1,95·m + 0,080; T 2,57·m + 0,047
+(nhãn câu app co thang mức chương ~2-2,5 lần). Trên 5b+6: MAE **.395** (V .348, T .443), r V .73 T .75 -> **KHÔNG THẮNG** (cần
+<= .35). Giảm .432 -> .395 (-9 %) chỉ nhờ giãn thang; thứ hạng giữ nguyên nên r không đổi. Ghi lại 4+5 (tập học): .419 -> .390.
+Trần (mức đáp án) .286, nên ngưỡng .35 đòi mức chương dự đoán sát hơn hẳn: C0 thiếu ở thứ hạng chứ không ở thang. Kế: CF (một lượt
+LLM đọc cả chương) qua hàng GPU của Model.
