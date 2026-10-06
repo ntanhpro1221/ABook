@@ -2778,3 +2778,30 @@ Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCE
   - lệch đúng 1 bậc ở một trục -> `soft`;
   - `ramp` không kèm `soft` cho ranh giới bắt buộc mà vị trí mờ.
 - **Tiếp:** kế hoạch LoRA 4B (`scene_train_v3/LORA_PLAN.md`) ghi trước sau phép prompt mốc 06-10 (để chốt dạng đầu ra) và oracle 10-10.
+
+**GHI TRƯỚC - LoRA LỚP CUỐI cho llmVT, học trên Mac (06-10 09:3x; trước mọi số của base hay LoRA trên MLX):**
+- **Vì sao lớp cuối:** `qwen3.5:4b` của app đọc gần như hằng số (V0 E1 T2, ERROR_ANALYSIS_4B), tức lỗi nằm ở khâu đọc ra.
+  Mac mini 16 GB không học nổi toàn bộ: mlx-lm lan ngược qua lớp gated-delta của Qwen3.5 theo từng token, một lớp ~4 GB ở
+  1.024 token, kể cả khi vá checkpoint theo khúc. Lớp 31 là full attention, lan ngược không qua gated-delta.
+  LoRA toàn bộ (PyTorch + kernel chunk) là việc sau, ở GPU nhà hoặc Kaggle.
+- **Model:** `mlx-community/Qwen3.5-4B-4bit` (rev 0e7ffd5c), mlx-lm 0.32.0. LoRA r 16, scale 2, chỉ lớp 31, lr 2e-4 cosine,
+  1.540 bước (2 epoch), loss chỉ trên câu trả lời, think tắt (khối think rỗng như Ollama).
+- **Dữ liệu:** 40 chương nhãn dạy (lô thử + lô 2, hướng dẫn bản 3), `build_mood_sft.py --prompt P2`, nhãn mềm A/B:
+  770 mẫu train + 62 val. Không truyện nào của bộ đáp án 4/5/5b/6.
+- **Đo:** `mlx_mood_eval.py` trên Mac, cùng 260 khúc ranh giới app (`export_mood_eval.py`).
+  - P2 = kỳ vọng chữ số theo xác suất; P0 = JSON tham lam.
+  - Chấm bằng `prompt_mood.chapter_rs` như llmVT của app: V, T từ LLM; E từ nhãn câu; `SCORE_SKIP_NOTES=1`.
+- **CHÍNH:** LoRA-P2 so base-P0 (prompt app hiện nay), CÙNG MLX 4-bit, bộ 4 + 5 + 5b (22 chương). THẮNG nếu VET hơn
+  ≥ 0,05 VÀ hơn ở ≥ 16/22 chương.
+- **Ghi lại, không quyết:**
+  - LoRA-P2 so base-P2 (phần của việc học);
+  - bộ 6;
+  - độ lệch chuẩn đầu ra trong chương (hết trả hằng chưa);
+  - tỉ lệ V = 0;
+  - E từ LLM.
+- **Lưu ý trước:** MLX 4-bit (affine, nhóm 64) khác Q4_K_M của Ollama, nên số base ở đây không so thẳng với số Ollama của phép prompt mốc.
+- **Thắng thì:**
+  - đề xuất Model học LoRA TOÀN BỘ trên GPU (cùng dữ liệu), đo lại bằng Ollama;
+  - app tải biến thể model llmVT như một runtime tuỳ chọn.
+
+  **Thua thì:** lớp cuối không đủ; vẫn đề xuất LoRA toàn bộ một lần trước khi đóng hướng.
