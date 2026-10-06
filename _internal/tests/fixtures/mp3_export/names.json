@@ -1,0 +1,86 @@
+{
+ "safeName": [
+  {
+   "text": "Chương 646: Trở về/1?",
+   "limit": 120,
+   "name": "Chương 646 Trở về 1"
+  },
+  {
+   "text": "  \"...\"  ",
+   "limit": 120,
+   "name": "Sach"
+  },
+  {
+   "text": ". a .",
+   "limit": 120,
+   "name": " a"
+  },
+  {
+   "text": "Tên\tcó　nhiều    khoảng\ntrắng",
+   "limit": 120,
+   "name": "Tên có nhiều khoảng trắng"
+  },
+  {
+   "text": "..Sách.. ",
+   "limit": 120,
+   "name": "Sách"
+  },
+  {
+   "text": "<>:\"/\\|?*\u0001\u001f",
+   "limit": 120,
+   "name": "Sach"
+  },
+  {
+   "text": "Một tên chương rất dài Một tên chương rất dài Một tên chương rất dài Một tên chương rất dài Một tên chương rất dài Một tên chương rất dài ",
+   "limit": 90,
+   "name": "Một tên chương rất dài Một tên chương rất dài Một tên chương rất dài Một tên chương rất dà"
+  },
+  {
+   "text": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA B",
+   "limit": 90,
+   "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  },
+  {
+   "text": "🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙",
+   "limit": 90,
+   "name": "🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙"
+  },
+  {
+   "text": "",
+   "limit": 120,
+   "name": "Sach"
+  }
+ ],
+ "chapterFileName": [
+  {
+   "number": 1,
+   "total": 2,
+   "fullTitle": "Chương 1 · Mở đầu",
+   "name": "01 - Chương 1 · Mở đầu.mp3"
+  },
+  {
+   "number": 7,
+   "total": 99,
+   "fullTitle": "Chương 7: Trở về/1?",
+   "name": "07 - Chương 7 Trở về 1.mp3"
+  },
+  {
+   "number": 12,
+   "total": 120,
+   "fullTitle": "Chương mười hai",
+   "name": "012 - Chương mười hai.mp3"
+  },
+  {
+   "number": 1,
+   "total": 1000,
+   "fullTitle": "Kết",
+   "name": "0001 - Kết.mp3"
+  },
+  {
+   "number": 3,
+   "total": 5,
+   "fullTitle": "   ",
+   "name": "03 - Sach.mp3"
+  }
+ ]
+}

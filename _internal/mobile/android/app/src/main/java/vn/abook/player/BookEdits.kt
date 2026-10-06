@@ -69,7 +69,7 @@ object BookEdits {
         else -> false
     }
 
-    private fun isSpace(char: Char) = Character.isWhitespace(char) || Character.isSpaceChar(char)
+    internal fun isSpace(char: Char) = Character.isWhitespace(char) || Character.isSpaceChar(char)
 
     private fun codePoints(text: String): List<Int> = text.codePoints().toArray().toList()
 

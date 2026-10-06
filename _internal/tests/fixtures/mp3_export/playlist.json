@@ -1,0 +1,26 @@
+{
+ "title": "Sách thử · Tập 1",
+ "entries": [
+  [
+   12.2,
+   "Chương 1 · Mở đầu",
+   "01 - Chương 1 · Mở đầu.mp3"
+  ],
+  [
+   2.5,
+   "Chương 2",
+   "02 - Chương 2.mp3"
+  ],
+  [
+   3.5,
+   "Chương 3",
+   "03 - Chương 3.mp3"
+  ],
+  [
+   0.0,
+   "Chương 4",
+   "04 - Chương 4.mp3"
+  ]
+ ],
+ "text": "#EXTM3U\n#PLAYLIST:Sách thử · Tập 1\n#EXTINF:12,Chương 1 · Mở đầu\n01 - Chương 1 · Mở đầu.mp3\n#EXTINF:2,Chương 2\n02 - Chương 2.mp3\n#EXTINF:4,Chương 3\n03 - Chương 3.mp3\n#EXTINF:0,Chương 4\n04 - Chương 4.mp3\n"
+}
