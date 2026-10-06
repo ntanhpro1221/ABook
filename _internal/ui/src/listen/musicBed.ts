@@ -59,7 +59,7 @@ const FADE_SECONDS = 2;
 export const SIBLING_FADE_SECONDS = 6;
 export const STEP_RAMP_SECONDS = 4;
 const STEP_MS = 50;
-/** Bài tải hỏng (mất mạng): đoạn của nó im lặng, chừng ấy sau mới thử lại - như RETRY_MS của MusicBed.kt. */
+/** Bài tải hỏng (mất mạng): đoạn của nó im lặng, chừng ấy sau mới thử lại - như MusicFailures.RETRY_MS của Android. */
 export const RETRY_MS = 5 * 60_000;
 
 function cueAt(cues: MusicCue[], seconds: number): MusicCue | null {

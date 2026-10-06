@@ -18,7 +18,7 @@ import {
 
 // Bộ ví dụ DÙNG CHUNG với pytest (test_a_listen_scene_break_rule_is_shared.py) và test JVM (SceneBreakTest.kt): luật dòng ngăn cảnh của
 // text_processing.is_scene_break_line và cách đọc to chia / lặng ở đó.
-const SCENE = JSON.parse(readFileSync(new URL("../../../tests/fixtures/scene_break/cases.json", import.meta.url), "utf8")) as {
+const SCENE = JSON.parse(readFileSync(new URL("../../../tests/fixtures/scene_break/cases.json", import.meta.url)).toString("utf8")) as {
   ms: number;
   ruleGlyphs: string;
   aloneGlyphs: string;

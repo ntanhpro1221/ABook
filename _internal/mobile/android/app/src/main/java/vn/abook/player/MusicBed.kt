@@ -43,7 +43,6 @@ object MusicBed {
     private const val SAVE_EVERY_MS = 5000L
     private const val PREFS = "music_bed"
     private val CREDIT_KEYS = listOf("title", "creator", "attribution", "landing", "license", "licenseUrl")
-    private const val RETRY_MS = 5 * 60_000L // bài tải hỏng (mất mạng): chừng ấy sau, tới lúc đổi bài, thử lại
 
     /** Một bài đang kêu. `goal` = âm lượng đang hướng tới, `perTick` = mỗi nhịp STEP_MS nhích bao nhiêu; `entering` = đang mờ vào
      *  (tua lúc này không nhảy thẳng tới mức); `cue` = mốc đang phát (bước âm lượng), null với danh sách phát. */
@@ -65,8 +64,8 @@ object MusicBed {
     private var current: Bed? = null
     private val fading = mutableListOf<Bed>()
     private var fadingTicker = false
-    // Bài không phát được -> lúc được thử lại (SystemClock.elapsedRealtime): tải hỏng (mất mạng) thì sau RETRY_MS, file hỏng thì không bao giờ trong phiên.
-    private val failed = mutableMapOf<String, Long>()
+    // Bài không phát được -> lúc được thử lại: tải hỏng (mất mạng) thì sau RETRY_MS, file hỏng thì không bao giờ trong phiên.
+    private val failed = MusicFailures { SystemClock.elapsedRealtime() }
 
     // ---- danh sách phát ("Nghe ngay") ----
     private var playlist: String? = null // danh sách đang dùng cho cuốn này; null = nhạc theo mốc của sách (hay không nhạc)
@@ -127,7 +126,7 @@ object MusicBed {
         val seeked = abs(seconds - lastSeconds) > SEEK_JUMP_SECONDS
         lastSeconds = seconds
         playing = isPlaying
-        val cue = cues.firstOrNull { seconds >= it.start && seconds < it.end }?.takeUnless { isFailed(it.track) }
+        val cue = MusicCues.at(cues, seconds, failed)
         if (cue?.track != current?.track || (seeked && cue != null && current == null)) {
             switchTo(cue?.let { (it.track to Streaming.chapterUri(appContext, book, it.track)) },
                 cue?.let { MusicCues.targetGain(it, seconds, gain) } ?: gain, seconds - (cue?.start ?: 0.0), cue)
@@ -262,22 +261,20 @@ object MusicBed {
         }
     }
 
-    /** Bài không phát được (`retry`: tải hỏng - thử lại sau [RETRY_MS]; không thì cả phiên): với danh sách phát, các bài sau dồn lên thay vì
-     *  im lặng suốt khoảng của nó. Trước đây tải hỏng một lần lúc mất mạng là bài ấy im tới khi mở lại cuốn. */
+    /** Bài không phát được (`retry`: tải hỏng - thử lại sau [MusicFailures.RETRY_MS]; không thì cả phiên): với danh sách phát, các bài sau
+     *  dồn lên thay vì im lặng suốt khoảng của nó. Trước đây tải hỏng một lần lúc mất mạng là bài ấy im tới khi mở lại cuốn. */
     private fun drop(link: String, retry: Boolean = false) {
-        failed[link] = if (retry) SystemClock.elapsedRealtime() + RETRY_MS else Long.MAX_VALUE
+        failed.drop(link, retry)
         if (playlist == null || spans.none { it.track.link == link }) return
         rebuild()
     }
 
-    private fun isFailed(link: String): Boolean = (failed[link] ?: return false) > SystemClock.elapsedRealtime()
+    private fun isFailed(link: String): Boolean = failed.isFailed(link)
 
     /** Bỏ các bài đã hết hạn chờ khỏi danh sách hỏng; true nếu hàng bài của danh sách phát vì thế đổi. */
     private fun retryDue(): Boolean {
-        val now = SystemClock.elapsedRealtime()
-        val due = failed.filterValues { it <= now }.keys
+        val due = failed.takeDue()
         if (due.isEmpty()) return false
-        failed.keys.removeAll(due)
         if (playlist == null || tracks.none { it.link in due }) return false
         rebuild()
         return true
@@ -377,16 +374,18 @@ object MusicBed {
                 override fun onPlaybackStateChanged(state: Int) {
                     if (state == Player.STATE_READY) {
                         player.removeListener(this)
+                        failed.forget(track)
                         val duration = player.duration
                         if (duration > 0) player.seekTo(offsetMs % duration)
                     }
                 }
             })
             player.addListener(object : Player.Listener {
-                // Điện thoại không tự tải nhạc của sách từ mạng: file thiếu trong gói / máy tính không phát được thì cho đoạn này im lặng.
+                // Nhạc của sách hỏng (file thiếu trong gói, mạng tới máy tính rớt khi nghe thẳng): đoạn này im lặng, RETRY_MS sau thử
+                // lại như máy tính. Bài của danh sách phát phát hỏng (file hỏng) thì bỏ cả phiên - tải hỏng đã có fetch lo.
                 override fun onPlayerError(error: PlaybackException) {
                     main.post {
-                        drop(track)
+                        drop(track, retry = playlist == null)
                         player.release()
                         if (current?.player === player) {
                             current = null
