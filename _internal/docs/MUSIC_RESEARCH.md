@@ -3370,7 +3370,7 @@ Sau 76aa32e9 (nhãn câu app không có hình dạng: 0,280 so với phẳng 0,2
   nên alpha 1 ép mọi hệ số về ~0. Đổi thành **alpha = 0,001** (cùng thang: XᵀWX/Σw + alpha·I), tức phạt nhẹ chỉ để ổn định khi các
   nguồn tương quan nhau. Mọi điều khác giữ nguyên.
 
-### 06-10 23:4x - Kết quả L3-EST (ghi trước 33953738 + ca75b94a): KHÔNG THẮNG (r V 0,27 < 0,40)
+### 06-10 23:1x - Kết quả L3-EST (ghi trước 33953738 + ca75b94a): KHÔNG THẮNG (r V 0,27 < 0,40)
 Bỏ-một-truyện; 42 chương; báo 23 chương 5b+6. Đường phẳng 0,283. Mã: Corpus research/music/l3_est.py.
 
 | cách | MAE trong chương | r V | r T | hệ số V / T |
@@ -3397,7 +3397,7 @@ thì V 0,16, T 0,40. Các dòng khác có biến thiên ở 23/23 chương.
 - **Ghi rõ về L3-EST (Lead 23:5x):** alpha của ridge đã đổi từ 1 sang 0,001 SAU khi ghi trước (33953738) nhưng TRƯỚC khi tính bất kỳ
   số nào (ca75b94a), vì alpha 1 sai thang. Kết quả trên dùng alpha 0,001.
 
-### 06-10 23:5x - Ranh giới khúc app CÓ cờ scene_break (0.4.31, dev/scene-break fc3e6486) so với người (CPU, ghi lại)
+### 06-10 23:1x - Ranh giới khúc app CÓ cờ scene_break (0.4.31, dev/scene-break fc3e6486) so với người (CPU, ghi lại)
 `music_scenes` của nhánh (chỉ đọc), cờ đặt lên câu trước dòng ngắt như `store.chapter_script`. F1 lệch <= 2 câu. Mã: Corpus
 research/music/app_flag_seg.py.
 
