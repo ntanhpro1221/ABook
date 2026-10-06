@@ -2833,3 +2833,18 @@ Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCE
   - tỉ lệ V = 0;
   - giây/lượt (phải ngang bản gốc).
 - **Thắng thì:** đề xuất Lead thay model llmVT của app bằng `qwen35-4b-musicvt` (cùng cỡ tải 3,2 GB, runtime tuỳ chọn như cũ), cùng prompt P2 và đọc chữ số; nghe kiểm bằng oracle như lần trước nếu Lead muốn. **Thua thì:** ghi lại; hướng dữ liệu dạy dừng ở cỡ này.
+
+### 06-10 10:3x - LoRA lớp cuối trên Mac: số nền (ghi lại, chưa phải kết quả CHÍNH)
+
+Hai lượt nền MLX (Qwen3.5-4B-4bit, không adapter) xong; bộ 4+5+5b 22 chương, thước app+llmVT, `SCORE_SKIP_NOTES=1`:
+
+| lượt | VET | V | E (nhãn câu) | T | SD trong chương V/E/T | V=0 |
+|---|---|---|---|---|---|---|
+| base_P0 (JSON) | +.259 | +.089 | +.310 | +.379 | .18/.40/.48 | 91 % |
+| base_P2 (chữ số, kỳ vọng) | +.258 | +.284 | +.310 | +.180 | .22/.18/.12 | 0 % |
+| base_P2 argmax | +.231 | +.249 | +.310 | +.133 | - | - |
+
+Bộ 6 (ghi lại): P0 +.242, P2 +.239. Nhận xét SAU KHI THẤY SỐ (không dùng để quyết): P2 sửa hẳn V (hết V=0 hằng) nhưng
+T kém P0; ghép V của P2 + T của P0 sẽ ra ~+.32 - đây là phép chọn sau dữ liệu, chỉ được kiểm bằng lượt đo ghi trước
+khác (prompt mốc trên Ollama đang chờ trong hàng GPU). Học LoRA: ~37 phút / 100 bước -> 1.540 bước xong ~19:15,
+lượt lora1_P2 xong ~19:35 06-10. Luật CHÍNH giữ nguyên như ghi trước (lora1_P2 so base_P0, +0,05 và >= 16/22).
