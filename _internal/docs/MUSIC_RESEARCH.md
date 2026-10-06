@@ -3175,3 +3175,22 @@ mặt phẳng VA trượt 45 s) gần như KHÔNG BAO GIỜ nổ - ranh giới a
 - Hướng đúng: ranh giới CẢNH là một bài toán riêng (lớp 2,5): thẻ cảnh của CS đã sinh danh sách cảnh có tỉ lệ thời lượng - đề xuất ghi
   trước một ứng viên "CS-SEG": LLM chia cảnh (trả số câu bắt đầu mỗi cảnh) so app bằng F1 ranh giới, cùng luật thắng RULE.
   Chờ Lead duyệt (hướng mới).
+
+**GHI TRƯỚC - CS-SEG: RANH GIỚI CẢNH (Lead duyệt 06-10 17:5x, ƯU TIÊN trước L3-PAIR / L2-ANCH; trước mọi số):**
+Ba ứng viên + mốc app, cùng thước RULE: F1 ranh giới, lệch <= 2 câu là trúng (ghép tham lam), và BÁO RIÊNG số ranh giới / giờ
+(người chấm 22-24). Mọi cách đều qua CÙNG bộ lọc trễ: cảnh < 60 s (ước thời lượng của app) gộp vào cảnh trước (bỏ ranh giới đầu
+của nó) - không đổi bài vì một cảnh quá ngắn. Báo cả trước và sau bộ lọc; số CHÍNH là SAU bộ lọc. Học/chọn: không có hằng nào để
+chọn (danh sách dấu hiệu viết sẵn dưới đây, không sửa sau khi xem số). Đo: 5b+6 (+7 khi có đáp án); 4+5 ghi lại.
+- **CUE (CPU, tất định):** ranh giới trước câu i nếu câu i (hoặc dòng ngay trước nó trong văn bản) là: (1) dòng ngắt chỉ gồm ký hiệu
+  (`***`, `---`, `~~~`, `◇◆○●♦※✦＊` lặp >= 1, `oOo`) hoặc tiêu đề (`kind == heading`); (2) tiêu đề phụ / đổi góc kể: dòng <= 10 chữ
+  bắt đầu bằng `Góc nhìn`, `POV`, `Phần`, `Interlude`, `Side`, `Phía`, hoặc nằm trọn trong `【】`, `[]`, `「」` đứng riêng, hoặc
+  dạng `— X —`; (3) cụm thời gian / nơi chốn ở ĐẦU câu: TIME_JUMP của app + `trong khi đó`, `cùng lúc đó`, `cùng lúc ấy`, `lúc ấy ở`,
+  `lúc đó ở`, `(vài|mấy|một|hai|ba) (giờ|tiếng|phút) sau`, `(sáng|trưa|chiều|tối|đêm) (hôm|ngày) (ấy|đó)`, `ngày hôm đó`, `quay lại`,
+  `trở lại với`, `ở một nơi khác`, `tại một nơi khác`.
+- **LLM (GPU, qwen3.5:4b):** chương đánh số câu `seq<TAB>câu`, cắt cửa sổ ~12.000 ký tự chồng 2.000; prompt: "liệt kê số câu BẮT
+  ĐẦU mỗi cảnh mới (đổi thời gian, nơi chốn, nhóm nhân vật, hay mạch cảm xúc rõ), cảnh thường dài 1-4 phút đọc"; đáp JSON danh sách
+  số; nhiệt độ 0, think=false. Gộp các cửa sổ: hợp, ranh giới cách nhau <= 2 câu coi là một (giữ cái đầu).
+- **CUE ∪ LLM:** hợp hai danh sách, gộp <= 2 câu như trên.
+- **Thắng:** F1 >= app + 0,10 trên 5b+6(+7) VÀ số ranh giới / giờ trong [0,7 ; 1,3] × TB hai người chấm. **Chọn cho app:** trong các
+  cách thắng, CUE được chọn nếu F1(CUE) >= F1(tốt nhất) - 0,05 (rẻ, tất định); LLM / CUE∪LLM chỉ khi hơn CUE > 0,05.
+- Ghi lại: F1 riêng từng loại dấu hiệu CUE; P0 chấm trên khúc cắt bởi cách thắng (sau, khi có khe GPU) so P0 trên khúc app.
