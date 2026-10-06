@@ -565,33 +565,76 @@ def snap_to_source_names(names: "Sequence[str]", source: str, folded_source: str
     if not source or not folded_source:
         return {}
     nouns: dict[str, Counter[str]] | None = None
+    book: tuple[str, str] | None = None
     snapped: dict[str, str] = {}
     for name in names:
         own = normalize_name(name)
-        if not own or source_occurrences(own, folded_source) or _vietnamese_order_name(name):
+        if not own or source_occurrences(own, folded_source):
             continue
-        replaced: list[str] = []
-        for word in name.split():
-            if source_occurrences(word, folded_source):
-                replaced.append(word)
-                continue
-            if nouns is None:
-                nouns = _source_proper_nouns(source)  # chỉ dựng khi có nhãn vắng mặt thật
-            folded_word = fold_for_source_search(word)
-            matches = [
-                folded
-                for folded, spellings in nouns.items()
-                if sum(spellings.values()) >= SOURCE_NAME_MINIMUM_COUNT and _within_one_edit(folded_word, folded)
-            ]
-            if len(matches) != 1:
-                break
-            spellings = nouns[matches[0]]
-            replaced.append(max(spellings, key=lambda spelling: (spellings[spelling], spelling)))
-        else:
-            candidate = " ".join(replaced)
-            if candidate != " ".join(name.split()) and source_occurrences(candidate, folded_source):
-                snapped[name] = candidate.upper() if name.isupper() else candidate
+        if not _vietnamese_order_name(name):  # từng chữ cách một ký tự: tên Việt / Hán Việt thì đã là họ khác
+            replaced: list[str] = []
+            for word in name.split():
+                if source_occurrences(word, folded_source):
+                    replaced.append(word)
+                    continue
+                if nouns is None:
+                    nouns = _source_proper_nouns(source)  # chỉ dựng khi có nhãn vắng mặt thật
+                folded_word = fold_for_source_search(word)
+                matches = [
+                    folded
+                    for folded, spellings in nouns.items()
+                    if sum(spellings.values()) >= SOURCE_NAME_MINIMUM_COUNT and _within_one_edit(folded_word, folded)
+                ]
+                if len(matches) != 1:
+                    break
+                spellings = nouns[matches[0]]
+                replaced.append(max(spellings, key=lambda spelling: (spellings[spelling], spelling)))
+            else:
+                candidate = " ".join(replaced)
+                if candidate != " ".join(name.split()) and source_occurrences(candidate, folded_source):
+                    snapped[name] = candidate.upper() if name.isupper() else candidate
+                    continue
+        # Luật từng chữ không đổi được nhãn: thử xem sách viết cùng các chữ cái ấy nhưng gộp chỗ cách. Cả tên Việt - ở đây
+        # không chữ nào bị đổi, nên "Gu Yang Cheon" (đủ ba âm tiết hợp lệ) vẫn gộp được thành "Gu Yangcheon".
+        if book is None:
+            text = "\n".join(unicodedata.normalize("NFC", line) for line in source.split("\n"))
+            book = (text, _fold_each_char(text))
+        merged = _merged_spelling_in_source(name, *book)
+        if merged:
+            snapped[name] = merged.upper() if name.isupper() else merged
     return snapped
+
+
+def _merged_spelling_in_source(name: str, text: str, folded: str) -> str:
+    """Nhãn bị TÁCH âm tiết - "Kim Jae Hun" - mà sách viết liền "Kim Jaehun": cách viết của sách, hoặc "" nếu không có.
+
+    Phiên Model đo B9 (06-10, "Nhân viên văn phòng Cục quái vật"): model ghi "Kim Jae Hun" / "KIM JAE HUN" cho nhân
+    vật mà sách viết "Kim Jaehun" 755 lần; luật từng chữ không gộp được vì "Jae" và "Hun" không cách "Jaehun" một ký tự,
+    nên trong sách thật nhân vật thành hai người, hai giọng. Dựng mẫu từ chính các chữ của nhãn (đã bỏ dấu), nối bằng
+    cách / gạch nối tuỳ chọn Ở RANH GIỚI CHỮ CỦA NHÃN - không chèn giữa các chữ cái, nên không bịa ra chữ nào - rồi khớp
+    nguyên từ hai đầu. Chỉ nhận cách viết KHÁC nhãn (đã có chỗ gộp hay thay cách bằng gạch nối; nhãn nguyên văn vắng mặt
+    mới tới đây), mọi chữ viết hoa đầu, tổng từ `SOURCE_NAME_MINIMUM_COUNT` lần; nhiều cách viết thì lấy cách nhiều nhất.
+    Nhãn một chữ không có gì để gộp.
+    """
+    words = [_fold_each_char(word) for word in normalize_name(name).split()]
+    if len(words) < 2:
+        return ""
+    pattern = re.compile(r"[ \t-]?".join(re.escape(word) for word in words) + r"(?!\w)")
+    own = " ".join(words)
+    spellings: Counter[str] = Counter()
+    for match in pattern.finditer(folded):
+        before = folded[match.start() - 1] if match.start() else ""
+        if before.isalnum() or before == "_":
+            continue
+        spelling = text[match.start():match.end()]
+        if " ".join(folded[match.start():match.end()].split()) == own:
+            continue
+        if not all(part[:1].isupper() for part in re.split(r"[\s-]+", spelling)):
+            continue
+        spellings[spelling] += 1
+    if sum(spellings.values()) < SOURCE_NAME_MINIMUM_COUNT:
+        return ""
+    return max(spellings, key=lambda spelling: (spellings[spelling], spelling))
 
 
 # Một chữ romaji Hepburn: chuỗi âm tiết (phụ âm đầu tuỳ chọn, có thể kép "kk"/"tch", hoặc ghép "ky"/"sh"/"ts"...) + nguyên
