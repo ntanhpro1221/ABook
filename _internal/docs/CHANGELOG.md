@@ -12,9 +12,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Giọng Supertonic có cả trên điện thoại, đọc như trên máy tính: 10 giọng nam nữ, âm thanh 44 kHz, số và ngày giờ được đọc thành chữ. Giọng không có sẵn
   trong app: vào Cài đặt › Nghe, bấm tải "Giọng Supertonic" (khoảng 400 MB), có thanh tiến độ và nút gỡ. Tải xong máy tự đo xem điện thoại đọc kịp
   không; không kịp thì thẻ nói rõ và chỉ sang "Làm trước" (máy làm sẵn trước khi nghe), hay giọng trực tuyến. Máy tính cũng vậy khi máy chậm.
-- Giọng VieNeu và giọng Supertonic dùng chung phần chạy giọng và bộ đọc số, ngày giờ: tải giọng nào trước thì giọng sau không tải lại phần ấy, và gỡ
-  một giọng không làm hỏng giọng kia. Ai đã có Giọng VieNeu thì sau khi cập nhật bấm tải lại phần dùng chung một lần (khoảng 40 MB); bản cũ của phần
-  ấy được xoá khỏi máy.
+- Giọng VieNeu, giọng Supertonic và Phân tích nhạc dùng chung phần chạy model (giọng đọc còn dùng chung bộ đọc số, ngày giờ): tải cái nào trước thì
+  cái sau không tải lại phần ấy, và gỡ một cái không làm hỏng cái còn lại. Ai đã có Giọng VieNeu hay Phân tích nhạc thì sau khi cập nhật bấm tải lại
+  phần dùng chung một lần (khoảng 40 MB với VieNeu, 12 MB với Phân tích nhạc); bản cũ của phần ấy được xoá khỏi máy.
 
 ## [0.4.29] - 2026-10-06
 

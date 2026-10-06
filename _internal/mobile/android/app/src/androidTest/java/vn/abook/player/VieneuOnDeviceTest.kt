@@ -10,7 +10,6 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import vn.abook.player.vieneu.SeaG2p
-import vn.abook.player.vieneu.SharedRuntime
 import vn.abook.player.vieneu.VieneuModule
 import vn.abook.player.vieneu.VieneuVoices
 import vn.abook.player.vieneu.VoiceModule

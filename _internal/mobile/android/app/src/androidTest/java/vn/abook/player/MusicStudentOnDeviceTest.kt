@@ -70,7 +70,7 @@ class MusicStudentOnDeviceTest {
             }
             if (target.name.endsWith(".so")) target.setReadOnly()
         }
-        val report = compareWithTheDesktop(AndroidMusicStudent.open(installed, context.cacheDir))
+        val report = compareWithTheDesktop(AndroidMusicStudent.open(installed, installed, context.cacheDir))
         println("MUSIC_STUDENT_PARITY\n$report")
         File(context.cacheDir, "parity.txt").writeText(report)
     }
@@ -91,14 +91,17 @@ class MusicStudentOnDeviceTest {
         assumeTrue("không tới được máy chủ gói ở $base", reachable)
         val dir = File(context.filesDir, "music/student-download").apply { deleteRecursively() }
         val store = MusicStore(File(context.filesDir, "music/mine-test").apply { deleteRecursively() }, AndroidMusicTags, AndroidLoudness)
-        val setup = MusicStudentSetup(dir, store, { AndroidMusicStudent.open(it, context.cacheDir) }, base, MusicStudentSetup.PACKAGE + OrtRuntime.parts(abi))
+        // thư viện vào một thư mục dùng chung riêng của bài thử, không phải của app
+        val runtime = SharedRuntime(File(context.filesDir, "runtime-test").apply { deleteRecursively() }, emptyList())
+        val setup = MusicStudentSetup(dir, store, { AndroidMusicStudent.open(it, runtime.dir, context.cacheDir) }, runtime, base,
+            MusicStudentSetup.PACKAGE + OrtRuntime.parts(abi))
         val started = System.nanoTime()
         setup.start()
         setup.join(600_000)
         val status = setup.status()
         assertEquals(status.toString(), "ready", status.getString("state"))
         val seconds = (System.nanoTime() - started) / 1_000_000_000
-        val so = File(dir, "ort/libonnxruntime.so")
+        val so = File(runtime.dir, "ort/libonnxruntime.so")
         assertTrue(so.isFile && !so.canWrite())
         val header = "downloaded ${status.getLong("done")} bytes in $seconds s; libonnxruntime.so ${so.length()} bytes read-only"
         println("MUSIC_BUNDLE_DOWNLOAD_PARITY " + header + " " + compareWithTheDesktop(store.analyzer!!).replace("\n", " | "))

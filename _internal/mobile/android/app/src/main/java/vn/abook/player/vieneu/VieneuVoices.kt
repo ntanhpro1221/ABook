@@ -5,6 +5,7 @@ import android.content.Context
 import org.json.JSONObject
 import vn.abook.player.AndroidMusicStudent
 import vn.abook.player.OrtRuntime
+import vn.abook.player.SharedRuntime
 import vn.abook.player.readaloud.Clip
 import vn.abook.player.readaloud.Voice
 import vn.abook.player.readaloud.VoiceException
@@ -31,7 +32,7 @@ object VieneuVoices {
     fun module(appContext: Context): VieneuModule = module ?: run {
         val ctx = appContext.applicationContext
         context = ctx
-        VieneuModule(File(ctx.filesDir, "vieneu"), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), facts(ctx),
+        VieneuModule(File(ctx.filesDir, VieneuModule.FOLDER), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), facts(ctx),
             benchmark = ::benchmark, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) }).also { module = it }
     }
 

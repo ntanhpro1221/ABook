@@ -14,14 +14,20 @@ import java.io.IOException
  *
  * Tải xong: cắm bộ phân tích vào [MusicStore.analyzer] rồi phân tích nốt các bài đã nhập trước đó ([MusicStore.analyzePending]).
  * Việc nặng luôn ở luồng nền riêng; không bao giờ chặn việc nhập.
+ *
+ * Thư viện ONNX Runtime (file `ort/...` trong [files]) không nằm trong [dir] mà ở thư mục dùng chung với các giọng đọc ([SharedRuntime]): giọng
+ * nào tải trước thì gói nhạc thấy sẵn, không tính và không tải lại; gói hỏng bị xoá thì thư viện chỉ đi khi không mô-đun nào đang cài cần nó.
  */
 class MusicStudentSetup(
     private val dir: File,
     private val store: MusicStore,
     /** Thư mục gói đã đủ file -> bộ phân tích (nhẹ: chưa nạp tháp). Ném lỗi nếu gói hỏng. */
     private val open: (File) -> ((File) -> JSONObject?),
+    /** Thư mục thư viện chạy model dùng chung với các giọng đọc. */
+    private val runtime: SharedRuntime,
     private val base: String = BASE,
-    private val files: List<Part> = PACKAGE,
+    /** File của gói: model (vào [dir]) và thư viện ONNX Runtime (`ort/...`, vào thư mục dùng chung). */
+    files: List<Part> = PACKAGE,
     /** Máy này có thư viện ONNX Runtime để tải không (ABI lạ như x86 32-bit thì không: gói không chạy được, đừng mời tải). */
     private val supported: Boolean = true,
     /** Máy đang dùng mạng tính phí (dữ liệu di động)? Chỉ để giao diện nhắc, không chặn. */
@@ -36,6 +42,9 @@ class MusicStudentSetup(
     private var analysing = false
     private var worker: Thread? = null
     private val pinned = PinnedFiles(dir, base)
+    private val own = files.filter { it.name.substringBefore('/') !in SharedRuntime.PARTS }
+    private val libs = files - own.toSet()
+    private val shared = runtime.pinnedFrom(base)
 
     /** Mã nhận dạng model của gói này (băm các SHA-256 ghim của file model): bài phân tích bằng model khác thì là bài "cũ" cần phân tích lại. */
     val modelId: String = sha256Of(files.filter { !it.blocking }.joinToString("\n") { it.name + " " + it.sha256 }.toByteArray()).take(12)
@@ -45,10 +54,14 @@ class MusicStudentSetup(
     }
 
     /** Mọi file có mặt với đúng cỡ đã ghim (dùng được, kể cả khi đã có bản mới hơn: bản cũ vẫn chạy cho tới khi người dùng cập nhật). */
-    fun complete(): Boolean = supported && files.all { pinned.present(it) }
+    fun complete(): Boolean = supported && own.all { pinned.present(it) } && libs.all { shared.present(it) }
 
     /** Các file mà bản app này ghim khác (hay chưa có) so với gói đã tải. Rỗng nếu chưa tải gói nào (khi ấy là "chưa có", không phải "cũ"). */
-    fun outdatedParts(): List<Part> = pinned.outdated(files)
+    fun outdatedParts(): List<Part> =
+        if (pinned.readStamp().isEmpty()) emptyList() else pinned.outdated(own) + libs.filter { !shared.isCurrent(it) }
+
+    /** Các file chưa có bản đúng ghim - lần tải tới phải lấy (thư viện đã có ở thư mục dùng chung thì không). */
+    private fun todo(): List<Part> = own.filter { !pinned.isCurrent(it) } + libs.filter { !shared.isCurrent(it) }
 
     /** Số byte phải tải qua mạng cho [parts]. */
     private fun wireBytes(parts: List<Part>) = parts.sumOf { it.wireSize }
@@ -57,7 +70,13 @@ class MusicStudentSetup(
     fun status(): JSONObject = synchronized(lock) {
         val behind = if (state == DOWNLOADING || !supported) emptyList() else outdatedParts()
         val shown = if (behind.isNotEmpty() && (state == MISSING || state == READY)) OUTDATED else state
-        val needed = if (state == DOWNLOADING) todoTotal else if (shown == OUTDATED) wireBytes(behind) else wireBytes(files)
+        // chưa có / lỗi: phần máy này còn thiếu (thư viện đã ở thư mục dùng chung thì không tính); đã xong: đúng lần tải vừa rồi
+        val needed = when {
+            state == DOWNLOADING -> todoTotal
+            shown == OUTDATED -> wireBytes(behind)
+            state == READY -> todoTotal
+            else -> wireBytes(todo())
+        }
         JSONObject().put("state", shown).put("done", finished + current).put("total", needed).put("error", error)
             .put("ready", state == READY).put("analysing", analysing)
             .put("metered", runCatching { metered() }.getOrDefault(false)).put("supported", supported)
@@ -72,8 +91,7 @@ class MusicStudentSetup(
      */
     fun attachIfPresent(): Boolean {
         if (!complete()) return false
-        val stamp = pinned.readStamp()
-        if (files.any { it.blocking && !pinned.isCurrent(it, stamp) }) return false
+        if (own.any { it.blocking && !pinned.isCurrent(it) } || libs.any { it.blocking && !shared.isCurrent(it) }) return false
         if (!attach()) return false
         analysePending()
         return true
@@ -92,8 +110,9 @@ class MusicStudentSetup(
             error = ""
             finished = 0
             current = 0
-            val stamp = pinned.readStamp()
-            todoTotal = wireBytes(files.filter { !pinned.isCurrent(it, stamp) })
+            todoTotal = wireBytes(todo())
+            // giữ chỗ thư viện trong lúc tải: một giọng bị gỡ giữa chừng không được xoá thứ gói này sắp dùng
+            runtime.claim(KEY, SharedRuntime.runtimeOf(libs.map { it.name.substringBefore('/') }))
             worker = Thread({ download() }, "abook-music-student").apply {
                 isDaemon = true
                 priority = Thread.MIN_PRIORITY
@@ -109,16 +128,23 @@ class MusicStudentSetup(
 
     private fun download() {
         try {
-            pinned.download(files, object : PinnedFiles.Progress {
+            val progress = object : PinnedFiles.Progress {
                 override fun current(bytes: Long) = synchronized(lock) { current = bytes }
                 override fun done(part: Part) = synchronized(lock) {
                     finished += part.wireSize
                     current = 0
                 }
-            })
+            }
+            // một giọng đọc có thể đang tải cùng thư viện: lần lượt, người sau thấy sẵn
+            if (libs.isNotEmpty()) synchronized(runtime.fetching) { shared.download(libs, progress) }
+            // bản trong thư mục riêng của gói (chỗ các bản trước đặt) không còn được đọc
+            libs.map { it.name.substringBefore('/') }.distinct().forEach { File(dir, it).deleteRecursively() }
+            pinned.download(own, progress)
         } catch (failure: Exception) {
             fail(describe(failure))
             return
+        } finally {
+            runtime.done(KEY) // từ đây file model trên đĩa nói gói này cần gì
         }
         if (!attach()) return
         analysePending()
@@ -134,8 +160,9 @@ class MusicStudentSetup(
             }
             true
         } catch (failure: Exception) {
-            // gói đủ file mà không dùng được (cấu hình lạ, đầu hỏng): xoá để lần bấm sau tải lại sạch
-            pinned.wipe(files)
+            // gói đủ file mà không dùng được (cấu hình lạ, đầu hỏng): xoá để lần bấm sau tải lại sạch; thư viện dùng chung chỉ đi khi không ai cần
+            pinned.wipe(own)
+            runtime.release(libs.groupBy { it.name.substringBefore('/') })
             fail("Bộ phân tích tải về không dùng được (${failure.message ?: failure.javaClass.simpleName}) - bấm Thử lại để tải lại.")
             false
         }
@@ -190,6 +217,9 @@ class MusicStudentSetup(
         private const val OUTDATED = "outdated"
         private const val ERROR = "error"
         const val STAMP = PinnedFiles.STAMP
+        /** Thư mục riêng của gói trong `files/` của app. */
+        const val FOLDER = "music/student"
+        private const val KEY = "music"
 
         // Ghim đúng như webui/music_student.py (REPO_ID, REVISION, PACKAGE_FILES["onnx"], PACKAGE_HASHES): đổi bên kia thì đổi ở đây
         // (tests/test_music_student_android.py so hai bảng).
