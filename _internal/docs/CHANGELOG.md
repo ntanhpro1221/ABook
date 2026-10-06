@@ -46,6 +46,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Menu "…" của trang sách có thêm "Xuất M4B cho app sách nói": cả cuốn thành một file `.m4b` mà Apple Books, Smart AudioBook Player, BookPlayer... mở là thấy
   đủ danh sách chương (tên chương thật, nhảy đúng đầu chương), có bìa, tên sách và giọng kể. Máy làm ở nền như "Xuất file sách" - sách dài mất vài phút, tải
   lại trang vẫn thấy tiến độ, xong thì báo nơi file nằm. Chỉ chương đã làm xong được đưa vào; thiếu chương thì thông báo nói rõ có bao nhiêu chương trong file.
+- Phát trên loa / TV có hẹn giờ tắt: thanh "Đang phát trên <thiết bị>" (máy tính và điện thoại) có nút trăng như trình phát trong app - chọn 5 tới 90 phút, số phút tự đặt,
+  hay "Dừng khi hết chương này"; nút đếm ngược, thêm được 10 phút, tắt được. Đồng hồ chỉ chạy khi loa / TV đang phát. Hết giờ thì thiết bị tạm dừng và chỗ đang nghe
+  được lưu; hẹn "hết chương" thì dừng ở cuối chương và lần nghe sau vào thẳng chương kế.
+- Điện thoại phát lên loa / TV: màn hình khoá, nút tai nghe / Bluetooth và đồng hồ điều khiển được thiết bị - phát / tạm dừng, lùi / tới 15 giây, chương trước / sau -
+  và hiện tên chương, tên sách. Phím âm lượng và thanh âm lượng ở màn hình khoá chỉnh âm lượng của chính loa / TV (khi thiết bị cho chỉnh từ xa; loa, TV giữ
+  âm lượng riêng thì phím vẫn chỉnh điện thoại).
+- Máy tính phát lên loa / TV mà điện thoại đang hiện thanh "Đang phát trên…": màn hình khoá, tai nghe của điện thoại cũng điều khiển được - phát / tạm dừng, lùi / tới,
+  chương trước / sau, dừng. Hết khi máy tính thôi phát.
 
 ## [0.4.29] - 2026-10-06
 

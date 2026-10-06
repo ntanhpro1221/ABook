@@ -5,7 +5,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
-import { Back15, Forward15 } from "@/listen/PlayerViews";
+import { Back15, Forward15, RemoteSleepMenu } from "@/listen/PlayerViews";
+import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, type RemoteSleep, type RemoteSleepCommand } from "@/listen/sleep";
 import { useListenBook, useSource } from "@/listen/source";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
@@ -51,6 +52,8 @@ export interface RemotePhone {
   /** Máy tính có cuốn này trong thư viện. */
   known: boolean;
   cover: CoverImage | null;
+  /** Hẹn giờ tắt của loa / TV (`via` cast) - máy này đếm theo phiên phát (webui/cast.py). */
+  sleep?: RemoteSleep | null;
 }
 
 interface RemoteView {
@@ -63,7 +66,8 @@ type RemoteCommand =
   | { action: "skip" | "seek"; seconds: number }
   | { action: "jump"; chapterId: number; seconds: number }
   | { action: "rate"; rate: number }
-  | { action: "load"; bookId: string; chapterId: number; seconds: number };
+  | { action: "load"; bookId: string; chapterId: number; seconds: number }
+  | RemoteSleepCommand;
 
 type Ack = { id: string; ok: boolean; message: string };
 
@@ -113,6 +117,7 @@ export function useRemoteCommand() {
             if (command.action === "pause") return { ...base, playing: false };
             if (command.action === "play") return { ...base, playing: true };
             if (command.action === "skip") return { ...base, position: Math.max(0, here + command.seconds) };
+            if (command.action === "sleep") return { ...base, sleep: remoteSleepAfter(command, phone.playing) };
             return base;
           }),
         };
@@ -243,6 +248,10 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
             )}
           </button>
           <IconButton label={`Tới ${SKIP_SECONDS} giây trên ${phone.name}`} icon={Forward15} size="sm" onClick={() => send({ action: "skip", seconds: SKIP_SECONDS })} />
+          {/* Hẹn giờ tắt chỉ cho loa / TV: điện thoại, máy tính khác tự có hẹn giờ của chúng. */}
+          {phone.via === "cast" && (
+            <RemoteSleepMenu sleep={remoteSleepMode(phone.sleep, receivedAt)} name={phone.name} onSet={(request) => send(remoteSleepCommand(request))} />
+          )}
         </div>
         <div className="hidden w-28 text-right text-xs tabular text-fg-2 md:block">
           {formatClock(at)} / {formatClock(phone.duration)}

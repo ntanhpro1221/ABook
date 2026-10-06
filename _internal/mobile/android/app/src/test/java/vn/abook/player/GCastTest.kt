@@ -470,4 +470,35 @@ class GCastTest {
         until { players.only().now()!!.getDouble("position") > at }
         assertNotNull(players.playing().singleOrNull())
     }
+
+    @Test
+    fun theVolumeKeysMoveTheCastDeviceVolume() {
+        val speaker = device(duration = 30.0).apply { volume = 0.3 }
+        val (chosen, saved) = book()
+        val players = players(speaker, chosen, saved).apply { volumeEveryMs = 100 }
+        val id = players.found()
+        players.send(id, load(1))
+        players.playingNow()
+        assertEquals("âm lượng thiết bị báo khi mở ứng dụng", 30, players.now()!!.volume)
+        players.send(id, command("volume", "level" to 64))
+        assertEquals(0.64, speaker.calls("receiver.SET_VOLUME").single().getJSONObject("volume").getDouble("level"), 1e-9)
+        assertEquals(0.64, speaker.volume, 1e-9)
+        assertEquals(64, players.now()!!.volume)
+        assertTrue(runCatching { players.send(id, command("volume", "level" to 101)) }.exceptionOrNull() is Dlna.Failure)
+        assertEquals(1, speaker.calls("receiver.SET_VOLUME").size)
+    }
+
+    @Test
+    fun aCastDeviceWithFixedVolumeLeavesThePhoneVolume() {
+        val speaker = device(duration = 30.0).apply { fixedVolume = true }
+        val (chosen, saved) = book()
+        val players = players(speaker, chosen, saved).apply { volumeEveryMs = 100 }
+        val id = players.found()
+        players.send(id, load(1))
+        players.playingNow()
+        Thread.sleep(300)
+        assertNull("loa giữ âm lượng riêng: phím âm lượng vẫn chỉnh điện thoại", players.now()!!.volume)
+        assertTrue(runCatching { players.send(id, command("volume", "level" to 40)) }.exceptionOrNull() is Dlna.Failure)
+        assertTrue(speaker.calls("receiver.SET_VOLUME").isEmpty())
+    }
 }

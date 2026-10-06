@@ -14,8 +14,14 @@ import java.util.UUID
  * Loa giả DLNA cho bài thử (JVM: DlnaTest; trên máy Android: DlnaOnDeviceTest) - cư xử như scripts/fake_renderer.py của máy
  * tính: trả lời SSDP (cổng UDP riêng, gửi thẳng), mô tả, SOAP AVTransport; chỉ tua khi đã chạy (701), hết bài về STOPPED vị
  * trí 0, không Pause được nếu `pause = false`; TẢI audio từ đường dẫn được đưa khi Play; vị trí chạy nhanh gấp `speed`.
+ * Có RenderingControl (âm lượng 0-100, [volume]) trừ khi `volumeControl = false`.
  */
-class FakeRenderer(val name: String, private val speed: Double = 1.0, private val pause: Boolean = true) {
+class FakeRenderer(
+    val name: String,
+    private val speed: Double = 1.0,
+    private val pause: Boolean = true,
+    private val volumeControl: Boolean = true,
+) {
     val udn = "uuid:${UUID.randomUUID()}"
     val actions = mutableListOf<Pair<String, Map<String, String>>>()
     val fetched = mutableListOf<Int>()
@@ -24,6 +30,7 @@ class FakeRenderer(val name: String, private val speed: Double = 1.0, private va
     private var duration = 0.0
     private var offset = 0.0
     private var since = 0L
+    @Volatile var volume = 30
     private val http = ServerSocket().apply { bind(InetSocketAddress("127.0.0.1", 0)) }
     private val udp = DatagramSocket(InetSocketAddress("127.0.0.1", 0))
     var description: () -> String = ::describe
@@ -108,7 +115,7 @@ class FakeRenderer(val name: String, private val speed: Double = 1.0, private va
             try {
                 val out = handle(action, args)
                 200 to ("<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>" +
-                    "<u:${action}Response xmlns:u=\"urn:schemas-upnp-org:service:AVTransport:1\">" +
+                    "<u:${action}Response xmlns:u=\"urn:schemas-upnp-org:service:${if ("RenderingControl" in path) "RenderingControl" else "AVTransport"}:1\">" +
                     out.entries.joinToString("") { "<${it.key}>${escape(it.value)}</${it.key}>" } +
                     "</u:${action}Response></s:Body></s:Envelope>")
             } catch (error: IllegalStateException) {
@@ -131,7 +138,10 @@ class FakeRenderer(val name: String, private val speed: Double = 1.0, private va
         "<deviceType>${Dlna.MEDIA_RENDERER}</deviceType><friendlyName>${escape(name)}</friendlyName>" +
         "<manufacturer>ABook</manufacturer><modelName>Fake renderer</modelName><UDN>$udn</UDN><serviceList>" +
         "<service><serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType>" +
-        "<controlURL>/AVTransport/control</controlURL></service></serviceList></device></root>"
+        "<controlURL>/AVTransport/control</controlURL></service>" +
+        (if (volumeControl) "<service><serviceType>urn:schemas-upnp-org:service:RenderingControl:1</serviceType>" +
+            "<controlURL>/RenderingControl/control</controlURL></service>" else "") +
+        "</serviceList></device></root>"
 
     @Synchronized
     private fun handle(action: String, args: Map<String, String>): Map<String, String> {
@@ -174,6 +184,11 @@ class FakeRenderer(val name: String, private val speed: Double = 1.0, private va
             }
             "GetTransportInfo" -> return mapOf("CurrentTransportState" to state, "CurrentTransportStatus" to "OK")
             "GetPositionInfo" -> return mapOf("TrackDuration" to Dlna.clock(duration), "TrackURI" to uri, "RelTime" to Dlna.clock(position()))
+            "GetVolume" -> return if (volumeControl) mapOf("CurrentVolume" to volume.toString()) else error("401")
+            "SetVolume" -> {
+                if (!volumeControl) error("401")
+                volume = args["DesiredVolume"]?.toIntOrNull()?.coerceIn(0, 100) ?: error("402")
+            }
             else -> error("401")
         }
         return emptyMap()
