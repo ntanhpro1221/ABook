@@ -223,7 +223,7 @@ def test_a_linked_book_and_an_unknown_book_cannot_be_edited(imported, tmp_path: 
     (remote / "book.json").write_bytes(json.dumps(data).encode("utf-8"))
     status, data = call("PUT", f"/api/books/{book_id(remote)}/title", {"title": "x"})
     assert status == 409 and "máy tính khác" in data["error"]
-    assert app.capabilities(remote) == {"toolchain": True, "workshop": False, "link": True}
+    assert app.capabilities(remote) == {"toolchain": True, "workshop": False, "link": True, "sync": False}
 
 
 # ---- khả năng của máy --------------------------------------------------------------------------------------------
@@ -232,10 +232,10 @@ def test_a_linked_book_and_an_unknown_book_cannot_be_edited(imported, tmp_path: 
 def test_the_app_reports_what_this_machine_can_do_with_the_open_book(imported) -> None:
     app, _folder, identifier, call = imported
     _status, info = call("GET", "/api/app")
-    assert info["capabilities"] == {"toolchain": True, "workshop": False, "link": False}, "bản dev: Studio là runtime cạnh mã"
+    assert info["capabilities"] == {"toolchain": True, "workshop": False, "link": False, "sync": False}, "bản dev: Studio là runtime cạnh mã"
     _status, info = call("GET", f"/api/app?book={identifier}")
-    assert info["capabilities"] == {"toolchain": True, "workshop": False, "link": False}
-    assert app.listen_book(identifier)["capabilities"] == {"toolchain": True, "workshop": False, "link": False}
+    assert info["capabilities"] == {"toolchain": True, "workshop": False, "link": False, "sync": False}
+    assert app.listen_book(identifier)["capabilities"] == {"toolchain": True, "workshop": False, "link": False, "sync": False}
     assert [book["capabilities"]["workshop"] for book in app.listen_library()] == [False]
 
     class Missing:  # app đóng gói chưa cài Studio

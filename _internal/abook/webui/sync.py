@@ -928,7 +928,9 @@ class SyncHandler(BaseHTTPRequestHandler):
             if method == "GET" and path == "/sync/v1/library":
                 # `routes` như lời đáp ghép: điện thoại học lại các đường mỗi lần mở thư viện - địa chỉ có SAU lúc ghép
                 # (cài Tailscale/ZeroTier sau khi ghép, đổi mạng nhà) vẫn tới được điện thoại trước khi nó ra khỏi nhà.
-                self._json(HTTPStatus.OK, {"name": self.app.name, "books": self.app.library_view(), "routes": self.app.routes()})
+                # `kind`: máy tính khác đã ghép biết đây là máy tính - nó gửi phần sửa các cuốn về đây như điện thoại (remote_books).
+                self._json(HTTPStatus.OK, {"name": self.app.name, "kind": "computer", "books": self.app.library_view(),
+                                           "routes": self.app.routes()})
                 return
             if method == "POST" and path == "/sync/v1/match":
                 self._json(HTTPStatus.OK, {"matches": self.app.match(self._body().get("books"))})
