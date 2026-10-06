@@ -26,6 +26,7 @@ import { ProjectScreen } from "@/studio/ProjectScreen";
 import { ProjectsScreen } from "@/studio/ProjectsScreen";
 import { desktopTextImport, httpSource } from "./httpSource";
 import { BookFileMenuItem, ExportJobHost, M4bMenuItem } from "./ExportBookFileJob";
+import { RemoteDownloadMenuItem, RemoteDownloadStatus } from "./RemoteDownload";
 import { SettingsScreen } from "./SettingsScreen";
 import { Shell } from "./Shell";
 
@@ -472,8 +473,8 @@ export function App() {
                       <BookScreen
                         extraActions={(book) =>
                           book.imported ? (
-                            // Sách của máy khác (remote) thôi hiện khi gỡ máy ấy - không có gì để xoá ở đây.
-                            book.remote || info.remote ? null : <RemoveImportedMenuItem book={book} />
+                            // Sách của máy khác (remote) thôi hiện khi gỡ máy ấy - không có gì để xoá ở đây; tải về máy được.
+                            info.remote ? null : book.remote ? <RemoteDownloadMenuItem book={book} /> : <RemoveImportedMenuItem book={book} />
                           ) : (
                             <>
                               <BookFileMenuItem book={book} />
@@ -484,6 +485,7 @@ export function App() {
                           )
                         }
                         studioLink={(book) => (book.imported ? null : <StudioChipLink id={book.id} />)}
+                        notice={(book) => (book.remote && !info.remote ? <RemoteDownloadStatus book={book} /> : null)}
                         editing={
                           info.remote
                             ? false

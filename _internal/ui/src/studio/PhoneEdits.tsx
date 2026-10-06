@@ -101,14 +101,14 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
   };
 
   return (
-    <section aria-label="Thay đổi từ điện thoại" className="mb-5 rounded-2xl border border-line bg-panel p-4">
+    <section aria-label="Thay đổi từ máy khác" className="mb-5 rounded-2xl border border-line bg-panel p-4">
       <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-        <Smartphone className="size-4 text-fg-3" /> Thay đổi từ điện thoại{data.waiting ? ` (${data.waiting} việc chờ duyệt)` : ""}
+        <Smartphone className="size-4 text-fg-3" /> Thay đổi từ máy khác{data.waiting ? ` (${data.waiting} việc chờ duyệt)` : ""}
       </h2>
       {data.devices.length > 0 && (
         <p className="mt-1 text-pretty text-sm text-fg-2">
-          Điện thoại chưa được điều khiển sản xuất nên những việc dưới đây chờ bạn quyết - chưa có gì được làm. “Áp dụng” biến việc thành yêu
-          cầu trong “Áp dụng thay đổi” (chưa thu lại gì); “Bỏ qua” bỏ hẳn. Tên sách, bìa, tên nhân vật, tên chương và nhạc nền điện thoại gửi
+          Điện thoại hay máy tính đã ghép chưa được điều khiển sản xuất nên những việc dưới đây chờ bạn quyết - chưa có gì được làm. “Áp dụng” biến việc thành yêu
+          cầu trong “Áp dụng thay đổi” (chưa thu lại gì); “Bỏ qua” bỏ hẳn. Tên sách, bìa, tên nhân vật, tên chương và nhạc nền máy ấy gửi
           thì đã áp ngay.
         </p>
       )}
