@@ -796,5 +796,6 @@ Gom 19-09 (chỉ SAO CHÉP; bản trong Tools và Thùng rác giữ nguyên). T�
 `Corpus/manifest.json` (`scripts/corpus/manifest.py --check`): 11 truyện (thêm Tam quốc diễn nghĩa 27-09), 4.120
 chương, 12,99 triệu từ.
 Tên nhận ra bằng nội dung chương đầu và số chương khớp số mp3 trong `D:/Novels/Reading`. Thêm truyện từ Hako
-bằng `scripts/corpus/hako.py` (khảo sát: `Corpus/_survey/hako_survey_*.json`; dịch bởi người, AI dịch, sáng tác),
+bằng `tools/hako.py` của kho riêng tư `ABook-Hako` (clone tại `Corpus/_full`; khảo sát ở `survey/`; dịch bởi người, AI dịch,
+sáng tác),
 **né các truyện đã có trong `Reading`/`Completed`** theo lệnh chủ sách.
