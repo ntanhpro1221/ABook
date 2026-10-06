@@ -271,6 +271,11 @@ class App:
         self._remote_refreshed = 0.0
         self._remote_lock = threading.Lock()
         self._state_synced: dict[str, float] = {}
+        # "Tải về máy" cho sách "Trên máy khác"; phần sửa các cuốn của máy tính khác tự gửi về máy ấy sau `edits_send_delay` giây
+        # kể từ lần sửa cuối (như điện thoại - EditsSync.kt), và mỗi lần làm mới thư viện. None: chỉ gửi khi bấm (bài thử).
+        self.remote_downloads = remote_books.Downloads()
+        self.edits_send_delay: float | None = 4.0
+        self._edits_timers: dict[str, threading.Timer] = {}
         # App Windows đóng gói (webui/host.py): vỏ Tauri báo có bản mới (`update`), nhận lệnh cài qua `shell`; Studio
         # (thư viện + model làm sách) tải thêm khi cần (`studio`, webui/studio_setup.py). Bản dev: cả ba là None.
         self.update: dict[str, Any] | None = None
@@ -347,23 +352,28 @@ class App:
         return path
 
     def _editable(self, value: str) -> Path:
-        """Sách người dùng sửa được ("áp ngay", docs/EDITING.md): dự án có xưởng, hay cuốn nhập từ file `.abook` (lớp sửa
-        `book_edits`). Cuốn nghe thẳng từ máy tính khác thì không - sửa ở máy ấy."""
+        """Sách người dùng sửa được ("áp ngay", docs/EDITING.md): dự án có xưởng, cuốn nhập từ file `.abook` (lớp sửa
+        `book_edits`), hay cuốn của máy tính khác (lớp sửa, gửi về máy ấy - hẹn gửi ngay ở đây). Cuốn của điện thoại chia sẻ thư
+        viện thì không - sửa ở điện thoại ấy."""
         path = self._listenable(value)
         if packages.is_package(path) and remote_books.remote_of(packages.manifest(path)) is not None:
-            raise ApiError(HTTPStatus.CONFLICT, "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy")
+            if not remote_books.sends_edits(packages.manifest(path)):
+                raise ApiError(HTTPStatus.CONFLICT, "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy")
+            self._schedule_send_edits(value)
         return path
 
     def capabilities(self, path: Path | None = None) -> dict[str, bool]:
         """Máy này làm được gì với cuốn `path` (ui/src/shared/capabilities.ts): `toolchain` - Studio dùng được trên máy này
         (bản dev: luôn có; bản đóng gói: đã cài và không cũ); `workshop` - cuốn có dự án sản xuất ở đây; `link` - cuốn lấy từ
-        máy tính khác (nghe thẳng, chưa phải của máy này). Không có `path`: chỉ `toolchain` có nghĩa."""
+        thiết bị khác mà không sửa được ở đây (điện thoại chia sẻ thư viện); `sync` - cuốn của máy tính khác: sửa được ở đây,
+        phần sửa gửi về máy ấy (như điện thoại với máy tính). Không có `path`: chỉ `toolchain` có nghĩa."""
         studio = self.studio
         toolchain = studio is None or bool(studio.installed() and not studio.outdated())
         workshop = path is not None and store.is_project(path)
-        link = (path is not None and not workshop and packages.is_package(path)
-                and remote_books.remote_of(packages.manifest(path)) is not None)
-        return {"toolchain": toolchain, "workshop": workshop, "link": link}
+        remote = (path is not None and not workshop and packages.is_package(path)
+                  and remote_books.remote_of(packages.manifest(path)) is not None)
+        sync = remote and remote_books.sends_edits(packages.manifest(path))
+        return {"toolchain": toolchain, "workshop": workshop, "link": remote and not sync, "sync": sync}
 
     def install_update(self) -> dict[str, Any]:
         """Người dùng bấm "Cập nhật": vỏ tải gói đã ký, dừng server này, chạy bộ cài rồi mở lại app (docs/PACKAGING.md)."""
@@ -1984,6 +1994,7 @@ class App:
         def run() -> None:
             try:
                 remote_books.refresh(self.library.root, self.computers)
+                self._send_pending_edits()
             finally:
                 self._remote_lock.release()
         if wait:
@@ -2020,6 +2031,71 @@ class App:
         else:
             threading.Thread(target=run, name="remote-state", daemon=True).start()
 
+    def _remote_package(self, value: str) -> Path:
+        """Cuốn "Trên máy khác" (cuốn ảo của remote_books); cuốn khác: 409."""
+        path = self._listenable(value)
+        if not packages.is_package(path) or remote_books.remote_of(packages.manifest(path)) is None:
+            raise ApiError(HTTPStatus.CONFLICT, "Cuốn này đã nằm trên máy này")
+        return path
+
+    def remote_download(self, value: str, action: str) -> dict[str, Any]:
+        """"Tải về máy" một cuốn của máy khác (remote_books.Downloads): `status`, `start` (hay tải tiếp), `cancel`."""
+        path = self._remote_package(value)
+        if action == "status":
+            return self.remote_downloads.status(path)
+        self._mutating()
+        if action == "cancel":
+            return self.remote_downloads.cancel(path)
+        try:
+            return self.remote_downloads.start(path)
+        except remote_books.RemoteError as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+
+    def send_remote_edits(self, value: str) -> dict[str, Any]:
+        """"Gửi về máy tính": phần sửa của cuốn của máy tính khác về máy ấy ngay (remote_books.send_edits). Trả `editsSync` mới."""
+        self._mutating()
+        path = self._remote_package(value)
+        if not remote_books.sends_edits(packages.manifest(path)):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy")
+        try:
+            return remote_books.send_edits(path)
+        except remote_books.RemoteError as error:
+            raise ApiError(HTTPStatus.BAD_GATEWAY, str(error)) from error
+
+    def _schedule_send_edits(self, value: str) -> None:
+        """Hẹn gửi phần sửa của cuốn sau `edits_send_delay` giây; mỗi lần sửa lại dời hẹn (người dùng đang sửa dở thì chưa gửi).
+        Gửi hỏng thì thôi: lần làm mới thư viện sau gửi lại."""
+        if self.edits_send_delay is None:
+            return
+
+        def run() -> None:
+            self._edits_timers.pop(value, None)
+            path = self.library.resolve_listenable(value)
+            if path is not None and packages.is_package(path):
+                try:
+                    remote_books.send_edits(path)
+                except remote_books.RemoteError:
+                    pass
+        previous = self._edits_timers.pop(value, None)
+        if previous is not None:
+            previous.cancel()
+        timer = threading.Timer(self.edits_send_delay, run)
+        timer.daemon = True
+        self._edits_timers[value] = timer
+        timer.start()
+
+    def _send_pending_edits(self) -> None:
+        """Vừa nói chuyện được với các máy đã ghép: gửi nốt phần sửa còn tồn của mọi cuốn của máy tính khác."""
+        if self.edits_send_delay is None:
+            return
+        for path in packages.folders(self.library.root):
+            try:
+                book = packages.manifest(path)
+                if remote_books.sends_edits(book) and not book_edits.is_empty(book_edits.load(path)):
+                    remote_books.send_edits(path)
+            except (remote_books.RemoteError, OSError, ValueError):
+                continue
+
     def computers_view(self) -> dict[str, Any]:
         return {"name": socket_name(), "computers": self.computers.list()}
 
@@ -2041,6 +2117,7 @@ class App:
 
     def forget_computer(self, computer: str) -> dict[str, Any]:
         self._mutating()
+        self.remote_downloads.cancel_computer(computer)
         self.computers.forget(computer, self.library.root)
         return self.computers_view()
 
@@ -2074,6 +2151,8 @@ class App:
                 continue
             self._built_workshop(view, path)
             view["capabilities"] = capabilities_of(path)
+            if view["capabilities"].get("sync"):  # cuốn của máy tính khác: phần sửa chưa gửi về máy ấy, kết quả lần gửi trước
+                view["editsSync"] = remote_books.edits_state(path)
             books.append(view)
         books.sort(key=lambda item: ((item["state"].get("last") or {}).get("at") or 0, item.get("updatedAt") or 0),
                    reverse=True)
@@ -2116,6 +2195,8 @@ class App:
             view = listen_view.book(path, value, self.summary(path), self.listening.get(value))
         view["records"] = self.listening.records(value)  # hồ sơ nghe gắn với cuốn này (webui/listening.py)
         view["capabilities"] = self.capabilities(path)
+        if view["capabilities"].get("sync"):
+            view["editsSync"] = remote_books.edits_state(path)
         return view
 
     def voices(self) -> list[dict[str, Any]]:
@@ -3411,6 +3492,19 @@ class Handler(BaseHTTPRequestHandler):
     def get_listen_book(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.listen_book(value))
 
+    def get_remote_download(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.remote_download(value, "status"))
+
+    def post_remote_download(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Tải về máy" cuốn của máy khác (hay tải tiếp phần còn thiếu) - chạy nền, giao diện hỏi tiến độ bằng GET.
+        self._send_json(HTTPStatus.OK, self.app.remote_download(value, "start"))
+
+    def delete_remote_download(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.remote_download(value, "cancel"))
+
+    def post_send_edits(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.send_remote_edits(value))
+
     def post_progress(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
         self.app.sync_remote_state(value, wait=False)
@@ -4049,6 +4143,10 @@ ROUTES: list[Route] = [
     ("GET", re.compile(LISTEN + r"/chapters/(\d+)/text"), Handler.get_chapter_text),
 
     ("GET", re.compile(LISTEN), Handler.get_listen_book),
+    ("GET", re.compile(LISTEN + r"/download"), Handler.get_remote_download),
+    ("POST", re.compile(LISTEN + r"/download"), Handler.post_remote_download),
+    ("DELETE", re.compile(LISTEN + r"/download"), Handler.delete_remote_download),
+    ("POST", re.compile(LISTEN + r"/edits/send"), Handler.post_send_edits),
     # Chỉ trên máy này (remote_studio không có): bỏ một cuốn nhập từ file .abook khỏi thư viện.
     ("DELETE", re.compile(LISTEN), Handler.delete_listen_book),
     ("POST", re.compile(LISTEN + r"/progress"), Handler.post_progress),

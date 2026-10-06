@@ -54,6 +54,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   âm lượng riêng thì phím vẫn chỉnh điện thoại).
 - Máy tính phát lên loa / TV mà điện thoại đang hiện thanh "Đang phát trên…": màn hình khoá, tai nghe của điện thoại cũng điều khiển được - phát / tạm dừng, lùi / tới,
   chương trước / sau, dừng. Hết khi máy tính thôi phát.
+- Sách "Trên máy khác" (máy tính): menu "…" của sách có "Tải về máy", như trên điện thoại - máy tải cả cuốn ở nền, tiến độ hiện ngay dưới tên sách, dừng được; xong thì nghe trọn cả khi máy kia đã tắt. Máy kia tắt hay mất mạng giữa chừng thì phần đã tải vẫn giữ, bấm "Tải tiếp" chỉ lấy phần còn thiếu; máy kia thu lại một chương thì "Tải nốt về máy" lấy đúng chương ấy.
+- Sách của một máy tính khác giờ sửa được ngay ở máy tính đang nghe (tên sách, bìa, tên nhân vật, tên chương, nhạc nền, cách đọc, người nói...), như điện thoại với máy tính: phần sửa tự gửi về máy giữ sách (hay bấm "Gửi về máy tính"), sửa áp ngay thì máy ấy áp liền, việc cần Studio vào hộp "Thay đổi từ máy khác" (trước đây "Thay đổi từ điện thoại") trong Studio của máy ấy, chờ chủ máy duyệt. Máy kia đang tắt thì phần sửa nằm chờ ở máy này, gửi khi tới được.
 
 ## [0.4.29] - 2026-10-06
 
