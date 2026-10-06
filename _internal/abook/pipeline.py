@@ -338,6 +338,7 @@ SEGMENTATION_CHECKPOINT_FIELDS = (
     "seq",
     "paragraph_index",
     "break_ms",
+    "scene_break",
     "text",
     "text_sha256",
     "kind_hint",
@@ -773,6 +774,7 @@ class BookPipeline:
             "emotion": str(row["emotion"] or "neutral"),
             "intensity": int(row["intensity"] or 0),
             "text": str(row["text"] or ""),
+            "scene_break": bool(row["scene_break"]),
         }
 
     def _chapter_delivery_wavs(

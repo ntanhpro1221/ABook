@@ -32,6 +32,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tên bị máy tách thành từng âm tiết ("Kim Jae Hun") trong khi sách viết liền ("Kim Jaehun") không còn thành hai nhân vật hai
   giọng: app gộp về cách viết của sách, nhưng chỉ khi sách viết liền như thế ít nhất ba lần và không chỗ nào viết đúng như máy.
 
+### Âm thanh
+
+- Dòng chỉ có ký hiệu ngăn cảnh trong truyện ("***", "◆", "———", "~~~") giờ là chỗ nghỉ thật: sách nói dừng khoảng 1,5 giây
+  khi đổi cảnh thay vì nghỉ ngắn như hết một câu, và nhạc nền đổi đoạn đúng chỗ ấy. Chữ của truyện không bị đổi.
+
 ## [0.4.29] - 2026-10-06
 
 ### Studio
