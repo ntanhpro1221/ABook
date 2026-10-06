@@ -3394,3 +3394,19 @@ thì V 0,16, T 0,40. Các dòng khác có biến thiên ở 23/23 chương.
 3. Nhãn app gần như vô dụng một mình (r 0,10), nhưng vẫn nhận hệ số V +0,36 khi gộp: nó mang một ít tín hiệu bổ sung.
 4. Hệ quả: lớp 3 cần một model đọc hình dạng V tốt hơn (L3-PAIR so cặp / L3-3B có neo), không thể có chỉ bằng gộp đầu ra sẵn có.
    Ranh giới cảnh đúng hơn (CS-SEG) cũng ảnh hưởng: mọi khúc ở đây là khúc app, mà ranh giới khúc app chỉ ngang ngẫu nhiên.
+- **Ghi rõ về L3-EST (Lead 23:5x):** alpha của ridge đã đổi từ 1 sang 0,001 SAU khi ghi trước (33953738) nhưng TRƯỚC khi tính bất kỳ
+  số nào (ca75b94a), vì alpha 1 sai thang. Kết quả trên dùng alpha 0,001.
+
+### 06-10 23:5x - Ranh giới khúc app CÓ cờ scene_break (0.4.31, dev/scene-break fc3e6486) so với người (CPU, ghi lại)
+`music_scenes` của nhánh (chỉ đọc), cờ đặt lên câu trước dòng ngắt như `store.chapter_script`. F1 lệch <= 2 câu. Mã: Corpus
+research/music/app_flag_seg.py.
+
+| | 5b+6 F1 (P / R) | ranh giới/giờ | 4+5 F1 |
+|---|---|---|---|
+| app trước 0.4.31 (không cờ) | 0,130 (0,15 / 0,11) | 18,4 | 0,161 |
+| app 0.4.31 (có cờ) | **0,207** (0,23 / 0,19) | 19,8 | 0,233 |
+| người A so với người B (trần) | **0,724** (0,72 / 0,73) | 22,5 | 0,767 |
+
+Cờ thêm khoảng 1,4 ranh giới/giờ, hầu hết trúng: F1 +0,08. Nhưng app vẫn chỉ đạt khoảng 1/3 mức đồng thuận người-người. Phần còn lại
+là cảnh người chấm cắt theo NỘI DUNG mà không có dấu hiệu chữ nào, cộng các lần cắt đều 180 s của app (vẫn là phần lớn ranh giới).
+Đây là việc CS-SEG (LLM) phải trả lời.
