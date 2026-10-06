@@ -3782,3 +3782,35 @@ Subhead dạng ngoặc thì phần lớn là thoại hệ thống, thực đơn 
 - Bộ 7 đã dùng cho xác nhận X/Y, nên số này chỉ là thăm dò. Luật khung là luật cơ học, dựa trên định dạng dữ liệu. Muốn đưa vào app
   thì ghi trước và xác nhận trên bộ mới, hoặc Lead quyết vì rủi ro thấp: chỉ bỏ ranh giới, không thêm ranh giới nào.
 - Ngoài phạm vi nhạc: cùng khung ấy làm câu trước mỗi mép hộp mang quãng nghỉ cảnh 1.500 ms khi đọc (text_processing, file khoá).
+
+### 07-10 07:0x - FRAME-BOX: nhận hộp theo nội dung thắng luật "<= 8 câu"; GHI TRƯỚC luật xác nhận cho bộ 8
+
+Lead (07-10) chọn sửa từ gốc ở chỗ nhận dạng dòng ngăn cảnh (text_processing, nhánh dev, 0.4.32), không lọc riêng ở pha nhạc.
+Vì thế cần một luật nhận hộp không bỏ nhầm ranh giới thật. `research/music/frame_box.py` chạy trên FILE NGUỒN như text_processing:
+- Dòng khung = `is_scene_break_line` của app.
+- Hai dòng khung LIỀN NHAU là một HỘP khi: cùng tập ký tự sau NFKC; cách nhau 1-12 dòng có chữ; và hoặc >= 50% dòng bên trong có
+  dạng bảng trạng thái (`STATUS`: dòng trong ngoặc, `Tên: …`, `+10`/`100/100`, dòng ngắn có số), hoặc dòng đầu bên trong là
+  TIÊU ĐỀ MỤC (`HEADER`: mở bằng `[…]`/`【…】`, hay mã độ hiếm `SSR-…`).
+- Điều kiện HEADER được thêm SAU khi xem hộp sót ở bộ 7: vật phẩm gacha có tiêu đề mã độ hiếm và thân văn xuôi.
+- Mọi dòng khung của hộp không còn là ranh giới.
+
+| X, z .8, phạt ngắn 1.0 | 4+5 | 5b+6 | bộ 7 |
+|---|---|---|---|
+| X hiện tại: đổi/giờ · P · F1 · sai chỗ/giờ | 5,1 · .79 · .264 · 1,1 | 4,8 · .70 · .236 · 1,4 | 7,7 · .38 · .286 · 4,8 |
+| (i) <= 8 câu bỏ cả hai | 4,9 · .79 · .254 · 1,1 | 4,3 · .74 · .229 · 1,1 | 5,5 · .54 · .321 · 2,5 |
+| ranh giới bỏ (trùng đáp án) | 6 (3) | 6 (2) | 52 (1) |
+| **(ii) hộp theo nội dung** | 5,1 · .79 · .264 · 1,1 | 4,7 · .72 · .237 · 1,3 | 5,5 · .54 · .321 · 2,5 |
+| ranh giới bỏ (trùng đáp án) | 2 (0) | 2 (0) | 53 (1) |
+| (ii') chỉ dạng bảng, không HEADER | như (ii) | như (ii) | 7,3 · .41 · .292 · 4,3; bỏ 26 (1) |
+
+(ii) không bỏ nhầm ranh giới thật nào ở 4+5 và 5b+6. Ở bộ 7, (ii) cho đúng lợi ích của (i). Chọn (ii).
+
+**GHI TRƯỚC - xác nhận trên bộ 8** (đáp án cảnh mới, chấm mù A/B như bộ 7). Luật đóng băng: `frame_box.py` ở commit này,
+BOX_LINES 12, BOX_SHARE .5, STATUS + HEADER như trên.
+- Chọn truyện: bộ 8 PHẢI có >= 1 truyện dùng khung bảng trạng thái/hệ thống (đếm bằng `box_lines` trên nguồn, >= 5 hộp trong 5 chương),
+  và >= 2 truyện không có. Không có truyện kiểu ấy thì phép thử vô nghĩa.
+- (ii) QUA khi cả ba đều đúng:
+  1. đổi sai chỗ/giờ (ii) <= 0,8 x X hiện tại;
+  2. F1 (ii) >= F1 X − .01;
+  3. số ranh giới bị bỏ trùng đáp án <= 10% số bị bỏ.
+- Qua thì Lead cài vào text_processing (nhận hộp trước khi gắn `scene_break`; sửa luôn quãng nghỉ 1,5 s), đo lại bằng `verify_app_x.py`.
