@@ -757,7 +757,9 @@ def _quoted_span_is_dialogue(line: str, match: re.Match[str]) -> bool:
     inner = quoted[1:-1].strip()
     if not has_spoken_content(inner):
         return False
-    if line.strip() == quoted:
+    # Cả dòng là câu trong ngoặc, chỉ thêm dấu chấm đặt ngoài ngoặc (“...an toàn”.): vẫn là nguyên một câu nói (thầy gán
+    # nhãn 06-10). Dấu hỏi ngoài ngoặc thì không (“Cơ hội hoàn hảo”? - người kể ngẫm lại một chữ).
+    if not line[: match.start(1)].strip() and line[match.end(1) :].strip() in ("", "."):
         return True
     if any(mark in inner for mark in ("?", "!", "…")) or inner.endswith("."):
         return True
@@ -854,19 +856,21 @@ def _line_pieces(line: str) -> list[tuple[str, str]]:
         hint = "thought" if line.startswith("(") and line.endswith(")") else "narration"
         return [(line, hint)]
 
-    raw: list[tuple[str, str]] = []
+    raw: list[tuple[str, str, bool]] = []
     cursor = 0
     for match, hint in matches:
         if match.start() > cursor:
-            raw.append((line[cursor : match.start()], "narration"))
-        raw.append((match.group(1), hint))
+            raw.append((line[cursor : match.start()], "narration", False))
+        raw.append((match.group(1), hint, True))
         cursor = match.end()
     if cursor < len(line):
-        raw.append((line[cursor:], "narration"))
+        raw.append((line[cursor:], "narration", False))
 
     merged: list[tuple[str, str]] = []
+    # Mảnh cuối của `merged` là trọn một câu thoại trong ngoặc: câu thoại trong ngoặc liền sau nó là một lượt riêng.
+    last_is_quoted_dialogue = False
     pending_prefix = ""
-    for text, hint in raw:
+    for text, hint, quoted in raw:
         text = text.strip()
         if not text:
             continue
@@ -874,17 +878,24 @@ def _line_pieces(line: str) -> list[tuple[str, str]]:
             if merged:
                 previous_text, previous_hint = merged[-1]
                 merged[-1] = (_join_fragments(previous_text, text), previous_hint)
+                # “a”, “b”, “c” hay “thuật ngữ”: “câu nói” là MỘT câu kể liệt kê / dẫn lời, không phải hai lượt thoại.
+                last_is_quoted_dialogue = last_is_quoted_dialogue and text == "."
             else:
                 pending_prefix = _join_fragments(pending_prefix, text)
             continue
         if pending_prefix:
             text = _join_fragments(pending_prefix, text)
             pending_prefix = ""
-        if merged and merged[-1][1] == hint:
+        quoted_dialogue = quoted and hint == "dialogue"
+        # Hai câu trong ngoặc liền nhau trên một dòng ("...nữa." "Cô chắc chứ?") thường là hai người nói (thầy gán nhãn
+        # 06-10): tách thành hai đoạn để mỗi câu có người nói riêng, thay vì gộp làm một.
+        if merged and merged[-1][1] == hint and not (quoted_dialogue and last_is_quoted_dialogue):
             previous_text, _ = merged[-1]
             merged[-1] = (_join_fragments(previous_text, text), hint)
+            last_is_quoted_dialogue = False
         else:
             merged.append((text, hint))
+            last_is_quoted_dialogue = quoted_dialogue
     return merged
 
 
