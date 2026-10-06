@@ -438,6 +438,23 @@ class FakeDB:
         self.analysis_critic_attempts.append(attempt)
         return attempt
 
+    def release_analysis_critic_attempt(
+        self,
+        analysis_candidate_id,
+        attempt_number,
+        *,
+        expected_intent_hash,
+        restore_state,
+    ):
+        candidate = self.get_analysis_candidate(analysis_candidate_id)
+        attempt = self.analysis_critic_attempts.pop()
+        assert attempt["analysis_candidate_id"] == analysis_candidate_id
+        assert attempt["attempt_number"] == attempt_number
+        assert attempt["intent_hash"] == expected_intent_hash
+        candidate["critic_attempt_count"] -= 1
+        candidate["state"] = restore_state
+        return candidate
+
     def complete_analysis_critic_attempt(
         self,
         analysis_candidate_id,
@@ -10835,10 +10852,16 @@ def test_critic_accepted_reopen_commits_without_ollama_or_regeneration(
     assert segment["confidence"] == pytest.approx(0.9)
 
 
-def test_invalid_critic_reopen_retries_same_candidate_without_generator(
+def test_invalid_critic_reopen_finishes_the_candidate_then_walks_on_like_an_unstopped_run(
     tmp_path,
     monkeypatch,
 ) -> None:
+    """The reopened critic finishes the durable candidate; then the batch goes on as the
+    uninterrupted run would have - an exhausted critic budget does not end the attempt loop
+    there, so attempts 2 and 3 of the generator still run. Attempt 1 is walked again too;
+    in production it is answered from the response ledger, not the model
+    (tests/test_analysis_replay.py), here `_request` is stubbed above the ledger.
+    """
     db = production_analysis_db(tmp_path)
     settings = build_settings()
     first = OllamaBookAnalyzer(settings, db, lambda _message: None)
@@ -10882,28 +10905,37 @@ def test_invalid_critic_reopen_retries_same_candidate_without_generator(
     reopened = ProjectDB(tmp_path / "project.sqlite3")
     second = OllamaBookAnalyzer(settings, reopened, lambda _message: None)
     monkeypatch.setattr(second, "ensure_available", lambda: True)
-    monkeypatch.setattr(
-        second,
-        "_request",
-        lambda *_args, **_kwargs: pytest.fail("invalid resume must not regenerate"),
-    )
-    monkeypatch.setattr(
-        second,
-        "_request_director_critic",
-        lambda group, validated, **kwargs: director_critic_payload(
+    resumed_attempts = []
+
+    def regenerate(group, **kwargs):
+        resumed_attempts.append(int(kwargs["request_contract"]["attempt"]))
+        return generate(group)
+
+    monkeypatch.setattr(second, "_request", regenerate)
+    reopened_critic_calls = 0
+
+    def reopened_critic(group, validated, **kwargs):
+        nonlocal reopened_critic_calls
+        reopened_critic_calls += 1
+        if reopened_critic_calls > 1:
+            pytest.fail("a terminal candidate must not be sent to the critic again")
+        return director_critic_payload(
             group,
             validated,
             candidate_rows=kwargs["candidate_rows"],
             candidate_hash=kwargs["candidate_hash"],
-        ),
-    )
+        )
+
+    monkeypatch.setattr(second, "_request_director_critic", reopened_critic)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
 
     with pytest.raises(RuntimeError, match="attempt budget is exhausted"):
         second.analyze_all(lambda: False)
 
     terminal = reopened.get_analysis_candidate(int(candidate["id"]))
     assert terminal["state"] == "terminal"
-    assert generator_calls == 1
+    assert generator_calls == 1 + len(resumed_attempts)
+    assert resumed_attempts == [1, 2, 3]
 
 
 def test_director_request_honors_stop_before_network() -> None:
@@ -12566,8 +12598,13 @@ def test_a_carried_character_appears_in_the_known_list_of_the_next_batch() -> No
         assert excluded not in summary
 
 
-def test_a_count_this_project_measured_outranks_a_carried_one() -> None:
-    """The two never add up: a carried count is what we were told, not what we saw."""
+def test_a_resume_counts_a_carried_character_as_the_unstopped_run_did() -> None:
+    """Carried count first, then +1 per analysed line - what a run that never stopped holds.
+
+    This used to pin the opposite ("a measured count replaces a carried one"), but only a
+    resume ever did that: the uninterrupted run starts from the carried 55 and adds every
+    line it analyses, so stopping changed the prompt (AUDIT resume_determinism R4).
+    """
     db = FakeDB()
     db.analysed = [
         {
@@ -12584,7 +12621,7 @@ def test_a_count_this_project_measured_outranks_a_carried_one() -> None:
 
     analyzer = OllamaBookAnalyzer(build_settings(), db, lambda _message: None)
 
-    assert analyzer._speaker_counts["JULIANA"] == 1
+    assert analyzer._speaker_counts["JULIANA"] == 56
 
 
 def test_an_empty_carry_leaves_the_prompt_exactly_as_it_was() -> None:
