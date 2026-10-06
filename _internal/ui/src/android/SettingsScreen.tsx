@@ -1,7 +1,9 @@
 import * as Switch from "@radix-ui/react-switch";
-import { Download } from "lucide-react";
+import { ChevronRight, Download } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { Button, Segmented, TimeSelect } from "@/shared/ui";
+import { Button, Segmented, Sheet, TimeSelect } from "@/shared/ui";
+import { ThirdPartyList } from "@/shared/ThirdPartyList";
+import { MyMusicSection } from "@/listen/MyMusic";
 import { VieneuModuleCard, type VieneuBackend } from "@/listen/VieneuModuleCard";
 import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { androidSource } from "./androidSource";
@@ -68,6 +70,42 @@ function NotificationRow() {
         Mở cài đặt
       </Button>
     </Row>
+  );
+}
+
+// Dấu "/" cuối: lõi native chỉ mở địa chỉ bắt đầu bằng "https://github.com/ntanhpro1221/ABook/" (LibraryPlugin.openRelease).
+const SOURCE_URL = "https://github.com/ntanhpro1221/ABook/";
+
+/** "Giới thiệu": bản đang cài, mã nguồn (MIT), thành phần bên thứ ba (docs/THIRD_PARTY.md gói lúc build) trong tấm trượt. */
+export function AboutGroup({ version }: { version: string | null }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Group title="Giới thiệu" id="about">
+      <Row label="Phiên bản">
+        <span className="tabular text-sm text-fg-2">{version ?? "…"}</span>
+      </Row>
+      <Row label="Mã nguồn mở" hint="Giấy phép MIT - github.com/ntanhpro1221/ABook">
+        <Button size="sm" onClick={() => void openRelease(SOURCE_URL)}>
+          Mở
+        </Button>
+      </Row>
+      <Sheet
+        open={open}
+        onOpenChange={setOpen}
+        title="Thành phần bên thứ ba"
+        trigger={
+          <button type="button" className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left">
+            <span className="min-w-0">
+              <span className="block text-[15px] font-medium">Thành phần bên thứ ba</span>
+              <span className="mt-0.5 block text-xs leading-snug text-fg-2">Thư viện, giọng đọc và nhạc ABook dùng, cùng giấy phép của từng thứ.</span>
+            </span>
+            <ChevronRight className="size-5 shrink-0 text-fg-3" />
+          </button>
+        }
+      >
+        <div className="px-1.5 pt-3">{open && <ThirdPartyList />}</div>
+      </Sheet>
+    </Group>
   );
 }
 
@@ -247,6 +285,13 @@ export function SettingsScreen() {
         </div>
       </Group>
 
+      {/* "Nhạc của tôi" trước chỉ mở được từ hộp "Sửa sách" của từng cuốn, dù kho nhạc là chung cho mọi cuốn. */}
+      <Group title="Nhạc nền" id="music">
+        <div className="px-4 py-3.5">
+          <MyMusicSection />
+        </div>
+      </Group>
+
       <Group title="Giao diện">
         <Row label="Màu">
           <Segmented
@@ -273,7 +318,7 @@ export function SettingsScreen() {
         </Group>
       )}
 
-      <p className="mt-10 text-center text-xs text-fg-3">ABook{current ? ` ${current}` : ""} · trình nghe sách nói</p>
+      <AboutGroup version={current} />
     </div>
   );
 }

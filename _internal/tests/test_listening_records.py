@@ -6,6 +6,7 @@ Sách không biết gì về việc nghe, hồ sơ nghe không biết mình thu�
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 from abook.webui.actions import FakeRunner
@@ -175,6 +176,36 @@ def test_the_ui_manages_the_records_of_a_book(library) -> None:  # noqa: F811 - 
     finally:
         server.stop()
 
+
+
+def test_the_ui_moves_a_record_to_another_book(library) -> None:  # noqa: F811 - fixture
+    """"Chuyển sang cuốn khác…" trong hộp hồ sơ nghe: hồ sơ (chỗ nghe đi theo) thành hồ sơ đang dùng của cuốn kia; cuốn đích phải
+    có trong thư viện."""
+    lib, project, listening = library
+    other = project.parent / "sach_hai"
+    shutil.copytree(project, other)
+    app = App(preferences=lib.preferences, runner=FakeRunner(), token="t", listening=listening)
+    server = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "t"}
+    base = f"/api/listen/books/{book_id(project)}"
+    try:
+        _request(server.port, "POST", base + "/progress", headers=headers,
+                 body={"chapterId": 1, "seconds": 42.0, "duration": 100.0})
+        _status, data, _ = _request(server.port, "GET", base + "/records", headers=headers)
+        record = json.loads(data)["records"][0]["id"]
+        status, _data, _ = _request(server.port, "POST", f"{base}/records/{record}/move", headers=headers,
+                                    body={"book": "khong-co-sach-nay"})
+        assert status == 404 and listening.book_of(record) == book_id(project), "cuốn đích không có: hồ sơ ở yên"
+
+        status, data, _ = _request(server.port, "POST", f"{base}/records/{record}/move", headers=headers,
+                                   body={"book": book_id(other)})
+
+        assert status == 200 and json.loads(data)["records"] == [], "trả về hồ sơ còn lại của cuốn cũ"
+        _status, data, _ = _request(server.port, "GET", f"/api/listen/books/{book_id(other)}", headers=headers)
+        assert json.loads(data)["state"]["last"]["seconds"] == 42.0
+        assert [item["id"] for item in listening.records(book_id(other)) if item["active"]] == [record]
+    finally:
+        server.stop()
 
 def test_both_devices_share_one_default_record_per_book(tmp_path: Path) -> None:
     """Hồ sơ "Mặc định" mang mã suy từ mã sách ở mọi máy: máy tính và điện thoại cùng nghe một cuốn (hay cùng chuyển

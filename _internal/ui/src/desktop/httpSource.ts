@@ -153,5 +153,8 @@ export const httpSource: ListenSource = {
       (await api<{ records: ListeningRecord[] }>(`/api/listen/books/${bookId}/records/${recordId}`, { method: "PUT", body: { name } })).records,
     remove: async (bookId, recordId) =>
       (await api<{ records: ListeningRecord[] }>(`/api/listen/books/${bookId}/records/${recordId}`, { method: "DELETE" })).records,
+    move: async (bookId, recordId, toBook) =>
+      (await api<{ records: ListeningRecord[] }>(`/api/listen/books/${bookId}/records/${recordId}/move`, { method: "POST", body: { book: toBook } }))
+        .records,
   },
 };
