@@ -71,6 +71,7 @@ class LibraryPlugin : Plugin() {
         // Gửi phần sửa về máy tính xong: tải lại sách từ máy tính (không báo "Đã tải xong") và báo giao diện làm mới.
         EditsSync.refresh = { id -> downloadBook(id, null, null, announce = false) }
         EditsSync.changed = { id -> notifyListeners("editsSync", JSObject().put("bookId", id)) }
+        Mp3Exports.events = { event -> notifyListeners("mp3Export", JSObject.fromJSONObject(event)) }
         Playback.init(context)
         PhoneCast.init(context)
         TextImports.codec = AndroidCoverCodec
@@ -948,6 +949,53 @@ class LibraryPlugin : Plugin() {
                 fail(call, error, "không đóng được file sách để chia sẻ")
             }
         }
+    }
+
+    // ---- "Xuất MP3 để nghe ở app khác" (Mp3Export, Mp3ExportWorker) ------------------------------------------------
+
+    /**
+     * Xuất cuốn `bookId` thành thư mục MP3 như máy tính. Lần đầu (hay `pick`, hay thư mục cũ không còn ghi được) hỏi chỗ lưu bằng bộ
+     * chọn thư mục của hệ thống, rồi nhớ lại. `cover`: data URL PNG bìa giao diện tự vẽ, dùng khi sách không có bìa thật. Trả
+     * {started, run, folder, chapters} - tiến độ và kết quả đến qua sự kiện "mp3Export" mang `run` - hay {started: false} khi huỷ chọn.
+     */
+    @PluginMethod
+    fun exportMp3(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        if (Store.manifest(id) == null) return call.reject("Sách này chưa tải về điện thoại")
+        val tree = if (call.getBoolean("pick", false) == true) null else Mp3Exports.remembered(context)
+        if (tree == null) startActivityForResult(call, Mp3Exports.pickIntent(context), "pickedExportFolder") else startMp3Export(call, tree)
+    }
+
+    @ActivityCallback
+    private fun pickedExportFolder(call: PluginCall?, result: ActivityResult) {
+        if (call == null) return
+        val tree = result.data?.data ?: return call.resolve(JSObject().put("started", false))
+        try {
+            Mp3Exports.remember(context, tree)
+        } catch (error: Exception) {
+            return fail(call, error, "không giữ được quyền ghi thư mục đã chọn")
+        }
+        startMp3Export(call, tree)
+    }
+
+    private fun startMp3Export(call: PluginCall, tree: Uri) = background(call) {
+        val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
+        val drawn = drawnCover(call.getString("cover"))
+        val plan = Mp3Export.plan(id, drawn) // sách không có gì để xuất: từ chối ngay, không bắt đầu việc nền
+        val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Không mở được thư mục đã chọn - chọn lại nơi lưu")
+        val coverFile = drawn?.let { bytes ->
+            File(context.cacheDir, "mp3-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
+        }
+        val run = Mp3Exports.start(context, id, tree, coverFile)
+        call.resolve(JSObject().put("started", true).put("run", run).put("folder", "$treeName/${Mp3Export.folderName(plan.title)}")
+            .put("chapters", plan.chapters.size))
+    }
+
+    /** Bìa tự vẽ gửi từ giao diện, cùng luật với máy tính (export._cover_file): chỉ data URL PNG, tối đa 4 MB. */
+    private fun drawnCover(value: String?): ByteArray? {
+        val match = Regex("data:image/png;base64,([A-Za-z0-9+/=]+)").matchEntire(value ?: return null) ?: return null
+        val bytes = runCatching { android.util.Base64.decode(match.groupValues[1], android.util.Base64.DEFAULT) }.getOrNull() ?: return null
+        return bytes.takeIf { it.size <= 4 * 1024 * 1024 && Id3Tag.Cover.of(it)?.mime == "image/png" }
     }
 
     // ---- hồ sơ nghe (độc lập với sách, app giữ liên kết - Store) -----------------------------------------------

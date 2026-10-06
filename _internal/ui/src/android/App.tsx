@@ -24,6 +24,7 @@ import { cn } from "@/shared/cn";
 import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import { androidSource } from "./androidSource";
 import { DevicesScreen } from "./DevicesScreen";
+import { ExportMp3MenuItem, watchMp3Exports } from "./ExportMp3";
 import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { NativeAudioEngine } from "./nativeEngine";
@@ -39,6 +40,7 @@ function DownloadWatcher() {
   const client = useQueryClient();
   useEffect(() => watchDownloads(client), [client]);
   useEffect(() => watchEditsSync(client), [client]);
+  useEffect(() => watchMp3Exports(), []);
   // Chương chỉ-có-chữ đang được lõi đọc to: mốc câu / chữ lõi báo đi vào kịch bản chữ của màn đọc (android/readAloud.ts).
   useEffect(() => watchReadAloud(client), [client]);
   return null;
@@ -264,7 +266,14 @@ export function AndroidApp() {
                     element={
                       <BookScreen
                         extraActions={(book) =>
-                          book.remote ? <DownloadMenuItem book={book} /> : <RemoveFromPhoneMenuItem book={book} />
+                          book.remote ? (
+                            <DownloadMenuItem book={book} />
+                          ) : (
+                            <>
+                              <ExportMp3MenuItem book={book} />
+                              <RemoveFromPhoneMenuItem book={book} />
+                            </>
+                          )
                         }
                       />
                     }
