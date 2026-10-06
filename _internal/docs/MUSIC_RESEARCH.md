@@ -2985,3 +2985,31 @@ k chọn trên bộ 4+5: V 1,5, T 1,5 (lưới 1..10; giãn mạnh hơn chỉ l�
   - ở giữa -> cả hai: phân vị trong cuốn + hiệu chỉnh mức chương (ghi rõ phần nào lớn hơn).
 - **Ghi lại:** đồng thuận A-B (so lô 2 .87/.84/.91); mức chương A so B (người chấm có đồng ý về mức chương không); số mẫu dạy thêm.
 - **Dè dặt trước:** 4 cuốn là ít - kết luận chỉ chọn hướng làm kế, không tự đổi app.
+
+### 06-10 15:xx - KẾT QUẢ lô 4 (ghi trước 5a64e319): mức chương dao động mạnh TRONG cuốn -> làm CẢ HAI, phần mức chương lớn hơn
+
+Hai agent Opus chấm mù xong 20/20 mỗi người (bản 3); phân xử 83 đoạn (`scene_book_var/`, `book_var.py`). Mức chương (V, T thang
+-2..2, theo số tiếng, bỏ chu_thich), nhãn phân xử:
+
+| truyện | V 5 chương | T 5 chương |
+|---|---|---|
+| Kou 2 ni Timeleap | +1.02 +0.72 +1.00 +0.18 +1.07 | +0.08 -0.85 -0.34 +0.39 -0.32 |
+| Arifureta | -0.11 +1.43 +0.75 +0.90 +1.30 | +0.37 -1.32 -0.75 -0.50 -0.90 |
+| Strongest Survival (Otome) | -0.69 -0.40 +0.64 -0.14 +0.39 | +0.91 +1.38 -0.99 +0.82 -0.16 |
+| Mạc Trần Vương (Hàn) | -0.89 -0.30 +0.10 -0.68 -0.20 | +1.00 +0.93 +0.25 +1.04 +1.01 |
+
+- SD_trong V .490, T .640; SD_tổng (42 chương đáp án) V .680, T .817 -> tỉ số **V .72, T .78** -> theo luật: **CẢ HAI**
+  (phân vị/giọng cấp cuốn + hiệu chỉnh mức chương), và phần mức chương LỚN HƠN: cuốn chỉ giải thích ~48 % (V) / ~39 % (T)
+  phương sai mức chương. A riêng .77/.80, B riêng .75/.76 - cùng kết luận.
+- **Người chấm đồng ý cao về mức chương:** r A-B trên 20 mức chương V .961 (MAE .18), T .954 (MAE .24). Mức chương là đích đo
+  được, học được - trong khi mọi ước lượng hiện có của app không hơn hằng 0.
+- Ghi lại: đồng thuận A-B trong chương V .73 E .82 T .78 (gộp .92/.89/.92) - thấp hơn lô 2 ở r TB chương, gộp ngang. Hai người
+  cùng nêu: L4 tạo `scene 0-0` cho tiêu đề trước dòng người dịch; leo thang dài cùng nhóm (1-10 phút) không có chỗ (accent <= 15 s).
+- **Kế:** (a) thước MAE tuyệt đối thành thước kèm cho mọi model đọc không khí (đã có trong `score_mlx_lora.py`); (b) thử ước mức
+  chương một lượt (đọc/tóm tắt cả chương -> một V, T) - cần GPU/Mac, ghi trước riêng khi có chỗ; (c) app: giọng cấp cuốn
+  (bảng thể loại có sẵn) + mức chương + thứ hạng trong chương - đề xuất cho Lead, chưa làm.
+
+**SỬA dữ liệu musicvt (ghi TRƯỚC khi chuỗi bắt đầu; Lead 06-10: B7c chen trước, musicvt lùi ~10-10):** thêm lô 4 ->
+`mlx_lora/sft` = 80 chương (pilot + v3 + v31 + book_var, `build_mood_sft.py --prompt P2 --seed 7`): **train 1.768, val 72**
+(cảnh 762, cửa sổ 1.078, bỏ 8; val không đổi vì không chương lô 4 nào rơi vào phần val theo hash); token dài nhất 2.351, p99
+2.283. Bản 60 chương giữ ở `mlx_lora/sft_60ch_0610/`. Luật CHÍNH của musicvt không đổi.
