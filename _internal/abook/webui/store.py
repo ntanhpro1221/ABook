@@ -1025,22 +1025,11 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
         }
         chapter_name = chapter_names(connection, project_root).get(int(chapter["id"]), {})
     renamed = renames.load(project_root)
-    timed = str(chapter["status"]) == "completed" and all(row["wav_duration"] for row in rows)
-    starts: list[float] = []
-    elapsed = 0.0
-    for index, row in enumerate(rows):
-        starts.append(elapsed)
-        elapsed += float(row["wav_duration"] or 0.0)
-        if index + 1 < len(rows):
-            elapsed += float(row["break_ms"] or 0) / 1000.0
-    mp3 = chapter_mp3(project_root, chapter["output_mp3"]) if timed else None
-    real = audio_duration(mp3) if mp3 else None
-    scale = (real / elapsed) if (real and elapsed) else 1.0
+    timed, spans, mp3, duration = _sentence_timeline(project_root, chapter, rows)
     segments = []
     for index, row in enumerate(rows):
         speaker = str(row["speaker"] or "")
-        start = starts[index] * scale
-        end = (starts[index] + float(row["wav_duration"] or 0.0)) * scale
+        start, end = spans[index]
         heading = index == 0 and humanize.is_heading(str(row["text"]))
         segments.append({
             "id": int(row["id"]),
@@ -1062,9 +1051,44 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
         "chapterId": int(chapter["id"]),
         "title": chapter_name.get("full") or humanize.chapter_title(str(chapter["title"])),
         "timed": bool(timed and mp3),
-        "duration": round(real if real else elapsed, 3),
+        "duration": round(duration, 3),
         "segments": segments,
     }
+
+
+def _sentence_timeline(project_root: Path, chapter: Any,
+                       rows: list[Any]) -> tuple[bool, list[tuple[float, float]], Path | None, float]:
+    """(có mốc không, (đầu, cuối) của từng câu trong MP3 chương, file MP3, độ dài chương) - xem `chapter_script`. `chapter`
+    cần `status`, `output_mp3`; `rows` (theo `seq`) cần `wav_duration`, `break_ms`."""
+    timed = str(chapter["status"]) == "completed" and all(row["wav_duration"] for row in rows)
+    starts: list[float] = []
+    elapsed = 0.0
+    for index, row in enumerate(rows):
+        starts.append(elapsed)
+        elapsed += float(row["wav_duration"] or 0.0)
+        if index + 1 < len(rows):
+            elapsed += float(row["break_ms"] or 0) / 1000.0
+    mp3 = chapter_mp3(project_root, chapter["output_mp3"]) if timed else None
+    real = audio_duration(mp3) if mp3 else None
+    scale = (real / elapsed) if (real and elapsed) else 1.0
+    spans = [(start * scale, (start + float(row["wav_duration"] or 0.0)) * scale) for start, row in zip(starts, rows)]
+    return timed, spans, mp3, real if real else elapsed
+
+
+def chapter_spans(project_root: Path, chapter_id: int) -> dict[int, tuple[float, float]]:
+    """{mã câu: (đầu, cuối) giây trong MP3 chương} - rỗng khi chương chưa xuất hay chưa có mốc. Hàng "Cần nghe lại" dùng để
+    nghe một câu ngay trong chương khi WAV riêng của câu đã được dọn."""
+    with closing(connect(project_root)) as connection:
+        chapter = connection.execute("SELECT status, output_mp3 FROM chapters WHERE id = ?", (chapter_id,)).fetchone()
+        if chapter is None:
+            return {}
+        rows = connection.execute(
+            "SELECT id, wav_duration, break_ms FROM segments WHERE chapter_id = ? ORDER BY seq", (chapter_id,)
+        ).fetchall()
+    timed, spans, mp3, _duration = _sentence_timeline(project_root, chapter, rows)
+    if not (timed and mp3):
+        return {}
+    return {int(row["id"]): (round(start, 3), round(end, 3)) for row, (start, end) in zip(rows, spans)}
 
 
 def chapter_audio_path(project_root: Path, chapter_id: int) -> Path | None:

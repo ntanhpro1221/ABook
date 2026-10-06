@@ -147,5 +147,6 @@ export const androidSource: ListenSource = {
     activate: async (id, record) => (await EbookLibrary.activateRecord({ id, record })).records,
     rename: async (id, record, name) => (await EbookLibrary.renameRecord({ id, record, name })).records,
     remove: async (id, record) => (await EbookLibrary.deleteRecord({ id, record })).records,
+    move: async (id, record, book) => (await EbookLibrary.moveRecord({ id, record, book })).records,
   },
 };

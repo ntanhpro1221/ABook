@@ -25,6 +25,22 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   (vd "Ha ru tô"), bấm "Nghe thử" để nghe bằng giọng đang đọc cuốn này, rồi "Lưu cho cả cuốn" - mọi chỗ có đúng từ ấy đọc theo cách mới, chữ trong sách giữ
   nguyên và chữ đang đọc vẫn sáng đúng chỗ. Danh sách "Cách đọc tên" trong hộp "Sửa sách" để xem, sửa, nghe thử hay bỏ từng từ; cách đọc đi theo file sách khi
   xuất. Hộp "Sửa câu này" của sách nói chưa có Studio cũng nghe thử được cách đọc tên bằng giọng đọc của máy. Máy tính và điện thoại như nhau.
+- Hồ sơ nghe chuyển được sang cuốn khác ("Chuyển sang cuốn khác…" trong menu hồ sơ nghe; cuốn chỉ có một hồ sơ thì "Chuyển chỗ nghe sang cuốn khác…" ở menu "…"):
+  chỗ nghe, dấu trang và lịch sử đi theo, thành hồ sơ đang dùng ở cuốn kia - tiện khi có bản làm lại của cùng truyện. Máy tính và điện thoại như nhau.
+
+### Nhạc nền
+
+- Cài đặt có mục "Nhạc nền": kho "Nhạc của tôi" (nhập, xoá, "Phân tích nhạc") dùng chung cho mọi cuốn nên giờ mở thẳng từ đây, trước chỉ có trong hộp "Sửa sách"
+  của từng cuốn. Máy tính và điện thoại như nhau.
+
+### Làm sách
+
+- "Cần nghe lại": câu có bản thu riêng đã được dọn sau khi ghép chương giờ vẫn nghe được - máy phát đúng đoạn ấy trong file chương rồi dừng ở cuối câu, nên bấm
+  được "Ổn" hay "Cần thu lại", và "Nghe liền" cũng đi qua những câu ấy. Trước đây nút nghe bị tắt.
+
+
+- Cài đặt có nhóm "Giới thiệu": phiên bản đang cài, mã nguồn mở (giấy phép MIT, mở trang GitHub) và danh sách thành phần bên thứ ba cùng giấy phép của từng thứ.
+  Máy tính có cùng danh sách ở mục "Giới thiệu" của Cài đặt (nút "Thành phần bên thứ ba").
 
 ## [0.4.29] - 2026-10-06
 

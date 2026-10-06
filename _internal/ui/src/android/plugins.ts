@@ -328,6 +328,7 @@ export interface EbookLibraryPlugin {
   activateRecord(options: { id: string; record: string }): Promise<{ records: ListeningRecord[] }>;
   renameRecord(options: { id: string; record: string; name: string }): Promise<{ records: ListeningRecord[] }>;
   deleteRecord(options: { id: string; record: string }): Promise<{ records: ListeningRecord[] }>;
+  moveRecord(options: { id: string; record: string; book: string }): Promise<{ records: ListeningRecord[] }>;
   addListener(event: "download", handler: (event: DownloadEvent) => void): Promise<PluginListenerHandle>;
   /** Bộ chọn file của hệ thống để mở một file sách .abook; kết quả về qua sự kiện "import". */
   pickBook(): Promise<{ picked: boolean }>;

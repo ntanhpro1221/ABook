@@ -81,11 +81,19 @@ def review_items(project_root: Path) -> list[dict[str, Any]]:
     # Chữ đem đọc đang chờ áp (tab Kịch bản hay chính thẻ này): thẻ hiện nó thay vì mời sửa lại từ đầu.
     waiting = {entry["stable_id"]: entry for entry in line_requests(read_overrides(project_root))
                if isinstance(entry.get("spoken"), str)}
+    spans: dict[int, dict[int, tuple[float, float]]] = {}
     items = []
     for row in rows:
         similarity = float(row["asr_similarity"]) if row["asr_similarity"] is not None else None
         kind = _kind(str(row["status"]), str(row["warning_code"] or ""), similarity)
         chapter = names.get(int(row["chapter_id"]), {})
+        playable = store.segment_audio(project_root, row["wav_path"]) is not None
+        # WAV riêng của câu đã dọn sau khi ghép chương: nghe đúng đoạn ấy trong file chương (mốc như chế độ đọc theo).
+        span = None
+        if not playable and kind != "failed":
+            if int(row["chapter_id"]) not in spans:
+                spans[int(row["chapter_id"])] = store.chapter_spans(project_root, int(row["chapter_id"]))
+            span = spans[int(row["chapter_id"])].get(int(row["id"]))
         items.append({
             "segmentId": int(row["id"]),
             "stableId": str(row["stable_id"]),
@@ -97,7 +105,8 @@ def review_items(project_root: Path) -> list[dict[str, Any]]:
             "speaker": speaker_label(str(row["speaker"] or "")),
             "kind": kind,
             "reason": REASONS[kind],
-            "playable": store.segment_audio(project_root, row["wav_path"]) is not None,
+            "playable": playable,
+            "chapterClip": {"start": span[0], "end": span[1]} if span else None,
             # Sửa "chữ đem đọc" ngay trên thẻ (soát UX a5/a6 01-10: câu tượng thanh "Tách tách tách" hỏng sau mọi lần thử chỉ
             # có nút "Thu lại" - thu lại y chữ thì hỏng y như cũ). Băm chữ đi kèm để yêu cầu tự rơi khi câu đổi chữ.
             "textSha256": str(row["text_sha256"] or "") if "text_sha256" in row.keys() else "",

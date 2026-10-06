@@ -98,6 +98,8 @@ export interface ListenSource {
     activate(bookId: string, recordId: string): Promise<ListeningRecord[]>;
     rename(bookId: string, recordId: string, name: string): Promise<ListeningRecord[]>;
     remove(bookId: string, recordId: string): Promise<ListeningRecord[]>;
+    /** Gắn hồ sơ sang cuốn `toBook` (bản làm lại của cùng truyện…), thành hồ sơ đang dùng ở đó; trả hồ sơ còn lại của cuốn này. */
+    move(bookId: string, recordId: string, toBook: string): Promise<ListeningRecord[]>;
   };
 }
 
@@ -272,6 +274,13 @@ export function useListenMutations(bookId: string) {
     removeRecord: useMutation({
       mutationFn: (recordId: string) => source.records!.remove(bookId, recordId),
       onSuccess: refresh,
+    }),
+    moveRecord: useMutation({
+      mutationFn: ({ recordId, toBook }: { recordId: string; toBook: string }) => source.records!.move(bookId, recordId, toBook),
+      onSuccess: (_records, { toBook }) => {
+        refresh();
+        void client.invalidateQueries({ queryKey: ["listen", "book", toBook] });
+      },
     }),
   };
 }

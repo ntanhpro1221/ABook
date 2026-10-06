@@ -1,0 +1,50 @@
+{
+  "about": "Chuyển hồ sơ nghe sang cuốn khác rồi đồng bộ máy tính <-> điện thoại: lần chuyển sau thắng (movedAt). Dùng chung cho pytest (tests/test_listening_records.py, webui/listening.py merge_record) và test JVM (StoreRecordSyncTest.kt, Store.applySync). `computer` / `phone`: liên kết sách - hồ sơ và lúc chuyển của từng hồ sơ trước lần đẩy; `push`: điện thoại đẩy hồ sơ dưới cuốn `book`; `reply`: những gì lời đáp của máy tính phải mang; `*After`: hồ sơ của từng cuốn sau đó.",
+  "names": {"r-000000000000000a": "Mặc định", "r-000000000000000b": "Con"},
+  "cases": {
+    "phone_moved_later": {
+      "computer": {
+        "links": {"sach-cu": {"records": ["r-000000000000000a", "r-000000000000000b"], "active": "r-000000000000000b", "activeAt": 1500.0}},
+        "movedAt": {"r-000000000000000b": 1000.0}
+      },
+      "phone": {
+        "links": {"sach-cu": {"records": ["r-000000000000000a", "r-000000000000000b"], "active": "r-000000000000000b", "activeAt": 1500.0}},
+        "movedAt": {"r-000000000000000b": 1000.0}
+      },
+      "phoneMove": {"from": "sach-cu", "record": "r-000000000000000b", "to": "sach-moi"},
+      "push": {
+        "book": "sach-moi",
+        "body": {
+          "record": "r-000000000000000b", "recordName": "Con", "nameAt": 1.0, "activeAt": 2000.0, "movedAt": 2000.0,
+          "deletedRecords": {}, "last": {"chapterId": 7, "seconds": 55.0, "at": 1900.0}, "chapters": {}, "bookmarks": []
+        }
+      },
+      "reply": {"record": "r-000000000000000b", "book": "sach-moi", "movedAt": 2000.0,
+                "active": {"record": "r-000000000000000b", "at": 2000.0}},
+      "computerAfter": {"sach-cu": ["r-000000000000000a"], "sach-moi": ["r-000000000000000b"]},
+      "phoneAfter": {"sach-cu": ["r-000000000000000a"], "sach-moi": ["r-000000000000000b"]}
+    },
+    "computer_moved_later": {
+      "computer": {
+        "links": {"sach-cu": {"records": ["r-000000000000000a"], "active": "r-000000000000000a", "activeAt": 1500.0},
+                  "sach-moi": {"records": ["r-000000000000000b"], "active": "r-000000000000000b", "activeAt": 3000.0}},
+        "movedAt": {"r-000000000000000b": 3000.0}
+      },
+      "phone": {
+        "links": {"sach-cu": {"records": ["r-000000000000000a", "r-000000000000000b"], "active": "r-000000000000000b", "activeAt": 1500.0}},
+        "movedAt": {"r-000000000000000b": 1000.0}
+      },
+      "push": {
+        "book": "sach-cu",
+        "body": {
+          "record": "r-000000000000000b", "recordName": "Con", "nameAt": 1.0, "activeAt": 1500.0, "movedAt": 1000.0,
+          "deletedRecords": {}, "last": {"chapterId": 2, "seconds": 9.0, "at": 2500.0}, "chapters": {}, "bookmarks": []
+        }
+      },
+      "reply": {"record": "r-000000000000000b", "book": "sach-moi", "movedAt": 3000.0,
+                "active": {"record": "r-000000000000000b", "at": 3000.0}},
+      "computerAfter": {"sach-cu": ["r-000000000000000a"], "sach-moi": ["r-000000000000000b"]},
+      "phoneAfter": {"sach-cu": ["r-000000000000000a"], "sach-moi": ["r-000000000000000b"]}
+    }
+  }
+}
