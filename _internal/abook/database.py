@@ -2195,6 +2195,42 @@ CREATE TABLE IF NOT EXISTS analysis_critic_attempts (
     )
 );
 
+-- Sổ phản hồi phân tích: mỗi request gửi Ollama (băm nguyên thân request) và đúng chuỗi nó trả về, ghi trước khi
+-- parse, kể cả phản hồi bị host/critic bác. Request trùng băm thì đọc lại từ đây thay vì hỏi lại model, nên resume
+-- đi lại đúng con đường cũ. Không nâng SCHEMA_VERSION (như machine_take_substitutions): mã cũ bỏ qua bảng lạ.
+CREATE TABLE IF NOT EXISTS analysis_responses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_hash TEXT NOT NULL UNIQUE,
+    role TEXT NOT NULL,
+    group_fingerprint TEXT NOT NULL DEFAULT '',
+    attempt INTEGER,
+    seed INTEGER,
+    model_name TEXT NOT NULL,
+    model_digest TEXT NOT NULL DEFAULT '',
+    prompt_tokens INTEGER,
+    eval_tokens INTEGER,
+    done_reason TEXT NOT NULL DEFAULT '',
+    usage_json TEXT,
+    raw_response TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
+
+-- Trạng thái của vòng phân tích ở ranh giới batch vừa chốt, ghi CÙNG giao dịch với các segment của batch ấy: đếm người
+-- nói theo thứ tự chèn, giới, phản hồi mang sang batch con, và hàng đợi batch còn lại. Resume nạp lại nguyên trạng
+-- thay vì dựng lại từ segment (AUDIT resume_determinism 5.2).
+CREATE TABLE IF NOT EXISTS analysis_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    policy_fingerprint TEXT NOT NULL,
+    committed_batches INTEGER NOT NULL CHECK (committed_batches >= 1),
+    committed_through_segment_id INTEGER NOT NULL,
+    speaker_counts_json TEXT NOT NULL,
+    speaker_genders_json TEXT NOT NULL,
+    carried_feedback_json TEXT NOT NULL,
+    queue_json TEXT NOT NULL,
+    state_sha256 TEXT NOT NULL,
+    updated_at REAL NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS runtime_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     timestamp REAL NOT NULL,
@@ -6899,6 +6935,98 @@ class ProjectDB:
                 attempt_number,
             )
 
+    def release_analysis_critic_attempt(
+        self,
+        analysis_candidate_id: int,
+        attempt_number: int,
+        *,
+        expected_intent_hash: str,
+        restore_state: str,
+    ) -> sqlite3.Row:
+        """Undo one reservation exactly, because the owner stopped the run mid-critic.
+
+        A stop is not a fault: nothing was observed, so resume must re-run the same
+        attempt number - and with it the same seed - instead of the next one. This is the
+        precise inverse of `reserve_analysis_critic_attempt`: the reserved row goes, the
+        count goes back, the candidate returns to the state the reservation found, and a
+        prior orphan the reservation abandoned becomes reserved again. A dropped
+        connection still consumes the attempt (analysis.py keeps that rule).
+        """
+        normalized_restore_state = str(restore_state).strip()
+        if normalized_restore_state not in {
+            ANALYSIS_CANDIDATE_ALLOCATED,
+            ANALYSIS_CANDIDATE_CRITIC_INVALID,
+            ANALYSIS_CANDIDATE_CRITIC_IN_FLIGHT,
+        }:
+            raise ValueError("Analysis critic release requires an actionable restore state")
+        normalized_attempt = int(attempt_number)
+        with self.transaction() as conn:
+            candidate = self._analysis_candidate_row_conn(conn, analysis_candidate_id)
+            self._validate_analysis_candidate_history_conn(conn, candidate)
+            attempt = self._analysis_critic_attempt_row_conn(
+                conn,
+                analysis_candidate_id,
+                normalized_attempt,
+            )
+            require_all(
+                "Analysis critic release CAS failed",
+                ("candidate_state", str(candidate["state"]) != ANALYSIS_CANDIDATE_CRITIC_IN_FLIGHT),
+                ("attempt_count", int(candidate["critic_attempt_count"]) != normalized_attempt),
+                ("attempt_state", str(attempt["state"]) != ANALYSIS_CRITIC_ATTEMPT_RESERVED),
+                (
+                    "intent_hash",
+                    str(attempt["intent_hash"]) != str(expected_intent_hash).strip(),
+                ),
+                analysis_candidate_id=int(analysis_candidate_id),
+                attempt_number=normalized_attempt,
+            )
+            conn.execute(
+                "DELETE FROM analysis_critic_attempts "
+                "WHERE analysis_candidate_id=? AND attempt_number=? AND state=?",
+                (
+                    int(analysis_candidate_id),
+                    normalized_attempt,
+                    ANALYSIS_CRITIC_ATTEMPT_RESERVED,
+                ),
+            )
+            if normalized_restore_state == ANALYSIS_CANDIDATE_CRITIC_IN_FLIGHT:
+                revived = conn.execute(
+                    """
+                    UPDATE analysis_critic_attempts SET state=?,completed_at=NULL
+                    WHERE analysis_candidate_id=? AND attempt_number=? AND state=?
+                    """,
+                    (
+                        ANALYSIS_CRITIC_ATTEMPT_RESERVED,
+                        int(analysis_candidate_id),
+                        normalized_attempt - 1,
+                        ANALYSIS_CRITIC_ATTEMPT_ABANDONED,
+                    ),
+                )
+                if revived.rowcount != 1:
+                    raise RuntimeError(
+                        "Analysis critic release found no abandoned prior reservation"
+                    )
+            updated = conn.execute(
+                """
+                UPDATE analysis_candidates
+                SET state=?,critic_attempt_count=?,updated_at=?
+                WHERE id=? AND state=? AND critic_attempt_count=?
+                """,
+                (
+                    normalized_restore_state,
+                    normalized_attempt - 1,
+                    time.time(),
+                    int(analysis_candidate_id),
+                    ANALYSIS_CANDIDATE_CRITIC_IN_FLIGHT,
+                    normalized_attempt,
+                ),
+            )
+            if updated.rowcount != 1:
+                raise RuntimeError("Analysis critic release CAS failed")
+            candidate = self._analysis_candidate_row_conn(conn, analysis_candidate_id)
+            self._validate_analysis_candidate_history_conn(conn, candidate)
+            return candidate
+
     def complete_analysis_critic_attempt(
         self,
         analysis_candidate_id: int,
@@ -7287,32 +7415,193 @@ class ProjectDB:
         data: dict[str, Any],
         low_confidence_threshold: float = 0.58,
     ) -> None:
+        with self.transaction() as conn:
+            self._update_analysis_conn(conn, segment_id, data, low_confidence_threshold, time.time())
+
+    def update_analysis_rows(
+        self,
+        rows: Sequence[tuple[int, dict[str, Any]]],
+        *,
+        low_confidence_threshold: float,
+        analysis_state: dict[str, Any],
+    ) -> None:
+        """A whole batch without a director critic, committed with its analysis checkpoint.
+
+        One row at a time left a window where some rows of a batch were analysed and the
+        rest were not, and a resume then saw counts that no uninterrupted run ever had.
+        """
+        if not rows:
+            raise ValueError("Analysis batch cannot be empty")
+        now = time.time()
+        with self.transaction() as conn:
+            for segment_id, data in rows:
+                self._update_analysis_conn(conn, segment_id, data, low_confidence_threshold, now)
+            self._write_analysis_state_conn(conn, analysis_state, now)
+
+    def _update_analysis_conn(
+        self,
+        conn: sqlite3.Connection,
+        segment_id: int,
+        data: dict[str, Any],
+        low_confidence_threshold: float,
+        now: float,
+    ) -> None:
         if not isinstance(data, dict):
             raise ValueError("Analysis update data must be an object")
-        with self.transaction() as conn:
-            current = conn.execute(
-                "SELECT * FROM segments WHERE id=?",
-                (int(segment_id),),
+        current = conn.execute(
+            "SELECT * FROM segments WHERE id=?",
+            (int(segment_id),),
+        ).fetchone()
+        if current is None:
+            raise KeyError(f"Unknown segment id: {segment_id}")
+        merged = self._merged_analysis_update_data(current, data)
+        values = self._analysis_update_values(
+            merged,
+            low_confidence_threshold,
+            now,
+        )
+        updated = conn.execute(
+            """
+            UPDATE segments SET
+                kind=?,speaker=?,gender=?,age=?,emotion=?,intensity=?,pace=?,volume=?,
+                confidence=?,analysis_notes=?,warning_code=?,status=?,updated_at=?
+            WHERE id=?
+            """,
+            (*values, int(segment_id)),
+        )
+        if updated.rowcount != 1:
+            raise RuntimeError("Analysis update segment CAS failed")
+
+    _ANALYSIS_STATE_FIELDS = (
+        "policy_fingerprint",
+        "committed_batches",
+        "committed_through_segment_id",
+        "speaker_counts",
+        "speaker_genders",
+        "carried_feedback",
+        "queue",
+    )
+
+    def _write_analysis_state_conn(
+        self,
+        conn: sqlite3.Connection,
+        state: dict[str, Any],
+        now: float,
+    ) -> None:
+        if not isinstance(state, dict) or set(state) != set(self._ANALYSIS_STATE_FIELDS):
+            raise ValueError("Analysis state has an unexpected shape")
+        _state_json, state_hash = self._canonical_analysis_json(state, "analysis state")
+        columns = {
+            field: self._canonical_analysis_json(state[field], f"analysis state {field}")[0]
+            for field in ("speaker_counts", "speaker_genders", "carried_feedback", "queue")
+        }
+        conn.execute(
+            """
+            INSERT INTO analysis_state(
+                id,policy_fingerprint,committed_batches,committed_through_segment_id,
+                speaker_counts_json,speaker_genders_json,carried_feedback_json,queue_json,
+                state_sha256,updated_at
+            ) VALUES(1,?,?,?,?,?,?,?,?,?)
+            ON CONFLICT(id) DO UPDATE SET
+                policy_fingerprint=excluded.policy_fingerprint,
+                committed_batches=excluded.committed_batches,
+                committed_through_segment_id=excluded.committed_through_segment_id,
+                speaker_counts_json=excluded.speaker_counts_json,
+                speaker_genders_json=excluded.speaker_genders_json,
+                carried_feedback_json=excluded.carried_feedback_json,
+                queue_json=excluded.queue_json,
+                state_sha256=excluded.state_sha256,
+                updated_at=excluded.updated_at
+            """,
+            (
+                str(state["policy_fingerprint"]),
+                int(state["committed_batches"]),
+                int(state["committed_through_segment_id"]),
+                columns["speaker_counts"],
+                columns["speaker_genders"],
+                columns["carried_feedback"],
+                columns["queue"],
+                state_hash,
+                now,
+            ),
+        )
+
+    def analysis_state(self) -> dict[str, Any] | None:
+        """The checkpoint of the last committed analysis batch, verified against its hash."""
+        with self.connect() as conn:
+            row = conn.execute("SELECT * FROM analysis_state WHERE id=1").fetchone()
+        if row is None:
+            return None
+        state = {
+            "policy_fingerprint": str(row["policy_fingerprint"]),
+            "committed_batches": int(row["committed_batches"]),
+            "committed_through_segment_id": int(row["committed_through_segment_id"]),
+            "speaker_counts": json.loads(str(row["speaker_counts_json"])),
+            "speaker_genders": json.loads(str(row["speaker_genders_json"])),
+            "carried_feedback": json.loads(str(row["carried_feedback_json"])),
+            "queue": json.loads(str(row["queue_json"])),
+        }
+        _state_json, state_hash = self._canonical_analysis_json(state, "analysis state")
+        if state_hash != str(row["state_sha256"]):
+            raise RuntimeError("Analysis state checkpoint does not match its sha256")
+        return state
+
+    def analysis_response(self, request_hash: str) -> sqlite3.Row | None:
+        with self.connect() as conn:
+            return conn.execute(
+                "SELECT * FROM analysis_responses WHERE request_hash=?",
+                (str(request_hash),),
             ).fetchone()
-            if current is None:
-                raise KeyError(f"Unknown segment id: {segment_id}")
-            merged = self._merged_analysis_update_data(current, data)
-            values = self._analysis_update_values(
-                merged,
-                low_confidence_threshold,
-                time.time(),
-            )
-            updated = conn.execute(
+
+    def record_analysis_response(
+        self,
+        *,
+        request_hash: str,
+        role: str,
+        group_fingerprint: str,
+        attempt: int | None,
+        seed: int | None,
+        model_name: str,
+        model_digest: str,
+        prompt_tokens: int | None,
+        eval_tokens: int | None,
+        done_reason: str,
+        usage: dict[str, int] | None,
+        raw_response: str,
+    ) -> None:
+        """Append one raw model answer, in its own transaction, before anything parses it."""
+        raw: str | bytes = str(raw_response)
+        try:
+            raw.encode("utf-8")
+        except UnicodeEncodeError:
+            # Nửa cặp surrogate lạc (emoji vỡ) không mã hoá UTF-8 được; giữ nguyên từng byte dạng BLOB,
+            # analysis.py giải lại bằng surrogatepass.
+            raw = raw.encode("utf-8", "surrogatepass")
+        with self.transaction() as conn:
+            conn.execute(
                 """
-                UPDATE segments SET
-                    kind=?,speaker=?,gender=?,age=?,emotion=?,intensity=?,pace=?,volume=?,
-                    confidence=?,analysis_notes=?,warning_code=?,status=?,updated_at=?
-                WHERE id=?
+                INSERT INTO analysis_responses(
+                    request_hash,role,group_fingerprint,attempt,seed,model_name,model_digest,
+                    prompt_tokens,eval_tokens,done_reason,usage_json,raw_response,created_at
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(request_hash) DO NOTHING
                 """,
-                (*values, int(segment_id)),
+                (
+                    str(request_hash),
+                    str(role),
+                    str(group_fingerprint or ""),
+                    attempt,
+                    seed,
+                    str(model_name),
+                    str(model_digest or ""),
+                    prompt_tokens,
+                    eval_tokens,
+                    str(done_reason or ""),
+                    json.dumps(usage, sort_keys=True) if usage is not None else None,
+                    raw,
+                    time.time(),
+                ),
             )
-            if updated.rowcount != 1:
-                raise RuntimeError("Analysis update segment CAS failed")
 
     @staticmethod
     def _merged_analysis_update_data(
@@ -7411,6 +7700,7 @@ class ProjectDB:
         analysis_policy_fingerprint: str | None = None,
         analysis_group_fingerprint: str | None = None,
         analysis_context_hash: str | None = None,
+        analysis_state: dict[str, Any] | None = None,
     ) -> None:
         if not rows:
             raise ValueError("Analysis batch cannot be empty")
@@ -7612,6 +7902,8 @@ class ProjectDB:
                     conn,
                     accepted_candidate,
                 )
+            if analysis_state is not None:
+                self._write_analysis_state_conn(conn, analysis_state, now)
             conn.execute(
                 """
                 INSERT INTO runtime_events(timestamp,level,code,message,details_json)
@@ -8492,7 +8784,9 @@ class ProjectDB:
 
     def list_characters(self) -> list[sqlite3.Row]:
         with self.connect() as conn:
-            return list(conn.execute("SELECT * FROM characters ORDER BY importance,mention_count DESC"))
+            # `id` last: two characters with equal importance and count must come back in one
+            # order every time - the analysis seeds its known-characters list from this order.
+            return list(conn.execute("SELECT * FROM characters ORDER BY importance,mention_count DESC,id"))
 
     def set_listener_pronunciation(
         self,
