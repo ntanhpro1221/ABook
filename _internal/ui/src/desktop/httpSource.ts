@@ -2,6 +2,7 @@ import type { MusicCredit, MusicCue } from "@/listen/musicBed";
 import type { PlaylistQueue } from "@/listen/playlistBed";
 import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
 import type { ListenSource } from "@/listen/source";
+import type { EditsSyncState } from "@/shared/editsSync";
 import type { AddedBook, ImportPreview, TextImport } from "@/listen/textImport";
 import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
 import { ApiError, api, mediaUrl } from "@/studio/api";
@@ -137,6 +138,8 @@ export const httpSource: ListenSource = {
   saveNight: async (bookId, night) => {
     await api(`/api/listen/books/${bookId}/night`, { method: "POST", body: night });
   },
+  // Cuốn của máy tính khác (webui/remote_books.py): phần sửa về máy ấy như điện thoại gửi về máy tính.
+  sendEdits: (bookId) => api<EditsSyncState>(`/api/listen/books/${bookId}/edits/send`, { method: "POST" }),
   saveBook: async (bookId, options) => {
     const result = await api<{ file: string; folder: string; size: number; edits: number }>(`/api/books/${bookId}/save`, {
       method: "POST",

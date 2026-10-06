@@ -987,6 +987,102 @@ def set_music(folder: Path, body: dict[str, Any],
         return music_view(book, edits)
 
 
+def subtract(folder: Path, sent: dict[str, Any], sent_cover: bytes | None) -> int:
+    """Gỡ khỏi lớp sửa của `folder` đúng những gì đã gửi đi (`sent`, chụp lúc đóng gói; `sent_cover`: byte bìa đã gửi) - máy nhận
+    đã giữ chúng. Khoá người dùng đổi tiếp SAU lúc chụp (giá trị khác) thì ở lại, lần sau gửi tiếp. Cùng luật với BookEdits.subtract
+    (Kotlin), cộng dòng bỏ khỏi phần đọc. Trả số thay đổi còn lại."""
+    folder = Path(folder)
+    with _LOCK:
+        edits = load(folder)
+        before = pinned_files(edits)
+        for key in ("title", "cover"):
+            if key not in sent or key not in edits or edits[key] != sent[key]:
+                continue
+            if key == "cover" and isinstance(sent[key], dict):
+                mine = folder / EDITS_COVER
+                if sent_cover is None or not mine.is_file() or mine.read_bytes() != sent_cover:
+                    continue
+            edits.pop(key)
+
+        def remove_equal(mine: dict[str, Any] | None, theirs: dict[str, Any] | None) -> None:
+            for key in list(mine or {}):
+                if key in (theirs or {}) and mine[key] == theirs[key]:
+                    del mine[key]
+
+        remove_equal(edits.get("characters"), sent.get("characters"))
+        for key in list(edits.get("chapters") or {}):
+            remove_equal(edits["chapters"][key], (sent.get("chapters") or {}).get(key))
+            if not edits["chapters"][key]:
+                del edits["chapters"][key]
+        for key in list(edits.get("skip") or {}):
+            gone = set((sent.get("skip") or {}).get(key) or [])
+            edits["skip"][key] = [line for line in edits["skip"][key] if line not in gone]
+            if not edits["skip"][key]:
+                del edits["skip"][key]
+        music, sent_music = edits.get("music"), sent.get("music")
+        if music and sent_music:
+            for field in ("enabled", "levelDb", "playlist"):
+                if field in sent_music and field in music and music[field] == sent_music[field]:
+                    del music[field]
+            kept = [key for key in music.get("silenced") or [] if key not in set(sent_music.get("silenced") or [])]
+            if kept:
+                music["silenced"] = kept
+            else:
+                music.pop("silenced", None)
+            remove_equal(music.get("pins"), sent_music.get("pins"))
+            if music.get("pins"):
+                used = {link[len(music_plan.LOCAL_PREFIX):] for link in music["pins"].values()}
+                music["tracks"] = {sha: info for sha, info in (music.get("tracks") or {}).items() if sha in used}
+            else:
+                music.pop("pins", None)
+                music.pop("tracks", None)
+            if not music:
+                edits.pop("music")
+        wishes = edits.get("wishes")
+        if wishes:
+            from . import book_wishes
+
+            sent_wishes = sent.get("wishes") or {}
+            for section in book_wishes.SECTIONS:
+                remove_equal(wishes.get(section), sent_wishes.get(section))
+                if section in wishes and not wishes[section]:
+                    del wishes[section]
+            if book_wishes.ALIASES in wishes:
+                gone_aliases = sent_wishes.get(book_wishes.ALIASES) or []
+                wishes[book_wishes.ALIASES] = [item for item in wishes[book_wishes.ALIASES] if item not in gone_aliases]
+                if not wishes[book_wishes.ALIASES]:
+                    del wishes[book_wishes.ALIASES]
+            if not wishes:
+                edits.pop("wishes")
+        for key in ("characters", "chapters", "skip"):
+            if key in edits and not edits[key]:
+                del edits[key]
+        save(folder, edits)
+        after = set(pinned_files(edits))
+        dropped = [name for name in before if name not in after]
+        if dropped:
+            _drop_unused(folder, _base(folder), dropped)
+        return count(edits)
+
+
+def layer_files(folder: Path, edits: dict[str, Any]) -> dict[str, Path | bytes]:
+    """Các mục của lớp sửa khi đóng vào một file zip (file `.abook` v4, hay gói gửi về máy giữ sách): `edits.json` (byte), bìa sửa
+    và file các bài nhạc người nghe đã ghim (đường dẫn trong thư mục sách). Lớp sửa rỗng: không mục nào. Thiếu file: `EditsError`."""
+    folder = Path(folder)
+    if is_empty(edits):
+        return {}
+    files: dict[str, Path | bytes] = {EDITS_FILE: dump(edits)}
+    if isinstance(edits.get("cover"), dict):
+        files[EDITS_COVER] = folder / EDITS_COVER
+        if not files[EDITS_COVER].is_file():
+            raise EditsError("Thiếu ảnh bìa trong phần sửa của sách.")
+    for name in pinned_files(edits):
+        files[name] = folder.joinpath(*name.split("/"))
+        if not files[name].is_file():
+            raise EditsError("Thiếu file bài nhạc người nghe đã chọn trong thư mục sách.")
+    return files
+
+
 def clear(folder: Path) -> None:
     """Bỏ mọi thay đổi của người nghe: sách trở về đúng như người làm sách đã đóng gói (kể cả file các bài đã ghim)."""
     with _LOCK:

@@ -238,17 +238,12 @@ def book_layer(folder: Path) -> tuple[dict[str, Any], dict[str, Path | bytes], d
         files[name], known[name] = source, meta
     book.pop("package", None)
     edits = book_edits.load(folder)
-    if not book_edits.is_empty(edits):
-        files[book_edits.EDITS_FILE] = book_edits.dump(edits)
-        if isinstance(edits.get("cover"), dict):
-            files[book_edits.EDITS_COVER] = folder / book_edits.EDITS_COVER
-            if not files[book_edits.EDITS_COVER].is_file():
-                raise BookFileError("Thiếu ảnh bìa trong phần sửa của sách.")
-        for name in book_edits.pinned_files(edits):  # bài nhạc của người nghe đã ghim: đi theo file như bài của người làm sách
-            if name not in files:
-                files[name] = folder.joinpath(*name.split("/"))
-                if not files[name].is_file():
-                    raise BookFileError("Thiếu file bài nhạc người nghe đã chọn trong thư mục sách.")
+    try:
+        layer = book_edits.layer_files(folder, edits)
+    except book_edits.EditsError as exc:
+        raise BookFileError(str(exc)) from exc
+    for name, item in layer.items():  # bài nhạc của người nghe đã ghim đi theo file như bài của người làm sách (đã có thì giữ)
+        files.setdefault(name, item)
     return book, files, known, edits
 
 
