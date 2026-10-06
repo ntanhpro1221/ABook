@@ -13,6 +13,7 @@ import numpy as np
 import soundfile as sf
 
 from .io_utils import sha256_file
+from .runtime_contract import relocated_model_path
 from .resource_manager import trim_process_working_set
 from .tts import apply_pitch_variant
 from .voice_catalog import VOICE_PREVIEW_FILENAMES
@@ -292,7 +293,7 @@ class UTMOSNaturalnessVerifier:
                 "UTMOSv2 is enabled but no explicit checkpoint_path is configured",
                 latch=True,
             )
-        checkpoint_path = Path(checkpoint_value).expanduser().resolve()
+        checkpoint_path = relocated_model_path(checkpoint_value).resolve()
         if not checkpoint_path.is_file():
             return self._unavailable(
                 "PERCEPTUAL_CHECKPOINT_MISSING",
