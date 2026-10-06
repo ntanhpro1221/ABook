@@ -23,6 +23,11 @@ CURLY_QUOTE_SPECS = (
 )
 QUOTE_CLOSING_MARKS = {"”", "’", '"'}
 QUOTE_CLOSING_PATTERNS = {"’": THOUGHT_CLOSING_PATTERN}
+# Cả dòng bọc trong cặp ' thẳng ('Chà, chắc mình phải chăm chỉ thêm thôi.') là nội tâm, như ‘…’: kho có 8.554 dòng như
+# thế ở 70 bộ (bản dịch gõ không có dấu cong). Chỉ nhận khi ' mở dính chữ ở ĐẦU dòng và ' đóng dính chữ ở CUỐI dòng -
+# dấu ' giữa dòng ("Ma'at", "I'm") không mở/đóng gì. Dòng có ' đóng GIỮA chừng ('Bùn á? Hừm,' tôi thầm nghĩ. 'Chắc...')
+# là nội tâm xen lời kể - không nhận cả dòng.
+STRAIGHT_THOUGHT_LINE_PATTERN = re.compile(r"^'(?=\S)(?:(?!\S'\s).)*\S'$", re.DOTALL)
 # Một dòng NGUYÊN VẸN trong 『…』 là một giọng nói: kẻ nhập xác (Yamiyo no Hotaru), bảng thông báo game (Năng lực bá
 # đạo), tiếng qua loa/điện thoại (Two Childhood Friends). Cụm 『…』 nằm GIỮA câu kể là thuật ngữ - để yên, vì đổi giọng
 # giữa một câu kể là sai. 『 cố ý KHÔNG vào CURLY_QUOTE_SPECS: theo lối Nhật nó là ngoặc lồng trong 「…」 (nay là “”).
@@ -838,6 +843,8 @@ def _line_pieces(line: str) -> list[tuple[str, str]]:
         return [(line, "dialogue")]
     if is_whole_line_voice(line):
         return [(line, "dialogue")]
+    if STRAIGHT_THOUGHT_LINE_PATTERN.match(line):
+        return [(line, "thought")]
     matches = [
         (match, "dialogue" if _quoted_span_is_dialogue(line, match) else "narration")
         for match in _dialogue_quote_matches(line)
