@@ -3538,3 +3538,29 @@ chọn bài bằng `choose` thật với danh mục catalog_e1 - không cần GP
 
 Tôi (Music) viết `track_changes.py` ngay (CPU, đọc ABook_scene, không sửa app) để có số TRƯỚC sẵn khi Lead mở nhánh dev.
 (c) chờ CS-SEG.
+
+### 07-10 02:xx - Số TRƯỚC-SAU của đặc tả b31ebce1 (`music/track_changes.py`, CPU): (a)+(b) MỘT MÌNH KHÔNG QUA - chính xác lên, độ phủ sập
+
+Mô phỏng đúng đặc tả trên `choose`/`rank` thật của ABook_scene, danh mục catalog_e1, đường nhãn câu; chọn SIBLING_Z trên 4+5, báo 5b+6:
+
+| 5b+6 | đổi bài/giờ | P | R | F1 | lặp bài | anh em/giờ | r trong chương âm lượng~T |
+|---|---|---|---|---|---|---|---|
+| TRƯỚC 0.4.31 | 19,8 | .23 | .19 | **.207** | 14% | - | phẳng (gainDb không đổi trong chương) |
+| SAU, không luật lặp | 2,6 | **.81** | .09 | .159 | **69%** | - | +.08 |
+| SAU, anh em khi đã lặp, z .8 | 2,6 | .81 | .09 | .159 | 28% | 8,4 | -.03 |
+| SAU, anh em SỚM (mảnh kế sẽ lặp), z .5 (chọn 4+5) | 2,6 | .81 | .09 | .159 | 20% | 12,7 | +.10 |
+
+Cổng (ghi trong đặc tả): P >= .70 QUA; **F1 >= trước KHÔNG QUA** (.159 < .207); lặp <= 25% chỉ qua với đổi sớm (khi ấy anh em
+12,7/giờ - lại gần nhịp đổi cũ, chỉ êm hơn); r âm lượng không xấu đi QUA (bước rất nhỏ: |db| TB .6-.7, vì tension nhãn câu
+của app bị nén - đúng như L3-EST đã thấy; bước sẽ chỉ có ý nghĩa khi có tension mảnh tốt hơn).
+
+Đọc:
+- Đáp án có ~24 ranh giới/giờ; ranh giới có lý do của app chỉ 6,3/giờ, và chỉ 2,6/giờ thật sự đổi bài (cảnh kề cùng tâm trạng
+  chọn trùng bài). Bỏ cắt đều làm đúng việc nó hứa (P .23 -> .81) nhưng độ phủ phải đến từ chỗ khác: **(c) CS-SEG**.
+- Lặp là thật: cảnh có lý do trung vị 7,4 phút, bài trung vị 3,1 phút. Đổi anh em ở mảnh `length` là cắt giữa bài ở chỗ tuỳ ý.
+  Hướng tốt hơn (chưa đo): **nối anh em ở điểm kết TỰ NHIÊN của bài** (mốc tách đúng ở `duration`, mờ chéo 6 s) + `rank` phạt
+  bài ngắn hơn cảnh (độ dài cảnh có lý do biết lúc dựng plan; danh mục có bài tới 13 phút, p90 5,5).
+
+Kết luận cho app: **không làm (a)+(b) một mình.** Làm cùng (c) khi CS-SEG có số: ranh giới có lý do = cứng + CUE + LLM; đổi bài
+chỉ ở đó; trong cảnh: nối anh em ở điểm kết bài + bước âm lượng. Đo lại bằng `track_changes.py` thêm ranh giới SEG làm lý do
+(cổng giữ nguyên: P >= .70, F1 >= .207, lặp <= 25%, r không xấu đi).
