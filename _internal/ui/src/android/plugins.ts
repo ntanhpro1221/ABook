@@ -311,6 +311,9 @@ export interface EbookLibraryPlugin {
   /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file mới - hộp thoại "tạo file" của hệ thống hỏi chỗ lưu. `as` không nói:
    *  giữ loại file cuốn đã đến (`.abookproj` hay `.abook`). */
   saveBook(options: { id: string; as?: "abook" | "abookproj" }): Promise<{ saved: boolean; name?: string; size?: number; edits?: number }>;
+  /** "Chia sẻ…": đóng cuốn (kèm thay đổi của người nghe) thành file rồi mở bảng chia sẻ của hệ thống (Zalo, Drive, email…). `as` không nói:
+   *  sách nghe `.abook`. `shared: true` khi bảng chia sẻ đã mở. */
+  shareBook(options: { id: string; as?: "abook" | "abookproj" }): Promise<{ shared: boolean; name?: string }>;
   deleteBook(options: { id: string }): Promise<void>;
   storage(): Promise<{ bytes: number; free: number }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number }): Promise<ListeningState>;
@@ -329,6 +332,9 @@ export interface EbookLibraryPlugin {
   /** Bộ chọn file của hệ thống để mở một file sách .abook; kết quả về qua sự kiện "import". */
   pickBook(): Promise<{ picked: boolean }>;
   addListener(event: "import", handler: (event: ImportEvent) => void): Promise<PluginListenerHandle>;
+  /** App khác gửi tới một file EPUB / DOCX / PDF / TXT ("Mở bằng", chia sẻ): native đã chép nó như `pickSource` - giao diện mở bước
+   *  xem trước của "Thêm sách từ file…". `error`: không chép được, câu cho người dùng. */
+  addListener(event: "textPicked", handler: (event: { ref?: string; name?: string; pdf?: string; error?: string }) => void): Promise<PluginListenerHandle>;
   /** "Nhập nhạc của tôi…": hộp chọn file của hệ thống (nhiều bản một lúc), nhập từng bản vào kho nhạc của điện thoại (MusicStore.kt);
    *  trả khi nhập xong - cùng JSON như `/api/music/local/import` của máy tính - hay `{picked: false}` khi không chọn gì. */
   pickMusic(): Promise<{ picked: boolean } & Partial<ImportResult>>;

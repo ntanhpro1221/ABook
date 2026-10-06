@@ -47,6 +47,8 @@ object BookImport {
         val credits: MutableList<Pair<Int, String>> = mutableListOf(),
         /** File TXT cả truyện: số chương nếu tách theo các dòng "Chương N" (0 = không có gì để tách); người dùng tích mới tách (`ImportedBook.split_offer`). */
         var splitOffer: Int = 0,
+        /** Số dòng "Chương N" ấy; ít hơn [splitOffer] một khi chữ trước tiêu đề đầu thành chương "Mở đầu" (`ImportedBook.split_headings`). */
+        var splitHeadings: Int = 0,
     )
 
     val IMPORT_SUFFIXES = listOf("epub", "docx", "pdf")
@@ -106,7 +108,7 @@ object BookImport {
             renumbered[pick.first] = position + 1
         }
         val credits = book.credits.mapNotNull { (number, line) -> renumbered[number]?.let { it to line } }.toMutableList()
-        return Book(book.title, book.author, book.language, book.cover, book.coverType, chapters, book.notes.toMutableList(), book.textHasTitle, credits, book.splitOffer)
+        return Book(book.title, book.author, book.language, book.cover, book.coverType, chapters, book.notes.toMutableList(), book.textHasTitle, credits, book.splitOffer, book.splitHeadings)
     }
 
     /** PDF có lớp chữ: `pages` là các dòng CÓ CHỮ của từng trang (pdf.js, như file pages trong bộ ví dụ). */
@@ -139,7 +141,12 @@ object BookImport {
             "cover" to cover,
             "chapters" to book.chapters.map { linkedMapOf<String, Any?>("title" to it.title, "text" to it.text) },
             "notes" to book.notes.toList(),
-        ).also { if (book.splitOffer > 0) it["splitOffer"] = book.splitOffer }
+        ).also {
+            if (book.splitOffer > 0) {
+                it["splitOffer"] = book.splitOffer
+                it["splitHeadings"] = book.splitHeadings
+            }
+        }
     }
 
     private fun sha256(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
@@ -298,6 +305,8 @@ object BookImport {
         val book = Book(stemOf(file.name), chapters = mutableListOf(chapter), textHasTitle = true)
         val parts = splitTxtChapters(chapter.text)
         book.splitOffer = parts.size
+        // Chương tách ra từ một dòng tiêu đề mang tên dòng ấy - không bao giờ trùng tên chương "Mở đầu".
+        book.splitHeadings = parts.count { it.title != PREAMBLE }
         if (split && parts.isNotEmpty()) {
             book.chapters.clear()
             book.chapters.addAll(parts)

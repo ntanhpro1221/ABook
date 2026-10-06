@@ -37,6 +37,29 @@ object TextImports {
         return File(root(), ref)
     }
 
+    /** Loại của những file app khác gửi tới ("Mở bằng", chia sẻ) theo kiểu nội dung (AndroidManifest.xml). */
+    private val MIME_SUFFIX = mapOf(
+        "application/epub+zip" to "epub",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" to "docx",
+        "application/pdf" to "pdf",
+        "text/plain" to "txt",
+    )
+
+    /**
+     * File app khác gửi tới ("Mở bằng ABook", chia sẻ tới ABook): tên để chép vào bước xem trước của "Thêm sách từ file…" nếu nó là
+     * EPUB / DOCX / PDF / TXT, hay null khi nó là việc của [BookFileImport] (file sách .abook / .abookproj, hay loại không biết - để
+     * đường mở file sách nói lý do). Đuôi của tên hiện đi trước kiểu nội dung (Drive hay gửi EPUB là octet-stream); tên không có
+     * đuôi đọc được thì lấy đuôi theo kiểu nội dung.
+     */
+    fun incomingName(mime: String?, displayName: String?): String? {
+        val name = displayName?.substringAfterLast('/')?.trim().orEmpty()
+        val suffix = name.substringAfterLast('.', "").lowercase()
+        if (suffix == "abook" || suffix == "abookproj") return null
+        if (suffix in SUPPORTED) return name
+        val kind = MIME_SUFFIX[mime?.substringBefore(';')?.trim()?.lowercase()] ?: return null
+        return "${name.ifEmpty { "Sách" }}.$kind"
+    }
+
     /** Dọn mọi thư mục tạm còn sót (app bị giết giữa chừng): bước xem trước đang dở mất theo, người dùng chọn lại. */
     fun sweep() {
         kept.clear()

@@ -137,6 +137,7 @@ def test_txt_folder_keeps_the_studio_order_and_reads_every_encoding() -> None:
 def test_a_whole_story_txt_is_one_chapter_unless_the_listener_asks_to_split_it() -> None:
     whole = importers.import_text(FIXTURES / "whole.txt")
     assert len(whole.chapters) == 1 and whole.split_offer == 4, "mặc định KHÔNG tách; nhưng biết sẽ ra 4 chương để đề xuất"
+    assert whole.split_headings == 3, "nhãn đếm 3 dòng 'Chương N'; chương thứ 4 là phần 'Mở đầu' trước tiêu đề đầu"
     assert whole.chapters[0].text.startswith("Chuyến phà cuối ngày\nMột truyện ngắn thử nghiệm.\n\nChương 1: Bến phà lúc bình minh")
     split = importers.import_text(FIXTURES / "whole.txt", split_chapters=True)
     assert titles(split) == ["Mở đầu", "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3"]

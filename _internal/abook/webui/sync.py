@@ -43,7 +43,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
-from . import covers, edits_inbox, listen_view, music_plan, remote_studio, store, tls, word_timing
+from . import covers, edits_inbox, listen_view, music_plan, precast, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
@@ -533,7 +533,13 @@ class SyncApp:
             except Exception:  # noqa: BLE001 - một sách hỏng không được làm mất cả danh sách
                 continue
             work = work_of(path)
+            paused = paused_of(path)
             chapters = summary.get("chapters") or {}
+            try:
+                # `summary` dựng với running=False nên không mang lý do tạm dừng - gắn vào để `held` đúng như ở thư viện.
+                hold = precast.flags(path, {**summary, "paused": paused})
+            except Exception:  # noqa: BLE001
+                hold = {"ready": False, "held": False}
             books.append({
                 "id": summary["id"],
                 "title": str(summary.get("title") or path.name),
@@ -541,7 +547,9 @@ class SyncApp:
                 "statusLabel": str(summary.get("statusLabel") or ""),
                 "running": bool(summary.get("running")),
                 # "battery": máy tính rút sạc nên tự tạm dừng (power_source) - điện thoại báo để người ta biết máy tuột sạc.
-                "paused": paused_of(path),
+                "paused": paused,
+                # Phân tích xong và đang giữ chờ duyệt trước khi thu: điện thoại báo "Sẵn sàng duyệt".
+                "precast": {"ready": bool(hold["ready"]), "held": bool(hold["held"])},
                 "chapters": {"completed": int(chapters.get("completed") or 0), "total": int(chapters.get("total") or 0)},
                 "work": work,
                 "lastError": str(summary.get("lastError") or "")[:300],

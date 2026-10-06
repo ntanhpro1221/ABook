@@ -85,7 +85,7 @@ object LibraryTree {
             val subtitle = when {
                 chapter.id == current -> "Đang nghe dở"
                 heard?.optJSONObject(chapter.id.toString())?.optBoolean("done") == true -> "Đã nghe"
-                chapter.isText -> "Giọng máy đọc"
+                chapter.isText -> "Giọng đọc của máy"
                 else -> minutes(chapter.duration)
             }
             // Cả bộ nhiều phần trong một file (bookfile.pack_series): màn Android Auto không có tiêu đề nhóm nên mỗi dòng

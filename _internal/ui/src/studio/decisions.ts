@@ -42,7 +42,7 @@ export const PENDING_NOTE: Record<ApplyWhen, string> = {
 
 /** Cuốn không có xưởng (mở từ file .abook): thay đổi chỉ được ghi lại, Studio mới đưa vào giọng đọc - nói thế, không nói "áp ở
  *  ranh giới chương" như dự án. */
-export const WAITING_STUDIO = "Đang chờ Studio - giọng đọc chưa đổi gì. Lưu file thì thay đổi đi cùng; mở file bằng Studio để áp.";
+export const WAITING_STUDIO = "Đang chờ máy làm sách - giọng đọc chưa đổi gì. Lưu file thì thay đổi đi cùng; mở file bằng ABook Studio trên máy tính để áp.";
 
 /** Chỉ đọc bản của trang dự án trong bộ nhớ đệm - không thêm một nhịp hỏi máy chủ. */
 export function useApplyWhen(bookId: string): ApplyWhen {

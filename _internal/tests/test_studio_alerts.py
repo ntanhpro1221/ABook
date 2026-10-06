@@ -34,8 +34,8 @@ def test_the_phone_reads_a_compact_production_status_only_when_allowed(library, 
         assert status == 200 and view["name"] == "Máy thử" and view["at"] > 0
         assert "onBattery" in view, "điện thoại báo máy tuột sạc cả khi không có sách nào chạy"
         (book,) = view["books"]
-        assert {"id", "title", "phase", "statusLabel", "running", "paused", "chapters", "work", "lastError"} <= set(book)
-        assert book["paused"] is None
+        assert {"id", "title", "phase", "statusLabel", "running", "paused", "precast", "chapters", "work", "lastError"} <= set(book)
+        assert book["paused"] is None and book["precast"]["held"] is False
         assert book["chapters"]["total"] >= 1 and book["running"] is False
         assert book["work"] is None, "sách đời cũ của fixture không dựng được hộp việc: 'không biết', vẫn có mặt"
         status, _data, _ = _sync_request(server.port, "GET", "/sync/v1/studio")
@@ -76,3 +76,27 @@ def test_the_phone_learns_that_the_computer_paused_on_battery(library, monkeypat
         project_root=Path(path), state="running", running=True, pause_reason="battery"))
     app = SyncApp(lib, listening, Devices(project.parent / "devices.json"), "Máy thử")
     assert app.studio_view()[0]["paused"] == "battery"
+
+
+def test_the_phone_learns_that_a_book_is_held_for_review_before_recording(library, monkeypatch) -> None:  # noqa: F811
+    """Supervisor giữ cuốn chờ duyệt trước khi thu (precast): điện thoại báo "Sẵn sàng duyệt". `summary` của cổng đồng bộ
+    dựng với running=False nên không mang lý do tạm dừng - `held` phải đọc lý do từ supervisor như "paused"."""
+    from abook import background_runner
+    from abook.background_runner import BackgroundStatus
+    from abook.webui import precast
+
+    lib, project, listening = library
+    reason = {"value": None}
+    monkeypatch.setattr(background_runner, "get_status", lambda path: BackgroundStatus(
+        project_root=Path(path), state="running", running=True, pause_reason=reason["value"]))
+    app = SyncApp(lib, listening, Devices(project.parent / "devices.json"), "Máy thử")
+    precast.mark_held(project, now=100.0)
+    assert app.studio_view()[0]["precast"]["held"] is False, "đã ghi giữ mà sách không đứng vì người dùng: chưa báo"
+    reason["value"] = "listener"
+    (book,) = app.studio_view()
+    assert book["precast"]["held"] is True and book["paused"] == "listener"
+    reason["value"] = "battery"
+    assert app.studio_view()[0]["precast"]["held"] is False, "đứng vì pin: báo pin, không báo duyệt"
+    reason["value"] = "listener"
+    precast.release(project, now=200.0)
+    assert app.studio_view()[0]["precast"]["held"] is False, "đã cho thu tiếp"

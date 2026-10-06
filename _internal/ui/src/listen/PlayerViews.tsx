@@ -1681,7 +1681,7 @@ function CaughtUpNotice() {
   if (atEnd !== "caughtUp") return null;
   return (
     <p className="mt-3 rounded-xl bg-hover px-3 py-2 text-center text-sm text-fg-2">
-      Đã nghe hết phần đã có. Chương tiếp theo nghe được khi Studio làm xong.
+      Đã nghe hết phần đã có. Chương tiếp theo nghe được khi máy làm xong chương ấy.
     </p>
   );
 }

@@ -75,6 +75,7 @@ class LibraryPlugin : Plugin() {
         PhoneCast.init(context)
         TextImports.codec = AndroidCoverCodec
         TextImports.sweep() // thư mục tạm của lần "Thêm sách từ file…" bị bỏ dở lần trước
+        io.execute { BookShare.sweep(context.cacheDir) } // file đã gửi qua "Chia sẻ…" lần trước: app nhận đã đọc xong từ lâu
         // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
         if (prefs.getBoolean(SHARE_KEY, false)) io.execute { runCatching { LibraryServer.start(context) } }
     }
@@ -113,6 +114,27 @@ class LibraryPlugin : Plugin() {
             JSObject().put("error", "Không mở được file sách: ${error.message ?: error.javaClass.simpleName}")
         }
         notifyListeners("import", event, true)
+    }
+
+    /**
+     * File app khác gửi tới ("Mở bằng ABook", chia sẻ tới ABook - MainActivity): EPUB / DOCX / PDF / TXT vào bước xem trước của "Thêm sách
+     * từ file…" (chép vào thư mục tạm như bộ chọn, giao diện nghe sự kiện `textPicked` - android/imports.ts); còn lại là file sách,
+     * đi [importFrom] như trước.
+     */
+    fun openFrom(uri: Uri, mime: String?) = io.execute {
+        val type = mime ?: runCatching { context.contentResolver.getType(uri) }.getOrNull()
+        val name = TextImports.incomingName(type, displayName(uri) ?: uri.lastPathSegment)
+        if (name == null) {
+            importFrom(uri)
+            return@execute
+        }
+        val event = try {
+            val staged = stageDocument(uri, name)
+            JSObject().put("ref", staged.ref).put("name", staged.name).also { reply -> staged.pdf?.let { reply.put("pdf", it.absolutePath) } }
+        } catch (error: Exception) {
+            JSObject().put("error", error.message ?: "Không đọc được file này")
+        }
+        notifyListeners("textPicked", event, true)
     }
 
     /** Nút "Nhập sách": chọn file bằng bộ chọn của hệ thống (mọi loại - trình quản lý file không biết đuôi .abook). */
@@ -169,8 +191,8 @@ class LibraryPlugin : Plugin() {
         }
     }.getOrNull()
 
-    private fun stageDocument(uri: Uri): TextImports.Staged =
-        TextImports.stageFile(displayName(uri) ?: uri.lastPathSegment ?: "sach") { context.contentResolver.openInputStream(uri) }
+    private fun stageDocument(uri: Uri, name: String? = null): TextImports.Staged =
+        TextImports.stageFile(name ?: displayName(uri) ?: uri.lastPathSegment ?: "sach") { context.contentResolver.openInputStream(uri) }
 
     /** Thư mục TXT: chỉ các file nằm ngay trong thư mục (như Studio), không quét thư mục con. */
     private fun stageTree(tree: Uri): TextImports.Staged {
@@ -881,6 +903,49 @@ class LibraryPlugin : Plugin() {
                 call.resolve(JSObject().put("saved", true).put("name", name).put("size", written.size).put("edits", written.edits))
             } catch (error: Exception) {
                 fail(call, error, "không lưu được file")
+            }
+        }
+    }
+
+    /**
+     * "Chia sẻ…": đóng cuốn (kèm thay đổi của người nghe, như "Lưu thành…") thành file trong `cacheDir/share` ([BookShare]) rồi mở bảng
+     * chia sẻ của hệ thống (Zalo, Drive, email…). `as` không nói: sách nghe `.abook` - thứ người nhận mở được để nghe ngay. Trả
+     * {shared: true, name} khi bảng chia sẻ đã mở (người dùng gửi cho ai hay đóng bảng thì app không biết).
+     */
+    @PluginMethod
+    fun shareBook(call: PluginCall) {
+        val id = call.getString("id") ?: return call.reject("thiếu id")
+        val manifest = Store.rawManifest(id) ?: return call.reject("Không tìm thấy sách này trong thư viện")
+        if (Store.isComputerBook(id) || manifest.optJSONObject("package") == null) {
+            return call.reject("Sách này lấy từ máy tính khác - muốn gửi file sách thì gửi từ máy ấy")
+        }
+        val project = call.getString("as") == "abookproj"
+        val title = Store.manifest(id)?.optString("title").orEmpty()
+        io.execute {
+            val file = BookShare.target(context.cacheDir, title, project)
+            try {
+                file.parentFile?.mkdirs()
+                file.outputStream().use { BookDocumentWriter.write(Store.bookDir(id), it, project) }
+                val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                val mime = BookShare.mimeType(project)
+                val send = Intent(Intent.ACTION_SEND).setType(mime)
+                    .putExtra(Intent.EXTRA_STREAM, uri)
+                    .putExtra(Intent.EXTRA_TITLE, file.name)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                send.clipData = android.content.ClipData.newUri(context.contentResolver, file.name, uri)
+                val chooser = Intent.createChooser(send, "Chia sẻ “${title.ifBlank { file.nameWithoutExtension }}”")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                activity.runOnUiThread {
+                    try {
+                        activity.startActivity(chooser)
+                        call.resolve(JSObject().put("shared", true).put("name", file.name))
+                    } catch (error: Exception) {
+                        fail(call, error, "không mở được bảng chia sẻ")
+                    }
+                }
+            } catch (error: Exception) {
+                file.parentFile?.deleteRecursively()
+                fail(call, error, "không đóng được file sách để chia sẻ")
             }
         }
     }
