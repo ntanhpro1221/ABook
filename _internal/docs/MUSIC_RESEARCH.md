@@ -3718,3 +3718,43 @@ R .23 F1 .283, anh em 4,8/giờ (mô phỏng 7,7 / .38 / .286 / 4,8). Khớp tro
   dễ hơn: hằng 0 đã .352, nhãn app thô .334. Không dùng điều này để đổi kết luận.
 - Bài học: hiệu chỉnh mức (hệ số chặn) học từ một bộ không đứng được sang bộ khác; thứ tự (r) thì đứng được. Lớp mức chương nên
   dùng r / thứ hạng trong cuốn, hoặc hiệu chỉnh theo cuốn, không dùng hằng toàn cục.
+
+### 07-10 05:3x - ĐÍNH CHÍNH: kết quả "CL bộ 7 KHÔNG THẮNG" ở trên KHÔNG HỢP LỆ
+
+`spans7.py p0` gọi cứng `PM.ask("P2", …)`, nên file `pm_P0_set7` thực ra là đầu ra của prompt P2 (thang chữ số, có logprobs):
+ba dòng đầu trùng `pm_P2_set7`. Công thức ghi trước (T = 1,066·P0 − 0,490) vì vậy đã được áp lên một thang khác. Đó là lý do
+P0 "bộ 7" có T TB −0,39, sd 0,08, trong khi bộ 4/5 là +0,56/+0,69, sd 0,29. Đã sửa `spans7.py` (`PM.ask(variant, …)`) và cất file
+sai thành `*.WRONG_was_P2_prompt.jsonl`. P0 bộ 7 sẽ chạy lại trên GPU (hàng Model), rồi chấm lại đúng công thức ghi trước fff35839.
+Bảng và "bài học về hệ số chặn" ở mục trên bỏ hết. Cột V (C0) không dùng P0 nên MAE V .276 vẫn đúng.
+
+### 07-10 06:0x - SEG-P (thăm dò, KHÔNG ghi trước): bộ lọc ranh giới LLM cũ bỏ nhầm phía
+
+`research/music/seg_precision.py` tính độ chính xác của từng ranh giới LLM (qwen3.5:4b, kết quả SEG đã có, CPU) theo đặc trưng rẻ:
+
+| đặc trưng | P 4+5 | P 5b+6 | P bộ 7 |
+|---|---|---|---|
+| tất cả | .42 | .33 | .27 |
+| cách ranh giới TRƯỚC < 60 s | .32 | .23 | .14 |
+| cách ranh giới SAU < 60 s | .43 | .33 | .30 (trung tính) |
+| là câu đầu cửa sổ 12k ký tự | - | .22 | .09 |
+| trùng dấu CUE (±1 câu) | .79 | .79 | .36 |
+
+Khi hai ranh giới gần nhau, cái SAU hay sai. Bộ lọc trễ cũ (`hysteresis`, cảnh < 60 s thì bỏ ranh giới đầu cảnh ấy) lại bỏ cái
+TRƯỚC. Bộ lọc mới `later_drop`: bỏ ranh giới là câu đầu cửa sổ, rồi đi xuôi và bỏ ranh giới cách cái đã giữ < g giây.
+g được chọn trên 4+5 theo F1 cao nhất (luật chọn viết trong mã trước khi chạy), đo trên 5b+6 và bộ 7:
+
+| LLM một mình | 4+5 (học) | 5b+6 | bộ 7 |
+|---|---|---|---|
+| lọc cũ (bỏ TRƯỚC, 60 s) | .393 (P .42) | .314 (P .33) | .335 (P .27) |
+| **mới, g = 30 s (chọn)** | .457 (P .47) | **.393** (P .39) | **.435** (P .34) |
+| chỉ bỏ SAU 30 s | .456 | .387 | .414 |
+| chỉ bỏ đầu cửa sổ | .443 | .370 | .383 |
+
+Hai phần đều góp. Mức tăng +.08 đến +.10 F1 đứng được trên cả hai bộ đo.
+
+Có CUE làm dấu cứng: trên 5b+6, g = 60 s tăng từ .388 lên .424. Trên bộ 7 thì CUE kéo xuống: cũ .246, mới .291, P ~.19, 39 ranh giới/giờ,
+vì dấu CUE của nguồn bộ 7 nhiễu (P .36). Đó là việc riêng: CUE cần lọc theo nguồn.
+
+Với app: nguồn `llm` vẫn TẮT (chế độ X). Ngay cả bộ lọc mới cũng chỉ đạt P .34-.39, còn xa cổng P .70 của việc đổi bài. Nếu sau này
+mở lại chế độ Y thì dùng `later_drop` thay `hysteresis` cho ranh giới LLM. Kết quả này cần ghi trước và xác nhận trên một bộ mới
+trước khi đưa vào app.

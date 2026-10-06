@@ -165,9 +165,10 @@ object PrepareAhead {
         val cache = runCatching { ReadAloud.cache() }.getOrNull() ?: return
         val texts = ReadAloud.textChapters(done.bookId, done.chapters.map { it.id })
         val origin = ReadAloud.originOf(done.bookId)
+        val readings = ReadAloud.readingsOf(done.bookId)
         for (chapter in done.chapters) {
             val paragraphs = texts[chapter.id]?.second ?: continue
-            chapter.done = paragraphs.count { cache.contains(done.voice, it, origin) }.coerceAtMost(chapter.paragraphs - chapter.failed)
+            chapter.done = paragraphs.count { cache.contains(done.voice, it, origin, readings) }.coerceAtMost(chapter.paragraphs - chapter.failed)
         }
     }
 
@@ -209,11 +210,12 @@ object PrepareAhead {
         val budget = (cache.cap * PreparePlan.SHARE).toLong()
         val texts = ReadAloud.textChapters(mine.bookId, mine.chapters.map { it.id })
         val origin = ReadAloud.originNow(mine.bookId) // luồng của WorkManager: chờ đoán xong để cả việc dùng đúng gốc từ đoạn đầu
+        val readings = ReadAloud.readingsOf(mine.bookId) // cách đọc riêng của cuốn: cùng khoá với lúc nghe
         val runner = PrepareRunner(
             texts = { chapter -> texts[chapter.id]?.second },
-            cached = { cache.contains(mine.voice, it, origin) },
-            make = { ReadAloud.readExactly(mine.voice, it, origin) },
-            pin = { cache.pin(mine.voice, it, origin) },
+            cached = { cache.contains(mine.voice, it, origin, readings) },
+            make = { ReadAloud.readExactly(mine.voice, it, origin, readings) },
+            pin = { cache.pin(mine.voice, it, origin, readings) },
             live = { ReadAloud.liveJobs() > 0 },
             stopped = { stopped() || synchronized(lock) { job?.id != mine.id } },
             save = { save(context, it); notify(context, it) },

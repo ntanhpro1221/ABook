@@ -30,7 +30,7 @@ class ClipReader(
 
         private fun provider(voice: Voice) = voice.id.substringBefore(':')
         /** Đọc trên máy nhưng có thể chưa sẵn sàng (mô-đun tải thêm): hỏng thì đỡ bằng giọng của máy. */
-        private fun local(voice: Voice) = provider(voice) == "vieneu"
+        private fun local(voice: Voice) = provider(voice) == "vieneu" || provider(voice) == "supertonic"
         private fun online(voice: Voice) = provider(voice) != "device" && !local(voice)
 
         /** Câu cho người nghe khi đoạn này đọc tạm bằng `next` thay cho `failed` (cùng lời với giao diện máy tính, readAloudVoice.ts). */
@@ -38,7 +38,7 @@ class ClipReader(
             val keyed = OnlineVoices.NAMES[provider(failed)]
             val instead = if (provider(next) == "edge") "giọng Edge" else "giọng của máy"
             return when {
-                local(failed) -> "Giọng VieNeu chưa đọc được lúc này - tạm đọc bằng $instead."
+                local(failed) -> "Giọng ${if (provider(failed) == "supertonic") "Supertonic" else "VieNeu"} chưa đọc được lúc này - tạm đọc bằng $instead."
                 keyed == null -> "Không dùng được giọng trực tuyến - tạm đọc bằng $instead."
                 problem.reason == "auth" -> "Khóa $keyed không dùng được - tạm đọc bằng $instead. Kiểm tra lại khóa trong Cài đặt."
                 problem.reason == "quota" -> "Khóa $keyed đã hết hạn mức - tạm đọc bằng $instead."
@@ -56,9 +56,9 @@ class ClipReader(
         if (told.add("${provider(failed)}:$kind")) runCatching { notice(noticeFor(failed, problem, next)) }
     }
 
-    fun read(text: String, voiceId: String, origin: String? = null): Clip {
+    fun read(text: String, voiceId: String, origin: String? = null, readings: Map<String, String>? = null): Clip {
         val primary = voiceFor(voiceId)
-        cache.get(primary.id, text, origin)?.let { return it }
+        cache.get(primary.id, text, origin, readings)?.let { return it }
         val chain = ArrayList<Voice>().apply {
             add(primary)
             if (online(primary)) {
@@ -75,7 +75,7 @@ class ClipReader(
         var failed: Voice? = null
         var problem: VoiceException? = null
         for ((index, voice) in chain.withIndex()) {
-            if (index > 0) cache.get(voice.id, text, origin)?.let { clip ->
+            if (index > 0) cache.get(voice.id, text, origin, readings)?.let { clip ->
                 if (failed != null && problem != null) tell(failed!!, problem!!, voice)
                 return clip
             }
@@ -90,7 +90,7 @@ class ClipReader(
             }
             if (failed != null && problem != null) tell(failed!!, problem!!, voice)
             try {
-                return synthesize(voice, text, origin)
+                return synthesize(voice, text, origin, readings)
             } catch (error: VoiceException) {
                 val earlier = first
                 if (!(online(voice) || local(voice)) || index == chain.lastIndex) {
@@ -113,16 +113,16 @@ class ClipReader(
     }
 
     /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng" trong Cài đặt: người nghe muốn nghe chính giọng ấy, hỏng thì phải thấy lỗi). */
-    fun readExactly(text: String, voiceId: String, origin: String? = null): Clip {
+    fun readExactly(text: String, voiceId: String, origin: String? = null, readings: Map<String, String>? = null): Clip {
         val voice = voiceFor(voiceId)
-        return cache.get(voice.id, text, origin) ?: synthesize(voice, text, origin)
+        return cache.get(voice.id, text, origin, readings) ?: synthesize(voice, text, origin, readings)
     }
 
-    private fun synthesize(voice: Voice, text: String, origin: String?): Clip {
+    private fun synthesize(voice: Voice, text: String, origin: String?, readings: Map<String, String>?): Clip {
         val tmp = cache.temp(voice.extension)
         try {
-            val clip = voice.synthesize(text, tmp, origin)
-            return cache.put(voice.id, text, tmp, voice.extension, clip.durationMs, clip.words, origin)
+            val clip = voice.synthesize(text, tmp, origin, readings)
+            return cache.put(voice.id, text, tmp, voice.extension, clip.durationMs, clip.words, origin, readings)
         } catch (error: VoiceException) {
             tmp.delete()
             throw error

@@ -15,6 +15,11 @@ android {
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.ngdtuanh.abook"
+        // Bài đo trên điện thoại thật (scripts/supertonic_phone_bench.sh): -PbenchAppId=<tên khác> cài bản thử dưới gói riêng, không bao giờ
+        // thay hay xoá app thật của người dùng.
+        if (project.hasProperty("benchAppId")) {
+            applicationId project.property("benchAppId")
+        }
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 32
@@ -38,6 +43,10 @@ android {
         androidTest.assets.srcDirs += "../../../tests/fixtures/music_student"
         // Số của máy tính cho giọng VieNeu (scripts/vieneu_android_fixtures.py): VieneuOnDeviceTest so phoneme + clip trên máy thật.
         androidTest.assets.srcDirs += "../../../tests/fixtures/vieneu/android"
+        // "Xuất MP3" (tests/mp3_export_fixtures.py): Mp3ExportOnDeviceTest so tag điện thoại ghi với file ffmpeg của máy tính.
+        androidTest.assets.srcDirs += "../../../tests/fixtures/mp3_export"
+        // Ba đoạn đo tốc độ giọng Supertonic (scripts/supertonic_bench.py đọc cùng file): SupertonicBenchTest.
+        androidTest.assets.srcDirs += "../../../tests/fixtures/readaloud/supertonic"
     }
     signingConfigs {
         if (releaseSigning.getProperty("storeFile")) {

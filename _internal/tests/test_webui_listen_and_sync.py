@@ -435,9 +435,14 @@ def test_what_a_phone_reports_is_typed_and_bounded() -> None:
     assert remote_command({"action": "skip", "seconds": -15}) == {"action": "skip", "seconds": -15.0}
     assert remote_command({"action": "load", "bookId": "abc", "chapterId": 4, "seconds": 90, "x": 1}) == {
         "action": "load", "seconds": 90.0, "chapterId": 4, "bookId": "abc"}
-    for bad in ({"action": "format_disk"}, {"action": "jump"}, {"action": "load", "chapterId": 1, "bookId": "a/b"}):
+    for bad in ({"action": "format_disk"}, {"action": "jump"}, {"action": "load", "chapterId": 1, "bookId": "a/b"},
+                {"action": "sleep", "minutes": 15}):  # hẹn giờ tắt từ xa: chỉ loa / TV
         with pytest.raises(ValueError):
             remote_command(bad)
+    assert remote_command({"action": "sleep", "minutes": 99_999}, cast=True) == {"action": "sleep", "minutes": 1440.0}
+    assert remote_command({"action": "sleep", "minutes": "x"}, cast=True) == {"action": "sleep", "minutes": 0.0}
+    assert remote_command({"action": "sleep", "endOfChapter": True, "minutes": 5}, cast=True) == {
+        "action": "sleep", "endOfChapter": True}
 
 
 def test_the_desktop_sees_the_phone_and_its_pause_arrives(library, tmp_path: Path) -> None:

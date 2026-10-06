@@ -107,6 +107,7 @@ class ImportedBook:
     text_has_title: bool = False  # file TXT: tên chương nằm sẵn trong chữ (EPUB / DOCX / PDF: tên chương là trường riêng)
     credits: list[tuple[int, str]] = field(default_factory=list)  # (số chương, dòng ghi công) - gợi ý, như trong `notes`
     split_offer: int = 0  # file TXT cả truyện: số chương nếu tách theo các dòng "Chương N" (0 = không có gì để tách); người dùng tích mới tách
+    split_headings: int = 0  # số dòng "Chương N" ấy; ít hơn `split_offer` một khi chữ trước tiêu đề đầu thành chương "Mở đầu"
 
     def chapter_source(self, chapter: Chapter) -> str:
         """Chữ của chương như FILE NGUỒN mà Studio đọc: TXT nguyên văn (tên chương nằm sẵn trong chữ); EPUB / DOCX / PDF: tên
@@ -125,7 +126,7 @@ class ImportedBook:
             "title": self.title, "author": self.author, "language": self.language, "cover": cover,
             "chapters": [{"title": chapter.title, "text": chapter.text} for chapter in self.chapters],
             "notes": list(self.notes),
-            **({"splitOffer": self.split_offer} if self.split_offer else {}),
+            **({"splitOffer": self.split_offer, "splitHeadings": self.split_headings} if self.split_offer else {}),
         }
 
 
@@ -251,6 +252,8 @@ def _txt_file(path: Path, split: bool = False) -> ImportedBook:
     book = ImportedBook(title=path.stem, chapters=[chapter], text_has_title=True)
     parts = split_txt_chapters(chapter.text)
     book.split_offer = len(parts)
+    # Chương tách ra từ một dòng tiêu đề mang tên dòng ấy - không bao giờ trùng tên chương "Mở đầu".
+    book.split_headings = sum(part.title != PREAMBLE for part in parts)
     if split and parts:
         book.chapters = parts
     return book

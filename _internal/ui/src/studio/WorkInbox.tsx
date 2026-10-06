@@ -10,6 +10,7 @@ import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { useTryReading } from "./TryReading";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
+import { keepRequests, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
@@ -28,6 +29,8 @@ interface WorkExample {
   hasAudio: boolean;
   /** Câu mà lựa chọn trên thẻ sẽ đổi người nói (thẻ lượt đối đáp: các câu xen kẽ). */
   changes?: boolean;
+  /** Thẻ vai phụ cả cuốn: mã câu, để bỏ chọn từng câu. */
+  stableId?: string;
 }
 
 export interface WorkItem {
@@ -65,6 +68,10 @@ export interface WorkItem {
   keepCharacters?: string[];
   /** Chương của các câu thẻ sẽ đổi (hay của câu ví dụ) - "Duyệt trước khi thu" hỏi trước thẻ ở chương sắp thu. */
   chapters?: number[];
+  /** Thẻ vai phụ không tên cả cuốn: `examples` là mọi câu của nhóm, người nghe bỏ chọn câu không phải trước khi chọn người. */
+  pick?: boolean;
+  /** Giữ nguyên thẻ nhóm: mỗi vai giữ người của nó - một yêu cầu cho mỗi vai. */
+  keepGroups?: SpeakerRequest[];
 }
 
 interface VoiceChoice {
@@ -145,12 +152,21 @@ function midSentence(label: string | null | undefined): string {
   return text === "Vai phụ không tên" || text === "Người kể" ? text.charAt(0).toLowerCase() + text.slice(1) : text;
 }
 
-function Example({ bookId, example }: { bookId: string; example: WorkExample }) {
+function Example({ bookId, example, picked, onPick }: { bookId: string; example: WorkExample; picked?: boolean; onPick?: () => void }) {
   const clip = useClip();
   const id = `work-${example.segmentId}`;
   const playing = clip.current === id;
   return (
-    <li className="flex items-start gap-2 text-sm">
+    <li className={cn("flex items-start gap-2 text-sm", onPick && !picked && "opacity-60")}>
+      {onPick && (
+        <input
+          type="checkbox"
+          checked={picked}
+          onChange={onPick}
+          aria-label={`Gồm câu này: ${example.text}`}
+          className="mt-1.5 size-4 shrink-0 accent-[var(--accent)]"
+        />
+      )}
       {example.hasAudio ? (
         <button
           type="button"
@@ -315,15 +331,18 @@ function SpeakerFix({
   onOpenScript,
   scope = "alternate",
   onScope,
+  picked,
 }: {
   bookId: string;
   item: WorkItem;
   onOpenScript?: OpenScript;
   scope?: Scope;
   onScope?: (scope: Scope) => void;
+  /** Thẻ vai phụ cả cuốn: những câu người nghe còn chọn. */
+  picked?: LineRef[];
 }) {
   const client = useQueryClient();
-  const lines = scope === "all" && item.allLines ? item.allLines : item.lines;
+  const lines = picked ?? (scope === "all" && item.allLines ? item.allLines : item.lines);
   const pending = useContext(PendingHint);
   const when = useWhenApplied(bookId);
   // "Người khác…": người nói chưa có trong lựa chọn - kể cả người máy CHƯA TỪNG gán câu nào (linh thể nói trong 『』):
@@ -351,7 +370,9 @@ function SpeakerFix({
       // Gộp tên / quy ước 『』 cả cuốn còn ghi ở cấp TÊN cho các phần sau - hoàn tác chỉ lùi được phần câu, nên không mời.
       const back = item.requested
         ? `Trở lại quyết định trước: ${which} của ${midSentence(item.requested)}.`
-        : `${sentence(which)} lại là của ${midSentence(item.current)}.`;
+        : item.pick
+          ? `${sentence(which)} trở lại chờ duyệt.`
+          : `${sentence(which)} lại là của ${midSentence(item.current)}.`;
       const undo = alias ? {} : { action: undoAction(client, bookId, "speaker", [{ lines, requestedAt, keep }], back), duration: UNDO_MS };
       if (keep) {
         toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${midSentence(item.current)}`, {
@@ -375,6 +396,31 @@ function SpeakerFix({
     },
     onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
   });
+  // Thẻ nhóm giữ nguyên: mỗi vai giữ người của nó - vài yêu cầu, một nút hoàn tác cho cả nhóm.
+  const keepAll = useMutation({
+    mutationFn: async (requests: SpeakerRequest[]) => {
+      const made: Record<string, unknown>[] = [];
+      for (const request of requests) {
+        const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/speaker`, { method: "POST", body: request });
+        made.push({ lines: request.lines, requestedAt, keep: true });
+      }
+      return made;
+    },
+    onSuccess: (made) => {
+      refreshAfterDecision(client, bookId);
+      toast.success(`Đã ghi: ${item.keepLabel ?? "Giữ nguyên"}`, {
+        description: "Không câu nào phải thu lại; việc này sẽ không hiện lại.",
+        action: undoAction(client, bookId, "speaker", made, "Thẻ hỏi lại như trước khi bấm."),
+        duration: UNDO_MS,
+      });
+    },
+    onError: (error: Error) => {
+      refreshAfterDecision(client, bookId);
+      toast.error("Chưa ghi được", { description: error.message });
+    },
+  });
+  const busy = save.isPending || keepAll.isPending;
+  const none = !lines?.length;
   return (
     <div className="mt-3">
       {item.requested && (
@@ -409,15 +455,20 @@ function SpeakerFix({
             variant={(item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed")
               ? "primary" : "secondary"}
             aria-pressed={item.requested ? [choice.name, choice.label].includes(item.requested) : undefined}
-            disabled={save.isPending}
+            disabled={busy || none}
             onClick={() => save.mutate({ speaker: choice.value })}
           >
             {choice.label}
           </Button>
         ))}
         {item.currentValue && (
-          <Button data-choice size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ speaker: item.currentValue! })}>
+          <Button data-choice size="sm" variant="ghost" disabled={busy} onClick={() => save.mutate({ speaker: item.currentValue! })}>
             {item.keepLabel ?? (item.kind === "unnamed" ? "Đúng là vai phụ" : `Giữ ${item.current}`)}
+          </Button>
+        )}
+        {item.keepGroups && item.keepGroups.length > 0 && (
+          <Button data-choice size="sm" variant="ghost" disabled={busy} onClick={() => keepAll.mutate(keepRequests(item))}>
+            {item.keepLabel ?? "Giữ nguyên"}
           </Button>
         )}
         {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}
@@ -461,7 +512,7 @@ function SpeakerFix({
               key={gender}
               size="sm"
               variant="secondary"
-              disabled={!name.trim() || save.isPending}
+              disabled={!name.trim() || busy || none}
               onClick={() => save.mutate({ speaker: name.trim(), newGender: gender })}
             >
               {label}
@@ -578,6 +629,14 @@ type OpenReview = (card?: string) => void;
 function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = false }: { bookId: string; item: WorkItem; onOpenReview: OpenReview; onOpenScript?: OpenScript; onOpenNames?: OpenNames; active?: boolean }) {
   // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
   const [scope, setScope] = useState<Scope>("alternate");
+  // Thẻ vai phụ cả cuốn: câu người nghe bỏ chọn (mã câu), và mở cả danh sách hay chỉ vài câu đầu.
+  const [left, setLeft] = useState<ReadonlySet<string>>(new Set());
+  const [all, setAll] = useState(false);
+  // Gán một phần rồi thì thẻ còn đúng những câu đã bỏ chọn - chúng phải hiện là đang chọn, không phải vẫn bỏ.
+  const groupLines = item.pick ? (item.lines ?? []).map((line) => line.stableId).join(" ") : "";
+  useEffect(() => setLeft(new Set()), [groupLines]);
+  const picked = item.pick && item.lines ? pickedLines(item.lines, left) : undefined;
+  const shownExamples = item.pick && !all ? item.examples.slice(0, PICK_PREVIEW) : item.examples;
   const openScript: OpenScript | undefined =
     onOpenScript && ((chapterId, stableId, pick) => onOpenScript(chapterId, stableId, pick, item.key));
   const openNames: OpenNames | undefined = onOpenNames && ((name) => onOpenNames(name, item.key));
@@ -605,7 +664,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = 
       ) : item.voiceChoices && item.voiceChoices.length > 0 ? (
         <VoiceFix bookId={bookId} item={item} />
       ) : item.lines && item.choices ? (
-        <SpeakerFix bookId={bookId} item={item} onOpenScript={openScript} scope={scope} onScope={setScope} />
+        <SpeakerFix bookId={bookId} item={item} onOpenScript={openScript} scope={scope} onScope={setScope} picked={picked} />
       ) : (
         <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
           {item.options.map((option) => (
@@ -617,18 +676,32 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = 
       )}
       {item.examples.length > 0 && (
         <ul className="mt-3 space-y-2 border-t border-line pt-3">
-          {item.examples.map((example) => (
+          {picked && item.lines && (
+            <li className="text-xs text-fg-2">{pickNote(picked.length, item.lines.length)} - bỏ chọn câu không phải của người ấy.</li>
+          )}
+          {shownExamples.map((example) => (
             <Example
               key={example.segmentId}
               bookId={bookId}
               example={item.allLines && scope === "all" ? { ...example, changes: true } : example}
+              {...(picked && example.stableId
+                ? { picked: !left.has(example.stableId), onPick: () => setLeft(toggleLine(left, example.stableId!)) }
+                : {})}
             />
           ))}
         </ul>
       )}
+      {item.pick && item.examples.length > PICK_PREVIEW && (
+        <Button size="sm" variant="ghost" className="mt-2" aria-expanded={all} onClick={() => setAll((value) => !value)}>
+          {all ? "Thu gọn" : `Xem cả ${item.examples.length} câu`}
+        </Button>
+      )}
     </li>
   );
 }
+
+/** Thẻ vai phụ cả cuốn hiện ngần này câu đầu; "Xem cả N câu" mở hết để bỏ chọn. */
+const PICK_PREVIEW = 3;
 
 // "Giữ như máy đang làm" cho cả loại thẻ đang lọc (soát UX a6 01-10, D2): sau khi soát vài thẻ thấy máy đúng gần hết, người
 // làm sách bấm "giữ" từng thẻ một trong cả trăm thẻ. Một lần bấm (có hỏi lại) ghi đúng quyết định "giữ" mà từng thẻ ghi -
@@ -640,11 +713,12 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const pronunciation = kind === "pronunciation";
-  const keepable = items.filter((item) => (pronunciation ? Boolean(item.surface) : Boolean(item.lines?.length && item.currentValue)));
+  const keepable = items.filter((item) => (pronunciation ? Boolean(item.surface) : keepRequests(item).length > 0));
   if (!BULK_KINDS.includes(kind) || keepable.length < 2) return null;
   const run = async () => {
     setBusy(true);
     const decisions: Record<string, unknown>[] = [];
+    let done = 0;
     try {
       for (const item of keepable) {
         if (pronunciation) {
@@ -654,20 +728,21 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
           });
           decisions.push({ surface: item.surface, requestedAt, previous: item.current, keep: true });
         } else {
-          const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/speaker`, {
-            method: "POST",
-            body: { lines: item.lines, speaker: item.currentValue },
-          });
-          decisions.push({ lines: item.lines, requestedAt, keep: true });
+          // Thẻ vai phụ cả cuốn giữ người của từng vai: một yêu cầu cho mỗi vai.
+          for (const request of keepRequests(item)) {
+            const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/speaker`, { method: "POST", body: request });
+            decisions.push({ lines: request.lines, requestedAt, keep: true });
+          }
         }
+        done += 1;
       }
-      toast.success(`Đã giữ như máy đang làm cho ${decisions.length} thẻ`, {
+      toast.success(`Đã giữ như máy đang làm cho ${done} thẻ`, {
         description: "Không câu nào phải thu lại; máy sẽ không hỏi lại những thẻ này.",
-        action: undoAction(client, bookId, pronunciation ? "pronunciation" : "speaker", decisions, `${decisions.length} thẻ trở lại chờ duyệt.`),
+        action: undoAction(client, bookId, pronunciation ? "pronunciation" : "speaker", decisions, `${done} thẻ trở lại chờ duyệt.`),
         duration: UNDO_MS,
       });
     } catch (error) {
-      toast.error(`Mới giữ được ${decisions.length}/${keepable.length} thẻ`, { description: (error as Error).message });
+      toast.error(`Mới giữ được ${done}/${keepable.length} thẻ`, { description: (error as Error).message });
     } finally {
       setBusy(false);
       setConfirm(false);

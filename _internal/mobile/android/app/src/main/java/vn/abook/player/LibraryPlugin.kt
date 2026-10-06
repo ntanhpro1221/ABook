@@ -64,17 +64,20 @@ class LibraryPlugin : Plugin() {
         LocalStudio.bundledPicker = DeviceMusic.bundledPicker(context)
         // Bộ phân tích nhạc: "Gói nhạc" (model + thư viện ONNX Runtime) tải khi người dùng bấm (không bao giờ tự tải); đã có từ lần trước thì cắm luôn, ở luồng nền.
         val abi = OrtRuntime.deviceAbi()
-        val student = MusicStudentSetup(File(context.filesDir, "music/student"), musicStore, { AndroidMusicStudent.open(it, context.cacheDir) },
-            files = MusicStudentSetup.PACKAGE + OrtRuntime.parts(abi), supported = abi != null, metered = { AndroidMusicStudent.metered(context) })
+        val runtime = SharedRuntime.of(context)
+        val student = MusicStudentSetup(File(context.filesDir, MusicStudentSetup.FOLDER), musicStore, { AndroidMusicStudent.open(it, runtime.dir, context.cacheDir) },
+            runtime, files = MusicStudentSetup.PACKAGE + OrtRuntime.parts(abi), supported = abi != null, metered = { AndroidMusicStudent.metered(context) })
         LocalStudio.student = student
         musicImports.execute { runCatching { student.attachIfPresent() } }
         // Gửi phần sửa về máy tính xong: tải lại sách từ máy tính (không báo "Đã tải xong") và báo giao diện làm mới.
         EditsSync.refresh = { id -> downloadBook(id, null, null, announce = false) }
         EditsSync.changed = { id -> notifyListeners("editsSync", JSObject().put("bookId", id)) }
+        Mp3Exports.events = { event -> notifyListeners("mp3Export", JSObject.fromJSONObject(event)) }
         Playback.init(context)
         PhoneCast.init(context)
         TextImports.codec = AndroidCoverCodec
         TextImports.sweep() // thư mục tạm của lần "Thêm sách từ file…" bị bỏ dở lần trước
+        io.execute { BookShare.sweep(context.cacheDir) } // file đã gửi qua "Chia sẻ…" lần trước: app nhận đã đọc xong từ lâu
         // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
         if (prefs.getBoolean(SHARE_KEY, false)) io.execute { runCatching { LibraryServer.start(context) } }
     }
@@ -113,6 +116,27 @@ class LibraryPlugin : Plugin() {
             JSObject().put("error", "Không mở được file sách: ${error.message ?: error.javaClass.simpleName}")
         }
         notifyListeners("import", event, true)
+    }
+
+    /**
+     * File app khác gửi tới ("Mở bằng ABook", chia sẻ tới ABook - MainActivity): EPUB / DOCX / PDF / TXT vào bước xem trước của "Thêm sách
+     * từ file…" (chép vào thư mục tạm như bộ chọn, giao diện nghe sự kiện `textPicked` - android/imports.ts); còn lại là file sách,
+     * đi [importFrom] như trước.
+     */
+    fun openFrom(uri: Uri, mime: String?) = io.execute {
+        val type = mime ?: runCatching { context.contentResolver.getType(uri) }.getOrNull()
+        val name = TextImports.incomingName(type, displayName(uri) ?: uri.lastPathSegment)
+        if (name == null) {
+            importFrom(uri)
+            return@execute
+        }
+        val event = try {
+            val staged = stageDocument(uri, name)
+            JSObject().put("ref", staged.ref).put("name", staged.name).also { reply -> staged.pdf?.let { reply.put("pdf", it.absolutePath) } }
+        } catch (error: Exception) {
+            JSObject().put("error", error.message ?: "Không đọc được file này")
+        }
+        notifyListeners("textPicked", event, true)
     }
 
     /** Nút "Nhập sách": chọn file bằng bộ chọn của hệ thống (mọi loại - trình quản lý file không biết đuôi .abook). */
@@ -169,8 +193,8 @@ class LibraryPlugin : Plugin() {
         }
     }.getOrNull()
 
-    private fun stageDocument(uri: Uri): TextImports.Staged =
-        TextImports.stageFile(displayName(uri) ?: uri.lastPathSegment ?: "sach") { context.contentResolver.openInputStream(uri) }
+    private fun stageDocument(uri: Uri, name: String? = null): TextImports.Staged =
+        TextImports.stageFile(name ?: displayName(uri) ?: uri.lastPathSegment ?: "sach") { context.contentResolver.openInputStream(uri) }
 
     /** Thư mục TXT: chỉ các file nằm ngay trong thư mục (như Studio), không quét thư mục con. */
     private fun stageTree(tree: Uri): TextImports.Staged {
@@ -885,14 +909,106 @@ class LibraryPlugin : Plugin() {
         }
     }
 
+    /**
+     * "Chia sẻ…": đóng cuốn (kèm thay đổi của người nghe, như "Lưu thành…") thành file trong `cacheDir/share` ([BookShare]) rồi mở bảng
+     * chia sẻ của hệ thống (Zalo, Drive, email…). `as` không nói: sách nghe `.abook` - thứ người nhận mở được để nghe ngay. Trả
+     * {shared: true, name} khi bảng chia sẻ đã mở (người dùng gửi cho ai hay đóng bảng thì app không biết).
+     */
+    @PluginMethod
+    fun shareBook(call: PluginCall) {
+        val id = call.getString("id") ?: return call.reject("thiếu id")
+        val manifest = Store.rawManifest(id) ?: return call.reject("Không tìm thấy sách này trong thư viện")
+        if (Store.isComputerBook(id) || manifest.optJSONObject("package") == null) {
+            return call.reject("Sách này lấy từ máy tính khác - muốn gửi file sách thì gửi từ máy ấy")
+        }
+        val project = call.getString("as") == "abookproj"
+        val title = Store.manifest(id)?.optString("title").orEmpty()
+        io.execute {
+            val file = BookShare.target(context.cacheDir, title, project)
+            try {
+                file.parentFile?.mkdirs()
+                file.outputStream().use { BookDocumentWriter.write(Store.bookDir(id), it, project) }
+                val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                val mime = BookShare.mimeType(project)
+                val send = Intent(Intent.ACTION_SEND).setType(mime)
+                    .putExtra(Intent.EXTRA_STREAM, uri)
+                    .putExtra(Intent.EXTRA_TITLE, file.name)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                send.clipData = android.content.ClipData.newUri(context.contentResolver, file.name, uri)
+                val chooser = Intent.createChooser(send, "Chia sẻ “${title.ifBlank { file.nameWithoutExtension }}”")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                activity.runOnUiThread {
+                    try {
+                        activity.startActivity(chooser)
+                        call.resolve(JSObject().put("shared", true).put("name", file.name))
+                    } catch (error: Exception) {
+                        fail(call, error, "không mở được bảng chia sẻ")
+                    }
+                }
+            } catch (error: Exception) {
+                file.parentFile?.deleteRecursively()
+                fail(call, error, "không đóng được file sách để chia sẻ")
+            }
+        }
+    }
+
+    // ---- "Xuất MP3 để nghe ở app khác" (Mp3Export, Mp3ExportWorker) ------------------------------------------------
+
+    /**
+     * Xuất cuốn `bookId` thành thư mục MP3 như máy tính. Lần đầu (hay `pick`, hay thư mục cũ không còn ghi được) hỏi chỗ lưu bằng bộ
+     * chọn thư mục của hệ thống, rồi nhớ lại. `cover`: data URL PNG bìa giao diện tự vẽ, dùng khi sách không có bìa thật. Trả
+     * {started, run, folder, chapters} - tiến độ và kết quả đến qua sự kiện "mp3Export" mang `run` - hay {started: false} khi huỷ chọn.
+     */
+    @PluginMethod
+    fun exportMp3(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        if (Store.manifest(id) == null) return call.reject("Sách này chưa tải về điện thoại")
+        val tree = if (call.getBoolean("pick", false) == true) null else Mp3Exports.remembered(context)
+        if (tree == null) startActivityForResult(call, Mp3Exports.pickIntent(context), "pickedExportFolder") else startMp3Export(call, tree)
+    }
+
+    @ActivityCallback
+    private fun pickedExportFolder(call: PluginCall?, result: ActivityResult) {
+        if (call == null) return
+        val tree = result.data?.data ?: return call.resolve(JSObject().put("started", false))
+        try {
+            Mp3Exports.remember(context, tree)
+        } catch (error: Exception) {
+            return fail(call, error, "không giữ được quyền ghi thư mục đã chọn")
+        }
+        startMp3Export(call, tree)
+    }
+
+    private fun startMp3Export(call: PluginCall, tree: Uri) = background(call) {
+        val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
+        val drawn = drawnCover(call.getString("cover"))
+        val plan = Mp3Export.plan(id, drawn) // sách không có gì để xuất: từ chối ngay, không bắt đầu việc nền
+        val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Không mở được thư mục đã chọn - chọn lại nơi lưu")
+        val coverFile = drawn?.let { bytes ->
+            File(context.cacheDir, "mp3-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
+        }
+        val run = Mp3Exports.start(context, id, tree, coverFile)
+        call.resolve(JSObject().put("started", true).put("run", run).put("folder", "$treeName/${Mp3Export.folderName(plan.title)}")
+            .put("chapters", plan.chapters.size))
+    }
+
+    /** Bìa tự vẽ gửi từ giao diện, cùng luật với máy tính (export._cover_file): chỉ data URL PNG, tối đa 4 MB. */
+    private fun drawnCover(value: String?): ByteArray? {
+        val match = Regex("data:image/png;base64,([A-Za-z0-9+/=]+)").matchEntire(value ?: return null) ?: return null
+        val bytes = runCatching { android.util.Base64.decode(match.groupValues[1], android.util.Base64.DEFAULT) }.getOrNull() ?: return null
+        return bytes.takeIf { it.size <= 4 * 1024 * 1024 && Id3Tag.Cover.of(it)?.mime == "image/png" }
+    }
+
     // ---- hồ sơ nghe (độc lập với sách, app giữ liên kết - Store) -----------------------------------------------
 
     /** Trả danh sách hồ sơ mới, rồi báo máy tính: hồ sơ vừa rời trước (`left` - chỗ nghe cuối của nó, lưu lúc đổi, chưa
-     *  tới máy tính: điện thoại chỉ đẩy hồ sơ đang dùng), rồi hồ sơ đang dùng (lựa chọn, tên, bia mộ). */
-    private fun resolveRecords(call: PluginCall, records: JSONArray, left: String? = null) {
+     *  tới máy tính: điện thoại chỉ đẩy hồ sơ đang dùng), rồi hồ sơ đang dùng (lựa chọn, tên, bia mộ). `first`: cuốn đẩy
+     *  trước tiên (cuốn vừa nhận hồ sơ chuyển tới - máy tính gắn lại hồ sơ theo lần chuyển ấy trước khi nghe cuốn cũ). */
+    private fun resolveRecords(call: PluginCall, records: JSONArray, left: String? = null, first: String? = null) {
         call.resolve(JSObject().put("records", records))
         val id = call.getString("id") ?: return
         io.execute {
+            if (first != null) runCatching { pushState(first) }
             if (left != null && left != Store.knownActiveRecord(id) && Store.hasRecord(left)) {
                 runCatching { StateSync.pushNow(context, id, left) }
             }
@@ -930,6 +1046,16 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun renameRecord(call: PluginCall) = background(call) {
         resolveRecords(call, Store.renameRecord(call.getString("id")!!, call.getString("record")!!, call.getString("name") ?: ""))
+    }
+
+    @PluginMethod
+    fun moveRecord(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        val to = call.getString("book").orEmpty()
+        val change = { Store.moveRecord(id, call.getString("record")!!, to) }
+        // Cuốn nhận đang nạp trong trình phát: cũng qua Playback - lưu chỗ của hồ sơ đang dùng ở đó trước, rồi theo sang hồ
+        // sơ vừa chuyển tới (không thì lần lưu kế ghi chỗ của cuốn ấy đè lên hồ sơ vừa tới).
+        resolveRecords(call, if (Playback.bookId == to) switching(to, change) else switching(id, change), first = to)
     }
 
     @PluginMethod

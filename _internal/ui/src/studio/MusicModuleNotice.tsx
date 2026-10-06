@@ -49,7 +49,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
             <div className="flex flex-wrap items-center gap-2">
               {action === "install" ? (
                 <Button size="sm" variant="secondary" loading={starting} onClick={() => void post("/api/music/local/module")}>
-                  {failed ? "Thử lại" : updating ? `Cập nhật Phân tích nhạc (${formatSize(module.outdatedBytes ?? module.total)})` : `Phân tích nhạc (${formatSize(module.total)})`}
+                  {failed ? "Thử lại" : module.stopped ? `Tải lại phần chạy (${formatSize(module.outdatedBytes ?? module.total)})` : updating ? `Cập nhật Phân tích nhạc (${formatSize(module.outdatedBytes ?? module.total)})` : `Phân tích nhạc (${formatSize(module.total)})`}
                 </Button>
               ) : (
                 <Button size="sm" variant="secondary" loading={starting} onClick={() => void post("/api/music/local/reanalyse")}>

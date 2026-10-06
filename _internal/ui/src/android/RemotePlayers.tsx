@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
-import { Back15, Forward15 } from "@/listen/PlayerViews";
+import { Back15, Forward15, RemoteSleepMenu } from "@/listen/PlayerViews";
+import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode } from "@/listen/sleep";
 import { useSource } from "@/listen/source";
 import { formatClock } from "@/shared/format";
 import { IconButton } from "@/shared/ui";
@@ -80,6 +81,7 @@ function useRemotePlayerCommand() {
             if (command.action === "pause") state.playing = false;
             if (command.action === "play") state.playing = true;
             if (command.action === "skip") state.position = Math.max(0, here + command.seconds);
+            if (command.action === "sleep") return { ...player, age: 0, state, sleep: remoteSleepAfter(command, !!player.state.playing) };
             return { ...player, age: 0, state };
           }),
         };
@@ -170,6 +172,10 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
           className="grid size-10 place-items-center rounded-full text-fg active:bg-hover">
           <Forward15 className="size-5" />
         </button>
+        {/* Hẹn giờ tắt chỉ cho loa / TV: máy tính, điện thoại khác tự có hẹn giờ của chúng. */}
+        {remote.via === "cast" && (
+          <RemoteSleepMenu sleep={remoteSleepMode(remote.sleep, receivedAt)} name={remote.name} onSet={(request) => send(remoteSleepCommand(request))} />
+        )}
         {remote.known && (
           <button type="button" onClick={() => void listenHere()} disabled={moving}
             className="h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-fg active:bg-hover disabled:opacity-50">

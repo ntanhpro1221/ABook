@@ -5,6 +5,7 @@ import android.content.Context
 import org.json.JSONObject
 import vn.abook.player.AndroidMusicStudent
 import vn.abook.player.OrtRuntime
+import vn.abook.player.SharedRuntime
 import vn.abook.player.readaloud.Clip
 import vn.abook.player.readaloud.Voice
 import vn.abook.player.readaloud.VoiceException
@@ -25,17 +26,20 @@ object VieneuVoices {
     private var context: Context? = null
     private var module: VieneuModule? = null
     private var presetsOf: Pair<String, Map<String, List<VieneuPreset>>>? = null
-    private var g2p: SeaG2p? = null
     private var engine: Pair<String, VieneuTier>? = null
 
     @Synchronized
     fun module(appContext: Context): VieneuModule = module ?: run {
         val ctx = appContext.applicationContext
         context = ctx
-        val memory = ActivityManager.MemoryInfo().also { (ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(it) }
-        val facts = VieneuModule.Facts(Runtime.getRuntime().availableProcessors(), Math.round(memory.totalMem / 1e8) / 10.0)
-        VieneuModule(File(ctx.filesDir, "vieneu"), File(ctx.filesDir, "music/student"), OrtRuntime.deviceAbi(), facts,
+        VieneuModule(File(ctx.filesDir, VieneuModule.FOLDER), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), facts(ctx),
             benchmark = ::benchmark, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) }).also { module = it }
+    }
+
+    /** Cores and memory of this phone, for a voice module's "Khuyên dùng" and its card. */
+    fun facts(ctx: Context): VoiceModule.Facts {
+        val memory = ActivityManager.MemoryInfo().also { (ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(it) }
+        return VoiceModule.Facts(Runtime.getRuntime().availableProcessors(), Math.round(memory.totalMem / 1e8) / 10.0)
     }
 
     /** Drop the loaded engine and voice lists (the module is about to replace or remove files). The text reader stays mapped. */
@@ -86,7 +90,7 @@ object VieneuVoices {
         val preset = (if (name == null) list.firstOrNull() else list.firstOrNull { it.name == name }) ?: throw VoiceException("Không có giọng VieNeu này.", reason = "voice")
         try {
             OrtRuntime.load(owner.ortFolder())
-            val reader = g2p ?: SeaG2p(installed.g2pLibrary, installed.dictionary).also { g2p = it }
+            val reader = SeaG2p.shared(installed.g2pLibrary, installed.dictionary)
             val loaded = engine?.takeIf { it.first == tier }?.second ?: run {
                 forget()
                 val cores = Runtime.getRuntime().availableProcessors()
@@ -109,11 +113,11 @@ object VieneuVoices {
 
     /** One paragraph -> [out] (16-bit WAV at the tier's rate) + words. */
     @Synchronized
-    fun synthesize(id: String, text: String, out: File, origin: String? = null): Clip {
+    fun synthesize(id: String, text: String, out: File, origin: String? = null, readings: Map<String, String>? = null): Clip {
         val (tier, name) = id.removePrefix("$PREFIX:").let { it.substringBefore('/') to it.substringAfter('/', "") }
         val ready = ready(tier, name)
         val spoken = try {
-            VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin)
+            VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin, readings)
         } catch (failure: OutOfMemoryError) {
             forget()
             throw VoiceException("Điện thoại không đủ bộ nhớ cho giọng VieNeu lúc này.", cause = failure, reason = "voice")
@@ -127,17 +131,14 @@ object VieneuVoices {
      * Self-benchmark after a download (desktop `VieneuProvider.benchmark`): load the engine, read "Xin chào." once (ONNX Runtime's first run is
      * much slower; not counted), then [BENCH_TEXT] with the tier's first voice. RTF = seconds of work per second of audio (under 1 keeps up).
      */
-    fun benchmark(tier: String): VieneuModule.Benchmark = synchronized(this) {
+    fun benchmark(tier: String): VoiceModule.Benchmark = synchronized(this) {
         val began = System.nanoTime()
         val ready = ready(tier, null)
         val speaker = VieneuSpeaker(ready.g2p::phonemize)
         speaker.speak(tier, ready.engine, ready.preset.name, ready.preset, "Xin chào.")
         val loaded = System.nanoTime()
         val spoken = speaker.speak(tier, ready.engine, ready.preset.name, ready.preset, BENCH_TEXT)
-        val done = System.nanoTime()
-        val seconds = spoken.samples.size.toDouble() / spoken.rate
-        VieneuModule.Benchmark(Math.round((done - loaded) / 1e9 / seconds * 1000) / 1000.0, (done - loaded) / 1_000_000, (loaded - began) / 1_000_000,
-            Math.round(seconds * 100) / 100.0)
+        VoiceModule.Benchmark.of(began, loaded, System.nanoTime(), spoken.samples.size, spoken.rate)
     }
 }
 
@@ -146,4 +147,6 @@ class VieneuVoice(override val id: String) : Voice {
     override val extension = "wav"
     override fun synthesize(text: String, out: File): Clip = VieneuVoices.synthesize(id, text, out)
     override fun synthesize(text: String, out: File, origin: String?): Clip = VieneuVoices.synthesize(id, text, out, origin)
+    override fun synthesize(text: String, out: File, origin: String?, readings: Map<String, String>?): Clip =
+        VieneuVoices.synthesize(id, text, out, origin, readings)
 }

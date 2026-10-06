@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { defaultExportFolder, exportWhereHint, jobView, lastExportHint, packingText, RECENT_SECONDS, type ExportJob } from "./bookFileExport";
+import {
+  defaultExportFolder,
+  exportWhereHint,
+  jobView,
+  lastExportHint,
+  M4B_COPY,
+  missingChaptersNote,
+  packingText,
+  RECENT_SECONDS,
+  type ExportJob,
+} from "./bookFileExport";
 
 describe("defaultExportFolder", () => {
   it("joins with the separator the library path already uses", () => {
@@ -61,5 +71,28 @@ describe("lastExportHint", () => {
     expect(lastExportHint({ state: "idle" })).toBeNull();
     expect(lastExportHint({ state: "error", error: "x" })).toBeNull();
     expect(lastExportHint(undefined)).toBeNull();
+  });
+});
+
+describe("M4B export", () => {
+  const m4b = (chapters: number, chaptersTotal: number): ExportJob => ({
+    state: "done",
+    id: "m",
+    result: { folder: "D:/x", file: "D:/x/Truyện.m4b", size: 3 * 1048576, chapters, chaptersTotal },
+  });
+
+  it("speaks with its own words while running, when done and when failing", () => {
+    expect(jobView({ state: "running", elapsed: 5 }, 2, false, M4B_COPY)).toMatchObject({ kind: "loading", title: "Đang làm file M4B…" });
+    expect(jobView(m4b(6, 6), 0, false, M4B_COPY)).toEqual({ kind: "success", title: "Đã xuất M4B", description: "D:/x/Truyện.m4b · 3 MB" });
+    expect(jobView({ state: "error", error: "x" }, 0, false, M4B_COPY)).toMatchObject({ title: "Không xuất được M4B" });
+    expect(lastExportHint({ state: "running" }, M4B_COPY)).toBe("Đang làm file M4B - xem thông báo ở góc màn hình");
+  });
+
+  it("says when unfinished chapters were left out of the file", () => {
+    expect(jobView(m4b(4, 6), 0, false, M4B_COPY)).toMatchObject({
+      description: "D:/x/Truyện.m4b · 3 MB · 4/6 chương - chương chưa xong không có trong file",
+    });
+    expect(missingChaptersNote({ folder: "D:/x", chapters: 6, chaptersTotal: 6 })).toBe("");
+    expect(missingChaptersNote({ folder: "D:/x", file: "D:/x/a.abook" })).toBe("");
   });
 });
