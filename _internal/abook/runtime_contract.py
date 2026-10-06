@@ -5,7 +5,7 @@ import importlib
 import importlib.metadata
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Iterable
 
 
@@ -356,6 +356,34 @@ def _path_key(path: Path) -> str:
     return os.path.normcase(os.path.normpath(str(path.expanduser().resolve())))
 
 
+def relocated_model_path(value: str | Path, runtime_root: Path | None = None) -> Path:
+    """A model path from a book's locked settings, found on THIS machine.
+
+    Locked settings store absolute paths into the runtime that created the book
+    (`<runtime>/models/whisper`, `<runtime>/models/utmosv2/<checkpoint>`). The book stays the
+    same book when that runtime moves: the folder was renamed (`Ebook Reader` -> `ABook`,
+    2026-09-28), or the project was packed into an `.abookproj` and opened where Studio is
+    installed elsewhere. The stored string is never rewritten - it is part of the settings and
+    policy hashes - only where the file is looked for: the stored path when it exists, else the
+    same path under `models/` of the current runtime when THAT exists. Models are pinned by
+    content (UTMOS by `UTMOS_CHECKPOINT_SHA256`, Whisper by the checksum in its download URL),
+    so finding the file elsewhere cannot change what is loaded. Nothing found: the stored path,
+    and callers fail closed exactly as before.
+    """
+    stored = Path(str(value)).expanduser()
+    if stored.exists():
+        return stored
+    text = str(value)
+    parts = PureWindowsPath(text).parts if ("\\" in text or ":" in text) else Path(text).parts
+    lowered = [part.lower() for part in parts]
+    if "models" not in lowered:
+        return stored
+    index = len(lowered) - 1 - lowered[::-1].index("models")
+    root = runtime_root if runtime_root is not None else Path(os.environ.get("ABOOK_RUNTIME", "runtime"))
+    candidate = root.expanduser().joinpath("models", *parts[index + 1 :])
+    return candidate if candidate.exists() else stored
+
+
 def perceptual_settings_check(
     runtime_root: Path,
     settings: dict[str, Any],
@@ -395,7 +423,7 @@ def perceptual_settings_check(
     ).resolve()
     checkpoint_value = str(perceptual.get("checkpoint_path", "")).strip()
     configured_checkpoint = (
-        Path(checkpoint_value).expanduser().resolve() if checkpoint_value else None
+        relocated_model_path(checkpoint_value, runtime_root).resolve() if checkpoint_value else None
     )
     if configured_checkpoint is None:
         errors.append("perceptual_qa.checkpoint_path is empty")

@@ -11,6 +11,7 @@ from typing import Any, Callable
 import numpy as np
 
 from .io_utils import strip_lone_surrogates
+from .runtime_contract import relocated_model_path
 import soundfile as sf
 
 from .asr_contract import (
@@ -1816,13 +1817,13 @@ class WhisperVerifier:
                 else:
                     raise RuntimeError("CUDA unavailable for Whisper")
             model_name = str(self.settings["model"])
-            download_root = Path(str(self.settings.get("download_root", "models/whisper")))
+            download_root = relocated_model_path(str(self.settings.get("download_root", "models/whisper")))
             model_url = getattr(whisper, "_MODELS", {}).get(model_name)
             expected_model = download_root / str(model_url).rsplit("/", 1)[-1] if model_url else None
             if not self.allow_downloads and expected_model is not None and not expected_model.exists():
                 message = (
                     f"Thiếu Whisper {model_name} trong {download_root}. Job không được tự tải model giữa chừng; "
-                    "hãy chạy ABook trước."
+                    "hãy mở ABook để cài đủ model trước."
                 )
                 self.log(message)
                 if self.settings.get("required", False) or self.settings.get("failure_policy") == "fail":
