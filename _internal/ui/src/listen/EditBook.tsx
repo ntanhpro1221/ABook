@@ -471,6 +471,24 @@ export function useSaveBook(book: ListenBook) {
   return { save, busy, available: Boolean(source.saveBook) };
 }
 
+/** "Chia sẻ…" (điện thoại): gửi file sách của cuốn, kèm thay đổi của người nghe, qua bảng chia sẻ của hệ thống. */
+export function useShareBook(book: ListenBook) {
+  const source = useSource();
+  const [busy, setBusy] = useState(false);
+  const share = async () => {
+    if (!source.shareBook) return;
+    setBusy(true);
+    try {
+      await source.shareBook(book.id);
+    } catch (error) {
+      toast.error("Chưa chia sẻ được sách", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return { share, busy, available: Boolean(source.shareBook) };
+}
+
 type SaveKind = "abook" | "abookproj";
 
 /** "Lưu thành…": chọn loại file. `.abookproj` mang cả xưởng nếu cuốn đến từ một file dự án; không thì là file "chờ dựng xưởng"
@@ -516,7 +534,7 @@ export function SaveAsDialog({
       ) : (
         <p className="mt-3 text-sm text-fg-2">
           Sách nghe mở được bằng ABook trên máy tính và điện thoại, mang theo tên, bìa, tên nhân vật, tên chương, nhạc bạn đã sửa
-          {book.wishes ? `, cùng ${book.wishes} việc đang chờ Studio (chưa làm gì trong giọng đọc)` : ""}.
+          {book.wishes ? `, cùng ${book.wishes} việc đang chờ máy làm sách (chưa làm gì trong giọng đọc)` : ""}.
         </p>
       )}
       {pickFolder && (

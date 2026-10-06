@@ -201,6 +201,7 @@ class TextImportsTest {
         val plain = TextImports.preview(ref)
         assertEquals(1, plain.getJSONArray("chapters").length())
         assertEquals(4, plain.getInt("splitOffer")) // mặc định KHÔNG tách, nhưng cho biết tách sẽ ra bao nhiêu chương
+        assertEquals(3, plain.getInt("splitHeadings")) // nhãn: 3 dòng "Chương N", thêm phần "Mở đầu" thành 4 chương - như Python
         val split = TextImports.preview(ref, splitChapters = true)
         assertEquals(listOf("Mở đầu", "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3"), titles(split))
         assertEquals(4, split.getInt("splitOffer"))
@@ -349,5 +350,25 @@ class TextImportsTest {
         assertNull(TextImports.pagesOf(null))
         val array = JSONArray().put(JSONArray().put("a").put("b")).put(JSONArray())
         assertEquals(listOf(listOf("a", "b"), emptyList()), TextImports.pagesOf(array))
+    }
+
+    @Test
+    fun a_file_sent_from_another_app_goes_to_the_preview_only_when_it_is_a_text_book() {
+        val epub = "application/epub+zip"
+        val docx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        // Tên có đuôi đọc được: theo tên, kể cả khi nơi gửi nói octet-stream (Drive).
+        assertEquals("Truyện.epub", TextImports.incomingName("application/octet-stream", "Truyện.epub"))
+        assertEquals("a.TXT", TextImports.incomingName(null, "a.TXT"))
+        // Tên không có đuôi: theo kiểu nội dung.
+        assertEquals("Truyện.epub", TextImports.incomingName(epub, "Truyện"))
+        assertEquals("Sách.docx", TextImports.incomingName(docx, null))
+        assertEquals("Sách.pdf", TextImports.incomingName("application/pdf", ""))
+        assertEquals("ghi chú.txt", TextImports.incomingName("text/plain; charset=utf-8", "ghi chú"))
+        // File sách của app và loại lạ: đường mở file sách (BookFileImport) như trước.
+        assertNull(TextImports.incomingName("application/vnd.ngdtuanh.abook+zip", "Sách.abook"))
+        assertNull(TextImports.incomingName("text/plain", "Sách.abookproj"))
+        assertNull(TextImports.incomingName("application/octet-stream", "Sách.abook"))
+        assertNull(TextImports.incomingName("application/zip", "nhac.zip"))
+        assertNull(TextImports.incomingName(null, null))
     }
 }

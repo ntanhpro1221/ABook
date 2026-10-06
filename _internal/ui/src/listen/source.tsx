@@ -87,6 +87,8 @@ export interface ListenSource {
   /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file `.abook` mới: máy tính ghi vào thư mục xuất (hay
    *  `folder`), điện thoại hỏi chỗ lưu bằng hộp thoại của hệ thống. `saved: false` khi người dùng bỏ qua. */
   saveBook?(bookId: string, options?: { folder?: string; as?: "abook" | "abookproj" }): Promise<SavedBook>;
+  /** Điện thoại: gửi file sách `.abook` của cuốn (kèm thay đổi của người nghe) qua bảng chia sẻ của hệ thống. */
+  shareBook?(bookId: string): Promise<void>;
   /** Điện thoại: gửi ngay phần sửa của cuốn tải từ máy tính về máy tính (EditsSync.kt); trả trạng thái mới, lỗi thì nói lý do. */
   sendEdits?(bookId: string): Promise<EditsSyncState>;
   /** Hồ sơ nghe (nguồn nào chưa có thì giao diện ẩn đi); mỗi lệnh trả danh sách hồ sơ mới của cuốn. */

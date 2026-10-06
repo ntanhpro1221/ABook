@@ -41,7 +41,7 @@ export function remotePlace(book: ListenBook): string {
 function progressText(book: ListenBook, speaks: boolean, voice: string): string {
   // Sách mới nhập từ EPUB / DOCX / PDF / TXT: có chữ, máy có giọng thì giọng máy đọc (docs/LISTEN_ANYTHING.md mục 1) - cùng lời với trang
   // sách (labels.textBookLine), không ghi "Chỉ có chữ" ngay dưới nút "Nghe ngay".
-  if (book.stage === "text") return `${speaks ? voice || "Giọng máy đọc" : "Chỉ có chữ"} · ${book.chaptersTotal} chương`;
+  if (book.stage === "text") return `${speaks ? voice || "Giọng đọc của máy" : "Chỉ có chữ"} · ${book.chaptersTotal} chương`;
   const chapters = `${book.chaptersAvailable}/${book.chaptersTotal} chương`;
   if (book.progress.finished) return "Đã nghe xong";
   if (book.progress.caughtUp) return `Đã nghe hết phần đã có · ${chapters}`;
@@ -70,7 +70,7 @@ export function usePlayListenBook() {
       return;
     }
     if (full.progress.caughtUp) {
-      toast("Đã nghe hết phần đã có", { description: "Chương tiếp theo sẽ nghe được khi Studio làm xong." });
+      toast("Đã nghe hết phần đã có", { description: "Chương tiếp theo sẽ nghe được khi máy làm xong chương ấy." });
       return;
     }
     const point = resumePoint(full, chapters);
@@ -236,10 +236,10 @@ function UpcomingCard({ book, onOpen }: { book: ListenBook; onOpen?: (book: List
           {book.producing && book.pauseReason
             ? book.pauseReason === "battery"
               ? "Đang tạm dừng · máy đang chạy pin"
-              : "Đang tạm dừng · mở Studio để làm tiếp"
+              : `Đang tạm dừng${onOpen ? " · bấm để làm tiếp" : ""}`
             : book.producing
               ? `Đang làm · ${eta}`
-              : "Chưa có chương nghe được · mở Studio để làm tiếp"}
+              : `Chưa có chương nghe được${onOpen ? " · bấm để làm tiếp" : ""}`}
         </span>
       </span>
     </button>

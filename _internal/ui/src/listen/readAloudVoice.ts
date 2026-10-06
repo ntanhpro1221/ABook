@@ -105,9 +105,9 @@ export function resolveVoice(voices: ReadAloudVoice[], chosen: string): ReadAlou
   return voices.find((voice) => voice.id === chosen) ?? voices.find((voice) => voice.default) ?? voices[0];
 }
 
-/** Giọng đang đọc cuốn này, viết cho người nghe thấy ở Thư viện: "Đức Trí (VieNeu)", "Hoài My (Edge)"; giọng của máy (hay chưa biết) thì "Giọng máy đọc". */
+/** Giọng đang đọc cuốn này, viết cho người nghe thấy ở Thư viện: "Đức Trí (VieNeu)", "Hoài My (Edge)"; giọng của máy (hay chưa biết) thì "Giọng đọc của máy" (như Cài đặt). */
 export function voiceCaption(voice: ReadAloudVoice | undefined): string {
-  if (!voice || voice.provider === "device") return "Giọng máy đọc";
+  if (!voice || voice.provider === "device") return "Giọng đọc của máy";
   if (/\([^)]*\)\s*$/.test(voice.name)) return voice.name;
   const maker = voice.provider === "edge" ? "Edge" : voice.provider === "vieneu" ? "VieNeu" : voice.provider === "supertonic" ? "Supertonic" : KEYED_PROVIDERS[voice.provider];
   return maker ? `${voice.name} (${maker})` : voice.name;
