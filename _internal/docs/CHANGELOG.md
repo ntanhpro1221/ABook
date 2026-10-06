@@ -22,6 +22,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   (“… “…” …”) được tách và gán giọng đúng; "vui lòng" không còn bị hiểu là giọng vui, lời tự giới thiệu ("Tôi, Liz, ...")
   không bị nhầm là đang gọi người khác.
 
+### Cách đọc tên
+
+- Tên viết kiểu nói lắp ("A-Azuma-san") không còn làm dừng cả lượt phân tích sách: cách đọc "A A-du-ma-xan" được
+  khoá như mọi tên khác. Một cách đọc tên nào đó không khoá được thì app ghi cảnh báo và đọc tiếp cuốn, không dừng.
+
 ## [0.4.29] - 2026-10-06
 
 ### Studio
