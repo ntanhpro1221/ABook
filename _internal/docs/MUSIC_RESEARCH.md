@@ -3564,3 +3564,35 @@ của app bị nén - đúng như L3-EST đã thấy; bước sẽ chỉ có ý 
 Kết luận cho app: **không làm (a)+(b) một mình.** Làm cùng (c) khi CS-SEG có số: ranh giới có lý do = cứng + CUE + LLM; đổi bài
 chỉ ở đó; trong cảnh: nối anh em ở điểm kết bài + bước âm lượng. Đo lại bằng `track_changes.py` thêm ranh giới SEG làm lý do
 (cổng giữ nguyên: P >= .70, F1 >= .207, lặp <= 25%, r không xấu đi).
+
+### 06-10 23:4x - Đặc tả gộp, đo trước (`music/track_changes2.py`, CPU): cờ + CUE làm lý do, nối anh em ở điểm kết bài, phạt bài ngắn -> QUA
+
+Ba thay đổi so với b31ebce1:
+- Bài anh em chỉ nối ở điểm kết TỰ NHIÊN của bài: mốc tách đúng ở `duration`, không cắt ở mảnh `length`.
+- `rank` của đoạn đầu cảnh cộng `LEN_PEN x max(0, 1 - độ dài bài / độ dài cảnh)`, với độ dài cảnh kẹp ở 15 phút.
+- Ranh giới có lý do thêm CUE (`seg_scenes.cue_bounds`: tiêu đề phụ, dòng thời gian/địa điểm), chèn vào thành cờ `sceneBreak` trước
+  khi `music_scenes` chia cảnh.
+
+Cách chọn: (z, LEN_PEN) chọn trên 4+5 (lặp <= 25%, ít lần đổi anh em nhất) ra (.8, 1.0); số dưới là trên 5b+6.
+
+| 5b+6 | đổi bài/giờ | P | R | F1 | lặp | anh em/giờ | độ hợp z TB |
+|---|---|---|---|---|---|---|---|
+| TRƯỚC 0.4.31 | 19,8 | .23 | .19 | .207 | 14% | - | - |
+| chỉ cờ, z .8, phạt 1 | 2,6 | .81 | .09 | .159 | 4% | 8,2 | .67 |
+| **cờ+CUE, z .8, phạt 1 (CHÍNH)** | 4,8 | **.70** | .14 | **.236** | **4%** | 5,2 | .65 |
+| cờ+CUE, z .8, không phạt | 4,8 | .70 | .14 | .236 | 4% | 13,7 | .54 |
+| cờ+CUE, không anh em, phạt 1 | 4,8 | .70 | .14 | .236 | 22% | - | .68 |
+
+Kết quả: cổng P >= .70 qua sát nút; F1 .236 >= .207; lặp 4% <= 25%. r âm lượng~T không xấu đi (TRƯỚC phẳng; SAU ~0, vì bước nhỏ).
+**QUA.** Cái giá là độ hợp tâm trạng: z TB .54 lên .65 (trần im lặng MAX_Z là 2,0). Phạt bài ngắn đổi 8,5 lần đổi anh em/giờ lấy
++.11 z. Nếu nghe thấy bài kém hợp thì hạ LEN_PEN xuống .5.
+
+Thêm: Corpus/_full vừa sắp lại thư mục (`truyen/<số>-<tên>`), làm 19/42 đường nguồn trong `results/seg_inputs.json` chết. Đã chạy
+lại `resolve_inputs.py`: lại được 41/42 như trước (thiếu creepypasta 484 như cũ).
+
+**Đặc tả app thay mục 4 của b31ebce1 như sau:**
+1. Luật lặp = nối anh em ở `duration` của bài. Việc này cần `chapter_cues` tách mốc ở điểm kết bài: mốc mới mang `sibling: true`,
+   mờ chéo 6 s. z tới bài đang chơi <= .8, loại bài đã dùng trong chương; không có bài nào thì cho lặp.
+2. `music_select.rank`/`choose` nhận độ dài cảnh có lý do (đoạn đầu + các mảnh `length` nối sau) và cộng phạt bài ngắn (1.0).
+3. CUE vào app thành cờ `sceneBreak`, cùng chỗ với dòng ngắt của 0.4.31: chính là `cue_kind` trong `seg_scenes.py`. LLM (SEG) có
+   số thì đo lại bằng `track_changes2.py`: script tự thêm biến thể "cờ+CUE+LLM" khi có `results/seg_<bộ>_<tag>.jsonl`.
