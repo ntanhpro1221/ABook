@@ -2,7 +2,8 @@ import { Check, Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/shared/media";
-import { Button, Kbd, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { Button, Dialog, Kbd, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { cn } from "@/shared/cn";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences, useVoices } from "@/studio/data";
@@ -19,6 +20,7 @@ import {
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
 import { SupertonicModuleCard, VieneuModuleCard } from "@/listen/VieneuModuleCard";
 import { EXTEND_GESTURE } from "@/listen/extendGesture";
+import { MyMusicSection } from "@/listen/MyMusic";
 import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
@@ -285,6 +287,21 @@ function UpdateSection({ update, current }: { update: { version: string; notes: 
   );
 }
 
+/** Danh sách thành phần bên thứ ba (docs/THIRD_PARTY.md, gói lúc build) trong một hộp - trang Cài đặt không dài thêm. */
+function ThirdPartyButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button className="mt-3" size="sm" variant="secondary" onClick={() => setOpen(true)}>
+        Thành phần bên thứ ba
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen} title="Thành phần bên thứ ba" width="max-w-2xl">
+        <div className="mt-3 max-h-[65vh] select-text overflow-y-auto pr-1">{open && <ThirdPartyList />}</div>
+      </Dialog>
+    </>
+  );
+}
+
 export function SettingsScreen() {
   const { data: info } = useAppInfo();
   const { data: preferences, update } = usePreferences();
@@ -489,6 +506,16 @@ export function SettingsScreen() {
             />
           </Section>
         )}
+        {/* "Nhạc của tôi" trước chỉ mở được từ hộp "Sửa sách" của từng cuốn, dù kho nhạc là chung cho mọi cuốn. */}
+        <Section
+          id="music"
+          title="Nhạc nền"
+          description="Nhạc của riêng bạn làm nhạc nền, dùng chung cho mọi cuốn. Chọn bài cho từng đoạn ở “Sửa sách” của mỗi cuốn."
+        >
+          <div className="max-w-2xl">
+            <MyMusicSection />
+          </div>
+        </Section>
         <Section
           id="phone"
           title="Điện thoại và thiết bị"
@@ -553,6 +580,7 @@ export function SettingsScreen() {
             Mã nguồn mở, giấy phép MIT: <span className="font-medium text-fg">github.com/ntanhpro1221/ABook</span> - bản mới,
             ứng dụng Android và ghi chú từng bản ở mục Releases.
           </p>
+          <ThirdPartyButton />
         </Section>
       </div>
     </div>

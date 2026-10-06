@@ -933,6 +933,16 @@ class LibraryPlugin : Plugin() {
     }
 
     @PluginMethod
+    fun moveRecord(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        val to = call.getString("book").orEmpty()
+        val change = { Store.moveRecord(id, call.getString("record")!!, to) }
+        // Cuốn nhận đang nạp trong trình phát: cũng qua Playback - lưu chỗ của hồ sơ đang dùng ở đó trước, rồi theo sang hồ
+        // sơ vừa chuyển tới (không thì lần lưu kế ghi chỗ của cuốn ấy đè lên hồ sơ vừa tới).
+        resolveRecords(call, if (Playback.bookId == to) switching(to, change) else switching(id, change))
+    }
+
+    @PluginMethod
     fun deleteRecord(call: PluginCall) = background(call) {
         val id = call.getString("id")!!
         resolveRecords(call, switching(id) { Store.deleteRecord(id, call.getString("record")!!) })

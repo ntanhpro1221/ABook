@@ -399,6 +399,25 @@ object Store {
         return records(bookId)
     }
 
+    /** Gắn hồ sơ của cuốn `bookId` sang cuốn `toBook` (vd. bản làm lại của cùng truyện), thành hồ sơ đang dùng ở đó - chỗ
+     *  nghe, dấu trang đi theo (như webui/listening.py move_record). Trả các hồ sơ còn lại của `bookId`. */
+    @Synchronized
+    fun moveRecord(bookId: String, record: String, toBook: String): JSONArray {
+        val book = recordsBook()
+        val links = book.getJSONObject("links")
+        val list = links.optJSONObject(bookId)?.optJSONArray("records") ?: JSONArray()
+        require(book.getJSONObject("records").has(record) && (0 until list.length()).any { list.optString(it) == record }) {
+            "Không có hồ sơ nghe này"
+        }
+        require(toBook.isNotEmpty() && toBook != bookId) { "Chọn một cuốn khác" }
+        unlink(links, bookId, record)
+        val link = links.optJSONObject(toBook) ?: JSONObject().put("records", JSONArray()).put("activeAt", 0.0)
+        addRecord(link, record)
+        links.put(toBook, link.put("active", record))
+        saveRecords(book)
+        return records(bookId)
+    }
+
     /** Liên kết hồ sơ của cuốn mở từ file sang mã máy tính khi hai bên nhận ra là một cuốn (adopt). */
     private fun moveLinks(from: String, to: String) {
         val book = recordsBook()
