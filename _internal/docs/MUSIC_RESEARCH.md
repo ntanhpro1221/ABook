@@ -3369,3 +3369,28 @@ Sau 76aa32e9 (nhãn câu app không có hình dạng: 0,280 so với phẳng 0,2
 - **Sửa ghi trước (23:2x, TRƯỚC khi tính bất kỳ số nào):** alpha = 1 là sai thang. Phương sai độ lệch trong chương chỉ ~0,01-0,05,
   nên alpha 1 ép mọi hệ số về ~0. Đổi thành **alpha = 0,001** (cùng thang: XᵀWX/Σw + alpha·I), tức phạt nhẹ chỉ để ổn định khi các
   nguồn tương quan nhau. Mọi điều khác giữ nguyên.
+
+### 06-10 23:4x - Kết quả L3-EST (ghi trước 33953738 + ca75b94a): KHÔNG THẮNG (r V 0,27 < 0,40)
+Bỏ-một-truyện; 42 chương; báo 23 chương 5b+6. Đường phẳng 0,283. Mã: Corpus research/music/l3_est.py.
+
+| cách | MAE trong chương | r V | r T | hệ số V / T |
+|---|---|---|---|---|
+| **CHÍNH: 4 nguồn** | **0,247** | **0,27** | **0,44** | V: P2 −0,05, P0 +0,22, LoRA +0,56, app +0,36 / T: P2 +0,78, P0 +0,37, LoRA +0,15, app +0,09 -> KHÔNG THẮNG |
+| 3 nguồn LLM (bỏ app) | 0,246 | 0,28 | 0,44 | |
+| chỉ P2 | 0,256 | 0,27 | 0,37 | giãn V 0,87, T 1,41 |
+| chỉ MLX base_P0 | 0,258 | 0,52* | 0,46* | |
+| chỉ LoRA | 0,260 | 0,25 | 0,35 | |
+| chỉ nhãn app | 0,280 | 0,10 | 0,10 | |
+| đường phẳng | 0,283 | - | - | |
+| người A-B | 0,153 | 0,76-0,85 | | |
+
+\* base_P0 trả V hằng (thường 0) cho mọi khúc ở 16/23 chương. r 0,52 chỉ tính trên 7 chương còn lại; tính chương phẳng là r = 0
+thì V 0,16, T 0,40. Các dòng khác có biến thiên ở 23/23 chương.
+
+Đọc:
+1. Gộp nguồn qua MAE (0,247 <= 0,256) và r T (0,44), trượt r V (0,27). Hình dạng T đọc được phần nào; hình dạng V thì các LLM 4B hiện
+   có gần như không đọc được.
+2. Phần thắng so với đường phẳng chỉ 0,036. Khoảng cách tới người (0,153) gần như nguyên: 0,094 trên 0,130.
+3. Nhãn app gần như vô dụng một mình (r 0,10), nhưng vẫn nhận hệ số V +0,36 khi gộp: nó mang một ít tín hiệu bổ sung.
+4. Hệ quả: lớp 3 cần một model đọc hình dạng V tốt hơn (L3-PAIR so cặp / L3-3B có neo), không thể có chỉ bằng gộp đầu ra sẵn có.
+   Ranh giới cảnh đúng hơn (CS-SEG) cũng ảnh hưởng: mọi khúc ở đây là khúc app, mà ranh giới khúc app chỉ ngang ngẫu nhiên.
