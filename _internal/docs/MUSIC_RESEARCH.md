@@ -4149,3 +4149,30 @@ Lệnh: `chapter_level.py confirm set7`, công thức cố định docs fff35839
 
 **THẮNG:** MAE .233 <= .35. Công thức chính hơn cả hai mốc. Phần lớn nhờ trục T: P0 hiệu chỉnh cho r .86 và MAE .191.
 Trục V còn yếu (r .49), V chỉ nhỉnh hơn hằng 0 một chút. Mức chương bộ 7 đã xác nhận công thức V = C0 hc, T = P0 hc.
+
+### 07-10 06:5x - CL-APPLY: áp mức chương vào app thế nào (luật chọn viết trong mã trước khi chạy, đóng băng Corpus 458113b)
+CL đã xác nhận ở dạng HẰNG: mọi câu trong chương nhận cùng một mức. Đưa nguyên vào app thì nhạc phẳng cả chương.
+App hôm nay lấy V/T từng đoạn từ P0 (`music_moods.py`, đã chạy sau pha phân tích). Đo thêm dạng DỜI:
+`L_a + k·(p_a − TB thời lượng p_a trong chương)`, với L_a là mức chương. Dạng này giữ hình của nguồn p trong chương và dời
+mức về L_a.
+
+Luật chọn: MAE nhỏ nhất trên gộp 4/5/5b/6; nếu hoà (±.002) thì lấy k nhỏ hơn.
+
+| MAE (V, T) | 4+5 | 5b+6 | gộp 4-6 | **bộ 7 (xác nhận)** |
+|---|---|---|---|---|
+| app hôm nay (P0 từng đoạn) | .450 | .423 | .435 | .419 |
+| nhãn câu (đường lùi) | .403 | .429 | .418 | .334 |
+| hằng 0 | .442 | .462 | .453 | .352 |
+| hằng (CL) | .361 | .348 | .354 | .233 |
+| dời k=.25, P0 | .346 | .330 | .337 | .232 |
+| **dời k=.5, P0 (chọn)** | .337 | .322 | **.329** | **.234** |
+| dời k=1, P0 | .348 | .330 | .338 | .275 |
+| dời k=.5, nhãn | .352 | .346 | .349 | .235 |
+
+Chọn **dời k = .5, hình lấy từ P0**: tốt nhất ở cả hai nửa bộ học.
+- Bộ 7 QUA: .234 <= .35, và thấp hơn app hôm nay (.419) 44%.
+- Ở bộ 7 phần hình không thêm gì so với dạng hằng (.233), nhưng không làm hại. Phần hình giữ cho nhạc còn biến đổi trong
+  chương. Dạng k = 1 (giữ nguyên hình P0) thì kém hẳn, vì P0 khuếch đại dao động trong chương.
+- Phần lớn mức lợi là sửa MỨC: P0 thô chấm T cao hơn đáp án khoảng .5. Hằng FIXED T có b = −0,49.
+
+Đặc tả cài: `Corpus/research/music/SPEC_chapter_level.md`.
