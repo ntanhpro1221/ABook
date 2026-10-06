@@ -28,6 +28,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   Nghe ngay (máy tính và điện thoại) cũng vậy: ở dòng ngăn cảnh, trình phát im 1,5 giây thay vì đi tiếp ngay.
   Một dấu "*" hay "-" đứng riêng một đoạn cũng được tính là ngăn cảnh.
 
+### Nhạc nền
+
+- Nhạc nền đổi bài khi truyện đổi cảnh, không còn cứ vài phút lại đổi: ở dòng ngăn cảnh, tiêu đề, tiêu đề phụ ("Góc nhìn
+  của…", "【…】") hay câu chuyển thời gian / nơi chốn ("Trong khi đó…", "Vài giờ sau…"). Trong một cảnh dài, bài đang chơi
+  chơi tiếp; hết bài thì chuyển êm sang một bài cùng không khí đúng lúc bài kết thúc, và máy ưu tiên bài đủ dài cho cả
+  cảnh, nên ít phải nghe lại một bài. Trong cảnh, nhạc nhích to hay nhỏ dần theo độ căng của truyện. Sách xuất ra mang
+  theo các thay đổi ấy, nghe trên máy tính hay điện thoại đều như nhau.
+- Nghe trên máy tính: một bài nhạc không tải được (mất mạng) thì 5 phút sau máy tự thử lại như trên
+  điện thoại, không còn im đến khi sang đoạn khác.
+
 ## [0.4.30] - 2026-10-07
 
 ### Studio
