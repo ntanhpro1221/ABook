@@ -7,7 +7,10 @@ lẫn lộn đến đâu (độ lệch chuẩn của đoạn, của bài, thêm 
 - phạt khác PHONG CÁCH của cuốn (nếu đã chọn: cổ phong, giao hưởng, piano...);
 - phạt bài ít hợp làm nền (giai điệu nổi), bài quá ngắn để lặp;
 - phạt bài vừa dùng ở mấy đoạn trước - không lặp mãi một bài;
+- phạt bài ngắn hơn cảnh (phải lặp nhiều vòng);
 - hai đoạn liền nhau chọn trúng cùng bài thì nhạc chơi liền, không bắt đầu lại.
+Bài chỉ đổi ở ranh giới có lý do (đầu chương, dòng ngăn cảnh, dấu hiệu đổi cảnh, đổi không khí); mảnh chia đều của một đoạn
+dài chơi tiếp bài của cảnh, bài hết vòng thì nối sang bài anh em (xem `choose`).
 Không bài nào đủ gần (MAX_Z) thì đoạn ấy IM LẶNG - im lặng tốt hơn nhạc sai không khí. Hoà điểm thì chọn tất định theo mã
 sách: làm lại vẫn ra đúng bài cũ.
 Khi cả đoạn lẫn bài có 13 cường độ cảm xúc (Lớp 2), độ giống nhau (cosine) được trừ khỏi điểm: nó chỉ xếp hạng các bài đã qua
@@ -45,6 +48,18 @@ RECENT_SCENES = 3
 MIN_TRACK_SECONDS = 60
 WEAK_MOOD = 0.2                 # đoạn không có không khí rõ (ít câu có cảm xúc) ...
 CALM_TARGET = (0.15, -0.55)     # ... thì nhạc nền nhẹ, êm - nhạc mặc định bật (chủ sách 01-10)
+# Đổi bài chỉ ở ranh giới CÓ LÝ DO (docs/MUSIC_RESEARCH.md 06-10, đo bằng music/track_changes2.py): mảnh `reason="length"`
+# (chia đều đoạn dài) chơi tiếp bài của đoạn trước; trong một cảnh, bài hết thì nối sang bài ANH EM (gần bài đang chơi) đúng ở
+# điểm kết tự nhiên của nó; bài cho đầu cảnh bị phạt nếu ngắn hơn cảnh (phải lặp nhiều vòng).
+SIBLING_Z = 0.8                  # z_distance tối đa từ bài anh em tới bài đang chơi (chọn trên bộ 4+5)
+SHORT_TRACK_PENALTY = 1.0        # x (1 - độ dài bài / độ dài cảnh): phạt bài ngắn hơn cảnh
+SCENE_LENGTH_CAP = 900.0         # độ dài cảnh tính phạt kẹp ở 15 phút
+HEAD_CANDIDATES = 30             # số bài xếp hạng xét phạt bài ngắn cho đầu cảnh
+SIBLING_CANDIDATES = 50
+# Bước âm lượng trong cảnh: mảnh nối tiếp nhích nhạc theo tension của nó so với đầu cảnh; bước sát bước trước thì giữ mức cũ.
+STEP_DB_PER_TENSION = 6.0
+STEP_MAX_DB = 3.0
+STEP_HOLD_SECONDS = 40.0
 
 
 def _tiebreak(book_key: str, link: str) -> float:
@@ -135,49 +150,162 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
            book_key: str, family: str | None = None, pins: dict[str, str] | None = None,
            banned: Iterable[str] = (), genre_styles: dict[str, float] | None = None,
            keep: dict[str, str | None] | None = None,
-           available: Callable[[str], bool] | None = None) -> list[dict[str, Any]]:
+           available: Callable[[str], bool] | None = None, silenced: Iterable[str] = (),
+           track_info: Callable[[str], dict[str, Any] | None] | None = None) -> list[dict[str, Any]]:
     """Mỗi đoạn kèm `link` (None = im lặng), `distance`, `pinned`. `pins`: {khoá đoạn: link} người dùng ghim
-    (khoá = `scene_key`); `banned`: link người dùng đã bỏ (không chọn lại cho cuốn này).
+    (khoá = `scene_key`); `banned`: link người dùng đã bỏ (không chọn lại cho cuốn này); `silenced`: khoá các đoạn người
+    dùng để im lặng (`silenced: True`).
     `keep`: {khoá đoạn: link đã chọn trước đó (None = đoạn đã im lặng)} - như ghim "mềm": đoạn nào có trong `keep` giữ
     nguyên bài cũ (không tính là ghim), trừ khi bài ấy đã bị bỏ thì chọn lại. Người dùng sửa MỘT đoạn / MỘT bài thì các
     đoạn khác không được đổi bài theo chỉ vì phạt "vừa dùng" lan dọc cuốn.
     `available(link)`: bài có dùng được TRÊN MÁY NÀY không (đã có trong bộ đệm hay tải được) - bài không dùng được thì không
     chọn, đoạn lấy bài hợp nhất kế tiếp thay vì im lặng. Bài ghim vẫn là lựa chọn của người dùng (ghim không bị xoá) nhưng
-    lần dựng này đoạn ấy chọn theo xếp hạng và có `pinUnavailable`. None = bài nào cũng dùng được."""
+    lần dựng này đoạn ấy chọn theo xếp hạng và có `pinUnavailable`. None = bài nào cũng dùng được.
+
+    Đổi bài chỉ ở ranh giới có lý do: mảnh `reason="length"` cùng chương, sau một đoạn đang có nhạc, CHƠI TIẾP bài ấy
+    (`continued: True`, `stepDb` = bước âm lượng so với đầu cảnh) - ghim và im lặng của người dùng vẫn thắng, `keep` thì
+    không (mảnh nối tiếp đi theo đầu cảnh). Đầu cảnh chọn bài bằng `rank` cộng phạt bài ngắn hơn cảnh. Trong cảnh, bài chơi
+    hết một vòng thì nối sang bài anh em (`SIBLING_Z`, chưa dùng trong chương): `siblings` = [{at (giây trong chương), link}];
+    không có thì bài lặp. `track_info(link)`: thông tin bài (độ dài, không khí) cho bài ghim / giữ không qua `rank`."""
     pins = pins or {}
     keep = keep or {}
     banned = set(banned)
+    silenced = set(silenced)
+    known: dict[str, dict[str, Any] | None] = {}
 
     def usable(link: str | None) -> bool:
         return link is None or available is None or available(link)
 
+    def info(link: str) -> dict[str, Any] | None:
+        if link not in known:
+            known[link] = track_info(link) if track_info is not None else None
+        return known[link]
+
+    def ranked(scene: dict[str, Any], **extra: Any) -> list[dict[str, Any]]:
+        found = rank(scene, candidates_near, book_key=book_key, family=family, banned=banned, genre_styles=genre_styles,
+                     recent=recent, available=available, **extra)
+        for track in found:
+            known.setdefault(track["link"], track)
+        return found
+
+    def duration(link: str) -> float:
+        return float((info(link) or {}).get("duration") or 0.0)
+
+    heads = scene_heads(scenes)
+    lengths: dict[int, float] = {}
+    for index, head in enumerate(heads):
+        lengths[head] = lengths.get(head, 0.0) + _seconds(scenes[index])
+
     chosen: list[dict[str, Any]] = []
     recent: list[str] = []
-    for scene in scenes:
+    used: set[str] = set()
+    playing: str | None = None   # bài đang kêu ở cuối mảnh trước (kể cả bài anh em vừa nối)
+    position = 0.0               # giây đã chơi của bài ấy
+    head_tension = 0.0
+    for index, scene in enumerate(scenes):
+        if index == 0 or scene.get("chapterId") != scenes[index - 1].get("chapterId"):
+            used, playing, position = set(), None, 0.0
         key = scene_key(scene)
         result = dict(scene, key=key, pinned=False)
         pin_down = key in pins and not usable(pins[key])
+        follows = heads[index] != index and playing is not None
         if key in pins and not pin_down:
             result.update(link=pins[key], pinned=True, distance=None)
+        elif key in silenced:
+            result.update(link=None, distance=None, silenced=True)
+        elif follows:
+            result.update(link=playing, distance=None, continued=True)
         elif key in keep and keep[key] not in banned and usable(keep[key]):
             result.update(link=keep[key], distance=None)
-            if pin_down:
-                result["pinUnavailable"] = True
         else:
-            # Cùng một cách xếp hạng với "Đổi bài" (`rank`): bài máy chọn luôn là bài đầu danh sách gợi ý.
-            best = rank(scene, candidates_near, book_key=book_key, family=family, banned=banned,
-                        genre_styles=genre_styles, recent=recent, limit=1, available=available)
-            if pin_down:
-                result["pinUnavailable"] = True
-            if best:
-                result.update(link=best[0]["link"], distance=best[0]["score"])
-            else:
-                result.update(link=None, distance=None)
-        # Đoạn kề chọn trúng bài đang chơi: chơi tiếp, không phải bài "mới" (không tính là lặp).
-        if result["link"] and (not recent or recent[-1] != result["link"]):
-            recent.append(result["link"])
+            # Cùng một cách xếp hạng với "Đổi bài" (`rank`); đầu cảnh thêm phạt bài ngắn hơn cảnh.
+            want = min(lengths[heads[index]], SCENE_LENGTH_CAP)
+            best = min(ranked(scene, limit=HEAD_CANDIDATES), default=None,
+                       key=lambda track: track["score"] + SHORT_TRACK_PENALTY * _shortfall(track, want))
+            result.update(link=best["link"] if best else None, distance=best["score"] if best else None)
+        if pin_down:
+            result["pinUnavailable"] = True
+        link = result["link"]
+        if result.get("continued"):
+            tension = float(scene.get("tension") or 0.0)
+            result["stepDb"] = max(-STEP_MAX_DB, min(STEP_MAX_DB, STEP_DB_PER_TENSION * (tension - head_tension)))
+        else:
+            if link != playing:
+                playing, position = link, 0.0
+            head_tension = float(scene.get("tension") or 0.0)
+        # Bài chạy qua mảnh này theo thời gian: hết một vòng thì nối bài anh em, không có thì lặp.
+        length, elapsed = _seconds(scene), 0.0
+        siblings: list[dict[str, Any]] = []
+        while playing and length - elapsed > 1e-9:
+            track_seconds = duration(playing) or math.inf
+            step = min(length - elapsed, track_seconds - position)
+            position, elapsed = position + step, elapsed + step
+            if position < track_seconds - 1e-9:
+                continue
+            sibling = _sibling(info(playing), ranked(scene, exclude=used | {playing}, limit=SIBLING_CANDIDATES))
+            position = 0.0
+            if sibling:
+                playing = sibling
+                used.add(sibling)
+                siblings.append({"at": round(float(scene.get("start") or 0.0) + elapsed, 3), "link": sibling})
+        if siblings:
+            result["siblings"] = siblings
+        if link:
+            used.add(link)
+            # Đoạn kề chọn trúng bài đang chơi: chơi tiếp, không phải bài "mới" (không tính là lặp).
+            if not recent or recent[-1] != link:
+                recent.append(link)
         chosen.append(result)
+    _hold_steps(chosen)
     return chosen
+
+
+def scene_heads(scenes: list[dict[str, Any]]) -> list[int]:
+    """Với mỗi đoạn: vị trí đoạn ĐẦU CẢNH của nó - chính nó nếu mở bằng ranh giới có lý do (mọi `reason` trừ "length") hay là
+    đoạn đầu chương; mảnh `length` thuộc cảnh của đoạn trước."""
+    heads: list[int] = []
+    for index, scene in enumerate(scenes):
+        same_chapter = index > 0 and scene.get("chapterId") == scenes[index - 1].get("chapterId")
+        heads.append(heads[index - 1] if same_chapter and scene.get("reason") == "length" else index)
+    return heads
+
+
+def _seconds(scene: dict[str, Any]) -> float:
+    try:
+        return max(0.0, float(scene["end"]) - float(scene["start"]))
+    except (KeyError, TypeError, ValueError):
+        return 0.0
+
+
+def _shortfall(track: dict[str, Any], want: float) -> float:
+    """Phần cảnh (độ dài `want`) mà bài không phủ nổi trong một vòng: 0 nếu bài dài hơn cảnh hay không biết độ dài."""
+    if want <= 0:
+        return 0.0
+    length = float(track.get("duration") or 0.0) or want
+    return max(0.0, 1.0 - length / want)
+
+
+def _sibling(current: dict[str, Any] | None, candidates: list[dict[str, Any]]) -> str | None:
+    """Bài anh em của bài đang chơi: bài đầu tiên (theo xếp hạng cho mảnh này) cách bài ấy không quá SIBLING_Z."""
+    if not current or current.get("valence") is None or current.get("arousal") is None:
+        return None
+    target = (float(current["valence"]), float(current["arousal"]), float(current.get("tension") or 0.0))
+    return next((track["link"] for track in candidates if z_distance(track, target) <= SIBLING_Z), None)
+
+
+def _hold_steps(chosen: list[dict[str, Any]]) -> None:
+    """Bước âm lượng cách bước trước (trong cùng cảnh) chưa đủ STEP_HOLD_SECONDS thì giữ mức trước; đầu cảnh về 0."""
+    last_at, last_db = -math.inf, 0.0
+    for scene in chosen:
+        start = float(scene.get("start") or 0.0)
+        if not scene.get("continued"):
+            last_at, last_db = start, 0.0
+            continue
+        if start - last_at < STEP_HOLD_SECONDS:
+            scene["stepDb"] = last_db
+        elif scene["stepDb"] != last_db:
+            last_at, last_db = start, scene["stepDb"]
+        scene["stepDb"] = round(scene["stepDb"], 2)
 
 
 def rank(scene: dict[str, Any], candidates_near: Callable[[float, float], Iterable[dict[str, Any]]], *, book_key: str,

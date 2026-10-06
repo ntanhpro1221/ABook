@@ -121,17 +121,20 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
         scenes = music_scenes.book_scenes(book_scripts(project_root), moods["scenes"] if moods else None)
     genres = (taxonomy or {}).get("genres") or {}
     genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
+    known: dict[str, dict[str, Any]] = {}
     if keep:
-        usable = lookup(sorted({link for link in keep.values() if link}))
-        keep = {key: link for key, link in keep.items() if link is None or link in usable}
+        known = lookup(sorted({link for link in keep.values() if link}))
+        keep = {key: link for key, link in keep.items() if link is None or link in known}
+
+    def track_info(link: str) -> dict[str, Any] | None:
+        return known[link] if link in known else lookup([link]).get(link)
+
     chosen = music_select.choose(scenes, candidates_near, book_key=book_key or project_root.name,
                                  family=overrides["family"], pins=overrides["pins"], banned=overrides["banned"],
-                                 genre_styles=genre_styles, keep=keep, available=available)
-    silenced = set(overrides["silenced"])
-    for scene in chosen:
-        if scene["key"] in silenced:
-            scene.update(link=None, silenced=True)
-    links = sorted({scene["link"] for scene in chosen if scene.get("link")})
+                                 genre_styles=genre_styles, keep=keep, available=available,
+                                 silenced=overrides["silenced"], track_info=track_info)
+    links = sorted({link for scene in chosen for link in [scene.get("link")]
+                    + [sibling["link"] for sibling in scene.get("siblings") or []] if link})
     tracks = lookup(links) if links else {}
     plan = {
         "version": PLAN_VERSION,
@@ -151,7 +154,8 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
 # Thông tin bài ghi vào plan["tracks"] (ghi công, độ to) - bài thay thế tạm lúc phát cũng mang đúng bộ này.
 TRACK_INFO_KEYS = ("title", "creator", "license", "licenseUrl", "attribution", "duration", "source", "landing", "lufs",
                    "speechBand")
-CHOICE_FIELDS = ("key", "link", "distance", "pinned", "silenced", "pinUnavailable")  # phần `choose` / `build` gắn thêm cho từng đoạn
+# phần `choose` / `build` gắn thêm cho từng đoạn
+CHOICE_FIELDS = ("key", "link", "distance", "pinned", "silenced", "pinUnavailable", "continued", "stepDb", "siblings")
 
 
 def scenes_of(plan: dict[str, Any] | None) -> list[dict[str, Any]] | None:
@@ -181,18 +185,32 @@ def read_plan(project_root: Path) -> dict[str, Any] | None:
 
 def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
     """Nhạc của một chương cho trình phát: [{start, end, link, key}] theo thời gian trong MP3 chương (đoạn im lặng thì
-    không có). Hai đoạn liền nhau cùng bài gộp làm một - bài chơi liền, không bắt đầu lại."""
+    không có). Hai đoạn liền nhau cùng bài gộp làm một - bài chơi liền, không bắt đầu lại.
+    Bài anh em nối trong cảnh (`siblings` của đoạn, music_select.choose) tách mốc đúng ở điểm kết bài: mốc mới mang
+    `sibling: True` (trình phát mờ chéo dài hơn, không nghe như đổi cảnh). Bước âm lượng của các mảnh nối tiếp (`stepDb`) thành
+    `steps: [{at, db}]` của mốc - mức (dB, cộng vào `gainDb`) từ giây `at` của chương; mốc bắt đầu ở mức khác 0 thì có bước
+    ngay ở `start`."""
     if not plan.get("enabled"):
         return []
     cues: list[dict[str, Any]] = []
     for scene in plan.get("scenes") or []:
         if scene.get("chapterId") != chapter_id or not scene.get("link"):
             continue
-        if cues and cues[-1]["link"] == scene["link"] and abs(cues[-1]["end"] - float(scene["start"])) < 5:
-            cues[-1]["end"] = float(scene["end"])
-            continue
-        cues.append({"start": float(scene["start"]), "end": float(scene["end"]), "link": scene["link"],
-                     "key": scene["key"]})
+        level = float(scene.get("stepDb") or 0.0)
+        spans = [(float(scene["start"]), scene["link"], False)]
+        spans += [(float(sibling["at"]), sibling["link"], True) for sibling in scene.get("siblings") or []]
+        for index, (start, link, sibling) in enumerate(spans):
+            end = spans[index + 1][0] if index + 1 < len(spans) else float(scene["end"])
+            if cues and cues[-1]["link"] == link and abs(cues[-1]["end"] - start) < 5:
+                cue = cues[-1]
+                cue["end"] = end
+            else:
+                cue = {"start": start, "end": end, "link": link, "key": scene["key"]}
+                if sibling:
+                    cue["sibling"] = True
+                cues.append(cue)
+            if level != (cue["steps"][-1]["db"] if cue.get("steps") else 0.0):
+                cue.setdefault("steps", []).append({"at": round(start, 3), "db": level})
     return cues
 
 
@@ -383,7 +401,8 @@ def package(project_root: Path, chapter_ids: Iterable[int],
                         tracks[name][key] = round(value, 2)
             kept.append({"start": round(cue["start"], 3), "end": round(cue["end"], 3), "track": name,
                          "gainDb": cue_gain_db(level_db, _number(tracks[name].get("lufs")),
-                                               _number(tracks[name].get("speechBand")))})
+                                               _number(tracks[name].get("speechBand"))),
+                         **_cue_shape(cue)})
         if kept:
             chapters[str(chapter_id)] = kept
     if not chapters:
@@ -450,5 +469,21 @@ def packaged_cues(music: dict[str, Any] | None, chapter_id: int) -> list[dict[st
         item = {"start": start, "end": end, "link": tracks[track].get("link") or track, "key": track, "track": track}
         if _number(cue.get("gainDb")) is not None:
             item["gainDb"] = float(cue["gainDb"])
+        item.update(_cue_shape(cue))
         out.append(item)
+    return out
+
+
+def _cue_shape(cue: dict[str, Any]) -> dict[str, Any]:
+    """Phần hình dạng của một mốc ngoài bài và độ to: `sibling` (nối bài anh em trong cảnh) và `steps` (bước âm lượng
+    [{at, db}], `at` tăng dần) - chỉ khoá nào có, bước hỏng bị bỏ. Một chỗ cho gói sách (`package`) lẫn sách đã đóng gói
+    (`packaged_cues`)."""
+    out: dict[str, Any] = {}
+    if cue.get("sibling") is True:
+        out["sibling"] = True
+    raw = cue.get("steps") if isinstance(cue.get("steps"), list) else []
+    steps = [{"at": round(float(step["at"]), 3), "db": round(float(step["db"]), 2)} for step in raw
+             if isinstance(step, dict) and _number(step.get("at")) is not None and _number(step.get("db")) is not None]
+    if steps:
+        out["steps"] = sorted(steps, key=lambda step: step["at"])
     return out

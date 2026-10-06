@@ -52,7 +52,7 @@ older apps still open it.
 | Version | Adds |
 |---|---|
 | 1 | the layout above without `music/` and without part folders |
-| 2 | background music: the `music` object of `book.json` (`levelDb`, `tracks`, and per chapter the cue list `chapters[<chapterId>]` of `{start, end, track, gainDb}`) and the `music/<sha1>.<ext>` entries |
+| 2 | background music: the `music` object of `book.json` (`levelDb`, `tracks`, and per chapter the cue list `chapters[<chapterId>]` of `{start, end, track, gainDb}`, optionally with `steps` = `[{at, db}]`, volume steps inside a scene: from chapter second `at` the cue plays at `gainDb + db` (still capped at 0 dB), and `sibling: true` = the cue takes over from the previous track at its natural end inside the same scene, with a 6 s crossfade) and the `music/<sha1>.<ext>` entries |
 | 3 | a whole series in one file: parts, nested chapter paths and a series-wide chapter id scheme, described next |
 | 4 | the listener's edit layer: `edits.json` and `edits/cover.jpg`, described after version 3. Only written when the listener changed something; an unedited book stays at version 1-3 |
 | 5 | chapters that have only text: `texts/<n>.txt` entries and `chapters[i].state` / `chapters[i].text`, described after version 4. A book without a single audio chapter is valid. Only written when a chapter has text; an ordinary audiobook stays at version 1-4 |
