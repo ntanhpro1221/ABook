@@ -3814,3 +3814,28 @@ BOX_LINES 12, BOX_SHARE .5, STATUS + HEADER như trên.
   2. F1 (ii) >= F1 X − .01;
   3. số ranh giới bị bỏ trùng đáp án <= 10% số bị bỏ.
 - Qua thì Lead cài vào text_processing (nhận hộp trước khi gắn `scene_break`; sửa luôn quãng nghỉ 1,5 s), đo lại bằng `verify_app_x.py`.
+
+### 07-10 07:3x - SỬA GHI TRƯỚC bộ 8 (trước khi chọn truyện): đo ở mức RANH GIỚI trên câu trơn, không cần GPU
+
+Lead hỏi bộ 8 có cần khe phân tích 6 giờ không. Đổi bài cần nhãn cảm xúc từng câu (pha phân tích GPU), nhưng (ii) chỉ đổi TẬP ranh
+giới. Vậy đo thẳng ranh giới có lý do của `music_scenes.chapter_scenes` (đầu đoạn reason != length), trên câu TRƠN của
+`text_processing.segment_chapter_text`: cờ `scene_break` của app, không nhãn cảm xúc, thời lượng theo số ký tự. `frame_box.py bounds`
+trên ba bộ cũ (câu đã có, bỏ nhãn):
+
+| mức ranh giới, câu trơn | 4+5 | 5b+6 | bộ 7 |
+|---|---|---|---|
+| X: ranh giới/giờ · P · F1 · sai/giờ | 4,9 · .82 · .266 · 0,9 | 4,5 · .64 · .205 · 1,6 | 7,5 · .39 · .289 · 4,6 |
+| (i) <= 8 câu | 4,8 · .81 · .256 · 0,9 | 4,0 · .68 · .197 · 1,3 | 5,5 · .54 · .321 · 2,5 |
+| (ii) hộp theo nội dung | 4,9 · .82 · .266 · 0,9 | 4,3 · .67 · .206 · 1,4 | 5,5 · .54 · .321 · 2,5 |
+
+Cùng bức tranh với mức đổi bài. Bỏ nhãn làm 15-20% chương đổi ranh giới, vì gộp đoạn ngắn chọn phía theo không khí. Hai vế so sánh
+đều chịu điều đó như nhau.
+
+**Ghi trước bộ 8, thay mục 07:0x:**
+- Đo = mức ranh giới trên câu trơn (`frame_box.py bounds`, cách tính như bảng trên). Đáp án cảnh chấm trên chính các câu ấy (id = seq).
+- (ii) QUA khi cả ba đều đúng:
+  1. sai/giờ (ii) <= 0,8 x X;
+  2. F1 (ii) >= F1 X − .01;
+  3. ranh giới bị bỏ trùng đáp án <= 10% số bị bỏ.
+- Điều kiện chọn truyện giữ nguyên.
+- Không cần GPU. Lớp mức chương / L2 trên bộ 8 thì xin khe phân tích sau, xếp sau hàng model phân tích.
