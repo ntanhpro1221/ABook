@@ -267,20 +267,24 @@ def known_ids() -> set[str]:
     return ids
 
 
-# Thứ tự tải: truyện người dịch trước (LN Nhật/Hàn - trọng số cao nhất của bộ phân tích), rồi AI dịch, rồi sáng tác.
-FETCH_ORDER = [(kind, status) for kind in KINDS for status in ("hoanthanh", "dangtienhanh", "tamngung")]
+STATUSES = ("hoanthanh", "dangtienhanh", "tamngung")
 
 
-def fetch_all(workers: int, pause: float, max_pages: int) -> None:
+def fetch_all(workers: int, pause: float, max_pages: int, kinds: tuple[str, ...] = KINDS, skip_ids: Path | None = None) -> None:
     """Đi hết các trang danh sách Hako, tải CẢ BỘ mọi truyện chưa có trong `_full`. Chạy lại = làm tiếp.
 
     Mỗi bộ xong ghi một dòng vào `_full/_fetch_log.tsv`; `STOP_FILE` có mặt thì dừng sau bộ đang tải.
+    Thứ tự mặc định: người dịch trước (LN Nhật/Hàn - trọng số cao nhất của bộ phân tích), rồi AI dịch, rồi sáng tác.
+    Hai máy chia việc bằng `kinds` (06-10: máy nhà truyendich, Mac convert + sangtac); `skip_ids` = số truyện
+    máy kia đã có (`known-ids` của máy ấy), để không tải trùng những bộ đã nằm trong kho chính.
     """
     sources = Sources()
     have = known_ids()
+    if skip_ids:
+        have |= set(skip_ids.read_text(encoding="utf-8").split())
     log = FULL / "_fetch_log.tsv"
     fetched = 0
-    for kind, status in FETCH_ORDER:
+    for kind, status in [(kind, status) for kind in kinds for status in STATUSES]:
         for page in range(1, max_pages + 1):
             tree = html.fromstring(sources.get(f"/danh-sach?{kind}=1&{status}=1&sapxep=top&page={page}"))
             paths = [urlparse(a.get("href")).path for a in tree.xpath('//div[contains(@class,"series-title")]/a')]
@@ -325,11 +329,26 @@ def main(argv: list[str] | None = None) -> int:
     f.add_argument("--workers", type=int, default=6)
     f.add_argument("--pause", type=float, default=5.0, help="giây nghỉ giữa hai bộ")
     f.add_argument("--max-pages", type=int, default=1000)
+    f.add_argument("--kinds", default=",".join(KINDS), help="loại danh sách, cách nhau dấu phẩy: " + ",".join(KINDS))
+    f.add_argument("--out", type=Path, help="thư mục bộ đầy đủ (mặc định Corpus/_full) - máy khác ngoài máy nhà")
+    f.add_argument("--skip-ids", type=Path, help="file số truyện (mỗi dòng một số) đã có ở máy khác")
+    sub.add_parser("known-ids", help="in số truyện đã có trong _full, mỗi dòng một số")
     args = parser.parse_args(argv)
+    global FULL, STOP_FILE
+    if getattr(args, "out", None):
+        FULL = args.out
+        STOP_FILE = FULL / "STOP_FETCH"
     if args.command == "survey":
         survey(args.pages, args.sort, args.kind, args.status)
     elif args.command == "fetch-all":
-        fetch_all(args.workers, args.pause, args.max_pages)
+        kinds = tuple(kind for kind in args.kinds.split(",") if kind)
+        unknown = set(kinds) - set(KINDS)
+        if unknown:
+            parser.error(f"loại không có: {sorted(unknown)}")
+        FULL.mkdir(parents=True, exist_ok=True)
+        fetch_all(args.workers, args.pause, args.max_pages, kinds, args.skip_ids)
+    elif args.command == "known-ids":
+        print("\n".join(sorted(known_ids(), key=int)))
     else:
         download(args.path, args.title, args.workers)
     return 0
