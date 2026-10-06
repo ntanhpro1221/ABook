@@ -1123,12 +1123,15 @@ def download(path: str, title: str | None, workers: int, manager=None, info: dic
     try:
         info = info or series_info(manager, path)
         name = title or info["title"]
-        # Bộ đã có trong kho (kể cả 161 bộ chuyển từ Tools với tên ngắn, vd "Arafoo Kenja") thì tải tiếp VÀO thư mục ấy,
-        # nhận theo số truyện trong `path`/`url` - chọn theo tên Hako sẽ tải lại cả bộ sang thư mục mới.
-        folder = folder_of_series(path) or FULL / folder_name(name)
-        existing = read_json(folder / "metadata.json").get("path") or read_json(folder / "metadata.json").get("url")
-        if existing and series_id(existing) != series_id(path):  # trùng tên với bộ khác: không trộn chương
-            folder = FULL / folder_name(f"{name} [{series_id(path)}]")
+        # Tên thư mục = link truyện (chủ sách 06-10): "truyen-259-toi-la-nhen-thi-sao", "ai-dich-...", "sang-tac-...".
+        # Bộ đã có trong kho dưới tên khác (bộ chuyển từ Tools, vd "Kumo Desu ga"; hay Hako đổi đuôi tên) được nhận theo
+        # số truyện rồi ĐỔI TÊN sang link hiện tại - không bao giờ hai thư mục cho một bộ.
+        folder = FULL / series_folder(path)
+        if not folder.exists():
+            old = folder_of_series(path)
+            if old is not None:
+                LOGGER.info("%s -> %s", old.name, folder.name)
+                os.replace(old, folder)
         folder.mkdir(parents=True, exist_ok=True)
         result = download_chapters(path, folder, info["chapters"], workers, manager)
         chapters = result.get("chapters", [])
@@ -1183,6 +1186,14 @@ def series_id(path_or_url: str) -> str:
     if not found:
         return ""
     return found.group(2) if found.group(1) == "truyen" else f"{found.group(1)}:{found.group(2)}"
+
+
+def series_folder(path_or_url: str) -> str:
+    """Tên thư mục của bộ: phần link sau tên miền, "/" thành "-". Số truyện ở trong tên nên hai bộ không thể trùng."""
+    found = re.search(r"/(truyen|ai-dich|sang-tac)/(\d+[^/?#]*)", path_or_url)
+    if not found:
+        raise ValueError(f"không phải link truyện Hako: {path_or_url}")
+    return folder_name(f"{found.group(1)}-{found.group(2)}")
 
 
 def folder_of_series(path: str) -> Path | None:
