@@ -2848,3 +2848,19 @@ Bộ 6 (ghi lại): P0 +.242, P2 +.239. Nhận xét SAU KHI THẤY SỐ (không 
 T kém P0; ghép V của P2 + T của P0 sẽ ra ~+.32 - đây là phép chọn sau dữ liệu, chỉ được kiểm bằng lượt đo ghi trước
 khác (prompt mốc trên Ollama đang chờ trong hàng GPU). Học LoRA: ~37 phút / 100 bước -> 1.540 bước xong ~19:15,
 lượt lora1_P2 xong ~19:35 06-10. Luật CHÍNH giữ nguyên như ghi trước (lora1_P2 so base_P0, +0,05 và >= 16/22).
+
+### 06-10 10:5x - Essentia so CLAP ở lớp cảm xúc bài (ghi lại, KHÔNG ghi trước; `LLM_Train/music/compare_essentia.py`)
+
+Câu hỏi: đầu dò cảm xúc trên CLAP (đang dùng, Apache-2.0) có thua bộ mã hoá nhạc chuyên dụng không? Cùng 1.270 bài
+Incompetech có feel người gắn và có Essentia; cùng logistic C=1, cùng 5 phần kiểm chéo (seed 7). AUC trung bình 10 lớp:
+
+| đặc trưng | AUC TB | ghi chú |
+|---|---|---|
+| đầu dò CLAP 512 chiều | **.848** | thắng cả 10 lớp |
+| đầu dò Discogs-EffNet 1.280 chiều (Essentia, NC) | .797 | |
+| đầu mood/theme MTG có sẵn của Essentia (zero-shot theo bảng tag) | .762 | |
+| đầu V/A DEAM của Essentia | .605 | arousal ngược hướng với fear/wonder |
+| ghép CLAP + EffNet | .862 | +.014, nhưng NC - không ship |
+
+Kết luận: không có lý do đổi bộ mã hoá vì Essentia; Essentia giữ vai chỉ để so. Dè dặt: EffNet chưa chỉnh C (1.280 chiều,
+1.270 bài - có thể quá khớp); nhãn chỉ của một nhà soạn (Kevin MacLeod).
