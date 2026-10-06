@@ -36,7 +36,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Dòng chỉ có ký hiệu ngăn cảnh trong truyện ("***", "◆", "———", "~~~") giờ là chỗ nghỉ thật: sách nói dừng khoảng 1,5 giây
   khi đổi cảnh thay vì nghỉ ngắn như hết một câu, và nhạc nền đổi đoạn đúng chỗ ấy. Chữ của truyện không bị đổi.
-  Nghe ngay (máy tính và điện thoại) cũng vậy: dòng ngăn cảnh không bị đọc to ("sao sao sao") mà thành 1,5 giây im lặng.
+  Nghe ngay (máy tính và điện thoại) cũng vậy: ở dòng ngăn cảnh, trình phát im 1,5 giây thay vì đi tiếp ngay.
   Một dấu "*" hay "-" đứng riêng một đoạn cũng được tính là ngăn cảnh.
 
 ## [0.4.29] - 2026-10-06
