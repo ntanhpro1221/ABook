@@ -1907,7 +1907,7 @@ class App:
 
     def remote_send(self, device: str, body: dict[str, Any]) -> dict[str, Any]:
         try:
-            command = remote_command(body)
+            command = remote_command(body, cast=self.cast.owns(device))
         except ValueError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         if self.cast.owns(device):
