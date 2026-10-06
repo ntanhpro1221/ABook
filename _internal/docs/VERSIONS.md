@@ -135,6 +135,34 @@ Chấm giữa chừng, không cần đợi xong:
 
 ---
 
+### Cùng request, khác đầu ra: model phân tích phụ thuộc request ĐI TRƯỚC (2026-10-07)
+
+Đợt đo gold 5 (16 chương, 11 truyện) so 0.4.30 với 0.4.28 thấy một chương có 36 câu thoại của nhân vật có tên bị
+gán thành vô danh ở 0.4.30, còn 0.4.28 không câu nào. Truy ra: tách đoạn giống hệt, 26/28 lô đầu giống từng byte,
+lệch đầu tiên ở lô 29 (hai đoạn trượt người nói + cảm xúc một nhịp) rồi lan qua khối "Các đoạn ngay trước".
+Dựng lại request của lô ấy ở cả hai cây mã (chặn trước khi gọi model): **giống hệt từng byte**, cùng seed.
+
+Phát lại đúng request ấy 6 lần trên Ollama 0.33.2 (`LLM_Train/resume_determinism/ab_cache.py`, điều kiện G):
+
+| request đi trước | người nói 5 đoạn | số lần |
+|---|---|---|
+| khởi động lại máy chủ | A / B / NARRATOR / **B / A** | 2/2 |
+| một request lạ | A / B / NARRATOR / **B / A** | 2/2 |
+| lô liền trước (cùng vai, tái dùng tiền tố trong prompt cache) | A / B / NARRATOR / **A / B** | 2/2 |
+
+Đầu ra **tất định theo trạng thái bộ đệm prompt**, không theo mã: phần tiền tố được tái dùng làm đổi token sinh ra
+dù nhiệt độ 0,1 và seed cố định. Lần đo 0.4.30 còn ra bản thứ ba (giữa hai lô có lượt critic nên bộ đệm lại khác).
+
+Hệ quả:
+- Hai lượt đo cùng model khác lịch sử request lệch nhau theo từng chương (đợt 5: 8/16 chương lệch, mỗi chương tới
+  10-17 điểm người nói chặt vì một lần lệch nhịp lan cả chương). So phiên bản chỉ đọc theo khoảng tin cậy gộp theo
+  truyện, không đọc một chương.
+- Cùng họ với hiện tượng "dừng giữa pha phân tích là đổi quyển sách" ở AGENTS.md: không chỉ resume, mà bất kỳ thứ gì
+  chen vào hàng request (máy chủ khởi động lại, một model khác chạy xen) cũng đổi đầu ra.
+- Nâng Ollama không phải lối ra: changelog 0.33.3 -> 0.35.1 không sửa prompt cache / KV / seed (Lead đọc 07-10).
+  Các cách ghim (tắt bộ đệm RAM, keep_alive 0, request "mồi" cố định trước mỗi lô) đang đo trong cùng file; kết luận
+  ghi vào `resume_determinism/AB.md` rồi chép về đây.
+
 ---
 
 ## v0.2.0-lo02 — 27/30, và **không chương nào** hỏng ở tầng QA chương
