@@ -41,7 +41,8 @@ export interface MusicCredit {
 export const MUSIC_CHANGED_EVENT = "abook:music-changed";
 
 type BedAudio = Pick<HTMLAudioElement, "play" | "pause" | "paused" | "volume" | "loop" | "currentTime" | "duration"> & {
-  addEventListener(type: "loadedmetadata", listener: () => void, options?: { once?: boolean }): void;
+  /** `error`: bài không tải được (mất mạng, máy chủ không phát được). */
+  addEventListener(type: "loadedmetadata" | "error", listener: () => void, options?: { once?: boolean }): void;
   /** Bài không lặp (bài cũ khi nối bài anh em) đã chơi hết: không phát lại. */
   readonly ended?: boolean;
 };
@@ -58,6 +59,8 @@ const FADE_SECONDS = 2;
 export const SIBLING_FADE_SECONDS = 6;
 export const STEP_RAMP_SECONDS = 4;
 const STEP_MS = 50;
+/** Bài tải hỏng (mất mạng): đoạn của nó im lặng, chừng ấy sau mới thử lại - như RETRY_MS của MusicBed.kt. */
+export const RETRY_MS = 5 * 60_000;
 
 function cueAt(cues: MusicCue[], seconds: number): MusicCue | null {
   return cues.find((cue) => seconds >= cue.start && seconds < cue.end) ?? null;
@@ -98,11 +101,13 @@ export class MusicBed {
   private lastTime = 0;
   private listeners = new Set<(link: string | null) => void>();
   private announced: string | null = null;
+  // Bài không phát được (`link` của mốc) -> lúc được thử lại (Date.now()); tải được thì xoá.
+  private failed = new Map<string, number>();
 
   setCues(cues: MusicCue[], levelDb: number): void {
     this.cues = cues;
     this.gain = Math.pow(10, levelDb / 20);
-    this.switchTo(cueAt(this.cues, this.lastTime), this.lastTime);
+    this.switchTo(this.playableAt(this.lastTime), this.lastTime);
   }
 
   setVolume(volume: number): void {
@@ -114,7 +119,8 @@ export class MusicBed {
   sync(seconds: number, playing: boolean, seeked = false): void {
     this.lastTime = seconds;
     this.playing = playing;
-    const cue = cueAt(this.cues, seconds);
+    // Mốc của bài vừa tải hỏng tính như khoảng không nhạc; tới hạn thử lại thì lần đồng bộ này vào bài như mốc mới.
+    const cue = this.playableAt(seconds);
     const current = this.current?.cue;
     // Mốc anh em có thể cùng khoá đoạn với mốc trước (nối giữa một đoạn): phân biệt bằng cả giây bắt đầu.
     if (cue?.key !== current?.key || cue?.start !== current?.start || (seeked && cue)) {
@@ -144,6 +150,28 @@ export class MusicBed {
     this.current = null;
     this.fading = [];
     this.cues = [];
+    this.failed.clear();
+    this.emitActive();
+  }
+
+  /** Mốc tại giây `seconds`, trừ khi bài của nó đang chờ thử lại; bài đã tới hạn thì bỏ khỏi danh sách hỏng. */
+  private playableAt(seconds: number): MusicCue | null {
+    const cue = cueAt(this.cues, seconds);
+    if (!cue) return null;
+    const retryAt = this.failed.get(cue.link);
+    if (retryAt === undefined) return cue;
+    if (retryAt > Date.now()) return null;
+    this.failed.delete(cue.link);
+    return cue;
+  }
+
+  /** Bài `audio` của mốc `cue` không tải được: đoạn của nó im lặng, RETRY_MS sau mới thử lại. */
+  private drop(cue: MusicCue, audio: BedAudio): void {
+    this.failed.set(cue.link, Date.now() + RETRY_MS);
+    audio.pause();
+    this.fading = this.fading.filter((other) => other !== audio);
+    if (this.current?.audio !== audio) return;
+    this.current = null;
     this.emitActive();
   }
 
@@ -202,8 +230,10 @@ export class MusicBed {
       audio.loop = true;
       audio.volume = 0;
       audio.addEventListener("loadedmetadata", () => {
+        this.failed.delete(cue.link);
         if (audio.duration > 0) audio.currentTime = Math.max(0, seconds - cue.start) % audio.duration;
       }, { once: true });
+      audio.addEventListener("error", () => this.drop(cue, audio), { once: true });
       const goal = this.target(cue);
       this.current = { cue, audio, goal, perTick: (goal * STEP_MS) / 1000 / fadeSeconds, entering: true };
       if (this.playing) void audio.play().catch(() => undefined);

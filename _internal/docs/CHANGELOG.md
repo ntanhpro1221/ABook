@@ -49,6 +49,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   chơi tiếp; hết bài thì chuyển êm sang một bài cùng không khí đúng lúc bài kết thúc, và máy ưu tiên bài đủ dài cho cả
   cảnh, nên ít phải nghe lại một bài. Trong cảnh, nhạc nhích to hay nhỏ dần theo độ căng của truyện. Sách xuất ra mang
   theo các thay đổi ấy, nghe trên máy tính hay điện thoại đều như nhau.
+- Nghe trên máy tính: một bài nhạc không tải được (mất mạng) thì 5 phút sau máy tự thử lại như trên
+  điện thoại, không còn im đến khi sang đoạn khác.
 
 ## [0.4.29] - 2026-10-06
 
