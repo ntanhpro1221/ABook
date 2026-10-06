@@ -3839,3 +3839,19 @@ Cùng bức tranh với mức đổi bài. Bỏ nhãn làm 15-20% chương đổ
   3. ranh giới bị bỏ trùng đáp án <= 10% số bị bỏ.
 - Điều kiện chọn truyện giữ nguyên.
 - Không cần GPU. Lớp mức chương / L2 trên bộ 8 thì xin khe phân tích sau, xếp sau hàng model phân tích.
+
+### 07-10 08:0x - BỘ 8 chọn xong, 2 người chấm mù đang chạy
+
+- Chọn bằng `research/music/select_set8.py`, hạt 20261010, nguồn `_full/truyen` (Hako), loại mọi truyện đã dùng.
+- **Lệch ghi trước rồi sửa (trước khi có đáp án):** lần chạy đầu lỡ dùng tiêu chí cấu trúc (>= 5 cặp dòng ngắt cách nhau <= 12 dòng)
+  thay cho `box_lines` >= 5 hộp như đã ghi. Nó chọn Isekai Kenkokuki, mà "khung" là một sơ đồ trận đánh vẽ bằng ký tự. Đã bỏ và chạy
+  lại đúng ghi trước, cùng hạt.
+- Toàn kho chỉ có **2 truyện đạt >= 5 hộp** trong 5 chương rải đều (788 truyện 0 hộp). Lỗi khung hộp hiếm; (ii) chủ yếu là sửa đúng
+  cho số ít truyện kiểu hệ thống/diễn đàn.
+- Bộ 8:
+  - KHUNG: Diễn Đàn Bóc Phốt Tại Dị Giới, 8 hộp. Đây là bài đăng diễn đàn (`[Tiêu đề: …]`, `Người đăng: …`) kẹp giữa `◇ ◇ ◇`, ca khó
+    thật: bài đăng có thể đúng là cảnh xen, đáp án mù sẽ quyết.
+  - Thường: Quên tắt stream…; Virus Girlfriend; Ushiro no Seki no Gal…
+  - Tổng 20 chương, 333 KB.
+- Câu = `segment_chapter_text` (`research/music/export_set8.py`, id = seq). Người chấm chỉ thấy `seq<TAB>chữ`, không thấy cờ.
+- Đề PROMPT_A/B như bộ 7: A xuôi, B ngược, cấm đọc cờ/segments.
