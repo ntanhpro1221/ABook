@@ -36,9 +36,16 @@ object ReadAloud {
     /** Gắn vào MediaItem của một đoạn: chương (vị trí trong danh sách chương), đoạn, độ to của giọng đã đọc. `segment` -1 = không dùng. */
     class Slot(val chapterIndex: Int, val segment: Int, val gainDb: Double)
 
-    private class Chap(val index: Int, val paragraphs: List<String>) {
-        val timeline = VirtualTimeline(IntArray(paragraphs.size) { paragraphs[it].length })
+    private class Chap(val index: Int, val parsed: List<Paragraphs.Paragraph>) {
+        val paragraphs: List<String> = parsed.map { it.text }
+        /** Quãng lặng (ms) của từng dòng ngăn cảnh ([Paragraphs.sceneBreakGaps]); đoạn thường 0. */
+        val gaps: IntArray = Paragraphs.sceneBreakGaps(parsed)
+        // Dòng ngăn cảnh có độ dài cố định ngay từ đầu (lặng, không đọc): quãng lặng, hay 0 nếu không đáng (đầu / cuối chương, dòng thứ hai liền nhau).
+        val timeline = VirtualTimeline(IntArray(paragraphs.size) { paragraphs[it].length }).also { line ->
+            parsed.forEachIndexed { i, paragraph -> if (paragraph.sceneBreak) line.setDuration(i, gaps[i].toLong()) }
+        }
         val clips = arrayOfNulls<Clip>(paragraphs.size)
+        fun isBreak(segment: Int): Boolean = parsed[segment].sceneBreak
     }
 
     /** Chỗ cần phát mà chưa có đoạn âm thanh để đặt vào ExoPlayer: đang chờ đọc. `word` >= 0 thắng `offsetMs` (bắt đầu đúng chữ ấy). */
@@ -356,7 +363,7 @@ object ReadAloud {
         if (!chapter.isText) return null
         return try {
             val text = Store.file(Playback.bookId, chapter.text).readText(Charsets.UTF_8)
-            Chap(index, Paragraphs.of(Paragraphs.withoutLines(text, skipOf(Store.manifest(Playback.bookId), chapter.id)))).also {
+            Chap(index, Paragraphs.split(Paragraphs.withoutLines(text, skipOf(Store.manifest(Playback.bookId), chapter.id)))).also {
                 fromCache(it, originOf(Playback.bookId))
                 chaps[index] = it
             }
@@ -459,6 +466,8 @@ object ReadAloud {
                 fail("Không đọc được chữ của chương “${chapter.title}”")
                 return
             }
+            // Dòng ngăn cảnh không có quãng lặng (đầu / cuối chương, dòng thứ hai liền nhau) không phải là gì để phát: bỏ qua cả chuỗi mà không tốn vòng của `guard`.
+            while (feedSegment < chap.paragraphs.size && chap.isBreak(feedSegment) && chap.gaps[feedSegment] == 0) feedSegment += 1
             if (feedSegment >= chap.paragraphs.size) {
                 if (feedChapter + 1 >= all.size) {
                     if (waiting != null) fail("Chương “${chapter.title}” không có chữ để đọc")
@@ -470,9 +479,50 @@ object ReadAloud {
                 feedSegment = 0
                 continue
             }
+            if (chap.isBreak(feedSegment)) {
+                feedBreak(chap, feedSegment)
+                continue
+            }
             startJob(chap, feedSegment)
             return
         }
+    }
+
+    /**
+     * Dòng ngăn cảnh ("***"): không đọc, không gửi giọng nào. Có quãng lặng thì đặt một file WAV im lặng dài đúng quãng ấy vào hàng đợi như một đoạn âm thanh
+     * (đồng hồ ảo, tua, lưu vị trí, hẹn giờ chạy y như đoạn khác; tốc độ nghe nhanh thì lặng cũng ngắn lại); không có (đầu / cuối chương, dòng thứ hai liền nhau) hay
+     * không ghi được file thì bỏ qua như không có.
+     */
+    private fun feedBreak(chap: Chap, segment: Int) {
+        val gap = chap.gaps[segment]
+        val clip = if (gap > 0) silenceClip(gap.toLong()) else null
+        // Dời chỗ nạp TRƯỚC khi đặt vào ExoPlayer (như onClipReady): setMediaItems báo đổi mục ngay trong lúc gọi, pump lồng vào không được thấy đoạn này là "đoạn kế".
+        feedSegment = segment + 1
+        if (clip == null) {
+            chap.timeline.setDuration(segment, 0)
+            return
+        }
+        chap.clips[segment] = clip
+        val target = waiting
+        deliver(listOf(clipItem(chap, segment, clip)), if (target != null) SeekPlan.offsetIn(clip, target.word, target.offsetMs) else 0L)
+        notifyScript(chap)
+        Playback.emit("state")
+    }
+
+    private fun silenceClip(ms: Long): Clip? {
+        val dir = context?.cacheDir?.let { File(it, "readaloud-silence") } ?: return null
+        return runCatching {
+            dir.mkdirs()
+            val file = File(dir, "silence-$ms.wav")
+            if (!file.isFile) {
+                // Ghi ra file tạm rồi đổi tên: máy tắt giữa chừng không để lại file cụt mà lần sau cứ phát.
+                val part = File(dir, "silence-$ms.part")
+                Wav.silence(part, ms)
+                part.renameTo(file)
+            }
+            check(file.isFile) { "không ghi được file lặng" }
+            Clip(file, ms, emptyList(), "silence")
+        }.getOrNull()
     }
 
     private fun appendAudioRun(all: List<Playback.Chapter>) {
@@ -737,7 +787,7 @@ object ReadAloud {
      */
     private fun fromCache(chap: Chap, origin: String?) {
         val cache = runCatching { cache() }.getOrNull() ?: return
-        for (i in chap.paragraphs.indices) cache.get(voiceId, chap.paragraphs[i], origin)?.let {
+        for (i in chap.paragraphs.indices) if (!chap.isBreak(i)) cache.get(voiceId, chap.paragraphs[i], origin)?.let {
             chap.clips[i] = it
             chap.timeline.setDuration(i, it.durationMs)
         }
@@ -745,24 +795,28 @@ object ReadAloud {
 
     /** Chương của một cuốn không đang nạp: chữ từ gói sách, mốc từ bộ nhớ đệm (nếu đoạn đã từng được đọc bằng giọng đang chọn). */
     private fun peek(bookId: String, chapterId: Int): Chap? =
-        textChapters(bookId, listOf(chapterId))[chapterId]?.let { Chap(-1, it.second).also { chap -> fromCache(chap, originOf(bookId)) } }
+        parsedChapters(bookId, listOf(chapterId))[chapterId]?.let { Chap(-1, it.second).also { chap -> fromCache(chap, originOf(bookId)) } }
 
     /**
      * Các chương chỉ-có-chữ `ids` của một cuốn trên máy: mã -> (tên chương người nghe thấy, các đoạn đúng như lúc nghe). Chương không có chữ hay không đọc được
      * thì không có trong kết quả. Không cần cuốn đang nạp ("Làm trước" chạy cả khi app đã đóng).
      */
-    fun textChapters(bookId: String, ids: List<Int>): Map<Int, Pair<String, List<String>>> {
+    fun textChapters(bookId: String, ids: List<Int>): Map<Int, Pair<String, List<String>>> =
+        parsedChapters(bookId, ids).mapValues { (_, chapter) -> chapter.first to chapter.second.filter { !it.sceneBreak }.map { it.text } }
+
+    /** Như [textChapters] nhưng giữ cả dòng ngăn cảnh (trình phát chỉ lặng ở đó): "Làm trước" không đọc chúng nên không đếm. */
+    private fun parsedChapters(bookId: String, ids: List<Int>): Map<Int, Pair<String, List<Paragraphs.Paragraph>>> {
         val manifest = runCatching { Store.manifest(bookId) }.getOrNull()
         val array = manifest?.optJSONArray("chapters") ?: return emptyMap()
         val wanted = ids.toSet()
-        val out = HashMap<Int, Pair<String, List<String>>>()
+        val out = HashMap<Int, Pair<String, List<Paragraphs.Paragraph>>>()
         for (chapter in (0 until array.length()).map { array.getJSONObject(it) }) {
             val id = chapter.optInt("id")
             if (id !in wanted) continue
             val entry = chapter.optString("text").takeIf { it.startsWith("texts/") } ?: continue
             // Các dòng người nghe đã bỏ khỏi phần đọc (khoá `skip`) cũng bỏ ở đây: đoạn phải chia đúng như lúc nghe.
             val paragraphs = runCatching {
-                Paragraphs.of(Paragraphs.withoutLines(Store.file(bookId, entry).readText(Charsets.UTF_8), skipOf(manifest, id)))
+                Paragraphs.split(Paragraphs.withoutLines(Store.file(bookId, entry).readText(Charsets.UTF_8), skipOf(manifest, id)))
             }.getOrNull() ?: continue
             out[id] = chapter.optString("title") to paragraphs
         }

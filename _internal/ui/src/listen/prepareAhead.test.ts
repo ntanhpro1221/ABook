@@ -27,6 +27,9 @@ describe("Làm trước", () => {
     expect(texts).toEqual(["Đoạn một.", "Đoạn hai."]);
     const skipped = await paragraphsFor([{ ...chapter(2), skip: ["Dịch: A"] }], async () => "Dịch: A\n\nĐoạn một.");
     expect(skipped).toEqual(["Đoạn một."]);
+    // Dòng ngăn cảnh trình phát chỉ lặng, không đọc: không làm trước.
+    const scene = await paragraphsFor([chapter(2)], async () => "Đoạn một.\n\n* * *\n\n◆\n\nĐoạn hai.");
+    expect(scene).toEqual(["Đoạn một.", "Đoạn hai."]);
   });
 
   it("nói thời gian bằng lời", () => {

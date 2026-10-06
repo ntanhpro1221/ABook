@@ -136,6 +136,8 @@ describe("ước tính và đồng hồ ảo", () => {
     expect(estimateSeconds("x".repeat(140))).toBe(10);
     expect(estimateSeconds("Ừ.")).toBeGreaterThan(0);
     expect(estimatedStarts([{ text: "x".repeat(28) }, { text: "—" }, { text: "y".repeat(14) }])).toEqual([0, 2, 2]);
+    // dòng ngăn cảnh chiếm quãng lặng 1,5 s (chỉ khi có đoạn đọc được ở cả hai bên)
+    expect(estimatedStarts([{ text: "x".repeat(14) }, { text: "* * *" }, { text: "y".repeat(14) }, { text: "◆" }])).toEqual([0, 1, 2.5, 3.5]);
   });
 
   it("nạp xong thì tổng thời lượng là tổng các đoạn ước và kịch bản có mốc", async () => {
@@ -378,8 +380,8 @@ describe("nghe dở và lỗi", () => {
     expect(again.published.at(-1)!.segments[1].words).toEqual(timed.segments[1].words);
   });
 
-  it("đoạn không có chữ được bỏ qua", async () => {
-    const s = setup({ chapter: "Một hai.\n\n* * *\n\nBa bốn." });
+  it("đoạn không có chữ mà không phải ngăn cảnh ('...') được bỏ qua, không lặng", async () => {
+    const s = setup({ chapter: "Một hai.\n\n...\n\nBa bốn." });
     s.engine.load(s.trackInfo, 0, true);
     await flush();
     expect(s.requests.map((r) => r.text)).toEqual(["Một hai.", "Ba bốn."]);
@@ -452,6 +454,136 @@ describe("nghe dở và lỗi", () => {
     expect(audioOf(s, TEXTS[1])!.released).toBe(true);
     expect(s.requests.length).toBe(requested + 2); // đoạn 2 và 3 được xin lại (đoạn 4 chưa từng xin)
     expect(s.published.at(-1)!.segments[1].words).toBeUndefined();
+  });
+});
+
+describe("dòng ngăn cảnh: quãng lặng 1,5 giây", () => {
+  const CHAPTER_WITH_BREAK = "Một hai.\n\n* * *\n\nBa bốn.";
+
+  /** Nạp chương có dòng ngăn cảnh, đủ clip, đang nghe đoạn đầu (1 s), đồng hồ giả. */
+  async function playing(chapter = CHAPTER_WITH_BREAK) {
+    const s = setup({ chapter });
+    s.engine.load(s.trackInfo, 0, true);
+    await vi.advanceTimersByTimeAsync(0);
+    s.requests.forEach((r) => r.resolve());
+    await vi.advanceTimersByTimeAsync(0);
+    return s;
+  }
+
+  it("is an item of 1.5 s with no clip and no voice request, between the two clips", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = await playing();
+      expect(s.requests.map((r) => r.text)).toEqual(["Một hai.", "Ba bốn."]);
+      expect(s.engine.duration).toBeCloseTo(1 + 1.5 + 1, 6);
+      const script = s.published.at(-1)!;
+      expect(script.segments.map((segment) => [segment.text, segment.start, segment.end])).toEqual([
+        ["Một hai.", 0, 1],
+        ["* * *", 1, 2.5],
+        ["Ba bốn.", 2.5, 3.5],
+      ]);
+      expect(script.segments[1].words).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stays silent for 1.5 s, then plays the next paragraph; the clock runs through it", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = await playing();
+      audioOf(s, "Một hai.")!.finish();
+      expect(audioOf(s, "Ba bốn.")!.plays).toBe(0);
+      expect(s.engine.paused).toBe(false);
+      expect(s.engine.time).toBeCloseTo(1, 6);
+      await vi.advanceTimersByTimeAsync(700);
+      expect(s.engine.time).toBeCloseTo(1.7, 1);
+      expect(audioOf(s, "Ba bốn.")!.plays).toBe(0);
+      await vi.advanceTimersByTimeAsync(900);
+      expect(audioOf(s, "Ba bốn.")!.plays).toBe(1);
+      expect(s.engine.time).toBeCloseTo(2.5, 1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps its place when paused in the silence and finishes the rest of it on play", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = await playing();
+      audioOf(s, "Một hai.")!.finish();
+      await vi.advanceTimersByTimeAsync(1000);
+      s.engine.pause();
+      const at = s.engine.time;
+      expect(at).toBeCloseTo(2, 1);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(s.engine.time).toBe(at);
+      expect(audioOf(s, "Ba bốn.")!.plays).toBe(0);
+      s.engine.play();
+      await vi.advanceTimersByTimeAsync(300);
+      expect(audioOf(s, "Ba bốn.")!.plays).toBe(0);
+      await vi.advanceTimersByTimeAsync(300);
+      expect(audioOf(s, "Ba bốn.")!.plays).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("runs faster at a faster listening rate, like every other paragraph", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = await playing();
+      s.engine.setRate(2);
+      audioOf(s, "Một hai.")!.finish();
+      await vi.advanceTimersByTimeAsync(700);
+      expect(audioOf(s, "Ba bốn.")!.plays).toBe(0);
+      await vi.advanceTimersByTimeAsync(100);
+      expect(audioOf(s, "Ba bốn.")!.plays).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("seeking into it, or past it, stops the silence and plays from there", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = await playing();
+      audioOf(s, "Một hai.")!.finish();
+      await vi.advanceTimersByTimeAsync(500);
+      s.engine.seek(3);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(audioOf(s, "Ba bốn.")!.plays).toBe(1);
+      expect(audioOf(s, "Ba bốn.")!.currentTime).toBeCloseTo(0.5, 6);
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(s.events.filter((name) => name === "ended")).toHaveLength(0);
+      s.engine.seek(1.75); // lặng ở nửa chừng
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.engine.time).toBeCloseTo(1.75, 1);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(audioOf(s, "Ba bốn.")!.plays).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("is not played at the start or end of the chapter, nor twice for repeated lines", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = await playing("***\n\nMột hai.\n\n***");
+      expect(s.requests.map((r) => r.text)).toEqual(["Một hai."]);
+      expect(s.engine.duration).toBeCloseTo(1, 6);
+      audioOf(s, "Một hai.")!.finish();
+      expect(s.engine.ended).toBe(true);
+      const t = await playing("Một hai.\n\n***\n\n***\n\nBa bốn.");
+      expect(t.engine.duration).toBeCloseTo(3.5, 6);
+      // một dấu "*" đứng riêng một đoạn cũng là ngăn cảnh; "—" một mình (lời thoại im lặng) thì không
+      const lone = await playing("Một hai.\n\n*\n\nBa bốn.");
+      expect(lone.engine.duration).toBeCloseTo(3.5, 6);
+      const dash = await playing("Một hai.\n\n—\n\nBa bốn.");
+      expect(dash.engine.duration).toBeCloseTo(2, 6);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
