@@ -403,8 +403,10 @@ MIXED_AFFECT_BRIDGE_PATTERN = re.compile(
     r")\s*$",
     flags=re.IGNORECASE,
 )
+# "vui lòng" là công thức lịch sự ("Cô vui lòng rời khỏi đây được không?"), không phải niềm vui: lời từ chối lạnh lùng từng
+# bị ép happy (thầy gán nhãn 06-10).
 HAPPY_EVIDENCE_PATTERN = re.compile(
-    r"\b(?:vui\s+mừng(?:\s+rỡ)?|vui(?:\s+vẻ|\s+sướng)?|mừng(?:\s+rỡ)?|"
+    r"\b(?:vui\s+mừng(?:\s+rỡ)?|vui(?:\s+vẻ|\s+sướng|(?!\s+lòng))|mừng(?:\s+rỡ)?|"
     r"hạnh\s+phúc|hân\s+hoan|"
     r"nhẹ\s+nhõm|sung\s+sướng|khoái\s+chí|"
     rf"{ANALYSIS_ACTIVE_PRIDE_CUE_FRAGMENT})\b",
@@ -1457,6 +1459,15 @@ def _split_analysis_group(
     return group[:split_at], group[split_at:]
 
 
+# "“Lugar, con trai của Roxar. Bắt đầu thôi.”" là người nói TỰ GIỚI THIỆU (tên + dòng dõi/thân phận, hết câu), không phải gọi
+# Lugar (thầy gán nhãn 06-10). Câu gọi thật thì sau tên là lời nói ("Lugar, đi thôi.") hay ngắt bằng dấu phẩy ("Lugar, con
+# trai của ta, nghe đây").
+SELF_INTRODUCTION_APPOSITIVE_PATTERN = re.compile(
+    r"\s*(?!(?:tôi|ta|tao|tớ|mình|em|anh|chị|ngươi|mày|cậu|bạn)\s)(?:[a-zà-ỹđ]+\s+){1,3}của\s+(?:[a-zà-ỹđ]+\s+){0,2}"
+    r"[A-ZĐ][\wÀ-ỹĐđ'’-]*(?:\s+[A-ZĐ][\wÀ-ỹĐđ'’-]*)*\s*[.!](?:\s|[\"”’]|$)"
+)
+
+
 def _speaker_is_directly_addressed(text: str, speaker: str) -> bool:
     if speaker.casefold() in RESERVED_SPEAKERS:
         return False
@@ -1466,8 +1477,9 @@ def _speaker_is_directly_addressed(text: str, speaker: str) -> bool:
         return False
     escaped_label = re.escape(label).replace(r"\ ", r"\s+")
     quoted_start = rf"^[\s\"“”'‘’(\[]*{escaped_label}\s*[,!?:…]"
-    if re.search(quoted_start, text, flags=re.IGNORECASE):
-        return True
+    opening = re.search(quoted_start, text, flags=re.IGNORECASE)
+    if opening is not None:
+        return SELF_INTRODUCTION_APPOSITIVE_PATTERN.match(text, opening.end()) is None
     title_pattern = "|".join(
         re.escape(title).replace(r"\ ", r"\s+")
         for title in DIRECT_ADDRESS_TITLES
