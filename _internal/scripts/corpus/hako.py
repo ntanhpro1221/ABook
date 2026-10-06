@@ -6,7 +6,10 @@ Chạy bằng Python của máy có `cloudscraper` + `lxml` (`py`, 3.13) - KHÔN
     py scripts/corpus/hako.py survey --kind convert            # mục AI dịch (/ai-dich)
     py scripts/corpus/hako.py survey --kind sangtac            # sáng tác gốc tiếng Việt (/sang-tac)
     py scripts/corpus/hako.py download /truyen/259-toi-la-nhen-thi-sao --title "Kumo Desu Ga Nani Ka"
-    py scripts/corpus/hako.py download /truyen/8252-... --title "Kurakon" --max-chapters 12   # chỉ 12 chương đầu
+    py scripts/corpus/hako.py fetch-all                        # tải dần MỌI bộ trong danh sách chưa có trong _full
+
+Tải là tải CẢ BỘ, vào `Corpus/_full/<tên>` (chủ sách 06-10: "đã tải là tải hết"; tìm thật nhiều truyện rồi tải dần
+để lúc cần không phải tải - mạng thì dư). Chọn chương cho một việc là việc của bước sau, không phải của bộ tải.
 
 Viết lại từ `D:/Novels/Tools/NovelDownloader_Docln_MultiThread_MultiSource.py` của chủ sách (chỉ tham khảo,
 không sửa bản ấy - 19-09). Khác bản gốc ở những chỗ một kho dữ liệu cần:
@@ -37,6 +40,8 @@ from lxml import html
 
 SOURCES = ("https://docln.net", "https://docln.sbs", "https://ln.hako.vn")
 CORPUS = Path("D:/Novels/ABook/Corpus")
+FULL = CORPUS / "_full"
+STOP_FILE = FULL / "STOP_FETCH"  # tạo file này để `fetch-all` dừng sau bộ đang tải
 # Khảo sát nằm CÙNG kho (repo riêng tư, xem scripts/corpus/manifest.py): có bình luận người đọc chép từ Hako.
 SURVEY_DIR = CORPUS / "_survey"
 # Bộ lọc của trang danh sách Hako: truyện dịch bởi người, AI dịch ("convert"), sáng tác tiếng Việt.
@@ -195,14 +200,13 @@ def survey(pages: int, sort: str, kind: str = "truyendich", status: str = "hoant
     return results
 
 
-def download(path: str, title: str | None, workers: int, max_chapters: int = 0) -> Path:
-    sources = Sources()
+def download(path: str, title: str | None, workers: int, sources: Sources | None = None) -> Path:
+    sources = sources or Sources()
     info = series_info(sources, path)
     name = title or info["title"]
-    folder = CORPUS / re.sub(r'[<>:"/\\|?*]', "_", name).strip()
+    folder = FULL / re.sub(r'[<>:"/\\|?*]', "_", name).strip().rstrip(".")
     folder.mkdir(parents=True, exist_ok=True)
-    # --max-chapters N: chỉ N chương đầu theo mục lục (lấy mẫu đầu tập 1 thay vì cả bộ); 0 = tất cả.
-    chapters = info["chapters"][:max_chapters] if max_chapters > 0 else info["chapters"]
+    chapters = info["chapters"]
     digits = max(3, len(str(len(chapters))))
     missing: list[str] = []
     lock = threading.Lock()
@@ -233,7 +237,7 @@ def download(path: str, title: str | None, workers: int, max_chapters: int = 0) 
         **{key: value for key, value in info.items() if key != "chapters"},
         "chapters": [chapter["title"] for chapter in chapters],
         "source": "hako",
-        "max_chapters": max_chapters or None,
+        "url": f"https://docln.net{path}",
         "folder": str(folder),
         "missing": sorted(missing),
         "downloaded_at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -241,6 +245,67 @@ def download(path: str, title: str | None, workers: int, max_chapters: int = 0) 
     (folder / "metadata.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{name}: {len(chapters)} chương trong mục lục, thiếu {len(missing)} -> {folder}")
     return folder
+
+
+def series_id(path_or_url: str) -> str:
+    """Số truyện trong `/truyen/<số>-<tên>` - cùng một bộ dù tên miền hay đuôi tên đổi."""
+    found = re.search(r"/truyen/(\d+)", path_or_url)
+    return found.group(1) if found else ""
+
+
+def known_ids() -> set[str]:
+    """Bộ đã có trong `_full` (bản tải từ Hako ghi `path`; bản chuyển từ Tools ghi `url` docln)."""
+    ids = set()
+    for meta in FULL.glob("*/metadata.json"):
+        try:
+            data = json.loads(meta.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for key in ("path", "url"):
+            if series_id(str(data.get(key) or "")):
+                ids.add(series_id(str(data[key])))
+    return ids
+
+
+# Thứ tự tải: truyện người dịch trước (LN Nhật/Hàn - trọng số cao nhất của bộ phân tích), rồi AI dịch, rồi sáng tác.
+FETCH_ORDER = [(kind, status) for kind in KINDS for status in ("hoanthanh", "dangtienhanh", "tamngung")]
+
+
+def fetch_all(workers: int, pause: float, max_pages: int) -> None:
+    """Đi hết các trang danh sách Hako, tải CẢ BỘ mọi truyện chưa có trong `_full`. Chạy lại = làm tiếp.
+
+    Mỗi bộ xong ghi một dòng vào `_full/_fetch_log.tsv`; `STOP_FILE` có mặt thì dừng sau bộ đang tải.
+    """
+    sources = Sources()
+    have = known_ids()
+    log = FULL / "_fetch_log.tsv"
+    fetched = 0
+    for kind, status in FETCH_ORDER:
+        for page in range(1, max_pages + 1):
+            tree = html.fromstring(sources.get(f"/danh-sach?{kind}=1&{status}=1&sapxep=top&page={page}"))
+            paths = [urlparse(a.get("href")).path for a in tree.xpath('//div[contains(@class,"series-title")]/a')]
+            if not paths:
+                break
+            for path in paths:
+                if STOP_FILE.exists():
+                    print("gặp STOP_FETCH - dừng", flush=True)
+                    return
+                number = series_id(path)
+                if not number or number in have:
+                    continue
+                try:
+                    folder = download(path, None, workers, sources)
+                except Exception as exc:  # noqa: BLE001 - một bộ hỏng không dừng cả lượt
+                    print(f"  bỏ {path}: {exc}", file=sys.stderr, flush=True)
+                    continue
+                have.add(number)
+                fetched += 1
+                files = len(list(folder.glob("*.txt")))
+                with log.open("a", encoding="utf-8") as out:
+                    out.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}\t{kind}\t{status}\t{path}\t{files}\t{folder.name}\n")
+                print(f"[{fetched}] {kind}/{status} trang {page}: {folder.name} ({files} chương)", flush=True)
+                time.sleep(pause)
+    print(f"hết danh sách: tải {fetched} bộ mới", flush=True)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -256,12 +321,17 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("path", help="đường dẫn truyện, vd /truyen/259-toi-la-nhen-thi-sao")
     d.add_argument("--title")
     d.add_argument("--workers", type=int, default=6)
-    d.add_argument("--max-chapters", type=int, default=0, help="chỉ tải N chương đầu của mục lục (0 = cả bộ)")
+    f = sub.add_parser("fetch-all")
+    f.add_argument("--workers", type=int, default=6)
+    f.add_argument("--pause", type=float, default=5.0, help="giây nghỉ giữa hai bộ")
+    f.add_argument("--max-pages", type=int, default=1000)
     args = parser.parse_args(argv)
     if args.command == "survey":
         survey(args.pages, args.sort, args.kind, args.status)
+    elif args.command == "fetch-all":
+        fetch_all(args.workers, args.pause, args.max_pages)
     else:
-        download(args.path, args.title, args.workers, args.max_chapters)
+        download(args.path, args.title, args.workers)
     return 0
 
 
