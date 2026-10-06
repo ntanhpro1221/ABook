@@ -3234,3 +3234,40 @@ Tách lại 41 file nguồn bằng `segment_chapter_text` của nhánh (33/41 ch
 (P 0,63) so đọc nguồn 0,207 (P 0,69); 4+5 0,164 so 0,225. CUE sau lọc trên cờ: 5b+6 0,190 (đọc nguồn 0,192). Chỗ sót: 10 dòng chỉ
 MỘT ký hiệu ("*", "-") bị `SCENE_BREAK_MIN_RULE_GLYPHS = 3` loại, nhưng 9/10 trúng ranh giới đáp án (nhóm cả hai bắt: 29/49). Đề
 xuất cho app: nhận dòng một ký hiệu kẻ khi nó là cả một đoạn (dòng trống trước và sau). Mã: Corpus research/music/seg_flag_build.py.
+
+### 06-10 19:4x - Lệch MỨC hay lệch HÌNH DẠNG? (Lead 19:2x, góp ý ngoài đợt 3; CPU)
+Cùng một tập câu (khúc app, bỏ chu_thich, trọng số thời lượng, thang nửa, TB chương rồi TB V/T); model = nhãn câu app (mốc .43).
+Mã + hình: Corpus research/music/level_shape.py, figs/bland_altman_5b6.png, bland_altman_45.png.
+
+**ĐO 5b+6 (23 chương có đủ A, B, đáp án):**
+
+| cặp | MAE | lệch mức | MAE trong chương (trừ TB) | trong, co giãn α tối ưu | MAE nếu sửa mức hoàn hảo |
+|---|---|---|---|---|---|
+| A-B (người-người) | 0,147 | 0,078 | 0,153 | 0,146 | 0,153 |
+| model-A | 0,444 | 0,319 | 0,294 | 0,294 | 0,294 |
+| model-B | 0,435 | 0,301 | 0,296 | 0,297 | 0,296 |
+| model-đáp án | 0,429 | 0,308 | 0,280 | 0,281 | 0,280 |
+| *dự đoán PHẲNG (mốc)* | | | *0,286* | | |
+
+**Bland-Altman (bias, giới hạn đồng thuận 95% = bias ± 1,96 SD):**
+- Mức chương: model-đáp án V bias −0,08, LoA ±0,61; T −0,04, ±0,79. A-B: V ±0,19, T ±0,19.
+- Trong chương: model V ±0,61, T ±0,76; A-B V ±0,38, T ±0,44.
+- Mọi ô model đều có dốc âm rõ (chênh lệch giảm theo trung bình) = **thiên lệch tỉ lệ**: model nén về 0.
+  - SD mức chương: model 0,06-0,08, người 0,37-0,45 (nén ~5 lần).
+  - SD trong chương: model 0,07-0,08, người 0,30-0,39.
+
+**Kết luận:**
+1. **Khoảng cách 0,43 so với 0,15 còn lại 0,28 so với 0,15 sau khi sửa mức hoàn hảo.** Mức chiếm khoảng một nửa phần thừa, hình dạng
+   nửa kia.
+2. **Phần mức không phải lệch hệ thống** (bias chỉ −0,04 đến −0,08), nên một hằng số không sửa được.
+   - Nó là nén cộng nhiễu: thứ tự mức chương khá (r 0,73-0,75, người 0,97-0,98) nhưng biên độ chỉ bằng 1/5.
+   - Hiệu chỉnh tuyến tính chữa được phần nén. Phần nhiễu thì không (C0 đã hiệu chỉnh vẫn còn lệch mức 0,31-0,38). Vì vậy lớp 2 cần
+     một bộ ước lượng mức chương tốt hơn (CF/CS/LoRA), không chỉ hiệu chỉnh.
+3. **Phần hình dạng: nhãn câu app gần như KHÔNG có hình dạng.**
+   - MAE trong chương 0,280 so với 0,286 của đường phẳng.
+   - r trong chương TB 0,09-0,12.
+   - Co giãn α tối ưu (1,3 / 0,9) không đổi gì. Tức không phải thiếu biên độ mà là thiếu tín hiệu.
+   - Lớp 3 (hạng trong chương) phải đến từ model khác: P2/LoRA có r trong chương 0,29-0,33, ranh giới cảnh tốt hơn (CS-SEG), không
+     phải từ nhãn cảm xúc câu của phân tích.
+4. Hệ quả cho thiết kế: hiệu chỉnh chỉ là bước rẻ cho lớp 2. Cả hai lớp đều cần model tốt hơn. Lớp 3 cần nhiều hơn: hiện tại nhãn
+   câu app thua cả việc không làm gì có ý nghĩa.
