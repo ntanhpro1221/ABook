@@ -3053,3 +3053,18 @@ theo khúc trên 4/5/5b/6: mức chương = trung bình dự đoán của nó th
 học trên 4+5 (như C0), đo 5b+6, cùng luật thắng (MAE <= .35 VÀ r V,T >= .6). Ghi lại thêm: musicvt thô (không hiệu chỉnh); tổ hợp
 cố định V = C0 hc, T = P0 hc (hằng trong mục khám phá trên) - không phải phép thử mới vì 5b+6 đã xem. Nếu musicvt thắng ở đây và
 ở phép trong chương (docs 24cf8f78), lớp 2 + lớp 3 là MỘT lượt; CF chỉ còn cần nếu musicvt trượt mức chương.
+
+**GHI TRƯỚC - BỘ 7: XÁC NHẬN "LỚP 2 SUY TỪ LỚP 3" (Lead duyệt 06-10 13:xx; trước khi chọn chương và trước mọi số):**
+- **Chọn chương** (`Corpus/research/music/select_set7.py`, hạt 20261009; chỉ đọc tên file, cỡ, dòng đầu): 4 truyện MỚI (3 Nhật + 1
+  Hàn theo `scene_set6/strata.json`), mỗi truyện 5 chương rải đều theo thứ tự file, cỡ 8-30 KB. Loại mọi cuốn đã dùng ở bộ
+  4/5/5b/6, lô dạy pilot/v3/v31/lô 4, và cuốn có thư mục đáp án phân tích ở gốc Corpus.
+- **Phân tích app:** 9B-v8 (`qwen35-9b-lora-v8-q4`) như bộ 6 (run `06-10-music7-9bv8-sNN`, hàng GPU của Model) -> nhãn câu app
+  + ranh giới khúc app. Xuất `seq<TAB>chữ` bằng `export_scene_chapters.py`.
+- **Đáp án:** 2 agent Opus chấm mù theo bản 3 (lời giao như lô 4), phân xử `adjudicate_scenes`. Không ai xem số máy trước khi xong.
+- **P0 theo khúc app:** `prompt_mood.py run ... set7 P0 qwen3.5:4b` (như bộ 4/5). CF/CH chạy trên bộ 7 để đối chứng (ghi lại).
+- **Công thức CỐ ĐỊNH (hằng từ 4+5, không chọn lại):** thang nửa, cắt [-1, 1];
+  V = 1,876 · m_C0 + 0,068 (m_C0 = trung bình nhãn câu app theo thời lượng, bỏ chu_thich);
+  T = 1,066 · m_P0 − 0,490 (m_P0 = trung bình dự đoán P0 theo khúc, theo thời lượng).
+- **Thắng:** MAE TB(V,T) <= .35 trên bộ 7 (thước như mục mức chương: mọi câu nhận hằng = mức chương, TB chương). Ghi lại: r V, T;
+  mốc hằng 0, nhãn câu app thô, trần (mức đáp án); C0 hc riêng, P0 hc riêng; CF/CH thô.
+- **Hệ quả:** thắng -> kiến trúc app chốt "lớp 2 suy từ lớp 3" (Lead giao cắm). Trượt -> ghi lại, so CF xem lượt riêng có hơn.
