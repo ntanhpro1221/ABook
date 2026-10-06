@@ -617,7 +617,9 @@ Người gác pin là công cụ của máy chủ sách (treo cả tiến trình
 trong chính supervisor (`background_runner.run_supervisor` + `abook/power_source.py`): chạy pin quá 60 giây thì bật
 `pause_event` của worker, dây chuyền đứng ở checkpoint kế (`Pipeline._wait_pause_or_stop`, ghi sổ `status=paused`) và làm
 tiếp đúng chỗ khi cắm sạc. Tiến trình không chết, nên **tạm dừng an toàn cả giữa pha phân tích** - khác "Dừng" (mục
-"Đừng stop giữa pha phân tích" ở AGENTS.md). Cùng đường ấy là nút "Tạm dừng" / "Tiếp tục" ở trang dự án (`POST
+"Đừng stop giữa pha phân tích" ở AGENTS.md) - **miễn là dưới 30 phút**: khi tạm dừng không có gì giữ model trong Ollama,
+`keep_alive` 30 phút hết là model bị dỡ, và lần nạp lại làm cùng request trả lời khác (AUDIT 06-10,
+`D:/Novels/LLM_Train/resume_determinism/AUDIT.md`, nguyên nhân R1). Cùng đường ấy là nút "Tạm dừng" / "Tiếp tục" ở trang dự án (`POST
 /api/books/<id>/pause`, file `runtime/background/pause.request` gắn với lần chạy như `stop.request`).
 
 - "Tiếp tục" bấm lúc đang chạy pin = làm tiếp trên pin tới lần kế máy thấy sạc (`_pause_reason`); rút lần sau lại dừng.
