@@ -133,6 +133,9 @@ SCENE_BREAK_MS = 1500
 # Ký hiệu kiểu đường kẻ: một dấu đơn lẻ có thể là dấu câu / gạch thoại / tiêu đề markdown, nên cần >= SCENE_BREAK_MIN_RULE_GLYPHS dấu.
 SCENE_BREAK_RULE_GLYPHS = frozenset("*~-=_#+·•‧・—–―‒─━═┄┈╌")
 SCENE_BREAK_MIN_RULE_GLYPHS = 3
+# ... trừ khi dòng đứng riêng một đoạn: khi ấy một-hai dấu trong nhóm này cũng đủ. Gạch ngang dài "—"/"–" không vào nhóm: một
+# đoạn chỉ có "—" có thể là lời thoại im lặng.
+SCENE_BREAK_ALONE_GLYPHS = frozenset("*~-=#")
 # Ký hiệu trang trí: một dấu đã đủ là ngăn cảnh ("◆", "※", "○"). Không có dấu chấm, "…", ngoặc, nháy hay ?! ở đây - dòng "..." hay
 # dòng chỉ có dấu ngoặc kép không phải ngăn cảnh.
 SCENE_BREAK_ORNAMENT_GLYPHS = frozenset("◆◇◈○●◎□■▪▫▲△▽▼★☆✦✧✱✲✶✷✻✽❖❀✿❁※⁂⁕⋆◦♦♢◊⸻§")
@@ -1101,14 +1104,20 @@ def _punctuation_break_ms(text: str) -> int:
     )
 
 
-def is_scene_break_line(line: str) -> bool:
-    """Dòng chỉ có ký hiệu ngăn cảnh ("***", "* * *", "◆", "◇◇◇", "———", "---", "~~~", "＊＊＊"), không chữ không số."""
+def is_scene_break_line(line: str, alone: bool = False) -> bool:
+    """Dòng chỉ có ký hiệu ngăn cảnh ("***", "* * *", "◆", "◇◇◇", "———", "---", "~~~", "＊＊＊"), không chữ không số.
+
+    `alone`: dòng đứng riêng một đoạn (dòng trống trước và sau). Khi ấy một-hai dấu kẻ ("*", "-") cũng là ngăn cảnh: đo
+    06-10 trên đáp án cảnh của nhạc, 9/10 dòng một ký hiệu đứng riêng như thế trúng ranh giới cảnh (make_heroine "*",
+    yamiyo "-"); gạch thoại hay tiêu đề markdown thì luôn có chữ theo sau trên cùng dòng."""
     glyphs = [char for char in unicodedata.normalize("NFKC", line) if not char.isspace()]
     if not glyphs or len(glyphs) > SCENE_BREAK_MAX_GLYPHS:
         return False
     if not all(char in SCENE_BREAK_RULE_GLYPHS or char in SCENE_BREAK_ORNAMENT_GLYPHS for char in glyphs):
         return False
     if any(char in SCENE_BREAK_RULE_GLYPHS for char in glyphs):
+        if alone and all(char in SCENE_BREAK_ALONE_GLYPHS for char in glyphs):
+            return True
         return len(glyphs) >= SCENE_BREAK_MIN_RULE_GLYPHS
     return True
 
@@ -1161,7 +1170,7 @@ def _walk_paragraphs(
     for paragraph_index, paragraph in enumerate(paragraphs):
         lines = [line.strip() for line in paragraph.splitlines() if line.strip()]
         for line in lines:
-            if quote_state is None and rows and is_scene_break_line(line):
+            if quote_state is None and rows and is_scene_break_line(line, alone=len(lines) == 1):
                 # Dòng ngăn cảnh không có chữ nên không thành câu; câu trước nó mang quãng nghỉ dài và cờ `scene_break`.
                 rows[-1]["break_ms"] = max(int(rows[-1]["break_ms"]), SCENE_BREAK_MS)
                 rows[-1]["scene_break"] = True

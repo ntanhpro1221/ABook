@@ -21,7 +21,9 @@ from abook.text_processing import SCENE_BREAK_MS, is_scene_break_line, segment_c
 from abook.webui.music_scenes import chapter_scenes, hard_break
 
 SEPARATORS = ["***", "* * *", "◆", "◇◇◇", "———", "---", "~~~", "○", "＊＊＊", "◆ ◇ ◆", "※", "-----", "= = =", "###", "· · ·", "⁂"]
-NOT_SEPARATORS = ["...", ". . .", "…", "……", "“", "”", "\"", "-", "--", "—", "– –", "*", "~", "Chương 1", "Chương 1: ***", "***hay***", "0 0 0",
+# Một-hai dấu kẻ đứng RIÊNG một đoạn là ngăn cảnh (đo 06-10: 9/10 trúng ranh giới cảnh); trong một đoạn nhiều dòng thì không.
+LONE_SEPARATORS = ["-", "--", "*", "~", "=", "#", "＊"]
+NOT_SEPARATORS = ["...", ". . .", "…", "……", "“", "”", "\"", "—", "– –", "Chương 1", "Chương 1: ***", "***hay***", "0 0 0",
                   "ooo", "?", "?!", "!!!", "(…)", "[***]", "", "   "]
 
 
@@ -36,6 +38,16 @@ def test_a_separator_line_is_a_scene_break(separator: str) -> None:
     assert [row["text"] for row in rows] == ["Gió thổi qua đồi.", "Sáng hôm sau, mưa tạnh."], "the text is not altered"
     assert rows[0]["break_ms"] == SCENE_BREAK_MS == 1500 and rows[0]["scene_break"] is True
     assert rows[1]["scene_break"] is False and rows[1]["break_ms"] == 0, "chapter end: no pause, no mark"
+
+
+@pytest.mark.parametrize("line", LONE_SEPARATORS)
+def test_a_lone_short_rule_is_a_scene_break_only_on_its_own(line: str) -> None:
+    assert is_scene_break_line(line, alone=True) and not is_scene_break_line(line)
+    rows = segment_chapter_text(1, _text(line))
+    assert [row["text"] for row in rows] == ["Gió thổi qua đồi.", "Sáng hôm sau, mưa tạnh."]
+    assert rows[0]["scene_break"] is True and rows[0]["break_ms"] == SCENE_BREAK_MS
+    inside = segment_chapter_text(1, f"Gió thổi qua đồi.\n{line}\nSáng hôm sau, mưa tạnh.")
+    assert not any(row["scene_break"] for row in inside), "inside a multi-line paragraph it is not a break"
 
 
 @pytest.mark.parametrize("line", NOT_SEPARATORS)
