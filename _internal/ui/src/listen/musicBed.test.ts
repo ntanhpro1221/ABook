@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MusicBed, type MusicCue } from "./musicBed";
+import { MusicBed, SIBLING_FADE_SECONDS, STEP_RAMP_SECONDS, stepDbAt, type MusicCue } from "./musicBed";
 
 const cues: MusicCue[] = [
   { start: 0, end: 120, link: "a", key: "1:1", src: "/a" },
@@ -108,5 +108,96 @@ describe("âm lượng nhạc theo gainDb của mốc", () => {
     bed.sync(10, true);
     vi.advanceTimersByTime(3000);
     expect(made["/a"].volume).toBeCloseTo(Math.pow(10, -24 / 20), 3);
+  });
+});
+
+describe("bước âm lượng trong cảnh và nối bài anh em", () => {
+  afterEach(() => vi.useRealTimers());
+
+  type Fake = { volume: number; loop: boolean; paused: boolean };
+  function bedWithAudios() {
+    const made: Record<string, Fake> = {};
+    const bed = new MusicBed((src) => {
+      const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration: 200 };
+      made[src] = fake;
+      return Object.assign(fake, {
+        play: () => { fake.paused = false; return Promise.resolve(); },
+        pause: () => { fake.paused = true; },
+        addEventListener: () => undefined,
+      });
+    });
+    return { bed, made };
+  }
+  const db = (value: number) => Math.pow(10, value / 20);
+  const stepped: MusicCue = {
+    start: 0, end: 400, link: "a", key: "1:1", src: "/a", gainDb: -10,
+    steps: [{ at: 180, db: 2 }, { at: 300, db: -3 }],
+  };
+
+  it("bước đang hiệu lực là bước cuối cùng đã tới, chưa tới bước nào thì 0", () => {
+    expect(stepDbAt(stepped, 10)).toBe(0);
+    expect(stepDbAt(stepped, 180)).toBe(2);
+    expect(stepDbAt(stepped, 299)).toBe(2);
+    expect(stepDbAt(stepped, 350)).toBe(-3);
+  });
+
+  it("sang bước mới thì trượt dần trong STEP_RAMP_SECONDS, không nhảy", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithAudios();
+    bed.setCues([stepped], -20);
+    bed.sync(10, true);
+    vi.advanceTimersByTime(3000);
+    expect(made["/a"].volume).toBeCloseTo(db(-10), 3);
+    bed.sync(181, true);
+    vi.advanceTimersByTime((STEP_RAMP_SECONDS * 1000) / 2);
+    const half = made["/a"].volume;
+    expect(half).toBeGreaterThan(db(-10) + 0.01);
+    expect(half).toBeLessThan(db(-8) - 0.01);
+    vi.advanceTimersByTime((STEP_RAMP_SECONDS * 1000) / 2 + 200);
+    expect(made["/a"].volume).toBeCloseTo(db(-8), 3);
+    bed.sync(301, true);
+    vi.advanceTimersByTime(STEP_RAMP_SECONDS * 1000 + 200);
+    expect(made["/a"].volume).toBeCloseTo(db(-13), 3);
+  });
+
+  it("tua thì vào thẳng mức của bước tại chỗ tua", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithAudios();
+    bed.setCues([stepped], -20);
+    bed.sync(10, true);
+    vi.advanceTimersByTime(3000);
+    bed.sync(200, true, true);
+    expect(made["/a"].volume).toBeCloseTo(db(-8), 3);
+  });
+
+  it("một mốc mới bắt đầu ngay ở mức bước của nó, và gainDb + bước không vượt 0 dB", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithAudios();
+    bed.setCues([{ start: 0, end: 100, link: "b", key: "1:5", src: "/b", gainDb: -1, steps: [{ at: 0, db: 3 }] }], -20);
+    bed.sync(5, true);
+    vi.advanceTimersByTime(3000);
+    expect(made["/b"].volume).toBe(1);
+  });
+
+  it("nối bài anh em: mờ chéo SIBLING_FADE_SECONDS, bài cũ chơi nốt không lặp lại, cùng khoá đoạn vẫn đổi bài", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithAudios();
+    bed.setCues([
+      { start: 0, end: 150, link: "a", key: "1:1", src: "/a", gainDb: -10 },
+      { start: 150, end: 400, link: "c", key: "1:1", src: "/c", gainDb: -10, sibling: true },
+    ], -20);
+    bed.sync(10, true);
+    vi.advanceTimersByTime(3000);
+    bed.sync(151, true);
+    expect(bed.activeLink).toBe("c");
+    expect(made["/a"].loop).toBe(false);
+    expect(made["/c"].loop).toBe(true);
+    vi.advanceTimersByTime(3000); // nửa đường mờ chéo: cả hai còn kêu
+    expect(made["/a"].volume).toBeGreaterThan(0.05);
+    expect(made["/c"].volume).toBeGreaterThan(0.05);
+    expect(made["/c"].volume).toBeLessThan(db(-10) - 0.05);
+    vi.advanceTimersByTime(SIBLING_FADE_SECONDS * 1000 - 3000 + 200);
+    expect(made["/a"].volume).toBe(0);
+    expect(made["/c"].volume).toBeCloseTo(db(-10), 3);
   });
 });

@@ -6,7 +6,7 @@ Mỗi cảm xúc là một điểm trên hai trục của mô hình tròn cảm 
 êm (-). Đoạn = một khúc liền nhau cùng không khí:
 
 1. Ranh giới CỨNG từ chữ: đầu chương, dòng ngăn cảnh (`***`, `* * *`, `---`...), câu mở bằng mốc nhảy thời gian ("Sáng hôm
-   sau", "Ba ngày sau"...).
+   sau", "Ba ngày sau"...), dấu hiệu đổi cảnh (`cue_kind`: tiêu đề phụ, dòng thời gian / nơi chốn).
 2. Trong khúc giữa hai ranh giới cứng: không khí trượt (trung bình theo thời lượng đọc, cửa sổ ~45 giây) đổi XA khỏi không khí
    của đoạn đang mở và GIỮ đủ lâu thì cắt đoạn mới - một câu kêu lên giữa cảnh bình yên không đổi nhạc.
 3. Đoạn ngắn hơn MIN_SCENE_SECONDS gộp vào đoạn kề gần không khí nhất.
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable, Mapping
 
 # (valence, arousal) trên [-1, 1]. Đặt theo mô hình tròn cảm xúc; "sarcastic" và "whispering" là cách nói hơn là cảm xúc -
 # gần trung tính, chỉ kéo arousal.
@@ -78,6 +78,69 @@ TIME_JUMP = re.compile(
     r"(?:the\s+)?next\s+(?:morning|day)|(?:a\s+few|several|\d+)\s+(?:days|weeks|months|years)\s+later)",
     re.IGNORECASE,
 )
+# Dấu hiệu đổi cảnh trong chữ (CUE - docs/MUSIC_RESEARCH.md 06-10, `seg_scenes.cue_kind` của nghiên cứu): dòng chỉ ký hiệu,
+# tiêu đề phụ ("Góc nhìn của...", "【...】"), dòng thời gian / nơi chốn ("Trong khi đó", "Vài giờ sau"). Thành cờ `sceneBreak`
+# như dòng ngăn cảnh của sách (chapter_scenes) - ranh giới CÓ LÝ DO, chỗ duy nhất nhạc được đổi bài.
+CUE_SYMBOLS = re.compile(r"^\s*(?:(?:[*~#=_\-·•◇◆○●♦※✦＊]\s*){1,}|o\s*O\s*o)\s*$")
+CUE_SUBHEAD = re.compile(r"^\s*(?:góc nhìn|pov\b|phần\b|interlude|side\b|phía\b)", re.IGNORECASE)
+CUE_BRACKETED = re.compile(r"^\s*(?:【[^】]*】|\[[^\]]*\]|「[^」]*」|[—–-]{1,2}\s*[^—–-]{1,40}\s*[—–-]{1,2})\s*$")
+CUE_SUBHEAD_WORDS = 10
+CUE_TIME_PLACE = re.compile(
+    r"^\W*(?:trong\s+khi\s+đó|cùng\s+lúc\s+(?:đó|ấy)|lúc\s+(?:ấy|đó)\s+ở|(?:vài|mấy|một|hai|ba)\s+(?:giờ|tiếng|phút)\s+sau|"
+    r"(?:sáng|trưa|chiều|tối|đêm)\s+(?:hôm|ngày)\s+(?:ấy|đó)|ngày\s+hôm\s+đó|quay\s+lại|trở\s+lại\s+với|(?:ở|tại)\s+một\s+nơi\s+khác)",
+    re.IGNORECASE)
+
+
+def cue_kind(segment: dict[str, Any]) -> str | None:
+    """Loại dấu hiệu đổi cảnh của một câu: "heading", "separator", "subhead", "time_place", hay None."""
+    text = str(segment.get("text") or "").strip()
+    if segment.get("kind") == "heading":
+        return "heading"
+    if CUE_SYMBOLS.match(text):
+        return "separator"
+    if len(text.split()) <= CUE_SUBHEAD_WORDS and (CUE_SUBHEAD.match(text) or CUE_BRACKETED.match(text)):
+        return "subhead"
+    if TIME_JUMP.match(text) or CUE_TIME_PLACE.match(text):
+        return "time_place"
+    return None
+
+
+def cue_bounds(segments: list[dict[str, Any]]) -> dict[Any, str]:
+    """{id câu BẮT ĐẦU cảnh mới: loại dấu hiệu}. Dòng ký hiệu thì cảnh mới bắt đầu ở câu SAU nó; tiêu đề, tiêu đề phụ, dòng
+    thời gian / nơi chốn thì ở chính câu ấy. Câu đầu chương không tính (đầu chương đã là ranh giới)."""
+    out: dict[Any, str] = {}
+    for index, segment in enumerate(segments[1:], 1):
+        kind = cue_kind(segment)
+        if kind in ("separator", "heading", "subhead"):
+            if index + 1 < len(segments):
+                out.setdefault(segments[index + 1].get("id") if kind == "separator" else segment.get("id"), kind)
+        elif kind:
+            out.setdefault(segment.get("id"), kind)
+    return out
+
+
+# Các NGUỒN ranh giới có lý do ngoài dòng ngăn cảnh của sách (cột `segments.scene_break`), theo thứ tự ưu tiên: tên nguồn ->
+# hàm (các câu của chương) -> {id câu BẮT ĐẦU cảnh mới: loại}. Nguồn nào cũng thành cùng một cờ `sceneBreak` (`with_scene_breaks`),
+# kèm `sceneSource` = tên nguồn. Ranh giới tính sẵn ngoài chương (LLM chia cảnh, "llm") không nằm ở đây mà vào qua tham số
+# `boundaries` của `chapter_scenes` / `book_scenes` - cùng hình {id: loại}, cùng cờ.
+BOUNDARY_SOURCES: dict[str, Callable[[list[dict[str, Any]]], Mapping[Any, str]]] = {"cue": cue_bounds}
+
+
+def with_scene_breaks(segments: list[dict[str, Any]],
+                      boundaries: Mapping[str, Mapping[Any, str]] | None = None) -> list[dict[str, Any]]:
+    """Các câu, câu đứng ngay trước một ranh giới có lý do mang cờ `sceneBreak` - đúng chỗ cờ của dòng ngăn cảnh - kèm
+    `sceneSource` (nguồn: "cue", "llm"...) và `sceneCue` (loại, thành lý do của đoạn mới). Nguồn: `BOUNDARY_SOURCES` rồi
+    `boundaries` ({nguồn: {id câu bắt đầu cảnh: loại}}); hai nguồn cùng chỗ thì nguồn trước thắng. Câu gốc không bị sửa: câu
+    được gắn cờ là bản sao; câu đã có cờ từ dòng ngăn cảnh của sách giữ nguyên."""
+    sources = [(name, find(segments)) for name, find in BOUNDARY_SOURCES.items()]
+    sources += list((boundaries or {}).items())
+    out = list(segments)
+    for index, segment in enumerate(segments[:-1]):
+        following = segments[index + 1].get("id")
+        found = next(((name, starts[following]) for name, starts in sources if following in starts), None)
+        if found and not segment.get("sceneBreak"):
+            out[index] = dict(segment, sceneBreak=True, sceneSource=found[0], sceneCue=str(found[1] or found[0]))
+    return out
 
 
 def line_tension(segment: dict[str, Any]) -> float:
@@ -124,14 +187,18 @@ def _durations(segments: list[dict[str, Any]]) -> list[float]:
 
 def hard_break(segment: dict[str, Any], previous: dict[str, Any] | None = None) -> str | None:
     """Lý do đoạn nhạc mới phải bắt đầu ở `segment`. `previous`: câu ngay trước nó - dòng ngăn cảnh ("***", "◆") không có chữ
-    nên không thành câu, mà đánh dấu câu đứng trước (`sceneBreak`, từ cột `segments.scene_break`)."""
+    nên không thành câu, mà đánh dấu câu đứng trước (`sceneBreak`, từ cột `segments.scene_break`). Ranh giới từ nguồn khác
+    (`with_scene_breaks`: dấu hiệu đổi cảnh, LLM) cũng là cờ ấy, kèm `sceneSource` và loại `sceneCue` làm lý do."""
     text = str(segment.get("text") or "")
+    flagged = previous is not None and bool(previous.get("sceneBreak"))
     if segment.get("kind") == "heading":
         return "heading"
-    if (previous is not None and previous.get("sceneBreak")) or SEPARATOR.match(text):
+    if (flagged and not previous.get("sceneSource")) or SEPARATOR.match(text):
         return "separator"
     if TIME_JUMP.match(text):
         return "time_jump"
+    if flagged:
+        return str(previous["sceneCue"])
     return None
 
 
@@ -193,12 +260,16 @@ class _Accumulator:
                 for name in EMOTION_CLASSES}
 
 
-def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = None,
+                   boundaries: Mapping[str, Mapping[Any, str]] | None = None) -> list[dict[str, Any]]:
     """Các đoạn của một chương (`store.chapter_script` / `scripts/<n>.json` của `.abook`). `moods`: kết quả LLM đọc cả
-    đoạn (`music_moods.load()["scenes"]`) - chỉ đổi valence / tension của đoạn, KHÔNG bao giờ đổi ranh giới đoạn."""
+    đoạn (`music_moods.load()["scenes"]`) - chỉ đổi valence / tension của đoạn, KHÔNG bao giờ đổi ranh giới đoạn.
+    `boundaries`: ranh giới có lý do tính sẵn của chương này theo nguồn, {"llm": {id câu bắt đầu cảnh: loại}} - vào thành cờ
+    `sceneBreak` như dấu hiệu đổi cảnh (`with_scene_breaks`)."""
     segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
     if not segments:
         return []
+    segments = with_scene_breaks(segments, boundaries)
     seconds = _durations(segments)
     points = [line_point(segment) for segment in segments]
     timeline = []
@@ -368,6 +439,9 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
     }
 
 
-def book_scenes(scripts: Iterable[dict[str, Any]], moods: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
-    """Các đoạn của cả cuốn, theo thứ tự chương. `moods`: xem `chapter_scenes`."""
-    return [scene for script in scripts for scene in chapter_scenes(script, moods)]
+def book_scenes(scripts: Iterable[dict[str, Any]], moods: list[dict[str, Any]] | None = None,
+                boundaries: Mapping[Any, Mapping[str, Mapping[Any, str]]] | None = None) -> list[dict[str, Any]]:
+    """Các đoạn của cả cuốn, theo thứ tự chương. `moods`: xem `chapter_scenes`; `boundaries`: {chapterId: ranh giới theo
+    nguồn của chương ấy} (xem `chapter_scenes`)."""
+    return [scene for script in scripts
+            for scene in chapter_scenes(script, moods, (boundaries or {}).get(script.get("chapterId")))]

@@ -20,8 +20,9 @@ import kotlin.math.pow
  * Nhạc nền dưới giọng đọc - bản Android của ui/src/listen/musicBed.ts.
  *
  * Mốc nhạc từng chương nằm ở mục `music` của book.json (file `.abook` hay gói tải qua Wi-Fi - webui/music_plan.package):
- * `{levelDb, tracks: {"music/<sha1>.mp3": {...}}, chapters: {"<id>": [{start, end, track, gainDb}]}}`
- * (`levelDb` = nhạc thấp hơn giọng bao nhiêu LU; `gainDb` tính sẵn cho từng bài ở máy chủ). File bài lấy cùng đường với
+ * `{levelDb, tracks: {"music/<sha1>.mp3": {...}}, chapters: {"<id>": [{start, end, track, gainDb, steps?, sibling?}]}}`
+ * (`levelDb` = nhạc thấp hơn giọng bao nhiêu LU; `gainDb` tính sẵn cho từng bài ở máy chủ; `steps` / `sibling`: [MusicCues]).
+ * File bài lấy cùng đường với
  * audio chương (Streaming.chapterUri): có trên máy thì đọc thẳng, không thì nghe thẳng từ máy tính, qua bộ đệm đĩa.
  *
  * Sách KHÔNG có mục `music` (sách chỉ có chữ nghe bằng "Nghe ngay") mà người nghe đã chọn một danh sách phát (`music.playlist` của
@@ -35,7 +36,6 @@ import kotlin.math.pow
  * Mọi thao tác ở luồng chính, như Playback; danh mục / tải bài ở một luồng nền riêng.
  */
 object MusicBed {
-    private const val FADE_MS = 2000L
     private const val STEP_MS = 50L
     private const val SEEK_JUMP_SECONDS = 3.0
     private const val PAUSE_GRACE_MS = 2500L
@@ -45,11 +45,11 @@ object MusicBed {
     private val CREDIT_KEYS = listOf("title", "creator", "attribution", "landing", "license", "licenseUrl")
     private const val RETRY_MS = 5 * 60_000L // bài tải hỏng (mất mạng): chừng ấy sau, tới lúc đổi bài, thử lại
 
-    /** `gainDb`: độ khuếch đại máy chủ đã tính cho bài này (music_plan.cue_gain_db, ghi sẵn vào mốc khi đóng gói); null = sách
-     *  xuất bởi bản cũ -> mức chung `levelDb` của cuốn. Máy điện thoại không tự tính lại, chỉ áp con số. */
-    private data class Cue(val start: Double, val end: Double, val track: String, val gainDb: Double?)
-    private class Bed(val track: String, val player: ExoPlayer, val gain: Float) {
-        var fadeFrom = 0.01f // âm lượng lúc bắt đầu mờ đi: bài to và bài nhỏ cùng tắt trong FADE_MS
+    /** Một bài đang kêu. `goal` = âm lượng đang hướng tới, `perTick` = mỗi nhịp STEP_MS nhích bao nhiêu; `entering` = đang mờ vào
+     *  (tua lúc này không nhảy thẳng tới mức); `cue` = mốc đang phát (bước âm lượng), null với danh sách phát. */
+    private class Bed(val track: String, val player: ExoPlayer, var goal: Float, var perTick: Float, var cue: MusicCues.Cue?) {
+        var entering = true
+        var fadeStep = 0.001f // âm lượng bớt mỗi nhịp khi mờ đi: bài to và bài nhỏ cùng tắt trong cùng thời gian
     }
 
     private val main = Handler(Looper.getMainLooper())
@@ -58,7 +58,7 @@ object MusicBed {
     private var book = ""
     private var music: JSONObject? = null
     private var chapter = Int.MIN_VALUE
-    private var cues: List<Cue> = emptyList()
+    private var cues: List<MusicCues.Cue> = emptyList()
     private var gain = 0.1f
     private var playing = false
     private var lastSeconds = 0.0
@@ -122,16 +122,39 @@ object MusicBed {
         }
         if ((chapterId ?: Int.MIN_VALUE) != chapter) {
             chapter = chapterId ?: Int.MIN_VALUE
-            cues = cuesOf(chapterId)
+            cues = MusicCues.of(music, chapterId)
         }
         val seeked = abs(seconds - lastSeconds) > SEEK_JUMP_SECONDS
         lastSeconds = seconds
         playing = isPlaying
         val cue = cues.firstOrNull { seconds >= it.start && seconds < it.end }?.takeUnless { isFailed(it.track) }
         if (cue?.track != current?.track || (seeked && cue != null && current == null)) {
-            switchTo(cue?.let { (it.track to Streaming.chapterUri(appContext, book, it.track)) }, gainOf(cue), seconds - (cue?.start ?: 0.0))
+            switchTo(cue?.let { (it.track to Streaming.chapterUri(appContext, book, it.track)) },
+                cue?.let { MusicCues.targetGain(it, seconds, gain) } ?: gain, seconds - (cue?.start ?: 0.0), cue)
+        } else if (cue != null) {
+            current?.cue = cue // cùng bài sang mốc kề: chơi tiếp, bước âm lượng theo mốc mới
         }
+        retarget(seconds, seeked)
         applyPlaying()
+    }
+
+    /** Mức đích của bài đang kêu đổi (sang bước âm lượng mới): trượt dần [MusicCues.STEP_RAMP_MS]; vừa tua thì vào thẳng mức mới
+     *  (trừ lúc bài đang mờ vào). */
+    private fun retarget(seconds: Double, seeked: Boolean) {
+        val bed = current ?: return
+        val cue = bed.cue ?: return
+        val goal = MusicCues.targetGain(cue, seconds, gain)
+        if (abs(goal - bed.goal) < 1e-6f) return
+        bed.goal = goal
+        when {
+            bed.entering -> bed.perTick = goal * STEP_MS / (if (cue.sibling) MusicCues.SIBLING_FADE_MS else MusicCues.FADE_MS)
+            seeked -> {
+                bed.player.volume = goal
+                return
+            }
+            else -> bed.perTick = abs(goal - bed.player.volume) * STEP_MS / MusicCues.STEP_RAMP_MS
+        }
+        startFade()
     }
 
     /** Dừng hẳn (đổi cuốn, tắt dịch vụ phát): nhả mọi trình phát nhạc, ghi chỗ đang tới của danh sách phát. */
@@ -326,30 +349,14 @@ object MusicBed {
 
     // ---- nhạc theo mốc của sách --------------------------------------------------------------------------------
 
-    private fun cuesOf(chapterId: Int?): List<Cue> {
-        val tracks = music?.optJSONObject("tracks") ?: return emptyList()
-        val list = music?.optJSONObject("chapters")?.optJSONArray(chapterId?.toString() ?: return emptyList())
-            ?: return emptyList()
-        return (0 until list.length()).mapNotNull { index ->
-            val cue = list.optJSONObject(index) ?: return@mapNotNull null
-            val track = cue.optString("track")
-            if (!TRACK.matches(track) || !tracks.has(track)) null
-            else Cue(
-                cue.optDouble("start", 0.0), cue.optDouble("end", 0.0), track,
-                if (cue.has("gainDb")) cue.optDouble("gainDb").takeIf { it.isFinite() } else null,
-            )
-        }
-    }
-
-    /** Âm lượng mục tiêu của bài: gainDb của mốc, không có
-     *  thì mức chung. Tối đa 1 (ExoPlayer). */
-    private fun gainOf(cue: Cue?): Float =
-        cue?.gainDb?.let { 10.0.pow(it.coerceAtMost(0.0) / 20.0).toFloat() } ?: gain
-
-    /** Bài đang kêu mờ đi; `next` = (tên bài, file) thì bài ấy vào, bắt đầu ở giây `offsetSeconds` của nó, lên tới `targetGain`. */
-    private fun switchTo(next: Pair<String, Uri>?, targetGain: Float, offsetSeconds: Double) {
+    /** Bài đang kêu mờ đi; `next` = (tên bài, file) thì bài ấy vào, bắt đầu ở giây `offsetSeconds` của nó, lên tới `targetGain`.
+     *  `cue`: mốc của sách (bước âm lượng; mốc `sibling` = nối bài anh em ở điểm kết bài: mờ chéo [MusicCues.SIBLING_FADE_MS], bài cũ
+     *  chơi nốt rồi thôi, không quay lại đầu bài). */
+    private fun switchTo(next: Pair<String, Uri>?, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue? = null) {
+        val fadeMs = if (cue?.sibling == true) MusicCues.SIBLING_FADE_MS else MusicCues.FADE_MS
         current?.let {
-            it.fadeFrom = maxOf(it.player.volume, 0.01f)
+            it.fadeStep = maxOf(it.player.volume, 0.01f) * STEP_MS / fadeMs
+            if (cue?.sibling == true) it.player.repeatMode = Player.REPEAT_MODE_OFF
             fading += it
         }
         current = null
@@ -392,7 +399,7 @@ object MusicBed {
             player.setMediaItem(MediaItem.fromUri(uri))
             player.prepare()
             if (playing) player.play()
-            current = Bed(track, player, targetGain)
+            current = Bed(track, player, targetGain, targetGain * STEP_MS / fadeMs, cue)
         }
         startFade()
     }
@@ -400,21 +407,18 @@ object MusicBed {
     private fun startFade() {
         if (fadingTicker) return
         fadingTicker = true
-        val step = STEP_MS.toFloat() / FADE_MS
         main.post(object : Runnable {
             override fun run() {
                 var busy = false
                 current?.let { bed ->
                     val player = bed.player
-                    if (player.volume < bed.gain) {
-                        player.volume = minOf(bed.gain, player.volume + step * bed.gain)
-                        busy = busy || player.volume < bed.gain
-                    }
+                    player.volume = MusicCues.toward(player.volume, bed.goal, bed.perTick)
+                    if (abs(player.volume - bed.goal) < 1e-4f) bed.entering = false else busy = true
                 }
                 val iterator = fading.iterator()
                 while (iterator.hasNext()) {
                     val bed = iterator.next()
-                    bed.player.volume = maxOf(0f, bed.player.volume - step * bed.fadeFrom)
+                    bed.player.volume = maxOf(0f, bed.player.volume - bed.fadeStep)
                     if (bed.player.volume <= 0.001f) {
                         bed.player.release()
                         iterator.remove()
@@ -426,7 +430,4 @@ object MusicBed {
             }
         })
     }
-
-    // Bài danh mục luôn .mp3; bài người dùng nhập ("Nhạc của tôi") giữ định dạng của file (music_plan.TRACK_EXTENSIONS).
-    private val TRACK = Regex("music/[0-9a-f]{40}\\.(?:mp3|m4a|ogg|opus|flac|wav)")
 }
