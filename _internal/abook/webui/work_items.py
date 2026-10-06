@@ -288,6 +288,29 @@ def confident_doubts(project_root: Path, by_stable: dict[str, Any]) -> list[tupl
     return found
 
 
+def role_key(speaker: str) -> str:
+    """Nhãn vai của một vai phụ cục bộ ("NPC_LOCAL::c00006::r0b2…::Lính gác 1" -> "lính gác 1"), hạ chữ, gộp dấu cách;
+    "" với mọi người nói khác."""
+    if not speaker.startswith("NPC_LOCAL"):
+        return ""
+    return " ".join(speaker.rsplit("::", 1)[-1].casefold().split())
+
+
+def minor_role_groups(lines_by_speaker: dict[str, list[Any]], decided: set[str]) -> dict[str, dict[str, list[Any]]]:
+    """{nhãn vai: {vai cục bộ: các câu CHƯA quyết}} cho mỗi nhãn mà máy chia thành từ hai vai cục bộ trở lên trong cuốn.
+
+    Máy đặt mỗi vai phụ không tên trong phạm vi một chương/cảnh, nên "lính gác 1" ở bốn chương là bốn vai, bốn giọng. Nhãn
+    vai là thứ duy nhất sổ có chung giữa các chỗ ấy: không có cột người nghe ("nói với X"), còn "UNKNOWN" không mang nhãn
+    nào. Câu đã có quyết định của người nghe (`decided`, mã câu) ra khỏi nhóm - thẻ của vai ấy nói chuyện đã quyết."""
+    groups: dict[str, dict[str, list[Any]]] = defaultdict(dict)
+    for speaker, rows in lines_by_speaker.items():
+        key = role_key(speaker)
+        open_rows = [row for row in rows if str(row["stable_id"]) not in decided]
+        if key and open_rows:
+            groups[key][speaker] = open_rows
+    return {key: members for key, members in groups.items() if len(members) > 1}
+
+
 def calls_themselves(row: Any) -> bool:
     """Câu mở đầu bằng lời GỌI chính người đang giữ câu ("Lucien, ..." mà nhãn là LUCIEN): gần như chắc là sai - tên đứng
     đầu câu kèm dấu phẩy thường là người nghe."""
@@ -785,10 +808,55 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "requested": f"đổi giọng {', '.join(moving)}" if moving else None,
         })
 
-    # 5. Người nói không tên (vai phụ cục bộ): có thể là một nhân vật có tên trong chương.
+    # 5. Một vai phụ không tên mang cùng nhãn ở nhiều chương/cảnh ("lính gác 1" ở bốn chương, "áo xanh" ở ba): một thẻ
+    #    cho cả cuốn thay cho thẻ của từng chỗ - chọn người một lần, bỏ chọn câu nào không phải. Áp là đúng một yêu cầu
+    #    "ai nói câu này" cho mỗi câu đã chọn, cùng một lần bấm (hoàn tác cả nhóm một lần). Giữ nguyên = mỗi vai giữ
+    #    người của nó (`keepGroups`).
+    grouped: set[str] = set()
+    for role, members in sorted(minor_role_groups(lines_by_speaker, set(speaker_wishes)).items()):
+        rows = sorted((row for member_rows in members.values() for row in member_rows),
+                      key=lambda row: (chapter_index.get(int(row["chapter_id"]), 0), int(row["seq"])))
+        chapter_ids = {int(row["chapter_id"]) for row in rows}
+        grouped.update(members)
+        # Nhãn hay gặp nhất trong nhóm (máy viết "Lính gác" chỗ này, "lính  gác" chỗ kia); hoà thì câu đến trước.
+        label = Counter(" ".join(speaker_label(str(row["speaker"])).split()) for row in rows).most_common(1)[0][0]
+        where = f"{len(chapter_ids)} chương" if len(chapter_ids) > 1 else f"{len(members)} cảnh"
+        choices = _cast_choices(spoken, chapter_ids, set(), speaker_label) + [{"label": "Người kể", "value": NARRATOR}]
+        items.append({
+            "kind": "unnamed",
+            "key": f"unnamed-role:{role}",
+            "title": f"{len(rows)} câu của vai phụ “{label}” ở {where} - một người?",
+            "problem": f"Máy để “{label}” là vai phụ không tên riêng ở từng chỗ - {len(members)} giọng khác nhau. Nếu cả"
+                       " cuốn là một người, chọn người ấy một lần cho mọi câu; câu nào không phải thì bỏ chọn trước.",
+            "affected": len(rows),
+            "doubt": 0.4,
+            "options": [choice["label"] for choice in choices] + ["Mỗi chỗ một người"],
+            "current": f"{len(members)} vai phụ riêng",
+            # Mọi câu của nhóm (không chỉ vài câu ví dụ): người nghe bỏ chọn từng câu ngay trên thẻ.
+            "examples": [{**_example(row, names, speaker_label, project_root), "stableId": str(row["stable_id"])}
+                         for row in rows],
+            "lines": [{"stableId": str(row["stable_id"]), "textSha256": str(row["text_sha256"] or "")} for row in rows],
+            "choices": choices,
+            "requested": None,
+            "pick": True,
+            "keepGroups": [
+                {"speaker": speaker, "lines": [{"stableId": str(row["stable_id"]), "textSha256": str(row["text_sha256"] or "")}
+                                               for row in member_rows]}
+                for speaker, member_rows in members.items()
+            ],
+            "keepLabel": "Mỗi chỗ một người",
+        })
+
+    # 5b. Người nói không tên (vai phụ cục bộ không nằm trong thẻ cả cuốn): có thể là một nhân vật có tên trong chương.
     for speaker, rows in lines_by_speaker.items():
-        if not speaker.startswith("NPC_LOCAL"):
+        if not speaker.startswith("NPC_LOCAL") or speaker in grouped:
             continue
+        # Câu đã có quyết định riêng (bỏ chọn ở thẻ cả cuốn rồi gán phần còn lại, sửa một câu ở Kịch bản): thẻ chỉ hỏi những
+        # câu còn lại. Mọi câu đã quyết mà không cùng một người thì không còn gì để hỏi.
+        open_rows = [row for row in rows if str(row["stable_id"]) not in speaker_wishes]
+        if not open_rows and len({speaker_wishes[str(row["stable_id"])]["speaker"].casefold() for row in rows}) > 1:
+            continue
+        rows = open_rows or rows
         # Chọn một người có tên thì MỌI câu của vai này về người ấy (giọng của họ); "Đúng là vai phụ" giữ cả nhóm.
         choices = _cast_choices(spoken, {int(row["chapter_id"]) for row in rows}, set(), speaker_label)
         fix = _speaker_fix(rows, choices, speaker, speaker_wishes, speaker_label)
