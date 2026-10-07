@@ -674,6 +674,10 @@ class StudioSetup:
         return {
             "OLLAMA_HOST": f"127.0.0.1:{self.ollama_address.rsplit(':', 1)[-1]}",
             "OLLAMA_MODELS": str(models / "ollama"),
+            # llama-server trong Ollama giữ bộ đệm prompt trong RAM và khôi phục KV của request trước sau mồi slot sạch
+            # (`OllamaBookAnalyzer._prime_fresh_slot`) -> câu trả lời đổi theo request đứng trước. Tắt nó để cùng
+            # request ra cùng câu trả lời, kể cả khi dừng rồi làm tiếp.
+            "LLAMA_ARG_CACHE_RAM": "0",
             "ABOOK_RUNTIME": str(self.runtime),
             "PYTHONPATH": str(code or self.app_root),
             "PYTHONUTF8": "1",
