@@ -92,6 +92,7 @@ from abook.analysis import (
     local_speaker_display,
 )
 from abook.config import build_settings
+from tests.fresh_slot_fakes import PrimeResponse, is_fresh_slot_prime
 from abook.webui.studio_setup import PUBLISHED_MODELS, StudioSetup
 from abook.database import (
     ANALYSIS_CHAPTER_HEADING_CONFIDENCE,
@@ -591,6 +592,7 @@ class FakeSession:
         self.response = FakeResponse(payload)
         self.model_digests = list(model_digests or ["sha256:test-model-digest"])
         self.tags_calls = 0
+        self.primes = []
 
     def get(self, _url, timeout):
         assert timeout == 10
@@ -609,7 +611,10 @@ class FakeSession:
 
         return TagsResponse()
 
-    def post(self, _url, *, json, timeout, stream):
+    def post(self, _url, *, json, timeout, stream=False):
+        if is_fresh_slot_prime(json):
+            self.primes.append(json)
+            return PrimeResponse()
         self.request = {"json": json, "timeout": timeout, "stream": stream}
         return self.response
 
@@ -11877,6 +11882,7 @@ class TransportFaultSession:
         self.failures = int(failures)
         self.prefix_chunks = list(prefix_chunks)
         self.post_calls = 0
+        self.primes = 0
         self.tags_calls = 0
 
     def get(self, _url, timeout):
@@ -11899,7 +11905,9 @@ class TransportFaultSession:
         return TagsResponse()
 
     def post(self, _url, **kwargs):
-        del kwargs
+        if is_fresh_slot_prime(kwargs.get("json")):
+            self.primes += 1
+            return PrimeResponse()
         self.post_calls += 1
         if self.post_calls <= self.failures:
             return TransportFaultResponse(self.prefix_chunks)
@@ -11929,7 +11937,8 @@ def test_every_analysis_request_tells_ollama_not_to_think(monkeypatch):
     original_post = session.post
 
     def post(url, **kwargs):
-        sent.append(kwargs["json"])
+        if not is_fresh_slot_prime(kwargs["json"]):
+            sent.append(kwargs["json"])
         return original_post(url, **kwargs)
 
     session.post = post

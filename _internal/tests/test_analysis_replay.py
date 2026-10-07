@@ -24,6 +24,7 @@ from typing import Any, Callable
 
 import pytest
 
+from tests.fresh_slot_fakes import PrimeResponse, is_fresh_slot_prime
 from abook.analysis import (
     DIRECTOR_CRITIC_SYSTEM_PROMPT,
     LOW_CONFIDENCE_ISSUE_CODE,
@@ -276,7 +277,9 @@ class FakeOllama:
             raise AssertionError("unexpected request role")
         return json.dumps(answer, ensure_ascii=False), done_reason
 
-    def post(self, _url: str, *, json: dict[str, Any], timeout: Any, stream: bool):
+    def post(self, _url: str, *, json: dict[str, Any], timeout: Any, stream: bool = False):
+        if is_fresh_slot_prime(json):
+            return PrimeResponse()
         body = json
         request_hash = analysis_request_hash(body)
         text, done_reason = self._answer(body, request_hash)

@@ -88,7 +88,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   hiệu hay tên người khác ("Quỷ Vương", "Lôi Long").
 - Dừng giữa lúc phân tích rồi làm tiếp (hay app tắt đột ngột) không còn tự đổi cách app hỏi model: mỗi câu trả lời của
   model được ghi lại, làm tiếp thì dùng lại đúng câu trả lời cũ, và danh sách nhân vật, lượt thử, lời góp ý mang sang
-  được dựng lại y như lúc chưa dừng. Phần còn lệch là do chính Ollama tính hơi khác sau khi khởi động lại (đang đo).
+  được dựng lại y như lúc chưa dừng.
+- Phân tích cùng một cuốn bằng cùng một model giờ ra cùng một kết quả, dù Ollama vừa khởi động lại hay vừa trả lời
+  việc khác: trước mỗi câu hỏi app gửi một câu ngắn không liên quan để Ollama tính lại từ đầu, thay vì dùng lại phần
+  đã tính cho câu trước (phần ấy làm câu trả lời đổi theo câu hỏi đứng trước - người nói, giọng, audio đổi theo). Thời
+  gian phân tích không đổi. Chỉ đúng khi không có app khác hỏi cùng Ollama trong lúc ấy.
 
 ### Cách đọc tên
 
