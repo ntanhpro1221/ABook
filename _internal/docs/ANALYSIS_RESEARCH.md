@@ -39,6 +39,33 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 07-10 chiều - mồi lạ không làm request nạp lại từ đầu; ghi trước B15 / B16 / cổng P có oracle
+
+**Mồi lạ (`_prime_fresh_slot`, 0.4.31) không làm cái nó tả.** Ollama 0.33.2 chạy mọi GGUF qua `llama-server` (llama.cpp), có
+bộ đệm prompt trong RAM (mặc định 8.192 MiB). Log máy chủ (model v4, lượt PRIME + SR): 1.301 request phân tích đứng ngay sau mồi
+thì 1.255 có dòng `found better prompt with f_keep = 1.000, f_sim = 1.000` rồi dùng lại >= 100 token KV (trung bình 58 % prompt);
+46 chỉ dùng lại tiền tố template 1-4 token; 0 nạp từ 0. Mồi đẩy slot cũ vào RAM, request thật kéo KV cũ về. `prompt_eval_count`
+của Ollama = token dùng lại + token nạp mới nên KHÔNG làm bằng chứng được; phải đọc log `cached n_tokens` / `prompt eval time`.
+Phép đo PRIME vẫn cho kết quả trùng từng byte vì hai lượt gửi cùng chuỗi request nên bộ đệm RAM ở cùng trạng thái, không phải vì
+nạp lại sạch. Đang đo (LLM_Train/resume_determinism/q7_probe.py): mồi chat vs mồi `raw` x có/không `LLAMA_ARG_CACHE_RAM=0`,
+đọc log từng request. SR (dừng/chạy tiếp giữa pha phân tích trên 0.4.31) là phép thử của chính chỗ này: sau khi chạy tiếp, bộ đệm
+RAM trống.
+
+**Ghi trước (chi tiết LLM_Train/b15b16/PLAN.md, Lead duyệt kèm sửa):**
+- **Cổng P** (người kể theo đoạn, P_SPEC §5) chạy thêm hai nhánh oracle ở 11 chương có lỗi P: o2 = đoạn bộ phát hiện báo + người
+  kể đúng, o1 = ranh giới gold + người kể đúng. ctl->trt = phần app làm được; trt->o2 = giá trị của biết đúng người; o2->o1 = giá
+  trị của ranh giới chuẩn; lỗi còn ở o1 = lỗi gắn ngôi. Phán qua/không vẫn chỉ ctl vs trt.
+- **B15 đích phụ:** data_b9 + 1.800 mẫu phụ (cùng user, đáp = mỗi dòng thoại cùng/khác người nói với dòng thoại trước + người nghe
+  chỉ khi chữ có bằng chứng). Bằng chứng người nghe chỉ phủ 2,5 % dòng nên đích chính là cùng/khác. Suy luận không đổi. Tổng 6.016
+  mẫu ~ B10 nên đối chứng cùng bước là b9x750 (B9 1,425 epoch). Kiểm "có học" trên 200 mẫu / 8 truyện giữ lại: cùng/khác >= 85 %
+  VÀ recall lớp "cùng" >= 60 % (đa số = 68,8 %).
+- **B16 mẫu âm lật cuộc trao đổi:** 589 cặp (đổi A<->B cả cuộc trao đổi, lật từ giữa, một dòng -> người nghe có bằng chứng, một
+  dòng -> người chỉ được nhắc), chỉ từ cuộc trao đổi có nhãn đáng tin (loại 45,5 % ứng viên). DPO + 1,0 x NLL, khởi từ B9 s1234;
+  điểm DPO chỉ tính trên token giá trị speaker (mặt nạ) vì bản rejected giữ nguyên các trường khác (vd giới của người cũ) - không
+  mặt nạ thì model hạ được rejected nhờ trường lệch thay vì học ai nói. Đối chứng C16 = chỉ phần SFT. Sàng: lỗi trong cảnh -20 % so
+  B9 s1234, CI không chứa 0, và B16 < C16 ít nhất 10 %.
+- Thứ tự hàng: B7m -> cổng P -> (nhạc) -> B16 + C16 -> B15 -> B10 phần B.
+
 ## 07-10 Quy tắc quyết định: cổng 19 ch KHÔNG phân giải được +1,5 F1 - thước theo CƠ CHẾ (Model, Lead yêu cầu)
 
 Số (trả lời Q2 cho người ngoài, Corpus research/outside/q2_followup_answer.md): F1 giọng = B-cubed gộp micro trên 1.349 câu; CI cặp
@@ -58,6 +85,15 @@ lấy mẫu lại theo TRUYỆN (11 truyện) có nửa độ rộng ~3 điểm,
 
 Lead duyệt cả ba, thêm: cổng PHÁT HÀNH (như 0.4.31 trên Mac) chỉ là cổng KHÔNG TỤT, giữ 19 ch; cổng ĐỔI MẶC ĐỊNH model dùng cổng mở
 rộng ~34 truyện (dòng 2). Thước T+A+M tự động là thước XẤP XỈ: khi công bố kết quả luôn báo kèm số trên 145 lỗi hai người cùng gán.
+
+Sửa 07-10 chiều (góp ý ngoài vòng 2, Lead chốt):
+- **Lực của cổng:** cổng 19 ch chỉ thấy được khác biệt ~4,3 điểm F1; cổng ~34 truyện ~2,4; muốn thấy 1,5 cần ~90 truyện. Không
+  tuyên bố hơn/kém dưới ~2,5 điểm F1 ở bất kỳ cổng nào hiện có.
+- **Thước CHÍNH của thí nghiệm cơ chế = gán mù lại**: mọi dòng mà người nói KHÁC nhau giữa hai model, cộng một mẫu ngẫu nhiên các
+  dòng không đổi (để có mẫu số); hai agent gán mù như 293 lỗi B9. Bộ đếm T+A+M tự động thành thước PHỤ.
+- **Chặn F1:** ước lượng điểm phải >= -1,5, BÁO kèm cận dưới một phía nhưng KHÔNG dùng cận dưới để chặn (với nhiễu hiện có, chặn
+  bằng cận dưới sẽ loại ~50-75 % thay đổi vô hại).
+- **Nhiều hạt:** lấy trung bình, không bao giờ lấy hạt tốt nhất.
 
 ## 07-10 Lỗi người nói của B9 nằm ở đâu: phân loại theo CƠ CHẾ (293 lỗi, hai người gán mù)
 
