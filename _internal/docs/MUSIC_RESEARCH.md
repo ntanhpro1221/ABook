@@ -4219,7 +4219,7 @@ cùng nhân vật chính (người kể ngôi 1 / nhân vật góc nhìn đi san
 ra/vào lại làm điểm nhảy. Bí danh thật của app sẽ làm đếm đủ hơn, nhưng không sửa được cái lệch cấu trúc này.
 Bỏ hướng này. Chỗ hổng còn lại vẫn là R_NT: C1 lỡ 19/36 (4+5) và 28/37 (5b+6) NT.
 
-### 07-10 07:4x - GHI TRƯỚC: VOX, đầu dò "có lời" cho nhạc nhập trên máy người dùng (CPU)
+### 07-10 07:3x - GHI TRƯỚC: VOX, đầu dò "có lời" cho nhạc nhập trên máy người dùng (CPU)
 Vấn đề:
 - "Nhập nhạc của tôi" không dò lời hát (docs/MUSIC_IMPORT.md), nên bài có lời có thể bị tự chọn nằm dưới giọng đọc.
 - Danh mục lọc lời bằng Music Flamingo (MF). MF cần GPU lớn, máy người dùng không chạy được.
@@ -4249,7 +4249,7 @@ nên qua cổng cũng chưa chứng minh được trên nhạc pop.
 Nếu qua, đề xuất cho app (Lead thiết kế): bài nhập có CLAP > 0,5 và đầu dò >= τ thì gắn "Có vẻ có lời". Planner không TỰ chọn
 bài ấy; người dùng ghim thì vẫn dùng. Chỉ là đề xuất, đúng luật không tự sửa.
 
-### 07-10 07:4x - VOX: QUA (ghi trước 462055ca; mã đóng băng Corpus 0ccc1bd trước khi mở phần xác nhận)
+### 07-10 07:3x - VOX: QUA (ghi trước 462055ca; mã đóng băng Corpus 0ccc1bd trước khi mở phần xác nhận)
 `vox_head.py learn` / `confirm`:
 
 | | AUC | phủ có lời ở τ | báo nhầm ở τ |
