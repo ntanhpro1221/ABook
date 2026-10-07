@@ -11,7 +11,8 @@ mô-đun rồi (`measure_missing`, `analyze_pending`) thì bù cả hai.
 Phân tích: `analyze(path)` trả mục theo hình danh mục (valence, arousal, tension, sd, vetVar, emotions, confidence,
 fitsUnderNarration, loudness) hay None. Model nghe chỉ-âm-thanh (music_student.py) cắm vào qua `set_analyzer`; khi chưa có gói
 model hay thư viện, `analyze` trả None và bài ở trạng thái "chưa phân tích": KHÔNG BAO GIỜ bịa số. Bài chưa phân tích không bao giờ được
-máy tự chọn nhưng ghim tay được; bài đã phân tích vào danh sách ứng viên tự động như bài danh mục (music_select không đổi).
+máy tự chọn nhưng ghim tay được; bài đã phân tích vào danh sách ứng viên tự động như bài danh mục (music_select không đổi), trừ bài có vẻ có lời
+hát (`vocalsLikely`): lời át chữ đọc nên máy không tự chọn, người dùng ghim tay hay bấm "Vẫn dùng làm nhạc nền" (`vocalsOk`) thì vẫn dùng.
 """
 from __future__ import annotations
 
@@ -91,7 +92,7 @@ def _clip(value: float, low: float, high: float) -> float:
 def clean_analysis(result: Any) -> dict[str, Any] | None:
     """Kết quả của bộ phân tích -> khoá của một bài danh mục: valence / arousal (bắt buộc, kẹp -1..1), tension, sd, vetVar
     (phương sai dư của bộ đoán từng trục, >= 0: music_select cộng vào khoảng cách), emotions (13 cường độ 0..1), confidence, `fitsUnderNarration` -> `background`, `loudness` (số LUFS hay {lufs, speechBand}) ->
-    lufs / speechBand, family / style nếu có. Thiếu valence hoặc arousal -> None (không điền số nào thay bộ phân tích)."""
+    lufs / speechBand, `vocals` (0..1) + `vocalsLikely` (bool, đầu dò lời hát - bài có vẻ có lời không được máy TỰ chọn), family / style nếu có. Thiếu valence hoặc arousal -> None (không điền số nào thay bộ phân tích)."""
     if not isinstance(result, dict):
         return None
     valence, arousal = _finite(result.get("valence")), _finite(result.get("arousal"))
@@ -128,12 +129,22 @@ def clean_analysis(result: Any) -> dict[str, Any] | None:
         out["lufs"] = lufs
     if band is not None:
         out["speechBand"] = band
+    vocals = _finite(result.get("vocals"))
+    if vocals is not None:
+        out["vocals"] = _clip(vocals, 0.0, 1.0)
+    if isinstance(result.get("vocalsLikely"), bool):
+        out["vocalsLikely"] = result["vocalsLikely"]
     for key in ("family", "style"):
         if isinstance(result.get(key), str) and result[key]:
             out[key] = result[key]
     if out.get("family") not in (None, *music_plan.FAMILIES):
         del out["family"]
     return out
+
+
+def auto_excluded(info: dict[str, Any]) -> bool:
+    """Bài nhập này bị loại khỏi danh sách TỰ chọn vì có vẻ có lời hát và người dùng chưa cho phép."""
+    return bool(info.get("vocalsLikely")) and not info.get("vocalsOk")
 
 
 # ---- đọc file ------------------------------------------------------------------------------------------------------------
@@ -215,6 +226,8 @@ class LocalMusic:
         if entry.get("lufs") is not None:
             info["lufs"] = entry["lufs"]
         info.update(entry.get("analysis") or {})
+        if entry.get("vocalsOk"):
+            info["vocalsOk"] = True  # người dùng bấm "Vẫn dùng làm nhạc nền": máy được tự chọn dù đầu dò báo có lời
         if entry.get("lufs") is not None:
             info["lufs"] = entry["lufs"]  # số đo từ chính file thắng số của bộ phân tích
         return info
@@ -255,11 +268,13 @@ class LocalMusic:
         return None
 
     def near(self, valence: float, arousal: float, radius: int = 1, grid: int = 5) -> list[dict[str, Any]]:
-        """Ứng viên tự động quanh (valence, arousal), như `MusicCatalog.near`: chỉ bài ĐÃ phân tích (có không khí) và còn file."""
+        """Ứng viên tự động quanh (valence, arousal), như `MusicCatalog.near`: chỉ bài ĐÃ phân tích (có không khí) và còn file. Bài có vẻ
+        có lời hát (`vocalsLikely`) không được máy tự chọn (lời át chữ đọc) trừ khi người dùng bấm "Vẫn dùng làm nhạc nền" (`vocalsOk`);
+        ghim tay không đi qua đây nên vẫn dùng được."""
         wanted_v, wanted_a = music_catalog.cell_of(valence, arousal, grid)
         out = []
         for info in self.entries():
-            if not info["analysed"] or self.file(info["link"]) is None:
+            if not info["analysed"] or self.file(info["link"]) is None or auto_excluded(info):
                 continue
             v, a = music_catalog.cell_of(float(info["valence"]), float(info["arousal"]), grid)
             if abs(v - wanted_v) <= radius and abs(a - wanted_a) <= radius:
@@ -267,6 +282,20 @@ class LocalMusic:
         return out
 
     # -- ghi --------------------------------------------------------------------------------------------------------------
+    def set_vocals_ok(self, digest: str, ok: bool) -> bool:
+        """Người dùng bấm (hay bỏ) "Vẫn dùng làm nhạc nền" cho một bài có vẻ có lời: cờ `vocalsOk` ở mục của bài trong sổ (không nằm trong
+        `analysis` nên phân tích lại không làm mất). False nếu bài không còn trong kho."""
+        with self._lock:
+            entry = self._tracks().get(digest)
+            if entry is None:
+                return False
+            if ok:
+                entry["vocalsOk"] = True
+            else:
+                entry.pop("vocalsOk", None)
+            self._save()
+            return True
+
     def import_file(self, source: Path, fallback: dict[str, str] | None = None) -> tuple[dict[str, Any], bool]:
         """Nhập một file: kiểm đuôi và đọc được như âm thanh, chép vào kho theo mã sha1 nội dung, đo độ to, phân tích nếu có bộ
         phân tích. Trả (thông tin bài, đã có sẵn trong kho?). File trùng nội dung với bài đã có thì không chép lại.

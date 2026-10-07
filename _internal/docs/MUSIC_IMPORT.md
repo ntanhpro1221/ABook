@@ -34,12 +34,18 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
 -> `None`: bài ở trạng thái "chưa phân tích", KHÔNG bao giờ điền số thay model. `LocalMusic.analyze_pending()` (và
 `POST /api/music/local/analyze`) phân tích nốt các bài nhập từ trước khi bộ phân tích có mặt.
 
-- **Bộ phân tích "trò"** (`abook/webui/music_student.py`, `server.py` cắm lúc dựng kho nhạc qua `register()`): chỉ nghe, không dò
-  "có lời", không chặn bài nào. Một bài: ffmpeg giải mã -> ba cửa sổ 10 giây ở 20 / 50 / 80% (bài ngắn: một cửa sổ) mono 48 kHz
+- **Bộ phân tích "trò"** (`abook/webui/music_student.py`, `server.py` cắm lúc dựng kho nhạc qua `register()`): chỉ nghe, không chặn
+  bài nào. Một bài: ffmpeg giải mã -> ba cửa sổ 10 giây ở 20 / 50 / 80% (bài ngắn: một cửa sổ) mono 48 kHz
   -> tháp âm thanh LAION-CLAP (L2 từng cửa sổ, trung bình, L2) -> đầu trò A `student_head_A.npz` (MỘT đầu cho mọi máy từ 05-10; z-score 512
   chiều CLAP, 16 hàng: 13 cường độ = sigmoid, valence / energy / tension kẹp -1..1, rồi hiệu chỉnh - xem đoạn dưới; đường torch còn đo 42 đặc trưng âm học 22.050 Hz, `music_acoustic.py`, chỉ cho `loudness.speechBand`). `confidence` cố định 0,5,
   `fitsUnderNarration` và `family` đọc từ vector nhúng so với vector chữ đã tính sẵn (họ ngoài danh sách của app như "rock"
   -> `other`), `loudness.speechBand` = tỉ lệ năng lượng 300-3000 Hz. Bài < 3 giây hay file không giải mã được -> `None`.
+- **Đầu dò lời hát** (`vox_head.npz`, 07-10, `music_student._Head.vocals`): logistic trên đúng vector nhúng 512 chiều ấy (mu, sd, coef, intercept, tau)
+  -> `vocals` (xác suất 0..1) và `vocalsLikely` (>= tau). Thiếu file (gói cũ) thì hai khoá vắng và bộ phân tích vẫn chạy (`OPTIONAL_FILES`) - không
+  đoán. Bài `vocalsLikely` KHÔNG vào danh sách tự chọn (`LocalMusic.near`: lời át chữ đọc); ghim tay vẫn dùng được, và nút "Vẫn dùng làm nhạc nền"
+  (`POST /api/music/local/<sha1>/vocals-ok`, cờ `vocalsOk` ở mục của bài trong `library.json`, không mất khi phân tích lại) cho máy tự chọn nó. Không xoá,
+  không chặn nhập. Điện thoại tính cùng hai khoá (`MusicStudent.kt` `VoxHead`) nhưng không tự chọn nhạc nên chỉ hiện nhãn "Có vẻ có lời". Bài đã phân
+  tích từ trước có cờ sau khi người dùng bấm "Phân tích lại N bài" (không lưu vector nhúng nên phải giải mã lại).
 - **Hiệu chỉnh cho kho trộn** (`music_student.CALIBRATION`): V/E/T của trò bị nén về giữa, nên trong kho lẫn nhạc danh mục (số của thầy)
   và nhạc nhập, bài nhập được chọn quá thường. Mỗi trục, theo từng đường chạy: `v' = kẹp(a + b*v, -1, 1)`; trò KHÔNG còn ghi `sd`
   (bài nhập dùng `TRACK_SD_DEFAULT` như bài danh mục) mà ghi `vetVar` = phương sai dư của từng trục, và
