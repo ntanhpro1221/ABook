@@ -4318,3 +4318,21 @@ Giới hạn đã nêu của VOX: chưa đo trên nhạc có lời kiểu ngư�
   có tag nhạc cụ, chỉ 50 có voice, và cả 50 đều là bài CLAP chấm thấp.
 - Số ghi lại cho đủ: AUC đầu dò .679, CLAP .490; phủ voice .10; gắn nhầm ÂM .008. Những số này không trả lời câu hỏi về nhạc có lời.
 - Làm lại: tải lại 3 gói MTG, nhúng MỌI bài theo đúng cửa sổ app (`appwin.audio_windows`), rồi chấm cùng cách đọc đã ghi trước.
+
+### 07-10 08:0x - L3 (hình dạng trong chương bằng so cặp / ví dụ 3 bậc): KHÔNG THẮNG (ghi trước 33c0f58f / 06ff8c24)
+GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r V/T trong chương, trung bình theo chương. 23 chương có đủ đầu ra
+(5b+6; bộ 7 chưa có L3).
+
+| | r VT | V | T | so P0 | hơn P0 ở |
+|---|---|---|---|---|---|
+| P0 (mốc) | .320 | .252 | .388 | | |
+| P0-VOTE6 (đối chứng cùng chi phí: 6 mẫu ở t=.7, lấy TB) | .327 | .343 | .310 | +.007 | |
+| L3-PAIR (so cặp với 3 neo) | .129 | .134 | .123 | −.192 | 5/23 → KHÔNG THẮNG |
+| L3-3B (ví dụ 3 bậc) | .080 | −.181 | .341 | −.240 | 3/23 → KHÔNG THẮNG |
+
+Đọc:
+- Hỏi so cặp hay đưa ví dụ bậc cho 4B đều làm HỎNG thứ tự trong chương; 3B còn đảo chiều V.
+- Lấy mẫu nhiều lần không thêm gì (+.007).
+- Hình dạng trong chương từ LLM nhỏ dừng ở r khoảng .3. Vì vậy CL (07-10, đã cài) chỉ giữ một NỬA hình P0 quanh mức chương, và
+  điều này khớp.
+- Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
