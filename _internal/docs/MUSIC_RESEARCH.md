@@ -4177,7 +4177,7 @@ Chọn **dời k = .5, hình lấy từ P0**: tốt nhất ở cả hai nửa b�
 
 Đặc tả cài: `Corpus/research/music/SPEC_chapter_level.md`.
 
-### 07-10 07:1x - CL đã cài (dev/music-scene e82bc993): đo sau cài khớp
+### 07-10 07:0x - CL đã cài (dev/music-scene e82bc993): đo sau cài khớp
 Lệnh `cl_verify.py D:/Novels/ABook_mscene` (Corpus research/music, e8c2a2e). Nó đưa đúng các đoạn app và P0 của nghiên cứu qua
 `music_scenes.apply_chapter_level` của nhánh. So ba bản: cl_apply "dời k=0.5 nguồn P0", bản viết lại kiểu app (trọng số theo
 thời lượng cả đoạn) và hàm của nhánh.
