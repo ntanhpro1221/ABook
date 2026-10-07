@@ -14353,22 +14353,40 @@ class ProjectDB:
                 ),
             )
 
-    def rewrite_speaker(self, old_name: str, canonical_name: str, *, chapter_ids: list[int] | None = None) -> int:
-        """Đổi nhãn người nói `old_name` -> `canonical_name`; `chapter_ids`: chỉ trong các chương ấy (người kể theo chương)."""
+    def rewrite_speaker(
+        self,
+        old_name: str,
+        canonical_name: str,
+        *,
+        chapter_ids: list[int] | None = None,
+        only_ranges: list[tuple[int, int, int]] | None = None,
+        except_ranges: list[tuple[int, int, int]] | None = None,
+    ) -> int:
+        """Đổi nhãn người nói `old_name` -> `canonical_name`; `chapter_ids`: chỉ trong các chương ấy (người kể theo chương).
+
+        `only_ranges` / `except_ranges`: (chapter_id, từ seq, đến seq) - chỉ trong / trừ các đoạn ấy (người kể theo đoạn,
+        narrator_sections.py). Không truyền thì câu lệnh y như trước."""
+        where = "speaker=?"
+        params: list[Any] = [old_name]
+        if chapter_ids is not None:
+            ids = [int(chapter_id) for chapter_id in chapter_ids]
+            if not ids:
+                return 0
+            where += f" AND chapter_id IN ({','.join('?' for _ in ids)})"
+            params += ids
+        if only_ranges is not None:
+            if not only_ranges:
+                return 0
+            where += " AND (" + " OR ".join("(chapter_id=? AND seq BETWEEN ? AND ?)" for _ in only_ranges) + ")"
+            params += [int(value) for span in only_ranges for value in span]
+        for span in except_ranges or ():
+            where += " AND NOT (chapter_id=? AND seq BETWEEN ? AND ?)"
+            params += [int(value) for value in span]
         with self.connect() as conn:
-            if chapter_ids is None:
-                cursor = conn.execute(
-                    "UPDATE segments SET speaker=?,updated_at=? WHERE speaker=?",
-                    (canonical_name, time.time(), old_name),
-                )
-            else:
-                ids = [int(chapter_id) for chapter_id in chapter_ids]
-                if not ids:
-                    return 0
-                cursor = conn.execute(
-                    f"UPDATE segments SET speaker=?,updated_at=? WHERE speaker=? AND chapter_id IN ({','.join('?' for _ in ids)})",
-                    (canonical_name, time.time(), old_name, *ids),
-                )
+            cursor = conn.execute(
+                f"UPDATE segments SET speaker=?,updated_at=? WHERE {where}",
+                (canonical_name, time.time(), *params),
+            )
             return int(cursor.rowcount)
 
     def rewrite_segment_speakers(
