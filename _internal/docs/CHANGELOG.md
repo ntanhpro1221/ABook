@@ -75,6 +75,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   lại những đoạn vừa đổi chỗ vì cách chia cảnh mới); chương nào AI chưa đọc xong thì vẫn chơi theo cách cũ.
 - Nghe trên máy tính: một bài nhạc không tải được (mất mạng) thì 5 phút sau máy tự thử lại như trên
   điện thoại, không còn im đến khi sang đoạn khác.
+- Nhạc của bạn: bài có lời hát được nhận ra và không tự phát làm nền dưới giọng đọc (lời át chữ). Bài ấy hiện nhãn "Có vẻ có lời". Bạn vẫn có thể ghim hay bấm "Vẫn dùng làm nhạc nền".
 
 ### Làm sách
 

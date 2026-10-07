@@ -144,6 +144,12 @@ class MusicStoreTest {
         assertEquals("piano", clean.getString("family"))
         assertNull(MusicStore.cleanAnalysis(JSONObject().put("arousal", 0.1)))
         assertNull(MusicStore.cleanAnalysis("không phải đối tượng"))
+        // đầu dò lời hát: vocals kẹp 0..1, vocalsLikely phải là bool
+        val sung = MusicStore.cleanAnalysis(JSONObject().put("valence", 0.1).put("arousal", 0.2).put("vocals", 1.7).put("vocalsLikely", true))!!
+        assertEquals(1.0, sung.getDouble("vocals"), 0.0)
+        assertTrue(sung.getBoolean("vocalsLikely"))
+        val odd = MusicStore.cleanAnalysis(JSONObject().put("valence", 0.1).put("arousal", 0.2).put("vocals", "nhiều").put("vocalsLikely", "có"))!!
+        assertFalse(odd.has("vocals") || odd.has("vocalsLikely"))
         // số đo từ chính file thắng số của bộ phân tích
         val store = store { -23.0 }
         store.analyzer = { JSONObject().put("valence", 0.1).put("arousal", 0.2).put("loudness", -10.0) }

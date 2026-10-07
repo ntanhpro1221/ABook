@@ -14,6 +14,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -202,6 +203,46 @@ class MusicStudentTest {
                 assertEquals("$name $emotion", want.getJSONObject("emotions").getDouble(emotion), got.getJSONObject("emotions").getDouble(emotion), 1e-9)
             }
             assertEquals(want.getString("family"), got.getString("family"))
+            // đầu dò lời hát (vox_head.npz cạnh đầu A): cùng hai khoá, cùng số với Python
+            assertEquals("$name vocals", want.getDouble("vocals"), got.getDouble("vocals"), 1e-9)
+            assertEquals("$name vocalsLikely", want.getBoolean("vocalsLikely"), got.getBoolean("vocalsLikely"))
+        }
+    }
+
+    /** Đầu dò giả: coef = e_0, mu 0, sd 1, intercept 0 -> p = sigmoid(thành phần đầu của vector nhúng). */
+    private fun vox(tau: Double = 0.5, size: Int = 512): Map<String, NpyArray> = mapOf(
+        "mu" to NpyArray(intArrayOf(size), DoubleArray(size), null),
+        "sd" to NpyArray(intArrayOf(size), DoubleArray(size) { 1.0 }, null),
+        "coef" to NpyArray(intArrayOf(size), DoubleArray(size) { if (it == 0) 1.0 else 0.0 }, null),
+        "intercept" to NpyArray(intArrayOf(1), doubleArrayOf(0.0), null),
+        "tau" to NpyArray(intArrayOf(1), doubleArrayOf(tau), null),
+    )
+
+    private fun unit(first: Double): DoubleArray {
+        val norm = Math.hypot(first, 1.0)
+        return DoubleArray(512) { if (it == 0) first / norm else if (it == 1) 1.0 / norm else 0.0 }
+    }
+
+    @Test
+    fun the_vox_head_flags_sung_vocals_from_the_same_embedding_and_is_absent_without_its_file() {
+        val real = Npz.read(File(dir, "student_head_A.npz"))
+        val head = StudentHead(real, vox())
+        val sung = head.predict(unit(2.0))
+        val plain = head.predict(unit(-2.0))
+        assertTrue(sung.getBoolean("vocalsLikely"))
+        assertFalse(plain.getBoolean("vocalsLikely"))
+        assertEquals(Math.rint(1.0 / (1.0 + Math.exp(-unit(2.0)[0])) * 1000.0) / 1000.0, sung.getDouble("vocals"), 0.0)
+        assertTrue(sung.getDouble("vocals") in 0.0..1.0 && plain.getDouble("vocals") in 0.0..1.0)
+        assertFalse("tau của gói, không phải 0,5", StudentHead(real, vox(tau = 0.99)).predict(unit(2.0)).getBoolean("vocalsLikely"))
+        val bare = StudentHead(real).predict(unit(2.0))
+        assertFalse(bare.has("vocals") || bare.has("vocalsLikely"))
+        for (key in listOf("valence", "arousal", "tension", "fitsUnderNarration", "family")) {
+            assertEquals("khoá cũ giữ nguyên: $key", bare.get(key), sung.get(key))
+        }
+        try {
+            StudentHead(real, vox(size = 3))
+            fail("đầu dò sai hình")
+        } catch (_: IllegalArgumentException) {
         }
     }
 
