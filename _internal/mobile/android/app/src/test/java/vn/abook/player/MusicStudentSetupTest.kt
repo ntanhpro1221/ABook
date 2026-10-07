@@ -229,6 +229,16 @@ class MusicStudentSetupTest {
     }
 
     @Test
+    fun an_older_package_without_the_optional_vox_head_still_counts_as_complete() {
+        val folder = File(root, MusicStudentSetup.FOLDER).apply { mkdirs() }
+        File(folder, "big.bin").writeBytes(big)
+        File(folder, "small.json").writeBytes(small)
+        val vox = PinnedFiles.Part("vox_head.npz", "0".repeat(64), 100)
+        assertTrue(setup(store(), files = parts + vox).complete())
+        assertFalse("file bắt buộc vẫn phải có", setup(store(), files = parts + PinnedFiles.Part("other.bin", "0".repeat(64), 100)).complete())
+    }
+
+    @Test
     fun a_phone_whose_architecture_has_no_runtime_is_not_offered_the_download() {
         val setup = setup(store(), supported = false)
         assertFalse(setup.status().getBoolean("supported"))

@@ -1185,6 +1185,13 @@ class App:
             raise ApiError(HTTPStatus.NOT_FOUND, "Bài này không còn trong Nhạc của tôi")
         return self.my_music_view()
 
+    def my_music_vocals_ok(self, digest: str, ok: bool) -> dict[str, Any]:
+        """"Vẫn dùng làm nhạc nền": cho phép (hay thôi cho phép) máy tự chọn một bài có vẻ có lời hát. Chỉ là cờ của bài trên máy này."""
+        self._mutating()
+        if not self.my_music.set_vocals_ok(digest, ok):
+            raise ApiError(HTTPStatus.NOT_FOUND, "Bài này không còn trong Nhạc của tôi")
+        return self.my_music_view()
+
     def my_music_analyze(self) -> dict[str, Any]:
         """Phân tích các bài chưa phân tích (khi bộ phân tích đã có); chưa có thì nói rõ, không bịa."""
         self._mutating()
@@ -2982,6 +2989,12 @@ class Handler(BaseHTTPRequestHandler):
     def post_my_music_precise_remove(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.my_music_precise_remove())
 
+    def post_my_music_vocals_ok(self, _query: dict[str, list[str]], digest: str) -> None:
+        ok = self._body().get("ok", True)
+        if not isinstance(ok, bool):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "ok phải là true / false")
+        self._send_json(HTTPStatus.OK, self.app.my_music_vocals_ok(digest, ok))
+
     def post_my_music_analyze(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.my_music_analyze())
 
@@ -4088,6 +4101,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/music/local/precise"), Handler.post_my_music_precise),
     ("POST", re.compile(r"/api/music/local/precise/remove"), Handler.post_my_music_precise_remove),
     ("POST", re.compile(r"/api/music/local/analyze"), Handler.post_my_music_analyze),
+    ("POST", re.compile(r"/api/music/local/([0-9a-f]{40})/vocals-ok"), Handler.post_my_music_vocals_ok),
     ("DELETE", re.compile(r"/api/music/local/([0-9a-f]{40})"), Handler.delete_my_music),
     ("GET", re.compile(r"/api/music/local/([0-9a-f]{40})/file"), Handler.get_my_music_file),
     ("GET", re.compile(BOOK + r"/parts"), Handler.get_parts),

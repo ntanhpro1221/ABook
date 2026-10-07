@@ -250,6 +250,8 @@ def onnx_folder(tmp_path_factory) -> Path:
     folder = tmp_path_factory.mktemp("onnx_student")
     for name in music_student.PACKAGE_FILES["onnx"]:
         if not (PACKAGE / name).is_file():
+            if name in music_student.OPTIONAL_FILES:
+                continue  # gói dựng cũ chưa có đầu dò lời hát: bài thử đường ONNX vẫn chạy (không có hai khoá vocals)
             pytest.skip("không có gói model của trò ở " + str(PACKAGE))
         shutil.copyfile(PACKAGE / name, folder / name)
     return folder
@@ -355,3 +357,84 @@ def test_analysis_never_downloads_anything_on_its_own(tmp_path: Path, monkeypatc
     assert music_student.analyze(_tones(tmp_path / "t.wav", 5)) is None
     assert opened == [] and not (tmp_path / "student").exists()
     assert music_student.planned_backend() == name
+
+
+# ---- đầu dò lời hát (vox_head.npz) ----------------------------------------------------------------------------------------
+FIXTURE_HEAD = Path(__file__).parent / "fixtures" / "music_student" / "student_head_A.npz"
+
+
+def _fake_vox(directory: Path, *, tau: float = 0.5, coef_at: int = 0, mu: float = 0.0, sd: float = 1.0, intercept: float = 0.0) -> Path:
+    """Gói giả: đầu A thật của bài thử + đầu dò lời hát mà coef = e_{coef_at}, intercept 0 (xác suất = sigmoid của thành phần ấy)."""
+    directory.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(FIXTURE_HEAD, directory / "student_head_A.npz")
+    coef = np.zeros(512, dtype=np.float32)
+    coef[coef_at] = 1.0
+    np.savez(directory / "vox_head.npz", mu=np.full(512, mu, dtype=np.float32), sd=np.full(512, sd, dtype=np.float32), coef=coef,
+             intercept=np.array([intercept], dtype=np.float32), tau=np.array([tau], dtype=np.float32))
+    return directory / "student_head_A.npz"
+
+
+class _OnnxHead(music_student._Head):
+    backend = "onnx"
+
+
+def _unit(first: float) -> np.ndarray:
+    vector = np.zeros(512)
+    vector[0], vector[1] = first, 1.0
+    return vector / np.linalg.norm(vector)
+
+
+def test_the_vox_head_flags_sung_vocals_from_the_same_embedding(tmp_path: Path) -> None:
+    head = _OnnxHead(_fake_vox(tmp_path / "pkg"))
+    sung, plain = head.predict(_unit(+2.0)), head.predict(_unit(-2.0))
+    assert sung["vocalsLikely"] is True and plain["vocalsLikely"] is False
+    assert 0.5 < sung["vocals"] <= 1.0 and 0.0 <= plain["vocals"] < 0.5
+    first = _unit(+2.0)[0]
+    assert sung["vocals"] == round(1.0 / (1.0 + math.exp(-first)), 3), "sigmoid(((e - mu) / sd) @ coef + intercept)"
+    assert head.predict(_unit(0.0))["vocalsLikely"] is False or head.predict(_unit(0.0))["vocals"] >= 0.5
+
+
+def test_the_vox_threshold_is_the_packages_tau_not_one_half(tmp_path: Path) -> None:
+    embedding = _unit(+2.0)
+    low = _OnnxHead(_fake_vox(tmp_path / "low", tau=0.2)).predict(embedding)
+    high = _OnnxHead(_fake_vox(tmp_path / "high", tau=0.99)).predict(embedding)
+    assert low["vocals"] == high["vocals"] and low["vocalsLikely"] is True and high["vocalsLikely"] is False
+
+
+def test_without_the_vox_file_the_result_has_no_vocal_keys_and_every_old_key_is_unchanged(tmp_path: Path) -> None:
+    with_vox = _OnnxHead(_fake_vox(tmp_path / "with")).predict(_unit(+2.0))
+    without = _OnnxHead(FIXTURE_HEAD).predict(_unit(+2.0))  # thư mục của fixture có vox_head.npz: dựng gói không có nó
+    bare = tmp_path / "bare"
+    bare.mkdir()
+    shutil.copyfile(FIXTURE_HEAD, bare / "student_head_A.npz")
+    absent = _OnnxHead(bare / "student_head_A.npz").predict(_unit(+2.0))
+    assert "vocals" not in absent and "vocalsLikely" not in absent, "thiếu tệp thì không đoán"
+    assert {key: value for key, value in with_vox.items() if not key.startswith("vocals")} == absent
+    assert {key: value for key, value in without.items() if not key.startswith("vocals")} == absent
+
+
+def test_a_vox_file_of_the_wrong_shape_is_refused(tmp_path: Path) -> None:
+    path = _fake_vox(tmp_path / "pkg")
+    np.savez(path.with_name("vox_head.npz"), mu=np.zeros(3, dtype=np.float32), sd=np.ones(3, dtype=np.float32), coef=np.zeros(3, dtype=np.float32),
+             intercept=np.zeros(1, dtype=np.float32), tau=np.full(1, 0.5, dtype=np.float32))
+    with pytest.raises(ValueError, match="đầu dò lời hát"):
+        _OnnxHead(path)
+
+
+def test_the_package_pins_the_vox_head_for_both_ways_but_an_older_package_without_it_still_runs(tmp_path: Path) -> None:
+    import hashlib
+
+    assert music_student.REVISION == "eed82cec48a525de0582dcb5e7c3f436f165a39d"
+    assert "vox_head.npz" in music_student.PACKAGE_FILES["torch"] and "vox_head.npz" in music_student.PACKAGE_FILES["onnx"]
+    assert music_student.PACKAGE_HASHES["vox_head.npz"] == ("2def334c729b04ff918072aa0821a3e0146c77d9c1df90a21f1b676f47a48359", 7_374)
+    fixture = (FIXTURE_HEAD.parent / "vox_head.npz").read_bytes()
+    assert (hashlib.sha256(fixture).hexdigest(), len(fixture)) == music_student.PACKAGE_HASHES["vox_head.npz"]
+    assert [item.name for item in music_student.model_downloads("onnx")][-1] == "vox_head.npz"
+    old = tmp_path / "old"
+    old.mkdir()
+    for name in music_student.PACKAGE_FILES["onnx"]:
+        if name != "vox_head.npz":
+            (old / name).write_bytes(b"x")
+    assert music_student._complete(old, "onnx"), "gói cũ chưa có đầu dò lời hát vẫn dùng được"
+    (old / "student_head_A.npz").unlink()
+    assert not music_student._complete(old, "onnx"), "thiếu file bắt buộc thì không"

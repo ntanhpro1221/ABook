@@ -9,7 +9,7 @@ import kotlin.math.sqrt
 
 /**
  * Bộ phân tích "trò" của Nhạc của tôi trên điện thoại - bản Kotlin của đường ONNX trong `abook/webui/music_student.py`
- * (docs/MUSIC_IMPORT.md "Phân tích"): CHỈ NGHE, không dò "có lời", không chặn bài nào. Giải mã -> 48 kHz -> tối đa ba cửa sổ 10
+ * (docs/MUSIC_IMPORT.md "Phân tích"): CHỈ NGHE, không chặn bài nào (đầu dò lời hát [VoxHead] chỉ gắn cờ `vocalsLikely`). Giải mã -> 48 kHz -> tối đa ba cửa sổ 10
  * giây ở 20 / 50 / 80% bài -> log-mel ([MusicMel]) -> tháp CLAP (ONNX, [ClapTower]) -> chuẩn hoá L2 từng cửa sổ, trung bình, chuẩn
  * hoá L2 -> đầu trò A ([StudentHead]). Kết quả có hình bài danh mục (qua [MusicStore.cleanAnalysis]); không có `loudness.speechBand`
  * (cần âm học). Bài không giải mã được hay ngắn hơn 3 giây -> null: bài ở "chưa phân tích", KHÔNG BAO GIỜ bịa số.
@@ -74,7 +74,9 @@ fun interface ClapTower {
  * = sigmoid; valence / arousal / tension kẹp -1..1 rồi hiệu chỉnh cho kho trộn - [CALIBRATION], kèm `vetVar`), `fitsUnderNarration`
  * và `family` đọc thẳng từ vector nhúng so với vector chữ đã tính sẵn. Mọi phép tính bằng double.
  */
-class StudentHead(arrays: Map<String, NpyArray>) {
+class StudentHead(arrays: Map<String, NpyArray>, vox: Map<String, NpyArray>? = null) {
+    /** Đầu dò lời hát (`vox_head.npz`); null khi gói không có (gói cũ): kết quả không có `vocals` / `vocalsLikely`, không đoán. */
+    private val voxHead = vox?.let { VoxHead(it) }
     private val mu = array(arrays, "mu").doubles()
     private val sd = array(arrays, "sd").doubles()
     private val coef = array(arrays, "coef")
@@ -132,11 +134,16 @@ class StudentHead(arrays: Map<String, NpyArray>) {
             }
         }
         val family = familyNames[best]
-        return JSONObject().put("valence", vet.get("valence")).put("arousal", vet.get("arousal")).put("tension", vet.get("tension"))
+        val result = JSONObject().put("valence", vet.get("valence")).put("arousal", vet.get("arousal")).put("tension", vet.get("tension"))
             .put("vetVar", variance).put("emotions", intensity).put("confidence", MusicStudent.CONFIDENCE)
             .put("fitsUnderNarration", weights[0] / weights.sum())
             // Họ phong cách ngoài danh sách của app (vd "rock") là "other" - như danh mục.
             .put("family", if (family in FAMILIES) family else "other")
+        voxHead?.let { head ->
+            val vocals = head.probability(embedding)
+            result.put("vocals", Math.rint(vocals * 1000.0) / 1000.0).put("vocalsLikely", vocals >= head.tau)
+        }
+        return result
     }
 
     private fun dot(matrix: DoubleArray, row: Int, vector: DoubleArray): Double {
@@ -160,6 +167,38 @@ class StudentHead(arrays: Map<String, NpyArray>) {
             "tension" to Triple(-0.003, 1.283, 0.0412),
         )
 
-        fun load(file: File): StudentHead = StudentHead(Npz.read(file))
+        const val VOX_FILE = "vox_head.npz"
+
+        /** Đầu A ở `file`; đầu dò lời hát là `vox_head.npz` cạnh nó nếu có. */
+        fun load(file: File): StudentHead {
+            val vox = File(file.parentFile, VOX_FILE)
+            return StudentHead(Npz.read(file), if (vox.isFile) Npz.read(vox) else null)
+        }
+    }
+}
+
+/**
+ * Đầu dò lời hát (`vox_head.npz`, music_student._Head.vocals): logistic trên đúng vector nhúng 512 chiều (đã chuẩn hoá L2) của đầu trò:
+ * p = sigmoid(((embedding - mu) / sd) . coef + intercept); `vocalsLikely` = p >= tau. Phép tính bằng double.
+ */
+internal class VoxHead(arrays: Map<String, NpyArray>) {
+    private val mu = array(arrays, "mu").doubles()
+    private val sd = array(arrays, "sd").doubles()
+    private val coef = array(arrays, "coef").doubles()
+    private val intercept = array(arrays, "intercept").doubles()
+    val tau: Double = array(arrays, "tau").doubles().let { if (it.size == 1) it[0] else throw IllegalArgumentException("gói model không đúng hình đầu dò lời hát") }
+
+    init {
+        if (mu.size != StudentHead.EMBEDDING || sd.size != StudentHead.EMBEDDING || coef.size != StudentHead.EMBEDDING || intercept.size != 1) {
+            throw IllegalArgumentException("gói model không đúng hình đầu dò lời hát")
+        }
+    }
+
+    private fun array(arrays: Map<String, NpyArray>, name: String) = arrays[name] ?: throw IllegalArgumentException("gói model thiếu “$name”")
+
+    fun probability(embedding: DoubleArray): Double {
+        var score = intercept[0]
+        for (i in 0 until StudentHead.EMBEDDING) score += (embedding[i] - mu[i]) / sd[i] * coef[i]
+        return 1.0 / (1.0 + exp(-score))
     }
 }
