@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  analysisLabel, formatSize, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath,
+  analysisLabel, formatSize, hasVocals, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, vocalsLabel,
   type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood,
 } from "./musicLocal";
 
@@ -29,6 +29,17 @@ describe("analysis label", () => {
   it("says what the user can do with an unanalysed track instead of hiding it", () => {
     expect(analysisLabel({ analysed: false })).toContain("bạn vẫn ghim được");
     expect(analysisLabel({ analysed: true })).toContain("máy có thể tự chọn");
+  });
+});
+
+describe("vocals flag", () => {
+  it("labels an analysed track that probably has sung lyrics, and lets the listener's override change the label", () => {
+    expect(hasVocals(track({ analysed: true, vocalsLikely: true }))).toBe(true);
+    expect(hasVocals(track({ analysed: true, vocalsLikely: false }))).toBe(false);
+    expect(hasVocals(track({ analysed: true }))).toBe(false);
+    expect(hasVocals(track({ analysed: false, vocalsLikely: true }))).toBe(false);
+    expect(vocalsLabel({})).toBe("Có vẻ có lời - không tự chọn");
+    expect(vocalsLabel({ vocalsOk: true })).toContain("cho dùng làm nhạc nền");
   });
 });
 

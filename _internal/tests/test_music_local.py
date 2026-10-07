@@ -419,3 +419,73 @@ def test_the_music_of_mine_routes_are_not_open_to_a_remote_studio() -> None:
         assert not remote_studio.permitted(method, path), (method, path)
     assert remote_studio.permitted("GET", f"/api/books/abc/music/files/{'a' * 40}.flac"), "đường theo sách thì mở cho trình phát"
     assert not remote_studio.permitted("GET", f"/api/books/abc/music/files/{'a' * 40}.exe")
+
+
+# ---- bài có vẻ có lời hát (đầu dò lời hát của music_student): máy không tự chọn, ghim tay vẫn được ------------------------------
+def _vocal_analyzer(path: Path) -> dict:
+    """Hai bài giống hệt nhau về không khí; chỉ bài .ogg bị đầu dò báo có lời."""
+    return dict(CALM_ANALYSIS, fitsUnderNarration=1.0, sd={"valence": 0.01, "arousal": 0.01, "tension": 0.01},
+                vocals=0.93 if path.suffix == ".ogg" else 0.04, vocalsLikely=path.suffix == ".ogg")
+
+
+def test_clean_analysis_keeps_the_vocal_flags_and_clamps_the_probability() -> None:
+    cleaned = music_local.clean_analysis({"valence": 0.1, "arousal": 0.2, "vocals": 1.7, "vocalsLikely": True})
+    assert cleaned["vocals"] == 1.0 and cleaned["vocalsLikely"] is True
+    assert music_local.clean_analysis({"valence": 0.1, "arousal": 0.2, "vocals": -3})["vocals"] == 0.0
+    plain = music_local.clean_analysis({"valence": 0.1, "arousal": 0.2, "vocals": "nhiều", "vocalsLikely": "có"})
+    assert "vocals" not in plain and "vocalsLikely" not in plain, "không phải số / không phải bool thì bỏ, không đoán"
+    assert "vocals" not in music_local.clean_analysis({"valence": 0.1, "arousal": 0.2, "vocals": float("nan")})
+    assert music_local.clean_analysis({"valence": 0.1, "arousal": 0.2, "vocalsLikely": False})["vocalsLikely"] is False
+
+
+def test_a_track_that_probably_has_lyrics_is_not_an_automatic_candidate_until_the_user_allows_it(tmp_path: Path, songs) -> None:
+    music_local.set_analyzer(_vocal_analyzer)
+    store = LocalMusic(tmp_path / "mine")
+    plain, _ = store.import_file(songs["mp3"])
+    sung, _ = store.import_file(songs["ogg"])
+    assert sung["analysed"] is True and sung["vocalsLikely"] is True and "vocalsOk" not in sung
+    assert [t["link"] for t in store.near(0.3, -0.6)] == [plain["link"]], "bài có lời không vào danh sách tự chọn, nhưng không bị xoá"
+    assert {t["link"] for t in store.entries()} == {plain["link"], sung["link"]}, "vẫn nằm trong kho"
+    digest = music_plan.local_hash(sung["link"])
+    assert store.set_vocals_ok(digest, True) is True
+    assert {t["link"] for t in store.near(0.3, -0.6)} == {plain["link"], sung["link"]}
+    assert next(t for t in LocalMusic(tmp_path / "mine").entries() if t["link"] == sung["link"])["vocalsOk"] is True, "ghi vào sổ của máy"
+    music_local.set_analyzer_id("model-moi")  # phân tích lại không làm mất lựa chọn của người dùng
+    assert store.reanalyse() == 2 and store.near(0.3, -0.6)[0]["vocalsLikely"] is True
+    assert {t["link"] for t in store.near(0.3, -0.6)} == {plain["link"], sung["link"]}
+    assert store.set_vocals_ok(digest, False) is True and [t["link"] for t in store.near(0.3, -0.6)] == [plain["link"]]
+    assert store.set_vocals_ok("0" * 40, True) is False
+
+
+def test_the_planner_never_picks_a_track_with_lyrics_by_itself_but_a_pin_still_plays_it(studio, tmp_path: Path, songs) -> None:  # noqa: F811
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    music_local.set_analyzer(_vocal_analyzer)
+    plain = _import(server, songs["mp3"])["added"][0]["link"]
+    sung = _import(server, songs["ogg"])["added"][0]["link"]
+    assert {t["link"] for t in app._music_candidates(0.3, -0.6)} >= {plain} and sung not in {t["link"] for t in app._music_candidates(0.3, -0.6)}
+    _calm_plan(paths, {})
+    view = _call(server, "PUT", f"/api/books/{book}/music", {"family": ""})[1]
+    chosen = [scene["link"] for scene in view["plan"]["scenes"]]
+    assert plain in chosen, "bài giống hệt nhưng không có lời thì vẫn được tự chọn"
+    assert sung not in chosen, "bài có lời không bao giờ được tự chọn"
+    key = view["plan"]["scenes"][0]["key"]
+    pinned = _pin(server, book, key, sung)["plan"]["scenes"][0]
+    assert pinned["link"] == sung and pinned["pinned"] is True, "ghim thắng"
+    # "Vẫn dùng làm nhạc nền": qua API, cờ nằm trong danh sách của máy và bài vào danh sách tự chọn
+    digest = music_plan.local_hash(sung)
+    status, body = _call(server, "POST", f"/api/music/local/{digest}/vocals-ok", {"ok": True})
+    assert status == 200 and next(t for t in body["tracks"] if t["link"] == sung)["vocalsOk"] is True
+    assert sung in {t["link"] for t in app._music_candidates(0.3, -0.6)}
+    assert _call(server, "POST", f"/api/music/local/{digest}/vocals-ok", {"ok": "co"})[0] == 400
+    assert _call(server, "POST", f"/api/music/local/{'0' * 40}/vocals-ok", {"ok": True})[0] == 404
+    assert _call(server, "POST", f"/api/music/local/{digest}/vocals-ok", {"ok": False})[0] == 200
+    assert sung not in {t["link"] for t in app._music_candidates(0.3, -0.6)}
+
+
+def test_the_vocals_override_route_is_not_open_to_a_remote_studio() -> None:
+    from abook.webui import remote_studio
+
+    assert not remote_studio.permitted("POST", "/api/music/local/" + "a" * 40 + "/vocals-ok")

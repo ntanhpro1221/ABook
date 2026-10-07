@@ -1,5 +1,6 @@
 """Bộ phân tích "trò" cho Nhạc của tôi (music_local.set_analyzer): model CHỈ-NGHE học từ thầy (docs/MUSIC_RESEARCH.md "THẦY ->
-TRÒ", docs/MUSIC_IMPORT.md "Phân tích"). Không dò "có lời", không chặn bài nào - bài nào cũng ra một mục.
+TRÒ", docs/MUSIC_IMPORT.md "Phân tích"). Không chặn bài nào - bài nào cũng ra một mục; đầu dò `vox_head.npz` chỉ GẮN CỜ bài có vẻ có lời hát
+(`vocals`, `vocalsLikely`) để máy không tự chọn nó làm nền dưới giọng đọc.
 
 Hai đường chạy, cùng một cách cắt cửa sổ và cùng khoá đầu ra:
 - torch (máy có Studio: torch + transformers + librosa):
@@ -37,11 +38,12 @@ REPO_ID = "NGDtuanh/abook-music-student"
 # ABOOK_MUSIC_STUDENT_DIR. 03-10: gói đầu c6e1485f (tháp âm thanh CLAP fp16 + đầu trò, 97,4% AUC thầy - docs/MUSIC_RESEARCH.md);
 # 60e11bce thêm đường ONNX (tháp .onnx + đầu A); aaa54805 thêm thư viện ONNX Runtime của điện thoại (ort/1.30.0/<abi>/*.so.gz). 05-10: 332e7552 thay đầu A bằng đầu A mới (thang V có phần
 # MuQ) cho MỌI máy, bỏ đầu torch cũ, thêm muq/ (tháp MuQ ONNX CC BY-NC 4.0 + vector chữ + hằng số, đường V hợp); 143bea3d: đầu A + vhop_scale dựng lại bằng cửa sổ âm thanh của chính app, hiệu chỉnh mới. Các file còn lại trùng từng byte với ba commit đầu, nên một ghim cho mọi đường.
-REVISION = "143bea3d538587a88d40127103ac72c6501df54d"
+# 07-10: eed82cec thêm `vox_head.npz` (đầu dò "có lời hát" trên cùng vector nhúng; docs/MUSIC_RESEARCH.md "VOX"), các file khác giữ nguyên băm.
+REVISION = "eed82cec48a525de0582dcb5e7c3f436f165a39d"
 # Mỗi đường cần những file nào; chung preprocessor_config.json (torch đọc, onnx kiểm music_mel còn đúng cấu hình đã chép).
 PACKAGE_FILES = {
-    "torch": ("model.safetensors", "config.json", "preprocessor_config.json", "student_head_A.npz"),
-    "onnx": ("clap_audio_fp16.onnx", "student_head_A.npz", "preprocessor_config.json"),
+    "torch": ("model.safetensors", "config.json", "preprocessor_config.json", "student_head_A.npz", "vox_head.npz"),
+    "onnx": ("clap_audio_fp16.onnx", "student_head_A.npz", "preprocessor_config.json", "vox_head.npz"),
     # Tuỳ chọn "đo cảm xúc nhạc chính xác hơn" (music_valence.py): người dùng bật mới tải, không thuộc đường chạy nào ở trên.
     "muq": ("muq/muq_mulan_audio.onnx", "muq/valence_text.npz", "muq/vhop_scale.json"),
 }
@@ -52,6 +54,7 @@ PACKAGE_HASHES = {
     "preprocessor_config.json": ("b089fad772ef3242a3ff8b9e4a6449083253d28d83a1ad8aa346cea116bfe514", 524),
     "clap_audio_fp16.onnx": ("484bebfc9f42d3a22fc75e35c9027d543cc6c191031abf510a55392d5c1dbdd9", 58_989_719),
     "student_head_A.npz": ("3fcb54b598dd9b3c42cdacd68bb9938ceb68e65c4895a8133c75066aec7080f7", 53_577),
+    "vox_head.npz": ("2def334c729b04ff918072aa0821a3e0146c77d9c1df90a21f1b676f47a48359", 7_374),
     "muq/muq_mulan_audio.onnx": ("5bacc509e048720fe7e45178ce6a4e4d2a15a83d550510818399f4f7e6e9b1c8", 1_273_217_311),
     "muq/valence_text.npz": ("d07deac228b7b561bac016f610340f1f68ec05321abc813d9cb29478dd50847f", 34_394),
     "muq/vhop_scale.json": ("e9516c95ee81bd983eaed7d9e2c21ba1cc46f26eb6df5bbdf13e28b61ff717d7", 1_789),
@@ -59,6 +62,9 @@ PACKAGE_HASHES = {
 ENV_DIR = "ABOOK_MUSIC_STUDENT_DIR"
 ENV_BACKEND = "ABOOK_MUSIC_STUDENT_BACKEND"  # "onnx" | "torch" = ép đường ấy; trống = tự chọn
 ENV_DOWNLOAD = "ABOOK_MUSIC_STUDENT_DOWNLOAD"  # "0" = không bao giờ tải (bộ kiểm đặt sẵn, như ABOOK_CAST_DISCOVERY)
+VOX_FILE = "vox_head.npz"
+# File của gói mà thiếu thì bộ phân tích vẫn chạy (bản gói cũ, trước khi có đầu dò lời hát): bài không có `vocals` / `vocalsLikely`, không đoán.
+OPTIONAL_FILES = (VOX_FILE,)
 PACKAGE_FOLDER = "student"
 RETRY_SECONDS = 600  # nạp hỏng thì chừng ấy giây sau mới thử lại (nhập 40 bài không làm 40 lượt nạp hỏng)
 CLAP_RATE = 48_000
@@ -149,7 +155,8 @@ def model_id() -> str:
 
 def _complete(directory: Path | None, name: str | None = None) -> bool:
     name = name or backend()
-    return directory is not None and name is not None and all((directory / file).is_file() for file in PACKAGE_FILES[name])
+    return directory is not None and name is not None and all(
+        (directory / file).is_file() for file in PACKAGE_FILES[name] if file not in OPTIONAL_FILES)
 
 
 def available() -> bool:
@@ -188,6 +195,7 @@ class _Head:
     Lớp con đặt `backend`; V/E/T ra theo CALIBRATION của đường ấy (lớp gốc, `backend` trống: số thô, không `vetVar`)."""
 
     backend = ""
+    vox: dict[str, Any] | None = None  # đầu dò lời hát; None = gói không có
 
     def __init__(self, path: Path) -> None:
         import numpy as np
@@ -202,6 +210,23 @@ class _Head:
         self.family_text = head["family_text"].astype(np.float64)
         if self.mu.shape[0] != 512 + len(self.names) or self.coef.shape != (len(self.emotions) + 3, self.mu.shape[0]):
             raise ValueError("gói model không đúng hình đầu trò")
+        # Đầu dò lời hát: logistic trên đúng vector nhúng 512 chiều. Thiếu file (gói cũ) -> không có hai khoá vocals*, không đoán.
+        vox_path = path.with_name(VOX_FILE)
+        if vox_path.is_file():
+            vox = np.load(vox_path)
+            parts = {key: vox[key].astype(np.float64) for key in ("mu", "sd", "coef", "intercept", "tau")}
+            if any(parts[key].shape != (512,) for key in ("mu", "sd", "coef")) or any(parts[key].shape != (1,) for key in ("intercept", "tau")):
+                raise ValueError("gói model không đúng hình đầu dò lời hát")
+            self.vox = {**parts, "intercept": float(parts["intercept"][0]), "tau": float(parts["tau"][0])}
+
+    def vocals(self, embedding: Any) -> float | None:
+        """Xác suất bài có lời hát (0..1) từ vector nhúng L2, hay None khi gói không có đầu dò."""
+        import numpy as np
+
+        if self.vox is None:
+            return None
+        score = float(((np.asarray(embedding, dtype=np.float64) - self.vox["mu"]) / self.vox["sd"]) @ self.vox["coef"] + self.vox["intercept"])
+        return 1.0 / (1.0 + float(np.exp(-score)))
 
     def predict(self, embedding: Any, acoustic: dict[str, Any] | None = None) -> dict[str, Any]:
         import numpy as np
@@ -234,6 +259,10 @@ class _Head:
             # Họ phong cách ngoài danh sách của app (vd "rock") là "other" - như danh mục.
             "family": family if family in music_plan.FAMILIES else "other",
         }
+        vocals = self.vocals(embedding)
+        if vocals is not None:
+            result["vocals"] = round(vocals, 3)
+            result["vocalsLikely"] = bool(vocals >= self.vox["tau"])
         band = acoustic.get("speech_band_ratio")
         if band is not None:
             result["loudness"] = {"speechBand": float(band)}
