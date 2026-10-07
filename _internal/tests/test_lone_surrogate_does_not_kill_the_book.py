@@ -68,8 +68,9 @@ def test_clean_input_is_returned_unchanged() -> None:
 def test_there_is_exactly_one_door_and_it_is_guarded() -> None:
     """Vá một biên nhận chỉ đủ nếu chỉ có một biên nhận.
 
-    Kiểm rồi: `analysis.py` gọi `/api/generate` ở hai chỗ, nhưng chỗ thứ hai là
-    `release_model()` — gửi prompt rỗng với `keep_alive: 0` để nhả VRAM và **bỏ qua hoàn toàn
+    Kiểm rồi: `analysis.py` gọi `/api/generate` ở ba chỗ, nhưng hai chỗ kia là
+    `release_model()` — gửi prompt rỗng với `keep_alive: 0` để nhả VRAM — và
+    `_prime_fresh_slot()` — mồi 1 token trước mỗi request thật; cả hai **bỏ qua hoàn toàn
     phản hồi**. Nên văn bản do model sinh ra chỉ vào hệ thống qua `_stream_json_response`.
 
     Test này giữ cho câu ấy còn đúng. Nếu ai thêm một đường gọi model nữa mà quên dọn, nó đỏ ở
@@ -80,10 +81,12 @@ def test_there_is_exactly_one_door_and_it_is_guarded() -> None:
     from abook import analysis
 
     source = inspect.getsource(analysis)
-    assert source.count("/api/generate") == 2, (
+    assert source.count("/api/generate") == 3, (
         "có đường gọi model mới; nó phải dọn surrogate lạc như `_stream_json_response`"
     )
     assert "keep_alive" in inspect.getsource(analysis.OllamaBookAnalyzer.release_model)
+    prime = inspect.getsource(analysis.OllamaBookAnalyzer._prime_fresh_slot)
+    assert ".raise_for_status()" in prime and ".json()" not in prime and ".text" not in prime
 
     streaming = inspect.getsource(analysis.OllamaBookAnalyzer._stream_json_response)
     assert "contains_lone_surrogate(decoded)" in streaming

@@ -7544,6 +7544,23 @@ class OllamaBookAnalyzer:
             decoded = strip_lone_surrogates(decoded)
         return decoded
 
+    def _prime_fresh_slot(self, body: dict[str, Any]) -> None:
+        """Gửi trước một request 1 token KHÔNG chung tiền tố với request phân tích (system khác), để llama-server nạp lại
+        prompt thật từ đầu thay vì dùng lại KV của request trước. KV dùng lại mang dấu request đã tính nó (cách chia lô lúc
+        nạp), nên cùng một request có thể ra câu trả lời khác tuỳ request đứng trước - đổi người nói, đổi giọng, đổi audio.
+        Mồi lạ làm đầu ra chỉ còn phụ thuộc chính request: đo 07-10 (LLM_Train/resume_determinism/PRIME.md) hai chương
+        nhạy, sau slot bẩn và sau khởi động lại trùng từng byte; thời gian cả chương không đổi. Cùng model + num_ctx để
+        Ollama không nạp lại model."""
+        options = {"num_predict": 1, "temperature": 0, "seed": 0}
+        if isinstance(body.get("options"), dict) and "num_ctx" in body["options"]:
+            options["num_ctx"] = body["options"]["num_ctx"]
+        self.session.post(
+            f"{self.base_url}/api/generate",
+            json={"model": body.get("model"), "system": "Trả lời một chữ.", "prompt": "1", "think": False,
+                  "stream": False, "keep_alive": body.get("keep_alive", "30m"), "options": options},
+            timeout=(10.0, 120.0),
+        ).raise_for_status()
+
     def _ollama_stream(
         self,
         body: dict[str, Any],
@@ -7574,6 +7591,7 @@ class OllamaBookAnalyzer:
             usage: dict[str, int] | None = None
             response: requests.Response | None = None
             try:
+                self._prime_fresh_slot(body)
                 response = self.session.post(
                     f"{self.base_url}/api/generate",
                     json=body,
