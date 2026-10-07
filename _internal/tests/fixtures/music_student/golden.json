@@ -2264,7 +2264,9 @@
     },
     "confidence": 0.5,
     "fitsUnderNarration": 0.9999999899995072,
-    "family": "ambient"
+    "family": "ambient",
+    "vocals": 0.01,
+    "vocalsLikely": false
    }
   },
   "mono_22k.mp3": {
@@ -2808,7 +2810,9 @@
     },
     "confidence": 0.5,
     "fitsUnderNarration": 0.9999995435955027,
-    "family": "ambient"
+    "family": "ambient",
+    "vocals": 0.005,
+    "vocalsLikely": false
    }
   }
  },
@@ -2846,7 +2850,9 @@
     },
     "confidence": 0.5,
     "fitsUnderNarration": 0.9999999899995072,
-    "family": "ambient"
+    "family": "ambient",
+    "vocals": 0.01,
+    "vocalsLikely": false
    }
   },
   "mono_22k.mp3": {
@@ -2880,7 +2886,9 @@
     },
     "confidence": 0.5,
     "fitsUnderNarration": 0.9999995435955027,
-    "family": "ambient"
+    "family": "ambient",
+    "vocals": 0.005,
+    "vocalsLikely": false
    }
   }
  }

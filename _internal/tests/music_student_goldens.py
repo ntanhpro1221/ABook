@@ -3,14 +3,14 @@ Kotlin phải ra ĐÚNG những con số mà bản Python (webui/music_student.p
 
     fixtures/music_student/stereo_44k.mp3   12 giây, stereo 44,1 kHz (ba cửa sổ 10 giây): nhạc tổng hợp, không phải nhạc của ai
     fixtures/music_student/mono_22k.mp3     5 giây, mono 22,05 kHz (một cửa sổ ngắn, repeatpad)
-    fixtures/music_student/student_head_A.npz, preprocessor_config.json   bản sao ghim ở music_student.REVISION (53 KB): test đọc npz thật
+    fixtures/music_student/student_head_A.npz, vox_head.npz, preprocessor_config.json   bản sao ghim ở music_student.REVISION (53 KB + 7 KB): test đọc npz thật
     fixtures/music_student/golden.json      windows (n -> điểm bắt đầu), mel (tín hiệu tổng hợp xác định: vài khung + tổng),
                                             head (vector nhúng 512 chiều -> kết quả của đầu), tracks (kết quả đầy đủ của
                                             music_student.analyze trên mp3 qua ffmpeg + onnxruntime: để so với máy Android)
 
 Sinh lại (chỉ khi cố ý đổi hành vi):
     runtime/.venv/Scripts/python.exe -m tests.music_student_goldens --model-dir <thư mục có clap_audio_fp16.onnx, student_head_A.npz,
-                                                                      preprocessor_config.json>
+                                                                      vox_head.npz, preprocessor_config.json>
 (thêm --rebuild-audio để tổng hợp lại hai file mp3 - mp3 do ffmpeg mã hoá nên cần ffmpeg có libmp3lame).
 """
 from __future__ import annotations
@@ -85,7 +85,7 @@ def main() -> int:
     if args.rebuild_audio:
         for name, (rate, channels, seconds) in TRACKS.items():
             encode(FIXTURES / name, synth(rate, channels, seconds), rate)
-    for name in ("student_head_A.npz", "preprocessor_config.json"):
+    for name in ("student_head_A.npz", "vox_head.npz", "preprocessor_config.json"):
         shutil.copyfile(args.model_dir / name, FIXTURES / name)
 
     golden: dict = {"windows": [], "mel": {}, "head": {}, "tracks": {}}

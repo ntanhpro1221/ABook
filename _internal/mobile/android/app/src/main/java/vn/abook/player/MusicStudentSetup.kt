@@ -54,7 +54,7 @@ class MusicStudentSetup(
     }
 
     /** Mọi file có mặt với đúng cỡ đã ghim (dùng được, kể cả khi đã có bản mới hơn: bản cũ vẫn chạy cho tới khi người dùng cập nhật). */
-    fun complete(): Boolean = supported && own.all { pinned.present(it) } && libs.all { shared.present(it) }
+    fun complete(): Boolean = supported && own.all { it.name in OPTIONAL || pinned.present(it) } && libs.all { shared.present(it) }
 
     /** Các file mà bản app này ghim khác (hay chưa có) so với gói đã tải. Rỗng nếu chưa tải gói nào (khi ấy là "chưa có", không phải "cũ"). */
     fun outdatedParts(): List<Part> =
@@ -230,13 +230,17 @@ class MusicStudentSetup(
         // Ghim đúng như webui/music_student.py (REPO_ID, REVISION, PACKAGE_FILES["onnx"], PACKAGE_HASHES): đổi bên kia thì đổi ở đây
         // (tests/test_music_student_android.py so hai bảng).
         const val REPO_ID = "NGDtuanh/abook-music-student"
-        const val REVISION = "143bea3d538587a88d40127103ac72c6501df54d"
+        const val REVISION = "eed82cec48a525de0582dcb5e7c3f436f165a39d"
         const val BASE = "https://huggingface.co/$REPO_ID/resolve/$REVISION/"
         val PACKAGE = listOf(
             Part("clap_audio_fp16.onnx", "484bebfc9f42d3a22fc75e35c9027d543cc6c191031abf510a55392d5c1dbdd9", 58_989_719),
             Part("student_head_A.npz", "3fcb54b598dd9b3c42cdacd68bb9938ceb68e65c4895a8133c75066aec7080f7", 53_577),
             Part("preprocessor_config.json", "b089fad772ef3242a3ff8b9e4a6449083253d28d83a1ad8aa346cea116bfe514", 524),
+            // đầu dò lời hát (07-10): gói cũ thiếu nó vẫn chạy, bài chỉ không có cờ lời hát ([OPTIONAL])
+            Part("vox_head.npz", "2def334c729b04ff918072aa0821a3e0146c77d9c1df90a21f1b676f47a48359", 7_374),
         )
+        /** File của gói mà thiếu thì bộ phân tích vẫn chạy (music_student.OPTIONAL_FILES). */
+        val OPTIONAL = setOf("vox_head.npz")
 
         fun sha256Of(bytes: ByteArray): String = PinnedFiles.sha256Of(bytes)
     }
