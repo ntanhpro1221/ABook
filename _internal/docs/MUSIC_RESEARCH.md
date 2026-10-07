@@ -4336,3 +4336,23 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
 - Hình dạng trong chương từ LLM nhỏ dừng ở r khoảng .3. Vì vậy CL (07-10, đã cài) chỉ giữ một NỬA hình P0 quanh mức chương, và
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
+
+### 07-10 09:0x - VOX-MTG lần 2 (3 gói MTG nhúng đầy đủ, cửa sổ app): ĐẠT cách đọc ghi trước, nhưng mẫu nhỏ
+Agent nhúng lại `autotagging_moodtheme_audio-00..02.tar` bằng `vox_mtg_full.py` (`results/vox_mtg_full.npz`).
+- 372 bài có tag nhạc cụ, khoảng 0,57 s/bài trên CPU. Đầu dò áp y nguyên, không học lại.
+
+| 372 bài, 17 có `instrument---voice` | AUC | phủ voice ở τ |
+|---|---|---|
+| đầu dò VOX | .869 | .65 (11/17; Wilson 95 % khoảng .41-.83) |
+| CLAP `vocals` | .762 | |
+
+- Theo cách đọc ghi trước (AUC >= CLAP và phủ >= .60): ĐẠT. VOX hơn CLAP cả ngoài danh mục.
+- Nhưng 17 bài dương là nhỏ, khoảng tin cậy của phủ rộng. Tag `voice` của MTG thưa (1.604/25.135 bài trong cả bộ), trong khi CLAP
+  chấm `vocals` trung bình .537. Nên nhóm ÂM có nhiều bài có lời mà thiếu tag. Con số "gắn 13,5 % bài không tag voice" vì thế
+  KHÔNG phải báo nhầm đo được.
+- Đầu dò gắn 16 % bài Jamendo nói chung. Bài CLAP > .5 thì đầu dò gắn 28 %, bài CLAP <= .5 gắn 1,2 %.
+- 6/17 bài voice bị lọt (điểm .02-.33). Không nghe lại được để biết đó là lời át hay giọng nền (choir, vocalise).
+
+Kết luận: giữ VOX như đã cài; không học lại. Ghi vào MUSIC_IMPORT: "đầu dò có thể bỏ sót khoảng 1/3 bài có lời ngoài danh mục;
+người dùng luôn có thể tự bỏ chọn bài". Muốn đo chặt hơn cần nhãn có lời / không lời đáng tin trên nhạc pop (MF trên vài trăm
+bài MTG đã nhúng, GPU), xếp sau.
