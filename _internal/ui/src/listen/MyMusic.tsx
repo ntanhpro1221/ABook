@@ -7,6 +7,7 @@ import { Button } from "@/shared/ui";
 import { api, type AppInfo } from "@/studio/api";
 import { hasNativeMusicImport, importMusic } from "@/studio/musicImport";
 import { importSummary, LOCAL_PREFIX, type LocalMusicView, type LocalTrack } from "@/studio/musicLocal";
+import { VocalsNote } from "@/studio/VocalsNote";
 import { MusicModuleNotice } from "@/studio/MusicModuleNotice";
 
 // "Nhạc của tôi" trên trang sửa sách (docs/MUSIC_IMPORT.md): nhạc bạn tự có làm nhạc nền. Nhập, xem, xoá ở đây; "Đổi bài" ở từng đoạn
@@ -146,6 +147,7 @@ export function MyMusicSection() {
                 {track.title}
                 {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
                 {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
+                <VocalsNote track={track} canOverride={canImport && !hasNativeMusicImport()} onView={refresh} />
               </span>
               {canImport &&
                 (removing === track.link ? (

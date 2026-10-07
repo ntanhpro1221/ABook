@@ -297,7 +297,8 @@ class MusicStore(
         /**
          * Kết quả của bộ phân tích -> khoá của một bài danh mục (như `music_local.clean_analysis`): valence / arousal (bắt buộc, kẹp
          * -1..1), tension, sd, vetVar, emotions (13 cường độ 0..1), confidence, `fitsUnderNarration` -> `background`, `loudness` (số LUFS hay
-         * {lufs, speechBand}) -> lufs / speechBand, family / style nếu có. Thiếu valence hoặc arousal -> null (không điền số nào thay
+         * {lufs, speechBand}) -> lufs / speechBand, `vocals` (0..1) + `vocalsLikely` (đầu dò lời hát; điện thoại không tự chọn nhạc nên chỉ để giao diện
+         * hiện nhãn "Có vẻ có lời"), family / style nếu có. Thiếu valence hoặc arousal -> null (không điền số nào thay
          * bộ phân tích).
          */
         fun cleanAnalysis(result: Any?): JSONObject? {
@@ -329,6 +330,8 @@ class MusicStore(
             val band = finite(if (loud is JSONObject) loud.opt("speechBand") else result.opt("speechBand"))
             if (lufs != null) out.put("lufs", lufs)
             if (band != null) out.put("speechBand", band)
+            finite(result.opt("vocals"))?.let { out.put("vocals", it.coerceIn(0.0, 1.0)) }
+            (result.opt("vocalsLikely") as? Boolean)?.let { out.put("vocalsLikely", it) }
             for (key in listOf("family", "style")) (result.opt(key) as? String)?.takeIf { it.isNotEmpty() }?.let { out.put(key, it) }
             if (out.has("family") && out.getString("family") !in FAMILIES) out.remove("family")
             return out

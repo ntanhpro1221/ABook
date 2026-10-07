@@ -12,6 +12,11 @@ export interface LocalTrack {
   album?: string;
   genre?: string;
   bytes: number;
+  /** Đầu dò lời hát (chỉ bài đã phân tích bằng gói có `vox_head.npz`): xác suất 0..1 và cờ "có vẻ có lời". Bài có cờ thì máy không tự chọn nó
+   *  làm nền dưới giọng đọc (ghim tay thì được); `vocalsOk` = người dùng đã bấm "Vẫn dùng làm nhạc nền". */
+  vocals?: number;
+  vocalsLikely?: boolean;
+  vocalsOk?: boolean;
 }
 
 /** Một phần của mô-đun "Phân tích nhạc" (máy tính: công cụ đọc âm thanh, thư viện chạy model, model; điện thoại: thư viện chạy model, model). */
@@ -165,6 +170,16 @@ export function localDigest(link: string): string | null {
 export function previewPath(link: string): string {
   const digest = localDigest(link);
   return digest ? `/api/music/local/${digest}/file` : `/api/music/track?link=${encodeURIComponent(link)}`;
+}
+
+/** Bài này có vẻ có lời hát (đầu dò lời hát báo): hiện nhãn "Có vẻ có lời". */
+export function hasVocals(track: Pick<LocalTrack, "analysed" | "vocalsLikely">): boolean {
+  return track.analysed && track.vocalsLikely === true;
+}
+
+/** Nhãn của bài có vẻ có lời hát. */
+export function vocalsLabel(track: Pick<LocalTrack, "vocalsOk">): string {
+  return track.vocalsOk ? "Có vẻ có lời - bạn cho dùng làm nhạc nền" : "Có vẻ có lời - không tự chọn";
 }
 
 /** Trạng thái phân tích, nói bằng điều người nghe thấy (không nói model nào). */
