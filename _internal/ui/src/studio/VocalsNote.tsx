@@ -19,7 +19,7 @@ export function VocalsNote({ track, canOverride, onView }: { track: LocalTrack; 
       <span>{vocalsLabel(track)}</span>
       {canOverride && (
         <Button size="sm" variant="ghost" loading={allow.isPending} onClick={() => allow.mutate(!allowed)}>
-          {allowed ? "Thôi, đừng tự chọn" : "Vẫn dùng làm nhạc nền"}
+          {allowed ? "Thôi, không dùng làm nhạc nền" : "Vẫn dùng làm nhạc nền"}
         </Button>
       )}
     </span>
