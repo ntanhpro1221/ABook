@@ -4301,7 +4301,7 @@ Kế hoạch: Corpus `research/music/PLAN_llm_nt.md`. Mã: `llm_nt2.py`, chuỗi
 
 Hàng GPU: Model báo "sau B10" nghĩa là khoảng 10-10; chỗ chen tự nhiên là sau B10 cặp đầu (khoảng sáng 08-10), cần Lead duyệt.
 
-### 07-10 08:0x - GHI TRƯỚC: VOX-MTG, kiểm VOX ngoài danh mục (nhạc Jamendo, nhiều bài có lời; CPU)
+### 07-10 07:5x - GHI TRƯỚC: VOX-MTG, kiểm VOX ngoài danh mục (nhạc Jamendo, nhiều bài có lời; CPU)
 Giới hạn đã nêu của VOX: chưa đo trên nhạc có lời kiểu người dùng nhập. Bộ kiểm dùng MTG-Jamendo `autotagging_moodtheme`.
 - Vector nhúng đã có sẵn: `C:/abook_data/mtg_jamendo/clap/*.npz`, CLAP 3 cửa sổ như analyze_clap, gần cửa sổ app.
 - Nhãn từ `autotagging_instrument.tsv` công khai của MTG:
@@ -4313,3 +4313,8 @@ Giới hạn đã nêu của VOX: chưa đo trên nhạc có lời kiểu ngư�
 **Đọc (viết trước):**
 - AUC đầu dò >= CLAP và phủ DƯƠNG >= .60: VOX đứng được trên nhạc có lời ngoài danh mục.
 - Ngược lại: ghi giới hạn vào MUSIC_IMPORT, và học lại đầu dò có thêm nhãn MTG (ghi trước riêng).
+**Kết quả lần 1: KHÔNG HỢP LỆ do thiết kế** (`vox_mtg.py`, `results/vox_mtg.txt`).
+- `mtg_rolling.py` chỉ giữ vector cho 4.665 bài qua lọc danh mục (CLAP `vocals` <= .5). Tập kiểm vì vậy gần như toàn không lời: 2.813 bài
+  có tag nhạc cụ, chỉ 50 có voice, và cả 50 đều là bài CLAP chấm thấp.
+- Số ghi lại cho đủ: AUC đầu dò .679, CLAP .490; phủ voice .10; gắn nhầm ÂM .008. Những số này không trả lời câu hỏi về nhạc có lời.
+- Làm lại: tải lại 3 gói MTG, nhúng MỌI bài theo đúng cửa sổ app (`appwin.audio_windows`), rồi chấm cùng cách đọc đã ghi trước.
