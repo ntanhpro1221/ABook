@@ -13,10 +13,12 @@ export interface LocalTrack {
   genre?: string;
   bytes: number;
   /** Đầu dò lời hát (chỉ bài đã phân tích bằng gói có `vox_head.npz`): xác suất 0..1 và cờ "có vẻ có lời". Bài có cờ thì máy không tự chọn nó
-   *  làm nền dưới giọng đọc (ghim tay thì được); `vocalsOk` = người dùng đã bấm "Vẫn dùng làm nhạc nền". */
+   *  làm nền dưới giọng đọc (ghim tay thì được). */
   vocals?: number;
   vocalsLikely?: boolean;
-  vocalsOk?: boolean;
+  /** Công tắc tự chọn của người dùng cho bài này: "on" = cho máy tự chọn dù có vẻ có lời, "off" = máy không bao giờ tự chọn (ghim tay thì được);
+   *  vắng = mặc định (tự chọn được, trừ bài có vẻ có lời). */
+  auto?: "on" | "off";
 }
 
 /** Một phần của mô-đun "Phân tích nhạc" (máy tính: công cụ đọc âm thanh, thư viện chạy model, model; điện thoại: thư viện chạy model, model). */
@@ -177,9 +179,18 @@ export function hasVocals(track: Pick<LocalTrack, "analysed" | "vocalsLikely">):
   return track.analysed && track.vocalsLikely === true;
 }
 
-/** Nhãn của bài có vẻ có lời hát. */
-export function vocalsLabel(track: Pick<LocalTrack, "vocalsOk">): string {
-  return track.vocalsOk ? "Có vẻ có lời - bạn cho dùng làm nhạc nền" : "Có vẻ có lời - không tự chọn";
+/** Nhãn khi máy không tự chọn bài này (có vẻ có lời hát, hay bạn đã tắt), hoặc bài có lời mà bạn cho tự chọn; bài bình thường thì không có nhãn. */
+export function autoLabel(track: Pick<LocalTrack, "analysed" | "vocalsLikely" | "auto">): string | null {
+  if (track.auto === "off") return "Máy không tự chọn bài này";
+  if (!hasVocals(track)) return null;
+  return track.auto === "on" ? "Có vẻ có lời - bạn cho máy tự chọn" : "Có vẻ có lời - máy không tự chọn bài này";
+}
+
+/** Nút đổi công tắc tự chọn của bài: chữ trên nút và giá trị `auto` gửi đi (null = về mặc định). */
+export function autoSwitch(track: Pick<LocalTrack, "analysed" | "vocalsLikely" | "auto">): { text: string; next: "on" | "off" | null } {
+  if (track.auto === "off") return { text: "Cho máy tự chọn lại", next: null };
+  if (track.auto === "on") return { text: "Thôi, không cho máy tự chọn", next: null };
+  return hasVocals(track) ? { text: "Vẫn cho máy tự chọn", next: "on" } : { text: "Đừng tự chọn bài này", next: "off" };
 }
 
 /** Trạng thái phân tích, nói bằng điều người nghe thấy (không nói model nào). */
