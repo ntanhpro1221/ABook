@@ -44,7 +44,7 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
   -> `vocals` (xác suất 0..1) và `vocalsLikely` (>= tau). Thiếu file (gói cũ) thì hai khoá vắng và bộ phân tích vẫn chạy (`OPTIONAL_FILES`) - không
   đoán. Bài `vocalsLikely` KHÔNG vào danh sách tự chọn (`LocalMusic.near`: lời át chữ đọc); ghim tay vẫn dùng được, và nút "Vẫn dùng làm nhạc nền"
   (`POST /api/music/local/<sha1>/vocals-ok`, cờ `vocalsOk` ở mục của bài trong `library.json`, không mất khi phân tích lại) cho máy tự chọn nó. Không xoá,
-  không chặn nhập. Điện thoại tính cùng hai khoá (`MusicStudent.kt` `VoxHead`) nhưng không tự chọn nhạc nên chỉ hiện nhãn "Có vẻ có lời". Bài đã phân
+  không chặn nhập. Đầu dò có thể bỏ sót bài có lời; bài lọt như vậy máy vẫn có thể tự chọn - người dùng xoá bài khỏi Nhạc của tôi hay ghim bài khác (chưa có nút "đừng tự chọn bài này" cho bài không bị báo có lời). Điện thoại tính cùng hai khoá (`MusicStudent.kt` `VoxHead`) nhưng không tự chọn nhạc nên chỉ hiện nhãn "Có vẻ có lời". Bài đã phân
   tích từ trước có cờ sau khi người dùng bấm "Phân tích lại N bài" (không lưu vector nhúng nên phải giải mã lại).
 - **Hiệu chỉnh cho kho trộn** (`music_student.CALIBRATION`): V/E/T của trò bị nén về giữa, nên trong kho lẫn nhạc danh mục (số của thầy)
   và nhạc nhập, bài nhập được chọn quá thường. Mỗi trục, theo từng đường chạy: `v' = kẹp(a + b*v, -1, 1)`; trò KHÔNG còn ghi `sd`
