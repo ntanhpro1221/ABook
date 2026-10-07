@@ -147,6 +147,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("GET", r"/api/analysis-models"),
     ("POST", r"/api/readings"),
     ("POST", _BOOK + r"/speaker"),
+    ("POST", _BOOK + r"/narrator-section"),  # thẻ "người kể của đoạn khác" (narrator_cards.py): cùng thẻ "Việc cần duyệt" từ điện thoại
     ("POST", _BOOK + r"/voice"),
     ("POST", _BOOK + r"/line"),
     ("GET", _BOOK + r"/voices"),

@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
+from . import narrator_sections
 from .analysis import (
     DIALOGUE_CLOSERS,
     DIALOGUE_OPENERS,
@@ -2163,9 +2164,13 @@ def _resolve_first_person_labels_by_chapter(
     identity: str,
     chapters: dict[int, str],
     log: Callable[[str], None],
+    sections: dict[int, list[dict[str, Any]]] | None = None,
 ) -> int:
     """Người kể theo chương (`voices.first_person_chapters`): nhãn đại từ ngôi thứ nhất của mỗi chương về đúng người kể
-    của CHƯƠNG ấy (chương không đặt thì về người kể cả cuốn; chương kể ngôi ba thì để nguyên như cuốn ngôi ba)."""
+    của CHƯƠNG ấy (chương không đặt thì về người kể cả cuốn; chương kể ngôi ba thì để nguyên như cuốn ngôi ba).
+
+    `sections`: các đoạn người kể người dùng đã nhận (narrator_sections.accepted) - câu nằm trong đoạn thì theo người kể của
+    ĐOẠN (rỗng = ngôi ba, để nguyên), không theo chương. Không có đoạn nào thì y như trước."""
     if identity and normalize_name(identity) in PRONOUNS:
         identity = ""
     narrator_of: dict[int, str] = {}
@@ -2179,12 +2184,30 @@ def _resolve_first_person_labels_by_chapter(
                      if normalize_name(str(row["speaker"])) in FIRST_PERSON_PRONOUNS})
     moved = 0
     notes: list[str] = []
-    for canonical in sorted(set(narrator_of.values())):
+    # Đoạn đã nhận -> (chương, từ seq, đến seq) theo từng người kể; câu trong đoạn không đi theo người kể của chương.
+    chapter_of = {_chapter_index_of(chapter): int(chapter["id"]) for chapter in db.list_chapters()}
+    spans: dict[str, list[tuple[int, int, int]]] = {}
+    all_spans: list[tuple[int, int, int]] = []
+    for index, entries in sorted((sections or {}).items()):
+        for entry in entries:
+            if index not in chapter_of:
+                continue
+            span = (chapter_of[index], int(entry["from_seq"]), int(entry["to_seq"]))
+            all_spans.append(span)
+            narrator = str(entry.get("narrator") or "").strip()
+            if narrator and normalize_name(narrator) not in PRONOUNS:
+                spans.setdefault(canonical_key(narrator), []).append(span)
+    for canonical in sorted(set(narrator_of.values()) | set(spans)):
         ids = [chapter_id for chapter_id, name in narrator_of.items() if name == canonical]
         for speaker in labels:
             if canonical_key(speaker) == canonical:
                 continue
-            rewritten = db.rewrite_speaker(speaker, canonical, chapter_ids=ids)
+            rewritten = 0
+            if ids:
+                rewritten += db.rewrite_speaker(speaker, canonical, chapter_ids=ids,
+                                                **({"except_ranges": all_spans} if all_spans else {}))
+            if spans.get(canonical):
+                rewritten += db.rewrite_speaker(speaker, canonical, only_ranges=spans[canonical])
             if rewritten:
                 moved += rewritten
                 notes.append(f"{speaker}->{canonical}={rewritten}")
@@ -2232,8 +2255,11 @@ def resolve_first_person_labels(
     from .analysis import first_person_chapters
 
     chapters = first_person_chapters(settings)
-    if chapters:
-        return _resolve_first_person_labels_by_chapter(db, identity, chapters, log)
+    # Đoạn người kể người dùng đã nhận (narrator_sections.json cạnh sổ): chỉ có nghĩa khi sách có người kể "tôi".
+    root = getattr(getattr(db, "path", None), "parent", None)
+    sections = narrator_sections.accepted(narrator_sections.load(root)) if root is not None and (identity or chapters) else {}
+    if chapters or sections:
+        return _resolve_first_person_labels_by_chapter(db, identity, chapters, log, sections or None)
     if not identity:
         return 0
     if normalize_name(identity) in PRONOUNS:
