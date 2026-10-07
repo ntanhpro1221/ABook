@@ -4337,6 +4337,18 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 09:0x - GHI TRƯỚC STU: học sinh chấm hình trong chương từ nhãn bạc Claude (CPU)
+
+Kế hoạch và mã: Corpus `research/music/PLAN_stu.md`, `stu_*.py`.
+
+- **Dữ liệu học:** 60 chương bạc (1.291 khúc; cảnh thật + 4 phân hoạch ngẫu nhiên 250-1000 tiếng). Không trùng truyện với bộ đo.
+- **Mô hình:** đặc trưng = vector nhúng trừ TB phân hoạch. Encoder là mmBERT-base lớp cuối, hoặc Qwen3-0.6B lớp giữa / cuối.
+  Đầu ridge (alpha 1-1000) hoặc xếp hạng cặp (C .01-10).
+- **Chọn:** r TB(V,T) lớn nhất trên đoạn app 4+5+5b+6. Thước `q4_oracle`. Hoà ±.01 thì mmBERT > Qwen, ridge > rank,
+  siêu tham số giữa.
+- **Cổng bộ 7:** r TB(V,T) >= .40 VÀ >= P0 (.144) + .10.
+- **Đóng băng:** mã và lựa chọn bằng commit trước `confirm`.
+
 ### 07-10 09:0x - TRACK-E2E: lợi của CL đi trọn vào BÀI được chọn
 
 Chọn bài gần nhất trong danh mục (2.382 bài, `z_distance` của app, bỏ các phạt) cho mỗi đoạn app. Đo |mood bài − đáp án| theo
