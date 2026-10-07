@@ -4337,6 +4337,29 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 10:5x - XÁC NHẬN L2-EST trên bộ 7 (ghi trước 06-10 20:1x): **KHÔNG THẮNG** - lại kẹt ở r V
+
+Mac chạy MLX base_P0 + lora1_P2 trên khúc app bộ 7 (10:43-10:55). Lệnh `SCORE_SKIP_NOTES=1 python l2_est.py confirm set7`.
+Học trên 42 chương 4+5+5b+6, dự đoán 20 chương bộ 7. Cổng: MAE mức < .20 VÀ r >= .80 cả V, T.
+
+| bộ 7 | MAE mức | r V | r T | SD dự đoán/đáp án V, T |
+|---|---|---|---|---|
+| **[CHÍNH] ridge 4 mô hình + khớp p.sai** | **.196** | **.65** | .86 | 1.33, 1.21 |
+| [ghi lại] CHÍNH cũ (+ 4 đặc trưng chữ) | .197 | .67 | .85 | 1.43, 1.15 |
+| [ghi lại] nhãn câu app + hiệu chỉnh | .251 | .49 | .65 | .70, .76 |
+| [ghi lại] P2 + hiệu chỉnh | .194 | .64 | .81 | .82, .69 |
+| [ghi lại] base_P0 + hiệu chỉnh | .206 | .54 | .84 | .33, 1.12 |
+| [ghi lại] lora1_P2 + hiệu chỉnh | .178 | .74 | .79 | .87, .97 |
+| [ghi lại] hằng TB train | .327 | - | - | 0, 0 |
+
+Đọc:
+- Qua MAE và r T, trượt r V (.65; bộ học là .77).
+- Cùng chỗ kẹt như trên bộ học và L2-EST+CL: V mức chương là trục khó, và gộp nguồn không đẩy được nó qua .80.
+- Khớp phương sai làm SD dự đoán lớn hơn đáp án trên bộ 7 (1.33 / 1.21). Chống nén học trên 42 chương đã thổi quá tay ở bộ mới.
+- Nguồn đơn tốt nhất là lora1_P2 hiệu chỉnh (.178, r V .74). Đây chỉ là số ghi lại, chọn sau khi xem, nên không phải bằng chứng.
+- Kết luận: không cài L2-EST. Lớp mức chương đang cài (CL, e82bc993) giữ nguyên. Nhánh mức chương dừng ở đây; nút thắt là lỗi
+  chấm HÌNH trong chương (Q4), đang làm bằng STU-FT + lô bạc.
+
 ### 07-10 10:2x - Ghi trước ba việc chờ dữ liệu: lô bạc 2.000 cảnh, LFE (giám khảo không người nghe), NTS (học sinh NT mọi khe)
 
 Chi tiết nằm ở Corpus riêng tư (có chữ truyện); ở đây chỉ ghi số và luật.
