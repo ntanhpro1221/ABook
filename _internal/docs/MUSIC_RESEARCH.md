@@ -4337,6 +4337,42 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 09:0x - Góp ý ngoài Q3/Q4 (ChatGPT, Lead giao): lỗi chấm lớn hơn lỗi ranh giới; luật chỉ phủ ~1/2 NT
+
+Mã: Corpus `research/music/q4_oracle.py`, `q3_coverage.py`. Số mô tả, không cổng.
+
+**Q4.** r trong chương (thước `chapter_rs`, chương hằng tính 0, TB chương). Ranh giới app là bản trong bộ đo (`scenes_app`).
+
+| bộ | (a) trần: đoạn app + V/E/T đáp án | P0 trên đoạn app | (b) P0 trên ranh giới đáp án |
+|---|---|---|---|
+| 4 | .750 | .239 | |
+| 5 | .843 | .318 | |
+| 5b | .761 | .277 | |
+| 6 | .824 | .307 | .404 |
+| 7 | .644 | .144 | |
+
+TB V,T. (b) chỉ có ở bộ 6 (P0 đã chạy trên 150 cảnh đáp án).
+
+- Ranh giới app làm mất khoảng .18-.36 so với trần 1. Đổi sang ranh giới đáp án chỉ thêm .10 cho P0 (bộ 6).
+- Khoảng cách lớn nhất là lỗi CHẤM: .82 trần so với .31-.40.
+- Chưng cất từ thầy (4B) chỉ có ích khi thầy vượt .32 trên đáp án. Thầy hiện chưa vượt.
+- (c) Kẹp [-1,1] của CL không chạm câu nào (0 %). r của CL bằng r của P0 (cùng hình): 4-6 V .226 T .356, bộ 7 V .098 T .191.
+
+**Q3.** Độ phủ ứng viên: ranh giới đáp án nằm trong TOL = 2 câu của một ứng viên. Đây là trần recall của mọi bộ lọc trên tập ấy.
+
+| tập ứng viên | 4+5+5b+6 /giờ | phủ NT | bộ 7 phủ NT | 8+9 phủ NT |
+|---|---|---|---|---|
+| X (đã cài) | 4.7 | .37 | .48 | .28 |
+| luật thô (cờ + mọi CUE) | 10.5 | .45 | .57 | .34 |
+| câu có dấu mở cảnh | 23.9 | .47 | .38 | .52 |
+| LLM chia cảnh thô | 32.2 | .70 | .81 | - |
+| hợp ba tập | 60.9 | .90 | .95 | .66 (không LLM) |
+
+- Lọc ứng viên LUẬT không thể vượt khoảng .45 recall NT. Vì thế C2 (4B lọc ∩ dấu mở) chỉ thêm 1 NT.
+- Đúng hướng góp ý: phân loại MỌI khe câu. LLM-NT2 (đã đóng băng, trong hàng GPU) làm đúng việc này: khúc 40 câu chồng 10,
+  hỏi thẳng đổi nơi/thời gian.
+- Nếu NT2 trượt, bước kế là cửa sổ chồng nửa bước (Zehe NAACL 2025: .60 -> .68) hoặc học sinh nhỏ trên mọi khe, ghi trước riêng.
+
 ### 07-10 09:0x - CL-E: mức chương cho trục E (năng lượng) - không cần, dừng ở bộ học
 
 Câu hỏi: CL đặt mức chương cho V/T. App chọn bài theo ô V-E. Có nên làm tương tự cho E?
