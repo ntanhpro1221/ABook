@@ -39,6 +39,38 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 07-10 Kế hoạch gốc kế tiếp sau B10: B13 - học với TẬP đáp án chấp nhận (ghi trước, Model)
+
+**Vì sao là gốc, và vì sao lúc này.** Hai gốc của 04-10 là (A) đáp án chuẩn và (B) thuật toán học. B13 đánh vào chỗ hai gốc chạm
+nhau: nhãn gold nói "câu này người A HOẶC người kể đều đúng" (652/1.827 câu gold có nhiều đáp án chấp nhận, mục B3 bên dưới), bộ chấm
+cũng chấm như thế, nhưng huấn luyện SFT ép MỘT tên. Với model, đó là nhiễu nhãn ở đúng token quyết định: hai câu giống nhau nhận hai
+"đáp án duy nhất" khác nhau, và model học cách lưỡng lự. Các hướng khác đã có số hoặc đang chạy: lệch phơi bày không phải gốc (E1),
+kênh nhiễu âm (B6), thêm dữ liệu cùng kiểu (B9, B10), học từ lỗi của chính học trò (B11, chuỗi riêng), lịch sử-gold (đang xếp hàng,
+nếu trần >= +5 chặt thì B12 lịch sử nhiễu chạy trước theo b12/PLAN.md). B3 là hướng gốc duy nhất trong danh sách 04-10 chưa đo.
+Không phải bỏ phiếu hạt, không chỉnh prompt: đổi HÀM MỤC TIÊU cho khớp nghĩa của nhãn.
+
+**Bước 0 - chẩn đoán trên CPU (~1 giờ, chạy ngay, không tốn GPU).** Trên gốc cổng 19 chương đã có (mrel430b, B9 s1234):
+(i) phần lỗi người nói chặt rơi vào câu nhiều đáp án; (ii) trong data_b9, số mẫu có câu gốc gold với tập > 1 (phần data_v8; phần bạc
+một thầy chỉ có một tên). Luật dừng ghi trước: câu nhiều đáp án mang < 15 % lỗi chặt -> KHÔNG chạy GPU, ghi kết quả âm, chuyển
+sang ứng viên kế (B7 gom cụm theo người nói, nếu B7m chưa trả lời).
+
+**Bước 1 - huấn luyện (GPU, sau B10 + SR + lịch sử-gold).** Đúng công thức B9 (data_b9, 527 bước, hạt 1234 rồi 1), biến duy nhất là
+loss ở khoảng token giá trị `speaker`: thay CE một đáp án bằng log-likelihood biên trên tập chấp nhận,
+`-log Σ_{c ∈ A} P(c | tiền tố)`, mỗi ứng viên chấm teacher-forced trên cùng tiền tố (k <= 4, chỉ vài token đuôi; ước +20-30 %
+thời gian bước). Câu một đáp án: loss y như B9. Tập A dựng BẰNG MÃ từ nhãn gold (dấu `~`), không xin thầy lập luận.
+Làm trong LLM_Train/b1/train_lora_w.py (cờ `--set-loss`), không đụng repo app; kiểm trên CPU bằng mẫu đồ chơi: tập một phần tử ra
+đúng loss của B9 tới 1e-6.
+
+**Luật thắng (cổng 19 chương / 11 truyện, chạy MỘT lần, TB 2 hạt so B9 cùng cổng).**
+- THẮNG: F1 giọng >= B9 + 1,5 và người nói chặt >= B9 + 1,0, CI cụm theo truyện của F1 không chứa 0; không truyện nào tụt > 3
+  chặt; Hàn không tụt > 2.
+- Cơ chế phải khớp: tỉ lệ sai trên câu nhiều đáp án giảm >= 20 % tương đối, câu một đáp án không tụt > 1 điểm. Điểm tăng mà câu
+  nhiều đáp án không giảm -> ghi "thắng không vì lý do dự kiến", không triển khai trước khi hiểu.
+- ÂM: < B9 - 1 ở F1 giọng -> đóng hướng, ghi số. Giữa hai mốc -> hoà, không thêm hạt để "kéo" qua ngưỡng.
+
+**Giá.** Bước 0: 1 giờ CPU. Cài loss: ~nửa ngày agent Sonnet theo đặc tả này (không commit, Model duyệt diff). GPU nhà: 2 x
+(huấn luyện ~9 giờ + cổng ~4 giờ) ~ 26 giờ; hoặc một hạt trên Kaggle sau thứ Bảy 10-10 để rút còn ~13 giờ nhà.
+
 ## 04-10 Đột phá - đánh vào gốc: đáp án chuẩn và thuật toán học
 
 Chủ sách 04-10: model phân tích là tính năng chính, nguồn gốc ý tưởng của app; bỏ phiếu nhiều hạt "không giải quyết gốc";
