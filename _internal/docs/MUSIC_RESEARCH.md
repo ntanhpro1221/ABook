@@ -4337,7 +4337,7 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
-### 07-10 09:0x - VOX-MTG lần 2 (3 gói MTG nhúng đầy đủ, cửa sổ app): ĐẠT cách đọc ghi trước, nhưng mẫu nhỏ
+### 07-10 08:5x - VOX-MTG lần 2 (3 gói MTG nhúng đầy đủ, cửa sổ app): ĐẠT cách đọc ghi trước, nhưng mẫu nhỏ
 Agent nhúng lại `autotagging_moodtheme_audio-00..02.tar` bằng `vox_mtg_full.py` (`results/vox_mtg_full.npz`).
 - 372 bài có tag nhạc cụ, khoảng 0,57 s/bài trên CPU. Đầu dò áp y nguyên, không học lại.
 
