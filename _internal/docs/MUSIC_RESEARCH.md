@@ -4337,6 +4337,30 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 10:0x - STU KHÔNG QUA cổng .40, nhưng gấp đôi P0 trên bộ 7
+
+Ghi trước: 1fc14ab0, sửa 046843bf. Đóng băng: Corpus cab1ee5. Lựa chọn theo luật là Qwen3-0.6B lớp giữa + ridge 1000.
+
+| r trong chương, đoạn app | học 4-6 (42 ch) | bộ 7 (20 ch) |
+|---|---|---|
+| P0 (4B) | ~.29 | .144 |
+| STU | .377 | .230 |
+| TB z STU+P0 (ứng viên chính) | .453 | **.286** |
+| trần: ranh giới app + đáp án | .80 | .644 |
+
+- **Cổng:** >= .40 trượt; >= P0 + .10 đạt. Kết quả: KHÔNG QUA.
+- Tách lỗi theo r_gốc = r_đích × r_trần: trên bộ 7, .286 / .644 ≈ .44 nếu ranh giới hoàn hảo.
+- **MAE khi thay hình P0 trong CL bằng STU:** .241 so với .234. Không lợi, vì MAE do mức chương quyết.
+- **Ghi lại:**
+  - E: STU .29 trên bộ 7.
+  - Lưới alpha dừng ở 1000 (mép lưới).
+  - Bạc 1 người: r A-B trong chương .77-.90.
+- **Đọc:** học từ chỉ 60 chương bạc, một đầu tuyến tính đã nhân đôi P0. Nút thắt là lượng nhãn, không phải model. Việc kế
+  (Lead duyệt): STU-FT, tức tinh chỉnh mmBERT-small trên ~2.000 cảnh bạc 1 người (Huber, rồi thêm RankNet / chênh kề
+  từng phần). Ghi trước riêng; thả SAU khi tuần đặt lại.
+
+Mã: Corpus `research/music/stu_*.py`, `PLAN_stu.md`.
+
 ### 07-10 09:4x - Sửa ghi trước LLM-NT2 (góp ý ngoài Q3 vòng 2), TRƯỚC khi NT2A chạy
 
 Ba điểm của góp ý, đối chiếu với NT2:
