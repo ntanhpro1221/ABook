@@ -4337,6 +4337,25 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 09:0x - CL-E: mức chương cho trục E (năng lượng) - không cần, dừng ở bộ học
+
+Câu hỏi: CL đặt mức chương cho V/T. App chọn bài theo ô V-E. Có nên làm tương tự cho E?
+
+E của app hôm nay là đường nhãn câu (`music_scenes._view`: `acc.point()`; LLM chỉ ghi đè V/T). Thước như CL-APPLY: MAE theo câu
+(thời lượng), TB chương, chỉ trục E. Mức chương = a·TB(nguồn) + b học trên 4+5, nguồn ∈ {nhãn, P0}; dạng {hằng, dời k ∈ .25/.5/1 ×
+hình nhãn/P0}. Ngưỡng đặt trước khi xem số bộ học: phải tốt hơn app ít nhất .03.
+
+| gộp 4+5+5b+6 (42 chương) | MAE_E |
+|---|---|
+| app hôm nay (nhãn câu) | .307 |
+| tốt nhất (mức nhãn, dời k=1 hình nhãn) | .305 |
+| hằng 0 | .323 |
+| P0 từng đoạn (app KHÔNG dùng cho E) | .462 |
+| trần: mức chương đáp án, hằng | .267 |
+
+Kết luận: không cách nào tiến gần -.03. Dừng ở bộ học; bộ 7 để nguyên cho E. Ghi chú: giữ E ở đường nhãn là ĐÚNG - E của P0
+(4B) tệ hơn cả hằng 0, nên đừng đổi E sang LLM. Mã: Corpus research/music/cl_e.py.
+
 ### 07-10 08:5x - VOX-MTG lần 2 (3 gói MTG nhúng đầy đủ, cửa sổ app): ĐẠT cách đọc ghi trước, nhưng mẫu nhỏ
 Agent nhúng lại `autotagging_moodtheme_audio-00..02.tar` bằng `vox_mtg_full.py` (`results/vox_mtg_full.npz`).
 - 372 bài có tag nhạc cụ, khoảng 0,57 s/bài trên CPU. Đầu dò áp y nguyên, không học lại.
