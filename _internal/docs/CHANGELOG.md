@@ -88,6 +88,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
+- Phân tích cùng một cuốn bằng cùng một model không còn đổi theo câu hỏi đứng trước: Studio khởi Ollama với bộ đệm câu
+  hỏi trong RAM tắt (bộ đệm ấy lấy lại phần đã tính cho câu trước, kể cả sau câu mồi của 0.4.31), và câu mồi không còn
+  chung chữ nào với câu hỏi thật.
 - Câu hỏi "'Tôi' là ai?" lúc tạo sách gợi ý đúng người kể ở vị trí đầu thường hơn hẳn: 16/17 truyện ngôi thứ nhất
   để riêng không dùng khi chỉnh (trước 12/17), và người kể luôn nằm trong ba gợi ý đầu. Trước đây gợi ý đầu hay là tước
   hiệu hay tên người khác ("Quỷ Vương", "Lôi Long").
