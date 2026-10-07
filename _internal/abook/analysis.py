@@ -19,6 +19,7 @@ import requests
 
 from .config import ANALYSIS_RETRY_POLICY_VERSION
 from . import database as _database
+from . import narrator_sections as _narrator_sections
 from .database import (
     INAUDIBLE_DELIVERY_FIELDS,
     critic_delta_fields,
@@ -5440,32 +5441,36 @@ def _analysis_context_hash(
             if original_context is not None
             else {}
         )
-        context.append(
-            {
-                "stable_id": str(row["stable_id"]),
-                "chapter_id": int(row["chapter_id"]),
-                "paragraph_index": _row_optional_int(row, "paragraph_index"),
-                "kind_hint": str(row["kind_hint"]),
-                "previous_stable_id": str(source_context.get("previous_stable_id", "")),
-                "previous_text_sha256": sha256_text(previous_text),
-                "previous_source_text_sha256": str(
-                    source_context.get("previous_text_sha256", "")
-                ),
-                "previous_chapter_id": source_context.get("previous_chapter_id"),
-                "previous_seq": source_context.get("previous_seq"),
-                "previous_paragraph_index": source_context.get("previous_paragraph_index"),
-                "previous_kind_hint": str(source_context.get("previous_kind_hint", "")),
-                "next_stable_id": str(source_context.get("next_stable_id", "")),
-                "next_text_sha256": sha256_text(next_text),
-                "next_source_text_sha256": str(
-                    source_context.get("next_text_sha256", "")
-                ),
-                "next_chapter_id": source_context.get("next_chapter_id"),
-                "next_seq": source_context.get("next_seq"),
-                "next_paragraph_index": source_context.get("next_paragraph_index"),
-                "next_kind_hint": str(source_context.get("next_kind_hint", "")),
-            }
-        )
+        entry = {
+            "stable_id": str(row["stable_id"]),
+            "chapter_id": int(row["chapter_id"]),
+            "paragraph_index": _row_optional_int(row, "paragraph_index"),
+            "kind_hint": str(row["kind_hint"]),
+            "previous_stable_id": str(source_context.get("previous_stable_id", "")),
+            "previous_text_sha256": sha256_text(previous_text),
+            "previous_source_text_sha256": str(
+                source_context.get("previous_text_sha256", "")
+            ),
+            "previous_chapter_id": source_context.get("previous_chapter_id"),
+            "previous_seq": source_context.get("previous_seq"),
+            "previous_paragraph_index": source_context.get("previous_paragraph_index"),
+            "previous_kind_hint": str(source_context.get("previous_kind_hint", "")),
+            "next_stable_id": str(source_context.get("next_stable_id", "")),
+            "next_text_sha256": sha256_text(next_text),
+            "next_source_text_sha256": str(
+                source_context.get("next_text_sha256", "")
+            ),
+            "next_chapter_id": source_context.get("next_chapter_id"),
+            "next_seq": source_context.get("next_seq"),
+            "next_paragraph_index": source_context.get("next_paragraph_index"),
+            "next_kind_hint": str(source_context.get("next_kind_hint", "")),
+        }
+        if "narrator_section" in source_context:
+            # Người kể của ĐOẠN đã được người dùng nhận (narrator_sections.py): prompt của lô này nói người kể khác chương/cuốn,
+            # nên ứng viên của lô phải mang khoá riêng. Chỉ thêm khi có - lô không chạm đoạn nào giữ nguyên băm (và khoá cấp
+            # cuốn `_analysis_policy_fingerprint` không đổi: nhận một đoạn không làm hỏng cả cuốn).
+            entry["narrator_section"] = str(source_context["narrator_section"])
+        context.append(entry)
     return sha256_text(
         json.dumps(context, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     )
@@ -7047,6 +7052,9 @@ class OllamaBookAnalyzer:
         self._chapter_titles = {int(row["id"]): str(row["title"]) for row in chapters}
         # Khoá của người kể theo chương là chapter_index (thứ tự nguồn); DB cũ/giả không có cột ấy thì dùng id.
         self._chapter_indexes = {int(row["id"]): _chapter_index_of(row) for row in chapters}
+        # Người kể theo ĐOẠN người dùng đã nhận (narrator_sections.json cạnh sổ dự án): đọc lại ở mỗi lô (`_bind_narrator_sections`).
+        self._narrator_sections: dict[int, list[dict[str, Any]]] = {}
+        self._bind_narrator_sections()
 
     def _available(self) -> bool:
         try:
@@ -7204,6 +7212,58 @@ class OllamaBookAnalyzer:
             return self.first_person_chapters[index]
         return self.first_person_identity
 
+    def _bind_narrator_sections(
+        self,
+        group: list[Any] | None = None,
+        original_context: dict[str, dict[str, Any]] | None = None,
+    ) -> None:
+        """Đọc lại các đoạn người kể người dùng đã nhận, và (có `group`) ghi người kể của từng câu thuộc đoạn ấy vào
+        `original_context` - nơi `_analysis_context_hash` lấy khoá của lô. Gọi ở đầu MỖI lô, để prompt và khoá của lô cùng đọc
+        một bản (resume đọc lại đúng giá trị đã lưu). Sách không có người kể thì không đọc gì: prompt và khoá y như trước."""
+        root = getattr(getattr(self.db, "path", None), "parent", None)
+        self._narrator_sections = (
+            _narrator_sections.accepted(_narrator_sections.load(root))
+            if root is not None and (self.first_person_identity or self.first_person_chapters)
+            else {}
+        )
+        if group is None or original_context is None:
+            return
+        for row in group:
+            context = original_context.get(str(row["stable_id"]))
+            if context is None:
+                continue
+            narrator = self._section_narrator(row)
+            if narrator is None:
+                context.pop("narrator_section", None)
+            else:
+                context["narrator_section"] = narrator
+
+    def _section_narrator(self, row: Any) -> str | None:
+        """Người kể của câu nếu một đoạn đã nhận chứa nó ("" = ngôi ba), không thì None (theo chương rồi cuốn)."""
+        if not self._narrator_sections:
+            return None
+        index = self._chapter_indexes.get(int(row["chapter_id"]))
+        return None if index is None else _narrator_sections.narrator_at(self._narrator_sections, index, int(row["seq"]))
+
+    def _section_runs(self, group: list[Any] | None) -> list[tuple[int, str, int, int, int]] | None:
+        """Các khúc liền nhau cùng người kể của lô, hoặc None khi không câu nào của lô nằm trong đoạn đã nhận. Mỗi khúc:
+        (chương, người kể, seq đầu, vị trí đầu trong lô, vị trí cuối trong lô)."""
+        if not self._narrator_sections or not group:
+            return None
+        runs: list[tuple[int, str, int, int, int]] = []
+        touched = False
+        for position, row in enumerate(group):
+            chapter_id = int(row["chapter_id"])
+            narrator = self._section_narrator(row)
+            touched = touched or narrator is not None
+            if narrator is None:
+                narrator = self._narrator_of(chapter_id)
+            if runs and runs[-1][:2] == (chapter_id, narrator):
+                runs[-1] = (*runs[-1][:4], position)
+            else:
+                runs.append((chapter_id, narrator, int(row["seq"]), position, position))
+        return runs if touched else None
+
     def _narrator_line(self, group: list[Any] | None = None) -> str:
         """The first-person narrator, when the book names one (``voices.first_person_identity``).
 
@@ -7215,7 +7275,23 @@ class OllamaBookAnalyzer:
         recover that, because those lines never carried a pronoun label. Unset means third
         person and the prompt is exactly what it was.
         """
-        if self.first_person_chapters and group:
+        runs = self._section_runs(group)
+        if runs is not None:
+            # Một đoạn người dùng đã nhận (narrator_sections.py) nằm trong lô: người kể theo từng khúc liền nhau của lô.
+            if len({narrator for _chapter, narrator, _seq, _first, _last in runs}) > 1:
+                parts = [
+                    f'- {"đoạn " + _batch_id(first + 1) if first == last else "các đoạn " + _batch_id(first + 1) + " đến " + _batch_id(last + 1)}'
+                    f' (từ câu {seq} của chương "{self._chapter_titles.get(chapter_id, "")}"): '
+                    + (f"người kể xưng \"tôi\" là {narrator}" if narrator else "kể ở ngôi thứ ba, không có người kể xưng \"tôi\"")
+                    for chapter_id, narrator, seq, first, last in runs
+                ]
+                return (
+                    "Truyện đổi người kể theo đoạn:\n" + "\n".join(parts) + "\n"
+                    "Câu thoại và nội tâm của chính người kể phải dùng speaker là tên người kể của ĐOẠN ấy - không "
+                    "dùng \"tôi\", NARRATOR hay tên người đang nói chuyện với người kể.\n\n"
+                )
+            narrator = runs[0][1]
+        elif self.first_person_chapters and group:
             chapters: list[int] = []
             for row in group:
                 chapter_id = int(row["chapter_id"])
@@ -8664,6 +8740,7 @@ class OllamaBookAnalyzer:
                 return
             if before_batch is not None:
                 before_batch(group_index)
+            self._bind_narrator_sections(group, original_context)
             validated: dict[str, dict[str, Any]] = {}
             payload: dict[str, Any] = {}
             last_error = "AI analysis is unavailable"

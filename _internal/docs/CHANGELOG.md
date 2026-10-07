@@ -101,6 +101,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Giọng làm sách đọc chữ như "Nghe ngay": số La Mã ("Chương IV" thành "Chương bốn", "Thế chiến II"), viết tắt ("HP" thành "hát pê"), tiếng reo kéo dài ("Aaaa"),
   kính ngữ ("Ariel-sama"), "~", số kiểu Anh "1,000", mũi tên và ký hiệu theo ngữ cảnh. Chữ đã có trong bảng cách đọc của cuốn vẫn đọc theo bảng. Trên bộ 612 câu
   thử, câu đọc đúng từng chữ tăng từ 31% lên 65%, đọc đúng chữ (bỏ dấu câu) từ 43% lên 86%; ngang với Nghe ngay.
+- Truyện kể ngôi thứ nhất mà có đoạn do người khác kể (chương đổi người kể, đoạn chèn giữa hai dòng ngắt cảnh): hộp "Việc cần duyệt"
+  hiện thẻ "Chương 195, câu 40–112: có vẻ không phải <tên> kể" ngay sau khi chia câu, với ba nút "Đúng, đổi người kể", "Không, giữ
+  nguyên" và "Chọn người kể…". Đồng ý thì phần chưa phân tích của đoạn ấy được nói đúng người kể, máy thôi gán lời người khác cho
+  "tôi"; chưa trả lời thì máy giữ nguyên. Chương đã phân tích xong thì thẻ nói rõ lựa chọn chỉ áp khi làm lại sách, và đồng ý một
+  đoạn không bắt cả cuốn phân tích lại. Dùng được từ điện thoại điều khiển máy tính; việc hiện thẻ này trong app điện thoại độc lập
+  chưa có.
 
 ### Cách đọc tên
 
