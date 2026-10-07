@@ -18,6 +18,7 @@
 # 64 không đóng) -> N,D NARRATOR, QUỶ VƯƠNG~. 66 tiếng cười "Pw, pwahahahaha!..." kèm câu kể cùng đoạn, khoá D -> gã áo choàng
 # và NARRATOR đều đủ. 99 câu tác giả định cho gã áo choàng nói (lời tác giả, khoá D) -> NARRATOR đủ, NPC*~.
 # Tiếng lòng của Yuria (ngôi một) -> 9 T; 13 "Quân khốn nạn, người ta đang tập trung mà!" N,T NARRATOR,YURIA đủ.
+# 06-10 (phiên Model) chuyển theo cách tách rel430b 24ed59d2 (gate_gold_rel430b.py): 66 tách thành 66 D gã áo choàng đen + 67 N; cũ >=67 dời +1
 0 H
 1 N
 2 N
@@ -84,39 +85,40 @@
 63 D YURIA,YURIA ASHRIEN angry 2-3 fast loud f
 64 D QUỶ VƯƠNG,NPC*~ happy,sarcastic,tender 0-1 normal normal m
 65 N,D NARRATOR,QUỶ VƯƠNG~ neutral,happy 0-1 normal normal u
-66 D,N NPC*:gã áo choàng đen,NARRATOR,UNKNOWN~ happy,sarcastic 1-2 normal normal,loud m
-67 D NPC*:gã áo choàng đen,UNKNOWN~ sarcastic,angry 0-1 normal normal m
-68 D QUỶ VƯƠNG,NPC*~ sarcastic,happy,neutral 0-1 normal normal m
-69 D NPC*:gã áo choàng đen,UNKNOWN~ sarcastic,angry 0-2 normal normal m
-70 D QUỶ VƯƠNG,NPC*~ neutral,sarcastic,tender 0-1 normal normal m
-71 D YURIA,YURIA ASHRIEN,NPC*~ surprised,angry,sarcastic 0-1 normal normal f
-72 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
-73 D QUỶ VƯƠNG,NPC*~ neutral,tender,sarcastic 0-1 normal normal m
-74 D YURIA,YURIA ASHRIEN angry,surprised 2-3 fast loud f
-75 N NARRATOR neutral,angry 0-1 normal normal u
-76 N
-77 D NPC*:gã áo choàng đen,UNKNOWN~ surprised,angry,sarcastic 0-1 normal normal m
-78 D QUỶ VƯƠNG,NPC*~ neutral,happy,sarcastic 0-1 normal normal m
-79 D YURIA,YURIA ASHRIEN,NPC*~ sarcastic,angry 0-1 normal normal f
-80 D NPC*:gã áo choàng đen,UNKNOWN~,YURIA~ sarcastic,angry 0-1 normal normal m
-81 N
-82 D QUỶ VƯƠNG,NPC*~ happy,sarcastic,afraid 0-1 fast,normal normal m
-83 D YURIA,YURIA ASHRIEN angry 1-2 normal normal,loud f
-84 D QUỶ VƯƠNG,NPC*~ afraid,neutral 0-1 normal soft,normal m
-85 N NARRATOR neutral,angry,afraid 0-1 normal normal u
-86 D QUỶ VƯƠNG,NPC*~ neutral 0-1 normal normal m
-87 D YURIA,YURIA ASHRIEN neutral,surprised 0-1 normal normal f
-88 D QUỶ VƯƠNG,NPC*~ neutral 0-1 normal normal m
-89 D YURIA,YURIA ASHRIEN neutral 0-1 normal normal f
-90 N NARRATOR neutral,happy 0-1 normal normal u
-91 D QUỶ VƯƠNG,NPC*~ happy,excited,sarcastic 0-2 normal normal m
+66 D NPC*:gã áo choàng đen,UNKNOWN~ happy,sarcastic 1-2 normal normal,loud m
+67 N
+68 D NPC*:gã áo choàng đen,UNKNOWN~ sarcastic,angry 0-1 normal normal m
+69 D QUỶ VƯƠNG,NPC*~ sarcastic,happy,neutral 0-1 normal normal m
+70 D NPC*:gã áo choàng đen,UNKNOWN~ sarcastic,angry 0-2 normal normal m
+71 D QUỶ VƯƠNG,NPC*~ neutral,sarcastic,tender 0-1 normal normal m
+72 D YURIA,YURIA ASHRIEN,NPC*~ surprised,angry,sarcastic 0-1 normal normal f
+73 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+74 D QUỶ VƯƠNG,NPC*~ neutral,tender,sarcastic 0-1 normal normal m
+75 D YURIA,YURIA ASHRIEN angry,surprised 2-3 fast loud f
+76 N NARRATOR neutral,angry 0-1 normal normal u
+77 N
+78 D NPC*:gã áo choàng đen,UNKNOWN~ surprised,angry,sarcastic 0-1 normal normal m
+79 D QUỶ VƯƠNG,NPC*~ neutral,happy,sarcastic 0-1 normal normal m
+80 D YURIA,YURIA ASHRIEN,NPC*~ sarcastic,angry 0-1 normal normal f
+81 D NPC*:gã áo choàng đen,UNKNOWN~,YURIA~ sarcastic,angry 0-1 normal normal m
+82 N
+83 D QUỶ VƯƠNG,NPC*~ happy,sarcastic,afraid 0-1 fast,normal normal m
+84 D YURIA,YURIA ASHRIEN angry 1-2 normal normal,loud f
+85 D QUỶ VƯƠNG,NPC*~ afraid,neutral 0-1 normal soft,normal m
+86 N NARRATOR neutral,angry,afraid 0-1 normal normal u
+87 D QUỶ VƯƠNG,NPC*~ neutral 0-1 normal normal m
+88 D YURIA,YURIA ASHRIEN neutral,surprised 0-1 normal normal f
+89 D QUỶ VƯƠNG,NPC*~ neutral 0-1 normal normal m
+90 D YURIA,YURIA ASHRIEN neutral 0-1 normal normal f
+91 N NARRATOR neutral,happy 0-1 normal normal u
 92 D QUỶ VƯƠNG,NPC*~ happy,excited,sarcastic 0-2 normal normal m
-93 N NARRATOR neutral,sad 0-1 normal normal u
-94 D NPC*:gã áo choàng đen,UNKNOWN~ sad,tired,sarcastic 0-1 slow,normal soft,normal m
-95 N NARRATOR neutral,sad 0-1 normal normal u
-96 N
-97 N NARRATOR neutral,sad,sarcastic 0-1 normal normal u
-98 N
-99 D NARRATOR,NPC*:gã áo choàng đen~ sarcastic,sad,neutral 0-1 normal normal u
-100 N
+93 D QUỶ VƯƠNG,NPC*~ happy,excited,sarcastic 0-2 normal normal m
+94 N NARRATOR neutral,sad 0-1 normal normal u
+95 D NPC*:gã áo choàng đen,UNKNOWN~ sad,tired,sarcastic 0-1 slow,normal soft,normal m
+96 N NARRATOR neutral,sad 0-1 normal normal u
+97 N
+98 N NARRATOR neutral,sad,sarcastic 0-1 normal normal u
+99 N
+100 D NARRATOR,NPC*:gã áo choàng đen~ sarcastic,sad,neutral 0-1 normal normal u
 101 N
+102 N
