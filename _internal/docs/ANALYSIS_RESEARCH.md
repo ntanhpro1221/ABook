@@ -71,6 +71,15 @@ Làm trong LLM_Train/b1/train_lora_w.py (cờ `--set-loss`), không đụng repo
 **Giá.** Bước 0: 1 giờ CPU. Cài loss: ~nửa ngày agent Sonnet theo đặc tả này (không commit, Model duyệt diff). GPU nhà: 2 x
 (huấn luyện ~9 giờ + cổng ~4 giờ) ~ 26 giờ; hoặc một hạt trên Kaggle sau thứ Bảy 10-10 để rút còn ~13 giờ nhà.
 
+**KẾT QUẢ bước 0 (07-10 08:4x): DỪNG theo luật ghi trước - không chạy GPU.** Cổng 19 chương, 1.349 câu chấm (LLM_Train/b13/DIAG.md,
+số đếm từng chương khớp `lnj_table.collect()`). "Nhiều đáp án" trong 652/1.827 của 04-10 phần lớn là BÍ DANH của cùng một người
+(`~` liệt kê cách gọi khác của một nhân vật trên gần mọi dòng) - bộ chấm đã gộp bí danh (`matched_person`), nên đó không phải nhiễu
+nhãn ở quyết định chọn người. Mơ hồ THẬT (người kể hoặc nhân vật, NPC* hoặc người có tên, hai người khác nhau) = 14,8 % câu nhưng chỉ
+mang **1,6 % lỗi chặt của mrel430bA (6/381) và 2,7 % của B9 s1234 (8/301)** - dưới mốc 15 %. Tỉ lệ sai trên các câu ấy 3-4 % so với
+25-33 % trên câu một người: model gần như không sai ở đó. Trong data_b9 mơ hồ thật là ~4,1 % quyết định người nói (246 câu, 186 bị ép
+về NARRATOR). Đọc: lỗi người nói nằm ở câu MỘT đáp án - chọn sai người, không phải bị dạy lưỡng lự. Hướng kế theo kế hoạch: gom cụm
+theo người nói (B7) - đang chờ số B7m trong hàng.
+
 ## 04-10 Đột phá - đánh vào gốc: đáp án chuẩn và thuật toán học
 
 Chủ sách 04-10: model phân tích là tính năng chính, nguồn gốc ý tưởng của app; bỏ phiếu nhiều hạt "không giải quyết gốc";
