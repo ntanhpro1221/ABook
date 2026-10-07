@@ -4337,7 +4337,7 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
-### 07-10 09:1x - TRACK-E2E: lợi của CL đi trọn vào BÀI được chọn
+### 07-10 09:0x - TRACK-E2E: lợi của CL đi trọn vào BÀI được chọn
 
 Chọn bài gần nhất trong danh mục (2.382 bài, `z_distance` của app, bỏ các phạt) cho mỗi đoạn app. Đo |mood bài − đáp án| theo
 câu, TB chương, TB ba trục. Mã: Corpus `research/music/track_e2e.py`.
