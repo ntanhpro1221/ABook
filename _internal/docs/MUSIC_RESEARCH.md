@@ -4349,6 +4349,10 @@ Kế hoạch và mã: Corpus `research/music/PLAN_stu.md`, `stu_*.py`.
 - **Cổng bộ 7:** r TB(V,T) >= .40 VÀ >= P0 (.144) + .10.
 - **Đóng băng:** mã và lựa chọn bằng commit trước `confirm`.
 
+- **Sửa 09:2x** (sau số bộ học của mmBERT, trước bộ 7):
+  - Số học: STU .353; TB z STU+P0 .434; P0 riêng ~.29.
+  - Ứng viên chính là cái học cao hơn trong {STU, TB z STU+P0}. Cổng không đổi.
+
 ### 07-10 09:0x - TRACK-E2E: lợi của CL đi trọn vào BÀI được chọn
 
 Chọn bài gần nhất trong danh mục (2.382 bài, `z_distance` của app, bỏ các phạt) cho mỗi đoạn app. Đo |mood bài − đáp án| theo
