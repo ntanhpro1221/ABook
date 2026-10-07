@@ -39,6 +39,23 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 07-10 Quy tắc quyết định: cổng 19 ch KHÔNG phân giải được +1,5 F1 - thước theo CƠ CHẾ (Model, Lead yêu cầu)
+
+Số (trả lời Q2 cho người ngoài, Corpus research/outside/q2_followup_answer.md): F1 giọng = B-cubed gộp micro trên 1.349 câu; CI cặp
+lấy mẫu lại theo TRUYỆN (11 truyện) có nửa độ rộng ~3 điểm, dao động giữa hạt ~2. Mọi luật "thắng khi F1 >= +1,5" ghi trước đây
+(B13, B12, cổng P, kế hoạch B7) là không quyết được trên cổng này. Từ nay:
+1. **Thí nghiệm nhắm một cơ chế -> thước chính là số lỗi của CƠ CHẾ ấy**, so cặp từng câu cùng cổng, CI bootstrap theo truyện,
+   ngưỡng là GIẢM TƯƠNG ĐỐI ghi trước (vd -20 %), không phải điểm F1. F1 giọng và người nói chặt chỉ là CHẶN: không tụt quá -1,5.
+   - T+A+M ("chọn nhầm người trong cảnh") đo TỰ ĐỘNG: lỗi chặt mà model chọn một người có tên xuất hiện trong nhãn gold của 15 đoạn
+     trước / 5 đoạn sau. Kiểm trên 293 lỗi B9 có hai người gán: thước tự động 154 lỗi, T+A+M cả hai người 145; precision 0,68,
+     recall 0,72 - ngang mức hai người gán đồng ý với nhau (kappa 0,61).
+   - P: số lỗi gán thừa cho "tôi" trong đoạn bộ phát hiện báo (b14err/P_RULE.md).
+2. **Quyết định đổi mặc định / phát hành vẫn theo F1 + chặt**, nhưng trên cổng MỞ RỘNG: thêm mọi chương gold ngoài 10 truyện huấn
+   luyện (44 thư mục gold -> ~34 truyện); nửa CI ước 3,05 x căn(11/34) ~ 1,7. Vẫn không thấy được +1,5 với một hạt: so mô hình huấn
+   luyện là TB >= 2 hạt mỗi bên.
+3. **Sàng một hạt (vd B7m s1234):** qua sàng khi thước cơ chế giảm >= 20 % và CI theo truyện không chứa 0; qua sàng mới chạy hạt 2
+   và cổng mở rộng.
+
 ## 07-10 Lỗi người nói của B9 nằm ở đâu: phân loại theo CƠ CHẾ (293 lỗi, hai người gán mù)
 
 Lead hỏi sau B13: lỗi chặt của B9 s1234 trên câu MỘT đáp án (cổng 19 ch, 293 lỗi, bỏ 8 câu mơ hồ thật) do cơ chế nào? Hồ sơ mỗi lỗi
