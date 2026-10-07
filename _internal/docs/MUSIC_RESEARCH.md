@@ -4337,6 +4337,28 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 10:2x - Ghi trước ba việc chờ dữ liệu: lô bạc 2.000 cảnh, LFE (giám khảo không người nghe), NTS (học sinh NT mọi khe)
+
+Chi tiết nằm ở Corpus riêng tư (có chữ truyện); ở đây chỉ ghi số và luật.
+
+- **Lô bạc 2.000** (`scene_silver2k/SPEC_silver_2000.md`, Corpus d7d791d, 57e5d11): chỉ thả khi tuần đặt lại.
+  - Phạm vi: 489 chương, 242 bộ Hako; JP 343, KR 122, CN 24 (trọng số LN Nhật > Hàn); 68.499 câu.
+  - Loại 81 bộ trùng các bộ đáp án 4–9.
+  - Một người chấm Sonnet mỗi chương, hướng dẫn 3.1 như 60 chương bạc cũ. 10 chương có người thứ hai để đo độ khớp. Mốc khớp
+    trên v31 với cùng hàm: V .75, E .48, T .67.
+  - Thêm trường `mo=NT|NH|GC` (định nghĩa bộ TYPES) để lô này cũng cho nhãn bạc NT.
+  - Hai giai đoạn: 120 chương rồi 369 chương. Điểm đường cong STU-FT sau giai đoạn 1, cổng cuối như STU (bộ 7 ≥ .40 và ≥ P0 + .10).
+  - Không thả mẻ mới nếu dự kiến vượt 90 % tuần.
+- **LFE** (`PLAN_lfe.md`, Corpus b6cf5ee): giám khảo là Music2Emotion (AMAAI-Lab, MIT), chấm valence/arousal thẳng từ âm thanh
+  bài được chọn. Model khác loại, không dùng CLAP hay trò của ta.
+  - Giám khảo chỉ được tin nếu trên bộ học bài chọn theo đáp án thắng ba đối chứng: chính các bài ấy xáo trong chương (kiểm dấu
+    p < .01), bài ngẫu nhiên (≥ .60), và A=A.
+  - Khi hợp lệ thì so app hôm nay với CL trên bộ 7, dự đoán ghi trước CL tốt hơn.
+  - Đang chấm 622 bài trên CPU.
+- **NTS** (`PLAN_nt_student.md`, Corpus bb3c060): mmBERT-small hai chiều, 8 câu trái + 8 câu phải, phân loại mọi khe.
+  - Nhãn từ `mo=`: NT là dương; NH/GC và khe xa ranh giới > 2 câu là âm; khe ±1–2 câu quanh ranh giới bỏ.
+  - Thước, ngưỡng và ba cổng giống hệt NT2, để so ngang.
+
 ### 07-10 10:0x - STU KHÔNG QUA cổng .40, nhưng gấp đôi P0 trên bộ 7
 
 Ghi trước: 1fc14ab0, sửa 046843bf. Đóng băng: Corpus cab1ee5. Lựa chọn theo luật là Qwen3-0.6B lớp giữa + ridge 1000.
