@@ -66,6 +66,21 @@ hai agent Sonnet gán độc lập: đồng ý mã chính 67 %, **kappa 0,61**. 
   là việc của SỔ NHÂN VẬT (gộp bí danh, NPC = người có tên) - sửa được bằng mã sau phân tích, không cần huấn luyện; đo trước khi làm.
 Số: LLM_Train/b14err/AGREE.md (theo truyện, cặp bất đồng).
 
+**N bằng mã sau phân tích - KHÔNG ĐẠT (luật ghi trước b14err/N_RULE.md).** Gộp tên không nhìn gold (chuẩn hoá, bỏ kính ngữ, tập con
+token khớp đúng một nhãn dài hơn) sửa 0/36 lỗi N hai người cùng gán, 0/57 tập rộng, và làm 5 câu đúng thành sai (gộp tên trơn sang
+dạng có danh xưng mà gold không có). N KHÔNG phải sai dạng tên: 22/57 là NPC* <-> người có tên (nối danh tính), 32/57 là nhầm hẳn người
+khác; kính ngữ / phiên âm 0. Phần N thuộc về nối danh tính NPC (reconcile) và chọn người trong cảnh, không phải sổ tên.
+
+**P bước 0 - QUA cả hai điều kiện, nhưng mỏng (b14err/P_RULE.md, p_RESULT.md).** 43 lỗi P hai người cùng gán: GÁN THỪA cho "tôi" 28,
+GÁN THIẾU 15. Bộ phát hiện D (cắt đoạn ở dòng ngắt cảnh; lời dẫn gần như không có "tôi", hoặc tên người kể xuất hiện ngôi ba
+nhiều -> đoạn có người kể khác) - ngưỡng cố định, không gold:
+- Độ phủ: 22/28 lỗi gán thừa nằm ở đoạn D báo (79 %), đạt >= 1/2 ở 3 truyện (14/15, 4/4, 4/4), 0/5 ở 3 truyện còn lại. MỘT chương
+  (đổi điểm nhìn) giữ 14/28 và là chương duy nhất gold xác nhận người kể khác; bỏ nó còn 8/14 (57 %).
+- Báo nhầm: 55 chương gold của truyện ngôi thứ nhất, 3/64 đoạn mà người kể đúng là first_person bị báo khác (4,7 %, mốc 5 % - thêm
+  một đoạn là trượt); riêng các truyện có first_person chắc chắn 3/47 (6,4 %). Bắt đúng 9/10 đoạn người kể khác.
+- Đọc: tín hiệu thật nhưng thưa (đổi điểm nhìn hiếm, 10 đoạn trên 55 chương) và mốc báo nhầm sát nút. Không áp thẳng: đưa vào app như
+  ĐỀ XUẤT người kể theo đoạn mà người dùng thấy và đổi được, và đo bằng cổng GPU (prompt đổi -> đầu ra đổi) trước khi bật mặc định.
+
 ## 07-10 Kế hoạch gốc kế tiếp sau B10: B13 - học với TẬP đáp án chấp nhận (ghi trước, Model)
 
 **Vì sao là gốc, và vì sao lúc này.** Hai gốc của 04-10 là (A) đáp án chuẩn và (B) thuật toán học. B13 đánh vào chỗ hai gốc chạm
