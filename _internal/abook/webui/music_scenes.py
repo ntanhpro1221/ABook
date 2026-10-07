@@ -70,6 +70,12 @@ SHIFT_HOLD_SECONDS = 40.0      # ... và phải giữ chừng ấy giây
 MIN_SCENE_SECONDS = 60.0
 MAX_SCENE_SECONDS = 180.0       # đoạn dài hơn thì chia đều (_split_long)
 UNTIMED_SECONDS_PER_CHAR = 0.065  # chương chưa có audio: ước thời lượng đọc theo số ký tự (~15 ký tự/giây)
+# Mức chương cho valence / tension (`apply_chapter_level`): hằng số ĐÓNG BĂNG của docs/MUSIC_RESEARCH.md 07-10 "CL" / "CL-APPLY"
+# (`LLM_Train/music/chapter_level.py::FIXED`): (hệ số, hằng) của L_V (V = C0 hc) và L_T (T = P0 hc), và k giữ hình P0 trong chương.
+# Không làm tròn, không chỉnh - muốn đổi phải đo lại theo nghiên cứu.
+CHAPTER_LEVEL_V = (1.876, 0.068)
+CHAPTER_LEVEL_T = (1.066, -0.490)
+CHAPTER_LEVEL_SHAPE = 0.5
 
 SEPARATOR = re.compile(r"^\s*(?:[*~#=_\-·•oO0]\s*){3,}\s*$")
 TIME_JUMP = re.compile(
@@ -343,7 +349,41 @@ def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = 
     scenes.append(current)
     scenes = _split_long(_merge_short(scenes), segments, seconds)
     spans = _mood_spans(moods, script.get("chapterId"), segments)
-    return [_view(scene, segments, timeline, seconds, script, spans) for scene in scenes]
+    return apply_chapter_level([_view(scene, segments, timeline, seconds, script, spans) for scene in scenes])
+
+
+def apply_chapter_level(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Mức chương cho valence / tension của các đoạn của MỘT chương (docs/MUSIC_RESEARCH.md 07-10 "CL" và "CL-APPLY"; mã đã
+    đóng băng `LLM_Train/music/chapter_level.py::FIXED` + `cl_apply.py`). LLM đọc từng đoạn (P0) chấm sai MỨC (T cao hơn đáp án
+    chừng .5, V lệch theo chương) và phóng đại dao động giữa các đoạn, mà đáp án chủ yếu đổi theo chương: ước mức cả chương rồi
+    giữ một nửa hình dạng của P0 trong chương thì MAE giảm 44% (.419 -> .234 ở bộ 7). Với TB(x) = trung bình trọng số d = end - start:
+
+        L_V = clip(1.876 * TB(labelValence) + 0.068)      L_T = clip(1.066 * TB(pT) - 0.490)
+        valence = clip(L_V + 0.5 * (pV - TB(pV)))         tension = clip(L_T + 0.5 * (pT - TB(pT)))
+
+    pV / pT: valence / tension LLM của đoạn (đã về [-1, 1]); giữ lại ở `llmValence` / `llmTension`. Chỉ áp khi MỌI đoạn đã
+    có LLM đọc (`moodSource == "llm"`) - có đoạn còn ở đường nhãn thì trả nguyên (đường ấy chưa đo). Đoạn được áp mang
+    `moodSource` = "chapter"; arousal, sd, emotions, confidence không đổi. Thuần hàm: không sửa đoạn đưa vào."""
+    weights = [max(0.0, float(scene["end"]) - float(scene["start"])) for scene in scenes]
+    total = sum(weights)
+    if not scenes or total <= 0 or any(scene.get("moodSource") != "llm" for scene in scenes):
+        return scenes
+
+    def mean(values: list[float]) -> float:
+        return sum(w * v for w, v in zip(weights, values)) / total
+
+    def clip(value: float) -> float:
+        return max(-1.0, min(1.0, value))
+
+    llm_valence = [float(scene["valence"]) for scene in scenes]
+    llm_tension = [float(scene["tension"]) for scene in scenes]
+    mean_valence, mean_tension = mean(llm_valence), mean(llm_tension)
+    level_v = clip(CHAPTER_LEVEL_V[0] * mean([float(scene["labelValence"]) for scene in scenes]) + CHAPTER_LEVEL_V[1])
+    level_t = clip(CHAPTER_LEVEL_T[0] * mean_tension + CHAPTER_LEVEL_T[1])
+    return [dict(scene, moodSource="chapter", llmValence=round(pv, 3), llmTension=round(pt, 3),
+                 valence=round(clip(level_v + CHAPTER_LEVEL_SHAPE * (pv - mean_valence)), 3),
+                 tension=round(clip(level_t + CHAPTER_LEVEL_SHAPE * (pt - mean_tension)), 3))
+            for scene, pv, pt in zip(scenes, llm_valence, llm_tension)]
 
 
 def _mood_spans(moods: list[dict[str, Any]] | None, chapter_id: Any,
@@ -431,6 +471,7 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
     mood_source = "labels"
     overlaps = [(sum(seconds[max(first, a):min(last, b) + 1]), v, t) for a, b, v, t in spans if a <= last and b >= first]
     total = sum(w for w, _v, _t in overlaps)
+    label_valence = valence  # đường nhãn câu, TRƯỚC khi LLM ghi đè: nền của mức chương (`apply_chapter_level`)
     if total > 0:
         valence = sum(w * v / 2 for w, v, _t in overlaps) / total
         tension = sum(w * t / 2 for w, _v, t in overlaps) / total
@@ -450,6 +491,7 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
         "reason": scene["reason"],
         "lines": last - first + 1,
         "moodSource": mood_source,
+        "labelValence": round(label_valence, 3),
     }
 
 
