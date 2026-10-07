@@ -51,6 +51,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   theo các thay đổi ấy, nghe trên máy tính hay điện thoại đều như nhau.
 - Nhạc nền đổi bài ít sai chỗ hơn: không còn đổi ở dòng hệ thống / thông báo trong ngoặc (`[…]`, `【…】`) hay ở câu mở đầu
   bằng "trong khi đó", "lúc ấy"; chỉ tiêu đề góc nhìn, dòng bao gạch và dòng ngắt cảnh của sách mới đánh dấu cảnh mới.
+- Nhạc nền chọn không khí sát truyện hơn: độ vui/buồn và độ căng của nhạc được đặt theo mức của cả chương, rồi mới thay đổi
+  nhẹ theo từng đoạn. Không còn nhảy mạnh giữa các đoạn, và bớt hẳn kiểu chương bình thường mà nhạc vẫn căng. Sách đã dựng
+  nhạc từ bản trước vẫn giữ cách chọn cũ cho tới khi bấm "Tính lại cảm xúc nhạc" ở thẻ nhạc của cuốn một lần (cũng để AI đọc
+  lại những đoạn vừa đổi chỗ vì cách chia cảnh mới); chương nào AI chưa đọc xong thì vẫn chơi theo cách cũ.
 - Nghe trên máy tính: một bài nhạc không tải được (mất mạng) thì 5 phút sau máy tự thử lại như trên
   điện thoại, không còn im đến khi sang đoạn khác.
 
