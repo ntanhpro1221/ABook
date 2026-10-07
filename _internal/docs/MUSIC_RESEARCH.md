@@ -4300,3 +4300,16 @@ Kế hoạch: Corpus `research/music/PLAN_llm_nt.md`. Mã: `llm_nt2.py`, chuỗi
   3. Sai CHẶT/giờ <= C1 + 0,5.
 
 Hàng GPU: Model báo "sau B10" nghĩa là khoảng 10-10; chỗ chen tự nhiên là sau B10 cặp đầu (khoảng sáng 08-10), cần Lead duyệt.
+
+### 07-10 08:0x - GHI TRƯỚC: VOX-MTG, kiểm VOX ngoài danh mục (nhạc Jamendo, nhiều bài có lời; CPU)
+Giới hạn đã nêu của VOX: chưa đo trên nhạc có lời kiểu người dùng nhập. Bộ kiểm dùng MTG-Jamendo `autotagging_moodtheme`.
+- Vector nhúng đã có sẵn: `C:/abook_data/mtg_jamendo/clap/*.npz`, CLAP 3 cửa sổ như analyze_clap, gần cửa sổ app.
+- Nhãn từ `autotagging_instrument.tsv` công khai của MTG:
+  - DƯƠNG = có `instrument---voice`;
+  - ÂM = có ít nhất 1 tag nhạc cụ nhưng không có voice. Tag MTG không đủ, nên ÂM có nhiễu (bài có lời mà thiếu tag).
+- Áp `onnx_student/vox_head.npz` y nguyên (không học lại). Đo AUC của đầu dò so với CLAP `vocals` (feats.jsonl), tỉ lệ gắn cờ ở τ
+  trên DƯƠNG / ÂM, và chia theo `vocals` CLAP <= .5 / > .5.
+
+**Đọc (viết trước):**
+- AUC đầu dò >= CLAP và phủ DƯƠNG >= .60: VOX đứng được trên nhạc có lời ngoài danh mục.
+- Ngược lại: ghi giới hạn vào MUSIC_IMPORT, và học lại đầu dò có thêm nhãn MTG (ghi trước riêng).
