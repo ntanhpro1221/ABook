@@ -250,10 +250,84 @@ def test_a_scene_takes_valence_and_tension_from_the_llm_weighted_by_overlap() ->
     moods = [_mood(ids[0], ids[2], 2.0, 2.0), _mood(ids[3], ids[11], -2.0, 0.0)]  # 3 câu rồi 9 câu, mỗi câu 6 giây
     plain, = music_scenes.chapter_scenes(script)
     scene, = music_scenes.chapter_scenes(script, moods)
-    assert scene["valence"] == pytest.approx(-0.5, abs=1e-3) and scene["tension"] == pytest.approx(0.25, abs=1e-3)
-    assert scene["moodSource"] == "llm" and plain["moodSource"] == "labels"
+    # Giá trị LLM (trung bình theo giây của phần chồng lên đoạn) được giữ ở llmValence / llmTension; mức chương (một đoạn duy nhất:
+    # phần dời bằng 0) đặt valence = 1.876 * nhãn + .068 và tension = 1.066 * T_LLM - .49 (nhãn trung tính: valence nhãn = 0).
+    assert scene["llmValence"] == pytest.approx(-0.5, abs=1e-3) and scene["llmTension"] == pytest.approx(0.25, abs=1e-3)
+    assert scene["labelValence"] == 0.0
+    assert scene["valence"] == pytest.approx(0.068, abs=1e-3) and scene["tension"] == pytest.approx(1.066 * 0.25 - 0.49, abs=1e-3)
+    assert scene["moodSource"] == "chapter" and plain["moodSource"] == "labels"
     for field in ("arousal", "sd", "emotions", "confidence", "start", "end", "firstSegment", "lastSegment", "reason", "lines"):
         assert scene[field] == plain[field], field
+
+
+def _level_scene(start: float, end: float, label: float, p_v: float, p_t: float, source: str = "llm") -> dict:
+    """Đoạn tối thiểu cho `apply_chapter_level`: valence / tension đang là của LLM (p_v, p_t trên [-1, 1])."""
+    return {"start": start, "end": end, "labelValence": label, "valence": p_v, "tension": p_t, "arousal": 0.3,
+            "moodSource": source}
+
+
+def test_chapter_level_shifts_the_llm_shape_around_the_chapter_level_with_numbers_worked_by_hand() -> None:
+    # Ba đoạn 60 / 120 / 60 giây. TB(nhãn) = (.2*60 + 0*120 - .2*60) / 240 = 0 -> L_V = .068.
+    # TB(pT) = (.8*60 + .6*120 + .4*60) / 240 = .6 -> L_T = 1.066 * .6 - .49 = .1496. TB(pV) = (.5*60 + .1*120 - .3*60) / 240 = .1.
+    scenes = [_level_scene(0, 60, 0.2, 0.5, 0.8), _level_scene(60, 180, 0.0, 0.1, 0.6), _level_scene(180, 240, -0.2, -0.3, 0.4)]
+    before = [dict(scene) for scene in scenes]
+    got = music_scenes.apply_chapter_level(scenes)
+    assert scenes == before, "thuần hàm: không sửa đoạn đưa vào"
+    assert [scene["valence"] for scene in got] == [pytest.approx(0.268), pytest.approx(0.068), pytest.approx(-0.132)]
+    assert [scene["tension"] for scene in got] == [pytest.approx(0.25), pytest.approx(0.15), pytest.approx(0.05)]  # .2496 / .1496 / .0496
+    assert [scene["llmValence"] for scene in got] == [0.5, 0.1, -0.3]
+    assert [scene["llmTension"] for scene in got] == [0.8, 0.6, 0.4]
+    assert all(scene["moodSource"] == "chapter" and scene["arousal"] == 0.3 for scene in got)
+
+
+def test_chapter_level_is_clipped_to_the_scale() -> None:
+    # Hai đoạn dài bằng nhau, nhãn +.45: L_V = 1.876 * .45 + .068 = .9122; pV = 1 / 0 (TB .5) dời +-.25: .9122 + .25 > 1 -> 1.0,
+    # còn đoạn kia .9122 - .25 = .6622 (clip chỉ cắt phần vượt).
+    top = music_scenes.apply_chapter_level([_level_scene(0, 60, 0.45, 1.0, 0.0), _level_scene(60, 120, 0.45, 0.0, 0.0)])
+    assert [scene["valence"] for scene in top] == [1.0, pytest.approx(0.662)]
+    # Mức L_V cũng bị cắt TRƯỚC khi cộng phần dời: nhãn +.9 -> L_V = 1.7564 -> 1, rồi 1 +- .25 -> 1.0 và .75; nhãn -.9 -> -1.6 -> -1,
+    # rồi -1 +- .25 -> -.75 và -1.0. T = -1 mọi đoạn: L_T = -1.556 -> -1.
+    high = music_scenes.apply_chapter_level([_level_scene(0, 60, 0.9, 0.5, 1.0), _level_scene(60, 120, 0.9, -0.5, 1.0)])
+    assert [scene["valence"] for scene in high] == [1.0, 0.75]
+    low = music_scenes.apply_chapter_level([_level_scene(0, 60, -0.9, 0.5, -1.0), _level_scene(60, 120, -0.9, -0.5, -1.0)])
+    assert [scene["valence"] for scene in low] == [-0.75, -1.0] and [scene["tension"] for scene in low] == [-1.0, -1.0]
+    # T = +1 mọi đoạn: L_T = 1.066 - .49 = .576 (P0 chấm cao nhất cũng không còn cho tension 1).
+    peak = music_scenes.apply_chapter_level([_level_scene(0, 60, 0.0, 0.0, 1.0), _level_scene(60, 120, 0.0, 0.0, 1.0)])
+    assert [scene["tension"] for scene in peak] == [pytest.approx(0.576)] * 2
+
+
+def test_chapter_level_leaves_a_chapter_alone_when_any_scene_has_no_llm_reading() -> None:
+    mixed = [_level_scene(0, 60, 0.2, 0.5, 0.8), _level_scene(60, 120, 0.0, 0.1, 0.6, source="labels")]
+    assert music_scenes.apply_chapter_level(mixed) == mixed
+    assert music_scenes.apply_chapter_level([]) == []
+    assert music_scenes.apply_chapter_level([_level_scene(5, 5, 0.2, 0.5, 0.8)])[0]["moodSource"] == "llm", "tổng thời lượng 0"
+    # Qua chapter_scenes: LLM mới đọc đoạn đầu -> đoạn đầu "llm", đoạn sau "labels", không đoạn nào thành "chapter"; vẫn có nhãn.
+    script = _two_scene_script()
+    first_ids = [segment["id"] for segment in script["segments"]]
+    scenes = music_scenes.chapter_scenes(script, [_mood(first_ids[0], first_ids[11], 2.0, 2.0)])
+    assert [scene["moodSource"] for scene in scenes] == ["llm", "labels"]
+    assert all("labelValence" in scene for scene in scenes)
+
+
+def _two_scene_script() -> dict:
+    """Hai đoạn trung tính dài bằng nhau (~76 giây): 12 câu, rồi câu mở "Sáng hôm sau" (ranh giới cứng) và 11 câu nữa."""
+    script = _scene_script(ids=1, lines=24)
+    script["segments"][12]["text"] = "Sáng hôm sau, gió vẫn thổi nhẹ."
+    return script
+
+
+def test_chapter_scenes_applies_the_chapter_level_when_every_scene_was_read_by_the_llm() -> None:
+    script = _two_scene_script()
+    ids = [segment["id"] for segment in script["segments"]]
+    # Đoạn 1: V = 2 -> pV = 1, T = 2 -> pT = 1. Đoạn 2: V = 0, T = 0. Hai đoạn dài bằng nhau; nhãn trung tính: TB(nhãn) = 0.
+    moods = [_mood(ids[0], ids[11], 2.0, 2.0), _mood(ids[12], ids[23], 0.0, 0.0)]
+    first, second = music_scenes.chapter_scenes(script, moods)
+    assert (first["lines"], second["lines"]) == (12, 12) and second["reason"] == "time_jump"
+    # L_V = .068; TB(pV) = .5 -> .068 + .5 * (1 - .5) = .318 và .068 - .25 = -.182. L_T = 1.066 * .5 - .49 = .043 -> .293 và -.207.
+    assert (first["valence"], second["valence"]) == (pytest.approx(0.318, abs=1e-3), pytest.approx(-0.182, abs=1e-3))
+    assert (first["tension"], second["tension"]) == (pytest.approx(0.293, abs=1e-3), pytest.approx(-0.207, abs=1e-3))
+    assert (first["llmValence"], second["llmValence"]) == (1.0, 0.0)
+    assert first["moodSource"] == second["moodSource"] == "chapter"
 
 
 def test_without_moods_the_scenes_are_exactly_the_label_scenes() -> None:
@@ -265,6 +339,8 @@ def test_without_moods_the_scenes_are_exactly_the_label_scenes() -> None:
         got = music_scenes.chapter_scenes(script, moods)
         assert got == baseline and all(scene["moodSource"] == "labels" for scene in got)
     assert baseline[0]["valence"] < 0, "đường nhãn: câu buồn cho valence âm"
+    # Khác hệ cũ đúng một khoá: labelValence (đường nhãn trước khi LLM ghi đè) - ở đoạn "labels" nó chính là valence.
+    assert all(scene["labelValence"] == scene["valence"] and "llmValence" not in scene for scene in baseline)
 
 
 def test_the_llm_never_changes_where_the_scenes_split() -> None:
@@ -278,7 +354,8 @@ def test_the_llm_never_changes_where_the_scenes_split() -> None:
     moods = [_mood(1, 66, -2.0, 2.0)]
     shape = lambda scenes: [(s["firstSegment"], s["lastSegment"], s["reason"], s["start"], s["end"]) for s in scenes]  # noqa: E731
     assert shape(music_scenes.chapter_scenes(script, moods)) == shape(music_scenes.chapter_scenes(script))
-    assert all(scene["moodSource"] == "llm" for scene in music_scenes.chapter_scenes(script, moods))
+    # Chương toàn đoạn LLM đọc thì thành "chapter" (mức chương, `apply_chapter_level`) - ranh giới vẫn y nguyên.
+    assert all(scene["moodSource"] == "chapter" for scene in music_scenes.chapter_scenes(script, moods))
 
 
 def test_a_built_plan_uses_the_moods_file_and_a_kept_plan_keeps_its_scenes(tmp_path: Path) -> None:
@@ -292,7 +369,13 @@ def test_a_built_plan_uses_the_moods_file_and_a_kept_plan_keeps_its_scenes(tmp_p
     (project / music_moods.FILE).write_text(json.dumps({"version": 1, "prompt": music_moods.PROMPT_VERSION, "scenes": items}),
                                             encoding="utf-8")
     second = music_plan.build(project, near, lookup)
-    assert all(s["moodSource"] == "llm" and s["valence"] == 1.0 and s["tension"] == -1.0 for s in second["scenes"])
+    # Mọi đoạn LLM chấm V = 2, T = -2 -> pV = 1, pT = -1 giống nhau, phần dời bằng 0: tension = L_T = 1.066 * -1 - .49 -> -1.0
+    # (clip); valence = L_V = 1.876 * TB(nhãn, trọng số giây) + .068 của chương ấy, cắt vào [-1, 1].
+    assert all(s["moodSource"] == "chapter" and s["tension"] == -1.0 and s["llmValence"] == 1.0 for s in second["scenes"])
+    for chapter in {s["chapterId"] for s in second["scenes"]}:
+        scenes = [s for s in second["scenes"] if s["chapterId"] == chapter]
+        label = sum((s["end"] - s["start"]) * s["labelValence"] for s in scenes) / sum(s["end"] - s["start"] for s in scenes)
+        assert all(s["valence"] == pytest.approx(max(-1.0, min(1.0, 1.876 * label + 0.068)), abs=2e-3) for s in scenes)
     # Đưa sẵn đoạn (keep_scenes) thì không tính lại: đoạn đã mang valence / tension / moodSource.
     kept = music_plan.build(project, near, lookup, scenes=music_plan.scenes_of(first))
     assert all(s["moodSource"] == "labels" for s in kept["scenes"])

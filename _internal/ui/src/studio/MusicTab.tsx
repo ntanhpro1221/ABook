@@ -32,7 +32,7 @@ interface Scene {
   /** Bài đã ghim không còn dùng được trên máy này (vd. đã xoá khỏi "Nhạc của tôi"): lần dựng này đoạn dùng bài khác. */
   pinUnavailable?: boolean;
   /** "llm": vui/buồn và căng thẳng của đoạn do AI đọc cả đoạn; "labels": cộng từ cảm xúc từng câu. */
-  moodSource?: "llm" | "labels";
+  moodSource?: "llm" | "chapter" | "labels";
 }
 
 /** Model AI đọc không khí cả đoạn (tuỳ chọn, tải khi bấm): `downloadable` false = Ollama của máy, người dùng tự kéo model. */
@@ -605,8 +605,15 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                     </span>
                     <span className="w-32 shrink-0">
                       {moodOf(scene, taxonomy.emotions)}
-                      {scene.moodSource === "llm" && (
-                        <span className="ml-1.5 rounded bg-sunken px-1 py-0.5 text-xs text-fg-2" title="AI đã đọc cả đoạn này để chấm không khí">
+                      {(scene.moodSource === "llm" || scene.moodSource === "chapter") && (
+                        <span
+                          className="ml-1.5 rounded bg-sunken px-1 py-0.5 text-xs text-fg-2"
+                          title={
+                            scene.moodSource === "chapter"
+                              ? "AI đã đọc cả đoạn này để chấm không khí, rồi cân theo mức của cả chương"
+                              : "AI đã đọc cả đoạn này để chấm không khí"
+                          }
+                        >
                           AI
                         </span>
                       )}
