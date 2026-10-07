@@ -4337,6 +4337,53 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 14:1x - LFE (ghi trước Corpus b6cf5ee): giám khảo độc lập Music2Emotion HỢP LỆ; CL hơn app cùng chiều TRACK-E2E nhưng chưa chắc
+
+Giám khảo là Music2Emotion (AMAAI-Lab, MIT, `J_all.ckpt`). Nó chấm valence/arousal thẳng từ âm thanh của 622 bài được chọn
+(CPU; 3 bài model không đọc được thì bỏ khỏi so cặp). Lỗi giám khảo mỗi đoạn = TB(|V bài − V đáp án|, |arousal bài − E đáp án|),
+thang [−1, 1], TB theo thời lượng trong chương rồi TB chương. Bài được chọn bằng `z_distance` trên danh mục 2.382 bài, như TRACK-E2E.
+
+**Giám khảo có hợp lệ không** (bộ học 4+5+5b+6, 42 chương, 260 đoạn app; cả ba điều kiện):
+
+| kiểm | kết quả | ngưỡng | |
+|---|---|---|---|
+| bài theo ĐÁP ÁN thắng chính các bài ấy XÁO trong chương | 163/246 = .66, p 1,9e-7 | > .5, p < .01 | đạt |
+| thắng bài NGẪU NHIÊN | 192/251 = .76 | ≥ .60 | đạt |
+| A=A (chấm lại 10 bài) | lệch 0,0000 | ≤ .01 | đạt |
+| [ghi lại] thắng DỜI một đoạn | 143/242 = .59, p .003 | | |
+
+→ **HỢP LỆ.** Giám khảo nhận ra bài đúng chỗ trong chương. r trong chương giữa V bài theo giám khảo và V đáp án là .57.
+
+**Lỗi giám khảo theo hệ** (thấp là tốt):
+
+| | bộ học | bộ 7 (theo dõi) |
+|---|---|---|
+| bài theo đáp án (trần khi ranh giới là của app) | .306 | .275 |
+| app hôm nay (P0 + E nhãn câu) | .400 | .342 |
+| CL đã cài | .379 | .319 |
+| [đối chứng] đáp án xáo trong chương | .397 | .307 |
+| [đối chứng] đáp án dời một đoạn | .370 | .299 |
+| [đối chứng] ngẫu nhiên | .445 | .387 |
+
+**CL − app**, theo chương, KTC95 bootstrap 2.000 lần:
+
+| | CL − app | KTC95 |
+|---|---|---|
+| bộ học | −.023 | [−.050, +.001] |
+| bộ 7 | −.021 | [−.069, +.028] |
+
+Dự đoán ghi trước (CL < app) ĐÚNG CHIỀU trên cả hai bộ, nhưng khoảng tin chạm 0, nên chưa chắc.
+
+Đọc:
+- Lần đầu có một thước bài–cảnh không đi qua trò CLAP của ta, và nó cho cùng chiều với TRACK-E2E.
+- Trên bộ học, app hôm nay (.400) TỆ NGANG bài đúng nhưng xáo thứ tự trong chương (.397). Phần "hình trong chương" của lựa chọn
+  hiện nay gần như không thêm gì. Đây là cùng kết luận Q4 (lỗi chấm hình là nút thắt), nay đo bằng âm thanh.
+- Khoảng cách tới trần (.306) lớn gấp 4 lần lợi của CL. Chỗ đáng làm vẫn là học sinh hình (STU-FT + lô bạc).
+- Trên bộ 7, giám khảo phân biệt đáp án với bản xáo kém hơn (.56, p .15), vì chương bộ 7 ít cảnh và mức chương nói gần hết. Bộ
+  cuối mới (`scene_silver2k/final/`) mới là chỗ đo cuối.
+- Giới hạn: không có trục T (M2E không đo căng thẳng); arousal của M2E được so với E đáp án.
+- Từ nay LFE là thước thứ hai cho STU-FT / chọn bài, cạnh r trong chương.
+
 ### 07-10 11:3x - STU-FT thử ống (ghi trước Corpus bd23991): ống chạy, nhưng tinh chỉnh CHƯA hơn đầu tuyến tính trên 60 chương
 
 mmBERT-small tinh chỉnh trọn (Huber δ .25 trên dự đoán trừ TB phân hoạch). Dữ liệu là 1.291 khúc / 300 phân hoạch từ 60 chương
