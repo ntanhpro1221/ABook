@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.31] - 2026-10-07
+
 ### Nghe
 
 - File TXT cả truyện: ô tách chương giờ ghi đúng số dòng "Chương N" có trong file, và nói riêng khi phần chữ trước chương đầu thành một chương "Mở đầu" (ví dụ "Tách theo
