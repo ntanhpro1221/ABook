@@ -4337,7 +4337,7 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
-### 07-10 09:5x - Sửa ghi trước LLM-NT2 (góp ý ngoài Q3 vòng 2), TRƯỚC khi NT2A chạy
+### 07-10 09:4x - Sửa ghi trước LLM-NT2 (góp ý ngoài Q3 vòng 2), TRƯỚC khi NT2A chạy
 
 Ba điểm của góp ý, đối chiếu với NT2:
 
