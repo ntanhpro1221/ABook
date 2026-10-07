@@ -4337,6 +4337,38 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 11:3x - STU-FT thử ống (ghi trước Corpus bd23991): ống chạy, nhưng tinh chỉnh CHƯA hơn đầu tuyến tính trên 60 chương
+
+mmBERT-small tinh chỉnh trọn (Huber δ .25 trên dự đoán trừ TB phân hoạch). Dữ liệu là 1.291 khúc / 300 phân hoạch từ 60 chương
+bạc cũ; 4 epoch CPU, khoảng 88 phút.
+
+| epoch | r TB(V,T) bộ học 4+5+5b+6 |
+|---|---|
+| 1 | .300 |
+| 2 (chọn) | .301 |
+| 3 | .295 |
+| 4 | .294 |
+
+Mốc trên cùng bộ học: STU đầu tuyến tính trên Qwen3-0.6B lớp giữa đạt .377.
+
+Bộ 7 (20 chương, một lần):
+
+| | r V | r E | r T | TB(V,T) |
+|---|---|---|---|---|
+| **STU-FT** | .236 | .064 | .212 | **.224** |
+| [ghi lại] TB z STU-FT + P0 | .318 | .037 | .240 | .279 |
+| [mốc] STU đầu tuyến tính | | | | .230 |
+| [mốc] P0 | | | | .144 |
+
+- Cổng thử ống: ≥ .280. **KHÔNG QUA.**
+- CL với hình STU-FT: MAE .245, CL đang cài .234 (ghi lại).
+
+Đọc:
+- Ống đã đủ: tải model, tokenizer chữ Việt, vòng huấn luyện, chọn epoch, chấm cùng thước.
+- Với 246 cảnh, tinh chỉnh 140M tham số ngang đầu tuyến tính trên vector đóng băng: .224 so với .230 ở bộ 7, và thua ở bộ học.
+  Loss huấn luyện tụt 26 lần (.030 → .001) trong khi bộ học đi ngang từ epoch 1, tức học thuộc. Đúng dự đoán "nút thắt là số nhãn".
+- Bản chính chạy sau lô bạc 2.000 (thả khi tuần đặt lại), với cùng mã và siêu tham số. Cổng .40 như đã ghi.
+
 ### 07-10 10:5x - XÁC NHẬN L2-EST trên bộ 7 (ghi trước 06-10 20:1x): **KHÔNG THẮNG** - lại kẹt ở r V
 
 Mac chạy MLX base_P0 + lora1_P2 trên khúc app bộ 7 (10:43-10:55). Lệnh `SCORE_SKIP_NOTES=1 python l2_est.py confirm set7`.
