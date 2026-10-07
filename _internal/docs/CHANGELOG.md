@@ -91,7 +91,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Phân tích cùng một cuốn bằng cùng một model không còn đổi theo câu hỏi đứng trước: Studio khởi Ollama với bộ đệm câu
   hỏi trong RAM tắt (bộ đệm ấy lấy lại phần đã tính cho câu trước, kể cả sau câu mồi của 0.4.31), và câu mồi không còn
-  chung chữ nào với câu hỏi thật. Phân tích chậm hơn khoảng 7% (một chương thử: 665 → 709 giây), kết quả không đổi.
+  chung chữ nào với câu hỏi thật. Dừng giữa lúc phân tích rồi làm tiếp giờ ra đúng cùng một cuốn: thử 4 chương, dừng ở
+  đoạn 624/955, hai lượt trùng từng chữ (0.4.31: 10 đoạn khác, 4 đoạn đổi người nói). Phân tích chậm hơn khoảng 7–12%.
 - Card đồ hoạ hết bộ nhớ giữa lúc phân tích (vd một app khác vừa lấy thêm bộ nhớ card) không còn làm hỏng chương: Ollama
   báo lỗi trước khi trả lời thì máy chờ một lúc cho card trống rồi hỏi lại câu ấy, tối đa hai lần.
 - Câu hỏi "'Tôi' là ai?" lúc tạo sách gợi ý đúng người kể ở vị trí đầu thường hơn hẳn: 16/17 truyện ngôi thứ nhất

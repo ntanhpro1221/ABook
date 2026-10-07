@@ -28,6 +28,13 @@ phép thử này luôn nói sự thật còn trí nhớ thì không.
 
 ## Đừng `stop` giữa pha phân tích — đó là đổi quyển sách, không phải tạm nghỉ
 
+**Từ 0.4.32 (SR2, 07-10): dừng/resume giữa pha phân tích ra CÙNG quyển sách từng byte** — 4 chương
+Rokujouma, 955 đoạn, dừng ở 624, vân tay candidate + segments trùng, 0 đoạn khác
+(`LLM_Train/resume_determinism/SR2.md`). Điều kiện: Ollama chạy với `LLAMA_ARG_CACHE_RAM=0`
+(Studio đặt sẵn) và mồi raw của `_prime_fresh_slot`. Cùng thí nghiệm trên 0.4.31 (mồi cũ, bộ đệm
+RAM bật): 10/955 đoạn khác, 4 đổi người nói (`SR.md`). Ollama không phải của Studio, hay bản cũ hơn
+0.4.32: luật dưới đây vẫn áp. Một thí nghiệm, một model (v4) - chưa đo qwen3.5 lai.
+
 Đã chứng minh bằng thí nghiệm có đối chứng (2026-09-07, xem `VERSIONS.md`). Cùng code, cùng
 nguồn, cùng cách đọc gieo sẵn; biến duy nhất là một lần `stop`/`resume` ở 620/948:
 
