@@ -4337,6 +4337,21 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 09:5x - Sửa ghi trước LLM-NT2 (góp ý ngoài Q3 vòng 2), TRƯỚC khi NT2A chạy
+
+Ba điểm của góp ý, đối chiếu với NT2:
+
+1. **Model nhân quả không thấy câu sau:** NT2 không dính. Prompt đọc trọn khúc 40 câu đã đánh số rồi mới trả số câu.
+2. **Khúc chồng không phải mẫu độc lập:** có dính, vì trước đây lấy HỢP mọi khúc, gồm cả vị trí ở mép khúc thiếu ngữ cảnh.
+   - Sửa: mỗi khúc chỉ nhận VÙNG GIỮA [đầu+5, cuối−5). Mép chương thì nhận tới mép. Các vùng lát kín chương, không chồng.
+   - `NT2_UNION=1` cho số theo luật cũ để ghi lại.
+3. **Dự đoán trùng thoát phạt:** thước đổi sang ghép MỘT-MỘT trong TOL (cặp gần nhất trước), áp cho cả C1 lẫn C1 ∪ LLM.
+   - C1 trên bộ học không đổi số: F1_NT .444, R .356, sai 1,5/giờ, vì reasoned đã gộp ranh giới trùng.
+   - R/P theo luật cũ vẫn ghi kèm.
+
+Cổng, biến thể và luật chọn giữ nguyên. Đầu ra thô của LLM lưu đầu/cuối khúc nên cả hai luật đều tính lại được. Mã: Corpus
+`research/music/llm_nt2.py`.
+
 ### 07-10 09:0x - GHI TRƯỚC STU: học sinh chấm hình trong chương từ nhãn bạc Claude (CPU)
 
 Kế hoạch và mã: Corpus `research/music/PLAN_stu.md`, `stu_*.py`.
