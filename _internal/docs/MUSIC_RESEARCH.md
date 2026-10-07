@@ -4176,3 +4176,16 @@ Chọn **dời k = .5, hình lấy từ P0**: tốt nhất ở cả hai nửa b�
 - Phần lớn mức lợi là sửa MỨC: P0 thô chấm T cao hơn đáp án khoảng .5. Hằng FIXED T có b = −0,49.
 
 Đặc tả cài: `Corpus/research/music/SPEC_chapter_level.md`.
+
+### 07-10 07:1x - CL đã cài (dev/music-scene e82bc993): đo sau cài khớp
+Lệnh `cl_verify.py D:/Novels/ABook_mscene` (Corpus research/music, e8c2a2e). Nó đưa đúng các đoạn app và P0 của nghiên cứu qua
+`music_scenes.apply_chapter_level` của nhánh. So ba bản: cl_apply "dời k=0.5 nguồn P0", bản viết lại kiểu app (trọng số theo
+thời lượng cả đoạn) và hàm của nhánh.
+
+| MAE | cl_apply | tham chiếu kiểu app | nhánh |
+|---|---|---|---|
+| 4+5+5b+6 | .3285 | .3285 | .3285 |
+| bộ 7 | .2345 | .2344 | .2344 |
+
+Kết quả KHỚP (lệch < .001). Trọng số theo đoạn hay theo câu gần như không đổi số. Việc làm tròn labelValence tới 3 chữ số
+cũng không thấy ở 4 chữ số.
