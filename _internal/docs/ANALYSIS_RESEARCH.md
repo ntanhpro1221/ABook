@@ -56,6 +56,9 @@ lấy mẫu lại theo TRUYỆN (11 truyện) có nửa độ rộng ~3 điểm,
 3. **Sàng một hạt (vd B7m s1234):** qua sàng khi thước cơ chế giảm >= 20 % và CI theo truyện không chứa 0; qua sàng mới chạy hạt 2
    và cổng mở rộng.
 
+Lead duyệt cả ba, thêm: cổng PHÁT HÀNH (như 0.4.31 trên Mac) chỉ là cổng KHÔNG TỤT, giữ 19 ch; cổng ĐỔI MẶC ĐỊNH model dùng cổng mở
+rộng ~34 truyện (dòng 2). Thước T+A+M tự động là thước XẤP XỈ: khi công bố kết quả luôn báo kèm số trên 145 lỗi hai người cùng gán.
+
 ## 07-10 Lỗi người nói của B9 nằm ở đâu: phân loại theo CƠ CHẾ (293 lỗi, hai người gán mù)
 
 Lead hỏi sau B13: lỗi chặt của B9 s1234 trên câu MỘT đáp án (cổng 19 ch, 293 lỗi, bỏ 8 câu mơ hồ thật) do cơ chế nào? Hồ sơ mỗi lỗi
