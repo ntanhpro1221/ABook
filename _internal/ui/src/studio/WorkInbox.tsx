@@ -16,7 +16,7 @@ import { keepRequests, pickedLines, pickNote, toggleLine, type LineRef, type Spe
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
 // (bước 2): mong muốn ghi vào overrides.json, dây chuyền áp ở ranh giới chương và thu lại những câu có tên ấy.
 
-export type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio";
+export type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator";
 
 interface WorkExample {
   segmentId: number;
@@ -72,6 +72,16 @@ export interface WorkItem {
   pick?: boolean;
   /** Giữ nguyên thẻ nhóm: mỗi vai giữ người của nó - một yêu cầu cho mỗi vai. */
   keepGroups?: SpeakerRequest[];
+  /** Thẻ người kể của đoạn (webui/narrator_cards.py): đoạn nào, người kể của sách, ứng viên, và điều cần biết trước khi bấm
+   *  (đoạn đã phân tích xong thì chỉ áp khi làm lại sách). */
+  narratorSection?: {
+    chapterIndex: number;
+    fromSeq: number;
+    toSeq: number;
+    narrator: string;
+    appliesNote: string;
+    choices: { label: string; value: string }[];
+  };
 }
 
 interface VoiceChoice {
@@ -104,6 +114,7 @@ const KIND_LABEL: Record<WorkKind, string> = {
   "shared-voice": "Chung giọng",
   unnamed: "Vai phụ không tên",
   audio: "Bản thu lỗi",
+  narrator: "Người kể của đoạn",
 };
 
 const PAGE = 40;
@@ -141,6 +152,7 @@ function decidedTitle(item: WorkItem): string | null {
   }
   if (item.voiceChoices?.length) return item.voiceChoices.find((choice) => choice.label === answer || choice.done === answer)?.done ?? null;
   if (item.kind === "alias") return `“${item.subject ?? item.current}” là ${midSentence(answer)}`;
+  if (item.kind === "narrator") return `Đoạn này: ${answer === "Giữ nguyên" ? `vẫn do ${item.current} kể` : answer === "Đổi người kể" ? `không phải ${item.current} kể` : `${answer} kể`}`;
   if (item.lines?.length) return `${item.lines.length > 1 ? `${item.lines.length} câu này` : "Câu này"} của ${midSentence(answer)}`;
   return null;
 }
@@ -524,6 +536,76 @@ function SpeakerFix({
   );
 }
 
+// Người kể của một ĐOẠN khác người kể "tôi" của sách: ba lựa chọn - đúng (đoạn không do người ấy kể), không (giữ nguyên), hay chọn
+// người khác. Lô phân tích chưa chạy sẽ theo lựa chọn; đoạn đã phân tích xong thì chỉ áp khi làm lại sách (thẻ nói rõ).
+function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
+  const client = useQueryClient();
+  const section = item.narratorSection!;
+  const [choosing, setChoosing] = useState(false);
+  const [name, setName] = useState("");
+  const where = { chapterIndex: section.chapterIndex, fromSeq: section.fromSeq, toSeq: section.toSeq };
+  const save = useMutation({
+    mutationFn: (body: { action: "accept" | "choose" | "keep"; narrator?: string }) =>
+      api<{ action: string; narrator: string }>(`/api/books/${bookId}/narrator-section`, { method: "POST", body: { ...where, ...body } }),
+    onSuccess: ({ action, narrator }) => {
+      refreshAfterDecision(client, bookId);
+      const back = item.requested ? `Trở lại quyết định trước: ${item.requested}.` : "Thẻ hỏi lại như trước khi bấm.";
+      toast.success(
+        action === "keep" ? `Giữ nguyên: đoạn này vẫn do ${item.current} kể` : narrator ? `Đã ghi: đoạn này do ${narrator} kể` : `Đã ghi: đoạn này không phải ${item.current} kể`,
+        {
+          description: section.appliesNote || "Phần chưa phân tích sẽ theo lựa chọn này.",
+          action: undoAction(client, bookId, "narrator-section", [where], back),
+          duration: UNDO_MS,
+        },
+      );
+    },
+    onError: (error: Error) => toast.error("Chưa ghi được người kể", { description: error.message }),
+  });
+  const typed = name.trim();
+  return (
+    <div className="mt-3">
+      {section.appliesNote && <p className="mb-2 text-xs text-fg-2">{section.appliesNote}</p>}
+      {item.requested && (
+        <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
+          <Check className="size-3.5 text-success" />
+          Đã ghi: {item.requested}.
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Người kể của đoạn">
+        <Button data-choice size="sm" variant={item.requested === "Đổi người kể" ? "primary" : "secondary"} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
+          Đúng, đổi người kể
+        </Button>
+        <Button data-choice size="sm" variant={item.requested === "Giữ nguyên" ? "primary" : "ghost"} disabled={save.isPending} onClick={() => save.mutate({ action: "keep" })}>
+          Không, giữ nguyên
+        </Button>
+        <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} onClick={() => setChoosing((value) => !value)}>
+          Chọn người kể…
+        </Button>
+      </div>
+      {choosing && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {section.choices.map((choice) => (
+            <Button key={choice.value} size="sm" variant="secondary" disabled={save.isPending} onClick={() => save.mutate({ action: "choose", narrator: choice.value })}>
+              {choice.label}
+            </Button>
+          ))}
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Tên người kể"
+            aria-label="Tên người kể của đoạn"
+            maxLength={80}
+            className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-accent"
+          />
+          <Button size="sm" variant="primary" disabled={!typed || save.isPending} onClick={() => save.mutate({ action: "choose", narrator: typed })}>
+            Đặt người kể
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Giọng / giới của một nhân vật: một lần bấm. Dây chuyền chọn giọng mới như bước phân vai (mọi người khác giữ giọng) và
 // chỉ thu lại khi giọng thật sự đổi - ghi chú dưới mỗi nút nói trước cái giá ấy.
 function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
@@ -652,7 +734,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = 
           Ảnh hưởng <span className="tabular font-semibold text-fg">{formatNumber(item.affected)}</span> câu
         </span>
         <span>
-          {item.kind === "audio" ? "Trạng thái" : "Máy đang dùng"}: <span className="font-medium text-fg">{item.current}</span>
+          {item.kind === "audio" ? "Trạng thái" : item.kind === "narrator" ? "Máy coi người kể là" : "Máy đang dùng"}: <span className="font-medium text-fg">{item.current}</span>
         </span>
       </div>
       {item.kind === "audio" ? (
@@ -661,6 +743,8 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = 
         </Button>
       ) : item.kind === "pronunciation" && item.surface ? (
         <PronunciationFix bookId={bookId} item={item} onOpenNames={openNames} />
+      ) : item.kind === "narrator" && item.narratorSection ? (
+        <NarratorFix bookId={bookId} item={item} />
       ) : item.voiceChoices && item.voiceChoices.length > 0 ? (
         <VoiceFix bookId={bookId} item={item} />
       ) : item.lines && item.choices ? (

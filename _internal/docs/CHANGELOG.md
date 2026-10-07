@@ -97,6 +97,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   việc khác: trước mỗi câu hỏi app gửi một câu ngắn không liên quan để Ollama tính lại từ đầu, thay vì dùng lại phần
   đã tính cho câu trước (phần ấy làm câu trả lời đổi theo câu hỏi đứng trước - người nói, giọng, audio đổi theo). Thời
   gian phân tích không đổi. Chỉ đúng khi không có app khác hỏi cùng Ollama trong lúc ấy.
+- Truyện kể ngôi thứ nhất mà có đoạn do người khác kể (chương đổi người kể, đoạn chèn giữa hai dòng ngắt cảnh): hộp "Việc cần duyệt"
+  hiện thẻ "Chương 195, câu 40–112: có vẻ không phải <tên> kể" ngay sau khi chia câu, với ba nút "Đúng, đổi người kể", "Không, giữ
+  nguyên" và "Chọn người kể…". Đồng ý thì phần chưa phân tích của đoạn ấy được nói đúng người kể, máy thôi gán lời người khác cho
+  "tôi"; chưa trả lời thì máy giữ nguyên. Chương đã phân tích xong thì thẻ nói rõ lựa chọn chỉ áp khi làm lại sách, và đồng ý một
+  đoạn không bắt cả cuốn phân tích lại. Dùng được từ điện thoại điều khiển máy tính; việc hiện thẻ này trong app điện thoại độc lập
+  chưa có.
 
 ### Cách đọc tên
 
