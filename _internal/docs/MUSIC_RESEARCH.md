@@ -4337,7 +4337,7 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
-### 07-10 15:xx - Q4 vòng 3 trên 60 chương bạc cũ: STU-FT đúng là học thuộc; mmBERT-small ĐÔNG CỨNG hơn bản tinh chỉnh; trọng số đều theo chương nhích nhẹ
+### 07-10 14:3x - Q4 vòng 3 trên 60 chương bạc cũ: STU-FT đúng là học thuộc; mmBERT-small ĐÔNG CỨNG hơn bản tinh chỉnh; trọng số đều theo chương nhích nhẹ
 
 Không cổng; đây là mốc trước lô bạc. Mã `stu_ft_diag.py`, `stu_cc.py`.
 
