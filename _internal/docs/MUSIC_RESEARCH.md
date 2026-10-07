@@ -4337,6 +4337,20 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 09:1x - TRACK-E2E: lợi của CL đi trọn vào BÀI được chọn
+
+Chọn bài gần nhất trong danh mục (2.382 bài, `z_distance` của app, bỏ các phạt) cho mỗi đoạn app. Đo |mood bài − đáp án| theo
+câu, TB chương, TB ba trục. Mã: Corpus `research/music/track_e2e.py`.
+
+| | 4-6: bài - đáp án | 4-6: mục tiêu - đáp án | bộ 7: bài - đáp án | bộ 7: mục tiêu - đáp án | đổi bài/giờ (4-6 / 7) |
+|---|---|---|---|---|---|
+| app trước CL | .369 | .392 | .328 | .341 | 18.5 / 21.2 |
+| CL đã cài | .320 | .321 | .208 | .218 | 18.8 / 19.9 |
+| mục tiêu = đáp án | .147 | 0 | .062 | 0 | 21.7 / 17.5 |
+
+- Danh mục đủ dày: lỗi mood của bài chọn ra ≈ lỗi mục tiêu. Phần mục tiêu sửa được thì bài chọn ra sửa được gần trọn.
+- CL không làm nhạc đứng yên: số lần đổi bài không giảm.
+
 ### 07-10 09:0x - Góp ý ngoài Q3/Q4 (ChatGPT, Lead giao): lỗi chấm lớn hơn lỗi ranh giới; luật chỉ phủ ~1/2 NT
 
 Mã: Corpus `research/music/q4_oracle.py`, `q3_coverage.py`. Số mô tả, không cổng.
