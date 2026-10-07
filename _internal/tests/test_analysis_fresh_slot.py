@@ -177,3 +177,60 @@ def test_a_lost_real_request_is_primed_again_before_each_retry() -> None:
     assert _analyzer(session)._stream_json_response(_request()) == PAYLOAD
 
     assert [call["prime"] for call in session.calls] == [True, False, True, False]
+
+
+class _StatusResponse:
+    """Response của Ollama trả mã lỗi trước khi stream (vd 500 khi llama-server chết vì GPU hết bộ nhớ)."""
+
+    def __init__(self, status: int) -> None:
+        self.status_code = status
+
+    def raise_for_status(self) -> None:
+        raise requests.HTTPError(f"{self.status_code} Server Error", response=self)  # type: ignore[arg-type]
+
+    def close(self) -> None:
+        return None
+
+
+class StatusSession(RecordingSession):
+    """Request thật đầu tiên trả `status` (trước khi có chữ nào), các lần sau trả bình thường."""
+
+    def __init__(self, status: int, times: int = 1) -> None:
+        super().__init__()
+        self.status = status
+        self.times = times
+
+    def post(self, _url: str, **kwargs: Any) -> Any:
+        body = kwargs["json"]
+        if not is_fresh_slot_prime(body) and self.times > 0:
+            self.times -= 1
+            self.calls.append({"prime": False, "json": body, "stream": kwargs.get("stream", False)})
+            return _StatusResponse(self.status)
+        return super().post(_url, **kwargs)
+
+
+def test_a_server_error_before_any_answer_is_primed_and_asked_again() -> None:
+    """Q7 07-10: GPU hết bộ nhớ -> llama-server chết, Ollama trả 500 và bỏ model. Chưa có chữ nào nên hỏi lại được."""
+    session = StatusSession(500)
+
+    assert _analyzer(session)._stream_json_response(_request()) == PAYLOAD
+
+    assert [call["prime"] for call in session.calls] == [True, False, True, False]
+
+
+def test_a_client_error_is_not_retried() -> None:
+    session = StatusSession(400)
+
+    with pytest.raises(requests.HTTPError):
+        _analyzer(session)._stream_json_response(_request())
+
+    assert len(session.reals) == 1
+
+
+def test_server_errors_stop_after_the_bounded_retry_budget() -> None:
+    session = StatusSession(500, times=99)
+
+    with pytest.raises(requests.HTTPError):
+        _analyzer(session)._stream_json_response(_request())
+
+    assert len(session.reals) == OLLAMA_TRANSPORT_RECONNECT_ATTEMPTS + 1

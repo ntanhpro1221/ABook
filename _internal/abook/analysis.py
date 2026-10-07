@@ -938,6 +938,9 @@ OLLAMA_TRANSPORT_EXCEPTIONS = (
 )
 OLLAMA_TRANSPORT_RECONNECT_ATTEMPTS = 2
 OLLAMA_TRANSPORT_RECONNECT_BACKOFF_SECONDS = 2.0
+# After a 5xx Ollama has usually expired the model (llama-server died on CUDA OOM); give VRAM
+# time to come back before the replay reloads it.
+OLLAMA_SERVER_ERROR_BACKOFF_SECONDS = 15.0
 
 
 def is_ollama_transport_fault(exc: BaseException) -> bool:
@@ -7718,7 +7721,15 @@ class OllamaBookAnalyzer:
                         f"({response_chars:,} response chars)"
                     )
                 break
-            except OLLAMA_TRANSPORT_EXCEPTIONS as exc:
+            except (*OLLAMA_TRANSPORT_EXCEPTIONS, requests.HTTPError) as exc:
+                # A 5xx before any character is Ollama failing the whole request - e.g. the
+                # GPU ran out of memory (another app took VRAM), llama-server died and Ollama
+                # expired the model (Q7 07-10). Nothing was observed, so replaying it after the
+                # model reloads is as safe as replaying a dropped connection; a 4xx is the
+                # request's own fault and is raised.
+                server_error = isinstance(exc, requests.HTTPError)
+                if server_error and (exc.response is None or exc.response.status_code < 500):
+                    raise
                 replayable = (
                     connect_attempt < OLLAMA_TRANSPORT_RECONNECT_ATTEMPTS
                     and not any(parts)
@@ -7726,12 +7737,16 @@ class OllamaBookAnalyzer:
                 )
                 if not replayable:
                     raise
-                delay = OLLAMA_TRANSPORT_RECONNECT_BACKOFF_SECONDS * (connect_attempt + 1)
+                backoff = (OLLAMA_SERVER_ERROR_BACKOFF_SECONDS if server_error
+                           else OLLAMA_TRANSPORT_RECONNECT_BACKOFF_SECONDS)
+                delay = backoff * (connect_attempt + 1)
                 if time.monotonic() - started + delay >= wall_timeout:
                     raise
                 self.log(
-                    "Kết nối Ollama rớt trước khi nhận được dữ liệu "
-                    f"({exc.__class__.__name__}); thử kết nối lại sau {delay:.0f}s."
+                    (f"Ollama báo lỗi {exc.response.status_code} trước khi trả lời (có thể GPU hết bộ nhớ)"
+                     if server_error else
+                     f"Kết nối Ollama rớt trước khi nhận được dữ liệu ({exc.__class__.__name__})")
+                    + f"; thử lại sau {delay:.0f}s."
                 )
                 time.sleep(delay)
             finally:
