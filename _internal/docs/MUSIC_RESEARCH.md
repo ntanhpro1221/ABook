@@ -4189,3 +4189,32 @@ thời lượng cả đoạn) và hàm của nhánh.
 
 Kết quả KHỚP (lệch < .001). Trọng số theo đoạn hay theo câu gần như không đổi số. Việc làm tròn labelValence tới 3 chữ số
 cũng không thấy ở 4 chữ số.
+
+### 07-10 07:3x - CAST: đổi tập nhân vật có mặt KHÔNG phải đường gốc cho ranh giới NT (thăm dò trên bộ học, không ghi trước)
+Giả thuyết (Music tự chọn, Lead đồng ý cho tự làm): đổi nơi/thời gian thì người có mặt cũng đổi. Mã: `LLM_Train/music/cast_shift.py`.
+
+Cách đo:
+- "Có mặt" ở mỗi câu = người nói của câu thoại + tên người nói nào của chương xuất hiện trong chữ câu.
+- Cột `speaker` lấy từ DB phân tích. DB đánh giá không có bảng characters, nên không có bí danh; app thật có thêm bí danh.
+- Điểm ở vị trí k = 1 − cosine(đếm nhân vật trong W câu trước, W câu sau).
+- Thước 1 (TYPES), bộ 4+5 và 5b+6.
+
+| 4+5 / 5b+6 | W=10 | W=20 |
+|---|---|---|
+| AUC NT so với vị trí không ranh giới | .665 / .664 | .657 / .681 |
+| AUC NT so với NH/GC | .655 / .597 | .663 / .609 |
+| AUC ranh giới C1 trúng NT so với C1 sai | .516 / .540 | .617 / .750 |
+
+Dùng tín hiệu theo hai cách, đều không qua:
+1. **Lọc C1** (bỏ ranh giới CUE có điểm < θ, W=20):
+   - 4+5 mất trúng: F1_NT .557 → .456.
+   - 5b+6 chỉ nhỉnh: .321 → .333.
+   - Sai CHẶT trên bộ học vốn đã thấp (1,4-1,6/giờ), nên không còn chỗ để lọc.
+2. **Thêm ranh giới tại đỉnh** (cực đại trong ±W, cách C1 > 10 câu):
+   - P_NT chỉ .00-.14.
+   - Mỗi giờ thêm được 0-3 trong số 19/28 NT mà C1 lỡ, nhưng sai CHẶT tăng thêm 1-8/giờ.
+
+Đọc: tín hiệu có thật nhưng yếu (AUC ~.66). Lý do có tính cấu trúc: ở LN/truyện mạng, phần lớn chỗ đổi nơi/thời gian vẫn theo
+cùng nhân vật chính (người kể ngôi 1 / nhân vật góc nhìn đi sang nơi mới), nên tập người có mặt ít đổi. Còn trong một cảnh, người
+ra/vào lại làm điểm nhảy. Bí danh thật của app sẽ làm đếm đủ hơn, nhưng không sửa được cái lệch cấu trúc này.
+Bỏ hướng này. Chỗ hổng còn lại vẫn là R_NT: C1 lỡ 19/36 (4+5) và 28/37 (5b+6) NT.
