@@ -12,6 +12,7 @@
 # (Shizuka trước cái cười trừ 183), 233-234, 252-254 (252 Kenji trách không được cảm ơn, 253 Koutarou mỉa "có đi có lại").
 # 235, 240: lời thoại hỏng dấu ngoặc nên parser khoá N -> NARRATOR (quy tắc 10). 333, 341 "Zzzz", 346 "Guehefuefuefue",
 # 361 "Uehhehehe": tiếng ngáy / nói mơ của Koutarou (347 "Koutarou nói mơ lần nữa", 362) -> KOUTAROU, NARRATOR~ (quy tắc 8).
+# 06-10 (phiên Model) chuyển theo cách tách rel430b 24ed59d2 (gate_gold_rel430b.py): 235 N -> D KOUTAROU (khoá thoại)
 0 H
 1 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u
 2 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u
@@ -247,7 +248,7 @@
 232 N NARRATOR neutral,happy 0-1 normal normal u
 233 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA,KOUTAROU~,SATOMI KOUTAROU~,SATOMI~,KOU~ sarcastic,surprised,neutral 0-1 normal normal m
 234 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,KENJI~,MATSUDAIRA KENJI~,MACKENZIE~,MATSUDAIRA~ afraid,angry,neutral 0-1 normal normal m
-235 N
+235 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,NARRATOR~ angry,neutral 0-1 normal normal m
 236 N
 237 N
 238 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
