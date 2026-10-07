@@ -7621,18 +7621,21 @@ class OllamaBookAnalyzer:
         return decoded
 
     def _prime_fresh_slot(self, body: dict[str, Any]) -> None:
-        """Gửi trước một request 1 token KHÔNG chung tiền tố với request phân tích (system khác), để llama-server nạp lại
-        prompt thật từ đầu thay vì dùng lại KV của request trước. KV dùng lại mang dấu request đã tính nó (cách chia lô lúc
-        nạp), nên cùng một request có thể ra câu trả lời khác tuỳ request đứng trước - đổi người nói, đổi giọng, đổi audio.
-        Mồi lạ làm đầu ra chỉ còn phụ thuộc chính request: đo 07-10 (LLM_Train/resume_determinism/PRIME.md) hai chương
-        nhạy, sau slot bẩn và sau khởi động lại trùng từng byte; thời gian cả chương không đổi. Cùng model + num_ctx để
-        Ollama không nạp lại model."""
+        """Gửi trước một request 1 token KHÔNG chung token nào với request phân tích, để slot của llama-server không còn
+        tiền tố nào dùng lại được. KV dùng lại mang dấu request đã tính nó (cách chia lô lúc nạp), nên cùng một request có
+        thể ra câu trả lời khác tuỳ request đứng trước - đổi người nói, đổi giọng, đổi audio.
+
+        Mồi là `raw` ("1" không qua chat template): mồi cũ chỉ đổi system nên vẫn qua template và chung vài token đầu với
+        request thật. Mồi chỉ dọn slot; llama-server còn bộ đệm prompt trong RAM (`--cache-ram`, mặc định 8192 MiB) khôi
+        phục lại KV cũ của request trước sau mồi - log 07-10: 1.255/1.301 request lấy lại ~58% prompt, 0 request nạp từ
+        đầu. Nên mồi chỉ đủ khi Ollama chạy với LLAMA_ARG_CACHE_RAM=0 (Studio đặt trong `StudioSetup.environment`).
+        Số đo: LLM_Train/resume_determinism/Q7.md. Cùng model + num_ctx để Ollama không nạp lại model."""
         options = {"num_predict": 1, "temperature": 0, "seed": 0}
         if isinstance(body.get("options"), dict) and "num_ctx" in body["options"]:
             options["num_ctx"] = body["options"]["num_ctx"]
         self.session.post(
             f"{self.base_url}/api/generate",
-            json={"model": body.get("model"), "system": "Trả lời một chữ.", "prompt": "1", "think": False,
+            json={"model": body.get("model"), "raw": True, "prompt": "1", "think": False,
                   "stream": False, "keep_alive": body.get("keep_alive", "30m"), "options": options},
             timeout=(10.0, 120.0),
         ).raise_for_status()

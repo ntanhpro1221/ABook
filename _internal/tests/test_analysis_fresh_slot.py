@@ -1,5 +1,5 @@
-"""Mồi slot sạch (`OllamaBookAnalyzer._prime_fresh_slot`): trước mỗi lần hỏi model thật có đúng một request 1 token, system
-khác; câu trả lời lấy lại từ sổ không hỏi model nên không mồi; lỗi kết nối ở lúc mồi được thử lại như lỗi của request thật.
+"""Mồi slot sạch (`OllamaBookAnalyzer._prime_fresh_slot`): trước mỗi lần hỏi model thật có đúng một request 1 token, raw
+(không qua chat template); câu trả lời lấy lại từ sổ không hỏi model nên không mồi; lỗi kết nối ở lúc mồi được thử lại như lỗi của request thật.
 Lý do và số đo nằm trong docstring của hàm ấy. Không gọi Ollama thật."""
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import requests
 from abook.analysis import OLLAMA_TRANSPORT_RECONNECT_ATTEMPTS, OllamaBookAnalyzer
 from abook.config import build_settings
 from test_analysis_required import FakeDB, FakeResponse
-from tests.fresh_slot_fakes import FRESH_SLOT_SYSTEM, PrimeResponse, is_fresh_slot_prime
+from tests.fresh_slot_fakes import FRESH_SLOT_PROMPT, PrimeResponse, is_fresh_slot_prime
 
 PAYLOAD = {"segments": [{"id": "S001"}]}
 REAL_SYSTEM = "Bạn là bộ phân tích."
@@ -96,7 +96,8 @@ def test_every_real_model_call_is_preceded_by_exactly_one_prime() -> None:
     assert prime["model"] == real["model"] == "qwen3:8b"
     assert prime["options"]["num_ctx"] == real["options"]["num_ctx"] == 16384
     assert prime["options"]["num_predict"] == 1
-    assert prime["system"] == FRESH_SLOT_SYSTEM and prime["system"] != real["system"]
+    # raw: không qua chat template, không system -> không chung token nào với request thật
+    assert prime["raw"] is True and prime["prompt"] == FRESH_SLOT_PROMPT and "system" not in prime
     assert real["system"] == REAL_SYSTEM and real["options"]["num_predict"] == 512
     # mồi không stream (nhận một JSON rồi thôi), request thật thì stream
     assert prime["stream"] is False and session.calls[0]["stream"] is False
