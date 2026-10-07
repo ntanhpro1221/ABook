@@ -99,7 +99,8 @@ def _two_people(first: set[str], second: set[str]) -> bool:
 
 
 def split_doubts(rows: list[Any], narrator_of: Callable[[int], str],
-                 named: Callable[[str], bool]) -> list[tuple[str, list[Any], list[str], list[str], int]]:
+                 named: Callable[[str], bool],
+                 row_narrator: Callable[[Any], str] | None = None) -> list[tuple[str, list[Any], list[str], list[str], int]]:
     """"Hai người chung một tên": trong chương kể ngôi thứ nhất, câu thoại của MỘT nhãn chia làm hai giọng xưng hô không
     bao giờ đi chung câu (8B-v5 gán 21 câu của một bà thầy bói vô danh cho LUCIA: "cậu… ta" so với "anh… bà").
 
@@ -107,7 +108,10 @@ def split_doubts(rows: list[Any], narrator_of: Callable[[int], str],
     khỏi cách nhãn ấy xưng hô ở các chương KHÁC của cuốn - chưa có hồ sơ ấy (nhãn chỉ nói ở chương này) thì không hỏi: không
     biết nhóm nào là người thật. Đo 29-09 (luật hai nhóm + tự xưng, trước khi lọc ngôi kể và đòi hồ sơ): bộ LN 12 chương
     15/15 lần báo đúng ở v3, v6, 8B-v5; truyện kể ngôi ba (Tam quốc, Tắt đèn) thì phần lớn báo nhầm - một người đổi xưng hô
-    theo vai vế ("ta… ngươi" với tướng dưới, "tôi… ngài" với chúa) - nên chỉ xét chương có người kể."""
+    theo vai vế ("ta… ngươi" với tướng dưới, "tôi… ngài" với chúa) - nên chỉ xét chương có người kể.
+
+    `row_narrator(câu)` (người kể THEO ĐOẠN, narrator_sections.py): có thì thay `narrator_of` - mỗi câu theo người kể của đoạn
+    nó nằm; không truyền thì tra theo chương như trước."""
     dialogue = [row for row in rows if str(row["kind"]) == "dialogue" and named(str(row["speaker"] or ""))]
     bags = {id(row): tokens(str(row["text"] or "")) for row in dialogue}
     by_label: dict[str, dict[int, list[Any]]] = defaultdict(lambda: defaultdict(list))
@@ -116,12 +120,17 @@ def split_doubts(rows: list[Any], narrator_of: Callable[[int], str],
     found = []
     for label, chapters in by_label.items():
         for chapter_id, chapter_rows in chapters.items():
-            narrator = narrator_of(chapter_id)
             # Người kể thì không: câu dính người kể đã có thẻ xưng hô từng câu (address_doubts), và hồ sơ của người kể ở
             # các chương khác nhiễm chính những câu model gộp vào - 29-09 HDST 130: nhóm "tôi" (đúng là Ed) bị chọn nhầm
             # làm nhóm lạ vì Ed ở chương 062 đã mang lời người khác.
-            if not narrator or _same_person(label, narrator):
-                continue
+            if row_narrator is None:
+                narrator = narrator_of(chapter_id)
+                if not narrator or _same_person(label, narrator):
+                    continue
+            else:
+                chapter_rows = [row for row in chapter_rows if row_narrator(row) and not _same_person(label, row_narrator(row))]
+                if not chapter_rows:
+                    continue
             voices = [group for group in _voices([(row, bags[id(row)]) for row in chapter_rows])
                       if len(group[1]) >= SPLIT_MIN_LINES]
             if len(voices) < 2 or not _two_people(voices[0][0], voices[1][0]):
@@ -147,16 +156,20 @@ def split_doubts(rows: list[Any], narrator_of: Callable[[int], str],
     return found
 
 
-def address_doubts(rows: list[Any], narrator_of: Callable[[int], str]) -> list[tuple[Any, str, list[str]]]:
+def address_doubts(rows: list[Any], narrator_of: Callable[[int], str],
+                   row_narrator: Callable[[Any], str] | None = None) -> list[tuple[Any, str, list[str]]]:
     """(câu, người xưng hô giống hơn, các đại từ trong câu) cho câu thoại dính người kể của chương (`narrator_of(chapter_id)`,
-    rỗng = chương kể ngôi ba: bỏ qua) mà xưng hô hợp người kia hơn người đang được gán ít nhất `MARGIN`."""
+    rỗng = chương kể ngôi ba: bỏ qua) mà xưng hô hợp người kia hơn người đang được gán ít nhất `MARGIN`.
+
+    `row_narrator(câu)`: người kể THEO ĐOẠN (narrator_sections.py), thay `narrator_of` khi truyền - câu trong đoạn kể ngôi ba
+    thì bỏ qua, câu trong đoạn của người khác thì xét theo người ấy; hồ sơ xưng hô vẫn dựng trên cả chương."""
     by_chapter: dict[int, list[Any]] = defaultdict(list)
     for row in rows:
         by_chapter[int(row["chapter_id"])].append(row)
     found: list[tuple[Any, str, list[str]]] = []
     for chapter_id, chapter_rows in by_chapter.items():
         narrator = narrator_of(chapter_id)
-        if not narrator:
+        if not narrator and row_narrator is None:
             continue
         profiles: dict[str, Counter] = defaultdict(Counter)
         lines: Counter = Counter()
@@ -170,6 +183,10 @@ def address_doubts(rows: list[Any], narrator_of: Callable[[int], str]) -> list[t
         for row, bag in zip(chapter_rows, bags):
             if not bag:
                 continue
+            if row_narrator is not None:
+                narrator = row_narrator(row)
+                if not narrator:
+                    continue
             label = str(row["speaker"] or "")
             own = profiles[label] - bag  # không để câu đang xét tự xác nhận người đang được gán
             if sum(own.values()) < MIN_OWN:
