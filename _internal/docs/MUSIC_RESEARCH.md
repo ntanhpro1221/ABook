@@ -3719,7 +3719,7 @@ R .23 F1 .283, anh em 4,8/giờ (mô phỏng 7,7 / .38 / .286 / 4,8). Khớp tro
 - Bài học: hiệu chỉnh mức (hệ số chặn) học từ một bộ không đứng được sang bộ khác; thứ tự (r) thì đứng được. Lớp mức chương nên
   dùng r / thứ hạng trong cuốn, hoặc hiệu chỉnh theo cuốn, không dùng hằng toàn cục.
 
-### 07-10 05:3x - ĐÍNH CHÍNH: kết quả "CL bộ 7 KHÔNG THẮNG" ở trên KHÔNG HỢP LỆ
+### 07-10 04:5x - ĐÍNH CHÍNH: kết quả "CL bộ 7 KHÔNG THẮNG" ở trên KHÔNG HỢP LỆ
 
 `spans7.py p0` gọi cứng `PM.ask("P2", …)`, nên file `pm_P0_set7` thực ra là đầu ra của prompt P2 (thang chữ số, có logprobs):
 ba dòng đầu trùng `pm_P2_set7`. Công thức ghi trước (T = 1,066·P0 − 0,490) vì vậy đã được áp lên một thang khác. Đó là lý do
@@ -3727,7 +3727,7 @@ P0 "bộ 7" có T TB −0,39, sd 0,08, trong khi bộ 4/5 là +0,56/+0,69, sd 0,
 sai thành `*.WRONG_was_P2_prompt.jsonl`. P0 bộ 7 sẽ chạy lại trên GPU (hàng Model), rồi chấm lại đúng công thức ghi trước fff35839.
 Bảng và "bài học về hệ số chặn" ở mục trên bỏ hết. Cột V (C0) không dùng P0 nên MAE V .276 vẫn đúng.
 
-### 07-10 06:0x - SEG-P (thăm dò, KHÔNG ghi trước): bộ lọc ranh giới LLM cũ bỏ nhầm phía
+### 07-10 05:0x - SEG-P (thăm dò, KHÔNG ghi trước): bộ lọc ranh giới LLM cũ bỏ nhầm phía
 
 `research/music/seg_precision.py` tính độ chính xác của từng ranh giới LLM (qwen3.5:4b, kết quả SEG đã có, CPU) theo đặc trưng rẻ:
 
@@ -3758,3 +3758,887 @@ vì dấu CUE của nguồn bộ 7 nhiễu (P .36). Đó là việc riêng: CUE 
 Với app: nguồn `llm` vẫn TẮT (chế độ X). Ngay cả bộ lọc mới cũng chỉ đạt P .34-.39, còn xa cổng P .70 của việc đổi bài. Nếu sau này
 mở lại chế độ Y thì dùng `later_drop` thay `hysteresis` cho ranh giới LLM. Kết quả này cần ghi trước và xác nhận trên một bộ mới
 trước khi đưa vào app.
+
+### 07-10 05:0x - FRAME (thăm dò, KHÔNG ghi trước): khung hộp làm chế độ X đổi bài sai chỗ
+
+Vì sao CUE bộ 7 chỉ đạt P .36: truyện gacha (`full_truyen_2532`) dùng dòng `===` làm khung bảng trạng thái, có chương 20-36 dòng.
+`is_scene_break_line` (text_processing.py, file khoá) coi chúng là dòng ngắt cảnh, nên cờ `scene_break` bắn ở cả hai mép mỗi hộp.
+Subhead dạng ngoặc thì phần lớn là thoại hệ thống, thực đơn (`【Súp Mây • 90 Eso】`), đếm ngược (`【5】【4】…`) hay vật phẩm.
+
+`research/music/frame_filter.py` thử lọc trong PHA NHẠC, không đụng file khoá. Đo bằng đúng phép đo đổi bài của X (z .8, phạt ngắn 1.0):
+
+| | 4+5 | 5b+6 | bộ 7 |
+|---|---|---|---|
+| X hiện tại: đổi/giờ, P, F1, sai chỗ/giờ | 5,1 · .79 · .264 · 1,1 | 4,8 · .70 · .236 · 1,4 | 7,7 · .38 · .286 · 4,8 |
+| **+ lọc khung K = 8** (hai cờ/dấu tách cách nhau <= 8 câu thì bỏ cả hai) | 4,9 · .79 · .254 · 1,1 | 4,3 · .74 · .229 · **1,1** | 5,5 · .54 · .321 · **2,5** |
+| + bỏ mọi subhead ngoặc | 4,9 · .79 · .254 · 1,1 | 3,2 · .70 · .167 · 1,0 | 5,9 · .46 · .289 · 3,2 |
+| + bỏ ngoặc thành chuỗi (K = 8) | 4,9 · .79 · .254 · 1,1 | 4,0 · .68 · .197 · 1,3 | 6,1 · .44 · .286 · 3,4 |
+| + khung + ngoặc chuỗi | 4,8 · .78 · .244 · 1,1 | 3,5 · .73 · .188 · 1,0 | 3,9 · .71 · .324 · 1,1 |
+
+Đọc:
+- Lọc khung là thay đổi duy nhất không mất gì đáng kể. Đổi sai chỗ giảm ở cả hai bộ đo (1,4 -> 1,1; 4,8 -> 2,5). F1 đi ngang trên
+  5b+6 và 4+5 (mất 1 lần trúng), tăng trên bộ 7.
+- Luật ngoặc không tổng quát được: trên 5b+6 mất recall mà P không tăng. Bỏ.
+- Bộ 7 đã dùng cho xác nhận X/Y, nên số này chỉ là thăm dò. Luật khung là luật cơ học, dựa trên định dạng dữ liệu. Muốn đưa vào app
+  thì ghi trước và xác nhận trên bộ mới, hoặc Lead quyết vì rủi ro thấp: chỉ bỏ ranh giới, không thêm ranh giới nào.
+- Ngoài phạm vi nhạc: cùng khung ấy làm câu trước mỗi mép hộp mang quãng nghỉ cảnh 1.500 ms khi đọc (text_processing, file khoá).
+
+### 07-10 05:1x - FRAME-BOX: nhận hộp theo nội dung thắng luật "<= 8 câu"; GHI TRƯỚC luật xác nhận cho bộ 8
+
+Lead (07-10) chọn sửa từ gốc ở chỗ nhận dạng dòng ngăn cảnh (text_processing, nhánh dev, 0.4.32), không lọc riêng ở pha nhạc.
+Vì thế cần một luật nhận hộp không bỏ nhầm ranh giới thật. `research/music/frame_box.py` chạy trên FILE NGUỒN như text_processing:
+- Dòng khung = `is_scene_break_line` của app.
+- Hai dòng khung LIỀN NHAU là một HỘP khi: cùng tập ký tự sau NFKC; cách nhau 1-12 dòng có chữ; và hoặc >= 50% dòng bên trong có
+  dạng bảng trạng thái (`STATUS`: dòng trong ngoặc, `Tên: …`, `+10`/`100/100`, dòng ngắn có số), hoặc dòng đầu bên trong là
+  TIÊU ĐỀ MỤC (`HEADER`: mở bằng `[…]`/`【…】`, hay mã độ hiếm `SSR-…`).
+- Điều kiện HEADER được thêm SAU khi xem hộp sót ở bộ 7: vật phẩm gacha có tiêu đề mã độ hiếm và thân văn xuôi.
+- Mọi dòng khung của hộp không còn là ranh giới.
+
+| X, z .8, phạt ngắn 1.0 | 4+5 | 5b+6 | bộ 7 |
+|---|---|---|---|
+| X hiện tại: đổi/giờ · P · F1 · sai chỗ/giờ | 5,1 · .79 · .264 · 1,1 | 4,8 · .70 · .236 · 1,4 | 7,7 · .38 · .286 · 4,8 |
+| (i) <= 8 câu bỏ cả hai | 4,9 · .79 · .254 · 1,1 | 4,3 · .74 · .229 · 1,1 | 5,5 · .54 · .321 · 2,5 |
+| ranh giới bỏ (trùng đáp án) | 6 (3) | 6 (2) | 52 (1) |
+| **(ii) hộp theo nội dung** | 5,1 · .79 · .264 · 1,1 | 4,7 · .72 · .237 · 1,3 | 5,5 · .54 · .321 · 2,5 |
+| ranh giới bỏ (trùng đáp án) | 2 (0) | 2 (0) | 53 (1) |
+| (ii') chỉ dạng bảng, không HEADER | như (ii) | như (ii) | 7,3 · .41 · .292 · 4,3; bỏ 26 (1) |
+
+(ii) không bỏ nhầm ranh giới thật nào ở 4+5 và 5b+6. Ở bộ 7, (ii) cho đúng lợi ích của (i). Chọn (ii).
+
+**GHI TRƯỚC - xác nhận trên bộ 8** (đáp án cảnh mới, chấm mù A/B như bộ 7). Luật đóng băng: `frame_box.py` ở commit này,
+BOX_LINES 12, BOX_SHARE .5, STATUS + HEADER như trên.
+- Chọn truyện: bộ 8 PHẢI có >= 1 truyện dùng khung bảng trạng thái/hệ thống (đếm bằng `box_lines` trên nguồn, >= 5 hộp trong 5 chương),
+  và >= 2 truyện không có. Không có truyện kiểu ấy thì phép thử vô nghĩa.
+- (ii) QUA khi cả ba đều đúng:
+  1. đổi sai chỗ/giờ (ii) <= 0,8 x X hiện tại;
+  2. F1 (ii) >= F1 X − .01;
+  3. số ranh giới bị bỏ trùng đáp án <= 10% số bị bỏ.
+- Qua thì Lead cài vào text_processing (nhận hộp trước khi gắn `scene_break`; sửa luôn quãng nghỉ 1,5 s), đo lại bằng `verify_app_x.py`.
+
+### 07-10 05:1x - SỬA GHI TRƯỚC bộ 8 (trước khi chọn truyện): đo ở mức RANH GIỚI trên câu trơn, không cần GPU
+
+Lead hỏi bộ 8 có cần khe phân tích 6 giờ không. Đổi bài cần nhãn cảm xúc từng câu (pha phân tích GPU), nhưng (ii) chỉ đổi TẬP ranh
+giới. Vậy đo thẳng ranh giới có lý do của `music_scenes.chapter_scenes` (đầu đoạn reason != length), trên câu TRƠN của
+`text_processing.segment_chapter_text`: cờ `scene_break` của app, không nhãn cảm xúc, thời lượng theo số ký tự. `frame_box.py bounds`
+trên ba bộ cũ (câu đã có, bỏ nhãn):
+
+| mức ranh giới, câu trơn | 4+5 | 5b+6 | bộ 7 |
+|---|---|---|---|
+| X: ranh giới/giờ · P · F1 · sai/giờ | 4,9 · .82 · .266 · 0,9 | 4,5 · .64 · .205 · 1,6 | 7,5 · .39 · .289 · 4,6 |
+| (i) <= 8 câu | 4,8 · .81 · .256 · 0,9 | 4,0 · .68 · .197 · 1,3 | 5,5 · .54 · .321 · 2,5 |
+| (ii) hộp theo nội dung | 4,9 · .82 · .266 · 0,9 | 4,3 · .67 · .206 · 1,4 | 5,5 · .54 · .321 · 2,5 |
+
+Cùng bức tranh với mức đổi bài. Bỏ nhãn làm 15-20% chương đổi ranh giới, vì gộp đoạn ngắn chọn phía theo không khí. Hai vế so sánh
+đều chịu điều đó như nhau.
+
+**Ghi trước bộ 8, thay mục FRAME-BOX:**
+- Đo = mức ranh giới trên câu trơn (`frame_box.py bounds`, cách tính như bảng trên). Đáp án cảnh chấm trên chính các câu ấy (id = seq).
+- (ii) QUA khi cả ba đều đúng:
+  1. sai/giờ (ii) <= 0,8 x X;
+  2. F1 (ii) >= F1 X − .01;
+  3. ranh giới bị bỏ trùng đáp án <= 10% số bị bỏ.
+- Điều kiện chọn truyện giữ nguyên.
+- Không cần GPU. Lớp mức chương / L2 trên bộ 8 thì xin khe phân tích sau, xếp sau hàng model phân tích.
+
+### 07-10 05:1x - BỘ 8 chọn xong, 2 người chấm mù đang chạy
+
+- Chọn bằng `research/music/select_set8.py`, hạt 20261010, nguồn `_full/truyen` (Hako), loại mọi truyện đã dùng.
+- **Lệch ghi trước rồi sửa (trước khi có đáp án):** lần chạy đầu lỡ dùng tiêu chí cấu trúc (>= 5 cặp dòng ngắt cách nhau <= 12 dòng)
+  thay cho `box_lines` >= 5 hộp như đã ghi. Nó chọn Isekai Kenkokuki, mà "khung" là một sơ đồ trận đánh vẽ bằng ký tự. Đã bỏ và chạy
+  lại đúng ghi trước, cùng hạt.
+- Toàn kho chỉ có **2 truyện đạt >= 5 hộp** trong 5 chương rải đều (788 truyện 0 hộp). Lỗi khung hộp hiếm; (ii) chủ yếu là sửa đúng
+  cho số ít truyện kiểu hệ thống/diễn đàn.
+- Bộ 8:
+  - KHUNG: Diễn Đàn Bóc Phốt Tại Dị Giới, 8 hộp. Đây là bài đăng diễn đàn (`[Tiêu đề: …]`, `Người đăng: …`) kẹp giữa `◇ ◇ ◇`, ca khó
+    thật: bài đăng có thể đúng là cảnh xen, đáp án mù sẽ quyết.
+  - Thường: Quên tắt stream…; Virus Girlfriend; Ushiro no Seki no Gal…
+  - Tổng 20 chương, 333 KB.
+- Câu = `segment_chapter_text` (`research/music/export_set8.py`, id = seq). Người chấm chỉ thấy `seq<TAB>chữ`, không thấy cờ.
+- Đề PROMPT_A/B như bộ 7: A xuôi, B ngược, cấm đọc cờ/segments.
+
+(Ghi chú: các mục 07-10 từ ĐÍNH CHÍNH tới BỘ 8 ở trên lúc đầu bị đề nhầm giờ 05:3x-08:0x; đã sửa theo đồng hồ máy. Thứ tự không đổi.)
+
+### 07-10 05:2x - XÁC NHẬN BỘ 8: (ii) KHÔNG QUA - không sửa text_processing
+
+Đáp án `scene_set8/gold_scene8` (phân xử A+B; hai người chấm khớp ranh giới F1 **.817**). Đo `frame_box.py set8`, đúng ghi trước:
+
+| mức ranh giới, câu trơn | ranh giới/giờ | P | R | F1 | sai/giờ | bỏ (trùng đáp án) |
+|---|---|---|---|---|---|---|
+| X hiện tại (toàn bộ 8) | 5,9 | .27 | .15 | .194 | 4,3 | - |
+| (i) <= 8 câu | 6,2 | .33 | .20 | .247 | 4,1 | 14 (2) |
+| **(ii) hộp theo nội dung** | 6,6 | .28 | .17 | .213 | **4,8** | 16 (**2**) |
+| X, chỉ truyện khung (diễn đàn) | 12,1 | .12 | .17 | .138 | 10,7 | - |
+| (ii), chỉ truyện khung | 14,2 | .15 | .25 | .187 | 12,1 | 16 (2) |
+| 3 truyện thường (cả ba cách) | 3,0 | .56 | .15 | .233 | 1,3 | 0 |
+
+**-> (ii) KHÔNG QUA.** Trượt 2/3 điều kiện:
+- sai/giờ 4,8 > 0,8 × 4,3;
+- bỏ trùng đáp án 2/16 = 12,5% > 10%.
+
+F1 thì có tăng (.213 so với .194). Theo luật đã ghi: không cài vào text_processing.
+
+Chẩn đoán (thăm dò), truyện diễn đàn, theo loại dấu, ✓ = trúng đáp án:
+- subhead ngoặc (`[Tiêu đề: …]`, bình luận trong ngoặc): ✗ 39, ✓ 3;
+- cờ khung `◇ ◇ ◇` mà (ii) nhận là hộp: ✗ 14, ✓ 2;
+- cờ khác: ✗ 7, ✓ 3.
+
+Đọc:
+- Đáp án coi bài đăng diễn đàn là một phần cảnh đang diễn ra (nhân vật đọc diễn đàn), không phải cảnh mới.
+- (ii) bỏ đúng phần lớn cờ khung. Nhưng khi dòng khung không còn, dòng `[Tiêu đề…]` sát bên tự thành ranh giới riêng (trước đó chúng gộp
+  với đoạn ngắn của khung). Nên số ranh giới, và số sai, lại TĂNG. Nguồn nhiễu chính của X ở thể loại này là CUE subhead dạng ngoặc
+  (`music_scenes.CUE_BRACKETED`), không phải dòng khung.
+- Cũng dấu ấy: P .27 ở 5b+6, .24 ở bộ 7, .78 ở 4+5 (n = 9). Nhưng bỏ hẳn nó làm 5b+6 mất recall (mục FRAME). Chưa có luật sạch;
+  nếu làm tiếp thì là một giả thuyết mới về `CUE_BRACKETED`, ghi trước riêng.
+- Lỗi khung hộp vốn hiếm (2/790 truyện đạt >= 5 hộp). Quãng nghỉ 1,5 s ở mép hộp khi đọc vẫn còn; đó là việc của phía đọc, ngoài phạm vi nhạc.
+
+### 07-10 05:4x - BRACKET: luật CUE ngoặc, học trên 4+5/5b+6/7/8; GHI TRƯỚC xác nhận bộ 9
+
+Lead: CUE subhead dạng ngoặc (`music_scenes.CUE_BRACKETED`) là nguồn nhiễu lớn nhất của X. `research/music/cue_bracket.py`, CPU,
+mức ranh giới trên câu trơn (bỏ nhãn).
+
+`dump` - độ chính xác của dấu ngoặc theo đặc trưng:
+- Dạng gạch bao (`-o0o-`): P .83. `[… POV]`: 2/2 trúng.
+- Ngoặc đứng lẻ (P .57-.62) hơn ngoặc thành chuỗi trong 8 câu (.13-.22). `【…】`: P .06. Có `:`: P .00-.12.
+- Bộ 8 (diễn đàn): mọi loại ~.10, vì dòng ngoặc ở đó là bình luận/thông báo trong thế giới truyện.
+
+`rules` - gộp 82 chương:
+
+| luật | ranh giới/giờ | P | F1 | sai/giờ | bỏ (trùng đáp án) |
+|---|---|---|---|---|---|
+| X (giữ mọi ngoặc) | 5,6 | .53 | .239 | 2,6 | - |
+| bỏ mọi ngoặc | 4,3 | .61 | .223 | 1,7 | 132 (28) |
+| bỏ ngoặc thành chuỗi | 4,9 | .55 | .225 | 2,2 | 93 (16) |
+| bỏ lời nói + chuỗi + `:`/số | 4,5 | .61 | .230 | 1,7 | 120 (25) |
+| **chỉ giữ gạch-bao + POV** | 4,4 | **.62** | .230 | **1,7** | 122 (21) |
+| giữ gạch-bao + POV + lẻ không `:` | 4,7 | .59 | .235 | 1,9 | 105 (16) |
+
+Tiêu chí chọn, viết trước khi xem bảng: ít sai/giờ nhất với điều kiện F1 gộp >= X − .02. Hoà thì F1 cao hơn, rồi P cao hơn.
+Kết quả: **"chỉ giữ gạch-bao + POV"**. Từng nhóm (F1; sai/giờ), X → luật:
+- 4+5: .266 → .256; 0,9 → 0,9.
+- 5b+6: .205 → .176; 1,6 → 1,1.
+- bộ 7: .289 → .293; 4,6 → 3,0.
+- bộ 8: .194 → .222; 4,3 → 2,3.
+
+Cái giá: 5b+6 mất F1, vì vài ngoặc lời nói (thần giao cách cảm) tình cờ mở đầu cảnh.
+
+**GHI TRƯỚC - bộ 9.** Luật đóng băng là `cue_bracket.keep_bracket` ở commit này: một câu subhead dạng ngoặc chỉ là ranh giới khi nó
+bao bằng gạch, hoặc bên trong nói góc nhìn (POV/góc nhìn/side).
+- Chọn truyện: `research/music/select_set9.py`, hạt 20261011, Hako `_full/truyen`, loại mọi truyện đã dùng kể cả bộ 7/8.
+  2 truyện có >= 3 dòng ngoặc (CUE_BRACKETED, <= 10 tiếng) trong 5 chương rải đều, cộng 2 truyện ngẫu nhiên.
+  Câu trơn `segment_chapter_text`; 2 người chấm mù A/B như bộ 8.
+- Đo `cue_bracket.py confirm set9`. QUA khi cả hai đều đúng:
+  1. sai/giờ (X + luật) <= 0,8 × X;
+  2. F1 (X + luật) >= F1 X − .02.
+- Qua thì đề xuất Lead sửa `music_scenes.cue_kind`: ngoặc chỉ là subhead khi bao gạch hoặc có POV/góc nhìn. Không đụng file khoá.
+
+**Bộ 9 đã chọn** (`select_set9.py` chạy một lần, đúng ghi trước, không lệch). Có 215 truyện >= 3 ngoặc và 621 truyện còn lại.
+| truyện | dòng ngoặc trong 5 chương | KB |
+|---|---|---|
+| Nữ Phản Phái Muốn Thôi Miên Thao Túng Tôi? | 7 | 59 |
+| Ác Nữ Tôi Phụng Sự Suốt 13 Năm Đã Gục Ngã | 4 | 67 |
+| Tôi phải làm gì khi toàn bộ bạn cùng phòng đều hóa gái? (ngẫu nhiên) | 0 | 68 |
+| Overlord WN (ngẫu nhiên) | 0 | 102 |
+
+Overlord WN là bản web novel, chữ khác hẳn bản LN của bộ 5. Bộ lọc tên không bắt được vì tên khác, nên vẫn giữ: không trùng
+chương nào với đáp án cũ. 20 chương, câu trơn ở `scene_set9/scene9_segments`. Hai người chấm mù A/B (Opus, đề sao từ bộ 8)
+đang chấm.
+
+**Bộ 9: KẾT QUẢ - KHÔNG QUA.** Đáp án `gold_scene9` lấy từ hai người chấm mù A/B qua `adjudicate_scenes.py`.
+A và B khớp nhau F1 .796 (bộ 8 là .817). Đáp án có 57 ranh giới trên 4,0 giờ.
+
+| | ranh giới/giờ | P | R | F1 | sai/giờ | bỏ (trùng đáp án) |
+|---|---|---|---|---|---|---|
+| X hiện tại | 2,0 | .50 | .07 | .123 | 1,0 | - |
+| X + luật ngoặc | 1,3 | .40 | .04 | .065 | 0,8 | 11 (2) |
+
+- Cổng 1 (sai/giờ <= 0,8 × X) qua sát nút: 0,8 so với 0,8.
+- Cổng 2 (F1 >= X − .02) trượt.
+- Luật bỏ 11 dòng ngoặc, 9 dòng là chữ hệ thống thật (`[Phần thưởng: …]`, `[Đánh giá: C]`, `[Histania Lowen]`).
+- 2 dòng bị bỏ lại trùng đáp án: `[Hộ phù truyền tin]` và `['Thiên tài Vũ khí' đã nhận diện…]`. Đó là thông báo hệ thống rơi
+  đúng đầu một cảnh mới, nên vẫn là chữ trong thế giới truyện, chỉ tình cờ trùng vị trí.
+- X ở bộ này chỉ trúng 4 ranh giới, nên mất 2 là F1 giảm một nửa. Phép thử ít lực, nhưng cổng đã ghi trước thì theo cổng.
+
+Kết luận: không đề xuất sửa `cue_kind`. Đặc tả soạn sẵn `research/music/SPEC_bracket_cue.md` để nguyên, không dùng.
+Gộp cả 5 bộ: luật bỏ 133 dòng ngoặc, 23 dòng (17%) trùng đáp án. Ngoặc phần lớn là nhiễu, nhưng bỏ hết thì mất đúng những
+chỗ thông báo hệ thống mở cảnh.
+
+### 07-10 05:3x - MISS (thăm dò, KHÔNG ghi trước): X bỏ lỡ ranh giới nào, và chữ có báo được không
+Lead hỏi: X chỉ trúng 4/57 ở bộ 9, vậy nút thắt là độ phủ. Mã: `LLM_Train/music/miss_types.py`. Đo trên 4+5 / 5b+6 / 7 / 8 / 9
+(câu trơn, mức ranh giới): 453 ranh giới đáp án, 24,6 giờ. X ra 5,0 ranh giới/giờ, P .53, F1 .226, trượt 388.
+
+**Loại chỗ trượt.** Trường `setting` trong đáp án trộn cả nơi chốn lẫn việc đang làm, nên đếm theo chữ không tin được.
+Tôi đọc tay 30 chỗ trượt đầu cảnh cứng chọn ngẫu nhiên (hạt 7):
+- ~50%: đổi nhịp trong cùng cảnh (ai đó lên tiếng, một hành động mới, suy nghĩ bị cắt ngang). Chữ không có dấu gì.
+- ~37%: đổi nơi hay thời gian thật. Khoảng một nửa có dấu chữ ở câu mở: "Tôi mở cánh cửa lớp học", "1 phút sau",
+  "hơn nửa ngày sau", "Chúng tôi tạm biệt… tiến đến". Nửa còn lại mở bằng lời thoại hay tên người, không có dấu.
+- ~7%: lời tác giả / người dịch. X trượt cả 18/18 ranh giới loại này.
+- ~3%: dòng hệ thống.
+- Đầu cảnh mềm (`start=soft`): X trượt 141/150.
+
+**Tín hiệu chữ ứng viên.** "P gần" = tỉ lệ câu bắn nằm trong ±2 câu của một ranh giới đáp án. Một câu kể bất kỳ có P gần .13.
+
+| tín hiệu | bắn/giờ | P gần | phủ chỗ trượt | X + nó: F1 | sai/giờ |
+|---|---|---|---|---|---|
+| X | - | - | - | .226 | 2,4 |
+| "trong lúc / trong khi / lúc này" mở câu | 3,2 | .33 | 21 | .254 | 3,6 |
+| động từ di chuyển (bước vào, mở cửa, tiến đến…) | 11,5 | .24 | 47 | .263 | 6,3 |
+| "sau khi / lát sau…" mở câu | 6,3 | .17 | 22 | .233 | 5,3 |
+| đổi ngôi kể (tỉ lệ "tôi" 6 câu trước/sau) | 9,3 | .17 | 18 | .211 | 4,6 |
+| câu kể dài sau >= 4 câu thoại | 4,1 | .12 | 11 | .218 | 4,8 |
+| ghi chú + mốc thời gian trong câu | 2,4 | .32 | 14 | .241 | 2,6 |
+| gộp mọi tín hiệu mở cảnh, cách >= 20 câu | 9,9 | .23 | 55 | .282 | 8,4 |
+
+Kết luận:
+1. Không tín hiệu chữ nào chắc. P gần tốt nhất là .33, so với .13 của câu bất kỳ. Cổng đổi bài là P .70.
+   Phủ được thì sai/giờ tăng gấp 2-3 lần.
+2. Ghi chú + mốc thời gian là thứ duy nhất không làm tăng sai, nhưng F1 chỉ thêm .015. Không đáng một bộ 10.
+3. Phân nửa chỗ trượt là đổi nhịp trong cảnh. Đổi bài ở những chỗ đó vốn không đúng việc. Chúng thuộc về lớp mức trong bài
+   (L2: cường độ / ramp), không thuộc ranh giới đổi bài.
+   Vì vậy F1 ranh giới so với toàn bộ đáp án đánh giá thấp chế độ X: X chỉ nên trúng phần đổi nơi/thời gian.
+   Nên đo X theo đáp án cứng có đổi nơi/thời gian (cần nhãn), và đo đổi nhịp bằng L2.
+4. Chưa ghi trước giả thuyết nào, chưa dùng bộ 10.
+
+### 07-10 05:3x - TYPES (GHI TRƯỚC, Lead duyệt): gắn loại cho mọi ranh giới đáp án, đo X bằng thước "đổi nơi/thời gian"
+Ghi trước khi tạo đề và trước khi có nhãn nào.
+
+**Đối tượng.** Mọi ranh giới đáp án (đầu mỗi `scene` trừ cảnh đầu) của các bộ 4, 5, 5b, 6, 7, 8, 9: 453 ranh giới.
+
+**Nhãn.** Chọn đúng một nhãn. Xét ±1 câu quanh dấu ▶ của đề.
+- `NT` (đổi nơi / thời gian): sau ranh giới, câu chuyện ở nơi khác, hoặc thời gian đứt quãng. Gồm các trường hợp:
+  - nhảy thời gian ("hôm sau", "1 phút sau", "sau bữa tối" khi bỏ qua một quãng);
+  - cắt sang nhóm nhân vật khác ở chỗ khác ("trong khi đó, tại…");
+  - mở hay đóng một hồi tưởng / giấc mơ / ký ức;
+  - đến nơi mới sau khi di chuyển (bước vào lớp, tới thành phố), kể cả khi việc di chuyển được kể liền.
+- `NH` (đổi nhịp): cùng nơi, thời gian liền mạch, cùng cảnh. Ranh giới là đổi không khí, đổi việc, đổi đề tài, có người
+  đến hay lên tiếng, suy nghĩ bị cắt ngang, trận đánh chuyển pha. Đổi người kể mà vẫn cùng nơi, cùng lúc cũng là `NH`.
+- `GC` (ngoài truyện): bước vào hoặc ra khỏi chữ không thuộc truyện: lời tác giả, lời người dịch, ghi chú, quảng cáo.
+- Kèm độ chắc 1-3 và một câu lý do.
+
+**Cách chấm.** Hai người chấm mù A/B (Opus), đề giống nhau, A đi xuôi, B đi ngược. Người chấm chỉ thấy chữ quanh ranh giới
+(7 câu trước, 6 câu sau). Không thấy dự đoán của X, không thấy nhãn đáp án (setting, mood).
+Phân xử:
+- A = B: lấy nhãn chung.
+- Khác nhau: lấy nhãn của người chắc hơn.
+- Bằng độ chắc: theo thứ tự `GC` > `NT` > `NH`, vì thước đổi bài nên thận trọng khi bỏ một ranh giới thật.
+Báo độ khớp A-B: tỉ lệ trùng và kappa.
+
+**Thước đo** (TOL ±2 câu, mức ranh giới, câu trơn như `cue_bracket`):
+1. Đổi bài (X) so với `NT`:
+   - R_NT = số `NT` được trúng / tổng `NT`;
+   - P_NT = số ranh giới X gần một `NT` / tổng ranh giới X;
+   - F1_NT.
+   - Sai/giờ CHẶT: ranh giới X không gần `NT` nào. Ranh giới X rơi vào `NH` tính là đổi bài sai chỗ.
+   - Báo thêm sai/giờ NỚI: chỉ tính ranh giới X không gần ranh giới đáp án nào.
+   - `GC`: báo riêng, không tính vào thước nào. Ghi chú nên tắt nhạc hay giữ nhạc là chuyện khác.
+2. Đổi nhịp so với `NH`: R_NH của các nguồn động trong chương hiện có: ranh giới LLM sau `later_drop` g = 30 s (bộ có
+   đầu ra LLM), và chế độ Y (đổi cảm xúc theo nhãn câu app, bộ có nhãn). Kèm báo động sai/giờ, tức không gần ranh giới đáp
+   án nào. Đây là đo mô tả, chưa có cổng.
+3. Từ nay cổng đổi bài cho mọi thay đổi chế độ X dùng thước 1: F1_NT và sai/giờ CHẶT.
+
+*Sửa ghi trước, trước khi có nhãn nào (người chấm vừa bắt đầu):* mục 2 ghi sai chế độ Y. Y trong `track_changes2` là
+"cờ + CUE + LLM", không phải đổi cảm xúc theo nhãn câu app. Nguồn động đo ở thước `NH` nay là ranh giới LLM
+(`results/seg_<bộ>_qwen3.5_4b.jsonl`, có cho bộ 4/5/5b/6/7) ở hai dạng: thô, và sau `later_drop` g = 30 s.
+Đề: `Corpus/research/music/scene_types/batch_01..10.md`, 453 mục. Khoá: `LLM_Train/music/results/types_key.json`.
+
+**TYPES - KẾT QUẢ.** Hai người chấm mù khớp nhau: trùng .96, kappa .90.
+- A: NT 119, NH 313, GC 21. B: NT 122, NH 303, GC 28.
+- Lệch nhau chủ yếu ở NH/GC (7 mục) và NH/NT (13 mục).
+
+Sau phân xử: **NT 123 (27%), NH 306 (68%), GC 24 (5%)**. Ba phần tư ranh giới đáp án không phải chỗ đổi cảnh thật.
+
+Thước 1, đổi bài (X) so với NT (`score_types.py`):
+
+| | NT | X/giờ | R_NT | P_NT | F1_NT | sai CHẶT/giờ | sai NỚI/giờ |
+|---|---|---|---|---|---|---|---|
+| 4+5 | 36 | 4,9 | .50 | .64 | .563 | 1,8 | 0,9 |
+| 5b+6 | 37 | 4,5 | .24 | .32 | .277 | 3,1 | 1,6 |
+| bộ 7 | 21 | 7,5 | .48 | .30 | .370 | 5,2 | 4,6 |
+| bộ 8 | 16 | 5,9 | .38 | .23 | .286 | 4,6 | 4,3 |
+| bộ 9 | 13 | 2,0 | .15 | .25 | .190 | 1,5 | 1,0 |
+| **gộp** | 123 | 5,0 | **.37** | **.37** | **.366** | **3,2** | 2,4 |
+
+- So với toàn bộ đáp án, X chỉ có F1 .226. Đo theo đúng việc đổi bài thì F1 là .366.
+- X vẫn trượt 63% chỗ đổi nơi/thời gian thật.
+- Ranh giới X rơi vào NH chiếm 0,8/giờ (hiệu CHẶT − NỚI).
+- X trượt cả 24 GC.
+
+Thước 2, mô tả: ranh giới LLM so với NH.
+- LLM sau `later_drop` g = 30 s chỉ phủ 33-50% NH, nhưng phủ NT tốt hơn hẳn: 56-81%.
+- Giá phải trả là 23-30 ranh giới/giờ, trong đó 12-16/giờ không gần ranh giới đáp án nào.
+- LLM thô phủ NH 34-54%, NT 66-81%.
+
+LLM bắt được phần lớn chỗ đổi nơi/thời gian mà X trượt. Vấn đề của nó là bắn quá nhiều chứ không phải mù.
+
+Kết luận:
+1. Từ nay cổng X dùng thước 1. Mốc gộp: F1_NT .366, sai CHẶT 3,2/giờ.
+2. Việc đáng làm tiếp cho độ phủ: lọc LLM theo thước NT. Ví dụ chỉ giữ ranh giới LLM có thêm một dấu chữ mở cảnh, hay có đổi
+   nơi trong lời kể. Mục tiêu là tăng R_NT mà P_NT không tụt. Muốn làm thì phải ghi trước trên 4+5/5b+6, rồi xác nhận
+   bằng bộ 7 (NT đã có nhãn).
+3. Người chấm chỉ ra ba chỗ định nghĩa còn mơ hồ: nhảy thời gian rất ngắn ("lát sau"); đến nơi mới nhưng việc đi không nằm
+   ở ▶; cắt giữa các mặt trận cùng lúc. Lần gắn nhãn sau cần nói rõ ba chỗ này.
+
+Nhãn: `Corpus/research/music/scene_types/types_gold.json` (khoá `types_key.json`). Nhãn của A và B nằm ở `types_A/`, `types_B/`.
+
+### 07-10 05:5x - LLM-NT (GHI TRƯỚC, Lead duyệt cổng): làm thước NT tốt lên
+Chọn CHỈ trên 4+5 / 5b+6 (73 NT, 11,9 giờ). Mã đóng băng: `research/music/llm_nt_combo.py` (Corpus 48ffed9).
+Thăm dò trên bộ học:
+- Lọc LLM rồi CHỈ THÊM vào X: không có biến thể nào qua cổng Lead ngay trên bộ học.
+  - Tốt nhất: LLM ∩ "trong lúc / mốc thời gian ±1". R_NT .37 → .41, nhưng sai CHẶT 2,4 → 3,1.
+  - Thêm vào thì không giảm được sai.
+- Theo nguồn của X, trên thước NT:
+  - cờ sách: P_NT .53;
+  - ngoặc (subhead dạng ngoặc): P_NT .11, n 9;
+  - time_place: P_NT .17, n 6;
+  - subhead chữ / separator: 1.00 (n nhỏ).
+
+  Ngoặc trúng ranh giới đáp án nhưng đó là đổi nhịp (P bất kỳ .67), không phải đổi cảnh.
+
+| bộ học (gộp) | /giờ | R_NT | P_NT | F1_NT | sai CHẶT |
+|---|---|---|---|---|---|
+| X | 4,7 | .37 (27) | .48 | .419 | 2,4 |
+| **C1** = X − ngoặc (`keep_bracket` sai) − time_place | 3,7 | .36 (26) | .59 | .444 | **1,5** |
+| **C2** = C1 + LLM later_drop 30 s ∩ "trong lúc / mốc thời gian ±1" | 4,7 | .41 (30) | .54 | .465 | 2,2 |
+
+Cổng (ghi trước, chưa xem số của bộ xác nhận nào trên thước NT):
+- **C1** không cần LLM, nên xác nhận trên GỘP bộ 7 + 8 + 9 (49 NT). QUA khi cả hai đều đúng:
+  - sai CHẶT <= 0,8 × X;
+  - F1_NT >= X − .02.
+
+  Bộ 8, 9 đã từng đo luật ngoặc trên thước cũ, nhưng chưa bao giờ trên thước NT.
+- **C2** xác nhận trên bộ 7, vì chỉ bộ 7 có LLM mà chưa dùng để chọn. Đây là cổng của Lead. QUA khi cả ba đều đúng:
+  - số NT trúng >= X + 2;
+  - P_NT >= .37;
+  - sai CHẶT <= X.
+
+  Qua thì bộ xác nhận thứ hai cần LLM chạy trên 8 + 9 (GPU, sau hàng model phân tích, Lead duyệt khe).
+- Lệnh chạy: `llm_nt_combo.py c1`, `llm_nt_combo.py c2`. Mã không sửa sau khi chạy.
+
+**LLM-NT - KẾT QUẢ** (mã đóng băng, chạy một lần). Bộ 7 + 8 + 9 có 50 NT; ghi trước lỡ chép 49.
+
+| | /giờ | R_NT | P_NT | F1_NT | sai CHẶT |
+|---|---|---|---|---|---|
+| X, bộ 7+8+9 | 5,3 | .36 (18) | .27 | .308 | 3,8 |
+| **C1**, bộ 7+8+9 | 3,7 | .40 (20) | .43 | **.412** | **2,1** |
+| X, bộ 7 | 7,5 | .48 (10) | .30 | - | 5,2 |
+| C2, bộ 7 | 6,4 | .52 (11) | .39 | - | 3,9 |
+
+- **C1 QUA:** sai CHẶT còn 0,55 × X, F1_NT +.10. Bỏ hai nguồn yếu mà R_NT không giảm.
+- **C2 KHÔNG QUA:** cổng "trúng >= X + 2" trượt, chỉ thêm 1 NT. Phần LLM không thêm đáng kể so với C1.
+  Không cần khe GPU 8 + 9.
+
+Đề xuất app (nhánh dev/music-scene, Lead cài):
+- `cue_kind`: ngoặc chỉ là subhead khi `bracket_is_subhead` (bao gạch hoặc nói POV/góc nhìn).
+- Bỏ loại `time_place` khỏi ranh giới đổi bài: không còn là `sceneBreak`. Cờ sách thì vẫn giữ.
+
+Đặc tả: `Corpus/research/music/SPEC_bracket_cue.md` (đã sửa cho C1).
+Ghi chú: luật ngoặc từng trượt bộ 9 trên thước cũ. Thước cũ trộn đổi nhịp vào, mà ngoặc lại hay rơi đúng chỗ đổi nhịp.
+
+### 07-10 06:4x - CL bộ 7: chạy lại P0 đúng prompt -> THẮNG
+Thay kết quả không hợp lệ ở mục 04:5x. P0 bộ 7 được chạy lại trong hàng GPU của Model sau PRIME (06:40-06:44), 100 khúc, 0 lỗi.
+Đầu ra là JSON `{"V","E","T"}` đúng khuôn P0 như bộ 4/5/5b. File chạy nhầm prompt P2 đã đổi tên `.WRONG_was_P2_prompt`.
+Lệnh: `chapter_level.py confirm set7`, công thức cố định docs fff35839, cổng MAE <= .35.
+
+| bộ 7, 20 chương | MAE | V | T | r V | r T |
+|---|---|---|---|---|---|
+| [mốc] hằng 0 | .352 | .360 | .345 | - | - |
+| [mốc] nhãn câu app thô | .334 | .333 | .335 | .49 | .65 |
+| **[CHÍNH] V = C0 hc, T = P0 hc** | **.233** | .276 | .191 | .49 | **.86** |
+| C0 hc cả hai trục | .324 | .276 | .371 | .49 | .65 |
+| P0 thô | .403 | .310 | .496 | .46 | .86 |
+| [mốc] trần | .094 | | | | |
+
+**THẮNG:** MAE .233 <= .35. Công thức chính hơn cả hai mốc. Phần lớn nhờ trục T: P0 hiệu chỉnh cho r .86 và MAE .191.
+Trục V còn yếu (r .49), V chỉ nhỉnh hơn hằng 0 một chút. Mức chương bộ 7 đã xác nhận công thức V = C0 hc, T = P0 hc.
+
+### 07-10 06:5x - CL-APPLY: áp mức chương vào app thế nào (luật chọn viết trong mã trước khi chạy, đóng băng Corpus 458113b)
+CL đã xác nhận ở dạng HẰNG: mọi câu trong chương nhận cùng một mức. Đưa nguyên vào app thì nhạc phẳng cả chương.
+App hôm nay lấy V/T từng đoạn từ P0 (`music_moods.py`, đã chạy sau pha phân tích). Đo thêm dạng DỜI:
+`L_a + k·(p_a − TB thời lượng p_a trong chương)`, với L_a là mức chương. Dạng này giữ hình của nguồn p trong chương và dời
+mức về L_a.
+
+Luật chọn: MAE nhỏ nhất trên gộp 4/5/5b/6; nếu hoà (±.002) thì lấy k nhỏ hơn.
+
+| MAE (V, T) | 4+5 | 5b+6 | gộp 4-6 | **bộ 7 (xác nhận)** |
+|---|---|---|---|---|
+| app hôm nay (P0 từng đoạn) | .450 | .423 | .435 | .419 |
+| nhãn câu (đường lùi) | .403 | .429 | .418 | .334 |
+| hằng 0 | .442 | .462 | .453 | .352 |
+| hằng (CL) | .361 | .348 | .354 | .233 |
+| dời k=.25, P0 | .346 | .330 | .337 | .232 |
+| **dời k=.5, P0 (chọn)** | .337 | .322 | **.329** | **.234** |
+| dời k=1, P0 | .348 | .330 | .338 | .275 |
+| dời k=.5, nhãn | .352 | .346 | .349 | .235 |
+
+Chọn **dời k = .5, hình lấy từ P0**: tốt nhất ở cả hai nửa bộ học.
+- Bộ 7 QUA: .234 <= .35, và thấp hơn app hôm nay (.419) 44%.
+- Ở bộ 7 phần hình không thêm gì so với dạng hằng (.233), nhưng không làm hại. Phần hình giữ cho nhạc còn biến đổi trong
+  chương. Dạng k = 1 (giữ nguyên hình P0) thì kém hẳn, vì P0 khuếch đại dao động trong chương.
+- Phần lớn mức lợi là sửa MỨC: P0 thô chấm T cao hơn đáp án khoảng .5. Hằng FIXED T có b = −0,49.
+
+Đặc tả cài: `Corpus/research/music/SPEC_chapter_level.md`.
+
+### 07-10 07:0x - CL đã cài (dev/music-scene e82bc993): đo sau cài khớp
+Lệnh `cl_verify.py D:/Novels/ABook_mscene` (Corpus research/music, e8c2a2e). Nó đưa đúng các đoạn app và P0 của nghiên cứu qua
+`music_scenes.apply_chapter_level` của nhánh. So ba bản: cl_apply "dời k=0.5 nguồn P0", bản viết lại kiểu app (trọng số theo
+thời lượng cả đoạn) và hàm của nhánh.
+
+| MAE | cl_apply | tham chiếu kiểu app | nhánh |
+|---|---|---|---|
+| 4+5+5b+6 | .3285 | .3285 | .3285 |
+| bộ 7 | .2345 | .2344 | .2344 |
+
+Kết quả KHỚP (lệch < .001). Trọng số theo đoạn hay theo câu gần như không đổi số. Việc làm tròn labelValence tới 3 chữ số
+cũng không thấy ở 4 chữ số.
+
+### 07-10 07:3x - CAST: đổi tập nhân vật có mặt KHÔNG phải đường gốc cho ranh giới NT (thăm dò trên bộ học, không ghi trước)
+Giả thuyết (Music tự chọn, Lead đồng ý cho tự làm): đổi nơi/thời gian thì người có mặt cũng đổi. Mã: `LLM_Train/music/cast_shift.py`.
+
+Cách đo:
+- "Có mặt" ở mỗi câu = người nói của câu thoại + tên người nói nào của chương xuất hiện trong chữ câu.
+- Cột `speaker` lấy từ DB phân tích. DB đánh giá không có bảng characters, nên không có bí danh; app thật có thêm bí danh.
+- Điểm ở vị trí k = 1 − cosine(đếm nhân vật trong W câu trước, W câu sau).
+- Thước 1 (TYPES), bộ 4+5 và 5b+6.
+
+| 4+5 / 5b+6 | W=10 | W=20 |
+|---|---|---|
+| AUC NT so với vị trí không ranh giới | .665 / .664 | .657 / .681 |
+| AUC NT so với NH/GC | .655 / .597 | .663 / .609 |
+| AUC ranh giới C1 trúng NT so với C1 sai | .516 / .540 | .617 / .750 |
+
+Dùng tín hiệu theo hai cách, đều không qua:
+1. **Lọc C1** (bỏ ranh giới CUE có điểm < θ, W=20):
+   - 4+5 mất trúng: F1_NT .557 → .456.
+   - 5b+6 chỉ nhỉnh: .321 → .333.
+   - Sai CHẶT trên bộ học vốn đã thấp (1,4-1,6/giờ), nên không còn chỗ để lọc.
+2. **Thêm ranh giới tại đỉnh** (cực đại trong ±W, cách C1 > 10 câu):
+   - P_NT chỉ .00-.14.
+   - Mỗi giờ thêm được 0-3 trong số 19/28 NT mà C1 lỡ, nhưng sai CHẶT tăng thêm 1-8/giờ.
+
+Đọc: tín hiệu có thật nhưng yếu (AUC ~.66). Lý do có tính cấu trúc: ở LN/truyện mạng, phần lớn chỗ đổi nơi/thời gian vẫn theo
+cùng nhân vật chính (người kể ngôi 1 / nhân vật góc nhìn đi sang nơi mới), nên tập người có mặt ít đổi. Còn trong một cảnh, người
+ra/vào lại làm điểm nhảy. Bí danh thật của app sẽ làm đếm đủ hơn, nhưng không sửa được cái lệch cấu trúc này.
+Bỏ hướng này. Chỗ hổng còn lại vẫn là R_NT: C1 lỡ 19/36 (4+5) và 28/37 (5b+6) NT.
+
+### 07-10 07:3x - GHI TRƯỚC: VOX, đầu dò "có lời" cho nhạc nhập trên máy người dùng (CPU)
+Vấn đề:
+- "Nhập nhạc của tôi" không dò lời hát (docs/MUSIC_IMPORT.md), nên bài có lời có thể bị tự chọn nằm dưới giọng đọc.
+- Danh mục lọc lời bằng Music Flamingo (MF). MF cần GPU lớn, máy người dùng không chạy được.
+- CLAP zero-shot `vocals` thì báo nhầm nhiều: trong các bài nó chấm > 0,5, MF nói 954/1.254 (nhóm R) không có lời.
+
+Giả thuyết: một đầu hồi quy logistic trên đúng vector nhúng app đã tính phân biệt được bài có lời / không lời trong nhóm bị CLAP
+nghi. Vector nhúng là LAION-CLAP 3 cửa sổ 20/50/80 %, trung bình L2, `embeddings_appwin.npy`. App dùng hai tầng: CLAP > 0,5 rồi đầu dò.
+Mã: `LLM_Train/music/vox_head.py`.
+
+Dữ liệu và chia:
+- `mf_vocals.jsonl`: 1.599 bài, 308 có lời (R 300/1.254, I 8/345).
+- **XÁC NHẬN:** bài có chữ số hex cuối của sha1(id) thuộc 0-4, khoảng 31 %. Niêm phong: không mở số cho tới khi chốt mọi thứ trên phần HỌC.
+
+Trên phần HỌC (5 lớp chéo phân tầng):
+- Logistic L2 trên z-score 512 chiều, chọn C ∈ {.01, .1, 1}.
+- Ngưỡng τ = mức thấp nhất mà tỉ lệ báo nhầm (bài KHÔNG lời bị gắn "có lời") <= 5 % trên dự đoán chéo.
+- Mốc: CLAP `vocals` (`analysis.jsonl`), ngưỡng chọn cùng luật.
+
+**Cổng trên XÁC NHẬN** (cả ba):
+1. AUC(đầu) >= AUC(CLAP) + .05.
+2. Độ phủ bài có lời ở τ >= .60.
+3. Báo nhầm ở τ <= .08.
+
+Giới hạn ghi rõ: bộ nhãn là nhạc danh mục (phần lớn không lời, nguồn miễn phí). Nhạc người dùng nhập (pop có lời) lệch phân bố,
+nên qua cổng cũng chưa chứng minh được trên nhạc pop.
+
+Nếu qua, đề xuất cho app (Lead thiết kế): bài nhập có CLAP > 0,5 và đầu dò >= τ thì gắn "Có vẻ có lời". Planner không TỰ chọn
+bài ấy; người dùng ghim thì vẫn dùng. Chỉ là đề xuất, đúng luật không tự sửa.
+
+### 07-10 07:3x - VOX: QUA (ghi trước 462055ca; mã đóng băng Corpus 0ccc1bd trước khi mở phần xác nhận)
+`vox_head.py learn` / `confirm`:
+
+| | AUC | phủ có lời ở τ | báo nhầm ở τ |
+|---|---|---|---|
+| HỌC, chéo 5 lớp (1.107 bài, 217 có lời), đầu C=.01 | .980 | .91 | .049 |
+| HỌC, CLAP `vocals` | .863 | .00 | .000 |
+| **XÁC NHẬN (492 bài, 91 có lời), đầu** | **.975** | **.90** | **.075** |
+| XÁC NHẬN, CLAP `vocals` | .842 | .00 | .000 |
+
+QUA cả ba cổng.
+- Báo nhầm .075 sát trần .08: bài không lời bị gắn nhầm cỡ 7-8 %. Vì chỉ là đề xuất, người dùng ghim thì vẫn dùng, nên chấp nhận được.
+- CLAP bão hoà ở 1,0 trên nhiều bài không lời, nên không có ngưỡng nào giữ báo nhầm <= 5 % mà còn phủ được gì. Vì thế không dùng CLAP một mình được.
+
+Đã xuất `onnx_student/vox_head.npz`:
+- Học trên cả 1.599 bài, C=.01, τ học lại theo cùng luật bằng dự đoán chéo.
+- Nội dung: mu, sd, coef 512, intercept, tau.
+- Cách dùng: z-score rồi logistic, thêm đúng một tích vô hướng vào đầu trò.
+
+Giới hạn (đã ghi trước): nhãn là nhạc danh mục. Chưa đo trên pop có lời người dùng nhập. Tầng 1 (CLAP > 0,5) có thể lọt bài có lời mà
+CLAP chấm thấp; ca này chưa đo được vì MF trượt chứng dương ở khoảng .3-.5.
+
+### 07-10 07:4x - GHI TRƯỚC: LLM-NT2, hỏi thẳng "đổi nơi / nhảy thời gian" (ứng viên GPU; mã đóng băng Corpus 4f3b7d4 trước mọi lượt chạy)
+Kế hoạch: Corpus `research/music/PLAN_llm_nt.md`. Mã: `llm_nt2.py`, chuỗi `nt2_chain.sh` (dấu "HẾT NHẠC NT2 07-10").
+
+**Câu hỏi:**
+- qwen3.5:4b, temperature 0, think false, format json.
+- Khúc 40 câu chồng 10, chữ trơn, câu đánh số theo chương.
+- Hỏi câu nào truyện chuyển sang nơi khác hay nhảy thời gian.
+- Bỏ mục có `quote` không khớp 3 tiếng đầu của câu `line` (±1).
+- Biến thể:
+  - (a) chỉ luật;
+  - (b) thêm 3 ví dụ tự viết;
+  - (c) đòi `reason`, bỏ mục rỗng.
+
+**Ghép:** C1 ∪ (vị trí LLM cách ranh giới C1 > TOL), qua `with_breaks` / `reasoned`. Thước 1 (TYPES NT).
+
+**Bộ học 4+5+5b+6:**
+- C1 ở đây: F1_NT .444, R_NT .36, sai CHẶT 1,5/giờ.
+- Chạy (a) trước. (a) thêm < 5 NT trúng thì dừng, không chạy b/c/xác nhận.
+- LUẬT CHỌN: F1_NT cao nhất trên gộp 4 bộ; hoà ±.01 thì lấy sai CHẶT thấp hơn.
+
+**Xác nhận 7+8+9:**
+- LLM chưa từng chạy trên các bộ này.
+- Nhãn NT đã được xem khi đo C1. Đây là giới hạn đã nêu; nếu kịp sẽ thêm bộ 10 làm xác nhận thứ hai.
+- **Cổng (cả ba):**
+  1. R_NT >= C1 + .10.
+  2. P_NT của phần THÊM >= .35.
+  3. Sai CHẶT/giờ <= C1 + 0,5.
+
+Hàng GPU: Model báo "sau B10" nghĩa là khoảng 10-10; chỗ chen tự nhiên là sau B10 cặp đầu (khoảng sáng 08-10), cần Lead duyệt.
+
+### 07-10 07:5x - GHI TRƯỚC: VOX-MTG, kiểm VOX ngoài danh mục (nhạc Jamendo, nhiều bài có lời; CPU)
+Giới hạn đã nêu của VOX: chưa đo trên nhạc có lời kiểu người dùng nhập. Bộ kiểm dùng MTG-Jamendo `autotagging_moodtheme`.
+- Vector nhúng đã có sẵn: `C:/abook_data/mtg_jamendo/clap/*.npz`, CLAP 3 cửa sổ như analyze_clap, gần cửa sổ app.
+- Nhãn từ `autotagging_instrument.tsv` công khai của MTG:
+  - DƯƠNG = có `instrument---voice`;
+  - ÂM = có ít nhất 1 tag nhạc cụ nhưng không có voice. Tag MTG không đủ, nên ÂM có nhiễu (bài có lời mà thiếu tag).
+- Áp `onnx_student/vox_head.npz` y nguyên (không học lại). Đo AUC của đầu dò so với CLAP `vocals` (feats.jsonl), tỉ lệ gắn cờ ở τ
+  trên DƯƠNG / ÂM, và chia theo `vocals` CLAP <= .5 / > .5.
+
+**Đọc (viết trước):**
+- AUC đầu dò >= CLAP và phủ DƯƠNG >= .60: VOX đứng được trên nhạc có lời ngoài danh mục.
+- Ngược lại: ghi giới hạn vào MUSIC_IMPORT, và học lại đầu dò có thêm nhãn MTG (ghi trước riêng).
+**Kết quả lần 1: KHÔNG HỢP LỆ do thiết kế** (`vox_mtg.py`, `results/vox_mtg.txt`).
+- `mtg_rolling.py` chỉ giữ vector cho 4.665 bài qua lọc danh mục (CLAP `vocals` <= .5). Tập kiểm vì vậy gần như toàn không lời: 2.813 bài
+  có tag nhạc cụ, chỉ 50 có voice, và cả 50 đều là bài CLAP chấm thấp.
+- Số ghi lại cho đủ: AUC đầu dò .679, CLAP .490; phủ voice .10; gắn nhầm ÂM .008. Những số này không trả lời câu hỏi về nhạc có lời.
+- Làm lại: tải lại 3 gói MTG, nhúng MỌI bài theo đúng cửa sổ app (`appwin.audio_windows`), rồi chấm cùng cách đọc đã ghi trước.
+
+### 07-10 08:0x - L3 (hình dạng trong chương bằng so cặp / ví dụ 3 bậc): KHÔNG THẮNG (ghi trước 33c0f58f / 06ff8c24)
+GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r V/T trong chương, trung bình theo chương. 23 chương có đủ đầu ra
+(5b+6; bộ 7 chưa có L3).
+
+| | r VT | V | T | so P0 | hơn P0 ở |
+|---|---|---|---|---|---|
+| P0 (mốc) | .320 | .252 | .388 | | |
+| P0-VOTE6 (đối chứng cùng chi phí: 6 mẫu ở t=.7, lấy TB) | .327 | .343 | .310 | +.007 | |
+| L3-PAIR (so cặp với 3 neo) | .129 | .134 | .123 | −.192 | 5/23 → KHÔNG THẮNG |
+| L3-3B (ví dụ 3 bậc) | .080 | −.181 | .341 | −.240 | 3/23 → KHÔNG THẮNG |
+
+Đọc:
+- Hỏi so cặp hay đưa ví dụ bậc cho 4B đều làm HỎNG thứ tự trong chương; 3B còn đảo chiều V.
+- Lấy mẫu nhiều lần không thêm gì (+.007).
+- Hình dạng trong chương từ LLM nhỏ dừng ở r khoảng .3. Vì vậy CL (07-10, đã cài) chỉ giữ một NỬA hình P0 quanh mức chương, và
+  điều này khớp.
+- Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
+
+### 07-10 14:3x - Q4 vòng 3 trên 60 chương bạc cũ: STU-FT đúng là học thuộc; mmBERT-small ĐÔNG CỨNG hơn bản tinh chỉnh; trọng số đều theo chương nhích nhẹ
+
+Không cổng; đây là mốc trước lô bạc. Mã `stu_ft_diag.py`, `stu_cc.py`.
+
+**(3) "Loss tụt 26 lần, r bộ học đi ngang" - học thuộc hay chỉ co thang?**
+
+| epoch | khúc ĐÃ THẤY: r trong phân hoạch V / E / T | MAE sau căn giữa V | SD dự đoán / SD đích V | chương CHƯA THẤY 4+5+5b+6: SD dự đoán V | r bộ học |
+|---|---|---|---|---|---|
+| 1 | .83 / .81 / .84 | .061 | .186 / .162 | .132 | .300 |
+| 2 | .90 / .89 / .92 | .032 | .171 / .162 | .116 | .301 |
+| 4 | .93 / .92 / .94 | .015 | .161 / .162 | .102 | .294 |
+
+- Trên khúc đã thấy: lỗi căn giữa giảm 4 lần và độ lệch chuẩn dự đoán KHỚP đích. Model không chỉ chỉnh trung bình hay thang; nó khớp
+  thật từng khúc.
+- Trên chương chưa thấy: dự đoán co dần (SD .13 → .10) mà r không lên.
+- Khoảng cách đã thấy / chưa thấy (.83 / .30) có ngay từ epoch 1. Một phần vì 4 phân hoạch cắt ngẫu nhiên lặp lại cùng chữ của một
+  chương, nên mỗi câu được thấy khoảng 5 lần.
+- Kết luận: **học thuộc**, đúng như đã nghi. Với lô bạc nên dùng ít epoch hơn, hoặc dừng sớm theo bộ học.
+
+**(2) Ridge căn giữa trong chương, mỗi chương cùng tổng trọng số** (Q4 vòng 3), so với trọng số đều cũ. Cùng ba biểu diễn, cộng
+mmBERT-small đông cứng làm đối chứng cho STU-FT. r TB(V,T), alpha tốt nhất trên bộ học:
+
+| biểu diễn | đều (cũ) | mỗi chương cùng tổng trọng số | [theo dõi] bộ 7 |
+|---|---|---|---|
+| Qwen3-0.6B lớp giữa | .402 (α 10⁴) | **.414** (α 10⁴) | .225 |
+| mmBERT-base lớp cuối | .356 | .366 | .177 |
+| mmBERT-small lớp cuối, ĐÔNG CỨNG | .321 | .334 | .172 |
+| mmBERT-small TINH CHỈNH (STU-FT ep2) | .301 | | .224 |
+
+- Trọng số theo chương nhích +.006 đến +.013 ở mọi biểu diễn. Từ nay đó là mặc định.
+- **"Do biểu diễn" hay "do tinh chỉnh":** cùng mmBERT-small, bản đông cứng hơn bản tinh chỉnh trên bộ học (.334 / .301), ngang
+  trên bộ 7 (.212 ở α 10³ / .224).
+  - Với 246 cảnh, tinh chỉnh không thêm gì.
+  - Biểu diễn mmBERT-small yếu hơn Qwen-0.6B lớp giữa (.334 / .414).
+- Alpha tốt nhất của Qwen nằm ở MÉP lưới (10⁴). Ít nhãn thì cần co rất mạnh; với lô bạc sẽ quét lại cả lưới.
+- Hệ quả cho lô bạc: đặc trưng chính là Qwen-0.6B lớp giữa đông cứng + ridge theo chương. MLP nhỏ và mở dần khối trên chỉ làm khi
+  đường cong 250 → 2.000 còn lên.
+
+### 07-10 14:1x - LFE (ghi trước Corpus b6cf5ee): giám khảo độc lập Music2Emotion HỢP LỆ; CL hơn app cùng chiều TRACK-E2E nhưng chưa chắc
+
+Giám khảo là Music2Emotion (AMAAI-Lab, MIT, `J_all.ckpt`). Nó chấm valence/arousal thẳng từ âm thanh của 622 bài được chọn
+(CPU; 3 bài model không đọc được thì bỏ khỏi so cặp). Lỗi giám khảo mỗi đoạn = TB(|V bài − V đáp án|, |arousal bài − E đáp án|),
+thang [−1, 1], TB theo thời lượng trong chương rồi TB chương. Bài được chọn bằng `z_distance` trên danh mục 2.382 bài, như TRACK-E2E.
+
+**Giám khảo có hợp lệ không** (bộ học 4+5+5b+6, 42 chương, 260 đoạn app; cả ba điều kiện):
+
+| kiểm | kết quả | ngưỡng | |
+|---|---|---|---|
+| bài theo ĐÁP ÁN thắng chính các bài ấy XÁO trong chương | 163/246 = .66, p 1,9e-7 | > .5, p < .01 | đạt |
+| thắng bài NGẪU NHIÊN | 192/251 = .76 | ≥ .60 | đạt |
+| A=A (chấm lại 10 bài) | lệch 0,0000 | ≤ .01 | đạt |
+| [ghi lại] thắng DỜI một đoạn | 143/242 = .59, p .003 | | |
+
+→ **HỢP LỆ.** Giám khảo nhận ra bài đúng chỗ trong chương. r trong chương giữa V bài theo giám khảo và V đáp án là .57.
+
+**Lỗi giám khảo theo hệ** (thấp là tốt):
+
+| | bộ học | bộ 7 (theo dõi) |
+|---|---|---|
+| bài theo đáp án (trần khi ranh giới là của app) | .306 | .275 |
+| app hôm nay (P0 + E nhãn câu) | .400 | .342 |
+| CL đã cài | .379 | .319 |
+| [đối chứng] đáp án xáo trong chương | .397 | .307 |
+| [đối chứng] đáp án dời một đoạn | .370 | .299 |
+| [đối chứng] ngẫu nhiên | .445 | .387 |
+
+**CL − app**, theo chương, KTC95 bootstrap 2.000 lần:
+
+| | CL − app | KTC95 |
+|---|---|---|
+| bộ học | −.023 | [−.050, +.001] |
+| bộ 7 | −.021 | [−.069, +.028] |
+
+Dự đoán ghi trước (CL < app) ĐÚNG CHIỀU trên cả hai bộ, nhưng khoảng tin chạm 0, nên chưa chắc.
+
+Đọc:
+- Lần đầu có một thước bài–cảnh không đi qua trò CLAP của ta, và nó cho cùng chiều với TRACK-E2E.
+- Trên bộ học, app hôm nay (.400) TỆ NGANG bài đúng nhưng xáo thứ tự trong chương (.397). Phần "hình trong chương" của lựa chọn
+  hiện nay gần như không thêm gì. Đây là cùng kết luận Q4 (lỗi chấm hình là nút thắt), nay đo bằng âm thanh.
+- Khoảng cách tới trần (.306) lớn gấp 4 lần lợi của CL. Chỗ đáng làm vẫn là học sinh hình (STU-FT + lô bạc).
+- Trên bộ 7, giám khảo phân biệt đáp án với bản xáo kém hơn (.56, p .15), vì chương bộ 7 ít cảnh và mức chương nói gần hết. Bộ
+  cuối mới (`scene_silver2k/final/`) mới là chỗ đo cuối.
+- Giới hạn: không có trục T (M2E không đo căng thẳng); arousal của M2E được so với E đáp án.
+- Từ nay LFE là thước thứ hai cho STU-FT / chọn bài, cạnh r trong chương.
+
+### 07-10 11:3x - STU-FT thử ống (ghi trước Corpus bd23991): ống chạy, nhưng tinh chỉnh CHƯA hơn đầu tuyến tính trên 60 chương
+
+mmBERT-small tinh chỉnh trọn (Huber δ .25 trên dự đoán trừ TB phân hoạch). Dữ liệu là 1.291 khúc / 300 phân hoạch từ 60 chương
+bạc cũ; 4 epoch CPU, khoảng 88 phút.
+
+| epoch | r TB(V,T) bộ học 4+5+5b+6 |
+|---|---|
+| 1 | .300 |
+| 2 (chọn) | .301 |
+| 3 | .295 |
+| 4 | .294 |
+
+Mốc trên cùng bộ học: STU đầu tuyến tính trên Qwen3-0.6B lớp giữa đạt .377.
+
+Bộ 7 (20 chương, một lần):
+
+| | r V | r E | r T | TB(V,T) |
+|---|---|---|---|---|
+| **STU-FT** | .236 | .064 | .212 | **.224** |
+| [ghi lại] TB z STU-FT + P0 | .318 | .037 | .240 | .279 |
+| [mốc] STU đầu tuyến tính | | | | .230 |
+| [mốc] P0 | | | | .144 |
+
+- Cổng thử ống: ≥ .280. **KHÔNG QUA.**
+- CL với hình STU-FT: MAE .245, CL đang cài .234 (ghi lại).
+
+Đọc:
+- Ống đã đủ: tải model, tokenizer chữ Việt, vòng huấn luyện, chọn epoch, chấm cùng thước.
+- Với 246 cảnh, tinh chỉnh 140M tham số ngang đầu tuyến tính trên vector đóng băng: .224 so với .230 ở bộ 7, và thua ở bộ học.
+  Loss huấn luyện tụt 26 lần (.030 → .001) trong khi bộ học đi ngang từ epoch 1, tức học thuộc. Đúng dự đoán "nút thắt là số nhãn".
+- Bản chính chạy sau lô bạc 2.000 (thả khi tuần đặt lại), với cùng mã và siêu tham số. Cổng .40 như đã ghi.
+
+### 07-10 10:5x - XÁC NHẬN L2-EST trên bộ 7 (ghi trước 06-10 20:1x): **KHÔNG THẮNG** - lại kẹt ở r V
+
+Mac chạy MLX base_P0 + lora1_P2 trên khúc app bộ 7 (10:43-10:55). Lệnh `SCORE_SKIP_NOTES=1 python l2_est.py confirm set7`.
+Học trên 42 chương 4+5+5b+6, dự đoán 20 chương bộ 7. Cổng: MAE mức < .20 VÀ r >= .80 cả V, T.
+
+| bộ 7 | MAE mức | r V | r T | SD dự đoán/đáp án V, T |
+|---|---|---|---|---|
+| **[CHÍNH] ridge 4 mô hình + khớp p.sai** | **.196** | **.65** | .86 | 1.33, 1.21 |
+| [ghi lại] CHÍNH cũ (+ 4 đặc trưng chữ) | .197 | .67 | .85 | 1.43, 1.15 |
+| [ghi lại] nhãn câu app + hiệu chỉnh | .251 | .49 | .65 | .70, .76 |
+| [ghi lại] P2 + hiệu chỉnh | .194 | .64 | .81 | .82, .69 |
+| [ghi lại] base_P0 + hiệu chỉnh | .206 | .54 | .84 | .33, 1.12 |
+| [ghi lại] lora1_P2 + hiệu chỉnh | .178 | .74 | .79 | .87, .97 |
+| [ghi lại] hằng TB train | .327 | - | - | 0, 0 |
+
+Đọc:
+- Qua MAE và r T, trượt r V (.65; bộ học là .77).
+- Cùng chỗ kẹt như trên bộ học và L2-EST+CL: V mức chương là trục khó, và gộp nguồn không đẩy được nó qua .80.
+- Khớp phương sai làm SD dự đoán lớn hơn đáp án trên bộ 7 (1.33 / 1.21). Chống nén học trên 42 chương đã thổi quá tay ở bộ mới.
+- Nguồn đơn tốt nhất là lora1_P2 hiệu chỉnh (.178, r V .74). Đây chỉ là số ghi lại, chọn sau khi xem, nên không phải bằng chứng.
+- Kết luận: không cài L2-EST. Lớp mức chương đang cài (CL, e82bc993) giữ nguyên. Nhánh mức chương dừng ở đây; nút thắt là lỗi
+  chấm HÌNH trong chương (Q4), đang làm bằng STU-FT + lô bạc.
+
+### 07-10 10:2x - Ghi trước ba việc chờ dữ liệu: lô bạc 2.000 cảnh, LFE (giám khảo không người nghe), NTS (học sinh NT mọi khe)
+
+Chi tiết nằm ở Corpus riêng tư (có chữ truyện); ở đây chỉ ghi số và luật.
+
+- **Lô bạc 2.000** (`scene_silver2k/SPEC_silver_2000.md`, Corpus d7d791d, 57e5d11): chỉ thả khi tuần đặt lại.
+  - Phạm vi: 489 chương, 242 bộ Hako; JP 343, KR 122, CN 24 (trọng số LN Nhật > Hàn); 68.499 câu.
+  - Loại 81 bộ trùng các bộ đáp án 4–9.
+  - Một người chấm Sonnet mỗi chương, hướng dẫn 3.1 như 60 chương bạc cũ. 10 chương có người thứ hai để đo độ khớp. Mốc khớp
+    trên v31 với cùng hàm: V .75, E .48, T .67.
+  - Thêm trường `mo=NT|NH|GC` (định nghĩa bộ TYPES) để lô này cũng cho nhãn bạc NT.
+  - Hai giai đoạn: 120 chương rồi 369 chương. Điểm đường cong STU-FT sau giai đoạn 1, cổng cuối như STU (bộ 7 ≥ .40 và ≥ P0 + .10).
+  - Không thả mẻ mới nếu dự kiến vượt 90 % tuần.
+- **LFE** (`PLAN_lfe.md`, Corpus b6cf5ee): giám khảo là Music2Emotion (AMAAI-Lab, MIT), chấm valence/arousal thẳng từ âm thanh
+  bài được chọn. Model khác loại, không dùng CLAP hay trò của ta.
+  - Giám khảo chỉ được tin nếu trên bộ học bài chọn theo đáp án thắng ba đối chứng: chính các bài ấy xáo trong chương (kiểm dấu
+    p < .01), bài ngẫu nhiên (≥ .60), và A=A.
+  - Khi hợp lệ thì so app hôm nay với CL trên bộ 7, dự đoán ghi trước CL tốt hơn.
+  - Đang chấm 622 bài trên CPU.
+- **NTS** (`PLAN_nt_student.md`, Corpus bb3c060): mmBERT-small hai chiều, 8 câu trái + 8 câu phải, phân loại mọi khe.
+  - Nhãn từ `mo=`: NT là dương; NH/GC và khe xa ranh giới > 2 câu là âm; khe ±1–2 câu quanh ranh giới bỏ.
+  - Thước, ngưỡng và ba cổng giống hệt NT2, để so ngang.
+
+### 07-10 10:0x - STU KHÔNG QUA cổng .40, nhưng gấp đôi P0 trên bộ 7
+
+Ghi trước: 1fc14ab0, sửa 046843bf. Đóng băng: Corpus cab1ee5. Lựa chọn theo luật là Qwen3-0.6B lớp giữa + ridge 1000.
+
+| r trong chương, đoạn app | học 4-6 (42 ch) | bộ 7 (20 ch) |
+|---|---|---|
+| P0 (4B) | ~.29 | .144 |
+| STU | .377 | .230 |
+| TB z STU+P0 (ứng viên chính) | .453 | **.286** |
+| trần: ranh giới app + đáp án | .80 | .644 |
+
+- **Cổng:** >= .40 trượt; >= P0 + .10 đạt. Kết quả: KHÔNG QUA.
+- Tách lỗi theo r_gốc = r_đích × r_trần: trên bộ 7, .286 / .644 ≈ .44 nếu ranh giới hoàn hảo.
+- **MAE khi thay hình P0 trong CL bằng STU:** .241 so với .234. Không lợi, vì MAE do mức chương quyết.
+- **Ghi lại:**
+  - E: STU .29 trên bộ 7.
+  - Lưới alpha dừng ở 1000 (mép lưới).
+  - Bạc 1 người: r A-B trong chương .77-.90.
+- **Đọc:** học từ chỉ 60 chương bạc, một đầu tuyến tính đã nhân đôi P0. Nút thắt là lượng nhãn, không phải model. Việc kế
+  (Lead duyệt): STU-FT, tức tinh chỉnh mmBERT-small trên ~2.000 cảnh bạc 1 người (Huber, rồi thêm RankNet / chênh kề
+  từng phần). Ghi trước riêng; thả SAU khi tuần đặt lại.
+
+Mã: Corpus `research/music/stu_*.py`, `PLAN_stu.md`.
+
+### 07-10 09:4x - Sửa ghi trước LLM-NT2 (góp ý ngoài Q3 vòng 2), TRƯỚC khi NT2A chạy
+
+Ba điểm của góp ý, đối chiếu với NT2:
+
+1. **Model nhân quả không thấy câu sau:** NT2 không dính. Prompt đọc trọn khúc 40 câu đã đánh số rồi mới trả số câu.
+2. **Khúc chồng không phải mẫu độc lập:** có dính, vì trước đây lấy HỢP mọi khúc, gồm cả vị trí ở mép khúc thiếu ngữ cảnh.
+   - Sửa: mỗi khúc chỉ nhận VÙNG GIỮA [đầu+5, cuối−5). Mép chương thì nhận tới mép. Các vùng lát kín chương, không chồng.
+   - `NT2_UNION=1` cho số theo luật cũ để ghi lại.
+3. **Dự đoán trùng thoát phạt:** thước đổi sang ghép MỘT-MỘT trong TOL (cặp gần nhất trước), áp cho cả C1 lẫn C1 ∪ LLM.
+   - C1 trên bộ học không đổi số: F1_NT .444, R .356, sai 1,5/giờ, vì reasoned đã gộp ranh giới trùng.
+   - R/P theo luật cũ vẫn ghi kèm.
+
+Cổng, biến thể và luật chọn giữ nguyên. Đầu ra thô của LLM lưu đầu/cuối khúc nên cả hai luật đều tính lại được. Mã: Corpus
+`research/music/llm_nt2.py`.
+
+### 07-10 09:0x - GHI TRƯỚC STU: học sinh chấm hình trong chương từ nhãn bạc Claude (CPU)
+
+Kế hoạch và mã: Corpus `research/music/PLAN_stu.md`, `stu_*.py`.
+
+- **Dữ liệu học:** 60 chương bạc (1.291 khúc; cảnh thật + 4 phân hoạch ngẫu nhiên 250-1000 tiếng). Không trùng truyện với bộ đo.
+- **Mô hình:** đặc trưng = vector nhúng trừ TB phân hoạch. Encoder là mmBERT-base lớp cuối, hoặc Qwen3-0.6B lớp giữa / cuối.
+  Đầu ridge (alpha 1-1000) hoặc xếp hạng cặp (C .01-10).
+- **Chọn:** r TB(V,T) lớn nhất trên đoạn app 4+5+5b+6. Thước `q4_oracle`. Hoà ±.01 thì mmBERT > Qwen, ridge > rank,
+  siêu tham số giữa.
+- **Cổng bộ 7:** r TB(V,T) >= .40 VÀ >= P0 (.144) + .10.
+- **Đóng băng:** mã và lựa chọn bằng commit trước `confirm`.
+
+- **Sửa 09:2x** (sau số bộ học của mmBERT, trước bộ 7):
+  - Số học: STU .353; TB z STU+P0 .434; P0 riêng ~.29.
+  - Ứng viên chính là cái học cao hơn trong {STU, TB z STU+P0}. Cổng không đổi.
+
+### 07-10 09:0x - TRACK-E2E: lợi của CL đi trọn vào BÀI được chọn
+
+Chọn bài gần nhất trong danh mục (2.382 bài, `z_distance` của app, bỏ các phạt) cho mỗi đoạn app. Đo |mood bài − đáp án| theo
+câu, TB chương, TB ba trục. Mã: Corpus `research/music/track_e2e.py`.
+
+| | 4-6: bài - đáp án | 4-6: mục tiêu - đáp án | bộ 7: bài - đáp án | bộ 7: mục tiêu - đáp án | đổi bài/giờ (4-6 / 7) |
+|---|---|---|---|---|---|
+| app trước CL | .369 | .392 | .328 | .341 | 18.5 / 21.2 |
+| CL đã cài | .320 | .321 | .208 | .218 | 18.8 / 19.9 |
+| mục tiêu = đáp án | .147 | 0 | .062 | 0 | 21.7 / 17.5 |
+
+- Danh mục đủ dày: lỗi mood của bài chọn ra ≈ lỗi mục tiêu. Phần mục tiêu sửa được thì bài chọn ra sửa được gần trọn.
+- CL không làm nhạc đứng yên: số lần đổi bài không giảm.
+
+### 07-10 09:0x - Góp ý ngoài Q3/Q4 (ChatGPT, Lead giao): lỗi chấm lớn hơn lỗi ranh giới; luật chỉ phủ ~1/2 NT
+
+Mã: Corpus `research/music/q4_oracle.py`, `q3_coverage.py`. Số mô tả, không cổng.
+
+**Q4.** r trong chương (thước `chapter_rs`, chương hằng tính 0, TB chương). Ranh giới app là bản trong bộ đo (`scenes_app`).
+
+| bộ | (a) trần: đoạn app + V/E/T đáp án | P0 trên đoạn app | (b) P0 trên ranh giới đáp án |
+|---|---|---|---|
+| 4 | .750 | .239 | |
+| 5 | .843 | .318 | |
+| 5b | .761 | .277 | |
+| 6 | .824 | .307 | .404 |
+| 7 | .644 | .144 | |
+
+TB V,T. (b) chỉ có ở bộ 6 (P0 đã chạy trên 150 cảnh đáp án).
+
+- Ranh giới app làm mất khoảng .18-.36 so với trần 1. Đổi sang ranh giới đáp án chỉ thêm .10 cho P0 (bộ 6).
+- Khoảng cách lớn nhất là lỗi CHẤM: .82 trần so với .31-.40.
+- Chưng cất từ thầy (4B) chỉ có ích khi thầy vượt .32 trên đáp án. Thầy hiện chưa vượt.
+- (c) Kẹp [-1,1] của CL không chạm câu nào (0 %). r của CL bằng r của P0 (cùng hình): 4-6 V .226 T .356, bộ 7 V .098 T .191.
+
+**Q3.** Độ phủ ứng viên: ranh giới đáp án nằm trong TOL = 2 câu của một ứng viên. Đây là trần recall của mọi bộ lọc trên tập ấy.
+
+| tập ứng viên | 4+5+5b+6 /giờ | phủ NT | bộ 7 phủ NT | 8+9 phủ NT |
+|---|---|---|---|---|
+| X (đã cài) | 4.7 | .37 | .48 | .28 |
+| luật thô (cờ + mọi CUE) | 10.5 | .45 | .57 | .34 |
+| câu có dấu mở cảnh | 23.9 | .47 | .38 | .52 |
+| LLM chia cảnh thô | 32.2 | .70 | .81 | - |
+| hợp ba tập | 60.9 | .90 | .95 | .66 (không LLM) |
+
+- Lọc ứng viên LUẬT không thể vượt khoảng .45 recall NT. Vì thế C2 (4B lọc ∩ dấu mở) chỉ thêm 1 NT.
+- Đúng hướng góp ý: phân loại MỌI khe câu. LLM-NT2 (đã đóng băng, trong hàng GPU) làm đúng việc này: khúc 40 câu chồng 10,
+  hỏi thẳng đổi nơi/thời gian.
+- Nếu NT2 trượt, bước kế là cửa sổ chồng nửa bước (Zehe NAACL 2025: .60 -> .68) hoặc học sinh nhỏ trên mọi khe, ghi trước riêng.
+
+### 07-10 09:0x - CL-E: mức chương cho trục E (năng lượng) - không cần, dừng ở bộ học
+
+Câu hỏi: CL đặt mức chương cho V/T. App chọn bài theo ô V-E. Có nên làm tương tự cho E?
+
+E của app hôm nay là đường nhãn câu (`music_scenes._view`: `acc.point()`; LLM chỉ ghi đè V/T). Thước như CL-APPLY: MAE theo câu
+(thời lượng), TB chương, chỉ trục E. Mức chương = a·TB(nguồn) + b học trên 4+5, nguồn ∈ {nhãn, P0}; dạng {hằng, dời k ∈ .25/.5/1 ×
+hình nhãn/P0}. Ngưỡng đặt trước khi xem số bộ học: phải tốt hơn app ít nhất .03.
+
+| gộp 4+5+5b+6 (42 chương) | MAE_E |
+|---|---|
+| app hôm nay (nhãn câu) | .307 |
+| tốt nhất (mức nhãn, dời k=1 hình nhãn) | .305 |
+| hằng 0 | .323 |
+| P0 từng đoạn (app KHÔNG dùng cho E) | .462 |
+| trần: mức chương đáp án, hằng | .267 |
+
+Kết luận: không cách nào tiến gần -.03. Dừng ở bộ học; bộ 7 để nguyên cho E. Ghi chú: giữ E ở đường nhãn là ĐÚNG - E của P0
+(4B) tệ hơn cả hằng 0, nên đừng đổi E sang LLM. Mã: Corpus research/music/cl_e.py.
+
+### 07-10 08:5x - VOX-MTG lần 2 (3 gói MTG nhúng đầy đủ, cửa sổ app): ĐẠT cách đọc ghi trước, nhưng mẫu nhỏ
+Agent nhúng lại `autotagging_moodtheme_audio-00..02.tar` bằng `vox_mtg_full.py` (`results/vox_mtg_full.npz`).
+- 372 bài có tag nhạc cụ, khoảng 0,57 s/bài trên CPU. Đầu dò áp y nguyên, không học lại.
+
+| 372 bài, 17 có `instrument---voice` | AUC | phủ voice ở τ |
+|---|---|---|
+| đầu dò VOX | .869 | .65 (11/17; Wilson 95 % khoảng .41-.83) |
+| CLAP `vocals` | .762 | |
+
+- Theo cách đọc ghi trước (AUC >= CLAP và phủ >= .60): ĐẠT. VOX hơn CLAP cả ngoài danh mục.
+- Nhưng 17 bài dương là nhỏ, khoảng tin cậy của phủ rộng. Tag `voice` của MTG thưa (1.604/25.135 bài trong cả bộ), trong khi CLAP
+  chấm `vocals` trung bình .537. Nên nhóm ÂM có nhiều bài có lời mà thiếu tag. Con số "gắn 13,5 % bài không tag voice" vì thế
+  KHÔNG phải báo nhầm đo được.
+- Đầu dò gắn 16 % bài Jamendo nói chung. Bài CLAP > .5 thì đầu dò gắn 28 %, bài CLAP <= .5 gắn 1,2 %.
+- 6/17 bài voice bị lọt (điểm .02-.33). Không nghe lại được để biết đó là lời át hay giọng nền (choir, vocalise).
+
+Kết luận: giữ VOX như đã cài; không học lại. Ghi vào MUSIC_IMPORT: "đầu dò có thể bỏ sót khoảng 1/3 bài có lời ngoài danh mục;
+người dùng luôn có thể tự bỏ chọn bài". Muốn đo chặt hơn cần nhãn có lời / không lời đáng tin trên nhạc pop (MF trên vài trăm
+bài MTG đã nhúng, GPU), xếp sau.

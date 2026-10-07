@@ -25,6 +25,7 @@
 # ‘gia tộc bóng tối' nằm trong câu tự nhủ của "tôi" (98) -> N,T người kể đủ. 26 '"... l" Louina ngạc nhiên lắc đầu.' khoá
 # N -> NARRATOR, LOUINA~. 1 dòng dịch giả "Trans: Bui!!!" -> N. 184 "Ự!" tiếng kêu khi ngã -> EPHERENE, NARRATOR~ (quy tắc 8).
 # Ngôi ba: 126 câu tự hỏi của Glitheon -> N,T, GLITHEON~.
+# 06-10 (phiên Model) chuyển theo cách tách rel430b 24ed59d2 (gate_gold_rel430b.py): 22 tách thành 22 (T, nhãn cũ) + 23 N; cũ 23 -> 24 N (khoá lời kể); cũ >=24 dời +1
 0 H
 1 N
 2 N
@@ -48,263 +49,264 @@
 20 N NARRATOR neutral,angry 0-1 normal normal u
 21 N
 22 N,T LOUINA~,NARRATOR neutral 0-1 normal normal u
-23 N,T LOUINA~,NARRATOR neutral 0-1 normal normal u
+23 N
 24 N
-25 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER surprised,sarcastic,neutral 0-1 normal normal f
-26 N NARRATOR,LOUINA~ neutral,surprised 0-1 normal normal u
-27 N NARRATOR neutral,angry 0-1 normal normal u
-28 N
+25 N
+26 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER surprised,sarcastic,neutral 0-1 normal normal f
+27 N NARRATOR,LOUINA~ neutral,surprised 0-1 normal normal u
+28 N NARRATOR neutral,angry 0-1 normal normal u
 29 N
-30 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral 0-1 normal normal f
-31 D LOUINA neutral 0-1 normal normal f
-32 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral 0-1 normal normal f
-33 N
-34 D LOUINA happy,neutral 0-1 normal normal f
-35 N NARRATOR neutral,happy 0-1 normal normal u
-36 D LOUINA happy,neutral,excited 0-1 normal normal f
-37 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral 0-1 normal normal f
-38 D LOUINA neutral,sad 0-1 normal soft,normal f
-39 N
+30 N
+31 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral 0-1 normal normal f
+32 D LOUINA neutral 0-1 normal normal f
+33 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral 0-1 normal normal f
+34 N
+35 D LOUINA happy,neutral 0-1 normal normal f
+36 N NARRATOR neutral,happy 0-1 normal normal u
+37 D LOUINA happy,neutral,excited 0-1 normal normal f
+38 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral 0-1 normal normal f
+39 D LOUINA neutral,sad 0-1 normal soft,normal f
 40 N
 41 N
-42 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral 0-1 normal normal f
-43 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral,sad,tired 0-1 normal normal f
-44 N
+42 N
+43 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral 0-1 normal normal f
+44 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral,sad,tired 0-1 normal normal f
 45 N
 46 N
-47 D KEIRON sarcastic,happy,neutral 0-1 normal normal m
-48 N NARRATOR neutral,angry 0-1 normal normal u
-49 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER angry 1-2 normal normal f
-50 N NARRATOR neutral,angry 0-1 normal normal u
-51 N
-52 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER angry,neutral 0-2 normal normal f
-53 N
-54 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral 0-1 normal normal f
-55 D KEIRON neutral 0-1 normal normal m
-56 N
-57 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER~ neutral 0-1 normal normal,soft m
-58 N
+47 N
+48 D KEIRON sarcastic,happy,neutral 0-1 normal normal m
+49 N NARRATOR neutral,angry 0-1 normal normal u
+50 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER angry 1-2 normal normal f
+51 N NARRATOR neutral,angry 0-1 normal normal u
+52 N
+53 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER angry,neutral 0-2 normal normal f
+54 N
+55 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER neutral 0-1 normal normal f
+56 D KEIRON neutral 0-1 normal normal m
+57 N
+58 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER~ neutral 0-1 normal normal,soft m
 59 N
-60 N NARRATOR neutral,tired 0-1 normal normal u
-61 N
+60 N
+61 N NARRATOR neutral,tired 0-1 normal normal u
 62 N
 63 N
 64 N
-65 N,T NARRATOR neutral 0-1 normal normal u
-66 N
-67 N NARRATOR neutral,tired 0-1 normal normal u
-68 D NPC*:tài xế của Louina,JEFF neutral 0-1 normal normal m
-69 D NPC*:tài xế của Louina,JEFF surprised,neutral 0-1 normal normal m
-70 N
-71 D NPC*:tài xế của Louina,JEFF neutral,happy 0-1 normal normal m
+65 N
+66 N,T NARRATOR neutral 0-1 normal normal u
+67 N
+68 N NARRATOR neutral,tired 0-1 normal normal u
+69 D NPC*:tài xế của Louina,JEFF neutral 0-1 normal normal m
+70 D NPC*:tài xế của Louina,JEFF surprised,neutral 0-1 normal normal m
+71 N
 72 D NPC*:tài xế của Louina,JEFF neutral,happy 0-1 normal normal m
-73 D NPC*:tài xế của Louina,JEFF neutral,surprised 0-1 normal normal m
-74 D NPC*:tài xế của Louina,JEFF happy,excited,neutral 0-1 normal normal m
-75 N
-76 D JEFF,NPC*:tài xế của Louina~ happy,excited,surprised 0-1 normal normal,loud m
-77 D NPC*:tài xế của Louina,JEFF~ happy,excited 0-1 normal normal,loud m
-78 N
-79 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-80 D JEFF neutral,happy 0-1 normal normal,loud m
-81 N
+73 D NPC*:tài xế của Louina,JEFF neutral,happy 0-1 normal normal m
+74 D NPC*:tài xế của Louina,JEFF neutral,surprised 0-1 normal normal m
+75 D NPC*:tài xế của Louina,JEFF happy,excited,neutral 0-1 normal normal m
+76 N
+77 D JEFF,NPC*:tài xế của Louina~ happy,excited,surprised 0-1 normal normal,loud m
+78 D NPC*:tài xế của Louina,JEFF~ happy,excited 0-1 normal normal,loud m
+79 N
+80 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+81 D JEFF neutral,happy 0-1 normal normal,loud m
 82 N
 83 N
 84 N
 85 N
 86 N
-87 D NARRATOR,NPC*~,DECULEIN~ neutral,sad 0-1 normal normal u
-88 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-89 D JEFF neutral,surprised 0-1 normal normal m
-90 N NARRATOR neutral,surprised 0-1 normal normal u
-91 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
-92 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-93 D JEFF neutral 0-1 normal normal m
-94 N
+87 N
+88 D NARRATOR,NPC*~,DECULEIN~ neutral,sad 0-1 normal normal u
+89 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+90 D JEFF neutral,surprised 0-1 normal normal m
+91 N NARRATOR neutral,surprised 0-1 normal normal u
+92 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
+93 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+94 D JEFF neutral 0-1 normal normal m
 95 N
-96 D NARRATOR,NPC*~,DECULEIN~ neutral,sad 0-1 normal normal u
-97 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
+96 N
+97 D NARRATOR,NPC*~,DECULEIN~ neutral,sad 0-1 normal normal u
 98 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
 99 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
-100 D,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-101 D JEFF surprised,neutral 0-1 normal normal m
-102 N
-103 D JEFF neutral 0-1 normal normal m
-104 N
-105 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral,surprised 0-1 normal normal,soft m
-106 N
+100 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
+101 D,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+102 D JEFF surprised,neutral 0-1 normal normal m
+103 N
+104 D JEFF neutral 0-1 normal normal m
+105 N
+106 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral,surprised 0-1 normal normal,soft m
 107 N
 108 N
 109 N
 110 N
 111 N
 112 N
-113 D,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal soft,normal m
-114 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
-115 N
+113 N
+114 D,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal soft,normal m
+115 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
 116 N
 117 N
-118 D GALAK,NPC*:cái bóng~ neutral,surprised 0-1 normal normal,soft m
-119 N
+118 N
+119 D GALAK,NPC*:cái bóng~ neutral,surprised 0-1 normal normal,soft m
 120 N
-121 D GLITHEON neutral 0-1 normal normal m
-122 N
+121 N
+122 D GLITHEON neutral 0-1 normal normal m
 123 N
 124 N
-125 D GLITHEON neutral,sarcastic 0-1 normal normal m
-126 N,T GLITHEON~,NARRATOR neutral 0-1 normal normal u
-127 N
+125 N
+126 D GLITHEON neutral,sarcastic 0-1 normal normal m
+127 N,T GLITHEON~,NARRATOR neutral 0-1 normal normal u
 128 N
 129 N
-130 D GLITHEON neutral 0-1 normal normal m
-131 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
-132 D GLITHEON neutral,sarcastic 0-1 normal normal m
-133 N
+130 N
+131 D GLITHEON neutral 0-1 normal normal m
+132 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
+133 D GLITHEON neutral,sarcastic 0-1 normal normal m
 134 N
-135 D GLITHEON happy,sarcastic,neutral 0-1 normal normal m
-136 N
+135 N
+136 D GLITHEON happy,sarcastic,neutral 0-1 normal normal m
 137 N
 138 N
-139 D GLITHEON neutral 0-1 normal normal m
-140 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
-141 D GLITHEON happy,sarcastic 0-1 normal normal m
-142 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
-143 N
+139 N
+140 D GLITHEON neutral 0-1 normal normal m
+141 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
+142 D GLITHEON happy,sarcastic 0-1 normal normal m
+143 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
 144 N
 145 N
 146 N
 147 N
 148 N
-149 D GLITHEON sarcastic,happy,neutral 0-1 normal normal m
-150 D GALAK,NPC*:cái bóng~ angry 0-2 normal normal,soft m
-151 N
+149 N
+150 D GLITHEON sarcastic,happy,neutral 0-1 normal normal m
+151 D GALAK,NPC*:cái bóng~ angry 0-2 normal normal,soft m
 152 N
 153 N
-154 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
-155 D GLITHEON neutral,sarcastic 0-1 normal normal m
-156 N
+154 N
+155 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
+156 D GLITHEON neutral,sarcastic 0-1 normal normal m
 157 N
-158 D GALAK,NPC*:cái bóng~ neutral,tender 0-1 normal normal,soft m
-159 D GLITHEON sad,neutral 0-1 normal,slow normal m
-160 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
-161 N NARRATOR neutral,happy 0-1 normal normal u
-162 D GLITHEON happy,sarcastic,neutral 0-1 normal normal m
-163 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
-164 N
+158 N
+159 D GALAK,NPC*:cái bóng~ neutral,tender 0-1 normal normal,soft m
+160 D GLITHEON sad,neutral 0-1 normal,slow normal m
+161 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
+162 N NARRATOR neutral,happy 0-1 normal normal u
+163 D GLITHEON happy,sarcastic,neutral 0-1 normal normal m
+164 D GALAK,NPC*:cái bóng~ neutral 0-1 normal normal,soft m
 165 N
-166 N NARRATOR neutral,surprised 0-1 normal normal u
-167 D EPHERENE,EPHERENE LUNA tired,angry,sarcastic 0-1 normal normal f
-168 N
+166 N
+167 N NARRATOR neutral,surprised 0-1 normal normal u
+168 D EPHERENE,EPHERENE LUNA tired,angry,sarcastic 0-1 normal normal f
 169 N
 170 N
-171 D EPHERENE,EPHERENE LUNA sarcastic,angry,tired 0-1 normal normal f
-172 N
+171 N
+172 D EPHERENE,EPHERENE LUNA sarcastic,angry,tired 0-1 normal normal f
 173 N
 174 N
 175 N
 176 N
 177 N
-178 D EPHERENE,EPHERENE LUNA tired,sad 0-1 normal,slow soft,normal f
-179 N
+178 N
+179 D EPHERENE,EPHERENE LUNA tired,sad 0-1 normal,slow soft,normal f
 180 N
 181 N
 182 N
 183 N
-184 D EPHERENE,EPHERENE LUNA,NARRATOR~ surprised,afraid,sad 1-2 fast normal,loud f
-185 N
-186 D EPHERENE,EPHERENE LUNA sad,angry 0-1 normal normal,soft f
-187 D LUCIA,EPHERENE,EPHERENE LUNA angry 1-2 normal,fast loud,normal f
-188 N
-189 N NARRATOR neutral,angry 0-1 normal normal u
-190 D EPHERENE,EPHERENE LUNA tired,sarcastic 0-1 normal normal,soft f
-191 N
-192 D EPHERENE,EPHERENE LUNA sarcastic,tired 0-1 normal normal f
-193 D LUCIA angry 1-2 normal,fast loud,normal f
-194 N NARRATOR neutral,angry 0-1 normal normal u
-195 N
+184 N
+185 D EPHERENE,EPHERENE LUNA,NARRATOR~ surprised,afraid,sad 1-2 fast normal,loud f
+186 N
+187 D EPHERENE,EPHERENE LUNA sad,angry 0-1 normal normal,soft f
+188 D LUCIA,EPHERENE,EPHERENE LUNA angry 1-2 normal,fast loud,normal f
+189 N
+190 N NARRATOR neutral,angry 0-1 normal normal u
+191 D EPHERENE,EPHERENE LUNA tired,sarcastic 0-1 normal normal,soft f
+192 N
+193 D EPHERENE,EPHERENE LUNA sarcastic,tired 0-1 normal normal f
+194 D LUCIA angry 1-2 normal,fast loud,normal f
+195 N NARRATOR neutral,angry 0-1 normal normal u
 196 N
 197 N
-198 D EPHERENE,EPHERENE LUNA sarcastic,tired 0-1 normal normal f
-199 N
-200 D NPC*:quý tộc 1,LUCIA~ sarcastic,angry 0-1 normal normal u
-201 D NPC*:quý tộc 2,LUCIA~ sarcastic,angry 0-1 normal normal u
-202 D NPC*:quý tộc 3,LUCIA~ sarcastic,neutral 0-1 normal normal u
-203 N
-204 D NPC*:quý tộc 4,LUCIA~ sarcastic,surprised 0-1 normal normal u
-205 D NPC*:quý tộc 5,LUCIA~ sarcastic 0-1 normal normal u
-206 D NPC*:quý tộc 6,LUCIA~ afraid,neutral 0-1 normal normal u
-207 D NPC*:quý tộc 7,LUCIA~ afraid,angry,neutral 0-1 normal normal u
-208 D NPC*:quý tộc 8,LUCIA~ neutral,angry 0-1 normal normal u
-209 N
+198 N
+199 D EPHERENE,EPHERENE LUNA sarcastic,tired 0-1 normal normal f
+200 N
+201 D NPC*:quý tộc 1,LUCIA~ sarcastic,angry 0-1 normal normal u
+202 D NPC*:quý tộc 2,LUCIA~ sarcastic,angry 0-1 normal normal u
+203 D NPC*:quý tộc 3,LUCIA~ sarcastic,neutral 0-1 normal normal u
+204 N
+205 D NPC*:quý tộc 4,LUCIA~ sarcastic,surprised 0-1 normal normal u
+206 D NPC*:quý tộc 5,LUCIA~ sarcastic 0-1 normal normal u
+207 D NPC*:quý tộc 6,LUCIA~ afraid,neutral 0-1 normal normal u
+208 D NPC*:quý tộc 7,LUCIA~ afraid,angry,neutral 0-1 normal normal u
+209 D NPC*:quý tộc 8,LUCIA~ neutral,angry 0-1 normal normal u
 210 N
-211 D EPHERENE,EPHERENE LUNA angry,sarcastic 0-1 normal soft,normal f
-212 N NARRATOR neutral,angry 0-1 normal normal u
-213 N
-214 N,T NARRATOR neutral 0-1 normal normal u
-215 N
+211 N
+212 D EPHERENE,EPHERENE LUNA angry,sarcastic 0-1 normal soft,normal f
+213 N NARRATOR neutral,angry 0-1 normal normal u
+214 N
+215 N,T NARRATOR neutral 0-1 normal normal u
 216 N
 217 N
 218 N
 219 N
 220 N
-221 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-222 N
-223 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-224 N NARRATOR neutral,happy 0-1 normal normal u
-225 N
-226 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-227 N
-228 N NARRATOR neutral,afraid 0-1 normal normal u
-229 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-230 N
+221 N
+222 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+223 N
+224 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+225 N NARRATOR neutral,happy 0-1 normal normal u
+226 N
+227 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+228 N
+229 N NARRATOR neutral,afraid 0-1 normal normal u
+230 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 231 N
 232 N
 233 N
 234 N
-235 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-236 N
-237 N NARRATOR neutral,surprised 0-1 normal normal u
-238 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-239 N NARRATOR neutral,surprised 0-1 normal normal u
-240 N
+235 N
+236 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+237 N
+238 N NARRATOR neutral,surprised 0-1 normal normal u
+239 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+240 N NARRATOR neutral,surprised 0-1 normal normal u
 241 N
-242 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-243 N
+242 N
+243 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 244 N
-245 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-246 N
+245 N
+246 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 247 N
-248 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-249 N
-250 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-251 N
-252 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-253 N
+248 N
+249 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+250 N
+251 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+252 N
+253 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 254 N
-255 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-256 N NARRATOR neutral,afraid 0-1 normal normal u
-257 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-258 N
-259 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-260 N
+255 N
+256 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+257 N NARRATOR neutral,afraid 0-1 normal normal u
+258 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+259 N
+260 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 261 N
 262 N
 263 N
 264 N
-265 D EPHERENE,EPHERENE LUNA surprised 0-1 normal normal f
-266 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-267 N NARRATOR neutral,sad 0-1 normal normal u
-268 D EPHERENE,EPHERENE LUNA neutral 0-1 normal normal f
-269 N
-270 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-271 N
+265 N
+266 D EPHERENE,EPHERENE LUNA surprised 0-1 normal normal f
+267 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+268 N NARRATOR neutral,sad 0-1 normal normal u
+269 D EPHERENE,EPHERENE LUNA neutral 0-1 normal normal f
+270 N
+271 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 272 N
 273 N
-274 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-275 N
-276 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-277 N
-278 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
-279 N
+274 N
+275 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+276 N
+277 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
+278 N
+279 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 280 N
-281 N,T DECULEIN~,NARRATOR neutral 0-1 normal normal u
-282 N
+281 N
+282 N,T DECULEIN~,NARRATOR neutral 0-1 normal normal u
+283 N

@@ -39,6 +39,168 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 07-10 chiều - xếp hạng lại bằng log-prob của chính B9: KHÔNG qua, đóng hướng
+
+Câu hỏi: model đã sinh greedy; nếu cho nó tự chấm vài giả thuyết đổi người nói, có chọn được đáp đúng hơn không (không huấn
+luyện, chỉ thêm vài lượt tới mỗi lô)? Ghi trước: LLM_Train/rerank/STEP1_PLAN.md. Kết quả: rerank/STEP1_RESULT.txt.
+- Bước 0 (CPU, trần oracle trên B9 s1234, 19 ch, 301 lỗi chặt / 154 trong cảnh): một giả thuyết cho cả cuộc trao đổi chỉ chữa
+  được 21,6 % lỗi chặt -> bỏ dạng đó. Cửa sổ 2 dòng thoại liền nhau, ngân sách 8 giả thuyết: trần 45,8 % chặt, nhưng 2 truyện
+  chiếm 103/138; giới hạn trong một lô còn 28,9 % chặt / 40,3 % trong cảnh.
+- Bước 1 (GPU 45 phút): 2.037 giả thuyết / 363 cửa sổ, điểm = tổng log-prob token giá trị speaker trên MỌI dòng của đáp, dưới
+  đúng prompt app đã gửi (dựng lại 573/573 lô khớp vân tay), model HF 4-bit + adapter B9. Greedy đã có điểm cao nhất ở 87,3 %
+  cửa sổ (sàng sớm 3 chương: 92,8 %, dưới ngưỡng dừng 95 %). Áp tau 0: đổi 46 cửa sổ, sửa 15 dòng, phá 19 dòng đúng. Lỗi chặt
+  301 -> 305; lỗi trong cảnh 154 -> 164 (+6,5 %, CI theo truyện [+3, +19] - TỆ HƠN có ý nghĩa). Không truyện nào ngoài rokujouma
+  giảm. Tau 0,5 / 1 / 2 cũng tăng lỗi trong cảnh. Bộ chọn chỉ nhặt đúng 14/79 cửa sổ có phương án tốt hơn.
+- Một nguồn nhiễu: 7,0 % giá trị speaker greedy (sinh bằng GGUF q8) không phải argmax dưới bản HF 4-bit - cùng cỡ với số lần
+  đổi, nên phần lớn lần đổi là lệch lượng tử chứ không phải "model biết đáp khác tốt hơn".
+- Kết luận: log-prob của chính model không chọn tốt hơn greedy (lỗi của nó là lỗi nó tin). Còn một việc đã ghi trước: chấm lại
+  đúng bộ giả thuyết này bằng B16 (DPO trên cặp đổi người = dạy đúng phép chọn này) khi B16 xong; không qua thì đóng hẳn.
+
+## 07-10 chiều - mồi lạ không làm request nạp lại từ đầu; ghi trước B15 / B16 / cổng P có oracle
+
+**Mồi lạ (`_prime_fresh_slot`, 0.4.31) không làm cái nó tả.** Ollama 0.33.2 chạy mọi GGUF qua `llama-server` (llama.cpp), có
+bộ đệm prompt trong RAM (mặc định 8.192 MiB). Log máy chủ (model v4, lượt PRIME + SR): 1.301 request phân tích đứng ngay sau mồi
+thì 1.255 có dòng `found better prompt with f_keep = 1.000, f_sim = 1.000` rồi dùng lại >= 100 token KV (trung bình 58 % prompt);
+46 chỉ dùng lại tiền tố template 1-4 token; 0 nạp từ 0. Mồi đẩy slot cũ vào RAM, request thật kéo KV cũ về. `prompt_eval_count`
+của Ollama = token dùng lại + token nạp mới nên KHÔNG làm bằng chứng được; phải đọc log `cached n_tokens` / `prompt eval time`.
+Phép đo PRIME vẫn cho kết quả trùng từng byte vì hai lượt gửi cùng chuỗi request nên bộ đệm RAM ở cùng trạng thái, không phải vì
+nạp lại sạch. Đang đo (LLM_Train/resume_determinism/q7_probe.py): mồi chat vs mồi `raw` x có/không `LLAMA_ARG_CACHE_RAM=0`,
+đọc log từng request. SR (dừng/chạy tiếp giữa pha phân tích trên 0.4.31) là phép thử của chính chỗ này: sau khi chạy tiếp, bộ đệm
+RAM trống.
+
+**Kết quả (Q7 + SR + SR2, 07-10, LLM_Train/resume_determinism/Q7.md, SR.md, SR2.md).** Mồi `raw` + `LLAMA_ARG_CACHE_RAM=0`
+(bộ đệm RAM tắt) thì request sau mồi nạp lại từ 0; chương thật ra y hệt bản có bộ đệm, chậm hơn 6,6 %. SR trên 0.4.31 (bộ đệm bật):
+dừng ở 624/955 rồi chạy tiếp ra 10/955 đoạn khác, tất cả sau mốc dừng (nhân vật y hệt). SR2 trên 0.4.32 (1d57e389, bộ đệm tắt):
+liền mạch và dừng/chạy tiếp trùng từng byte (0/955, cùng vân tay), 3.596 / 3.584 s (0.4.31 liền mạch 3.205 s, +12 %). Giới hạn:
+một truyện 4 chương, một model (v4), một lượt; Lead ghi luật mới vào AGENTS.md (rel432 0fa3cab6).
+
+**Ghi trước (chi tiết LLM_Train/b15b16/PLAN.md, Lead duyệt kèm sửa):**
+- **Cổng P** (người kể theo đoạn, P_SPEC §5) chạy thêm hai nhánh oracle ở 11 chương có lỗi P: o2 = đoạn bộ phát hiện báo + người
+  kể đúng, o1 = ranh giới gold + người kể đúng. ctl->trt = phần app làm được; trt->o2 = giá trị của biết đúng người; o2->o1 = giá
+  trị của ranh giới chuẩn; lỗi còn ở o1 = lỗi gắn ngôi. Phán qua/không vẫn chỉ ctl vs trt.
+- **B15 đích phụ:** data_b9 + 1.800 mẫu phụ (cùng user, đáp = mỗi dòng thoại cùng/khác người nói với dòng thoại trước + người nghe
+  chỉ khi chữ có bằng chứng). Bằng chứng người nghe chỉ phủ 2,5 % dòng nên đích chính là cùng/khác. Suy luận không đổi. Tổng 6.016
+  mẫu ~ B10 nên đối chứng cùng bước là b9x750 (B9 1,425 epoch). Kiểm "có học" trên 200 mẫu / 8 truyện giữ lại: cùng/khác >= 85 %
+  VÀ recall lớp "cùng" >= 60 % (đa số = 68,8 %).
+- **B16 mẫu âm lật cuộc trao đổi:** 589 cặp (đổi A<->B cả cuộc trao đổi, lật từ giữa, một dòng -> người nghe có bằng chứng, một
+  dòng -> người chỉ được nhắc), chỉ từ cuộc trao đổi có nhãn đáng tin (loại 45,5 % ứng viên). DPO + 1,0 x NLL, khởi từ B9 s1234;
+  điểm DPO chỉ tính trên token giá trị speaker (mặt nạ) vì bản rejected giữ nguyên các trường khác (vd giới của người cũ) - không
+  mặt nạ thì model hạ được rejected nhờ trường lệch thay vì học ai nói. Đối chứng C16 = chỉ phần SFT. Sàng: lỗi trong cảnh -20 % so
+  B9 s1234, CI không chứa 0, và B16 < C16 ít nhất 10 %.
+- Thứ tự hàng: B7m -> cổng P -> (nhạc) -> B16 + C16 -> B15 -> B10 phần B.
+
+## 07-10 Quy tắc quyết định: cổng 19 ch KHÔNG phân giải được +1,5 F1 - thước theo CƠ CHẾ (Model, Lead yêu cầu)
+
+Số (trả lời Q2 cho người ngoài, Corpus research/outside/q2_followup_answer.md): F1 giọng = B-cubed gộp micro trên 1.349 câu; CI cặp
+lấy mẫu lại theo TRUYỆN (11 truyện) có nửa độ rộng ~3 điểm, dao động giữa hạt ~2. Mọi luật "thắng khi F1 >= +1,5" ghi trước đây
+(B13, B12, cổng P, kế hoạch B7) là không quyết được trên cổng này. Từ nay:
+1. **Thí nghiệm nhắm một cơ chế -> thước chính là số lỗi của CƠ CHẾ ấy**, so cặp từng câu cùng cổng, CI bootstrap theo truyện,
+   ngưỡng là GIẢM TƯƠNG ĐỐI ghi trước (vd -20 %), không phải điểm F1. F1 giọng và người nói chặt chỉ là CHẶN: không tụt quá -1,5.
+   - T+A+M ("chọn nhầm người trong cảnh") đo TỰ ĐỘNG: lỗi chặt mà model chọn một người có tên xuất hiện trong nhãn gold của 15 đoạn
+     trước / 5 đoạn sau. Kiểm trên 293 lỗi B9 có hai người gán: thước tự động 154 lỗi, T+A+M cả hai người 145; precision 0,68,
+     recall 0,72 - ngang mức hai người gán đồng ý với nhau (kappa 0,61).
+   - P: số lỗi gán thừa cho "tôi" trong đoạn bộ phát hiện báo (b14err/P_RULE.md).
+2. **Quyết định đổi mặc định / phát hành vẫn theo F1 + chặt**, nhưng trên cổng MỞ RỘNG: thêm mọi chương gold ngoài 10 truyện huấn
+   luyện (44 thư mục gold -> ~34 truyện); nửa CI ước 3,05 x căn(11/34) ~ 1,7. Vẫn không thấy được +1,5 với một hạt: so mô hình huấn
+   luyện là TB >= 2 hạt mỗi bên.
+3. **Sàng một hạt (vd B7m s1234):** qua sàng khi thước cơ chế giảm >= 20 % và CI theo truyện không chứa 0; qua sàng mới chạy hạt 2
+   và cổng mở rộng.
+
+Lead duyệt cả ba, thêm: cổng PHÁT HÀNH (như 0.4.31 trên Mac) chỉ là cổng KHÔNG TỤT, giữ 19 ch; cổng ĐỔI MẶC ĐỊNH model dùng cổng mở
+rộng ~34 truyện (dòng 2). Thước T+A+M tự động là thước XẤP XỈ: khi công bố kết quả luôn báo kèm số trên 145 lỗi hai người cùng gán.
+
+Sửa 07-10 chiều (góp ý ngoài vòng 2, Lead chốt):
+- **Lực của cổng:** cổng 19 ch chỉ thấy được khác biệt ~4,3 điểm F1; cổng ~34 truyện ~2,4; muốn thấy 1,5 cần ~90 truyện. Không
+  tuyên bố hơn/kém dưới ~2,5 điểm F1 ở bất kỳ cổng nào hiện có.
+- **Thước CHÍNH của thí nghiệm cơ chế = gán mù lại**: mọi dòng mà người nói KHÁC nhau giữa hai model, cộng một mẫu ngẫu nhiên các
+  dòng không đổi (để có mẫu số); hai agent gán mù như 293 lỗi B9. Bộ đếm T+A+M tự động thành thước PHỤ.
+- **Chặn F1:** ước lượng điểm phải >= -1,5, BÁO kèm cận dưới một phía nhưng KHÔNG dùng cận dưới để chặn (với nhiễu hiện có, chặn
+  bằng cận dưới sẽ loại ~50-75 % thay đổi vô hại).
+- **Nhiều hạt:** lấy trung bình, không bao giờ lấy hạt tốt nhất.
+
+## 07-10 Lỗi người nói của B9 nằm ở đâu: phân loại theo CƠ CHẾ (293 lỗi, hai người gán mù)
+
+Lead hỏi sau B13: lỗi chặt của B9 s1234 trên câu MỘT đáp án (cổng 19 ch, 293 lỗi, bỏ 8 câu mơ hồ thật) do cơ chế nào? Hồ sơ mỗi lỗi
+= câu + 15 đoạn trước / 5 đoạn sau (gold và model), xáo thứ tự, giấu tên truyện. Bảng 10 mã ghi trước (LLM_Train/b14err/TAXONOMY.md);
+hai agent Sonnet gán độc lập: đồng ý mã chính 67 %, **kappa 0,61**. Số dưới = mã chính của người A / người B (hai người cùng mã).
+
+| cơ chế | gộp 293 | bỏ Rokujouma (177) |
+|---|---|---|
+| chọn nhầm GIỮA NHỮNG NGƯỜI TRONG CẢNH: lệch lượt (T) + người nghe (A) + người được nhắc (M) | **56 % / 57 %** (35 %) | 31 % / 30 % (16 %) |
+| - lệch lượt đối đáp T | 17 % / 25 % (15 %) | 11 % / 15 % |
+| - người nghe / được gọi A | 19 % / 15 % (11 %) | 8 % / 7 % |
+| - người được nhắc trong lời dẫn M | 19 % / 17 % (10 %) | 12 % / 8 % |
+| ngôi thứ nhất: "tôi"/người kể vs nhân vật P | 17 % / 19 % (15 %) | **28 % / 31 % (24 %)** |
+| danh tính / dạng tên N (đúng người, sai tên; NPC vs người có tên) | 13 % / 17 % (12 %) | **21 % / 28 % (20 %)** |
+| loại đoạn kéo theo K | 4 % / 3 % | 7 % / 5 % |
+| gold đáng ngờ G | 1 % / 3 % (ít nhất một người nghi 9 %) | |
+| thông tin ở xa ngoài cửa sổ F | 0 % / 0 % (có mặt 6 %) | |
+
+- **Một nửa lỗi nằm trong DÂY CHUYỀN** (mã phụ C, ít nhất một người: 52 %): khi model hiểu sai ai đang nói với ai, cả đoạn hội
+  thoại lật theo. Kết hợp E1 (không phải lệch phơi bày): sai ở mức CẢNH, không phải từng câu học sai lịch sử.
+- **Cửa sổ không phải nút thắt**: F gần 0 - manh mối gần như luôn có trong 15 đoạn trước.
+- **Hai kiểu truyện, hai cơ chế.** Rokujouma (116 lỗi, nhiều nhân vật, ngôi ba): T/A/M. Các truyện còn lại: P (ngôi thứ nhất) và N (danh tính).
+- **Hệ quả cho hướng gốc:** (1) T+A+M là bài toán chọn người trong cảnh, quyết định chung cho cả cuộc hội thoại - đúng chỗ B7 (gom cụm
+  theo người nói) và trạng thái cảnh (B10) nhắm tới; (2) P cần một cơ chế riêng cho người kể ngôi thứ nhất; (3) N (12-20 %) có phần
+  là việc của SỔ NHÂN VẬT (gộp bí danh, NPC = người có tên) - sửa được bằng mã sau phân tích, không cần huấn luyện; đo trước khi làm.
+Số: LLM_Train/b14err/AGREE.md (theo truyện, cặp bất đồng).
+
+**N bằng mã sau phân tích - KHÔNG ĐẠT (luật ghi trước b14err/N_RULE.md).** Gộp tên không nhìn gold (chuẩn hoá, bỏ kính ngữ, tập con
+token khớp đúng một nhãn dài hơn) sửa 0/36 lỗi N hai người cùng gán, 0/57 tập rộng, và làm 5 câu đúng thành sai (gộp tên trơn sang
+dạng có danh xưng mà gold không có). N KHÔNG phải sai dạng tên: 22/57 là NPC* <-> người có tên (nối danh tính), 32/57 là nhầm hẳn người
+khác; kính ngữ / phiên âm 0. Phần N thuộc về nối danh tính NPC (reconcile) và chọn người trong cảnh, không phải sổ tên.
+
+**P bước 0 - QUA cả hai điều kiện, nhưng mỏng (b14err/P_RULE.md, p_RESULT.md).** 43 lỗi P hai người cùng gán: GÁN THỪA cho "tôi" 28,
+GÁN THIẾU 15. Bộ phát hiện D (cắt đoạn ở dòng ngắt cảnh; lời dẫn gần như không có "tôi", hoặc tên người kể xuất hiện ngôi ba
+nhiều -> đoạn có người kể khác) - ngưỡng cố định, không gold:
+- Độ phủ: 22/28 lỗi gán thừa nằm ở đoạn D báo (79 %), đạt >= 1/2 ở 3 truyện (14/15, 4/4, 4/4), 0/5 ở 3 truyện còn lại. MỘT chương
+  (đổi điểm nhìn) giữ 14/28 và là chương duy nhất gold xác nhận người kể khác; bỏ nó còn 8/14 (57 %).
+- Báo nhầm: 55 chương gold của truyện ngôi thứ nhất, 3/64 đoạn mà người kể đúng là first_person bị báo khác (4,7 %, mốc 5 % - thêm
+  một đoạn là trượt); riêng các truyện có first_person chắc chắn 3/47 (6,4 %). Bắt đúng 9/10 đoạn người kể khác.
+- Đọc: tín hiệu thật nhưng thưa (đổi điểm nhìn hiếm, 10 đoạn trên 55 chương) và mốc báo nhầm sát nút. Không áp thẳng: đưa vào app như
+  ĐỀ XUẤT người kể theo đoạn mà người dùng thấy và đổi được, và đo bằng cổng GPU (prompt đổi -> đầu ra đổi) trước khi bật mặc định.
+
+## 07-10 Kế hoạch gốc kế tiếp sau B10: B13 - học với TẬP đáp án chấp nhận (ghi trước, Model)
+
+**Vì sao là gốc, và vì sao lúc này.** Hai gốc của 04-10 là (A) đáp án chuẩn và (B) thuật toán học. B13 đánh vào chỗ hai gốc chạm
+nhau: nhãn gold nói "câu này người A HOẶC người kể đều đúng" (652/1.827 câu gold có nhiều đáp án chấp nhận, mục B3 bên dưới), bộ chấm
+cũng chấm như thế, nhưng huấn luyện SFT ép MỘT tên. Với model, đó là nhiễu nhãn ở đúng token quyết định: hai câu giống nhau nhận hai
+"đáp án duy nhất" khác nhau, và model học cách lưỡng lự. Các hướng khác đã có số hoặc đang chạy: lệch phơi bày không phải gốc (E1),
+kênh nhiễu âm (B6), thêm dữ liệu cùng kiểu (B9, B10), học từ lỗi của chính học trò (B11, chuỗi riêng), lịch sử-gold (đang xếp hàng,
+nếu trần >= +5 chặt thì B12 lịch sử nhiễu chạy trước theo b12/PLAN.md). B3 là hướng gốc duy nhất trong danh sách 04-10 chưa đo.
+Không phải bỏ phiếu hạt, không chỉnh prompt: đổi HÀM MỤC TIÊU cho khớp nghĩa của nhãn.
+
+**Bước 0 - chẩn đoán trên CPU (~1 giờ, chạy ngay, không tốn GPU).** Trên gốc cổng 19 chương đã có (mrel430b, B9 s1234):
+(i) phần lỗi người nói chặt rơi vào câu nhiều đáp án; (ii) trong data_b9, số mẫu có câu gốc gold với tập > 1 (phần data_v8; phần bạc
+một thầy chỉ có một tên). Luật dừng ghi trước: câu nhiều đáp án mang < 15 % lỗi chặt -> KHÔNG chạy GPU, ghi kết quả âm, chuyển
+sang ứng viên kế (B7 gom cụm theo người nói, nếu B7m chưa trả lời).
+
+**Bước 1 - huấn luyện (GPU, sau B10 + SR + lịch sử-gold).** Đúng công thức B9 (data_b9, 527 bước, hạt 1234 rồi 1), biến duy nhất là
+loss ở khoảng token giá trị `speaker`: thay CE một đáp án bằng log-likelihood biên trên tập chấp nhận,
+`-log Σ_{c ∈ A} P(c | tiền tố)`, mỗi ứng viên chấm teacher-forced trên cùng tiền tố (k <= 4, chỉ vài token đuôi; ước +20-30 %
+thời gian bước). Câu một đáp án: loss y như B9. Tập A dựng BẰNG MÃ từ nhãn gold (dấu `~`), không xin thầy lập luận.
+Làm trong LLM_Train/b1/train_lora_w.py (cờ `--set-loss`), không đụng repo app; kiểm trên CPU bằng mẫu đồ chơi: tập một phần tử ra
+đúng loss của B9 tới 1e-6.
+
+**Luật thắng (cổng 19 chương / 11 truyện, chạy MỘT lần, TB 2 hạt so B9 cùng cổng).**
+- THẮNG: F1 giọng >= B9 + 1,5 và người nói chặt >= B9 + 1,0, CI cụm theo truyện của F1 không chứa 0; không truyện nào tụt > 3
+  chặt; Hàn không tụt > 2.
+- Cơ chế phải khớp: tỉ lệ sai trên câu nhiều đáp án giảm >= 20 % tương đối, câu một đáp án không tụt > 1 điểm. Điểm tăng mà câu
+  nhiều đáp án không giảm -> ghi "thắng không vì lý do dự kiến", không triển khai trước khi hiểu.
+- ÂM: < B9 - 1 ở F1 giọng -> đóng hướng, ghi số. Giữa hai mốc -> hoà, không thêm hạt để "kéo" qua ngưỡng.
+
+**Giá.** Bước 0: 1 giờ CPU. Cài loss: ~nửa ngày agent Sonnet theo đặc tả này (không commit, Model duyệt diff). GPU nhà: 2 x
+(huấn luyện ~9 giờ + cổng ~4 giờ) ~ 26 giờ; hoặc một hạt trên Kaggle sau thứ Bảy 10-10 để rút còn ~13 giờ nhà.
+
+**KẾT QUẢ bước 0 (07-10 08:4x): DỪNG theo luật ghi trước - không chạy GPU.** Cổng 19 chương, 1.349 câu chấm (LLM_Train/b13/DIAG.md,
+số đếm từng chương khớp `lnj_table.collect()`). "Nhiều đáp án" trong 652/1.827 của 04-10 phần lớn là BÍ DANH của cùng một người
+(`~` liệt kê cách gọi khác của một nhân vật trên gần mọi dòng) - bộ chấm đã gộp bí danh (`matched_person`), nên đó không phải nhiễu
+nhãn ở quyết định chọn người. Mơ hồ THẬT (người kể hoặc nhân vật, NPC* hoặc người có tên, hai người khác nhau) = 14,8 % câu nhưng chỉ
+mang **1,6 % lỗi chặt của mrel430bA (6/381) và 2,7 % của B9 s1234 (8/301)** - dưới mốc 15 %. Tỉ lệ sai trên các câu ấy 3-4 % so với
+25-33 % trên câu một người: model gần như không sai ở đó. Trong data_b9 mơ hồ thật là ~4,1 % quyết định người nói (246 câu, 186 bị ép
+về NARRATOR). Đọc: lỗi người nói nằm ở câu MỘT đáp án - chọn sai người, không phải bị dạy lưỡng lự. Hướng kế theo kế hoạch: gom cụm
+theo người nói (B7) - đang chờ số B7m trong hàng.
+
 ## 04-10 Đột phá - đánh vào gốc: đáp án chuẩn và thuật toán học
 
 Chủ sách 04-10: model phân tích là tính năng chính, nguồn gốc ý tưởng của app; bỏ phiếu nhiều hạt "không giải quyết gốc";

@@ -19,6 +19,7 @@
 # Parser: 133 “Tớ cũng không ngờ mình có thể ngồi tường thuật toàn bộ nội dung “Harry Potter” cho cậu nghe đấy.” là lời MITSUKI
 # (134 "Mitsuki hơi bĩu môi", 135 Remon cãi "Tớ mới là người phải phàn nàn chứ!") nhưng ngoặc lồng làm parser khoá N -> NARRATOR,
 # AYANO~ (quy tắc 10; host ép NARRATOR, ~ giữ cho segment_diff như Nageki 53).
+# 06-10 (phiên Model) chuyển theo cách tách rel430b 24ed59d2 (gate_gold_rel430b.py): 133 N -> D (khoá thoại, giữ NARRATOR)
 0 H
 1 N
 2 N
@@ -152,7 +153,7 @@
 130 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,tender 0-1 normal soft,normal m
 131 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,tender 0-1 normal normal f
 132 N
-133 N NARRATOR,AYANO~,MITSUKI~,AYANO MITSUKI~,MITSUKI AYANO~ sarcastic,happy,neutral 0-1 normal normal u
+133 D NARRATOR,AYANO~,MITSUKI~,AYANO MITSUKI~,MITSUKI AYANO~ sarcastic,happy,neutral 0-1 normal normal u
 134 N
 135 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO angry,excited,happy 1-2 fast,normal loud f
 136 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO sarcastic,happy,neutral 0-1 normal normal m

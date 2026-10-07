@@ -7,6 +7,31 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Nhạc của bạn: bài có lời hát được nhận ra và không tự phát làm nền dưới giọng đọc (lời át chữ). Bài ấy hiện nhãn "Có vẻ có lời". Bạn vẫn có thể ghim hay bấm "Vẫn cho máy tự chọn".
+- Nhạc của bạn: mỗi bài có một nút để bạn quyết máy có được tự chọn nó làm nhạc nền hay không. "Đừng tự chọn bài này" cho bài nào bạn chỉ muốn ghim tay (kể cả bài máy không nhận ra là có lời); "Cho máy tự chọn lại" để trả về như cũ. Bài đã tắt hiện nhãn "Máy không tự chọn bài này", ghim tay vẫn được.
+
+### Studio
+
+- Phân tích cùng một cuốn bằng cùng một model không còn đổi theo câu hỏi đứng trước: Studio khởi Ollama với bộ đệm câu
+  hỏi trong RAM tắt (bộ đệm ấy lấy lại phần đã tính cho câu trước, kể cả sau câu mồi của 0.4.31), và câu mồi không còn
+  chung chữ nào với câu hỏi thật. Dừng giữa lúc phân tích rồi làm tiếp giờ ra đúng cùng một cuốn: thử 4 chương, dừng ở
+  đoạn 624/955, hai lượt trùng từng chữ (0.4.31: 10 đoạn khác, 4 đoạn đổi người nói). Phân tích chậm hơn khoảng 7–12%.
+- Card đồ hoạ hết bộ nhớ giữa lúc phân tích (vd một app khác vừa lấy thêm bộ nhớ card) không còn làm hỏng chương: Ollama
+  báo lỗi trước khi trả lời thì máy chờ một lúc cho card trống rồi hỏi lại câu ấy, tối đa hai lần.
+- Giọng làm sách đọc chữ như "Nghe ngay": số La Mã ("Chương IV" thành "Chương bốn", "Thế chiến II"), viết tắt ("HP" thành "hát pê"), tiếng reo kéo dài ("Aaaa"),
+  kính ngữ ("Ariel-sama"), "~", số kiểu Anh "1,000", mũi tên và ký hiệu theo ngữ cảnh. Chữ đã có trong bảng cách đọc của cuốn vẫn đọc theo bảng. Trên bộ 612 câu
+  thử, câu đọc đúng từng chữ tăng từ 31% lên 65%, đọc đúng chữ (bỏ dấu câu) từ 43% lên 86%; ngang với Nghe ngay.
+- Truyện kể ngôi thứ nhất mà có đoạn do người khác kể (chương đổi người kể, đoạn chèn giữa hai dòng ngắt cảnh): hộp "Việc cần duyệt"
+  hiện thẻ "Chương 195, câu 40–112: có vẻ không phải <tên> kể" ngay sau khi chia câu, với ba nút "Đúng, đổi người kể", "Không, giữ
+  nguyên" và "Chọn người kể…". Đồng ý thì phần chưa phân tích của đoạn ấy được nói đúng người kể, máy thôi gán lời người khác cho
+  "tôi"; chưa trả lời thì máy giữ nguyên. Chương đã phân tích xong thì thẻ nói rõ lựa chọn chỉ áp khi làm lại sách, và đồng ý một
+  đoạn không bắt cả cuốn phân tích lại. Dùng được từ điện thoại điều khiển máy tính; việc hiện thẻ này trong app điện thoại độc lập
+  chưa có.
+
+## [0.4.31] - 2026-10-07
+
 ### Nghe
 
 - File TXT cả truyện: ô tách chương giờ ghi đúng số dòng "Chương N" có trong file, và nói riêng khi phần chữ trước chương đầu thành một chương "Mở đầu" (ví dụ "Tách theo
@@ -75,8 +100,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   lại những đoạn vừa đổi chỗ vì cách chia cảnh mới); chương nào AI chưa đọc xong thì vẫn chơi theo cách cũ.
 - Nghe trên máy tính: một bài nhạc không tải được (mất mạng) thì 5 phút sau máy tự thử lại như trên
   điện thoại, không còn im đến khi sang đoạn khác.
-- Nhạc của bạn: bài có lời hát được nhận ra và không tự phát làm nền dưới giọng đọc (lời át chữ). Bài ấy hiện nhãn "Có vẻ có lời". Bạn vẫn có thể ghim hay bấm "Vẫn cho máy tự chọn".
-- Nhạc của bạn: mỗi bài có một nút để bạn quyết máy có được tự chọn nó làm nhạc nền hay không. "Đừng tự chọn bài này" cho bài nào bạn chỉ muốn ghim tay (kể cả bài máy không nhận ra là có lời); "Cho máy tự chọn lại" để trả về như cũ. Bài đã tắt hiện nhãn "Máy không tự chọn bài này", ghim tay vẫn được.
 
 ### Làm sách
 
@@ -89,31 +112,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
-- Phân tích cùng một cuốn bằng cùng một model không còn đổi theo câu hỏi đứng trước: Studio khởi Ollama với bộ đệm câu
-  hỏi trong RAM tắt (bộ đệm ấy lấy lại phần đã tính cho câu trước, kể cả sau câu mồi của 0.4.31), và câu mồi không còn
-  chung chữ nào với câu hỏi thật. Dừng giữa lúc phân tích rồi làm tiếp giờ ra đúng cùng một cuốn: thử 4 chương, dừng ở
-  đoạn 624/955, hai lượt trùng từng chữ (0.4.31: 10 đoạn khác, 4 đoạn đổi người nói). Phân tích chậm hơn khoảng 7–12%.
-- Card đồ hoạ hết bộ nhớ giữa lúc phân tích (vd một app khác vừa lấy thêm bộ nhớ card) không còn làm hỏng chương: Ollama
-  báo lỗi trước khi trả lời thì máy chờ một lúc cho card trống rồi hỏi lại câu ấy, tối đa hai lần.
 - Câu hỏi "'Tôi' là ai?" lúc tạo sách gợi ý đúng người kể ở vị trí đầu thường hơn hẳn: 16/17 truyện ngôi thứ nhất
   để riêng không dùng khi chỉnh (trước 12/17), và người kể luôn nằm trong ba gợi ý đầu. Trước đây gợi ý đầu hay là tước
   hiệu hay tên người khác ("Quỷ Vương", "Lôi Long").
 - Dừng giữa lúc phân tích rồi làm tiếp (hay app tắt đột ngột) không còn tự đổi cách app hỏi model: mỗi câu trả lời của
   model được ghi lại, làm tiếp thì dùng lại đúng câu trả lời cũ, và danh sách nhân vật, lượt thử, lời góp ý mang sang
   được dựng lại y như lúc chưa dừng.
-- Phân tích cùng một cuốn bằng cùng một model giờ ra cùng một kết quả, dù Ollama vừa khởi động lại hay vừa trả lời
-  việc khác: trước mỗi câu hỏi app gửi một câu ngắn không liên quan để Ollama tính lại từ đầu, thay vì dùng lại phần
-  đã tính cho câu trước (phần ấy làm câu trả lời đổi theo câu hỏi đứng trước - người nói, giọng, audio đổi theo). Thời
-  gian phân tích không đổi. Chỉ đúng khi không có app khác hỏi cùng Ollama trong lúc ấy.
-- Giọng làm sách đọc chữ như "Nghe ngay": số La Mã ("Chương IV" thành "Chương bốn", "Thế chiến II"), viết tắt ("HP" thành "hát pê"), tiếng reo kéo dài ("Aaaa"),
-  kính ngữ ("Ariel-sama"), "~", số kiểu Anh "1,000", mũi tên và ký hiệu theo ngữ cảnh. Chữ đã có trong bảng cách đọc của cuốn vẫn đọc theo bảng. Trên bộ 612 câu
-  thử, câu đọc đúng từng chữ tăng từ 31% lên 65%, đọc đúng chữ (bỏ dấu câu) từ 43% lên 86%; ngang với Nghe ngay.
-- Truyện kể ngôi thứ nhất mà có đoạn do người khác kể (chương đổi người kể, đoạn chèn giữa hai dòng ngắt cảnh): hộp "Việc cần duyệt"
-  hiện thẻ "Chương 195, câu 40–112: có vẻ không phải <tên> kể" ngay sau khi chia câu, với ba nút "Đúng, đổi người kể", "Không, giữ
-  nguyên" và "Chọn người kể…". Đồng ý thì phần chưa phân tích của đoạn ấy được nói đúng người kể, máy thôi gán lời người khác cho
-  "tôi"; chưa trả lời thì máy giữ nguyên. Chương đã phân tích xong thì thẻ nói rõ lựa chọn chỉ áp khi làm lại sách, và đồng ý một
-  đoạn không bắt cả cuốn phân tích lại. Dùng được từ điện thoại điều khiển máy tính; việc hiện thẻ này trong app điện thoại độc lập
-  chưa có.
+- Phân tích cùng một cuốn bằng cùng một model ít đổi theo câu hỏi đứng trước hơn: trước mỗi câu hỏi app gửi một câu
+  ngắn không liên quan, để câu hỏi sau không nối tiếp phần Ollama vừa tính cho câu trước (phần ấy làm câu trả lời đổi
+  theo câu hỏi đứng trước - người nói, giọng, audio đổi theo). Thời gian phân tích không đổi. Chưa bảo đảm: Ollama
+  vẫn có thể lấy lại phần đã tính từ bộ đệm riêng của nó, và việc này chỉ có tác dụng khi không có app khác hỏi cùng
+  Ollama trong lúc ấy.
 
 ### Cách đọc tên
 
