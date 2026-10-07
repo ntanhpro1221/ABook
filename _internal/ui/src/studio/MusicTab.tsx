@@ -9,8 +9,8 @@ import { Button } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
 import { importMusic } from "./musicImport";
-import { analysisLabel, hasVocals, importSummary, LOCAL_PREFIX, previewPath, type LocalMusicView, type LocalTrack } from "./musicLocal";
-import { VocalsNote } from "./VocalsNote";
+import { analysisLabel, importSummary, LOCAL_PREFIX, previewPath, type LocalMusicView, type LocalTrack } from "./musicLocal";
+import { AutoPickNote } from "./AutoPickNote";
 import { MusicModuleNotice } from "./MusicModuleNotice";
 
 // Tab "Nhạc nền" của trang dự án (docs/MUSIC_SELECTION_MODEL.md, mục 4 - ba tầng chỉnh): cả cuốn (bật/tắt, thế giới
@@ -363,11 +363,7 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
                 {track.title}
                 {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
                 {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
-                {hasVocals(track) ? (
-                  <VocalsNote track={track} canOverride={canImport} onView={refresh} />
-                ) : (
-                  <span className="block text-xs text-fg-2">{analysisLabel(track)}</span>
-                )}
+                <AutoPickNote track={track} canOverride={canImport} onView={refresh} idleLabel={analysisLabel(track)} />
               </span>
               <span className="flex shrink-0 gap-1">
                 <Button size="sm" variant="ghost" icon={previewing === track.link ? Square : Play} aria-pressed={previewing === track.link}
