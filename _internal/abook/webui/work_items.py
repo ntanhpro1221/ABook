@@ -18,10 +18,11 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .. import names as renames
+from .. import narrator_sections
 from ..listener_overrides import (
     NARRATOR, UNNAMED, pronunciation_requests, read_overrides, speaker_requests, surface_key, voice_requests,
 )
-from . import store
+from . import narrator_cards, store
 from .address_cues import address_doubts, split_doubts
 from .humanize import shown_reading
 from .reviews import review_items
@@ -39,6 +40,7 @@ SEVERITY = {
     "pronunciation": 0.5,
     "unnamed": 0.3,
     "audio": 0.9,
+    "narrator": 0.9,  # đoạn kể bởi người khác mà máy cứ gán lời họ cho "tôi": sai người ở cả một đoạn
 }
 EXAMPLES = 3
 # Thẻ "Lượt đối đáp" gộp một chuỗi câu liền nhau cùng người thành một thẻ, tối đa ngần này câu. Số CHẴN: khúc sau bắt đầu
@@ -417,8 +419,16 @@ def work_items(project_root: Path) -> dict[str, Any]:
         index = str(chapter_index.get(chapter_id, ""))
         return str(chapter_narrators[index]).strip() if index in chapter_narrators else book_narrator
 
+    # Người kể theo ĐOẠN người dùng đã nhận (narrator_sections.json): câu trong đoạn theo người kể của đoạn, không của chương.
+    accepted_sections = narrator_sections.accepted(narrator_sections.load(project_root)) if (book_narrator or chapter_narrators) else {}
+
+    def row_narrator(row: Any) -> str:
+        found = narrator_sections.narrator_at(accepted_sections, int(chapter_index.get(int(row["chapter_id"]), 0)), int(row["seq"]))
+        return narrator_of(int(row["chapter_id"])) if found is None else found
+
+    by_section = row_narrator if accepted_sections else None
     asked = {item["key"] for item in items}
-    for row, suggested, cue in address_doubts(spoken, narrator_of) if (book_narrator or chapter_narrators) else []:
+    for row, suggested, cue in address_doubts(spoken, narrator_of, by_section) if (book_narrator or chapter_narrators) else []:
         stable_id = str(row["stable_id"])
         if f"speaker:{stable_id}" in asked:
             continue
@@ -450,7 +460,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
     #     nhập 32-55% câu người vô danh). Một thẻ cho cả nhóm; "Người khác…" đặt tên người lạ để có giọng riêng.
     asked = {item["key"] for item in items}
     for label, odd_rows, odd_words, usual_words, usual_count in (
-        split_doubts(spoken, narrator_of, _is_named) if (book_narrator or chapter_narrators) else []
+        split_doubts(spoken, narrator_of, _is_named, by_section) if (book_narrator or chapter_narrators) else []
     ):
         odd_rows = [row for row in odd_rows if f"speaker:{row['stable_id']}" not in asked]
         if len(odd_rows) < 2:
@@ -479,6 +489,48 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "current": who,
             "examples": [_example(row, names, speaker_label, project_root) for row in odd_rows[:EXAMPLES]],
             **fix,
+        })
+
+    # 0d. Người kể của ĐOẠN khác người kể "tôi" của sách (narrator_sections.py, ngưỡng đã đo ở b14err/P_RULE.md): model vẫn được
+    #     dặn "người kể là X" nên gán thừa lời người khác cho X. Đề xuất có ngay sau khi chia câu, người dùng nhận lúc nào cũng
+    #     được; lô đã phân tích rồi thì lựa chọn chỉ áp khi làm lại sách - thẻ nói rõ điều đó. Chưa trả lời = không áp.
+    decisions = narrator_sections.load(project_root)
+    for proposal in narrator_cards.proposals(project_root):
+        chapter_id, first, last = proposal["chapter_id"], proposal["from_seq"], proposal["to_seq"]
+        who = speaker_label(proposal["narrator"])
+        decision = narrator_cards.decision_of(decisions, proposal["chapter_index"], first, last)
+        total, done = narrator_cards.progress(project_root, chapter_id, first, last)
+        with closing(store.connect(project_root)) as connection:
+            shown = connection.execute(
+                "SELECT * FROM segments WHERE chapter_id=? AND seq BETWEEN ? AND ? ORDER BY seq LIMIT ?",
+                (chapter_id, first, last, EXAMPLES)).fetchall()
+        if decision is None:
+            requested = None
+        elif not decision["accepted"]:
+            requested = "Giữ nguyên"
+        else:
+            requested = f"Người kể: {speaker_label(decision['narrator'])}" if decision["narrator"] else "Đổi người kể"
+        chapter_name = names.get(chapter_id, {}).get("name") or f"Chương {proposal['chapter_index']}"
+        if proposal["r1"] is not None and proposal["r1"] < 1:
+            why = "Lời kể ở đây hầu như không có “tôi”, khác với phần còn lại của chương."
+        else:
+            why = f"Lời kể gọi tên {who} như nói về một người khác, và ít “tôi” hơn hẳn phần còn lại."
+        items.append({
+            "kind": "narrator",
+            "key": f"narrator:{proposal['chapter_index']}:{first}:{last}",
+            "title": f"{chapter_name}, câu {first}–{last}: có vẻ không phải {who} kể",
+            "problem": f"{why} Nếu người kể ở đây là người khác, máy sẽ thôi gán lời họ cho {who}. Chưa trả lời thì máy giữ nguyên.",
+            "affected": total,
+            "doubt": 0.5,
+            "options": ["Đúng, đổi người kể", "Không, giữ nguyên", "Chọn người kể…"],
+            "current": who,
+            "examples": [_example(row, names, speaker_label, project_root) for row in shown],
+            "requested": requested,
+            "narratorSection": {
+                "chapterIndex": proposal["chapter_index"], "fromSeq": first, "toSeq": last, "narrator": who,
+                "appliesNote": narrator_cards.applies_note(total, done),
+                "choices": _cast_choices(spoken, {chapter_id}, {proposal["narrator"].casefold()}, speaker_label),
+            },
         })
 
     # 1. Chưa rõ nam hay nữ mà có lời: giọng sai giới là lỗi người nghe nhận ra ngay. Bấm "Nam"/"Nữ" -> overrides.json

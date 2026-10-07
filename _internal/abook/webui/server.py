@@ -48,6 +48,7 @@ from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
 from .name_readings import name_readings
 from .voice_picker import engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices
+from . import narrator_cards
 from .work_items import work_items
 from .cast import CastError, CastPlayers
 from .cast import search as cast_search
@@ -3252,6 +3253,17 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"stableId": stable_id, "kind": kind, "emotion": emotion, "intensity": intensity,
                                         "spoken": spoken})
 
+    def post_narrator_section(self, _query: dict[str, list[str]], value: str) -> None:
+        # Thẻ "người kể của đoạn khác" (narrator_cards.py): quyết định lưu ở narrator_sections.json cạnh sổ dự án; dây chuyền
+        # đọc lại ở mỗi lô phân tích chưa chạy. Chỉ dự án có xưởng trên máy này - cuốn nhập từ file không có phân tích để áp.
+        self.app._mutating()
+        path = self.app._book(value)
+        try:
+            result = narrator_cards.decide(path, self._body())
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self._send_json(HTTPStatus.OK, result)
+
     def post_voice(self, _query: dict[str, list[str]], value: str) -> None:
         # Giọng / giới của MỘT nhân vật (thẻ "Nam hay nữ", "Chung giọng"): như người nói - ghi mong muốn vào overrides.json,
         # dây chuyền áp ở ranh giới chương; hỏi SQLite chỉ đọc bằng đúng phép dây chuyền dùng để từ chối tại chỗ.
@@ -4126,6 +4138,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/word-timings"), Handler.post_word_timings),
     ("POST", re.compile(BOOK + r"/projectfile"), Handler.post_projectfile),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
+    ("POST", re.compile(BOOK + r"/narrator-section"), Handler.post_narrator_section),
     ("POST", re.compile(BOOK + r"/voice"), Handler.post_voice),
     ("POST", re.compile(BOOK + r"/line"), Handler.post_line),
     ("GET", re.compile(BOOK + r"/voices"), Handler.get_voice_choices),
