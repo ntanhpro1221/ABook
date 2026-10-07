@@ -39,6 +39,33 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 07-10 Lỗi người nói của B9 nằm ở đâu: phân loại theo CƠ CHẾ (293 lỗi, hai người gán mù)
+
+Lead hỏi sau B13: lỗi chặt của B9 s1234 trên câu MỘT đáp án (cổng 19 ch, 293 lỗi, bỏ 8 câu mơ hồ thật) do cơ chế nào? Hồ sơ mỗi lỗi
+= câu + 15 đoạn trước / 5 đoạn sau (gold và model), xáo thứ tự, giấu tên truyện. Bảng 10 mã ghi trước (LLM_Train/b14err/TAXONOMY.md);
+hai agent Sonnet gán độc lập: đồng ý mã chính 67 %, **kappa 0,61**. Số dưới = mã chính của người A / người B (hai người cùng mã).
+
+| cơ chế | gộp 293 | bỏ Rokujouma (177) |
+|---|---|---|
+| chọn nhầm GIỮA NHỮNG NGƯỜI TRONG CẢNH: lệch lượt (T) + người nghe (A) + người được nhắc (M) | **56 % / 57 %** (35 %) | 31 % / 30 % (16 %) |
+| - lệch lượt đối đáp T | 17 % / 25 % (15 %) | 11 % / 15 % |
+| - người nghe / được gọi A | 19 % / 15 % (11 %) | 8 % / 7 % |
+| - người được nhắc trong lời dẫn M | 19 % / 17 % (10 %) | 12 % / 8 % |
+| ngôi thứ nhất: "tôi"/người kể vs nhân vật P | 17 % / 19 % (15 %) | **28 % / 31 % (24 %)** |
+| danh tính / dạng tên N (đúng người, sai tên; NPC vs người có tên) | 13 % / 17 % (12 %) | **21 % / 28 % (20 %)** |
+| loại đoạn kéo theo K | 4 % / 3 % | 7 % / 5 % |
+| gold đáng ngờ G | 1 % / 3 % (ít nhất một người nghi 9 %) | |
+| thông tin ở xa ngoài cửa sổ F | 0 % / 0 % (có mặt 6 %) | |
+
+- **Một nửa lỗi nằm trong DÂY CHUYỀN** (mã phụ C, ít nhất một người: 52 %): khi model hiểu sai ai đang nói với ai, cả đoạn hội
+  thoại lật theo. Kết hợp E1 (không phải lệch phơi bày): sai ở mức CẢNH, không phải từng câu học sai lịch sử.
+- **Cửa sổ không phải nút thắt**: F gần 0 - manh mối gần như luôn có trong 15 đoạn trước.
+- **Hai kiểu truyện, hai cơ chế.** Rokujouma (116 lỗi, nhiều nhân vật, ngôi ba): T/A/M. Các truyện còn lại: P (ngôi thứ nhất) và N (danh tính).
+- **Hệ quả cho hướng gốc:** (1) T+A+M là bài toán chọn người trong cảnh, quyết định chung cho cả cuộc hội thoại - đúng chỗ B7 (gom cụm
+  theo người nói) và trạng thái cảnh (B10) nhắm tới; (2) P cần một cơ chế riêng cho người kể ngôi thứ nhất; (3) N (12-20 %) có phần
+  là việc của SỔ NHÂN VẬT (gộp bí danh, NPC = người có tên) - sửa được bằng mã sau phân tích, không cần huấn luyện; đo trước khi làm.
+Số: LLM_Train/b14err/AGREE.md (theo truyện, cặp bất đồng).
+
 ## 07-10 Kế hoạch gốc kế tiếp sau B10: B13 - học với TẬP đáp án chấp nhận (ghi trước, Model)
 
 **Vì sao là gốc, và vì sao lúc này.** Hai gốc của 04-10 là (A) đáp án chuẩn và (B) thuật toán học. B13 đánh vào chỗ hai gốc chạm
