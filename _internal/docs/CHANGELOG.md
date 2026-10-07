@@ -97,6 +97,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   việc khác: trước mỗi câu hỏi app gửi một câu ngắn không liên quan để Ollama tính lại từ đầu, thay vì dùng lại phần
   đã tính cho câu trước (phần ấy làm câu trả lời đổi theo câu hỏi đứng trước - người nói, giọng, audio đổi theo). Thời
   gian phân tích không đổi. Chỉ đúng khi không có app khác hỏi cùng Ollama trong lúc ấy.
+- Giọng làm sách đọc chữ như "Nghe ngay": số La Mã ("Chương IV" thành "Chương bốn", "Thế chiến II"), viết tắt ("HP" thành "hát pê"), tiếng reo kéo dài ("Aaaa"),
+  kính ngữ ("Ariel-sama"), "~", số kiểu Anh "1,000", mũi tên và ký hiệu theo ngữ cảnh. Chữ đã có trong bảng cách đọc của cuốn vẫn đọc theo bảng. Trên bộ 612 câu
+  thử, câu đọc đúng từng chữ tăng từ 31% lên 65%, đọc đúng chữ (bỏ dấu câu) từ 43% lên 86%; ngang với Nghe ngay.
 
 ### Cách đọc tên
 
