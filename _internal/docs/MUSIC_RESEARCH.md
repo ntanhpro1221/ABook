@@ -4337,6 +4337,44 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 07-10 15:xx - Q4 vòng 3 trên 60 chương bạc cũ: STU-FT đúng là học thuộc; mmBERT-small ĐÔNG CỨNG hơn bản tinh chỉnh; trọng số đều theo chương nhích nhẹ
+
+Không cổng; đây là mốc trước lô bạc. Mã `stu_ft_diag.py`, `stu_cc.py`.
+
+**(3) "Loss tụt 26 lần, r bộ học đi ngang" - học thuộc hay chỉ co thang?**
+
+| epoch | khúc ĐÃ THẤY: r trong phân hoạch V / E / T | MAE sau căn giữa V | SD dự đoán / SD đích V | chương CHƯA THẤY 4+5+5b+6: SD dự đoán V | r bộ học |
+|---|---|---|---|---|---|
+| 1 | .83 / .81 / .84 | .061 | .186 / .162 | .132 | .300 |
+| 2 | .90 / .89 / .92 | .032 | .171 / .162 | .116 | .301 |
+| 4 | .93 / .92 / .94 | .015 | .161 / .162 | .102 | .294 |
+
+- Trên khúc đã thấy: lỗi căn giữa giảm 4 lần và độ lệch chuẩn dự đoán KHỚP đích. Model không chỉ chỉnh trung bình hay thang; nó khớp
+  thật từng khúc.
+- Trên chương chưa thấy: dự đoán co dần (SD .13 → .10) mà r không lên.
+- Khoảng cách đã thấy / chưa thấy (.83 / .30) có ngay từ epoch 1. Một phần vì 4 phân hoạch cắt ngẫu nhiên lặp lại cùng chữ của một
+  chương, nên mỗi câu được thấy khoảng 5 lần.
+- Kết luận: **học thuộc**, đúng như đã nghi. Với lô bạc nên dùng ít epoch hơn, hoặc dừng sớm theo bộ học.
+
+**(2) Ridge căn giữa trong chương, mỗi chương cùng tổng trọng số** (Q4 vòng 3), so với trọng số đều cũ. Cùng ba biểu diễn, cộng
+mmBERT-small đông cứng làm đối chứng cho STU-FT. r TB(V,T), alpha tốt nhất trên bộ học:
+
+| biểu diễn | đều (cũ) | mỗi chương cùng tổng trọng số | [theo dõi] bộ 7 |
+|---|---|---|---|
+| Qwen3-0.6B lớp giữa | .402 (α 10⁴) | **.414** (α 10⁴) | .225 |
+| mmBERT-base lớp cuối | .356 | .366 | .177 |
+| mmBERT-small lớp cuối, ĐÔNG CỨNG | .321 | .334 | .172 |
+| mmBERT-small TINH CHỈNH (STU-FT ep2) | .301 | | .224 |
+
+- Trọng số theo chương nhích +.006 đến +.013 ở mọi biểu diễn. Từ nay đó là mặc định.
+- **"Do biểu diễn" hay "do tinh chỉnh":** cùng mmBERT-small, bản đông cứng hơn bản tinh chỉnh trên bộ học (.334 / .301), ngang
+  trên bộ 7 (.212 ở α 10³ / .224).
+  - Với 246 cảnh, tinh chỉnh không thêm gì.
+  - Biểu diễn mmBERT-small yếu hơn Qwen-0.6B lớp giữa (.334 / .414).
+- Alpha tốt nhất của Qwen nằm ở MÉP lưới (10⁴). Ít nhãn thì cần co rất mạnh; với lô bạc sẽ quét lại cả lưới.
+- Hệ quả cho lô bạc: đặc trưng chính là Qwen-0.6B lớp giữa đông cứng + ridge theo chương. MLP nhỏ và mở dần khối trên chỉ làm khi
+  đường cong 250 → 2.000 còn lên.
+
 ### 07-10 14:1x - LFE (ghi trước Corpus b6cf5ee): giám khảo độc lập Music2Emotion HỢP LỆ; CL hơn app cùng chiều TRACK-E2E nhưng chưa chắc
 
 Giám khảo là Music2Emotion (AMAAI-Lab, MIT, `J_all.ckpt`). Nó chấm valence/arousal thẳng từ âm thanh của 622 bài được chọn
