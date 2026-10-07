@@ -438,23 +438,52 @@ def test_clean_analysis_keeps_the_vocal_flags_and_clamps_the_probability() -> No
     assert music_local.clean_analysis({"valence": 0.1, "arousal": 0.2, "vocalsLikely": False})["vocalsLikely"] is False
 
 
+def test_the_auto_switch_decides_whether_the_machine_may_pick_a_track_by_itself(tmp_path: Path, songs) -> None:
+    music_local.set_analyzer(_vocal_analyzer)
+    store = LocalMusic(tmp_path / "mine")
+    plain, _ = store.import_file(songs["mp3"])
+    sung, _ = store.import_file(songs["ogg"])
+    assert "auto" not in plain and "auto" not in sung, "vắng = mặc định"
+    plain_digest, sung_digest = music_plan.local_hash(plain["link"]), music_plan.local_hash(sung["link"])
+    assert music_local.auto_excluded({}) is False
+    assert music_local.auto_excluded({"vocalsLikely": True}) is True
+    assert music_local.auto_excluded({"vocalsLikely": True, "auto": "on"}) is False
+    assert music_local.auto_excluded({"auto": "off"}) is True and music_local.auto_excluded({"vocalsLikely": True, "auto": "off"}) is True
+    # "off" loại cả bài không có lời; ghim tay không đi qua near nên vẫn dùng được
+    assert store.set_auto(plain_digest, "off") is True
+    assert store.near(0.3, -0.6) == [], "bài thường bị tắt và bài có lời đều không vào danh sách tự chọn"
+    assert next(t for t in LocalMusic(tmp_path / "mine").entries() if t["link"] == plain["link"])["auto"] == "off", "ghi vào sổ của máy"
+    assert store.file(plain["link"]) is not None and plain["link"] in store.lookup([plain["link"]])
+    music_local.set_analyzer_id("model-cong-tac")  # phân tích lại không làm mất công tắc
+    assert store.reanalyse() == 2 and store.near(0.3, -0.6) == []
+    assert store.lookup([plain["link"]])[plain["link"]]["auto"] == "off"
+    # "on" cho bài có lời vào lại; None về mặc định
+    assert store.set_auto(sung_digest, "on") is True and [t["link"] for t in store.near(0.3, -0.6)] == [sung["link"]]
+    assert store.set_auto(plain_digest, None) is True and {t["link"] for t in store.near(0.3, -0.6)} == {plain["link"], sung["link"]}
+    assert store.set_auto(sung_digest, None) is True and [t["link"] for t in store.near(0.3, -0.6)] == [plain["link"]]
+    assert "auto" not in next(t for t in store.entries() if t["link"] == plain["link"])
+    assert store.set_auto("0" * 40, "on") is False
+    with pytest.raises(ValueError):
+        store.set_auto(plain_digest, "maybe")
+
+
 def test_a_track_that_probably_has_lyrics_is_not_an_automatic_candidate_until_the_user_allows_it(tmp_path: Path, songs) -> None:
     music_local.set_analyzer(_vocal_analyzer)
     store = LocalMusic(tmp_path / "mine")
     plain, _ = store.import_file(songs["mp3"])
     sung, _ = store.import_file(songs["ogg"])
-    assert sung["analysed"] is True and sung["vocalsLikely"] is True and "vocalsOk" not in sung
+    assert sung["analysed"] is True and sung["vocalsLikely"] is True and "auto" not in sung
     assert [t["link"] for t in store.near(0.3, -0.6)] == [plain["link"]], "bài có lời không vào danh sách tự chọn, nhưng không bị xoá"
     assert {t["link"] for t in store.entries()} == {plain["link"], sung["link"]}, "vẫn nằm trong kho"
     digest = music_plan.local_hash(sung["link"])
-    assert store.set_vocals_ok(digest, True) is True
+    assert store.set_auto(digest, "on") is True
     assert {t["link"] for t in store.near(0.3, -0.6)} == {plain["link"], sung["link"]}
-    assert next(t for t in LocalMusic(tmp_path / "mine").entries() if t["link"] == sung["link"])["vocalsOk"] is True, "ghi vào sổ của máy"
+    assert next(t for t in LocalMusic(tmp_path / "mine").entries() if t["link"] == sung["link"])["auto"] == "on", "ghi vào sổ của máy"
     music_local.set_analyzer_id("model-moi")  # phân tích lại không làm mất lựa chọn của người dùng
     assert store.reanalyse() == 2 and store.near(0.3, -0.6)[0]["vocalsLikely"] is True
     assert {t["link"] for t in store.near(0.3, -0.6)} == {plain["link"], sung["link"]}
-    assert store.set_vocals_ok(digest, False) is True and [t["link"] for t in store.near(0.3, -0.6)] == [plain["link"]]
-    assert store.set_vocals_ok("0" * 40, True) is False
+    assert store.set_auto(digest, None) is True and [t["link"] for t in store.near(0.3, -0.6)] == [plain["link"]]
+    assert store.set_auto("0" * 40, "on") is False
 
 
 def test_the_planner_never_picks_a_track_with_lyrics_by_itself_but_a_pin_still_plays_it(studio, tmp_path: Path, songs) -> None:  # noqa: F811
@@ -474,18 +503,27 @@ def test_the_planner_never_picks_a_track_with_lyrics_by_itself_but_a_pin_still_p
     key = view["plan"]["scenes"][0]["key"]
     pinned = _pin(server, book, key, sung)["plan"]["scenes"][0]
     assert pinned["link"] == sung and pinned["pinned"] is True, "ghim thắng"
-    # "Vẫn dùng làm nhạc nền": qua API, cờ nằm trong danh sách của máy và bài vào danh sách tự chọn
+    # công tắc tự chọn: qua API, khoá nằm trong danh sách của máy và bài vào / ra danh sách tự chọn
     digest = music_plan.local_hash(sung)
-    status, body = _call(server, "POST", f"/api/music/local/{digest}/vocals-ok", {"ok": True})
-    assert status == 200 and next(t for t in body["tracks"] if t["link"] == sung)["vocalsOk"] is True
+    status, body = _call(server, "POST", f"/api/music/local/{digest}/auto", {"auto": "on"})
+    assert status == 200 and next(t for t in body["tracks"] if t["link"] == sung)["auto"] == "on"
     assert sung in {t["link"] for t in app._music_candidates(0.3, -0.6)}
-    assert _call(server, "POST", f"/api/music/local/{digest}/vocals-ok", {"ok": "co"})[0] == 400
-    assert _call(server, "POST", f"/api/music/local/{'0' * 40}/vocals-ok", {"ok": True})[0] == 404
-    assert _call(server, "POST", f"/api/music/local/{digest}/vocals-ok", {"ok": False})[0] == 200
+    for bad in ({"auto": "co"}, {"auto": True}, {"auto": 1}, {}, {"ok": True}):
+        assert _call(server, "POST", f"/api/music/local/{digest}/auto", bad)[0] == 400, bad
+    assert _call(server, "POST", f"/api/music/local/{'0' * 40}/auto", {"auto": "on"})[0] == 404
+    assert _call(server, "POST", f"/api/music/local/{'0' * 40}/auto", {"auto": None})[0] == 404
+    status, body = _call(server, "POST", f"/api/music/local/{digest}/auto", {"auto": None})
+    assert status == 200 and "auto" not in next(t for t in body["tracks"] if t["link"] == sung)
     assert sung not in {t["link"] for t in app._music_candidates(0.3, -0.6)}
+    plain_digest = music_plan.local_hash(plain)
+    status, body = _call(server, "POST", f"/api/music/local/{plain_digest}/auto", {"auto": "off"})
+    assert status == 200 and next(t for t in body["tracks"] if t["link"] == plain)["auto"] == "off"
+    assert plain not in {t["link"] for t in app._music_candidates(0.3, -0.6)}, "bài thường bị tắt cũng không được tự chọn"
+    pinned = _pin(server, book, key, plain)["plan"]["scenes"][0]
+    assert pinned["link"] == plain and pinned["pinned"] is True, "ghim tay vẫn thắng công tắc tắt"
 
 
-def test_the_vocals_override_route_is_not_open_to_a_remote_studio() -> None:
+def test_the_auto_switch_route_is_not_open_to_a_remote_studio() -> None:
     from abook.webui import remote_studio
 
-    assert not remote_studio.permitted("POST", "/api/music/local/" + "a" * 40 + "/vocals-ok")
+    assert not remote_studio.permitted("POST", "/api/music/local/" + "a" * 40 + "/auto")

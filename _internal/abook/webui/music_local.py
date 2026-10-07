@@ -12,7 +12,8 @@ Phân tích: `analyze(path)` trả mục theo hình danh mục (valence, arousal
 fitsUnderNarration, loudness) hay None. Model nghe chỉ-âm-thanh (music_student.py) cắm vào qua `set_analyzer`; khi chưa có gói
 model hay thư viện, `analyze` trả None và bài ở trạng thái "chưa phân tích": KHÔNG BAO GIỜ bịa số. Bài chưa phân tích không bao giờ được
 máy tự chọn nhưng ghim tay được; bài đã phân tích vào danh sách ứng viên tự động như bài danh mục (music_select không đổi), trừ bài có vẻ có lời
-hát (`vocalsLikely`): lời át chữ đọc nên máy không tự chọn, người dùng ghim tay hay bấm "Vẫn dùng làm nhạc nền" (`vocalsOk`) thì vẫn dùng.
+hát (`vocalsLikely`): lời át chữ đọc nên máy không tự chọn, người dùng ghim tay hay bấm "Vẫn cho máy tự chọn" (`auto` = "on") thì vẫn dùng.
+Công tắc `auto` của từng bài ("on" | "off" | vắng): "off" = máy không bao giờ tự chọn bài này (ghim tay vẫn được), kể cả bài không có lời.
 """
 from __future__ import annotations
 
@@ -37,6 +38,7 @@ INDEX_VERSION = 1
 MAX_TRACK_BYTES = 1 << 30  # 1 GiB: một bản nhạc dài hơn thế không phải nhạc nền
 _TAG_MAX = 200
 _CHUNK = 1 << 20
+AUTO_VALUES = ("on", "off")  # công tắc `auto` của một bài; vắng = mặc định (tự chọn được, trừ bài có vẻ có lời)
 
 
 class MusicImportError(Exception):
@@ -143,8 +145,9 @@ def clean_analysis(result: Any) -> dict[str, Any] | None:
 
 
 def auto_excluded(info: dict[str, Any]) -> bool:
-    """Bài nhập này bị loại khỏi danh sách TỰ chọn vì có vẻ có lời hát và người dùng chưa cho phép."""
-    return bool(info.get("vocalsLikely")) and not info.get("vocalsOk")
+    """Bài nhập này bị loại khỏi danh sách TỰ chọn: người dùng đặt `auto` = "off", hay bài có vẻ có lời hát mà người dùng chưa đặt "on"."""
+    auto = info.get("auto")
+    return auto == "off" or (bool(info.get("vocalsLikely")) and auto != "on")
 
 
 # ---- đọc file ------------------------------------------------------------------------------------------------------------
@@ -226,8 +229,8 @@ class LocalMusic:
         if entry.get("lufs") is not None:
             info["lufs"] = entry["lufs"]
         info.update(entry.get("analysis") or {})
-        if entry.get("vocalsOk"):
-            info["vocalsOk"] = True  # người dùng bấm "Vẫn dùng làm nhạc nền": máy được tự chọn dù đầu dò báo có lời
+        if entry.get("auto") in AUTO_VALUES:
+            info["auto"] = entry["auto"]  # công tắc của người dùng: "on" = tự chọn dù đầu dò báo có lời, "off" = không bao giờ tự chọn
         if entry.get("lufs") is not None:
             info["lufs"] = entry["lufs"]  # số đo từ chính file thắng số của bộ phân tích
         return info
@@ -269,8 +272,8 @@ class LocalMusic:
 
     def near(self, valence: float, arousal: float, radius: int = 1, grid: int = 5) -> list[dict[str, Any]]:
         """Ứng viên tự động quanh (valence, arousal), như `MusicCatalog.near`: chỉ bài ĐÃ phân tích (có không khí) và còn file. Bài có vẻ
-        có lời hát (`vocalsLikely`) không được máy tự chọn (lời át chữ đọc) trừ khi người dùng bấm "Vẫn dùng làm nhạc nền" (`vocalsOk`);
-        ghim tay không đi qua đây nên vẫn dùng được."""
+        có lời hát (`vocalsLikely`) không được máy tự chọn (lời át chữ đọc) trừ khi người dùng đặt `auto` = "on"; bài đặt "off"
+        cũng không được tự chọn (`auto_excluded`). Ghim tay không đi qua đây nên vẫn dùng được."""
         wanted_v, wanted_a = music_catalog.cell_of(valence, arousal, grid)
         out = []
         for info in self.entries():
@@ -282,17 +285,19 @@ class LocalMusic:
         return out
 
     # -- ghi --------------------------------------------------------------------------------------------------------------
-    def set_vocals_ok(self, digest: str, ok: bool) -> bool:
-        """Người dùng bấm (hay bỏ) "Vẫn dùng làm nhạc nền" cho một bài có vẻ có lời: cờ `vocalsOk` ở mục của bài trong sổ (không nằm trong
-        `analysis` nên phân tích lại không làm mất). False nếu bài không còn trong kho."""
+    def set_auto(self, digest: str, auto: str | None) -> bool:
+        """Công tắc tự chọn của một bài: "on" (tự chọn dù có vẻ có lời), "off" (không bao giờ tự chọn), None (về mặc định). Khoá `auto` ở mục của
+        bài trong sổ (không nằm trong `analysis` nên phân tích lại không làm mất). False nếu bài không còn trong kho."""
+        if auto is not None and auto not in AUTO_VALUES:
+            raise ValueError(f"auto phải là 'on', 'off' hay None, không phải {auto!r}")
         with self._lock:
             entry = self._tracks().get(digest)
             if entry is None:
                 return False
-            if ok:
-                entry["vocalsOk"] = True
+            if auto is None:
+                entry.pop("auto", None)
             else:
-                entry.pop("vocalsOk", None)
+                entry["auto"] = auto
             self._save()
             return True
 

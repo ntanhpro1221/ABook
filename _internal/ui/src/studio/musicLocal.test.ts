@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  analysisLabel, formatSize, hasVocals, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, vocalsLabel,
+  analysisLabel, formatSize, hasVocals, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, autoLabel, autoSwitch,
   type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood,
 } from "./musicLocal";
 
@@ -33,13 +33,30 @@ describe("analysis label", () => {
 });
 
 describe("vocals flag", () => {
-  it("labels an analysed track that probably has sung lyrics, and lets the listener's override change the label", () => {
+  it("labels an analysed track that probably has sung lyrics", () => {
     expect(hasVocals(track({ analysed: true, vocalsLikely: true }))).toBe(true);
     expect(hasVocals(track({ analysed: true, vocalsLikely: false }))).toBe(false);
     expect(hasVocals(track({ analysed: true }))).toBe(false);
     expect(hasVocals(track({ analysed: false, vocalsLikely: true }))).toBe(false);
-    expect(vocalsLabel({})).toBe("Có vẻ có lời - không tự chọn");
-    expect(vocalsLabel({ vocalsOk: true })).toContain("cho dùng làm nhạc nền");
+  });
+});
+
+describe("auto-pick switch", () => {
+  const sung = { analysed: true, vocalsLikely: true } as const;
+  const plain = { analysed: true } as const;
+  it("labels only the tracks the machine will not pick on its own (or that the listener allowed despite lyrics)", () => {
+    expect(autoLabel(sung)).toBe("Có vẻ có lời - máy không tự chọn bài này");
+    expect(autoLabel({ ...sung, auto: "on" })).toBe("Có vẻ có lời - bạn cho máy tự chọn");
+    expect(autoLabel({ ...plain, auto: "off" })).toBe("Máy không tự chọn bài này");
+    expect(autoLabel({ ...sung, auto: "off" })).toBe("Máy không tự chọn bài này");
+    expect(autoLabel(plain)).toBeNull();
+    expect(autoLabel({ analysed: false })).toBeNull();
+  });
+  it("offers exactly one button per state, each leading to the next state", () => {
+    expect(autoSwitch(plain)).toEqual({ text: "Đừng tự chọn bài này", next: "off" });
+    expect(autoSwitch(sung)).toEqual({ text: "Vẫn cho máy tự chọn", next: "on" });
+    expect(autoSwitch({ ...sung, auto: "on" })).toEqual({ text: "Thôi, không cho máy tự chọn", next: null });
+    expect(autoSwitch({ ...plain, auto: "off" })).toEqual({ text: "Cho máy tự chọn lại", next: null });
   });
 });
 
