@@ -51,6 +51,12 @@ nạp lại sạch. Đang đo (LLM_Train/resume_determinism/q7_probe.py): mồi 
 đọc log từng request. SR (dừng/chạy tiếp giữa pha phân tích trên 0.4.31) là phép thử của chính chỗ này: sau khi chạy tiếp, bộ đệm
 RAM trống.
 
+**Kết quả (Q7 + SR + SR2, 07-10, LLM_Train/resume_determinism/Q7.md, SR.md, SR2.md).** Mồi `raw` + `LLAMA_ARG_CACHE_RAM=0`
+(bộ đệm RAM tắt) thì request sau mồi nạp lại từ 0; chương thật ra y hệt bản có bộ đệm, chậm hơn 6,6 %. SR trên 0.4.31 (bộ đệm bật):
+dừng ở 624/955 rồi chạy tiếp ra 10/955 đoạn khác, tất cả sau mốc dừng (nhân vật y hệt). SR2 trên 0.4.32 (1d57e389, bộ đệm tắt):
+liền mạch và dừng/chạy tiếp trùng từng byte (0/955, cùng vân tay), 3.596 / 3.584 s (0.4.31 liền mạch 3.205 s, +12 %). Giới hạn:
+một truyện 4 chương, một model (v4), một lượt; Lead ghi luật mới vào AGENTS.md (rel432 0fa3cab6).
+
 **Ghi trước (chi tiết LLM_Train/b15b16/PLAN.md, Lead duyệt kèm sửa):**
 - **Cổng P** (người kể theo đoạn, P_SPEC §5) chạy thêm hai nhánh oracle ở 11 chương có lỗi P: o2 = đoạn bộ phát hiện báo + người
   kể đúng, o1 = ranh giới gold + người kể đúng. ctl->trt = phần app làm được; trt->o2 = giá trị của biết đúng người; o2->o1 = giá
