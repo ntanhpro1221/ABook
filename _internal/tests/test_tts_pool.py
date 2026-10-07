@@ -88,6 +88,8 @@ def test_the_shim_exposes_no_way_to_write(voice_db) -> None:
         "voice_profile_by_key",
         "list_voice_profiles",
         "list_pronunciations",
+        "list_chapters",  # hai phép đọc cho bước đoán gốc cuốn của Studio (`studio_names.chapter_texts`)
+        "list_segments",
     }
 
 

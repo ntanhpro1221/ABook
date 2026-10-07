@@ -46,6 +46,7 @@ from .text_processing import (
     spoken_symbols_to_words,
 )
 from . import voice_balance
+from .readaloud.studio_tn import studio_tn_tagged
 from .voice_catalog import (
     FORMANT_RATIO_MAX,
     FORMANT_RATIO_MIN,
@@ -1066,6 +1067,7 @@ class TTSCoordinator:
         self._exact_pronunciation_map: dict[str, str] = {}
         self._exact_pronunciation_metadata: dict[str, Any] = {}
         self._has_kept_english = False
+        self._book_origin: tuple[str | None] | None = None  # gốc cuốn ("ja" / "ko" / None), đoán một lần từ chữ các chương
 
     @property
     def vieneu(self) -> EngineAdapter:
@@ -1376,6 +1378,14 @@ class TTSCoordinator:
                 raise RuntimeError("Pronunciation anchor marker was lost during normalization")
         return normalized_text
 
+    def _origin_of_book(self) -> str | None:
+        """Gốc của cuốn cho bước đọc chữ theo chữ (`studio_tn`), như Nghe ngay; chữ dự án không đổi giữa các lần gọi nên đoán một lần."""
+        if self._book_origin is None:
+            from .studio_names import book_origin_for_project
+
+            self._book_origin = (book_origin_for_project(self.db),)
+        return self._book_origin[0]
+
     def _row_speaks_english(self, row: Any) -> bool:
         """Máy đọc của đoạn có đọc được chữ Anh để nguyên không (`EngineAdapter.speaks_english`). Chỉ hỏi giọng của đoạn khi bảng cách đọc
         có mục `keep_english` - không có thì câu trả lời không đổi gì."""
@@ -1439,6 +1449,9 @@ class TTSCoordinator:
             pronunciation_delivery_variant=normalized_variant,
             speaks_english=speaks_english,
         )
+        # Cùng bộ chuẩn hoá theo chữ với Nghe ngay (số La Mã, viết tắt, thán từ kéo dài, kính ngữ...), TRƯỚC `normalize_vocalizations_for_tts` (nó
+        # đổi "III" thành "I. I" và "Aaaa" thành "A... a" trước khi luật theo chữ kịp nhận ra); chữ của bảng phát âm giữ nguyên.
+        text, anchor_tags = studio_tn_tagged(text, anchor_tags, self._origin_of_book(), speaks_english)
         text = self._normalize_with_anchor_spans(text, anchor_tags, anchors)
         anchors.sort(
             key=lambda item: (
