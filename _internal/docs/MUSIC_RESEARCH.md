@@ -4218,3 +4218,33 @@ Dùng tín hiệu theo hai cách, đều không qua:
 cùng nhân vật chính (người kể ngôi 1 / nhân vật góc nhìn đi sang nơi mới), nên tập người có mặt ít đổi. Còn trong một cảnh, người
 ra/vào lại làm điểm nhảy. Bí danh thật của app sẽ làm đếm đủ hơn, nhưng không sửa được cái lệch cấu trúc này.
 Bỏ hướng này. Chỗ hổng còn lại vẫn là R_NT: C1 lỡ 19/36 (4+5) và 28/37 (5b+6) NT.
+
+### 07-10 07:4x - GHI TRƯỚC: VOX, đầu dò "có lời" cho nhạc nhập trên máy người dùng (CPU)
+Vấn đề:
+- "Nhập nhạc của tôi" không dò lời hát (docs/MUSIC_IMPORT.md), nên bài có lời có thể bị tự chọn nằm dưới giọng đọc.
+- Danh mục lọc lời bằng Music Flamingo (MF). MF cần GPU lớn, máy người dùng không chạy được.
+- CLAP zero-shot `vocals` thì báo nhầm nhiều: trong các bài nó chấm > 0,5, MF nói 954/1.254 (nhóm R) không có lời.
+
+Giả thuyết: một đầu hồi quy logistic trên đúng vector nhúng app đã tính phân biệt được bài có lời / không lời trong nhóm bị CLAP
+nghi. Vector nhúng là LAION-CLAP 3 cửa sổ 20/50/80 %, trung bình L2, `embeddings_appwin.npy`. App dùng hai tầng: CLAP > 0,5 rồi đầu dò.
+Mã: `LLM_Train/music/vox_head.py`.
+
+Dữ liệu và chia:
+- `mf_vocals.jsonl`: 1.599 bài, 308 có lời (R 300/1.254, I 8/345).
+- **XÁC NHẬN:** bài có chữ số hex cuối của sha1(id) thuộc 0-4, khoảng 31 %. Niêm phong: không mở số cho tới khi chốt mọi thứ trên phần HỌC.
+
+Trên phần HỌC (5 lớp chéo phân tầng):
+- Logistic L2 trên z-score 512 chiều, chọn C ∈ {.01, .1, 1}.
+- Ngưỡng τ = mức thấp nhất mà tỉ lệ báo nhầm (bài KHÔNG lời bị gắn "có lời") <= 5 % trên dự đoán chéo.
+- Mốc: CLAP `vocals` (`analysis.jsonl`), ngưỡng chọn cùng luật.
+
+**Cổng trên XÁC NHẬN** (cả ba):
+1. AUC(đầu) >= AUC(CLAP) + .05.
+2. Độ phủ bài có lời ở τ >= .60.
+3. Báo nhầm ở τ <= .08.
+
+Giới hạn ghi rõ: bộ nhãn là nhạc danh mục (phần lớn không lời, nguồn miễn phí). Nhạc người dùng nhập (pop có lời) lệch phân bố,
+nên qua cổng cũng chưa chứng minh được trên nhạc pop.
+
+Nếu qua, đề xuất cho app (Lead thiết kế): bài nhập có CLAP > 0,5 và đầu dò >= τ thì gắn "Có vẻ có lời". Planner không TỰ chọn
+bài ấy; người dùng ghim thì vẫn dùng. Chỉ là đề xuất, đúng luật không tự sửa.
