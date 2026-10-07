@@ -39,6 +39,23 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 07-10 chiều - xếp hạng lại bằng log-prob của chính B9: KHÔNG qua, đóng hướng
+
+Câu hỏi: model đã sinh greedy; nếu cho nó tự chấm vài giả thuyết đổi người nói, có chọn được đáp đúng hơn không (không huấn
+luyện, chỉ thêm vài lượt tới mỗi lô)? Ghi trước: LLM_Train/rerank/STEP1_PLAN.md. Kết quả: rerank/STEP1_RESULT.txt.
+- Bước 0 (CPU, trần oracle trên B9 s1234, 19 ch, 301 lỗi chặt / 154 trong cảnh): một giả thuyết cho cả cuộc trao đổi chỉ chữa
+  được 21,6 % lỗi chặt -> bỏ dạng đó. Cửa sổ 2 dòng thoại liền nhau, ngân sách 8 giả thuyết: trần 45,8 % chặt, nhưng 2 truyện
+  chiếm 103/138; giới hạn trong một lô còn 28,9 % chặt / 40,3 % trong cảnh.
+- Bước 1 (GPU 45 phút): 2.037 giả thuyết / 363 cửa sổ, điểm = tổng log-prob token giá trị speaker trên MỌI dòng của đáp, dưới
+  đúng prompt app đã gửi (dựng lại 573/573 lô khớp vân tay), model HF 4-bit + adapter B9. Greedy đã có điểm cao nhất ở 87,3 %
+  cửa sổ (sàng sớm 3 chương: 92,8 %, dưới ngưỡng dừng 95 %). Áp tau 0: đổi 46 cửa sổ, sửa 15 dòng, phá 19 dòng đúng. Lỗi chặt
+  301 -> 305; lỗi trong cảnh 154 -> 164 (+6,5 %, CI theo truyện [+3, +19] - TỆ HƠN có ý nghĩa). Không truyện nào ngoài rokujouma
+  giảm. Tau 0,5 / 1 / 2 cũng tăng lỗi trong cảnh. Bộ chọn chỉ nhặt đúng 14/79 cửa sổ có phương án tốt hơn.
+- Một nguồn nhiễu: 7,0 % giá trị speaker greedy (sinh bằng GGUF q8) không phải argmax dưới bản HF 4-bit - cùng cỡ với số lần
+  đổi, nên phần lớn lần đổi là lệch lượng tử chứ không phải "model biết đáp khác tốt hơn".
+- Kết luận: log-prob của chính model không chọn tốt hơn greedy (lỗi của nó là lỗi nó tin). Còn một việc đã ghi trước: chấm lại
+  đúng bộ giả thuyết này bằng B16 (DPO trên cặp đổi người = dạy đúng phép chọn này) khi B16 xong; không qua thì đóng hẳn.
+
 ## 07-10 chiều - mồi lạ không làm request nạp lại từ đầu; ghi trước B15 / B16 / cổng P có oracle
 
 **Mồi lạ (`_prime_fresh_slot`, 0.4.31) không làm cái nó tả.** Ollama 0.33.2 chạy mọi GGUF qua `llama-server` (llama.cpp), có
