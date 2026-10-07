@@ -176,9 +176,10 @@ additive: the format version does not change, a reader that does not know `words
 
 ## Security considerations
 
-The file is a ZIP of media and JSON. Risks are the usual ones for archives: path traversal (prevented by the fixed
-entry names), decompression bombs (prevented by the entry, size and hash limits), and malformed MP3/JPEG/WAV data, which
-readers hand to their platform's media decoders. The format has no active content and no external references.
+The file is a ZIP of media, JSON and, from version 5, plain UTF-8 chapter text (`texts/<n>.txt`, no markup). Risks are
+the usual ones for archives: path traversal (prevented by the fixed entry names), decompression bombs (prevented by the
+entry, size and hash limits), and malformed MP3/WAV/M4A/Ogg/Opus/FLAC/JPEG data, which readers hand to their platform's
+media decoders. The format has no active content and no external references.
 
 ## Versioning
 
