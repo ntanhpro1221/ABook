@@ -4248,3 +4248,25 @@ nên qua cổng cũng chưa chứng minh được trên nhạc pop.
 
 Nếu qua, đề xuất cho app (Lead thiết kế): bài nhập có CLAP > 0,5 và đầu dò >= τ thì gắn "Có vẻ có lời". Planner không TỰ chọn
 bài ấy; người dùng ghim thì vẫn dùng. Chỉ là đề xuất, đúng luật không tự sửa.
+
+### 07-10 07:4x - VOX: QUA (ghi trước 462055ca; mã đóng băng Corpus 0ccc1bd trước khi mở phần xác nhận)
+`vox_head.py learn` / `confirm`:
+
+| | AUC | phủ có lời ở τ | báo nhầm ở τ |
+|---|---|---|---|
+| HỌC, chéo 5 lớp (1.107 bài, 217 có lời), đầu C=.01 | .980 | .91 | .049 |
+| HỌC, CLAP `vocals` | .863 | .00 | .000 |
+| **XÁC NHẬN (492 bài, 91 có lời), đầu** | **.975** | **.90** | **.075** |
+| XÁC NHẬN, CLAP `vocals` | .842 | .00 | .000 |
+
+QUA cả ba cổng.
+- Báo nhầm .075 sát trần .08: bài không lời bị gắn nhầm cỡ 7-8 %. Vì chỉ là đề xuất, người dùng ghim thì vẫn dùng, nên chấp nhận được.
+- CLAP bão hoà ở 1,0 trên nhiều bài không lời, nên không có ngưỡng nào giữ báo nhầm <= 5 % mà còn phủ được gì. Vì thế không dùng CLAP một mình được.
+
+Đã xuất `onnx_student/vox_head.npz`:
+- Học trên cả 1.599 bài, C=.01, τ học lại theo cùng luật bằng dự đoán chéo.
+- Nội dung: mu, sd, coef 512, intercept, tau.
+- Cách dùng: z-score rồi logistic, thêm đúng một tích vô hướng vào đầu trò.
+
+Giới hạn (đã ghi trước): nhãn là nhạc danh mục. Chưa đo trên pop có lời người dùng nhập. Tầng 1 (CLAP > 0,5) có thể lọt bài có lời mà
+CLAP chấm thấp; ca này chưa đo được vì MF trượt chứng dương ở khoảng .3-.5.
