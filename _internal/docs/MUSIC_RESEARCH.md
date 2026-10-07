@@ -4270,3 +4270,33 @@ QUA cả ba cổng.
 
 Giới hạn (đã ghi trước): nhãn là nhạc danh mục. Chưa đo trên pop có lời người dùng nhập. Tầng 1 (CLAP > 0,5) có thể lọt bài có lời mà
 CLAP chấm thấp; ca này chưa đo được vì MF trượt chứng dương ở khoảng .3-.5.
+
+### 07-10 07:4x - GHI TRƯỚC: LLM-NT2, hỏi thẳng "đổi nơi / nhảy thời gian" (ứng viên GPU; mã đóng băng Corpus 4f3b7d4 trước mọi lượt chạy)
+Kế hoạch: Corpus `research/music/PLAN_llm_nt.md`. Mã: `llm_nt2.py`, chuỗi `nt2_chain.sh` (dấu "HẾT NHẠC NT2 07-10").
+
+**Câu hỏi:**
+- qwen3.5:4b, temperature 0, think false, format json.
+- Khúc 40 câu chồng 10, chữ trơn, câu đánh số theo chương.
+- Hỏi câu nào truyện chuyển sang nơi khác hay nhảy thời gian.
+- Bỏ mục có `quote` không khớp 3 tiếng đầu của câu `line` (±1).
+- Biến thể:
+  - (a) chỉ luật;
+  - (b) thêm 3 ví dụ tự viết;
+  - (c) đòi `reason`, bỏ mục rỗng.
+
+**Ghép:** C1 ∪ (vị trí LLM cách ranh giới C1 > TOL), qua `with_breaks` / `reasoned`. Thước 1 (TYPES NT).
+
+**Bộ học 4+5+5b+6:**
+- C1 ở đây: F1_NT .444, R_NT .36, sai CHẶT 1,5/giờ.
+- Chạy (a) trước. (a) thêm < 5 NT trúng thì dừng, không chạy b/c/xác nhận.
+- LUẬT CHỌN: F1_NT cao nhất trên gộp 4 bộ; hoà ±.01 thì lấy sai CHẶT thấp hơn.
+
+**Xác nhận 7+8+9:**
+- LLM chưa từng chạy trên các bộ này.
+- Nhãn NT đã được xem khi đo C1. Đây là giới hạn đã nêu; nếu kịp sẽ thêm bộ 10 làm xác nhận thứ hai.
+- **Cổng (cả ba):**
+  1. R_NT >= C1 + .10.
+  2. P_NT của phần THÊM >= .35.
+  3. Sai CHẶT/giờ <= C1 + 0,5.
+
+Hàng GPU: Model báo "sau B10" nghĩa là khoảng 10-10; chỗ chen tự nhiên là sau B10 cặp đầu (khoảng sáng 08-10), cần Lead duyệt.
