@@ -151,7 +151,7 @@ difference context switching. The perceptual pool measured 4 workers at 1.66x un
 
 
 class ReadOnlyVoiceDB:
-    """The four reads synthesis needs, and nothing else.
+    """The reads synthesis needs, and nothing else.
 
     ProjectDB cannot be used here: its constructor runs the schema script, so merely
     building one in a worker would write to the database the parent owns.
@@ -203,6 +203,15 @@ class ReadOnlyVoiceDB:
                     (float(minimum_confidence),),
                 )
             )
+
+    # Hai phép đọc `studio_names.chapter_texts` cần để đoán gốc cuốn (bước đọc chữ theo chữ của Studio): cùng câu lệnh với ProjectDB.
+    def list_chapters(self) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            return list(connection.execute("SELECT * FROM chapters ORDER BY chapter_index"))
+
+    def list_segments(self) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            return list(connection.execute("SELECT * FROM segments ORDER BY chapter_id,seq"))
 
 
 _COORDINATOR: list[Any] = []
