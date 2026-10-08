@@ -41,14 +41,17 @@ object EnglishVi {
         "undead" to "ăn-đét", "hilde" to "hiu-đơ", "oldest" to "ôn-đít", "wind" to "guyn", "world" to "gua", "monster" to "mon-tơ",
         "brother" to "bờ-ro-dờ", "charlie" to "chác-li",
         "anne" to "an-ne", "louise" to "lui", "april" to "ây-rồ", // chủ sách 04-10 chiều: ca lạ, luật không suy rộng
+        "novem" to "nô-vem", // tên bịa: o mở âm tiết đọc o (Docora đo-co-ra), riêng Novem chủ sách chốt nô
     )
     // Chữ viết tắt đã đọc thành từ (chủ sách 04-10): khoá là đúng chữ hoa như viết.
-    val ACRONYMS = mapOf("VIP" to "víp", "ID" to "ai-đi")
+    val ACRONYMS = mapOf("VIP" to "víp", "ID" to "ai-đi", "OK" to "ô-kê", "TV" to "ti-vi") // OK, TV: mục 5 (từ điển)
     // Từ mượn đã vào từ điển tiếng Việt (mục 6).
     val LOANWORDS = mapOf(
         "radio" to "ra-đi-ô", "radar" to "ra-đa", "tennis" to "ten-nít", "acid" to "a-xít", "piano" to "pi-a-nô", "chocolate" to "sô-cô-la",
         "vitamin" to "vi-ta-min", "cowboy" to "cao-bồi", "meeting" to "mít-tinh", "dollar" to "đô-la", "cafe" to "cà-phê", "golf" to "gôn",
         "card" to "cạc", "taxi" to "tắc-xi",
+        "video" to "vi-đê-ô", "massage" to "mát-xa", "salon" to "xa-lông", "marathon" to "ma-ra-tông", "opera" to "ô-pê-ra",
+        "sandwich" to "xan-uých", "ok" to "ô-kê",
     )
     val OVERRIDES = LOANWORDS + OWNER
 
@@ -170,7 +173,8 @@ object EnglishVi {
 
     private fun alignLetters(phones: List<Phone>, word: String): List<Phone> {
         val count = phones.count { it.stress >= 0 }
-        for (drop in listOf(false, true)) {
+        // e cuối câm thì bỏ trước khi đếm cụm chữ (Beatrice: ea, i = e, a, i); phát âm kết bằng nguyên âm thì e cuối là một âm (Sophie)
+        for (drop in if (phones.isNotEmpty() && phones.last().stress < 0) listOf(true, false) else listOf(false, true)) {
             if (drop && !(word.length > 2 && word.endsWith("e") && word[word.length - 2] !in "aeiouy")) continue
             val groups = splitHiatus(vowelGroups(word, drop), count) ?: continue
             var at = 0
@@ -185,8 +189,10 @@ object EnglishVi {
     private val LONG = mapOf('a' to "EY", 'e' to "IY", 'i' to "AY", 'o' to "OW", 'u' to "UW", 'y' to "AY")
     private val FACE = mapOf('a' to "AA", 'e' to "EH", 'i' to "IH", 'o' to "AA", 'u' to "UH", 'y' to "IH") // o -> o (tom, ro-xe)
     private val FINAL_OPEN = mapOf('a' to "AA", 'e' to "IY", 'i' to "IY", 'o' to "OW", 'u' to "UW", 'y' to "IY")
+    /** Chữ còn lại sau o đến hết từ mà o đọc ô (-oa, -ona, -ono, -onia, -opia); o khác đọc o. */
+    private val LONG_O_ENDINGS = setOf("a", "na", "no", "nia", "pia")
     private val DIGRAPHS = listOf(
-        "eau" to "OW", "igh" to "AY", "ee" to "IY", "ea" to "IY", "ai" to "EY", "ay" to "EY", "ei" to "EY", "ie" to "IY", "oa" to "OW",
+        "eau" to "OW", "igh" to "AY", "ee" to "IY", "ea" to "IY", "ai" to "EY", "ay" to "EY", "ei" to "EY", "ey" to "EY", "ie" to "IY", "oa" to "OW",
         "oo" to "UW", "ou" to "AW", "oi" to "OY", "oy" to "OY", "au" to "AO", "aw" to "AO", "ew" to "UW",
     )
     private val SIMPLE_CONSONANT = mapOf(
@@ -231,6 +237,7 @@ object EnglishVi {
                 var digraph = DIGRAPHS.firstOrNull { rest.startsWith(it.first) }
                 if (rest == "ey" || rest == "ay" || (rest == "ie" && size <= 4)) digraph = rest to (if (rest != "ay") "IY" else "EY")
                 if (rest.startsWith("ow")) digraph = "ow" to (if (rest == "ow") "OW" else "AW")
+                if (rest == "oa") digraph = null // -oa cuối tên bịa là hai âm tiết ô-a (Astroa Át-trô-a, Ranoa), không phải oa đơn như boat
                 if (rest == "ue") digraph = "ue" to "UW"
                 if (digraph != null && digraph.first.endsWith("y") && !isVowelLetter(w, i + digraph.first.length - 1)) {
                     digraph = null // ay / ey / oy trước nguyên âm: y là phụ âm (Alunaya -> na-gia)
@@ -254,8 +261,8 @@ object EnglishVi {
                 val vowel = when {
                     ch == 'a' && sub(w, i + 1, i + 3) == "nk" -> "AE" // ank -> anh như đường âm vị (tank -> tanh)
                     i == end - 1 -> FINAL_OPEN.getValue(ch)
-                    // o mở âm tiết (o + một phụ âm + nguyên âm) đọc ô: Novem -> nô-vem
-                    ch == 'o' && !isVowelLetter(w, i + 1) && isVowelLetter(w, i + 2) && w[i + 1] !in "wy" -> "OW"
+                    // -ona, -ono, -onia, -opia (Symphonia, Dystopia, Heliona) đọc ô; o mở âm tiết khác đọc o (Docora đo-co-ra)
+                    ch == 'o' && sub(w, i + 1, end) in LONG_O_ENDINGS -> "OW"
                     else -> FACE.getValue(ch)
                 }
                 out.add(Phone(vowel, 0, ch.toString()))
@@ -352,6 +359,12 @@ object EnglishVi {
         val vowel = word[word.length - 3]
         return phones.map { if (it.stress >= 0) Phone(FACE.getValue(vowel), 0, vowel.toString()) else it } + Phone("EH", 0, "e")
     }
+
+    /** Từ thường (không phải tên) cùng dáng tên ngắn + e câm: viết hoa đầu câu vẫn đi đường âm vị (Fire phai, Note nốt), không theo mặt chữ như Mike. */
+    private val COMMON_WORDS = setOf(
+        "fire", "ice", "white", "note", "code", "core", "more", "line", "wine", "side", "home", "hope", "zone", "rule", "mode", "love", "life",
+        "size", "base", "case", "face", "race", "rate",
+    )
 
     /** MỘT phụ âm đầu (một chữ, hay ch / sh / th / ph / wh) + một nguyên âm + MỘT phụ âm (trừ h w x y) + e câm: Jake, Zeke, Rose (chủ sách). */
     private fun shortSilentE(word: String): Boolean {
@@ -540,7 +553,8 @@ object EnglishVi {
                     }
                 }
                 if (head.isEmpty() && liquidStop.isEmpty() && nextOnset.isNotEmpty() && run.size == 1 && run[0] in STOPS && canClose && vowel.stress >= 1 &&
-                    vowel.base != "UW" && vowel.base != "IY" && ( // nguyên âm dài cao không nhân đôi (Lucas -> lu-cát)
+                    vowel.base != "UW" && vowel.base != "IY" && // nguyên âm dài cao không nhân đôi (Lucas -> lu-cát)
+                    !(rColored && phones[vowels[k + 1]].base == "IY") && ( // r bỏ rồi -y cuối thì không nhân đôi (Party pa-ti, harpy ha-pi)
                         GEMINATE == "stressed" || (GEMINATE == "primary" && vowel.stress == 1) ||
                             (GEMINATE == "short" && vowel.base in SHORT_VOWELS)
                         )
@@ -553,6 +567,9 @@ object EnglishVi {
                         coda = letter
                         codaPhone = head[0]
                         head = head.drop(1)
+                        if (codaPhone == "K" && (head.firstOrNull() == "S" || (head.isEmpty() && nextOnset == "S"))) {
+                            codaPhone = "KS" // x: a + x giữ c (Axel ác-xồ, Max mắc), không ach như ck (Jack dách)
+                        }
                     }
                 }
                 head.forEach { tail.add(epenthetic(it)) }
@@ -576,7 +593,13 @@ object EnglishVi {
             }
             if (k == 0 && wGu && vowel.base == "AY") core = "ây" // w + ai: guây (Weiss)
             if (vowel.base == "AW" && (run.firstOrNull() == "S" || run.firstOrNull() == "Z")) core = "au" // house hau, mouse mau; town tao, sound sao
-            if (vowel.base == "AE" && coda == "c") coda = "ch" // ac viết ach (Jack dách, action ách-sừn)
+            if (codaPhone == "CH" && coda == "t" && core in setOf("i", "a", "ê", "oa")) {
+                coda = "ch" // /tʃ/ khép được bằng ch sau i, a, ê, oa (ích, ách, ếch, oách): Lich lích, Mitch mích, March mách
+            }
+            if (vowel.base == "EH" && core == "ê" && !(last && run.take(3) == listOf("K", "S", "T"))) {
+                core = EH // e + c: êch chỉ trước cụm xt cuối (text tếch, next nếch); còn lại éc (Rebecca, Extra, check)
+            }
+            if (vowel.base == "AE" && coda == "c" && codaPhone != "G" && codaPhone != "KS") coda = "ch" // ac viết ach (Jack dách, action ách-sừn)
             if (vowel.base == "AE" && coda == "ng" && run.size >= 2 && run[0] == "NG" && run[1] == "K") {
                 core = "a" // /æŋk/ -> anh (chủ sách 04-10: tank -> tanh; rank, thank theo đó)
                 coda = "nh"
@@ -588,8 +611,15 @@ object EnglishVi {
                 core = "ư"
                 grave = true
             }
+            if (last && k > 0 && (vowel.base == "AA" || vowel.base == "AO") && (vowel.stress == 0 || vowel.stress == 2) && vowel.letters == "o" &&
+                coda == "n" && !rColored && (prev == "T" || prev == "S" || prev == "G")
+            ) {
+                core = "ơ" // -ton / -son / -xon / -gon cuối không nhấn chính: ơn như Oa-xinh-tơn, Ê-đi-xơn (Jaxon giác-xơn, Anton an-tơn)
+            }
             if (last && vowel.base == "UW" && vowel.stress == 0 && vowel.letters == "e" && run.isEmpty()) core = "iu" // -ew cuối: iu (Andrew an-riu)
-            if (last && vowel.base == "ER" && vowel.stress == 0 && core == "ơ" && run.isEmpty() && onset.isNotEmpty() && before != listOf("S", "T")) {
+            if (last && vowel.base == "ER" && vowel.stress == 0 && (vowel.letters.takeLast(1).let { it == "e" || it == "o" || it.isEmpty() }) &&
+                core == "ơ" && run.isEmpty() && onset.isNotEmpty() && before != listOf("S", "T")
+            ) {
                 grave = true // -er cuối mở: ơ thanh huyền (guốt-tờ, hăn-tờ), trừ sau st (mát-tơ)
             }
             if (ilFinal) core += "u"
@@ -746,7 +776,7 @@ object EnglishVi {
         }
         var phones: List<Phone>? = null
         var route = "via:phonemes"
-        if (capital && shortSilentE(key) && SHORT_SILENT_E == "face") {
+        if (capital && shortSilentE(key) && key !in COMMON_WORDS && SHORT_SILENT_E == "face") {
             phones = faceShort(key)
             route = "via:face"
         }
@@ -789,14 +819,32 @@ object EnglishVi {
         if (value.isEmpty()) return null
         val flags = ArrayList<String>()
         val readings = ArrayList<String>()
-        for (part in value.split('-')) {
+        for ((index, part0) in value.split('-').withIndex()) {
+            var part = part0
+            // hậu tố gọi Nhật sau gạch (Lyle-kun) đọc theo romaji, không theo chữ Anh (kun != căn)
+            if (index > 0 && part in Romanization.JA_SUFFIXES) {
+                val suffix = Romanization.reading(part, "ja")
+                if (!suffix.isNullOrEmpty()) {
+                    flags.add("via:suffix")
+                    readings.add(suffix)
+                    continue
+                }
+            }
             val acronym = if (overrides) ACRONYMS[part] else null
             if (acronym != null) {
                 flags.add("via:override")
                 readings.add(acronym)
                 continue
             }
-            val case = partCase(part) ?: return null
+            var case = partCase(part)
+            if (case == null && overrides) {
+                val plain = Normalizer.normalize(part, Normalizer.Form.NFD).filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
+                if (plain.lowercase(Locale.ROOT) in OVERRIDES) {
+                    part = plain
+                    case = partCase(plain) // từ mượn viết có dấu (café -> cà-phê)
+                }
+            }
+            if (case == null) return null
             readings.add(readWord(part.lowercase(Locale.ROOT), case, dictionary, overrides, flags) ?: return null)
         }
         return Reading(readings.joinToString(" "), flags.distinct())

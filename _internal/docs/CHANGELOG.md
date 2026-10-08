@@ -76,6 +76,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Ở màn hẹp (Studio từ xa trên điện thoại, cửa sổ nhỏ): thông báo không còn đè lên thanh tab dưới cùng; ô "Chia thành mấy tập?" không cắt
   tên sách; gợi ý tách file TXT cả truyện hết dấu chấm thừa sau "Chương 3”…".
 
+### Đọc từ và tên tiếng Anh
+
+- Đọc từ và tên tiếng Anh đúng hơn khi giọng chỉ nói được âm tiết Việt (máy tính và điện thoại như nhau; giọng nói được tiếng Anh vẫn
+  giữ nguyên chữ Anh): "Beatrice" thành "Bi-a-trít", "Jaxon" thành "Giác-xơn", "Party" thành "Pa-ti", "Lich" thành "Lích", "video"
+  thành "vi-đê-ô", "Fire" thành "Phai", "Lyle-kun" thành "Lai-ồ cun"; tên bịa có chữ o như "Docora" đọc "Đo-co-ra" thay vì "Đô-cô-ra";
+  OK và TV đọc "ô-kê", "ti-vi". Trên bộ nhãn đo, tên và từ Anh đọc đúng từ 86% lên 91% ở phần dùng để chỉnh luật và từ 73% lên 77% ở
+  phần để riêng.
+
 ## [0.4.31] - 2026-10-07
 
 ### Nghe

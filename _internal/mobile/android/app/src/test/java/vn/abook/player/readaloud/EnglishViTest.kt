@@ -87,8 +87,20 @@ class EnglishViTest {
     }
 
     @Test
+    fun theBenchRoundTenRulesHold() {
+        // vòng 10 (bộ đo translit_bench); cùng ca với test_english_vi.py::test_reading_follows_the_convention
+        val cases = mapOf(
+            "Docora" to "Đo-co-ra", "Symphonia" to "Xim-phô-ni-a", "Jaxon" to "Giác-xơn", "Anton" to "An-tơn", "Astroa" to "Át-trô-a",
+            "Lich" to "Lích", "March" to "Mách", "Axel" to "Ác-xồ", "Flag" to "Phờ-lác", "Rebecca" to "Re-béc-ca", "text" to "tếch",
+            "Party" to "Pa-ti", "Arthur" to "A-thơ", "Silver" to "Xin-vờ", "Beatrice" to "Bi-a-trít", "Greyrat" to "Gờ-rây-rát",
+            "Fire" to "Phai", "Note" to "Nốt", "video" to "vi-đê-ô", "café" to "cà-phê", "OK" to "ô-kê", "TV" to "ti-vi", "Lyle-kun" to "Lai-ồ cun",
+        )
+        for ((token, want) in cases) assertEquals(token, want, EnglishVi.reading(token, phones))
+    }
+
+    @Test
     fun withoutADictionaryTheSpellingRouteReads() {
-        assertEquals(EnglishVi.Reading("Goa-sinh-ton", listOf("via:spelling")), EnglishVi.readingWithFlags("Washington", emptyMap(), overrides = false))
+        assertEquals(EnglishVi.Reading("Goa-sinh-tơn", listOf("via:spelling")), EnglishVi.readingWithFlags("Washington", emptyMap(), overrides = false))
         assertEquals("En-cờ-rít", EnglishVi.reading("Encrid", emptyMap()))
     }
 

@@ -260,6 +260,7 @@ _FRENCH = "nguồn đọc kiểu Pháp / theo chữ, không theo âm Anh"
 _COMMUNITY = "dạng cộng đồng, không phải chuẩn"
 EXPLAINED: dict[str, tuple[str, str]] = {
     "Kate": ("Ca-te", _OWNER_FIXED),
+    "Novem": ("No-vem", _OWNER_FIXED + "; o mở âm tiết của tên bịa đọc o (Docora đo-co-ra), chỉ -ona / -ono / -onia / -opia đọc ô"),
     "Pete": ("Pe-te", _OWNER_FIXED + "; tên ngắn khác cùng dạng đọc theo mặt chữ (Zeke -> de-ke)"),
     "guild": ("ghiu", _OWNER_FIXED + "; l cuối sau i -> u (skill -> xờ-kiu) vẫn là luật"),
     "great": ("gờ-rết", _OWNER_FIXED + ": ea không thành i (late -> lết, /eɪ/ + t -> êt là luật)"),
@@ -330,7 +331,7 @@ EXPLAINED: dict[str, tuple[str, str]] = {
     "Twain": ("Toen", _COMMUNITY + "; uên không phải vần tiếng Việt, viết oen như Oen-đi"),
     "camera": ("ca-mơ-ra", _COMMUNITY),
     "font": ("phon", _COMMUNITY),
-    "sandwich": ("xan-đuýt", _COMMUNITY),
+    "sandwich": ("xan-đuých", _COMMUNITY),
     "robot": ("rô-bót", _COMMUNITY),
     "rock": ("róc", _COMMUNITY),
     "smartphone": ("xờ-mát-phôn", _COMMUNITY),

@@ -264,6 +264,18 @@ Luật rút ra (chung các lần):
 - /æŋk/ → **anh** (tanh; rank → ranh, thank → thanh theo đó, cờ `analogy:ank`). /iː/ → i (tim).
 - -er cuối → ơ thanh NGANG (mát-tơ).
 
+**Vòng 10 (08-10, theo bộ đo `translit_bench`; [App], chưa qua tai chủ sách; đo bằng `Corpus/research/tn/translit_bench/score_rules.py`):** các điểm
+quy ước chưa nói tới, chọn theo nhãn nhất quán của bộ đo; không điểm nào đổi một phán quyết chủ sách ở trên (Novem nô-vem thành ca riêng).
+- o mở âm tiết của tên bịa (đường chữ) → **o** (Docora đo-co-ra); chỉ -oa / -ona / -ono / -onia / -opia → ô (Astroa át-trô-a, Symphonia xim-phô-ni-a).
+- -ton / -son / -xon / -gon cuối không nhấn chính → **ơn** ngang (Jaxon giác-xơn, Anton an-tơn), như Oa-xinh-tơn, Ê-đi-xơn.
+- /tʃ/ cuối khép bằng **ch** sau i, a, ê, oa (Lich lích, Mitch mích, March mách); sau nguyên âm khác vẫn t (luật sh / th → t).
+- a + x giữ **c** (Axel ác-xồ, như Max mắc), a + g cuối giữ **c** (flag phờ-lác); chỉ a + ck mới ach (Jack dách).
+- e + c → **éc** (Rebecca re-béc-ca, Extra éc-xơ-tra); **êch** chỉ trước cụm xt cuối, là hai ca chủ sách (text tếch, next nếch).
+- r bỏ rồi -y cuối thì không nhân đôi phụ âm (Party pa-ti); -er / -or → "-tờ" huyền, còn -ur / -ir / -ure ngang (Arthur a-thơ, Elixir i-lích-xơ).
+- Từ thường cùng dáng tên ngắn + e câm (Fire, Note, Code, Core, More, Ice, White…) đi đường âm vị (phai, nốt, cốt), không theo mặt chữ như Mike.
+- Từ mượn đã vào từ điển thêm: video vi-đê-ô, massage mát-xa, salon xa-lông, marathon ma-ra-tông, opera ô-pê-ra, sandwich xan-uých, café cà-phê;
+  OK ô-kê, TV ti-vi (mục 5). Hậu tố gọi Nhật sau gạch (Lyle-kun) đọc theo romaji (cun), không theo chữ Anh.
+
 Cài đặt: `abook/english_vi.py` (bản Kotlin `readaloud/EnglishVi.kt`), ca có nguồn ở `tests/english_vi_evidence.py`, các điểm [Chọn] quét
 bằng `scripts/sweep_english_vi_variants.py` (chủ sách x100, nhà nước x2, SGK / báo x1, cộng đồng x0).
 
