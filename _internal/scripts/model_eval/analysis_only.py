@@ -77,8 +77,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--masked-mention-counts", action="store_true",
                         help="GIỮ thứ tự theo độ nổi tiếng nhưng thay mọi con số bằng `?` - tách riêng ảnh "
                              "hưởng của CON SỐ, độ dài prompt gần như không đổi")
+    parser.add_argument("--known-plus-text", action="store_true",
+                        help="GIỮ nguyên danh sách gốc, NỐI THÊM tên riêng trích từ chữ của chính lô (chữ các đoạn, "
+                             "known_text_names.py, không dùng gold) mà danh sách chưa có, dạng `số lần đã gặp=0` - "
+                             "LLM_Train/known_text/PLAN.md (08-10)")
     args = parser.parse_args(argv)
-    variants = [args.no_mention_counts, args.known_sorted_by_name, args.masked_mention_counts]
+    variants = [args.no_mention_counts, args.known_sorted_by_name, args.masked_mention_counts, args.known_plus_text]
     if sum(bool(flag) for flag in variants) > 1:
         parser.error("chỉ được một biến thể danh sách nhân vật mỗi lượt - nếu không thì đo hai thứ cùng lúc")
 
@@ -124,6 +128,41 @@ def main(argv: list[str] | None = None) -> int:
             return "\n".join(lines)
 
         OllamaBookAnalyzer._known_summary = _known_summary_without_counts
+
+    if args.known_plus_text:
+        # Soát 263 lỗi B9 (b15b16/PLAN.md 08-10): 0/93 nhân vật bị bỏ sót nằm trong danh sách - danh sách chỉ dựng từ đầu ra
+        # của các lô TRƯỚC, nên người được gọi tên lần đầu ngay trong lô ("..., Galak ạ") không bao giờ có mặt.
+        import re as _re
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from known_text_names import batch_names  # noqa: E402
+
+        original_request = OllamaBookAnalyzer._request
+        original_known = OllamaBookAnalyzer._known_summary
+
+        def request_with_group(self, group, *a, **kw):
+            self._kt_group = group
+            try:
+                return original_request(self, group, *a, **kw)
+            finally:
+                self._kt_group = None
+
+        def known_plus_text(self) -> str:
+            base = original_known(self)
+            group = getattr(self, "_kt_group", None)
+            if not group:
+                return base
+            rows = [{"text": row["text"]} for row in group]  # đoạn trước/sau trong prompt = chữ các đoạn kề của chính lô
+            have = {t for name in self._speaker_counts for t in _re.findall(r"\w{3,}", str(name).casefold())}
+            extra = [n for n in batch_names(rows) if not any(t in have for t in _re.findall(r"\w{3,}", n.casefold()))]
+            if not extra:
+                return base
+            lines = [f"- {n}; số lần đã gặp=0; gender đã biết=unknown" for n in extra]
+            if base.startswith("(Chưa có"):
+                return "\n".join(lines)
+            return base + "\n" + "\n".join(lines)
+
+        OllamaBookAnalyzer._request = request_with_group
+        OllamaBookAnalyzer._known_summary = known_plus_text
 
     if args.no_think:
         original = OllamaBookAnalyzer._stream_json_response
