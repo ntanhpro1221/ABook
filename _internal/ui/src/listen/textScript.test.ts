@@ -83,6 +83,25 @@ describe("withoutLines", () => {
   });
 });
 
+// Cùng các ca với ParagraphsTest.kt: mã chú thích của trang web bị bỏ như máy tính (text_processing.INLINE_REFERENCE_MARKER_PATTERN), khoảng trắng gọn lại.
+describe("web note markers", () => {
+  it("drops [noteNNN] like the desktop and tidies the spaces", () => {
+    expect(paragraphsOf("Anh ta đi rồi. [note54360] Cô ở lại.")).toEqual(["Anh ta đi rồi. Cô ở lại."]);
+    expect(paragraphsOf("Anh đi rồi[NOTE7][ note12 ].")).toEqual(["Anh đi rồi."]);
+    expect(paragraphsOf("Một[note1]\n\n[ NOTE22 ]Hai.[note3]")).toEqual(["Một", "Hai."]);
+  });
+
+  it("keeps brackets that are not web note markers", () => {
+    expect(paragraphsOf("Xem [Note] và [1] và [note] và [note1a].")).toEqual(["Xem [Note] và [1] và [note] và [note1a]."]);
+  });
+
+  it("still skips a credit line that carries a marker, and the reader shows no marker", () => {
+    const text = "Chương 2\n\nDịch: Nhóm A [note12]\n\nMở đầu.";
+    expect(paragraphsOf(withoutLines(text, ["Dịch: Nhóm A"]))).toEqual(["Chương 2", "Mở đầu."]);
+    expect(textScript(1, "t", "Mưa [note9] rơi.").segments.map((segment) => segment.text)).toEqual(["Mưa rơi."]);
+  });
+});
+
 describe("paragraphsOf", () => {
   it("splits on blank lines and joins the lines a typesetter broke", () => {
     expect(paragraphsOf("Một dòng bị\nbẻ giữa chừng.\n\nĐoạn hai.\r\n\r\n\r\nĐoạn ba.\n")).toEqual([

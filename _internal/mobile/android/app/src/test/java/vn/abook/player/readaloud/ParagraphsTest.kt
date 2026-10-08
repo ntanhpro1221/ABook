@@ -65,4 +65,23 @@ class ParagraphsTest {
     fun oldMacLineEndingsCountAsNewlines() {
         assertEquals(listOf("A", "B"), Paragraphs.of("A\r\rB"))
     }
+
+    // Cùng các ca với textScript.test.ts ("web note markers"): mã chú thích của trang web bị bỏ như máy tính, khoảng trắng gọn lại.
+    @Test
+    fun dropsWebNoteMarkersLikeTheDesktop() {
+        assertEquals(listOf("Anh ta đi rồi. Cô ở lại."), Paragraphs.of("Anh ta đi rồi. [note54360] Cô ở lại."))
+        assertEquals(listOf("Anh đi rồi."), Paragraphs.of("Anh đi rồi[NOTE7][ note12 ]."))
+        assertEquals(listOf("Một", "Hai."), Paragraphs.of("Một[note1]\n\n[ NOTE22 ]Hai.[note3]"))
+    }
+
+    @Test
+    fun keepsBracketsThatAreNotWebNoteMarkers() {
+        assertEquals(listOf("Xem [Note] và [1] và [note] và [note1a]."), Paragraphs.of("Xem [Note] và [1] và [note] và [note1a]."))
+    }
+
+    @Test
+    fun aCreditLineWithAMarkerIsStillSkipped() {
+        val text = "Chương 2\n\nDịch: Nhóm A [note12]\n\nMở đầu."
+        assertEquals(listOf("Chương 2", "Mở đầu."), Paragraphs.of(Paragraphs.withoutLines(text, listOf("Dịch: Nhóm A"))))
+    }
 }
