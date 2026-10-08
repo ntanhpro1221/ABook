@@ -6,7 +6,7 @@ import { formatClock } from "@/shared/format";
 import { Button } from "@/shared/ui";
 import { api, type AppInfo } from "@/studio/api";
 import { hasNativeMusicImport, importMusic } from "@/studio/musicImport";
-import { importSummary, LOCAL_PREFIX, type LocalMusicView, type LocalTrack } from "@/studio/musicLocal";
+import { analysisLabel, importSummary, LOCAL_PREFIX, MY_MUSIC_INTRO, mineNote, type LocalMusicView, type LocalTrack } from "@/studio/musicLocal";
 import { AutoPickNote } from "@/studio/AutoPickNote";
 import { MusicModuleNotice } from "@/studio/MusicModuleNotice";
 
@@ -23,6 +23,9 @@ export interface MineItem {
   duration?: number;
   analysed: boolean;
   fits: boolean;
+  /** Như `LocalTrack`: nhãn "Có vẻ có lời" / "Máy không tự chọn bài này" - cùng nhãn với Cài đặt. */
+  vocalsLikely?: boolean;
+  auto?: "on" | "off";
 }
 
 /** Hộp chọn file nhập nhạc có dùng được ở đây không: điện thoại luôn có; máy tính cần hộp chọn file của máy chủ (Studio từ xa thì không). */
@@ -72,6 +75,7 @@ export function SwapTrack({
             <div className="tabular truncate text-xs text-fg-2">
               {[item.creator, item.duration ? formatClock(item.duration) : ""].filter(Boolean).join(" · ")}
             </div>
+            {mineNote(item) && <div className="text-xs text-fg-2">{mineNote(item)}</div>}
           </div>
           <Button size="sm" variant="secondary" icon={Pin} disabled={busy} loading={choosing === item.link} onClick={() => onChoose(item.link)}>
             Chọn
@@ -131,11 +135,7 @@ export function MyMusicSection() {
         )}
       </div>
       {!!tracks.length && <MusicModuleNotice view={data} queryKey={MY_MUSIC_KEY} />}
-      <p className="text-xs text-fg-2 text-pretty">
-        Thêm nhạc của riêng bạn (mp3, m4a, ogg, opus, flac, wav) làm nhạc nền. File được chép vào kho nhạc của máy này. Bài nào bạn chọn
-        cho một đoạn sẽ đi cùng file sách khi bạn lưu, nên máy khác cũng nghe được. ABook chỉ ghi tên bài và nghệ sĩ có sẵn trong file,
-        không nói gì về giấy phép.
-      </p>
+      <p className="text-xs text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
       {!canImport && <p className="text-xs text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách.</p>}
       {canImport && !tracks.length && <p className="text-xs text-fg-2">Chưa có bài nào.</p>}
       {!!tracks.length && (
@@ -147,7 +147,13 @@ export function MyMusicSection() {
                 {track.title}
                 {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
                 {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
-                <AutoPickNote track={track} canOverride={canImport && !hasNativeMusicImport()} onView={refresh} />
+                {/* Chưa phân tích: nói như tab Nhạc của dự án. Máy tính còn nói bài đã phân tích thì máy tự chọn được; điện thoại không tự chọn nên không nói. */}
+                <AutoPickNote
+                  track={track}
+                  canOverride={canImport && !hasNativeMusicImport()}
+                  onView={refresh}
+                  idleLabel={hasNativeMusicImport() && track.analysed ? undefined : analysisLabel(track)}
+                />
               </span>
               {canImport &&
                 (removing === track.link ? (

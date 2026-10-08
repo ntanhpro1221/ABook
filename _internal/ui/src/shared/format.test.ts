@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { excerpt, formatFingerprint, formatSize, licenseLabel, shownReading } from "./format";
+import { etaOf, excerpt, formatEta, formatFingerprint, formatSize, licenseLabel, shownReading } from "./format";
 
 describe("shownReading", () => {
   it("capitalises each word of a name's reading for display", () => {
@@ -68,5 +68,20 @@ describe("formatSize", () => {
     expect(formatSize(850 * 1024 ** 2)).toBe("850 MB");
     expect(formatSize(3.25 * 1024 ** 3)).toBe("3,3 GB");
     expect(formatSize(4 * 1024 ** 3)).toBe("4 GB");
+  });
+});
+
+describe("formatEta", () => {
+  it("chỉ nói sắp xong khi bước đang làm thật sự gần xong", () => {
+    expect(formatEta(40, 0.95)).toBe("sắp xong");
+    expect(formatEta(40, 0.21)).toBe("còn dưới 2 phút");
+    expect(formatEta(40)).toBe("sắp xong");
+    expect(formatEta(600, 0.2)).toBe("còn khoảng 10 phút");
+  });
+
+  it("chưa có tốc độ (không có ước lượng) thì không nói gì", () => {
+    expect(etaOf({ eta: null, progress: { analysis: 0.2, synthesis: 0 } })).toBeNull();
+    expect(etaOf({ eta: { phase: "analysis", seconds: 30 }, progress: { analysis: 0.21, synthesis: 0 } })).toBe("còn dưới 2 phút");
+    expect(etaOf({ eta: { phase: "synthesis", seconds: 30 }, progress: { analysis: 1, synthesis: 0.97 } })).toBe("sắp xong");
   });
 });

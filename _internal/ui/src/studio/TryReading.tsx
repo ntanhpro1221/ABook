@@ -3,9 +3,11 @@ import { Pause, Volume2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useClip } from "@/listen/clip";
 import type { ReadAloudTry } from "@/listen/readings";
+import { cn } from "@/shared/cn";
 import { Button } from "@/shared/ui";
 import { api, ApiError, suggestionOf, urls } from "./api";
-import { previewCaption, refusalText } from "./previewText";
+import { useCachedBook } from "./data";
+import { previewCaption, refusalText, tryNote } from "./previewText";
 
 // "Nghe thử" trước khi lưu (webui/reading_preview.py): máy thu thử một câu có tên ấy bằng đúng cách đọc đang gõ, đúng giọng và
 // đúng đường của lần thu thật - không ghi gì vào sách. Dùng chung cho dòng "Cách đọc tên" và thẻ hộp việc.
@@ -41,6 +43,9 @@ export function useTryReading({
   aloud?: ReadAloudTry;
 }): { button: ReactNode; note: ReactNode } {
   const clip = useClip();
+  // Sách đang thu (không phải tạm dừng) thì máy chủ từ chối nghe thử - nói trước, đừng đợi bấm mới biết.
+  const book = useCachedBook(bookId).data?.book;
+  const bookBusy = Boolean(book && (book.running || book.starting) && !book.paused);
   const [heard, setHeard] = useState<{ surface: string; spoken: string; preview: ReadingPreview } | null>(null);
   const [refusal, setRefusal] = useState("");
   const play = (preview: ReadingPreview) => clip.toggle(`try-${preview.url}`, urls.readingPreview(preview.url));
@@ -56,7 +61,9 @@ export function useTryReading({
         onRejected(error.message, suggestionOf(error));
         return;
       }
-      setRefusal(refusalText(error instanceof ApiError ? error.detail.reason : undefined, error.message));
+      const reason = error instanceof ApiError ? error.detail.reason : undefined;
+      const why = refusalText(reason, error.message);
+      setRefusal(why === error.message ? `Chưa nghe thử được - ${why}` : why);
     },
   });
   useEffect(() => setRefusal(""), [spoken]);
@@ -105,18 +112,19 @@ export function useTryReading({
       {playing ? "Dừng" : "Nghe thử"}
     </Button>
   );
+  const status = tryNote({
+    pending: ask.isPending,
+    refusal,
+    playing,
+    caption: same ? previewCaption(heard.preview.text, heard.preview.speaker) : null,
+    bookBusy,
+  });
   const note = unavailable ? (
     <p className="text-xs text-fg-3">Chưa nghe thử được: {unavailable}</p>
-  ) : ask.isPending ? (
-    <p role="status" className="text-xs text-fg-2">
-      Máy đang đọc thử - lần đầu có thể mất vài chục giây
+  ) : status ? (
+    <p role="status" className={cn("text-xs", refusal && !ask.isPending ? "text-warning" : "text-fg-3")}>
+      {status}
     </p>
-  ) : refusal ? (
-    <p role="status" className="text-xs text-fg-2">
-      {refusal}
-    </p>
-  ) : same ? (
-    <p className="text-xs text-fg-3">{previewCaption(heard.preview.text, heard.preview.speaker)}</p>
   ) : null;
   return { button, note };
 }

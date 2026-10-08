@@ -162,7 +162,7 @@ export function TemplateBar({ draft, onPick }: {
           </div>
           {confirming && <p className="mt-2 text-[13px] text-fg-2">Đã có mẫu “{findTemplate(templates, name)?.name}”. Ghi đè bằng các lựa chọn hiện tại?</p>}
           {problem && <p role="alert" className="mt-2 text-[13px] text-danger">{problem}</p>}
-          <p className="mt-2 text-[13px] text-fg-3">Mẫu nhớ giọng kể, chất lượng, model đọc hiểu và chuyện có bắt đầu ngay không. Không nhớ truyện, tên sách hay dòng ghi công.</p>
+          <p className="mt-2 text-[13px] text-fg-3">Mẫu nhớ giọng kể, chất lượng, bộ phân tích truyện và chuyện có bắt đầu ngay không. Không nhớ truyện, tên sách hay dòng ghi công.</p>
         </form>
       )}
     </div>

@@ -9,6 +9,8 @@ mỗi lô phân tích CHƯA chạy; lô đã chạy xong thì không phân tích
 """
 from __future__ import annotations
 
+import re
+import unicodedata
 from contextlib import closing
 from pathlib import Path
 from typing import Any
@@ -131,3 +133,44 @@ def decide(project_root: Path, body: dict[str, Any]) -> dict[str, Any]:
     narrator_sections.decide(project_root, chapter_index, first, last, accepted=action != "keep",
                              narrator=narrator if action == "choose" else "", source="owner" if action == "choose" else "auto")
     return {"action": action, "narrator": narrator if action == "choose" else ""}
+
+
+# Tên riêng gợi ý cho "Chọn người kể…": chữ viết hoa đứng GIỮA câu trong đoạn (chưa có sổ nhân vật thì đây là chỗ duy nhất
+# thấy được ai có mặt), nối liền nếu viết hoa liên tiếp ("Thiên Biến"). Tối đa ba chữ một tên.
+SUGGEST_NAMES = 4
+_WORD = re.compile(r"[^\W\d_]+")
+
+
+def section_names(texts: list[str], leave_out: set[str]) -> list[str]:
+    """Tên riêng hay gặp nhất trong chữ của một đoạn, trừ `leave_out` (khoá casefold: người kể của sách) - nhiều lần nhất trước."""
+    from ..character_registry import _opens_a_sentence
+
+    counts: dict[str, int] = {}
+    first_seen: dict[str, int] = {}
+    for text in texts:
+        text = unicodedata.normalize("NFC", text)
+        run: list[str] = []
+        previous_end = -1
+        for match in _WORD.finditer(text):
+            word = match.group(0)
+            joined = bool(run) and text[previous_end:match.start()] == " "
+            capital = word[0].isupper() and len(word) > 1
+            if capital and joined and len(run) < 3:
+                run.append(word)
+            else:
+                _flush(run, counts, first_seen)
+                run = [word] if capital and not _opens_a_sentence(text, match.start()) else []
+            previous_end = match.end()
+        _flush(run, counts, first_seen)
+    blocked = {item.casefold() for item in leave_out}
+    ranked = sorted((name for name in counts if name.casefold() not in blocked
+                     and not any(part.casefold() in blocked for part in name.split())),
+                    key=lambda name: (-counts[name], first_seen[name]))
+    return ranked[:SUGGEST_NAMES]
+
+
+def _flush(run: list[str], counts: dict[str, int], first_seen: dict[str, int]) -> None:
+    if run:
+        name = " ".join(run)
+        counts[name] = counts.get(name, 0) + 1
+        first_seen.setdefault(name, len(first_seen))

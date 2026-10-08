@@ -559,3 +559,30 @@ def test_the_reserved_unknown_speaker_never_shows_as_a_name_or_gets_a_gender_car
     from abook.webui.reviews import speaker_label
 
     assert [speaker_label(raw) for raw in ("UNKNOWN", "Unknown", "UNNAMED", "ANONYMOUS_1")] == ["Vai phụ không tên"] * 4
+
+
+def test_every_decided_card_carries_the_withdrawal_of_its_own_click(tmp_path: Path) -> None:
+    """"Đã quyết, chờ áp dụng" có nút Hoàn tác cho TỪNG mục (không chỉ toast vài giây): thẻ mang đúng thân yêu cầu `withdraw`
+    mà thông báo hoàn tác gửi - endpoint + `requestedAt` của lần bấm ấy."""
+    from abook.listener_overrides import NARRATOR, request_pronunciation, request_speaker
+
+    project = make_book(tmp_path)
+    (project / "doubt.json").write_text(json.dumps({"segments": {
+        "c": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.91, "top": [["RHINE", 0.91], ["LUCIEN", 0.05]],
+              "disagree": True},
+    }}), encoding="utf-8")
+    cards = {item["kind"]: item for item in work_items(project)["items"]}
+    assert "undo" not in cards["speaker"] and "undo" not in cards["pronunciation"], "chưa quyết thì chưa có gì để hoàn tác"
+
+    request_speaker(project, "c", "sha-c", NARRATOR, now=1234.5)
+    request_pronunciation(project, "Hailkes", "Hên-khơ", now=2345.5)
+    cards = {item["kind"]: item for item in work_items(project)["items"]}
+    assert cards["speaker"]["undo"] == {"endpoint": "speaker", "decisions": [
+        {"lines": [{"stableId": "c", "textSha256": "sha-c"}], "requestedAt": 1234.5}]}
+    assert cards["pronunciation"]["undo"] == {"endpoint": "pronunciation", "decisions": [
+        {"surface": "Hailkes", "requestedAt": 2345.5, "previous": cards["pronunciation"]["current"], "keep": False}]}
+
+    # Giữ đúng cách máy đang đọc: hoàn tác cũng bỏ được (keep) dù dây chuyền đã áp hay chưa.
+    request_pronunciation(project, "Hailkes", cards["pronunciation"]["current"], now=3456.5)
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "pronunciation")
+    assert card["undo"]["decisions"][0]["keep"] is True and card["undo"]["decisions"][0]["requestedAt"] == 3456.5

@@ -120,6 +120,49 @@ def _speaker_fix(rows: list[Any], choices: list[dict[str, str]], current: str,
     }
 
 
+def _undo_of(item: dict[str, Any], overrides: dict[str, Any]) -> dict[str, Any] | None:
+    """Cách rút lại quyết định đã ghi của một thẻ ("Đã quyết, chờ áp dụng" có nút Hoàn tác cho TỪNG mục, không chỉ toast vài
+    giây): đúng thân yêu cầu `withdraw` mà thông báo hoàn tác đã gửi - `endpoint` + từng `decisions[i]` kèm `requestedAt` của lần
+    bấm ấy. Thẻ gộp tên / quy ước 『』 còn ghi ở cấp tên cho các phần sau - hoàn tác chỉ lùi được phần câu nên không mời."""
+    if not item.get("requested") or item["kind"] in ("alias", "bracket"):
+        return None
+    if item["kind"] == "narrator":
+        section = item["narratorSection"]
+        return {"endpoint": "narrator-section", "decisions": [
+            {"chapterIndex": section["chapterIndex"], "fromSeq": section["fromSeq"], "toSeq": section["toSeq"]}]}
+
+    def stamp(section: str, key: str) -> float | None:
+        entry = (overrides.get(section) or {}).get(key)
+        try:
+            return float(entry["requested_at"]) if isinstance(entry, dict) else None
+        except (KeyError, TypeError, ValueError):
+            return None
+
+    if item["kind"] == "pronunciation" and item.get("surface"):
+        at = stamp("pronunciations", surface_key(str(item["surface"])))
+        keep = item["requested"] == item["current"]
+        return {"endpoint": "pronunciation", "decisions": [
+            {"surface": item["surface"], "requestedAt": at, "previous": item["current"], "keep": keep}]} if at else None
+    if item.get("voiceChoices"):
+        decisions = []
+        for character in item.get("keepCharacters") or []:
+            entry = (overrides.get("voices") or {}).get(character)
+            at = stamp("voices", character)
+            # Thẻ chung giọng: chỉ người đã bị đổi giọng (có `avoid`) là phần của quyết định này.
+            if at and (item["kind"] == "gender" or (isinstance(entry, dict) and entry.get("avoid"))):
+                decisions.append({"character": character, "requestedAt": at, "keep": False})
+        return {"endpoint": "voice", "decisions": decisions} if decisions else None
+    if item.get("lines"):
+        clicks: dict[float, list[dict[str, str]]] = defaultdict(list)
+        for line in item["lines"]:
+            at = stamp("speakers", line["stableId"])
+            if at:
+                clicks[at].append(line)
+        # Một lần bấm có thể ghi nhiều câu cùng mốc (thẻ vai phụ cả cuốn) - mỗi mốc một quyết định.
+        return {"endpoint": "speaker", "decisions": [{"lines": lines, "requestedAt": at} for at, lines in clicks.items()]} if clicks else None
+    return None
+
+
 def _character_key(name: str) -> str:
     """Khoá tên chuẩn như `character_registry.canonical_key` - cùng khoá mục `voices` của overrides.json."""
     return " ".join(str(name).strip().casefold().split()).upper()
@@ -504,6 +547,14 @@ def work_items(project_root: Path) -> dict[str, Any]:
             shown = connection.execute(
                 "SELECT * FROM segments WHERE chapter_id=? AND seq BETWEEN ? AND ? ORDER BY seq LIMIT ?",
                 (chapter_id, first, last, EXAMPLES)).fetchall()
+            section_texts = [str(row[0]) for row in connection.execute(
+                "SELECT text FROM segments WHERE chapter_id=? AND seq BETWEEN ? AND ? ORDER BY seq", (chapter_id, first, last))]
+        # "Chọn người kể…" gợi sẵn: tên riêng có mặt trong đoạn (sổ nhân vật có thể chưa có - đang phân tích), rồi người hay
+        # nói trong chương; người kể của sách thì không (đó là câu hỏi đang hỏi).
+        narrator_choices = [{"label": name, "value": name}
+                            for name in narrator_cards.section_names(section_texts, {proposal["narrator"], who})]
+        narrator_choices += [choice for choice in _cast_choices(spoken, {chapter_id}, {proposal["narrator"].casefold()}, speaker_label)
+                             if choice["label"].casefold() not in {item["label"].casefold() for item in narrator_choices}]
         if decision is None:
             requested = None
         elif not decision["accepted"]:
@@ -518,7 +569,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
         items.append({
             "kind": "narrator",
             "key": f"narrator:{proposal['chapter_index']}:{first}:{last}",
-            "title": f"{chapter_name}, câu {first}–{last}: có vẻ không phải {who} kể",
+            "title": f"{chapter_name}, {'câu ' + str(first) if first == last else f'câu {first}–{last}'}: có vẻ không phải {who} kể",
             "problem": f"{why} Nếu người kể ở đây là người khác, máy sẽ thôi gán lời họ cho {who}. Chưa trả lời thì máy giữ nguyên.",
             "affected": total,
             "doubt": 0.5,
@@ -529,7 +580,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "narratorSection": {
                 "chapterIndex": proposal["chapter_index"], "fromSeq": first, "toSeq": last, "narrator": who,
                 "appliesNote": narrator_cards.applies_note(total, done),
-                "choices": _cast_choices(spoken, {chapter_id}, {proposal["narrator"].casefold()}, speaker_label),
+                "choices": narrator_choices,
             },
         })
 
@@ -873,16 +924,21 @@ def work_items(project_root: Path) -> dict[str, Any]:
         # Nhãn hay gặp nhất trong nhóm (máy viết "Lính gác" chỗ này, "lính  gác" chỗ kia); hoà thì câu đến trước.
         label = Counter(" ".join(speaker_label(str(row["speaker"])).split()) for row in rows).most_common(1)[0][0]
         where = f"{len(chapter_ids)} chương" if len(chapter_ids) > 1 else f"{len(members)} cảnh"
-        choices = _cast_choices(spoken, chapter_ids, set(), speaker_label) + [{"label": "Người kể", "value": NARRATOR}]
+        # "Người kể" chỉ là lựa chọn khi sách có người kể "tôi" (lời người kể thường lẫn vào vai phụ); truyện ngôi ba thì lính
+        # gác không phải người kể. Thay vào đó: "là một người mới tên “…”" (`newPerson`) - cả nhóm thành MỘT người có giọng riêng.
+        choices = _cast_choices(spoken, chapter_ids, set(), speaker_label)
+        if book_narrator or chapter_narrators:
+            choices += [{"label": "Người kể", "value": NARRATOR}]
         items.append({
             "kind": "unnamed",
+            "newPerson": label[:1].upper() + label[1:],
             "key": f"unnamed-role:{role}",
             "title": f"{len(rows)} câu của vai phụ “{label}” ở {where} - một người?",
             "problem": f"Máy để “{label}” là vai phụ không tên riêng ở từng chỗ - {len(members)} giọng khác nhau. Nếu cả"
                        " cuốn là một người, chọn người ấy một lần cho mọi câu; câu nào không phải thì bỏ chọn trước.",
             "affected": len(rows),
             "doubt": 0.4,
-            "options": [choice["label"] for choice in choices] + ["Mỗi chỗ một người"],
+            "options": [choice["label"] for choice in choices] + [f"Là một người mới tên “{label[:1].upper() + label[1:]}”", "Mỗi chỗ một người"],
             "current": f"{len(members)} vai phụ riêng",
             # Mọi câu của nhóm (không chỉ vài câu ví dụ): người nghe bỏ chọn từng câu ngay trên thẻ.
             "examples": [{**_example(row, names, speaker_label, project_root), "stableId": str(row["stable_id"])}
@@ -980,6 +1036,9 @@ def work_items(project_root: Path) -> dict[str, Any]:
                                    if line["stableId"] in chapter_of}
                                   or {int(example["chapterId"]) for example in item["examples"]})
         item["score"] = round(item["affected"] * item["doubt"] * SEVERITY[item["kind"]], 3)
+        undo = _undo_of(item, overrides)
+        if undo is not None:
+            item["undo"] = undo
     items.sort(key=lambda item: -item["score"])
     counts: dict[str, int] = defaultdict(int)
     for item in items:

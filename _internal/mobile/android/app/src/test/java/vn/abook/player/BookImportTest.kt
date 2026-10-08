@@ -133,6 +133,22 @@ class BookImportTest {
     }
 
     @Test
+    fun a_lone_title_line_names_the_book_and_is_not_a_chapter_exactly_like_python() {
+        val file = File(dir, "titled.txt")
+        val plain = BookImport.importFile(file)
+        assertEquals(expectedText("titled"), dump(plain))
+        val split = BookImport.importFile(file, splitChapters = true)
+        assertEquals(expectedText("titled.split"), dump(split))
+        assertEquals(listOf("Chương 1: Chuyến phà đêm", "Chương 2: Căn nhà bên sông"), titles(split))
+        assertEquals("Ngọn đèn cuối cùng", BookImport.titleFromLine("# Ngọn đèn cuối cùng"))
+        for (line in listOf("Chương 1: Bến phà", "“Hôm nay nước lớn,” ông nói.", "Anh ta đi.", "- Ông đi đâu", "", "   ", "123")) {
+            assertEquals(line, "", BookImport.titleFromLine(line))
+        }
+        assertEquals("Tên truyện", BookImport.titleOnlyPreamble(listOf("Tên truyện", "", "Chương 1"), 2))
+        assertEquals("", BookImport.titleOnlyPreamble(listOf("Tên truyện", "Giới thiệu ngắn", "Chương 1"), 2))
+    }
+
+    @Test
     fun the_preview_keeps_very_short_items_as_unticked_chapters_exactly_like_python() {
         val expected = StrictJson.parse(File(dir, "expected/keep_short.json").readText(Charsets.UTF_8)) as org.json.JSONObject
         val actual = org.json.JSONObject()
@@ -179,8 +195,10 @@ class BookImportTest {
     fun a_txt_with_fewer_than_two_chapter_headings_or_only_volume_headings_offers_no_split() {
         assertTrue(BookImport.splitTxtChapters("Chương 1\nChỉ một chương thôi.").isEmpty())
         assertTrue(BookImport.splitTxtChapters("Quyển 1\nA\n\nQuyển 2\nB").isEmpty())
-        // "Chương trình hôm nay" không phải tiêu đề: nó là chữ dẫn ("Mở đầu"), rồi hai chương thật.
-        assertEquals(listOf("Mở đầu", "Chương 1", "Chương 2"), BookImport.splitTxtChapters("Chương trình hôm nay\n\nChương 1\nA\n\nChương 2\nB").map { it.title })
+        // "Chương trình hôm nay là gì." không phải tiêu đề: nó là chữ dẫn ("Mở đầu"), rồi hai chương thật.
+        assertEquals(listOf("Mở đầu", "Chương 1", "Chương 2"), BookImport.splitTxtChapters("Chương trình hôm nay là gì.\n\nChương 1\nA\n\nChương 2\nB").map { it.title })
+        // Chữ dẫn chỉ là một dòng tên truyện thì là tên sách, không phải một chương "Mở đầu" 4 chữ.
+        assertEquals(listOf("Chương 1", "Chương 2"), BookImport.splitTxtChapters("Chương trình hôm nay\n\nChương 1\nA\n\nChương 2\nB").map { it.title })
     }
 
     @Test

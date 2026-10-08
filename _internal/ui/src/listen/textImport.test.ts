@@ -7,6 +7,7 @@ import {
   pickedTotals,
   renameChapter,
   shownTitle,
+  splitIsSure,
   splitLabel,
   type ImportPreviewChapter,
 } from "./textImport";
@@ -117,6 +118,16 @@ describe("isBookFile", () => {
     expect(isBookFile(" C:/x/Du an.ABOOKPROJ ")).toBe(true);
     expect(isBookFile("D:\Truyện\Tên truyện.epub")).toBe(false);
     expect(isBookFile("D:\abook\chuong 1.txt")).toBe(false);
+  });
+});
+
+describe("split is on by default only when the file is surely a whole story", () => {
+  it("needs a split offer and at least three heading lines", () => {
+    expect(splitIsSure({})).toBe(false);
+    expect(splitIsSure({ splitOffer: 2, splitHeadings: 2 })).toBe(false);
+    expect(splitIsSure({ splitOffer: 3, splitHeadings: 2 })).toBe(false);
+    expect(splitIsSure({ splitOffer: 4, splitHeadings: 3 })).toBe(true);
+    expect(splitIsSure({ splitOffer: 3, splitHeadings: 3 })).toBe(true);
   });
 });
 

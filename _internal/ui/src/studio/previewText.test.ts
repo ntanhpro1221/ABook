@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { previewCaption, refusalText } from "./previewText";
+import { previewCaption, refusalText, tryNote } from "./previewText";
 
 describe("refusalText", () => {
   it("says why in plain words for the reasons the server gives", () => {
-    expect(refusalText("producing", "x")).toBe("Đang làm sách - nghe thử khi máy rảnh");
-    expect(refusalText("gpu", "x")).toBe("Card đồ hoạ đang bận");
-    expect(refusalText("studio", "x")).toBe("Cần cài phần làm sách trước");
+    expect(refusalText("producing", "x")).toContain("sau khi xong chương đang làm");
+    expect(refusalText("gpu", "x")).toContain("Card đồ hoạ đang bận");
+    expect(refusalText("studio", "x")).toContain("Cần cài phần làm sách");
   });
 
   it("falls back to the server's own message for any other refusal", () => {
@@ -24,5 +24,27 @@ describe("previewCaption", () => {
     const caption = previewCaption(`${"từ ".repeat(60)}cuối`, "");
     expect(caption).toContain("…”");
     expect(caption).not.toContain("giọng");
+  });
+});
+
+describe("tryNote", () => {
+  const idle = { pending: false, refusal: "", playing: false, caption: null, bookBusy: false };
+
+  it("says nothing before the first try on an idle book", () => {
+    expect(tryNote(idle)).toBeNull();
+  });
+
+  it("tells a book that is being recorded up front, in the listener's words", () => {
+    expect(tryNote({ ...idle, bookBusy: true })).toContain("sau khi xong chương đang làm");
+  });
+
+  it("says waiting, then playing, then done - never only a silent button", () => {
+    expect(tryNote({ ...idle, pending: true })).toContain("Máy đang đọc thử");
+    expect(tryNote({ ...idle, playing: true, caption: "câu mẫu" })).toBe("Đang phát · câu mẫu");
+    expect(tryNote({ ...idle, caption: "câu mẫu" })).toContain("Đã nghe xong");
+  });
+
+  it("a refusal wins over everything but the wait", () => {
+    expect(tryNote({ ...idle, refusal: "Card đồ hoạ đang bận", caption: "x", bookBusy: true })).toBe("Card đồ hoạ đang bận");
   });
 });

@@ -510,7 +510,7 @@ export function SettingsScreen() {
         <Section
           id="music"
           title="Nhạc nền"
-          description="Nhạc của riêng bạn làm nhạc nền, dùng chung cho mọi cuốn. Chọn bài cho từng đoạn ở “Sửa sách” của mỗi cuốn."
+          description="Nhạc của riêng bạn làm nhạc nền, dùng chung cho mọi cuốn. Chọn bài cho từng đoạn ở tab “Nhạc nền” của từng dự án trong Studio."
         >
           <div className="max-w-2xl">
             <MyMusicSection />

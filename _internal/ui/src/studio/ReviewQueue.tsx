@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Clock, Ear, FileText, ListMusic, Loader2, PenLine, Play, RotateCcw, ShieldCheck, Square } from "lucide-react";
+import { AlertTriangle, Check, Clock, Ear, FileText, ListMusic, Loader2, PenLine, Play, RotateCcw, ShieldCheck, Square, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClip, type ClipSource } from "@/listen/clip";
@@ -8,6 +8,7 @@ import { formatPercent } from "@/shared/format";
 import { Button, EmptyState, Kbd, Segmented, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
 import { usePendingNote } from "./decisions";
+import { matchPhrase, shortcutHint, spokenEditLabel } from "./reviewText";
 
 // "Cần nghe lại": câu mà khâu tự kiểm tra không chắc (webui/reviews.py). Nghe từng câu, bấm Ổn hoặc Cần thu lại.
 // "Cần thu lại" ghi một yêu cầu cho dây chuyền (overrides.json `retakes`): câu được thu lại bằng hạt giống MỚI ở lần chạy
@@ -108,7 +109,7 @@ function SpokenEditor({
       for (const line of lines) {
         await api(`/api/books/${bookId}/line`, { method: "POST", body: { stableId: line.stableId, textSha256: line.textSha256, spoken } });
       }
-      toast.success(lines.length > 1 ? `Đã ghi chữ đem đọc cho ${lines.length} câu` : "Đã ghi chữ đem đọc", {
+      toast.success(lines.length > 1 ? `Đã ghi cách đọc cho ${lines.length} câu` : "Đã ghi cách đọc câu này", {
         description: "Chữ của sách giữ nguyên; câu được thu lại bằng chữ mới.",
       });
       onDone(spoken);
@@ -146,7 +147,7 @@ function SpokenEditor({
         </Button>
         {twins.length > 0 && (
           <Button size="sm" variant="secondary" disabled={busy} onClick={() => void save([item, ...twins])}>
-            Lưu cho cả {twins.length + 1} câu cùng chữ
+            Lưu cho cả {twins.length + 1} câu giống hệt
           </Button>
         )}
         <Button size="sm" variant="ghost" disabled={busy} onClick={() => onDone(null)}>
@@ -185,19 +186,29 @@ function Row({
       data-review-row={item.stableId}
       className={cn("grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-3 rounded-xl px-3 py-3", handled(item) && !editing ? "opacity-70" : "hover:bg-hover")}
     >
-      <button
-        type="button"
-        disabled={!source}
-        title={source ? undefined : unplayable}
-        aria-label={!source ? `${unplayable}: ${item.text}` : playing ? "Dừng" : `Nghe câu: ${item.text}`}
-        onClick={() => source && clip.toggle(id, source)}
-        className={cn(
-          "grid size-10 place-items-center rounded-full transition-colors disabled:opacity-40",
-          playing ? "bg-accent text-accent-ink" : "bg-hover text-fg hover:bg-line",
-        )}
-      >
-        {playing && clip.loading ? <Loader2 className="size-4 animate-spin" /> : playing ? <Vu className="h-3" /> : <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
-      </button>
+      {source ? (
+        <button
+          type="button"
+          aria-label={playing ? "Dừng" : `Nghe câu: ${item.text}`}
+          onClick={() => clip.toggle(id, source)}
+          className={cn(
+            "grid size-10 place-items-center rounded-full transition-colors",
+            playing ? "bg-accent text-accent-ink" : "bg-hover text-fg hover:bg-line",
+          )}
+        >
+          {playing && clip.loading ? <Loader2 className="size-4 animate-spin" /> : playing ? <Vu className="h-3" /> : <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+        </button>
+      ) : (
+        // Không có gì để nghe thì không có nút ▶ nhìn như bấm được: một dấu nói thẳng lý do (câu hỏng / đã dọn bản thu).
+        <span
+          role="img"
+          aria-label={unplayable}
+          title={unplayable}
+          className={cn("grid size-10 place-items-center rounded-full", item.kind === "failed" ? "bg-danger-soft text-danger" : "bg-hover text-fg-3")}
+        >
+          {item.kind === "failed" ? <AlertTriangle className="size-4" /> : <VolumeX className="size-4" />}
+        </span>
+      )}
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className={cn("rounded-md px-1.5 py-0.5 font-semibold", KIND_TONE[item.kind])}>{KIND_LABEL[item.kind]}</span>
@@ -205,7 +216,7 @@ function Row({
           {item.speaker && <span className="text-fg-2">· {item.speaker}</span>}
           {item.similarity !== null && (
             <span className="tabular text-fg-2" title="Máy nghe lại bản thu và so với chữ của câu: 100% là nghe ra đúng từng chữ">
-              · máy nghe khớp {formatPercent(item.similarity)}
+              · {matchPhrase(formatPercent(item.similarity))}
             </span>
           )}
         </div>
@@ -249,8 +260,7 @@ function Row({
               onClick={() => setEditing(true)}
               className="mt-1.5 mr-3 inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline"
             >
-              <PenLine className="size-3.5" /> Sửa chữ đem đọc
-              {twins.length > 0 ? ` (có ${twins.length} câu cùng chữ)` : ""}
+              <PenLine className="size-3.5" /> {spokenEditLabel(twins.length)}
             </button>
           )
         )}
@@ -408,7 +418,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
           {data.pending ? (
             <>
               Còn <span className="font-semibold text-fg">{data.pending} câu</span> máy tự kiểm không chắc - nghe bằng tai rồi bấm Ổn hoặc
-              Cần thu lại. Câu hỏng (chưa thu được) không có gì để nghe: sửa chữ đem đọc - tượng thanh, chữ lạ - hay thu lại.
+              Cần thu lại. Câu hỏng (chưa thu được) không có gì để nghe: sửa cách máy đọc câu ấy - tiếng động, chữ lạ - hay thu lại.
             </>
           ) : (
             "Đã xem hết các câu đáng lo."
@@ -435,9 +445,11 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
               Nghe liền {playableCount} câu
             </Button>
           )}
-          <span className="hidden items-center gap-1.5 text-xs text-fg-3 md:inline-flex">
-            Đang nghe liền: <Kbd>O</Kbd> Ổn · <Kbd>R</Kbd> Cần thu lại - rồi sang câu kế
-          </span>
+          {shortcutHint(continuous) && (
+            <span className="hidden items-center gap-1.5 text-xs text-fg-3 md:inline-flex">
+              Đang nghe liền: <Kbd>O</Kbd> Ổn · <Kbd>R</Kbd> Cần thu lại - rồi sang câu kế
+            </span>
+          )}
         </div>
       )}
       {data.redoChapters.length > 0 && (

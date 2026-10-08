@@ -102,6 +102,15 @@ export function splitLabel(preview: Pick<ImportPreview, "splitOffer" | "splitHea
   return offer > headings ? `${base} (thêm phần Mở đầu - ${formatNumber(offer)} chương)` : base;
 }
 
+/** Từ chừng này dòng "Chương N" trong MỘT file TXT thì máy chắc đó là cả truyện: ô tách tích sẵn (soát UX a8 02-10 - truyện tải trên mạng
+ *  phần lớn là một file, mặc định không tách ra "1 chương" dài hàng giờ). Hai dòng có thể chỉ là trùng hợp: dưới mức này vẫn chỉ đề xuất. */
+export const SURE_SPLIT_HEADINGS = 3;
+
+/** File TXT cả truyện mà máy chắc là nhiều chương: bản xem trước đầu tiên nên được đọc lại với "tách" đã tích. */
+export function splitIsSure(preview: Pick<ImportPreview, "splitOffer" | "splitHeadings">): boolean {
+  return Boolean(preview.splitOffer) && (preview.splitHeadings ?? preview.splitOffer ?? 0) >= SURE_SPLIT_HEADINGS;
+}
+
 /** Các hàng tích sẵn: mọi hàng trừ mục rất ngắn. */
 export function defaultPicked(chapters: readonly ImportPreviewChapter[]): ReadonlySet<number> {
   return new Set(chapters.filter((chapter) => chapter.included !== false).map((chapter) => chapter.index));

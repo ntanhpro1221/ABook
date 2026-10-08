@@ -125,8 +125,11 @@ def flags(project_root: Path, summary: Mapping[str, Any]) -> dict[str, Any]:
         "wait": record["wait"],
         "announcedAt": record["announcedAt"],
         # Còn đang giữ thật: supervisor tạm dừng để chờ duyệt, chưa ai cho thu tiếp, và sách vẫn đứng vì người dùng
-        # (không phải vì pin).
-        "held": record["heldAt"] is not None and record["releasedAt"] is None and summary.get("paused") == "listener",
+        # (không phải vì pin). Tiến trình chết lúc đang giữ (máy chủ khởi động lại, tắt máy) thì lời hứa "chờ bạn duyệt" vẫn
+        # còn: sổ giữ chỉ khép lại khi người dùng cho thu (`release`), nên sách không tự trở thành "tạm ngưng lúc phân vai" cạnh
+        # một nút "Tiếp tục tạo" bỏ qua việc duyệt (soát UX a8).
+        "held": record["heldAt"] is not None and record["releasedAt"] is None
+        and (summary.get("paused") == "listener" or not (summary.get("running") or summary.get("starting"))),
     }
 
 

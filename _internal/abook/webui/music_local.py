@@ -144,6 +144,12 @@ def clean_analysis(result: Any) -> dict[str, Any] | None:
     return out
 
 
+def auto_keys(info: dict[str, Any]) -> dict[str, Any]:
+    """Các khoá của một bài mà giao diện cần để nói vì sao máy không tự chọn nó ("Có vẻ có lời", "bạn đã tắt") - cho danh sách "Đổi bài"
+    của một đoạn nói đúng như Cài đặt. Bài bình thường: rỗng."""
+    return {key: info[key] for key in ("vocalsLikely", "auto") if key in info}
+
+
 def auto_excluded(info: dict[str, Any]) -> bool:
     """Bài nhập này bị loại khỏi danh sách TỰ chọn: người dùng đặt `auto` = "off", hay bài có vẻ có lời hát mà người dùng chưa đặt "on"."""
     auto = info.get("auto")

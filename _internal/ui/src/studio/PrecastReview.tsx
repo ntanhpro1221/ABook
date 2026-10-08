@@ -8,6 +8,7 @@ import { PersonRow } from "@/listen/BookScreen";
 import type { CastMember } from "@/listen/model";
 import { useCast } from "@/listen/source";
 import { cn } from "@/shared/cn";
+import { useMediaQuery } from "@/shared/media";
 import { formatNumber } from "@/shared/format";
 import { Button, EmptyState } from "@/shared/ui";
 import { api, type BookSummary, type PrecastView } from "./api";
@@ -24,6 +25,7 @@ import {
   TOP_PEOPLE,
   type PrecastStep,
 } from "./precast";
+import { nameKey, sameNames } from "./workText";
 import { useWork, WorkCards } from "./WorkInbox";
 
 // "Duyệt trước khi thu" (webui/precast.py, docs/STUDIO_REVIEW.md): ngay khi phân tích xong và trước khi thu tới những chương đầu,
@@ -87,6 +89,19 @@ export function PrecastWaitSwitch({ book, className }: { book: BookSummary; clas
 // Nút "Thu âm" (tạm dừng -> tiếp tục, không chạy lại gì) là nút chính ở đầu trang dự án (ProjectScreen Actions): màn này không
 // thêm nút thứ hai cùng làm một việc (soát UX a8 05-10, mục 12).
 
+function Intro({ book, view }: { book: BookSummary; view: PrecastView }) {
+  return (
+    <>
+      <p className="mt-1 max-w-2xl text-pretty text-sm text-fg-2">
+        Máy đã đọc hết truyện và phân vai. Xem nhanh những chỗ đáng sửa nhất trước khi thu - mỗi bước bỏ qua được, sửa xong máy áp từ
+        chương sau. {freeNote(view)}
+      </p>
+      {/* Công tắc chỉ có nghĩa trước mốc (Studio mở màn này cả khi chưa kịp báo, vd app đóng lúc phân tích xong). */}
+      {!book.precast?.announcedAt && !view.recordedChapters && <PrecastWaitSwitch book={book} className="mt-4 border-none bg-panel-2" />}
+    </>
+  );
+}
+
 const STEP_TITLE: Record<PrecastStep, string> = {
   cast: "Nhân vật và giọng",
   names: "Cách đọc tên",
@@ -115,9 +130,13 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
   const { data: work, isLoading } = useWork(book.id);
   const { data: cast } = useCast(book.id);
   const step: PrecastStep = PRECAST_STEPS.includes(stepParam as PrecastStep) ? (stepParam as PrecastStep) : "cast";
+  // Điện thoại: bốn bước phải nằm ở màn đầu - lời giới thiệu và công tắc gập lại (soát UX a8 07-10).
+  const narrow = useMediaQuery("(max-width: 639px)");
   if (!view || isLoading || !work) return <div className="mt-6 text-sm text-fg-2">Đang gom những gì cần duyệt…</div>;
 
   const people = (cast?.characters ?? []).slice(0, TOP_PEOPLE);
+  // Nhiều dòng cùng tên ("Lính gác" ba lần) hầu như là một người máy tách ra theo từng chương - hỏi, và cho đường tắt tới chỗ gộp.
+  const twins = sameNames(cast?.characters ?? []);
   const castCards = castItems(work.items);
   const nameCards = nameItems(work.items);
   const lineCards = lineItems(work.items, view.upcoming.map((chapter) => chapter.id));
@@ -134,21 +153,21 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
 
   return (
     <div className="mt-5">
-      <div className="rounded-2xl border border-line bg-panel p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 max-w-2xl">
-            <h2 className="text-base font-semibold">Duyệt trước khi thu</h2>
-            <p className="mt-1 text-pretty text-sm text-fg-2">
-              Máy đã đọc hết truyện và phân vai. Xem nhanh những chỗ đáng sửa nhất trước khi thu - mỗi bước bỏ qua được, sửa xong
-              máy áp ở chương kế tiếp. {freeNote(view)}
-            </p>
-            {book.precast?.held && book.running && (
-              <p className="mt-2 text-sm font-medium text-warning">Sách đang tạm dừng chờ bạn duyệt - duyệt xong bấm “Thu âm” ở đầu trang.</p>
-            )}
-          </div>
+      <div className="rounded-2xl border border-line bg-panel p-4 sm:p-5">
+        <div className="min-w-0 max-w-2xl">
+          <h2 className="text-base font-semibold">Duyệt trước khi thu</h2>
+          {book.precast?.held && (
+            <p className="mt-2 text-sm font-medium text-warning">Sách đang chờ bạn duyệt - duyệt xong bấm “Thu âm” ở đầu trang.</p>
+          )}
         </div>
-        {/* Công tắc chỉ có nghĩa trước mốc (Studio mở màn này cả khi chưa kịp báo, vd app đóng lúc phân tích xong). */}
-        {!book.precast?.announcedAt && !view.recordedChapters && <PrecastWaitSwitch book={book} className="mt-4 border-none bg-panel-2" />}
+        {narrow ? (
+          <details className="mt-2">
+            <summary className="cursor-pointer text-sm text-fg-2">Giải thích và công tắc chờ duyệt</summary>
+            <Intro book={book} view={view} />
+          </details>
+        ) : (
+          <Intro book={book} view={view} />
+        )}
       </div>
 
       <ol className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Các bước duyệt">
@@ -193,15 +212,24 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {people.map((person) => (
-                <PersonRow
-                  key={person.name}
-                  bookId={book.id}
-                  person={person}
-                  onPickVoice={open.onPickVoice}
-                  onMerge={open.onMerge}
-                  onRename={open.onRename}
-                  onGender={open.onGender}
-                />
+                <div key={person.name} className="flex min-w-0 flex-col gap-1">
+                  <PersonRow
+                    bookId={book.id}
+                    person={person}
+                    onPickVoice={open.onPickVoice}
+                    onMerge={open.onMerge}
+                    onRename={open.onRename}
+                    onGender={open.onGender}
+                  />
+                  {twins.has(nameKey(person.displayName)) && person.lines > 0 && (
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-xs text-fg-2">
+                      <span>Cùng tên với người khác trong sách - một người?</span>
+                      <Button size="sm" variant="ghost" onClick={() => open.onMerge(person)}>
+                        Gộp vào…
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
             {castCards.length > 0 && (
@@ -244,12 +272,12 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
         {step === "done" && (
           <EmptyState icon={ClipboardCheck} title="Xong lượt duyệt" className="py-10" action={
             <div className="flex flex-wrap justify-center gap-2">
-              <Button variant={book.precast?.held && book.running ? "ghost" : "secondary"} size="lg" onClick={open.onClose}>
+              <Button variant={book.precast?.held ? "ghost" : "secondary"} size="lg" onClick={open.onClose}>
                 Về danh sách chương
               </Button>
             </div>
           }>
-            {book.precast?.held && book.running
+            {book.precast?.held
               ? "Sửa nào cũng đã ghi lại. Bấm “Thu âm” ở đầu trang để sách làm tiếp - máy áp các sửa ấy trước khi thu chương đầu tiên."
               : book.running
                 ? "Sửa nào cũng đã ghi lại; máy áp ở chương kế tiếp. Những chỗ khác máy chưa chắc vẫn ở “Việc cần duyệt”."
@@ -310,7 +338,7 @@ export function usePrecastInvites(books: BookSummary[] | undefined) {
 
 /** Dải mời trên trang dự án: phân tích xong, chưa thu bao nhiêu - mở màn duyệt (hay "Thu âm" khi sách đang chờ). */
 export function PrecastBanner({ book, onOpen }: { book: BookSummary; onOpen: () => void }) {
-  const held = Boolean(book.precast?.held && book.running);
+  const held = Boolean(book.precast?.held);
   return (
     <div className={cn("mt-6 flex flex-wrap items-center gap-3 rounded-xl border p-4", held ? "border-warning/40 bg-warning-soft" : "border-accent/30 bg-accent-soft")}>
       <ClipboardCheck className={cn("size-5 shrink-0", held ? "text-warning" : "text-accent-text")} />

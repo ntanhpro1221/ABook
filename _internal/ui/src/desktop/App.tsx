@@ -522,8 +522,10 @@ export function App() {
       <Toaster
         // Góc trên bên phải: nút chính của các trang Studio nằm ở giữa / bên trái và thanh dưới (thanh phát, thanh Tạo sách) ở đáy -
         // thông báo ở góc dưới phải từng che nút "Tiếp tục" / "Tạo" ngay sau khi bấm (soát UX a8 05-10, mục 22).
-        position={narrow || modalOpen ? "top-center" : "top-right"}
-        offset={{ top: narrow && !modalOpen ? 96 : 16, right: 16, left: 96, bottom: "var(--toast-bottom, 96px)" }}
+        // Màn hẹp (Studio từ xa trên điện thoại): đầu trang dự án là chỗ nhìn trạng thái và nút chính - thông báo nằm đáy, trên
+        // thanh dưới (soát UX a8 07-10: thông báo đè đầu trang). Có hộp thoại mở thì vẫn ở trên như cũ.
+        position={modalOpen ? "top-center" : narrow ? "bottom-center" : "top-right"}
+        offset={{ top: 16, right: 16, left: narrow ? 16 : 96, bottom: "var(--toast-bottom, 96px)" }}
         visibleToasts={2}
         containerAriaLabel="Thông báo"
         // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.

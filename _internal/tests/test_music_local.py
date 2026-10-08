@@ -527,3 +527,10 @@ def test_the_auto_switch_route_is_not_open_to_a_remote_studio() -> None:
     from abook.webui import remote_studio
 
     assert not remote_studio.permitted("POST", "/api/music/local/" + "a" * 40 + "/auto")
+
+
+def test_the_keys_that_explain_why_the_machine_skips_a_track_reach_the_swap_list() -> None:
+    """"Đổi bài" của một đoạn nói đúng như Cài đặt: bài có vẻ có lời / bài bạn đã tắt mang nhãn của nó (ui: musicLocal.mineNote)."""
+    assert music_local.auto_keys({"title": "x", "vocalsLikely": True, "auto": "off", "valence": 0.1}) == {"vocalsLikely": True, "auto": "off"}
+    assert music_local.auto_keys({"title": "x", "vocalsLikely": False}) == {"vocalsLikely": False}
+    assert music_local.auto_keys({"title": "x"}) == {}, "bài bình thường: không thêm khoá nào"

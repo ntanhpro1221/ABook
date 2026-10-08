@@ -198,6 +198,20 @@ export function analysisLabel(track: Pick<LocalTrack, "analysed">): string {
   return track.analysed ? "Đã phân tích - máy có thể tự chọn" : "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được";
 }
 
+/** Lời giới thiệu "Nhạc của tôi" - MỘT câu cho mọi nơi nói về nó (tab Nhạc nền của dự án, Cài đặt, Sửa sách), kể cả chuyện bài ghim đi cùng file
+ *  sách: người dùng không phải đoán chỗ này khác chỗ kia ra sao (soát UX a8 02-10). */
+export const MY_MUSIC_INTRO =
+  "Thêm nhạc của riêng bạn (mp3, m4a, ogg, opus, flac, wav) làm nhạc nền. File được chép vào kho nhạc của máy này. Bài nào bạn chọn cho một đoạn " +
+  "(ở nút “Đổi bài”) đi cùng file sách (.abook / .abookproj), nên mở trên máy khác hay sang điện thoại vẫn nghe được - không ai khác tải được bài ấy. " +
+  "ABook chỉ ghi tên bài và nghệ sĩ có sẵn trong file, không nói gì về giấy phép.";
+
+/** Dòng chú thích của một bài trong danh sách "Đổi bài" của một đoạn: nhãn tự chọn (có vẻ có lời / bạn đã tắt), hợp không khí đoạn này, hay chưa phân tích
+ *  - cùng nhãn với Cài đặt và tab Nhạc của dự án. Không có gì đáng nói thì undefined. */
+export function mineNote(item: Pick<LocalTrack, "analysed" | "vocalsLikely" | "auto"> & { fits?: boolean }): string | undefined {
+  const notes = [autoLabel(item), item.analysed ? (item.fits ? "Hợp không khí đoạn này" : null) : analysisLabel(item)].filter((note): note is string => Boolean(note));
+  return notes.length ? notes.join(" · ") : undefined;
+}
+
 /** Gộp kết quả của nhiều lượt nhập (mỗi file một lượt, để thấy tiến độ). Danh sách bài lấy của lượt cuối. */
 export function mergeImports(results: ImportResult[]): ImportResult {
   const last = results[results.length - 1];

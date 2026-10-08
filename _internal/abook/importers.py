@@ -254,20 +254,58 @@ def _txt_file(path: Path, split: bool = False) -> ImportedBook:
     book.split_offer = len(parts)
     # Chương tách ra từ một dòng tiêu đề mang tên dòng ấy - không bao giờ trùng tên chương "Mở đầu".
     book.split_headings = sum(part.title != PREAMBLE for part in parts)
+    if parts:
+        # Cả truyện: tên sách gợi ý là dòng tiêu đề đầu file ("Ngọn đèn cuối cùng"), không phải tên file ("ngon_den_cuoi_cung").
+        book.title = title_from_line(first_text_line(chapter.text)) or book.title
+        lines = chapter.text.split("\n")
+        alone = title_only_preamble(lines, _first_cut(lines))
+        if split and alone:
+            book.notes.append(f"Dòng đầu “{alone}” là tên truyện - dùng làm tên sách, không đọc thành một chương.")
     if split and parts:
         book.chapters = parts
     return book
 
 
+def first_text_line(text: str) -> str:
+    """Dòng đầu có chữ của `text`, bỏ khoảng trắng hai đầu; "" nếu không có."""
+    return next((line.strip() for line in text.split("\n") if line.strip()), "")
+
+
+def title_from_line(line: str) -> str:
+    """`line` nếu nó trông là TIÊU ĐỀ truyện: ngắn (<= 80 ký tự, <= 12 từ), có chữ, không bắt đầu bằng gạch lời thoại / ngoặc, không
+    kết bằng dấu câu, không phải dòng "Chương N"; dấu `#` Markdown đầu dòng bỏ đi. Không thì "". Một luật cho trình tạo sách (tên sách
+    gợi ý của file cả truyện), "Thêm sách từ file…" và việc tách file cả truyện. Kotlin: BookImport.titleFromLine."""
+    first = line.strip().lstrip("#").strip()
+    if not first or len(first) > 80 or len(first.split()) > 12:
+        return ""
+    if is_heading_line(first) or first[0] in "-–—“\"‘'«(" or first[-1] in ".!?…,;:\"”’»)":
+        return ""
+    return first if any(ch.isalpha() for ch in first) else ""
+
+
+def title_only_preamble(lines: list[str], cut: int) -> str:
+    """Chữ trước tiêu đề chương đầu tiên (`lines[:cut]`) chỉ là MỘT dòng và dòng ấy trông là tiêu đề truyện: trả tên truyện đó. Nó là tên
+    sách chứ không phải một chương "Mở đầu" 4 chữ (soát UX a8 02-10); không thì "" - chữ dẫn nhiều dòng (tên + giới thiệu) vẫn là "Mở đầu"."""
+    kept = [line for line in lines[:cut] if line.strip()]
+    return title_from_line(kept[0]) if len(kept) == 1 else ""
+
+
+def _first_cut(lines: list[str]) -> int:
+    return next((index for index, line in enumerate(lines) if is_heading_line(line, TXT_HEADING)), 0)
+
+
 def split_txt_chapters(text: str) -> list[Chapter]:
     """Chữ (đã `_clean_text`) của một file TXT cả truyện -> các chương cắt ở đầu mỗi dòng tiêu đề "Chương N" (cùng luật nhận tiêu đề
     với trình tạo sách, `txt_split`: "Quyển N" không phải tiêu đề). Chữ giữ nguyên từng dòng, tiêu đề nằm trong chữ của chương; chữ
-    đứng trước tiêu đề đầu tiên thành chương "Mở đầu" (không bỏ). Dưới hai tiêu đề: [] (không có gì để tách). Kotlin: splitTxtChapters."""
+    đứng trước tiêu đề đầu tiên thành chương "Mở đầu" (không bỏ) - trừ khi nó chỉ là MỘT dòng tên truyện (`title_only_preamble`): dòng ấy
+    là tên sách (`_txt_file`), người nghe được báo ở ghi chú. Dưới hai tiêu đề: [] (không có gì để tách). Kotlin: splitTxtChapters."""
     lines = text.split("\n")
     cuts = [index for index, line in enumerate(lines) if is_heading_line(line, TXT_HEADING)]
     if len(cuts) < 2:
         return []
-    chapters = [Chapter(PREAMBLE, "\n".join(lines[: cuts[0]]).strip("\n"))] if any(line.strip() for line in lines[: cuts[0]]) else []
+    # Chữ dẫn chỉ là một dòng tên truyện thì không thành chương "Mở đầu" - nó là tên sách (`title_only_preamble`).
+    lead = any(line.strip() for line in lines[: cuts[0]]) and not title_only_preamble(lines, cuts[0])
+    chapters = [Chapter(PREAMBLE, "\n".join(lines[: cuts[0]]).strip("\n"))] if lead else []
     for position, start in enumerate(cuts):
         end = cuts[position + 1] if position + 1 < len(cuts) else len(lines)
         chapters.append(Chapter(lines[start].strip(), "\n".join(lines[start:end]).strip("\n")))

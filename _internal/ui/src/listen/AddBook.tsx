@@ -15,6 +15,7 @@ import {
   pickedSuggestions,
   pickedTotals,
   renameChapter,
+  splitIsSure,
   splitLabel,
   type ChapterNames,
   type ImportChoice,
@@ -83,7 +84,8 @@ export function AddBookDialog({
   const [problem, setProblem] = useState("");
   // Gợi ý dòng ghi công người nghe chọn bỏ khỏi phần đọc (theo dòng); mặc định không bỏ dòng nào.
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
-  // File TXT cả truyện: người dùng tích "Tách thành N chương" (mặc định không - máy chỉ đề xuất, không tự cắt file của người dùng).
+  // File TXT cả truyện: "Tách theo N dòng “Chương N”" - tích sẵn khi máy chắc (`splitIsSure`: từ 3 dòng), không thì chỉ đề xuất; bỏ tích được,
+  // file của người dùng không bị sửa.
   const [split, setSplit] = useState(false);
   // Chương nào vào sách (số thứ tự hàng của bước xem trước) và tên người dùng đã đổi. Mặc định như máy đề xuất: mọi chương trừ mục rất ngắn.
   const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());
@@ -147,10 +149,22 @@ export function AddBookDialog({
     setProblem("");
     setBusy("reading");
     try {
-      const result = await importer.preview(picked);
+      let result = await importer.preview(picked);
+      // Cả truyện trong một file mà máy chắc là nhiều chương: mở sẵn với "tách" đã tích (bỏ tích được, danh sách chương đổi theo).
+      let split = false;
+      if (splitIsSure(result)) {
+        split = await importer.preview(picked, { splitChapters: true }).then(
+          (again) => {
+            result = again;
+            return true;
+          },
+          () => false,
+        );
+      }
       setPreview(result);
       setPicked(defaultPicked(result.chapters));
       setTitle(result.title);
+      setSplit(split);
     } catch (error) {
       setProblem((error as Error).message);
       void importer.discard?.(picked).catch(() => undefined);
@@ -240,7 +254,7 @@ export function AddBookDialog({
       description={
         preview
           ? "Xem danh sách chương trước khi thêm. Chữ của truyện được giữ nguyên - ABook chỉ đổi định dạng."
-          : "EPUB, Word (DOCX), PDF có chữ, hay một thư mục mà mỗi file TXT là một chương. Sách vào Thư viện để đọc ngay."
+          : "EPUB, Word (DOCX), PDF có chữ, một file TXT cả truyện, hay một thư mục mà mỗi file TXT là một chương. Sách vào Thư viện để đọc ngay."
       }
     >
       {!preview ? (
@@ -271,7 +285,7 @@ export function AddBookDialog({
                 data-autofocus
                 onChange={(event) => setTyped(event.target.value)}
                 aria-label="Đường dẫn file hay thư mục"
-                placeholder={importer.choose ? "…hoặc dán đường dẫn file hay thư mục" : "Dán đường dẫn file sách hay thư mục TXT, ví dụ D:\\Truyện\\Tên truyện.epub"}
+                placeholder={importer.choose ? "…hoặc dán đường dẫn file hay thư mục" : "Dán đường dẫn file sách (EPUB, Word, PDF, TXT) hay thư mục TXT, ví dụ D:\\Truyện\\Tên truyện.epub"}
                 className="h-10 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent"
               />
               <Button type="submit" disabled={!cleanPath(typed) || busy !== null} loading={busy === "reading" && !importer.choose}>

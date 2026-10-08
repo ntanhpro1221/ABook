@@ -149,6 +149,24 @@ def test_a_whole_story_txt_is_one_chapter_unless_the_listener_asks_to_split_it()
     assert split.credits == [(3, "Dịch: Nhóm Lục Bình")], "gợi ý ghi công đi theo chương mới (chương 3 = 'Chương 2' vì có 'Mở đầu')"
 
 
+def test_a_whole_story_txt_is_named_by_its_title_line_and_a_lone_title_line_is_not_a_chapter() -> None:
+    whole = importers.import_text(FIXTURES / "whole.txt")
+    assert whole.title == "Chuyến phà cuối ngày", "tên sách gợi ý là dòng tiêu đề đầu file, không phải tên file 'whole'"
+    assert (whole.split_offer, whole.split_headings) == (4, 3), "chữ dẫn hai dòng (tên + giới thiệu) vẫn là chương 'Mở đầu'"
+    titled = importers.import_text(FIXTURES / "titled.txt")
+    assert titled.title == "Ngọn đèn cuối cùng" and len(titled.chapters) == 1
+    assert (titled.split_offer, titled.split_headings) == (2, 2), "chữ dẫn chỉ là MỘT dòng tên truyện: không có chương 'Mở đầu'"
+    assert titled.notes == [], "chưa tích tách thì chưa có gì để báo"
+    split = importers.import_text(FIXTURES / "titled.txt", split_chapters=True)
+    assert titles(split) == ["Chương 1: Chuyến phà đêm", "Chương 2: Căn nhà bên sông"]
+    assert split.notes == ["Dòng đầu “Ngọn đèn cuối cùng” là tên truyện - dùng làm tên sách, không đọc thành một chương."], "nói ra, không bỏ âm thầm"
+    assert importers.title_from_line("# Ngọn đèn cuối cùng") == "Ngọn đèn cuối cùng"
+    for line in ("Chương 1: Bến phà", "“Hôm nay nước lớn,” ông nói.", "Anh ta đi.", "- Ông đi đâu", "", "   ", "123"):
+        assert importers.title_from_line(line) == "", line
+    assert importers.title_only_preamble(["Tên truyện", "", "Chương 1"], 2) == "Tên truyện"
+    assert importers.title_only_preamble(["Tên truyện", "Giới thiệu ngắn", "Chương 1"], 2) == "", "hai dòng thì giữ làm chương 'Mở đầu'"
+
+
 @pytest.mark.parametrize("name", ["epub3.epub", "split.epub"])
 def test_the_preview_keeps_very_short_items_as_unticked_chapters_in_file_order(name: str) -> None:
     kept = importers.import_text(FIXTURES / name, keep_short=True)

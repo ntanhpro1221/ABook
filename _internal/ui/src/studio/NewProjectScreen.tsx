@@ -46,6 +46,7 @@ import {
 import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
 import { samePath } from "@/studio/samePath";
+import { splitOutcome } from "@/studio/splitOffer";
 import {
   UPLOAD_ACCEPT,
   batchName,
@@ -59,7 +60,7 @@ import {
   type Picked,
   type UploadProgress,
 } from "@/studio/upload";
-import { AnalysisModelPicker, modelLabel, useAnalysisModels } from "@/studio/AnalysisModelPicker";
+import { AnalysisModelPicker, analysisChoiceLabel, modelLabel, useAnalysisModels } from "@/studio/AnalysisModelPicker";
 import { DEFAULT_LABEL, applyTemplate, type BookTemplate, type Profile } from "@/studio/bookTemplates";
 import { TemplateBar } from "@/studio/TemplateBar";
 import { VolumeSplit } from "@/studio/VolumeSplit";
@@ -78,7 +79,7 @@ const PROFILES: { value: Profile; title: string; pace: string; summary: string; 
     title: "Nhanh",
     pace: "Nhanh nhất",
     summary: "Nghe thử một truyện mới, hoặc cần gấp.",
-    points: ["Phân tích truyện từng đoạn dài một lượt", "Soát cơ bản sau khi đọc", "Đọc lại tối đa 1 lần nếu câu bị đọc sai"],
+    points: ["Máy hiểu truyện theo từng đoạn dài một lần - nhanh hơn", "Soát cơ bản sau khi đọc", "Đọc lại tối đa 1 lần nếu câu bị đọc sai"],
   },
   {
     value: "balanced",
@@ -605,7 +606,7 @@ function SourceStep({
             </div>
           )}
           {files.filter((file) => file.split).map((file) => (
-            <SplitSuggestion key={file.path} file={file} onSplit={onSplit} />
+            <SplitSuggestion key={file.path} file={file} title={title} onSplit={onSplit} />
           ))}
           {/* Gợi ý chia phần đứng TRƯỚC lời nhắc số chương: truyện nhiều tập đánh số lại từ 1 ở mỗi tập, lời nhắc "trùng số" chỉ là
               hệ quả của việc chưa chia. */}
@@ -821,20 +822,29 @@ function ChapterNumberWarning({ issues, suggestsSplit }: { issues: string[]; sug
   );
 }
 
-function SplitSuggestion({ file, onSplit }: { file: ScannedFile; onSplit: (path: string) => Promise<void> }) {
+function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: string; onSplit: (path: string) => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const plan = file.split!;
   const quoted = plan.titles.map((title) => `“${title}”`).join(", ");
+  // Chữ dẫn chỉ là một dòng tên truyện: trùng Tên sách thì nó là tên sách (không thành chương "Mở đầu" 4 chữ); khác thì chữ vẫn ở lại.
+  const outcome = splitOutcome(plan, title);
   return (
     <div className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
       <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">Gợi ý: “{file.name}” có vẻ chứa cả {formatNumber(plan.chapters)} chương</p>
+        <p className="font-semibold">Gợi ý: “{file.name}” có vẻ chứa cả {formatNumber(outcome.chapters)} chương</p>
         <p className="mt-1 break-words text-fg-2">
           Máy thấy các tiêu đề {quoted}
           {plan.chapters > plan.titles.length + (plan.preamble ? 1 : 0) ? "…" : ""}. Hiện cả file được làm thành MỘT chương - một file
           audio dài, không chuyển chương được. Tách theo các tiêu đề ấy?
-          {plan.preamble ? " Phần chữ trước tiêu đề đầu tiên thành chương “Mở đầu”." : ""} File gốc giữ nguyên.
+          {outcome.titleAsName
+            ? ` Dòng đầu file “${plan.titleLine}” là tên truyện nên làm tên sách, không thành một chương riêng.`
+            : outcome.titleStays
+              ? ` Dòng đầu file “${plan.titleLine}” khác Tên sách bạn đã đặt nên vẫn thành chương “Mở đầu” - muốn nó làm tên sách thì đổi Tên sách thành “${plan.titleLine}” trước khi tách.`
+              : plan.preamble
+                ? " Phần chữ trước tiêu đề đầu tiên thành chương “Mở đầu”."
+                : ""}{" "}
+          File gốc giữ nguyên.
         </p>
         <div className="mt-2.5">
           <Button
@@ -847,7 +857,7 @@ function SplitSuggestion({ file, onSplit }: { file: ScannedFile; onSplit: (path:
               void onSplit(file.path).finally(() => setBusy(false));
             }}
           >
-            Tách thành {formatNumber(plan.chapters)} chương
+            Tách thành {formatNumber(outcome.chapters)} chương
           </Button>
         </div>
       </div>
@@ -889,8 +899,8 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
         )}
         {seed.analysisModelMissing && (
           <p className="mt-1 text-warning">
-            Phần trước đọc bằng model “{modelLabel(seed.analysisModelMissing)}”, máy này lúc này không thấy model ấy - phần mới sẽ
-            dùng model mặc định (đổi được ở bước Chất lượng). Đổi model giữa hai phần có thể làm vài người nói được gán khác đi.
+            Phần trước được phân tích bằng bản “{modelLabel(seed.analysisModelMissing)}”, máy này lúc này không thấy bản ấy - phần mới
+            sẽ dùng bản mặc định (đổi được ở bước Chất lượng). Đổi bản giữa hai phần có thể làm vài người nói được gán khác đi.
           </p>
         )}
         {!seed.analyzed && (
@@ -1376,12 +1386,10 @@ function ConfirmStep({
       : []),
     ["Nhân vật", seed ? `Giữ ${carriedText(seed.carries)}; người mới được phân vai sau khi phân tích` : "Tự động phân vai sau khi phân tích"],
     ["Chất lượng", option.title],
-    // Luôn nói model nào sẽ đọc hiểu truyện - cả khi là mặc định - vì phân tích là bước dài nhất và không ngắt được.
-    ...(analysisModel
-      ? ([["Model đọc hiểu", `${modelLabel(analysisModel)} (${seed?.analysisModel === analysisModel ? "như phần trước" : "chỉ cuốn này"})`]] as [string, string][])
-      : models?.default
-        ? ([["Model đọc hiểu", `${modelLabel(models.default)} (mặc định)`]] as [string, string][])
-        : []),
+    // Luôn nói bộ phân tích nào sẽ đọc hiểu truyện - cả khi là mặc định - vì phân tích là bước dài nhất và không ngắt được.
+    ...(analysisModel || models?.default
+      ? ([["Bộ phân tích truyện", analysisChoiceLabel(analysisModel, seed?.analysisModel)]] as [string, string][])
+      : []),
     ...(measured
       ? ([
           ["Thời gian làm", lengthRange(guess.totalLow, guess.totalHigh)],
@@ -1814,17 +1822,21 @@ export function NewProjectScreen() {
               replaces={draft.replaces}
               onSplit={async (path) => {
                 try {
-                  const { folder } = await api<{ folder: string }>("/api/sources/split", { method: "POST", body: { path } });
+                  // Tên sách đang điền đi kèm: dòng tên truyện đầu file trùng nó thì không thành chương "Mở đầu" (txt_split.split).
+                  const { folder } = await api<{ folder: string }>("/api/sources/split", { method: "POST", body: { path, title: draft.title.trim() } });
                   // File đã chọn thẳng: thư mục chương thay chỗ nó. File nằm trong một thư mục đã chọn: thêm thư mục chương,
                   // bỏ file cả truyện khỏi danh sách (vẫn hoàn tác được như mọi chương bỏ tay).
                   // Đường người dùng gõ ("D:/Truyện/a.txt") khác dạng đường máy quét ("D:\Truyện\a.txt"): so bằng samePath.
                   const replaced = draft.paths.some((item) => samePath(item, path));
+                  // Tên sách người dùng đã có / đã gõ ở lại: thư mục chương mang tên FILE ("ngon_den_cuoi_cung"), không được đè lên nó khi quét lại.
+                  const keepTitle = draft.title.trim() ? { titleEdited: true } : {};
                   update(
                     replaced
-                      ? { paths: draft.paths.map((item) => (samePath(item, path) ? folder : item)), excluded: [], limit: null, volumeStarts: null }
-                      : { paths: [...draft.paths, folder], excluded: [...draft.excluded, path], limit: null, volumeStarts: null },
+                      ? { paths: draft.paths.map((item) => (samePath(item, path) ? folder : item)), excluded: [], limit: null, volumeStarts: null, ...keepTitle }
+                      : { paths: [...draft.paths, folder], excluded: [...draft.excluded, path], limit: null, volumeStarts: null, ...keepTitle },
                   );
-                  const chapters = scan?.files.find((file) => samePath(file.path, path))?.split?.chapters;
+                  const plan = scan?.files.find((file) => samePath(file.path, path))?.split;
+                  const chapters = plan ? splitOutcome(plan, draft.title).chapters : undefined;
                   toast.success(chapters ? `Đã tách thành ${formatNumber(chapters)} chương` : "Đã tách thành các chương", {
                     description: "File gốc vẫn giữ nguyên.",
                   });

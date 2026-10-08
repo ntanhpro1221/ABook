@@ -60,7 +60,7 @@ import {
 import {
   formatClock,
   formatDate,
-  formatEta,
+  etaOf,
   formatLength,
   formatNumber,
   formatPercent,
@@ -162,7 +162,7 @@ function Step({
 function ProductionPanel({ book }: { book: BookSummary }) {
   const [analysis, casting, synthesis] = stepStates(book);
   const live = book.running || book.starting;
-  const eta = book.paused ? "đang tạm dừng" : book.eta ? formatEta(book.eta.seconds) : live ? "đang ước tính thời gian…" : "";
+  const eta = book.paused ? "đang tạm dừng" : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
   return (
     <section className="mt-8">
       <div className="mb-3 flex items-baseline justify-between">
@@ -221,6 +221,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
   const stop = useStop();
   const pause = usePause();
   const inAnalysis = book.phase === "analysis";
+  const eta = etaOf(book);
   return (
     <Dialog
       open={open}
@@ -241,20 +242,18 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
           <div className="text-pretty">
             <p>
-              <span className="font-semibold">Dừng giữa lúc phân tích là mất phần phân tích đã làm.</span> Chạy tiếp sau đó sẽ ra{" "}
-              <span className="font-semibold">một cuốn sách khác</span> so với chạy liền một mạch: đoạn sau chỗ dừng có thể đổi
-              người nói, kéo theo đổi giọng.
+              <span className="font-semibold">Dừng giữa lúc phân tích thì mất phần đã làm,</span> và chạy lại sẽ ra một cuốn hơi
+              khác: người nói ở đoạn sau chỗ dừng có thể đổi, kéo theo đổi giọng.
             </p>
             <p className="mt-2 text-fg-2">
-              Nên để chạy hết bước này{book.eta ? ` (${formatEta(book.eta.seconds)})` : ""}.
+              Nên để chạy hết bước này{eta ? ` (${eta})` : ""}.
               {book.canPause && (
                 <>
                   {" "}
-                  Muốn nghỉ giữa chừng thì bấm <span className="font-medium text-fg">Tạm dừng</span>: sách đứng yên (sau phần
-                  đang làm dở) và làm tiếp đúng chỗ, giữ nguyên phần đã phân tích - nhưng vẫn giữ bộ nhớ card đồ hoạ.
+                  Cần nghỉ thì bấm <span className="font-medium text-fg">Tạm dừng</span>: sách đứng yên rồi làm tiếp đúng chỗ,
+                  phần đã phân tích không mất.
                 </>
-              )}{" "}
-              Nếu buộc phải dừng hẳn (tắt máy), trang sách sẽ có nút “Làm lại phân tích từ đầu” - nên dùng nó thay vì chạy tiếp bản dở.
+              )}
             </p>
           </div>
         </div>
@@ -481,7 +480,7 @@ function Actions({ book }: { book: BookSummary }) {
           variant={book.phase === "done" && !book.pendingChanges ? "primary" : "secondary"}
           size="lg"
           icon={Headphones}
-          className="max-sm:flex-1"
+          className="max-sm:basis-full"
           onClick={() => navigate(`/book/${book.id}`)}
         >
           Nghe trong Thư viện
@@ -544,6 +543,12 @@ function Actions({ book }: { book: BookSummary }) {
             </Button>
           )}
         </>
+      ) : book.precast?.held && book.phase !== "done" ? (
+        // Sách đang chờ duyệt mà tiến trình đã chết (máy chủ khởi động lại): vẫn là "Thu âm", không phải "Tiếp tục tạo" cạnh
+        // một khung mời duyệt (soát UX a8) - cùng việc với nút "Thu âm" lúc sách đang giữ.
+        <Button variant="primary" size="lg" icon={Mic2} loading={start.isPending} onClick={() => begin(book.id)}>
+          Thu âm
+        </Button>
       ) : book.phase !== "done" && book.analysisInterrupted ? (
         // Phân tích bị ngắt: chạy tiếp ra MỘT CUỐN KHÁC (AGENTS.md) - nút chính là làm lại từ đầu, "Tiếp tục" lùi xuống kèm
         // lời cảnh báo. Làm lại = dự án mới thay bản dở (cần máy tính: Studio từ xa không tạo lại sách được).
@@ -557,11 +562,11 @@ function Actions({ book }: { book: BookSummary }) {
             Tiếp tục
           </Button>
           <p className="basis-full text-pretty text-sm text-fg-2">
-            Phân tích đã bị ngắt giữa chừng
+            Phân tích đã dừng giữa chừng
             {book.segments.total ? ` (còn ${formatNumber(book.segments.pending ?? book.segments.total - book.segments.analyzed)}/${formatNumber(book.segments.total)} câu chưa phân tích)` : ""}.
-            {remote ? " " : " Làm lại từ đầu cho kết quả như chạy liền một mạch (bản dở vào Thùng rác). "}
-            “Tiếp tục” vẫn chạy được nhưng ra một cuốn sách khác so với chạy liền mạch: đoạn sau chỗ ngắt có thể đổi người nói và
-            giọng đọc{remote ? ". Muốn làm lại từ đầu, mở trang này trên máy tính." : "."}
+            {remote
+              ? " “Tiếp tục” vẫn chạy được nhưng ra một cuốn hơi khác so với chạy liền một mạch. Muốn làm lại từ đầu, mở trang này trên máy tính."
+              : " Làm lại từ đầu cho kết quả như chạy liền một mạch (bản dở được cất đi); “Tiếp tục” vẫn chạy được nhưng ra một cuốn hơi khác - người nói ở đoạn sau chỗ dừng có thể đổi."}
           </p>
         </>
       ) : book.phase !== "done" ? (
@@ -658,7 +663,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
     onSuccess: ({ lines }) => {
       toast.success(`Đã ghi: thu lại ${lines} câu của ${chapter.displayTitle}`, {
         description: book.running
-          ? "Máy thu lại khi sách chạy tới ranh giới chương kế. Bỏ được trong hộp “Áp dụng thay đổi”."
+          ? "Máy thu lại từ chương sau. Bỏ được trong hộp “Áp dụng thay đổi”."
           : "Bấm “Áp dụng thay đổi” ở đầu trang để thu. Bỏ được trong hộp ấy.",
       });
       void client.invalidateQueries({ queryKey: ["book", book.id] });
@@ -1003,12 +1008,23 @@ export function ProjectScreen() {
         <div className="contents sm:block sm:min-w-0 sm:flex-1 sm:pt-1">
           <div className="min-w-0 sm:contents">
           <StatusPill
-            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.paused && book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
+            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
             tone={book.paused ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused}
           />
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-[30px]">{book.title}</h1>
-          <p className="mt-2 text-sm text-fg-2">{meta.join(" · ")}</p>
+          {/* Điện thoại: một dòng gọn (số chương) + "Chi tiết" gập - giọng kể, chất lượng, model, ngày tạo từng chiếm 3 dòng đầu
+              trang (soát UX a8 07-10). */}
+          <p className="mt-2 text-sm text-fg-2">
+            {meta[0]}
+            <span className="max-sm:hidden">{meta.slice(1).map((part) => ` · ${part}`)}</span>
+          </p>
+          {meta.length > 1 && (
+            <details className="mt-1 text-sm text-fg-2 sm:hidden">
+              <summary className="cursor-pointer text-fg-3">Chi tiết</summary>
+              <p className="mt-1">{meta.slice(1).join(" · ")}</p>
+            </details>
+          )}
           <PartLinks id={book.id} />
           {book.phase === "done" || book.audioSeconds > 0 ? (
             <p className="tabular mt-1 text-sm text-fg-2">
@@ -1017,7 +1033,7 @@ export function ProjectScreen() {
                 <span className="font-medium text-warning"> · {book.chapters.missingAudio} chương mất file audio</span>
               ) : null}
               {book.position && (
-                <span className="text-fg-3"> · lần nghe cuối {formatRelative(book.position.at)} ở {formatClock(book.position.seconds)}</span>
+                <span className="text-fg-3 max-sm:hidden"> · lần nghe cuối {formatRelative(book.position.at)} ở {formatClock(book.position.seconds)}</span>
               )}
             </p>
           ) : null}
