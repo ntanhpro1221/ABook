@@ -130,12 +130,22 @@ def test_tally_of_sourced_forms_by_kind():
     ("Party", "Pa-ti"), ("Arthur", "A-thơ"), ("Silver", "Xin-vờ"), ("Beatrice", "Bi-a-trít"), ("Greyrat", "Gờ-rây-rát"),
     # từ thường cùng dáng tên ngắn + e câm đọc theo âm vị; từ mượn đã vào từ điển; chữ viết tắt thành từ; hậu tố gọi Nhật sau gạch
     ("Fire", "Phai"), ("Note", "Nốt"), ("video", "vi-đê-ô"), ("café", "cà-phê"), ("OK", "ô-kê"), ("TV", "ti-vi"), ("Lyle-kun", "Lai-ồ cun"),
+    # vòng 11: -well -> oen (nửa đầu đọc như một từ, cụm cuối còn âm tiết sau thì thành ơ); -ore -> o; tắc d / g + l / r và nguyên âm dài không khép
+    ("Cromwell", "Cờ-rom-oen"), ("Roxwell", "Róc-xơ-oen"), ("Pellinore", "Pe-li-no"), ("Daydream", "Đây-đờ-rim"), ("Libra", "Li-bờ-ra"),
+    ("Integra", "In-te-gờ-ra"), ("England", "Inh-gơ-lừn"), ("Templar", "Tem-pờ-lơ"),
+    # ir không nhấn trong từ điển -> i (đường chữ giữ ơ); -ar cuối ơ, a trước r giữa từ vẫn a; -re cuối ngang
+    ("Miranda", "Mi-ran-đa"), ("Zirnitra", "Dơ-ni-tra"), ("Oscar", "Ót-cơ"), ("Maria", "Ma-ri-a"), ("Ogre", "Ô-gơ"),
+    # ou + nguyên âm -> u; chr -> k; -oh cuối -> ô; -ayer / -oyar giữ y trong nguyên âm đôi; w nuốt vào u ở nửa sau từ ghép
+    ("Louina", "Lu-i-na"), ("Chrono", "Cờ-rô-nô"), ("Uzoh", "U-dô"), ("Loyar", "Loi-a"), ("cosplayer", "cót-pờ-lây-ơ"), ("Lilywood", "Li-li-út"),
+    # chữ viết hoa lạ đọc như tên: TOÀN HOA từ điển / dài, kết bằng một chữ hoa; từ mượn thêm
+    ("LYLE", "Lai-ồ"), ("TYPE", "Tai"), ("YGGDRASIL", "Ích-đờ-ra-xiu"), ("DreadlorD", "Đờ-rét-lót"), ("beta", "bê-ta"), ("motor", "mô-tơ"),
+    ("pharaoh", "pha-ra-ông"), ("coca", "cô-ca"),
 ])
 def test_reading_follows_the_convention(token, reading):
     assert vietnamized_english(token) == reading
 
 
-@pytest.mark.parametrize("token", ["MARY", "iPhone", "McDonald", "O'Brien", "Ko1", "", "Jean Paul", "Vĩnh"])
+@pytest.mark.parametrize("token", ["NPC", "USB", "iPhone", "McDonald", "O'Brien", "Ko1", "", "Jean Paul", "Vĩnh"])
 def test_unsure_is_none(token):
     assert vietnamized_english(token) is None
 

@@ -106,7 +106,8 @@ class EnglishViTest {
 
     @Test
     fun whatItIsNotSureOfItDoesNotRead() {
-        assertNull(EnglishVi.reading("MARY", phones))
+        assertNull(EnglishVi.reading("NPC", phones))
+        assertEquals("Ma-ri", EnglishVi.reading("MARY", phones)) // TOÀN HOA từ 4 chữ có trong từ điển đọc như tên (vòng 11); người gọi vẫn bỏ qua chữ TOÀN HOA
         assertNull(EnglishVi.reading("iPhone", phones))
         assertNull(EnglishVi.reading("O'Brien", phones))
         assertNull(EnglishVi.reading("", phones))
