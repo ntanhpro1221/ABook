@@ -4337,6 +4337,37 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 08-10 15:1x - CẦU NỐI bộ 7 (ghi trước Corpus PLAN_bridge7.md): bộ 7 thấp vì chương PHẲNG, không phải học sinh hỏng trên một miền truyện
+
+Agent Sonnet chấm bạc lại bộ 7 và bộ 6, mỗi bộ 20 chương, theo đúng quy trình lô bạc (hướng dẫn 3.1, một người chấm, chấm mù).
+Học sinh là STU 60 chương (qwen06 giữa, ridge, alpha 1e4). Số chính bỏ các chương-trục mà nhãn tham chiếu đứng yên một mức;
+trong ngoặc là số tính mọi chương (chương hằng tính r = 0).
+
+| TB r(V,T) trong chương | bộ 6 | bộ 7 |
+|---|---|---|
+| học sinh ~ vàng | .418 | .281 (.201) |
+| học sinh ~ bạc | .377 | .244 (.232) |
+| bạc ~ vàng | .821 | .587 (.426) |
+| người chấm A ~ B của vàng | .796 | .833 (.457) |
+
+- Luật ghi trước cho ra "CẢ HAI": học sinh tụt .13 và độ khớp nhãn tụt .23 ở bộ 7.
+- **Nguyên nhân chung: chương bộ 7 phẳng.** Độ lệch chuẩn trong chương (theo giây) của nhãn vàng:
+
+  | | V | E | T |
+  |---|---|---|---|
+  | bộ 6 | .30 | .31 | .37 |
+  | bộ 7 | .12 | .16 | .12 |
+
+  - Với nhãn bạc, bộ 6 là .24/.29/.33 và bộ 7 là .16/.20/.23.
+  - Trên chương phẳng, r trong chương phần lớn là nhiễu, nên học sinh và độ khớp giữa hai người chấm cùng tụt.
+  - Độ thưa cảnh không phải nguyên nhân: bạc bộ 6 thưa ngang vàng bộ 7 (1,34 cảnh/1.000 tiếng) mà bạc ~ vàng vẫn .82.
+- **Kết luận:** bộ 7 không đại diện để đo hình dạng không khí trong chương.
+  - Khoảng cách .42 -> .20 chủ yếu do mẫu chương ít tương phản, không phải do học sinh hỏng trên một miền truyện.
+  - Từ nay báo bộ 7 theo hai cách (mọi chương / bỏ chương hằng, ghi số chương bị bỏ). Đề nghị báo kèm r có trọng số theo độ lệch
+    của nhãn vàng trong chương. Luật của các lượt đã ghi trước không đổi.
+- **Sự cố đo:** mã đo nhạc nạp `music_scenes` từ worktree `ABook_docs_music`. Rebase cây đó để ghi docs đã làm đổi đoạn app. Cây đã
+  được ghim lại ở 399fe2d6, mọi số trên đo bằng cây đã ghim, và docs nhạc từ nay đi qua worktree `ABook_mdocs`.
+
 ### 08-10 13:xx - Bộ 7 thấp thật, và một phần là do THƯỚC: vàng bộ 7 có chương hằng (r=0); đầu Pearson thua ridge
 
 Kiểm câu C của góp ý ngoài vòng 4. Học sinh trong mục này là STU 60 chương: qwen06 giữa, ridge căn giữa, alpha 1e4.
