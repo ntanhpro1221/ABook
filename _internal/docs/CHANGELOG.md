@@ -36,8 +36,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   các nút đọc không khí bằng AI nói theo điều người nghe được ("Chọn nhạc sát không khí hơn", "Đọc lại không khí các đoạn").
 - Nhạc của tôi: "Đổi bài" ở từng đoạn cũng hiện "Có vẻ có lời" / "Máy không tự chọn bài này" như Cài đặt; Cài đặt > Nhạc nền hiện dòng "Chưa phân tích" như tab dự án; hai nơi nói cùng một câu
   về bài đã ghim đi theo file sách (.abook / .abookproj, cả sang điện thoại); mô tả không còn nhắc "Sửa sách".
-- Nhạc của bạn: bài có lời hát được nhận ra và không tự phát làm nền dưới giọng đọc (lời át chữ). Bài ấy hiện nhãn "Có vẻ có lời". Bạn vẫn có thể ghim hay bấm "Vẫn cho máy tự chọn".
-- Nhạc của bạn: mỗi bài có một nút để bạn quyết máy có được tự chọn nó làm nhạc nền hay không. "Đừng tự chọn bài này" cho bài nào bạn chỉ muốn ghim tay (kể cả bài máy không nhận ra là có lời); "Cho máy tự chọn lại" để trả về như cũ. Bài đã tắt hiện nhãn "Máy không tự chọn bài này", ghim tay vẫn được.
 - "Đổi bài" -> "Chọn" cho một đoạn giờ xong gần như ngay (trước đây phải chờ dựng lại nhạc cả cuốn, sách 43 chương ~35 giây), và chỉ cảnh của
   đoạn ấy đổi - các chương khác giữ nguyên cả bài lẫn các bài nối tiếp. Đoạn được chọn lại không lấy trùng bài của cảnh liền trước hay liền sau.
 
@@ -62,6 +60,26 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - "Cần nghe lại": dòng phím tắt chỉ hiện khi đang nghe liền; "khớp" nói rõ là khớp với chữ của câu; nút "Sửa chữ đem đọc" nói lời tự
   nhiên; câu hỏng không còn nút nghe vô nghĩa. Thẻ nhân vật xuống dòng thay vì cắt tên và giọng, và "trầm hẳn/sáng hẳn" ghi rõ là
   chỉnh so với giọng gốc.
+- Ở màn hẹp (Studio từ xa trên điện thoại, cửa sổ nhỏ): thông báo không còn đè lên thanh tab dưới cùng; ô "Chia thành mấy tập?" không cắt
+  tên sách; gợi ý tách file TXT cả truyện hết dấu chấm thừa sau "Chương 3”…".
+
+### Đọc từ và tên tiếng Anh
+
+- Đọc từ và tên tiếng Anh đúng hơn khi giọng chỉ nói được âm tiết Việt (máy tính và điện thoại như nhau; giọng nói được tiếng Anh vẫn
+  giữ nguyên chữ Anh): "Beatrice" thành "Bi-a-trít", "Jaxon" thành "Giác-xơn", "Party" thành "Pa-ti", "Lich" thành "Lích", "video"
+  thành "vi-đê-ô", "Fire" thành "Phai", "Lyle-kun" thành "Lai-ồ cun"; tên bịa có chữ o như "Docora" đọc "Đo-co-ra" thay vì "Đô-cô-ra";
+  OK và TV đọc "ô-kê", "ti-vi". Trên bộ nhãn đo, tên và từ Anh đọc đúng từ 86% lên 91% ở phần dùng để chỉnh luật và từ 73% lên 77% ở
+  phần để riêng.
+
+## [0.4.32] - 2026-10-08
+
+### Nhạc nền
+
+- Nhạc của bạn: bài có lời hát được nhận ra và không tự phát làm nền dưới giọng đọc (lời át chữ). Bài ấy hiện nhãn "Có vẻ có lời". Bạn vẫn có thể ghim hay bấm "Vẫn cho máy tự chọn".
+- Nhạc của bạn: mỗi bài có một nút để bạn quyết máy có được tự chọn nó làm nhạc nền hay không. "Đừng tự chọn bài này" cho bài nào bạn chỉ muốn ghim tay (kể cả bài máy không nhận ra là có lời); "Cho máy tự chọn lại" để trả về như cũ. Bài đã tắt hiện nhãn "Máy không tự chọn bài này", ghim tay vẫn được.
+
+### Studio
+
 - Chọn người nói ở thẻ "Vai phụ không tên" (hay đọc tên, ai nói câu này) của một sách đã làm xong không còn làm cả trang dự án
   hiện "Không mở được sách" - quyết định vẫn được ghi như trước, nay trang giữ nguyên.
 - Phân tích cùng một cuốn bằng cùng một model không còn đổi theo câu hỏi đứng trước: Studio khởi Ollama với bộ đệm câu
@@ -79,16 +97,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   "tôi"; chưa trả lời thì máy giữ nguyên. Chương đã phân tích xong thì thẻ nói rõ lựa chọn chỉ áp khi làm lại sách, và đồng ý một
   đoạn không bắt cả cuốn phân tích lại. Dùng được từ điện thoại điều khiển máy tính; việc hiện thẻ này trong app điện thoại độc lập
   chưa có.
-- Ở màn hẹp (Studio từ xa trên điện thoại, cửa sổ nhỏ): thông báo không còn đè lên thanh tab dưới cùng; ô "Chia thành mấy tập?" không cắt
-  tên sách; gợi ý tách file TXT cả truyện hết dấu chấm thừa sau "Chương 3”…".
-
-### Đọc từ và tên tiếng Anh
-
-- Đọc từ và tên tiếng Anh đúng hơn khi giọng chỉ nói được âm tiết Việt (máy tính và điện thoại như nhau; giọng nói được tiếng Anh vẫn
-  giữ nguyên chữ Anh): "Beatrice" thành "Bi-a-trít", "Jaxon" thành "Giác-xơn", "Party" thành "Pa-ti", "Lich" thành "Lích", "video"
-  thành "vi-đê-ô", "Fire" thành "Phai", "Lyle-kun" thành "Lai-ồ cun"; tên bịa có chữ o như "Docora" đọc "Đo-co-ra" thay vì "Đô-cô-ra";
-  OK và TV đọc "ô-kê", "ti-vi". Trên bộ nhãn đo, tên và từ Anh đọc đúng từ 86% lên 91% ở phần dùng để chỉnh luật và từ 73% lên 77% ở
-  phần để riêng.
 
 ## [0.4.31] - 2026-10-07
 
