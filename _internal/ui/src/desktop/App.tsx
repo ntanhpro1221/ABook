@@ -526,6 +526,8 @@ export function App() {
         // thanh dưới (soát UX a8 07-10: thông báo đè đầu trang). Có hộp thoại mở thì vẫn ở trên như cũ.
         position={modalOpen ? "top-center" : narrow ? "bottom-center" : "top-right"}
         offset={{ top: 16, right: 16, left: narrow ? 16 : 96, bottom: "var(--toast-bottom, 96px)" }}
+        // Dưới 600 px sonner bỏ `offset` mà dùng `mobileOffset` (mặc định 16 px) - thông báo từng đè lên thanh tab dưới ở 390 px.
+        mobileOffset={{ top: 16, right: 16, left: 16, bottom: "var(--toast-bottom, 96px)" }}
         visibleToasts={2}
         containerAriaLabel="Thông báo"
         // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.

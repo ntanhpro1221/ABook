@@ -835,7 +835,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
         <p className="font-semibold">Gợi ý: “{file.name}” có vẻ chứa cả {formatNumber(outcome.chapters)} chương</p>
         <p className="mt-1 break-words text-fg-2">
           Máy thấy các tiêu đề {quoted}
-          {plan.chapters > plan.titles.length + (plan.preamble ? 1 : 0) ? "…" : ""}. Hiện cả file được làm thành MỘT chương - một file
+          {plan.chapters > plan.titles.length + (plan.preamble ? 1 : 0) ? " và các tiêu đề sau" : ""}. Hiện cả file được làm thành MỘT chương - một file
           audio dài, không chuyển chương được. Tách theo các tiêu đề ấy?
           {outcome.titleAsName
             ? ` Dòng đầu file “${plan.titleLine}” là tên truyện nên làm tên sách, không thành một chương riêng.`

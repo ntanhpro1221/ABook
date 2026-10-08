@@ -577,6 +577,8 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
   if (isLoading || !data) return <p className="mt-6 text-sm text-fg-2">Đang dựng nhạc nền…</p>;
   const { plan, overrides, taxonomy } = data;
   const genres = Object.entries(taxonomy.genres ?? {});
+  // Màn hẹp: ô chọn không đủ rộng cho tên thể loại dài ("Dị giới / kỳ ảo phương Tây (…)") nên chữ bị cắt - ghi đủ tên bên dưới.
+  const genreName = genres.find(([value]) => value === overrides.genre)?.[1].vi ?? "";
   const byChapter = new Map<number, Scene[]>();
   for (const scene of plan?.scenes ?? []) byChapter.set(scene.chapterId, [...(byChapter.get(scene.chapterId) ?? []), scene]);
   // Bài đang được đổi sang (nút "Chọn" của nó hiện "Đang đổi…").
@@ -601,7 +603,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
           <select
             id="music-genre"
             value={overrides.genre ?? ""}
-            title={genres.find(([value]) => value === overrides.genre)?.[1].vi ?? "Chưa chọn"}
+            title={genreName || "Chưa chọn"}
             onChange={(event) => change.mutate({ genre: event.target.value || null })}
             // Rộng vừa tên thể loại dài nhất ("Dị giới / kỳ ảo phương Tây (…)") - không cắt chữ; hẹp màn thì thôi ở bề ngang ô.
             className="mt-1 h-9 w-full max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-accent sm:w-auto sm:min-w-64"
@@ -613,6 +615,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
               </option>
             ))}
           </select>
+          {genreName.length > 28 && <span className="mt-1 block text-xs text-fg-2 sm:hidden">{genreName}</span>}
         </label>
         <label className="min-w-0 basis-full text-sm sm:basis-auto">
           <span className="block text-fg-2">Mức nhạc dưới giọng đọc</span>
@@ -721,6 +724,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         onClick={() => setSwapping(swapping === scene.key ? null : scene.key)}>
                         {swap.text}
                       </Button>
+                      {follows && <span aria-hidden className="size-8 shrink-0 max-sm:hidden" />}
                       {!follows && <SceneMenu
                         scene={scene}
                         disabled={change.isPending}
