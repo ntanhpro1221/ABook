@@ -42,3 +42,22 @@ export function routeLine(computer: RoutedComputer, devices: readonly PairedDevi
 export function deviceKindLabel(kind: PairedDevice["kind"]): string {
   return kind === "phone" ? "điện thoại" : "máy tính";
 }
+
+/** Đang chờ máy kia dậy (webui/remote_books.py `waking`): nối được tới máy mà ABook bên ấy chưa trả lời - điện thoại tắt màn
+ *  hình thì hệ điều hành cho ABook "ngủ" tới vài phút. Giây kể từ 1970, như `lastSeen`. */
+export interface Waking {
+  since: number;
+  until: number;
+  via: "wifi" | "bluetooth";
+}
+
+/** Dòng trạng thái khi đang chờ: "Điện thoại đang ngủ - mở ABook trên điện thoại để trả lời ngay · chờ thêm tối đa 4 phút". */
+export function wakingLine(computer: { kind?: "phone" | "computer"; waking?: Waking }, now: number = Date.now() / 1000): string {
+  const left = Math.max(0, (computer.waking?.until ?? now) - now);
+  const rest = left >= 90 ? `${Math.round(left / 60)} phút` : `${Math.max(1, Math.round(left))} giây`;
+  const what =
+    computer.kind === "computer"
+      ? "Máy kia chưa trả lời - mở ABook trên máy ấy"
+      : "Điện thoại đang ngủ - mở ABook trên điện thoại để trả lời ngay";
+  return `${what} · chờ thêm tối đa ${rest}`;
+}

@@ -21,7 +21,7 @@ Mọi thứ giữa các máy đã là HTTPS (chứng chỉ tự ký, ghim vân t
 ## Khung
 
 ```
-loại (1 byte) | luồng (4 byte, big-endian) | độ dài (4 byte, big-endian) | dữ liệu (tối đa 16 KB)
+loại (1 byte) | luồng (4 byte, big-endian) | độ dài (4 byte, big-endian) | dữ liệu (DATA tối đa 4 KB)
 ```
 
 | loại | nghĩa |
@@ -29,12 +29,43 @@ loại (1 byte) | luồng (4 byte, big-endian) | độ dài (4 byte, big-endian)
 | 1 OPEN | bên kết nối mở luồng mới (số lẻ: điện thoại; số chẵn dành cho bên kia) |
 | 2 DATA | dữ liệu của luồng |
 | 3 CLOSE | hết dữ liệu theo chiều này (half-close); luồng xong khi cả hai chiều đã CLOSE |
-| 4 WINDOW | trả tín dụng: 4 byte không dấu, trong (0, 256 KB] - số byte vừa ghi xuống socket cục bộ; ngoài khoảng ấy là sai giao thức (RESET) |
+| 4 WINDOW | trả tín dụng: 4 byte không dấu. Luồng N: trong (0, 64 KB] - số byte vừa ghi xuống socket cục bộ, ngoài khoảng ấy là sai giao thức (RESET luồng). Luồng 0: tín dụng chung của đường hầm, trong (0, 256 KB] - số byte DATA đã tiêu (ghi xuống hay bỏ) |
 | 5 RESET | bỏ luồng ngay, cả hai chiều (29-09): ứng dụng cục bộ đóng ngang, bên phục vụ không mở được cổng cục bộ hay từ chối luồng, bên kia gửi quá tín dụng. DATA tới luồng không còn thì đáp RESET; WINDOW/CLOSE/RESET tới luồng không còn là khung trễ, bỏ qua - không bao giờ đáp RESET cho RESET |
+| 6 ACK | luồng 0, 4 byte: số byte bên này vừa đọc khỏi đường hầm (mỗi 4 KB). Bên gửi giữ không quá 16 KB chưa được báo (08-10) |
 
-**Cửa sổ tín dụng 256 KB mỗi luồng, mỗi chiều** (như HTTP/2): gửi trong phần tín dụng, trả tín dụng sau khi đã ghi. Trình
-phát ngừng đọc khi bộ đệm đầy thì chỉ luồng của nó đứng - lời gọi đồng bộ bên cạnh vẫn về ngay; bộ nhớ đệm mỗi luồng có trần.
-Bên kia gửi quá tín dụng là sai giao thức - RESET luồng.
+**Cửa sổ tín dụng 64 KB mỗi luồng, mỗi chiều** (như HTTP/2): gửi trong phần tín dụng, trả tín dụng sau khi đã ghi (mỗi 16 KB). Trình
+phát ngừng đọc khi bộ đệm đầy thì chỉ luồng của nó đứng - lời gọi đồng bộ bên cạnh vẫn về ngay. **Cửa sổ chung 256 KB mỗi chiều**
+(WINDOW luồng 0) là trần bộ nhớ nhận của cả đường hầm, bao nhiêu luồng cũng vậy; DATA tới luồng đã bỏ / luồng lạ vẫn được trả tín
+dụng chung. Gửi quá tín dụng luồng là sai giao thức - RESET luồng; quá tín dụng chung - đóng đường hầm.
+
+**Công bằng (08-10).** Đo thật trước đó: tải 3 MB ở 143 KB/s thì một yêu cầu nhỏ bên cạnh chờ 3,4-4 giây. Hai nguyên nhân: khung 16 KB
+ghi thẳng từ luồng của từng luồng (ai giành khoá trước thì đi trước, luồng tải lớn giành gần như mọi lần), và `write()` trả về khi bộ
+đệm socket/RFCOMM nhận - hàng trăm KB nằm trong đó, mọi khung mới xếp sau chúng. Nay ở cả hai bên (`bluetooth.py` `_Outbox`,
+`BtMux.kt` `BtOutbox`):
+
+- Mỗi luồng một hàng khung (OPEN/DATA/CLOSE giữ thứ tự), MỘT luồng ghi chọn theo deficit round robin, mỗi lượt 4 KB: yêu cầu nhỏ
+  chỉ chờ mỗi luồng lớn một khung (~27 ms ở 150 KB/s).
+- Khung điều khiển (WINDOW, RESET, ACK) đi trước, tối đa 4 khung liền khi DATA đang chờ; ACK không bao giờ chờ ACK.
+- ACK giới hạn byte "đã ghi mà chưa tới": tối đa 16 KB (~0,1 giây) nằm trong bộ đệm hệ điều hành.
+- Luồng đọc không bao giờ chờ, không đụng đĩa: khung trả lời chỉ được xếp hàng cho luồng ghi. Đóng thường giữ các khung đã xếp;
+  RESET (hai phía) bỏ chúng.
+
+| Ống giả lập 150 KB/s (`test_bluetooth_fairness.py`, `BtMuxTest`) | yêu cầu nhỏ giữa lúc tải lớn | tốc độ tải |
+|---|---|---|
+| Trước (khung 16 KB, ghi thẳng) | 1,53-1,64 giây | 152 KB/s |
+| Sau, Python | 0,09 giây | 150 KB/s |
+| Sau, Kotlin | 0,10 giây | 147 KB/s |
+
+| Sóng thật (08-10, cùng điện thoại Android, app ở trước, tải 3 MB từ điện thoại, 8 lần hỏi thư viện giữa lúc tải; lúc rảnh hỏi mất 0,12-0,22 giây) | yêu cầu nhỏ | tốc độ tải |
+|---|---|---|
+| Trước | 3,44-3,95 giây | 143 KB/s |
+| Sau, đang bay tối đa 16 KB (mặc định) | 0,28-0,51 giây | 121-123 KB/s |
+| Sau, thử 32 KB | 0,41-0,65 giây | 136-137 KB/s |
+
+Mỗi lần hỏi là một kết nối mới (bắt tay TLS + yêu cầu: ~3 lượt đi về), mỗi lượt chờ sau phần đang bay. Giữ 16 KB: đổi ~15% tốc
+độ tải lấy độ trễ thấp hơn (âm thanh chương chỉ cần 8-16 KB/s).
+
+Không giữ tương thích với bản trước (khung 16 KB, không ACK): hai bên phải cùng bản.
 
 **Vì sao cần RESET** (soát đối kháng 29-09): ExoPlayer đóng kết nối mỗi lần tua ra ngoài bộ đệm, đổi chương, dừng. Chỉ có
 CLOSE thì bên phục vụ không biết: nó gửi tới hết tín dụng rồi chờ mãi - mỗi lần giữ một luồng, hai luồng đọc, một socket;
@@ -147,6 +178,20 @@ chia sẻ đang bật + nút "Tắt chia sẻ". Loại `connectedDevice` (không
 `mediaPlayback`: không phát gì) đòi một quyền "thiết bị ngoài" - manifest khai `CHANGE_NETWORK_STATE` (quyền thường, cấp lúc cài) nên
 dịch vụ không phụ thuộc người dùng có cho "Thiết bị ở gần" hay không. Android 13+ xin quyền thông báo lúc bật chia sẻ; từ chối thì
 dịch vụ vẫn chạy, chỉ không hiện trong ngăn thông báo. Không khoá CPU / Wi-Fi nào.
+
+**Máy tính chờ điện thoại dậy (08-10 chiều, `remote_books._Wait`).** Tầng dưới đã nối (Wi-Fi: TCP; Bluetooth: RFCOMM của đường hầm
+lên) mà 3 giây chưa xong bắt tay TLS = app trên điện thoại đang ngủ. Khi làm mới thư viện máy ấy, máy tính không báo lỗi mà chờ tiếp
+(Bluetooth 300 giây, Wi-Fi 60 giây - theo số đo trên), "Máy tính khác" hiện "Điện thoại đang ngủ - mở ABook trên điện thoại để trả
+lời ngay" kèm thời gian còn chờ và nút "Thôi chờ". Bắt tay TLS chạy từng nhịp 0,5 giây (OpenSSL làm tiếp từ chỗ dừng), nên thôi
+chờ là thôi ngay; chỉ coi là xong khi app trả lời đã xác thực (vân tay ghim). Hết hạn: "Điện thoại vẫn chưa trả lời…", Wi-Fi không bị
+coi là hỏng, và các lần làm mới nền 10 phút sau không chờ lại (người dùng bấm làm mới thì chờ). Hỏi trình phát, gửi chỗ nghe… vẫn
+hỏng nhanh như cũ. Không gõ cửa UDP: theo đo đạc trên, gói tới socket Wi-Fi đã có sẵn lúc nối TCP.
+
+**Cho ABook chạy nền (phía điện thoại).** Không có API công khai nào để app tự xin HANS / MIUI / One UI miễn; chỉ người dùng bật được.
+Khi bật "Cho máy khác nghe thư viện này", màn Thiết bị có nút "Để máy tính khỏi phải chờ: cho ABook chạy nền" mở trang thông tin
+ứng dụng (`ACTION_APPLICATION_DETAILS_SETTINGS`, `LibraryPlugin.openAppSettings`) và một dòng chỉ đường theo `Build.MANUFACTURER`
+(`ui/src/android/backgroundHelp.ts`: OPPO/realme/OnePlus "Pin → Cho phép hoạt động nền + Tự khởi chạy", Xiaomi "Tiết kiệm pin →
+Không hạn chế", Samsung "Pin → Không hạn chế"). Không gọi thành phần riêng không công bố của hãng.
 
 **Tên Bluetooth**: điện thoại báo thêm `bluetoothName` (`BluetoothAdapter.name`, cần "Thiết bị ở gần"; không có quyền thì bỏ trường) trong
 lời chào UDP, lời đáp ghép và lời đáp thư viện. Máy tính lưu nó (`btName` trong computers.json) và, khi Wi-Fi hỏng mà chưa biết địa chỉ

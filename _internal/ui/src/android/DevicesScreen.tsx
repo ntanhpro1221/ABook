@@ -1,12 +1,13 @@
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bluetooth, CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Unplug, Wifi } from "lucide-react";
+import { BatteryCharging, Bluetooth, CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Unplug, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatLength } from "@/shared/format";
 import { Button, EmptyState, Progress } from "@/shared/ui";
+import { backgroundHelp } from "./backgroundHelp";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
 import { hasNewWords } from "./bookUpdates";
@@ -506,6 +507,20 @@ function SharePanel() {
             ? `Cả qua Bluetooth cho máy đã ghép${data.bluetooth.connections ? ` - ${data.bluetooth.connections} đang kết nối` : ""}`
             : data.bluetooth.status}
         </p>
+      )}
+      {enabled && (
+        <div className="mt-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={BatteryCharging}
+            className="h-auto min-h-8 whitespace-normal py-1.5 text-left"
+            onClick={() => void EbookLibrary.openAppSettings().catch((error: Error) => toast.error(error.message))}
+          >
+            Để máy tính khỏi phải chờ: cho ABook chạy nền
+          </Button>
+          <p className="mt-1 px-1 text-xs leading-snug text-fg-2">{backgroundHelp(data?.manufacturer)}</p>
+        </div>
       )}
       {enabled && data && (
         <div className="mt-4 space-y-3 border-t border-line pt-4">

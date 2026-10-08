@@ -408,10 +408,24 @@ class LibraryPlugin : Plugin() {
             .put("blocked", LibraryServer.blocked).put("devices", devices).put("error", LibraryServer.lastError)
             .put("fingerprint", if (LibraryServer.fingerprint.isEmpty()) "" else Pin.display(LibraryServer.fingerprint))
             .put("bluetooth", JSObject().put("status", BluetoothShare.status).put("connections", BluetoothShare.connections()))
+            .put("manufacturer", Build.MANUFACTURER.orEmpty()) // hướng dẫn cho chạy nền theo hãng (OPPO, Xiaomi, Samsung...)
     }
 
     @PluginMethod
     fun shareStatus(call: PluginCall) = background(call) { call.resolve(shareView()) }
+
+    /**
+     * Trang thông tin ứng dụng của ABook trong Cài đặt Android - nơi người dùng cho ABook chạy nền (máy hãng cho app "ngủ" khi
+     * ở nền, máy tính phải chờ). Chỉ dùng intent công khai; không mở trang riêng của hãng (không có tài liệu, đổi theo bản).
+     */
+    @PluginMethod
+    fun openAppSettings(call: PluginCall) {
+        val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { context.startActivity(intent) }
+            .onSuccess { call.resolve() }
+            .onFailure { call.reject("Không mở được cài đặt của ABook") }
+    }
 
     @PluginMethod
     fun setShare(call: PluginCall) {
