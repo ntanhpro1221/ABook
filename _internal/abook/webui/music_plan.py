@@ -105,13 +105,14 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
           lookup: Callable[[list[str]], dict[str, dict[str, Any]]], *, catalog_revision: str | None = None,
           book_key: str | None = None, taxonomy: dict[str, Any] | None = None,
           scenes: list[dict[str, Any]] | None = None,
-          keep: dict[str, str | None] | None = None,
+          keep: dict[str, str | None] | None = None, kept_siblings: dict[str, list[str]] | None = None,
           available: Callable[[str], bool] | None = None) -> dict[str, Any]:
     """Dựng lại music_plan.json: chia đoạn cả cuốn, chọn bài theo lựa chọn của người dùng, gắn thông tin bài.
     `scenes`: các đoạn đã có (từ plan cũ, qua `scenes_of`) - chọn lại bài trên đúng các đoạn ấy, không chia lại sách;
     người dùng sửa một đoạn thì các đoạn khác không đổi theo (chỉ "Chọn lại nhạc" mới chia lại).
     `keep`: {khoá đoạn: bài cũ} (từ `kept_tracks`) - đoạn nào có trong đó giữ nguyên bài, trừ khi bài đã bị bỏ hoặc không
-    còn trong danh mục (không dùng được nữa) thì chọn lại như thường.
+    còn trong danh mục (không dùng được nữa) thì chọn lại như thường. `kept_siblings` (từ `kept_siblings`): bài anh em cũ của
+    các đoạn ấy - đoạn không bị sửa lan thì nối đúng các bài cũ (music_select.choose).
     `available(link)`: bài dùng được trên máy này không (music_select.choose) - bài không lấy được thì đoạn chọn bài kế."""
     project_root = Path(project_root)
     overrides = read_overrides(project_root)
@@ -123,15 +124,19 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
     genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
     known: dict[str, dict[str, Any]] = {}
     if keep:
-        known = lookup(sorted({link for link in keep.values() if link}))
+        known = lookup(sorted({link for link in keep.values() if link}
+                              | {link for links in (kept_siblings or {}).values() for link in links}))
         keep = {key: link for key, link in keep.items() if link is None or link in known}
+        kept_siblings = {key: links for key, links in (kept_siblings or {}).items()
+                         if key in keep and all(link in known for link in links)}
 
     def track_info(link: str) -> dict[str, Any] | None:
         return known[link] if link in known else lookup([link]).get(link)
 
     chosen = music_select.choose(scenes, candidates_near, book_key=book_key or project_root.name,
                                  family=overrides["family"], pins=overrides["pins"], banned=overrides["banned"],
-                                 genre_styles=genre_styles, keep=keep, available=available,
+                                 genre_styles=genre_styles, keep=keep, kept_siblings=kept_siblings if keep else None,
+                                 available=available,
                                  silenced=overrides["silenced"], track_info=track_info)
     links = sorted({link for scene in chosen for link in [scene.get("link")]
                     + [sibling["link"] for sibling in scene.get("siblings") or []] if link})
@@ -173,6 +178,14 @@ def kept_tracks(plan: dict[str, Any] | None, edited: Iterable[str] = ()) -> dict
     skip = set(edited)
     return {scene["key"]: scene.get("link") for scene in (plan or {}).get("scenes") or []
             if scene.get("key") and scene["key"] not in skip and not scene.get("silenced")}
+
+
+def kept_siblings(plan: dict[str, Any] | None, edited: Iterable[str] = ()) -> dict[str, list[str]]:
+    """Bài anh em đã nối trong từng đoạn của plan ({khoá đoạn: [link]}), cùng các đoạn với `kept_tracks` - cho
+    `build(kept_siblings=...)`."""
+    keep = kept_tracks(plan, edited)
+    return {scene["key"]: [str(sibling.get("link")) for sibling in scene.get("siblings") or []]
+            for scene in (plan or {}).get("scenes") or [] if scene.get("key") in keep}
 
 
 def read_plan(project_root: Path) -> dict[str, Any] | None:
