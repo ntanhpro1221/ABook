@@ -224,6 +224,223 @@ class BtMuxTest {
         assertEquals(Triple(BtMux.RESET, 3, 0), readFrame(near))
     }
 
+    // ---- bộ lập lịch công bằng (BtOutbox) - cùng các ca với tests/test_bluetooth_fairness.py -----------------------------
+
+    private fun frames(box: BtOutbox, max: Int = 1000): List<Triple<Int, Int, Int>> {
+        val taken = mutableListOf<Triple<Int, Int, Int>>()
+        while (taken.size < max) {
+            val frame = box.next(10) ?: break
+            val buffer = java.nio.ByteBuffer.wrap(frame)
+            taken += Triple(buffer.get().toInt(), buffer.getInt(), buffer.getInt())
+        }
+        return taken
+    }
+
+    private fun int4(value: Int): ByteArray = java.nio.ByteBuffer.allocate(4).putInt(value).array()
+
+    @Test
+    fun aBigStreamDoesNotStarveASmallOne() {
+        val box = BtOutbox(limit = Int.MAX_VALUE)
+        repeat(50) { box.push(1, BtMux.DATA, ByteArray(BtMux.MAX_DATA)) }
+        box.push(3, BtMux.OPEN)
+        box.push(3, BtMux.DATA, ByteArray(300))
+        box.push(3, BtMux.CLOSE)
+        val order = frames(box).map { it.second }
+        assertEquals("luồng nhỏ chỉ chờ một khung của luồng lớn", 1, order.indexOf(3))
+        assertEquals(listOf(3, 3, 3), order.subList(1, 4))
+        assertEquals(50, order.count { it == 1 })
+    }
+
+    @Test
+    fun controlFramesGoFirstButNeverStarveData() {
+        val box = BtOutbox(limit = Int.MAX_VALUE)
+        repeat(3) { box.push(1, BtMux.DATA, ByteArray(100)) }
+        repeat(10) { box.send(BtMux.WINDOW, 5, int4(1)) }
+        val w = BtMux.WINDOW
+        val d = BtMux.DATA
+        assertEquals(listOf(w, w, w, w, d, w, w, w, w, d, w, w, d), frames(box).map { it.first })
+    }
+
+    @Test
+    fun onlyAFewBytesMayBeAheadOfTheScheduler() {
+        val box = BtOutbox(limit = 3 * BtMux.MAX_DATA)
+        repeat(10) { box.push(1, BtMux.DATA, ByteArray(BtMux.MAX_DATA)) }
+        assertEquals(3, frames(box).size)
+        box.send(BtMux.ACK, 0, int4(1))
+        assertEquals("khung điều khiển không chờ", listOf(BtMux.ACK), frames(box).map { it.first })
+        box.acked(BtMux.MAX_DATA + BtMux.HEADER)
+        assertEquals(1, frames(box).size)
+        box.acked(1 shl 20)
+        assertEquals(3, frames(box).size)
+    }
+
+    @Test
+    fun dataWaitsForTheLinkCreditButOtherFramesDoNot() {
+        val box = BtOutbox(limit = Int.MAX_VALUE, credit = BtMux.MAX_DATA)
+        repeat(2) { box.push(1, BtMux.DATA, ByteArray(BtMux.MAX_DATA)) }
+        box.push(3, BtMux.OPEN)
+        assertEquals(listOf(BtMux.DATA to 1, BtMux.OPEN to 3), frames(box).map { it.first to it.second })
+        box.credit(BtMux.MAX_DATA)
+        assertEquals(listOf(BtMux.DATA to 1), frames(box).map { it.first to it.second })
+    }
+
+    @Test
+    fun aDroppedStreamSendsNothingMore() {
+        val box = BtOutbox(limit = Int.MAX_VALUE)
+        repeat(5) {
+            box.push(1, BtMux.DATA, ByteArray(BtMux.MAX_DATA))
+            box.push(3, BtMux.DATA, ByteArray(BtMux.MAX_DATA))
+        }
+        box.drop(1)
+        assertEquals(setOf(3), frames(box).map { it.second }.toSet())
+        box.close()
+        assertEquals(null, box.next(10))
+    }
+
+    private fun socketPair(): Pair<Socket, Socket> {
+        val listener = ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))
+        val near = Socket("127.0.0.1", listener.localPort)
+        val far = listener.accept()
+        listener.close()
+        return near to far
+    }
+
+    /** Một BtMux bên kết nối với `streams` luồng mà ứng dụng cục bộ đổ dữ liệu vào không ngừng; bên kia viết tay. */
+    private fun feedingMux(streams: Int, limit: Int = BtMux.IN_FLIGHT): Socket {
+        val (near, far) = socketPair()
+        val mux = BtMux(far.getInputStream(), far.getOutputStream(), { far.close() }, limit = limit)
+        Thread { mux.run() }.apply { isDaemon = true }.start()
+        repeat(streams) {
+            val (app, local) = socketPair()
+            mux.open(local)
+            Thread { runCatching { while (true) app.getOutputStream().write(ByteArray(65536)) } }.apply { isDaemon = true }.start()
+            cleanups += { app.close() }
+        }
+        cleanups += { mux.shutdown(); near.close() }
+        return near
+    }
+
+    private fun readWhole(socket: Socket, timeout: Int): Pair<Triple<Int, Int, Int>, ByteArray>? {
+        socket.soTimeout = timeout
+        val input = java.io.DataInputStream(socket.getInputStream())
+        val header = ByteArray(9)
+        try {
+            input.readFully(header)
+        } catch (_: java.net.SocketTimeoutException) {
+            return null
+        }
+        socket.soTimeout = 5000
+        val buffer = java.nio.ByteBuffer.wrap(header)
+        val head = Triple(buffer.get().toInt(), buffer.getInt(), buffer.getInt())
+        val payload = ByteArray(head.third)
+        input.readFully(payload)
+        return head to payload
+    }
+
+    /** Đếm byte DATA mỗi luồng tới khi im 400 ms; báo đã đọc từng khung để IN_FLIGHT không chặn. */
+    private fun dataUntilQuiet(near: Socket): Map<Int, Int> {
+        val got = HashMap<Int, Int>()
+        while (true) {
+            val (head, payload) = readWhole(near, 400) ?: return got
+            assertTrue(payload.size <= BtMux.MAX_DATA)
+            if (head.first == BtMux.DATA) {
+                got[head.second] = (got[head.second] ?: 0) + payload.size
+                near.getOutputStream().write(frame(BtMux.ACK, 0, int4(9 + payload.size)))
+            }
+        }
+    }
+
+    @Test
+    fun aStreamStopsAtItsCreditWhenTheOtherSideDoesNotRead() {
+        val near = feedingMux(1)
+        assertEquals(mapOf(1 to BtMux.STREAM_WINDOW), dataUntilQuiet(near))
+        near.getOutputStream().write(frame(BtMux.WINDOW, 1, int4(16 * 1024)))
+        assertEquals(mapOf(1 to 16 * 1024), dataUntilQuiet(near))
+    }
+
+    @Test
+    fun allStreamsTogetherStopAtTheLinkCredit() {
+        val near = feedingMux(5)
+        val first = dataUntilQuiet(near).values.sum()
+        assertTrue("$first", first > BtMux.LINK_WINDOW - BtMux.MAX_DATA && first <= BtMux.LINK_WINDOW)
+    }
+
+    @Test
+    fun aStreamResetMidwayStopsWhileTheOtherGoesOn() {
+        val near = feedingMux(2, limit = 2 * BtMux.MAX_DATA)
+        repeat(2) { readWhole(near, 5000) }
+        near.getOutputStream().write(frame(BtMux.RESET, 1))
+        Thread.sleep(200)
+        val got = dataUntilQuiet(near)
+        assertTrue("khung của luồng đã bỏ vẫn được gửi: $got", (got[1] ?: 0) <= 2 * BtMux.MAX_DATA)
+        assertTrue("$got", (got[3] ?: 0) >= BtMux.STREAM_WINDOW - 2 * BtMux.MAX_DATA)
+    }
+
+    /** Một chiều của "sóng" ~150 KB/s: đọc từng ít một, nhả theo nhịp; phần chưa đi nằm trong bộ đệm socket như RFCOMM thật. */
+    private fun throttle(source: Socket, target: Socket) = Thread {
+        val rate = 150 * 1024
+        val buffer = ByteArray(1024)
+        var started = System.nanoTime()
+        var total = 0L
+        runCatching {
+            while (true) {
+                val count = source.getInputStream().read(buffer)
+                if (count < 0) break
+                total += count
+                val wait = started + total * 1_000_000_000L / rate - System.nanoTime()
+                if (wait > 0) {
+                    Thread.sleep(wait / 1_000_000, (wait % 1_000_000).toInt())
+                } else {
+                    started = System.nanoTime()
+                    total = 0
+                }
+                target.getOutputStream().write(buffer, 0, count)
+            }
+        }
+        runCatching { source.close() }
+        runCatching { target.close() }
+    }.apply { isDaemon = true }.start()
+
+    @Test
+    fun aSmallRequestIsQuickWhileABigDownloadFillsASlowLink() {
+        val (clientEnd, wireA) = socketPair()
+        val (wireB, serverEnd) = socketPair()
+        throttle(wireA, wireB)
+        throttle(wireB, wireA)
+        val server = BtMux(serverEnd.getInputStream(), serverEnd.getOutputStream(), { serverEnd.close() },
+            dial = { Socket("127.0.0.1", http.localPort) }, odd = false)
+        val client = BtMux(clientEnd.getInputStream(), clientEnd.getOutputStream(), { clientEnd.close() })
+        Thread { server.run() }.apply { isDaemon = true }.start()
+        Thread { client.run() }.apply { isDaemon = true }.start()
+        val local = BtLocalPort(client)
+        val download = Socket("127.0.0.1", local.port)
+        cleanups += { download.close(); client.shutdown(); server.shutdown(); local.close() }
+        download.getOutputStream().write("GET /big HTTP/1.1${CRLF}Host: x$CRLF$CRLF".toByteArray())
+        val got = java.util.concurrent.atomic.AtomicLong()
+        Thread {
+            val buffer = ByteArray(65536)
+            runCatching {
+                while (true) {
+                    val count = download.getInputStream().read(buffer)
+                    if (count < 0) break
+                    got.addAndGet(count.toLong())
+                }
+            }
+        }.apply { isDaemon = true }.start()
+        Thread.sleep(2000) // tải đã chạy đều, mọi bộ đệm đã đầy
+        val before = got.get()
+        val started = System.nanoTime()
+        val (code, body) = get(local.port, "/nho")
+        val took = (System.nanoTime() - started) / 1e9
+        assertEquals(200, code)
+        assertArrayEquals("nho".toByteArray(), body)
+        Thread.sleep(1000)
+        val rate = (got.get() - before) / ((System.nanoTime() - started) / 1e9) / 1024
+        println("BtMux ống 150 KB/s: yêu cầu nhỏ ${"%.3f".format(took)} s, tải ${"%.0f".format(rate)} KB/s")
+        assertTrue("yêu cầu nhỏ chờ $took s sau luồng tải", took < 0.3)
+        assertTrue("tải chỉ còn $rate KB/s", rate > 90)
+    }
+
     /** Nói chuyện với đầu Python thật (webui/bluetooth.py) - chạy tay: BTMUX_PY_PORT=<cổng> gradlew testDebugUnitTest. */
     @Test
     fun speaksTheSameProtocolAsThePythonSide() {

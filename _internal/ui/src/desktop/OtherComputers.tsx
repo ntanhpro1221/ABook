@@ -1,13 +1,13 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bluetooth, Check, Laptop, Radar, RefreshCw, Smartphone, Unplug } from "lucide-react";
-import { useRef, useState } from "react";
+import { Bluetooth, Check, Laptop, Moon, Radar, RefreshCw, Smartphone, Unplug } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatRelative } from "@/shared/format";
 import { Button, IconButton, Skeleton, Tooltip } from "@/shared/ui";
-import { bluetoothAddress, deviceKindLabel, isBluetoothHost, routeLine, type PairedDevice } from "./computerRoutes";
+import { bluetoothAddress, deviceKindLabel, isBluetoothHost, routeLine, wakingLine, type PairedDevice, type Waking } from "./computerRoutes";
 
 // Máy tính khác (webui/remote_books.py): ghép bằng địa chỉ + mã 6 số đang hiện trên máy ấy - đúng mã điện thoại dùng - rồi
 // thư viện của máy ấy hiện trong Thư viện của máy này ("Trên <máy>"). Chương tải về lần đầu nghe tới và được giữ lại, nên
@@ -27,6 +27,9 @@ interface Computer {
   fingerprint?: string;
   /** Địa chỉ Bluetooth dự phòng của máy ghép qua Wi-Fi (webui/remote_books.py: máy tự tìm theo tên, hay chọn ở đây). */
   bt?: string;
+  kind?: "phone" | "computer";
+  /** Đang chờ máy ấy dậy: nối được tới máy mà ABook bên ấy chưa trả lời (điện thoại tắt màn hình). */
+  waking?: Waking;
 }
 
 interface ComputersView {
@@ -46,7 +49,19 @@ interface FoundComputer {
 
 export function OtherComputers() {
   const client = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["computers"], queryFn: () => api<ComputersView>("/api/computers") });
+  const { data, isLoading } = useQuery({
+    queryKey: ["computers"],
+    queryFn: () => api<ComputersView>("/api/computers"),
+    // Đang chờ một máy dậy: xem lại thường xuyên để thấy nó trả lời (hay hết hạn chờ).
+    refetchInterval: (query) => (query.state.data?.computers.some((computer) => computer.waking) ? 2000 : false),
+  });
+  const waking = data?.computers.filter((computer) => computer.waking).map((computer) => computer.id).join(",") ?? "";
+  const wasWaking = useRef("");
+  useEffect(() => {
+    // Một máy vừa thôi "đang ngủ" (đã trả lời, hay hết hạn): sách của nó có thể vừa hiện ra.
+    if (wasWaking.current && wasWaking.current !== waking) void client.invalidateQueries({ queryKey: ["listen", "library"] });
+    wasWaking.current = waking;
+  }, [waking, client]);
   const [address, setAddress] = useState("");
   const [code, setCode] = useState("");
   // Thiết bị Bluetooth đã ghép ở Windows: chỉ đọc danh sách của hệ điều hành; lỗi hay rỗng thì thôi, không chặn gì.
@@ -73,6 +88,10 @@ export function OtherComputers() {
   });
   const refresh = useMutation({
     mutationFn: () => api<ComputersView>("/api/computers/refresh", { method: "POST" }),
+    onSuccess: done,
+  });
+  const stopWaiting = useMutation({
+    mutationFn: (id: string) => api<ComputersView>(`/api/computers/${id}/stop-waiting`, { method: "POST" }),
     onSuccess: done,
   });
   const forget = useMutation({
@@ -114,11 +133,26 @@ export function OtherComputers() {
               <Laptop className="size-5 shrink-0 text-fg-2" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{computer.name}</div>
-                <div className={cn("truncate text-xs", computer.error ? "text-danger" : "text-fg-2")}>
-                  {computer.error
-                    ? computer.error
-                    : `${routeLine(computer, devices)}${computer.lastSeen ? ` · thấy ${formatRelative(computer.lastSeen)}` : ""}`}
-                </div>
+                {computer.waking ? (
+                  <div className="flex flex-wrap items-center gap-x-2 text-xs text-fg-2" role="status">
+                    <Moon className="size-3.5 shrink-0" aria-hidden />
+                    <span className="min-w-0">{wakingLine(computer)}</span>
+                    <button
+                      type="button"
+                      className="rounded text-accent-text underline-offset-2 hover:underline disabled:opacity-60"
+                      disabled={stopWaiting.isPending}
+                      onClick={() => stopWaiting.mutate(computer.id)}
+                    >
+                      Thôi chờ
+                    </button>
+                  </div>
+                ) : (
+                  <div className={cn("truncate text-xs", computer.error ? "text-danger" : "text-fg-2")}>
+                    {computer.error
+                      ? computer.error
+                      : `${routeLine(computer, devices)}${computer.lastSeen ? ` · thấy ${formatRelative(computer.lastSeen)}` : ""}`}
+                  </div>
+                )}
                 {computer.fingerprint && (
                   <div className="mt-0.5 break-words text-[11px] text-fg-3">
                     Vân tay <span className="tabular-nums">{formatFingerprint(computer.fingerprint)}</span>

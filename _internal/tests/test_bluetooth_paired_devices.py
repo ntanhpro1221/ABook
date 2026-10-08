@@ -121,8 +121,8 @@ def test_the_bluetooth_name_the_phone_reports_is_matched_before_its_wifi_name(li
         {"name": "OPPO CPH2121", "address": "01:02:03:04:05:06", "kind": "phone"}])
     exchange = remote_books._exchange
 
-    def with_bluetooth_name(endpoint, method, path, token, body=None, timeout=remote_books.TIMEOUT):
-        reply, seen = exchange(endpoint, method, path, token, body, timeout)
+    def with_bluetooth_name(endpoint, method, path, token, body=None, timeout=remote_books.TIMEOUT, wake=False):
+        reply, seen = exchange(endpoint, method, path, token, body, timeout, wake=wake)
         if path == "/sync/v1/pair":
             reply = json.dumps({**json.loads(reply), "bluetoothName": "  Pixel  của An "}).encode("utf-8")
         return reply, seen

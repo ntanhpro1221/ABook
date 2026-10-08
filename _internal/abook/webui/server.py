@@ -71,6 +71,7 @@ MUSIC_OFFLINE_SECONDS = 300            # tải hỏng vì mạng: cả máy coi 
 MY_MUSIC_IMPORT_LIMIT = 500             # số file tối đa trong một lượt nhập "Nhạc của tôi"
 MUSIC_WARM_ROUNDS = 3                  # tải sẵn rồi chọn lại bài thay cho bài hỏng: tối đa 3 vòng
 MAX_BODY = 1024 * 1024
+REFRESH_PATIENCE_SECONDS = 8  # "Hỏi lại thư viện": máy thức trả lời trong ngần này; máy đang ngủ thì chờ tiếp ở nền
 TYPES = {
     ".js": "text/javascript; charset=utf-8",
     ".mjs": "text/javascript; charset=utf-8",
@@ -1997,26 +1998,35 @@ class App:
 
     # ---- nghe ------------------------------------------------------------------------------------------
 
-    def refresh_remote(self, *, wait: bool = False) -> None:
+    def refresh_remote(self, *, wait: bool = False, patience: float | None = None) -> None:
         """Hỏi lại thư viện của các máy tính khác: chạy nền, tối đa mỗi phút một lần (thư viện được hỏi mỗi vài giây);
-        `wait` - ngay và đợi xong (vừa ghép, người dùng bấm làm mới)."""
+        `wait` - ngay (vừa ghép, người dùng bấm làm mới) và đợi xong, tối đa `patience` giây: điện thoại đang ngủ thì việc hỏi
+        chạy tiếp ở nền (remote_books chờ nó dậy tới 5 phút) và giao diện xem `waking` của máy ấy."""
         if not self.computers.list():
             return
+        finished = threading.Event()
+
         def run() -> None:
             try:
-                remote_books.refresh(self.library.root, self.computers)
+                remote_books.refresh(self.library.root, self.computers, asked=wait)
                 self._send_pending_edits()
             finally:
                 self._remote_lock.release()
+                finished.set()
         if wait:
-            self._remote_lock.acquire()
-            self._remote_refreshed = time.time()
-            run()
-            return
-        if time.time() - self._remote_refreshed < 60 or not self._remote_lock.acquire(blocking=False):
+            if not self._remote_lock.acquire(timeout=-1 if patience is None else patience):
+                return
+        elif time.time() - self._remote_refreshed < 60 or not self._remote_lock.acquire(blocking=False):
             return
         self._remote_refreshed = time.time()
         threading.Thread(target=run, name="remote-books", daemon=True).start()
+        if wait:
+            finished.wait(patience)
+
+    def stop_waiting_computer(self, computer: str) -> dict[str, Any]:
+        """Người dùng thôi chờ điện thoại đang ngủ (remote_books.stop_waiting)."""
+        remote_books.stop_waiting(computer)
+        return self.computers_view()
 
     def sync_remote_state(self, value: str, *, wait: bool) -> None:
         """Chỗ nghe của một cuốn "Trên máy khác", hai chiều: gửi bản của máy này, gộp bản máy kia trả về (theo mốc thời gian
@@ -3459,8 +3469,12 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.app.set_computer_bluetooth(computer, str(self._body().get("address") or "")))
 
     def post_computers_refresh(self, _query: dict[str, list[str]]) -> None:
-        self.app.refresh_remote(wait=True)
+        # Máy thức trả lời trong vài giây; máy đang ngủ thì trả về ngay với `waking`, việc hỏi chạy tiếp ở nền.
+        self.app.refresh_remote(wait=True, patience=REFRESH_PATIENCE_SECONDS)
         self._send_json(HTTPStatus.OK, self.app.computers_view())
+
+    def post_computer_stop_waiting(self, _query: dict[str, list[str]], computer: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.stop_waiting_computer(computer))
 
     def delete_computer(self, _query: dict[str, list[str]], computer: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.forget_computer(computer))
@@ -4186,6 +4200,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/computers/discover"), Handler.get_computers_discover),
     ("GET", re.compile(r"/api/computers/bluetooth"), Handler.get_computers_bluetooth),
     ("POST", re.compile(r"/api/computers/([0-9a-f]{12})/bluetooth"), Handler.post_computer_bluetooth),
+    ("POST", re.compile(r"/api/computers/([0-9a-f]{12})/stop-waiting"), Handler.post_computer_stop_waiting),
     ("DELETE", re.compile(r"/api/computers/([0-9a-f]{12})"), Handler.delete_computer),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
     ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),
