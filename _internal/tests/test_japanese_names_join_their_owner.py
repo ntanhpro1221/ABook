@@ -85,3 +85,42 @@ def test_an_english_title_the_model_wrote_is_not_a_second_person() -> None:
     assert mapping["Lady Lucia"] == mapping["LUCIA"]
     assert mapping["Sir Lancelot"] == "Sir Lancelot", "không có nhãn Lancelot trơn nào để gom về - giữ nguyên"
     assert mapping["Master"] == "Master", "chỉ có chức danh thì không có tên để gom"
+
+
+BOTH_ORDERS = "\n".join([
+    "Yakishio Remon chạy tới.", "Cậu nhìn Yakishio Remon.", "Yakishio Remon cười.", "Remon Yakishio, cô ấy là vậy.", "Gọi là Remon Yakishio.",
+    "Kasagi Shizuka gật đầu.", "Kasagi Shizuka mỉm cười.",
+])
+
+
+def test_a_book_writing_one_name_in_both_orders_is_still_one_person() -> None:
+    """08-10, Make Heroine 017a: sách viết cả "Yakishio Remon" lẫn "Remon Yakishio" - trước đây là hai tên đủ, "REMON" và
+    "YAKISHIO" mỗi nhãn khớp hai "người" nên không gom, và cô có hai giọng (B9: 21 câu)."""
+    mapping = canonical_speaker_names({"Remon": 32, "Yakishio": 26, "Shizuka Kasagi": 4, "SHIZUKA": 20}, BOTH_ORDERS)
+    assert mapping["Remon"] == mapping["Yakishio"] == "YAKISHIO REMON"
+    assert mapping["Shizuka Kasagi"] == mapping["SHIZUKA"] == "KASAGI SHIZUKA", "nhãn đảo thứ tự tên đủ của sách"
+
+
+def test_a_reversed_label_joins_the_name_the_model_already_wrote() -> None:
+    mapping = canonical_speaker_names({"Remon Yakishio": 3, "Yakishio Remon": 9, "Yurika Kasagi": 2}, BOTH_ORDERS)
+    assert mapping["Remon Yakishio"] == "Yakishio Remon"
+    assert mapping["Yurika Kasagi"] == "Yurika Kasagi", "sách không viết tên đủ ấy ở thứ tự nào - giữ nguyên"
+
+
+TITLES = "\n".join([
+    "Tướng quân Niên Phi bước vào.", "Thầy Vương lên tiếng.", "Chị Dậu ngồi xuống.", "Tiểu thư Bạch Dạ cười.",
+])
+
+
+def test_a_vietnamese_title_before_a_name_the_book_writes_joins_that_name() -> None:
+    counts = {"TƯỚNG QUÂN NIÊN PHI": 4, "NIÊN PHI": 6, "Tiểu thư Bạch Dạ": 2, "Bạch Dạ": 5, "Thầy Vương": 3, "Vương": 2,
+              "CHỊ DẬU": 8, "DẬU": 3, "Hoàng tử Vân Phi": 2, "Vân Phi": 4, "Bác sĩ Lee": 2, "Lee": 3}
+    mapping = canonical_speaker_names(counts, TITLES)
+    assert mapping["TƯỚNG QUÂN NIÊN PHI"] == mapping["NIÊN PHI"]
+    assert mapping["Tiểu thư Bạch Dạ"] == mapping["Bạch Dạ"]
+    assert mapping["Bác sĩ Lee"] == mapping["Lee"], "\"bác sĩ\" là chức danh, không phải \"bác\" + \"sĩ Lee\""
+    assert mapping["Thầy Vương"] == "Thầy Vương", "một âm tiết sau chức danh có thể chỉ là họ"
+    assert mapping["CHỊ DẬU"] == "CHỊ DẬU" and mapping["DẬU"] == "DẬU", "chị Dậu là vợ anh Dậu"
+    assert mapping["Hoàng tử Vân Phi"] == "Hoàng tử Vân Phi", "sách không viết \"hoàng tử Vân Phi\" - không có bằng chứng"
+    assert canonical_speaker_names({"TƯỚNG QUÂN NIÊN PHI": 4, "NIÊN PHI": 6}, "")["TƯỚNG QUÂN NIÊN PHI"] \
+        == "TƯỚNG QUÂN NIÊN PHI", "không có nguồn thì luật tên có dấu tắt"

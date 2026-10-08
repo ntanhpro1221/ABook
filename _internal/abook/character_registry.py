@@ -107,12 +107,15 @@ RESERVED_SPEAKERS = {"narrator": "NARRATOR", "unknown": "UNKNOWN"}
 # Chức danh dài đứng trước chức danh ngắn cùng tiền tố ("cô giáo" trước "cô").
 # Chức danh tiếng Anh (01-10): sách viết "giáo sư Glast" mà LoRA v8 gán nhãn "Professor Glast" (34 câu, Hướng dẫn sinh tồn
 # 062) - model dịch chức danh khi viết nhãn; không gộp thì cùng một người hai giọng giữa các chương.
+# 08-10: thêm "bác sĩ", "tướng quân", "thái tử", "trưởng lão" (Corpus: "Tướng quân Niên Phi", "Thái tử Jeremy", "Bác sĩ Tô
+# Cách" - "bác sĩ" phải đứng trước "bác"). Tên có dấu sau chức danh: xem `_honorific_target`.
 HONORIFIC_PREFIX_PATTERN = re.compile(
     r"^(?:assistant professor|associate professor|professor|headmaster|headmistress|principal|young master|young lady"
     r"|master|lady|lord|sir|dame|miss|mister|mrs\.?|mr\.?|ms\.?|dr\.?|doctor|captain|commander|general|colonel"
     r"|lieutenant|sergeant|prince|princess|king|queen|emperor|empress|duke|duchess|countess|count|baroness|baron"
     r"|marquess|marquis|earl|saint|father|sister|brother|elder|vice president|president|knight"
-    r"|trợ lý giáo sư|phó giáo sư|giáo sư|hiệu trưởng|hiệu phó|giáo viên|cô giáo|thầy giáo|thầy|sư phụ|sư huynh|sư tỷ"
+    r"|trợ lý giáo sư|phó giáo sư|giáo sư|hiệu trưởng|hiệu phó|giáo viên|cô giáo|thầy giáo|bác sĩ|tướng quân|thái tử"
+    r"|trưởng lão|thầy|sư phụ|sư huynh|sư tỷ"
     r"|sư muội|sư đệ|tiền bối|học trưởng|học tỷ|tiểu thư|thiếu gia|công chúa|hoàng tử|hoàng đế|nữ hoàng|hoàng hậu"
     r"|quận chúa|điện hạ|bệ hạ|đội trưởng|thuyền trưởng|chỉ huy|thánh nữ|anh|chị|cô|dì|chú|bác|ông|bà|ngài|quý cô"
     r"|quý ông|bá tước|công tước|nam tước|tử tước|hầu tước|đức ngài)\s+(.+)$",
@@ -229,12 +232,31 @@ def _looks_like_proper_name(value: str) -> bool:
     return ASCII_PROPER_NAME_PATTERN.fullmatch(value.strip()) is not None
 
 
-def _honorific_target(value: str) -> str | None:
+def _honorific_target(value: str, folded_source: str = "") -> str | None:
+    """Tên đứng sau chức danh ("GIÁO SƯ GLAST" -> "GLAST"), hoặc None.
+
+    Tên viết La-tinh trơn: như cũ. Tên CÓ DẤU ("Tướng quân Niên Phi", "Tiểu thư Bạch Dạ" - Corpus đầy những tên ấy) thì
+    chặt hơn, vì văn Việt / Hán Việt gọi người qua người khác: (1) chức danh không phải xưng hô gia đình (`NAME_PREFIX_TITLES`
+    - "chị Dậu" là vợ anh Dậu); (2) tên không phải MỘT âm tiết Việt - "thầy Vương" có thể chỉ là họ, nhãn "VƯƠNG" là ai cũng
+    được; (3) mọi chữ của tên viết hoa đầu; (4) SÁCH viết đúng "chức danh + tên" ít nhất một lần. Không có nguồn thì tắt.
+    """
     match = HONORIFIC_PREFIX_PATTERN.fullmatch(" ".join(value.split()))
     if match is None:
         return None
     candidate = match.group(1).strip()
-    return candidate if _looks_like_proper_name(candidate) else None
+    if _looks_like_proper_name(candidate):
+        return candidate
+    title = match.group(0)[: match.start(1)].strip()
+    words = candidate.split()
+    if (
+        not folded_source
+        or normalize_name(title) in NAME_PREFIX_TITLES
+        or (len(words) == 1 and _vietnamese_order_name(candidate))
+        or not all(word[:1].isupper() for word in words)
+        or not source_occurrences(f"{title} {candidate}", folded_source)
+    ):
+        return None
+    return candidate
 
 
 # Một nhãn dài là "tên ngắn + họ bịa" khi nó có tối đa ngần này câu...
@@ -681,26 +703,39 @@ def merge_into_book_full_names(representatives: dict[str, str], source: str) -> 
     Đo 28-09 trên bộ LN (Two Childhood Friends 042): qwen3:8b ghi cùng một người lúc "KUCHINASHI" (họ), lúc "YOSHIHITO"
     (tên gọi), không lần nào tên đủ - luật tên gọi dựa trên nhãn không có gì để nối, và Yoshihito có hai giọng. Tên đủ thì
     sách đã viết. Họ mà cả nhà dùng chung (8 người họ Onizuki ở Yamiyo) khớp nhiều tên đủ -> không đoán; tên gọi thì riêng.
-    Tên đích là nhãn đã có nếu model từng ghi tên đủ, không thì tên đủ viết HOA theo cách sách viết."""
+    Tên đích là nhãn đã có nếu model từng ghi tên đủ, không thì tên đủ viết HOA theo cách sách viết.
+
+    Một người, hai thứ tự (08-10): Make Heroine 017a viết cả "Yakishio Remon" (5 lần) lẫn "Remon Yakishio" (4 lần) - đếm là
+    hai tên đủ thì "REMON" và "YAKISHIO" đều khớp hai "người", không đoán, và cô có hai giọng (B9: 21 câu). Hai cách viết cùng
+    hai chữ là MỘT người; đích theo thứ tự sách viết nhiều hơn. Nhãn hai chữ đảo thứ tự một tên đủ của sách ("SHIZUKA
+    KASAGI" khi sách viết "Kasagi Shizuka") cũng về tên ấy."""
     full_names = book_japanese_full_names(source)
     if not full_names:
         return {}
-    owners: dict[str, set[str]] = defaultdict(set)
+    spellings: dict[frozenset[str], list[str]] = defaultdict(list)
     for full in full_names:
-        family, given = normalize_name(full).split()
-        owners[family].add(full)
-        owners[given].add(full)
+        spellings[frozenset(normalize_name(full).split())].append(full)
+    owners: dict[str, set[frozenset[str]]] = defaultdict(set)
+    for person in spellings:
+        for word in person:
+            owners[word].add(person)
     by_identity = {identity_key(name): name for name in representatives.values()}
     redirected: dict[str, str] = {}
     for key, name in representatives.items():
         words = normalize_name(name).split()
-        if len(words) != 1 or not _japanese_order_name(name):
+        if not _japanese_order_name(name):
             continue
-        candidates = owners.get(words[0], set())
-        if len(candidates) != 1:
+        if len(words) == 1 and len(owners.get(words[0], set())) == 1:
+            person = next(iter(owners[words[0]]))
+        elif len(words) == 2 and frozenset(words) in spellings:
+            person = frozenset(words)
+        else:
             continue
-        full = next(iter(candidates))
-        redirected[key] = by_identity.get(identity_key(full), full.upper())
+        forms = sorted(spellings[person], key=lambda full: (-full_names[full], full))
+        target = next((by_identity[identity_key(full)] for full in forms if identity_key(full) in by_identity),
+                      forms[0].upper())
+        if identity_key(target) != identity_key(name):
+            redirected[key] = target
     return redirected
 
 
@@ -855,7 +890,7 @@ def canonical_speaker_names(
         ):
             continue
         target_key = normalized
-        honorific_target = _honorific_target(cleaned)
+        honorific_target = _honorific_target(cleaned, folded_source)
         if honorific_target is not None:
             honorific_key = identity_key(honorific_target)
             if honorific_key in representatives:
