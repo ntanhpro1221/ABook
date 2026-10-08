@@ -137,6 +137,9 @@ class Computers:
             # Đường Bluetooth dự phòng: máy kia báo trong lời đáp ghép (sync.py `routes`); không báo thì giữ cái đã biết.
             if known := (_routes_bluetooth(reply_data) or data["computers"].get(key, {}).get("bt") or ""):
                 entry["bt"] = known
+            # Tên Bluetooth điện thoại báo (khác tên máy ở Wi-Fi): để tự khớp với thiết bị đã ghép ở Windows.
+            if known_name := (_bluetooth_name(reply_data) or data["computers"].get(key, {}).get("btName") or ""):
+                entry["btName"] = known_name
             data["computers"][key] = entry
             self._write(data)
         return {"id": key, "name": name, "host": host, "port": port}
@@ -217,7 +220,8 @@ def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: 
                 continue  # chính máy này trả lời
             # Điện thoại cũng trả lời khi bật "Cho máy khác nghe thư viện này" (LibraryServer.kt, cùng giao thức).
             found[(host, sync_port)] = {"name": str(reply.get("name") or host), "host": host, "port": sync_port,
-                                        "kind": "phone" if reply.get("kind") == "phone" else "computer"}
+                                        "kind": "phone" if reply.get("kind") == "phone" else "computer",
+                                        **({"btName": name} if (name := _bluetooth_name(reply)) else {})}
     finally:
         probe.close()
     return sorted(found.values(), key=lambda item: (item["name"].casefold(), item["host"]))
@@ -311,7 +315,13 @@ def _match_paired(computer: str) -> None:
     if entry is None or _bluetooth_of(entry):
         return
     try:
-        address = bluetooth.match_by_name(str(entry.get("name") or ""), bluetooth.paired_devices())
+        devices = bluetooth.paired_devices()
+        # Windows lưu tên Bluetooth người dùng đặt cho điện thoại, thường khác tên máy ở Wi-Fi: khớp tên Bluetooth điện thoại báo
+        # trước, tên máy sau.
+        address = ""
+        for name in (str(entry.get("btName") or ""), str(entry.get("name") or "")):
+            if address := bluetooth.match_by_name(name, devices):
+                break
     except Exception:  # noqa: BLE001 - danh sách của Windows hỏng kiểu gì cũng chỉ là "chưa tìm ra"
         return
     if address:
@@ -383,6 +393,12 @@ def _bluetooth_of(entry: dict[str, Any]) -> str:
     return bluetooth.normalize_address(host.removeprefix("bt:") if host.startswith("bt:") else str(entry.get("bt") or ""))
 
 
+def _bluetooth_name(reply: Any) -> str:
+    """Tên Bluetooth máy kia báo (`bluetoothName`: BluetoothAdapter.name của điện thoại, cần quyền "Thiết bị ở gần"); "" nếu không có."""
+    value = reply.get("bluetoothName") if isinstance(reply, dict) else None
+    return " ".join(value.split())[:80] if isinstance(value, str) else ""
+
+
 def _routes_bluetooth(reply: Any) -> str:
     """Địa chỉ Bluetooth máy kia báo trong lời đáp ghép / thư viện (`routes.bluetooth`, hay `bt`); "" nếu không có."""
     if not isinstance(reply, dict):
@@ -435,6 +451,7 @@ def refresh(library_root: Path, computers: Computers) -> dict[str, Any]:
                 books += 1
             # `kind`: máy tính nhận phần sửa của cuốn (POST .../edits, như từ điện thoại); điện thoại chia sẻ thư viện thì không.
             reported = {} if str(entry["host"]).startswith("bt:") else {"bt": _routes_bluetooth(library)}  # máy báo đường Bluetooth của nó
+            reported["btName"] = _bluetooth_name(library)
             computers.note(public["id"], lastSeen=time.time(), error="", name=str(library.get("name") or entry["name"]),
                            kind="computer" if library.get("kind") == "computer" else "phone",
                            **{key: value for key, value in reported.items() if value})

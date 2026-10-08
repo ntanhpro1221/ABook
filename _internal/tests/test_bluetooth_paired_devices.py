@@ -107,6 +107,46 @@ def test_when_wifi_fails_the_phone_is_found_among_the_paired_devices_by_name(lib
         phone.drop()
 
 
+def test_the_bluetooth_name_the_phone_reports_is_matched_before_its_wifi_name(library, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    """Windows lưu tên Bluetooth người dùng đặt ("Pixel của An"), điện thoại báo ở Wi-Fi tên máy ("OPPO CPH2121"): lời ghép mang
+    thêm `bluetoothName`, máy tính khớp theo tên ấy trước, tên máy sau."""
+    sync, devices = _sync(library, tmp_path)
+    phone = FakePhone(sync.port)
+    bluetooth.gateway(PHONE, connect=phone.connect)
+    computers = Computers(tmp_path / "nay" / "computers.json")
+    monkeypatch.setattr(remote_books, "_COMPUTERS", computers)
+    monkeypatch.setattr(remote_books, "_looked", {})
+    monkeypatch.setattr(bluetooth, "paired_devices", lambda: [
+        {"name": "Pixel của An", "address": PHONE, "kind": "phone"},
+        {"name": "OPPO CPH2121", "address": "01:02:03:04:05:06", "kind": "phone"}])
+    exchange = remote_books._exchange
+
+    def with_bluetooth_name(endpoint, method, path, token, body=None, timeout=remote_books.TIMEOUT):
+        reply, seen = exchange(endpoint, method, path, token, body, timeout)
+        if path == "/sync/v1/pair":
+            reply = json.dumps({**json.loads(reply), "bluetoothName": "  Pixel  của An "}).encode("utf-8")
+        return reply, seen
+
+    monkeypatch.setattr(remote_books, "_exchange", with_bluetooth_name)
+    try:
+        key = _wifi_entry_of_the_phone(computers, phone, devices)
+        assert computers.get(key)["btName"] == "Pixel của An", "ghi tên Bluetooth điện thoại báo (gọn khoảng trắng)"
+        entry = computers.get(key)
+        with pytest.raises(RemoteError, match="Wi-Fi"):
+            remote_books._request(remote_books._base(entry), "GET", "/sync/v1/library", entry["token"])
+        assert _eventually(lambda: computers.get(key).get("bt") == PHONE), "khớp tên Bluetooth, không phải tên máy"
+    finally:
+        sync.stop()
+        phone.drop()
+
+
+def test_without_a_bluetooth_name_the_wifi_name_still_matches_and_odd_values_are_ignored() -> None:
+    assert remote_books._bluetooth_name({"bluetoothName": " Pixel   của An "}) == "Pixel của An"
+    assert remote_books._bluetooth_name({"bluetoothName": "x" * 200}) == "x" * 80
+    for odd in ({}, {"bluetoothName": 5}, {"bluetoothName": None}, [], "Pixel"):
+        assert remote_books._bluetooth_name(odd) == ""
+
+
 def test_no_matching_name_leaves_the_error_alone_and_the_search_is_throttled(library, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
     sync, devices = _sync(library, tmp_path)
     phone = FakePhone(sync.port)
