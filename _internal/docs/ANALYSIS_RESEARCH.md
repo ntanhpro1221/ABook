@@ -39,6 +39,21 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 08-10 chiều - B10 (thêm 1.798 mẫu bạc) và B9-750 (B9 cùng 751 bước): một hạt CHƯA kết luận được
+
+Cổng 19 chương / 11 truyện, hạt 1234, KTC bootstrap cụm theo truyện (luật ghi trước `LLM_Train/b10/B9_750_PLAN.md`):
+
+| cặp | F1 giọng | người nói chặt |
+|---|---|---|
+| B10 - B9-750 (hiệu của dữ liệu bạc) | +0,9 [-1,7; +3,9] | -2,4 [-7,1; +0,6] |
+| B9-750 - B9 (hiệu của số bước) | +1,3 [-0,9; +5,4] | -0,7 [-7,7; +5,9] |
+| B10 - B9 | +2,2 [-0,2; +6,7] | -3,0 [-9,9; +2,6] |
+
+F1 gộp: B10 71,7, B9-750 70,8, B9 69,5. Không trường hợp nào chạm ngưỡng ±1,5 của luật, nên một hạt CHƯA kết luận. Bỏ-một-truyện:
+bỏ make_heroine thì B10 - B9-750 về -0,2 (một truyện gánh hơn nửa mức tăng). Đáng chú ý: F1 giọng nhích lên nhưng người nói
+chặt đi xuống ở B10 (74,6 so 77,7 của B9), nên phần tăng không đến từ gán đúng người hơn. Hạt thêm của B10 (s1, s2) và B9 s2 đã
+có trong hàng (B10 phần B); hạt thêm cho B9-750 chỉ chạy khi Lead quyết.
+
 ## 07-10 chiều - xếp hạng lại bằng log-prob của chính B9: KHÔNG qua, đóng hướng
 
 Câu hỏi: model đã sinh greedy; nếu cho nó tự chấm vài giả thuyết đổi người nói, có chọn được đáp đúng hơn không (không huấn
