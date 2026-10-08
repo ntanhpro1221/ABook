@@ -37,6 +37,11 @@ describe("choose", () => {
     expect(await phoneTextImport.choose!("file")).toBeNull();
   });
 
+  it("says the dialog has nothing to do when the picked file was an .abook book that native opened itself", async () => {
+    library.pickSource.mockResolvedValue({ picked: true, book: true });
+    expect(await phoneTextImport.choose!("file")).toBe("opened");
+  });
+
   it("remembers where the PDF copy is, so the WebView can read it", async () => {
     library.pickSource.mockResolvedValue({ picked: true, ref: "i3", name: "sach.pdf", pdf: "/data/library/imports/i3/sach.pdf" });
     expect(await phoneTextImport.choose!("file")).toMatchObject({ ref: "i3", pdf: "/data/library/imports/i3/sach.pdf" });

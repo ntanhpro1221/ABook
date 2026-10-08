@@ -29,7 +29,7 @@ describe("hỏi trước khi gửi chữ cho giọng trực tuyến", () => {
   it("lời hỏi gọi tên giọng như người nghe gọi và nói rõ gửi cho ai", () => {
     expect(spokenVoiceName("Hoài My (Edge)")).toBe("Hoài My");
     expect(onlinePromptText(hoaiMy)).toBe(
-      "Giọng Hoài My là giọng trực tuyến của Microsoft: chữ của đoạn đang đọc được gửi tới Microsoft để đọc.",
+      "Giọng Hoài My là giọng Edge: chữ của đoạn đang đọc được gửi tới máy chủ Microsoft để đọc.",
     );
     expect(onlinePromptText({ name: "Ai đó", provider: "lạ" })).toContain("dịch vụ ngoài");
     // Giọng dùng khóa của người nghe: nói cả chuyện dịch vụ có thể tính tiền vào tài khoản của họ.
@@ -40,7 +40,7 @@ describe("hỏi trước khi gửi chữ cho giọng trực tuyến", () => {
 
   it("bước 'Chọn giọng đọc' chỉ nói 'không gửi chữ' khi danh sách có giọng của máy", () => {
     expect(chooseVoiceText(voices, hoaiMy)).toContain("không gửi chữ đi đâu");
-    expect(chooseVoiceText(voices, hoaiMy)).toContain("gửi tới Microsoft");
+    expect(chooseVoiceText(voices, hoaiMy)).toContain("gửi tới máy chủ Microsoft");
     const onlineOnly = chooseVoiceText([hoaiMy, namMinh], hoaiMy);
     expect(onlineOnly).not.toContain("không gửi chữ");
     expect(onlineOnly).toBe(onlinePromptText(hoaiMy));
