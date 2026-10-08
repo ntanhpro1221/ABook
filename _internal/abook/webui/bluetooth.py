@@ -558,7 +558,9 @@ class _AuthenticationUnavailable(Exception):
 # BluetoothShare). Android biết kênh nhờ createRfcommSocketToServiceRecord; Windows thì phải tự hỏi bản ghi SDP của máy kia
 # (WSALookupServiceBeginW/NextW/End qua ctypes, như PyBluez) rồi mới connect((địa chỉ, kênh)).
 
-LUP_RETURN_ADDR, LUP_FLUSHCACHE = 0x0100, 0x2000
+# LUP_FLUSHCACHE là 0x1000 (0x2000 là LUP_FLUSHPREVIOUS): sai cờ thì Windows trả bản ghi SDP cũ trong bộ nhớ đệm, không hỏi
+# điện thoại, và ABook không bao giờ hiện ra (thử sóng thật 08-10).
+LUP_RETURN_ADDR, LUP_FLUSHCACHE = 0x0100, 0x1000
 LOOKUP_FLAGS = LUP_FLUSHCACHE | LUP_RETURN_ADDR
 WSAEFAULT, WSASERVICE_NOT_FOUND, WSA_E_NO_MORE, WSANO_DATA = 10014, 10108, 10110, 11004
 BLUETOOTH_OFF = (10050, 10047, 10051)  # mạng/địa chỉ không dùng được: không có card hay tắt sóng

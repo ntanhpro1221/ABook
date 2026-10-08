@@ -106,7 +106,7 @@ def test_the_sdp_query_asks_for_the_abook_service_on_that_device() -> None:
     assert query.query.lpszContext == f"({PHONE})" and query.query.dwNameSpace == bluetooth.NS_BTH == 16
     assert query.query.dwSize == ctypes.sizeof(bluetooth._WSAQUERYSETW)
     assert bytes(query.query.lpServiceClassId.contents) == bluetooth.SERVICE_UUID.bytes_le
-    assert bluetooth.LOOKUP_FLAGS == 0x2000 | 0x0100, "LUP_FLUSHCACHE | LUP_RETURN_ADDR"
+    assert bluetooth.LOOKUP_FLAGS == 0x1000 | 0x0100, "LUP_FLUSHCACHE (0x1000, không phải LUP_FLUSHPREVIOUS 0x2000) | LUP_RETURN_ADDR"
     if ctypes.sizeof(ctypes.c_void_p) == 8:
         assert ctypes.sizeof(bluetooth._WSAQUERYSETW) == 120, "bố cục WSAQUERYSETW của ws2def.h trên x64"
 
