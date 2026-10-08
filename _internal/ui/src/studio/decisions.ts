@@ -27,7 +27,7 @@ export function applyWhen(
 const SENTENCE: Record<ApplyWhen, string> = {
   start: "Máy dùng ngay từ khi bắt đầu làm sách.",
   cast: "Áp dụng khi phân vai xong.",
-  running: "Máy áp ở ranh giới chương kế tiếp, không phải dừng sách.",
+  running: "Máy áp từ chương sau, không phải dừng sách.",
   done: "Bấm “Áp dụng thay đổi” ở đầu trang để đưa vào sách.",
   paused: "Máy áp dụng khi sách làm tiếp.",
 };
@@ -36,7 +36,7 @@ const SENTENCE: Record<ApplyWhen, string> = {
 export const PENDING_NOTE: Record<ApplyWhen, string> = {
   start: "dùng khi bắt đầu làm sách",
   cast: "chờ phân vai xong",
-  running: "máy áp ở ranh giới chương kế tiếp",
+  running: "áp từ chương sau",
   done: "bấm “Áp dụng thay đổi” ở đầu trang để áp",
   paused: "chờ áp dụng khi sách chạy tiếp",
 };

@@ -307,11 +307,37 @@ object BookImport {
         book.splitOffer = parts.size
         // Chương tách ra từ một dòng tiêu đề mang tên dòng ấy - không bao giờ trùng tên chương "Mở đầu".
         book.splitHeadings = parts.count { it.title != PREAMBLE }
+        if (parts.isNotEmpty()) {
+            // Cả truyện: tên sách gợi ý là dòng tiêu đề đầu file, không phải tên file (importers._txt_file).
+            titleFromLine(firstTextLine(chapter.text)).takeIf { it.isNotEmpty() }?.let { book.title = it }
+            val lines = chapter.text.split("\n")
+            val alone = titleOnlyPreamble(lines, lines.indexOfFirst { isHeadingLine(it, TXT_HEADING) })
+            if (split && alone.isNotEmpty()) book.notes.add("Dòng đầu “$alone” là tên truyện - dùng làm tên sách, không đọc thành một chương.")
+        }
         if (split && parts.isNotEmpty()) {
             book.chapters.clear()
             book.chapters.addAll(parts)
         }
         return book
+    }
+
+    /** `importers.first_text_line`: dòng đầu có chữ, bỏ khoảng trắng hai đầu; "" nếu không có. */
+    internal fun firstTextLine(text: String): String = text.split("\n").map(::pyStrip).firstOrNull { it.isNotEmpty() }.orEmpty()
+
+    /** `importers.title_from_line`: [line] nếu nó trông là TIÊU ĐỀ truyện (ngắn, có chữ, không bắt đầu bằng gạch lời thoại / ngoặc, không
+     *  kết bằng dấu câu, không phải dòng "Chương N"; `#` Markdown đầu dòng bỏ đi), không thì "". */
+    internal fun titleFromLine(line: String): String {
+        val first = pyStrip(pyStrip(line).trimStart('#'))
+        if (first.isEmpty() || cpLen(first) > 80 || wordCount(first) > 12) return ""
+        if (isHeadingLine(first) || first[0] in "-–—“\"‘'«(" || first.last() in ".!?…,;:\"”’»)") return ""
+        return if (first.codePoints().anyMatch { Character.isLetter(it) }) first else ""
+    }
+
+    /** `importers.title_only_preamble`: chữ trước tiêu đề chương đầu ([cut] = chỉ số dòng ấy) chỉ là MỘT dòng và dòng ấy trông là tiêu đề truyện
+     *  -> tên truyện đó; không thì "". Nó là tên sách chứ không phải một chương "Mở đầu". */
+    internal fun titleOnlyPreamble(lines: List<String>, cut: Int): String {
+        val kept = lines.subList(0, maxOf(cut, 0)).filter { pyStrip(it).isNotEmpty() }
+        return if (kept.size == 1) titleFromLine(kept[0]) else ""
     }
 
     /** `importers.split_txt_chapters`: chữ (đã `cleanText`) của file TXT cả truyện -> các chương cắt ở đầu mỗi dòng "Chương N" (không tính "Quyển N"),
@@ -321,7 +347,8 @@ object BookImport {
         val cuts = lines.indices.filter { isHeadingLine(lines[it], TXT_HEADING) }
         if (cuts.size < 2) return emptyList()
         val chapters = mutableListOf<Chapter>()
-        if (lines.subList(0, cuts[0]).any { pyStrip(it).isNotEmpty() }) chapters.add(Chapter(PREAMBLE, lines.subList(0, cuts[0]).joinToString("\n").trim('\n')))
+        // Chữ dẫn chỉ là một dòng tên truyện thì không thành chương "Mở đầu" - nó là tên sách (titleOnlyPreamble).
+        if (lines.subList(0, cuts[0]).any { pyStrip(it).isNotEmpty() } && titleOnlyPreamble(lines, cuts[0]).isEmpty()) chapters.add(Chapter(PREAMBLE, lines.subList(0, cuts[0]).joinToString("\n").trim('\n')))
         for ((position, start) in cuts.withIndex()) {
             val end = if (position + 1 < cuts.size) cuts[position + 1] else lines.size
             chapters.add(Chapter(pyStrip(lines[start]), lines.subList(start, end).joinToString("\n").trim('\n')))

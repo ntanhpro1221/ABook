@@ -628,6 +628,7 @@ class App:
         started_at = time.time()
         self.jobs.start(path)
         store.mark_run_started(path, started_at)
+        precast.release(path)  # "Thu âm" sau khi tiến trình giữ đã chết: bấm làm tiếp là cho thu, như nút Thu âm lúc đang giữ
         self._queue_successors(path)
         self._watch_precast()
 
@@ -1375,7 +1376,7 @@ class App:
             if track["link"] == current:
                 continue
             items.append({"link": track["link"], "title": track["title"], "creator": track["creator"], "attribution": "",
-                          "duration": track["duration"], "analysed": track["analysed"], "fits": False})
+                          "duration": track["duration"], "analysed": track["analysed"], "fits": False, **music_local.auto_keys(track)})
         items.sort(key=lambda item: (not item["analysed"], item["title"].lower()))
         return {"key": scene_key, "alternatives": [], "mine": items}
 
@@ -1416,7 +1417,7 @@ class App:
             if link == current or link in banned:
                 continue
             item = {"link": link, "title": track["title"], "creator": track["creator"], "attribution": "",
-                    "duration": track["duration"], "analysed": track["analysed"], "fits": link in fits}
+                    "duration": track["duration"], "analysed": track["analysed"], "fits": link in fits, **music_local.auto_keys(track)}
             if link in fits:
                 item["score"] = fits[link]
             items.append(item)
@@ -3678,6 +3679,7 @@ class Handler(BaseHTTPRequestHandler):
     def post_source_split(self, _query: dict[str, list[str]]) -> None:
         # Người dùng bấm "Tách thành N chương" (đề xuất của bước 1): các chương ghi vào thư mục mới trong thư viện, file
         # gốc giữ nguyên. Từ xa: nguồn phải là file đã gửi lên, và kết quả cũng nằm trong "Nguồn tải lên" để quét tiếp được.
+        # `title`: Tên sách đang điền - dòng tên truyện đầu file trùng nó thì không thành chương "Mở đầu".
         from . import txt_split
 
         self.app._mutating()
@@ -3689,7 +3691,7 @@ class Handler(BaseHTTPRequestHandler):
         library = Path(self.app.preferences.get()["libraryRoot"])
         root = library / (actions.UPLOAD_FOLDER if self._remote() else actions.SPLIT_FOLDER)
         try:
-            folder = txt_split.split(source, root)
+            folder = txt_split.split(source, root, str(body.get("title") or ""))
         except (OSError, ValueError) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, f"Không tách được: {error}") from error
         self._send_json(HTTPStatus.OK, {"folder": str(folder)})

@@ -34,7 +34,7 @@ def test_a_whole_book_in_one_file_is_offered_a_split_not_given_one(tmp_path: Pat
     assert scan["totals"]["chapters"] == 1, "mặc định vẫn là một chương - chỉ đề xuất"
     offer = scan["files"][0]["split"]
     # "Chương trình…" và "Hồi lâu sau…" là câu văn, không phải tiêu đề.
-    assert offer == {"chapters": 4, "titles": ["Chương 1: Gặp lại", "CHƯƠNG 2 - Lên đường", "Chương Ba"], "preamble": True}
+    assert offer == {"chapters": 4, "titles": ["Chương 1: Gặp lại", "CHƯƠNG 2 - Lên đường", "Chương Ba"], "preamble": True, "titleLine": ""}
 
     folder = txt_split.split(source, tmp_path / "lib" / actions.SPLIT_FOLDER)
     assert source.read_bytes() == original
@@ -62,6 +62,32 @@ def test_one_chapter_per_file_is_left_alone(tmp_path: Path) -> None:
 def test_chinese_headings_split_too(tmp_path: Path) -> None:
     source = tmp_path / "zh.txt"
     source.write_text("第一章 开始\n他来了。\n第二章 结束\n他走了。\n", encoding="utf-8")
-    assert txt_split.plan(source) == {"chapters": 2, "titles": ["第一章 开始", "第二章 结束"], "preamble": False}
+    assert txt_split.plan(source) == {"chapters": 2, "titles": ["第一章 开始", "第二章 结束"], "preamble": False, "titleLine": ""}
     names = sorted(path.name for path in txt_split.split(source, tmp_path / "out").glob("*.txt"))
     assert names == ["0001 第一章 开始.txt", "0002 第二章 结束.txt"]
+
+
+def test_a_lone_title_line_is_the_book_name_when_it_matches_the_title_and_stays_a_chapter_when_it_does_not(tmp_path: Path) -> None:
+    source = tmp_path / "ngon_den_cuoi_cung.txt"
+    source.write_text("Ngọn đèn cuối cùng\n\nChương 1: Chuyến phà đêm\n\nSương xuống.\n\nChương 2: Căn nhà\n\nĐèn sáng.\n", encoding="utf-8")
+    offer = txt_split.plan(source)
+    assert offer is not None and offer["titleLine"] == "Ngọn đèn cuối cùng" and offer["chapters"] == 3, "chương 'Mở đầu' vẫn tính trong đề xuất; bước tạo sách trừ nó"
+    root = tmp_path / "out"
+
+    same = txt_split.split(source, root, "  ngọn ĐÈN cuối cùng ")
+    assert sorted(path.name for path in same.glob("*.txt")) == ["0001 Chương 1 Chuyến phà đêm.txt", "0002 Chương 2 Căn nhà.txt"]
+    assert same.name == "ngon_den_cuoi_cung", "tên thư mục vẫn là tên file (tên sách do trình tạo sách giữ, không đọc lại từ đây)"
+
+    other = txt_split.split(source, root, "Tên khác do tôi đặt")
+    assert other != same, "giữ hay bỏ dòng tên truyện ra hai bộ chương khác nhau"
+    assert sorted(path.name for path in other.glob("*.txt"))[0] == "0000 Mở đầu.txt", "tên sách khác dòng ấy: chữ không bị bỏ, vẫn là chương 'Mở đầu'"
+    assert (other / "0000 Mở đầu.txt").read_text(encoding="utf-8") == "Ngọn đèn cuối cùng\n"
+    assert txt_split.split(source, root) != same, "không có tên sách thì không bỏ gì"
+
+
+def test_a_two_line_lead_is_never_taken_for_a_title(tmp_path: Path) -> None:
+    source = tmp_path / "a.txt"
+    source.write_text("Ánh Trăng\nTác giả: Ai Đó\n\nChương 1\nA\n\nChương 2\nB\n", encoding="utf-8")
+    offer = txt_split.plan(source)
+    assert offer is not None and offer["titleLine"] == ""
+    assert (txt_split.split(source, tmp_path / "out", "Ánh Trăng") / "0000 Mở đầu.txt").is_file()

@@ -243,3 +243,21 @@ def test_an_unreadable_book_never_holds(tmp_path) -> None:
     precast.set_wait(root, True)
     (root / "project.sqlite3").write_bytes(b"not a database")
     assert precast.hold_due(root) is False
+
+
+def test_a_book_held_for_review_stays_waiting_after_its_process_dies(studio) -> None:
+    """Soát UX a8: máy chủ khởi động lại lúc sách đang chờ duyệt thì trang từng hiện "Tạm ngưng lúc phân vai" + "Tiếp tục tạo"
+    cạnh "Duyệt ngay". Sổ giữ chỉ khép khi người dùng cho thu: tiến trình chết thì sách vẫn "chờ bạn duyệt", và làm tiếp là cho thu."""
+    from abook.webui import precast
+
+    paths, db, server, app, runner, pauses, toasts = studio
+    _fresh_cast(db)
+    precast.mark_held(paths.root)  # supervisor đã giữ, rồi tiến trình chết: không còn chạy, không còn "listener"
+    status, data = _call(server, "GET", _url(paths))
+    assert status == 200 and data["book"]["running"] is False and data["book"]["precast"]["held"] is True
+
+    status, data = _call(server, "POST", _url(paths) + "/start", {})
+    assert status in (200, 202), data
+    assert precast.read(paths.root)["releasedAt"] is not None
+    status, data = _call(server, "GET", _url(paths))
+    assert data["book"]["precast"]["held"] is False, "đã cho thu: không còn chờ duyệt"

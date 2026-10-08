@@ -4,9 +4,9 @@ import { excerpt } from "@/shared/format";
 
 /** Máy chủ trả mã `reason` kèm lời từ chối; câu chữ cho người nghe nằm ở đây (máy chủ giữ mã, giao diện giữ chữ). */
 const REFUSALS: Record<string, string> = {
-  producing: "Đang làm sách - nghe thử khi máy rảnh",
-  gpu: "Card đồ hoạ đang bận",
-  studio: "Cần cài phần làm sách trước",
+  producing: "Máy đang thu sách nên chưa nghe thử được - thử lại sau khi xong chương đang làm",
+  gpu: "Card đồ hoạ đang bận - thử lại sau ít phút",
+  studio: "Cần cài phần làm sách trước khi nghe thử",
   busy: "Đang nghe thử câu khác - bấm lại sau ít giây",
 };
 
@@ -18,4 +18,21 @@ export function refusalText(reason: unknown, fallback: string): string {
 /** Dòng dưới nút sau khi nghe: lúc thu thật sẽ nghe GẦN như vậy (âm thanh không phải lúc nào cũng tái lập từng byte), câu nào, giọng ai. */
 export function previewCaption(text: string, speaker: string): string {
   return `Lúc thu thật sẽ nghe gần như vậy · câu “${excerpt(text, 70)}”${speaker ? ` · giọng ${speaker}` : ""}`;
+}
+
+/** Dòng trạng thái dưới nút "Nghe thử": đang chờ máy / đang phát / đã nghe xong / bị từ chối - luôn nói MỘT điều, để người nghe biết
+ *  nút đã làm gì (soát UX a8: bấm xong không thấy gì). `bookBusy`: sách đang thu - nói trước, đừng đợi bị từ chối. */
+export function tryNote(state: {
+  pending: boolean;
+  refusal: string;
+  playing: boolean;
+  caption: string | null;
+  bookBusy: boolean;
+}): string | null {
+  if (state.pending) return "Máy đang đọc thử - lần đầu có thể mất vài chục giây";
+  if (state.refusal) return state.refusal;
+  if (state.playing && state.caption) return `Đang phát · ${state.caption}`;
+  if (state.caption) return `Đã nghe xong - bấm “Nghe thử” để nghe lại · ${state.caption}`;
+  if (state.bookBusy) return "Máy đang thu sách - nghe thử được sau khi xong chương đang làm";
+  return null;
 }

@@ -6,10 +6,11 @@ from __future__ import annotations
 
 import hashlib
 import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
-from ..importers import MAX_HEADING, PREAMBLE, TXT_HEADING
+from ..importers import MAX_HEADING, PREAMBLE, TXT_HEADING, title_only_preamble
 from ..io_utils import decode_text_bytes
 from .volumes import is_volume_heading
 
@@ -39,8 +40,22 @@ def starts(lines: list[str], found: list[int]) -> list[int]:
     return result
 
 
+def same_title(a: str, b: str) -> bool:
+    """Hai tên sách là một (không phân biệt hoa thường, khoảng trắng thừa, dạng dấu NFC / NFD)."""
+    def norm(text: str) -> str:
+        return " ".join(unicodedata.normalize("NFC", text).casefold().split())
+
+    return bool(norm(a)) and norm(a) == norm(b)
+
+
+def _title_line(lines: list[str], found: list[int]) -> str:
+    """Chữ trước chương đầu chỉ là MỘT dòng tên truyện: tên ấy ("" nếu không phải) - `importers.title_only_preamble`."""
+    return title_only_preamble(lines, starts(lines, found)[0])
+
+
 def plan(path: Path) -> dict[str, Any] | None:
-    """Đề xuất tách một file: số chương sẽ ra và vài tiêu đề đầu, hay None khi file chỉ là một chương (ít hơn hai tiêu đề)."""
+    """Đề xuất tách một file: số chương sẽ ra và vài tiêu đề đầu, hay None khi file chỉ là một chương (ít hơn hai tiêu đề).
+    `titleLine`: chữ dẫn chỉ là một dòng tên truyện - bước tạo sách bỏ nó khỏi chương khi nó trùng Tên sách (`split`)."""
     try:
         lines = _lines(path)
     except OSError:
@@ -54,27 +69,32 @@ def plan(path: Path) -> dict[str, Any] | None:
         "titles": [lines[index].strip() for index in found[:3]],
         # Chữ trước tiêu đề đầu tiên (tên truyện, lời giới thiệu, ghi công) thành một chương riêng "Mở đầu" - không bỏ đi.
         "preamble": preamble,
+        "titleLine": _title_line(lines, found) if preamble else "",
     }
 
 
-def split(path: Path, root: Path) -> Path:
+def split(path: Path, root: Path, title: str = "") -> Path:
     """Ghi các chương của `path` thành từng file TXT (UTF-8) trong một thư mục mới dưới `root`, trả thư mục ấy:
     `<root>/<băm nội dung>/<tên file>` - tách lại cùng file thì dùng lại thư mục, file khác cùng tên không đè lên nhau, và
     tên thư mục chương vẫn là tên truyện (trình tạo sách gợi ý tên sách theo nó). Chữ giữ nguyên từng dòng - chỉ cắt ở
-    đầu các dòng tiêu đề."""
+    đầu các dòng tiêu đề. Chữ dẫn chỉ là MỘT dòng tên truyện và dòng ấy trùng `title` (Tên sách đang điền): nó là tên sách, không thành
+    chương "Mở đầu" 4 chữ; khác `title` thì vẫn là chương "Mở đầu" (không bỏ chữ của truyện)."""
     raw = path.read_bytes()
     lines = _lines(path)
     found = headings(lines)
     if len(found) < 2:
         raise ValueError("File này không có đủ tiêu đề chương để tách")
     stem = " ".join(_UNSAFE_NAME.sub(" ", path.stem).split()).strip(" .")[:80] or "truyen"
-    folder = root / hashlib.sha256(raw).hexdigest()[:8] / stem
+    lead = _title_line(lines, found)
+    drop = bool(lead) and same_title(lead, title)
+    # Bỏ hay giữ dòng tên truyện ra hai bộ chương khác nhau: hai thư mục khác nhau.
+    folder = root / hashlib.sha256(raw + (b"+title" if drop else b"")).hexdigest()[:8] / stem
     if folder.is_dir() and any(folder.glob("*.txt")):
         return folder
     width = max(4, len(str(len(found))))
     parts: list[tuple[str, list[str]]] = []
     cuts = starts(lines, found)
-    if any(line.strip() for line in lines[: cuts[0]]):
+    if any(line.strip() for line in lines[: cuts[0]]) and not drop:
         parts.append((PREAMBLE, lines[: cuts[0]]))
     for position, heading in enumerate(found):
         end = cuts[position + 1] if position + 1 < len(found) else len(lines)

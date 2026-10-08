@@ -9,6 +9,7 @@ import { cn } from "@/shared/cn";
 import { syncsToComputer } from "@/shared/capabilities";
 import { usePageTitle } from "@/shared/title";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
+import { toneLabel } from "./voiceTone";
 import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
@@ -251,13 +252,14 @@ export function PersonRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <span className="truncate font-semibold">{name}</span>
+          {/* Tên và giọng xuống dòng thay vì cắt: "Thanh Bình · trầm hẳn" cắt giữa chừng là mất đúng chữ người nghe cần (soát UX a8). */}
+          <span className="min-w-0 break-words font-semibold">{name}</span>
           {person.gender && <span className="shrink-0 text-xs text-fg-2">{person.gender}</span>}
         </div>
-        {person.originalName && <div className="truncate text-xs text-fg-3">(tên gốc: {cleanName(person.originalName)})</div>}
-        <div className="mt-0.5 truncate text-xs text-fg-2">
+        {person.originalName && <div className="break-words text-xs text-fg-3">(tên gốc: {cleanName(person.originalName)})</div>}
+        <div className="mt-0.5 break-words text-xs text-fg-2">
           <AudioLines className="mr-1 inline size-3.5 -translate-y-px text-fg-3" />
-          {person.voice ? `${person.voice.preset}${person.voice.tone ? ` · ${person.voice.tone}` : ""}` : "Chưa có giọng"}
+          {person.voice ? `${person.voice.preset}${person.voice.tone ? ` · ${toneLabel(person.voice.tone)}` : ""}` : "Chưa có giọng"}
         </div>
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
         {person.pendingVoice && (onPickVoice || waiting) && (

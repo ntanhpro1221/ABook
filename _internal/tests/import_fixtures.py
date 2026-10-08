@@ -14,6 +14,8 @@
     fixtures/import/whole.txt                MỘT file TXT cả truyện: chữ dẫn trước chương đầu, ba dòng "Chương N", một dòng ghi công,
                                              câu văn mở đầu bằng "Chương trình" (không phải tiêu đề). expected/whole.json = KHÔNG tách
                                              (mặc định), expected/whole.split.json = người dùng tích "Tách thành N chương"
+    fixtures/import/titled.txt               như whole.txt nhưng chữ dẫn chỉ là MỘT dòng tên truyện: tên sách = dòng ấy; tách thì không có
+                                             chương "Mở đầu" (expected/titled.json, titled.split.json)
     fixtures/import/expected/keep_short.json epub3 và split đọc với keep_short=True: mục rất ngắn đứng đúng chỗ trong danh sách, short=true,
                                              `defaults` = các chương tích sẵn (không có mục ngắn), ghi chú "N mục rất ngắn chưa chọn"
     fixtures/import/expected/<tên>.json      kết quả mong đợi (ImportedBook.to_dict, hay {"error": ...})
@@ -449,6 +451,18 @@ def whole_txt() -> bytes:
     return WHOLE_STORY.encode("utf-8")
 
 
+# Cả truyện mà chữ dẫn chỉ là MỘT dòng tên truyện: tên sách gợi ý là dòng ấy, tách thì không có chương "Mở đầu" 4 chữ.
+WHOLE_TITLED = (
+    "Ngọn đèn cuối cùng\n\n"
+    "Chương 1: Chuyến phà đêm\n\nSương xuống rất sớm.\n\n"
+    "Chương 2: Căn nhà bên sông\n\nĐèn còn sáng.\n"
+)
+
+
+def whole_titled_txt() -> bytes:
+    return WHOLE_TITLED.encode("utf-8")
+
+
 # --- toàn bộ ----------------------------------------------------------------------------------------------------------
 
 SOURCES = {
@@ -466,6 +480,7 @@ def source_files() -> dict[str, bytes]:
     files = {name: build() for name, build in SOURCES.items()}
     files.update({f"txt/{name}": data for name, data in txt_files().items()})
     files["whole.txt"] = whole_txt()
+    files["titled.txt"] = whole_titled_txt()
     return files
 
 
@@ -484,6 +499,8 @@ def expected_files(root: Path) -> dict[str, bytes]:
     # Một file TXT cả truyện: không tách (mặc định) và có tách (người dùng tích ô gợi ý).
     out["expected/whole.json"] = dumps(importers.import_text(root / "whole.txt").to_dict())
     out["expected/whole.split.json"] = dumps(importers.import_text(root / "whole.txt", split_chapters=True).to_dict())
+    out["expected/titled.json"] = dumps(importers.import_text(root / "titled.txt").to_dict())
+    out["expected/titled.split.json"] = dumps(importers.import_text(root / "titled.txt", split_chapters=True).to_dict())
     # Bước xem trước giữ cả mục rất ngắn (bìa, trang bản quyền) làm chương CHƯA CHỌN, đúng chỗ của chúng trong file (`keep_short`).
     kept = {}
     for name in ("epub3.epub", "split.epub"):

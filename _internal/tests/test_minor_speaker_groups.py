@@ -94,9 +94,19 @@ def test_one_card_gathers_every_line_of_the_role_across_the_book(tmp_path: Path)
     # Mọi câu (kèm chương) để người nghe bỏ chọn từng câu, theo thứ tự trong sách.
     assert [(example["stableId"], example["chapterId"], example["seq"]) for example in card["examples"]] == [
         ("b", 1, 1), ("d", 1, 3), ("e", 2, 0), ("g", 2, 2)]
-    assert [choice["value"] for choice in card["choices"]] == ["LUCIEN", "RHINE", NARRATOR]
+    # Truyện ngôi ba: lính gác không phải người kể - không gợi "Người kể"; thay bằng "là một người mới tên “Lính gác”".
+    assert [choice["value"] for choice in card["choices"]] == ["LUCIEN", "RHINE"]
+    assert card["newPerson"] == "Lính gác"
     assert {group["speaker"]: _pairs(group["lines"]) for group in card["keepGroups"]} == {
         GUARD_1: [("b", "sha-b"), ("d", "sha-d")], GUARD_2: [("e", "sha-e")], GUARD_2B: [("g", "sha-g")]}
+
+
+def test_a_first_person_book_still_offers_the_narrator_for_a_minor_role(tmp_path: Path) -> None:
+    project = make_book(tmp_path)
+    (project / "book_settings.json").write_text(json.dumps({"voices": {"first_person_identity": "Lucien"}}), encoding="utf-8")
+
+    card = _unnamed(project)["unnamed-role:lính gác"]
+    assert [choice["value"] for choice in card["choices"]][-1] == NARRATOR
 
 
 def test_one_role_in_two_scenes_of_a_chapter_is_a_group_too(tmp_path: Path) -> None:
