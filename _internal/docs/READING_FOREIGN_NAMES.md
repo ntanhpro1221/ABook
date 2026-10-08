@@ -276,6 +276,25 @@ quy ước chưa nói tới, chọn theo nhãn nhất quán của bộ đo; khô
 - Từ mượn đã vào từ điển thêm: video vi-đê-ô, massage mát-xa, salon xa-lông, marathon ma-ra-tông, opera ô-pê-ra, sandwich xan-uých, café cà-phê;
   OK ô-kê, TV ti-vi (mục 5). Hậu tố gọi Nhật sau gạch (Lyle-kun) đọc theo romaji (cun), không theo chữ Anh.
 
+**Vòng 11 (08-10, tiếp vòng 10; [App], chưa qua tai chủ sách; train en 91,4 -> 93,3%, theo số lần 94,4 -> 95,7%):** vẫn chọn theo nhãn nhất quán của bộ đo, không điểm nào
+đổi một phán quyết chủ sách ở trên.
+- Hậu tố **-well** của họ / tên Anh → **oen**, nửa đầu đọc như một từ; cụm phụ âm cuối của nửa đầu, vì còn âm tiết sau, thừa thì thành âm tiết ơ
+  (Cromwell cờ-rom-oen, Roxwell róc-xơ-oen).
+- **-ore** cuối của tên bịa → o, r bỏ (Pellinore pe-li-no, Algore an-go), như more / core.
+- Tắc + l / r giữa từ khép âm tiết trước CHỈ khi tắc đứng một mình (hay ng + k / g: England), nguyên âm không phải /iː uː eɪ/, tắc không phải d / g
+  (táp-lét, góp-lin, cốp-ra giữ nguyên); còn lại tách "Cờ" huyền (Libra li-bờ-ra, Daydream đây-đờ-rim, Integra in-te-gờ-ra, Templar tem-pờ-lơ).
+- ir không nhấn trong từ điển phát âm ở đầu / giữa tên → i (Miranda mi-ran-đa); tên bịa đoán theo chữ giữ ơ (Zirnitra dơ-ni-tra). -ar cuối không nhấn →
+  ơ ngang (Oscar ót-cơ, Altar ôn-tơ); a trước r đầu / giữa từ vẫn a (Maria ma-ri-a). -re cuối đọc /ɚ/ giữ ngang, không huyền như -er (ogre ô-gơ).
+- Tên bịa: ou trước nguyên âm → u (Louina lu-i-na); chr → k + r (Chrono cờ-rô-nô); -oh cuối → ô (Uzoh u-dô); -ayer / -oyar cuối giữ y trong nguyên
+  âm đôi (cosplayer cót-pờ-lây-ơ, Loyar loi-a); -wood ở nửa sau từ ghép: w nuốt vào u (Lilywood li-li-út).
+- Chữ viết hoa lạ vẫn là MỘT từ: TOÀN HOA từ 4 chữ có nguyên âm và có trong từ điển (LYLE lai-ồ, TYPE tai) hay dài từ 6 chữ (YGGDRASIL); chữ thường
+  kết bằng một chữ hoa (DreadlorD đờ-rét-lót) khi gộp lại có trong từ điển hay ghép được. Chữ TOÀN HOA ngắn (VIP, USB, NPC) vẫn là viết tắt. Người
+  gọi (`readaloud/names.py`) vẫn bỏ qua chữ TOÀN HOA nên đường đọc thật chưa đổi; luật chỉ để bộ đo và nơi gọi sau này.
+- Từ mượn thêm (có trong từ điển tiếng Việt): beta bê-ta, motor mô-tơ, pharaoh pha-ra-ông, protein pờ-rô-tin, coca cô-ca, piranha pi-ra-nha.
+- Nhãn bộ đo chưa theo luật chủ sách (để nguyên, không chiều theo): w đầu từ trước ai / e / i / ơ (web oép, White oai, wiki uy-ki, Word uốt; chủ sách
+  w → gu), au (aura o-ra, Auber o-bơ; chủ sách au → au), ɜr + c (Dirk đớc; chủ sách Kirk cấc), e viết a trước r (Marigold me-ri-gôn; chủ sách Mary ma-ri),
+  -el của tên bịa → en (Atel a-ten; chủ sách Lancel lan-xồ), j + a (Jasper giát; chủ sách Jack dách), -tion → sơn (Connection; chủ sách -sừn).
+
 Cài đặt: `abook/english_vi.py` (bản Kotlin `readaloud/EnglishVi.kt`), ca có nguồn ở `tests/english_vi_evidence.py`, các điểm [Chọn] quét
 bằng `scripts/sweep_english_vi_variants.py` (chủ sách x100, nhà nước x2, SGK / báo x1, cộng đồng x0).
 
