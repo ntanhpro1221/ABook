@@ -514,7 +514,7 @@ function SharePanel() {
             variant="ghost"
             size="sm"
             icon={BatteryCharging}
-            className="h-auto min-h-8 whitespace-normal py-1.5 text-left"
+            className="h-auto min-h-8 justify-start whitespace-normal py-1.5 text-left"
             onClick={() => void EbookLibrary.openAppSettings().catch((error: Error) => toast.error(error.message))}
           >
             Để máy tính khỏi phải chờ: cho ABook chạy nền

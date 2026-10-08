@@ -134,12 +134,12 @@ export function OtherComputers() {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{computer.name}</div>
                 {computer.waking ? (
-                  <div className="flex flex-wrap items-center gap-x-2 text-xs text-fg-2" role="status">
-                    <Moon className="size-3.5 shrink-0" aria-hidden />
-                    <span className="min-w-0">{wakingLine(computer)}</span>
+                  <div className="text-xs text-fg-2" role="status">
+                    <Moon className="mr-1.5 -mt-0.5 inline size-3.5 align-middle" aria-hidden />
+                    {wakingLine(computer)}
                     <button
                       type="button"
-                      className="rounded text-accent-text underline-offset-2 hover:underline disabled:opacity-60"
+                      className="ml-2 rounded text-accent-text underline-offset-2 hover:underline disabled:opacity-60"
                       disabled={stopWaiting.isPending}
                       onClick={() => stopWaiting.mutate(computer.id)}
                     >
