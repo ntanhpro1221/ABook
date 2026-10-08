@@ -85,7 +85,7 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=1200, help="giây cho MỘT chương")
     parser.add_argument("--no-think-for", nargs="*", default=["qwen3"], help="tiền tố tên model được gửi think=false")
     parser.add_argument("--known-list", default="baseline",
-                        choices=("baseline", "no-counts", "sorted-by-name", "masked-counts"),
+                        choices=("baseline", "no-counts", "sorted-by-name", "masked-counts", "plus-text"),
                         help="biến thể danh sách nhân vật đã biết, cho giả thuyết prompt tự gây thiên lệch "
                              "(docs/LLM_EVAL.md): `no-counts` bỏ cả con số lẫn thứ tự (và ~500 token), "
                              "`sorted-by-name` chỉ đổi thứ tự, `masked-counts` chỉ xoá con số")
@@ -95,6 +95,7 @@ def main() -> None:
         "no-counts": "--no-mention-counts",
         "sorted-by-name": "--known-sorted-by-name",
         "masked-counts": "--masked-mention-counts",
+        "plus-text": "--known-plus-text",
     }[args.known_list]
 
     gold = load_gold(GOLD_ROOT / args.gold)
