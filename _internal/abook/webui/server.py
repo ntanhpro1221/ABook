@@ -1225,8 +1225,9 @@ class App:
         chia lại cả cuốn); mặc định chia lại đoạn ("Chọn lại nhạc", lần dựng đầu). `edited` (cần `keep_scenes`): các đoạn
         vừa bị sửa - khác None thì mọi đoạn KHÁC giữ bài cũ (trừ bài đã bị bỏ); None thì chọn lại tất cả."""
         path = self._book(value)
-        # Dựng lại = muốn dữ liệu mới nhất: đọc lại mục lục (nhỏ) thay vì bản đệm 24 giờ.
-        manifest = self.music_catalog().manifest(refresh=True)
+        # "Chọn lại nhạc" = muốn dữ liệu mới nhất: đọc lại mục lục (nhỏ) thay vì bản đệm 24 giờ. Sửa một đoạn (ghim, im lặng,
+        # bỏ bài) thì dùng bản đệm - mỗi lần bấm không chờ mạng.
+        manifest = self.music_catalog().manifest(refresh=edited is None)
         plan = self._music_build(value, path, manifest, music_plan.read_plan(path) if keep_scenes else None, edited)
         self._warm_music(plan, value)
         return plan
@@ -1239,6 +1240,7 @@ class App:
                                 taxonomy=manifest.get("taxonomy"),
                                 scenes=music_plan.scenes_of(previous),
                                 keep=music_plan.kept_tracks(previous, edited) if edited is not None else None,
+                                kept_siblings=music_plan.kept_siblings(previous, edited) if edited is not None else None,
                                 available=self.music_track_available)
 
     def music_update(self, value: str, body: dict[str, Any]) -> dict[str, Any]:
