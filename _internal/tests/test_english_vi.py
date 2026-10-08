@@ -32,9 +32,9 @@ OWNER = [(token, sources) for token, sources, kind in evidence.SOURCED if kind =
 # ca riêng: chỉ bảng ghi đè ra được, luật không suy rộng (vòng 9: từ Washington trở đi)
 FIXED_ONLY = {"Kate", "Pete", "guild", "time", "Thomas", "great", "Gate", "higher", "Laplace", "Walt", "Dalton", "days", "VIP", "ID",
               "Washington", "Damien", "Darius", "Violet", "Forthorthe", "Judge", "Max", "Mikhail", "Blanche", "Reine", "Wolf", "Walker",
-              "Undead", "Hilde", "oldest", "card", "wind", "world", "monster", "brother", "Charlie", "Anne", "Louise", "April"}
+              "Undead", "Hilde", "oldest", "card", "wind", "world", "monster", "brother", "Charlie", "Anne", "Louise", "April", "Novem"}
 # Chủ sách viết những dạng mà bộ kiểm âm tiết (đúng chính tả) không nhận; không nới bộ kiểm, nên chưa có cách đọc (hỏi lại chủ sách)
-TALLY = {"owner": [121, 157], "official": [2, 4], "textbook": [8, 32], "press": [0, 2], "community": [6, 18]}
+TALLY = {"owner": [120, 157], "official": [2, 4], "textbook": [8, 32], "press": [0, 2], "community": [6, 18]}
 
 
 def _load_script(name: str):
@@ -122,6 +122,14 @@ def test_tally_of_sourced_forms_by_kind():
     ("Encrid", "En-cờ-rít"), ("Lancel", "Lan-xồ"), ("Calian", "Ca-li-an"), ("Litana", "Li-ta-na"),
     # nối gạch
     ("Jean-Paul", "Gin Pau"),
+    # vòng 10 (bộ đo translit_bench): o mở âm tiết của tên bịa đọc o, riêng -ona / -onia / -opia ô; -ton / -son / -xon cuối ơn; -oa cuối ô-a
+    ("Docora", "Đo-co-ra"), ("Symphonia", "Xim-phô-ni-a"), ("Jaxon", "Giác-xơn"), ("Anton", "An-tơn"), ("Astroa", "Át-trô-a"),
+    # /tʃ/ cuối khép bằng ch sau i, a; a + x giữ c, a + g cuối giữ c; e + c: éc (êch chỉ trước xt cuối: text, next)
+    ("Lich", "Lích"), ("March", "Mách"), ("Axel", "Ác-xồ"), ("Flag", "Phờ-lác"), ("Rebecca", "Re-béc-ca"), ("text", "tếch"),
+    # r bỏ + -y không nhân đôi; -er / -or huyền nhưng -ur / -ir / -ure ngang; e câm cuối khi gắn chữ cho nguyên âm (Beatrice); ey trước phụ âm
+    ("Party", "Pa-ti"), ("Arthur", "A-thơ"), ("Silver", "Xin-vờ"), ("Beatrice", "Bi-a-trít"), ("Greyrat", "Gờ-rây-rát"),
+    # từ thường cùng dáng tên ngắn + e câm đọc theo âm vị; từ mượn đã vào từ điển; chữ viết tắt thành từ; hậu tố gọi Nhật sau gạch
+    ("Fire", "Phai"), ("Note", "Nốt"), ("video", "vi-đê-ô"), ("café", "cà-phê"), ("OK", "ô-kê"), ("TV", "ti-vi"), ("Lyle-kun", "Lai-ồ cun"),
 ])
 def test_reading_follows_the_convention(token, reading):
     assert vietnamized_english(token) == reading
@@ -133,7 +141,7 @@ def test_unsure_is_none(token):
 
 
 def test_without_a_dictionary_the_spelling_route_reads():
-    assert vietnamized_english_flags("Washington", {}, overrides=False) == ("Goa-sinh-ton", ("via:spelling",))
+    assert vietnamized_english_flags("Washington", {}, overrides=False) == ("Goa-sinh-tơn", ("via:spelling",))
     assert vietnamized_english_flags("Washington", overrides=False) == ("Goa-sinh-tơn", ("via:phonemes",))
     assert vietnamized_english_flags("España", {}) == ("Ét-pa-nha", ("via:spelling",))  # ñ -> nh
     assert vietnamized_english("Encrid", {}) == vietnamized_english("Encrid")

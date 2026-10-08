@@ -50,6 +50,11 @@ EDGE: list[str] = [
     "Brightwater", "Xylo", "Quinzel", "Shalltear", "Lucretia", "Ashford", "Whitlock",
     # nối gạch, viết hoa, chữ lạ, chữ viết tắt
     "Jean-Paul", "Mary-Ann", "MARY", "iPhone", "McDonald", "O'Brien", "Ko1", "", "VIP", "ID", "id", "Vip",
+    # vòng 10 (bộ đo translit_bench): o mở âm tiết tên bịa, -ton / -xon, -oa cuối, ch cuối, a + x / g cuối, e + c, r bỏ + -y, -er / -ur huyền hay ngang,
+    # e câm cuối khi gắn chữ, ey, từ thường cùng dáng tên ngắn + e câm, từ mượn có dấu, OK / TV, hậu tố gọi Nhật sau gạch
+    "Docora", "Symphonia", "Dystopia", "Heliona", "Novem", "Jaxon", "Anton", "Astroa", "Ranoa", "Lich", "Mitch", "March", "Axel", "Flag", "magma",
+    "Rebecca", "Extra", "text", "next", "Party", "harpy", "Arthur", "Silver", "Elixir", "Beatrice", "Greyrat", "Fire", "Note", "Code", "White",
+    "video", "Video", "café", "OK", "TV", "ok", "Lyle-kun", "Mary-dono", "Eleanora-san", "Persona-kun",
 ]
 
 

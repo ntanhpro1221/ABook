@@ -18,6 +18,7 @@ Ba tầng (luật thuần trước, thuật toán sau; tầng LLM làm sau):
 `vietnamized_english(word)` trả cách đọc nối gạch hay None (chữ lạ, viết hoa lạ / toàn hoa, hay có âm tiết mà `vietnamese_syllable.valid_spoken_form`
 không nhận). Cờ trong `vietnamized_english_flags`:
   via:override / via:phonemes / via:spelling / via:face   đường đã đi (face: tên ngắn đọc theo mặt chữ, Mike -> mi-ke)
+  via:suffix    hậu tố gọi Nhật sau gạch (Lyle-kun) đọc theo romaji của `romanization`, không theo chữ Anh
   open:...      quy ước ghi "mở" (`OPEN_CHOICES`; hiện không còn điểm nào)
   analogy:...   quy ước không nói, suy theo phán quyết / hàng gần nhất (ank: /æŋk/ -> anh theo tank -> tanh)
   fit:...       đường âm vị cho âm tiết mà bộ kiểm không nhận, nên đọc theo chữ
@@ -29,7 +30,7 @@ import unicodedata
 from collections.abc import Mapping
 from pathlib import Path
 
-from .romanization import _tone_acute
+from .romanization import _JA_SUFFIXES, _tone_acute, romanized_reading
 from .vietnamese_syllable import valid_spoken_form, valid_syllable
 
 PHONES_PATH = Path(__file__).resolve().parent / "assets" / "english_phones.txt.gz"
@@ -53,14 +54,16 @@ OWNER = {
     "mikhail": "mi-kha-in", "blanche": "bờ-lan-che", "reine": "ren", "wolf": "gốp", "walker": "goắc-cơ", "undead": "ăn-đét",
     "hilde": "hiu-đơ", "oldest": "ôn-đít", "wind": "guyn", "world": "gua", "monster": "mon-tơ", "brother": "bờ-ro-dờ", "charlie": "chác-li",
     "anne": "an-ne", "louise": "lui", "april": "ây-rồ",  # chủ sách 04-10 chiều: ca lạ, luật không suy rộng
+    "novem": "nô-vem",  # tên bịa: o mở âm tiết đọc o (Docora đo-co-ra), riêng Novem chủ sách chốt nô
 }  # Kyle: chủ sách viết kai-ồ; chính tả luật 1.5 viết c trước a (bộ kiểm âm tiết không nhận "kai"), cùng một âm
 # Chữ viết tắt đã đọc thành từ (chủ sách 04-10): khoá là đúng chữ hoa như viết; chữ viết tắt khác là việc của luật mục 5.
-ACRONYMS = {"VIP": "víp", "ID": "ai-đi"}
+ACRONYMS = {"VIP": "víp", "ID": "ai-đi", "OK": "ô-kê", "TV": "ti-vi"}  # OK, TV: mục 5 (từ điển)
 # Từ mượn đã vào từ điển tiếng Việt (mục 6; nền bằng chứng mục 2.4, từ điển S40): đọc như từ Việt. Chỉ những từ mà chữ tiếng Anh trùng gốc
 # và trùng nghĩa với từ mượn; các âm tiết nối gạch như mọi đầu ra khác (từ điển viết "cao bồi", "mít tinh").
 LOANWORDS = {
     "radio": "ra-đi-ô", "radar": "ra-đa", "tennis": "ten-nít", "acid": "a-xít", "piano": "pi-a-nô", "chocolate": "sô-cô-la",
     "vitamin": "vi-ta-min", "cowboy": "cao-bồi", "meeting": "mít-tinh", "dollar": "đô-la", "cafe": "cà-phê", "golf": "gôn", "card": "cạc", "taxi": "tắc-xi",
+    "video": "vi-đê-ô", "massage": "mát-xa", "salon": "xa-lông", "marathon": "ma-ra-tông", "opera": "ô-pê-ra", "sandwich": "xan-uých", "ok": "ô-kê",
 }
 OVERRIDES = {**LOANWORDS, **OWNER}
 
@@ -207,7 +210,8 @@ def _split_hiatus(groups: list[str], count: int) -> list[str] | None:
 def _align_letters(phones: list[Phone], word: str) -> list[Phone]:
     """Gắn cụm chữ nguyên âm cho từng nguyên âm khi số cụm bằng số nguyên âm (bỏ e câm cuối nếu cần); không bằng thì để trống."""
     count = sum(1 for phone in phones if phone[1] >= 0)
-    for drop in (False, True):
+    # e cuối câm thì bỏ trước khi đếm cụm chữ (Beatrice: ea, i = e, a, i); phát âm kết bằng nguyên âm thì e cuối là một âm (Sophie)
+    for drop in (True, False) if phones and phones[-1][1] < 0 else (False, True):
         if drop and not (len(word) > 2 and word.endswith("e") and word[-2] not in "aeiouy"):
             continue
         groups = _split_hiatus(_vowel_groups(word, drop), count)
@@ -231,7 +235,8 @@ _LONG = {"a": "EY", "e": "IY", "i": "AY", "o": "OW", "u": "UW", "y": "AY"}
 # o cuối từ vẫn "ô" (_FINAL_OPEN).
 _FACE = {"a": "AA", "e": "EH", "i": "IH", "o": "AA", "u": "UH", "y": "IH"}
 _FINAL_OPEN = {"a": "AA", "e": "IY", "i": "IY", "o": "OW", "u": "UW", "y": "IY"}
-_DIGRAPHS = (("eau", "OW"), ("igh", "AY"), ("ee", "IY"), ("ea", "IY"), ("ai", "EY"), ("ay", "EY"), ("ei", "EY"), ("ie", "IY"), ("oa", "OW"),
+_LONG_O_ENDINGS = frozenset({"a", "na", "no", "nia", "pia"})  # chữ còn lại sau o đến hết từ mà o đọc ô (-oa, -ona, -ono, -onia, -opia); o khác đọc o
+_DIGRAPHS = (("eau", "OW"), ("igh", "AY"), ("ee", "IY"), ("ea", "IY"), ("ai", "EY"), ("ay", "EY"), ("ei", "EY"), ("ey", "EY"), ("ie", "IY"), ("oa", "OW"),
              ("oo", "UW"), ("ou", "AW"), ("oi", "OY"), ("oy", "OY"), ("au", "AO"), ("aw", "AO"), ("ew", "UW"))
 
 
@@ -269,6 +274,8 @@ def _spell_phones(word: str) -> list[Phone] | None:
             digraph = next(((letters, phone) for letters, phone in _DIGRAPHS if rest.startswith(letters)), None)
             if rest in ("ey", "ay") or (rest == "ie" and size <= 4):
                 digraph = (rest, "IY" if rest != "ay" else "EY")
+            if rest == "oa":
+                digraph = None  # -oa cuối tên bịa là hai âm tiết ô-a (Astroa Át-trô-a, Ranoa), không phải oa đơn như boat
             if rest.startswith("ow"):
                 digraph = ("ow", "OW" if rest == "ow" else "AW")
             if rest == "ue":
@@ -295,8 +302,8 @@ def _spell_phones(word: str) -> list[Phone] | None:
                 out.append(("AE", 0, ch))  # ank -> anh như đường âm vị (tank -> tanh)
             elif i == end - 1:
                 out.append((_FINAL_OPEN[ch], 0, ch))
-            elif ch == "o" and not _is_vowel_letter(w, i + 1) and _is_vowel_letter(w, i + 2) and w[i + 1] not in "wy":
-                out.append(("OW", 0, ch))  # o mở âm tiết (o + một phụ âm + nguyên âm) đọc ô: chủ sách 04-10 Novem -> nô-vem
+            elif ch == "o" and w[i + 1:end] in _LONG_O_ENDINGS:
+                out.append(("OW", 0, ch))  # -ona, -ono, -onia, -opia (Symphonia, Dystopia, Heliona) đọc ô; o mở âm tiết khác đọc o (Docora đo-co-ra)
             else:
                 out.append((_FACE[ch], 0, ch))
             i += 1
@@ -387,6 +394,13 @@ def _face_short(word: str) -> list[Phone]:
         phones[-1] = ("S" if word[-2] == "c" else "G", -1, "")  # c trước e mềm (Luce -> lu-xe), g cứng (Cage -> ca-ghe): chủ sách 04-10
     vowel = word[-3]
     return [(_FACE[vowel], 0, vowel) if phone[1] >= 0 else phone for phone in phones] + [("EH", 0, "e")]
+
+
+# Từ thường (không phải tên) cùng dáng với tên ngắn + e câm: viết hoa đầu câu vẫn đi đường âm vị (Fire phai, Note nốt, Code cốt), không đọc theo mặt chữ như Mike
+_COMMON_WORDS = frozenset({
+    "fire", "ice", "white", "note", "code", "core", "more", "line", "wine", "side", "home", "hope", "zone", "rule", "mode", "love", "life",
+    "size", "base", "case", "face", "race", "rate",
+})
 
 
 def _short_silent_e(word: str) -> bool:
@@ -607,6 +621,8 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
             geminate = CHOICES["geminate"]
             if not head and not liquid_stop and next_onset and len(run) == 1 and run[0] in _STOPS and can_close and vowel[1] >= 1 and (
                 vowel[0] not in ("UW", "IY")  # nguyên âm dài cao không nhân đôi (chủ sách 04-10: Lucas -> lu-cát)
+            ) and not (
+                r_colored and phones[vowels[k + 1]][0] == "IY"  # r bỏ rồi -y cuối thì không nhân đôi (Party pa-ti, harpy ha-pi)
             ) and (
                 geminate == "stressed" or (geminate == "primary" and vowel[1] == 1)
                 or (geminate == "short" and vowel[0] in _SHORT_VOWELS)
@@ -617,6 +633,8 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
                 if letter is not None:
                     coda, coda_phone = letter, head[0]
                     head = head[1:]
+                    if coda_phone == "K" and (head[:1] == ["S"] or (not head and next_onset == "S")):
+                        coda_phone = "KS"  # x: a + x giữ c (Axel ác-xồ, Max mắc), không ach như ck (Jack dách)
             tail = [_epenthetic(base) for base in head]
             if liquid_stop:
                 tail.append(_Syl(_onset_letter(liquid_stop), "ơ", "", True))
@@ -638,7 +656,11 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
             nucleus = "ây"  # w + ai: guây (chủ sách 04-10: Weiss)
         if vowel[0] == "AW" and run[:1] in (["S"], ["Z"]):
             nucleus = "au"  # ao trước s: au (chủ sách 04-10: house hau, mouse mau; town tao, sound sao)
-        if vowel[0] == "AE" and coda == "c":
+        if coda_phone == "CH" and coda == "t" and nucleus in ("i", "a", "ê", "oa"):
+            coda = "ch"  # /tʃ/ khép được bằng ch sau i, a, ê, oa (ích, ách, ếch, oách): Lich lích, Mitch mích, March mách
+        if vowel[0] == "EH" and nucleus == "ê" and not (last and run[:3] == ["K", "S", "T"]):
+            nucleus = CHOICES["eh"]  # e + c: êch chỉ trước cụm xt cuối (chủ sách: text tếch, next nếch); còn lại éc (Rebecca, Extra, check)
+        if vowel[0] == "AE" and coda == "c" and coda_phone not in ("G", "KS"):
             coda = "ch"  # ac viết ach (chủ sách 04-10: Jack dách, action ách-sừn)
         if vowel[0] == "AE" and coda == "ng" and run[:2] == ["NG", "K"]:
             nucleus, coda = "a", "nh"  # /æŋk/ -> anh (chủ sách 04-10: tank -> tanh; rank, thank theo đó)
@@ -646,9 +668,11 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
         if last and _is_schwa(vowel) and ((before[-1:] in (["SH"], ["ZH"]) and run == ["N"]) or (before[-1:] == ["L"] and run == ["N", "D"])):
             nucleus, grave = "ư", True  # -tion, -sion, -land: ừn thanh huyền dù khép (chủ sách 04-10: station xờ-tây-sừn, Scotland lừn);
             # -land mọi chỗ (chủ sách 04-10 sau: Roland rô-lừn)
+        if last and k > 0 and vowel[0] in ("AA", "AO") and vowel[1] in (0, 2) and vowel[2] == "o" and coda == "n" and not r_colored and before[-1:] in (["T"], ["S"], ["G"]):
+            nucleus = "ơ"  # -ton / -son / -xon / -gon cuối không nhấn chính: ơn như Oa-xinh-tơn, Ê-đi-xơn (Jaxon giác-xơn, Anton an-tơn)
         if last and vowel[0] == "UW" and vowel[1] == 0 and vowel[2] == "e" and not run:
             nucleus = "iu"  # -ew cuối: iu (chủ sách 04-10: Andrew an-riu)
-        if last and vowel[0] == "ER" and vowel[1] == 0 and nucleus == "ơ" and not run and onset and before != ["S", "T"]:
+        if last and vowel[0] == "ER" and vowel[1] == 0 and vowel[2][-1:] in ("e", "o", "") and nucleus == "ơ" and not run and onset and before != ["S", "T"]:
             grave = True  # -er cuối mở: ơ thanh huyền (chủ sách 04-10: guốt-tờ, hăn-tờ), trừ sau st (mát-tơ)
         if il_final:
             nucleus += "u"
@@ -785,7 +809,7 @@ def _read_word(key: str, capital: bool, dictionary: Mapping[str, str], overrides
         return reading[:1].upper() + reading[1:] if capital else reading
     phones: list[Phone] | None = None
     route = "via:phonemes"
-    if capital and _short_silent_e(key) and CHOICES["short_silent_e"] == "face":
+    if capital and _short_silent_e(key) and key not in _COMMON_WORDS and CHOICES["short_silent_e"] == "face":
         phones, route = _face_short(key), "via:face"
     if phones is None and key in dictionary:
         phones = _parse_phones(dictionary[key], key)
@@ -832,12 +856,20 @@ def vietnamized_english_flags(word: str, dictionary: Mapping[str, str] | None = 
     phones = default_phones() if dictionary is None else dictionary
     flags: list[str] = []
     readings: list[str] = []
-    for part in value.split("-"):
+    for index, part in enumerate(value.split("-")):
+        if index and part in _JA_SUFFIXES and (suffix := romanized_reading(part, "ja")):
+            flags.append("via:suffix")  # hậu tố gọi Nhật sau gạch (Lyle-kun) đọc theo romaji, không theo chữ Anh (kun != căn)
+            readings.append(suffix)
+            continue
         if overrides and part in ACRONYMS:
             flags.append("via:override")
             readings.append(ACRONYMS[part])
             continue
         case = _part_case(part)
+        if case is None and overrides:
+            plain = "".join(ch for ch in unicodedata.normalize("NFD", part) if not unicodedata.combining(ch))
+            if plain.casefold() in OVERRIDES:
+                part, case = plain, _part_case(plain)  # từ mượn viết có dấu (café -> cà-phê)
         if case is None:
             return None
         reading = _read_word(part.lower(), case, phones, overrides, flags)
