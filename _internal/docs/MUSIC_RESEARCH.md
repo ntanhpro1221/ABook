@@ -4337,6 +4337,21 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 09-10 00:3x - NTS (học sinh ranh giới đổi nơi/thời gian) không qua cổng xác nhận, hụt 0,1 lỗi mỗi giờ
+
+NTS là mmBERT-small phân loại từng khe giữa hai câu, học từ ranh giới bạc, chạy CPU (`PLAN_nt_student.md`). Luật chọn lấy bản ce
+(ngưỡng chọn trên bộ học để lỗi chặt không vượt C1 quá 0,5 mỗi giờ).
+
+| | bộ học 4+5+5b+6 | bộ xác nhận 7+8+9 (50 NT, 12,7 giờ) |
+|---|---|---|
+| C1 F1 / R / lỗi chặt mỗi giờ | .444 / .36 / 1,5 | .412 / .40 / 2,1 |
+| C1 + NTS | .545 / .49 / 1,9 | .496 / .56 / 2,7 |
+| ranh giới thêm, tỉ lệ đúng | 17, .59 | 17, .47 |
+
+- Cổng 1 (recall +.10): qua, +.16. Cổng 2 (tỉ lệ đúng của phần thêm ≥ .35): qua. Cổng 3 (lỗi chặt ≤ C1 + 0,5): **trượt**, 2,7 > 2,6.
+- Theo luật ghi trước: **không đưa NTS vào app**, không chỉnh ngưỡng sau khi mở bộ xác nhận. Nếu NT2 (LLM) qua thì dùng NT2;
+  NT2A đang chạy lại sau sự cố CPU đêm 08-10.
+
 ### 08-10 19:4x - Đường cong 2.000 cảnh với Qwen3-1.7B: encoder lớn thắng ở mọi điểm, dữ liệu thêm lời ít dần
 
 Cùng thủ tục `stu_curve.py` (theo bộ truyện, 3 hạt, alpha chọn trên bộ học), thay qwen06 lớp giữa bằng qwen17 lớp 14
