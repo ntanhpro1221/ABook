@@ -231,7 +231,6 @@ object BluetoothShare {
 
     private val radio = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            // ACL_CONNECTED không cần xử lý: chỉ cần được gửi tới (xem watch).
             when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
                 BluetoothAdapter.STATE_ON -> synchronized(this@BluetoothShare) { if (wanted) runCatching { start(context) } }
                 BluetoothAdapter.STATE_TURNING_OFF, BluetoothAdapter.STATE_OFF -> dropListener("Bluetooth của điện thoại đang tắt")
@@ -281,16 +280,16 @@ object BluetoothShare {
     }
 
     /**
-     * Cũng nghe ACTION_ACL_CONNECTED, và đây là thứ MỞ BĂNG khi máy tính gọi tới (đo thật 08-10, ColorOS): HANS đóng băng tiến trình
-     * ~30 giây sau khi rời màn hình dù đang có dịch vụ nền (ShareService), còn RFCOMM là socket của hệ điều hành nên không "gói tin"
-     * nào đánh thức nó - máy tính nối được RFCOMM mà bắt tay TLS quá hạn. Khi máy tính nối, ngăn xếp Bluetooth phát ACL_CONNECTED tới
-     * receiver đã đăng ký (binder một chiều) và HANS mở băng tiến trình ngay (`unfreeze ... reason: AsyncBinder`) cho accept() chạy.
-     * Không đăng ký thì không có gì gọi tiến trình dậy. Receiver không làm gì cả.
+     * Nghe ACTION_STATE_CHANGED để nghe lại khi Bluetooth bật. Đừng trông chờ gì hơn: ColorOS (HANS) đóng băng tiến trình ~30 giây sau
+     * khi rời màn hình dù có dịch vụ nền (ShareService), RFCOMM là socket của hệ điều hành nên không gì đánh thức accept() khi máy
+     * tính nối. Thử nghe ACTION_ACL_CONNECTED để mở băng: đo thật 08-10 chiều, receiver KHÔNG BAO GIỜ nhận được broadcast nào khi máy
+     * tính nối (liên kết ACL đang sống thì không phát lại) - bỏ. Chỉ thấy tiến trình tự mở băng lẻ tẻ ~10 giây (lý do AsyncBinder, từ
+     * tiến trình bluetooth); kết nối RFCOMM đã nối nằm chờ ở hệ điều hành và bắt tay TLS xong đúng lúc ấy (đo: 224 giây).
      */
     private fun watch(context: Context) {
         if (watching) return
         watching = true
-        ContextCompat.registerReceiver(context, radio, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED).apply { addAction(BluetoothDevice.ACTION_ACL_CONNECTED) },
+        ContextCompat.registerReceiver(context, radio, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
             ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 

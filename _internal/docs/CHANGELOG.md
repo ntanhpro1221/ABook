@@ -21,9 +21,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - "Máy tính khác": lời hướng dẫn tách riêng hai đoạn "Cùng Wi-Fi" và "Không chung Wi-Fi" (Bluetooth); ở màn hẹp ô địa chỉ máy kia
   rộng cả hàng nên đọc được hết gợi ý.
 - Điện thoại: khi bật "Cho máy khác nghe thư viện này", ABook hiện một thông báo thường trực ("Đang cho máy khác nghe thư viện này",
-  có nút "Tắt chia sẻ") và vẫn trả lời máy tính khi tắt màn hình - trước đây một số máy (OPPO) đóng băng app ở nền nên máy tính chờ
-  mãi. Điện thoại cũng báo tên Bluetooth của nó, nên máy tính tự nhận ra điện thoại trong các thiết bị đã ghép dù tên Bluetooth
-  khác tên máy.
+  có nút "Tắt chia sẻ"; bấm nút ấy thì công tắc trong app tắt theo, kể cả khi đang mở app). Trên OPPO (ColorOS) app vẫn bị hệ thống
+  "đóng băng" ~30 giây sau khi tắt màn hình dù có thông báo: máy tính gọi qua Wi-Fi được trả lời sau ~19 giây, qua Bluetooth thì
+  phải chờ tới lần hệ thống tình cờ đánh thức app (đo thật: tới vài phút) - sẽ tìm cách khác cho Bluetooth. Điện thoại cũng báo tên
+  Bluetooth của nó, nên máy tính tự nhận ra điện thoại trong các thiết bị đã ghép dù tên Bluetooth khác tên máy.
 
 ### Nhạc nền
 

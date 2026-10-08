@@ -123,13 +123,24 @@ rồi để yên, không lưu lượng; máy tính gọi `scripts/bt_desktop_pro
 | **Dịch vụ nền** `ShareService` (loại `connectedDevice`, thông báo thường trực, `dumpsys`: `isForeground=true`) | **vẫn đóng băng** sau ~30 giây (HANS không miễn dịch cho dịch vụ nền thường) |
 | Dịch vụ nền + giữ khoá CPU (wake lock) | vẫn đóng băng (17 giây sau khi tắt màn hình) - bỏ, lại hao pin |
 | Dịch vụ nền + tự kết nối vòng (127.0.0.1) mỗi 10 giây | vẫn đóng băng - bỏ |
-| **Dịch vụ nền + nghe `ACTION_ACL_CONNECTED`** (đăng ký trong `BluetoothShare.watch`) | đang đóng băng, máy tính nối: **được mở băng, bắt tay TLS xong, 401 đúng** |
+| Dịch vụ nền + nghe `ACTION_ACL_CONNECTED` (đăng ký trong `BluetoothShare.watch`) | **vẫn đóng băng** (đo lại 08-10 chiều: 3 lần gọi có ghi log, receiver không nhận được broadcast nào; 6 lần gọi lúc đóng băng không lần nào làm app dậy). Một lần "mở băng" ghi nhận buổi trưa là trùng hợp với lần app tự dậy; đã bỏ receiver này |
 
 Vì sao: HANS chỉ mở băng khi có gói tin mạng tới socket (Wi-Fi: mở sau ~19 giây - đo được lần nối đầu tiên vào máy đang đóng băng,
 cũng là lý do đường Wi-Fi chậm khi điện thoại nằm yên) hay một lời gọi binder một chiều (`unfreeze ... reason: AsyncBinder`).
-RFCOMM là socket do ngăn xếp Bluetooth giữ, không có gì trong hai thứ đó nên không gì đánh thức app. Khi máy tính nối, ngăn xếp
-Bluetooth phát `ACTION_ACL_CONNECTED` tới receiver đã đăng ký của app (binder một chiều) - đó là cái mở băng cho `accept()` chạy.
-Receiver không làm gì cả; không đăng ký thì không có gì gọi tiến trình dậy.
+RFCOMM là socket do ngăn xếp Bluetooth giữ, không có gì trong hai thứ đó nên không gì đánh thức app khi máy tính nối. `ACL_CONNECTED`
+chỉ phát khi DỰNG liên kết ACL, nên liên kết đang sống thì nối RFCOMM không phát lại.
+
+**Cái đo được (08-10 chiều, `adb logcat` chỉ dòng `OplusHansManager` của app + `bt_desktop_probe.py` lúc app đóng băng):**
+
+- Gọi lúc đóng băng, timeout 45 giây: hỏng ở 6/6 lần (SDP 1,4-2,1 giây, RFCOMM nối được, bắt tay TLS quá hạn). Lần thứ 7 đạt chỉ vì nằm
+  trong cửa sổ 10 giây sau một lần app tự dậy.
+- App tự dậy lẻ tẻ ~10 giây rồi bị đóng băng lại (`unfreeze ... reason: AsyncBinder`, người gọi là tiến trình bluetooth); lúc đầu
+  đều đặn 4 phút một lần (xx:28), sau đó thất thường (13:25:33, 13:26:36). Không liên quan tới lần gọi của máy tính.
+- **Gọi với timeout 300 giây: ĐẠT, 224 giây** - kết nối RFCOMM đã nối nằm chờ ở hệ điều hành, và bắt tay TLS xong ngay khi app dậy lần
+  tới. Nghĩa là đóng/nối lại sau vài giây không giúp ích gì (kết nối chờ sẵn còn tốt hơn); chỉ chờ lâu hơn mới xong.
+- Chưa có cách đánh thức app theo ý muốn qua Bluetooth. Còn lại: chờ lâu có thông báo cho người dùng ("Điện thoại đang ngủ…"),
+  hay giữ app khỏi bị đóng băng bằng thứ HANS miễn (đổi cài đặt pin của hãng - ngoài tầm app; hay thiết bị đồng hành CompanionDevice
+  với quyền chạy nền - cần người dùng chọn máy trong hộp hệ thống).
 
 `ShareService` vẫn cần: giữ tiến trình khỏi bị hệ thống dọn khi nền (máy hãng khác dọn mạnh tay hơn ColorOS), và cho người dùng thấy
 chia sẻ đang bật + nút "Tắt chia sẻ". Loại `connectedDevice` (không phải `dataSync`: Android 15 cắt sau 6 giờ; không phải
