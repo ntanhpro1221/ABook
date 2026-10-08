@@ -1954,6 +1954,20 @@ def _repair_same_paragraph_speakers(
             _record_host_note_marker(data, PARAGRAPH_SPEAKER_LOCK_NOTE)
 
 
+def opens_a_new_turn(previous_text: str, text: str) -> bool:
+    """Đoạn thoại `text` ngay sau đoạn thoại `previous_text` mở một LƯỢT nói mới, không phải phần tiếp của lời đang dở:
+    nó mở ngoặc, mở ngoặc đơn hay gạch đầu dòng, hoặc đoạn trước đã đóng ngoặc."""
+    previous_text, text = previous_text.rstrip(), text.lstrip()
+    if not previous_text or not text:
+        return True
+    return (
+        text[0] in DIALOGUE_OPENERS
+        or text[0] in PAREN_TURN_OPENERS
+        or previous_text[-1] in DIALOGUE_CLOSERS
+        or DIALOGUE_DASH_TURN_PATTERN.match(text) is not None
+    )
+
+
 def _repair_continued_dialogue_speakers(
     group: list[Any],
     result: dict[str, dict[str, Any]],
@@ -1976,13 +1990,7 @@ def _repair_continued_dialogue_speakers(
             continue
         if paragraph != previous_paragraph + 1:
             continue
-        previous_text = str(previous_row["text"]).rstrip()
-        text = str(row["text"]).lstrip()
-        if not previous_text or not text:
-            continue
-        if text[0] in DIALOGUE_OPENERS or text[0] in PAREN_TURN_OPENERS or previous_text[-1] in DIALOGUE_CLOSERS:
-            continue
-        if DIALOGUE_DASH_TURN_PATTERN.match(text):
+        if opens_a_new_turn(str(previous_row["text"]), str(row["text"])):
             continue
         data["speaker"] = previous["speaker"]
         data["gender"] = previous["gender"]
