@@ -165,6 +165,30 @@ Hệ quả:
 
 ---
 
+### Một người hai tên trong sổ nhân vật: đo trên đầu ra sẵn có, không GPU (2026-10-08)
+
+Soát 263 dòng B9 sai (LLM_Train/b15b16/audit_bc) nêu bốn ca "một người bị tách hai". Chạy lại các lượt gom tên của dây
+chuyền (`canonical_speaker_names`, cùng hàm thước F1 giọng gọi) trên đầu ra B9 s1234 của cổng 19 chương và 22 lượt đo khác:
+
+- "Giáo sư Fernando" / "Fernando" và "Kasagi" / "Shizuka" app **đã gộp** (luật chức danh; tên Nhật đủ trong sách) - soát
+  thấy tách vì thước người nói chặt so chữ nhãn, không phải vì giọng.
+- "Tài xế 1" / "Tài xế 2" là **hai người thật** (gold villain 22: Jeff và tài xế của Louina nói chuyện) - không gộp nhãn
+  đánh số. "Tài xế" -> Jeff cần đồng tham chiếu, ngoài phạm vi luật tên.
+- Lỗ thật: sách Make Heroine viết cả "Yakishio Remon" (5) lẫn "Remon Yakishio" (4), luật tên Nhật đủ đếm là hai người nên
+  "REMON" / "YAKISHIO" không gộp - 21 câu B9, 86 câu trên 4 lượt. Sửa: hai thứ tự là một người; nhãn đảo thứ tự ("SHIZUKA
+  KASAGI") về tên đủ của sách. Kèm: tên có dấu sau chức danh (không phải xưng hô gia đình, không một âm tiết, sách viết đúng
+  "chức danh + tên"), thêm "bác sĩ", "tướng quân", "thái tử", "trưởng lão".
+
+| | B3 F1 giọng B9 (1.349 câu) | B3 F1 giọng 22 lượt (25.916 câu) |
+|---|---|---|
+| trước | 64,72 % | 59,21 % |
+| sau | 65,52 % | 59,39 % |
+
+31 cặp gộp mới đều đúng người theo gold; gold-check có nguồn sách (44 truyện) không nhập thêm ai. Tách còn lại lớn nhất là
+biệt danh không có bằng chứng trong chữ (KOU / KOUTAROU ~270 câu trên 22 lượt, MACKENZIE / KENJI, YUNG PUNG / GU YANGCHEON).
+
+---
+
 ## v0.2.0-lo02 — 27/30, và **không chương nào** hỏng ở tầng QA chương
 
 Chương 030..059, 3.762 segment, gieo từ `lo01b_768c98bb4f`.
