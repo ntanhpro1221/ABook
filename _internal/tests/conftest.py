@@ -186,6 +186,33 @@ def _count_sleeping(request: pytest.FixtureRequest) -> Iterator[None]:
         time.sleep = _REAL_SLEEP
 
 
+@pytest.fixture(autouse=True)
+def _no_real_bluetooth(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Không bài thử nào được chạm Bluetooth thật của máy đang chạy test: liệt kê thiết bị đã ghép trả rỗng, tra SDP / nối RFCOMM
+    thật báo lỗi. Bài nào cần thì tự đặt (`monkeypatch.setattr(bluetooth, "paired_devices", ...)`) hay đưa bộ giả qua `dll=` /
+    `ws2=` / `connect=`, như tests/test_bluetooth_desktop_client.py."""
+    from abook.webui import bluetooth
+
+    real_paired, real_connect, real_find = bluetooth.paired_devices, bluetooth.connect_rfcomm, bluetooth.find_channel
+
+    def paired_devices(*, dll: object = None) -> list:
+        return real_paired(dll=dll) if dll is not None else []
+
+    def connect_rfcomm(address: str, *, ws2: object = None):  # noqa: ANN202
+        if ws2 is None:
+            raise OSError("Bài thử không được nối Bluetooth thật")
+        return real_connect(address, ws2=ws2)
+
+    def find_channel(address: str, *, ws2: object = None) -> int:
+        if ws2 is None:
+            raise OSError("Bài thử không được tra SDP thật")
+        return real_find(address, ws2=ws2)
+
+    monkeypatch.setattr(bluetooth, "paired_devices", paired_devices)
+    monkeypatch.setattr(bluetooth, "connect_rfcomm", connect_rfcomm)
+    monkeypatch.setattr(bluetooth, "find_channel", find_channel)
+
+
 def pytest_terminal_summary(terminalreporter, exitstatus, config) -> None:  # noqa: ANN001
     if not _CALLS:
         return

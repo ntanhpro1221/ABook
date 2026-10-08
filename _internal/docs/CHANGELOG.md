@@ -7,6 +7,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Mạng giữa các máy
+
+- Máy tính dùng thư viện của điện thoại qua Bluetooth khi không chung Wi-Fi (trước đây chỉ điện thoại gọi máy tính được). Ghép
+  một điện thoại mới: ở "Máy tính khác" chọn điện thoại trong danh sách thiết bị Bluetooth đã ghép với máy tính (ghép trong Cài
+  đặt Windows trước, và trên điện thoại bật "Cho máy khác nghe thư viện này"), gõ mã 6 số. Nghe sách, chỗ nghe và điều khiển trình
+  phát đi qua Bluetooth như qua Wi-Fi, vẫn chỉ nhận đúng chứng chỉ đã ghép lúc đầu.
+- Điện thoại đã ghép qua Wi-Fi mà Wi-Fi hỏng: máy tính tự tìm điện thoại ấy trong các thiết bị Bluetooth đã ghép (trùng tên) rồi
+  đi Bluetooth; Wi-Fi quay lại thì tự về Wi-Fi. Không tự tìm ra thì bấm biểu tượng Bluetooth cạnh máy ấy ("Dự phòng qua
+  Bluetooth…") để chọn một lần, hay chọn "Không dùng". Máy chỉ đọc danh sách đã ghép của Windows, không dò sóng. Chưa thử trên
+  sóng Bluetooth thật.
+
 ### Nhạc nền
 
 - Nhạc của bạn: bài có lời hát được nhận ra và không tự phát làm nền dưới giọng đọc (lời át chữ). Bài ấy hiện nhãn "Có vẻ có lời". Bạn vẫn có thể ghim hay bấm "Vẫn cho máy tự chọn".
