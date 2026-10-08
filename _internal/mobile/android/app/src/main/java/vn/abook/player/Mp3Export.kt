@@ -27,6 +27,9 @@ object Mp3Export {
     interface Folder {
         /** Tên hiện cho người dùng (vd "Music/Sách thử"). */
         val label: String
+
+        /** Địa chỉ để mở thư mục này bằng app Tệp của hệ thống (thư mục SAF); null khi nơi ghi không có (test, thư mục thường). */
+        val uri: String? get() = null
         fun write(name: String, body: (OutputStream) -> Unit)
     }
 
@@ -68,7 +71,7 @@ object Mp3Export {
     class Plan(val title: String, val narrator: String, val chapters: List<Chapter>, val numbered: Int, val chaptersTotal: Int,
                val cover: Id3Tag.Cover?, val coverName: String)
 
-    class Result(val folder: String, val files: Int, val chaptersTotal: Int)
+    class Result(val folder: String, val files: Int, val chaptersTotal: Int, val uri: String? = null)
 
     /** `safe_name` của máy tính: bỏ ký tự Windows cấm, gộp khoảng trắng, cắt `limit` ký tự, giữ nguyên chữ tiếng Việt. */
     fun safeName(text: String, limit: Int = 120): String {
@@ -171,6 +174,6 @@ object Mp3Export {
             progress(entries.size, listed)
         }
         folder.write(playlistName(plan.title)) { it.write(playlist(plan.title, entries).toByteArray(Charsets.UTF_8)) }
-        return Result(folder.label, entries.size, plan.chaptersTotal)
+        return Result(folder.label, entries.size, plan.chaptersTotal, folder.uri)
     }
 }

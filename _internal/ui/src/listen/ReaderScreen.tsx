@@ -91,6 +91,11 @@ export function ReaderScreen({
   // "Đọc từ này là…": cuốn chỉ có chữ của máy này - giữ (hay bấm chuột phải) một chữ để dạy giọng đọc cách đọc nó cho cả cuốn.
   const readingEdit = editing && textOnly && canEditBook(book);
   const [readingWord, setReadingWord] = useState<string | null>(null);
+  // Câu của hộp "Đọc từ này là…" mở từ nút “Sửa cách đọc” (cho chọn từ trong câu); giữ một chữ thì cũng kèm câu để đổi sang từ khác.
+  const [readingSentence, setReadingSentence] = useState("");
+  // Cuốn có audio: giữ một chữ mở hộp “Sửa câu này” thẳng ở bước sửa cách đọc từ ấy (cùng việc với cuốn chỉ có chữ).
+  const [wishWord, setWishWord] = useState<string | null>(null);
+  const [selectedWord, setSelectedWord] = useState(-1);
   const coarse = useMediaQuery("(pointer: coarse)");
   const [prefs, setPrefs] = useState<ReaderPrefs>(loadPrefs);
   const [selected, setSelected] = useState<number | null>(null);
@@ -196,7 +201,10 @@ export function ReaderScreen({
   const tapSentence = (sentence: number, word: number) => {
     if (canListen) {
       listen(sentence, word);
-      if (lineEdit) setSelected(sentence);
+      if (lineEdit || readingEdit) {
+        setSelected(sentence);
+        setSelectedWord(word);
+      }
       return;
     }
     setSelected(sentence === selected ? null : sentence);
@@ -220,7 +228,21 @@ export function ReaderScreen({
     const next = chapters[index + step];
     if (next) navigate(`/book/${id}/read/${next.id}`, { replace: true });
   };
-  const hint = readerHint({ textOnly, canSpeak, timed: script.timed, tapped: Boolean(prefs.tapped), coarse, wish: lineEdit?.mode === "wish", readings: readingEdit });
+  const hint = readerHint({ textOnly, canSpeak, timed: script.timed, tapped: Boolean(prefs.tapped), coarse, wish: lineEdit?.mode === "wish", readings: readingEdit || lineEdit?.mode === "wish" });
+  // Giữ một chữ (điện thoại) / bấm chuột phải (máy tính): sửa cách đọc chữ ấy - cuốn chỉ có chữ lưu thẳng, cuốn có audio ghi thành việc chờ máy làm sách.
+  const wordMenu = readingEdit
+    ? (sentence: number, word: number) => {
+        setReadingSentence(script.segments[sentence].text);
+        setReadingWord(wordOf(script.segments[sentence].text, word) || null);
+      }
+    : lineEdit?.mode === "wish"
+      ? (sentence: number, word: number) => {
+          const held = wordOf(script.segments[sentence].text, word);
+          if (!held) return;
+          setWishWord(held);
+          setEditingLine(sentence);
+        }
+      : undefined;
   const name = chapter.subtitle || chapter.title;
 
   return (
@@ -295,7 +317,7 @@ export function ReaderScreen({
             script={script}
             playingIndex={playingIndex}
             onTap={selectable ? tapSentence : undefined}
-            onWordMenu={readingEdit ? (sentence, word) => setReadingWord(wordOf(script.segments[sentence].text, word) || null) : undefined}
+            onWordMenu={wordMenu}
             focusIndex={playingIndex >= 0 ? playingIndex : current}
             selected={selected}
             heading="h1"
@@ -330,6 +352,20 @@ export function ReaderScreen({
                   <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe từ câu này
                 </button>
               )}
+              {readingEdit && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = script.segments[selected]?.text ?? "";
+                    setReadingSentence(text);
+                    setReadingWord(selectedWord >= 0 ? wordOf(text, selectedWord) : "");
+                  }}
+                  onMouseDown={(event) => event.preventDefault()}
+                  className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
+                >
+                  <Pencil className="size-4" /> Sửa cách đọc
+                </button>
+              )}
               {lineEdit && (
                 <button
                   type="button"
@@ -359,9 +395,19 @@ export function ReaderScreen({
           </div>
         )}
       </div>
-      {readingEdit && <WordReadingDialog bookId={id} word={readingWord} onClose={() => setReadingWord(null)} />}
+      {readingEdit && <WordReadingDialog bookId={id} word={readingWord} sentence={readingSentence} onClose={() => setReadingWord(null)} />}
       {lineEdit?.mode === "wish" && (
-        <LineWishDialog book={book} script={script} segmentIndex={editingLine} wishes={wishes.data} onClose={() => setEditingLine(null)} />
+        <LineWishDialog
+          book={book}
+          script={script}
+          segmentIndex={editingLine}
+          wishes={wishes.data}
+          word={wishWord}
+          onClose={() => {
+            setEditingLine(null);
+            setWishWord(null);
+          }}
+        />
       )}
     </div>
   );

@@ -41,6 +41,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   chữ đi đâu: "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc." (cả máy tính và điện thoại).
 - Thư viện trống chỉ còn một nút "Thêm sách từ file…" ở giữa màn (nút trùng ở đầu trang hiện lại khi đã có sách); trang sách chưa đủ chương không đếm chương hai lần.
 - Màn "Đang nghe": hàng nút xếp thành hai nhóm nên nút phát trên loa / TV không rơi lẻ một mình; nút hẹn giờ ghi "15 phút" thay cho "14:51" dễ lẫn với giờ.
+- Mở app khi chưa có sách: "Chưa có sách trên máy" hiện ngay, không còn hàng thẻ chờ cả chục giây (thư viện không chờ danh sách giọng đọc khi không có sách chỉ-có-chữ).
+- "Thêm sách từ file…" ở bước xem trước: "Chọn lại" mở thẳng bộ chọn file thay vì quay về hộp rồi phải bấm thêm một lần.
+- Dòng "Đang chuẩn bị giọng đọc…" chỉ hiện khi phải chờ giọng hơn một giây rưỡi; chờ ngắn giữa câu không còn làm dòng chữ nháy.
+- Dưới mỗi chương chỉ có chữ ghi đúng giọng đang đọc cuốn ("Hoài My (Edge)", "Giọng đọc của máy") thay vì luôn "Giọng đọc của máy".
+- Xuất MP3 xong: thông báo nói rõ lưu ở thư mục nào, kèm nút "Mở thư mục" (máy không mở được thì chỉ đường bằng chữ).
+- Cài đặt: "Giọng đọc" lên đầu; nhóm "Hẹn giờ ngủ" gọn lại còn bốn dòng chính, phần chỉnh tinh (cách lắc, độ nhạy, mỗi lần thêm, nhỏ dần) gập vào "Tuỳ chỉnh thêm".
+- "Lưu" ở trang sách chỉ hỏi chỗ lưu lần đầu rồi nhớ: những lần sau ghi thẳng vào file đã lưu (chỗ ấy hỏng thì hỏi lại); "Lưu thành…" luôn hỏi. File gốc bạn mở sách ra không bị ghi đè.
+- Sửa cách đọc một từ có hai đường ở cả sách chỉ có chữ lẫn sách nói: giữ một chữ (hay bấm chuột phải), hoặc chạm câu rồi "Sửa cách đọc" / "Sửa câu này"; lời nhắc đầu trang đọc nói cả hai.
 
 ## [0.4.33] - 2026-10-08
 

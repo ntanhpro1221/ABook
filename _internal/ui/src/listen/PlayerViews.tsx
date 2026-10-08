@@ -53,14 +53,15 @@ import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, voiceSections } from "./voiceGroups";
 import { revealVoiceSettings } from "./voiceSettingsLink";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, voiceCaption } from "./readAloudVoice";
-import { bookProgressText, caughtUpDetail, nextChapterLabel, otherBookLine, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, caughtUpDetail, nextChapterLabel, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, textChapterLine, toggleLabel } from "./labels";
+import { useAfter } from "@/shared/useAfter";
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
 import { ADD_MUSIC_LABEL } from "./playlistBed";
 import { JumpToPlaying, ReadAlongText, sentenceIndexAt, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { canPrepare, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import type { ReadAloudVoice } from "./readAloud";
-import { chapterScriptQuery, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource } from "./source";
+import { chapterScriptQuery, useBookVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource } from "./source";
 
 export function speedLabel(rate: number): string {
   return `${rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}×`;
@@ -1077,13 +1078,15 @@ function MusicCreditLine() {
 function TrackSubtitle() {
   const { track, purpose, atEnd, playing, buffering } = usePlayer();
   const speaking = useSpeaking();
+  // Đệm một nhịp giữa câu (~1 giây) không được làm dòng này nháy "Đang chuẩn bị giọng đọc…" rồi mất: chỉ nói khi chờ thật sự lâu (soát UX a9).
+  const preparing = useAfter(speaking && playing && buffering, PREPARING_VOICE_AFTER_MS);
   if (!track) return null;
   return (
     <>
       {purpose === "review" && (
         <span className="mr-1.5 inline-block rounded bg-info-soft px-1.5 text-[11px] font-semibold uppercase tracking-wide text-info">Nghe kiểm</span>
       )}
-      {speaking && playing && buffering ? PREPARING_VOICE : atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : track.bookTitle}
+      {preparing ? PREPARING_VOICE : atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : track.bookTitle}
     </>
   );
 }
@@ -1384,6 +1387,7 @@ export function chapterStatusLabel(producing: boolean): string {
 function ChapterPanel() {
   const { track, queue, jumpTo, playing } = usePlayer();
   const { data: book } = useListenBook(track?.bookId);
+  const voice = useBookVoice(track?.bookId);
   const container = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     container.current?.querySelector<HTMLElement>("[data-current=true]")?.scrollIntoView({ block: "center" });
@@ -1422,7 +1426,7 @@ function ChapterPanel() {
                 {chapter.available
                   ? formatLength(chapter.duration)
                   : chapter.state === "text"
-                    ? textChapterLine(Boolean(chapter.speech))
+                    ? textChapterLine(Boolean(chapter.speech), voice)
                     : chapterStatusLabel(Boolean(book?.producing))}
               </span>
             </span>

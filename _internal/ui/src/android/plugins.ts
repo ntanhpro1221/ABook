@@ -250,6 +250,8 @@ export interface Mp3ExportEvent {
   files?: number;
   chaptersTotal?: number;
   folder?: string;
+  /** Địa chỉ thư mục bản xuất để mở bằng app Tệp (`openFolder`); không có thì không có nút mở. */
+  uri?: string;
   stopped?: boolean;
   error?: string;
 }
@@ -334,7 +336,8 @@ export interface EbookLibraryPlugin {
   addListener(event: "shareChanged", handler: () => void): Promise<PluginListenerHandle>;
   /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file mới - hộp thoại "tạo file" của hệ thống hỏi chỗ lưu. `as` không nói:
    *  giữ loại file cuốn đã đến (`.abookproj` hay `.abook`). */
-  saveBook(options: { id: string; as?: "abook" | "abookproj" }): Promise<{ saved: boolean; name?: string; size?: number; edits?: number }>;
+  /** `ask`: luôn hỏi chỗ lưu ("Lưu thành…"); không thì "Lưu" ghi thẳng vào chỗ đã lưu lần trước của cuốn này, chưa có mới hỏi. */
+  saveBook(options: { id: string; as?: "abook" | "abookproj"; ask?: boolean }): Promise<{ saved: boolean; name?: string; size?: number; edits?: number }>;
   /** "Chia sẻ…": đóng cuốn (kèm thay đổi của người nghe) thành file rồi mở bảng chia sẻ của hệ thống (Zalo, Drive, email…). `as` không nói:
    *  sách nghe `.abook`. `shared: true` khi bảng chia sẻ đã mở. */
   shareBook(options: { id: string; as?: "abook" | "abookproj" }): Promise<{ shared: boolean; name?: string }>;
@@ -342,6 +345,8 @@ export interface EbookLibraryPlugin {
    *  chọn thư mục của hệ thống rồi nhớ lại. `cover`: bìa tự vẽ (data URL PNG) khi sách không có bìa. Tiến độ / kết quả: sự kiện
    *  "mp3Export" mang cùng `run`. `started: false` khi không chọn thư mục. */
   exportMp3(options: { bookId: string; cover?: string; pick?: boolean }): Promise<{ started: boolean; run?: string; folder?: string; chapters?: number }>;
+  /** "Mở thư mục" ở thông báo xuất xong: mở thư mục bản xuất bằng app Tệp. `opened: false` khi máy không có app nào mở được. */
+  openFolder(options: { uri: string }): Promise<{ opened: boolean }>;
   addListener(event: "mp3Export", handler: (event: Mp3ExportEvent) => void): Promise<PluginListenerHandle>;
   deleteBook(options: { id: string }): Promise<void>;
   storage(): Promise<{ bytes: number; free: number }>;

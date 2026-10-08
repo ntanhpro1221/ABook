@@ -1,6 +1,7 @@
 import * as Switch from "@radix-ui/react-switch";
-import { ChevronRight, Download } from "lucide-react";
+import { ChevronDown, ChevronRight, Download } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { cn } from "@/shared/cn";
 import { Button, Segmented, Sheet, TimeSelect } from "@/shared/ui";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { MyMusicSection } from "@/listen/MyMusic";
@@ -124,6 +125,7 @@ export function AboutGroup({ version }: { version: string | null }) {
 export function SettingsScreen() {
   const [settings, setSettings] = useState<PlayerSettings>(loadSettings);
   const { current, update } = useAppUpdate();
+  const [sleepMore, setSleepMore] = useState(false);
   const change = (patch: Partial<PlayerSettings>) => {
     const next = { ...settings, ...patch };
     setSettings(next);
@@ -133,6 +135,28 @@ export function SettingsScreen() {
   return (
     <div className="px-4 pb-10 pt-4">
       <h1 className="text-2xl font-bold tracking-tight">Cài đặt</h1>
+
+      {/* Giọng đọc là việc người mới cần trước hết; hẹn giờ ngủ là tuỳ chọn nên xuống sau (soát UX a9). */}
+      <Group title="Giọng đọc" id="voices">
+        <div className="px-4 py-3.5">
+          <p className="mb-3 text-xs leading-snug text-fg-2">
+            Giọng mặc định khi nghe sách chưa có audio (“Nghe ngay”). Mỗi cuốn vẫn đổi được giọng riêng ở nút “Giọng đọc” trong trình phát.
+          </p>
+          <VoiceSettings
+            api={phoneVoices}
+            deviceHint="Máy chưa có giọng tiếng Việt. Cài trong Cài đặt của điện thoại → Chuyển văn bản thành giọng nói → tải dữ liệu giọng Tiếng Việt."
+            modules={(reload) => (
+              <>
+                {/* Mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ này (PlayerViews.PlayerAlert). */}
+                <div id="vieneu-module" className="scroll-mt-4">
+                  <VieneuModuleCard backend={phoneVieneu} onChanged={reload} />
+                </div>
+                <VieneuModuleCard backend={phoneSupertonic} copy={SUPERTONIC_COPY} onChanged={reload} />
+              </>
+            )}
+          />
+        </div>
+      </Group>
 
       <Group title="Hẹn giờ ngủ">
         <Row label="Lắc máy để nghe thêm" hint="Khi đang hẹn giờ, lắc nhẹ điện thoại hai lần - máy rung báo đã thêm giờ.">
@@ -145,33 +169,6 @@ export function SettingsScreen() {
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
         </Row>
-        {settings.shakeToExtend && (
-          <>
-            <Row label="Khi lắc" hint="Cộng thêm: mỗi cú lắc thêm vài phút. Đặt lại: hẹn giờ quay về từ đầu (vd lại đủ 30 phút).">
-              <Segmented
-                label="Khi lắc"
-                value={settings.shakeAction ?? "extend"}
-                onChange={(value) => change({ shakeAction: value })}
-                options={[
-                  { value: "extend", label: "Cộng thêm" },
-                  { value: "reset", label: "Đặt lại" },
-                ]}
-              />
-            </Row>
-            <Row label="Độ nhạy" hint="Hay bị tính nhầm khi trở mình thì chọn Mạnh tay; lắc mãi không ăn thì chọn Nhẹ tay.">
-              <Segmented
-                label="Độ nhạy lắc"
-                value={settings.shakeSensitivity ?? "normal"}
-                onChange={(value) => change({ shakeSensitivity: value })}
-                options={[
-                  { value: "gentle", label: "Nhẹ tay" },
-                  { value: "normal", label: "Vừa" },
-                  { value: "firm", label: "Mạnh tay" },
-                ]}
-              />
-            </Row>
-          </>
-        )}
         <Row label="Úp máy để tạm dừng" hint="Úp màn hình xuống (lên bàn, lên nệm) là dừng; lật lên trong 10 phút là nghe tiếp. Cầm máy trên tay thì không tính.">
           <Switch.Root
             checked={settings.flipToPause ?? false}
@@ -181,14 +178,6 @@ export function SettingsScreen() {
           >
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
-        </Row>
-        <Row label="Mỗi lần thêm">
-          <Segmented
-            label="Mỗi lần thêm"
-            value={String(settings.sleepExtendMinutes)}
-            onChange={(value) => change({ sleepExtendMinutes: Number(value) })}
-            options={[5, 10, 15].map((value) => ({ value: String(value), label: `${value}′` }))}
-          />
         </Row>
         <Row label="Lịch đêm" hint="Bấm nghe trong khung giờ này thì tự hẹn giờ ngủ - khỏi nhớ bấm lúc buồn ngủ.">
           <Switch.Root
@@ -243,14 +232,63 @@ export function SettingsScreen() {
             ]}
           />
         </Row>
-        <Row label="Nhỏ dần trước khi tắt">
-          <Segmented
-            label="Nhỏ dần trước khi tắt"
-            value={String(settings.sleepFadeSeconds)}
-            onChange={(value) => change({ sleepFadeSeconds: Number(value) })}
-            options={[10, 30, 60].map((value) => ({ value: String(value), label: `${value}s` }))}
-          />
-        </Row>
+        {/* Bảy dòng liền một khối khiến nhóm này dài hơn cả phần còn lại của Cài đặt: phần chỉnh tinh (cách lắc, mỗi lần thêm, nhỏ dần) gập lại (soát UX a9). */}
+        <button
+          type="button"
+          aria-expanded={sleepMore}
+          onClick={() => setSleepMore((value) => !value)}
+          className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left"
+        >
+          <span className="text-[15px] font-medium">Tuỳ chỉnh thêm</span>
+          <ChevronDown className={cn("size-5 shrink-0 text-fg-3 transition-transform", sleepMore && "rotate-180")} />
+        </button>
+        {sleepMore && (
+          <>
+            {settings.shakeToExtend && (
+              <>
+                <Row label="Khi lắc" hint="Cộng thêm: mỗi cú lắc thêm vài phút. Đặt lại: hẹn giờ quay về từ đầu (vd lại đủ 30 phút).">
+                  <Segmented
+                    label="Khi lắc"
+                    value={settings.shakeAction ?? "extend"}
+                    onChange={(value) => change({ shakeAction: value })}
+                    options={[
+                      { value: "extend", label: "Cộng thêm" },
+                      { value: "reset", label: "Đặt lại" },
+                    ]}
+                  />
+                </Row>
+                <Row label="Độ nhạy" hint="Hay bị tính nhầm khi trở mình thì chọn Mạnh tay; lắc mãi không ăn thì chọn Nhẹ tay.">
+                  <Segmented
+                    label="Độ nhạy lắc"
+                    value={settings.shakeSensitivity ?? "normal"}
+                    onChange={(value) => change({ shakeSensitivity: value })}
+                    options={[
+                      { value: "gentle", label: "Nhẹ tay" },
+                      { value: "normal", label: "Vừa" },
+                      { value: "firm", label: "Mạnh tay" },
+                    ]}
+                  />
+                </Row>
+              </>
+            )}
+            <Row label="Mỗi lần thêm">
+              <Segmented
+                label="Mỗi lần thêm"
+                value={String(settings.sleepExtendMinutes)}
+                onChange={(value) => change({ sleepExtendMinutes: Number(value) })}
+                options={[5, 10, 15].map((value) => ({ value: String(value), label: `${value}′` }))}
+              />
+            </Row>
+            <Row label="Nhỏ dần trước khi tắt">
+              <Segmented
+                label="Nhỏ dần trước khi tắt"
+                value={String(settings.sleepFadeSeconds)}
+                onChange={(value) => change({ sleepFadeSeconds: Number(value) })}
+                options={[10, 30, 60].map((value) => ({ value: String(value), label: `${value}s` }))}
+              />
+            </Row>
+          </>
+        )}
       </Group>
 
       <Group title="Nghe">
@@ -277,27 +315,6 @@ export function SettingsScreen() {
             ]}
           />
         </Row>
-      </Group>
-
-      <Group title="Giọng đọc" id="voices">
-        <div className="px-4 py-3.5">
-          <p className="mb-3 text-xs leading-snug text-fg-2">
-            Giọng mặc định khi nghe sách chưa có audio (“Nghe ngay”). Mỗi cuốn vẫn đổi được giọng riêng ở nút “Giọng đọc” trong trình phát.
-          </p>
-          <VoiceSettings
-            api={phoneVoices}
-            deviceHint="Máy chưa có giọng tiếng Việt. Cài trong Cài đặt của điện thoại → Chuyển văn bản thành giọng nói → tải dữ liệu giọng Tiếng Việt."
-            modules={(reload) => (
-              <>
-                {/* Mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ này (PlayerViews.PlayerAlert). */}
-                <div id="vieneu-module" className="scroll-mt-4">
-                  <VieneuModuleCard backend={phoneVieneu} onChanged={reload} />
-                </div>
-                <VieneuModuleCard backend={phoneSupertonic} copy={SUPERTONIC_COPY} onChanged={reload} />
-              </>
-            )}
-          />
-        </div>
       </Group>
 
       {/* "Nhạc của tôi" trước chỉ mở được từ hộp "Sửa sách" của từng cuốn, dù kho nhạc là chung cho mọi cuốn. */}

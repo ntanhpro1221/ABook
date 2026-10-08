@@ -9,8 +9,7 @@ import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { caughtUpDetail, resumeWhere } from "./labels";
 import { foldVietnamese, listeningBook, resumePoint, seriesIndex, volumeBadge, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
-import type { ReadAloudVoice } from "./readAloud";
-import { chosenVoice, resolveVoice, voiceCaption } from "./readAloudVoice";
+import { bookVoiceCaption } from "./readAloudVoice";
 import { useListenLibrary, useReadAloudVoices, useSource } from "./source";
 
 type Filter = "all" | "listening" | "new" | "finished";
@@ -19,11 +18,6 @@ function stateOf(book: ListenBook): Filter {
   if (book.progress.finished) return "finished";
   if (book.progress.heardSeconds > 0 || book.state.last) return "listening";
   return "new";
-}
-
-/** Giọng đang đọc cuốn này ("Đức Trí (VieNeu)"): giọng đã chọn cho cuốn, không thì giọng mặc định của máy. */
-function bookVoice(voices: ReadAloudVoice[] | undefined, bookId: string): string {
-  return voices?.length ? voiceCaption(resolveVoice(voices, chosenVoice(bookId))) : "";
 }
 
 /** Dòng trạng thái của một cuốn, cùng một bộ từ ở Thư viện, trang sách và thẻ nghe dở. `speaks`: máy này có giọng đọc (sách chỉ có chữ). */
@@ -108,7 +102,7 @@ function BookTile({ book, badge }: { book: ListenBook; badge?: string }) {
   // Sách chỉ có chữ: có giọng đọc trên máy thì nút trên bìa là "Nghe ngay" (giọng máy đọc), không thì vẫn là "Đọc".
   const voices = useReadAloudVoices();
   const speaks = (voices.data?.length ?? 0) > 0;
-  const voice = bookVoice(voices.data, book.id);
+  const voice = bookVoiceCaption(voices.data, book.id);
   const textOnly = book.stage === "text" && !speaks;
   return (
     <div className="group">
@@ -160,7 +154,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
   const playingHere = current && player.playing;
   const voices = useReadAloudVoices().data;
   const speaks = (voices?.length ?? 0) > 0;
-  const voice = bookVoice(voices, book.id);
+  const voice = bookVoiceCaption(voices, book.id);
   const last = book.state.last;
   const chapter = (current ? player.track?.chapterTitle : undefined) || book.lastChapterTitle;
   // Cùng dạng với nút chính của trang sách ("Nghe tiếp · Chương 3 · 12:04").

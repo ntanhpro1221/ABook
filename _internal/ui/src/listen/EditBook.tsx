@@ -453,7 +453,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
 export function useSaveBook(book: ListenBook) {
   const source = useSource();
   const [busy, setBusy] = useState(false);
-  const save = async (options?: { folder?: string; as?: "abook" | "abookproj" }) => {
+  const save = async (options?: { folder?: string; as?: "abook" | "abookproj"; ask?: boolean }) => {
     if (!source.saveBook) return;
     setBusy(true);
     try {
@@ -559,7 +559,7 @@ export function SaveAsDialog({
           variant="primary"
           icon={FileDown}
           loading={busy}
-          onClick={() => void save({ ...(folder ? { folder } : {}), as: kind }).then(() => onOpenChange(false))}
+          onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then(() => onOpenChange(false))}
         >
           Lưu
         </Button>

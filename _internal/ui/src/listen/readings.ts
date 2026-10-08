@@ -29,6 +29,16 @@ export function wordOf(text: string, word: number): string {
   return piece ? wordCore(piece.text) : "";
 }
 
+/** Các từ của một câu, mỗi từ một lần (đã bỏ dấu câu hai đầu, giữ thứ tự) - để chọn từ muốn sửa cách đọc. */
+export function sentenceWords(text: string): string[] {
+  const seen = new Set<string>();
+  for (const piece of splitPieces(text)) {
+    const core = piece.word >= 0 ? wordCore(piece.text) : "";
+    if (core) seen.add(core);
+  }
+  return [...seen];
+}
+
 /** Cách đọc người gõ, đã gọn: bỏ khoảng trắng hai đầu, gộp khoảng trắng giữa (máy chủ làm sạch cùng cách). */
 export function cleanSpoken(value: string): string {
   return value.normalize("NFC").trim().replace(/\s+/gu, " ");

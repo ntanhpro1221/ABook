@@ -2,7 +2,8 @@ import { Pause, Pencil, Trash2, Volume2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button, Dialog, IconButton } from "@/shared/ui";
-import { cleanSpoken, readingFor, useBookReadings, useReadAloudTry, useSaveReading, wordCore, type BookReading, type ReadAloudTry } from "./readings";
+import { cleanSpoken, readingFor, sentenceWords, useBookReadings, useReadAloudTry, useSaveReading, wordCore, type BookReading, type ReadAloudTry } from "./readings";
+import { cn } from "@/shared/cn";
 
 // "Đọc từ này là…" (giữ / bấm chuột phải vào một chữ ở màn đọc của cuốn chỉ có chữ) và danh sách "Cách đọc tên" của hộp "Sửa sách": dạy
 // giọng đọc một từ cho cả cuốn. Chỉ giọng đọc đổi, chữ của sách giữ nguyên (listen/readings.ts).
@@ -86,25 +87,51 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
   );
 }
 
-/** Hộp "Đọc từ này là…": `word` là chữ người nghe vừa giữ (đã bỏ dấu câu hai đầu); null = đóng. */
-export function WordReadingDialog({ bookId, word, onClose }: { bookId: string; word: string | null; onClose: () => void }) {
+/** Hộp "Đọc từ này là…": `word` là chữ người nghe vừa giữ (đã bỏ dấu câu hai đầu), "" khi mở từ nút “Sửa cách đọc” mà chưa chọn chữ nào; null = đóng.
+ *  `sentence`: câu chứa chữ ấy - có thì hiện các từ của câu để chọn / đổi từ muốn sửa (đường “Sửa cách đọc” ở menu câu). */
+export function WordReadingDialog({ bookId, word, sentence, onClose }: { bookId: string; word: string | null; sentence?: string; onClose: () => void }) {
   const readings = useBookReadings(bookId, word !== null);
   const aloud = useReadAloudTry(bookId);
-  const surface = word ? wordCore(word) : "";
+  const [picked, setPicked] = useState<string | null>(null);
+  useEffect(() => setPicked(null), [word, sentence]);
+  const surface = picked ?? (word ? wordCore(word) : "");
+  const words = sentence ? sentenceWords(sentence) : [];
   return (
     <Dialog
-      open={Boolean(surface)}
+      open={word !== null && (Boolean(surface) || words.length > 0)}
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
       title="Đọc từ này là…"
       description={
-        <>
-          Gõ cách đọc cho <span className="font-semibold text-fg">“{surface}”</span> - mọi chỗ có đúng từ này (đúng chữ hoa, chữ thường) trong cuốn
-          sẽ đọc như vậy. Chữ trong sách giữ nguyên.
-        </>
+        surface ? (
+          <>
+            Gõ cách đọc cho <span className="font-semibold text-fg">“{surface}”</span> - mọi chỗ có đúng từ này (đúng chữ hoa, chữ thường) trong cuốn
+            sẽ đọc như vậy. Chữ trong sách giữ nguyên.
+          </>
+        ) : (
+          "Chọn từ máy đọc sai (thường là tên riêng), rồi gõ cách đọc đúng. Áp cho cả cuốn; chữ trong sách giữ nguyên."
+        )
       }
     >
-      {surface && <ReadingForm bookId={bookId} surface={surface} current={readingFor(readings.data, surface)} aloud={aloud} onDone={onClose} />}
+      {words.length > 1 && (
+        <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label="Các từ trong câu">
+          {words.map((item) => (
+            <button
+              key={item}
+              type="button"
+              aria-pressed={surface === item}
+              onClick={() => setPicked(item)}
+              className={cn(
+                "inline-flex h-8 items-center rounded-full border px-2.5 text-sm pointer-coarse:h-10",
+                surface === item ? "border-accent bg-accent-soft text-accent-text" : "border-line hover:bg-hover",
+              )}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      )}
+      {surface && <ReadingForm key={surface} bookId={bookId} surface={surface} current={readingFor(readings.data, surface)} aloud={aloud} onDone={onClose} />}
     </Dialog>
   );
 }

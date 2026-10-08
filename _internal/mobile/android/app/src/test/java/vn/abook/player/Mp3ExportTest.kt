@@ -94,6 +94,8 @@ class Mp3ExportTest {
         assertEquals(2, result.files)
         assertEquals(3, result.chaptersTotal)
         assertEquals("${out.name}/Sách thử Tập 1", result.folder)
+        // Thư mục thường (bài thử) không có địa chỉ để mở bằng app Tệp: giao diện không hiện nút "Mở thư mục".
+        assertEquals(null, result.uri)
         assertEquals(listOf(0 to 2, 1 to 2, 2 to 2), seen)
         val folder = File(out, "Sách thử Tập 1")
         assertEquals(listOf("01 - Chương 1 · Mở đầu.mp3", "02 - Chương 2 Đi về.mp3", "Sách thử Tập 1.m3u8", "cover.jpg"),

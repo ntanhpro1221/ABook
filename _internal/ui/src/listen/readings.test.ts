@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readerHint } from "./labels";
-import { cleanSpoken, readingFor, trialReadings, wordCore, wordOf } from "./readings";
+import { cleanSpoken, readingFor, sentenceWords, trialReadings, wordCore, wordOf } from "./readings";
 
 // "Đọc từ này là…": chữ người nghe giữ ra khoá gì, cách đọc gõ vào gửi đi thế nào (cùng luật khoá với abook/readaloud/readings.py,
 // Readings.kt - bộ ví dụ chung tests/fixtures/book_edits/readings/).
@@ -52,5 +52,12 @@ describe("lời nhắc màn đọc nói cách mở “Đọc từ này là…”
     expect(readerHint({ ...base, readings: true })).toContain("Bấm chuột phải vào một chữ đọc sai để sửa cách đọc.");
     expect(readerHint({ ...base, coarse: true, tapped: true, readings: true })).toContain("Giữ vào một chữ đọc sai");
     expect(readerHint(base)).not.toContain("sửa cách đọc");
+  });
+});
+
+describe("các từ của một câu (chọn từ muốn sửa cách đọc)", () => {
+  it("mỗi từ một lần, bỏ dấu câu hai đầu, giữ thứ tự", () => {
+    expect(sentenceWords("“Haruto,” Kate nói. Haruto cười.")).toEqual(["Haruto", "Kate", "nói", "cười"]);
+    expect(sentenceWords("… !")).toEqual([]);
   });
 });
