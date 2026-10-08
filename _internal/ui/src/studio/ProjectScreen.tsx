@@ -585,9 +585,14 @@ function Actions({ book }: { book: BookSummary }) {
           Làm tiếp cuốn này · {next} chương mới
         </Button>
       )}
-      {!remote && <IconButton label="Mở thư mục sách" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}
-      {/* Đổi tên / xoá chỉ trên máy này - Studio từ xa không có hai đường ấy (remote_studio.ALLOWED). */}
-      {!remote && <ProjectMenu book={book} />}
+      {/* Hai nút biểu tượng đi thành một cụm: màn hẹp xuống dòng thì xuống cùng nhau, không để "…" đứng một mình một hàng.
+          Đổi tên / xoá chỉ trên máy này - Studio từ xa không có hai đường ấy (remote_studio.ALLOWED). */}
+      {!remote && (
+        <span className="inline-flex items-center gap-2">
+          <IconButton label="Mở thư mục sách" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />
+          <ProjectMenu book={book} />
+        </span>
+      )}
       <StopDialog book={book} open={confirmStop} onOpenChange={setConfirmStop} />
       <ApplyChangesDialog
         bookId={book.id}
