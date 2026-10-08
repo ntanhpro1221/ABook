@@ -14,6 +14,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tên kèm chức danh viết bằng chữ có dấu ("Tướng quân Niên Phi", "Tiểu thư Bạch Dạ") gộp về đúng người khi truyện có viết
   đúng như thế; thêm các chức danh "bác sĩ", "tướng quân", "thái tử", "trưởng lão". Cách gọi theo quan hệ ("chị Dậu") vẫn
   giữ riêng.
+- Nhân vật được gọi bằng tên gọi tắt ("Kou" của Koutarou) hay biệt danh mà truyện tự giải thích ("tên đầy đủ là Matsudaira
+  Kenji nên cứ gọi tắt là Mackenzie") giờ đọc bằng một giọng. Hai người có tên na ná nhau ("Mai" và "Maika" cùng xuất
+  hiện) vẫn là hai người.
 
 ## [0.4.33] - 2026-10-08
 
