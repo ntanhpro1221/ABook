@@ -14,6 +14,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
+- Chọn người nói ở thẻ "Vai phụ không tên" (hay đọc tên, ai nói câu này) của một sách đã làm xong không còn làm cả trang dự án
+  hiện "Không mở được sách" - quyết định vẫn được ghi như trước, nay trang giữ nguyên.
 - Phân tích cùng một cuốn bằng cùng một model không còn đổi theo câu hỏi đứng trước: Studio khởi Ollama với bộ đệm câu
   hỏi trong RAM tắt (bộ đệm ấy lấy lại phần đã tính cho câu trước, kể cả sau câu mồi của 0.4.31), và câu mồi không còn
   chung chữ nào với câu hỏi thật. Dừng giữa lúc phân tích rồi làm tiếp giờ ra đúng cùng một cuốn: thử 4 chương, dừng ở
