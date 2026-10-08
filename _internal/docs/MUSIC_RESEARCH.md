@@ -4337,6 +4337,64 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 08-10 19:4x - Đường cong 2.000 cảnh với Qwen3-1.7B: encoder lớn thắng ở mọi điểm, dữ liệu thêm lời ít dần
+
+Cùng thủ tục `stu_curve.py` (theo bộ truyện, 3 hạt, alpha chọn trên bộ học), thay qwen06 lớp giữa bằng qwen17 lớp 14
+(nhúng toàn bộ 12.426 khúc bạc xong 19:37 trong hàng GPU của Model).
+
+| cảnh | học 1.7B / 0.6B | bộ 7 mọi | bộ 7 bỏ chương hằng | bộ 7 trọng số SD |
+|---|---|---|---|---|
+| 250 | .448 / .344 | .267 / .184 | .369 / .255 | .435 / .343 |
+| 500 | .478 / .393 | .316 / .236 | .437 / .328 | .504 / .412 |
+| 1.000 | .506 / .424 | .325 / .265 | .449 / .367 | .514 / .455 |
+| 2.000 | .527 / .454 | .335 / .273 | .462 / .379 | .532 / .474 |
+
+- Encoder lớn hơn cộng khoảng +.07 trên bộ học và +.06 đến +.08 trên bộ 7 ở 2.000 cảnh. Mức ấy lớn hơn một lần gấp đôi dữ liệu.
+- Độ dốc mỗi lần gấp đôi (bộ học) giảm: +.030, +.028, +.021. Trên bộ 7, đoạn 1.000 → 2.000 chỉ +.010 (mọi chương).
+- Vì thế lô bạc 2 (khoảng 15-20 % hạn mức tuần) ước chỉ thêm +.02 học, +.01 bộ 7: **chưa làm**. Đợi đường cong 4B lớp 18
+  (nhúng bạc trên Mac) trước. Bộ chọn chương cho lô 2 đã viết sẵn nhưng chưa chạy.
+- Chi phí triển khai 1.7B (app phải chạy thêm một model), đo 22:46 trên GPU nhà 8 GB (`stu_deploy_probe.py`):
+  đủ 28 lớp 4,05 GiB VRAM, ~3,5 giây mỗi giờ audio; **cắt còn 14 lớp đầu** 2,52 GiB, ~1,7 giây, nhúng trùng khít bản đủ
+  (cos 1,0000) nên chỉ cần tải khoảng 1,9 GB; trên CPU ~30 giây mỗi giờ audio. Không ngồi cạnh model phân tích 9B trong 8 GB,
+  nên chạy sau khi phân tích nhả VRAM, hoặc trên CPU.
+
+### 08-10 17:5x - Đường cong dữ liệu tới 2.000 cảnh bạc + STU-BIG: dữ liệu và biểu diễn lớn đều còn giúp
+
+Học sinh STU: ridge căn giữa chương trên đặc trưng ĐÔNG CỨNG. Lấy mẫu theo bộ truyện, 3 hạt. Bộ 7 báo ba cách: mọi chương / bỏ
+chương-trục hằng / trọng số theo độ lệch vàng trong chương (xem mục cầu nối).
+
+**Đường cong (qwen06 lớp giữa)**, TB r(V,T) trong chương:
+
+| cảnh bạc | bộ học | bộ 7 mọi / bỏ hằng / trọng số SD |
+|---|---|---|
+| 250 | .344 | .184 / .255 / .343 |
+| 500 | .393 | .236 / .328 / .412 |
+| 1.000 | .424 | .265 / .367 / .455 |
+| 2.000 | .454 | .273 / .379 / .474 |
+
+- Mỗi lần gấp đôi, bộ học tăng +.049, +.031, +.030: còn lên đều khoảng .03.
+- Bộ 7 (bỏ chương hằng) tăng +.073, +.039, +.012: chậm dần, nhưng đây là bộ phẳng (mục cầu nối).
+- Theo từng trục ở 2.000 cảnh, bộ học V .418, E .472, T .490.
+
+**Thêm truyện hay thêm chương cùng truyện** (ghi trước Corpus PLAN_curve_split.md): so ở cùng số cảnh, lấy 1 chương mỗi bộ (gấp
+đôi số truyện) hay 2 chương mỗi bộ cho ra kết quả như nhau. Δ là −.013, +.008, −.012 ở 250 / 500 / 1.000 cảnh. Số cảnh quyết, số
+truyện không quyết; lô sau giữ cách lấy 2 chương mỗi bộ.
+
+**STU-BIG** (ghi trước PLAN_stu_bigger.md, 60 chương bạc cũ):
+
+| biểu diễn | bộ học | Δ | bộ 7 mọi / bỏ hằng / SD |
+|---|---|---|---|
+| qwen06 lớp giữa (mốc) | .414 | | .225 / .313 / .405 |
+| Qwen3-1.7B L14 | .455 | +.041 | .287 / .399 / .466 |
+| Qwen3-4B-Instruct (nền app) L18 | .518 | +.104 | .231 / .324 / .447 |
+| 4B lớp cuối | .464 | +.050 | .235 / .328 / .403 |
+
+- Theo luật, cả 1.7B và 4B đều THẮNG.
+- Chi phí triển khai:
+  - Muốn dùng 4B lớp giữa thì app phải tự xuất lớp giữa trong lúc phân tích, vì Ollama chỉ trả lớp cuối.
+  - Muốn dùng 1.7B thì app phải chạy thêm một model; cần đo thời gian và VRAM trên máy 8 GB.
+- Bước kế: nhúng toàn bộ 11.135 khúc bạc bằng 1.7B (GPU nhà) và 4B (Mac), rồi chạy lại đường cong 2.000 cảnh với biểu diễn lớn.
+
 ### 08-10 15:1x - CẦU NỐI bộ 7 (ghi trước Corpus PLAN_bridge7.md): bộ 7 thấp vì chương PHẲNG, không phải học sinh hỏng trên một miền truyện
 
 Agent Sonnet chấm bạc lại bộ 7 và bộ 6, mỗi bộ 20 chương, theo đúng quy trình lô bạc (hướng dẫn 3.1, một người chấm, chấm mù).

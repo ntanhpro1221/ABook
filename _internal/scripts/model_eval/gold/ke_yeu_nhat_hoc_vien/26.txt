@@ -5,6 +5,7 @@
 # Hai góc kể: 1-77 NGÔI THỨ NHẤT, "tôi" = ISAAC (m; người chơi xuyên vào nhân vật lớp D - 54 "Xin mời Isaac của lớp D..." rồi
 # 55 "Đến lượt của tôi rồi"; "Isaac" ~800 lần cả bộ, không có họ) -> --first-person Isaac. 78-127 NGÔI BA (sân thượng: ác quỷ
 # Leafa và Giáo sư Fernando), "tôi" không có mặt.
+# 08-10 (Model, soát nhóm B/C, ADJUDICATION.md): 111 nội tâm ‘...’ đổi LEAFA -> FERNANDO đủ điểm, Leafa còn nửa điểm.
 # Tên: FERNANDO / FERNANDO FROST (m, giáo sư; "Giáo sư Fernando" là danh xưng - không tính); PHILIP / PHILIP MELTRON (m, giáo sư
 # lớp A); MATEO / MATEO JORDANA (m); LEAFA / LEAFA HÃO HUYỀN (m - "hắn", ác quỷ trùm cuối). MARCO (trợ lý), TRISTAN, IAN, LUCE
 # không nói. Người vô danh: 1 người tuyên bố mở đầu, 35 trọng tài, 54 "vị giáo sư còn lại" gọi tên (11) -> NPC*:<mô tả>, UNKNOWN~.
@@ -128,7 +129,7 @@
 108 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ happy,sarcastic 0-1 normal normal,soft u
 109 N
 110 N
-111 T LEAFA,LEAFA HÃO HUYỀN,FERNANDO~,FERNANDO FROST~ neutral,sarcastic,happy 0-1 normal normal,soft m
+111 T FERNANDO,FERNANDO FROST,LEAFA~,LEAFA HÃO HUYỀN~ neutral,angry,sarcastic 0-1 normal normal,soft m
 112 D FERNANDO,FERNANDO FROST neutral,angry 0-1 normal normal m
 113 N
 114 N
