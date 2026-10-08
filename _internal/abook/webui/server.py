@@ -2126,6 +2126,18 @@ class App:
         self.refresh_remote(wait=True)
         return self.computers_view()
 
+    def paired_bluetooth(self) -> dict[str, Any]:
+        """Điện thoại / máy tính đã ghép Bluetooth trong Cài đặt Windows - để chọn đường Bluetooth cho một máy đã ghép qua Wi-Fi."""
+        return {"devices": bluetooth.paired_devices()}
+
+    def set_computer_bluetooth(self, computer: str, address: str) -> dict[str, Any]:
+        self._mutating()
+        try:
+            self.computers.set_bluetooth(computer, address)
+        except remote_books.RemoteError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        return self.computers_view()
+
     def forget_computer(self, computer: str) -> dict[str, Any]:
         self._mutating()
         self.remote_downloads.cancel_computer(computer)
@@ -3440,6 +3452,12 @@ class Handler(BaseHTTPRequestHandler):
     def get_computers_discover(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.discover_computers())
 
+    def get_computers_bluetooth(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.paired_bluetooth())
+
+    def post_computer_bluetooth(self, _query: dict[str, list[str]], computer: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.set_computer_bluetooth(computer, str(self._body().get("address") or "")))
+
     def post_computers_refresh(self, _query: dict[str, list[str]]) -> None:
         self.app.refresh_remote(wait=True)
         self._send_json(HTTPStatus.OK, self.app.computers_view())
@@ -4166,6 +4184,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/computers"), Handler.post_computers),
     ("POST", re.compile(r"/api/computers/refresh"), Handler.post_computers_refresh),
     ("GET", re.compile(r"/api/computers/discover"), Handler.get_computers_discover),
+    ("GET", re.compile(r"/api/computers/bluetooth"), Handler.get_computers_bluetooth),
+    ("POST", re.compile(r"/api/computers/([0-9a-f]{12})/bluetooth"), Handler.post_computer_bluetooth),
     ("DELETE", re.compile(r"/api/computers/([0-9a-f]{12})"), Handler.delete_computer),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
     ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),
