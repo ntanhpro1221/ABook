@@ -17,6 +17,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   về bài đã ghim đi theo file sách (.abook / .abookproj, cả sang điện thoại); mô tả không còn nhắc "Sửa sách".
 - Nhạc của bạn: bài có lời hát được nhận ra và không tự phát làm nền dưới giọng đọc (lời át chữ). Bài ấy hiện nhãn "Có vẻ có lời". Bạn vẫn có thể ghim hay bấm "Vẫn cho máy tự chọn".
 - Nhạc của bạn: mỗi bài có một nút để bạn quyết máy có được tự chọn nó làm nhạc nền hay không. "Đừng tự chọn bài này" cho bài nào bạn chỉ muốn ghim tay (kể cả bài máy không nhận ra là có lời); "Cho máy tự chọn lại" để trả về như cũ. Bài đã tắt hiện nhãn "Máy không tự chọn bài này", ghim tay vẫn được.
+- "Đổi bài" -> "Chọn" cho một đoạn giờ xong gần như ngay (trước đây phải chờ dựng lại nhạc cả cuốn, sách 43 chương ~35 giây), và chỉ cảnh của
+  đoạn ấy đổi - các chương khác giữ nguyên cả bài lẫn các bài nối tiếp. Đoạn được chọn lại không lấy trùng bài của cảnh liền trước hay liền sau.
 
 ### Studio
 
