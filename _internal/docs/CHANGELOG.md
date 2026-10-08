@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Phân vai giọng đọc
+
+- Người nói chỉ được mô tả ("người đàn ông", "cậu bé") không còn bị đoán bừa là một nhân vật có tên trong chương - lỗi hay gặp nhất là gán cho chính người đang nói chuyện với họ. App chỉ gộp khi chính nhãn đã gọi tên ("tiểu thư Clara") hoặc truyện viết rõ ngay bên cạnh ("Cậu bé Iven…"). Trên 10 lượt đo 19 chương: thêm 81 câu đúng người nói, điểm giọng +0,65.
+
 ### Điện thoại
 
 - Sách chữ chép từ web có mã chú thích lẫn vào ("[note54360]") không còn hiện ra trong màn đọc và không còn bị đọc lên "note năm bốn ba sáu không" - giống máy tính; "[Note]" không số hay "[1]" giữ nguyên.
