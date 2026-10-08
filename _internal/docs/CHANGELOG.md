@@ -12,7 +12,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính dùng thư viện của điện thoại qua Bluetooth khi không chung Wi-Fi (trước đây chỉ điện thoại gọi máy tính được). Ghép
   một điện thoại mới: ở "Máy tính khác" chọn điện thoại trong danh sách thiết bị Bluetooth đã ghép với máy tính (ghép trong Cài
   đặt Windows trước, và trên điện thoại bật "Cho máy khác nghe thư viện này"), gõ mã 6 số. Nghe sách, chỗ nghe và điều khiển trình
-  phát đi qua Bluetooth như qua Wi-Fi, vẫn chỉ nhận đúng chứng chỉ đã ghép lúc đầu.
+  phát đi qua Bluetooth như qua Wi-Fi, vẫn chỉ tin đúng máy đã ghép lúc đầu.
 - Điện thoại đã ghép qua Wi-Fi mà Wi-Fi hỏng: máy tính tự tìm điện thoại ấy trong các thiết bị Bluetooth đã ghép (trùng tên) rồi
   đi Bluetooth; Wi-Fi quay lại thì tự về Wi-Fi. Không tự tìm ra thì bấm biểu tượng Bluetooth cạnh máy ấy ("Dự phòng qua
   Bluetooth…") để chọn một lần, hay chọn "Không dùng". Máy chỉ đọc danh sách đã ghép của Windows, không dò sóng. Đã thử trên
@@ -30,7 +30,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   cùng bản mới.
 - "Máy tính khác": khi điện thoại đang ngủ (ABook trên điện thoại bị hệ thống tạm dừng), máy tính không báo lỗi mà ghi "Điện thoại
   đang ngủ - mở ABook trên điện thoại để trả lời ngay", chờ thêm tối đa 5 phút qua Bluetooth / 1 phút qua Wi-Fi, có nút "Thôi chờ".
-- Điện thoại, màn Thiết bị: khi đang cho máy khác nghe thư viện, nút "Để máy tính khỏi phải chờ: cho ABook chạy nền" mở trang cài
+- Điện thoại, màn Tải sách: khi đang cho máy khác nghe thư viện, nút "Để máy tính khỏi phải chờ: cho ABook chạy nền" mở trang cài
   đặt của ABook, kèm lời chỉ đường theo hãng máy (OPPO/realme/OnePlus, Xiaomi, Samsung).
 
 ### Nhạc nền
@@ -51,7 +51,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tạo sách từ file TXT cả truyện: dòng tên truyện đứng một mình ở đầu file không còn thành một chương "Mở đầu" riêng - ở Thư viện nó thành tên sách (có ghi chú), ở Studio nó thành tên sách khi trùng
   Tên sách bạn đã nhập, còn khác thì giữ làm chương để không mất chữ nào. "Tách thành N chương" không còn đặt lại Tên sách bạn đã có. Thư viện "Thêm sách từ file…" tự tích tách chương khi file chắc chắn có
   từ ba dòng "Chương N" và lấy tên truyện từ dòng đầu thay vì tên file; điện thoại làm giống hệt.
-- Tạo sách: "Chia thành mấy tập?" thay "Chia thành 1 phần" và ô nhập ghi "từ 2 đến N"; lời mô tả bộ phân tích truyện bỏ chữ kỹ thuật ("model", tên thẻ Ollama chỉ còn là ghi chú nhỏ).
+- Tạo sách: "Chia thành mấy phần?" thay "Chia thành 1 phần" và ô nhập ghi "từ 2 đến N"; lời mô tả bộ phân tích truyện bỏ chữ kỹ thuật ("model", tên thẻ Ollama chỉ còn là ghi chú nhỏ).
 - Hộp "Việc cần duyệt": mỗi mục "Đã quyết, chờ áp dụng" có nút "Hoàn tác" riêng (vai phụ, giới, giọng, người nói, người kể, cách đọc),
   còn đó đến khi máy áp - không chỉ vài giây của thông báo. Thẻ người kể của một đoạn ghi "câu 6" khi chỉ một câu, "Chọn người kể…"
   gợi sẵn các tên có trong đoạn và nhân vật đã có (vẫn gõ tự do được), và sau khi quyết thì tiêu đề nói kết quả ("Đoạn này do Mai kể").
@@ -67,7 +67,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - "Cần nghe lại": dòng phím tắt chỉ hiện khi đang nghe liền; "khớp" nói rõ là khớp với chữ của câu; nút "Sửa chữ đem đọc" nói lời tự
   nhiên; câu hỏng không còn nút nghe vô nghĩa. Thẻ nhân vật xuống dòng thay vì cắt tên và giọng, và "trầm hẳn/sáng hẳn" ghi rõ là
   chỉnh so với giọng gốc.
-- Ở màn hẹp (Studio từ xa trên điện thoại, cửa sổ nhỏ): thông báo không còn đè lên thanh tab dưới cùng; ô "Chia thành mấy tập?" không cắt
+- Ở màn hẹp (Studio từ xa trên điện thoại, cửa sổ nhỏ): thông báo không còn đè lên thanh tab dưới cùng; ô "Chia thành mấy phần?" không cắt
   tên sách; gợi ý tách file TXT cả truyện hết dấu chấm thừa sau "Chương 3”…".
 
 ### Đọc từ và tên tiếng Anh
