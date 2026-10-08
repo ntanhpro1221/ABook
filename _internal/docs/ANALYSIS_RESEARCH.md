@@ -39,6 +39,18 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 09-10 đêm - Bước nối vô danh: mặc định named (cổng 4 bản); tên trích từ chữ trong known-list làm HẠI
+
+**Bước nối (LLM_Train/known_text/recgate_replay.py, cây dev/reconcile-tight a37261c7).** Bước nối chạy sau analyze_all, nên đo
+bằng PHÁT LẠI trên DB 10 lượt cổng: trả đoạn đã nối về nhãn thô (sự kiện LOCAL_IDENTITY_RECONCILED, khớp 100%), gọi code thật với
+ABOOK_LOCAL_IDENTITY_RECONCILE. Kiểm thước: phát lại `loose` ra lại DB gốc TỪNG ĐOẠN ở 5/5 lượt cùng digest model (lệch chỉ ở lượt
+mà model đã tạo lại sau ngày đo). So với loose phát lại, tổng 10 lượt (dòng chặt / F1 giọng): named +73 / +5,77, off +63 / +5,12,
+evidence +55 / +4,56; named >= evidence cả 10 lượt. Mặc định app = named từ main b8631e3a.
+
+**KTXT (LLM_Train/known_text/PLAN.md).** B9 s1234 với known-list cộng tên trích từ chữ, 19 chương: chặt −5,4% (KTC cụm theo
+truyện [−7,9; −0,7]), F1 giọng −2,0%; dòng sai->đúng 40, đúng->sai 113. Luật ghi trước: lệch train/test (model chưa học với
+danh sách ấy). Không đưa vào app; chỉ thử lại nếu train cùng known-list plus-text.
+
 ## 08-10 tối - Người nói vô danh: bước nối NPC -> tên của app làm HẠI; logit_bias không giúp
 
 Trên cổng 19 chương (1.349 câu chấm), gold có 77 câu người nói vô danh (`NPC*` đủ điểm), nhưng project của B9 s1234 chỉ ghi
