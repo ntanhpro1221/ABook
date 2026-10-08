@@ -1,4 +1,5 @@
-import { skipToken, useQuery, type QueryClient } from "@tanstack/react-query";
+import { type QueryClient } from "@tanstack/react-query";
+import { useCachedBook } from "./data";
 import { toast } from "sonner";
 import { api, type BookSummary } from "./api";
 
@@ -46,7 +47,7 @@ export const WAITING_STUDIO = "Đang chờ máy làm sách - giọng đọc chư
 
 /** Chỉ đọc bản của trang dự án trong bộ nhớ đệm - không thêm một nhịp hỏi máy chủ. */
 export function useApplyWhen(bookId: string): ApplyWhen {
-  return applyWhen(useQuery<{ book: BookSummary }>({ queryKey: ["book", bookId], queryFn: skipToken }).data?.book);
+  return applyWhen(useCachedBook(bookId).data?.book);
 }
 
 export function useWhenApplied(bookId: string): string {
