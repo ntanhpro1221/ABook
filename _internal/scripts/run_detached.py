@@ -48,6 +48,11 @@ def _resolve(program: str) -> str:
     """`bash` phải là Git Bash: `bash.exe` của WSL cũng nằm trên PATH và chạy một hệ điều hành khác."""
     if program == "bash" and GIT_BASH.is_file():
         return str(GIT_BASH)
+    # Đường tương đối ("runtime/.venv/Scripts/python.exe") CreateProcess không tìm thấy (09-10: nhịp tim thả lại chết
+    # câm vì thế) - đổi sang đường tuyệt đối dưới ROOT.
+    local = ROOT / program
+    if not Path(program).is_absolute() and local.is_file():
+        return str(local.resolve())
     return shutil.which(program) or program
 
 
@@ -99,10 +104,14 @@ def main(argv: list[str]) -> int:
         return 2
     command = [_resolve(argv[0]), *argv[1:]]
     _note(f"bắt đầu: {' '.join(argv)}")
-    completed = subprocess.run(
-        command, cwd=str(ROOT), stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL, creationflags=NO_WINDOW,
-    )
+    try:
+        completed = subprocess.run(
+            command, cwd=str(ROOT), stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, creationflags=NO_WINDOW,
+        )
+    except OSError as error:  # pythonw không có stderr: không ghi ở đây thì lỗi biến mất
+        _note(f"không chạy được ({error}): {' '.join(argv)}")
+        return 127
     _note(f"xong (mã {completed.returncode}): {' '.join(argv)}")
     return completed.returncode
 
