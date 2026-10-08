@@ -53,7 +53,7 @@ class VieneuModule(
         val (label, text) = CHOICE_TEXT.getValue(choice)
         // Turbo trên máy ít RAM: vẫn tải được (người dùng quyết), nhưng nói trước vì sao Nano hợp hơn.
         val detail = if (choice == "turbo" && facts.ramGb < TURBO_MIN_RAM_GB)
-            "$text. Máy này có khoảng ${"%.0f".format(java.util.Locale.ROOT, facts.ramGb)} GB RAM, mà Turbo cần khoảng 1,3 GB khi đọc nên Android dễ tắt nó - Nano hợp hơn"
+            "$text. Máy này có khoảng ${"%.0f".format(java.util.Locale.ROOT, facts.ramGb)} GB RAM, mà giọng này cần khoảng 1,3 GB khi đọc nên Android dễ tắt nó - Giọng VieNeu Nano hợp hơn"
         else text
         return label to detail
     }

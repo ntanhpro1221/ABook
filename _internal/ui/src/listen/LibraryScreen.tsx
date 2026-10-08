@@ -378,8 +378,9 @@ export function LibraryScreen({
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <Segmented<Filter>
               label="Lọc sách"
-              // Điện thoại: mỗi nút lọc đủ 44 px để chạm.
-              itemClassName="max-sm:h-[44px]"
+              // Điện thoại: mỗi nút lọc đủ 44 px để chạm; cả thanh trải hết bề ngang, các nút chia đều - chữ to (cỡ chữ hệ thống 1,3) không bị cắt "Nghe xong".
+              className="max-sm:flex max-sm:w-full"
+              itemClassName="max-sm:h-[44px] max-sm:min-w-0 max-sm:flex-1 max-sm:px-1"
               value={filter}
               onChange={setFilter}
               options={[

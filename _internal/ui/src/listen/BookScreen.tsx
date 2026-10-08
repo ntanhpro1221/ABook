@@ -890,7 +890,8 @@ export function BookScreen({
                 // phát/dừng từng làm hàng xuống dòng khác đi, "Từ đầu" nhảy sang chỗ nút khác (soát UX 29-09).
                 className="max-sm:w-full"
               >
-                {primaryLabel}
+                {/* Tên chương dài (truyện dịch) hay chữ hệ thống to: cắt "…" trong nút thay vì tràn ra hai mép màn hình (soát UX a9). */}
+                <span className="min-w-0 truncate">{primaryLabel}</span>
               </Button>
             )}
             {caughtUp && (
