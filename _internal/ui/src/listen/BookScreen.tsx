@@ -17,7 +17,7 @@ import { useClip } from "./clip";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
-import { keepTogether, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
+import { keepTogether, partialBookLine, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerViews";
 import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
@@ -782,6 +782,8 @@ export function BookScreen({
   const listening = player.track?.bookId === book.id;
   const heard = book.progress.heardSeconds;
   const left = Math.max(0, book.duration - heard);
+  // Điện thoại, sách chưa đủ chương mà không máy nào thu ở đây: dòng "Sách này có x/y chương đã thu" thay cho dòng đếm chương ở trên.
+  const phonePartial = !book.complete && !textOnly && !book.producing && !book.imported && source.kind === "android";
   const caughtUp = Boolean(book.progress.caughtUp) && !listening;
   // Máy này có giọng đọc cho các chương chỉ có chữ (source.withReadAloud gắn `speech`).
   const speaks = chapters.some((chapter) => chapter.speech === true);
@@ -834,9 +836,11 @@ export function BookScreen({
             {book.narrator && `Giọng kể ${book.narrator} · `}
             {textOnly
               ? `${book.chaptersTotal} chương`
-              : book.complete
-                ? `${book.chaptersTotal} chương · ${formatLength(book.duration)}`
-                : `${book.chaptersAvailable}/${book.chaptersTotal} chương có audio · ${formatLength(book.duration)} phần đã có`}
+              : phonePartial
+                ? `${formatLength(book.duration)} phần đã có` // số chương đã nằm ở dòng "Sách này có x/y chương đã thu" ngay dưới
+                : book.complete
+                  ? `${book.chaptersTotal} chương · ${formatLength(book.duration)}`
+                  : `${book.chaptersAvailable}/${book.chaptersTotal} chương có audio · ${formatLength(book.duration)} phần đã có`}
           </p>
           {textOnly && (
             <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-text">
@@ -850,7 +854,9 @@ export function BookScreen({
                 ? "Đang thu âm - chương mới tự hiện ra khi xong"
                 : book.imported
                   ? "Chưa hoàn thành - file sách này chỉ có các chương đã làm; mở bản mới hơn để nghe tiếp"
-                  : "Chưa hoàn thành - việc thu đang dừng"}
+                  : phonePartial
+                    ? partialBookLine(book.chaptersAvailable, book.chaptersTotal)
+                    : "Chưa hoàn thành - việc thu đang dừng"}
               {studioLink?.(book)}
             </p>
           )}

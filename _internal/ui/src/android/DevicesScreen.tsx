@@ -1,6 +1,6 @@
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BatteryCharging, Bluetooth, CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Unplug, Wifi } from "lucide-react";
+import { BatteryCharging, Bluetooth, CheckCircle2, ChevronRight, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Unplug, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -271,6 +271,11 @@ function Fingerprint({ value }: { value?: string }) {
   );
 }
 
+/** Lời trạng thái Bluetooth của chia sẻ (BluetoothLink.kt) báo thiếu quyền "Thiết bị ở gần". */
+export function needsNearbyPermission(status?: string): boolean {
+  return Boolean(status && status.includes("Thiết bị ở gần"));
+}
+
 function pinChanged(error: unknown): error is Error {
   return error instanceof Error && (error as Error & { code?: string }).code === "PIN_CHANGED";
 }
@@ -508,6 +513,18 @@ function SharePanel() {
             : data.bluetooth.status}
         </p>
       )}
+      {/* Thiếu quyền "Thiết bị ở gần" thì chỉ nói là chưa đủ; nút mở thẳng trang quyền của ABook (Quyền › Thiết bị ở gần). */}
+      {enabled && needsNearbyPermission(data?.bluetooth?.status) && (
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={Bluetooth}
+          className="mt-1 h-auto min-h-8 justify-start whitespace-normal py-1.5 text-left"
+          onClick={() => void EbookLibrary.openAppSettings().catch((error: Error) => toast.error(error.message))}
+        >
+          Mở cài đặt để cho phép
+        </Button>
+      )}
       {enabled && (
         <div className="mt-3">
           <Button
@@ -527,17 +544,27 @@ function SharePanel() {
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
             <dt className="text-fg-2">Tên</dt>
             <dd className="truncate">{data.name}</dd>
-            <dt className="text-fg-2">Địa chỉ</dt>
-            <dd className="tabular break-all">
-              {data.addresses.length ? data.addresses.map((address) => `${address}:${data.port}`).join(", ") : "chưa vào mạng Wi-Fi nào"}
-            </dd>
-            {data.fingerprint && (
-              <>
-                <dt className="text-fg-2">Vân tay</dt>
-                <dd className="tabular break-all text-xs">{data.fingerprint}</dd>
-              </>
-            )}
           </dl>
+          {/* Địa chỉ và vân tay chứng chỉ (64 chữ số hex) là thứ để dò khi máy kia không tự thấy điện thoại: người nghe bình thường không cần,
+              nên gập lại (soát UX a9). */}
+          <details className="group text-sm">
+            <summary className="flex min-h-9 cursor-pointer list-none items-center gap-1.5 text-fg-2 [&::-webkit-details-marker]:hidden">
+              <ChevronRight className="size-4 transition-transform group-open:rotate-90" aria-hidden />
+              Chi tiết
+            </summary>
+            <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pl-5">
+              <dt className="text-fg-2">Địa chỉ</dt>
+              <dd className="tabular break-all">
+                {data.addresses.length ? data.addresses.map((address) => `${address}:${data.port}`).join(", ") : "chưa vào mạng Wi-Fi nào"}
+              </dd>
+              {data.fingerprint && (
+                <>
+                  <dt className="text-fg-2">Vân tay</dt>
+                  <dd className="tabular break-all text-xs">{data.fingerprint}</dd>
+                </>
+              )}
+            </dl>
+          </details>
           {pairing && left > 0 ? (
             <div className="rounded-xl bg-accent-soft p-4 text-center">
               <div className="text-xs text-fg-2">Nhập mã này trên máy kia</div>
@@ -545,6 +572,7 @@ function SharePanel() {
               <div className="tabular mt-1 text-xs text-fg-2">
                 còn {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
               </div>
+              <div className="mt-1 text-xs text-fg-2">Máy kia chưa tự thấy điện thoại? Địa chỉ nằm ở mục Chi tiết bên dưới.</div>
               <button type="button" onClick={() => run.mutate(() => EbookLibrary.shareCancelPairing())} className="mt-2 text-sm text-fg-2 underline underline-offset-4">
                 Huỷ mã
               </button>

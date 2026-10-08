@@ -248,18 +248,58 @@ class EdgeTtsTest {
         val clip = EdgeTts("v", connector) { waits += it }.synthesize("Xin", File(dir, "busy.mp3"))
         assertEquals(3, calls[0])
         assertEquals(1000, clip.durationMs)
-        assertEquals(listOf(300L, 600L), waits)
+        assertEquals(listOf(500L, 1_500L), waits)
         assertEquals(6000, File(dir, "busy.mp3").length())
 
-        calls[0] = -1 // bận cả ba lần: báo bận (không phải mất mạng - không nghỉ giọng Edge 2 phút)
+        calls[0] = -2 // bận cả bốn lần (1 + RETRIES): câu thân thiện, không phải mất mạng - không nghỉ giọng Edge 2 phút
+        val gaps = mutableListOf<Long>()
         try {
-            EdgeTts("v", connector) { }.synthesize("Xin", File(dir, "busy2.mp3"))
+            EdgeTts("v", connector) { gaps += it }.synthesize("Xin", File(dir, "busy2.mp3"))
             fail("đáng ra lỗi")
         } catch (error: VoiceException) {
             assertFalse(error.offline)
-            assertTrue(error.message!!.contains("503"))
+            assertEquals(EdgeTts.NOT_ANSWERING, error.message) // dịch vụ bận, mạng vẫn có: không nói "mất mạng"
+            assertFalse(error.message!!.contains("Mất mạng"))
             assertEquals(2, calls[0])
+            assertEquals(listOf(500L, 1_500L, 4_000L), gaps)
         }
+    }
+
+    @Test
+    fun networkLostMidSentenceIsRetriedWithGrowingWaitsThenSaysItPlainly() {
+        // Cắt giữa lượt rồi mọi kết nối mới đều "không tìm thấy máy chủ": thử đủ 3 lần, nghỉ lùi dần, rồi câu cho người nghe (không phải câu kỹ thuật).
+        val calls = intArrayOf(0)
+        val connector = EdgeTts.Connector { _, _ ->
+            if (calls[0]++ == 0) WebSocket({ }, ByteArrayInputStream(session(audio(3000))), ByteArrayOutputStream())
+            else throw UnknownHostException("speech.platform.bing.com")
+        }
+        val waits = mutableListOf<Long>()
+        try {
+            EdgeTts("v", connector) { waits += it }.synthesize("Xin", File(dir, "lost.mp3"))
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertTrue(error.offline) // mạng thật sự mất: ClipReader vẫn nghỉ giọng Edge và rơi sang giọng của máy
+            assertEquals(EdgeTts.LOST_NETWORK, error.message)
+            assertEquals(4, calls[0])
+            assertEquals(listOf(500L, 1_500L, 4_000L), waits)
+            assertFalse(error.message!!.contains("Edge"))
+        }
+    }
+
+    @Test
+    fun networkThatComesBackWithinTheRetriesFinishesTheSentence() {
+        val calls = intArrayOf(0)
+        val connector = EdgeTts.Connector { _, _ ->
+            when (calls[0]++) {
+                0 -> WebSocket({ }, ByteArrayInputStream(session(audio(3000))), ByteArrayOutputStream())
+                1, 2 -> throw java.net.ConnectException("Network is unreachable")
+                else -> WebSocket({ }, ByteArrayInputStream(session(audio(6000), text("turn.end"))), ByteArrayOutputStream())
+            }
+        }
+        val clip = EdgeTts("v", connector) { }.synthesize("Xin", File(dir, "back.mp3"))
+        assertEquals(4, calls[0])
+        assertEquals(1000, clip.durationMs)
+        assertEquals(6000, File(dir, "back.mp3").length())
     }
 
     @Test

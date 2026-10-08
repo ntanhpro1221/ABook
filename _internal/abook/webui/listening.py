@@ -573,6 +573,37 @@ def book_progress(state: dict[str, Any], chapters: list[dict[str, Any]], *, comp
     }
 
 
+def text_book_progress(state: dict[str, Any], chapters: list[dict[str, Any]]) -> dict[str, Any]:
+    """Như `book_progress` cho sách CHỈ CÓ CHỮ (chưa chương nào có audio): không có độ dài audio để chia nên tính theo chương -
+    chương nghe xong là 1, chương đang đọc dở là phần đã đọc trên độ dài ước đã ghi. Trước đây thanh tiến độ của sách chữ luôn 0.
+    `chapters` là MỌI chương của sách (phép tính của điện thoại: android/progress.ts `textBookProgress`)."""
+    done_chapters = 0
+    heard = 0.0
+    total = 0.0
+    for chapter in chapters:
+        record = state.get("chapters", {}).get(str(chapter["id"]))
+        if not record:
+            continue
+        heard += float(record.get("heard") or 0.0)
+        if record.get("done"):
+            total += 1.0
+            done_chapters += 1
+        elif float(record.get("duration") or 0.0) > 0:
+            total += min(1.0, max(0.0, float(record.get("heard") or 0.0) / float(record["duration"])))
+    marked = bool(state.get("finished"))
+    all_done = bool(chapters) and done_chapters == len(chapters)
+    fraction = min(1.0, total / len(chapters)) if chapters else 0.0
+    return {
+        "heardSeconds": round(heard, 1),
+        "totalSeconds": 0.0,
+        "fraction": 1.0 if marked else round(fraction, 4),
+        "chaptersDone": done_chapters,
+        "finished": marked or all_done,
+        "caughtUp": False,
+        "rewound": False,
+    }
+
+
 def _rewound(state: dict[str, Any], chapters: list[dict[str, Any]]) -> bool:
     last = state.get("last") or {}
     if not chapters or "chapterId" not in last:

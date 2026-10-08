@@ -65,6 +65,15 @@ export function sleepLabel(mode: SleepMode, now: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+/** Nhãn trên NÚT hẹn giờ: có đơn vị ("14 phút", "40 giây") - "14:51" ngay cạnh nút tốc độ và giọng đọc trông như giờ đồng hồ (soát UX a9). Bảng mở ra vẫn
+ *  hiện đồng hồ đếm lùi đầy đủ ([sleepLabel]). */
+export function sleepButtonLabel(mode: SleepMode, now: number): string {
+  if (mode.kind === "chapter") return "Hết chương";
+  const left = sleepLeftMs(mode, now);
+  if (left === null) return "";
+  return left < 60_000 ? `${Math.max(1, Math.ceil(left / 1000))} giây` : `${Math.ceil(left / 60_000)} phút`;
+}
+
 export function sleepSpoken(mode: SleepMode, now: number): string {
   if (mode.kind === "chapter") return "Hẹn giờ tắt: dừng khi hết chương này";
   const left = sleepLeftMs(mode, now);

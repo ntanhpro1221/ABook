@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, sleepLabel } from "./sleep";
+import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, sleepButtonLabel, sleepLabel } from "./sleep";
 
 describe("hẹn giờ tắt của loa / TV", () => {
   it("đọc lời máy giữ phiên phát như hẹn giờ ở đây: chỉ trôi khi thiết bị đang phát", () => {
@@ -25,5 +25,18 @@ describe("hẹn giờ tắt của loa / TV", () => {
     expect(remoteSleepAfter({ action: "sleep", minutes: 30 }, false)).toEqual({ kind: "minutes", minutes: 30, left: 1800, counting: false });
     expect(remoteSleepAfter({ action: "sleep", endOfChapter: true }, true)).toEqual({ kind: "chapter" });
     expect(remoteSleepAfter({ action: "sleep", minutes: 0 }, true)).toBeNull();
+  });
+});
+
+describe("nhãn trên nút hẹn giờ", () => {
+  it("có đơn vị, không giống giờ đồng hồ", () => {
+    const at = 1_000_000;
+    const mode = remoteSleepMode({ kind: "minutes", minutes: 15, left: 891, counting: true }, at); // 14:51
+    expect(sleepButtonLabel(mode, at)).toBe("15 phút");
+    expect(sleepButtonLabel(mode, at + 40_000)).toBe("15 phút");
+    expect(sleepButtonLabel(mode, at + 120_000)).toBe("13 phút");
+    expect(sleepButtonLabel(mode, at + 850_000)).toBe("41 giây");
+    expect(sleepButtonLabel({ kind: "chapter" }, at)).toBe("Hết chương");
+    expect(sleepButtonLabel({ kind: "off" }, at)).toBe("");
   });
 });

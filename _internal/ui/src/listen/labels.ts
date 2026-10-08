@@ -109,3 +109,14 @@ export function readerHint(state: {
 export function keepTogether(title: string): string {
   return title.replace(/^(Chương|Tập|Phần|Hồi|Quyển)\s+(\S+)/i, "$1\u00a0$2");
 }
+
+/** Lời sau khi nghe hết phần đã có. Chỉ hứa "máy làm xong thì nghe được" khi chắc có máy đang làm (`producing`); không thì nói điều chắc chắn - sách mở từ
+ *  file .abook hay tải về điện thoại không có máy nào làm tiếp ở đây (soát UX a9: "việc thu đang dừng" / "khi máy làm xong" sai sự thật). */
+export function caughtUpDetail(producing?: boolean): string {
+  return producing ? "Chương tiếp theo sẽ nghe được khi máy làm xong chương ấy." : "Các chương sau chưa có audio.";
+}
+
+/** Dòng trạng thái của sách chưa đủ chương mà không máy nào đang thu (điện thoại: không biết máy tính còn làm không; file .abook). */
+export function partialBookLine(available: number, total: number): string {
+  return `Sách này có ${available}/${total} chương đã thu - các chương sau chưa có audio`;
+}
