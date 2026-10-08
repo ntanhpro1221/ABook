@@ -1,4 +1,4 @@
-"""Thử tay: máy tính nói chuyện với điện thoại QUA BLUETOOTH THẬT (chưa thử trên sóng thật khi viết - 08-10).
+"""Thử tay: máy tính nói chuyện với điện thoại QUA BLUETOOTH THẬT (đã thử trên sóng thật 08-10, xem docs/BLUETOOTH.md).
 
 Chuẩn bị: điện thoại đã ghép Bluetooth với máy tính trong Cài đặt Windows; trên điện thoại mở ABook và bật "Cho máy khác nghe
 thư viện này" (BluetoothShare nghe RFCOMM); Bluetooth của máy tính bật.
@@ -22,6 +22,8 @@ from abook.webui import bluetooth, tls  # noqa: E402
 
 
 def main(argv: list[str]) -> int:
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8", errors="replace")  # bảng mã Windows (cp1252) không in được tiếng Việt
     if len(argv) < 2:
         devices = bluetooth.paired_devices()
         for device in devices:
