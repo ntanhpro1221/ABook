@@ -4337,6 +4337,34 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 08-10 13:xx - Bộ 7 thấp thật, và một phần là do THƯỚC: vàng bộ 7 có chương hằng (r=0); đầu Pearson thua ridge
+
+Kiểm câu C của góp ý ngoài vòng 4. Học sinh trong mục này là STU 60 chương: qwen06 giữa, ridge căn giữa, alpha 1e4.
+
+| bộ | TB r(V,T) | khoảng 95 % (bootstrap chương) |
+|---|---|---|
+| 4 | .404 | .20-.59 |
+| 5 | .365 | |
+| 5b | .529 | |
+| 6 | .428 | |
+| 7 | .225 | .09-.36 |
+
+- **Không phải nhiễu.** Lấy ngẫu nhiên 20 chương từ bộ học thì TB của bộ 7 nằm ở phân vị 0 %. Đổi alpha chỉ xê dịch khoảng .02, nên
+  thiên lệch chọn model (Varma & Simon 2006) nhỏ.
+- **Lỗi thước:** vàng bộ 7 có 5 chương mà V đứng yên một mức, 1 chương như thế với E và 6 với T (chương chỉ có 1-2 cảnh, hoặc các cảnh
+  cùng giá trị). Với những chương này r được tính bằng 0 theo quy ước. Bộ học không có chương nào như vậy.
+  - Bỏ các chương ấy theo từng trục thì bộ 7 lên .225 -> .299 (đo bằng ridge này), phân vị 0,76 %.
+  - Từ nay báo bộ 7 cả hai cách và ghi số chương bị bỏ (Lead đồng ý).
+  - Mọi Δ bộ 7 trước đây bị pha loãng khoảng x0,7; dấu của chúng không đổi.
+- **Vàng bộ 7 thưa cảnh:** 1,35 cảnh/1.000 tiếng (A 1,51, B 1,39), gần bạc (1,43). Vàng bộ 5/6 dày hơn (2,05/2,09). Bộ 7 là bộ vàng
+  duy nhất chấm bằng hướng dẫn v3. Gộp cảnh vàng bộ 6 xuống cùng mật độ thì r chỉ tụt 0-.07 (`coarsen6.py`).
+- **Phân rã khoảng cách .42 -> .20:** chương hằng khoảng .08, độ thưa 0-.05, phần còn lại khoảng .10-.14 do miền hoặc nội dung nhãn.
+  Để tách hai thứ này, CẦU NỐI đã ghi trước (Corpus PLAN_bridge7.md): agent chấm bạc lại bộ 7 và bộ 6 theo đúng quy trình bạc. Đang chờ thả.
+- **Đầu Pearson + λ·MSE** (ghi trước PLAN_pearson_head.md): khởi tạo từ ridge rồi tinh chỉnh. KHÔNG THẮNG.
+  - Biến thể tốt nhất trên bộ học đạt .336, thua ridge .414 một khoảng .078. Bộ 7 (bỏ chương hằng) Δ −.006.
+  - r trên chính khúc học lên khoảng .88, tức là học thuộc ngay khi rời nghiệm ridge.
+  - Với 4.004 khúc và 1.024 chiều, thứ quyết định là điều chuẩn của ridge, không phải hàm mất mát. Giữ ridge.
+
 ### 07-10 14:3x - Q4 vòng 3 trên 60 chương bạc cũ: STU-FT đúng là học thuộc; mmBERT-small ĐÔNG CỨNG hơn bản tinh chỉnh; trọng số đều theo chương nhích nhẹ
 
 Không cổng; đây là mốc trước lô bạc. Mã `stu_ft_diag.py`, `stu_cc.py`.
