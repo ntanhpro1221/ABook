@@ -4337,6 +4337,43 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 08-10 17:5x - Đường cong dữ liệu tới 2.000 cảnh bạc + STU-BIG: dữ liệu và biểu diễn lớn đều còn giúp
+
+Học sinh STU: ridge căn giữa chương trên đặc trưng ĐÔNG CỨNG. Lấy mẫu theo bộ truyện, 3 hạt. Bộ 7 báo ba cách: mọi chương / bỏ
+chương-trục hằng / trọng số theo độ lệch vàng trong chương (xem mục cầu nối).
+
+**Đường cong (qwen06 lớp giữa)**, TB r(V,T) trong chương:
+
+| cảnh bạc | bộ học | bộ 7 mọi / bỏ hằng / trọng số SD |
+|---|---|---|
+| 250 | .344 | .184 / .255 / .343 |
+| 500 | .393 | .236 / .328 / .412 |
+| 1.000 | .424 | .265 / .367 / .455 |
+| 2.000 | .454 | .273 / .379 / .474 |
+
+- Mỗi lần gấp đôi, bộ học tăng +.049, +.031, +.030: còn lên đều khoảng .03.
+- Bộ 7 (bỏ chương hằng) tăng +.073, +.039, +.012: chậm dần, nhưng đây là bộ phẳng (mục cầu nối).
+- Theo từng trục ở 2.000 cảnh, bộ học V .418, E .472, T .490.
+
+**Thêm truyện hay thêm chương cùng truyện** (ghi trước Corpus PLAN_curve_split.md): so ở cùng số cảnh, lấy 1 chương mỗi bộ (gấp
+đôi số truyện) hay 2 chương mỗi bộ cho ra kết quả như nhau. Δ là −.013, +.008, −.012 ở 250 / 500 / 1.000 cảnh. Số cảnh quyết, số
+truyện không quyết; lô sau giữ cách lấy 2 chương mỗi bộ.
+
+**STU-BIG** (ghi trước PLAN_stu_bigger.md, 60 chương bạc cũ):
+
+| biểu diễn | bộ học | Δ | bộ 7 mọi / bỏ hằng / SD |
+|---|---|---|---|
+| qwen06 lớp giữa (mốc) | .414 | | .225 / .313 / .405 |
+| Qwen3-1.7B L14 | .455 | +.041 | .287 / .399 / .466 |
+| Qwen3-4B-Instruct (nền app) L18 | .518 | +.104 | .231 / .324 / .447 |
+| 4B lớp cuối | .464 | +.050 | .235 / .328 / .403 |
+
+- Theo luật, cả 1.7B và 4B đều THẮNG.
+- Chi phí triển khai:
+  - Muốn dùng 4B lớp giữa thì app phải tự xuất lớp giữa trong lúc phân tích, vì Ollama chỉ trả lớp cuối.
+  - Muốn dùng 1.7B thì app phải chạy thêm một model; cần đo thời gian và VRAM trên máy 8 GB.
+- Bước kế: nhúng toàn bộ 11.135 khúc bạc bằng 1.7B (GPU nhà) và 4B (Mac), rồi chạy lại đường cong 2.000 cảnh với biểu diễn lớn.
+
 ### 08-10 15:1x - CẦU NỐI bộ 7 (ghi trước Corpus PLAN_bridge7.md): bộ 7 thấp vì chương PHẲNG, không phải học sinh hỏng trên một miền truyện
 
 Agent Sonnet chấm bạc lại bộ 7 và bộ 6, mỗi bộ 20 chương, theo đúng quy trình lô bạc (hướng dẫn 3.1, một người chấm, chấm mù).
