@@ -77,10 +77,45 @@ của B qua Bluetooth rồi tua lùi 6 lần liền (mỗi lần tua ra ngoài b
 cũ giữ lại mỗi lần tua hai luồng ở bên phục vụ. A bấm "Phát tiếp trên <B>" / "Tạm dừng trên <B>": trình phát của B
 PAUSED -> PLAYING -> PAUSED (B lúc ấy nghe thẳng một cuốn của A - hai chiều cùng lúc trên một đường RFCOMM).
 
-## Máy tính KẾT NỐI tới điện thoại (08-10, chưa thử trên sóng thật)
+## Máy tính KẾT NỐI tới điện thoại (08-10)
 
-Viết xong, kiểm bằng bộ giả (`tests/test_bluetooth_desktop_client.py`, `tests/test_bluetooth_paired_devices.py`); chưa một byte nào
-đi qua sóng Bluetooth thật.
+Viết xong, kiểm bằng bộ giả (`tests/test_bluetooth_desktop_client.py`, `tests/test_bluetooth_paired_devices.py`), rồi thử trên
+sóng thật (mục dưới).
+
+### Thử trên sóng Bluetooth thật (08-10 12:00, máy tính Windows 11 <-> OPPO CPH2121 Android 12, đã ghép sẵn)
+
+Điện thoại chạy `BluetoothShareOnDeviceTest` (androidTest, `am instrument -e bt_real 1`, không mở Activity, không chạm
+điện thoại); máy tính chạy `scripts/bt_desktop_probe.py` và các kịch bản nhỏ. Số đo:
+
+- **Lỗi thật tìm thấy: `LUP_FLUSHCACHE` sai giá trị.** Code dùng 0x2000 - đó là `LUP_FLUSHPREVIOUS`; `LUP_FLUSHCACHE` là 0x1000.
+  Với cờ sai Windows trả bản ghi SDP CŨ trong bộ nhớ đệm (không một gói nào tới điện thoại), nên ABook không bao giờ hiện ra:
+  "Không thấy ABook trên máy kia". Sửa còn đúng một hằng số; từ đó tra SDP trả `ABook` ở kênh 5, 0,8-1,5 giây.
+- `bt_desktop_probe.py`: SDP kênh 5 (0,8 giây) -> RFCOMM nối -> TLS -> `GET /sync/v1/library` không mã đáp 401, cả chuỗi ~2 giây; lần
+  đầu qua đường hầm (SDP + RFCOMM + TLS + yêu cầu) 1,2 giây, các yêu cầu sau 0,13 giây.
+- Một đường hầm, nhiều luồng TCP (Mux): 8 yêu cầu song song xong trong 0,29 giây, 16 song song trong 0,58 giây, đều 401 đúng.
+- Ghép bằng mã 6 số qua Bluetooth (`Computers.pair("bt:...", mã)`: 1,1 giây), đọc thư viện (0,19 giây), manifest, rồi tải một file
+  3 MB (byte giả, sha1 khớp từng byte): 143 KB/s (~1,1 Mbit/s, gấp ~9 lần tốc độ nghe mp3 128 kbit/s). Trong lúc tải, yêu cầu
+  JSON nhỏ chen vào về sau ~3,5 giây (chung một đường RFCOMM với luồng tải).
+- Đứt rồi nối lại: dừng app điện thoại giữa chừng -> yêu cầu báo "Không thấy ABook..." ngay (0,01 giây, trong 10 giây thử lại của
+  Gateway); bật lại app -> yêu cầu đầu tiên sau đó thành công (~21 giây tính cả lúc điện thoại khởi động lại).
+- Qua máy chủ webui thật (cổng 8779, thư viện bản sao): ghép `bt:<địa chỉ điện thoại>` + mã 6 số rồi mở Cài đặt -> "Máy tính khác":
+  dòng "Bluetooth · <tên Bluetooth> · thấy ... trước" hiện đúng (tên lấy từ thiết bị đã ghép ở Windows).
+
+**Giới hạn thấy khi thử (không phải lỗi của đường hầm):**
+
+- **ColorOS đóng băng tiến trình ABook khoảng 30 giây sau khi app không còn ở trước màn hình và không có lưu lượng**
+  (`OplusHansManager: freeze uid ... scene: LcdOn`, `/proc/<pid>/cgroup` = `freezer:/frozen`). Lúc ấy điện thoại vẫn trả lời SDP và
+  nhận RFCOMM (do hệ điều hành làm), nhưng LibraryServer không chạy nên bắt tay TLS quá hạn (45 giây). Có lưu lượng đang chạy thì
+  không bị đóng băng (`importance=traffic`). `LibraryServer` chạy trong tiến trình app, không có dịch vụ nền nổi (foreground
+  service) - nên "Cho máy khác nghe thư viện này" trên máy ColorOS chỉ chắc chắn khi app đang mở; cả đường Wi-Fi cũng vậy.
+- Tên điện thoại báo qua Wi-Fi là "OPPO CPH2121" (hãng + kiểu máy) còn Windows ghi tên Bluetooth người dùng đặt ("<tên người dùng>-OPPO"):
+  `match_by_name` không tự nối hai tên này - máy ghép Wi-Fi cần chọn tay "Dự phòng qua Bluetooth…" (ghép thẳng bằng `bt:` thì không cần).
+- Chưa thử: nghe thẳng một chương trong trình phát, điều khiển trình phát, tắt Bluetooth giữa chừng (luật điện thoại chủ sách:
+  không đổi cài đặt máy).
+
+Chạy lại: `adb shell am instrument -w -e bt_real 1 [-e bt_pair 1] [-e bt_seed_mb 3] -e class vn.abook.player.BluetoothShareOnDeviceTest
+com.ngdtuanh.abook.test/androidx.test.runner.AndroidJUnitRunner` (mã 6 số và sha1 cuốn thử in ra logcat, tag `BtReal`), rồi gọi
+từ máy tính trong vòng ~30 giây đầu.
 
 - **Tra SDP** (`bluetooth.py`, `find_channel`): `WSALookupServiceBeginW/NextW/End` qua ctypes (`ws2_32`), `lpServiceClassId` =
   UUID ABook, `lpszContext` = `"(AA:BB:CC:DD:EE:FF)"`, cờ `LUP_FLUSHCACHE | LUP_RETURN_ADDR` (như PyBluez); kênh là `port` của
@@ -103,19 +138,19 @@ Viết xong, kiểm bằng bộ giả (`tests/test_bluetooth_desktop_client.py`,
   tai nghe/loa theo lớp thiết bị). Khi Wi-Fi của một máy ghép Wi-Fi hỏng mà chưa có `bt`, một luồng nền (mỗi máy tối đa hai phút
   một lần) chọn thiết bị trùng tên máy (ưu tiên điện thoại; trùng nhiều cái thì không đoán) và ghi `bt` vào computers.json.
   Chọn tay: `GET /api/computers/bluetooth` (danh sách đã ghép), `POST /api/computers/<mã>/bluetooth {"address": ...}` (rỗng = bỏ).
-- **Thử tay khi có sóng thật**: `scripts/bt_desktop_probe.py` (không đối số: liệt kê thiết bị đã ghép; có địa chỉ: tra SDP, mở đường
+- **Thử tay trên sóng thật**: `scripts/bt_desktop_probe.py` (không đối số: liệt kê thiết bị đã ghép; có địa chỉ: tra SDP, mở đường
   hầm, bắt tay TLS, GET `/sync/v1/library` không mã - đáp 401 là đạt).
 
 ## Còn lại
 
-- **Thử máy tính <-> điện thoại trên sóng thật**: chạy `bt_desktop_probe.py <địa chỉ>`, rồi ghép bằng `bt:<địa chỉ>` + mã 6 số,
-  nghe thẳng một chương, đồng bộ chỗ nghe, điều khiển trình phát, tắt Bluetooth giữa chừng. Điểm chưa chắc vì chưa thử thật: cờ
-  truyền cho `WSALookupServiceNextW` (đang dùng cùng cờ với Begin như PyBluez), tên thiết bị Windows lưu có trùng tên điện thoại
-  báo qua Wi-Fi không, và Windows có hiện hộp ghép nếu thiết bị chưa ghép khi `SO_BTH_AUTHENTICATE` bật.
+- **Sóng thật, phần còn lại** (08-10 đã thử ghép + thư viện + tải 3 MB + nhiều luồng + nối lại, xem trên): nghe thẳng một chương
+  trong trình phát, đồng bộ chỗ nghe, điều khiển trình phát, tắt Bluetooth giữa chừng. Đã giải xong: cờ SDP (sửa `LUP_FLUSHCACHE`);
+  tên Windows lưu KHÔNG trùng tên điện thoại báo qua Wi-Fi (xem trên). Chưa biết: Windows có hiện hộp ghép nếu thiết bị chưa
+  ghép khi `SO_BTH_AUTHENTICATE` bật (thiết bị thử đã ghép sẵn).
 - Giao diện "Máy tính khác" (`ui/src/desktop/OtherComputers.tsx`, chữ ở `computerRoutes.ts`) đã có: dòng "Bluetooth · <tên thiết bị>"
   cho máy ghép Bluetooth, menu "Dự phòng qua Bluetooth…" (kèm "Không dùng") cho máy ghép Wi-Fi, và các nút chọn thiết bị đã ghép ngay dưới
   ô ghép. Chưa hiện máy nào đang thật sự đi đường nào lúc này (chỉ hiện đường đã cấu hình).
 - Bộ test không bao giờ chạm Bluetooth thật: `tests/conftest.py` `_no_real_bluetooth` (autouse) thay `paired_devices` bằng danh sách rỗng và
   `find_channel` / `connect_rfcomm` bằng lỗi, trừ khi bài đưa bộ giả (`dll=` / `ws2=` / `connect=`).
 - ~~Tự chọn đường~~ XONG (4d74b592, `Route.kt`): điện thoại giữ cả địa chỉ Wi-Fi lẫn Bluetooth của máy tính, dò đường Wi-Fi rồi lùi về Bluetooth khi hỏng, máy tính báo lại các đường của nó mỗi lần liệt kê thư viện.
-- ~~Máy tính KẾT NỐI tới điện thoại~~ viết xong 08-10 (mục trên), chờ thử sóng thật. Cần Bluetooth máy tính BẬT và một điện thoại thật.
+- ~~Máy tính KẾT NỐI tới điện thoại~~ viết xong và thử trên sóng thật 08-10 (mục trên).
