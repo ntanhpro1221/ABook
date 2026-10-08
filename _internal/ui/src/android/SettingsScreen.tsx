@@ -53,12 +53,14 @@ const phoneSupertonic: VieneuBackend = {
 
 function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 px-4 py-3.5">
-      <div className="min-w-0">
+    // Chữ giữ tối thiểu ~12rem; nút chọn rộng (Không / 1 giờ / 2 giờ / 3 giờ) không đủ chỗ thì xuống hàng dưới, sát phải - chữ hệ thống to
+    // từng bóp lời giải thích còn một chữ mỗi dòng (soát UX a9).
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3.5">
+      <div className="min-w-0 flex-[1_1_12rem]">
         <div className="text-[15px] font-medium">{label}</div>
         {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2">{hint}</div>}
       </div>
-      <div className="shrink-0">{children}</div>
+      <div className="ml-auto shrink-0">{children}</div>
     </div>
   );
 }

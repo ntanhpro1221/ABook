@@ -382,7 +382,7 @@ export function LineWishDialog({
                 <MenuRow
                   icon={RefreshCw}
                   title="Thu lại câu này"
-                  note={!identified ? "chưa có mã câu trong file sách" : !hasAudio ? "Chương này chưa có audio - chưa có gì để thu lại" : wish?.retake ? "Đã ghi - đang chờ máy làm sách" : "Đọc lại bằng hạt giống mới, giọng như cũ"}
+                  note={!identified ? "chưa có mã câu trong file sách" : !hasAudio ? "Chương này chưa có audio - chưa có gì để thu lại" : wish?.retake ? "Đã ghi - đang chờ máy làm sách" : "Đọc lại một lần khác, giọng như cũ"}
                   disabled={!identified || !hasAudio || Boolean(wish?.retake) || retake.isPending}
                   onClick={() => retake.mutate()}
                   trailing={null}
