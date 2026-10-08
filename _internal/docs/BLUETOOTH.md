@@ -77,10 +77,45 @@ của B qua Bluetooth rồi tua lùi 6 lần liền (mỗi lần tua ra ngoài b
 cũ giữ lại mỗi lần tua hai luồng ở bên phục vụ. A bấm "Phát tiếp trên <B>" / "Tạm dừng trên <B>": trình phát của B
 PAUSED -> PLAYING -> PAUSED (B lúc ấy nghe thẳng một cuốn của A - hai chiều cùng lúc trên một đường RFCOMM).
 
+## Máy tính KẾT NỐI tới điện thoại (08-10, chưa thử trên sóng thật)
+
+Viết xong, kiểm bằng bộ giả (`tests/test_bluetooth_desktop_client.py`, `tests/test_bluetooth_paired_devices.py`); chưa một byte nào
+đi qua sóng Bluetooth thật.
+
+- **Tra SDP** (`bluetooth.py`, `find_channel`): `WSALookupServiceBeginW/NextW/End` qua ctypes (`ws2_32`), `lpServiceClassId` =
+  UUID ABook, `lpszContext` = `"(AA:BB:CC:DD:EE:FF)"`, cờ `LUP_FLUSHCACHE | LUP_RETURN_ADDR` (như PyBluez); kênh là `port` của
+  `SOCKADDR_BTH` trong `RemoteAddr` của `CSADDR_INFO`. Bố cục cấu trúc và đọc kênh tách phần thuần, test với bộ đệm dựng tay.
+  Rồi `socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM).connect((địa chỉ, kênh))`, đặt `SO_BTH_AUTHENTICATE` nếu được.
+- **Đường hầm** (`Gateway`, dùng lại `Mux` và `LocalPort`): cổng `127.0.0.1:47670 + (hash & 31)`, cùng cách tính `String.hashCode`
+  của `BluetoothLink.kt` (đối chiếu số chạy thật bằng JBR); nối RFCOMM lười ở luồng riêng khi có kết nối đầu tiên (hay `warm`),
+  mở lại khi đứt, vừa hỏng thì 10 giây sau mới quay số lại, đóng sau 60 giây không luồng. Bên gọi dùng luồng số lẻ, điện thoại
+  (`BluetoothShare`) số chẵn.
+- **Chọn đường** (`route.py`, bản `Route.kt`; `remote_books._base` / `_connect`): máy có địa chỉ Bluetooth (host `bt:<địa chỉ>`, hay
+  trường `bt` trong computers.json do máy kia báo `routes.bluetooth` lúc ghép / mỗi lần liệt kê thư viện, hay do người dùng chọn)
+  thì Wi-Fi trước; nối Wi-Fi hỏng (chưa gửi byte nào) thì yêu cầu ấy đi tiếp qua đường hầm, các yêu cầu sau đi thẳng Bluetooth,
+  mỗi phút thử lại Wi-Fi ở nền. Gốc đổi sang `127.0.0.1:<cổng đường hầm>` nhưng `PinnedHTTPSConnection` vẫn kiểm vân tay đã ghim
+  (test: vân tay sai/trống bị từ chối, máy khác đứng sau đường hầm không nhận được mã thiết bị).
+- **Ghép mới qua Bluetooth**: `Computers.pair("bt:AA:BB:...", mã 6 số)` (hay chỉ địa chỉ Bluetooth) - điện thoại phục vụ cùng
+  cổng đồng bộ qua RFCOMM nên mã 6 số chạy y như Wi-Fi. Ô nhập địa chỉ ở "Máy tính khác" nhận địa chỉ Bluetooth; chưa có nút
+  chọn từ danh sách trong giao diện.
+- **Điện thoại không báo được địa chỉ Bluetooth** (Android 8+ trả `02:00:00:00:00:00`): máy tính liệt kê thiết bị đã ghép ở Windows
+  (`paired_devices`: `BluetoothFindFirstDevice/NextDevice/Close` trong `bthprops.cpl`, chỉ đọc danh sách, `fIssueInquiry` = 0, bỏ
+  tai nghe/loa theo lớp thiết bị). Khi Wi-Fi của một máy ghép Wi-Fi hỏng mà chưa có `bt`, một luồng nền (mỗi máy tối đa hai phút
+  một lần) chọn thiết bị trùng tên máy (ưu tiên điện thoại; trùng nhiều cái thì không đoán) và ghi `bt` vào computers.json.
+  Chọn tay: `GET /api/computers/bluetooth` (danh sách đã ghép), `POST /api/computers/<mã>/bluetooth {"address": ...}` (rỗng = bỏ).
+- **Thử tay khi có sóng thật**: `scripts/bt_desktop_probe.py` (không đối số: liệt kê thiết bị đã ghép; có địa chỉ: tra SDP, mở đường
+  hầm, bắt tay TLS, GET `/sync/v1/library` không mã - đáp 401 là đạt).
+
 ## Còn lại
 
-- Máy tính KẾT NỐI tới điện thoại qua Bluetooth (máy tính dùng thư viện điện thoại): cần tra SDP trên Windows
-  (WSALookupServiceBegin qua ctypes) để biết kênh RFCOMM của điện thoại.
-- Thử máy tính <-> điện thoại trên sóng thật (Bluetooth máy tính đang tắt đêm 28-09).
+- **Thử máy tính <-> điện thoại trên sóng thật**: chạy `bt_desktop_probe.py <địa chỉ>`, rồi ghép bằng `bt:<địa chỉ>` + mã 6 số,
+  nghe thẳng một chương, đồng bộ chỗ nghe, điều khiển trình phát, tắt Bluetooth giữa chừng. Điểm chưa chắc vì chưa thử thật: cờ
+  truyền cho `WSALookupServiceNextW` (đang dùng cùng cờ với Begin như PyBluez), tên thiết bị Windows lưu có trùng tên điện thoại
+  báo qua Wi-Fi không, và Windows có hiện hộp ghép nếu thiết bị chưa ghép khi `SO_BTH_AUTHENTICATE` bật.
+- Giao diện "Máy tính khác" (`ui/src/desktop/OtherComputers.tsx`, chữ ở `computerRoutes.ts`) đã có: dòng "Bluetooth · <tên thiết bị>"
+  cho máy ghép Bluetooth, menu "Dự phòng qua Bluetooth…" (kèm "Không dùng") cho máy ghép Wi-Fi, và các nút chọn thiết bị đã ghép ngay dưới
+  ô ghép. Chưa hiện máy nào đang thật sự đi đường nào lúc này (chỉ hiện đường đã cấu hình).
+- Bộ test không bao giờ chạm Bluetooth thật: `tests/conftest.py` `_no_real_bluetooth` (autouse) thay `paired_devices` bằng danh sách rỗng và
+  `find_channel` / `connect_rfcomm` bằng lỗi, trừ khi bài đưa bộ giả (`dll=` / `ws2=` / `connect=`).
 - ~~Tự chọn đường~~ XONG (4d74b592, `Route.kt`): điện thoại giữ cả địa chỉ Wi-Fi lẫn Bluetooth của máy tính, dò đường Wi-Fi rồi lùi về Bluetooth khi hỏng, máy tính báo lại các đường của nó mỗi lần liệt kê thư viện.
-- Cả hai việc trên cần Bluetooth máy tính BẬT (cài đặt của chủ sách) và một điện thoại thật - chưa làm mù.
+- ~~Máy tính KẾT NỐI tới điện thoại~~ viết xong 08-10 (mục trên), chờ thử sóng thật. Cần Bluetooth máy tính BẬT và một điện thoại thật.

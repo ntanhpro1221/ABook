@@ -16,7 +16,9 @@ DATA tới một luồng không còn thì đáp RESET (bên kia tưởng luồng
 khung trễ, bỏ qua - không bao giờ đáp RESET cho RESET. Cùng giao thức ở phía Android: mobile/.../BtMux.kt.
 
 Windows: Python có sẵn socket RFCOMM (AF_BLUETOOTH, từ 3.9); bản ghi SDP (để điện thoại tìm dịch vụ theo UUID) đăng ký bằng
-WSASetServiceW qua ctypes - không thêm gói nào (thêm gói là đổi uv.lock, tức đổi hash chất lượng).
+WSASetServiceW qua ctypes - không thêm gói nào (thêm gói là đổi uv.lock, tức đổi hash chất lượng). Chiều ngược lại (máy
+tính dùng thư viện của điện thoại): tra SDP bằng WSALookupService* để biết kênh, rồi `Gateway` mở cổng cục bộ như điện thoại
+làm (cuối file).
 """
 from __future__ import annotations
 
@@ -24,11 +26,13 @@ import ctypes
 import itertools
 import os
 import queue
+import re
 import socket
 import struct
 import threading
+import time
 import uuid
-from typing import Callable
+from typing import Callable, Iterator
 
 SERVICE_UUID = uuid.UUID("a1f667fe-352a-49b7-9b91-a5463677cac0")  # dịch vụ ABook (điện thoại dùng đúng UUID này)
 SERVICE_NAME = "ABook"
@@ -287,9 +291,10 @@ class Mux:
 
 class LocalPort:
     """Bên kết nối: cổng TCP cục bộ (127.0.0.1) mà mọi kết nối vào đều đi qua đường hầm - trình phát, đồng bộ... chỉ việc
-    dùng http://127.0.0.1:<port> như một máy tính trong mạng."""
+    dùng http://127.0.0.1:<port> như một máy tính trong mạng. `mux`: bất cứ thứ gì có `alive` và `open(socket)` - Mux, hay
+    Gateway (mở RFCOMM lười)."""
 
-    def __init__(self, mux: Mux, port: int = 0) -> None:
+    def __init__(self, mux: "Mux | Gateway", port: int = 0) -> None:
         self.mux = mux
         self.server = socket.create_server(("127.0.0.1", port))
         self.port = self.server.getsockname()[1]
@@ -546,3 +551,377 @@ class BluetoothServer:
 
 class _AuthenticationUnavailable(Exception):
     pass
+
+
+# ---- Windows: bên GỌI - tra SDP tìm kênh RFCOMM của điện thoại, rồi đường hầm cục bộ ---------------------------------------
+# Máy tính dùng thư viện của điện thoại (điện thoại bật "Cho máy khác nghe thư viện này" thì nghe RFCOMM cùng UUID,
+# BluetoothShare). Android biết kênh nhờ createRfcommSocketToServiceRecord; Windows thì phải tự hỏi bản ghi SDP của máy kia
+# (WSALookupServiceBeginW/NextW/End qua ctypes, như PyBluez) rồi mới connect((địa chỉ, kênh)).
+
+LUP_RETURN_ADDR, LUP_FLUSHCACHE = 0x0100, 0x2000
+LOOKUP_FLAGS = LUP_FLUSHCACHE | LUP_RETURN_ADDR
+WSAEFAULT, WSASERVICE_NOT_FOUND, WSA_E_NO_MORE, WSANO_DATA = 10014, 10108, 10110, 11004
+BLUETOOTH_OFF = (10050, 10047, 10051)  # mạng/địa chỉ không dùng được: không có card hay tắt sóng
+CONNECT_SECONDS = 15  # hạn RFCOMM connect; tra SDP nằm ngoài hạn này (Windows tự hết hạn)
+GATEWAY_RETRY_SECONDS = 10  # vừa hỏng (ngoài tầm, điện thoại tắt Bluetooth): trả lỗi ngay, không quay số lại (như Android)
+GATEWAY_IDLE_SECONDS = 60  # không luồng nào mở ngần này thì đóng RFCOMM - mở lại khi cần
+FIRST_PORT, PORT_SPAN = 47670, 32  # cổng cục bộ ổn định theo địa chỉ, cùng dải với BluetoothLink.kt: 47670 + (hash & 31)
+SOCKADDR_BTH_SIZE = ctypes.sizeof(_SOCKADDR_BTH)
+
+_ADDRESS = re.compile(r"(?:[0-9A-F]{2}:){5}[0-9A-F]{2}")
+
+
+def normalize_address(text: str) -> str:
+    """"aa-bb-cc-dd-ee-ff" / "AA:BB:..." -> "AA:BB:CC:DD:EE:FF" (Android in hoa); không phải địa chỉ Bluetooth thì ""."""
+    clean = (text or "").strip().upper().replace("-", ":")
+    return clean if _ADDRESS.fullmatch(clean) else ""
+
+
+def stable_port(address: str) -> int:
+    """Cổng cục bộ của đường hầm tới `address`: cùng cách tính với BluetoothLink.kt (String.hashCode của Java, 5 bit thấp),
+    nên một máy giữ cùng cổng qua các lần mở lại."""
+    value = 0
+    for char in address:
+        value = (31 * value + ord(char)) & 0xFFFFFFFF
+    return FIRST_PORT + (value & (PORT_SPAN - 1))
+
+
+class ServiceNotFound(OSError):
+    """Máy kia ngoài tầm sóng, hay không mở dịch vụ ABook (không có bản ghi SDP với UUID này)."""
+
+
+class _ServiceQuery:
+    """WSAQUERYSETW hỏi "máy `address` có dịch vụ SERVICE_UUID không, ở kênh nào". Giữ mọi cấu trúc sống cùng đối tượng."""
+
+    def __init__(self, address: str) -> None:
+        self.guid = _GUID.of(SERVICE_UUID)
+        self.query = _WSAQUERYSETW()
+        self.query.dwSize = ctypes.sizeof(self.query)
+        self.query.lpServiceClassId = ctypes.pointer(self.guid)
+        self.query.dwNameSpace = NS_BTH
+        self.query.lpszContext = f"({address})"
+
+
+def channels_of(result: _WSAQUERYSETW) -> list[int]:
+    """Kênh RFCOMM trong một kết quả tra SDP: RemoteAddr của mỗi CSADDR_INFO là SOCKADDR_BTH, `port` là kênh. Bỏ mục không
+    phải địa chỉ Bluetooth hay kênh ngoài 1-30."""
+    channels = []
+    for index in range(result.dwNumberOfCsAddrs if result.lpcsaBuffer else 0):
+        remote = result.lpcsaBuffer[index].RemoteAddr
+        if not remote.lpSockaddr or remote.iSockaddrLength < SOCKADDR_BTH_SIZE:
+            continue
+        address = ctypes.cast(remote.lpSockaddr, ctypes.POINTER(_SOCKADDR_BTH)).contents
+        if address.addressFamily == AF_BTH and 1 <= address.port <= 30:
+            channels.append(int(address.port))
+    return channels
+
+
+class _Ws2:
+    """Ba lời gọi WSALookupService của Windows. `dll`/`last_error` thay được để bài thử không chạm Bluetooth thật."""
+
+    def __init__(self, dll: object = None, last_error: Callable[[], int] | None = None) -> None:
+        self.dll = dll if dll is not None else ctypes.WinDLL("ws2_32", use_last_error=True)
+        self.last_error = last_error or ctypes.get_last_error
+        if dll is None:
+            self.dll.WSALookupServiceBeginW.argtypes = [ctypes.POINTER(_WSAQUERYSETW), ctypes.c_ulong,
+                                                        ctypes.POINTER(ctypes.c_void_p)]
+            self.dll.WSALookupServiceNextW.argtypes = [ctypes.c_void_p, ctypes.c_ulong, ctypes.POINTER(ctypes.c_ulong),
+                                                       ctypes.c_void_p]
+            self.dll.WSALookupServiceEnd.argtypes = [ctypes.c_void_p]
+
+    def lookup(self, query: _WSAQUERYSETW) -> Iterator[ctypes.Array]:
+        """Từng bộ đệm kết quả (WSAQUERYSETW, con trỏ bên trong trỏ vào chính bộ đệm). Hết kết quả thì dừng."""
+        handle = ctypes.c_void_p()
+        if self.dll.WSALookupServiceBeginW(ctypes.byref(query), LOOKUP_FLAGS, ctypes.byref(handle)) != 0:
+            raise OSError(self.last_error(), "WSALookupServiceBeginW")
+        try:
+            size = 4096
+            while True:
+                buffer = ctypes.create_string_buffer(size)
+                length = ctypes.c_ulong(size)
+                if self.dll.WSALookupServiceNextW(handle, LOOKUP_FLAGS, ctypes.byref(length), buffer) == 0:
+                    yield buffer
+                    continue
+                code = self.last_error()
+                if code == WSAEFAULT and length.value > size:
+                    size = length.value  # bộ đệm nhỏ quá: Windows nói cần bao nhiêu
+                    continue
+                if code in (WSA_E_NO_MORE, WSANO_DATA, WSASERVICE_NOT_FOUND):
+                    return
+                raise OSError(code, "WSALookupServiceNextW")
+        finally:
+            self.dll.WSALookupServiceEnd(handle)
+
+
+def find_channel(address: str, *, ws2: _Ws2 | None = None) -> int:
+    """Kênh RFCOMM của dịch vụ ABook trên máy `address`; `ServiceNotFound` nếu máy ấy không có."""
+    query = _ServiceQuery(address)
+    try:
+        for buffer in (ws2 or _Ws2()).lookup(query.query):
+            channels = channels_of(_WSAQUERYSETW.from_buffer(buffer))
+            if channels:
+                return channels[0]
+    except OSError as error:
+        if error.errno not in (WSASERVICE_NOT_FOUND, WSANO_DATA):
+            raise
+    raise ServiceNotFound("Không thấy ABook trên máy kia qua Bluetooth - máy kia đã bật ABook, Bluetooth và "
+                          "“Cho máy khác nghe thư viện này” chưa, và có trong tầm sóng không?")
+
+
+def connect_rfcomm(address: str, *, ws2: _Ws2 | None = None) -> socket.socket:
+    """Một kết nối RFCOMM tới dịch vụ ABook của `address` (đã ghép Bluetooth trong Cài đặt Windows). CHẶN tới vài chục giây
+    khi máy kia ngoài tầm - chỉ gọi từ luồng nền (Gateway)."""
+    if os.name != "nt" or not hasattr(socket, "AF_BLUETOOTH"):
+        raise OSError("Máy này chưa hỗ trợ Bluetooth cho ABook")
+    try:
+        channel = find_channel(address, ws2=ws2)
+        link = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+    except ServiceNotFound:
+        raise
+    except OSError as error:
+        raise OSError("Bluetooth của máy tính đang tắt - bật trong Cài đặt Windows" if error.errno in BLUETOOTH_OFF
+                      else f"Không tra được ABook trên máy kia qua Bluetooth: {error}") from error
+    try:
+        try:
+            link.setsockopt(SOL_RFCOMM, SO_BTH_AUTHENTICATE, 1)  # chỉ nối máy đã ghép; không bật được thì để TLS ghim vân tay gác
+        except OSError:
+            pass
+        link.settimeout(CONNECT_SECONDS)
+        link.connect((address, channel))
+        link.settimeout(None)
+    except OSError as error:
+        _close_socket(link)
+        raise OSError(f"Không kết nối được máy kia qua Bluetooth ({error})") from error
+    return link
+
+
+class Gateway:
+    """Đường hầm Bluetooth tới MỘT máy (điện thoại) cho máy tính: cổng TCP 127.0.0.1:<ổn định theo địa chỉ> mà mọi kết nối
+    vào đều là một luồng Mux trên MỘT kết nối RFCOMM (phía điện thoại là BluetoothShare). Cho `https://127.0.0.1:<port>` làm
+    gốc của máy ấy - TLS đi nguyên vẹn qua đường hầm nên vân tay ghim vẫn kiểm đúng chứng chỉ của máy kia.
+
+    Lười: RFCOMM chỉ mở khi có kết nối đầu tiên (hay `warm`), mở lại khi đứt, đóng sau GATEWAY_IDLE_SECONDS không luồng. Quay số
+    luôn ở luồng riêng - `open`/`warm` không bao giờ chặn người gọi (giao diện, luồng hỏi trình phát). Vừa hỏng thì trả lỗi
+    ngay trong GATEWAY_RETRY_SECONDS."""
+
+    def __init__(self, address: str, *, connect: Callable[[str], socket.socket] | None = None,
+                 retry_seconds: float = GATEWAY_RETRY_SECONDS, idle_seconds: float = GATEWAY_IDLE_SECONDS) -> None:
+        self.address = address
+        self.connect = connect
+        self.retry_seconds = retry_seconds
+        self.idle_seconds = idle_seconds
+        self.last_error = ""
+        self.closed = False
+        self._mux: Mux | None = None
+        self._failed_at: float | None = None
+        self._last_used = time.monotonic()
+        self._dialing = threading.Lock()  # một lần quay số một lúc; các luồng sau chờ kết quả của lần ấy
+        self._lock = threading.Lock()
+        self._stopped = threading.Event()
+        try:
+            self.local = LocalPort(self, stable_port(address))
+        except OSError:
+            self.local = LocalPort(self, 0)  # cổng ổn định đang bận: để hệ thống chọn
+        self.port = self.local.port
+        threading.Thread(target=self._reap, name="bt-gateway-idle", daemon=True).start()
+
+    @property
+    def alive(self) -> bool:
+        """Cho LocalPort (nó chỉ cần `alive` và `open`): còn nhận kết nối cục bộ tới khi `close`."""
+        return not self.closed
+
+    @property
+    def up(self) -> bool:
+        mux = self._mux
+        return mux is not None and mux.alive
+
+    def open(self, client: socket.socket) -> None:
+        threading.Thread(target=self._carry, args=(client,), name="bt-carry", daemon=True).start()
+
+    def warm(self) -> None:
+        """Mở RFCOMM ở nền nếu chưa mở (người gọi sắp dùng đường này): yêu cầu đầu chưa kịp thì yêu cầu sau đã có đường."""
+        if not self.up and not self.closed and not self._dialing.locked():
+            threading.Thread(target=self._try_link, name="bt-warm", daemon=True).start()
+
+    def _try_link(self) -> None:
+        try:
+            self._link()
+        except (OSError, LinkClosed):
+            pass
+
+    def _carry(self, client: socket.socket) -> None:
+        try:
+            self._link().open(client)
+            self._last_used = time.monotonic()
+        except (OSError, LinkClosed):
+            _close_socket(client)  # lý do nằm ở `last_error`; ứng dụng thấy kết nối bị đóng
+        except Exception as error:  # noqa: BLE001 - Bluetooth stack lỗi kiểu gì cũng không được làm sập app
+            self.last_error = f"Không kết nối được qua Bluetooth: {type(error).__name__}: {error}"
+            _close_socket(client)
+
+    def _link(self) -> Mux:
+        with self._dialing:
+            if self.closed:
+                raise OSError("Đã thôi ghép máy này")
+            mux = self._mux
+            if mux is not None and mux.alive:
+                return mux
+            if self._failed_at is not None and time.monotonic() - self._failed_at < self.retry_seconds:
+                raise OSError(self.last_error or "Không kết nối được qua Bluetooth")
+            try:
+                link = (self.connect or connect_rfcomm)(self.address)
+            except OSError as error:
+                self._failed_at, self.last_error = time.monotonic(), str(error) or "Không kết nối được qua Bluetooth"
+                raise
+            fresh = Mux(link, odd=True)  # điện thoại phục vụ số chẵn (BluetoothShare: odd = false), bên gọi số lẻ
+            with self._lock:
+                if self.closed:
+                    fresh.shutdown()
+                    raise OSError("Đã thôi ghép máy này")
+                self._mux = fresh
+            threading.Thread(target=fresh.run, name="bt-link", daemon=True).start()
+            self._failed_at, self.last_error = None, ""
+            self._last_used = time.monotonic()
+            return fresh
+
+    def _reap(self) -> None:
+        """Đóng RFCOMM khi không còn luồng nào đã GATEWAY_IDLE_SECONDS: không giữ sóng Bluetooth (và pin điện thoại) cho máy
+        không ai dùng."""
+        while not self._stopped.wait(max(0.05, min(15.0, self.idle_seconds / 4))):
+            mux = self._mux
+            if mux is None or not mux.alive:
+                continue
+            with mux.lock:
+                busy = bool(mux.streams)
+            now = time.monotonic()
+            if busy:
+                self._last_used = now
+            elif now - self._last_used > self.idle_seconds:
+                mux.shutdown()
+
+    def close(self) -> None:
+        with self._lock:
+            self.closed = True
+            mux = self._mux
+        self._stopped.set()
+        self.local.close()
+        if mux is not None:
+            mux.shutdown()
+
+
+_gateways: dict[str, Gateway] = {}
+_gateways_lock = threading.Lock()
+
+
+def gateway(address: str, *, connect: Callable[[str], socket.socket] | None = None) -> Gateway:
+    """Đường hầm tới máy `address` ("AA:BB:..." hay "bt:AA:BB:..."; một cho mỗi địa chỉ, dựng lần đầu cần). Địa chỉ hỏng:
+    ValueError."""
+    clean = normalize_address(address.removeprefix("bt:"))
+    if not clean:
+        raise ValueError(f"Địa chỉ Bluetooth không hợp lệ: {address}")
+    with _gateways_lock:
+        found = _gateways.get(clean)
+        if found is None or found.closed:
+            found = _gateways[clean] = Gateway(clean, connect=connect)
+        return found
+
+
+def last_error(address: str) -> str:
+    clean = normalize_address(address.removeprefix("bt:"))
+    with _gateways_lock:
+        found = _gateways.get(clean)
+    return found.last_error if found is not None else ""
+
+
+def forget(address: str) -> None:
+    """Thôi ghép máy `address`: đóng cổng cục bộ và kết nối RFCOMM của nó."""
+    clean = normalize_address(address.removeprefix("bt:"))
+    with _gateways_lock:
+        found = _gateways.pop(clean, None)
+    if found is not None:
+        found.close()
+
+
+# ---- Windows: thiết bị Bluetooth đã ghép với máy tính ---------------------------------------------------------------------
+# Android 8+ không cho app đọc địa chỉ Bluetooth của chính nó (trả 02:00:00:00:00:00), nên điện thoại KHÔNG báo được địa chỉ lúc
+# ghép Wi-Fi. Máy tính tự tìm: liệt kê thiết bị đã ghép trong Cài đặt Windows (bthprops.cpl, chỉ đọc danh sách của hệ điều hành -
+# không dò sóng, không nối thiết bị nào) rồi chọn cái trùng tên điện thoại, hay để người dùng chọn một lần.
+
+MAJOR_COMPUTER, MAJOR_PHONE = 1, 2  # lớp thiết bị Bluetooth (bit 8-12 của ulClassofDevice)
+
+
+class _SYSTEMTIME(ctypes.Structure):
+    _fields_ = [(name, ctypes.c_ushort) for name in ("year", "month", "weekday", "day", "hour", "minute", "second", "millis")]
+
+
+class _BLUETOOTH_DEVICE_SEARCH_PARAMS(ctypes.Structure):
+    _fields_ = [("dwSize", ctypes.c_ulong), ("fReturnAuthenticated", ctypes.c_int), ("fReturnRemembered", ctypes.c_int),
+                ("fReturnUnknown", ctypes.c_int), ("fReturnConnected", ctypes.c_int), ("fIssueInquiry", ctypes.c_int),
+                ("cTimeoutMultiplier", ctypes.c_ubyte), ("hRadio", ctypes.c_void_p)]
+
+
+class _BLUETOOTH_DEVICE_INFO(ctypes.Structure):
+    _fields_ = [("dwSize", ctypes.c_ulong), ("address", ctypes.c_ulonglong), ("ulClassofDevice", ctypes.c_ulong),
+                ("fConnected", ctypes.c_int), ("fRemembered", ctypes.c_int), ("fAuthenticated", ctypes.c_int),
+                ("stLastSeen", _SYSTEMTIME), ("stLastUsed", _SYSTEMTIME), ("szName", ctypes.c_wchar * 248)]
+
+
+def address_text(value: int) -> str:
+    """BTH_ADDR (số 48 bit, byte cao nhất trước) -> "AA:BB:CC:DD:EE:FF"."""
+    return ":".join(f"{(value >> shift) & 0xFF:02X}" for shift in range(40, -8, -8))
+
+
+def paired_device(info: _BLUETOOTH_DEVICE_INFO) -> dict[str, object]:
+    """Một BLUETOOTH_DEVICE_INFO -> {"name", "address", "kind": "phone" | "computer" | "other"} (phần thuần, test được)."""
+    major = (info.ulClassofDevice >> 8) & 0x1F
+    return {"name": str(info.szName), "address": address_text(info.address),
+            "kind": "phone" if major == MAJOR_PHONE else "computer" if major == MAJOR_COMPUTER else "other"}
+
+
+def paired_devices(*, dll: object = None) -> list[dict[str, object]]:
+    """Thiết bị đã ghép (hay được nhớ) trong Cài đặt Windows, mỗi cái {"name", "address", "kind"}; bỏ tai nghe, loa... không phải
+    điện thoại / máy tính. Không có Bluetooth hay không phải Windows: danh sách rỗng. `dll` thay được để bài thử không chạm hệ thống."""
+    if dll is None:
+        if os.name != "nt":
+            return []
+        try:
+            dll = ctypes.WinDLL("bthprops.cpl")
+        except OSError:
+            return []
+        dll.BluetoothFindFirstDevice.argtypes = [ctypes.POINTER(_BLUETOOTH_DEVICE_SEARCH_PARAMS),
+                                                 ctypes.POINTER(_BLUETOOTH_DEVICE_INFO)]
+        dll.BluetoothFindFirstDevice.restype = ctypes.c_void_p
+        dll.BluetoothFindNextDevice.argtypes = [ctypes.c_void_p, ctypes.POINTER(_BLUETOOTH_DEVICE_INFO)]
+        dll.BluetoothFindDeviceClose.argtypes = [ctypes.c_void_p]
+    params = _BLUETOOTH_DEVICE_SEARCH_PARAMS()
+    params.dwSize = ctypes.sizeof(params)
+    params.fReturnAuthenticated = params.fReturnRemembered = params.fReturnConnected = 1
+    params.fReturnUnknown = params.fIssueInquiry = 0  # chỉ đọc danh sách đã ghép: không dò sóng
+    info = _BLUETOOTH_DEVICE_INFO()
+    info.dwSize = ctypes.sizeof(info)
+    handle = dll.BluetoothFindFirstDevice(ctypes.byref(params), ctypes.byref(info))
+    if not handle:
+        return []  # không có card Bluetooth, hay chưa có thiết bị nào
+    found: list[dict[str, object]] = []
+    try:
+        while True:
+            device = paired_device(info)
+            if device["kind"] != "other" and normalize_address(str(device["address"])):
+                found.append(device)
+            if not dll.BluetoothFindNextDevice(handle, ctypes.byref(info)):
+                break
+    finally:
+        dll.BluetoothFindDeviceClose(handle)
+    return found
+
+
+def match_by_name(name: str, devices: list[dict[str, object]]) -> str:
+    """Địa chỉ của thiết bị đã ghép trùng tên `name` (không phân biệt hoa thường, bỏ khoảng trắng thừa); ưu tiên điện thoại.
+    Không có, hay có NHIỀU máy cùng tên (không biết cái nào) thì "" - đừng đoán, người dùng chọn tay."""
+    wanted = " ".join((name or "").casefold().split())
+    if not wanted:
+        return ""
+    same = [device for device in devices if " ".join(str(device["name"]).casefold().split()) == wanted]
+    phones = [device for device in same if device["kind"] == "phone"]
+    pool = phones or same
+    return str(pool[0]["address"]) if len({device["address"] for device in pool}) == 1 else ""
