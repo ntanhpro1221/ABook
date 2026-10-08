@@ -125,7 +125,7 @@ export function VolumeSplit({
     <section aria-labelledby="volumes-title" className="mt-4 rounded-xl border border-accent/40 bg-panel p-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="volumes-title" className="flex items-center gap-2 font-semibold">
-          <Layers className="size-4 text-accent-text" /> {parts.length > 1 ? `Chia thành ${parts.length} phần` : "Chia thành mấy tập?"}
+          <Layers className="size-4 text-accent-text" /> {parts.length > 1 ? `Chia thành ${parts.length} phần` : "Chia thành mấy phần?"}
         </h3>
         <Button size="sm" variant="ghost" onClick={() => onChange(null)}>
           Không chia nữa
@@ -134,14 +134,14 @@ export function VolumeSplit({
       <p className="mt-1 text-fg-2">
         Mỗi phần là một sách trong Dự án: phần 1 như sách thường, phần sau nối tiếp, xếp hàng sau phần trước. Đổi “từ chương” để
         dời chỗ cắt.
-        {parts.length === 1 && ` Hiện mới có một phần - điền chương mà tập 2 bắt đầu (từ chương 2 đến chương ${total}) ở ô dưới rồi bấm Thêm.`}
+        {parts.length === 1 && ` Hiện mới có một phần - điền chương mà phần 2 bắt đầu (từ chương 2 đến chương ${total}) ở ô dưới rồi bấm Thêm.`}
       </p>
       <ol className="mt-3 divide-y divide-line rounded-lg border border-line">
         {parts.map((part, index) => (
           <li key={part.start} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_auto_90px_32px]">
             <div className="min-w-0">
               {/* Phần 1 giữ nguyên tên sách (là sách thường, như máy chủ đặt) - nên nói ra nó là phần 1; các phần sau đã có "· Phần N" trong tên. */}
-              <div className="truncate font-medium">
+              <div className="truncate font-medium max-sm:whitespace-normal max-sm:break-words">
                 {titles[index]}
                 {index === 0 && <span className="ml-2 text-xs font-normal text-fg-3">phần 1</span>}
               </div>
