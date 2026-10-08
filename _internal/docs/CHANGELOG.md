@@ -17,9 +17,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   đi Bluetooth; Wi-Fi quay lại thì tự về Wi-Fi. Không tự tìm ra thì bấm biểu tượng Bluetooth cạnh máy ấy ("Dự phòng qua
   Bluetooth…") để chọn một lần, hay chọn "Không dùng". Máy chỉ đọc danh sách đã ghép của Windows, không dò sóng. Chưa thử trên
   sóng Bluetooth thật.
+- "Máy tính khác": lời hướng dẫn tách riêng hai đoạn "Cùng Wi-Fi" và "Không chung Wi-Fi" (Bluetooth); ở màn hẹp ô địa chỉ máy kia
+  rộng cả hàng nên đọc được hết gợi ý.
 
 ### Nhạc nền
 
+- Tab Nhạc nền: "Đổi từ đây" ở đoạn nối tiếp thẳng hàng với "Đổi bài" của các dòng khác; ở màn hẹp, thể loại truyện dài được ghi đủ tên dưới ô
+  chọn thay vì bị cắt giữa chữ.
 - Tab Nhạc nền của dự án: mỗi đoạn chỉ còn một nút "Đổi bài" và một nút "…" (im lặng, bỏ ghim, không dùng bài này cho cả cuốn), nên các cột thẳng hàng ở mọi dòng. Đoạn dài được cắt mảnh mà vẫn chơi
   tiếp một bài hiện gọn "↳ tiếp bài của đoạn trên"; "Đổi từ đây" ở đó đổi bài từ chỗ ấy trở đi. Sửa một đoạn chỉ hiện "Đang lưu lựa chọn…"; "Chọn lại nhạc" (và đổi thể loại) nói "Đang chọn lại nhạc cho cả cuốn - cỡ nửa phút"
   thay vì lặng lẽ khoá nút (các đoạn khác có thể đổi bài theo cách máy chọn lại - đó là cách chọn nhạc, không phải lỗi). "Thế giới của truyện" đổi thành "Thể loại truyện" và ô chọn không còn bị cắt chữ;
@@ -69,6 +73,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   "tôi"; chưa trả lời thì máy giữ nguyên. Chương đã phân tích xong thì thẻ nói rõ lựa chọn chỉ áp khi làm lại sách, và đồng ý một
   đoạn không bắt cả cuốn phân tích lại. Dùng được từ điện thoại điều khiển máy tính; việc hiện thẻ này trong app điện thoại độc lập
   chưa có.
+- Ở màn hẹp (Studio từ xa trên điện thoại, cửa sổ nhỏ): thông báo không còn đè lên thanh tab dưới cùng; ô "Chia thành mấy tập?" không cắt
+  tên sách; gợi ý tách file TXT cả truyện hết dấu chấm thừa sau "Chương 3”…".
 
 ## [0.4.31] - 2026-10-07
 

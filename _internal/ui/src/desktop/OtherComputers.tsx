@@ -180,7 +180,7 @@ export function OtherComputers() {
           pair.mutate();
         }}
       >
-        <label className="min-w-0 flex-1 text-xs text-fg-2" htmlFor="other-computer-address">
+        <label className="min-w-0 flex-1 text-xs text-fg-2 max-sm:basis-full" htmlFor="other-computer-address">
           Địa chỉ máy kia
           <input
             id="other-computer-address"
@@ -224,14 +224,18 @@ export function OtherComputers() {
           </ul>
         </div>
       )}
-      <p className="text-xs leading-relaxed text-fg-3">
-        Hai máy phải cùng mạng (ở khác nơi thì vào cùng một mạng riêng ảo rồi gõ địa chỉ của máy kia trong mạng ấy). Trên máy
-        kia: Cài đặt → Điện thoại và thiết bị → bật “Cho phép thiết bị khác kết nối qua Wi-Fi” → “Ghép thiết bị mới” để lấy mã
-        6 số; địa chỉ máy ấy ghi ở dòng “Trình duyệt” ngay cạnh mã. Điện thoại Android: màn Tải sách → bật “Cho máy khác nghe
-        thư viện này” → “Ghép máy mới”. Máy này tên “{data.name}” trong danh sách thiết bị đã ghép của máy kia. Không chung Wi-Fi
-        thì ghép điện thoại với máy tính này qua Bluetooth trong Cài đặt Windows trước, mở ABook trên điện thoại, bật “Cho máy
-        khác nghe thư viện này”, rồi chọn điện thoại ở trên và gõ mã 6 số.
-      </p>
+      <div className="space-y-2 text-xs leading-relaxed text-fg-3">
+        <p>
+          Cùng Wi-Fi: hai máy phải cùng mạng (ở khác nơi thì vào cùng một mạng riêng ảo rồi gõ địa chỉ của máy kia trong mạng
+          ấy). Trên máy kia: Cài đặt → Điện thoại và thiết bị → bật “Cho phép thiết bị khác kết nối qua Wi-Fi” → “Ghép thiết bị
+          mới” để lấy mã 6 số; địa chỉ máy ấy ghi ở dòng “Trình duyệt” ngay cạnh mã. Điện thoại Android: màn Tải sách → bật “Cho
+          máy khác nghe thư viện này” → “Ghép máy mới”. Máy này tên “{data.name}” trong danh sách thiết bị đã ghép của máy kia.
+        </p>
+        <p>
+          Không chung Wi-Fi: ghép điện thoại với máy tính này qua Bluetooth trong Cài đặt Windows trước, mở ABook trên điện
+          thoại, bật “Cho máy khác nghe thư viện này”, rồi chọn điện thoại ở trên và gõ mã 6 số.
+        </p>
+      </div>
     </div>
   );
 }
