@@ -39,6 +39,21 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 08-10 tối - Người nói vô danh: bước nối NPC -> tên của app làm HẠI; logit_bias không giúp
+
+Trên cổng 19 chương (1.349 câu chấm), gold có 77 câu người nói vô danh (`NPC*` đủ điểm), nhưng project của B9 s1234 chỉ ghi
+NPC 8 lần. Truy ra hai phần:
+
+- **Bước nối của app.** `reconcile_local_speaker_identities` (gọi trong pipeline trước khi khoá tên) hỏi model xem nhãn mô tả
+  ("người đàn ông", "khách") có phải người có tên cùng chương không. Ở B9 s1234 nó đổi 29 câu; câu trả lời gốc đúng 16, sau
+  khi nối đúng 3. So bỏ nối với có nối trên 10 lượt cổng: F1 giọng +0,78 (B9 s1234), +0,39, +0,26, +0,22, +0,06, +0,91,
+  +1,09, −0,01, +0,77, +0,98; người nói chặt không lượt nào tụt (tới +1,85). 9/10 lượt tốt hơn khi bỏ nối. Cổng mỗi lượt chỉ
+  một chương nên đo đúng trường hợp bước này nhắm tới (tên lộ ra sau trong cùng chương). Đề xuất: tắt hoặc siết bước nối.
+- **Model.** Tỉ lệ ghi NPC dao động mạnh theo hạt cùng công thức (B9: 8 và 40 câu; v8 thêm-hạt: 10 và 54), dữ liệu train có
+  NPC ở 4,5% câu lời. Một logit_bias cho token `NPC` (một token riêng của Qwen3), quét trên điểm GGUF ở đầu mỗi giá trị
+  speaker, so với câu trả lời gốc: tốt nhất +3 câu, bỏ-một-truyện −3 câu -> không giúp. Hướng còn lại là train.
+- Hậu xử lý không gold (nhãn mô tả hoặc người có tên vắng trong chữ quanh câu -> NPC) thua trên 4/5 model.
+
 ## 08-10 chiều - B10 (thêm 1.798 mẫu bạc) và B9-750 (B9 cùng 751 bước): một hạt CHƯA kết luận được
 
 Cổng 19 chương / 11 truyện, hạt 1234, KTC bootstrap cụm theo truyện (luật ghi trước `LLM_Train/b10/B9_750_PLAN.md`):
