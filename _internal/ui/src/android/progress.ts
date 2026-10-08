@@ -52,3 +52,26 @@ function positionSeconds(last: { chapterId: number; seconds: number }, chapters:
   }
   return before;
 }
+
+/** Sách chỉ-có-chữ (chưa chương nào có audio): không có độ dài audio để chia, nên tiến độ tính theo chương - chương nghe xong là 1, chương đang
+ *  đọc dở là phần đã đọc trên độ dài ước của nó (`ChapterState.duration`, nếu đã ghi). Trước đây thanh tiến độ của sách chữ luôn 0. */
+export function textBookProgress(state: ListeningState, chapters: ListenChapter[]): BookProgress {
+  let sum = 0;
+  let done = 0;
+  let heard = 0;
+  for (const chapter of chapters) {
+    const record = state.chapters[String(chapter.id)];
+    if (!record) continue;
+    heard += record.heard || 0;
+    if (record.done) {
+      sum += 1;
+      done += 1;
+    } else if (record.duration && record.duration > 0) {
+      sum += Math.min(1, Math.max(0, (record.heard || 0) / record.duration));
+    }
+  }
+  const marked = Boolean(state.finished);
+  const all = chapters.length > 0 && done === chapters.length;
+  const fraction = chapters.length ? Math.min(1, sum / chapters.length) : 0;
+  return { heardSeconds: heard, totalSeconds: 0, fraction: marked ? 1 : fraction, chaptersDone: done, finished: marked || all, caughtUp: false, rewound: false };
+}

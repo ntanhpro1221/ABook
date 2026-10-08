@@ -48,11 +48,12 @@ import { COARSE, EXTEND_GESTURE } from "./extendGesture";
 import { useBookMusic } from "./EditBook";
 import { canPlay, otherBooksToHear, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
-import { SLEEP_CHOICES, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
+import { SLEEP_CHOICES, sleepButtonLabel, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, voiceSections } from "./voiceGroups";
+import { revealVoiceSettings } from "./voiceSettingsLink";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, voiceCaption } from "./readAloudVoice";
-import { bookProgressText, nextChapterLabel, otherBookLine, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, caughtUpDetail, nextChapterLabel, otherBookLine, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
 import { ADD_MUSIC_LABEL } from "./playlistBed";
@@ -97,6 +98,8 @@ function SeekBar({ large = false }: { large?: boolean }) {
   useEffect(() => setDragging(null), [track?.chapterId, track?.bookId]);
   const shown = dragging ?? second;
   const max = duration > 0 ? duration : 1;
+  // Vị trí không bao giờ vượt độ dài (soát UX a9: "1:00" trên thanh dài "0:59" - giờ phát đã làm tròn lên trước khi độ dài kịp cập nhật).
+  const clamped = duration > 0 ? Math.min(shown, duration) : shown;
   const onKeyDown = (event: ReactKeyboardEvent) => {
     // Bàn phím trên thanh tua đi theo đúng bước của trình phát (15 giây), không qua trạng thái "đang kéo".
     const steps: Record<string, () => void> = {
@@ -117,7 +120,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
   };
   return (
     <div className={cn("w-full", large ? "space-y-1.5" : "flex items-center gap-3")}>
-      {!large && <span className="tabular w-12 shrink-0 text-right text-xs text-fg-2">{formatClock(shown)}</span>}
+      {!large && <span className="tabular w-12 shrink-0 text-right text-xs text-fg-2">{formatClock(clamped)}</span>}
       <Slider.Root
         className={cn("group relative flex touch-none select-none items-center", large ? "h-5 w-full" : "h-4 flex-1")}
         min={0}
@@ -150,7 +153,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
       </Slider.Root>
       {large ? (
         <div className="tabular flex justify-between text-xs text-fg-2">
-          <span>{formatClock(shown)}</span>
+          <span>{formatClock(clamped)}</span>
           <span>-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</span>
         </div>
       ) : (
@@ -435,16 +438,7 @@ function useOpenVoiceSettings() {
   return useCallback((anchor = "voices") => {
     setExpanded(false);
     navigate("/settings");
-    let tries = 0;
-    const reveal = () => {
-      const target = document.getElementById(anchor);
-      if (target) {
-        target.scrollIntoView({ block: "start" });
-        // Danh sách giọng phía trên hiện ra SAU (hỏi máy xong mới dựng): chỗ cần tới bị đẩy xuống - cuộn lại vài lần cho tới khi trang yên.
-        for (const wait of [250, 600, 1200]) setTimeout(() => target.scrollIntoView({ block: "start" }), wait);
-      } else if (tries++ < 20) setTimeout(reveal, 50);
-    };
-    setTimeout(reveal, 0);
+    revealVoiceSettings(anchor);
   }, [navigate, setExpanded]);
 }
 
@@ -759,7 +753,7 @@ function SleepPicker({
           <SleepRing fraction={sleep.kind === "minutes" && sleep.minutes > 0 && left !== null ? left / (sleep.minutes * 60_000) : null}>
             <Moon className="size-4" />
           </SleepRing>
-          {active && <span className="tabular">{sleepLabel(sleep, now)}</span>}
+          {active && <span className="tabular">{sleepButtonLabel(sleep, now)}</span>}
         </>
       }
     >
@@ -1155,7 +1149,7 @@ function PlayerAlert({ className, overlay = false }: { className?: string; overl
 }
 
 function CompactProgress() {
-  const fraction = useClock((time, duration) => (duration > 0 ? Math.round((time / duration) * 400) / 400 : 0));
+  const fraction = useClock((time, duration) => (duration > 0 ? Math.min(1, Math.round((time / duration) * 400) / 400) : 0));
   return (
     <div className="absolute inset-x-0 top-0 h-[2px] bg-line">
       <div className="h-full bg-accent" style={{ width: `${fraction * 100}%` }} />
@@ -1752,7 +1746,7 @@ function CaughtUpNotice() {
   if (atEnd !== "caughtUp") return null;
   return (
     <p className="mt-3 rounded-xl bg-hover px-3 py-2 text-center text-sm text-fg-2">
-      Đã nghe hết phần đã có. Chương tiếp theo nghe được khi máy làm xong chương ấy.
+      Đã nghe hết phần đã có. {caughtUpDetail()}
     </p>
   );
 }
@@ -1858,7 +1852,9 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
         // Cửa sổ vừa (~900px): cột trái 400px chỉ chừa ~270px cho đọc theo - co về 320px dưới lg (soát UX 29-09).
         className={cn(
           "flex shrink-0 flex-col bg-panel",
-          mobile ? "min-h-0 flex-1 px-6 pb-6 pt-3" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
+          // Điện thoại xoay ngang chỉ cao ~360px: cả cột không vừa, phần dưới (tốc độ / hẹn giờ / nhạc / dấu trang, tab Đọc theo / Chương)
+          // bị cắt không cuộn tới được (soát UX a9) - cho cả cột cuộn dọc. Màn dọc đủ chỗ nên không có gì để cuộn.
+          mobile ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-3" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
         )}
         // Mỗi cuốn một sắc: màu chủ đạo của ảnh bìa thật (máy chủ tính sẵn), không có thì màu của bìa vẽ từ tên.
         // Nhạt dần trước khi tới chữ và nút, nên không đụng tới độ tương phản của chúng.
@@ -1872,7 +1868,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
           {canGoBack ? <IconButton label="Quay lại chỗ vừa nghe" icon={Undo2} onClick={goBack} /> : <span className="size-9" />}
         </div>
         {mobile && showPanel ? (
-          <div className="-mx-6 mt-2 min-h-0 flex-1 border-y border-line">{panelBody}</div>
+          <div className="-mx-6 mt-2 min-h-56 flex-1 border-y border-line">{panelBody}</div>
         ) : (
           // Bìa vuông, to nhất 300px nhưng co theo chỗ còn lại của khung (cả chiều cao): cqw/cqh là cỡ của chính khung này (container-type:size) - nút bìa
           // w-full max-w-[300px] cũ không co theo chiều cao nên đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10).
@@ -1902,14 +1898,20 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
         <div className="mt-3 flex justify-center">
           <Transport large />
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-1">
-          <MusicMenu />
-          <VoiceMenu />
-          <SpeedMenu />
-          <SleepMenu />
-          <BookmarkButton />
-          <VolumeControl />
-          {actions}
+        {/* Hai nhóm xuống dòng theo nhóm, không theo từng nút: nhãn tốc độ / hẹn giờ / tên giọng làm hàng dài hơn màn thì trước đây nút cuối (phát trên
+            loa / TV) rơi lẻ một mình ở hàng dưới (soát UX a9). */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <div className="flex items-center justify-center gap-1">
+            <MusicMenu />
+            <VoiceMenu />
+            <SpeedMenu />
+            <SleepMenu />
+          </div>
+          <div className="flex items-center justify-center gap-1">
+            <BookmarkButton />
+            <VolumeControl />
+            {actions}
+          </div>
         </div>
         {/* Đang nhỏ dần thì "Sắp tắt…" đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
         {sleep.kind === "chapter" && !fading && <p className="mt-2 text-center text-xs text-fg-2">Sẽ dừng khi hết chương này.</p>}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookProgressText, keepTogether, nextChapterLabel, otherBookLine, PREPARING_VOICE, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, caughtUpDetail, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -102,5 +102,18 @@ describe("keepTogether", () => {
     expect(keepTogether("Chương 1")).toBe("Chương\u00a01");
     expect(keepTogether("Chương 12 · Bến phà")).toBe("Chương\u00a012 · Bến phà");
     expect(keepTogether("Bến phà lúc bình minh")).toBe("Bến phà lúc bình minh");
+  });
+});
+
+describe("sách chưa đủ chương mà không máy nào thu", () => {
+  it("chỉ hứa 'khi máy làm xong' lúc có máy đang thu; không thì nói điều chắc chắn", () => {
+    expect(caughtUpDetail(true)).toContain("khi máy làm xong");
+    expect(caughtUpDetail(false)).not.toContain("máy làm xong");
+    expect(caughtUpDetail()).toBe("Các chương sau chưa có audio.");
+  });
+
+  it("dòng trạng thái cho số chương đã thu, không nói việc thu đang dừng", () => {
+    expect(partialBookLine(1, 2)).toBe("Sách này có 1/2 chương đã thu - các chương sau chưa có audio");
+    expect(partialBookLine(1, 2)).not.toContain("đang dừng");
   });
 });
