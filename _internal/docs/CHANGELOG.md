@@ -23,8 +23,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: khi bật "Cho máy khác nghe thư viện này", ABook hiện một thông báo thường trực ("Đang cho máy khác nghe thư viện này",
   có nút "Tắt chia sẻ"; bấm nút ấy thì công tắc trong app tắt theo, kể cả khi đang mở app). Trên OPPO (ColorOS) app vẫn bị hệ thống
   "đóng băng" ~30 giây sau khi tắt màn hình dù có thông báo: máy tính gọi qua Wi-Fi được trả lời sau ~19 giây, qua Bluetooth thì
-  phải chờ tới lần hệ thống tình cờ đánh thức app (đo thật: tới vài phút) - sẽ tìm cách khác cho Bluetooth. Điện thoại cũng báo tên
-  Bluetooth của nó, nên máy tính tự nhận ra điện thoại trong các thiết bị đã ghép dù tên Bluetooth khác tên máy.
+  phải chờ tới lần hệ thống tình cờ đánh thức app (đo thật: tới vài phút). Điện thoại cũng báo tên Bluetooth của nó, nên máy tính
+  tự nhận ra điện thoại trong các thiết bị đã ghép dù tên Bluetooth khác tên máy.
+- Qua Bluetooth, đang tải sách lớn thì những việc nhỏ (thư viện, chỗ nghe, điều khiển trình phát) vẫn về ngay: trước đây tải 3 MB
+  làm chúng chờ 3-4 giây, nay khoảng nửa giây (đo trên điện thoại thật; tải sách chậm đi chừng 15%). Máy tính và điện thoại phải
+  cùng bản mới.
+- "Máy tính khác": khi điện thoại đang ngủ (ABook trên điện thoại bị hệ thống tạm dừng), máy tính không báo lỗi mà ghi "Điện thoại
+  đang ngủ - mở ABook trên điện thoại để trả lời ngay", chờ thêm tối đa 5 phút qua Bluetooth / 1 phút qua Wi-Fi, có nút "Thôi chờ".
+- Điện thoại, màn Thiết bị: khi đang cho máy khác nghe thư viện, nút "Để máy tính khỏi phải chờ: cho ABook chạy nền" mở trang cài
+  đặt của ABook, kèm lời chỉ đường theo hãng máy (OPPO/realme/OnePlus, Xiaomi, Samsung).
 
 ### Nhạc nền
 

@@ -7,13 +7,21 @@ qua Wi-Fi cũng chạy qua Bluetooth mà sync.py không phải biết. Âm thanh
 mái trên RFCOMM (~100-250 KB/s thực tế); tải cả chương 20 MB mất vài phút.
 
 RFCOMM chỉ cho một kết nối mỗi kênh mỗi cặp máy, nên phải tự ghép kênh. Khung: loại (1 byte), luồng (4 byte), độ dài (4
-byte), big-endian, rồi dữ liệu. Trình phát ngừng đọc khi bộ đệm đầy, nên mỗi luồng có cửa sổ tín dụng riêng như HTTP/2: bên
-gửi chỉ gửi trong phần tín dụng, bên nhận trả tín dụng sau khi ĐÃ ghi xuống socket cục bộ - một luồng nghẽn không làm luồng
-khác đứng, và bộ nhớ đệm mỗi luồng có trần. CLOSE là "hết dữ liệu theo chiều này" (half-close); luồng xong khi cả hai chiều
+byte), big-endian, rồi dữ liệu (DATA tối đa 4 KB). Trình phát ngừng đọc khi bộ đệm đầy, nên mỗi luồng có cửa sổ tín dụng
+riêng như HTTP/2 (64 KB mỗi chiều): bên gửi chỉ gửi trong phần tín dụng, bên nhận trả tín dụng sau khi ĐÃ ghi xuống socket
+cục bộ (mỗi 16 KB) - một luồng nghẽn không làm luồng khác đứng. Cả đường hầm còn một cửa sổ chung 256 KB (WINDOW luồng 0):
+trần bộ nhớ nhận, bao nhiêu luồng cũng vậy. CLOSE là "hết dữ liệu theo chiều này" (half-close); luồng xong khi cả hai chiều
 đã CLOSE. RESET là "bỏ luồng này ngay, cả hai chiều": ứng dụng cục bộ đóng ngang (trình phát tua ra ngoài bộ đệm, đổi
 chương, dừng) thì bên kia phải thôi gửi - không thì nó chờ tín dụng mãi, giữ luồng, luồng đọc và socket tới khi hết chỗ.
 DATA tới một luồng không còn thì đáp RESET (bên kia tưởng luồng còn sống); WINDOW, CLOSE, RESET tới luồng không còn là
 khung trễ, bỏ qua - không bao giờ đáp RESET cho RESET. Cùng giao thức ở phía Android: mobile/.../BtMux.kt.
+
+Công bằng (08-10, đo thật: tải 3 MB ở 143 KB/s thì một yêu cầu nhỏ bên cạnh chờ ~3,5 giây): mỗi luồng xếp khung của nó vào
+hàng riêng, MỘT luồng ghi chọn khung theo deficit round robin (Shreedhar-Varghese 1996) - luồng nhỏ chỉ chờ mỗi luồng lớn một
+khung 4 KB (~27 ms). Khung điều khiển (WINDOW, RESET, ACK) đi trước, tối đa CONTROL_BURST khung liền khi DATA đang chờ.
+`write()` trả về không có nghĩa đã tới: bộ đệm socket/RFCOMM nuốt hàng trăm KB và mọi thứ xếp sau chúng. Nên bên nhận báo
+số byte đã đọc khỏi đường hầm (ACK, luồng 0, mỗi 4 KB) và bên gửi giữ không quá IN_FLIGHT byte chưa được báo. Luồng đọc
+không bao giờ chờ ai: khung trả lời chỉ được xếp hàng cho luồng ghi.
 
 Windows: Python có sẵn socket RFCOMM (AF_BLUETOOTH, từ 3.9); bản ghi SDP (để điện thoại tìm dịch vụ theo UUID) đăng ký bằng
 WSASetServiceW qua ctypes - không thêm gói nào (thêm gói là đổi uv.lock, tức đổi hash chất lượng). Chiều ngược lại (máy
@@ -32,14 +40,20 @@ import struct
 import threading
 import time
 import uuid
+from collections import deque
 from typing import Callable, Iterator
 
 SERVICE_UUID = uuid.UUID("a1f667fe-352a-49b7-9b91-a5463677cac0")  # dịch vụ ABook (điện thoại dùng đúng UUID này)
 SERVICE_NAME = "ABook"
-OPEN, DATA, CLOSE, WINDOW, RESET = 1, 2, 3, 4, 5
+OPEN, DATA, CLOSE, WINDOW, RESET, ACK = 1, 2, 3, 4, 5, 6
 HEADER = struct.Struct(">BII")
-MAX_DATA = 16 * 1024
-WINDOW_SIZE = 256 * 1024
+MAX_DATA = 4 * 1024  # khung DATA lớn nhất, cũng là phần mỗi lượt của một luồng
+STREAM_WINDOW = 64 * 1024  # tín dụng mỗi luồng mỗi chiều
+LINK_WINDOW = 256 * 1024  # tín dụng chung cả đường hầm mỗi chiều = trần bộ nhớ nhận
+UPDATE_AFTER = 16 * 1024  # trả tín dụng khi đã tiêu chừng này
+ACK_AFTER = 4 * 1024  # báo đã đọc khỏi đường hầm sau chừng này byte
+IN_FLIGHT = 16 * 1024  # byte đã ghi xuống kết nối mà bên kia chưa báo đọc (~0,1 giây ở 150 KB/s)
+CONTROL_BURST = 4
 MAX_STREAMS = 64
 DIAL_SECONDS = 10  # nối vào cổng đồng bộ của chính máy này; nối được rồi thì KHÔNG hạn giờ đọc (hỏi dài 25 giây)
 RETRY_SECONDS = 20  # Bluetooth tắt / card rút ra: thử mở lại sau ngần này
@@ -72,13 +86,132 @@ def _read_exact(link: socket.socket, size: int) -> bytes:
     return b"".join(chunks)
 
 
+class _Outbox:
+    """Mọi khung ra của một đầu đường hầm, cho MỘT luồng ghi. Khung điều khiển (`send`) đi trước, tối đa CONTROL_BURST khung
+    liền khi DATA đang chờ; khung của từng luồng (`push`: OPEN, DATA, CLOSE - giữ đúng thứ tự trong luồng) xếp hàng riêng và
+    được chọn theo deficit round robin, mỗi lượt MAX_DATA byte. DATA còn cần tín dụng chung (`credit`, WINDOW luồng 0); mọi
+    khung luồng dừng khi đã có `limit` byte đi mà bên kia chưa báo đọc (`acked`) - khung điều khiển thì không bao giờ dừng
+    (ACK hai chiều không được chờ nhau)."""
+
+    def __init__(self, *, limit: int = IN_FLIGHT, credit: int = LINK_WINDOW) -> None:
+        self.ready = threading.Condition()
+        self.control: deque[bytes] = deque()
+        self.queues: dict[int, deque[tuple[int, bytes]]] = {}
+        self.active: deque[int] = deque()  # luồng có khung chờ, theo lượt
+        self.deficit: dict[int, int] = {}
+        self.turn: int | None = None  # luồng đang trong lượt (đã cộng phần lượt này)
+        self.burst = 0
+        self.link_credit = credit
+        self.in_flight = 0
+        self.limit = limit
+        self.closed = False
+
+    def send(self, kind: int, number: int, payload: bytes = b"") -> None:
+        with self.ready:
+            if self.closed:
+                raise LinkClosed()
+            self.control.append(HEADER.pack(kind, number, len(payload)) + payload)
+            self.ready.notify_all()
+
+    def push(self, number: int, kind: int, payload: bytes = b"") -> None:
+        with self.ready:
+            if self.closed:
+                raise LinkClosed()
+            waiting = self.queues.get(number)
+            if waiting is None:
+                waiting = self.queues[number] = deque()
+                self.deficit[number] = 0
+                self.active.append(number)
+            waiting.append((kind, payload))
+            self.ready.notify_all()
+
+    def drop(self, number: int) -> None:
+        """Bỏ mọi khung chưa gửi của một luồng (RESET): bên kia đã hay sẽ quên luồng ấy."""
+        with self.ready:
+            if self.queues.pop(number, None) is not None:
+                self.active.remove(number)
+                del self.deficit[number]
+                if self.turn == number:
+                    self.turn = None
+
+    def credit(self, amount: int) -> None:
+        with self.ready:
+            self.link_credit += amount
+            self.ready.notify_all()
+
+    def acked(self, amount: int) -> None:
+        with self.ready:
+            self.in_flight = max(0, self.in_flight - amount)
+            self.ready.notify_all()
+
+    def close(self) -> None:
+        with self.ready:
+            self.closed = True
+            self.ready.notify_all()
+
+    def next(self, timeout: float | None = None) -> bytes | None:
+        """Khung kế tiếp cho luồng ghi, chờ tới khi có khung gửi được. None: đã đóng (hay hết `timeout`)."""
+        with self.ready:
+            while not self.closed:
+                frame = self._pick()
+                if frame is not None:
+                    self.in_flight += len(frame)
+                    return frame
+                if not self.ready.wait(timeout):
+                    return None
+            return None
+
+    def _pick(self) -> bytes | None:
+        if self.control and self.burst < CONTROL_BURST:
+            self.burst += 1
+            return self.control.popleft()
+        frame = self._next_in_turn()
+        if frame is not None:
+            self.burst = 0
+            return frame
+        return self.control.popleft() if self.control else None
+
+    def _next_in_turn(self) -> bytes | None:
+        if self.in_flight >= self.limit:
+            return None
+        for _ in range(len(self.active) + 1):
+            if not self.active:
+                return None
+            number = self.active[0]
+            waiting = self.queues[number]
+            kind, payload = waiting[0]
+            cost = len(payload)
+            if kind == DATA and cost > self.link_credit:
+                self.active.rotate(-1)  # chờ tín dụng chung; luồng sau vẫn có thể gửi OPEN/CLOSE
+                self.turn = None
+                continue
+            if self.turn != number:
+                self.turn = number
+                self.deficit[number] += MAX_DATA
+            if cost > self.deficit[number]:
+                self.active.rotate(-1)  # hết lượt
+                self.turn = None
+                continue
+            waiting.popleft()
+            self.deficit[number] -= cost
+            if not waiting:
+                del self.queues[number], self.deficit[number]
+                self.active.popleft()
+                self.turn = None
+            if kind == DATA:
+                self.link_credit -= cost
+            return HEADER.pack(kind, number, cost) + payload
+        return None
+
+
 class _Stream:
     def __init__(self, mux: "Mux", number: int, local: socket.socket | None) -> None:
         self.mux, self.number, self.local = mux, number, local
-        self.credit = WINDOW_SIZE  # bên kia nhận được bấy nhiêu byte nữa
+        self.credit = STREAM_WINDOW  # bên kia nhận được bấy nhiêu byte nữa
         self.changed = threading.Condition()
         self.outgoing: queue.Queue[bytes | None] = queue.Queue()  # từ đường hầm xuống socket cục bộ; None = bên kia hết
-        self.queued = 0  # byte đã nhận mà chưa ghi xuống - bên kia giữ đúng tín dụng thì không bao giờ quá WINDOW_SIZE
+        self.queued = 0  # byte đã nhận mà chưa ghi xuống
+        self.unreturned = 0  # byte đã ghi xuống mà chưa trả tín dụng
         self.sent_eof = False
         self.got_eof = False
         self.closed = False
@@ -96,14 +229,17 @@ class _Stream:
         threading.Thread(target=self._pump, name=f"bt-pump-{self.number}", daemon=True).start()
         threading.Thread(target=self._drain, name=f"bt-drain-{self.number}", daemon=True).start()
 
-    def receive(self, data: bytes) -> bool:
-        """Dữ liệu bên kia gửi cho luồng này; False nếu bên kia gửi quá tín dụng (sai giao thức - đóng luồng)."""
+    def receive(self, data: bytes) -> None:
+        """Dữ liệu bên kia gửi cho luồng này (luồng đọc gọi - không bao giờ chờ). Quá tín dụng là sai giao thức: RESET."""
         with self.changed:
-            self.queued += len(data)
-            if self.queued > WINDOW_SIZE:
-                return False
-        self.outgoing.put(data)
-        return True
+            if not self.closed and self.queued + self.unreturned + len(data) <= STREAM_WINDOW:
+                self.queued += len(data)
+                self.outgoing.put(data)
+                return
+            overflow = not self.closed
+        self.mux._consumed(len(data))  # không giữ thì trả tín dụng chung ngay
+        if overflow:
+            self.close(reset=True)
 
     def grant(self, amount: int) -> None:
         with self.changed:
@@ -111,7 +247,7 @@ class _Stream:
             self.changed.notify_all()
 
     def _pump(self) -> None:
-        """socket cục bộ -> đường hầm, chỉ trong phần tín dụng."""
+        """socket cục bộ -> hàng của luồng này, chỉ trong phần tín dụng."""
         assert self.local is not None
         try:
             while True:
@@ -124,23 +260,25 @@ class _Stream:
                 data = self.local.recv(budget)
                 if not data:
                     break
-                with self.changed:
+                with self.changed:  # xếp dưới khoá: đã đóng (RESET) thì không còn khung nào lọt vào sau `drop`
+                    if self.closed:
+                        return
                     self.credit -= len(data)
-                self.mux._send(DATA, self.number, data)
+                    self.mux.out.push(self.number, DATA, data)
+            with self.changed:
+                if self.closed:
+                    return
+                self.sent_eof = True
+                self.mux.out.push(self.number, CLOSE)
         except LinkClosed:
             return  # đường hầm đứt: shutdown() đã đóng mọi luồng
         except OSError:
             self.close(reset=True)  # ứng dụng cục bộ cắt ngang (RST), hay luồng vừa bị đóng
             return
-        self.sent_eof = True
-        try:
-            self.mux._send(CLOSE, self.number)
-        except LinkClosed:
-            return
         self._maybe_done()
 
     def _drain(self) -> None:
-        """đường hầm -> socket cục bộ; trả tín dụng sau khi đã ghi."""
+        """đường hầm -> socket cục bộ; trả tín dụng (luồng và chung) sau khi đã ghi."""
         assert self.local is not None
         try:
             while True:
@@ -151,8 +289,16 @@ class _Stream:
                     break
                 self.local.sendall(data)
                 with self.changed:
+                    if self.closed:
+                        return  # close() đã trả tín dụng chung cho mọi byte còn giữ, kể cả chỗ này
                     self.queued -= len(data)
-                self.mux._send(WINDOW, self.number, struct.pack(">I", len(data)))
+                    self.unreturned += len(data)
+                    grant = self.unreturned if self.unreturned >= UPDATE_AFTER else 0
+                    if grant:
+                        self.unreturned = 0
+                if grant:
+                    self.mux.out.send(WINDOW, self.number, struct.pack(">I", grant))
+                self.mux._consumed(len(data))
         except LinkClosed:
             return
         except OSError:
@@ -165,46 +311,73 @@ class _Stream:
         if self.sent_eof and self.got_eof:
             self.close()
 
-    def close(self, *, reset: bool = False) -> None:
-        """Đóng luồng (một lần). `reset`: đóng ngang - báo bên kia bỏ luồng, để nó không chờ tín dụng mãi."""
+    def close(self, *, reset: bool = False, abandoned: bool = False) -> None:
+        """Đóng luồng (một lần). `reset`: đóng ngang - báo bên kia bỏ luồng, để nó không chờ tín dụng mãi. `abandoned`: bên
+        kia đã bỏ luồng (nó gửi RESET). Hai trường hợp ấy bỏ luôn khung chưa gửi; đóng thường thì khung còn xếp vẫn đi hết."""
         with self.changed:
             if self.closed:
                 return
             self.closed = True
+            leftover, self.queued = self.queued, 0
             self.changed.notify_all()
         if self.local is not None:
             _close_socket(self.local)
         self.outgoing.put(None)
         self.mux._forget(self.number)
+        if leftover:
+            self.mux._consumed(leftover)
+        if reset or abandoned:
+            self.mux.out.drop(self.number)
         if reset:
             try:
-                self.mux._send(RESET, self.number)
+                self.mux.out.send(RESET, self.number)
             except LinkClosed:
                 pass
 
 
 class Mux:
     """Một đầu đường hầm trên một kết nối byte (RFCOMM, hay socket thường khi thử). `dial`: bên phục vụ - mở kết nối cục bộ
-    cho mỗi luồng bên kia mở. `open(sock)`: bên kết nối - đưa một socket cục bộ vào đường hầm."""
+    cho mỗi luồng bên kia mở. `open(sock)`: bên kết nối - đưa một socket cục bộ vào đường hầm. `limit`: IN_FLIGHT (thử)."""
 
-    def __init__(self, link: socket.socket, *, dial: Callable[[], socket.socket] | None = None, odd: bool = True) -> None:
+    def __init__(self, link: socket.socket, *, dial: Callable[[], socket.socket] | None = None, odd: bool = True,
+                 limit: int = IN_FLIGHT) -> None:
         self.link = link
         self.dial = dial
         self.streams: dict[int, _Stream] = {}
         self.lock = threading.Lock()
-        self.send_lock = threading.Lock()
+        self.out = _Outbox(limit=limit)
         self.numbers = itertools.count(1 if odd else 2, 2)
         self.alive = True
+        self._credit_lock = threading.Lock()
+        self._held = 0  # byte DATA đã nhận mà chưa tiêu (trần LINK_WINDOW)
+        self._unreturned = 0  # byte đã tiêu mà chưa trả tín dụng chung
+        threading.Thread(target=self._write, name="bt-write", daemon=True).start()
 
-    def _send(self, kind: int, number: int, payload: bytes = b"") -> None:
-        if not self.alive:
-            raise LinkClosed()
-        try:
-            with self.send_lock:
-                self.link.sendall(HEADER.pack(kind, number, len(payload)) + payload)
-        except OSError as error:
-            self.shutdown()
-            raise LinkClosed() from error
+    def _write(self) -> None:
+        """Luồng ghi duy nhất của kết nối."""
+        while True:
+            frame = self.out.next()
+            if frame is None:
+                return
+            try:
+                self.link.sendall(frame)
+            except OSError:
+                self.shutdown()
+                return
+
+    def _consumed(self, amount: int) -> None:
+        """`amount` byte DATA đã ghi xuống (hay bỏ): trả tín dụng chung, gộp mỗi UPDATE_AFTER."""
+        with self._credit_lock:
+            self._held -= amount
+            self._unreturned += amount
+            grant = self._unreturned if self._unreturned >= UPDATE_AFTER else 0
+            if grant:
+                self._unreturned = 0
+        if grant:
+            try:
+                self.out.send(WINDOW, 0, struct.pack(">I", grant))
+            except LinkClosed:
+                pass
 
     def _forget(self, number: int) -> None:
         with self.lock:
@@ -217,36 +390,54 @@ class Mux:
                 raise LinkClosed("đường hầm đã đóng" if not self.alive else "quá nhiều luồng")
             number = next(self.numbers)
             stream = self.streams[number] = _Stream(self, number, local)
-        self._send(OPEN, number)
+        self.out.push(number, OPEN)
         stream.start()
         return number
 
     def run(self) -> None:
-        """Đọc khung tới khi đường hầm đứt; đứt thì đóng mọi luồng."""
+        """Đọc khung tới khi đường hầm đứt; đứt thì đóng mọi luồng. Không bao giờ chờ luồng nào: chỉ xếp hàng."""
+        read = 0
         try:
             while True:
                 kind, number, length = HEADER.unpack(_read_exact(self.link, HEADER.size))
                 if length > MAX_DATA:
                     raise LinkClosed("khung quá lớn")
                 payload = _read_exact(self.link, length) if length else b""
+                read += HEADER.size + length
+                if read >= ACK_AFTER:
+                    self.out.send(ACK, 0, struct.pack(">I", read))
+                    read = 0
+                amount = struct.unpack(">I", payload)[0] if kind in (WINDOW, ACK) and length == 4 else 0
+                if number == 0:
+                    if kind == ACK:
+                        self.out.acked(amount)
+                    elif kind == WINDOW:
+                        if not 0 < amount <= LINK_WINDOW:
+                            raise LinkClosed("tín dụng chung sai")
+                        self.out.credit(amount)
+                    continue
+                if kind == DATA:
+                    with self._credit_lock:
+                        self._held += length
+                        if self._held + self._unreturned > LINK_WINDOW:
+                            raise LinkClosed("gửi quá tín dụng chung")
                 with self.lock:
                     stream = self.streams.get(number)
                 if kind == OPEN:
                     self._accept(number)
                 elif stream is None:
                     if kind == DATA:
-                        self._send(RESET, number)  # bên kia tưởng luồng còn sống: bảo nó thôi gửi
+                        self._consumed(length)
+                        self.out.send(RESET, number)  # bên kia tưởng luồng còn sống: bảo nó thôi gửi
                     continue  # WINDOW/CLOSE/RESET trễ của luồng đã xong: bỏ
                 elif kind == RESET:
-                    stream.close()
+                    stream.close(abandoned=True)
                 elif kind == DATA:
-                    if not stream.receive(payload):
-                        stream.close(reset=True)  # gửi quá tín dụng: sai giao thức
+                    stream.receive(payload)
                 elif kind == CLOSE:
                     stream.outgoing.put(None)
                 elif kind == WINDOW:
-                    amount = struct.unpack(">I", payload)[0] if len(payload) == 4 else 0
-                    if 0 < amount <= WINDOW_SIZE:
+                    if 0 < amount <= STREAM_WINDOW:
                         stream.grant(amount)
                     else:
                         stream.close(reset=True)
@@ -265,7 +456,7 @@ class Mux:
             if stream is not None:
                 self.streams[number] = stream
         if stream is None:
-            self._send(RESET, number)
+            self.out.send(RESET, number)
             return
         threading.Thread(target=self._dial, args=(stream,), name=f"bt-dial-{number}", daemon=True).start()
 
@@ -284,6 +475,7 @@ class Mux:
                 return
             self.alive = False  # open()/_accept() kiểm cờ này dưới cùng khoá: không luồng nào đăng ký sau ảnh chụp dưới
             streams = list(self.streams.values())
+        self.out.close()
         for stream in streams:
             stream.close()
         _close_socket(self.link)

@@ -94,7 +94,8 @@ class Computers:
         """Cho giao diện: không bao giờ kèm mã thiết bị."""
         with self._lock:
             entries = self._read()["computers"]
-        return [{"id": key, **{field: value for field, value in entry.items() if field != "token"}}
+        return [{"id": key, **{field: value for field, value in entry.items() if field != "token"},
+                 **({"waking": now} if (now := waking(key)) else {})}
                 for key, entry in sorted(entries.items(), key=lambda item: str(item[1].get("name", "")).casefold())]
 
     def note(self, computer: str, **fields: Any) -> None:
@@ -254,42 +255,173 @@ def _unreachable(endpoint: Endpoint) -> str:
     return bluetooth.last_error(address) or UNREACHABLE_BLUETOOTH
 
 
-def _tunnel(address: str, fingerprint: str | None) -> Endpoint:
+def _tunnel(address: str, fingerprint: str | None, computer: str = "") -> Endpoint:
     """Gốc https của máy ở địa chỉ Bluetooth `address`: cổng cục bộ của đường hầm (mở RFCOMM ở nền nếu chưa mở). Vân tay giữ
     nguyên - TLS đi hết đường hầm tới máy kia, nên chứng chỉ vẫn phải khớp."""
     link = bluetooth.gateway(address)
     link.warm()
-    return Endpoint("127.0.0.1", link.port, fingerprint, bluetooth=bluetooth.normalize_address(address))
+    return Endpoint("127.0.0.1", link.port, fingerprint, bluetooth=bluetooth.normalize_address(address), computer=computer)
 
 
-def _dial(endpoint: Endpoint, timeout: float) -> tls.PinnedHTTPSConnection:
+# ---- điện thoại đang ngủ ---------------------------------------------------------------------------------------------------
+# Đo 08-10 (docs/BLUETOOTH.md): ColorOS đóng băng ABook ~30 giây sau khi rời màn hình. Hệ điều hành vẫn nhận kết nối (TCP, RFCOMM)
+# nhưng app không bắt tay TLS cho tới khi tự dậy: Wi-Fi ~19 giây (gói TCP tới làm nó dậy), Bluetooth có khi 224 giây (không gì
+# đánh thức được). Nối lại không giúp gì - kết nối đang chờ xong ngay khi app dậy - nên tầng dưới đã nối thì cứ chờ, nói cho
+# người dùng biết, và cho họ thôi chờ. Chỉ coi là xong khi bắt tay TLS + vân tay đã ghim xong.
+
+WAKE_BLUETOOTH_SECONDS = 300
+WAKE_WIFI_SECONDS = 60
+SLEEPY_SECONDS = 3  # tầng dưới đã nối mà ngần này chưa bắt tay xong: báo "đang ngủ"
+QUIET_SECONDS = 600  # thôi chờ / chờ hết hạn: ngần này không tự chờ lại ở nền (người dùng bấm hỏi lại thì vẫn chờ)
+STILL_ASLEEP = "Điện thoại vẫn chưa trả lời - mở ABook trên điện thoại rồi bấm “Hỏi lại thư viện”"
+STOPPED_WAITING = "Đã thôi chờ - mở ABook trên điện thoại rồi bấm “Hỏi lại thư viện”"
+_WAKE_LOCK = threading.Lock()
+_waits: dict[str, list["_Wait"]] = {}  # máy -> các lần nối đang chờ nó dậy
+_quiet: dict[str, float] = {}  # máy -> lúc thôi chờ / chờ hết hạn
+
+
+class _Wait:
+    """Một lần nối được phép chờ máy kia dậy: tầng dưới (TCP, hay cổng đường hầm) nối với hạn thường như mọi lần, bắt tay TLS
+    thì chờ tới `limit`, từng nhịp ngắn để thôi chờ là thôi ngay. Kiểm vân tay vẫn là của PinnedHTTPSConnection."""
+
+    STEP = 0.5
+
+    def __init__(self, endpoint: Endpoint) -> None:
+        self.computer = endpoint.computer
+        self.bluetooth = endpoint.bluetooth
+        self.limit = WAKE_BLUETOOTH_SECONDS if endpoint.bluetooth else WAKE_WIFI_SECONDS
+        self.started = time.time()
+        self.asleep = False
+        self.cancelled = False
+        self.finished = threading.Event()
+
+    def handshake(self, sock: Any) -> None:
+        """Bắt tay TLS trên `sock` (SSLSocket chưa bắt tay); hết hạn hay bị thôi chờ: TimeoutError."""
+        with _WAKE_LOCK:
+            _waits.setdefault(self.computer, []).append(self)
+        threading.Thread(target=self._watch, name="remote-wake", daemon=True).start()
+        deadline = time.monotonic() + self.limit
+        usual = sock.gettimeout()
+        sock.settimeout(self.STEP)
+        try:
+            while True:
+                try:
+                    sock.do_handshake()
+                    return
+                except TimeoutError:  # OpenSSL giữ trạng thái bắt tay: gọi lại là làm tiếp
+                    if self.cancelled or time.monotonic() > deadline:
+                        raise
+        finally:
+            sock.settimeout(usual)
+            self.done()
+
+    def _lower_layer_up(self) -> bool:
+        """Wi-Fi: TCP đã nối là xong tầng dưới. Bluetooth: cổng cục bộ luôn nối được, phải chờ RFCOMM của đường hầm lên."""
+        return not self.bluetooth or bluetooth.gateway(self.bluetooth).up
+
+    def _watch(self) -> None:
+        if self.finished.wait(SLEEPY_SECONDS):
+            return
+        while not self.finished.is_set():
+            if self._lower_layer_up():
+                self.asleep = True
+                return
+            self.finished.wait(0.5)
+
+    def cancel(self) -> None:
+        self.cancelled = True
+
+    def done(self) -> None:
+        self.finished.set()
+        with _WAKE_LOCK:
+            mine = _waits.get(self.computer, [])
+            if self in mine:
+                mine.remove(self)
+            if not mine:
+                _waits.pop(self.computer, None)
+
+    def reason(self, error: BaseException) -> str:
+        """Câu cho người dùng khi lần chờ này hỏng; "" nếu không phải chuyện điện thoại ngủ (lỗi thường xử như cũ)."""
+        if self.cancelled:
+            return STOPPED_WAITING
+        if self.asleep and isinstance(error, TimeoutError):
+            with _WAKE_LOCK:
+                _quiet[self.computer] = time.monotonic()
+            return STILL_ASLEEP
+        return ""
+
+
+class _WakingContext:
+    """SSLContext của PinnedHTTPSConnection, chỉ khác ở chỗ bắt tay do `_Wait` làm (http.client gọi `wrap_socket` ngay sau khi
+    nối TCP xong)."""
+
+    def __init__(self, context: Any, wait: _Wait) -> None:
+        self.context, self.wait = context, wait
+
+    def wrap_socket(self, sock: Any, server_hostname: str | None = None) -> Any:
+        wrapped = self.context.wrap_socket(sock, server_hostname=server_hostname, do_handshake_on_connect=False)
+        self.wait.handshake(wrapped)
+        return wrapped
+
+
+def waking(computer: str) -> dict[str, Any] | None:
+    """Máy đang được chờ dậy (cho giao diện): lúc bắt đầu chờ, hạn chờ, đi đường nào."""
+    with _WAKE_LOCK:
+        asleep = [wait for wait in _waits.get(computer, []) if wait.asleep]
+    if not asleep:
+        return None
+    first = min(asleep, key=lambda wait: wait.started)
+    return {"since": first.started, "until": first.started + first.limit, "via": "bluetooth" if first.bluetooth else "wifi"}
+
+
+def stop_waiting(computer: str) -> None:
+    """Người dùng thôi chờ máy này dậy: bỏ các lần nối đang chờ, và một lúc không tự chờ lại ở nền."""
+    with _WAKE_LOCK:
+        _quiet[computer] = time.monotonic()
+        pending = list(_waits.get(computer, []))
+    for wait in pending:
+        wait.cancel()
+
+
+def _quiet_now(computer: str) -> bool:
+    with _WAKE_LOCK:
+        return time.monotonic() - _quiet.get(computer, -QUIET_SECONDS) < QUIET_SECONDS
+
+
+def _dial(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.PinnedHTTPSConnection:
+    """Nối + bắt tay + kiểm vân tay, CHƯA gửi byte nào. `wake`: máy kia có thể đang ngủ - xem `_Wait`."""
     connection = tls.PinnedHTTPSConnection(endpoint.host, endpoint.port, expected=endpoint.fingerprint, timeout=timeout)
+    wait = _Wait(endpoint) if wake and endpoint.computer else None
+    if wait is not None:
+        connection._context = _WakingContext(connection._context, wait)  # type: ignore[attr-defined] - SSLContext của http.client
     try:
-        connection.connect()  # nối + bắt tay + kiểm vân tay, CHƯA gửi byte nào
-    except BaseException:
+        connection.connect()
+    except BaseException as error:
         connection.close()
+        if wait is not None and (reason := wait.reason(error)):
+            raise RemoteError(reason) from error
         raise
     if endpoint.target:
         route.mark_up(endpoint.target)
     return connection
 
 
-def _connect(endpoint: Endpoint, timeout: float) -> tls.PinnedHTTPSConnection:
+def _connect(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.PinnedHTTPSConnection:
     """Nối tới máy kia. Đường Wi-Fi hỏng lúc nối (không phải lệch vân tay - lệch vân tay là lỗi, không lùi) mà máy kia có đường
     Bluetooth thì đánh dấu Wi-Fi hỏng (các yêu cầu sau đi thẳng Bluetooth) và nối lại qua đường hầm. Chỉ lùi khi CHƯA gửi byte
-    nào: yêu cầu ghi không bao giờ chạy hai lần."""
+    nào: yêu cầu ghi không bao giờ chạy hai lần. Máy đang ngủ (`_Wait`) không phải Wi-Fi hỏng: không lùi."""
     try:
-        return _dial(endpoint, timeout)
+        return _dial(endpoint, timeout, wake=wake)
     except tls.PinError:
         raise
     except OSError:
         if endpoint.target:
             route.mark_down(endpoint.target)
         if not endpoint.fallback:
-            if endpoint.computer:
+            if endpoint.computer and endpoint.target:
                 _look_for_bluetooth(endpoint.computer)  # lần sau (nếu tìm ra) đi Bluetooth
             raise
-        return _dial(_tunnel(endpoint.fallback, endpoint.fingerprint), timeout)
+        return _dial(_tunnel(endpoint.fallback, endpoint.fingerprint, endpoint.computer), timeout, wake=wake)
 
 
 LOOK_SECONDS = 120  # tìm địa chỉ Bluetooth theo tên: mỗi máy không quá hai phút một lần
@@ -338,9 +470,11 @@ def _read(response: http.client.HTTPResponse, size: int | None = None) -> bytes:
 
 @contextmanager
 def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str, Any] | None = None,
-          timeout: float = TIMEOUT, upload: tuple[Path, str] | None = None) -> Iterator[tuple[http.client.HTTPResponse, str]]:
+          timeout: float = TIMEOUT, upload: tuple[Path, str] | None = None,
+          wake: bool = False) -> Iterator[tuple[http.client.HTTPResponse, str]]:
     """Một yêu cầu qua TLS ghim vân tay, thân trả lời CHƯA đọc: (trả lời, vân tay chứng chỉ máy kia đã đưa ra). Máy kia trả lỗi
-    thì `RemoteError` mang câu của nó và mã trạng thái. `upload`: (file, kiểu nội dung) gửi làm thân thay cho JSON."""
+    thì `RemoteError` mang câu của nó và mã trạng thái. `upload`: (file, kiểu nội dung) gửi làm thân thay cho JSON. `wake`:
+    máy kia đang ngủ thì chờ nó dậy (`_Wait`)."""
     if endpoint.fingerprint == "":
         raise RemoteError("Máy này chưa ghi vân tay của máy kia - ghép lại với máy kia")
     data = json.dumps(body).encode("utf-8") if body is not None else None
@@ -350,7 +484,7 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
     connection: tls.PinnedHTTPSConnection | None = None
     try:
         try:
-            connection = _connect(endpoint, timeout)
+            connection = _connect(endpoint, timeout, wake=wake)
             if upload is not None:
                 headers.update({"Content-Type": upload[1], "Content-Length": str(upload[0].stat().st_size)})
                 with upload[0].open("rb") as handle:
@@ -376,15 +510,15 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
 
 
 def _exchange(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str, Any] | None = None,
-              timeout: float = TIMEOUT) -> tuple[bytes, str]:
+              timeout: float = TIMEOUT, wake: bool = False) -> tuple[bytes, str]:
     """Một yêu cầu qua TLS ghim vân tay: (thân trả lời, vân tay chứng chỉ máy kia đã đưa ra)."""
-    with _open(endpoint, method, path, token, body, timeout) as (response, seen):
+    with _open(endpoint, method, path, token, body, timeout, wake=wake) as (response, seen):
         return _read(response), seen
 
 
 def _request(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str, Any] | None = None,
-             timeout: float = TIMEOUT) -> bytes:
-    return _exchange(endpoint, method, path, token, body, timeout)[0]
+             timeout: float = TIMEOUT, wake: bool = False) -> bytes:
+    return _exchange(endpoint, method, path, token, body, timeout, wake=wake)[0]
 
 
 def _bluetooth_of(entry: dict[str, Any]) -> str:
@@ -420,46 +554,63 @@ def _base(entry: dict[str, Any]) -> Endpoint:
     Bluetooth) -> đường hầm; cả hai -> Wi-Fi khi thông, hỏng thì Bluetooth (và nhớ, thử lại Wi-Fi mỗi phút ở nền). Không bao giờ
     chờ mạng."""
     host, port, fingerprint = str(entry["host"]), int(entry["port"]), str(entry.get("fingerprint") or "")
+    computer = str(entry.get("id") or "")
     address = _bluetooth_of(entry)
     if not address:
-        return Endpoint(host, port, fingerprint, target=f"{host}:{port}", computer=str(entry.get("id") or ""))
+        return Endpoint(host, port, fingerprint, target=f"{host}:{port}", computer=computer)
     lan = [] if host.startswith("bt:") else [f"{host}:{port}"]
     choice = route.pick(lan, address)
     if choice.lan is None:
-        return _tunnel(address, fingerprint)
-    return Endpoint(host, port, fingerprint, target=choice.lan, fallback=address)
+        return _tunnel(address, fingerprint, computer)
+    return Endpoint(host, port, fingerprint, target=choice.lan, fallback=address, computer=computer)
 
 
-def refresh(library_root: Path, computers: Computers) -> dict[str, Any]:
-    """Hỏi mọi máy đã ghép thư viện của nó, dựng / cập nhật các cuốn ảo. Máy không trả lời: giữ nguyên những gì đã có."""
-    root = Path(library_root).expanduser() / REMOTE_FOLDER
+def refresh(library_root: Path, computers: Computers, *, asked: bool = False) -> dict[str, Any]:
+    """Hỏi mọi máy đã ghép thư viện của nó (cùng lúc - một điện thoại đang ngủ không giữ chân máy khác), dựng / cập nhật các
+    cuốn ảo. Máy không trả lời: giữ nguyên những gì đã có. Máy đang ngủ thì chờ nó dậy (`_Wait`); vừa thôi chờ / chờ hết hạn
+    thì lần hỏi nền bỏ qua máy ấy một lúc, `asked` (người dùng bấm hỏi lại, vừa ghép) thì chờ lại."""
     report: dict[str, Any] = {}
+    workers = []
     for public in computers.list():
-        entry = computers.get(public["id"])
-        if entry is None:
+        if asked:
+            with _WAKE_LOCK:
+                _quiet.pop(public["id"], None)
+        elif _quiet_now(public["id"]):
             continue
-        try:
-            library = json.loads(_request(_base(entry), "GET", "/sync/v1/library", entry["token"]).decode("utf-8"))
-            folder = root / _folder(str(library.get("name") or entry["name"]), public["id"])
-            listed = [str(book["id"]) for book in library.get("books") or [] if isinstance(book, dict) and book.get("id")]
-            _follow_renamed(entry, public["id"], folder, set(listed))
-            built = {remote["book"]: child for child, manifest in _manifests(folder)
-                     if (remote := remote_of(manifest)) and remote["computer"] == public["id"]}
-            books = 0
-            for book in listed:
-                _refresh_book(entry, public["id"], folder, book, built.get(book))
-                books += 1
-            # `kind`: máy tính nhận phần sửa của cuốn (POST .../edits, như từ điện thoại); điện thoại chia sẻ thư viện thì không.
-            reported = {} if str(entry["host"]).startswith("bt:") else {"bt": _routes_bluetooth(library)}  # máy báo đường Bluetooth của nó
-            reported["btName"] = _bluetooth_name(library)
-            computers.note(public["id"], lastSeen=time.time(), error="", name=str(library.get("name") or entry["name"]),
-                           kind="computer" if library.get("kind") == "computer" else "phone",
-                           **{key: value for key, value in reported.items() if value})
-            report[public["id"]] = {"books": books}
-        except RemoteError as error:
-            computers.note(public["id"], error=str(error))
-            report[public["id"]] = {"error": str(error)}
+        worker = threading.Thread(target=_refresh_computer, args=(library_root, computers, public["id"], report),
+                                  name="remote-library", daemon=True)
+        worker.start()
+        workers.append(worker)
+    for worker in workers:
+        worker.join()
     return report
+
+
+def _refresh_computer(library_root: Path, computers: Computers, computer: str, report: dict[str, Any]) -> None:
+    entry = computers.get(computer)
+    if entry is None:
+        return
+    try:
+        library = json.loads(_request(_base(entry), "GET", "/sync/v1/library", entry["token"], wake=True).decode("utf-8"))
+        folder = Path(library_root).expanduser() / REMOTE_FOLDER / _folder(str(library.get("name") or entry["name"]), computer)
+        listed = [str(book["id"]) for book in library.get("books") or [] if isinstance(book, dict) and book.get("id")]
+        _follow_renamed(entry, computer, folder, set(listed))
+        built = {remote["book"]: child for child, manifest in _manifests(folder)
+                 if (remote := remote_of(manifest)) and remote["computer"] == computer}
+        books = 0
+        for book in listed:
+            _refresh_book(entry, computer, folder, book, built.get(book))
+            books += 1
+        # `kind`: máy tính nhận phần sửa của cuốn (POST .../edits, như từ điện thoại); điện thoại chia sẻ thư viện thì không.
+        reported = {} if str(entry["host"]).startswith("bt:") else {"bt": _routes_bluetooth(library)}  # máy báo đường Bluetooth của nó
+        reported["btName"] = _bluetooth_name(library)
+        computers.note(computer, lastSeen=time.time(), error="", name=str(library.get("name") or entry["name"]),
+                       kind="computer" if library.get("kind") == "computer" else "phone",
+                       **{key: value for key, value in reported.items() if value})
+        report[computer] = {"books": books}
+    except RemoteError as error:
+        computers.note(computer, error=str(error))
+        report[computer] = {"error": str(error)}
 
 
 def _manifests(folder: Path, suffix: str = "") -> list[tuple[Path, dict[str, Any]]]:
