@@ -16,9 +16,19 @@ Nên script này là đúng cái khuôn ấy: `pythonw` (không console) khởi 
 (xem `tests/test_a_windowless_daemon_opens_no_window.py`, lỗi 21-09 của `heartbeat_daemon.py`).
 
 Mã thoát và giờ chạy ghi vào `runtime/detached_runs.log`, vì không có ai đọc stdout của một tiến trình rời.
+
+## Cha là WMI, không phải phiên (09-10 00:1x)
+
+Đổi tài khoản làm app Claude khởi động lại lúc 00:04-00:13 và MỌI việc thả bằng `Start-Process pythonw` chết
+theo (máy không khởi động lại): chuỗi GPU của Model, chuỗi nhạc, người gác pin, bộ giữ êm quạt. Chúng vẫn
+là hậu duệ của app. Nên lần chạy đầu không tự làm việc: nó nhờ dịch vụ WMI (`Win32_Process.Create`) chạy lại
+chính nó - cha mới là WmiPrvSE, ngoài cây của app; cùng phiên đăng nhập nên vẫn thấy GPU (phiên Model thử
+00:2x). Tiến trình WMI tạo không kế thừa biến môi trường của người gọi (OMP_NUM_THREADS...), nên chúng được ghi
+ra một file tạm cho lần chạy thứ hai đọc lại rồi xoá. WMI hỏng thì chạy ngay tại chỗ như trước.
 """
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -30,6 +40,8 @@ ROOT = Path(__file__).resolve().parent.parent
 LOG = ROOT / "runtime" / "detached_runs.log"
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
 GIT_BASH = Path(r"C:\Program Files\Git\bin\bash.exe")
+OUTSIDE = "--outside-claude"
+ENV_DIR = ROOT / "runtime" / "detached_env"
 
 
 def _resolve(program: str) -> str:
@@ -45,7 +57,43 @@ def _note(line: str) -> None:
         handle.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} pid={os.getpid()} {line}\n")
 
 
+def _relaunch_outside(argv: list[str]) -> bool:
+    """Nhờ WMI chạy lại script này (cờ OUTSIDE + file môi trường); True khi WMI nhận lệnh."""
+    if os.name != "nt":
+        return False
+    ENV_DIR.mkdir(parents=True, exist_ok=True)
+    env_file = ENV_DIR / f"{os.getpid()}_{time.time_ns()}.json"
+    env_file.write_text(json.dumps(dict(os.environ)), encoding="utf-8")
+    command_line = subprocess.list2cmdline([sys.executable, str(Path(__file__).resolve()), OUTSIDE, str(env_file), *argv])
+    quote = lambda value: "'" + value.replace("'", "''") + "'"  # noqa: E731 - chuỗi PowerShell nháy đơn
+    script = (
+        "$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments "
+        f"@{{CommandLine={quote(command_line)}; CurrentDirectory={quote(str(ROOT))}}}; exit $r.ReturnValue"
+    )
+    try:
+        done = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script], stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=NO_WINDOW, timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        done = None
+    if done is not None and done.returncode == 0:
+        return True
+    env_file.unlink(missing_ok=True)
+    return False
+
+
 def main(argv: list[str]) -> int:
+    if argv[:1] == [OUTSIDE] and len(argv) >= 2:
+        env_file = Path(argv[1])
+        try:
+            os.environ.update(json.loads(env_file.read_text(encoding="utf-8")))
+            env_file.unlink()
+        except (OSError, ValueError) as error:
+            _note(f"không đọc được môi trường người gọi ({error}) - chạy với môi trường của WMI")
+        argv = argv[2:]
+    elif argv and _relaunch_outside(argv):
+        return 0
     if not argv:
         _note("không có lệnh nào để chạy")
         return 2
