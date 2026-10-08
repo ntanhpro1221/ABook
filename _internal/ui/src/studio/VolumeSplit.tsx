@@ -125,7 +125,7 @@ export function VolumeSplit({
     <section aria-labelledby="volumes-title" className="mt-4 rounded-xl border border-accent/40 bg-panel p-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="volumes-title" className="flex items-center gap-2 font-semibold">
-          <Layers className="size-4 text-accent-text" /> Chia thành {parts.length} phần
+          <Layers className="size-4 text-accent-text" /> {parts.length > 1 ? `Chia thành ${parts.length} phần` : "Chia thành mấy tập?"}
         </h3>
         <Button size="sm" variant="ghost" onClick={() => onChange(null)}>
           Không chia nữa
@@ -134,6 +134,7 @@ export function VolumeSplit({
       <p className="mt-1 text-fg-2">
         Mỗi phần là một sách trong Dự án: phần 1 như sách thường, phần sau nối tiếp, xếp hàng sau phần trước. Đổi “từ chương” để
         dời chỗ cắt.
+        {parts.length === 1 && ` Hiện mới có một phần - điền chương mà tập 2 bắt đầu (từ chương 2 đến chương ${total}) ở ô dưới rồi bấm Thêm.`}
       </p>
       <ol className="mt-3 divide-y divide-line rounded-lg border border-line">
         {parts.map((part, index) => (
@@ -203,7 +204,7 @@ function AddCut({ starts, total, onAdd }: { starts: number[]; total: number; onA
         inputMode="numeric"
         aria-label="Thêm phần từ chương"
         aria-invalid={bad}
-        placeholder={`2-${total}`}
+        placeholder={`từ 2 đến ${total}`}
         onChange={(event) => {
           setText(event.target.value);
           setBad(false);
@@ -215,7 +216,7 @@ function AddCut({ starts, total, onAdd }: { starts: number[]; total: number; onA
           }
         }}
         className={cn(
-          "h-8 w-20 rounded-lg border bg-bg px-2 text-center text-sm tabular-nums outline-none placeholder:text-fg-3 focus:border-accent",
+          "h-8 w-28 rounded-lg border bg-bg px-2 text-center text-sm tabular-nums outline-none placeholder:text-fg-3 focus:border-accent",
           bad ? "border-danger" : "border-line",
         )}
       />

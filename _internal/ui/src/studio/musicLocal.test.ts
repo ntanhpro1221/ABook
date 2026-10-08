@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  analysisLabel, formatSize, hasVocals, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, autoLabel, autoSwitch,
+  analysisLabel, formatSize, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, autoLabel, autoSwitch,
   type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood,
 } from "./musicLocal";
 
@@ -160,5 +160,22 @@ describe("đo cảm xúc nhạc chính xác hơn", () => {
     expect(preciseBusy(precise({ state: "ready", working: true }))).toBe(true);
     expect(preciseBusy(precise({ state: "ready" }))).toBe(false);
     expect(preciseBusy(undefined)).toBe(false);
+  });
+});
+
+describe("note of a track in the swap list", () => {
+  it("names a sung track and an unanalysed one the same way as Settings and the project tab", () => {
+    expect(mineNote({ analysed: true, vocalsLikely: true, fits: false })).toBe("Có vẻ có lời - máy không tự chọn bài này");
+    expect(mineNote({ analysed: true, vocalsLikely: true, fits: true })).toBe("Có vẻ có lời - máy không tự chọn bài này · Hợp không khí đoạn này");
+    expect(mineNote({ analysed: true, auto: "off", fits: false })).toBe("Máy không tự chọn bài này");
+    expect(mineNote({ analysed: false })).toBe(analysisLabel({ analysed: false }));
+  });
+  it("says nothing about an ordinary analysed track that does not fit", () => {
+    expect(mineNote({ analysed: true, fits: false })).toBeUndefined();
+    expect(mineNote({ analysed: true, fits: true })).toBe("Hợp không khí đoạn này");
+  });
+  it("tells one story about pinned tracks travelling with the book file", () => {
+    expect(MY_MUSIC_INTRO).toContain(".abook / .abookproj");
+    expect(MY_MUSIC_INTRO).not.toContain("Sửa sách");
   });
 });

@@ -528,14 +528,15 @@ class SyncApp:
                 self._work[str(path)] = (stamp, count)
             return count
 
-        def paused_of(path: Path) -> str | None:
+        def status_of(path: Path) -> tuple[bool, str | None]:
             # Đọc thẳng state của supervisor (như nhịp tim ở trên): sách chạy bằng dòng lệnh cũng được báo.
             from ..background_runner import get_status
 
             try:
-                return get_status(path).pause_reason
+                status = get_status(path)
+                return bool(status.running), status.pause_reason
             except Exception:  # noqa: BLE001
-                return None
+                return False, None
 
         books = []
         for path in self.library.projects():
@@ -544,11 +545,11 @@ class SyncApp:
             except Exception:  # noqa: BLE001 - một sách hỏng không được làm mất cả danh sách
                 continue
             work = work_of(path)
-            paused = paused_of(path)
+            alive, paused = status_of(path)
             chapters = summary.get("chapters") or {}
             try:
-                # `summary` dựng với running=False nên không mang lý do tạm dừng - gắn vào để `held` đúng như ở thư viện.
-                hold = precast.flags(path, {**summary, "paused": paused})
+                # `summary` dựng với running=False nên không mang tiến trình sống hay lý do tạm dừng - gắn vào để `held` đúng như ở thư viện.
+                hold = precast.flags(path, {**summary, "running": alive, "paused": paused})
             except Exception:  # noqa: BLE001
                 hold = {"ready": False, "held": False}
             books.append({

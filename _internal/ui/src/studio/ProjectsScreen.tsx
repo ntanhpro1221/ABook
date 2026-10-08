@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
-import { formatEta, formatPercent, formatRelative } from "@/shared/format";
+import { etaOf, formatPercent, formatRelative } from "@/shared/format";
 import { Button, EmptyState, Progress, Skeleton, StatusPill } from "@/shared/ui";
 import type { BookSummary } from "./api";
 import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook } from "./data";
@@ -34,7 +34,7 @@ function ProjectRow({ book }: { book: BookSummary }) {
     book.phase === "done"
       ? `${book.chapters.completed}/${book.chapters.total} chương xong`
       : book.eta && live
-        ? formatEta(book.eta.seconds)
+        ? etaOf(book)
         : `${book.chapters.completed}/${book.chapters.total} chương xong`;
   const needs = [
     book.pendingChanges ? `${book.pendingChanges} thay đổi chờ áp` : "",
@@ -62,7 +62,7 @@ function ProjectRow({ book }: { book: BookSummary }) {
         </div>
         <div className="col-start-2 md:col-start-auto">
           <StatusPill
-            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.paused && book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
+            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
             // Cùng trạng thái = cùng màu với chip ở trang dự án (soát UX a8 05-10); việc còn lại của sách xong nói ở dòng tiến độ.
             tone={book.queuePosition || book.paused ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused}

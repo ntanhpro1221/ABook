@@ -1,15 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, Download, Music2, Pin, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX, Volume2 } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Ban, Download, Music2, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
+import { cn } from "@/shared/cn";
 import { formatClock } from "@/shared/format";
 import { MUSIC_LEVELS as LEVELS } from "@/shared/musicLevels";
-import { Button } from "@/shared/ui";
+import { Button, IconButton } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
 import { importMusic } from "./musicImport";
-import { analysisLabel, importSummary, LOCAL_PREFIX, previewPath, type LocalMusicView, type LocalTrack } from "./musicLocal";
+import { CONTINUED_NOTE, isContinuation, swapButton } from "./musicScenes";
+import {
+  analysisLabel,
+  importSummary,
+  LOCAL_PREFIX,
+  MY_MUSIC_INTRO,
+  mineNote,
+  previewPath,
+  type LocalMusicView,
+  type LocalTrack,
+} from "./musicLocal";
 import { AutoPickNote } from "./AutoPickNote";
 import { MusicModuleNotice } from "./MusicModuleNotice";
 
@@ -30,6 +42,8 @@ interface Scene {
   link: string | null;
   pinned?: boolean;
   silenced?: boolean;
+  /** Mảnh nối tiếp của một đoạn dài: chơi tiếp bài của đoạn trên (docs/MUSIC_RESEARCH.md), không phải một lựa chọn riêng. */
+  continued?: boolean;
   /** Bài đã ghim không còn dùng được trên máy này (vd. đã xoá khỏi "Nhạc của tôi"): lần dựng này đoạn dùng bài khác. */
   pinUnavailable?: boolean;
   /** "llm": vui/buồn và căng thẳng của đoạn do AI đọc cả đoạn; "labels": cộng từ cảm xúc từng câu. */
@@ -59,7 +73,7 @@ interface MusicView {
   error: string;
   /** Tên các bài đã bỏ (từ danh mục; thiếu thì hiện tên file). */
   bannedTracks?: Record<string, TrackInfo>;
-  /** Việc nền "Tính lại cảm xúc nhạc" của cuốn này. */
+  /** Việc nền "Đọc lại không khí các đoạn" của cuốn này. */
   moods?: { running: boolean; error: string };
   taxonomy: {
     genres?: Record<string, { vi: string }>;
@@ -86,7 +100,17 @@ interface MineAlternative {
   analysed: boolean;
   fits: boolean;
   score?: number;
+  /** Như `LocalTrack`: nhãn "Có vẻ có lời" / "Máy không tự chọn bài này" ở danh sách "Đổi bài" giống ở Cài đặt. */
+  vocalsLikely?: boolean;
+  auto?: "on" | "off";
 }
+
+const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
+
+/** "Chọn lại nhạc" (và đổi thể loại) dựng lại nhạc cả cuốn - sách 43 chương mất cỡ nửa phút: nói ra để các nút mờ không có vẻ như bị treo. */
+const REBUILDING = "Đang chọn lại nhạc cho cả cuốn - cỡ nửa phút với sách dài. Bạn cứ chờ ở đây, xong là tự cập nhật.";
+/** Sửa một đoạn (chọn bài, ghim, im lặng, bỏ bài) chỉ mất chốc lát: chỉ báo bận nhẹ, không hứa nửa phút. */
+const SAVING = "Đang lưu lựa chọn…";
 
 const PREVIEW_SECONDS = 20;
 
@@ -258,6 +282,11 @@ function Alternatives({
   const row = { busy, choosing, previewing, onPreview, onChoose };
   return (
     <div className="space-y-3">
+      {busy && (
+        <p role="status" className="text-fg-2">
+          {SAVING}
+        </p>
+      )}
       {data?.alternatives.length ? (
         <ul className="space-y-1">
           {data.alternatives.map((item) => (
@@ -275,7 +304,7 @@ function Alternatives({
               <TrackRow
                 key={item.link}
                 item={item}
-                note={item.analysed ? (item.fits ? "Hợp không khí đoạn này" : undefined) : "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được"}
+                note={mineNote(item)}
                 canPreview={canPreviewMine}
                 {...row}
               />
@@ -344,11 +373,7 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
           </Button>
         )}
       </div>
-      <p className="text-sm text-fg-2 text-pretty">
-        Thêm nhạc của riêng bạn (mp3, m4a, ogg, opus, flac, wav) làm nhạc nền. File được chép vào kho nhạc của máy này. Bài nào bạn
-        ghim cho một đoạn (ở “Đổi bài”) sẽ đi cùng file sách .abook / .abookproj và sang điện thoại, vì không ai khác tải được nó.
-        ABook chỉ ghi tên bài và nghệ sĩ có sẵn trong file, không nói gì về giấy phép.
-      </p>
+      <p className="text-sm text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
       {!canImport && (
         <p className="text-sm text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách. Ở đây bạn vẫn ghim được bài đã nhập qua “Đổi bài”.</p>
       )}
@@ -393,8 +418,8 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
   );
 }
 
-/** "Đọc không khí cả đoạn bằng AI": model nhỏ (tuỳ chọn, tải khi bấm) đọc nguyên đoạn để chọn nhạc sát không khí hơn. Chưa tải:
- *  nút "Tải"; đang tải: tiến độ; đã tải: "Tính lại cảm xúc nhạc" cho cuốn này. */
+/** "Chọn nhạc sát không khí hơn": model nhỏ (tuỳ chọn, tải khi bấm) đọc nguyên đoạn để chọn nhạc sát không khí hơn. Chưa tải:
+ *  nút "Tải thêm"; đang tải: tiến độ; đã tải: "Đọc lại không khí các đoạn" cho cuốn này. */
 function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { running: boolean; error: string }; onCompute: (view: MusicView) => void }) {
   const client = useQueryClient();
   const { data: info } = useAppInfo();
@@ -407,45 +432,88 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
   const download = useMutation({
     mutationFn: () => api<MoodsModel>("/api/music/moods-model", { method: "POST" }),
     onSuccess: (result) => client.setQueryData(key, result),
-    onError: (error: Error) => toast.error("Không tải được model", { description: error.message }),
+    onError: (error: Error) => toast.error("Không tải được phần đọc không khí", { description: error.message }),
   });
   const compute = useMutation({
     mutationFn: () => api<MusicView>(`/api/books/${bookId}/music/moods`, { method: "POST" }),
     onSuccess: onCompute,
-    onError: (error: Error) => toast.error("Không tính lại được cảm xúc nhạc", { description: error.message }),
+    onError: (error: Error) => toast.error("Không đọc lại được không khí các đoạn", { description: error.message }),
   });
   if (!data) return null;
   const running = Boolean(moods?.running) || compute.isPending;
   const percent = data.progress && data.progress.total > 0 ? Math.round((data.progress.done * 100) / data.progress.total) : null;
   return (
     <section className="space-y-2 rounded-xl border border-line bg-panel p-4">
-      <h3 className="text-sm font-semibold">Đọc không khí cả đoạn bằng AI</h3>
+      <h3 className="text-sm font-semibold">Chọn nhạc sát không khí hơn</h3>
       <p className="text-sm text-fg-2 text-pretty">
-        Chọn nhạc sát không khí của đoạn hơn: AI đọc nguyên đoạn thay vì cộng từng câu. Chạy sau phân tích, khoảng 1 phút card đồ hoạ mỗi
-        giờ sách.
+        Máy đọc kỹ cả đoạn truyện để hiểu không khí (buồn, căng thẳng, êm…) thay vì cộng cảm xúc từng câu, nên nhạc hợp đoạn hơn. Chạy
+        sau khi phân tích xong - cỡ 1 phút cho mỗi giờ sách nếu máy có card đồ hoạ.
       </p>
       {data.installed ? (
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" variant="secondary" icon={RefreshCw} loading={running} onClick={() => compute.mutate()}>
-            {running ? "Đang đọc không khí…" : "Tính lại cảm xúc nhạc"}
+            {running ? "Đang đọc không khí…" : "Đọc lại không khí các đoạn"}
           </Button>
           {moods?.error && <span className="text-sm text-warning">{moods.error}</span>}
         </div>
       ) : data.downloading ? (
-        <p className="text-sm">Đang tải model{percent !== null ? ` - ${percent}%` : "…"}</p>
+        <p className="text-sm">Đang tải phần đọc không khí{percent !== null ? ` - ${percent}%` : "…"}</p>
       ) : data.downloadable && !info?.remote ? (
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" variant="secondary" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>
-            Tải (3,2 GB)
+            Tải thêm (3,2 GB)
           </Button>
           {data.error && <span className="text-sm text-warning">{data.error}</span>}
         </div>
       ) : (
         <p className="text-sm text-fg-2">
-          {data.downloadable ? "Tải model trên máy tính chủ sách." : "Model chưa có trong Ollama của máy này."}
+          {data.downloadable ? "Tải phần đọc không khí trên máy tính chủ sách." : "Máy này chưa có phần đọc không khí (cài qua Ollama)."}
         </p>
       )}
     </section>
+  );
+}
+
+/** "…" của một đoạn nhạc: im lặng / có nhạc, bỏ ghim (khi đã ghim), không dùng bài này cho cả cuốn. Gom vào đây thay vì bốn nút lặp ở mỗi dòng. */
+function SceneMenu({
+  scene,
+  disabled,
+  onSilence,
+  onUnpin,
+  onBan,
+}: {
+  scene: Scene;
+  disabled: boolean;
+  onSilence: () => void;
+  onUnpin: () => void;
+  onBan?: () => void;
+}) {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <IconButton label="Thêm tuỳ chọn cho đoạn này" icon={MoreHorizontal} size="sm" disabled={disabled} className="data-[state=open]:bg-hover" />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Item onSelect={onSilence} className={MENU_ITEM}>
+            <VolumeX className="size-4" /> {scene.silenced ? "Cho đoạn này có nhạc" : "Để đoạn này im lặng"}
+          </DropdownMenu.Item>
+          {scene.pinned && (
+            <DropdownMenu.Item onSelect={onUnpin} className={MENU_ITEM}>
+              <PinOff className="size-4" /> Bỏ ghim - để máy chọn lại bài
+            </DropdownMenu.Item>
+          )}
+          {onBan && (
+            <>
+              <DropdownMenu.Separator className="my-1 h-px bg-line" />
+              <DropdownMenu.Item onSelect={onBan} className={cn(MENU_ITEM, "text-danger")}>
+                <Ban className="size-4" /> Không dùng bài này cho cả cuốn
+              </DropdownMenu.Item>
+            </>
+          )}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
 
@@ -459,7 +527,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
     queryFn: () => api<MusicView>(`/api/books/${bookId}/music`),
     refetchInterval: (query) => (query.state.data?.moods?.running ? 3000 : false), // đang đọc không khí: hỏi lại tới khi xong
   });
-  // Việc "Tính lại cảm xúc nhạc" vừa xong: nhạc đã dựng lại, báo trình phát nạp lại mốc nhạc.
+  // Việc "Đọc lại không khí các đoạn" vừa xong: nhạc đã dựng lại, báo trình phát nạp lại mốc nhạc.
   const moodsRunning = useRef(false);
   useEffect(() => {
     const running = Boolean(data?.moods?.running);
@@ -528,14 +596,15 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
           {overrides.enabled ? "Nhạc nền đang bật" : "Nhạc nền đang tắt"}
         </Button>
         <label className="min-w-0 basis-full text-sm sm:basis-auto">
-          <span className="block text-fg-2">Thế giới của truyện</span>
-          <span className="block text-xs text-fg-2">Chưa chọn thì nhạc lấy từ mọi phong cách</span>
+          <span className="block text-fg-2">Thể loại truyện</span>
+          <span className="block text-xs text-fg-2">Chưa chọn thì nhạc lấy từ mọi thể loại</span>
           <select
             id="music-genre"
             value={overrides.genre ?? ""}
             title={genres.find(([value]) => value === overrides.genre)?.[1].vi ?? "Chưa chọn"}
             onChange={(event) => change.mutate({ genre: event.target.value || null })}
-            className="mt-1 h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-accent sm:w-64"
+            // Rộng vừa tên thể loại dài nhất ("Dị giới / kỳ ảo phương Tây (…)") - không cắt chữ; hẹp màn thì thôi ở bề ngang ô.
+            className="mt-1 h-9 w-full max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-accent sm:w-auto sm:min-w-64"
           >
             <option value="">Chưa chọn</option>
             {genres.map(([value, genre]) => (
@@ -564,6 +633,11 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         <Button variant="ghost" icon={RefreshCw} loading={rebuild.isPending} onClick={() => rebuild.mutate()}>
           {rebuild.isPending ? "Đang chọn lại…" : "Chọn lại nhạc"}
         </Button>
+        {(change.isPending || rebuild.isPending) && (
+          <p role="status" className="basis-full text-sm text-fg-2">
+            {rebuild.isPending || change.variables?.genre !== undefined ? REBUILDING : SAVING}
+          </p>
+        )}
         {overrides.banned.length > 0 && (
           <details className="basis-full text-sm">
             <summary className="cursor-pointer text-fg-2">Bài đã bỏ ({overrides.banned.length})</summary>
@@ -598,8 +672,10 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
             <ul className="divide-y divide-line rounded-xl border border-line">
               {scenes.map((scene, index) => {
                 const track = scene.link ? plan.tracks[scene.link] : undefined;
+                const follows = isContinuation(scene);
+                const swap = swapButton(scene);
                 return (
-                  <li key={scene.key} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-2.5 text-sm">
+                  <li key={scene.key} className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 text-sm", follows ? "py-1.5" : "py-2.5")}>
                     <span className="tabular w-28 shrink-0 text-fg-2">
                       {/* Các đoạn nối liền: đoạn này hết ở đúng chỗ đoạn sau bắt đầu (cùng cách làm tròn). */}
                       {formatClock(scene.start)}–{formatClock(scenes[index + 1]?.start ?? scene.end)}
@@ -620,7 +696,9 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                       )}
                     </span>
                     <span className="min-w-0 basis-full break-words sm:flex-1 sm:basis-0">
-                      {scene.link ? (
+                      {follows ? (
+                        <span className="text-fg-2">{CONTINUED_NOTE}</span>
+                      ) : scene.link ? (
                         <>
                           <Music2 className="mr-1.5 inline size-4 text-accent-text" />
                           {track?.title ?? "Bài nhạc"}
@@ -637,25 +715,19 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         <span className="text-fg-2">{scene.silenced ? "Im lặng (bạn chọn)" : "Im lặng - không bài nào đủ hợp"}</span>
                       )}
                     </span>
-                    <span className="flex basis-full flex-wrap gap-1 sm:basis-auto sm:shrink-0">
-                      <Button size="sm" variant="ghost" icon={Shuffle} aria-expanded={swapping === scene.key}
+                    {/* Một nút chính + "…": cột nút thẳng hàng ở mọi dòng (trước đây bốn nút, dòng có "Bỏ ghim" lệch cột). */}
+                    <span className="flex basis-full items-center gap-1 sm:w-32 sm:shrink-0 sm:basis-auto sm:justify-end">
+                      <Button size="sm" variant="ghost" icon={Shuffle} aria-expanded={swapping === scene.key} title={swap.title}
                         onClick={() => setSwapping(swapping === scene.key ? null : scene.key)}>
-                        Đổi bài
+                        {swap.text}
                       </Button>
-                      <Button size="sm" variant="ghost" icon={VolumeX}
-                        onClick={() => change.mutate({ silence: { [scene.key]: !scene.silenced } })}>
-                        {scene.silenced ? "Có nhạc" : "Im lặng"}
-                      </Button>
-                      {scene.pinned && (
-                        <Button size="sm" variant="ghost" onClick={() => change.mutate({ pins: { [scene.key]: null } })}>
-                          Bỏ ghim
-                        </Button>
-                      )}
-                      {scene.link && (
-                        <Button size="sm" variant="ghost" icon={Ban} onClick={() => ban(scene.link!, trackLabel(scene.link!, track))}>
-                          Không dùng bài này cho cả cuốn
-                        </Button>
-                      )}
+                      {!follows && <SceneMenu
+                        scene={scene}
+                        disabled={change.isPending}
+                        onSilence={() => change.mutate({ silence: { [scene.key]: !scene.silenced } })}
+                        onUnpin={() => change.mutate({ pins: { [scene.key]: null } })}
+                        onBan={scene.link ? () => ban(scene.link!, trackLabel(scene.link!, track)) : undefined}
+                      />}
                     </span>
                     {swapping === scene.key && (
                       <div className="basis-full rounded-lg bg-sunken p-2.5 text-sm">

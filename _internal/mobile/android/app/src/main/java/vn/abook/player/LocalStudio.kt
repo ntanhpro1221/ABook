@@ -327,6 +327,8 @@ object LocalStudio {
         val items = (musicStore?.entries() ?: emptyList()).filter { it.getString("link") != current }.map { track ->
             JSONObject().put("link", track.getString("link")).put("title", track.getString("title")).put("creator", track.getString("creator"))
                 .put("attribution", "").put("duration", track.get("duration")).put("analysed", track.getBoolean("analysed")).put("fits", false)
+                // Như music_local.auto_keys: nhãn "Có vẻ có lời" ở "Đổi bài" giống ở Cài đặt (điện thoại không có công tắc `auto`).
+                .also { item -> if (track.has("vocalsLikely")) item.put("vocalsLikely", track.get("vocalsLikely")) }
         }.sortedWith(compareBy({ it.getBoolean("analysed").not() }, { it.getString("title").lowercase() }))
         return JSONObject().put("key", key).put("alternatives", JSONArray()).put("mine", JSONArray(items))
     }

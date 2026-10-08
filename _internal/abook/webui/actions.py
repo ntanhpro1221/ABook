@@ -222,12 +222,8 @@ def _first_line(path: Path) -> str:
 def _title_line(path: Path) -> str:
     """Dòng đầu của file nếu trông là TIÊU ĐỀ truyện (ngắn, không kết bằng dấu câu, không phải "Chương N" hay lời thoại) - tên
     sách gợi ý khi cả truyện nằm trong một file ("whole.txt" mà dòng đầu là "Chuyến phà cuối ngày"); "" nếu không."""
-    first = _first_line(path).lstrip("#").strip()
-    if not first or len(first) > 80 or len(first.split()) > 12:
-        return ""
-    if humanize.is_heading(first) or first[0] in "-–—“\"‘'«(" or first[-1] in ".!?…,;:\"”’»)":
-        return ""
-    return first if any(ch.isalpha() for ch in first) else ""
+    first = importers.title_from_line(_first_line(path))  # luật chung với "Thêm sách từ file…" và việc tách file cả truyện
+    return "" if humanize.is_heading(first) else first
 
 
 def _credits_at_top(path: Path) -> list[str]:

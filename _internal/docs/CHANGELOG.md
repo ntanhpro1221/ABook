@@ -9,11 +9,36 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Nhạc nền
 
+- Tab Nhạc nền của dự án: mỗi đoạn chỉ còn một nút "Đổi bài" và một nút "…" (im lặng, bỏ ghim, không dùng bài này cho cả cuốn), nên các cột thẳng hàng ở mọi dòng. Đoạn dài được cắt mảnh mà vẫn chơi
+  tiếp một bài hiện gọn "↳ tiếp bài của đoạn trên"; "Đổi từ đây" ở đó đổi bài từ chỗ ấy trở đi. Sửa một đoạn chỉ hiện "Đang lưu lựa chọn…"; "Chọn lại nhạc" (và đổi thể loại) nói "Đang chọn lại nhạc cho cả cuốn - cỡ nửa phút"
+  thay vì lặng lẽ khoá nút (các đoạn khác có thể đổi bài theo cách máy chọn lại - đó là cách chọn nhạc, không phải lỗi). "Thế giới của truyện" đổi thành "Thể loại truyện" và ô chọn không còn bị cắt chữ;
+  các nút đọc không khí bằng AI nói theo điều người nghe được ("Chọn nhạc sát không khí hơn", "Đọc lại không khí các đoạn").
+- Nhạc của tôi: "Đổi bài" ở từng đoạn cũng hiện "Có vẻ có lời" / "Máy không tự chọn bài này" như Cài đặt; Cài đặt > Nhạc nền hiện dòng "Chưa phân tích" như tab dự án; hai nơi nói cùng một câu
+  về bài đã ghim đi theo file sách (.abook / .abookproj, cả sang điện thoại); mô tả không còn nhắc "Sửa sách".
 - Nhạc của bạn: bài có lời hát được nhận ra và không tự phát làm nền dưới giọng đọc (lời át chữ). Bài ấy hiện nhãn "Có vẻ có lời". Bạn vẫn có thể ghim hay bấm "Vẫn cho máy tự chọn".
 - Nhạc của bạn: mỗi bài có một nút để bạn quyết máy có được tự chọn nó làm nhạc nền hay không. "Đừng tự chọn bài này" cho bài nào bạn chỉ muốn ghim tay (kể cả bài máy không nhận ra là có lời); "Cho máy tự chọn lại" để trả về như cũ. Bài đã tắt hiện nhãn "Máy không tự chọn bài này", ghim tay vẫn được.
 
 ### Studio
 
+- Tạo sách từ file TXT cả truyện: dòng tên truyện đứng một mình ở đầu file không còn thành một chương "Mở đầu" riêng - ở Thư viện nó thành tên sách (có ghi chú), ở Studio nó thành tên sách khi trùng
+  Tên sách bạn đã nhập, còn khác thì giữ làm chương để không mất chữ nào. "Tách thành N chương" không còn đặt lại Tên sách bạn đã có. Thư viện "Thêm sách từ file…" tự tích tách chương khi file chắc chắn có
+  từ ba dòng "Chương N" và lấy tên truyện từ dòng đầu thay vì tên file; điện thoại làm giống hệt.
+- Tạo sách: "Chia thành mấy tập?" thay "Chia thành 1 phần" và ô nhập ghi "từ 2 đến N"; lời mô tả bộ phân tích truyện bỏ chữ kỹ thuật ("model", tên thẻ Ollama chỉ còn là ghi chú nhỏ).
+- Hộp "Việc cần duyệt": mỗi mục "Đã quyết, chờ áp dụng" có nút "Hoàn tác" riêng (vai phụ, giới, giọng, người nói, người kể, cách đọc),
+  còn đó đến khi máy áp - không chỉ vài giây của thông báo. Thẻ người kể của một đoạn ghi "câu 6" khi chỉ một câu, "Chọn người kể…"
+  gợi sẵn các tên có trong đoạn và nhân vật đã có (vẫn gõ tự do được), và sau khi quyết thì tiêu đề nói kết quả ("Đoạn này do Mai kể").
+  Thẻ vai phụ cả cuốn không còn mời "Người kể" trước với một lính gác ngôi ba, mà có lựa chọn "Là một người mới tên “Lính gác”".
+- "Duyệt trước khi thu" > "Nhân vật và giọng": các dòng cùng tên (ba “Lính gác”) hiện "Cùng tên với người khác trong sách - một người?"
+  kèm nút "Gộp vào…". Ở màn điện thoại, phần giới thiệu gập lại để bốn bước hiện ngay màn đầu.
+- Sách đang "chờ bạn duyệt" mà máy chủ vừa khởi động lại không còn hiện "Tạm ngưng lúc phân vai" cùng "Tiếp tục tạo" song song khung
+  "Duyệt ngay": trang ghi "Chờ bạn duyệt" và nút chính là "Thu âm".
+- Trang dự án: chỉ ghi "sắp xong" khi thật sự gần xong; cảnh báo khi dừng giữa lúc phân tích ngắn lại còn vài câu bằng lời thường;
+  câu đầu hộp việc không còn tự mâu thuẫn khi sách đang dừng; ở màn hẹp phần đầu trang gọn hơn (các chi tiết phụ gập vào "Chi tiết"),
+  nút "Xuất…" không bị cắt và thông báo hiện ở đáy, không đè đầu trang.
+- "Nghe thử" cách đọc tên cho biết đang phát, đã xong hay lỗi; lúc máy đang thu sách thì nói rõ nghe thử sau khi xong chương đang làm.
+- "Cần nghe lại": dòng phím tắt chỉ hiện khi đang nghe liền; "khớp" nói rõ là khớp với chữ của câu; nút "Sửa chữ đem đọc" nói lời tự
+  nhiên; câu hỏng không còn nút nghe vô nghĩa. Thẻ nhân vật xuống dòng thay vì cắt tên và giọng, và "trầm hẳn/sáng hẳn" ghi rõ là
+  chỉnh so với giọng gốc.
 - Chọn người nói ở thẻ "Vai phụ không tên" (hay đọc tên, ai nói câu này) của một sách đã làm xong không còn làm cả trang dự án
   hiện "Không mở được sách" - quyết định vẫn được ghi như trước, nay trang giữ nguyên.
 - Phân tích cùng một cuốn bằng cùng một model không còn đổi theo câu hỏi đứng trước: Studio khởi Ollama với bộ đệm câu

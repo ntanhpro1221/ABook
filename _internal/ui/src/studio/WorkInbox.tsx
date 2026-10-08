@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AudioLines, Check, Pause, Play, Search, UserPlus } from "lucide-react";
+import { AudioLines, Check, Pause, Play, RotateCcw, Search, UserPlus } from "lucide-react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
@@ -11,6 +11,7 @@ import { ReadingProblem } from "./ReadingProblem";
 import { useTryReading } from "./TryReading";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { keepRequests, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
+import { decidedTitle, inboxLead, midSentence, sentence } from "./workText";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
@@ -72,6 +73,10 @@ export interface WorkItem {
   pick?: boolean;
   /** Giữ nguyên thẻ nhóm: mỗi vai giữ người của nó - một yêu cầu cho mỗi vai. */
   keepGroups?: SpeakerRequest[];
+  /** Thẻ vai phụ cả cuốn: tên đề nghị cho "là một người mới tên “…”" (cả nhóm thành MỘT người có giọng riêng). */
+  newPerson?: string;
+  /** Thẻ đã quyết: cách rút đúng lần bấm ấy (`POST /{endpoint}` với `withdraw`) - nút "Hoàn tác" của mục "Đã quyết". */
+  undo?: { endpoint: string; decisions: Record<string, unknown>[] };
   /** Thẻ người kể của đoạn (webui/narrator_cards.py): đoạn nào, người kể của sách, ứng viên, và điều cần biết trước khi bấm
    *  (đoạn đã phân tích xong thì chỉ áp khi làm lại sách). */
   narratorSection?: {
@@ -137,32 +142,6 @@ export function useWorkCount(bookId: string) {
 /** Việc đã quyết chờ gì: sách đang dở thì tự áp khi chạy tiếp; sách ĐÃ XONG không tự chạy lại - phải bấm "Áp dụng thay
  *  đổi" (soát UX 29-09: thẻ từng nói "chờ … chạy tiếp" cả ở sách đã xong). */
 const PendingHint = createContext("chờ áp dụng khi sách chạy tiếp");
-
-/** Chữ đầu viết hoa - "câu này" đứng đầu câu báo. */
-function sentence(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-/** Thẻ đã quyết nói KẾT QUẢ thay vì lặp câu hỏi ("Đọc “Arcanist” là…?" khi đã giữ - soát UX 29-09); null = giữ tiêu đề. */
-function decidedTitle(item: WorkItem): string | null {
-  const answer = item.requested;
-  if (!answer) return null;
-  if (item.kind === "pronunciation" && item.surface) {
-    return answer === item.current ? `Giữ: “${item.surface}” đọc là “${answer}”` : `“${item.surface}” sẽ đọc là “${answer}”`;
-  }
-  if (item.voiceChoices?.length) return item.voiceChoices.find((choice) => choice.label === answer || choice.done === answer)?.done ?? null;
-  if (item.kind === "alias") return `“${item.subject ?? item.current}” là ${midSentence(answer)}`;
-  if (item.kind === "narrator") return `Đoạn này: ${answer === "Giữ nguyên" ? `vẫn do ${item.current} kể` : answer === "Đổi người kể" ? `không phải ${item.current} kể` : `${answer} kể`}`;
-  if (item.lines?.length) return `${item.lines.length > 1 ? `${item.lines.length} câu này` : "Câu này"} của ${midSentence(answer)}`;
-  return null;
-}
-
-/** Nhãn nút ("Vai phụ không tên", "Người kể") đứng GIỮA câu thì viết thường chữ đầu - "…của vai phụ không tên" (soát UX
- *  29-09). Tên người giữ nguyên. */
-function midSentence(label: string | null | undefined): string {
-  const text = label ?? "";
-  return text === "Vai phụ không tên" || text === "Người kể" ? text.charAt(0).toLowerCase() + text.slice(1) : text;
-}
 
 function Example({ bookId, example, picked, onPick }: { bookId: string; example: WorkExample; picked?: boolean; onPick?: () => void }) {
   const clip = useClip();
@@ -478,6 +457,12 @@ function SpeakerFix({
             {item.keepLabel ?? (item.kind === "unnamed" ? "Đúng là vai phụ" : `Giữ ${item.current}`)}
           </Button>
         )}
+        {/* Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng. */}
+        {item.newPerson && (
+          <Button data-choice size="sm" variant="secondary" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
+            Là một người mới tên “{item.newPerson}”
+          </Button>
+        )}
         {item.keepGroups && item.keepGroups.length > 0 && (
           <Button data-choice size="sm" variant="ghost" disabled={busy} onClick={() => keepAll.mutate(keepRequests(item))}>
             {item.keepLabel ?? "Giữ nguyên"}
@@ -708,6 +693,33 @@ type OpenScript = (chapterId: number, stableId: string, pick?: boolean, card?: s
 type OpenNames = (name: string, card?: string) => void;
 type OpenReview = (card?: string) => void;
 
+// "Hoàn tác" bền của một mục đã quyết: toast chỉ sống vài giây, mà người duyệt thường nhận ra bấm nhầm khi đã xem sang thẻ khác.
+// Đi đúng đường hoàn tác của toast (decisions.undoAction): máy chủ bỏ yêu cầu của đúng lần bấm ấy, hay nói thật khi dây chuyền
+// đã đưa nó vào sách.
+function UndoDecision({ bookId, item }: { bookId: string; item: WorkItem }) {
+  const client = useQueryClient();
+  const [asked, setAsked] = useState(false);
+  const undo = item.undo!;
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      icon={RotateCcw}
+      className="ml-auto"
+      disabled={asked}
+      aria-label={`Hoàn tác: ${decidedTitle(item) ?? item.title}`}
+      onClick={() => {
+        setAsked(true);
+        undoAction(client, bookId, undo.endpoint, undo.decisions, "Việc này trở lại chờ bạn duyệt.").onClick();
+        // Không hoàn tác được (đã vào sách) thì thẻ còn đó - mở nút lại để thử khi đổi ý.
+        window.setTimeout(() => setAsked(false), 2500);
+      }}
+    >
+      Hoàn tác
+    </Button>
+  );
+}
+
 function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = false }: { bookId: string; item: WorkItem; onOpenReview: OpenReview; onOpenScript?: OpenScript; onOpenNames?: OpenNames; active?: boolean }) {
   // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
   const [scope, setScope] = useState<Scope>("alternate");
@@ -727,6 +739,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = 
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="rounded-full bg-hover px-2 py-0.5 text-[11px] font-medium text-fg-2">{KIND_LABEL[item.kind]}</span>
         <h3 className="text-[15px] font-semibold">{decidedTitle(item) ?? item.title}</h3>
+        {item.requested && item.undo && <UndoDecision bookId={bookId} item={item} />}
       </div>
       <p className="mt-1.5 text-sm text-fg-2">{item.problem}</p>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-2">
@@ -990,19 +1003,8 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
   const at = cursor === null ? null : Math.min(cursor, Math.max(items.slice(0, shown).length - 1, 0));
   return (
     <div className="mt-5">
-      <p className="max-w-3xl text-sm text-fg-2">
-        {/* Lời mở đầu theo trạng thái sách - soát UX 29-09: "đang chạy tiếp" hiện cả khi sách đã xong hay đang dừng. */}
-        {book.running && book.paused
-          ? "Sách đang tạm dừng - sửa bây giờ, máy áp dụng khi làm tiếp."
-          : book.running
-          ? "Máy đã tự quyết và đang chạy tiếp - không có gì phải chờ."
-          : book.phase === "done"
-            ? "Sách đã xong - sửa xong thì bấm “Áp dụng thay đổi” ở trên để thu lại đúng các câu bị ảnh hưởng."
-            : "Sách đang dừng - sửa bây giờ, lần chạy tiếp sẽ áp dụng."}{" "}
-        Đây là những chỗ máy không chắc, xếp theo lợi: việc ở
-        trên sửa một lần được nhiều câu nhất. Cách đọc tên, người nói từng câu, hai tên của một người, giới và giọng nhân
-        vật đều sửa được ngay tại đây, không phải dừng sách.
-      </p>
+      {/* Lời mở đầu theo trạng thái sách - soát UX 29-09: "đang chạy tiếp" hiện cả khi sách đã xong hay đang dừng. */}
+      <p className="max-w-3xl text-sm text-fg-2">{inboxLead(book)}</p>
       {atReview > 0 && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
           <span className="min-w-0 text-pretty">

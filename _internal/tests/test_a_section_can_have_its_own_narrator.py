@@ -298,3 +298,33 @@ def test_a_book_without_a_narrator_gets_no_card_and_a_stale_range_is_refused(tmp
     with pytest.raises(ValueError, match="đại từ"):
         narrator_cards.decide(other, {"chapterIndex": 1, "fromSeq": proposal["from_seq"], "toSeq": proposal["to_seq"],
                                       "action": "choose", "narrator": "tôi"})
+
+
+def test_a_one_line_section_says_line_not_a_range_and_suggests_the_names_in_it(tmp_path: Path) -> None:
+    """Soát UX a8: "câu 6–6" -> "câu 6"; "Chọn người kể…" gợi sẵn tên riêng có mặt trong đoạn (sổ nhân vật có thể còn trống)."""
+    from abook.webui import narrator_cards
+    from abook.webui.work_items import work_items
+
+    names = narrator_cards.section_names(
+        ["Mai ngồi một mình. Cô gọi Lâm Hạ, rồi Mai thở dài, và Lâm Hạ quay lại.", "Anh nhìn Hạ Vy."], {"Kakeru"})
+    assert names == ["Lâm Hạ", "Mai", "Hạ Vy"], names
+    assert "Kakeru" not in narrator_cards.section_names(["Rồi Kakeru cười. Sau đó Kakeru đi."], {"Kakeru"})
+
+    project, rows = _book(tmp_path)
+    card = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
+    section = card["narratorSection"]
+    where = f"câu {section['fromSeq']}" if section["fromSeq"] == section["toSeq"] else f"câu {section['fromSeq']}–{section['toSeq']}"
+    assert card["title"].endswith(f"{where}: có vẻ không phải Kakeru kể")
+    assert "Kakeru" not in [choice["label"] for choice in section["choices"]], "người kể của sách không phải gợi ý"
+
+
+def test_a_decided_narrator_card_carries_the_withdrawal_of_the_decision(tmp_path: Path) -> None:
+    from abook.webui import narrator_cards
+    from abook.webui.work_items import work_items
+
+    project, _rows = _book(tmp_path)
+    section = narrator_cards.proposals(project)[0]
+    narrator_cards.decide(project, {"chapterIndex": 1, "fromSeq": section["from_seq"], "toSeq": section["to_seq"], "action": "accept"})
+    card = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
+    assert card["undo"] == {"endpoint": "narrator-section", "decisions": [
+        {"chapterIndex": 1, "fromSeq": section["from_seq"], "toSeq": section["to_seq"]}]}

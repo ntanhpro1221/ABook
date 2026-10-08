@@ -56,9 +56,23 @@ export function formatLength(seconds: number): string {
   return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
 }
 
-export function formatEta(seconds: number): string {
-  if (seconds < 90) return "sắp xong";
+/** Từ mức này của bước đang làm thì "còn dưới 2 phút" mới là "sắp xong" (soát UX a8: sách mới 21% mà đã ghi "sắp xong"). */
+const NEAR_DONE = 0.85;
+
+/** `fraction`: bước đang làm đã được bao nhiêu (0-1). Còn ít giây mà bước chưa tới mức gần xong thì chỉ nói còn dưới 2 phút -
+ *  "sắp xong" là lời hứa về cái đích, không phải về con số giây. Không đưa `fraction` thì giữ nghĩa cũ. */
+export function formatEta(seconds: number, fraction?: number): string {
+  if (seconds < 90) return fraction === undefined || fraction >= NEAR_DONE ? "sắp xong" : "còn dưới 2 phút";
   return `còn khoảng ${formatLength(seconds)}`;
+}
+
+/** Thời gian còn lại của một cuốn đang chạy, theo bước máy đang ước (phân tích / thu âm), hoặc null khi chưa có tốc độ để ước. */
+export function etaOf(book: {
+  eta: { phase: string; seconds: number } | null;
+  progress: { analysis: number; synthesis: number };
+}): string | null {
+  if (!book.eta) return null;
+  return formatEta(book.eta.seconds, book.eta.phase === "synthesis" ? book.progress.synthesis : book.progress.analysis);
 }
 
 export function formatRelative(epochSeconds: number | null | undefined): string {

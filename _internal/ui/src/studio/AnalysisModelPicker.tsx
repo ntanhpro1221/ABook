@@ -42,6 +42,19 @@ export function modelHint(model: AnalysisModel, defaultSize = 0): string {
   return parts.join(" · ");
 }
 
+/** Dòng trong danh sách "bản khác": nói nặng nhẹ (người chọn cần biết trước), tên kỹ thuật ở cuối để phân biệt các bản cùng cỡ. */
+export function experimentalLabel(model: AnalysisModel, defaultSize = 0): string {
+  const hint = modelHint(model, defaultSize);
+  return `Bản thử nghiệm${hint ? ` · ${hint}` : ""} (${modelLabel(model.name)})`;
+}
+
+/** Bước xác nhận: bộ phân tích nào sẽ đọc hiểu truyện, nói bằng lời người nghe hiểu (tên kỹ thuật chỉ khi là bản thử nghiệm). */
+export function analysisChoiceLabel(chosen: string, seedModel?: string): string {
+  return chosen
+    ? `Bản thử nghiệm “${modelLabel(chosen)}” (${seedModel === chosen ? "như phần trước" : "chỉ cuốn này"})`
+    : "Mặc định của ABook";
+}
+
 /** Model mặc định + các model đang có (bước Chất lượng và bước Xác nhận dùng chung một lần hỏi). */
 export function useAnalysisModels() {
   return useQuery({
@@ -61,14 +74,14 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
   return (
     <details className="group mt-8 max-w-2xl" open={Boolean(value)}>
       <summary className="cursor-pointer text-sm font-medium text-fg-2 hover:text-fg">
-        Nâng cao: model đọc hiểu truyện{value ? ` - ${modelLabel(value)}` : ""}
+        Nâng cao: bộ phân tích truyện{value ? ` - bản thử nghiệm` : ""}
       </summary>
       <p className="mt-2 text-[13px] text-fg-2 text-pretty">
-        Model đoán ai nói câu nào, cảm xúc ra sao. Không chắc thì để mặc định - model khác chỉ dùng cho cuốn này, khi muốn thử
-        một model mới trên sách thật.
+        Bộ phân tích đoán ai nói câu nào, cảm xúc ra sao. Không chắc thì để mặc định - bản khác chỉ dùng cho cuốn này, khi muốn thử một
+        bản mới trên sách thật.
       </p>
       <label htmlFor="analysis-model" className="sr-only">
-        Model đọc hiểu truyện
+        Bộ phân tích truyện
       </label>
       <select
         id="analysis-model"
@@ -76,23 +89,22 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 h-9 w-full max-w-lg rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
       >
-        <option value="">Mặc định - {modelLabel(data.default)}</option>
-        <optgroup label="Model khác (thử nghiệm)">
-          {others.map((model) => {
-            const hint = modelHint(model, defaultSize);
-            return (
-              <option key={model.name} value={model.name}>
-                {hint ? `${modelLabel(model.name)} - ${hint}` : modelLabel(model.name)}
-              </option>
-            );
-          })}
+        <option value="">Mặc định của ABook (khuyên dùng)</option>
+        <optgroup label="Bản khác (thử nghiệm)">
+          {others.map((model) => (
+            <option key={model.name} value={model.name}>
+              {experimentalLabel(model, defaultSize)}
+            </option>
+          ))}
         </optgroup>
       </select>
+      {/* Tên kỹ thuật (tag trong Ollama) chỉ ở chú thích nhỏ, cho người cần biết đúng bản nào. */}
       <p className="mt-1.5 text-[13px] text-fg-2 text-pretty">
         {value
-          ? "Model thử nghiệm: chưa được kiểm trên nhiều truyện, kết quả có thể kém hơn mặc định."
+          ? "Bản thử nghiệm: chưa được kiểm trên nhiều truyện, kết quả có thể kém hơn mặc định."
           : "Mặc định: máy đề xuất cho hầu hết các truyện, không cần chỉnh gì."}
       </p>
+      <p className="mt-1 text-xs text-fg-3 break-all">Tên kỹ thuật: {modelLabel(value || data.default)}</p>
     </details>
   );
 }
