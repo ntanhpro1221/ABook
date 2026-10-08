@@ -72,6 +72,7 @@ class LibraryPlugin : Plugin() {
         // Gửi phần sửa về máy tính xong: tải lại sách từ máy tính (không báo "Đã tải xong") và báo giao diện làm mới.
         EditsSync.refresh = { id -> downloadBook(id, null, null, announce = false) }
         EditsSync.changed = { id -> notifyListeners("editsSync", JSObject().put("bookId", id)) }
+        ShareService.changed = { notifyListeners("shareChanged", JSObject()) }
         Mp3Exports.events = { event -> notifyListeners("mp3Export", JSObject.fromJSONObject(event)) }
         Playback.init(context)
         PhoneCast.init(context)

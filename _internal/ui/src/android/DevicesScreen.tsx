@@ -462,6 +462,11 @@ function SharePanel() {
     onSuccess: (data) => client.setQueryData(["share"], data),
     onError: (error: Error) => toast.error("Chưa làm được", { description: error.message }),
   });
+  useEffect(() => {
+    // Nút "Tắt chia sẻ" trên thông báo tắt công tắc ngoài màn hình này: hỏi lại để công tắc tắt theo.
+    const handle = EbookLibrary.addListener("shareChanged", () => void client.invalidateQueries({ queryKey: ["share"] }));
+    return () => void handle.then((listener) => listener.remove());
+  }, [client]);
   const [now, setNow] = useState(() => Date.now() / 1000);
   const pairing = status.data?.pairing ?? null;
   useEffect(() => {
@@ -478,8 +483,9 @@ function SharePanel() {
         <div className="min-w-0">
           <h2 id="share-title" className="text-[15px] font-medium">Cho máy khác nghe thư viện này</h2>
           <p className="mt-0.5 text-xs leading-snug text-fg-2">
-            Máy tính đã ghép nghe thẳng sách đã tải về điện thoại này, cùng mạng Wi-Fi, không phải chép sang. Điện thoại cần đang
-            mở ABook.
+            Máy tính đã ghép nghe thẳng sách đã tải về điện thoại này, không phải chép sang. Chia sẻ chạy cả khi ABook ở nền, cho
+            tới khi tắt ở đây hay ở thông báo. Máy OPPO, Xiaomi… có thể cho ABook "ngủ" khi ở nền: máy tính sẽ chờ lâu hơn - mở ABook
+            lên là trả lời ngay.
           </p>
         </div>
         <Switch.Root

@@ -16,9 +16,10 @@ import androidx.core.content.ContextCompat
 /**
  * Giữ ABook sống khi "Cho máy khác nghe thư viện này" bật. Trên ColorOS (OplusHansManager) tiến trình của app bị ĐÓNG BĂNG
  * (cgroup frozen) khoảng 30 giây sau khi rời màn hình - [LibraryServer] (Wi-Fi) và [BluetoothShare] (RFCOMM) vẫn "chạy" mà
- * không trả lời ai, máy tính chờ TLS 45 giây (đo thật 08-10). Đo thật cũng cho thấy dịch vụ này MỘT MÌNH không cứu được ColorOS
- * (vẫn đóng băng dù isForeground=true; cái mở băng là receiver ACL_CONNECTED trong BluetoothShare.watch, còn Wi-Fi thì gói tin
- * tự mở băng sau ~19 s). Vẫn giữ dịch vụ: chống bị dọn ở nền trên máy hãng khác, và người dùng thấy chia sẻ đang bật kèm nút tắt.
+ * không trả lời ai, máy tính chờ TLS 45 giây (đo thật 08-10). Đo thật cho thấy dịch vụ này MỘT MÌNH không cứu được ColorOS (vẫn
+ * đóng băng dù isForeground=true), receiver ACL_CONNECTED cũng không (không nhận được broadcast nào); Wi-Fi thì gói tin tự mở băng
+ * sau ~19 s, Bluetooth thì chỉ mở khi hệ điều hành tình cờ đánh thức (kết nối chờ sẵn xong trong tối đa vài phút). Vẫn giữ dịch vụ:
+ * chống bị dọn ở nền trên máy hãng khác, và người dùng thấy chia sẻ đang bật kèm nút tắt.
  * Không giữ khoá CPU / Wi-Fi nào - wake lock cũng không chống được đóng băng (đã thử).
  *
  * Loại `connectedDevice` (Android 14+ bắt khai): dịch vụ này giữ kết nối với thiết bị ngoài qua Bluetooth / mạng. Không dùng
@@ -81,6 +82,10 @@ class ShareService : Service() {
         private const val ID = 4208
         private const val ACTION_STOP = "vn.abook.player.share.STOP"
 
+        /** Công tắc đổi từ ngoài giao diện (nút "Tắt chia sẻ" trên thông báo): LibraryPlugin báo màn hình hỏi lại trạng thái. */
+        @Volatile
+        var changed: (() -> Unit)? = null
+
         /**
          * Chạy chia sẻ: bật dịch vụ giữ tiến trình rồi mở [LibraryServer] (kéo theo [BluetoothShare]); idempotent. Không ghi
          * công tắc - xem [turnOn]. Chạy ngoài luồng chính. Không bật được dịch vụ (Android 12+ từ chối khi app không ở trước
@@ -112,6 +117,7 @@ class ShareService : Service() {
         fun turnOff(context: Context) {
             SyncLink.prefs(context).edit().putBoolean(SHARE_KEY, false).commit()
             disable(context)
+            changed?.invoke()
         }
     }
 }
