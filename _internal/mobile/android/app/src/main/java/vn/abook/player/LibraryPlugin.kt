@@ -894,10 +894,12 @@ class LibraryPlugin : Plugin() {
     }
 
     /**
-     * "Lưu thành…": hộp thoại "tạo file" của hệ thống (người dùng chọn chỗ và tên), rồi ghi cuốn - kèm thay đổi của người nghe
-     * nếu có (file phiên bản 4) - bằng BookDocumentWriter. `as` "abook" hay "abookproj" (cuốn nhập từ file dự án giữ xưởng của nó; cuốn
-     * từ file `.abook` thành file chờ dựng xưởng); không nói thì giữ đúng loại file cuốn đã đến. Trả {saved: true, name, size, edits},
-     * hay {saved: false} khi huỷ.
+     * "Lưu" / "Lưu thành…": ghi cuốn - kèm thay đổi của người nghe nếu có (file phiên bản 4) - bằng BookDocumentWriter. `as` "abook" hay
+     * "abookproj" (cuốn nhập từ file dự án giữ xưởng của nó; cuốn từ file `.abook` thành file chờ dựng xưởng); không nói thì giữ đúng loại
+     * file cuốn đã đến. Lần đầu hỏi chỗ lưu bằng hộp thoại "tạo file" của hệ thống (người dùng chọn chỗ và tên) rồi NHỚ chỗ ấy: "Lưu" những lần
+     * sau ghi thẳng vào đó, không hỏi lại (như máy tính). `ask: true` ("Lưu thành…") luôn hỏi; chỗ nhớ không ghi được nữa (file bị xoá, mất
+     * quyền) cũng hỏi lại. File gốc người dùng mở sách ra không bao giờ bị ghi đè - chỗ nhớ chỉ là file do chính "Lưu" đã tạo. Trả
+     * {saved: true, name, size, edits}, hay {saved: false} khi huỷ.
      */
     @PluginMethod
     fun saveBook(call: PluginCall) {
@@ -906,17 +908,38 @@ class LibraryPlugin : Plugin() {
         if (Store.isComputerBook(id) || manifest.optJSONObject("package") == null) {
             return call.reject("Sách này lấy từ máy tính khác - muốn lưu thành file thì lưu ở máy ấy")
         }
-        val title = Store.manifest(id)?.optString("title").orEmpty()
         val project = savesAsProject(call, id)
+        val kept = if (call.getBoolean("ask", false) == true) null else rememberedSave(id, project)
+        if (kept != null) writeSavedBook(call, kept, direct = true) else askSaveLocation(call, id, project)
+    }
+
+    private fun askSaveLocation(call: PluginCall, id: String, project: Boolean) {
+        val title = Store.manifest(id)?.optString("title").orEmpty()
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
             .setType(if (project) BookFileImport.PROJECT_MIMETYPE else BookFileImport.MIMETYPE)
             .putExtra(Intent.EXTRA_TITLE, BookDocumentWriter.defaultName(title, project))
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
         startActivityForResult(call, intent, "savedBook")
     }
 
     /** "Lưu" giữ loại file cuốn đã đến (có `project.json` = file dự án); "Lưu thành…" chọn `as`. */
     private fun savesAsProject(call: PluginCall, id: String): Boolean =
         (call.getString("as") ?: if (ProjectDocument.kept(Store.bookDir(id)) != null) "abookproj" else "abook") == "abookproj"
+
+    private fun savePlaces() = context.getSharedPreferences("book_saves", Context.MODE_PRIVATE)
+
+    /** Chỗ "Lưu" đã ghi lần trước của cuốn này, cùng loại file và còn quyền ghi; không thì null (hỏi lại). */
+    private fun rememberedSave(id: String, project: Boolean): Uri? {
+        val (kind, address) = savePlaces().getString(id, null)?.split("|", limit = 2)?.takeIf { it.size == 2 } ?: return null
+        if ((kind == "abookproj") != project) return null
+        val uri = Uri.parse(address)
+        return uri.takeIf { context.contentResolver.persistedUriPermissions.any { grant -> grant.uri == it && grant.isWritePermission } }
+    }
+
+    private fun rememberSave(id: String, project: Boolean, uri: Uri) {
+        val kept = runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION) }
+        if (kept.isSuccess) savePlaces().edit().putString(id, "${if (project) "abookproj" else "abook"}|$uri").apply()
+    }
 
     @ActivityCallback
     private fun savedBook(call: PluginCall?, result: ActivityResult) {
@@ -926,20 +949,29 @@ class LibraryPlugin : Plugin() {
             call.resolve(JSObject().put("saved", false))
             return
         }
-        io.execute {
-            try {
-                val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
-                val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn")
-                val written = out.use { BookDocumentWriter.write(Store.bookDir(id), it, savesAsProject(call, id)) }
-                val name = runCatching {
-                    context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
-                        if (cursor.moveToFirst()) cursor.getString(0) else null
-                    }
-                }.getOrNull() ?: ""
-                call.resolve(JSObject().put("saved", true).put("name", name).put("size", written.size).put("edits", written.edits))
-            } catch (error: Exception) {
-                fail(call, error, "không lưu được file")
-            }
+        writeSavedBook(call, uri, direct = false)
+    }
+
+    /** Ghi cuốn vào `uri`. `direct`: chỗ nhớ từ lần trước - ghi hỏng thì hỏi lại chỗ lưu thay vì báo lỗi; chỗ vừa chọn thì nhớ lại. */
+    private fun writeSavedBook(call: PluginCall, uri: Uri, direct: Boolean) = io.execute {
+        val id = call.getString("id")
+        try {
+            if (id == null) throw IllegalArgumentException("thiếu id")
+            val project = savesAsProject(call, id)
+            val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn")
+            val written = out.use { BookDocumentWriter.write(Store.bookDir(id), it, project) }
+            if (!direct) rememberSave(id, project, uri)
+            val name = runCatching {
+                context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getString(0) else null
+                }
+            }.getOrNull() ?: ""
+            call.resolve(JSObject().put("saved", true).put("name", name).put("size", written.size).put("edits", written.edits))
+        } catch (error: Exception) {
+            if (direct && id != null) {
+                savePlaces().edit().remove(id).apply()
+                activity.runOnUiThread { askSaveLocation(call, id, savesAsProject(call, id)) }
+            } else fail(call, error, "không lưu được file")
         }
     }
 
@@ -1024,6 +1056,21 @@ class LibraryPlugin : Plugin() {
         val run = Mp3Exports.start(context, id, tree, coverFile)
         call.resolve(JSObject().put("started", true).put("run", run).put("folder", "$treeName/${Mp3Export.folderName(plan.title)}")
             .put("chapters", plan.chapters.size))
+    }
+
+    /**
+     * "Mở thư mục" ở thông báo xuất xong: mở thư mục bản xuất bằng app Tệp của hệ thống. Chỉ nhận địa chỉ nằm trong thư mục người dùng đã
+     * cấp cho ABook (không mở địa chỉ tuỳ ý); máy không có app nào mở được thư mục thì trả {opened: false} - giao diện nói đường đi bằng chữ.
+     */
+    @PluginMethod
+    fun openFolder(call: PluginCall) {
+        val uri = call.getString("uri")?.let(Uri::parse) ?: return call.reject("thiếu uri")
+        val allowed = uri.scheme == "content" && context.contentResolver.persistedUriPermissions.any { uri.toString().startsWith(it.uri.toString()) }
+        if (!allowed) return call.resolve(JSObject().put("opened", false))
+        val intent = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, android.provider.DocumentsContract.Document.MIME_TYPE_DIR)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        call.resolve(JSObject().put("opened", runCatching { context.startActivity(intent) }.isSuccess))
     }
 
     /** Bìa tự vẽ gửi từ giao diện, cùng luật với máy tính (export._cover_file): chỉ data URL PNG, tối đa 4 MB. */

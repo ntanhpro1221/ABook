@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookProgressText, caughtUpDetail, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, caughtUpDetail, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -115,5 +115,34 @@ describe("sách chưa đủ chương mà không máy nào thu", () => {
   it("dòng trạng thái cho số chương đã thu, không nói việc thu đang dừng", () => {
     expect(partialBookLine(1, 2)).toBe("Sách này có 1/2 chương đã thu - các chương sau chưa có audio");
     expect(partialBookLine(1, 2)).not.toContain("đang dừng");
+  });
+});
+
+describe("giọng ghi dưới mỗi chương chỉ có chữ", () => {
+  it("nói đúng giọng đang đọc cuốn, không cứng 'Giọng đọc của máy'", () => {
+    expect(textChapterLine(true, "Hoài My (Edge)")).toBe("Hoài My (Edge)");
+    expect(textChapterLine(true, "")).toBe("Giọng đọc của máy");
+    expect(textChapterLine(false, "Hoài My (Edge)")).toBe("Chỉ có chữ");
+  });
+});
+
+describe("lời nhắc màn đọc: giữ chữ ở cả hai loại sách", () => {
+  it("sách nói sửa được cũng nhắc giữ chữ đọc sai, cùng câu với sách chữ", () => {
+    const audio = { textOnly: false, canSpeak: false, timed: true, tapped: false, coarse: true, wish: true, readings: true };
+    expect(readerHint(audio)).toContain("Giữ vào một chữ đọc sai để sửa cách đọc.");
+    const text = { ...audio, textOnly: true, canSpeak: true, wish: false };
+    expect(readerHint(text)).toContain("Giữ vào một chữ đọc sai để sửa cách đọc.");
+  });
+
+  it("chuột phải trên máy tính", () => {
+    const audio = { textOnly: false, canSpeak: false, timed: true, tapped: false, coarse: false, wish: true, readings: true };
+    expect(readerHint(audio)).toContain("Bấm chuột phải vào một chữ đọc sai để sửa cách đọc.");
+  });
+});
+
+describe("chờ giọng đọc", () => {
+  it("chỉ nói 'Đang chuẩn bị giọng đọc…' khi chờ quá ~1,5 giây", () => {
+    expect(PREPARING_VOICE_AFTER_MS).toBeGreaterThanOrEqual(1000);
+    expect(PREPARING_VOICE_AFTER_MS).toBeLessThanOrEqual(2000);
   });
 });

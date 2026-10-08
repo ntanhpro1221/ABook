@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Clock, MessageSquareQuote, RefreshCw, Type, UserRound, X } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { cn } from "@/shared/cn";
 import { studioNeed } from "@/shared/capabilities";
@@ -157,8 +157,8 @@ function wordsOf(text: string): string[] {
   return out;
 }
 
-function WordView({ bookId, text, names, need, onBack }: { bookId: string; text: string; names: NameWish[]; need: string; onBack: () => void }) {
-  const [word, setWord] = useState<string | null>(null);
+function WordView({ bookId, text, names, need, onBack, initial = null }: { bookId: string; text: string; names: NameWish[]; need: string; onBack: () => void; initial?: string | null }) {
+  const [word, setWord] = useState<string | null>(initial);
   const words = useMemo(() => wordsOf(text), [text]);
   const pending = word ? names.find((item) => sameWord(item.surface, word)) : undefined;
   // Chưa có xưởng để thu thử: "Nghe thử" bằng giọng đọc của máy.
@@ -221,17 +221,21 @@ export function LineWishDialog({
   script,
   segmentIndex,
   wishes,
+  word: heldWord = null,
   onClose,
 }: {
   book: ListenBook;
   script: Script;
   segmentIndex: number | null;
   wishes: WishesView | undefined;
+  /** Chữ người nghe vừa giữ (đường “giữ chữ”, như cuốn chỉ có chữ): hộp mở thẳng ở bước sửa cách đọc từ ấy. null: mở ở menu câu. */
+  word?: string | null;
   onClose: () => void;
 }) {
   const client = useQueryClient();
   const { data: cast } = useCast(book.id);
-  const [view, setView] = useState<View>("menu");
+  const [view, setView] = useState<View>(heldWord ? "word" : "menu");
+  useEffect(() => setView(heldWord ? "word" : "menu"), [segmentIndex, heldWord]);
   const segment = segmentIndex === null ? undefined : script.segments[segmentIndex];
   const wish = segment?.stableId ? wishes?.lines[segment.stableId] : undefined;
   const people = useMemo(() => peopleOf(cast, script), [cast, script]);
@@ -318,7 +322,7 @@ export function LineWishDialog({
   });
 
   const items = waitingItems(wish);
-  const title = view === "speaker" ? (line?.kind === "thought" ? "Ai nghĩ câu này?" : "Ai nói câu này?") : view === "delivery" ? "Cách đọc câu này" : view === "word" ? "Cách đọc một tên" : "Sửa câu này";
+  const title = view === "speaker" ? (line?.kind === "thought" ? "Ai nghĩ câu này?" : "Ai nói câu này?") : view === "delivery" ? "Cách đọc câu này" : view === "word" ? "Đọc từ này là…" : "Sửa câu này";
   return (
     <Dialog open={segment !== undefined} onOpenChange={(open) => !open && close()} width="max-w-md" title={title}>
       {line && (
@@ -378,7 +382,7 @@ export function LineWishDialog({
                   disabled={!identified}
                   onClick={() => setView("delivery")}
                 />
-                <MenuRow icon={Type} title="Cách đọc một tên trong câu" note="Chọn từ máy đọc sai, gõ cách đọc đúng" onClick={() => setView("word")} />
+                <MenuRow icon={Type} title="Sửa cách đọc một từ" note="Chọn từ máy đọc sai, gõ cách đọc đúng" onClick={() => setView("word")} />
                 <MenuRow
                   icon={RefreshCw}
                   title="Thu lại câu này"
@@ -406,7 +410,7 @@ export function LineWishDialog({
               </Button>
             </>
           )}
-          {view === "word" && <WordView bookId={book.id} text={line.text} names={wishes?.pronunciations ?? []} need={need} onBack={() => setView("menu")} />}
+          {view === "word" && <WordView key={`${segmentIndex}:${heldWord}`} initial={heldWord} bookId={book.id} text={line.text} names={wishes?.pronunciations ?? []} need={need} onBack={() => setView("menu")} />}
         </div>
       )}
     </Dialog>

@@ -1,13 +1,13 @@
 import type { MusicCredit, MusicCue } from "./musicBed";
 import type { PlaylistQueue } from "./playlistBed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
 import type { Bookmark, Cast, ListenBook, ListenChapter, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
-import { mergeTimings, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
-import { voicesOf } from "./readAloudVoice";
+import { mergeTimings, VOICE_CHANGED_EVENT, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
+import { bookVoiceCaption, voicesOf } from "./readAloudVoice";
 import type { PreparePlan, PrepareRequest, PrepareStatus } from "./prepareAhead";
 
 // Nguồn dữ liệu của phía Nghe. Giao diện chỉ nói chuyện với giao diện này:
@@ -86,8 +86,8 @@ export interface ListenSource {
   /** Chỗ đọc dở ở chế độ đọc (nguồn nào không có thì giao diện tự nhớ trong máy). */
   saveReading?(bookId: string, chapterId: number, index: number): Promise<void>;
   /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file `.abook` mới: máy tính ghi vào thư mục xuất (hay
-   *  `folder`), điện thoại hỏi chỗ lưu bằng hộp thoại của hệ thống. `saved: false` khi người dùng bỏ qua. */
-  saveBook?(bookId: string, options?: { folder?: string; as?: "abook" | "abookproj" }): Promise<SavedBook>;
+   *  `folder`), điện thoại hỏi chỗ lưu bằng hộp thoại của hệ thống lần đầu rồi nhớ (`ask` hỏi lại). `saved: false` khi người dùng bỏ qua. */
+  saveBook?(bookId: string, options?: { folder?: string; as?: "abook" | "abookproj"; ask?: boolean }): Promise<SavedBook>;
   /** Điện thoại: gửi file sách `.abook` của cuốn (kèm thay đổi của người nghe) qua bảng chia sẻ của hệ thống. */
   shareBook?(bookId: string): Promise<void>;
   /** Điện thoại: gửi ngay phần sửa của cuốn tải từ máy tính về máy tính (EditsSync.kt); trả trạng thái mới, lỗi thì nói lý do. */
@@ -105,8 +105,12 @@ export interface ListenSource {
 
 const SourceContext = createContext<ListenSource | null>(null);
 
+function needsSpeech(book: ListenBook): boolean {
+  return Boolean(book.chapters?.some((chapter) => chapter.state === "text"));
+}
+
 function markSpeech(book: ListenBook, can: boolean): ListenBook {
-  if (!can || !book.chapters?.some((chapter) => chapter.state === "text")) return book;
+  if (!can || !book.chapters || !needsSpeech(book)) return book;
   return { ...book, chapters: book.chapters.map((chapter) => (chapter.state === "text" ? { ...chapter, speech: true } : chapter)) };
 }
 
@@ -120,7 +124,11 @@ export function withReadAloud(source: ListenSource): ListenSource {
     readAloudVoices: () => voicesOf(source),
     book: async (id) => markSpeech(await source.book(id), await speaks()),
     library: async () => {
-      const [books, can] = await Promise.all([source.library(), speaks()]);
+      // Hỏi giọng chỉ khi có cuốn mang chương chỉ-có-chữ (điện thoại: danh sách thư viện không kèm chương nên hầu như không bao giờ):
+      // chờ danh sách giọng (lõi đọc to khởi động, hỏi cả dịch vụ trực tuyến) làm thư viện trống hiện skeleton cả chục giây (soát UX a9).
+      const books = await source.library();
+      if (!books.some(needsSpeech)) return books;
+      const can = await speaks();
       return books.map((book) => markSpeech(book, can));
     },
   };
@@ -283,4 +291,15 @@ export function useListenMutations(bookId: string) {
       },
     }),
   };
+}
+
+/** Tên giọng đang đọc cuốn `bookId` ("Hoài My (Edge)", "Giọng đọc của máy"); "" khi máy chưa báo giọng nào. Đổi giọng giữa chừng thì cập nhật ngay. */
+export function useBookVoice(bookId: string | undefined): string {
+  const voices = useReadAloudVoices().data;
+  const [, bump] = useReducer((count: number) => count + 1, 0);
+  useEffect(() => {
+    window.addEventListener(VOICE_CHANGED_EVENT, bump);
+    return () => window.removeEventListener(VOICE_CHANGED_EVENT, bump);
+  }, []);
+  return bookId ? bookVoiceCaption(voices, bookId) : "";
 }

@@ -25,7 +25,7 @@ import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
-import { useCast, useListenBook, useListenLibrary, useListenMutations, useSource } from "./source";
+import { useBookVoice, useCast, useListenBook, useListenLibrary, useListenMutations, useSource } from "./source";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
@@ -35,11 +35,14 @@ function ChapterRow({
   onDone,
   onRename,
   prepared = false,
+  voice = "",
 }: {
   book: ListenBook;
   chapter: ListenChapter;
   /** "Làm trước" đã đọc sẵn chương này bằng giọng của cuốn: nghe ngay, không cần mạng hay chờ. */
   prepared?: boolean;
+  /** Tên giọng đang đọc cuốn (useBookVoice) - dòng phụ của chương chỉ-có-chữ nói đúng giọng ấy. */
+  voice?: string;
   onDone: (chapterId: number, done: boolean) => void;
   /** Sách sửa được trên máy này (shared/capabilities.ts): "Đổi tên chương…" - cái tên hiện trên màn hình, không đổi audio. */
   onRename?: (chapter: ListenChapter) => void;
@@ -96,7 +99,7 @@ function ChapterRow({
           {chapter.available
             ? formatLength(chapter.duration)
             : chapter.state === "text"
-              ? textChapterLine(Boolean(chapter.speech))
+              ? textChapterLine(Boolean(chapter.speech), voice)
               : chapterStatusLabel(book.producing)}
           {prepared && (
             <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-accent-soft px-1 align-[1px] text-[11px] font-medium text-accent-text">
@@ -746,6 +749,7 @@ export function BookScreen({
   const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
   const sharer = useShareBook(book ?? ({ id: id ?? "" } as ListenBook));
   // Chương đã "Làm trước" (điện thoại, PrepareAhead.kt): dấu "Đã làm sẵn" ở danh sách chương.
+  const voice = useBookVoice(id);
   const prepared = usePreparedChapters(id ?? "", Boolean(book?.chapters?.some((chapter) => chapter.state === "text" && chapter.speech)));
   // Điện thoại: mở sách là hỏi máy tính đã ghép bản mới nhất của hồ sơ nghe (chỗ nghe, tên, hồ sơ vừa chọn bên ấy) -
   // không thì chỉ biết khi chính điện thoại phát hay dừng cuốn này.
@@ -1011,6 +1015,7 @@ export function BookScreen({
                   onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })}
                   onRename={editable ? setRenamingChapter : undefined}
                   prepared={chapter.state === "text" && prepared.has(chapter.id)}
+                  voice={voice}
                 />
               ))}
             </section>

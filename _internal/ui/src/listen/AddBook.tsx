@@ -91,6 +91,7 @@ export function AddBookDialog({
   const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());
   const [names, setNames] = useState<ChapterNames>({});
   const titleField = useRef<HTMLInputElement>(null);
+  const lastKind = useRef<ImportKind>("file");
   // Đọc xong file: con trỏ sang ô "Tên sách" (lúc mở hộp, `data-autofocus` của ô đường dẫn nhận con trỏ). Màn cảm ứng thì KHÔNG: bàn phím
   // ảo bật lên che mất nút "Thêm vào thư viện", mà tên đã điền sẵn và hiếm khi cần sửa (soát máy thật 03-10).
   const hasPreview = preview !== null; // tích / bỏ tích tách chương đọc lại bản xem trước: con trỏ không nhảy về ô tên
@@ -194,6 +195,7 @@ export function AddBookDialog({
   };
   const choose = async (kind: ImportKind) => {
     if (!importer.choose) return;
+    lastKind.current = kind;
     try {
       const picked = await importer.choose(kind);
       if (picked === "opened") {
@@ -204,6 +206,12 @@ export function AddBookDialog({
     } catch (error) {
       setProblem((error as Error).message);
     }
+  };
+  // "Chọn lại" sau khi đã chọn file: mở thẳng bộ chọn file (thư mục nếu lần trước chọn thư mục) thay vì quay về hộp rồi bắt bấm thêm một lần
+  // nữa (soát UX a9). Máy tính (có ô dán đường dẫn) thì về bước chọn như cũ.
+  const chooseAgain = () => {
+    reset();
+    if (importer.choose && !importer.typedPath) void choose(lastKind.current);
   };
   const openExisting = (id: string) => {
     reset();
@@ -428,7 +436,7 @@ export function AddBookDialog({
             </p>
           )}
           <div className="mt-5 flex flex-wrap justify-end gap-2">
-            <Button variant="ghost" disabled={busy !== null} onClick={reset}>
+            <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>
               Chọn lại
             </Button>
             {known ? (

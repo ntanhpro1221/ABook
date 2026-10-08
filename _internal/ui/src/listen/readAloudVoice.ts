@@ -113,6 +113,11 @@ export function voiceCaption(voice: ReadAloudVoice | undefined): string {
   return maker ? `${voice.name} (${maker})` : voice.name;
 }
 
+/** Tên giọng đang đọc cuốn `bookId` (giọng đã chọn cho cuốn, không thì mặc định của máy); "" khi máy chưa báo giọng nào. */
+export function bookVoiceCaption(voices: ReadAloudVoice[] | undefined, bookId: string): string {
+  return voices?.length ? voiceCaption(resolveVoice(voices, chosenVoice(bookId))) : "";
+}
+
 let fellBack = false; // lời nhắn rơi sang giọng máy: một lần cho cả phiên, không mỗi chương một lần
 const told = new Set<string>(); // lời nhắn của giọng dùng khoá: một lần mỗi (nhà cung cấp, lý do) cho cả phiên
 const benched = new Map<string, string>(); // nhà cung cấp có khoá bị từ chối / hết hạn mức: các đoạn sau đi thẳng sang giọng kế
