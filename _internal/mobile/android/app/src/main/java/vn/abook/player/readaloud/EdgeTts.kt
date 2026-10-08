@@ -192,8 +192,14 @@ class EdgeTts(
         const val CONNECT_MS = 8_000
         const val READ_MS = 15_000
         const val TOTAL_MS = 45_000L
-        /** Lỗi thoáng qua ([Dropped]) thử lại tối đa chừng này lần, mỗi lần một kết nối mới, nghỉ 0,3 s × số lần đã thử (như `edge.py` RETRIES). */
-        const val RETRIES = 2
+        /** Lỗi thoáng qua ([Dropped]) thử lại tối đa chừng này lần, mỗi lần một kết nối mới, nghỉ lùi dần theo [BACKOFF_MS]: đủ cho một đoạn mạng chập
+         *  chờn (qua vùng sóng yếu, wifi đổi sóng) mà chưa bắt người nghe chờ quá lâu (soát UX a9; trước 2 lần × 0,3 s - mạng mất 2 giây là dừng). */
+        const val RETRIES = 3
+        val BACKOFF_MS = longArrayOf(500L, 1_500L, 4_000L)
+        /** Hết cách thử lại vì MẤT MẠNG thật: câu nói thẳng cho người nghe (thay cho "Mất kết nối với giọng Edge giữa chừng"). */
+        const val LOST_NETWORK = "Mất mạng - giọng trực tuyến tạm dừng. Bấm phát để thử lại, hoặc chọn giọng trên máy."
+        /** Hết cách thử lại mà mạng vẫn còn (dịch vụ cắt lượt / bận): không nói "mất mạng". */
+        const val NOT_ANSWERING = "Giọng Edge đang không trả lời - bấm phát để thử lại, hoặc chọn giọng trên máy."
         /** Lệch giữa đồng hồ máy và máy chủ (giây), học từ header `Date` của lần bị từ chối 403; dùng chung cho mọi lần gọi. */
         @Volatile var clockSkewSeconds = 0.0
         private val random = SecureRandom()
@@ -215,7 +221,7 @@ class EdgeTts(
                 val shift = EdgeProtocol.durationMs(bytes) + EdgeProtocol.BOUNDARY_SHIFT_MS
                 var attempt = 0
                 while (true) {
-                    try {
+                    val failure: Exception = try {
                         val (audio, found) = readPart(part, shift)
                         sink.write(audio)
                         boundaries.addAll(found)
@@ -223,10 +229,19 @@ class EdgeTts(
                         break
                     } catch (error: Dropped) {
                         // Dịch vụ cắt lượt giữa chừng hay bận lúc bắt tay: thử lại mảnh ấy bằng kết nối mới, không rơi ngay về giọng của máy.
-                        if (attempt == RETRIES) throw VoiceException(error.message ?: "Giọng Edge cắt kết nối giữa chừng", cause = error)
-                        attempt += 1
-                        pause(300L * attempt)
+                        error
+                    } catch (error: VoiceException) {
+                        // Mất mạng GIỮA CHỪNG (đã cắt lượt trước đó, hay mảnh trước vừa đọc xong): kết nối mới cũng báo "không có mạng" - vẫn thử lại, mạng
+                        // hay chập chờn vài giây. Ngay lần đầu mà đã không có mạng thì thôi, rơi sang giọng kế liền như trước.
+                        if (!error.offline || (attempt == 0 && bytes == 0L)) throw error
+                        error
                     }
+                    if (attempt == RETRIES) {
+                        val offline = (failure as? VoiceException)?.offline == true
+                        throw VoiceException(if (offline) LOST_NETWORK else NOT_ANSWERING, offline = offline, cause = failure)
+                    }
+                    pause(BACKOFF_MS[attempt])
+                    attempt += 1
                 }
             }
         }

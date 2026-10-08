@@ -7,7 +7,7 @@ import type { ListenSource } from "./source";
 // rơi sang giọng kế - Edge rồi giọng của máy - mà không dừng.
 
 const GLOBAL_KEY = "abook-readaloud-voice";
-export const ONLINE_NOTICE = "Giọng trực tuyến gửi chữ của sách tới Microsoft để đọc.";
+export const ONLINE_NOTICE = "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc.";
 export const FALLBACK_NOTICE = "Không dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.";
 /** Sự kiện: người dùng vừa đổi khoá của giọng dùng khoá riêng (Cài đặt) - danh sách giọng phải hỏi lại. */
 export const ONLINE_KEYS_CHANGED_EVENT = "abook:readaloud-online-keys";

@@ -27,6 +27,7 @@ export function stagedChoice(picked: { ref: string; name?: string; pdf?: string 
 export const phoneTextImport: TextImport = {
   async choose(kind) {
     const picked = await EbookLibrary.pickSource({ kind });
+    if (picked.picked && picked.book) return "opened";
     if (!picked.picked || !picked.ref) return null;
     return stagedChoice({ ref: picked.ref, name: picked.name, pdf: picked.pdf });
   },

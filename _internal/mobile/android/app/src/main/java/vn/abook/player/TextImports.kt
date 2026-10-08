@@ -60,6 +60,15 @@ object TextImports {
         return "${name.ifEmpty { "Sách" }}.$kind"
     }
 
+    /** File sách / dự án của app (.abook, .abookproj - theo đuôi tên, hay kiểu nội dung khi tên mất đuôi): đi đường mở file sách
+     *  (BookFileImport), không phải bước xem trước của "Thêm sách từ file…". Cho một nút nhận mọi loại file (soát UX a9). */
+    fun isAppBookFile(mime: String?, displayName: String?): Boolean {
+        val suffix = displayName?.substringAfterLast('/')?.trim().orEmpty().substringAfterLast('.', "").lowercase()
+        if (suffix == "abook" || suffix == "abookproj") return true
+        val type = mime?.substringBefore(';')?.trim()?.lowercase()
+        return type == BookFileImport.MIMETYPE || type == BookFileImport.PROJECT_MIMETYPE
+    }
+
     /** Dọn mọi thư mục tạm còn sót (app bị giết giữa chừng): bước xem trước đang dở mất theo, người dùng chọn lại. */
     fun sweep() {
         kept.clear()

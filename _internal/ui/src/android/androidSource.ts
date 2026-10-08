@@ -1,6 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import type { Cast, ListenBook, ListeningSession, ListeningState, Script } from "@/listen/model";
-import { bookProgress } from "./progress";
+import { bookProgress, textBookProgress } from "./progress";
 import type { ListenSource } from "@/listen/source";
 import { EbookLibrary, EbookPlayer, ReadAloud, type LocalBook } from "./plugins";
 import { phonePrepare } from "./readAloud";
@@ -31,6 +31,7 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     state: chapter.text && !chapter.file ? ("text" as const) : null,
     ...(chapter.skip?.length ? { skip: chapter.skip } : {}),
   }));
+  const textOnly = chapters.length > 0 && chapters.every((chapter) => chapter.state === "text");
   const state: ListeningState = { ...book.state, chapters: book.state?.chapters ?? {}, bookmarks: book.state?.bookmarks ?? [] };
   return {
     id: book.id,
@@ -42,13 +43,13 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     chaptersAvailable: chapters.filter((chapter) => chapter.available).length,
     complete: book.complete,
     // Cuốn chỉ có chữ (.abook phiên bản 5): chương nào cũng chưa có audio mà có chữ.
-    stage: chapters.length > 0 && chapters.every((chapter) => chapter.state === "text") ? ("text" as const) : null,
+    stage: textOnly ? ("text" as const) : null,
     // Trên điện thoại không biết máy tính còn đang làm hay không: chỉ biết cuốn này chưa đủ chương.
     producing: false,
     paused: !book.complete,
     updatedAt: state.updatedAt ?? null,
     state,
-    progress: bookProgress(state, chapters.filter((chapter) => chapter.available), book.complete),
+    progress: textOnly ? textBookProgress(state, chapters) : bookProgress(state, chapters.filter((chapter) => chapter.available), book.complete),
     lastChapterTitle: chapters.find((chapter) => chapter.id === state.last?.chapterId)?.fullTitle ?? "",
     cover: book.cover
       ? { url: `${fileUrl(book.id, book.cover.file)}?v=${book.cover.version}`, color: book.cover.color, width: book.cover.width, height: book.cover.height }

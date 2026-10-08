@@ -20,6 +20,25 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   đúng như thế; thêm các chức danh "bác sĩ", "tướng quân", "thái tử", "trưởng lão". Cách gọi theo quan hệ ("chị Dậu") vẫn
   giữ riêng.
 
+### Điện thoại
+
+- Xoay ngang màn "Đang nghe": cả cột bìa, nút và tab Đọc theo / Chương cuộn dọc được, không còn mất hàng nút tốc độ, hẹn giờ, nhạc nền, dấu trang.
+- Nút Back của máy khi một menu, hộp thoại hay tấm trượt đang mở chỉ đóng nó lại, không rời trang đang xem.
+- "Thêm sách từ file…" nhận luôn file sách .abook / .abookproj (mở như "Mở file sách" và báo "Đã thêm sách" kèm nút mở), nên chỉ còn một nút
+  thêm sách ở thư viện trống; "Mở file sách" ở tab Tải sách vẫn còn, và nhận cả EPUB / Word / PDF / TXT.
+- Giọng trực tuyến chập chờn mạng giữa câu: máy thử lại ba lần, lùi dần (0,5 - 1,5 - 4 giây) rồi mới dừng; hết cách thì nói thẳng: "Mất mạng - giọng trực
+  tuyến tạm dừng…" khi mạng mất thật, "Giọng Edge đang không trả lời…" khi mạng còn mà dịch vụ cắt / bận - cả hai kèm "bấm phát để thử lại, hoặc chọn giọng trên máy".
+- Hộp "Chọn giọng khác" (hỏi trước khi đọc bằng giọng trực tuyến) có thêm "Tải giọng chạy trên máy…" dẫn tới nơi tải VieNeu / Supertonic trong Cài đặt;
+  máy tính cũng có.
+- Sách mở từ file .abook mà chưa đủ chương không còn ghi "việc thu đang dừng" hay hứa "nghe được khi máy làm xong": ghi "Sách này có N/M chương đã thu".
+- Thanh tiến độ của sách chỉ có chữ chạy theo chương đã nghe thay vì luôn 0 (máy tính cũng vậy); vị trí đang nghe không bao giờ lớn hơn độ dài chương (hết cảnh "1:00 / 0:59").
+- Tab Tải sách, mục "Cho máy khác nghe thư viện này": địa chỉ và "Vân tay" 64 chữ số gập vào "Chi tiết"; khi thiếu quyền "Thiết bị ở gần" có nút
+  "Mở cài đặt để cho phép".
+- Giọng trực tuyến gọi thống nhất là "Edge" ở mọi nơi hiện cho người nghe (nhóm giọng, chọn giọng, Cài đặt, thư viện, câu báo); riêng câu báo quyền riêng tư vẫn nói rõ
+  chữ đi đâu: "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc." (cả máy tính và điện thoại).
+- Thư viện trống chỉ còn một nút "Thêm sách từ file…" ở giữa màn (nút trùng ở đầu trang hiện lại khi đã có sách); trang sách chưa đủ chương không đếm chương hai lần.
+- Màn "Đang nghe": hàng nút xếp thành hai nhóm nên nút phát trên loa / TV không rơi lẻ một mình; nút hẹn giờ ghi "15 phút" thay cho "14:51" dễ lẫn với giờ.
+
 ## [0.4.33] - 2026-10-08
 
 ### Mạng giữa các máy

@@ -196,7 +196,11 @@ export function AddBookDialog({
     if (!importer.choose) return;
     try {
       const picked = await importer.choose(kind);
-      if (picked) await read(picked);
+      if (picked === "opened") {
+        // File sách .abook chọn trong hộp này: nguồn đã mở nó (toast "Đã thêm sách" kèm nút mở), hộp không còn việc.
+        clear();
+        onOpenChange(false);
+      } else if (picked) await read(picked);
     } catch (error) {
       setProblem((error as Error).message);
     }
@@ -254,7 +258,7 @@ export function AddBookDialog({
       description={
         preview
           ? "Xem danh sách chương trước khi thêm. Chữ của truyện được giữ nguyên - ABook chỉ đổi định dạng."
-          : "EPUB, Word (DOCX), PDF có chữ, một file TXT cả truyện, hay một thư mục mà mỗi file TXT là một chương. Sách vào Thư viện để đọc ngay."
+          : "EPUB, Word (DOCX), PDF có chữ, một file TXT cả truyện, hay một thư mục mà mỗi file TXT là một chương. Sách vào Thư viện để đọc ngay. Có file sách .abook (bạn bè gửi, tải về) thì chọn luôn ở đây."
       }
     >
       {!preview ? (

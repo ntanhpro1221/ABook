@@ -18,7 +18,7 @@ import pytest
 from abook.webui import humanize, listen_view, store, tls
 from abook.webui import sync as sync_module
 from abook.webui.library import Library, Preferences, book_id
-from abook.webui.listening import Listening, book_progress, merge_states
+from abook.webui.listening import Listening, book_progress, merge_states, text_book_progress
 from abook.webui.server import App, Server
 from abook.webui.actions import FakeRunner
 from abook.webui.sync import PAIRING_ATTEMPTS, Devices, Remote, SyncApp, SyncServer, manifest, remote_command
@@ -635,3 +635,18 @@ def test_a_continued_part_carries_its_chain_to_the_phone(library) -> None:
     assert manifest(project, book_id(project), listening)["series"] == expected
     view = listen_view.book(project, book_id(project), store.summarize(project), listening.get("x"))
     assert view["series"] == expected
+
+
+def test_a_text_only_book_progresses_by_chapter() -> None:
+    """Sách chỉ có chữ không có độ dài audio: tiến độ theo chương (trước đây luôn 0), như điện thoại."""
+    chapters = [{"id": index, "duration": 0.0} for index in range(1, 5)]
+    assert text_book_progress({"chapters": {}}, chapters)["fraction"] == 0.0
+    some = text_book_progress(
+        {"chapters": {"1": {"heard": 300, "done": True}, "2": {"heard": 100, "done": False, "duration": 400}}}, chapters)
+    assert some["fraction"] == round((1 + 0.25) / 4, 4) and some["chaptersDone"] == 1 and not some["finished"]
+    everything = {str(chapter["id"]): {"heard": 10, "done": True} for chapter in chapters}
+    assert text_book_progress({"chapters": everything}, chapters)["finished"]
+    marked = text_book_progress({"chapters": {}, "finished": True}, chapters)
+    assert marked["fraction"] == 1.0 and marked["finished"]
+    over = text_book_progress({"chapters": {"1": {"heard": 900, "done": False, "duration": 400}}}, chapters)
+    assert over["fraction"] == 0.25

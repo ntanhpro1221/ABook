@@ -371,4 +371,15 @@ class TextImportsTest {
         assertNull(TextImports.incomingName("application/zip", "nhac.zip"))
         assertNull(TextImports.incomingName(null, null))
     }
+
+    @Test
+    fun an_app_book_file_picked_in_add_book_is_told_apart_from_a_text_book() {
+        assertTrue(TextImports.isAppBookFile("application/octet-stream", "Sách.abook"))
+        assertTrue(TextImports.isAppBookFile(null, "Sách.ABOOKPROJ"))
+        assertTrue(TextImports.isAppBookFile("application/vnd.ngdtuanh.abook+zip", "Sách"))
+        assertTrue(TextImports.isAppBookFile("application/vnd.ngdtuanh.abookproj+zip; x=1", null))
+        assertFalse(TextImports.isAppBookFile("text/plain", "Truyện.txt"))
+        assertFalse(TextImports.isAppBookFile("application/zip", "nhac.zip"))
+        assertFalse(TextImports.isAppBookFile(null, null))
+    }
 }

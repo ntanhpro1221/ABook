@@ -154,7 +154,8 @@ class LibraryPlugin : Plugin() {
             call?.resolve(JSObject().put("picked", false))
             return
         }
-        importFrom(uri)
+        // Một nút nhận mọi loại file: file chữ (EPUB / DOCX / PDF / TXT) vào bước xem trước, file sách vào Thư viện.
+        openFrom(uri, null)
         call?.resolve(JSObject().put("picked", true))
     }
 
@@ -176,9 +177,16 @@ class LibraryPlugin : Plugin() {
             call.resolve(JSObject().put("picked", false))
             return
         }
+        val folder = call.getString("kind") == "folder"
         io.execute {
             try {
-                val staged = if (call.getString("kind") == "folder") stageTree(uri) else stageDocument(uri)
+                // Chọn nhầm file sách .abook ở đây (người dùng chỉ có một nút "Thêm sách từ file…"): mở như "Mở file sách", báo `book`.
+                if (!folder && TextImports.isAppBookFile(runCatching { context.contentResolver.getType(uri) }.getOrNull(), displayName(uri) ?: uri.lastPathSegment)) {
+                    importFrom(uri)
+                    call.resolve(JSObject().put("picked", true).put("book", true))
+                    return@execute
+                }
+                val staged = if (folder) stageTree(uri) else stageDocument(uri)
                 val reply = JSObject().put("picked", true).put("ref", staged.ref).put("name", staged.name)
                 staged.pdf?.let { reply.put("pdf", it.absolutePath) }
                 call.resolve(reply)
