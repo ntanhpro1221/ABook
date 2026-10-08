@@ -19,7 +19,7 @@ from . import book_edits, covers, project_views, store
 from .. import continuation
 from .fingerprints import Fingerprints, base_name, identity_prints, is_text_identity
 from .listen_view import FORMAT
-from .listening import book_progress
+from .listening import book_progress, text_book_progress
 
 TEXT_STATE = "text"  # = bookfile.TEXT_STATE
 MANIFEST = "book.json"  # = bookfile.MANIFEST (bookfile nhập library, library nhập module này - nên không nhập ở đây)
@@ -280,7 +280,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "remote": _remote_view(book) if remote else None,
         "updatedAt": max((Path(path) / MANIFEST).stat().st_mtime, book_edits.stamp(Path(path))[0] / 1e9),
         "state": state,
-        "progress": book_progress(state, available, complete=complete),
+        "progress": (text_book_progress(state, items) if text_book(book) else book_progress(state, available, complete=complete)),
         "cover": book_edits.cover_view(Path(path), book_id),
         # Số thay đổi của người nghe trên cuốn này (lớp sửa): giao diện ghi "N thay đổi" và mời lưu thành file. `wishes`: trong
         # số ấy, bao nhiêu là ý muốn chờ Studio (book_wishes.py) - chưa áp vào audio.

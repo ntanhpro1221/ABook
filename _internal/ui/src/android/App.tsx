@@ -1,6 +1,6 @@
 import { App as CapacitorApp } from "@capacitor/app";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Download, FileAudio, Library, Settings, Trash2 } from "lucide-react";
+import { Download, Library, Settings, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { HashRouter, NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ import { SourceProvider } from "@/listen/source";
 import { usePageEnter } from "@/shared/motion";
 import { watchDownloads, watchEditsSync } from "./downloads";
 import { watchReadAloud } from "./readAloud";
-import { pickBookFile, watchImports } from "./imports";
+import { watchImports } from "./imports";
 import { cn } from "@/shared/cn";
 import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import { androidSource } from "./androidSource";
@@ -31,9 +31,10 @@ import { NativeAudioEngine } from "./nativeEngine";
 import { SettingsScreen } from "./SettingsScreen";
 import { UpdateNotice } from "./UpdateNotice";
 import { applyTheme, loadSettings, pushSettings } from "./settings";
+import { dismissTopLayer } from "./backLayers";
 
 // Vỏ Android: cùng các màn hình Nghe với máy tính, bố cục một tay - điều hướng dưới đáy, trình phát thu nhỏ ngay
-// trên thanh điều hướng, nút Back của máy đóng màn hình đang nghe trước rồi mới lùi trang.
+// trên thanh điều hướng, nút Back của máy đóng menu / hộp thoại đang mở, rồi màn hình đang nghe, rồi mới lùi trang.
 
 /** Theo dõi mọi lượt tải từ lúc app mở, không phụ thuộc màn đang xem (android/downloads.ts). */
 function DownloadWatcher() {
@@ -62,6 +63,8 @@ function BackButton() {
   const { expanded, setExpanded } = useNowPlaying();
   useEffect(() => {
     const handle = CapacitorApp.addListener("backButton", () => {
+      // Menu / hộp thoại / tấm trượt đang mở: đóng lớp ấy trước (android/backLayers.ts), chưa đụng tới màn Đang nghe hay trang.
+      if (dismissTopLayer()) return;
       if (expanded) setExpanded(false);
       else if (location.pathname !== "/") navigate(-1);
       else void CapacitorApp.minimizeApp();
@@ -135,14 +138,11 @@ function EmptyLibrary() {
           <Button variant="secondary" icon={Download} onClick={() => navigate("/devices")}>
             Tải sách từ máy tính
           </Button>
-          <Button variant="ghost" icon={FileAudio} onClick={() => void pickBookFile()}>
-            Mở file sách (.abook)
-          </Button>
         </div>
       }
     >
-      Có file EPUB, Word, PDF hay TXT thì thêm thẳng - nghe ngay bằng giọng đọc. Có ABook trên máy tính thì kết nối qua Wi-Fi rồi tải
-      sách nói về, nghe được cả khi không có mạng; có file sách .abook (bạn bè gửi, tải về) thì mở nó bằng app.
+      Có file EPUB, Word, PDF hay TXT thì thêm thẳng - nghe ngay bằng giọng đọc; file sách .abook (bạn bè gửi, tải về) cũng chọn ở cùng nút
+      này. Có ABook trên máy tính thì kết nối qua Wi-Fi rồi tải sách nói về, nghe được cả khi không có mạng.
     </EmptyState>
   );
 }

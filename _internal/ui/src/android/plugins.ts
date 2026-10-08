@@ -370,8 +370,8 @@ export interface EbookLibraryPlugin {
   pickMusic(): Promise<{ picked: boolean } & Partial<ImportResult>>;
   addListener(event: "musicImport", handler: (event: { done: number; total: number }) => void): Promise<PluginListenerHandle>;
   /** "Thêm sách từ file…" (BookImport.kt + TextBook.kt): bộ chọn file / thư mục của hệ thống; chép thứ đã chọn vào thư mục tạm của app
-   *  (`ref`). `pdf`: đường dẫn bản sao PDF - WebView lấy chữ bằng pdf.js (shared/pdfPages.ts) rồi đưa sang `previewImport`. */
-  pickSource(options: { kind: "file" | "folder" }): Promise<{ picked: boolean; ref?: string; name?: string; pdf?: string }>;
+   *  (`ref`). `book`: thứ chọn là file sách .abook / .abookproj - đã đi đường "Mở file sách" (sự kiện `import`), không có `ref`. `pdf`: đường dẫn bản sao PDF - WebView lấy chữ bằng pdf.js (shared/pdfPages.ts) rồi đưa sang `previewImport`. */
+  pickSource(options: { kind: "file" | "folder" }): Promise<{ picked: boolean; ref?: string; name?: string; pdf?: string; book?: boolean }>;
   /** Đọc thứ đã chọn bằng luật nhập sách của Kotlin; PDF thì kèm `pages` (các dòng từng trang) pdf.js đã lấy ra. Lỗi đọc được: từ chối
    *  với câu cho người dùng. */
   previewImport(options: { ref: string; pages?: string[][]; title?: string; author?: string; splitChapters?: boolean }): Promise<ImportPreview>;

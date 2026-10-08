@@ -76,8 +76,9 @@ export interface AddedBook {
 }
 
 export interface TextImport {
-  /** Mở bộ chọn của máy; `null` khi người dùng bỏ qua. Máy tính không có hộp thoại (chạy trong trình duyệt): không có `choose`. */
-  choose?(kind: ImportKind): Promise<ImportChoice | null>;
+  /** Mở bộ chọn của máy; `null` khi người dùng bỏ qua. Máy tính không có hộp thoại (chạy trong trình duyệt): không có `choose`.
+   *  `"opened"`: thứ chọn là file sách .abook / .abookproj và nguồn đã mở nó như "Mở file sách" (điện thoại) - hộp chỉ việc đóng. */
+  choose?(kind: ImportKind): Promise<ImportChoice | "opened" | null>;
   /** Máy tính dán được đường dẫn thay cho hộp thoại. */
   typedPath?: boolean;
   preview(choice: ImportChoice, options?: ImportOptions): Promise<ImportPreview>;

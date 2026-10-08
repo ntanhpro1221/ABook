@@ -29,6 +29,7 @@ import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useListenBook, useSource } from "./source";
 import { withFreshSkips } from "./textScript";
+import { caughtUpDetail } from "./labels";
 
 export type { SleepMode, SleepRequest } from "./sleep";
 
@@ -1086,7 +1087,7 @@ export function PlayerProvider({
         }
         const caughtUp = refs.current.book?.complete === false;
         setAtEnd(caughtUp ? "caughtUp" : "finished");
-        if (caughtUp) caughtUpToast("Chương tiếp theo sẽ nghe được khi máy làm xong chương ấy.");
+        if (caughtUp) caughtUpToast(caughtUpDetail());
         else finishedToast();
       }),
       engine.on("error", () => {
