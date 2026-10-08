@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Giọng chỉ nói được âm tiết Việt đọc tên và từ tiếng Anh đúng hơn: họ có đuôi -well (Cromwell), tên đuôi -ore (Pellinore), các cụm như
+  Libra, Daydream, Miranda, Oscar, Chrono, chữ viết hoa cả từ như LYLE, và thêm vài từ đã quen tai (beta, motor, pharaoh).
+
 ## [0.4.33] - 2026-10-08
 
 ### Mạng giữa các máy
