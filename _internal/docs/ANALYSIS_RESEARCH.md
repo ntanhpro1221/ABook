@@ -73,6 +73,9 @@ RAM trống.
 dừng ở 624/955 rồi chạy tiếp ra 10/955 đoạn khác, tất cả sau mốc dừng (nhân vật y hệt). SR2 trên 0.4.32 (1d57e389, bộ đệm tắt):
 liền mạch và dừng/chạy tiếp trùng từng byte (0/955, cùng vân tay), 3.596 / 3.584 s (0.4.31 liền mạch 3.205 s, +12 %). Giới hạn:
 một truyện 4 chương, một model (v4), một lượt; Lead ghi luật mới vào AGENTS.md (rel432 0fa3cab6).
+Cổng Mac 0.4.32 (08-10, 1dc1455d hash 284f3feb, v4, Ollama Mac chạy với LLAMA_ARG_CACHE_RAM=0): 19/19 chương trùng 0.4.31 TỪNG
+ĐOẠN (0/2.782), chậm hơn ~13 % mỗi chương. Trên Metal mồi raw + tắt bộ đệm RAM không đổi đầu ra; trên CUDA nhà thì có đổi (SR C
+0.4.31 1c91f782 vs SR2 C2 1065ee04 trên cùng 4 chương) nhưng tự trùng khi dừng/chạy tiếp.
 
 **Ghi trước (chi tiết LLM_Train/b15b16/PLAN.md, Lead duyệt kèm sửa):**
 - **Cổng P** (người kể theo đoạn, P_SPEC §5) chạy thêm hai nhánh oracle ở 11 chương có lỗi P: o2 = đoạn bộ phát hiện báo + người
