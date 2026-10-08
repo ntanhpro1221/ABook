@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại
+
+- Sách chữ chép từ web có mã chú thích lẫn vào ("[note54360]") không còn hiện ra trong màn đọc và không còn bị đọc lên "note năm bốn ba sáu không" - giống máy tính; "[Note]" không số hay "[1]" giữ nguyên.
+
 ## [0.4.34] - 2026-10-09
 
 ### Đọc tên

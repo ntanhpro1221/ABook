@@ -17,6 +17,14 @@ object Paragraphs {
     /** `\n[ \t<nbsp>]*\n` của textScript.ts (ký tự thứ ba trong ngoặc là U+00A0). */
     private val BLANK_LINE = Regex("\n[ \t ]*\n")
 
+    private val NOTE_MARKER = Regex("\\[[$JS_SPACE]*note[0-9]+[$JS_SPACE]*]", RegexOption.IGNORE_CASE)
+
+    /**
+     * Bỏ mã chú thích của trang web chép lẫn vào chữ ("[note54360]") - không phải chữ truyện, đọc lên là đọc "note năm bốn ba sáu không". Đúng mẫu của máy tính
+     * (`text_processing.INLINE_REFERENCE_MARKER_PATTERN`, bước chuẩn hoá trước khi tách câu) và của `withoutNoteMarkers` trong textScript.ts; "[Note]" không số, "[1]" giữ nguyên.
+     */
+    fun withoutNoteMarkers(text: String): String = text.replace(NOTE_MARKER, "")
+
     /** Gộp mọi khoảng trắng thành một dấu cách rồi cắt hai đầu (`squeeze` của textScript.ts; `trim()` của JS cắt đúng tập `\s`). */
     fun squeeze(text: String): String = text.replace(SPACES, " ").trim { it in JS_SPACE_CHARS }
 
@@ -36,7 +44,7 @@ object Paragraphs {
      * dòng trống là MỘT đoạn: chỉ khi cả file có đúng một dòng thì dòng ấy mới đứng riêng.
      */
     fun split(text: String): List<Paragraph> {
-        val clean = text.replace(NEWLINES, "\n")
+        val clean = withoutNoteMarkers(text).replace(NEWLINES, "\n")
         if (BLANK_LINE.containsMatchIn(clean)) return clean.split(BLANK_LINE).flatMap(::blockParagraphs)
         val lines = clean.split("\n").map(::squeeze).filter { it.isNotEmpty() }
         return lines.map { Paragraph(it, isSceneBreakLine(it, lines.size == 1)) }
@@ -53,7 +61,7 @@ object Paragraphs {
         if (skip.isEmpty()) return text
         var seen = 0
         return text.replace(NEWLINES, "\n").split("\n").filter { line ->
-            val shown = squeeze(line)
+            val shown = squeeze(withoutNoteMarkers(line)) // `skip` ghi từ chữ đã bỏ mã chú thích (BookImport.creditLines)
             if (shown.isEmpty() || seen >= CREDIT_WINDOW) return@filter true
             seen++
             shown !in skip

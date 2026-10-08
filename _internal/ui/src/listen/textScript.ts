@@ -12,6 +12,14 @@ function squeeze(text: string): string {
   return text.replace(SPACES, " ").trim();
 }
 
+/** Mã chú thích của trang web chép lẫn vào chữ ("[note54360]") - không phải chữ truyện, đọc lên là đọc "note năm bốn ba sáu không". Đúng mẫu của máy tính
+ *  (text_processing.INLINE_REFERENCE_MARKER_PATTERN, bước chuẩn hoá trước khi tách câu); "[Note]" không số, "[1]" giữ nguyên. Kotlin: Paragraphs.withoutNoteMarkers. */
+const NOTE_MARKER = /\[\s*note\d+\s*\]/gi;
+
+export function withoutNoteMarkers(text: string): string {
+  return text.replace(NOTE_MARKER, "");
+}
+
 /** Dấu kết câu ở cuối dòng: dòng như vậy là trọn một đoạn, không phải dòng bị máy dàn trang bẻ giữa câu. */
 const SENTENCE_END = /[.!?…"”»’)」』】。！？~–—]$/;
 /** Dài hơn mọi khổ dòng của máy dàn trang: chắc chắn là trọn một đoạn. */
@@ -112,7 +120,7 @@ export function sceneBreakGaps(items: readonly { text: string; sceneBreak?: bool
  *  một đoạn): mỗi dòng là một đoạn. Kèm cờ dòng ngăn cảnh; với luật "đứng riêng" (text_processing: đoạn = giữa hai dòng trống) file không có dòng trống
  *  là MỘT đoạn nên chỉ khi cả file có đúng một dòng thì dòng ấy mới đứng riêng. */
 export function splitParagraphs(text: string): Paragraph[] {
-  const clean = text.replace(NEWLINES, "\n");
+  const clean = withoutNoteMarkers(text).replace(NEWLINES, "\n");
   if (BLANK_LINE.test(clean)) return clean.split(BLANK_LINE).flatMap(blockParagraphs);
   const lines = clean.split("\n").map(squeeze).filter(Boolean);
   return lines.map((line) => ({ text: line, sceneBreak: isSceneBreakLine(line, lines.length === 1) }));
@@ -135,7 +143,7 @@ export function withoutLines(text: string, skip: readonly string[] | undefined):
     .replace(NEWLINES, "\n")
     .split("\n")
     .filter((line) => {
-      const shown = squeeze(line);
+      const shown = squeeze(withoutNoteMarkers(line)); // `skip` ghi từ chữ đã bỏ mã chú thích (BookImport.creditLines)
       if (!shown || seen >= CREDIT_WINDOW) return true;
       seen += 1;
       return !skip.includes(shown);
