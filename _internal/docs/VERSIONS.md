@@ -226,6 +226,59 @@ của bộ đo: hai luật chỉ bắn ở Rokujouma - "Kou" 17 project, "Macken
 
 ---
 
+### Bước nối người nói chỉ được mô tả: bốn bản, đo trên đầu ra sẵn có, không GPU (2026-10-09)
+
+`reconcile_local_speaker_identities` hỏi model "nhãn mô tả NPC_LOCAL này là ai trong số người có tên cùng chương" rồi
+gộp. Phiên Model (LLM_Train/npc_bias/PLAN.md 08-10 23:2x, known_text/reconcile_effect.py) thấy bỏ hẳn bước này tốt hơn ở
+9/10 lượt cổng 19 chương. Soát tay 29 dòng B9 s1234 bị nối (nhãn thô = lô đã chấp nhận trong `analysis_candidates`):
+
+| kiểu | dòng | ví dụ |
+|---|---|---|
+| nối đúng (thô sai hoặc nửa điểm) | 3 | "khách" -> Shizuka; "người nói bằng giọng trầm" -> Tre'ainar (lời dẫn 3 đoạn sau gọi tên) |
+| thô đúng, nối vào **người đang nói chuyện với NPC** | 4 | "người đàn ông" -> Koutarou (Koutarou đáp ngay câu sau); "thầy giáo" -> người kể "tôi" |
+| thô đúng, nối vào người **cùng cảnh / được nhắc trong lời dẫn gần** | 6 | "người vận chuyển" -> Kenji ("Koutarou và Kenji đang cố vác..."); "áo choàng đen" -> Quỷ vương |
+| thô đúng, nối vào **một tên hợp giới bất kỳ** trong chương | 6 | "người hỏi" -> Clara (40 đoạn sau mới xuất hiện); "giám sát viên" -> Giáo sư Fernando |
+| thô đã sai, nối vẫn sai | 10 | tiếng động "-Lật phật!" -> người kể; "người đi ngang" -> Yu Daon (người duy nhất cùng giới; gold Choi Soocheol) |
+
+Phiên Model đo thêm 8 lượt: đổi ĐÚNG->SAI 116, SAI->ĐÚNG 53; ca sửa đúng chủ yếu khi nhãn đã chứa tên ("tiểu thư
+Clara", "quỷ vương"). Bốn bản (`analysis.local_identity_reconcile` hoặc biến môi trường
+`ABOOK_LOCAL_IDENTITY_RECONCILE`, mặc định vẫn `loose`):
+
+- `loose` - bản cũ, giữ nguyên từng byte request (sổ phát lại vẫn trúng).
+- `off` - không nối.
+- `named` - không hỏi model: nối khi chính nhãn là tên hoặc **chức danh + tên** (`HONORIFIC_PREFIX_PATTERN` của sổ nhân
+  vật), hoặc lời dẫn cách nhãn <= 3 đoạn viết "<mô tả> <Tên>" / "<mô tả> tên là <Tên>" ("Cậu bé Iven, ...:" - ca gốc của
+  bước này). "Chứa tên" trơn của Model thì không: phần lớn nhãn chứa tên là về NGƯỜI KHÁC ("người gọi Koutarou", "tiểu
+  thư theo Karin", "người bạn của Shizuka", "người nói với EARTH LAGANN" - 70 nhãn NPC như thế trên 10 lượt, so với 10 nhãn là tên thật).
+- `evidence` - vẫn hỏi model, nhưng chỉ về tên mà lời dẫn gọi trong 3 đoạn quanh nhãn (hoặc nối với mô tả), không phải
+  người giữ lượt thoại liền trước/sau, không được nhắc trong chính câu của nhãn.
+
+Mô phỏng trên 10 lượt (scratchpad reconcile/sim_all.py; thước reconcile_effect.py: F1 giọng sau `canonical_speaker_names`,
+người nói chặt trên 1.349 câu). `named` tính chính xác (tất định); `evidence` và "Model lọc" giả định model trả như cũ
+trên ứng viên còn lại; "Model tất định" = nối mọi nhãn chứa đúng một tên (cả chuỗi / một từ >= 4 ký tự), không hỏi model.
+Δ so với `loose`, F1 giọng (điểm %) / người nói chặt (dòng):
+
+| lượt | off | evidence | Model lọc | Model tất định | **named** |
+|---|---|---|---|---|---|
+| b9s1234 | +0,78 / +13 | +0,80 / +13 | +0,78 / +13 | +0,71 / +11 | +0,78 / +13 |
+| b9s1 | +0,39 / 0 | +0,39 / 0 | +0,39 / 0 | +0,05 / −7 | +0,39 / 0 |
+| b9x750s1234 | +0,27 / +6 | +0,32 / +8 | +0,27 / +6 | +0,07 / +4 | +0,27 / +6 |
+| b10s1234 | +0,22 / +2 | +0,27 / +3 | +0,16 / +2 | −0,21 / −4 | +0,22 / +2 |
+| 9bv8 | +0,06 / +2 | +0,06 / +2 | +0,06 / +2 | −0,31 / −10 | +0,06 / +2 |
+| v8 | +0,91 / +5 | +0,80 / +3 | +0,75 / +3 | +0,57 / +2 | +0,91 / +5 |
+| v8ms1 | +1,09 / +5 | +0,95 / +4 | +1,13 / +6 | +1,08 / +6 | +1,13 / +6 |
+| v8ms2 | −0,02 / 0 | −0,02 / 0 | −0,02 / 0 | −0,36 / −3 | −0,02 / 0 |
+| q35v8 | +0,77 / +25 | +1,02 / +30 | +1,23 / +34 | +1,23 / +34 | +1,28 / +34 |
+| mrel430b | +0,98 / +13 | +0,91 / +12 | +0,88 / +13 | +0,61 / +5 | +0,98 / +13 |
+| TB / tổng | +0,54 / +71 | +0,55 / +75 | +0,56 / +79 | +0,34 / +38 | **+0,60 / +81** |
+
+`named` không thua `off` ở lượt nào (bằng 8, hơn 2), giữ ca Iven và không tốn lượt model. Nó nối 18 dòng trên 10 lượt,
+13 đúng ("quỷ vương" -> Quỷ vương, "tiểu thư Clara" -> Clara). `evidence` hơn `off` ở 4 lượt, thua ở 3: lời dẫn gần vẫn
+gọi tên người cùng cảnh ("Koutarou và Kenji đang cố vác..." ngay trước câu của người vận chuyển). Mẫu "<mô tả>, <Tên>"
+(dấu phẩy trơn) đã bỏ: "Lách qua người đàn ông đang cố đặt cái tủ lạnh, Koutarou và Kenji..." là hai mệnh đề.
+
+---
+
 ## v0.2.0-lo02 — 27/30, và **không chương nào** hỏng ở tầng QA chương
 
 Chương 030..059, 3.762 segment, gieo từ `lo01b_768c98bb4f`.

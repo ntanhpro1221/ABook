@@ -12360,6 +12360,172 @@ def test_contradicting_gender_or_age_is_never_offered_as_the_same_person(monkeyp
     }
 
 
+def _identity_rows(*rows: tuple[str, str, str], gender: str = "male", age: str = "unknown"):
+    """(kind, speaker, text) in reading order, as one analysed chapter."""
+    return [
+        {
+            "id": index, "stable_id": f"c1s{index}", "chapter_id": 1, "seq": index,
+            "status": "analyzed", "kind": kind, "kind_hint": kind, "speaker": speaker,
+            "text": text, "gender": gender if kind != "narration" else "unknown",
+            "age": age if kind != "narration" else "unknown",
+        }
+        for index, (kind, speaker, text) in enumerate(rows, 1)
+    ]
+
+
+def _identity_analyzer(monkeypatch, db, mode: str):
+    monkeypatch.delenv("ABOOK_LOCAL_IDENTITY_RECONCILE", raising=False)
+    settings = build_settings(overrides={"analysis": {"local_identity_reconcile": mode}})
+    analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
+    monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
+    asked: list[dict] = []
+
+    def response(request, **_kwargs):
+        # A reader who says yes only to Iven: the tests are about what is offered.
+        asked.append(request)
+        questions = json.loads(str(request["prompt"]).split("\n\n", 2)[2])
+        return {
+            "identities": [
+                {
+                    "id": item["id"],
+                    "name": "Iven" if "Iven" in [c["name"] for c in item["candidates"]] else "",
+                }
+                for item in questions
+            ]
+        }
+
+    monkeypatch.setattr(analyzer, "_stream_json_response", response)
+    return analyzer, asked
+
+
+# The Iven case as the book has it (alpha.10, chapter 2): the narration right before the
+# boy's line names him, his own line names somebody else, and his named line comes later.
+IVEN_CHAPTER = (
+    ("dialogue", "NPC_LOCAL::c00002::rf::người đàn ông",
+     "“Alisa, nhóc Evans chỉ vừa mới bình phục thôi. Iven, đỡ mẹ con rồi về nhà thôi.”"),
+    ("narration", "NARRATOR",
+     ("Cậu bé Iven, người đã kéo Lucien đến đây xem nữ phù thủy, vừa nửa đỡ nửa dìu mẹ mình "
+      "vừa làm mặt hài hước:")),
+    ("dialogue", "NPC_LOCAL::c00002::rae::cậu bé",
+     "“Anh Lucien không phải kiểu yếu đuối đến mức ốm cái đã lăn ra chết đâu.”"),
+    ("dialogue", "NPC_LOCAL::c00002::r1e::phụ nữ",
+     "“Evans bé nhỏ, nhìn con khá hơn thế này là dì yên lòng rồi.”"),
+    ("narration", "NARRATOR", "Được Iven dìu đỡ, bà vừa đi vừa cằn nhằn:"),
+    ("narration", "NARRATOR", "Chẳng mấy chốc, bốn người đã về đến trước cái lán nhỏ của Lucien."),
+    ("narration", "NARRATOR", "Lúc chia tay, Iven len lén hỏi Lucien đầy tò mò:"),
+    ("dialogue", "Iven", "“Anh Lucien, anh muốn trở thành nhạc sĩ từ khi nào thế?”"),
+    ("dialogue", "Lucien", "“Vừa xong.”"),
+)
+
+
+@pytest.mark.parametrize("mode", ["named", "evidence"])
+def test_the_boy_the_narration_names_is_merged_in_every_strict_mode(monkeypatch, mode) -> None:
+    """"Cậu bé Iven, ...:" right before the line is the text saying who speaks it.
+
+    "named" merges it without the model; "evidence" still asks, offering the boy Iven -
+    and only Iven, since Lucien is named in the boy's own line and nobody names himself.
+    """
+    db = FakeDB()
+    db.rows = _identity_rows(*IVEN_CHAPTER)
+    analyzer, asked = _identity_analyzer(monkeypatch, db, mode)
+
+    assert analyzer.reconcile_local_speaker_identities() == 1
+    boy = next(row for row in db.rows if row["stable_id"] == "c1s3")
+    assert boy["speaker"] == "Iven"
+    # The man who calls out "Iven, đỡ mẹ con" is somebody talking TO Iven.
+    man = next(row for row in db.rows if row["stable_id"] == "c1s1")
+    assert man["speaker"] == "NPC_LOCAL::c00002::rf::người đàn ông"
+    if mode == "named":
+        assert asked == []
+    else:
+        offered = {
+            item["label"]: [candidate["name"] for candidate in item["candidates"]]
+            for item in json.loads(asked[0]["prompt"].split("\n\n", 2)[2])
+        }
+        assert offered["NPC cậu bé"] == ["Iven"]
+        # Iven is named in the man's own line, so he is not offered to the man.
+        assert "Iven" not in offered.get("NPC người đàn ông", [])
+
+
+def test_the_person_a_stranger_talks_to_is_never_offered_as_the_stranger(monkeypatch) -> None:
+    """Koutarou answers the mover, and the narration around names him: still not the mover.
+
+    The commonest wrong merge on the gate (rk014, b9s1234): the model joined a described
+    speaker to the person answering them.
+    """
+    db = FakeDB()
+    db.rows = _identity_rows(
+        ("narration", "NARRATOR", "Khi Koutarou đứng dậy cũng là lúc người đàn ông bước vào."),
+        ("dialogue", "NPC_LOCAL::c00001::r4::người đàn ông", "“Đó là hành lý cuối cùng rồi hả?”"),
+        ("dialogue", "Koutarou", "“Dạ cảm ơn bác ạ!”"),
+        ("narration", "NARRATOR", "Koutarou cúi người cảm tạ ông bác lớn tuổi."),
+    )
+    for mode in ("evidence", "named"):
+        analyzer, asked = _identity_analyzer(monkeypatch, db, mode)
+        assert analyzer.reconcile_local_speaker_identities() == 0
+        assert asked == []
+    assert db.rows[1]["speaker"] == "NPC_LOCAL::c00001::r4::người đàn ông"
+
+
+def test_a_name_the_text_never_ties_to_the_stranger_is_not_asked_about(monkeypatch) -> None:
+    """A same-gender name from elsewhere in the chapter is no evidence (meke031: "người hỏi"
+    was merged into Clara, who arrives forty segments later)."""
+    db = FakeDB()
+    db.rows = _identity_rows(
+        ("narration", "NARRATOR", "Các tiểu thư trải thảm dưới tán cây và ngồi lên trên."),
+        ("dialogue", "NPC_LOCAL::c00001::r6::người hỏi", "“Tiểu thư, cô đã mua váy mới rồi sao?”"),
+        *[("narration", "NARRATOR", "Gió thổi qua những tán cây.")] * 6,
+        ("narration", "NARRATOR", "Clara bước tới, vẫy tay chào mọi người."),
+        ("dialogue", "Clara", "“Tôi xin lỗi vì tới muộn!”"),
+        gender="female",
+    )
+    for mode in ("evidence", "named"):
+        analyzer, asked = _identity_analyzer(monkeypatch, db, mode)
+        assert analyzer.reconcile_local_speaker_identities() == 0
+        assert asked == []
+    assert db.rows[1]["speaker"] == "NPC_LOCAL::c00001::r6::người hỏi"
+
+
+def test_named_mode_merges_a_label_that_is_the_name_but_not_one_about_someone(monkeypatch) -> None:
+    """"tiểu thư Clara" is Clara; "tiểu thư theo Karin" is one of Karin's followers.
+
+    Containing the name is not enough - on the gate most such labels were about somebody
+    else ("người gọi Koutarou", "người bạn của Shizuka") - so only a known title may stand
+    before the name.
+    """
+    db = FakeDB()
+    db.rows = _identity_rows(
+        ("dialogue", "NPC_LOCAL::c00001::r1::tiểu thư Clara", "“Chào buổi sáng!”"),
+        ("dialogue", "NPC_LOCAL::c00001::r2::tiểu thư theo Karin", "“Vâng, đúng vậy.”"),
+        ("narration", "NARRATOR", "Karin cười tươi."),
+        ("dialogue", "Karin", "“Trông hơi thấp hèn.”"),
+        ("dialogue", "Clara", "“Tôi xin lỗi vì tới muộn!”"),
+        gender="female",
+    )
+    analyzer, asked = _identity_analyzer(monkeypatch, db, "named")
+
+    assert analyzer.reconcile_local_speaker_identities() == 1
+    assert asked == []
+    assert [row["speaker"] for row in db.rows if row["kind"] == "dialogue"] == [
+        "Clara", "NPC_LOCAL::c00001::r2::tiểu thư theo Karin", "Karin", "Clara",
+    ]
+
+
+def test_off_mode_and_the_environment_switch(monkeypatch) -> None:
+    """"off" never merges; the environment variable picks the version over the settings,
+    so a measuring run switches it without touching a project's locked settings."""
+    db = FakeDB()
+    db.rows = _identity_rows(*IVEN_CHAPTER)
+    analyzer, asked = _identity_analyzer(monkeypatch, db, "named")
+    monkeypatch.setenv("ABOOK_LOCAL_IDENTITY_RECONCILE", "off")
+    assert analyzer.reconcile_local_speaker_identities() == 0
+    assert asked == []
+    assert db.rows[2]["speaker"] == "NPC_LOCAL::c00002::rae::cậu bé"
+    monkeypatch.setenv("ABOOK_LOCAL_IDENTITY_RECONCILE", "siết")
+    with pytest.raises(ValueError):
+        analyzer.reconcile_local_speaker_identities()
+
+
 # --- an audible disagreement that nothing can split ------------------------------------
 # The owner's decision on 2026-09-05, after a run died on exactly this. The escape hatch
 # above it only covers host affect disagreement - emotion and intensity - which happens

@@ -6993,6 +6993,183 @@ def _traits_compatible(left: list[Any], right: list[Any]) -> bool:
     return True
 
 
+# Bốn bản của bước nối người nói cục bộ, chọn bằng `analysis.local_identity_reconcile` hoặc biến môi
+# trường ABOOK_LOCAL_IDENTITY_RECONCILE (biến môi trường thắng, để lượt đo đổi bản không cần sửa
+# settings đã khoá của project):
+#   "loose"    = hỏi model về mọi tên cùng chương hợp giới/tuổi (bản cũ, mặc định);
+#   "off"      = không nối;
+#   "named"    = không hỏi model: nối khi chính nhãn là tên / chức danh + tên, hoặc lời dẫn sát bên
+#                nối mô tả với tên ("Cậu bé Iven") - `_identity_named_in_text`;
+#   "evidence" = hỏi model như cũ nhưng chỉ về tên mà chữ có bằng chứng (`_evidenced_identity_candidates`).
+# Mô phỏng 10 lượt cổng 19 chương (09-10, docs/VERSIONS.md): so với "loose", "named" +0,60 F1 giọng /
+# +81 dòng người nói chặt, "off" +0,54 / +71, "evidence" +0,55 / +75.
+LOCAL_IDENTITY_MODES = ("loose", "off", "named", "evidence")
+LOCAL_IDENTITY_MODE_ENV = "ABOOK_LOCAL_IDENTITY_RECONCILE"
+# Lời dẫn cách đoạn của nhãn tối đa bấy nhiêu đoạn mới tính là "gọi tên gần" (ca thật: "Cậu bé Iven,
+# ...:" ngay trước câu thoại; "Đứng bên cạnh giường là Tre'ainar" ba đoạn sau).
+LOCAL_IDENTITY_EVIDENCE_WINDOW = 3
+# Tìm lượt thoại liền trước/liền sau nhãn trong bấy nhiêu đoạn; xa hơn coi như đã sang cảnh khác.
+LOCAL_IDENTITY_TURN_WINDOW = 8
+
+
+def local_identity_mode(settings: dict[str, Any]) -> str:
+    value = os.environ.get(LOCAL_IDENTITY_MODE_ENV) or settings.get(
+        "local_identity_reconcile", "loose"
+    )
+    mode = str(value).strip().casefold()
+    if mode not in LOCAL_IDENTITY_MODES:
+        raise ValueError(
+            f"local_identity_reconcile must be one of {LOCAL_IDENTITY_MODES}, got {value!r}"
+        )
+    return mode
+
+
+def _identity_name_forms(name: str) -> set[str]:
+    """Casefolded surfaces under which the text can name `name`.
+
+    The whole name, and for a name of several words each word that is itself a name -
+    "Fernando" for "Giáo sư Fernando", "Koutarou" for "NAKAYAMA KOUTAROU" - but not a title
+    or a Vietnamese word ("Giáo", "Kim"), which the text uses for other people too.
+    """
+    folded = name.replace("’", "'").casefold().strip()
+    forms = {folded} if folded else set()
+    parts = folded.split()
+    if len(parts) > 1:
+        forms.update(part for part in parts if len(part) >= 3 and not is_vietnamese_syllable(part))
+    return forms
+
+
+def _text_names(text: str, forms: set[str]) -> bool:
+    folded = text.replace("’", "'").casefold()
+    return any(_whole_name_occurrences(folded, form) for form in forms)
+
+
+def _description_names(description: str, forms: set[str], texts: list[str]) -> bool:
+    """Whether the text joins the description to the name: "cậu bé Iven", "cậu bé tên là Iven",
+    "cậu bé ấy, Iven". A bare comma is not a join: "Lách qua người đàn ông đang cố đặt cái tủ
+    lạnh, Koutarou và Kenji ..." ends one clause and starts the next (9bv8, rk014)."""
+    folded = " ".join(description.casefold().split())
+    if not folded:
+        return False
+    patterns = [
+        re.compile(
+            r"(?<!\w)" + re.escape(folded) + r"(?:\s+tên(?:\s+là)?|\s+là|\s+ấy,?)?\s+"
+            + re.escape(form) + r"(?!\w)"
+        )
+        for form in forms
+    ]
+    return any(
+        pattern.search(text.replace("’", "'").casefold()) for text in texts for pattern in patterns
+    )
+
+
+def _speaker_positions(chapter_rows: list[Any], speaker: str) -> list[int]:
+    return [index for index, row in enumerate(chapter_rows) if str(row["speaker"]) == speaker]
+
+
+def _narration_near(chapter_rows: list[Any], positions: list[int]) -> list[str]:
+    """Narration within LOCAL_IDENTITY_EVIDENCE_WINDOW segments of any of `positions`."""
+    return [
+        str(row["text"])
+        for index, row in enumerate(chapter_rows)
+        if str(row["kind"]) == "narration"
+        and any(abs(index - position) <= LOCAL_IDENTITY_EVIDENCE_WINDOW for position in positions)
+    ]
+
+
+def _evidenced_identity_candidates(
+    chapter_rows: list[Any], speaker: str, options: list[str]
+) -> list[str]:
+    """The named speakers the text itself ties to the local `speaker`, out of `options`.
+
+    Asking the model about every same-chapter name lost more than it won: on the 19-chapter
+    gate it merged 29 described lines of one run into named people and got 3 right, where
+    the described label had 16 right (Model 08-10, PLAN.md). The wrong merges were the person
+    the speaker was talking to, a named companion standing in the same scene, or simply a
+    name of the right gender from elsewhere in the chapter. So a name is offered only when
+    the narration names it close to the speaker's lines (within
+    LOCAL_IDENTITY_EVIDENCE_WINDOW segments) or joins it to the description ("cậu bé Iven"),
+    and never when it is the speaker's interlocutor - the nearest turn on either side - or
+    is named in the speaker's own lines, since nobody calls themselves by name.
+    `chapter_rows` are the chapter's analysed rows in reading order.
+    """
+    positions = _speaker_positions(chapter_rows, speaker)
+    if not positions or not options:
+        return []
+    own_text = " ".join(str(chapter_rows[index]["text"]) for index in positions)
+    near_narration = _narration_near(chapter_rows, positions)
+    chapter_narration = [
+        str(row["text"]) for row in chapter_rows if str(row["kind"]) == "narration"
+    ]
+    interlocutors: set[str] = set()
+    for position in positions:
+        for step in (-1, 1):
+            index = position + step
+            while 0 <= index < len(chapter_rows) and abs(index - position) <= LOCAL_IDENTITY_TURN_WINDOW:
+                row = chapter_rows[index]
+                if str(row["kind"]) != "narration" and str(row["speaker"]) != speaker:
+                    interlocutors.add(str(row["speaker"]))
+                    break
+                index += step
+    description = local_speaker_label(speaker)
+    offered = []
+    for name in options:
+        if name in interlocutors:
+            continue
+        forms = _identity_name_forms(name)
+        if not forms or _text_names(own_text, forms):
+            continue
+        if any(_text_names(text, forms) for text in near_narration) or _description_names(
+            description, forms, chapter_narration
+        ):
+            offered.append(name)
+    return offered
+
+
+def _identity_named_by_label(speaker: str, options: list[str]) -> str | None:
+    """The named speaker the local label itself names, or None.
+
+    A label is the name ("quỷ vương" for Quỷ vương) or a title before it ("tiểu thư Clara",
+    "giáo sư Fernando"). Containing the name is not enough: most labels that do are about
+    somebody else - "người gọi Koutarou", "tiểu thư theo Karin", "người bạn của Shizuka",
+    "người nói với EARTH LAGANN" (10 gate runs, 08-10) - so the words before the name must be
+    a title the registry already knows (`HONORIFIC_PREFIX_PATTERN`). Two candidates fitting
+    equally well is no answer.
+    """
+    from .character_registry import _honorific_target
+
+    label = " ".join(local_speaker_label(speaker).split())
+    targets = {label.replace("’", "'").casefold()}
+    titled = _honorific_target(label)
+    if titled:
+        targets.add(titled.replace("’", "'").casefold())
+    exact = [name for name in options if name.replace("’", "'").casefold() in targets]
+    if exact:
+        return exact[0] if len(exact) == 1 else None
+    partial = [name for name in options if targets & _identity_name_forms(name)]
+    return partial[0] if len(partial) == 1 else None
+
+
+def _identity_named_in_text(
+    chapter_rows: list[Any], speaker: str, options: list[str]
+) -> str | None:
+    """The "named" mode's answer, without the model: the name the label itself carries
+    (`_identity_named_by_label`), or else the one name the narration next to the speaker's
+    lines joins to the description - "Cậu bé Iven, người đã kéo Lucien đến đây ...:" right
+    before the boy's line, the case this step was written for."""
+    named = _identity_named_by_label(speaker, options)
+    if named is not None:
+        return named
+    near_narration = _narration_near(chapter_rows, _speaker_positions(chapter_rows, speaker))
+    description = local_speaker_label(speaker)
+    joined = [
+        name
+        for name in options
+        if _description_names(description, _identity_name_forms(name), near_narration)
+    ]
+    return joined[0] if len(joined) == 1 else None
+
+
 def _local_identity_schema(question_ids: list[str], names: list[str]) -> dict[str, Any]:
     """Constrain the answer to the ids asked and the names offered, or an empty string."""
     return {
@@ -9849,8 +10026,14 @@ class OllamaBookAnalyzer:
         exactly when the later name is finally available. Only same-chapter candidates are
         offered, and only when gender and age do not contradict, so a wrong answer can
         merge two people who at least sound alike rather than two who do not.
+
+        Measured later, that question loses more than it wins (10 gate runs, 08-10/09-10:
+        every run but one scores better with no merge at all), so `local_identity_mode`
+        picks one of four versions - see LOCAL_IDENTITY_MODES. "loose" is the question
+        above, unchanged byte for byte so ledgers replay.
         """
-        if not self.settings.get("enabled", True):
+        mode = local_identity_mode(self.settings)
+        if not self.settings.get("enabled", True) or mode == "off":
             return 0
         rows = [row for row in self.db.list_segments() if str(row["status"]) != "pending"]
         by_chapter: dict[int, list[Any]] = defaultdict(list)
@@ -9883,6 +10066,13 @@ class OllamaBookAnalyzer:
                     for name, candidate_rows in sorted(named_rows.items())
                     if _traits_compatible(speaker_rows, candidate_rows)
                 ]
+                if mode == "named":
+                    resolved = _identity_named_in_text(chapter_rows, speaker, options)
+                    if resolved is not None:
+                        merged += self._merge_local_identity(chapter_id, speaker, resolved)
+                    continue
+                if mode == "evidence":
+                    options = _evidenced_identity_candidates(chapter_rows, speaker, options)
                 if not options:
                     continue
                 questions.append(
@@ -9931,7 +10121,11 @@ class OllamaBookAnalyzer:
                 "prompt": prompt,
                 "format": _local_identity_schema(
                     [str(item["id"]) for item in questions],
-                    sorted(named_rows),
+                    (
+                        sorted(named_rows)
+                        if mode == "loose"
+                        else sorted({str(c["name"]) for q in questions for c in q["candidates"]})
+                    ),
                 ),
                 "keep_alive": "10m",
                 "options": {
@@ -9979,27 +10173,31 @@ class OllamaBookAnalyzer:
                     continue
                 if resolved not in {str(c["name"]) for c in question["candidates"]}:
                     continue
-                rewritten = self.db.rewrite_speaker(speaker, resolved)
-                if not rewritten:
-                    continue
-                merged += rewritten
-                message = (
-                    f"Hợp nhất {local_speaker_display(speaker)} → {resolved} "
-                    f"({rewritten} segment) ở chương {chapter_id}."
-                )
-                self.log(message)
-                self.db.event(
-                    "info",
-                    "LOCAL_IDENTITY_RECONCILED",
-                    message,
-                    {
-                        "chapter_id": chapter_id,
-                        "local_speaker": speaker,
-                        "named_speaker": resolved,
-                        "segments": rewritten,
-                    },
-                )
+                merged += self._merge_local_identity(chapter_id, speaker, resolved)
         return merged
+
+    def _merge_local_identity(self, chapter_id: int, speaker: str, resolved: str) -> int:
+        rewritten = self.db.rewrite_speaker(speaker, resolved)
+        if not rewritten:
+            return 0
+        message = (
+            f"Hợp nhất {local_speaker_display(speaker)} → {resolved} "
+            f"({rewritten} segment) ở chương {chapter_id}."
+        )
+        self.log(message)
+        self.db.event(
+            "info",
+            "LOCAL_IDENTITY_RECONCILED",
+            message,
+            {
+                "chapter_id": chapter_id,
+                "local_speaker": speaker,
+                "named_speaker": resolved,
+                "segments": rewritten,
+                "mode": local_identity_mode(self.settings),
+            },
+        )
+        return rewritten
 
     def reconcile_name_pronunciations(
         self,
