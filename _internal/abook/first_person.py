@@ -16,6 +16,7 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -86,10 +87,20 @@ _TOKEN = re.compile(r"\w+(?:-\w+)*")
 _W_CALLED, _W_SPOKEN, _W_NARRATED, _W_WITH_I, _W_INTRO, _W_COMMON_WORD = 2.0, 1.2, -0.2, -0.8, 1.5, -0.5
 
 
+@lru_cache(maxsize=64)
+def _name_pattern(names: frozenset[str]) -> re.Pattern[str]:
+    return re.compile(rf"(?<![\w-])({'|'.join(re.escape(name) for name in sorted(names, key=lambda n: (-len(n), n)))}){_NAME_SUFFIX}")
+
+
+def _is_call(text: str, match: re.Match[str]) -> bool:
+    before, after = text[:match.start(1)].rstrip(" "), text[match.end():].lstrip(" ")
+    return bool((not before or before[-1] in _CALL_BEFORE or _CALL_TITLE.search(before)) and (not after or after[0] in _CALL_AFTER))
+
+
 def _count_names(rows: list[tuple[str, str]], names: set[str]) -> dict[str, Counter]:
     """{tên: Counter(called, spoken, narrated, with_i)} - `rows` là (kind, text) mỗi đoạn."""
     stats: dict[str, Counter] = {name: Counter() for name in names}
-    pattern = re.compile(rf"(?<![\w-])({'|'.join(re.escape(name) for name in sorted(names, key=lambda n: (-len(n), n)))}){_NAME_SUFFIX}")
+    pattern = _name_pattern(frozenset(names))
     for kind, text in rows:
         dialogue = kind == "dialogue"
         with_i = not dialogue and bool(NARRATOR_I.search(text))
@@ -100,10 +111,54 @@ def _count_names(rows: list[tuple[str, str]], names: set[str]) -> dict[str, Coun
                 found["with_i"] += with_i
                 continue
             found["spoken"] += 1
-            before, after = text[:match.start(1)].rstrip(" "), text[match.end():].lstrip(" ")
-            if (not before or before[-1] in _CALL_BEFORE or _CALL_TITLE.search(before)) and (not after or after[0] in _CALL_AFTER):
+            if _is_call(text, match):
                 found["called"] += 1
     return stats
+
+
+# Tiếng gọi mà `_is_call` không bắt vì thiếu dấu câu: trước tên ("Này Kou đi đâu đấy", "Cảm ơn Koutarou") hoặc sau tên
+# ("Kou ơi", "Kou à?"). Tên ngay sau "là/tên/gọi/xưng" là nói VỀ cái tên ("người ta gọi là Kou, ..."), không phải gọi.
+_CALL_WORDS = "này|nè|ê|hey|chào|thưa"
+_CALL_INTERJECTION = re.compile(rf"(?<!\w)(?:{_CALL_WORDS}|cảm ơn|cám ơn|xin lỗi)$", re.IGNORECASE)
+_CALL_PARTICLE = re.compile(r"(?:ơi|à|ạ|này|nhé|nha)(?!\w)", re.IGNORECASE)
+_NAMING_A_NAME = re.compile(r"(?<!\w)(?:là|tên|gọi|xưng)[,:]?$", re.IGNORECASE)
+# Tên kẹp giữa dấu câu chỉ là tiếng gọi khi đứng ĐẦU câu thoại (sau dấu mở và tiếng gọi: "“Này, Kou, ...") hoặc CUỐI câu
+# ("..., Satomi."). Đo 09-10: tính cả tên giữa câu ("Hmm? Karui… Tsukshi đâu rồi?") thì 10 câu đúng thành sai thay vì 3.
+_LINE_HEAD = re.compile(rf"[\W_]*(?:(?:{_CALL_WORDS})[,!]?)?", re.IGNORECASE)
+_LINE_TAIL = re.compile(r"[\W_]*")
+# Câu tự giới thiệu đọc đúng tên người nói ("Chào anh, tôi là chủ nhà khu kí túc Corona, Kasagi Shizuka").
+_SAYS_WHO_I_AM = re.compile(
+    r"(?<!\w)(?:tôi|tớ|mình|em|ta|tao|anh|chị)\s+(?:tên\s+|chính\s+)?là(?!\w)|(?<!\w)tên\s+(?:của\s+)?(?:tôi|tớ|mình|em|ta)\s+là(?!\w)",
+    re.IGNORECASE,
+)
+
+
+def addressed_names(text: str, names: set[str]) -> set[str]:
+    """Những tên trong `names` mà câu thoại `text` GỌI ("Này Kou, ...", "..., Satomi-san.") hoặc nhắc kèm kính ngữ ("Chắc
+    Karin-nim sẽ thấy nóng hơn"): người nói câu ấy không phải người mang tên đó - không ai gọi tên chính mình hay tự thêm
+    kính ngữ cho mình. Câu tự giới thiệu thì phần GỌI không tính (người nói đọc tên chính mình); kính ngữ vẫn tính.
+    Đo 09-10 trên 10 lượt cổng 19 chương: câu thoại gán cho người mà chính câu ấy gọi/kính ngữ - sai 100% theo đáp án."""
+    names = {name for name in names if name}
+    if not names:
+        return set()
+    introduces = _SAYS_WHO_I_AM.search(text) is not None
+    found: set[str] = set()
+    for match in _name_pattern(frozenset(names)).finditer(text):
+        suffix = text[match.end(1):match.end()]
+        if suffix and _HONORIFIC.search(suffix):
+            found.add(match.group(1))
+            continue
+        before, after = text[:match.start(1)].rstrip(" "), text[match.end():]
+        if introduces or _NAMING_A_NAME.search(before):
+            continue
+        at_edge = _LINE_HEAD.fullmatch(before) is not None or _LINE_TAIL.fullmatch(after) is not None
+        if (
+            (_is_call(text, match) and at_edge)
+            or _CALL_INTERJECTION.search(before)
+            or _CALL_PARTICLE.match(after.lstrip(" "))
+        ):
+            found.add(match.group(1))
+    return found
 
 
 def _merge_forms(stats: dict[str, Counter]) -> dict[str, list[str]]:

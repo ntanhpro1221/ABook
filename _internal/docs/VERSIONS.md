@@ -284,6 +284,49 @@ các đoạn đã nối về nhãn thô theo sự kiện LOCAL_IDENTITY_RECONCIL
 **mặc định đổi sang `named`**. `loose` giữ cho sổ phát lại / so sánh; phép kiểm thước bằng GPU (phát lại `loose` phải ra
 đúng DB gốc) và `evidence` thật đang xếp hàng.
 
+### Không ai gọi tên chính mình: sửa người nói sau gom tên, không GPU (2026-10-09)
+
+Sau xử lý sau, B9 s1234 còn 288/1.349 câu sai người nói trên cổng 19 chương (10 lượt: 3.607). Phân lớp tự động mọi câu
+sai (scratchpad postfix/errors.py; dòng = 10 lượt / B9 s1234): gán nhầm một người có tên khác 1.255 / 119, **đảo vai
+trong một cuộc trao đổi** 798 / 68, gán người nói câu kề 444 / 23, gán người có tên cho NPC 395 / 49, NPC cho người có
+tên 294 / 14, khác dạng tên mà cùng giọng 185 / 2, lời kể <-> lời nói 206 / 10, đáp án chỉ cho nửa điểm 30 / 3.
+
+Tín hiệu tất định tìm được: câu thoại gán cho X mà nhắc X **kèm kính ngữ** ("Kasagi-san", "Karin-nim") sai **92/92**
+(100%); gọi trống ("Này Kou, ...", "..., Mackenzie.") sai khi bỏ câu tự giới thiệu và tên giữa câu. Trong đáp án chỉ
+15/451 cặp câu thoại liền nhau cùng người nói (3%): chuỗi thoại liền gần như luôn xen kẽ. Hai luật
+(`character_registry._repair_dialogue_turns_by_address`, ngay sau `_canonicalize_named_speakers`; nhận diện câu gọi là
+`first_person.addressed_names`):
+
+- **Xen kẽ có neo:** chuỗi câu thoại liền, mỗi câu một đoạn văn và mở lượt mới (`analysis.opens_a_new_turn`), nhãn đúng
+  hai người có tên; câu gọi P không phải P nói; chỉ một thứ tự ABAB/BABA hợp mọi neo thì gán lại cả chuỗi.
+- **Câu lẻ tự gọi mình:** về người có tên duy nhất khác nói trong 6 đoạn quanh đó; không có thì để nguyên.
+
+Phát lại bằng chính code trên DB chép (scratchpad postfix/replay.py; nhãn thô -> reconcile `named` -> gom tên -> luật),
+Δ so với chỉ gom tên, F1 giọng / người nói chặt:
+
+| lượt | Δ F1 | Δ chặt |
+|---|---|---|
+| b9s1234 | +1,71 | +18 |
+| b9s1 | +1,68 | +19 |
+| b9x750s1234 | +2,16 | +22 |
+| b10s1234 | +1,66 | +18 |
+| 9bv8 | +0,40 | +10 |
+| v8 | +0,00 | +7 |
+| v8ms1 | +0,60 | +14 |
+| v8ms2 | +0,23 | +7 |
+| q35v8 | +0,56 | +7 |
+| mrel430b | +0,72 | +11 |
+| tổng | **+9,72** | **+133** |
+
+184 câu đổi nhãn: 136 sai -> đúng, 3 đúng -> sai, còn lại sai -> sai / đúng -> đúng (cùng người khác dạng tên). Ba câu
+đúng -> sai đều là cảnh nhiều người mà nhãn chỉ có hai: Make Heroine 031:61 (cả nhóm tiểu thư, hai lượt) và Rokujouma
+284a:93 (Yurika chen vào). Đã thử và bỏ: tính cả tên giữa câu là tiếng gọi (+7,59 / +128 nhưng 10 đúng -> sai, v8 −0,20:
+"Hmm? Karui… Tsukshi đâu rồi?" - đại tư tế mà model gán Karui); không lật chuỗi đã xen kẽ sẵn (+5,15, mất 52 câu sửa
+đúng); đổi câu lẻ sang nhãn NPC "người gọi X" (+0,74, làm vỡ cụm giọng); chọn thứ tự xen kẽ theo đa số nhãn khi không có
+neo (90 đúng -> sai). Quét 1.315 project khác nhau của `_model_eval_v2` (220.168 đoạn): luật đổi 996 câu (0,45%);
+soát tay 25 câu ngẫu nhiên ngoài LN Nhật: đa số là câu có kính ngữ/gọi tên rõ ("Khụ khụ… Azuma-dono." gán Azuma), một ca
+sai là nhãn mô tả "Bạn của Saki" bị coi là người tên Saki - nhãn có chữ thường giờ không sinh tên gọi. Còn lại chưa có tín hiệu: cảnh ba người, nội tâm theo điểm nhìn, NPC được gán tên mà không ai gọi.
+
 ---
 
 ## v0.2.0-lo02 — 27/30, và **không chương nào** hỏng ở tầng QA chương

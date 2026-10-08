@@ -17,8 +17,10 @@ from .analysis import (
     is_vietnamese_syllable,
     local_speaker_display,
     local_speaker_label,
+    opens_a_new_turn,
     strip_japanese_honorific,
 )
+from .first_person import addressed_names
 from .database import (
     ProjectDB,
 )
@@ -1127,6 +1129,167 @@ def _canonicalize_named_speakers(
             "rõ ràng trước khi khóa voice."
         )
     return aliases_by_target
+
+
+# Luật "gọi tên thì không phải người ấy nói" (đo 09-10 trên 10 lượt cổng 19 chương): người đối thoại tìm trong 6 đoạn mỗi
+# phía; chuỗi lượt xen kẽ tính từ 2 câu.
+ADDRESS_PARTNER_WINDOW = 6
+ALTERNATION_MIN_TURNS = 2
+
+
+def _address_surfaces(aliases: Iterable[str]) -> set[str]:
+    """Những cách một câu thoại gọi nhân vật mang các bí danh `aliases`: bí danh bỏ kính ngữ, từng chữ tên riêng (>= 3 chữ
+    cái, không phải âm tiết tiếng Việt - "Kou" của "Kou Satomi"), hai chữ cuối của tên Việt từ ba chữ; mỗi dạng viết hoa
+    chữ đầu hoặc viết hoa cả (nhãn hay VIẾT HOA, câu hét cũng thế). Tên Việt một âm tiết ("Tượng", "Minh") bỏ: trùng chữ
+    thường quá dễ."""
+    found: set[str] = set()
+    for alias in aliases:
+        name = strip_japanese_honorific(" ".join(str(alias).split()))
+        if len(name) < 2 or not name[0].isalpha():
+            continue
+        words = name.split()
+        vietnamese = all(is_vietnamese_syllable(word.casefold()) for word in words)
+        if (vietnamese and len(words) < 2) or any(word[0].islower() for word in words):
+            continue  # có chữ thường là nhãn mô tả ("Bạn của Saki"): "Saki" trong đó là người khác
+        found.add(name)
+        found.update(
+            word for word in words
+            if len(word) >= 3 and word[0].isupper() and not is_vietnamese_syllable(word.casefold())
+        )
+        if vietnamese and len(words) >= 3:
+            found.add(" ".join(words[-2:]))
+    surfaces: set[str] = set()
+    for name in found:
+        if name.casefold() in RESERVED_SPEAKERS:
+            continue
+        surfaces.update({
+            name[0].upper() + name[1:],
+            " ".join(word[0].upper() + word[1:].lower() for word in name.split()),
+            name.upper(),
+        })
+    return surfaces
+
+
+def _repair_dialogue_turns_by_address(
+    db: ProjectDB,
+    log: Callable[[str], None],
+    aliases_by_speaker: dict[str, set[str]],
+) -> None:
+    """Không ai gọi tên chính mình: câu thoại gán cho X mà GỌI X ("Này Kou, ...", "Satomi-san") là của người khác
+    (`first_person.addressed_names`; đo 09-10: 100% sai theo đáp án). Hai cách sửa, đều chỉ khi chữ trong truyện đủ chắc:
+
+    - Chuỗi câu thoại liền nhau, mỗi câu một đoạn văn và mở một lượt mới, nhãn chỉ gồm đúng hai người có tên: hai người ấy
+      nói xen kẽ (trong đáp án chỉ 3% cặp câu liền nhau cùng người nói). Các câu gọi tên làm NEO - câu gọi P không phải P
+      nói; chỉ đúng một thứ tự xen kẽ (ABAB hay BABA) hợp mọi neo thì gán lại cả chuỗi theo thứ tự ấy.
+    - Câu còn lại vẫn gán cho chính người nó gọi: đổi sang người có tên DUY NHẤT khác nói trong 6 đoạn quanh đó; không có
+      hoặc có hơn một người thì để nguyên.
+
+    Lời kể và nội tâm không đụng tới. Cổng 19 chương, 10 lượt (09-10): F1 giọng +9,7 cộng dồn, +133 câu đúng người nói,
+    không lượt nào giảm; 3 câu đúng thành sai (cảnh ba người mà nhãn chỉ có hai)."""
+    rows = sorted(db.list_segments(), key=lambda row: (int(row["chapter_id"]), int(row["seq"])))
+    named = {
+        speaker
+        for speaker in {str(row["speaker"]) for row in rows}
+        if not is_local_speaker(speaker) and speaker.casefold() not in RESERVED_SPEAKERS
+    }
+    owners: dict[str, set[str]] = defaultdict(set)
+    for speaker in named:
+        for surface in _address_surfaces(aliases_by_speaker.get(speaker, set()) | {speaker}):
+            owners[surface].add(speaker)
+    if not owners:
+        return
+    surfaces = frozenset(owners)
+    addressed_cache: dict[int, set[str]] = {}
+
+    def addressed(row: Any) -> set[str]:
+        key = int(row["id"])
+        if key not in addressed_cache:
+            addressed_cache[key] = (
+                {speaker for surface in addressed_names(str(row["text"]), surfaces) for speaker in owners[surface]}
+                if str(row["kind"]) == "dialogue" else set()
+            )
+        return addressed_cache[key]
+
+    by_chapter: dict[int, list[Any]] = defaultdict(list)
+    for row in rows:
+        by_chapter[int(row["chapter_id"])].append(row)
+    changes: dict[int, str] = {}
+    for chapter_rows in by_chapter.values():
+        by_seq = {int(row["seq"]): row for row in chapter_rows}
+        paragraph_size = Counter(int(row["paragraph_index"]) for row in chapter_rows)
+
+        def turn(row: Any) -> bool:
+            return (
+                str(row["kind"]) == "dialogue"
+                and str(row["kind_hint"]) == "dialogue"
+                and paragraph_size[int(row["paragraph_index"])] == 1
+            )
+
+        runs: list[list[Any]] = []
+        current: list[Any] = []
+        for row in chapter_rows:
+            if (
+                turn(row)
+                and current
+                and int(row["seq"]) == int(current[-1]["seq"]) + 1
+                and int(row["paragraph_index"]) == int(current[-1]["paragraph_index"]) + 1
+                and opens_a_new_turn(str(current[-1]["text"]), str(row["text"]))
+            ):
+                current.append(row)
+                continue
+            if len(current) >= ALTERNATION_MIN_TURNS:
+                runs.append(current)
+            current = [row] if turn(row) else []
+        if len(current) >= ALTERNATION_MIN_TURNS:
+            runs.append(current)
+
+        for run in runs:
+            speakers = [str(row["speaker"]) for row in run]
+            people = sorted(set(speakers))
+            if len(people) != 2 or not set(people) <= named:
+                continue
+            anchors = [addressed(row) & set(people) for row in run]
+            if not any(anchors):
+                continue
+            phases = [
+                [order[index % 2] for index in range(len(run))]
+                for order in (people, people[::-1])
+            ]
+            fitting = [phase for phase in phases if all(want not in anchor for want, anchor in zip(phase, anchors))]
+            if len(fitting) != 1:
+                continue
+            for row, speaker, want in zip(run, speakers, fitting[0]):
+                if speaker != want:
+                    changes[int(row["id"])] = want
+
+        for row in chapter_rows:
+            speaker, seq = str(row["speaker"]), int(row["seq"])
+            if int(row["id"]) in changes or speaker not in named or speaker not in addressed(row):
+                continue
+            partners = {
+                str(near["speaker"])
+                for offset in range(-ADDRESS_PARTNER_WINDOW, ADDRESS_PARTNER_WINDOW + 1)
+                if offset and (near := by_seq.get(seq + offset)) is not None
+                and str(near["kind"]) == "dialogue"
+                and str(near["speaker"]) in named
+                and str(near["speaker"]) != speaker
+            }
+            if len(partners) == 1:
+                changes[int(row["id"])] = partners.pop()
+    if not changes:
+        return
+    rows_by_speaker: dict[str, list[Any]] = defaultdict(list)
+    for row in rows:
+        rows_by_speaker[str(row["speaker"])].append(row)
+    repaired = 0
+    for segment_id, speaker in sorted(changes.items()):
+        repaired += db.rewrite_segment_speakers(
+            [segment_id],
+            speaker=speaker,
+            gender=_majority(rows_by_speaker[speaker], "gender"),
+            age=_majority(rows_by_speaker[speaker], "age"),
+        )
+    log(f"Đã đổi người nói cho {repaired} câu thoại gọi đúng tên người được gán (không ai gọi tên chính mình).")
 
 
 # Vietnamese marks gender in the words it uses for people far more reliably than an
@@ -2533,6 +2696,7 @@ def build_registry_and_cast(
     _repair_cross_batch_dialogue_continuations(db, log)
     _repair_crowd_dialogue_blocks(db, log)
     aliases_by_speaker = _canonicalize_named_speakers(db, log)
+    _repair_dialogue_turns_by_address(db, log, aliases_by_speaker)
     _merge_adjacent_local_speakers(db, log)
     _merge_local_speakers_with_named_identity(db, log)
 
