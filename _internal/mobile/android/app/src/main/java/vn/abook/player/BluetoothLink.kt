@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothClass
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothServerSocket
 import android.content.BroadcastReceiver
@@ -38,6 +39,17 @@ object BluetoothLink {
     fun permitted(context: Context): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
             context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+
+    /**
+     * Tên Bluetooth của chính điện thoại (cái Windows lưu khi ghép, thường khác tên máy ở Wi-Fi) để máy tính tự khớp thiết bị đã
+     * ghép; "" nếu chưa có quyền "Thiết bị ở gần", không có Bluetooth hay chưa đặt tên - khi đó lời chào bỏ trường này.
+     */
+    @SuppressLint("MissingPermission")
+    fun adapterName(context: Context): String = try {
+        if (permitted(context)) context.getSystemService(BluetoothManager::class.java)?.adapter?.name.orEmpty().trim().take(80) else ""
+    } catch (_: SecurityException) {
+        ""
+    }
 
     /** Máy tính và điện thoại đã ghép Bluetooth với máy này (bỏ tai nghe, loa, đồng hồ...); `abook` = đã thấy dịch vụ ABook. */
     @SuppressLint("MissingPermission")
@@ -219,6 +231,7 @@ object BluetoothShare {
 
     private val radio = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            // ACL_CONNECTED không cần xử lý: chỉ cần được gửi tới (xem watch).
             when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
                 BluetoothAdapter.STATE_ON -> synchronized(this@BluetoothShare) { if (wanted) runCatching { start(context) } }
                 BluetoothAdapter.STATE_TURNING_OFF, BluetoothAdapter.STATE_OFF -> dropListener("Bluetooth của điện thoại đang tắt")
@@ -267,10 +280,17 @@ object BluetoothShare {
         if (wanted && server == null) runCatching { start(context) }
     }
 
+    /**
+     * Cũng nghe ACTION_ACL_CONNECTED, và đây là thứ MỞ BĂNG khi máy tính gọi tới (đo thật 08-10, ColorOS): HANS đóng băng tiến trình
+     * ~30 giây sau khi rời màn hình dù đang có dịch vụ nền (ShareService), còn RFCOMM là socket của hệ điều hành nên không "gói tin"
+     * nào đánh thức nó - máy tính nối được RFCOMM mà bắt tay TLS quá hạn. Khi máy tính nối, ngăn xếp Bluetooth phát ACL_CONNECTED tới
+     * receiver đã đăng ký (binder một chiều) và HANS mở băng tiến trình ngay (`unfreeze ... reason: AsyncBinder`) cho accept() chạy.
+     * Không đăng ký thì không có gì gọi tiến trình dậy. Receiver không làm gì cả.
+     */
     private fun watch(context: Context) {
         if (watching) return
         watching = true
-        ContextCompat.registerReceiver(context, radio, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
+        ContextCompat.registerReceiver(context, radio, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED).apply { addAction(BluetoothDevice.ACTION_ACL_CONNECTED) },
             ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 

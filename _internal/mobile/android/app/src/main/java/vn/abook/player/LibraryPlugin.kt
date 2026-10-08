@@ -30,7 +30,7 @@ import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 
 /** Công tắc "Cho máy khác nghe thư viện này" (SharedPreferences "sync"). */
-private const val SHARE_KEY = "shareLibrary"
+private const val SHARE_KEY = ShareService.SHARE_KEY
 
 /** Số file tối đa trong một lượt nhập "Nhạc của tôi" (server.MY_MUSIC_IMPORT_LIMIT). */
 private const val MY_MUSIC_IMPORT_LIMIT = 500
@@ -79,7 +79,7 @@ class LibraryPlugin : Plugin() {
         TextImports.sweep() // thư mục tạm của lần "Thêm sách từ file…" bị bỏ dở lần trước
         io.execute { BookShare.sweep(context.cacheDir) } // file đã gửi qua "Chia sẻ…" lần trước: app nhận đã đọc xong từ lâu
         // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
-        if (prefs.getBoolean(SHARE_KEY, false)) io.execute { runCatching { LibraryServer.start(context) } }
+        if (prefs.getBoolean(SHARE_KEY, false)) io.execute { runCatching { ShareService.enable(context) } }
     }
 
     private fun background(call: PluginCall, block: () -> Unit) = io.execute {
@@ -413,16 +413,27 @@ class LibraryPlugin : Plugin() {
     fun shareStatus(call: PluginCall) = background(call) { call.resolve(shareView()) }
 
     @PluginMethod
-    fun setShare(call: PluginCall) = background(call) {
-        val enabled = call.getBoolean("enabled") ?: false
-        prefs.edit().putBoolean(SHARE_KEY, enabled).commit()
-        if (enabled) LibraryServer.start(context) else LibraryServer.stop()
+    fun setShare(call: PluginCall) {
+        // Bật chia sẻ chạy một dịch vụ nền có thông báo thường trực (ShareService) để Android không đóng băng app khi tắt màn hình:
+        // Android 13+ xin quyền thông báo trước. Bị từ chối thì chia sẻ vẫn bật (dịch vụ vẫn chạy, chỉ không hiện trong ngăn thông báo).
+        if ((call.getBoolean("enabled") ?: false) && Build.VERSION.SDK_INT >= 33 && !StudioAlerts.permitted(context)) {
+            requestPermissionForAlias("notifications", call, "setShareAfterPermission")
+        } else {
+            setShareNow(call)
+        }
+    }
+
+    @PermissionCallback
+    private fun setShareAfterPermission(call: PluginCall) = setShareNow(call)
+
+    private fun setShareNow(call: PluginCall) = background(call) {
+        if (call.getBoolean("enabled") ?: false) ShareService.turnOn(context) else ShareService.turnOff(context)
         call.resolve(shareView())
     }
 
     @PluginMethod
     fun sharePair(call: PluginCall) = background(call) {
-        if (!LibraryServer.running()) LibraryServer.start(context)
+        if (!LibraryServer.running()) ShareService.enable(context)
         LibraryServer.startPairing()
         call.resolve(shareView())
     }

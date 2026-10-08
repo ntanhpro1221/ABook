@@ -14,15 +14,17 @@ import org.junit.runner.RunWith
 import java.io.File
 
 /**
- * "Cho máy khác nghe thư viện này" qua Bluetooth THẬT, không mở Activity: khởi LibraryServer (kéo theo BluetoothShare.start
- * như app khi bật chia sẻ), kiểm trạng thái "running", rồi giữ sống để một máy tính ghép với điện thoại gọi vào
- * (scripts/bt_desktop_probe.py <địa chỉ>). Chỉ chạy khi có tham số `bt_real` - bài thử thường bỏ qua:
+ * "Cho máy khác nghe thư viện này" qua Bluetooth THẬT, không mở Activity: bật chia sẻ bằng ShareService.enable - cùng đường công
+ * tắc trong app dùng (dịch vụ nền chống đóng băng + LibraryServer, kéo theo BluetoothShare.start) -, kiểm trạng thái "running",
+ * rồi giữ sống để một máy tính ghép với điện thoại gọi vào (scripts/bt_desktop_probe.py <địa chỉ>). Chỉ chạy khi có tham số
+ * `bt_real` - bài thử thường bỏ qua:
  *
  *     adb shell am instrument -w -e bt_real 1 [-e bt_seconds 360] -e class vn.abook.player.BluetoothShareOnDeviceTest \
  *         com.ngdtuanh.abook.test/androidx.test.runner.AndroidJUnitRunner
  *
  * Thêm `-e bt_pair 1` (in mã ghép 6 số ra logcat) và `-e bt_seed_mb 4` (dựng cuốn thử 4 MB để đo tải sách).
- * ColorOS đóng băng tiến trình này khoảng 30 giây sau khi bắt đầu nếu app không ở trước màn hình - gọi vào trong khoảng đó.
+ * Không có dịch vụ nền thì ColorOS đóng băng tiến trình này khoảng 30 giây sau khi bắt đầu (app không ở trước màn hình); có nó thì
+ * phải nối được suốt thời gian giữ sống - `-e bt_seconds 200` rồi gọi vào sau hơn 2 phút.
  * Dừng sớm: tạo file `files/bt_real.done` (adb shell run-as com.ngdtuanh.abook touch files/bt_real.done). Nhật ký ở logcat, tag `BtReal`.
  */
 @RunWith(AndroidJUnit4::class)
@@ -33,7 +35,7 @@ class BluetoothShareOnDeviceTest {
 
     @After
     fun tearDown() {
-        runCatching { LibraryServer.stop() }
+        runCatching { ShareService.disable(context) }
     }
 
     @Test
@@ -43,7 +45,9 @@ class BluetoothShareOnDeviceTest {
         val seconds = arguments.getString("bt_seconds")?.toIntOrNull() ?: 360
         done.delete()
 
-        LibraryServer.start(context)
+        ShareService.enable(context)
+        Log.i(TAG, "dịch vụ chia sẻ chạy=${shareServiceRunning()}")
+        Log.i(TAG, "tên Bluetooth báo cho máy kia='${LibraryServer.bluetoothNameSource()}'")
         Log.i(TAG, "LibraryServer chạy=${LibraryServer.running()} cổng=${LibraryServer.PORT} vân tay=${LibraryServer.fingerprint}")
         Log.i(TAG, "BluetoothShare.status='${BluetoothShare.status}'")
         assertTrue(LibraryServer.lastError, LibraryServer.running())
@@ -70,6 +74,16 @@ class BluetoothShareOnDeviceTest {
         }
         Log.i(TAG, "hết giờ giữ sống; đỉnh kết nối $peak; status='${BluetoothShare.status}'")
         seeded?.deleteRecursively()
+    }
+
+    @Suppress("DEPRECATION") // getRunningServices vẫn trả đúng dịch vụ của chính app
+    private fun shareServiceRunning(): Boolean {
+        val manager = context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        repeat(30) { // dịch vụ vào chế độ foreground bất đồng bộ, chờ tối đa 3 giây
+            if (manager.getRunningServices(100).any { it.service.className == ShareService::class.java.name && it.foreground }) return true
+            Thread.sleep(100)
+        }
+        return false
     }
 
     private fun seedBook(megabytes: Int): File {
