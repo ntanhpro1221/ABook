@@ -59,8 +59,9 @@ export function onlinePromptText(voice: Pick<ReadAloudVoice, "name" | "provider"
   const name = spokenVoiceName(voice.name);
   const keyed = KEYED_PROVIDERS[voice.provider];
   if (keyed) return `Giọng ${name} dùng khóa ${keyed} của bạn: chữ của đoạn đang đọc được gửi tới ${keyed} để đọc, và dịch vụ có thể tính tiền vào tài khoản của bạn.`;
+  // Người nghe biết giọng này là "Edge"; chữ đi tới đâu thì vẫn nói thật: máy chủ của công ty.
   return company
-    ? `Giọng ${name} là giọng trực tuyến của ${company}: chữ của đoạn đang đọc được gửi tới ${company} để đọc.`
+    ? `Giọng ${name} là giọng ${voice.provider === "edge" ? "Edge" : "trực tuyến"}: chữ của đoạn đang đọc được gửi tới máy chủ ${company} để đọc.`
     : `Giọng ${name} là giọng trực tuyến: chữ của đoạn đang đọc được gửi tới dịch vụ ngoài để đọc.`;
 }
 

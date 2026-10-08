@@ -6,7 +6,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
-import { resumeWhere } from "./labels";
+import { caughtUpDetail, resumeWhere } from "./labels";
 import { foldVietnamese, listeningBook, resumePoint, seriesIndex, volumeBadge, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
 import type { ReadAloudVoice } from "./readAloud";
@@ -70,7 +70,7 @@ export function usePlayListenBook() {
       return;
     }
     if (full.progress.caughtUp) {
-      toast("Đã nghe hết phần đã có", { description: "Chương tiếp theo sẽ nghe được khi máy làm xong chương ấy." });
+      toast("Đã nghe hết phần đã có", { description: caughtUpDetail(full.producing) });
       return;
     }
     const point = resumePoint(full, chapters);
@@ -343,7 +343,8 @@ export function LibraryScreen({
           <h1 className="whitespace-nowrap text-2xl font-bold tracking-tight sm:text-[28px]">Thư viện</h1>
           <p className="mt-1 text-sm text-fg-2">{books?.length ? `${books.length} cuốn` : ""}</p>
         </div>
-        {header}
+        {/* Thư viện trống: nút giữa màn (`empty`) là lời mời chính - nút thứ hai cùng tên ở đầu trang chỉ lặp lại (soát UX a9). */}
+        {(books?.length || upcoming.length > 0) && header}
       </header>
       {recap}
       {upcoming.length > 0 && (
