@@ -53,11 +53,22 @@ export function useLibrary({ live = true }: { live?: boolean } = {}) {
   });
 }
 
+export function fetchBook(id: string | undefined) {
+  return api<{ book: BookSummary; chapters: Chapter[] }>(`/api/books/${id}`);
+}
+
+/** Đọc bản của trang dự án trong bộ nhớ đệm mà không thêm nhịp hỏi máy chủ. Vẫn mang queryFn thật (enabled: false thay vì
+ *  skipToken): React Query chạy lại khoá này bằng tuỳ chọn của người quan sát gặp sau cùng, nên một người quan sát skipToken
+ *  làm lần làm mới sau một quyết định ném "Missing queryFn" và trang dự án chết (soát UX a8). */
+export function useCachedBook(id: string | undefined) {
+  return useQuery({ queryKey: ["book", id], queryFn: () => fetchBook(id), enabled: false });
+}
+
 export function useBook(id: string | undefined) {
   return useQuery({
     queryKey: ["book", id],
     enabled: Boolean(id),
-    queryFn: () => api<{ book: BookSummary; chapters: Chapter[] }>(`/api/books/${id}`),
+    queryFn: () => fetchBook(id),
     refetchInterval: (query) => (query.state.data?.book.running || query.state.data?.book.starting ? LIVE_MS * 1.5 : IDLE_MS),
   });
 }
