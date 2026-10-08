@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Phân vai giọng đọc
+
+- Một nhân vật mà truyện viết tên theo cả hai thứ tự ("Yakishio Remon" và "Remon Yakishio") không còn bị đọc bằng hai giọng
+  khi chỗ này gọi họ, chỗ kia gọi tên.
+- Tên kèm chức danh viết bằng chữ có dấu ("Tướng quân Niên Phi", "Tiểu thư Bạch Dạ") gộp về đúng người khi truyện có viết
+  đúng như thế; thêm các chức danh "bác sĩ", "tướng quân", "thái tử", "trưởng lão". Cách gọi theo quan hệ ("chị Dậu") vẫn
+  giữ riêng.
+
 ## [0.4.33] - 2026-10-08
 
 ### Mạng giữa các máy
