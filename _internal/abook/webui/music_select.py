@@ -149,7 +149,7 @@ def score(track: dict[str, Any], target: tuple[float, ...], *, family: str | Non
 def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float], Iterable[dict[str, Any]]], *,
            book_key: str, family: str | None = None, pins: dict[str, str] | None = None,
            banned: Iterable[str] = (), genre_styles: dict[str, float] | None = None,
-           keep: dict[str, str | None] | None = None,
+           keep: dict[str, str | None] | None = None, kept_siblings: dict[str, list[str]] | None = None,
            available: Callable[[str], bool] | None = None, silenced: Iterable[str] = (),
            track_info: Callable[[str], dict[str, Any] | None] | None = None) -> list[dict[str, Any]]:
     """Mỗi đoạn kèm `link` (None = im lặng), `distance`, `pinned`. `pins`: {khoá đoạn: link} người dùng ghim
@@ -158,9 +158,15 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
     `keep`: {khoá đoạn: link đã chọn trước đó (None = đoạn đã im lặng)} - như ghim "mềm": đoạn nào có trong `keep` giữ
     nguyên bài cũ (không tính là ghim), trừ khi bài ấy đã bị bỏ thì chọn lại. Người dùng sửa MỘT đoạn / MỘT bài thì các
     đoạn khác không được đổi bài theo chỉ vì phạt "vừa dùng" lan dọc cuốn.
+    `kept_siblings`: {khoá đoạn: link các bài anh em đã nối trong đoạn ấy lần trước} - đoạn nào cả chuỗi từ đầu cảnh tới nó
+    vẫn y như lần trước (đầu cảnh giữ bài cũ, các mảnh nối tiếp cũng vậy) thì dùng lại đúng các bài anh em cũ thay vì xếp hạng
+    lại: sửa một đoạn chỉ đổi cảnh của đoạn ấy, không đổi bài anh em ở chương khác (và khỏi xếp hạng cả cuốn - nhanh).
+    Hai cảnh liền kề không cùng bài, trừ khi người dùng ghim như thế: đầu cảnh chọn theo xếp hạng không lấy bài đang chơi ở
+    mảnh trước; đầu cảnh giữ bài cũ mà trùng bài đang chơi thì chọn lại nếu mảnh trước vừa đổi (bản cũ không bị sửa lan).
     `available(link)`: bài có dùng được TRÊN MÁY NÀY không (đã có trong bộ đệm hay tải được) - bài không dùng được thì không
     chọn, đoạn lấy bài hợp nhất kế tiếp thay vì im lặng. Bài ghim vẫn là lựa chọn của người dùng (ghim không bị xoá) nhưng
-    lần dựng này đoạn ấy chọn theo xếp hạng và có `pinUnavailable`. None = bài nào cũng dùng được.
+    lần dựng này đoạn ấy chọn theo xếp hạng và có `pinUnavailable`. None = bài nào cũng dùng được. Mỗi link chỉ hỏi một lần
+    trong một lần chọn (hỏi là xem đĩa - cả cuốn xếp hạng hàng trăm nghìn lượt bài).
 
     Đổi bài chỉ ở ranh giới có lý do: mảnh `reason="length"` cùng chương, sau một đoạn đang có nhạc, CHƠI TIẾP bài ấy
     (`continued: True`, `stepDb` = bước âm lượng so với đầu cảnh) - ghim và im lặng của người dùng vẫn thắng, `keep` thì
@@ -171,7 +177,16 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
     keep = keep or {}
     banned = set(banned)
     silenced = set(silenced)
+    kept_siblings = kept_siblings or {}
     known: dict[str, dict[str, Any] | None] = {}
+    if available is not None:
+        asked: dict[str, bool] = {}
+        ask = available
+
+        def available(link: str) -> bool:
+            if link not in asked:
+                asked[link] = ask(link)
+            return asked[link]
 
     def usable(link: str | None) -> bool:
         return link is None or available is None or available(link)
@@ -202,9 +217,10 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
     playing: str | None = None   # bài đang kêu ở cuối mảnh trước (kể cả bài anh em vừa nối)
     position = 0.0               # giây đã chơi của bài ấy
     head_tension = 0.0
+    intact = True                # mảnh trước y như lần dựng trước (bài, vị trí trong bài) - xem `kept_siblings`
     for index, scene in enumerate(scenes):
         if index == 0 or scene.get("chapterId") != scenes[index - 1].get("chapterId"):
-            used, playing, position = set(), None, 0.0
+            used, playing, position, intact = set(), None, 0.0, True
         key = scene_key(scene)
         result = dict(scene, key=key, pinned=False)
         pin_down = key in pins and not usable(pins[key])
@@ -215,17 +231,34 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             result.update(link=None, distance=None, silenced=True)
         elif follows:
             result.update(link=playing, distance=None, continued=True)
-        elif key in keep and keep[key] not in banned and usable(keep[key]):
-            result.update(link=keep[key], distance=None)
         else:
-            # Cùng một cách xếp hạng với "Đổi bài" (`rank`); đầu cảnh thêm phạt bài ngắn hơn cảnh.
-            want = min(lengths[heads[index]], SCENE_LENGTH_CAP)
-            best = min(ranked(scene, limit=HEAD_CANDIDATES), default=None,
-                       key=lambda track: track["score"] + SHORT_TRACK_PENALTY * _shortfall(track, want))
-            result.update(link=best["link"] if best else None, distance=best["score"] if best else None)
+            kept = keep.get(key) if key in keep and keep[key] not in banned and usable(keep[key]) else ""
+            if kept != "" and (intact or kept is None or kept != playing):
+                result.update(link=kept, distance=None)
+            else:
+                # Cùng một cách xếp hạng với "Đổi bài" (`rank`); đầu cảnh thêm phạt bài ngắn hơn cảnh. Tránh bài đang chơi
+                # và bài đoạn kế đang giữ (hai cảnh liền kề không cùng bài); không còn bài nào khác thì mới chấp nhận trùng.
+                want = min(lengths[heads[index]], SCENE_LENGTH_CAP)
+                ahead = scenes[index + 1] if index + 1 < len(scenes) and heads[index + 1] == index + 1 else None
+                after = scene_key(ahead) if ahead and ahead.get("chapterId") == scene.get("chapterId") else None
+                avoid = {playing, pins.get(after) or keep.get(after) if after else None} - {None}
+                options = ranked(scene, limit=HEAD_CANDIDATES, exclude=avoid) if avoid else []
+                options = options or ranked(scene, limit=HEAD_CANDIDATES)
+                best = min(options, default=None,
+                           key=lambda track: track["score"] + SHORT_TRACK_PENALTY * _shortfall(track, want))
+                if best is None and kept:
+                    result.update(link=kept, distance=None)  # bài giữ trùng bài đang chơi mà không có bài nào khác
+                else:
+                    result.update(link=best["link"] if best else None, distance=best["score"] if best else None)
         if pin_down:
             result["pinUnavailable"] = True
         link = result["link"]
+        # Cả chuỗi tới đây như lần trước thì bài anh em cũng như lần trước: dùng lại, khỏi xếp hạng.
+        same = key in keep and key in kept_siblings and keep[key] == link
+        intact = same and (intact if result.get("continued") or link == playing else True)
+        if intact and any(old in banned or not usable(old) for old in kept_siblings[key]):
+            intact = False  # bài anh em cũ vừa bị bỏ / máy này không lấy được: xếp hạng lại từ đây
+        reuse = list(kept_siblings[key]) if intact else None
         if result.get("continued"):
             tension = float(scene.get("tension") or 0.0)
             result["stepDb"] = max(-STEP_MAX_DB, min(STEP_MAX_DB, STEP_DB_PER_TENSION * (tension - head_tension)))
@@ -242,7 +275,10 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             position, elapsed = position + step, elapsed + step
             if position < track_seconds - 1e-9:
                 continue
-            sibling = _sibling(info(playing), ranked(scene, exclude=used | {playing}, limit=SIBLING_CANDIDATES))
+            if reuse is not None:
+                sibling = reuse.pop(0) if reuse else None
+            else:
+                sibling = _sibling(info(playing), ranked(scene, exclude=used | {playing}, limit=SIBLING_CANDIDATES))
             position = 0.0
             if sibling:
                 playing = sibling

@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- Nhạc nền: "Đổi bài" -> "Chọn" cho một đoạn giờ xong gần như ngay (trước đây phải chờ dựng lại nhạc cả cuốn, sách 43 chương ~35 giây), và chỉ cảnh của
+  đoạn ấy đổi - các chương khác giữ nguyên cả bài lẫn các bài nối tiếp. Đoạn được chọn lại không lấy trùng bài của cảnh liền trước hay liền sau.
+
 ## [0.4.31] - 2026-10-07
 
 ### Nghe
