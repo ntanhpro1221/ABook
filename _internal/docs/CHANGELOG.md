@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.33] - 2026-10-08
+
 ### Mạng giữa các máy
 
 - Máy tính dùng thư viện của điện thoại qua Bluetooth khi không chung Wi-Fi (trước đây chỉ điện thoại gọi máy tính được). Ghép
