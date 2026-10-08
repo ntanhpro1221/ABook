@@ -6996,13 +6996,14 @@ def _traits_compatible(left: list[Any], right: list[Any]) -> bool:
 # Bốn bản của bước nối người nói cục bộ, chọn bằng `analysis.local_identity_reconcile` hoặc biến môi
 # trường ABOOK_LOCAL_IDENTITY_RECONCILE (biến môi trường thắng, để lượt đo đổi bản không cần sửa
 # settings đã khoá của project):
-#   "loose"    = hỏi model về mọi tên cùng chương hợp giới/tuổi (bản cũ, mặc định);
+#   "loose"    = hỏi model về mọi tên cùng chương hợp giới/tuổi (bản cũ, mặc định tới 0.4.34);
 #   "off"      = không nối;
-#   "named"    = không hỏi model: nối khi chính nhãn là tên / chức danh + tên, hoặc lời dẫn sát bên
+#   "named"    = MẶC ĐỊNH từ 09-10. Không hỏi model: nối khi chính nhãn là tên / chức danh + tên, hoặc lời dẫn sát bên
 #                nối mô tả với tên ("Cậu bé Iven") - `_identity_named_in_text`;
 #   "evidence" = hỏi model như cũ nhưng chỉ về tên mà chữ có bằng chứng (`_evidenced_identity_candidates`).
 # Mô phỏng 10 lượt cổng 19 chương (09-10, docs/VERSIONS.md): so với "loose", "named" +0,60 F1 giọng /
-# +81 dòng người nói chặt, "off" +0,54 / +71, "evidence" +0,55 / +75.
+# +81 dòng người nói chặt, "off" +0,54 / +71, "evidence" +0,55 / +75. Model đo lại bằng chính code này trên DB
+# 10 lượt (09-10 01:0x, LLM_Train/known_text/recgate_score_cpu.txt): "named" +0,65 F1 / +81 chặt, >= "off" cả 10 lượt.
 LOCAL_IDENTITY_MODES = ("loose", "off", "named", "evidence")
 LOCAL_IDENTITY_MODE_ENV = "ABOOK_LOCAL_IDENTITY_RECONCILE"
 # Lời dẫn cách đoạn của nhãn tối đa bấy nhiêu đoạn mới tính là "gọi tên gần" (ca thật: "Cậu bé Iven,
@@ -7014,7 +7015,7 @@ LOCAL_IDENTITY_TURN_WINDOW = 8
 
 def local_identity_mode(settings: dict[str, Any]) -> str:
     value = os.environ.get(LOCAL_IDENTITY_MODE_ENV) or settings.get(
-        "local_identity_reconcile", "loose"
+        "local_identity_reconcile", "named"
     )
     mode = str(value).strip().casefold()
     if mode not in LOCAL_IDENTITY_MODES:
