@@ -808,3 +808,13 @@ lấy lựa chọn đầu nên từ nay nội tâm của người kể ngôi 1 l
 người nghĩ. Đổi 1.015 dòng (1.006 N,T + 9 T) trên 94 file. 35 dòng T chỉ có NARRATOR (phần lớn là tên phép / tên game / dòng
 hệ thống trong nháy đơn mà gold cố ý để giọng kể) giữ nguyên. Lý do (A1 04-10): hai thầy Opus độc lập cùng đọc 36 câu nội tâm
 của Gu Yangcheon (zenith 058) bằng giọng Gu theo prompt của app, gold cũ để NARRATOR. Script: LLM_Train/b6/fix_thought_gold.py.
+
+## 08-10 - Kẻ yếu nhất học viện 26:111 (soát lỗi nhóm B/C của B9, LLM_Train/b15b16/audit_bc)
+
+Agent soát (Sonnet, results_2.tsv) đánh dấu gold có lẽ sai; Model đọc lại cảnh 99-115 và đồng ý.
+
+| câu | gold cũ | kết luận | lý do |
+|---|---|---|---|
+| 26:111 nội tâm ‘...’ | LEAFA đủ, FERNANDO~ | FERNANDO đủ, LEAFA~ | xưng hô: trong cảnh Fernando gọi Leafa là "ngươi" (100, 104, 107, 112), Leafa luôn gọi Fernando "ngài" / "Giáo sư" (103, 115); câu nghĩ dùng "ngươi". Lời Leafa trong cảnh đều ở ≪...≫, câu này ở ‘...’. 112 Fernando hỏi tiếp và 113 ra tay - khớp ý "đằng nào ngươi cũng nằm lại đây". Còn nhập nhằng nên Leafa giữ nửa điểm |
+
+Tác động: 1 dòng. B9 s1234 gán Fernando ở dòng này -> từ sai thành đúng (người nói chặt keyeu 26 +1 dòng).
