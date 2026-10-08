@@ -198,3 +198,75 @@ def test_steps_and_sibling_cues_travel_through_the_book_package(tmp_path: Path) 
     back = music_plan.packaged_cues(json.loads(json.dumps(music)), 1)
     assert back[0]["steps"] == [{"at": 180.4, "db": 1.8}, {"at": 300.0, "db": -1.0}] and "sibling" not in back[0]
     assert back[1]["sibling"] is True and back[1]["steps"] == [{"at": 250.0, "db": 1.8}]
+
+
+def test_editing_one_chapter_reuses_the_sibling_hand_overs_of_untouched_scenes_without_ranking(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(music_select, "SHORT_TRACK_PENALTY", 0.0)
+    tracks = [_track("a", 0.25, -0.15, -0.2, 200), _track("b", 0.27, -0.18, -0.2, 200), _track("far", 0.25, 0.3, 0.3, 200)]
+    info = {track["link"]: track for track in tracks}.get
+    one = _chapter()[:3]
+    two = [dict(scene, chapterId=8) for scene in one]
+    asked: list[float] = []
+
+    def near(valence: float, arousal: float) -> list[dict]:
+        asked.append(valence)
+        return tracks
+
+    before = choose(one + two, near, book_key="b", track_info=info)
+    keep = {entry["key"]: entry["link"] for entry in before}
+    old = {entry["key"]: [sibling["link"] for sibling in entry.get("siblings") or []] for entry in before}
+    assert old[before[4]["key"]], "chương 2 có nối bài anh em - phép thử có nghĩa"
+    asked.clear()
+    same = choose(one + two, near, book_key="b", keep=keep, kept_siblings=old, track_info=info)
+    assert [(e["link"], e.get("siblings")) for e in same] == [(e["link"], e.get("siblings")) for e in before]
+    assert asked == [], "không đoạn nào bị sửa: không xếp hạng gì"
+    # Ghim đầu chương 1 sang bài khác: chương 1 tính lại, chương 2 nối ĐÚNG bài anh em cũ (kể cả khi xếp hạng sẽ ra bài khác).
+    old[before[4]["key"]] = [tracks[2]["link"]]
+    other = next(t["link"] for t in tracks[:2] if t["link"] != before[0]["link"])
+    pinned = choose(one + two, near, book_key="b", pins={before[0]["key"]: other},
+                    keep={k: v for k, v in keep.items() if k != before[0]["key"]}, kept_siblings=old, track_info=info)
+    assert pinned[0]["link"] == other and pinned[1]["link"] == other
+    assert [s["link"] for s in pinned[4]["siblings"]] == [tracks[2]["link"]]
+    assert pinned[3]["link"] == before[3]["link"] and pinned[5]["link"] == tracks[2]["link"]  # mảnh sau chơi tiếp bài anh em ấy
+
+
+def test_a_rechosen_scene_avoids_the_track_playing_before_it_and_the_track_its_next_neighbour_keeps() -> None:
+    tracks = [_track("a", 0.25, -0.15, -0.2, 600), _track("b", 0.25, -0.16, -0.2, 600), _track("c", 0.2, -0.3, -0.3, 600)]
+    scenes = [{"chapterId": 1, "firstSegment": first, "valence": 0.25, "arousal": -0.15, "confidence": 0.8,
+               "tension": -0.2, "reason": "mood_shift"} for first in (1, 20, 40)]
+    keys = [scene_key(scene) for scene in scenes]
+    keep = {keys[0]: tracks[0]["link"], keys[2]: tracks[1]["link"]}
+    chosen = choose(scenes, _near(tracks), book_key="b", keep=keep)
+    assert [entry["link"] for entry in chosen] == [tracks[0]["link"], tracks[2]["link"], tracks[1]["link"]]
+    # Không còn bài nào khác: trùng láng giềng còn hơn im lặng.
+    chosen = choose(scenes, _near(tracks[:2]), book_key="b", keep=keep)
+    assert chosen[1]["link"] in {tracks[0]["link"], tracks[1]["link"]}
+
+
+def test_a_kept_head_that_now_repeats_a_changed_neighbour_is_chosen_again_but_an_unchanged_pair_stays() -> None:
+    tracks = [_track("a", 0.25, -0.15, -0.2, 600), _track("b", 0.25, -0.16, -0.2, 600)]
+    scenes = [{"chapterId": 1, "firstSegment": first, "valence": 0.25, "arousal": -0.15, "confidence": 0.8,
+               "tension": -0.2, "reason": "mood_shift"} for first in (1, 20)]
+    keys = [scene_key(scene) for scene in scenes]
+    a, b = tracks[0]["link"], tracks[1]["link"]
+    old = {keys[0]: [], keys[1]: []}
+    # Người dùng ghim đoạn 1 vào đúng bài đoạn 2 đang giữ: đoạn 2 (không ghim) chọn bài khác.
+    chosen = choose(scenes, _near(tracks), book_key="b", pins={keys[0]: b}, keep={keys[1]: b}, kept_siblings=old)
+    assert [entry["link"] for entry in chosen] == [b, a]
+    # Cặp trùng có sẵn từ lần dựng trước mà không ai sửa: giữ nguyên, sửa một đoạn không sửa lan.
+    chosen = choose(scenes, _near(tracks), book_key="b", keep={keys[0]: b, keys[1]: b}, kept_siblings=old)
+    assert [entry["link"] for entry in chosen] == [b, b]
+
+
+def test_each_track_is_checked_for_this_machine_once_per_choice() -> None:
+    tracks = [_track(f"t{i}", 0.25, -0.15 - i / 100, -0.2, 200) for i in range(5)]
+    counts: dict[str, int] = {}
+
+    def available(link: str) -> bool:
+        counts[link] = counts.get(link, 0) + 1
+        return True
+
+    choose(_chapter() + [dict(scene, chapterId=8) for scene in _chapter()], _near(tracks), book_key="b",
+           available=available, track_info={t["link"]: t for t in tracks}.get)
+    assert counts and max(counts.values()) == 1
