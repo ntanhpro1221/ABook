@@ -4353,8 +4353,10 @@ Cùng thủ tục `stu_curve.py` (theo bộ truyện, 3 hạt, alpha chọn trê
 - Độ dốc mỗi lần gấp đôi (bộ học) giảm: +.030, +.028, +.021. Trên bộ 7, đoạn 1.000 → 2.000 chỉ +.010 (mọi chương).
 - Vì thế lô bạc 2 (khoảng 15-20 % hạn mức tuần) ước chỉ thêm +.02 học, +.01 bộ 7: **chưa làm**. Đợi đường cong 4B lớp 18
   (nhúng bạc trên Mac) trước. Bộ chọn chương cho lô 2 đã viết sẵn nhưng chưa chạy.
-- Chi phí triển khai 1.7B (app phải chạy thêm một model): đang chờ đo VRAM đỉnh và tốc độ, cả bản cắt còn 14 lớp đầu,
-  trên GPU nhà (`stu_deploy_probe.py`).
+- Chi phí triển khai 1.7B (app phải chạy thêm một model), đo 22:46 trên GPU nhà 8 GB (`stu_deploy_probe.py`):
+  đủ 28 lớp 4,05 GiB VRAM, ~3,5 giây mỗi giờ audio; **cắt còn 14 lớp đầu** 2,52 GiB, ~1,7 giây, nhúng trùng khít bản đủ
+  (cos 1,0000) nên chỉ cần tải khoảng 1,9 GB; trên CPU ~30 giây mỗi giờ audio. Không ngồi cạnh model phân tích 9B trong 8 GB,
+  nên chạy sau khi phân tích nhả VRAM, hoặc trên CPU.
 
 ### 08-10 17:5x - Đường cong dữ liệu tới 2.000 cảnh bạc + STU-BIG: dữ liệu và biểu diễn lớn đều còn giúp
 
