@@ -534,6 +534,7 @@ export function Segmented<T extends string>({
   options,
   label,
   wrap = false,
+  className,
   itemClassName,
 }: {
   value: T;
@@ -542,6 +543,8 @@ export function Segmented<T extends string>({
   label: string;
   /** Nhiều lựa chọn (8 loại việc): xuống hàng thay vì bóp chữ - soát UX 29-09, thanh lọc cần ~1089px. */
   wrap?: boolean;
+  /** Thêm cho khung ngoài (vd. trải hết bề ngang trên điện thoại). */
+  className?: string;
   /** Thêm cho từng nút (vd. cỡ chạm trên điện thoại). */
   itemClassName?: string;
 }) {
@@ -551,7 +554,7 @@ export function Segmented<T extends string>({
       role="radiogroup"
       aria-label={label}
       onKeyDown={radioGroupKeys(values, value, onChange)}
-      className={cn("rounded-lg border border-line bg-panel-2 p-0.5", wrap ? "flex flex-wrap gap-0.5" : "inline-flex")}
+      className={cn("rounded-lg border border-line bg-panel-2 p-0.5", wrap ? "flex flex-wrap gap-0.5" : "inline-flex", className)}
     >
       {options.map((option, index) => (
         <button
