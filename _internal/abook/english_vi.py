@@ -64,6 +64,7 @@ LOANWORDS = {
     "radio": "ra-đi-ô", "radar": "ra-đa", "tennis": "ten-nít", "acid": "a-xít", "piano": "pi-a-nô", "chocolate": "sô-cô-la",
     "vitamin": "vi-ta-min", "cowboy": "cao-bồi", "meeting": "mít-tinh", "dollar": "đô-la", "cafe": "cà-phê", "golf": "gôn", "card": "cạc", "taxi": "tắc-xi",
     "video": "vi-đê-ô", "massage": "mát-xa", "salon": "xa-lông", "marathon": "ma-ra-tông", "opera": "ô-pê-ra", "sandwich": "xan-uých", "ok": "ô-kê",
+    "beta": "bê-ta", "motor": "mô-tơ", "pharaoh": "pha-ra-ông", "protein": "pờ-rô-tin", "coca": "cô-ca", "piranha": "pi-ra-nha",  # vòng 11
 }
 OVERRIDES = {**LOANWORDS, **OWNER}
 
@@ -219,7 +220,8 @@ def _align_letters(phones: list[Phone], word: str) -> list[Phone]:
             out, at = [], 0
             for base, stress, _ in phones:
                 if stress >= 0:
-                    out.append((base, stress, groups[at]))
+                    # -re cuối đọc /ɚ/ (ogre, centre): chữ "r", không phải e của -er nên không mang huyền (Ô-gơ, không Ô-gờ)
+                    out.append((base, stress, "r" if base == "ER" and at == len(groups) - 1 and word.endswith("re") and not drop else groups[at]))
                     at += 1
                 else:
                     out.append((base, stress, ""))
@@ -243,6 +245,8 @@ _DIGRAPHS = (("eau", "OW"), ("igh", "AY"), ("ee", "IY"), ("ea", "IY"), ("ai", "E
 def _is_vowel_letter(word: str, index: int) -> bool:
     ch = word[index:index + 1]
     if ch == "y":
+        if index > 0 and word[index - 1] in "aeo" and word[index + 1:] in ("er", "ar", "or"):
+            return True  # -ayer / -oyar cuối từ: y còn thuộc nguyên âm đôi (cosplayer cót-pờ-lây-ơ, Loyar loi-a)
         return word[index + 1:index + 2] not in tuple("aeiou")  # y trước nguyên âm là phụ âm: Yuri, Ryan, Alunaya (na-gia)
     return ch != "" and ch in "aeiou"
 
@@ -268,6 +272,10 @@ def _spell_phones(word: str) -> list[Phone] | None:
         ch = w[i]
         if _is_vowel_letter(w, i):
             if i == magic:
+                if ch == "o" and w[i + 1:i + 2] == "r":
+                    out.extend([("AO", 0, ch), ("R", -1, "")])  # -ore: /ɔːr/ -> o, r bỏ, không phải ô dài (Pellinore pe-li-no, Algore an-go)
+                    i += 2
+                    continue
                 out.append((_LONG[ch], 0, ch))
                 i += 1
                 continue
@@ -276,6 +284,8 @@ def _spell_phones(word: str) -> list[Phone] | None:
                 digraph = (rest, "IY" if rest != "ay" else "EY")
             if rest == "oa":
                 digraph = None  # -oa cuối tên bịa là hai âm tiết ô-a (Astroa Át-trô-a, Ranoa), không phải oa đơn như boat
+            if rest.startswith("ou") and _is_vowel_letter(w, i + 2):
+                digraph = ("ou", "UW")  # ou trước nguyên âm đọc u (Louina lu-i-na, như Louie lu-i), không phải ao
             if rest.startswith("ow"):
                 digraph = ("ow", "OW" if rest == "ow" else "AW")
             if rest == "ue":
@@ -300,8 +310,8 @@ def _spell_phones(word: str) -> list[Phone] | None:
                 continue
             if ch == "a" and w[i + 1:i + 3] == "nk":
                 out.append(("AE", 0, ch))  # ank -> anh như đường âm vị (tank -> tanh)
-            elif i == end - 1:
-                out.append((_FINAL_OPEN[ch], 0, ch))
+            elif i == end - 1 or (ch == "o" and w[i + 1:end] == "h"):
+                out.append((_FINAL_OPEN[ch], 0, ch))  # oh cuối: ô (Uzoh u-dô)
             elif ch == "o" and w[i + 1:end] in _LONG_O_ENDINGS:
                 out.append(("OW", 0, ch))  # -ona, -ono, -onia, -opia (Symphonia, Dystopia, Heliona) đọc ô; o mở âm tiết khác đọc o (Docora đo-co-ra)
             else:
@@ -322,6 +332,10 @@ def _spell_phones(word: str) -> list[Phone] | None:
             i += 3
             continue
         two = rest[:2]
+        if rest.startswith("chr"):
+            out.append(("K", -1, ""))  # chr đọc k + r (Chrono cờ-rô-nô, như Chris cờ-rít)
+            i += 2
+            continue
         if two in ("ch", "sh", "th", "ph", "ck", "ng", "wh", "dg"):
             out.append(({"ch": "CH", "sh": "SH", "th": "TH", "ph": "F", "ck": "K", "ng": "NG", "wh": "W", "dg": "JH"}[two], -1, ""))
             i += 2
@@ -528,8 +542,10 @@ def _glide_w(nucleus: str) -> str | None:
     return None
 
 
-def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -> list[_Syl] | None:
-    """`word_start` False: phần sau của từ ghép (w ở đó không thành gu)."""
+def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True, more: bool = False, known: bool = False,
+               ) -> list[_Syl] | None:
+    """`word_start` False: phần sau của từ ghép (w ở đó không thành gu). `more`: còn âm tiết đứng sau (Roxwell): phụ âm thừa của cụm cuối
+    thành âm tiết ơ thay vì rơi (Róc-xơ-oen). `known`: âm vị lấy từ từ điển (không phải đoán theo chữ)."""
     # /aɪər/ (fire, higher): ơ sau ai nuốt vào ai, r bỏ (chủ sách 04-10: fireball -> phai-bôn)
     phones = [phone for index, phone in enumerate(phones)
               if not (phone[0] == "ER" and phone[1] == 0 and index > 0 and phones[index - 1][0] == "AY")]
@@ -596,6 +612,8 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
                 for base in run[1:]:
                     if CHOICES["final_cluster"] == "syllable":
                         tail.append(_final_syllable(base, flags))
+                    elif more:
+                        tail.append(_epenthetic(base))
         else:
             head, next_onset, next_glide = _split_onset(run, medial=phones[vowels[k + 1]][0] == "UW")
             if next_onset == "NG":
@@ -609,7 +627,10 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
                 head = []  # AO + s + t: s rơi, âm tiết mở ô (chủ sách 04-10: Austin -> ô-tin)
             liquid_stop = ""
             if next_onset in ("L", "R") and head and head[-1] in _ALL_STOPS:
-                if (next_onset == "L" or (next_onset == "R" and len(head) == 1 and can_close)) and vowel[1] >= 1:
+                if ((next_onset == "L" and (len(head) == 1 or head[-2:] in (["NG", "K"], ["NG", "G"]))) or (next_onset == "R" and len(head) == 1 and can_close)
+                        ) and vowel[1] >= 1 and not (
+                    (len(head) == 1 and head[-1] in ("D", "G")) or vowel[0] in ("IY", "UW", "EY")  # d / g khép thành t / c lạc âm, nguyên âm dài không bị khép: Libra li-bờ-ra, Daydream đây-đờ-rim
+                ):
                     # tắc + l sau nguyên âm nhấn (tắc + r khi tắc đứng một mình): tắc khép âm tiết nhấn, l / r mở âm tiết sau (chủ sách 04-10:
                     # táp-lét, góp-lin, xờ-cót-lừn, cobra cốp-ra); nk + l: k rơi (Franklin -> phờ-ranh-lin)
                     if head[-2:] == ["NG", "K"]:
@@ -646,6 +667,10 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
             nucleus, coda = "eo", ""  # l cuối sau e (hay trước phụ âm cuối không phải t d) thành o: eo (chủ sách 04-10: Elf, bell beo, spell xờ-peo); l trước t d giữ n (Roosevelt)
         if not last and vowel[0] == "AO" and run == ["S", "T"]:
             nucleus = "ô"  # au / o + s + t -> ô (chủ sách 04-10: Austin ô-tin)
+        if vowel[0] == "ER" and vowel[1] == 0 and vowel[2] == "i" and not last and nucleus == "ơ" and known:
+            nucleus = "i"  # từ điển cho ir không nhấn ở đầu / giữa tên: i (Miranda mi-ran-đa); tên bịa (Zirnitra dơ-ni-tra) và cuối từ (Elixir) vẫn ơ
+        if vowel[0] == "ER" and vowel[1] == 0 and vowel[2] == "a" and last and not run and nucleus == "a":
+            nucleus = "ơ"  # -ar cuối không nhấn: ơ ngang (Oscar ót-cơ, Altar ôn-tơ); a trước r chỉ ở đầu / giữa từ (Maria ma-ri-a)
         if vowel[0] == "ER" and coda in ("c", "ch"):
             nucleus = "â"  # ơc / ơch không có vần: ɜːr + c -> âc (chủ sách 04-10: Kirk cấc, Burke bấc)
         if last and vowel[0] == "AO" and r_colored and coda_phone == "JH":
@@ -677,6 +702,8 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
         if il_final:
             nucleus += "u"
         use = "Z" if onset == "JH" and vowel[1] >= 1 and vowel[0] in ("AE", "AH", "UH") else onset  # j trước a ă u đọc d (chủ sách 04-10: Jack dách, Jud dút)
+        if k == 0 and not word_start and glide == "W" and nucleus == "u" and not use:
+            glide = ""  # -wood ở nửa sau từ ghép: w nuốt vào u (Lilywood li-li-út, Underwood ăn-đơ-út)
         _emit(out, use, glide, nucleus, coda, grave)
         out.extend(tail)
         onset, glide = next_onset, next_glide
@@ -790,6 +817,24 @@ def _part_case(part: str) -> bool | None:
     return None
 
 
+def _fold_stylized_case(part: str, dictionary: Mapping[str, str]) -> str | None:
+    """Chữ viết hoa lạ mà vẫn là MỘT từ / tên (không phải viết tắt): TOÀN HOA từ 4 chữ có nguyên âm, và hoặc có trong từ điển (LYLE, TYPE) hoặc
+    dài từ 6 chữ (YGGDRASIL); chữ thường kết bằng một chữ hoa cuối (DemiGoD, DreadlorD) mà gộp lại có trong từ điển hay ghép được từ hai từ có
+    trong từ điển. Trả dạng viết hoa chữ đầu để đọc như tên, None nếu vẫn coi là viết tắt / chữ lạ. Chữ TOÀN HOA ngắn hơn (VIP, USB, IQ) là
+    viết tắt đọc theo mục 5, không vào đây."""
+    if not part.isascii() or not part.isalpha() or len(part) < 4:
+        return None
+    lower = part.lower()
+    if part.isupper():
+        if any(ch in "aeiouy" for ch in lower) and (lower in dictionary or len(part) >= 6):
+            return lower.capitalize()
+        return None
+    if part[0].isupper() and part[-1].isupper() and part[1:-1] == part[1:-1].lower() and part[1:-1]:
+        if lower in dictionary or _compound_parts(lower, dictionary) is not None:
+            return lower.capitalize()
+    return None
+
+
 def _compound_parts(key: str, dictionary: Mapping[str, str]) -> tuple[str, str] | None:
     """Từ ghép không có trong từ điển mà hai nửa có (sandworm = sand + worm): đọc từng phần (chủ sách 04-10: fireball -> phai-bôn).
     Mỗi nửa ít nhất COMPOUND_NAME_MIN_PART chữ như cách tách tên ghép của Studio; nửa đầu dài nhất trước."""
@@ -802,11 +847,17 @@ def _compound_parts(key: str, dictionary: Mapping[str, str]) -> tuple[str, str] 
 
 
 def _read_word(key: str, capital: bool, dictionary: Mapping[str, str], overrides: bool, flags: list[str], word_start: bool = True,
-               ) -> str | None:
+               more: bool = False) -> str | None:
     if overrides and key in OVERRIDES:
         flags.append("via:override")
         reading = OVERRIDES[key]
         return reading[:1].upper() + reading[1:] if capital else reading
+    if key.endswith("well") and len(key) >= 7:
+        # hậu tố -well của họ / tên Anh: oen (SGK Crôm-oen, Cromwell Cờ-rom-oen, Roxwell Róc-xơ-oen); nửa đầu đọc như một từ
+        head = _read_word(key[:-4], capital, dictionary, overrides, flags, word_start, True)
+        if head is not None:
+            flags.append("via:compound")
+            return head + "-oen"
     phones: list[Phone] | None = None
     route = "via:phonemes"
     if capital and _short_silent_e(key) and key not in _COMMON_WORDS and CHOICES["short_silent_e"] == "face":
@@ -825,7 +876,7 @@ def _read_word(key: str, capital: bool, dictionary: Mapping[str, str], overrides
                 return "-".join(readings)
     if phones is not None:
         trial: list[str] = []
-        syllables = _syllabify(phones, trial, word_start)
+        syllables = _syllabify(phones, trial, word_start, more, True)
         reading = None if syllables is None else _validated(syllables, capital)
         if reading is not None:
             flags.append(route)
@@ -836,7 +887,7 @@ def _read_word(key: str, capital: bool, dictionary: Mapping[str, str], overrides
     if phones is None:
         return None
     trial = []
-    syllables = _syllabify(phones, trial, word_start)
+    syllables = _syllabify(phones, trial, word_start, more)
     reading = None if syllables is None else _validated(syllables, capital)
     if reading is None:
         return None
@@ -866,6 +917,10 @@ def vietnamized_english_flags(word: str, dictionary: Mapping[str, str] | None = 
             readings.append(ACRONYMS[part])
             continue
         case = _part_case(part)
+        if case is None:
+            folded = _fold_stylized_case(part, phones)
+            if folded is not None:
+                part, case = folded, True
         if case is None and overrides:
             plain = "".join(ch for ch in unicodedata.normalize("NFD", part) if not unicodedata.combining(ch))
             if plain.casefold() in OVERRIDES:
