@@ -52,6 +52,7 @@ object EnglishVi {
         "card" to "cạc", "taxi" to "tắc-xi",
         "video" to "vi-đê-ô", "massage" to "mát-xa", "salon" to "xa-lông", "marathon" to "ma-ra-tông", "opera" to "ô-pê-ra",
         "sandwich" to "xan-uých", "ok" to "ô-kê",
+        "beta" to "bê-ta", "motor" to "mô-tơ", "pharaoh" to "pha-ra-ông", "protein" to "pờ-rô-tin", "coca" to "cô-ca", "piranha" to "pi-ra-nha", // vòng 11
     )
     val OVERRIDES = LOANWORDS + OWNER
 
@@ -178,7 +179,16 @@ object EnglishVi {
             if (drop && !(word.length > 2 && word.endsWith("e") && word[word.length - 2] !in "aeiouy")) continue
             val groups = splitHiatus(vowelGroups(word, drop), count) ?: continue
             var at = 0
-            return phones.map { phone -> if (phone.stress >= 0) phone.copy(letters = groups[at++]) else phone.copy(letters = "") }
+            return phones.map { phone ->
+                if (phone.stress >= 0) {
+                    // -re cuối đọc /ɚ/ (ogre, centre): chữ "r", không phải e của -er nên không mang huyền (Ô-gơ, không Ô-gờ)
+                    val letters = if (phone.base == "ER" && at == groups.size - 1 && word.endsWith("re") && !drop) "r" else groups[at]
+                    at++
+                    phone.copy(letters = letters)
+                } else {
+                    phone.copy(letters = "")
+                }
+            }
         }
         return phones
     }
@@ -207,6 +217,8 @@ object EnglishVi {
         if (index < 0 || index >= word.length) return false
         val ch = word[index]
         if (ch == 'y') {
+            // -ayer / -oyar cuối từ: y còn thuộc nguyên âm đôi (cosplayer cót-pờ-lây-ơ, Loyar loi-a)
+            if (index > 0 && word[index - 1] in "aeo" && sub(word, index + 1, word.length) in setOf("er", "ar", "or")) return true
             val next = sub(word, index + 1, index + 2)
             return !(next.isNotEmpty() && next[0] in "aeiou") // y trước nguyên âm là phụ âm: Yuri, Ryan, Alunaya (na-gia)
         }
@@ -230,6 +242,12 @@ object EnglishVi {
             val ch = w[i]
             if (isVowelLetter(w, i)) {
                 if (i == magic) {
+                    if (ch == 'o' && sub(w, i + 1, i + 2) == "r") {
+                        out.add(Phone("AO", 0, "o")) // -ore: /ɔːr/ -> o, r bỏ, không phải ô dài (Pellinore pe-li-no, Algore an-go)
+                        out.add(Phone("R", -1, ""))
+                        i += 2
+                        continue
+                    }
                     out.add(Phone(LONG.getValue(ch), 0, ch.toString()))
                     i += 1
                     continue
@@ -238,6 +256,7 @@ object EnglishVi {
                 if (rest == "ey" || rest == "ay" || (rest == "ie" && size <= 4)) digraph = rest to (if (rest != "ay") "IY" else "EY")
                 if (rest.startsWith("ow")) digraph = "ow" to (if (rest == "ow") "OW" else "AW")
                 if (rest == "oa") digraph = null // -oa cuối tên bịa là hai âm tiết ô-a (Astroa Át-trô-a, Ranoa), không phải oa đơn như boat
+                if (rest.startsWith("ou") && isVowelLetter(w, i + 2)) digraph = "ou" to "UW" // ou trước nguyên âm đọc u (Louina lu-i-na, như Louie lu-i), không phải ao
                 if (rest == "ue") digraph = "ue" to "UW"
                 if (digraph != null && digraph.first.endsWith("y") && !isVowelLetter(w, i + digraph.first.length - 1)) {
                     digraph = null // ay / ey / oy trước nguyên âm: y là phụ âm (Alunaya -> na-gia)
@@ -260,7 +279,7 @@ object EnglishVi {
                 }
                 val vowel = when {
                     ch == 'a' && sub(w, i + 1, i + 3) == "nk" -> "AE" // ank -> anh như đường âm vị (tank -> tanh)
-                    i == end - 1 -> FINAL_OPEN.getValue(ch)
+                    i == end - 1 || (ch == 'o' && sub(w, i + 1, end) == "h") -> FINAL_OPEN.getValue(ch) // oh cuối: ô (Uzoh u-dô)
                     // -ona, -ono, -onia, -opia (Symphonia, Dystopia, Heliona) đọc ô; o mở âm tiết khác đọc o (Docora đo-co-ra)
                     ch == 'o' && sub(w, i + 1, end) in LONG_O_ENDINGS -> "OW"
                     else -> FACE.getValue(ch)
@@ -288,6 +307,11 @@ object EnglishVi {
                 continue
             }
             val two = sub(rest, 0, 2)
+            if (rest.startsWith("chr")) {
+                out.add(Phone("K", -1, "")) // chr đọc k + r (Chrono cờ-rô-nô, như Chris cờ-rít)
+                i += 2
+                continue
+            }
             val digraph = CONSONANT_DIGRAPHS[two]
             if (digraph != null) {
                 out.add(Phone(digraph, -1, ""))
@@ -464,8 +488,11 @@ object EnglishVi {
         }
     }
 
-    /** `wordStart` false: phần sau của từ ghép (w ở đó không thành gu). */
-    private fun syllabify(input: List<Phone>, flags: MutableList<String>, wordStart: Boolean = true): List<Syl>? {
+    /**
+     * `wordStart` false: phần sau của từ ghép (w ở đó không thành gu). `more`: còn âm tiết đứng sau (Roxwell): phụ âm thừa của cụm cuối thành âm
+     * tiết ơ thay vì rơi. `known`: âm vị lấy từ từ điển (không phải đoán theo chữ).
+     */
+    private fun syllabify(input: List<Phone>, flags: MutableList<String>, wordStart: Boolean = true, more: Boolean = false, known: Boolean = false): List<Syl>? {
         // /aɪər/ (fire, higher): ơ sau ai nuốt vào ai, r bỏ (chủ sách 04-10: fireball -> phai-bôn)
         val phones = input.filterIndexed { index, phone -> !(phone.base == "ER" && phone.stress == 0 && index > 0 && input[index - 1].base == "AY") }
         val vowels = phones.indices.filter { phones[it].stress >= 0 }
@@ -524,7 +551,9 @@ object EnglishVi {
                         letter == null -> tail.add(finalSyllable(first, flags))
                         else -> coda = letter
                     }
-                    for (base in run.drop(1)) if (FINAL_CLUSTER == "syllable") tail.add(finalSyllable(base, flags))
+                    for (base in run.drop(1)) {
+                        if (FINAL_CLUSTER == "syllable") tail.add(finalSyllable(base, flags)) else if (more) tail.add(epenthetic(base))
+                    }
                 }
             } else {
                 val split = splitOnset(run, phones[vowels[k + 1]].base == "UW")
@@ -543,7 +572,11 @@ object EnglishVi {
                 if (vowel.base == "AO" && run == listOf("S", "T")) head = emptyList() // AO + s + t: s rơi, âm tiết mở ô (Austin -> ô-tin)
                 var liquidStop = ""
                 if ((nextOnset == "L" || nextOnset == "R") && head.isNotEmpty() && head.last() in ALL_STOPS) {
-                    if ((nextOnset == "L" || (nextOnset == "R" && head.size == 1 && canClose)) && vowel.stress >= 1) {
+                    val lAfterNasal = head.size >= 2 && head.last() in setOf("K", "G") && head[head.size - 2] == "NG"
+                    if (((nextOnset == "L" && (head.size == 1 || lAfterNasal)) || (nextOnset == "R" && head.size == 1 && canClose)) && vowel.stress >= 1 &&
+                        !((head.size == 1 && (head.last() == "D" || head.last() == "G")) || vowel.base == "IY" || vowel.base == "UW" || vowel.base == "EY")
+                    ) {
+                        // d / g khép thành t / c lạc âm, nguyên âm dài không bị khép: Libra li-bờ-ra, Daydream đây-đờ-rim
                         // tắc + l sau nguyên âm nhấn (tắc + r khi tắc đứng một mình): tắc khép âm tiết nhấn (táp-lét, góp-lin, xờ-cót-lừn, cobra cốp-ra); nk + l: k rơi
                         if (head.size >= 2 && head[head.size - 2] == "NG" && head.last() == "K") head = head.dropLast(1)
                     } else {
@@ -583,6 +616,12 @@ object EnglishVi {
                 coda = ""
             }
             if (!last && vowel.base == "AO" && run == listOf("S", "T")) core = "ô" // au / o + s + t -> ô (Austin ô-tin)
+            if (vowel.base == "ER" && vowel.stress == 0 && vowel.letters == "i" && !last && core == "ơ" && known) {
+                core = "i" // từ điển cho ir không nhấn ở đầu / giữa tên: i (Miranda mi-ran-đa); tên bịa (Zirnitra dơ-ni-tra) và cuối từ (Elixir) vẫn ơ
+            }
+            if (vowel.base == "ER" && vowel.stress == 0 && vowel.letters == "a" && last && run.isEmpty() && core == "a") {
+                core = "ơ" // -ar cuối không nhấn: ơ ngang (Oscar ót-cơ, Altar ôn-tơ); a trước r chỉ ở đầu / giữa từ (Maria ma-ri-a)
+            }
             if (vowel.base == "ER" && (coda == "c" || coda == "ch")) core = "â" // ơc / ơch không có vần: ɜːr + c -> âc (Kirk cấc, Burke bấc)
             if (last && vowel.base == "AO" && rColored && codaPhone == "JH") {
                 core = "o" // o + ch cuối -> óc (George gióc)
@@ -624,6 +663,7 @@ object EnglishVi {
             }
             if (ilFinal) core += "u"
             val use = if (onset == "JH" && vowel.stress >= 1 && (vowel.base == "AE" || vowel.base == "AH" || vowel.base == "UH")) "Z" else onset // j trước a ă u đọc d (Jack dách, Jud dút)
+            if (k == 0 && !wordStart && glide == "W" && core == "u" && use.isEmpty()) glide = "" // -wood ở nửa sau từ ghép: w nuốt vào u (Lilywood li-li-út)
             emit(out, use, glide, core, coda, grave)
             out.addAll(tail)
             onset = nextOnset
@@ -754,6 +794,25 @@ object EnglishVi {
         return null
     }
 
+    /**
+     * Chữ viết hoa lạ mà vẫn là MỘT từ / tên (không phải viết tắt): TOÀN HOA từ 4 chữ có nguyên âm, và hoặc có trong từ điển (LYLE, TYPE) hoặc
+     * dài từ 6 chữ (YGGDRASIL); chữ thường kết bằng một chữ hoa cuối (DreadlorD) mà gộp lại có trong từ điển hay ghép được từ hai từ có trong từ
+     * điển. Trả dạng viết hoa chữ đầu, null nếu vẫn coi là viết tắt / chữ lạ.
+     */
+    private fun foldStylizedCase(part: String, dictionary: Map<String, String>): String? {
+        if (part.length < 4 || !part.all { it in 'a'..'z' || it in 'A'..'Z' }) return null
+        val lower = part.lowercase(Locale.ROOT)
+        if (part.all { it in 'A'..'Z' }) {
+            if (lower.any { it in "aeiouy" } && (lower in dictionary || part.length >= 6)) return lower.substring(0, 1).uppercase(Locale.ROOT) + lower.substring(1)
+            return null
+        }
+        val middle = part.substring(1, part.length - 1)
+        if (part[0] in 'A'..'Z' && part.last() in 'A'..'Z' && middle.isNotEmpty() && middle == middle.lowercase(Locale.ROOT)) {
+            if (lower in dictionary || compoundParts(lower, dictionary) != null) return lower.substring(0, 1).uppercase(Locale.ROOT) + lower.substring(1)
+        }
+        return null
+    }
+
     /** Cùng số với `analysis.COMPOUND_NAME_MIN_PART` (cách tách tên ghép của Studio) - bản Python import thẳng hằng ấy. */
     private const val COMPOUND_MIN_PART = 4
 
@@ -767,11 +826,20 @@ object EnglishVi {
 
     private fun readWord(
         key: String, capital: Boolean, dictionary: Map<String, String>, overrides: Boolean, flags: MutableList<String>, wordStart: Boolean = true,
+        more: Boolean = false,
     ): String? {
         if (overrides) {
             OVERRIDES[key]?.let { reading ->
                 flags.add("via:override")
                 return if (capital) reading.substring(0, 1).uppercase(Locale.ROOT) + reading.substring(1) else reading
+            }
+        }
+        if (key.endsWith("well") && key.length >= 7) {
+            // hậu tố -well của họ / tên Anh: oen (SGK Crôm-oen, Cromwell Cờ-rom-oen, Roxwell Róc-xơ-oen); nửa đầu đọc như một từ
+            val head = readWord(key.substring(0, key.length - 4), capital, dictionary, overrides, flags, wordStart, true)
+            if (head != null) {
+                flags.add("via:compound")
+                return "$head-oen"
             }
         }
         var phones: List<Phone>? = null
@@ -794,7 +862,7 @@ object EnglishVi {
         }
         phones?.let { found ->
             val trial = ArrayList<String>()
-            val reading = syllabify(found, trial, wordStart)?.let { validated(it, capital) }
+            val reading = syllabify(found, trial, wordStart, more, true)?.let { validated(it, capital) }
             if (reading != null) {
                 flags.add(route)
                 flags.addAll(trial)
@@ -804,7 +872,7 @@ object EnglishVi {
         }
         val spelled = spellPhones(key) ?: return null
         val trial = ArrayList<String>()
-        val reading = syllabify(spelled, trial, wordStart)?.let { validated(it, capital) } ?: return null
+        val reading = syllabify(spelled, trial, wordStart, more)?.let { validated(it, capital) } ?: return null
         flags.add("via:spelling")
         flags.addAll(trial)
         return reading
@@ -837,6 +905,13 @@ object EnglishVi {
                 continue
             }
             var case = partCase(part)
+            if (case == null) {
+                val folded = foldStylizedCase(part, dictionary)
+                if (folded != null) {
+                    part = folded
+                    case = true
+                }
+            }
             if (case == null && overrides) {
                 val plain = Normalizer.normalize(part, Normalizer.Form.NFD).filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
                 if (plain.lowercase(Locale.ROOT) in OVERRIDES) {

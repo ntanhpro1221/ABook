@@ -55,6 +55,11 @@ EDGE: list[str] = [
     "Docora", "Symphonia", "Dystopia", "Heliona", "Novem", "Jaxon", "Anton", "Astroa", "Ranoa", "Lich", "Mitch", "March", "Axel", "Flag", "magma",
     "Rebecca", "Extra", "text", "next", "Party", "harpy", "Arthur", "Silver", "Elixir", "Beatrice", "Greyrat", "Fire", "Note", "Code", "White",
     "video", "Video", "café", "OK", "TV", "ok", "Lyle-kun", "Mary-dono", "Eleanora-san", "Persona-kun",
+    # vòng 11: -well, -ore, tắc + l / r (d g, nguyên âm dài, cụm ng + g), ir không nhấn, -ar cuối, -re cuối, -ayer, ou + nguyên âm, chr, oh cuối,
+    # w nuốt vào u ở nửa sau từ ghép, chữ viết hoa lạ (TOÀN HOA, kết bằng một chữ hoa), từ mượn thêm
+    "Cromwell", "Roxwell", "Maxwell", "Manticore", "Pellinore", "Algore", "Libra", "Daydream", "Integra", "deadline", "England", "Templar", "Miranda",
+    "Oscar", "Altar", "Maria", "Ogre", "Louina", "Chrono", "Uzoh", "Loyar", "cosplayer", "Lilywood", "LYLE", "TYPE", "YGGDRASIL", "DreadlorD",
+    "NPC", "MARY", "beta", "Beta", "motor", "pharaoh", "protein", "coca", "piranha",
 ]
 
 
