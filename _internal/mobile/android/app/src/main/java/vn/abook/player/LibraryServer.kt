@@ -68,14 +68,30 @@ object LibraryServer {
         private set
     var lastError = ""
         private set
+    private var appContext: Context? = null
+
+    /** Tên Bluetooth của điện thoại (BluetoothLink.adapterName); test JVM thay bằng giá trị giả. */
+    internal var bluetoothNameSource: () -> String = { appContext?.let(BluetoothLink::adapterName).orEmpty() }
 
     fun init(context: Context) {
         Store.init(context)
         Remote.init(context.applicationContext)
+        appContext = context.applicationContext
         if (!::devicesFile.isInitialized) devicesFile = File(context.filesDir, "share.json")
     }
 
     fun name(): String = "${Build.MANUFACTURER} ${Build.MODEL}".trim().ifBlank { "Điện thoại" }
+
+    /**
+     * Tên máy kèm tên Bluetooth (`bluetoothName`) trong lời chào / ghép / thư viện: máy tính lưu tên Bluetooth người dùng đặt,
+     * không phải tên máy ở Wi-Fi, nên cần nó để tự khớp thiết bị đã ghép (remote_books._match_paired). Không có tên thì bỏ trường.
+     */
+    private fun identity(reply: JSONObject): JSONObject {
+        reply.put("name", name())
+        val bluetooth = runCatching { bluetoothNameSource() }.getOrDefault("")
+        if (bluetooth.isNotBlank()) reply.put("bluetoothName", bluetooth)
+        return reply
+    }
 
     @Synchronized
     fun running(): Boolean = server?.isClosed == false
@@ -236,7 +252,7 @@ object LibraryServer {
                 val packet = DatagramPacket(buffer, buffer.size)
                 socket.receive(packet)
                 if (String(packet.data, 0, packet.length).trim().toByteArray().contentEquals(PROBE)) {
-                    val reply = JSONObject().put("app", "abook").put("name", name()).put("port", PORT)
+                    val reply = identity(JSONObject().put("app", "abook")).put("port", PORT)
                         .put("kind", "phone").toString().toByteArray()
                     socket.send(DatagramPacket(reply, reply.size, packet.socketAddress))
                 }
@@ -311,7 +327,7 @@ object LibraryServer {
             val body = runCatching { JSONObject(String(request.body)) }.getOrDefault(JSONObject())
             val token = pair(body.optString("code"), body.optString("device"))
             if (token == null) json(output, 403, JSONObject().put("error", "Mã ghép nối sai hoặc đã hết hạn"))
-            else json(output, 200, JSONObject().put("token", token).put("name", name()).put("fingerprint", fingerprint))
+            else json(output, 200, identity(JSONObject().put("token", token)).put("fingerprint", fingerprint))
             return
         }
         val token = request.headers["authorization"]?.removePrefix("Bearer ")?.trim().orEmpty()
@@ -320,7 +336,7 @@ object LibraryServer {
             return
         }
         if (request.method == "GET" && path == "/sync/v1/library") {
-            json(output, 200, JSONObject().put("name", name()).put("books", libraryView()))
+            json(output, 200, identity(JSONObject()).put("books", libraryView()))
             return
         }
         // Mạng trạm bước 4: máy đã ghép xem và điều khiển trình phát của điện thoại này - cùng hình dạng máy tính trả

@@ -106,16 +106,44 @@ sóng thật (mục dưới).
 - **ColorOS đóng băng tiến trình ABook khoảng 30 giây sau khi app không còn ở trước màn hình và không có lưu lượng**
   (`OplusHansManager: freeze uid ... scene: LcdOn`, `/proc/<pid>/cgroup` = `freezer:/frozen`). Lúc ấy điện thoại vẫn trả lời SDP và
   nhận RFCOMM (do hệ điều hành làm), nhưng LibraryServer không chạy nên bắt tay TLS quá hạn (45 giây). Có lưu lượng đang chạy thì
-  không bị đóng băng (`importance=traffic`). `LibraryServer` chạy trong tiến trình app, không có dịch vụ nền nổi (foreground
-  service) - nên "Cho máy khác nghe thư viện này" trên máy ColorOS chỉ chắc chắn khi app đang mở; cả đường Wi-Fi cũng vậy.
+  không bị đóng băng (`importance=traffic`). Cách chữa: mục "Giữ phục vụ khi app ở nền" ngay dưới.
 - Tên điện thoại báo qua Wi-Fi là "OPPO CPH2121" (hãng + kiểu máy) còn Windows ghi tên Bluetooth người dùng đặt ("<tên người dùng>-OPPO"):
-  `match_by_name` không tự nối hai tên này - máy ghép Wi-Fi cần chọn tay "Dự phòng qua Bluetooth…" (ghép thẳng bằng `bt:` thì không cần).
+  `match_by_name` không tự nối hai tên này. Cách chữa: điện thoại báo thêm tên Bluetooth của nó (mục dưới).
 - Chưa thử: nghe thẳng một chương trong trình phát, điều khiển trình phát, tắt Bluetooth giữa chừng (luật điện thoại chủ sách:
   không đổi cài đặt máy).
 
+### Giữ phục vụ khi app ở nền (08-10 buổi trưa, cùng máy)
+
+Đo trên máy ColorOS thật (Android 12), `BluetoothShareOnDeviceTest` bật chia sẻ bằng `ShareService.enable` (đúng đường công tắc dùng),
+rồi để yên, không lưu lượng; máy tính gọi `scripts/bt_desktop_probe.py`:
+
+| Cách giữ | Kết quả |
+|---|---|
+| Không có gì (trước) | đóng băng sau ~30 giây; Wi-Fi và Bluetooth không trả lời, TLS quá hạn 45 giây |
+| **Dịch vụ nền** `ShareService` (loại `connectedDevice`, thông báo thường trực, `dumpsys`: `isForeground=true`) | **vẫn đóng băng** sau ~30 giây (HANS không miễn dịch cho dịch vụ nền thường) |
+| Dịch vụ nền + giữ khoá CPU (wake lock) | vẫn đóng băng (17 giây sau khi tắt màn hình) - bỏ, lại hao pin |
+| Dịch vụ nền + tự kết nối vòng (127.0.0.1) mỗi 10 giây | vẫn đóng băng - bỏ |
+| **Dịch vụ nền + nghe `ACTION_ACL_CONNECTED`** (đăng ký trong `BluetoothShare.watch`) | đang đóng băng, máy tính nối: **được mở băng, bắt tay TLS xong, 401 đúng** |
+
+Vì sao: HANS chỉ mở băng khi có gói tin mạng tới socket (Wi-Fi: mở sau ~19 giây - đo được lần nối đầu tiên vào máy đang đóng băng,
+cũng là lý do đường Wi-Fi chậm khi điện thoại nằm yên) hay một lời gọi binder một chiều (`unfreeze ... reason: AsyncBinder`).
+RFCOMM là socket do ngăn xếp Bluetooth giữ, không có gì trong hai thứ đó nên không gì đánh thức app. Khi máy tính nối, ngăn xếp
+Bluetooth phát `ACTION_ACL_CONNECTED` tới receiver đã đăng ký của app (binder một chiều) - đó là cái mở băng cho `accept()` chạy.
+Receiver không làm gì cả; không đăng ký thì không có gì gọi tiến trình dậy.
+
+`ShareService` vẫn cần: giữ tiến trình khỏi bị hệ thống dọn khi nền (máy hãng khác dọn mạnh tay hơn ColorOS), và cho người dùng thấy
+chia sẻ đang bật + nút "Tắt chia sẻ". Loại `connectedDevice` (không phải `dataSync`: Android 15 cắt sau 6 giờ; không phải
+`mediaPlayback`: không phát gì) đòi một quyền "thiết bị ngoài" - manifest khai `CHANGE_NETWORK_STATE` (quyền thường, cấp lúc cài) nên
+dịch vụ không phụ thuộc người dùng có cho "Thiết bị ở gần" hay không. Android 13+ xin quyền thông báo lúc bật chia sẻ; từ chối thì
+dịch vụ vẫn chạy, chỉ không hiện trong ngăn thông báo. Không khoá CPU / Wi-Fi nào.
+
+**Tên Bluetooth**: điện thoại báo thêm `bluetoothName` (`BluetoothAdapter.name`, cần "Thiết bị ở gần"; không có quyền thì bỏ trường) trong
+lời chào UDP, lời đáp ghép và lời đáp thư viện. Máy tính lưu nó (`btName` trong computers.json) và, khi Wi-Fi hỏng mà chưa biết địa chỉ
+Bluetooth, khớp thiết bị đã ghép theo tên Bluetooth ấy trước, tên máy sau (`remote_books._match_paired`).
+
 Chạy lại: `adb shell am instrument -w -e bt_real 1 [-e bt_pair 1] [-e bt_seed_mb 3] -e class vn.abook.player.BluetoothShareOnDeviceTest
 com.ngdtuanh.abook.test/androidx.test.runner.AndroidJUnitRunner` (mã 6 số và sha1 cuốn thử in ra logcat, tag `BtReal`), rồi gọi
-từ máy tính trong vòng ~30 giây đầu.
+từ máy tính (từ 08-10 trưa gọi vào lúc nào cũng được, không cần trong 30 giây đầu - xem trên).
 
 - **Tra SDP** (`bluetooth.py`, `find_channel`): `WSALookupServiceBeginW/NextW/End` qua ctypes (`ws2_32`), `lpServiceClassId` =
   UUID ABook, `lpszContext` = `"(AA:BB:CC:DD:EE:FF)"`, cờ `LUP_FLUSHCACHE | LUP_RETURN_ADDR` (như PyBluez); kênh là `port` của
