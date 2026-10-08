@@ -12,6 +12,10 @@ cuốn ảo, rồi gửi về máy kia đúng đường điện thoại gửi (`
 chỗ nghe và phần sửa ấy, máy này không ghi gì lên máy kia; mã thiết bị máy kia cấp nằm trong `computers.json` cạnh tuỳ chọn
 của app (dữ liệu cá nhân - không đồng bộ, không đưa lên đâu), cùng vân tay chứng chỉ TLS của máy kia (tls.py): lúc ghép máy này
 nhận chứng chỉ của máy kia và ghi vân tay lại; từ đó mọi yêu cầu chỉ nhận ĐÚNG chứng chỉ ấy. Vân tay đổi là lỗi bảo ghép lại.
+
+Không chung Wi-Fi thì đi Bluetooth (webui/bluetooth.py `Gateway`): máy ghép bằng địa chỉ Bluetooth ("bt:AA:BB:...") hay có trường `bt`
+(máy kia báo lúc ghép Wi-Fi) thì gốc https là cổng cục bộ của đường hầm; Wi-Fi trước, hỏng thì Bluetooth (route.py, như Route.kt
+của điện thoại). Đổi host sang 127.0.0.1 không làm lỏng gì: TLS đi nguyên vẹn qua đường hầm và vân tay ghim vẫn kiểm.
 """
 from __future__ import annotations
 
@@ -29,12 +33,14 @@ from pathlib import Path
 from typing import Any, Callable, Iterator, NamedTuple
 from urllib.parse import quote
 
-from . import book_edits, tls
+from . import bluetooth, book_edits, route, tls
 
 REMOTE_FOLDER = "Trên máy khác"
 MANIFEST = "book.json"
 TIMEOUT = 4
 FILE_TIMEOUT = 60
+PAIR_BLUETOOTH_TIMEOUT = 45  # ghép qua Bluetooth: tra SDP + nối RFCOMM + bắt tay TLS, người dùng đang chờ ở một yêu cầu riêng
+LIBRARY_PORT = 47630  # cổng đồng bộ mặc định (điện thoại: LibraryServer.PORT); máy ghép bằng Bluetooth không dùng nhưng entry có cổng
 _COMPUTERS: "Computers | None" = None
 
 
@@ -99,19 +105,24 @@ class Computers:
                 self._write(data)
 
     def pair(self, address: str, code: str, device_name: str) -> dict[str, Any]:
-        """Ghép với máy ở `address` ("192.168.1.20" hay "192.168.1.20:47630") bằng mã 6 số đang hiện trên máy ấy."""
-        match = re.fullmatch(r"\s*\[?([A-Za-z0-9.\-:]+?)\]?(?::(\d{2,5}))?\s*", address or "")
+        """Ghép với máy ở `address` ("192.168.1.20" hay "192.168.1.20:47630"; "AA:BB:CC:DD:EE:FF" hay "bt:AA:BB:..." là địa chỉ
+        Bluetooth của máy đã ghép trong Cài đặt Windows - không cần chung Wi-Fi) bằng mã 6 số đang hiện trên máy ấy."""
         digits = re.sub(r"\D", "", code or "")
-        if not match or len(digits) != 6:
-            raise RemoteError("Nhập địa chỉ máy kia (vd 192.168.1.20) và mã 6 số đang hiện trên máy ấy")
-        host, port = match.group(1), int(match.group(2) or 47630)
+        by_bluetooth = bluetooth.normalize_address(re.sub(r"(?i)^\s*bt:", "", address or ""))
+        match = None if by_bluetooth or re.match(r"(?i)\s*bt:", address or "") else re.fullmatch(
+            r"\s*\[?([A-Za-z0-9.\-:]+?)\]?(?::(\d{2,5}))?\s*", address or "")  # "bt:..." hỏng không phải tên máy
+        if (not match and not by_bluetooth) or len(digits) != 6:
+            raise RemoteError("Nhập địa chỉ máy kia (vd 192.168.1.20, hay địa chỉ Bluetooth AA:BB:CC:DD:EE:FF) và mã 6 số "
+                              "đang hiện trên máy ấy")
+        host, port = (f"bt:{by_bluetooth}", LIBRARY_PORT) if by_bluetooth else (match.group(1), int(match.group(2) or LIBRARY_PORT))
         # Lần ghép đầu: chưa có vân tay để đối chiếu (None) - ghi lại chứng chỉ máy kia đưa ra, sau khi nó tự xưng cùng vân tay.
-        reply, seen = _exchange(Endpoint(host, port, None), "POST", "/sync/v1/pair", "",
-                                {"code": digits, "device": device_name or "Máy tính"})
+        first = _tunnel(by_bluetooth, None) if by_bluetooth else Endpoint(host, port, None)
+        reply, seen = _exchange(first, "POST", "/sync/v1/pair", "", {"code": digits, "device": device_name or "Máy tính"},
+                                PAIR_BLUETOOTH_TIMEOUT if by_bluetooth else TIMEOUT)
         try:
-            data = json.loads(reply.decode("utf-8"))
-            token, name = str(data["token"]), str(data.get("name") or host)
-            claimed = str(data["fingerprint"]).lower()
+            reply_data = json.loads(reply.decode("utf-8"))
+            token, name = str(reply_data["token"]), str(reply_data.get("name") or host)
+            claimed = str(reply_data["fingerprint"]).lower()
         except (ValueError, KeyError) as error:
             raise RemoteError("Máy kia trả lời lạ - có phải ABook không?") from error
         if not seen or claimed != seen:
@@ -121,17 +132,44 @@ class Computers:
             # Ghép lại cùng một máy (cùng địa chỉ) thì thay chỗ cũ: sách đã tải và chỗ nghe giữ nguyên.
             key = next((existing for existing, entry in data["computers"].items()
                         if entry.get("host") == host and int(entry.get("port") or 0) == port), secrets.token_hex(6))
-            data["computers"][key] = {"name": name, "host": host, "port": port, "token": token, "fingerprint": seen,
-                                      "pairedAt": time.time(), "lastSeen": time.time(), "error": ""}
+            entry = {"name": name, "host": host, "port": port, "token": token, "fingerprint": seen,
+                     "pairedAt": time.time(), "lastSeen": time.time(), "error": ""}
+            # Đường Bluetooth dự phòng: máy kia báo trong lời đáp ghép (sync.py `routes`); không báo thì giữ cái đã biết.
+            if known := (_routes_bluetooth(reply_data) or data["computers"].get(key, {}).get("bt") or ""):
+                entry["bt"] = known
+            data["computers"][key] = entry
             self._write(data)
         return {"id": key, "name": name, "host": host, "port": port}
+
+    def set_bluetooth(self, computer: str, address: str) -> None:
+        """Người dùng chọn thiết bị Bluetooth của máy đã ghép qua Wi-Fi (`bluetooth.paired_devices`); "" bỏ chọn. Máy ghép bằng
+        địa chỉ Bluetooth thì địa chỉ nằm sẵn ở host."""
+        clean = bluetooth.normalize_address(address) if address else ""
+        if address and not clean:
+            raise RemoteError("Địa chỉ Bluetooth phải có dạng AA:BB:CC:DD:EE:FF")
+        with self._lock:
+            data = self._read()
+            entry = data["computers"].get(computer)
+            if not isinstance(entry, dict):
+                raise RemoteError("Máy này không còn ghép")
+            if str(entry.get("host") or "").startswith("bt:"):
+                raise RemoteError("Máy này đã ghép qua Bluetooth rồi")
+            old = bluetooth.normalize_address(str(entry.get("bt") or ""))
+            if clean:
+                entry["bt"] = clean
+            else:
+                entry.pop("bt", None)
+            self._write(data)
+        if old and old != clean:
+            _release_bluetooth({"bt": old}, data["computers"].values())
 
     def forget(self, computer: str, library_root: Path) -> None:
         """Thôi ghép: bỏ mã thiết bị và thư mục đệm của máy ấy (tải lại được khi ghép lại)."""
         with self._lock:
             data = self._read()
-            data["computers"].pop(computer, None)
+            gone = data["computers"].pop(computer, None) or {}
             self._write(data)
+        _release_bluetooth(gone, data["computers"].values())
         root = Path(library_root).expanduser() / REMOTE_FOLDER
         for child in (root.iterdir() if root.is_dir() else []):
             if child.is_dir() and child.name.endswith(f"({computer[:8]})"):
@@ -186,14 +224,98 @@ def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: 
 
 
 class Endpoint(NamedTuple):
-    """Một máy đã ghép: địa chỉ + vân tay chứng chỉ phải gặp. `fingerprint` None: chưa có (lần ghép đầu)."""
+    """Một máy đã ghép: địa chỉ + vân tay chứng chỉ phải gặp. `fingerprint` None: chưa có (lần ghép đầu). Còn lại là đường đi
+    (`_base`): `target` "host:cổng" của đường Wi-Fi (để route.py nhớ thông/hỏng), `fallback` địa chỉ Bluetooth thử khi nối Wi-Fi
+    hỏng, `bluetooth` địa chỉ Bluetooth của máy mà endpoint này (127.0.0.1:<cổng đường hầm>) dẫn tới."""
 
     host: str
     port: int
     fingerprint: str | None
+    target: str = ""
+    fallback: str = ""
+    bluetooth: str = ""
+    computer: str = ""  # mã máy trong computers.json: Wi-Fi hỏng mà chưa biết địa chỉ Bluetooth thì tìm theo tên (`_look_for_bluetooth`)
 
 
 UNREACHABLE = "Không kết nối được máy kia - máy tắt, khác mạng hay chưa bật “Cho phép điện thoại kết nối qua Wi-Fi”"
+UNREACHABLE_BLUETOOTH = ("Không kết nối được máy kia qua Bluetooth - máy kia đã bật ABook và Bluetooth chưa, và có trong tầm "
+                         "sóng không?")
+
+
+def _unreachable(endpoint: Endpoint) -> str:
+    """Lời báo không tới được máy kia: đi Bluetooth (hay lùi về Bluetooth) thì nói lý do đường hầm đã ghi."""
+    address = endpoint.bluetooth or endpoint.fallback
+    if not address:
+        return UNREACHABLE
+    return bluetooth.last_error(address) or UNREACHABLE_BLUETOOTH
+
+
+def _tunnel(address: str, fingerprint: str | None) -> Endpoint:
+    """Gốc https của máy ở địa chỉ Bluetooth `address`: cổng cục bộ của đường hầm (mở RFCOMM ở nền nếu chưa mở). Vân tay giữ
+    nguyên - TLS đi hết đường hầm tới máy kia, nên chứng chỉ vẫn phải khớp."""
+    link = bluetooth.gateway(address)
+    link.warm()
+    return Endpoint("127.0.0.1", link.port, fingerprint, bluetooth=bluetooth.normalize_address(address))
+
+
+def _dial(endpoint: Endpoint, timeout: float) -> tls.PinnedHTTPSConnection:
+    connection = tls.PinnedHTTPSConnection(endpoint.host, endpoint.port, expected=endpoint.fingerprint, timeout=timeout)
+    try:
+        connection.connect()  # nối + bắt tay + kiểm vân tay, CHƯA gửi byte nào
+    except BaseException:
+        connection.close()
+        raise
+    if endpoint.target:
+        route.mark_up(endpoint.target)
+    return connection
+
+
+def _connect(endpoint: Endpoint, timeout: float) -> tls.PinnedHTTPSConnection:
+    """Nối tới máy kia. Đường Wi-Fi hỏng lúc nối (không phải lệch vân tay - lệch vân tay là lỗi, không lùi) mà máy kia có đường
+    Bluetooth thì đánh dấu Wi-Fi hỏng (các yêu cầu sau đi thẳng Bluetooth) và nối lại qua đường hầm. Chỉ lùi khi CHƯA gửi byte
+    nào: yêu cầu ghi không bao giờ chạy hai lần."""
+    try:
+        return _dial(endpoint, timeout)
+    except tls.PinError:
+        raise
+    except OSError:
+        if endpoint.target:
+            route.mark_down(endpoint.target)
+        if not endpoint.fallback:
+            if endpoint.computer:
+                _look_for_bluetooth(endpoint.computer)  # lần sau (nếu tìm ra) đi Bluetooth
+            raise
+        return _dial(_tunnel(endpoint.fallback, endpoint.fingerprint), timeout)
+
+
+LOOK_SECONDS = 120  # tìm địa chỉ Bluetooth theo tên: mỗi máy không quá hai phút một lần
+_looked: dict[str, float] = {}
+
+
+def _look_for_bluetooth(computer: str) -> None:
+    """Máy đã ghép qua Wi-Fi mà Wi-Fi vừa hỏng, chưa biết địa chỉ Bluetooth của nó (điện thoại Android 8+ không tự báo được):
+    ở nền, tìm trong thiết bị đã ghép ở Windows cái trùng tên máy ấy rồi ghi `bt` vào computers.json - từ lần sau Wi-Fi hỏng
+    thì đi Bluetooth. Không bao giờ chặn người gọi."""
+    if _COMPUTERS is None:
+        return
+    with _RECORD_LOCK:
+        now = time.monotonic()
+        if now - _looked.get(computer, -LOOK_SECONDS) < LOOK_SECONDS:
+            return
+        _looked[computer] = now
+    threading.Thread(target=_match_paired, args=(computer,), name="bt-paired-lookup", daemon=True).start()
+
+
+def _match_paired(computer: str) -> None:
+    entry = _COMPUTERS.get(computer) if _COMPUTERS is not None else None
+    if entry is None or _bluetooth_of(entry):
+        return
+    try:
+        address = bluetooth.match_by_name(str(entry.get("name") or ""), bluetooth.paired_devices())
+    except Exception:  # noqa: BLE001 - danh sách của Windows hỏng kiểu gì cũng chỉ là "chưa tìm ra"
+        return
+    if address:
+        _COMPUTERS.note(computer, bt=address)
 
 
 def _read(response: http.client.HTTPResponse, size: int | None = None) -> bytes:
@@ -215,9 +337,10 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
     headers = {"Authorization": f"Bearer {token}"} if token else {}
     if data is not None:
         headers["Content-Type"] = "application/json"
-    connection = tls.PinnedHTTPSConnection(endpoint.host, endpoint.port, expected=endpoint.fingerprint, timeout=timeout)
+    connection: tls.PinnedHTTPSConnection | None = None
     try:
         try:
+            connection = _connect(endpoint, timeout)
             if upload is not None:
                 headers.update({"Content-Type": upload[1], "Content-Length": str(upload[0].stat().st_size)})
                 with upload[0].open("rb") as handle:
@@ -229,7 +352,7 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
             raise RemoteError("Chứng chỉ của máy kia đã khác lúc ghép - máy kia cài lại ABook, hoặc có ai chen vào mạng. "
                               "Nếu chắc đó vẫn là máy của anh, gỡ rồi ghép lại") from error
         except (OSError, http.client.HTTPException) as error:
-            raise RemoteError(UNREACHABLE) from error
+            raise RemoteError(_unreachable(endpoint)) from error
         if response.status >= 400:
             try:
                 message = json.loads(_read(response).decode("utf-8")).get("error")
@@ -238,7 +361,8 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
             raise RemoteError(message or f"Máy kia trả lỗi {response.status}", status=response.status)
         yield response, connection.peer_fingerprint
     finally:
-        connection.close()
+        if connection is not None:
+            connection.close()
 
 
 def _exchange(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str, Any] | None = None,
@@ -253,8 +377,41 @@ def _request(endpoint: Endpoint, method: str, path: str, token: str, body: dict[
     return _exchange(endpoint, method, path, token, body, timeout)[0]
 
 
+def _bluetooth_of(entry: dict[str, Any]) -> str:
+    """Địa chỉ Bluetooth của máy đã ghép: host "bt:<địa chỉ>" (ghép qua Bluetooth) hay trường `bt` (máy kia báo lúc ghép Wi-Fi)."""
+    host = str(entry.get("host") or "")
+    return bluetooth.normalize_address(host.removeprefix("bt:") if host.startswith("bt:") else str(entry.get("bt") or ""))
+
+
+def _routes_bluetooth(reply: Any) -> str:
+    """Địa chỉ Bluetooth máy kia báo trong lời đáp ghép / thư viện (`routes.bluetooth`, hay `bt`); "" nếu không có."""
+    if not isinstance(reply, dict):
+        return ""
+    routes = reply.get("routes")
+    value = (routes.get("bluetooth") if isinstance(routes, dict) else None) or reply.get("bt")
+    return bluetooth.normalize_address(value) if isinstance(value, str) else ""
+
+
+def _release_bluetooth(gone: dict[str, Any], rest: Any) -> None:
+    """Thôi ghép một máy: đóng đường hầm của nó, trừ khi máy khác đã ghép còn dùng đúng địa chỉ ấy."""
+    address = _bluetooth_of(gone)
+    if address and not any(_bluetooth_of(other) == address for other in rest):
+        bluetooth.forget(address)
+
+
 def _base(entry: dict[str, Any]) -> Endpoint:
-    return Endpoint(str(entry["host"]), int(entry["port"]), str(entry.get("fingerprint") or ""))
+    """Gốc để hỏi máy đã ghép, chọn đường như điện thoại (route.py): chỉ có Wi-Fi -> Wi-Fi; chỉ có Bluetooth (ghép bằng địa chỉ
+    Bluetooth) -> đường hầm; cả hai -> Wi-Fi khi thông, hỏng thì Bluetooth (và nhớ, thử lại Wi-Fi mỗi phút ở nền). Không bao giờ
+    chờ mạng."""
+    host, port, fingerprint = str(entry["host"]), int(entry["port"]), str(entry.get("fingerprint") or "")
+    address = _bluetooth_of(entry)
+    if not address:
+        return Endpoint(host, port, fingerprint, target=f"{host}:{port}", computer=str(entry.get("id") or ""))
+    lan = [] if host.startswith("bt:") else [f"{host}:{port}"]
+    choice = route.pick(lan, address)
+    if choice.lan is None:
+        return _tunnel(address, fingerprint)
+    return Endpoint(host, port, fingerprint, target=choice.lan, fallback=address)
 
 
 def refresh(library_root: Path, computers: Computers) -> dict[str, Any]:
@@ -277,8 +434,10 @@ def refresh(library_root: Path, computers: Computers) -> dict[str, Any]:
                 _refresh_book(entry, public["id"], folder, book, built.get(book))
                 books += 1
             # `kind`: máy tính nhận phần sửa của cuốn (POST .../edits, như từ điện thoại); điện thoại chia sẻ thư viện thì không.
+            reported = {} if str(entry["host"]).startswith("bt:") else {"bt": _routes_bluetooth(library)}  # máy báo đường Bluetooth của nó
             computers.note(public["id"], lastSeen=time.time(), error="", name=str(library.get("name") or entry["name"]),
-                           kind="computer" if library.get("kind") == "computer" else "phone")
+                           kind="computer" if library.get("kind") == "computer" else "phone",
+                           **{key: value for key, value in reported.items() if value})
             report[public["id"]] = {"books": books}
         except RemoteError as error:
             computers.note(public["id"], error=str(error))
