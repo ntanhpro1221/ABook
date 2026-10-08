@@ -739,6 +739,173 @@ def merge_into_book_full_names(representatives: dict[str, str], source: str) -> 
     return redirected
 
 
+# Biệt danh rút gọn (08-10): ngắn hơn thế thì một chữ romaji như "Ai", "Yu" là tên riêng của người khác quá dễ.
+NICKNAME_MINIMUM_LENGTH = 3
+# Sách phải tự viết biệt danh ít nhất ngần này lần (viết hoa đầu) - một lần có thể là tiếng kêu, chữ đứt.
+NICKNAME_MINIMUM_COUNT = 2
+# Ranh giới "cùng một câu" khi soát hai tên có đứng cạnh nhau như hai người không: dấu câu và mọi dấu ngoặc kép - lời thoại
+# gọi "Kou" và câu dẫn "Kenji hỏi Koutarou" ngay sau là hai câu.
+NICKNAME_CLAUSE_PATTERN = re.compile(r"[.!?…“”\"«»\n]+")
+
+# Một câu dài hơn thế quanh một chỗ gọi tên thì đã là đoạn văn, không còn là "cùng một câu".
+NICKNAME_CLAUSE_WINDOW = 1000
+LETTERS_PATTERN = re.compile(r"[^\W\d_]*")
+
+
+def _letter_at(text: str, index: int) -> bool:
+    return 0 <= index < len(text) and LETTERS_PATTERN.match(text, index).end() > index
+
+
+def _capitalized_words_from(source: str, prefix: str) -> "Counter[str]":
+    """{chữ hạ: số lần} của mọi chữ viết hoa đầu trong sách (kể cả đầu câu) mở bằng `prefix` - "kou" ra {"kou": 12,
+    "koutarou": 230}. Tìm thẳng chữ mở đầu thay vì tách cả cuốn thành chữ (cuốn 10 triệu ký tự: 0,9 giây mỗi lần)."""
+    found: Counter[str] = Counter()
+    for match in re.finditer(re.escape(prefix), source, flags=re.IGNORECASE):
+        start = match.start()
+        if not source[start].isupper() or _letter_at(source, start - 1):
+            continue
+        found[source[start:LETTERS_PATTERN.match(source, match.end()).end()].casefold()] += 1
+    return found
+
+
+def _named_in_one_clause(source: str, first: str, second: str) -> bool:
+    """Sách có một câu (`NICKNAME_CLAUSE_PATTERN`) nhắc cả hai chữ - như hai người ("Mai và Maika"). Chỉ xét quanh từng
+    chỗ `first` xuất hiện."""
+    for match in re.finditer(re.escape(first), source, flags=re.IGNORECASE):
+        start, end = match.span()
+        if _letter_at(source, start - 1) or _letter_at(source, end):
+            continue
+        head = NICKNAME_CLAUSE_PATTERN.split(source[max(0, start - NICKNAME_CLAUSE_WINDOW):start])[-1]
+        tail = NICKNAME_CLAUSE_PATTERN.split(source[end:end + NICKNAME_CLAUSE_WINDOW])[0]
+        if second in {word.casefold() for word in re.findall(r"[^\W\d_]+", head + " " + tail)}:
+            return True
+    return False
+
+
+def merge_short_given_names(representatives: dict[str, str], source: str) -> dict[str, str]:
+    """Nhãn MỘT chữ là biệt danh rút gọn tên gọi của một tên Nhật đủ trong sổ: "KOU" -> "SATOMI KOUTAROU". Trả về {key:
+    tên đích}.
+
+    Đo 08-10 trên cổng 22 lượt (Rokujouma 014/015): model ghi bạn thân gọi Koutarou là "Kou" thành nhãn "KOU" - 271 câu
+    của nhân vật chính thành người thứ hai, giọng thứ hai. Chỉ khi chữ cho đủ bằng chứng, vì "Kou" và "Koutarou" cũng có
+    thể là hai người:
+    - cả hai là romaji (`ROMAJI_WORD_PATTERN`), nhãn ngắn dài từ `NICKNAME_MINIMUM_LENGTH`, cắt đúng ranh giới âm tiết
+      (phần còn lại "tarou" cũng là romaji), và tên dài là chữ CUỐI (tên gọi) của một nhãn nhiều chữ - không phải họ;
+    - đúng một nhãn như thế, và không nhãn nào khác có chữ mở bằng chữ ngắn;
+    - sách viết chữ ngắn từ `NICKNAME_MINIMUM_COUNT` lần, tên dài NHIỀU hơn chữ ngắn (biệt danh là cách gọi phụ: "Kou"
+      12 / "Koutarou" 230; "Miko" 140 / "Mikoto" 2 ở Yamiyo là hai thứ khác nhau), không chữ viết hoa nào khác của sách
+      mở bằng chữ ngắn, chữ ngắn không là một phần tên đủ nào của sách;
+    - không câu nào của sách nhắc cả hai (`_named_in_one_clause`) - hai người khác nhau thì sớm muộn đứng chung một câu.
+    Quét Corpus 59 truyện (08-10): 86 cặp chữ viết hoa có dạng ấy, đa số là tiếng cười kéo dài ("Haha"/"Hahaha") hay cách
+    viết khác ("Kocho"/"Kochou") - luật chỉ bắn khi model ghi CẢ HAI thành nhãn người nói. Trên 1.303 project của bộ đo
+    nó chỉ bắn ở Rokujouma: "Kou", và "Shizu" mà sách dùng cho Shizuka ("Nhờ Kenji và Shizu giúp")."""
+    if not source:
+        return {}
+    names = set(representatives.values())
+    full_name_words: set[str] | None = None  # dựng khi có nhãn qua được phần nhãn: phần lớn sách không có
+    redirected: dict[str, str] = {}
+    for key, name in representatives.items():
+        words = normalize_name(name).split()
+        if len(words) != 1:
+            continue
+        short = words[0]
+        if len(short) < NICKNAME_MINIMUM_LENGTH or not ROMAJI_WORD_PATTERN.fullmatch(short):
+            continue
+        owners: set[str] = set()
+        rivals: set[str] = set()
+        for other in names:
+            other_words = normalize_name(other).split()
+            if other == name or not any(word.startswith(short) for word in other_words):
+                continue
+            given = other_words[-1]
+            if (
+                len(other_words) >= 2
+                and _japanese_order_name(other)
+                and len(given) > len(short)
+                and given.startswith(short)
+                and ROMAJI_WORD_PATTERN.fullmatch(given[len(short):])
+                and not any(word.startswith(short) for word in other_words[:-1])
+            ):
+                owners.add(other)
+            else:
+                rivals.add(other)
+        if len(owners) != 1 or rivals:
+            continue
+        target = next(iter(owners))
+        given = normalize_name(target).split()[-1]
+        if full_name_words is None:
+            full_name_words = {word for full in book_japanese_full_names(source) for word in normalize_name(full).split()}
+        if short in full_name_words:
+            continue
+        book_words = _capitalized_words_from(source, short)
+        if book_words[short] < NICKNAME_MINIMUM_COUNT or book_words[given] <= book_words[short]:
+            continue
+        if set(book_words) - {short, given}:
+            continue
+        if _named_in_one_clause(source, short, given):
+            continue
+        redirected[key] = target
+    return redirected
+
+
+# Câu sách tự nối hai tên của một người: "Tên đầy đủ là Matsudaira Kenji nên cứ gọi tắt là Mackenzie." Phần tên lấy là
+# các chữ viết hoa đầu liền nhau ngay sau "là" (`_leading_capitalized`).
+FULL_NAME_SENTENCE_PATTERN = re.compile(
+    r"tên đầy đủ\b[^.!?…\n]*?\blà\s+(?P<full>[^.!?…\n]+?)\bgọi\s+(?:tắt\s+)?là\s+(?P<short>[^.!?…\n]+)",
+    flags=re.IGNORECASE,
+)
+FULL_NAME_ANCHOR_PATTERN = re.compile(r"tên đầy đủ", flags=re.IGNORECASE)
+SENTENCE_STOPS = ".!?…\n"
+SENTENCE_PATTERN = re.compile(r"[^.!?…\n]+")
+
+
+def _leading_capitalized(text: str) -> str:
+    """Các chữ viết hoa đầu liền nhau ở đầu `text` ("Matsudaira Kenji nên cứ" -> "Matsudaira Kenji"), bỏ dấu ngoặc."""
+    words: list[str] = []
+    for token in text.split():
+        word = token.strip("\"'“”‘’«»()[],;:")
+        if not word or not word[0].isupper():
+            break
+        words.append(word)
+        if token.rstrip("\"'“”‘’«»()[]").endswith((",", ";", ":")):
+            break
+    return " ".join(words)
+
+
+def merge_named_short_forms(representatives: dict[str, str], source: str) -> dict[str, str]:
+    """Nhãn là tên gọi tắt mà SÁCH tự nối với tên đủ trong một câu: "MACKENZIE" -> "MATSUDAIRA KENJI" khi sách viết
+    "Tên đầy đủ là Matsudaira Kenji nên cứ gọi tắt là Mackenzie". Trả về {key: tên đích}.
+
+    Đo 08-10 trên cổng 22 lượt (Rokujouma 014): bạn thân Koutarou có hai nhãn "MACKENZIE" / "MATSUDAIRA KENJI" - 83 câu
+    sang giọng thứ hai. Tên gọi kiểu Âu của người Nhật (cả tên Hàn, Trung) không suy được từ chữ cái, chỉ tin câu nối:
+    "tên đầy đủ ... là <tên đủ>" rồi "gọi (tắt) là <tên gọi>" trong CÙNG một câu, cả hai đã là nhãn, và câu không nhắc nhãn
+    nào khác - "Koutarou gọi thân mật cậu bạn là Mackenzie" (Koutarou là NGƯỜI GỌI) không có "tên đầy đủ" nên không tính.
+    Quét Corpus 59 truyện (08-10): chỉ đúng câu này qua mẫu."""
+    if not source:
+        return {}
+    by_identity = {identity_key(name): name for name in representatives.values()}
+    redirected_names: dict[str, str] = {}
+    for anchor in FULL_NAME_ANCHOR_PATTERN.finditer(source):  # tìm chữ neo trước: cắt cả cuốn thành câu là chậm
+        start = max(source.rfind(stop, 0, anchor.start()) for stop in SENTENCE_STOPS) + 1
+        sentence = SENTENCE_PATTERN.match(source, start)
+        sentence = sentence.group(0) if sentence else ""
+        match = FULL_NAME_SENTENCE_PATTERN.search(sentence)
+        if not match:
+            continue
+        full = by_identity.get(identity_key(_leading_capitalized(match.group("full"))))
+        short = by_identity.get(identity_key(_leading_capitalized(match.group("short"))))
+        if not full or not short or full == short:
+            continue
+        folded = fold_for_source_search(sentence)
+        if any(
+            name not in (full, short) and source_occurrences(normalize_name(name), folded)
+            for name in by_identity.values()
+        ):
+            continue
+        redirected_names[short] = full
+    return {key: redirected_names[name] for key, name in representatives.items() if name in redirected_names}
+
+
 def _bare_word(word: str) -> str:
     return fold_for_source_search(word).replace("đ", "d")
 
@@ -871,6 +1038,14 @@ def canonical_speaker_names(
         if representatives[key] != winner:
             log(f"  {representatives[key]} là một phần tên {winner} trong sách: cùng một nhân vật.")
             representatives[key] = winner
+
+    # Biệt danh - sau lượt tên đủ, để "KOUTAROU" đã thành "SATOMI KOUTAROU" trước khi "KOU" tìm chủ.
+    for key, winner in sorted(merge_short_given_names(representatives, source).items()):
+        log(f"  {representatives[key]} là cách gọi tắt {winner}: cùng một nhân vật.")
+        representatives[key] = winner
+    for key, winner in sorted(merge_named_short_forms(representatives, source).items()):
+        log(f"  Sách viết {representatives[key]} là tên gọi tắt của {winner}: cùng một nhân vật.")
+        representatives[key] = winner
 
     # Sau cùng, chỉ đổi CHỮ hiển thị (một tên thành một tên): tên rơi hết dấu viết lại theo sách.
     marked = restore_source_marks(sorted(set(representatives.values())), source)

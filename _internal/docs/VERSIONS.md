@@ -189,6 +189,43 @@ biệt danh không có bằng chứng trong chữ (KOU / KOUTAROU ~270 câu trê
 
 ---
 
+### Biệt danh trong sổ nhân vật: "Kou", "Mackenzie" (2026-10-08)
+
+Tiếp mục trên. Mọi cặp giọng mà gold nói là một người trên 22 lượt x 19 chương, theo kiểu:
+
+| kiểu | cặp | câu ở giọng thứ hai | bằng chứng trong chữ | làm |
+|---|---|---|---|---|
+| tiền tố tên gọi | KOU / SATOMI KOUTAROU (Rokujouma 014, 015) | 271 (22 lượt) | "Kou" 12 lần, "Koutarou" 230, không câu nào nhắc cả hai | gộp |
+| tên gọi kiểu Âu | MACKENZIE / MATSUDAIRA KENJI (014) | 83 (10 lượt) | "Tên đầy đủ là Matsudaira Kenji nên cứ gọi tắt là Mackenzie" | gộp |
+| tên khác hẳn | KIM WOOJIN / DECULEIN (Villain 22) | 20 (6 lượt) | linh hồn xuyên không, sách nhắc một lần, không câu nối | không |
+| mô tả | BÓNG ĐÈN (SÁNG TRƯNG) / QUỶ VƯƠNG | 11 | không câu nối | không |
+| không phải biệt danh | YUNG PUNG / GU YANGCHEON (Zenith 058) | 93 | Yung Pung là người khác (gold 7 câu) - model gán nhầm | không |
+
+Còn lại trong 120 cặp "khác" là model gán nhầm người (NUKUMIZU / YAKISHIO, LEAFA / FERNANDO...), không phải tên.
+
+Hai luật (`merge_short_given_names`, `merge_named_short_forms`, sau lượt tên Nhật đủ):
+- **Tiền tố romaji**: nhãn một chữ romaji từ 3 ký tự, cắt đúng ranh giới âm tiết của tên gọi (chữ cuối) của đúng một nhãn
+  nhiều chữ kiểu Nhật; không nhãn nào khác có chữ mở bằng nó; sách viết chữ ngắn từ 2 lần, tên dài nhiều hơn, không chữ
+  viết hoa nào khác mở bằng chữ ngắn, chữ ngắn không thuộc tên đủ nào, và không câu nào (tách theo dấu câu và ngoặc kép)
+  nhắc cả hai. Quét Corpus: "Miko" (140) / "Mikoto" (2), "Tia" / "Tiana" bị chặn vì tên dài ít hơn; "Yukino" /
+  "Yukinoshita" bị chặn vì đứng chung câu.
+- **Câu nối**: "tên đầy đủ ... là <tên đủ> ... gọi (tắt) là <tên gọi>" trong một câu, cả hai là nhãn, câu không nhắc nhãn
+  nào khác. "Koutarou gọi thân mật cậu bạn là Mackenzie" (Koutarou là người gọi) không tính. Corpus: chỉ câu Mackenzie.
+
+| | B3 F1 giọng B9 (1.349 câu) | B3 F1 giọng 22 lượt (25.916 câu) |
+|---|---|---|
+| trước | 65,52 % | 59,39 % (P 62,00, R 57,00) |
+| sau | 66,42 % | 60,45 % (P 61,88, R 59,08) |
+
+Người nói chặt sau gom không đổi (71,64 % / 77,84 % - thước so chữ nhãn). Tách "khác" 120 cặp / 627 câu -> 87 / 272.
+47 cặp gộp mới: KOU 24, MACKENZIE 18, và SHIZU -> KASAGI SHIZUKA 5 (sách dùng "Shizu" cho Shizuka: "Nhờ Kenji và Shizu
+giúp"). Theo danh tính tên: 0 gộp sai. Theo đa số gold của câu trong nhãn: 6 lượt nhãn chứa phần lớn câu của người khác
+(model gán câu GỌI "Kou" cho Kou) - cả 27 chương-lượt đổi đều tăng F1 (+0,56 đến +11,03), không lượt nào giảm. Gold-check
+có nguồn sách (44 truyện) không nhập thêm ai. Quét 1.303 project khác nhau
+của bộ đo: hai luật chỉ bắn ở Rokujouma - "Kou" 17 project, "Mackenzie" 12, "Shizu" 4; không ở truyện nào khác.
+
+---
+
 ## v0.2.0-lo02 — 27/30, và **không chương nào** hỏng ở tầng QA chương
 
 Chương 030..059, 3.762 segment, gieo từ `lo01b_768c98bb4f`.
