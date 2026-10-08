@@ -277,6 +277,13 @@ trên ứng viên còn lại; "Model tất định" = nối mọi nhãn chứa �
 gọi tên người cùng cảnh ("Koutarou và Kenji đang cố vác..." ngay trước câu của người vận chuyển). Mẫu "<mô tả>, <Tên>"
 (dấu phẩy trơn) đã bỏ: "Lách qua người đàn ông đang cố đặt cái tủ lạnh, Koutarou và Kenji..." là hai mệnh đề.
 
+**Đo lại bằng chính code (phiên Model 09-10 01:0x, LLM_Train/known_text/recgate_score_cpu.txt):** chép DB 10 lượt, trả
+các đoạn đã nối về nhãn thô theo sự kiện LOCAL_IDENTITY_RECONCILED (khớp 100% số đoạn), rồi gọi lại
+`reconcile_local_speaker_identities` ở cây a37261c7. Cộng 10 lượt so với DB gốc: `off` F1 +5,89 (TB +0,59) / chặt +71,
+`named` +6,53 (TB +0,65) / +81; `named` >= `off` cả 10 lượt (chỉ nối thêm ở v8ms1 +1 và q35v8 +9 dòng). Khớp mô phỏng ->
+**mặc định đổi sang `named`**. `loose` giữ cho sổ phát lại / so sánh; phép kiểm thước bằng GPU (phát lại `loose` phải ra
+đúng DB gốc) và `evidence` thật đang xếp hàng.
+
 ---
 
 ## v0.2.0-lo02 — 27/30, và **không chương nào** hỏng ở tầng QA chương

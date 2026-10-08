@@ -12286,7 +12286,10 @@ def test_a_described_speaker_is_merged_with_the_name_revealed_later(monkeypatch)
     different people with voices three semitones apart. The existing label merge cannot
     close this: it joins a local label to a named speaker *of the same name*, so "cậu bé"
     would only ever find someone called "cậu bé".
+
+    This is the "loose" version (the model question), no longer the default since 09-10.
     """
+    monkeypatch.setenv("ABOOK_LOCAL_IDENTITY_RECONCILE", "loose")
     db = FakeDB()
     local = "NPC_LOCAL::c00001::rabc::cậu bé"
     db.rows = [
