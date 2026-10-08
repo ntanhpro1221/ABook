@@ -5,6 +5,8 @@ import { formatClock, formatLength, formatPercent } from "@/shared/format";
 
 /** Đang chờ giọng máy đọc xong đoạn đầu (thanh phát nhỏ, màn "Đang nghe", nhãn nút phát). */
 export const PREPARING_VOICE = "Đang chuẩn bị giọng đọc…";
+/** Chờ giọng ngắn hơn mức này thì không nói gì (chỉ vòng quay ở nút phát). */
+export const PREPARING_VOICE_AFTER_MS = 1500;
 
 /** Chỗ nghe tiếp: "Chương 3 · 12:04" - cùng một dạng ở thẻ "Đang nghe dở" của Thư viện và nút chính của trang sách. */
 export function resumeWhere(chapterTitle: string, seconds: number): string {
@@ -69,10 +71,11 @@ export function textBookLine(speaks: boolean): string {
   return speaks ? "Chỉ có chữ · nghe bằng giọng đọc" : "Chỉ có chữ · máy này chưa có giọng đọc";
 }
 
-/** Dòng phụ của một chương chỉ có chữ trong danh sách chương. Cố định: không đổi sang độ dài khi giọng máy đã đọc một phần - độ dài ấy là
- *  ước, đổi theo giọng và theo phần đã đọc sẵn, nên nhãn nhảy qua lại làm người nghe tưởng chương vừa đổi. Tiến độ nghe đã có thanh riêng. */
-export function textChapterLine(speaks: boolean): string {
-  return speaks ? "Giọng đọc của máy" : "Chỉ có chữ";
+/** Dòng phụ của một chương chỉ có chữ trong danh sách chương: tên giọng đang đọc cuốn ("Hoài My (Edge)"; giọng của máy thì "Giọng đọc của máy").
+ *  Cố định: không đổi sang độ dài khi giọng máy đã đọc một phần - độ dài ấy là ước, đổi theo giọng và theo phần đã đọc sẵn, nên nhãn nhảy qua lại
+ *  làm người nghe tưởng chương vừa đổi. Tiến độ nghe đã có thanh riêng. */
+export function textChapterLine(speaks: boolean, voice = ""): string {
+  return speaks ? voice || "Giọng đọc của máy" : "Chỉ có chữ";
 }
 
 /** "Bấm" với chuột, "Chạm" với màn cảm ứng. */
@@ -102,7 +105,8 @@ export function readerHint(state: {
   }
   if (!state.timed) return "Chương này chưa thu thành sách nói - chữ vẫn đọc được. Thu xong thì “Nghe từ đây” hiện ra.";
   if (state.tapped) return null;
-  return `${verb} vào một chữ để nghe từ đúng chữ ấy${state.wish ? "; “Sửa câu này” để đổi người nói, cách đọc, tên hay thu lại câu" : ""}.`;
+  const reading = state.readings ? ` ${state.coarse ? "Giữ" : "Bấm chuột phải"} vào một chữ đọc sai để sửa cách đọc.` : "";
+  return `${verb} vào một chữ để nghe từ đúng chữ ấy${state.wish ? "; “Sửa câu này” để đổi người nói, cách đọc, tên hay thu lại câu" : ""}.${reading}`;
 }
 
 /** "Chương 1" không gãy dòng giữa chữ và số (thẻ hẹp ở 1280 px từng gãy "từ Chương / 1"): dấu cách không ngắt thay cho dấu cách thường. */

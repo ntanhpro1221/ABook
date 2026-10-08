@@ -3,7 +3,7 @@ import { FolderDown } from "lucide-react";
 import { toast } from "sonner";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
-import { EbookLibrary } from "./plugins";
+import { EbookLibrary, type Mp3ExportEvent } from "./plugins";
 
 // "Xuất MP3 để nghe ở app khác" trên điện thoại: cùng chữ, cùng bản xuất với máy tính (desktop/App.tsx ExportMenuItem). Việc chạy nền
 // (Mp3ExportWorker.kt): app đang mở thì thông báo trong app theo tiến độ; ra ngoài app thì thông báo của hệ thống, có nút "Dừng".
@@ -35,6 +35,19 @@ async function exportMp3(book: ListenBook, pick = false) {
   }
 }
 
+/** Lời của thông báo "xong": nói chỗ lưu (thư mục) trước, rồi mới tới lưu ý còn chương chưa làm xong. */
+export function finishedToast(event: Pick<Mp3ExportEvent, "files" | "chaptersTotal" | "folder" | "uri">): { title: string; description: string; uri?: string } {
+  const files = event.files ?? 0;
+  const where = event.folder ? `Lưu ở ${event.folder}.` : "";
+  const partial = files < (event.chaptersTotal ?? 0) ? "Các chương chưa làm xong sẽ không có trong bản xuất." : "";
+  return { title: `Đã xuất ${files} chương`, description: [where, partial].filter(Boolean).join(" "), uri: event.uri || undefined };
+}
+
+async function openFolder(uri: string, folder: string) {
+  const opened = await EbookLibrary.openFolder({ uri }).then((reply) => reply.opened, () => false);
+  if (!opened) toast("Máy không mở được thư mục", { description: folder ? `Mở app Tệp rồi vào ${folder}.` : "Mở app Tệp rồi vào thư mục đã chọn." });
+}
+
 /** Theo dõi các lượt xuất từ lúc app mở (App.tsx): tiến độ, xong, dừng, lỗi. */
 export function watchMp3Exports(): () => void {
   const handle = EbookLibrary.addListener("mp3Export", (event) => {
@@ -43,11 +56,12 @@ export function watchMp3Exports(): () => void {
     const id = toastId(event.bookId);
     if (event.finished) {
       runs.delete(event.bookId);
-      const files = event.files ?? 0;
-      toast.success(`Đã xuất ${files} chương`, {
+      const done = finishedToast(event);
+      toast.success(done.title, {
         id,
-        description: files < (event.chaptersTotal ?? 0) ? "Các chương chưa làm xong sẽ không có trong bản xuất." : event.folder,
-        action: undefined,
+        description: done.description,
+        // Chỗ lưu nằm ngay trong thông báo; nút mở app Tệp tới đúng thư mục ấy (máy không mở được thì nói đường đi bằng chữ).
+        action: done.uri ? { label: "Mở thư mục", onClick: () => void openFolder(done.uri!, event.folder ?? "") } : undefined,
       });
     } else if (event.stopped) {
       runs.delete(event.bookId);

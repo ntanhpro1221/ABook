@@ -201,6 +201,8 @@ class SafDestination(private val resolver: ContentResolver, private val tree: Ur
  * "application/octet-stream" để bộ lưu trữ không tự thêm đuôi; đổi tên xong máy tự quét thành bài hát.
  */
 private class SafFolder(private val resolver: ContentResolver, private val tree: Uri, private val dir: Uri, override val label: String) : Mp3Export.Folder {
+    override val uri: String get() = dir.toString()
+
     private val known = SafDestination.children(resolver, tree, dir)
 
     private fun uri(documentId: String) = DocumentsContract.buildDocumentUriUsingTree(tree, documentId)
@@ -271,10 +273,11 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                     runCatching { setForegroundAsync(Mp3Exports.foreground(context, id, bookId, title, written, total)) }
                 }
             }, stopped = { isStopped })
-            val note = if (result.files < result.chaptersTotal) "Các chương chưa làm xong sẽ không có trong bản xuất." else result.folder
-            Mp3Exports.finished(context, bookId, "Đã xuất ${result.files} chương", "$title · $note")
+            // Nói chỗ lưu trước (người nghe cần biết đi đâu tìm), rồi mới tới lưu ý chương thiếu.
+            val partial = if (result.files < result.chaptersTotal) " Các chương chưa làm xong sẽ không có trong bản xuất." else ""
+            Mp3Exports.finished(context, bookId, "Đã xuất ${result.files} chương", "$title · lưu ở ${result.folder}.$partial")
             Mp3Exports.emit(event().put("finished", true).put("files", result.files).put("chaptersTotal", result.chaptersTotal)
-                .put("folder", result.folder))
+                .put("folder", result.folder).put("uri", result.uri))
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
             Mp3Exports.finished(context, bookId, "Đã dừng xuất", "$title · đã xuất $done chương")
