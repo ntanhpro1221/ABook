@@ -315,7 +315,9 @@ def test_play_after_pause_continues_on_the_device_without_loading_again(tmp_path
         position = _now(players)["position"]
         players.send(speaker, {"action": "play"})
         assert device.state == "PLAYING" and len(device.calls("media.LOAD")) == 1
-        assert _until(lambda: _now(players)["playing"]) and _now(players)["position"] >= position
+        # Tiếp từ chỗ dừng, không về đầu. Vị trí đọc ngay sau "pause" có thể là ước lượng từ trạng thái PLAYING cũ (cộng thời gian trôi),
+        # nhỉnh hơn chỗ máy thật dừng vài chục mili giây - lần chạy cả bộ 08-10 hỏng "1.0 >= 1.01". Dung sai 0,1 s, xa mọi lần "về đầu".
+        assert _until(lambda: _now(players)["playing"]) and _now(players)["position"] >= position - 0.1
 
 
 @pytest.mark.parametrize("how", ["takeover", "stop_app", "interrupt"])
