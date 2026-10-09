@@ -17,6 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from ln_table import EVAL, chapter_points  # noqa: E402
+from score_models import exit_on_gold_mismatch  # noqa: E402
 from voice_identity import bcubed  # noqa: E402
 
 BASE = [("tcf", "two_childhood_friends", "042"), ("nise", "nise_seiken", "132"), ("hdst", "huong_dan_sinh_ton", "062"),
@@ -62,6 +63,7 @@ def totals(data: dict[str, tuple], names: list[str]) -> tuple[float, float, floa
             emotion / lines if lines else 0.0, spoken)
 
 
+@exit_on_gold_mismatch
 def main(argv: list[str]) -> int:
     argv = [arg for arg in argv if arg != "--by-book"]
     pair = None

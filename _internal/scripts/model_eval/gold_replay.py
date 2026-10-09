@@ -43,7 +43,7 @@ from abook.database import ProjectDB  # noqa: E402
 from abook.models import BookStatus, ProjectPaths  # noqa: E402
 from abook.quality_policy import QUALITY_POLICY_VERSION, build_quality_policy, quality_policy_hash  # noqa: E402
 from abook.worker import ProjectRunLock, _configure_logging, _load_locked_settings  # noqa: E402
-from score_models import GOLD_ROOT, load_gold  # noqa: E402
+from score_models import GOLD_ROOT, aligned_gold, exit_on_gold_mismatch  # noqa: E402
 
 FAKE_DIGEST = "sha256:" + "0" * 64
 GENDER = {"m": "male", "f": "female"}
@@ -191,6 +191,7 @@ class Replayer:
         return response
 
 
+@exit_on_gold_mismatch
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("project", type=Path)
@@ -214,7 +215,8 @@ def main(argv: list[str] | None = None) -> int:
     segment(db, settings, print)
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
-    replay = Replayer(db, load_gold(GOLD_ROOT / args.gold), args.out, args.gold, book_spelling=not args.gold_capitals)
+    # Project vừa tách xong: dạy model bằng đáp án lệch seq là dạy sai người, nên gióng theo chữ trước.
+    replay = Replayer(db, aligned_gold(GOLD_ROOT / args.gold, args.project.resolve()), args.out, args.gold, book_spelling=not args.gold_capitals)
 
     def fake_available(self) -> bool:
         self._model_digest = FAKE_DIGEST

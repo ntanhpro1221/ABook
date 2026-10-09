@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, "D:/Novels/ABook/_internal/scripts/model_eval")
 sys.path.insert(0, "D:/Novels/ABook/_internal")
-from score_models import GOLD_ROOT, load_gold, read_project  # noqa: E402
+from score_models import GOLD_ROOT, aligned_gold_multi, exit_on_gold_mismatch, read_project  # noqa: E402
 from voice_identity import bcubed, source_text, voice_of  # noqa: E402
 
 from abook.character_registry import canonical_speaker_names  # noqa: E402
@@ -36,7 +36,6 @@ def gate(root: Path, gold_dir: str, chapters: tuple[str, ...]) -> str:
     entry = next((e for e in json.loads(summary.read_text(encoding="utf-8")) if e.get("chapters_ok") == e.get("chapters")), None)
     if entry is None:
         return "dở"
-    gold = load_gold(GOLD_ROOT / gold_dir)
     projects = [found.parent for model in root.iterdir() if model.is_dir() for chapter in chapters
                 for found in [next((model / chapter).rglob("project.sqlite3"), None)] if found]
     rows = {}
@@ -44,6 +43,7 @@ def gate(root: Path, gold_dir: str, chapters: tuple[str, ...]) -> str:
         with contextlib.redirect_stdout(io.StringIO()):
             found, _meta = read_project(project, set(chapters))
         rows.update({(str(row["chapter"]), int(row["seq"])): row for row in found})
+    gold = aligned_gold_multi(GOLD_ROOT / gold_dir, projects, set(chapters))  # theo chữ của chính project từng chương
     mapping = canonical_speaker_names(Counter(str(row["speaker"] or "") for row in rows.values()), source_text(projects))
     points = [(entry_.speakers[0][0], voice_of(str(rows[key]["speaker"] or ""), key[0], mapping))
               for key, entry_ in gold.items() if entry_.spoken and key in rows]
@@ -52,6 +52,7 @@ def gate(root: Path, gold_dir: str, chapters: tuple[str, ...]) -> str:
     return f"chặt {rates['speaker']:.1f} · F1 {f1:.1%} · cảm xúc {rates['emotion']:.1f}"
 
 
+@exit_on_gold_mismatch
 def main(argv: list[str]) -> int:
     runs = [spec.partition("=") for spec in argv]
     print("| cổng | " + " | ".join(label for label, _, _ in runs) + " |")

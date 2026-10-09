@@ -8,24 +8,34 @@ from pathlib import Path
 
 sys.path.insert(0, "D:/Novels/ABook/_internal/scripts/model_eval")
 sys.path.insert(0, "D:/Novels/ABook/_internal")
-from score_models import GOLD_ROOT, load_gold, read_project  # noqa: E402
+from score_models import GOLD_ROOT, aligned_gold, exit_on_gold_mismatch, read_project  # noqa: E402
 
 EVAL = Path("D:/Novels/Audiobooks/_model_eval_v2")
 BASE = [("tcf", "two_childhood_friends", "042"), ("nise", "nise_seiken", "132"), ("hdst", "huong_dan_sinh_ton", "062"),
         ("yamiyo", "yamiyo_no_hotaru", "141"), ("nageki", "nageki_no_bourei", "65"), ("lu", "love_unseen", "07")]
 
 
-def rows_of(prefix: str, short: str, chapter: str) -> dict[int, dict]:
+def project_of(prefix: str, short: str) -> Path | None:
     project = next((EVAL / f"{prefix}-{short}").rglob("project.sqlite3"), None)
+    return project.parent if project else None
+
+
+def rows_of(prefix: str, short: str, chapter: str) -> dict[int, dict]:
+    project = project_of(prefix, short)
     if project is None:
         return {}
-    rows, _extra = read_project(project.parent, {chapter})
+    rows, _extra = read_project(project, {chapter})
     return {int(row["seq"]): row for row in rows}
 
 
+@exit_on_gold_mismatch
 def main(a: str, b: str) -> None:
     for short, gold_dir, chapter in BASE:
-        gold = {seq: row for (ch, seq), row in load_gold(GOLD_ROOT / gold_dir).items() if ch == chapter}
+        # Đáp án gióng theo chữ project lượt a (lượt b cùng cách tách trong bộ này); không có project nào thì không có gì để so.
+        project = project_of(a, short) or project_of(b, short)
+        if project is None:
+            continue
+        gold = {seq: row for (ch, seq), row in aligned_gold(GOLD_ROOT / gold_dir, project, {chapter}).items()}
         ra, rb = rows_of(a, short, chapter), rows_of(b, short, chapter)
         flips: Counter = Counter()
         total = 0

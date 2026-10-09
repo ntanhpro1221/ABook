@@ -41,7 +41,8 @@ from abook.analysis import _validate  # noqa: E402
 from scripts.model_eval.score_models import (  # noqa: E402
     GOLD_DIR,
     GOLD_ROOT,
-    load_gold,
+    aligned_gold,
+    exit_on_gold_mismatch,
     score_rows,
 )
 
@@ -115,6 +116,7 @@ def replay(project: Path, chapters: set[str] | None) -> tuple[list[dict], dict[s
     return out, tally
 
 
+@exit_on_gold_mismatch
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("project", type=Path)
@@ -123,10 +125,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--show", type=int, default=0, help="in N lỗi người nói đầu")
     args = parser.parse_args(argv)
 
-    gold = load_gold(GOLD_ROOT / args.gold)
     wanted = set(args.chapters) if args.chapters else None
-    if wanted:
-        gold = {key: value for key, value in gold.items() if key[0] in wanted}
+    gold = aligned_gold(GOLD_ROOT / args.gold, args.project, wanted)
     rows, tally = replay(args.project, wanted)
     result = score_rows(gold, rows)
     print("  " + ", ".join(f"{name} {count}" for name, count in tally.items()))

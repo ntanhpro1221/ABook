@@ -22,7 +22,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from score_models import GOLD_ROOT, load_gold, read_project, score_rows  # noqa: E402
+from score_models import GOLD_ROOT, aligned_gold, exit_on_gold_mismatch, read_project, score_rows  # noqa: E402
 
 
 def collect(roots: list[Path]) -> dict[str, dict[str, dict]]:
@@ -48,11 +48,12 @@ def collect(roots: list[Path]) -> dict[str, dict[str, dict]]:
     return found
 
 
-def chapter_scores(found: dict[str, dict[str, dict]], gold: dict) -> dict[str, dict[str, dict]]:
+def chapter_scores(found: dict[str, dict[str, dict]], gold_dir: Path) -> dict[str, dict[str, dict]]:
     scores: dict[str, dict[str, dict]] = {}
     for model, runs in found.items():
         for chapter, run in runs.items():
-            chapter_gold = {key: value for key, value in gold.items() if key[0] == chapter}
+            # Gióng đáp án theo chữ của chính project lượt đo này (parser có thể đã tách chương khác lúc đo).
+            chapter_gold = aligned_gold(gold_dir, Path(run["project"]), {chapter})
             if not chapter_gold:
                 continue
             rows, _meta = read_project(Path(run["project"]), {chapter})
@@ -73,6 +74,7 @@ def mean_and_error(values: list[float]) -> tuple[float, float]:
     return mean, math.sqrt(variance / len(values))
 
 
+@exit_on_gold_mismatch
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("roots", nargs="+", type=Path)
@@ -82,8 +84,7 @@ def main() -> int:
     parser.add_argument("--json", type=Path)
     args = parser.parse_args()
 
-    gold = load_gold(GOLD_ROOT / args.gold)
-    scores = chapter_scores(collect(args.roots), gold)
+    scores = chapter_scores(collect(args.roots), GOLD_ROOT / args.gold)
     if args.base not in scores:
         raise SystemExit(f"không có lượt đo nào của mốc {args.base} dưới các thư mục đã cho")
     base = scores[args.base]
