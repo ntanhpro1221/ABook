@@ -34,8 +34,12 @@ class MusicStudentSetup(
     private val metered: () -> Boolean = { false },
 ) {
     private val lock = Any()
+    @Volatile
     private var state = MISSING
     private var error = ""
+    private var cancelled = false // lần tải vừa rồi bị người dùng huỷ ("Đã huỷ - lần tải sau làm tiếp từ chỗ dừng"); xoá khi tải lại
+    @Volatile
+    private var cancelRequested = false
     private var finished = 0L // byte đã xong của các file đang phải tải
     private var current = 0L // đã tải của file đang tải
     private var todoTotal = 0L // tổng byte của các file lần tải này phải lấy
@@ -78,7 +82,7 @@ class MusicStudentSetup(
             else -> wireBytes(todo())
         }
         JSONObject().put("state", shown).put("done", finished + current).put("total", needed).put("error", error)
-            .put("ready", state == READY).put("analysing", analysing)
+            .put("ready", state == READY).put("analysing", analysing).put("cancelled", cancelled).put("cancellable", true)
             .put("metered", runCatching { metered() }.getOrDefault(false)).put("supported", supported)
             .put("outdatedParts", org.json.JSONArray(behind.map { it.label }.distinct())).put("outdatedBytes", wireBytes(behind))
             .put("stale", store.staleCount())
@@ -114,6 +118,8 @@ class MusicStudentSetup(
             if (state == READY && outdatedParts().isEmpty()) return
             state = DOWNLOADING
             error = ""
+            cancelled = false
+            cancelRequested = false
             finished = 0
             current = 0
             todoTotal = wireBytes(todo())
@@ -125,6 +131,12 @@ class MusicStudentSetup(
                 start()
             }
         }
+    }
+
+    /** Người dùng bấm Huỷ khi đang tải: dừng ở nhịp đọc kế của file đang tải, `.part` ở lại để lần tải sau làm tiếp (Range); trạng thái về "chưa tải"
+     *  (hay "có bản mới") kèm `cancelled`. Không có lần tải nào thì không làm gì. Không lấy khoá: luồng tải có thể đang giữ nó. */
+    fun cancel() {
+        if (state == DOWNLOADING) cancelRequested = true
     }
 
     /** Chờ luồng tải/phân tích xong (cho test). */
@@ -140,12 +152,22 @@ class MusicStudentSetup(
                     finished += part.wireSize
                     current = 0
                 }
+                override fun cancelled() = cancelRequested
             }
             // một giọng đọc có thể đang tải cùng thư viện: lần lượt, người sau thấy sẵn
             if (libs.isNotEmpty()) synchronized(runtime.fetching) { shared.download(libs, progress) }
             // bản trong thư mục riêng của gói (chỗ các bản trước đặt) không còn được đọc
             libs.map { it.name.substringBefore('/') }.distinct().forEach { File(dir, it).deleteRecursively() }
             pinned.download(own, progress)
+        } catch (_: PinnedFiles.Cancelled) {
+            synchronized(lock) {
+                state = if (store.analyzer != null) READY else MISSING // bản cũ vẫn chạy thì vẫn "sẵn sàng" (có bản mới)
+                error = ""
+                cancelled = true
+                finished = 0
+                current = 0
+            }
+            return
         } catch (failure: Exception) {
             fail(describe(failure))
             return

@@ -31,6 +31,13 @@ class MusicStudentSetupTest {
     private val ranges = CopyOnWriteArrayList<String?>()
     private var broken = false
     private var missing = false
+
+    /** `big.bin` đang bị máy chủ giữ giữa chừng: gửi 30 000 byte, báo [reached], chờ [gate], gửi thêm 1000 rồi giữ kết nối tới [end]. */
+    private val reached = CountDownLatch(1)
+    private val gate = CountDownLatch(1)
+    private val end = CountDownLatch(1)
+    @Volatile
+    private var stalled = false
     private val big = ByteArray(300_000) { (it * 31 + it / 7).toByte() }
     private var small = """{"x": 1}""".toByteArray()
     // Thư viện .so: máy chủ giữ bản gzip, máy tải bản nén rồi giải ra thư mục con.
@@ -86,13 +93,25 @@ class MusicStudentSetupTest {
             val from = range?.removePrefix("bytes=")?.removeSuffix("-")?.toIntOrNull()
             val status = if (from != null) "206 Partial Content" else "200 OK"
             out.write("HTTP/1.1 $status\r\nContent-Length: ${body.size - (from ?: 0)}\r\nConnection: close\r\n\r\n".toByteArray())
-            out.write(body, from ?: 0, body.size - (from ?: 0))
+            if (stalled && name == "big.bin" && from == null) {
+                out.write(body, 0, 30_000)
+                out.flush()
+                reached.countDown()
+                gate.await(20, TimeUnit.SECONDS)
+                out.write(body, 30_000, 1000)
+                out.flush()
+                end.await(20, TimeUnit.SECONDS)
+            } else {
+                out.write(body, from ?: 0, body.size - (from ?: 0))
+            }
         }
         out.flush()
     }
 
     @After
     fun tearDown() {
+        gate.countDown()
+        end.countDown()
         server.close()
     }
 
@@ -298,6 +317,55 @@ class MusicStudentSetupTest {
         assertEquals(setup.status().toString(), "ready", setup.status().getString("state"))
         assertEquals("bytes=100000-", ranges[requests.indexOf("big.bin")])
         assertEquals(big.toList(), File(dir, "big.bin").readBytes().toList())
+    }
+
+    @Test
+    fun a_cancel_in_the_middle_keeps_the_part_goes_back_to_missing_and_the_next_tap_resumes_with_a_range_request() {
+        val store = store()
+        LocalStudio.musicStore = store
+        try {
+            val setup = setup(store)
+            LocalStudio.student = setup
+            assertTrue("thẻ hiện nút Huỷ", setup.status().getBoolean("cancellable"))
+            assertFalse(setup.status().getBoolean("cancelled"))
+            assertEquals("chưa tải thì huỷ không làm gì", 200, LocalStudio.handle("POST", "/api/music/local/module/cancel", null).first)
+            assertFalse(setup.status().getBoolean("cancelled"))
+            stalled = true
+            setup.start()
+            assertTrue("máy chủ giữ big.bin giữa chừng", reached.await(20, TimeUnit.SECONDS))
+            assertEquals("downloading", setup.status().getString("state"))
+            // chờ máy nhận xong 30 000 byte đầu (huỷ được thấy ở nhịp đọc kế, không phải trước nhịp đầu)
+            val until = System.currentTimeMillis() + 20_000
+            while (File(root, "music/student/big.bin.part").length() < 30_000 && System.currentTimeMillis() < until) Thread.sleep(10)
+            // đường của giao diện: POST /api/music/local/module/cancel trả view mới
+            val (code, view) = LocalStudio.handle("POST", "/api/music/local/module/cancel", null)
+            assertEquals(200, code)
+            assertTrue((view as JSONObject).has("module"))
+            gate.countDown()
+            setup.join()
+            val status = setup.status()
+            assertEquals(status.toString(), "missing", status.getString("state"))
+            assertTrue(status.getBoolean("cancelled"))
+            assertEquals("", status.getString("error"))
+            assertEquals(0, status.getLong("done"))
+            assertEquals("phần đã tải ở lại", 31_000L, File(root, "music/student/big.bin.part").length())
+            assertFalse(File(root, "music/student/big.bin").exists())
+            assertNull("không cắm bộ phân tích từ bản dở", store.analyzer)
+            // bấm tải lại: làm tiếp từ chỗ dừng, chữ "đã huỷ" biến mất
+            stalled = false
+            end.countDown()
+            ranges.clear()
+            setup.start()
+            assertFalse(setup.status().getBoolean("cancelled"))
+            setup.join()
+            assertEquals(setup.status().toString(), "ready", setup.status().getString("state"))
+            assertEquals(listOf<String?>("bytes=31000-"), ranges.filter { it != null })
+            assertEquals(big.toList(), File(root, "music/student/big.bin").readBytes().toList())
+            assertNotNull(store.analyzer)
+        } finally {
+            LocalStudio.student = null
+            LocalStudio.musicStore = null
+        }
     }
 
     @Test

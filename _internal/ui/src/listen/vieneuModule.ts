@@ -71,7 +71,7 @@ export interface VieneuStatus {
   restart?: boolean;
   /** Đang dùng mạng tính phí (dữ liệu di động của điện thoại): chỉ để nhắc, không chặn. */
   metered?: boolean;
-  /** Lần tải vừa rồi bị người dùng huỷ: phần đã tải giữ, lần sau làm tiếp (chỉ máy tính). */
+  /** Lần tải vừa rồi bị người dùng huỷ: phần đã tải giữ, lần sau làm tiếp. */
   cancelled?: boolean;
 }
 

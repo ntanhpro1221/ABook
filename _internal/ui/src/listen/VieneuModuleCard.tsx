@@ -34,7 +34,7 @@ export interface VieneuBackend {
   start(choices?: VieneuChoiceId[]): Promise<VieneuStatus>;
   measure(): Promise<VieneuStatus>;
   remove?(choice: VieneuChoiceId): Promise<VieneuStatus>;
-  /** Huỷ lần tải đang chạy (máy tính; điện thoại chưa có): phần đã tải giữ để lần sau làm tiếp. */
+  /** Huỷ lần tải đang chạy: phần đã tải giữ để lần sau làm tiếp. */
   cancel?(): Promise<VieneuStatus>;
   voices(): Promise<ReadAloudVoice[]>;
 }
