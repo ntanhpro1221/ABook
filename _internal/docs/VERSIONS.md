@@ -327,6 +327,45 @@ neo (90 đúng -> sai). Quét 1.315 project khác nhau của `_model_eval_v2` (2
 soát tay 25 câu ngẫu nhiên ngoài LN Nhật: đa số là câu có kính ngữ/gọi tên rõ ("Khụ khụ… Azuma-dono." gán Azuma), một ca
 sai là nhãn mô tả "Bạn của Saki" bị coi là người tên Saki - nhãn có chữ thường giờ không sinh tên gọi. Còn lại chưa có tín hiệu: cảnh ba người, nội tâm theo điểm nhìn, NPC được gán tên mà không ai gọi.
 
+### Câu tự gọi tên mình mà luật không sửa được: hỏi người nghe, không đổi người nói (2026-10-09)
+
+Luật gọi tên chỉ sửa khi chắc (chuỗi xen kẽ có đúng một thứ tự hợp neo, hoặc đúng một người có tên khác trong 6 đoạn). Câu
+còn lại (0 hoặc >= 2 người) trước đây để nguyên và không ai biết. Nay `webui/work_items.self_addressed` (tính LÚC XEM trên SQLite
+chỉ đọc như mọi tín hiệu của hộp việc - không có dấu nào lưu vào DB) lấy đúng các câu mà sau cả hai luật của dây chuyền người
+nói vẫn là người chính câu ấy gọi (`character_registry.self_addressed`, dùng chung `address_index` với luật sửa; alias lấy
+từ bảng `characters` + `character_aliases`). Thẻ `vocative` cũ (chỉ bắt "Tên," đầu câu) thay bằng phép này: rộng hơn (gọi cuối
+câu, tiếng gọi, kính ngữ) và cùng một phép với luật sửa. Hộp việc và tab Kịch bản dùng chung. Ứng viên: người có tên nói
+trong 6 đoạn quanh câu (`speakers_near`, gần nhất trước; `_only_other_speaker` dùng lại hàm này), rồi người nói nhiều nhất
+chương cho đủ 4, Người kể, Vai phụ không tên. Không gợi ý sẵn ai: người gần nhất chỉ đúng 1/30.
+
+Đo trên 10 lượt cổng 19 chương (11.580 câu thoại; measure_ask.py): 30 câu bị hỏi, **30/30 sai theo đáp án**. Người đúng nằm
+trong lựa chọn của thẻ ở **28/30 (93%)**: người nói quanh câu riêng 7/30, thêm người nói nhiều nhất chương 13/30, thêm Vai phụ
+không tên (15/30 câu đúng là vai phụ không tên) và Người kể 28/30; hai câu hụt là người ở chương khác ("Koutarou" gán
+Yuichirou) và nhãn khác dạng tên (Blanche/Abigail). Quét 1.347 project khác nhau (1.359 chương): 243 thẻ = **0,18 thẻ mỗi chương**
+(135 project có thẻ; 24 project có chương > 2 thẻ). Chương nhiều nhất 25 thẻ (using_gacha: truyện ghi thẻ người nói cuối câu
+"-... –Noru." nên tên đứng cuối câu bị coi là tiếng gọi; luật sửa của 0.4.35 cũng dính cùng điểm này). Luật sửa
+phát lại 10 lượt cho đúng nhãn từng đoạn như 0.4.35 (190 chương, 27.802 đoạn, giống từng byte). File khóa đổi:
+`character_registry.py` (hàm dùng chung, không đổi hành vi) - hash b4c85652 -> a2ee1cad.
+
+#### Sửa luật gọi tên: tên sau gạch cuối câu là nhãn người nói (2026-10-09)
+
+Điểm bắt gặp khi quét thẻ mới: using_gacha ghi người nói bằng gạch + tên cuối câu ("-Em đã làm gì Shisuha thế? –Noru.").
+`first_person.addressed_names` coi "Noru." cuối câu là tiếng gọi nên luật gọi tên của 0.4.35 chuyển những câu ĐÚNG ấy sang
+người khác. Quét 1.347 project (scan_dash.py): luật cũ đổi **23 câu** dạng tên-sau-gạch-cuối-câu ở 3 project (một truyện,
+using_gacha và hai lượt music7), **23/23 có tên = nhãn đang gán** (tức đang đúng, luật làm sai 100%; soát tay 12 mẫu ngẫu
+nhiên: 12/12 sai), và để lại 27 câu bị hỏi. Trên mọi dòng có đuôi này (gạch đứng sau dấu câu/khoảng trắng, tên viết hoa): 66/69
+mang đúng nhãn ấy (using_gacha 45/45, music7 s07 17/19, s06 4/5), 3 câu nhãn model sai.
+
+Sửa: `first_person._is_speaker_tag` - tên đứng ngay sau gạch (– — ― -, có hay không khoảng trắng), có chữ trước gạch, gạch không
+dính chữ ("S-Suzune-san" không tính) và sau tên chỉ còn dấu câu/hết câu thì KHÔNG phải tiếng gọi. Giữ nguyên: kính ngữ vẫn
+tính (không mẫu nào trong 1.347 project có "–Tên-san" cuối câu; 8 câu kính ngữ cạnh gạch đều là tiếng lắp "S-Suzune-san"),
+dòng mở bằng "– Tên." vẫn là tiếng gọi. Chưa dùng đuôi làm bằng chứng NGƯỜI NÓI (như lời dẫn): chỉ ~3 câu được sửa thêm, ở một
+truyện - không đáng thêm luật.
+
+Đo lại: 10 lượt cổng - nhãn từng đoạn giống từng byte trước/sau (190 chương, 27.802 đoạn; cổng không có dạng này nên F1 và
+chặt không đổi); 30 thẻ, 28/30 có người đúng như cũ. Quét 1.347 project: dạng tên-sau-gạch bị đổi 23 -> 0, bị hỏi 27 -> 0;
+thẻ "ai nói câu này" 243 -> 215 (0,18 -> 0,16 mỗi chương), chương nhiều thẻ nhất 25 (using_gacha) -> 8 (rokujouma 014).
+
 ### Lời dẫn nêu tên người nói: vòng 2 sau gom tên, không GPU (2026-10-09)
 
 Sau luật gọi tên còn 3.289 câu sai người nói trên 10 lượt (B9 s1234: 268). Phân lớp lại (dòng = 10 lượt / B9 s1234): gán nhầm

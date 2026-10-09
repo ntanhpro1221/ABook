@@ -1187,6 +1187,48 @@ def _address_owners(
     return named, owners
 
 
+def address_index(
+    rows: list[Any],
+    aliases_by_speaker: dict[str, set[str]],
+) -> tuple[set[str], Callable[[Any], set[str]]]:
+    """(những người có tên trong `rows`, `addressed(row)`: những người mà câu thoại `row` GỌI hay kính ngữ - nhớ kết quả)."""
+    named, owners = _address_owners(rows, aliases_by_speaker)
+    surfaces = frozenset(owners)
+    cache: dict[int, set[str]] = {}
+
+    def addressed(row: Any) -> set[str]:
+        key = int(row["id"])
+        if key not in cache:
+            cache[key] = (
+                {speaker for surface in addressed_names(str(row["text"]), surfaces) for speaker in owners[surface]}
+                if surfaces and str(row["kind"]) == "dialogue" else set()
+            )
+        return cache[key]
+
+    return named, addressed
+
+
+def self_addressed(
+    rows: list[Any],
+    aliases_by_speaker: dict[str, set[str]],
+    wanted: Callable[[Any], bool] = lambda _row: True,
+) -> dict[int, list[str]]:
+    """segments.id -> những người có tên nói quanh câu (`speakers_near`, gần nhất trước), cho mỗi câu thoại (trong số `wanted`)
+    gán cho người có tên mà chính câu ấy GỌI người đó: sai theo đáp án (không ai gọi tên chính mình). Sau
+    `_repair_dialogue_turns_by_address` còn lại đúng những câu luật không sửa được (không có hoặc hơn một người đối thoại
+    có tên) - Studio hỏi người nghe "ai nói câu này" ở đúng những câu ấy. `rows` là cả cuốn (có `id`, `chapter_id`, `seq`,
+    `kind`, `speaker`, `text`): người có tên và cách gọi họ tính trên cả cuốn."""
+    named, addressed = address_index(rows, aliases_by_speaker)
+    by_chapter: dict[int, dict[int, Any]] = defaultdict(dict)
+    for row in rows:
+        by_chapter[int(row["chapter_id"])][int(row["seq"])] = row
+    return {
+        int(row["id"]): speakers_near(by_chapter[int(row["chapter_id"])], int(row["seq"]), str(row["speaker"]), named)
+        for row in rows
+        if wanted(row) and str(row["speaker"]) in named and str(row["speaker"]) in addressed(row)
+    }
+
+
 def _turn_runs(chapter_rows: list[Any]) -> list[list[Any]]:
     """Chuỗi câu thoại liền nhau trong một chương, mỗi câu một đoạn văn và mở một lượt mới (>= `ALTERNATION_MIN_TURNS`)."""
     paragraph_size = Counter(int(row["paragraph_index"]) for row in chapter_rows)
@@ -1218,18 +1260,22 @@ def _turn_runs(chapter_rows: list[Any]) -> list[list[Any]]:
     return runs
 
 
+def speakers_near(by_seq: dict[int, Any], seq: int, speaker: str, named: set[str]) -> list[str]:
+    """Những người có tên khác `speaker` nói câu thoại trong `ADDRESS_PARTNER_WINDOW` đoạn quanh `seq`, người gần nhất trước."""
+    near: dict[str, None] = {}
+    for distance in range(1, ADDRESS_PARTNER_WINDOW + 1):
+        for offset in (distance, -distance):
+            row = by_seq.get(seq + offset)
+            if row is not None and str(row["kind"]) == "dialogue" and str(row["speaker"]) in named and str(row["speaker"]) != speaker:
+                near.setdefault(str(row["speaker"]))
+    return list(near)
+
+
 def _only_other_speaker(by_seq: dict[int, Any], seq: int, speaker: str, named: set[str]) -> str | None:
     """Người có tên DUY NHẤT khác `speaker` nói câu thoại trong `ADDRESS_PARTNER_WINDOW` đoạn quanh `seq`; không có hoặc
     có hơn một người thì None."""
-    partners = {
-        str(near["speaker"])
-        for offset in range(-ADDRESS_PARTNER_WINDOW, ADDRESS_PARTNER_WINDOW + 1)
-        if offset and (near := by_seq.get(seq + offset)) is not None
-        and str(near["kind"]) == "dialogue"
-        and str(near["speaker"]) in named
-        and str(near["speaker"]) != speaker
-    }
-    return partners.pop() if len(partners) == 1 else None
+    partners = speakers_near(by_seq, seq, speaker, named)
+    return partners[0] if len(partners) == 1 else None
 
 
 def _rewrite_speakers(db: ProjectDB, rows: list[Any], changes: dict[int, str]) -> int:
@@ -1264,21 +1310,9 @@ def _repair_dialogue_turns_by_address(
     Lời kể và nội tâm không đụng tới. Cổng 19 chương, 10 lượt (09-10): F1 giọng +9,7 cộng dồn, +133 câu đúng người nói,
     không lượt nào giảm; 3 câu đúng thành sai (cảnh ba người mà nhãn chỉ có hai)."""
     rows = sorted(db.list_segments(), key=lambda row: (int(row["chapter_id"]), int(row["seq"])))
-    named, owners = _address_owners(rows, aliases_by_speaker)
-    if not owners:
+    named, addressed = address_index(rows, aliases_by_speaker)
+    if not named:
         return
-    surfaces = frozenset(owners)
-    addressed_cache: dict[int, set[str]] = {}
-
-    def addressed(row: Any) -> set[str]:
-        key = int(row["id"])
-        if key not in addressed_cache:
-            addressed_cache[key] = (
-                {speaker for surface in addressed_names(str(row["text"]), surfaces) for speaker in owners[surface]}
-                if str(row["kind"]) == "dialogue" else set()
-            )
-        return addressed_cache[key]
-
     by_chapter: dict[int, list[Any]] = defaultdict(list)
     for row in rows:
         by_chapter[int(row["chapter_id"])].append(row)

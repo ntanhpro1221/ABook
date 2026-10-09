@@ -215,14 +215,14 @@ def test_the_studio_refuses_on_the_spot_a_speaker_the_pipeline_would_refuse(tmp_
 
 
 def test_the_called_person_and_the_unnamed_extra_get_the_chapters_speakers_as_choices(tmp_path: Path) -> None:
-    """Người gọi hay người nói, vai phụ không tên: sửa bằng cùng cơ chế gán người nói. Ứng viên là người có tên nói nhiều
-    nhất trong chương (không phải người bị gọi); vai phụ thì chọn một lần cho MỌI câu của vai ấy."""
+    """Người gọi hay người nói, vai phụ không tên: sửa bằng cùng cơ chế gán người nói. Ứng viên là người có tên nói quanh
+    câu (6 đoạn, gần nhất trước), rồi người nói nhiều nhất chương (không phải người bị gọi); vai phụ thì chọn một lần cho MỌI câu của vai ấy."""
     from abook.listener_overrides import NARRATOR, UNNAMED, request_speakers
 
     project = make_book(tmp_path)
     items = {item["kind"]: item for item in work_items(project)["items"]}
     vocative, unnamed = items["vocative"], items["unnamed"]
-    assert [choice["value"] for choice in vocative["choices"]] == ["ÁO CHOÀNG ĐEN", "LUCIEN", "RHINE", NARRATOR, UNNAMED]
+    assert [choice["value"] for choice in vocative["choices"]] == ["LUCIEN", "ÁO CHOÀNG ĐEN", "RHINE", NARRATOR, UNNAMED]
     assert vocative["lines"] == [{"stableId": "b", "textSha256": "sha-b"}] and vocative["currentValue"] == "HEIDI"
     assert [choice["value"] for choice in unnamed["choices"]] == ["ÁO CHOÀNG ĐEN", "HEIDI", "LUCIEN", "RHINE"]
 
