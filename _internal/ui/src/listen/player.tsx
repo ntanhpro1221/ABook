@@ -413,8 +413,10 @@ export function PlayerProvider({
     toast(note ?? `Đã tới ${sameChapter ? formatClock(to.seconds) : refs.current.queue.find((c) => c.id === to.chapterId)?.title ?? ""}`, {
       id: "jump",
       duration: 8000,
+      // Tên chương cũ nằm ở dòng mô tả, không ở nhãn nút: nhãn dài chiếm hết bề ngang toast trên điện thoại, chữ của toast bị bóp còn vài ký tự một hàng (soát UX a11).
+      ...(sameChapter ? {} : { description: `Chỗ cũ: ${title} · ${formatClock(from.seconds)}` }),
       action: {
-        label: `Quay lại ${sameChapter ? formatClock(from.seconds) : `${title} ${formatClock(from.seconds)}`}`,
+        label: sameChapter ? `Quay lại ${formatClock(from.seconds)}` : "Quay lại chỗ cũ",
         onClick: () => goBackRef.current(),
       },
     });

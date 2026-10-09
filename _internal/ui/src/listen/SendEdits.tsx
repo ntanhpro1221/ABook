@@ -1,10 +1,11 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CircleAlert, Laptop, Loader2, Send, Smartphone } from "lucide-react";
+import { CircleAlert, Laptop, Loader2, Send, Smartphone, X } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { localEditsNote } from "@/shared/capabilities";
 import { cn } from "@/shared/cn";
-import { editsSyncNote } from "@/shared/editsSync";
+import { editsSyncNote, holderName, sentToast } from "@/shared/editsSync";
 import { Button } from "@/shared/ui";
 import { refreshAfterEdit } from "./EditBook";
 import type { ListenBook } from "./model";
@@ -19,6 +20,7 @@ const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 te
 export function useSendEdits(book: ListenBook) {
   const source = useSource();
   const client = useQueryClient();
+  const where = holderName(book.remote);
   const send = useMutation({
     mutationFn: async () => {
       if (!source.sendEdits) throw new Error("Máy này không gửi phần sửa về máy tính");
@@ -26,20 +28,20 @@ export function useSendEdits(book: ListenBook) {
     },
     onSuccess: (state) => {
       refreshAfterEdit(client, book.id);
-      const note = editsSyncNote(state);
-      toast.success("Đã gửi về máy tính", { description: note?.lines.join(" · ") || undefined, duration: 8000 });
+      const done = sentToast(state, where);
+      toast.success(done.title, { description: done.description, duration: 8000 });
     },
     onError: (error: Error) => {
       refreshAfterEdit(client, book.id);
-      toast.error("Chưa gửi được về máy tính", { description: `${error.message} Phần sửa vẫn nằm trên máy này.`, duration: 10000 });
+      toast.error(`Chưa gửi được về ${where}`, { description: `${error.message} Phần sửa vẫn nằm trên máy này.`, duration: 10000 });
     },
   });
-  return { send: () => send.mutate(), busy: send.isPending, available: Boolean(source.sendEdits) };
+  return { send: () => send.mutate(), busy: send.isPending, available: Boolean(source.sendEdits), where };
 }
 
 /** Mục "Gửi về máy tính" trong menu của sách; mờ đi (kèm lý do) khi không còn gì để gửi - không giấu. */
 export function SendEditsItem({ book }: { book: ListenBook }) {
-  const { send, busy, available } = useSendEdits(book);
+  const { send, busy, available, where } = useSendEdits(book);
   if (!available) return null;
   const pending = book.editsSync?.pending ?? 0;
   return (
@@ -50,7 +52,7 @@ export function SendEditsItem({ book }: { book: ListenBook }) {
     >
       {busy ? <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin" /> : <Send className="mt-0.5 size-4 shrink-0" />}
       <span className="min-w-0">
-        <span className="block">{busy ? "Đang gửi…" : pending ? `Gửi về máy tính (${pending} thay đổi)` : "Gửi về máy tính"}</span>
+        <span className="block">{busy ? "Đang gửi…" : pending ? `Gửi về ${where} (${pending} thay đổi)` : `Gửi về ${where}`}</span>
         {!busy && !pending && <span className="block text-xs text-fg-3">Chưa có thay đổi nào chờ gửi</span>}
       </span>
     </DropdownMenu.Item>
@@ -71,11 +73,33 @@ export function LocalEditsBanner({ book }: { book: ListenBook }) {
   );
 }
 
-/** Dòng tình trạng dưới tên sách: chưa gửi (và vì sao), hay đã gửi và máy tính đã làm gì với nó. Không có gì để nói thì không hiện. */
+const SEEN_KEY = "abook.editsSentSeen.";
+
+function seenAt(id: string): number {
+  try {
+    return Number(window.localStorage.getItem(SEEN_KEY + id)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Dòng tình trạng dưới tên sách: chưa gửi (và vì sao), hay máy kia đã làm gì với lần gửi vừa rồi. Đã gửi mà không có gì đáng kể thì không
+ *  hiện (thông báo lúc gửi đã nói rồi); có điều đáng kể (xung đột, việc chờ duyệt) thì hiện cho tới khi người dùng bấm “Đã hiểu”. */
 export function EditsSyncBanner({ book }: { book: ListenBook }) {
-  const { send, busy, available } = useSendEdits(book);
-  const note = editsSyncNote(book.editsSync);
+  const { send, busy, available, where } = useSendEdits(book);
+  const [seen, setSeen] = useState(() => seenAt(book.id));
+  const note = editsSyncNote(book.editsSync, where);
   if (!note) return null;
+  const at = book.editsSync?.last?.at ?? 0;
+  if (note.tone === "sent" && (note.lines.length === 0 || seen >= at)) return null;
+  const dismiss = () => {
+    setSeen(at);
+    try {
+      window.localStorage.setItem(SEEN_KEY + book.id, String(at));
+    } catch {
+      // không lưu được thì lần mở sau hiện lại - không sao
+    }
+  };
   const Icon = note.tone === "error" ? CircleAlert : note.tone === "sent" ? Laptop : Send;
   return (
     <div
@@ -95,7 +119,12 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
       ))}
       {available && book.editsSync && book.editsSync.pending > 0 && (
         <Button size="sm" variant="secondary" className="mt-2" icon={Send} loading={busy} onClick={send}>
-          Gửi về máy tính
+          Gửi về {where}
+        </Button>
+      )}
+      {note.tone === "sent" && (
+        <Button size="sm" variant="secondary" className="mt-2" icon={X} onClick={dismiss}>
+          Đã hiểu
         </Button>
       )}
     </div>

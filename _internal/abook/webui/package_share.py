@@ -23,6 +23,10 @@ from typing import Any
 from . import book_edits, covers, edits_inbox, listen_view, music_plan, packages
 
 
+_WHAT = {"title": "Tên sách", "cover": "Ảnh bìa", "character": "Tên nhân vật", "chapter": "Tên chương", "reading": "Cách đọc",
+         "music": "Nhạc nền", "wish": "Việc chờ Studio"}
+
+
 def _cover_meta(path: Path, book: dict[str, Any]) -> dict[str, Any] | None:
     """Màu và phiên bản của bìa người nghe thấy (đã qua lớp sửa); sách không bìa, hay đã bỏ bìa: None."""
     cover = book.get("cover")
@@ -37,6 +41,8 @@ def library_entry(path: Path, key: str, state: dict[str, Any]) -> dict[str, Any]
     entry = {name: view[name] for name in ("id", "title", "narrator", "duration", "chaptersTotal", "chaptersAvailable",
                                            "complete", "updatedAt")}
     entry["series"] = None
+    if view.get("author"):
+        entry["author"] = view["author"]  # tìm và sắp theo tác giả ở máy kia cần nó; dự án Studio không có tác giả nên không mang khoá
     meta = _cover_meta(path, packages.edited_manifest(path))
     entry["cover"] = {"color": meta.get("color", ""), "version": meta.get("version", 0)} if meta else None
     return entry
@@ -84,6 +90,7 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
         "format": listen_view.FORMAT,
         "id": key,
         "title": view["title"],
+        **({"author": view["author"]} if view.get("author") else {}),
         "narrator": view["narrator"],
         "duration": view["duration"],
         "chaptersTotal": view["chaptersTotal"],
@@ -150,7 +157,8 @@ def receive_edits(path: Path, device: dict[str, Any], package: Path) -> dict[str
                                   incoming_wins=True)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
-    conflicts = ([{"kind": "edits", "key": "", "label": f"{report['conflicts']} thay đổi trùng với bản trên máy tính này, "
-                                                          f"đã thay bằng bản từ {device['name']}"}] if report["conflicts"] else [])
+    conflicts = [edits_inbox.conflict(item["kind"], item["key"], _WHAT[item["kind"]],
+                                      f"{_WHAT[item['kind']]}: đã có bản riêng trên máy tính này, đã thay bằng bản từ {device['name']}",
+                                      item["lost"], item["kept"]) for item in report["clashes"]]
     return {"applied": book_edits.count_applied(edits), "skipped": 0, "music": False, "requests": 0,
             "waiting": book_edits.count_wishes(edits), "skippedWishes": 0, "conflicts": conflicts}

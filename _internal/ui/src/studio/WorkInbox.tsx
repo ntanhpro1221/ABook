@@ -32,6 +32,9 @@ interface WorkExample {
   changes?: boolean;
   /** Thẻ vai phụ cả cuốn: mã câu, để bỏ chọn từng câu. */
   stableId?: string;
+  /** Thẻ “Ai nói câu này”: câu liền trước và liền sau (mọi người nói) làm ngữ cảnh để quyết ai nói. */
+  before?: string;
+  after?: string;
 }
 
 export interface WorkItem {
@@ -179,7 +182,9 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
           {example.changes && <span className="font-semibold text-accent-text"> · sẽ đổi</span>}
           {!example.hasAudio && " · chưa thu"}
         </div>
+        {example.before && <p className="line-clamp-2 text-fg-3" aria-label="Câu liền trước">{example.before}</p>}
         <p className="text-fg">{example.text}</p>
+        {example.after && <p className="line-clamp-2 text-fg-3" aria-label="Câu liền sau">{example.after}</p>}
       </div>
     </li>
   );
@@ -919,6 +924,18 @@ export function WorkInbox(props: InboxProps) {
   );
 }
 
+/** Số thay đổi đang chờ áp dụng trong các thẻ đã quyết: hai thẻ cùng quyết một câu (“Ai nói câu này” + “Người gọi hay người nói”) là MỘT thay đổi -
+ *  khớp số trên nút “Áp dụng N thay đổi”. “Giữ” cách đang đọc là đã quyết mà không có gì chờ áp dụng. */
+export function waitingChanges(decided: WorkItem[]): number {
+  const changes = new Set<string>();
+  for (const item of decided) {
+    if (item.requested === item.current) continue;
+    const lines = item.lines?.map((line) => line.stableId).sort();
+    changes.add(lines?.length ? `lines:${lines.join(",")}` : `key:${item.key}`);
+  }
+  return changes.size;
+}
+
 function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: kindParam, focus, onKind, inPrecast, onOpenPrecast }: InboxProps) {
   const bookId = book.id;
   const hint = useContext(PendingHint);
@@ -980,6 +997,13 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
     if (index >= PAGE) setShown(Math.ceil((index + 1) / PAGE) * PAGE);
     window.setTimeout(() => document.getElementById(`work-${focus}`)?.scrollIntoView({ block: "center" }), 0);
   }, [focus, data, kind]);
+  // Quyết xong việc cuối của loại đang lọc: về “Tất cả” cả trong địa chỉ trang, không thì tải lại (hay quay lại) vẫn lọc loại đã hết thẻ (soát UX a11).
+  useEffect(() => {
+    if (!data || kind === "all") return;
+    if (!data.items.some((item) => !item.requested && item.kind === kind && !inPrecast?.has(item.key))) setKind("all");
+    // setKind chỉ ghi state + gọi onKind - không cần gắn lại.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, kind, inPrecast]);
   if (isLoading || !data) return <div className="mt-6 text-sm text-fg-2">Đang tìm những chỗ máy chưa chắc…</div>;
   if (!data.items.length) {
     return (
@@ -994,7 +1018,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
   const atReview = undecided.length - open.length;
   const decided = data.items.filter((item) => item.requested);
   // "Giữ" cách đang đọc là đã quyết mà không có gì chờ áp dụng - không đếm vào "chờ áp dụng" (soát UX 29-09).
-  const waiting = decided.filter((item) => item.requested !== item.current).length;
+  const waiting = waitingChanges(decided);
   const counts: Partial<Record<WorkKind, number>> = {};
   for (const item of open) counts[item.kind] = (counts[item.kind] ?? 0) + 1;
   const kinds = (Object.keys(KIND_LABEL) as WorkKind[]).filter((value) => counts[value]);

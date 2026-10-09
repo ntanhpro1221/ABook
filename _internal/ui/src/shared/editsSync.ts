@@ -36,28 +36,42 @@ export interface EditsSyncNote {
   lines: string[];
 }
 
+/** Tên máy giữ sách để nói trong lời báo: máy tính khác thì tên thật của nó (hai máy đều là máy tính, "máy tính" không nói máy nào), không thì "máy tính". */
+export function holderName(remote: boolean | { computer: string } | undefined): string {
+  return typeof remote === "object" && remote.computer ? remote.computer : "máy tính";
+}
+
 /** Điều đáng nói về một cuốn tải từ máy tính: chưa gửi (kèm lý do nếu lần gửi trước hỏng), hay đã gửi và máy tính đã làm gì.
- *  `null` khi chưa có gì để nói (chưa sửa gì, chưa gửi bao giờ). */
-export function editsSyncNote(state: EditsSyncState | null | undefined): EditsSyncNote | null {
+ *  `where`: tên máy giữ sách (`holderName`). `null` khi chưa có gì để nói (chưa sửa gì, chưa gửi bao giờ). */
+export function editsSyncNote(state: EditsSyncState | null | undefined, where = "máy tính"): EditsSyncNote | null {
   if (!state) return null;
   const { pending, last } = state;
   if (pending > 0) {
     if (last?.state === "error") {
-      return { tone: "error", title: `${pending} thay đổi chưa gửi về máy tính`, lines: [last.error ?? "Chưa gửi được - sẽ thử lại."] };
+      return { tone: "error", title: `${pending} thay đổi chưa gửi về ${where}`, lines: [last.error ?? "Chưa gửi được - sẽ thử lại."] };
     }
     return {
       tone: "pending",
-      title: `${pending} thay đổi đang chờ gửi về máy tính`,
-      lines: ["Tự gửi khi tới được máy tính; bấm “Gửi về máy tính” để gửi ngay."],
+      title: `${pending} thay đổi đang chờ gửi về ${where}`,
+      lines: [`Tự gửi khi tới được ${where}; bấm “Gửi về ${where}” để gửi ngay.`],
     };
   }
   if (last?.state !== "sent") return null;
   const lines: string[] = [];
-  if (last.applied) lines.push(`${last.applied} thay đổi đã áp trên máy tính`);
-  if (last.requests) lines.push(`${last.requests} việc đã thành yêu cầu trên máy tính, chờ áp dụng ở Studio`);
-  if (last.waiting) lines.push(`${last.waiting} việc đang chờ duyệt trên máy tính - chưa làm gì cho tới khi bạn đồng ý trên máy tính`);
+  if (last.applied) lines.push(`${last.applied} thay đổi đã áp trên ${where}`);
+  if (last.requests) lines.push(`${last.requests} việc đã thành yêu cầu trên ${where}, chờ áp dụng ở Studio`);
+  if (last.waiting) lines.push(`${last.waiting} việc đang chờ duyệt trên ${where} - chưa làm gì cho tới khi bạn đồng ý trên ${where}`);
   const skipped = (last.skipped ?? 0) + (last.skippedWishes ?? 0);
-  if (skipped) lines.push(`${skipped} thay đổi không còn chỗ trong sách trên máy tính nên bị bỏ qua`);
+  if (skipped) lines.push(`${skipped} thay đổi không còn chỗ trong sách trên ${where} nên bị bỏ qua`);
   lines.push(...(last.conflicts ?? []));
-  return { tone: "sent", title: `Đã gửi về máy tính ${formatWhen(last.at)}`.trim(), lines };
+  return { tone: "sent", title: `Đã gửi về ${where} ${formatWhen(last.at)}`.trim(), lines };
+}
+
+/** Thông báo ngay sau khi bấm Gửi: nói điều vừa xảy ra, không lặp lời dặn "tự gửi khi..." của dòng tình trạng (soát UX a11). */
+export function sentToast(state: EditsSyncState, where = "máy tính"): { title: string; description?: string } {
+  const description =
+    state.pending > 0
+      ? `Còn ${state.pending} thay đổi chưa gửi được - sẽ thử lại khi tới được ${where}.`
+      : editsSyncNote({ ...state, pending: 0 }, where)?.lines.join(" · ") || undefined;
+  return { title: `Đã gửi về ${where}`, description };
 }

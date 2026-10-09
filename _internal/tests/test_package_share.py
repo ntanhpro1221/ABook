@@ -71,7 +71,7 @@ def test_the_manifest_of_a_package_has_the_shape_of_a_projects(library, tmp_path
     book = sync.book_manifest(folder, key)
     assert set(book) >= {"format", "id", "title", "narrator", "duration", "chaptersTotal", "chaptersAvailable", "complete", "series",
                          "version", "chapters", "cast", "samples", "cover", "music"}
-    assert set(book) - {"music", "wordsVersion"} == set(project_book) - {"music", "wordsVersion"}
+    assert set(book) - {"music", "wordsVersion", "author"} == set(project_book) - {"music", "wordsVersion"}
     assert book["id"] == key and "package" not in book
     chapter = next(chapter for chapter in book["chapters"] if chapter["available"])
     assert set(chapter) >= set(next(item for item in project_book["chapters"] if item["available"]))
@@ -133,6 +133,8 @@ def test_a_text_only_package_is_shared_with_its_text(tmp_path: Path) -> None:
     assert book["chaptersAvailable"] == 0 and book["chapters"], "sách chỉ-chữ: thấy sách, chưa chương nào nghe được"
     chapter = book["chapters"][0]
     assert chapter["state"] == "text" and chapter["text"].startswith("texts/") and "file" not in chapter
+    author = packages.manifest(folder).get("author")
+    assert author and entry["author"] == author == book["author"], "tác giả đi theo thẻ và sách: máy kia tìm và hiện được"
     served = sync.resolve_file(folder, chapter["text"])
     assert isinstance(served, bytes) and served.decode("utf-8").strip()
     assert sync.resolve_file(folder, "texts/99999.txt") is None
@@ -232,7 +234,9 @@ def test_edits_from_the_other_computer_land_in_the_packages_own_edits_layer(tmp_
         app.rename(value, "Máy B đặt lần hai")
         state = app.send_remote_edits(value)
         (conflict,) = state["last"]["conflicts"]
-        assert "Máy A" not in conflict and book_edits.load(folder)["title"] == "Máy B đặt lần hai"
+        assert conflict == ("Tên sách: máy kia (Máy A) đã đổi thành “Chủ máy A đặt lại” trước đó, "
+                            "bản của bạn “Máy B đặt lần hai” đã thay vào")
+        assert book_edits.load(folder)["title"] == "Máy B đặt lần hai"
     finally:
         server.stop()
 

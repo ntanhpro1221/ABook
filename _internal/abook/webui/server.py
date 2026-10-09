@@ -17,6 +17,7 @@ import re
 import secrets
 import shutil
 import socket
+import sqlite3
 import threading
 import time
 import urllib.error
@@ -180,6 +181,15 @@ def _cast_discovery() -> bool:
 
 class MirrorMismatch(OSError):
     """Bản sao dự phòng của bài nhạc không khớp bản gốc (sha1 / số byte) - không phải lỗi mạng."""
+
+
+
+def broken_reason(error: Exception) -> str:
+    """Vì sao một dự án không mở được, bằng lời người dùng hiểu: sổ làm việc (SQLite) của sách hỏng hay do bản app khác ghi - không để lộ
+    tên cột / lỗi kỹ thuật. Lỗi khác giữ nguyên câu của nó."""
+    if isinstance(error, sqlite3.DatabaseError):
+        return "sổ làm việc của sách này bị hỏng hoặc do một bản ABook khác ghi, nên chưa mở được"
+    return str(error)
 
 
 class App:
@@ -572,7 +582,7 @@ class App:
             try:
                 books.append(self.summary(path))
             except Exception as exc:  # noqa: BLE001 - một sách hỏng không được làm mất cả thư viện
-                books.append({"id": book_id(path), "path": str(path), "title": path.name, "broken": str(exc)})
+                books.append({"id": book_id(path), "path": str(path), "title": path.name, "broken": broken_reason(exc)})
         books.sort(key=lambda book: book.get("updatedAt") or 0, reverse=True)
         return {"root": str(self.library.root), "books": books}
 
@@ -2454,6 +2464,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.NOT_FOUND, {"error": f"Không thấy file: {error}"})
         except ValueError as error:
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+        except sqlite3.DatabaseError as error:
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": broken_reason(error)})
         except Exception as error:  # noqa: BLE001 - lỗi bất kỳ vẫn phải về thành JSON cho giao diện
             self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"{type(error).__name__}: {error}"})
 

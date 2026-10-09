@@ -39,6 +39,8 @@ const SIZES = [16, 18, 20, 22, 24];
 const LEADINGS = [1.6, 1.8, 2];
 /** Điện thoại: nút trên thanh đầu đủ 44 px để chạm. */
 const TOUCH = "max-sm:size-[44px]";
+// Thanh nổi dưới câu đang chọn: điện thoại chỉ còn biểu tượng cho nút phụ (nhãn vẫn cho trình đọc màn hình) để cả thanh nằm MỘT hàng, không che chữ đang đọc.
+const BAR_LABEL = "max-sm:sr-only";
 
 function loadPrefs(): ReaderPrefs {
   try {
@@ -299,14 +301,15 @@ export function ReaderScreen({
 
   return (
     <div className="flex h-full flex-col">
-      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg/95 px-3 backdrop-blur sm:px-6">
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg/95 px-3 backdrop-blur max-sm:h-auto max-sm:flex-wrap max-sm:gap-y-0 sm:px-6">
         <IconButton label="Về trang sách" icon={ArrowLeft} onClick={() => navigate(`/book/${id}`)} className={TOUCH} />
-        <div className="min-w-0 flex-1">
+        {/* Điện thoại: sáu nút đã chiếm gần hết bề ngang, tên chương bị cụt còn vài chữ - tên xuống hàng riêng dưới các nút (soát UX a11). */}
+        <div className="min-w-0 flex-1 max-sm:order-last max-sm:basis-full max-sm:px-1 max-sm:pb-2">
           <div className="truncate text-sm font-semibold">{name}</div>
           {/* Tên chương đã ở dòng trên: dòng dưới chỉ thêm "Chương 3" khi dòng trên là tên riêng của chương. */}
           <div className="truncate text-xs text-fg-2">{chapter.subtitle ? `${book.title} · ${chapter.title}` : book.title}</div>
         </div>
-        <IconButton label="Chương trước" icon={ChevronLeft} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
+        <IconButton label="Chương trước" icon={ChevronLeft} disabled={index <= 0} onClick={() => go(-1)} className={cn(TOUCH, "max-sm:ml-auto")} />
         <IconButton label="Chương sau" icon={ChevronRight} disabled={index >= chapters.length - 1} onClick={() => go(1)} className={TOUCH} />
         <IconButton label="Tìm trong sách" icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
         <Popover.Root>
@@ -402,7 +405,8 @@ export function ReaderScreen({
                   onMouseDown={(event) => event.preventDefault()}
                   className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-float"
                 >
-                  <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe từ câu này
+                  <Play className="size-4" fill="currentColor" strokeWidth={0} /> <span className="sm:hidden">Nghe từ đây</span>
+                  <span className="max-sm:hidden">Nghe từ câu này</span>
                 </button>
               )}
               <button
@@ -411,7 +415,7 @@ export function ReaderScreen({
                 onMouseDown={(event) => event.preventDefault()}
                 className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
               >
-                <BookmarkPlus className="size-4" /> Đặt dấu trang ở câu này
+                <BookmarkPlus className="size-4" /> <span className={BAR_LABEL}>Đặt dấu trang ở câu này</span>
               </button>
               {readingEdit && (
                 <button
@@ -425,7 +429,7 @@ export function ReaderScreen({
                   onMouseDown={(event) => event.preventDefault()}
                   className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
                 >
-                  <Pencil className="size-4" /> Sửa cách đọc
+                  <Pencil className="size-4" /> <span className={BAR_LABEL}>Sửa cách đọc</span>
                 </button>
               )}
               {lineEdit && (
@@ -440,7 +444,7 @@ export function ReaderScreen({
                   onMouseDown={(event) => event.preventDefault()}
                   className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line disabled:opacity-60"
                 >
-                  <Pencil className="size-4" /> {lineEdit.mode === "studio" ? "Sửa trong Studio" : "Sửa câu này"}
+                  <Pencil className="size-4" /> <span className={BAR_LABEL}>{lineEdit.mode === "studio" ? "Sửa trong Studio" : "Sửa câu này"}</span>
                 </button>
               )}
             </div>

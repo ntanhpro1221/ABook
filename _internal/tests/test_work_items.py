@@ -178,6 +178,22 @@ def test_a_speaker_card_offers_clickable_choices_and_hides_once_the_listener_kee
     assert not [item for item in work_items(project)["items"] if item["kind"] == "speaker"]
 
 
+def test_a_speaker_card_shows_the_neighbouring_lines_and_offers_only_people_with_a_voice(tmp_path: Path) -> None:
+    """Một câu không đủ để quyết ai nói: thẻ mang câu liền trước và liền sau; người chưa nói câu nào (chưa có giọng) không phải chip vì
+    bấm vào chỉ ra lỗi - cùng phép thử `speaker_target` với lúc ghi yêu cầu."""
+    project = make_book(tmp_path)
+    (project / "doubt.json").write_text(json.dumps({"segments": {
+        "c": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.91, "top": [["RHINE", 0.91], ["KHONG CO AI", 0.5], ["LUCIEN", 0.05]],
+              "disagree": True},
+    }}), encoding="utf-8")
+
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "speaker")
+    (example,) = card["examples"]
+    assert example["before"] == "“Heidi, các cậu đi đâu vậy?”" and example["after"] == "“Ta đến rồi.”"
+    assert "KHONG CO AI" not in [choice["value"] for choice in card["choices"]]
+    assert [choice["value"] for choice in card["choices"]][0] == "RHINE"
+
+
 def test_the_studio_refuses_on_the_spot_a_speaker_the_pipeline_would_refuse(tmp_path: Path) -> None:
     """Giao diện hỏi bằng ĐÚNG phép dây chuyền dùng (`listener_overrides.speaker_target`), nên không có yêu cầu nào được
     ghi rồi lặng lẽ bị bỏ ở ranh giới chương. Và vẫn không ghi SQLite của sách."""
