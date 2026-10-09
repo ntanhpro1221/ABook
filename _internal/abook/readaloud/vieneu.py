@@ -372,6 +372,16 @@ def _stars(out: list[str]) -> None:
         out[index] = censored.group(1) + stutter_sound(censored.group(2), censored.group(2)) + "…" + censored.group(3) if censored else token.replace("*", "")
 
 
+_QUESTION_BANG = re.compile(r"[?!]{2,}")
+
+
+def _question_runs(out: list[str]) -> None:
+    """Dãy "?!" / "!?" / "??" có dấu hỏi thành một "?": sea-g2p chỉ giữ DẤU ĐẦU của dãy ("!?" thành "!" và mất giọng hỏi). "!!!" giữ nguyên."""
+    for index, token in enumerate(out):
+        if "?" in token:
+            out[index] = _QUESTION_BANG.sub(lambda match: "?" if "?" in match.group() else match.group(), token)
+
+
 def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_english: bool) -> None:
     """Nói lắp "T-tôi", "C-Chuyện", "Ng-ngài", "E-em", "[Kh- Không": phần lắp đọc bằng âm ("tờ… tôi", "chờ… chuyện", "e… em") thay vì tên chữ cái; phần còn lại của chữ đọc như bình thường
     (nên "T-Tsukinoki-senpai" vẫn qua luật tên). Chỉ khi phần lắp là phần đầu của chữ sau và không phải một âm tiết đầy đủ ("Hà-Hà")."""
@@ -478,6 +488,7 @@ def reading_marks(out: list[str], toks: list[str] | None = None) -> None:
     _dashes(out)
     _frames(out)
     _stars(out)
+    _question_runs(out)
     for index, token in enumerate(out):  # 《》〈〉 còn sót (không có cặp) cũng chỉ là khung; hai chữ dính hai bên khung được tách ("có《Cỏ sạch》là")
         out[index] = re.sub("[" + ANGLE_OPEN[1:] + ANGLE_CLOSE[1:] + "]+", lambda match: " " if match.start() and token[match.start() - 1].isalnum() and token[match.end():][:1].isalnum() else "", token)
 
