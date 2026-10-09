@@ -327,6 +327,57 @@ neo (90 đúng -> sai). Quét 1.315 project khác nhau của `_model_eval_v2` (2
 soát tay 25 câu ngẫu nhiên ngoài LN Nhật: đa số là câu có kính ngữ/gọi tên rõ ("Khụ khụ… Azuma-dono." gán Azuma), một ca
 sai là nhãn mô tả "Bạn của Saki" bị coi là người tên Saki - nhãn có chữ thường giờ không sinh tên gọi. Còn lại chưa có tín hiệu: cảnh ba người, nội tâm theo điểm nhìn, NPC được gán tên mà không ai gọi.
 
+### Lời dẫn nêu tên người nói: vòng 2 sau gom tên, không GPU (2026-10-09)
+
+Sau luật gọi tên còn 3.289 câu sai người nói trên 10 lượt (B9 s1234: 268). Phân lớp lại (dòng = 10 lượt / B9 s1234): gán nhầm
+người có tên khác 1.426 / 155, đảo vai trong trao đổi 545 / 23, gán người có tên cho NPC 395 / 49, gán người nói câu kề
+393 / 14, NPC cho người có tên 294 / 14, lời kể <-> lời nói 206 / 10, đáp án nửa điểm 30 / 3.
+
+Tín hiệu thử trên đáp án (scratchpad postfix/sig_lead*.py, sig_self.py, sig_i.py):
+
+- **Lời dẫn nêu tên** (đoạn kể ngay sau câu thoại mở đầu "TÊN (<=3 chữ) động từ"; hay ngay trước, kết bằng ":"): với động từ
+  NÓI (nói, đáp, hỏi, hét, thì thầm, lên tiếng, quát...) người được nêu đúng 98,0% (199/203); khi nhãn model khác người ấy
+  thì 23/23. Với động từ cử chỉ / phản ứng (cười, thở dài, nhìn, gật đầu, nhún vai, trả lời) đáp án cũng cho 97-100% (66/69
+  khi nhãn khác) - **nhưng soát tay 12 câu quét 1.315 project thì chúng sai**: "Eun nhe răng cười." sau lời của Add, "Add trả
+  lời rồi đứng dậy" sau "Hmm?" của Eun là phản ứng của NGƯỜI NGHE, và một câu sai lật cả chuỗi xen kẽ. Cổng 19 chương không bắt
+  được vì toàn truyện cùng kiểu; chọn động từ nói thuần và bỏ cử chỉ. Rộng hơn nữa (mọi đoạn kể bắt đầu bằng tên) chỉ 41%
+  khi nhãn khác.
+- **Tự giới thiệu** ("tôi là X"): 8 câu trên 10 lượt, không câu nào sửa được - chỉ dùng làm quyền phủ quyết.
+- **Lời dẫn "Tôi đáp/hỏi" (ngôi thứ nhất)**: tối đa 5 câu một chương - quá ít để lấy nhãn chủ đạo, bỏ.
+
+Luật (`character_registry._repair_dialogue_turns_by_lead_in`, ngay sau luật gọi tên; nhận lời dẫn là
+`first_person.lead_in_speaker`, tự giới thiệu là `first_person.introduced_names`): (1) câu thoại gán người có tên khác với
+người được nêu thì đổi sang người được nêu; (2) chuỗi câu thoại liền (cùng định nghĩa với luật xen kẽ) chứa câu có lời dẫn
+được xếp lại ABAB quanh câu ấy, "B" là người còn lại trong nhãn chuỗi hay người có tên duy nhất khác quanh đó. Bỏ qua khi: câu
+gọi tên người được nêu hoặc tự giới thiệu là người khác; đoạn kể kết bằng ":" hay "," (dẫn câu SAU); lời dẫn nằm giữa hai
+câu thoại mà câu sau đã gán chính người ấy (không rõ dẫn câu nào); tên là người bị tác động ("vẫy Đạo-vinh bảo rằng:") thay vì
+chủ ngữ; "tự hỏi", "ngừng nói", "nói chuyện", "đồng ý", "đáp lại lời X..." (phản ứng, nghĩ thầm); sau động từ còn hơn 5 chữ
+mới hết câu; chuỗi quá hai người hay hai lời dẫn mâu thuẫn; chuỗi chỉ một nhãn mà lời dẫn đồng ý nhãn ấy (độc thoại tách
+đoạn). Cùng lúc tách khỏi luật gọi tên các hàm dùng chung (`_address_owners`, `_turn_runs`, `_only_other_speaker`,
+`_rewrite_speakers`); nhãn thô -> phát lại luật gọi tên cho ra đúng nhãn như trước (so từng nhãn trên 3 lượt).
+
+Phát lại 10 lượt, Δ so với luật gọi tên (F1 giọng / người nói chặt):
+
+| lượt | Δ F1 | Δ chặt |
+|---|---|---|
+| b9s1234 | +0,00 | +0 |
+| b9s1 | +0,00 | +0 |
+| b9x750s1234 | +0,00 | +0 |
+| b10s1234 | +0,00 | +0 |
+| 9bv8 | +0,00 | +0 |
+| v8 | +0,00 | +0 |
+| v8ms1 | +0,17 | +3 |
+| v8ms2 | +0,41 | +4 |
+| q35v8 | +0,25 | +2 |
+| mrel430b | +0,40 | +4 |
+| tổng | **+1,22** | **+13** |
+
+13 lần đổi nhãn (cộng dồn 10 lượt, chỉ ~8 câu khác nhau), cả 13 sai -> đúng, 0 đúng -> sai. Con số nhỏ: B9 (mặc định) đã gắn đúng những câu có lời dẫn rõ ràng, luật chỉ
+cứu các model yếu hơn. Quét 1.315 project khác nhau (220.168 đoạn): luật đổi 180 câu (0,08%). Soát tay bốn mẻ mẫu ngẫu nhiên
+(14 + 16 + 14 + 22 câu) tìm ra hơn mười dạng sai (phản ứng của người nghe, nghĩ thầm, lời dẫn câu sau, tên là người bị tác động...) và đã chặn từng dạng (xem trên); mẻ cuối chỉ còn ca ba người bị nhãn gộp làm một
+(nhãn gốc vốn đã sai). Chưa có tín hiệu cho lớp lớn còn lại - đảo vai trong cảnh ba người, NPC gán tên, nội tâm - cần cách đo
+khác (ngữ nghĩa lời thoại), không phải luật tất định.
+
 ---
 
 ## v0.2.0-lo02 — 27/30, và **không chương nào** hỏng ở tầng QA chương

@@ -20,7 +20,7 @@ from .analysis import (
     opens_a_new_turn,
     strip_japanese_honorific,
 )
-from .first_person import addressed_names
+from .first_person import addressed_names, introduced_names, lead_in_speaker
 from .database import (
     ProjectDB,
 )
@@ -1170,6 +1170,83 @@ def _address_surfaces(aliases: Iterable[str]) -> set[str]:
     return surfaces
 
 
+def _address_owners(
+    rows: list[Any],
+    aliases_by_speaker: dict[str, set[str]],
+) -> tuple[set[str], dict[str, set[str]]]:
+    """(những người có tên trong `rows`, {cách gọi: những người mang cách gọi ấy})."""
+    named = {
+        speaker
+        for speaker in {str(row["speaker"]) for row in rows}
+        if not is_local_speaker(speaker) and speaker.casefold() not in RESERVED_SPEAKERS
+    }
+    owners: dict[str, set[str]] = defaultdict(set)
+    for speaker in named:
+        for surface in _address_surfaces(aliases_by_speaker.get(speaker, set()) | {speaker}):
+            owners[surface].add(speaker)
+    return named, owners
+
+
+def _turn_runs(chapter_rows: list[Any]) -> list[list[Any]]:
+    """Chuỗi câu thoại liền nhau trong một chương, mỗi câu một đoạn văn và mở một lượt mới (>= `ALTERNATION_MIN_TURNS`)."""
+    paragraph_size = Counter(int(row["paragraph_index"]) for row in chapter_rows)
+
+    def turn(row: Any) -> bool:
+        return (
+            str(row["kind"]) == "dialogue"
+            and str(row["kind_hint"]) == "dialogue"
+            and paragraph_size[int(row["paragraph_index"])] == 1
+        )
+
+    runs: list[list[Any]] = []
+    current: list[Any] = []
+    for row in chapter_rows:
+        if (
+            turn(row)
+            and current
+            and int(row["seq"]) == int(current[-1]["seq"]) + 1
+            and int(row["paragraph_index"]) == int(current[-1]["paragraph_index"]) + 1
+            and opens_a_new_turn(str(current[-1]["text"]), str(row["text"]))
+        ):
+            current.append(row)
+            continue
+        if len(current) >= ALTERNATION_MIN_TURNS:
+            runs.append(current)
+        current = [row] if turn(row) else []
+    if len(current) >= ALTERNATION_MIN_TURNS:
+        runs.append(current)
+    return runs
+
+
+def _only_other_speaker(by_seq: dict[int, Any], seq: int, speaker: str, named: set[str]) -> str | None:
+    """Người có tên DUY NHẤT khác `speaker` nói câu thoại trong `ADDRESS_PARTNER_WINDOW` đoạn quanh `seq`; không có hoặc
+    có hơn một người thì None."""
+    partners = {
+        str(near["speaker"])
+        for offset in range(-ADDRESS_PARTNER_WINDOW, ADDRESS_PARTNER_WINDOW + 1)
+        if offset and (near := by_seq.get(seq + offset)) is not None
+        and str(near["kind"]) == "dialogue"
+        and str(near["speaker"]) in named
+        and str(near["speaker"]) != speaker
+    }
+    return partners.pop() if len(partners) == 1 else None
+
+
+def _rewrite_speakers(db: ProjectDB, rows: list[Any], changes: dict[int, str]) -> int:
+    rows_by_speaker: dict[str, list[Any]] = defaultdict(list)
+    for row in rows:
+        rows_by_speaker[str(row["speaker"])].append(row)
+    repaired = 0
+    for segment_id, speaker in sorted(changes.items()):
+        repaired += db.rewrite_segment_speakers(
+            [segment_id],
+            speaker=speaker,
+            gender=_majority(rows_by_speaker[speaker], "gender"),
+            age=_majority(rows_by_speaker[speaker], "age"),
+        )
+    return repaired
+
+
 def _repair_dialogue_turns_by_address(
     db: ProjectDB,
     log: Callable[[str], None],
@@ -1187,15 +1264,7 @@ def _repair_dialogue_turns_by_address(
     Lời kể và nội tâm không đụng tới. Cổng 19 chương, 10 lượt (09-10): F1 giọng +9,7 cộng dồn, +133 câu đúng người nói,
     không lượt nào giảm; 3 câu đúng thành sai (cảnh ba người mà nhãn chỉ có hai)."""
     rows = sorted(db.list_segments(), key=lambda row: (int(row["chapter_id"]), int(row["seq"])))
-    named = {
-        speaker
-        for speaker in {str(row["speaker"]) for row in rows}
-        if not is_local_speaker(speaker) and speaker.casefold() not in RESERVED_SPEAKERS
-    }
-    owners: dict[str, set[str]] = defaultdict(set)
-    for speaker in named:
-        for surface in _address_surfaces(aliases_by_speaker.get(speaker, set()) | {speaker}):
-            owners[surface].add(speaker)
+    named, owners = _address_owners(rows, aliases_by_speaker)
     if not owners:
         return
     surfaces = frozenset(owners)
@@ -1216,34 +1285,7 @@ def _repair_dialogue_turns_by_address(
     changes: dict[int, str] = {}
     for chapter_rows in by_chapter.values():
         by_seq = {int(row["seq"]): row for row in chapter_rows}
-        paragraph_size = Counter(int(row["paragraph_index"]) for row in chapter_rows)
-
-        def turn(row: Any) -> bool:
-            return (
-                str(row["kind"]) == "dialogue"
-                and str(row["kind_hint"]) == "dialogue"
-                and paragraph_size[int(row["paragraph_index"])] == 1
-            )
-
-        runs: list[list[Any]] = []
-        current: list[Any] = []
-        for row in chapter_rows:
-            if (
-                turn(row)
-                and current
-                and int(row["seq"]) == int(current[-1]["seq"]) + 1
-                and int(row["paragraph_index"]) == int(current[-1]["paragraph_index"]) + 1
-                and opens_a_new_turn(str(current[-1]["text"]), str(row["text"]))
-            ):
-                current.append(row)
-                continue
-            if len(current) >= ALTERNATION_MIN_TURNS:
-                runs.append(current)
-            current = [row] if turn(row) else []
-        if len(current) >= ALTERNATION_MIN_TURNS:
-            runs.append(current)
-
-        for run in runs:
+        for run in _turn_runs(chapter_rows):
             speakers = [str(row["speaker"]) for row in run]
             people = sorted(set(speakers))
             if len(people) != 2 or not set(people) <= named:
@@ -1263,33 +1305,105 @@ def _repair_dialogue_turns_by_address(
                     changes[int(row["id"])] = want
 
         for row in chapter_rows:
-            speaker, seq = str(row["speaker"]), int(row["seq"])
+            speaker = str(row["speaker"])
             if int(row["id"]) in changes or speaker not in named or speaker not in addressed(row):
                 continue
-            partners = {
-                str(near["speaker"])
-                for offset in range(-ADDRESS_PARTNER_WINDOW, ADDRESS_PARTNER_WINDOW + 1)
-                if offset and (near := by_seq.get(seq + offset)) is not None
-                and str(near["kind"]) == "dialogue"
-                and str(near["speaker"]) in named
-                and str(near["speaker"]) != speaker
-            }
-            if len(partners) == 1:
-                changes[int(row["id"])] = partners.pop()
+            partner = _only_other_speaker(by_seq, int(row["seq"]), speaker, named)
+            if partner is not None:
+                changes[int(row["id"])] = partner
     if not changes:
         return
-    rows_by_speaker: dict[str, list[Any]] = defaultdict(list)
-    for row in rows:
-        rows_by_speaker[str(row["speaker"])].append(row)
-    repaired = 0
-    for segment_id, speaker in sorted(changes.items()):
-        repaired += db.rewrite_segment_speakers(
-            [segment_id],
-            speaker=speaker,
-            gender=_majority(rows_by_speaker[speaker], "gender"),
-            age=_majority(rows_by_speaker[speaker], "age"),
-        )
+    repaired = _rewrite_speakers(db, rows, changes)
     log(f"Đã đổi người nói cho {repaired} câu thoại gọi đúng tên người được gán (không ai gọi tên chính mình).")
+
+
+def _repair_dialogue_turns_by_lead_in(
+    db: ProjectDB,
+    log: Callable[[str], None],
+    aliases_by_speaker: dict[str, set[str]],
+) -> None:
+    """Lời dẫn nêu tên người nói: đoạn kể ngay sau câu thoại mở đầu "Yakishio khẽ đáp, ..." (hay ngay trước, kết bằng dấu hai
+    chấm: "Shizuka lên tiếng:") là bằng chứng câu thoại ấy của người được nêu (`first_person.lead_in_speaker`, chỉ động từ
+    nói). Hai việc, đều chỉ khi chữ đủ chắc:
+
+    - Câu thoại đang gán cho người có tên khác thì đổi sang người được nêu. Bỏ qua khi chính câu ấy GỌI người được nêu (không
+      ai gọi tên mình) hay tự giới thiệu là người khác ("Tôi là Lancel Dante").
+    - Chuỗi câu thoại liền nhau (như `_turn_runs`) chứa câu có lời dẫn: nói xen kẽ, nên cả chuỗi xếp lại ABAB quanh câu ấy;
+      "B" là người còn lại trong nhãn chuỗi, hay người có tên duy nhất khác nói quanh đó. Chỉ xếp lại khi sau bước trên chuỗi
+      có đủ hai người (chuỗi cùng một nhãn mà lời dẫn đồng ý là lời độc thoại tách đoạn, để nguyên). Bỏ cả chuỗi nếu có hơn
+      hai người, hai lời dẫn mâu thuẫn, hay một câu bị gán cho người nó gọi tên hoặc tự giới thiệu là người khác.
+
+    Đo 10 lượt cổng 19 chương, so với luật gọi tên: xem VERSIONS.md (mục lời dẫn)."""
+    rows = sorted(db.list_segments(), key=lambda row: (int(row["chapter_id"]), int(row["seq"])))
+    named, owners = _address_owners(rows, aliases_by_speaker)
+    if not owners:
+        return
+    names = set(owners)
+    surfaces = frozenset(owners)
+
+    def addressed(row: Any) -> set[str]:
+        return {speaker for surface in addressed_names(str(row["text"]), surfaces) for speaker in owners[surface]}
+
+    def introduced(row: Any) -> set[str]:
+        return {speaker for surface in introduced_names(str(row["text"]), names) for speaker in owners[surface]}
+
+    by_chapter: dict[int, list[Any]] = defaultdict(list)
+    for row in rows:
+        by_chapter[int(row["chapter_id"])].append(row)
+    changes: dict[int, str] = {}
+    for chapter_rows in by_chapter.values():
+        by_seq = {int(row["seq"]): row for row in chapter_rows}
+        leads: dict[int, str] = {}
+        for row in chapter_rows:
+            if str(row["kind"]) != "dialogue":
+                continue
+            seq = int(row["seq"])
+            who: set[str] = set()
+            for near_seq, after in ((seq + 1, True), (seq - 1, False)):
+                near = by_seq.get(near_seq)
+                if near is None or str(near["kind"]) != "narration":
+                    continue
+                name = lead_in_speaker(str(near["text"]), names, after=after)
+                if name is None or len(owners[name]) != 1:
+                    continue
+                # Lời dẫn đứng GIỮA hai câu thoại có thể dẫn câu sau: khi câu sau đã gán cho chính người ấy thì không chắc là của câu trước.
+                following = by_seq.get(near_seq + 1) if after else None
+                if following is not None and str(following["kind"]) == "dialogue" and str(following["speaker"]) in owners[name]:
+                    continue
+                who |= owners[name]
+            if len(who) != 1:
+                continue
+            speaker = next(iter(who))
+            if speaker in addressed(row) or introduced(row) - {speaker}:
+                continue
+            leads[seq] = speaker
+            if str(row["speaker"]) != speaker and str(row["speaker"]) in named:
+                changes[int(row["id"])] = speaker
+
+        for run in _turn_runs(chapter_rows):
+            led = [(index, leads[int(row["seq"])]) for index, row in enumerate(run) if int(row["seq"]) in leads]
+            if not led:
+                continue
+            current = [changes.get(int(row["id"]), str(row["speaker"])) for row in run]
+            first_index, first = led[0]
+            others = (set(current) | {speaker for _index, speaker in led}) - {first}
+            if not others and (other := _only_other_speaker(by_seq, int(run[first_index]["seq"]), first, named)) is not None:
+                others = {other}
+            if len(others) != 1 or len(set(current)) < 2 or not set(current) <= named:
+                continue
+            other = next(iter(others))
+            want = [first if (index - first_index) % 2 == 0 else other for index in range(len(run))]
+            if any(want[index] != speaker for index, speaker in led):
+                continue
+            if any(person in addressed(row) or introduced(row) - {person} for row, person in zip(run, want)):
+                continue
+            for row, person, now in zip(run, want, current):
+                if person != now:
+                    changes[int(row["id"])] = person
+    if not changes:
+        return
+    repaired = _rewrite_speakers(db, rows, changes)
+    log(f"Đã đổi người nói cho {repaired} câu thoại theo lời dẫn nêu tên người nói (\"X đáp\", \"X lên tiếng:\").")
 
 
 # Vietnamese marks gender in the words it uses for people far more reliably than an
@@ -2697,6 +2811,7 @@ def build_registry_and_cast(
     _repair_crowd_dialogue_blocks(db, log)
     aliases_by_speaker = _canonicalize_named_speakers(db, log)
     _repair_dialogue_turns_by_address(db, log, aliases_by_speaker)
+    _repair_dialogue_turns_by_lead_in(db, log, aliases_by_speaker)
     _merge_adjacent_local_speakers(db, log)
     _merge_local_speakers_with_named_identity(db, log)
 
