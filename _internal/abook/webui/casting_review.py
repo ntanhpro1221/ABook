@@ -23,7 +23,7 @@ from ..listener_overrides import (
 from . import store
 from .reviews import speaker_label
 from .address_cues import _same_person
-from .work_items import calls_themselves, confident_doubts, merged_turns
+from .work_items import confident_doubts, merged_turns, self_addressed
 
 # Người có tên trong cả cuốn đưa vào ô "người khác": sách dài có hàng trăm vai, ô tìm lọc tại chỗ.
 OTHERS = 300
@@ -68,12 +68,13 @@ def _hints(connection: Any, project_root: Path, rows: list[Any], chapter_id: int
     (đo được) > hai câu liền nhau cùng người (38/42 sai) > lời gọi."""
     hints: dict[str, dict[str, Any]] = {}
     speech = [row for row in rows if str(row["kind"]) != "narration"]
+    calling = self_addressed(connection, chapter_id)
     for row in speech:
-        if calls_themselves(row):
+        if int(row["id"]) in calling:
             name = label(str(row["speaker"]), display)
             hints[str(row["stable_id"])] = {
                 "kind": "vocative",
-                "note": f"Câu mở đầu bằng lời gọi {name} - người được gọi thường là người nghe, không phải người nói.",
+                "note": f"Câu này gọi tên {name} - người được gọi thường là người nghe, không phải người nói.",
             }
     order = {str(row["stable_id"]): index for index, row in enumerate(speech)}
     for first, second in merged_turns(connection, chapter_id):

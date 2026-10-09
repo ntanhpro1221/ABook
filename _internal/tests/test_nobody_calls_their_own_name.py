@@ -130,3 +130,28 @@ def test_a_lone_line_with_two_possible_partners_is_left_alone(tmp_path: Path) ->
         (5, "dialogue", "“Thôi kệ cậu ta.”", "KENJI", "male"),
     ])
     assert _repair(db) == ["SHIZUKA", "NARRATOR", "KOU", "NARRATOR", "KENJI"]
+
+
+def test_a_name_after_a_dash_at_the_end_of_a_line_is_the_speaker_tag_not_a_call() -> None:
+    # Truyện ghi người nói bằng gạch + tên cuối câu ("... –Noru."): tên ấy là chính người nói. Đo 09-10: 23 câu đúng bị luật
+    # đổi sang người khác ở một truyện (using_gacha), 100% sai; 66/69 câu có đuôi này mang đúng nhãn ấy.
+    assert addressed_names("“Sao anh cứ thở dài vậy? Có chuyện gì thế? –Noru.”", {"Noru"}) == set()
+    assert addressed_names("-Em đã làm gì Kou thế? –Noru", {"Noru", "Kou"}) == set()
+    assert addressed_names("“Nhờ anh lần còn lại nhé. — Estel”", {"Estel"}) == set()
+    # Vẫn là tiếng gọi: gạch không đứng trước tên cuối câu, tên đầu dòng sau gạch, gạch dính chữ ("S-Suzune").
+    assert addressed_names("“Đi đi, Noru.”", {"Noru"}) == {"Noru"}
+    assert addressed_names("“Noru, đi đâu đấy?”", {"Noru"}) == {"Noru"}
+    assert addressed_names("– Noru.", {"Noru"}) == {"Noru"}
+    assert addressed_names("“Cảm ơn nhé–Noru”", {"Noru"}) == {"Noru"}
+
+
+def test_a_line_tagged_with_its_speaker_by_a_dash_keeps_its_speaker(tmp_path: Path) -> None:
+    lines = [
+        (1, "dialogue", "-Em đã làm gì Shisuha thế? –Noru.", "NORU", "female"),
+        (2, "narration", "Okura gãi đầu.", "NARRATOR", "unknown"),
+        (3, "dialogue", "-Anh chẳng làm gì cả. –Okura.", "OKURA", "male"),
+    ]
+    assert _repair(_project(tmp_path / "a", lines)) == ["NORU", "NARRATOR", "OKURA"]
+    # Không có gạch: "Noru." cuối câu là tiếng gọi, câu về người đối thoại duy nhất.
+    called = [(p, k, text.replace(" –Noru.", " Noru.").replace(" –Okura.", " Okura."), s, g) for p, k, text, s, g in lines]
+    assert _repair(_project(tmp_path / "b", called)) == ["OKURA", "NARRATOR", "NORU"]

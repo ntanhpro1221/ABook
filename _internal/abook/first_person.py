@@ -97,6 +97,17 @@ def _is_call(text: str, match: re.Match[str]) -> bool:
     return bool((not before or before[-1] in _CALL_BEFORE or _CALL_TITLE.search(before)) and (not after or after[0] in _CALL_AFTER))
 
 
+def _is_speaker_tag(before: str, after: str) -> bool:
+    """Tên đứng ngay sau một gạch ("... –Noru.") và chỉ còn dấu câu/hết câu: nhãn người nói cuối câu (xem `_TAG_DASHES`)."""
+    head = before.rstrip(_TAG_DASHES)
+    return (
+        head != before
+        and bool(head.strip())
+        and not head[-1].isalnum()
+        and _TAG_TAIL.fullmatch(after) is not None
+    )
+
+
 def _count_names(rows: list[tuple[str, str]], names: set[str]) -> dict[str, Counter]:
     """{tên: Counter(called, spoken, narrated, with_i)} - `rows` là (kind, text) mỗi đoạn."""
     stats: dict[str, Counter] = {name: Counter() for name in names}
@@ -126,6 +137,10 @@ _NAMING_A_NAME = re.compile(r"(?<!\w)(?:là|tên|gọi|xưng)[,:]?$", re.IGNOREC
 # ("..., Satomi."). Đo 09-10: tính cả tên giữa câu ("Hmm? Karui… Tsukshi đâu rồi?") thì 10 câu đúng thành sai thay vì 3.
 _LINE_HEAD = re.compile(rf"[\W_]*(?:(?:{_CALL_WORDS})[,!]?)?", re.IGNORECASE)
 _LINE_TAIL = re.compile(r"[\W_]*")
+# Nhãn người nói cuối câu thoại ("... –Noru."): truyện ghi ai nói bằng gạch + tên ở CUỐI câu, nên tên ấy là chính người nói, không
+# phải tiếng gọi. Gạch phải đứng sau chữ viết thường/dấu câu hay khoảng trắng (không phải "S-Suzune-san") và có chữ trước nó.
+_TAG_DASHES = "–—―-"
+_TAG_TAIL = re.compile(r"[\s.!?…,;:”\"’'»)\]]*")
 # Câu tự giới thiệu đọc đúng tên người nói ("Chào anh, tôi là chủ nhà khu kí túc Corona, Kasagi Shizuka").
 _SAYS_WHO_I_AM = re.compile(
     r"(?<!\w)(?:tôi|tớ|mình|em|ta|tao|anh|chị)\s+(?:tên\s+|chính\s+)?là(?!\w)|(?<!\w)tên\s+(?:của\s+)?(?:tôi|tớ|mình|em|ta)\s+là(?!\w)",
@@ -149,7 +164,7 @@ def addressed_names(text: str, names: set[str]) -> set[str]:
             found.add(match.group(1))
             continue
         before, after = text[:match.start(1)].rstrip(" "), text[match.end():]
-        if introduces or _NAMING_A_NAME.search(before):
+        if introduces or _NAMING_A_NAME.search(before) or _is_speaker_tag(before, after):
             continue
         at_edge = _LINE_HEAD.fullmatch(before) is not None or _LINE_TAIL.fullmatch(after) is not None
         if (
