@@ -272,6 +272,52 @@ class EditsSyncTest {
     }
 
     @Test
+    fun a_sent_reading_and_playlist_stay_here_but_are_no_longer_pending() {
+        // Như bản Python (test_a_sent_reading_and_playlist_stay_here_but_are_no_longer_pending): sách máy tính trả về không mang cách đọc /
+        // danh sách phát, nên bỏ chúng khỏi lớp sửa là mất; nhưng cũng không đếm là "chưa gửi" mãi.
+        BookEdits.setReading(dir, "Lucien", "Lu-xi-en")
+        BookEdits.setMusic(dir, JSONObject().put("playlist", "school_light"))
+        assertEquals(2, Store.manifest(id)!!.getJSONObject("editsSync").getInt("pending"))
+        val view = EditsSync.push(id) { accepted() }
+        assertEquals(0, view.getInt("pending"))
+        assertFalse("`kept` là sổ riêng, không hiện ra giao diện", view.getJSONObject("last").has("kept"))
+        val left = BookEdits.load(dir)
+        assertEquals("Lu-xi-en", left.getJSONObject("readings").getString("Lucien"))
+        assertEquals("school_light", left.getJSONObject("music").getString("playlist"))
+        assertEquals(0, Store.manifest(id)!!.getJSONObject("editsSync").getInt("pending"))
+        // không còn gì chưa gửi: bấm gửi nữa cũng không đi đâu
+        EditsSync.push(id) { fail("không có gì mới để gửi"); "" }
+
+        BookEdits.setReading(dir, "Lucien", "Lu-xiên") // sửa tiếp sau khi đã gửi: chỉ phần mới chờ gửi
+        assertEquals(1, Store.manifest(id)!!.getJSONObject("editsSync").getInt("pending"))
+        call("PUT", "/title", JSONObject().put("title", "Tên mới"))
+        assertEquals(2, Store.manifest(id)!!.getJSONObject("editsSync").getInt("pending"))
+        // gửi lỗi không làm quên cái đã gửi trước đó
+        try {
+            EditsSync.push(id) { throw IOException("connect failed") }
+            fail("phải ném lỗi")
+        } catch (error: IOException) {
+            assertNotNull(error.message)
+        }
+        val failed = Store.manifest(id)!!.getJSONObject("editsSync")
+        assertEquals(2, failed.getInt("pending"))
+        assertEquals("error", failed.getJSONObject("last").getString("state"))
+        assertEquals(0, EditsSync.push(id) { accepted() }.getInt("pending"))
+    }
+
+    @Test
+    fun conflict_notes_are_worded_for_the_sending_phone() {
+        val item = JSONObject().put("kind", "title").put("key", "").put("label", "Tên sách: máy tính đã có bản riêng")
+            .put("what", "Tên sách").put("lost", "“Chủ máy đặt lại”").put("kept", "“Tên mới”")
+        call("PUT", "/title", JSONObject().put("title", "Tên mới"))
+        val reply = JSONObject().put("applied", 1).put("conflicts", org.json.JSONArray().put(item).put(JSONObject().put("kind", "cover").put("key", "")
+            .put("label", "Ảnh bìa: máy tính đã có bản riêng").put("what", "Ảnh bìa").put("lost", "").put("kept", "")))
+        val notes = EditsSync.push(id, "Máy chủ") { reply.toString() }.getJSONObject("last").getJSONArray("conflicts")
+        assertEquals("Tên sách: máy kia (Máy chủ) đã đổi thành “Chủ máy đặt lại” trước đó, bản của bạn “Tên mới” đã thay vào", notes.getString(0))
+        assertEquals("Ảnh bìa: máy kia (Máy chủ) đã đổi khác trước đó, bản của bạn đã thay vào", notes.getString(1))
+    }
+
+    @Test
     fun a_refusal_or_a_lost_connection_keeps_every_edit_and_says_why() {
         call("PUT", "/title", JSONObject().put("title", "Tên mới"))
         try {

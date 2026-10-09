@@ -91,7 +91,7 @@ object Peers {
     private fun streamedDirs(key: String): List<File> =
         File(Store.root, "books").listFiles()?.filter { it.isDirectory && it.name.startsWith("p${key}_") && !File(it, "book.json").isFile } ?: emptyList()
 
-    /** Sửa chưa gửi của các cuốn nghe thẳng của một thiết bị: mỗi cuốn còn bao nhiêu thay đổi (gồm cả ý muốn chờ Studio). */
+    /** Sửa chưa gửi của các cuốn nghe thẳng của một thiết bị: mỗi cuốn còn bao nhiêu thay đổi (gồm cả ý muốn chờ Studio, trừ phần đã gửi rồi - [EditsSync.pending]). */
     class Unsent(val books: List<Book>) {
         class Book(val id: String, val title: String, val changes: Int)
 
@@ -104,7 +104,7 @@ object Peers {
      */
     fun unsent(key: String): Unsent = Unsent(
         streamedDirs(key).mapNotNull { dir ->
-            val changes = BookEdits.count(BookEdits.load(dir))
+            val changes = EditsSync.pending(dir, BookEdits.load(dir)) // cách đọc / nhạc đã gửi rồi mà còn nằm ở lớp sửa thì không tính là chưa gửi
             if (changes == 0) null else Unsent.Book(dir.name, Store.playableManifest(dir.name)?.optString("title").orEmpty().ifEmpty { dir.name }, changes)
         }.sortedBy { it.id },
     )

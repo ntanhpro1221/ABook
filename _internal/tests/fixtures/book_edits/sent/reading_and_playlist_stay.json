@@ -1,0 +1,50 @@
+{
+ "previous": {},
+ "sent": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Tên mới",
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  },
+  "music": {
+   "levelDb": -24.0,
+   "playlist": "school_light"
+  }
+ },
+ "current": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Tên mới",
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  },
+  "music": {
+   "levelDb": -24.0,
+   "playlist": "school_light"
+  }
+ },
+ "marks": {
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  },
+  "music": {
+   "playlist": "school_light"
+  }
+ },
+ "left": {
+  "format": "abook-edits",
+  "version": 1,
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  },
+  "music": {
+   "playlist": "school_light"
+  }
+ },
+ "unmarked": {
+  "format": "abook-edits",
+  "version": 1
+ },
+ "pending": 0
+}

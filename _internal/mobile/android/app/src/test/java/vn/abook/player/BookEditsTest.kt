@@ -231,6 +231,27 @@ class BookEditsTest {
     }
 
     @Test
+    fun every_sent_case_gives_what_python_gave() {
+        assertTrue(BookEditsFixtures.cases("sent").size >= 5)
+        for (name in BookEditsFixtures.cases("sent")) {
+            val case = BookEditsFixtures.obj("sent/$name.json")
+            val previous = case.getJSONObject("previous")
+            val current = BookEdits.validate(case.getJSONObject("current"))
+            val sent = case.optJSONObject("sent")?.let { BookEdits.validate(it) }
+            val folder = BookEditsFixtures.tempDir("abook-sent")
+            BookEdits.save(folder, current)
+            val marks = if (sent != null) BookEdits.sentMarks(sent, previous) else previous
+            if (sent != null) BookEdits.subtract(folder, sent, null)
+            val left = BookEdits.load(folder)
+            val rest = BookEdits.unmarked(left, marks)
+            assertJson("$name: sổ đã gửi", case.getJSONObject("marks"), marks)
+            assertJson("$name: lớp sửa còn lại", case.getJSONObject("left"), left)
+            assertJson("$name: phần chưa gửi", case.getJSONObject("unmarked"), rest)
+            assertEquals("$name: số chưa gửi", case.getInt("pending"), BookEdits.count(rest))
+        }
+    }
+
+    @Test
     fun the_gain_formula_reproduces_what_the_book_maker_wrote() {
         val music = base.getJSONObject("music")
         val tracks = music.getJSONObject("tracks")

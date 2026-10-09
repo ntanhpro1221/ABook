@@ -36,6 +36,7 @@ class LibraryServerMusicTest {
         root = BookEditsFixtures.tempDir("abook-share-music")
         BookEditsFixtures.useStoreRoot(root)
         BookEditsFixtures.copyBase(dir) // sách nhập từ file: có book.json mang `music`, hai bài của người làm sách trong music/
+        Store.rememberChapters(id, JSONObject(), imported = true) // ghi sổ "mở từ file": điện thoại chỉ chia sẻ cuốn nhập từ file
         // Thiết bị đã ghép: share.json lưu băm SHA-256 của mã (LibraryServer.hash), không lưu mã thật.
         val devices = File(root, "share.json")
         val hash = MessageDigest.getInstance("SHA-256").digest(token.toByteArray()).joinToString("") { "%02x".format(it) }

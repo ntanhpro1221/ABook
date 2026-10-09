@@ -783,6 +783,7 @@ class LibraryPlugin : Plugin() {
             val stale = cached == null ||
                 cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
                 cached.optString("title") != entry.optString("title") ||
+                cached.optString("author") != entry.optString("author") ||
                 cached.optJSONObject("cover")?.optLong("version") != entry.optJSONObject("cover")?.optLong("version")
             val manifest = (if (stale) runCatching { Streaming.fetchManifest(context, id) }.getOrNull() else null) ?: cached ?: continue
             if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
@@ -801,7 +802,7 @@ class LibraryPlugin : Plugin() {
                 if (Store.rawManifest(id) != null) continue
                 val cached = Store.streamManifest(id)
                 val stale = cached == null || cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
-                    cached.optString("title") != entry.optString("title")
+                    cached.optString("title") != entry.optString("title") || cached.optString("author") != entry.optString("author")
                 val manifest = (if (stale) runCatching {
                     Streaming.fetchManifest(context, id, peer.getString("key"), entry.getString("remoteId"))
                 }.getOrNull() else null) ?: cached ?: continue
