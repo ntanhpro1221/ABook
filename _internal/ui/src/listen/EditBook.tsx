@@ -7,6 +7,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { CoverSearchDialog } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
+import { holderName } from "@/shared/editsSync";
 import { formatClock } from "@/shared/format";
 import { levelOptions } from "@/shared/musicLevels";
 import { Switch } from "@/desktop/PhoneSync";
@@ -237,7 +238,10 @@ export function EditBookDialog({
   };
   const rename = useMutation({
     mutationFn: (next: string) => api(`/api/books/${book.id}/title`, { method: "PUT", body: { title: next } }),
-    onSuccess: () => done("Đã đổi tên sách"),
+    onSuccess: () => {
+      done("Đã đổi tên sách");
+      onOpenChange(false); // lưu xong thì đóng hộp: để mở nguyên là không biết đã lưu chưa (soát UX a11)
+    },
     onError: (error: Error) => toast.error("Chưa đổi được tên sách", { description: error.message }),
   });
   const setCover = useMutation({
@@ -266,7 +270,11 @@ export function EditBookDialog({
       onOpenChange={onOpenChange}
       width="max-w-xl"
       title="Sửa sách"
-      description="Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
+      description={
+        syncsToComputer(book.capabilities)
+          ? `Đổi có hiệu lực ngay trên máy này và được gửi về ${holderName(book.remote)} khi kết nối - audio và chữ của người làm sách giữ nguyên.`
+          : "Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
+      }
     >
       <div className="max-h-[68vh] space-y-4 overflow-y-auto pr-1">
         <Section title="Tên sách">

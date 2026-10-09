@@ -7,6 +7,22 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sách của máy tính khác
+
+- Sửa cách đọc hay chọn nhạc cho sách của máy khác rồi gửi: lần gửi xong không còn báo "1 thay đổi đang chờ gửi" mãi, "Gỡ ghép" không còn bắt "Gửi trước rồi gỡ" lặp vô hạn; cách đọc và nhạc bạn chọn vẫn giữ nguyên ở máy này (trước đây nhạc chọn cho sách chỉ có chữ của máy kia bị quên sau khi gửi).
+- Sách nhập từ file của máy kia hiện tác giả trên thẻ, trang sách và tìm theo tác giả được.
+- Khi hai máy cùng đổi một chỗ (vd tên sách), lời báo viết theo máy bạn đang dùng: "máy kia (tên) đã đổi thành …, bản của bạn … đã thay vào". Lời báo "Đã gửi" chỉ còn khi có điều đáng đọc, kèm nút "Đã hiểu"; nút và thông báo gọi đúng tên máy kia thay vì "máy tính" chung chung.
+- Hộp "Sửa sách": "Lưu tên" đóng hộp và báo đã đổi; dòng dẫn nói tên gửi về máy kia khi kết nối. Trang sách bỏ dòng "Nghe thẳng…" ngược nghĩa khi đã có "Đã tải về máy". Thông báo ghép xong nói tên máy thật.
+
+### Điện thoại và cửa sổ hẹp
+
+- Trang sách ở khổ tablet không còn tràn ngang vì tên chương dài ở nút "Nghe tiếp". Màn đọc ở khổ điện thoại: tên chương xuống hàng riêng đủ chữ, thanh "Nghe từ đây / dấu trang / sửa cách đọc" nằm một hàng, không che câu đang đọc. Cài đặt › Máy tính khác: nút ở khổ điện thoại có chữ thay vì chỉ biểu tượng.
+
+### Việc cần anh và Cài đặt
+
+- Thẻ "Ai nói câu này" cho xem câu liền trước và liền sau để quyết, và không còn mời chọn người chưa có giọng trong sách. "Đã quyết, chờ áp dụng" đếm khớp số trên nút "Áp dụng"; quyết xong thẻ cuối của một loại thì địa chỉ trang về "Tất cả".
+- Cài đặt › Nhạc nền nhắc đến công tắc tự chọn nhạc và báo khi bật/tắt. Dự án hỏng báo "sổ làm việc của sách bị hỏng…" thay vì lỗi SQL.
+
 ## [0.4.38] - 2026-10-09
 
 ### Việc cần anh

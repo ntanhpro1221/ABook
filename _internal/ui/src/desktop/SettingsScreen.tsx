@@ -513,7 +513,7 @@ export function SettingsScreen() {
         <Section
           id="music"
           title="Nhạc nền"
-          description="Nhạc của riêng bạn làm nhạc nền, dùng chung cho mọi cuốn. Chọn bài cho từng đoạn ở tab “Nhạc nền” của từng dự án trong Studio."
+          description="Máy tự chọn nhạc nền cho sách chỉ có chữ (công tắc ngay dưới), và bạn có thể thêm nhạc của riêng mình, dùng chung cho mọi cuốn. Chọn bài cho từng đoạn ở tab “Nhạc nền” của từng dự án trong Studio."
         >
           <div className="mb-5 flex max-w-2xl items-start justify-between gap-6">
             <label htmlFor="auto-music" className="min-w-0 cursor-pointer">
@@ -523,7 +523,19 @@ export function SettingsScreen() {
             <Switch
               id="auto-music"
               checked={preferences?.autoMusic !== false}
-              onCheckedChange={(value) => update({ autoMusic: value }, { onSuccess: () => void client.invalidateQueries({ queryKey: ["listen"] }) })}
+              onCheckedChange={(value) =>
+                update(
+                  { autoMusic: value },
+                  {
+                    onSuccess: () => {
+                      void client.invalidateQueries({ queryKey: ["listen"] });
+                      toast.success(value ? "Đã bật tự chọn nhạc nền" : "Đã tắt tự chọn nhạc nền", {
+                        description: value ? "Sách chỉ có chữ chưa chọn nhạc sẽ có nhạc nhè nhẹ." : "Sách chưa chọn nhạc sẽ im lặng; cuốn đã chọn nhạc vẫn giữ.",
+                      });
+                    },
+                  },
+                )
+              }
             />
           </div>
           <div className="max-w-2xl">

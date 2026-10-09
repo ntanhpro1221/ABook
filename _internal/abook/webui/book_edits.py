@@ -392,23 +392,42 @@ def merge(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, An
     THẮNG BÊN MÁY NÀY (người nghe đã làm nó ở đây), còn lại lấy cả hai. Nhạc im lặng: hợp (không có "bỏ im lặng" để thắng).
     Trả (kết quả, báo cáo): {"adopted": số thay đổi lấy từ file, "kept": số thay đổi của máy này, "conflicts": số khoá hai
     bên khác nhau (đã theo máy này), "cover": "local" | "incoming" | None - bìa sửa lấy từ đâu}."""
+    out, report, _clashes = merge_clashes(local, incoming)
+    return out, report
+
+
+def merge_clashes(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any], list[dict[str, Any]]]:
+    """`merge` kèm danh sách từng khoá hai bên khác nhau: [{kind, key, kept, lost}] (giá trị bên máy này được giữ / giá trị bên kia thua;
+    bìa và nhạc không mang giá trị). Số phần tử bằng `conflicts` của báo cáo."""
     out = empty()
     conflicts = 0
+    clashes: list[dict[str, Any]] = []
+
+    def clash(kind: str, key: str, kept: Any = None, lost: Any = None) -> None:
+        clashes.append({"kind": kind, "key": key, "kept": kept, "lost": lost})
+
     for key in ("title", "cover"):
         if key in local:
             out[key] = copy.deepcopy(local[key])
             conflicts += key in incoming and incoming[key] != local[key]
+            if key in incoming and incoming[key] != local[key]:
+                clash(key, "", *((local[key], incoming[key]) if key == "title" else ()))
         elif key in incoming:
             out[key] = copy.deepcopy(incoming[key])
     people = {**(incoming.get("characters") or {}), **(local.get("characters") or {})}
-    conflicts += sum(1 for name, shown in (local.get("characters") or {}).items()
-                     if name in (incoming.get("characters") or {}) and incoming["characters"][name] != shown)
+    for name, shown in (local.get("characters") or {}).items():
+        if name in (incoming.get("characters") or {}) and incoming["characters"][name] != shown:
+            conflicts += 1
+            clash("character", name, shown, incoming["characters"][name])
     if people:
         out["characters"] = people
     chapters: dict[str, dict[str, str]] = {}
     for key in {*(incoming.get("chapters") or {}), *(local.get("chapters") or {})}:
         theirs, ours = (incoming.get("chapters") or {}).get(key, {}), (local.get("chapters") or {}).get(key, {})
-        conflicts += sum(1 for field in ours if field in theirs and theirs[field] != ours[field])
+        for field in ours:
+            if field in theirs and theirs[field] != ours[field]:
+                conflicts += 1
+                clash("chapter", key, ours[field], theirs[field])
         chapters[key] = {**theirs, **ours}
     if chapters:
         out["chapters"] = chapters
@@ -419,8 +438,10 @@ def merge(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, An
         out["skip"] = skip
     # Cách đọc riêng: như tên nhân vật - từ nào cả hai cùng đặt thì cách của máy này thắng.
     readings = {**(incoming.get("readings") or {}), **(local.get("readings") or {})}
-    conflicts += sum(1 for shown, spoken in (local.get("readings") or {}).items()
-                     if shown in (incoming.get("readings") or {}) and incoming["readings"][shown] != spoken)
+    for shown, spoken in (local.get("readings") or {}).items():
+        if shown in (incoming.get("readings") or {}) and incoming["readings"][shown] != spoken:
+            conflicts += 1
+            clash("reading", shown, spoken, incoming["readings"][shown])
     if readings:
         out["readings"] = dict(sorted(readings.items()))
     music: dict[str, Any] = {}
@@ -428,7 +449,9 @@ def merge(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, An
     for field in ("enabled", "levelDb", "playlist"):
         if field in local_music:
             music[field] = local_music[field]
-            conflicts += field in incoming_music and incoming_music[field] != local_music[field]
+            if field in incoming_music and incoming_music[field] != local_music[field]:
+                conflicts += 1
+                clash("music", field)
         elif field in incoming_music:
             music[field] = incoming_music[field]
     silenced = sorted({*(local_music.get("silenced") or []), *(incoming_music.get("silenced") or [])})
@@ -436,8 +459,10 @@ def merge(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, An
         music["silenced"] = silenced
     # Đổi bài: mốc nào cả hai cùng đổi thì bài của máy này thắng; thông tin bài chỉ giữ cho các bài còn được ghim.
     pins = {**(incoming_music.get("pins") or {}), **(local_music.get("pins") or {})}
-    conflicts += sum(1 for key, link in (local_music.get("pins") or {}).items()
-                     if key in (incoming_music.get("pins") or {}) and incoming_music["pins"][key] != link)
+    for key, link in (local_music.get("pins") or {}).items():
+        if key in (incoming_music.get("pins") or {}) and incoming_music["pins"][key] != link:
+            conflicts += 1
+            clash("music", "pins")
     if pins:
         wanted = {link[len(music_plan.LOCAL_PREFIX):] for link in pins.values()}
         known = {**(incoming_music.get("tracks") or {}), **(local_music.get("tracks") or {})}
@@ -449,13 +474,14 @@ def merge(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, An
 
     wishes, wish_conflicts = book_wishes.merge(local.get("wishes"), incoming.get("wishes"))
     conflicts += wish_conflicts
+    clashes.extend({"kind": "wish", "key": "", "kept": None, "lost": None} for _ in range(wish_conflicts))
     if wishes:
         out["wishes"] = wishes
     cover = None
     if isinstance(out.get("cover"), dict):
         cover = "local" if isinstance(local.get("cover"), dict) else "incoming"
     taken = count(out) - count(local)
-    return out, {"adopted": max(0, taken), "kept": count(local), "conflicts": conflicts, "cover": cover}
+    return out, {"adopted": max(0, taken), "kept": count(local), "conflicts": conflicts, "cover": cover}, clashes
 
 
 # ---- lớp phủ lên lớp sách ---------------------------------------------------------------------------------------
@@ -1088,7 +1114,7 @@ def subtract(folder: Path, sent: dict[str, Any], sent_cover: bytes | None) -> in
                 del edits["skip"][key]
         music, sent_music = edits.get("music"), sent.get("music")
         if music and sent_music:
-            for field in ("enabled", "levelDb", "playlist"):
+            for field in ("enabled", "levelDb"):  # `playlist` ở lại: máy kia không phản ánh nó trong sách, đây là nơi duy nhất nhạc được chọn
                 if field in sent_music and field in music and music[field] == sent_music[field]:
                     del music[field]
             kept = [key for key in music.get("silenced") or [] if key not in set(sent_music.get("silenced") or [])]
@@ -1130,6 +1156,40 @@ def subtract(folder: Path, sent: dict[str, Any], sent_cover: bytes | None) -> in
         if dropped:
             _drop_unused(folder, _base(folder), dropped)
         return count(edits)
+
+
+def sent_marks(edits: dict[str, Any], previous: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Phần của lớp sửa vừa gửi đi mà `subtract` cố ý GIỮ lại: cách đọc riêng và danh sách phát nhạc đã chọn. Máy kia nhận và giữ chúng, nhưng
+    sách nó trả về không mang chúng, nên bỏ khỏi lớp sửa ở đây là người nghe mất cách đọc / nhạc vừa đặt. Ghi lại (cộng `previous`: các
+    lần gửi trước) để `unmarked` không đếm chúng là chưa gửi."""
+    previous = previous or {}
+    out: dict[str, Any] = {}
+    readings = {**(previous.get("readings") or {}), **(edits.get("readings") or {})}
+    if readings:
+        out["readings"] = readings
+    music = dict(previous.get("music") or {})
+    if "playlist" in (edits.get("music") or {}):
+        music["playlist"] = edits["music"]["playlist"]
+    if music:
+        out["music"] = music
+    return out
+
+
+def unmarked(edits: dict[str, Any], marks: dict[str, Any]) -> dict[str, Any]:
+    """`edits` trừ những gì `marks` (`sent_marks` các lần gửi trước) đã nói là máy kia có rồi - để đếm phần CHƯA gửi. Không sửa `edits`."""
+    out = copy.deepcopy(edits)
+    readings = out.get("readings") or {}
+    for shown in list(readings):
+        if shown in (marks.get("readings") or {}) and marks["readings"][shown] == readings[shown]:
+            del readings[shown]
+    if not readings:
+        out.pop("readings", None)
+    music = out.get("music") or {}
+    if "playlist" in music and "playlist" in (marks.get("music") or {}) and marks["music"]["playlist"] == music["playlist"]:
+        del music["playlist"]
+    if not music:
+        out.pop("music", None)
+    return out
 
 
 def layer_files(folder: Path, edits: dict[str, Any]) -> dict[str, Path | bytes]:
@@ -1198,13 +1258,13 @@ def adopt(folder: Path, incoming: dict[str, Any], cover: bytes | None,
           member: Callable[[str, Path], None] | None = None, *, incoming_wins: bool = False) -> dict[str, Any]:
     """Nhập lại một file sách ĐÃ có trên máy mà file mang phần sửa: hợp vào phần sửa của máy (`merge`: máy này thắng) -
     không giải nén lại audio. `cover`: byte edits/cover.jpg của file (nếu có). `member(tên, đích)`: chép một mục của file ra
-    thư mục sách - cho file các bài nhạc người nghe đã ghim mà máy này chưa có. Trả báo cáo của `merge`.
+    thư mục sách - cho file các bài nhạc người nghe đã ghim mà máy này chưa có. Trả báo cáo của `merge` (kèm "clashes" của `merge_clashes` khi `incoming_wins`).
 
     `incoming_wins`: phần sửa đến SAU thắng (máy khác gửi phần sửa của người nghe về cuốn này - sync.py): khoá cả hai cùng đặt
     thì lấy bản gửi tới, `conflicts` vẫn là số khoá hai bên khác nhau; `adopted` / `kept` / `cover` của báo cáo khi ấy tính từ phía bản gửi tới."""
     folder = Path(folder)
     with _LOCK:
-        merged, report = merge(incoming, load(folder)) if incoming_wins else merge(load(folder), incoming)
+        merged, report, clashes = merge_clashes(incoming, load(folder)) if incoming_wins else (*merge(load(folder), incoming), [])
         if report["cover"] == ("local" if incoming_wins else "incoming") and cover is not None:
             atomic_write_bytes(folder / EDITS_COVER, cover)
         if member is not None:
@@ -1213,7 +1273,7 @@ def adopt(folder: Path, incoming: dict[str, Any], cover: bytes | None,
                 if not target.is_file():
                     member(name, target)
         save(folder, merged)
-    return report
+    return {**report, "clashes": clashes} if incoming_wins else report
 
 
 # ---- chủ máy sản xuất mở file đã sửa: áp vào dự án của mình --------------------------------------------------------
