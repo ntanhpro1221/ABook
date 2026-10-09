@@ -82,10 +82,13 @@ export function OtherComputers() {
   const pair = useMutation({
     mutationFn: () => api<ComputersView>("/api/computers", { method: "POST", body: { address, code } }),
     onSuccess: (view) => {
+      // Máy vừa ghép = máy có trong danh sách mới mà danh sách cũ chưa có: nói tên thật, không để mẫu “<tên máy>” (soát UX a11).
+      const known = new Set(data?.computers.map((computer) => computer.id));
+      const name = view.computers.find((computer) => !known.has(computer.id))?.name;
       done(view);
       setAddress("");
       setCode("");
-      toast.success("Đã ghép", { description: "Sách của máy ấy hiện trong Thư viện với nhãn “Trên <tên máy>”." });
+      toast.success("Đã ghép", { description: name ? `Sách của ${name} hiện trong Thư viện với nhãn “Trên ${name}”.` : "Sách của máy ấy hiện trong Thư viện với nhãn “Trên” và tên máy ấy." });
     },
     onError: (error: Error) => toast.error("Chưa ghép được", { description: error.message }),
   });
@@ -142,7 +145,7 @@ export function OtherComputers() {
       {data.computers.length > 0 && (
         <ul className="divide-y divide-line rounded-xl border border-line">
           {data.computers.map((computer) => (
-            <li key={computer.id} className="flex items-center gap-3 px-3 py-2.5">
+            <li key={computer.id} className="flex items-center gap-3 px-3 py-2.5 max-sm:flex-wrap">
               <Laptop className="size-5 shrink-0 text-fg-2" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{computer.name}</div>
@@ -174,6 +177,8 @@ export function OtherComputers() {
                   </div>
                 )}
               </div>
+              {/* Điện thoại không có chú giải khi rê chuột: ba nút chỉ có biểu tượng thành ba nút có chữ, xuống hàng riêng (soát UX a11). */}
+              <div className="ml-auto flex shrink-0 items-center gap-1 max-sm:w-full max-sm:justify-end max-sm:gap-2">
               {!isBluetoothHost(computer.host) && (
                 <BluetoothFallback
                   computer={computer}
@@ -182,8 +187,15 @@ export function OtherComputers() {
                   onChoose={(address) => setBluetooth.mutate({ id: computer.id, address })}
                 />
               )}
-              <IconButton label="Hỏi lại thư viện" icon={RefreshCw} size="sm" disabled={refresh.isPending} onClick={() => refresh.mutate()} />
-              <IconButton label={`Thôi ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} />
+              <IconButton label="Hỏi lại thư viện" icon={RefreshCw} size="sm" disabled={refresh.isPending} onClick={() => refresh.mutate()} className="max-sm:hidden" />
+              <Button size="sm" variant="ghost" icon={RefreshCw} disabled={refresh.isPending} onClick={() => refresh.mutate()} className="sm:hidden" aria-label="Hỏi lại thư viện">
+                Hỏi lại
+              </Button>
+              <IconButton label={`Thôi ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} className="max-sm:hidden" />
+              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => void unpair.start(computer)} className="sm:hidden" aria-label={`Thôi ghép ${computer.name}`}>
+                Thôi ghép
+              </Button>
+              </div>
             </li>
           ))}
         </ul>
@@ -310,11 +322,12 @@ function BluetoothFallback({
           aria-label={`Dự phòng qua Bluetooth cho ${computer.name}`}
           disabled={busy}
           className={cn(
-            "inline-flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg",
+            "inline-flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg max-sm:h-9 max-sm:w-auto max-sm:px-2.5",
             current ? "text-accent-text" : "text-fg-2",
           )}
         >
           <Bluetooth className="size-[18px]" strokeWidth={2} />
+          <span className="ml-1.5 text-sm sm:hidden">Bluetooth</span>
         </DropdownMenu.Trigger>
       </Tooltip>
       <DropdownMenu.Portal>

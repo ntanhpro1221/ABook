@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, C
 import { useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
+import { holderName } from "@/shared/editsSync";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { syncsToComputer } from "@/shared/capabilities";
@@ -753,6 +754,9 @@ export function BookScreen({
   const [recordDialog, setRecordDialog] = useState<RecordDialog>(null);
   const [finding, setFinding] = useState(false);
   const { data: castView } = useCast(id);
+  // Sách của máy khác đã tải về máy: dòng "Đã tải về máy" (desktop/RemoteDownload.tsx, cùng khoá truy vấn) đã nói đủ, bỏ dòng "Nghe thẳng"
+  // đi cùng nó - hai dòng ngược nghĩa nhau (soát UX a11). Chỉ đọc bộ nhớ tạm, không tự hỏi máy chủ.
+  const downloaded = useQuery<{ state?: string }>({ queryKey: ["listen", "download", id], enabled: false }).data?.state === "done";
   // Hook không được đặt sau `return` sớm: cuốn chưa nạp xong thì dùng một cuốn rỗng (nút lưu chưa hiện lúc ấy).
   const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
   const sharer = useShareBook(book ?? ({ id: id ?? "" } as ListenBook));
@@ -872,7 +876,7 @@ export function BookScreen({
               {studioLink?.(book)}
             </p>
           )}
-          {book.remote && (
+          {book.remote && !downloaded && (
             <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-full bg-info-soft px-3 py-1 text-xs font-medium text-info">
               <Laptop className="size-3.5" />{" "}
               {typeof book.remote === "object"
@@ -907,7 +911,7 @@ export function BookScreen({
                 onClick={() => (finished ? restart() : listening ? player.toggle() : void playBook(book))}
                 // Điện thoại: nút chính một hàng riêng, các nút phụ luôn ở hàng dưới theo cùng thứ tự - nhãn đổi độ dài khi
                 // phát/dừng từng làm hàng xuống dòng khác đi, "Từ đầu" nhảy sang chỗ nút khác (soát UX 29-09).
-                className="max-sm:w-full"
+                className="min-w-0 max-w-full max-sm:w-full"
               >
                 {/* Tên chương dài (truyện dịch) hay chữ hệ thống to: cắt "…" trong nút thay vì tràn ra hai mép màn hình (soát UX a9). */}
                 <span className="min-w-0 truncate">{primaryLabel}</span>
@@ -995,7 +999,7 @@ export function BookScreen({
                       )}
                       {!workshop && Boolean(book.wishes) && (
                         <DropdownMenu.Item onSelect={() => setWishesOpen(true)} className={MENU_ITEM}>
-                          <Hourglass className="size-4" /> Việc đang chờ {syncs ? "gửi về máy tính" : "máy làm sách"} ({book.wishes})
+                          <Hourglass className="size-4" /> Việc đang chờ {syncs ? `gửi về ${holderName(book.remote)}` : "máy làm sách"} ({book.wishes})
                         </DropdownMenu.Item>
                       )}
                     </>

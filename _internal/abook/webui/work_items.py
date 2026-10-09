@@ -20,7 +20,7 @@ from typing import Any, Callable
 from .. import names as renames
 from .. import narrator_sections
 from ..listener_overrides import (
-    NARRATOR, UNNAMED, pronunciation_requests, read_overrides, speaker_requests, surface_key, voice_requests,
+    NARRATOR, NO_VOICE, UNNAMED, pronunciation_requests, read_overrides, speaker_requests, speaker_target, surface_key, voice_requests,
 )
 from .. import speaker_logprobs
 from . import narrator_cards, store
@@ -95,6 +95,36 @@ def _example(row: Any, names: dict[int, dict[str, Any]], label: Callable[[str], 
         # Chỉ câu đã có bản thu (file còn nằm trong thư mục sách) mới nghe được; câu chưa thu vẫn là ví dụ ngữ cảnh.
         "hasAudio": _has_audio(row, project_root),
     }
+
+
+def _refine_speaker_cards(project_root: Path, items: list[dict[str, Any]]) -> None:
+    """Hai việc cho thẻ gán người nói cho MỘT câu (“Ai nói câu này”), cả hai chỉ làm thẻ dễ quyết hơn:
+    - gắn câu liền trước và liền sau (mọi người nói) vào câu ví dụ - `before` / `after`: không thấy ai vừa nói, ai được nhắc tới thì không quyết được;
+    - bỏ khỏi lựa chọn người CHƯA có giọng trong sách (chưa nói câu nào): bấm vào chỉ ra lỗi "chưa gán được" (`listener_overrides.speaker_target`
+      cùng phép thử với lúc ghi yêu cầu, nên chip còn lại luôn bấm được)."""
+    cards = [item for item in items if item["kind"] == "speaker" and len(item["examples"]) == 1]
+    if not cards:
+        return
+    with closing(store.connect(project_root)) as connection:
+        for item in cards:
+            example = item["examples"][0]
+            rows = connection.execute("SELECT seq, text FROM segments WHERE chapter_id = ? AND seq IN (?, ?)",
+                                      (example["chapterId"], example["seq"] - 1, example["seq"] + 1)).fetchall()
+            around = {int(row[0]): str(row[1]) for row in rows}
+            for key, seq in (("before", example["seq"] - 1), ("after", example["seq"] + 1)):
+                if around.get(seq, "").strip():
+                    example[key] = around[seq]
+            lines = item.get("lines") or []
+            if len(lines) != 1 or not item.get("choices"):
+                continue
+            voiceless = {choice["value"] for choice in item["choices"]
+                         if choice["value"] not in (NARRATOR, UNNAMED)
+                         and speaker_target(connection, stable_id=lines[0]["stableId"], text_sha256=lines[0]["textSha256"],
+                                            speaker=choice["value"])[1] == NO_VOICE}
+            if voiceless:
+                gone = {choice["label"] for choice in item["choices"] if choice["value"] in voiceless}
+                item["choices"] = [choice for choice in item["choices"] if choice["value"] not in voiceless]
+                item["options"] = [option for option in item["options"] if option not in gone]
 
 
 def _cast_choices(spoken: list[Any], chapter_ids: set[int], leave_out: set[str],
@@ -1106,6 +1136,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
 
     # Chương của các câu mỗi thẻ sẽ đổi (hay của câu ví dụ, với thẻ không đổi câu nào cụ thể): "Duyệt trước khi thu"
     # (precast.py) hỏi trước những thẻ ở các chương sắp thu.
+    _refine_speaker_cards(project_root, items)
     chapter_of = {str(row["stable_id"]): int(row["chapter_id"]) for row in spoken}
     for item in items:
         item["chapters"] = sorted({chapter_of[line["stableId"]] for line in item.get("lines") or ()

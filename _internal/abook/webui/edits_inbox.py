@@ -159,9 +159,31 @@ def _theirs(layer: dict[str, Any], cover: bytes | None) -> dict[str, Any]:
 
 
 _WHAT = {"title": "Tên sách", "cover": "Ảnh bìa", "characters": "Tên nhân vật", "chapters": "Tên chương", "music": "Nhạc nền"}
+HOST = "máy kia"  # `sender_label` nói theo góc nhìn NGƯỜI GỬI, nơi lời báo hiện ra: máy giữ sách là "máy kia" (bên gửi thêm tên máy)
 
 
-def _conflicts(project: Path, device: str, name: str, layer: dict[str, Any], cover: bytes | None, local: Any) -> list[dict[str, str]]:
+def _quoted(value: Any) -> str:
+    text = " ".join(str(value).split()) if isinstance(value, str) else ""
+    return f"“{text[:40]}{'…' if len(text) > 40 else ''}”" if text else ""
+
+
+def conflict(kind: str, key: str, what: str, label: str, lost: Any = None, kept: Any = None) -> dict[str, Any]:
+    """Một khoá hai bên đặt khác nhau. `label`: câu cho CHỦ MÁY giữ sách (hộp thư, lịch sử nhận); `what`/`lost`/`kept` (thứ gì, giá trị
+    ở máy giữ sách, giá trị người gửi vừa gửi) để máy gửi tự viết lại câu cho mình (`sender_label`)."""
+    return {"kind": kind, "key": key, "label": label, "what": what, "lost": _quoted(lost), "kept": _quoted(kept)}
+
+
+def sender_label(item: dict[str, Any], host: str) -> str:
+    """Câu báo xung đột cho người GỬI: thứ gì đã đổi ở máy giữ sách `host` sau lần gửi trước, và bản vừa gửi đã thay vào."""
+    where = f"{HOST} ({host})" if host else HOST
+    if item.get("lost") and item.get("kept"):
+        return f"{item['what']}: {where} đã đổi thành {item['lost']} trước đó, bản của bạn {item['kept']} đã thay vào"
+    if item.get("what"):
+        return f"{item['what']}: {where} đã đổi khác trước đó, bản của bạn đã thay vào"
+    return str(item.get("label") or "")  # máy kia cũ không gửi các khoá trên: giữ câu của nó
+
+
+def _conflicts(project: Path, device: str, name: str, layer: dict[str, Any], cover: bytes | None, local: Any) -> list[dict[str, Any]]:
     """Khoá mà chủ máy (hay thiết bị khác) đã đặt khác, KỂ TỪ lần trước thiết bị này gửi: bản của điện thoại vẫn thắng (đến
     sau thắng) nhưng người dùng được báo. Khoá chưa có giá trị riêng ở máy tính, hay đang đúng giá trị điện thoại gửi lần trước,
     hay đúng giá trị điện thoại gửi lần này: không phải xung đột."""
@@ -177,16 +199,21 @@ def _conflicts(project: Path, device: str, name: str, layer: dict[str, Any], cov
 
     for section in ("title", "cover"):
         if section in mine and differs(section):
-            found.append({"kind": section, "key": "", "label": f"{_WHAT[section]}: máy tính đã có bản riêng, đã thay bằng bản từ {name}"})
+            found.append(conflict(section, "", _WHAT[section], f"{_WHAT[section]}: máy tính đã có bản riêng, đã thay bằng bản từ {name}",
+                                  mine.get(section) if section == "title" else None, theirs.get(section) if section == "title" else None))
     for key in (mine.get("characters") or {}):
         if differs("characters", key):
-            found.append({"kind": "character", "key": key, "label": f"{_WHAT['characters']}: máy tính đã đặt “{mine['characters'][key]}”, đã thay bằng bản từ {name}"})
+            found.append(conflict("character", key, _WHAT["characters"],
+                                  f"{_WHAT['characters']}: máy tính đã đặt “{mine['characters'][key]}”, đã thay bằng bản từ {name}",
+                                  mine["characters"][key], (theirs.get("characters") or {}).get(key)))
     for key in (mine.get("chapters") or {}):
         if differs("chapters", key):
-            found.append({"kind": "chapter", "key": key, "label": f"{_WHAT['chapters']} (mã {key}): máy tính đã đặt lại, đã thay bằng bản từ {name}"})
+            found.append(conflict("chapter", key, f"{_WHAT['chapters']} (mã {key})",
+                                  f"{_WHAT['chapters']} (mã {key}): máy tính đã đặt lại, đã thay bằng bản từ {name}"))
     for key in (mine.get("music") or {}):
         if differs("music", key):
-            found.append({"kind": "music", "key": key, "label": f"{_WHAT['music']} ({'bật/tắt' if key == 'enabled' else 'mức to'}): máy tính đã chọn khác, đã thay bằng bản từ {name}"})
+            what = f"{_WHAT['music']} ({'bật/tắt' if key == 'enabled' else 'mức to'})"
+            found.append(conflict("music", key, what, f"{what}: máy tính đã chọn khác, đã thay bằng bản từ {name}"))
     return found
 
 

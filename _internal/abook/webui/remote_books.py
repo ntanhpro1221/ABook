@@ -197,7 +197,7 @@ def unsent_edits(library_root: Path, computer: str) -> list[dict[str, Any]]:
             continue
         for package, manifest in sorted(_manifests(folder), key=lambda item: item[0].name):
             edits = book_edits.load(package)
-            changes = book_edits.count(edits)
+            changes = pending_changes(package, edits)
             if changes:
                 # Tên người nghe THẤY (đã sửa), không phải tên gốc trong gói: hộp gỡ ghép nói cuốn nào sẽ mất phần sửa.
                 title = book_edits.apply_manifest(manifest, edits).get("title")
@@ -1044,10 +1044,25 @@ def _last_sent(package: Path) -> dict[str, Any] | None:
 def edits_state(package: Path) -> dict[str, Any]:
     """`editsSync` của cuốn (cùng hình dạng điện thoại trả - ui/src/shared/editsSync.ts): số thay đổi CHƯA gửi (gửi xong là gỡ khỏi
     lớp sửa, nên số còn lại chính là phần chưa tới máy kia) và kết quả lần gửi gần nhất."""
-    return {"pending": book_edits.count(book_edits.load(package)), "last": _last_sent(package)}
+    last = _last_sent(package)
+    return {"pending": pending_changes(package), "last": {key: value for key, value in last.items() if key != "kept"} if last else None}
+
+
+def _sent_marks(package: Path) -> dict[str, Any]:
+    """`book_edits.sent_marks` của các lần gửi trước (nằm trong `sync_edits.json`, khoá `kept`): cách đọc, danh sách phát đã tới máy kia mà vẫn nằm ở đây."""
+    kept = (_last_sent(package) or {}).get("kept")
+    return kept if isinstance(kept, dict) else {}
+
+
+def pending_changes(package: Path, edits: dict[str, Any] | None = None) -> int:
+    """Số thay đổi CHƯA tới máy kia: lớp sửa trừ phần đã gửi mà vẫn giữ lại ở đây (cách đọc, nhạc đã chọn)."""
+    edits = book_edits.load(package) if edits is None else edits
+    return book_edits.count(book_edits.unmarked(edits, _sent_marks(package)))
 
 
 def _remember_send(package: Path, state: dict[str, Any]) -> None:
+    if "kept" not in state and _sent_marks(package):
+        state = {**state, "kept": _sent_marks(package)}  # lần gửi lỗi không làm quên cái đã gửi trước đó
     temporary = package / (EDITS_STATE + ".tmp")
     temporary.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
     temporary.replace(package / EDITS_STATE)
@@ -1058,7 +1073,7 @@ def send_edits(package: Path) -> dict[str, Any]:
     qua `POST /sync/v1/books/<mã>/edits`. Máy kia nhận xong: lấy lại bản mới của sách (đã mang các sửa ấy) rồi gỡ đúng những gì đã gửi
     khỏi lớp sửa của máy này (`book_edits.subtract`). Lỗi: ghi lại (lớp sửa giữ nguyên, lần sau gửi lại) rồi `RemoteError`.
     Trả `edits_state` mới."""
-    from .edits_inbox import MAX_PACKAGE_BYTES
+    from .edits_inbox import MAX_PACKAGE_BYTES, sender_label
     from .packages import manifest
 
     package = Path(package).resolve()
@@ -1100,9 +1115,9 @@ def send_edits(package: Path) -> dict[str, Any]:
         _reload(package, entry, book)  # bản mới của máy kia đã mang các sửa: lấy về TRƯỚC khi gỡ lớp sửa để không chớp bản cũ
         book_edits.subtract(package, edits, cover)
         _remember_send(package, {
-            "state": "sent", "at": time.time(),
+            "state": "sent", "at": time.time(), "kept": book_edits.sent_marks(edits, _sent_marks(package)),
             **{key: int(reply.get(key) or 0) for key in ("applied", "skipped", "requests", "waiting", "skippedWishes")},
-            "conflicts": [str(item.get("label")) for item in reply.get("conflicts") or [] if isinstance(item, dict) and item.get("label")],
+            "conflicts": [sender_label(item, entry["name"]) for item in reply.get("conflicts") or [] if isinstance(item, dict) and item.get("label")],
         })
         return edits_state(package)
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { editsSyncNote, type EditsSyncState } from "./editsSync";
+import { editsSyncNote, holderName, sentToast, type EditsSyncState } from "./editsSync";
 
 const sent = (over: Partial<NonNullable<EditsSyncState["last"]>> = {}): EditsSyncState => ({
   pending: 0,
@@ -46,5 +46,22 @@ describe("tình trạng gửi phần sửa về máy tính", () => {
   it("còn thay đổi mới sau lần gửi thành công: nói phần chưa gửi", () => {
     const note = editsSyncNote({ pending: 1, last: { state: "sent", at: 1 } })!;
     expect(note.tone).toBe("pending");
+  });
+
+  it("nói tên máy giữ sách khi biết (hai máy đều là máy tính)", () => {
+    expect(holderName({ computer: "Lecoo" })).toBe("Lecoo");
+    expect(holderName(true)).toBe("máy tính");
+    expect(editsSyncNote({ pending: 2, last: null }, "Lecoo")!.title).toBe("2 thay đổi đang chờ gửi về Lecoo");
+    expect(editsSyncNote(sent({ applied: 1, conflicts: ["x"] }), "Lecoo")!.lines).toEqual(["1 thay đổi đã áp trên Lecoo", "x"]);
+  });
+
+  it("thông báo sau khi gửi không lặp lời dặn của dòng tình trạng", () => {
+    expect(sentToast({ pending: 0, last: { state: "sent", at: 1, applied: 2 } }, "Lecoo")).toEqual({
+      title: "Đã gửi về Lecoo",
+      description: "2 thay đổi đã áp trên Lecoo",
+    });
+    const left = sentToast({ pending: 1, last: { state: "sent", at: 1 } }, "Lecoo");
+    expect(left.description).toBe("Còn 1 thay đổi chưa gửi được - sẽ thử lại khi tới được Lecoo.");
+    expect(left.description).not.toMatch(/Tự gửi khi/);
   });
 });

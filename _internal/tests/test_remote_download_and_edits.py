@@ -185,7 +185,8 @@ def test_edits_made_on_this_computer_reach_the_other_computer_like_a_phones(libr
         app.rename(value, "Máy B đặt lần hai")
         state = app.send_remote_edits(value)
         (conflict,) = state["last"]["conflicts"]
-        assert socket_name() in conflict and store.display_title(project, "") == "Máy B đặt lần hai"
+        assert "Máy kia" in conflict and "Chủ máy A đặt lại" in conflict and socket_name() not in conflict, "báo theo góc nhìn máy gửi"
+        assert store.display_title(project, "") == "Máy B đặt lần hai"
     finally:
         other.stop()
 
@@ -278,6 +279,29 @@ def test_discarding_drops_the_edits_with_the_folder(library, tmp_path: Path) -> 
         app.forget_computer(computer, "discard")
         assert not path.exists() and app.computers_view()["computers"] == []
         assert store.display_title(project, "") != "Bỏ đi", "không gửi gì về máy kia"
+    finally:
+        other.stop()
+
+
+def test_a_sent_reading_and_playlist_stay_here_but_are_no_longer_pending(library, tmp_path: Path) -> None:  # noqa: F811
+    """Cách đọc và nhạc đã chọn tới máy kia rồi thì không còn "chờ gửi" (thôi ghép không hỏi), nhưng vẫn ở lớp sửa - sách máy kia trả về không mang chúng."""
+    app, other, _sync, _project, _devices, computer, value, path = _two_computers(library, tmp_path)
+    try:
+        book_edits.set_reading(path, "Lucien", "Lu-xi-en")
+        book_edits.set_music(path, {"playlist": "school_light"})
+        assert app.listen_book(value)["editsSync"]["pending"] == 2
+        state = app.send_remote_edits(value)
+        assert state["pending"] == 0 and "kept" not in (state["last"] or {})
+        left = book_edits.load(path)
+        assert left["readings"] == {"Lucien": "Lu-xi-en"} and left["music"]["playlist"] == "school_light"
+        assert app.unsent_computer_edits(computer)["changes"] == 0
+
+        book_edits.set_reading(path, "Lucien", "Lu-xiên")  # sửa tiếp sau khi đã gửi: chỉ phần mới chờ gửi
+        assert app.listen_book(value)["editsSync"]["pending"] == 1
+        app.rename(value, "Tên mới")
+        assert app.send_remote_edits(value)["pending"] == 0
+        app.forget_computer(computer)
+        assert not path.exists()
     finally:
         other.stop()
 
