@@ -7,6 +7,7 @@ import { api } from "@/studio/api";
 import { Button, Dialog, Skeleton } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { formatDate, formatRelative } from "@/shared/format";
+import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
 
 // Hợp đồng với server (webui/server.py: sync_view). Máy chủ đồng bộ chỉ chạy khi người dùng bật; mã ghép nối chỉ
 // có khi người dùng bấm "Ghép thiết bị mới", sống 5 phút, dùng một lần, sai 5 lần là bị huỷ. Cùng mã ghép cả điện
@@ -247,7 +248,7 @@ export function PhoneSync() {
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-6">
         <label htmlFor="phone-sync" className="min-w-0 cursor-pointer">
-          <span className="block text-sm font-medium">Cho phép thiết bị khác kết nối qua Wi-Fi</span>
+          <span className="block text-sm font-medium">{SYNC_SWITCH_LABEL}</span>
           <span className={cn("mt-0.5 block text-[13px]", failing ? "text-danger" : "text-fg-2")}>
             {sync.enabled
               ? `Điện thoại và máy tính cùng mạng sẽ thấy máy này với tên “${sync.name}”.`

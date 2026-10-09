@@ -185,9 +185,31 @@ describe("addRest (“Thêm tất cả phần còn lại”)", () => {
     ]);
     expect(items[2].note).toBe("File EPUB bị hỏng.");
     expect(added.map((entry) => entry.name)).toEqual(["b.epub"]);
-    expect(seen).toEqual(["b.epub", "hong.epub", "c.epub"]);
+    expect(seen).toEqual(["c.epub", "hong.epub", "b.epub"]); // từ cuốn cuối về trước: thư viện xếp cuốn mới lên đầu
     expect(importer.discard).toHaveBeenCalledTimes(1); // bản tạm của cuốn hỏng
     expect(summarize(items)).toEqual({ added: 2, existing: 1, skipped: 0, failed: 2, opened: 0 });
+  });
+
+  it("adds the book being viewed last, so the library (newest on top) shows the batch in the order picked", async () => {
+    const queue = buildQueue([ok("a.epub"), ok("b.epub"), ok("c.epub")]);
+    const { importer, added } = fakeImporter({ "b.epub": preview("B"), "c.epub": preview("C") });
+    const order: string[] = [];
+    const items = await addRest(
+      importer,
+      queue,
+      queue[0].id,
+      async () => {
+        order.push(...added.map((entry) => entry.name), "a.epub");
+        return { state: "added", bookId: "id-a" };
+      },
+      { openBooks: async (rest) => rest },
+    );
+    expect(order).toEqual(["c.epub", "b.epub", "a.epub"]);
+    expect(items.map((item) => [item.name, item.state])).toEqual([
+      ["a.epub", "added"],
+      ["b.epub", "added"],
+      ["c.epub", "added"],
+    ]);
   });
 
   it("leaves the .abook files for openBooks, after the text books", async () => {

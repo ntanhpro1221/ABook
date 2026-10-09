@@ -142,18 +142,22 @@ export async function advanceQueue(
   }
 }
 
+type QueueResult = Pick<QueueItem, "state" | "note" | "bookId">;
+
 /** "Thêm tất cả phần còn lại": `current` là kết quả của cuốn đang xem (người dùng đã thêm hay bỏ qua nó đúng như đang hiện - chỗ gọi lo); các cuốn chờ SAU nó
  *  đi `addWithDefaults`, lỗi ghi vào hàng và đi tiếp. File sách .abook để `openBooks` làm sau cùng. */
 export async function addRest(
   importer: Pick<TextImport, "preview" | "add" | "discard">,
   start: readonly QueueItem[],
   currentId: number,
-  current: Pick<QueueItem, "state" | "note" | "bookId">,
+  current: QueueResult | (() => Promise<QueueResult>),
   hooks: { working?: (name: string) => void; changed?: (items: QueueItem[]) => void; openBooks: (items: QueueItem[]) => Promise<QueueItem[]> },
 ): Promise<QueueItem[]> {
-  let items = settle(start, currentId, current);
+  // Thư viện xếp cuốn vừa vào lên đầu: thêm từ cuốn CUỐI về cuốn đang xem (hàm `current` chạy sau cùng) để cả lô hiện đúng thứ tự đã chọn
+  // (soát UX a10: ba file chọn theo thứ tự A, B, C hiện ra C, B, A).
+  let items = typeof current === "function" ? [...start] : settle(start, currentId, current);
   hooks.changed?.(items);
-  for (const item of waitingAfter(items, currentId)) {
+  for (const item of [...waitingAfter(items, currentId)].reverse()) {
     if (!item.choice || isBookFile(item.choice.ref)) continue;
     hooks.working?.(item.name);
     try {
@@ -162,6 +166,10 @@ export async function addRest(
       void importer.discard?.(item.choice).catch(() => undefined);
       items = settle(items, item.id, { state: "error", note: (error as Error).message });
     }
+    hooks.changed?.(items);
+  }
+  if (typeof current === "function") {
+    items = settle(items, currentId, await current());
     hooks.changed?.(items);
   }
   return hooks.openBooks(items);

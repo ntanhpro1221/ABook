@@ -235,7 +235,9 @@ def test_forgetting_a_computer_is_refused_while_edits_are_unsent_and_changes_not
         book_edits.set_chapter_title(path, 1, "Chương mở đầu")
         view = app.unsent_computer_edits(computer)
         assert view["changes"] == 2 and view["sendable"] is True
+        assert view["reachable"] is True, "máy kia đang bật: hộp mời Gửi trước"
         assert [item["changes"] for item in view["books"]] == [2]
+        assert [item["title"] for item in view["books"]] == ["Tên đặt ở máy B"], "hộp gỡ ghép nói tên đã sửa, không phải tên gốc"
 
         with pytest.raises(ApiError, match="1 cuốn còn 2 thay đổi chưa gửi") as refused:
             app.forget_computer(computer)
@@ -261,6 +263,7 @@ def test_send_first_that_fails_keeps_the_pairing_and_every_edit(library, tmp_pat
     app, other, _sync, _project, _devices, computer, value, path = _two_computers(library, tmp_path)
     other.stop()
     app.rename(value, "Máy kia đã tắt")
+    assert app.unsent_computer_edits(computer)["reachable"] is False, "hộp phải biết máy kia đã tắt, không tin trạng thái cũ"
     with pytest.raises(ApiError) as failed:
         app.forget_computer(computer, "send")
     assert failed.value.status == 502

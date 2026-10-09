@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { RowBoundary } from "@/shared/RowBoundary";
 import { etaOf, formatPercent, formatRelative } from "@/shared/format";
 import { Button, EmptyState, Progress, Skeleton, StatusPill } from "@/shared/ui";
 import type { BookSummary } from "./api";
@@ -15,7 +16,22 @@ import { groupParts, splitLive, type Entry } from "./projectGroups";
 // Studio: nơi làm sách. Danh sách là bảng công việc - trạng thái sản xuất, tiến độ, thời gian còn lại - chứ không
 // phải kệ sách (kệ sách là của phía Nghe).
 
+/** Một hàng lỗi khi vẽ (dữ liệu thiếu) chỉ làm hàng ấy báo "Không đọc được", không trắng cả danh sách. */
 function ProjectRow({ book }: { book: BookSummary }) {
+  return (
+    <RowBoundary
+      fallback={
+        <div className="rounded-xl border border-dashed border-line px-4 py-2 text-sm">
+          <span className="font-medium">{book.title}</span> <span className="text-xs text-danger">Không đọc được dự án này</span>
+        </div>
+      }
+    >
+      <ProjectRowBody book={book} />
+    </RowBoundary>
+  );
+}
+
+function ProjectRowBody({ book }: { book: BookSummary }) {
   const navigate = useNavigate();
   // Đổi tên / xoá chỉ trên máy này (remote_studio.ALLOWED không có hai đường ấy).
   const local = !useAppInfo().data?.remote;
