@@ -24,9 +24,10 @@ import vn.abook.player.vieneu.VieneuVoices
  * - Giọng dùng khoá của người dùng (OnlineVoices.kt): `onlineProviders()` -> `{providers: [...]}` (khoá chỉ ở dạng che), `setOnlineKey({provider, key, region})`,
  *   `removeOnlineKey({provider})`, `checkOnlineKey({provider})` -> `{ok, reason?, message?, voices?, provider}`. Khoá đi vào qua lệnh plugin, không bao giờ ra lại.
  * - Mô-đun "Giọng VieNeu" (vieneu/VieneuModule.kt, cùng hình trạng thái với máy tính - ui/src/listen/vieneuModule.ts): `vieneuStatus()`,
- *   `vieneuStart({choices?})` (không có `choices`: cập nhật phần cũ), `vieneuMeasure()` (đo lại tốc độ), `vieneuRemove({choice})` - đều trả trạng thái mới.
+ *   `vieneuStart({choices?})` (không có `choices`: cập nhật phần cũ), `vieneuMeasure()` (đo lại tốc độ), `vieneuRemove({choice})`,
+ *   `vieneuCancel()` (Huỷ khi đang tải: dừng ở nhịp đọc kế, `.part` giữ để lần sau tải tiếp; trạng thái kèm `cancelled`, `cancellable`) - đều trả trạng thái mới.
  * - Mô-đun "Giọng Supertonic" (readaloud/SupertonicModule.kt, cùng hình): `supertonicStatus()`, `supertonicStart({choices?})`, `supertonicMeasure()`,
- *   `supertonicRemove({choice})`.
+ *   `supertonicRemove({choice})`, `supertonicCancel()`.
  * - "Làm trước" (PrepareAhead.kt): `preparePlan({bookId, voice, chapterIds})` -> `{chapters, offered, audioSeconds, secondsEstimate}` (ước trước khi bấm);
  *   `prepareStart({bookId, voice, chapterIds, label, chargingOnly})`, `prepareStatus()`, `prepareCancel()`, `prepareOptions({chargingOnly})` -> trạng thái
  *   (`PrepareStatus` của ui/src/listen/prepareAhead.ts). Sự kiện `readAloudPrepare` (trạng thái) sau mỗi đoạn và mỗi lần đổi.
@@ -193,6 +194,12 @@ class ReadAloudPlugin : Plugin() {
     }
 
     @PluginMethod
+    fun vieneuCancel(call: PluginCall) {
+        VieneuVoices.module(context).cancel()
+        resolveVieneu(call)
+    }
+
+    @PluginMethod
     fun vieneuMeasure(call: PluginCall) {
         VieneuVoices.module(context).measureAgain()
         resolveVieneu(call)
@@ -212,6 +219,12 @@ class ReadAloudPlugin : Plugin() {
         } catch (error: IllegalArgumentException) {
             call.reject(error.message ?: "Lựa chọn lạ")
         }
+    }
+
+    @PluginMethod
+    fun supertonicCancel(call: PluginCall) {
+        SupertonicVoices.module(context).cancel()
+        resolveSupertonic(call)
     }
 
     @PluginMethod

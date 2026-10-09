@@ -26,7 +26,7 @@ object LocalStudio {
     private val CHAPTER_RETAKE = Regex("/chapters/([0-9]+)/retake")
     private val CASTING_CHAPTER = Regex("/casting/([0-9]+)")
     private val SCENE_ALTERNATIVES = Regex("/music/scenes/([^/]+)/alternatives")
-    private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze)|/(module)|/(reanalyse))?")
+    private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze)|/(module)|/(reanalyse)|/(module/cancel))?")
     private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins", "playlist")
     private val lock = Any()
 
@@ -100,12 +100,17 @@ object LocalStudio {
         }
 
     /** `/api/music/local...`: kho nhạc của máy, không thuộc cuốn nào. Nhập file đi qua hộp chọn file của hệ thống (LibraryPlugin.pickMusic). */
-    private fun myMusic(method: String, digest: String?, analyze: Boolean, download: Boolean, reanalyse: Boolean): Pair<Int, Any?> {
+    private fun myMusic(method: String, digest: String?, analyze: Boolean, download: Boolean, reanalyse: Boolean, cancel: Boolean): Pair<Int, Any?> {
         val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
         return when {
             method == "POST" && download -> {
                 // Người dùng bấm "Tải bộ phân tích": chạy ở luồng riêng, giao diện hỏi lại view để thấy tiến độ.
                 (student ?: throw Api(404, "Không có đường dẫn này")).start()
+                200 to musicView()
+            }
+            method == "POST" && cancel -> {
+                // Người dùng bấm Huỷ khi đang tải: dừng ở nhịp đọc kế, phần đã tải giữ để lần sau làm tiếp.
+                (student ?: throw Api(404, "Không có đường dẫn này")).cancel()
                 200 to musicView()
             }
             method == "POST" && reanalyse -> {
@@ -131,7 +136,7 @@ object LocalStudio {
     private fun run(method: String, rawPath: String, body: JSONObject): Pair<Int, Any?> {
         val path = rawPath.substringBefore('?') // tham số của GET do giao diện gửi trong `body` (android/localStudio.ts)
         if (method == "GET" && path == "/api/music/playlists") return 200 to playlistsView()
-        MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null, it.groups[3] != null, it.groups[4] != null) }
+        MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null, it.groups[3] != null, it.groups[4] != null, it.groups[5] != null) }
         val match = ROUTE.matchEntire(path) ?: throw Api(404, "Không có đường dẫn này")
         val id = match.groupValues[1]
         val rest = match.groupValues[2]

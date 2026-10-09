@@ -62,7 +62,7 @@ export interface MusicModuleStatus {
   restart?: boolean;
   /** Lần tải vừa rồi bị người dùng huỷ (phần đã tải giữ, lần sau làm tiếp). */
   cancelled?: boolean;
-  /** Máy tính: có nút Huỷ khi đang tải (điện thoại không có). */
+  /** Có nút Huỷ khi đang tải (máy tính và điện thoại). */
   cancellable?: boolean;
   /** Chỉ máy tính. */
   precise?: PreciseMood;

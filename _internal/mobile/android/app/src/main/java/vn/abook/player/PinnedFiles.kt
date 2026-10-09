@@ -41,9 +41,15 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     interface Progress {
         fun current(bytes: Long)
         fun done(part: Part)
+
+        /** The listener tapped Huỷ: the download stops at the next read (the `.part` stays, the next download resumes it with Range). */
+        fun cancelled(): Boolean = false
     }
 
     class ChecksumError : IOException("sai mã kiểm")
+
+    /** The download was stopped on request ([Progress.cancelled]): not an error, and never retried. */
+    class Cancelled : Exception("đã huỷ")
 
     private val stampFile get() = File(dir, stampName)
 
@@ -79,6 +85,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
         dir.mkdirs()
         val stamp = readStamp().toMutableMap()
         for (part in parts) {
+            if (progress.cancelled()) throw Cancelled()
             if (isCurrent(part, stamp)) continue
             // A file of the right size without a stamp (fetched before stamps existed): hash it once and accept it if it matches.
             if (!(present(part) && sha256(file(part)) == part.sha256)) fetch(part, progress)
@@ -115,6 +122,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
         val partial = File(wire.path + ".part")
         var attempts = 0
         while (true) {
+            if (progress.cancelled()) throw Cancelled()
             try {
                 transfer(part.remote, packed?.sha256 ?: part.sha256, part.wireSize, partial, progress)
                 break
@@ -184,6 +192,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
                         var written = have
                         progress.current(written)
                         while (true) {
+                            if (progress.cancelled()) throw Cancelled()
                             val read = input.read(buffer)
                             if (read < 0) break
                             if (written + read > size) throw IOException("file lớn hơn dự kiến")

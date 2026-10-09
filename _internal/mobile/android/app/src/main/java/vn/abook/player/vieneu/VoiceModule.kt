@@ -71,9 +71,14 @@ abstract class VoiceModule(
 
     protected val pinned = PinnedFiles(dir, "", STAMP)
     private val lock = Any()
+    @Volatile
     private var downloading = false
     private var benchmarking = false
     private var error = ""
+    /** The last download was stopped by the listener (the card says "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng"); cleared when a download starts. */
+    private var cancelled = false
+    @Volatile
+    private var cancelRequested = false
     private var finished = 0L
     private var current = 0L
     private var total = 0L
@@ -165,6 +170,7 @@ abstract class VoiceModule(
             .put("suggestion", if (benchmarking) JSONObject.NULL else suggestion(bench, installedTiers) ?: JSONObject.NULL)
             .put("device", JSONObject().put("cores", facts.cores).put("ramGb", facts.ramGb).put("gpu", "").put("runs", "cpu"))
             .put("recommended", best).put("slowRtf", SLOW_RTF).put("metered", runCatching { metered() }.getOrDefault(false)).put("removable", true)
+            .put("cancelled", cancelled).put("cancellable", true)
     }
 
     // ---- download / remove / measure -------------------------------------------------------------------------------------------
@@ -177,6 +183,8 @@ abstract class VoiceModule(
             val states = states()
             val needed = lacking(wanted ?: have(states), states)
             error = ""
+            cancelled = false
+            cancelRequested = false
             if (needed.isEmpty()) return
             if (unsupported.isNotEmpty()) {
                 error = unsupported.replaceFirstChar { it.uppercase() } + "."
@@ -196,6 +204,12 @@ abstract class VoiceModule(
         }
     }
 
+    /** The listener tapped Huỷ: stop at the next read of the file being fetched (`.part` kept; the state goes back to what it was, plus `cancelled`).
+     *  Nothing downloading: nothing to do. No lock: the download thread may hold it while it replaces shared runtime files. */
+    fun cancel() {
+        if (downloading) cancelRequested = true
+    }
+
     private fun run(needed: List<String>) {
         try {
             forget() // a loaded engine must not read files being replaced
@@ -205,6 +219,7 @@ abstract class VoiceModule(
                     finished += part.wireSize
                     current = 0
                 }
+                override fun cancelled() = cancelRequested
             }
             val (common, own) = needed.partition(::common)
             // another module may be fetching the same runtime files: one at a time, the second then finds them current
@@ -220,6 +235,12 @@ abstract class VoiceModule(
             }
             val installedTiers = have(states())
             measure(tiers.filter { tier -> tier in installedTiers && needs(tier).any { it in needed } })
+        } catch (_: PinnedFiles.Cancelled) {
+            // the .part stays: the next tap resumes it with Range
+            synchronized(lock) {
+                error = ""
+                cancelled = true
+            }
         } catch (failure: Exception) {
             synchronized(lock) { error = describe(failure) }
         } finally {
