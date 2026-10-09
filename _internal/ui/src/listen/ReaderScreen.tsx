@@ -1,13 +1,14 @@
 import * as Popover from "@radix-ui/react-popover";
-import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Pencil, Play, Type } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Pencil, Play, Search, Type } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { cn } from "@/shared/cn";
 import { lineEditing } from "@/shared/capabilities";
 import { useMediaQuery } from "@/shared/media";
 import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
 import { canEditBook } from "./EditBook";
+import { FindInBook } from "./FindInBook";
 import { chapterToFollow, firstVisibleIndex } from "./follow";
 import { readerHint } from "./labels";
 import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
@@ -71,6 +72,7 @@ export function ReaderScreen({
 }) {
   const { id = "", chapterId: chapterParam } = useParams();
   const [params] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const source = useSource();
   const player = usePlayer();
@@ -101,6 +103,7 @@ export function ReaderScreen({
   const [selected, setSelected] = useState<number | null>(null);
   const [editingLine, setEditingLine] = useState<number | null>(null);
   const [current, setCurrent] = useState(0);
+  const [finding, setFinding] = useState(false);
   const container = useRef<HTMLDivElement | null>(null);
   const saveTimer = useRef<number | undefined>(undefined);
   const restored = useRef("");
@@ -129,10 +132,23 @@ export function ReaderScreen({
     }
   }, [prefs]);
 
-  // Mở chương: tới câu được yêu cầu (?at=), câu đang nghe, hay chỗ đọc dở - theo thứ tự ấy.
+  // Ctrl+F (Cmd+F) mở ô "Tìm trong sách" thay cho ô tìm của trình duyệt: tìm cả cuốn, không chỉ chữ đang hiện trên trang.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        setFinding(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Mở chương: tới câu được yêu cầu (?at=), câu đang nghe, hay chỗ đọc dở - theo thứ tự ấy. Mỗi lần được yêu cầu một chỗ (kể cả cùng chương, kể cả
+  // cùng chỗ lần nữa - location.key đổi) thì tới đó; `&play=1` (chọn từ ô tìm lúc đang nghe cuốn này): nghe tiếp từ chính câu ấy.
   useEffect(() => {
     if (!script || !book) return;
-    const key = `${id}:${chapterId}`;
+    const key = `${id}:${chapterId}:${location.key}`;
     if (restored.current === key) return;
     restored.current = key;
     const requested = params.get("at");
@@ -151,7 +167,13 @@ export function ReaderScreen({
       else container.current?.querySelector<HTMLElement>(`[data-index="${target}"]`)?.scrollIntoView({ block: "start" });
       setCurrent(target);
     });
-  }, [book, chapterId, id, params, playingIndex, script]);
+    if (requested === null) return;
+    // Chỗ vừa tìm thấy: chọn câu ấy để thấy nó sáng lên và có nút "Nghe từ câu này"; chọn nghe ngay thì nghe, không cần chọn.
+    if (params.get("play") === "1" && canListen && listenFrom(target)) {
+      follow.follow();
+      setSelected(null);
+    } else if (canListen || lineEdit) setSelected(target);
+  }, [book, canListen, chapterId, follow, id, lineEdit, listenFrom, location.key, params, playingIndex, script]);
 
   // Chỗ đọc = câu đầu tiên còn thấy trong khung; lưu thưa (2 giây sau lần cuộn cuối).
   const onScroll = useCallback(() => {
@@ -256,6 +278,7 @@ export function ReaderScreen({
         </div>
         <IconButton label="Chương trước" icon={ChevronLeft} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
         <IconButton label="Chương sau" icon={ChevronRight} disabled={index >= chapters.length - 1} onClick={() => go(1)} className={TOUCH} />
+        <IconButton label="Tìm trong sách" icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
         <Popover.Root>
           <Popover.Trigger asChild>
             <button type="button" aria-label="Cỡ chữ và giãn dòng" className={cn("grid size-9 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
@@ -395,6 +418,7 @@ export function ReaderScreen({
           </div>
         )}
       </div>
+      <FindInBook book={book} open={finding} onOpenChange={setFinding} />
       {readingEdit && <WordReadingDialog bookId={id} word={readingWord} sentence={readingSentence} onClose={() => setReadingWord(null)} />}
       {lineEdit?.mode === "wish" && (
         <LineWishDialog

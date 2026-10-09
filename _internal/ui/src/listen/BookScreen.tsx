@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsC
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
+import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
@@ -744,6 +745,7 @@ export function BookScreen({
   const [wishesOpen, setWishesOpen] = useState(false);
   const [viewsOpen, setViewsOpen] = useState(false);
   const [recordDialog, setRecordDialog] = useState<RecordDialog>(null);
+  const [finding, setFinding] = useState(false);
   const { data: castView } = useCast(id);
   // Hook không được đặt sau `return` sớm: cuốn chưa nạp xong thì dùng một cuốn rỗng (nút lưu chưa hiện lúc ấy).
   const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
@@ -917,6 +919,12 @@ export function BookScreen({
                 {book.state.reading ? "Đọc tiếp" : "Đọc"}
               </Button>
             </Tooltip>
+            {chapters.length > 0 && (
+              <>
+                <IconButton label="Tìm chữ trong sách" icon={Search} size="lg" onClick={() => setFinding(true)} />
+                <FindInBook book={book} open={finding} onOpenChange={setFinding} />
+              </>
+            )}
             {started && point && !finished && (
               <Tooltip label="Nghe lại từ chương đầu tiên">
                 <Button variant="ghost" size="lg" icon={RotateCcw} onClick={restart}>
