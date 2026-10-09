@@ -18,7 +18,9 @@ from pathlib import Path
 HERE = Path(r"D:/Novels/ABook/_internal/scripts/model_eval")
 sys.path.insert(0, str(HERE))
 
-from score_models import GOLD_ROOT, load_gold, read_project, speaker_credit  # noqa: E402
+from score_models import (  # noqa: E402
+    GOLD_ROOT, aligned_gold_multi, exit_on_gold_mismatch, load_gold, read_project, speaker_credit,
+)
 
 CHAPTERS = ("351", "363", "378", "381")
 
@@ -39,23 +41,29 @@ def shape(text: str, wanted: str, given: str) -> str:
     return "model lấy một người khác trong cảnh"
 
 
+@exit_on_gold_mismatch
 def main() -> int:
     root = Path(sys.argv[1] if len(sys.argv) > 1 else r"D:/Novels/Audiobooks/_model_eval_v2/21-09")
-    gold = load_gold(GOLD_ROOT / "throne_of_magical_arcana")
-    gold_chapters = {chapter for chapter, _ in gold}
+    gold_dir = GOLD_ROOT / "throne_of_magical_arcana"
+    gold_chapters = {chapter for chapter, _ in load_gold(gold_dir)}
+    gold: dict | None = None  # đáp án gióng theo model đầu tiên; các model sau vẫn được kiểm chữ (cảnh báo / dừng)
 
     per_model: dict[str, dict[tuple[str, int], dict]] = {}
     for model_dir in sorted(p for p in root.iterdir() if p.is_dir()):
         rows_by_key: dict[tuple[str, int], dict] = {}
+        projects: list[Path] = []
         for chapter in CHAPTERS:
             project = next((model_dir / chapter).rglob("project.sqlite3"), None)
             if project is None:
                 continue
+            projects.append(project.parent)
             rows, _meta = read_project(project.parent, gold_chapters)
             for row in rows:
                 rows_by_key[(str(row["chapter"]), int(row["seq"]))] = row
         if rows_by_key:
             per_model[model_dir.name] = rows_by_key
+            aligned = aligned_gold_multi(gold_dir, projects, gold_chapters)
+            gold = aligned if gold is None else gold
     if len(per_model) < 2:
         print("cần ít nhất hai model có dữ liệu")
         return 1

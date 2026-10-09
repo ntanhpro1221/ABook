@@ -37,7 +37,9 @@ for path in (HERE, ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from score_models import GOLD_ROOT, load_gold, read_project, speaker_credit, speaker_key  # noqa: E402
+from score_models import (  # noqa: E402
+    GOLD_ROOT, aligned_gold_multi, exit_on_gold_mismatch, load_gold, read_project, speaker_credit, speaker_key,
+)
 
 from abook import character_registry  # noqa: E402
 from abook.character_registry import canonical_speaker_names, is_local_speaker  # noqa: E402
@@ -120,6 +122,7 @@ def gold_check() -> int:
     return 1 if broken else 0
 
 
+@exit_on_gold_mismatch
 def main(argv: list[str]) -> int:
     if "--without-given-names" in argv:
         character_registry.merge_given_names = lambda _representatives: {}
@@ -130,13 +133,14 @@ def main(argv: list[str]) -> int:
         print(__doc__)
         return 2
     root, gold_dir, chapters = Path(argv[0]), argv[1], tuple(argv[2:])
-    gold = load_gold(GOLD_ROOT / gold_dir)
-    wanted_chapters = {chapter for chapter, _ in gold}
+    wanted_chapters = {chapter for chapter, _ in load_gold(GOLD_ROOT / gold_dir)}
     for model_dir in sorted(path for path in root.iterdir() if path.is_dir()):
         projects = [found.parent for chapter in chapters
                     for found in [next((model_dir / chapter).rglob("project.sqlite3"), None)] if found]
         if not projects:
             continue
+        # Đáp án gióng theo chữ của project từng chương của model này (cách tách có thể khác giữa các lượt đo).
+        gold = aligned_gold_multi(GOLD_ROOT / gold_dir, projects, wanted_chapters)
         rows: dict[tuple[str, int], dict] = {}
         for project in projects:
             found, _meta = read_project(project, wanted_chapters)

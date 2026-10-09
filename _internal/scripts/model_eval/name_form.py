@@ -16,7 +16,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from score_models import GOLD_ROOT, load_gold, read_project, speaker_credit
+from score_models import (
+    GOLD_ROOT, aligned_gold_multi, exit_on_gold_mismatch, load_gold, read_project, speaker_credit,
+)
 
 
 def fold(name: str) -> str:
@@ -26,21 +28,24 @@ def fold(name: str) -> str:
     return " ".join(text.upper().replace("-", " ").split())
 
 
+@exit_on_gold_mismatch
 def main(argv: list[str]) -> int:
     if len(argv) < 3:
         print(__doc__)
         return 2
     root, gold_dir, chapters = Path(argv[0]), argv[1], tuple(argv[2:])
-    gold = load_gold(GOLD_ROOT / gold_dir)
-    wanted_chapters = {chapter for chapter, _ in gold}
+    wanted_chapters = {chapter for chapter, _ in load_gold(GOLD_ROOT / gold_dir)}
     for model_dir in sorted(path for path in root.iterdir() if path.is_dir()):
         rows: dict[tuple[str, int], dict] = {}
+        projects: list[Path] = []
         for chapter in chapters:
             project = next((model_dir / chapter).rglob("project.sqlite3"), None)
             if project is None:
                 continue
+            projects.append(project.parent)
             found, _meta = read_project(project.parent, wanted_chapters)
             rows.update({(str(row["chapter"]), int(row["seq"])): row for row in found})
+        gold = aligned_gold_multi(GOLD_ROOT / gold_dir, projects, wanted_chapters)
         total = strict = folded = unknown = 0
         for key, entry in gold.items():
             if not entry.spoken or key not in rows:

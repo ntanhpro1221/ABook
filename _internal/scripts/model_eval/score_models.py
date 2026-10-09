@@ -18,12 +18,14 @@ from __future__ import annotations
 
 import argparse
 import csv
+import functools
 import hashlib
 import json
 import re
 import sqlite3
 import sys
 import unicodedata
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -139,11 +141,157 @@ def parse_gold(path: Path) -> list[Gold]:
 
 
 def load_gold(directory: Path = GOLD_DIR) -> dict[tuple[str, int], Gold]:
+    # Chỉ glob `*.txt` KHÔNG đệ quy: dấu chữ `.seqtext` và thư mục `_variants/` không bao giờ thành đáp án.
     gold: dict[tuple[str, int], Gold] = {}
     for path in sorted(directory.glob("*.txt")):
         for row in parse_gold(path):
             gold[(row.chapter, row.seq)] = row
     return gold
+
+
+# --- Dấu chữ của đáp án (09-10) -------------------------------------------------------------------------------------
+# Đáp án khoá theo seq, không mang chữ: parser tách chương khác đi một đoạn là mọi dòng sau đó lệch một mà không ai hay
+# (ca thật: 22 ác nhân 283 -> 284 đoạn, người nói chặt tụt 46,6 điểm hoàn toàn do cây thước). Mỗi chương đáp án có một
+# `<chương>.seqtext` cạnh nó: `seq<TAB>băm` cho MỌI đoạn của chương ở project đã gắn nhãn. Chấm thì so với chữ project.
+# Đáp án gắn nhãn trên cách tách khác (parser cũ) để ở `_variants/<nhãn>/<chương>.txt` + `.seqtext`.
+
+SEQTEXT_TOLERANCE = 0.005  # tỉ lệ đoạn lệch tối đa vẫn chịu dùng đáp án chính (kèm cảnh báo) khi không biến thể nào khớp
+_WARNED: set[str] = set()  # mỗi dòng cảnh báo in một lần mỗi tiến trình (paired.py chấm hàng trăm cặp model x chương)
+
+
+class GoldTextMismatch(RuntimeError):
+    """Chữ đoạn trong project không khớp dấu chữ của đáp án và không biến thể nào khớp - chấm sẽ lệch seq."""
+
+    def __init__(self, book: str, chapter: str, bad: int, total: int, first_seq: int):
+        self.book, self.chapter, self.bad, self.total, self.first_seq = book, chapter, bad, total, first_seq
+        super().__init__(
+            f"gold {book}/{chapter}: {bad}/{total} đoạn lệch chữ, seq đầu {first_seq}; không biến thể nào khớp - "
+            f"parser tách chương khác lúc gắn nhãn. Gắn dấu cho cách tách mới bằng "
+            f"gold_fingerprint.py --variant, hoặc gắn lại nhãn đáp án"
+        )
+
+
+def normalise_segment_text(text: object) -> str:
+    """NFC, mọi chuỗi khoảng trắng thành một dấu cách, cắt đầu đuôi: khác biệt trình bày không làm lệch dấu chữ."""
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFC", str(text or ""))).strip()
+
+
+def segment_fingerprint(text: object) -> str:
+    """12 ký tự đầu của sha1 chữ đã chuẩn hoá - MỘT hàm cho cả khi ghi `.seqtext` lẫn khi so."""
+    return hashlib.sha1(normalise_segment_text(text).encode("utf-8")).hexdigest()[:12]
+
+
+def read_seqtext(path: Path) -> dict[int, str]:
+    hashes: dict[int, str] = {}
+    for number, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        seq, tab, digest = line.partition("\t")
+        if not tab or not digest.strip():
+            raise ValueError(f"{path.name}:{number}: cần `seq<TAB>băm`: {line!r}")
+        hashes[int(seq)] = digest.strip()
+    return hashes
+
+
+def write_seqtext(path: Path, texts: dict[int, str], header: list[str]) -> None:
+    """Ghi dấu chữ (LF, kể cả trên Windows) cho MỌI đoạn trong `texts`."""
+    lines = [f"# {line}" for line in header] + [f"{seq}\t{segment_fingerprint(texts[seq])}" for seq in sorted(texts)]
+    path.write_bytes(("\n".join(lines) + "\n").encode("utf-8"))
+
+
+def _warn(message: str) -> None:
+    if message not in _WARNED:
+        _WARNED.add(message)
+        print(message, file=sys.stderr, flush=True)  # stderr: các bảng phân tích chuyển hướng stdout để nuốt nhật ký
+
+
+def _mismatched_seqs(seqs: Iterable[int], sidecar: dict[int, str], texts: dict[int, str]) -> list[int]:
+    """Các seq đáp án mà chữ project khác dấu; thiếu ở project hoặc ở dấu cũng là lệch."""
+    return sorted(
+        seq for seq in seqs
+        if seq not in texts or seq not in sidecar or segment_fingerprint(texts[seq]) != sidecar[seq]
+    )
+
+
+def _align_chapter(gold_dir: Path, chapter: str, rows: list[Gold], texts: dict[int, str],
+                   log: Callable[[str], None]) -> list[Gold]:
+    book = gold_dir.name
+    sidecar_path = gold_dir / f"{chapter}.seqtext"
+    if not sidecar_path.is_file():
+        log(f"CẢNH BÁO gold {book}/{chapter}: chưa có dấu chữ (.seqtext) - không kiểm được gióng đoạn")
+        return rows
+    seqs = [row.seq for row in rows]
+    bad = _mismatched_seqs(seqs, read_seqtext(sidecar_path), texts)
+    if not bad:
+        return rows
+    log(f"CẢNH BÁO gold {book}/{chapter}: {len(bad)}/{len(seqs)} đoạn lệch chữ, seq đầu {bad[0]}")
+    variants = gold_dir / "_variants"
+    for folder in sorted(path for path in variants.iterdir() if path.is_dir()) if variants.is_dir() else []:
+        gold_file, side_file = folder / f"{chapter}.txt", folder / f"{chapter}.seqtext"
+        if not (gold_file.is_file() and side_file.is_file()):
+            continue
+        variant_rows = parse_gold(gold_file)
+        if not _mismatched_seqs((row.seq for row in variant_rows), read_seqtext(side_file), texts):
+            log(f"gold {book}/{chapter}: dùng biến thể {folder.name} (khớp chữ)")
+            return variant_rows
+    if len(bad) / len(seqs) > SEQTEXT_TOLERANCE:
+        raise GoldTextMismatch(book, chapter, len(bad), len(seqs), bad[0])
+    return rows
+
+
+def _aligned(gold_dir: Path, project_dir: Path, chapters: set[str] | None,
+             log: Callable[[str], None] | None) -> tuple[dict[tuple[str, int], Gold], set[str]]:
+    """(đáp án đã gióng, các chương ĐÃ kiểm). Chương không có đoạn nào trong project: giữ nguyên, không kiểm."""
+    log = log or _warn
+    gold = {key: row for key, row in load_gold(gold_dir).items() if chapters is None or key[0] in chapters}
+    by_chapter: dict[str, list[Gold]] = {}
+    for row in gold.values():
+        by_chapter.setdefault(row.chapter, []).append(row)
+    project_texts = read_segment_texts(project_dir, set(by_chapter))
+    aligned: dict[tuple[str, int], Gold] = {}
+    checked: set[str] = set()
+    for chapter, rows in sorted(by_chapter.items()):
+        if chapter in project_texts:
+            rows = _align_chapter(gold_dir, chapter, rows, project_texts[chapter], log)
+            checked.add(chapter)
+        aligned.update({(row.chapter, row.seq): row for row in rows})
+    return aligned, checked
+
+
+def aligned_gold(gold_dir: Path, project_dir: Path, chapters: set[str] | None = None,
+                 log: Callable[[str], None] | None = None) -> dict[tuple[str, int], Gold]:
+    """`load_gold` + kiểm chữ: đáp án của `chapters` (mặc định mọi chương) đối chiếu với chữ đoạn trong project.
+
+    Không có `.seqtext`: cảnh báo, dùng nguyên. Có dấu mà lệch: thử `_variants/*/` theo thứ tự tên, biến thể đầu khớp thì
+    dùng; không biến thể nào khớp mà lệch quá SEQTEXT_TOLERANCE số đoạn đáp án thì ném GoldTextMismatch.
+    `log` thay chỗ in cảnh báo (mặc định stderr, mỗi dòng một lần).
+    """
+    return _aligned(gold_dir, project_dir, chapters, log)[0]
+
+
+def aligned_gold_multi(gold_dir: Path, project_dirs: Iterable[Path], chapters: set[str] | None = None,
+                       log: Callable[[str], None] | None = None) -> dict[tuple[str, int], Gold]:
+    """Như aligned_gold cho nhiều project (mỗi project một vài chương, như eval_models): mỗi chương gióng theo project chứa nó."""
+    gold = {key: row for key, row in load_gold(gold_dir).items() if chapters is None or key[0] in chapters}
+    for project in project_dirs:
+        aligned, checked = _aligned(gold_dir, project, chapters, log)
+        gold = {key: row for key, row in gold.items() if key[0] not in checked}
+        gold.update({key: row for key, row in aligned.items() if key[0] in checked})
+    return gold
+
+
+def exit_on_gold_mismatch(main: Callable) -> Callable:
+    """Điểm vào dòng lệnh: GoldTextMismatch thành thông báo rõ + mã thoát 3 thay vì traceback."""
+    @functools.wraps(main)
+    def wrapper(*args, **kwargs):
+        try:
+            return main(*args, **kwargs)
+        except GoldTextMismatch as error:
+            print(f"LỖI {error}", file=sys.stderr)
+            raise SystemExit(3) from None
+
+    return wrapper
 
 
 def speaker_credit(gold: Gold, speaker: str) -> float:
@@ -236,9 +384,27 @@ def score_rows(gold: dict[tuple[str, int], Gold], rows: list[dict]) -> dict:
     }
 
 
-def read_project(project: Path, chapters: set[str]) -> tuple[list[dict], dict]:
+def _open_project(project: Path) -> sqlite3.Connection:
     connection = sqlite3.connect(f"file:{project / 'project.sqlite3'}?mode=ro", uri=True)
     connection.row_factory = sqlite3.Row
+    return connection
+
+
+def read_segment_texts(project: Path, chapters: set[str] | None = None) -> dict[str, dict[int, str]]:
+    """{tên chương (như khoá của đáp án): {seq: chữ}} của MỌI đoạn - nguồn cho aligned_gold và gold_fingerprint."""
+    connection = _open_project(project)
+    try:
+        texts: dict[str, dict[int, str]] = {}
+        for row in connection.execute("SELECT ch.title, s.seq, s.text FROM segments s JOIN chapters ch ON ch.id = s.chapter_id"):
+            if chapters is None or str(row["title"]) in chapters:
+                texts.setdefault(str(row["title"]), {})[int(row["seq"])] = str(row["text"] or "")
+    finally:
+        connection.close()
+    return texts
+
+
+def read_project(project: Path, chapters: set[str]) -> tuple[list[dict], dict]:
+    connection = _open_project(project)
     try:
         rows = [
             dict(row)
@@ -298,6 +464,7 @@ def write_disputes(results: list[dict], path: Path) -> None:
     path.with_suffix(path.suffix + ".key").write_text(key + "\n", encoding="utf-8")
 
 
+@exit_on_gold_mismatch
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("projects", nargs="*", type=Path)
@@ -329,7 +496,8 @@ def main(argv: list[str] | None = None) -> int:
     results = []
     for project in projects:
         rows, meta = read_project(project, chapters)
-        result = score_rows(gold, rows)
+        # Mỗi project có thể tách chương khác nhau: đáp án gióng theo CHỮ của chính project ấy (dấu chữ + biến thể).
+        result = score_rows(aligned_gold(GOLD_ROOT / args.gold, project, chapters), rows)
         result.update({"project": str(project), **meta})
         results.append(result)
 

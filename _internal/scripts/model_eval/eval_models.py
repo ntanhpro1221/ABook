@@ -29,7 +29,9 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 
-from score_models import GOLD_ROOT, WEIGHTS, load_gold, read_project, score_rows  # noqa: E402
+from score_models import (  # noqa: E402
+    GOLD_ROOT, WEIGHTS, aligned_gold, aligned_gold_multi, exit_on_gold_mismatch, load_gold, read_project, score_rows,
+)
 
 RETRY_PATTERN = re.compile(r"lỗi lần \d+: LLM returned (\d+)/(\d+) IDs")
 
@@ -39,7 +41,7 @@ def slug(model: str) -> str:
 
 
 def run_chapter(model: str, chapter: str, root: Path, book: str | None, timeout: int, no_think: bool,
-                known_variant: str = "", first_person: str = "", seed_gold: str = "") -> dict:
+                known_variant: str = "", first_person: str = "", seed_gold: str = "", gold: str = "") -> dict:
     where = root / slug(model) / chapter
     make = [sys.executable, "scripts/model_eval/make_eval_project.py", model, "--chapters", chapter, "--root", str(where)]
     if book:
@@ -52,6 +54,9 @@ def run_chapter(model: str, chapter: str, root: Path, book: str | None, timeout:
     project = next(where.rglob("project.sqlite3"), None)
     if project is None:
         return {"chapter": chapter, "ok": False, "why": "không tạo được project"}
+    if gold:
+        # Cách tách đã cố định từ lúc tạo project: đáp án lệch chữ thì dừng TRƯỚC khi tốn giờ GPU phân tích.
+        aligned_gold(GOLD_ROOT / gold, project.parent, {chapter})
     command = [sys.executable, "scripts/model_eval/analysis_only.py", str(project.parent)]
     if no_think:
         command.append("--no-think")
@@ -75,6 +80,7 @@ def run_chapter(model: str, chapter: str, root: Path, book: str | None, timeout:
             "id_retries": len(retries), "why": why}
 
 
+@exit_on_gold_mismatch
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("models", nargs="+")
@@ -111,16 +117,20 @@ def main() -> None:
         for chapter in args.chapters:
             result = run_chapter(model, chapter, args.root, args.book, args.timeout, no_think,
                                  known_variant=known_variant, first_person=args.first_person,
-                                 seed_gold=args.gold if args.seed_gold_cast and args.book else "")
+                                 seed_gold=args.gold if args.seed_gold_cast and args.book else "", gold=args.gold)
             runs.append(result)
             print(f"{model} {chapter}: {'OK' if result['ok'] else 'HỎNG'} {result.get('seconds', '')}s "
                   f"thử lại vì thiếu ID {result.get('id_retries', 0)} {result.get('why', '')}", flush=True)
         rows = []
+        projects = []
         for result in runs:
             if result["ok"]:
                 chapter_rows, _meta = read_project(Path(result["project"]), gold_chapters)
                 rows += chapter_rows
-        scored = score_rows(gold, rows) if rows else {"score": 0.0, "rates": {name: 0.0 for name in WEIGHTS}}
+                projects.append(Path(result["project"]))
+        # Đã cảnh báo ở run_chapter (trước khi chạy) nên chấm lặng; đáp án gióng theo chữ của chính project từng chương.
+        model_gold = aligned_gold_multi(GOLD_ROOT / args.gold, projects, gold_chapters, log=lambda _message: None)
+        scored = score_rows(model_gold, rows) if rows else {"score": 0.0, "rates": {name: 0.0 for name in WEIGHTS}}
         entry = {
             "model": model, "no_think": no_think, "known_list": args.known_list,
             "seed_gold_cast": bool(args.seed_gold_cast and args.book),

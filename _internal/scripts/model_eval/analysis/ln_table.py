@@ -18,7 +18,7 @@ ROOT = Path(os.environ.get("ABOOK_ROOT", "D:/Novels/ABook/_internal"))
 sys.path.insert(0, str(ROOT / "scripts" / "model_eval"))
 sys.path.insert(0, str(ROOT))
 
-from score_models import GOLD_ROOT, load_gold, read_project, speaker_credit  # noqa: E402
+from score_models import GOLD_ROOT, aligned_gold, exit_on_gold_mismatch, read_project, speaker_credit  # noqa: E402
 from voice_identity import bcubed, source_text, voice_of  # noqa: E402
 try:
     from voice_identity import gold_person  # noqa: E402  (29-09 tối: NPC*:<mô tả> là một người)
@@ -41,13 +41,13 @@ def chapter_points(root: Path, gold_dir: str, chapter: str):
     if not summary.is_file() or not any(entry.get("chapters_ok") == entry.get("chapters") and entry.get("chapters")
                                         for entry in json.loads(summary.read_text(encoding="utf-8"))):
         return None
-    gold = load_gold(GOLD_ROOT / gold_dir)
     model_dirs = [path for path in root.iterdir() if path.is_dir()] if root.is_dir() else []
     for model_dir in model_dirs:
         project = next((model_dir / chapter).rglob("project.sqlite3"), None)
         if project is None:
             continue
         rows_list, _meta = read_project(project.parent, {chapter})
+        gold = aligned_gold(GOLD_ROOT / gold_dir, project.parent, {chapter})  # theo chữ của chính project này
         rows = {(str(row["chapter"]), int(row["seq"])): row for row in rows_list}
         mapping = canonical_speaker_names(Counter(str(row["speaker"] or "") for row in rows.values()),
                                           source_text([project.parent]))
@@ -66,6 +66,7 @@ def chapter_points(root: Path, gold_dir: str, chapter: str):
     return None
 
 
+@exit_on_gold_mismatch
 def main(prefixes: list[str]) -> int:
     import contextlib
     import io
