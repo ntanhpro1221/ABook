@@ -54,11 +54,19 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
     /**
      * Phonemes of ONE unit made of [sentences], exactly `vieneu_engine.phonemize` (= vieneu 3.8.1 for that unit): each sentence normalised
      * without the final-punctuation rule, joined with spaces, the unit's final punctuation settled, then the pipeline (normalise with
-     * punc_norm + G2P). "" when nothing is left to read.
+     * punc_norm + G2P). "" when nothing is left to read. One difference from vieneu: a unit that ends in "?" / "!" keeps that mark (punc_norm
+     * would turn a short "Thật sao?" into "Thật sao." and lose the question tone); a unit without a final mark still gets ".".
      */
     fun phonemize(sentences: List<String>): String {
-        val chunk = puncNorm(normalizeUnit(sentences))
-        return if (chunk.isBlank()) "" else g2p(normalize(chunk, true))
+        val text = normalizeUnit(sentences)
+        val chunk = puncNorm(text)
+        if (chunk.isBlank()) return ""
+        val phonemes = g2p(normalize(chunk, true))
+        if (phonemes.endsWith(".") && (text.contains('?') || text.contains('!'))) {
+            val written = g2p(normalize(text, false)).trimEnd()
+            if (written.endsWith("?") || written.endsWith("!")) return phonemes.dropLast(1) + written.last()
+        }
+        return phonemes
     }
 
     @Synchronized

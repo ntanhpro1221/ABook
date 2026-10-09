@@ -36,19 +36,19 @@
    "sentences": [
     "Hả?"
    ],
-   "phonemes": "hˈaː4."
+   "phonemes": "hˈaː4?"
   },
   {
    "sentences": [
     "Không!"
    ],
-   "phonemes": "xˌoŋ."
+   "phonemes": "xˌoŋ!"
   },
   {
    "sentences": [
     "Thật sao...?"
    ],
-   "phonemes": "tˈə6t̪ sˈaːw."
+   "phonemes": "tˈə6t̪ sˈaːw?"
   },
   {
    "sentences": [
@@ -774,7 +774,7 @@
    "sentences": [
     "Ơ kìa!"
    ],
-   "phonemes": "ˈəː kˈiə2."
+   "phonemes": "ˈəː kˈiə2!"
   },
   {
    "sentences": [
@@ -792,13 +792,13 @@
    "sentences": [
     "Ha ha ha!"
    ],
-   "phonemes": "hˈaː hˈaː hˈaː."
+   "phonemes": "hˈaː hˈaː hˈaː!"
   },
   {
    "sentences": [
     "Ê, đợi tớ với!"
    ],
-   "phonemes": "ˈe, ɗˈəː6j t̪ˈəːɜ vˌəːɜj."
+   "phonemes": "ˈe, ɗˈəː6j t̪ˈəːɜ vˌəːɜj!"
   },
   {
    "sentences": [
@@ -7432,7 +7432,7 @@
      "pieces": [
       "“……tờ, tức là sao???"
      ],
-     "phonemes": ". t̪ˈəː2, t̪ˈyɜc lˌaː2 sˈaːw."
+     "phonemes": ". t̪ˈəː2, t̪ˈyɜc lˌaː2 sˈaːw?"
     }
    ]
   },
@@ -7482,7 +7482,7 @@
      "pieces": [
       "“……tờ, tức là sao???"
      ],
-     "phonemes": ". t̪ˈəː2, t̪ˈyɜc lˌaː2 sˈaːw."
+     "phonemes": ". t̪ˈəː2, t̪ˈyɜc lˌaː2 sˈaːw?"
     }
    ]
   },
@@ -8416,7 +8416,7 @@
    "cap": 84
   },
   {
-   "phonemes": "hˈaː hˈaː hˈaː.",
+   "phonemes": "hˈaː hˈaː hˈaː!",
    "syllables": 3,
    "cap": 23
   },
@@ -8451,7 +8451,7 @@
    "cap": 92
   },
   {
-   "phonemes": "hˈaː4.",
+   "phonemes": "hˈaː4?",
    "syllables": 1,
    "cap": 13
   },
@@ -9256,7 +9256,7 @@
    "cap": 118
   },
   {
-   "phonemes": "tˈə6t̪ sˈaːw.",
+   "phonemes": "tˈə6t̪ sˈaːw?",
    "syllables": 2,
    "cap": 18
   },
@@ -9476,14 +9476,14 @@
    "cap": 686
   },
   {
+   "phonemes": "xˌoŋ!",
+   "syllables": 1,
+   "cap": 13
+  },
+  {
    "phonemes": "xˌoŋ, xˌoŋ, xˌoŋ fˌaː4j tˈeɜ!",
    "syllables": 5,
    "cap": 82
-  },
-  {
-   "phonemes": "xˌoŋ.",
-   "syllables": 1,
-   "cap": 13
   },
   {
    "phonemes": "zˈaː4j ɗˈəɜw kˈɔɜ bˈaː mˈyəj hˈaːj ɗˈo6j tˈaːm zˈaː.",
@@ -9731,7 +9731,7 @@
    "cap": 94
   },
   {
-   "phonemes": "ˈe, ɗˈəː6j t̪ˈəːɜ vˌəːɜj.",
+   "phonemes": "ˈe, ɗˈəː6j t̪ˈəːɜ vˌəːɜj!",
    "syllables": 4,
    "cap": 28
   },
@@ -9916,7 +9916,7 @@
    "cap": 144
   },
   {
-   "phonemes": "ˈəː kˈiə2.",
+   "phonemes": "ˈəː kˈiə2!",
    "syllables": 2,
    "cap": 18
   },
