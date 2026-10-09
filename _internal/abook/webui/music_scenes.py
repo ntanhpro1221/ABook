@@ -395,11 +395,13 @@ def apply_chapter_level(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | None) -> list[dict[str, Any]] | None:
-    """Đường "student" (music_scene_student.py; SPEC_app_q06.md mục 1 + PLAN_m3_q06_level.md): mức chương như CL, HÌNH trong chương do học sinh
-    đoán. `scenes`: các đoạn của MỘT chương ngay từ `_view` (chưa qua `apply_chapter_level`); `items`: độ lệch thô của học sinh, mỗi đoạn một
-    mục khớp chapterId + id câu đầu / cuối (dV, dE, dT). Với w = end - start, TB(x) = trung bình theo w:
+    """Đường "student" (music_scene_student.py; SPEC_app_q06.md mục 1 + PLAN_m3_q06_level.md + PLAN_lv_q06.md): mức chương như CL (mức V thì ưu tiên
+    đầu mức chương của học sinh), HÌNH trong chương do học sinh đoán. `scenes`: các đoạn của MỘT chương ngay từ `_view` (chưa qua
+    `apply_chapter_level`); `items`: độ lệch thô của học sinh, mỗi đoạn một mục khớp chapterId + id câu đầu / cuối (dV, dE, dT; và `chapterV`
+    khi gói có đầu mức chương). Với w = end - start, TB(x) = trung bình theo w:
 
-        L_V = clip(1.876 * TB(labelValence) + 0.068)                        (như CL: mức V luôn từ nhãn câu)
+        L_V = clip(chapterV)                                                nếu mục có `chapterV` (LV-Q06 10-10: bộ 7 MAE_V .262 -> .155)
+        L_V = clip(1.876 * TB(labelValence) + 0.068)                        nếu không (gói cũ chưa có đầu mức chương: như CL, từ nhãn câu)
         L_T = clip(1.066 * TB(pT) - 0.490)                                  nếu MỌI đoạn đã có P0 (moodSource "llm"); pT = tension P0
         L_T = clip(4.022 * TB(labelTension) - 0.056)                        nếu không (M3: nhãn đủ thay P0 ở mức chương hơi kém)
         valence = clip(L_V + k * (dV - TB(dV)))   tension = clip(L_T + k * (dT - TB(dT)))     k = 1 (CL của P0 dùng 0.5)
@@ -408,7 +410,8 @@ def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | No
                                                              chương bộ 7 .391 so với .141 của nhãn câu)
 
     Chương một đoạn: độ lệch 0 nên đoạn = mức chương. sd, emotions, confidence giữ nguyên.
-    Đoạn mang `moodSource` = "student", `studentValence` / `studentArousal` / `studentTension` = dV / dE / dT thô, và `llmValence` / `llmTension` khi chính đoạn ấy đã có P0.
+    Đoạn mang `moodSource` = "student", `studentValence` / `studentArousal` / `studentTension` = dV / dE / dT thô, `levelSource` = {"V": "student" |
+    "labels", "T": "p0" | "labels"} (mức V / T của chương lấy từ đâu, cho giao diện / ghi chép), và `llmValence` / `llmTension` khi chính đoạn ấy đã có P0.
     Trả None (caller dùng `apply_chapter_level`, đường hôm nay) khi không có mục cho MỌI đoạn của chương. Thuần hàm: không sửa đoạn đưa vào."""
     weights = [max(0.0, float(scene["end"]) - float(scene["start"])) for scene in scenes]
     total = sum(weights)
@@ -416,10 +419,11 @@ def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | No
         return None
     by_key = {(item.get("chapterId"), item.get("firstSegment"), item.get("lastSegment")): item for item in items if isinstance(item, dict)}
     try:
-        deviations = [(float(item["dV"]), float(item["dE"]), float(item["dT"]))
-                      for item in (by_key[(scene.get("chapterId"), scene.get("firstSegment"), scene.get("lastSegment"))] for scene in scenes)]
+        matched = [by_key[(scene.get("chapterId"), scene.get("firstSegment"), scene.get("lastSegment"))] for scene in scenes]
+        deviations = [(float(item["dV"]), float(item["dE"]), float(item["dT"])) for item in matched]
     except (KeyError, TypeError, ValueError):
         return None
+    chapter_v = _chapter_level_v(matched)
 
     def mean(values: list[float]) -> float:
         return sum(w * v for w, v in zip(weights, values)) / total
@@ -427,16 +431,22 @@ def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | No
     def clip(value: float) -> float:
         return max(-1.0, min(1.0, value))
 
-    level_v = clip(CHAPTER_LEVEL_V[0] * mean([float(scene["labelValence"]) for scene in scenes]) + CHAPTER_LEVEL_V[1])
-    if all(scene.get("moodSource") == "llm" for scene in scenes):
+    if chapter_v is not None:
+        level_v = clip(chapter_v)
+    else:
+        level_v = clip(CHAPTER_LEVEL_V[0] * mean([float(scene["labelValence"]) for scene in scenes]) + CHAPTER_LEVEL_V[1])
+    p0 = all(scene.get("moodSource") == "llm" for scene in scenes)
+    if p0:
         level_t = clip(CHAPTER_LEVEL_T[0] * mean([float(scene["tension"]) for scene in scenes]) + CHAPTER_LEVEL_T[1])
     else:
         level_t = clip(CHAPTER_LEVEL_T_LABELS[0] * mean([float(scene["labelTension"]) for scene in scenes]) + CHAPTER_LEVEL_T_LABELS[1])
+    level_source = {"V": "labels" if chapter_v is None else "student", "T": "p0" if p0 else "labels"}
     level_e = mean([float(scene["arousal"]) for scene in scenes])
     mean_dv, mean_de, mean_dt = (mean([dev[axis] for dev in deviations]) for axis in range(3))
     out = []
     for scene, (dv, de, dt) in zip(scenes, deviations):
-        fields = {"moodSource": "student", "studentValence": round(dv, 3), "studentArousal": round(de, 3), "studentTension": round(dt, 3),
+        fields = {"moodSource": "student", "levelSource": dict(level_source),
+                  "studentValence": round(dv, 3), "studentArousal": round(de, 3), "studentTension": round(dt, 3),
                   "valence": round(clip(level_v + STUDENT_SHAPE * (dv - mean_dv)), 3),
                   "arousal": round(clip(level_e + STUDENT_SHAPE * (de - mean_de)), 3),
                   "tension": round(clip(level_t + STUDENT_SHAPE * (dt - mean_dt)), 3)}
@@ -444,6 +454,16 @@ def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | No
             fields.update(llmValence=round(float(scene["valence"]), 3), llmTension=round(float(scene["tension"]), 3))
         out.append(dict(scene, **fields))
     return out
+
+
+def _chapter_level_v(items: list[dict[str, Any]]) -> float | None:
+    """Mức V của chương do đầu mức chương của học sinh đoán (`chapterV` của các mục, cùng giá trị ở mọi đoạn); None nếu mục nào thiếu hay hỏng
+    (gói cũ chưa có đầu mức chương) - khi ấy mức V về nhãn câu."""
+    try:
+        levels = [float(item["chapterV"]) for item in items]
+    except (KeyError, TypeError, ValueError):
+        return None
+    return levels[0] if levels and all(math.isfinite(level) for level in levels) else None
 
 
 def _mood_spans(moods: list[dict[str, Any]] | None, chapter_id: Any,
