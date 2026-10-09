@@ -37,7 +37,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, ffmpeg_setup, humanize, listen_view,
-               music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_select, music_student, music_valence, packages, project_views,
+               music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -237,9 +237,11 @@ class App:
         # Mô-đun "Phân tích nhạc" (music_module.py): ffmpeg + thư viện + model, người dùng bấm mới tải (không bao giờ tự tải). Thư viện đã tải
         # lần trước vào sys.path TRƯỚC khi cắm bộ phân tích; không thì bài nhập ở "chưa phân tích" và nhập vẫn chạy (thẻ đọc bằng tinytag).
         ffmpeg_setup.configure(self.music_dir.parent / ffmpeg_setup.FOLDER)
-        music_module.configure(self.music_dir, after_install=self._music_module_installed)
+        music_module.configure(self.music_dir, after_install=self._music_module_installed,
+                               studio_installed=lambda: self.studio is not None and bool(self.studio.installed()))
         music_student.configure(self.music_dir / music_student.PACKAGE_FOLDER)
         music_student.register()
+        music_scene_student.configure(self.music_dir / music_scene_student.PACKAGE_FOLDER)  # học sinh hình không khí trong chương: tuỳ chọn, chưa phát hành
         # "Đo cảm xúc nhạc chính xác hơn" (music_valence.py): tuỳ chọn, mặc định tắt; bật rồi thì mở app là làm tiếp các bài chưa đo (không hại nếu đã xong).
         music_valence.configure(self.my_music, lambda: bool(self.preferences.get().get("preciseMusicMood")),
                                 lambda value: self.preferences.update({"preciseMusicMood": value}))
@@ -1165,10 +1167,13 @@ class App:
             music_valence.disable()
         return self.my_music_view()
 
-    def my_music_module(self) -> dict[str, Any]:
-        """Người dùng bấm "Phân tích nhạc": tải (hay cập nhật) mô-đun ở luồng nền rồi trả view. Đã đủ thì không làm gì."""
+    def my_music_module(self, scene: bool = False) -> dict[str, Any]:
+        """Người dùng bấm "Phân tích nhạc": tải (hay cập nhật) mô-đun ở luồng nền rồi trả view. Đã đủ thì không làm gì. `scene`: bấm nút
+        "Học sinh không khí cảnh" (phần tuỳ chọn, tải cùng cơ chế)."""
         self._mutating()
-        music_module.start()
+        if scene and (reason := music_module.scene_student_offered()):
+            raise ApiError(HTTPStatus.CONFLICT, f"Chưa tải được bộ này: {reason}.")
+        music_module.start(scene=scene)
         return self.my_music_view()
 
     def _music_module_installed(self) -> None:
@@ -1320,8 +1325,9 @@ class App:
             raise ApiError(HTTPStatus.CONFLICT, str(exc)) from exc
 
     def music_moods_compute(self, value: str) -> dict[str, Any]:
-        """Người dùng bấm "Tính lại cảm xúc nhạc": chạy `music_moods.compute` rồi dựng lại rãnh nhạc (chia lại đoạn) ở luồng nền.
-        Không chạy khi cuốn đang có dây chuyền (hai việc giành GPU) hay model chưa tải."""
+        """Người dùng bấm "Tính lại cảm xúc nhạc": chạy `music_moods.compute` (nếu model đọc không khí đã tải) rồi học sinh đoán hình không khí
+        (nếu máy có gói, `music_scene_student`), rồi dựng lại rãnh nhạc (chia lại đoạn) ở luồng nền. Hai việc độc lập. Không chạy khi cuốn đang
+        có dây chuyền (hai việc giành GPU) hay máy chưa có cái nào trong hai."""
         self._mutating()
         path = self._editable(value)
         if packages.is_package(path):
@@ -1329,12 +1335,14 @@ class App:
         if self.runner.running(path) or self.jobs.starting(path):
             raise ApiError(HTTPStatus.CONFLICT, "Cuốn này đang được làm - đợi xong rồi hãy tính lại cảm xúc nhạc")
         base = self._ollama_base()
+        scene_ready = music_scene_student.present() and not music_module.scene_student_offered()
         if self.studio is not None:
             try:
                 self.studio.ensure_ollama()  # Ollama riêng của Studio tự bật nếu đang tắt
             except Exception as exc:  # noqa: BLE001 - SetupError / OSError
-                raise ApiError(HTTPStatus.CONFLICT, f"Không bật được Ollama của Studio: {exc}") from exc
-        if music_moods.model_digest(base) is None:
+                if not scene_ready:
+                    raise ApiError(HTTPStatus.CONFLICT, f"Không bật được Ollama của Studio: {exc}") from exc
+        if music_moods.model_digest(base) is None and not scene_ready:
             raise ApiError(HTTPStatus.CONFLICT, "Chưa tải model đọc không khí - bấm Tải trước")
         with self._moods_lock:
             if not (self._moods_jobs.get(str(path)) or {}).get("running"):
@@ -1342,11 +1350,31 @@ class App:
                 threading.Thread(target=self._moods_run, args=(value, path, base), name="music-moods", daemon=True).start()
         return self._music_payload(path, music_plan.read_plan(path), "")
 
+    def _scene_student_run(self, path: Path) -> None:
+        """Học sinh đoán hình không khí trong chương cho "Tính lại". Tiến trình này có torch (máy dev) thì chạy tại chỗ; không (bản cài) mà Studio đã cài thì
+        chạy bằng Python của Studio ở tiến trình con, cùng thư mục mã với worker. KHÔNG BAO GIỜ ném."""
+        try:
+            if music_scene_student.dependencies_ok() or self.studio is None or not self.studio.installed():
+                music_scene_student.run_after_analysis(path, lambda: False, lambda _line: None, lambda _kind, _payload: None)  # không gói thì bỏ qua
+                return
+            code = self.studio.code_for(path)
+            music_scene_student.run_in_studio(path, self.studio.python, code, self.studio.environment(code), lambda _line: None)
+        except Exception:  # noqa: BLE001 - tuỳ chọn: lỗi gì cũng chỉ là không có hình không khí
+            pass
+
     def _moods_run(self, value: str, path: Path, base: str) -> None:
         error = ""
         try:
-            music_moods.compute(path, base)
+            failure: Exception | None = None
+            try:
+                if music_moods.model_digest(base) is not None:
+                    music_moods.compute(path, base)
+            except Exception as exc:  # noqa: BLE001 - lỗi P0 không chặn học sinh; báo sau khi đã dựng lại
+                failure = exc
+            self._scene_student_run(path)
             self.music_rebuild(value)
+            if failure is not None:
+                raise failure
         except Exception as exc:  # noqa: BLE001 - việc nền: lỗi hiện ở tab Nhạc, không làm sập máy chủ
             error = str(getattr(exc, "message", None) or exc)
         finally:
@@ -3072,7 +3100,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.app.my_music_import(paths))
 
     def post_my_music_module(self, _query: dict[str, list[str]]) -> None:
-        self._send_json(HTTPStatus.OK, self.app.my_music_module())
+        self._send_json(HTTPStatus.OK, self.app.my_music_module(scene=self._body().get("scene") is True))
 
     def post_my_music_reanalyse(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.my_music_reanalyse())
