@@ -68,6 +68,14 @@ export interface ImportChoice {
 
 export type ImportKind = "file" | "folder";
 
+/** Một thứ trong lần chọn nhiều file: đọc được (có `choice`), không nhận được (`error` nói vì sao), hay file sách .abook mà nguồn đã mở sẵn. */
+export type PickedItem = { name: string; choice: ImportChoice } | { name: string; error: string } | { name: string; opened: true };
+
+/** File sách / dự án của ABook (.abook, .abookproj): không phải sách để nhập chữ mà mở thẳng như "Mở file sách". */
+export function isBookFile(path: string): boolean {
+  return /\.abook(proj)?$/i.test(path.trim());
+}
+
 export interface AddedBook {
   id: string;
   /** "new" (cuốn mới), "existing" (đúng cuốn này đã có trong thư viện), "updated". */
@@ -81,12 +89,34 @@ export interface TextImport {
   choose?(kind: ImportKind): Promise<ImportChoice | "opened" | null>;
   /** Máy tính dán được đường dẫn thay cho hộp thoại. */
   typedPath?: boolean;
+  /** Bộ chọn file chọn được NHIỀU file một lúc (kind "file"): mỗi file một [PickedItem]; rỗng khi người dùng bỏ qua. Có thì hộp dùng nó thay cho
+   *  `choose("file")`. */
+  chooseMany?(): Promise<PickedItem[]>;
+  /** Kéo thả file vào cửa sổ (máy tính): nghe tới khi gọi hàm trả về. `hover`: đang kéo file ngang cửa sổ / rời đi; `drop`: đã thả. */
+  watchDrops?(handlers: { hover(on: boolean): void; drop(items: PickedItem[]): void }): () => void;
   preview(choice: ImportChoice, options?: ImportOptions): Promise<ImportPreview>;
   /** `separate`: "Thêm bản riêng" - cuốn mới dù thư viện đã có đúng bộ chữ này. `options`: như lúc xem trước (điện thoại giữ cuốn của lần xem
    *  trước cuối, nên thêm đúng thứ người dùng đã thấy). */
   add(choice: ImportChoice, title: string, separate?: boolean, options?: ImportOptions): Promise<AddedBook>;
   /** Bỏ thứ tạm đã giữ cho lần chọn này (điện thoại: bản sao file); nguồn nào không giữ gì thì không có. */
   discard?(choice: ImportChoice): Promise<void>;
+}
+
+/** Đọc file cho bước xem trước: cả truyện trong một file mà máy chắc là nhiều chương (`splitIsSure`) thì đọc lại với "tách" đã tích (bỏ tích được).
+ *  Dùng cho cả bước xem trước lẫn "Thêm tất cả phần còn lại" - cùng một mặc định. */
+export async function readPreview(importer: Pick<TextImport, "preview">, choice: ImportChoice): Promise<{ preview: ImportPreview; split: boolean }> {
+  let preview = await importer.preview(choice);
+  let split = false;
+  if (splitIsSure(preview)) {
+    split = await importer.preview(choice, { splitChapters: true }).then(
+      (again) => {
+        preview = again;
+        return true;
+      },
+      () => false,
+    );
+  }
+  return { preview, split };
 }
 
 // ---- Chọn chương và đổi tên ở bước xem trước ---------------------------------------------------------------------------------

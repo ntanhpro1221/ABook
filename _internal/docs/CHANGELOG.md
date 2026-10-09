@@ -10,6 +10,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Thư viện
 
 - Ô "Tìm sách" tìm được cả theo tên tác giả (sách chữ nhập từ EPUB, DOCX, PDF có ghi tác giả), không phân biệt hoa thường và dấu: gõ "nguyen" ra mọi cuốn của Nguyễn. Có ở máy tính và điện thoại.
+- "Thêm sách từ file…" chọn được nhiều file một lúc (EPUB, Word, PDF, TXT, cả file sách .abook), trên máy tính lẫn điện thoại: từng cuốn hiện ra ở bước xem trước quen thuộc với tiêu đề "Sách 2/5", bạn đổi tên, chọn chương rồi thêm, hoặc "Bỏ cuốn này". Có nút "Thêm tất cả phần còn lại" để thêm hết số còn lại bằng đúng lựa chọn mặc định của bước xem trước. File không đọc được chỉ báo lý do trong danh sách, không chặn các cuốn sau; chữ của truyện vẫn giữ nguyên.
+- Máy tính: kéo một hay nhiều file thả vào màn Thư viện là mở đúng danh sách xem trước ấy ("Thả để thêm sách"); loại file ABook chưa đọc được thì báo rõ ngay.
 
 ### Điện thoại
 
