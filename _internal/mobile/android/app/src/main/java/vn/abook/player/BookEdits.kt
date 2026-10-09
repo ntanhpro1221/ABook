@@ -1327,12 +1327,21 @@ object BookEdits {
     }
 
     /**
-     * Phần của lớp sửa vừa gửi đi mà [subtract] cố ý GIỮ lại: cách đọc riêng và danh sách phát nhạc đã chọn (webui/book_edits.py
-     * `sent_marks`). Máy tính nhận và giữ chúng, nhưng sách nó trả về không mang chúng, nên bỏ khỏi lớp sửa ở đây là người nghe mất
-     * cách đọc / nhạc vừa đặt. Ghi lại (cộng `previous`: các lần gửi trước) để [unmarked] không đếm chúng là chưa gửi.
+     * Phần của lớp sửa vừa gửi đi mà [subtract] cố ý GIỮ lại: dòng bỏ khỏi phần đọc, cách đọc riêng và danh sách phát nhạc đã chọn
+     * (webui/book_edits.py `sent_marks`). Máy tính nhận và giữ chúng, nhưng sách nó trả về không mang chúng, nên bỏ khỏi lớp sửa ở
+     * đây là người nghe mất dòng đã bỏ / cách đọc / nhạc vừa đặt. Ghi lại (cộng `previous`: các lần gửi trước) để [unmarked] không
+     * đếm chúng là chưa gửi.
      */
     fun sentMarks(edits: JSONObject, previous: JSONObject? = null): JSONObject {
         val out = JSONObject()
+        val skip = JSONObject()
+        val ourSkip = edits.optJSONObject("skip")
+        val earlierSkip = previous?.optJSONObject("skip")
+        val chapterKeys = (earlierSkip?.let { names(it) } ?: emptyList()) + (ourSkip?.let { names(it) } ?: emptyList())
+        for (key in chapterKeys.distinct().sortedBy { it.toLong() }) {
+            skip.put(key, JSONArray((skipLines(earlierSkip, key) + skipLines(ourSkip, key)).distinct().sortedWith { a, b -> byCodePoints(a, b) }))
+        }
+        if (skip.length() > 0) out.put("skip", skip)
         val readings = JSONObject()
         previous?.optJSONObject("readings")?.let { for (key in names(it)) readings.put(key, it.get(key)) }
         edits.optJSONObject("readings")?.let { for (key in names(it)) readings.put(key, it.get(key)) }
@@ -1347,6 +1356,16 @@ object BookEdits {
     /** `edits` trừ những gì `marks` ([sentMarks] các lần gửi trước) đã nói là máy tính có rồi - để đếm phần CHƯA gửi. Không sửa `edits`. */
     fun unmarked(edits: JSONObject, marks: JSONObject?): JSONObject {
         val out = deepCopy(edits) as JSONObject
+        val skip = out.optJSONObject("skip")
+        if (skip != null) {
+            val sentSkip = marks?.optJSONObject("skip")
+            for (key in names(skip)) {
+                val gone = skipLines(sentSkip, key).toSet()
+                val left = skipLines(skip, key).filter { it !in gone }
+                if (left.isEmpty()) skip.remove(key) else skip.put(key, JSONArray(left))
+            }
+            if (skip.length() == 0) out.remove("skip")
+        }
         val sentReadings = marks?.optJSONObject("readings")
         val readings = out.optJSONObject("readings")
         if (readings != null) {
