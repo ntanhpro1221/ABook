@@ -348,6 +348,15 @@ object VieneuUnits {
         }
     }
 
+    private val QUESTION_BANG = Regex("[?!]{2,}")
+
+    /** A run of "?!" / "!?" / "??" with a question mark becomes one "?": sea-g2p keeps only the FIRST mark of a run ("!?" becomes "!", the question tone is lost). "!!!" stays - `_question_runs`. */
+    private fun questionRuns(out: MutableList<String>) {
+        for ((index, token) in out.withIndex()) {
+            if ('?' in token) out[index] = QUESTION_BANG.replace(token) { if ('?' in it.value) "?" else it.value }
+        }
+    }
+
     /** Stuttering "T-tôi", "C-Chuyện", "E-em", "[Kh- Không": the stutter is read as a sound ("tờ… tôi", "chờ… chuyện", "e… em"), the rest of the word as usual - `_stutters`. */
     private fun stutters(toks: List<String>, out: MutableList<String>, origin: String?) {
         for ((index, token) in toks.withIndex()) {
@@ -514,6 +523,7 @@ object VieneuUnits {
         dashes(out)
         frames(out)
         stars(out)
+        questionRuns(out)
         val leftover = ANGLE_OPEN.drop(1) + ANGLE_CLOSE.drop(1)
         for ((index, token) in out.withIndex()) { // leftover 《》〈〉 without a pair are only a frame; two words glued on both sides of one are split ("có《Cỏ sạch》là")
             out[index] = Regex("[" + leftover + "]+").replace(token) { m ->

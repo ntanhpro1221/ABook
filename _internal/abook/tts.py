@@ -809,6 +809,37 @@ def join_chunks(waves: list[np.ndarray], sample_rate: int, ends: list[str] | Non
     return out.astype(np.float32, copy=False)
 
 
+_VIENEU_FINAL_MARK = re.compile(r"[?!]+\s*$")
+
+
+def keep_vieneu_final_mark() -> None:
+    """VieNeu ép dấu cuối của khúc dưới 5 từ về "." (`punc_norm` của sea-g2p): "Thật sao?" thành "Thật sao." và mất giọng hỏi, giọng cảm
+    (đo 10-10: F0 cuối câu hỏi ngắn +1,0 st khi giữ dấu, CER không tệ hơn). Khúc kết bằng "?" / "!" giữ dấu ấy; khúc thiếu dấu vẫn được thêm
+    ".". Đặt thay hai hàm của `vieneu_utils.phonemize_text` (chốt dấu ở mức chữ, rồi ở mức phoneme); gọi nhiều lần cũng chỉ đặt một lần.
+    Cùng luật với `readaloud.vieneu_engine.phonemize` (Nghe ngay); chép lại ở đây vì file này bị khoá, còn vieneu_engine thì không."""
+    import vieneu_utils.phonemize_text as phonemize_text
+
+    if getattr(phonemize_text, "_abook_keeps_final_mark", False):
+        return
+    original_punc_norm, original_phonemize = phonemize_text.punc_norm, phonemize_text._phonemize_cached
+
+    def punc_norm(text: str) -> str:
+        out = original_punc_norm(text)
+        found = _VIENEU_FINAL_MARK.search(text)
+        return out[:-1] + found.group(0)[0] if found and out.endswith(".") else out
+
+    def phonemize(text: str, punc_norm: bool = True) -> str:
+        out = original_phonemize(text, punc_norm)
+        if punc_norm and out.endswith(".") and ("?" in text or "!" in text):
+            written = original_phonemize(text, False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
+            if written.endswith(("?", "!")):
+                out = out[:-1] + written[-1]
+        return out
+
+    phonemize_text.punc_norm, phonemize_text._phonemize_cached = punc_norm, phonemize
+    phonemize_text._abook_keeps_final_mark = True
+
+
 class VieNeuEngine(EngineAdapter):
     name = "vieneu"
     label = "VieNeu"
@@ -820,6 +851,7 @@ class VieNeuEngine(EngineAdapter):
             from vieneu import Vieneu
         except ImportError as exc:
             raise RuntimeError("Thiếu VieNeu; hãy chạy ABook") from exc
+        keep_vieneu_final_mark()
         self.log("Nạp VieNeu-TTS.")
         self.tts = Vieneu(max_batch_size=max(1, int(self.settings["tts"]["batch_size"])))
         raw = list(self.tts.list_preset_voices())
