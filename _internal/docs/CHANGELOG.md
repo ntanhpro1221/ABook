@@ -23,13 +23,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Điện thoại và cửa sổ hẹp
 
 - Trang sách ở khổ tablet không còn tràn ngang vì tên chương dài ở nút "Nghe tiếp". Màn đọc ở khổ điện thoại: tên chương xuống hàng riêng đủ chữ, thanh "Nghe từ đây / dấu trang / sửa cách đọc" nằm một hàng, không che câu đang đọc. Cài đặt › Máy tính khác: nút ở khổ điện thoại có chữ thay vì chỉ biểu tượng.
+- Thanh "Đọc theo / Chương / Dấu trang" của màn "Đang nghe" ở khổ 768 px không còn tràn (chỉ còn biểu tượng khi hẹp).
 
 ### Việc cần anh và Cài đặt
 
 - Thẻ "Ai nói câu này" cho xem câu liền trước và liền sau để quyết, và không còn mời chọn người chưa có giọng trong sách. "Đã quyết, chờ áp dụng" đếm khớp số trên nút "Áp dụng"; quyết xong thẻ cuối của một loại thì địa chỉ trang về "Tất cả".
 - Hộp "Việc cần anh" chỉ hỏi những câu chính máy đọc không chắc (cùng cách xưng hô, hai câu liền nhau, lời gọi tên): bỏ loại thẻ đề xuất theo "máy chấm thứ hai" vì đo thấy nó đề xuất sai nhiều hơn đúng.
 - Cài đặt › Nhạc nền nhắc đến công tắc tự chọn nhạc và báo khi bật/tắt. Dự án hỏng báo "sổ làm việc của sách bị hỏng…" thay vì lỗi SQL.
-- Thanh "Đọc theo / Chương / Dấu trang" của màn "Đang nghe" ở khổ 768 px không còn tràn (chỉ còn biểu tượng khi hẹp). Thẻ "Ai nói câu này": nhãn chương/câu nằm ngay trên câu được hỏi, câu ấy có vạch đánh dấu.
+- Thẻ "Ai nói câu này": nhãn chương/câu nằm ngay trên câu được hỏi, câu ấy có vạch đánh dấu.
 
 ## [0.4.38] - 2026-10-09
 
