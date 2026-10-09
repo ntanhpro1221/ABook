@@ -24,7 +24,9 @@ def test_the_shared_speech_cases_match() -> None:
     golden = json.loads(SPEECH.read_text(encoding="utf-8"))
     assert golden == shared.speech_cases(), "Python và bộ ví dụ (Kotlin đọc cùng file) phải khớp"
     for case in golden["cases"]:
-        assert len(case["spokenTokens"] or tokens(case["spokenText"])) == len(case["tokens"]), "số chữ đem đọc = số chữ hiện"
+        assert len(case["spokenTokens"] or case["spokenSlots"]) == len(case["tokens"]), "số chữ đem đọc = số chữ hiện (giọng nhận chữ thô: bảng chữ hiện)"
+        if case["spokenText"] is not None:
+            assert len(tokens(case["spokenText"])) == len([slot for slot in case["spokenSlots"] if slot is not None]), "chữ mất khỏi chuỗi đúng chỗ bảng báo"
 
 
 def test_only_whole_words_match_and_case_counts() -> None:
@@ -34,6 +36,53 @@ def test_only_whole_words_match_and_case_counts() -> None:
     assert readings.spoken_text("a\n  Haruto\tb", table) == "a\n  Ha-ru-tô\tb", "khoảng trắng giữ nguyên"
     assert readings.is_word("Haruto") and readings.is_word("Haruto-kun") and not readings.is_word("Hai kes")
     assert not readings.is_word("Haruto,") and not readings.is_word("") and not readings.is_word("Tôkyô")
+
+
+def test_a_phrase_key_is_one_to_six_words_with_single_spaces() -> None:
+    assert readings.is_key("Haruto") and readings.is_key("Hạ Vy") and readings.is_key("a b c d e f")
+    assert not readings.is_key("a b c d e f g") and not readings.is_key("Hạ  Vy") and not readings.is_key(" Hạ Vy") and not readings.is_key("Hạ Vy ")
+    assert not readings.is_key("Hạ, Vy") and not readings.is_key("Hạ\tVy") and not readings.is_key("") and not readings.is_key("Tôkyô Vy")
+
+
+def test_a_phrase_matches_whole_words_without_punctuation_between() -> None:
+    table = {"Hạ Vy": "Hà Vi", "Hạ": "Há"}
+    assert readings.spoken_text("“Hạ Vy,” Hạ, Vy và hạ vy; Hạ  Vy\nHạ\nVy", table) == "“Hà Vi,” Há, Vy và hạ vy; Hà  Vi\nHà\nVi"
+    assert readings.tag("Hạ, Vy", table) != readings.tag("Hạ Vy", table) and readings.tag("hạ vy", table) == ""
+    assert [key for key, _ in readings.applicable("Hạ Vy gặp Hạ rồi Hạ Vy", table)] == ["Hạ Vy", "Hạ"], "thứ tự xuất hiện lần đầu"
+    assert readings.spoken_text("Hạ Vy", {"Hạ": "Há"}) == "Há Vy", "chỉ khoá một chữ: như trước"
+    assert readings.spoken_text("Hạ Vy…", {"Hạ Vy": "Hà Vi"}) == "Hà Vi…", "dấu câu đuôi giữ nguyên"
+    assert readings.spoken_text("Hạ —Vy", {"Hạ Vy": "Hà Vi"}) == "Hạ —Vy", "dấu câu đầu chữ sau là dấu chen giữa"
+
+
+def test_the_spoken_words_are_shared_out_over_the_shown_words() -> None:
+    def said(text: str, key: str, value: str) -> list[str]:
+        toks = tokens(text)
+        out = list(toks)
+        readings.apply_tokens(toks, out, {key: value})
+        return out
+    assert said("Hạ Vy", "Hạ Vy", "Hà Vi") == ["Hà", "Vi"]
+    assert said("Hạ Vy", "Hạ Vy", "Hà Vi Anh") == ["Hà-Vi", "Anh"], "dư: nhóm đầu nhận"
+    assert said("a b c", "a b c", "x y z t") == ["x-y", "z", "t"]
+    assert said("Hạ Vy", "Hạ Vy", "Hà") == ["Hà", ""], "ít hơn: chữ hiện cuối rỗng"
+    assert said("a b c", "a b c", "x") == ["x", "", ""]
+    assert said("“ông Tư,”", "ông Tư", "Tứ") == ["“Tứ,”", ""], "dấu câu đuôi dính vào từ đọc cuối"
+
+
+def test_a_shown_word_with_nothing_to_say_leaves_the_text_and_keeps_its_timing_slot() -> None:
+    said, slots = readings.spoken_layout("Anh gọi ông Tư!\nVâng.", {"ông Tư": "Tứ"})
+    assert said == "Anh gọi Tứ!\nVâng." and slots == [0, 1, 2, None, 3]
+    assert readings.expand_words([[0, 10], [10, 20], [20, 30], [30, 40]], slots) == [[0, 10], [10, 20], [20, 30], [30, 30], [30, 40]]
+    assert readings.spoken_layout("Anh gọi ông Tư!", None) == ("Anh gọi ông Tư!", [0, 1, 2, 3])
+
+
+def test_an_online_voice_keeps_one_highlight_per_shown_word_for_a_short_phrase(tmp_path: Path) -> None:
+    provider = FakeProvider()
+    service = ReadAloud(tmp_path, [provider])
+    text = "Anh gọi ông Tư rồi đi."
+    clip = service.clip("fake:ngoc", text, readings={"ông Tư": "Tứ"})
+    assert provider.calls[-1] == ("ngoc", "Anh gọi Tứ rồi đi."), "chữ rỗng mất khỏi chuỗi gửi giọng"
+    assert len(clip["words"]) == len(text.split()), "vẫn một mốc cho mỗi chữ hiện"
+    assert clip["words"][3] == [clip["words"][2][1], clip["words"][2][1]], "chữ mất nhận mốc rỗng ở cuối chữ trước"
 
 
 def test_an_online_voice_reads_the_spoken_form_and_each_shown_word_keeps_one_highlight(tmp_path: Path) -> None:
@@ -119,7 +168,7 @@ def test_the_listener_sets_a_reading_and_the_book_is_read_with_it(tmp_path: Path
         assert book_edits.load(folder)["readings"] == {"Haruto": "Ha ru tô"}
         status, _ = call("POST", "/api/readaloud/clip", {"voice": "fake:ngoc", "text": "Haruto", "bookId": identifier, "readings": {}})
         assert status == 200 and provider.calls[-1][1] == "Haruto", "ô cách đọc trống: nghe từ ấy như thường"
-        status, answer = call("POST", "/api/readaloud/clip", {"voice": "fake:ngoc", "text": "Haruto", "readings": {"Hai kes": "x"}})
+        status, answer = call("POST", "/api/readaloud/clip", {"voice": "fake:ngoc", "text": "Haruto", "readings": {"Hai, kes": "x"}})
         assert status == 400 and answer["error"]
         assert call("GET", f"/api/books/{identifier}/readings", None) == (200, {"readings": [{"surface": "Haruto", "spoken": "Ha ru tô"}]})
         assert call("PUT", f"/api/books/{identifier}/readings", {"surface": "Haruto", "spoken": ""})[1] == {"readings": []}

@@ -4,7 +4,11 @@
   "Kate": "Kết",
   "Lucien": "Lu-xi-en",
   "Tôkyô": "Tô ky ô",
-  "MP": "ma lực"
+  "MP": "ma lực",
+  "Hạ Vy": "Hà Vi",
+  "Hạ": "Há",
+  "Lý Tiểu": "Lý Tiểu Long",
+  "ông Tư": "Tứ"
  },
  "cases": [
   {
@@ -18,6 +22,11 @@
    ],
    "spokenTokens": null,
    "spokenText": "“Ha-ru-tô,” Kết nói.",
+   "spokenSlots": [
+    0,
+    1,
+    2
+   ],
    "tag": "r8c771f618eb8ec75",
    "key": "f7007c8561c0d8618cb5e11b3b69482b6487dcde55fd0b80201abf4ffa60631e"
   },
@@ -36,6 +45,7 @@
     "nói."
    ],
    "spokenText": null,
+   "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
    "key": "dbe3e3cabe5c4ad8a30f67e87141d19d8de1b092f882ae1a33b404c17115b417"
   },
@@ -54,6 +64,7 @@
     "nói."
    ],
    "spokenText": null,
+   "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
    "key": "69fa35ef2bdb6f6e398977221b1a602ed5d024cec8ea1d7a5b6bb3ab02bc506f"
   },
@@ -78,6 +89,21 @@
    ],
    "spokenTokens": null,
    "spokenText": "Kết gặp Kết ở Tô-ky-ô - còn haruto, Harutoo và Haruto-kun thì không.",
+   "spokenSlots": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
    "tag": "r669e9aea4c533d44",
    "key": "8a24d36d6ec73304bf78fc0f9b91df3deac9f5b08b54736b076d7ed989cee2f8"
   },
@@ -116,6 +142,7 @@
     "không."
    ],
    "spokenText": null,
+   "spokenSlots": null,
    "tag": "r669e9aea4c533d44",
    "key": "30914f427e6ac7c2e1cf89aee7e1b58651a0ef93d374bb62e5fae8e14d00a9c8"
   },
@@ -132,6 +159,13 @@
    ],
    "spokenTokens": null,
    "spokenText": "Không có tên nào cả.",
+   "spokenSlots": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
    "tag": "",
    "key": "c33ea22c47498cffc941e09a61960af0d1f41eee5ecc4cc23a4340a89c101e26"
   },
@@ -154,6 +188,7 @@
     "(Lu-xi-en!)"
    ],
    "spokenText": null,
+   "spokenSlots": null,
    "tag": "r2370bda33939e04a",
    "key": "e46f862aeae4a11ffe55f2a93ed868364e14bc1dd1383cea239dc0caa70f9762"
   },
@@ -169,6 +204,12 @@
    ],
    "spokenTokens": null,
    "spokenText": "[Lu-xi-en]\nKết\tđi tiếp.",
+   "spokenSlots": [
+    0,
+    1,
+    2,
+    3
+   ],
    "tag": "r6e74ef10f0bb4e8c",
    "key": "b15145907cd1314d057a7af037781d370909dfe55cb1024912318b1e5e068e67"
   },
@@ -187,6 +228,7 @@
     "nói."
    ],
    "spokenText": null,
+   "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
    "key": "283bafbd1cd0a778a9aaf28cb46a6f991970041675d851d1323a1df6bcfdaf67"
   },
@@ -215,6 +257,7 @@
     "ma-lực."
    ],
    "spokenText": null,
+   "spokenSlots": null,
    "tag": "r633c865c060faef6",
    "key": "3ff6ac7c2cdb3e99dd3455a50352ba180a89b877cdf613d57ec14dc28ef4c74f"
   },
@@ -237,8 +280,225 @@
     "cả."
    ],
    "spokenText": null,
+   "spokenSlots": null,
    "tag": "",
    "key": "24c07dbdc360575561b847d00ccec5eae0629deb98bf444d65b6f061cd6367fd"
+  },
+  {
+   "voice": "edge:vi-VN-HoaiMyNeural",
+   "text": "“Hạ Vy,” Kate nói.",
+   "origin": null,
+   "tokens": [
+    "“Hạ",
+    "Vy,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": null,
+   "spokenText": "“Hà Vi,” Kết nói.",
+   "spokenSlots": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "tag": "r81c6e74e07144399",
+   "key": "6da2a588cf93d7161f4ce1e06c2c3153f9e1f78264b6f5f21cab223db2a91d0c"
+  },
+  {
+   "voice": "vieneu:turbo/Thường",
+   "text": "“Hạ Vy,” Kate nói.",
+   "origin": null,
+   "tokens": [
+    "“Hạ",
+    "Vy,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": [
+    "“Hà",
+    "Vi,”",
+    "Kết",
+    "nói."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r81c6e74e07144399",
+   "key": "89a2c3151c6f0a8e2c6bc0328c19882dcca7d7a068cb4917fc45b61253c7aafc"
+  },
+  {
+   "voice": "edge:vi-VN-NamMinhNeural",
+   "text": "Lý Tiểu gặp ông Tư rồi Hạ Vy và Hạ.",
+   "origin": null,
+   "tokens": [
+    "Lý",
+    "Tiểu",
+    "gặp",
+    "ông",
+    "Tư",
+    "rồi",
+    "Hạ",
+    "Vy",
+    "và",
+    "Hạ."
+   ],
+   "spokenTokens": null,
+   "spokenText": "Lý-Tiểu Long gặp Tứ rồi Hà Vi và Há.",
+   "spokenSlots": [
+    0,
+    1,
+    2,
+    3,
+    null,
+    4,
+    5,
+    6,
+    7,
+    8
+   ],
+   "tag": "r3e4375453368fca7",
+   "key": "990dabb645393c5c84751b3666726a5fbd54cad1cc894ece2818919539765fa7"
+  },
+  {
+   "voice": "vieneu:nano/Nhẹ",
+   "text": "Lý Tiểu gặp ông Tư rồi Hạ Vy và Hạ.",
+   "origin": null,
+   "tokens": [
+    "Lý",
+    "Tiểu",
+    "gặp",
+    "ông",
+    "Tư",
+    "rồi",
+    "Hạ",
+    "Vy",
+    "và",
+    "Hạ."
+   ],
+   "spokenTokens": [
+    "Lý-Tiểu",
+    "Long",
+    "gặp",
+    "Tứ",
+    "",
+    "rồi",
+    "Hà",
+    "Vi",
+    "và",
+    "Há."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r3e4375453368fca7",
+   "key": "df994218a5a9a707438e6e677e16318ee263c4c6bc7b98ba1ad009e833193c67"
+  },
+  {
+   "voice": "edge:vi-VN-HoaiMyNeural",
+   "text": "Anh gọi: ông Tư! Ông Tư nói.",
+   "origin": null,
+   "tokens": [
+    "Anh",
+    "gọi:",
+    "ông",
+    "Tư!",
+    "Ông",
+    "Tư",
+    "nói."
+   ],
+   "spokenTokens": null,
+   "spokenText": "Anh gọi: Tứ! Ông Tư nói.",
+   "spokenSlots": [
+    0,
+    1,
+    2,
+    null,
+    3,
+    4,
+    5
+   ],
+   "tag": "raff1e6190a9d81a9",
+   "key": "07edd0764fd8af8e8ca8f1b80e18b8162c62c455b4dc9cde091ee13d057a7fc5"
+  },
+  {
+   "voice": "supertonic:F1",
+   "text": "Anh gọi: ông Tư! Ông Tư nói.",
+   "origin": null,
+   "tokens": [
+    "Anh",
+    "gọi:",
+    "ông",
+    "Tư!",
+    "Ông",
+    "Tư",
+    "nói."
+   ],
+   "spokenTokens": [
+    "Anh",
+    "gọi:",
+    "Tứ!",
+    "",
+    "Ông",
+    "Tư",
+    "nói."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "raff1e6190a9d81a9",
+   "key": "134907a1caae4a90721a4f585debb05883a69e34d4919865a040b7e21280192e"
+  },
+  {
+   "voice": "edge:vi-VN-HoaiMyNeural",
+   "text": "Hạ, Vy đi; hạ vy ở lại.",
+   "origin": null,
+   "tokens": [
+    "Hạ,",
+    "Vy",
+    "đi;",
+    "hạ",
+    "vy",
+    "ở",
+    "lại."
+   ],
+   "spokenTokens": null,
+   "spokenText": "Há, Vy đi; hạ vy ở lại.",
+   "spokenSlots": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "tag": "r7f137f8486d33d82",
+   "key": "de6da00fc5e94749cfb01398c1dba1b3726ff83710fa63fa2968784ebf78f1fc"
+  },
+  {
+   "voice": "vieneu:turbo/Thường",
+   "text": "Hạ, Vy đi; hạ vy ở lại.",
+   "origin": null,
+   "tokens": [
+    "Hạ,",
+    "Vy",
+    "đi;",
+    "hạ",
+    "vy",
+    "ở",
+    "lại."
+   ],
+   "spokenTokens": [
+    "Há,",
+    "Vy",
+    "đi;",
+    "hạ",
+    "vy",
+    "ở",
+    "lại."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r7f137f8486d33d82",
+   "key": "5aa6e38d3966610dbd95420b8ddd2a0c25787579378a0be5c78e1d3eee62221d"
   }
  ]
 }

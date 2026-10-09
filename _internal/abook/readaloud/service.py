@@ -180,7 +180,7 @@ class ReadAloud:
                 with lock:  # hai yêu cầu cùng đoạn (đọc trước + bấm nghe) chỉ đọc một lần
                     hit = self.cache.get(key)
                     if hit is None:
-                        said = text if reads_names else book_readings.spoken_text(text, readings)
+                        said, slots = (text, None) if reads_names else book_readings.spoken_layout(text, readings)
                         if not reads_names:
                             made = provider.synthesize(said, native)
                         elif tags[1]:
@@ -188,6 +188,8 @@ class ReadAloud:
                         else:
                             made = provider.synthesize(text, native, origin)
                         words = made.words if made.words is not None else map_boundaries(said, made.boundaries, made.duration_ms)
+                        if slots is not None:  # cụm đọc ngắn hơn số chữ hiện: chữ đã mất khỏi chuỗi nhận mốc rỗng
+                            words = book_readings.expand_words(words, slots)
                         hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
             finally:
                 with self._locks_guard:
