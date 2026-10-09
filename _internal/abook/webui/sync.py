@@ -43,7 +43,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
-from . import covers, edits_inbox, listen_view, music_plan, precast, remote_studio, store, tls, word_timing
+from . import covers, edits_inbox, listen_view, music_plan, package_share, packages, precast, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
@@ -492,7 +492,14 @@ class SyncApp:
         self._work_lock = threading.Lock()
 
     def book(self, value: str) -> Path | None:
-        return self.library.resolve(value)
+        """Cuốn máy đã ghép đòi: dự án, hay cuốn nhập từ file (không cuốn ảo của máy khác)."""
+        return self.library.resolve_sharable(value)
+
+    def book_manifest(self, path: Path, key: str) -> dict[str, Any]:
+        """`book.json` của cuốn `path` - dự án hay cuốn nhập từ file, cùng hình dạng."""
+        if store.is_project(path):
+            return manifest(path, key, self.listening, self.music_track)
+        return package_share.manifest(path, key)
 
     def player_view(self) -> dict[str, Any]:
         """Trình phát của máy này cho máy đã ghép: cùng hình dạng thân báo của điện thoại (`state`, `books`, `stream`,
@@ -596,8 +603,11 @@ class SyncApp:
     def receive_edits(self, project: Path, device: dict[str, Any], package: Path) -> dict[str, Any]:
         """Phần sửa điện thoại gửi về cho một cuốn (edits_inbox.py): sửa "áp ngay" áp liền; ý muốn chờ Studio thành yêu cầu khi
         thiết bị được điều khiển sản xuất từ xa (công tắc chung VÀ quyền của thiết bị - như Studio từ xa), không thì vào hộp thư
-        chờ chủ máy duyệt. `ValueError` (edits_inbox.InboundError): gói sai, không áp gì."""
+        chờ chủ máy duyệt. Cuốn nhập từ file: phần sửa vào lớp sửa của cuốn (package_share.receive_edits).
+        `ValueError` (edits_inbox.InboundError): gói sai, không áp gì."""
         if not store.is_project(project):
+            if packages.is_package(project):
+                return package_share.receive_edits(project, device, package)
             raise LookupError("Cuốn này không phải dự án của máy tính")
         may_produce = self.studio is not None and self.studio.allowed() and bool(device.get("studio"))
         report = edits_inbox.receive(project, device["id"], device["name"], package, my_music=self.my_music, may_produce=may_produce)
@@ -617,19 +627,23 @@ class SyncApp:
         if not isinstance(books, list):
             return found
         projects = list(self.library.projects())
+        imported = self.library.imported_packages()
         for item in books[:200]:
             if not isinstance(item, dict) or not isinstance(item.get("key"), str):
                 continue
-            own = self.library.find(item["key"], projects)
+            own = self.library.find(item["key"], projects + imported)
             if own is not None:
                 found[item["key"]] = book_id(own)
                 continue
             if not isinstance(item.get("chapters"), dict):
                 continue
-            for path in projects:
-                if self.fingerprints.shares_a_chapter(path, item["chapters"]):
-                    found[item["key"]] = book_id(path)
-                    break
+            # Cuốn nhập từ file không có dấu vân tay trong DB: so thẳng mã băm ghi trong gói (packages.same_book).
+            mine = next((path for path in projects if self.fingerprints.shares_a_chapter(path, item["chapters"])), None)
+            if mine is None:
+                mine = next((path for path in imported
+                             if packages.same_book(item["chapters"], packages.chapter_prints(packages.manifest(path)))), None)
+            if mine is not None:
+                found[item["key"]] = book_id(mine)
         return found
 
     def library_view(self) -> list[dict[str, Any]]:
@@ -649,10 +663,19 @@ class SyncApp:
             if words := word_timing.stamp(path):  # điện thoại đã tải sách thấy chữ sáng theo giọng đọc là bản mới (cùng dấu với manifest)
                 entry["wordsVersion"] = words
             out.append(entry)
+        # Cuốn nhập từ file ("Thêm sách") cũng nghe được ở máy đã ghép; cuốn ảo của máy khác thì không (chống vòng soi nhau).
+        for path in self.library.imported_packages():
+            identifier = book_id(path)
+            try:
+                out.append(package_share.library_entry(path, identifier, self.listening.get(identifier)))
+            except Exception:  # noqa: BLE001 - một cuốn hỏng không làm mất cả danh sách
+                continue
         return out
 
     def resolve_file(self, project_root: Path, relative: str) -> Path | bytes | None:
         """Đường dẫn file của gói (chỉ các tên trong manifest; không đi ra ngoài thư mục sách)."""
+        if not store.is_project(project_root):
+            return package_share.resolve_file(project_root, relative)
         if relative == "cast.json":
             return json.dumps(store.cast(project_root), ensure_ascii=False).encode("utf-8")
         if relative == covers.COVER_FILE:
@@ -983,8 +1006,7 @@ class SyncHandler(BaseHTTPRequestHandler):
             # đúng mã nó dùng - không thì nó tưởng hồ sơ đã chuyển sang cuốn khác và gỡ khỏi cuốn đang nghe.
             key = book_id(project)
             if method == "GET" and match.group(2) == "manifest":
-                self._json(HTTPStatus.OK, {**manifest(project, key, self.app.listening, self.app.music_track),
-                                           "id": book})
+                self._json(HTTPStatus.OK, {**self.app.book_manifest(project, key), "id": book})
             elif method == "POST" and match.group(2) == "state":
                 body = self._body()
                 record = body.get("record")

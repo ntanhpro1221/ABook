@@ -932,7 +932,7 @@ def _track_entry(info: dict[str, Any], path: Path) -> dict[str, Any]:
     return entry
 
 
-def _place(folder: Path, name: str, source: Path) -> None:
+def place(folder: Path, name: str, source: Path) -> None:
     """Chép file bài đã ghim vào thư mục sách (music/<sha1>.<đuôi>) - nguyên tử, không ghi đè file cùng cỡ đã có."""
     target = Path(folder).joinpath(*name.split("/"))
     if target.is_file() and target.stat().st_size == Path(source).stat().st_size:
@@ -1043,7 +1043,7 @@ def set_music(folder: Path, body: dict[str, Any],
         else:
             edits.pop("music", None)
         for name, path in placing:
-            _place(folder, name, path)
+            place(folder, name, path)
         try:
             _write(folder, edits)
         except EditsError:
@@ -1195,14 +1195,17 @@ def read_layer(archive: Any, names: set[str]) -> tuple[dict[str, Any], bytes | N
 
 
 def adopt(folder: Path, incoming: dict[str, Any], cover: bytes | None,
-          member: Callable[[str, Path], None] | None = None) -> dict[str, Any]:
+          member: Callable[[str, Path], None] | None = None, *, incoming_wins: bool = False) -> dict[str, Any]:
     """Nhập lại một file sách ĐÃ có trên máy mà file mang phần sửa: hợp vào phần sửa của máy (`merge`: máy này thắng) -
     không giải nén lại audio. `cover`: byte edits/cover.jpg của file (nếu có). `member(tên, đích)`: chép một mục của file ra
-    thư mục sách - cho file các bài nhạc người nghe đã ghim mà máy này chưa có. Trả báo cáo của `merge`."""
+    thư mục sách - cho file các bài nhạc người nghe đã ghim mà máy này chưa có. Trả báo cáo của `merge`.
+
+    `incoming_wins`: phần sửa đến SAU thắng (máy khác gửi phần sửa của người nghe về cuốn này - sync.py): khoá cả hai cùng đặt
+    thì lấy bản gửi tới, `conflicts` vẫn là số khoá hai bên khác nhau; `adopted` / `kept` / `cover` của báo cáo khi ấy tính từ phía bản gửi tới."""
     folder = Path(folder)
     with _LOCK:
-        merged, report = merge(load(folder), incoming)
-        if report["cover"] == "incoming" and cover is not None:
+        merged, report = merge(incoming, load(folder)) if incoming_wins else merge(load(folder), incoming)
+        if report["cover"] == ("local" if incoming_wins else "incoming") and cover is not None:
             atomic_write_bytes(folder / EDITS_COVER, cover)
         if member is not None:
             for name in pinned_files(merged):
