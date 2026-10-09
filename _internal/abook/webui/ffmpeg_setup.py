@@ -93,7 +93,7 @@ def cannot_download() -> str:
 def reason(error: BaseException) -> str:
     if isinstance(error, studio_setup.SetupError):
         if error.__cause__ is not None:  # download() bọc lỗi mạng
-            return "không tải được - kiểm tra kết nối mạng rồi thử lại"
+            return "mạng bị ngắt - kiểm tra kết nối rồi bấm tải lại (phần đã tải được giữ)"
         return "file tải về không đúng bản đã ghim (đã xoá) - thử lại"
     if isinstance(error, (zipfile.BadZipFile, KeyError)):
         return "gói tải về không có ffmpeg - thử lại"

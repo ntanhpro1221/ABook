@@ -13,6 +13,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tab Kịch bản đánh dấu thêm câu máy chỉ chắc vài chục phần trăm ai nói và câu có cách xưng hô lệch - đúng những câu hộp "Việc cần anh" hỏi. "Xác nhận cả chương đúng" có Hoàn tác (nút trên thông báo và Ctrl+Z).
 - Đổi sang giọng khác giới: hộp "Đổi giọng" hỏi "đổi cả giới?" ngay trong hộp, rồi ghi giới theo; dòng chờ áp dụng ở tab Nhân vật hiện giới mới.
 - Thẻ có nhiều lựa chọn gom bớt vào "Người khác…"; thẻ 『』 và thẻ lượt đối đáp có một dòng giải thích hai phạm vi, số "Ảnh hưởng" đổi theo phạm vi đang chọn. Thẻ lượt đối đáp không tô lựa chọn đầu như thể máy đề xuất.
+- Cài Studio (và mọi mô-đun tải thêm) trên mạng chập chờn: khi kết nối đứt giữa chừng mà máy chủ không báo lỗi, app tự nối tiếp từ chỗ đã tải thay vì báo "không đúng bản đã ghim" rồi xoá cả phần đã tải; hết lượt thử thì báo mất mạng và giữ phần đã tải để bấm "Cài tiếp".
 - Chữ rõ hơn: lỗi nghe thử không còn hiện tên lỗi của máy; báo "Thu lại N câu" thống nhất; gợi ý tên người kể không còn mảnh chồng lấn; ô chọn chương ở màn hẹp không còn bị cụt chữ; thông báo có nút ✕ để gạt đi khi che chữ; nhãn cách đọc của mỗi câu hiện mờ trên màn cảm ứng.
 
 ### Nhạc nền

@@ -361,6 +361,52 @@ def test_a_download_resumes_where_it_stopped_and_refuses_a_wrong_file(tmp_path: 
         server.shutdown()
 
 
+class CutBlob(Blob):
+    """Mỗi lần trả lời chỉ gửi tối đa `cut` byte rồi đóng kết nối - Content-Length vẫn hứa đủ."""
+
+    cut = 0
+
+    def do_GET(self) -> None:  # noqa: N802
+        start = 0
+        header = self.headers.get("Range")
+        if header:
+            Blob.ranges.append(header)
+            start = int(header.removeprefix("bytes=").split("-")[0])
+        self.send_response(HTTPStatus.PARTIAL_CONTENT if header else HTTPStatus.OK)
+        self.send_header("Content-Length", str(len(Blob.data) - start))
+        self.end_headers()
+        self.wfile.write(Blob.data[start:start + CutBlob.cut])
+        self.close_connection = True
+
+
+def test_a_download_cut_mid_way_keeps_its_part_and_resumes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(studio_setup.time, "sleep", lambda _seconds: None)
+    Blob.data = bytes(range(256)) * 4_000  # ~1 MB
+    Blob.ranges = []
+    CutBlob.cut = 300_000
+    server = ThreadingHTTPServer(("127.0.0.1", 0), CutBlob)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = f"http://127.0.0.1:{server.server_address[1]}/uv.zip"
+    item = Download("uv", url, hashlib.sha256(Blob.data).hexdigest(), len(Blob.data))
+    target = tmp_path / "downloads" / "uv.zip"
+    try:
+        studio_setup.download(item, target, lambda *_: None, lambda: False)
+        assert target.read_bytes() == Blob.data, "nối lại sau mỗi lần đứt tới khi đủ"
+        assert Blob.ranges == ["bytes=300000-", "bytes=600000-", "bytes=900000-"]
+
+        CutBlob.cut = 100_000  # 5 lượt không đủ: báo lỗi mạng, giữ phần đã tải để bấm Cài tiếp
+        Blob.ranges = []
+        other = tmp_path / "other" / "uv.zip"
+        with pytest.raises(SetupError, match="Kiểm tra mạng"):
+            studio_setup.download(item, other, lambda *_: None, lambda: False)
+        assert other.with_name("uv.zip.part").stat().st_size == 500_000, "không xoá .part khi mạng đứt"
+        CutBlob.cut = len(Blob.data)
+        studio_setup.download(item, other, lambda *_: None, lambda: False)
+        assert Blob.ranges[-1] == "bytes=500000-" and other.read_bytes() == Blob.data
+    finally:
+        server.shutdown()
+
+
 def test_the_studio_carries_its_own_vc_runtime_next_to_its_python(tmp_path: Path, ollama: str) -> None:
     """Đo 28-09: thư viện của Studio nạp msvcp140_1.dll từ System32 (VC++ Redistributable - Windows sạch không có). Bộ
     cài mang sẵn bản Microsoft cho phân phối lại; Studio chép vào thư mục Python gốc (tìm trước System32), không đè file

@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import filecmp
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -222,6 +223,8 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
     part = target.with_name(target.name + ".part")
     for attempt in range(5):
         have = part.stat().st_size if part.is_file() else 0
+        if have >= item.size:
+            break  # đủ cỡ (hay thừa): để băm quyết
         request = urllib.request.Request(item.url, headers={"Range": f"bytes={have}-"} if have else {})
         try:
             with urllib.request.urlopen(request, timeout=60) as response:
@@ -235,8 +238,11 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
                         handle.write(chunk)
                         done += len(chunk)
                         progress(done, item.size)
+            if done < item.size:
+                # Kết nối đứt giữa chừng mà không báo lỗi: giữ .part, tải tiếp bằng Range ở lượt sau.
+                raise ConnectionError(f"mạng ngắt khi mới tải {done * 100 // item.size}%")
             break
-        except (urllib.error.URLError, TimeoutError, ConnectionError) as error:
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError) as error:
             if attempt == 4:
                 raise SetupError(f"Không tải được {item.name} ({error}). Kiểm tra mạng rồi bấm Cài tiếp.") from error
             time.sleep(3 * (attempt + 1))
