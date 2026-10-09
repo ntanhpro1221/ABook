@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Việc cần anh
+
+- Những câu mà máy tự thấy mình gán người nói không chắc (chỉ khoảng một câu trong mười, câu kém chắc nhất của cuốn) hiện thành thẻ "Ai nói câu này - …?" kèm mức chắc của máy, bấm chọn người đúng ngay trên thẻ như các thẻ khác; cuốn nào máy chưa ghi mức chắc thì không có thẻ này.
+
 ## [0.4.37] - 2026-10-09
 
 ### Thư viện

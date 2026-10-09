@@ -290,3 +290,31 @@ def write_chapter_records(project_root: Path, chapter: int, records: Iterable[Ma
     temporary = path.with_suffix(".jsonl.tmp")
     temporary.write_bytes(body.encode("utf-8"))
     os.replace(temporary, path)
+
+
+def read_confidences(project_root: Path) -> dict[str, dict[str, Any]]:
+    """{stable_id -> dòng đo} của mọi chương trong `analysis_logprobs/`: hộp "Việc cần duyệt" đọc để hỏi lại những câu model
+    kém chắc nhất. Thiếu thư mục/file, dòng hỏng hay thiếu `p_first` thì bỏ qua (không bao giờ làm sập người gọi)."""
+    found: dict[str, dict[str, Any]] = {}
+    folder = Path(project_root) / DIRNAME
+    try:
+        paths = sorted(folder.glob("*.jsonl"))
+    except OSError:
+        return found
+    for path in paths:
+        try:
+            text = path.read_bytes().decode("utf-8", "replace")
+        except OSError:
+            continue
+        for line in text.splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(row, dict) or not isinstance(row.get("stable_id"), str) or not isinstance(row.get("speaker"), str):
+                continue
+            p_first = row.get("p_first")
+            if isinstance(p_first, bool) or not isinstance(p_first, (int, float)) or not 0 <= p_first <= 1:
+                continue
+            found[row["stable_id"]] = row
+    return found
