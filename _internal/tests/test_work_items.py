@@ -632,7 +632,8 @@ def test_the_models_own_doubt_asks_only_the_least_sure_tenth_of_the_measured_lin
     assert [card["key"] for card in cards] == ["speaker:b", "speaker:c"], "20 câu x 10% = 2 thẻ, p_first thấp nhất trước"
     first = cards[0]
     assert first["title"] == "Ai nói câu này - Heidi?"
-    assert first["problem"] == "Máy gán cho Heidi nhưng không chắc (20%)."
+    assert first["problem"] == "Máy gán cho Heidi nhưng chỉ chắc khoảng 20%."
+    assert first["suggested"] is False, "thẻ logprob không đề xuất ai: chip đầu không tô cam"
     assert first["doubt"] == 0.8 and first["current"] == "Heidi"
     assert first["lines"] == [{"stableId": "b", "textSha256": "sha-b"}]
     values = [choice["value"] for choice in first["choices"]]
@@ -682,7 +683,7 @@ def test_a_logprob_card_follows_the_listeners_decision_and_survives_bad_files(tm
                      + b"\n" + json.dumps(lp("c", "LUCIEN", 1.7)).encode() + b"\n")
     (project / "analysis_logprobs" / "00002.jsonl").write_bytes(b"\xff\xfe broken")
     card = next(item for item in speaker_cards(project))
-    assert card["key"] == "speaker:x9" and card["problem"].endswith("(30%).")
+    assert card["key"] == "speaker:x9" and card["problem"].endswith("chỉ chắc khoảng 30%.")
     assert not card["requested"]
 
     request_speaker(project, "x9", "sha-x9", "RHINE", now=time.time())

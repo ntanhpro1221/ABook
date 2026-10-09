@@ -393,7 +393,7 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
     <MenuShell
       label="Nhạc nền"
       active={playing}
-      trigger={<><Music2 className="size-4" /><span className="max-w-32 truncate max-sm:hidden">{playing ? label : ""}</span></>}
+      trigger={<><Music2 className="size-4" /><span className="max-w-32 truncate max-sm:hidden @max-[1330px]:hidden">{playing ? label : ""}</span></>}
       width="w-72"
     >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>
@@ -489,7 +489,7 @@ export function VoiceMenu() {
     <MenuShell
       label="Giọng đọc"
       // Tên giọng hiện cả trên điện thoại: người nghe thấy ngay giọng nào đang đọc, không chỉ một biểu tượng.
-      trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate">{current ? spokenVoiceName(current.name) : ""}</span></>}
+      trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[1000px]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
       width="w-80 max-w-[calc(100vw-1.5rem)]"
     >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Giọng đọc · nhớ riêng cho cuốn này</div>
@@ -1281,7 +1281,7 @@ export function PlayerBar({
     );
   }
   return (
-    <section aria-label="Trình phát" className="relative z-20 shrink-0 border-t border-line bg-panel">
+    <section aria-label="Trình phát" className="@container relative z-20 shrink-0 border-t border-line bg-panel">
       <BookmarkShortcut />
       <FurtherElsewhere />
       <FollowRecord />
@@ -1289,7 +1289,7 @@ export function PlayerBar({
       <PlayerAlert className="mx-4 mt-2" />
       {/* Cột giữa theo bề rộng CỦA THANH (min(40%, 480px)), không theo cửa sổ (40vw): thanh không gồm thanh bên, 40vw từng
           chiếm 512/1044 px ở cửa sổ 1280 - tên chương bị cắt, cụm nút phải (266 px) bị ép vào 238 px (soát UX 29-09). */}
-      <div className="grid h-[76px] grid-cols-[minmax(0,1fr)_min(40%,480px)_minmax(0,1fr)] items-center gap-4 px-4">
+      <div className="grid h-[76px] grid-cols-[minmax(0,1fr)_min(40%,480px)_minmax(max-content,1fr)] items-center @max-[900px]:grid-cols-[minmax(0,1fr)_minmax(0,260px)_minmax(max-content,1fr)] gap-4 px-4">
         <button
           type="button"
           onClick={() => setExpanded(true)}

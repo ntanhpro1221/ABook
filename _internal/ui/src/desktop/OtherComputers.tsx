@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { api } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatRelative } from "@/shared/format";
+import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
 import { Button, IconButton, Skeleton, Tooltip } from "@/shared/ui";
 import type { UnsentEdits } from "@/shared/unpair";
 import { useUnpair } from "@/shared/useUnpair";
@@ -159,15 +160,17 @@ export function OtherComputers() {
                     </button>
                   </div>
                 ) : (
-                  <div className={cn("truncate text-xs", computer.error ? "text-danger" : "text-fg-2")}>
+                  // Lời báo lỗi dài (chứng chỉ máy kia đổi...) xuống dòng cho đọc hết, không cắt giữa chừng.
+                  <div className={cn("text-xs", computer.error ? "text-danger [overflow-wrap:anywhere]" : "truncate text-fg-2")}>
                     {computer.error
                       ? computer.error
                       : `${routeLine(computer, devices)}${computer.lastSeen ? ` · thấy ${formatRelative(computer.lastSeen)}` : ""}`}
                   </div>
                 )}
                 {computer.fingerprint && (
-                  <div className="mt-0.5 break-words text-[11px] text-fg-3">
-                    Vân tay <span className="tabular-nums">{formatFingerprint(computer.fingerprint)}</span>
+                  // 8 ký tự đầu đủ để đối chiếu với máy kia; đủ 64 ký tự ở chú giải khi rê chuột vào.
+                  <div className="mt-0.5 break-words text-[11px] text-fg-3" title={formatFingerprint(computer.fingerprint)}>
+                    Vân tay <span className="tabular-nums">{formatFingerprint(computer.fingerprint).slice(0, 9)}</span>…
                   </div>
                 )}
               </div>
@@ -273,7 +276,7 @@ export function OtherComputers() {
       <div className="space-y-2 text-xs leading-relaxed text-fg-3">
         <p>
           Cùng Wi-Fi: hai máy phải cùng mạng (ở khác nơi thì vào cùng một mạng riêng ảo rồi gõ địa chỉ của máy kia trong mạng
-          ấy). Trên máy kia: Cài đặt → Điện thoại và thiết bị → bật “Cho phép thiết bị khác kết nối qua Wi-Fi” → “Ghép thiết bị
+          ấy). Trên máy kia: Cài đặt → Điện thoại và thiết bị → bật “{SYNC_SWITCH_LABEL}” → “Ghép thiết bị
           mới” để lấy mã 6 số; địa chỉ máy ấy ghi ở dòng “Trình duyệt” ngay cạnh mã. Điện thoại Android: màn Tải sách → bật “Cho
           máy khác nghe thư viện này” → “Ghép máy mới”. Máy này tên “{data.name}” trong danh sách thiết bị đã ghép của máy kia.
         </p>

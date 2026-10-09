@@ -25,10 +25,22 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
     expect(copy.cancel).toBe("Huỷ");
   });
 
-  it("máy kia không tới được thì không mời gửi và nói vì sao", () => {
+  it("máy kia tới được thì “Gửi trước” là nút chính", () => {
+    expect(unpairCopy("Máy bàn", "điện thoại", two, true)!.sendPrimary).toBe(true);
+  });
+
+  it("máy kia đang tắt thì “Gửi trước” vẫn có nhưng không là nút chính, kèm dòng nói máy ấy tắt", () => {
     const copy = unpairCopy("Máy bàn", "điện thoại", two, false)!;
-    expect(copy.send).toBeNull();
-    expect(copy.lines[1]).toContain("Chưa tới được Máy bàn");
+    expect(copy.send).toBe("Thử gửi trước rồi gỡ");
+    expect(copy.sendPrimary).toBe(false);
+    expect(copy.lines[1]).toContain("Máy bàn đang tắt");
+  });
+
+  it("lời hỏi thật của máy tính (`reachable` trong phần sửa chưa gửi) thắng trạng thái cũ của danh sách máy", () => {
+    const off = unpairCopy("Máy bàn", "máy tính", { ...two, reachable: false }, true)!;
+    expect(off.sendPrimary).toBe(false);
+    const on = unpairCopy("Máy bàn", "máy tính", { ...two, reachable: true }, false)!;
+    expect(on.sendPrimary).toBe(true);
   });
 
   it("máy kia là điện thoại (không nhận sửa) thì chỉ có bỏ hay huỷ", () => {

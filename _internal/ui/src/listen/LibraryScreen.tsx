@@ -11,6 +11,7 @@ import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, isLibrarySor
 import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, seriesIndex, volumeBadge, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
 import { bookVoiceCaption } from "./readAloudVoice";
+import { spokenVoiceName } from "./onlineConsent";
 import { useListenLibrary, useReadAloudVoices, useSource } from "./source";
 
 type Filter = "all" | "listening" | "new" | "finished";
@@ -36,7 +37,9 @@ export function remotePlace(book: ListenBook): string {
 function progressText(book: ListenBook, speaks: boolean, voice: string): string {
   // Sách mới nhập từ EPUB / DOCX / PDF / TXT: có chữ, máy có giọng thì giọng máy đọc (docs/LISTEN_ANYTHING.md mục 1) - cùng lời với trang
   // sách (labels.textBookLine), không ghi "Chỉ có chữ" ngay dưới nút "Nghe ngay".
-  if (book.stage === "text") return `${speaks ? voice || "Giọng đọc của máy" : "Chỉ có chữ"} · ${book.chaptersTotal} chương`;
+  // Dòng phụ là NGƯỜI VIẾT sách (tìm sách theo tác giả được, thẻ cũng phải nói); không có tác giả thì mới nói giọng, và chỉ tên giọng - không nói
+  // máy chủ nào đọc ("Hoài My (Edge)" là chuyện kỹ thuật, soát UX a10).
+  if (book.stage === "text") return `${book.author?.trim() || (speaks ? (voice ? spokenVoiceName(voice) : "Giọng đọc của máy") : "Chỉ có chữ")} · ${book.chaptersTotal} chương`;
   const chapters = `${book.chaptersAvailable}/${book.chaptersTotal} chương`;
   if (book.progress.finished) return "Đã nghe xong";
   if (book.progress.caughtUp) return `Đã nghe hết phần đã có · ${chapters}`;
@@ -134,8 +137,16 @@ function BookTile({ book, badge }: { book: ListenBook; badge?: string }) {
           </div>
         )}
         {book.remote && (
-          <span className="pointer-events-none absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
-            <Laptop className="size-3" /> {typeof book.remote === "object" && book.remote?.computer ? book.remote.computer : "Máy tính"}
+          // Dải dưới bìa, chừa chỗ nút phát bên phải: tên sách vẽ ở ĐẦU bìa, huy hiệu ở góc trên từng đè lên chữ ấy (soát UX a10). Bìa vẽ có nhãn
+          // "TẬP n" ở góc dưới trái thì huy hiệu nhích lên trên nhãn.
+          <span
+            className={cn(
+              "pointer-events-none absolute left-2.5 inline-flex max-w-[calc(100%-5rem)] items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white",
+              book.series?.part || badge ? "bottom-9" : "bottom-2.5",
+            )}
+          >
+            <Laptop className="size-3 shrink-0" />
+            <span className="truncate">{typeof book.remote === "object" && book.remote?.computer ? book.remote.computer : "Máy tính"}</span>
           </span>
         )}
       </div>

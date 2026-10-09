@@ -400,6 +400,8 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
 export function ProjectMenu({ book, rename = true, className }: { book: BookSummary; rename?: boolean; className?: string }) {
   const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
   const navigate = useNavigate();
+  // `?.`: tóm tắt của dự án hỏng là {broken: "..."} - không có segments.
+  const analyzed = (book.segments?.analyzed ?? 0) > 0;
   return (
     <>
       <DropdownMenu.Root>
@@ -427,15 +429,20 @@ export function ProjectMenu({ book, rename = true, className }: { book: BookSumm
             )}
             {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). Dự án chưa
                 phân tích câu nào thì không có gì để mang theo - mờ kèm lý do thay vì dẫn tới một phần mới trống (soát UX 29-09). */}
-            <DropdownMenu.Item
-              disabled={book.segments.analyzed === 0}
-              onSelect={() => navigate(`/studio/new?continue=${book.id}`)}
-              className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
-            >
-              <BookPlus className="size-4" /> Làm tiếp cuốn này…
-              {book.segments.analyzed === 0 && <span className="ml-auto pl-3 text-xs text-fg-3">chạy phần này trước</span>}
-            </DropdownMenu.Item>
-            <DropdownMenu.Separator className="my-1 h-px bg-line" />
+            {/* Dự án hỏng (`broken`) không có `segments` và không có gì để mang theo: chỉ còn xoá. */}
+            {!book.broken && (
+              <>
+                <DropdownMenu.Item
+                  disabled={!analyzed}
+                  onSelect={() => navigate(`/studio/new?continue=${book.id}`)}
+                  className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
+                >
+                  <BookPlus className="size-4" /> Làm tiếp cuốn này…
+                  {!analyzed && <span className="ml-auto pl-3 text-xs text-fg-3">chạy phần này trước</span>}
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator className="my-1 h-px bg-line" />
+              </>
+            )}
             <DropdownMenu.Item onSelect={() => setDialog("delete")} className={cn(MENU_ITEM, "text-danger")}>
               <Trash2 className="size-4" /> Xoá dự án…
             </DropdownMenu.Item>

@@ -61,6 +61,8 @@ export interface WorkItem {
   currentValue?: string;
   /** Nhãn nút giữ nguyên khi "Giữ <người đang nói>" không đúng nghĩa (bí danh: "Hai người khác nhau"). */
   keepLabel?: string;
+  /** `false`: máy không đề xuất ai (thẻ theo độ tin logprob chỉ nói máy chưa chắc) - chip đầu không tô như gợi ý của máy. */
+  suggested?: boolean;
   /** Thẻ bí danh: tên được hỏi, để hiển thị ("“Thiên Biến Vạn Hóa” là Krai") - `current` là nhãn lựa chọn, không phải tên. */
   subject?: string;
   /** Việc giọng/giới của nhân vật ("Nam hay nữ", "Chung giọng"): mỗi lựa chọn là một yêu cầu POST /voice; giữ nguyên thì
@@ -443,7 +445,7 @@ function SpeakerFix({
             key={choice.value}
             size="sm"
             // Đã quyết thì tô lựa chọn của người nghe, không phải gợi ý đầu của máy.
-            variant={(item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed")
+            variant={(item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed" && item.suggested !== false)
               ? "primary" : "secondary"}
             aria-pressed={item.requested ? [choice.name, choice.label].includes(item.requested) : undefined}
             disabled={busy || none}
