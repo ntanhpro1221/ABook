@@ -644,6 +644,8 @@ def test_the_moods_model_and_recompute_endpoints(studio, tmp_path: Path, monkeyp
     from abook.webui.server import App
 
     paths, app, server, runner = studio
+    # Bài này giả định máy chưa có gói học sinh cảnh: máy thử có biến trỏ gói thật thì "scene" thành sẵn sàng và bài hỏng.
+    monkeypatch.delenv("ABOOK_MUSIC_SCENE_STUDENT_DIR", raising=False)
     _with_catalog(app, tmp_path)
     book = book_id(paths.root)
     digest: list[str | None] = [None]
