@@ -82,6 +82,8 @@ export interface EbookPlayerPlugin {
     rewindSeconds?: number;
     safetyStopHours?: number;
     schedule?: { from: string; to: string; minutes: number } | null;
+    /** Máy tự chọn nhạc nền cho sách chỉ có chữ chưa chọn nhạc (Cài đặt > Nhạc nền). */
+    autoMusic?: boolean;
     /** Giọng đọc của "Nghe ngay" (mã giọng của ReadAloud.voices); "" = giọng mặc định của máy. */
     readAloudVoice?: string;
     /** Cuốn của `readAloudVoice`: lõi nhớ giọng ấy cho cuốn ấy (ReadAloud.chooseFor); không có thì cuốn đang nạp. */
@@ -384,7 +386,7 @@ export interface EbookLibraryPlugin {
   setChapterDone(options: { id: string; chapterId: number; done: boolean }): Promise<ListeningState>;
   setFinished(options: { id: string; finished: boolean }): Promise<ListeningState>;
   setRate(options: { id: string; rate: number }): Promise<void>;
-  addBookmark(options: { id: string; chapterId: number; seconds: number; note: string }): Promise<Bookmark>;
+  addBookmark(options: { id: string; chapterId: number; seconds: number; note: string; index?: number; quote?: string }): Promise<Bookmark>;
   updateBookmark(options: { id: string; markId: string; note: string }): Promise<void>;
   deleteBookmark(options: { id: string; markId: string }): Promise<void>;
   syncState(options: { id: string }): Promise<ListeningState>;

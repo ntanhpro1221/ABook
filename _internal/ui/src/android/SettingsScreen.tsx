@@ -5,6 +5,7 @@ import { cn } from "@/shared/cn";
 import { Button, Segmented, Sheet, TimeSelect } from "@/shared/ui";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { MyMusicSection } from "@/listen/MyMusic";
+import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
 import { VieneuModuleCard, type VieneuBackend } from "@/listen/VieneuModuleCard";
 import { SUPERTONIC_COPY } from "@/listen/vieneuModule";
 import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
@@ -319,6 +320,16 @@ export function SettingsScreen() {
 
       {/* "Nhạc của tôi" trước chỉ mở được từ hộp "Sửa sách" của từng cuốn, dù kho nhạc là chung cho mọi cuốn. */}
       <Group title="Nhạc nền" id="music">
+        <Row label={AUTO_MUSIC_LABEL} hint={AUTO_MUSIC_HINT}>
+          <Switch.Root
+            checked={settings.autoMusic !== false}
+            onCheckedChange={(value) => change({ autoMusic: value })}
+            aria-label={AUTO_MUSIC_LABEL}
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
+          >
+            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+          </Switch.Root>
+        </Row>
         <div className="px-4 py-3.5">
           <MyMusicSection />
         </div>

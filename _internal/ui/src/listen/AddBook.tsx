@@ -104,7 +104,8 @@ export function AddBookDialog({
   const queueRef = useRef<QueueItem[] | null>(null);
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [working, setWorking] = useState("");
-  const [confirmLeave, setConfirmLeave] = useState(false);
+  // Hộp hỏi trong hộp thoại khi hàng còn sách chưa thêm: "close" = Esc / bấm ra ngoài, "again" = nút "Chọn lại" (cả hai bỏ cả hàng).
+  const [confirmLeave, setConfirmLeave] = useState<"close" | "again" | null>(null);
   const setQueue = (next: QueueItem[] | null) => {
     queueRef.current = next;
     setQueueState(next);
@@ -153,7 +154,7 @@ export function AddBookDialog({
     setQueue(null);
     setCurrentId(null);
     setWorking("");
-    setConfirmLeave(false);
+    setConfirmLeave(null);
   };
   const reset = () => {
     // Hàng: bản tạm của mọi cuốn chưa xong được bỏ (cuốn đang xem cũng nằm trong đó); một file thì như trước.
@@ -167,7 +168,7 @@ export function AddBookDialog({
   const close = (next: boolean) => {
     if (busy === "adding") return;
     if (!next && unfinished > 1) {
-      setConfirmLeave((asked) => !asked); // lần Esc thứ hai là "Quay lại"
+      setConfirmLeave((asked) => (asked === "close" ? null : "close")); // lần Esc thứ hai là "Quay lại"
       return;
     }
     if (!next) reset();
@@ -323,6 +324,11 @@ export function AddBookDialog({
   // "Chọn lại" sau khi đã chọn file: mở thẳng bộ chọn file (thư mục nếu lần trước chọn thư mục) thay vì quay về hộp rồi bắt bấm thêm một lần
   // nữa (soát UX a9). Máy tính (có ô dán đường dẫn) thì về bước chọn như cũ.
   const chooseAgain = () => {
+    // Còn các cuốn khác trong hàng: "Chọn lại" bỏ cả hàng - hỏi như Esc, không bỏ im lặng (soát UX a10).
+    if (unfinished > 1 && confirmLeave !== "again") {
+      setConfirmLeave("again");
+      return;
+    }
     reset();
     if (importer.choose && !importer.typedPath) void choose(lastKind.current);
   };
@@ -439,19 +445,31 @@ export function AddBookDialog({
       }
     >
       {confirmLeave && (
-        <div role="alertdialog" aria-label="Đóng khi còn sách chưa thêm" className="mb-4 rounded-xl border border-warning/40 bg-warning-soft p-3.5">
-          <p className="text-sm font-medium">Còn {unfinished} cuốn chưa thêm vào thư viện. Đóng bây giờ thì các cuốn ấy sẽ không được thêm.</p>
+        <div
+          role="alertdialog"
+          aria-label={confirmLeave === "again" ? "Chọn lại khi còn sách chưa thêm" : "Đóng khi còn sách chưa thêm"}
+          className="mb-4 rounded-xl border border-warning/40 bg-warning-soft p-3.5"
+        >
+          <p className="text-sm font-medium">
+            {confirmLeave === "again"
+              ? `Còn ${unfinished} cuốn chưa thêm vào thư viện. Chọn lại thì các cuốn ấy sẽ không được thêm.`
+              : `Còn ${unfinished} cuốn chưa thêm vào thư viện. Đóng bây giờ thì các cuốn ấy sẽ không được thêm.`}
+          </p>
           <div className="mt-3 flex flex-wrap justify-end gap-2">
             <Button
               variant="ghost"
               onClick={() => {
+                if (confirmLeave === "again") {
+                  chooseAgain();
+                  return;
+                }
                 reset();
                 onOpenChange(false);
               }}
             >
-              Bỏ các cuốn còn lại
+              {confirmLeave === "again" ? "Bỏ các cuốn còn lại và chọn lại" : "Bỏ các cuốn còn lại"}
             </Button>
-            <Button variant="primary" onClick={() => setConfirmLeave(false)}>
+            <Button variant="primary" onClick={() => setConfirmLeave(null)}>
               Quay lại thêm sách
             </Button>
           </div>

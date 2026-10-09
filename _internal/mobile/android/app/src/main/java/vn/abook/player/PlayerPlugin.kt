@@ -187,6 +187,7 @@ class PlayerPlugin : Plugin() {
             val planned = schedule?.getInteger("minutes")
             SleepTimer.schedule = if (from != null && to != null && planned != null) Triple(from, to, planned) else null
         }
+        call.getBoolean("autoMusic")?.let { Playlists.autoEnabled = it }
         Playback.configure(call.getDouble("rewindAfterMinutes") ?: 5.0, call.getDouble("rewindSeconds") ?: 5.0)
     }
 

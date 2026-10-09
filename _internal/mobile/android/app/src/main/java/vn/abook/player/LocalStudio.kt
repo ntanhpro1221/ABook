@@ -305,7 +305,8 @@ object LocalStudio {
         if (view.has("playlist") || BookEdits.truthy(BookEdits.rawBook(dir).opt("music"))) return view
         // Mục lục danh mục chưa tải được (máy mới, chưa có mạng) thì dùng luật đóng kèm: chọn được tên danh sách ngay, bài tải sau.
         val manifest = runCatching { catalog?.manifest() }.getOrNull()
-        val auto = Playlists.autoPlaylist(dir, manifest, bundledPicker) ?: return view
+        val auto = Playlists.autoPlaylist(dir, manifest, bundledPicker)
+            ?: return if (!Playlists.autoEnabled && Playlists.isTextBook(BookEdits.rawBook(dir))) view.put("autoOff", true) else view
         return view.put("playlist", auto).put("playlistAuto", true)
     }
 

@@ -17,7 +17,7 @@ import { useClip } from "./clip";
 import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
-import { canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
+import { bookmarkReadPath, canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { keepTogether, partialBookLine, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerViews";
@@ -159,10 +159,11 @@ function ChapterRow({
 
 function BookmarksTab({ book }: { book: ListenBook }) {
   const playBook = usePlayListenBook();
+  const navigate = useNavigate();
   if (!book.state.bookmarks.length) {
     return (
       <EmptyState icon={BookOpenText} title="Chưa có dấu trang" className="mt-2">
-        Khi đang nghe, bấm biểu tượng dấu trang (hoặc phím B) để đánh dấu đoạn muốn quay lại.
+        Khi đang nghe, bấm biểu tượng dấu trang (hoặc phím B) để đánh dấu đoạn muốn quay lại. Khi đang đọc, chọn một câu rồi bấm “Đặt dấu trang ở câu này”.
       </EmptyState>
     );
   }
@@ -172,7 +173,12 @@ function BookmarksTab({ book }: { book: ListenBook }) {
         bookId={book.id}
         chapters={book.chapters ?? []}
         marks={book.state.bookmarks}
-        onJump={(mark) => void playBook(book, mark.chapterId, mark.seconds)}
+        onJump={(mark) => {
+          // Dấu đặt ở màn đọc trỏ tới câu: mở màn đọc đúng câu ấy; dấu đặt khi nghe thì nghe tiếp từ chỗ đó.
+          const path = bookmarkReadPath(book.id, mark);
+          if (path) navigate(path);
+          else void playBook(book, mark.chapterId, mark.seconds);
+        }}
       />
     </div>
   );
