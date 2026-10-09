@@ -38,6 +38,21 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
    "v6 thua v3" rút từ đó không đứng (mục dưới).
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
+8. **Gold khoá theo seq trượt khi parser đổi cách chia đoạn.** Gold ghi `seq nhãn`, không ghi chữ. Parser main 33cfba1e tách
+   thêm một đoạn ở villain 22 (‘…' lồng giữa câu kể) và demonking 15 ("…" dính lời kể sau), nên mọi dòng gold sau chỗ ấy lệch
+   một: chấm B9 trên cây mới bằng gold cũ ra villain −46,6 chặt, demonking −18,6 - toàn là thước. Trước khi so hai lượt khác
+   cây mã: so chữ đoạn của hai project (một lệnh), lệch thì khoá lại gold theo chữ (`LLM_Train/spkconf/gold_remap.py`).
+
+## 09-10 chiều - B9 trên cây mới (logprob) và dựng lại bộ chấm ứng viên
+
+- **B9 s1234 chạy lại trên main 33cfba1e** (cờ `ABOOK_SPEAKER_LOGPROBS=1`, Lead cần cho calib): so lượt cũ trên a40231f3 cùng
+  adapter, gold khoá lại theo chia đoạn mới: F1 giọng 69,51 -> 71,04 (+1,53 [+0,5; +2,5]), chặt 77,69 -> 79,14 (+1,45
+  [+0,3; +2,5]), 11 truyện (keyeu +5,9, meke +8,3, zenith +4,7; mh −1,1, forbidden −0,9). Không trùng byte (466/573 lô thô) -
+  khác code giữa hai cây, chưa tách được phần của cờ; giây +27%. Hai lượt khác cây là MỘT phép đo mỗi bên, đọc như hướng.
+- **Bộ chấm ứng viên runs/scorer_prod_27_09 đã mất khỏi đĩa** (cùng pdnc_pre, st/, bookst/). Dựng lại theo log hàng 27-09:
+  PDNC 1 epoch -> `--init` + 6 epoch gold 10 truyện (para_cast_all), seed 1234, GPU nhà (Kaggle hết giờ tuần, T4 không bf16).
+  Ngưỡng ghi trước `LLM_Train/scorer_prod/PLAN.md`; checkpoint lên HF riêng tư `NGDtuanh/abook-quote-scorer` để không mất lần
+  nữa. 11 truyện cổng không trùng truyện nào bộ chấm đã học (cả PDNC) - phép so với B9/logprob là truyện chưa thấy.
 
 ## 09-10 sáng - Không "chộp tên quen"; nhóm B tập khó là nhiễu dạng tên; luật "không ai gọi tên chính mình"
 
