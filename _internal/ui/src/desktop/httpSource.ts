@@ -3,14 +3,90 @@ import type { PlaylistQueue } from "@/listen/playlistBed";
 import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
 import type { ListenSource } from "@/listen/source";
 import type { EditsSyncState } from "@/shared/editsSync";
-import type { AddedBook, ImportPreview, TextImport } from "@/listen/textImport";
+import { itemFromPath } from "@/listen/importQueue";
+import type { AddedBook, ImportPreview, PickedItem, TextImport } from "@/listen/textImport";
 import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
 import { ApiError, api, mediaUrl } from "@/studio/api";
 import { pickFiles, pickFolder } from "@/studio/data";
+import { batchName, pickedFromDrop, planUpload, sendPlan, UPLOAD_LIMIT, type Picked } from "@/studio/upload";
+import { toast } from "sonner";
 import { paragraphsFor, type PrepareStatus } from "@/listen/prepareAhead";
 
 function fileName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
+}
+
+const DROP_LIMIT_MB = UPLOAD_LIMIT / 2 ** 20;
+
+/** Cửa sổ app (Tauri): HTML5 không nhận file thả vào (WebView2 giao cho vỏ), nên vỏ đọc đường dẫn thật và phát `abook-drag` vào trang (main.rs). */
+function watchAppDrops({ hover, drop }: Parameters<NonNullable<TextImport["watchDrops"]>>[0]): () => void {
+  const listener = (event: Event) => {
+    const detail = (event as CustomEvent<{ state?: string; paths?: string[] }>).detail;
+    if (detail?.state === "enter") hover(true);
+    else if (detail?.state === "leave") hover(false);
+    else if (detail?.state === "drop") {
+      hover(false);
+      drop((detail.paths ?? []).map(itemFromPath));
+    }
+  };
+  window.addEventListener("abook-drag", listener);
+  return () => window.removeEventListener("abook-drag", listener);
+}
+
+/** Trình duyệt: trang không biết đường dẫn file thả vào, nên gửi từng file lên máy tính (cùng đường với Studio - studio/upload.ts) rồi đọc bản đã gửi. */
+async function droppedItems(files: Promise<(Picked & { file: File })[]>): Promise<PickedItem[]> {
+  const plan = planUpload(await files, batchName(new Date(), Math.random().toString(36).slice(2, 6)));
+  const items: PickedItem[] = [
+    ...plan.rejected.map((name) => ({ name, error: "ABook chưa đọc được loại file này - chỉ nhận EPUB, Word (DOCX), PDF có chữ, TXT." })),
+    ...plan.tooBig.map((name) => ({ name, error: `File lớn hơn ${DROP_LIMIT_MB} MB - kéo vào trình duyệt chỉ gửi được file tới ${DROP_LIMIT_MB} MB. Mở bằng app ABook để thêm file lớn.` })),
+  ];
+  if (!plan.groups.length) return items;
+  const sending = toast.loading("Đang gửi file lên máy tính…");
+  try {
+    return [...(await sendPlan(plan, () => undefined)).map(itemFromPath), ...items];
+  } finally {
+    toast.dismiss(sending);
+  }
+}
+
+function watchBrowserDrops({ hover, drop }: Parameters<NonNullable<TextImport["watchDrops"]>>[0]): () => void {
+  let depth = 0;
+  const carriesFiles = (event: DragEvent) => Boolean(event.dataTransfer?.types.includes("Files"));
+  const enter = (event: DragEvent) => {
+    if (!carriesFiles(event)) return;
+    depth += 1;
+    hover(true);
+  };
+  const over = (event: DragEvent) => {
+    if (!carriesFiles(event)) return;
+    event.preventDefault(); // không chặn thì trình duyệt mở file ngay trong tab
+    event.dataTransfer!.dropEffect = "copy";
+  };
+  const leave = (event: DragEvent) => {
+    if (!carriesFiles(event)) return;
+    depth = Math.max(0, depth - 1);
+    if (!depth) hover(false);
+  };
+  const dropped = (event: DragEvent) => {
+    if (!carriesFiles(event)) return;
+    event.preventDefault();
+    depth = 0;
+    hover(false);
+    // Phải đọc danh sách file ngay trong sự kiện (qua một await trình duyệt xoá nó).
+    droppedItems(pickedFromDrop(event.dataTransfer!)).then(drop, (error: Error) =>
+      toast.error("Không đọc được các file vừa thả", { description: error.message }),
+    );
+  };
+  window.addEventListener("dragenter", enter);
+  window.addEventListener("dragover", over);
+  window.addEventListener("dragleave", leave);
+  window.addEventListener("drop", dropped);
+  return () => {
+    window.removeEventListener("dragenter", enter);
+    window.removeEventListener("dragover", over);
+    window.removeEventListener("dragleave", leave);
+    window.removeEventListener("drop", dropped);
+  };
 }
 
 /** "Thêm sách từ file…" trên máy tính: máy chủ cục bộ đọc file bằng `abook/importers.py` (webui/textbook.py). Có hộp thoại của
@@ -20,15 +96,13 @@ export function desktopTextImport(dialogs: boolean): TextImport {
     typedPath: true,
     choose: dialogs
       ? async (kind) => {
-          if (kind === "folder") {
-            const path = await pickFolder("Chọn thư mục có các chương TXT");
-            return path ? { ref: path, name: fileName(path) } : null;
-          }
-          const paths = await pickFiles("Chọn một file sách (EPUB, DOCX, PDF, TXT)");
-          if (paths.length > 1) throw new Error("Chọn một file sách thôi. Truyện nhiều file TXT thì để vào một thư mục rồi chọn thư mục ấy.");
-          return paths[0] ? { ref: paths[0], name: fileName(paths[0]) } : null;
+          if (kind !== "folder") return null; // file: chooseMany (chọn được nhiều file)
+          const path = await pickFolder("Chọn thư mục có các chương TXT");
+          return path ? { ref: path, name: fileName(path) } : null;
         }
       : undefined,
+    chooseMany: dialogs ? async () => (await pickFiles("Chọn file sách (chọn được nhiều file một lúc)")).map(itemFromPath) : undefined,
+    watchDrops: dialogs ? watchAppDrops : watchBrowserDrops,
     preview: (choice, options) =>
       api<ImportPreview>("/api/listen/import/preview", { method: "POST", body: { path: choice.ref, splitChapters: Boolean(options?.splitChapters) } }),
     add: (choice, title, separate, options) =>

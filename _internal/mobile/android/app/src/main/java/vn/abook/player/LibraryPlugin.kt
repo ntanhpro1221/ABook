@@ -32,6 +32,9 @@ import java.util.concurrent.TimeUnit
 /** Công tắc "Cho máy khác nghe thư viện này" (SharedPreferences "sync"). */
 private const val SHARE_KEY = ShareService.SHARE_KEY
 
+/** Số file tối đa trong một lần chọn nhiều file của "Thêm sách từ file…" (mỗi file được chép vào thư mục tạm của app trước khi xem trước). */
+private const val PICK_SOURCE_LIMIT = 40
+
 /** Số file tối đa trong một lượt nhập "Nhạc của tôi" (server.MY_MUSIC_IMPORT_LIMIT). */
 private const val MY_MUSIC_IMPORT_LIMIT = 500
 
@@ -161,39 +164,64 @@ class LibraryPlugin : Plugin() {
 
     // ---- "Thêm sách từ file…": EPUB / DOCX / PDF / thư mục TXT thành sách chỉ có chữ (TextImports, docs/LISTEN_ANYTHING.md) -----------------
 
-    /** Bộ chọn file (hay thư mục TXT) của hệ thống; thứ chọn được chép vào thư mục tạm của app, trả `ref` để xem trước và thêm. */
+    /** Bộ chọn file (hay thư mục TXT) của hệ thống; thứ chọn được chép vào thư mục tạm của app, trả `ref` để xem trước và thêm.
+     *  `multiple` (chỉ với file): chọn được nhiều file một lúc, trả `items` - mỗi file một `{ref, name, pdf?}`, `{book: true, name}` (file sách .abook đã mở),
+     *  hay `{name, error}` (không chép được: một file hỏng không làm hỏng cả lượt). */
     @PluginMethod
     fun pickSource(call: PluginCall) {
         val intent = if (call.getString("kind") == "folder") Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
         else Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+            .apply { if (call.getBoolean("multiple") == true) putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true) }
         startActivityForResult(call, intent, "pickedSource")
     }
 
     @ActivityCallback
     private fun pickedSource(call: PluginCall?, result: ActivityResult) {
         if (call == null) return
-        val uri = result.data?.data
-        if (uri == null) {
+        val uris = ArrayList<Uri>()
+        result.data?.clipData?.let { clip -> for (index in 0 until clip.itemCount) uris.add(clip.getItemAt(index).uri) }
+        result.data?.data?.let { if (it !in uris) uris.add(it) }
+        if (uris.isEmpty()) {
             call.resolve(JSObject().put("picked", false))
             return
         }
         val folder = call.getString("kind") == "folder"
+        val multiple = !folder && call.getBoolean("multiple") == true
         io.execute {
             try {
-                // Chọn nhầm file sách .abook ở đây (người dùng chỉ có một nút "Thêm sách từ file…"): mở như "Mở file sách", báo `book`.
-                if (!folder && TextImports.isAppBookFile(runCatching { context.contentResolver.getType(uri) }.getOrNull(), displayName(uri) ?: uri.lastPathSegment)) {
-                    importFrom(uri)
-                    call.resolve(JSObject().put("picked", true).put("book", true))
-                    return@execute
+                if (multiple) {
+                    val items = JSArray()
+                    for (uri in uris.take(PICK_SOURCE_LIMIT)) {
+                        items.put(
+                            try {
+                                stagedSource(uri, false)
+                            } catch (error: Exception) {
+                                JSObject().put("name", displayName(uri) ?: uri.lastPathSegment ?: "file").put("error", error.message ?: "Không đọc được file này")
+                            },
+                        )
+                    }
+                    call.resolve(JSObject().put("picked", true).put("items", items))
+                } else {
+                    call.resolve(stagedSource(uris[0], folder).put("picked", true))
                 }
-                val staged = if (folder) stageTree(uri) else stageDocument(uri)
-                val reply = JSObject().put("picked", true).put("ref", staged.ref).put("name", staged.name)
-                staged.pdf?.let { reply.put("pdf", it.absolutePath) }
-                call.resolve(reply)
             } catch (error: Exception) {
                 fail(call, error, "không đọc được thứ đã chọn")
             }
         }
+    }
+
+    /** Một thứ đã chọn thành JSON cho giao diện: `{ref, name, pdf?}` (đã chép vào thư mục tạm), hay `{book: true, name}` khi là file sách .abook (người dùng chỉ có
+     *  một nút "Thêm sách từ file…": mở như "Mở file sách"). Ném lỗi khi không chép được. */
+    private fun stagedSource(uri: Uri, folder: Boolean): JSObject {
+        val shown = displayName(uri) ?: uri.lastPathSegment
+        if (!folder && TextImports.isAppBookFile(runCatching { context.contentResolver.getType(uri) }.getOrNull(), shown)) {
+            importFrom(uri)
+            return JSObject().put("name", shown ?: "Sách").put("book", true)
+        }
+        val staged = if (folder) stageTree(uri) else stageDocument(uri)
+        val reply = JSObject().put("ref", staged.ref).put("name", staged.name)
+        staged.pdf?.let { reply.put("pdf", it.absolutePath) }
+        return reply
     }
 
     private fun displayName(uri: Uri): String? = runCatching {

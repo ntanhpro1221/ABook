@@ -1,5 +1,5 @@
 import { Capacitor } from "@capacitor/core";
-import type { ImportChoice, TextImport } from "@/listen/textImport";
+import type { ImportChoice, PickedItem, TextImport } from "@/listen/textImport";
 import { EbookLibrary } from "./plugins";
 
 // "Thêm sách từ file…" trên điện thoại. Bộ chọn và luật nhập là native (BookImport.kt, TextBook.kt); riêng PDF cần pdf.js nên đi qua
@@ -30,6 +30,18 @@ export const phoneTextImport: TextImport = {
     if (picked.picked && picked.book) return "opened";
     if (!picked.picked || !picked.ref) return null;
     return stagedChoice({ ref: picked.ref, name: picked.name, pdf: picked.pdf });
+  },
+  // Chọn nhiều file một lúc: mỗi file một mục của hàng xem trước (file không chép được ghi lỗi, không làm hỏng cả lượt).
+  async chooseMany() {
+    const picked = await EbookLibrary.pickSource({ kind: "file", multiple: true });
+    if (!picked.picked) return [];
+    return (picked.items ?? []).map((entry): PickedItem => {
+      const name = entry.name ?? "Sách";
+      if (entry.error) return { name, error: entry.error };
+      if (entry.book) return { name, opened: true };
+      if (!entry.ref) return { name, error: "Không đọc được file này." };
+      return { name, choice: stagedChoice({ ref: entry.ref, name, pdf: entry.pdf }) };
+    });
   },
   async preview(choice, options) {
     const pdf = (choice as PickedPdf).pdf;

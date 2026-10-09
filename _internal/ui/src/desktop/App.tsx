@@ -9,6 +9,7 @@ import { ClipProvider } from "@/listen/clip";
 import { WebAudioEngine } from "@/listen/engine";
 import { RoutedEngine } from "@/listen/readAloud";
 import { AddBookButton } from "@/listen/AddBook";
+import { DropToAdd } from "@/listen/DropToAdd";
 import { LibraryScreen } from "@/listen/LibraryScreen";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { ReaderScreen } from "@/listen/ReaderScreen";
@@ -218,12 +219,12 @@ function useOpenedBook() {
   const navigate = useNavigate();
   const client = useQueryClient();
   return useCallback(
-    (result: OpenedBook) => {
+    (result: OpenedBook): boolean => {
       if (result.error) {
         toast.error("Không mở được file sách", { description: result.file ? `${result.file}: ${result.error}` : result.error });
-        return;
+        return false;
       }
-      if (!result.id) return;
+      if (!result.id) return false;
       if (result.how === "studio") {
         void client.invalidateQueries({ queryKey: ["library"] });
         navigate(`/studio/${result.id}`);
@@ -234,13 +235,14 @@ function useOpenedBook() {
             ? `Thiếu ${lost} file nguồn chương (đã bị dời ở máy gói) - nghe, xem, xuất vẫn được; thu lại chương ấy thì cần chép nguồn vào.`
             : OPENED_SAID.studio[1],
         });
-        return;
+        return true;
       }
       void client.invalidateQueries({ queryKey: ["listen"] });
       navigate(`/book/${result.id}`);
       const [said, description] = OPENED_SAID[result.how ?? "new"];
       toast.success(keptEditsTitle(result.merge?.kept) ?? said, { description: mergeNote(result) ?? description });
       if (result.how === "project" && result.edits) offerFold(client, result.id, result.edits);
+      return true;
     },
     [client, navigate],
   );
@@ -383,17 +385,20 @@ function LibraryRoute() {
   const { data: info } = useAppInfo();
   const openBookPath = useOpenBookPath();
   return (
-    <LibraryScreen
-      empty={<EmptyLibrary />}
-      header={
-        <div className="flex flex-wrap justify-end gap-2">
-          <AddBookButton onBookFile={openBookPath} />
-          <OpenBookFileButton />
-        </div>
-      }
-      recap={<MorningRecap className="mt-6" />}
-      onOpenUpcoming={info?.listenOnly ? undefined : (book) => navigate(`/studio/${book.id}`)}
-    />
+    <>
+      <LibraryScreen
+        empty={<EmptyLibrary />}
+        header={
+          <div className="flex flex-wrap justify-end gap-2">
+            <AddBookButton onBookFile={openBookPath} />
+            <OpenBookFileButton />
+          </div>
+        }
+        recap={<MorningRecap className="mt-6" />}
+        onOpenUpcoming={info?.listenOnly ? undefined : (book) => navigate(`/studio/${book.id}`)}
+      />
+      <DropToAdd onBookFile={openBookPath} />
+    </>
   );
 }
 
