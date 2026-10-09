@@ -41,6 +41,7 @@ const phoneSupertonic: VieneuBackend = {
   start: (choices) => ReadAloud.supertonicStart(choices ? { choices } : {}),
   measure: () => ReadAloud.supertonicMeasure(),
   remove: (choice) => ReadAloud.supertonicRemove({ choice }),
+  cancel: () => ReadAloud.supertonicCancel(),
   voices: phoneVieneu.voices,
 };
 

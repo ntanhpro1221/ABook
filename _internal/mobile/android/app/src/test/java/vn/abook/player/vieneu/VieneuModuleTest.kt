@@ -25,6 +25,8 @@ import java.net.Socket
 import java.nio.file.Files
 import java.security.MessageDigest
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -41,6 +43,18 @@ class VieneuModuleTest {
     private lateinit var root: File
     private val requests = CopyOnWriteArrayList<String>()
     private val benched = CopyOnWriteArrayList<String>()
+    private val ranges = CopyOnWriteArrayList<String>()
+
+    /** A file the server stops in the middle of: sends [first] bytes, tells the test ([reached]), waits for [gate], sends 1000 more and holds the
+     *  connection (until [end]) - so a cancel lands while the module is part-way through that file. */
+    private class Stall(val name: String, val first: Int) {
+        val reached = CountDownLatch(1)
+        val gate = CountDownLatch(1)
+        val end = CountDownLatch(1)
+    }
+
+    @Volatile
+    private var stall: Stall? = null
     private var rtf = mapOf("turbo" to 1.75, "nano" to 1.84)
 
     private fun digest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
@@ -99,20 +113,38 @@ class VieneuModuleTest {
     private fun serve(client: Socket) {
         val input = client.getInputStream().bufferedReader(Charsets.ISO_8859_1)
         val name = (input.readLine() ?: return).split(' ')[1].removePrefix("/")
-        while (true) if ((input.readLine() ?: return).isEmpty()) break
+        var range: String? = null
+        while (true) {
+            val line = input.readLine() ?: return
+            if (line.isEmpty()) break
+            if (line.startsWith("Range:", ignoreCase = true)) range = line.substringAfter(':').trim()
+        }
         requests.add(name)
+        range?.let { ranges.add(it) }
         val body = files[name]
         val out = client.getOutputStream()
         if (body == null) out.write("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".toByteArray())
         else {
-            out.write("HTTP/1.1 200 OK\r\nContent-Length: ${body.size}\r\nConnection: close\r\n\r\n".toByteArray())
-            out.write(body)
+            val from = range?.removePrefix("bytes=")?.removeSuffix("-")?.toIntOrNull() ?: 0
+            out.write("HTTP/1.1 ${if (range != null) "206 Partial Content" else "200 OK"}\r\nContent-Length: ${body.size - from}\r\nConnection: close\r\n\r\n".toByteArray())
+            val held = stall?.takeIf { it.name == name && from == 0 }
+            if (held == null) out.write(body, from, body.size - from)
+            else {
+                out.write(body, 0, held.first)
+                out.flush()
+                held.reached.countDown()
+                held.gate.await(20, TimeUnit.SECONDS)
+                out.write(body, held.first, 1000)
+                out.flush()
+                held.end.await(20, TimeUnit.SECONDS)
+            }
         }
         out.flush()
     }
 
     @After
     fun tearDown() {
+        stall?.let { it.gate.countDown(); it.end.countDown() }
         server.close()
         root.deleteRecursively()
     }
@@ -393,5 +425,47 @@ class VieneuModuleTest {
         assertEquals("error", status.getString("state"))
         assertTrue(status.getString("error"), status.getString("error").startsWith("Không tải được giọng VieNeu"))
         assertTrue("finished parts are kept", File(root, "runtime/g2p/sea_g2p.bin").isFile)
+    }
+
+    @Test
+    fun aCancelStopsTheDownloadKeepsThePartAndTheNextTapResumesWithRange() {
+        val held = Stall("nano.bin", 30_000).also { stall = it }
+        val module = module()
+        assertFalse(module.status().getBoolean("cancelled"))
+        assertTrue("the card may show Huỷ", module.status().getBoolean("cancellable"))
+        module.cancel() // nothing is downloading: nothing happens
+        assertFalse(module.status().getBoolean("cancelled"))
+        module.start(listOf("nano"))
+        assertTrue("the server holds nano.bin part-way", held.reached.await(20, TimeUnit.SECONDS))
+        assertEquals("downloading", module.status().getString("state"))
+        // wait until the phone has taken the first bytes in (the cancel is seen at the next read, not before the first)
+        val partial0 = File(File(root, VieneuModule.FOLDER), "nano/nano.bin.part")
+        val until = System.currentTimeMillis() + 20_000
+        while (partial0.length() < 30_000 && System.currentTimeMillis() < until) Thread.sleep(10)
+        module.cancel()
+        held.gate.countDown()
+        module.join()
+        val status = module.status()
+        assertEquals(status.toString(), "missing", status.getString("state"))
+        assertTrue(status.getBoolean("cancelled"))
+        assertEquals("", status.getString("error"))
+        assertEquals(0, status.getLong("done"))
+        val folder = File(root, VieneuModule.FOLDER)
+        val partial = File(folder, "nano/nano.bin.part")
+        assertEquals("what was sent stays for the next tap", 31_000L, partial.length())
+        assertFalse(File(folder, "nano/nano.bin").exists())
+        assertTrue("a cancelled download measures nothing", benched.isEmpty())
+        // the next tap resumes where it stopped and clears the note
+        stall = null
+        held.end.countDown()
+        ranges.clear()
+        module.start(listOf("nano"))
+        assertFalse("the note goes as soon as the download starts", module.status().getBoolean("cancelled"))
+        module.join()
+        assertEquals(module.status().toString(), "ready", module.status().getString("state"))
+        assertEquals(listOf("bytes=31000-"), ranges.toList())
+        assertEquals(nano.toList(), File(folder, "nano/nano.bin").readBytes().toList())
+        assertFalse(partial.exists())
+        assertFalse(module.status().getBoolean("cancelled"))
     }
 }

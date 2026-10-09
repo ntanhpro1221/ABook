@@ -18,6 +18,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy chưa cài Studio: menu sách chữ, trang dự án và trình "Tạo sách nói" nói thẳng "cần card NVIDIA, tải khoảng 20 GB" kèm nút "Cài Studio" dẫn tới thẻ cài; vẫn tạo được dự án (dự án chờ tới khi cài xong) và không còn hiện ước tính thời gian khi chưa có Studio. Cài đặt > Studio có khối trạng thái ở đầu mục, các tuỳ chọn chỉ dùng cho Studio hiện mờ khi chưa cài.
 - Trang dự án gọi model phân tích bằng tên dễ hiểu ("Model phân tích bản 4") thay vì tên kỹ thuật.
 - Nút "Huỷ" khi tải thêm giọng VieNeu, giọng Supertonic, Phân tích nhạc và model nhạc theo đoạn: phần đã tải được giữ, lần tải sau làm tiếp từ chỗ dừng ("Đã huỷ - lần tải sau làm tiếp từ chỗ dừng").
+- Điện thoại cũng có nút "Huỷ" khi tải giọng VieNeu, giọng Supertonic và Phân tích nhạc (cả trong khối lỗi của trình phát): phần đã tải được giữ, lần tải sau làm tiếp từ chỗ dừng, như trên máy tính.
 - Màn hẹp hay màn cảm ứng: lựa chọn trong Cài đặt, "Thử giọng", nút bìa, "Xem các tab sau", menu chương, nút ✕ của thông báo, "Quay lại chỗ cũ", nút "Thư viện" và các nút tương tự đủ 40 px để chạm trúng; màn rộng giữ nguyên.
 - Câu "chữ của sách không rời khỏi máy" nói thêm cho đủ: app có hỏi mạng lấy cấu hình và danh mục nhạc, không gửi chữ của sách.
 

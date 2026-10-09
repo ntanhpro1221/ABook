@@ -84,6 +84,7 @@ export const phoneVieneu: VieneuBackend = {
   start: (choices) => ReadAloud.vieneuStart(choices ? { choices } : {}),
   measure: () => ReadAloud.vieneuMeasure(),
   remove: (choice) => ReadAloud.vieneuRemove({ choice }),
+  cancel: () => ReadAloud.vieneuCancel(),
   voices: async () => (await ReadAloud.voices()).voices,
 };
 
