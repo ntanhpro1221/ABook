@@ -1,0 +1,31 @@
+{
+ "previous": {
+  "readings": {
+   "Haruto": "Ha-ru-tô"
+  }
+ },
+ "current": {
+  "format": "abook-edits",
+  "version": 1,
+  "readings": {
+   "Haruto": "Ha-ru-tô"
+  }
+ },
+ "marks": {
+  "readings": {
+   "Haruto": "Ha-ru-tô"
+  }
+ },
+ "left": {
+  "format": "abook-edits",
+  "version": 1,
+  "readings": {
+   "Haruto": "Ha-ru-tô"
+  }
+ },
+ "unmarked": {
+  "format": "abook-edits",
+  "version": 1
+ },
+ "pending": 0
+}

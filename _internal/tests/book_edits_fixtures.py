@@ -9,6 +9,9 @@ những file này.
     fixtures/book_edits/invalid/<ca>.json phần sửa phải bị từ chối
     fixtures/book_edits/expected/<ca>.json  {manifest, cast, scripts{mã chương: script}} người nghe thấy khi áp `<ca>` lên base
     fixtures/book_edits/merge/<ca>.json   {local, incoming, merged, report}: hợp hai lớp sửa khi nhập lại
+    fixtures/book_edits/sent/<ca>.json    {previous, sent?, current, marks, left, unmarked, pending}: gửi phần sửa về máy giữ sách - cách đọc
+                                          và danh sách phát đã gửi vẫn ở lại lớp sửa (`subtract`) nhưng không còn là "chưa gửi" (`sent_marks`,
+                                          `unmarked`)
     fixtures/book_edits/contract/<ca>.json chuỗi yêu cầu / lời đáp của máy chủ Python cho từng đường "áp ngay" và đường ý muốn
                                           chờ Studio - LocalStudio.kt phải đáp y hệt (trừ trường dễ đổi: `volatile`). Trong thân
                                           yêu cầu, chuỗi "$requestedAt#N" là `requestedAt` của lời đáp bước N (để rút đúng lần bấm)
@@ -285,6 +288,32 @@ MERGE_CASES = {
         {**HEAD, "characters": {"LUCIEN": "A"}},
         {**HEAD, "title": "Của bạn", "wishes": {"retakes": {NARRATION[0]: {"requested_at": 1759400005.0, "text_sha256": NARRATION[1]}}}},
     ),
+}
+# Gửi phần sửa về máy giữ sách. `previous`: sổ các lần gửi trước (`sent_marks`); `sent`: lớp sửa vừa đóng gói gửi đi (không có: chưa gửi lần
+# nào mới); `current`: lớp sửa trên máy ở thời điểm sau khi gửi xong (kể cả sửa làm tiếp trong lúc gửi). Kết quả mong đợi: sổ mới, lớp sửa
+# còn lại sau `subtract`, phần chưa gửi (`unmarked`) và số thay đổi chưa gửi.
+SENT_CASES: dict[str, dict[str, Any]] = {
+    "reading_and_playlist_stay": {
+        "sent": {"title": "Tên mới", "readings": {"Lucien": "Lu-xi-en"}, "music": {"levelDb": -24.0, "playlist": "school_light"}},
+        "current": {"title": "Tên mới", "readings": {"Lucien": "Lu-xi-en"}, "music": {"levelDb": -24.0, "playlist": "school_light"}},
+    },
+    "edited_again_after_sending": {
+        "previous": {"readings": {"Lucien": "Lu-xi-en"}, "music": {"playlist": "fantasy_calm"}},
+        "current": {"readings": {"Lucien": "Lu-xiên", "Kate": "Kết"}, "music": {"playlist": "fantasy_calm"}},
+    },
+    "second_send_adds_to_the_marks": {
+        "previous": {"readings": {"Lucien": "Lu-xi-en"}, "music": {"playlist": "fantasy_calm"}},
+        "sent": {"readings": {"Lucien": "Lu-xi-en", "Kate": "Kết"}, "characters": {"LUCIEN": "Lu-xi-en"}},
+        "current": {"readings": {"Lucien": "Lu-xi-en", "Kate": "Kết"}, "characters": {"LUCIEN": "Lu-xi-en"}, "title": "Làm tiếp khi đang gửi"},
+    },
+    "playlist_changed_after_sending": {
+        "previous": {"music": {"playlist": "fantasy_calm"}},
+        "current": {"music": {"levelDb": -24.0, "playlist": "school_light"}},
+    },
+    "only_what_was_sent_is_left": {
+        "previous": {"readings": {"Haruto": "Ha-ru-tô"}},
+        "current": {"readings": {"Haruto": "Ha-ru-tô"}},
+    },
 }
 # Chuỗi yêu cầu mỗi ca của hợp đồng máy chủ <-> LocalStudio (đường tính từ `/api/books/<mã>`). Ảnh bìa: `$cover` là data URL
 # của ảnh nhỏ (xem `tiny_cover`). Trường dễ đổi giữa hai bản cài (màu chủ đạo, phiên bản bìa) không so.
@@ -703,6 +732,27 @@ def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str,
     return recorded
 
 
+def sent_case(name: str) -> dict[str, Any]:
+    """Ca `sent/<tên>.json`: chạy `sent_marks` / `subtract` / `unmarked` của Python trên `SENT_CASES[name]` (Kotlin phải ra y hệt)."""
+    from abook.webui import book_edits
+
+    case = SENT_CASES[name]
+    previous = case.get("previous", {})
+    current = book_edits.validate({**HEAD, **case["current"]})
+    sent = book_edits.validate({**HEAD, **case["sent"]}) if "sent" in case else None
+    with tempfile.TemporaryDirectory() as raw:
+        folder = Path(raw)
+        book_edits.save(folder, current)
+        marks = book_edits.sent_marks(sent, previous) if sent is not None else previous
+        if sent is not None:
+            book_edits.subtract(folder, sent, None)
+        left = book_edits.load(folder)
+    rest = book_edits.unmarked(left, marks)
+    return {"previous": previous, **({"sent": book_edits._ordered(sent)} if sent is not None else {}),
+            "current": book_edits._ordered(current), "marks": marks, "left": book_edits._ordered(left),
+            "unmarked": book_edits._ordered(rest), "pending": book_edits.count(rest)}
+
+
 def generate(*, rebuild_base: bool = False) -> None:
     """Sinh lại mọi file mong đợi từ `base`. `base` chỉ dựng lại khi `rebuild_base` (nó mang giờ đóng gói và phiên bản bìa nên
     mỗi lần dựng ra byte khác - đổi nó là đổi cả bộ ví dụ)."""
@@ -717,7 +767,7 @@ def generate(*, rebuild_base: bool = False) -> None:
             shutil.copytree(folder, BASE)
             # Readium manifest sinh lại được từ book.json, nên bỏ khỏi bộ ví dụ
             (BASE / "manifest.json").unlink(missing_ok=True)
-    for old in ("edits", "invalid", "expected", "merge", "contract", "series", "track", "readings"):
+    for old in ("edits", "invalid", "expected", "merge", "sent", "contract", "series", "track", "readings"):
         shutil.rmtree(FIXTURES / old, ignore_errors=True)
     (FIXTURES / "track").mkdir(parents=True)
     (FIXTURES / "track" / "tone.wav").write_bytes(tone_wav())
@@ -743,6 +793,8 @@ def generate(*, rebuild_base: bool = False) -> None:
         merged, report = book_edits.merge(local, incoming)
         _write(FIXTURES / "merge" / f"{name}.json", {"local": book_edits._ordered(local), "incoming": book_edits._ordered(incoming),
                                                      "merged": book_edits._ordered(merged), "report": report})
+    for name in SENT_CASES:
+        _write(FIXTURES / "sent" / f"{name}.json", sent_case(name))
     for name, steps in CONTRACT.items():
         _write(FIXTURES / "contract" / f"{name}.json", {"volatile": VOLATILE, "steps": record_contract(BASE, steps)})
     _write(FIXTURES / "readings" / "speech.json", speech_cases())

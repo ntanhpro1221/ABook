@@ -118,6 +118,21 @@ class PeersUnpairTest {
     }
 
     @Test
+    fun a_reading_that_was_already_sent_is_not_unsent_and_does_not_block_forgetting() {
+        // Cách đọc đã tới máy kia vẫn nằm ở lớp sửa (sách máy kia trả về không mang nó) - nhưng không phải "chưa gửi": nếu đếm, "gửi trước rồi gỡ" lặp mãi.
+        val id = streamed("k1", "b1", "computer")
+        BookEdits.setReading(Store.bookDir(id), "Lucien", "Lu-xi-en")
+        rename(id, "Tên một")
+        assertEquals(2, Peers.unsent("k1").changes)
+        Peers.sendUnsent("k1") { book -> EditsSync.push(book) { accepted() } }
+        assertEquals(0, Peers.unsent("k1").books.size)
+        assertEquals(1, BookEdits.count(BookEdits.load(Store.bookDir(id)))) // cách đọc còn đó
+        Peers.refuseIfUnsent("k1", discard = false) // thôi ghép không còn bị từ chối
+        BookEdits.setReading(Store.bookDir(id), "Lucien", "Lu-xiên") // sửa tiếp: chỉ phần mới chưa gửi
+        assertEquals(1, Peers.unsent("k1").changes)
+    }
+
+    @Test
     fun an_edit_made_while_sending_is_not_lost_silently() {
         val id = streamed("k1", "b1", "computer")
         rename(id, "Tên một")
