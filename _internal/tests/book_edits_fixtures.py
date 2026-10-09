@@ -9,7 +9,7 @@ những file này.
     fixtures/book_edits/invalid/<ca>.json phần sửa phải bị từ chối
     fixtures/book_edits/expected/<ca>.json  {manifest, cast, scripts{mã chương: script}} người nghe thấy khi áp `<ca>` lên base
     fixtures/book_edits/merge/<ca>.json   {local, incoming, merged, report}: hợp hai lớp sửa khi nhập lại
-    fixtures/book_edits/sent/<ca>.json    {previous, sent?, current, marks, left, unmarked, pending}: gửi phần sửa về máy giữ sách - cách đọc
+    fixtures/book_edits/sent/<ca>.json    {previous, sent?, removed?, current, marks, left, unmarked, removeLater?, pending}: gửi phần sửa về máy giữ sách - cách đọc
                                           và danh sách phát đã gửi vẫn ở lại lớp sửa (`subtract`) nhưng không còn là "chưa gửi" (`sent_marks`,
                                           `unmarked`)
     fixtures/book_edits/contract/<ca>.json chuỗi yêu cầu / lời đáp của máy chủ Python cho từng đường "áp ngay" và đường ý muốn
@@ -327,6 +327,24 @@ SENT_CASES: dict[str, dict[str, Any]] = {
         "previous": {"skip": {"1": ["Dịch: Nhóm Thử"]}},
         "sent": {"skip": {"1": ["Biên tập: Ai Đó", "Dịch: Nhóm Thử"], "2": ["Trans: Tôi"]}, "readings": {"Lucien": "Lu-xi-en"}},
         "current": {"skip": {"1": ["Biên tập: Ai Đó", "Dịch: Nhóm Thử"], "2": ["Trans: Tôi", "Scan: Bạn"]}, "readings": {"Lucien": "Lu-xi-en"}},
+    },
+    # Bỏ đi SAU khi đã gửi: máy kia còn giữ nên phải được báo gỡ (`removed_marks`) - đếm là chưa gửi cho tới khi gửi.
+    "removed_after_sending": {
+        "previous": {"skip": {"1": ["Dịch: Nhóm Thử"], "2": ["Dịch: Nhóm Thử"]}, "readings": {"Lucien": "Lu-xi-en"}, "music": {"playlist": "fantasy_calm"}},
+        "current": {},
+    },
+    "removed_reading_goes_with_the_next_send": {
+        "previous": {"readings": {"Lucien": "Lu-xi-en", "Kate": "Kết"}, "skip": {"1": ["Biên tập: Ai Đó", "Dịch: Nhóm Thử"]}},
+        "sent": {"readings": {"Lucien": "Lu-xi-en"}, "skip": {"1": ["Dịch: Nhóm Thử"]}, "title": "Tên mới"},
+        "current": {"readings": {"Lucien": "Lu-xi-en"}, "skip": {"1": ["Dịch: Nhóm Thử"]}, "title": "Tên mới"},
+    },
+    "reading_changed_is_not_removed": {
+        "previous": {"readings": {"Lucien": "Lu-xi-en"}},
+        "current": {"readings": {"Lucien": "Lu-xiên"}},
+    },
+    "line_removed_in_one_chapter_only": {
+        "previous": {"skip": {"1": ["Dịch: Nhóm Thử"], "2": ["Dịch: Nhóm Thử"]}},
+        "current": {"skip": {"2": ["Dịch: Nhóm Thử"]}},
     },
 }
 # Chuỗi yêu cầu mỗi ca của hợp đồng máy chủ <-> LocalStudio (đường tính từ `/api/books/<mã>`). Ảnh bìa: `$cover` là data URL
@@ -757,14 +775,19 @@ def sent_case(name: str) -> dict[str, Any]:
     with tempfile.TemporaryDirectory() as raw:
         folder = Path(raw)
         book_edits.save(folder, current)
-        marks = book_edits.sent_marks(sent, previous) if sent is not None else previous
+        # Cái đã gửi rồi người nghe bỏ đi: gói gửi mang nó để máy kia gỡ theo, sổ mới không còn nhắc tới nó.
+        removed = book_edits.removed_marks(sent, previous) if sent is not None else {}
+        marks = book_edits.sent_marks(sent, book_edits.forget_marks(previous, removed)) if sent is not None else previous
         if sent is not None:
             book_edits.subtract(folder, sent, None)
         left = book_edits.load(folder)
     rest = book_edits.unmarked(left, marks)
+    waiting = book_edits.removed_marks(left, marks)  # còn phải báo máy kia gỡ (chưa gửi)
     return {"previous": previous, **({"sent": book_edits._ordered(sent)} if sent is not None else {}),
+            **({"removed": removed} if removed else {}),
             "current": book_edits._ordered(current), "marks": marks, "left": book_edits._ordered(left),
-            "unmarked": book_edits._ordered(rest), "pending": book_edits.count(rest)}
+            "unmarked": book_edits._ordered(rest), **({"removeLater": waiting} if waiting else {}),
+            "pending": book_edits.count(rest) + book_edits.count_removed(waiting)}
 
 
 def generate(*, rebuild_base: bool = False) -> None:

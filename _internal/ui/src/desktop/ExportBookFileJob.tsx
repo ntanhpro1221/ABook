@@ -39,7 +39,7 @@ interface StartDetail {
 
 /** Cuốn đang xuất? Menu dùng để khoá mục và hiện "lần xuất gần nhất". */
 function useExportJob(kind: ExportKind, id: string) {
-  return useQuery({ queryKey: jobKey(kind, id), queryFn: () => api<ExportJob>(jobUrl(kind, id)), staleTime: 0, gcTime: 0 });
+  return useQuery({ queryKey: jobKey(kind, id), queryFn: () => api<ExportJob>(jobUrl(kind, id)), staleTime: 0, gcTime: 0, retry: false });
 }
 
 function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook; kind: ExportKind; icon: LucideIcon; label: string }) {

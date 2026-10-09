@@ -1,0 +1,52 @@
+{
+ "previous": {
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ],
+   "2": [
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "current": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "2": [
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "marks": {
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ],
+   "2": [
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "left": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "2": [
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "unmarked": {
+  "format": "abook-edits",
+  "version": 1
+ },
+ "removeLater": {
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "pending": 1
+}

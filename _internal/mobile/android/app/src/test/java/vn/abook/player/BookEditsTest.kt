@@ -232,7 +232,7 @@ class BookEditsTest {
 
     @Test
     fun every_sent_case_gives_what_python_gave() {
-        assertTrue(BookEditsFixtures.cases("sent").size >= 5)
+        assertTrue(BookEditsFixtures.cases("sent").size >= 9)
         for (name in BookEditsFixtures.cases("sent")) {
             val case = BookEditsFixtures.obj("sent/$name.json")
             val previous = case.getJSONObject("previous")
@@ -240,14 +240,19 @@ class BookEditsTest {
             val sent = case.optJSONObject("sent")?.let { BookEdits.validate(it) }
             val folder = BookEditsFixtures.tempDir("abook-sent")
             BookEdits.save(folder, current)
-            val marks = if (sent != null) BookEdits.sentMarks(sent, previous) else previous
+            // Cái đã gửi rồi người nghe bỏ đi: gói gửi mang nó để máy kia gỡ theo, sổ mới không còn nhắc tới nó.
+            val removed = if (sent != null) BookEdits.removedMarks(sent, previous) else JSONObject()
+            val marks = if (sent != null) BookEdits.sentMarks(sent, BookEdits.forgetMarks(previous, removed)) else previous
             if (sent != null) BookEdits.subtract(folder, sent, null)
             val left = BookEdits.load(folder)
             val rest = BookEdits.unmarked(left, marks)
+            val waiting = BookEdits.removedMarks(left, marks)
+            assertJson("$name: cái gói gửi đi bảo gỡ", case.optJSONObject("removed") ?: JSONObject(), removed)
             assertJson("$name: sổ đã gửi", case.getJSONObject("marks"), marks)
             assertJson("$name: lớp sửa còn lại", case.getJSONObject("left"), left)
             assertJson("$name: phần chưa gửi", case.getJSONObject("unmarked"), rest)
-            assertEquals("$name: số chưa gửi", case.getInt("pending"), BookEdits.count(rest))
+            assertJson("$name: còn phải báo gỡ", case.optJSONObject("removeLater") ?: JSONObject(), waiting)
+            assertEquals("$name: số chưa gửi", case.getInt("pending"), BookEdits.count(rest) + BookEdits.countRemoved(waiting))
         }
     }
 

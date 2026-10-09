@@ -28,6 +28,9 @@ import java.text.Normalizer
 object BookEdits {
     const val EDITS_FILE = "edits.json"
     const val EDITS_COVER = "edits/cover.jpg"
+
+    /** Mục của gói gửi đi nói máy giữ sách gỡ gì ([removedMarks]) - webui/book_edits.py REMOVED_FILE. */
+    const val REMOVED_FILE = "edits_removed.json"
     const val FORMAT = "abook-edits"
     const val VERSION = 1
     const val MAX_EDITS_BYTES = 1024 * 1024
@@ -1379,6 +1382,80 @@ object BookEdits {
             if (music.length() == 0) out.remove("music")
         }
         return out
+    }
+
+    /**
+     * Cái `marks` ([sentMarks]) nói máy tính đã có mà `edits` hiện không còn - người nghe bỏ cách đọc / dòng bỏ / danh sách phát SAU khi đã gửi
+     * ({skip: {mã chương: [dòng]}, readings: {chữ hiện: chữ đọc}, playlist: mã}); gói gửi đi mang chúng kèm giá trị để máy kia gỡ theo, chỉ khi
+     * giá trị của nó còn đúng vậy (webui/book_edits.py `removed_marks`). Cách đọc còn đó nhưng đổi chữ đọc thì không phải gỡ ([unmarked] đếm là chưa gửi).
+     */
+    fun removedMarks(edits: JSONObject, marks: JSONObject?): JSONObject {
+        val out = JSONObject()
+        val sentSkip = marks?.optJSONObject("skip")
+        if (sentSkip != null) {
+            val ours = edits.optJSONObject("skip")
+            val skip = JSONObject()
+            for (key in names(sentSkip).sortedBy { it.toLong() }) {
+                val here = skipLines(ours, key).toSet()
+                val gone = skipLines(sentSkip, key).filter { it !in here }
+                if (gone.isNotEmpty()) skip.put(key, JSONArray(gone))
+            }
+            if (skip.length() > 0) out.put("skip", skip)
+        }
+        val sentReadings = marks?.optJSONObject("readings")
+        if (sentReadings != null) {
+            val ours = edits.optJSONObject("readings")
+            val gone = JSONObject()
+            for (shown in names(sentReadings).sortedWith { a, b -> byCodePoints(a, b) }) if (ours == null || !ours.has(shown)) gone.put(shown, sentReadings.get(shown))
+            if (gone.length() > 0) out.put("readings", gone)
+        }
+        val sentPlaylist = marks?.optJSONObject("music")?.takeIf { it.has("playlist") }
+        if (sentPlaylist != null && edits.optJSONObject("music")?.has("playlist") != true) out.put("playlist", sentPlaylist.get("playlist"))
+        return out
+    }
+
+    /** Số thay đổi trong [removedMarks] (một dòng bỏ ở trăm chương là một). */
+    fun countRemoved(removed: JSONObject): Int =
+        (removed.optJSONObject("skip")?.let { skip -> names(skip).flatMap { skipLines(skip, it) }.toSet().size } ?: 0) +
+            (removed.optJSONObject("readings")?.length() ?: 0) + (if (removed.has("playlist")) 1 else 0)
+
+    /** `marks` trừ phần đã gỡ ở máy tính ([removedMarks]): sổ mới không còn nhắc tới chúng. Không sửa `marks`. */
+    fun forgetMarks(marks: JSONObject?, removed: JSONObject): JSONObject {
+        val out = if (marks == null) JSONObject() else deepCopy(marks) as JSONObject
+        val skip = out.optJSONObject("skip")
+        if (skip != null) {
+            val goneSkip = removed.optJSONObject("skip")
+            for (key in names(skip)) {
+                val gone = skipLines(goneSkip, key).toSet()
+                val left = skipLines(skip, key).filter { it !in gone }
+                if (left.isEmpty()) skip.remove(key) else skip.put(key, JSONArray(left))
+            }
+            if (skip.length() == 0) out.remove("skip")
+        }
+        val readings = out.optJSONObject("readings")
+        if (readings != null) {
+            removed.optJSONObject("readings")?.let { gone -> for (shown in names(gone)) readings.remove(shown) }
+            if (readings.length() == 0) out.remove("readings")
+        }
+        val music = out.optJSONObject("music")
+        if (music != null) {
+            if (removed.has("playlist")) music.remove("playlist")
+            if (music.length() == 0) out.remove("music")
+        }
+        return out
+    }
+
+    /** Byte của mục [REMOVED_FILE]: khoá xếp cố định, UTF-8, LF - cùng nội dung thì cùng byte (webui/book_edits.py `dump_removed`). */
+    fun dumpRemoved(removed: JSONObject): ByteArray {
+        val out = LinkedHashMap<String, Any?>()
+        removed.optJSONObject("skip")?.takeIf { it.length() > 0 }?.let { skip ->
+            out["skip"] = names(skip).sortedBy { it.toLong() }.associateWith { skipLines(skip, it) }
+        }
+        removed.optJSONObject("readings")?.takeIf { it.length() > 0 }?.let { readings ->
+            out["readings"] = names(readings).sortedWith { a, b -> byCodePoints(a, b) }.associateWith { readings.opt(it) }
+        }
+        if (removed.has("playlist")) out["playlist"] = removed.opt("playlist")
+        return (StrictJson.dumps(out, 1) + "\n").toByteArray(Charsets.UTF_8)
     }
 
     /** Bỏ khỏi `mine` mọi khoá mà `sent` cũng có với đúng giá trị ấy. */

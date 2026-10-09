@@ -131,8 +131,11 @@ class Computers:
         with self._lock:
             data = self._read()
             # Ghép lại cùng một máy (cùng địa chỉ) thì thay chỗ cũ: sách đã tải và chỗ nghe giữ nguyên.
+            # Máy đã từng thôi ghép (cùng vân tay chứng chỉ, dù đổi địa chỉ) lấy lại mã cũ: mã sách ở máy này theo mã ấy, nên chỗ
+            # nghe và dấu trang của các cuốn ấy hiện lại, không mất khi ghép lại.
+            former = data.get("former", {}).pop(seen, None)
             key = next((existing for existing, entry in data["computers"].items()
-                        if entry.get("host") == host and int(entry.get("port") or 0) == port), secrets.token_hex(6))
+                        if entry.get("host") == host and int(entry.get("port") or 0) == port), None) or former or secrets.token_hex(6)
             entry = {"name": name, "host": host, "port": port, "token": token, "fingerprint": seen,
                      "pairedAt": time.time(), "lastSeen": time.time(), "error": ""}
             # Đường Bluetooth dự phòng: máy kia báo trong lời đáp ghép (sync.py `routes`); không báo thì giữ cái đã biết.
@@ -175,6 +178,8 @@ class Computers:
         with self._lock:
             data = self._read()
             gone = data["computers"].pop(computer, None) or {}
+            if gone.get("fingerprint"):
+                data.setdefault("former", {})[str(gone["fingerprint"])] = computer
             self._write(data)
         _release_bluetooth(gone, data["computers"].values())
         root = Path(library_root).expanduser() / REMOTE_FOLDER
@@ -202,6 +207,26 @@ def unsent_edits(library_root: Path, computer: str) -> list[dict[str, Any]]:
                 # Tên người nghe THẤY (đã sửa), không phải tên gốc trong gói: hộp gỡ ghép nói cuốn nào sẽ mất phần sửa.
                 title = book_edits.apply_manifest(manifest, edits).get("title")
                 found.append({"package": package, "title": str(title or package.name), "changes": changes})
+    return found
+
+
+def cached_books(library_root: Path, computer: str) -> list[dict[str, Any]]:
+    """Các cuốn ảo của máy `computer` trong thư mục đệm - thứ `Computers.forget` xoá: [{package, bytes}], `bytes` là phần đã tải về
+    máy này (chương, chữ đọc theo, nhạc... - không tính book.json và bìa). Hộp thôi ghép nói số cuốn và dung lượng sẽ mất."""
+    root = Path(library_root).expanduser() / REMOTE_FOLDER
+    found = []
+    for folder in sorted(root.iterdir()) if root.is_dir() else []:
+        if not (folder.is_dir() and folder.name.endswith(f"({computer[:8]})")):
+            continue
+        for package, _manifest in sorted(_manifests(folder), key=lambda item: item[0].name):
+            size = 0
+            for file in package.rglob("*"):
+                if file.is_file() and file.relative_to(package).as_posix() not in (MANIFEST, "cover.jpg", "cover.json"):
+                    try:
+                        size += file.stat().st_size
+                    except OSError:
+                        continue
+            found.append({"package": package, "bytes": size})
     return found
 
 
@@ -292,8 +317,26 @@ def _unreachable(endpoint: Endpoint) -> str:
     """Lời báo không tới được máy kia: đi Bluetooth (hay lùi về Bluetooth) thì nói lý do đường hầm đã ghi."""
     address = endpoint.bluetooth or endpoint.fallback
     if not address:
-        return UNREACHABLE
+        name = _peer_name(endpoint)
+        return UNREACHABLE.replace("máy kia", _called(name), 1) if name else UNREACHABLE
     return bluetooth.last_error(address) or UNREACHABLE_BLUETOOTH
+
+
+def _peer_name(endpoint: Endpoint) -> str:
+    """Tên máy đã ghép mà `endpoint` dẫn tới ("" khi chưa biết - lúc đang ghép): lời báo nói tên máy, không nói "máy kia"."""
+    entry = _COMPUTERS.get(endpoint.computer) if _COMPUTERS is not None and endpoint.computer else None
+    return str(entry.get("name") or "") if entry else ""
+
+
+def _called(name: str) -> str:
+    """"máy <tên>" - tên đã mở đầu bằng "Máy" (vd "Máy kia") thì không thêm chữ máy nữa."""
+    return name[:1].lower() + name[1:] if name.casefold().startswith("máy ") else f"máy {name}"
+
+
+def _cut(endpoint: Endpoint) -> str:
+    """Lời báo khi máy kia đang trả lời thì ngừng giữa chừng (tắt máy, rớt mạng): nói đúng điều người dùng thấy."""
+    phrase = _called(_peer_name(endpoint) or "kia")
+    return f"{phrase[:1].upper()}{phrase[1:]} không trả lời (tắt hay mất mạng)"
 
 
 def _tunnel(address: str, fingerprint: str | None, computer: str = "") -> Endpoint:
@@ -512,7 +555,7 @@ def _read(response: http.client.HTTPResponse, size: int | None = None) -> bytes:
 @contextmanager
 def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str, Any] | None = None,
           timeout: float = TIMEOUT, upload: tuple[Path, str] | None = None,
-          wake: bool = False) -> Iterator[tuple[http.client.HTTPResponse, str]]:
+          wake: bool = False, extra: dict[str, str] | None = None) -> Iterator[tuple[http.client.HTTPResponse, str]]:
     """Một yêu cầu qua TLS ghim vân tay, thân trả lời CHƯA đọc: (trả lời, vân tay chứng chỉ máy kia đã đưa ra). Máy kia trả lỗi
     thì `RemoteError` mang câu của nó và mã trạng thái. `upload`: (file, kiểu nội dung) gửi làm thân thay cho JSON. `wake`:
     máy kia đang ngủ thì chờ nó dậy (`_Wait`)."""
@@ -520,6 +563,7 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
         raise RemoteError("Máy này chưa ghi vân tay của máy kia - ghép lại với máy kia")
     data = json.dumps(body).encode("utf-8") if body is not None else None
     headers = {"Authorization": f"Bearer {token}"} if token else {}
+    headers.update(extra or {})
     if data is not None:
         headers["Content-Type"] = "application/json"
     connection: tls.PinnedHTTPSConnection | None = None
@@ -853,8 +897,10 @@ def _note(package: Path, relative: str, version: Any, *, absent: bool = False) -
 def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | None = None,
           progress: Callable[[int], None] | None = None, cancelled: Callable[[], bool] | None = None) -> Path:
     """Tải một file của sách trên máy khác vào thư mục của cuốn: ghi ra `<tên>.part` từng khúc rồi mới đổi tên - đứt giữa chừng thì
-    file cũ (nếu có) vẫn nguyên, không bao giờ có file dở mang tên thật. `size`: cỡ book.json ghi (khác thì không nhận).
-    `progress(số byte vừa nhận)`, `cancelled()`: cho việc tải cả cuốn. Lỗi: `RemoteError` (hay `Cancelled`)."""
+    file cũ (nếu có) vẫn nguyên, không bao giờ có file dở mang tên thật. `size`: cỡ book.json ghi (khác thì không nhận). Biết `size` thì
+    phần `.part` dở (máy kia tắt giữa chừng, người dùng bấm dừng) được GIỮ và lần sau tải tiếp bằng `Range` - chương lớn trên Wi-Fi yếu
+    không phải tải lại từ đầu; máy kia không hiểu `Range` thì tải lại từ đầu. `progress(số byte vừa nhận)`, `cancelled()`: cho việc tải cả
+    cuốn. Lỗi: `RemoteError` (hay `Cancelled`); máy kia ngừng trả lời giữa chừng thì nói tên máy ấy (`_cut`)."""
     if not _SAFE_NAME.fullmatch(relative) or ".." in relative:
         raise RemoteError("Tên file lạ trong sách")
     entry, book_key = _entry_of(book)
@@ -866,20 +912,42 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
     with lock:  # bấm nghe đúng chương đang tải nền: một người ghi file `.part`
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_name(target.name + ".part")
+        endpoint = _base(entry)
+        keep = False
         try:
-            with _open(_base(entry), "GET", f"/sync/v1/books/{book_key}/files/{quote(relative)}", entry["token"],
-                       timeout=FILE_TIMEOUT) as (response, _seen), temporary.open("wb") as sink:
-                while chunk := _read(response, CHUNK):
-                    if cancelled is not None and cancelled():
-                        raise Cancelled
-                    sink.write(chunk)
-                    if progress is not None:
-                        progress(len(chunk))
+            have = temporary.stat().st_size if size is not None and temporary.is_file() else 0
+            if size is not None and not 0 < have < size:
+                have = 0
+            with _open(endpoint, "GET", f"/sync/v1/books/{book_key}/files/{quote(relative)}", entry["token"], timeout=FILE_TIMEOUT,
+                       extra={"Range": f"bytes={have}-"} if have else None) as (response, _seen):
+                if have and not (response.status == 206 and re.match(rf"bytes {have}-", response.getheader("Content-Range") or "")):
+                    have = 0  # máy kia gửi cả file (không hiểu Range): bỏ phần dở, tải từ đầu
+                expected = response.length
+                received = 0
+                try:
+                    with temporary.open("ab" if have else "wb") as sink:
+                        while chunk := _read(response, CHUNK):
+                            if cancelled is not None and cancelled():
+                                keep = size is not None
+                                raise Cancelled
+                            sink.write(chunk)
+                            received += len(chunk)
+                            if progress is not None:
+                                progress(len(chunk))
+                except RemoteError as problem:
+                    if problem.status is None:
+                        keep = size is not None
+                        raise RemoteError(_cut(endpoint)) from problem
+                    raise
+                if received < expected if expected is not None else size is not None and have + received < size:
+                    keep = size is not None  # đứt giữa chừng mà máy kia đóng êm (tắt máy): phần đã nhận giữ lại cho lần tải tiếp
+                    raise RemoteError(_cut(endpoint))
             if size is not None and temporary.stat().st_size != size:
                 raise RemoteError("File tải về không đủ - thử lại")
             temporary.replace(target)
         finally:
-            temporary.unlink(missing_ok=True)
+            if not keep:
+                temporary.unlink(missing_ok=True)
     _note(package, relative, book.get("version"))
     return target
 
@@ -927,6 +995,21 @@ def missing(package: Path, book: dict[str, Any]) -> list[tuple[str, int | None]]
     return out
 
 
+def _part_size(package: Path, relative: str, size: int | None) -> int:
+    """Phần `.part` dở của một file (lần tải trước đứt giữa chừng, `_save` giữ lại để tải tiếp bằng Range): số byte đã có, 0 khi không dùng được."""
+    try:
+        have = (package / (relative + ".part")).stat().st_size
+    except OSError:
+        return 0
+    return have if size is not None and 0 < have < size else 0
+
+
+def _bytes_done(package: Path, files: list[tuple[str, int | None]], left: list[tuple[str, int | None]]) -> int:
+    """Byte đã có thật: các file đủ + phần dở của các file còn thiếu."""
+    total = sum(size or 0 for _name, size in files)
+    return total - sum(size or 0 for _name, size in left) + sum(_part_size(package, name, size) for name, size in left)
+
+
 class Downloads:
     """Tải trọn những cuốn "Trên máy khác" về máy này ở nền ("Tải về máy" - như điện thoại tải sách của máy tính): từng file một,
     file đã có (đúng cỡ, đúng phiên bản) thì bỏ qua, nên dừng giữa chừng - người dùng bấm dừng, máy kia tắt, app đóng - rồi bấm tải
@@ -934,6 +1017,7 @@ class Downloads:
 
     def __init__(self) -> None:
         self._jobs: dict[str, dict[str, Any]] = {}
+        self._auto: dict[str, int] = {}  # số lần tự tải tiếp của mỗi cuốn (từ lần người dùng bấm gần nhất)
         self._lock = threading.Lock()
 
     def status(self, package: Path) -> dict[str, Any]:
@@ -951,13 +1035,18 @@ class Downloads:
         total = sum(size or 0 for _name, size in files)
         state = "done" if not left else job["state"] if job is not None and job["state"] in ("failed", "cancelled") else "none"
         return {"state": state, "files": len(files), "filesDone": len(files) - len(left), "bytes": total,
-                "bytesDone": total - sum(size or 0 for _name, size in left), "error": job["error"] if state == "failed" else ""}
+                "bytesDone": _bytes_done(package, files, left), "error": job["error"] if state == "failed" else "",
+                # đứt vì mất kết nối với máy kia (không phải lỗi ổ đĩa): máy kia lên lại thì tự tải tiếp (`resume_interrupted`)
+                "retry": state == "failed" and bool(job.get("retry"))}
 
-    def start(self, package: Path, *, wait: bool = False) -> dict[str, Any]:
-        """Bắt đầu (hay tải tiếp) cả cuốn; đang tải thì thôi. `wait`: tải ngay trong luồng này (bài thử)."""
+    def start(self, package: Path, *, wait: bool = False, auto: bool = False) -> dict[str, Any]:
+        """Bắt đầu (hay tải tiếp) cả cuốn; đang tải thì thôi. `wait`: tải ngay trong luồng này (bài thử). `auto`: máy tự tải tiếp
+        (`resume_interrupted`), không phải người dùng bấm."""
         from .packages import manifest
 
         package = Path(package).resolve()
+        if not auto:
+            self._auto.pop(str(package), None)
         book = manifest(package)
         _entry_of(book)  # thôi ghép rồi: nói ngay, không mở việc nền
         with self._lock:
@@ -967,7 +1056,7 @@ class Downloads:
             files, left = wanted(book), missing(package, book)
             total = sum(size or 0 for _name, size in files)
             job = {"state": "running", "files": len(files), "filesDone": len(files) - len(left), "bytes": total,
-                   "bytesDone": total - sum(size or 0 for _name, size in left), "error": "", "stop": threading.Event(),
+                   "bytesDone": _bytes_done(package, files, left), "error": "", "stop": threading.Event(),
                    "computer": (remote_of(book) or {}).get("computer", "")}
             self._jobs[str(package)] = job
         if wait:
@@ -976,8 +1065,30 @@ class Downloads:
             threading.Thread(target=self._run, args=(package, book, left, job), name="remote-download", daemon=True).start()
         return self.status(package)
 
+    def resume_interrupted(self, package: Path, reachable: Callable[[str], bool], *, every: float = 10.0, limit: int = 5) -> bool:
+        """Lần tải đứt vì mất kết nối với máy kia (`retry`): máy kia trả lời lại (`reachable(mã máy)`) thì tải tiếp luôn, không đợi người dùng
+        bấm - như phần sửa tự gửi lại khi tới được máy ấy. Hỏi nhiều nhất mỗi `every` giây, và tối đa `limit` lần tự tải tiếp cho tới khi người
+        dùng bấm. Trả True nếu vừa bắt đầu tải tiếp."""
+        key = str(Path(package).resolve())
+        with self._lock:
+            job = self._jobs.get(key)
+            if job is None or job["state"] != "failed" or not job.get("retry") or self._auto.get(key, 0) >= limit:
+                return False
+            if time.monotonic() - job.get("probed", float("-inf")) < every:
+                return False
+            job["probed"] = time.monotonic()
+            computer = job["computer"]
+        if not reachable(computer):
+            return False
+        self._auto[key] = self._auto.get(key, 0) + 1
+        try:
+            self.start(Path(key), auto=True)
+        except RemoteError:
+            return False
+        return True
+
     def cancel(self, package: Path) -> dict[str, Any]:
-        """Dừng tải: file đang tải dở bỏ đi, các file đã xong giữ lại."""
+        """Dừng tải: các file đã xong giữ lại, file đang tải dở giữ phần đã nhận để tải tiếp."""
         with self._lock:
             job = self._jobs.get(str(Path(package).resolve()))
             if job is not None:
@@ -1000,7 +1111,7 @@ class Downloads:
             for relative, size in left:
                 if job["stop"].is_set():
                     raise Cancelled
-                before = job["bytesDone"]
+                before = job["bytesDone"] - _part_size(package, relative, size)  # `bytesDone` đã tính phần dở của file này
                 try:
                     _save(package, relative, book, size=size, progress=received, cancelled=job["stop"].is_set)
                 except RemoteError as problem:
@@ -1013,6 +1124,7 @@ class Downloads:
             state = "cancelled"
         except RemoteError as problem:
             state, error = "failed", str(problem)
+            job["retry"] = problem.status is None  # không tới được / đứt giữa chừng: thử lại được khi máy kia lên
         except OSError as problem:
             state, error = "failed", f"Không ghi được vào ổ đĩa của máy này ({problem.strerror or problem})"
         with self._lock:
@@ -1055,9 +1167,11 @@ def _sent_marks(package: Path) -> dict[str, Any]:
 
 
 def pending_changes(package: Path, edits: dict[str, Any] | None = None) -> int:
-    """Số thay đổi CHƯA tới máy kia: lớp sửa trừ phần đã gửi mà vẫn giữ lại ở đây (cách đọc, nhạc đã chọn)."""
+    """Số thay đổi CHƯA tới máy kia: lớp sửa trừ phần đã gửi mà vẫn giữ lại ở đây (cách đọc, nhạc đã chọn), cộng phần đã gửi rồi người nghe
+    bỏ đi mà máy kia chưa biết (`book_edits.removed_marks`)."""
     edits = book_edits.load(package) if edits is None else edits
-    return book_edits.count(book_edits.unmarked(edits, _sent_marks(package)))
+    marks = _sent_marks(package)
+    return book_edits.count(book_edits.unmarked(edits, marks)) + book_edits.count_removed(book_edits.removed_marks(edits, marks))
 
 
 def _remember_send(package: Path, state: dict[str, Any]) -> None:
@@ -1080,13 +1194,17 @@ def send_edits(package: Path) -> dict[str, Any]:
     with _SEND_LOCK:
         book = manifest(package)
         edits = book_edits.load(package)
-        if book_edits.is_empty(edits):
+        marks = _sent_marks(package)
+        removed = book_edits.removed_marks(edits, marks)  # đã gửi rồi người nghe bỏ đi: báo máy kia gỡ theo
+        if book_edits.is_empty(edits) and not removed:
             return edits_state(package)
         outgoing = package / ".edits_out.zip"
         try:
             try:
                 entry, book_key = _entry_of(book)
                 members = book_edits.layer_files(package, edits)
+                if removed:
+                    members[book_edits.REMOVED_FILE] = book_edits.dump_removed(removed)
                 cover = members[book_edits.EDITS_COVER].read_bytes() if book_edits.EDITS_COVER in members else None
                 with zipfile.ZipFile(outgoing, "w", zipfile.ZIP_STORED) as archive:
                     for name, item in members.items():
@@ -1115,7 +1233,7 @@ def send_edits(package: Path) -> dict[str, Any]:
         _reload(package, entry, book)  # bản mới của máy kia đã mang các sửa: lấy về TRƯỚC khi gỡ lớp sửa để không chớp bản cũ
         book_edits.subtract(package, edits, cover)
         _remember_send(package, {
-            "state": "sent", "at": time.time(), "kept": book_edits.sent_marks(edits, _sent_marks(package)),
+            "state": "sent", "at": time.time(), "kept": book_edits.sent_marks(edits, book_edits.forget_marks(marks, removed)),
             **{key: int(reply.get(key) or 0) for key in ("applied", "skipped", "requests", "waiting", "skippedWishes")},
             "conflicts": [sender_label(item, entry["name"]) for item in reply.get("conflicts") or [] if isinstance(item, dict) and item.get("label")],
         })

@@ -1,0 +1,61 @@
+{
+ "previous": {
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ],
+   "2": [
+    "Dịch: Nhóm Thử"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  },
+  "music": {
+   "playlist": "fantasy_calm"
+  }
+ },
+ "current": {
+  "format": "abook-edits",
+  "version": 1
+ },
+ "marks": {
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ],
+   "2": [
+    "Dịch: Nhóm Thử"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  },
+  "music": {
+   "playlist": "fantasy_calm"
+  }
+ },
+ "left": {
+  "format": "abook-edits",
+  "version": 1
+ },
+ "unmarked": {
+  "format": "abook-edits",
+  "version": 1
+ },
+ "removeLater": {
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ],
+   "2": [
+    "Dịch: Nhóm Thử"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  },
+  "playlist": "fantasy_calm"
+ },
+ "pending": 3
+}

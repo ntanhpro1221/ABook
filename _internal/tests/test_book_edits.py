@@ -114,7 +114,9 @@ def test_sending_edits_follows_the_golden_file(name: str) -> None:
     """Gửi xong: cách đọc và danh sách phát ở lại lớp sửa nhưng không còn là "chưa gửi" - cùng bộ ví dụ với BookEdits.kt (EditsSyncTest)."""
     golden = _read(shared.FIXTURES / "sent" / f"{name}.json")
     assert shared.sent_case(name) == golden
-    assert golden["pending"] == book_edits.count(book_edits.unmarked(golden["left"], golden["marks"]))
+    waiting = book_edits.removed_marks(golden["left"], golden["marks"])
+    assert waiting == golden.get("removeLater", {})
+    assert golden["pending"] == book_edits.count(book_edits.unmarked(golden["left"], golden["marks"])) + book_edits.count_removed(waiting)
 
 
 def test_writers_store_the_minimum_and_a_noop_edit_never_counts(tmp_path: Path) -> None:
@@ -775,3 +777,27 @@ def test_a_pin_in_an_edited_file_reaches_the_producers_store_through_the_open_an
     assert (folded["applied"], folded["skipped"]) == (1, 0)
     assert app.my_music.file(shared.TRACK_LINK) is not None
     assert music_plan.read_overrides(project)["pins"] == {"1:1": shared.TRACK_LINK, "1:5": shared.TRACK_LINK}
+
+
+def test_withdrawing_what_the_sender_dropped_only_removes_the_value_it_sent(tmp_path: Path) -> None:
+    folder = tmp_path / "base"
+    shutil.copytree(shared.BASE, folder)
+    book_edits.save(folder, book_edits.validate({
+        **shared.HEAD, "title": "Giữ",
+        "skip": {"1": ["Dịch: Nhóm Thử", "Biên tập: Ai Đó"], "2": ["Dịch: Nhóm Thử"]},
+        "readings": {"Lucien": "Lu-xi-en", "Kate": "Kết"}, "music": {"playlist": "fantasy_calm", "levelDb": -20.0}}))
+    removed = book_edits.parse_removed(book_edits.dump_removed(
+        {"skip": {"1": ["Dịch: Nhóm Thử"]}, "readings": {"Lucien": "Lu-xi-en", "Kate": "Kết kết"}, "playlist": "school_light"}))
+    assert book_edits.apply_removed(folder, removed) == 2, "dòng bỏ ở chương 1 và cách đọc Lucien; Kate / danh sách phát đã khác nên ở lại"
+    layer = book_edits.load(folder)
+    assert layer["skip"] == {"1": ["Biên tập: Ai Đó"], "2": ["Dịch: Nhóm Thử"]}
+    assert layer["readings"] == {"Kate": "Kết"} and layer["music"] == {"levelDb": -20.0, "playlist": "fantasy_calm"} and layer["title"] == "Giữ"
+    assert book_edits.apply_removed(folder, removed) == 0
+    assert book_edits.apply_removed(folder, {"playlist": "fantasy_calm", "readings": {"Kate": "Kết"}}) == 2
+    assert book_edits.load(folder)["music"] == {"levelDb": -20.0}
+
+
+@pytest.mark.parametrize("raw", [[], {}, {"title": "x"}, {"skip": {"x": ["a"]}}, {"readings": {"A": "A"}}, {"playlist": "Kỳ ảo"}, {"playlist": 3}])
+def test_a_bad_withdrawal_is_refused(raw: Any) -> None:
+    with pytest.raises(book_edits.EditsError):
+        book_edits.validate_removed(raw)

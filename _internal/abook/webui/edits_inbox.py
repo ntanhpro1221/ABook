@@ -2,7 +2,7 @@
 
 Cuốn điện thoại tải từ máy tính này (Store.computerBooks) sửa được ngay trên điện thoại (lớp sửa `edits.json`, cùng giao ước với
 file `.abook` v4 - book_edits.py). Gói gửi về là một file zip nhỏ: `edits.json`, `edits/cover.jpg` (khi đổi bìa), `music/<sha1>.<đuôi>`
-(các bài nhạc người nghe ghim) - đúng tên và đúng kiểm tra của lớp sửa trong file sách (`book_edits.read_layer`). Gói đến từ mạng
+(các bài nhạc người nghe ghim), và `edits_removed.json` (cái đã gửi mà người nghe bỏ đi sau đó - máy giữ sách gỡ theo, book_edits.apply_removed) - đúng tên và đúng kiểm tra của lớp sửa trong file sách (`book_edits.read_layer`). Gói đến từ mạng
 nên là dữ liệu của người lạ: từ chối cả gói khi sai, chỉ thiết bị đã ghép mới gửi được (sync.py), chỉ cuốn có trong thư viện.
 
 Hai loại sửa đi hai ngả:
@@ -38,7 +38,7 @@ SYNCED_FILE = "edits_synced.json"
 MAX_PACKAGE_BYTES = 160 * 1024 * 1024  # cả gói (bìa <= 8 MiB, nhạc ghim thường vài MiB mỗi bài)
 MAX_TRACK_BYTES = 128 * 1024 * 1024  # một bài nhạc ghim; hơn thế không phải nhạc nền
 MAX_RECENT = 10
-_MEMBER = re.compile(r"edits\.json|edits/cover\.jpg|music/[0-9a-f]{40}\.(?:mp3|m4a|ogg|opus|flac|wav)")
+_MEMBER = re.compile(r"edits\.json|edits_removed\.json|edits/cover\.jpg|music/[0-9a-f]{40}\.(?:mp3|m4a|ogg|opus|flac|wav)")
 _LOCK = threading.RLock()
 _CHUNK = 256 * 1024
 
@@ -76,6 +76,19 @@ def read_package(path: Path) -> tuple[dict[str, Any], bytes | None, dict[str, st
         if any(archive.getinfo(name).file_size > MAX_TRACK_BYTES for name in tracks):
             raise InboundError("Một bài nhạc trong gói quá dài.")
     return edits, cover, tracks
+
+
+def read_removed(path: Path) -> dict[str, Any]:
+    """Phần người gửi đã bỏ sau khi gửi (`book_edits.removed_marks`) trong gói đã qua `read_package`: {} khi gói không có mục ấy; sai: `InboundError`."""
+    try:
+        with zipfile.ZipFile(path) as archive:
+            if book_edits.REMOVED_FILE not in archive.namelist():
+                return {}
+            if archive.getinfo(book_edits.REMOVED_FILE).file_size > book_edits.MAX_EDITS_BYTES:
+                raise InboundError("Phần gỡ trong gói thay đổi quá lớn.")
+            return book_edits.parse_removed(archive.read(book_edits.REMOVED_FILE))
+    except (book_edits.EditsError, zipfile.BadZipFile, OSError) as exc:
+        raise InboundError(str(exc)) from exc
 
 
 def extract(path: Path, tracks: dict[str, str], target: Path) -> None:
