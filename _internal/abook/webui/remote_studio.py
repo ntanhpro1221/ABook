@@ -163,6 +163,9 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("GET", r"/api/music/moods-model"),
     ("GET", _BOOK + r"/music/scenes/[^/]+/alternatives"),
 ))
+# Cài lên màn hình chính (ui/index.html): trình duyệt tải manifest và biểu tượng KHÔNG kèm cookie (iOS lấy apple-touch-icon lúc bấm
+# "Thêm vào màn hình chính"), nên các file này mở cho cả trình duyệt chưa ghép. Không chứa gì ngoài tên app và hình biểu tượng.
+PUBLIC_STATIC = frozenset({"/manifest.webmanifest", "/apple-touch-icon.png", "/icon-192.png", "/icon-512.png"})
 TYPES = {
     ".js": "text/javascript; charset=utf-8",
     ".css": "text/css; charset=utf-8",

@@ -7,7 +7,7 @@ import { cn } from "@/shared/cn";
 import { formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { caughtUpDetail, resumeWhere } from "./labels";
-import { foldVietnamese, listeningBook, resumePoint, seriesIndex, volumeBadge, type ListenBook } from "./model";
+import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, seriesIndex, volumeBadge, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
 import { bookVoiceCaption } from "./readAloudVoice";
 import { useListenLibrary, useReadAloudVoices, useSource } from "./source";
@@ -325,9 +325,8 @@ export function LibraryScreen({
   const listening = useMemo(() => listeningBook(books ?? [], playingId), [books, playingId]);
   const folded = foldVietnamese(query.trim());
   const shown = (books ?? []).filter(
-    // Tên sách hoặc giọng kể ("duc tri" tìm ra mọi cuốn Đức Trí đọc - soát UX 29-09).
-    (book) => (filter === "all" || stateOf(book) === filter)
-      && (!folded || foldVietnamese(`${book.title} ${book.narrator}`).includes(folded)),
+    // Tên sách, tác giả hoặc giọng kể ("duc tri" tìm ra mọi cuốn Đức Trí đọc - soát UX 29-09).
+    (book) => (filter === "all" || stateOf(book) === filter) && bookMatchesQuery(book, folded),
   );
   return (
     <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">

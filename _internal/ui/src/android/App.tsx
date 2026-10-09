@@ -32,6 +32,8 @@ import { SettingsScreen } from "./SettingsScreen";
 import { UpdateNotice } from "./UpdateNotice";
 import { applyTheme, loadSettings, pushSettings } from "./settings";
 import { dismissTopLayer } from "./backLayers";
+import { useBookBytes } from "./storage";
+import { formatSize } from "@/shared/format";
 
 // Vỏ Android: cùng các màn hình Nghe với máy tính, bố cục một tay - điều hướng dưới đáy, trình phát thu nhỏ ngay
 // trên thanh điều hướng, nút Back của máy đóng menu / hộp thoại đang mở, rồi màn hình đang nghe, rồi mới lùi trang.
@@ -169,12 +171,14 @@ function DownloadMenuItem({ book }: { book: ListenBook }) {
 /** Sách đã nằm trên điện thoại: xoá bản ấy để lấy lại chỗ trống (soát UX 29-09: EbookLibrary.deleteBook có sẵn mà không
  *  nút nào gọi - sách tải về chỉ có thêm, không bớt được). Hộp xác nhận ở RemoveFromPhoneHost, ngoài menu. */
 function RemoveFromPhoneMenuItem({ book }: { book: ListenBook }) {
+  const bytes = useBookBytes(book.id);
   return (
     <DropdownMenu.Item
       onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>("abook-remove-from-phone", { detail: book }))}
       className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
     >
       <Trash2 className="size-4" /> Xoá khỏi điện thoại…
+      {bytes !== undefined && <span className="ml-auto text-xs text-fg-2">Chiếm {formatSize(bytes)}</span>}
     </DropdownMenu.Item>
   );
 }
@@ -184,7 +188,9 @@ function RemoveFromPhoneHost() {
   const [busy, setBusy] = useState(false);
   const client = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const player = usePlayer();
+  const bytes = useBookBytes(book?.id ?? "");
   useEffect(() => {
     const listener = (event: Event) => setBook((event as CustomEvent<ListenBook>).detail);
     window.addEventListener("abook-remove-from-phone", listener);
@@ -197,7 +203,8 @@ function RemoveFromPhoneHost() {
     try {
       await EbookLibrary.deleteBook({ id: book.id });
       setBook(null);
-      navigate("/", { replace: true });
+      // Xoá từ danh sách dung lượng ở màn "Tải sách" thì ở lại đó; chỉ rời trang của chính cuốn vừa xoá.
+      if (location.pathname.startsWith(`/book/${book.id}`)) navigate("/", { replace: true });
       void client.invalidateQueries();
       toast.success(`Đã xoá “${book.title}” khỏi điện thoại`);
     } catch (error) {
@@ -211,7 +218,7 @@ function RemoveFromPhoneHost() {
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
       title={`Xoá “${book?.title ?? ""}” khỏi điện thoại?`}
-      description="Bản trên điện thoại bị xoá hẳn để lấy lại chỗ trống. Sách của máy tính hay thiết bị đã ghép thì tải lại được, chỗ nghe đồng bộ lại từ máy ấy; sách mở từ file .abook thì mở lại file ấy."
+      description={`${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Bản trên điện thoại bị xoá hẳn để lấy lại chỗ trống. Sách của máy tính hay thiết bị đã ghép thì tải lại được, chỗ nghe đồng bộ lại từ máy ấy; sách mở từ file .abook thì mở lại file ấy.`}
     >
       <div className="flex justify-end gap-2">
         <Button variant="ghost" onClick={() => setBook(null)}>

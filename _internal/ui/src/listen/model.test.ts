@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
+import { bookMatchesQuery, chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
@@ -134,6 +134,14 @@ describe("resumePoint", () => {
 
 it("folds Vietnamese for searching without marks", () => {
   expect(foldVietnamese("Đức Trí · Tập 16")).toBe("duc tri · tap 16");
+});
+
+it("matches a book by title, author or narrator without marks or case", () => {
+  const book = { title: "Tắt đèn", author: "Ngô Tất Tố", narrator: "Đức Trí" };
+  for (const query of ["tat den", "NGO TAT TO", "duc tri", ""]) expect(bookMatchesQuery(book, foldVietnamese(query.trim()))).toBe(true);
+  expect(bookMatchesQuery(book, foldVietnamese("nguyen"))).toBe(false);
+  expect(bookMatchesQuery({ title: "Sống mãi", author: "Nguyễn Huy Thiệp", narrator: "" }, foldVietnamese("nguyen huy"))).toBe(true);
+  expect(bookMatchesQuery({ title: "Chí Phèo", narrator: "" }, foldVietnamese("nguyễn"))).toBe(false);
 });
 
 describe("chaptersByPart", () => {
