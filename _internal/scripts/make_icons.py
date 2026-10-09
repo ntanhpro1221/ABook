@@ -15,6 +15,7 @@ Ra (vẽ lại toàn bộ mỗi lần chạy):
     abook/assets/project_file.ico + .png   file .abookproj
     abook/assets/icon/*.svg                bản vector gốc: phóng to bao nhiêu cũng không vỡ
     mobile/android/app/src/main/res/...           launcher (thường, tròn, thích ứng + đơn sắc Android 13), màn chờ
+    ui/public/*.png                       "Thêm vào màn hình chính" của trình duyệt (iPhone, iPad, Android): tràn viền, hệ điều hành tự bo
 
 Cỡ 16-32 px vẽ bản GIẢN LƯỢC (ba tay sách, nét dày, không đường trang): thu nhỏ bản đầy đủ xuống 16 px chỉ còn vệt nhoè.
 Qt vẽ SVG (QtSvg), Pillow ghi ICO nhiều cỡ.
@@ -142,10 +143,11 @@ def _forest(gid: str = "forest") -> str:
             f'<stop offset="1" stop-color="{FOREST_BOTTOM}"/></linearGradient>')
 
 
-def app_icon(*, small: bool = False, round_: bool = False) -> str:
-    """Ô vuông bo góc (Windows, launcher cũ) hoặc hình tròn (launcher tròn); hình sách-loa chiếm ~55% bề ngang."""
+def app_icon(*, small: bool = False, round_: bool = False, square: bool = False) -> str:
+    """Ô vuông bo góc (Windows, launcher cũ), hình tròn (launcher tròn) hoặc vuông tràn viền (`square`: iOS và trình duyệt tự bo,
+    góc trong suốt sẽ hiện thành đen); hình sách-loa chiếm ~55% bề ngang."""
     shape = ('<circle cx="512" cy="512" r="512" fill="url(#forest)"/>' if round_
-             else '<rect width="1024" height="1024" rx="228" fill="url(#forest)"/>')
+             else f'<rect width="1024" height="1024" rx="{0 if square else 228}" fill="url(#forest)"/>')
     scale = (1.08 if small else 1.0) * (0.92 if round_ else 1.0)
     return _svg(shape + _placed(glyph(small=small), scale), _forest())
 
@@ -240,6 +242,18 @@ def write_android() -> list[Path]:
     return written
 
 
+# Trang nghe qua trình duyệt (apple-touch-icon + web app manifest trong ui/index.html): tên file cố định vì index.html trỏ tới.
+WEB_ICONS = (("apple-touch-icon.png", 180), ("icon-192.png", 192), ("icon-512.png", 512))
+
+
+def write_web() -> list[Path]:
+    target = ROOT / "ui" / "public"
+    target.mkdir(parents=True, exist_ok=True)
+    for name, size in WEB_ICONS:
+        rasterize(app_icon(square=True), size).convert("RGB").save(target / name)
+    return [target / name for name, _ in WEB_ICONS]
+
+
 def preview(folder: Path) -> None:
     """Các cỡ trên nền sáng và nền tối, như Explorer / thanh tác vụ ở hai chế độ."""
     folder.mkdir(parents=True, exist_ok=True)
@@ -276,6 +290,7 @@ def main() -> int:
     write_ico(ASSETS / "project_file.ico", file_icon(dashed=True), file_icon(small=True, dashed=True))
     if not args.no_android:
         write_android()
+    write_web()
     if args.preview:
         preview(args.preview)
     print(ASSETS)

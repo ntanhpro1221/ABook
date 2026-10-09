@@ -882,4 +882,8 @@ object Store {
     }
 
     fun sizeOf(dir: File): Long = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+
+    /** Cỡ từng cuốn trên máy (mã cuốn -> byte) để màn "Tải sách" xếp cuốn nào chiếm nhiều nhất; tổng của chúng là cỡ cả thư viện. */
+    fun bookSizes(): Map<String, Long> =
+        File(root, "books").listFiles { entry -> entry.isDirectory }.orEmpty().associate { it.name to sizeOf(it) }
 }

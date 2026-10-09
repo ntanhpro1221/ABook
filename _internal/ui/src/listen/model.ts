@@ -413,3 +413,8 @@ export function chapterHeard(state: ListeningState, chapter: ListenChapter): num
 export function foldVietnamese(text: string): string {
   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
 }
+
+/** Ô "Tìm sách": khớp tên, tác giả hoặc giọng kể, không phân biệt hoa thường và dấu ("nguyen" tìm ra "Nguyễn"). `folded` đã qua foldVietnamese. */
+export function bookMatchesQuery(book: Pick<ListenBook, "title" | "author" | "narrator">, folded: string): boolean {
+  return !folded || foldVietnamese(`${book.title} ${book.author ?? ""} ${book.narrator}`).includes(folded);
+}
