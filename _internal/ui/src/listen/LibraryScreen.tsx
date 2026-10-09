@@ -7,6 +7,7 @@ import { cn } from "@/shared/cn";
 import { formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { caughtUpDetail, resumeWhere } from "./labels";
+import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, isLibrarySort, type LibrarySort } from "./librarySort";
 import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, seriesIndex, volumeBadge, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
 import { bookVoiceCaption } from "./readAloudVoice";
@@ -319,14 +320,22 @@ export function LibraryScreen({
   const upcoming = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable === 0 && book.stage !== "text") ?? [], [allBooks]);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<LibrarySort>(loadLibrarySort);
   const player = usePlayer();
   // Theo cuốn đang phát (không tính nghe kiểm trong Studio), không chỉ theo chỗ nghe đã lưu - chỗ ấy chỉ được làm mới khi dừng.
   const playingId = player.track && player.purpose !== "review" ? player.track.bookId : null;
   const listening = useMemo(() => listeningBook(books ?? [], playingId), [books, playingId]);
   const folded = foldVietnamese(query.trim());
-  const shown = (books ?? []).filter(
-    // Tên sách, tác giả hoặc giọng kể ("duc tri" tìm ra mọi cuốn Đức Trí đọc - soát UX 29-09).
-    (book) => (filter === "all" || stateOf(book) === filter) && bookMatchesQuery(book, folded),
+  const shown = useMemo(
+    () =>
+      sortBooks(
+        (books ?? []).filter(
+          // Tên sách, tác giả hoặc giọng kể ("duc tri" tìm ra mọi cuốn Đức Trí đọc - soát UX 29-09).
+          (book) => (filter === "all" || stateOf(book) === filter) && bookMatchesQuery(book, folded),
+        ),
+        sort,
+      ),
+    [books, filter, folded, sort],
   );
   return (
     <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
@@ -384,6 +393,24 @@ export function LibraryScreen({
                 { value: "finished", label: "Nghe xong" },
               ]}
             />
+            <label className="flex items-center gap-2 text-sm text-fg-2 max-sm:w-full">
+              <span className="shrink-0">Xếp theo</span>
+              <select
+                value={sort}
+                onChange={(event) => {
+                  if (!isLibrarySort(event.target.value)) return;
+                  setSort(event.target.value);
+                  saveLibrarySort(event.target.value);
+                }}
+                className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2 text-sm text-fg outline-none focus:border-accent max-sm:h-[44px]"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label className="relative max-sm:w-full">
               <span className="sr-only">Tìm sách</span>
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-3" />
