@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Nhạc nền theo sát chỗ truyện lúc căng lúc dịu TRONG một chương hơn: máy tính có thêm một model nhỏ tuỳ chọn ("Học sinh không khí cảnh") đọc chữ từng đoạn rồi đoán đoạn nào vui hơn, căng hơn, dồn dập hơn mức chung của chương. Chưa có bản model để tải; khi chưa có, nhạc chọn như trước. Sách làm ở máy tính vẫn mang sẵn lựa chọn ấy sang điện thoại.
+
 ## [0.4.36] - 2026-10-09
 
 ### Việc cần anh

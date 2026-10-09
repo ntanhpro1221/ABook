@@ -225,6 +225,16 @@ def install_libs_part(progress: Callable[[int, int], None]) -> None:
     activate_libs()
 
 
+def scene_student_part() -> Component:
+    """Phần TUỲ CHỌN "Học sinh không khí cảnh" (music_scene_student.py, ~1,9 GB): đoán hình không khí trong chương cho nhạc nền. Không thuộc
+    `_components()` - thiếu nó mô-đun vẫn "ready", người dùng không bị đòi tải - mà dựng riêng cho chỗ nào cho bấm tải (như phần muq của
+    music_valence.py). Gói chưa phát hành (REVISION trống): `blocked` nêu lý do, `downloads` rỗng - không có gì để tải."""
+    from . import music_scene_student as scene
+
+    return Component("scene_q17", "Học sinh không khí cảnh (1,9 GB)", scene.model_pin(), scene.total_bytes(), scene.present(),
+                     external=bool(os.environ.get(scene.ENV_DIR)), blocked=scene.cannot_download(), downloads=scene.model_downloads())
+
+
 # ---- các phần của máy này -----------------------------------------------------------------------------------------------------
 def _components() -> list[Component]:
     backend = music_student.planned_backend()

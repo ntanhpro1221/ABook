@@ -36,7 +36,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, ffmpeg_setup, humanize, listen_view,
-               music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_select, music_student, music_valence, packages, project_views,
+               music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -229,6 +229,7 @@ class App:
         music_module.configure(self.music_dir, after_install=self._music_module_installed)
         music_student.configure(self.music_dir / music_student.PACKAGE_FOLDER)
         music_student.register()
+        music_scene_student.configure(self.music_dir / music_scene_student.PACKAGE_FOLDER)  # học sinh hình không khí trong chương: tuỳ chọn, chưa phát hành
         # "Đo cảm xúc nhạc chính xác hơn" (music_valence.py): tuỳ chọn, mặc định tắt; bật rồi thì mở app là làm tiếp các bài chưa đo (không hại nếu đã xong).
         music_valence.configure(self.my_music, lambda: bool(self.preferences.get().get("preciseMusicMood")),
                                 lambda value: self.preferences.update({"preciseMusicMood": value}))
@@ -1326,6 +1327,7 @@ class App:
         error = ""
         try:
             music_moods.compute(path, base)
+            music_scene_student.run_after_analysis(path, lambda: False, lambda _line: None, lambda _kind, _payload: None)  # không ném; không gói thì bỏ qua
             self.music_rebuild(value)
         except Exception as exc:  # noqa: BLE001 - việc nền: lỗi hiện ở tab Nhạc, không làm sập máy chủ
             error = str(getattr(exc, "message", None) or exc)
