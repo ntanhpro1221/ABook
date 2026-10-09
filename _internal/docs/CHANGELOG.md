@@ -24,6 +24,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Thư viện
 
 - Sách bạn thêm từ file (nút "Thêm sách": .abook, .abookproj, EPUB, Word, PDF) giờ cũng hiện và nghe được ở điện thoại và máy tính đã ghép, y như sách tự làm - kể cả tên sách, tên chương, bìa và nhạc bạn đã đổi. Sửa tên, bìa, nhạc từ máy kia gửi về cuốn ấy cũng được nhận và giữ trong "N thay đổi" của cuốn; ý muốn cần Studio (cách đọc, giọng) được giữ lại để lưu theo file. Sách bạn chỉ xem lại từ máy khác thì không chia sẻ tiếp.
+- Sách chưa có chương nào nghe được (mới thêm, máy chưa làm âm thanh) giờ cũng hiện ở máy đã ghép: đọc được chữ ở máy kia, và nghe ngay bằng giọng của máy kia nếu máy ấy có giọng.
 
 ### Cách đọc tên
 
@@ -31,7 +32,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Dấu trang và nhạc nền
 
-- Sách chưa có chương nào nghe được (mới thêm, máy chưa làm âm thanh) giờ cũng hiện ở máy đã ghép: đọc được chữ ở máy kia, và nghe ngay bằng giọng của máy kia nếu máy ấy có giọng.
 - Màn đọc: chọn một câu rồi bấm "Đặt dấu trang ở câu này". Dòng dấu trang ghi chính câu chữ ấy (không còn chỉ có giờ phút, vô nghĩa với sách chỉ có chữ), bấm vào là mở màn đọc đúng câu đó. Có ở máy tính và điện thoại.
 - Cài đặt › Nhạc nền: công tắc "Tự chọn nhạc nền cho sách chỉ có chữ" (mặc định vẫn bật). Tắt thì sách chưa chọn nhạc sẽ im lặng, cuốn nào bạn đã chọn nhạc ở menu "Nhạc nền" của sách vẫn có nhạc. Lúc chưa tải được danh mục nhạc, nút nhạc nền không còn hiện tên mã kỹ thuật của bộ nhạc.
 
