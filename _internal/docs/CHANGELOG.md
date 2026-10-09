@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.37] - 2026-10-09
+
 ### Thư viện
 
 - Ô "Tìm sách" tìm được cả theo tên tác giả (sách chữ nhập từ EPUB, DOCX, PDF có ghi tác giả), không phân biệt hoa thường và dấu: gõ "nguyen" ra mọi cuốn của Nguyễn. Có ở máy tính và điện thoại.
