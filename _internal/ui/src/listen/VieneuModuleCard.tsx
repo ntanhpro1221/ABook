@@ -34,6 +34,8 @@ export interface VieneuBackend {
   start(choices?: VieneuChoiceId[]): Promise<VieneuStatus>;
   measure(): Promise<VieneuStatus>;
   remove?(choice: VieneuChoiceId): Promise<VieneuStatus>;
+  /** Huỷ lần tải đang chạy (máy tính; điện thoại chưa có): phần đã tải giữ để lần sau làm tiếp. */
+  cancel?(): Promise<VieneuStatus>;
   voices(): Promise<ReadAloudVoice[]>;
 }
 
@@ -41,6 +43,7 @@ export const desktopVieneu: VieneuBackend = {
   status: () => api<VieneuStatus>("/api/readaloud/vieneu"),
   start: (choices) => api<VieneuStatus>("/api/readaloud/vieneu", { method: "POST", body: choices ? { choices } : {} }),
   measure: () => api<VieneuStatus>("/api/readaloud/vieneu/measure", { method: "POST", body: {} }),
+  cancel: () => api<VieneuStatus>("/api/readaloud/vieneu/cancel", { method: "POST", body: {} }),
   voices: () => api<ReadAloudVoice[]>("/api/readaloud/voices"),
 };
 
@@ -50,6 +53,7 @@ export const desktopSupertonic: VieneuBackend = {
   start: (choices) => api<VieneuStatus>("/api/readaloud/supertonic", { method: "POST", body: choices ? { choices } : {} }),
   measure: () => api<VieneuStatus>("/api/readaloud/supertonic/measure", { method: "POST", body: {} }),
   remove: (choice) => api<VieneuStatus>("/api/readaloud/supertonic/remove", { method: "POST", body: { choice } }),
+  cancel: () => api<VieneuStatus>("/api/readaloud/supertonic/cancel", { method: "POST", body: {} }),
 };
 
 /** Thẻ của mô-đun giọng Supertonic: cùng thẻ, lời riêng (máy tính). */
@@ -57,24 +61,13 @@ export function SupertonicModuleCard({ onChanged }: { onChanged?: () => void }) 
   return <VieneuModuleCard backend={desktopSupertonic} copy={SUPERTONIC_COPY} onChanged={onChanged} />;
 }
 
-/** Thẻ của mô-đun "Giọng VieNeu" trong Cài đặt: chọn giọng muốn tải (có "Khuyên dùng" theo máy), thấy đúng dung lượng máy còn thiếu,
- *  bấm mới tải; tải xong máy tự thử vài giây và nói giọng có kịp người nghe không - không kịp thì đề nghị đổi, người dùng bấm mới đổi. */
-export function VieneuModuleCard({
-  onChanged,
-  backend = desktopVieneu,
-  copy = VIENEU_COPY,
-}: { onChanged?: () => void; backend?: VieneuBackend; copy?: ModuleCopy } = {}) {
+/** Trạng thái mô-đun giọng + nhịp hỏi lại khi đang tải / đo (mỗi giây); tải / đo xong thì danh sách giọng của trình phát hỏi lại để giọng mới hiện ngay.
+ *  Thẻ trong Cài đặt và khối lỗi của trình phát (VieneuDownload) dùng chung - cùng khoá truy vấn nên hai nơi thấy cùng một lần tải. */
+export function useModuleStatus(backend: VieneuBackend, copy: ModuleCopy, onChanged?: () => void) {
   const client = useQueryClient();
-  const lowerName = lowerFirst(copy.name);
   const { data: status } = useQuery({ queryKey: ["readaloud", copy.key], queryFn: () => backend.status() });
-  const [chosen, setChosen] = useState<VieneuChoiceId[] | null>(null);
-  const [busy, setBusy] = useState(false);
   const working = status?.state === "downloading" || Boolean(status?.benchmarking);
   const wasWorking = useRef(false);
-  // Trong lúc tải: % không bao giờ lùi (một lần nối lại mà máy chủ tải lại từ đầu file làm số nhảy lùi) và cỡ mỗi lựa chọn đứng yên ở cỡ lúc bấm tải
-  // (số "còn thiếu" của lựa chọn co lại mỗi khi một phần dùng chung tải xong: 313 -> 297 MB giữa chừng).
-  const peak = useRef(0);
-  const sizes = useRef<Record<string, number>>({});
   useEffect(() => {
     if (!working) return;
     const timer = setInterval(() => void client.invalidateQueries({ queryKey: ["readaloud", copy.key] }), 1000);
@@ -89,6 +82,25 @@ export function VieneuModuleCard({
     }
     wasWorking.current = working;
   }, [working, client, onChanged]);
+  return { status, working };
+}
+
+/** Thẻ của mô-đun "Giọng VieNeu" trong Cài đặt: chọn giọng muốn tải (có "Khuyên dùng" theo máy), thấy đúng dung lượng máy còn thiếu,
+ *  bấm mới tải; tải xong máy tự thử vài giây và nói giọng có kịp người nghe không - không kịp thì đề nghị đổi, người dùng bấm mới đổi. */
+export function VieneuModuleCard({
+  onChanged,
+  backend = desktopVieneu,
+  copy = VIENEU_COPY,
+}: { onChanged?: () => void; backend?: VieneuBackend; copy?: ModuleCopy } = {}) {
+  const client = useQueryClient();
+  const lowerName = lowerFirst(copy.name);
+  const { status, working } = useModuleStatus(backend, copy, onChanged);
+  const [chosen, setChosen] = useState<VieneuChoiceId[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  // Trong lúc tải: % không bao giờ lùi (một lần nối lại mà máy chủ tải lại từ đầu file làm số nhảy lùi) và cỡ mỗi lựa chọn đứng yên ở cỡ lúc bấm tải
+  // (số "còn thiếu" của lựa chọn co lại mỗi khi một phần dùng chung tải xong: 313 -> 297 MB giữa chừng).
+  const peak = useRef(0);
+  const sizes = useRef<Record<string, number>>({});
   if (!status) return null;
   const downloading = status.state === "downloading";
   peak.current = downloading ? Math.max(peak.current, status.done) : 0;
@@ -135,7 +147,16 @@ export function VieneuModuleCard({
     <div className="max-w-xl space-y-3">
       <h3 className="text-sm font-semibold">{copy.title}</h3>
       <p role="status" className={cn("text-sm text-pretty", failed ? "text-danger" : "text-fg-2")}>{vieneuLabel(shown, copy)}</p>
-      {status.state === "downloading" && <Progress value={vieneuPercent(shown) / 100} size="sm" running label={`Đang tải ${lowerName}`} />}
+      {status.state === "downloading" && (
+        <div className="flex items-center gap-3">
+          <Progress value={vieneuPercent(shown) / 100} size="sm" running label={`Đang tải ${lowerName}`} className="flex-1" />
+          {backend.cancel && (
+            <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.cancel!(), `Chưa huỷ được việc tải ${lowerName}`)}>
+              Huỷ
+            </Button>
+          )}
+        </div>
+      )}
       <ul className="divide-y divide-line rounded-xl border border-line">
         {status.choices.map((choice) => {
           const on = picked.includes(choice.id);

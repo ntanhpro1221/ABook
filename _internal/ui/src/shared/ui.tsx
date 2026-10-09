@@ -55,11 +55,9 @@ export function Button({
         "inline-flex select-none items-center justify-center whitespace-nowrap font-medium transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45",
         VARIANTS[variant],
         SIZES[size],
-        // Màn cảm ứng: nút 32-36 px nới vùng chạm theo chiều dọc lên ~44 px như IconButton (soát UX 29-09: "Sửa", "Nam",
-        // "Nữ", "Đọc thế này" chỉ 28-32 px trên điện thoại).
-        size !== "lg" && "relative pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:content-['']",
-        size === "sm" && "pointer-coarse:after:-inset-y-1.5",
-        size === "md" && "pointer-coarse:after:-inset-y-1",
+        // Màn hẹp / cảm ứng: nút 28-38 px nới vùng chạm theo chiều dọc lên 40 px (touch-reach trong styles.css; soát UX 29-09 và a14: "Sửa",
+        // "Nam", "Nữ", "Thử giọng" chỉ 28-32 px trên điện thoại).
+        "touch-reach",
         className,
       )}
       {...rest}
@@ -89,9 +87,9 @@ export function IconButton({
 }) {
   const box = size === "sm" ? "size-8" : size === "lg" ? "size-11" : "size-9";
   const glyph = size === "lg" ? "size-5" : "size-[18px]";
-  // Màn cảm ứng: nút 32-36 px nới vùng chạm theo CHIỀU DỌC lên ~44 px (soát UX 29-09) - không nới ngang, vì các nút trên
+  // Màn hẹp / cảm ứng: nút nới vùng chạm theo CHIỀU DỌC lên 40 px (touch-reach, soát UX 29-09 và a14) - không nới ngang, vì các nút trên
   // thanh công cụ đứng sát nhau, vùng nới ngang sẽ giành chạm của nút bên cạnh.
-  const reach = size === "lg" ? "" : "relative pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-1.5 pointer-coarse:after:content-['']";
+  const reach = "touch-reach";
   return (
     <Tooltip label={label}>
       <button
@@ -292,12 +290,12 @@ export function TabsList({ children, className }: { children: ReactNode; classNa
       </TabsPrimitive.List>
       {/* Mũi tên báo còn tab ngoài mép (chỉ màn cảm ứng / hẹp; bàn phím đã có phím mũi tên của hàng tab). */}
       {edges.left && (
-        <button type="button" tabIndex={-1} aria-label="Xem các tab trước" onClick={() => nudge(-1)} className="absolute left-0 top-0 grid h-11 w-7 place-items-center text-fg-2 sm:hidden">
+        <button type="button" tabIndex={-1} aria-label="Xem các tab trước" onClick={() => nudge(-1)} className="touch-hit absolute left-0 top-0 grid h-11 w-7 place-items-center text-fg-2 sm:hidden">
           <ChevronLeft className="size-4" />
         </button>
       )}
       {edges.right && (
-        <button type="button" tabIndex={-1} aria-label="Xem các tab sau" onClick={() => nudge(1)} className="absolute right-0 top-0 grid h-11 w-7 place-items-center text-fg-2 sm:hidden">
+        <button type="button" tabIndex={-1} aria-label="Xem các tab sau" onClick={() => nudge(1)} className="touch-hit absolute right-0 top-0 grid h-11 w-7 place-items-center text-fg-2 sm:hidden">
           <ChevronRight className="size-4" />
         </button>
       )}
@@ -309,7 +307,7 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
   return (
     <TabsPrimitive.Trigger
       value={value}
-      className="relative -mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-2 text-sm sm:px-3 font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
+      className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-2 text-sm sm:px-3 font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
     >
       {children}
       {count !== undefined && (
@@ -565,7 +563,7 @@ export function Segmented<T extends string>({
           tabIndex={radioTabIndex(values, value, index)}
           onClick={() => onChange(option.value)}
           className={cn(
-            "h-7 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors",
+            "touch-row h-7 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors",
             value === option.value ? "bg-panel text-fg shadow-card" : "text-fg-2 hover:text-fg",
             itemClassName,
           )}

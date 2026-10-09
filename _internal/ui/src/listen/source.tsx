@@ -8,6 +8,7 @@ import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
 import { mergeTimings, VOICE_CHANGED_EVENT, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
 import { bookVoiceCaption, voicesOf } from "./readAloudVoice";
+import type { VieneuBackend } from "./VieneuModuleCard";
 import type { PreparePlan, PrepareRequest, PrepareStatus } from "./prepareAhead";
 
 // Nguồn dữ liệu của phía Nghe. Giao diện chỉ nói chuyện với giao diện này:
@@ -36,6 +37,8 @@ export interface ListenSource {
   /** "Nghe ngay" (readAloud.ts): các giọng đọc có trên máy này và việc đọc một đoạn chữ thành clip (audio + mốc từng chữ). Nguồn nào chưa có
    *  thì chương chỉ-có-chữ chỉ đọc được bằng mắt. Android: lõi native tự đọc (plugin ReadAloud, android/readAloud.ts) nên không có `readAloudClip`. */
   readAloudVoices?(): Promise<ReadAloudVoice[]>;
+  /** Mô-đun giọng VieNeu của nền tảng (tải / trạng thái) khi nguồn không phải máy chủ cục bộ: khối lỗi của trình phát tải giọng ngay tại chỗ qua đây. Máy tính dùng `desktopVieneu`. */
+  vieneu?: VieneuBackend;
   readAloudClip?(voice: string, text: string, options?: ClipOptions): Promise<ReadAloudClip>;
   /** Nghe thử một giọng (Cài đặt › Giọng đọc, menu giọng của trình phát) hay một cách đọc ("Đọc từ này là…" - `options.readings`, cách đọc
    *  của cuốn `options.bookId`): đọc `text` bằng giọng ấy, trả địa chỉ phát được. */

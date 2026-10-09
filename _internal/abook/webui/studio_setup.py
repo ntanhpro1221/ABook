@@ -222,6 +222,8 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
     target.parent.mkdir(parents=True, exist_ok=True)
     part = target.with_name(target.name + ".part")
     for attempt in range(5):
+        if cancelled():
+            raise Cancelled()  # bấm Huỷ lúc đang chờ thử lại / chưa có byte nào về
         have = part.stat().st_size if part.is_file() else 0
         if have >= item.size:
             break  # đủ cỡ (hay thừa): để băm quyết
@@ -245,7 +247,10 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
         except (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError) as error:
             if attempt == 4:
                 raise SetupError(f"Không tải được {item.name} ({error}). Kiểm tra mạng rồi bấm Cài tiếp.") from error
-            time.sleep(3 * (attempt + 1))
+            for _ in range(12 * (attempt + 1)):  # 3 * (attempt + 1) giây, nhưng nhả ra ngay khi bấm Huỷ
+                if cancelled():
+                    raise Cancelled()
+                time.sleep(0.25)
     actual = _sha256(part)
     if actual != item.sha256:
         part.unlink(missing_ok=True)

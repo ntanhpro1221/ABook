@@ -214,7 +214,7 @@ function SectionIndex({ root }: { root: { current: HTMLElement | null } }) {
           key={item.id}
           type="button"
           onClick={() => jump(item.id)}
-          className="h-8 rounded-full border border-line bg-panel px-3 text-[13px] font-medium text-fg-2 transition-colors hover:border-line-strong hover:text-fg"
+          className="touch-row h-8 rounded-full border border-line bg-panel px-3 text-[13px] font-medium text-fg-2 transition-colors hover:border-line-strong hover:text-fg"
         >
           {item.title}
         </button>
@@ -555,24 +555,28 @@ export function SettingsScreen() {
             title="Studio"
             description="Phần làm sách nói (thư viện, model đọc hiểu truyện, giọng đọc) - tải thêm khi cần, nằm riêng một thư mục."
           >
-            <div className="mb-4 flex max-w-xl items-start justify-between gap-6">
-              <label htmlFor="pause-on-battery" className="min-w-0 cursor-pointer">
-                <span className="block text-sm font-medium">Tạm dừng khi rút sạc</span>
-                <span className="mt-0.5 block text-[13px] text-fg-2 text-pretty">
-                  Máy tính xách tay chạy pin thì làm sách rất chậm mà hao pin. Sách đứng yên và tự làm tiếp đúng chỗ khi cắm sạc
-                  lại - kể cả giữa lúc phân tích truyện.
-                </span>
-              </label>
-              <Switch
-                id="pause-on-battery"
-                checked={preferences?.pauseOnBattery !== false}
-                onCheckedChange={(value) => update({ pauseOnBattery: value })}
-              />
-            </div>
-            <NewBookDefaults />
-            <BookTemplates />
-            <SharedReadingsSettings />
+            {/* Trạng thái Studio (đã cài / chưa cài + Gỡ hay Cài) ở đầu mục; chưa cài thì các tuỳ chọn bên dưới chỉ có tác dụng khi đã có Studio: mờ đi nhưng vẫn xem và chỉnh được. */}
             <StudioSettings />
+            {!info.studio.installed && <p className="mb-3 text-[13px] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p>}
+            <div className={cn(!info.studio.installed && "opacity-60")}>
+              <div className="mb-4 flex max-w-xl items-start justify-between gap-6">
+                <label htmlFor="pause-on-battery" className="min-w-0 cursor-pointer">
+                  <span className="block text-sm font-medium">Tạm dừng khi rút sạc</span>
+                  <span className="mt-0.5 block text-[13px] text-fg-2 text-pretty">
+                    Máy tính xách tay chạy pin thì làm sách rất chậm mà hao pin. Sách đứng yên và tự làm tiếp đúng chỗ khi cắm sạc
+                    lại - kể cả giữa lúc phân tích truyện.
+                  </span>
+                </label>
+                <Switch
+                  id="pause-on-battery"
+                  checked={preferences?.pauseOnBattery !== false}
+                  onCheckedChange={(value) => update({ pauseOnBattery: value })}
+                />
+              </div>
+              <NewBookDefaults />
+              <BookTemplates />
+              <SharedReadingsSettings />
+            </div>
           </Section>
         )}
         <Section

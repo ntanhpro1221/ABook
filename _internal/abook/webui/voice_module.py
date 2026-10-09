@@ -22,11 +22,12 @@ def pin(files: tuple[studio_setup.Download, ...]) -> str:
     return hashlib.sha256("\n".join(f"{item.name} {item.sha256}" for item in files).encode()).hexdigest()
 
 
-def download_files(part: Component, target: Path, progress: Callable[[int], None]) -> None:
-    """Tải các file của `part` thẳng vào `target`: `studio_setup.download` ghi `.part` rồi đổi tên sau khi khớp băm, nên engine đang chạy chỉ thấy file đủ."""
+def download_files(part: Component, target: Path, progress: Callable[[int], None], cancelled: Callable[[], bool] = lambda: False) -> None:
+    """Tải các file của `part` thẳng vào `target`: `studio_setup.download` ghi `.part` rồi đổi tên sau khi khớp băm, nên engine đang chạy chỉ thấy file đủ.
+    `cancelled` (người dùng bấm Huỷ): dừng giữa chừng, `.part` ở lại để lần tải sau làm tiếp bằng Range."""
     done = 0
     for item in part.downloads:
-        studio_setup.download(item, target / item.name, lambda have, _total, offset=done: progress(offset + have), lambda: False)
+        studio_setup.download(item, target / item.name, lambda have, _total, offset=done: progress(offset + have), cancelled)
         done += item.size
 
 
@@ -39,7 +40,9 @@ class ModuleCore:
         self.noun, self.thread_name, self.shared, self.usable = noun, thread, shared, usable
         self.lock = threading.RLock()
         self.folder: Path | None = None
-        self.state: dict[str, Any] = {"downloading": False, "benchmarking": False, "done": 0, "total": 0, "error": ""}
+        # `cancelled`: lần tải vừa rồi bị người dùng huỷ (hiện "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng"); xoá khi bắt đầu tải lại.
+        self.state: dict[str, Any] = {"downloading": False, "benchmarking": False, "done": 0, "total": 0, "error": "", "cancelled": False}
+        self._cancel = threading.Event()
         self._thread: threading.Thread | None = None
         self._bench: Callable[[str], dict[str, Any]] | None = None
         self._after: Callable[[], None] | None = None
@@ -51,7 +54,7 @@ class ModuleCore:
         with self.lock:
             self.folder = Path(folder) if folder is not None else None
             self._bench, self._after = benchmark, after_install
-            self.state.update(downloading=False, benchmarking=False, done=0, total=0, error="")
+            self.state.update(downloading=False, benchmarking=False, done=0, total=0, error="", cancelled=False)
 
     def ensure_folder(self, name: str) -> None:
         """Cho Studio (tiến trình dây chuyền không gọi `configure`): chưa ai cấu hình thì dùng chỗ server đặt mô-đun - cạnh
@@ -93,7 +96,8 @@ class ModuleCore:
               finish: Callable[[], None], tiers: Callable[[set[str]], list[str]]) -> None:
         """Tải `needed` ở luồng nền (người gọi giữ `lock`, đã kiểm `busy()` và cấu hình). Phần bị chặn thì ghi lỗi thay vì tải. `install(phần,
         báo tiến độ)`: cài một phần; `finish()`: việc sau khi mọi phần xong (đưa thư viện vào sys.path); `tiers(các phần đã tải)`: giọng cần đo lại."""
-        self.state.update(error="", done=0)
+        self.state.update(error="", done=0, cancelled=False)
+        self._cancel.clear()
         if not needed:
             return
         reason = next((part.blocked for part in needed if part.blocked and not part.external), "")
@@ -108,6 +112,14 @@ class ModuleCore:
         thread = self._thread
         if thread is not None:
             thread.join(timeout)
+
+    def cancel(self) -> None:
+        """Người dùng bấm Huỷ: dừng ở nhịp đọc kế của file đang tải (`.part` giữ lại, lần tải sau làm tiếp). Không có lần tải nào thì không làm gì."""
+        if self.state["downloading"]:  # không lấy khoá: luồng tải có thể đang giữ nó (cài thư viện dùng chung)
+            self._cancel.set()
+
+    def cancelled(self) -> bool:
+        return self._cancel.is_set()
 
     def _run(self, needed: list[Component], install: Callable[[Component, Callable[[int], None]], None], finish: Callable[[], None],
              tiers: Callable[[set[str]], list[str]]) -> None:
@@ -138,6 +150,9 @@ class ModuleCore:
             with self.lock:
                 self.state.update(downloading=False, error="")
             self.measure(tiers({part.id for part in needed}))
+        except studio_setup.Cancelled:
+            with self.lock:
+                self.state.update(downloading=False, error="", done=0, cancelled=True)
         except Exception as error:  # noqa: BLE001 - mọi lỗi thành một câu cho người dùng
             with self.lock:
                 self.state.update(downloading=False, error=f"Không tải được {self.noun}: {music_module._reason(error)}.")

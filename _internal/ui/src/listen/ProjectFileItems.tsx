@@ -7,7 +7,9 @@ import { toast } from "sonner";
 import { cn } from "@/shared/cn";
 import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
+import { useStudioMissing } from "@/studio/data";
 import type { ListenBook } from "./model";
+import { useSource } from "./source";
 
 // Cuốn mở từ file dự án `.abookproj` (docs/EDITING.md, phase P3): xưởng đi theo cuốn (hay đang chờ), kèm vài bản chụp CHỈ ĐỌC của
 // các màn Studio để điện thoại / máy chưa cài Studio cho người ta xem mà không mở sổ dự án.
@@ -46,6 +48,44 @@ function useBuildProject(book: ListenBook, done: (made: { chapters: number; voic
   return { build, building };
 }
 
+/** Mục mờ của việc cần Studio khi máy chưa có. Trên máy tính, Studio cài được ngay ở đây: dòng phụ nói cần gì và bấm là tới thẻ “Cài Studio”
+ *  (đầu màn Dự án). Điện thoại không có Studio để cài - giữ lời riêng của điện thoại. */
+function NeedStudioItem({ title, phoneNote }: { title: string; phoneNote: string }) {
+  const source = useSource();
+  if (source.kind === "android") return <DisabledNeedItem title={title} note={phoneNote} />;
+  return <DesktopNeedStudioItem title={title} note={phoneNote} />;
+}
+
+function DisabledNeedItem({ title, note }: { title: string; note: string }) {
+  return (
+    <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
+      <Wrench className="mt-0.5 size-4 shrink-0" />
+      <span className="min-w-0">
+        <span className="block">{title}</span>
+        <span className="block text-xs text-fg-3">{note}</span>
+      </span>
+    </DropdownMenu.Item>
+  );
+}
+
+function DesktopNeedStudioItem({ title, note }: { title: string; note: string }) {
+  const navigate = useNavigate();
+  const studio = useStudioMissing();
+  if (!studio.missing) return <DisabledNeedItem title={title} note={note} />;
+  return (
+    <DropdownMenu.Item onSelect={() => navigate("/studio")} className={cn(MENU_ITEM, "h-auto items-start py-1.5")}>
+      <Wrench className="mt-0.5 size-4 shrink-0" />
+      <span className="min-w-0">
+        <span className="block">{title}</span>
+        <span className="block text-xs text-fg-3">
+          {studio.update ? "Cần cập nhật Studio - " : "Cần cài Studio (card NVIDIA) - "}
+          <span className="font-medium text-accent-text underline">{studio.update ? "Cập nhật Studio" : "Cài Studio"}</span>
+        </span>
+      </span>
+    </DropdownMenu.Item>
+  );
+}
+
 /** Chữ nói rõ “Làm sách nói từ cuốn này” mang gì sang Studio. */
 export const TEXT_BOOK_COST =
   "Studio sẽ tạo một dự án mới từ chữ các chương của cuốn này, mang theo tên sách và bìa bạn đặt. Chưa chạy gì - chọn giọng kể rồi bắt đầu làm audio ở Studio. Cuốn đang đọc vẫn giữ nguyên.";
@@ -66,16 +106,17 @@ export function TextBookItems({ book }: { book: ListenBook }) {
       </DropdownMenu.Item>
     );
   }
+  if (!toolchain) return <NeedStudioItem title="Làm sách nói từ cuốn này" phoneNote="Cần cài Studio trên máy tính - ở đây cuốn này chỉ để đọc" />;
   return (
     <DropdownMenu.Item
-      disabled={!toolchain || building}
+      disabled={building}
       onSelect={() => void build()}
       className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}
     >
-      {toolchain ? <Hammer className="mt-0.5 size-4 shrink-0" /> : <Wrench className="mt-0.5 size-4 shrink-0" />}
+      <Hammer className="mt-0.5 size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">Làm sách nói từ cuốn này</span>
-        <span className="block text-xs text-fg-3">{toolchain ? TEXT_BOOK_COST : "Cần cài Studio trên máy tính - ở đây cuốn này chỉ để đọc"}</span>
+        <span className="block text-xs text-fg-3">{TEXT_BOOK_COST}</span>
       </span>
     </DropdownMenu.Item>
   );
@@ -104,16 +145,17 @@ export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews:
           <Hammer className="size-4" /> Mở xưởng đã dựng
         </DropdownMenu.Item>
       )}
-      {pending && !info.built && (
+      {pending && !info.built && !toolchain && <NeedStudioItem title="Dựng xưởng" phoneNote="Cần cài Studio - file này chỉ mang phần nghe, chưa có xưởng" />}
+      {pending && !info.built && toolchain && (
         <DropdownMenu.Item
-          disabled={!toolchain || building}
+          disabled={building}
           onSelect={() => void build()}
           className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}
         >
-          {toolchain ? <Hammer className="mt-0.5 size-4 shrink-0" /> : <Wrench className="mt-0.5 size-4 shrink-0" />}
+          <Hammer className="mt-0.5 size-4 shrink-0" />
           <span className="min-w-0">
             <span className="block">Dựng xưởng</span>
-            <span className="block text-xs text-fg-3">{toolchain ? WORKSHOP_COST : "Cần cài Studio - file này chỉ mang phần nghe, chưa có xưởng"}</span>
+            <span className="block text-xs text-fg-3">{WORKSHOP_COST}</span>
           </span>
         </DropdownMenu.Item>
       )}

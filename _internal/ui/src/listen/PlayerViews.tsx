@@ -52,6 +52,7 @@ import { SLEEP_CHOICES, sleepButtonLabel, sleepExtended, sleepLabel, sleepLeftMs
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, voiceSections } from "./voiceGroups";
 import { revealVoiceSettings } from "./voiceSettingsLink";
+import { VieneuDownload } from "./VieneuDownload";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, voiceCaption } from "./readAloudVoice";
 import { bookProgressText, caughtUpDetail, nextChapterLabel, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, textChapterLine, toggleLabel } from "./labels";
 import { useAfter } from "@/shared/useAfter";
@@ -1113,31 +1114,40 @@ function PlayerAlert({ className, overlay = false }: { className?: string; overl
     const local = offline && voices ? localVoiceFor(voices, current) : undefined;
     const button = "min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[44px]";
     return (
-      <div role="alert" className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
-        <TriangleAlert className="size-4 shrink-0 text-danger" />
-        <span className="min-w-[14rem] flex-1">{offline && current ? noOfflineMessage(spokenVoiceName(current.name)) : error}</span>
-        {offline && local && track && (
-          <button
-            type="button"
-            onClick={() => {
-              chooseVoice(track.bookId, local.id);
-              dismissError();
-              // Lõi điện thoại nhận giọng mới qua một lệnh riêng: cho nó kịp tới trước lệnh phát.
-              window.setTimeout(resume, 300);
-            }}
-            {...keepFocus}
-            className={button}
-          >
-            Đọc bằng {voiceCaption(local)}
+      <div role="alert" className={cn("flex items-start gap-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
+        <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
+        {/* Lời báo + cụm nút xuống hàng khi hẹp; nút ✕ đứng riêng ở góc trên phải nên không thêm hàng nào và không bao giờ trôi xuống dưới cụm nút. */}
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="min-w-0 flex-1 basis-[14rem]">{offline && current ? noOfflineMessage(spokenVoiceName(current.name)) : error}</span>
+          {offline && local && track && (
+            <button
+              type="button"
+              onClick={() => {
+                chooseVoice(track.bookId, local.id);
+                dismissError();
+                // Lõi điện thoại nhận giọng mới qua một lệnh riêng: cho nó kịp tới trước lệnh phát.
+                window.setTimeout(resume, 300);
+              }}
+              {...keepFocus}
+              className={button}
+            >
+              Đọc bằng {voiceCaption(local)}
+            </button>
+          )}
+          <button type="button" onClick={resume} {...keepFocus} className={button}>
+            Thử lại
           </button>
-        )}
-        {offline && !local && (
-          <button type="button" onClick={() => openVoiceSettings("vieneu-module")} {...keepFocus} className={button}>
-            Tải giọng VieNeu
-          </button>
-        )}
-        <button type="button" onClick={resume} {...keepFocus} className={button}>
-          Thử lại
+          {offline && !local && <VieneuDownload button="Tải giọng VieNeu" onOpenSettings={() => openVoiceSettings("vieneu-module")} />}
+        </div>
+        {/* Gạt đi tới lần lỗi mới: khối này nằm trên mọi màn, người đang làm việc khác (Cài đặt, Thư viện) không bị nó đè mãi. */}
+        <button
+          type="button"
+          aria-label="Đóng lời báo"
+          onClick={dismissError}
+          {...keepFocus}
+          className="-my-1 -mr-1 grid size-9 shrink-0 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg max-sm:size-[44px]"
+        >
+          <X className="size-4" />
         </button>
       </div>
     );
@@ -1252,7 +1262,7 @@ export function PlayerBar({
         <FadingNotice className="mx-3 mt-2" />
         <PlayerAlert className="mx-3 mt-2" />
         <div className="flex h-16 items-center gap-3 px-3">
-          <button type="button" onClick={() => setExpanded(true)} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label="Mở màn hình đang nghe">
+          <button type="button" onClick={() => setExpanded(true)} className="touch-row flex min-w-0 flex-1 items-center gap-3 text-left" aria-label="Mở màn hình đang nghe">
             <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className={cn("size-11", !expanded && "cover-morph")} />
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold">{track.chapterTitle}</div>
@@ -1266,7 +1276,7 @@ export function PlayerBar({
             onClick={toggle}
             aria-label={toggleLabel(playing, buffering, speaking)}
             aria-busy={(playing && buffering) || undefined}
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-fg text-bg"
+            className="touch-hit grid size-11 shrink-0 place-items-center rounded-full bg-fg text-bg"
           >
             {playing && buffering ? (
               <Loader2 className="size-5 animate-spin" />

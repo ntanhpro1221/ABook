@@ -6,6 +6,7 @@ import {
   Headphones,
   Check,
   CircleAlert,
+  Download,
   FolderDown,
   FolderOpen,
   Mic2,
@@ -68,6 +69,7 @@ import {
   formatTime,
 } from "@/shared/format";
 import { CastList } from "@/listen/BookScreen";
+import { analyzerLabel } from "./analyzerLabel";
 import { ApplyChangesDialog } from "./ApplyChanges";
 import { CoverEditor } from "./CoverEditor";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
@@ -410,7 +412,7 @@ export function ProjectMenu({ book, rename = true, className }: { book: BookSumm
             type="button"
             aria-label={`Tuỳ chọn dự án ${book.title}`}
             className={cn(
-              "inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover",
+              "touch-box inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover",
               className,
             )}
           >
@@ -465,7 +467,7 @@ function Actions({ book }: { book: BookSummary }) {
   const begin = (id: string) => {
     if (!studio.missing) return start.mutate(id);
     toast.error(studio.update ? "Cần cập nhật Studio" : "Cần cài Studio", {
-      description: "Phân tích và thu âm chạy bằng Studio. Xem, nghe, sửa cách đọc, nhạc nền, bìa và xuất sách vẫn làm được.",
+      description: "Phân tích và thu âm chạy bằng Studio.",
       action: remote ? undefined : { label: studio.update ? "Cập nhật Studio" : "Cài Studio", onClick: () => navigate("/studio") },
     });
   };
@@ -609,9 +611,16 @@ function Actions({ book }: { book: BookSummary }) {
         onApply={() => begin(book.id)}
       />
       {studio.missing && !live && (book.phase !== "done" || Boolean(book.pendingChanges)) && (
-        <p className="basis-full text-pretty text-sm text-fg-2">
-          Máy này {studio.update ? "cần cập nhật" : "chưa cài"} Studio nên chưa làm tiếp được phần phân tích và thu âm. Nghe, xem,
-          sửa cách đọc, nhạc nền, bìa và xuất sách vẫn được{remote ? "" : " - cài Studio ở trang Studio khi cần"}.
+        <p className="flex basis-full flex-wrap items-center gap-x-3 gap-y-2 text-pretty text-sm text-fg-2">
+          <span>
+            Máy này {studio.update ? "cần cập nhật" : "chưa cài"} Studio nên chưa làm tiếp được phần phân tích và thu âm (nghe, xem,
+            sửa cách đọc, nhạc nền, bìa và xuất sách vẫn được).
+          </span>
+          {!remote && (
+            <Button variant="secondary" size="sm" icon={Download} onClick={() => navigate("/studio")}>
+              {studio.update ? "Cập nhật Studio" : "Cài Studio"}
+            </Button>
+          )}
         </p>
       )}
       {live && book.paused === "battery" && (
@@ -690,7 +699,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
           <button
             type="button"
             aria-label={`Tuỳ chọn ${chapter.displayTitle}`}
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 opacity-0 transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
+            className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 opacity-0 transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
           >
             <MoreHorizontal className="size-[18px]" />
           </button>
@@ -1003,13 +1012,13 @@ export function ProjectScreen() {
     book.settings.narrator && `Giọng kể ${book.settings.narrator}`,
     book.settings.profileLabel,
     // Model đã phân tích cuốn này - đổi model mặc định thì biết cuốn nào làm bằng model cũ.
-    book.settings.analyzer && `Phân tích bằng ${book.settings.analyzer.replace(/:latest$/, "")}`,
+    book.settings.analyzer && analyzerLabel(book.settings.analyzer),
     book.createdAt && `Tạo ${formatDate(book.createdAt)}`,
   ].filter(Boolean);
 
   return (
     <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-7 sm:px-10">
-      <button type="button" onClick={() => navigate("/studio")} className="inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+      <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
       {/* Màn hẹp (điện thoại): bìa nhỏ cạnh tên sách, hàng nút nằm dưới cả hai (soát UX a8 05-10: bìa to + tên + 3 hàng nút
@@ -1033,7 +1042,7 @@ export function ProjectScreen() {
           </p>
           {meta.length > 1 && (
             <details className="mt-1 text-sm text-fg-2 sm:hidden">
-              <summary className="cursor-pointer text-fg-3">Chi tiết</summary>
+              <summary className="touch-hit cursor-pointer text-fg-3">Chi tiết</summary>
               <p className="mt-1">{meta.slice(1).join(" · ")}</p>
             </details>
           )}
@@ -1080,7 +1089,7 @@ export function ProjectScreen() {
           <TabsTrigger value="activity">Nhật ký</TabsTrigger>
         </TabsList>
         {from && FROM_LABEL[from] && tab !== from && (
-          <button type="button" onClick={back} className="mt-4 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+          <button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
             <ArrowLeft className="size-4" /> Về {FROM_LABEL[from]}
           </button>
         )}

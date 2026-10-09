@@ -11,7 +11,7 @@ import {
   type VieneuStatus,
 } from "./vieneuModule";
 
-const MB = 1024 * 1024;
+const MB = 1_000_000;
 
 function status(over: Partial<VieneuStatus> = {}): VieneuStatus {
   return {

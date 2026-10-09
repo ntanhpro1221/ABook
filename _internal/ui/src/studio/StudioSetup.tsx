@@ -1,11 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Cpu, Download, LoaderCircle, Square, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { cn } from "@/shared/cn";
 import { Button, Progress } from "@/shared/ui";
 import { api } from "./api";
-import { useAppInfo } from "./data";
+import { useAppInfo, useStudioMissing } from "./data";
+import { formatSize } from "./musicLocal";
 
 // App Windows đóng gói chỉ mang phần nghe; Studio - thư viện dây chuyền + model, ~20 GB - tải khi người dùng bấm
 // (webui/studio_setup.py). Bản dev không có thẻ này: Studio là runtime cạnh mã nguồn (`info.studio` = null).
@@ -31,8 +33,35 @@ interface SetupStatus {
   root: string;
 }
 
-function formatBytes(bytes: number): string {
-  return bytes >= 1024 ** 3 ? `${(bytes / 1024 ** 3).toFixed(1)} GB` : `${Math.round(bytes / 1024 ** 2)} MB`;
+/** Studio là gì và máy cần gì để cài - MỘT chỗ viết, thẻ "Cài Studio" ở màn Dự án và khối nhắc ở trình tạo sách nói dùng chung để hai nơi không lệch nhau. */
+export const STUDIO_WHAT = "Studio là phần biến truyện chữ thành sách nói: model đọc hiểu truyện, giọng đọc, nghe lại để kiểm từng câu.";
+export const STUDIO_NEEDS = "Cần card đồ hoạ NVIDIA, tải khoảng 20 GB, ổ đĩa trống 30 GB. Cài một lần; nghe sách không cần Studio.";
+
+/** Khối nói thật với người đang tạo sách nói trên máy chưa có Studio (hay Studio cần cập nhật): cần gì, cài ở đâu, và dự án vẫn tạo được -
+ *  nó chờ tới khi Studio sẵn sàng. Cùng chữ với thẻ "Cài Studio" ở màn Dự án (STUDIO_WHAT / STUDIO_NEEDS); nút dẫn tới thẻ ấy. Máy có
+ *  Studio thì không hiện gì. */
+export function StudioInstallNotice({ className }: { className?: string }) {
+  const { data: info } = useAppInfo();
+  const navigate = useNavigate();
+  const studio = useStudioMissing();
+  if (!studio.missing) return null;
+  return (
+    <section aria-label="Cần Studio" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
+      <Cpu className="mt-0.5 size-4 shrink-0 text-warning" />
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">{studio.update ? "Studio cần cập nhật trước khi làm sách" : "Máy này chưa cài Studio"}</p>
+        <p className="mt-1 text-[13px] leading-relaxed text-fg-2 text-pretty">
+          {studio.update ? "" : `${STUDIO_WHAT} ${STUDIO_NEEDS} `}
+          Vẫn tạo dự án được: dự án chờ tới khi {studio.update ? "cập nhật" : "cài"} xong, các bước đã chọn ở đây được giữ nguyên.
+        </p>
+      </div>
+      {!info?.remote && (
+        <Button variant="secondary" size="sm" icon={Download} onClick={() => navigate("/studio")}>
+          {studio.update ? "Cập nhật Studio" : "Cài Studio"}
+        </Button>
+      )}
+    </section>
+  );
 }
 
 /** Máy chưa cài Studio (hay Studio cài từ bản app cũ cần cập nhật): thẻ ở đầu màn Dự án - cần gì, từng bước, tiến độ,
@@ -87,9 +116,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
             {update
               ? `Bản ABook này làm sách bằng ${status.outdated.join(", ")} khác với bản Studio đang có - cập nhật rồi làm sách
                 tiếp. Chỉ tải lại đúng phần ấy; sách đã làm và chỗ đang nghe giữ nguyên.`
-              : `Studio là phần biến truyện chữ thành sách nói: model đọc hiểu truyện, giọng đọc, nghe lại để kiểm từng câu. Cần
-                card đồ hoạ NVIDIA, tải khoảng 20 GB, ổ đĩa trống 30 GB. Cài một lần; nghe sách không cần Studio. Mất mạng hay
-                tắt máy giữa chừng thì bấm lại là làm tiếp.`}
+              : `${STUDIO_WHAT} ${STUDIO_NEEDS} Mất mạng hay tắt máy giữa chừng thì bấm lại là làm tiếp.`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -139,7 +166,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
             <span className="truncate">{status.detail || current.label}</span>
             {status.progress && status.progress.total > 0 && (
               <span className="tabular shrink-0">
-                {formatBytes(status.progress.done)} / {formatBytes(status.progress.total)}
+                {formatSize(status.progress.done)} / {formatSize(status.progress.total)}
               </span>
             )}
           </div>
@@ -154,6 +181,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
 export function StudioSettings() {
   const { data: info } = useAppInfo();
   const client = useQueryClient();
+  const navigate = useNavigate();
   const [armed, setArmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const { data: status } = useQuery({
@@ -168,7 +196,16 @@ export function StudioSettings() {
   }, [armed]);
   if (!info?.studio || !status) return null;
   if (!status.installed) {
-    return <p className="text-sm text-fg-2">Chưa cài - vào Studio &gt; Dự án để cài khi muốn làm sách nói trên máy này.</p>;
+    return (
+      <div className="mb-6 max-w-xl">
+        <h3 className="text-sm font-semibold">Studio trên máy này</h3>
+        <p className="mt-1 text-sm">Chưa cài.</p>
+        <p className="mt-1 text-[13px] leading-relaxed text-fg-2 text-pretty">{STUDIO_NEEDS}</p>
+        <Button className="mt-3" variant="primary" icon={Download} onClick={() => navigate("/studio")}>
+          Cài Studio
+        </Button>
+      </div>
+    );
   }
   const remove = async () => {
     if (!armed) {
@@ -188,11 +225,16 @@ export function StudioSettings() {
     }
   };
   return (
-    <div className="max-w-xl">
-      <p className="text-sm">Studio đã cài{status.gpu ? `, chạy trên ${status.gpu.name}` : ""}.</p>
+    <div className="mb-6 max-w-xl">
+      <h3 className="text-sm font-semibold">Studio trên máy này</h3>
+      <p className="mt-1 text-sm">Studio đã cài{status.gpu ? `, chạy trên ${status.gpu.name}` : ""}.</p>
       {status.outdated.length > 0 && (
         <p className="mt-1 text-[13px] text-fg-2">
-          Cần cập nhật {status.outdated.join(", ")} - vào Studio &gt; Dự án, bấm "Cập nhật Studio".
+          Cần cập nhật {status.outdated.join(", ")} -{" "}
+          <button type="button" onClick={() => navigate("/studio")} className="font-medium text-accent-text underline">
+            Cập nhật Studio
+          </button>
+          .
         </p>
       )}
       <p className="mt-1 break-all text-[13px] text-fg-2">{status.root}</p>

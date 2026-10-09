@@ -149,7 +149,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((now) => !now)}
-        className="flex w-full flex-wrap items-center justify-between gap-2 text-left"
+        className="touch-hit flex w-full flex-wrap items-center justify-between gap-2 text-left"
       >
         <span className="flex items-center gap-1.5 text-sm font-semibold">
           <ChevronDown className={cn("size-4 shrink-0 text-fg-3 transition-transform", !open && "-rotate-90")} aria-hidden />
@@ -262,7 +262,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                               chooseDefaultVoice(voice.id);
                               setChosen(voice.id);
                             }}
-                            className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                            className="touch-row flex min-w-0 flex-1 items-center gap-2.5 text-left"
                           >
                             <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border", selected ? "border-accent bg-accent text-accent-ink" : "border-line-strong")}>
                               {selected && <Check className="size-3" strokeWidth={3} />}

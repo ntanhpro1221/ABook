@@ -15,16 +15,24 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thẻ có nhiều lựa chọn gom bớt vào "Người khác…"; thẻ 『』 và thẻ lượt đối đáp có một dòng giải thích hai phạm vi, số "Ảnh hưởng" đổi theo phạm vi đang chọn. Thẻ lượt đối đáp không tô lựa chọn đầu như thể máy đề xuất.
 - Cài Studio (và mọi mô-đun tải thêm) trên mạng chập chờn: khi kết nối đứt giữa chừng mà máy chủ không báo lỗi, app tự nối tiếp từ chỗ đã tải thay vì báo "không đúng bản đã ghim" rồi xoá cả phần đã tải; hết lượt thử thì báo mất mạng và giữ phần đã tải để bấm "Cài tiếp".
 - Chữ rõ hơn: lỗi nghe thử không còn hiện tên lỗi của máy; báo "Thu lại N câu" thống nhất; gợi ý tên người kể không còn mảnh chồng lấn; ô chọn chương ở màn hẹp không còn bị cụt chữ; thông báo có nút ✕ để gạt đi khi che chữ; nhãn cách đọc của mỗi câu hiện mờ trên màn cảm ứng.
+- Máy chưa cài Studio: menu sách chữ, trang dự án và trình "Tạo sách nói" nói thẳng "cần card NVIDIA, tải khoảng 20 GB" kèm nút "Cài Studio" dẫn tới thẻ cài; vẫn tạo được dự án (dự án chờ tới khi cài xong) và không còn hiện ước tính thời gian khi chưa có Studio. Cài đặt > Studio có khối trạng thái ở đầu mục, các tuỳ chọn chỉ dùng cho Studio hiện mờ khi chưa cài.
+- Trang dự án gọi model phân tích bằng tên dễ hiểu ("Model phân tích bản 4") thay vì tên kỹ thuật.
+- Nút "Huỷ" khi tải thêm giọng VieNeu, giọng Supertonic, Phân tích nhạc và model nhạc theo đoạn: phần đã tải được giữ, lần tải sau làm tiếp từ chỗ dừng ("Đã huỷ - lần tải sau làm tiếp từ chỗ dừng").
+- Màn hẹp hay màn cảm ứng: lựa chọn trong Cài đặt, "Thử giọng", nút bìa, "Xem các tab sau", menu chương, nút ✕ của thông báo, "Quay lại chỗ cũ", nút "Thư viện" và các nút tương tự đủ 40 px để chạm trúng; màn rộng giữ nguyên.
+- Câu "chữ của sách không rời khỏi máy" nói thêm cho đủ: app có hỏi mạng lấy cấu hình và danh mục nhạc, không gửi chữ của sách.
 
 ### Nhạc nền
 
 - Nhạc nền theo sát chỗ truyện lúc căng lúc dịu TRONG một chương hơn: trong "Phân tích nhạc" có thêm một model nhỏ tuỳ chọn ("Học sinh không khí cảnh", tải thêm 0,71 GiB, chạy trên CPU, khoảng 18 giây cho mỗi giờ audio) đọc chữ từng đoạn rồi đoán đoạn nào vui hơn, căng hơn mức chung của chương. Khi chưa tải, nhạc chọn như trước. Sách làm ở máy tính vẫn mang sẵn lựa chọn ấy sang điện thoại.
 - Cũng model ấy giờ đoán cả đoạn nào sôi nổi, đoạn nào lặng trong chương, nên nhạc nhanh/chậm, mạnh/nhẹ đổi theo đúng chỗ truyện hơn hẳn trước (trước đây độ sôi nổi chỉ lấy từ cảm xúc từng câu). Mức sôi nổi chung của chương giữ như cũ.
 - Cũng model ấy giờ đoán mức vui/buồn chung của cả chương, sát hơn cách suy từ cảm xúc từng câu như trước. Ai đã tải model thì chỉ cần cập nhật thêm vài chục KB (không phải tải lại 0,71 GiB) rồi bấm "Tính lại cảm xúc nhạc" cho sách muốn dùng.
+- Nút tải ghi rõ việc và dung lượng thật theo một đơn vị (MB = 1 triệu byte), vd "Tải Phân tích nhạc (57 MB)". Thẻ "Nhạc theo sát từng đoạn" giờ hiện ngay trong Cài đặt > Nhạc nền kể cả khi chưa nhập bài nào, ghi tổng dung lượng gồm cả Phân tích nhạc nếu chưa có, và nói lý do khi máy chưa dùng được thay vì ẩn đi.
 
 ### Nghe ngay
 
 - Giọng VieNeu trong "Nghe ngay" (máy tính và điện thoại) đọc câu hỏi và câu cảm ngắn ("Thật sao?", "Đi!") đúng giọng hỏi, giọng cảm: trước đây câu dưới 5 từ bị đọc như câu kể, cuối câu không lên giọng.
+- Khối lỗi của trình phát có nút ✕ để gạt đi (màn hẹp không còn chiếm hai hàng che nội dung). Mất mạng mà giọng đang chọn cần mạng: "Tải giọng VieNeu" tải ngay tại chỗ - có thanh tiến độ và nút Huỷ - xong thì "Đọc bằng giọng VieNeu", không phải rời màn nghe; "Xem trong Cài đặt" vẫn còn nếu muốn.
+- Sửa lỗi ngầm khiến bên nghe sau không chạy khi máy kia không gửi tên thiết bị.
 
 ## [0.4.39] - 2026-10-10
 

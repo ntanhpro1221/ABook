@@ -74,7 +74,8 @@ _thread: threading.Thread | None = None
 _after: Callable[[], None] | None = None
 _studio_installed: Callable[[], bool] | None = None
 _job = ""  # việc nền đang chạy sau khi tải: "" | "analysing"
-_state: dict[str, Any] = {"downloading": False, "done": 0, "total": 0, "error": ""}
+_state: dict[str, Any] = {"downloading": False, "done": 0, "total": 0, "error": "", "cancelled": False}
+_cancel = threading.Event()  # người dùng bấm Huỷ khi đang tải (cancel())
 _verified: dict[tuple[str, int, int, str], bool] = {}  # (đường dẫn, cỡ, giờ sửa, SHA-256 ghim) -> file đúng bản ghim
 
 
@@ -133,7 +134,7 @@ def configure(folder: Path | str | None, after_install: Callable[[], None] | Non
         _folder = Path(folder) if folder is not None else None
         _after = after_install
         _studio_installed = studio_installed
-        _state.update(downloading=False, done=0, total=0, error="")
+        _state.update(downloading=False, done=0, total=0, error="", cancelled=False)
         activate_libs()
 
 
@@ -257,10 +258,10 @@ def libs_state() -> str:
     return judge_parts([part], _read_stamp())[part.id]
 
 
-def install_libs_part(progress: Callable[[int, int], None]) -> None:
+def install_libs_part(progress: Callable[[int, int], None], cancelled: Callable[[], bool] = lambda: False) -> None:
     """Tải phần thư viện cho mô-đun khác (Giọng VieNeu): giải vào chỗ chung, ghi dấu của mô-đun nhạc, đưa vào sys.path."""
     with _lock:
-        _install_libs(progress, lambda: False)
+        _install_libs(progress, cancelled)
         stamp = _read_stamp()
         stamp["libs"] = libs_pin()
         _write_stamp(stamp)
@@ -289,11 +290,15 @@ def scene_student_offered() -> str:
 
 def scene_student_status() -> dict[str, Any]:
     """Cho giao diện: phần tuỳ chọn đã có chưa (`state` current / outdated / missing), cỡ tải, `blocked` (rỗng nếu tải được), và `offered` (máy
-    dùng được nó; không thì `reason` nói vì sao - giao diện ẩn nút tải)."""
+    dùng được nó; không thì `reason` nói vì sao - giao diện không hiện nút tải mà nói lý do)."""
     part = scene_student_part()
     reason = scene_student_offered()
     state = judge_parts([part], _read_stamp())[part.id]
-    return {"state": state, "bytes": part.size if state == "current" else part.need(), "blocked": part.blocked,
+    # `total`: cỡ lần bấm "Tải" của riêng phần này tính cả những phần khác của Phân tích nhạc còn thiếu (ffmpeg, thư viện, model nghe nhạc) -
+    # máy chưa tải Phân tích nhạc thì bấm tải model theo đoạn là tải luôn chúng (`start(scene=True)`).
+    components = _components(True)
+    total = sum(item.need() for item in _needed(components, _judge(components)))
+    return {"state": state, "bytes": part.size if state == "current" else part.need(), "total": total, "blocked": part.blocked,
             "external": part.external, "offered": not reason, "reason": reason}
 
 
@@ -377,6 +382,7 @@ def status() -> dict[str, Any]:
             "outdatedBytes": sum(part.need() for part in behind),
             "restart": bool((pending := _lib_next()) is not None and pending.is_dir() and _lib().is_dir() and _libs_loaded()),
             "analysing": _job == "analysing", "metered": False, "scene": scene_student_status(),
+            "cancelled": bool(_state["cancelled"]), "cancellable": True,
         }
 
 
@@ -390,7 +396,8 @@ def start(scene: bool = False) -> None:
             return
         components = _components(scene)
         needed = _needed(components, _judge(components))
-        _state.update(error="", done=0)
+        _state.update(error="", done=0, cancelled=False)
+        _cancel.clear()
         if not needed:
             return
         reason = next((part.blocked for part in needed if part.blocked), "")
@@ -400,6 +407,12 @@ def start(scene: bool = False) -> None:
         _state.update(downloading=True, total=sum(part.need() for part in needed))
         _thread = threading.Thread(target=_run, args=(needed,), name="music-module", daemon=True)
         _thread.start()
+
+
+def cancel() -> None:
+    """Người dùng bấm Huỷ khi đang tải: dừng ở nhịp đọc kế của file đang tải, `.part` ở lại để lần tải sau làm tiếp; trạng thái về "chưa tải" kèm `cancelled`."""
+    if _state["downloading"]:
+        _cancel.set()
 
 
 def join(timeout: float | None = None) -> None:
@@ -436,9 +449,9 @@ def _run(needed: list[Component]) -> None:
                     _state["done"] = base + done
 
             if part.id == "ffmpeg":
-                ffmpeg_setup.install(progress, lambda: False)
+                ffmpeg_setup.install(progress, _cancel.is_set)
             elif part.id == "libs":
-                _install_libs(progress, lambda: False)
+                _install_libs(progress, _cancel.is_set)
             else:
                 directory = part.target if part.id == "scene_q06" else music_student.package_dir()
                 assert directory is not None
@@ -447,7 +460,7 @@ def _run(needed: list[Component]) -> None:
                 for item in part.downloads:
                     if part.target is not None and file_ok(item, directory / item.name):
                         continue
-                    studio_setup.download(item, directory / item.name, lambda have, _t, offset=done: progress(offset + have), lambda: False)
+                    studio_setup.download(item, directory / item.name, lambda have, _t, offset=done: progress(offset + have), _cancel.is_set)
                     if part.target is not None:
                         _remember_ok(item, directory / item.name)
                     done += item.size
@@ -467,6 +480,9 @@ def _run(needed: list[Component]) -> None:
                 _after()
             finally:
                 _job = ""
+    except studio_setup.Cancelled:
+        with _lock:
+            _state.update(downloading=False, error="", done=0, cancelled=True)
     except Exception as error:  # noqa: BLE001 - mọi lỗi đều thành một câu cho người dùng, không bao giờ im lặng
         with _lock:
             _state.update(downloading=False, error=f"Không tải được Phân tích nhạc: {_reason(error)}.")

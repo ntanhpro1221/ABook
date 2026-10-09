@@ -2,6 +2,7 @@ import { Capacitor } from "@capacitor/core";
 import type { Cast, ListenBook, ListeningSession, ListeningState, Script } from "@/listen/model";
 import { bookProgress, textBookProgress } from "./progress";
 import type { ListenSource } from "@/listen/source";
+import type { VieneuBackend } from "@/listen/VieneuModuleCard";
 import { EbookLibrary, EbookPlayer, ReadAloud, type LocalBook } from "./plugins";
 import { phonePrepare } from "./readAloud";
 import { phoneTextImport } from "./textImport";
@@ -77,8 +78,18 @@ export function chapterTextEntry(bookId: string, chapterId: number): string {
   return chapterTexts.get(bookId)?.get(chapterId) ?? `texts/${chapterId}.txt`;
 }
 
+/** "Giọng VieNeu" trên điện thoại: lõi native tải, đo, gỡ (VieneuModule.kt) - cùng thẻ với máy tính, và khối lỗi của trình phát tải giọng ngay tại chỗ. */
+export const phoneVieneu: VieneuBackend = {
+  status: () => ReadAloud.vieneuStatus(),
+  start: (choices) => ReadAloud.vieneuStart(choices ? { choices } : {}),
+  measure: () => ReadAloud.vieneuMeasure(),
+  remove: (choice) => ReadAloud.vieneuRemove({ choice }),
+  voices: async () => (await ReadAloud.voices()).voices,
+};
+
 export const androidSource: ListenSource = {
   kind: "android",
+  vieneu: phoneVieneu,
   async library() {
     const { books } = await EbookLibrary.localBooks();
     // Sách trên máy tính chưa tải cũng là sách của thư viện này (nghe thẳng - Streaming.kt). Máy tính không trả lời

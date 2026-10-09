@@ -16,7 +16,7 @@ import { downloadFraction, downloadMenuLabel, downloadNote, type RemoteDownload 
 const MENU_ITEM = "flex h-auto cursor-default items-start gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-60 data-[highlighted]:bg-hover";
 
 function computerOf(book: ListenBook): string {
-  return typeof book.remote === "object" ? book.remote.computer : "";
+  return book.remote && typeof book.remote === "object" ? book.remote.computer : "";
 }
 
 function useRemoteDownload(book: ListenBook) {

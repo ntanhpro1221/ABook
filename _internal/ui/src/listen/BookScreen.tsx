@@ -73,7 +73,7 @@ function ChapterRow({
         onClick={onPlay}
         disabled={!canPlay(chapter)}
         aria-label={current && player.playing ? `Tạm dừng ${chapter.fullTitle}` : `Nghe ${chapter.fullTitle}`}
-        className="grid size-9 shrink-0 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
+        className="touch-hit grid size-9 shrink-0 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
       >
         {current && player.playing ? (
           <Vu className="h-3 text-accent" />
@@ -91,7 +91,7 @@ function ChapterRow({
         type="button"
         onClick={canPlay(chapter) ? onPlay : () => navigate(`/book/${book.id}/read/${chapter.id}`)}
         aria-label={canPlay(chapter) ? undefined : `Đọc ${chapter.fullTitle} (chưa có audio)`}
-        className="min-w-0 flex-1 text-left"
+        className="touch-hit min-w-0 flex-1 text-left"
       >
         <div className={cn("truncate text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
           {name}
@@ -840,7 +840,7 @@ export function BookScreen({
 
   return (
     <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-5 sm:px-10 sm:pt-7">
-      <button type="button" onClick={() => navigate("/")} className="inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+      <button type="button" onClick={() => navigate("/")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Thư viện
       </button>
       <header className="mt-5 flex flex-col gap-5 sm:flex-row sm:gap-7">

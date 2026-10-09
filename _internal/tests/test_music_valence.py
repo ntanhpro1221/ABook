@@ -270,7 +270,7 @@ def test_turning_it_on_downloads_the_pinned_files_then_measures(worker, monkeypa
     monkeypatch.setattr(music_valence, "present", lambda directory=None: have["files"])
     seen: list[tuple[str, str, int]] = []
 
-    def fake_download(part, target, progress):
+    def fake_download(part, target, progress, cancelled=None):
         seen.extend((item.name, item.url, item.size) for item in part.downloads)
         progress(part.size)
         have["files"] = True
@@ -286,13 +286,42 @@ def test_turning_it_on_downloads_the_pinned_files_then_measures(worker, monkeypa
     assert {info["valenceBy"] for info in store.entries()} == {"vhop1"}
 
 
+def test_cancelling_the_download_turns_the_switch_off_and_keeps_the_partial_file_for_next_time(worker, monkeypatch) -> None:
+    store, flag, digests = worker
+    flag["on"] = False
+    monkeypatch.setattr(music_valence, "ram_bytes", lambda: 16 * 1024 ** 3)
+    monkeypatch.setattr(music_valence, "present", lambda directory=None: False)
+    seen: list[bool] = []
+
+    def cancelling(part, target, progress, cancelled=None):
+        music_valence.cancel()
+        seen.append(bool(cancelled and cancelled()))
+        raise music_valence.studio_setup.Cancelled()
+
+    monkeypatch.setattr(music_valence.voice_module, "download_files", cancelling)
+    music_valence.enable()
+    music_valence.join(10)
+    status = music_valence.status()
+    assert seen == [True], "cờ huỷ tới tận hàm tải"
+    assert flag["on"] is False, "huỷ = không muốn bật nữa"
+    assert status["state"] == "off" and status["cancelled"] is True and status["error"] == "" and _FakeScorer.made == 0
+    # bật lại thì tải lại từ đầu lượt (cờ huỷ và dấu 'đã huỷ' được xoá)
+    def fine(part, target, progress, cancelled=None):
+        assert not (cancelled and cancelled())
+
+    monkeypatch.setattr(music_valence.voice_module, "download_files", fine)
+    music_valence.enable()
+    music_valence.join(10)
+    assert music_valence.status()["cancelled"] is False
+
+
 def test_a_failed_download_is_one_sentence_and_does_not_turn_the_measuring_on_by_itself(worker, monkeypatch) -> None:
     store, flag, digests = worker
     flag["on"] = False
     monkeypatch.setattr(music_valence, "ram_bytes", lambda: 16 * 1024 ** 3)
     monkeypatch.setattr(music_valence, "present", lambda directory=None: False)
 
-    def broken(part, target, progress):
+    def broken(part, target, progress, cancelled=None):
         raise OSError("đầy ổ")
 
     monkeypatch.setattr(music_valence.voice_module, "download_files", broken)
@@ -425,7 +454,7 @@ def test_the_server_removes_the_muq_files_through_the_api_and_turning_it_on_agai
     # bật lại: file không còn nên phải tải lại (tải giả, không chạm mạng)
     monkeypatch.setattr(music_valence, "ram_bytes", lambda: 16 * 1024 ** 3)
     seen: list[str] = []
-    monkeypatch.setattr(music_valence.voice_module, "download_files", lambda part, target, progress: seen.extend(item.name for item in part.downloads))
+    monkeypatch.setattr(music_valence.voice_module, "download_files", lambda part, target, progress, cancelled=None: seen.extend(item.name for item in part.downloads))
     music_local.set_analyzer(lambda path: None)  # "đã có bộ phân tích" cho cổng của máy chủ
     status, _ = _call(server, "POST", "/api/music/local/precise", {"enabled": True})
     music_valence.join(10)
