@@ -161,6 +161,62 @@ def addressed_names(text: str, names: set[str]) -> set[str]:
     return found
 
 
+# Lời dẫn: đoạn kể ngay sau câu thoại mở đầu bằng tên + động từ NÓI ("Yakishio khẽ đáp, ...", "- Sanae chen vào.") hoặc ngay
+# trước câu thoại kết bằng dấu hai chấm ("Shizuka lên tiếng:") cho biết ai nói. Chỉ động từ nói: cười, thở dài, nhìn, gật đầu và
+# "trả lời" thường là PHẢN ỨNG của người nghe ("Eun nhe răng cười" sau lời của Add) - đo trên đáp án không bắt được, soát tay
+# mẫu quét nhiều truyện thì thấy chúng lật cả chuỗi lượt. Trạng từ xen giữa tối đa 3 chữ thường, không có phủ định hay "bật/nhắm
+# mắt" ("Sophien nhắm mắt không trả lời").
+_LEAD_VERBS = (
+    "nói|đáp|hỏi|hét|gào|thì thầm|thì thào|lên tiếng|thốt|kêu|bảo|lẩm bẩm|cất tiếng|tiếp lời|ngắt lời|cằn nhằn|quát|gắt|thét|"
+    "thủ thỉ|chen vào|xen vào|lầm bầm|càu nhàu|mắng|thưa"
+)
+_LEAD_MID_BLOCKED = frozenset({"không", "chưa", "chẳng", "bật", "nhắm", "mắt", "tự", "ngừng", "ngưng", "dừng", "thôi", "im"})
+# Ngay sau động từ: "nói chuyện" là trò chuyện, "đồng ý/hùa theo/lời" là đáp lại người khác - không phải tên người vừa nói câu thoại.
+_LEAD_NOT_FOLLOWED_BY = r"(?!\s+(?:chuyện|đồng ý|đồng tình|tán thành|phụ họa|phụ hoạ|hùa theo|lời))"
+# Sau động từ chỉ còn tối đa 3 chữ rồi hết câu hay dấu câu: "Shizuka khẽ đáp, ..." nhưng không "Alistar chỉ đáp lại lời Rubon bằng ánh mắt
+# sắc lạnh" (phản ứng với người khác) hay "Azuma nói mà không rõ đang mắng ai; ..." (dẫn câu thoại KẾ TIẾP). Tên phải là CHỦ NGỮ: đầu
+# đoạn hoặc ngay sau dấu câu ("..., vẫy Đạo-vinh bảo rằng:" thì Đạo-vinh là người bị vẫy, không phải người nói).
+_LEAD_END = r"(?:\s+[^\W\d_]+){0,5}\s*(?:[,.;!?…–—-]|$)"
+
+
+@lru_cache(maxsize=64)
+def _lead_patterns(names: frozenset[str]) -> tuple[re.Pattern[str], re.Pattern[str]]:
+    alternatives = "|".join(re.escape(name) for name in sorted(names, key=lambda n: (-len(n), n)))
+    middle = r"(?P<mid>(?:\s+[^\W\d_]+){0,3}?)"
+    following = re.compile(rf"^[\W_]*(?P<name>{alternatives})(?![\w])(?:-\w+)?{middle}\s+(?:{_LEAD_VERBS})(?![\w]){_LEAD_NOT_FOLLOWED_BY}{_LEAD_END}")
+    leading = re.compile(
+        rf"(?:^|[.!?…;,]\s+)[\W_]*(?P<name>{alternatives})(?![\w])(?:-\w+)?{middle}\s+(?:{_LEAD_VERBS})(?:\s+[^\W\d_]+){{0,2}}\s*[:：]\s*$"
+    )
+    return following, leading
+
+
+def lead_in_speaker(narration: str, names: set[str], *, after: bool) -> str | None:
+    """Tên trong `names` mà đoạn kể `narration` nêu làm người nói câu thoại ngay TRƯỚC nó (`after=True`: "Shizuka đáp.") hay
+    ngay SAU nó (`after=False`: "Shizuka lên tiếng:"). None nếu không có lời dẫn rõ ràng."""
+    names = {name for name in names if name}
+    if not names:
+        return None
+    if after and narration.rstrip().endswith((":", "：", ",")):
+        return None  # "Shizuka lên tiếng:" / "Vulcan sốc thốt lên," dẫn câu thoại KẾ TIẾP, không phải câu vừa xong
+    following, leading = _lead_patterns(frozenset(names))
+    match = following.match(narration) if after else leading.search(narration)
+    if match is None:
+        return None
+    words = match.group("mid").split()
+    if any(not word.islower() or word in _LEAD_MID_BLOCKED for word in words):
+        return None
+    return match.group("name")
+
+
+def introduced_names(text: str, names: set[str]) -> set[str]:
+    """Những tên trong `names` mà câu thoại `text` tự giới thiệu là của người nói ("Tôi là Lancel Dante.")."""
+    found: set[str] = set()
+    for match in _SELF_INTRO.finditer(text):
+        said = " ".join(_bare(word) for word in match.group(1).split())
+        found.update(name for name in names if name == said or name in said.split())
+    return found
+
+
 def _merge_forms(stats: dict[str, Counter]) -> dict[str, list[str]]:
     """Gộp các dạng của một người: tên một chữ là họ/tên của cụm dài hơn ("Yangcheon" -> "Gu Yangcheon"; chọn cụm dài hay
     gặp nhất), hoặc là dạng gọi tắt đầu chữ ("Juli" -> "Juliana"). Trả {tên đại diện: các dạng}; đại diện là dạng hay gặp nhất."""

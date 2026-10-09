@@ -11,6 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Người nói chỉ được mô tả ("người đàn ông", "cậu bé") không còn bị đoán bừa là một nhân vật có tên trong chương - lỗi hay gặp nhất là gán cho chính người đang nói chuyện với họ. App chỉ gộp khi chính nhãn đã gọi tên ("tiểu thư Clara") hoặc truyện viết rõ ngay bên cạnh ("Cậu bé Iven…"). Trên 10 lượt đo 19 chương: thêm 81 câu đúng người nói, điểm giọng +0,65.
 - Câu thoại gọi tên một người ("Này Kou, …", "…, Satomi-san") không còn bị đọc bằng giọng của chính người được gọi: không ai gọi tên mình. Khi hai người nói qua lại liền mạch, app dựa vào những câu gọi tên ấy để xếp lại lượt nói cả đoạn; câu lẻ thì trả về người duy nhất đang nói chuyện quanh đó, không chắc thì để nguyên. Trên 10 lượt đo 19 chương: thêm 133 câu đúng người nói, điểm giọng +0,97, không lượt nào kém đi.
+- Khi truyện viết rõ ai nói ngay cạnh câu thoại ("…” Shizuka khẽ đáp." hay "Shizuka lên tiếng: “…”"), app đọc câu ấy bằng giọng người được nêu thay vì giọng model đoán; nếu nhiều người nói qua lại liền mạch thì cả đoạn được xếp lại theo đó. Chỉ tính lời dẫn là động từ nói - "Eun nhe răng cười" hay "Add trả lời rồi đứng dậy" là phản ứng của người nghe, không đụng tới. Trên 10 lượt đo 19 chương: thêm 13 câu đúng người nói, điểm giọng +0,12 mỗi lượt (chỉ ở model yếu hơn B9; B9 không đổi), không câu nào đúng thành sai.
 
 ### Điện thoại
 
