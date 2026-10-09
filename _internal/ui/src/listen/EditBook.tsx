@@ -584,7 +584,7 @@ export function StudioOnlyItem({ book }: { book: ListenBook }) {
   );
 }
 
-/** Cuốn nghe thẳng từ máy khác: mục sửa vẫn hiện, mờ đi, nói vì sao không sửa được ở đây - không giấu. */
+/** Cuốn không sửa được ở đây (máy tính, cuốn của điện thoại chia sẻ): mục sửa vẫn hiện, mờ đi, nói vì sao - không giấu. */
 export function EditBlockedItem({ book }: { book: ListenBook }) {
   const note = editBlockedNote(book.capabilities);
   if (!note) return null;

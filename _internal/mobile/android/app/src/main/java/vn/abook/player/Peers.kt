@@ -99,10 +99,23 @@ object Peers {
     }
 
     fun request(context: Context, key: String, method: String, path: String, body: JSONObject? = null,
-                readTimeoutMs: Int = 20_000, connectTimeoutMs: Int = 5000): String {
+                readTimeoutMs: Int = 20_000, connectTimeoutMs: Int = 5000, upload: File? = null): String {
         val link = link(context, key) ?: throw IllegalStateException("Thiết bị này chưa ghép")
         return SyncLink.request(context, method, path, body, auth = false, root = link.base, readTimeoutMs = readTimeoutMs,
-            connectTimeoutMs = connectTimeoutMs, token = link.token)
+            connectTimeoutMs = connectTimeoutMs, token = link.token, upload = upload)
+    }
+
+    /** Loại thiết bị ghép đã biết ("computer": máy tính khác - nhận gói sửa như máy tính chính; "phone": điện thoại - không nhận), hay "" khi chưa thấy. */
+    fun kindOf(context: Context, key: String): String = all(context).optJSONObject(key)?.optString("kind").orEmpty()
+
+    /** Ghi loại thiết bị mà thiết bị tự báo trong lời đáp thư viện (`kind`); chỉ ghi khi đổi. */
+    @Synchronized
+    private fun rememberKind(context: Context, key: String, kind: String) {
+        if (kind.isEmpty()) return
+        val peers = all(context)
+        val peer = peers.optJSONObject(key) ?: return
+        if (peer.optString("kind") == kind) return
+        save(context, peers.put(key, peer.put("kind", kind)))
     }
 
     /** Thư viện của từng thiết bị ghép, mỗi cuốn kèm mã cục bộ và trạng thái đã tải; thiết bị không trả lời thì `error`. */
@@ -116,6 +129,7 @@ object Peers {
             try {
                 val reply = JSONObject(request(context, key, "GET", "/sync/v1/library", readTimeoutMs = 8000, connectTimeoutMs = 1500))
                 val books = reply.optJSONArray("books") ?: JSONArray()
+                rememberKind(context, key, reply.optString("kind"))
                 for (index in 0 until books.length()) {
                     val book = books.getJSONObject(index)
                     val local = localId(key, book.getString("id"))

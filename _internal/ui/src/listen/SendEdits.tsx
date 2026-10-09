@@ -1,7 +1,8 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CircleAlert, Laptop, Loader2, Send } from "lucide-react";
+import { CircleAlert, Laptop, Loader2, Send, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import { localEditsNote } from "@/shared/capabilities";
 import { cn } from "@/shared/cn";
 import { editsSyncNote } from "@/shared/editsSync";
 import { Button } from "@/shared/ui";
@@ -53,6 +54,20 @@ export function SendEditsItem({ book }: { book: ListenBook }) {
         {!busy && !pending && <span className="block text-xs text-fg-3">Chưa có thay đổi nào chờ gửi</span>}
       </span>
     </DropdownMenu.Item>
+  );
+}
+
+/** Cuốn của điện thoại khác: sửa xong, nói rõ phần sửa chỉ có trên máy này (không có chỗ gửi). Chưa sửa gì thì không hiện. */
+export function LocalEditsBanner({ book }: { book: ListenBook }) {
+  const note = localEditsNote(book.capabilities);
+  if (!note || !book.edits) return null;
+  return (
+    <div role="status" className="mt-2 max-w-md rounded-xl bg-info-soft px-3 py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
+      <p className="inline-flex items-center gap-1.5 font-medium">
+        <Smartphone className="size-3.5 shrink-0" /> {book.edits} thay đổi chỉ có trên điện thoại này
+      </p>
+      <p className="mt-0.5 text-pretty">{note}</p>
+    </div>
   );
 }
 

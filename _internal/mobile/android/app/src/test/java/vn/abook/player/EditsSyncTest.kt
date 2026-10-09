@@ -79,16 +79,79 @@ class EditsSyncTest {
         assertEquals(caps.toString(), Store.capabilitiesOf(id).toString())
     }
 
+    /** Cuốn nghe thẳng chưa tải: chỉ có `stream.json` (gói của máy tính, hay của thiết bị ghép khi mang `source`). */
+    private fun streamed(streamId: String, source: String? = null, kind: String = ""): File {
+        val streamDir = Store.bookDir(streamId)
+        streamDir.mkdirs()
+        val manifest = BookEdits.rawBook(dir).put("id", streamId)
+        if (source != null) manifest.put("source", source).put("remoteId", "remote1").put("sourceKind", kind)
+        File(streamDir, "stream.json").writeText(manifest.toString())
+        return streamDir
+    }
+
+    private fun call2(bookId: String, method: String, suffix: String, body: JSONObject? = null) =
+        LocalStudio.handle(method, "/api/books/$bookId$suffix", body)
+
     @Test
-    fun a_book_of_another_paired_device_or_one_not_downloaded_is_still_edited_over_there() {
-        File(dir, "book.json").writeText(BookEdits.rawBook(dir).put("source", "device-1").toString())
-        assertEquals(409, call("PUT", "/title", JSONObject().put("title", "x")).first)
-        assertTrue(Store.capabilitiesOf(id).getBoolean("link"))
-        assertFalse(Store.capabilitiesOf(id).getBoolean("sync"))
-        File(root, "books/aaaaaaaaaaaaaaaaaaaaaaaa").mkdirs()
-        File(root, "books/aaaaaaaaaaaaaaaaaaaaaaaa/stream.json").writeText(JSONObject().put("id", "aaaaaaaaaaaaaaaaaaaaaaaa").toString())
-        assertEquals(409, LocalStudio.handle("PUT", "/api/books/aaaaaaaaaaaaaaaaaaaaaaaa/title", JSONObject().put("title", "x")).first)
-        assertTrue(Store.capabilitiesOf("aaaaaaaaaaaaaaaaaaaaaaaa").getBoolean("link"))
+    fun a_streamed_book_of_the_computer_is_editable_and_goes_home_without_being_downloaded() {
+        val streamId = "aaaaaaaaaaaaaaaaaaaaaaaa"
+        val streamDir = streamed(streamId)
+        assertFalse(File(streamDir, "book.json").exists())
+        assertEquals(200, call2(streamId, "PUT", "/title", JSONObject().put("title", "Tên nghe thẳng")).first)
+        val shown = Store.playableManifest(streamId)!!
+        assertEquals("Tên nghe thẳng", shown.getString("title"))
+        assertTrue(shown.getJSONObject("capabilities").getBoolean("sync"))
+        assertFalse(shown.getJSONObject("capabilities").getBoolean("link"))
+        assertEquals(1, shown.getJSONObject("editsSync").getInt("pending"))
+        assertEquals(null to streamId, Store.editDestination(streamId))
+        assertEquals("Tên nghe thẳng", Store.streamed(streamId, Store.streamManifest(streamId)!!).getString("title"))
+        assertEquals("Tên nghe thẳng", Store.playableBooks().first { it.optString("id") == streamId }.getString("title"))
+        // gửi xong: cuốn vẫn chưa tải (chỉ lấy lại gói sách), phần đã gửi được gỡ
+        var refreshed: String? = null
+        EditsSync.refresh = { refreshed = it }
+        var posted = emptySet<String>()
+        val view = EditsSync.push(streamId) { file ->
+            ZipFile(file).use { zip -> posted = zip.entries().asSequence().map { it.name }.toSet() }
+            accepted()
+        }
+        assertEquals(setOf("edits.json"), posted)
+        assertEquals(streamId, refreshed)
+        assertEquals(0, view.getInt("pending"))
+        assertFalse(File(streamDir, "book.json").exists())
+        assertEquals("sent", Store.playableManifest(streamId)!!.getJSONObject("editsSync").getJSONObject("last").getString("state"))
+    }
+
+    @Test
+    fun a_book_of_another_computer_goes_to_that_computer_and_one_of_a_phone_stays_on_this_phone() {
+        val fromComputer = streamed("pk1_remote1", source = "k1", kind = "computer")
+        call2("pk1_remote1", "PUT", "/title", JSONObject().put("title", "Sửa"))
+        assertEquals("k1" to "remote1", Store.editDestination("pk1_remote1"))
+        val caps = Store.capabilitiesOf("pk1_remote1")
+        assertTrue(caps.getBoolean("sync"))
+        assertFalse(caps.getBoolean("local"))
+        assertFalse(caps.getBoolean("link"))
+        assertTrue(File(fromComputer, "edits.json").isFile)
+
+        streamed("pk2_remote1", source = "k2", kind = "phone")
+        assertEquals(200, call2("pk2_remote1", "PUT", "/title", JSONObject().put("title", "Chỉ ở đây")).first)
+        assertNull(Store.editDestination("pk2_remote1"))
+        val local = Store.playableManifest("pk2_remote1")!!
+        assertEquals("Chỉ ở đây", local.getString("title"))
+        assertTrue(local.getJSONObject("capabilities").getBoolean("local"))
+        assertFalse(local.getJSONObject("capabilities").getBoolean("sync"))
+        assertFalse(local.getJSONObject("capabilities").getBoolean("link"))
+        assertFalse("không có chỗ gửi nên không có trạng thái gửi", local.has("editsSync"))
+        try {
+            EditsSync.push("pk2_remote1") { fail("không gửi cho điện thoại khác"); "" }
+            fail("phải từ chối")
+        } catch (error: IllegalStateException) {
+            assertTrue(error.message!!.contains("không có chỗ gửi"))
+        }
+        assertEquals("Chỉ ở đây", BookEdits.load(Store.bookDir("pk2_remote1")).getString("title")) // sửa vẫn nằm đó
+        // một thiết bị chưa rõ loại (chưa từng trả lời thư viện) cũng chỉ giữ sửa trên máy này
+        streamed("pk3_remote1", source = "k3", kind = "")
+        assertNull(Store.editDestination("pk3_remote1"))
+        assertEquals(listOf("pk1_remote1", "pk2_remote1", "pk3_remote1"), Store.bookIds().filter { it.startsWith("pk") }.sorted())
     }
 
     // ---- gói ------------------------------------------------------------------------------------------------------------

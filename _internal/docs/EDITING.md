@@ -266,7 +266,7 @@ A book the phone DOWNLOADED from its paired computer (`Store.computerBooks` with
 imported `.abook`: `LocalStudio` accepts it (`editable`), `edits.json` + `edits/cover.jpg` + pinned `music/<sha1>.<ext>` are written next
 to the downloaded files, the overlay shows. Capabilities gain `sync` (`{toolchain, workshop, link, sync}`): `sync` = downloaded from the
 main computer (editable, edits go home; no "Lưu"/"Lưu thành" - the book belongs to the computer), `link` = not editable here (streamed
-and not downloaded, or a book of another paired device - `source`). Streamed ("link") books are still read-only.
+and not downloaded, or a book of another paired device - `source`). Streamed books became editable too in P2d (below).
 
 **Wire format.** `POST /sync/v1/books/<id>/edits`, `Content-Type: application/zip`, body = a zip holding exactly `edits.json`, `edits/cover.jpg`
 (iff `cover` is an object) and `music/<sha1>.<ext>` (iff pinned). Same TLS-pinned link and device token as every `/sync/v1` route; <= 150 MiB
@@ -317,11 +317,30 @@ reason when nothing is pending).
 **Not covered.** The desktop as a CLIENT (a book streamed from another computer - `remote_books` - stays read-only on the desktop; no push);
 books shared by a phone (`LibraryServer.kt`) do not accept pushes; the inbox cannot be decided from remote Studio.
 
+## P2d - editing a streamed book and a book of another paired device (phone, 09-10)
+
+The phone no longer answers 409 for books it does not hold in full. `LocalStudio.editable` accepts every book with a package on the phone:
+`book.json` (downloaded / opened from a file) or `stream.json` (streamed, not downloaded). `BookEdits.rawBook` falls back to `stream.json`, so
+`edits.json` / `edits/cover.jpg` / pinned `music/` sit next to it exactly as for a downloaded book; `Store.streamed` / `playableManifest` /
+`playableBooks` lay the overlay on streamed books too (title, cover, chapters, music show in the library and player). Where the edits go
+(`Store.homeOf`, `Store.editDestination`):
+
+- the main computer, streamed or downloaded: `sync` (unchanged wire format). After the computer accepts, a downloaded book is re-downloaded; a
+  streamed one only re-fetches `stream.json` and the cover (`LibraryPlugin.refreshAfterPush`) - never the whole book.
+- another paired COMPUTER (`Peers`, library reply `kind: "computer"` remembered in the peer record; the manifest carries `sourceKind`): `sync`
+  too - the same zip goes to `POST /sync/v1/books/<remoteId>/edits` over that peer's pinned link (`Peers.request(upload=)`).
+- another paired PHONE (or a peer whose kind is not known yet): `local` - editable, never sent (a phone's `LibraryServer` takes no edits), the
+  page says "N thay đổi chỉ có trên điện thoại này" (`LocalEditsBanner`); no "Lưu / Chia sẻ" for it; per-line wishes are greyed with the
+  reason (nobody could carry them out).
+
+Capabilities gain `local`; the phone never reports `link: true` any more (the desktop still does for a phone-shared book, which it cannot
+edit). Unpairing a peer deletes its streamed books' folders, edits included. `EditsSync.scheduleAllPending` walks every book with a package
+(`Store.bookIds`) instead of only downloaded main-computer books.
+
 ## Not built (later phases)
 
 Swapping a cue to a CATALOG track on the phone (nor on the desktop, for a book without a workshop - see P4) (only the listener's
-own tracks can be pinned to a packaged book - there is no catalogue offline and no mood to rank by); edits on
-streamed ("link") books; an in-place "Lưu" that overwrites the original file (desktop "Lưu" writes `Đã xuất/<title>.abook` or `.abookproj`,
+own tracks can be pinned to a packaged book - there is no catalogue offline and no mood to rank by); an in-place "Lưu" that overwrites the original file (desktop "Lưu" writes `Đã xuất/<title>.abook` or `.abookproj`,
 Android asks where with the system "create document" picker).
 
 ## P3 - `.abookproj` version 3 (built 03-10)

@@ -10,7 +10,9 @@ import org.json.JSONObject
  * nhân vật, tên chương, nhạc nền, xem/bỏ thay đổi; và phần W (ý muốn chờ Studio - [BookWishes]): cách đọc tên, ai nói câu này,
  * gộp tên, cách đọc câu, giọng/giới, thu lại, danh sách chờ và rút. Cộng "Nhạc của tôi" ([MusicStore], docs/MUSIC_IMPORT.md): danh
  * sách bài đã nhập, xoá, và - cho từng cuốn - nhóm bài của tôi trong "Đổi bài" + ghim một bài vào một đoạn nhạc (`PUT /music {pins}`).
- * Cộng "Tìm bìa trên mạng" ([CoverSearch]): `GET /cover/search?q=` và `PUT /cover {url}`. Mọi thứ khác: 404. Cuốn lấy từ máy tính khác thì sửa ở máy ấy: 409.
+ * Cộng "Tìm bìa trên mạng" ([CoverSearch]): `GET /cover/search?q=` và `PUT /cover {url}`. Mọi thứ khác: 404. Sửa được MỌI cuốn trên máy, kể cả
+ * cuốn nghe thẳng chưa tải và cuốn của thiết bị ghép khác: lớp sửa nằm cạnh gói sách của nó; về máy giữ sách (máy tính) hay chỉ ở lại máy này
+ * là việc của [Store.editDestination] và [EditsSync] - không bao giờ chặn.
  *
  * Lời đáp phải y hệt bản Python (tests/fixtures/book_edits/contract/ - LocalStudioTest phát lại từng bước), nên câu báo lỗi
  * và mã trạng thái theo đúng server.py: sửa sai (ValueError bên Python) là 400.
@@ -27,7 +29,6 @@ object LocalStudio {
     private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze)|/(module)|/(reanalyse))?")
     private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins", "playlist")
     private val lock = Any()
-    private const val LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy"
 
     /** Kho "Nhạc của tôi" của điện thoại này (LibraryPlugin đặt khi nạp; test JVM đặt kho trong thư mục tạm). */
     @Volatile
@@ -154,14 +155,9 @@ object LocalStudio {
         return synchronized(lock) { 200 to handler(dir, body) }
     }
 
-    /** Thư mục cuốn nhập từ file mà người nghe sửa được; không có thì 404, cuốn lấy từ máy tính thì 409. */
+    /** Thư mục cuốn mà người nghe sửa được: mọi cuốn trên máy (đã tải, mở từ file, hay nghe thẳng chỉ có `stream.json`); không có thì 404. */
     private fun editable(id: String): java.io.File {
-        // Cuốn nghe thẳng chưa tải chỉ có `stream.json`: vẫn là sách của máy tính khác (409), không phải "không thấy" (404).
-        val raw = Store.rawManifest(id) ?: throw if (Store.streamManifest(id) != null) Api(409, LINK_BOOK) else Api(404, "Không tìm thấy sách này trong thư viện")
-        // Cuốn tải từ máy tính chính (không có `package`) sửa được ở đây: phần sửa gửi về máy tính (EditsSync). Của thiết bị ghép khác: 409.
-        if (raw.optString("source").isNotEmpty() || (!Store.isComputerBook(id) && raw.optJSONObject("package") == null)) {
-            throw Api(409, LINK_BOOK)
-        }
+        if (Store.rawManifest(id) == null && Store.streamManifest(id) == null) throw Api(404, "Không tìm thấy sách này trong thư viện")
         return Store.bookDir(id)
     }
 
