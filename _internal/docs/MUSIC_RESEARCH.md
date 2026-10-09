@@ -4337,6 +4337,31 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 09-10 19:5x - Phía bài: V/E catalog khớp giám khảo âm thanh độc lập; nút thắt vẫn ở phía cảnh
+
+Phép kiểm này chỉ để báo, không có cổng. Mã ở Corpus 3004fec (`lfe_catalog_check.py`).
+
+M2E đã nghe xong cả 4.763 bài ứng viên. Trong đó 2.341/2.382 bài catalog có điểm, đem so với V/E/T của catalog (CLAP+MuQ).
+
+| catalog | r M2E valence | r M2E arousal |
+|---|---|---|
+| valence | **.67** | .36 |
+| arousal (E) | .49 | **.77** |
+| tension | .00 | .41 |
+
+- Tương quan riêng phần:
+  - V catalog với M2E V, sau khi trừ M2E arousal: .69.
+  - E catalog với M2E arousal, sau khi trừ M2E V: .74.
+- Hồi quy từ ba trục catalog: dự đoán M2E V đạt R .80, M2E arousal đạt R .82.
+- Spearman gần như bằng Pearson.
+
+Đọc:
+- Hai thước khác loại (CLAP+MuQ zero-shot và M2E học có giám sát) đồng ý khá cao về hình bài. Vì vậy, lỗi chọn bài chủ yếu không
+  nằm ở nhãn bài, mà ở dự đoán cảnh. Điều này cùng kết luận Q4/LFE.
+- Lưu ý cho LFE: valence và arousal của M2E dính nhau mạnh (r .81), còn V và E của catalog gần như độc lập (.09). Trục V của giám
+  khảo vì thế một phần là arousal. Đọc lỗi V của LFE phải nhớ điều này.
+- Tension của catalog không có cặp nào trong M2E (r V .00, A .41). LFE không đo được T; phải đo T bằng r trong chương.
+
 ### 09-10 14:3x - Giám khảo nghe nhạc (M2E) thích bài chọn theo học sinh q17 hơn đường mức chương đã cài
 
 Học sinh q17 (Qwen3-1.7B cắt 14 lớp + ridge, đoán hình không khí trong chương) được đem chọn bài thật từ danh mục, theo đúng cách
