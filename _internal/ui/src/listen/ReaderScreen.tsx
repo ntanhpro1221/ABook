@@ -98,6 +98,7 @@ export function ReaderScreen({
   const [readingWord, setReadingWord] = useState<string | null>(null);
   // Câu của hộp "Đọc từ này là…" mở từ nút “Sửa cách đọc” (cho chọn từ trong câu); giữ một chữ thì cũng kèm câu để đổi sang từ khác.
   const [readingSentence, setReadingSentence] = useState("");
+  const [readingAt, setReadingAt] = useState<number | undefined>(undefined); // thứ tự chữ vừa giữ trong câu ấy
   // Cuốn có audio: giữ một chữ mở hộp “Sửa câu này” thẳng ở bước sửa cách đọc từ ấy (cùng việc với cuốn chỉ có chữ).
   const [wishWord, setWishWord] = useState<string | null>(null);
   const [selectedWord, setSelectedWord] = useState(-1);
@@ -283,6 +284,7 @@ export function ReaderScreen({
   const wordMenu = readingEdit
     ? (sentence: number, word: number) => {
         setReadingSentence(script.segments[sentence].text);
+        setReadingAt(word);
         setReadingWord(wordOf(script.segments[sentence].text, word) || null);
       }
     : lineEdit?.mode === "wish"
@@ -417,6 +419,7 @@ export function ReaderScreen({
                   onClick={() => {
                     const text = script.segments[selected]?.text ?? "";
                     setReadingSentence(text);
+                    setReadingAt(selectedWord >= 0 ? selectedWord : undefined);
                     setReadingWord(selectedWord >= 0 ? wordOf(text, selectedWord) : "");
                   }}
                   onMouseDown={(event) => event.preventDefault()}
@@ -455,7 +458,7 @@ export function ReaderScreen({
         )}
       </div>
       <FindInBook book={book} open={finding} onOpenChange={setFinding} />
-      {readingEdit && <WordReadingDialog bookId={id} word={readingWord} sentence={readingSentence} onClose={() => setReadingWord(null)} />}
+      {readingEdit && <WordReadingDialog bookId={id} word={readingWord} sentence={readingSentence} wordIndex={readingAt} onClose={() => setReadingWord(null)} />}
       {lineEdit?.mode === "wish" && (
         <LineWishDialog
           book={book}

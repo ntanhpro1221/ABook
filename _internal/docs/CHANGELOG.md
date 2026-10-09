@@ -21,6 +21,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Cài đặt › Máy tính khác: lời báo lỗi ghép xuống dòng cho đọc hết thay vì bị cắt; dòng "Vân tay" chỉ hiện 8 ký tự đầu để đối chiếu (đủ 64 ký tự khi rê chuột vào).
 - "Thêm sách từ file…" nhiều file: bấm "Chọn lại" khi còn sách chưa thêm cũng hỏi lại như khi nhấn Esc, không lặng lẽ bỏ cả hàng.
 
+### Cách đọc tên
+
+- "Sửa cách đọc" ở màn đọc dạy được cả CỤM chữ liền nhau, không chỉ một chữ: bấm chữ đầu rồi chữ cuối của tên ("Hạ Vy" -> "Hà Vi", "ông Tư" -> "Tứ"), tối đa 6 chữ, cụm sáng lên trong hộp. Cụm áp cho mọi chỗ có đúng các chữ ấy liền nhau trong cuốn (dấu câu chen giữa như "Hạ, Vy" thì không tính), chữ trong sách giữ nguyên. Có ở máy tính và điện thoại.
+
 ### Dấu trang và nhạc nền
 
 - Sách chưa có chương nào nghe được (mới thêm, máy chưa làm âm thanh) giờ cũng hiện ở máy đã ghép: đọc được chữ ở máy kia, và nghe ngay bằng giọng của máy kia nếu máy ấy có giọng.

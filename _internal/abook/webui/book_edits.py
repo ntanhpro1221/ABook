@@ -19,8 +19,8 @@ và độ dài, không ký tự điều khiển - và file sai thì bị từ ch
      "chapters": {"<mã chương>": {"title": "Chương 12", "subtitle": "Hồi kết"}},   (mỗi trường tuỳ chọn)
      "skip": {"<mã chương>": ["Dịch: Nhóm Lục Bình"]},          (dòng người nghe chọn bỏ khỏi phần đọc - gợi ý dòng ghi công của bộ
                                                                  nhập sách; màn đọc và đọc to bỏ qua, chữ của sách KHÔNG đổi)
-     "readings": {"Haruto": "Ha-ru-tô"},                         (cách đọc riêng của "Nghe ngay": chữ hiện -> chữ đọc, mỗi khoá MỘT
-                                                                 từ, khớp cả từ, phân biệt hoa thường - readaloud/readings.py;
+     "readings": {"Haruto": "Ha-ru-tô"},                         (cách đọc riêng của "Nghe ngay": chữ hiện -> chữ đọc, mỗi khoá MỘT từ
+                                                                 hay cụm 2..6 từ liền nhau, khớp cả từ, phân biệt hoa thường - readaloud/readings.py;
                                                                  chỉ giọng đọc đổi, chữ của sách KHÔNG đổi)
      "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<mã chương>:<mili giây đầu mốc>"],
                "pins": {"<mã chương>:<mili giây đầu mốc>": "local:<sha1>"},          (đổi bài một mốc sang bài "Nhạc của tôi")
@@ -231,12 +231,12 @@ def _validate_skip(skip: Any) -> dict[str, list[str]]:
 
 
 def validate_readings(readings: Any) -> dict[str, str]:
-    """`readings` {chữ hiện: chữ đọc}: chữ hiện là MỘT từ đã sạch (không dấu câu hai đầu, NFC - `readings.is_word`), chữ đọc sạch, không
-    rỗng, khác chữ hiện. Dùng cả cho cách đọc gửi kèm lần "Nghe thử" (chưa lưu)."""
+    """`readings` {chữ hiện: chữ đọc}: chữ hiện là MỘT từ hay một cụm 2..6 từ liền nhau đã sạch (không dấu câu hai đầu từng từ, NFC - `readings.is_key`),
+    chữ đọc sạch, không rỗng, khác chữ hiện. Dùng cả cho cách đọc gửi kèm lần "Nghe thử" (chưa lưu)."""
     if not isinstance(readings, dict) or not readings or len(readings) > MAX_READINGS:
         raise EditsError("Phần cách đọc riêng không hợp lệ hay quá dài.")
     for shown, spoken in readings.items():
-        if (not isinstance(shown, str) or not _is_clean(shown, READING_WORD_MAX) or not book_readings.is_word(shown)
+        if (not isinstance(shown, str) or not _is_clean(shown, READING_WORD_MAX) or not book_readings.is_key(shown)
                 or not isinstance(spoken, str) or not spoken or not _is_clean(spoken, READING_SPOKEN_MAX) or spoken == shown):
             raise EditsError("Một cách đọc riêng trong phần sửa không hợp lệ.")
     return {shown: readings[shown] for shown in sorted(readings)}
@@ -837,13 +837,13 @@ def readings_view(edits: dict[str, Any]) -> dict[str, Any]:
 
 
 def clean_reading(shown: Any, spoken: Any) -> tuple[str, str]:
-    """Chữ người gõ ở "Đọc từ này là…" -> (chữ hiện, chữ đọc) đã làm sạch; chữ hiện không phải MỘT từ: `EditsError`. Chữ đọc rỗng là bỏ."""
+    """Chữ người gõ ở "Đọc từ này là…" -> (chữ hiện, chữ đọc) đã làm sạch; chữ hiện không phải một từ hay cụm 2..6 từ liền nhau: `EditsError`. Chữ đọc rỗng là bỏ."""
     word = clean_text(shown, READING_WORD_MAX)
-    if not book_readings.is_word(word):
+    if not book_readings.is_key(word):
         start, end = book_readings.core_span(word)
-        word = word[start:end]  # người chạm vào "Haruto," - cách đọc đặt cho chính từ ấy, không dính dấu câu
-    if not word or not book_readings.is_word(word):
-        raise EditsError("Chỉ đặt được cách đọc cho MỘT từ.")
+        word = word[start:end]  # người chạm vào "Haruto," hay “Hạ Vy,” - cách đọc đặt cho chính chữ ấy, không dính dấu câu hai đầu
+    if not word or not book_readings.is_key(word):
+        raise EditsError("Chỉ đặt được cách đọc cho một từ hay tối đa 6 từ liền nhau, không có dấu câu ở giữa.")
     return word, clean_text(spoken, READING_SPOKEN_MAX)
 
 

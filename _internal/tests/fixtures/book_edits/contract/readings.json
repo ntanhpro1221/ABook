@@ -72,12 +72,49 @@
    "method": "PUT",
    "path": "/readings",
    "body": {
-    "surface": "Hai kes",
-    "spoken": "Hên-khơ"
+    "surface": "“Hạ  Vy,”",
+    "spoken": "Hà Vi"
+   },
+   "status": 200,
+   "response": {
+    "readings": [
+     {
+      "surface": "Hailkes",
+      "spoken": "Hên-khơ"
+     },
+     {
+      "surface": "Hạ Vy",
+      "spoken": "Hà Vi"
+     },
+     {
+      "surface": "Lucien",
+      "spoken": "Lu xi en"
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/readings",
+   "body": {
+    "surface": "Hạ, Vy",
+    "spoken": "Hà Vi"
    },
    "status": 400,
    "response": {
-    "error": "Chỉ đặt được cách đọc cho MỘT từ."
+    "error": "Chỉ đặt được cách đọc cho một từ hay tối đa 6 từ liền nhau, không có dấu câu ở giữa."
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/readings",
+   "body": {
+    "surface": "a b c d e f g",
+    "spoken": "bảy chữ"
+   },
+   "status": 400,
+   "response": {
+    "error": "Chỉ đặt được cách đọc cho một từ hay tối đa 6 từ liền nhau, không có dấu câu ở giữa."
    }
   },
   {
@@ -89,7 +126,7 @@
    },
    "status": 400,
    "response": {
-    "error": "Chỉ đặt được cách đọc cho MỘT từ."
+    "error": "Chỉ đặt được cách đọc cho một từ hay tối đa 6 từ liền nhau, không có dấu câu ở giữa."
    }
   },
   {
@@ -119,6 +156,10 @@
       "spoken": "Hên-khơ"
      },
      {
+      "surface": "Hạ Vy",
+      "spoken": "Hà Vi"
+     },
+     {
       "surface": "Lucien",
       "spoken": "Lu xi en"
      }
@@ -130,7 +171,7 @@
    "path": "/edits",
    "status": 200,
    "response": {
-    "applied": 2,
+    "applied": 3,
     "waiting": 0,
     "wishes": 0
    }
@@ -146,6 +187,10 @@
    "response": {
     "readings": [
      {
+      "surface": "Hạ Vy",
+      "spoken": "Hà Vi"
+     },
+     {
       "surface": "Lucien",
       "spoken": "Lu xi en"
      }
@@ -158,6 +203,10 @@
    "status": 200,
    "response": {
     "readings": [
+     {
+      "surface": "Hạ Vy",
+      "spoken": "Hà Vi"
+     },
      {
       "surface": "Lucien",
       "spoken": "Lu xi en"
