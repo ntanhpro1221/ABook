@@ -4337,6 +4337,21 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 09-10 23:4x - STU-LAYERS: ghép lớp q17 hay q17 + q06 KHÔNG hơn q17 L14
+
+Ghi trước ở Corpus e415e63, kết quả ở edfea6a (`PLAN_stu_layers.md`). Chạy CPU, khoảng 3 phút. Học trên toàn kho bạc, cùng thủ tục
+với mô hình CI. Mốc tái hiện đúng: học .527, bộ 7 .334.
+
+| nhánh (alpha chọn trên học) | học TB(V,T) | Δ học | bộ 7 | Δ bộ 7 |
+|---|---|---|---|---|
+| mốc q17 L14 a3e4 | .527 | | .334 | |
+| q17 L9+L14+L19 a1e5 (chọn) | .531 | +.004 | .343 | +.009 |
+| q17 L14 + q06 mid a3e4 | .522 | −.005 | .319 | −.016 |
+
+- Luật: Δ học ≥ .02, Δ bộ 7 ≥ .01, cận dưới gộp > 0.
+- Δ gộp 62 chương +.005 [−.006, +.017]; riêng V +.007 [−.010, +.024].
+- Kết luận: **THUA**, giữ L14. Đòn bẩy còn lại cho đoán cảnh là encoder lớn hơn: 4B L18 (nhúng bạc xếp trên Mac).
+
 ### 09-10 19:5x - Phía bài: V/E catalog khớp giám khảo âm thanh độc lập; nút thắt vẫn ở phía cảnh
 
 Phép kiểm này chỉ để báo, không có cổng. Mã ở Corpus 3004fec (`lfe_catalog_check.py`).
