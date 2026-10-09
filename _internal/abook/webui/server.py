@@ -1533,6 +1533,8 @@ class App:
             auto = self._auto_playlist(value, path)
             if auto is not None:
                 view.update(playlist=auto, playlistAuto=True)
+            elif not self.preferences.get().get("autoMusic", True) and packages.text_book(packages.manifest(path)):
+                view["autoOff"] = True  # cuốn chưa chọn nhạc và người dùng đã tắt "máy tự chọn" trong Cài đặt: nút nói đúng là chưa có nhạc
         return view
 
     def _auto_playlist(self, value: str, path: Path) -> str | None:
@@ -1540,7 +1542,7 @@ class App:
         danh mục nếu hợp lệ, không thì bản đóng kèm (chưa tải được danh mục cũng chọn được); đầu vào là tên sách + chữ các chương.
         Đệm theo (mã sách, nguồn luật, version luật). Không chọn được (không phải sách chữ, luật hỏng) thì None."""
         book = packages.manifest(path)
-        if not packages.text_book(book):
+        if not packages.text_book(book) or not self.preferences.get().get("autoMusic", True):
             return None
         try:
             manifest = self.music_catalog().manifest()
@@ -3625,7 +3627,8 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         mark = self.app.listening.add_bookmark(
             value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), str(body.get("note", "")),
-            record=_held_record(body),
+            record=_held_record(body), index=body["index"] if isinstance(body.get("index"), int) else None,
+            quote=str(body.get("quote") or ""),
         )
         self._send_json(HTTPStatus.CREATED, mark)
 
@@ -3990,6 +3993,8 @@ class Handler(BaseHTTPRequestHandler):
         # Supervisor đọc thẳng khoá này (power_source.pause_on_battery_enabled) - chỉ nhận đúng True/False.
         if isinstance(body.get("pauseOnBattery"), bool):
             allowed["pauseOnBattery"] = body["pauseOnBattery"]
+        if isinstance(body.get("autoMusic"), bool):
+            allowed["autoMusic"] = body["autoMusic"]
         # Mặc định của trình tạo sách: chất lượng là một trong ba mức; giọng kể là tên giọng có thật ("" = máy đề xuất).
         if body.get("newBookProfile") in ("fast", "balanced", "high_quality"):
             allowed["newBookProfile"] = body["newBookProfile"]

@@ -2,7 +2,7 @@ import type { MusicCredit, MusicCue } from "./musicBed";
 import type { PlaylistQueue } from "./playlistBed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
-import type { Bookmark, Cast, ListenBook, ListenChapter, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
+import type { Bookmark, BookmarkSentence, Cast, ListenBook, ListenChapter, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
@@ -66,7 +66,7 @@ export interface ListenSource {
   setChapterDone(bookId: string, chapterId: number, done: boolean): Promise<ListeningState>;
   setFinished(bookId: string, finished: boolean): Promise<ListeningState>;
   setRate(bookId: string, rate: number): Promise<void>;
-  addBookmark(bookId: string, chapterId: number, seconds: number, note: string, record?: string): Promise<Bookmark>;
+  addBookmark(bookId: string, chapterId: number, seconds: number, note: string, record?: string, sentence?: BookmarkSentence): Promise<Bookmark>;
   /** Hỏi thiết bị kia bản mới nhất của hồ sơ nghe đang dùng (điện thoại hỏi máy tính đã ghép); máy tính là nơi giữ. */
   refreshListening?(bookId: string): Promise<void>;
   updateBookmark(bookId: string, id: string, note: string): Promise<void>;
@@ -251,8 +251,8 @@ export function useListenMutations(bookId: string) {
       onSuccess: refresh,
     }),
     addBookmark: useMutation({
-      mutationFn: ({ chapterId, seconds, note }: { chapterId: number; seconds: number; note: string }) =>
-        source.addBookmark(bookId, chapterId, seconds, note),
+      mutationFn: ({ chapterId, seconds, note, sentence }: { chapterId: number; seconds: number; note: string; sentence?: BookmarkSentence }) =>
+        source.addBookmark(bookId, chapterId, seconds, note, undefined, sentence),
       onSuccess: refresh,
     }),
     updateBookmark: useMutation({

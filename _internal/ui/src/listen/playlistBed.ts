@@ -48,6 +48,8 @@ export interface PlaylistQueue {
 export interface PlaylistView {
   playlist?: string;
   playlistAuto?: boolean;
+  /** Cuốn chưa chọn nhạc và người dùng đã tắt "tự chọn nhạc nền" trong Cài đặt: chưa có nhạc cho cuốn này. */
+  autoOff?: boolean;
 }
 
 export interface PlaylistSummary {
@@ -259,11 +261,17 @@ export function autoPlaylistName(view: PlaylistView | undefined, menu: PlaylistM
 /** Chữ trên nút / thông báo của lựa chọn hiện tại: "Máy chọn: <tên>" khi máy đang chọn, "Tắt", tên danh sách, hay "Nhạc của tôi". */
 export function playlistLabel(view: PlaylistView | undefined, menu: PlaylistMenu | undefined): string {
   if (view?.playlistAuto) return ["Máy chọn", autoPlaylistName(view, menu)].filter(Boolean).join(": ");
-  if (!view?.playlist) return "Máy chọn";
+  if (!view?.playlist) return view?.autoOff ? "Chưa có nhạc (tắt trong Cài đặt)" : "Máy chọn";
   if (view.playlist === OFF_PLAYLIST) return OFF_LABEL;
   if (view.playlist === MINE_PLAYLIST) return "Nhạc của tôi";
-  return nameOf(menu, view.playlist) || view.playlist;
+  // Danh mục chưa tải (mất mạng lần đầu): không nói mã trần ("fantasy_adventure") cho người nghe.
+  return nameOf(menu, view.playlist) || "Danh sách đã chọn";
 }
+
+/** Công tắc "Tự chọn nhạc nền" ở Cài đặt > Nhạc nền (máy tính và điện thoại dùng chung lời). */
+export const AUTO_MUSIC_LABEL = "Tự chọn nhạc nền cho sách chỉ có chữ";
+export const AUTO_MUSIC_HINT =
+  "Máy chọn một bộ nhạc hợp với truyện (kỳ ảo, học đường, kiếm hiệp…) rồi phát nhè nhẹ dưới giọng đọc. Tắt thì sách chưa chọn nhạc sẽ im lặng; cuốn nào bạn đã chọn nhạc ở menu “Nhạc nền” của sách vẫn có nhạc.";
 
 /** Nhạc đang chạy cho cuốn này hay không (máy chọn được, hay người nghe chọn một danh sách) - để nút "Nhạc nền" sáng lên. */
 export function playlistPlaying(view: PlaylistView | undefined): boolean {
@@ -274,7 +282,7 @@ export function playlistPlaying(view: PlaylistView | undefined): boolean {
  *  nhạc. `view`: lựa chọn hiện tại - khi máy đang chọn, dòng "Để máy chọn" nói máy chọn danh sách nào. */
 export function playlistOptions(menu: PlaylistMenu | undefined, canImport = false, view?: PlaylistView): PlaylistOption[] {
   return [
-    { id: null, label: AUTO_LABEL, hint: autoPlaylistName(view, menu) },
+    { id: null, label: AUTO_LABEL, hint: view?.autoOff ? "đang tắt trong Cài đặt" : autoPlaylistName(view, menu) },
     { id: OFF_PLAYLIST, label: OFF_LABEL, hint: "" },
     ...(menu?.playlists ?? []).map((item) => ({ id: item.id, label: item.name, hint: hours(item.minutes), description: item.description || undefined })),
     {

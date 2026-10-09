@@ -1,5 +1,6 @@
 import { Check, Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/shared/media";
 import { Button, Dialog, Kbd, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
@@ -21,6 +22,7 @@ import { SharedReadingsSettings } from "@/studio/sharedReadings";
 import { SupertonicModuleCard, VieneuModuleCard } from "@/listen/VieneuModuleCard";
 import { EXTEND_GESTURE } from "@/listen/extendGesture";
 import { MyMusicSection } from "@/listen/MyMusic";
+import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
 import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
@@ -305,6 +307,7 @@ function ThirdPartyButton() {
 export function SettingsScreen() {
   const { data: info } = useAppInfo();
   const { data: preferences, update } = usePreferences();
+  const client = useQueryClient();
   const changeLibrary = async () => {
     try {
       const path = await pickFolder("Chọn thư mục thư viện", preferences?.libraryRoot ?? "");
@@ -512,6 +515,17 @@ export function SettingsScreen() {
           title="Nhạc nền"
           description="Nhạc của riêng bạn làm nhạc nền, dùng chung cho mọi cuốn. Chọn bài cho từng đoạn ở tab “Nhạc nền” của từng dự án trong Studio."
         >
+          <div className="mb-5 flex max-w-2xl items-start justify-between gap-6">
+            <label htmlFor="auto-music" className="min-w-0 cursor-pointer">
+              <span className="block text-sm font-medium">{AUTO_MUSIC_LABEL}</span>
+              <span className="mt-0.5 block text-[13px] text-fg-2 text-pretty">{AUTO_MUSIC_HINT}</span>
+            </label>
+            <Switch
+              id="auto-music"
+              checked={preferences?.autoMusic !== false}
+              onCheckedChange={(value) => update({ autoMusic: value }, { onSuccess: () => void client.invalidateQueries({ queryKey: ["listen"] }) })}
+            />
+          </div>
           <div className="max-w-2xl">
             <MyMusicSection />
           </div>
