@@ -586,3 +586,110 @@ def test_every_decided_card_carries_the_withdrawal_of_its_own_click(tmp_path: Pa
     request_pronunciation(project, "Hailkes", cards["pronunciation"]["current"], now=3456.5)
     card = next(item for item in work_items(project)["items"] if item["kind"] == "pronunciation")
     assert card["undo"]["decisions"][0]["keep"] is True and card["undo"]["decisions"][0]["requestedAt"] == 3456.5
+
+
+def write_logprobs(project: Path, rows: list[dict]) -> None:
+    folder = project / "analysis_logprobs"
+    folder.mkdir()
+    body = "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows)
+    (folder / "00001.jsonl").write_bytes(body.encode("utf-8"))
+
+
+def lp(stable_id: str, speaker: str, p_first: float) -> dict:
+    return {"chapter": 1, "seq": 0, "stable_id": stable_id, "kind": "dialogue", "speaker": speaker, "p_first": p_first,
+            "p_seq": p_first, "margin": 0.1, "alts": [], "ntok": 1, "p_end": 0.99}
+
+
+def speaker_cards(project: Path) -> list[dict]:
+    return [item for item in work_items(project)["items"] if item["kind"] == "speaker"]
+
+
+def test_the_models_own_doubt_asks_only_the_least_sure_tenth_of_the_measured_lines(tmp_path: Path) -> None:
+    """Số đo logprob (analysis_logprobs/): 6 câu thoại có số đo -> tối đa 10% = 0 thẻ; thêm vào cho đủ 20 thì tối đa 2 thẻ,
+    là hai câu p_first thấp nhất, và câu p_first từ ngưỡng trở lên không bao giờ thành thẻ."""
+    from abook.listener_overrides import NARRATOR, UNNAMED
+
+    project = make_book(tmp_path)
+    rows = [lp("b", "HEIDI", 0.2), lp("c", "LUCIEN", 0.5), lp("d", "ÁO CHOÀNG ĐEN", 0.9), lp("e", "ÁO CHOÀNG ĐEN", 0.95),
+            lp("f", "RHINE", 0.99), lp("g", "NPC_LOCAL::c00001::r1::người gác", 0.7)]
+    write_logprobs(project, rows)
+    assert speaker_cards(project) == [], "6 câu x 10% < 1: không đủ để hỏi câu nào"
+    rows += [dict(lp(f"x{index}", "LUCIEN", 0.99)) for index in range(14)]
+    (project / "analysis_logprobs" / "00001.jsonl").write_bytes(
+        "".join(json.dumps(row) + "\n" for row in rows).encode("utf-8"))
+    # 14 câu "x" không có trong sổ nên không tính: vẫn 6 câu đo được thì vẫn 0 thẻ.
+    assert speaker_cards(project) == []
+
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.executemany(
+        "INSERT INTO segments (id, stable_id, chapter_id, seq, text, kind, speaker, status, text_sha256)"
+        " VALUES (?,?,1,?,?, 'dialogue', 'LUCIEN', 'verified', ?)",
+        [(100 + index, f"x{index}", 100 + index, f"“Câu {index}.”", f"sha-x{index}") for index in range(14)],
+    )
+    db.commit()
+    db.close()
+    cards = speaker_cards(project)
+    assert [card["key"] for card in cards] == ["speaker:b", "speaker:c"], "20 câu x 10% = 2 thẻ, p_first thấp nhất trước"
+    first = cards[0]
+    assert first["title"] == "Ai nói câu này - Heidi?"
+    assert first["problem"] == "Máy gán cho Heidi nhưng không chắc (20%)."
+    assert first["doubt"] == 0.8 and first["current"] == "Heidi"
+    assert first["lines"] == [{"stableId": "b", "textSha256": "sha-b"}]
+    values = [choice["value"] for choice in first["choices"]]
+    assert "LUCIEN" in values and "HEIDI" not in values and values[-2:] == [NARRATOR, UNNAMED]
+    assert [option for option in first["options"] if option in ("Người kể", "Vai phụ không tên")] == ["Người kể", "Vai phụ không tên"]
+
+
+def test_a_line_whose_label_changed_or_already_has_a_card_gets_no_logprob_card(tmp_path: Path) -> None:
+    project = make_book(tmp_path)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.executemany(
+        "INSERT INTO segments (id, stable_id, chapter_id, seq, text, kind, speaker, status, text_sha256)"
+        " VALUES (?,?,1,?,?, 'dialogue', 'LUCIEN', 'verified', ?)",
+        [(100 + index, f"x{index}", 100 + index, f"“Câu {index}.”", f"sha-x{index}") for index in range(20)],
+    )
+    db.commit()
+    db.close()
+    rows = [lp(f"x{index}", "LUCIEN", 0.99) for index in range(20)]
+    rows += [lp("b", "LUCIEN", 0.1),   # sổ nay là HEIDI: nhãn đã đổi sau lần đo
+             lp("c", "lucien", 0.15),  # cùng nhãn khác cách viết: vẫn tính
+             lp("d", "ÁO CHOÀNG ĐEN", 0.2)]  # sẽ đã có thẻ của bộ chấm thứ hai
+    write_logprobs(project, rows)
+    (project / "doubt.json").write_text(json.dumps({"segments": {
+        "d": {"llm": "ÁO CHOÀNG ĐEN", "choice": "RHINE", "certainty": 0.9, "top": [["RHINE", 0.9]], "disagree": True},
+    }}), encoding="utf-8")
+    cards = speaker_cards(project)
+    assert [card["key"] for card in cards if card["problem"].startswith("Máy gán")] == ["speaker:c"], \
+        "23 câu x 10% = 2 thẻ nhưng b đổi nhãn, d đã có thẻ"
+    assert sum(1 for card in cards if card["key"] == "speaker:d") == 1, "một câu một thẻ"
+
+
+def test_a_logprob_card_follows_the_listeners_decision_and_survives_bad_files(tmp_path: Path) -> None:
+    from abook.listener_overrides import request_speaker
+
+    project = make_book(tmp_path)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.executemany(
+        "INSERT INTO segments (id, stable_id, chapter_id, seq, text, kind, speaker, status, text_sha256)"
+        " VALUES (?,?,1,?,?, 'dialogue', 'LUCIEN', 'verified', ?)",
+        [(100 + index, f"x{index}", 100 + index, f"“Câu {index}.”", f"sha-x{index}") for index in range(10)],
+    )
+    db.commit()
+    db.close()
+    write_logprobs(project, [lp(f"x{index}", "LUCIEN", 0.99) for index in range(9)] + [lp("x9", "LUCIEN", 0.3)])
+    path = project / "analysis_logprobs" / "00001.jsonl"
+    path.write_bytes(path.read_bytes() + b"{not json\n\n[1,2]\n" + json.dumps({"stable_id": "c", "speaker": "LUCIEN"}).encode()
+                     + b"\n" + json.dumps(lp("c", "LUCIEN", 1.7)).encode() + b"\n")
+    (project / "analysis_logprobs" / "00002.jsonl").write_bytes(b"\xff\xfe broken")
+    card = next(item for item in speaker_cards(project))
+    assert card["key"] == "speaker:x9" and card["problem"].endswith("(30%).")
+    assert not card["requested"]
+
+    request_speaker(project, "x9", "sha-x9", "RHINE", now=time.time())
+    assert next(item for item in speaker_cards(project))["requested"] == "Rhine"
+    request_speaker(project, "x9", "sha-x9", "LUCIEN", now=time.time())
+    assert speaker_cards(project) == [], "người nghe đã quyết giữ -> hết hỏi"
+
+
+def test_without_the_logprob_files_nothing_is_asked(tmp_path: Path) -> None:
+    assert not any(item["problem"].startswith("Máy gán") for item in speaker_cards(make_book(tmp_path)))
