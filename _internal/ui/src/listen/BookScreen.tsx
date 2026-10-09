@@ -21,7 +21,7 @@ import { canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, ty
 import { keepTogether, partialBookLine, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerViews";
-import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
+import { EditsSyncBanner, LocalEditsBanner, SendEditsItem } from "./SendEdits";
 import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { BookSuggestions } from "./ReadingSuggestions";
@@ -876,6 +876,7 @@ export function BookScreen({
           )}
           {notice?.(book)}
           {syncs && <EditsSyncBanner book={book} />}
+          <LocalEditsBanner book={book} />
           {textOnly && editable && <BookSuggestions book={book} />}
           <div className="mt-4 max-w-md max-sm:mx-auto">
             {!textOnly && (
@@ -963,7 +964,7 @@ export function BookScreen({
                       </DropdownMenu.Item>
                       {textOnly && <PlaylistSubmenu bookId={book.id} />}
                       {syncs && <SendEditsItem book={book} />}
-                      {!workshop && !syncs && saver.available && (
+                      {!workshop && !syncs && !book.capabilities?.local && saver.available && (
                         <>
                           <DropdownMenu.Item
                             disabled={!book.edits || saver.busy}

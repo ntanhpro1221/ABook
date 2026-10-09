@@ -88,7 +88,7 @@ object Streaming {
             if (peer != null) Peers.request(context, peer, "GET", "/sync/v1/books/$remote/manifest")
             else SyncLink.request(context, "GET", "/sync/v1/books/$id/manifest"),
         )
-        if (peer != null) manifest.put("id", id).put("source", peer).put("remoteId", remote)
+        if (peer != null) manifest.put("id", id).put("source", peer).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, peer))
         // Gói đổi (thêm/thu lại chương, đổi bìa): bỏ văn bản và dàn nhân vật đã cất để lần đọc sau lấy bản mới.
         val previous = Store.streamManifest(id)
         if (previous != null && previous.optString("version") != manifest.optString("version")) {

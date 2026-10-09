@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canEditLayer, editBlockedNote, lineEditing, showsStudioOnly, studioNeed, syncsToComputer, type Capabilities } from "./capabilities";
+import { canEditLayer, editBlockedNote, lineEditing, localEditsNote, showsStudioOnly, studioNeed, syncsToComputer, type Capabilities } from "./capabilities";
 
 const caps = (over: Partial<Capabilities>): Capabilities => ({ toolchain: false, workshop: false, link: false, ...over });
 
@@ -83,5 +83,34 @@ describe("cuốn tải từ máy tính chính (điện thoại)", () => {
     expect(syncsToComputer(caps({ workshop: true, sync: true }))).toBe(false);
     expect(syncsToComputer(caps({}))).toBe(false);
     expect(syncsToComputer(undefined)).toBe(false);
+  });
+});
+
+describe("cuốn của điện thoại khác (sửa chỉ ở lại máy này)", () => {
+  it("sửa được ngay, không gửi về đâu, và nói rõ chỉ nằm trên máy này", () => {
+    const local = caps({ local: true });
+    expect(canEditLayer(local)).toBe(true);
+    expect(editBlockedNote(local)).toBeNull();
+    expect(syncsToComputer(local)).toBe(false);
+    expect(localEditsNote(local)).toContain("chỉ có trên máy này");
+  });
+
+  it("sửa từng câu bị mờ kèm lý do (việc chờ Studio không có máy nào nhận)", () => {
+    expect(lineEditing(caps({ local: true }))).toMatchObject({ mode: "blocked" });
+  });
+
+  it("cuốn thường và cuốn gửi về máy tính không mang câu này", () => {
+    expect(localEditsNote(caps({}))).toBeNull();
+    expect(localEditsNote(caps({ sync: true }))).toBeNull();
+    expect(localEditsNote(undefined)).toBeNull();
+  });
+});
+
+describe("cuốn nghe thẳng từ máy tính trên điện thoại", () => {
+  it("sửa được và gửi về máy tính như cuốn đã tải", () => {
+    const streamed = caps({ sync: true });
+    expect(canEditLayer(streamed)).toBe(true);
+    expect(syncsToComputer(streamed)).toBe(true);
+    expect(lineEditing(streamed)).toEqual({ mode: "wish" });
   });
 });

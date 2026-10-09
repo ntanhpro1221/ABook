@@ -21,6 +21,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Xuất cả cuốn thành MỘT file M4B để nghe ở app sách nói khác (Smart AudioBook Player, Audiobookshelf, BookPlayer, Apple Books...): menu "…" của cuốn có "Xuất M4B cho app sách nói", cùng file với bản máy tính - mỗi chương một mục lục với tên chương thật, ảnh bìa, tên sách và giọng kể. Bạn đặt tên và chọn chỗ lưu; việc chạy nền (ra khỏi app hay tắt màn hình vẫn chạy tiếp), có thông báo tiến độ và nút "Dừng". Hết chỗ hay dừng giữa chừng thì báo rõ và không để lại file dở. Chương nào chưa làm xong không có trong file.
 - Mỗi cuốn trên máy cho biết nó chiếm bao nhiêu chỗ: menu của cuốn ghi "Chiếm 1,2 GB" ngay cạnh "Xoá khỏi điện thoại…", và màn "Tải sách" liệt kê các cuốn trên máy, cuốn nặng nhất đứng đầu, kèm nút xoá - để biết nên xoá cuốn nào khi máy đầy.
 
+- Sửa được cả những cuốn bạn đang nghe thẳng từ máy tính (chưa tải về) và cuốn của máy tính khác đã ghép: đổi tên, bìa, tên nhân vật, tên chương, nhạc nền không còn bị từ chối. Sửa xong tự gửi về máy giữ sách như cuốn đã tải, và nghe thẳng vẫn không bắt tải cả cuốn. Cuốn của một điện thoại khác thì máy kia không nhận phần sửa: bạn vẫn sửa được, và trang sách ghi rõ "thay đổi chỉ có trên điện thoại này".
+
 ### Nghe qua trình duyệt
 
 - Trên iPhone, iPad hay Android, "Thêm vào màn hình chính" ở trang nghe của máy tính giờ ra một biểu tượng ABook đúng nghĩa, mở toàn màn hình như một app thật, thanh trên cùng theo màu sáng / tối của giao diện.

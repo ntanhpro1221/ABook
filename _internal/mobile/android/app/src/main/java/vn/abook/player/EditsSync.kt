@@ -16,12 +16,15 @@ import java.util.zip.ZipOutputStream
 /**
  * Gửi phần sửa của người nghe về máy tính (docs/EDITING.md, P2b; máy tính nhận ở abook/webui/edits_inbox.py).
  *
- * Cuốn tải từ máy tính chính (Store.computerBooks) sửa được ngay trên điện thoại - lớp sửa `edits.json` như cuốn mở từ file -
- * nhưng sách là của máy tính: sửa chỉ có nghĩa lâu dài khi về tới đó. Gói gửi là một file zip nhỏ (`edits.json`, `edits/cover.jpg`
+ * Cuốn của máy tính (đã tải hay nghe thẳng chưa tải; máy tính chính hay một máy tính khác đã ghép - [Store.editDestination]) sửa được
+ * ngay trên điện thoại - lớp sửa `edits.json` như cuốn mở từ file, cạnh gói sách (book.json hay stream.json) - nhưng sách là của
+ * máy tính: sửa chỉ có nghĩa lâu dài khi về tới đó. Cuốn của điện thoại khác thì không có chỗ gửi: sửa ở lại máy này. Gói gửi là một file zip nhỏ (`edits.json`, `edits/cover.jpg`
  * khi đổi bìa, `music/<sha1>.<đuôi>` các bài nhạc ghim) qua đường TLS đã ghim (`POST /sync/v1/books/<mã>/edits`). Máy tính áp liền
  * sửa "áp ngay"; ý muốn chờ Studio thành yêu cầu nếu thiết bị này được điều khiển sản xuất, không thì nằm trong hộp thư chờ chủ máy
  * duyệt (không bao giờ tự áp). Máy tính nhận xong thì điện thoại gỡ khỏi lớp sửa của mình đúng những gì đã gửi
  * ([BookEdits.subtract]) rồi tải lại sách từ máy tính - bản mới của máy tính đã mang các sửa ấy.
+ *
+ * Gửi xong, cuốn đã tải thì tải lại từ máy ấy, cuốn nghe thẳng thì chỉ lấy lại gói sách (không tải cả cuốn).
  *
  * Trạng thái hiện cho người dùng (`editsSync` trong JSON sách): số thay đổi CHƯA gửi (`pending`) và kết quả lần gửi gần nhất
  * (`last`: đã gửi lúc nào, bao nhiêu áp, bao nhiêu chờ duyệt, xung đột, hay lỗi). Gửi tự động sau mỗi lần sửa (chờ vài giây cho
@@ -120,7 +123,7 @@ object EditsSync {
      */
     @Synchronized
     fun push(id: String, send: (File) -> String): JSONObject {
-        if (!Store.isDownloadedComputerBook(id)) throw IllegalStateException("Cuốn này không lấy từ máy tính nên không có chỗ gửi về")
+        if (Store.editDestination(id) == null) throw IllegalStateException("Cuốn này không lấy từ máy tính nên không có chỗ gửi về")
         val dir = Store.bookDir(id)
         val snapshot = try {
             snapshot(dir)
@@ -172,9 +175,17 @@ object EditsSync {
         return out
     }
 
-    /** Gửi thật qua đường TLS đã ghim tới máy tính chính (không bao giờ gọi trên luồng giao diện). */
+    /** Gửi thật qua đường TLS đã ghim tới máy giữ sách - máy tính chính, hay máy tính khác đã ghép (không bao giờ gọi trên luồng giao diện). */
     fun pushNow(context: Context, id: String): JSONObject = push(id) { file ->
-        SyncLink.request(context, "POST", "/sync/v1/books/$id/edits", upload = file, readTimeoutMs = 120_000)
+        val (peer, remote) = Store.editDestination(id) ?: throw IllegalStateException("Cuốn này không lấy từ máy tính nên không có chỗ gửi về")
+        if (peer == null) SyncLink.request(context, "POST", "/sync/v1/books/$remote/edits", upload = file, readTimeoutMs = 120_000)
+        else Peers.request(context, peer, "POST", "/sync/v1/books/$remote/edits", readTimeoutMs = 120_000, upload = file)
+    }
+
+    /** Có đường tới máy giữ sách `id` không (chưa ghép / thôi ghép thì không gửi, không hẹn). */
+    private fun reachable(context: Context, id: String): Boolean {
+        val (peer, _) = Store.editDestination(id) ?: return false
+        return if (peer == null) SyncLink.paired(context) else Peers.link(context, peer) != null
     }
 
     // ---- gửi tự động --------------------------------------------------------------------------------------------------
@@ -184,7 +195,7 @@ object EditsSync {
      * với máy tính, hay cuốn không thuộc máy tính: không làm gì. Gửi hỏng thì thử lại sau 1 phút, 5 phút, rồi để lần sau.
      */
     fun schedule(context: Context, id: String, delayMs: Long = DEBOUNCE_MS) {
-        if (!SyncLink.paired(context) || !Store.isDownloadedComputerBook(id)) return
+        if (!reachable(context, id)) return
         scheduled.remove(id)?.cancel(false)
         scheduled[id] = executor.schedule({
             scheduled.remove(id)
@@ -202,16 +213,17 @@ object EditsSync {
      * có việc chờ chủ máy duyệt xem còn bao nhiêu (chủ máy đã quyết bớt thì dòng "đang chờ duyệt" cũng bớt theo).
      */
     fun scheduleAllPending(context: Context) {
-        if (!SyncLink.paired(context)) return
-        for (id in Store.computerBooks()) {
-            if (Store.rawManifest(id) == null) continue
-            if (!BookEdits.isEmpty(BookEdits.load(Store.bookDir(id)))) schedule(context, id, 500)
-            if (lastState(Store.bookDir(id))?.optInt("waiting") ?: 0 > 0) {
-                executor.execute {
-                    runCatching {
-                        refreshWaiting(id) {
-                            SyncLink.request(context, "GET", "/sync/v1/books/$id/edits", readTimeoutMs = 10_000, connectTimeoutMs = 2_000)
-                        }
+        for (id in Store.bookIds()) {
+            if (!reachable(context, id)) continue
+            val dir = Store.bookDir(id)
+            if (!BookEdits.isEmpty(BookEdits.load(dir))) schedule(context, id, 500)
+            if ((lastState(dir)?.optInt("waiting") ?: 0) <= 0) continue
+            val (peer, remote) = Store.editDestination(id) ?: continue
+            executor.execute {
+                runCatching {
+                    refreshWaiting(id) {
+                        if (peer == null) SyncLink.request(context, "GET", "/sync/v1/books/$remote/edits", readTimeoutMs = 10_000, connectTimeoutMs = 2_000)
+                        else Peers.request(context, peer, "GET", "/sync/v1/books/$remote/edits", readTimeoutMs = 10_000, connectTimeoutMs = 2_000)
                     }
                 }
             }
