@@ -536,13 +536,11 @@ class SyncApp:
         from .work_items import work_items
 
         def stamp_of(path: Path) -> tuple[float, ...]:
-            stamps = [store.touched(path)]
-            for name in ("overrides.json", "doubt.json"):
-                try:
-                    stamps.append((path / name).stat().st_mtime)
-                except OSError:
-                    stamps.append(0.0)
-            return tuple(stamps)
+            try:
+                overrides_stamp = (path / "overrides.json").stat().st_mtime
+            except OSError:
+                overrides_stamp = 0.0
+            return (store.touched(path), overrides_stamp)
 
         def work_of(path: Path) -> int | None:
             # Không đếm được (sách đời cũ, DB đang khoá) thì None - điện thoại coi là "không biết", không báo gì.

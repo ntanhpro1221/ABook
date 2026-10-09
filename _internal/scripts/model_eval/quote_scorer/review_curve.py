@@ -1,4 +1,5 @@
 """Duyệt k% câu khó nhất thì đúng thêm bao nhiêu? - chọn tín hiệu xếp hạng cho hộp "Việc cần duyệt" (STUDIO_REVIEW.md).
+Số này đo trên nhãn qwen3 cũ; trên nhãn B9 (10-10) p_first của model thắng bộ chấm - xem ANALYSIS_RESEARCH.md.
 
     D:/Novels/LLM_Train/.venv/Scripts/python.exe scripts/model_eval/quote_scorer/review_curve.py \
         D:/Novels/LLM_Train/runs/st/ctrl@last --llm "lora27-4b:latest=D:/Novels/Audiobooks/_model_eval_v2/27-09-lora"

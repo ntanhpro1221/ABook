@@ -6,7 +6,7 @@ thiệp ít nhất mà lại hiệu quả nhất, thậm chí đưa ra các opti
 phải theo dạng luôn bắt người dùng phải thao tác chọn chọn mới sang bước tiếp theo"*.
 
 Vì sao cần: model không bao giờ đúng 100% (652/1.827 câu gold có hơn một người nói hợp lý; cảm xúc là cảm nhận), nhưng nó
-BIẾT câu nào không chắc - bộ chấm đã hiệu chỉnh: tin cậy >= 0,95 đúng 100%, < 0,5 chỉ đúng 33% (ANALYSIS_RESEARCH.md).
+BIẾT câu nào không chắc - xác suất token đầu của tên người nói (`speaker_logprobs`): AUROC bắt câu sai 0,746 (ANALYSIS_RESEARCH.md).
 Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100% với người nghe.
 
 ## Nguyên tắc
@@ -31,7 +31,7 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
 |---|---|---|---|---|---|
 | 1 | Giọng / giới / tuổi của nhân vật | độ tin cậy giới thấp; hai nhân vật dùng chung giọng (voice_pool_pressure); nhân vật chính mang giọng chung chung | preset + cao độ, nghe thử từng giọng; nam/nữ/chưa rõ; tuổi | `characters.locked_voice_key`, `locked` (giới), `locked_age` - CÓ | thu lại mọi câu của nhân vật |
 | 2 | Bí danh: một người hay hai? | hai tên cùng giới, ít khi cùng cảnh, tên này chứa họ/tự của tên kia (Khổng Minh / Gia-cát Lượng, Vân-trường / Quan Vũ) | gộp vào X / để riêng | `character_aliases` - CÓ | thu lại câu của tên bị gộp |
-| 3 | Ai nói câu này | tin cậy thấp; bộ chấm và LLM bất đồng; nhãn NPC mà chương có người được gọi tên sau đó; hai đoạn thoại liền nhau (đóng ngoặc -> mở ngoặc, không lời dẫn) cùng một người - 38/42 cặp như thế là máy sai (28-09) | 3 ứng viên hàng đầu + người kể + "người không tên" | `overrides.json` + `apply_listener_speaker` - CÓ (0b44c3eb, 28-09) | thu lại một câu |
+| 3 | Ai nói câu này | tin cậy thấp (p_first của chính model); nhãn NPC mà chương có người được gọi tên sau đó; hai đoạn thoại liền nhau (đóng ngoặc -> mở ngoặc, không lời dẫn) cùng một người - 38/42 cặp như thế là máy sai (28-09) | 3 ứng viên hàng đầu + người kể + "người không tên" | `overrides.json` + `apply_listener_speaker` - CÓ (0b44c3eb, 28-09) | thu lại một câu |
 | 4 | Loại đoạn: kể / thoại / nội tâm | "nói thầm", "khen thầm", ngoặc nhấn mạnh, thoại gạch ngang lạ | 3 loại | `overrides.json` + `apply_listener_line` - CÓ (9536f109, 28-09) | thu lại một câu |
 | 5 | Cảm xúc, cường độ, nhịp, âm lượng | critic bất đồng; luật host từ chối; tin cậy thấp | vài cảm xúc hàng đầu + nghe thử | cảm xúc, cường độ: `apply_listener_line` - CÓ (9536f109, 28-09); nhịp, âm lượng từng câu - CHƯA | thu lại một câu |
 | 6 | Cách đọc tên riêng | tin cậy phiên âm thấp; Whisper nghe tên khác xa (hàng chờ "Cần nghe lại") | 2-3 cách đọc, mỗi cách một câu thu thử | `pronunciations.locked` - CÓ | thu lại mọi câu có tên ấy |
@@ -105,7 +105,7 @@ chương sau đó vẫn miễn phí. Lời báo cần app mở: app đóng đún
      với câu nội tâm lần thu lại cho ra cùng giọng cho tới khi bản vá "nội tâm = giọng người nghĩ" được áp.
    - **Tab "Kịch bản" XONG 28-09** (`webui/casting_review.py`, `ui/src/studio/ScriptTab.tsx`): hộp việc chỉ đưa chỗ
      máy nghi, tab này cho duyệt CẢ chương - mọi câu thoại/nội tâm có chip người nói bấm đổi được, đi đúng đường ghi đè
-     của mục 3 (không có đường ghi thứ hai). Chỗ nghi dùng chung tín hiệu với hộp việc (bộ chấm thứ hai, lượt đối đáp,
+     của mục 3 (không có đường ghi thứ hai). Chỗ nghi dùng chung tín hiệu với hộp việc (lượt đối đáp,
      lời gọi); câu "liền nhau cùng người" gợi ý người khác gần nhất vừa nói trước cặp ấy. Xác nhận "Đúng là X" cũng
      ghi thành yêu cầu (= nhãn cho vòng học, bước 4). Thử trên bản sao lô 18 cuốn 2: 43 chương, 31 chỗ nghi. Chương 725: hai
      chỗ nghi đều là lỗi thật (khán giả trầm trồ mà gán cho Louise đang thuyết minh), và đọc quanh chúng thấy thêm hai

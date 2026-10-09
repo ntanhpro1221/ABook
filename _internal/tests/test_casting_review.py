@@ -91,20 +91,13 @@ def test_a_chapter_reads_as_a_script_with_who_says_each_line(tmp_path: Path) -> 
 
 def test_the_script_marks_where_the_machine_doubts_and_suggests_someone(tmp_path: Path) -> None:
     """Cùng tín hiệu với hộp Việc cần duyệt, gắn thẳng lên câu: hai câu liền nhau cùng người (gợi ý: người khác vừa nói trước
-    cặp ấy), lời gọi chính người nói, bộ chấm thứ hai bất đồng (mạnh nhất - đè tín hiệu khác trên cùng câu)."""
+    cặp ấy), lời gọi chính người nói."""
     project = make_book(tmp_path)
     hints = {line["stableId"]: line["hint"] for line in casting_chapter(project, 1)["lines"] if line["hint"]}
     assert hints["d"]["kind"] == "turn" and hints["d"]["suggest"] == "LUCIEN", "Lucien vừa nói trước cặp Heidi-Heidi"
     assert hints["c"]["kind"] == "vocative" and "Heidi" in hints["c"]["note"]
     assert set(hints) == {"c", "d"}
 
-    (project / "doubt.json").write_text(json.dumps({"segments": {
-        "d": {"llm": "HEIDI", "choice": "LUCIEN", "certainty": 0.93, "top": [["LUCIEN", 0.93]], "disagree": True},
-        "h": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.3, "top": [["RHINE", 0.3]], "disagree": True},
-    }}), encoding="utf-8")
-    hints = {line["stableId"]: line["hint"] for line in casting_chapter(project, 1)["lines"] if line["hint"]}
-    assert hints["d"] == {"kind": "speaker", "note": "Bộ chấm thứ hai chắc 93% là Lucien.", "suggest": "LUCIEN"}
-    assert "h" not in hints, "bộ chấm không chắc thì không làm phiền"
     listing = {chapter["chapterId"]: chapter for chapter in casting_chapters(project)["chapters"]}
     assert listing[1]["hints"] == 2 and listing[2]["hints"] == 0
     assert (listing[1]["speech"], listing[1]["lines"], listing[1]["index"]) == (6, 8, 1)
