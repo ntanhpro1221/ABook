@@ -39,6 +39,15 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 09-10 sáng - Không "chộp tên quen"; nhóm B tập khó là nhiễu dạng tên; luật "không ai gọi tên chính mình"
+
+- **Đổi tên nhân vật (LLM_Train/rename_diag, Mac M4, gốc và đổi tên cùng máy, 19 chương):** F1 giọng +0,8% [cụm −1,2; +1,9],
+  chặt −0,4%. Luật ghi trước: tụt < 1 -> B9 không dựa vào tên nhớ sẵn; không cần tăng cường đổi tên khi train.
+- **Biên v2 tập khó B9 (b15b16/v2_report.py):** tính mọi dạng tên của cùng người, nhóm B (170 dòng) trung vị biên −12,8 -> −1,9 nat,
+  150/170 lên -> phần lớn là nhiễu thước v1. Nhóm C (93) vẫn −17,6: lỗi nhận diện thật. Từ nay chấm tập khó phải báo cả biên v2.
+- **Luật hậu xử lý "không ai gọi tên chính mình" (main 7b3335bc):** phát lại cả build_registry_and_cast trên DB 10 lượt cổng
+  (known_text/pf_replay.py): F1 giọng +9,72 cộng dồn, +133 câu đúng người nói, đúng->sai 3, không lượt nào giảm.
+
 ## 09-10 đêm - Bước nối vô danh: mặc định named (cổng 4 bản); tên trích từ chữ trong known-list làm HẠI
 
 **Bước nối (LLM_Train/known_text/recgate_replay.py, cây dev/reconcile-tight a37261c7).** Bước nối chạy sau analyze_all, nên đo
