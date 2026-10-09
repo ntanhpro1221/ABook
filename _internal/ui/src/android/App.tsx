@@ -24,6 +24,7 @@ import { cn } from "@/shared/cn";
 import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import { androidSource } from "./androidSource";
 import { DevicesScreen } from "./DevicesScreen";
+import { ExportM4bMenuItem, watchM4bExports } from "./ExportM4b";
 import { ExportMp3MenuItem, watchMp3Exports } from "./ExportMp3";
 import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
@@ -44,6 +45,7 @@ function DownloadWatcher() {
   useEffect(() => watchDownloads(client), [client]);
   useEffect(() => watchEditsSync(client), [client]);
   useEffect(() => watchMp3Exports(), []);
+  useEffect(() => watchM4bExports(), []);
   // Chương chỉ-có-chữ đang được lõi đọc to: mốc câu / chữ lõi báo đi vào kịch bản chữ của màn đọc (android/readAloud.ts).
   useEffect(() => watchReadAloud(client), [client]);
   return null;
@@ -278,6 +280,7 @@ export function AndroidApp() {
                           ) : (
                             <>
                               <ExportMp3MenuItem book={book} />
+                              <ExportM4bMenuItem book={book} />
                               <RemoveFromPhoneMenuItem book={book} />
                             </>
                           )

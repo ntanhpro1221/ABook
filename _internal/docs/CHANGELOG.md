@@ -14,8 +14,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tìm chữ hay câu trong một cuốn rồi nhảy tới đó: nút kính lúp ở trang sách và ở màn đọc (hay Ctrl+F khi đang đọc) mở ô "Tìm trong sách" - gõ từ 2 ký tự, không cần dấu, hoa hay thường đều được ("nguyen" ra "Nguyễn"). Kết quả xếp theo thứ tự trong sách, mỗi dòng ghi chương và đoạn chữ quanh chỗ khớp (chữ tìm được tô đậm); sách dài thì hiện 200 kết quả đầu và cho biết còn bao nhiêu. Bấm một kết quả là mở màn đọc đúng câu ấy, và nếu đang nghe cuốn này thì nghe tiếp từ câu đó. Có ở máy tính và điện thoại, cho cả sách nói lẫn sách chỉ có chữ.
 - Máy tính: kéo một hay nhiều file thả vào màn Thư viện là mở đúng danh sách xem trước ấy ("Thả để thêm sách"); loại file ABook chưa đọc được thì báo rõ ngay.
 
+- Thư viện có ô "Xếp theo": Nghe gần đây (như trước), Tên sách, Tác giả, Mới thêm. Tên xếp theo tiếng Việt - bỏ dấu khi so, "Đào" đứng cạnh "Dưa" chứ không ra cuối bảng chữ cái, "Tập 2" đứng trước "Tập 10". Cách xếp được nhớ trên từng máy, và các tập cùng bộ vẫn nằm cạnh nhau theo số tập.
+
 ### Điện thoại
 
+- Xuất cả cuốn thành MỘT file M4B để nghe ở app sách nói khác (Smart AudioBook Player, Audiobookshelf, BookPlayer, Apple Books...): menu "…" của cuốn có "Xuất M4B cho app sách nói", cùng file với bản máy tính - mỗi chương một mục lục với tên chương thật, ảnh bìa, tên sách và giọng kể. Bạn đặt tên và chọn chỗ lưu; việc chạy nền (ra khỏi app hay tắt màn hình vẫn chạy tiếp), có thông báo tiến độ và nút "Dừng". Hết chỗ hay dừng giữa chừng thì báo rõ và không để lại file dở. Chương nào chưa làm xong không có trong file.
 - Mỗi cuốn trên máy cho biết nó chiếm bao nhiêu chỗ: menu của cuốn ghi "Chiếm 1,2 GB" ngay cạnh "Xoá khỏi điện thoại…", và màn "Tải sách" liệt kê các cuốn trên máy, cuốn nặng nhất đứng đầu, kèm nút xoá - để biết nên xoá cuốn nào khi máy đầy.
 
 ### Nghe qua trình duyệt

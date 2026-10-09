@@ -77,6 +77,7 @@ class LibraryPlugin : Plugin() {
         EditsSync.changed = { id -> notifyListeners("editsSync", JSObject().put("bookId", id)) }
         ShareService.changed = { notifyListeners("shareChanged", JSObject()) }
         Mp3Exports.events = { event -> notifyListeners("mp3Export", JSObject.fromJSONObject(event)) }
+        M4bExports.events = { event -> notifyListeners("m4bExport", JSObject.fromJSONObject(event)) }
         Playback.init(context)
         PhoneCast.init(context)
         TextImports.codec = AndroidCoverCodec
@@ -740,7 +741,9 @@ class LibraryPlugin : Plugin() {
         Store.books().forEach { manifest ->
             val id = manifest.getString("id")
             books.put(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id)))
-                .put("bytes", Store.sizeOf(Store.bookDir(id))))
+                .put("bytes", Store.sizeOf(Store.bookDir(id)))
+                // Lúc sách về điện thoại (cho "Mới thêm" ở thư viện): book.json ghi một lần lúc tải / mở file.
+                .put("addedAt", File(Store.bookDir(id), "book.json").lastModified() / 1000.0))
         }
         call.resolve(JSObject().put("books", books))
     }
@@ -1084,6 +1087,56 @@ class LibraryPlugin : Plugin() {
         val run = Mp3Exports.start(context, id, tree, coverFile)
         call.resolve(JSObject().put("started", true).put("run", run).put("folder", "$treeName/${Mp3Export.folderName(plan.title)}")
             .put("chapters", plan.chapters.size))
+    }
+
+    // ---- "Xuất M4B cho app sách nói" (M4bExport, M4bExportWorker) ---------------------------------------------------
+
+    /**
+     * Xuất cuốn `bookId` thành MỘT file `.m4b` có mục lục chương như máy tính. Hỏi tên và chỗ lưu bằng hộp thoại "tạo file" của hệ thống
+     * (mỗi lần - khác xuất MP3 không nhớ chỗ: đây là một file, người dùng đặt tên). `cover`: data URL PNG bìa giao diện tự vẽ, dùng khi
+     * sách không có bìa thật. Sách chưa có chương nào nghe được thì từ chối ngay, trước khi hỏi chỗ lưu. Trả {started, run, name, chapters}
+     * - tiến độ và kết quả đến qua sự kiện "m4bExport" mang `run` - hay {started: false} khi huỷ chọn.
+     */
+    @PluginMethod
+    fun exportM4b(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        if (Store.manifest(id) == null) return call.reject("Sách này chưa tải về điện thoại")
+        val plan = try {
+            Mp3Export.plan(id)
+        } catch (error: Mp3Export.Refused) {
+            return call.reject(error.message)
+        }
+        startActivityForResult(call, M4bExports.createIntent(plan.title), "pickedM4bFile")
+    }
+
+    /** Dừng lượt xuất M4B của cuốn `bookId` (nút "Dừng" trong app; thông báo của hệ thống có nút riêng). File dở bị xoá. */
+    @PluginMethod
+    fun cancelM4bExport(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        M4bExports.cancel(context, id)
+        call.resolve()
+    }
+
+    @ActivityCallback
+    private fun pickedM4bFile(call: PluginCall?, result: ActivityResult) {
+        if (call == null) return
+        val file = result.data?.data ?: return call.resolve(JSObject().put("started", false))
+        background(call) {
+            try {
+                val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
+                val drawn = drawnCover(call.getString("cover"))
+                val plan = Mp3Export.plan(id, drawn)
+                M4bExports.remember(context, file)
+                val coverFile = drawn?.let { bytes ->
+                    File(context.cacheDir, "m4b-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
+                }
+                val run = M4bExports.start(context, id, file, coverFile)
+                call.resolve(JSObject().put("started", true).put("run", run).put("name", M4bExport.fileName(plan.title)).put("chapters", plan.chapters.size))
+            } catch (error: Exception) {
+                M4bExports.discard(context, file) // chưa bắt đầu việc nền: file rỗng vừa tạo không để lại
+                throw error
+            }
+        }
     }
 
     /**

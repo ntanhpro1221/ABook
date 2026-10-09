@@ -116,6 +116,8 @@ export interface ListenBook {
   /** Máy tính, sách chỉ-chữ: mã dự án Studio đã làm từ cuốn này ("Làm sách nói từ cuốn này"), nếu còn trong thư viện. */
   studioProject?: string | null;
   updatedAt: number | null;
+  /** Giây Unix lúc sách vào thư viện này ("Mới thêm" ở ô xếp); không biết thì thiếu - xếp theo `updatedAt`. */
+  addedAt?: number | null;
   state: ListeningState;
   progress: BookProgress;
   lastChapterTitle?: string;

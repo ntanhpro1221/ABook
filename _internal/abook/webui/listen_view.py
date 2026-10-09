@@ -69,6 +69,7 @@ def book(project_root: Path, book_id: str, summary: dict[str, Any], state: dict[
         # (soát UX 30-09: thẻ ghi "Đang làm · đang chuẩn bị").
         "pauseReason": summary.get("paused") if summary.get("running") else None,
         "updatedAt": summary.get("updatedAt"),
+        "addedAt": summary.get("createdAt"),  # "Mới thêm" ở thư viện
         "state": state,
         "progress": book_progress(state, available, complete=complete),
         # Thẻ "Đang nghe dở" nói rõ chương nào, kể cả khi danh sách không kèm chương.
