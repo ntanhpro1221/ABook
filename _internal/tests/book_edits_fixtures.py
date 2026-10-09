@@ -215,7 +215,9 @@ INVALID: dict[str, Any] = {
     "skip_bad_chapter": {**HEAD, "skip": {"một": ["Dịch: A"]}},
     "readings_not_an_object": {**HEAD, "readings": [["Haruto", "Ha-ru-tô"]]},
     "readings_empty": {**HEAD, "readings": {}},
-    "reading_two_words": {**HEAD, "readings": {"Hai kes": "Hên-khơ"}},
+    "reading_seven_words": {**HEAD, "readings": {"a b c d e f g": "Hên-khơ"}},
+    "reading_phrase_with_punctuation": {**HEAD, "readings": {"Hạ, Vy": "Hà Vi"}},
+    "reading_phrase_double_space": {**HEAD, "readings": {"Hạ  Vy": "Hà Vi"}},
     "reading_word_with_punctuation": {**HEAD, "readings": {"Haruto,": "Ha-ru-tô"}},
     "reading_word_not_nfc": {**HEAD, "readings": {"To\u0302kyo\u0302": "Tô-ky-ô"}},
     "reading_word_too_long": {**HEAD, "readings": {"a" * 81: "a"}},
@@ -494,7 +496,9 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "PUT", "path": "/readings", "body": {"surface": "Hailkes", "spoken": "Hên khơ"}},
         {"method": "PUT", "path": "/readings", "body": {"surface": "“Hailkes,”", "spoken": "  Hên-khơ \n"}},
         {"method": "PUT", "path": "/readings", "body": {"surface": "Lucien", "spoken": "Lu xi en"}},
-        {"method": "PUT", "path": "/readings", "body": {"surface": "Hai kes", "spoken": "Hên-khơ"}},
+        {"method": "PUT", "path": "/readings", "body": {"surface": "“Hạ  Vy,”", "spoken": "Hà Vi"}},
+        {"method": "PUT", "path": "/readings", "body": {"surface": "Hạ, Vy", "spoken": "Hà Vi"}},
+        {"method": "PUT", "path": "/readings", "body": {"surface": "a b c d e f g", "spoken": "bảy chữ"}},
         {"method": "PUT", "path": "/readings", "body": {"surface": "...", "spoken": "chấm"}},
         {"method": "PUT", "path": "/readings", "body": {"surface": 3, "spoken": "ba"}},
         {"method": "PUT", "path": "/readings", "body": {"surface": "Heidi", "spoken": "Heidi"}},
@@ -517,7 +521,8 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
 }
 
 
-READINGS = {"Haruto": "Ha ru tô", "Kate": "Kết", "Lucien": "Lu-xi-en", "Tôkyô": "Tô ky ô", "MP": "ma lực"}
+READINGS = {"Haruto": "Ha ru tô", "Kate": "Kết", "Lucien": "Lu-xi-en", "Tôkyô": "Tô ky ô", "MP": "ma lực",
+            "Hạ Vy": "Hà Vi", "Hạ": "Há", "Lý Tiểu": "Lý Tiểu Long", "ông Tư": "Tứ"}
 # (giọng, chữ, gốc của cuốn): mỗi ca so chữ đem đọc và khoá clip. Có dấu câu dính hai đầu, từ lặp, chữ thường không khớp (phân biệt hoa
 # thường), từ dài hơn ("Harutoo", "Haruto-kun" - chỉ khớp cả từ), chữ NFD, đoạn không có từ nào (khoá như trước).
 SPEECH_CASES = [
@@ -533,6 +538,16 @@ SPEECH_CASES = [
     ("supertonic:F1", "“Haruto,” Kate nói.", "ja"),
     ("supertonic:M4", "Haruto gặp Kyouko ở Tôkyô, còn 30 MP.", "ja"),
     ("supertonic:F3", "Không có tên nào cả.", "ja"),
+    # Cụm nhiều chữ: số từ đọc bằng số chữ (Hạ Vy), nhiều hơn (Lý Tiểu), ít hơn (ông Tư - chữ hiện cuối không còn từ nào); khoá dài nhất thắng
+    # ("Hạ Vy" trước "Hạ"); dấu câu hai đầu cụm giữ nguyên, dấu câu GIỮA hay chữ hoa thường khác thì không khớp.
+    ("edge:vi-VN-HoaiMyNeural", "“Hạ Vy,” Kate nói.", None),
+    ("vieneu:turbo/Thường", "“Hạ Vy,” Kate nói.", None),
+    ("edge:vi-VN-NamMinhNeural", "Lý Tiểu gặp ông Tư rồi Hạ Vy và Hạ.", None),
+    ("vieneu:nano/Nhẹ", "Lý Tiểu gặp ông Tư rồi Hạ Vy và Hạ.", None),
+    ("edge:vi-VN-HoaiMyNeural", "Anh gọi: ông Tư! Ông Tư nói.", None),
+    ("supertonic:F1", "Anh gọi: ông Tư! Ông Tư nói.", None),
+    ("edge:vi-VN-HoaiMyNeural", "Hạ, Vy đi; hạ vy ở lại.", None),
+    ("vieneu:turbo/Thường", "Hạ, Vy đi; hạ vy ở lại.", None),
 ]
 
 
@@ -548,9 +563,10 @@ def speech_cases() -> dict[str, Any]:
         local = on_this_computer.get(provider)
         tag = readings.tag(text, READINGS)
         reading = "+".join(part for part in ((vieneu.reading_tag(text, origin, local.speaks_english) if local else ""), tag) if part)
+        layout = None if local else readings.spoken_layout(text, READINGS)
         cases.append({"voice": voice, "text": text, "origin": origin, "tokens": tokens(text),
                       "spokenTokens": vieneu.spoken_tokens(tokens(text), origin, local.speaks_english, READINGS) if local else None,
-                      "spokenText": None if local else readings.spoken_text(text, READINGS),
+                      "spokenText": layout and layout[0], "spokenSlots": layout and layout[1],
                       "tag": tag, "key": cache.clip_key(provider, native, text, reading)})
     return {"readings": READINGS, "cases": cases}
 

@@ -245,7 +245,7 @@ object BookEdits {
     }
 
     /**
-     * `readings` {chữ hiện: chữ đọc} (`book_edits.validate_readings`): chữ hiện là MỘT từ đã sạch ([Readings.isWord]), chữ đọc sạch,
+     * `readings` {chữ hiện: chữ đọc} (`book_edits.validate_readings`): chữ hiện là MỘT từ hay một cụm 2..6 từ liền nhau đã sạch ([Readings.isKey]), chữ đọc sạch,
      * không rỗng, khác chữ hiện. Dùng cả cho cách đọc gửi kèm lần "Nghe thử" (chưa lưu).
      */
     fun validateReadings(readings: Any?): JSONObject {
@@ -255,7 +255,7 @@ object BookEdits {
         val out = JSONObject()
         for (shown in names(readings).sortedWith { a, b -> byCodePoints(a, b) }) {
             val spoken = readings.opt(shown)
-            if (!isClean(shown, READING_WORD_MAX) || !Readings.isWord(shown) || spoken !is String || spoken.isEmpty() ||
+            if (!isClean(shown, READING_WORD_MAX) || !Readings.isKey(shown) || spoken !is String || spoken.isEmpty() ||
                 !isClean(spoken, READING_SPOKEN_MAX) || spoken == shown
             ) {
                 throw EditsError("Một cách đọc riêng trong phần sửa không hợp lệ.")
@@ -1041,15 +1041,15 @@ object BookEdits {
         return JSONObject().put("readings", list)
     }
 
-    /** Chữ người gõ ở "Đọc từ này là…" -> (chữ hiện, chữ đọc) đã làm sạch; chữ hiện không phải MỘT từ: [EditsError]. Chữ đọc rỗng là bỏ. */
+    /** Chữ người gõ ở "Đọc từ này là…" -> (chữ hiện, chữ đọc) đã làm sạch; chữ hiện không phải một từ hay cụm 2..6 từ liền nhau: [EditsError]. Chữ đọc rỗng là bỏ. */
     fun cleanReading(shown: Any?, spoken: Any?): Pair<String, String> {
         var word = cleanText(shown, READING_WORD_MAX)
-        if (!Readings.isWord(word)) {
+        if (!Readings.isKey(word)) {
             // Người chạm vào "Haruto," - cách đọc đặt cho chính từ ấy, không dính dấu câu.
             val (start, end) = Readings.coreSpan(word)
             word = word.substring(start, end)
         }
-        if (word.isEmpty() || !Readings.isWord(word)) throw EditsError("Chỉ đặt được cách đọc cho MỘT từ.")
+        if (word.isEmpty() || !Readings.isKey(word)) throw EditsError("Chỉ đặt được cách đọc cho một từ hay tối đa 6 từ liền nhau, không có dấu câu ở giữa.")
         return word to cleanText(spoken, READING_SPOKEN_MAX)
     }
 

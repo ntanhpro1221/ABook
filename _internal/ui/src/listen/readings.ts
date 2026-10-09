@@ -8,8 +8,8 @@ import { useReadAloudVoices, useSource } from "./source";
 import { splitPieces } from "./words";
 
 // Cách đọc riêng của một cuốn chỉ có chữ ("Đọc từ này là…", lớp sửa `readings` - abook/readaloud/readings.py, BookEdits.kt): người
-// nghe dạy giọng đọc một từ (thường là tên riêng) cho cả cuốn. Chỉ giọng đọc đổi, chữ của sách giữ nguyên. Khoá là MỘT từ, khớp cả từ,
-// phân biệt hoa thường - cùng luật với máy chủ và điện thoại (bỏ dấu câu / ngoặc hai đầu).
+// nghe dạy giọng đọc một từ hay một cụm 2..6 từ liền nhau (thường là tên riêng, "Hạ Vy") cho cả cuốn. Chỉ giọng đọc đổi, chữ của sách giữ nguyên.
+// Khoá khớp cả từ, phân biệt hoa thường - cùng luật với máy chủ và điện thoại (bỏ dấu câu / ngoặc hai đầu cụm, không dấu câu chen giữa).
 
 export interface BookReading {
   surface: string;
@@ -29,14 +29,55 @@ export function wordOf(text: string, word: number): string {
   return piece ? wordCore(piece.text) : "";
 }
 
-/** Các từ của một câu, mỗi từ một lần (đã bỏ dấu câu hai đầu, giữ thứ tự) - để chọn từ muốn sửa cách đọc. */
-export function sentenceWords(text: string): string[] {
-  const seen = new Set<string>();
-  for (const piece of splitPieces(text)) {
-    const core = piece.word >= 0 ? wordCore(piece.text) : "";
-    if (core) seen.add(core);
+/** Một cụm tối đa chừng này chữ liền nhau (cùng giới hạn `KEY_WORDS_MAX` của máy chủ và điện thoại). */
+export const MAX_PHRASE_WORDS = 6;
+
+/** Một chữ hiện của câu: `core` đã bỏ dấu câu hai đầu ("" cho chữ chỉ có dấu câu), `lead` / `tail` = còn dấu câu ở đầu / ở đuôi chữ. */
+export interface SentenceToken {
+  core: string;
+  lead: boolean;
+  tail: boolean;
+}
+
+/** Các chữ hiện của câu theo thứ tự (đơn vị `\S+` như mốc từng chữ): chỉ số trong mảng = thứ tự chữ (cùng số với `word` của `splitPieces`). */
+export function sentenceTokens(text: string): SentenceToken[] {
+  return splitPieces(text)
+    .filter((piece) => piece.word >= 0)
+    .map((piece) => {
+      const token = piece.text.normalize("NFC");
+      const core = wordCore(token);
+      const at = core ? token.indexOf(core) : 0;
+      return { core, lead: at > 0, tail: Boolean(core) && at + core.length < token.length };
+    });
+}
+
+/** Khoá của cụm gồm các chữ hiện từ `from` tới `to` (cùng luật khớp cụm với readings.py): null khi quá `MAX_PHRASE_WORDS` chữ, có chữ chỉ là dấu câu, hay có
+ *  dấu câu chen GIỮA cụm. Dấu câu ở đầu chữ đầu và đuôi chữ cuối thì được ("“Hạ Vy,”" -> "Hạ Vy"). */
+export function phraseKey(tokens: readonly SentenceToken[], from: number, to: number): string | null {
+  if (from < 0 || to < from || to >= tokens.length || to - from + 1 > MAX_PHRASE_WORDS) return null;
+  const cores: string[] = [];
+  for (let at = from; at <= to; at++) {
+    const token = tokens[at];
+    if (!token.core || (at > from && token.lead) || (at < to && token.tail)) return null;
+    cores.push(token.core);
   }
-  return [...seen];
+  return cores.join(" ");
+}
+
+/** Vùng đang chọn trong câu: các chữ hiện từ `from` tới `to` (kể cả). */
+export interface PhraseSelection {
+  from: number;
+  to: number;
+}
+
+/** Bấm chữ `at`: đang chọn đúng MỘT chữ khác thì mở rộng thành cụm tới chữ ấy (bấm chữ đầu rồi chữ cuối) nếu cụm hợp lệ; còn lại thì chọn riêng chữ ấy. */
+export function pickWord(tokens: readonly SentenceToken[], current: PhraseSelection | null, at: number): PhraseSelection {
+  if (current && current.from === current.to && current.from !== at) {
+    const from = Math.min(current.from, at);
+    const to = Math.max(current.from, at);
+    if (phraseKey(tokens, from, to) !== null) return { from, to };
+  }
+  return { from: at, to: at };
 }
 
 /** Cách đọc người gõ, đã gọn: bỏ khoảng trắng hai đầu, gộp khoảng trắng giữa (máy chủ làm sạch cùng cách). */
