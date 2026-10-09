@@ -41,6 +41,7 @@ import {
   useCreateBook,
   useFirstPersonHint,
   useScan,
+  useStudioMissing,
   useVoices,
 } from "@/studio/data";
 import { api } from "@/studio/api";
@@ -62,6 +63,7 @@ import {
 } from "@/studio/upload";
 import { AnalysisModelPicker, analysisChoiceLabel, modelLabel, useAnalysisModels } from "@/studio/AnalysisModelPicker";
 import { DEFAULT_LABEL, applyTemplate, type BookTemplate, type Profile } from "@/studio/bookTemplates";
+import { StudioInstallNotice } from "@/studio/StudioSetup";
 import { TemplateBar } from "@/studio/TemplateBar";
 import { VolumeSplit } from "@/studio/VolumeSplit";
 import { inOrder, ranges, startNumbers, volumeTitles } from "@/studio/volumes";
@@ -1228,6 +1230,7 @@ function QualityStep({
   chapters,
   analysisModel,
   setAnalysisModel,
+  noStudio,
 }: {
   profile: Profile;
   setProfile: (profile: Profile) => void;
@@ -1235,6 +1238,8 @@ function QualityStep({
   chapters: number;
   analysisModel: string;
   setAnalysisModel: (model: string) => void;
+  /** Máy chưa có Studio: số đo thời gian không nói gì về máy này - không hiện. */
+  noStudio?: boolean;
 }) {
   const guess = estimate(words, chapters);
   return (
@@ -1291,7 +1296,9 @@ function QualityStep({
               </ul>
               <div className="mt-4 flex items-start gap-1.5 border-t border-line pt-3 text-[13px] text-fg-2">
                 <Clock3 className="mt-0.5 size-3.5 shrink-0" />
-                {option.value === "high_quality" ? (
+                {noStudio ? (
+                  <span>Thời gian làm tính được khi Studio đã cài.</span>
+                ) : option.value === "high_quality" ? (
                   <span>
                     Trên máy này: <span className="font-semibold text-fg">{lengthRange(guess.totalLow, guess.totalHigh)}</span> cho{" "}
                     {chapters} chương
@@ -1329,6 +1336,7 @@ function ConfirmStep({
   analysisModel,
   restart,
   onReview,
+  noStudio,
 }: {
   /** "Chia thành nhiều tập": các tập sẽ tạo (số chương mỗi tập), hay không có khi là một sách. */
   volumes?: { chapters: number }[];
@@ -1352,11 +1360,13 @@ function ConfirmStep({
   restart?: { title: string };
   /** Quay lại bước đầu (chọn file, gợi ý dòng ghi công). */
   onReview: () => void;
+  /** Máy chưa có Studio: tạo được nhưng không chạy được - không ước thời gian, không "bắt đầu ngay". */
+  noStudio?: boolean;
 }) {
   const models = useAnalysisModels().data;
   const option = PROFILES.find((item) => item.value === profile)!;
   const guess = estimate(scan.totals.words, scan.files.length);
-  const measured = profile === "high_quality";
+  const measured = profile === "high_quality" && !noStudio;
   const rows: [string, string][] = [
     ["Chương", `${scan.files.length} chương · ${formatNumber(scan.totals.words)} chữ`],
     // Tập 1 là sách thường, tập sau nối tiếp nó (continuation.py): nói rõ tên từng sách và việc "tự chạy khi tập trước xong".
@@ -1390,13 +1400,15 @@ function ConfirmStep({
     ...(analysisModel || models?.default
       ? ([["Bộ phân tích truyện", analysisChoiceLabel(analysisModel, seed?.analysisModel)]] as [string, string][])
       : []),
-    ...(measured
-      ? ([
-          ["Thời gian làm", lengthRange(guess.totalLow, guess.totalHigh)],
-          ["Chương đầu nghe được sau", `khoảng ${formatLength(guess.firstChapter)}`],
-        ] as [string, string][])
-      : // "Nhanh" chưa có số đo trên máy này - vẫn nói được trần trên thay vì im lặng (soát UX a5 01-10).
-        ([["Thời gian làm", `chưa đo cho chế độ này - ngắn hơn “Chất lượng cao” (dưới ${formatLength(guess.totalHigh)})`]] as [string, string][])),
+    ...(noStudio
+      ? ([["Thời gian làm", "tính được khi Studio đã cài - dự án chờ tới lúc đó"]] as [string, string][])
+      : measured
+        ? ([
+            ["Thời gian làm", lengthRange(guess.totalLow, guess.totalHigh)],
+            ["Chương đầu nghe được sau", `khoảng ${formatLength(guess.firstChapter)}`],
+          ] as [string, string][])
+        : // "Nhanh" chưa có số đo trên máy này - vẫn nói được trần trên thay vì im lặng (soát UX a5 01-10).
+          ([["Thời gian làm", `chưa đo cho chế độ này - ngắn hơn “Chất lượng cao” (dưới ${formatLength(guess.totalHigh)})`]] as [string, string][])),
   ];
   return (
     <div>
@@ -1420,7 +1432,7 @@ function ConfirmStep({
         <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
         <p className="text-pretty">
           <span className="font-semibold">Giai đoạn đầu là phân tích cả truyện</span>
-          {measured ? ` (khoảng ${formatLength(guess.analysis)})` : " (truyện dài có thể mất nhiều giờ)"}: trong lúc đó đừng tắt máy, đừng cho máy ngủ và đừng bấm
+          {noStudio ? "" : measured ? ` (khoảng ${formatLength(guess.analysis)})` : " (truyện dài có thể mất nhiều giờ)"}: trong lúc đó đừng tắt máy, đừng cho máy ngủ và đừng bấm
           Dừng. Dừng giữa chừng rồi chạy tiếp sẽ ra cách phân vai khác với chạy liền một mạch - cần máy rảnh một lúc thì bấm{" "}
           <span className="font-semibold">Tạm dừng</span>, an toàn mọi lúc. Qua giai đoạn này thì dừng lúc nào cũng được.
         </p>
@@ -1447,11 +1459,13 @@ function ConfirmStep({
         </div>
       )}
       <label className="mt-4 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="start-now">
-        <Switch id="start-now" checked={startNow} onCheckedChange={setStartNow} />
+        <Switch id="start-now" checked={startNow && !noStudio} disabled={noStudio} onCheckedChange={setStartNow} />
         <span>
           <span className="block text-sm font-medium">Bắt đầu tạo ngay</span>
           <span className="mt-0.5 block text-[13px] leading-relaxed text-fg-2">
-            {startNow
+            {noStudio
+              ? "Chưa có Studio nên sách chưa chạy được. Sách được tạo và chờ; cài Studio xong thì bấm “Bắt đầu tạo sách nói” ở trang dự án."
+              : startNow
               ? "Sách chạy nền: đóng cửa sổ vẫn tiếp tục, Windows báo khi xong. Chương nào xong là nghe được chương đó, không phải chờ cả cuốn."
               : "Sách được tạo nhưng chưa chạy - bấm “Bắt đầu tạo sách nói” ở trang dự án khi sẵn sàng (vd sửa trước cách đọc tên)."}
           </span>
@@ -1489,6 +1503,7 @@ export function NewProjectScreen() {
   const [rawScan, setRawScan] = useState<ScanResult | null>(null);
   const [problem, setProblem] = useState<{ text: string; subfolders: string[] } | null>(null);
   const submitting = useRef(false);
+  const noStudio = useStudioMissing().missing;
   const update = (changes: Partial<Draft>) => setDraft((current) => ({ ...current, ...changes }));
 
   useEffect(() => saveDraft(draft), [draft]);
@@ -1685,7 +1700,7 @@ export function NewProjectScreen() {
         ...(draft.analysisModel ? { analysisModel: draft.analysisModel } : {}),
         // Chỉ khi người dùng đã đồng ý đề xuất - không gửi gì thì sách giữ nguyên nội dung.
         ...(draft.dropCredits && creditSummary(scan.files).lines ? { dropCreditLines: true } : {}),
-        start: draft.startNow,
+        start: draft.startNow && !noStudio,
         ...(draft.precastWait ? { precastWait: true } : {}),
       },
       {
@@ -1695,7 +1710,9 @@ export function NewProjectScreen() {
           const readings = shared.length
             ? `Dùng ${shared.length} cách đọc chung (${shared.slice(0, 3).join(", ")}${shared.length > 3 ? ", …" : ""}).`
             : "";
-          const starting = !draft.startNow
+          const starting = noStudio
+            ? "Dự án chờ tới khi Studio cài xong - rồi bấm “Bắt đầu tạo sách nói” ở trang dự án."
+            : !draft.startNow
             ? ""
             : result.queued
               ? `Đang có cuốn khác chạy - sách này vào hàng chờ (thứ ${result.queued}), tự bắt đầu khi cuốn ấy xong.`
@@ -1716,8 +1733,8 @@ export function NewProjectScreen() {
                 [
                   result.unchanged ? "Giữ nguyên sách cũ." : "",
                   starting,
-                  volumes > 1 && draft.startNow ? "Phần sau tự bắt đầu khi phần trước xong, mang giọng và cách đọc tên sang." : "",
-                  volumes > 1 && !draft.startNow ? "Bấm bắt đầu phần 1 thì các phần sau tự xếp hàng; mỗi phần chạy được khi phần trước đã phân tích xong." : "",
+                  volumes > 1 && draft.startNow && !noStudio ? "Phần sau tự bắt đầu khi phần trước xong, mang giọng và cách đọc tên sang." : "",
+                  volumes > 1 && (!draft.startNow || noStudio) ? "Bấm bắt đầu phần 1 thì các phần sau tự xếp hàng; mỗi phần chạy được khi phần trước đã phân tích xong." : "",
                   readings,
                   draft.replaces && !result.unchanged && !result.replaceError ? "Bản cũ đã vào Thùng rác." : "",
                 ]
@@ -1779,6 +1796,7 @@ export function NewProjectScreen() {
         <section className="min-w-0 flex-1">
           {/* Mẫu thiết lập chỉ cho sách mới: "Làm tiếp cuốn này" theo phần trước. */}
           {step > 0 && !draft.seed && <TemplateBar draft={draft} onPick={pickTemplate} />}
+          {step === 0 && <StudioInstallNotice className="mb-6" />}
           {step === 0 && (
             <SourceStep
               scan={scan}
@@ -1861,7 +1879,7 @@ export function NewProjectScreen() {
           )}
           {step === 2 && scan && (
             <QualityStep profile={draft.profile} setProfile={(profile) => update({ profile })} words={scan.totals.words} chapters={scan.files.length}
-              analysisModel={draft.analysisModel ?? ""} setAnalysisModel={(analysisModel) => update({ analysisModel })} />
+              analysisModel={draft.analysisModel ?? ""} setAnalysisModel={(analysisModel) => update({ analysisModel })} noStudio={noStudio} />
           )}
           {step === 3 && scan && (
             <ConfirmStep
@@ -1882,6 +1900,7 @@ export function NewProjectScreen() {
               analysisModel={draft.analysisModel ?? ""}
               restart={draft.replaces?.restart ? { title: draft.replaces.title } : undefined}
               onReview={() => go(0)}
+              noStudio={noStudio}
             />
           )}
           {/* Ghim ở đáy vùng cuộn: bước xác nhận dài (thêm dòng "Dòng ghi công"...) đẩy nút tạo xuống dưới nếp màn hình - soát
@@ -1895,8 +1914,8 @@ export function NewProjectScreen() {
                 Tiếp tục <ArrowRight className="size-4" />
               </Button>
             ) : (
-              <Button variant="primary" icon={draft.startNow ? Wand2 : Mic} loading={create.isPending} disabled={!title.trim()} onClick={submit}>
-                {draft.startNow ? "Tạo và bắt đầu" : "Tạo sách"}
+              <Button variant="primary" icon={draft.startNow && !noStudio ? Wand2 : Mic} loading={create.isPending} disabled={!title.trim()} onClick={submit}>
+                {draft.startNow && !noStudio ? "Tạo và bắt đầu" : "Tạo sách"}
               </Button>
             )}
           </div>

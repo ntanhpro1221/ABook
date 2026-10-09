@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  analysisLabel, formatSize, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, sceneOffered, autoLabel, autoSwitch,
+  analysisLabel, formatSize, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, sceneButton, sceneCard, autoLabel, autoSwitch,
   type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood, type SceneStudent,
 } from "./musicLocal";
 
@@ -124,9 +124,18 @@ describe("mô-đun Phân tích nhạc", () => {
   });
   it("dung lượng dễ đọc", () => {
     expect(formatSize(512)).toBe("1 KB");
-    expect(formatSize(5.5 * 1024 * 1024)).toBe("5,5 MB");
-    expect(formatSize(59_000_000)).toBe("56 MB");
+    expect(formatSize(5_500_000)).toBe("5,5 MB");
+    expect(formatSize(59_000_000)).toBe("59 MB");
     expect(formatSize(1_273_217_311)).toBe("1,27 GB");
+  });
+  it("một hệ đơn vị: MB là 10^6 byte, nên cỡ thật 56,9 triệu byte ghi 57 MB chứ không phải 54", () => {
+    expect(formatSize(56_900_000)).toBe("57 MB");
+    expect(formatSize(999_999)).toBe("1000 KB");
+    expect(formatSize(1_000_000)).toBe("1,0 MB");
+  });
+  it("lần tải bị huỷ thì nói lần sau làm tiếp từ chỗ dừng", () => {
+    expect(moduleLabel(status({ state: "missing", cancelled: true }))).toContain("Đã huỷ - lần tải sau làm tiếp từ chỗ dừng");
+    expect(moduleLabel(status({ state: "missing" }))).not.toContain("Đã huỷ");
   });
 });
 
@@ -185,13 +194,22 @@ describe("nhạc theo sát từng đoạn trong chương", () => {
   const module = (over: Partial<MusicModuleStatus> = {}): MusicModuleStatus => ({
     state: "ready", done: 0, total: 0, error: "", ready: true, analysing: false, metered: false, scene: scene(), ...over,
   });
-  it("chỉ mời khi Phân tích nhạc đã đủ, phần này chưa có và máy tải được", () => {
-    expect(sceneOffered(module())).toBe(true);
-    expect(sceneOffered(module({ scene: scene({ state: "current" }) }))).toBe(false);
-    expect(sceneOffered(module({ scene: scene({ blocked: "tải đang bị tắt trên máy này" }) }))).toBe(false);
-    expect(sceneOffered(module({ scene: scene({ offered: false, reason: "cần cài Studio: bộ này chạy trong Studio của máy tính" }) }))).toBe(false);
-    expect(sceneOffered(module({ state: "missing", ready: false }))).toBe(false);
-    expect(sceneOffered(module({ scene: undefined }))).toBe(false);
-    expect(sceneOffered(undefined)).toBe(false);
+  it("hiện khi phần này chưa có, kể cả khi Phân tích nhạc chưa tải (không đợi nhập bài)", () => {
+    expect(sceneCard(module())?.unavailable).toBe("");
+    expect(sceneCard(module({ state: "missing", ready: false }))?.unavailable).toBe("");
+    expect(sceneCard(module({ scene: scene({ state: "current" }) }))).toBeNull();
+    expect(sceneCard(module({ scene: undefined }))).toBeNull();
+    expect(sceneCard(undefined)).toBeNull();
+  });
+  it("máy chưa dùng được thì thẻ nói lý do thay vì ẩn", () => {
+    expect(sceneCard(module({ scene: scene({ offered: false, reason: "cần cài Studio: bộ này chạy trong Studio của máy tính" }) }))?.unavailable).toBe(
+      "Cần cài Studio: bộ này chạy trong Studio của máy tính",
+    );
+    expect(sceneCard(module({ scene: scene({ blocked: "tải đang bị tắt trên máy này" }) }))?.unavailable).toBe("Tải đang bị tắt trên máy này");
+  });
+  it("nút nói tải gì; thiếu Phân tích nhạc thì tổng gồm cả nó", () => {
+    expect(sceneButton(scene({ bytes: 728_000_000, total: 728_000_000 }))).toBe("Tải model nhạc theo đoạn (728 MB)");
+    expect(sceneButton(scene({ bytes: 728_000_000, total: 785_000_000 }))).toBe("Tải model nhạc theo đoạn cùng Phân tích nhạc (785 MB)");
+    expect(sceneButton(scene({ bytes: 728_000_000 }))).toContain("728 MB");
   });
 });

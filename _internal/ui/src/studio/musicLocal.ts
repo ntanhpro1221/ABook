@@ -60,6 +60,10 @@ export interface MusicModuleStatus {
   metered: boolean;
   /** Thư viện mới chỉ dùng được sau khi mở lại app. */
   restart?: boolean;
+  /** Lần tải vừa rồi bị người dùng huỷ (phần đã tải giữ, lần sau làm tiếp). */
+  cancelled?: boolean;
+  /** Máy tính: có nút Huỷ khi đang tải (điện thoại không có). */
+  cancellable?: boolean;
   /** Chỉ máy tính. */
   precise?: PreciseMood;
   /** Chỉ máy tính: phần tuỳ chọn "Học sinh không khí cảnh". */
@@ -71,6 +75,8 @@ export interface MusicModuleStatus {
 export interface SceneStudent {
   state: "current" | "outdated" | "missing";
   bytes: number;
+  /** Cỡ lần tải khi bấm: gồm cả những phần của Phân tích nhạc máy còn thiếu (bằng `bytes` khi Phân tích nhạc đã đủ). */
+  total?: number;
   blocked: string;
   external: boolean;
   /** Máy này dùng được phần này (có Studio để chạy nó); không thì `reason` nói vì sao và giao diện ẩn nút tải. */
@@ -94,6 +100,8 @@ export interface PreciseMood {
   error: string;
   working: boolean;
   pending: number;
+  /** Lần tải vừa rồi bị huỷ (công tắc đã tắt, file dở giữ lại). */
+  cancelled?: boolean;
 }
 
 export interface LocalMusicView {
@@ -104,13 +112,17 @@ export interface LocalMusicView {
   module?: MusicModuleStatus;
 }
 
-/** Dung lượng cho người đọc: dưới 1 MB ghi KB, còn lại MB làm tròn (một chữ số thập phân dưới 10 MB); từ 1 GB (như Hugging Face ghi) ghi GB hai chữ số thập phân. */
+/** Dung lượng cho người đọc, MỘT hệ đơn vị thập phân (KB = 10^3, MB = 10^6, GB = 10^9 byte - như Hugging Face và nhà mạng ghi): dưới 1 MB ghi KB, MB làm tròn
+ *  (một chữ số thập phân dưới 10 MB), từ 1 GB ghi GB hai chữ số thập phân. Số byte lấy từ máy chủ nên nhãn "(57 MB)" khớp cỡ thật của file. */
 export function formatSize(bytes: number): string {
   if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(2).replace(".", ",")} GB`;
-  const megabytes = bytes / (1024 * 1024);
-  if (megabytes < 1) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  const megabytes = bytes / 1e6;
+  if (megabytes < 1) return `${Math.max(1, Math.round(bytes / 1e3))} KB`;
   return `${megabytes < 10 ? megabytes.toFixed(1).replace(".", ",") : Math.round(megabytes)} MB`;
 }
+
+/** Lời báo lần tải vừa rồi bị huỷ - đứng đầu câu mô tả của thẻ để người dùng biết chuyện gì đã xảy ra và lần sau thế nào. */
+export const CANCELLED_NOTE = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng.";
 
 export function modulePercent(module: Pick<MusicModuleStatus, "done" | "total">): number {
   return module.total > 0 ? Math.min(100, Math.floor((module.done / module.total) * 100)) : 0;
@@ -124,13 +136,13 @@ export function moduleLabel(module: MusicModuleStatus): string {
   if (module.state === "unsupported") return module.reason ? `Máy này chưa phân tích được nhạc: ${module.reason}.` : "Máy này chưa phân tích được nhạc.";
   if (module.state === "outdated" && module.stopped)
     return `Phân tích nhạc đang tắt: cần tải lại phần chạy (${formatSize(module.outdatedBytes ?? module.total)}) để phân tích nhạc. Bài của bạn vẫn nhập, nghe và ghim tay được.`;
-  if (module.state === "outdated") return `Phân tích nhạc có bản mới - ${formatSize(module.outdatedBytes ?? module.total)}. Bản đang dùng vẫn chạy bình thường.`;
+  if (module.state === "outdated") return `${module.cancelled ? `${CANCELLED_NOTE} ` : ""}Phân tích nhạc có bản mới - ${formatSize(module.outdatedBytes ?? module.total)}. Bản đang dùng vẫn chạy bình thường.`;
   if (module.state === "ready") {
     if (module.restart) return "Phân tích nhạc đã cập nhật - mở lại ABook để dùng thư viện mới.";
     if ((module.stale ?? 0) > 0) return `${module.stale} bài được phân tích bằng bản cũ - vẫn dùng được, bạn có thể phân tích lại bằng bản mới.`;
     return "";
   }
-  return `Máy chưa nghe được nhạc của bạn để hiểu không khí của nó. Tải Phân tích nhạc một lần (${formatSize(module.total)}) để các bài nhập vào được phân tích ngay trên máy này; sau đó không cần mạng. Chưa tải thì bài của bạn vẫn nhập, nghe và ghim tay được.`;
+  return `${module.cancelled ? `${CANCELLED_NOTE} ` : ""}Máy chưa nghe được nhạc của bạn để hiểu không khí của nó. Tải Phân tích nhạc một lần (${formatSize(module.total)}) để các bài nhập vào được phân tích ngay trên máy này; sau đó không cần mạng. Chưa tải thì bài của bạn vẫn nhập, nghe và ghim tay được.`;
 }
 
 /** Có mời người dùng bật "Đo cảm xúc nhạc chính xác hơn" không: máy đủ sức, và đã có bộ phân tích nhạc (nó dùng lại phần nghe của bộ ấy). */
@@ -138,9 +150,19 @@ export function preciseOffered(module: MusicModuleStatus | undefined): module is
   return Boolean(module?.precise && module.precise.state !== "unavailable" && module.ready);
 }
 
-/** Có mời người dùng tải "Học sinh không khí cảnh" không: Phân tích nhạc đã đủ, máy có Studio để chạy nó, phần này chưa có và máy tải được. */
-export function sceneOffered(module: MusicModuleStatus | undefined): module is MusicModuleStatus & { scene: SceneStudent } {
-  return Boolean(module?.scene && module.scene.state === "missing" && module.scene.offered && !module.scene.blocked && module.state === "ready" && module.ready);
+/** Thẻ “Nhạc theo sát từng đoạn trong chương” (Học sinh không khí cảnh): hiện khi phần này chưa có trên máy - không đợi người dùng nhập bài hay tải Phân tích nhạc
+ *  trước (tải model này kéo theo các phần còn thiếu, cỡ ghi ở `total`). `unavailable`: máy chưa dùng được thì thẻ nói lý do (không ẩn); rỗng = bấm tải được. */
+export function sceneCard(module: MusicModuleStatus | undefined): { scene: SceneStudent; unavailable: string } | null {
+  const scene = module?.scene;
+  if (!scene || scene.state !== "missing") return null;
+  const reason = scene.blocked || (scene.offered ? "" : scene.reason);
+  return { scene, unavailable: reason ? reason[0].toUpperCase() + reason.slice(1) : "" };
+}
+
+/** Chữ trên nút tải của thẻ ấy: nói tải cái gì và cỡ thật; Phân tích nhạc còn thiếu thì nói tải cả nó. */
+export function sceneButton(scene: SceneStudent): string {
+  const total = scene.total ?? scene.bytes;
+  return total > scene.bytes ? `Tải model nhạc theo đoạn cùng Phân tích nhạc (${formatSize(total)})` : `Tải model nhạc theo đoạn (${formatSize(scene.bytes)})`;
 }
 
 /** Đang tải hay đang nghe kỹ lại: giao diện hỏi lại view mỗi giây. */
@@ -166,7 +188,7 @@ export function preciseLabel(precise: PreciseMood): string {
     return "Đang bật - bài mới nhập sẽ được nghe kỹ ngầm vài giây.";
   }
   const how = precise.present ? "Chạy" : `Tải thêm ${size} một lần, sau đó chạy`;
-  return `Máy nghe kỹ hơn từng bài bạn nhập để chọn nhạc nền hợp không khí truyện hơn. ${how} ngầm vài giây mỗi bài, không cần mạng.`;
+  return `${precise.cancelled ? `${CANCELLED_NOTE} ` : ""}Máy nghe kỹ hơn từng bài bạn nhập để chọn nhạc nền hợp không khí truyện hơn. ${how} ngầm vài giây mỗi bài, không cần mạng.`;
 }
 
 export interface ImportResult extends LocalMusicView {

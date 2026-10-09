@@ -228,10 +228,14 @@ def test_the_optional_scene_student_is_offered_downloaded_on_request_and_never_d
     monkeypatch.setenv(scene.ENV_DOWNLOAD, "1")
     monkeypatch.setattr(scene, "_directory", None)
     scene.configure(tmp_path / "music" / scene.PACKAGE_FOLDER)
+    before = music_module.status()
+    assert before["state"] == "missing" and before["scene"]["total"] > before["scene"]["bytes"] > 0, "chưa có Phân tích nhạc: tải model theo đoạn kéo theo các phần kia"
+    assert before["scene"]["total"] == before["scene"]["bytes"] + sum(part["bytes"] for part in before["parts"]), "tổng = phần này + mọi phần còn thiếu"
     music_module.start()
     music_module.join(10)
     machine.calls.clear()
     status = music_module.status()
+    assert status["scene"]["total"] == status["scene"]["bytes"], "Phân tích nhạc đã đủ: tổng chỉ còn phần này"
     assert status["state"] == "ready" and status["scene"]["state"] == "missing" and status["scene"]["blocked"] == ""
     assert "scene_q06" not in _names(status["parts"]), "thiếu phần tuỳ chọn thì mô-đun vẫn đủ"
     music_module.start()
@@ -284,6 +288,17 @@ def test_the_scene_download_is_refused_by_the_api_without_studio(studio, monkeyp
     assert status == 200 and started == [True]
 
 
+def test_the_cancel_routes_answer_with_the_current_status(studio) -> None:  # noqa: F811
+    _paths, _app, server, _runner = studio
+    status, view = _call(server, "POST", "/api/music/local/module/cancel")
+    assert status == 200 and view["module"]["cancelled"] is False and view["module"]["cancellable"] is True, "không có lần tải nào: không làm gì"
+    status, view = _call(server, "POST", "/api/music/local/precise/cancel")
+    assert status == 200 and view["module"]["precise"]["cancelled"] is False
+    for voice in ("vieneu", "supertonic"):
+        status, answer = _call(server, "POST", f"/api/readaloud/{voice}/cancel")
+        assert status == 200 and answer["cancelled"] is False and answer["state"] != "downloading"
+
+
 def test_the_torch_path_needs_no_libraries(machine: Machine, monkeypatch) -> None:
     monkeypatch.setenv(music_student.ENV_BACKEND, "torch")
     assert [part["id"] for part in music_module.status()["parts"]] == ["ffmpeg", "model"]
@@ -308,6 +323,40 @@ def test_a_failed_download_says_why_and_a_retry_resumes_with_the_parts_still_mis
     music_module.start()
     music_module.join(10)
     assert music_module.status()["state"] == "ready" and "ffmpeg" not in " ".join(machine.calls), "không tải lại ffmpeg"
+
+
+def test_cancel_stops_the_download_keeps_finished_parts_and_a_retry_resumes(machine: Machine, monkeypatch) -> None:
+    real = machine.download
+    seen: list[bool] = []
+
+    def cancelling(item, target, progress, cancelled):
+        if item.name == "onnxruntime":
+            music_module.cancel()
+            seen.append(cancelled())
+            raise studio_setup.Cancelled()
+        return real(item, target, progress, cancelled)
+
+    monkeypatch.setattr(studio_setup, "download", cancelling)
+    music_module.start()
+    music_module.join(10)
+    status = music_module.status()
+    assert seen == [True], "cờ huỷ tới tận hàm tải"
+    assert status["cancelled"] is True and status["cancellable"] is True
+    assert status["state"] not in ("downloading", "error") and status["error"] == ""
+    assert music_module._read_stamp() == {"ffmpeg": ffmpeg_setup.pin()}, "phần đã xong được nhớ"
+    monkeypatch.setattr(studio_setup, "download", real)
+    machine.calls.clear()
+    music_module.start()
+    music_module.join(10)
+    status = music_module.status()
+    assert status["state"] == "ready" and status["cancelled"] is False and "ffmpeg" not in " ".join(machine.calls), "tải tiếp, không tải lại phần đã xong"
+
+
+def test_cancel_when_nothing_is_downloading_does_nothing(machine: Machine) -> None:
+    music_module.cancel()
+    music_module.start()
+    music_module.join(10)
+    assert music_module.status()["state"] == "ready", "cờ huỷ thừa không làm lần tải sau hỏng"
 
 
 def test_a_machine_that_cannot_download_says_so_and_fetches_nothing(machine: Machine, monkeypatch) -> None:

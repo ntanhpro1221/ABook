@@ -38,7 +38,7 @@ export interface EditsSyncNote {
 
 /** Tên máy giữ sách để nói trong lời báo: máy tính khác thì tên thật của nó (hai máy đều là máy tính, "máy tính" không nói máy nào), không thì "máy tính". */
 export function holderName(remote: boolean | { computer: string } | undefined): string {
-  return typeof remote === "object" && remote.computer ? remote.computer : "máy tính";
+  return remote && typeof remote === "object" && remote.computer ? remote.computer : "máy tính";
 }
 
 /** Điều đáng nói về một cuốn tải từ máy tính: chưa gửi (kèm lý do nếu lần gửi trước hỏng), hay đã gửi và máy tính đã làm gì.

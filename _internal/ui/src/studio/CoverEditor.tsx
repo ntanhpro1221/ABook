@@ -113,7 +113,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           disabled={busy}
           onClick={() => input.current?.click()}
           aria-label={book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg px-1.5 text-[13px] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 sm:px-2"
+          className="touch-box inline-flex h-8 items-center gap-1.5 rounded-lg px-1.5 text-[13px] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 sm:px-2"
         >
           <ImagePlus className="size-4" /> <span className="max-sm:hidden">{book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}</span>
         </button>
@@ -123,7 +123,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           onClick={() => setSearching(true)}
           aria-label="Tìm ảnh bìa trên mạng"
           title="Tìm ảnh bìa trên mạng"
-          className="grid size-8 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
+          className="touch-box grid size-8 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
         >
           <Globe className="size-4" />
         </button>
@@ -134,7 +134,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
             onClick={() => remove.mutate()}
             aria-label="Bỏ ảnh bìa, dùng lại bìa vẽ từ tên sách"
             title="Bỏ ảnh bìa"
-            className="grid size-8 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
+            className="touch-box grid size-8 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
           >
             <Trash2 className="size-4" />
           </button>

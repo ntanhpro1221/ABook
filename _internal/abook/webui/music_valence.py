@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from . import music_local, music_module, music_student, voice_module
+from . import music_local, music_module, music_student, studio_setup, voice_module
 
 VERSION = "vhop1"
 MIN_RAM_BYTES = int(7.5 * 1024 ** 3)  # máy "8 GB" báo ~7,4-7,9 GiB (một phần RAM dành cho phần cứng)
@@ -41,7 +41,8 @@ _lock = threading.RLock()
 _store: music_local.LocalMusic | None = None
 _get_enabled: Callable[[], bool] = lambda: False
 _set_enabled: Callable[[bool], None] = lambda value: None
-_state: dict[str, Any] = {"downloading": False, "done": 0, "total": 0, "error": "", "working": False, "left": 0}
+_state: dict[str, Any] = {"downloading": False, "done": 0, "total": 0, "error": "", "working": False, "left": 0, "cancelled": False}
+_cancel = threading.Event()  # người dùng bấm Huỷ khi đang tải (cancel())
 _thread: threading.Thread | None = None
 _again = False
 
@@ -51,7 +52,7 @@ def configure(store: music_local.LocalMusic | None, get_enabled: Callable[[], bo
     global _store, _get_enabled, _set_enabled, _again
     with _lock:
         _store, _get_enabled, _set_enabled, _again = store, get_enabled, set_enabled, False
-        _state.update(downloading=False, done=0, total=0, error="", working=False, left=0)
+        _state.update(downloading=False, done=0, total=0, error="", working=False, left=0, cancelled=False)
 
 
 # ---- phép tính --------------------------------------------------------------------------------------------------------------------
@@ -282,7 +283,7 @@ def status() -> dict[str, Any]:
         pending = len(_store.valence_pending(VERSION)) if _store is not None and state == "ready" else 0
         return {"state": state, "enabled": enabled(), "present": have, "removable": removable(), "reason": reason, "bytes": total_bytes(),
                 "done": _state["done"] if state == "downloading" else 0, "total": _state["total"] if state == "downloading" else 0,
-                "error": _state["error"], "working": bool(_state["working"]), "pending": pending}
+                "error": _state["error"], "working": bool(_state["working"]), "pending": pending, "cancelled": bool(_state["cancelled"])}
 
 
 def enable() -> None:
@@ -303,6 +304,12 @@ def disable() -> None:
     """Người dùng tắt: dừng đo ở bài kế (bài đã đo giữ số của nó), giữ file đã tải để bật lại không phải tải."""
     with _lock:
         _set_enabled(False)
+
+
+def cancel() -> None:
+    """Người dùng bấm Huỷ khi đang tải: dừng ở nhịp đọc kế, tắt công tắc, giữ `.part` để lần bật sau tải tiếp."""
+    if _state["downloading"]:
+        _cancel.set()
 
 
 def remove_files() -> int:
@@ -333,7 +340,8 @@ def _download() -> None:
     global _thread
     if _state["downloading"] and _thread is not None and _thread.is_alive():
         return
-    _state.update(downloading=True, done=0, total=total_bytes(), error="")
+    _state.update(downloading=True, done=0, total=total_bytes(), error="", cancelled=False)
+    _cancel.clear()
     _thread = threading.Thread(target=_download_run, name="music-valence-download", daemon=True)
     _thread.start()
 
@@ -348,9 +356,15 @@ def _download_run() -> None:
             with _lock:
                 _state["done"] = done
 
-        voice_module.download_files(part, directory, progress)
+        voice_module.download_files(part, directory, progress, _cancel.is_set)
         with _lock:
             _state.update(downloading=False, error="")
+    except studio_setup.Cancelled:
+        # Huỷ = không muốn tải nữa: tắt công tắc luôn (bật rồi mà thiếu file sẽ hiện "chưa tải xong"); `.part` ở lại để bật lần sau tải tiếp.
+        with _lock:
+            _state.update(downloading=False, error="", done=0, cancelled=True)
+            _set_enabled(False)
+        return
     except Exception as error:  # noqa: BLE001 - mọi lỗi thành một câu cho người dùng
         with _lock:
             _state.update(downloading=False, error=f"Không tải được bộ đo cảm xúc chính xác hơn: {music_module._reason(error)}.")

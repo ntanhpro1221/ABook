@@ -315,7 +315,7 @@ def status() -> dict[str, Any]:
             "outdatedParts": [part.label for part in behind], "outdatedBytes": sum(part.size for part in behind),
             "benchmark": {tier: bench[tier] for tier in tiers if isinstance(bench.get(tier), dict)},
             "benchmarking": _state["benchmarking"], "suggestion": suggestion(bench, tiers) if not _state["benchmarking"] else None,
-            "device": facts, "recommended": best, "restart": _restart_pending(), "slowRtf": SLOW_RTF,
+            "cancelled": bool(_state["cancelled"]), "device": facts, "recommended": best, "restart": _restart_pending(), "slowRtf": SLOW_RTF,
         }
 
 
@@ -343,11 +343,18 @@ def join(timeout: float | None = None) -> None:
     _core.join(timeout)
 
 
-def _install(part: Component, progress: Callable[[int], None]) -> None:
+def cancel() -> None:
+    """Người dùng bấm Huỷ khi đang tải: dừng giữa chừng, phần đã tải được giữ để lần sau làm tiếp."""
+    _core.cancel()
+
+
+def _install(part: Component, progress: Callable[[int], None], cancelled: Callable[[], bool] | None = None) -> None:
+    """`cancelled`: cờ Huỷ của mô-đun đang tải (mặc định của chính mô-đun này); mô-đun khác dùng chung bộ đọc chữ truyền cờ của nó."""
     folder = _core.folder
     assert folder is not None
+    cancelled = cancelled or _core.cancelled
     if part.id == "libs":
-        music_module.install_libs_part(lambda done, _total: progress(done))
+        music_module.install_libs_part(lambda done, _total: progress(done), cancelled)
         return
     target = _dir(part.id)
     assert target is not None
@@ -356,7 +363,7 @@ def _install(part: Component, progress: Callable[[int], None]) -> None:
     if part.id in ("g2p", "voices"):
         item = part.downloads[0]
         wheel = folder / voice_module.DOWNLOADS / f"{item.name}.whl"
-        studio_setup.download(item, wheel, lambda have, _total: progress(have), lambda: False)
+        studio_setup.download(item, wheel, lambda have, _total: progress(have), cancelled)
         staging = target.with_name(target.name + ".part")
         shutil.rmtree(staging, ignore_errors=True)
         staging.mkdir(parents=True)
@@ -370,7 +377,7 @@ def _install(part: Component, progress: Callable[[int], None]) -> None:
         os.replace(staging, target)
         wheel.unlink(missing_ok=True)
         return
-    voice_module.download_files(part, target, progress)  # file model tải thẳng vào chỗ: engine đang chạy chỉ thấy file đủ
+    voice_module.download_files(part, target, progress, cancelled)  # file model tải thẳng vào chỗ: engine đang chạy chỉ thấy file đủ
 
 
 # ---- bộ đọc chữ dùng chung ----------------------------------------------------------------------------------------------------------
@@ -389,11 +396,11 @@ def g2p_state() -> str:
     return music_module.judge_parts([part], _core.pins())[part.id]
 
 
-def install_g2p_part(progress: Callable[[int], None]) -> None:
+def install_g2p_part(progress: Callable[[int], None], cancelled: Callable[[], bool] | None = None) -> None:
     """Tải bộ đọc chữ cho mô-đun khác: giải vào chỗ chung, ghi dấu ở đây, đưa vào sys.path (bản đã nạp thì chờ lần mở app sau, `LIB_NEXT`)."""
     with _lock:
         part = g2p_part()
-        _install(part, progress)
+        _install(part, progress, cancelled)
         stamp = _core.read_stamp()
         stamp["pins"] = {**_core.pins(), "g2p": part.pin}
         _core.write_stamp(stamp)
