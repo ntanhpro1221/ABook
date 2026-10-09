@@ -4337,6 +4337,42 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 02:xx - Cổng q17 trên bộ cuối: DỪNG; q06 thắng P0 nên vào app thay P0 ở hình trong chương
+
+**Cổng q17** (luật Lead chốt trước, Corpus 1afc494; bộ cuối mở MỘT lần):
+- (a) `stu_final_ci final,set7`, 40 chương, 14 bộ: Δ q17 − q06 TB(V,T) +.058; theo chương [−.006, +.097], theo bộ [+.002, +.088].
+  Cận dưới theo chương < 0 nên **KHÔNG QUA**.
+- (b) `spec_gate_final`: q17 TB .417, q06 .360, P0 .246; q17 − P0 +.171 [+.049, +.306]. Vế này qua.
+- Luật cần cả (a) và (b), nên **q17 DỪNG**. Bỏ luôn ý dùng giám khảo M2E làm thầy.
+- LFE bộ cuối (ghi lại): giám khảo M2E chấm q17 .330, CL .306, app trước CL .378. CL − q17 −.024 [−.060, +.010], không lặp lại
+  lợi +.021 đo được ở bộ học.
+
+**q06 so với P0** (luật Lead 10-10 01:1x: thắng ở set7 với cận dưới theo BỘ > 0; `q06_vs_p0.py`):
+
+| bộ | q06 | P0 | Δ | theo chương | theo bộ |
+|---|---|---|---|---|---|
+| set7 (20 ch, 4 bộ) | .274 | .144 | +.130 | [−.008, +.261] | [+.054, +.202] |
+| học 4+5+5b+6 (42 ch) | .453 | .291 | +.162 | [+.090, +.234] | [+.091, +.232] |
+
+QUA. Học sinh q06 học toàn bạc, không chương vàng nào. Đặc tả `Corpus/research/music/SPEC_app_q06.md`, Lead duyệt.
+- **Đo trên máy chủ sách**, CPU 6 luồng: bf16 838 tok/s (~18 s mỗi giờ audio), tương quan với kho ≥ .9998; fp32 469 tok/s (~32 s).
+  RAM đỉnh 2,63 GiB. Gói 0,71 GiB.
+- Gói `scene_q06/` lên HF `NGDtuanh/abook-music-student` ở commit c2e3253d. Đầu xuất xưởng học bạc + 478 đoạn vàng.
+
+**M3: đường student có bỏ được qwen3.5:4b không?** Ghi trước Corpus 5cd7e23, kết quả 79dfc64. Thước MAE của CL-APPLY.
+
+| MAE (V, T) | học | bộ 7 |
+|---|---|---|
+| CL hôm nay | .329 | .234 |
+| S-P0, hình q06 k=1 | .313 | .237 |
+| S-P0 k=1.5 (chọn trên học) | .307 | .250 |
+| S-LAB k=1.5 (mức T từ nhãn) | .354 | .294 |
+
+- **KHÔNG QUA**: mức T từ nhãn kém hẳn (r mức T .65 so với .86 ở bộ 7). Đường student vẫn chạy P0 để lấy mức T; mức V vốn đã từ nhãn.
+- Về MAE, hình q06 chỉ hoà CL. Lợi của q06 nằm ở thứ tự trong chương (r), không ở MAE.
+- k = 1.5 chọn trên bộ học lại thua ở bộ 7, nên app dùng k = 1 (ridge thô, không chỉnh thêm).
+- Máy có gói mà không có 4B: mức T = 4.022·TB(T nhãn) − .056. Vẫn hơn đường nhãn hôm nay (.285 so với .334 ở bộ 7).
+
 ### 09-10 23:4x - STU-LAYERS: ghép lớp q17 hay q17 + q06 KHÔNG hơn q17 L14
 
 Ghi trước ở Corpus e415e63, kết quả ở edfea6a (`PLAN_stu_layers.md`). Chạy CPU, khoảng 3 phút. Học trên toàn kho bạc, cùng thủ tục
