@@ -28,7 +28,7 @@ export interface Person {
 }
 
 interface Hint {
-  kind: "speaker" | "turn" | "vocative";
+  kind: "turn" | "vocative";
   note: string;
   suggest?: string;
 }

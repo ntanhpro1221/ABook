@@ -23,6 +23,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Việc cần anh và Cài đặt
 
 - Thẻ "Ai nói câu này" cho xem câu liền trước và liền sau để quyết, và không còn mời chọn người chưa có giọng trong sách. "Đã quyết, chờ áp dụng" đếm khớp số trên nút "Áp dụng"; quyết xong thẻ cuối của một loại thì địa chỉ trang về "Tất cả".
+- Hộp "Việc cần anh" chỉ hỏi những câu chính máy đọc không chắc (cùng cách xưng hô, hai câu liền nhau, lời gọi tên): bỏ loại thẻ đề xuất theo "máy chấm thứ hai" vì đo thấy nó đề xuất sai nhiều hơn đúng.
 - Cài đặt › Nhạc nền nhắc đến công tắc tự chọn nhạc và báo khi bật/tắt. Dự án hỏng báo "sổ làm việc của sách bị hỏng…" thay vì lỗi SQL.
 
 ## [0.4.38] - 2026-10-09

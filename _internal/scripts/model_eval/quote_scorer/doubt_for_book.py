@@ -1,10 +1,10 @@
-"""Chấm một cuốn sách THẬT bằng bộ chấm ứng viên, ghi `doubt.json` cạnh sách cho hộp "Việc cần duyệt" (STUDIO_REVIEW.md).
+"""Chấm một cuốn sách THẬT bằng bộ chấm ứng viên, ghi `doubt.json` cạnh sách (công cụ nghiên cứu: app KHÔNG đọc file này nữa, xem ANALYSIS_RESEARCH.md 10-10).
 
     CUDA_VISIBLE_DEVICES=-1 D:/Novels/LLM_Train/.venv/Scripts/python.exe \
         scripts/model_eval/quote_scorer/doubt_for_book.py <thư mục sách> --scorer D:/Novels/LLM_Train/runs/scorer_prod_27_09
 
-Bộ chấm KHÔNG đổi nhãn nào của dây chuyền - nó chỉ nói câu nào đáng để người nghe lại (review_curve.py 27-09: duyệt 20%
-câu xếp theo bộ chấm 74,8 -> 84,6%, theo tin cậy LLM tự báo 79,7% = ngẫu nhiên). Mặc định chạy CPU: GPU thuộc hàng huấn
+Bộ chấm KHÔNG đổi nhãn nào của dây chuyền. Số 27-09 (143 câu TMA, nhãn qwen3 cũ) nói nó xếp hạng tốt hơn tin cậy tự báo của LLM;
+số 10-10 (11 truyện cổng, nhãn B9) đảo lại: bộ chấm AUROC 0,665 < p_first 0,746 nên hộp việc đã bỏ thẻ theo nó. Mặc định chạy CPU: GPU thuộc hàng huấn
 luyện/sản xuất (mọi việc GPU đi qua một hàng). Cửa sổ dựng y như build_unlabeled.py (dàn trang paragraph, danh sách nhân
 vật chương, khớp tên phân biệt hoa thường), thêm câu nội tâm.
 

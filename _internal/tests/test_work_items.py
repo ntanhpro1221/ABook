@@ -77,23 +77,6 @@ def test_the_inbox_finds_each_kind_of_doubt_and_ranks_by_benefit(tmp_path: Path)
     assert time.time() - started < 5
 
 
-def test_the_second_scorer_flags_only_confident_disagreements_on_current_labels(tmp_path: Path) -> None:
-    """doubt.json (doubt_for_book.py): bộ chấm chắc một người có tên KHÁC nhãn LLM -> việc "Ai nói câu này?". Đồng ý, không
-    chắc, hay nhãn đã đổi từ sau lần chấm (dây chuyền phân tích lại) thì không làm phiền người nghe."""
-    project = make_book(tmp_path)
-    (project / "doubt.json").write_text(json.dumps({"segments": {
-        "c": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.91, "top": [["RHINE", 0.91], ["LUCIEN", 0.05]],
-              "disagree": True},
-        "f": {"llm": "RHINE", "choice": "RHINE", "certainty": 0.97, "top": [["RHINE", 0.97]], "disagree": False},
-        "d": {"llm": "ÁO CHOÀNG ĐEN", "choice": "LUCIEN", "certainty": 0.3, "top": [["LUCIEN", 0.3]], "disagree": True},
-        "b": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.95, "top": [["RHINE", 0.95]], "disagree": True},
-    }}), encoding="utf-8")
-    speakers = [item for item in work_items(project)["items"] if item["kind"] == "speaker"]
-    assert [item["key"] for item in speakers] == ["speaker:c"], "chỉ bất đồng chắc trên đúng nhãn đang dùng"
-    item = speakers[0]
-    assert item["current"] == "Lucien" and item["options"][:2] == ["Rhine", "Lucien"] and "Người kể" in item["options"]
-
-
 def test_a_pronunciation_card_has_lines_to_hear_and_shows_a_waiting_request(tmp_path: Path) -> None:
     """Bước 2: người nghe nghe máy đang đọc tên thế nào (câu đã thu trước), sửa ngay trên thẻ; mong muốn chưa áp thì thẻ
     nói "đang chờ" thay vì im lặng như chưa sửa."""
@@ -161,14 +144,12 @@ def test_a_speaker_card_offers_clickable_choices_and_hides_once_the_listener_kee
     from abook.listener_overrides import NARRATOR, UNNAMED, request_speaker
 
     project = make_book(tmp_path)
-    (project / "doubt.json").write_text(json.dumps({"segments": {
-        "c": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.91, "top": [["RHINE", 0.91], ["LUCIEN", 0.05]],
-              "disagree": True},
-    }}), encoding="utf-8")
+    unsure_line(project, "c")
 
     card = next(item for item in work_items(project)["items"] if item["kind"] == "speaker")
     assert (card["lines"], card["currentValue"]) == ([{"stableId": "c", "textSha256": "sha-c"}], "LUCIEN")
-    assert [choice["value"] for choice in card["choices"]] == ["RHINE", NARRATOR, UNNAMED], "người đang giữ câu có nút Giữ"
+    values = [choice["value"] for choice in card["choices"]]
+    assert values[-2:] == [NARRATOR, UNNAMED] and "RHINE" in values, "người trong chương là lựa chọn, kèm người kể và vô danh"
 
     request_speaker(project, "c", "sha-c", "RHINE", now=time.time())
     card = next(item for item in work_items(project)["items"] if item["kind"] == "speaker")
@@ -182,16 +163,12 @@ def test_a_speaker_card_shows_the_neighbouring_lines_and_offers_only_people_with
     """Một câu không đủ để quyết ai nói: thẻ mang câu liền trước và liền sau; người chưa nói câu nào (chưa có giọng) không phải chip vì
     bấm vào chỉ ra lỗi - cùng phép thử `speaker_target` với lúc ghi yêu cầu."""
     project = make_book(tmp_path)
-    (project / "doubt.json").write_text(json.dumps({"segments": {
-        "c": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.91, "top": [["RHINE", 0.91], ["KHONG CO AI", 0.5], ["LUCIEN", 0.05]],
-              "disagree": True},
-    }}), encoding="utf-8")
+    unsure_line(project, "c")
 
     card = next(item for item in work_items(project)["items"] if item["kind"] == "speaker")
     (example,) = card["examples"]
     assert example["before"] == "“Heidi, các cậu đi đâu vậy?”" and example["after"] == "“Ta đến rồi.”"
-    assert "KHONG CO AI" not in [choice["value"] for choice in card["choices"]]
-    assert [choice["value"] for choice in card["choices"]][0] == "RHINE"
+    assert all(choice["value"] != "KHONG CO AI" for choice in card["choices"])
 
 
 def test_the_studio_refuses_on_the_spot_a_speaker_the_pipeline_would_refuse(tmp_path: Path) -> None:
@@ -583,10 +560,7 @@ def test_every_decided_card_carries_the_withdrawal_of_its_own_click(tmp_path: Pa
     from abook.listener_overrides import NARRATOR, request_pronunciation, request_speaker
 
     project = make_book(tmp_path)
-    (project / "doubt.json").write_text(json.dumps({"segments": {
-        "c": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.91, "top": [["RHINE", 0.91], ["LUCIEN", 0.05]],
-              "disagree": True},
-    }}), encoding="utf-8")
+    unsure_line(project, "c")
     cards = {item["kind"]: item for item in work_items(project)["items"]}
     assert "undo" not in cards["speaker"] and "undo" not in cards["pronunciation"], "chưa quyết thì chưa có gì để hoàn tác"
 
@@ -618,6 +592,12 @@ def lp(stable_id: str, speaker: str, p_first: float) -> dict:
 
 def speaker_cards(project: Path) -> list[dict]:
     return [item for item in work_items(project)["items"] if item["kind"] == "speaker"]
+
+
+def unsure_line(project: Path, stable_id: str) -> None:
+    """Cho đúng câu `stable_id` của make_book là câu model kém chắc nhất (6 câu thoại có số đo -> 1 thẻ): thẻ "Ai nói câu này"."""
+    rows = {"b": "HEIDI", "c": "LUCIEN", "d": "ÁO CHOÀNG ĐEN", "e": "ÁO CHOÀNG ĐEN", "f": "RHINE", "g": "NPC_LOCAL::c00001::r1::người gác"}
+    write_logprobs(project, [lp(key, who, 0.3 if key == stable_id else 0.99) for key, who in rows.items()])
 
 
 def test_the_models_own_doubt_asks_only_the_least_sure_fifth_of_the_measured_lines(tmp_path: Path) -> None:
@@ -658,7 +638,7 @@ def test_the_models_own_doubt_asks_only_the_least_sure_fifth_of_the_measured_lin
     assert [option for option in first["options"] if option in ("Người kể", "Vai phụ không tên")] == ["Người kể", "Vai phụ không tên"]
 
 
-def test_a_line_whose_label_changed_or_already_has_a_card_gets_no_logprob_card(tmp_path: Path) -> None:
+def test_a_line_whose_label_changed_gets_no_logprob_card(tmp_path: Path) -> None:
     project = make_book(tmp_path)
     db = sqlite3.connect(project / "project.sqlite3")
     db.executemany(
@@ -670,16 +650,11 @@ def test_a_line_whose_label_changed_or_already_has_a_card_gets_no_logprob_card(t
     db.close()
     rows = [lp(f"x{index}", "LUCIEN", 0.99) for index in range(20)]
     rows += [lp("b", "LUCIEN", 0.1),   # sổ nay là HEIDI: nhãn đã đổi sau lần đo
-             lp("c", "lucien", 0.15),  # cùng nhãn khác cách viết: vẫn tính
-             lp("d", "ÁO CHOÀNG ĐEN", 0.2)]  # sẽ đã có thẻ của bộ chấm thứ hai
+             lp("c", "lucien", 0.15)]  # cùng nhãn khác cách viết: vẫn tính
     write_logprobs(project, rows)
-    (project / "doubt.json").write_text(json.dumps({"segments": {
-        "d": {"llm": "ÁO CHOÀNG ĐEN", "choice": "RHINE", "certainty": 0.9, "top": [["RHINE", 0.9]], "disagree": True},
-    }}), encoding="utf-8")
     cards = speaker_cards(project)
     assert [card["key"] for card in cards if card["problem"].startswith("Máy gán")] == ["speaker:c"], \
-        "23 câu x 10% = 2 thẻ nhưng b đổi nhãn, d đã có thẻ"
-    assert sum(1 for card in cards if card["key"] == "speaker:d") == 1, "một câu một thẻ"
+        "22 câu đo x 20% = 4 chỗ nhưng b đã đổi nhãn nên chỉ c thành thẻ"
 
 
 def test_a_logprob_card_follows_the_listeners_decision_and_survives_bad_files(tmp_path: Path) -> None:

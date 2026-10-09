@@ -51,9 +51,10 @@ def make_book(root: Path, narrator: str) -> Path:
                    [(1, "TOMOBE", "Tomobe", "male", 0), (2, "HINA", "Hina", "female", 0)])
     lines = [(text, "TOMOBE") for text in TOMOBE] + [(text, "HINA") for text in HINA] + [(WRONG, "TOMOBE")]
     db.executemany(
-        "INSERT INTO segments (stable_id, chapter_id, seq, text, kind, speaker, status, text_sha256)"
-        " VALUES (?, 1, ?, ?, 'dialogue', ?, 'verified', ?)",
-        [(f"s{seq}", seq, text, speaker, f"sha{seq}") for seq, (text, speaker) in enumerate(lines)],
+        "INSERT INTO segments (stable_id, chapter_id, seq, text, kind, speaker, canonical_character_id, voice_profile_id, status,"
+        " text_sha256) VALUES (?, 1, ?, ?, 'dialogue', ?, ?, ?, 'verified', ?)",  # người đã nói có giọng như sách thật: thẻ bỏ người chưa có giọng
+        [(f"s{seq}", seq, text, speaker, *((1, 1) if speaker == "TOMOBE" else (2, 2)), f"sha{seq}")
+         for seq, (text, speaker) in enumerate(lines)],
     )
     db.commit()
     db.close()
