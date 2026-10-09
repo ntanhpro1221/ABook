@@ -48,6 +48,32 @@ describe("choose", () => {
   });
 });
 
+describe("chooseMany", () => {
+  it("asks the system picker for several files at once and turns each into a row of the preview queue", async () => {
+    library.pickSource.mockResolvedValue({
+      picked: true,
+      items: [
+        { ref: "i1", name: "tap1.epub" },
+        { ref: "i2", name: "tap2.pdf", pdf: "/data/library/imports/i2/tap2.pdf" },
+        { name: "sach.abook", book: true },
+        { name: "anh.jpg", error: "Chưa đọc được file .jpg" },
+      ],
+    });
+    expect(await phoneTextImport.chooseMany!()).toEqual([
+      { name: "tap1.epub", choice: { ref: "i1", name: "tap1.epub" } },
+      { name: "tap2.pdf", choice: { ref: "i2", name: "tap2.pdf", pdf: "/data/library/imports/i2/tap2.pdf" } },
+      { name: "sach.abook", opened: true },
+      { name: "anh.jpg", error: "Chưa đọc được file .jpg" },
+    ]);
+    expect(library.pickSource).toHaveBeenCalledWith({ kind: "file", multiple: true });
+  });
+
+  it("returns nothing when the user backs out", async () => {
+    library.pickSource.mockResolvedValue({ picked: false });
+    expect(await phoneTextImport.chooseMany!()).toEqual([]);
+  });
+});
+
 describe("preview", () => {
   it("lets Kotlin read anything that is not a PDF", async () => {
     expect(await phoneTextImport.preview({ ref: "i1", name: "truyen.epub" })).toBe(PREVIEW);

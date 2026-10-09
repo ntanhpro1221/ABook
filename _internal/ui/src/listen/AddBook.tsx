@@ -1,26 +1,41 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { BookOpen, BookPlus, Copy, FileText, Folder, Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { BookOpen, BookPlus, Check, CircleAlert, Copy, FileText, Folder, Loader2, Minus } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ChapterPreview } from "@/shared/ChapterPreview";
+import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
+import {
+  addRest,
+  advanceQueue,
+  planPick,
+  queueLabel,
+  settle,
+  summarize,
+  summaryText,
+  waitingAfter,
+  type QueueItem,
+} from "./importQueue";
 import { groupSuggestions, setSkipLine, SuggestionChoices } from "./ReadingSuggestions";
 import { useSource } from "./source";
 import {
   chapterPicks,
   defaultPicked,
+  isBookFile,
   isDefaultPick,
   pickedSuggestions,
   pickedTotals,
+  readPreview,
   renameChapter,
-  splitIsSure,
   splitLabel,
   type ChapterNames,
+  type AddedBook,
   type ImportChoice,
   type ImportKind,
   type ImportPreview,
+  type PickedItem,
 } from "./textImport";
 
 // "Thêm sách từ file…": EPUB / DOCX / PDF / thư mục TXT thành sách chỉ-có-chữ trong thư viện (docs/LISTEN_ANYTHING.md mục 1 và 2).
@@ -31,12 +46,9 @@ function cleanPath(value: string): string {
   return value.trim().replace(/^["']+|["']+$/g, "").trim();
 }
 
-/** Nút mở hộp "Thêm sách từ file…"; không hiện khi nguồn này không nhập được (`source.textImport` trống). */
-/** File sách / dự án của ABook (.abook, .abookproj): không phải sách để nhập chữ mà mở thẳng như "Mở file sách". */
-export function isBookFile(path: string): boolean {
-  return /\.abook(proj)?$/i.test(path.trim());
-}
+export { isBookFile };
 
+/** Nút mở hộp "Thêm sách từ file…"; không hiện khi nguồn này không nhập được (`source.textImport` trống). */
 export function AddBookButton({
   variant = "secondary",
   size,
@@ -45,7 +57,7 @@ export function AddBookButton({
   variant?: "secondary" | "ghost" | "primary";
   size?: "sm" | "md" | "lg";
   /** Chọn hay dán một file .abook / .abookproj: mở nó (máy có đường mở file sách) thay vì báo "chưa đọc được". */
-  onBookFile?: (path: string) => Promise<void>;
+  onBookFile?: (path: string) => Promise<void | boolean>;
 }) {
   const source = useSource();
   const [open, setOpen] = useState(false);
@@ -68,9 +80,10 @@ export function AddBookDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onBookFile?: (path: string) => Promise<void>;
-  /** Thứ đã chọn sẵn (điện thoại: file app khác gửi tới - android/imports.ts): hộp mở thẳng ở bước đọc file / xem trước. */
-  initial?: ImportChoice | null;
+  onBookFile?: (path: string) => Promise<void | boolean>;
+  /** Thứ đã chọn sẵn (điện thoại: file app khác gửi tới - android/imports.ts; máy tính: file kéo thả vào thư viện - DropToAdd.tsx): hộp mở thẳng ở bước
+   *  đọc file / xem trước. Nhiều file thì thành hàng xem trước. */
+  initial?: ImportChoice | PickedItem[] | null;
 }) {
   const source = useSource();
   const importer = source.textImport;
@@ -82,6 +95,16 @@ export function AddBookDialog({
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState<"reading" | "adding" | null>(null);
   const [problem, setProblem] = useState("");
+  // Chọn / kéo thả nhiều file: hàng xem trước (importQueue.ts), mỗi cuốn qua đúng bước xem trước của một file. `null` = một file như trước. `queueRef` giữ
+  // bản mới nhất cho các vòng async ("Thêm tất cả phần còn lại" đi qua nhiều cuốn trong một lần bấm).
+  const [queue, setQueueState] = useState<QueueItem[] | null>(null);
+  const queueRef = useRef<QueueItem[] | null>(null);
+  const [currentId, setCurrentId] = useState<number | null>(null);
+  const [working, setWorking] = useState("");
+  const setQueue = (next: QueueItem[] | null) => {
+    queueRef.current = next;
+    setQueueState(next);
+  };
   // Gợi ý dòng ghi công người nghe chọn bỏ khỏi phần đọc (theo dòng); mặc định không bỏ dòng nào.
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   // File TXT cả truyện: "Tách theo N dòng “Chương N”" - tích sẵn khi máy chắc (`splitIsSure`: từ 3 dòng), không thì chỉ đề xuất; bỏ tích được,
@@ -101,8 +124,8 @@ export function AddBookDialog({
     titleField.current?.select();
   }, [hasPreview]);
   // Đọc thứ chọn sẵn đúng một lần (`read` dựng ở dưới, sau chỗ trả sớm khi nguồn không nhập được).
-  const readInitial = useRef<((picked: ImportChoice) => Promise<void>) | null>(null);
-  const initialRead = useRef<ImportChoice | null>(null);
+  const readInitial = useRef<((picked: ImportChoice | PickedItem[]) => Promise<void>) | null>(null);
+  const initialRead = useRef<ImportChoice | PickedItem[] | null>(null);
   useEffect(() => {
     if (!open || !initial || initialRead.current === initial) return;
     initialRead.current = initial;
@@ -110,25 +133,44 @@ export function AddBookDialog({
   }, [open, initial]);
   if (!importer) return null;
 
-  const clear = () => {
+  const clearPreview = () => {
     setChoice(null);
     setPreview(null);
     setTitle("");
-    setTyped("");
-    setProblem("");
     setSkipped(new Set());
     setSplit(false);
     setPicked(new Set());
     setNames({});
   };
+  const clear = () => {
+    clearPreview();
+    setTyped("");
+    setProblem("");
+    setQueue(null);
+    setCurrentId(null);
+    setWorking("");
+  };
   const reset = () => {
-    if (choice) void importer.discard?.(choice).catch(() => undefined);
+    // Hàng: bản tạm của mọi cuốn chưa xong được bỏ (cuốn đang xem cũng nằm trong đó); một file thì như trước.
+    const waiting = queueRef.current?.filter((item) => item.state === "waiting" && item.choice) ?? [];
+    if (queueRef.current) for (const item of waiting) void importer.discard?.(item.choice!).catch(() => undefined);
+    else if (choice) void importer.discard?.(choice).catch(() => undefined);
     clear();
   };
   const close = (next: boolean) => {
     if (busy === "adding") return;
     if (!next) reset();
     onOpenChange(next);
+  };
+  // Đọc file thành bản xem trước: cả truyện trong một file mà máy chắc là nhiều chương thì mở sẵn với "tách" đã tích (bỏ tích được, danh sách
+  // chương đổi theo).
+  const loadPreview = async (picked: ImportChoice) => {
+    setChoice(picked);
+    const { preview: result, split: sure } = await readPreview(importer, picked);
+    setPreview(result);
+    setPicked(defaultPicked(result.chapters));
+    setTitle(result.title);
+    setSplit(sure);
   };
   const read = async (picked: ImportChoice) => {
     if (onBookFile && isBookFile(picked.ref)) {
@@ -146,26 +188,10 @@ export function AddBookDialog({
       }
       return;
     }
-    setChoice(picked);
     setProblem("");
     setBusy("reading");
     try {
-      let result = await importer.preview(picked);
-      // Cả truyện trong một file mà máy chắc là nhiều chương: mở sẵn với "tách" đã tích (bỏ tích được, danh sách chương đổi theo).
-      let split = false;
-      if (splitIsSure(result)) {
-        split = await importer.preview(picked, { splitChapters: true }).then(
-          (again) => {
-            result = again;
-            return true;
-          },
-          () => false,
-        );
-      }
-      setPreview(result);
-      setPicked(defaultPicked(result.chapters));
-      setTitle(result.title);
-      setSplit(split);
+      await loadPreview(picked);
     } catch (error) {
       setProblem((error as Error).message);
       void importer.discard?.(picked).catch(() => undefined);
@@ -174,7 +200,79 @@ export function AddBookDialog({
       setBusy(null);
     }
   };
-  readInitial.current = read;
+  // ---- Hàng nhiều file (importQueue.ts) -------------------------------------------------------------------------------------
+  // File sách .abook / .abookproj còn lại (đã xếp cuối hàng) mở như "Mở file sách". Mở xong app sang trang sách, nên đây là việc cuối cùng.
+  const openBookFiles = async (items: QueueItem[]) => {
+    let next = items;
+    for (const item of items) {
+      if (item.state !== "waiting" || !item.choice) continue;
+      if (!onBookFile) {
+        next = settle(next, item.id, { state: "error", note: "Ở đây chưa mở được file sách .abook - dùng nút “Mở file sách”." });
+        continue;
+      }
+      try {
+        const ok = await onBookFile(item.choice.ref);
+        next = ok === false ? settle(next, item.id, { state: "error", note: "Không mở được file sách này." }) : settle(next, item.id, { state: "opened", note: "Đã mở" });
+      } catch (error) {
+        next = settle(next, item.id, { state: "error", note: (error as Error).message });
+      }
+    }
+    return next;
+  };
+  // Hàng xong: không file nào lỗi thì đóng hộp (một cuốn mới duy nhất thì mở trang sách, như thêm một file); có file lỗi thì giữ hộp để đọc lý do.
+  const finish = (items: QueueItem[]) => {
+    const summary = summarize(items);
+    if (summary.failed > 0) return;
+    const added = items.filter((item) => item.state === "added");
+    clear();
+    onOpenChange(false);
+    (summary.added || summary.opened ? toast.success : toast)(summaryText(summary), {
+      description: summary.added ? "Mới có chữ để đọc - chưa có âm thanh." : undefined,
+    });
+    if (added.length === 1 && added[0].bookId && summary.opened === 0) navigate(`/book/${added[0].bookId}`);
+  };
+  // Sang cuốn kế trong hàng (advanceQueue): đọc nó cho bước xem trước; file không đọc được ghi lỗi vào hàng và đi tiếp, không chặn các cuốn sau.
+  const goNext = async (start: QueueItem[]) => {
+    clearPreview();
+    setBusy("reading");
+    try {
+      const { items, current } = await advanceQueue(
+        start,
+        async (next, items) => {
+          setCurrentId(next.id);
+          setQueue(items);
+          await loadPreview(next.choice!);
+        },
+        openBookFiles,
+        (failed) => {
+          void importer.discard?.(failed.choice!).catch(() => undefined);
+          setChoice(null);
+        },
+      );
+      setQueue(items);
+      if (!current) finish(items);
+    } finally {
+      setBusy(null);
+    }
+  };
+  // Vừa chọn / kéo thả xong (planPick).
+  const startPicked = async (items: PickedItem[]) => {
+    const plan = planPick(items);
+    if (plan.kind === "none") return;
+    if (plan.kind === "single") {
+      const only = plan.item;
+      if ("error" in only) setProblem(only.error);
+      else if ("opened" in only) {
+        clear();
+        onOpenChange(false);
+      } else await read(only.choice);
+      return;
+    }
+    setProblem("");
+    setQueue(plan.items);
+    await goNext(plan.items);
+  };
+  readInitial.current = (value) => (Array.isArray(value) ? startPicked(value) : read(value));
   // Tích / bỏ tích "Tách thành N chương": đọc lại file với lựa chọn mới, danh sách chương xem trước đổi theo. Tên sách người dùng đã sửa giữ
   // nguyên; gợi ý ghi công, chương đã bỏ tích và tên chương đã đổi đặt lại vì danh sách chương đã khác.
   const changeSplit = async (on: boolean) => {
@@ -197,6 +295,10 @@ export function AddBookDialog({
     if (!importer.choose) return;
     lastKind.current = kind;
     try {
+      if (kind === "file" && importer.chooseMany) {
+        await startPicked(await importer.chooseMany());
+        return;
+      }
       const picked = await importer.choose(kind);
       if (picked === "opened") {
         // File sách .abook chọn trong hộp này: nguồn đã mở nó (toast "Đã thêm sách" kèm nút mở), hộp không còn việc.
@@ -218,20 +320,33 @@ export function AddBookDialog({
     onOpenChange(false);
     navigate(`/book/${id}`);
   };
+  // Thêm cuốn đang xem đúng như người dùng thấy (tên, chương đã tích, gợi ý đã chọn).
+  const addCurrent = async (separate: boolean): Promise<AddedBook> => {
+    const added = await importer.add(choice!, title.trim(), separate, { splitChapters: split, chapters: chapterPicks(preview!.chapters, picked, names) });
+    // Gợi ý người nghe đã chọn: bỏ dòng ấy khỏi phần đọc của cuốn mới (chữ trong sách không đổi). Hỏng thì sách vẫn đã vào thư
+    // viện - gợi ý còn chờ ở trang sách.
+    if (added.how === "new") {
+      for (const group of groups.filter((group) => skipped.has(group.line))) {
+        await setSkipLine(added.id, group.line, group.chapters, true).catch(() => undefined);
+      }
+    }
+    void client.invalidateQueries({ queryKey: ["listen"] });
+    void client.invalidateQueries({ queryKey: ["storage"] });
+    return added;
+  };
   const add = async (separate = false) => {
     if (!choice || !preview) return;
     setBusy("adding");
     try {
-      const added = await importer.add(choice, title.trim(), separate, { splitChapters: split, chapters: chapterPicks(preview.chapters, picked, names) });
-      // Gợi ý người nghe đã chọn: bỏ dòng ấy khỏi phần đọc của cuốn mới (chữ trong sách không đổi). Hỏng thì sách vẫn đã vào thư
-      // viện - gợi ý còn chờ ở trang sách.
-      if (added.how === "new") {
-        for (const group of groups.filter((group) => skipped.has(group.line))) {
-          await setSkipLine(added.id, group.line, group.chapters, true).catch(() => undefined);
-        }
+      const added = await addCurrent(separate);
+      const items = queueRef.current;
+      if (items && currentId !== null) {
+        // Trong hàng: cuốn này xong, sang cuốn kế (toast gộp ở cuối hàng).
+        const done = settle(items, currentId, added.how === "existing" ? { state: "existing", note: "Đã có trong thư viện", bookId: added.id } : { state: "added", bookId: added.id });
+        setQueue(done);
+        await goNext(done);
+        return;
       }
-      void client.invalidateQueries({ queryKey: ["listen"] });
-      void client.invalidateQueries({ queryKey: ["storage"] });
       toast.success(added.how === "existing" ? "Cuốn này đã có trong thư viện" : "Đã thêm sách vào thư viện", {
         description: added.how === "existing" ? undefined : "Mới có chữ để đọc - chưa có âm thanh.",
       });
@@ -243,6 +358,45 @@ export function AddBookDialog({
     } finally {
       setBusy(null);
     }
+  };
+  // "Thêm tất cả phần còn lại" (addRest): cuốn đang xem thêm đúng như đang hiện, các cuốn sau dùng mặc định của bước xem trước. Cuốn nào lỗi thì ghi vào hàng
+  // và đi tiếp.
+  const addAll = async () => {
+    const start = queueRef.current;
+    if (!start || currentId === null || !choice || !preview) return;
+    setBusy("adding");
+    setWorking(title.trim());
+    try {
+      let now: Pick<QueueItem, "state" | "note" | "bookId">;
+      if (known) now = { state: "existing", note: existing ? "Đã có trong thư viện" : "Đã thêm từ file này rồi", bookId: known.id };
+      else {
+        try {
+          const added = await addCurrent(false);
+          now = added.how === "existing" ? { state: "existing", note: "Đã có trong thư viện", bookId: added.id } : { state: "added", bookId: added.id };
+        } catch (error) {
+          now = { state: "error", note: (error as Error).message };
+        }
+      }
+      const items = await addRest(importer, start, currentId, now, { working: setWorking, changed: setQueue, openBooks: openBookFiles });
+      void client.invalidateQueries({ queryKey: ["listen"] });
+      void client.invalidateQueries({ queryKey: ["storage"] });
+      setQueue(items);
+      clearPreview();
+      finish(items);
+    } finally {
+      setBusy(null);
+      setWorking("");
+    }
+  };
+  const skipCurrent = () => {
+    const items = queueRef.current;
+    if (!items || currentId === null) return;
+    if (choice) void importer.discard?.(choice).catch(() => undefined);
+    const rest = known
+      ? settle(items, currentId, { state: "existing", note: existing ? "Đã có trong thư viện" : "Đã thêm từ file này rồi", bookId: known.id })
+      : settle(items, currentId, { state: "skipped", note: "Bỏ qua" });
+    setQueue(rest);
+    void goNext(rest);
   };
 
   // Ghi chú đổi định dạng; gợi ý dòng ghi công (luôn ở cuối `notes`, mỗi gợi ý một ghi chú) đã thành các ô chọn ở dưới.
@@ -256,20 +410,40 @@ export function AddBookDialog({
   // Cùng file đã thêm nhưng lần này chọn chương khác (hay tách chương khác): báo như trên, kèm "Vẫn thêm bản mới" - thêm cũng được, nhưng không im lặng.
   const sameSource = !existing ? (preview?.sameSource ?? null) : null;
   const known = existing ?? sameSource;
+  const label = queue && currentId !== null ? queueLabel(queue, currentId) : "";
+  const rest = queue && currentId !== null ? waitingAfter(queue, currentId).length : 0;
 
   return (
     <Dialog
       open={open}
       onOpenChange={close}
       width="max-w-2xl"
-      title="Thêm sách từ file"
+      title={preview && label ? `${label} - Thêm sách từ file` : "Thêm sách từ file"}
       description={
-        preview
+        queue && !preview
+          ? summaryText(summarize(queue))
+          : preview
           ? "Xem danh sách chương trước khi thêm. Chữ của truyện được giữ nguyên - ABook chỉ đổi định dạng."
-          : "EPUB, Word (DOCX), PDF có chữ, một file TXT cả truyện, hay một thư mục mà mỗi file TXT là một chương. Sách vào Thư viện để đọc ngay. Có file sách .abook (bạn bè gửi, tải về) thì chọn luôn ở đây."
+          : "EPUB, Word (DOCX), PDF có chữ, một file TXT cả truyện, hay một thư mục mà mỗi file TXT là một chương. Sách vào Thư viện để đọc ngay. Chọn được nhiều file một lúc - từng cuốn hiện ra để xem lại trước khi thêm. Có file sách .abook (bạn bè gửi, tải về) thì chọn luôn ở đây."
       }
     >
-      {!preview ? (
+      {queue && !preview ? (
+        <div>
+          {busy === "reading" && (
+            <p role="status" className="flex items-center gap-2 text-sm text-fg-2">
+              <Loader2 className="size-4 animate-spin" /> Đang đọc file kế tiếp…
+            </p>
+          )}
+          <QueueList items={queue} currentId={currentId} tall />
+          {busy === null && (
+            <div className="mt-5 flex justify-end">
+              <Button variant="primary" onClick={() => close(false)}>
+                Xong
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : !preview ? (
         <div>
           <div className="flex flex-wrap gap-2">
             {importer.choose && (
@@ -314,7 +488,8 @@ export function AddBookDialog({
         </div>
       ) : (
         <div>
-          <label className="block">
+          {queue && <QueueList items={queue} currentId={currentId} />}
+          <label className={cn("block", queue && "mt-4")}>
             <span className="text-sm font-medium">Tên sách</span>
             <input
               ref={titleField}
@@ -435,18 +610,36 @@ export function AddBookDialog({
                 : `Bạn đã thêm file này thành “${sameSource!.title}” (${sameSource!.chapters} chương).`}
             </p>
           )}
+          {busy === "adding" && working && queue && (
+            <p role="status" className="mt-3 flex items-center gap-2 text-sm text-fg-2">
+              <Loader2 className="size-4 shrink-0 animate-spin" /> <span className="min-w-0 truncate">Đang thêm “{working}”…</span>
+            </p>
+          )}
           <div className="mt-5 flex flex-wrap justify-end gap-2">
             <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>
               Chọn lại
             </Button>
+            {queue && (
+              <Button variant={known ? "primary" : "ghost"} disabled={busy !== null} onClick={skipCurrent}>
+                Bỏ cuốn này
+              </Button>
+            )}
+            {rest > 0 && (
+              <Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => void addAll()}>
+                Thêm tất cả phần còn lại
+              </Button>
+            )}
             {known ? (
               <>
                 <Button icon={Copy} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy !== null} onClick={() => void add(true)}>
                   {existing ? "Thêm bản riêng" : "Vẫn thêm bản mới"}
                 </Button>
-                <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(known.id)}>
-                  Mở cuốn đó
-                </Button>
+                {/* Trong hàng, "Mở cuốn đó" bỏ dở các cuốn sau: ở đó nút chính là "Bỏ cuốn này" (cuốn này đã có rồi). */}
+                {!queue && (
+                  <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(known.id)}>
+                    Mở cuốn đó
+                  </Button>
+                )}
               </>
             ) : (
               <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy === "reading"} onClick={() => void add()}>
@@ -457,5 +650,39 @@ export function AddBookDialog({
         </div>
       )}
     </Dialog>
+  );
+}
+
+const STATE_TEXT: Record<Exclude<QueueItem["state"], "waiting">, string> = {
+  added: "Đã thêm",
+  existing: "Đã có trong thư viện",
+  skipped: "Bỏ qua",
+  opened: "Đã mở",
+  error: "Chưa đọc được",
+};
+
+/** Danh sách các file đã chọn kèm tình trạng từng cái: cuốn đang xem, cuốn đã thêm / bỏ, cuốn không đọc được (kèm lý do). */
+function QueueList({ items, currentId, tall }: { items: QueueItem[]; currentId: number | null; tall?: boolean }) {
+  return (
+    <ul aria-label="Các file đã chọn" className={cn("mt-3 space-y-1.5 overflow-y-auto rounded-xl border border-line bg-hover p-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
+      {items.map((item) => {
+        const current = item.state === "waiting" && item.id === currentId;
+        let mark: ReactNode = <span className="block size-3 rounded-full border border-line-strong" />;
+        if (item.state === "added" || item.state === "existing" || item.state === "opened") mark = <Check className="size-3.5 text-success" strokeWidth={3} />;
+        else if (item.state === "error") mark = <CircleAlert className="size-3.5 text-danger" />;
+        else if (item.state === "skipped") mark = <Minus className="size-3.5 text-fg-3" />;
+        else if (current) mark = <span className="block size-3 rounded-full bg-accent" />;
+        const said = item.state === "waiting" ? (current ? "Đang xem" : "Chờ") : item.note ?? STATE_TEXT[item.state];
+        return (
+          <li key={item.id} aria-current={current ? "true" : undefined} className="flex items-start gap-2">
+            <span className="mt-0.5 grid size-3.5 shrink-0 place-items-center">{mark}</span>
+            <span className="min-w-0 flex-1">
+              <span className={cn("block truncate", current ? "font-semibold text-fg" : "text-fg-2")}>{item.name}</span>
+              <span className={cn("block text-pretty", item.state === "error" ? "text-danger" : "text-fg-3")}>{said}</span>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

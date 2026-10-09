@@ -17,7 +17,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
-use tauri::{AppHandle, Manager, RunEvent, Url};
+use tauri::{AppHandle, DragDropEvent, Manager, RunEvent, Url, WindowEvent};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_updater::{Update, UpdaterExt};
 
@@ -195,6 +195,18 @@ fn dispatch_event(app: &AppHandle, name: &str, detail: &Value) {
     }
 }
 
+/// File kéo thả vào cửa sổ: WebView2 giao việc nhận file cho vỏ (trang không nhận được sự kiện `drop` của HTML5), nên vỏ chuyển đường dẫn thật
+/// sang trang qua `abook-drag` - `state` là "enter" (đang kéo ngang cửa sổ), "leave" hoặc "drop" (kèm `paths`). Thư viện hiện lớp "Thả để thêm sách".
+fn forward_drag_drop(app: &AppHandle, event: &DragDropEvent) {
+    let paths = |paths: &[PathBuf]| paths.iter().map(|path| path.display().to_string()).collect::<Vec<_>>();
+    match event {
+        DragDropEvent::Enter { .. } => dispatch_event(app, "abook-drag", &json!({"state": "enter"})),
+        DragDropEvent::Drop { paths: dropped, .. } => dispatch_event(app, "abook-drag", &json!({"state": "drop", "paths": paths(dropped)})),
+        DragDropEvent::Leave => dispatch_event(app, "abook-drag", &json!({"state": "leave"})),
+        _ => {}
+    }
+}
+
 /// Tìm bản mới một lần mỗi lần mở app, gói phải có chữ ký khớp khoá công khai trong tauri.conf.json. Không có mạng hay
 /// chưa có bản phát hành nào: im lặng, lần mở sau thử lại. Bản dev không tìm, trừ khi thử bằng `ABOOK_UPDATE_URL`.
 fn check_for_update(app: &AppHandle) {
@@ -329,6 +341,11 @@ fn main() {
         }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .on_window_event(|window, event| {
+            if let WindowEvent::DragDrop(drag) = event {
+                forward_drag_drop(window.app_handle(), drag);
+            }
+        })
         .setup(|app| {
             let handle = app.handle().clone();
             app.manage(PendingUpdate(Mutex::new(None)));
