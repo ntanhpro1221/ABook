@@ -60,6 +60,12 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
   Phác thảo "Đường vào app" (mục dưới: `speaker_scorer.py`, `reconcile_speakers_with_scorer`) KHÔNG làm. Không tốn GPU/CPU cho
   bộ chấm nữa, trừ khi có ý tưởng mới đủ sức vượt p_first - ví dụ học trên LỖI của B9 (đầu vào có nhãn B9 + log-prob, đích =
   B9 sai hay đúng) thay vì học người nói từ gold; ý tưởng như thế phải ghi trước ngưỡng AUROC > p_first + khoảng tin cậy.
+- **Đã thử ngay ý "học trên lỗi B9" (CPU vài giây, `LLM_Train/errlearn/PREREG.md`, luật ghi trước: AUROC >= p_first + 0,02 và
+  khoảng tin cậy bootstrap theo truyện > 0):** 20 đặc trưng (log-prob B9 + thoại trần, vị trí trong chuỗi đối đáp, nhãn trùng
+  câu trước / cách một, NPC, tên nhãn nằm trong câu thoại, tên trong đoạn, số người nói quanh đó, token thay thế hàng đầu),
+  học giữ ngoài từng truyện. Logistic 0,726 (−0,019 [−0,051; +0,032]), cây tăng cường 0,737 (−0,008 [−0,046; +0,049]) - KHÔNG
+  vượt. Theo truyện cây lúc hơn nhiều (nhanvien 0,58 -> 0,76) lúc kém nhiều (shimotsuki 0,74 -> 0,57): 281 lỗi ở 11 truyện không
+  đủ để học cái chung. **Cờ nghi = p_first của B9; hướng cờ nghi học được đóng.**
 
 ## 09-10 chiều - B9 trên cây mới (logprob) và dựng lại bộ chấm ứng viên
 
