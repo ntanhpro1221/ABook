@@ -33,3 +33,11 @@ def test_a_reading_is_shown_with_each_word_capitalised() -> None:
     assert shown_reading("rên-ta-rô") == "Rên-ta-rô"
     assert shown_reading("Mu-rờ-lốc Cu-ô toa hain") == "Mu-rờ-lốc Cu-ô Toa Hain"
     assert shown_reading("ơ-lin") == "Ơ-lin"
+
+
+def test_a_chapter_status_outside_the_table_reads_as_plain_words() -> None:
+    """Soát UX a13 #18: trạng thái lạ không được đưa mã thô ("done") ra trang."""
+    from abook.webui.humanize import UNKNOWN_CHAPTER_STATUS, chapter_status_label
+
+    assert chapter_status_label("completed") == "Nghe được"
+    assert chapter_status_label("done") == UNKNOWN_CHAPTER_STATUS and "done" not in UNKNOWN_CHAPTER_STATUS

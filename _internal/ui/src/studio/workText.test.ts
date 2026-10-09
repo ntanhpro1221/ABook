@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PENDING_NOTE } from "@/studio/decisions";
-import { decidedTitle, inboxLead, narratorDecidedTitle, nameKey, sameNames } from "@/studio/workText";
+import { decidedTitle, inboxLead, narratorDecidedTitle, nameKey, rerecordSentence, sameNames } from "@/studio/workText";
 
 describe("tiêu đề thẻ người kể sau khi quyết", () => {
   it("không lặp tiền tố của nhãn lựa chọn", () => {
@@ -14,6 +14,14 @@ describe("tiêu đề thẻ người kể sau khi quyết", () => {
     expect(decidedTitle({ kind: "narrator", current: "Lâm", requested: null })).toBeNull();
     expect(decidedTitle({ kind: "speaker", current: "Lâm", requested: "Vai phụ không tên", lines: [1] })).toBe("Câu này của vai phụ không tên");
     expect(decidedTitle({ kind: "pronunciation", current: "Hên-khơ", surface: "Hailkes", requested: "Hên-khơ" })).toBe("Giữ: “Hailkes” đọc là “Hên-khơ”");
+  });
+});
+
+describe("cái giá của đổi giọng", () => {
+  it("mọi nơi nói 'thu lại N câu' cùng một cách", () => {
+    expect(rerecordSentence("đổi giọng, thu lại 12 câu")).toBe("Sẽ thu lại 12 câu bằng giọng mới.");
+    expect(rerecordSentence("thu lại 22 câu ở các chương chung")).toBe("Sẽ thu lại 22 câu ở các chương chung bằng giọng mới.");
+    expect(rerecordSentence(undefined)).toContain("thu lại");
   });
 });
 

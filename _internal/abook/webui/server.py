@@ -134,6 +134,9 @@ SPEAKER_PROBLEMS = {
     listener_overrides.NO_VOICE: "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được.",
 }
 
+UNNAMED_PROBLEM = ("Sách này chưa có nhóm “vai phụ không tên” để đưa câu vào. Chọn một người cụ thể, hay bấm “Người khác…” để đặt tên"
+                   " cho vai này (vd “lính gác”) - vai ấy sẽ có giọng riêng.")
+
 
 # Người gác mốc "Duyệt trước khi thu" (App._precast_tick): từ mốc phân tích xong tới lúc thu xong chương đầu là vài phút.
 PRECAST_POLL_SECONDS = 10.0
@@ -3317,6 +3320,9 @@ class Handler(BaseHTTPRequestHandler):
             problem = (book_wishes.speaker_problem(index, cast, stable_id, text_sha256, speaker, new_gender) if package
                        else store.speaker_request_problem(path, stable_id, text_sha256, speaker, new_gender))
             if problem is not None:
+                if problem == listener_overrides.NO_VOICE and speaker == listener_overrides.UNNAMED:
+                    # Sách chưa có nhóm "vai phụ không tên" nào để mượn giọng (nhóm ấy do bước phân tích tạo khi gặp vai như vậy).
+                    raise ApiError(HTTPStatus.BAD_REQUEST, UNNAMED_PROBLEM)
                 raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
         now = time.time()
         if package:
