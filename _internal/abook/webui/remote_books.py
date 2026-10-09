@@ -167,8 +167,11 @@ class Computers:
         if old and old != clean:
             _release_bluetooth({"bt": old}, data["computers"].values())
 
-    def forget(self, computer: str, library_root: Path) -> None:
-        """Thôi ghép: bỏ mã thiết bị và thư mục đệm của máy ấy (tải lại được khi ghép lại)."""
+    def forget(self, computer: str, library_root: Path, *, discard: bool = False) -> None:
+        """Thôi ghép: bỏ mã thiết bị và thư mục đệm của máy ấy (tải lại được khi ghép lại). Thư mục đệm mang cả phần sửa chưa gửi của
+        người nghe: còn sửa mà `discard` = False thì từ chối (`UnsentEdits`), không đổi gì - gửi trước (`send_unsent`) hay chọn bỏ."""
+        if not discard:
+            refuse_if_unsent(library_root, computer)
         with self._lock:
             data = self._read()
             gone = data["computers"].pop(computer, None) or {}
@@ -178,6 +181,39 @@ class Computers:
         for child in (root.iterdir() if root.is_dir() else []):
             if child.is_dir() and child.name.endswith(f"({computer[:8]})"):
                 shutil.rmtree(child, ignore_errors=True)
+
+
+class UnsentEdits(RemoteError):
+    """Thôi ghép sẽ làm mất phần sửa chưa gửi về máy kia (nói số cuốn và số thay đổi)."""
+
+
+def unsent_edits(library_root: Path, computer: str) -> list[dict[str, Any]]:
+    """Phần sửa chưa gửi của các cuốn của máy `computer` trong thư mục đệm - thứ `Computers.forget` xoá cùng thư mục:
+    [{package, title, changes}], ổn định theo tên thư mục. Cuốn không sửa gì thì không có mặt."""
+    root = Path(library_root).expanduser() / REMOTE_FOLDER
+    found = []
+    for folder in sorted(root.iterdir()) if root.is_dir() else []:
+        if not (folder.is_dir() and folder.name.endswith(f"({computer[:8]})")):
+            continue
+        for package, manifest in sorted(_manifests(folder), key=lambda item: item[0].name):
+            changes = book_edits.count(book_edits.load(package))
+            if changes:
+                found.append({"package": package, "title": str(manifest.get("title") or package.name), "changes": changes})
+    return found
+
+
+def refuse_if_unsent(library_root: Path, computer: str) -> None:
+    left = unsent_edits(library_root, computer)
+    if left:
+        raise UnsentEdits(f"{len(left)} cuốn còn {sum(item['changes'] for item in left)} thay đổi chưa gửi - gửi trước hay chọn bỏ rồi thôi ghép")
+
+
+def send_unsent(library_root: Path, computer: str) -> None:
+    """Gửi hết phần sửa chưa gửi của máy `computer` về máy ấy trước khi thôi ghép (`send_edits` từng cuốn; lỗi dừng ngay, cuốn ấy và
+    các cuốn sau giữ nguyên). Gửi xong mà vẫn còn sửa (vd sửa thêm giữa chừng) cũng là lỗi - không coi là xong khi còn thứ sẽ mất."""
+    for item in unsent_edits(library_root, computer):
+        send_edits(item["package"])
+    refuse_if_unsent(library_root, computer)
 
 
 def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: list[str] | None = None,
