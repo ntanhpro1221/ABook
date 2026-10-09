@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  analysisLabel, formatSize, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, autoLabel, autoSwitch,
-  type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood,
+  analysisLabel, formatSize, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, sceneOffered, autoLabel, autoSwitch,
+  type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood, type SceneStudent,
 } from "./musicLocal";
 
 const digest = "0123456789abcdef0123456789abcdef01234567";
@@ -177,5 +177,21 @@ describe("note of a track in the swap list", () => {
   it("tells one story about pinned tracks travelling with the book file", () => {
     expect(MY_MUSIC_INTRO).toContain(".abook / .abookproj");
     expect(MY_MUSIC_INTRO).not.toContain("Sửa sách");
+  });
+});
+
+describe("nhạc theo sát từng đoạn trong chương", () => {
+  const scene = (over: Partial<SceneStudent> = {}): SceneStudent => ({ state: "missing", bytes: 763_000_000, blocked: "", external: false, offered: true, reason: "", ...over });
+  const module = (over: Partial<MusicModuleStatus> = {}): MusicModuleStatus => ({
+    state: "ready", done: 0, total: 0, error: "", ready: true, analysing: false, metered: false, scene: scene(), ...over,
+  });
+  it("chỉ mời khi Phân tích nhạc đã đủ, phần này chưa có và máy tải được", () => {
+    expect(sceneOffered(module())).toBe(true);
+    expect(sceneOffered(module({ scene: scene({ state: "current" }) }))).toBe(false);
+    expect(sceneOffered(module({ scene: scene({ blocked: "tải đang bị tắt trên máy này" }) }))).toBe(false);
+    expect(sceneOffered(module({ scene: scene({ offered: false, reason: "cần cài Studio: bộ này chạy trong Studio của máy tính" }) }))).toBe(false);
+    expect(sceneOffered(module({ state: "missing", ready: false }))).toBe(false);
+    expect(sceneOffered(module({ scene: undefined }))).toBe(false);
+    expect(sceneOffered(undefined)).toBe(false);
   });
 });

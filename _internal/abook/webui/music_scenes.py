@@ -76,6 +76,11 @@ UNTIMED_SECONDS_PER_CHAR = 0.065  # chương chưa có audio: ước thời lư�
 CHAPTER_LEVEL_V = (1.876, 0.068)
 CHAPTER_LEVEL_T = (1.066, -0.490)
 CHAPTER_LEVEL_SHAPE = 0.5
+# Mức T của chương khi KHÔNG đủ P0 cho cả chương, dùng ở đường "student" (`apply_student`): L_T = a * TB(tension đường nhãn) + b.
+# M3 10-10 (Corpus/research/music/PLAN_m3_q06_level.md; LLM_Train/music/m3_q06_level.log); học trên 42 chương 4+5+5b+6.
+CHAPTER_LEVEL_T_LABELS = (4.022, -0.056)
+# Hệ số hình của học sinh trong chương (đo ở M3: k = 1; CL của P0 giữ 0.5).
+STUDENT_SHAPE = 1.0
 
 SEPARATOR = re.compile(r"^\s*(?:[*~#=_\-·•oO0]\s*){3,}\s*$")
 TIME_JUMP = re.compile(
@@ -281,11 +286,13 @@ class _Accumulator:
 
 
 def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = None,
-                   boundaries: Mapping[str, Mapping[Any, str]] | None = None) -> list[dict[str, Any]]:
+                   boundaries: Mapping[str, Mapping[Any, str]] | None = None,
+                   student: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     """Các đoạn của một chương (`store.chapter_script` / `scripts/<n>.json` của `.abook`). `moods`: kết quả LLM đọc cả
     đoạn (`music_moods.load()["scenes"]`) - chỉ đổi valence / tension của đoạn, KHÔNG bao giờ đổi ranh giới đoạn.
     `boundaries`: ranh giới có lý do tính sẵn của chương này theo nguồn, {"llm": {id câu bắt đầu cảnh: loại}} - vào thành cờ
-    `sceneBreak` như dấu hiệu đổi cảnh (`with_scene_breaks`)."""
+    `sceneBreak` như dấu hiệu đổi cảnh (`with_scene_breaks`). `student`: hình dạng không khí trong chương do học sinh đoán
+    (`music_scene_student.load()["scenes"]`) - đoạn lấy hình từ đó (`apply_student`), cũng không đổi ranh giới."""
     segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
     if not segments:
         return []
@@ -349,7 +356,8 @@ def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = 
     scenes.append(current)
     scenes = _split_long(_merge_short(scenes), segments, seconds)
     spans = _mood_spans(moods, script.get("chapterId"), segments)
-    return apply_chapter_level([_view(scene, segments, timeline, seconds, script, spans) for scene in scenes])
+    views = [_view(scene, segments, timeline, seconds, script, spans) for scene in scenes]
+    return apply_student(views, student) or apply_chapter_level(views)
 
 
 def apply_chapter_level(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -384,6 +392,53 @@ def apply_chapter_level(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
                  valence=round(clip(level_v + CHAPTER_LEVEL_SHAPE * (pv - mean_valence)), 3),
                  tension=round(clip(level_t + CHAPTER_LEVEL_SHAPE * (pt - mean_tension)), 3))
             for scene, pv, pt in zip(scenes, llm_valence, llm_tension)]
+
+
+def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | None) -> list[dict[str, Any]] | None:
+    """Đường "student" (music_scene_student.py; SPEC_app_q06.md mục 1 + PLAN_m3_q06_level.md): mức chương như CL, HÌNH trong chương do học sinh
+    đoán. `scenes`: các đoạn của MỘT chương ngay từ `_view` (chưa qua `apply_chapter_level`); `items`: độ lệch thô của học sinh, mỗi đoạn một
+    mục khớp chapterId + id câu đầu / cuối (dV, dE, dT). Với w = end - start, TB(x) = trung bình theo w:
+
+        L_V = clip(1.876 * TB(labelValence) + 0.068)                        (như CL: mức V luôn từ nhãn câu)
+        L_T = clip(1.066 * TB(pT) - 0.490)                                  nếu MỌI đoạn đã có P0 (moodSource "llm"); pT = tension P0
+        L_T = clip(4.022 * TB(labelTension) - 0.056)                        nếu không (M3: nhãn đủ thay P0 ở mức chương hơi kém)
+        valence = clip(L_V + k * (dV - TB(dV)))   tension = clip(L_T + k * (dT - TB(dT)))     k = 1 (CL của P0 dùng 0.5)
+
+    Chương một đoạn: độ lệch 0 nên đoạn = mức chương. arousal, sd, emotions, confidence giữ nguyên (arousal vẫn từ nhãn câu, KHÔNG dùng dE).
+    Đoạn mang `moodSource` = "student", `studentValence` / `studentTension` = dV / dT thô, và `llmValence` / `llmTension` khi chính đoạn ấy đã có P0.
+    Trả None (caller dùng `apply_chapter_level`, đường hôm nay) khi không có mục cho MỌI đoạn của chương. Thuần hàm: không sửa đoạn đưa vào."""
+    weights = [max(0.0, float(scene["end"]) - float(scene["start"])) for scene in scenes]
+    total = sum(weights)
+    if not scenes or not items or total <= 0:
+        return None
+    by_key = {(item.get("chapterId"), item.get("firstSegment"), item.get("lastSegment")): item for item in items if isinstance(item, dict)}
+    try:
+        deviations = [(float(item["dV"]), float(item["dT"]))
+                      for item in (by_key[(scene.get("chapterId"), scene.get("firstSegment"), scene.get("lastSegment"))] for scene in scenes)]
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    def mean(values: list[float]) -> float:
+        return sum(w * v for w, v in zip(weights, values)) / total
+
+    def clip(value: float) -> float:
+        return max(-1.0, min(1.0, value))
+
+    level_v = clip(CHAPTER_LEVEL_V[0] * mean([float(scene["labelValence"]) for scene in scenes]) + CHAPTER_LEVEL_V[1])
+    if all(scene.get("moodSource") == "llm" for scene in scenes):
+        level_t = clip(CHAPTER_LEVEL_T[0] * mean([float(scene["tension"]) for scene in scenes]) + CHAPTER_LEVEL_T[1])
+    else:
+        level_t = clip(CHAPTER_LEVEL_T_LABELS[0] * mean([float(scene["labelTension"]) for scene in scenes]) + CHAPTER_LEVEL_T_LABELS[1])
+    mean_dv, mean_dt = mean([dv for dv, _dt in deviations]), mean([dt for _dv, dt in deviations])
+    out = []
+    for scene, (dv, dt) in zip(scenes, deviations):
+        fields = {"moodSource": "student", "studentValence": round(dv, 3), "studentTension": round(dt, 3),
+                  "valence": round(clip(level_v + STUDENT_SHAPE * (dv - mean_dv)), 3),
+                  "tension": round(clip(level_t + STUDENT_SHAPE * (dt - mean_dt)), 3)}
+        if scene.get("moodSource") == "llm":
+            fields.update(llmValence=round(float(scene["valence"]), 3), llmTension=round(float(scene["tension"]), 3))
+        out.append(dict(scene, **fields))
+    return out
 
 
 def _mood_spans(moods: list[dict[str, Any]] | None, chapter_id: Any,
@@ -468,6 +523,7 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
     valence, arousal = acc.point()
     tension = acc.mean_tension()
     weight = acc.weight
+    label_tension = tension  # như label_valence: nền của mức T khi chương chưa đủ P0 (`apply_student`)
     mood_source = "labels"
     overlaps = [(sum(seconds[max(first, a):min(last, b) + 1]), v, t) for a, b, v, t in spans if a <= last and b >= first]
     total = sum(w for w, _v, _t in overlaps)
@@ -492,12 +548,14 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
         "lines": last - first + 1,
         "moodSource": mood_source,
         "labelValence": round(label_valence, 3),
+        "labelTension": round(label_tension, 3),
     }
 
 
 def book_scenes(scripts: Iterable[dict[str, Any]], moods: list[dict[str, Any]] | None = None,
-                boundaries: Mapping[Any, Mapping[str, Mapping[Any, str]]] | None = None) -> list[dict[str, Any]]:
-    """Các đoạn của cả cuốn, theo thứ tự chương. `moods`: xem `chapter_scenes`; `boundaries`: {chapterId: ranh giới theo
+                boundaries: Mapping[Any, Mapping[str, Mapping[Any, str]]] | None = None,
+                student: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Các đoạn của cả cuốn, theo thứ tự chương. `moods`, `student`: xem `chapter_scenes`; `boundaries`: {chapterId: ranh giới theo
     nguồn của chương ấy} (xem `chapter_scenes`)."""
     return [scene for script in scripts
-            for scene in chapter_scenes(script, moods, (boundaries or {}).get(script.get("chapterId")))]
+            for scene in chapter_scenes(script, moods, (boundaries or {}).get(script.get("chapterId")), student)]

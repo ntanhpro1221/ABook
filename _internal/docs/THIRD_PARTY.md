@@ -109,6 +109,11 @@ Quantization") - **CC BY-NC 4.0** (Ghi công - Phi thương mại; trọng số 
 (`muq/muq_mulan_audio.onnx`, ~1,27 GB, tháp âm thanh xuất sang ONNX fp32 và vector chữ / hằng số tính sẵn: `muq/valence_text.npz`, `muq/vhop_scale.json`);
 chỉ chạy trên máy người dùng để đo bài nhạc họ tự nhập. Khi phân phối gói: kèm giấy phép CC BY-NC 4.0, ghi công OpenMuQ và nói rõ đã chuyển định dạng sang ONNX.
 
+Tuỳ chọn "Học sinh không khí cảnh" của máy tính (`webui/music_scene_student.py`; người dùng bấm mới tải, KHÔNG nằm trong bộ cài) dùng model nền
+Qwen3-0.6B (`Qwen/Qwen3-0.6B`; (c) Qwen team, Apache-2.0) cắt còn 14 lớp đầu cùng đầu hồi quy tuyến tính của chính dự án (`scene_head_q06.npz`).
+Trọng số bf16 (~0,71 GiB cả gói) đăng cùng repo Hugging Face của dự án (`scene_q06/`), chạy trên CPU máy người dùng để đoán độ lệch không khí giữa
+các đoạn của một chương. Khi phân phối gói: kèm giấy phép Apache-2.0 (file `LICENSE` trong gói) và nói rõ model đã bị cắt lớp.
+
 Căn từng chữ khi đóng gói sách (`webui/word_timing.py`) dùng model nhận dạng tiếng Việt `dragonSwing/wav2vec2-base-vietnamese`
 (Apache-2.0; tinh chỉnh từ facebook/wav2vec2-base, Apache-2.0), xuất sang ONNX và lượng tử hoá int8 (~122 MB) bằng onnxruntime; cùng từ
 điển ký tự và cấu hình tiền xử lý của model gốc. Gói đăng ở huggingface.co/NGDtuanh/abook-analyzer (thư mục `word-align`), tải về

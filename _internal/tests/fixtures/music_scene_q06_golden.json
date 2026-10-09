@@ -1,0 +1,207 @@
+{
+ "about": "Expected q06 scene deviations (dV, dE, dT) from the research reference path (fp32, CPU), not from the app module. Hand-written chapters, no book text.",
+ "revision": "c2e3253de9ab157941589a6c4fb10cb861a17c37",
+ "headSha256": "84c9b10ac154852341daeabd33659b65333ae77f1eaf24b71c994c46ab9d3ec0",
+ "modelSha256": "7005be7da7f28271f15f0102ecefe19da6b80b0af6b5ba9477e278ed8430c2d1",
+ "tolerance": {
+  "fp32_max_abs": 1e-05,
+  "bf16_min_corr": 0.999
+ },
+ "chapters": [
+  {
+   "id": "golden-1",
+   "scenes": [
+    {
+     "sentences": [
+      "Sáng hôm ấy trời trong vắt.",
+      "Lan mở cửa sổ, gió từ vườn bưởi thổi vào mát rượi.",
+      "Bà cụ ngồi nhặt rau dưới hiên, thỉnh thoảng lại cười khi con mèo vờn cuộn len."
+     ],
+     "words": 35,
+     "tokens": 59,
+     "expected": [
+      0.40208191,
+      -0.20510898,
+      -0.64633725
+     ]
+    },
+    {
+     "sentences": [
+      "Đến trưa, tin dữ đến từ thị trấn.",
+      "Người đưa thư đứng ở cổng rất lâu, không nói gì.",
+      "Lan đọc lá thư hai lần rồi ngồi sụp xuống bậc thềm, tay run lẩy bẩy."
+     ],
+     "words": 35,
+     "tokens": 55,
+     "expected": [
+      -0.48899509,
+      -0.04932687,
+      0.46896206
+     ]
+    },
+    {
+     "sentences": [
+      "Đêm xuống, tiếng chó sủa dồn dập ở đầu làng.",
+      "Có bóng người lướt qua hàng rào.",
+      "Lan nín thở, nắm chặt con dao, nghe rõ tiếng tim mình đập thình thịch trong bóng tối."
+     ],
+     "words": 35,
+     "tokens": 56,
+     "expected": [
+      -0.20109709,
+      0.2749873,
+      0.54415425
+     ]
+    },
+    {
+     "sentences": [
+      "Gần sáng, anh trai cô trở về, áo ướt sũng nhưng vẫn sống.",
+      "Hai anh em ôm nhau khóc, rồi bật cười vì chẳng biết nói gì hơn.",
+      "Ngoài kia, gà bắt đầu gáy."
+     ],
+     "words": 34,
+     "tokens": 57,
+     "expected": [
+      0.29648116,
+      -0.02115591,
+      -0.37756667
+     ]
+    }
+   ]
+  },
+  {
+   "id": "golden-2",
+   "scenes": [
+    {
+     "sentences": [
+      "Học viện mở cửa ngày đầu năm.",
+      "Hành lang rộn ràng tiếng nói cười, những tấm biển chào mừng treo khắp nơi.",
+      "Minh lóng ngóng tìm phòng học, va phải một cô gái tóc buộc cao đang ôm chồng sách."
+     ],
+     "words": 40,
+     "tokens": 55,
+     "expected": [
+      0.58671603,
+      0.24238335,
+      -0.03748247
+     ]
+    },
+    {
+     "sentences": [
+      "Ngày thứ 1 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 2 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 3 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 4 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 5 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 6 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 7 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 8 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 9 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 10 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 11 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 12 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 13 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 14 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 15 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 16 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 17 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 18 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 19 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 20 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 21 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 22 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 23 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 24 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 25 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 26 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 27 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 28 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 29 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 30 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 31 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 32 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 33 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 34 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 35 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 36 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 37 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 38 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 39 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 40 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 41 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 42 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 43 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 44 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 45 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 46 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 47 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 48 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 49 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 50 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 51 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 52 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 53 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 54 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 55 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 56 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 57 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 58 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 59 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 60 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 61 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 62 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 63 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 64 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 65 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 66 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 67 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 68 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 69 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 70 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 71 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 72 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 73 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 74 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 75 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 76 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 77 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 78 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 79 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 80 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 81 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 82 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 83 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 84 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 85 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 86 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 87 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 88 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 89 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt.",
+      "Ngày thứ 90 của kỳ huấn luyện, Minh lại chạy mười vòng sân, chép bài lý thuyết phép thuật và quét dọn thư viện cho đến khi đèn tắt."
+     ],
+     "words": 2610,
+     "tokens": 3591,
+     "expected": [
+      -0.0045089,
+      -0.02275245,
+      -0.01754512
+     ]
+    },
+    {
+     "sentences": [
+      "Trận đấu tập bắt đầu.",
+      "Đối thủ vung kiếm, luồng lửa quét ngang sân, khán đài hét lên.",
+      "Minh lăn người tránh, đất đá văng tung toé, cậu chỉ còn một hơi thở để phản công."
+     ],
+     "words": 36,
+     "tokens": 56,
+     "expected": [
+      -0.32501117,
+      1.38023793,
+      1.31366872
+     ]
+    }
+   ]
+  }
+ ]
+}

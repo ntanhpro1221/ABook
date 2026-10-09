@@ -62,6 +62,20 @@ export interface MusicModuleStatus {
   restart?: boolean;
   /** Chỉ máy tính. */
   precise?: PreciseMood;
+  /** Chỉ máy tính: phần tuỳ chọn "Học sinh không khí cảnh". */
+  scene?: SceneStudent;
+}
+
+/** Phần tuỳ chọn của "Phân tích nhạc" (webui/music_scene_student.py): model nhỏ đoán đoạn nào trong chương vui / căng hơn đoạn khác, tải khi người dùng bấm.
+ *  `blocked` khác rỗng = máy này chưa tải được (lý do tiếng Việt). */
+export interface SceneStudent {
+  state: "current" | "outdated" | "missing";
+  bytes: number;
+  blocked: string;
+  external: boolean;
+  /** Máy này dùng được phần này (có Studio để chạy nó); không thì `reason` nói vì sao và giao diện ẩn nút tải. */
+  offered: boolean;
+  reason: string;
 }
 
 /** "Đo cảm xúc nhạc chính xác hơn" (chỉ máy tính, webui/music_valence.py): tuỳ chọn tải thêm một model lớn, người dùng bật mới tải. `unavailable` = máy
@@ -122,6 +136,11 @@ export function moduleLabel(module: MusicModuleStatus): string {
 /** Có mời người dùng bật "Đo cảm xúc nhạc chính xác hơn" không: máy đủ sức, và đã có bộ phân tích nhạc (nó dùng lại phần nghe của bộ ấy). */
 export function preciseOffered(module: MusicModuleStatus | undefined): module is MusicModuleStatus & { precise: PreciseMood } {
   return Boolean(module?.precise && module.precise.state !== "unavailable" && module.ready);
+}
+
+/** Có mời người dùng tải "Học sinh không khí cảnh" không: Phân tích nhạc đã đủ, máy có Studio để chạy nó, phần này chưa có và máy tải được. */
+export function sceneOffered(module: MusicModuleStatus | undefined): module is MusicModuleStatus & { scene: SceneStudent } {
+  return Boolean(module?.scene && module.scene.state === "missing" && module.scene.offered && !module.scene.blocked && module.state === "ready" && module.ready);
 }
 
 /** Đang tải hay đang nghe kỹ lại: giao diện hỏi lại view mỗi giây. */
