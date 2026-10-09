@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.39] - 2026-10-10
+
 ### Sách của máy tính khác
 
 - Sửa cách đọc hay chọn nhạc cho sách của máy khác rồi gửi: lần gửi xong không còn báo "1 thay đổi đang chờ gửi" mãi, "Gỡ ghép" không còn bắt "Gửi trước rồi gỡ" lặp vô hạn; cách đọc và nhạc bạn chọn vẫn giữ nguyên ở máy này (trước đây nhạc chọn cho sách chỉ có chữ của máy kia bị quên sau khi gửi).
