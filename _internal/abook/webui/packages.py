@@ -107,6 +107,20 @@ def is_package(path: Path) -> bool:
         return False
 
 
+def _packages_in(candidates: Iterable[Path]) -> list[Path]:
+    return [child.resolve() for child in candidates if child.is_dir() and not child.name.startswith(".") and is_package(child)]
+
+
+def local_folders(library_root: Path) -> list[Path]:
+    """Chỉ các cuốn người dùng nhập từ file, dưới `<thư viện>/Sách đã nhập/` - KHÔNG kể cuốn ảo của máy khác. Phần máy này chia sẻ
+    cho máy đã ghép (sync.py) dùng đúng danh sách này: cuốn ảo mà cũng chia sẻ thì máy A soi sách của B, B lại thấy bản soi ấy của A..."""
+    imported = Path(library_root).expanduser() / IMPORTED_FOLDER
+    try:
+        return _packages_in(sorted(imported.iterdir()) if imported.is_dir() else [])
+    except OSError:
+        return []
+
+
 def folders(library_root: Path) -> list[Path]:
     """Các cuốn đã nhập dưới `<thư viện>/Sách đã nhập/` (bỏ thư mục tạm của lần giải nén đang dở: tên bắt đầu bằng "."),
     và các cuốn ảo của máy tính khác dưới `<thư viện>/Trên máy khác/<máy>/` (remote_books.py)."""
@@ -115,14 +129,12 @@ def folders(library_root: Path) -> list[Path]:
     root = Path(library_root).expanduser()
     candidates: list[Path] = []
     try:
-        imported = root / IMPORTED_FOLDER
-        candidates += sorted(imported.iterdir()) if imported.is_dir() else []
         remote = root / REMOTE_FOLDER
         for computer in sorted(remote.iterdir()) if remote.is_dir() else []:
             candidates += sorted(computer.iterdir()) if computer.is_dir() else []
     except OSError:
-        return []
-    return [child.resolve() for child in candidates if child.is_dir() and not child.name.startswith(".") and is_package(child)]
+        candidates = []
+    return local_folders(root) + _packages_in(candidates)
 
 
 def chapter_prints(book: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -157,6 +169,11 @@ def _file(path: Path, relative: Any) -> Path | None:
         return None
     fetch(path, relative, book)
     return _inside(path, relative)
+
+
+def has(path: Path, relative: Any) -> bool:
+    """File `relative` của cuốn có trên đĩa (không tải gì từ máy khác)."""
+    return _inside(path, relative) is not None
 
 
 def music_file(path: Path, name: str) -> Path | None:

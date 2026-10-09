@@ -78,7 +78,7 @@ def read_package(path: Path) -> tuple[dict[str, Any], bytes | None, dict[str, st
     return edits, cover, tracks
 
 
-def _extract(path: Path, tracks: dict[str, str], target: Path) -> None:
+def extract(path: Path, tracks: dict[str, str], target: Path) -> None:
     """Chép các bài nhạc ghim ra `target/<sha1>.<đuôi>` (nơi `fold_edits` tìm file)."""
     target.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(path) as archive:
@@ -389,7 +389,7 @@ def receive(project: Path, device: str, name: str, package: Path, *, my_music: A
         scratch = Path(tempfile.mkdtemp(prefix=".edits_in_", dir=project))
         try:
             if tracks:
-                _extract(package, tracks, scratch)
+                extract(package, tracks, scratch)
             report = book_edits.fold_edits(project, layer, cover=cover, music_dir=scratch, my_music=my_music)
         finally:
             shutil.rmtree(scratch, ignore_errors=True)

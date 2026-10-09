@@ -350,6 +350,19 @@ class Library:
 
         return packages.folders(self.root)
 
+    def imported_packages(self) -> list[Path]:
+        """Chỉ cuốn người dùng nhập từ file (không cuốn ảo của máy khác) - phần thư viện này chia sẻ cho máy đã ghép."""
+        from . import packages
+
+        return packages.local_folders(self.root)
+
+    def resolve_sharable(self, value: str) -> Path | None:
+        """Cuốn máy đã ghép đòi được: dự án, hay cuốn nhập từ file (không cuốn ảo của máy khác - chống vòng soi nhau)."""
+        project = self.resolve(value)
+        if project is not None:
+            return project
+        return self.find(value, self.imported_packages())
+
     def resolve_listenable(self, value: str) -> Path | None:
         """Như `resolve`, cho phía Nghe: dự án hoặc cuốn đã nhập từ file."""
         project = self.resolve(value)
