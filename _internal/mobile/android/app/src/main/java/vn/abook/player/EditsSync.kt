@@ -39,6 +39,7 @@ object EditsSync {
     /** Lần gửi gần nhất đã thành công, thất bại, hay chưa gửi bao giờ. */
     const val SENT = "sent"
     const val FAILED = "error"
+    private const val KEPT = "kept"
 
     private val executor = Executors.newSingleThreadScheduledExecutor { runnable -> Thread(runnable, "edits-sync").apply { isDaemon = true } }
     private val scheduled = ConcurrentHashMap<String, ScheduledFuture<*>>()
@@ -61,13 +62,26 @@ object EditsSync {
     private fun lastState(dir: File): JSONObject? =
         stateFile(dir).takeIf { it.isFile }?.let { runCatching { JSONObject(it.readText()) }.getOrNull() }
 
+    /** `kept` của lần gửi gần nhất: [BookEdits.sentMarks] - cách đọc, danh sách phát đã tới máy tính mà vẫn nằm ở đây. Chỉ để đếm, không hiện ra. */
+    private fun marks(dir: File): JSONObject? = lastState(dir)?.optJSONObject(KEPT)
+
     /**
-     * `editsSync` của một cuốn: {pending: số thay đổi chưa gửi, last: kết quả lần gửi gần nhất hay null}. `pending` đếm lớp sửa
-     * hiện có (`edits` = BookEdits.count): gửi xong là gỡ, nên số còn lại chính là phần chưa tới máy tính.
+     * Số thay đổi CHƯA tới máy tính: lớp sửa hiện có trừ phần đã gửi mà vẫn giữ lại ở đây (cách đọc, nhạc đã chọn - [BookEdits.subtract]
+     * cố ý giữ, vì sách máy tính trả về không mang chúng). Gửi xong là gỡ phần còn lại, nên số này chính là phần chưa tới máy tính.
      */
-    fun view(dir: File, pending: Int): JSONObject = JSONObject().put("pending", pending).put("last", lastState(dir) ?: JSONObject.NULL)
+    fun pending(dir: File, edits: JSONObject): Int = BookEdits.count(BookEdits.unmarked(edits, marks(dir)))
+
+    /**
+     * `editsSync` của một cuốn: {pending: số thay đổi chưa gửi ([pending]), last: kết quả lần gửi gần nhất hay null}.
+     */
+    fun view(dir: File, pending: Int): JSONObject {
+        val last = lastState(dir)?.also { it.remove(KEPT) }
+        return JSONObject().put("pending", pending).put("last", last ?: JSONObject.NULL)
+    }
 
     private fun record(dir: File, state: JSONObject) {
+        // Lần gửi lỗi (hay làm mới số việc chờ duyệt) không làm quên cái đã gửi trước đó: lớp sửa vẫn giữ cách đọc ấy.
+        if (!state.has(KEPT)) marks(dir)?.let { state.put(KEPT, it) }
         Store.writeAtomic(stateFile(dir), state.toString())
     }
 
@@ -118,11 +132,12 @@ object EditsSync {
     /**
      * Gửi phần sửa của cuốn `id` (đã tải từ máy tính chính) qua `send` (nhận file gói, trả JSON lời đáp; ném lỗi nếu máy tính
      * không nhận) - gọi trên luồng nền. Nhận xong: gỡ phần đã gửi khỏi lớp sửa, ghi trạng thái "đã gửi", rồi nhờ plugin tải lại
-     * sách. Lỗi: ghi trạng thái "lỗi" (lớp sửa giữ nguyên, lần sau gửi lại) rồi ném tiếp. Trả `editsSync` mới. Không có gì để gửi:
-     * trả `editsSync` hiện tại.
+     * sách. Lỗi: ghi trạng thái "lỗi" (lớp sửa giữ nguyên, lần sau gửi lại) rồi ném tiếp. Trả `editsSync` mới. Không có gì để gửi
+     * (lớp sửa rỗng, hay chỉ còn cách đọc / nhạc đã gửi rồi - [pending] = 0): trả `editsSync` hiện tại. `host`: tên máy giữ sách, để lời báo
+     * xung đột nói ở máy nào ([senderLabel]).
      */
     @Synchronized
-    fun push(id: String, send: (File) -> String): JSONObject {
+    fun push(id: String, host: String = "", send: (File) -> String): JSONObject {
         if (Store.editDestination(id) == null) throw IllegalStateException("Cuốn này không lấy từ máy tính nên không có chỗ gửi về")
         val dir = Store.bookDir(id)
         val snapshot = try {
@@ -130,7 +145,7 @@ object EditsSync {
         } catch (error: IllegalStateException) {
             throw failure(dir, id, error.message.orEmpty(), error)
         }
-        if (snapshot == null) return view(dir, 0)
+        if (snapshot == null || pending(dir, snapshot.edits) == 0) return view(dir, 0)
         val file = File(Store.root, "edits_out_$id.zip")
         try {
             try {
@@ -148,15 +163,16 @@ object EditsSync {
                 throw failure(dir, id, "Máy tính trả lời không hiểu được", error)
             }
             refresh?.let { runCatching { it(id) } } // sách mới của máy tính đã mang sửa: tải lại TRƯỚC khi gỡ lớp phủ để không chớp bản cũ
-            val rest = BookEdits.subtract(dir, snapshot.edits, snapshot.cover)
-            record(dir, JSONObject().put("state", SENT).put("at", clock())
+            val kept = BookEdits.sentMarks(snapshot.edits, marks(dir)) // trước khi ghi trạng thái mới: `marks` còn là của các lần gửi trước
+            BookEdits.subtract(dir, snapshot.edits, snapshot.cover)
+            record(dir, JSONObject().put("state", SENT).put("at", clock()).put(KEPT, kept)
                 .put("applied", reply.optInt("applied")).put("skipped", reply.optInt("skipped"))
                 .put("requests", reply.optInt("requests")).put("waiting", reply.optInt("waiting"))
                 .put("skippedWishes", reply.optInt("skippedWishes"))
-                .put("conflicts", labels(reply.optJSONArray("conflicts"))))
+                .put("conflicts", labels(reply.optJSONArray("conflicts"), host)))
             attempts.remove(id)
             changed?.invoke(id)
-            return view(dir, rest)
+            return view(dir, pending(dir, BookEdits.load(dir)))
         } finally {
             file.delete()
         }
@@ -169,17 +185,45 @@ object EditsSync {
         return if (cause is IOException) IOException(message, cause) else IllegalStateException(message, cause)
     }
 
-    private fun labels(array: JSONArray?): JSONArray {
+    private fun labels(array: JSONArray?, host: String): JSONArray {
         val out = JSONArray()
-        if (array != null) for (index in 0 until array.length()) array.optJSONObject(index)?.optString("label")?.takeIf { it.isNotEmpty() }?.let(out::put)
+        if (array != null) for (index in 0 until array.length()) {
+            val item = array.optJSONObject(index) ?: continue
+            if (text(item, "label").isEmpty()) continue
+            out.put(senderLabel(item, host))
+        }
         return out
     }
 
+    private fun text(item: JSONObject, key: String): String = if (item.isNull(key)) "" else item.optString(key)
+
+    /**
+     * Câu báo xung đột cho người GỬI (webui/edits_inbox.py `sender_label`): thứ gì đã đổi ở máy giữ sách `host` sau lần gửi trước, và bản vừa
+     * gửi đã thay vào. `label` của máy tính là câu cho CHỦ máy ấy ("máy tính đã đặt...") - ở đây nó không đúng góc nhìn.
+     */
+    internal fun senderLabel(item: JSONObject, host: String): String {
+        val where = if (host.isNotEmpty()) "máy kia ($host)" else "máy kia"
+        val what = text(item, "what")
+        val lost = text(item, "lost")
+        val kept = text(item, "kept")
+        return when {
+            lost.isNotEmpty() && kept.isNotEmpty() -> "$what: $where đã đổi thành $lost trước đó, bản của bạn $kept đã thay vào"
+            what.isNotEmpty() -> "$what: $where đã đổi khác trước đó, bản của bạn đã thay vào"
+            else -> text(item, "label") // máy kia cũ không gửi các khoá trên: giữ câu của nó
+        }
+    }
+
     /** Gửi thật qua đường TLS đã ghim tới máy giữ sách - máy tính chính, hay máy tính khác đã ghép (không bao giờ gọi trên luồng giao diện). */
-    fun pushNow(context: Context, id: String): JSONObject = push(id) { file ->
+    fun pushNow(context: Context, id: String): JSONObject = push(id, holderName(context, id)) { file ->
         val (peer, remote) = Store.editDestination(id) ?: throw IllegalStateException("Cuốn này không lấy từ máy tính nên không có chỗ gửi về")
         if (peer == null) SyncLink.request(context, "POST", "/sync/v1/books/$remote/edits", upload = file, readTimeoutMs = 120_000)
         else Peers.request(context, peer, "POST", "/sync/v1/books/$remote/edits", readTimeoutMs = 120_000, upload = file)
+    }
+
+    /** Tên máy giữ sách `id` như đã ghép (máy tính chính: tên nó báo lúc ghép); không biết thì rỗng. */
+    private fun holderName(context: Context, id: String): String {
+        val peer = Store.editDestination(id)?.first ?: return SyncLink.prefs(context).getString("name", "").orEmpty()
+        return Peers.all(context).optJSONObject(peer)?.optString("name").orEmpty()
     }
 
     /** Có đường tới máy giữ sách `id` không (chưa ghép / thôi ghép thì không gửi, không hẹn). */
@@ -199,7 +243,7 @@ object EditsSync {
         scheduled.remove(id)?.cancel(false)
         scheduled[id] = executor.schedule({
             scheduled.remove(id)
-            if (BookEdits.isEmpty(BookEdits.load(Store.bookDir(id)))) return@schedule
+            if (pending(Store.bookDir(id), BookEdits.load(Store.bookDir(id))) == 0) return@schedule
             val ok = runCatching { pushNow(context, id) }.isSuccess
             if (!ok) {
                 val tried = attempts.merge(id, 1, Int::plus) ?: 1
@@ -216,7 +260,7 @@ object EditsSync {
         for (id in Store.bookIds()) {
             if (!reachable(context, id)) continue
             val dir = Store.bookDir(id)
-            if (!BookEdits.isEmpty(BookEdits.load(dir))) schedule(context, id, 500)
+            if (pending(dir, BookEdits.load(dir)) > 0) schedule(context, id, 500)
             if ((lastState(dir)?.optInt("waiting") ?: 0) <= 0) continue
             val (peer, remote) = Store.editDestination(id) ?: continue
             executor.execute {

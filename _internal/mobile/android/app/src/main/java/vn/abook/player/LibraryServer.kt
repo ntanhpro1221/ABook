@@ -359,7 +359,7 @@ object LibraryServer {
         }
         val match = Regex("/sync/v1/books/([^/]+)/(manifest|state|files/(.+))").matchEntire(path)
         val book = match?.groupValues?.get(1).orEmpty()
-        val manifest = if (BOOK_ID.matches(book)) Store.manifest(book) else null
+        val manifest = if (BOOK_ID.matches(book) && Store.isFileBook(book)) Store.manifest(book) else null
         if (match == null || manifest == null) {
             json(output, 404, JSONObject().put("error", "Không có sách này"))
             return
@@ -419,12 +419,15 @@ object LibraryServer {
 
     private fun hex(bytes: Int): String = ByteArray(bytes).also(random::nextBytes).joinToString("") { "%02x".format(it) }
 
-    /** Sách đã tải về điện thoại, cùng hình dạng `library_view` của máy tính. */
+    /**
+     * Sách nhập từ file trên điện thoại, cùng hình dạng `library_view` của máy tính. Không có bản soi sách của máy khác (đã tải hay không):
+     * máy kia mà soi lại bản soi của chính nó thì thấy sách của mình hai lần, rồi lại soi tiếp.
+     */
     private fun libraryView(): JSONArray {
         val books = JSONArray()
         for (manifest in Store.books()) {
             val id = manifest.optString("id")
-            if (!BOOK_ID.matches(id)) continue
+            if (!BOOK_ID.matches(id) || !Store.isFileBook(id)) continue
             val chapters = availableChapters(id, manifest)
             if (chapters == 0) continue
             val entry = JSONObject().put("id", id).put("title", manifest.optString("title"))
@@ -433,6 +436,7 @@ object LibraryServer {
                 .put("chaptersTotal", manifest.optInt("chaptersTotal", chapters))
                 .put("chaptersAvailable", chapters)
                 .put("complete", manifest.optBoolean("complete"))
+                .apply { manifest.optString("author").trim().takeIf { it.isNotEmpty() }?.let { put("author", it) } } // tìm và sắp theo tác giả ở máy kia cần nó
                 .put("updatedAt", maxOf(File(Store.bookDir(id), "book.json").lastModified(), File(Store.bookDir(id), BookEdits.EDITS_FILE).lastModified()) / 1000.0)
             val cover = manifest.optJSONObject("cover")
             entry.put("cover", if (cover == null) JSONObject.NULL

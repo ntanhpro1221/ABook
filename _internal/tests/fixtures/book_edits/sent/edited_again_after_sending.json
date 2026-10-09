@@ -1,0 +1,49 @@
+{
+ "previous": {
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  },
+  "music": {
+   "playlist": "fantasy_calm"
+  }
+ },
+ "current": {
+  "format": "abook-edits",
+  "version": 1,
+  "readings": {
+   "Kate": "Kết",
+   "Lucien": "Lu-xiên"
+  },
+  "music": {
+   "playlist": "fantasy_calm"
+  }
+ },
+ "marks": {
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  },
+  "music": {
+   "playlist": "fantasy_calm"
+  }
+ },
+ "left": {
+  "format": "abook-edits",
+  "version": 1,
+  "readings": {
+   "Kate": "Kết",
+   "Lucien": "Lu-xiên"
+  },
+  "music": {
+   "playlist": "fantasy_calm"
+  }
+ },
+ "unmarked": {
+  "format": "abook-edits",
+  "version": 1,
+  "readings": {
+   "Kate": "Kết",
+   "Lucien": "Lu-xiên"
+  }
+ },
+ "pending": 2
+}

@@ -1326,6 +1326,42 @@ object BookEdits {
         count(edits)
     }
 
+    /**
+     * Phần của lớp sửa vừa gửi đi mà [subtract] cố ý GIỮ lại: cách đọc riêng và danh sách phát nhạc đã chọn (webui/book_edits.py
+     * `sent_marks`). Máy tính nhận và giữ chúng, nhưng sách nó trả về không mang chúng, nên bỏ khỏi lớp sửa ở đây là người nghe mất
+     * cách đọc / nhạc vừa đặt. Ghi lại (cộng `previous`: các lần gửi trước) để [unmarked] không đếm chúng là chưa gửi.
+     */
+    fun sentMarks(edits: JSONObject, previous: JSONObject? = null): JSONObject {
+        val out = JSONObject()
+        val readings = JSONObject()
+        previous?.optJSONObject("readings")?.let { for (key in names(it)) readings.put(key, it.get(key)) }
+        edits.optJSONObject("readings")?.let { for (key in names(it)) readings.put(key, it.get(key)) }
+        if (readings.length() > 0) out.put("readings", readings)
+        val music = JSONObject()
+        previous?.optJSONObject("music")?.let { for (key in names(it)) music.put(key, it.get(key)) }
+        edits.optJSONObject("music")?.takeIf { it.has("playlist") }?.let { music.put("playlist", it.get("playlist")) }
+        if (music.length() > 0) out.put("music", music)
+        return out
+    }
+
+    /** `edits` trừ những gì `marks` ([sentMarks] các lần gửi trước) đã nói là máy tính có rồi - để đếm phần CHƯA gửi. Không sửa `edits`. */
+    fun unmarked(edits: JSONObject, marks: JSONObject?): JSONObject {
+        val out = deepCopy(edits) as JSONObject
+        val sentReadings = marks?.optJSONObject("readings")
+        val readings = out.optJSONObject("readings")
+        if (readings != null) {
+            for (shown in names(readings)) if (sentReadings != null && sentReadings.has(shown) && StrictJson.equal(sentReadings.opt(shown), readings.opt(shown))) readings.remove(shown)
+            if (readings.length() == 0) out.remove("readings")
+        }
+        val sentMusic = marks?.optJSONObject("music")
+        val music = out.optJSONObject("music")
+        if (music != null) {
+            if (music.has("playlist") && sentMusic != null && sentMusic.has("playlist") && StrictJson.equal(sentMusic.opt("playlist"), music.opt("playlist"))) music.remove("playlist")
+            if (music.length() == 0) out.remove("music")
+        }
+        return out
+    }
+
     /** Bỏ khỏi `mine` mọi khoá mà `sent` cũng có với đúng giá trị ấy. */
     private fun removeEqual(mine: JSONObject?, sent: JSONObject?) {
         if (mine == null || sent == null) return

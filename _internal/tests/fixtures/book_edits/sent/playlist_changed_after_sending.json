@@ -1,0 +1,37 @@
+{
+ "previous": {
+  "music": {
+   "playlist": "fantasy_calm"
+  }
+ },
+ "current": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "levelDb": -24.0,
+   "playlist": "school_light"
+  }
+ },
+ "marks": {
+  "music": {
+   "playlist": "fantasy_calm"
+  }
+ },
+ "left": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "levelDb": -24.0,
+   "playlist": "school_light"
+  }
+ },
+ "unmarked": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "levelDb": -24.0,
+   "playlist": "school_light"
+  }
+ },
+ "pending": 2
+}

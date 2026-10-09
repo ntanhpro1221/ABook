@@ -67,7 +67,7 @@ object Store {
         out.put("capabilities", capabilities(link = false, sync = home == Home.COMPUTER, local = home == Home.LOCAL))
         // Cuốn nhập từ file dự án `.abookproj` (ProjectDocument): giữ xưởng của nó / chờ dựng xưởng, kèm các bản chụp chỉ đọc.
         out.put("projectFile", ProjectDocument.info(bookDir(id)) ?: JSONObject.NULL)
-        if (home == Home.COMPUTER) out.put("editsSync", EditsSync.view(bookDir(id), BookEdits.count(edits)))
+        if (home == Home.COMPUTER) out.put("editsSync", EditsSync.view(bookDir(id), EditsSync.pending(bookDir(id), edits)))
         return out
     }
 
@@ -890,6 +890,17 @@ object Store {
     fun isComputerBook(id: String): Boolean {
         val manifest = rawManifest(id) ?: streamManifest(id) ?: return false
         return isComputer(manifest, printsBook().optJSONObject(id))
+    }
+
+    /**
+     * Cuốn nhập từ file (`.abook` / `.abookproj`) và chưa gắn với cuốn nào của máy tính - thứ duy nhất điện thoại chia sẻ cho máy đã ghép
+     * (LibraryServer; máy tính làm y vậy với `Sách đã nhập/`, package_share.py). Cuốn tải từ máy tính hay từ thiết bị khác là bản soi của
+     * sách bên kia: chia sẻ lại thì hai máy cứ soi nhau mãi.
+     */
+    @Synchronized
+    fun isFileBook(id: String): Boolean {
+        val raw = rawManifest(id) ?: return false
+        return homeOf(raw, printsBook().optJSONObject(id)) == Home.FILE
     }
 
     private fun isComputer(manifest: JSONObject, print: JSONObject?) =

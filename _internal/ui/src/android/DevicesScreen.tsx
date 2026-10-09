@@ -463,8 +463,8 @@ function PeersPanel() {
   );
 }
 
-// Mạng trạm bước 2 (LibraryServer.kt): điện thoại PHỤC VỤ sách đã tải cho máy đã ghép - máy tính nghe thẳng những cuốn chỉ
-// có trên điện thoại. Cùng giao thức cổng đồng bộ của máy tính, nên máy tính ghép như ghép một máy tính khác: Cài đặt →
+// Mạng trạm bước 2 (LibraryServer.kt): điện thoại PHỤC VỤ sách mở từ file cho máy đã ghép - máy tính nghe thẳng những cuốn chỉ
+// có trên điện thoại (không phải bản soi sách của máy khác). Cùng giao thức cổng đồng bộ của máy tính, nên máy tính ghép như ghép một máy tính khác: Cài đặt →
 // Máy tính khác → địa chỉ + mã 6 số hiện ở đây.
 function SharePanel() {
   const client = useQueryClient();
@@ -500,7 +500,7 @@ function SharePanel() {
         <div className="min-w-0">
           <h2 id="share-title" className="text-[15px] font-medium">Cho máy khác nghe thư viện này</h2>
           <p className="mt-0.5 text-xs leading-snug text-fg-2">
-            Máy tính đã ghép nghe thẳng sách đã tải về điện thoại này, không phải chép sang. Chia sẻ chạy cả khi ABook ở nền, cho
+            Máy đã ghép nghe thẳng những cuốn bạn tự thêm từ file vào điện thoại này, không phải chép sang. Chia sẻ chạy cả khi ABook ở nền, cho
             tới khi tắt ở đây hay ở thông báo. Máy OPPO, Xiaomi… có thể cho ABook "ngủ" khi ở nền: máy tính sẽ chờ lâu hơn - mở ABook
             lên là trả lời ngay.
           </p>

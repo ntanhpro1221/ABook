@@ -109,6 +109,14 @@ def test_merging_two_layers_follows_the_golden_file(name: str) -> None:
     assert book_edits._ordered(merged) == golden["merged"] and report == golden["report"]
 
 
+@pytest.mark.parametrize("name", sorted(shared.SENT_CASES))
+def test_sending_edits_follows_the_golden_file(name: str) -> None:
+    """Gửi xong: cách đọc và danh sách phát ở lại lớp sửa nhưng không còn là "chưa gửi" - cùng bộ ví dụ với BookEdits.kt (EditsSyncTest)."""
+    golden = _read(shared.FIXTURES / "sent" / f"{name}.json")
+    assert shared.sent_case(name) == golden
+    assert golden["pending"] == book_edits.count(book_edits.unmarked(golden["left"], golden["marks"]))
+
+
 def test_writers_store_the_minimum_and_a_noop_edit_never_counts(tmp_path: Path) -> None:
     folder = tmp_path / "base"
     shutil.copytree(shared.BASE, folder)
