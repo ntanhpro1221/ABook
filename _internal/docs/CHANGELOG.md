@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.38] - 2026-10-09
+
 ### Việc cần anh
 
 - Những câu mà máy tự thấy mình gán người nói không chắc (nhiều nhất khoảng một câu trong năm, câu kém chắc nhất của cuốn; trên 19 chương đo thử, cứ hai thẻ thì hơn một thẻ đúng là câu máy gán sai) hiện thành thẻ "Ai nói câu này - …?" kèm mức chắc của máy ("Máy gán cho … nhưng chỉ chắc khoảng 20%."), bấm chọn người đúng ngay trên thẻ như các thẻ khác; thẻ này không tô sẵn ai như gợi ý của máy; máy ghi mức chắc này cho mọi sách phân tích từ bản này (không làm phân tích chậm hơn); sách phân tích trước đó thì không có thẻ này.
