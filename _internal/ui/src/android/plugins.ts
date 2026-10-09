@@ -212,6 +212,8 @@ export interface LocalBook {
   samples: string[];
   /** Ảnh bìa thật tải về cùng gói (webui/covers.py), hoặc null. */
   cover?: { file: string; version: number; color: string; width: number; height: number } | null;
+  /** Giây Unix lúc sách về điện thoại (book.json ghi lần đầu). */
+  addedAt?: number;
   state: ListeningState;
   bytes?: number;
   /** Chưa tải: nghe thẳng từ máy tính (Streaming.kt) - gói sách đã cất ở stream.json. */
@@ -252,6 +254,23 @@ export interface Mp3ExportEvent {
   folder?: string;
   /** Địa chỉ thư mục bản xuất để mở bằng app Tệp (`openFolder`); không có thì không có nút mở. */
   uri?: string;
+  stopped?: boolean;
+  error?: string;
+}
+
+/** Tin của một lượt "Xuất M4B" (M4bExportWorker.kt): tiến độ (`done`/`total` chương, `percent` cả cuốn), xong (`finished`), dừng (`stopped`) hay lỗi. */
+export interface M4bExportEvent {
+  bookId: string;
+  run: string;
+  done?: number;
+  total?: number;
+  percent?: number;
+  finished?: boolean;
+  /** Tên file đã ghi, cỡ (byte), số chương có trong file / của cả cuốn (chương chưa làm xong không vào file). */
+  name?: string;
+  size?: number;
+  chapters?: number;
+  chaptersTotal?: number;
   stopped?: boolean;
   error?: string;
 }
@@ -348,6 +367,13 @@ export interface EbookLibraryPlugin {
   /** "Mở thư mục" ở thông báo xuất xong: mở thư mục bản xuất bằng app Tệp. `opened: false` khi máy không có app nào mở được. */
   openFolder(options: { uri: string }): Promise<{ opened: boolean }>;
   addListener(event: "mp3Export", handler: (event: Mp3ExportEvent) => void): Promise<PluginListenerHandle>;
+  /** "Xuất M4B cho app sách nói" (M4bExport.kt): cả cuốn một file `.m4b` có mục lục chương, chạy nền. Hệ thống hỏi tên và chỗ lưu
+   *  (mỗi lần). `cover`: bìa tự vẽ (data URL PNG) khi sách không có bìa. Tiến độ / kết quả: sự kiện "m4bExport" mang cùng `run`.
+   *  `started: false` khi không chọn chỗ lưu; sách chưa có chương nghe được thì từ chối ngay. */
+  exportM4b(options: { bookId: string; cover?: string }): Promise<{ started: boolean; run?: string; name?: string; chapters?: number }>;
+  /** Dừng lượt xuất M4B đang chạy của cuốn (file dở bị xoá). */
+  cancelM4bExport(options: { bookId: string }): Promise<void>;
+  addListener(event: "m4bExport", handler: (event: M4bExportEvent) => void): Promise<PluginListenerHandle>;
   deleteBook(options: { id: string }): Promise<void>;
   /** `bytes`: cả thư viện; `books`: cỡ từng cuốn trên máy (mã thư mục = mã cuốn). */
   storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number }[] }>;

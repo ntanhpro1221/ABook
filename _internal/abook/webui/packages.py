@@ -279,6 +279,8 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "imported": True,
         "remote": _remote_view(book) if remote else None,
         "updatedAt": max((Path(path) / MANIFEST).stat().st_mtime, book_edits.stamp(Path(path))[0] / 1e9),
+        # Lúc sách vào thư viện ("Mới thêm"): Windows ghi st_ctime là lúc tạo file; nơi khác là lần đổi gần nhất - vẫn không sớm hơn thật.
+        "addedAt": (Path(path) / MANIFEST).stat().st_ctime,
         "state": state,
         "progress": (text_book_progress(state, items) if text_book(book) else book_progress(state, available, complete=complete)),
         "cover": book_edits.cover_view(Path(path), book_id),

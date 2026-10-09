@@ -100,7 +100,10 @@ object Mp3Export {
     fun folderName(title: String): String = fitName("", safeName(title), "")
 
     /** Tên danh sách phát. */
-    fun playlistName(title: String): String = fitName("", safeName(title), ".m3u8")
+    fun playlistName(title: String): String = bookFileName(title, ".m3u8")
+
+    /** Tên một file mang tên sách ("<tên sách><đuôi>"): danh sách phát, file M4B. */
+    fun bookFileName(title: String, extension: String): String = fitName("", safeName(title), extension)
 
     /**
      * Máy tính (NTFS) nhận tên tới 255 ký tự UTF-16, điện thoại chỉ 255 byte UTF-8: tên tiếng Việt dài gần 90 ký tự có dấu có thể quá.

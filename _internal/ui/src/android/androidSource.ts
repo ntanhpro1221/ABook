@@ -48,6 +48,7 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     producing: false,
     paused: !book.complete,
     updatedAt: state.updatedAt ?? null,
+    addedAt: book.addedAt ?? null,
     state,
     progress: textOnly ? textBookProgress(state, chapters) : bookProgress(state, chapters.filter((chapter) => chapter.available), book.complete),
     lastChapterTitle: chapters.find((chapter) => chapter.id === state.last?.chapterId)?.fullTitle ?? "",

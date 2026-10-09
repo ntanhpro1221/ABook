@@ -116,7 +116,7 @@ object Mp3Exports {
         if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(CHANNEL) == null) {
             manager.createNotificationChannel(
                 NotificationChannel(CHANNEL, "Xuất sách", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "Tiến độ khi xuất MP3 để nghe ở app khác"
+                    description = "Tiến độ khi xuất MP3 / M4B để nghe ở app khác"
                 },
             )
         }
@@ -127,30 +127,35 @@ object Mp3Exports {
             PendingIntent.getActivity(context, 0, it, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         }
 
-    internal fun notificationId(bookId: String) = "mp3-export:$bookId".hashCode()
+    /** `tag` phân biệt hai kiểu xuất của cùng một cuốn ("mp3-export", "m4b-export") - mỗi kiểu một thông báo riêng. */
+    internal fun notificationId(bookId: String, tag: String = "mp3-export") = "$tag:$bookId".hashCode()
 
-    /** Thông báo đang chạy: tên sách, "3/10 chương", thanh tiến độ, nút "Dừng". */
-    internal fun foreground(context: Context, work: java.util.UUID, bookId: String, title: String, done: Int, total: Int): ForegroundInfo {
+    /**
+     * Thông báo đang chạy: tên sách, "3/10 chương", thanh tiến độ, nút "Dừng". `fraction` (0..1): thanh chạy theo phần cả cuốn đã làm
+     * (xuất M4B - một chương có thể mất vài phút), không thì theo số chương.
+     */
+    internal fun foreground(context: Context, work: java.util.UUID, bookId: String, title: String, done: Int, total: Int,
+                            tag: String = "mp3-export", fraction: Double? = null): ForegroundInfo {
         channel(context)
         val stop = WorkManager.getInstance(context).createCancelPendingIntent(work)
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.mipmap.ic_launcher_monochrome)
             .setContentTitle("Đang xuất sách…")
             .setContentText(if (total > 0) "$title · $done/$total chương" else title)
-            .setProgress(total, done, total == 0)
+            .apply { if (fraction != null) setProgress(1000, (fraction * 1000).toInt(), false) else setProgress(total, done, total == 0) }
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setContentIntent(openApp(context))
             .addAction(0, "Dừng", stop)
             .build()
-        val id = notificationId(bookId)
+        val id = notificationId(bookId, tag)
         return if (Build.VERSION.SDK_INT >= 29) ForegroundInfo(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         else ForegroundInfo(id, notification)
     }
 
     /** Thông báo kết quả (xong / dừng / lỗi): nằm lại sau khi việc nền đã tắt, bấm vào mở app. */
-    internal fun finished(context: Context, bookId: String, title: String, text: String) {
+    internal fun finished(context: Context, bookId: String, title: String, text: String, tag: String = "mp3-export") {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
         channel(context)
         val notification = NotificationCompat.Builder(context, CHANNEL)
@@ -161,7 +166,7 @@ object Mp3Exports {
             .setContentIntent(openApp(context))
             .setAutoCancel(true)
             .build()
-        runCatching { NotificationManagerCompat.from(context).notify(notificationId(bookId) + 1, notification) }
+        runCatching { NotificationManagerCompat.from(context).notify(notificationId(bookId, tag) + 1, notification) }
     }
 
     internal fun inputs(data: Data): Triple<String?, Uri?, File?> = Triple(
