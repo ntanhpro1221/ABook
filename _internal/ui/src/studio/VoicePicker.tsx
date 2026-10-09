@@ -22,6 +22,7 @@ import { byGender, rerecordText, type GenderFilter, type Rerecord } from "./voic
 // cả, và hộp nói trước đổi giọng sẽ thu lại bao nhiêu câu, hết chừng bao lâu.
 
 type Gender = "male" | "female";
+const GENDER_WORD: Record<Gender, string> = { male: "nam", female: "nữ" };
 
 interface VoiceOption extends EngineVoice {
   gender: Gender;
@@ -143,23 +144,30 @@ export function VoicePicker({
   const when = useWhenApplied(bookId);
   // Tên như tiêu đề hộp ("Oliver"), không phải khoá sổ in hoa ("OLIVER") - soát UX 30-09.
   const name = person?.displayName || data?.character.label || "";
+  // Giọng khác giới với nhân vật: hỏi ngay trong hộp trước khi ghi (soát UX a13 #4) - đổi giọng khác giới là đổi luôn giới của người ấy.
+  const [crossing, setCrossing] = useState<VoiceOption | null>(null);
+  useEffect(() => setCrossing(null), [person?.name]);
   const save = useMutation({
-    mutationFn: (voice: VoiceOption) =>
-      api<{ requestedAt: number }>(`/api/books/${bookId}/voice`, { method: "POST", body: { character: data!.character.value, preset: voice.name } }),
-    onSuccess: ({ requestedAt }, voice) => {
+    mutationFn: ({ voice, withGender }: { voice: VoiceOption; withGender: boolean }) =>
+      api<{ requestedAt: number }>(`/api/books/${bookId}/voice`, {
+        method: "POST",
+        // Có `gender` thì giới ghi cùng giọng (cùng đường overrides `voices`): dòng "chờ áp dụng" ở tab Nhân vật hiện giới mới.
+        body: { character: data!.character.value, preset: voice.name, ...(withGender ? { gender: voice.gender } : {}) },
+      }),
+    onSuccess: ({ requestedAt }, { voice, withGender }) => {
       // Dòng nhân vật hiện "Chờ áp dụng" ngay (store.pending_voices), không đợi lần làm mới sau 60 giây.
       refreshAfterDecision(client, bookId);
       const character = data!.character;
       // Chọn nhầm giọng trong danh sách dài: "Hoàn tác" như thẻ giọng trong hộp việc (studio/decisions.ts).
-      toast.success(`Đã ghi: ${name} đọc bằng giọng ${voice.name}`, {
-        description: `Mọi câu đã thu của người ấy sẽ đọc lại bằng giọng mới. ${when}`,
+      toast.success(`Đã ghi: ${name} đọc bằng giọng ${voice.name}${withGender ? ` và là ${GENDER_WORD[voice.gender]}` : ""}`, {
+        description: `${data!.rerecord?.lines ? `Thu lại ${formatNumber(data!.rerecord.lines)} câu đã thu của người ấy bằng giọng mới.` : "Chưa câu nào của người ấy được thu nên không phải thu lại gì."} ${when}`,
         action: undoAction(
           client,
           bookId,
           "voice",
           [{ character: character.value, requestedAt, keep: false }],
           // Không nói tên giọng cũ: người ấy có thể đang có một giọng chờ áp khác, và hoàn tác trả về đúng giọng chờ ấy.
-          `Giọng của ${name} trở lại như trước khi đổi.`,
+          `Giọng${withGender ? " và giới" : ""} của ${name} trở lại như trước khi đổi.`,
         ),
         duration: UNDO_MS,
       });
@@ -183,6 +191,12 @@ export function VoicePicker({
     },
     onError: (failure: Error) => toast.error("Chưa bỏ được lựa chọn", { description: failure.message }),
   });
+  // Chọn một giọng: cùng giới (hay chưa biết giới) ghi luôn; khác giới thì hỏi trước.
+  const choose = (voice: VoiceOption) => {
+    const known = data?.character.gender;
+    if ((known === "male" || known === "female") && known !== voice.gender) setCrossing(voice);
+    else save.mutate({ voice, withGender: false });
+  };
   const voices = byGender(data?.voices ?? [], shown);
   const groups = groupByEngine(voices);
   const groupLabels = plainGroupLabels(groups);
@@ -222,6 +236,21 @@ export function VoicePicker({
             </div>
           )}
           {data.rerecord && <p className="mb-2 text-sm text-pretty text-fg-2">{rerecordText(name, data.rerecord)}</p>}
+          {crossing && (
+            <div role="alert" className="mb-3 rounded-xl bg-warning-soft px-3 py-2 text-sm">
+              <p className="text-pretty">
+                {name} đang là {GENDER_WORD[data.character.gender as Gender]} - giọng {crossing.name} là giọng {GENDER_WORD[crossing.gender]}. Đổi cả giới của {name} thành {GENDER_WORD[crossing.gender]}?
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button size="sm" variant="primary" loading={save.isPending} onClick={() => save.mutate({ voice: crossing, withGender: true })}>
+                  Đổi giọng và giới
+                </Button>
+                <Button size="sm" variant="ghost" disabled={save.isPending} onClick={() => setCrossing(null)}>
+                  Thôi, giữ như cũ
+                </Button>
+              </div>
+            </div>
+          )}
           <Segmented<GenderFilter>
             label="Lọc giọng theo giới"
             value={shown}
@@ -281,7 +310,7 @@ export function VoicePicker({
                     size="sm"
                     variant={voice.suggested && !voice.current && !voice.pending ? "primary" : "secondary"}
                     disabled={voice.current || voice.pending || !voice.installed || save.isPending || keep.isPending}
-                    onClick={() => save.mutate(voice)}
+                    onClick={() => choose(voice)}
                   >
                     {voice.current ? "Đang dùng" : voice.pending ? "Đã chọn" : "Chọn"}
                   </Button>
@@ -294,7 +323,7 @@ export function VoicePicker({
           </div>
           <p className="mt-3 text-xs leading-relaxed text-fg-3">
             Giọng đang có người dùng vẫn chọn được: máy lấy bậc âm sắc khác để hai người không nghe giống nhau trong cùng
-            chương. Chọn giọng khác giới là đổi luôn giới của nhân vật. Các giọng thêm chỉ có một âm sắc: hai người cùng chương
+            chương. Chọn giọng khác giới thì hộp hỏi trước, vì đó là đổi luôn giới của nhân vật. Các giọng thêm chỉ có một âm sắc: hai người cùng chương
             chung giọng ấy sẽ nghe giống hệt nhau.
           </p>
         </>

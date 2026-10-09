@@ -315,6 +315,7 @@ def test_quoted_paragraphs_in_a_row_given_to_one_person_are_one_card_that_altern
     assert [item["key"] for item in turns] == ["turns:s1"], "chỉ cặp đóng ngoặc -> mở ngoặc, đoạn sau không lời dẫn"
     card = turns[0]
     assert card["title"] == "3 câu liền nhau đều là của Glast?"
+    assert card["suggested"] is False, "chip đầu của thẻ lượt đối đáp không phải đề xuất của máy (soát UX a13 #15)"
     assert [(example["text"], example["changes"]) for example in card["examples"]] == [
         ("“Cuối cùng, kế hoạch nào rồi cũng thất bại.”", False), ("“Ai biết ạ?”", True), ("“Ai biết được.”", False),
     ]

@@ -936,7 +936,7 @@ def chapters(project_root: Path) -> list[dict[str, Any]]:
             "fullTitle": names[int(row["id"])]["full"],
             "status": status,
             "statusLabel": "Mất file audio" if status == "completed" and mp3 is None
-            else humanize.CHAPTER_STATUS_LABELS.get(status, status),
+            else humanize.chapter_status_label(status),
             "segments": {
                 "total": int(counts["total"]) if counts else int(row["total_segments"] or 0),
                 "analyzed": int(counts["analyzed"] or 0) if counts else 0,

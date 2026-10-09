@@ -1,7 +1,7 @@
 import * as Popover from "@radix-ui/react-popover";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, BookOpenText, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Pause, Play, Search } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { hueOf } from "@/listen/BookScreen";
@@ -28,7 +28,7 @@ export interface Person {
 }
 
 interface Hint {
-  kind: "turn" | "vocative";
+  kind: "turn" | "vocative" | "address" | "unsure";
   note: string;
   suggest?: string;
 }
@@ -160,13 +160,34 @@ function isSpeech(line: Line): boolean {
   return line.kind === "dialogue" || line.kind === "thought";
 }
 
-function chapterLabel(chapter: ChapterEntry): string {
-  const extras = [
+function chapterExtras(chapter: ChapterEntry): string {
+  return [
     chapter.speech ? `${formatNumber(chapter.speech)} câu nói` : "chỉ lời kể",
     chapter.hints ? `${chapter.hints} chỗ nghi` : "",
     chapter.decided ? `${chapter.decided} đã quyết` : "",
-  ].filter(Boolean);
-  return `${chapter.title || `Chương ${chapter.index}`} — ${extras.join(" · ")}`;
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/** `compact` (màn hẹp): ô chọn chỉ có tên chương - ô native không có dấu "…" nên chữ dài bị cụt giữa chừng ("… · 9 c…"); số câu nằm ở dòng dưới ô. */
+function chapterLabel(chapter: ChapterEntry, compact = false): string {
+  const title = chapter.title || `Chương ${chapter.index}`;
+  return compact ? title : `${title} — ${chapterExtras(chapter)}`;
+}
+
+interface UndoStack {
+  stack: { current: (() => void)[] };
+  push: (undo: () => void) => void;
+}
+
+/** Ctrl+Z hoàn tác lần ghi gần nhất (soát UX a6 01-10): mọi lần ghi người nói của tab - từng câu hay cả chương - đẩy vào đây. */
+function useUndoStack(): UndoStack {
+  const stack = useRef<(() => void)[]>([]);
+  const push = useCallback((undo: () => void) => {
+    stack.current = [...stack.current.slice(-19), undo];
+  }, []);
+  return { stack, push };
 }
 
 function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => void) => void) {
@@ -222,7 +243,7 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => v
         return;
       }
       toast.success(lines.length > 1 ? `Đã ghi: ${lines.length} câu của ${label}` : `Đã ghi: câu này của ${label}`, {
-        description: `Câu đã thu sẽ đọc lại bằng giọng của người ấy. ${when}`,
+        description: `Câu đã thu sẽ được thu lại bằng giọng của người ấy. ${when}`,
         ...undo,
       });
     },
@@ -236,22 +257,40 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => v
 
 // "Chương này đúng": người nghe đã đọc hết chương - ghi nhận người nói của mọi câu chưa ai quyết, trừ câu máy còn nghi.
 // Mỗi xác nhận là một nhãn đúng cho vòng học (scripts/model_eval/listener_labels.py); dây chuyền áp thì không đổi gì.
-function useConfirmChapter(bookId: string) {
+function useConfirmChapter(bookId: string, onUndoable: (undo: () => void) => void) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (lines: Line[]) => {
       const groups = new Map<string, Line[]>();
       for (const line of lines) groups.set(line.current, [...(groups.get(line.current) ?? []), line]);
+      // Mỗi nhóm một yêu cầu: giữ `requestedAt` của từng lần ghi để một nút Hoàn tác lùi được cả chương.
+      const made: Record<string, unknown>[] = [];
       for (const [speaker, group] of groups) {
-        await api(`/api/books/${bookId}/speaker`, {
+        const refs = group.map((line) => ({ stableId: line.stableId, textSha256: line.textSha256 }));
+        const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/speaker`, {
           method: "POST",
-          body: { speaker, lines: group.map((line) => ({ stableId: line.stableId, textSha256: line.textSha256 })) },
+          body: { speaker, lines: refs },
         });
+        made.push({ lines: refs, requestedAt, keep: true });
       }
-      return lines.length;
+      return { count: lines.length, made };
     },
-    onSuccess: (count) =>
-      toast.success(`Đã xác nhận ${count} câu`, { description: "Máy sẽ không hỏi lại những câu này; mỗi câu là một nhãn đúng để học." }),
+    onSuccess: ({ count, made }) => {
+      // Nút trên thông báo và Ctrl+Z dùng CHUNG một lần hoàn tác (như sửa người nói từng câu).
+      const action = undoAction(client, bookId, "speaker", made, `${count} câu trở lại chờ duyệt.`);
+      let used = false;
+      const run = () => {
+        if (used) return;
+        used = true;
+        action.onClick();
+      };
+      onUndoable(run);
+      toast.success(`Đã xác nhận ${count} câu là đúng`, {
+        description: "Máy sẽ không hỏi lại những câu này và học từ chúng.",
+        action: { label: action.label, onClick: run },
+        duration: UNDO_MS,
+      });
+    },
     onError: (error: Error) => toast.error("Chưa xác nhận được", { description: error.message }),
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ["casting", bookId] });
@@ -415,6 +454,8 @@ export function DeliveryMenu({
         <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-fg-3">Chữ đem đọc</span>
         <textarea
           id={`spoken-${line.stableId}`}
+          aria-label="Chữ máy sẽ đọc thay cho câu này"
+          placeholder="Gõ chữ muốn máy đọc (để trống: đọc đúng chữ của sách)"
           value={words}
           onChange={(event) => setWords(event.target.value)}
           rows={Math.min(5, Math.max(2, Math.ceil(words.length / 42)))}
@@ -487,7 +528,8 @@ function DeliveryChip({
       className={cn(
         // Màn cảm ứng: nút chỉ 24 px - nới vùng chạm theo chiều dọc lên ~44 px (soát UX 29-09).
         "relative inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
-        hidden && !open && "opacity-0 group-hover:opacity-100",
+        // Màn chạm không có hover: nhãn hiện mờ thay vì ẩn hẳn (soát UX a13 #16).
+        hidden && !open && "opacity-0 group-hover:opacity-100 pointer-coarse:opacity-60",
         waiting && "text-fg-2",
       )}
     >
@@ -846,9 +888,12 @@ function ChapterScriptView({
   pickLine = true,
   people,
   onPicked,
+  undo: { stack: undos, push: pushUndo },
 }: {
   bookId: string;
   script: ChapterScript;
+  /** Ngăn xếp Ctrl+Z của cả tab (chương này lẫn nút "Xác nhận cả chương đúng"). */
+  undo: UndoStack;
   filter: Filter;
   who: string | null;
   /** Người gán bằng phím số (theo số trên chú giải): người nói của chương + người vừa gán qua ô tìm. */
@@ -861,10 +906,7 @@ function ChapterScriptView({
   pickLine?: boolean;
 }) {
   // Ctrl+Z: hoàn tác lần gán gần nhất (soát UX a6 01-10: gán nhầm một phím số chỉ hoàn tác được trong vài giây thông báo).
-  const undos = useRef<(() => void)[]>([]);
-  const assign = useAssign(bookId, script.chapterId, (undo) => {
-    undos.current = [...undos.current.slice(-19), undo];
-  });
+  const assign = useAssign(bookId, script.chapterId, pushUndo);
   const fixLine = useLineFix(bookId, script.chapterId);
   const clip = useClip();
   // Một lần cho cả chương, không mỗi câu một truy vấn.
@@ -1083,8 +1125,8 @@ function ChapterScriptView({
   );
 }
 
-function ChapterFooter({ bookId, script, onNext }: { bookId: string; script: ChapterScript; onNext: () => void }) {
-  const confirm = useConfirmChapter(bookId);
+function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: string; script: ChapterScript; onNext: () => void; onUndoable: (undo: () => void) => void }) {
+  const confirm = useConfirmChapter(bookId, onUndoable);
   const open = script.lines.filter((line) => line.editable && !line.wish && !line.hint);
   const doubtful = script.lines.filter((line) => line.editable && !line.wish && line.hint).length;
   return (
@@ -1092,10 +1134,10 @@ function ChapterFooter({ bookId, script, onNext }: { bookId: string; script: Cha
       {script.castReady && open.length > 0 ? (
         <div className="min-w-0">
           <Button size="sm" variant="secondary" icon={Check} loading={confirm.isPending} onClick={() => confirm.mutate(open)}>
-            Chương này đúng - xác nhận {open.length} câu
+            Xác nhận cả chương đúng - {open.length} câu
           </Button>
           <p className="mt-1 text-xs text-fg-3">
-            Ghi nhận người nói của các câu chưa ai quyết{doubtful ? `, trừ ${doubtful} câu máy còn nghi` : ""}. Mỗi câu là một nhãn đúng để máy học.
+            Coi người nói của các câu chưa ai quyết là đúng{doubtful ? `, trừ ${doubtful} câu máy còn nghi` : ""}: máy thôi hỏi và học từ đó. Bấm nhầm thì Hoàn tác hay Ctrl+Z.
           </p>
         </div>
       ) : (
@@ -1122,6 +1164,8 @@ export function ScriptTab({ bookId }: { bookId: string }) {
   const [who, setWho] = useState<string | null>(null);
   // Người gán qua ô tìm (vai phụ, người của chương khác): thêm vào chú giải với số kế tiếp để câu sau gán bằng một phím.
   const [added, setAdded] = useState<Person[]>([]);
+  const undo = useUndoStack();
+  const narrow = useMediaQuery("(max-width: 639px)");
   const contents = useQuery({
     queryKey: ["casting", bookId],
     queryFn: () => api<Contents>(`/api/books/${bookId}/casting`),
@@ -1194,12 +1238,13 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           >
             {chapters.map((chapter) => (
               <option key={chapter.chapterId} value={chapter.chapterId}>
-                {chapterLabel(chapter)}
+                {chapterLabel(chapter, narrow)}
               </option>
             ))}
           </select>
           <IconButton label="Chương sau" icon={ChevronRight} disabled={!data?.next} onClick={() => go(data?.next ?? null)} />
         </div>
+        {narrow && entry && <p className="w-full text-xs text-fg-3">{chapterExtras(entry)}</p>}
         <div className="max-w-full overflow-x-auto sm:ml-auto">
           <Segmented<Filter>
             label="Hiện câu nào"
@@ -1273,6 +1318,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           <ChapterScriptView
             bookId={bookId}
             script={data}
+            undo={undo}
             filter={filter}
             who={who}
             wantedLine={params.get("line")}
@@ -1286,7 +1332,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
               )
             }
           />
-          <ChapterFooter bookId={bookId} script={data} onNext={() => go(data.next)} />
+          <ChapterFooter bookId={bookId} script={data} onNext={() => go(data.next)} onUndoable={undo.push} />
         </>
       )}
     </div>

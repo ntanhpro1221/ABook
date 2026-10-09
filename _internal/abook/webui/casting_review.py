@@ -6,8 +6,9 @@ overrides.json -> dây chuyền áp ở ranh giới chương, câu đã thu thì
 của đường ấy vẫn đúng: chỉ gán cho người đã có giọng, câu đổi chữ thì yêu cầu tự rơi. Mỗi lần sửa cũng là một nhãn kiểu
 gold cho vòng học (nguyên tắc 7).
 
-Chỗ máy nghi dùng CHUNG tín hiệu với hộp việc (work_items.py): hai câu liền nhau cùng người, câu mở đầu bằng lời gọi chính
-người nói. SQLite mở chỉ đọc như mọi phần của webui.
+Chỗ máy nghi dùng CHUNG tín hiệu với hộp việc (work_items.py, gọi lại đúng hàm của nó): hai câu liền nhau cùng người, câu
+mở đầu bằng lời gọi chính người nói, xưng hô lệch khỏi người đang được gán (address_cues), và câu model kém chắc ai nói
+(speaker_logprobs: p_first thấp). SQLite mở chỉ đọc như mọi phần của webui.
 """
 from __future__ import annotations
 
@@ -22,8 +23,9 @@ from ..listener_overrides import (
 )
 from . import store
 from .reviews import speaker_label
-from .address_cues import _same_person
-from .work_items import merged_turns, self_addressed
+from .address_cues import _same_person, address_doubts
+from .work_items import first_person_lookup, merged_turns, self_addressed, unsure_speaker_lines
+from .. import speaker_logprobs
 
 # Người có tên trong cả cuốn đưa vào ô "người khác": sách dài có hàng trăm vai, ô tìm lọc tại chỗ.
 OTHERS = 300
@@ -63,11 +65,14 @@ def _is_person(raw: str) -> bool:
 
 
 def _hints(connection: Any, rows: list[Any], chapter_id: int | None,
-           display: dict[str, str] | None = None) -> dict[str, dict[str, Any]]:
+           display: dict[str, str] | None = None, project_root: Path | None = None) -> dict[str, dict[str, Any]]:
     """stable_id -> vì sao máy nghi người nói của câu ấy. Một câu nhiều tín hiệu thì giữ tín hiệu mạnh nhất: hai câu liền
-    nhau cùng người (38/42 sai) > lời gọi."""
+    nhau cùng người (38/42 sai) > lời gọi > xưng hô lệch > model kém chắc. `project_root`: cần cho hai tín hiệu cuối (đọc người
+    kể "tôi" của sách và số đo logprob); không có thì chỉ hai tín hiệu đầu."""
     hints: dict[str, dict[str, Any]] = {}
     speech = [row for row in rows if str(row["kind"]) != "narration"]
+    if project_root is not None:
+        _weak_hints(connection, speech, chapter_id, display, project_root, hints)
     calling = self_addressed(connection, chapter_id)
     for row in speech:
         if int(row["id"]) in calling:
@@ -93,6 +98,40 @@ def _hints(connection: Any, rows: list[Any], chapter_id: int | None,
                     break
         hints[str(second["stable_id"])] = hint
     return hints
+
+
+def _weak_hints(connection: Any, speech: list[Any], chapter_id: int | None, display: dict[str, str] | None,
+                project_root: Path, hints: dict[str, dict[str, Any]]) -> None:
+    """Hai tín hiệu của hộp việc mà tab này từng thiếu (soát UX a13 #2): xưng hô (thẻ 0b) và p_first thấp (thẻ 0c2) - cùng hàm,
+    cùng ngưỡng, cùng ngân sách "20% câu kém chắc nhất của cả cuốn". Xưng hô chỉ xét trên các câu của `speech` (một chương khi
+    mở chương; hồ sơ xưng hô vốn dựng theo chương)."""
+    chapter_index = {int(row[0]): int(row[1] or 0) for row in connection.execute("SELECT id, chapter_index FROM chapters")}
+    book_narrator, chapter_narrators, narrator_of, by_section = first_person_lookup(project_root, chapter_index)
+    carded: set[str] = set()
+    for row, suggested, _cue in address_doubts(speech, narrator_of, by_section) if (book_narrator or chapter_narrators) else []:
+        stable_id = str(row["stable_id"])
+        carded.add(stable_id)
+        hints[stable_id] = {
+            "kind": "address",
+            "note": f"Xưng hô trong câu giống {label(suggested, display)} hơn {label(str(row['speaker']), display)}.",
+            "suggest": suggested,
+        }
+    confidences = speaker_logprobs.read_confidences(project_root)
+    if not confidences:
+        return
+    # Ngân sách tính trên cả cuốn: mở một chương thì vẫn hỏi cùng những câu như hộp việc.
+    spoken = speech if chapter_id is None else connection.execute(
+        "SELECT id, stable_id, chapter_id, seq, speaker, kind FROM segments WHERE kind != 'narration' ORDER BY chapter_id, seq"
+    ).fetchall()
+    unsure, budget = unsure_speaker_lines(spoken, confidences, carded)
+    shown = {str(row["stable_id"]) for row in speech}
+    for row, found in unsure[:budget]:
+        stable_id = str(row["stable_id"])
+        if stable_id in shown and stable_id not in hints:
+            hints[stable_id] = {
+                "kind": "unsure",
+                "note": f"Máy chỉ chắc ~{round(float(found['p_first']) * 100)}% câu này là của {label(str(row['speaker']), display)}.",
+            }
 
 
 def _wish(connection: Any, row: Any, wish: dict[str, str] | None, as_kind: str = "",
@@ -147,7 +186,7 @@ def casting_chapters(project_root: Path) -> dict[str, Any]:
             "SELECT id, stable_id, chapter_id, seq, text, text_sha256, speaker, kind FROM segments"
             " WHERE kind != 'narration' ORDER BY chapter_id, seq"
         ).fetchall()
-        hints = _hints(connection, speech, None, display_names(connection))
+        hints = _hints(connection, speech, None, display_names(connection), project_root)
         cast_ready = connection.execute(
             "SELECT 1 FROM segments WHERE voice_profile_id IS NOT NULL LIMIT 1"
         ).fetchone() is not None
@@ -188,7 +227,7 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
             (chapter_id,),
         ).fetchall()
         display = display_names(connection)
-        hints = _hints(connection, rows, chapter_id, display)
+        hints = _hints(connection, rows, chapter_id, display, project_root)
         wishes = {entry["stable_id"]: entry for entry in speaker_requests(read_overrides(project_root))}
         line_wishes = {entry["stable_id"]: entry for entry in line_requests(read_overrides(project_root))}
         decided = {

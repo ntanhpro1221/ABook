@@ -534,6 +534,8 @@ export function App() {
         // Dưới 600 px sonner bỏ `offset` mà dùng `mobileOffset` (mặc định 16 px) - thông báo từng đè lên thanh tab dưới ở 390 px.
         mobileOffset={{ top: 16, right: 16, left: 16, bottom: "var(--toast-bottom, 96px)" }}
         visibleToasts={2}
+        // Thông báo vài giây che chữ thẻ bên dưới (soát UX a13 #17): nút ✕ để đọc xong là gạt đi ngay, không phải chờ hết hạn.
+        closeButton
         containerAriaLabel="Thông báo"
         // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.
         className="pointer-events-auto"
@@ -545,6 +547,7 @@ export function App() {
             // tối ở giao diện tối (soát UX 29-09).
             actionButton: "!bg-accent !text-accent-ink !font-semibold !rounded-lg",
             cancelButton: "!bg-hover !text-fg !rounded-lg",
+            closeButton: "!bg-panel !border-line !text-fg-2",
           },
         }}
       />

@@ -135,7 +135,7 @@ def decide(project_root: Path, body: dict[str, Any]) -> dict[str, Any]:
     return {"action": action, "narrator": narrator if action == "choose" else ""}
 
 
-# Tên riêng gợi ý cho "Chọn người kể…": chữ viết hoa đứng GIỮA câu trong đoạn (chưa có sổ nhân vật thì đây là chỗ duy nhất
+# Tên riêng gợi ý cho "Người kể là ai khác…": chữ viết hoa đứng GIỮA câu trong đoạn (chưa có sổ nhân vật thì đây là chỗ duy nhất
 # thấy được ai có mặt), nối liền nếu viết hoa liên tiếp ("Thiên Biến"). Tối đa ba chữ một tên.
 SUGGEST_NAMES = 4
 _WORD = re.compile(r"[^\W\d_]+")
@@ -166,7 +166,34 @@ def section_names(texts: list[str], leave_out: set[str]) -> list[str]:
     ranked = sorted((name for name in counts if name.casefold() not in blocked
                      and not any(part.casefold() in blocked for part in name.split())),
                     key=lambda name: (-counts[name], first_seen[name]))
-    return ranked[:SUGGEST_NAMES]
+    return _without_overlaps(ranked, counts, first_seen)[:SUGGEST_NAMES]
+
+
+def _overlap(first: str, second: str) -> bool:
+    """Hai tên là mảnh của cùng một cụm tên: một tên nằm trọn trong tên kia, hay đuôi tên này khớp đầu tên kia từ hai chữ trở lên
+    ("Thiên Biến Vạn" / "Biến Vạn Hóa"). Chỉ chung MỘT chữ ("Lâm Hạ" / "Hạ Vy") thì vẫn là hai người."""
+    one, two = first.casefold().split(), second.casefold().split()
+    if len(one) > len(two):
+        one, two = two, one
+    if any(two[start:start + len(one)] == one for start in range(len(two) - len(one) + 1)):
+        return True
+    for size in range(2, min(len(one), len(two)) + 1):
+        if one[-size:] == two[:size] or two[-size:] == one[:size]:
+            return True
+    return False
+
+
+def _without_overlaps(ranked: list[str], counts: dict[str, int], first_seen: dict[str, int]) -> list[str]:
+    """Bỏ mảnh chồng lấn, giữ tên DÀI NHẤT không chồng: tên viết hoa liên tiếp bị cắt ở ba chữ nên một cụm dài sinh ra vài mảnh
+    ("Thiên Biến Vạn", "Biến Vạn Hóa", "Hóa Krai Andrey"). Mảnh gặp trước (nhiều lần hơn) giữ chỗ; tên dài hơn nuốt mảnh nó chứa."""
+    kept: list[str] = []
+    for name in ranked:
+        clashing = [other for other in kept if _overlap(name, other)]
+        if not clashing:
+            kept.append(name)
+        elif all(len(name.split()) > len(other.split()) for other in clashing):
+            kept = [other for other in kept if other not in clashing] + [name]
+    return sorted(kept, key=lambda name: (-counts[name], first_seen[name]))
 
 
 def _flush(run: list[str], counts: dict[str, int], first_seen: dict[str, int]) -> None:
