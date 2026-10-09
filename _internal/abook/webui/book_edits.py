@@ -1199,6 +1199,139 @@ def unmarked(edits: dict[str, Any], marks: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+# ---- gỡ cái đã gửi: người nghe bỏ cách đọc / dòng bỏ / danh sách phát SAU khi đã gửi --------------------------------------
+#
+# Cách đọc, dòng bỏ khỏi phần đọc và danh sách phát ở lại lớp sửa sau khi gửi (`subtract`) nên `sent_marks` biết máy kia đã có chúng. Người
+# nghe bỏ một trong số đó đi thì lớp sửa không còn nó - chỉ thiếu thôi thì máy kia vẫn giữ mãi. Hiệu giữa sổ `sent_marks` và lớp sửa hiện
+# có là phần phải GỠ ở máy kia: gói gửi đi mang thêm mục `edits_removed.json` ({skip, readings, playlist} - kèm GIÁ TRỊ đã gửi), máy kia chỉ
+# gỡ khi giá trị của nó còn đúng bằng giá trị ấy (`apply_removed`: không đè lên bản chính máy kia đã đổi khác). Cùng luật với BookEdits.kt.
+
+REMOVED_FILE = "edits_removed.json"
+_REMOVED_KEYS = {"skip", "readings", "playlist"}
+
+
+def removed_marks(edits: dict[str, Any], marks: dict[str, Any]) -> dict[str, Any]:
+    """Cái `marks` (`sent_marks`) nói máy kia đã có mà `edits` hiện không còn: {"skip": {mã chương: [dòng]}, "readings": {chữ hiện: chữ đọc},
+    "playlist": mã}. Cách đọc còn đó nhưng đổi chữ đọc thì không phải gỡ (là thay đổi chưa gửi, `unmarked`)."""
+    out: dict[str, Any] = {}
+    skip = {key: lines for key, lines in
+            ((key, [line for line in lines if line not in (edits.get("skip") or {}).get(key, [])])
+             for key, lines in (marks.get("skip") or {}).items()) if lines}
+    if skip:
+        out["skip"] = {key: sorted(skip[key]) for key in sorted(skip, key=int)}
+    readings = {shown: spoken for shown, spoken in (marks.get("readings") or {}).items() if shown not in (edits.get("readings") or {})}
+    if readings:
+        out["readings"] = dict(sorted(readings.items()))
+    playlist = (marks.get("music") or {}).get("playlist")
+    if playlist is not None and "playlist" not in (edits.get("music") or {}):
+        out["playlist"] = playlist
+    return out
+
+
+def count_removed(removed: dict[str, Any]) -> int:
+    """Số thay đổi trong `removed` (một dòng bỏ ở trăm chương là một)."""
+    return (len({line for lines in (removed.get("skip") or {}).values() for line in lines}) + len(removed.get("readings") or {})
+            + ("playlist" in removed))
+
+
+def forget_marks(marks: dict[str, Any], removed: dict[str, Any]) -> dict[str, Any]:
+    """`marks` trừ phần đã gỡ ở máy kia (`removed_marks`): sổ mới không còn nhắc tới chúng."""
+    out = copy.deepcopy(marks)
+    skip = out.get("skip") or {}
+    for key in list(skip):
+        skip[key] = [line for line in skip[key] if line not in (removed.get("skip") or {}).get(key, [])]
+        if not skip[key]:
+            del skip[key]
+    if not skip:
+        out.pop("skip", None)
+    readings = out.get("readings") or {}
+    for shown in (removed.get("readings") or {}):
+        readings.pop(shown, None)
+    if not readings:
+        out.pop("readings", None)
+    music = out.get("music") or {}
+    if "playlist" in removed:
+        music.pop("playlist", None)
+    if not music:
+        out.pop("music", None)
+    return out
+
+
+def validate_removed(raw: Any) -> dict[str, Any]:
+    """`edits_removed.json` của người lạ: chỉ ba khoá, mỗi khoá cùng luật với lớp sửa (`skip`, `readings`, `playlist`)."""
+    if not isinstance(raw, dict) or not raw or set(raw) - _REMOVED_KEYS:
+        raise EditsError("Phần gỡ trong gói sửa không hợp lệ.")
+    out: dict[str, Any] = {}
+    if "skip" in raw:
+        out["skip"] = _validate_skip(raw["skip"])
+    if "readings" in raw:
+        out["readings"] = validate_readings(raw["readings"])
+    if "playlist" in raw:
+        if not isinstance(raw["playlist"], str) or not _PLAYLIST.fullmatch(raw["playlist"]):
+            raise EditsError("Phần gỡ trong gói sửa không hợp lệ.")
+        out["playlist"] = raw["playlist"]
+    return out
+
+
+def dump_removed(removed: dict[str, Any]) -> bytes:
+    """Byte ghi ra `edits_removed.json` (khoá xếp cố định, UTF-8, LF)."""
+    ordered: dict[str, Any] = {}
+    if removed.get("skip"):
+        ordered["skip"] = {key: sorted(removed["skip"][key]) for key in sorted(removed["skip"], key=int)}
+    if removed.get("readings"):
+        ordered["readings"] = dict(sorted(removed["readings"].items()))
+    if "playlist" in removed:
+        ordered["playlist"] = removed["playlist"]
+    return (json.dumps(ordered, ensure_ascii=False, indent=1) + "\n").encode("utf-8")
+
+
+def parse_removed(data: bytes) -> dict[str, Any]:
+    if len(data) > MAX_EDITS_BYTES:
+        raise EditsError("Phần gỡ trong gói sửa quá lớn.")
+    try:
+        raw = json.loads(data.decode("utf-8"), parse_constant=_reject_constant)
+    except (UnicodeDecodeError, ValueError) as exc:
+        raise EditsError("Phần gỡ trong gói sửa bị hỏng.") from exc
+    return validate_removed(raw)
+
+
+def apply_removed(folder: Path, removed: dict[str, Any]) -> int:
+    """Máy giữ sách gỡ khỏi lớp sửa của `folder` những gì người gửi đã bỏ (`removed_marks`), CHỈ khi giá trị ở đây còn đúng bằng giá trị
+    người gửi nói (dòng bỏ: còn dòng ấy; cách đọc: còn đúng chữ đọc ấy; danh sách phát: còn đúng mã ấy) - đã đổi khác ở đây thì là bản của
+    chính máy này, giữ nguyên. Trả số thay đổi đã gỡ."""
+    folder = Path(folder)
+    done: dict[str, Any] = {"skip": {}, "readings": {}}
+    with _LOCK:
+        edits = load(folder)
+        skip = edits.get("skip") or {}
+        for key, lines in (removed.get("skip") or {}).items():
+            drop = [line for line in lines if line in skip.get(key, [])]
+            if drop:
+                done["skip"][key] = drop
+                skip[key] = [line for line in skip[key] if line not in drop]
+                if not skip[key]:
+                    del skip[key]
+        if not skip:
+            edits.pop("skip", None)
+        readings = edits.get("readings") or {}
+        for shown, spoken in (removed.get("readings") or {}).items():
+            if readings.get(shown) == spoken:
+                done["readings"][shown] = spoken
+                del readings[shown]
+        if not readings:
+            edits.pop("readings", None)
+        music = edits.get("music") or {}
+        if "playlist" in removed and music.get("playlist") == removed["playlist"]:
+            done["playlist"] = removed["playlist"]
+            del music["playlist"]
+        if not music:
+            edits.pop("music", None)
+        gone = count_removed(done)
+        if gone:
+            save(folder, edits)
+    return gone
+
+
 def layer_files(folder: Path, edits: dict[str, Any]) -> dict[str, Path | bytes]:
     """Các mục của lớp sửa khi đóng vào một file zip (file `.abook` v4, hay gói gửi về máy giữ sách): `edits.json` (byte), bìa sửa
     và file các bài nhạc người nghe đã ghim (đường dẫn trong thư mục sách). Lớp sửa rỗng: không mục nào. Thiếu file: `EditsError`."""

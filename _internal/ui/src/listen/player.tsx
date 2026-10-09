@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
+import { api } from "@/studio/api";
 import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
@@ -97,7 +98,7 @@ export function scheduleWindow(schedule: SleepSchedule | null, now = new Date())
   return start.toDateString();
 }
 
-type BookRef = Pick<ListenBook, "id" | "title" | "narrator" | "state" | "cover" | "records"> & { complete?: boolean; stage?: ListenBook["stage"] };
+type BookRef = Pick<ListenBook, "id" | "title" | "narrator" | "state" | "cover" | "records" | "remote"> & { complete?: boolean; stage?: ListenBook["stage"] };
 
 function activeRecord(book: BookRef): string | undefined {
   return book.records?.find((record) => record.active)?.id;
@@ -260,7 +261,7 @@ export function PlayerProvider({
   const refs = useRef({
     track: null as Track | null,
     queue: [] as ListenChapter[],
-    book: null as { id: string; title: string; complete: boolean } | null,
+    book: null as { id: string; title: string; complete: boolean; remote?: ListenBook["remote"] } | null,
     sleep: { kind: "off" } as SleepMode,
     purpose: "listen" as Purpose,
     fading: false,
@@ -559,7 +560,7 @@ export function PlayerProvider({
     setQueue(chapters);
     refs.current.queue = chapters;
     // Sách chỉ-có-chữ không "đang làm": hết chương cuối là hết cuốn, không phải "chờ Studio làm tiếp".
-    refs.current.book = { id: book.id, title: book.title, complete: book.stage === "text" || (book.complete ?? true) };
+    refs.current.book = { id: book.id, title: book.title, complete: book.stage === "text" || (book.complete ?? true), remote: book.remote };
     refs.current.purpose = purposeValue;
     setPurpose(purposeValue);
     const bookRate = book.state?.rate ?? refs.current.defaultRate;
@@ -1094,8 +1095,22 @@ export function PlayerProvider({
       }),
       engine.on("error", () => {
         // Lõi Android nói đúng lý do (nghe thẳng mà mất kết nối với máy tính khác hẳn file hỏng).
-        setError(native?.error || engine.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.");
+        const fallback = native?.error || engine.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
+        setError(fallback);
         setBuffering(false);
+        // Sách “Trên máy khác” nghe thẳng trên máy tính: chương chưa tải về mà không phát được thường là máy kia đã tắt / mất mạng - hỏi máy ấy
+        // rồi nói đúng lý do, thay vì đổ cho file.
+        const bookId = refs.current.book?.id;
+        const remote = refs.current.book?.remote;
+        if (!native && typeof remote === "object" && remote.device) {
+          void api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`)
+            .then((answer) => {
+              if (answer.reachable || refs.current.book?.id !== bookId) return;
+              const message = `Máy ${remote.computer || "kia"} không trả lời (tắt hay mất mạng) - chương này chưa tải về máy này.`;
+              setError((current) => (current === fallback ? message : current));
+            })
+            .catch(() => undefined);
+        }
       }),
       engine.on("chapter", () => {
         if (!native || native.chapterId === null || !native.bookId) return;

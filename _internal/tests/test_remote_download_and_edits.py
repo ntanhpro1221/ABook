@@ -232,7 +232,7 @@ def test_subtract_keeps_what_changed_after_the_snapshot(tmp_path: Path) -> None:
 def test_forgetting_a_computer_is_refused_while_edits_are_unsent_and_changes_nothing(library, tmp_path: Path) -> None:  # noqa: F811
     app, other, _sync, _project, _devices, computer, value, path = _two_computers(library, tmp_path)
     try:
-        assert app.unsent_computer_edits(computer) == {"books": [], "changes": 0, "sendable": True}
+        assert app.unsent_computer_edits(computer) == {"books": [], "changes": 0, "sendable": True, "cache": {"books": 1, "bytes": 0, "places": 0}}
         app.rename(value, "Tên đặt ở máy B")
         book_edits.set_chapter_title(path, 1, "Chương mở đầu")
         view = app.unsent_computer_edits(computer)
@@ -341,5 +341,94 @@ def test_a_skipped_line_is_still_skipped_after_it_was_sent_to_the_other_computer
         # Đọc lại dòng ấy thì hết bỏ, như mọi lúc.
         book_edits.set_skip_line(path, [1], "Dịch: Nhóm Lục Bình", False)
         assert packages.edited_manifest(path)["chapters"][0]["skip"] == ["Biên tập: Ai Đó"]
+    finally:
+        other.stop()
+
+
+def test_forgetting_says_what_is_downloaded_keeps_the_listening_place_and_pairing_again_brings_it_back(library, tmp_path: Path) -> None:  # noqa: F811
+    """Hộp thôi ghép nói số cuốn, dung lượng đã tải và số cuốn có chỗ nghe; thôi ghép rồi ghép lại đúng máy ấy thì mã sách không đổi nên chỗ nghe còn."""
+    app, other, _sync, _project, devices, computer, value, _path = _two_computers(library, tmp_path)
+    try:
+        assert app.remote_downloads.start(app._listenable(value), wait=True)["state"] == "done"
+        app.listening.progress(value, 1, 42.0, 300.0)
+        cache = app.unsent_computer_edits(computer)["cache"]
+        assert cache["books"] == 1 and cache["bytes"] > 0 and cache["places"] == 1, cache
+        app.forget_computer(computer)
+        assert not app.computers.list()
+        view = app.pair_computer(f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
+        assert [item["id"] for item in view["computers"]] == [computer], "cùng vân tay chứng chỉ: lấy lại mã cũ"
+        (book,) = [item for item in app.listen_library() if item.get("remote")]
+        assert book["id"] == value and book["state"]["last"]["seconds"] == 42.0, "chỗ nghe vẫn còn"
+    finally:
+        other.stop()
+
+
+class _Reply:
+    """Trả lời của máy kia cho một file: `sent` byte đầu của phần được hỏi rồi đóng êm (như tắt máy giữa chừng); `length` là cỡ nó hứa."""
+
+    def __init__(self, body: bytes, *, status: int = 200, content_range: str = "", sent: int | None = None) -> None:
+        self.status, self.length, self._content_range = status, len(body), content_range
+        self._rest = body if sent is None else body[:sent]
+
+    def getheader(self, name: str) -> str:
+        return self._content_range if name == "Content-Range" else ""
+
+    def read(self, amount: int | None = None) -> bytes:
+        chunk, self._rest = self._rest[:amount], self._rest[amount:]
+        return chunk
+
+
+def test_a_cut_download_names_the_machine_keeps_the_part_and_resumes_with_a_range(tmp_path: Path, monkeypatch) -> None:
+    from contextlib import contextmanager
+
+    data = bytes(range(200)) * 5
+    asked: list[dict[str, str] | None] = []
+    plan = [lambda: _Reply(data, sent=300), lambda: _Reply(data[300:], status=206, content_range=f"bytes 300-{len(data) - 1}/{len(data)}")]
+
+    class Known:
+        def get(self, _computer: str) -> dict[str, Any]:
+            return {"id": "c1", "name": "Phòng khách", "token": "t", "host": "x", "port": 1, "fingerprint": "ab"}
+
+    @contextmanager
+    def fake_open(_endpoint, _method, _path, _token, *_args, extra=None, **_kwargs):
+        asked.append(extra)
+        yield plan[len(asked) - 1](), "ab"
+
+    monkeypatch.setattr(remote_books, "_COMPUTERS", Known())
+    monkeypatch.setattr(remote_books, "_open", fake_open)
+    book = {"package": {"remote": {"computer": "c1", "book": "b" * 24}}, "version": 1}
+    with pytest.raises(remote_books.RemoteError, match=r"Máy Phòng khách không trả lời \(tắt hay mất mạng\)"):
+        remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(data))
+    part = tmp_path / "chapters" / "1.mp3.part"
+    assert part.read_bytes() == data[:300] and not (tmp_path / "chapters" / "1.mp3").exists()
+    assert remote_books._part_size(tmp_path, "chapters/1.mp3", len(data)) == 300
+
+    remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(data))
+    assert asked[1] == {"Range": "bytes=300-"}
+    assert (tmp_path / "chapters" / "1.mp3").read_bytes() == data and not part.exists()
+
+
+def test_an_interrupted_download_resumes_by_itself_when_the_other_computer_answers_again(library, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    app, other, _sync, _project, _devices, _computer, value, path = _two_computers(library, tmp_path)
+    try:
+        real_save = remote_books._save
+
+        def cut(package: Path, relative: str, book: dict, **kwargs: Any) -> Path:
+            raise remote_books.RemoteError("Máy kia không trả lời (tắt hay mất mạng)")
+
+        monkeypatch.setattr(remote_books, "_save", cut)
+        failed = app.remote_downloads.start(path, wait=True)
+        assert failed["state"] == "failed" and failed["retry"] is True, failed
+        assert app.remote_download(value, "status")["state"] == "failed", "máy kia chưa trả lời lại thì nằm yên"
+        monkeypatch.setattr(remote_books, "_save", real_save)
+        app.remote_downloads._jobs[str(path.resolve())].pop("probed", None)
+        assert app.remote_download(value, "status")["state"] in ("running", "done"), "trả lời lại là tải tiếp"
+        for _ in range(100):
+            if app.remote_download(value, "status")["state"] == "done":
+                break
+            import time
+
+            time.sleep(0.05)
+        assert app.remote_download(value, "status")["state"] == "done"
     finally:
         other.stop()

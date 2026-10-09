@@ -12,6 +12,12 @@ export function formatSize(bytes: number): string {
   return `${formatNumber(bytes / 1024 ** 2)} MB`;
 }
 
+/** Câu báo kết thúc bằng dấu chấm: lời lỗi của máy chủ khi thì có chấm, khi thì không (và có khi kết thúc bằng dấu nháy) - nối thêm câu sau cho đúng. */
+export function endSentence(text: string): string {
+  const clean = text.trim();
+  return clean && !/[.!?…]$/.test(clean) ? `${clean}.` : clean;
+}
+
 export function formatPercent(fraction: number): string {
   const value = Math.max(0, Math.min(1, fraction)) * 100;
   if (value > 0 && value < 1) return "<1%";
@@ -37,6 +43,14 @@ export function excerpt(text: string, max = 48): string {
   const cut = clean.slice(0, max);
   const space = cut.lastIndexOf(" ");
   return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,.;:!?…—–-]+$/, "")}…`;
+}
+
+/** Rút một tên dài giữ CẢ đầu lẫn đuôi - "NGDtuanh-Lecoo" thành "NGDtu…Lecoo": tên máy thường chung đầu ("NGDtuanh-…") nên chỗ phân biệt máy nằm ở đuôi. */
+export function middleEllipsis(text: string, max = 14): string {
+  if (text.length <= max) return text;
+  const tail = Math.floor((max - 1) / 2);
+  const head = max - 1 - tail;
+  return `${text.slice(0, head).trimEnd()}…${text.slice(text.length - tail).trimStart()}`;
 }
 
 /** Cách đọc một tên để HIỆN: chữ đầu mỗi từ viết hoa - "rên-ta-rô" (phần tên máy tách từ "Nam rên-ta-rô") thành "Rên-ta-rô"

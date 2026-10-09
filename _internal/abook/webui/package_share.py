@@ -148,6 +148,9 @@ def receive_edits(path: Path, device: dict[str, Any], package: Path) -> dict[str
     thắng khi hai bên cùng đặt một khoá (xung đột được báo). Không có dự án để áp: ý muốn chờ Studio (`waiting`) nằm trong lớp sửa, đi theo cuốn khi
     lưu thành file. Cùng hình dạng trả lời với `edits_inbox.receive`."""
     edits, cover, tracks = edits_inbox.read_package(package)
+    removed = edits_inbox.read_removed(package)
+    # Cái người gửi đã gửi trước đó rồi bỏ đi: gỡ ở đây, chỉ khi giá trị ở đây còn đúng như họ đã gửi (không đè bản chính máy này đã đổi).
+    withdrawn = book_edits.apply_removed(path, removed) if removed else 0
     scratch = Path(tempfile.mkdtemp(prefix=".edits_in_", dir=path))
     try:
         if tracks:
@@ -160,5 +163,5 @@ def receive_edits(path: Path, device: dict[str, Any], package: Path) -> dict[str
     conflicts = [edits_inbox.conflict(item["kind"], item["key"], _WHAT[item["kind"]],
                                       f"{_WHAT[item['kind']]}: đã có bản riêng trên máy tính này, đã thay bằng bản từ {device['name']}",
                                       item["lost"], item["kept"]) for item in report["clashes"]]
-    return {"applied": book_edits.count_applied(edits), "skipped": 0, "music": False, "requests": 0,
+    return {"applied": book_edits.count_applied(edits) + withdrawn, "skipped": 0, "music": False, "requests": 0,
             "waiting": book_edits.count_wishes(edits), "skippedWishes": 0, "conflicts": conflicts}

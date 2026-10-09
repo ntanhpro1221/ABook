@@ -15,6 +15,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Khi hai máy cùng đổi một chỗ (vd tên sách), lời báo viết theo máy bạn đang dùng: "máy kia (tên) đã đổi thành …, bản của bạn … đã thay vào". Lời báo "Đã gửi" chỉ còn khi có điều đáng đọc, kèm nút "Đã hiểu"; nút và thông báo gọi đúng tên máy kia thay vì "máy tính" chung chung.
 - Điện thoại cũng vậy: cách đọc và nhạc bạn chọn cho sách của máy tính đã gửi xong không còn báo "thay đổi đang chờ gửi" mãi (và "Thôi ghép" không còn bắt gửi trước lặp lại), lời báo hai máy cùng đổi một chỗ viết theo điện thoại của bạn. Điện thoại chỉ chia sẻ cho máy đã ghép những cuốn bạn tự thêm từ file (kèm tác giả), không chia sẻ lại sách đã lấy từ máy khác - hai máy không còn thấy sách của chính mình hai lần.
 - Hộp "Sửa sách": "Lưu tên" đóng hộp và báo đã đổi; dòng dẫn nói tên gửi về máy kia khi kết nối. Trang sách bỏ dòng "Nghe thẳng…" ngược nghĩa khi đã có "Đã tải về máy". Thông báo ghép xong nói tên máy thật.
+- "Thôi ghép" hỏi ngay trong trang trước khi gỡ, nói rõ sẽ mất gì (bao nhiêu cuốn, bao nhiêu MB đã tải) và báo sau khi gỡ. Chỗ nghe và dấu trang của các cuốn giữ lại: ghép lại đúng máy ấy thì nghe tiếp đúng chỗ cũ.
+- Cách đọc, dòng bỏ khỏi phần đọc và danh sách nhạc đã gửi rồi mà sau đó bạn bỏ đi: lần gửi sau mang lệnh gỡ sang máy kia (chỉ gỡ khi bên ấy chưa đổi khác đi), hai máy không còn lệch nhau. Điện thoại cũng vậy.
+- Máy kia tắt hay mất mạng: nghe thẳng, tải về và gửi sửa đều nói đúng "máy <tên> không trả lời (tắt hay mất mạng)", trang sách không ghi "Đang nghe" lúc lỗi. Chương tải dở được tải tiếp từ chỗ đã có (không tải lại từ đầu) và tự thử lại khi máy kia bật lên; chữ "Tải nốt" không hiện khi chưa tải gì; trang sách không còn lỗi 404 lặp trong nhật ký.
+- Huy hiệu và dải "Đang phát trên / Đang dừng trên" giữ cả đầu lẫn đuôi tên máy khi hẹp, rê chuột để đọc tên đầy đủ.
 
 ### Điện thoại và cửa sổ hẹp
 
@@ -25,6 +29,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thẻ "Ai nói câu này" cho xem câu liền trước và liền sau để quyết, và không còn mời chọn người chưa có giọng trong sách. "Đã quyết, chờ áp dụng" đếm khớp số trên nút "Áp dụng"; quyết xong thẻ cuối của một loại thì địa chỉ trang về "Tất cả".
 - Hộp "Việc cần anh" chỉ hỏi những câu chính máy đọc không chắc (cùng cách xưng hô, hai câu liền nhau, lời gọi tên): bỏ loại thẻ đề xuất theo "máy chấm thứ hai" vì đo thấy nó đề xuất sai nhiều hơn đúng.
 - Cài đặt › Nhạc nền nhắc đến công tắc tự chọn nhạc và báo khi bật/tắt. Dự án hỏng báo "sổ làm việc của sách bị hỏng…" thay vì lỗi SQL.
+- Thanh "Đọc theo / Chương / Dấu trang" của màn "Đang nghe" ở khổ 768 px không còn tràn (chỉ còn biểu tượng khi hẹp). Thẻ "Ai nói câu này": nhãn chương/câu nằm ngay trên câu được hỏi, câu ấy có vạch đánh dấu.
 
 ## [0.4.38] - 2026-10-09
 

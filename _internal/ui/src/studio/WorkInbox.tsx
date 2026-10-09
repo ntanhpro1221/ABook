@@ -176,14 +176,18 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
         <span className="mt-0.5 size-7 shrink-0" aria-hidden />
       )}
       <div className="min-w-0">
-        <div className="text-xs text-fg-3">
-          {example.chapterTitle} · {example.seq === 0 ? "tiêu đề chương" : `câu ${example.seq}`}
-          {example.speaker && ` · máy gán: ${example.speaker}`}
-          {example.changes && <span className="font-semibold text-accent-text"> · sẽ đổi</span>}
-          {!example.hasAudio && " · chưa thu"}
-        </div>
         {example.before && <p className="line-clamp-2 text-fg-3" aria-label="Câu liền trước">{example.before}</p>}
-        <p className="text-fg">{example.text}</p>
+        {/* Nhãn đứng NGAY TRÊN câu được hỏi (không phải trên câu trước mờ - dễ đọc nhầm là nhãn của câu ấy); vạch bên trái đánh dấu đúng câu đang hỏi
+            khi có câu trước/sau làm ngữ cảnh. */}
+        <div className={cn((example.before || example.after) && "border-l-2 border-accent pl-2")}>
+          <div className="text-xs text-fg-3">
+            {example.chapterTitle} · {example.seq === 0 ? "tiêu đề chương" : `câu ${example.seq}`}
+            {example.speaker && ` · máy gán: ${example.speaker}`}
+            {example.changes && <span className="font-semibold text-accent-text"> · sẽ đổi</span>}
+            {!example.hasAudio && " · chưa thu"}
+          </div>
+          <p className="text-fg">{example.text}</p>
+        </div>
         {example.after && <p className="line-clamp-2 text-fg-3" aria-label="Câu liền sau">{example.after}</p>}
       </div>
     </li>

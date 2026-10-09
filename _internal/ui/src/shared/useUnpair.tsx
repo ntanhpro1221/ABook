@@ -1,15 +1,16 @@
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { UnpairDialog } from "./UnpairDialog";
-import { unpairCopy, type UnpairChoice, type UnsentEdits } from "./unpair";
+import { unpairCopy, unpairDone, type UnpairChoice, type UnsentEdits } from "./unpair";
 
 interface Asking<T> {
   target: T;
   unsent: UnsentEdits;
 }
 
-/** Gỡ ghép một máy mà không lặng lẽ mất sửa chưa gửi: `start(máy)` hỏi `unsent`; không còn sửa thì gỡ luôn (`run(máy, null)`), còn thì
- *  hiện `dialog` với các lựa chọn. `run(máy, "send" | "discard")` gửi trước / bỏ rồi gỡ và ném lỗi (nói lý do) nếu không làm được -
+/** Gỡ ghép một máy mà không lặng lẽ mất gì: `start(máy)` hỏi `unsent`; không có gì để mất (chưa tải gì, không sửa) thì gỡ luôn
+ *  (`run(máy, null)`), còn thì hiện `dialog` nói rõ mất gì (cuốn, MB đã tải, sửa chưa gửi) và giữ gì (chỗ nghe), các lựa chọn. Gỡ xong
+ *  luôn có toast. `run(máy, "send" | "discard")` gửi trước / bỏ rồi gỡ và ném lỗi (nói lý do) nếu không làm được -
  *  lỗi hiện trong hộp, máy vẫn ghép. Dùng chung điện thoại và máy tính. */
 export function useUnpair<T>(options: {
   self: "điện thoại" | "máy tính";
@@ -22,11 +23,17 @@ export function useUnpair<T>(options: {
   const [busy, setBusy] = useState<UnpairChoice | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const announce = (target: T, unsent: UnsentEdits | null) => {
+    const done = unpairDone(options.name(target), unsent);
+    toast.success(done.title, { description: done.description });
+  };
+
   const start = async (target: T) => {
     try {
       const unsent = await options.unsent(target);
       if (unpairCopy(options.name(target), options.self, unsent, true) === null) {
         await options.run(target, null);
+        announce(target, unsent);
         return;
       }
       setError(null);
@@ -42,6 +49,7 @@ export function useUnpair<T>(options: {
     setError(null);
     try {
       await options.run(asking.target, choice);
+      announce(asking.target, asking.unsent);
       setAsking(null);
     } catch (problem) {
       setError((problem as Error).message);

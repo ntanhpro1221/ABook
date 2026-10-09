@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type CSSPropertie
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
+import { ShortName } from "@/shared/ShortName";
 import { cn } from "@/shared/cn";
 import { formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
@@ -111,7 +112,7 @@ function BookTile({ book, badge }: { book: ListenBook; badge?: string }) {
   return (
     <div className="group">
       <div className="relative">
-        <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`}>
+        <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
           <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full" />
         </button>
         <button
@@ -141,12 +142,12 @@ function BookTile({ book, badge }: { book: ListenBook; badge?: string }) {
           // "TẬP n" ở góc dưới trái thì huy hiệu nhích lên trên nhãn.
           <span
             className={cn(
-              "pointer-events-none absolute left-2.5 inline-flex max-w-[calc(100%-5rem)] items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white",
+              "pointer-events-none absolute left-2.5 inline-flex max-w-[calc(100%-4.5rem)] items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white",
               book.series?.part || badge ? "bottom-9" : "bottom-2.5",
             )}
           >
             <Laptop className="size-3 shrink-0" />
-            <span className="truncate">{typeof book.remote === "object" && book.remote?.computer ? book.remote.computer : "Máy tính"}</span>
+            <ShortName name={typeof book.remote === "object" && book.remote?.computer ? book.remote.computer : "Máy tính"} short={11} className="truncate" />
           </span>
         )}
       </div>

@@ -1826,12 +1826,13 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
   }, [open, setExpanded]);
 
   const panelTabs = (
-    <div role="tablist" aria-label="Bảng" className="flex gap-1">
+    <div role="tablist" aria-label="Bảng" className="flex min-w-0 gap-1">
       {PANELS.map((item) => (
         <button
           key={item.value}
           type="button"
           role="tab"
+          title={item.label}
           aria-selected={panel === item.value && showPanel}
           onClick={() => {
             if (mobile && panel === item.value && showPanel) setShowPanel(false);
@@ -1841,12 +1842,13 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
             }
           }}
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors",
+            "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors",
             panel === item.value && showPanel ? "bg-hover text-fg" : "text-fg-2 hover:text-fg",
           )}
         >
           <item.icon className="size-4" />
-          {item.label}
+          {/* Cột phải hẹp (cửa sổ ~768 px: hai cột + thanh bên chỉ chừa ~210 px) thì chỉ còn biểu tượng, chữ giữ cho trình đọc màn hình. */}
+          <span className="@max-[20rem]:sr-only">{item.label}</span>
         </button>
       ))}
     </div>
@@ -1936,7 +1938,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
       </aside>
       {!mobile && (
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-14 shrink-0 items-center border-b border-line px-6">{panelTabs}</div>
+          <div className="@container flex h-14 shrink-0 items-center overflow-hidden border-b border-line px-3 lg:px-6">{panelTabs}</div>
           <div className="min-h-0 flex-1">{panelBody}</div>
         </div>
       )}

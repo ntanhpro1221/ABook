@@ -12,6 +12,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import type { CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
+import { ShortName } from "@/shared/ShortName";
 import { IconButton, Tooltip } from "@/shared/ui";
 import { api } from "@/studio/api";
 
@@ -214,16 +215,16 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
         style={{ width: `${share}%` }}
         aria-hidden
       />
-      <div className="flex h-14 items-center gap-3 px-4">
+      <div className="flex h-14 items-center gap-3 px-4 max-md:h-12 max-md:gap-2 max-md:px-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <BookCover title={phone.bookTitle} image={phone.cover} size="xs" className="size-9 shrink-0 rounded-md" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
               <DeviceIcon kind={phone.kind} className="size-3.5 shrink-0" />
-              <span className="truncate">
-                {phone.playing ? "Đang phát trên" : "Đang dừng trên"} {phone.name}
-                {protocolLabel(phone) && <span className="font-normal text-fg-3"> · {protocolLabel(phone)}</span>}
-              </span>
+              {/* Tên máy là chỗ phân biệt máy: câu dẫn không co, tên co sau cùng (và có tooltip), cách phát chỉ hiện khi rộng. */}
+              <span className="shrink-0 whitespace-nowrap">{phone.playing ? "Đang phát trên" : "Đang dừng trên"}</span>
+              <ShortName name={phone.name} short={13} className="shrink" />
+              {protocolLabel(phone) && <span className="hidden shrink-0 font-normal text-fg-3 lg:inline"> · {protocolLabel(phone)}</span>}
             </div>
             <div className="truncate text-sm">
               <span className="font-medium">{phone.chapterTitle}</span>

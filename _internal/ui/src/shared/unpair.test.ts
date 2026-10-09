@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { unpairCopy, type UnsentEdits } from "./unpair";
+import { unpairCopy, unpairDone, type UnsentEdits } from "./unpair";
 
 const two: UnsentEdits = {
   books: [
@@ -52,5 +52,21 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
   it("chỉ kể tên ba cuốn đầu", () => {
     const many: UnsentEdits = { books: [1, 2, 3, 4, 5].map((n) => ({ title: `S${n}`, changes: 1 })), changes: 5, sendable: true };
     expect(unpairCopy("M", "điện thoại", many, true)!.lines[0]).toBe("5 cuốn có 5 thay đổi chưa gửi về M sẽ mất: “S1”, “S2”, “S3” và 2 cuốn khác.");
+  });
+
+  it("máy kia có phần đã tải thì hỏi dù không còn sửa chưa gửi, nói rõ MB sẽ mất và chỗ nghe vẫn giữ", () => {
+    const cached: UnsentEdits = { books: [], changes: 0, sendable: true, cache: { books: 3, bytes: 5 * 1024 * 1024, places: 2 } };
+    const copy = unpairCopy("Máy bàn", "máy tính", cached, true)!;
+    expect(copy.send).toBeNull();
+    expect(copy.discard).toBe("Thôi ghép");
+    expect(copy.lines[0]).toContain("3 cuốn của Máy bàn sẽ rời Thư viện");
+    expect(copy.lines[0]).toContain("đã tải về máy tính này sẽ bị xoá");
+    expect(copy.lines[1]).toContain("Chỗ nghe và dấu trang của 2 cuốn vẫn giữ");
+  });
+
+  it("không có gì để mất thì gỡ như thường; lời báo sau khi gỡ nhắc chỗ nghe còn giữ", () => {
+    expect(unpairCopy("Máy bàn", "máy tính", { books: [], changes: 0, sendable: true, cache: { books: 0, bytes: 0, places: 0 } }, true)).toBeNull();
+    expect(unpairDone("Máy bàn", { books: [], changes: 0, sendable: true, cache: { books: 1, bytes: 0, places: 1 } }).description).toContain("Chỗ nghe và dấu trang vẫn giữ");
+    expect(unpairDone("Máy bàn", null).description).not.toContain("vẫn giữ");
   });
 });

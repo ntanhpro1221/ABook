@@ -1,0 +1,77 @@
+{
+ "previous": {
+  "readings": {
+   "Lucien": "Lu-xi-en",
+   "Kate": "Kết"
+  },
+  "skip": {
+   "1": [
+    "Biên tập: Ai Đó",
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "sent": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Tên mới",
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  }
+ },
+ "removed": {
+  "skip": {
+   "1": [
+    "Biên tập: Ai Đó"
+   ]
+  },
+  "readings": {
+   "Kate": "Kết"
+  }
+ },
+ "current": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Tên mới",
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  }
+ },
+ "marks": {
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  }
+ },
+ "left": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  }
+ },
+ "unmarked": {
+  "format": "abook-edits",
+  "version": 1
+ },
+ "pending": 0
+}

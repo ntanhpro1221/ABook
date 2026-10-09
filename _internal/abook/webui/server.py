@@ -357,6 +357,15 @@ class App:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy sách này trong thư viện")
         return path
 
+    def export_job_status(self, jobs: Any, value: str) -> dict[str, Any]:
+        """Việc xuất chạy nền của một cuốn. Cuốn không phải dự án (mở từ file, hay của máy khác) không bao giờ có lượt xuất: trả "idle" thay vì
+        404 - trang sách của chúng hỏi trạng thái này và không có gì để báo lỗi."""
+        path = self.library.resolve(value)
+        if path is None:
+            self._listenable(value)  # không có cuốn này thật thì vẫn 404
+            return {"state": "idle"}
+        return jobs.status(str(path))
+
     def _listenable(self, value: str) -> Path:
         """Phía Nghe: dự án hoặc cuốn mở từ file `.abook` (webui/packages.py). Studio vẫn chỉ dùng `_book`."""
         path = self.library.resolve_listenable(value)
@@ -2076,6 +2085,9 @@ class App:
         """"Tải về máy" một cuốn của máy khác (remote_books.Downloads): `status`, `start` (hay tải tiếp), `cancel`."""
         path = self._remote_package(value)
         if action == "status":
+            # Đứt vì máy kia tắt / mất mạng: máy kia lên lại thì tải tiếp luôn (giao diện hỏi tình trạng mỗi vài giây khi đang đứt).
+            if not self.read_only:
+                self.remote_downloads.resume_interrupted(path, self._computer_answers)
             return self.remote_downloads.status(path)
         self._mutating()
         if action == "cancel":
@@ -2084,6 +2096,18 @@ class App:
             return self.remote_downloads.start(path)
         except remote_books.RemoteError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+
+    def _computer_answers(self, computer: str) -> bool:
+        """Máy đã ghép `computer` có trả lời ngay lúc này không (hỏi nhẹ, trần 1,5 giây - không chờ máy ngủ dậy)."""
+        entry = self.computers.get(computer)
+        return entry is not None and remote_books.reachable(entry, timeout=1.5)
+
+    def computer_reachable(self, computer: str) -> dict[str, Any]:
+        """{"reachable"}: máy đã ghép trả lời ngay lúc này không - màn nghe hỏi khi một chương của sách "Trên máy khác" không phát được,
+        để nói đúng "máy ấy tắt hay mất mạng" thay vì "file có thể đã bị xoá"."""
+        if self.computers.get(computer) is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Máy này không ghép với máy ấy")
+        return {"reachable": self._computer_answers(computer)}
 
     def send_remote_edits(self, value: str) -> dict[str, Any]:
         """"Gửi về máy tính": phần sửa của cuốn của máy tính khác về máy ấy ngay (remote_books.send_edits). Trả `editsSync` mới."""
@@ -2171,6 +2195,15 @@ class App:
         books = [{"title": item["title"], "changes": item["changes"]} for item in remote_books.unsent_edits(self.library.root, computer)]
         sendable = entry.get("kind") == "computer"
         view: dict[str, Any] = {"books": books, "changes": sum(item["changes"] for item in books), "sendable": sendable}
+        # Cái máy này sẽ quên khi thôi ghép (hộp xác nhận nói rõ): số cuốn, MB đã tải, số cuốn đang có chỗ nghe / dấu trang (giữ lại -
+        # ghép lại đúng máy ấy là hiện lại, xem Computers.pair).
+        cached = remote_books.cached_books(self.library.root, computer)
+        places = 0
+        for item in cached:
+            state = self.listening.get(book_id(item["package"]))
+            if state.get("chapters") or state.get("bookmarks"):
+                places += 1
+        view["cache"] = {"books": len(cached), "bytes": sum(item["bytes"] for item in cached), "places": places}
         if books and sendable:
             view["reachable"] = remote_books.reachable(entry)
         return view
@@ -2897,7 +2930,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.ACCEPTED, self.app.bookfile_jobs.start(str(self.app._book(value)), run))
 
     def get_bookfile_job(self, _query: dict[str, list[str]], value: str) -> None:
-        self._send_json(HTTPStatus.OK, self.app.bookfile_jobs.status(str(self.app._book(value))))
+        self._send_json(HTTPStatus.OK, self.app.export_job_status(self.app.bookfile_jobs, value))
 
     def post_m4b_job(self, _query: dict[str, list[str]], value: str) -> None:
         # Cả cuốn thành một file `.m4b` có mục lục chương (export.export_m4b) - việc nền như "Xuất file sách": giải mã và mã
@@ -2917,7 +2950,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.ACCEPTED, self.app.m4b_jobs.start(str(project), run))
 
     def get_m4b_job(self, _query: dict[str, list[str]], value: str) -> None:
-        self._send_json(HTTPStatus.OK, self.app.m4b_jobs.status(str(self.app._book(value))))
+        self._send_json(HTTPStatus.OK, self.app.export_job_status(self.app.m4b_jobs, value))
 
     def get_word_timings(self, _query: dict[str, list[str]], value: str) -> None:
         # "Căn từ cho sách đã làm": tiến độ + số câu đã có mốc chữ (word_timing.Job.status).
@@ -3513,6 +3546,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_computer_stop_waiting(self, _query: dict[str, list[str]], computer: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.stop_waiting_computer(computer))
+
+    def get_computer_reachable(self, _query: dict[str, list[str]], computer: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.computer_reachable(computer))
 
     def get_computer_unsent(self, _query: dict[str, list[str]], computer: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.unsent_computer_edits(computer))
@@ -4246,6 +4282,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/computers/([0-9a-f]{12})/bluetooth"), Handler.post_computer_bluetooth),
     ("POST", re.compile(r"/api/computers/([0-9a-f]{12})/stop-waiting"), Handler.post_computer_stop_waiting),
     ("GET", re.compile(r"/api/computers/([0-9a-f]{12})/unsent"), Handler.get_computer_unsent),
+    ("GET", re.compile(r"/api/computers/([0-9a-f]{12})/reachable"), Handler.get_computer_reachable),
     ("DELETE", re.compile(r"/api/computers/([0-9a-f]{12})"), Handler.delete_computer),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
     ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),

@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { ListenBook } from "@/listen/model";
 import { cn } from "@/shared/cn";
+import { endSentence } from "@/shared/format";
 import { Button, Progress } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { downloadFraction, downloadMenuLabel, downloadNote, type RemoteDownload } from "./remoteDownloadState";
@@ -24,7 +25,8 @@ function useRemoteDownload(book: ListenBook) {
   const query = useQuery({
     queryKey: key,
     queryFn: () => api<RemoteDownload>(`/api/listen/books/${book.id}/download`),
-    refetchInterval: (current) => (current.state.data?.state === "running" ? 1000 : false),
+    // Đang tải: xem tiến độ mỗi giây. Đứt vì mất kết nối: hỏi mỗi vài giây - máy chủ tự tải tiếp khi máy kia trả lời lại.
+    refetchInterval: (current) => (current.state.data?.state === "running" ? 1000 : current.state.data?.state === "failed" && current.state.data.retry ? 8000 : false),
   });
   const start = useMutation({
     mutationFn: () => api<RemoteDownload>(`/api/listen/books/${book.id}/download`, { method: "POST" }),
@@ -45,7 +47,8 @@ function useRemoteDownload(book: ListenBook) {
     if (previous.current === "running" && now === "done") {
       toast.success(`Đã tải “${book.title}” về máy`, { description: `Nghe được cả khi ${computerOf(book) || "máy kia"} tắt` });
     } else if (previous.current === "running" && now === "failed") {
-      toast.error("Chưa tải xong về máy", { description: `${query.data?.error ?? ""} Phần đã tải vẫn giữ trên máy này.`.trim() });
+      const kept = (query.data?.bytesDone ?? 0) > 0 ? " Phần đã tải vẫn giữ trên máy này." : "";
+      toast.error("Chưa tải xong về máy", { description: `${endSentence(query.data?.error || `${computerOf(book) || "Máy kia"} không trả lời`)}${kept}` });
     }
     previous.current = now;
   }, [query.data?.state, query.data?.error, book]);
