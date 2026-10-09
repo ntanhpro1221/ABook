@@ -11,6 +11,9 @@ Studio, gói cài sẵn trên máy dev) không tính: dung lượng hiện là c
 - `g2p` sea-g2p (chữ -> phoneme, Rust + từ điển, Apache-2.0): wheel abi3 ghim, giải vào <dữ liệu app>/vieneu/lib.
 - `voices` các giọng có sẵn: hai file JSON trong wheel vieneu 3.8.3 ghim (chỉ lấy hai file ấy, không cài gói vieneu).
 - `turbo`, `nano`, `aligner`: file model trên Hugging Face, ghim commit + SHA-256.
+- `gguf` ("Bản tăng tốc", lựa chọn `fast`): cùng model Turbo chạy bằng audio.cpp (readaloud/vieneu_gguf.py) - server bản AVX2 ghim + GGUF q8_0, ~200 MB, nhanh
+  ~2 lần và ít RAM hơn. Chỉ có cho Windows x64 có AVX2; cần cả `turbo` (đường lui khi server không chạy, và giọng ONNX vẫn là nền). Người dùng có công tắc
+  "Dùng bản tăng tốc" (`set_accelerate`); tải xong, lần tự đo của Turbo chạy bằng bản này - hỏng thì ghi "máy này không chạy được" (`broken`) và đọc bằng ONNX.
 
 Thiết bị: luôn CPU. Đo 03-10 trên máy dev (Ryzen 9 8945HX, RTX 5060 Laptop đang bận việc khác ~80%): DirectML chậm hơn CPU nhiều (Turbo RTF 2,83
 so với 0,31; Nano 0,77 so với 0,30) - Turbo gọi hàng trăm đồ thị nhỏ mỗi giây, card không gánh được phần chi phí mỗi lần gọi. Torch của Studio là
@@ -30,6 +33,7 @@ import zipfile
 from pathlib import Path
 from typing import Any, Callable
 
+from ..readaloud import vieneu_gguf
 from ..readaloud.vieneu import Installed
 from . import music_module, studio_setup, voice_module, word_timing
 from .music_module import Component
@@ -82,17 +86,30 @@ NANO_FILES = (
              "c6c1d4398ca35d3ad1bd3f0459413d1b975d09e7f2f3a2b4493a7b92bbf6ce93", 155_132_418),
     Download("codec_decoder.onnx", _NANO + "codec_decoder.onnx", "b0ab15e7828a39d53679e25b1ba4ba415a61311307202a6323130b9e1cc3029d", 99_319_941),
 )
-FILES = {"g2p": (G2P,), "voices": (VOICES,), "turbo": TURBO_FILES, "nano": NANO_FILES, "aligner": studio_setup.WORD_ALIGN_FILES}
+# Bản tăng tốc (readaloud/vieneu_gguf.py): server audio.cpp v0.9.1 tự build nhắm AVX2 (MSVC, không AVX-512: trên Zen4 nhanh hơn bản AVX-512 ~1,25 lần và chạy được
+# trên mọi máy có AVX2; đổi binary là đổi audio nên ghim cả sha256) + GGUF q8_0 của VieNeu Turbo. Nâng: build lại, đăng lên nơi chứa, đổi URL + băm + cỡ, đo lại.
+SERVER_ZIP = Download("audiocpp-server.zip", "https://huggingface.co/NGDtuanh/abook-music-student/resolve/2374dab847a5a1356948a7e6b741997de25ebbbd/"
+                      "audiocpp/0.9.1-avx2/audiocpp-server-0.9.1-win-x64-avx2.zip",
+                      "533b667e01103617f746b30a31c716fa8e98c3d8a0c7ff53fd1df1795e236c86", 11_582_285)
+GGUF_MODEL = Download(vieneu_gguf.MODEL_FILE, _TURBO.replace("onnx_int8/", "gguf/") + vieneu_gguf.MODEL_FILE,
+                      "a60569e5d7dd6f24cbb7bb2e7c472bb988ad19563a4e78f0cc67cc53fd189bb4", 187_917_664)
+GGUF_FILES = (SERVER_ZIP, GGUF_MODEL)
+FILES = {"g2p": (G2P,), "voices": (VOICES,), "turbo": TURBO_FILES, "nano": NANO_FILES, "aligner": studio_setup.WORD_ALIGN_FILES, "gguf": GGUF_FILES}
 
 CHOICES = ("turbo", "nano", "aligner")
-NEEDS = {"turbo": ("libs", "g2p", "voices", "turbo"), "nano": ("libs", "g2p", "voices", "nano"), "aligner": ("libs", "aligner")}
+FAST = "fast"  # "Bản tăng tốc": chỉ hiện trên máy chạy được (`fast_supported`)
+NEEDS = {"turbo": ("libs", "g2p", "voices", "turbo"), "nano": ("libs", "g2p", "voices", "nano"), "aligner": ("libs", "aligner"),
+         FAST: ("libs", "g2p", "voices", "turbo", "gguf")}
 CHOICE_TEXT = {
     "turbo": ("Giọng VieNeu", "25 giọng, âm thanh 48 kHz - hay nhất"),
     "nano": ("Giọng VieNeu Nano", "11 giọng, âm thanh 24 kHz - lúc đọc tốn ít bộ nhớ và hợp máy ít lõi hơn Giọng VieNeu; file tải nặng hơn"),
     "aligner": ("Tô đúng từng chữ đang đọc", "Biết chính xác chữ nào đang được đọc. Không tải thì máy ước theo âm tiết, đôi khi lệch một nhịp"),
+    FAST: ("Bản tăng tốc", "Giọng VieNeu đọc nhanh gấp hai lần trở lên và tốn ít bộ nhớ hơn - giọng vẫn như cũ. Dùng kèm Giọng VieNeu"),
 }
 PART_LABEL = {"g2p": "Bộ đọc chữ tiếng Việt", "voices": "Danh sách giọng", "turbo": "Giọng VieNeu", "nano": "Giọng VieNeu Nano",
-              "aligner": "Bộ căn chữ"}
+              "aligner": "Bộ căn chữ", "gguf": "Bản tăng tốc"}
+GGUF_FOLDER = "gguf"
+SERVER_FOLDER = "server"  # giải gói server vào đây (đổi cả thư mục một lần, file chạy không bao giờ nằm dở)
 
 _core = ModuleCore("giọng VieNeu", "vieneu-module", frozenset({"libs"}), lambda: installed() is not None)
 _lock = _core.lock
@@ -106,11 +123,38 @@ def configure(folder: Path | str | None, *, benchmark: Callable[[str], dict[str,
     """Thư mục của mô-đun (server.py: <dữ liệu app>/vieneu). `benchmark(tầng)`: tự đo sau khi tải (VieneuProvider.benchmark); `after_install`:
     nạp lại giọng (VieneuProvider.forget). Đã tải từ trước thì đưa sea-g2p vào sys.path và chỉ chỗ bộ căn chữ cho word_timing ngay."""
     with _lock:
-        _core.configure(folder, benchmark, after_install)
+        _core.configure(folder, _probing(benchmark), _stopping(after_install))
+        vieneu_gguf.reset_failure()
         if _core.folder is not None:
             word_timing.add_model_dir(_core.folder / ALIGNER_FOLDER)
             _activate()
 
+
+def _stopping(after_install: Callable[[], None] | None) -> Callable[[], None]:
+    """Việc sau khi cập nhật / trước khi thay file model: tắt server bản tăng tốc (nó giữ file model và file chạy mở, Windows không cho thay) rồi nạp lại giọng."""
+    def run() -> None:
+        vieneu_gguf.shutdown()
+        if after_install is not None:
+            after_install()
+    return run
+
+
+def _probing(benchmark: Callable[[str], dict[str, Any]] | None) -> Callable[[str], dict[str, Any]] | None:
+    """Lần tự đo của Turbo chạy bằng bản tăng tốc khi có (đó là câu thử đầu tiên sau khi tải). Bản tăng tốc hỏng giữa chừng (server không lên, chết, không ra WAV) thì
+    khúc ấy đọc bằng ONNX, và ở đây ghi lại "máy này không chạy được" (`accelerated()["broken"]`) để lần sau khỏi thử; "Thử lại tốc độ" thử lại từ đầu."""
+    if benchmark is None:
+        return None
+
+    def run(tier: str) -> dict[str, Any]:
+        if tier != "turbo":
+            return benchmark(tier)
+        vieneu_gguf.reset_failure()
+        _set_broken("")
+        try:
+            return benchmark(tier)
+        finally:
+            _set_broken(vieneu_gguf.failure())
+    return run
 
 def _activate() -> None:
     folder = _core.folder
@@ -208,6 +252,20 @@ def _aligner_external() -> bool:
     return found is not None and (mine is None or found != mine)
 
 
+def fast_supported() -> bool:
+    """Máy chạy được bản tăng tốc (Windows x64, CPU có AVX2): không thì lựa chọn "Bản tăng tốc" không hiện, ONNX như cũ."""
+    return not vieneu_gguf.unsupported_reason()
+
+
+def _choices() -> tuple[str, ...]:
+    return CHOICES + (FAST,) if fast_supported() else CHOICES
+
+
+def _gguf_present() -> bool:
+    folder = _dir("gguf")
+    return folder is not None and (folder / SERVER_FOLDER / vieneu_gguf.SERVER_EXE).is_file() and (folder / vieneu_gguf.MODEL_FILE).is_file()
+
+
 def _parts() -> list[Component]:
     off = _download_off()
     libs = music_module.libs_part(off or music_module.libs_problem())
@@ -222,6 +280,8 @@ def _parts() -> list[Component]:
         files = FILES[part]
         out.append(Component(part, PART_LABEL[part], pin(files), sum(item.size for item in files), _complete(_dir(part), files),
                              external=part == "aligner" and _aligner_external(), blocked=off, downloads=list(files)))
+    out.append(Component("gguf", PART_LABEL["gguf"], pin(GGUF_FILES), sum(item.size for item in GGUF_FILES), _gguf_present(),
+                         blocked=off or vieneu_gguf.unsupported_reason(), downloads=list(GGUF_FILES)))
     return out
 
 
@@ -258,6 +318,16 @@ def installed() -> Installed | None:
     return Installed(voices, turbo, nano, word_timing.model_dir() is not None)
 
 
+def make_engine(tier: str, found: Installed) -> Any:
+    """Bộ dựng engine cho VieneuProvider (`engines=`): Turbo trên máy chạy được bản tăng tốc được bọc để dùng nó khi có (`vieneu_gguf.AcceleratedEngine`; ONNX nạp lười
+    làm đường lui), còn lại là engine ONNX như trước."""
+    from ..readaloud import vieneu
+
+    if tier == "turbo" and fast_supported():
+        return vieneu_gguf.AcceleratedEngine(lambda: vieneu._real_engine(tier, found), gguf_files)  # noqa: SLF001 - cùng gói, cùng bộ dựng với đường ONNX
+    return vieneu._real_engine(tier, found)  # noqa: SLF001
+
+
 def rtf(voice: str) -> float | None:
     """Tốc độ tự đo của giọng VieNeu `voice` ("vieneu:turbo/...") trên máy này - để "Làm trước" ước thời gian; None nếu chưa đo / giọng khác."""
     tier = voice.removeprefix("vieneu:").partition("/")[0] if voice.startswith("vieneu:") else ""
@@ -285,7 +355,7 @@ def status() -> dict[str, Any]:
         by_id = {part.id: part for part in parts}
         judged = _judged(parts)
         tiers = [tier for tier in ("turbo", "nano") if all(judged[part] != "missing" for part in NEEDS[tier])]
-        have = [choice for choice in CHOICES if all(judged[part] != "missing" for part in NEEDS[choice])]
+        have = [choice for choice in _choices() if all(judged[part] != "missing" for part in NEEDS[choice])]
         behind = _lacking(have, by_id, judged)
         behind = [part for part in behind if judged[part.id] == "outdated"]
         facts = device_facts()
@@ -301,11 +371,15 @@ def status() -> dict[str, Any]:
             state = "unsupported" if blocked else "missing"
         bench = _core.benchmarks()
         choices = []
-        for choice in CHOICES:
+        picks = {best, "aligner"} | ({FAST} if best == "turbo" else set())  # bản tăng tốc đi kèm Turbo: máy hợp Turbo thì khuyên cả hai
+        for choice in _choices():
             label, detail = CHOICE_TEXT[choice]
+            lacking = _lacking([choice], by_id, judged)
+            if choice == FAST:
+                lacking = [part for part in lacking if part.id == "gguf"]  # cỡ riêng của nó; phần Giọng VieNeu nó cần đã có dòng của mình
             choices.append({"id": choice, "label": label, "detail": detail, "needs": list(NEEDS[choice]),
-                            "bytes": sum(part.size for part in _lacking([choice], by_id, judged)), "installed": choice in have,
-                            "recommended": choice in (best, "aligner"), "default": choice in (best, "aligner")})
+                            "bytes": sum(part.size for part in lacking), "installed": choice in have,
+                            "recommended": choice in picks, "default": choice in picks, **({"requires": ["turbo"]} if choice == FAST else {})})
         return {
             "state": state, "done": _state["done"] if state == "downloading" else 0,
             "total": _state["total"] if state == "downloading" else 0, "error": _state["error"],
@@ -316,6 +390,7 @@ def status() -> dict[str, Any]:
             "benchmark": {tier: bench[tier] for tier in tiers if isinstance(bench.get(tier), dict)},
             "benchmarking": _state["benchmarking"], "suggestion": suggestion(bench, tiers) if not _state["benchmarking"] else None,
             "cancelled": bool(_state["cancelled"]), "device": facts, "recommended": best, "restart": _restart_pending(), "slowRtf": SLOW_RTF,
+            "accelerated": accelerated() if FAST in have else None,
         }
 
 
@@ -331,12 +406,16 @@ def start(choices: list[str] | None = None) -> None:
         by_id = {part.id: part for part in parts}
         judged = _judged(parts)
         if choices is None:
-            choices = [choice for choice in CHOICES if all(judged[part] != "missing" for part in NEEDS[choice])]
-        unknown = [choice for choice in choices if choice not in CHOICES]
+            choices = [choice for choice in _choices() if all(judged[part] != "missing" for part in NEEDS[choice])]
+        unknown = [choice for choice in choices if choice not in _choices()]
         if unknown:
             raise ValueError(f"Không có lựa chọn {unknown[0]!r}")
-        _core.begin(_lacking(choices, by_id, judged), _install, _activate,
-                    lambda changed: [tier for tier in ("turbo", "nano") if changed & set(NEEDS[tier])])
+        _core.begin(_lacking(choices, by_id, judged), _install, _activate, _tiers_changed)
+
+
+def _tiers_changed(changed: set[str]) -> list[str]:
+    """Giọng cần tự đo lại sau khi tải: tầng có phần vừa đổi; bản tăng tốc đổi thì đo lại Turbo (lần đo ấy chạy bằng nó)."""
+    return [tier for tier in ("turbo", "nano") if changed & (set(NEEDS[tier]) | ({"gguf"} if tier == "turbo" else set()))]
 
 
 def join(timeout: float | None = None) -> None:
@@ -377,7 +456,84 @@ def _install(part: Component, progress: Callable[[int], None], cancelled: Callab
         os.replace(staging, target)
         wheel.unlink(missing_ok=True)
         return
+    if part.id == "gguf":
+        _install_gguf(target, folder, progress, cancelled)
+        return
     voice_module.download_files(part, target, progress, cancelled)  # file model tải thẳng vào chỗ: engine đang chạy chỉ thấy file đủ
+
+
+def _install_gguf(target: Path, folder: Path, progress: Callable[[int], None], cancelled: Callable[[], bool]) -> None:
+    """Gói server (zip, giải vào `server/` bằng cách đổi cả thư mục) + GGUF (tải thẳng vào chỗ, `.part` rồi đổi tên sau khi khớp băm). Server cũ phải tắt trước
+    (nó giữ file chạy và file model mở): `_core._after` đã làm việc ấy ở đầu lần tải."""
+    vieneu_gguf.shutdown()
+    archive = folder / voice_module.DOWNLOADS / SERVER_ZIP.name
+    studio_setup.download(SERVER_ZIP, archive, lambda have, _total: progress(have), cancelled)
+    studio_setup.download(GGUF_MODEL, target / GGUF_MODEL.name, lambda have, _total: progress(SERVER_ZIP.size + have), cancelled)
+    staging = target / (SERVER_FOLDER + ".part")
+    shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir(parents=True)
+    with zipfile.ZipFile(archive) as bundle:
+        bundle.extractall(staging)
+    shutil.rmtree(target / SERVER_FOLDER, ignore_errors=True)
+    os.replace(staging, target / SERVER_FOLDER)
+    archive.unlink(missing_ok=True)
+    vieneu_gguf.reset_failure()
+
+
+# ---- bản tăng tốc: dùng được không, công tắc -------------------------------------------------------------------------------------------
+def _broken(stamp: dict[str, Any]) -> str:
+    """Lý do bản tăng tốc (đúng bản đã ghim) không chạy được trên máy này, ghi lúc tự đo; rỗng nếu chưa hỏng. Bản mới thì thử lại."""
+    info = stamp.get("gguf")
+    return str(info.get("broken") or "") if isinstance(info, dict) and info.get("pin") == pin(GGUF_FILES) else ""
+
+
+def _set_broken(reason: str) -> None:
+    with _lock:
+        stamp = _core.read_stamp()
+        if reason == _broken(stamp):
+            return
+        if reason:
+            stamp["gguf"] = {"broken": reason, "pin": pin(GGUF_FILES)}
+        else:
+            stamp.pop("gguf", None)
+        _core.write_stamp(stamp)
+
+
+def gguf_files() -> vieneu_gguf.GgufFiles | None:
+    """File bản tăng tốc nếu đang dùng được: đã tải, máy chạy được, người dùng không tắt, chưa ghi là hỏng. None -> Nghe ngay đọc bằng ONNX."""
+    folder = _dir("gguf")
+    if folder is None or not _gguf_present() or vieneu_gguf.unsupported_reason():
+        return None
+    stamp = _core.read_stamp()
+    if stamp.get("accelerate") is False or _broken(stamp):
+        return None
+    return vieneu_gguf.GgufFiles(folder / SERVER_FOLDER / vieneu_gguf.SERVER_EXE, folder / vieneu_gguf.MODEL_FILE, folder / "work")
+
+
+def accelerated() -> dict[str, Any]:
+    """Cho thẻ: `on` công tắc người dùng; `active` đang thật sự đọc bằng bản tăng tốc; `problem` lý do nó không chạy (ghi lúc tự đo, hay hỏng giữa phiên)."""
+    stamp = _core.read_stamp()
+    problem = _broken(stamp) or vieneu_gguf.failure()
+    on = stamp.get("accelerate") is not False
+    return {"on": on, "active": gguf_files() is not None and not problem, "problem": problem}
+
+
+def set_accelerate(on: bool) -> None:
+    """Công tắc "Dùng bản tăng tốc". Bật lại thì thử lại từ đầu (xoá dấu hỏng); đổi xong tự đo lại Turbo để con số tốc độ trên thẻ đúng với cách đọc đang dùng."""
+    with _lock:
+        if _core.folder is None:
+            raise ValueError("Mô-đun giọng VieNeu chưa được cấu hình")
+        stamp = _core.read_stamp()
+        stamp["accelerate"] = bool(on)
+        if on:
+            stamp.pop("gguf", None)
+        _core.write_stamp(stamp)
+    vieneu_gguf.reset_failure()
+    if not on:
+        vieneu_gguf.shutdown()
+    found = installed()
+    if found is not None and found.turbo is not None:
+        _core.measure_again(["turbo"])
 
 
 # ---- bộ đọc chữ dùng chung ----------------------------------------------------------------------------------------------------------

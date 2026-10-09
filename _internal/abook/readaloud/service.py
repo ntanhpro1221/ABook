@@ -68,12 +68,14 @@ def keyed_providers(keys: KeyStore) -> list[KeyedProvider]:
 class ReadAloud:
     """`keys`: kho khoá của giọng dùng khoá riêng - có thì (khi `providers` để trống) các giọng ấy xếp sau Edge, trước giọng của máy.
     `vieneu_locate`: nơi mô-đun "Giọng VieNeu" đặt các phần (webui/vieneu_module.installed) - có thì thêm giọng VieNeu vào danh sách;
+    `vieneu_engines`: bộ dựng engine VieNeu theo tầng (webui/vieneu_module.make_engine: Turbo dùng bản tăng tốc khi có); bỏ trống = engine ONNX;
     `supertonic_locate`: như vậy cho mô-đun "Giọng Supertonic" (webui/supertonic_module.installed);
     `rtf`: tốc độ tự đo của giọng (để "Làm trước" ước thời gian)."""
 
     def __init__(self, folder: Path | str, providers: list[Provider] | None = None, *, limit: int | None = None,
                  keys: KeyStore | None = None, vieneu_locate: Callable[[], vieneu.Installed | None] | None = None,
                  supertonic_locate: Callable[[], supertonic.Installed | None] | None = None,
+                 vieneu_engines: Callable[[str, vieneu.Installed], Any] | None = None,
                  rtf: Callable[[str], float | None] = lambda _voice: None) -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
@@ -81,7 +83,7 @@ class ReadAloud:
         if providers is None:
             providers = [EdgeProvider(), *(keyed_providers(keys) if keys is not None else []), DeviceProvider(self.folder / "tools")]
         self.providers: dict[str, Provider] = {provider.id: provider for provider in providers}
-        self.vieneu = vieneu.VieneuProvider(vieneu_locate) if vieneu_locate is not None else None
+        self.vieneu = vieneu.VieneuProvider(vieneu_locate, engines=vieneu_engines) if vieneu_locate is not None else None
         if self.vieneu is not None:
             self.providers[self.vieneu.id] = self.vieneu
         self.supertonic = supertonic.SupertonicProvider(supertonic_locate) if supertonic_locate is not None else None

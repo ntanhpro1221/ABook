@@ -278,6 +278,35 @@ chapters like an audiobook; the reading view asks the `ReadAloud` plugin for tim
 Read-aloud runs a little ahead of the listener (sentence queue, like video buffering), caches what it read as quick audio
 in the book, and a phone without a voice engine can stream it from a paired computer (existing stream path).
 
+### VieNeu accelerated edition (GGUF via audio.cpp) - built 10-10 (desktop only)
+
+Same Turbo model run by audio.cpp (ggml, GGUF q8_0) instead of onnxruntime. Optional part `gguf` ("Bản tăng tốc", choice `fast`, ~199.5 MB: pinned
+AVX2 server zip 11.6 MB + GGUF 187.9 MB), offered only on Windows x64 with AVX2 (`IsProcessorFeaturePresent(40)`); everything else keeps ONNX. Code:
+`abook/readaloud/vieneu_gguf.py` (`AcceleratedEngine` stands in for `ve.TurboEngine`, so the locked `readaloud/vieneu.py` is untouched), part and switch in
+`webui/vieneu_module.py` (`gguf_files`, `set_accelerate`, `POST /api/readaloud/vieneu/accelerate`), card in `ui/src/listen/VieneuModuleCard.tsx`.
+- One `audiocpp_server` on 127.0.0.1 (random port, no window, `--no-ui`, model loaded eagerly: ready in ~0.6 s), started at the first chunk, stopped when idle
+  300 s, at exit (atexit) and when the app dies (Job Object `KILL_ON_JOB_CLOSE`). Input must be phonemes (`vieneu_engine.phonemize`; lowercase text is read as
+  garbage without an error). Chunking, pauses, `join` and word timings stay the app's own; the server returns stereo 48 kHz PCM16, averaged to mono.
+- Voice files (`ref_codes.txt`, `speaker.emb.txt`) are written from the preset's own `codes` / `speaker_emb` (byte-identical to audio.cpp's shipped ones, test
+  compares 4 voices) into `gguf/work/voices/<hash>`: no 50 small downloads, no voice-name mapping, path stays ASCII. A voice without reference codes goes to ONNX.
+  User-cloned voices: Listen has none; GGUF has no CAM++ port, so they would need ONNX.
+- Server won't start / dies mid-chunk -> restart once; dies again -> `vieneu_gguf.failure()` set, ONNX (loaded lazily, so a healthy machine never pays its
+  0.5-9 GB) reads the rest of the session, listener sees nothing. The self-benchmark after download runs Turbo through this path; a failure there is stored as
+  `broken` in `module.json` (tied to the pinned bytes; "Thử lại tốc độ" or a new pin tries again). The card has the switch "Dùng bản tăng tốc".
+- Not byte-identical to ONNX (different engine = different audio): fine for Listen (no seed-pinned QA like Studio). Studio/tts.py and Android are not touched.
+
+End to end in the real app code (fresh profile with Vietnamese letters in the path, "Đức Trí", 24 paragraphs = 457 s of audio, 6 threads, no GPU, no CTC aligner, CPU idle ~9%):
+
+| | ONNX int8 | GGUF q8_0 |
+|---|---|---|
+| first clip ready (13 s of audio, cold start) | 7.68 s | 2.65 s |
+| RTF whole chapter | 0.417 | 0.148 |
+| peak RAM | 8.96 GB (python) | 1.02 GB (server) + 0.19 GB (python) |
+| CER (faster-whisper large-v3-turbo int8, 24 paragraphs) | 0.0245 | 0.0220 (dCER -0.0025, bootstrap CI95 [-0.009; +0.003]) |
+
+Earlier micro-benchmarks (6 voices x 12 paragraphs x 2 seeds, no gap) gave 1.6x-2.0x; the chapter run above keeps the app's 256-char chunks, where onnxruntime
+loses the most.
+
 ### VieNeu module - built 03-10 (phone)
 
 The phone runs the desktop's path, piece by piece, behind the same `Voice` interface (`readaloud/ReadAloud.kt` provider "vieneu",
