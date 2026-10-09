@@ -20,6 +20,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nhạc nền theo sát chỗ truyện lúc căng lúc dịu TRONG một chương hơn: trong "Phân tích nhạc" có thêm một model nhỏ tuỳ chọn ("Học sinh không khí cảnh", tải thêm 0,71 GiB, chạy trên CPU, khoảng 18 giây cho mỗi giờ audio) đọc chữ từng đoạn rồi đoán đoạn nào vui hơn, căng hơn mức chung của chương. Khi chưa tải, nhạc chọn như trước. Sách làm ở máy tính vẫn mang sẵn lựa chọn ấy sang điện thoại.
 - Cũng model ấy giờ đoán cả đoạn nào sôi nổi, đoạn nào lặng trong chương, nên nhạc nhanh/chậm, mạnh/nhẹ đổi theo đúng chỗ truyện hơn hẳn trước (trước đây độ sôi nổi chỉ lấy từ cảm xúc từng câu). Mức sôi nổi chung của chương giữ như cũ.
 
+### Nghe ngay
+
+- Giọng VieNeu trong "Nghe ngay" (máy tính và điện thoại) đọc câu hỏi và câu cảm ngắn ("Thật sao?", "Đi!") đúng giọng hỏi, giọng cảm: trước đây câu dưới 5 từ bị đọc như câu kể, cuối câu không lên giọng.
+
 ## [0.4.39] - 2026-10-10
 
 ### Sách của máy tính khác

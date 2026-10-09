@@ -466,6 +466,24 @@ SENTENCES = ["Trời hôm nay đẹp quá.", "Cô gái đứng bên cửa sổ, 
 TOLERANCE = 1e-5
 
 
+@pytest.mark.parametrize("text, mark", [("Thật sao?", "?"), ("Đi!", "!"), ("Hả?!", "?"), ("Ừ...?", "?"), ("Anh nói gì vậy ?", "?"), ("Đợi đã. Anh?", "?")])
+def test_a_short_question_or_cry_keeps_its_mark(text: str, mark: str) -> None:
+    """Dưới 5 từ, `punc_norm` của sea-g2p ép dấu cuối về "." và câu hỏi mất giọng hỏi (đo 10-10): chuỗi phoneme phải giữ "?" / "!"."""
+    pytest.importorskip("sea_g2p")
+    assert vieneu_engine.phonemize([text]).endswith(mark)
+
+
+def test_a_chunk_without_a_final_mark_still_gets_a_full_stop_and_long_ones_are_unchanged() -> None:
+    pytest.importorskip("sea_g2p")
+    from sea_g2p import SEAPipeline, punc_norm
+
+    assert vieneu_engine.phonemize(["Gì cơ"]).endswith(".") and vieneu_engine.phonemize(["Thật chứ…"]).endswith(".")
+    pipeline = SEAPipeline(lang="vi")
+    long = "Hôm nay trời đẹp lắm và tôi muốn đi chơi cùng anh"
+    for text in (long, long + ",", long + "?", long + "!", long + "?!", long + "…", "Tôi đi rồi, anh ở lại nhé!", "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi."):
+        assert vieneu_engine.phonemize([text]) == pipeline.run(punc_norm(text), punc_norm=True), text
+
+
 def test_parity_text_front_end_and_tokenizer() -> None:
     turbo, _codec, _nano = _parity_dirs()
     from tokenizers import Tokenizer

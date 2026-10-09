@@ -315,11 +315,21 @@ def normalize(sentences: Sequence[str]) -> str:
 
 def phonemize(sentences: Sequence[str]) -> str:
     """Phoneme của MỘT khúc gồm các câu `sentences`, đúng chuỗi của vieneu 3.8.1 cho khúc ấy: chuẩn hoá từng câu (`normalize`), chốt dấu cuối
-    của cả khúc (`punc_norm`), rồi sea-g2p (chuẩn hoá + G2P, punc_norm bật) như `phonemize_text_with_emotions`."""
+    của cả khúc (`punc_norm`), rồi sea-g2p (chuẩn hoá + G2P, punc_norm bật) như `phonemize_text_with_emotions`.
+    Khác vieneu ở MỘT điểm: `punc_norm` ép dấu cuối của khúc dưới 5 từ về "." ("Thật sao?" thành "Thật sao.") nên câu hỏi / cảm thán ngắn mất giọng
+    hỏi, giọng cảm (đo 10-10 trên Turbo của app: F0 cuối câu hỏi ngắn +0,1 đến +0,5 st tuỳ giọng khi giữ dấu - nhỏ nhưng đúng chiều, và phoneme đúng chữ). Khúc kết bằng "?" / "!" giữ dấu ấy; khúc thiếu dấu vẫn được thêm "."."""
     from sea_g2p import punc_norm
 
-    chunk = punc_norm(normalize(sentences))
-    return _sea().run(chunk, punc_norm=True) if chunk.strip() else ""
+    text = normalize(sentences)
+    chunk = punc_norm(text)
+    if not chunk.strip():
+        return ""
+    phonemes = _sea().run(chunk, punc_norm=True)
+    if phonemes.endswith(".") and ("?" in text or "!" in text):
+        written = _sea().run(text, punc_norm=False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
+        if written.endswith(("?", "!")):
+            phonemes = phonemes[:-1] + written[-1]
+    return phonemes
 
 
 # ---- phiên onnxruntime ----------------------------------------------------------------------------------------------------------
