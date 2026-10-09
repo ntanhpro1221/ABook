@@ -22,7 +22,7 @@ from lnx_table import BASE, EXT  # noqa: E402
 
 sys.path.insert(0, "D:/Novels/ABook/_internal/scripts/model_eval")
 sys.path.insert(0, "D:/Novels/ABook/_internal")
-from score_models import GOLD_ROOT, load_gold, read_project, speaker_credit  # noqa: E402
+from score_models import GOLD_ROOT, aligned_gold, exit_on_gold_mismatch, read_project, speaker_credit  # noqa: E402
 from voice_identity import source_text  # noqa: E402
 
 from abook.character_registry import canonical_speaker_names  # noqa: E402
@@ -72,11 +72,11 @@ def collect(spec: str) -> dict[str, list[int]]:
             root = EVAL / f"{prefix}-{name}"
             if not finished(root):
                 continue
-            gold = load_gold(GOLD_ROOT / gold_dir)
             project = next((path for model in root.iterdir() if model.is_dir()
                             for path in [next((model / chapter).rglob("project.sqlite3"), None)] if path), None)
             if project is None:
                 continue
+            gold = aligned_gold(GOLD_ROOT / gold_dir, project.parent, {chapter})  # theo chữ của chính project này
             with contextlib.redirect_stdout(io.StringIO()):
                 rows_list, _meta = read_project(project.parent, {chapter})
             rows = {int(row["seq"]): row for row in rows_list if str(row["chapter"]) == chapter}
@@ -97,6 +97,7 @@ def collect(spec: str) -> dict[str, list[int]]:
     return table
 
 
+@exit_on_gold_mismatch
 def main(argv: list[str]) -> int:
     runs = {spec.partition("=")[0]: collect(spec) for spec in argv}
     print("| loại | " + " | ".join(f"{label} (câu, chặt, sau gom)" for label in runs) + " |")
