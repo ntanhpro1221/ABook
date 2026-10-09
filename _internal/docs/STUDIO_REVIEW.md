@@ -31,11 +31,11 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
 |---|---|---|---|---|---|
 | 1 | Giọng / giới / tuổi của nhân vật | độ tin cậy giới thấp; hai nhân vật dùng chung giọng (voice_pool_pressure); nhân vật chính mang giọng chung chung | preset + cao độ, nghe thử từng giọng; nam/nữ/chưa rõ; tuổi | `characters.locked_voice_key`, `locked` (giới), `locked_age` - CÓ | thu lại mọi câu của nhân vật |
 | 2 | Bí danh: một người hay hai? | hai tên cùng giới, ít khi cùng cảnh, tên này chứa họ/tự của tên kia (Khổng Minh / Gia-cát Lượng, Vân-trường / Quan Vũ) | gộp vào X / để riêng | `character_aliases` - CÓ | thu lại câu của tên bị gộp |
-| 3 | Ai nói câu này | tin cậy thấp; bộ chấm và LLM bất đồng; nhãn NPC mà chương có người được gọi tên sau đó; hai đoạn thoại liền nhau (đóng ngoặc -> mở ngoặc, không lời dẫn) cùng một người - 38/42 cặp như thế là máy sai (28-09) | 3 ứng viên hàng đầu + người kể + "người không tên" | bảng ghi đè theo câu - CHƯA | thu lại một câu |
-| 4 | Loại đoạn: kể / thoại / nội tâm | "nói thầm", "khen thầm", ngoặc nhấn mạnh, thoại gạch ngang lạ | 3 loại | bảng ghi đè theo câu - CHƯA | thu lại một câu |
-| 5 | Cảm xúc, cường độ, nhịp, âm lượng | critic bất đồng; luật host từ chối; tin cậy thấp | vài cảm xúc hàng đầu + nghe thử | bảng ghi đè theo câu - CHƯA | thu lại một câu |
+| 3 | Ai nói câu này | tin cậy thấp; bộ chấm và LLM bất đồng; nhãn NPC mà chương có người được gọi tên sau đó; hai đoạn thoại liền nhau (đóng ngoặc -> mở ngoặc, không lời dẫn) cùng một người - 38/42 cặp như thế là máy sai (28-09) | 3 ứng viên hàng đầu + người kể + "người không tên" | `overrides.json` + `apply_listener_speaker` - CÓ (0b44c3eb, 28-09) | thu lại một câu |
+| 4 | Loại đoạn: kể / thoại / nội tâm | "nói thầm", "khen thầm", ngoặc nhấn mạnh, thoại gạch ngang lạ | 3 loại | `overrides.json` + `apply_listener_line` - CÓ (9536f109, 28-09) | thu lại một câu |
+| 5 | Cảm xúc, cường độ, nhịp, âm lượng | critic bất đồng; luật host từ chối; tin cậy thấp | vài cảm xúc hàng đầu + nghe thử | cảm xúc, cường độ: `apply_listener_line` - CÓ (9536f109, 28-09); nhịp, âm lượng từng câu - CHƯA | thu lại một câu |
 | 6 | Cách đọc tên riêng | tin cậy phiên âm thấp; Whisper nghe tên khác xa (hàng chờ "Cần nghe lại") | 2-3 cách đọc, mỗi cách một câu thu thử | `pronunciations.locked` - CÓ | thu lại mọi câu có tên ấy |
-| 7 | Lỗi chữ / văn bản nguồn lạ | Whisper lệch có hệ thống ở cùng một từ; từ không có trong từ điển | sửa chữ (chỉ `spoken_text`, không đụng nguồn) | ghi đè `spoken_text` - CHƯA | thu lại câu có chữ ấy |
+| 7 | Lỗi chữ / văn bản nguồn lạ | Whisper lệch có hệ thống ở cùng một từ; từ không có trong từ điển | sửa chữ (chỉ `spoken_text`, không đụng nguồn) | ghi đè `spoken_text`: `apply_listener_line(spoken=...)` - CÓ (25adc816, 29-09) | thu lại câu có chữ ấy |
 | 8 | Bản thu lỗi | hàng chờ "Cần nghe lại" (hỏng, chưa kiểm được, tên lệch) | ổn / thu lại (seed khác) / đổi cách đọc | `listener_audio_acceptances` + danh sách đúc lại - CÓ | thu lại một câu |
 | 9 | Truyện ngôi thứ nhất | tỉ lệ "tôi" trong lời kể cao | "tôi" là ai (gợi ý tên) | `voices.first_person_identity` - CÓ (27-09) | phân tích lại |
 

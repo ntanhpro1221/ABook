@@ -746,6 +746,9 @@ class SyncHandler(BaseHTTPRequestHandler):
             else:
                 remote_studio.send_page(self, HTTPStatus.SERVICE_UNAVAILABLE, remote_studio.closed_page(self.app.name))
             return
+        if method in ("GET", "HEAD") and path in remote_studio.PUBLIC_STATIC:
+            remote_studio.serve_static(self, studio.static_dir, path)
+            return
         device = self._device(cookie=True)
         producing = device is not None and studio.allowed() and bool(device.get("studio"))
         if path.startswith(("/api/", "/media/")):

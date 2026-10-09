@@ -349,7 +349,8 @@ export interface EbookLibraryPlugin {
   openFolder(options: { uri: string }): Promise<{ opened: boolean }>;
   addListener(event: "mp3Export", handler: (event: Mp3ExportEvent) => void): Promise<PluginListenerHandle>;
   deleteBook(options: { id: string }): Promise<void>;
-  storage(): Promise<{ bytes: number; free: number }>;
+  /** `bytes`: cả thư viện; `books`: cỡ từng cuốn trên máy (mã thư mục = mã cuốn). */
+  storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number }[] }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number }): Promise<ListeningState>;
   setChapterDone(options: { id: string; chapterId: number; done: boolean }): Promise<ListeningState>;
   setFinished(options: { id: string; finished: boolean }): Promise<ListeningState>;

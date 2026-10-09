@@ -7,6 +7,18 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Thư viện
+
+- Ô "Tìm sách" tìm được cả theo tên tác giả (sách chữ nhập từ EPUB, DOCX, PDF có ghi tác giả), không phân biệt hoa thường và dấu: gõ "nguyen" ra mọi cuốn của Nguyễn. Có ở máy tính và điện thoại.
+
+### Điện thoại
+
+- Mỗi cuốn trên máy cho biết nó chiếm bao nhiêu chỗ: menu của cuốn ghi "Chiếm 1,2 GB" ngay cạnh "Xoá khỏi điện thoại…", và màn "Tải sách" liệt kê các cuốn trên máy, cuốn nặng nhất đứng đầu, kèm nút xoá - để biết nên xoá cuốn nào khi máy đầy.
+
+### Nghe qua trình duyệt
+
+- Trên iPhone, iPad hay Android, "Thêm vào màn hình chính" ở trang nghe của máy tính giờ ra một biểu tượng ABook đúng nghĩa, mở toàn màn hình như một app thật, thanh trên cùng theo màu sáng / tối của giao diện.
+
 ## [0.4.36] - 2026-10-09
 
 ### Việc cần anh

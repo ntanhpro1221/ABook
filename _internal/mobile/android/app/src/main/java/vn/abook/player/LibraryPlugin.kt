@@ -1195,7 +1195,10 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun storage(call: PluginCall) = background(call) {
-        call.resolve(JSObject().put("bytes", Store.sizeOf(File(Store.root, "books"))).put("free", Store.root.usableSpace))
+        val sizes = Store.bookSizes()
+        val books = JSArray()
+        for ((id, bytes) in sizes) books.put(JSObject().put("id", id).put("bytes", bytes))
+        call.resolve(JSObject().put("bytes", sizes.values.sum()).put("free", Store.root.usableSpace).put("books", books))
     }
 
     // ---- trạng thái nghe -------------------------------------------------------------------------------------

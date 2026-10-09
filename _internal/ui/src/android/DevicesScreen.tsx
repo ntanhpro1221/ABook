@@ -1,25 +1,22 @@
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BatteryCharging, Bluetooth, CheckCircle2, ChevronRight, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Unplug, Wifi } from "lucide-react";
+import { BatteryCharging, Bluetooth, CheckCircle2, ChevronRight, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
-import { formatFingerprint, formatLength } from "@/shared/format";
+import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
 import { Button, EmptyState, Progress } from "@/shared/ui";
 import { backgroundHelp } from "./backgroundHelp";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
 import { hasNewWords } from "./bookUpdates";
+import { booksBySize, useStorage } from "./storage";
+import { useListenLibrary } from "@/listen/source";
 import { EbookLibrary, type DownloadEvent, type RemoteBook, type ShareStatus } from "./plugins";
 
 // "Tải sách": lấy sách từ máy tính qua Wi-Fi. Ghép nối một lần bằng mã 6 số hiện trong Cài đặt của máy tính;
 // sau đó chỉ cần mở màn hình này để thấy sách mới và chương mới.
-
-function formatBytes(bytes: number): string {
-  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} GB`;
-  return `${Math.round(bytes / 1024 ** 2).toLocaleString("vi-VN")} MB`;
-}
 
 function PairPanel() {
   const client = useQueryClient();
@@ -602,6 +599,37 @@ function SharePanel() {
   );
 }
 
+/** Sách trên máy: tổng, rồi từng cuốn chiếm bao nhiêu (nhiều nhất trước) để chọn cuốn xoá cho nhẹ máy. */
+function StoragePanel({ storage }: { storage: { bytes: number; free: number; books: { id: string; bytes: number }[] } }) {
+  const { data: library } = useListenLibrary();
+  const sized = booksBySize(storage.books, library ?? []);
+  return (
+    <section className="mt-8" aria-label="Dung lượng sách trên máy">
+      <p className="text-center text-xs text-fg-3">
+        Sách trên máy: {formatSize(storage.bytes)} · còn trống {formatSize(storage.free)}
+      </p>
+      {sized.length > 0 && (
+        <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-panel">
+          {sized.map(({ book, bytes }) => (
+            <li key={book.id} className="flex items-center gap-3 px-4 py-2.5">
+              <div className="min-w-0 flex-1 truncate text-sm">{book.title}</div>
+              <div className="shrink-0 text-xs text-fg-2">{formatSize(bytes)}</div>
+              <button
+                type="button"
+                aria-label={`Xoá ${book.title} khỏi điện thoại`}
+                onClick={() => window.dispatchEvent(new CustomEvent("abook-remove-from-phone", { detail: book }))}
+                className="grid size-9 shrink-0 place-items-center rounded-full text-fg-2"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export function DevicesScreen() {
   const client = useQueryClient();
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
@@ -611,7 +639,7 @@ export function DevicesScreen() {
     queryFn: () => EbookLibrary.remoteLibrary(),
     retry: 0,
   });
-  const storage = useQuery({ queryKey: ["storage"], queryFn: () => EbookLibrary.storage() });
+  const storage = useStorage();
   const progress = useDownloadProgress();
 
   const unpair = async () => {
@@ -693,11 +721,7 @@ export function DevicesScreen() {
       </div>
       <PeersPanel />
       <SharePanel />
-      {storage.data && (
-        <p className="mt-8 text-center text-xs text-fg-3">
-          Sách trên máy: {formatBytes(storage.data.bytes)} · còn trống {formatBytes(storage.data.free)}
-        </p>
-      )}
+      {storage.data && <StoragePanel storage={storage.data} />}
     </div>
   );
 }
