@@ -43,6 +43,24 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
    một: chấm B9 trên cây mới bằng gold cũ ra villain −46,6 chặt, demonking −18,6 - toàn là thước. Trước khi so hai lượt khác
    cây mã: so chữ đoạn của hai project (một lệnh), lệch thì khoá lại gold theo chữ (`LLM_Train/spkconf/gold_remap.py`).
 
+## 10-10 - Bộ chấm ứng viên dựng lại THUA log-prob của B9: không dùng làm cờ nghi, đóng hướng
+
+- **Dựng lại** (`LLM_Train/scorer_prod/PLAN.md`): bước 1 PDNC hạt 1234 lặp y lệnh ra loss 0,6153 / test 0,762, lần trước cùng
+  hạt cùng lệnh 1,119 / 0,378 -> bước 1 không tất định giữa hai lần chạy, thỉnh thoảng sụp (27-09 zh_pre cũng sụp); luôn kiểm
+  test bước 1 trong khoảng trước khi đi tiếp. Lần dựng 09-10 đầu còn thiếu `--lr 7.5e-6 --head-lr 2.5e-4` ở bước 2 (lỗi
+  công thức của Model). Bản đạt: `runs/scorer_prod_09_10b`, HF riêng tư `NGDtuanh/abook-quote-scorer`.
+- **Người nói, 19 chương cổng** (11 truyện bộ chấm chưa thấy, 1.143 câu có gold + logprob): B9 s1234 chặt 75,4, bộ chấm 57,0.
+  Bộ chấm thua ở MỌI ngăn tin cậy của chính nó (ngăn >= 0,9: 79,4 vs 85,6) và mọi truyện trừ keyeu (hoà) / villain (−0,9).
+  Con số 84,6% (TMA test 27-09) là trên truyện cùng phân bố với dữ liệu học; ra truyện lạ nó không giữ được.
+- **Làm cờ nghi** (Lead, `S/spkconf/calib_doubt.out`): AUROC tách câu B9 sai/đúng - p_first 0,746, p_seq 0,751, margin 0,739,
+  bộ chấm (rerank) 0,665, gộp p_first + bộ chấm (combo_rr) 0,748. Gộp không hơn p_first trong nhiễu. Duyệt 20% câu ít chắc
+  nhất: theo p_first chặt 75,4 -> 86,2 (54,1% câu duyệt là sai thật), theo bộ chấm -> 83,1 (38,3%), ngẫu nhiên -> 80,3.
+  Thẻ "bộ chấm bất đồng, tin cậy >= 0,5" trong app: 215 thẻ, 38,6% là lỗi LLM thật, so với 54,9% ở 215 câu p_first thấp nhất.
+- **Quyết (Lead 10-10):** không dùng bộ chấm làm cờ nghi - app bỏ thẻ bộ chấm, giữ thẻ p_first (`fix/no-scorer-cards`).
+  Phác thảo "Đường vào app" (mục dưới: `speaker_scorer.py`, `reconcile_speakers_with_scorer`) KHÔNG làm. Không tốn GPU/CPU cho
+  bộ chấm nữa, trừ khi có ý tưởng mới đủ sức vượt p_first - ví dụ học trên LỖI của B9 (đầu vào có nhãn B9 + log-prob, đích =
+  B9 sai hay đúng) thay vì học người nói từ gold; ý tưởng như thế phải ghi trước ngưỡng AUROC > p_first + khoảng tin cậy.
+
 ## 09-10 chiều - B9 trên cây mới (logprob) và dựng lại bộ chấm ứng viên
 
 - **B9 s1234 chạy lại trên main 33cfba1e** (cờ `ABOOK_SPEAKER_LOGPROBS=1`, Lead cần cho calib): so lượt cũ trên a40231f3 cùng
@@ -1698,7 +1716,7 @@ toàn (`scratchpad/gpu_queue_27_09b.sh`).
 
 Thứ tự: E3 cơ sở (mốc) -> N7 + N1 (tăng trần và dữ liệu) -> N2, N3 -> N5 -> N4, N6.
 
-## Đường vào app (phác thảo 27-09 - chưa làm, chờ kiểm chứng chéo theo truyện)
+## Đường vào app (phác thảo 27-09 - KHÔNG LÀM: 10-10 bộ chấm thua log-prob B9 trên truyện chưa thấy, mục 10-10 trên)
 
 Bộ chấm chỉ thay TRỤC NGƯỜI NÓI; loại đoạn, cảm xúc, cường độ, nhịp, âm lượng vẫn do LLM. Vị trí trong luồng bắt buộc
 (AGENTS.md): sau "segment toàn book" và sổ nhân vật (bí danh + tên hiển thị), trước "khoá voice mapping".
