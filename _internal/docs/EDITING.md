@@ -334,7 +334,15 @@ The phone no longer answers 409 for books it does not hold in full. `LocalStudio
   reason (nobody could carry them out).
 
 Capabilities gain `local`; the phone never reports `link: true` any more (the desktop still does for a phone-shared book, which it cannot
-edit). Unpairing a peer deletes its streamed books' folders, edits included. `EditsSync.scheduleAllPending` walks every book with a package
+edit). Unpairing a peer deletes its streamed books' folders, so it never does so silently while edits are unsent: `Peers.unsent(key)` counts the
+unsent changes of those streamed books (downloaded books stay with their edits), `Peers.forget` refuses with the count unless the caller says
+`discard`, and `peerForget({send: true})` first pushes every book home (`Peers.sendUnsent` -> `EditsSync.pushNow`; one failure stops before anything
+is removed). The page (`DevicesScreen` -> `shared/useUnpair` + `UnpairDialog`, copy in `shared/unpair.ts`) asks first when `peerUnsent` reports
+changes: "Gửi trước rồi gỡ" (only when the peer is a computer that answers), "Vẫn gỡ, bỏ thay đổi", "Huỷ". The desktop has the same box for
+"Máy tính khác" (`remote_books.unsent_edits` / `send_unsent` / `Computers.forget(discard=)`, `GET /api/computers/<id>/unsent`,
+`DELETE /api/computers/<id>?edits=send|discard`; a bare DELETE with unsent edits answers 409). Not offered: "save as a book of my own" - a streamed
+book has no audio on the phone, so keeping it would mean downloading the whole book first and re-homing it as a standalone one (own id, no
+`source`, edits layered on a full package), which is a separate feature. Disconnecting the main computer (`unpair`) deletes no book, so it asks nothing. `EditsSync.scheduleAllPending` walks every book with a package
 (`Store.bookIds`) instead of only downloaded main-computer books.
 
 ## Not built (later phases)

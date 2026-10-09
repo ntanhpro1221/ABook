@@ -87,15 +87,57 @@ object Peers {
         return JSONObject().put("key", key).put("name", reply.optString("name", host))
     }
 
-    /** Thôi ghép: bỏ mã thiết bị và mọi sách CHƯA TẢI (chỉ nghe thẳng) của thiết bị ấy; sách đã tải giữ lại. */
-    fun forget(context: Context, key: String) {
+    /** Sách nghe thẳng (chưa tải: không có `book.json`) của thiết bị `key` - đúng những thư mục `forget` xoá. */
+    private fun streamedDirs(key: String): List<File> =
+        File(Store.root, "books").listFiles()?.filter { it.isDirectory && it.name.startsWith("p${key}_") && !File(it, "book.json").isFile } ?: emptyList()
+
+    /** Sửa chưa gửi của các cuốn nghe thẳng của một thiết bị: mỗi cuốn còn bao nhiêu thay đổi (gồm cả ý muốn chờ Studio). */
+    class Unsent(val books: List<Book>) {
+        class Book(val id: String, val title: String, val changes: Int)
+
+        val changes get() = books.sumOf { it.changes }
+    }
+
+    /**
+     * Phần sửa của người nghe đang nằm trong thư mục các cuốn nghe thẳng của `key` - thứ mà thôi ghép sẽ xoá cùng thư mục. Cuốn đã
+     * tải giữ nguyên khi thôi ghép (cả lớp sửa của nó) nên không tính ở đây.
+     */
+    fun unsent(key: String): Unsent = Unsent(
+        streamedDirs(key).mapNotNull { dir ->
+            val changes = BookEdits.count(BookEdits.load(dir))
+            if (changes == 0) null else Unsent.Book(dir.name, Store.playableManifest(dir.name)?.optString("title").orEmpty().ifEmpty { dir.name }, changes)
+        }.sortedBy { it.id },
+    )
+
+    /**
+     * Gửi hết phần sửa chưa gửi của `key` về máy ấy trước khi thôi ghép: `send(mã sách)` gửi một cuốn và ném lỗi nếu máy kia không
+     * nhận (cuốn ấy cùng các cuốn sau giữ nguyên). Gửi xong mà vẫn còn sửa (vd người dùng sửa thêm giữa chừng) cũng là lỗi - không
+     * bao giờ coi như xong khi còn thứ sẽ mất.
+     */
+    fun sendUnsent(key: String, send: (String) -> Unit) {
+        for (book in unsent(key).books) send(book.id)
+        val left = unsent(key)
+        if (left.books.isNotEmpty()) throw IllegalStateException("Còn ${left.changes} thay đổi chưa gửi về máy kia - chưa thôi ghép")
+    }
+
+    /** Từ chối thôi ghép khi còn sửa chưa gửi mà người dùng chưa chọn bỏ (`discard`): lỗi nói số cuốn và số thay đổi sẽ mất. */
+    internal fun refuseIfUnsent(key: String, discard: Boolean) {
+        if (discard) return
+        val left = unsent(key)
+        if (left.books.isNotEmpty()) {
+            throw IllegalStateException("${left.books.size} cuốn còn ${left.changes} thay đổi chưa gửi - gửi trước hay chọn bỏ rồi thôi ghép")
+        }
+    }
+
+    /** Thôi ghép: bỏ mã thiết bị và mọi sách CHƯA TẢI (chỉ nghe thẳng) của thiết bị ấy; sách đã tải giữ lại. Còn sửa chưa gửi mà
+     *  `discard` = false thì từ chối, không đổi gì (gọi [unsent] để hỏi người dùng trước). */
+    fun forget(context: Context, key: String, discard: Boolean = false) {
+        refuseIfUnsent(key, discard)
         val peers = all(context)
         peers.optJSONObject(key)?.optString("host")?.takeIf { it.startsWith("bt:") }?.let { BluetoothLink.forget(it) }
         peers.remove(key)
         save(context, peers)
-        File(Store.root, "books").listFiles()?.filter { it.name.startsWith("p${key}_") }?.forEach { dir ->
-            if (!File(dir, "book.json").isFile) dir.deleteRecursively()
-        }
+        streamedDirs(key).forEach { it.deleteRecursively() }
     }
 
     fun request(context: Context, key: String, method: String, path: String, body: JSONObject? = null,

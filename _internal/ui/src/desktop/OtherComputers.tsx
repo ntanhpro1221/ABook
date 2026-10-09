@@ -7,6 +7,8 @@ import { api } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatRelative } from "@/shared/format";
 import { Button, IconButton, Skeleton, Tooltip } from "@/shared/ui";
+import type { UnsentEdits } from "@/shared/unpair";
+import { useUnpair } from "@/shared/useUnpair";
 import { bluetoothAddress, deviceKindLabel, isBluetoothHost, routeLine, wakingLine, type PairedDevice, type Waking } from "./computerRoutes";
 
 // Máy tính khác (webui/remote_books.py): ghép bằng địa chỉ + mã 6 số đang hiện trên máy ấy - đúng mã điện thoại dùng - rồi
@@ -94,9 +96,19 @@ export function OtherComputers() {
     mutationFn: (id: string) => api<ComputersView>(`/api/computers/${id}/stop-waiting`, { method: "POST" }),
     onSuccess: done,
   });
-  const forget = useMutation({
-    mutationFn: (id: string) => api<ComputersView>(`/api/computers/${id}`, { method: "DELETE" }),
-    onSuccess: done,
+  // Thôi ghép xoá thư mục đệm của máy ấy, kể cả phần sửa chưa gửi: còn sửa thì hỏi trước (shared/unpair.ts).
+  const unpair = useUnpair<Computer>({
+    self: "máy tính",
+    name: (computer) => computer.name,
+    reachable: (computer) => {
+      const current = data?.computers.find((item) => item.id === computer.id) ?? computer;
+      return !current.error && !current.waking;
+    },
+    unsent: (computer) => api<UnsentEdits>(`/api/computers/${computer.id}/unsent`),
+    run: async (computer, choice) => {
+      const edits = choice === null ? "" : `?edits=${choice}`;
+      done(await api<ComputersView>(`/api/computers/${computer.id}${edits}`, { method: "DELETE" }));
+    },
   });
   const setBluetooth = useMutation({
     mutationFn: ({ id, address }: { id: string; address: string }) =>
@@ -168,7 +180,7 @@ export function OtherComputers() {
                 />
               )}
               <IconButton label="Hỏi lại thư viện" icon={RefreshCw} size="sm" disabled={refresh.isPending} onClick={() => refresh.mutate()} />
-              <IconButton label={`Thôi ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => forget.mutate(computer.id)} />
+              <IconButton label={`Thôi ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} />
             </li>
           ))}
         </ul>
@@ -270,6 +282,7 @@ export function OtherComputers() {
           thoại, bật “Cho máy khác nghe thư viện này”, rồi chọn điện thoại ở trên và gõ mã 6 số.
         </p>
       </div>
+      {unpair.dialog}
     </div>
   );
 }

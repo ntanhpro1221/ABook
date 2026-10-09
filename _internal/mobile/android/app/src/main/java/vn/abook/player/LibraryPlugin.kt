@@ -842,9 +842,23 @@ class LibraryPlugin : Plugin() {
         call.resolve(JSObject.fromJSONObject(Peers.pairBluetooth(context, address, call.getString("code") ?: "")))
     }
 
+    /** Sửa chưa gửi của các cuốn nghe thẳng của một thiết bị ghép - thứ thôi ghép sẽ xoá (hộp xác nhận hỏi trước): từng cuốn, tổng, và
+     *  `sendable` = thiết bị là máy tính nên "gửi trước" có nghĩa (điện thoại khác không nhận sửa). */
+    @PluginMethod
+    fun peerUnsent(call: PluginCall) = background(call) {
+        val key = call.getString("key") ?: ""
+        val unsent = Peers.unsent(key)
+        val books = JSArray()
+        for (book in unsent.books) books.put(JSObject().put("id", book.id).put("title", book.title).put("changes", book.changes))
+        call.resolve(JSObject().put("books", books).put("changes", unsent.changes).put("sendable", Peers.kindOf(context, key) == "computer"))
+    }
+
+    /** Thôi ghép. Còn sửa chưa gửi thì từ chối, trừ khi `send` (gửi hết về máy ấy rồi mới gỡ; hỏng giữa chừng thì không gỡ) hay `discard` (người dùng chọn bỏ). */
     @PluginMethod
     fun peerForget(call: PluginCall) = background(call) {
-        Peers.forget(context, call.getString("key") ?: "")
+        val key = call.getString("key") ?: ""
+        if (call.getBoolean("send") == true) Peers.sendUnsent(key) { EditsSync.pushNow(context, it) }
+        Peers.forget(context, key, discard = call.getBoolean("discard") ?: false)
         call.resolve()
     }
 
