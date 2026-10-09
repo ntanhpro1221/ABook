@@ -7,6 +7,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
 import { Button, EmptyState, Progress } from "@/shared/ui";
+import { useUnpair } from "@/shared/useUnpair";
 import { backgroundHelp } from "./backgroundHelp";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
@@ -321,12 +322,23 @@ function PeersPanel() {
     },
     onError: (error: Error) => toast.error("Chưa ghép được", { description: error.message }),
   });
-  const forget = async (key: string) => {
-    await EbookLibrary.peerForget({ key });
-    void client.invalidateQueries({ queryKey: ["peer-libraries"] });
-    void client.invalidateQueries({ queryKey: ["streamable"] });
-  };
   const peers = libraries.data?.peers ?? [];
+  // Thôi ghép xoá các cuốn nghe thẳng của thiết bị, kể cả phần sửa chưa gửi: còn sửa thì hỏi trước (shared/unpair.ts).
+  const unpair = useUnpair<(typeof peers)[number]>({
+    self: "điện thoại",
+    name: (peer) => peer.name,
+    // Máy kia có đang trả lời không: hỏi lại thư viện của nó ngay lúc này (kết quả cũ trong bộ nhớ có thể đã quá lâu).
+    reachable: (peer) => !libraries.data?.peers.find((item) => item.key === peer.key)?.error,
+    unsent: async (peer) => {
+      await libraries.refetch();
+      return EbookLibrary.peerUnsent({ key: peer.key });
+    },
+    run: async (peer, choice) => {
+      await EbookLibrary.peerForget({ key: peer.key, send: choice === "send", discard: choice === "discard" });
+      void client.invalidateQueries({ queryKey: ["peer-libraries"] });
+      void client.invalidateQueries({ queryKey: ["streamable"] });
+    },
+  });
   const ready = (address.includes(".") || address.startsWith("bt:")) && code.replace(/\D/g, "").length === 6;
   return (
     <section className="mt-8" aria-labelledby="peers-title">
@@ -427,7 +439,7 @@ function PeersPanel() {
               </div>
               <Fingerprint value={peer.fingerprint} />
             </div>
-            <button type="button" onClick={() => void forget(peer.key)} className="text-xs font-medium text-danger">
+            <button type="button" onClick={() => void unpair.start(peer)} className="text-xs font-medium text-danger">
               Thôi ghép
             </button>
           </div>
@@ -445,6 +457,7 @@ function PeersPanel() {
           </div>
         </div>
       ))}
+      {unpair.dialog}
     </section>
   );
 }

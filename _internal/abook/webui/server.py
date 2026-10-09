@@ -2149,10 +2149,28 @@ class App:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         return self.computers_view()
 
-    def forget_computer(self, computer: str) -> dict[str, Any]:
+    def unsent_computer_edits(self, computer: str) -> dict[str, Any]:
+        """Phần sửa chưa gửi của sách máy tính khác - thứ thôi ghép sẽ xoá (hộp xác nhận hỏi trước): từng cuốn, tổng, và `sendable` =
+        máy kia là máy tính (nhận được sửa; điện thoại chia sẻ thư viện thì không)."""
+        entry = self.computers.get(computer)
+        if entry is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Máy này không ghép với máy ấy")
+        books = [{"title": item["title"], "changes": item["changes"]} for item in remote_books.unsent_edits(self.library.root, computer)]
+        return {"books": books, "changes": sum(item["changes"] for item in books), "sendable": entry.get("kind") == "computer"}
+
+    def forget_computer(self, computer: str, edits: str = "") -> dict[str, Any]:
+        """Thôi ghép. Còn sửa chưa gửi thì từ chối (409), trừ khi `edits` = "send" (gửi hết về máy ấy rồi mới gỡ; hỏng giữa chừng thì không
+        gỡ, 502) hay "discard" (người dùng chọn bỏ)."""
         self._mutating()
-        self.remote_downloads.cancel_computer(computer)
-        self.computers.forget(computer, self.library.root)
+        try:
+            if edits == "send":
+                remote_books.send_unsent(self.library.root, computer)
+            self.remote_downloads.cancel_computer(computer)
+            self.computers.forget(computer, self.library.root, discard=edits == "discard")
+        except remote_books.UnsentEdits as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        except remote_books.RemoteError as error:
+            raise ApiError(HTTPStatus.BAD_GATEWAY, str(error)) from error
         return self.computers_view()
 
     def listen_library(self) -> list[dict[str, Any]]:
@@ -3477,8 +3495,11 @@ class Handler(BaseHTTPRequestHandler):
     def post_computer_stop_waiting(self, _query: dict[str, list[str]], computer: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.stop_waiting_computer(computer))
 
-    def delete_computer(self, _query: dict[str, list[str]], computer: str) -> None:
-        self._send_json(HTTPStatus.OK, self.app.forget_computer(computer))
+    def get_computer_unsent(self, _query: dict[str, list[str]], computer: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.unsent_computer_edits(computer))
+
+    def delete_computer(self, query: dict[str, list[str]], computer: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.forget_computer(computer, (query.get("edits") or [""])[0]))
 
     def get_listen_library(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.listen_library())
@@ -4202,6 +4223,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/computers/bluetooth"), Handler.get_computers_bluetooth),
     ("POST", re.compile(r"/api/computers/([0-9a-f]{12})/bluetooth"), Handler.post_computer_bluetooth),
     ("POST", re.compile(r"/api/computers/([0-9a-f]{12})/stop-waiting"), Handler.post_computer_stop_waiting),
+    ("GET", re.compile(r"/api/computers/([0-9a-f]{12})/unsent"), Handler.get_computer_unsent),
     ("DELETE", re.compile(r"/api/computers/([0-9a-f]{12})"), Handler.delete_computer),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
     ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),

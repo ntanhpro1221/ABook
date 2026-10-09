@@ -329,7 +329,10 @@ export interface EbookLibraryPlugin {
   peerPair(options: { host: string; port: number; code: string }): Promise<{ key: string; name: string }>;
   /** Ghép thiết bị đã ghép Bluetooth với điện thoại này - cùng mã 6 số, đi qua Bluetooth. */
   peerPairBluetooth(options: { address: string; code: string }): Promise<{ key: string; name: string }>;
-  peerForget(options: { key: string }): Promise<void>;
+  /** Sửa chưa gửi của các cuốn nghe thẳng của một thiết bị ghép - thứ thôi ghép sẽ xoá; `sendable`: thiết bị là máy tính (nhận được sửa). */
+  peerUnsent(options: { key: string }): Promise<{ books: { id: string; title: string; changes: number }[]; changes: number; sendable: boolean }>;
+  /** Thôi ghép; còn sửa chưa gửi thì từ chối trừ khi `send` (gửi hết về máy ấy rồi mới gỡ) hay `discard` (bỏ phần sửa). */
+  peerForget(options: { key: string; send?: boolean; discard?: boolean }): Promise<void>;
   peerLibraries(): Promise<{ peers: PeerLibrary[] }>;
   remotePlayers(): Promise<{ players: RemotePlayer[] }>;
   /** Tìm lại loa / TV ngay (điện thoại tự tìm - PhoneCast); danh sách mới hiện ở lần `remotePlayers` kế. */

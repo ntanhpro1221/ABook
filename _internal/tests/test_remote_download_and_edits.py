@@ -222,3 +222,69 @@ def test_subtract_keeps_what_changed_after_the_snapshot(tmp_path: Path) -> None:
     assert (left["title"], left["characters"], left["chapters"]) == ("B", {"Y": "Y mới"}, {"1": {"subtitle": "Đổi"}})
     assert "skip" not in left and "music" not in left
     assert json.loads((folder / book_edits.EDITS_FILE).read_text(encoding="utf-8"))["title"] == "B"
+
+
+# ---- thôi ghép không được lặng lẽ xoá sửa chưa gửi (docs/EDITING.md, P2d) -------------------------------------------------
+
+
+def test_forgetting_a_computer_is_refused_while_edits_are_unsent_and_changes_nothing(library, tmp_path: Path) -> None:  # noqa: F811
+    app, other, _sync, _project, _devices, computer, value, path = _two_computers(library, tmp_path)
+    try:
+        assert app.unsent_computer_edits(computer) == {"books": [], "changes": 0, "sendable": True}
+        app.rename(value, "Tên đặt ở máy B")
+        book_edits.set_chapter_title(path, 1, "Chương mở đầu")
+        view = app.unsent_computer_edits(computer)
+        assert view["changes"] == 2 and view["sendable"] is True
+        assert [item["changes"] for item in view["books"]] == [2]
+
+        with pytest.raises(ApiError, match="1 cuốn còn 2 thay đổi chưa gửi") as refused:
+            app.forget_computer(computer)
+        assert refused.value.status == 409
+        assert path.exists() and len(app.computers_view()["computers"]) == 1, "từ chối thì không đụng gì"
+        assert book_edits.count(book_edits.load(path)) == 2
+    finally:
+        other.stop()
+
+
+def test_send_first_delivers_the_edits_and_then_forgets(library, tmp_path: Path) -> None:  # noqa: F811
+    app, other, _sync, project, _devices, computer, value, path = _two_computers(library, tmp_path)
+    try:
+        app.rename(value, "Gửi rồi mới gỡ")
+        app.forget_computer(computer, "send")
+        assert not path.exists() and app.computers_view()["computers"] == []
+        assert store.display_title(project, "") == "Gửi rồi mới gỡ", "sửa đã tới máy kia trước khi gỡ"
+    finally:
+        other.stop()
+
+
+def test_send_first_that_fails_keeps_the_pairing_and_every_edit(library, tmp_path: Path) -> None:  # noqa: F811
+    app, other, _sync, _project, _devices, computer, value, path = _two_computers(library, tmp_path)
+    other.stop()
+    app.rename(value, "Máy kia đã tắt")
+    with pytest.raises(ApiError) as failed:
+        app.forget_computer(computer, "send")
+    assert failed.value.status == 502
+    assert path.exists() and len(app.computers_view()["computers"]) == 1
+    assert book_edits.load(path)["title"] == "Máy kia đã tắt"
+
+
+def test_discarding_drops_the_edits_with_the_folder(library, tmp_path: Path) -> None:  # noqa: F811
+    app, other, _sync, project, _devices, computer, value, path = _two_computers(library, tmp_path)
+    try:
+        app.rename(value, "Bỏ đi")
+        app.forget_computer(computer, "discard")
+        assert not path.exists() and app.computers_view()["computers"] == []
+        assert store.display_title(project, "") != "Bỏ đi", "không gửi gì về máy kia"
+    finally:
+        other.stop()
+
+
+def test_a_phone_cannot_take_edits_so_unsent_is_reported_unsendable(library, tmp_path: Path) -> None:  # noqa: F811
+    app, other, _sync, _project, _devices, computer, _value, path = _two_computers(library, tmp_path)
+    other.stop()
+    app.computers.note(computer, kind="phone")
+    book_edits.save(path, {**book_edits.load(path), "title": "Chỉ ở đây"})
+    view = app.unsent_computer_edits(computer)
+    assert (view["changes"], view["sendable"]) == (1, False)
+    with pytest.raises(ApiError, match="chưa gửi"):
+        app.forget_computer(computer)

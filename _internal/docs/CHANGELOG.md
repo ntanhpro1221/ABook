@@ -24,6 +24,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Mỗi cuốn trên máy cho biết nó chiếm bao nhiêu chỗ: menu của cuốn ghi "Chiếm 1,2 GB" ngay cạnh "Xoá khỏi điện thoại…", và màn "Tải sách" liệt kê các cuốn trên máy, cuốn nặng nhất đứng đầu, kèm nút xoá - để biết nên xoá cuốn nào khi máy đầy.
 
 - Sửa được cả những cuốn bạn đang nghe thẳng từ máy tính (chưa tải về) và cuốn của máy tính khác đã ghép: đổi tên, bìa, tên nhân vật, tên chương, nhạc nền không còn bị từ chối. Sửa xong tự gửi về máy giữ sách như cuốn đã tải, và nghe thẳng vẫn không bắt tải cả cuốn. Cuốn của một điện thoại khác thì máy kia không nhận phần sửa: bạn vẫn sửa được, và trang sách ghi rõ "thay đổi chỉ có trên điện thoại này".
+- Gỡ ghép một thiết bị không còn lặng lẽ xoá những thay đổi bạn đã sửa mà chưa gửi: nếu các cuốn nghe thẳng của máy ấy còn sửa chưa gửi, app hỏi trước ("2 cuốn có 3 thay đổi chưa gửi về … sẽ mất") với ba lựa chọn - "Gửi trước rồi gỡ" (khi máy ấy là máy tính và đang tới được; gửi hỏng thì không gỡ gì), "Vẫn gỡ, bỏ thay đổi", hoặc "Huỷ". Máy tính cũng hỏi như vậy khi thôi ghép một máy tính khác (Cài đặt → Máy tính khác). Không còn sửa nào thì gỡ như trước.
 
 ### Nghe qua trình duyệt
 
