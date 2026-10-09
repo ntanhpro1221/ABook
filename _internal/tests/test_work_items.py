@@ -604,21 +604,21 @@ def speaker_cards(project: Path) -> list[dict]:
     return [item for item in work_items(project)["items"] if item["kind"] == "speaker"]
 
 
-def test_the_models_own_doubt_asks_only_the_least_sure_tenth_of_the_measured_lines(tmp_path: Path) -> None:
-    """Số đo logprob (analysis_logprobs/): 6 câu thoại có số đo -> tối đa 10% = 0 thẻ; thêm vào cho đủ 20 thì tối đa 2 thẻ,
-    là hai câu p_first thấp nhất, và câu p_first từ ngưỡng trở lên không bao giờ thành thẻ."""
+def test_the_models_own_doubt_asks_only_the_least_sure_fifth_of_the_measured_lines(tmp_path: Path) -> None:
+    """Số đo logprob (analysis_logprobs/): 6 câu thoại có số đo -> tối đa 20% = 1 thẻ; thêm vào cho đủ 20 thì tối đa 4 thẻ,
+    là các câu p_first thấp nhất, và câu p_first từ ngưỡng trở lên không bao giờ thành thẻ."""
     from abook.listener_overrides import NARRATOR, UNNAMED
 
     project = make_book(tmp_path)
     rows = [lp("b", "HEIDI", 0.2), lp("c", "LUCIEN", 0.5), lp("d", "ÁO CHOÀNG ĐEN", 0.9), lp("e", "ÁO CHOÀNG ĐEN", 0.95),
             lp("f", "RHINE", 0.99), lp("g", "NPC_LOCAL::c00001::r1::người gác", 0.7)]
     write_logprobs(project, rows)
-    assert speaker_cards(project) == [], "6 câu x 10% < 1: không đủ để hỏi câu nào"
+    assert [card["key"] for card in speaker_cards(project)] == ["speaker:b"], "6 câu x 20% = 1 thẻ: câu p_first thấp nhất"
     rows += [dict(lp(f"x{index}", "LUCIEN", 0.99)) for index in range(14)]
     (project / "analysis_logprobs" / "00001.jsonl").write_bytes(
         "".join(json.dumps(row) + "\n" for row in rows).encode("utf-8"))
-    # 14 câu "x" không có trong sổ nên không tính: vẫn 6 câu đo được thì vẫn 0 thẻ.
-    assert speaker_cards(project) == []
+    # 14 câu "x" không có trong sổ nên không tính: vẫn 6 câu đo được thì vẫn 1 thẻ.
+    assert [card["key"] for card in speaker_cards(project)] == ["speaker:b"]
 
     db = sqlite3.connect(project / "project.sqlite3")
     db.executemany(
@@ -629,7 +629,8 @@ def test_the_models_own_doubt_asks_only_the_least_sure_tenth_of_the_measured_lin
     db.commit()
     db.close()
     cards = speaker_cards(project)
-    assert [card["key"] for card in cards] == ["speaker:b", "speaker:c"], "20 câu x 10% = 2 thẻ, p_first thấp nhất trước"
+    assert [card["key"] for card in cards] == ["speaker:b", "speaker:c", "speaker:g"], (
+        "20 câu x 20% = 4 chỗ nhưng chỉ 3 câu dưới ngưỡng, p_first thấp nhất trước")
     first = cards[0]
     assert first["title"] == "Ai nói câu này - Heidi?"
     assert first["problem"] == "Máy gán cho Heidi nhưng chỉ chắc khoảng 20%."

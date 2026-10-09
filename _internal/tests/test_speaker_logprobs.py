@@ -242,8 +242,15 @@ def _answer() -> tuple[str, list[dict[str, Any]]]:
     return text, tokens
 
 
-def test_flag_off_sends_no_logprobs_and_writes_nothing(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_the_flag_is_on_unless_set_to_zero(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv(SL.ENV_FLAG, raising=False)
+    assert SL.enabled()
+    monkeypatch.setenv(SL.ENV_FLAG, "0")
+    assert not SL.enabled()
+
+
+def test_flag_off_sends_no_logprobs_and_writes_nothing(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv(SL.ENV_FLAG, "0")
     text, tokens = _answer()
     session, db = LogprobSession(text, tokens), PathDB(tmp_path)
     analyzer = _analyzer(session, db)
@@ -259,7 +266,7 @@ def test_flag_on_asks_for_logprobs_and_writes_one_line_per_spoken_segment(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     text, tokens = _answer()
-    monkeypatch.delenv(SL.ENV_FLAG, raising=False)
+    monkeypatch.setenv(SL.ENV_FLAG, "0")
     off_session, off_db = LogprobSession(text, tokens), PathDB(tmp_path / "off")
     (tmp_path / "off").mkdir()
     off_payload = _analyzer(off_session, off_db)._request(off_db.rows)
@@ -298,11 +305,8 @@ def test_ledger_key_ignores_the_flag(monkeypatch: pytest.MonkeyPatch, tmp_path: 
             return None
 
     keys = []
-    for flag in (None, "1"):
-        if flag is None:
-            monkeypatch.delenv(SL.ENV_FLAG, raising=False)
-        else:
-            monkeypatch.setenv(SL.ENV_FLAG, flag)
+    for flag in ("0", "1"):
+        monkeypatch.setenv(SL.ENV_FLAG, flag)
         recorded.clear()
         db = Ledger(tmp_path)
         _analyzer(LogprobSession(text, tokens), db)._request(db.rows)
