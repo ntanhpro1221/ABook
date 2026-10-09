@@ -34,6 +34,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Giọng VieNeu trong "Nghe ngay" (máy tính và điện thoại) đọc câu hỏi và câu cảm ngắn ("Thật sao?", "Đi!") đúng giọng hỏi, giọng cảm: trước đây câu dưới 5 từ bị đọc như câu kể, cuối câu không lên giọng.
 - Khối lỗi của trình phát có nút ✕ để gạt đi (màn hẹp không còn chiếm hai hàng che nội dung). Mất mạng mà giọng đang chọn cần mạng: "Tải giọng VieNeu" tải ngay tại chỗ - có thanh tiến độ và nút Huỷ - xong thì "Đọc bằng giọng VieNeu", không phải rời màn nghe; "Xem trong Cài đặt" vẫn còn nếu muốn.
 - Sửa lỗi ngầm khiến bên nghe sau không chạy khi máy kia không gửi tên thiết bị.
+- Giọng VieNeu trên máy tính có thêm "Bản tăng tốc" (tải thêm khoảng 200 MB, chỉ hiện trên Windows có CPU hỗ trợ AVX2): cùng giọng, đọc nhanh gấp hai đến ba lần và tốn ít bộ nhớ hơn nhiều (một chương thử: đoạn đầu có tiếng sau 2,7 giây thay vì 7,7 giây, đỉnh bộ nhớ khoảng 1,2 GB thay vì 9 GB). Có công tắc "Dùng bản tăng tốc" trong thẻ Giọng VieNeu; máy không chạy được thì tự đọc bằng bản thường, không báo lỗi giữa chừng. Âm thanh không giống từng chút so với bản thường (cùng giọng, mỗi lần đọc một khác biệt nhỏ), chất lượng nghe thử ngang nhau.
 
 ## [0.4.39] - 2026-10-10
 

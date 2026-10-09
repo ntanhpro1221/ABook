@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  acceleratedNote,
   benchmarkLabel,
   initialChoices,
   meteredNotice,
   selectionBytes,
   SUPERTONIC_COPY,
   suggestionText,
+  toggleChoice,
   tierVoicePrefix,
   vieneuLabel,
   type VieneuStatus,
@@ -129,5 +131,33 @@ describe("mô-đun Giọng VieNeu", () => {
     expect(meteredNotice({ metered: false }, 301 * MB)).toBeNull();
     expect(meteredNotice({ metered: true }, 0)).toBeNull();
     expect(meteredNotice({}, 5 * MB)).toBeNull();
+  });
+});
+
+describe("bản tăng tốc", () => {
+  const fast = status({
+    choices: [
+      ...status().choices,
+      { id: "fast", label: "Bản tăng tốc", detail: "", needs: ["libs", "g2p", "voices", "turbo", "gguf"], bytes: 199 * MB, installed: false, recommended: true, default: true, requires: ["turbo"] },
+    ],
+    parts: [...status().parts, { id: "gguf", label: "", bytes: 199 * MB, state: "missing" }],
+  });
+
+  it("đánh dấu bản tăng tốc thì đánh dấu luôn Giọng VieNeu, bỏ Giọng VieNeu thì bỏ luôn bản tăng tốc", () => {
+    expect(toggleChoice(fast, [], "fast", true).sort()).toEqual(["fast", "turbo"]);
+    expect(toggleChoice(fast, ["turbo", "fast", "aligner"], "turbo", false)).toEqual(["aligner"]);
+    expect(toggleChoice(fast, ["turbo", "fast"], "fast", false)).toEqual(["turbo"]);
+    expect(toggleChoice(fast, ["turbo"], "nano", true)).toEqual(["turbo", "nano"]);
+  });
+
+  it("tổng cần tải tính cả Giọng VieNeu mà bản tăng tốc cần, một lần", () => {
+    expect(selectionBytes(fast, ["turbo", "fast"])).toBe((27 + 26 + 3 + 200 + 199) * MB);
+    expect(selectionBytes(fast, ["fast"])).toBe((27 + 26 + 3 + 200 + 199) * MB);
+  });
+
+  it("câu dưới công tắc nói điều người nghe thấy", () => {
+    expect(acceleratedNote({ on: false, active: false, problem: "" })).toBe("Đang đọc bằng bản thường.");
+    expect(acceleratedNote({ on: true, active: true, problem: "" })).toBe("Đang đọc bằng bản tăng tốc.");
+    expect(acceleratedNote({ on: true, active: false, problem: "server thoát" })).toContain("chưa chạy được");
   });
 });

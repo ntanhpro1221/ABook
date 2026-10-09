@@ -304,7 +304,7 @@ class App:
         # Giọng VieNeu (vieneu_module.py): mô-đun tải khi người dùng bấm; tải rồi thì giọng của nó vào danh sách, tải xong tự đo vài giây.
         self.readaloud = readaloud.ReadAloud(preferences.path.with_name("readaloud-cache"),
                                              keys=readaloud_keys.KeyStore(preferences.path.with_name(readaloud_keys.FILE_NAME)),
-                                             vieneu_locate=vieneu_module.installed, supertonic_locate=supertonic_module.installed,
+                                             vieneu_locate=vieneu_module.installed, supertonic_locate=supertonic_module.installed, vieneu_engines=vieneu_module.make_engine,
                                              rtf=lambda voice: supertonic_module.rtf(voice) or vieneu_module.rtf(voice))
         vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=self.readaloud.vieneu.benchmark,
                                 after_install=self.readaloud.vieneu.forget)
@@ -3962,6 +3962,18 @@ class Handler(BaseHTTPRequestHandler):
     def post_readaloud_supertonic(self, _query: dict[str, list[str]]) -> None:
         self._start_voice_module(supertonic_module)
 
+    def post_readaloud_vieneu_accelerate(self, _query: dict[str, list[str]]) -> None:
+        # Công tắc "Dùng bản tăng tốc" (vieneu_module.set_accelerate): tắt/bật cách đọc của giọng VieNeu Turbo; tự đo lại tốc độ sau đó.
+        self.app._mutating()
+        on = self._body().get("on")
+        if not isinstance(on, bool):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu on (true/false)")
+        try:
+            vieneu_module.set_accelerate(on)
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self._send_json(HTTPStatus.OK, vieneu_module.status())
+
     def post_readaloud_vieneu_cancel(self, _query: dict[str, list[str]]) -> None:
         # "Huỷ" khi đang tải: dừng giữa chừng, phần đã tải giữ để lần sau làm tiếp.
         self.app._mutating()
@@ -4213,6 +4225,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/readaloud/vieneu"), Handler.post_readaloud_vieneu),
     ("POST", re.compile(r"/api/readaloud/vieneu/measure"), Handler.post_readaloud_vieneu_measure),
     ("POST", re.compile(r"/api/readaloud/vieneu/cancel"), Handler.post_readaloud_vieneu_cancel),
+    ("POST", re.compile(r"/api/readaloud/vieneu/accelerate"), Handler.post_readaloud_vieneu_accelerate),
     ("GET", re.compile(r"/api/readaloud/supertonic"), Handler.get_readaloud_supertonic),
     ("POST", re.compile(r"/api/readaloud/supertonic"), Handler.post_readaloud_supertonic),
     ("POST", re.compile(r"/api/readaloud/supertonic/measure"), Handler.post_readaloud_supertonic_measure),

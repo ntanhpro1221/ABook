@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from abook.readaloud import vieneu, vieneu_engine
+from abook.readaloud import vieneu, vieneu_engine, vieneu_gguf
 from abook.readaloud.service import ReadAloud
 from abook.readaloud.vieneu import Installed, VieneuProvider, units
 from abook.webui import music_module, studio_setup, vieneu_module, word_timing
@@ -330,6 +330,7 @@ def module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(vieneu_module, "_g2p_external", lambda: False)
     monkeypatch.setattr(music_module, "_libs_external", lambda: True)
     monkeypatch.setattr(vieneu_module, "_facts", {"cores": 16, "ramGb": 16.0, "gpu": "", "runs": "cpu"})
+    monkeypatch.setattr(vieneu_gguf, "unsupported_reason", lambda: "máy thử")  # bản tăng tốc có bài thử riêng (test_readaloud_vieneu_gguf.py)
     network = Network()
     monkeypatch.setattr(studio_setup, "download", network.download)
     music_module.configure(tmp_path / "music")
@@ -447,7 +448,7 @@ def test_recommendation_and_suggestion_rules() -> None:
 def test_the_server_shows_and_starts_the_module(studio, monkeypatch: pytest.MonkeyPatch) -> None:  # noqa: F811
     _paths, app, server, _runner = studio
     status, view = _call(server, "GET", "/api/readaloud/vieneu")
-    assert status == 200 and {choice["id"] for choice in view["choices"]} == {"turbo", "nano", "aligner"}
+    assert status == 200 and {choice["id"] for choice in view["choices"]} == {"turbo", "nano", "aligner"} | ({"fast"} if vieneu_module.fast_supported() else set())
     status, view = _call(server, "POST", "/api/readaloud/vieneu", {"choices": ["nano"]})
     assert status == 200 and view["state"] == "error", "bài thử tắt việc tải (conftest)"
     status, answer = _call(server, "POST", "/api/readaloud/vieneu", {"choices": "nano"})

@@ -5,7 +5,7 @@
 
 import { CANCELLED_NOTE, formatSize } from "@/studio/musicLocal";
 
-export type VieneuChoiceId = "turbo" | "nano" | "aligner" | "supertonic";
+export type VieneuChoiceId = "turbo" | "nano" | "aligner" | "supertonic" | "fast";
 /** Giọng có kết quả tự đo riêng (mỗi tầng một lần đo). */
 export type ModuleTier = "turbo" | "nano" | "supertonic";
 
@@ -24,6 +24,15 @@ export interface VieneuChoice {
   default: boolean;
   /** Gỡ được khỏi máy này (điện thoại, giọng Supertonic). */
   removable?: boolean;
+  /** Lựa chọn khác phải có cùng (bản tăng tốc cần Giọng VieNeu): đánh dấu cái này thì đánh dấu luôn cái kia. */
+  requires?: VieneuChoiceId[];
+}
+
+/** Bản tăng tốc của giọng VieNeu (máy tính, Windows có AVX2): công tắc của người dùng, đang chạy thật không, và lý do khi nó không chạy được. */
+export interface VieneuAccelerated {
+  on: boolean;
+  active: boolean;
+  problem: string;
 }
 
 export interface VieneuPart {
@@ -73,6 +82,8 @@ export interface VieneuStatus {
   metered?: boolean;
   /** Lần tải vừa rồi bị người dùng huỷ: phần đã tải giữ, lần sau làm tiếp. */
   cancelled?: boolean;
+  /** Có khi bản tăng tốc đã tải (máy tính). */
+  accelerated?: VieneuAccelerated | null;
 }
 
 /** Câu nhắc trước khi tải bằng dữ liệu di động (null khi không cần nhắc). */
@@ -91,6 +102,23 @@ export function selectionBytes(status: Pick<VieneuStatus, "choices" | "parts">, 
     if (part && part.state !== "current") total += part.bytes;
   }
   return total;
+}
+
+/** Đánh dấu / bỏ đánh dấu một lựa chọn: đánh dấu cái cần cái khác (bản tăng tốc cần Giọng VieNeu) thì đánh dấu cả hai; bỏ cái được cần thì bỏ luôn cái cần nó. */
+export function toggleChoice(status: Pick<VieneuStatus, "choices">, picked: readonly VieneuChoiceId[], id: VieneuChoiceId, on: boolean): VieneuChoiceId[] {
+  if (on) {
+    const needed = status.choices.find((choice) => choice.id === id)?.requires ?? [];
+    return [...new Set([...picked, id, ...needed])];
+  }
+  const dependants = status.choices.filter((choice) => choice.requires?.includes(id)).map((choice) => choice.id);
+  return picked.filter((item) => item !== id && !dependants.includes(item));
+}
+
+/** Câu dưới công tắc bản tăng tốc: nói điều người nghe thấy (đọc nhanh hơn hay đang đọc bằng bản thường), không nói cách làm. */
+export function acceleratedNote(state: VieneuAccelerated): string {
+  if (!state.on) return "Đang đọc bằng bản thường.";
+  if (state.problem) return "Máy này chưa chạy được bản tăng tốc nên đang đọc bằng bản thường. Bấm “Thử lại tốc độ” để thử lại.";
+  return state.active ? "Đang đọc bằng bản tăng tốc." : "Bản tăng tốc sẽ dùng từ lần đọc kế.";
 }
 
 /** Lời của một mô-đun trong thẻ (giọng VieNeu hay giọng Supertonic): tên, tiêu đề, câu mời tải, các tầng đo, nơi lưu truy vấn. */
