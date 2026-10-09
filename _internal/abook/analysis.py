@@ -20,6 +20,7 @@ import requests
 from .config import ANALYSIS_RETRY_POLICY_VERSION
 from . import database as _database
 from . import narrator_sections as _narrator_sections
+from . import speaker_logprobs as _speaker_logprobs
 from .database import (
     INAUDIBLE_DELIVERY_FIELDS,
     critic_delta_fields,
@@ -7205,6 +7206,9 @@ def _local_identity_schema(question_ids: list[str], names: list[str]) -> dict[st
 
 
 class OllamaBookAnalyzer:
+    # (chữ thô, token logprob) của lượt generator vừa xong khi ABOOK_SPEAKER_LOGPROBS=1; `_write_speaker_logprobs` lấy đi.
+    _logprob_capture: tuple[str, list[dict[str, Any]]] | None = None
+
     def __init__(
         self,
         settings: dict[str, Any],
@@ -7729,6 +7733,7 @@ class OllamaBookAnalyzer:
     ) -> dict[str, Any]:
         if not stop_checked and stop_requested is not None and stop_requested():
             raise AnalysisRequestStopped("Stop requested before Ollama request")
+        self._logprob_capture = None
         request["stream"] = True
         # Không "suy nghĩ": Ollama 0.34.x cho qwen3 suy nghĩ trước khi trả JSON dù request có `format` - thử Studio
         # 28-09, cùng prompt sinh 360 token thay vì 61 rồi hết ngân sách đầu ra, cuốn hỏng. Mọi lượt đo và mọi cuốn đã
@@ -7766,11 +7771,20 @@ class OllamaBookAnalyzer:
                 },
             )
         else:
+            # Logprob token của người nói (ABOOK_SPEAKER_LOGPROBS=1, chỉ lượt generator): xin Ollama SAU khi băm khoá sổ nên
+            # khoá và chữ model trả không đổi; câu trả lời lấy từ sổ không có token nên không ghi gì.
+            token_sink: list[dict[str, Any]] | None = (
+                [] if ledger_role == "generator" and _speaker_logprobs.enabled() else None
+            )
+            stream_extra = {} if token_sink is None else {"token_sink": token_sink}
             raw_text, completion_reason, evaluation_count, usage = self._ollama_stream(
                 body,
                 stop_requested=stop_requested,
                 activity=activity,
+                **stream_extra,
             )
+            if token_sink is not None:
+                self._logprob_capture = (raw_text, token_sink)
             record = getattr(self.db, "record_analysis_response", None)
             if callable(record):
                 options = request.get("options", {})
@@ -7835,8 +7849,10 @@ class OllamaBookAnalyzer:
         *,
         stop_requested: Callable[[], bool] | None,
         activity: Callable[[int, int], None] | None,
+        token_sink: list[dict[str, Any]] | None = None,
     ) -> tuple[str, str, int | None, dict[str, int] | None]:
-        """One streamed model call: raw text, done_reason, eval_count, usage."""
+        """One streamed model call: raw text, done_reason, eval_count, usage. `token_sink` (tuỳ chọn): xin và gom logprob
+        từng token; None thì body gửi đi y hệt trước."""
         wall_timeout = min(
             float(self.settings.get("timeout_seconds", ANALYSIS_REQUEST_MAX_SECONDS)),
             ANALYSIS_REQUEST_MAX_SECONDS,
@@ -7853,6 +7869,8 @@ class OllamaBookAnalyzer:
         # replay and the transport fault is reported to the caller.
         for connect_attempt in range(OLLAMA_TRANSPORT_RECONNECT_ATTEMPTS + 1):
             parts = []
+            if token_sink is not None:
+                token_sink.clear()
             completed = False
             completion_reason = ""
             evaluation_count = None
@@ -7862,7 +7880,7 @@ class OllamaBookAnalyzer:
                 self._prime_fresh_slot(body)
                 response = self.session.post(
                     f"{self.base_url}/api/generate",
-                    json=body,
+                    json=body if token_sink is None else {**body, **_speaker_logprobs.request_options()},
                     timeout=(10.0, min(ANALYSIS_STREAM_IDLE_SECONDS, wall_timeout)),
                     stream=True,
                 )
@@ -7887,6 +7905,8 @@ class OllamaBookAnalyzer:
                         if envelope.get("error"):
                             raise RuntimeError(str(envelope["error"]))
                         parts.append(str(envelope.get("response", "")))
+                        if token_sink is not None:
+                            token_sink.extend(envelope.get("logprobs") or [])
                         completed = bool(envelope.get("done", False))
                         if completed:
                             completion_reason = str(
@@ -8131,6 +8151,7 @@ class OllamaBookAnalyzer:
             ledger_attempt=int(request_contract["attempt"]),
         )
         self._verify_locked_model_digest("after generator request")
+        self._write_speaker_logprobs(group, batch_to_stable, payload)
         segments = payload.get("segments", [])
         if isinstance(segments, list):
             for item in segments:
@@ -8140,6 +8161,35 @@ class OllamaBookAnalyzer:
                 if batch_id in batch_to_stable:
                     item["id"] = batch_to_stable[batch_id]
         return payload
+
+    def _write_speaker_logprobs(
+        self, group: list[Any], batch_to_stable: dict[str, str], payload: dict[str, Any]
+    ) -> None:
+        """Ghi độ không chắc của người nói từng đoạn thoại/nội tâm của lô (cờ ABOOK_SPEAKER_LOGPROBS) vào
+        `analysis_logprobs/<chương>.jsonl`. Chỉ ghi chép: lỗi ở đây không bao giờ làm hỏng lô phân tích."""
+        capture, self._logprob_capture = self._logprob_capture, None
+        if capture is None:
+            return
+        root = getattr(getattr(self.db, "path", None), "parent", None)
+        if root is None:
+            return
+        try:
+            raw_text, tokens = capture
+            measured = _speaker_logprobs.speaker_records(raw_text, tokens, payload)
+            rows = {str(row["stable_id"]): row for row in group}
+            by_chapter: dict[int, list[dict[str, Any]]] = defaultdict(list)
+            for batch_id, record in measured.items():
+                row = rows.get(batch_to_stable.get(batch_id, ""))
+                if row is None:
+                    continue
+                chapter = self._chapter_indexes.get(int(row["chapter_id"]), int(row["chapter_id"]))
+                by_chapter[chapter].append(
+                    {"chapter": chapter, "seq": int(row["seq"]), "stable_id": str(row["stable_id"]), **record}
+                )
+            for chapter, records in by_chapter.items():
+                _speaker_logprobs.write_chapter_records(Path(root), chapter, records)
+        except Exception as exc:  # noqa: BLE001
+            self.log(f"Không ghi được logprob người nói ({exc.__class__.__name__}: {exc}); bỏ qua.")
 
     def _request_director_critic(
         self,

@@ -417,6 +417,13 @@ cứu các model yếu hơn. Quét 1.315 project khác nhau (220.168 đoạn): l
 (nhãn gốc vốn đã sai). Chưa có tín hiệu cho lớp lớn còn lại - đảo vai trong cảnh ba người, NPC gán tên, nội tâm - cần cách đo
 khác (ngữ nghĩa lời thoại), không phải luật tất định.
 
+### Logprob token của người nói: ghi chép ẩn, chưa ai đo (2026-10-09)
+
+Cờ `ABOOK_SPEAKER_LOGPROBS=1` (tắt mặc định) xin Ollama `logprobs`/`top_logprobs` cho lượt generator và ghi, mỗi đoạn thoại/nội tâm,
+`analysis_logprobs/<chương>.jsonl` cạnh sổ dự án (`speaker_logprobs.py`); độ tin cậy model tự báo bằng chữ vô dụng (TB 0,91), logprob
+token thì chưa đo. **File khoá `analysis.py` đổi: hash `a2ee1cad` -> `486be66f`**; cờ tắt thì request và mọi đầu ra y hệt (cờ bật
+cũng không đổi chữ model trả: 3/3 prompt giống từng byte trên qwen3.5:2b CPU, logprobs thêm SAU khi băm khoá sổ nên khoá không đổi).
+
 ---
 
 ## v0.2.0-lo02 — 27/30, và **không chương nào** hỏng ở tầng QA chương
