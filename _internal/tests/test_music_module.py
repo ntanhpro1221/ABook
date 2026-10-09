@@ -221,6 +221,69 @@ def test_a_machine_that_already_has_ffmpeg_and_the_libraries_only_needs_the_mode
     assert music_module.status()["state"] == "ready"
 
 
+def test_the_optional_scene_student_is_offered_downloaded_on_request_and_never_demanded(machine: Machine, tmp_path: Path, monkeypatch) -> None:
+    from abook.webui import music_scene_student as scene
+
+    monkeypatch.delenv(scene.ENV_DIR, raising=False)
+    monkeypatch.setenv(scene.ENV_DOWNLOAD, "1")
+    monkeypatch.setattr(scene, "_directory", None)
+    scene.configure(tmp_path / "music" / scene.PACKAGE_FOLDER)
+    music_module.start()
+    music_module.join(10)
+    machine.calls.clear()
+    status = music_module.status()
+    assert status["state"] == "ready" and status["scene"]["state"] == "missing" and status["scene"]["blocked"] == ""
+    assert "scene_q06" not in _names(status["parts"]), "thiếu phần tuỳ chọn thì mô-đun vẫn đủ"
+    music_module.start()
+    assert machine.calls == [], "bấm Phân tích nhạc không tải phần tuỳ chọn"
+    music_module.start(scene=True)
+    music_module.join(10)
+    assert sorted(machine.calls) == sorted(scene.PACKAGE_FILES) and not music_module._state["error"]
+    assert all((tmp_path / "music" / scene.PACKAGE_FOLDER / name).is_file() for name in scene.PACKAGE_FILES)
+    assert music_module._read_stamp()["scene_q06"] == scene.model_pin()
+    status = music_module.status()
+    assert status["state"] == "ready" and status["scene"]["state"] == "current" and _names(status["parts"])["scene_q06"] == "current"
+    machine.calls.clear()
+    music_module.start(scene=True)
+    assert machine.calls == [], "đã có thì không tải lại"
+    # App lên bản ghim khác: phần đã tải thành "cũ" và một lần bấm cập nhật chỉ tải phần ấy.
+    monkeypatch.setattr(scene, "REVISION", "0" * 40)
+    assert music_module.status()["state"] == "outdated" and music_module.status()["outdatedParts"] == ["Học sinh không khí cảnh"]
+    music_module.start()
+    music_module.join(10)
+    assert sorted(machine.calls) == sorted(scene.PACKAGE_FILES) and music_module.status()["state"] == "ready"
+
+
+def test_the_optional_scene_student_is_hidden_without_studio_or_torch(machine: Machine, monkeypatch) -> None:
+    from abook.webui import music_scene_student as scene
+
+    monkeypatch.delenv(scene.ENV_DIR, raising=False)
+    monkeypatch.setattr(scene, "dependencies_ok", lambda: False)
+    music_module.configure(music_module._folder, studio_installed=lambda: False)
+    offer = music_module.status()["scene"]
+    assert offer["offered"] is False and "Studio" in offer["reason"] and offer["state"] == "missing"
+    monkeypatch.setattr(scene, "dependencies_ok", lambda: True)
+    assert music_module.status()["scene"]["offered"] is True, "tiến trình này có torch"
+    monkeypatch.setattr(scene, "dependencies_ok", lambda: False)
+    music_module.configure(music_module._folder, studio_installed=lambda: True)
+    assert music_module.status()["scene"] == {**offer, "offered": True, "reason": ""}, "đã cài Studio: mời tải"
+
+
+def test_the_scene_download_is_refused_by_the_api_without_studio(studio, monkeypatch) -> None:  # noqa: F811
+    from abook.webui import music_scene_student as scene
+
+    _paths, _app, server, _runner = studio
+    started: list[bool] = []
+    monkeypatch.setattr(music_module, "start", lambda scene=False: started.append(scene))
+    monkeypatch.setattr(scene, "dependencies_ok", lambda: False)
+    music_module.configure(music_module._folder, studio_installed=lambda: False)
+    status, answer = _call(server, "POST", "/api/music/local/module", {"scene": True})
+    assert status == 409 and "Studio" in json.dumps(answer, ensure_ascii=False) and started == []
+    monkeypatch.setattr(scene, "dependencies_ok", lambda: True)
+    status, _answer = _call(server, "POST", "/api/music/local/module", {"scene": True})
+    assert status == 200 and started == [True]
+
+
 def test_the_torch_path_needs_no_libraries(machine: Machine, monkeypatch) -> None:
     monkeypatch.setenv(music_student.ENV_BACKEND, "torch")
     assert [part["id"] for part in music_module.status()["parts"]] == ["ffmpeg", "model"]
@@ -293,9 +356,11 @@ def test_the_module_routes_work_through_the_api_and_are_not_open_to_a_remote_stu
 
     _paths, _app, server, _runner = studio
     started: list[bool] = []
-    monkeypatch.setattr(music_module, "start", lambda: started.append(True))
+    monkeypatch.setattr(music_module, "start", lambda scene=False: started.append(scene is False))
     status, view = _call(server, "POST", "/api/music/local/module")
     assert status == 200 and started == [True] and "module" in view and "reader" not in view
+    status, _view = _call(server, "POST", "/api/music/local/module", {"scene": True})
+    assert status == 200 and started == [True, False], "nút của phần tuỳ chọn gửi scene: true"
     status, _answer = _call(server, "POST", "/api/music/local/reanalyse")
     assert status == 409, "chưa có bộ phân tích thì nói rõ"
     for path in ("/api/music/local/module", "/api/music/local/reanalyse"):

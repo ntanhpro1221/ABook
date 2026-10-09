@@ -24,7 +24,7 @@ from typing import Any, Callable, Iterable
 
 from ..config import DEFAULT_SETTINGS
 from ..io_utils import atomic_write_json, atomic_write_text, ffmpeg_available, ffmpeg_executable, run_hidden
-from . import music_moods, music_scenes, music_select, store
+from . import music_moods, music_scene_student, music_scenes, music_select, store
 
 PLAN_FILE = "music_plan.json"
 OVERRIDES_FILE = "music_overrides.json"
@@ -117,9 +117,12 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
     project_root = Path(project_root)
     overrides = read_overrides(project_root)
     if scenes is None:
-        # Có kết quả LLM đọc cả đoạn (music_moods.py) thì valence / tension của đoạn lấy từ đó; không có thì đường nhãn câu.
+        # Có kết quả LLM đọc cả đoạn (music_moods.py) thì valence / tension của đoạn lấy từ đó; không có thì đường nhãn câu. Có học
+        # sinh đoán hình không khí trong chương (music_scene_student.py) thì nó chỉnh tiếp V / E / T quanh mức chương.
         moods = music_moods.load(project_root)
-        scenes = music_scenes.book_scenes(book_scripts(project_root), moods["scenes"] if moods else None)
+        student = music_scene_student.load(project_root)
+        scenes = music_scenes.book_scenes(book_scripts(project_root), moods["scenes"] if moods else None,
+                                          student=student["scenes"] if student else None)
     genres = (taxonomy or {}).get("genres") or {}
     genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
     known: dict[str, dict[str, Any]] = {}

@@ -8,6 +8,8 @@ tuỳ máy (`_components`):
             vào sys.path trước khi import. Máy đã import được (Studio, máy dev) thì không tải.
 - `model`   (music_student.py, ~59 MB onnx / ~55 MB torch): gói model trên Hugging Face, ghim commit + SHA-256. Máy Studio (đã có torch + ffmpeg)
             chỉ cần phần này.
+Cộng một phần TUỲ CHỌN `scene_q06` (music_scene_student.py, 0,71 GiB, "Học sinh không khí cảnh"): chỉ nằm trong danh sách khi người dùng bấm tải nó
+hoặc nó đã nằm trên máy (khi đó cập nhật như mọi phần); thiếu nó mô-đun vẫn "ready".
 Mỗi phần có "mã ghim" (`pin`). Lúc tải ghi dấu `module.json` (phần -> ghim đã tải); `status()` so dấu với ghim bản app này mang, KHÔNG băm lại
 59 MB mỗi lần mở. App lên bản mới đổi ghim của phần nào thì phần ấy là "cũ" (state `outdated`, kèm danh sách phần và số byte phải tải); một
 lần bấm chỉ tải các phần đổi, phần còn lại giữ nguyên - như Studio (`StudioSetup._pins/outdated`). Bản cũ vẫn chạy cho tới lúc cập nhật xong.
@@ -67,6 +69,7 @@ _lock = threading.RLock()
 _folder: Path | None = None  # <dữ liệu app>/music
 _thread: threading.Thread | None = None
 _after: Callable[[], None] | None = None
+_studio_installed: Callable[[], bool] | None = None
 _job = ""  # việc nền đang chạy sau khi tải: "" | "analysing"
 _state: dict[str, Any] = {"downloading": False, "done": 0, "total": 0, "error": ""}
 
@@ -81,16 +84,20 @@ class Component:
     external: bool = False  # máy đã có sẵn không do mô-đun (Studio, máy dev): không tải, không "cũ"
     blocked: str = ""  # lý do không tải được trên máy này (tiếng Việt), rỗng nếu tải được
     downloads: list[Any] = field(default_factory=list)
+    target: Path | None = None  # thư mục đặt file khi không phải thư mục gói model nhạc
 
 
 # ---- cấu hình -----------------------------------------------------------------------------------------------------------------
-def configure(folder: Path | str | None, after_install: Callable[[], None] | None = None) -> None:
+def configure(folder: Path | str | None, after_install: Callable[[], None] | None = None,
+              studio_installed: Callable[[], bool] | None = None) -> None:
     """Thư mục nhạc của app (server.py: <dữ liệu app>/music). `after_install`: việc làm sau khi tải/cập nhật xong (phân tích nốt bài chưa
-    phân tích, đo độ to bù); chạy ở luồng tải, không bao giờ tự phân tích lại bài đã có kết quả. Đã có thư viện tải trước đó thì đăng ký ngay."""
-    global _folder, _after
+    phân tích, đo độ to bù); chạy ở luồng tải, không bao giờ tự phân tích lại bài đã có kết quả. Đã có thư viện tải trước đó thì đăng ký ngay.
+    `studio_installed`: máy đã cài Studio chưa (phần tuỳ chọn "Học sinh không khí cảnh" chạy trong Studio, xem `scene_student_status`)."""
+    global _folder, _after, _studio_installed
     with _lock:
         _folder = Path(folder) if folder is not None else None
         _after = after_install
+        _studio_installed = studio_installed
         _state.update(downloading=False, done=0, total=0, error="")
         activate_libs()
 
@@ -225,8 +232,38 @@ def install_libs_part(progress: Callable[[int, int], None]) -> None:
     activate_libs()
 
 
+def scene_student_part() -> Component:
+    """Phần TUỲ CHỌN "Học sinh không khí cảnh" (music_scene_student.py, 0,71 GiB): đoán hình không khí trong chương cho nhạc nền. Chỉ vào `_components()`
+    khi người dùng bấm tải nó (`start(scene=True)`) hay nó đã nằm trên máy - thiếu nó mô-đun vẫn "ready", người dùng không bị đòi tải. Chưa có
+    REVISION hay bị tắt: `blocked` nêu lý do, `downloads` rỗng."""
+    from . import music_scene_student as scene
+
+    return Component("scene_q06", "Học sinh không khí cảnh", scene.model_pin(), scene.total_bytes(), scene.present(),
+                     external=bool(os.environ.get(scene.ENV_DIR)), blocked=scene.cannot_download(), downloads=scene.model_downloads(),
+                     target=scene.package_dir())
+
+
+def scene_student_offered() -> str:
+    """Rỗng nếu máy này dùng được phần tuỳ chọn (tiến trình này có torch, hoặc đã cài Studio để chạy nó); không thì lý do (tiếng Việt)."""
+    from . import music_scene_student as scene
+
+    if scene.dependencies_ok() or (_studio_installed is not None and _studio_installed()):
+        return ""
+    return "cần cài Studio: bộ này chạy trong Studio của máy tính"
+
+
+def scene_student_status() -> dict[str, Any]:
+    """Cho giao diện: phần tuỳ chọn đã có chưa (`state` current / outdated / missing), cỡ tải, `blocked` (rỗng nếu tải được), và `offered` (máy
+    dùng được nó; không thì `reason` nói vì sao - giao diện ẩn nút tải)."""
+    part = scene_student_part()
+    reason = scene_student_offered()
+    return {"state": judge_parts([part], _read_stamp())[part.id], "bytes": part.size, "blocked": part.blocked,
+            "external": part.external, "offered": not reason, "reason": reason}
+
+
 # ---- các phần của máy này -----------------------------------------------------------------------------------------------------
-def _components() -> list[Component]:
+def _components(scene: bool = False) -> list[Component]:
+    """`scene`: có cả phần tuỳ chọn "Học sinh không khí cảnh" (người dùng vừa bấm tải nó); phần ấy đã nằm trên máy thì luôn có mặt."""
     backend = music_student.planned_backend()
     out: list[Component] = []
     external_ffmpeg = ffmpeg_setup.external()
@@ -240,6 +277,9 @@ def _components() -> list[Component]:
     out.append(Component("model", "Model nghe nhạc", music_student.model_pin(backend), sum(item.size for item in files),
                          music_student._complete(directory, backend), external=pinned_elsewhere,
                          blocked=music_student.cannot_download() if not pinned_elsewhere else "", downloads=files))
+    extra = scene_student_part()
+    if scene or (extra.present and not extra.external):
+        out.append(extra)
     return out
 
 
@@ -300,19 +340,19 @@ def status() -> dict[str, Any]:
             "outdatedParts": [part.label for part in behind] if state in ("outdated", "downloading") else [],
             "outdatedBytes": sum(part.size for part in behind),
             "restart": bool((pending := _lib_next()) is not None and pending.is_dir() and _lib().is_dir() and _libs_loaded()),
-            "analysing": _job == "analysing", "metered": False,
+            "analysing": _job == "analysing", "metered": False, "scene": scene_student_status(),
         }
 
 
 # ---- tải ---------------------------------------------------------------------------------------------------------------------
-def start() -> None:
+def start(scene: bool = False) -> None:
     """Bắt đầu tải (hay cập nhật chỉ những phần có ghim đổi) ở luồng nền. Gọi nhiều lần cũng chỉ một lượt; đang lỗi thì gọi lại là thử lại; đã
-    đủ thì không làm gì."""
+    đủ thì không làm gì. `scene`: tải cả phần tuỳ chọn "Học sinh không khí cảnh" (người dùng bấm riêng nút ấy)."""
     global _thread
     with _lock:
         if _state["downloading"] and _thread is not None and _thread.is_alive():
             return
-        components = _components()
+        components = _components(scene)
         needed = _needed(components, _judge(components))
         _state.update(error="", done=0)
         if not needed:
@@ -362,7 +402,7 @@ def _run(needed: list[Component]) -> None:
             elif part.id == "libs":
                 _install_libs(progress, lambda: False)
             else:
-                directory = music_student.package_dir()
+                directory = part.target if part.id == "scene_q06" else music_student.package_dir()
                 assert directory is not None
                 directory.mkdir(parents=True, exist_ok=True)
                 done = 0
