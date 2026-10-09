@@ -4337,6 +4337,23 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 03:xx - q06 trong app khớp nghiên cứu (A2); q06 cũng xếp E trong chương tốt hơn hẳn nhãn câu
+
+**A2:** nhánh app `music/q06-scene-student`, Corpus c4eecc1. Chính mô-đun `music_scene_student` chạy trên gói thật, đầu chỉ học bạc, bộ 7:
+- tương quan với đường nghiên cứu .9998 / .99995 / .99992; r trong chương TB(V,T) .275 (nghiên cứu .274);
+- 798 tok/s ở bf16 CPU 6 luồng (~19 s mỗi giờ audio); RAM đỉnh 2,93 GiB.
+
+Chạy qua tiến trình con của Studio trên bản sao một dự án bộ 7 cũng ra đủ đoạn `moodSource "student"`.
+
+**Q06-E:** ghi trước Corpus 3354283, kết quả 77a689e. So r của E trong chương, cùng thước với q06_vs_p0:
+
+| | q06 | nhãn câu (app hôm nay) | Δ | theo bộ |
+|---|---|---|---|---|
+| bộ 7 (20 ch) | .391 | .141 | +.249 | [+.128, +.371] |
+| học 4+5+5b+6 (42 ch) | .471 | .238 | +.233 | [+.097, +.380] |
+
+QUA. Đề xuất: đoạn "student" lấy arousal = mức E hôm nay + (dE − TB dE). Chờ Lead chọn gộp chung nhánh q06 hay tách riêng.
+
 ### 10-10 02:xx - Cổng q17 trên bộ cuối: DỪNG; q06 thắng P0 nên vào app thay P0 ở hình trong chương
 
 **Cổng q17** (luật Lead chốt trước, Corpus 1afc494; bộ cuối mở MỘT lần):
