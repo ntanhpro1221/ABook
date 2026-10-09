@@ -4337,6 +4337,25 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 04:xx - LV-Q06: mức V của chương lấy từ nhúng q06 tốt hơn hẳn nhãn câu; mức T vẫn cần P0
+
+Ghi trước ở Corpus a6d4d68, kết quả ở 7977f81. Đầu ridge đoán MỨC chương từ nhúng q06 trung bình cả chương:
+- học trên 542 chương bạc, không nhìn vàng;
+- alpha 1e3, chọn bằng CV theo truyện.
+
+So với app hôm nay (mức V từ nhãn, mức T từ P0), hình q06 k = 1, thước MAE `cl_apply`:
+
+| MAE | học V | học T | bộ 7 V | bộ 7 T |
+|---|---|---|---|---|
+| app hôm nay (S-P0) | .335 | .291 | .262 | .213 |
+| mức q06 (S-Q) | .321 | .337 | .155 | .201 |
+
+- **Trục V QUA, hơn ≥ .01 ở cả hai bộ.** r mức V học .67 → .71, bộ 7 .49 → .89. Đây là nút thắt "r V ~.78" từ 07-10. Mức q06 lệch
+  cao hơn vàng chừng +.1 (bạc so với vàng) mà vẫn thắng.
+- **Trục T KHÔNG QUA:** ở bộ học, P0 hơn hẳn. Giữ qwen3.5:4b cho mức T.
+- Đề xuất Lead: đường "student" lấy L_V từ đầu mức chương. File `chapter_head_q06.npz` đã dựng xong (bạc + 62 chương vàng), chờ duyệt
+  rồi mới đưa lên HF.
+
 ### 10-10 03:xx - q06 trong app khớp nghiên cứu (A2); q06 cũng xếp E trong chương tốt hơn hẳn nhãn câu
 
 **A2:** nhánh app `music/q06-scene-student`, Corpus c4eecc1. Chính mô-đun `music_scene_student` chạy trên gói thật, đầu chỉ học bạc, bộ 7:
