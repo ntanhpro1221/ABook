@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.35] - 2026-10-09
+
 ### Phân vai giọng đọc
 
 - Người nói chỉ được mô tả ("người đàn ông", "cậu bé") không còn bị đoán bừa là một nhân vật có tên trong chương - lỗi hay gặp nhất là gán cho chính người đang nói chuyện với họ. App chỉ gộp khi chính nhãn đã gọi tên ("tiểu thư Clara") hoặc truyện viết rõ ngay bên cạnh ("Cậu bé Iven…"). Trên 10 lượt đo 19 chương: thêm 81 câu đúng người nói, điểm giọng +0,65.
