@@ -218,10 +218,11 @@ def test_subtract_keeps_what_changed_after_the_snapshot(tmp_path: Path) -> None:
                                 "music": {"levelDb": -20.0, "silenced": ["1:0"]}})
     book_edits.save(folder, {**sent, "title": "B", "characters": {"X": "Ích", "Y": "Y mới"},
                              "chapters": {"1": {"title": "Một", "subtitle": "Đổi"}}})
-    assert book_edits.subtract(folder, sent, None) == 3
+    assert book_edits.subtract(folder, sent, None) == 4
     left = book_edits.load(folder)
     assert (left["title"], left["characters"], left["chapters"]) == ("B", {"Y": "Y mới"}, {"1": {"subtitle": "Đổi"}})
-    assert "skip" not in left and "music" not in left
+    assert left["skip"] == {"1": ["Dịch: Nhóm"]}, "dòng bỏ khỏi phần đọc ở lại (sách máy kia không mang nó); sent_marks nhớ là đã gửi"
+    assert "music" not in left
     assert json.loads((folder / book_edits.EDITS_FILE).read_text(encoding="utf-8"))["title"] == "B"
 
 
@@ -315,3 +316,30 @@ def test_a_phone_cannot_take_edits_so_unsent_is_reported_unsendable(library, tmp
     assert (view["changes"], view["sendable"]) == (1, False)
     with pytest.raises(ApiError, match="chưa gửi"):
         app.forget_computer(computer)
+
+
+def test_a_skipped_line_is_still_skipped_after_it_was_sent_to_the_other_computer(library, tmp_path: Path) -> None:  # noqa: F811
+    """Dòng người nghe bỏ khỏi phần đọc là sở thích của MÁY NÀY: máy kia không phản ánh nó trong sách, nên gửi xong vẫn phải bỏ ở đây."""
+    app, other, _sync, _project, _devices, _computer, value, path = _two_computers(library, tmp_path)
+    try:
+        book_edits.set_skip_line(path, [1], "Dịch: Nhóm Lục Bình", True)
+        assert packages.edited_manifest(path)["chapters"][0]["skip"] == ["Dịch: Nhóm Lục Bình"]
+        book_edits.set_chapter_title(path, 1, "Chương mở đầu")
+        assert app.listen_book(value)["editsSync"]["pending"] == 2
+        state = app.send_remote_edits(value)
+        assert state["last"]["state"] == "sent" and state["pending"] == 0, "dòng đã gửi không còn là phần chờ gửi"
+        assert packages.edited_manifest(path)["chapters"][0]["skip"] == ["Dịch: Nhóm Lục Bình"], "gửi xong vẫn bỏ dòng ấy"
+        assert book_edits.load(path)["skip"] == {"1": ["Dịch: Nhóm Lục Bình"]}
+        assert app.send_remote_edits(value)["pending"] == 0
+
+        # Bỏ thêm một dòng sau lần gửi: chỉ dòng mới là phần chờ gửi.
+        book_edits.set_skip_line(path, [1], "Biên tập: Ai Đó", True)
+        assert app.listen_book(value)["editsSync"]["pending"] == 1
+        assert app.send_remote_edits(value)["pending"] == 0
+        assert packages.edited_manifest(path)["chapters"][0]["skip"] == ["Biên tập: Ai Đó", "Dịch: Nhóm Lục Bình"]
+
+        # Đọc lại dòng ấy thì hết bỏ, như mọi lúc.
+        book_edits.set_skip_line(path, [1], "Dịch: Nhóm Lục Bình", False)
+        assert packages.edited_manifest(path)["chapters"][0]["skip"] == ["Biên tập: Ai Đó"]
+    finally:
+        other.stop()
