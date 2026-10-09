@@ -11,6 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Ô "Tìm sách" tìm được cả theo tên tác giả (sách chữ nhập từ EPUB, DOCX, PDF có ghi tác giả), không phân biệt hoa thường và dấu: gõ "nguyen" ra mọi cuốn của Nguyễn. Có ở máy tính và điện thoại.
 - "Thêm sách từ file…" chọn được nhiều file một lúc (EPUB, Word, PDF, TXT, cả file sách .abook), trên máy tính lẫn điện thoại: từng cuốn hiện ra ở bước xem trước quen thuộc với tiêu đề "Sách 2/5", bạn đổi tên, chọn chương rồi thêm, hoặc "Bỏ cuốn này". Có nút "Thêm tất cả phần còn lại" để thêm hết số còn lại bằng đúng lựa chọn mặc định của bước xem trước. File không đọc được chỉ báo lý do trong danh sách, không chặn các cuốn sau; chữ của truyện vẫn giữ nguyên.
+- Tìm chữ hay câu trong một cuốn rồi nhảy tới đó: nút kính lúp ở trang sách và ở màn đọc (hay Ctrl+F khi đang đọc) mở ô "Tìm trong sách" - gõ từ 2 ký tự, không cần dấu, hoa hay thường đều được ("nguyen" ra "Nguyễn"). Kết quả xếp theo thứ tự trong sách, mỗi dòng ghi chương và đoạn chữ quanh chỗ khớp (chữ tìm được tô đậm); sách dài thì hiện 200 kết quả đầu và cho biết còn bao nhiêu. Bấm một kết quả là mở màn đọc đúng câu ấy, và nếu đang nghe cuốn này thì nghe tiếp từ câu đó. Có ở máy tính và điện thoại, cho cả sách nói lẫn sách chỉ có chữ.
 - Máy tính: kéo một hay nhiều file thả vào màn Thư viện là mở đúng danh sách xem trước ấy ("Thả để thêm sách"); loại file ABook chưa đọc được thì báo rõ ngay.
 
 ### Điện thoại
