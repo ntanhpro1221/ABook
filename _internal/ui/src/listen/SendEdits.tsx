@@ -1,11 +1,12 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleAlert, Laptop, Loader2, Send, Smartphone, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { localEditsNote } from "@/shared/capabilities";
 import { cn } from "@/shared/cn";
 import { editsSyncNote, holderName, sentToast } from "@/shared/editsSync";
+import { endSentence } from "@/shared/format";
 import { Button } from "@/shared/ui";
 import { refreshAfterEdit } from "./EditBook";
 import type { ListenBook } from "./model";
@@ -33,7 +34,7 @@ export function useSendEdits(book: ListenBook) {
     },
     onError: (error: Error) => {
       refreshAfterEdit(client, book.id);
-      toast.error(`Chưa gửi được về ${where}`, { description: `${error.message} Phần sửa vẫn nằm trên máy này.`, duration: 10000 });
+      toast.error(`Chưa gửi được về ${where}`, { description: `${endSentence(error.message)} Phần sửa vẫn nằm trên máy này.`, duration: 10000 });
     },
   });
   return { send: () => send.mutate(), busy: send.isPending, available: Boolean(source.sendEdits), where };
@@ -88,7 +89,15 @@ function seenAt(id: string): number {
 export function EditsSyncBanner({ book }: { book: ListenBook }) {
   const { send, busy, available, where } = useSendEdits(book);
   const [seen, setSeen] = useState(() => seenAt(book.id));
-  const note = editsSyncNote(book.editsSync, where);
+  // Khung “Chưa tải xong về máy” (desktop/RemoteDownload.tsx) cùng nằm dưới tên sách: cả hai cùng đứt vì máy kia không trả lời thì chỉ
+  // một khung nói lý do dài, khung này giữ phần riêng của nó (số thay đổi chưa gửi, nút gửi) - không lặp nguyên câu.
+  const download = useQuery<{ state: string; retry?: boolean }>({ queryKey: ["listen", "download", book.id], queryFn: skipToken });
+  const found = editsSyncNote(book.editsSync, where);
+  const unreachable = /Không kết nối được|không trả lời/.test(book.editsSync?.last?.error ?? "");
+  const note =
+    found && found.tone === "error" && unreachable && download.data?.state === "failed" && download.data.retry
+      ? { ...found, lines: [`Tự gửi khi ${where} trả lời lại; bấm “Gửi về ${where}” để gửi ngay.`] }
+      : found;
   if (!note) return null;
   const at = book.editsSync?.last?.at ?? 0;
   if (note.tone === "sent" && (note.lines.length === 0 || seen >= at)) return null;

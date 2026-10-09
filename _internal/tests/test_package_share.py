@@ -269,3 +269,51 @@ def test_a_skipped_line_is_still_skipped_after_it_was_sent_for_an_imported_book(
         assert packages.edited_manifest(path)["chapters"][0]["skip"] == ["Dịch: Nhóm Lục Bình"], "B vẫn bỏ dòng ấy sau khi gửi"
     finally:
         server.stop()
+
+
+def test_what_was_sent_and_then_dropped_is_withdrawn_on_the_holder_only_while_it_still_has_the_sent_value(tmp_path: Path) -> None:
+    """Cách đọc / dòng bỏ / danh sách phát đã gửi rồi người nghe bỏ đi: máy giữ sách gỡ theo (không còn bản lệch nhau), nhưng không đè lên bản chính máy ấy đổi."""
+    app, server, _sync, folder, _mirror, _computer = _pair(tmp_path)
+    try:
+        (book,) = [item for item in app.listen_library() if item.get("remote")]
+        value = book["id"]
+        path = app._listenable(value)
+        book_edits.set_reading(path, "Lucien", "Lu-xi-en")
+        book_edits.set_reading(path, "Heidi", "Hai-đi")
+        book_edits.set_skip_line(path, [1], "Dịch: Nhóm Lục Bình", True)
+        book_edits.set_skip_line(path, [1], "Biên tập: Ai Đó", True)
+        book_edits.set_music(path, {"playlist": "school_light"})
+        assert app.send_remote_edits(value)["pending"] == 0
+        # Máy A tự đổi cách đọc "Heidi" sau đó: đó là bản của chính A.
+        book_edits.set_reading(folder, "Heidi", "Hây-đi")
+        assert book_edits.load(folder)["readings"] == {"Heidi": "Hây-đi", "Lucien": "Lu-xi-en"}
+
+        book_edits.set_reading(path, "Lucien", "")
+        book_edits.set_reading(path, "Heidi", "")
+        book_edits.set_skip_line(path, [1], "Dịch: Nhóm Lục Bình", False)
+        book_edits.set_music(path, {"playlist": None})
+        state = app.listen_book(value)["editsSync"]
+        assert state["pending"] == 4, "bỏ đi sau khi đã gửi cũng là thay đổi chờ gửi"
+        state = app.send_remote_edits(value)
+        assert state["pending"] == 0 and state["last"]["applied"] == 4, state  # gỡ 3 (Heidi ở lại: A đã đổi) + dòng "Biên tập" còn trong lớp sửa gửi lại
+        layer = book_edits.load(folder)
+        assert layer["readings"] == {"Heidi": "Hây-đi"} and layer["skip"] == {"1": ["Biên tập: Ai Đó"]} and "music" not in layer
+        assert remote_books._sent_marks(path).get("readings") is None, "sổ đã gửi không còn nhắc cái đã gỡ"
+        assert app.send_remote_edits(value)["pending"] == 0
+    finally:
+        server.stop()
+
+
+def test_a_book_that_is_not_a_project_has_no_export_job_but_is_not_a_404(tmp_path: Path) -> None:
+    from abook.webui.server import ApiError
+
+    app, server, _sync, _folder, _mirror, _computer = _pair(tmp_path)
+    try:
+        (book,) = [item for item in app.listen_library() if item.get("remote")]
+        assert app.export_job_status(app.bookfile_jobs, book["id"]) == {"state": "idle"}
+        assert app.export_job_status(app.m4b_jobs, book["id"]) == {"state": "idle"}
+        with pytest.raises(ApiError) as caught:
+            app.export_job_status(app.m4b_jobs, "khongcosach")
+        assert caught.value.status == 404
+    finally:
+        server.stop()

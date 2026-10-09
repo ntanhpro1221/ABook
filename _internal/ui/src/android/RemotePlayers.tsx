@@ -9,6 +9,7 @@ import { Back15, Forward15, RemoteSleepMenu } from "@/listen/PlayerViews";
 import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode } from "@/listen/sleep";
 import { useSource } from "@/listen/source";
 import { formatClock } from "@/shared/format";
+import { ShortName } from "@/shared/ShortName";
 import { IconButton } from "@/shared/ui";
 import { EbookLibrary, type RemotePlayer, type RemotePlayerCommand } from "./plugins";
 
@@ -136,14 +137,13 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
   return (
     <section aria-label={`Đang phát trên ${remote.name}`} className="relative shrink-0 border-t border-line bg-accent-soft/60">
       <div className="absolute inset-x-0 top-0 h-[2px] bg-accent transition-[width] duration-500 ease-linear" style={{ width: `${share}%` }} aria-hidden />
-      <div className="flex items-center gap-2 px-3 py-2">
+      <div className="flex items-center gap-1 px-3 py-1">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
             <KindIcon kind={remote.kind} className="size-3.5 shrink-0" />
-            <span className="truncate">
-              {state.playing ? "Đang phát trên" : "Đang dừng trên"} {remote.name}
-              {protocolLabel(remote) && <span className="font-normal text-fg-3"> · {protocolLabel(remote)}</span>}
-            </span>
+            <span className="shrink-0 whitespace-nowrap">{state.playing ? "Đang phát trên" : "Đang dừng trên"}</span>
+            <ShortName name={remote.name} short={13} className="shrink" />
+            {protocolLabel(remote) && <span className="hidden shrink-0 font-normal text-fg-3 sm:inline"> · {protocolLabel(remote)}</span>}
           </div>
           <div className="truncate text-sm">
             <span className="font-medium">{state.chapterTitle}</span>

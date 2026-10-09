@@ -53,12 +53,30 @@ object Peers {
         val host = "bt:$address"
         val peers = all(context)
         val key = peers.keys().asSequence().firstOrNull { peers.getJSONObject(it).optString("host") == host }
-            ?: UUID.randomUUID().toString().replace("-", "").take(8)
+            ?: takeFormer(context, fingerprint) ?: UUID.randomUUID().toString().replace("-", "").take(8)
         peers.put(key, JSONObject().put("name", reply.optString("name", address)).put("host", host).put("port", 0)
             .put("token", reply.getString("token")).put("fingerprint", fingerprint)
             .put("pairedAt", System.currentTimeMillis() / 1000.0))
         save(context, peers)
         return JSONObject().put("key", key).put("name", reply.optString("name", address))
+    }
+
+    /** Vân tay -> mã của thiết bị đã thôi ghép: ghép lại đúng máy ấy (dù đổi địa chỉ) lấy lại mã cũ, nên mã sách cục bộ ([localId]) và chỗ
+     *  nghe / dấu trang gắn với nó hiện lại, không mất khi ghép lại. */
+    @Synchronized
+    private fun takeFormer(context: Context, fingerprint: String): String? {
+        val former = runCatching { JSONObject(prefs(context).getString("former", "{}") ?: "{}") }.getOrDefault(JSONObject())
+        val key = former.optString(fingerprint).takeIf { it.isNotEmpty() } ?: return null
+        former.remove(fingerprint)
+        prefs(context).edit().putString("former", former.toString()).commit()
+        return key
+    }
+
+    @Synchronized
+    private fun rememberFormer(context: Context, fingerprint: String, key: String) {
+        if (fingerprint.isEmpty()) return
+        val former = runCatching { JSONObject(prefs(context).getString("former", "{}") ?: "{}") }.getOrDefault(JSONObject())
+        prefs(context).edit().putString("former", former.put(fingerprint, key).toString()).commit()
     }
 
     /** Mã sách cục bộ cho một cuốn của thiết bị ghép: chữ cái đầu "p" + mã thiết bị + mã sách bên ấy (mọi ký tự đều nằm
@@ -79,7 +97,7 @@ object Peers {
         val peers = all(context)
         val key = peers.keys().asSequence().firstOrNull { existing ->
             peers.getJSONObject(existing).let { it.optString("host") == host && it.optInt("port") == port }
-        } ?: UUID.randomUUID().toString().replace("-", "").take(8)
+        } ?: takeFormer(context, fingerprint) ?: UUID.randomUUID().toString().replace("-", "").take(8)
         peers.put(key, JSONObject().put("name", reply.optString("name", host)).put("host", host).put("port", port)
             .put("token", reply.getString("token")).put("fingerprint", fingerprint)
             .put("pairedAt", System.currentTimeMillis() / 1000.0))
@@ -96,6 +114,15 @@ object Peers {
         class Book(val id: String, val title: String, val changes: Int)
 
         val changes get() = books.sumOf { it.changes }
+    }
+
+    /** Cái thôi ghép sẽ quên của `key`: số cuốn nghe thẳng, byte của chúng, và số cuốn đang có chỗ nghe (chỗ nghe nằm ngoài các thư mục ấy, giữ lại). */
+    class Cached(val books: Int, val bytes: Long, val places: Int)
+
+    fun cached(key: String): Cached {
+        val dirs = streamedDirs(key)
+        return Cached(dirs.size, dirs.sumOf { dir -> dir.walkTopDown().filter { it.isFile }.sumOf { it.length() } },
+            dirs.count { Store.knownActiveRecord(it.name) != null })
     }
 
     /**
@@ -135,6 +162,7 @@ object Peers {
         refuseIfUnsent(key, discard)
         val peers = all(context)
         peers.optJSONObject(key)?.optString("host")?.takeIf { it.startsWith("bt:") }?.let { BluetoothLink.forget(it) }
+        peers.optJSONObject(key)?.optString("fingerprint")?.let { rememberFormer(context, it, key) }
         peers.remove(key)
         save(context, peers)
         streamedDirs(key).forEach { it.deleteRecursively() }

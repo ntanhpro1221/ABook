@@ -306,6 +306,28 @@ class EditsSyncTest {
     }
 
     @Test
+    fun a_reading_dropped_after_it_was_sent_is_withdrawn_on_the_computer_with_the_value_that_was_sent() {
+        BookEdits.setReading(dir, "Lucien", "Lu-xi-en")
+        EditsSync.push(id) { accepted() }
+        BookEdits.setReading(dir, "Lucien", "") // người nghe bỏ cách đọc đã gửi
+        assertEquals("bỏ đi sau khi gửi cũng là thay đổi chưa gửi", 1, Store.manifest(id)!!.getJSONObject("editsSync").getInt("pending"))
+        var sentNames = emptySet<String>()
+        var removed = JSONObject()
+        val view = EditsSync.push(id) { file ->
+            ZipFile(file).use { zip ->
+                sentNames = zip.entries().asSequence().map { it.name }.toSet()
+                removed = JSONObject(zip.getInputStream(zip.getEntry(BookEdits.REMOVED_FILE)).readBytes().toString(Charsets.UTF_8))
+            }
+            accepted()
+        }
+        assertEquals(setOf(BookEdits.REMOVED_FILE), sentNames)
+        assertEquals("Lu-xi-en", removed.getJSONObject("readings").getString("Lucien"))
+        assertEquals(0, view.getInt("pending"))
+        assertFalse("sổ đã gửi không còn nhắc tới cách đọc đã gỡ", File(dir, EditsSync.STATE_FILE).readText().contains("Lu-xi-en"))
+        EditsSync.push(id) { fail("đã gỡ xong, không còn gì để gửi"); "" }
+    }
+
+    @Test
     fun conflict_notes_are_worded_for_the_sending_phone() {
         val item = JSONObject().put("kind", "title").put("key", "").put("label", "Tên sách: máy tính đã có bản riêng")
             .put("what", "Tên sách").put("lost", "“Chủ máy đặt lại”").put("kept", "“Tên mới”")

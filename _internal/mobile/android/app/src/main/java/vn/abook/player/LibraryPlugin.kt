@@ -844,14 +844,17 @@ class LibraryPlugin : Plugin() {
     }
 
     /** Sửa chưa gửi của các cuốn nghe thẳng của một thiết bị ghép - thứ thôi ghép sẽ xoá (hộp xác nhận hỏi trước): từng cuốn, tổng, và
-     *  `sendable` = thiết bị là máy tính nên "gửi trước" có nghĩa (điện thoại khác không nhận sửa). */
+     *  `sendable` = thiết bị là máy tính nên "gửi trước" có nghĩa (điện thoại khác không nhận sửa); `cache` = cái thôi ghép sẽ quên
+     *  (số cuốn nghe thẳng, byte của chúng, số cuốn đang có chỗ nghe - chỗ nghe giữ lại, [Peers.forget]). */
     @PluginMethod
     fun peerUnsent(call: PluginCall) = background(call) {
         val key = call.getString("key") ?: ""
         val unsent = Peers.unsent(key)
         val books = JSArray()
         for (book in unsent.books) books.put(JSObject().put("id", book.id).put("title", book.title).put("changes", book.changes))
-        call.resolve(JSObject().put("books", books).put("changes", unsent.changes).put("sendable", Peers.kindOf(context, key) == "computer"))
+        val cache = Peers.cached(key)
+        call.resolve(JSObject().put("books", books).put("changes", unsent.changes).put("sendable", Peers.kindOf(context, key) == "computer")
+            .put("cache", JSObject().put("books", cache.books).put("bytes", cache.bytes).put("places", cache.places)))
     }
 
     /** Thôi ghép. Còn sửa chưa gửi thì từ chối, trừ khi `send` (gửi hết về máy ấy rồi mới gỡ; hỏng giữa chừng thì không gỡ) hay `discard` (người dùng chọn bỏ). */

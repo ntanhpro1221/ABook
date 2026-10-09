@@ -53,7 +53,7 @@ object EditsSync {
     @Volatile var clock: () -> Long = { System.currentTimeMillis() / 1000 }
 
     /** Ảnh chụp lớp sửa lúc đóng gói: dùng cả để gỡ đúng những gì đã gửi. */
-    class Snapshot(val edits: JSONObject, val cover: ByteArray?)
+    class Snapshot(val edits: JSONObject, val cover: ByteArray?, val removed: JSONObject = JSONObject())
 
     // ---- trạng thái -------------------------------------------------------------------------------------------------
 
@@ -69,7 +69,11 @@ object EditsSync {
      * Số thay đổi CHƯA tới máy tính: lớp sửa hiện có trừ phần đã gửi mà vẫn giữ lại ở đây (cách đọc, nhạc đã chọn - [BookEdits.subtract]
      * cố ý giữ, vì sách máy tính trả về không mang chúng). Gửi xong là gỡ phần còn lại, nên số này chính là phần chưa tới máy tính.
      */
-    fun pending(dir: File, edits: JSONObject): Int = BookEdits.count(BookEdits.unmarked(edits, marks(dir)))
+    fun pending(dir: File, edits: JSONObject): Int {
+        val marks = marks(dir)
+        // Cộng phần đã gửi rồi người nghe bỏ đi mà máy tính chưa biết ([BookEdits.removedMarks]): gửi tiếp để máy tính gỡ theo.
+        return BookEdits.count(BookEdits.unmarked(edits, marks)) + BookEdits.countRemoved(BookEdits.removedMarks(edits, marks))
+    }
 
     /**
      * `editsSync` của một cuốn: {pending: số thay đổi chưa gửi ([pending]), last: kết quả lần gửi gần nhất hay null}.
@@ -90,7 +94,8 @@ object EditsSync {
     /** Lớp sửa hiện có của cuốn, kèm byte bìa mới; null khi không còn gì để gửi. Thiếu file bìa / file nhạc đã chọn: lỗi nói rõ. */
     fun snapshot(dir: File): Snapshot? = BookEdits.locked {
         val edits = BookEdits.load(dir)
-        if (BookEdits.isEmpty(edits)) return@locked null
+        val removed = BookEdits.removedMarks(edits, marks(dir))
+        if (BookEdits.isEmpty(edits) && removed.length() == 0) return@locked null
         var cover: ByteArray? = null
         if (edits.opt("cover") is JSONObject) {
             val file = File(dir, BookEdits.EDITS_COVER)
@@ -100,16 +105,23 @@ object EditsSync {
         for (name in BookEdits.pinnedFiles(edits)) {
             if (!File(dir, name).isFile) throw IllegalStateException("Thiếu file nhạc đã chọn trong sách - hãy chọn lại bài ấy rồi gửi")
         }
-        Snapshot(BookEdits.deepCopy(edits) as JSONObject, cover)
+        Snapshot(BookEdits.deepCopy(edits) as JSONObject, cover, removed)
     }
 
-    /** Ghi gói zip của `snapshot` ra `target` (edits.json, bìa, bài nhạc ghim) - đúng tên mục mà máy tính nhận (edits_inbox.py). */
+    /** Ghi gói zip của `snapshot` ra `target` (edits.json, bìa, bài nhạc ghim, và edits_removed.json khi người nghe đã bỏ cái từng gửi) - đúng tên mục mà máy tính nhận (edits_inbox.py). */
     fun writePackage(dir: File, snapshot: Snapshot, target: File) {
         target.parentFile?.mkdirs()
         ZipOutputStream(target.outputStream().buffered()).use { zip ->
-            zip.putNextEntry(ZipEntry(BookEdits.EDITS_FILE))
-            zip.write(BookEdits.dump(snapshot.edits))
-            zip.closeEntry()
+            if (!BookEdits.isEmpty(snapshot.edits)) {
+                zip.putNextEntry(ZipEntry(BookEdits.EDITS_FILE))
+                zip.write(BookEdits.dump(snapshot.edits))
+                zip.closeEntry()
+            }
+            if (snapshot.removed.length() > 0) {
+                zip.putNextEntry(ZipEntry(BookEdits.REMOVED_FILE))
+                zip.write(BookEdits.dumpRemoved(snapshot.removed))
+                zip.closeEntry()
+            }
             snapshot.cover?.let {
                 zip.putNextEntry(ZipEntry(BookEdits.EDITS_COVER))
                 zip.write(it)
@@ -163,7 +175,7 @@ object EditsSync {
                 throw failure(dir, id, "Máy tính trả lời không hiểu được", error)
             }
             refresh?.let { runCatching { it(id) } } // sách mới của máy tính đã mang sửa: tải lại TRƯỚC khi gỡ lớp phủ để không chớp bản cũ
-            val kept = BookEdits.sentMarks(snapshot.edits, marks(dir)) // trước khi ghi trạng thái mới: `marks` còn là của các lần gửi trước
+            val kept = BookEdits.sentMarks(snapshot.edits, BookEdits.forgetMarks(marks(dir), snapshot.removed)) // trước khi ghi trạng thái mới: `marks` còn là của các lần gửi trước
             BookEdits.subtract(dir, snapshot.edits, snapshot.cover)
             record(dir, JSONObject().put("state", SENT).put("at", clock()).put(KEPT, kept)
                 .put("applied", reply.optInt("applied")).put("skipped", reply.optInt("skipped"))

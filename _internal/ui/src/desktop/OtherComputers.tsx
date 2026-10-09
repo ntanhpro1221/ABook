@@ -100,7 +100,7 @@ export function OtherComputers() {
     mutationFn: (id: string) => api<ComputersView>(`/api/computers/${id}/stop-waiting`, { method: "POST" }),
     onSuccess: done,
   });
-  // Thôi ghép xoá thư mục đệm của máy ấy, kể cả phần sửa chưa gửi: còn sửa thì hỏi trước (shared/unpair.ts).
+  // Thôi ghép xoá thư mục đệm của máy ấy (phần đã tải, phần sửa chưa gửi): có gì để mất thì hỏi trước, nói rõ mất gì và giữ gì (shared/unpair.ts).
   const unpair = useUnpair<Computer>({
     self: "máy tính",
     name: (computer) => computer.name,
@@ -192,7 +192,7 @@ export function OtherComputers() {
                 Hỏi lại
               </Button>
               <IconButton label={`Thôi ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} className="max-sm:hidden" />
-              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => void unpair.start(computer)} className="sm:hidden" aria-label={`Thôi ghép ${computer.name}`}>
+              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => void unpair.start(computer)} className="text-danger sm:hidden max-sm:order-first max-sm:mr-auto" aria-label={`Thôi ghép ${computer.name}`}>
                 Thôi ghép
               </Button>
               </div>
