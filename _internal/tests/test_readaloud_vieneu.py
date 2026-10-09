@@ -603,6 +603,38 @@ def test_smileys_stars_dashes_and_cjk_punctuation(text: str, said: str) -> None:
 
 
 @pytest.mark.parametrize("text, said", [
+    ("Gì vậy!? Thật sao?!", "Gì vậy? Thật sao?"),  # sea-g2p chỉ giữ dấu ĐẦU của dãy: "!?" mất dấu hỏi nếu để nguyên
+    ("Cái gì??? Không!!!", "Cái gì? Không!!!"),
+    ("Hả?! Ừ... thật à?", "Hả? Ừ... thật à?"),
+])
+def test_a_run_of_question_and_exclamation_marks_with_a_question_is_one_question_mark(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
+def test_a_studio_short_question_keeps_its_mark_through_vieneu(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Studio đọc bằng gói vieneu: `keep_vieneu_final_mark` thay hai hàm chốt dấu của nó, khúc dưới 5 từ giữ "?" / "!", khúc thiếu dấu vẫn thêm "."."""
+    pytest.importorskip("vieneu_utils")
+    import vieneu_utils.phonemize_text as pt
+
+    from abook.tts import keep_vieneu_final_mark
+
+    for name in ("punc_norm", "_phonemize_cached"):
+        monkeypatch.setattr(pt, name, getattr(pt, name))
+    monkeypatch.setattr(pt, "_abook_keeps_final_mark", False, raising=False)
+    long = "Hôm nay trời đẹp lắm và tôi muốn đi chơi cùng anh"
+    before = {text: pt.phonemize_text_with_emotions(pt.normalize_to_chunks_v3_with_gaps(text)[0][0]) for text in ("Thật sao?", "Đi!", "Gì cơ", "Hả?!", long, long + "?", "Tôi đi, anh ở lại nhé!")}
+    assert before["Thật sao?"].endswith(".") and before["Đi!"].endswith(".")  # đúng cái cần sửa
+    keep_vieneu_final_mark()
+    keep_vieneu_final_mark()  # lần hai không đặt chồng
+    after = {text: pt.phonemize_text_with_emotions(pt.normalize_to_chunks_v3_with_gaps(text)[0][0]) for text in before}
+    assert after["Thật sao?"].endswith("?") and after["Đi!"].endswith("!") and after["Hả?!"].endswith("?")
+    assert after["Gì cơ"].endswith(".")
+    for text in (long, long + "?", "Tôi đi, anh ở lại nhé!", "Gì cơ"):
+        assert after[text] == before[text], text  # khúc dài và khúc thiếu dấu không đổi
+    assert pt.phonemize_text_with_emotions(pt.normalize_to_chunks_v3_with_gaps("Ờ [cười] sao?")[0][0]).endswith("?")  # đường có cue cảm xúc cũng vậy
+
+
+@pytest.mark.parametrize("text, said", [
     ("Tên là【Song Kiếm Thuật】!” rồi.", "Tên là,【Song Kiếm Thuật】!” rồi."),
     ("Của 【Trường】rất xinh. Khung 【 Số dư 】 nữa.", "Của, 【Trường】,rất xinh. Khung, 【 Số dư 】, nữa."),
     ("Tiến hóa: [Bậc 1] xong [1] và kỹ năng [Hỏa] nữa.", "Tiến hóa: [Bậc 1] xong [1] và kỹ năng, [Hỏa], nữa."),  # chú thích "[1]" để nguyên; sau dấu hai chấm đã có nhịp
