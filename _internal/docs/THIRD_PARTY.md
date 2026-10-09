@@ -133,6 +133,11 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
   luận (`abook/readaloud/vieneu_engine.py`) viết lại theo mã của `vieneu` 3.8.1 (Phạm Nguyễn Ngọc Bảo, Apache-2.0) - ghi nguồn ở đầu
   file. Chữ -> phoneme: wheel `sea-g2p` 0.10.0 (pnnbao97, Apache-2.0) tải cùng mô-đun. Mốc từng chữ dùng lại model căn chữ của Studio
   (mục trên). Khi phân phối: kèm giấy phép Apache-2.0 và ghi chú của các dự án này.
+  "Bản tăng tốc" của mô-đun này (tải khi người dùng bấm, `readaloud/vieneu_gguf.py`): audio.cpp v0.9.1 (0xShug0 / ShugoAI LLC, Apache-2.0) - chỉ `audiocpp_server.exe`
+  dựng lại từ mã nguồn gốc không sửa (MSVC, nhắm AVX2; `BUILD.txt` trong gói nói cách dựng), kèm DLL runtime Visual C++ (phân phối lại theo điều khoản Visual Studio),
+  `LICENSE-audio.cpp.txt` và `third_party/` (ggml MIT, cJSON MIT, cpp-httplib MIT, libyaml MIT, sentencepiece Apache-2.0; `external/llama_tokenizer` dẫn xuất từ
+  llama.cpp, MIT); gói zip ghim SHA-256 trên Hugging Face `NGDtuanh/abook-music-student`. Trọng số: `vieneu-v3-turbo-q8_0.gguf` của pnnbao-ump/VieNeu-TTS-v3-Turbo
+  (Apache-2.0, ghim commit + SHA-256), cùng model với bản ONNX ở trên.
 - Giọng Supertonic 3 (mô-đun tải khi người dùng bấm, `webui/supertonic_module.py`; không nằm trong bộ cài): model Supertonic 3 (Supertone Inc.,
   99 triệu tham số, ONNX) giấy phép **BigScience OpenRAIL-M** - trọng số và mười file giọng tải thẳng từ Hugging Face `Supertone/supertonic-3`
   (ghim commit + SHA-256 từng file; hãng đã giải thể, repo lưu trữ 09-09-2026 nên đây là bản cuối), kèm file LICENSE của hãng đặt cạnh model.

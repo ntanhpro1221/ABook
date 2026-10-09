@@ -8,11 +8,13 @@ import { formatSize } from "@/studio/musicLocal";
 import { forgetVoices, switchVoices } from "./readAloudVoice";
 import type { ReadAloudVoice } from "./readAloud";
 import {
+  acceleratedNote,
   benchmarkLabel,
   initialChoices,
   meteredNotice,
   selectionBytes,
   suggestionText,
+  toggleChoice,
   lowerFirst,
   tierVoicePrefix,
   VIENEU_COPY,
@@ -33,6 +35,8 @@ export interface VieneuBackend {
   status(): Promise<VieneuStatus>;
   start(choices?: VieneuChoiceId[]): Promise<VieneuStatus>;
   measure(): Promise<VieneuStatus>;
+  /** Công tắc "Dùng bản tăng tốc" (máy tính). */
+  accelerate?(on: boolean): Promise<VieneuStatus>;
   remove?(choice: VieneuChoiceId): Promise<VieneuStatus>;
   /** Huỷ lần tải đang chạy: phần đã tải giữ để lần sau làm tiếp. */
   cancel?(): Promise<VieneuStatus>;
@@ -44,6 +48,7 @@ export const desktopVieneu: VieneuBackend = {
   start: (choices) => api<VieneuStatus>("/api/readaloud/vieneu", { method: "POST", body: choices ? { choices } : {} }),
   measure: () => api<VieneuStatus>("/api/readaloud/vieneu/measure", { method: "POST", body: {} }),
   cancel: () => api<VieneuStatus>("/api/readaloud/vieneu/cancel", { method: "POST", body: {} }),
+  accelerate: (on) => api<VieneuStatus>("/api/readaloud/vieneu/accelerate", { method: "POST", body: { on } }),
   voices: () => api<ReadAloudVoice[]>("/api/readaloud/voices"),
 };
 
@@ -138,7 +143,7 @@ export function VieneuModuleCard({
     switchVoices(tierVoicePrefix(suggestion.tier), target);
     toast.success(suggestion.switchTo === "nano" ? "Đã chuyển sang giọng VieNeu Nano" : "Đã chuyển sang giọng trực tuyến");
   };
-  const toggle = (id: VieneuChoiceId, on: boolean) => setChosen(on ? [...new Set([...picked, id])] : picked.filter((item) => item !== id));
+  const toggle = (id: VieneuChoiceId, on: boolean) => setChosen(toggleChoice(status, picked, id, on));
   const failed = status.state === "error";
   const canPick = !working && status.state !== "unsupported";
   const suggestion = status.suggestion && !working ? suggestionText(status.suggestion) : null;
@@ -192,6 +197,21 @@ export function VieneuModuleCard({
           );
         })}
       </ul>
+      {status.accelerated && backend.accelerate && (
+        <div className="space-y-1">
+          <label className={cn("flex items-center gap-2 text-sm", canPick ? "cursor-pointer" : "cursor-default")}>
+            <input
+              type="checkbox"
+              className="size-4 accent-[var(--accent)]"
+              checked={status.accelerated.on}
+              disabled={!canPick || busy}
+              onChange={(event) => void run(() => backend.accelerate!(event.target.checked), "Chưa đổi được cách đọc")}
+            />
+            Dùng bản tăng tốc
+          </label>
+          <p className="text-[13px] text-fg-2 text-pretty">{acceleratedNote(status.accelerated)}</p>
+        </div>
+      )}
       {copy.tiers.map((tier) =>
         status.benchmark[tier] ? (
           <p key={tier} className="text-[13px] text-fg-2 text-pretty">{benchmarkLabel(tier, status.benchmark[tier]!, status.slowRtf)}</p>
