@@ -410,10 +410,25 @@ def test_apply_student_with_p0_on_every_scene_takes_the_t_level_from_p0_with_num
     assert [s["tension"] for s in got] == [pytest.approx(0.1496 + 0.075, abs=6e-4), pytest.approx(0.1496 - 0.225, abs=6e-4),
                                            pytest.approx(0.1496 + 0.375, abs=6e-4)]
     assert all(s["moodSource"] == "student" for s in got)
-    assert [(s["studentValence"], s["studentTension"]) for s in got] == [(0.3, 0.1), (0.0, -0.2), (-0.2, 0.4)], "độ lệch thô"
+    assert [(s["studentValence"], s["studentArousal"], s["studentTension"]) for s in got] == [(0.3, -0.1, 0.1), (0.0, 0.2, -0.2),
+                                                                                         (-0.2, -0.1, 0.4)], "độ lệch thô"
     assert [(s["llmValence"], s["llmTension"]) for s in got] == [(0.5, 0.8), (0.1, 0.6), (-0.3, 0.4)], "giữ giá trị P0 để so"
-    for field in ("arousal", "labelValence", "labelTension", "emotions", "start", "end", "firstSegment", "lastSegment"):
-        assert [s[field] for s in got] == [s[field] for s in scenes], field  # arousal KHÔNG lấy dE
+    # arousal: mức = TB nhãn .25 (mọi đoạn .25); dE = -.1 / .2 / -.1 -> TB = (-6 + 24 - 6) / 240 = .05 -> .25 - .15 / .25 + .15 / .25 - .15
+    assert [s["arousal"] for s in got] == [pytest.approx(0.1, abs=6e-4), pytest.approx(0.4, abs=6e-4), pytest.approx(0.1, abs=6e-4)]
+    for field in ("labelValence", "labelTension", "emotions", "start", "end", "firstSegment", "lastSegment"):
+        assert [s[field] for s in got] == [s[field] for s in scenes], field
+
+
+def test_apply_student_takes_the_energy_shape_from_the_student_around_the_label_level_with_numbers_worked_by_hand() -> None:
+    # Q06-E (Corpus PLAN_q06_e.md): mức E giữ TB nhãn câu theo thời lượng, hình E từ dE. Nhãn arousal .6 / 0 / .2 -> TB = (36 + 0 + 12) / 240
+    # = .2; dE - TB = -.15 / .15 / -.15 -> .05 / .35 / .05. Có P0 hay không thì E cũng vậy (P0 không chấm E).
+    scenes = [_scene(0, 60, 0.2, 0.1, 1, 10), _scene(60, 180, 0.0, 0.2, 11, 20), _scene(180, 240, -0.2, 0.0, 21, 30)]
+    for scene, arousal in zip(scenes, (0.6, 0.0, 0.2)):
+        scene["arousal"] = arousal
+    got = music_scenes.apply_student(scenes, ITEMS)
+    assert [s["arousal"] for s in got] == [pytest.approx(0.05, abs=6e-4), pytest.approx(0.35, abs=6e-4), pytest.approx(0.05, abs=6e-4)]
+    hot = [dict(scene, arousal=0.95) for scene in scenes]
+    assert max(s["arousal"] for s in music_scenes.apply_student(hot, ITEMS)) == 1.0, "kẹp về thang [-1, 1]"
 
 
 def test_apply_student_without_p0_on_every_scene_takes_the_t_level_from_the_labels_with_numbers_worked_by_hand() -> None:
@@ -471,8 +486,11 @@ def test_chapter_scenes_takes_the_shape_from_the_student_and_falls_back_to_the_c
     assert [s["tension"] for s in got] == [pytest.approx(max(-1.0, min(1.0, level_t + d)), abs=2e-3) for d in centred("dT")]
     assert [(s["llmValence"], s["llmTension"]) for s in got] == [(s["llmValence"], s["llmTension"]) for s in level]
     assert [(s["studentValence"], s["studentTension"]) for s in got] == [(i["dV"], i["dT"]) for i in items]
-    for field in ("start", "end", "firstSegment", "lastSegment", "reason", "lines", "sd", "emotions", "confidence", "arousal"):
-        assert [s[field] for s in got] == [s[field] for s in level], field  # ranh giới, chữ, arousal không đổi
+    level_e = mean([s["arousal"] for s in plain])  # mức E = TB nhãn câu, hình E từ dE (Q06-E)
+    assert [s["arousal"] for s in got] == [pytest.approx(max(-1.0, min(1.0, level_e + d)), abs=2e-3) for d in centred("dE")]
+    assert [s["studentArousal"] for s in got] == [i["dE"] for i in items]
+    for field in ("start", "end", "firstSegment", "lastSegment", "reason", "lines", "sd", "emotions", "confidence"):
+        assert [s[field] for s in got] == [s[field] for s in level], field  # ranh giới, chữ không đổi
     # Không có LLM: học sinh vẫn chạy, mức T từ nhãn.
     no_llm = music_scenes.chapter_scenes(script, None, None, items)
     assert [s["moodSource"] for s in no_llm] == ["student"] * 3

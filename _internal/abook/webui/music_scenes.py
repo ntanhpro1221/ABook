@@ -403,9 +403,12 @@ def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | No
         L_T = clip(1.066 * TB(pT) - 0.490)                                  nếu MỌI đoạn đã có P0 (moodSource "llm"); pT = tension P0
         L_T = clip(4.022 * TB(labelTension) - 0.056)                        nếu không (M3: nhãn đủ thay P0 ở mức chương hơi kém)
         valence = clip(L_V + k * (dV - TB(dV)))   tension = clip(L_T + k * (dT - TB(dT)))     k = 1 (CL của P0 dùng 0.5)
+        arousal = clip(TB(arousal) + k * (dE - TB(dE)))      mức E vẫn là TB nhãn câu của chương (CL-E 07-10: không cần sửa mức);
+                                                             hình E từ học sinh (Q06-E 10-10, Corpus PLAN_q06_e.md: r E trong
+                                                             chương bộ 7 .391 so với .141 của nhãn câu)
 
-    Chương một đoạn: độ lệch 0 nên đoạn = mức chương. arousal, sd, emotions, confidence giữ nguyên (arousal vẫn từ nhãn câu, KHÔNG dùng dE).
-    Đoạn mang `moodSource` = "student", `studentValence` / `studentTension` = dV / dT thô, và `llmValence` / `llmTension` khi chính đoạn ấy đã có P0.
+    Chương một đoạn: độ lệch 0 nên đoạn = mức chương. sd, emotions, confidence giữ nguyên.
+    Đoạn mang `moodSource` = "student", `studentValence` / `studentArousal` / `studentTension` = dV / dE / dT thô, và `llmValence` / `llmTension` khi chính đoạn ấy đã có P0.
     Trả None (caller dùng `apply_chapter_level`, đường hôm nay) khi không có mục cho MỌI đoạn của chương. Thuần hàm: không sửa đoạn đưa vào."""
     weights = [max(0.0, float(scene["end"]) - float(scene["start"])) for scene in scenes]
     total = sum(weights)
@@ -413,7 +416,7 @@ def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | No
         return None
     by_key = {(item.get("chapterId"), item.get("firstSegment"), item.get("lastSegment")): item for item in items if isinstance(item, dict)}
     try:
-        deviations = [(float(item["dV"]), float(item["dT"]))
+        deviations = [(float(item["dV"]), float(item["dE"]), float(item["dT"]))
                       for item in (by_key[(scene.get("chapterId"), scene.get("firstSegment"), scene.get("lastSegment"))] for scene in scenes)]
     except (KeyError, TypeError, ValueError):
         return None
@@ -429,11 +432,13 @@ def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | No
         level_t = clip(CHAPTER_LEVEL_T[0] * mean([float(scene["tension"]) for scene in scenes]) + CHAPTER_LEVEL_T[1])
     else:
         level_t = clip(CHAPTER_LEVEL_T_LABELS[0] * mean([float(scene["labelTension"]) for scene in scenes]) + CHAPTER_LEVEL_T_LABELS[1])
-    mean_dv, mean_dt = mean([dv for dv, _dt in deviations]), mean([dt for _dv, dt in deviations])
+    level_e = mean([float(scene["arousal"]) for scene in scenes])
+    mean_dv, mean_de, mean_dt = (mean([dev[axis] for dev in deviations]) for axis in range(3))
     out = []
-    for scene, (dv, dt) in zip(scenes, deviations):
-        fields = {"moodSource": "student", "studentValence": round(dv, 3), "studentTension": round(dt, 3),
+    for scene, (dv, de, dt) in zip(scenes, deviations):
+        fields = {"moodSource": "student", "studentValence": round(dv, 3), "studentArousal": round(de, 3), "studentTension": round(dt, 3),
                   "valence": round(clip(level_v + STUDENT_SHAPE * (dv - mean_dv)), 3),
+                  "arousal": round(clip(level_e + STUDENT_SHAPE * (de - mean_de)), 3),
                   "tension": round(clip(level_t + STUDENT_SHAPE * (dt - mean_dt)), 3)}
         if scene.get("moodSource") == "llm":
             fields.update(llmValence=round(float(scene["valence"]), 3), llmTension=round(float(scene["tension"]), 3))
