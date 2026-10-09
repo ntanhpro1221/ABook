@@ -43,6 +43,8 @@ SEVERITY = {
     "narrator": 0.9,  # đoạn kể bởi người khác mà máy cứ gán lời họ cho "tôi": sai người ở cả một đoạn
 }
 EXAMPLES = 3
+# Thẻ "gọi tên chính người nói": tối đa ngần này người nói quanh câu làm ứng viên đầu tiên.
+NEARBY_CHOICES = 4
 # Thẻ "Lượt đối đáp" gộp một chuỗi câu liền nhau cùng người thành một thẻ, tối đa ngần này câu. Số CHẴN: khúc sau bắt đầu
 # đúng nhịp xen kẽ của khúc trước (câu thứ 9 là câu giữ nguyên, như câu 1, 3...).
 TURN_CHAIN_MAX = 8
@@ -356,14 +358,33 @@ def minor_role_groups(lines_by_speaker: dict[str, list[Any]], decided: set[str])
     return {key: members for key, members in groups.items() if len(members) > 1}
 
 
-def calls_themselves(row: Any) -> bool:
-    """Câu mở đầu bằng lời GỌI chính người đang giữ câu ("Lucien, ..." mà nhãn là LUCIEN): gần như chắc là sai - tên đứng
-    đầu câu kèm dấu phẩy thường là người nghe."""
-    speaker = str(row["speaker"])
-    if not _is_named(speaker):
-        return False
-    name = _speaker_label(speaker)
-    return bool(name) and LEADING.sub("", str(row["text"])).upper().startswith(name.upper() + ",")
+def self_addressed(connection: Any, chapter_id: int | None = None) -> dict[int, list[str]]:
+    """segments.id -> những người có tên nói quanh câu (gần nhất trước), cho câu thoại gán cho người mà chính câu ấy GỌI
+    ("Lucien, ..." / "..., Satomi-san." / "Karin-nim"): không ai gọi tên chính mình - gần như chắc sai (100% theo đáp án,
+    `first_person.addressed_names`). Luật tự sửa của dây chuyền (`_repair_dialogue_turns_by_address`) chỉ sửa khi chắc; câu
+    nó để nguyên rơi vào đây, nên hộp việc hỏi đúng những câu ấy. Tính lúc xem từ SQLite - không có dấu nào lưu. Người
+    nói KHÔNG bị đổi. `chapter_id`: chỉ xét câu của chương ấy (người có tên và cách gọi vẫn tính trên cả cuốn)."""
+    from ..character_registry import self_addressed as registry_self_addressed  # nặng: chỉ nạp khi dựng hộp việc
+
+    tables = store._table_names(connection)
+    columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
+    if "canonical_character_id" not in columns or "characters" not in tables:
+        return {}
+    rows = connection.execute(
+        "SELECT id, chapter_id, seq, text, speaker, kind, canonical_character_id FROM segments"
+        " WHERE kind != 'narration' ORDER BY chapter_id, seq"
+    ).fetchall()
+    found: dict[int, set[str]] = defaultdict(set)
+    for row in connection.execute("SELECT id, display_name FROM characters"):
+        found[int(row[0])].add(str(row[1] or ""))
+    if "character_aliases" in tables:
+        for row in connection.execute("SELECT character_id, alias FROM character_aliases"):
+            found[int(row[0])].add(str(row[1] or ""))
+    aliases = {
+        str(row["speaker"]): found.get(int(row["canonical_character_id"] or 0), set()) - {""}
+        for row in rows
+    }
+    return registry_self_addressed(rows, aliases, lambda row: chapter_id is None or int(row["chapter_id"]) == chapter_id)
 
 
 def work_items(project_root: Path) -> dict[str, Any]:
@@ -400,6 +421,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             for row in connection.execute("SELECT id, voice_key, preset_name FROM voice_profiles")
         } if "voice_profiles" in store._table_names(connection) else {}
         turns = merged_turns(connection)
+        self_addressed_ids = self_addressed(connection)
         pronunciations = connection.execute(
             "SELECT surface, spoken_form, confidence, locked FROM pronunciations WHERE confidence < 0.9"
         ).fetchall() if "pronunciations" in store._table_names(connection) else []
@@ -634,13 +656,17 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "requested": {"male": "Nam", "female": "Nữ"}.get(wish["gender"]) if wish is not None else None,
         })
 
-    # 2. Người nói lại chính là người được GỌI ở đầu câu ("Lucien, ..." mà nhãn là LUCIEN): gần như chắc là sai.
+    # 2. Người nói lại chính là người được GỌI ("Lucien, ..." / "..., Satomi-san." mà nhãn là LUCIEN/SATOMI): không ai gọi tên
+    #    chính mình - sai 100% theo đáp án (self_addressed). Ứng viên: người có tên nói trong 6 đoạn quanh đó (gần nhất trước),
+    #    rồi người nói nhiều nhất chương; đây chính là những câu luật tự sửa của dây chuyền không chắc nên để nguyên.
     for row in spoken:
-        if not calls_themselves(row):
+        if int(row["id"]) not in self_addressed_ids:
             continue
         speaker = str(row["speaker"])
         name = speaker_label(speaker)
-        choices = _cast_choices(spoken, {int(row["chapter_id"])}, {speaker.casefold()}, speaker_label)
+        nearby = [{"label": speaker_label(person), "value": person} for person in self_addressed_ids[int(row["id"])]]
+        choices = nearby[:NEARBY_CHOICES]
+        choices += _cast_choices(spoken, {int(row["chapter_id"])}, {speaker.casefold()}, speaker_label)[:max(0, 4 - len(choices))]
         choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
         fix = _speaker_fix([row], choices, speaker, speaker_wishes, speaker_label)
         if fix is None:
@@ -648,8 +674,9 @@ def work_items(project_root: Path) -> dict[str, Any]:
         items.append({
             "kind": "vocative",
             "key": f"vocative:{row['id']}",
-            "title": f"Câu mở đầu bằng lời gọi “{name}” lại gán cho chính {name}",
-            "problem": "Tên đứng đầu câu và có dấu phẩy thường là người NGHE, không phải người nói.",
+            "title": f"Câu này gọi tên “{name}” nhưng lại gán cho chính {name}",
+            "problem": f"Không ai gọi tên chính mình: câu có tên {name} thường là nói với {name} hay nói về {name}, không"
+                       f" phải {name} nói.",
             "affected": 1,
             "doubt": 0.7,
             "options": ["Chọn người nói khác", "Giữ nguyên"],

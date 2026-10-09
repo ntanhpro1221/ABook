@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Việc cần anh
+
+- Câu thoại gọi đúng tên người đang được gán nói nó ("Kasagi-san, …" mà giọng lại là Kasagi) mà app không đủ chắc để tự sửa nay hiện thành thẻ "Câu này gọi tên … nhưng lại gán cho chính …" - ở hộp "Việc cần anh" và đánh dấu trong tab Kịch bản, cả trên máy tính và điện thoại. Các lựa chọn là những người nói quanh câu ấy, rồi người nói nhiều nhất chương, Người kể và Vai phụ không tên; app vẫn giữ nguyên người nói cho tới khi anh chọn.
+
+### Phân vai giọng đọc
+
+- Truyện ghi người nói bằng gạch + tên ở cuối câu ("… –Noru.") không còn bị đọc sai: tên ấy là nhãn người nói chứ không phải lời gọi, nên app không chuyển câu sang người khác nữa (bản 0.4.35 từng đổi nhầm những câu đúng thành giọng người khác ở loại truyện này).
+
 ## [0.4.35] - 2026-10-09
 
 ### Phân vai giọng đọc
