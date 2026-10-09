@@ -4337,6 +4337,23 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 09-10 14:3x - Giám khảo nghe nhạc (M2E) thích bài chọn theo học sinh q17 hơn đường mức chương đã cài
+
+Học sinh q17 (Qwen3-1.7B cắt 14 lớp + ridge, đoán hình không khí trong chương) được đem chọn bài thật từ danh mục, theo đúng cách
+nhánh app `music/q17-scene-student` áp (mức chương CL + độ lệch học sinh), rồi chấm bằng giám khảo âm thanh độc lập Music2Emotion
+(đã kiểm hợp lệ 07-10). Ghi trước trong `PLAN_lfe.md`; mô hình là mô hình CI (không học trên bộ đo nào).
+
+Lỗi giám khảo TB chương (|V/E bài theo giám khảo − đáp án|, thấp là hợp đáp án hơn), 62 chương, q17 đổi bài ở 319/360 đoạn:
+
+| | đáp án | app hôm nay | CL (đã cài) | q17 |
+|---|---|---|---|---|
+| bộ học 4+5+5b+6 (42 ch) | .306 | .400 | .379 | .356 |
+| bộ 7 (20 ch) | .275 | .342 | .319 | .303 |
+
+- Gộp: lỗi(CL) − lỗi(q17) = +.021, KTC 95 % theo chương [+.004, +.037] -> **q17 tốt hơn** theo giám khảo; thu hẹp chừng 30 %
+  khoảng cách từ CL tới bài chọn theo đáp án. So app trước CL: +.042 [+.019, +.066].
+- Đây là thước thứ hai, không phải cổng. Luật triển khai q17 vẫn là luật ghi trước trên bộ cuối (CI so qwen06 và hơn P0 .10).
+
 ### 09-10 00:3x - NTS (học sinh ranh giới đổi nơi/thời gian) không qua cổng xác nhận, hụt 0,1 lỗi mỗi giờ
 
 NTS là mmBERT-small phân loại từng khe giữa hai câu, học từ ranh giới bạc, chạy CPU (`PLAN_nt_student.md`). Luật chọn lấy bản ce
