@@ -30,14 +30,15 @@ export function UnpairDialog({
       </div>
       <div className="mt-5 flex flex-col gap-2">
         {copy?.send && (
-          <Button variant="primary" loading={busy === "send"} disabled={busy !== null} onClick={() => onChoose("send")}>
+          <Button variant={copy.sendPrimary ? "primary" : "secondary"} loading={busy === "send"} disabled={busy !== null} onClick={() => onChoose("send")}>
             {copy.send}
           </Button>
         )}
         <Button variant="danger" loading={busy === "discard"} disabled={busy !== null} onClick={() => onChoose("discard")}>
           {copy?.discard}
         </Button>
-        <Button variant="ghost" disabled={busy !== null} onClick={onCancel}>
+        {/* Máy kia tắt: nút chính là Huỷ (gửi lúc này sẽ hỏng), không phải "Gửi trước". */}
+        <Button variant={copy?.send && !copy.sendPrimary ? "primary" : "ghost"} disabled={busy !== null} onClick={onCancel}>
           {copy?.cancel}
         </Button>
       </div>

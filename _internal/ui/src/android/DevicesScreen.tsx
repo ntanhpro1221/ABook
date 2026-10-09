@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
+import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
 import { Button, EmptyState, Progress } from "@/shared/ui";
 import { useUnpair } from "@/shared/useUnpair";
 import { backgroundHelp } from "./backgroundHelp";
@@ -77,7 +78,7 @@ function PairPanel() {
           </div>
         </div>
         <ol className="mt-4 space-y-1.5 text-sm text-fg-2">
-          <li>1. Trên máy tính: mở ABook → Cài đặt → bật “Cho phép thiết bị khác kết nối qua Wi-Fi” → bấm “Ghép thiết bị mới”.</li>
+          <li>1. Trên máy tính: mở ABook → Cài đặt → bật “{SYNC_SWITCH_LABEL}” → bấm “Ghép thiết bị mới”.</li>
           <li>2. Chọn máy tính bên dưới và nhập mã 6 số vừa hiện trên máy tính.</li>
         </ol>
       </div>

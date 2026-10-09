@@ -9,7 +9,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Việc cần anh
 
-- Những câu mà máy tự thấy mình gán người nói không chắc (chỉ khoảng một câu trong mười, câu kém chắc nhất của cuốn) hiện thành thẻ "Ai nói câu này - …?" kèm mức chắc của máy, bấm chọn người đúng ngay trên thẻ như các thẻ khác; cuốn nào máy chưa ghi mức chắc thì không có thẻ này.
+- Những câu mà máy tự thấy mình gán người nói không chắc (chỉ khoảng một câu trong mười, câu kém chắc nhất của cuốn) hiện thành thẻ "Ai nói câu này - …?" kèm mức chắc của máy ("Máy gán cho … nhưng chỉ chắc khoảng 20%."), bấm chọn người đúng ngay trên thẻ như các thẻ khác; thẻ này không tô sẵn ai như gợi ý của máy; cuốn nào máy chưa ghi mức chắc thì không có thẻ này.
+
+### Máy tính: sửa lỗi nhỏ khi dùng
+
+- Một dự án bị hỏng (không đọc được) không còn làm trắng cả trang Dự án: dòng "Không đọc được" hiện ra và bấm "…" là xoá được; một dòng lỗi khi vẽ cũng chỉ báo "Không đọc được dự án này" chứ không kéo cả danh sách theo.
+- Thanh phát không còn chồng nút lên nhau khi cửa sổ không quá rộng (1024-1500 px): nhãn nhạc nền và tên giọng chỉ hiện chữ khi thanh đủ chỗ, còn lại chỉ là biểu tượng; không nút nào bị che.
+- "Thêm sách từ file…" chọn nhiều file: nhấn Esc hay bấm ra ngoài khi còn sách chưa thêm thì hộp hỏi lại ("Còn 2 cuốn chưa thêm…") thay vì lặng lẽ bỏ cả hàng; "Thêm tất cả phần còn lại" xếp các cuốn vào thư viện đúng thứ tự đã chọn; thông báo sau khi thêm nói "Đọc được ngay; bấm Nghe ngay để nghe." thay vì "chưa có âm thanh".
+- Thẻ sách chữ trong Thư viện ghi tác giả (nếu có) thay vì "Hoài My (Edge)"; huy hiệu tên máy trên sách của máy khác nằm ở dải dưới bìa, không đè lên tên sách.
+- Gỡ ghép một máy tính khác còn sửa chưa gửi: hộp nói tên sách như bạn đã đổi, và hỏi thật máy kia có đang bật không - máy kia tắt thì "Thử gửi trước rồi gỡ" không còn là nút chính, kèm dòng báo máy ấy đang tắt. Lời báo "không kết nối được" nhắc đúng tên công tắc ở Cài đặt ("Cho phép thiết bị khác kết nối qua Wi-Fi").
+- Cài đặt › Máy tính khác: lời báo lỗi ghép xuống dòng cho đọc hết thay vì bị cắt; dòng "Vân tay" chỉ hiện 8 ký tự đầu để đối chiếu (đủ 64 ký tự khi rê chuột vào).
 
 ## [0.4.37] - 2026-10-09
 

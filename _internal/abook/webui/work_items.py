@@ -594,7 +594,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "kind": "speaker",
                 "key": f"speaker:{stable_id}",
                 "title": f"Ai nói câu này - {speaker_label(current)}?",
-                "problem": f"Máy gán cho {speaker_label(current)} nhưng không chắc ({round(float(found['p_first']) * 100)}%).",
+                "problem": f"Máy gán cho {speaker_label(current)} nhưng chỉ chắc khoảng {round(float(found['p_first']) * 100)}%.",
+                "suggested": False,  # không có ứng viên nào được đề xuất: nút đầu không được tô như "máy đề xuất"
                 "affected": 1,
                 "doubt": round(1 - float(found["p_first"]), 3),
                 "options": list(dict.fromkeys([speaker_label(current)] + [choice["label"] for choice in choices])),

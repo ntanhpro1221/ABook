@@ -2151,12 +2151,17 @@ class App:
 
     def unsent_computer_edits(self, computer: str) -> dict[str, Any]:
         """Phần sửa chưa gửi của sách máy tính khác - thứ thôi ghép sẽ xoá (hộp xác nhận hỏi trước): từng cuốn, tổng, và `sendable` =
-        máy kia là máy tính (nhận được sửa; điện thoại chia sẻ thư viện thì không)."""
+        máy kia là máy tính (nhận được sửa; điện thoại chia sẻ thư viện thì không). `reachable`: máy kia trả lời NGAY lúc hỏi (chỉ hỏi khi
+        có gì để gửi) - trạng thái "thấy lần cuối" của danh sách máy có thể cũ cả phút, hộp nói "Gửi trước" mà máy kia đã tắt."""
         entry = self.computers.get(computer)
         if entry is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Máy này không ghép với máy ấy")
         books = [{"title": item["title"], "changes": item["changes"]} for item in remote_books.unsent_edits(self.library.root, computer)]
-        return {"books": books, "changes": sum(item["changes"] for item in books), "sendable": entry.get("kind") == "computer"}
+        sendable = entry.get("kind") == "computer"
+        view: dict[str, Any] = {"books": books, "changes": sum(item["changes"] for item in books), "sendable": sendable}
+        if books and sendable:
+            view["reachable"] = remote_books.reachable(entry)
+        return view
 
     def forget_computer(self, computer: str, edits: str = "") -> dict[str, Any]:
         """Thôi ghép. Còn sửa chưa gửi thì từ chối (409), trừ khi `edits` = "send" (gửi hết về máy ấy rồi mới gỡ; hỏng giữa chừng thì không

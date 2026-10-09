@@ -42,6 +42,9 @@ import {
 // Ba bước trong một hộp: chọn → xem danh sách chương (và gợi ý của máy) → thêm. Máy tính và điện thoại dùng chung; chỗ khác nhau
 // (bộ chọn, ai đọc file) nằm ở `source.textImport`.
 
+/** Dòng dưới toast "Đã thêm sách": sách chỉ có chữ đọc được ngay, nghe bằng giọng đọc - không nói "chưa có âm thanh" (nghe như không nghe được). */
+const READY_NOTE = "Đọc được ngay; bấm Nghe ngay để nghe.";
+
 function cleanPath(value: string): string {
   return value.trim().replace(/^["']+|["']+$/g, "").trim();
 }
@@ -101,6 +104,7 @@ export function AddBookDialog({
   const queueRef = useRef<QueueItem[] | null>(null);
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [working, setWorking] = useState("");
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const setQueue = (next: QueueItem[] | null) => {
     queueRef.current = next;
     setQueueState(next);
@@ -149,6 +153,7 @@ export function AddBookDialog({
     setQueue(null);
     setCurrentId(null);
     setWorking("");
+    setConfirmLeave(false);
   };
   const reset = () => {
     // Hàng: bản tạm của mọi cuốn chưa xong được bỏ (cuốn đang xem cũng nằm trong đó); một file thì như trước.
@@ -157,8 +162,14 @@ export function AddBookDialog({
     else if (choice) void importer.discard?.(choice).catch(() => undefined);
     clear();
   };
+  // Esc / bấm ra ngoài khi hàng còn sách chưa thêm: hỏi ngay trong hộp, không bỏ cả hàng im lặng (soát UX a10).
+  const unfinished = queue?.filter((item) => item.state === "waiting" && item.choice && !isBookFile(item.choice.ref)).length ?? 0;
   const close = (next: boolean) => {
     if (busy === "adding") return;
+    if (!next && unfinished > 1) {
+      setConfirmLeave((asked) => !asked); // lần Esc thứ hai là "Quay lại"
+      return;
+    }
     if (!next) reset();
     onOpenChange(next);
   };
@@ -227,7 +238,7 @@ export function AddBookDialog({
     clear();
     onOpenChange(false);
     (summary.added || summary.opened ? toast.success : toast)(summaryText(summary), {
-      description: summary.added ? "Mới có chữ để đọc - chưa có âm thanh." : undefined,
+      description: summary.added ? READY_NOTE : undefined,
     });
     if (added.length === 1 && added[0].bookId && summary.opened === 0) navigate(`/book/${added[0].bookId}`);
   };
@@ -348,7 +359,7 @@ export function AddBookDialog({
         return;
       }
       toast.success(added.how === "existing" ? "Cuốn này đã có trong thư viện" : "Đã thêm sách vào thư viện", {
-        description: added.how === "existing" ? undefined : "Mới có chữ để đọc - chưa có âm thanh.",
+        description: added.how === "existing" ? undefined : READY_NOTE,
       });
       clear(); // bản tạm đã dùng xong (native tự dọn)
       onOpenChange(false);
@@ -365,19 +376,19 @@ export function AddBookDialog({
     const start = queueRef.current;
     if (!start || currentId === null || !choice || !preview) return;
     setBusy("adding");
-    setWorking(title.trim());
     try {
-      let now: Pick<QueueItem, "state" | "note" | "bookId">;
-      if (known) now = { state: "existing", note: existing ? "Đã có trong thư viện" : "Đã thêm từ file này rồi", bookId: known.id };
-      else {
+      // Cuốn đang xem được thêm SAU các cuốn kế (addRest): cả lô vào thư viện đúng thứ tự đã chọn.
+      const addNow = async (): Promise<Pick<QueueItem, "state" | "note" | "bookId">> => {
+        setWorking(title.trim());
+        if (known) return { state: "existing", note: existing ? "Đã có trong thư viện" : "Đã thêm từ file này rồi", bookId: known.id };
         try {
           const added = await addCurrent(false);
-          now = added.how === "existing" ? { state: "existing", note: "Đã có trong thư viện", bookId: added.id } : { state: "added", bookId: added.id };
+          return added.how === "existing" ? { state: "existing", note: "Đã có trong thư viện", bookId: added.id } : { state: "added", bookId: added.id };
         } catch (error) {
-          now = { state: "error", note: (error as Error).message };
+          return { state: "error", note: (error as Error).message };
         }
-      }
-      const items = await addRest(importer, start, currentId, now, { working: setWorking, changed: setQueue, openBooks: openBookFiles });
+      };
+      const items = await addRest(importer, start, currentId, addNow, { working: setWorking, changed: setQueue, openBooks: openBookFiles });
       void client.invalidateQueries({ queryKey: ["listen"] });
       void client.invalidateQueries({ queryKey: ["storage"] });
       setQueue(items);
@@ -427,6 +438,25 @@ export function AddBookDialog({
           : "EPUB, Word (DOCX), PDF có chữ, một file TXT cả truyện, hay một thư mục mà mỗi file TXT là một chương. Sách vào Thư viện để đọc ngay. Chọn được nhiều file một lúc - từng cuốn hiện ra để xem lại trước khi thêm. Có file sách .abook (bạn bè gửi, tải về) thì chọn luôn ở đây."
       }
     >
+      {confirmLeave && (
+        <div role="alertdialog" aria-label="Đóng khi còn sách chưa thêm" className="mb-4 rounded-xl border border-warning/40 bg-warning-soft p-3.5">
+          <p className="text-sm font-medium">Còn {unfinished} cuốn chưa thêm vào thư viện. Đóng bây giờ thì các cuốn ấy sẽ không được thêm.</p>
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                reset();
+                onOpenChange(false);
+              }}
+            >
+              Bỏ các cuốn còn lại
+            </Button>
+            <Button variant="primary" onClick={() => setConfirmLeave(false)}>
+              Quay lại thêm sách
+            </Button>
+          </div>
+        </div>
+      )}
       {queue && !preview ? (
         <div>
           {busy === "reading" && (

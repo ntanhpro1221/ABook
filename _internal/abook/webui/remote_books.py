@@ -196,9 +196,12 @@ def unsent_edits(library_root: Path, computer: str) -> list[dict[str, Any]]:
         if not (folder.is_dir() and folder.name.endswith(f"({computer[:8]})")):
             continue
         for package, manifest in sorted(_manifests(folder), key=lambda item: item[0].name):
-            changes = book_edits.count(book_edits.load(package))
+            edits = book_edits.load(package)
+            changes = book_edits.count(edits)
             if changes:
-                found.append({"package": package, "title": str(manifest.get("title") or package.name), "changes": changes})
+                # Tên người nghe THẤY (đã sửa), không phải tên gốc trong gói: hộp gỡ ghép nói cuốn nào sẽ mất phần sửa.
+                title = book_edits.apply_manifest(manifest, edits).get("title")
+                found.append({"package": package, "title": str(title or package.name), "changes": changes})
     return found
 
 
@@ -278,7 +281,9 @@ class Endpoint(NamedTuple):
     computer: str = ""  # mã máy trong computers.json: Wi-Fi hỏng mà chưa biết địa chỉ Bluetooth thì tìm theo tên (`_look_for_bluetooth`)
 
 
-UNREACHABLE = "Không kết nối được máy kia - máy tắt, khác mạng hay chưa bật “Cho phép điện thoại kết nối qua Wi-Fi”"
+# Tên công tắc ở Cài đặt của máy kia - đúng chuỗi của ui/src/shared/syncSwitch.ts (tests/test_sync_switch_label.py giữ hai bên không lệch).
+SYNC_SWITCH = "Cho phép thiết bị khác kết nối qua Wi-Fi"
+UNREACHABLE = f"Không kết nối được máy kia - máy tắt, khác mạng hay chưa bật “{SYNC_SWITCH}”"
 UNREACHABLE_BLUETOOTH = ("Không kết nối được máy kia qua Bluetooth - máy kia đã bật ABook và Bluetooth chưa, và có trong tầm "
                          "sóng không?")
 
@@ -735,6 +740,15 @@ def player(entry: dict[str, Any], *, timeout: float = 2.0) -> dict[str, Any]:
     if not isinstance(reply, dict):
         raise RemoteError("Máy kia trả lời lạ - có phải ABook không?")
     return reply
+
+
+def reachable(entry: dict[str, Any], *, timeout: float = 2.0) -> bool:
+    """Máy đã ghép có trả lời ngay lúc này không (cùng lời hỏi nhẹ của `player`; không chờ máy ngủ dậy)."""
+    try:
+        player(entry, timeout=timeout)
+    except (RemoteError, OSError, ValueError):
+        return False
+    return True
 
 
 def player_command(entry: dict[str, Any], command: dict[str, Any], *, timeout: float = 5.0) -> dict[str, Any]:
