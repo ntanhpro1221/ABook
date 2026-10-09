@@ -30,7 +30,9 @@ SPOKEN_KINDS = ("dialogue", "thought")
 
 
 def enabled() -> bool:
-    return os.environ.get(ENV_FLAG, "").strip() == "1"
+    """Bật mặc định từ 09-10 (A/B cùng cây: không tốn giây đo được, nhãn trùng từng byte; LLM_Train/spkconf/lpab.txt).
+    `ABOOK_SPEAKER_LOGPROBS=0` tắt."""
+    return os.environ.get(ENV_FLAG, "").strip() != "0"
 
 
 def request_options() -> dict[str, Any]:
