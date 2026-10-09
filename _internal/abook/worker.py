@@ -198,6 +198,26 @@ def _emit(queue: Queue, kind: str, payload: dict[str, Any] | None = None) -> Non
         pass
 
 
+def run_music_after_analysis(root: Path, base_url: str, stop_requested: Any, log: Any, emit: Any, *, pause_requested: Any) -> None:
+    """Sau pha phân tích, nhạc nền tính không khí của đoạn (import muộn: worker không nạp webui khi không cần): LLM nhỏ đọc cả đoạn nếu
+    người dùng đã tải, rồi - khi Ollama đã dỡ model - học sinh đoán hình không khí trong chương nếu máy có gói. Hai việc độc lập: lỗi của
+    việc trước không chặn việc sau (và không nuốt: ném lại sau cùng để dây chuyền ghi `music_moods_skipped`); học sinh không bao giờ ném."""
+    from .webui import music_moods, music_scene_student
+
+    failure: Exception | None = None
+    try:
+        music_moods.run_after_analysis(root, base_url, stop_requested, log, emit, pause_requested=pause_requested)
+    except Exception as exc:  # noqa: BLE001 - hoãn tới sau học sinh
+        failure = exc
+    if music_scene_student.package_dir() is None:  # worker là tiến trình riêng: không có cấu hình của server
+        from .webui.library import preferences_path
+
+        music_scene_student.configure(preferences_path().with_name("music") / music_scene_student.PACKAGE_FOLDER)
+    music_scene_student.run_after_analysis(root, stop_requested, log, emit, pause_requested=pause_requested)
+    if failure is not None:
+        raise failure
+
+
 def _emit_pipeline_result(message_queue: Queue, db: ProjectDB) -> None:
     book = db.book()
     if str(book["status"]) == BookStatus.ERROR.value:
@@ -621,12 +641,8 @@ def run_worker(
             return dict(settings["resources"])
 
         def music_moods_after_analysis(base_url: str) -> None:
-            # Sau pha phân tích: nhạc nền đọc không khí cả đoạn bằng model nhỏ nếu người dùng đã tải (import muộn: worker
-            # không nạp webui khi không cần).
-            from .webui import music_moods
-
-            music_moods.run_after_analysis(paths.root, base_url, stop_event.is_set, pipeline.log, emit,
-                                           pause_requested=pause_event.is_set)
+            run_music_after_analysis(paths.root, base_url, stop_event.is_set, pipeline.log, emit,
+                                     pause_requested=pause_event.is_set)
 
         pipeline = BookPipeline(
             paths=paths,

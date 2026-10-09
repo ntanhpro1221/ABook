@@ -281,11 +281,13 @@ class _Accumulator:
 
 
 def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = None,
-                   boundaries: Mapping[str, Mapping[Any, str]] | None = None) -> list[dict[str, Any]]:
+                   boundaries: Mapping[str, Mapping[Any, str]] | None = None,
+                   student: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     """Các đoạn của một chương (`store.chapter_script` / `scripts/<n>.json` của `.abook`). `moods`: kết quả LLM đọc cả
     đoạn (`music_moods.load()["scenes"]`) - chỉ đổi valence / tension của đoạn, KHÔNG bao giờ đổi ranh giới đoạn.
     `boundaries`: ranh giới có lý do tính sẵn của chương này theo nguồn, {"llm": {id câu bắt đầu cảnh: loại}} - vào thành cờ
-    `sceneBreak` như dấu hiệu đổi cảnh (`with_scene_breaks`)."""
+    `sceneBreak` như dấu hiệu đổi cảnh (`with_scene_breaks`). `student`: hình dạng không khí trong chương do học sinh đoán
+    (`music_scene_student.load()["scenes"]`) - áp sau mức chương (`apply_student`), cũng không đổi ranh giới."""
     segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
     if not segments:
         return []
@@ -349,7 +351,7 @@ def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = 
     scenes.append(current)
     scenes = _split_long(_merge_short(scenes), segments, seconds)
     spans = _mood_spans(moods, script.get("chapterId"), segments)
-    return apply_chapter_level([_view(scene, segments, timeline, seconds, script, spans) for scene in scenes])
+    return apply_student(apply_chapter_level([_view(scene, segments, timeline, seconds, script, spans) for scene in scenes]), student)
 
 
 def apply_chapter_level(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -384,6 +386,41 @@ def apply_chapter_level(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
                  valence=round(clip(level_v + CHAPTER_LEVEL_SHAPE * (pv - mean_valence)), 3),
                  tension=round(clip(level_t + CHAPTER_LEVEL_SHAPE * (pt - mean_tension)), 3))
             for scene, pv, pt in zip(scenes, llm_valence, llm_tension)]
+
+
+def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    """Hình dạng không khí TRONG chương do học sinh đoán (music_scene_student.py; docs/MUSIC_RESEARCH.md, đường q17). Học sinh
+    không đoán mức mà đoán độ LỆCH của từng đoạn quanh mức chương (dV, dE, dT; mỗi đoạn một mục khớp chapterId + id câu đầu / cuối).
+    Với TB(x) = trung bình trọng số d = end - start của giá trị hiện có trong chương (sau `apply_chapter_level` thì TB chính là mức chương):
+
+        valence = clip(TB(valence) + dV)   arousal = clip(TB(arousal) + dE)   tension = clip(TB(tension) + dT)
+
+    Chỉ áp khi MỌI đoạn của chương có mục (đoạn nào thiếu thì trả nguyên - đường hôm nay: độ lệch là so với trung bình cả chương,
+    thiếu một đoạn là lệch cả hình). Đoạn được áp mang `moodSource` = "student"; giá trị trước khi áp ở `chapterValence` /
+    `chapterTension` / `labelArousal` (`llmValence` / `llmTension` nếu có thì giữ nguyên). Thuần hàm: không sửa đoạn đưa vào;
+    `scenes` là các đoạn của MỘT chương."""
+    weights = [max(0.0, float(scene["end"]) - float(scene["start"])) for scene in scenes]
+    total = sum(weights)
+    if not scenes or not items or total <= 0:
+        return scenes
+    by_key = {(item.get("chapterId"), item.get("firstSegment"), item.get("lastSegment")): item for item in items if isinstance(item, dict)}
+    try:
+        deviations = [tuple(float(by_key[(scene.get("chapterId"), scene.get("firstSegment"), scene.get("lastSegment"))][axis])
+                            for axis in ("dV", "dE", "dT")) for scene in scenes]
+    except (KeyError, TypeError, ValueError):
+        return scenes
+
+    def mean(axis: str) -> float:
+        return sum(w * float(scene[axis]) for w, scene in zip(weights, scenes)) / total
+
+    def clip(value: float) -> float:
+        return round(max(-1.0, min(1.0, value)), 3)
+
+    level_v, level_e, level_t = mean("valence"), mean("arousal"), mean("tension")
+    return [dict(scene, moodSource="student", chapterValence=scene["valence"], chapterTension=scene["tension"],
+                 labelArousal=scene["arousal"], valence=clip(level_v + dv), arousal=clip(level_e + de),
+                 tension=clip(level_t + dt))
+            for scene, (dv, de, dt) in zip(scenes, deviations)]
 
 
 def _mood_spans(moods: list[dict[str, Any]] | None, chapter_id: Any,
@@ -496,8 +533,9 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
 
 
 def book_scenes(scripts: Iterable[dict[str, Any]], moods: list[dict[str, Any]] | None = None,
-                boundaries: Mapping[Any, Mapping[str, Mapping[Any, str]]] | None = None) -> list[dict[str, Any]]:
-    """Các đoạn của cả cuốn, theo thứ tự chương. `moods`: xem `chapter_scenes`; `boundaries`: {chapterId: ranh giới theo
+                boundaries: Mapping[Any, Mapping[str, Mapping[Any, str]]] | None = None,
+                student: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Các đoạn của cả cuốn, theo thứ tự chương. `moods`, `student`: xem `chapter_scenes`; `boundaries`: {chapterId: ranh giới theo
     nguồn của chương ấy} (xem `chapter_scenes`)."""
     return [scene for script in scripts
-            for scene in chapter_scenes(script, moods, (boundaries or {}).get(script.get("chapterId")))]
+            for scene in chapter_scenes(script, moods, (boundaries or {}).get(script.get("chapterId")), student)]
