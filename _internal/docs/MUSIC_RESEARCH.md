@@ -4337,6 +4337,25 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 05:xx - LV-Q06 theo từng truyện: bộ 7 qua cả bốn; bộ cuối lợi lớn nhưng một truyện lệch .004 trên ngưỡng
+
+Lead duyệt LV-Q06 kèm điều kiện: không truyện nào của bộ 7 tệ hơn quá .03 MAE_V. MAE_V từng truyện, app → LV:
+
+| bộ 7 | app | LV | Δ |
+|---|---|---|---|
+| pha_dao | .234 | .179 | −.055 |
+| housemaid | .276 | .119 | −.158 |
+| gacha | .321 | .144 | −.177 |
+| max_level_newbie | .216 | .179 | −.036 |
+
+Bộ CUỐI (10 truyện mới, 20 chương; đã mở nên chỉ ghi lại; Corpus 96246ba):
+- MAE_V .270 → .183; mức V chương MAE .224 → .117, r .45 → .88.
+- 8/10 truyện tốt hơn (4 truyện tốt hơn .13–.23). rebuild_world +.034 (2 chương) là truyện duy nhất vượt .03; kamigoroshi +.010.
+- Mức T q06 ở bộ này sát P0 (r .88 vs .80), nhưng bộ học vẫn thua, nên T giữ P0.
+
+Đầu mức chương đã lên HF `NGDtuanh/abook-music-student` commit 182d945e (`scene_q06/chapter_head_q06.npz`, 17.874 byte).
+Đưa vào app: nhánh `music/q06-chapter-level` (đang làm). Đổi REVISION không bắt tải lại phần đã có đúng SHA-256.
+
 ### 10-10 04:xx - LV-Q06: mức V của chương lấy từ nhúng q06 tốt hơn hẳn nhãn câu; mức T vẫn cần P0
 
 Ghi trước ở Corpus a6d4d68, kết quả ở 7977f81. Đầu ridge đoán MỨC chương từ nhúng q06 trung bình cả chương:
