@@ -54,7 +54,7 @@ describe("labels", () => {
     expect(batchName(new Date(2026, 9, 5, 8, 7), "ab12")).toBe("Tải lên 05-10-2026 08h07 ab12");
   });
   it("shows files and size sent so far", () => {
-    expect(progressLabel({ files: 3, totalFiles: 12, bytes: 1.2 * 1024 * 1024, totalBytes: 4.5 * 1024 * 1024 })).toBe(
+    expect(progressLabel({ files: 3, totalFiles: 12, bytes: 1_200_000, totalBytes: 4_500_000 })).toBe(
       "Đang gửi 3/12 file · 1,2 MB / 4,5 MB",
     );
   });

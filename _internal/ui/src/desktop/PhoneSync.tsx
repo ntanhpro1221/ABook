@@ -135,7 +135,7 @@ export function Switch({
       checked={checked}
       onCheckedChange={onCheckedChange}
       disabled={disabled}
-      className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-switch-off transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 data-[state=checked]:bg-accent"
+      className="touch-hit relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-switch-off transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 data-[state=checked]:bg-accent"
     >
       <SwitchPrimitive.Thumb className="block size-5 translate-x-0.5 rounded-full bg-white shadow-sm transition-transform duration-150 data-[state=checked]:translate-x-[22px]" />
     </SwitchPrimitive.Root>

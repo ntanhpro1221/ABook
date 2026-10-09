@@ -184,20 +184,20 @@ def status() -> dict[str, Any]:
             "benchmark": {TIER: bench[TIER]} if tiers and isinstance(bench.get(TIER), dict) else {},
             "benchmarking": _core.state["benchmarking"],
             "suggestion": suggestion(bench, tiers) if not _core.state["benchmarking"] else None,
-            "device": facts, "recommended": CHOICE, "restart": vieneu_module._restart_pending(), "slowRtf": SLOW_RTF,
+            "cancelled": bool(_core.state["cancelled"]), "device": facts, "recommended": CHOICE, "restart": vieneu_module._restart_pending(), "slowRtf": SLOW_RTF,
         }
 
 
 # ---- tải, gỡ ----------------------------------------------------------------------------------------------------------------------
 def _install(part: Component, progress: Callable[[int], None]) -> None:
     if part.id == "libs":
-        music_module.install_libs_part(lambda done, _total: progress(done))
+        music_module.install_libs_part(lambda done, _total: progress(done), _core.cancelled)
     elif part.id == "g2p":
-        vieneu_module.install_g2p_part(progress)
+        vieneu_module.install_g2p_part(progress, _core.cancelled)
     else:
         target = _model_dir()
         assert target is not None
-        voice_module.download_files(part, target, progress)
+        voice_module.download_files(part, target, progress, _core.cancelled)
 
 
 def start(choices: list[str] | None = None) -> None:
@@ -223,6 +223,11 @@ def start(choices: list[str] | None = None) -> None:
 
 def join(timeout: float | None = None) -> None:
     _core.join(timeout)
+
+
+def cancel() -> None:
+    """Người dùng bấm Huỷ khi đang tải: dừng giữa chừng, phần đã tải được giữ để lần sau làm tiếp."""
+    _core.cancel()
 
 
 def remove(choice: str = CHOICE) -> None:

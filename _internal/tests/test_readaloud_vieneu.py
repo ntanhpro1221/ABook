@@ -381,6 +381,29 @@ def test_shared_parts_download_once_and_the_stamp_records_pins(module) -> None:
     assert (folder / "voices" / "voices_v3_turbo.json").is_file() and (folder / "lib" / "sea_g2p").is_dir()
 
 
+def test_cancel_returns_to_not_downloaded_and_the_next_start_downloads_again(module, monkeypatch: pytest.MonkeyPatch) -> None:
+    network, _measured, _folder = module
+    real = network.download
+    seen: list[bool] = []
+
+    def cancelling(item, target, progress, cancelled):
+        vieneu_module.cancel()
+        seen.append(cancelled())
+        raise studio_setup.Cancelled()
+
+    monkeypatch.setattr(studio_setup, "download", cancelling)
+    vieneu_module.start(["turbo"])
+    vieneu_module.join(10)
+    status = vieneu_module.status()
+    assert seen == [True], "cờ huỷ tới tận hàm tải"
+    assert status["state"] == "missing" and status["cancelled"] is True and status["error"] == ""
+    monkeypatch.setattr(studio_setup, "download", real)
+    vieneu_module.start(["turbo"])
+    vieneu_module.join(10)
+    status = vieneu_module.status()
+    assert status["state"] == "ready" and status["cancelled"] is False
+
+
 def test_a_changed_pin_updates_only_that_part(module, monkeypatch: pytest.MonkeyPatch) -> None:
     network, _measured, _folder = module
     vieneu_module.start(["nano"])

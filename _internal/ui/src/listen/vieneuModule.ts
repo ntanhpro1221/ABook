@@ -3,7 +3,7 @@
 // máy tính (abook/webui/supertonic_module.py) dùng cùng khung và cùng hình trạng thái, chỉ khác lời (`ModuleCopy`). Phần thuần (không React) để
 // thử riêng; thẻ ở VieneuModuleCard.tsx.
 
-import { formatSize } from "@/studio/musicLocal";
+import { CANCELLED_NOTE, formatSize } from "@/studio/musicLocal";
 
 export type VieneuChoiceId = "turbo" | "nano" | "aligner" | "supertonic";
 /** Giọng có kết quả tự đo riêng (mỗi tầng một lần đo). */
@@ -71,6 +71,8 @@ export interface VieneuStatus {
   restart?: boolean;
   /** Đang dùng mạng tính phí (dữ liệu di động của điện thoại): chỉ để nhắc, không chặn. */
   metered?: boolean;
+  /** Lần tải vừa rồi bị người dùng huỷ: phần đã tải giữ, lần sau làm tiếp (chỉ máy tính). */
+  cancelled?: boolean;
 }
 
 /** Câu nhắc trước khi tải bằng dữ liệu di động (null khi không cần nhắc). */
@@ -105,7 +107,7 @@ export const VIENEU_COPY: ModuleCopy = {
   key: "vieneu",
   name: "Giọng VieNeu",
   title: "Giọng VieNeu · tải thêm, đọc ngay trên máy",
-  invite: "Đọc sách chỉ có chữ bằng giọng hay, ngay trên máy này - không cần mạng, chữ của sách không rời khỏi máy. Tải một lần; tải xong máy tự thử vài giây xem có kịp đọc trực tiếp không.",
+  invite: "Đọc sách chỉ có chữ bằng giọng hay, ngay trên máy này - không cần mạng, chữ của sách không rời khỏi máy (app chỉ hỏi mạng lấy cấu hình và danh mục nhạc, không gửi chữ của sách). Tải một lần; tải xong máy tự thử vài giây xem có kịp đọc trực tiếp không.",
   tiers: ["turbo", "nano"],
 };
 
@@ -113,7 +115,7 @@ export const SUPERTONIC_COPY: ModuleCopy = {
   key: "supertonic",
   name: "Giọng Supertonic",
   title: "Giọng Supertonic · tải thêm, đọc ngay trên máy",
-  invite: "Mười giọng nam nữ đọc sách chỉ có chữ ngay trên máy này - nhẹ máy, không cần mạng, chữ của sách không rời khỏi máy. Tải một lần; tải xong máy tự thử vài giây xem có kịp đọc trực tiếp không.",
+  invite: "Mười giọng nam nữ đọc sách chỉ có chữ ngay trên máy này - nhẹ máy, không cần mạng, chữ của sách không rời khỏi máy (app chỉ hỏi mạng lấy cấu hình và danh mục nhạc, không gửi chữ của sách). Tải một lần; tải xong máy tự thử vài giây xem có kịp đọc trực tiếp không.",
   tiers: ["supertonic"],
 };
 
@@ -179,7 +181,8 @@ export function vieneuLabel(status: VieneuStatus, copy: ModuleCopy = VIENEU_COPY
   if (status.benchmarking) return "Đang thử giọng vừa tải trên máy này (vài giây)…";
   if (status.state === "unsupported") return status.reason ? `Máy này chưa dùng được ${mid}: ${status.reason}.` : `Máy này chưa dùng được ${mid}.`;
   if (status.restart) return `${copy.name} đã cập nhật - mở lại ABook để dùng bản mới.`;
-  if (status.state === "outdated") return `${copy.name} có bản mới - ${formatSize(status.outdatedBytes)}. Bản đang dùng vẫn đọc bình thường.`;
+  const cancelled = status.cancelled ? `${CANCELLED_NOTE} ` : "";
+  if (status.state === "outdated") return `${cancelled}${copy.name} có bản mới - ${formatSize(status.outdatedBytes)}. Bản đang dùng vẫn đọc bình thường.`;
   if (status.state === "ready") return `${copy.name} đã có trên máy: chọn trong nút Giọng đọc khi nghe sách chỉ có chữ.`;
-  return copy.invite;
+  return `${cancelled}${copy.invite}`;
 }

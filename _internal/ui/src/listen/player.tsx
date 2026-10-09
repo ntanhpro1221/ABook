@@ -1102,7 +1102,7 @@ export function PlayerProvider({
         // rồi nói đúng lý do, thay vì đổ cho file.
         const bookId = refs.current.book?.id;
         const remote = refs.current.book?.remote;
-        if (!native && typeof remote === "object" && remote.device) {
+        if (!native && remote && typeof remote === "object" && remote.device) {
           void api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`)
             .then((answer) => {
               if (answer.reachable || refs.current.book?.id !== bookId) return;

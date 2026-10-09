@@ -1179,6 +1179,13 @@ class App:
         music_module.start(scene=scene)
         return self.my_music_view()
 
+    def my_music_cancel(self, what: str) -> dict[str, Any]:
+        """Người dùng bấm "Huỷ" khi đang tải một mô-đun nhạc (`module`: Phân tích nhạc + Học sinh cảnh, `precise`: đo cảm xúc chính xác hơn): dừng
+        giữa chừng, `.part` ở lại để lần tải sau làm tiếp. Không có lần tải nào thì không làm gì."""
+        self._mutating()
+        (music_valence.cancel if what == "precise" else music_module.cancel)()
+        return self.my_music_view()
+
     def _music_module_installed(self) -> None:
         """Sau khi mô-đun tải/cập nhật xong: phân tích nốt bài CHƯA phân tích và đo độ to bù. Bài đã có kết quả của bản cũ KHÔNG bị phân tích
         lại (kết quả cũ vẫn dùng được) - người dùng bấm "Phân tích lại"."""
@@ -3105,6 +3112,12 @@ class Handler(BaseHTTPRequestHandler):
     def post_my_music_module(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.my_music_module(scene=self._body().get("scene") is True))
 
+    def post_my_music_module_cancel(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.my_music_cancel("module"))
+
+    def post_my_music_precise_cancel(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.my_music_cancel("precise"))
+
     def post_my_music_reanalyse(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.my_music_reanalyse())
 
@@ -3949,6 +3962,17 @@ class Handler(BaseHTTPRequestHandler):
     def post_readaloud_supertonic(self, _query: dict[str, list[str]]) -> None:
         self._start_voice_module(supertonic_module)
 
+    def post_readaloud_vieneu_cancel(self, _query: dict[str, list[str]]) -> None:
+        # "Huỷ" khi đang tải: dừng giữa chừng, phần đã tải giữ để lần sau làm tiếp.
+        self.app._mutating()
+        vieneu_module.cancel()
+        self._send_json(HTTPStatus.OK, vieneu_module.status())
+
+    def post_readaloud_supertonic_cancel(self, _query: dict[str, list[str]]) -> None:
+        self.app._mutating()
+        supertonic_module.cancel()
+        self._send_json(HTTPStatus.OK, supertonic_module.status())
+
     def post_readaloud_supertonic_measure(self, _query: dict[str, list[str]]) -> None:
         self.app._mutating()
         supertonic_module.measure_again()
@@ -4188,9 +4212,11 @@ ROUTES: list[Route] = [
     ("DELETE", re.compile(r"/api/readaloud/prepare"), Handler.delete_readaloud_prepare),
     ("POST", re.compile(r"/api/readaloud/vieneu"), Handler.post_readaloud_vieneu),
     ("POST", re.compile(r"/api/readaloud/vieneu/measure"), Handler.post_readaloud_vieneu_measure),
+    ("POST", re.compile(r"/api/readaloud/vieneu/cancel"), Handler.post_readaloud_vieneu_cancel),
     ("GET", re.compile(r"/api/readaloud/supertonic"), Handler.get_readaloud_supertonic),
     ("POST", re.compile(r"/api/readaloud/supertonic"), Handler.post_readaloud_supertonic),
     ("POST", re.compile(r"/api/readaloud/supertonic/measure"), Handler.post_readaloud_supertonic_measure),
+    ("POST", re.compile(r"/api/readaloud/supertonic/cancel"), Handler.post_readaloud_supertonic_cancel),
     ("POST", re.compile(r"/api/readaloud/supertonic/remove"), Handler.post_readaloud_supertonic_remove),
     ("GET", re.compile(r"/api/readaloud/online"), Handler.get_readaloud_online),
     ("PUT", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.put_readaloud_online),
@@ -4260,9 +4286,11 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/music/local"), Handler.get_my_music),
     ("POST", re.compile(r"/api/music/local/import"), Handler.post_my_music_import),
     ("POST", re.compile(r"/api/music/local/module"), Handler.post_my_music_module),
+    ("POST", re.compile(r"/api/music/local/module/cancel"), Handler.post_my_music_module_cancel),
     ("POST", re.compile(r"/api/music/local/reanalyse"), Handler.post_my_music_reanalyse),
     ("POST", re.compile(r"/api/music/local/precise"), Handler.post_my_music_precise),
     ("POST", re.compile(r"/api/music/local/precise/remove"), Handler.post_my_music_precise_remove),
+    ("POST", re.compile(r"/api/music/local/precise/cancel"), Handler.post_my_music_precise_cancel),
     ("POST", re.compile(r"/api/music/local/analyze"), Handler.post_my_music_analyze),
     ("POST", re.compile(r"/api/music/local/([0-9a-f]{40})/auto"), Handler.post_my_music_auto),
     ("DELETE", re.compile(r"/api/music/local/([0-9a-f]{40})"), Handler.delete_my_music),

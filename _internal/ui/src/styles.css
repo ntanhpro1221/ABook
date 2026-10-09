@@ -212,6 +212,69 @@
   }
 }
 
+/* Đích chạm >= 40 px ở màn hẹp hay màn cảm ứng (soát UX a14: nhiều nút 20-28 px): nới vùng bấm bằng ::after trong suốt, cỡ nhìn thấy và bố cục
+ * giữ nguyên, màn rộng chuột không đổi gì. `touch-hit` cho nút/liên kết đứng riêng (cần phần tử đã có định vị hoặc để nó tự `relative`);
+ * `touch-row` cho hàng xếp sát nhau theo chiều dọc: nâng chiều cao thật lên 40 px, để vùng nới không giành chạm của hàng bên cạnh. */
+@utility touch-hit {
+  @media (pointer: coarse), (max-width: 40rem) {
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: max(100%, 2.5rem);
+      height: max(100%, 2.5rem);
+      transform: translate(-50%, -50%);
+    }
+  }
+}
+/* Như `touch-hit` nhưng chỉ nới CHIỀU DỌC (nút trên thanh công cụ đứng sát nhau theo chiều ngang - nới ngang sẽ giành chạm của nút bên cạnh):
+ * nền của Button / IconButton. Lưu ý khoảng cách trong app là --spacing 3,5 px (không phải 4), nên `h-9` chỉ 31,5 px. */
+@utility touch-reach {
+  @media (pointer: coarse), (max-width: 40rem) {
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: max(100%, 2.5rem);
+      transform: translateY(-50%);
+    }
+  }
+}
+/* Nút ✕ và nút hành động ("Quay lại chỗ cũ", "Hoàn tác") trong thông báo của sonner: 20-24 px, cùng quy tắc nới vùng bấm. */
+@media (pointer: coarse), (max-width: 40rem) {
+  [data-sonner-toast] [data-button] {
+    position: relative;
+  }
+  [data-sonner-toast] [data-close-button]::after,
+  [data-sonner-toast] [data-button]::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 2.5rem);
+    height: max(100%, 2.5rem);
+    transform: translate(-50%, -50%);
+  }
+}
+@utility touch-row {
+  @media (pointer: coarse), (max-width: 40rem) {
+    min-height: 2.5rem;
+  }
+}
+/* Nút chỉ có biểu tượng đứng cạnh nhau theo chiều ngang (nới bằng ::after sẽ đè lên nhau): nâng cỡ thật lên 40 x 40 px. */
+@utility touch-box {
+  @media (pointer: coarse), (max-width: 40rem) {
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+    justify-content: center;
+  }
+}
+
 /* Câu đang đọc ở Đọc theo: đủ đậm để nổi lên ở cả hai giao diện (giao diện sáng trước đây chỉ 1,06:1). */
 .read-along-active {
   background: var(--read-along);
