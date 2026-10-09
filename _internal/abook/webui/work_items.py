@@ -22,6 +22,7 @@ from .. import narrator_sections
 from ..listener_overrides import (
     NARRATOR, UNNAMED, pronunciation_requests, read_overrides, speaker_requests, surface_key, voice_requests,
 )
+from .. import speaker_logprobs
 from . import narrator_cards, store
 from .address_cues import address_doubts, split_doubts
 from .humanize import shown_reading
@@ -45,6 +46,10 @@ SEVERITY = {
 EXAMPLES = 3
 # Thẻ "gọi tên chính người nói": tối đa ngần này người nói quanh câu làm ứng viên đầu tiên.
 NEARBY_CHOICES = 4
+# Thẻ "Ai nói câu này" theo logprob (speaker_logprobs.py): câu mà token đầu của tên người nói có p_first dưới ngưỡng là câu
+# đáng ngờ (đặt theo S/spkconf - chỉnh khi có số 11 truyện), và chỉ hỏi tối đa ngần này phần số câu thoại có số đo của sách.
+LOGPROB_DOUBT = 0.8
+LOGPROB_SHARE = 0.10
 # Thẻ "Lượt đối đáp" gộp một chuỗi câu liền nhau cùng người thành một thẻ, tối đa ngần này câu. Số CHẴN: khúc sau bắt đầu
 # đúng nhịp xen kẽ của khúc trước (câu thứ 9 là câu giữ nguyên, như câu 1, 3...).
 TURN_CHAIN_MAX = 8
@@ -555,6 +560,48 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "examples": [_example(row, names, speaker_label, project_root) for row in odd_rows[:EXAMPLES]],
             **fix,
         })
+
+    # 0c2. Ai nói câu này - theo ĐỘ TIN logprob của chính model (speaker_logprobs.py, cờ ABOOK_SPEAKER_LOGPROBS): câu mà token
+    #      đầu của tên người nói có xác suất thấp. Đo sớm trên 3 chương: AUROC ~0,77, duyệt 10% câu p_first thấp nhất thì 63% câu
+    #      duyệt là câu sai. Chỉ hỏi câu mà nhãn hiện tại CÒN là nhãn model sinh (khác = dây chuyền hay người nghe đã đổi, số đo
+    #      không còn nói về nhãn ấy) và câu chưa có thẻ nào ở trên (một câu một thẻ). Không có số đo = không thẻ.
+    confidences = speaker_logprobs.read_confidences(project_root)
+    measured = [
+        (row, confidences[str(row["stable_id"])]) for row in spoken
+        if row["kind"] in speaker_logprobs.SPOKEN_KINDS and str(row["stable_id"]) in confidences
+    ]
+    if measured:
+        budget = int(len(measured) * LOGPROB_SHARE + 1e-9)
+        carded = {str(line["stableId"]) for item in items for line in item.get("lines", [])}
+        unsure = sorted(
+            ((row, found) for row, found in measured
+             if found["p_first"] < LOGPROB_DOUBT and str(row["stable_id"]) not in carded
+             and renames.name_key(str(row["speaker"])) == renames.name_key(found["speaker"])),
+            key=lambda pair: (pair[1]["p_first"], int(pair[0]["chapter_id"]), int(pair[0]["seq"])),
+        )
+        for row, found in unsure:
+            if budget <= 0:
+                break
+            stable_id = str(row["stable_id"])
+            current = str(row["speaker"])
+            choices = _cast_choices(spoken, {int(row["chapter_id"])}, {current.casefold()}, speaker_label)
+            choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
+            fix = _speaker_fix([row], choices, current, speaker_wishes, speaker_label)
+            if fix is None:
+                continue
+            budget -= 1
+            items.append({
+                "kind": "speaker",
+                "key": f"speaker:{stable_id}",
+                "title": f"Ai nói câu này - {speaker_label(current)}?",
+                "problem": f"Máy gán cho {speaker_label(current)} nhưng không chắc ({round(float(found['p_first']) * 100)}%).",
+                "affected": 1,
+                "doubt": round(1 - float(found["p_first"]), 3),
+                "options": list(dict.fromkeys([speaker_label(current)] + [choice["label"] for choice in choices])),
+                "current": speaker_label(current),
+                "examples": [_example(row, names, speaker_label, project_root)],
+                **fix,
+            })
 
     # 0d. Người kể của ĐOẠN khác người kể "tôi" của sách (narrator_sections.py, ngưỡng đã đo ở b14err/P_RULE.md): model vẫn được
     #     dặn "người kể là X" nên gán thừa lời người khác cho X. Đề xuất có ngay sau khi chia câu, người dùng nhận lúc nào cũng
