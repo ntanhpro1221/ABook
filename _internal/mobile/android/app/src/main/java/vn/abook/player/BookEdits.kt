@@ -866,8 +866,13 @@ object BookEdits {
         return file?.takeIf { it.isFile }
     }
 
-    /** `book.json` nguyên văn của thư mục sách. */
-    fun rawBook(folder: File): JSONObject = JSONObject(File(folder, "book.json").readText())
+    /** Gói sách nguyên văn của thư mục sách: `book.json` (đã tải / mở từ file), không có thì `stream.json` (cuốn nghe thẳng chưa tải -
+     *  lớp sửa nằm cạnh nó, cùng hình dạng); không có cả hai thì null. */
+    fun rawBookOrNull(folder: File): JSONObject? =
+        listOf("book.json", "stream.json").map { File(folder, it) }.firstOrNull { it.isFile }?.let { JSONObject(it.readText()) }
+
+    /** Như [rawBookOrNull] nhưng ném lỗi khi thư mục không có sách. */
+    fun rawBook(folder: File): JSONObject = rawBookOrNull(folder) ?: throw IOException("Thư mục không có gói sách")
 
     /** Tên file dàn nhân vật theo book.json (mặc định cast.json). */
     private fun castName(book: JSONObject): String = listOf(book.opt("cast"), "cast.json").first { truthy(it) }.toString()
@@ -1260,7 +1265,7 @@ object BookEdits {
      */
     fun subtract(folder: File, sent: JSONObject, sentCover: ByteArray?): Int = synchronized(lock) {
         val edits = load(folder)
-        val book = File(folder, "book.json").takeIf { it.isFile }?.let { rawBook(folder) }
+        val book = rawBookOrNull(folder)
         val before = pinnedFiles(edits)
         for (key in listOf("title", "cover")) {
             if (!sent.has(key) || !edits.has(key) || !StrictJson.equal(edits.opt(key), sent.opt(key))) continue

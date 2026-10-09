@@ -72,8 +72,8 @@ class LibraryPlugin : Plugin() {
             runtime, files = MusicStudentSetup.PACKAGE + OrtRuntime.parts(abi), supported = abi != null, metered = { AndroidMusicStudent.metered(context) })
         LocalStudio.student = student
         musicImports.execute { runCatching { student.attachIfPresent() } }
-        // Gửi phần sửa về máy tính xong: tải lại sách từ máy tính (không báo "Đã tải xong") và báo giao diện làm mới.
-        EditsSync.refresh = { id -> downloadBook(id, null, null, announce = false) }
+        // Gửi phần sửa về máy tính xong: lấy lại sách từ máy ấy (không báo "Đã tải xong") và báo giao diện làm mới.
+        EditsSync.refresh = { id -> refreshAfterPush(id) }
         EditsSync.changed = { id -> notifyListeners("editsSync", JSObject().put("bookId", id)) }
         ShareService.changed = { notifyListeners("shareChanged", JSObject()) }
         Mp3Exports.events = { event -> notifyListeners("mp3Export", JSObject.fromJSONObject(event)) }
@@ -669,6 +669,17 @@ class LibraryPlugin : Plugin() {
         }
     }
 
+    /** Máy giữ sách vừa nhận phần sửa: cuốn đã tải thì tải lại (file đổi), cuốn nghe thẳng thì chỉ lấy lại gói sách và bìa - không tải cả cuốn. */
+    private fun refreshAfterPush(id: String) {
+        val (peer, remote) = Store.editDestination(id) ?: return
+        if (Store.rawManifest(id) != null) {
+            downloadBook(id, peer, remote, announce = false)
+            return
+        }
+        val manifest = Streaming.fetchManifest(context, id, peer, remote)
+        if (manifest.optJSONObject("cover") != null) Streaming.fetchSmall(context, id, "cover.jpg")
+    }
+
     /**
      * Phần việc của [download], dùng được ngoài một lời gọi giao diện: gửi phần sửa về máy tính xong thì tải lại sách (EditsSync) mà
      * không báo "Đã tải xong". `announce`: báo tiến độ cho giao diện qua sự kiện "download".
@@ -679,7 +690,7 @@ class LibraryPlugin : Plugin() {
         val remote = if (source != null) remoteId ?: throw IllegalArgumentException("thiếu remoteId") else id
         if (source == null) matchImported() // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
         val manifest = JSONObject(SyncLink.request(context, "GET", "/sync/v1/books/$remote/manifest", root = link.base, token = link.token))
-        if (source != null) manifest.put("id", id).put("source", source).put("remoteId", remote)
+        if (source != null) manifest.put("id", id).put("source", source).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, source))
         val chapters = manifest.getJSONArray("chapters")
         val files = mutableListOf<Pair<String, Long>>()
         for (index in 0 until chapters.length()) {
@@ -777,7 +788,7 @@ class LibraryPlugin : Plugin() {
             if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
                 Streaming.fetchSmall(context, id, "cover.jpg")
             }
-            books.put(JSObject.fromJSONObject(Store.linked(manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true))
+            books.put(JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true))
         }
         // Thiết bị ghép (điện thoại khác, máy tính khác): cùng cách, gói ghi nguồn - thiết bị không trả lời thì bỏ qua.
         val peers = Peers.libraries(context)
@@ -797,7 +808,7 @@ class LibraryPlugin : Plugin() {
                 if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
                     Streaming.fetchSmall(context, id, "cover.jpg")
                 }
-                books.put(JSObject.fromJSONObject(Store.linked(manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
+                books.put(JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
                     .put("sourceName", peer.optString("name")))
             }
         }
@@ -880,7 +891,7 @@ class LibraryPlugin : Plugin() {
     fun book(call: PluginCall) = background(call) {
         val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
         val local = Store.manifest(id)
-        val manifest = local ?: Store.linked(openStreamed(id))
+        val manifest = local ?: Store.streamed(id, openStreamed(id))
         call.resolve(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", local == null)
             .put("records", Store.records(id)))
     }
@@ -896,6 +907,7 @@ class LibraryPlugin : Plugin() {
         val method = call.getString("method") ?: "GET"
         val path = call.getString("path") ?: throw IllegalArgumentException("thiếu đường dẫn")
         val body = call.getObject("body")?.let { JSONObject(it.toString()) }
+        if (method.uppercase() == "GET") fetchStreamedScript(path)
         val (status, reply) = LocalStudio.handle(method, path, body)
         if (status == 200 && method.uppercase() != "GET") {
             Regex("/api/books/([A-Za-z0-9_-]+)").find(path)?.groupValues?.get(1)?.let { id ->
@@ -905,6 +917,18 @@ class LibraryPlugin : Plugin() {
         }
         val answer = JSObject().put("status", status)
         call.resolve(if (reply is JSONObject) answer.put("body", JSObject.fromJSONObject(reply)) else answer.put("body", JSONObject.NULL))
+    }
+
+    /** `GET /api/books/<mã>/chapters/<n>/script` của cuốn nghe thẳng: chữ đọc theo của chương chưa về máy thì lấy từ máy giữ sách trước (như [readText]). */
+    private fun fetchStreamedScript(path: String) {
+        val match = Regex("/api/books/([A-Za-z0-9_-]+)/chapters/([0-9]+)/script").matchEntire(path.substringBefore('?')) ?: return
+        val id = match.groupValues[1]
+        if (Store.rawManifest(id) != null) return
+        val chapters = Store.streamManifest(id)?.optJSONArray("chapters") ?: return
+        val script = (0 until chapters.length()).mapNotNull { chapters.optJSONObject(it) }
+            .firstOrNull { (it.opt("id") as? Number)?.toLong() == match.groupValues[2].toLong() }?.optString("script").orEmpty()
+        if (script.isBlank() || script == "null" || runCatching { Store.file(id, script).isFile }.getOrDefault(true)) return
+        Streaming.fetchSmall(context, id, script)
     }
 
     /**
