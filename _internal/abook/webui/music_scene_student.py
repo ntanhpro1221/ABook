@@ -10,9 +10,16 @@ arousal vẫn lấy từ nhãn câu (chưa đo riêng nên chưa thay). Ranh gi�
 Gói model (thư mục `scene_q06/` trong repo Hugging Face NGDtuanh/abook-music-student, cùng repo với mô-đun "Phân tích nhạc"; Qwen3 theo
 Apache-2.0, (c) Qwen team, cắt 14 lớp): `config.json`, `model.safetensors` (bf16, 0,71 GiB cả gói), `tokenizer.json`, `tokenizer_config.json`,
 `LICENSE` và đầu hồi quy `scene_head_q06.npz`: `mu`, `sd` (D,) chuẩn hoá; `coef` (D, 3) cho V/E/T; `intercept` (3,); `layer` (số lớp giữ
-lại); `maxTokens` (khúc, 2048). D = 1024. Tải bằng `studio_setup.Download` ghim commit + SHA-256 qua music_module.py (một phần TUỲ CHỌN của
+lại); `maxTokens` (khúc, 2048). D = 1024. Cộng đầu MỨC CHƯƠNG `chapter_head_q06.npz` (LV-Q06 10-10, Corpus/research/music/PLAN_lv_q06.md; 18 KB, TUỲ CHỌN
+trong gói - xem dưới): `mu`, `sd` (D,); `coef` (D, 2) cho V/T; `intercept` (2,); `axes` ("V", "T"); `alpha`. Tải bằng `studio_setup.Download` ghim commit + SHA-256 qua music_module.py (một phần TUỲ CHỌN của
 "Phân tích nhạc", người dùng bấm mới tải). ABOOK_MUSIC_SCENE_STUDENT_DIR trỏ tới thư mục gói đã có sẵn (bài thử, máy không mạng). Không có
 gói / thiếu torch -> `available()` false và nhạc chạy đường hôm nay, KHÔNG bao giờ bịa số.
+
+Mức chương (LV-Q06): một ridge học trên nhúng TRUNG BÌNH cả chương (trọng số = số chữ của đoạn, KHÔNG căn giữa) của 542 chương bạc:
+`V = ((TB(X) - mu) / sd) @ coef[:, 0] + intercept[0]`. Mức V của chương đoán thế này sát hơn mức từ nhãn câu (MAE_V bộ 7 .262 -> .155). Cột T của đầu có
+trong file nhưng app KHÔNG dùng (mức T vẫn P0, không có P0 thì nhãn; xem music_scenes.apply_student). `compute` ghi mức V vào mỗi đoạn của chương
+(`chapterV`); gói cũ chưa có file này (người dùng chưa cập nhật) thì không ghi `chapterV` và `apply_student` giữ mức V từ nhãn như trước. File này
+KHÔNG tính vào "gói đủ file" (`REQUIRED_FILES`) và KHÔNG vào `package_sha` (khoá bộ nhớ đệm nhúng): thêm nó không bắt nhúng lại cả cuốn.
 
 Cách học (khớp LLM_Train/music/stu_embed.py, stu_fit.py, stu_curve.py::fit_predict - làm Y HỆT):
 1. Nhúng: chữ đoạn = các câu nối "\\n" (music_moods.scene_text), token hoá có token đặc biệt, cắt khúc `maxTokens` token (mỗi khúc một lần
@@ -50,8 +57,13 @@ REPO_ID = "NGDtuanh/abook-music-student"
 SUBFOLDER = "scene_q06"
 # Đường tải luôn ghim cứng một commit (như music_student.py); file nào đổi thì SHA-256 + cỡ ở đây đổi theo (khoá = tên file trong thư mục gói,
 # không kèm SUBFOLDER - SUBFOLDER chỉ nằm trong URL). REVISION trống thì mô-đun không tải gì, chỉ dùng gói đã có sẵn / ABOOK_MUSIC_SCENE_STUDENT_DIR.
-REVISION = "c2e3253de9ab157941589a6c4fb10cb861a17c37"
-PACKAGE_FILES = ("config.json", "model.safetensors", "tokenizer.json", "tokenizer_config.json", "LICENSE", "scene_head_q06.npz")
+# Đổi REVISION không bắt tải lại file cũ: `studio_setup.download` bỏ qua file đã có đúng SHA-256 và music_module chỉ tính cỡ các file còn thiếu / sai băm.
+REVISION = "182d945e4129165f2be9e69b50be919eb1078d63"
+CHAPTER_HEAD_FILE = "chapter_head_q06.npz"
+PACKAGE_FILES = ("config.json", "model.safetensors", "tokenizer.json", "tokenizer_config.json", "LICENSE", "scene_head_q06.npz", CHAPTER_HEAD_FILE)
+# Đủ để chạy học sinh và để tính khoá nhúng; đầu mức chương là phần thêm ở bản sau (thiếu thì chỉ không có `chapterV`).
+OPTIONAL_FILES = (CHAPTER_HEAD_FILE,)
+REQUIRED_FILES = tuple(file for file in PACKAGE_FILES if file not in OPTIONAL_FILES)
 PACKAGE_HASHES: dict[str, tuple[str, int]] = {
     "config.json": ("638669b3924f21702d7938e10dae48890db8be6d4a72836e667932092e712475", 1152),
     "model.safetensors": ("7005be7da7f28271f15f0102ecefe19da6b80b0af6b5ba9477e278ed8430c2d1", 751650088),
@@ -59,6 +71,7 @@ PACKAGE_HASHES: dict[str, tuple[str, int]] = {
     "tokenizer_config.json": ("154e5ff1e7c152d964edf30da854ea62465c767719ac8e97e58babf2d4fa9079", 724),
     "LICENSE": ("832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e", 11343),
     "scene_head_q06.npz": ("84c9b10ac154852341daeabd33659b65333ae77f1eaf24b71c994c46ab9d3ec0", 22234),
+    CHAPTER_HEAD_FILE: ("63b5c7d3f2e21796cec7307630bd6ba39b585f684f86e6c2b73e73467833c858", 17874),
 }
 ENV_DIR = "ABOOK_MUSIC_SCENE_STUDENT_DIR"
 ENV_DOWNLOAD = "ABOOK_MUSIC_SCENE_STUDENT_DOWNLOAD"  # "0" = không bao giờ tải
@@ -120,7 +133,7 @@ def total_bytes() -> int:
 
 
 def _complete(directory: Path | None) -> bool:
-    return directory is not None and all((directory / file).is_file() for file in PACKAGE_FILES)
+    return directory is not None and all((directory / file).is_file() for file in REQUIRED_FILES)
 
 
 def present() -> bool:
@@ -140,18 +153,18 @@ def available() -> bool:
 
 
 def package_sha(directory: Path | None = None) -> str:
-    """SHA-256 gộp (tên + nội dung) mọi file gói - một phần khoá bộ nhớ đệm nhúng; "" nếu gói chưa đủ file. Nhớ theo (đường dẫn, cỡ,
-    giờ sửa) để một tiến trình không băm lại 0,71 GiB mỗi lần hỏi."""
+    """SHA-256 gộp (tên + nội dung) các file BẮT BUỘC của gói (không có đầu mức chương) - một phần khoá bộ nhớ đệm nhúng; "" nếu gói chưa đủ
+    file. Nhớ theo (đường dẫn, cỡ, giờ sửa) để một tiến trình không băm lại 0,71 GiB mỗi lần hỏi."""
     directory = directory or package_dir()
     if not _complete(directory):
         return ""
-    stats = [(directory / file).stat() for file in PACKAGE_FILES]
-    signature = (str(directory), *((file, stat.st_size, stat.st_mtime_ns) for file, stat in zip(PACKAGE_FILES, stats)))
+    stats = [(directory / file).stat() for file in REQUIRED_FILES]
+    signature = (str(directory), *((file, stat.st_size, stat.st_mtime_ns) for file, stat in zip(REQUIRED_FILES, stats)))
     with _lock:
         if signature in _sha_memo:
             return _sha_memo[signature]
     digest = hashlib.sha256()
-    for file in PACKAGE_FILES:
+    for file in REQUIRED_FILES:
         digest.update(file.encode() + b"\0")
         with (directory / file).open("rb") as handle:
             for block in iter(lambda: handle.read(1 << 20), b""):
@@ -187,6 +200,40 @@ class Head:
             return np.zeros((len(x), 3))
         centered = x - np.average(x, axis=0, weights=np.asarray(weights, dtype=np.float64))
         return ((centered - self.mu) / self.sd) @ self.coef + self.intercept
+
+
+class ChapterHead:
+    """`chapter_head_q06.npz`: mu, sd (D,), coef (D, 2) cho V/T, intercept (2,), axes ("V", "T"), alpha. Mức V/T của cả chương từ nhúng trung bình."""
+
+    def __init__(self, path: Path) -> None:
+        import numpy as np
+
+        data = np.load(path)
+        self.mu, self.sd = data["mu"].astype(np.float64), data["sd"].astype(np.float64)
+        self.coef, self.intercept = data["coef"].astype(np.float64), data["intercept"].astype(np.float64)
+        width = self.mu.shape[0] if self.mu.ndim == 1 else -1
+        if (width < 1 or self.sd.shape != (width,) or self.coef.shape != (width, 2) or self.intercept.shape != (2,)
+                or [str(axis) for axis in data["axes"]] != ["V", "T"]):
+            raise ValueError("gói model không đúng hình đầu mức chương")
+
+    def level(self, embeddings: Any, weights: Any) -> Any:
+        """(V, T) thô của MỘT chương (chưa kẹp): TB nhúng các đoạn theo trọng số = số chữ, KHÔNG căn giữa, rồi chuẩn hoá + hồi quy."""
+        import numpy as np
+
+        mean = np.average(np.asarray(embeddings, dtype=np.float64), axis=0, weights=np.asarray(weights, dtype=np.float64))
+        return ((mean - self.mu) / self.sd) @ self.coef + self.intercept
+
+
+def load_chapter_head(directory: Path | None, log: Callable[[str], None] = lambda _line: None) -> ChapterHead | None:
+    """Đầu mức chương của gói nếu có và đúng hình; gói cũ chưa có file ấy -> None (không phải lỗi). File hỏng -> một dòng log và None: mức V về nhãn."""
+    path = None if directory is None else directory / CHAPTER_HEAD_FILE
+    if path is None or not path.is_file():
+        return None
+    try:
+        return ChapterHead(path)
+    except (OSError, ValueError, KeyError) as error:
+        log(f"Bỏ qua mức chương của học sinh: {type(error).__name__}: {error}")
+        return None
 
 
 # ---- model --------------------------------------------------------------------------------------------------------------------
@@ -331,6 +378,7 @@ def compute(project_root: Path, *, stop_requested: Callable[[], bool] = lambda: 
     if not _complete(directory):
         raise FileNotFoundError("chưa có gói model")
     head = Head(directory / HEAD_FILE)
+    chapter_head = load_chapter_head(directory, log)
     package = package_sha(directory)
     cache_path = project_root / CACHE_FILE
     cache = _load_cache(cache_path)
@@ -363,9 +411,12 @@ def compute(project_root: Path, *, stop_requested: Callable[[], bool] = lambda: 
                 cache[key] = embedder.embed(text)
                 embedded += 1
                 dirty = True
-            deviations = head.deviations([cache[key] for key in keys], [max(1, len(text.split())) for text in texts])
+            vectors, weights = [cache[key] for key in keys], [max(1, len(text.split())) for text in texts]
+            deviations = head.deviations(vectors, weights)
+            # Mức V của cả chương (cùng giá trị ở mọi đoạn của chương; thiếu đầu mức chương thì không ghi): đo từ nhúng đã có, không chạy model thêm.
+            level = {} if chapter_head is None else {"chapterV": round(float(chapter_head.level(vectors, weights)[0]), 4)}
             items += [{"chapterId": scene["chapterId"], "firstSegment": scene["firstSegment"], "lastSegment": scene["lastSegment"],
-                       "dV": round(float(dev[0]), 4), "dE": round(float(dev[1]), 4), "dT": round(float(dev[2]), 4)}
+                       "dV": round(float(dev[0]), 4), "dE": round(float(dev[1]), 4), "dT": round(float(dev[2]), 4), **level}
                       for scene, dev in zip(scenes, deviations)]
             atomic_write_json(project_root / FILE, {"version": VERSION, "package": package, "built": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
                                                     "scenes": items})

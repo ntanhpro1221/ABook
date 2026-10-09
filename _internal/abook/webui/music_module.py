@@ -13,6 +13,9 @@ hoặc nó đã nằm trên máy (khi đó cập nhật như mọi phần); thi�
 Mỗi phần có "mã ghim" (`pin`). Lúc tải ghi dấu `module.json` (phần -> ghim đã tải); `status()` so dấu với ghim bản app này mang, KHÔNG băm lại
 59 MB mỗi lần mở. App lên bản mới đổi ghim của phần nào thì phần ấy là "cũ" (state `outdated`, kèm danh sách phần và số byte phải tải); một
 lần bấm chỉ tải các phần đổi, phần còn lại giữ nguyên - như Studio (`StudioSetup._pins/outdated`). Bản cũ vẫn chạy cho tới lúc cập nhật xong.
+Cỡ "cần tải" của phần có thư mục đích riêng (`scene_q06`) chỉ tính các file còn thiếu hay sai SHA-256 (`Component.need`): cập nhật mà gói chỉ thêm một file
+18 KB thì báo 18 KB, không phải 0,71 GiB, và thanh tiến độ cũng chạy trên chừng ấy. Kết quả băm nhớ theo (đường dẫn, cỡ, giờ sửa) - không băm lại 0,7 GB mỗi lần
+giao diện hỏi `status()`.
 Cập nhật KHÔNG tự phân tích lại các bài đã có: `stale` đếm bài phân tích bằng bản cũ, người dùng bấm "Phân tích lại" (`reanalyse`).
 
 Thư viện (numpy/onnxruntime) đã nạp vào tiến trình thì không thay tại chỗ được: bản mới giải vào `lib.next`, đổi chỗ ở lần mở app sau
@@ -72,6 +75,32 @@ _after: Callable[[], None] | None = None
 _studio_installed: Callable[[], bool] | None = None
 _job = ""  # việc nền đang chạy sau khi tải: "" | "analysing"
 _state: dict[str, Any] = {"downloading": False, "done": 0, "total": 0, "error": ""}
+_verified: dict[tuple[str, int, int, str], bool] = {}  # (đường dẫn, cỡ, giờ sửa, SHA-256 ghim) -> file đúng bản ghim
+
+
+def file_ok(item: Any, path: Path) -> bool:
+    """File `path` đã nằm đúng bản `item` ghim (cỡ + SHA-256). Nhớ theo (đường dẫn, cỡ, giờ sửa) để lần hỏi sau không băm lại; sai cỡ thì khỏi băm."""
+    try:
+        stat = path.stat()
+    except OSError:
+        return False
+    if stat.st_size != item.size:
+        return False
+    key = (str(path), stat.st_size, stat.st_mtime_ns, item.sha256)
+    with _lock:
+        if key not in _verified:
+            _verified[key] = studio_setup._sha256(path) == item.sha256
+        return _verified[key]
+
+
+def _remember_ok(item: Any, path: Path) -> None:
+    """Vừa tải xong và `studio_setup.download` đã kiểm SHA-256: nhớ luôn để khỏi băm lại."""
+    try:
+        stat = path.stat()
+    except OSError:
+        return
+    with _lock:
+        _verified[(str(path), stat.st_size, stat.st_mtime_ns, item.sha256)] = True
 
 
 @dataclass
@@ -85,6 +114,12 @@ class Component:
     blocked: str = ""  # lý do không tải được trên máy này (tiếng Việt), rỗng nếu tải được
     downloads: list[Any] = field(default_factory=list)
     target: Path | None = None  # thư mục đặt file khi không phải thư mục gói model nhạc
+
+    def need(self) -> int:
+        """Byte còn phải tải: chỉ các file chưa nằm đúng bản ghim ở `target`. Phần không có thư mục đích riêng thì nguyên `size`."""
+        if self.target is None or not self.downloads:
+            return self.size
+        return sum(item.size for item in self.downloads if not file_ok(item, self.target / item.name))
 
 
 # ---- cấu hình -----------------------------------------------------------------------------------------------------------------
@@ -257,7 +292,8 @@ def scene_student_status() -> dict[str, Any]:
     dùng được nó; không thì `reason` nói vì sao - giao diện ẩn nút tải)."""
     part = scene_student_part()
     reason = scene_student_offered()
-    return {"state": judge_parts([part], _read_stamp())[part.id], "bytes": part.size, "blocked": part.blocked,
+    state = judge_parts([part], _read_stamp())[part.id]
+    return {"state": state, "bytes": part.size if state == "current" else part.need(), "blocked": part.blocked,
             "external": part.external, "offered": not reason, "reason": reason}
 
 
@@ -330,7 +366,7 @@ def status() -> dict[str, Any]:
             state = "unsupported"
         else:
             state = "outdated" if installed_any else "missing"
-        total = _state["total"] if state == "downloading" else sum(part.size for part in needed)
+        total = _state["total"] if state == "downloading" else sum(part.need() for part in needed)
         return {
             "state": state, "done": _state["done"] if state == "downloading" else 0, "total": total,
             "error": _state["error"], "ready": state in ("ready", "outdated") and music_local.analyzer_available(),
@@ -338,7 +374,7 @@ def status() -> dict[str, Any]:
             "parts": [{"id": part.id, "label": part.label, "bytes": part.size, "state": judged[part.id], "external": part.external}
                       for part in components],
             "outdatedParts": [part.label for part in behind] if state in ("outdated", "downloading") else [],
-            "outdatedBytes": sum(part.size for part in behind),
+            "outdatedBytes": sum(part.need() for part in behind),
             "restart": bool((pending := _lib_next()) is not None and pending.is_dir() and _lib().is_dir() and _libs_loaded()),
             "analysing": _job == "analysing", "metered": False, "scene": scene_student_status(),
         }
@@ -361,7 +397,7 @@ def start(scene: bool = False) -> None:
         if reason:
             _state["error"] = reason[0].upper() + reason[1:] + "."
             return
-        _state.update(downloading=True, total=sum(part.size for part in needed))
+        _state.update(downloading=True, total=sum(part.need() for part in needed))
         _thread = threading.Thread(target=_run, args=(needed,), name="music-module", daemon=True)
         _thread.start()
 
@@ -392,6 +428,8 @@ def _run(needed: list[Component]) -> None:
         finished = 0
         stamp = _read_stamp()
         for part in needed:
+            need = part.need()  # trước khi tải: file đã đúng bản ghim không tính, không tải lại
+
             def progress(done: int, _total: int = 0, base: int = finished) -> None:
                 """`done` = byte đã tải của riêng phần này; thanh tiến độ chung = các phần đã xong + phần đang tải."""
                 with _lock:
@@ -407,9 +445,13 @@ def _run(needed: list[Component]) -> None:
                 directory.mkdir(parents=True, exist_ok=True)
                 done = 0
                 for item in part.downloads:
+                    if part.target is not None and file_ok(item, directory / item.name):
+                        continue
                     studio_setup.download(item, directory / item.name, lambda have, _t, offset=done: progress(offset + have), lambda: False)
+                    if part.target is not None:
+                        _remember_ok(item, directory / item.name)
                     done += item.size
-            finished += part.size
+            finished += need
             stamp[part.id] = part.pin
             _write_stamp(stamp)
             with _lock:

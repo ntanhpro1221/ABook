@@ -1,5 +1,5 @@
 """Học sinh hình không khí trong chương, đường q06 (webui/music_scene_student.py + music_scenes.apply_student): nhúng bằng Qwen3-0.6B cắt lớp,
-căn giữa trong chương + đầu hồi quy, bộ nhớ đệm, kiểu số CPU, áp vào đoạn (mức chương + hình), móc sau pha phân tích, bộ ví dụ cố định với gói
+căn giữa trong chương + đầu hồi quy, đầu mức chương (LV-Q06), bộ nhớ đệm, kiểu số CPU, áp vào đoạn (mức chương + hình), móc sau pha phân tích, bộ ví dụ cố định với gói
 thật (chỉ chạy khi ABOOK_MUSIC_SCENE_STUDENT_DIR trỏ tới gói). Gói giả nhỏ dựng ngay trong test (Qwen3 4 lớp, hidden 32, tokenizer WordLevel);
 không cần mạng, không GPU."""
 from __future__ import annotations
@@ -46,6 +46,8 @@ def _build_package(root: Path, *, cut: bool = False, seed: int = 0) -> Path:
     rng = np.random.default_rng(seed)
     np.savez(root / student.HEAD_FILE, mu=rng.normal(size=WIDTH), sd=rng.uniform(0.5, 1.5, size=WIDTH), coef=rng.normal(size=(WIDTH, 3)),
              intercept=np.array([0.01, -0.02, 0.03]), layer=LAYER, maxTokens=MAX_TOKENS)
+    np.savez(root / student.CHAPTER_HEAD_FILE, mu=rng.normal(size=WIDTH), sd=rng.uniform(0.5, 1.5, size=WIDTH), coef=rng.normal(size=(WIDTH, 2)),
+             intercept=np.array([0.05, -0.04]), axes=np.array(["V", "T"]), alpha=1000.0)
     # Kiểu số CPU đã "đo" sẵn (fp32: trọng số bf16 nở ra đúng từng bit) để test không đo thật.
     student.remember_cpu_dtype(root, "fp32", torch.__version__)
     (root / "LICENSE").write_bytes(b"Apache-2.0 (gia)")
@@ -189,13 +191,32 @@ def test_a_head_of_the_wrong_shape_is_refused(package: Path) -> None:
         student.Head(package / student.HEAD_FILE)
 
 
+def test_a_chapter_head_of_the_wrong_shape_or_axes_is_refused_and_a_broken_one_only_costs_the_chapter_level(package: Path) -> None:
+    path = package / student.CHAPTER_HEAD_FILE
+    data = dict(np.load(path))
+    student.ChapterHead(path)
+    for broken in ({**data, "coef": data["coef"][:, :1]}, {**data, "intercept": np.zeros(3)}, {**data, "sd": data["sd"][:-1]},
+                   {**data, "axes": np.array(["T", "V"])}, {**data, "mu": np.zeros((WIDTH, 1))}):
+        np.savez(path, **broken)
+        with pytest.raises(ValueError):
+            student.ChapterHead(path)
+        lines: list[str] = []
+        assert student.load_chapter_head(package, lines.append) is None and len(lines) == 1, "hỏng: một dòng log, không ném"
+    path.write_bytes(b"khong phai npz")
+    assert student.load_chapter_head(package) is None
+    path.unlink()
+    lines = []
+    assert student.load_chapter_head(package, lines.append) is None and lines == [], "gói cũ chưa có file: không phải lỗi, không log"
+    assert student.load_chapter_head(None) is None
+
+
 # ---- tính cả cuốn, bộ nhớ đệm -----------------------------------------------------------------------------------------------------
 def test_compute_matches_the_head_applied_to_the_reference_embeddings(package: Path, book: list[dict], tmp_path: Path) -> None:
     project = tmp_path / "project"
     assert _compute(project) == 6
     saved = student.load(project)
     assert saved["package"] == student.package_sha(package) and saved["version"] == 1 and len(saved["scenes"]) == 6
-    head = student.Head(package / student.HEAD_FILE)
+    head, chapter = student.Head(package / student.HEAD_FILE), student.ChapterHead(package / student.CHAPTER_HEAD_FILE)
     for script in book:
         segments, scenes = script["segments"], music_scenes.chapter_scenes(script)
         assert len(scenes) == 3
@@ -205,6 +226,28 @@ def test_compute_matches_the_head_applied_to_the_reference_embeddings(package: P
         mine = [item for item in saved["scenes"] if item["chapterId"] == script["chapterId"]]
         assert [(i["firstSegment"], i["lastSegment"]) for i in mine] == [(s["firstSegment"], s["lastSegment"]) for s in scenes]
         assert np.allclose([[i["dV"], i["dE"], i["dT"]] for i in mine], expected, atol=2e-3)
+        # Mức V của chương: đầu mức chương trên TB nhúng (trọng số số chữ, không căn giữa); cùng giá trị ở mọi đoạn của chương.
+        embeddings = np.array([_reference_embedding(package, text) for text in texts])
+        weights = np.array([len(text.split()) for text in texts], dtype=float)
+        mean = (embeddings * weights[:, None]).sum(0) / weights.sum()
+        expected_v = float((((mean - chapter.mu) / chapter.sd) @ chapter.coef + chapter.intercept)[0])
+        assert {i["chapterV"] for i in mine} == {mine[0]["chapterV"]} and mine[0]["chapterV"] == pytest.approx(expected_v, abs=2e-3)
+
+
+def test_an_old_package_without_the_chapter_head_still_runs_keeps_the_embedding_key_and_writes_no_chapter_level(
+        package: Path, book: list[dict], tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project, spy = tmp_path / "project", Spy(monkeypatch)
+    key = student.package_sha(package)
+    assert _compute(project) == 6
+    assert all("chapterV" in item for item in student.load(project)["scenes"])
+    (package / student.CHAPTER_HEAD_FILE).unlink()
+    assert student.present() and student.available() == student.dependencies_ok(), "thiếu đầu mức chương không làm gói thành thiếu"
+    assert student.package_sha(package) == key, "thêm / bỏ đầu mức chương không đổi khoá nhúng: không nhúng lại cả cuốn"
+    spy.embeds.clear()
+    assert _compute(project) == 0 and not spy.embeds
+    saved = student.load(project)
+    assert len(saved["scenes"]) == 6 and not any("chapterV" in item for item in saved["scenes"])
+    assert {s["levelSource"]["V"] for s in music_scenes.book_scenes(book, student=saved["scenes"])} == {"labels"}
 
 
 def test_a_second_run_loads_no_model_and_a_changed_scene_embeds_only_that_scene(package: Path, book: list[dict], tmp_path: Path,
@@ -447,6 +490,60 @@ def test_apply_student_without_p0_on_every_scene_takes_the_t_level_from_the_labe
     assert not any("llmValence" in s or "llmTension" in s for s in music_scenes.apply_student(labels, ITEMS))
 
 
+def _with_level(items: list[dict], level: float) -> list[dict]:
+    return [dict(item, chapterV=level) for item in items]
+
+
+def test_apply_student_takes_the_v_level_from_the_chapter_head_with_numbers_worked_by_hand() -> None:
+    # chapterV = .25 thay L_V = .068 (từ nhãn); hình V vẫn dV - TB(dV) = .275 / -.025 / -.225 -> .525 / .225 / .025.
+    scenes = [_scene(0, 60, 0.2, 0.1, 1, 10, p_v=0.5, p_t=0.8), _scene(60, 180, 0.0, 0.2, 11, 20, p_v=0.1, p_t=0.6),
+              _scene(180, 240, -0.2, 0.0, 21, 30, p_v=-0.3, p_t=0.4)]
+    items = _with_level(ITEMS, 0.25)
+    before = copy.deepcopy(items)
+    got = music_scenes.apply_student(scenes, items)
+    assert items == before
+    assert [s["valence"] for s in got] == [pytest.approx(0.525, abs=6e-4), pytest.approx(0.225, abs=6e-4), pytest.approx(0.025, abs=6e-4)]
+    # Mức T giữ nguyên: P0 đủ -> L_T = .1496 như khi chưa có chapterV, không đổi theo chapterV.
+    assert [s["tension"] for s in got] == [pytest.approx(0.1496 + 0.075, abs=6e-4), pytest.approx(0.1496 - 0.225, abs=6e-4),
+                                           pytest.approx(0.1496 + 0.375, abs=6e-4)]
+    assert [s["tension"] for s in got] == [s["tension"] for s in music_scenes.apply_student(scenes, ITEMS)]
+    assert all(s["levelSource"] == {"V": "student", "T": "p0"} and s["moodSource"] == "student" for s in got)
+    assert [s["arousal"] for s in got] == [s["arousal"] for s in music_scenes.apply_student(scenes, ITEMS)], "mức E không đổi"
+
+
+def test_apply_student_takes_the_v_level_from_the_chapter_head_and_the_t_level_from_the_labels_without_p0() -> None:
+    # Không P0: L_T = .44675 (nhãn) như cũ; chapterV = -.4 -> V = -.125 / -.425 / -.625. Mức T không đổi theo chapterV.
+    scenes = [_scene(0, 60, 0.2, 0.1, 1, 10), _scene(60, 180, 0.0, 0.2, 11, 20), _scene(180, 240, -0.2, 0.0, 21, 30)]
+    got = music_scenes.apply_student(scenes, _with_level(ITEMS, -0.4))
+    assert [s["valence"] for s in got] == [pytest.approx(-0.125, abs=6e-4), pytest.approx(-0.425, abs=6e-4), pytest.approx(-0.625, abs=6e-4)]
+    assert [s["tension"] for s in got] == [pytest.approx(0.44675 + 0.075, abs=6e-4), pytest.approx(0.44675 - 0.225, abs=6e-4),
+                                           pytest.approx(0.44675 + 0.375, abs=6e-4)]
+    assert all(s["levelSource"] == {"V": "student", "T": "labels"} for s in got)
+    other = music_scenes.apply_student(scenes, _with_level(ITEMS, 0.6))
+    assert [s["tension"] for s in other] == [s["tension"] for s in got], "T không phụ thuộc chapterV"
+
+
+def test_apply_student_clips_the_chapter_level_and_a_one_scene_chapter_sits_at_it() -> None:
+    scenes = [_scene(0, 60, 0.0, 0.1, 1, 10), _scene(60, 120, 0.0, 0.1, 11, 20)]
+    got = music_scenes.apply_student(scenes, _with_level([_item(1, 10, 0.3, 0, 0), _item(11, 20, -0.3, 0, 0)], 1.4))  # kẹp 1 -> 1.3 / .7
+    assert [s["valence"] for s in got] == [1.0, pytest.approx(0.7)]
+    got, = music_scenes.apply_student([_scene(0, 90, 0.3, 0.1, 1, 10)], _with_level([_item(1, 10, 0.0, 0.0, 0.0)], -1.7))
+    assert got["valence"] == -1.0 and got["levelSource"] == {"V": "student", "T": "labels"}
+    got, = music_scenes.apply_student([_scene(0, 90, 0.3, 0.1, 1, 10)], _with_level([_item(1, 10, 0.0, 0.0, 0.0)], 0.2))
+    assert got["valence"] == 0.2, "một đoạn: đúng mức chương, không phụ thuộc nhãn"
+
+
+def test_apply_student_falls_back_to_the_label_level_without_a_usable_chapter_level() -> None:
+    scenes = [_scene(0, 60, 0.2, 0.1, 1, 10), _scene(60, 180, 0.0, 0.2, 11, 20), _scene(180, 240, -0.2, 0.0, 21, 30)]
+    labels = music_scenes.apply_student(scenes, ITEMS)
+    assert [s["valence"] for s in labels] == VALENCE and all(s["levelSource"] == {"V": "labels", "T": "labels"} for s in labels)
+    for odd in (None, "x", float("nan"), float("inf")):
+        got = music_scenes.apply_student(scenes, [dict(ITEMS[0], chapterV=odd), *ITEMS[1:]])
+        assert [s["valence"] for s in got] == [s["valence"] for s in labels] and got[0]["levelSource"]["V"] == "labels", odd
+    partial = music_scenes.apply_student(scenes, [dict(ITEMS[0], chapterV=0.25), *ITEMS[1:]])
+    assert partial[0]["levelSource"]["V"] == "labels", "thiếu ở một đoạn: cả chương về nhãn"
+
+
 def test_apply_student_clips_to_the_scale_and_keeps_a_one_scene_chapter_at_the_level() -> None:
     hot = [_scene(0, 60, 0.0, 0.5, 1, 10), _scene(60, 120, 0.0, 0.5, 11, 20)]  # L_T = 4.022 * .5 - .056 = 1.955 -> kẹp 1
     got = music_scenes.apply_student(hot, [_item(1, 10, 0, 0, 0.3), _item(11, 20, 0, 0, -0.3)])
@@ -510,6 +607,13 @@ def test_the_plan_is_built_from_the_students_file(package: Path, book: list[dict
     scenes = music_scenes.book_scenes(book, student=saved["scenes"])
     assert len(scenes) == 6 and {s["moodSource"] for s in scenes} == {"student"}
     assert [s["valence"] for s in scenes] != [s["valence"] for s in music_scenes.book_scenes(book)]
+    assert {s["levelSource"]["V"] for s in scenes} == {"student"}
+    for chapter_id in (1, 2):
+        mine = [s for s in scenes if s["chapterId"] == chapter_id]
+        level = next(i["chapterV"] for i in saved["scenes"] if i["chapterId"] == chapter_id)
+        total = sum(s["end"] - s["start"] for s in mine)
+        shape_mean = sum((s["end"] - s["start"]) * s["studentValence"] for s in mine) / total
+        assert all(s["valence"] == pytest.approx(max(-1.0, min(1.0, max(-1.0, min(1.0, level)) + s["studentValence"] - shape_mean)), abs=2e-3) for s in mine)
 
 
 # ---- công thức đầu giữ cứng (luôn chạy, không cần model) ------------------------------------------------------------------------------
@@ -519,8 +623,12 @@ def test_the_head_formula_is_pinned_with_a_fake_package_and_fixed_embeddings(tmp
     -> z = (-1, -.5), (-3, 0), (1, .5); nhân coef [[1, 2, 0], [2, 0, 1]], cộng intercept [.1, 0, -.1]."""
     directory = tmp_path / "package"
     directory.mkdir()
-    for file in student.PACKAGE_FILES:
+    for file in student.REQUIRED_FILES:
         (directory / file).write_bytes(b"gia")
+    # Đầu mức chương viết tay: TB nhúng theo chữ = (37 [1,0] + 37 [0,1] + 74 [2,2]) / 148 = [1.25, 1.25]; trừ mu [.25, .25] rồi chia sd [.5, 2] -> z = (2, .5);
+    # V = 2 * 1 + .5 * 2 + .1 = 3.1 (chưa kẹp; apply_student kẹp), T = 2 * .5 - .5 * 1 + .2 = .7 (app không dùng).
+    np.savez(directory / student.CHAPTER_HEAD_FILE, mu=np.array([0.25, 0.25]), sd=np.array([0.5, 2.0]), coef=np.array([[1.0, 0.5], [2.0, -1.0]]),
+             intercept=np.array([0.1, 0.2]), axes=np.array(["V", "T"]), alpha=1000.0)
     np.savez(directory / student.HEAD_FILE, mu=np.array([0.25, -0.25]), sd=np.array([0.5, 2.0]), coef=np.array([[1.0, 2.0, 0.0], [2.0, 0.0, 1.0]]),
              intercept=np.array([0.1, 0.0, -0.1]), layer=1, maxTokens=8)
     monkeypatch.setenv(student.ENV_DIR, str(directory))
@@ -552,6 +660,9 @@ def test_the_head_formula_is_pinned_with_a_fake_package_and_fixed_embeddings(tmp
     assert _compute(tmp_path / "project") == 3
     items = student.load(tmp_path / "project")["scenes"]
     assert [(i["dV"], i["dE"], i["dT"]) for i in items] == [(-1.9, -2.0, -0.6), (-2.9, -6.0, -0.1), (2.1, 2.0, 0.4)]
+    assert [i["chapterV"] for i in items] == [3.1, 3.1, 3.1]
+    head = student.ChapterHead(directory / student.CHAPTER_HEAD_FILE)
+    assert head.level([[1.0, 0.0], [0.0, 1.0], [2.0, 2.0]], [37, 37, 74]).tolist() == pytest.approx([3.1, 0.7])
 
 
 # ---- bộ ví dụ cố định với gói thật ------------------------------------------------------------------------------------------------------
@@ -560,7 +671,7 @@ GOLDEN = Path(__file__).parent / "fixtures" / "music_scene_q06_golden.json"
 
 def test_the_golden_fixture_matches_the_pin_the_app_carries() -> None:
     golden = json.loads(GOLDEN.read_text(encoding="utf-8"))
-    assert golden["revision"] == student.REVISION
+    assert golden["chapterHeadRevision"] == student.REVISION, "bộ ví dụ mức chương làm ở đúng bản gói app mang"
     assert golden["headSha256"] == student.PACKAGE_HASHES[student.HEAD_FILE][0]
     assert golden["modelSha256"] == student.PACKAGE_HASHES["model.safetensors"][0]
 
@@ -584,12 +695,31 @@ def _golden_deviations(directory: Path, dtype: str, monkeypatch: pytest.MonkeyPa
     return got, expected
 
 
+def _golden_chapter_levels(directory: Path, dtype: str, monkeypatch: pytest.MonkeyPatch) -> tuple[list[list[float]], list[list[float]]]:
+    """(tính được, mong đợi) (V, T) thô của từng chương, qua đường nhúng + `ChapterHead.level` (TB nhúng theo số chữ) của mô-đun."""
+    golden = json.loads(GOLDEN.read_text(encoding="utf-8"))
+    monkeypatch.setattr(student, "read_cpu_dtype", lambda *_args: dtype)
+    monkeypatch.setattr(student, "remember_cpu_dtype", lambda *_args: None)
+    chapter_head = student.ChapterHead(directory / student.CHAPTER_HEAD_FILE)
+    embedder = student._Embedder(directory, student.Head(directory / student.HEAD_FILE), "")
+    got, expected = [], []
+    try:
+        for chapter in golden["chapters"]:
+            scenes = chapter["scenes"]
+            vectors = [embedder.embed("\n".join(scene["sentences"])) for scene in scenes]
+            got.append(chapter_head.level(vectors, [scene["words"] for scene in scenes]).tolist())
+            expected.append(chapter["expectedChapterLevel"])
+    finally:
+        embedder.close()
+    return got, expected
+
+
 def _real_package() -> Path:
     where = os.environ.get(student.ENV_DIR)
     if not where:
         pytest.skip(f"đặt {student.ENV_DIR} trỏ tới gói q06 thật (vd D:/Novels/LLM_Train/music/pkg_scene_q06) để chạy bộ ví dụ cố định")
     directory = Path(where)
-    if not student._complete(directory):
+    if not student._complete(directory) or not (directory / student.CHAPTER_HEAD_FILE).is_file():
         pytest.skip(f"{student.ENV_DIR}={where} chưa đủ file gói q06")
     return directory
 
@@ -610,6 +740,21 @@ def test_the_real_package_in_bf16_still_follows_the_golden_deviations(monkeypatc
     assert min(corr) >= floor, corr
 
 
+def test_the_real_package_reproduces_the_golden_chapter_level_in_fp32(monkeypatch: pytest.MonkeyPatch) -> None:
+    got, expected = _golden_chapter_levels(_real_package(), "fp32", monkeypatch)
+    assert len(got) == len(expected) >= 2
+    worst = float(np.abs(np.array(got) - np.array(expected)).max())
+    print(f"golden chapter level fp32: max abs deviation {worst:.3e}")
+    assert worst < 1e-5
+
+
+def test_the_real_package_in_bf16_keeps_the_golden_chapter_level_within_five_thousandths(monkeypatch: pytest.MonkeyPatch) -> None:
+    got, expected = _golden_chapter_levels(_real_package(), "bf16", monkeypatch)
+    worst = float(np.abs(np.array(got) - np.array(expected)).max())
+    print(f"golden chapter level bf16: max abs deviation {worst:.3e}")
+    assert worst < 5e-3
+
+
 # ---- gói tải theo yêu cầu --------------------------------------------------------------------------------------------------------------
 def test_the_optional_download_part_is_pinned_to_the_published_package(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv(student.ENV_DIR, raising=False)
@@ -617,9 +762,12 @@ def test_the_optional_download_part_is_pinned_to_the_published_package(monkeypat
     part = music_module.scene_student_part()
     assert part.id == "scene_q06" and part.label == "Học sinh không khí cảnh" and part.blocked == ""
     assert [d.name for d in part.downloads] == list(student.PACKAGE_FILES) == ["config.json", "model.safetensors", "tokenizer.json",
-                                                                              "tokenizer_config.json", "LICENSE", "scene_head_q06.npz"]
-    assert part.downloads[1].url == ("https://huggingface.co/NGDtuanh/abook-music-student/resolve/c2e3253de9ab157941589a6c4fb10cb861a17c37/"
+                                                                              "tokenizer_config.json", "LICENSE", "scene_head_q06.npz",
+                                                                              "chapter_head_q06.npz"]
+    assert part.downloads[1].url == ("https://huggingface.co/NGDtuanh/abook-music-student/resolve/182d945e4129165f2be9e69b50be919eb1078d63/"
                                       "scene_q06/model.safetensors")
+    assert student.PACKAGE_HASHES["chapter_head_q06.npz"] == ("63b5c7d3f2e21796cec7307630bd6ba39b585f684f86e6c2b73e73467833c858", 17874)
+    assert student.REQUIRED_FILES == tuple(student.PACKAGE_FILES[:-1]), "đầu mức chương là phần thêm, không bắt buộc"
     assert part.downloads[1].sha256 == "7005be7da7f28271f15f0102ecefe19da6b80b0af6b5ba9477e278ed8430c2d1" and part.size == student.total_bytes()
     assert 0.70 < part.size / 2 ** 30 < 0.72, "0,71 GiB"
     assert "scene_q06" not in [component.id for component in music_module._components()], "tuỳ chọn: không đòi người dùng tải"

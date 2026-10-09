@@ -1,5 +1,5 @@
 {
- "about": "Expected q06 scene deviations (dV, dE, dT) from the research reference path (fp32, CPU), not from the app module. Hand-written chapters, no book text.",
+ "about": "Expected q06 scene deviations (dV, dE, dT) from the research reference path (fp32, CPU), not from the app module. Hand-written chapters, no book text. expectedChapterLevel = raw (V, T) of chapter_head_q06.npz on the word-weighted mean scene embedding; the app uses V only.",
  "revision": "c2e3253de9ab157941589a6c4fb10cb861a17c37",
  "headSha256": "84c9b10ac154852341daeabd33659b65333ae77f1eaf24b71c994c46ab9d3ec0",
  "modelSha256": "7005be7da7f28271f15f0102ecefe19da6b80b0af6b5ba9477e278ed8430c2d1",
@@ -67,6 +67,10 @@
       -0.37756667
      ]
     }
+   ],
+   "expectedChapterLevel": [
+    0.29968342,
+    0.03064303
    ]
   },
   {
@@ -201,7 +205,12 @@
       1.31366872
      ]
     }
+   ],
+   "expectedChapterLevel": [
+    -0.53325916,
+    -0.47687692
    ]
   }
- ]
+ ],
+ "chapterHeadRevision": "182d945e4129165f2be9e69b50be919eb1078d63"
 }

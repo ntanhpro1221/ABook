@@ -405,3 +405,89 @@ def test_packing_a_pinned_track_into_a_book_file_and_playing_it_need_no_ffmpeg(s
     assert status == 200 and cue["gainDb"] == music_plan.cue_gain_db(-20.0, None, None), "độ to mặc định của danh mục"
     status, body, _headers = _request(server.port, "GET", cue["src"], headers={"X-Ebook-Token": "t"})
     assert status == 200 and body == songs["flac"].read_bytes()
+
+
+# ---- cập nhật gói "Học sinh không khí cảnh" chỉ thêm một file nhỏ: chỉ tính và tải file ấy (LV-Q06) ---------------------------------------------
+def _old_scene_package(tmp_path: Path, monkeypatch) -> tuple[Path, dict[str, bytes], str]:
+    """Gói giả có đủ file CŨ đúng băm (nội dung giả, cỡ thật nhỏ) và thiếu đầu mức chương; dấu mô-đun ghi ghim cũ. Trả (thư mục, nội dung từng file, tên file mới)."""
+    import hashlib
+
+    from abook.webui import music_scene_student as scene
+
+    monkeypatch.delenv(scene.ENV_DIR, raising=False)
+    monkeypatch.setenv(scene.ENV_DOWNLOAD, "1")
+    monkeypatch.setattr(scene, "_directory", None)
+    directory = tmp_path / "music" / scene.PACKAGE_FOLDER
+    scene.configure(directory)
+    contents = {name: (name + "|").encode() * (3000 if name == "model.safetensors" else 7) for name in scene.PACKAGE_FILES}
+    monkeypatch.setattr(scene, "PACKAGE_HASHES", {name: (hashlib.sha256(data).hexdigest(), len(data)) for name, data in contents.items()})
+    directory.mkdir(parents=True)
+    for name in scene.REQUIRED_FILES:
+        (directory / name).write_bytes(contents[name])
+    music_module._write_stamp({**music_module._read_stamp(), "scene_q06": "ghim cu"})
+    return directory, contents, scene.CHAPTER_HEAD_FILE
+
+
+def test_a_scene_update_that_only_adds_one_small_file_counts_and_downloads_just_that_file(machine: Machine, tmp_path: Path, monkeypatch) -> None:
+    from abook.webui import music_scene_student as scene
+
+    music_module.start()
+    music_module.join(10)
+    directory, contents, new_file = _old_scene_package(tmp_path, monkeypatch)
+    machine.calls.clear()
+    small, whole = len(contents[new_file]), sum(len(data) for data in contents.values())
+    assert small < whole / 100
+    status = music_module.status()
+    assert status["state"] == "outdated" and status["scene"]["state"] == "outdated" and _names(status["parts"])["scene_q06"] == "outdated"
+    assert status["outdatedBytes"] == small == status["total"] == status["scene"]["bytes"], "chỉ file còn thiếu, không phải cả gói"
+    assert next(part["bytes"] for part in status["parts"] if part["id"] == "scene_q06") == whole, "cỡ cả phần vẫn là cả gói"
+    music_module.start()
+    music_module.join(10)
+    assert machine.calls == [new_file], "file cũ đúng băm không tải lại"
+    assert music_module._state["total"] == small and music_module._state["done"] == small, "thanh tiến độ chạy trên file thiếu"
+    assert music_module._read_stamp()["scene_q06"] == scene.model_pin() and music_module.status()["state"] == "ready"
+    assert (directory / "model.safetensors").read_bytes() == contents["model.safetensors"]
+
+
+def test_the_scene_download_counts_a_wrong_hash_file_again_and_remembers_what_it_hashed(machine: Machine, tmp_path: Path, monkeypatch) -> None:
+    music_module.start()
+    music_module.join(10)
+    directory, contents, new_file = _old_scene_package(tmp_path, monkeypatch)
+    hashed: list[str] = []
+    real = studio_setup._sha256
+    monkeypatch.setattr(studio_setup, "_sha256", lambda path: hashed.append(path.name) or real(path))
+    part = music_module.scene_student_part()
+    assert part.need() == len(contents[new_file]) and sorted(hashed) == sorted(name for name in contents if name != new_file)
+    hashed.clear()
+    for _ in range(3):  # giao diện hỏi mỗi giây
+        music_module.status()
+    assert part.need() == len(contents[new_file]) and hashed == [], "không băm lại file đã băm (đường dẫn, cỡ, giờ sửa không đổi)"
+    (directory / "LICENSE").write_bytes(b"x" * len(contents["LICENSE"]))  # cùng cỡ, sai nội dung
+    assert part.need() == len(contents[new_file]) + len(contents["LICENSE"]) and hashed == ["LICENSE"]
+    (directory / "config.json").unlink()
+    assert part.need() == len(contents[new_file]) + len(contents["LICENSE"]) + len(contents["config.json"])
+
+
+def test_the_real_download_never_touches_the_network_for_files_that_are_already_right(tmp_path: Path, monkeypatch) -> None:
+    import hashlib
+    import io
+
+    good = {"a.bin": b"alpha" * 100, "b.bin": b"beta" * 100}
+    new = b"gamma" * 10
+    opened: list[str] = []
+
+    def fake_urlopen(request: Any, timeout: float = 0) -> io.BytesIO:
+        opened.append(request.full_url)
+        response = io.BytesIO(new)
+        response.status = 200  # type: ignore[attr-defined]
+        return response
+
+    monkeypatch.setattr(studio_setup.urllib.request, "urlopen", fake_urlopen)
+    items = [studio_setup.Download(name, f"https://example.invalid/{name}", hashlib.sha256(data).hexdigest(), len(data)) for name, data in good.items()]
+    items.append(studio_setup.Download("c.bin", "https://example.invalid/c.bin", hashlib.sha256(new).hexdigest(), len(new)))
+    for name, data in good.items():
+        (tmp_path / name).write_bytes(data)
+    for item in items:
+        assert studio_setup.download(item, tmp_path / item.name, lambda _have, _total: None, lambda: False) == tmp_path / item.name
+    assert opened == ["https://example.invalid/c.bin"], "chỉ file thiếu mới gọi mạng"
+    assert (tmp_path / "c.bin").read_bytes() == new
