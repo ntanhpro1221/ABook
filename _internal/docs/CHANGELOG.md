@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Việc cần anh và Studio
+
+- Thẻ "Người kể của đoạn": đoạn đã phân tích xong thì lựa chọn chỉ áp khi làm lại sách, nên thẻ xuống cuối danh sách, và sau khi bấm nằm trong nhóm riêng "Đã ghi, áp khi làm lại sách" thay vì "chờ áp dụng". Nút nói rõ đổi thành gì ("Không phải X kể - đoạn kể ngôi thứ ba", "Giữ X là người kể").
+- Tab Kịch bản đánh dấu thêm câu máy chỉ chắc vài chục phần trăm ai nói và câu có cách xưng hô lệch - đúng những câu hộp "Việc cần anh" hỏi. "Xác nhận cả chương đúng" có Hoàn tác (nút trên thông báo và Ctrl+Z).
+- Đổi sang giọng khác giới: hộp "Đổi giọng" hỏi "đổi cả giới?" ngay trong hộp, rồi ghi giới theo; dòng chờ áp dụng ở tab Nhân vật hiện giới mới.
+- Thẻ có nhiều lựa chọn gom bớt vào "Người khác…"; thẻ 『』 và thẻ lượt đối đáp có một dòng giải thích hai phạm vi, số "Ảnh hưởng" đổi theo phạm vi đang chọn. Thẻ lượt đối đáp không tô lựa chọn đầu như thể máy đề xuất.
+- Chữ rõ hơn: lỗi nghe thử không còn hiện tên lỗi của máy; báo "Thu lại N câu" thống nhất; gợi ý tên người kể không còn mảnh chồng lấn; ô chọn chương ở màn hẹp không còn bị cụt chữ; thông báo có nút ✕ để gạt đi khi che chữ; nhãn cách đọc của mỗi câu hiện mờ trên màn cảm ứng.
+
 ### Nhạc nền
 
 - Nhạc nền theo sát chỗ truyện lúc căng lúc dịu TRONG một chương hơn: trong "Phân tích nhạc" có thêm một model nhỏ tuỳ chọn ("Học sinh không khí cảnh", tải thêm 0,71 GiB, chạy trên CPU, khoảng 18 giây cho mỗi giờ audio) đọc chữ từng đoạn rồi đoán đoạn nào vui hơn, căng hơn mức chung của chương. Khi chưa tải, nhạc chọn như trước. Sách làm ở máy tính vẫn mang sẵn lựa chọn ấy sang điện thoại.

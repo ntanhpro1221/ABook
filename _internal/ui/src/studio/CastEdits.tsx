@@ -134,7 +134,7 @@ export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved
       toast.success(`Đã ghi: ${name} là nhân vật ${label}`, {
         description: waiting
           ? WAITING_STUDIO
-          : `${recorded ? "Nếu giọng đang đọc chưa hợp giới này, các câu đã thu của người ấy sẽ đọc lại bằng giọng mới. " : ""}${when}`,
+          : `${recorded ? "Nếu giọng đang đọc chưa hợp giới này, các câu đã thu của người ấy sẽ được thu lại bằng giọng mới. " : ""}${when}`,
         action: undoAction(client, bookId, "voice", [{ character: person.name, requestedAt, keep: false }], `${name} trở lại như trước khi đổi giới tính.`),
         duration: UNDO_MS,
       });

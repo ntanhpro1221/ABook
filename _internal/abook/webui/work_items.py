@@ -401,6 +401,48 @@ def self_addressed(connection: Any, chapter_id: int | None = None) -> dict[int, 
     return registry_self_addressed(rows, aliases, lambda row: chapter_id is None or int(row["chapter_id"]) == chapter_id)
 
 
+def first_person_lookup(project_root: Path, chapter_index: dict[int, int]) -> tuple[str, dict, Callable[[int], str], Callable[[Any], str] | None]:
+    """Người kể "tôi" của sách: (người kể cả cuốn, người kể theo chương, `narrator_of(chapter_id)`, `row_narrator(câu)` hay None).
+    `row_narrator` chỉ có khi người dùng đã nhận một đoạn có người kể riêng (narrator_sections.json): câu trong đoạn theo người
+    kể của đoạn, không của chương. Dùng chung với tab Kịch bản (casting_review) để hai nơi nghi xưng hô cùng một phép."""
+    voices_settings = store.read_settings(project_root).get("voices")
+    voices_settings = voices_settings if isinstance(voices_settings, dict) else {}
+    book_narrator = str(voices_settings.get("first_person_identity") or "").strip()
+    chapter_narrators = voices_settings.get("first_person_chapters") if isinstance(voices_settings.get("first_person_chapters"), dict) else {}
+
+    def narrator_of(chapter_id: int) -> str:
+        index = str(chapter_index.get(chapter_id, ""))
+        return str(chapter_narrators[index]).strip() if index in chapter_narrators else book_narrator
+
+    # Người kể theo ĐOẠN người dùng đã nhận (narrator_sections.json): câu trong đoạn theo người kể của đoạn, không của chương.
+    accepted_sections = narrator_sections.accepted(narrator_sections.load(project_root)) if (book_narrator or chapter_narrators) else {}
+
+    def row_narrator(row: Any) -> str:
+        found = narrator_sections.narrator_at(accepted_sections, int(chapter_index.get(int(row["chapter_id"]), 0)), int(row["seq"]))
+        return narrator_of(int(row["chapter_id"])) if found is None else found
+
+    return book_narrator, chapter_narrators, narrator_of, row_narrator if accepted_sections else None
+
+
+def unsure_speaker_lines(spoken: list[Any], confidences: dict[str, dict[str, Any]],
+                         carded: set[str]) -> tuple[list[tuple[Any, dict[str, Any]]], int]:
+    """(các câu model kém chắc ai nói - p_first thấp nhất trước, số câu được phép hỏi): thẻ 0c2 của hộp việc và dấu "máy chỉ chắc
+    ~N%" của tab Kịch bản dùng đúng một phép. `carded`: câu đã có thẻ khác (một câu một thẻ)."""
+    measured = [
+        (row, confidences[str(row["stable_id"])]) for row in spoken
+        if row["kind"] in speaker_logprobs.SPOKEN_KINDS and str(row["stable_id"]) in confidences
+    ]
+    if not measured:
+        return [], 0
+    unsure = sorted(
+        ((row, found) for row, found in measured
+         if found["p_first"] < LOGPROB_DOUBT and str(row["stable_id"]) not in carded
+         and renames.name_key(str(row["speaker"])) == renames.name_key(found["speaker"])),
+        key=lambda pair: (pair[1]["p_first"], int(pair[0]["chapter_id"]), int(pair[0]["seq"])),
+    )
+    return unsure, int(len(measured) * LOGPROB_SHARE + 1e-9)
+
+
 def work_items(project_root: Path) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     renamed = renames.load(project_root)
@@ -461,23 +503,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
 
     # 0b. Ai nói câu này - theo XƯNG HÔ (address_cues.py): truyện kể ngôi thứ nhất, câu dính người kể "tôi" mà cách xưng
     #     hô ("ta… ngươi", "tớ… cậu") hợp người khác trong chương hơn hẳn. Đo 29-09 trên bộ LN: câu bị hỏi sai thật 85-95%.
-    voices_settings = store.read_settings(project_root).get("voices")
-    voices_settings = voices_settings if isinstance(voices_settings, dict) else {}
-    book_narrator = str(voices_settings.get("first_person_identity") or "").strip()
-    chapter_narrators = voices_settings.get("first_person_chapters") if isinstance(voices_settings.get("first_person_chapters"), dict) else {}
-
-    def narrator_of(chapter_id: int) -> str:
-        index = str(chapter_index.get(chapter_id, ""))
-        return str(chapter_narrators[index]).strip() if index in chapter_narrators else book_narrator
-
-    # Người kể theo ĐOẠN người dùng đã nhận (narrator_sections.json): câu trong đoạn theo người kể của đoạn, không của chương.
-    accepted_sections = narrator_sections.accepted(narrator_sections.load(project_root)) if (book_narrator or chapter_narrators) else {}
-
-    def row_narrator(row: Any) -> str:
-        found = narrator_sections.narrator_at(accepted_sections, int(chapter_index.get(int(row["chapter_id"]), 0)), int(row["seq"]))
-        return narrator_of(int(row["chapter_id"])) if found is None else found
-
-    by_section = row_narrator if accepted_sections else None
+    book_narrator, chapter_narrators, narrator_of, by_section = first_person_lookup(project_root, chapter_index)
     for row, suggested, cue in address_doubts(spoken, narrator_of, by_section) if (book_narrator or chapter_narrators) else []:
         stable_id = str(row["stable_id"])
         current = str(row["speaker"])
@@ -544,19 +570,9 @@ def work_items(project_root: Path) -> dict[str, Any]:
     #      duyệt là câu sai. Chỉ hỏi câu mà nhãn hiện tại CÒN là nhãn model sinh (khác = dây chuyền hay người nghe đã đổi, số đo
     #      không còn nói về nhãn ấy) và câu chưa có thẻ nào ở trên (một câu một thẻ). Không có số đo = không thẻ.
     confidences = speaker_logprobs.read_confidences(project_root)
-    measured = [
-        (row, confidences[str(row["stable_id"])]) for row in spoken
-        if row["kind"] in speaker_logprobs.SPOKEN_KINDS and str(row["stable_id"]) in confidences
-    ]
-    if measured:
-        budget = int(len(measured) * LOGPROB_SHARE + 1e-9)
+    if confidences:
         carded = {str(line["stableId"]) for item in items for line in item.get("lines", [])}
-        unsure = sorted(
-            ((row, found) for row, found in measured
-             if found["p_first"] < LOGPROB_DOUBT and str(row["stable_id"]) not in carded
-             and renames.name_key(str(row["speaker"])) == renames.name_key(found["speaker"])),
-            key=lambda pair: (pair[1]["p_first"], int(pair[0]["chapter_id"]), int(pair[0]["seq"])),
-        )
+        unsure, budget = unsure_speaker_lines(spoken, confidences, carded)
         for row, found in unsure:
             if budget <= 0:
                 break
@@ -597,7 +613,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 (chapter_id, first, last, EXAMPLES)).fetchall()
             section_texts = [str(row[0]) for row in connection.execute(
                 "SELECT text FROM segments WHERE chapter_id=? AND seq BETWEEN ? AND ? ORDER BY seq", (chapter_id, first, last))]
-        # "Chọn người kể…" gợi sẵn: tên riêng có mặt trong đoạn (sổ nhân vật có thể chưa có - đang phân tích), rồi người hay
+        # "Người kể là ai khác…" gợi sẵn: tên riêng có mặt trong đoạn (sổ nhân vật có thể chưa có - đang phân tích), rồi người hay
         # nói trong chương; người kể của sách thì không (đó là câu hỏi đang hỏi).
         narrator_choices = [{"label": name, "value": name}
                             for name in narrator_cards.section_names(section_texts, {proposal["narrator"], who})]
@@ -614,17 +630,22 @@ def work_items(project_root: Path) -> dict[str, Any]:
             why = "Lời kể ở đây hầu như không có “tôi”, khác với phần còn lại của chương."
         else:
             why = f"Lời kể gọi tên {who} như nói về một người khác, và ít “tôi” hơn hẳn phần còn lại."
+        # Đoạn đã phân tích XONG: lựa chọn chỉ áp khi làm lại sách (applies_note) - thẻ này không làm được gì ngay, nên xuống
+        # cuối danh sách (xem sort ở cuối) và sau khi bấm không tính vào "chờ áp dụng".
+        redo_only = total > 0 and done >= total
         items.append({
             "kind": "narrator",
             "key": f"narrator:{proposal['chapter_index']}:{first}:{last}",
             "title": f"{chapter_name}, {'câu ' + str(first) if first == last else f'câu {first}–{last}'}: có vẻ không phải {who} kể",
-            "problem": f"{why} Nếu người kể ở đây là người khác, máy sẽ thôi gán lời họ cho {who}. Chưa trả lời thì máy giữ nguyên.",
+            "problem": f"{why} Nếu người kể ở đây là người khác, máy sẽ thôi gán lời họ cho {who}."
+                       + ("" if decision is not None else " Chưa trả lời thì máy giữ nguyên."),
             "affected": total,
             "doubt": 0.5,
-            "options": ["Đúng, đổi người kể", "Không, giữ nguyên", "Chọn người kể…"],
+            "options": [f"Không phải {who} kể", f"Giữ {who} là người kể", "Người kể là ai khác…"],
             "current": who,
             "examples": [_example(row, names, speaker_label, project_root) for row in shown],
             "requested": requested,
+            "redoOnly": redo_only,
             "narratorSection": {
                 "chapterIndex": proposal["chapter_index"], "fromSeq": first, "toSeq": last, "narrator": who,
                 "appliesNote": narrator_cards.applies_note(total, done),
@@ -751,6 +772,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
                                " cặp như thế là hai người đối đáp - có thể câu sau là của người đang nói với " + name + ".",
                     "affected": 1,
                     "doubt": 0.9,
+                    # Chip đầu (người kể "tôi", hay người nói nhiều nhất) chỉ là ứng viên thường gặp, máy không đề xuất ai.
+                    "suggested": False,
                     "options": ["Chọn người nói khác", "Giữ nguyên"],
                     "current": speaker_label(speaker),
                     "examples": [{**_example(lines[0], names, speaker_label, project_root), "changes": False},
@@ -767,6 +790,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
                            " chuỗi là lời của MỘT người khác (độc thoại vắt nhiều đoạn) thì chọn “Cả chuỗi”.",
                 "affected": len(changing),
                 "doubt": 0.9,
+                "suggested": False,
                 "options": ["Chọn người nói khác", "Giữ nguyên"],
                 "current": speaker_label(speaker),
                 "examples": [{**_example(row, names, speaker_label, project_root), "changes": index % 2 == 1} for index, row in enumerate(lines)],
@@ -1093,7 +1117,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
         undo = _undo_of(item, overrides)
         if undo is not None:
             item["undo"] = undo
-    items.sort(key=lambda item: -item["score"])
+    # Việc chỉ áp được khi làm lại sách (thẻ người kể của đoạn đã phân tích xong) đứng sau mọi việc áp được ngay, điểm cao cũng vậy.
+    items.sort(key=lambda item: (bool(item.get("redoOnly")), -item["score"]))
     counts: dict[str, int] = defaultdict(int)
     for item in items:
         counts[item["kind"]] += 1

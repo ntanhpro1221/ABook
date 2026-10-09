@@ -328,3 +328,40 @@ def test_a_decided_narrator_card_carries_the_withdrawal_of_the_decision(tmp_path
     card = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
     assert card["undo"] == {"endpoint": "narrator-section", "decisions": [
         {"chapterIndex": 1, "fromSeq": section["from_seq"], "toSeq": section["to_seq"]}]}
+
+
+def test_a_card_that_only_a_redo_can_apply_goes_last_and_stops_saying_the_machine_keeps_it(tmp_path: Path) -> None:
+    """Soát UX a13 #1: đoạn đã phân tích xong thì lựa chọn chỉ áp khi làm lại sách - thẻ không được xếp trên việc áp ngay."""
+    from abook.webui import narrator_cards
+    from abook.webui.work_items import work_items
+
+    project, _rows = _book(tmp_path)
+    card = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
+    assert not card["redoOnly"] and "Chưa trả lời thì máy giữ nguyên" in card["problem"], "chưa phân tích: áp ngay, như cũ"
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("UPDATE segments SET status='verified'")
+    # Một thẻ khác, điểm thấp hơn hẳn: một cách đọc tên máy kém chắc.
+    db.execute("INSERT INTO pronunciations VALUES ('Zed', 'zét', 0.2, 0)")
+    db.execute("UPDATE segments SET text = text || ' Zed.' WHERE seq = 1")
+    db.commit()
+    db.close()
+    items = work_items(project)["items"]
+    kinds = [item["kind"] for item in items]
+    assert len(kinds) > 1 and kinds[-1] == "narrator" and items[-1]["redoOnly"] and items[-1]["score"] > 0, kinds
+    section = items[-1]["narratorSection"]
+    narrator_cards.decide(project, {"chapterIndex": 1, "fromSeq": section["fromSeq"], "toSeq": section["toSeq"], "action": "accept"})
+    answered = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
+    assert answered["requested"] == "Đổi người kể" and answered["redoOnly"]
+    assert "Chưa trả lời" not in answered["problem"]
+
+
+def test_overlapping_name_fragments_keep_the_longest_name_that_does_not_overlap(tmp_path: Path) -> None:
+    """Soát UX a13 #11: "Thiên Biến Vạn", "Biến Vạn Hóa", "Hóa Krai Andrey" là mảnh của cùng một cụm tên - gợi ý chỉ giữ không chồng."""
+    from abook.webui import narrator_cards
+
+    texts = ["Rồi Thiên Biến Vạn Hóa Krai Andrey bước vào.", "Lúc ấy Thiên Biến Vạn gật đầu.", "Gặp Biến Vạn Hóa, Mai cười."]
+    names = narrator_cards.section_names(texts, set())
+    assert "Biến Vạn Hóa" not in names and "Thiên Biến Vạn" in names, names
+    assert not any(narrator_cards._overlap(a, b) for a in names for b in names if a != b), names
+    assert not narrator_cards._overlap("Lâm Hạ", "Hạ Vy"), "chung một chữ vẫn là hai người"
+    assert narrator_cards._overlap("Krai", "Krai Andrey")

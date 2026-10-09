@@ -563,3 +563,14 @@ def test_a_remote_studio_may_preview_only_when_it_may_produce() -> None:
     assert not remote_studio.permitted("GET", clip, producing=False)
     assert not remote_studio.permitted("GET", "/media/books/YWJj/reading-previews/../../preferences.json")
     assert not any(pattern.fullmatch(book + "/pronunciation/preview") for _verb, pattern in remote_studio.LISTEN_ROUTES)
+
+
+def test_a_python_error_from_the_preview_process_becomes_plain_words_and_stays_in_the_log(caplog: pytest.LogCaptureFixture) -> None:
+    """Soát UX a13 #7: "Không nghe thử được: KeyError: 'tts'" không nói gì với người nghe."""
+    with caplog.at_level("WARNING"):
+        raw = reading_preview._plain_error("KeyError: 'tts'")
+    assert "KeyError" not in raw and "'tts'" not in raw and "nhật ký" in raw
+    assert "KeyError: 'tts'" in caplog.text, "chi tiết nằm trong nhật ký"
+    assert reading_preview._plain_error("Không đọc được câu này trong sách.") == "Không đọc được câu này trong sách."
+    assert reading_preview._plain_error("ValueError: Giọng này chưa tải") == "Giọng này chưa tải"
+    assert reading_preview._plain_error(None).startswith("không có âm thanh")

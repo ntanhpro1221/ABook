@@ -11,7 +11,7 @@ import { ReadingProblem } from "./ReadingProblem";
 import { useTryReading } from "./TryReading";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { keepRequests, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
-import { decidedTitle, inboxLead, midSentence, sentence } from "./workText";
+import { decidedTitle, inboxLead, midSentence, rerecordSentence, sentence } from "./workText";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
@@ -51,6 +51,8 @@ export interface WorkItem {
   /** Việc cách đọc tên: chữ gốc trong sách, và cách đọc người nghe đã ghi mà dây chuyền chưa áp (nếu có). */
   surface?: string;
   requested?: string | null;
+  /** Đã quyết mà chỉ áp khi làm lại sách (thẻ người kể của đoạn đã phân tích xong): không tính vào "chờ áp dụng", xếp cuối. */
+  redoOnly?: boolean;
   /** Việc gán người nói ("Ai nói câu này", người gọi, vai phụ không tên): các câu (mã ổn định + băm chữ, để yêu cầu
    *  không áp nhầm câu đã đổi) và các lựa chọn bấm được. */
   lines?: { stableId: string; textSha256: string }[];
@@ -284,6 +286,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
         <input
           id={inputId}
           aria-label={`Cách đọc mới cho ${item.surface}`}
+          placeholder={`vd ${item.current}`}
           value={value}
           onChange={(event) => {
             setValue(event.target.value);
@@ -387,7 +390,7 @@ function SpeakerFix({
       const label = choice?.name ?? choice?.label ?? speaker;
       toast.success(`Đã ghi: ${which} của ${midSentence(label)}`, {
         description:
-          `Câu đã thu sẽ đọc lại bằng giọng của người ấy. ${when}` +
+          `Câu đã thu sẽ được thu lại bằng giọng của người ấy. ${when}` +
           (alias && item.kind === "bracket"
             ? " Lời trong 『』 ở các chương và các phần sau của cuốn cũng tự về người này."
             : alias
@@ -423,6 +426,13 @@ function SpeakerFix({
   });
   const busy = save.isPending || keepAll.isPending;
   const none = !lines?.length;
+  // Quá nhiều chip (thẻ 『』 có thể 12 người): chừa MAX_CHIPS đầu (và lựa chọn đã ghi), phần còn lại nằm trong “Người khác…”.
+  const everyChoice = item.choices ?? [];
+  const isAnswer = (choice: { label: string; name?: string }) => Boolean(item.requested) && [choice.name, choice.label].includes(item.requested!);
+  const shownChoices = everyChoice.filter((choice, index) => index < MAX_CHIPS || isAnswer(choice) || GENERIC_PEOPLE.has(choice.label));
+  const moreChoices = everyChoice.filter((choice) => !shownChoices.includes(choice));
+  // Gợi ý tên bằng chính tên trong sách, không phải tên truyện nào đó (soát UX a13 #6).
+  const sample = everyChoice.map((choice) => choice.name ?? choice.label).find((text) => text && !GENERIC_PEOPLE.has(text) && !/^(Tất cả là|Giữ) /.test(text));
   return (
     <div className="mt-3">
       {item.requested && (
@@ -448,8 +458,15 @@ function SpeakerFix({
           />
         </div>
       )}
+      {item.allLines && item.lines && onScope && (
+        <p className="mb-2 text-xs text-fg-3">
+          {item.scopeLabels
+            ? `${item.scopeLabels[0]}: chỉ những câu 『』 của chương này. ${item.scopeLabels[1]}: mọi câu 『』 của sách, và các phần làm sau cũng theo.`
+            : "Câu xen kẽ: chỉ những câu đánh dấu “sẽ đổi”. Cả chuỗi: mọi câu của chuỗi này - khi cả chuỗi là lời của một người."}
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Ai nói câu này">
-        {(item.choices ?? []).map((choice, index) => (
+        {shownChoices.map((choice, index) => (
           <Button data-choice
             key={choice.value}
             size="sm"
@@ -501,14 +518,25 @@ function SpeakerFix({
       </div>
       {creating && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {moreChoices.length > 0 && (
+            <div className="flex w-full flex-wrap items-center gap-1.5" role="group" aria-label="Những người khác trong sách">
+              {moreChoices.map((choice) => (
+                <Button key={choice.value} size="sm" variant="secondary" disabled={busy || none} onClick={() => save.mutate({ speaker: choice.value })}>
+                  {choice.label}
+                </Button>
+              ))}
+              <span className="text-xs text-fg-3">hay đặt tên một người mới:</span>
+            </div>
+          )}
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Tên người nói (vd Tọa Phu Đồng Tử)"
+            placeholder={sample ? `Tên người nói (vd ${sample})` : "Tên người nói"}
             aria-label="Tên người nói mới"
             maxLength={80}
             className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-accent"
           />
+          <span className="text-xs text-fg-2">Giới (bấm để lưu):</span>
           {(
             [
               ["male", "Nam"],
@@ -521,6 +549,7 @@ function SpeakerFix({
               size="sm"
               variant="secondary"
               disabled={!name.trim() || busy || none}
+              aria-label={`Lưu người nói mới, giới: ${label.toLowerCase()}`}
               onClick={() => save.mutate({ speaker: name.trim(), newGender: gender })}
             >
               {label}
@@ -560,22 +589,22 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const typed = name.trim();
   return (
     <div className="mt-3">
-      {section.appliesNote && <p className="mb-2 text-xs text-fg-2">{section.appliesNote}</p>}
+      {section.appliesNote && !(item.requested && item.redoOnly) && <p className="mb-2 text-xs text-fg-2">{section.appliesNote}</p>}
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          Đã ghi: {item.requested}.
+          {item.redoOnly ? "Đã ghi - áp khi làm lại sách." : `Đã ghi: ${item.requested}.`}
         </p>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Người kể của đoạn">
         <Button data-choice size="sm" variant={item.requested === "Đổi người kể" ? "primary" : "secondary"} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
-          Đúng, đổi người kể
+          Không phải {item.current} kể - đoạn kể ngôi thứ ba
         </Button>
         <Button data-choice size="sm" variant={item.requested === "Giữ nguyên" ? "primary" : "ghost"} disabled={save.isPending} onClick={() => save.mutate({ action: "keep" })}>
-          Không, giữ nguyên
+          Giữ {item.current} là người kể
         </Button>
         <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} onClick={() => setChoosing((value) => !value)}>
-          Chọn người kể…
+          Người kể là ai khác…
         </Button>
       </div>
       {choosing && (
@@ -641,7 +670,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       toast.success(`Đã ghi: ${label}`, {
         description: note?.startsWith("giữ giọng")
           ? "Giọng đang đọc giữ nguyên - không phải thu lại câu nào."
-          : `Mọi câu của người ấy sẽ đọc lại bằng giọng mới. ${when}`,
+          : `${rerecordSentence(note)} ${when}`,
         ...undo,
       });
     },
@@ -755,7 +784,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = 
       <p className="mt-1.5 text-sm text-fg-2">{item.problem}</p>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-2">
         <span>
-          Ảnh hưởng <span className="tabular font-semibold text-fg">{formatNumber(item.affected)}</span> câu
+          Ảnh hưởng <span className="tabular font-semibold text-fg">{formatNumber(item.allLines && scope === "all" ? item.allLines.length : item.affected)}</span> câu
         </span>
         <span>
           {item.kind === "audio" ? "Trạng thái" : item.kind === "narrator" ? "Máy coi người kể là" : "Máy đang dùng"}: <span className="font-medium text-fg">{item.current}</span>
@@ -807,6 +836,10 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = 
     </li>
   );
 }
+
+/** Nhiều hơn ngần này lựa chọn thì phần còn lại gom vào “Người khác…”. */
+const MAX_CHIPS = 6;
+const GENERIC_PEOPLE = new Set(["Người kể", "Người kể đọc tất cả", "Vai phụ không tên"]);
 
 /** Thẻ vai phụ cả cuốn hiện ngần này câu đầu; "Xem cả N câu" mở hết để bỏ chọn. */
 const PICK_PREVIEW = 3;
@@ -1020,7 +1053,10 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
   const undecided = data.items.filter((item) => !item.requested);
   const open = inPrecast ? undecided.filter((item) => !inPrecast.has(item.key)) : undecided;
   const atReview = undecided.length - open.length;
-  const decided = data.items.filter((item) => item.requested);
+  const answered = data.items.filter((item) => item.requested);
+  // Đã ghi mà chỉ áp khi làm lại sách (đoạn người kể đã phân tích xong): nhóm riêng, không có nút "Áp dụng thay đổi" nào cho nó.
+  const redo = answered.filter((item) => item.redoOnly);
+  const decided = answered.filter((item) => !item.redoOnly);
   // "Giữ" cách đang đọc là đã quyết mà không có gì chờ áp dụng - không đếm vào "chờ áp dụng" (soát UX 29-09).
   const waiting = waitingChanges(decided);
   const counts: Partial<Record<WorkKind, number>> = {};
@@ -1079,16 +1115,26 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
       )}
       {!open.length && atReview === 0 && (
         <p className="mt-4 text-sm text-fg-2">
-          Mọi việc đã có quyết định - {hint}.
+          Mọi việc đã có quyết định{decided.length > 0 ? ` - ${hint}` : ""}.
         </p>
       )}
       {decided.length > 0 && (
         <details className="mt-6 rounded-xl border border-line px-4 py-3">
           <summary className="cursor-pointer text-sm font-medium text-fg-2">
-            {waiting === decided.length ? `Đã quyết, chờ áp dụng · ${decided.length}` : `Đã quyết · ${decided.length} (${waiting} chờ áp dụng)`}
+            {waiting === decided.length ? `Đã quyết, chờ áp dụng · ${decided.length} việc` : `Đã quyết · ${decided.length} việc (${waiting} thay đổi chờ áp dụng)`}
           </summary>
           <ol className="mt-3 space-y-3">
             {decided.map((item) => (
+              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} />
+            ))}
+          </ol>
+        </details>
+      )}
+      {redo.length > 0 && (
+        <details className="mt-4 rounded-xl border border-line px-4 py-3">
+          <summary className="cursor-pointer text-sm font-medium text-fg-2">Đã ghi, áp khi làm lại sách · {redo.length}</summary>
+          <ol className="mt-3 space-y-3">
+            {redo.map((item) => (
               <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} />
             ))}
           </ol>

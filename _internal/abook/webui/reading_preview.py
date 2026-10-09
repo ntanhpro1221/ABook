@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import queue
 import re
@@ -38,6 +39,9 @@ from ..tts_pool import ReadOnlyVoiceDB
 from . import store
 from .remote_studio import FORWARD_SECONDS
 from .reviews import speaker_label
+
+_LOG = logging.getLogger(__name__)
+_EXCEPTION_TEXT = re.compile(r"^\w+(?:Error|Exception|Exit|Interrupt|Warning): ?(.*)$", re.DOTALL)
 
 # Ngưỡng của lần nạp VieNeu thật: ~2,3 GiB VRAM (đo trên card 8 GB) và ~6 GB RAM trống - dưới đó nạp là tranh với việc khác
 # trên máy, hay hết bộ nhớ giữa chừng.
@@ -199,6 +203,22 @@ PREVIEW_SCRIPT = _HEAD + _OVERLAY + _BODY
 _namespace: dict[str, Any] = {"ReadOnlyVoiceDB": ReadOnlyVoiceDB}
 exec(compile(_OVERLAY, "<reading_preview overlay>", "exec"), _namespace)  # noqa: S102 - hằng số của chính module này
 PreviewVoiceDB: type[ReadOnlyVoiceDB] = _namespace["PreviewVoiceDB"]
+
+
+def _plain_error(raw: Any) -> str:
+    """Lỗi của tiến trình đọc thử thành lời người nghe hiểu được. Lỗi Python thô ("KeyError: 'tts'") không nói gì với họ: chi tiết
+    vào nhật ký, người nghe nhận một câu chung; câu đã là tiếng Việt (do chính mã viết ra) thì giữ nguyên."""
+    text = str(raw or "").strip()
+    if not text:
+        return "không có âm thanh - thử lại sau ít phút."
+    found = _EXCEPTION_TEXT.match(text)
+    if found is None:
+        return text
+    _LOG.warning("Nghe thử lỗi: %s", text)
+    detail = found.group(1).strip()
+    if detail and any(ord(character) > 127 for character in detail) and not detail.startswith(("'", '"')):
+        return detail
+    return "máy đọc thử gặp lỗi - thử lại, hay chọn giọng khác. Chi tiết có trong nhật ký của máy."
 
 
 class PreviewError(Exception):
@@ -631,8 +651,7 @@ class ReadingPreviews:
             raise PreviewError(HTTPStatus.UNPROCESSABLE_ENTITY, "Phần đọc thử tắt giữa chừng - thử lại.", "failed") from None
         if not result.get("ok") or not target.is_file():
             self._discard(child)  # tiến trình sau một lỗi có thể mang bộ nhớ card hỏng: khởi động lại cho sạch
-            raise PreviewError(HTTPStatus.UNPROCESSABLE_ENTITY,
-                               f"Không nghe thử được: {result.get('error') or 'không có âm thanh'}", "failed")
+            raise PreviewError(HTTPStatus.UNPROCESSABLE_ENTITY, f"Không nghe thử được: {_plain_error(result.get('error'))}", "failed")
         if self._generation == generation:  # `shutdown` giữa chừng thì không hẹn lại tiến trình đã tắt
             self._arm(child)
 

@@ -193,3 +193,23 @@ def test_script_names_a_person_the_way_the_cast_tab_does(tmp_path: Path) -> None
     assert "Heidi Bé Nhỏ" in [person["label"] for person in view["cast"]]
     # Vai phụ cục bộ vẫn theo tên trong câu, không theo "NPC ..." của sổ.
     assert next(line for line in view["lines"] if line["stableId"] == "e")["label"] == "người gác"
+
+
+def test_the_script_marks_the_lines_the_model_is_unsure_of_with_the_inbox_budget(tmp_path: Path) -> None:
+    """Soát UX a13 #2: hộp việc hỏi câu p_first thấp (20% câu có số đo, cùng hàm `unsure_speaker_lines`), tab Kịch bản phải
+    đánh dấu cùng câu ấy - mở chương nào cũng ra cùng ngân sách của cả cuốn."""
+    project = make_book(tmp_path)
+    folder = project / "analysis_logprobs"
+    folder.mkdir()
+    spoken = {"b": "LUCIEN", "c": "HEIDI", "d": "HEIDI", "e": "NPC_LOCAL::c00001::r1::người gác", "g": "LUCIEN", "h": "LUCIEN",
+              "j": "RHINE", "k": "NPC_LOCAL::c00002::r2::bà bán hàng", "l": "UNKNOWN"}
+    low = {"h": 0.25, "j": 0.4}
+    rows = [{"chapter": 1, "seq": 0, "stable_id": key, "kind": "dialogue", "speaker": who, "p_first": low.get(key, 0.99),
+             "p_seq": 0.9, "margin": 0.1, "alts": [], "ntok": 1, "p_end": 0.99} for key, who in spoken.items()]
+    (folder / "00001.jsonl").write_bytes("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows).encode("utf-8"))
+    one = {line["stableId"]: line["hint"] for line in casting_chapter(project, 1)["lines"] if line["hint"]}
+    assert one["h"]["kind"] == "unsure" and "25%" in one["h"]["note"] and "Lucien" in one["h"]["note"]
+    assert set(one) == {"c", "d", "h"}, "9 câu có số đo x 20% = 1 chỗ: chỉ câu thấp nhất, dù câu 'j' cũng dưới ngưỡng"
+    assert not any(line["hint"] for line in casting_chapter(project, 2)["lines"]), "'j' vượt ngân sách của cả cuốn"
+    listing = {chapter["chapterId"]: chapter for chapter in casting_chapters(project)["chapters"]}
+    assert listing[1]["hints"] == 3 and listing[2]["hints"] == 0

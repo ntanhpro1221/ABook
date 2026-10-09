@@ -28,6 +28,14 @@ CHAPTER_STATUS_LABELS = {
     "warning": "Cần xem lại",
 }
 
+# Trạng thái chương ngoài bảng trên (dữ liệu lạ, bản dây chuyền mới hơn): nhãn chung, không đưa mã thô như "done" ra trang.
+UNKNOWN_CHAPTER_STATUS = "Chưa rõ trạng thái"
+
+
+def chapter_status_label(status: str) -> str:
+    return CHAPTER_STATUS_LABELS.get(status, UNKNOWN_CHAPTER_STATUS)
+
+
 GENDER_LABELS = {"male": "Nam", "female": "Nữ"}
 
 # Tên giọng VieNeu là tên hiện hành của VieNeu (3.8.3) và cũng là khoá - không đổi qua lại. Chỉ giọng của máy đọc khác

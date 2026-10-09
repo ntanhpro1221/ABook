@@ -13,6 +13,13 @@ export function midSentence(label: string | null | undefined): string {
   return text === "Vai phụ không tên" || text === "Người kể" ? text.charAt(0).toLowerCase() + text.slice(1) : text;
 }
 
+/** Cái giá của một lựa chọn đổi giọng, nói theo MỘT cách ("thu lại N câu") ở thẻ lẫn thông báo: ghi chú của nút ("đổi giọng, thu lại 12
+ *  câu" / "thu lại 22 câu ở các chương chung") thành câu báo; ghi chú không nói số thì câu chung. */
+export function rerecordSentence(note?: string): string {
+  const cost = note?.match(/thu lại \d+ câu[^,]*/)?.[0];
+  return cost ? `Sẽ ${cost} bằng giọng mới.` : "Câu đã thu của người ấy sẽ được thu lại bằng giọng mới.";
+}
+
 /** Tiêu đề thẻ người kể của đoạn sau khi đã quyết - nói KẾT QUẢ, không lặp tiền tố của nhãn ("Người kể: Mai" -> "Đoạn này do
  *  Mai kể", soát UX a8: từng ra "Đoạn này: Người kể: Mai kể"). */
 export function narratorDecidedTitle(current: string, answer: string): string {
