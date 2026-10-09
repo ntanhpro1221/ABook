@@ -15,7 +15,8 @@ sơ gắn với đúng một sách, mỗi sách có một hồ sơ đang dùng. 
         "chapters": {"3": {"heard": 812.4, "done": false, "at": ...}},
         "rate": 1.25,
         "finished": false,
-        "bookmarks": [{"id": "...", "chapterId": 3, "seconds": 64.0, "note": "", "at": ...}],
+        "bookmarks": [{"id": "...", "chapterId": 3, "seconds": 64.0, "note": "", "at": ...,
+                       "index": 12, "quote": "Trời đã sáng."}],
         "night": {"id": "...", "startedAt": ..., "endedAt": ..., "events": [...], "timeline": [...]},
         "updatedAt": ...
 
@@ -45,6 +46,18 @@ DONE_TAIL_SECONDS = 20.0
 # Hai dấu trang cùng chương cách nhau không quá chừng này là một: bấm hai lần liền (hay Space lặp lại nút vừa
 # bấm) không được đẻ ra dấu trùng.
 BOOKMARK_MERGE_SECONDS = 5.0
+BOOKMARK_QUOTE_CHARS = 60  # ~60 chữ đầu câu của dấu trang đặt ở màn đọc
+
+
+def bookmark_quote(text: Any) -> str:
+    """Đầu câu cho dòng dấu trang: gộp khoảng trắng, cắt ở ranh giới từ quanh `BOOKMARK_QUOTE_CHARS` ký tự, thêm "…" khi có cắt.
+    Bản Kotlin: Store.bookmarkQuote."""
+    clean = " ".join(str(text or "").split())
+    if len(clean) <= BOOKMARK_QUOTE_CHARS:
+        return clean
+    cut = clean[:BOOKMARK_QUOTE_CHARS]
+    space = cut.rfind(" ")
+    return (cut[:space] if space > BOOKMARK_QUOTE_CHARS // 2 else cut).rstrip(" ,.;:!?…-—") + "…"
 # Thẻ "Tối qua" chỉ nói về đêm vừa rồi: nhật ký cũ hơn chừng này thì thôi.
 NIGHT_RECENT_SECONDS = 20 * 3600
 NIGHT_MAX_POINTS = 480
@@ -332,16 +345,24 @@ class Listening:
             self._save()
 
     def add_bookmark(self, book: str, chapter_id: int, seconds: float, note: str = "",
-                     record: str | None = None) -> dict[str, Any]:
-        """Dấu trang mới - hoặc dấu đã có ngay chỗ ấy (±5 giây cùng chương), kèm cờ `existing`. Đặt từ trình phát thì
-        vào hồ sơ đang phát (`record`, xem `_held`); hồ sơ ấy vừa bị xoá thì vào hồ sơ đang dùng - người nghe đã bấm."""
+                     record: str | None = None, index: int | None = None, quote: str = "") -> dict[str, Any]:
+        """Dấu trang mới - hoặc dấu đã có ngay chỗ ấy (±5 giây cùng chương; dấu đặt ở màn đọc: cùng câu), kèm cờ `existing`.
+        Đặt từ trình phát thì vào hồ sơ đang phát (`record`, xem `_held`); hồ sơ ấy vừa bị xoá thì vào hồ sơ đang dùng - người
+        nghe đã bấm. `index` + `quote`: dấu đặt ở màn đọc trỏ tới CÂU (thứ tự câu trong chương, như `?at=`) và giữ ~60 chữ đầu
+        câu, để dòng dấu trang nói câu chữ ấy kể cả chương chưa có audio (`seconds` khi đó là 0)."""
         mark = {"id": uuid.uuid4().hex[:12], "chapterId": int(chapter_id), "seconds": round(float(seconds), 1),
                 "note": note.strip()[:500], "at": time.time()}
+        if index is not None and int(index) >= 0:
+            mark["index"] = int(index)
+            mark["quote"] = bookmark_quote(quote)
         with self._lock:
             entry = self._held(book, record) or self._book(book)
             for current in entry["bookmarks"]:
-                if (int(current.get("chapterId", -1)) == mark["chapterId"]
-                        and abs(float(current.get("seconds", 0.0)) - mark["seconds"]) <= BOOKMARK_MERGE_SECONDS):
+                if int(current.get("chapterId", -1)) != mark["chapterId"]:
+                    continue
+                same = (current.get("index") == mark["index"] if "index" in mark
+                        else abs(float(current.get("seconds", 0.0)) - mark["seconds"]) <= BOOKMARK_MERGE_SECONDS)
+                if same:
                     if mark["note"] and not current.get("note"):
                         current["note"] = mark["note"]
                         current["at"] = entry["updatedAt"] = mark["at"]
@@ -376,6 +397,9 @@ class Listening:
             restored = {"id": str(mark["id"])[:40], "chapterId": int(mark["chapterId"]),
                         "seconds": round(float(mark["seconds"]), 1), "note": str(mark.get("note", ""))[:500],
                         "at": time.time()}
+            if isinstance(mark.get("index"), int) and not isinstance(mark["index"], bool) and mark["index"] >= 0:
+                restored["index"] = mark["index"]
+                restored["quote"] = bookmark_quote(mark.get("quote"))
             entry["bookmarks"] = [item for item in entry["bookmarks"] if item["id"] != restored["id"]] + [restored]
             (entry.get("deleted") or {}).pop(restored["id"], None)
             entry["updatedAt"] = restored["at"]

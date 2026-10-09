@@ -55,6 +55,9 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     "bookTemplates": [],
     # "Đo cảm xúc nhạc chính xác hơn" (music_valence.py): tháp MuQ 1,27 GB chỉ tải khi người dùng bật; mặc định tắt. Đổi qua /api/music/local/precise.
     "preciseMusicMood": False,
+    # Nhạc nền MÁY TỰ CHỌN cho sách chỉ có chữ chưa được chọn nhạc (Cài đặt > Nhạc nền; mặc định bật): tắt thì sách chưa chọn gì không có nhạc, cuốn
+    # nào người nghe đã chọn nhạc (menu "Nhạc nền" của sách) vẫn phát. Đọc ở server._auto_playlist.
+    "autoMusic": True,
 }
 MAX_RECENTS = 30
 BOOK_PROFILES = ("fast", "balanced", "high_quality")

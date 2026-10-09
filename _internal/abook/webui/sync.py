@@ -377,6 +377,27 @@ class Devices:
         os.replace(temporary, self.path)
 
 
+TEXT_STATE = "text"  # `chapters[i].state` của chương chỉ có chữ (bookfile.TEXT_STATE, docs/LISTEN_ANYTHING.md mục 1)
+TEXT_ENTRY = re.compile(r"texts/(\d+)\.txt")
+
+
+def text_layer(project_root: Path, chapters: list[dict[str, Any]]) -> dict[str, bytes]:
+    """Cuốn chưa có chương nào xong audio: chương nào còn đọc được chữ nguồn thì thành chương CHỈ-CHỮ (`state` "text", mục
+    `texts/<mã>.txt`, không `file`) - sách vẫn nhìn thấy, đọc được ở máy kia và trong file `.abook`. Chương không còn file nguồn thì
+    để nguyên. Sửa `chapters` tại chỗ; trả {tên mục: chữ} để bên đóng gói chép vào file."""
+    files: dict[str, bytes] = {}
+    for chapter in chapters:
+        text = store.chapter_source_text(project_root, chapter["id"])
+        if text is None or not text.strip():
+            continue
+        name = f"texts/{chapter['id']}.txt"
+        chapter["state"], chapter["text"] = TEXT_STATE, name
+        files[name] = text.encode("utf-8")
+        # Chương chỉ-chữ không mang khoá `file` (JSON null thì `optString` của Android đọc ra chữ "null"): bỏ hẳn khoá.
+        chapter.pop("file", None)
+    return files
+
+
 def manifest(project_root: Path, book: str, listening: Listening,
              music_track: Callable[[str], Path | None] | None = None) -> dict[str, Any]:
     """`book.json` của một cuốn: chỉ các chương ĐÃ nghe được, kèm tên file để điện thoại tải về.
@@ -396,6 +417,7 @@ def manifest(project_root: Path, book: str, listening: Listening,
             "size": path.stat().st_size if path else 0,
             "script": f"scripts/{chapter['id']}.json",
         })
+    texts = {} if any(chapter["available"] for chapter in chapters) else text_layer(project_root, chapters)
     cast = store.cast(project_root)
     samples = sorted({person["sampleId"] for person in cast["characters"] + cast["extras"] if person.get("sampleId")})
     cover = covers.cover_meta(project_root)
@@ -410,8 +432,10 @@ def manifest(project_root: Path, book: str, listening: Listening,
     # "có cập nhật" và lấy lại chữ. Chưa căn thì không vào băm (phiên bản như trước).
     words = word_timing.stamp(project_root)
     # Đổi ảnh bìa hay nhạc nền cũng là một phiên bản mới của gói: điện thoại thấy "có cập nhật" và tải lại.
+    # Chữ chương chỉ-chữ vào băm bằng mã băm riêng (cỡ luôn 0): sửa file nguồn là một phiên bản mới.
     version = hashlib.sha256(json.dumps([[(c["id"], c["size"]) for c in chapters],
-                                         cover["version"] if cover else 0] + ([music] if music else []) + ([{"words": words}] if words else []),
+                                         cover["version"] if cover else 0] + ([music] if music else []) + ([{"words": words}] if words else [])
+                                        + ([{"texts": {name: hashlib.sha256(text).hexdigest()[:16] for name, text in texts.items()}}] if texts else []),
                                         sort_keys=True).encode()).hexdigest()[:16]
     return {
         "format": listen_view.FORMAT,
@@ -615,8 +639,6 @@ class SyncApp:
                 summary = store.summarize(path)
             except Exception:  # noqa: BLE001 - sách hỏng không làm hỏng danh sách
                 continue
-            if summary["chapters"]["completed"] <= 0:
-                continue
             identifier = book_id(path)
             summary["id"] = identifier
             view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
@@ -639,6 +661,13 @@ class SyncApp:
         if match:
             script = store.chapter_script(project_root, int(match.group(1)))
             return json.dumps(script, ensure_ascii=False).encode("utf-8") if script else None
+        match = TEXT_ENTRY.fullmatch(relative)
+        if match:
+            # Chữ nguồn của chương chưa có audio (text_layer): chỉ khi cả cuốn chưa có chương nào nghe được, đúng như manifest.
+            if any(chapter["playable"] for chapter in store.chapters(project_root)):
+                return None
+            text = store.chapter_source_text(project_root, int(match.group(1)))
+            return text.encode("utf-8") if text and text.strip() else None
         match = re.fullmatch(r"samples/(\d+)\.wav", relative)
         if match:
             cast = store.cast(project_root)

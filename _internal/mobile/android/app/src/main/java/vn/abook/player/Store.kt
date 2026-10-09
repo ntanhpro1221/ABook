@@ -656,12 +656,24 @@ object Store {
         save(id, state)
     }
 
+    /** `listening.bookmark_quote`: đầu câu cho dòng dấu trang - gộp khoảng trắng, cắt ở ranh giới từ quanh 60 ký tự, thêm "…" khi có cắt. */
+    fun bookmarkQuote(text: String): String {
+        val clean = text.split(Regex("\\s+")).filter { it.isNotEmpty() }.joinToString(" ")
+        if (clean.length <= 60) return clean
+        val cut = clean.take(60)
+        val space = cut.lastIndexOf(' ')
+        return (if (space > 30) cut.substring(0, space) else cut).trimEnd(' ', ',', '.', ';', ':', '!', '?', '…', '-', '—') + "…"
+    }
+
+    /** `index` + `quote`: dấu đặt ở màn đọc trỏ tới CÂU (thứ tự câu trong chương, như `?at=`) và giữ ~60 chữ đầu câu - cùng trường với
+     *  máy tính (listening.py `add_bookmark`); dấu đặt từ trình phát không có hai trường này. */
     @Synchronized
-    fun addBookmark(id: String, chapterId: Int, seconds: Double, note: String): JSONObject {
+    fun addBookmark(id: String, chapterId: Int, seconds: Double, note: String, index: Int? = null, quote: String = ""): JSONObject {
         val state = state(id)
         val mark = JSONObject()
             .put("id", UUID.randomUUID().toString().replace("-", "").substring(0, 12))
             .put("chapterId", chapterId).put("seconds", seconds).put("note", note.take(500)).put("at", now())
+        if (index != null && index >= 0) mark.put("index", index).put("quote", bookmarkQuote(quote))
         state.getJSONArray("bookmarks").put(mark)
         state.put("updatedAt", now())
         save(id, state)

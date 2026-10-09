@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookMatchesQuery, chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
+import { bookMatchesQuery, bookmarkReadPath, chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
@@ -235,5 +235,13 @@ describe("otherBooksToHear", () => {
     const shelf = [book("text", { stage: "text" }), book("audio")];
     expect(otherBooksToHear(shelf, "cur", false).map((item) => item.id)).toEqual(["audio"]);
     expect(otherBooksToHear(shelf, "cur", true).map((item) => item.id)).toEqual(["text", "audio"]);
+  });
+});
+
+describe("bookmarkReadPath", () => {
+  it("opens the reader on the sentence a reader bookmark points to; a player bookmark has no sentence", () => {
+    expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 12, quote: "Trời đã sáng." })).toBe("/book/b1/read/3?at=12");
+    expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 0, quote: "" })).toBe("/book/b1/read/3?at=0");
+    expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 64, note: "", at: 1 })).toBeNull();
   });
 });

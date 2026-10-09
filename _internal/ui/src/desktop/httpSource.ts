@@ -179,8 +179,8 @@ export const httpSource: ListenSource = {
   setRate: async (bookId, rate) => {
     await api(`/api/listen/books/${bookId}/rate`, { method: "POST", body: { rate } });
   },
-  addBookmark: (bookId, chapterId, seconds, note, record) =>
-    api<Bookmark>(`/api/listen/books/${bookId}/bookmarks`, { method: "POST", body: { chapterId, seconds, note, record } }),
+  addBookmark: (bookId, chapterId, seconds, note, record, sentence) =>
+    api<Bookmark>(`/api/listen/books/${bookId}/bookmarks`, { method: "POST", body: { chapterId, seconds, note, record, index: sentence?.index, quote: sentence?.quote } }),
   updateBookmark: async (bookId, id, note) => {
     await api(`/api/listen/books/${bookId}/bookmarks/${id}`, { method: "PUT", body: { note } });
   },

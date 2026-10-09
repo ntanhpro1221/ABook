@@ -271,8 +271,13 @@ object Playlists {
 
     private val autoCache = HashMap<Triple<String, String, Long>, String?>()
 
+    /** Cài đặt > Nhạc nền > "Tự chọn nhạc nền cho sách chỉ có chữ" (`autoMusic` của PlayerPlugin.configure; mặc định bật, như `autoMusic` của
+     *  preferences.json trên máy tính). Tắt thì sách chưa chọn nhạc không có nhạc; cuốn đã chọn (`music.playlist`) vẫn phát. */
+    @Volatile
+    var autoEnabled = true
+
     /** Sách CHỈ CÓ CHỮ (`packages.text_book`): có chương và mọi chương là chữ không audio. */
-    private fun isTextBook(book: JSONObject): Boolean {
+    fun isTextBook(book: JSONObject): Boolean {
         val chapters = book.optJSONArray("chapters") ?: return false
         val items = (0 until chapters.length()).mapNotNull { chapters.optJSONObject(it) }
         return items.isNotEmpty() && items.all { BookEdits.truthy(it.opt("text")) && !BookEdits.truthy(it.opt("file")) }
@@ -285,7 +290,7 @@ object Playlists {
      */
     fun autoPlaylist(dir: File, manifest: JSONObject?, bundled: JSONObject?): String? {
         val book = BookEdits.rawBook(dir)
-        if (!isTextBook(book)) return null
+        if (!isTextBook(book) || !autoEnabled) return null
         val (picker, source) = usablePicker(manifest, bundled)
         if (picker == null) return null
         val key = Triple(dir.name, source, picker.getLong("version"))

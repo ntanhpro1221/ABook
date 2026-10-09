@@ -80,7 +80,7 @@ FORMAT = "abook"
 FORMAT_VERSION = 5
 MANIFEST = "book.json"
 READIUM_MANIFEST = "manifest.json"
-TEXT_STATE = "text"  # `chapters[i].state` của chương chỉ có chữ (các giai đoạn khác: docs/LISTEN_ANYTHING.md mục 1)
+TEXT_STATE = sync.TEXT_STATE  # `chapters[i].state` của chương chỉ có chữ (các giai đoạn khác: docs/LISTEN_ANYTHING.md mục 1)
 MAX_ENTRIES = 20_000
 MAX_JSON_BYTES = 32 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024**3
@@ -159,18 +159,12 @@ def _add_chapters(project_root: Path, book: dict[str, Any], files: dict[str, Pat
 
 
 def _add_texts(project_root: Path, book: dict[str, Any], files: dict[str, Path | bytes]) -> None:
-    """Cuốn chưa có chương nào xong audio: chương nào còn đọc được chữ nguồn thì thành chương CHỈ-CHỮ (`state` "text", mục
-    `texts/<mã>.txt`) - sách vẫn đóng gói, mở, đọc được. Chương không còn file nguồn thì để nguyên (không chữ, không audio)."""
+    """Cuốn chưa có chương nào xong audio: chương nào còn đọc được chữ nguồn thì thành chương CHỈ-CHỮ (`sync.text_layer`) - sách vẫn
+    đóng gói, mở, đọc được. Chương không còn file nguồn thì để nguyên (không chữ, không audio)."""
+    files.update(sync.text_layer(project_root, book["chapters"]))
     for chapter in book["chapters"]:
-        text = store.chapter_source_text(project_root, chapter["id"])
-        if text is None or not text.strip():
-            continue
-        name = f"texts/{chapter['id']}.txt"
-        chapter["state"], chapter["text"] = TEXT_STATE, name
-        files[name] = text.encode("utf-8")
-        # Chương chỉ-chữ không mang khoá `file` / `script` (JSON null thì `optString` của Android đọc ra chữ "null"): bỏ hẳn khoá.
-        chapter.pop("file", None)
-        if chapter.get("script") not in files:
+        # Chương chỉ-chữ không mang khoá `script` (JSON null thì `optString` của Android đọc ra chữ "null") trừ khi chữ đọc theo đã vào gói.
+        if chapter.get("text") and chapter.get("script") not in files:
             chapter.pop("script", None)
 
 

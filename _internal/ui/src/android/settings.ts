@@ -22,6 +22,8 @@ export interface PlayerSettings {
   safetyStopHours: number;
   /** Lịch đêm tự hẹn giờ. */
   sleepSchedule: { from: string; to: string; minutes: number } | null;
+  /** Máy tự chọn nhạc nền cho sách chỉ có chữ chưa chọn nhạc (mặc định bật; Playlists.autoEnabled). */
+  autoMusic: boolean;
 }
 
 export const DEFAULT_SETTINGS: PlayerSettings = {
@@ -37,6 +39,7 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   rewindAfterMinutes: 5,
   safetyStopHours: 2,
   sleepSchedule: null,
+  autoMusic: true,
 };
 
 const KEY = "abook-player-settings";
@@ -71,6 +74,7 @@ export async function pushSettings(settings: PlayerSettings): Promise<void> {
     rewindAfterMinutes: settings.rewindAfterMinutes,
     safetyStopHours: settings.safetyStopHours,
     schedule: settings.sleepSchedule,
+    autoMusic: settings.autoMusic !== false,
   }).catch(() => undefined);
 }
 

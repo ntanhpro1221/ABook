@@ -46,7 +46,7 @@ import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./cloc
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { COARSE, EXTEND_GESTURE } from "./extendGesture";
 import { useBookMusic } from "./EditBook";
-import { canPlay, otherBooksToHear, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
+import { bookmarkReadPath, canPlay, otherBooksToHear, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepButtonLabel, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
@@ -1476,7 +1476,9 @@ function BookmarkRow({
           <span className="block truncate text-sm font-medium">{chapter ? chapter.subtitle || chapter.title : "Chương đã bị gỡ"}</span>
           <span className="tabular block text-xs text-fg-2">
             {chapter?.subtitle ? `${chapter.title} · ` : ""}
-            {formatClock(mark.seconds)} · {formatWhen(mark.at)}
+            {/* Chương chưa có audio (sách chỉ có chữ): giờ phút vô nghĩa với người đọc - chỉ có câu chữ. */}
+            {chapter?.available === false && mark.index !== undefined ? "" : `${formatClock(mark.seconds)} · `}
+            {formatWhen(mark.at)}
           </span>
           {quote && <span className="mt-1 line-clamp-2 block text-sm italic leading-snug text-fg">“{quote}”</span>}
         </button>
@@ -1562,7 +1564,7 @@ export function BookmarkList({
           bookId={bookId}
           mark={mark}
           chapter={chapters.find((chapter) => chapter.id === mark.chapterId)}
-          quote={sentenceAt(scriptOf(mark.chapterId), mark.seconds)}
+          quote={mark.quote || sentenceAt(scriptOf(mark.chapterId), mark.seconds)}
           editing={editing === mark.id}
           onEdit={(value) => setEditing(value ? mark.id : null)}
           onJump={onJump}
@@ -1574,6 +1576,8 @@ export function BookmarkList({
 
 function BookmarkPanel({ editingId, setEditingId }: { editingId: string | null; setEditingId: (id: string | null) => void }) {
   const { track, queue, jumpTo } = usePlayer();
+  const { setExpanded } = useNowPlaying();
+  const navigate = useNavigate();
   const { data: book } = useListenBook(track?.bookId);
   const marks = book?.state.bookmarks ?? [];
   if (!track || !marks.length) {
@@ -1591,7 +1595,13 @@ function BookmarkPanel({ editingId, setEditingId }: { editingId: string | null; 
         bookId={track.bookId}
         chapters={queue}
         marks={marks}
-        onJump={(mark) => jumpTo(mark.chapterId, mark.seconds, mark.note.trim() ? `Đã tới dấu trang “${excerpt(mark.note)}”` : undefined)}
+        onJump={(mark) => {
+          const path = bookmarkReadPath(track.bookId, mark);
+          if (path) {
+            setExpanded(false);
+            navigate(path);
+          } else jumpTo(mark.chapterId, mark.seconds, mark.note.trim() ? `Đã tới dấu trang “${excerpt(mark.note)}”` : undefined);
+        }}
         editingId={editingId}
         setEditingId={setEditingId}
       />

@@ -1351,7 +1351,8 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun addBookmark(call: PluginCall) = background(call) {
-        val mark = Store.addBookmark(call.getString("id")!!, call.getInt("chapterId")!!, call.getDouble("seconds") ?: 0.0, call.getString("note") ?: "")
+        val mark = Store.addBookmark(call.getString("id")!!, call.getInt("chapterId")!!, call.getDouble("seconds") ?: 0.0, call.getString("note") ?: "",
+            call.getInt("index"), call.getString("quote") ?: "")
         call.resolve(JSObject.fromJSONObject(mark))
     }
 

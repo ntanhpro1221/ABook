@@ -118,14 +118,14 @@ export const androidSource: ListenSource = {
   setChapterDone: (id, chapterId, done) => EbookLibrary.setChapterDone({ id, chapterId, done }),
   setFinished: (id, finished) => EbookLibrary.setFinished({ id, finished }),
   setRate: (id, rate) => EbookLibrary.setRate({ id, rate }),
-  addBookmark: (id, chapterId, seconds, note) => EbookLibrary.addBookmark({ id, chapterId, seconds, note }),
+  addBookmark: (id, chapterId, seconds, note, _record, sentence) => EbookLibrary.addBookmark({ id, chapterId, seconds, note, index: sentence?.index, quote: sentence?.quote }),
   refreshListening: async (id) => {
     await EbookLibrary.syncState({ id });
   },
   updateBookmark: (id, markId, note) => EbookLibrary.updateBookmark({ id, markId, note }),
   deleteBookmark: (id, markId) => EbookLibrary.deleteBookmark({ id, markId }),
   restoreBookmark: async (id, mark) => {
-    await EbookLibrary.addBookmark({ id, chapterId: mark.chapterId, seconds: mark.seconds, note: mark.note });
+    await EbookLibrary.addBookmark({ id, chapterId: mark.chapterId, seconds: mark.seconds, note: mark.note, index: mark.index, quote: mark.quote });
   },
   async sessions(bookId) {
     const book = await EbookLibrary.book({ id: bookId });

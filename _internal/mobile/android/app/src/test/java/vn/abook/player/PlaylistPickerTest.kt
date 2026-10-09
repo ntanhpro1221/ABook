@@ -103,6 +103,22 @@ class PlaylistPickerTest {
         assertNull(Playlists.autoPlaylist(File(root, "khac").apply { mkdirs(); File(this, "book.json").writeText(File(dir, "book.json").readText()) }, null, bundled))
     }
 
+    @Test
+    fun turning_off_the_machines_pick_in_settings_leaves_a_book_with_no_choice_without_music() {
+        val dir = File(BookEditsFixtures.tempDir("abook-pick-off"), "pick-off-book").apply { mkdirs() }
+        File(dir, "texts").mkdirs()
+        File(dir, "texts/1.txt").writeText("Một câu tự đặt, chẳng có từ khoá nào cả. ".repeat(60))
+        val chapter = JSONObject().put("id", 1).put("state", "text").put("text", "texts/1.txt")
+        File(dir, "book.json").writeText(JSONObject().put("title", "Sách thử").put("chapters", JSONArray().put(chapter)).toString())
+        try {
+            Playlists.autoEnabled = false
+            assertNull(Playlists.autoPlaylist(dir, null, bundled))
+        } finally {
+            Playlists.autoEnabled = true
+        }
+        assertTrue(Playlists.autoPlaylist(dir, null, bundled) != null)
+    }
+
     /** Thời gian `pick` trên ca dài nhất của bộ ví dụ - đo trên JVM (máy tính), KHÔNG phải điện thoại; số trên máy Android: PlaylistPickTimingTest. */
     @Test
     fun pick_time_on_the_longest_case_on_the_jvm() {

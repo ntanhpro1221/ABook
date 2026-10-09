@@ -19,6 +19,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thẻ sách chữ trong Thư viện ghi tác giả (nếu có) thay vì "Hoài My (Edge)"; huy hiệu tên máy trên sách của máy khác nằm ở dải dưới bìa, không đè lên tên sách.
 - Gỡ ghép một máy tính khác còn sửa chưa gửi: hộp nói tên sách như bạn đã đổi, và hỏi thật máy kia có đang bật không - máy kia tắt thì "Thử gửi trước rồi gỡ" không còn là nút chính, kèm dòng báo máy ấy đang tắt. Lời báo "không kết nối được" nhắc đúng tên công tắc ở Cài đặt ("Cho phép thiết bị khác kết nối qua Wi-Fi").
 - Cài đặt › Máy tính khác: lời báo lỗi ghép xuống dòng cho đọc hết thay vì bị cắt; dòng "Vân tay" chỉ hiện 8 ký tự đầu để đối chiếu (đủ 64 ký tự khi rê chuột vào).
+- "Thêm sách từ file…" nhiều file: bấm "Chọn lại" khi còn sách chưa thêm cũng hỏi lại như khi nhấn Esc, không lặng lẽ bỏ cả hàng.
+
+### Dấu trang và nhạc nền
+
+- Sách chưa có chương nào nghe được (mới thêm, máy chưa làm âm thanh) giờ cũng hiện ở máy đã ghép: đọc được chữ ở máy kia, và nghe ngay bằng giọng của máy kia nếu máy ấy có giọng.
+- Màn đọc: chọn một câu rồi bấm "Đặt dấu trang ở câu này". Dòng dấu trang ghi chính câu chữ ấy (không còn chỉ có giờ phút, vô nghĩa với sách chỉ có chữ), bấm vào là mở màn đọc đúng câu đó. Có ở máy tính và điện thoại.
+- Cài đặt › Nhạc nền: công tắc "Tự chọn nhạc nền cho sách chỉ có chữ" (mặc định vẫn bật). Tắt thì sách chưa chọn nhạc sẽ im lặng, cuốn nào bạn đã chọn nhạc ở menu "Nhạc nền" của sách vẫn có nhạc. Lúc chưa tải được danh mục nhạc, nút nhạc nền không còn hiện tên mã kỹ thuật của bộ nhạc.
 
 ## [0.4.37] - 2026-10-09
 

@@ -308,6 +308,8 @@ export interface Preferences {
   sleepSchedule: { from: string; to: string; minutes: number } | null;
   /** Máy tính xách tay rút sạc: tạm dừng tạo sách (abook/power_source.py). */
   pauseOnBattery?: boolean;
+  /** Máy tự chọn nhạc nền cho sách chỉ có chữ chưa chọn nhạc (mặc định bật; listen/playlistBed.ts AUTO_MUSIC_LABEL). */
+  autoMusic?: boolean;
   /** Mặc định của trình tạo sách cho sách mới ("" = giọng máy đề xuất). */
   newBookNarrator?: string;
   newBookProfile?: string;

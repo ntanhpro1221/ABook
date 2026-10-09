@@ -277,3 +277,26 @@ def test_a_book_with_its_makers_music_keeps_the_scene_music(tmp_path: Path) -> N
     book_edits.set_music(folder, {"playlist": "calm"})
     app._listenable = lambda value: folder  # type: ignore[method-assign]
     assert app.music_playlist_queue("sach")["tracks"] == []
+
+
+def test_turning_off_the_machines_pick_in_settings_silences_only_the_books_with_no_choice(tmp_path: Path) -> None:
+    app, book, server = _text_book_server(tmp_path)
+    try:
+        app.preferences.update({"autoMusic": False})
+        _status, view = _call(server, "GET", f"/api/books/{book}/music")
+        assert "playlist" not in view and "playlistAuto" not in view and view["autoOff"] is True
+        _status, queue = _call(server, "GET", f"/api/books/{book}/music/playlist")
+        assert queue["playlist"] is None and queue["tracks"] == []
+        # cuốn người nghe đã chọn nhạc thì vẫn phát
+        _status, view = _call(server, "PUT", f"/api/books/{book}/music", {"playlist": "calm"})
+        assert view["playlist"] == "calm" and "autoOff" not in view
+        assert [track["link"] for track in _call(server, "GET", f"/api/books/{book}/music/playlist")[1]["tracks"]] == CALM
+        # bật lại: máy chọn như trước
+        app.preferences.update({"autoMusic": True})
+        _status, view = _call(server, "PUT", f"/api/books/{book}/music", {"playlist": None})
+        assert view["playlistAuto"] is True and "autoOff" not in view
+        # đổi qua API cài đặt: chỉ nhận đúng true/false
+        assert _call(server, "PUT", "/api/preferences", {"autoMusic": "tắt"})[1]["autoMusic"] is True
+        assert _call(server, "PUT", "/api/preferences", {"autoMusic": False})[1]["autoMusic"] is False
+    finally:
+        server.stop()

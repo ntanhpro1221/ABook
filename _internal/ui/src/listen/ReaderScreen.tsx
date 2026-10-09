@@ -1,10 +1,12 @@
 import * as Popover from "@radix-ui/react-popover";
-import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Pencil, Play, Search, Type } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookmarkPlus, BookOpenText, ChevronLeft, ChevronRight, Headphones, Pencil, Play, Search, Type } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
+import { toast } from "sonner";
 import { cn } from "@/shared/cn";
 import { lineEditing } from "@/shared/capabilities";
 import { useMediaQuery } from "@/shared/media";
+import { excerpt } from "@/shared/format";
 import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
 import { canEditBook } from "./EditBook";
@@ -15,7 +17,7 @@ import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { usePlayer } from "./player";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { wordOf } from "./readings";
-import { useChapterScript, useListenBook, useSource } from "./source";
+import { useChapterScript, useListenBook, useListenMutations, useSource } from "./source";
 import { WordReadingDialog } from "./WordReadings";
 
 // Chế độ ĐỌC: văn bản chương như một cuốn ebook, đi cùng chỗ đang nghe.
@@ -77,6 +79,7 @@ export function ReaderScreen({
   const source = useSource();
   const player = usePlayer();
   const { data: book } = useListenBook(id);
+  const mutations = useListenMutations(id);
   const chapters = book?.chapters ?? [];
   const chapterId = Number(chapterParam ?? book?.state.reading?.chapterId ?? chapters[0]?.id ?? 0);
   const chapter = chapters.find((item) => item.id === chapterId);
@@ -245,7 +248,32 @@ export function ReaderScreen({
     }
     listen(visibleSentence(container.current));
   };
-  const selectable = canListen || lineEdit !== null;
+  // Câu nào cũng chọn được: ít nhất có "Đặt dấu trang ở câu này" (sách chỉ có chữ, máy không có giọng cũng đặt được).
+  const selectable = true;
+  // Dấu trang theo câu: giữ vị trí câu + ~60 chữ đầu câu; chương có audio thì thêm giờ bắt đầu câu để trình phát cũng tới được.
+  const bookmarkSentence = (sentence: number) => {
+    const segment = script.segments[sentence];
+    if (!segment) return;
+    mutations.addBookmark.mutate(
+      { chapterId, seconds: segment.start ?? 0, note: "", sentence: { index: sentence, quote: segment.text } },
+      {
+        onSuccess: (mark) => {
+          setSelected(null);
+          if (mark.existing) {
+            toast("Đã có dấu trang ở câu này", { id: "bookmark-existing", description: excerpt(segment.text) });
+            return;
+          }
+          toast.success("Đã đặt dấu trang", {
+            id: "bookmark",
+            duration: 8000,
+            description: excerpt(segment.text),
+            cancel: { label: "Hoàn tác", onClick: () => mutations.deleteBookmark.mutate(mark.id) },
+          });
+        },
+        onError: () => toast.error("Chưa đặt được dấu trang"),
+      },
+    );
+  };
   const go = (step: 1 | -1) => {
     const next = chapters[index + step];
     if (next) navigate(`/book/${id}/read/${next.id}`, { replace: true });
@@ -375,6 +403,14 @@ export function ReaderScreen({
                   <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe từ câu này
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => bookmarkSentence(selected)}
+                onMouseDown={(event) => event.preventDefault()}
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
+              >
+                <BookmarkPlus className="size-4" /> Đặt dấu trang ở câu này
+              </button>
               {readingEdit && (
                 <button
                   type="button"

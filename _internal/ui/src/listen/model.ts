@@ -46,8 +46,22 @@ export interface Bookmark {
   seconds: number;
   note: string;
   at: number;
-  /** Máy chủ trả về dấu đã có ngay chỗ ấy (±5 giây) thay vì tạo dấu trùng. */
+  /** Dấu đặt ở màn đọc trỏ tới CÂU: thứ tự câu trong chương (như `?at=`) và ~60 chữ đầu câu. Dấu đặt từ trình phát không có hai trường này. */
+  index?: number;
+  quote?: string;
+  /** Máy chủ trả về dấu đã có ngay chỗ ấy (±5 giây, hay cùng câu) thay vì tạo dấu trùng. */
   existing?: boolean;
+}
+
+/** Màn đọc mở đúng câu của một dấu trang đặt ở màn đọc (`?at=` - ReaderScreen); dấu đặt từ trình phát (không có câu) thì null. */
+export function bookmarkReadPath(bookId: string, mark: Bookmark): string | null {
+  return typeof mark.index === "number" ? `/book/${bookId}/read/${mark.chapterId}?at=${mark.index}` : null;
+}
+
+/** Câu mà dấu trang đặt ở màn đọc trỏ tới. */
+export interface BookmarkSentence {
+  index: number;
+  quote: string;
 }
 
 export interface ChapterState {
