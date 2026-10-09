@@ -47,9 +47,10 @@ EXAMPLES = 3
 # Thẻ "gọi tên chính người nói": tối đa ngần này người nói quanh câu làm ứng viên đầu tiên.
 NEARBY_CHOICES = 4
 # Thẻ "Ai nói câu này" theo logprob (speaker_logprobs.py): câu mà token đầu của tên người nói có p_first dưới ngưỡng là câu
-# đáng ngờ (đặt theo S/spkconf - chỉnh khi có số 11 truyện), và chỉ hỏi tối đa ngần này phần số câu thoại có số đo của sách.
+# đáng ngờ (19 chương cổng 09-10: duyệt 20% câu p_first thấp nhất -> 54% câu duyệt là câu sai, đúng chặt 75,4 -> 86,2), và chỉ hỏi
+# tối đa ngần này phần số câu thoại có số đo của sách.
 LOGPROB_DOUBT = 0.8
-LOGPROB_SHARE = 0.10
+LOGPROB_SHARE = 0.20
 # Thẻ "Lượt đối đáp" gộp một chuỗi câu liền nhau cùng người thành một thẻ, tối đa ngần này câu. Số CHẴN: khúc sau bắt đầu
 # đúng nhịp xen kẽ của khúc trước (câu thứ 9 là câu giữ nguyên, như câu 1, 3...).
 TURN_CHAIN_MAX = 8
