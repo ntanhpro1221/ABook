@@ -252,3 +252,20 @@ def test_a_bad_edits_package_changes_nothing_in_a_package(tmp_path: Path) -> Non
     assert book_edits.is_empty(book_edits.load(folder))
     with pytest.raises(LookupError):
         sync.receive_edits(tmp_path, {"id": "abc", "name": "Pixel"}, bad)
+
+
+def test_a_skipped_line_is_still_skipped_after_it_was_sent_for_an_imported_book(tmp_path: Path) -> None:
+    """Máy A giữ cuốn nhập từ file không đưa `skip` vào manifest (sở thích người nghe từng máy): B bỏ dòng, gửi xong vẫn phải bỏ ở B."""
+    app, server, _sync, folder, _mirror, _computer = _pair(tmp_path)
+    try:
+        (book,) = [item for item in app.listen_library() if item.get("remote")]
+        value = book["id"]
+        path = app._listenable(value)
+        book_edits.set_skip_line(path, [1], "Dịch: Nhóm Lục Bình", True)
+        assert app.listen_book(value)["editsSync"]["pending"] == 1
+        state = app.send_remote_edits(value)
+        assert state["last"]["state"] == "sent" and state["pending"] == 0, state
+        assert book_edits.load(folder)["skip"] == {"1": ["Dịch: Nhóm Lục Bình"]}, "máy A nhận và giữ trong lớp sửa của cuốn"
+        assert packages.edited_manifest(path)["chapters"][0]["skip"] == ["Dịch: Nhóm Lục Bình"], "B vẫn bỏ dòng ấy sau khi gửi"
+    finally:
+        server.stop()

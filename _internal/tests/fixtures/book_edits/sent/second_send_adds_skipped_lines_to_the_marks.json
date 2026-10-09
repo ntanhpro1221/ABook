@@ -1,0 +1,83 @@
+{
+ "previous": {
+  "skip": {
+   "1": [
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "sent": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "1": [
+    "Biên tập: Ai Đó",
+    "Dịch: Nhóm Thử"
+   ],
+   "2": [
+    "Trans: Tôi"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  }
+ },
+ "current": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "1": [
+    "Biên tập: Ai Đó",
+    "Dịch: Nhóm Thử"
+   ],
+   "2": [
+    "Scan: Bạn",
+    "Trans: Tôi"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  }
+ },
+ "marks": {
+  "skip": {
+   "1": [
+    "Biên tập: Ai Đó",
+    "Dịch: Nhóm Thử"
+   ],
+   "2": [
+    "Trans: Tôi"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  }
+ },
+ "left": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "1": [
+    "Biên tập: Ai Đó",
+    "Dịch: Nhóm Thử"
+   ],
+   "2": [
+    "Scan: Bạn",
+    "Trans: Tôi"
+   ]
+  },
+  "readings": {
+   "Lucien": "Lu-xi-en"
+  }
+ },
+ "unmarked": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "2": [
+    "Scan: Bạn"
+   ]
+  }
+ },
+ "pending": 1
+}

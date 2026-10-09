@@ -314,6 +314,20 @@ SENT_CASES: dict[str, dict[str, Any]] = {
         "previous": {"readings": {"Haruto": "Ha-ru-tô"}},
         "current": {"readings": {"Haruto": "Ha-ru-tô"}},
     },
+    # Dòng bỏ khỏi phần đọc: máy kia không mang `skip` trong sách trả về, nên gửi xong vẫn ở lại (như cách đọc), chỉ không còn là "chưa gửi".
+    "skipped_line_stays": {
+        "sent": {"title": "Tên mới", "skip": {"1": ["Dịch: Nhóm Thử", "Biên tập: Ai Đó"]}},
+        "current": {"title": "Tên mới", "skip": {"1": ["Dịch: Nhóm Thử", "Biên tập: Ai Đó"]}},
+    },
+    "skipped_line_added_after_sending": {
+        "previous": {"skip": {"1": ["Dịch: Nhóm Thử"]}},
+        "current": {"skip": {"1": ["Biên tập: Ai Đó", "Dịch: Nhóm Thử"], "2": ["Trans: Tôi"]}},
+    },
+    "second_send_adds_skipped_lines_to_the_marks": {
+        "previous": {"skip": {"1": ["Dịch: Nhóm Thử"]}},
+        "sent": {"skip": {"1": ["Biên tập: Ai Đó", "Dịch: Nhóm Thử"], "2": ["Trans: Tôi"]}, "readings": {"Lucien": "Lu-xi-en"}},
+        "current": {"skip": {"1": ["Biên tập: Ai Đó", "Dịch: Nhóm Thử"], "2": ["Trans: Tôi", "Scan: Bạn"]}, "readings": {"Lucien": "Lu-xi-en"}},
+    },
 }
 # Chuỗi yêu cầu mỗi ca của hợp đồng máy chủ <-> LocalStudio (đường tính từ `/api/books/<mã>`). Ảnh bìa: `$cover` là data URL
 # của ảnh nhỏ (xem `tiny_cover`). Trường dễ đổi giữa hai bản cài (màu chủ đạo, phiên bản bìa) không so.

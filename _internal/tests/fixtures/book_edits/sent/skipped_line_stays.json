@@ -1,0 +1,48 @@
+{
+ "previous": {},
+ "sent": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Tên mới",
+  "skip": {
+   "1": [
+    "Biên tập: Ai Đó",
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "current": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Tên mới",
+  "skip": {
+   "1": [
+    "Biên tập: Ai Đó",
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "marks": {
+  "skip": {
+   "1": [
+    "Biên tập: Ai Đó",
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "left": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "1": [
+    "Biên tập: Ai Đó",
+    "Dịch: Nhóm Thử"
+   ]
+  }
+ },
+ "unmarked": {
+  "format": "abook-edits",
+  "version": 1
+ },
+ "pending": 0
+}

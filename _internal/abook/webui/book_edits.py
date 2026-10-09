@@ -1083,7 +1083,8 @@ def set_music(folder: Path, body: dict[str, Any],
 def subtract(folder: Path, sent: dict[str, Any], sent_cover: bytes | None) -> int:
     """Gỡ khỏi lớp sửa của `folder` đúng những gì đã gửi đi (`sent`, chụp lúc đóng gói; `sent_cover`: byte bìa đã gửi) - máy nhận
     đã giữ chúng. Khoá người dùng đổi tiếp SAU lúc chụp (giá trị khác) thì ở lại, lần sau gửi tiếp. Cùng luật với BookEdits.subtract
-    (Kotlin), cộng dòng bỏ khỏi phần đọc. Trả số thay đổi còn lại."""
+    (Kotlin). `skip` (dòng bỏ khỏi phần đọc), cách đọc riêng và danh sách phát nhạc ở lại: sách máy kia trả về không mang chúng (sở thích của
+    người nghe ở máy này), gỡ đi là dòng đã bỏ lại hiện ra - `sent_marks` ghi nhớ chúng đã gửi. Trả số thay đổi còn lại."""
     folder = Path(folder)
     with _LOCK:
         edits = load(folder)
@@ -1107,11 +1108,6 @@ def subtract(folder: Path, sent: dict[str, Any], sent_cover: bytes | None) -> in
             remove_equal(edits["chapters"][key], (sent.get("chapters") or {}).get(key))
             if not edits["chapters"][key]:
                 del edits["chapters"][key]
-        for key in list(edits.get("skip") or {}):
-            gone = set((sent.get("skip") or {}).get(key) or [])
-            edits["skip"][key] = [line for line in edits["skip"][key] if line not in gone]
-            if not edits["skip"][key]:
-                del edits["skip"][key]
         music, sent_music = edits.get("music"), sent.get("music")
         if music and sent_music:
             for field in ("enabled", "levelDb"):  # `playlist` ở lại: máy kia không phản ánh nó trong sách, đây là nơi duy nhất nhạc được chọn
@@ -1159,11 +1155,15 @@ def subtract(folder: Path, sent: dict[str, Any], sent_cover: bytes | None) -> in
 
 
 def sent_marks(edits: dict[str, Any], previous: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Phần của lớp sửa vừa gửi đi mà `subtract` cố ý GIỮ lại: cách đọc riêng và danh sách phát nhạc đã chọn. Máy kia nhận và giữ chúng, nhưng
-    sách nó trả về không mang chúng, nên bỏ khỏi lớp sửa ở đây là người nghe mất cách đọc / nhạc vừa đặt. Ghi lại (cộng `previous`: các
-    lần gửi trước) để `unmarked` không đếm chúng là chưa gửi."""
+    """Phần của lớp sửa vừa gửi đi mà `subtract` cố ý GIỮ lại: dòng bỏ khỏi phần đọc, cách đọc riêng và danh sách phát nhạc đã chọn. Máy kia
+    nhận và giữ chúng, nhưng sách nó trả về không mang chúng, nên bỏ khỏi lớp sửa ở đây là người nghe mất dòng đã bỏ / cách đọc / nhạc vừa
+    đặt. Ghi lại (cộng `previous`: các lần gửi trước) để `unmarked` không đếm chúng là chưa gửi."""
     previous = previous or {}
     out: dict[str, Any] = {}
+    skip = {key: sorted({*(previous.get("skip") or {}).get(key, []), *(edits.get("skip") or {}).get(key, [])})
+            for key in {*(previous.get("skip") or {}), *(edits.get("skip") or {})}}
+    if skip:
+        out["skip"] = {key: skip[key] for key in sorted(skip, key=int)}
     readings = {**(previous.get("readings") or {}), **(edits.get("readings") or {})}
     if readings:
         out["readings"] = readings
@@ -1178,6 +1178,13 @@ def sent_marks(edits: dict[str, Any], previous: dict[str, Any] | None = None) ->
 def unmarked(edits: dict[str, Any], marks: dict[str, Any]) -> dict[str, Any]:
     """`edits` trừ những gì `marks` (`sent_marks` các lần gửi trước) đã nói là máy kia có rồi - để đếm phần CHƯA gửi. Không sửa `edits`."""
     out = copy.deepcopy(edits)
+    skip = out.get("skip") or {}
+    for key in list(skip):
+        skip[key] = [line for line in skip[key] if line not in (marks.get("skip") or {}).get(key, [])]
+        if not skip[key]:
+            del skip[key]
+    if not skip:
+        out.pop("skip", None)
     readings = out.get("readings") or {}
     for shown in list(readings):
         if shown in (marks.get("readings") or {}) and marks["readings"][shown] == readings[shown]:

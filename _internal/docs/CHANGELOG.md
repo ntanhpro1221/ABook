@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Sách của máy tính khác
 
 - Sửa cách đọc hay chọn nhạc cho sách của máy khác rồi gửi: lần gửi xong không còn báo "1 thay đổi đang chờ gửi" mãi, "Gỡ ghép" không còn bắt "Gửi trước rồi gỡ" lặp vô hạn; cách đọc và nhạc bạn chọn vẫn giữ nguyên ở máy này (trước đây nhạc chọn cho sách chỉ có chữ của máy kia bị quên sau khi gửi).
+- Dòng bạn bỏ khỏi phần đọc (vd dòng "Dịch: …") của sách máy khác không hiện lại sau khi gửi phần sửa: trên máy tính máy kia không mang lựa chọn này nên trước đây dòng ấy đọc lại ngay sau lần gửi; giờ vẫn bỏ và không tính là "đang chờ gửi".
 - Sách nhập từ file của máy kia hiện tác giả trên thẻ, trang sách và tìm theo tác giả được.
 - Khi hai máy cùng đổi một chỗ (vd tên sách), lời báo viết theo máy bạn đang dùng: "máy kia (tên) đã đổi thành …, bản của bạn … đã thay vào". Lời báo "Đã gửi" chỉ còn khi có điều đáng đọc, kèm nút "Đã hiểu"; nút và thông báo gọi đúng tên máy kia thay vì "máy tính" chung chung.
 - Điện thoại cũng vậy: cách đọc và nhạc bạn chọn cho sách của máy tính đã gửi xong không còn báo "thay đổi đang chờ gửi" mãi (và "Thôi ghép" không còn bắt gửi trước lặp lại), lời báo hai máy cùng đổi một chỗ viết theo điện thoại của bạn. Điện thoại chỉ chia sẻ cho máy đã ghép những cuốn bạn tự thêm từ file (kèm tác giả), không chia sẻ lại sách đã lấy từ máy khác - hai máy không còn thấy sách của chính mình hai lần.
