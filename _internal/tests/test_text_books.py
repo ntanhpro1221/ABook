@@ -344,6 +344,14 @@ def test_the_preview_lists_very_short_items_unticked_and_the_totals_count_only_t
     assert studio.preview_text_book(str(IMPORTS / "epub3.epub"))["existing"] is None
 
 
+def test_the_preview_says_why_a_page_that_is_not_the_story_is_unticked(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    preview = studio.preview_text_book(str(IMPORTS / "calibre_split.epub"))
+    assert [(row["included"], row.get("matter")) for row in preview["chapters"]] == [
+        (False, "Trang tên sách"), (True, None), (True, None), (True, None), (False, "Trang giới thiệu")], "không bỏ, chỉ chưa tích, kèm lý do"
+    assert preview["totals"]["chapters"] == 3
+
+
 def test_a_listener_unticks_chapters_renames_one_and_brings_back_a_short_item(tmp_path: Path) -> None:
     studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
     source = str(IMPORTS / "epub3.epub")

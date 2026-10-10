@@ -37,6 +37,103 @@ def test_every_format_gives_the_expected_book(name: str) -> None:
     assert importers.import_text(FIXTURES / name).to_dict() == expected(name.rsplit(".", 1)[0])
 
 
+@pytest.mark.parametrize("name", list(shared.REAL_WORLD))
+def test_real_world_book_shapes_give_the_expected_book(name: str) -> None:
+    assert importers.import_text(FIXTURES / name).to_dict() == expected(name.rsplit(".", 1)[0])
+    if name.endswith(".txt"):
+        assert importers.import_text(FIXTURES / name, split_chapters=True).to_dict() == expected(name[:-4] + ".split")
+
+
+def test_a_txt_table_of_contents_is_not_empty_chapters_and_never_names_the_book() -> None:
+    book = importers.import_text(FIXTURES / "toc_txt.txt", split_chapters=True)
+    assert titles(book) == [importers.PREAMBLE, "Chương 1: Bến đò", "Chương 2: Mưa", "Chương 3: Nước lên"]
+    assert book.chapters[0].text.startswith("MỤC LỤC") and book.chapters[0].matter == "Mục lục", "mục lục ở lại (không bỏ chữ), chưa tích sẵn"
+    assert book.title != "MỤC LỤC" and importers.title_from_line("Mục lục") == ""
+    pg = importers.import_text(FIXTURES / "gutenberg.txt", split_chapters=True)
+    assert (pg.title, pg.author) == ("Bến đò ngang", "Lê Thử Nghiệm")
+    assert titles(pg) == [importers.PREAMBLE, "CHAPTER I.", "CHAPTER II."] and pg.chapters[0].matter == "Trang của Project Gutenberg"
+    assert not importers.import_text(FIXTURES / "gutenberg.txt").chapters[0].matter, "cả cuốn là một chương: không cờ"
+
+
+def test_hidden_html_text_and_ruby_readings_stay_out_but_footnotes_stay_in() -> None:
+    text = importers.import_text(FIXTURES / "hidden.epub").chapters[0].text
+    for hidden in ("CSS_AN", "THUOC_TINH_HIDDEN", "ARIA_AN", "STYLE_AN", "SO_TRANG_CSS", "ID_LOP_AN", "NOSCRIPT", "まほう", "(", "7 và"):
+        assert hidden not in text, hidden
+    assert "Câu có chữ ẩn giữa câu và vẫn liền mạch." in text, "thẻ rỗng ẩn không nuốt phần sau"
+    assert "Chỉ ẩn khi in" in text and "Đọc liên kết như chữ thường." in text, "@media print và bộ chọn phức tạp không tính"
+    assert "Cô ấy dùng 魔法 thật." in text and "Lời chú thích vẫn ở lại." in text
+    assert importers.css_hidden(".a{display:none} p .b{display:none} .c{color:red}") == [importers._Hidden("", "", frozenset({"a"}))]
+
+
+def test_a_drop_cap_image_gives_its_letter_back_only_when_the_word_goes_on_right_after_it() -> None:
+    text = importers.import_text(FIXTURES / "dropcap.epub").chapters[0].text
+    assert text.startswith("Mọi chuyện bắt đầu ở bến.")
+    assert "\n\nẢnh trên là bến đò.\n\nrời ra một quãng." in text, "alt dài hay chữ cách ra: không ghép"
+
+
+def test_hoi_thu_nhat_nhi_nhut_are_chapter_headings_but_a_sentence_is_not() -> None:
+    for line in ("Hồi thứ nhất", "Hồi thứ nhì", "Hồi thứ nhứt", "Chương thứ nhất: Bến đò"):
+        assert importers.is_heading_line(line, importers.TXT_HEADING), line
+    assert not importers.is_heading_line("Hồi nhất định phải kể cho hết.", importers.TXT_HEADING)
+    assert titles(importers.import_text(FIXTURES / "hoi.txt", split_chapters=True)) == ["Hồi thứ nhất", "Hồi thứ nhì", "Hồi thứ ba"]
+
+
+def test_cells_rules_figures_pre_and_note_numbers_do_not_glue_words() -> None:
+    lines = importers.import_text(FIXTURES / "glued.epub").chapters[0].text.split("\n\n")
+    for line in ("Chỉ số Giá trị", "Sức mạnh 120", "Cảnh một kết thúc.", "Cảnh hai bắt đầu.", "Bến đò lúc sáng", "Lời bên lề",
+                 "Dòng thơ một", "Dòng thơ hai"):
+        assert line in lines, line
+    assert "Có chú thích 1 rồi nói tiếp [2], mét vuông là m2 nhé." in lines
+
+
+def test_a_non_utf8_txt_is_read_in_the_encoding_its_text_looks_like_and_says_so() -> None:
+    from abook.io_utils import decode_text
+
+    assert decode_text(shared.encode_cp1258("Người lái đò nhớ tên từng khách."))[1] == "cp1258"
+    portuguese = importers.import_text(FIXTURES / "pt_cp1252.txt")
+    assert "situação não" in portuguese.chapters[0].text and "Tây Âu (cp1252)" in portuguese.notes[0]
+    assert "他走进房间" in importers.import_text(FIXTURES / "zh_gbk.txt").chapters[0].text
+    assert titles(importers.import_text(FIXTURES / "bom_join.txt", split_chapters=True)) == ["Chương 1", "Chương 2"]
+    declared = importers.import_text(FIXTURES / "declared.epub")
+    assert titles(declared) == ["Chương 1: Bến đò", "Chương 2: Mưa"] and "Người lái đò" in declared.chapters[0].text
+
+
+def test_docx_title_heading_scene_headings_bold_roman_chapters_and_title_page() -> None:
+    title_h1 = importers.import_text(FIXTURES / "title_h1.docx")
+    assert title_h1.title == "Bến đò ngang" and titles(title_h1) == ["Chương 1: Bến đò", "Chương 2: Mưa"]
+    scenes = importers.import_text(FIXTURES / "scenes.docx")
+    assert titles(scenes) == ["Chương 1", "Chương 2"] and scenes.chapters[0].text.startswith("Cảnh 1\n\n") and not scenes.notes
+    roman = importers.import_text(FIXTURES / "roman.docx")
+    assert titles(roman) == [importers.PREAMBLE, "I. KHỞI ĐẦU", "II. MƯA"]
+    assert roman.chapters[0].matter == "Trang tên sách" and importers.default_picks(roman) == [(2, ""), (3, "")]
+    assert "V. Năm người khách" in roman.chapters[1].text, "dòng số La Mã không in đậm là chữ"
+
+
+def test_names_drop_a_contents_suffix_keep_the_child_chapter_name_and_read_a_tool_file_name_from_its_first_line() -> None:
+    nested = importers.import_text(FIXTURES / "nested.epub")
+    assert nested.title == "Bến đò ngang" and titles(nested) == ["Chương 1: Bến đò", "Chương 2: Mưa"]
+    assert titles(importers.import_text(FIXTURES / "index_split_003.txt")) == ["Sương sớm"]
+
+
+def test_only_the_toc_nav_names_chapters_not_landmarks_or_the_page_list() -> None:
+    assert titles(importers.import_text(FIXTURES / "nav_pages.epub")) == ["Chương 1: Bến đò", "Chương 2: Mưa"]
+
+
+def test_a_broken_or_missing_toc_or_nfd_zip_names_still_read_the_spine() -> None:
+    for name in ("toc_broken.epub", "toc_missing.epub", "nfd_names.epub"):
+        book = importers.import_text(FIXTURES / name)
+        assert titles(book)[0] == "Chương 1: Bến số 1", name
+    assert importers.import_text(FIXTURES / "toc_missing.epub").notes[-1].startswith("Bỏ qua 1 phần bị thiếu")
+
+
+def test_a_chapter_cut_into_several_files_is_one_chapter_when_the_toc_names_only_its_first_file() -> None:
+    book = importers.import_text(FIXTURES / "calibre_split.epub", keep_short=True)
+    assert titles(book)[1:4] == ["Chương 1: Bến đò", "Chương 2: Mưa", "Chương 3: Nước lên"], "file mở bằng tiêu đề riêng vẫn là chương mới"
+    assert "Phần sau của chương một" in book.chapters[1].text and "Phần sau của chương ba" in book.chapters[3].text
+    assert book.chapters[-1].matter == "Trang giới thiệu", "trang giới thiệu cuối sách không bị nối, chỉ chưa tích sẵn"
+    assert [number for number, _name in importers.default_picks(book)] == [2, 3, 4]
+
+
 def test_epub_follows_the_spine_names_chapters_from_the_nav_and_takes_the_cover() -> None:
     book = importers.import_text(FIXTURES / "epub3.epub")
     assert (book.title, book.author, book.language) == ("Chuyến phà cuối ngày", "Lê Thử Nghiệm", "vi")
@@ -104,8 +201,8 @@ def test_a_credit_line_is_suggested_never_removed() -> None:
 
 def test_docx_splits_on_heading_1_and_2_and_falls_back_to_chapter_lines() -> None:
     book = importers.import_text(FIXTURES / "headings.docx")
-    assert titles(book) == [importers.PREAMBLE, "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ",
-                            "Phần phụ trong chương hai", "Chương 3: Cơn mưa cuối mùa"]
+    assert titles(book) == [importers.PREAMBLE, "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3: Cơn mưa cuối mùa"]
+    assert "\n\nPhần phụ trong chương hai\n\n" in book.chapters[2].text, "Heading 1 là chương thì Heading 2 là một dòng trong chương"
     text = book.chapters[1].text
     assert "Hai dòng có tab và xuống dòng cứng." in text, "xuống dòng cứng giữa câu nối lại, tab là khoảng trắng"
     assert "\n\nDòng thơ viết hoa\n\nKhông nối vào dòng trên\n\n- câu thoại riêng.\n\n" in text, \
@@ -130,7 +227,8 @@ def test_txt_folder_keeps_the_studio_order_and_reads_every_encoding() -> None:
     assert book.chapters[1].text == "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.", "UTF-8 BOM + CRLF"
     assert book.chapters[2].text == "Chương hai\n\nTiếng máy nổ trầm đục.", "UTF-16"
     assert "Mưa rơi suốt chiều." in book.chapters[4].text, "cp1258 (dấu rời) về NFC"
-    assert book.notes[0] == "Bỏ qua mục trống: Chương 3", "file chỉ có khoảng trắng không thành chương, nhưng có nói ra"
+    assert "Bỏ qua mục trống: Chương 3" in book.notes, "file chỉ có khoảng trắng không thành chương, nhưng có nói ra"
+    assert "tiếng Việt Windows (cp1258)" in book.notes[0], "đọc theo bảng mã đoán được thì nói ra"
     assert [chapter.text for chapter in book.chapters] == [chapter.text for chapter in importers.import_text(FIXTURES / "txt").chapters]
 
 
@@ -299,7 +397,7 @@ def test_studio_scan_takes_docx_and_pdf_like_epub(tmp_path: Path) -> None:
     scan = actions.scan_inputs([str(FIXTURES / "headings.docx"), str(FIXTURES / "story.pdf")], epub_root=library)
     assert scan["errors"] == [] and scan["suggestedTitle"] == "Chuyến phà cuối ngày"
     assert [row["firstLine"] for row in scan["files"]][:2] == [importers.PREAMBLE, "Chương 1: Bến phà lúc bình minh"]
-    assert len(scan["files"]) == 5 + 3 and scan["totals"]["chapters"] == 8
+    assert len(scan["files"]) == 4 + 3 and scan["totals"]["chapters"] == 7
     assert all(row["chars"] > 0 for row in scan["files"])
     assert any(note.startswith("story.pdf: Bỏ dòng lặp") for note in scan["notes"]) and any("headings.docx" in note for note in scan["notes"])
     scanned = actions.scan_inputs([str(FIXTURES / "scan.pdf")], epub_root=library)

@@ -15,6 +15,8 @@ export interface PreviewChapter {
   chars: number;
   /** Mục rất ngắn (bìa, trang bản quyền?): gắn nhãn nhỏ để người nghe biết vì sao nó chưa được tích. */
   short?: boolean;
+  /** Phần có vẻ không phải truyện (bìa, bản quyền, mục lục…): lý do máy thấy, hiện ra để người nghe biết vì sao nó chưa được tích. */
+  matter?: string;
 }
 
 /** Cho người dùng chọn chương nào vào sách và đổi tên chương ("Thêm sách từ file…"). Trạng thái do chỗ gọi giữ. */
@@ -108,7 +110,11 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                 <div className="line-clamp-2 break-words text-sm font-medium">{title}</div>
               )}
               {sub && <div className="line-clamp-1 break-words text-xs text-fg-2">{sub}</div>}
-              {chapter.short && <div className="text-xs text-fg-3">rất ngắn - có thể là bìa / trang bản quyền</div>}
+              {chapter.matter ? (
+                <div className="text-xs text-fg-3">{chapter.matter} - có vẻ không phải truyện, tích nếu muốn nghe</div>
+              ) : (
+                chapter.short && <div className="text-xs text-fg-3">rất ngắn - có thể là bìa / trang bản quyền</div>
+              )}
             </div>
             <div className="tabular text-right text-xs text-fg-2">
               <div>{formatNumber(chapter.words)} chữ</div>

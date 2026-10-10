@@ -119,7 +119,7 @@ def build(book: importers.ImportedBook, out: Path, *, producer: str = "ABook") -
 def preview(book: importers.ImportedBook) -> dict[str, Any]:
     """Danh sách chương cho bước xem trước (cùng hàng chữ với danh sách chương của trình tạo sách Studio): tên, dòng đầu, số chữ,
     số ký tự. `notes` là gợi ý - hiện ra, không tự áp. Mỗi hàng có `included` (mặc định có vào sách không: mục rất ngắn - bìa, trang
-    bản quyền - hiện ra CHƯA tích, kèm `short`); người dùng tích / bỏ tích rồi gửi lại danh sách khi thêm (`picks_from_json`).
+    bản quyền - hiện ra CHƯA tích, kèm `short`; phần không phải truyện - kèm `matter`, lý do như "Trang bản quyền"); người dùng tích / bỏ tích rồi gửi lại danh sách khi thêm (`picks_from_json`).
     `suggestions[].chapter` và `index` đều là số thứ tự trong danh sách này, không phải mã chương trong sách."""
     rows = []
     for number, chapter in enumerate(book.chapters, start=1):
@@ -130,8 +130,9 @@ def preview(book: importers.ImportedBook) -> dict[str, Any]:
             "firstLine": next((line.strip() for line in source.splitlines() if line.strip()), "")[:200],
             "words": len(source.split()),
             "chars": sum(not ch.isspace() for ch in source),
-            "included": not chapter.short,
+            "included": not chapter.short and not chapter.matter,
             **({"short": True} if chapter.short else {}),
+            **({"matter": chapter.matter} if chapter.matter else {}),
         })
     kept = [row for row in rows if row["included"]]
     return {

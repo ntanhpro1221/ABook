@@ -1,0 +1,28 @@
+{
+ "title": "Chương cắt nhiều file",
+ "author": null,
+ "language": "vi",
+ "cover": null,
+ "chapters": [
+  {
+   "title": "Chương 1: Bến đò",
+   "text": "Con đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nPhần sau của chương một, Calibre cắt ra file riêng. Con đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người."
+  },
+  {
+   "title": "Chương 2: Mưa",
+   "text": "Con đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nPhần sau của chương hai. Con đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người."
+  },
+  {
+   "title": "Chương 3: Nước lên",
+   "text": "Con đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nPhần sau của chương ba. Con đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người."
+  },
+  {
+   "title": "Sách điện tử này được làm để thử, không bán. Con đò chở khách qua sông từ sáng…",
+   "text": "Sách điện tử này được làm để thử, không bán. Con đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.",
+   "matter": "Trang giới thiệu"
+  }
+ ],
+ "notes": [
+  "Bỏ qua 1 mục rất ngắn (bìa, trang bản quyền?)."
+ ]
+}

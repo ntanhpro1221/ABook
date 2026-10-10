@@ -22,7 +22,7 @@ import re
 import sys
 import unicodedata
 import zipfile
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field, replace
 from html.parser import HTMLParser
 from pathlib import Path
@@ -30,7 +30,7 @@ from typing import Any
 from urllib.parse import unquote
 from xml.etree import ElementTree
 
-from .io_utils import decode_text_bytes, discover_txt_files
+from .io_utils import decode_text, discover_txt_files
 
 IMPORT_SUFFIXES = (".epub", ".docx", ".pdf")  # file sách mà `import_text` mở (cùng .txt và thư mục TXT)
 MAX_MEMBER = 20 * 1024 * 1024  # một mục XHTML / XML lớn hơn thế là bất thường
@@ -54,8 +54,17 @@ NS = {
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 MC_FALLBACK = "{http://schemas.openxmlformats.org/markup-compatibility/2006}Fallback"
 TOC_STYLE = re.compile(r"toc ?\d|toc ?heading")  # tên kiểu (viết thường) của mục lục Word tự sinh
-BLOCKS = {"p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "blockquote", "section", "article", "tr", "dd", "dt", "pre"}
+HEADING_LEVELS = {"heading 1": 1, "heading1": 1, "heading 2": 2, "heading2": 2}  # kiểu tiêu đề Word -> cấp
+BOLD_ROMAN = re.compile(r"\s*[IVXLC]+\.\s+\S")  # dòng in đậm "I. KHỞI ĐẦU": tiêu đề chương khi có từ hai dòng như thế
+TITLE_PAGE_LINES = 3  # chữ trước chương đầu chỉ vài dòng ngắn, không câu nào kết thúc: trang tên sách / tác giả
+TITLE_PAGE_WIDTH = 80
+BLOCKS = {"p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "blockquote", "section", "article", "tr", "dd", "dt", "pre",
+          "figure", "figcaption", "aside"}
+CELLS = {"td", "th"}  # ô bảng: cách nhau một dấu cách ("Sức mạnh 120", không "Sức mạnh120")
+NOTE_MARK = re.compile(r"\[?\d{1,3}\]?|\*{1,3}|†")  # chữ trong <sup> là số chú thích: tách khỏi chữ đứng trước ("thích 1", không "thích1")
+UNIT_POWER = re.compile(r"(?<![^\W\d_])[kcdm]?m$")  # ... trừ lũy thừa đơn vị: "m<sup>2</sup>" vẫn là "m2"
 HEADINGS = {"h1", "h2", "h3"}
+WRAPPERS = {"body", "section", "div", "article", "main"}  # khối bọc cả trang: vai của chúng (trước chữ đầu tiên) là vai của trang
 UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')  # ký tự Windows không nhận trong tên file
 BROKEN = "không phải file {kind} thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
 
@@ -64,6 +73,8 @@ _NUMBER_WORDS = (
     "một|hai|ba|bốn|tư|năm|lăm|sáu|bảy|tám|chín|mười|mươi|mốt|trăm|nghìn|ngàn|linh|lẻ|"
     "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve"
 )
+# Số thứ tự chỉ đứng sau "thứ" ("Hồi thứ nhất", "Chương thứ nhì", "Hồi thứ nhứt"): "Hồi nhất định…" là câu văn, không phải tiêu đề.
+_ORDINAL_WORDS = "nhất|nhứt|nhì"
 CHAPTER_WORDS = "chương|chuong|hồi|hoi|chapter|tiết"
 
 
@@ -71,7 +82,7 @@ def heading_pattern(words: str) -> re.Pattern[str]:
     """Dòng tiêu đề chương: một trong `words` rồi số ("Chương 12", "Hồi thứ hai", "第三章")."""
     return re.compile(
         r"^\s*(?:"
-        r"(?:" + words + r")\s+(?:thứ\s+)?(?:\d+|[ivxlcdm]+|(?:(?:" + _NUMBER_WORDS + r")\s*)+)(?![\w])"
+        r"(?:" + words + r")\s+(?:thứ\s+(?:" + _ORDINAL_WORDS + r")|(?:thứ\s+)?(?:\d+|[ivxlcdm]+|(?:(?:" + _NUMBER_WORDS + r")\s*)+))(?![\w])"
         r"|第\s*[\d一二三四五六七八九十百千零〇两]+\s*[章回]"
         r")",
         re.IGNORECASE,
@@ -94,6 +105,7 @@ class Chapter:
     text: str  # các đoạn cách nhau một dòng trống; KHÔNG gồm tên chương (trừ file TXT: nguyên văn file)
     short: bool = False  # mục EPUB rất ngắn (bìa, trang bản quyền): bị bỏ, trừ khi `import_text(keep_short=True)` đưa nó về như chương CHƯA CHỌN
     name: str = ""  # tên người dùng đặt ở bước xem trước (`select_chapters`); rỗng = `title`. Chỉ là tên: `text` và tên trong chữ không đổi
+    matter: str = ""  # có vẻ không phải truyện (bìa, bản quyền, mục lục…): lý do cho người nghe. KHÔNG bị bỏ - chỉ chưa tích sẵn ở bước xem trước
 
 
 @dataclass
@@ -125,7 +137,8 @@ class ImportedBook:
                      "sha256": hashlib.sha256(self.cover_bytes).hexdigest()}
         return {
             "title": self.title, "author": self.author, "language": self.language, "cover": cover,
-            "chapters": [{"title": chapter.title, "text": chapter.text} for chapter in self.chapters],
+            "chapters": [{"title": chapter.title, "text": chapter.text, **({"matter": chapter.matter} if chapter.matter else {})}
+                         for chapter in self.chapters],
             "notes": list(self.notes),
             **({"splitOffer": self.split_offer, "splitHeadings": self.split_headings} if self.split_offer else {}),
         }
@@ -155,11 +168,16 @@ def import_text(path: Path | str, *, split_chapters: bool = False, keep_short: b
 
 def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> ImportedBook:
     """Mọi định dạng đi qua đây: Unicode NFC, và gợi ý (không bỏ) dòng ghi công ở đầu chương."""
-    book.title = _nfc(book.title)
+    book.title = TOC_SUFFIX.sub("", _nfc(book.title)) or _nfc(book.title)  # "Lều chõng — Mục lục" (tên trang mục lục Wikisource) -> "Lều chõng"
     book.author = _nfc(book.author) if book.author else None
     for chapter in book.chapters:
-        chapter.title, chapter.text = _nfc(chapter.title), _nfc(chapter.text)
+        chapter.title, chapter.text = _nfc(chapter.title).replace(BOM, ""), _nfc(chapter.text).replace(BOM, "")
     book.notes = [_nfc(note) for note in book.notes]
+    for chapter in book.chapters:
+        chapter.matter = chapter.matter or text_matter(chapter.title, chapter.text)
+    if all(chapter.matter or chapter.short for chapter in book.chapters):
+        for chapter in book.chapters:  # cả cuốn "không phải truyện" là nhận nhầm (TXT cả truyện mở bằng lời Project Gutenberg): không cờ nào
+            chapter.matter = ""
     short = sum(chapter.short for chapter in book.chapters)
     if short:
         book.notes.append(f"{short} mục rất ngắn chưa chọn - tích nếu muốn giữ." if keep_short
@@ -169,6 +187,9 @@ def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> I
     if not book.chapters or not any(chapter.text.strip() or chapter.short for chapter in book.chapters):
         raise ImportFailed(f"Không có chương nào có chữ trong “{source or book.title}” - file rỗng hay mã hoá lạ? "
                            "Với file .txt: thử mở bằng Notepad rồi lưu lại ở dạng UTF-8.")
+    matter = sum(bool(chapter.matter) and not chapter.short for chapter in book.chapters)
+    if matter and keep_short:
+        book.notes.append(f"{matter} mục có vẻ không phải truyện (bìa, bản quyền, mục lục…) chưa chọn - tích nếu muốn nghe.")
     if len(book.chapters) > 1:
         # File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do. Mục rất ngắn mà chỉ có
         # tên (trang đề tựa) thì ở lại: người dùng quyết có tích nó không.
@@ -183,8 +204,9 @@ def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> I
 
 
 def default_picks(book: ImportedBook) -> list[tuple[int, str]]:
-    """Lựa chọn chương mặc định của bước xem trước: mọi chương trừ mục rất ngắn (`Chapter.short`). [(số chương 1-based, tên mới "")]. Kotlin: BookImport.defaultPicks."""
-    return [(number, "") for number, chapter in enumerate(book.chapters, start=1) if not chapter.short]
+    """Lựa chọn chương mặc định của bước xem trước: mọi chương trừ mục rất ngắn (`Chapter.short`) và mục có vẻ không phải truyện
+    (`Chapter.matter`). [(số chương 1-based, tên mới "")]. Kotlin: BookImport.defaultPicks."""
+    return [(number, "") for number, chapter in enumerate(book.chapters, start=1) if not chapter.short and not chapter.matter]
 
 
 def select_chapters(book: ImportedBook, picks: list[tuple[int, str]]) -> ImportedBook:
@@ -212,6 +234,9 @@ def credit_suggestions(source: str) -> list[str]:
     from .text_processing import credit_lines
 
     return credit_lines("\n".join(source.split("\n", CREDIT_HEAD_LINES)[:CREDIT_HEAD_LINES]))
+
+
+BOM = "\ufeff"  # dấu BOM lọt giữa chữ (nối nhiều file): vô hình, nhưng làm "Chương 1" ở đầu dòng không còn là tiêu đề
 
 
 def _nfc(text: str) -> str:
@@ -243,35 +268,90 @@ def _words(text: str) -> str:
     return _nfc(" ".join(text.split()))
 
 
+# Phần không phải truyện (bìa, trang tên sách, bản quyền, mục lục…): KHÔNG bỏ - chỉ chưa tích sẵn ở bước xem trước, kèm lý do (`Chapter.matter`).
+MATTER_TYPES = (  # epub:type / role của trang -> lý do; cụ thể trước, chung sau
+    ("cover", "Trang bìa"), ("titlepage", "Trang tên sách"), ("halftitlepage", "Trang tên sách"), ("copyright-page", "Trang bản quyền"),
+    ("imprint", "Trang bản quyền"), ("colophon", "Trang bản quyền"), ("toc", "Mục lục"), ("landmarks", "Mục lục"),
+    ("frontmatter", "Phần đầu sách"), ("backmatter", "Phần cuối sách"),
+)
+MATTER_NAMES = {"cover": "Trang bìa", "title": "Trang tên sách", "titlepage": "Trang tên sách", "toc": "Mục lục", "nav": "Mục lục",
+                "copyright": "Trang bản quyền", "license": "Trang bản quyền", "colophon": "Trang bản quyền", "imprint": "Trang bản quyền",
+                "about": "Trang giới thiệu"}
+# Tên file trong gói: đúng một từ ấy, chỉ kèm số / dấu nối / "page" ("cover.xhtml", "001_titlepage", "copyright-page") - "chapter_title_3" không tính.
+_MATTER_NAME = re.compile(r"[\W_\d]*(" + "|".join(MATTER_NAMES) + r")(?:[\W_]*page)?[\W_\d]*")
+_TOC_TITLES = {"mục lục", "muc luc", "contents", "table of contents"}
+TOC_SUFFIX = re.compile(r"\s+[—–-]\s*(?:mục lục|muc luc)\s*$", re.IGNORECASE)
+MATTER_HEAD = 400  # số ký tự đầu chương xét lời Project Gutenberg / Wikisource
+
+
+def name_matter(href: str) -> str:
+    """Lý do "không phải truyện" theo tên file trong gói EPUB (`MATTER_NAMES`); "" nếu không. Kotlin: BookImport.nameMatter."""
+    match = _MATTER_NAME.fullmatch(posixpath.splitext(posixpath.basename(href))[0].casefold())
+    return MATTER_NAMES[match.group(1)] if match else ""
+
+
+def text_matter(title: str, text: str) -> str:
+    """Lý do "không phải truyện" theo chữ - mọi định dạng: tên / dòng đầu là "Mục lục", "Contents"; lời của Project Gutenberg hay
+    Wikisource ở đầu chương. "" nếu không. Kotlin: BookImport.textMatter."""
+    head = f"{title}\n{text[:MATTER_HEAD]}".casefold()
+    first = first_text_line(text).casefold().rstrip(" :.")
+    clean = title.casefold().strip()
+    if clean in _TOC_TITLES or first in _TOC_TITLES or clean.endswith(("— mục lục", "- mục lục")):
+        return "Mục lục"
+    if "project gutenberg" in head:
+        return "Trang của Project Gutenberg"
+    if "wikisource" in head:
+        return "Trang của Wikisource"
+    return ""
+
+
 # --- Thư mục TXT -------------------------------------------------------------------------------------------------------
 
 def _clean_text(text: str) -> str:
     """Đổi định dạng thôi: xuống dòng \\n, bỏ khoảng trắng cuối dòng, tối đa một dòng trống liền nhau, bỏ dòng trống hai đầu."""
-    lines = [line.rstrip() for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n")]
+    lines = [line.rstrip() for line in text.replace("\r\n", "\n").replace("\r", "\n").replace(BOM, "").split("\n")]
     return re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip("\n")
 
 
-def _txt_chapter(path: Path) -> Chapter:
-    """Một file TXT là một chương. Tên chương: dòng đầu nếu nó là dòng tiêu đề ("Chương 1: Buổi sáng" - đúng thứ người nghe thấy ở
-    đầu chương), không thì tên file ("01.txt" -> "Chương 1")."""
+# Bảng mã đoán được (`io_utils.decode_text`) không phải UTF: báo người dùng - đoán sai thì chữ lạ, và họ biết cách sửa.
+MEANINGLESS_NAME = re.compile(r"index_split_\d+|untitled(?:[\s_-]*\d+)?|part\d+|text\d+|split_\d+", re.IGNORECASE)  # tên file do công cụ đặt
+ENCODING_NAMES = {"cp1258": "tiếng Việt Windows (cp1258)", "windows-1252": "Tây Âu (cp1252)", "gb18030": "tiếng Trung (GB18030)"}
+
+
+def _txt_chapter(path: Path) -> tuple[Chapter, str]:
+    """Một file TXT là một chương (cùng bảng mã đã đọc). Tên chương: dòng đầu nếu nó là dòng tiêu đề ("Chương 1: Buổi sáng" - đúng thứ
+    người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1")."""
     from .webui.humanize import chapter_title
 
-    text = _clean_text(decode_text_bytes(path.read_bytes()))
+    text, encoding = decode_text(path.read_bytes())
+    text = _clean_text(text)
     first = next((line.strip() for line in text.split("\n") if line.strip()), "")
-    return Chapter(first if is_heading_line(first) else chapter_title(path.stem), text)
+    if is_heading_line(first):
+        return Chapter(first, text), encoding
+    # Tên file vô nghĩa ("index_split_003", "Untitled") mà dòng đầu trông là tiêu đề ("Sương sớm"): tên chương là dòng ấy.
+    named = MEANINGLESS_NAME.fullmatch(path.stem) and title_from_line(first)
+    return Chapter(named or chapter_title(path.stem), text), encoding
+
+
+def _encoding_notes(encodings: Iterable[str]) -> list[str]:
+    found = set(encodings)
+    names = [name for encoding, name in ENCODING_NAMES.items() if encoding in found]
+    return [f"File chữ không phải UTF-8 - đã đọc theo bảng mã {', '.join(names)}. Nếu chữ lạ, lưu lại file dạng UTF-8 rồi nhập lại."] if names else []
 
 
 def _txt_folder(folder: Path) -> ImportedBook:
     files = discover_txt_files(folder)  # đúng luật của Studio: các .txt nằm ngay trong thư mục, xếp tên tự nhiên
     if not files:
         raise ImportFailed("Thư mục này không có file .txt nào nằm ngay bên trong")
-    return ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[_txt_chapter(file) for file in files], text_has_title=True)
+    read = [_txt_chapter(file) for file in files]
+    return ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[chapter for chapter, _ in read], text_has_title=True,
+                        notes=_encoding_notes(encoding for _, encoding in read))
 
 
 def _txt_file(path: Path, split: bool = False) -> ImportedBook:
     """Một file TXT là một chương - trừ khi nó là CẢ truyện (>= 2 dòng "Chương N") và người dùng tích tách: `split_txt_chapters`."""
-    chapter = _txt_chapter(path)
-    book = ImportedBook(title=title_from_filename(path.stem), chapters=[chapter], text_has_title=True)
+    chapter, encoding = _txt_chapter(path)
+    book = ImportedBook(title=title_from_filename(path.stem), chapters=[chapter], text_has_title=True, notes=_encoding_notes([encoding]))
     parts = split_txt_chapters(chapter.text)
     book.split_offer = len(parts)
     # Chương tách ra từ một dòng tiêu đề mang tên dòng ấy - không bao giờ trùng tên chương "Mở đầu".
@@ -280,12 +360,34 @@ def _txt_file(path: Path, split: bool = False) -> ImportedBook:
         # Cả truyện: tên sách gợi ý là dòng tiêu đề đầu file ("Ngọn đèn cuối cùng"), không phải tên file ("ngon_den_cuoi_cung").
         book.title = title_from_line(first_text_line(chapter.text)) or book.title
         lines = chapter.text.split("\n")
-        alone = title_only_preamble(lines, _first_cut(lines))
+        alone = title_only_preamble(lines, next(iter(_txt_cuts(lines)), 0))
         if split and alone:
             book.notes.append(f"Dòng đầu “{alone}” là tên truyện - dùng làm tên sách, không đọc thành một chương.")
+    title, author = gutenberg_header(chapter.text)
+    book.title, book.author = title or book.title, author or None
     if split and parts:
         book.chapters = parts
     return book
+
+
+_PG_FIELD = re.compile(r"(title|author)\s*:\s*(.+)", re.IGNORECASE)
+PG_HEAD_LINES = 60  # số dòng đầu file xét phần đầu của Project Gutenberg (tới dòng "*** START OF")
+
+
+def gutenberg_header(text: str) -> tuple[str, str]:
+    """File TXT của Project Gutenberg mở bằng "The Project Gutenberg eBook of …" rồi các dòng "Title: …", "Author: …": (tên, tác giả) từ
+    đó - không thì ("", ""). Tên sách không bao giờ là cả câu "The Project Gutenberg eBook of …". Kotlin: BookImport.gutenbergHeader."""
+    lines = text.split("\n", PG_HEAD_LINES)[:PG_HEAD_LINES]
+    if "project gutenberg" not in first_text_line("\n".join(lines)).casefold():
+        return "", ""
+    found: dict[str, str] = {}
+    for line in lines:
+        if line.lstrip().startswith("***"):
+            break
+        match = _PG_FIELD.fullmatch(line.strip())
+        if match:
+            found.setdefault(match.group(1).casefold(), _words(match.group(2)))
+    return found.get("title", ""), found.get("author", "")
 
 
 def first_text_line(text: str) -> str:
@@ -298,7 +400,7 @@ def title_from_line(line: str) -> str:
     kết bằng dấu câu, không phải dòng "Chương N"; dấu `#` Markdown đầu dòng bỏ đi. Không thì "". Một luật cho trình tạo sách (tên sách
     gợi ý của file cả truyện), "Thêm sách từ file…" và việc tách file cả truyện. Kotlin: BookImport.titleFromLine."""
     first = line.strip().lstrip("#").strip()
-    if not first or len(first) > 80 or len(first.split()) > 12:
+    if not first or len(first) > 80 or len(first.split()) > 12 or first.casefold() in _TOC_TITLES:
         return ""
     if is_heading_line(first) or first[0] in "-–—“\"‘'«(" or first[-1] in ".!?…,;:\"”’»)":
         return ""
@@ -312,8 +414,22 @@ def title_only_preamble(lines: list[str], cut: int) -> str:
     return title_from_line(kept[0]) if len(kept) == 1 else ""
 
 
-def _first_cut(lines: list[str]) -> int:
-    return next((index for index, line in enumerate(lines) if is_heading_line(line, TXT_HEADING)), 0)
+def _txt_cuts(lines: list[str]) -> list[int]:
+    """Các dòng tiêu đề "Chương N" của file TXT cả truyện, TRỪ mục lục: một chuỗi >= 2 tiêu đề liền nhau không có chữ nào giữa chúng
+    ("MỤC LỤC / Chương 1… / Chương 2…" đầu file) không phải chương - chúng ở lại trong chữ dẫn, không thành những chương rỗng.
+    Kotlin: BookImport.txtCuts."""
+    cuts = [index for index, line in enumerate(lines) if is_heading_line(line, TXT_HEADING)]
+    kept: list[int] = []
+    run: list[int] = []  # các tiêu đề liền nhau chưa có chữ
+    for start, end in zip(cuts, [*cuts[1:], len(lines)]):
+        run.append(start)
+        if any(line.strip() for line in lines[start + 1:end]):
+            if len(run) <= 2:  # tiêu đề lẻ không có chữ vẫn là chương như trước; chỉ chuỗi >= 2 tiêu đề trống (mục lục) bị bỏ qua
+                kept += run
+            else:
+                kept.append(start)
+            run = []
+    return kept + (run if len(run) == 1 else [])
 
 
 def split_txt_chapters(text: str) -> list[Chapter]:
@@ -322,7 +438,7 @@ def split_txt_chapters(text: str) -> list[Chapter]:
     đứng trước tiêu đề đầu tiên thành chương "Mở đầu" (không bỏ) - trừ khi nó chỉ là MỘT dòng tên truyện (`title_only_preamble`): dòng ấy
     là tên sách (`_txt_file`), người nghe được báo ở ghi chú. Dưới hai tiêu đề: [] (không có gì để tách). Kotlin: splitTxtChapters."""
     lines = text.split("\n")
-    cuts = [index for index, line in enumerate(lines) if is_heading_line(line, TXT_HEADING)]
+    cuts = _txt_cuts(lines)
     if len(cuts) < 2:
         return []
     # Chữ dẫn chỉ là một dòng tên truyện thì không thành chương "Mở đầu" - nó là tên sách (`title_only_preamble`).
@@ -361,19 +477,34 @@ def _xml(raw: bytes, kind: str = "EPUB") -> ElementTree.Element:
         raise ImportFailed(BROKEN.format(kind=kind)) from error
 
 
-def _read(book: zipfile.ZipFile, name: str, kind: str = "EPUB") -> bytes:
-    try:
-        info = book.getinfo(name)
-    except KeyError as error:
-        raise ImportFailed(BROKEN.format(kind=kind)) from error
+class _Zip(zipfile.ZipFile):
+    """Gói EPUB / DOCX: tra mục theo tên chịu được Unicode dạng rời (NFD - zip làm trên macOS) khi manifest viết dạng gộp (hay ngược lại)."""
+
+    _by_nfc: dict[str, zipfile.ZipInfo] | None = None
+
+    def member(self, name: str) -> zipfile.ZipInfo | None:
+        """Mục `name`, hay None nếu gói không có. Kotlin: BookImport.member."""
+        try:
+            return self.getinfo(name)
+        except KeyError:
+            pass
+        if self._by_nfc is None:  # một lần cho mỗi gói: cuốn nghìn chương NFD không quét lại nghìn lần
+            self._by_nfc = {_nfc(info.filename): info for info in self.infolist()}
+        return self._by_nfc.get(_nfc(name))
+
+
+def _read(book: _Zip, name: str, kind: str = "EPUB") -> bytes:
+    info = book.member(name)
+    if info is None:
+        raise ImportFailed(BROKEN.format(kind=kind))
     if info.file_size > MAX_MEMBER:
         raise ImportFailed(f"có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
     return book.read(info)
 
 
-def _open_zip(path: Path, kind: str) -> zipfile.ZipFile:
+def _open_zip(path: Path, kind: str) -> _Zip:
     try:
-        book = zipfile.ZipFile(path)
+        book = _Zip(path)
     except (OSError, zipfile.BadZipFile) as error:
         raise ImportFailed(BROKEN.format(kind=kind)) from error
     if sum(info.file_size for info in book.infolist()) > MAX_TOTAL:
@@ -384,37 +515,124 @@ def _open_zip(path: Path, kind: str) -> zipfile.ZipFile:
 
 # --- EPUB --------------------------------------------------------------------------------------------------------------
 
-class _Text(HTMLParser):
-    """Chữ của một trang XHTML: mỗi khối (đoạn, tiêu đề, dòng danh sách, <br>) một dòng; bỏ script/style/head."""
+# Chữ ẩn của nguồn HTML không phải chữ truyện người đọc thấy: bỏ là đổi định dạng, không phải sửa chữ. Thẻ rỗng (void) không bao giờ mở
+# vùng ẩn - `<img aria-hidden="true">` không có thẻ đóng, ẩn nó không được nuốt phần còn lại của trang.
+VOID = {"area", "base", "br", "col", "embed", "hr", "img", "image", "input", "link", "meta", "source", "track", "wbr"}
+HIDDEN_TAGS = {"noscript", "rt", "rp"}  # rt / rp của ruby: cách đọc in nhỏ trên chữ gốc - đọc chữ gốc một lần
+_HIDDEN_STYLE = re.compile(r"display\s*:\s*none|visibility\s*:\s*hidden", re.IGNORECASE)
+_SIMPLE_SELECTOR = re.compile(r"([a-z][\w-]*)?((?:[.#][\w-]+)*)", re.IGNORECASE)
 
-    def __init__(self) -> None:
+
+@dataclass(frozen=True)
+class _Hidden:
+    """Một bộ chọn CSS đơn giản mà stylesheet trong gói ẩn đi (`display:none` / `visibility:hidden`): thẻ, id, các lớp - rỗng = mọi."""
+    tag: str
+    id: str
+    classes: frozenset[str]
+
+
+def css_hidden(css: str) -> list[_Hidden]:
+    """Các bộ chọn đơn giản (`.lop`, `#id`, `the`, `the.lop`, `.a.b`) mà `css` ẩn đi. Bỏ qua bộ chọn phức tạp (khoảng trắng, >, :, [ ])
+    và mọi khối @ (@media print…: không phải thứ người đọc thấy trên màn hình). Kotlin: BookImport.cssHidden."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
+    found: list[_Hidden] = []
+    depth, start, selector = 0, 0, ""
+    for index, char in enumerate(css):
+        if char == "{":
+            if depth == 0:
+                selector, start = css[start:index].strip(), index + 1
+            depth += 1
+        elif char == "}" and depth:
+            depth -= 1
+            if depth == 0:
+                if not selector.startswith("@") and _HIDDEN_STYLE.search(css[start:index]):
+                    for one in selector.split(","):
+                        match = _SIMPLE_SELECTOR.fullmatch(one.strip())
+                        if match and one.strip():
+                            parts = re.findall(r"[.#][\w-]+", match.group(2) or "")
+                            found.append(_Hidden((match.group(1) or "").casefold(), next((part[1:] for part in parts if part[0] == "#"), ""),
+                                                 frozenset(part[1:] for part in parts if part[0] == ".")))
+                start = index + 1
+    return found
+
+
+def _hides(tag: str, attrs: dict[str, str], rules: list[_Hidden]) -> bool:
+    """Phần tử này ẩn với người đọc: `hidden`, `aria-hidden="true"`, style nội tuyến display:none / visibility:hidden, <noscript>, rt / rp
+    của ruby, số trang (epub:type="pagebreak" / role="doc-pagebreak"), hay một luật CSS đơn giản của gói (`css_hidden`). Kotlin: BookImport.hides."""
+    if tag in VOID:
+        return False
+    if tag in HIDDEN_TAGS or "hidden" in attrs or attrs.get("aria-hidden", "").strip().casefold() == "true":
+        return True
+    if _HIDDEN_STYLE.search(attrs.get("style", "")) or "pagebreak" in _types(attrs.items()):
+        return True
+    classes = set(attrs.get("class", "").split())
+    return any((not rule.tag or rule.tag == tag) and (not rule.id or rule.id == attrs.get("id")) and rule.classes <= classes
+               for rule in rules)
+
+
+class _Text(HTMLParser):
+    """Chữ của một trang XHTML: mỗi khối (đoạn, tiêu đề, dòng danh sách, <br>) một dòng; bỏ script/style/head và chữ ẩn (`_hides`)."""
+
+    def __init__(self, hidden: list[_Hidden] | None = None) -> None:
         super().__init__(convert_charrefs=True)
+        self._rules = hidden or []
+        self._hidden_tag = ""  # thẻ mở vùng ẩn đang bỏ qua, và số thẻ cùng tên đang mở bên trong nó
+        self._hidden_depth = 0
+        self._cap = ""  # chữ cái đầu chương vẽ bằng ảnh (<img alt="M">): chờ xem chữ ngay sau có dính liền không
+        self._pre = 0  # trong <pre>: xuống dòng của nguồn là xuống dòng thật (thơ, thư), không gộp
+        self._sup: list[int] = []  # chỗ (số mảnh trong `_current`) bắt đầu mỗi <sup> đang mở
         self.lines: list[str] = []
         self.heading = ""
         self.headings: list[tuple[int, str]] = []  # (dòng của tiêu đề, chữ): mọi tiêu đề h1-h3 có chữ, theo thứ tự
         self.anchors: dict[str, int] = {}  # id / <a name> -> chỉ số dòng bắt đầu từ chỗ ấy (mục lục trỏ #mảnh vào đây)
         self.images = 0
+        self.types: set[str] = set()  # vai (epub:type / role) của <body> và các khối bọc ngoài trước chữ đầu tiên ("frontmatter", "cover"…)
         self._current: list[str] = []
         self._skip = 0
         self._in_heading = 0
 
     def _flush(self) -> None:
+        self._cap = ""
+        self._sup = [0] * len(self._sup)  # dòng mới: <sup> đang mở bắt đầu từ đầu dòng (không còn chữ đứng trước để tách)
         line = _words("".join(self._current))
         if line:
             self.lines.append(line)
         self._current = []
 
     def handle_starttag(self, tag: str, attrs) -> None:  # chữ ký của HTMLParser
+        if self._hidden_depth:
+            self._hidden_depth += tag == self._hidden_tag
+            self._anchor(tag, attrs)
+            return
+        if not self._skip and _hides(tag, {name: value or "" for name, value in attrs}, self._rules):
+            if tag in BLOCKS:
+                self._flush()
+            self._hidden_tag, self._hidden_depth = tag, 1
+            self._anchor(tag, attrs)
+            return
         if tag in {"script", "style", "head", "title"}:
             self._skip += 1
         elif tag in {"img", "image"}:
             self.images += 1
-        elif tag == "br":
+            alt = next((value or "" for name, value in attrs if name == "alt"), "")
+            self._cap = alt if len(alt) == 1 and alt.isalpha() else ""
+        elif tag in {"br", "hr"}:  # hr: ngắt cảnh - ít nhất là ranh giới đoạn, không để hai cảnh dính vào nhau
             self._flush()
+        elif tag in CELLS:
+            self._current.append(" ")
+        elif tag == "sup":
+            self._sup.append(len(self._current))
         elif tag in BLOCKS:
             self._flush()
             if tag in HEADINGS:
                 self._in_heading += 1
+            self._pre += tag == "pre"
+        if tag in WRAPPERS and not self.lines and not "".join(self._current).strip():
+            self.types |= _types(attrs)
+        self._anchor(tag, attrs)
+
+    def _anchor(self, tag: str, attrs) -> None:
+        """Mảnh của thẻ (`id` của mọi phần tử, `name` của <a>) - kể cả trong vùng ẩn: mục lục trỏ vào đó vẫn là một chỗ trong trang."""
         if not self._skip:
             for name, value in attrs:
                 key = name.partition(":")[2] or name  # như bản Kotlin: bỏ tiền tố ("xml:id" thành "id")
@@ -422,9 +640,23 @@ class _Text(HTMLParser):
                     self.anchors.setdefault(value, len(self.lines))
 
     def handle_endtag(self, tag: str) -> None:
+        if self._hidden_depth:
+            if tag == self._hidden_tag:
+                self._hidden_depth -= 1
+                if not self._hidden_depth and tag in BLOCKS:
+                    self._flush()
+            return
         if tag in {"script", "style", "head", "title"}:
             self._skip = max(0, self._skip - 1)
+        elif tag in CELLS:
+            self._current.append(" ")
+        elif tag == "sup" and self._sup:
+            at = self._sup.pop()
+            before, mark = "".join(self._current[:at]), "".join(self._current[at:]).strip()
+            if NOTE_MARK.fullmatch(mark) and before[-1:].isalpha() and not (mark in {"2", "3"} and UNIT_POWER.search(before)):
+                self._current.insert(at, " ")
         elif tag in BLOCKS:
+            self._pre -= tag == "pre" and self._pre > 0
             if tag in HEADINGS and self._in_heading:
                 self._in_heading -= 1
                 text = _words("".join(self._current))
@@ -435,7 +667,17 @@ class _Text(HTMLParser):
             self._flush()
 
     def handle_data(self, data: str) -> None:
-        if not self._skip:
+        if not self._skip and not self._hidden_depth:
+            if self._cap and data:
+                # Chữ cái đầu là ảnh ("M" + "ọi chuyện…"): chỉ ghép khi chữ ngay sau dính liền - ảnh minh hoạ, chữ cách ra thì không.
+                data, self._cap = (self._cap + data if data[0].isalpha() else data), ""
+            if self._pre:
+                first, *rest = data.split("\n")
+                self._current.append(first)
+                for line in rest:
+                    self._flush()
+                    self._current.append(line)
+                return
             self._current.append(data)
 
     def close(self) -> None:
@@ -443,15 +685,51 @@ class _Text(HTMLParser):
         self._flush()
 
 
-def _page(raw: bytes) -> _Text:
-    parser = _Text()
-    parser.feed(raw.decode("utf-8", errors="replace"))
+def _types(attrs: Iterable[tuple[str, str | None]]) -> set[str]:
+    """Vai của một phần tử: các từ của `epub:type` (thuộc tính `type` có tiền tố / không gian tên - `<ol type="a">` không tính) và
+    của `role` bỏ tiền tố "doc-" (`role="doc-pagebreak"` = "pagebreak"). Kotlin: BookImport.types."""
+    found: set[str] = set()
+    for key, value in attrs:
+        local = key.rpartition("}")[2]
+        prefixed = local != key or ":" in local
+        local = local.rpartition(":")[2].casefold()
+        if value and ((local == "type" and prefixed) or local == "role"):
+            found.update(token.casefold().removeprefix("doc-") for token in value.split())
+    return found
+
+
+_DECLARED_ENCODING = re.compile(rb"""<\?xml[^>]*?encoding\s*=\s*["']([\w.:-]+)|<meta[^>]*?charset\s*=\s*["']?([\w.:-]+)""", re.IGNORECASE)
+ENCODING_ALIASES = {"gb2312": "gb18030", "gbk": "gb18030", "x-gbk": "gb18030", "iso-8859-1": "windows-1252", "latin1": "windows-1252",
+                    "us-ascii": "windows-1252", "ascii": "windows-1252"}  # như trình duyệt (WHATWG): nhãn cũ đọc bằng bảng mã rộng hơn
+
+
+def markup_text(raw: bytes) -> str:
+    """Chữ của một trang XHTML: UTF-8 (hay UTF-16 có BOM) nếu đọc trọn được - nhiều file khai báo sai -, không thì theo khai báo
+    `<?xml encoding>` / `<meta charset>` trong 2 KB đầu, không có khai báo thì UTF-8 (byte hỏng thành �)."""
+    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return raw.decode("utf-16", errors="replace")
+    try:
+        return raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        pass
+    match = _DECLARED_ENCODING.search(raw[:2048])
+    name = (match.group(1) or match.group(2)).decode("ascii").lower() if match else "utf-8"
+    try:
+        return raw.decode(ENCODING_ALIASES.get(name, name), errors="replace")
+    except LookupError:
+        return raw.decode("utf-8", errors="replace")
+
+
+def _page(raw: bytes, hidden: list[_Hidden] | None = None) -> _Text:
+    parser = _Text(hidden)
+    parser.feed(markup_text(raw))
     parser.close()
     return parser
 
 
-def _toc(book: zipfile.ZipFile, manifest: dict[str, tuple[str, str, str]], spine_toc: str) -> list[tuple[str, str, str]]:
-    """Mục lục theo thứ tự: (href không #, mảnh sau #, tên). EPUB3 nav trước, EPUB2 NCX sau."""
+def _toc(book: _Zip, manifest: dict[str, tuple[str, str, str]], spine_toc: str) -> tuple[list[tuple[str, str, str]], bool]:
+    """Mục lục theo thứ tự: (href không #, mảnh sau #, tên). EPUB3 nav trước, EPUB2 NCX sau. Kèm: gói CÓ khai báo mục lục (nav / NCX) hay
+    không. Tệp mục lục hỏng hay thiếu không làm hỏng cả cuốn - chữ vẫn đọc theo thứ tự đọc (spine), chỉ mất tên chương của mục lục."""
     entries: list[tuple[str, str, str]] = []
 
     def add(base: str, target: str, label: str) -> None:
@@ -459,23 +737,39 @@ def _toc(book: zipfile.ZipFile, manifest: dict[str, tuple[str, str, str]], spine
         entries.append((posixpath.normpath(posixpath.join(base, unquote(path))), unquote(fragment), label))
 
     nav = next((href for href, _media, props in manifest.values() if "nav" in props.split()), "")
-    if nav:
-        root = _xml(_read(book, nav))
-        for anchor in root.iter(f"{{{NS['x']}}}a"):
+    root = _toc_root(book, nav)
+    if root is not None:
+        # Tệp nav có nhiều <nav>: mục lục (epub:type="toc"), mốc (landmarks), danh sách số trang (page-list) - chỉ mục lục là chương;
+        # đọc cả số trang thì mỗi chỗ ngắt trang thành một "chương". Không <nav> nào ghi "toc" thì lấy <nav> đầu.
+        navs = list(root.iter(f"{{{NS['x']}}}nav"))
+        listing = next((node for node in navs if "toc" in _types(node.attrib.items())), navs[0] if navs else root)
+        for anchor in listing.iter(f"{{{NS['x']}}}a"):
             href = anchor.get("href", "")
             label = _words("".join(anchor.itertext()))
             if href and label:
                 add(posixpath.dirname(nav), href, label)
     ncx = manifest.get(spine_toc, ("", "", ""))[0] or next(
         (href for href, media, _props in manifest.values() if media == "application/x-dtbncx+xml"), "")
-    if ncx and not entries:
-        root = _xml(_read(book, ncx))
+    root = _toc_root(book, ncx) if not entries else None
+    if root is not None:
         for point in root.iter(f"{{{NS['ncx']}}}navPoint"):
             label = point.find("ncx:navLabel/ncx:text", NS)
             content = point.find("ncx:content", NS)
             if label is not None and content is not None and (label.text or "").strip():
                 add(posixpath.dirname(ncx), content.get("src", ""), _words(label.text))
-    return entries
+    # Nút cha trỏ cùng chỗ với nút con đầu ("Quyển một" và "Chương 12" cùng trỏ c1.xhtml): tên chương là tên nút con.
+    entries = [entry for index, entry in enumerate(entries) if index + 1 == len(entries) or entries[index + 1][:2] != entry[:2]]
+    return entries, bool(nav or ncx)
+
+
+def _toc_root(book: _Zip, href: str) -> ElementTree.Element | None:
+    """Tệp mục lục `href` đã đọc; không khai báo, thiếu trong gói hay hỏng XML: None (cuốn vẫn đọc được theo spine)."""
+    if not href:
+        return None
+    try:
+        return _xml(_read(book, href))
+    except ImportFailed:
+        return None
 
 
 def _split_points(page: _Text, entries: list[tuple[str, str]]) -> list[tuple[int, str]]:
@@ -500,7 +794,7 @@ def _meta_text(opf: ElementTree.Element, name: str) -> str | None:
     return text or None
 
 
-def _epub_cover(book: zipfile.ZipFile, opf: ElementTree.Element, manifest: dict[str, tuple[str, str, str]]) -> tuple[bytes, str] | None:
+def _epub_cover(book: _Zip, opf: ElementTree.Element, manifest: dict[str, tuple[str, str, str]]) -> tuple[bytes, str] | None:
     """Bìa theo manifest: mục có properties="cover-image" (EPUB3), không thì <meta name="cover" content="id"> (EPUB2)."""
     href = next((href for href, _media, props in manifest.values() if "cover-image" in props.split()), "")
     if not href:
@@ -509,11 +803,8 @@ def _epub_cover(book: zipfile.ZipFile, opf: ElementTree.Element, manifest: dict[
     media = next((media for entry, media, _props in manifest.values() if entry == href), "")
     if not href or not media.startswith("image/"):
         return None
-    try:
-        info = book.getinfo(href)
-    except KeyError:
-        return None
-    return (book.read(info), media) if info.file_size <= MAX_COVER else None
+    info = book.member(href)
+    return (book.read(info), media) if info is not None and info.file_size <= MAX_COVER else None
 
 
 def _epub(path: Path) -> ImportedBook:
@@ -535,22 +826,34 @@ def _epub(path: Path) -> ImportedBook:
             raise ImportFailed(BROKEN.format(kind="EPUB"))
         titles: dict[str, str] = {}  # href -> tên đầu tiên trỏ tới nó
         listed_in: dict[str, list[tuple[str, str]]] = {}  # href -> [(mảnh, tên)] theo thứ tự mục lục
-        for toc_href, toc_fragment, toc_label in _toc(book, manifest, spine.get("toc", "")):
+        toc, declared = _toc(book, manifest, spine.get("toc", ""))
+        for toc_href, toc_fragment, toc_label in toc:
             titles.setdefault(toc_href, toc_label)
             listed_in.setdefault(toc_href, []).append((toc_fragment, toc_label))
         result = ImportedBook(title=_meta_text(opf, "title") or title_from_filename(path.stem), author=_meta_text(opf, "creator"),
                               language=_meta_text(opf, "language"))
+        if declared and not toc:
+            result.notes.append("Mục lục trong file không đọc được - tên chương lấy từ chữ của từng chương.")
         cover = _epub_cover(book, opf, manifest)
         if cover:
             result.cover_bytes, result.cover_type = cover
+        # Có mục lục thì file của thứ tự đọc không có mục nào, không phải phần đầu / cuối sách và không mở bằng tiêu đề riêng là
+        # PHẦN SAU của chương trước (Calibre cắt chương dài thành index_split_001, _002…) - nối vào, đừng thành "chương" tên là câu văn.
+        has_toc = any(manifest.get(ref.get("idref", ""), ("",))[0] in titles for ref in spine.iterfind("opf:itemref", NS))
+        hidden = [rule for href, media, _props in manifest.values() if media == "text/css" and book.member(href) is not None
+                  for rule in css_hidden(_read(book, href).decode("utf-8", errors="replace"))]
         images = 0  # trang chỉ có ảnh: một ghi chú đếm, không kể tên file trong gói (mục rất ngắn: `_finish` đếm)
+        missing = 0  # mục của thứ tự đọc mà gói không có (tải chưa trọn): bỏ qua + đếm, phần còn lại vẫn đọc được
         for itemref in spine.iterfind("opf:itemref", NS):
             if itemref.get("linear", "yes") == "no":
                 continue
             href, media, props = manifest.get(itemref.get("idref", ""), ("", "", ""))
             if not href or "nav" in props.split() or "html" not in media:
                 continue
-            page = _page(_read(book, href))
+            if book.member(href) is None:
+                missing += 1
+                continue
+            page = _page(_read(book, href), hidden)
             # Nhiều chương trong MỘT file: mục lục trỏ vào các mảnh (#id) của file này thì cắt chữ tại các mảnh ấy, theo thứ tự đọc,
             # mỗi phần mang tên của mục lục. Chữ trước mảnh đầu là phần riêng (không tên) nếu không mục nào trỏ về đầu file.
             points = _split_points(page, listed_in.get(href, []))
@@ -562,6 +865,12 @@ def _epub(path: Path) -> ImportedBook:
                          for (start, label), end in zip(points, ends)]
             else:
                 parts = [(page.lines, page.heading, titles.get(href, ""))]
+            page_matter = next((reason for kind, reason in MATTER_TYPES if kind in page.types), "") or name_matter(href)
+            if (has_toc and not points and not parts[0][2] and not page_matter and not page.heading and page.lines
+                    and not is_heading_line(page.lines[0]) and not text_matter("", "\n\n".join(page.lines))
+                    and result.chapters and not result.chapters[-1].matter):
+                result.chapters[-1].text = "\n\n".join(filter(None, [result.chapters[-1].text, *page.lines]))
+                continue
             for lines, heading, listed in parts:
                 if not lines and page.images and not points:
                     images += 1
@@ -577,15 +886,17 @@ def _epub(path: Path) -> ImportedBook:
                     lines = lines[1:]
                 elif heading and first == heading.casefold() and title.casefold() in first:
                     title, lines = lines[0], lines[1:]
-                result.chapters.append(Chapter(title, "\n\n".join(lines), short=is_short))
+                result.chapters.append(Chapter(title, "\n\n".join(lines), short=is_short, matter=page_matter))
         if images:
             result.notes.append(f"Bỏ qua {images} trang chỉ có ảnh.")
+        if missing:
+            result.notes.append(f"Bỏ qua {missing} phần bị thiếu trong file (file có thể tải chưa trọn).")
         return result
 
 
 # --- DOCX --------------------------------------------------------------------------------------------------------------
 
-def _docx_styles(book: zipfile.ZipFile) -> dict[str, str]:
+def _docx_styles(book: _Zip) -> dict[str, str]:
     """styleId -> tên kiểu viết thường ("heading 1", "title"); Word luôn ghi tên tiếng Anh của kiểu có sẵn."""
     try:
         root = _xml(_read(book, "word/styles.xml", "DOCX"), "DOCX")
@@ -648,6 +959,24 @@ def _join_wrapped(lines: list[str]) -> list[str]:
     return joined
 
 
+def _docx_bold(paragraph: ElementTree.Element) -> bool:
+    """Mọi đoạn chạy có chữ trong đoạn đều in đậm (w:b, không phải w:val="0")."""
+    runs = [run for run in paragraph.iter(f"{W}r") if "".join(node.text or "" for node in run.iter(f"{W}t")).strip()]
+
+    def bold(run: ElementTree.Element) -> bool:
+        node = run.find(f"{W}rPr/{W}b")
+        return node is not None and node.get(f"{W}val", "true").casefold() not in {"0", "false", "off"}
+
+    return bool(runs) and all(bold(run) for run in runs)
+
+
+def title_page(text: str) -> bool:
+    """Chữ trước chương đầu chỉ là trang tên sách / tác giả: vài dòng ngắn, không dòng nào kết thúc câu."""
+    lines = [line for line in text.split("\n\n") if line.strip()]
+    return 0 < len(lines) <= TITLE_PAGE_LINES and all(
+        len(line) <= TITLE_PAGE_WIDTH and not line.rstrip().endswith((".", "!", "?", "…", "。")) for line in lines)
+
+
 def _docx(path: Path) -> ImportedBook:
     with _open_zip(path, "DOCX") as book:
         document = _xml(_read(book, "word/document.xml", "DOCX"), "DOCX")
@@ -660,7 +989,7 @@ def _docx(path: Path) -> ImportedBook:
     body = document.find(f"{W}body")
     if body is None:
         raise ImportFailed(BROKEN.format(kind="DOCX"))
-    sections: list[tuple[str | None, list[str]]] = [(None, [])]  # (tên chương theo kiểu Heading, các đoạn)
+    items: list[tuple[int, str, bool]] = []  # (cấp tiêu đề - 0 là chữ thường, dòng, cả đoạn in đậm)
     book_title: str | None = None
     toc_lines = 0
     for paragraph in _docx_paragraphs(body):
@@ -672,31 +1001,47 @@ def _docx(path: Path) -> ImportedBook:
             # nhận nhầm là tiêu đề chương.
             toc_lines += 1
             continue
+        level, bold = HEADING_LEVELS.get(style, 0), _docx_bold(paragraph)
         for line in _join_wrapped([_words(line) for line in _docx_text(paragraph)]):
             if not line:
                 continue
-            if style in {"heading 1", "heading 2", "heading1", "heading2"}:
-                sections.append((line, []))
-            else:
-                if style == "title" and book_title is None:
-                    book_title = line
-                sections[-1][1].append(line)
+            if not level and style == "title" and book_title is None:
+                book_title = line
+            items.append((level, line, bold))
+    levels = [level for level, _, _ in items if level]
+    if levels.count(1) == 1 and len(items) > 1 and items[0][0] == 1 and not is_heading_line(items[0][1]):
+        # Heading 1 duy nhất, ở đầu, không phải "Chương N": tên sách. Chương theo cấp kế (Heading 2), không có thì dòng "Chương N" / đậm.
+        book_title, items, chapter_levels = book_title or items[0][1], items[1:], {2}
+    elif 1 in levels and 2 in levels:
+        chapter_levels = {1}  # Heading 1 là chương, Heading 2 là cảnh trong chương: một dòng của chương
+    else:
+        chapter_levels = {1, 2}
     result = ImportedBook(title=meta_title or book_title or title_from_filename(path.stem), author=meta_author, language=meta_language)
     if toc_lines:
         result.notes.append(f"Bỏ qua mục lục của tài liệu ({toc_lines} dòng).")
-    if len(sections) == 1:
-        # Không có kiểu Heading: tách theo dòng "Chương N" (như PDF).
-        result.chapters, notes = _split_on_headings(sections[0][1], result.title)
+    if not any(level in chapter_levels for level, _, _ in items):
+        # Không có kiểu Heading: tách theo dòng "Chương N" (như PDF), và dòng in đậm "I. KHỞI ĐẦU" khi có từ hai dòng như thế.
+        roman = [index for index, (_, line, bold) in enumerate(items) if bold and is_heading_line(line, BOLD_ROMAN)]
+        result.chapters, notes = _split_on_headings([line for _, line, _ in items], result.title, roman if len(roman) >= 2 else ())
         result.notes += notes
-        return result
-    for title, paragraphs in sections:
-        if title is None:
-            if paragraphs:
-                result.chapters.append(Chapter(PREAMBLE, "\n\n".join(paragraphs)))
-        elif paragraphs:
-            result.chapters.append(Chapter(title, "\n\n".join(paragraphs)))
-        else:
-            result.notes.append(f"Bỏ qua mục trống: {title}")
+    else:
+        sections: list[tuple[str | None, list[str]]] = [(None, [])]  # (tên chương theo kiểu Heading, các đoạn)
+        for level, line, _ in items:
+            if level in chapter_levels:
+                sections.append((line, []))
+            else:
+                sections[-1][1].append(line)
+        for title, paragraphs in sections:
+            if title is None:
+                if paragraphs:
+                    result.chapters.append(Chapter(PREAMBLE, "\n\n".join(paragraphs)))
+            elif paragraphs:
+                result.chapters.append(Chapter(title, "\n\n".join(paragraphs)))
+            else:
+                result.notes.append(f"Bỏ qua mục trống: {title}")
+    first = result.chapters[0] if len(result.chapters) > 1 else None
+    if first is not None and first.title == PREAMBLE and title_page(first.text):
+        first.matter = "Trang tên sách"  # không bỏ: chưa tích, kèm lý do
     return result
 
 
@@ -706,8 +1051,9 @@ def is_heading_line(line: str, pattern: re.Pattern[str] = HEADING) -> bool:
     return len(line.strip()) <= MAX_HEADING and pattern.match(line) is not None
 
 
-def _split_on_headings(paragraphs: list[str], book_title: str) -> tuple[list[Chapter], list[str]]:
-    """Chữ trước tiêu đề đầu tiên thành chương "Mở đầu" (không bỏ đi); không có tiêu đề nào thì cả file là một chương."""
+def _split_on_headings(paragraphs: list[str], book_title: str, extra: Iterable[int] = ()) -> tuple[list[Chapter], list[str]]:
+    """Chữ trước tiêu đề đầu tiên thành chương "Mở đầu" (không bỏ đi); không có tiêu đề nào thì cả file là một chương. `extra`: số thứ tự
+    các dòng cũng là tiêu đề (DOCX: dòng in đậm "I. KHỞI ĐẦU")."""
     chapters: list[Chapter] = []
     notes: list[str] = []
     title: str | None = None
@@ -722,9 +1068,11 @@ def _split_on_headings(paragraphs: list[str], book_title: str) -> tuple[list[Cha
         else:
             notes.append(f"Bỏ qua mục trống: {title}")
 
-    any_heading = any(is_heading_line(paragraph) for paragraph in paragraphs)
-    for paragraph in paragraphs:
-        if is_heading_line(paragraph):
+    extra = set(extra)
+    headings = [is_heading_line(paragraph) or index in extra for index, paragraph in enumerate(paragraphs)]
+    any_heading = any(headings)
+    for paragraph, heading in zip(paragraphs, headings, strict=True):
+        if heading:
             close()
             title, body = paragraph.strip(), []
         else:
