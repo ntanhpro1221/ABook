@@ -107,14 +107,14 @@ def test_the_http_cancel_of_a_projectfile_export_answers_with_the_cancelled_reas
     worker = threading.Thread(target=export)
     worker.start()
     for _ in range(100):
-        _status, data = _call(server, "GET", f"/api/books/{book}/music-export")
+        _status, data = _call(server, "GET", f"/api/books/{book}/music-export?kind=projectfile")
         if data.get("active"):
             break
         threading.Event().wait(0.05)
     assert data["active"] is True and data["done"] == 0
-    status, data = _call(server, "POST", f"/api/books/{book}/music-export/cancel", {})
+    status, data = _call(server, "POST", f"/api/books/{book}/music-export/cancel?kind=projectfile", {})
     assert status == 200 and data == {"cancelling": True}
     gate.set()
     worker.join(15)
     assert result["status"] == 409 and result["data"]["reason"] == "cancelled"  # type: ignore[index]
-    assert _call(server, "GET", f"/api/books/{book}/music-export")[1]["active"] is False
+    assert _call(server, "GET", f"/api/books/{book}/music-export?kind=projectfile")[1]["active"] is False

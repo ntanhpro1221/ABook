@@ -559,7 +559,8 @@ function Actions({ book }: { book: BookSummary }) {
           Xuất…
         </Button>
       )}
-      <ExportDialog book={book} open={exporting} onOpenChange={setExporting} onApplyFirst={() => setConfirmApply(true)} />
+      {/* key: chuyển Phần 1 -> Phần 2 là một hộp mới - không mang `busy`, nút Huỷ, kết quả của cuốn trước sang cuốn này. */}
+      <ExportDialog key={book.id} book={book} open={exporting} onOpenChange={setExporting} onApplyFirst={() => setConfirmApply(true)} />
       {book.queuePosition ? (
         <>
           <span className="inline-flex h-11 items-center gap-2 rounded-xl bg-warning-soft px-4 text-sm font-medium text-warning">

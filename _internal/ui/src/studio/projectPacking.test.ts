@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { packError, packView } from "./projectPacking";
+import { followPackJob, PackCancelled, PackDetached, packError, packView, type PackJob } from "./projectPacking";
 
 describe("packView", () => {
   it("chưa có tiến độ: dòng chung, thanh chạy không biết trước", () => {
@@ -42,5 +42,58 @@ describe("packError", () => {
       detail: "",
     });
     expect(packError("KeyError: 'x'")).toEqual({ summary: "Chưa gói được dự án.", detail: "KeyError: 'x'" });
+  });
+});
+
+describe("followPackJob", () => {
+  const instant = async () => undefined;
+  const running: PackJob = { state: "running", phase: "hash", done: 1, total: 2 };
+  const result = { folder: "D:/x", file: "D:/x/a.abookproj", size: 5 };
+
+  it("trả kết quả khi máy chủ báo xong, báo tiến độ từng lần hỏi", async () => {
+    const answers: PackJob[] = [running, running, { state: "done", result }];
+    const seen: PackJob[] = [];
+    const got = await followPackJob({ fetchJob: async () => answers.shift() as PackJob, alive: () => true, onJob: (job) => seen.push(job), sleep: instant });
+    expect(got).toEqual(result);
+    expect(seen).toHaveLength(2);
+  });
+
+  it("máy chủ báo huỷ thì ném PackCancelled", async () => {
+    await expect(followPackJob({ fetchJob: async () => ({ state: "cancelled" }), alive: () => true, onJob: () => undefined, sleep: instant })).rejects.toBeInstanceOf(PackCancelled);
+  });
+
+  it("gỡ màn hình giữa lúc gói: ném PackDetached (dấu riêng), KHÔNG phải PackCancelled - không báo Đã huỷ xuất", async () => {
+    let mounted = true;
+    const error = await followPackJob({
+      fetchJob: async () => running,
+      alive: () => mounted,
+      onJob: () => {
+        mounted = false; // màn hình gỡ sau lần hỏi đầu
+      },
+      sleep: instant,
+    }).catch((caught) => caught);
+    expect(error).toBeInstanceOf(PackDetached);
+    expect(error).not.toBeInstanceOf(PackCancelled);
+    // gỡ từ trước khi hỏi: cũng vậy, và không hỏi máy chủ lần nào
+    let asked = 0;
+    const early = await followPackJob({ fetchJob: async () => (asked++, running), alive: () => false, onJob: () => undefined, sleep: instant }).catch((caught) => caught);
+    expect(early).toBeInstanceOf(PackDetached);
+    expect(asked).toBe(0);
+  });
+
+  it("hỏi hụt vài lần liền mới hỏng; hỏng thật thì ném lời của máy chủ", async () => {
+    let calls = 0;
+    const flaky = followPackJob({
+      fetchJob: async () => {
+        if (++calls < 3) throw new Error("mạng chớp");
+        return { state: "done", result };
+      },
+      alive: () => true,
+      onJob: () => undefined,
+      sleep: instant,
+    });
+    expect(await flaky).toEqual(result);
+    await expect(followPackJob({ fetchJob: async () => { throw new Error("mất mạng"); }, alive: () => true, onJob: () => undefined, sleep: instant, maxMisses: 2 })).rejects.toThrow("mất mạng");
+    await expect(followPackJob({ fetchJob: async () => ({ state: "error", error: "Đầy ổ" }), alive: () => true, onJob: () => undefined, sleep: instant })).rejects.toThrow("Đầy ổ");
   });
 });

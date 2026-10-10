@@ -493,6 +493,7 @@ export function App() {
               <ExportJobHost kind="bookfile" />
               <ExportJobHost kind="m4b" />
               {!info.remote && <ExportJobHost kind="audiobook" />}
+              {!info.remote && <ExportJobHost kind="projectfile" />}
               {!info.remote && <AudiobookDialogHost />}
               <Shell>
                 <Routes>
