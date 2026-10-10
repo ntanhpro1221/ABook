@@ -59,6 +59,15 @@ def test_a_bracket_is_world_text_unless_it_is_dashed_or_names_a_point_of_view() 
         assert cue_kind({"text": text}) == "subhead", text
 
 
+def test_a_dashed_dialogue_tag_or_a_plain_sentence_is_not_a_subhead() -> None:
+    """docs/MUSIC_RESEARCH.md 10-10 CUE-DASH: lời dẫn thoại kiểu Việt và câu thường mở bằng "Phần"/"Phía" không đổi cảnh."""
+    for text in ("– Lizz nói –", "– Đừng lại gần. –", "Phần thưởng:", "Phía sau lưng hắn là cả một đội quân.",
+                 "Phần lớn bọn họ"):
+        assert cue_kind({"text": text}) is None, text
+    for text in ("—Nanato—", "— Chương cuối —", "— 0● 0—", "- 3 -", "Phần 4:", "Phần hai", "[Yuki POV]"):
+        assert cue_kind({"text": text}) == "subhead", text
+
+
 def test_a_time_or_place_line_is_no_longer_a_boundary_but_a_time_jump_still_breaks() -> None:
     segments = [{"id": i, "text": text} for i, text in enumerate(["Mở.", "Một.", "Trong khi đó, ở thành phố phía nam.", "Hai."], 1)]
     assert 3 not in cue_bounds(segments) and cue_bounds(segments) == {}
