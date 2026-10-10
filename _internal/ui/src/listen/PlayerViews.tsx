@@ -201,8 +201,8 @@ function Transport({ large = false }: { large?: boolean }) {
   const waiting = buffering && playing;
   return (
     <div className={cn("flex items-center", large ? "gap-4 sm:gap-6" : "gap-1")}>
-      <IconButton label="Chương trước (Shift+←)" icon={SkipBack} size={size} onClick={previous} {...keepFocus} />
-      <IconButton label={`Lùi ${SKIP_SECONDS} giây (←)`} icon={Back15} size={size} onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
+      <IconButton label="Chương trước (Shift+←)" icon={SkipBack} size={size} className="touch-box" onClick={previous} {...keepFocus} />
+      <IconButton label={`Lùi ${SKIP_SECONDS} giây (←)`} icon={Back15} size={size} className="touch-box" onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
       <button
         type="button"
         onClick={toggle}
@@ -229,12 +229,13 @@ function Transport({ large = false }: { large?: boolean }) {
           </span>
         )}
       </button>
-      <IconButton label={`Tới ${SKIP_SECONDS} giây (→)`} icon={Forward15} size={size} onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
+      <IconButton label={`Tới ${SKIP_SECONDS} giây (→)`} icon={Forward15} size={size} className="touch-box" onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
       {/* Còn chương sau mà chưa có audio: nút vẫn bấm được và nói vì sao (player.step báo + đường đọc chữ); chỉ chương cuối mới mờ. */}
       <IconButton
         label={nextChapterLabel(hasNext, hasLater)}
         icon={SkipForward}
         size={size}
+        className="touch-box"
         onClick={next}
         disabled={!hasLater}
         {...keepFocus}
@@ -1852,7 +1853,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
             }
           }}
           className={cn(
-            "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors",
+            "touch-row inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors",
             panel === item.value && showPanel ? "bg-hover text-fg" : "text-fg-2 hover:text-fg",
           )}
         >
@@ -1889,7 +1890,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
         }}
       >
         <div className="flex items-center justify-between">
-          <IconButton label="Thu nhỏ (Esc)" icon={ChevronDown} onClick={() => setExpanded(false)} />
+          <IconButton label="Thu nhỏ (Esc)" icon={ChevronDown} className="touch-box" onClick={() => setExpanded(false)} />
           <span className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">Đang nghe</span>
           {canGoBack ? <IconButton label="Quay lại chỗ vừa nghe" icon={Undo2} onClick={goBack} /> : <span className="size-9" />}
         </div>

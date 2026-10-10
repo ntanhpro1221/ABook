@@ -6,10 +6,19 @@ export function formatNumber(value: number): string {
   return numberFormat.format(Math.round(value));
 }
 
-/** Cỡ file: "850 MB", "3,2 GB" (một chữ số thập phân từ 1 GB trở lên). */
+/** Cỡ file: "850 MB", "3,2 GB" (một chữ số thập phân từ 1 GB trở lên). Dưới 10 MB cũng một chữ số thập phân ("0,5 MB", không làm tròn thành "0 MB" hay "1 MB");
+ *  dưới 0,1 MB thì ghi KB. */
 export function formatSize(bytes: number): string {
   if (bytes >= 1024 ** 3) return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(bytes / 1024 ** 3)} GB`;
-  return `${formatNumber(bytes / 1024 ** 2)} MB`;
+  const megabytes = bytes / 1024 ** 2;
+  if (megabytes < 0.1) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  if (megabytes < 10) return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(megabytes)} MB`;
+  return `${formatNumber(megabytes)} MB`;
+}
+
+/** Tên file trong một đường dẫn (dấu ngăn \ hay /): thông báo chỉ nói tên, đường đầy đủ để ở gợi ý khi rê chuột. */
+export function fileName(path: string): string {
+  return path.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || path;
 }
 
 /** Câu báo kết thúc bằng dấu chấm: lời lỗi của máy chủ khi thì có chấm, khi thì không (và có khi kết thúc bằng dấu nháy) - nối thêm câu sau cho đúng. */

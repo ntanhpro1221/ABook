@@ -1,4 +1,4 @@
-import { formatClock, formatSize } from "@/shared/format";
+import { fileName, formatClock, formatSize } from "@/shared/format";
 
 // "Xuất file sách" và "Xuất M4B" (menu "…" của trang sách): nói trước file sẽ nằm đâu, và trong lúc làm nói điều đổi theo thời gian.
 // Máy chủ không báo "chương n/N" khi làm - chỉ có thời gian trôi qua là thứ thật để nói.
@@ -63,7 +63,7 @@ export const RECENT_SECONDS = 30 * 60;
 
 export type JobView =
   | { kind: "none" }
-  | { kind: "loading" | "success" | "error"; title: string; description: string };
+  | { kind: "loading" | "success" | "error"; title: string; description: string; /** Đường đầy đủ của file vừa xuất: để ở gợi ý khi rê chuột, thông báo chỉ nói tên file. */ place?: string };
 
 /** Nơi file nằm: file sách, hay thư mục khi cả bộ mỗi phần một file. */
 export function exportedPlace(result: ExportResult): string {
@@ -86,7 +86,8 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
   if (announce && (job.finishedAgo ?? 0) > RECENT_SECONDS) return { kind: "none" };
   if (job.state === "done" && job.result) {
     const details = [job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result)].filter(Boolean);
-    return { kind: "success", title: copy.done, description: [exportedPlace(job.result), ...details].join(" · ") };
+    const file = job.result.file;
+    return { kind: "success", title: copy.done, description: [file ? fileName(file) : job.result.folder, ...details].join(" · "), ...(file && fileName(file) !== file ? { place: file } : {}) };
   }
   if (job.state === "error") return { kind: "error", title: copy.failed, description: job.error ?? "" };
   return { kind: "none" };

@@ -349,7 +349,9 @@ def test_a_download_resumes_where_it_stopped_and_refuses_a_wrong_file(tmp_path: 
         partial = target.with_name("uv.zip.part").stat().st_size
         assert 0 < partial < len(Blob.data) and not target.exists(), "bản dở giữ ở .part"
 
-        studio_setup.download(item, target, lambda *_: None, lambda: False)
+        resumed: list[int] = []
+        studio_setup.download(item, target, lambda done, _total: resumed.append(done), lambda: False)
+        assert resumed[0] == partial, "phần .part đã có tính vào đã tải ngay từ đầu, thanh không về 0 rồi nhảy"
         assert Blob.ranges == [f"bytes={partial}-"], "tải tiếp từ chỗ dở, không tải lại từ đầu"
         assert target.read_bytes() == Blob.data and not target.with_name("uv.zip.part").exists()
 

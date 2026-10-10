@@ -105,7 +105,8 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
         const folder = job.result.folder;
         toast.success(view.title, {
           id: toastId(kind, id),
-          description: view.description,
+          // Thông báo chỉ nói tên file; đường đầy đủ hiện khi rê chuột (nút “Mở thư mục” đưa tới đúng chỗ).
+          description: view.place ? <span title={view.place}>{view.description}</span> : view.description,
           duration: 15000,
           // Studio từ xa: thư mục nằm trên máy tính, không mở được từ máy đang xem.
           action: remote ? undefined : { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }) },

@@ -218,9 +218,12 @@ def nvidia_gpu() -> dict[str, Any] | None:
 def download(item: Download, target: Path, progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> Path:
     """Tải về `target` (ghi `.part`, tải tiếp bằng Range), kiểm SHA-256 rồi mới đổi tên. Sai băm: xoá, báo lỗi."""
     if target.is_file() and _sha256(target) == item.sha256:
+        progress(item.size, item.size)  # đã có sẵn: tính vào "đã tải" ngay, thanh tổng không tụt rồi nhảy
         return target
     target.parent.mkdir(parents=True, exist_ok=True)
     part = target.with_name(target.name + ".part")
+    if part.is_file():
+        progress(min(part.stat().st_size, item.size), item.size)  # tải tiếp sau Huỷ / mất mạng: phần .part đã có tính ngay từ đầu (trước đây thanh về 0 rồi mới nhảy)
     for attempt in range(5):
         if cancelled():
             raise Cancelled()  # bấm Huỷ lúc đang chờ thử lại / chưa có byte nào về

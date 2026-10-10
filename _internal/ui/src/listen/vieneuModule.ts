@@ -84,6 +84,8 @@ export interface VieneuStatus {
   cancelled?: boolean;
   /** Có khi bản tăng tốc đã tải (máy tính). */
   accelerated?: VieneuAccelerated | null;
+  /** Lý do máy này không chạy được bản tăng tốc (lựa chọn ấy ẩn đi nhưng thẻ vẫn nói); rỗng/thiếu = chạy được. */
+  fastUnsupported?: string;
 }
 
 /** Câu nhắc trước khi tải bằng dữ liệu di động (null khi không cần nhắc). */
@@ -112,6 +114,11 @@ export function toggleChoice(status: Pick<VieneuStatus, "choices">, picked: read
   }
   const dependants = status.choices.filter((choice) => choice.requires?.includes(id)).map((choice) => choice.id);
   return picked.filter((item) => item !== id && !dependants.includes(item));
+}
+
+/** Dòng mờ khi máy không chạy được bản tăng tốc (không ẩn im lặng); null khi không có gì để nói. */
+export function fastUnsupportedNote(status: Pick<VieneuStatus, "fastUnsupported">): string | null {
+  return status.fastUnsupported ? `Bản tăng tốc: máy này không chạy được (${status.fastUnsupported}).` : null;
 }
 
 /** Câu dưới công tắc bản tăng tốc: nói điều người nghe thấy (đọc nhanh hơn hay đang đọc bằng bản thường), không nói cách làm. */
@@ -206,7 +213,8 @@ export function vieneuLabel(status: VieneuStatus, copy: ModuleCopy = VIENEU_COPY
   const mid = lowerFirst(copy.name);
   if (status.state === "error") return status.error;
   if (status.state === "downloading") return `Đang tải ${mid} (${formatSize(status.total)}) ${vieneuPercent(status)}%`;
-  if (status.benchmarking) return "Đang thử giọng vừa tải trên máy này (vài giây)…";
+  // Chưa có số đo nào = giọng vừa tải; đã có = bật / tắt bản tăng tốc hay “Thử lại tốc độ” (không tải gì cả).
+  if (status.benchmarking) return Object.keys(status.benchmark).length === 0 ? "Đang thử giọng vừa tải trên máy này (vài giây)…" : "Đang đo lại tốc độ trên máy này (vài giây)…";
   if (status.state === "unsupported") return status.reason ? `Máy này chưa dùng được ${mid}: ${status.reason}.` : `Máy này chưa dùng được ${mid}.`;
   if (status.restart) return `${copy.name} đã cập nhật - mở lại ABook để dùng bản mới.`;
   const cancelled = status.cancelled ? `${CANCELLED_NOTE} ` : "";

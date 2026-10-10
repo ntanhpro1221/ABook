@@ -9,6 +9,7 @@ import { forgetVoices, switchVoices } from "./readAloudVoice";
 import type { ReadAloudVoice } from "./readAloud";
 import {
   acceleratedNote,
+  fastUnsupportedNote,
   benchmarkLabel,
   initialChoices,
   meteredNotice,
@@ -212,6 +213,7 @@ export function VieneuModuleCard({
           <p className="text-[13px] text-fg-2 text-pretty">{acceleratedNote(status.accelerated)}</p>
         </div>
       )}
+      {fastUnsupportedNote(status) && <p className="text-[13px] text-fg-3 text-pretty">{fastUnsupportedNote(status)}</p>}
       {copy.tiers.map((tier) =>
         status.benchmark[tier] ? (
           <p key={tier} className="text-[13px] text-fg-2 text-pretty">{benchmarkLabel(tier, status.benchmark[tier]!, status.slowRtf)}</p>
@@ -238,7 +240,7 @@ export function VieneuModuleCard({
               {failed ? "Thử lại" : bytes > 0 ? `Tải (${formatSize(bytes)})` : "Dùng"}
             </Button>
           )}
-          {Object.keys(status.benchmark).length > 0 && (
+          {(Object.keys(status.benchmark).length > 0 || Boolean(status.accelerated?.problem)) && (
             <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.measure())}>
               Thử lại tốc độ
             </Button>

@@ -100,9 +100,13 @@ export function chooseDefaultVoice(voice: string): void {
 /** Câu đọc thử ("Thử giọng" trong Cài đặt): ngắn, có dấu câu để nghe cả chỗ ngắt. */
 export const SAMPLE_TEXT = "Xin chào, tôi sẽ đọc sách cho bạn nghe. Bạn thấy giọng này thế nào?";
 
-/** Giọng dùng thật: giọng đã chọn nếu còn trong danh sách, không thì giọng mặc định, không thì giọng đầu tiên. */
+/** Giọng dùng thật: giọng đã chọn nếu còn trong danh sách, không thì giọng mặc định, không thì giọng đầu tiên. Người nghe CHƯA tự chọn giọng nào mà máy đã có
+ *  giọng VieNeu thì mặc định là giọng VieNeu đầu danh sách (đọc ngay trên máy, chữ không rời máy) chứ không phải giọng Edge gửi chữ tới Microsoft (soát UX a15). */
 export function resolveVoice(voices: ReadAloudVoice[], chosen: string): ReadAloudVoice | undefined {
-  return voices.find((voice) => voice.id === chosen) ?? voices.find((voice) => voice.default) ?? voices[0];
+  const exact = voices.find((voice) => voice.id === chosen);
+  if (exact) return exact;
+  const local = chosen ? undefined : voices.find((voice) => voice.provider === "vieneu");
+  return local ?? voices.find((voice) => voice.default) ?? voices[0];
 }
 
 /** Giọng đang đọc cuốn này, viết cho người nghe thấy ở Thư viện: "Đức Trí (VieNeu)", "Hoài My (Edge)"; giọng của máy (hay chưa biết) thì "Giọng đọc của máy" (như Cài đặt). */

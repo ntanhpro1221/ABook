@@ -349,7 +349,7 @@ export function SettingsScreen() {
               <span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
             </div>
             {info?.dialogs && (
-              <Button icon={FolderOpen} onClick={() => void changeLibrary()}>
+              <Button icon={FolderOpen} className="touch-row" onClick={() => void changeLibrary()}>
                 Đổi thư mục
               </Button>
             )}

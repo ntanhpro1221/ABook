@@ -8,7 +8,7 @@ import { cn } from "@/shared/cn";
 import { CoverSearchDialog } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { holderName } from "@/shared/editsSync";
-import { formatClock } from "@/shared/format";
+import { fileName, formatClock } from "@/shared/format";
 import { levelOptions } from "@/shared/musicLevels";
 import { Switch } from "@/desktop/PhoneSync";
 import { Button, Dialog, Segmented } from "@/shared/ui";
@@ -470,7 +470,7 @@ export function useSaveBook(book: ListenBook) {
       const edits = result.edits ? `${result.edits} thay đổi của bạn nằm trong file.` : "Chưa có thay đổi nào - file giống bản gốc.";
       const folder = result.folder;
       toast.success("Đã lưu file sách", {
-        description: `${result.file ?? ""}${result.file ? " - " : ""}${edits}`,
+        description: result.file ? <span title={result.file}>{`${fileName(result.file)} - ${edits}`}</span> : edits,
         duration: 8000,
         action: folder
           ? { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }).catch(() => undefined) }

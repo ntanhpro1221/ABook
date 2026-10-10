@@ -6,6 +6,7 @@ import {
   buildQueue,
   itemFromPath,
   planPick,
+  queueFocus,
   queueLabel,
   queueTotal,
   settle,
@@ -228,5 +229,22 @@ describe("summaryText", () => {
     expect(summaryText({ added: 3, existing: 1, skipped: 0, failed: 1, opened: 0 })).toBe("Đã thêm 3 sách · 1 cuốn đã có trong thư viện · 1 file chưa đọc được");
     expect(summaryText({ added: 0, existing: 0, skipped: 2, failed: 0, opened: 0 })).toBe("Bỏ qua 2 cuốn");
     expect(summaryText({ added: 0, existing: 0, skipped: 0, failed: 0, opened: 0 })).toBe("Không thêm cuốn nào");
+  });
+});
+
+describe("queueFocus", () => {
+  const items = buildQueue([ok("a.epub"), ok("b.txt"), ok("c.pdf")]);
+
+  it("stays on the book being previewed until the batch is being added", () => {
+    expect(queueFocus(items, 0, "")).toEqual({ id: 0, adding: false });
+  });
+
+  it("follows the book that is being added, not the one that was previewed (it is added last)", () => {
+    expect(queueFocus(items, 0, "b.txt")).toEqual({ id: 1, adding: true });
+    expect(queueFocus(settle(items, 1, { state: "added" }), 0, "c.pdf")).toEqual({ id: 2, adding: true });
+  });
+
+  it("keeps the previewed book when the working name matches no waiting file (its title differs from the file name)", () => {
+    expect(queueFocus(items, 0, "Tên sách đã sửa")).toEqual({ id: 0, adding: true });
   });
 });
