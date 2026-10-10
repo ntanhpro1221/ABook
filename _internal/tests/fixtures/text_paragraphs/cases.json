@@ -1,0 +1,131 @@
+{
+  "_comment": "Shared by pytest (tests/test_listen_paragraphs_shared.py) and vitest (ui/src/listen/textScript.test.ts): the chapter text -> paragraphs rule of textScript.ts (splitParagraphs after withoutLines, the skip lines of the listener) and its Python port abook/readaloud/paragraphs.py (used by the desktop audiobook export) - an exported chapter must be cut into the very paragraphs the player reads, or the clips already made do not match. Change one side, change the others and this file.",
+  "cases": [
+    {
+      "name": "splits on blank lines and joins the lines a typesetter broke",
+      "text": "Một dòng bị\nbẻ giữa chừng.\n\nĐoạn hai.\r\n\r\n\r\nĐoạn ba.\n",
+      "paragraphs": [
+        "Một dòng bị bẻ giữa chừng.",
+        "Đoạn hai.",
+        "Đoạn ba."
+      ]
+    },
+    {
+      "name": "a file with no blank line is one paragraph per line",
+      "text": "Dòng một.\nDòng hai.\n  Dòng ba.  \n",
+      "paragraphs": [
+        "Dòng một.",
+        "Dòng hai.",
+        "Dòng ba."
+      ]
+    },
+    {
+      "name": "a file with only a few blank lines keeps each sentence-ended line a paragraph",
+      "text": "Chương 1\n\nDòng một.\nDòng hai!\n“Dòng ba?”\nDòng bốn",
+      "paragraphs": [
+        "Chương 1",
+        "Dòng một.",
+        "Dòng hai!",
+        "“Dòng ba?”",
+        "Dòng bốn"
+      ]
+    },
+    {
+      "name": "a line longer than any typesetter width is a whole paragraph",
+      "text": "Tựa\n\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nkhông dấu",
+      "paragraphs": [
+        "Tựa",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "không dấu"
+      ]
+    },
+    {
+      "name": "lines broken mid-sentence are joined even if one of them ends a sentence",
+      "text": "A\n\nMột dòng dài bị bẻ,\nmột dòng nữa kết thúc.\nRồi câu sau tiếp\nvà hết.",
+      "paragraphs": [
+        "A",
+        "Một dòng dài bị bẻ, một dòng nữa kết thúc. Rồi câu sau tiếp và hết."
+      ]
+    },
+    {
+      "name": "an empty chapter has no paragraph",
+      "text": "\n \n\n",
+      "paragraphs": []
+    },
+    {
+      "name": "a blank line made of non-breaking spaces still separates paragraphs",
+      "text": "Một.\n \nHai.",
+      "paragraphs": [
+        "Một.",
+        "Hai."
+      ]
+    },
+    {
+      "name": "web note markers are dropped and the spaces tidied",
+      "text": "Anh ta đi rồi. [note54360] Cô ở lại.",
+      "paragraphs": [
+        "Anh ta đi rồi. Cô ở lại."
+      ]
+    },
+    {
+      "name": "note markers in any case and with inner spaces",
+      "text": "Anh đi rồi[NOTE7][ note12 ].",
+      "paragraphs": [
+        "Anh đi rồi."
+      ]
+    },
+    {
+      "name": "a paragraph made only of a marker disappears",
+      "text": "Một[note1]\n\n[ NOTE22 ]Hai.[note3]",
+      "paragraphs": [
+        "Một",
+        "Hai."
+      ]
+    },
+    {
+      "name": "brackets that are not web note markers stay",
+      "text": "Xem [Note] và [1] và [note] và [note1a].",
+      "paragraphs": [
+        "Xem [Note] và [1] và [note] và [note1a]."
+      ]
+    },
+    {
+      "name": "listener-skipped credit lines among the first six lines are left out",
+      "text": "Chương 2\n\nDịch:  Nhóm A\n\nMở đầu.\n\nDịch: Nhóm A",
+      "skip": [
+        "Dịch: Nhóm A"
+      ],
+      "paragraphs": [
+        "Chương 2",
+        "Mở đầu."
+      ]
+    },
+    {
+      "name": "a credit line later than the sixth line stays",
+      "text": "Dòng 1.\nDòng 2.\nDòng 3.\nDòng 4.\nDòng 5.\nDòng 6.\nDịch: Nhóm A",
+      "skip": [
+        "Dịch: Nhóm A"
+      ],
+      "paragraphs": [
+        "Dòng 1.",
+        "Dòng 2.",
+        "Dòng 3.",
+        "Dòng 4.",
+        "Dòng 5.",
+        "Dòng 6.",
+        "Dịch: Nhóm A"
+      ]
+    },
+    {
+      "name": "a credit line that carries a note marker is still skipped",
+      "text": "Chương 2\n\nDịch: Nhóm A [note12]\n\nMở đầu.",
+      "skip": [
+        "Dịch: Nhóm A"
+      ],
+      "paragraphs": [
+        "Chương 2",
+        "Mở đầu."
+      ]
+    }
+  ]
+}

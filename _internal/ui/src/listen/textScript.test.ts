@@ -67,6 +67,20 @@ describe("dòng ngăn cảnh (bộ ví dụ dùng chung)", () => {
   });
 });
 
+// Bộ ví dụ DÙNG CHUNG với pytest (test_listen_paragraphs_shared.py): chương -> đoạn của sách nói xuất bằng máy tính (abook/readaloud/paragraphs.py) phải
+// ra đúng các đoạn màn đọc đọc, không thì clip đã làm khi nghe / "Làm trước" không trùng khoá với clip của bản xuất.
+const PARAGRAPHS = JSON.parse(readFileSync(new URL("../../../tests/fixtures/text_paragraphs/cases.json", import.meta.url)).toString("utf8")) as {
+  cases: { name: string; text: string; skip?: string[]; paragraphs: string[] }[];
+};
+
+describe("paragraphs shared with the audiobook export", () => {
+  it("has cases", () => expect(PARAGRAPHS.cases.length).toBeGreaterThan(5));
+
+  it.each(PARAGRAPHS.cases)("cuts the chapter as the Python port does: $name", ({ text, skip, paragraphs }) => {
+    expect(paragraphsOf(withoutLines(text, skip ?? []))).toEqual(paragraphs);
+  });
+});
+
 // Cùng các ca với ParagraphsTest.kt (Paragraphs.withoutLines): lõi đọc to của điện thoại phải chia ra đúng các đoạn như màn đọc.
 describe("withoutLines", () => {
   it("skips only the chosen lines among the first six of the chapter", () => {

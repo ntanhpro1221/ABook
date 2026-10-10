@@ -575,12 +575,12 @@ def test_export_file_names_are_safe_and_keep_vietnamese() -> None:
 def test_export_takes_only_a_real_png_cover(tmp_path: Path) -> None:
     import base64
 
-    from abook.webui.export import _cover_file
+    from abook.webui.export import drawn_cover
 
     gif = "data:image/png;base64," + base64.b64encode(b"GIF89a" + b"\0" * 20).decode()
-    assert _cover_file(tmp_path, gif) is None, "đuôi PNG nhưng ruột không phải PNG"
+    assert drawn_cover(tmp_path, gif) is None, "đuôi PNG nhưng ruột không phải PNG"
     png = "data:image/png;base64," + base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"\0" * 20).decode()
-    assert _cover_file(tmp_path, png) == tmp_path / "cover.png"
+    assert drawn_cover(tmp_path, png) == tmp_path / "cover.png"
 
 
 def test_the_reading_place_is_kept_and_the_newest_device_wins(tmp_path: Path) -> None:

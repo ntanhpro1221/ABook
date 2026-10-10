@@ -37,7 +37,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, ffmpeg_setup, humanize, listen_view,
-               music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, packages, project_views,
+               listen_export, music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -269,6 +269,9 @@ class App:
         self.bookfile_jobs = export_jobs.BookFileJobs()
         # "Xuất M4B" cũng chạy nền, bản ghi riêng: đang đóng gói file sách vẫn xuất M4B được và ngược lại.
         self.m4b_jobs = export_jobs.BookFileJobs()
+        # "Xuất sách nói" của sách Nghe ngay (listen_export.py): bản ghi riêng có tiến độ + huỷ; chương đã ghép dở nằm trong `export_work` để làm tiếp.
+        self.listen_exports = export_jobs.BookFileJobs()
+        self.export_work_dir = preferences.path.with_name(listen_export.WORK_FOLDER)
         # Hàng đợi sản xuất: hai cuốn chạy cùng lúc tranh nhau GPU (phân tích cần ~6,2 GB trên card 8 GB), nên cuốn
         # thứ hai xếp hàng và tự bắt đầu khi cuốn đang chạy xong. Hàng đợi sống cùng app (đóng app là bỏ hàng).
         self.queue: list[str] = []
@@ -2990,6 +2993,85 @@ class Handler(BaseHTTPRequestHandler):
     def get_m4b_job(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.export_job_status(self.app.m4b_jobs, value))
 
+    # ---- xuất sách nói của sách Nghe ngay (listen_export.py) --------------------------------------------------------------
+
+    def _audiobook_inputs(self, value: str, voice: Any) -> tuple[Path, listen_export.Reading, list[listen_export.Chapter]]:
+        """Cuốn, cách đọc (giọng + gốc Nhật / Hàn + cách đọc riêng - đúng thứ trình phát dùng) và các chương của một lượt xuất sách nói. Chỉ sách Nghe ngay
+        (chỉ có chữ, nằm trên máy này); sách Studio đã có audio thì xuất MP3 / M4B có sẵn."""
+        path = self.app._listenable(value)
+        if not packages.is_package(path) or not packages.text_book(packages.manifest(path)):
+            raise ApiError(HTTPStatus.CONFLICT, "Chỉ sách chỉ có chữ (EPUB, TXT...) mới xuất sách nói ở đây")
+        if remote_books.remote_of(packages.manifest(path)) is not None:
+            raise ApiError(HTTPStatus.CONFLICT, "Sách này lấy từ máy tính khác - xuất sách nói ở máy ấy")
+        if not isinstance(voice, str) or not voice:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng đọc")
+        try:
+            self.app.readaloud._resolve(voice)
+        except VoiceError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error), reason=error.reason) from error
+        body = {"bookId": value}
+        reading = listen_export.Reading(voice, self._reading_origin(body), self._book_readings(body))
+        return path, reading, listen_export.load_chapters(path)
+
+    def get_audiobook_plan(self, query: dict[str, list[str]], value: str) -> None:
+        # Cho hộp "Xuất sách nói": số chương / chữ / giờ nghe, ước thời gian máy làm (giọng đã đo tốc độ), chương đã làm sẵn từ lần trước, và ffmpeg đã có chưa.
+        voice = (query.get("voice") or [""])[0]
+        _path, reading, chapters = self._audiobook_inputs(value, voice)
+        info = listen_export.plan(chapters, reading, listen_export.work_folder(self.app.export_work_dir, value), self.app.readaloud.speed(voice))
+        self._send_json(HTTPStatus.OK, {**info, "ffmpeg": ffmpeg_setup.status()})
+
+    def post_audiobook_job(self, _query: dict[str, list[str]], value: str) -> None:
+        # Việc nền như "Xuất M4B", có tiến độ (chương i/N, %, ước còn lại) và Huỷ; tải lại trang vẫn hỏi lại được. Đang có lượt cho cuốn này thì trả lượt ấy.
+        self.app._mutating()
+        body = self._body()
+        fmt = body.get("format")
+        if fmt not in listen_export.FORMATS:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Chỉ xuất được MP3 hoặc M4B")
+        path, reading, chapters = self._audiobook_inputs(value, body.get("voice"))
+        if not chapters:
+            raise ApiError(HTTPStatus.CONFLICT, "Sách chưa có chương nào có chữ để đọc")
+        if not ffmpeg_setup.ready():
+            raise ApiError(HTTPStatus.CONFLICT, "Máy này chưa có công cụ ghép âm thanh (ffmpeg) - tải nó trong hộp Xuất sách nói rồi bấm lại")
+        root = self._export_root(body)
+        cover = body.get("cover") if isinstance(body.get("cover"), str) else None
+        app = self.app
+        jobs = app.listen_exports
+        key = str(path)
+
+        def run() -> dict[str, Any]:
+            result = listen_export.export_audiobook(
+                app.readaloud, path, root, app.export_work_dir, fmt=fmt, reading=reading, book_id=value, cover_drawn=cover,
+                progress=lambda **fields: jobs.update(key, **fields), cancelled=lambda: jobs.cancelled(key))
+            app.exports.add(result["folder"])
+            return result
+
+        self._send_json(HTTPStatus.ACCEPTED, jobs.start(key, run))
+
+    def get_audiobook_job(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.listen_exports.status(str(self.app._listenable(value))))
+
+    def post_audiobook_cancel(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Huỷ": việc dừng ở chỗ an toàn kế (giữa hai đoạn); chương đã ghép được giữ cho lần xuất sau.
+        self.app._mutating()
+        jobs = self.app.listen_exports
+        key = str(self.app._listenable(value))
+        jobs.cancel(key)
+        self._send_json(HTTPStatus.OK, jobs.status(key))
+
+    def get_ffmpeg(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, ffmpeg_setup.status())
+
+    def post_ffmpeg(self, _query: dict[str, list[str]]) -> None:
+        # Người dùng bấm tải công cụ ghép âm thanh (không bao giờ tự tải).
+        self.app._mutating()
+        ffmpeg_setup.start()
+        self._send_json(HTTPStatus.OK, ffmpeg_setup.status())
+
+    def post_ffmpeg_cancel(self, _query: dict[str, list[str]]) -> None:
+        self.app._mutating()
+        ffmpeg_setup.cancel()
+        self._send_json(HTTPStatus.OK, ffmpeg_setup.status())
+
     def get_word_timings(self, _query: dict[str, list[str]], value: str) -> None:
         # "Căn từ cho sách đã làm": tiến độ + số câu đã có mốc chữ (word_timing.Job.status).
         self._send_json(HTTPStatus.OK, self.app.word_jobs.status(self.app._book(value)))
@@ -4326,6 +4408,13 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/m4b-job"), Handler.post_m4b_job),
     ("GET", re.compile(BOOK + r"/m4b-job"), Handler.get_m4b_job),
     ("GET", re.compile(BOOK + r"/export-size"), Handler.get_export_size),
+    ("GET", re.compile(LISTEN + r"/audiobook/plan"), Handler.get_audiobook_plan),
+    ("GET", re.compile(LISTEN + r"/audiobook"), Handler.get_audiobook_job),
+    ("POST", re.compile(LISTEN + r"/audiobook"), Handler.post_audiobook_job),
+    ("POST", re.compile(LISTEN + r"/audiobook/cancel"), Handler.post_audiobook_cancel),
+    ("GET", re.compile(r"/api/ffmpeg"), Handler.get_ffmpeg),
+    ("POST", re.compile(r"/api/ffmpeg"), Handler.post_ffmpeg),
+    ("POST", re.compile(r"/api/ffmpeg/cancel"), Handler.post_ffmpeg_cancel),
     ("GET", re.compile(BOOK + r"/word-timings"), Handler.get_word_timings),
     ("POST", re.compile(BOOK + r"/word-timings"), Handler.post_word_timings),
     ("POST", re.compile(BOOK + r"/projectfile"), Handler.post_projectfile),

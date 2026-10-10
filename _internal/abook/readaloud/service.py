@@ -92,10 +92,20 @@ class ReadAloud:
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
         self._live = 0  # clip của người đang nghe đang được đọc: "Làm trước" nhường
+        self._rtf = rtf
         # Gốc Nhật / Hàn của từng cuốn (máy đoán + người dùng ghi đè); cạnh thư mục bộ đệm, không nằm trong đó (bộ đệm dọn mọi file .json lâu không dùng).
         self.origins = names.BookOrigins(self.folder.with_name(self.folder.name + "-book-origins.json"))
         self.prepare = Prepare(lambda voice, text, origin, readings: self.clip(voice, text, background=True, origin=origin, readings=readings),
                                lambda: self._live, int(self.cache.limit * PREPARE_SHARE), rtf)
+
+    @property
+    def live(self) -> int:
+        """Số clip của người đang nghe đang được đọc: việc nền (Làm trước, xuất sách nói) đứng chờ khi khác 0."""
+        return self._live
+
+    def speed(self, voice_id: str) -> float | None:
+        """Tốc độ tự đo của giọng (giây máy làm cho mỗi giây nghe) - để ước thời gian; None nếu chưa đo / giọng không đo được."""
+        return self._rtf(voice_id)
 
     def warm(self) -> None:
         """Liệt kê giọng của máy ở luồng nền (hỏi PowerShell mất ~1 giây): lúc người nghe mở một cuốn chỉ-có-chữ, danh sách đã sẵn."""
