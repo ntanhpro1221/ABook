@@ -679,14 +679,29 @@ object BookEdits {
         PEOPLE.flatMap { kind -> cast.optJSONArray(kind)?.let { list -> (0 until list.length()).mapNotNull { list.optJSONObject(it) } } ?: emptyList() }
 
     /**
+     * `book_edits.shared_cast`: `cast.json` khi rời máy này (máy đã ghép xin qua [LibraryServer]) - không dấu "đang chờ đổi giọng"
+     * (`pendingVoice`) hay "chờ gộp vào X" (`mergedInto`): ý muốn chưa áp của máy này; máy nhận tự dựng dấu từ lớp sửa nó có.
+     */
+    fun sharedCast(cast: JSONObject): JSONObject {
+        val out = deepCopy(cast) as JSONObject
+        for (person in peopleOf(out)) {
+            if (person.has("pendingVoice")) person.put("pendingVoice", JSONObject.NULL) // như cast.json của dự án: khoá có, không chờ gì
+            person.remove("mergedInto")
+        }
+        return out
+    }
+
+    /**
      * `cast.json` -> bản người nghe thấy: tên nhân vật đã đổi (`displayName`, và `originalName` khi khác tên gốc), và
-     * `firstChapter` theo tên chương mới. `base`: book.json lớp sách (để biết tên chương gốc).
+     * `firstChapter` theo tên chương mới; dấu ý muốn chờ Studio: đổi giọng (`pendingVoice`), "Gộp vào…" (`mergedInto`).
+     * `base`: book.json lớp sách (để biết tên chương gốc).
      */
     fun applyCast(cast: JSONObject, edits: JSONObject, base: JSONObject? = null): JSONObject {
         val people = edits.optJSONObject("characters") ?: JSONObject()
         val chapterNames = renamedChapters(base, edits)
         val waiting = BookWishes.pendingVoices(edits.optJSONObject("wishes"))
-        if (people.length() == 0 && chapterNames.isEmpty() && waiting.isEmpty()) return cast
+        val merging = edits.optJSONObject("wishes")?.optJSONArray(BookWishes.ALIASES)?.length() ?: 0
+        if (people.length() == 0 && chapterNames.isEmpty() && waiting.isEmpty() && merging == 0) return cast
         val out = deepCopy(cast) as JSONObject
         for (person in peopleOf(out)) {
             val name = person.opt("name")
@@ -701,6 +716,7 @@ object BookEdits {
             val first = person.opt("firstChapter")
             if (first is String && first in chapterNames) person.put("firstChapter", chapterNames.getValue(first))
         }
+        BookWishes.markMerges(peopleOf(out).filter { it.opt("name") is String }, edits.optJSONObject("wishes"))
         return out
     }
 
@@ -914,11 +930,13 @@ object BookEdits {
         return if (isEmpty(edits)) script else applyScript(script, rawCast(folder, book), edits, chapter)
     }
 
-    /** Chữ của file `relative` trong gói khi lớp sửa làm nó khác đi (cast.json, scripts/<n>.json); null = giữ nguyên file. */
-    fun overlaidText(folder: File, book: JSONObject, edits: JSONObject, relative: String): String? {
+    /** Chữ của file `relative` trong gói khi lớp sửa làm nó khác đi (cast.json, scripts/<n>.json); null = giữ nguyên file.
+     *  `shared`: bản gửi sang máy khác - dàn nhân vật qua [sharedCast]. */
+    fun overlaidText(folder: File, book: JSONObject, edits: JSONObject, relative: String, shared: Boolean = false): String? {
         if (relative == castName(book)) {
             val raw = readObject(File(folder, relative)) ?: return null
-            return applyCast(raw, edits, book).toString()
+            val cast = applyCast(raw, edits, book)
+            return (if (shared) sharedCast(cast) else cast).toString()
         }
         val chapters = book.optJSONArray("chapters") ?: return null
         val chapter = (0 until chapters.length()).mapNotNull { chapters.optJSONObject(it) }.firstOrNull { it.opt("script") == relative } ?: return null

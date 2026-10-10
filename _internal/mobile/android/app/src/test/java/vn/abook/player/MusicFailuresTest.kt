@@ -67,4 +67,24 @@ class MusicFailuresTest {
         failures.clear()
         assertFalse(failures.isFailed(calm))
     }
+
+    @Test
+    fun a_failed_download_backs_off_and_gives_up_for_the_session_after_a_few_tries() {
+        val link = "https://x/calm.mp3"
+        for (wait in listOf(1L, 2L, 4L).map { it * MusicFailures.RETRY_MS }) {
+            failures.dropDownload(link)
+            clock += wait - 1
+            assertTrue("chưa tới hạn thử lại", failures.isFailed(link))
+            clock += 1
+            assertEquals(setOf(link), failures.takeDue())
+        }
+        failures.dropDownload(link)
+        clock += MusicFailures.RETRY_MS * 1000
+        assertTrue("hỏng quá ${MusicFailures.DOWNLOAD_RETRIES} lần thử lại: bỏ cả phiên", failures.isFailed(link))
+        assertEquals(emptySet<String>(), failures.takeDue())
+        failures.forget(link)
+        failures.dropDownload(link)
+        clock += MusicFailures.RETRY_MS
+        assertFalse("phát được thì đếm lại từ đầu", failures.isFailed(link))
+    }
 }

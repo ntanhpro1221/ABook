@@ -36,9 +36,9 @@ def _slow_views(monkeypatch: pytest.MonkeyPatch, gate: threading.Event) -> None:
     """Chặn pack ở bước chụp màn xem (sau khi gom chương, trước khi băm) tới khi `gate` mở - để thử trạng thái "đang chạy" cho chắc."""
     real = projectfile.project_views.snapshot
 
-    def slow(project_root, tick=None):
+    def slow(project_root, tick=None, verdicts=None):
         gate.wait(15)
-        return real(project_root, tick)
+        return real(project_root, tick, verdicts)
 
     monkeypatch.setattr(projectfile.project_views, "snapshot", slow)
 
@@ -172,10 +172,10 @@ def test_closing_the_app_in_the_middle_cancels_cleanly_within_seconds(studio, tm
     reached = threading.Event()
     real = projectfile.project_views.snapshot
 
-    def slow(project_root, tick=None):
+    def slow(project_root, tick=None, verdicts=None):
         reached.set()
         _wait(lambda: False, 1.0)  # chụp màn xem lâu hơn một chút, chưa tới băm
-        return real(project_root, tick)
+        return real(project_root, tick, verdicts)
 
     monkeypatch.setattr(projectfile.project_views, "snapshot", slow)
     _call(server, "POST", f"/api/books/{book}/projectfile-job", {"target": str(tmp_path / "ra")})

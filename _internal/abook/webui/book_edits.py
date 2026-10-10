@@ -543,15 +543,31 @@ def apply_manifest(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any
     return out
 
 
+def shared_cast(cast: dict[str, Any]) -> dict[str, Any]:
+    """`cast.json` khi rời máy này (file `.abook` / `.abookproj`, đồng bộ sang máy đã ghép): không dấu "đang chờ đổi giọng"
+    (`pendingVoice`) hay "chờ gộp vào X" (`mergedInto`) - đó là ý muốn chưa áp của máy này, chưa thành giọng hay người nói nào;
+    máy nhận tự dựng dấu của nó từ lớp sửa nó có (`apply_cast`). Mọi đường xuất / đồng bộ dàn nhân vật đi qua đây."""
+    out = copy.deepcopy(cast)
+    for kind in ("characters", "extras", "carried"):
+        for person in out.get(kind) or []:
+            if isinstance(person, dict):
+                if "pendingVoice" in person:
+                    person["pendingVoice"] = None  # như cast.json của dự án: khoá có, không đang chờ gì
+                person.pop("mergedInto", None)
+    return out
+
+
 def apply_cast(cast: dict[str, Any], edits: dict[str, Any], base: dict[str, Any] | None = None) -> dict[str, Any]:
     """`cast.json` -> bản người nghe thấy: tên nhân vật đã đổi (`displayName`, và `originalName` khi khác tên gốc), và
-    `firstChapter` theo tên chương mới. `base`: book.json lớp sách (để biết tên chương gốc)."""
+    `firstChapter` theo tên chương mới; dấu ý muốn chờ Studio: đổi giọng (`pendingVoice`), "Gộp vào…" (`mergedInto`).
+    `base`: book.json lớp sách (để biết tên chương gốc)."""
     from . import book_wishes
 
     people = edits.get("characters") or {}
     chapter_names = _chapter_renames(base, edits)
     waiting = book_wishes.pending_voices(edits.get("wishes"))
-    if not people and not chapter_names and not waiting:
+    merging = (edits.get("wishes") or {}).get(book_wishes.ALIASES)
+    if not people and not chapter_names and not waiting and not merging:
         return cast
     out = copy.deepcopy(cast)
     for kind in ("characters", "extras", "carried"):
@@ -571,6 +587,8 @@ def apply_cast(cast: dict[str, Any], edits: dict[str, Any], base: dict[str, Any]
                     person.pop("originalName", None)
             if person.get("firstChapter") in chapter_names:
                 person["firstChapter"] = chapter_names[person["firstChapter"]]
+    book_wishes.mark_merges([person for kind in ("characters", "extras", "carried") for person in out.get(kind) or []
+                             if isinstance(person, dict) and isinstance(person.get("name"), str)], edits.get("wishes"))
     return out
 
 

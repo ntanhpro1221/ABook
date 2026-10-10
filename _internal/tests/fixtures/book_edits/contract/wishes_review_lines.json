@@ -1,0 +1,120 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/review",
+   "body": {
+    "verdict": "redo",
+    "lines": [
+     {
+      "stableId": "c1_s0003_fa1fe2",
+      "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+     },
+     {
+      "stableId": "c1_s0002_c58b67",
+      "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c"
+     },
+     {
+      "stableId": "c9_s0001_000000"
+     },
+     "x"
+    ]
+   },
+   "status": 200,
+   "response": {
+    "ok": true,
+    "lines": 2,
+    "requestedAt": 1791666576.7081013
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [
+     {
+      "kind": "retake",
+      "label": "Thu lại cả chương (2 câu)",
+      "chapter": "Chương 646 · Trở về (1)",
+      "lines": 0,
+      "section": "retakes",
+      "key": "c1_s0002_c58b67",
+      "keys": [
+       "c1_s0002_c58b67",
+       "c1_s0003_fa1fe2"
+      ],
+      "requestedAt": 1791666576.7081013
+     }
+    ],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/review",
+   "body": {
+    "verdict": "ok",
+    "lines": [
+     {
+      "stableId": "c1_s0003_fa1fe2"
+     }
+    ]
+   },
+   "status": 200,
+   "response": {
+    "ok": true,
+    "lines": 0,
+    "requestedAt": 1791666576.7637496
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/review",
+   "body": {
+    "verdict": "redo",
+    "lines": []
+   },
+   "status": 200,
+   "response": {
+    "ok": true,
+    "lines": 0,
+    "requestedAt": 1791666576.8017175
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/review",
+   "body": {
+    "verdict": "bogus",
+    "lines": [
+     {
+      "stableId": "c1_s0002_c58b67",
+      "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c"
+     }
+    ]
+   },
+   "status": 400,
+   "response": {
+    "error": "Phán quyết không hợp lệ"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0,
+    "wishes": 1
+   }
+  }
+ ]
+}

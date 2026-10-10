@@ -236,7 +236,8 @@ object MusicBed {
         val catalog = DeviceMusic.catalog(appContext)
         val links = Playlists.linksOf(catalog.playlists(), choice)
         val found = if (links.isEmpty()) emptyMap() else catalog.lookup(links)
-        return Playlists.queue(links, found, levelDb) to found
+        // Bài quá MusicCatalog.TRACK_MAX_MB (theo `bytes` của danh mục, hay lần tải trước) không vào hàng: bài sau dồn lên, như máy tính.
+        return Playlists.queue(links, found, levelDb) { catalog.usable(it, found[it]) } to found
     }
 
     /** File của một bài để phát; bài danh mục chưa tải thì tải ở luồng nền (lần `sync` sau mới phát) và trả null. */
@@ -253,18 +254,37 @@ object MusicBed {
         if (isFailed(link) || link.startsWith(MusicStore.LOCAL_PREFIX) || !downloading.add(link)) return
         val info = infos[link]
         worker.execute {
-            val file = runCatching { DeviceMusic.catalog(appContext).download(link, info) }.getOrNull()
+            var tooBig = false
+            val file = try {
+                DeviceMusic.catalog(appContext).download(link, info)
+            } catch (_: MusicCatalog.TrackTooBig) {
+                tooBig = true
+                null
+            } catch (_: Exception) {
+                null
+            }
             main.post {
                 downloading.remove(link)
-                if (file == null) drop(link, retry = true) // không tải được (mạng, nguồn gỡ bài): bỏ qua bài này một lúc
+                when {
+                    file != null -> {}
+                    tooBig -> drop(link) // quá MusicCatalog.TRACK_MAX_MB: máy này không dùng bài ấy, bài khác thay
+                    else -> { // không tải được (mạng, nguồn gỡ bài): bỏ qua bài này một lúc, lùi dần, có hạn
+                        failed.dropDownload(link)
+                        replan(link)
+                    }
+                }
             }
         }
     }
 
-    /** Bài không phát được (`retry`: tải hỏng - thử lại sau [MusicFailures.RETRY_MS]; không thì cả phiên): với danh sách phát, các bài sau
+    /** Bài không phát được (`retry`: phát hỏng - thử lại sau [MusicFailures.RETRY_MS]; không thì cả phiên): với danh sách phát, các bài sau
      *  dồn lên thay vì im lặng suốt khoảng của nó. Trước đây tải hỏng một lần lúc mất mạng là bài ấy im tới khi mở lại cuốn. */
     private fun drop(link: String, retry: Boolean = false) {
         failed.drop(link, retry)
+        replan(link)
+    }
+
+    private fun replan(link: String) {
         if (playlist == null || spans.none { it.track.link == link }) return
         rebuild()
     }

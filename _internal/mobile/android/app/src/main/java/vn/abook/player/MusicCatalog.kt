@@ -3,8 +3,10 @@ package vn.abook.player
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
+import java.io.FilterInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
@@ -42,6 +44,13 @@ class MusicCatalog(
 
     /** Danh mục không đọc được (mất mạng lần đầu, định dạng mới hơn app). Câu chữ để người dùng đọc - như `CatalogError` bên Python. */
     class CatalogError(message: String) : Exception(message)
+
+    /** Bài lớn hơn [TRACK_MAX_MB] (`bytes` của danh mục, Content-Length hay số byte đếm được khi tải): máy này không dùng - như
+     *  `TrackTooBig` của webui/server.py. Không phải lỗi mạng: không thử lại. */
+    class TrackTooBig(val size: Long) : IOException("bài nhạc quá $TRACK_MAX_MB MB")
+
+    /** Luồng tải biết trước cỡ (Content-Length của [openUrl]; null = nguồn không báo) để bỏ bài quá lớn trước khi tải. */
+    class Sized(input: InputStream, val length: Long?) : FilterInputStream(input)
 
     private val source by lazy { sourceOf().trimEnd('/') + "/" }
     private val remote get() = source.startsWith("http://") || source.startsWith("https://")
@@ -179,11 +188,54 @@ class MusicCatalog(
     /** File bài đã tải về máy (không tải); chưa có thì null. */
     fun cached(link: String): File? = fileOf(link).takeIf { it.isFile }
 
+    /** Các bài đã biết là quá [TRACK_MAX_MB] (`dir/too_big.json`: {link: số byte}) - không hết hạn: cỡ bài không đổi. */
+    private val tooBig by lazy {
+        val found = HashMap<String, Long>()
+        runCatching { JSONObject(File(dir, "too_big.json").readText()) }.getOrNull()?.let { data ->
+            for (key in data.keys()) (data.opt(key) as? Number)?.let { found[key] = it.toLong() }
+        }
+        found
+    }
+
+    private fun markTooBig(link: String, size: Long) {
+        synchronized(lock) {
+            if (tooBig[link] == size) return
+            tooBig[link] = size
+            runCatching { Store.writeAtomic(File(dir, "too_big.json"), JSONObject(tooBig.toMap()).toString().toByteArray(Charsets.UTF_8)) }
+        }
+    }
+
+    /**
+     * Bài `link` dùng được TRÊN MÁY NÀY không (`server.music_track_available`): đã tải thì được; quá [TRACK_MAX_MB] theo `bytes` của
+     * danh mục (`info`) hay theo lần tải trước thì không - danh sách phát bỏ nó, bài sau dồn lên. Chưa biết cỡ thì cứ coi là được.
+     */
+    fun usable(link: String, info: JSONObject?): Boolean {
+        if (cached(link) != null) return true
+        val size = (info?.opt("bytes") as? Number)?.toLong()
+        if (size != null && size > TRACK_MAX_BYTES) return false
+        return synchronized(lock) { (tooBig[link] ?: 0L) <= TRACK_MAX_BYTES }
+    }
+
+    /** Chép bài đang tải, dừng ([TrackTooBig]) khi quá [TRACK_MAX_BYTES]: Content-Length báo trước, hay đếm thật khi nguồn không báo. */
+    private fun copyCapped(input: InputStream, sink: OutputStream) {
+        (input as? Sized)?.length?.let { if (it > TRACK_MAX_BYTES) throw TrackTooBig(it) }
+        val buffer = ByteArray(1 shl 16)
+        var copied = 0L
+        while (true) {
+            val read = input.read(buffer)
+            if (read < 0) return
+            copied += read
+            if (copied > TRACK_MAX_BYTES) throw TrackTooBig(copied)
+            sink.write(buffer, 0, read)
+        }
+    }
+
     private fun fileOf(link: String) = File(File(dir, "files"), sha1(link.toByteArray(Charsets.UTF_8)) + ".mp3")
 
     /**
      * Tải bài `link` của danh mục về máy (đã có thì thôi): link gốc trước, hỏng thì bản sao trong `info.mirrors` - chỉ khi danh mục ghi
-     * `sha1` của bản gốc, và bản sao phải khớp `sha1` (và `bytes`) mới dùng, không phát nhầm bài. Không lấy được thì null.
+     * `sha1` của bản gốc, và bản sao phải khớp `sha1` (và `bytes`) mới dùng, không phát nhầm bài. Không lấy được thì null. Bài quá
+     * [TRACK_MAX_MB] (danh mục, Content-Length hay đếm khi tải) thì ném [TrackTooBig] và ghi nhớ - [usable] từ đó trả false.
      */
     fun download(link: String, info: JSONObject?): File? {
         if (!link.startsWith("https://")) return null
@@ -191,6 +243,10 @@ class MusicCatalog(
         if (target.isFile) return target
         val expected = info?.optString("sha1")?.lowercase()?.takeIf { SHA1.matches(it) }
         val size = (info?.opt("bytes") as? Number)?.toLong()
+        if (size != null && size > TRACK_MAX_BYTES) {
+            markTooBig(link, size)
+            throw TrackTooBig(size)
+        }
         val mirrors = info?.optJSONArray("mirrors")?.takeIf { expected != null }?.let { list ->
             (0 until list.length()).mapNotNull { (list.opt(it) as? String)?.takeIf { url -> url.startsWith("https://") } }
         } ?: emptyList()
@@ -198,10 +254,13 @@ class MusicCatalog(
         for (url in listOf(link) + mirrors) {
             val part = File(target.path + ".${System.nanoTime()}.part")
             try {
-                open(url).use { input -> part.outputStream().use { input.copyTo(it, 1 shl 16) } }
+                open(url).use { input -> part.outputStream().use { copyCapped(input, it) } }
                 if (url != link && ((size != null && part.length() != size) || sha1(part.readBytes()) != expected)) throw IOException("bản sao khác bản gốc")
                 if (!part.renameTo(target) && !target.isFile) throw IOException("không ghi được")
                 return target
+            } catch (error: TrackTooBig) { // bản sao cùng cỡ: khỏi thử
+                markTooBig(link, error.size)
+                throw error
             } catch (_: Exception) {
                 // thử nguồn kế
             } finally {
@@ -217,6 +276,9 @@ class MusicCatalog(
         const val FORMAT = "abook-music-catalog"
         const val FORMAT_VERSION = 1
         const val MANIFEST_MAX_AGE_MS = 24L * 3600 * 1000
+        /** Bài nhạc nền lớn hơn thế (bản dài 30-50 phút, có bài 110 MB) máy này không dùng - cùng `MUSIC_TRACK_MAX_MB` của server.py. */
+        const val TRACK_MAX_MB = 40
+        const val TRACK_MAX_BYTES = TRACK_MAX_MB * 1024L * 1024
         private const val SHARD_WORKERS = 8
         private const val USER_AGENT = "ABook (+https://github.com/ntanhpro1221/ABook)"
         private val SHA1 = Regex("[0-9a-f]{40}")
@@ -244,7 +306,7 @@ class MusicCatalog(
                 connection.disconnect()
                 throw IOException("HTTP ${connection.responseCode}")
             }
-            return connection.inputStream
+            return Sized(connection.inputStream, connection.contentLengthLong.takeIf { it >= 0 })
         }
     }
 }
