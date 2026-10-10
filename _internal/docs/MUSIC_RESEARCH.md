@@ -4337,6 +4337,43 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 khuya - Đoạn buồn giữa chương: lỗi nằm ở mảnh nối tiếp, không ở V; bộ 11 đã khoá
+
+Lead chỉ hướng: dựng bộ thử đúng mục tiêu trước, rồi thử gốc trên CPU. Ghi trước ở Corpus `research/music/PLAN_sadwithin.md`
+(a3ea039 → f57185a).
+
+**Bộ 11** (khoá 5618976).
+- 10 chương chọn bằng từ vựng theo cửa sổ 400 tiếng, không dùng model: 6 chương có đoạn buồn giữa chương không buồn, 4 chương vui
+  đối chứng; JP và KR.
+- Hai agent chấm mù, phân xử. A-B V r .88.
+- Theo giờ câu: joyful .69 h, sadness .19 h. Lớp vui = joyful.
+- Phân tích app (9B-v8) đang chờ trong hàng GPU.
+
+**Nhiễu đo.**
+- `book_key` phá hoà điểm khi chọn bài, và `measure` lấy tag làm `book_key`.
+- V vàng lượng tử hoá bậc .125 nên hoà nhiều: trần trên vàng học nhảy 23,6 ↔ 30,6 % chỉ vì đổi tag. Gốc không đổi theo tag.
+- Từ nay gốc, ô và trần đều lấy TB 8 key, so cặp. Trần vàng học = 26,2 %. Số trần đo một lần trước đây có sai số ±4 điểm.
+
+**Tương phản trong chương: dừng ở vàng học.**
+- Lớp tuyến tính trên dV, labV, sad, joy, chọn bằng kiểm chéo bỏ một truyện.
+- MAE giảm .318 → .311, nhưng buồn→vui đứng đúng 45,0 % ở cả 8 ô.
+
+**Gốc lỗi.**
+- 42,4 trong 45 điểm buồn→vui ở gốc nằm ở mảnh `length`. `music_select.choose` cho mảnh ấy chơi tiếp bài đầu cảnh, bất kể V của nó.
+- Chỉ 2,6 điểm là do chọn bài đầu chương. Ở trần cũng thế.
+- Vì vậy sửa V chỉ đổi MAE, không đổi bài. Đây là lý do SADFIX, blend và tương phản đều đứng yên.
+
+**Ngắt nối tiếp** (ghi trước, chờ Lead duyệt mới đo bộ 11): mảnh `length` thành đầu cảnh mới khi |V mảnh − V đầu cảnh| ≥ θ.
+- Trên vàng học, ô chọn β .25 θ .2:
+  - buồn→vui 45,0 → 32,6 %;
+  - vui→vui 57,8 → 67,5 %;
+  - MAE bài (V bài so với V vàng mọi câu) .358 → .333;
+  - cảnh/giờ 4,5 → 8,8.
+- Trần + ngắt: buồn→vui 14,4 %, MAE bài .198.
+- Cực tiểu hẹp (ô kề 43,3 / 34,3 %).
+- Khác DRIFT (lỗi 1): chọn lại bài thay vì hạ nhạc, và chấm bằng vàng theo câu. Thêm luật MAE bài ≤ gốc + .01 để bắt ngắt nhầm ở
+  đoạn trung tính, đúng điểm DRIFT đã thua.
+
 ### 10-10 tối - SADFIX: sửa co của q06 bằng học lại / hiệu chỉnh đều THUA; chương buồn cả chương vốn đã ổn
 
 Lead duyệt cả hai hướng của Q06-CALIB, theo thứ tự gốc trước. Ghi trước ở Corpus `research/music/PLAN_sadset.md`
