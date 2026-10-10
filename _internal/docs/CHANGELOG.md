@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.46] - 2026-10-11
+
 ### Thêm sách từ file (máy tính và điện thoại)
 
 - EPUB đọc đúng chương hơn: chương cắt thành nhiều file không còn thành nhiều "chương", mục lục hỏng hay thiếu vẫn mở được sách, bảng số trang và mốc không thành chương, nút "Quyển" không cướp tên chương con. Chữ ẩn (số trang, chú âm ruby) không bị đọc, chữ cái đầu chương vẽ bằng ảnh không mất, ô bảng, chú thích, thơ không dính chữ. Bìa, bản quyền, mục lục, lời Project Gutenberg / Wikisource hiện ra nhưng chưa tích, kèm lý do.
