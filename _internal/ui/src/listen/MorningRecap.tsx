@@ -142,10 +142,10 @@ export function MorningRecap({ className }: { className?: string }) {
       <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="absolute right-2 top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
         <X className="size-4" />
       </button>
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-accent-text">
-        <Moon className="size-3.5" /> {sessionLabel(session.endedAt)} · {session.bookTitle}
+      <div className="flex items-center gap-2 pr-11 text-xs font-semibold uppercase tracking-[0.08em] text-accent-text">
+        <Moon className="size-3.5 shrink-0" /> {sessionLabel(session.endedAt)} · {session.bookTitle}
       </div>
-      <h2 className="mt-1.5 pr-8 text-lg font-semibold leading-snug">Nghe tới đâu rồi thiếp đi?</h2>
+      <h2 className="mt-1.5 pr-11 text-lg font-semibold leading-snug">Nghe tới đâu rồi thiếp đi?</h2>
 
       <ol className="mt-4 grid gap-3 lg:grid-cols-2">
         {markers.map((marker) => {

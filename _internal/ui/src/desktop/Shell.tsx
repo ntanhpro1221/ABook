@@ -4,6 +4,7 @@ import { NavLink, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
 import { useNowPlaying } from "@/listen/player";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
+import { ShortcutsHost } from "@/listen/Shortcuts";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
@@ -186,6 +187,17 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-full">
+      {/* Người dùng bàn phím: Tab đầu tiên tới đây, bỏ qua thanh bên để vào thẳng nội dung. Màn "Đang nghe" mở thì nội dung bên dưới bị khoá (inert) - không hiện. */}
+      {!expanded && (
+        <button
+          type="button"
+          onClick={() => main.current?.focus()}
+          className="fixed left-3 top-3 z-[60] -translate-y-[200%] rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float focus:translate-y-0"
+        >
+          Bỏ qua tới nội dung
+        </button>
+      )}
+      <ShortcutsHost />
       <aside className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex">
         <Brand />
         <nav aria-label="Điều hướng">
@@ -214,7 +226,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <div className="relative flex min-w-0 flex-1 flex-col">
-        <main ref={main} className="min-h-0 flex-1 overflow-y-auto" inert={expanded}>
+        <main ref={main} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto outline-none" inert={expanded}>
           {children}
         </main>
         {/* Màn "Đang nghe" phủ kín cột này: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}
