@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.44] - 2026-10-10
+
 ### Làm sách trong Studio (máy tính)
 
 - Hàng tab của trang dự án (và của trang cuốn sách) ở cửa sổ hẹp giờ lăn chuột thường là chạy sang ngang, hai đầu có nút mũi tên tròn báo còn tab; trước đây phải giữ Shift mới lăn được.
