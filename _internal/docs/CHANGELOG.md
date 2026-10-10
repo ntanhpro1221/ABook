@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay (điện thoại)
+
+- Sách chỉ có chữ (EPUB, TXT) xuất được thành sách nói ngay trên điện thoại: menu … của sách → "Xuất sách nói (M4B)…". Điện thoại đọc cả cuốn bằng giọng đang chọn cho cuốn rồi ghép thành MỘT file M4B có mục lục chương, tên sách, tác giả và bìa; bạn đặt tên và chọn nơi lưu. Việc chạy nền (tắt màn hình vẫn chạy) có thông báo tiến độ và nút "Dừng", nhường cho chương bạn đang nghe; dừng hay app bị đóng giữa chừng thì phần đã đọc xong được giữ, xuất lại làm tiếp từ đó. Giọng trực tuyến gửi cả cuốn ra ngoài nên hộp nói rõ trước khi bắt đầu. Điện thoại chỉ làm M4B (máy tính còn làm được MP3).
+
 ### Trình phát và bàn phím (máy tính)
 
 - Màn "Đang nghe": menu Nhạc nền và Giọng đọc không còn tràn đáy màn điện thoại (danh sách cuộn trong hộp); thanh mini ở cửa sổ 1280 px giữ chỗ cho tên chương dù có đủ nút nhạc / giọng / hẹn giờ; chữ "15" ở nút lùi / tới đủ lớn để đọc.

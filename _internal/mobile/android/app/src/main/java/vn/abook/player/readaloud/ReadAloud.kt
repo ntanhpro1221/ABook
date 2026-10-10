@@ -840,7 +840,7 @@ object ReadAloud {
         parsedChapters(bookId, ids).mapValues { (_, chapter) -> chapter.first to chapter.second.filter { !it.sceneBreak }.map { it.text } }
 
     /** Như [textChapters] nhưng giữ cả dòng ngăn cảnh (trình phát chỉ lặng ở đó): "Làm trước" không đọc chúng nên không đếm. */
-    private fun parsedChapters(bookId: String, ids: List<Int>): Map<Int, Pair<String, List<Paragraphs.Paragraph>>> {
+    internal fun parsedChapters(bookId: String, ids: List<Int>): Map<Int, Pair<String, List<Paragraphs.Paragraph>>> {
         val manifest = runCatching { Store.manifest(bookId) }.getOrNull()
         val array = manifest?.optJSONArray("chapters") ?: return emptyMap()
         val wanted = ids.toSet()
