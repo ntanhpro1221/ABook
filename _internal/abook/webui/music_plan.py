@@ -210,6 +210,7 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
     if not plan.get("enabled"):
         return []
     cues: list[dict[str, Any]] = []
+    rested = False  # mốc trước kết sớm (`stopAt`): mốc sau dù cùng bài vẫn là bài mở lại sau quãng lặng, không gộp
     for scene in plan.get("scenes") or []:
         if scene.get("chapterId") != chapter_id or not scene.get("link"):
             continue
@@ -220,7 +221,7 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
             # `stopAt`: bài kết sớm trước ranh giới (music_select.TAIL_MIN_SECONDS), phần còn lại của mảnh lặng.
             last = float(scene["end"]) if scene.get("stopAt") is None else min(float(scene["end"]), float(scene["stopAt"]))
             end = spans[index + 1][0] if index + 1 < len(spans) else last
-            if cues and cues[-1]["link"] == link and abs(cues[-1]["end"] - start) < 5:
+            if cues and not rested and cues[-1]["link"] == link and abs(cues[-1]["end"] - start) < 5:
                 cue = cues[-1]
                 cue["end"] = end
             else:
@@ -230,6 +231,8 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
                 cues.append(cue)
             if level != (cue["steps"][-1]["db"] if cue.get("steps") else 0.0):
                 cue.setdefault("steps", []).append({"at": round(start, 3), "db": level})
+            rested = False
+        rested = scene.get("stopAt") is not None
     return cues
 
 
