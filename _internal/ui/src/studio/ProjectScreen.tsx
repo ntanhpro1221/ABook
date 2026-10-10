@@ -72,6 +72,7 @@ import { CastList } from "@/listen/BookScreen";
 import { analyzerLabel } from "./analyzerLabel";
 import { ApplyChangesDialog } from "./ApplyChanges";
 import { CoverEditor } from "./CoverEditor";
+import { ChapterError } from "./ChapterError";
 import { friendlyError } from "./errorText";
 import { isGone, useSideError } from "./polling";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
@@ -838,7 +839,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
       <div className="min-w-0">
         <div className={cn("truncate font-medium", current && "text-accent-text")}>{chapter.displayTitle}</div>
         {chapter.lastError ? (
-          <div className="truncate text-xs text-danger">{chapter.lastError}</div>
+          <ChapterError raw={chapter.lastError} />
         ) : chapter.subtitle ? (
           <div className="truncate text-xs text-fg-2">{chapter.subtitle}</div>
         ) : null}
