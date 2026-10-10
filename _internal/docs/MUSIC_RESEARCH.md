@@ -4337,6 +4337,26 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 - Cỡ bài: 27/2.382 bài quá 40 MiB; app lọc theo `bytes` có sẵn trong danh mục
+
+App mới chặn bài nhạc lớn hơn 40 MB (`MUSIC_TRACK_MAX_MB`, phần của Lead). Lý do: Studio a23 tải trước 190 MB cho một cuốn. Quét
+danh mục revision 5880ea7b1098:
+- 27 bài vượt 40 MiB.
+- 24 bài trong số đó của Kevin MacLeod: ambient/piano dài 17–59 phút, 256–320 kbps. Lớn nhất là bốn bài 59 phút, mỗi bài 134,9 MiB.
+- 3 bài ngắn để dạng không nén: 2 WAV của OpenGameArt và 1 FLAC.
+- 61 bài vượt 20 MiB.
+
+Mọi bài đều có trường `bytes`, là cỡ thật lúc dựng danh mục, nên app đọc cỡ ngay từ danh mục và chỉ hỏi mạng khi thiếu. Bài lớn dồn
+ở các ô êm; ô nặng nhất là V-giữa/êm nhất, 10/86 bài, sau khi lọc vẫn còn 76.
+
+Lead chọn chỉ lọc, không bỏ khỏi danh mục, không làm bản nhẹ. Phương án bản nhẹ tính sẵn:
+- MP3 96 kbps đưa được 23/27 bài xuống dưới 40 MiB; bốn bài 59 phút cần khoảng 80 kbps; WAV/FLAC đổi sang MP3 còn 4–6 MB.
+- Cần một trường mới `lite` cho cả hai nền tảng.
+- MỞ LẠI nếu số đo chọn bài cho thấy mất 27 bài dài làm điểm cảnh tệ đi rõ.
+
+Lưu ý cho đo nghiên cứu: `P.CAT.near` trong các script đo KHÔNG lọc theo cỡ. Lần đo cuối bộ 11 + 12 đã ghi trước giữ nguyên như
+vậy; ảnh hưởng chia đều cho các cấu hình được so cặp.
+
 ### 10-10 khuya - Nhãn 9B đọc cả chương: xếp đúng thứ tự, sai độ lớn; nhánh V mảnh không GPU dừng
 
 Sau FRAG-V tôi thử thêm hai đường, chỉ trên vàng học, luật ghi trước ở Corpus ec7a966 và e80fe91.
