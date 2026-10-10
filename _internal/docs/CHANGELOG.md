@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.45] - 2026-10-10
+
 ### Làm sách trong Studio (máy tính)
 
 - Dự án và thư viện lớn mở nhanh hơn: hộp "Việc cần duyệt" của cuốn 400 chương từ khoảng 3 phút còn vài giây, "Áp dụng N thay đổi" xem trước từ 16 giây còn nửa giây, trang "Cách đọc tên" và "Phân vai" mở trong chưa tới một giây; tab Việc cần duyệt chỉ tải con số, danh sách đầy đủ khi mở tab.
