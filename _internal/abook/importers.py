@@ -60,9 +60,21 @@ TITLE_PAGE_LINES = 3  # chữ trước chương đầu chỉ vài dòng ngắn, 
 TITLE_PAGE_WIDTH = 80
 BLOCKS = {"p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "blockquote", "section", "article", "tr", "dd", "dt", "pre",
           "figure", "figcaption", "aside"}
+LISTS = {"ol", "ul"}  # danh sách: không ngắt dòng, nhưng có thể là vùng lời chú (<ol epub:type="endnotes">)
 CELLS = {"td", "th"}  # ô bảng: cách nhau một dấu cách ("Sức mạnh 120", không "Sức mạnh120")
 NOTE_MARK = re.compile(r"\[?\d{1,3}\]?|\*{1,3}|†")  # chữ trong <sup> là số chú thích: tách khỏi chữ đứng trước ("thích 1", không "thích1")
 UNIT_POWER = re.compile(r"(?<![^\W\d_])[kcdm]?m$")  # ... trừ lũy thừa đơn vị: "m<sup>2</sup>" vẫn là "m2"
+NOTE_LABEL = re.compile(r"[\[(]?\d{1,3}[\])]?|\*{1,3}|†|‡|[¹²³⁰⁴⁵⁶⁷⁸⁹]+")  # nhãn của dấu gọi chú thích là liên kết: "1", "[2]", "(3)", "*", "†", "²"
+NOTE_MARK_MAX = 12  # dấu gọi có epub:type="noteref" mang nhãn bất kỳ, nhưng không dài hơn chừng này ký tự
+NOTE_OPEN, NOTE_SEP, NOTE_CLOSE = "\ue000", "\ue001", "\ue002"  # bao quanh dấu gọi chú thích trong dòng đang đọc: `_resolve_notes` quyết giữ hay bỏ rồi gỡ chúng
+_NOTE_SPAN = re.compile(NOTE_OPEN + r"(\d+)" + NOTE_SEP + r"(.*?)" + NOTE_CLOSE)
+NOTE_TYPES = {"footnote", "endnote", "rearnote"}  # epub:type / role (bỏ "doc-") của MỘT lời chú
+NOTE_AREA_TYPES = {"footnotes", "endnotes", "rearnotes"}  # ... của vùng chứa các lời chú (chương Endnotes)
+MAX_NOTE_LINES = 40  # đích của dấu gọi dài hơn thế (không phải lời chú, vd cả một chương) thì thôi
+NOTE_CONTEXT = 24  # số ký tự chữ đứng trước dấu gọi, cho ví dụ ở bước xem trước
+NOTE_EXAMPLES = 3  # số ví dụ ở bước xem trước
+NOTE_EXAMPLE_WIDTH = 80  # lời chú trong ví dụ cắt ở chừng này ký tự (ranh giới từ)
+SUPERSCRIPT = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 HEADINGS = {"h1", "h2", "h3"}
 WRAPPERS = {"body", "section", "div", "article", "main"}  # khối bọc cả trang: vai của chúng (trước chữ đầu tiên) là vai của trang
 UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')  # ký tự Windows không nhận trong tên file
@@ -121,6 +133,9 @@ class ImportedBook:
     credits: list[tuple[int, str]] = field(default_factory=list)  # (số chương, dòng ghi công) - gợi ý, như trong `notes`
     split_offer: int = 0  # file TXT cả truyện: số chương nếu tách theo các dòng "Chương N" (0 = không có gì để tách); người dùng tích mới tách
     split_headings: int = 0  # số dòng "Chương N" ấy; ít hơn `split_offer` một khi chữ trước tiêu đề đầu thành chương "Mở đầu"
+    footnote_found: int = 0  # EPUB / DOCX có cấu trúc: số lời chú tìm thấy (đề xuất ở bước xem trước, `FootnoteChoice`); 0 = không có
+    footnote_marks: int = 0  # ... trong đó số dấu gọi (số chú thích) nằm trong chữ của sách - ô "Không đọc số chú thích" chỉ có nghĩa khi > 0
+    footnote_examples: list[tuple[str, str]] = field(default_factory=list)  # (dấu gọi kèm chữ đứng trước: "…trees²", lời chú) vài ví dụ
 
     def chapter_source(self, chapter: Chapter) -> str:
         """Chữ của chương như FILE NGUỒN mà Studio đọc: TXT nguyên văn (tên chương nằm sẵn trong chữ); EPUB / DOCX / PDF: tên
@@ -141,14 +156,46 @@ class ImportedBook:
                          for chapter in self.chapters],
             "notes": list(self.notes),
             **({"splitOffer": self.split_offer, "splitHeadings": self.split_headings} if self.split_offer else {}),
+            **({"footnotes": self.footnote_offer()} if self.footnote_found else {}),
         }
 
+    def footnote_offer(self) -> dict[str, Any]:
+        """Đề xuất về chú thích cho bước xem trước (và bộ ví dụ): số lời chú tìm thấy, số dấu gọi nằm trong chữ, vài ví dụ {mark: "…trees²", note}."""
+        return {"found": self.footnote_found, "marks": self.footnote_marks,
+                "examples": [{"mark": mark, "note": note} for mark, note in self.footnote_examples]}
 
-def import_text(path: Path | str, *, split_chapters: bool = False, keep_short: bool = False) -> ImportedBook:
+
+@dataclass(frozen=True)
+class FootnoteChoice:
+    """Chú thích trong sách nhập: ĐỀ XUẤT người nghe tích ở bước xem trước (mặc định KHÔNG áp - ABook không tự bỏ hay sửa chữ của truyện;
+    bỏ tích là về như cũ). Mặc định (cả hai trống): chữ như trong sách, chỉ lời chú nằm GIỮA chương được đặt xuống cuối chương đó (chữ không đổi,
+    chỉ đổi chỗ để không cắt ngang câu) và chương toàn lời chú thì chưa tích. Kotlin: BookImport.FootnoteChoice."""
+    hide_marks: bool = False  # không đọc số chú thích (dấu gọi) trong chữ
+    notes: str = ""  # "" = như trong sách; "end" = đọc lời chú ở cuối chương chứa dấu gọi (kể cả lời chú ở chương Endnotes riêng); "drop" = bỏ lời chú
+
+
+NO_FOOTNOTES = FootnoteChoice()  # không tích gì: sách như trong file
+
+
+def footnote_choice_from_json(raw: Any) -> FootnoteChoice:
+    """`footnotes` của lời gọi xem trước / thêm sách: {"hideMarks": bool, "notes": ""|"end"|"drop"}; None = không tích gì. Dạng sai: `ImportFailed`."""
+    if raw is None:
+        return FootnoteChoice()
+    if not isinstance(raw, dict):
+        raise ImportFailed("Lựa chọn về chú thích không hợp lệ")
+    hide, notes = raw.get("hideMarks", False), raw.get("notes", "")
+    if not isinstance(hide, bool) or notes not in ("", "end", "drop"):
+        raise ImportFailed("Lựa chọn về chú thích không hợp lệ")
+    return FootnoteChoice(hide, notes)
+
+
+def import_text(path: Path | str, *, split_chapters: bool = False, keep_short: bool = False,
+                footnotes: FootnoteChoice | None = None) -> ImportedBook:
     """Mở một thư mục TXT, hay file .epub / .docx / .pdf / .txt. Lỗi dự đoán được là `ImportFailed`. `split_chapters`: file .txt cả
     truyện thì tách thành các chương theo dòng "Chương N" (người dùng tích gợi ý `split_offer`; mặc định cả file là một chương).
     `keep_short`: bước xem trước - mục rất ngắn (`Chapter.short`) vẫn nằm trong danh sách, đúng chỗ của nó trong file, để người dùng tích
-    nếu muốn giữ (`default_picks` bỏ chúng); không có thì chúng bị bỏ như trước."""
+    nếu muốn giữ (`default_picks` bỏ chúng); không có thì chúng bị bỏ như trước. `footnotes`: EPUB / DOCX có chú thích - lựa chọn người dùng đã
+    tích ở bước xem trước (`FootnoteChoice`); không có thì như trong sách."""
     path = Path(path)
     if path.is_dir():
         book = _txt_folder(path)
@@ -157,7 +204,9 @@ def import_text(path: Path | str, *, split_chapters: bool = False, keep_short: b
         if suffix == ".pdf":
             pages, title, author = pdf_pages(path)
             return import_pdf_pages(pages, title_from_filename(path.stem), title, author)
-        reader = {".epub": _epub, ".docx": _docx, ".txt": lambda file: _txt_file(file, split_chapters)}.get(suffix)
+        choice = footnotes or FootnoteChoice()
+        reader = {".epub": lambda file: _epub(file, choice), ".docx": lambda file: _docx(file, choice),
+                  ".txt": lambda file: _txt_file(file, split_chapters)}.get(suffix)
         if reader is None:
             raise ImportFailed(f"Chưa đọc được file {suffix or 'không có đuôi'} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
         book = reader(path)
@@ -272,14 +321,16 @@ def _words(text: str) -> str:
 MATTER_TYPES = (  # epub:type / role của trang -> lý do; cụ thể trước, chung sau
     ("cover", "Trang bìa"), ("titlepage", "Trang tên sách"), ("halftitlepage", "Trang tên sách"), ("copyright-page", "Trang bản quyền"),
     ("imprint", "Trang bản quyền"), ("colophon", "Trang bản quyền"), ("toc", "Mục lục"), ("landmarks", "Mục lục"),
+    ("endnotes", "Chú thích"), ("footnotes", "Chú thích"), ("rearnotes", "Chú thích"),
     ("frontmatter", "Phần đầu sách"), ("backmatter", "Phần cuối sách"),
 )
 MATTER_NAMES = {"cover": "Trang bìa", "title": "Trang tên sách", "titlepage": "Trang tên sách", "toc": "Mục lục", "nav": "Mục lục",
                 "copyright": "Trang bản quyền", "license": "Trang bản quyền", "colophon": "Trang bản quyền", "imprint": "Trang bản quyền",
-                "about": "Trang giới thiệu"}
+                "about": "Trang giới thiệu", "endnotes": "Chú thích", "footnotes": "Chú thích"}
 # Tên file trong gói: đúng một từ ấy, chỉ kèm số / dấu nối / "page" ("cover.xhtml", "001_titlepage", "copyright-page") - "chapter_title_3" không tính.
 _MATTER_NAME = re.compile(r"[\W_\d]*(" + "|".join(MATTER_NAMES) + r")(?:[\W_]*page)?[\W_\d]*")
 _TOC_TITLES = {"mục lục", "muc luc", "contents", "table of contents"}
+_NOTE_TITLES = {"chú thích", "endnotes", "end notes", "footnotes", "notes"}  # tên chương toàn lời chú
 TOC_SUFFIX = re.compile(r"\s+[—–-]\s*(?:mục lục|muc luc)\s*$", re.IGNORECASE)
 MATTER_HEAD = 400  # số ký tự đầu chương xét lời Project Gutenberg / Wikisource
 
@@ -291,13 +342,15 @@ def name_matter(href: str) -> str:
 
 
 def text_matter(title: str, text: str) -> str:
-    """Lý do "không phải truyện" theo chữ - mọi định dạng: tên / dòng đầu là "Mục lục", "Contents"; lời của Project Gutenberg hay
+    """Lý do "không phải truyện" theo chữ - mọi định dạng: tên / dòng đầu là "Mục lục", "Contents", "Chú thích", "Endnotes"; lời của Project Gutenberg hay
     Wikisource ở đầu chương. "" nếu không. Kotlin: BookImport.textMatter."""
     head = f"{title}\n{text[:MATTER_HEAD]}".casefold()
     first = first_text_line(text).casefold().rstrip(" :.")
     clean = title.casefold().strip()
     if clean in _TOC_TITLES or first in _TOC_TITLES or clean.endswith(("— mục lục", "- mục lục")):
         return "Mục lục"
+    if clean in _NOTE_TITLES or first in _NOTE_TITLES:
+        return "Chú thích"
     if "project gutenberg" in head:
         return "Trang của Project Gutenberg"
     if "wikisource" in head:
@@ -570,12 +623,32 @@ def _hides(tag: str, attrs: dict[str, str], rules: list[_Hidden]) -> bool:
                for rule in rules)
 
 
-class _Text(HTMLParser):
-    """Chữ của một trang XHTML: mỗi khối (đoạn, tiêu đề, dòng danh sách, <br>) một dòng; bỏ script/style/head và chữ ẩn (`_hides`)."""
+@dataclass
+class _Mark:
+    """Một dấu gọi chú thích trong chữ (liên kết tới lời chú): đích, nhãn ("2", "[1]"), chữ đứng ngay trước, id của chính dấu, dòng chứa nó."""
+    href: str
+    label: str
+    before: str
+    id: str
+    line: int
 
-    def __init__(self, hidden: list[_Hidden] | None = None) -> None:
+
+class _Text(HTMLParser):
+    """Chữ của một trang XHTML: mỗi khối (đoạn, tiêu đề, dòng danh sách, <br>) một dòng; bỏ script/style/head và chữ ẩn (`_hides`).
+    Chú thích: dấu gọi (`_Mark`) nằm trong dòng giữa NOTE_OPEN…NOTE_CLOSE (`_resolve_notes` gỡ chúng: giữ hay bỏ chữ của dấu); lời chú là
+    những khoảng dòng (`spans` theo id, `notes` / `areas` theo kiểu epub:type / role)."""
+
+    def __init__(self, hidden: list[_Hidden] | None = None, backlinks_hidden: bool = False) -> None:
         super().__init__(convert_charrefs=True)
         self._rules = hidden or []
+        self._backlinks_hidden = backlinks_hidden  # nút quay lại "↩︎" của lời chú (epub:type="backlink"): ẩn khi lời chú được đặt về cuối chương
+        self._stack: list[list[Any]] = []  # khối đang mở: [thẻ, dòng bắt đầu, [id…], kiểu: 0 thường / 1 lời chú / 2 vùng lời chú]
+        self._links: list[dict[str, Any]] = []  # <a> đang mở: href, chỗ bắt đầu trong `_current`, có noteref / backlink, id, đang trong <sup> / chứa <sup>
+        self.spans: dict[str, tuple[int, int]] = {}  # id -> [dòng đầu, dòng cuối) của khối chứa phần tử có id ấy
+        self.notes: list[tuple[int, int]] = []  # khoảng dòng của từng lời chú có kiểu (epub:type footnote / endnote / rearnote)
+        self.areas: list[tuple[int, int]] = []  # ... của vùng toàn lời chú (epub:type endnotes…)
+        self.marks: list[_Mark] = []
+        self.note_lines: set[int] = set()  # các dòng thuộc lời chú (`_resolve_notes`)
         self._hidden_tag = ""  # thẻ mở vùng ẩn đang bỏ qua, và số thẻ cùng tên đang mở bên trong nó
         self._hidden_depth = 0
         self._cap = ""  # chữ cái đầu chương vẽ bằng ảnh (<img alt="M">): chờ xem chữ ngay sau có dính liền không
@@ -594,6 +667,8 @@ class _Text(HTMLParser):
     def _flush(self) -> None:
         self._cap = ""
         self._sup = [0] * len(self._sup)  # dòng mới: <sup> đang mở bắt đầu từ đầu dòng (không còn chữ đứng trước để tách)
+        for link in self._links:
+            link["start"] = 0
         line = _words("".join(self._current))
         if line:
             self.lines.append(line)
@@ -602,13 +677,14 @@ class _Text(HTMLParser):
     def handle_starttag(self, tag: str, attrs) -> None:  # chữ ký của HTMLParser
         if self._hidden_depth:
             self._hidden_depth += tag == self._hidden_tag
-            self._anchor(tag, attrs)
+            self._anchor(tag, attrs, own=False)
             return
-        if not self._skip and _hides(tag, {name: value or "" for name, value in attrs}, self._rules):
+        if not self._skip and (_hides(tag, {name: value or "" for name, value in attrs}, self._rules)
+                               or (self._backlinks_hidden and tag == "a" and "backlink" in _types(attrs))):
             if tag in BLOCKS:
                 self._flush()
             self._hidden_tag, self._hidden_depth = tag, 1
-            self._anchor(tag, attrs)
+            self._anchor(tag, attrs, own=False)
             return
         if tag in {"script", "style", "head", "title"}:
             self._skip += 1
@@ -622,22 +698,54 @@ class _Text(HTMLParser):
             self._current.append(" ")
         elif tag == "sup":
             self._sup.append(len(self._current))
+            if self._links:
+                self._links[-1]["sup"] = True
+        elif tag == "a":
+            fields = {name: value or "" for name, value in attrs}
+            kinds = _types(attrs)
+            self._links.append({"href": fields.get("href", "").strip(), "start": len(self._current), "noteref": "noteref" in kinds,
+                                "id": fields.get("id", ""), "in_sup": bool(self._sup), "sup": False})
         elif tag in BLOCKS:
             self._flush()
             if tag in HEADINGS:
                 self._in_heading += 1
             self._pre += tag == "pre"
+        if tag in BLOCKS or tag in LISTS:
+            kinds = _types(attrs)
+            self._stack.append([tag, len(self.lines), [], 1 if kinds & NOTE_TYPES else 2 if kinds & NOTE_AREA_TYPES else 0])
         if tag in WRAPPERS and not self.lines and not "".join(self._current).strip():
             self.types |= _types(attrs)
         self._anchor(tag, attrs)
 
-    def _anchor(self, tag: str, attrs) -> None:
-        """Mảnh của thẻ (`id` của mọi phần tử, `name` của <a>) - kể cả trong vùng ẩn: mục lục trỏ vào đó vẫn là một chỗ trong trang."""
+    def _anchor(self, tag: str, attrs, own: bool = True) -> None:
+        """Mảnh của thẻ (`id` của mọi phần tử, `name` của <a>) - kể cả trong vùng ẩn: mục lục trỏ vào đó vẫn là một chỗ trong trang.
+        `own`: phần tử không nằm trong vùng ẩn - id của nó thuộc khối đang mở (đích của dấu gọi chú thích: `spans`)."""
         if not self._skip:
             for name, value in attrs:
                 key = name.partition(":")[2] or name  # như bản Kotlin: bỏ tiền tố ("xml:id" thành "id")
                 if value and (key == "id" or (tag == "a" and key == "name")):
                     self.anchors.setdefault(value, len(self.lines))
+                    if own and self._stack:
+                        self._stack[-1][2].append(value)
+
+    def _close_block(self, tag: str) -> None:
+        """Khối `tag` đóng: các khối mở bên trong nó (thẻ không đóng) đóng cùng; mỗi khối ghi khoảng dòng của nó cho id / kiểu lời chú."""
+        for at in range(len(self._stack) - 1, -1, -1):
+            if self._stack[at][0] == tag:
+                while len(self._stack) > at:
+                    self._finish_block(self._stack.pop())
+                return
+
+    def _finish_block(self, block: list[Any]) -> None:
+        _tag, start, ids, kind = block
+        end = len(self.lines)
+        if end > start:
+            for value in ids:
+                self.spans.setdefault(value, (start, end))
+            if kind == 1:
+                self.notes.append((start, end))
+            elif kind == 2:
+                self.areas.append((start, end))
 
     def handle_endtag(self, tag: str) -> None:
         if self._hidden_depth:
@@ -654,7 +762,9 @@ class _Text(HTMLParser):
             at = self._sup.pop()
             before, mark = "".join(self._current[:at]), "".join(self._current[at:]).strip()
             if NOTE_MARK.fullmatch(mark) and before[-1:].isalpha() and not (mark in {"2", "3"} and UNIT_POWER.search(before)):
-                self._current.insert(at, " ")
+                self._current.insert(at, " ")  # (dấu gọi là liên kết thì `_end_link` đã tự đặt dấu cách trong NOTE_OPEN…NOTE_CLOSE: mark không còn khớp)
+        elif tag == "a" and self._links:
+            self._end_link(self._links.pop())
         elif tag in BLOCKS:
             self._pre -= tag == "pre" and self._pre > 0
             if tag in HEADINGS and self._in_heading:
@@ -665,6 +775,9 @@ class _Text(HTMLParser):
                 if not self.heading:
                     self.heading = text
             self._flush()
+            self._close_block(tag)
+        elif tag in LISTS:
+            self._close_block(tag)
 
     def handle_data(self, data: str) -> None:
         if not self._skip and not self._hidden_depth:
@@ -680,9 +793,43 @@ class _Text(HTMLParser):
                 return
             self._current.append(data)
 
+    def _end_link(self, link: dict[str, Any]) -> None:
+        """</a>: nếu liên kết là dấu gọi chú thích - epub:type="noteref" / role="doc-noteref", hay nhãn như số trong <sup> (`<sup><a href="#fn1">1</a></sup>`,
+        `<a href="#fn1"><sup>1</sup></a>`) trỏ vào một mảnh (#id) - bọc chữ của nó trong NOTE_OPEN…NOTE_CLOSE (kèm dấu cách tách khỏi chữ đứng trước)
+        và ghi `_Mark`; có phải dấu gọi thật hay không (đích có là lời chú) còn do `_resolve_notes` quyết."""
+        href, start = link["href"], link["start"]
+        if "#" not in href or _EXTERNAL.match(href):
+            return
+        text = "".join(self._current[start:])
+        label = _words(text)
+        if not label or len(label) > NOTE_MARK_MAX:
+            return
+        if not (link["noteref"] or (NOTE_LABEL.fullmatch(label) and (link["in_sup"] or link["sup"]))):
+            return
+        before = "".join(self._current[:start])
+        lead = "" if text[:1].isspace() or not before[-1:].isalpha() or (label in {"2", "3"} and UNIT_POWER.search(before)) else " "
+        self._current[start:] = [f"{NOTE_OPEN}{len(self.marks)}{NOTE_SEP}{lead}", *self._current[start:], NOTE_CLOSE]
+        self.marks.append(_Mark(href, label, _note_context(before), link["id"], len(self.lines)))
+
     def close(self) -> None:
         super().close()
         self._flush()
+        while self._stack:
+            self._finish_block(self._stack.pop())
+
+
+_EXTERNAL = re.compile(r"[a-z][a-z0-9+.-]*:", re.IGNORECASE)  # liên kết ra ngoài (http:, mailto:) không phải dấu gọi chú thích
+
+
+def _note_context(before: str) -> str:
+    """Chữ đứng ngay trước một dấu gọi (tối đa NOTE_CONTEXT ký tự, không cắt giữa từ) - ngữ cảnh cho ví dụ ở bước xem trước. Kotlin: BookImport.noteContext."""
+    flat = " ".join(_NOTE_SPAN.sub("", before).split())  # số của dấu gọi đứng trước không phải chữ truyện
+    if len(flat) <= NOTE_CONTEXT:
+        return flat
+    tail = flat[-NOTE_CONTEXT:]
+    if flat[-NOTE_CONTEXT - 1] != " " and " " in tail:
+        tail = tail[tail.index(" ") + 1:]
+    return tail
 
 
 def _types(attrs: Iterable[tuple[str, str | None]]) -> set[str]:
@@ -720,11 +867,141 @@ def markup_text(raw: bytes) -> str:
         return raw.decode("utf-8", errors="replace")
 
 
-def _page(raw: bytes, hidden: list[_Hidden] | None = None) -> _Text:
-    parser = _Text(hidden)
+def _page(raw: bytes, hidden: list[_Hidden] | None = None, backlinks_hidden: bool = False) -> _Text:
+    parser = _Text(hidden, backlinks_hidden)
     parser.feed(markup_text(raw))
     parser.close()
     return parser
+
+
+@dataclass
+class _Unit:
+    """Một lời chú trong sách: các dòng [start, end) của trang `page`, và các dấu gọi trỏ tới nó (trang, dòng, số thứ tự dấu trong trang) theo thứ tự đọc."""
+    page: int
+    start: int
+    end: int
+    refs: list[tuple[int, int, int]] = field(default_factory=list)
+
+
+@dataclass
+class _Notes:
+    found: int = 0
+    marks: int = 0
+    examples: list[tuple[str, str]] = field(default_factory=list)
+    by_page: dict[int, list[_Unit]] = field(default_factory=dict)  # trang -> lời chú nằm ở trang ấy
+    by_dest: dict[int, list[_Unit]] = field(default_factory=dict)  # trang -> lời chú có dấu gọi đầu tiên ở trang ấy (theo thứ tự đọc)
+
+
+def _resolve_notes(entries: list[tuple[str, _Text]], hide_marks: bool) -> _Notes:
+    """Chú thích của cả cuốn EPUB (mọi trang đã đọc, theo thứ tự đọc): dấu gọi nào trỏ tới lời chú nào (cùng trang hay trang khác), lời chú là các
+    dòng nào (`_Text.note_lines`), vài ví dụ cho bước xem trước. Gỡ NOTE_OPEN…NOTE_CLOSE khỏi chữ: dấu gọi đã nhận ra được bỏ chữ khi `hide_marks`,
+    còn lại giữ nguyên. Không bỏ dòng nào - chỉ số dòng của mọi trang vẫn như cũ (mục lục còn trỏ vào đó). Kotlin: BookImport.resolveNotes."""
+    spans: dict[tuple[str, str], tuple[int, int, int]] = {}
+    mark_ids: set[tuple[str, str]] = set()
+    typed: set[tuple[int, int, int]] = set()
+    for at, (path, page) in enumerate(entries):
+        for name, (start, end) in page.spans.items():
+            spans.setdefault((path, name), (at, start, end))
+        mark_ids.update((path, mark.id) for mark in page.marks if mark.id)
+        typed.update((at, start, end) for start, end in page.notes)
+    heading_lines = [{line for line, _text in page.headings} for _path, page in entries]
+    refs: dict[tuple[int, int, int], list[tuple[int, int, int]]] = {}
+    resolved: list[dict[int, tuple[int, int, int]]] = [{} for _ in entries]  # trang -> {số thứ tự dấu gọi: lời chú}
+    for at, (path, page) in enumerate(entries):
+        inside = [*page.notes, *page.areas]  # dấu trong một lời chú (nhãn "1" quay lại chỗ gọi) không phải dấu gọi
+        for number, mark in enumerate(page.marks):
+            if any(start <= mark.line < end for start, end in inside):
+                continue
+            target, _hash, fragment = mark.href.partition("#")
+            where = posixpath.normpath(posixpath.join(posixpath.dirname(path), unquote(target))) if target else path
+            fragment = unquote(fragment)
+            found = spans.get((where, fragment)) if fragment and (where, fragment) not in mark_ids else None
+            if found is None:
+                continue
+            at_page, start, end = found
+            if found not in typed and (end - start > MAX_NOTE_LINES or any(start <= line < end for line in heading_lines[at_page])):
+                continue
+            if at_page == at and start <= mark.line < end:
+                continue
+            refs.setdefault(found, []).append((at, mark.line, number))
+            resolved[at][number] = found
+    # Lời chú nằm gọn trong lời chú khác (<aside epub:type="footnote"><p id="fn1">…) thì là một: lấy khối ngoài; dấu gọi trỏ vào khối trong về khối ngoài.
+    outer: dict[tuple[int, int, int], tuple[int, int, int]] = {}
+    keys_by_page: dict[int, list[tuple[int, int, int]]] = {}
+    for key in typed | set(refs):
+        keys_by_page.setdefault(key[0], []).append(key)
+    for keys in keys_by_page.values():
+        top = None
+        for key in sorted(keys, key=lambda item: (item[1], -item[2])):
+            if top is not None and key[2] <= top[2]:
+                outer[key] = top
+            else:
+                top = outer[key] = key
+    units: dict[tuple[int, int, int], _Unit] = {}
+    for key in sorted(set(outer.values())):
+        units[key] = _Unit(*key)
+    for key, marks in refs.items():
+        units[outer[key]].refs += marks
+    notes = _Notes(found=len(units), marks=sum(len(by_mark) for by_mark in resolved))
+    for unit in units.values():
+        unit.refs.sort()
+        notes.by_page.setdefault(unit.page, []).append(unit)
+        if unit.refs:
+            notes.by_dest.setdefault(unit.refs[0][0], []).append(unit)
+    for listed in notes.by_dest.values():
+        listed.sort(key=lambda unit: unit.refs[0])
+    for at, (_path, page) in enumerate(entries):
+        for number, line in enumerate(page.lines):
+            if NOTE_OPEN in line:
+                page.lines[number] = " ".join(_NOTE_SPAN.sub(
+                    lambda match, found=resolved[at]: "" if hide_marks and int(match.group(1)) in found else match.group(2), line).split())
+        flagged: set[int] = set()
+        for unit in notes.by_page.get(at, []):
+            flagged.update(range(unit.start, unit.end))
+        for start, end in page.areas:
+            flagged.update(line for line in range(start, end) if line not in heading_lines[at])
+        page.note_lines = flagged
+    seen: set[tuple[int, int, int]] = set()
+    for at, (_path, page) in enumerate(entries):
+        for number, mark in enumerate(page.marks):
+            key = outer[resolved[at][number]] if number in resolved[at] else None
+            if key is None or key in seen or len(notes.examples) >= NOTE_EXAMPLES:
+                continue
+            seen.add(key)
+            core = mark.label.strip("[]()")
+            text = " ".join(entries[key[0]][1].lines[key[1]:key[2]])
+            text = re.sub(r"^[\[(]?" + re.escape(core) + r"[\])]?[.:)]?\s+", "", text.strip()).strip(" \u00a0\u21a9\ufe0e\ufe0f")
+            if text:
+                sup = core.translate(SUPERSCRIPT) if core.isdigit() else mark.label
+                notes.examples.append((("…" + mark.before if mark.before else "") + sup, clip_title(text, NOTE_EXAMPLE_WIDTH)))
+    return notes
+
+
+def _notes_only(page: _Text) -> bool:
+    """Trang chỉ có lời chú (và tiêu đề của nó): chương "Endnotes" - có cờ "Chú thích", không bỏ."""
+    headings = {line for line, _text in page.headings}
+    return any(page.lines[line] for line in page.note_lines) and all(
+        line in page.note_lines or line in headings or not text for line, text in enumerate(page.lines))
+
+
+def _part_lines(entries: list[tuple[str, _Text]], notes: _Notes, at: int, start: int, end: int, mode: str) -> tuple[list[str], list[str], bool]:
+    """Các dòng [start, end) của trang `at` (một chương hay cả trang) thành (thân, lời chú ở cuối, có lời chú bị bỏ / dời đi). Lời chú nằm giữa chương
+    đứng ở CUỐI chương, theo thứ tự trong trang - chữ không đổi, chỉ đổi chỗ. `mode`: "" như trên; "end" - lời chú của mọi dấu gọi trong chương này,
+    cả lời chú ở trang khác (chương Endnotes), theo thứ tự dấu gọi; "drop" - bỏ lời chú. Kotlin: BookImport.partLines."""
+    page = entries[at][1]
+    lines, flagged = page.lines, page.note_lines
+    body = [lines[line] for line in range(start, end) if line not in flagged]
+    tail: list[str] = []
+    touched = any(line in flagged for line in range(start, end))
+    if mode == "end":
+        covered = {line for unit in notes.by_page.get(at, []) if unit.refs and start <= unit.start < end for line in range(unit.start, unit.end)}
+        for unit in notes.by_dest.get(at, []):
+            if start <= unit.refs[0][1] < end:
+                tail += entries[unit.page][1].lines[unit.start:unit.end]
+        tail += [lines[line] for line in range(start, end) if line in flagged and line not in covered]
+    elif mode != "drop":
+        tail = [lines[line] for line in range(start, end) if line in flagged]
+    return [line for line in body if line], [line for line in tail if line], touched and mode in ("end", "drop")
 
 
 def _toc(book: _Zip, manifest: dict[str, tuple[str, str, str]], spine_toc: str) -> tuple[list[tuple[str, str, str]], bool]:
@@ -807,7 +1084,7 @@ def _epub_cover(book: _Zip, opf: ElementTree.Element, manifest: dict[str, tuple[
     return (book.read(info), media) if info is not None and info.file_size <= MAX_COVER else None
 
 
-def _epub(path: Path) -> ImportedBook:
+def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
     with _open_zip(path, "EPUB") as book:
         container = _xml(_read(book, "META-INF/container.xml"))
         rootfile = container.find(".//c:rootfile", NS)
@@ -844,6 +1121,7 @@ def _epub(path: Path) -> ImportedBook:
                   for rule in css_hidden(_read(book, href).decode("utf-8", errors="replace"))]
         images = 0  # trang chỉ có ảnh: một ghi chú đếm, không kể tên file trong gói (mục rất ngắn: `_finish` đếm)
         missing = 0  # mục của thứ tự đọc mà gói không có (tải chưa trọn): bỏ qua + đếm, phần còn lại vẫn đọc được
+        entries: list[tuple[str, _Text]] = []  # (đường trong gói, trang) theo thứ tự đọc: chú thích cần nhìn cả cuốn trước khi dựng chương
         for itemref in spine.iterfind("opf:itemref", NS):
             if itemref.get("linear", "yes") == "no":
                 continue
@@ -853,7 +1131,11 @@ def _epub(path: Path) -> ImportedBook:
             if book.member(href) is None:
                 missing += 1
                 continue
-            page = _page(_read(book, href), hidden)
+            entries.append((href, _page(_read(book, href), hidden, choice.notes == "end")))
+        notes = _resolve_notes(entries, choice.hide_marks)
+        result.footnote_found, result.footnote_marks, result.footnote_examples = notes.found, notes.marks, notes.examples
+        stored: list[tuple[list[str], list[str]]] = []  # thân + lời chú ở cuối của từng chương trong `result.chapters` (nối file sau vào chương trước)
+        for at, (href, page) in enumerate(entries):
             # Nhiều chương trong MỘT file: mục lục trỏ vào các mảnh (#id) của file này thì cắt chữ tại các mảnh ấy, theo thứ tự đọc,
             # mỗi phần mang tên của mục lục. Chữ trước mảnh đầu là phần riêng (không tên) nếu không mục nào trỏ về đầu file.
             points = _split_points(page, listed_in.get(href, []))
@@ -861,18 +1143,22 @@ def _epub(path: Path) -> ImportedBook:
                 if points[0][0] > 0:
                     points.insert(0, (0, ""))
                 ends = [start for start, _label in points[1:]] + [len(page.lines)]
-                parts = [(page.lines[start:end], next((text for at, text in page.headings if start <= at < end), ""), label)
+                parts = [(start, end, next((text for at_line, text in page.headings if start <= at_line < end), ""), label)
                          for (start, label), end in zip(points, ends)]
             else:
-                parts = [(page.lines, page.heading, titles.get(href, ""))]
-            page_matter = next((reason for kind, reason in MATTER_TYPES if kind in page.types), "") or name_matter(href)
-            if (has_toc and not points and not parts[0][2] and not page_matter and not page.heading and page.lines
-                    and not is_heading_line(page.lines[0]) and not text_matter("", "\n\n".join(page.lines))
-                    and result.chapters and not result.chapters[-1].matter):
-                result.chapters[-1].text = "\n\n".join(filter(None, [result.chapters[-1].text, *page.lines]))
-                continue
-            for lines, heading, listed in parts:
-                if not lines and page.images and not points:
+                parts = [(0, len(page.lines), page.heading, titles.get(href, ""))]
+            page_matter = (next((reason for kind, reason in MATTER_TYPES if kind in page.types), "") or name_matter(href)
+                           or ("Chú thích" if not points and _notes_only(page) else ""))
+            for start, end, heading, listed in parts:
+                body, tail, removed = _part_lines(entries, notes, at, start, end, choice.notes)
+                lines = [*body, *tail]
+                if (has_toc and not points and not listed and not page_matter and not page.heading and lines
+                        and not is_heading_line(lines[0]) and not text_matter("", "\n\n".join(lines))
+                        and result.chapters and not result.chapters[-1].matter):
+                    stored[-1] = (stored[-1][0] + body, stored[-1][1] + tail)
+                    result.chapters[-1].text = "\n\n".join(filter(None, [*stored[-1][0], *stored[-1][1]]))
+                    continue
+                if not lines and page.images and not points and not removed:
                     images += 1
                     continue
                 if not lines:
@@ -884,9 +1170,14 @@ def _epub(path: Path) -> ImportedBook:
                 # hay lấy nó làm tên khi nó đầy đủ hơn tên mục lục - không để người nghe nghe tên chương hai lần.
                 if first == title.casefold() or (heading and first == heading.casefold() and first in title.casefold()):
                     lines = lines[1:]
+                    body, tail = (body[1:], tail) if body else (body, tail[1:])
                 elif heading and first == heading.casefold() and title.casefold() in first:
                     title, lines = lines[0], lines[1:]
+                    body, tail = (body[1:], tail) if body else (body, tail[1:])
+                if removed and not lines:
+                    continue  # trang chỉ có lời chú (chương Endnotes) mà lời chú đã đặt về chương của chúng / bị bỏ: không còn gì
                 result.chapters.append(Chapter(title, "\n\n".join(lines), short=is_short, matter=page_matter))
+                stored.append((body, tail))
         if images:
             result.notes.append(f"Bỏ qua {images} trang chỉ có ảnh.")
         if missing:
@@ -935,6 +1226,8 @@ def _docx_text(element: ElementTree.Element) -> list[str]:
             lines[-1] += "-"
         elif tag == f"{W}br" and child.get(f"{W}type", "textWrapping") == "textWrapping":
             lines.append("")
+        elif tag in (f"{W}footnoteReference", f"{W}endnoteReference"):  # chữ của lời chú ở footnotes.xml / endnotes.xml: giữ chỗ để biết dấu gọi ở đâu
+            lines[-1] += NOTE_OPEN + ("f" if tag == f"{W}footnoteReference" else "e") + child.get(f"{W}id", "") + NOTE_CLOSE
         else:
             nested = _docx_text(child)
             lines[-1] += nested[0]
@@ -977,10 +1270,33 @@ def title_page(text: str) -> bool:
         len(line) <= TITLE_PAGE_WIDTH and not line.rstrip().endswith((".", "!", "?", "…", "。")) for line in lines)
 
 
-def _docx(path: Path) -> ImportedBook:
+_DOCX_REF = re.compile(NOTE_OPEN + r"([fe])(-?\d+)" + NOTE_CLOSE)
+
+
+def _docx_notes(book: _Zip) -> dict[tuple[str, str], list[str]]:
+    """Lời chú Word: {("f" | "e", id): các dòng} từ word/footnotes.xml và word/endnotes.xml (bỏ separator / continuationSeparator). Phần hỏng hay thiếu: bỏ qua."""
+    notes: dict[tuple[str, str], list[str]] = {}
+    for key, kind, part in (("f", "footnote", "word/footnotes.xml"), ("e", "endnote", "word/endnotes.xml")):
+        if book.member(part) is None:
+            continue
+        try:
+            root = _xml(_read(book, part, "DOCX"), "DOCX")
+        except ImportFailed:
+            continue
+        for note in root.iter(f"{W}{kind}"):
+            if note.get(f"{W}type", "normal") != "normal":
+                continue
+            lines = [line for paragraph in _docx_paragraphs(note) for line in (_words(text) for text in _docx_text(paragraph)) if line]
+            if lines:
+                notes[(key, note.get(f"{W}id", ""))] = lines
+    return notes
+
+
+def _docx(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
     with _open_zip(path, "DOCX") as book:
         document = _xml(_read(book, "word/document.xml", "DOCX"), "DOCX")
         styles = _docx_styles(book)
+        word_notes = _docx_notes(book)
         meta_title = meta_author = meta_language = None
         if "docProps/core.xml" in book.namelist():
             core = _xml(_read(book, "docProps/core.xml", "DOCX"), "DOCX")
@@ -989,9 +1305,12 @@ def _docx(path: Path) -> ImportedBook:
     body = document.find(f"{W}body")
     if body is None:
         raise ImportFailed(BROKEN.format(kind="DOCX"))
-    items: list[tuple[int, str, bool]] = []  # (cấp tiêu đề - 0 là chữ thường, dòng, cả đoạn in đậm)
+    items: list[tuple[int, str, bool, bool]] = []  # (cấp tiêu đề - 0 là chữ thường, dòng, cả đoạn in đậm, là lời chú đặt về cuối chương)
     book_title: str | None = None
     toc_lines = 0
+    cited: set[tuple[str, str]] = set()  # lời chú đã có dấu gọi (mỗi lời chú một lần)
+    examples: list[tuple[str, str]] = []
+    references = 0  # số dấu gọi đã gặp: số thứ tự Word đánh cho chú thích
     for paragraph in _docx_paragraphs(body):
         style_node = paragraph.find(f"{W}pPr/{W}pStyle")
         style_id = style_node.get(f"{W}val", "") if style_node is not None else ""
@@ -1002,13 +1321,25 @@ def _docx(path: Path) -> ImportedBook:
             toc_lines += 1
             continue
         level, bold = HEADING_LEVELS.get(style, 0), _docx_bold(paragraph)
-        for line in _join_wrapped([_words(line) for line in _docx_text(paragraph)]):
-            if not line:
-                continue
-            if not level and style == "title" and book_title is None:
-                book_title = line
-            items.append((level, line, bold))
-    levels = [level for level, _, _ in items if level]
+        for raw in _join_wrapped([_words(line) for line in _docx_text(paragraph)]):
+            line, cites = _DOCX_REF.sub("", raw), []
+            for match in _DOCX_REF.finditer(raw):
+                key = (match.group(1), match.group(2))
+                references += 1
+                if key in word_notes and key not in cited:
+                    cited.add(key)
+                    cites.append(key)
+                    if len(examples) < NOTE_EXAMPLES:
+                        before = _note_context(_DOCX_REF.sub("", raw[:match.start()]))
+                        examples.append((("…" + before if before else "") + str(references).translate(SUPERSCRIPT),
+                                         clip_title(" ".join(word_notes[key]), NOTE_EXAMPLE_WIDTH)))
+            if line:
+                if not level and style == "title" and book_title is None:
+                    book_title = line
+                items.append((level, line, bold, False))
+            if choice.notes == "end":  # lời chú Word (chưa từng vào sách): đề xuất, tích mới đưa về cuối chương chứa dấu gọi
+                items += [(0, text, False, True) for key in cites for text in word_notes[key]]
+    levels = [level for level, *_ in items if level]
     if levels.count(1) == 1 and len(items) > 1 and items[0][0] == 1 and not is_heading_line(items[0][1]):
         # Heading 1 duy nhất, ở đầu, không phải "Chương N": tên sách. Chương theo cấp kế (Heading 2), không có thì dòng "Chương N" / đậm.
         book_title, items, chapter_levels = book_title or items[0][1], items[1:], {2}
@@ -1016,27 +1347,29 @@ def _docx(path: Path) -> ImportedBook:
         chapter_levels = {1}  # Heading 1 là chương, Heading 2 là cảnh trong chương: một dòng của chương
     else:
         chapter_levels = {1, 2}
-    result = ImportedBook(title=meta_title or book_title or title_from_filename(path.stem), author=meta_author, language=meta_language)
+    result = ImportedBook(title=meta_title or book_title or title_from_filename(path.stem), author=meta_author, language=meta_language,
+                          footnote_found=len(cited), footnote_examples=examples)
     if toc_lines:
         result.notes.append(f"Bỏ qua mục lục của tài liệu ({toc_lines} dòng).")
-    if not any(level in chapter_levels for level, _, _ in items):
+    if not any(level in chapter_levels for level, *_ in items):
         # Không có kiểu Heading: tách theo dòng "Chương N" (như PDF), và dòng in đậm "I. KHỞI ĐẦU" khi có từ hai dòng như thế.
-        roman = [index for index, (_, line, bold) in enumerate(items) if bold and is_heading_line(line, BOLD_ROMAN)]
-        result.chapters, notes = _split_on_headings([line for _, line, _ in items], result.title, roman if len(roman) >= 2 else ())
+        roman = [index for index, (_, line, bold, _note) in enumerate(items) if bold and is_heading_line(line, BOLD_ROMAN)]
+        result.chapters, notes = _split_on_headings([line for _, line, _, _ in items], result.title, roman if len(roman) >= 2 else (),
+                                                    {index for index, item in enumerate(items) if item[3]})
         result.notes += notes
     else:
-        sections: list[tuple[str | None, list[str]]] = [(None, [])]  # (tên chương theo kiểu Heading, các đoạn)
-        for level, line, _ in items:
+        sections: list[tuple[str | None, list[str], list[str]]] = [(None, [], [])]  # (tên chương theo kiểu Heading, các đoạn, lời chú ở cuối)
+        for level, line, _, note in items:
             if level in chapter_levels:
-                sections.append((line, []))
+                sections.append((line, [], []))
             else:
-                sections[-1][1].append(line)
-        for title, paragraphs in sections:
+                sections[-1][2 if note else 1].append(line)
+        for title, paragraphs, tail in sections:
             if title is None:
                 if paragraphs:
-                    result.chapters.append(Chapter(PREAMBLE, "\n\n".join(paragraphs)))
+                    result.chapters.append(Chapter(PREAMBLE, "\n\n".join([*paragraphs, *tail])))
             elif paragraphs:
-                result.chapters.append(Chapter(title, "\n\n".join(paragraphs)))
+                result.chapters.append(Chapter(title, "\n\n".join([*paragraphs, *tail])))
             else:
                 result.notes.append(f"Bỏ qua mục trống: {title}")
     first = result.chapters[0] if len(result.chapters) > 1 else None
@@ -1051,32 +1384,34 @@ def is_heading_line(line: str, pattern: re.Pattern[str] = HEADING) -> bool:
     return len(line.strip()) <= MAX_HEADING and pattern.match(line) is not None
 
 
-def _split_on_headings(paragraphs: list[str], book_title: str, extra: Iterable[int] = ()) -> tuple[list[Chapter], list[str]]:
+def _split_on_headings(paragraphs: list[str], book_title: str, extra: Iterable[int] = (), note_lines: Iterable[int] = ()) -> tuple[list[Chapter], list[str]]:
     """Chữ trước tiêu đề đầu tiên thành chương "Mở đầu" (không bỏ đi); không có tiêu đề nào thì cả file là một chương. `extra`: số thứ tự
-    các dòng cũng là tiêu đề (DOCX: dòng in đậm "I. KHỞI ĐẦU")."""
+    các dòng cũng là tiêu đề (DOCX: dòng in đậm "I. KHỞI ĐẦU"). `note_lines`: số thứ tự các dòng là lời chú (DOCX, người nghe tích đọc lời chú):
+    không bao giờ là tiêu đề, và đứng ở cuối chương."""
     chapters: list[Chapter] = []
     notes: list[str] = []
     title: str | None = None
     body: list[str] = []
+    tail: list[str] = []
 
     def close() -> None:
         if title is None:
             if body:
-                chapters.append(Chapter(PREAMBLE if any_heading else book_title, "\n\n".join(body)))
+                chapters.append(Chapter(PREAMBLE if any_heading else book_title, "\n\n".join([*body, *tail])))
         elif body:
-            chapters.append(Chapter(title, "\n\n".join(body)))
+            chapters.append(Chapter(title, "\n\n".join([*body, *tail])))
         else:
             notes.append(f"Bỏ qua mục trống: {title}")
 
-    extra = set(extra)
-    headings = [is_heading_line(paragraph) or index in extra for index, paragraph in enumerate(paragraphs)]
+    extra, note_lines = set(extra), set(note_lines)
+    headings = [index not in note_lines and (is_heading_line(paragraph) or index in extra) for index, paragraph in enumerate(paragraphs)]
     any_heading = any(headings)
-    for paragraph, heading in zip(paragraphs, headings, strict=True):
+    for index, (paragraph, heading) in enumerate(zip(paragraphs, headings, strict=True)):
         if heading:
             close()
-            title, body = paragraph.strip(), []
+            title, body, tail = paragraph.strip(), [], []
         else:
-            body.append(paragraph)
+            (tail if index in note_lines else body).append(paragraph)
     close()
     if not any_heading:
         notes.append("Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương.")

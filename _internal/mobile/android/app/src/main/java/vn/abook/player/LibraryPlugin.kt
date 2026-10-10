@@ -265,7 +265,7 @@ class LibraryPlugin : Plugin() {
         val ref = call.getString("ref") ?: throw IllegalArgumentException("thiếu ref")
         val pages = TextImports.pagesOf(call.getArray("pages"))
         call.resolve(JSObject.fromJSONObject(TextImports.preview(ref, pages, call.getString("title") ?: "", call.getString("author") ?: "",
-            call.getBoolean("splitChapters") ?: false)))
+            call.getBoolean("splitChapters") ?: false, BookImport.footnoteChoiceFromJson(call.getObject("footnotes")))))
     }
 
     /** Nhập thành sách chỉ có chữ trong thư viện; trả {id, how, chapters}. */

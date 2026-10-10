@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Thêm sách từ file (máy tính và điện thoại)
+
+- Sách EPUB và DOCX có chú thích: bước xem trước nói "Tìm thấy N chú thích" kèm ví dụ và đề xuất ba ô, mặc định không tích gì - "Không đọc số chú thích", "Đọc lời chú ở cuối chương" (cả lời chú ở chương Endnotes riêng, hay trong footnotes.xml của Word), "Bỏ lời chú"; lời chú nằm giữa chương được đặt xuống cuối chương cho khỏi cắt ngang câu, chữ không đổi; chương toàn lời chú hiện ra chưa tích với nhãn "Chú thích". ABook không tự bỏ hay sửa chữ của truyện.
+
 ## [0.4.45] - 2026-10-10
 
 ### Làm sách trong Studio (máy tính)

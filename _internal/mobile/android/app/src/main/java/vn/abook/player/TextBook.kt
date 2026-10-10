@@ -89,6 +89,9 @@ object TextBook {
      * phần không phải truyện - kèm `matter`, lý do như "Trang bản quyền"); `index` và
      * `suggestions[].chapter` là số thứ tự trong danh sách này, không phải mã chương trong sách.
      */
+    private fun footnotes(book: BookImport.Book): JSONObject = JSONObject().put("found", book.footnoteFound).put("marks", book.footnoteMarks)
+        .put("examples", JSONArray(book.footnoteExamples.map { (mark, note) -> JSONObject().put("mark", mark).put("note", note) }))
+
     fun preview(book: BookImport.Book): JSONObject {
         val rows = JSONArray()
         var words = 0
@@ -113,6 +116,8 @@ object TextBook {
             .put("notes", JSONArray(book.notes))
             // Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
             .put("suggestions", JSONArray(book.credits.map { (chapter, line) -> JSONObject().put("chapter", chapter).put("line", line) }))
+            // Chú thích (EPUB / DOCX có cấu trúc): tìm thấy N lời chú - giao diện đề xuất "không đọc số", "đọc lời chú ở cuối chương" / "bỏ lời chú" (mặc định KHÔNG tích).
+            .also { if (book.footnoteFound > 0) it.put("footnotes", footnotes(book)) }
             .put("totals", JSONObject().put("chapters", chapters).put("words", words))
             // File TXT cả truyện: số chương nếu tách theo "Chương N" - giao diện đề xuất (ô KHÔNG tích sẵn). Không có gì để tách thì không có khoá.
             // `splitHeadings`: số dòng "Chương N"; nhãn nói thêm phần "Mở đầu" khi chữ trước tiêu đề đầu thành một chương riêng.

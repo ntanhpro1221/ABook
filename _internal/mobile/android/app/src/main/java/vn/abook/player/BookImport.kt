@@ -50,6 +50,36 @@ object BookImport {
         var splitOffer: Int = 0,
         /** Số dòng "Chương N" ấy; ít hơn [splitOffer] một khi chữ trước tiêu đề đầu thành chương "Mở đầu" (`ImportedBook.split_headings`). */
         var splitHeadings: Int = 0,
+        /** EPUB / DOCX có cấu trúc: số lời chú tìm thấy (đề xuất ở bước xem trước, [FootnoteChoice]); 0 = không có (`ImportedBook.footnote_found`). */
+        var footnoteFound: Int = 0,
+        /** ... trong đó số dấu gọi (số chú thích) nằm trong chữ của sách (`ImportedBook.footnote_marks`). */
+        var footnoteMarks: Int = 0,
+        /** (dấu gọi kèm chữ đứng trước: "…trees²", lời chú) vài ví dụ (`ImportedBook.footnote_examples`). */
+        val footnoteExamples: MutableList<Pair<String, String>> = mutableListOf(),
+    )
+
+    /**
+     * Chú thích trong sách nhập (`importers.FootnoteChoice`): ĐỀ XUẤT người nghe tích ở bước xem trước, mặc định KHÔNG áp - ABook không tự bỏ hay sửa chữ
+     * của truyện. Mặc định (cả hai trống): chữ như trong sách, chỉ lời chú nằm GIỮA chương được đặt xuống cuối chương đó. `hideMarks`: không đọc số
+     * chú thích; `notes`: "" như trong sách, "end" đọc lời chú ở cuối chương chứa dấu gọi, "drop" bỏ lời chú.
+     */
+    data class FootnoteChoice(val hideMarks: Boolean = false, val notes: String = "")
+
+    /** `importers.footnote_choice_from_json`: `{"hideMarks": bool, "notes": ""|"end"|"drop"}`; null = không tích gì. Dạng sai: [Failed]. */
+    fun footnoteChoiceFromJson(raw: Any?): FootnoteChoice {
+        if (raw == null || raw === org.json.JSONObject.NULL) return FootnoteChoice()
+        if (raw !is org.json.JSONObject) throw Failed("Lựa chọn về chú thích không hợp lệ")
+        val hide = if (raw.has("hideMarks")) raw.get("hideMarks") else false
+        val notes = if (raw.has("notes")) raw.get("notes") else ""
+        if (hide !is Boolean || notes !is String || notes !in listOf("", "end", "drop")) throw Failed("Lựa chọn về chú thích không hợp lệ")
+        return FootnoteChoice(hide, notes)
+    }
+
+    /** `ImportedBook.footnote_offer`: số lời chú tìm thấy, số dấu gọi nằm trong chữ, vài ví dụ {mark, note} - cho bước xem trước và bộ ví dụ. */
+    fun footnoteOffer(book: Book): Map<String, Any?> = linkedMapOf(
+        "found" to book.footnoteFound,
+        "marks" to book.footnoteMarks,
+        "examples" to book.footnoteExamples.map { (mark, note) -> linkedMapOf<String, Any?>("mark" to mark, "note" to note) },
     )
 
     val IMPORT_SUFFIXES = listOf("epub", "docx", "pdf")
@@ -70,13 +100,15 @@ object BookImport {
 
     /** Một thư mục TXT, hay file .epub / .docx / .txt. (PDF đi qua `fromPdfPages`: lấy chữ ra là việc của pdf.js.) `splitChapters`: file .txt cả
      *  truyện thì tách thành các chương theo dòng "Chương N" (người dùng tích gợi ý `splitOffer`). `keepShort`: bước xem trước - mục rất ngắn vẫn nằm
-     *  trong danh sách, đúng chỗ của nó trong file ([defaultPicks] bỏ chúng); không có thì chúng bị bỏ như trước. */
-    fun importFile(path: File, splitChapters: Boolean = false, keepShort: Boolean = false): Book {
+     *  trong danh sách, đúng chỗ của nó trong file ([defaultPicks] bỏ chúng); không có thì chúng bị bỏ như trước. `footnotes`: EPUB / DOCX có chú thích -
+     *  lựa chọn người nghe đã tích ở bước xem trước ([FootnoteChoice]); không có thì như trong sách. */
+    fun importFile(path: File, splitChapters: Boolean = false, keepShort: Boolean = false, footnotes: FootnoteChoice? = null): Book {
+        val choice = footnotes ?: FootnoteChoice()
         val book = when {
             path.isDirectory -> txtFolder(path)
             path.isFile -> when (val suffix = path.extension.lowercase()) {
-                "epub" -> epub(path)
-                "docx" -> docx(path)
+                "epub" -> epub(path, choice)
+                "docx" -> docx(path, choice)
                 "txt" -> txtFile(path, splitChapters)
                 "pdf" -> throw Failed("PDF cần lấy chữ bằng pdf.js trước (fromPdfPages)")
                 else -> throw Failed("Chưa đọc được file ${if (suffix.isEmpty()) "không có đuôi" else ".$suffix"} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
@@ -110,7 +142,8 @@ object BookImport {
             renumbered[pick.first] = position + 1
         }
         val credits = book.credits.mapNotNull { (number, line) -> renumbered[number]?.let { it to line } }.toMutableList()
-        return Book(book.title, book.author, book.language, book.cover, book.coverType, chapters, book.notes.toMutableList(), book.textHasTitle, credits, book.splitOffer, book.splitHeadings)
+        return Book(book.title, book.author, book.language, book.cover, book.coverType, chapters, book.notes.toMutableList(), book.textHasTitle, credits, book.splitOffer, book.splitHeadings,
+            book.footnoteFound, book.footnoteMarks, book.footnoteExamples.toMutableList())
     }
 
     /** PDF có lớp chữ: `pages` là các dòng CÓ CHỮ của từng trang (pdf.js, như file pages trong bộ ví dụ). */
@@ -150,6 +183,7 @@ object BookImport {
                 it["splitOffer"] = book.splitOffer
                 it["splitHeadings"] = book.splitHeadings
             }
+            if (book.footnoteFound > 0) it["footnotes"] = footnoteOffer(book)
         }
     }
 
@@ -223,6 +257,22 @@ object BookImport {
             }
         }
         return nfc(out.toString())
+    }
+
+    /** `" ".join(text.split())` - như [words] nhưng không NFC (chữ đã NFC từ lúc tách). */
+    private fun squeeze(text: String): String {
+        val out = StringBuilder()
+        var pending = false
+        for (c in text) {
+            if (isPySpace(c)) {
+                pending = out.isNotEmpty()
+            } else {
+                if (pending) out.append(' ')
+                pending = false
+                out.append(c)
+            }
+        }
+        return out.toString()
     }
 
     /** Số "từ" tách bằng khoảng trắng (`len(text.split())`). */
@@ -924,6 +974,46 @@ object BookImport {
     private val TEXT_HEADINGS = setOf("h1", "h2", "h3")
     private val WRAPPERS = setOf("body", "section", "div", "article", "main") // khối bọc cả trang: vai của chúng (trước chữ đầu tiên) là vai của trang
     private val SKIPPED_TAGS = setOf("script", "style", "head", "title")
+    private val LISTS = setOf("ol", "ul") // danh sách: không ngắt dòng, nhưng có thể là vùng lời chú (<ol epub:type="endnotes">)
+
+    // Chú thích (`importers.NOTE_*`): dấu gọi nằm trong dòng giữa NOTE_OPEN…NOTE_CLOSE (ký tự vùng riêng, không bao giờ có trong chữ truyện) cho tới
+    // khi `resolveNotes` gỡ chúng; DOCX dùng chúng để giữ chỗ dấu tham chiếu.
+    private const val NOTE_OPEN = ""
+    private const val NOTE_SEP = ""
+    private const val NOTE_CLOSE = ""
+    private val NOTE_SPAN = Regex("$NOTE_OPEN(\\d+)$NOTE_SEP([^\\n]*?)$NOTE_CLOSE")
+    private val DOCX_REF = Regex("$NOTE_OPEN([fe])(-?\\d+)$NOTE_CLOSE")
+    private val NOTE_LABEL = Pattern.compile("[\\[(]?\\d{1,3}[\\])]?|\\*{1,3}|†|‡|[⁰¹²³⁴-⁹]+", UNICODE_CLASSES) // nhãn của dấu gọi là liên kết: "1", "[2]", "*", "²"
+    private const val NOTE_MARK_MAX = 12 // dấu gọi có epub:type="noteref" mang nhãn bất kỳ, nhưng không dài hơn chừng này ký tự
+    private val NOTE_TYPES = setOf("footnote", "endnote", "rearnote") // epub:type / role (bỏ "doc-") của MỘT lời chú
+    private val NOTE_AREA_TYPES = setOf("footnotes", "endnotes", "rearnotes") // ... của vùng chứa các lời chú (chương Endnotes)
+    private const val MAX_NOTE_LINES = 40 // đích của dấu gọi dài hơn thế (không phải lời chú, vd cả một chương) thì thôi
+    private const val NOTE_CONTEXT = 24 // số ký tự chữ đứng trước dấu gọi, cho ví dụ ở bước xem trước
+    private const val NOTE_EXAMPLES = 3
+    private const val NOTE_EXAMPLE_WIDTH = 80
+    private val EXTERNAL = Pattern.compile("[a-z][a-z0-9+.-]*:", Pattern.CASE_INSENSITIVE) // liên kết ra ngoài (http:, mailto:) không phải dấu gọi
+    private const val SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹" // chữ số 0-9 viết nhỏ trên dòng
+
+    private fun superscript(digits: String): String = digits.map { if (it in '0'..'9') SUPERSCRIPT[it - '0'] else it }.joinToString("")
+
+    /** Một dấu gọi chú thích trong chữ (`importers._Mark`): đích, nhãn ("2", "[1]"), chữ đứng ngay trước, id của chính dấu, dòng chứa nó. */
+    private class Mark(val href: String, val label: String, val before: String, val id: String, val line: Int)
+
+    /** Một `<a>` đang mở (`_Text._links`): đích, chỗ bắt đầu trong dòng đang viết, có noteref không, id, đang trong `<sup>` / chứa `<sup>`. */
+    private class Link(val href: String, var start: Int, val noteref: Boolean, val id: String, val inSup: Boolean, var sup: Boolean = false)
+
+    /** Một khối đang mở (`_Text._stack`): thẻ, dòng bắt đầu, các id nằm trong nó, kiểu: 0 thường / 1 lời chú / 2 vùng lời chú. */
+    private class Block(val tag: String, val start: Int, val ids: MutableList<String>, val kind: Int)
+
+    /** `importers._note_context`: chữ đứng ngay trước một dấu gọi (tối đa [NOTE_CONTEXT] ký tự, không cắt giữa từ) - ngữ cảnh cho ví dụ ở bước xem trước. */
+    internal fun noteContext(before: String): String {
+        val flat = squeeze(NOTE_SPAN.replace(before, "")) // số của dấu gọi đứng trước không phải chữ truyện
+        if (cpLen(flat) <= NOTE_CONTEXT) return flat
+        val cut = flat.offsetByCodePoints(flat.length, -NOTE_CONTEXT)
+        var tail = flat.substring(cut)
+        if (flat[flat.offsetByCodePoints(cut, -1)] != ' ' && ' ' in tail) tail = tail.substring(tail.indexOf(' ') + 1)
+        return tail
+    }
 
     /** Chữ của một trang XHTML: mỗi khối (đoạn, tiêu đề, dòng danh sách, <br>) một dòng; bỏ script/style/head. */
     /** Chữ ẩn (`importers._hides`): thẻ rỗng (void) không bao giờ mở vùng ẩn - `<img aria-hidden>` không có thẻ đóng. */
@@ -984,8 +1074,15 @@ object BookImport {
         return rules.any { (it.tag.isEmpty() || it.tag == tag) && (it.id.isEmpty() || it.id == named["id"]) && classes.containsAll(it.classes) }
     }
 
-    private class PageText(private val rules: List<Hidden> = emptyList()) {
+    private class PageText(private val rules: List<Hidden> = emptyList(), private val backlinksHidden: Boolean = false) {
         val lines = mutableListOf<String>()
+        val spans = hashMapOf<String, Pair<Int, Int>>() // id -> [dòng đầu, dòng cuối) của khối chứa phần tử có id ấy (đích của dấu gọi chú thích)
+        val notes = mutableListOf<Pair<Int, Int>>() // khoảng dòng của từng lời chú có kiểu (epub:type footnote / endnote / rearnote)
+        val areas = mutableListOf<Pair<Int, Int>>() // ... của vùng toàn lời chú (epub:type endnotes…)
+        val marks = mutableListOf<Mark>()
+        var noteLines: Set<Int> = emptySet() // các dòng thuộc lời chú (`resolveNotes`)
+        private val stack = mutableListOf<Block>()
+        private val links = mutableListOf<Link>()
         var heading = ""
         val headings = mutableListOf<Pair<Int, String>>() // (dòng của tiêu đề, chữ): mọi tiêu đề h1-h3 có chữ, theo thứ tự
         val anchors = hashMapOf<String, Int>() // id / <a name> -> chỉ số dòng bắt đầu từ chỗ ấy (mục lục trỏ #mảnh vào đây)
@@ -1003,18 +1100,26 @@ object BookImport {
         private fun flush() {
             cap = ""
             for (index in sup.indices) sup[index] = 0 // dòng mới: <sup> đang mở bắt đầu từ đầu dòng
+            for (link in links) link.start = 0
             val line = words(current.toString())
             if (line.isNotEmpty()) lines.add(line)
             current.setLength(0)
         }
 
-        private fun start(tag: String) {
+        private fun start(tag: String, attrs: Map<String, String>) {
             when {
                 tag in SKIPPED_TAGS -> skip++
                 tag == "img" || tag == "image" -> images++
                 tag == "br" || tag == "hr" -> flush() // hr: ngắt cảnh - ít nhất là ranh giới đoạn
                 tag in CELLS -> current.append(' ')
-                tag == "sup" -> sup.add(current.length)
+                tag == "sup" -> {
+                    sup.add(current.length)
+                    links.lastOrNull()?.sup = true
+                }
+                tag == "a" -> {
+                    val named = attrs.mapKeys { it.key.lowercase() }
+                    links.add(Link(pyStrip(named["href"] ?: ""), current.length, "noteref" in types(attrs), named["id"] ?: "", sup.isNotEmpty()))
+                }
                 tag in TEXT_BLOCKS -> {
                     flush()
                     if (tag in TEXT_HEADINGS) inHeading++
@@ -1042,6 +1147,8 @@ object BookImport {
                     val unit = (mark == "2" || mark == "3") && UNIT_POWER.matcher(current.substring(0, at)).find()
                     if (NOTE_MARK.matcher(mark).matches() && at > 0 && Character.isLetter(current.codePointBefore(at)) && !unit) current.insert(at, ' ')
                 }
+                tag == "a" && links.isNotEmpty() -> endLink(links.removeAt(links.size - 1))
+                tag in LISTS -> closeBlock(tag)
                 tag in TEXT_BLOCKS -> {
                     if (tag == "pre" && pre > 0) pre--
                     if (tag in TEXT_HEADINGS && inHeading > 0) {
@@ -1051,16 +1158,58 @@ object BookImport {
                         if (heading.isEmpty()) heading = text
                     }
                     flush()
+                    closeBlock(tag)
                 }
             }
         }
 
-        /** Mảnh của thẻ: `id` của mọi phần tử, `name` của `<a>`; mảnh trùng thì lấy cái đầu. Kể cả trong vùng ẩn: mục lục trỏ vào đó vẫn là một chỗ. */
-        private fun anchor(tag: String, attrs: Map<String, String>) {
+        /** `</a>` (`importers._Text._end_link`): nếu liên kết là dấu gọi chú thích - epub:type="noteref" / role="doc-noteref", hay nhãn như số trong `<sup>`
+         *  (`<sup><a href="#fn1">1</a></sup>`, `<a href="#fn1"><sup>1</sup></a>`) trỏ vào một mảnh (#id) - bọc chữ của nó trong NOTE_OPEN…NOTE_CLOSE (kèm
+         *  dấu cách tách khỏi chữ đứng trước) và ghi [Mark]; có phải dấu gọi thật hay không (đích có là lời chú) còn do [resolveNotes] quyết. */
+        private fun endLink(link: Link) {
+            val href = link.href
+            if ('#' !in href || EXTERNAL.matcher(href).lookingAt()) return
+            val text = current.substring(link.start)
+            val label = words(text)
+            if (label.isEmpty() || cpLen(label) > NOTE_MARK_MAX) return
+            if (!(link.noteref || (NOTE_LABEL.matcher(label).matches() && (link.inSup || link.sup)))) return
+            val before = current.substring(0, link.start)
+            val lead = if ((text.isNotEmpty() && isPySpace(text[0])) || before.isEmpty() || !Character.isLetter(before.codePointBefore(before.length)) ||
+                ((label == "2" || label == "3") && UNIT_POWER.matcher(before).find())
+            ) "" else " "
+            current.insert(link.start, "$NOTE_OPEN${marks.size}$NOTE_SEP$lead")
+            current.append(NOTE_CLOSE)
+            marks.add(Mark(href, label, noteContext(before), link.id, lines.size))
+        }
+
+        /** Khối [tag] đóng: các khối mở bên trong nó (thẻ không đóng) đóng cùng; mỗi khối ghi khoảng dòng của nó cho id / kiểu lời chú. */
+        private fun closeBlock(tag: String) {
+            for (at in stack.indices.reversed()) {
+                if (stack[at].tag == tag) {
+                    while (stack.size > at) finishBlock(stack.removeAt(stack.size - 1))
+                    return
+                }
+            }
+        }
+
+        private fun finishBlock(block: Block) {
+            val end = lines.size
+            if (end > block.start) {
+                for (value in block.ids) spans.putIfAbsent(value, block.start to end)
+                if (block.kind == 1) notes.add(block.start to end) else if (block.kind == 2) areas.add(block.start to end)
+            }
+        }
+
+        /** Mảnh của thẻ: `id` của mọi phần tử, `name` của `<a>`; mảnh trùng thì lấy cái đầu. Kể cả trong vùng ẩn: mục lục trỏ vào đó vẫn là một chỗ.
+         *  [own]: phần tử không nằm trong vùng ẩn - id của nó thuộc khối đang mở (đích của dấu gọi chú thích: [spans]). */
+        private fun anchor(tag: String, attrs: Map<String, String>, own: Boolean = true) {
             if (skip > 0) return
             for ((key, value) in attrs) {
                 val name = key.lowercase()
-                if (value.isNotEmpty() && (name == "id" || (tag == "a" && name == "name"))) anchors.putIfAbsent(value, lines.size)
+                if (value.isNotEmpty() && (name == "id" || (tag == "a" && name == "name"))) {
+                    anchors.putIfAbsent(value, lines.size)
+                    if (own && stack.isNotEmpty()) stack.last().ids.add(value)
+                }
             }
         }
 
@@ -1071,14 +1220,19 @@ object BookImport {
                         val tag = token.name.lowercase()
                         if (hiddenDepth > 0) {
                             if (tag == hiddenTag) hiddenDepth++
-                            anchor(tag, token.attrs)
-                        } else if (skip == 0 && hides(tag, token.attrs, rules)) {
+                            anchor(tag, token.attrs, own = false)
+                        } else if (skip == 0 && (hides(tag, token.attrs, rules) || (backlinksHidden && tag == "a" && "backlink" in types(token.attrs)))) {
+                            // nút quay lại "↩︎" của lời chú (epub:type="backlink") ẩn khi lời chú được đặt về cuối chương
                             if (tag in TEXT_BLOCKS) flush()
                             hiddenTag = tag
                             hiddenDepth = 1
-                            anchor(tag, token.attrs)
+                            anchor(tag, token.attrs, own = false)
                         } else {
-                            start(tag)
+                            start(tag, token.attrs)
+                            if (tag in TEXT_BLOCKS || tag in LISTS) {
+                                val kinds = types(token.attrs)
+                                stack.add(Block(tag, lines.size, mutableListOf(), if (kinds.any { it in NOTE_TYPES }) 1 else if (kinds.any { it in NOTE_AREA_TYPES }) 2 else 0))
+                            }
                             if (tag == "img" || tag == "image") {
                                 val alt = token.attrs["alt"] ?: ""
                                 cap = if (alt.codePointCount(0, alt.length) == 1 && Character.isLetter(alt.codePointAt(0))) alt else ""
@@ -1109,6 +1263,7 @@ object BookImport {
                 }
             }
             flush()
+            while (stack.isNotEmpty()) finishBlock(stack.removeAt(stack.size - 1))
         }
     }
 
@@ -1129,15 +1284,17 @@ object BookImport {
     private val MATTER_TYPES = listOf(
         "cover" to "Trang bìa", "titlepage" to "Trang tên sách", "halftitlepage" to "Trang tên sách", "copyright-page" to "Trang bản quyền",
         "imprint" to "Trang bản quyền", "colophon" to "Trang bản quyền", "toc" to "Mục lục", "landmarks" to "Mục lục",
+        "endnotes" to "Chú thích", "footnotes" to "Chú thích", "rearnotes" to "Chú thích",
         "frontmatter" to "Phần đầu sách", "backmatter" to "Phần cuối sách",
     )
     private val MATTER_NAMES = linkedMapOf(
         "cover" to "Trang bìa", "title" to "Trang tên sách", "titlepage" to "Trang tên sách", "toc" to "Mục lục", "nav" to "Mục lục",
         "copyright" to "Trang bản quyền", "license" to "Trang bản quyền", "colophon" to "Trang bản quyền", "imprint" to "Trang bản quyền",
-        "about" to "Trang giới thiệu",
+        "about" to "Trang giới thiệu", "endnotes" to "Chú thích", "footnotes" to "Chú thích",
     )
     private val MATTER_NAME = Pattern.compile("[\\W_\\d]*(" + MATTER_NAMES.keys.joinToString("|") + ")(?:[\\W_]*page)?[\\W_\\d]*", UNICODE_CLASSES)
     private val TOC_TITLES = setOf("mục lục", "muc luc", "contents", "table of contents")
+    private val NOTE_TITLES = setOf("chú thích", "endnotes", "end notes", "footnotes", "notes") // tên chương toàn lời chú
     private val TOC_SUFFIX = Pattern.compile("\\s+[—–-]\\s*(?:mục lục|muc luc)\\s*$", Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES)
     private const val MATTER_HEAD = 400
 
@@ -1155,6 +1312,7 @@ object BookImport {
         val clean = pyStrip(casefold(title))
         return when {
             clean in TOC_TITLES || first in TOC_TITLES || clean.endsWith("— mục lục") || clean.endsWith("- mục lục") -> "Mục lục"
+            clean in NOTE_TITLES || first in NOTE_TITLES -> "Chú thích"
             "project gutenberg" in head -> "Trang của Project Gutenberg"
             "wikisource" in head -> "Trang của Wikisource"
             else -> ""
@@ -1227,7 +1385,156 @@ object BookImport {
         return if (points.size >= 2 && page.lines.isNotEmpty()) points.sortedBy { it.first } else emptyList()
     }
 
-    private class Part(val lines: List<String>, val heading: String, val listed: String)
+    /** Một chương cắt từ trang: dòng [start, end) của trang, tiêu đề trong chữ, tên mục lục. */
+    private class Part(val start: Int, val end: Int, val heading: String, val listed: String)
+
+    /** Một lời chú trong sách (`importers._Unit`): các dòng của trang [page], và các dấu gọi trỏ tới nó theo thứ tự đọc. */
+    private data class Key(val page: Int, val start: Int, val end: Int) : Comparable<Key> {
+        override fun compareTo(other: Key) = compareValuesBy(this, other, Key::page, Key::start, Key::end)
+    }
+
+    private class Ref(val page: Int, val line: Int, val number: Int)
+
+    private class NoteUnit(val key: Key) {
+        val refs = mutableListOf<Ref>()
+    }
+
+    private class Notes(val found: Int, val marks: Int) {
+        val examples = mutableListOf<Pair<String, String>>()
+        val byPage = hashMapOf<Int, MutableList<NoteUnit>>() // trang -> lời chú nằm ở trang ấy
+        val byDest = hashMapOf<Int, MutableList<NoteUnit>>() // trang -> lời chú có dấu gọi đầu tiên ở trang ấy (theo thứ tự đọc)
+    }
+
+    private val REF_ORDER = compareBy<Ref>({ it.page }, { it.line }, { it.number })
+
+    /**
+     * Chú thích của cả cuốn EPUB (`importers._resolve_notes`; mọi trang đã đọc, theo thứ tự đọc): dấu gọi nào trỏ tới lời chú nào (cùng trang hay trang khác),
+     * lời chú là các dòng nào ([PageText.noteLines]), vài ví dụ cho bước xem trước. Gỡ NOTE_OPEN…NOTE_CLOSE khỏi chữ: dấu gọi đã nhận ra được bỏ chữ khi
+     * [hideMarks], còn lại giữ nguyên. Không bỏ dòng nào - chỉ số dòng của mọi trang vẫn như cũ (mục lục còn trỏ vào đó).
+     */
+    private fun resolveNotes(entries: List<Pair<String, PageText>>, hideMarks: Boolean): Notes {
+        val spans = hashMapOf<Pair<String, String>, Key>()
+        val markIds = hashSetOf<Pair<String, String>>()
+        val typed = hashSetOf<Key>()
+        for ((at, entry) in entries.withIndex()) {
+            val (path, page) = entry
+            for ((name, span) in page.spans) spans.putIfAbsent(path to name, Key(at, span.first, span.second))
+            for (mark in page.marks) if (mark.id.isNotEmpty()) markIds.add(path to mark.id)
+            for ((start, end) in page.notes) typed.add(Key(at, start, end))
+        }
+        val headingLines = entries.map { (_, page) -> page.headings.map { it.first }.toSet() }
+        val refs = linkedMapOf<Key, MutableList<Ref>>()
+        val resolved = entries.map { linkedMapOf<Int, Key>() } // trang -> {số thứ tự dấu gọi: lời chú}
+        for ((at, entry) in entries.withIndex()) {
+            val (path, page) = entry
+            val inside = page.notes + page.areas // dấu trong một lời chú (nhãn "1" quay lại chỗ gọi) không phải dấu gọi
+            for ((number, mark) in page.marks.withIndex()) {
+                if (inside.any { (start, end) -> mark.line in start until end }) continue
+                val target = mark.href.substringBefore('#')
+                val fragment = unquote(mark.href.substringAfter('#', ""))
+                val where = if (target.isNotEmpty()) normpath(join(dirname(path), unquote(target))) else path
+                val found = (if (fragment.isNotEmpty() && (where to fragment) !in markIds) spans[where to fragment] else null) ?: continue
+                if (found !in typed && (found.end - found.start > MAX_NOTE_LINES || headingLines[found.page].any { it in found.start until found.end })) continue
+                if (found.page == at && mark.line in found.start until found.end) continue
+                refs.getOrPut(found) { mutableListOf() }.add(Ref(at, mark.line, number))
+                resolved[at][number] = found
+            }
+        }
+        // Lời chú nằm gọn trong lời chú khác (<aside epub:type="footnote"><p id="fn1">…) thì là một: lấy khối ngoài; dấu gọi trỏ vào khối trong về khối ngoài.
+        val outer = hashMapOf<Key, Key>()
+        val keysByPage = hashMapOf<Int, MutableList<Key>>()
+        for (key in typed + refs.keys) keysByPage.getOrPut(key.page) { mutableListOf() }.add(key)
+        for (keys in keysByPage.values) {
+            var top: Key? = null
+            for (key in keys.sortedWith(compareBy<Key>({ it.start }, { -it.end }))) {
+                val above = top
+                if (above != null && key.end <= above.end) {
+                    outer[key] = above
+                } else {
+                    top = key
+                    outer[key] = key
+                }
+            }
+        }
+        val units = linkedMapOf<Key, NoteUnit>()
+        for (key in outer.values.toSortedSet()) units[key] = NoteUnit(key)
+        for ((key, marks) in refs) units.getValue(outer.getValue(key)).refs.addAll(marks)
+        val notes = Notes(units.size, resolved.sumOf { it.size })
+        for (unit in units.values) {
+            unit.refs.sortWith(REF_ORDER)
+            notes.byPage.getOrPut(unit.key.page) { mutableListOf() }.add(unit)
+            if (unit.refs.isNotEmpty()) notes.byDest.getOrPut(unit.refs[0].page) { mutableListOf() }.add(unit)
+        }
+        for (listed in notes.byDest.values) listed.sortWith { a, b -> REF_ORDER.compare(a.refs[0], b.refs[0]) }
+        for ((at, entry) in entries.withIndex()) {
+            val page = entry.second
+            for (number in page.lines.indices) {
+                val line = page.lines[number]
+                if (NOTE_OPEN in line) {
+                    page.lines[number] = squeeze(NOTE_SPAN.replace(line) { match ->
+                        if (hideMarks && match.groupValues[1].toInt() in resolved[at]) "" else match.groupValues[2]
+                    })
+                }
+            }
+            val flagged = hashSetOf<Int>()
+            for (unit in notes.byPage[at].orEmpty()) for (line in unit.key.start until unit.key.end) flagged.add(line)
+            for ((start, end) in page.areas) for (line in start until end) if (line !in headingLines[at]) flagged.add(line)
+            page.noteLines = flagged
+        }
+        val seen = hashSetOf<Key>()
+        for ((at, entry) in entries.withIndex()) {
+            for ((number, mark) in entry.second.marks.withIndex()) {
+                val key = resolved[at][number]?.let { outer.getValue(it) }
+                if (key == null || key in seen || notes.examples.size >= NOTE_EXAMPLES) continue
+                seen.add(key)
+                val core = mark.label.trim { it in "[]()" }
+                val joined = pyStrip(entries[key.page].second.lines.subList(key.start, key.end).joinToString(" "))
+                val text = Pattern.compile("^[\\[(]?" + Pattern.quote(core) + "[\\])]?[.:)]?\\s+", UNICODE_CLASSES).matcher(joined).replaceFirst("")
+                    .trim { it in " \u00a0\u21a9\ufe0e\ufe0f" }
+                if (text.isNotEmpty()) {
+                    val sup = if (core.isNotEmpty() && core.all { Character.isDigit(it) || it in SUPERSCRIPT }) superscript(core) else mark.label
+                    notes.examples.add(((if (mark.before.isNotEmpty()) "…" + mark.before else "") + sup) to clipTitle(text, NOTE_EXAMPLE_WIDTH))
+                }
+            }
+        }
+        return notes
+    }
+
+    /** `importers._notes_only`: trang chỉ có lời chú (và tiêu đề của nó) - chương "Endnotes": có cờ "Chú thích", không bỏ. */
+    private fun notesOnly(page: PageText): Boolean {
+        val headings = page.headings.map { it.first }.toSet()
+        return page.noteLines.any { page.lines[it].isNotEmpty() } &&
+            page.lines.withIndex().all { (line, text) -> line in page.noteLines || line in headings || text.isEmpty() }
+    }
+
+    private class PartLines(val body: List<String>, val tail: List<String>, val removed: Boolean)
+
+    /**
+     * Các dòng [start, end) của trang [at] (một chương hay cả trang) thành thân + lời chú ở cuối + có lời chú bị bỏ / dời đi (`importers._part_lines`).
+     * Lời chú nằm giữa chương đứng ở CUỐI chương, theo thứ tự trong trang - chữ không đổi, chỉ đổi chỗ. [mode]: "" như trên; "end" - lời chú của mọi dấu
+     * gọi trong chương này, cả lời chú ở trang khác (chương Endnotes), theo thứ tự dấu gọi; "drop" - bỏ lời chú.
+     */
+    private fun partLines(entries: List<Pair<String, PageText>>, notes: Notes, at: Int, start: Int, end: Int, mode: String): PartLines {
+        val page = entries[at].second
+        val lines = page.lines
+        val flagged = page.noteLines
+        val body = (start until end).filter { it !in flagged }.map { lines[it] }
+        val tail = mutableListOf<String>()
+        val touched = (start until end).any { it in flagged }
+        if (mode == "end") {
+            val covered = hashSetOf<Int>()
+            for (unit in notes.byPage[at].orEmpty()) {
+                if (unit.refs.isNotEmpty() && unit.key.start in start until end) for (line in unit.key.start until unit.key.end) covered.add(line)
+            }
+            for (unit in notes.byDest[at].orEmpty()) {
+                if (unit.refs[0].line in start until end) tail.addAll(entries[unit.key.page].second.lines.subList(unit.key.start, unit.key.end))
+            }
+            for (line in start until end) if (line in flagged && line !in covered) tail.add(lines[line])
+        } else if (mode != "drop") {
+            for (line in start until end) if (line in flagged) tail.add(lines[line])
+        }
+        return PartLines(body.filter { it.isNotEmpty() }, tail.filter { it.isNotEmpty() }, touched && (mode == "end" || mode == "drop"))
+    }
 
     private fun epubCover(zip: ZipFile, opf: Markup.Node, manifest: Map<String, ManifestItem>): Pair<ByteArray, String>? {
         var href = manifest.values.firstOrNull { "cover-image" in tokens(it.props) }?.href ?: ""
@@ -1242,7 +1549,7 @@ object BookImport {
         return zip.getInputStream(entry).use { it.readBytes() } to media
     }
 
-    private fun epub(file: File): Book = openZip(file, "EPUB").use { zip ->
+    private fun epub(file: File, choice: FootnoteChoice): Book = openZip(file, "EPUB").use { zip ->
         val container = xml(zip, "META-INF/container.xml", "EPUB")
         val opfPath = container.descendants().firstOrNull { it.local == "rootfile" }?.attr("full-path")
         if (opfPath.isNullOrEmpty()) throw broken("EPUB")
@@ -1272,6 +1579,7 @@ object BookImport {
             .flatMap { cssHidden(String(read(zip, it.href, "EPUB"), Charsets.UTF_8)) }
         var images = 0 // trang chỉ có ảnh: một ghi chú đếm, không kể tên file trong gói (mục rất ngắn: `finish` đếm)
         var missing = 0 // mục của thứ tự đọc mà gói không có (tải chưa trọn): bỏ qua + đếm, phần còn lại vẫn đọc được
+        val entries = mutableListOf<Pair<String, PageText>>() // (đường trong gói, trang) theo thứ tự đọc: chú thích cần nhìn cả cuốn trước khi dựng chương
         for (itemref in spine.children.filter { it.local == "itemref" }) {
             if ((itemref.attr("linear") ?: "yes") == "no") continue
             val item = manifest[itemref.attr("idref") ?: ""] ?: ManifestItem("", "", "")
@@ -1280,33 +1588,47 @@ object BookImport {
                 missing++
                 continue
             }
-            val page = PageText(hidden).also { it.feed(markupText(read(zip, item.href, "EPUB"))) }
+            entries.add(item.href to PageText(hidden, choice.notes == "end").also { it.feed(markupText(read(zip, item.href, "EPUB"))) })
+        }
+        val notes = resolveNotes(entries, choice.hideMarks)
+        result.footnoteFound = notes.found
+        result.footnoteMarks = notes.marks
+        result.footnoteExamples.addAll(notes.examples)
+        val stored = mutableListOf<Pair<List<String>, List<String>>>() // thân + lời chú ở cuối của từng chương trong `result.chapters` (nối file sau vào chương trước)
+        for ((at, entry) in entries.withIndex()) {
+            val (href, page) = entry
             // Nhiều chương trong MỘT file: mục lục trỏ vào các mảnh (#id) của file này thì cắt chữ tại các mảnh ấy, theo thứ tự đọc,
             // mỗi phần mang tên của mục lục. Chữ trước mảnh đầu là phần riêng (không tên) nếu không mục nào trỏ về đầu file.
-            val points = splitPoints(page, listedIn[item.href].orEmpty()).toMutableList()
+            val points = splitPoints(page, listedIn[href].orEmpty()).toMutableList()
             val parts = if (points.isNotEmpty()) {
                 if (points[0].first > 0) points.add(0, 0 to "")
                 points.mapIndexed { index, (start, label) ->
                     val end = if (index + 1 < points.size) points[index + 1].first else page.lines.size
-                    Part(page.lines.subList(start, end), page.headings.firstOrNull { it.first in start until end }?.second ?: "", label)
+                    Part(start, end, page.headings.firstOrNull { it.first in start until end }?.second ?: "", label)
                 }
             } else {
-                listOf(Part(page.lines, page.heading, titles[item.href] ?: ""))
+                listOf(Part(0, page.lines.size, page.heading, titles[href] ?: ""))
             }
-            val pageMatter = MATTER_TYPES.firstOrNull { it.first in page.types }?.second ?: nameMatter(item.href)
-            if (hasToc && points.isEmpty() && parts[0].listed.isEmpty() && pageMatter.isEmpty() && page.heading.isEmpty() && page.lines.isNotEmpty() &&
-                !isHeadingLine(page.lines[0]) && textMatter("", page.lines.joinToString("\n\n")).isEmpty() &&
-                result.chapters.isNotEmpty() && result.chapters.last().matter.isEmpty()
-            ) {
-                val last = result.chapters.removeAt(result.chapters.size - 1)
-                result.chapters.add(Chapter(last.title, (listOf(last.text).filter { it.isNotEmpty() } + page.lines).joinToString("\n\n"), last.short, last.name, last.matter))
-                continue
-            }
+            val pageMatter = MATTER_TYPES.firstOrNull { it.first in page.types }?.second
+                ?: nameMatter(href).ifEmpty { if (points.isEmpty() && notesOnly(page)) "Chú thích" else "" }
             for (part in parts) {
-                var lines: List<String> = part.lines
+                val taken = partLines(entries, notes, at, part.start, part.end, choice.notes)
+                var body = taken.body
+                var tail = taken.tail
+                var lines = body + tail
                 val heading = part.heading
                 val listed = part.listed
-                if (lines.isEmpty() && page.images > 0 && points.isEmpty()) {
+                if (hasToc && points.isEmpty() && listed.isEmpty() && pageMatter.isEmpty() && page.heading.isEmpty() && lines.isNotEmpty() &&
+                    !isHeadingLine(lines[0]) && textMatter("", lines.joinToString("\n\n")).isEmpty() &&
+                    result.chapters.isNotEmpty() && result.chapters.last().matter.isEmpty()
+                ) {
+                    val merged = Pair(stored.last().first + body, stored.last().second + tail)
+                    stored[stored.size - 1] = merged
+                    val last = result.chapters.removeAt(result.chapters.size - 1)
+                    result.chapters.add(Chapter(last.title, (merged.first + merged.second).filter { it.isNotEmpty() }.joinToString("\n\n"), last.short, last.name, last.matter))
+                    continue
+                }
+                if (lines.isEmpty() && page.images > 0 && points.isEmpty() && !taken.removed) {
                     images++
                     continue
                 }
@@ -1318,11 +1640,15 @@ object BookImport {
                 // hay lấy nó làm tên khi nó đầy đủ hơn tên mục lục - không để người nghe nghe tên chương hai lần.
                 if (first == casefold(title) || (heading.isNotEmpty() && first == casefold(heading) && casefold(title).contains(first))) {
                     lines = lines.drop(1)
+                    if (body.isNotEmpty()) body = body.drop(1) else tail = tail.drop(1)
                 } else if (heading.isNotEmpty() && first == casefold(heading) && first.contains(casefold(title))) {
                     title = lines[0]
                     lines = lines.drop(1)
+                    if (body.isNotEmpty()) body = body.drop(1) else tail = tail.drop(1)
                 }
+                if (taken.removed && lines.isEmpty()) continue // trang chỉ có lời chú (chương Endnotes) mà lời chú đã đặt về chương của chúng / bị bỏ: không còn gì
                 result.chapters.add(Chapter(title, lines.joinToString("\n\n"), short = isShort, matter = pageMatter))
+                stored.add(body to tail)
             }
         }
         if (images > 0) result.notes.add("Bỏ qua $images trang chỉ có ảnh.")
@@ -1367,6 +1693,9 @@ object BookImport {
                 "w:t" -> lines[lines.size - 1] += child.text
                 "w:tab" -> lines[lines.size - 1] += " "
                 "w:noBreakHyphen" -> lines[lines.size - 1] += "-"
+                // chữ của lời chú ở footnotes.xml / endnotes.xml: giữ chỗ để biết dấu gọi ở đâu
+                "w:footnoteReference", "w:endnoteReference" ->
+                    lines[lines.size - 1] += NOTE_OPEN + (if (child.name == "w:footnoteReference") "f" else "e") + (child.attr("id") ?: "") + NOTE_CLOSE
                 "w:br" -> if ((child.attr("type") ?: "textWrapping") == "textWrapping") lines.add("") else {
                     val nested = docxText(child)
                     lines[lines.size - 1] += nested[0]
@@ -1422,9 +1751,33 @@ object BookImport {
         }
     }
 
-    private fun docx(file: File): Book = openZip(file, "DOCX").use { zip ->
+    /** Một dòng của tài liệu Word: cấp tiêu đề (0 là chữ thường), dòng, cả đoạn in đậm, là lời chú đặt về cuối chương. */
+    private class Item(val level: Int, val line: String, val bold: Boolean, val note: Boolean)
+
+    /** `importers._docx_notes`: lời chú Word {("f" | "e", id): các dòng} từ word/footnotes.xml và word/endnotes.xml (bỏ separator / continuationSeparator).
+     *  Phần hỏng hay thiếu: bỏ qua. */
+    private fun docxNotes(zip: ZipFile): Map<Pair<String, String>, List<String>> {
+        val notes = hashMapOf<Pair<String, String>, List<String>>()
+        for ((key, kind, part) in listOf(Triple("f", "w:footnote", "word/footnotes.xml"), Triple("e", "w:endnote", "word/endnotes.xml"))) {
+            if (member(zip, part) == null) continue
+            val root = try {
+                xml(zip, part, "DOCX")
+            } catch (_: Failed) {
+                continue
+            }
+            for (note in root.descendants().filter { it.name == kind }) {
+                if ((note.attr("type") ?: "normal") != "normal") continue
+                val lines = docxParagraphs(note).flatMap { paragraph -> docxText(paragraph).map { words(it) } }.filter { it.isNotEmpty() }.toList()
+                if (lines.isNotEmpty()) notes[key to (note.attr("id") ?: "")] = lines
+            }
+        }
+        return notes
+    }
+
+    private fun docx(file: File, choice: FootnoteChoice): Book = openZip(file, "DOCX").use { zip ->
         val document = xml(zip, "word/document.xml", "DOCX")
         val styles = docxStyles(zip)
+        val wordNotes = docxNotes(zip)
         var metaTitle: String? = null
         var metaAuthor: String? = null
         var metaLanguage: String? = null
@@ -1435,9 +1788,12 @@ object BookImport {
             metaLanguage = metaText(core, "language")
         }
         val body = document.children.firstOrNull { it.name == "w:body" } ?: throw broken("DOCX")
-        val items = mutableListOf<Triple<Int, String, Boolean>>() // (cấp tiêu đề - 0 là chữ thường, dòng, cả đoạn in đậm)
+        val items = mutableListOf<Item>()
         var bookTitle: String? = null
         var tocLines = 0
+        val cited = hashSetOf<Pair<String, String>>() // lời chú đã có dấu gọi (mỗi lời chú một lần)
+        val examples = mutableListOf<Pair<String, String>>()
+        var references = 0 // số dấu gọi đã gặp: số thứ tự Word đánh cho chú thích
         for (paragraph in docxParagraphs(body)) {
             val styleNode = paragraph.children.firstOrNull { it.name == "w:pPr" }?.children?.firstOrNull { it.name == "w:pStyle" }
             val styleId = styleNode?.attr("val") ?: ""
@@ -1450,18 +1806,36 @@ object BookImport {
             }
             val level = HEADING_LEVELS[style] ?: 0
             val bold = docxBold(paragraph)
-            for (line in joinWrapped(docxText(paragraph).map { words(it) })) {
-                if (line.isEmpty()) continue
-                if (level == 0 && style == "title" && bookTitle == null) bookTitle = line
-                items.add(Triple(level, line, bold))
+            for (raw in joinWrapped(docxText(paragraph).map { words(it) })) {
+                val line = DOCX_REF.replace(raw, "")
+                val cites = mutableListOf<Pair<String, String>>()
+                for (match in DOCX_REF.findAll(raw)) {
+                    val key = match.groupValues[1] to match.groupValues[2]
+                    references++
+                    val noteLines = wordNotes[key]
+                    if (noteLines != null && key !in cited) {
+                        cited.add(key)
+                        cites.add(key)
+                        if (examples.size < NOTE_EXAMPLES) {
+                            val before = noteContext(DOCX_REF.replace(raw.substring(0, match.range.first), ""))
+                            examples.add(((if (before.isNotEmpty()) "…$before" else "") + superscript(references.toString())) to clipTitle(noteLines.joinToString(" "), NOTE_EXAMPLE_WIDTH))
+                        }
+                    }
+                }
+                if (line.isNotEmpty()) {
+                    if (level == 0 && style == "title" && bookTitle == null) bookTitle = line
+                    items.add(Item(level, line, bold, false))
+                }
+                // lời chú Word (chưa từng vào sách): đề xuất, tích mới đưa về cuối chương chứa dấu gọi
+                if (choice.notes == "end") for (key in cites) for (text in wordNotes.getValue(key)) items.add(Item(0, text, false, true))
             }
         }
-        val levels = items.map { it.first }.filter { it != 0 }
-        var lines = items.toList()
+        val levels = items.map { it.level }.filter { it != 0 }
+        var lines: List<Item> = items.toList()
         val chapterLevels = when {
             // Heading 1 duy nhất, ở đầu, không phải "Chương N": tên sách. Chương theo cấp kế (Heading 2), không có thì dòng "Chương N" / đậm.
-            levels.count { it == 1 } == 1 && items.size > 1 && items[0].first == 1 && !isHeadingLine(items[0].second) -> {
-                bookTitle = bookTitle ?: items[0].second
+            levels.count { it == 1 } == 1 && items.size > 1 && items[0].level == 1 && !isHeadingLine(items[0].line) -> {
+                bookTitle = bookTitle ?: items[0].line
                 lines = items.drop(1)
                 setOf(2)
             }
@@ -1469,20 +1843,29 @@ object BookImport {
             else -> setOf(1, 2)
         }
         val result = Book(metaTitle ?: bookTitle ?: titleFromFilename(stemOf(file.name)), author = metaAuthor, language = metaLanguage)
+        result.footnoteFound = cited.size
+        result.footnoteExamples.addAll(examples)
         if (tocLines > 0) result.notes.add("Bỏ qua mục lục của tài liệu ($tocLines dòng).")
-        if (lines.none { it.first in chapterLevels }) {
+        if (lines.none { it.level in chapterLevels }) {
             // Không có kiểu Heading: tách theo dòng "Chương N" (như PDF), và dòng in đậm "I. KHỞI ĐẦU" khi có từ hai dòng như thế.
-            val roman = lines.indices.filter { lines[it].third && isHeadingLine(lines[it].second, BOLD_ROMAN) }
-            val (chapters, notes) = splitOnHeadings(lines.map { it.second }, result.title, if (roman.size >= 2) roman.toSet() else emptySet())
+            val roman = lines.indices.filter { lines[it].bold && isHeadingLine(lines[it].line, BOLD_ROMAN) }
+            val (chapters, notes) = splitOnHeadings(
+                lines.map { it.line }, result.title, if (roman.size >= 2) roman.toSet() else emptySet(), lines.indices.filter { lines[it].note }.toSet(),
+            )
             result.chapters.addAll(chapters)
             result.notes.addAll(notes)
         } else {
-            val sections = mutableListOf<Pair<String?, MutableList<String>>>(null to mutableListOf())
-            for ((level, line) in lines) if (level in chapterLevels) sections.add(line to mutableListOf()) else sections.last().second.add(line)
-            for ((title, paragraphs) in sections) {
+            class Section(val title: String?, val paragraphs: MutableList<String> = mutableListOf(), val tail: MutableList<String> = mutableListOf())
+            val sections = mutableListOf(Section(null))
+            for (item in lines) {
+                if (item.level in chapterLevels) sections.add(Section(item.line)) else (if (item.note) sections.last().tail else sections.last().paragraphs).add(item.line)
+            }
+            for (section in sections) {
+                val title = section.title
+                val text = (section.paragraphs + section.tail).joinToString("\n\n")
                 when {
-                    title == null -> if (paragraphs.isNotEmpty()) result.chapters.add(Chapter(PREAMBLE, paragraphs.joinToString("\n\n")))
-                    paragraphs.isNotEmpty() -> result.chapters.add(Chapter(title, paragraphs.joinToString("\n\n")))
+                    title == null -> if (section.paragraphs.isNotEmpty()) result.chapters.add(Chapter(PREAMBLE, text))
+                    section.paragraphs.isNotEmpty() -> result.chapters.add(Chapter(title, text))
                     else -> result.notes.add("Bỏ qua mục trống: $title")
                 }
             }
@@ -1518,20 +1901,24 @@ object BookImport {
 
     internal fun isHeadingLine(line: String, pattern: Pattern = HEADING): Boolean = cpLen(pyStrip(line)) <= MAX_HEADING && pattern.matcher(line).lookingAt()
 
-    /** `importers._split_on_headings`; `extra`: số thứ tự các dòng cũng là tiêu đề (DOCX: dòng in đậm "I. KHỞI ĐẦU"). */
-    private fun splitOnHeadings(paragraphs: List<String>, bookTitle: String, extra: Set<Int> = emptySet()): Pair<List<Chapter>, List<String>> {
+    /** `importers._split_on_headings`; `extra`: số thứ tự các dòng cũng là tiêu đề (DOCX: dòng in đậm "I. KHỞI ĐẦU"). `noteLines`: số thứ tự các dòng là
+     *  lời chú (DOCX, người nghe tích đọc lời chú): không bao giờ là tiêu đề, và đứng ở cuối chương. */
+    private fun splitOnHeadings(
+        paragraphs: List<String>, bookTitle: String, extra: Set<Int> = emptySet(), noteLines: Set<Int> = emptySet(),
+    ): Pair<List<Chapter>, List<String>> {
         val chapters = mutableListOf<Chapter>()
         val notes = mutableListOf<String>()
         var title: String? = null
         var body = mutableListOf<String>()
-        val headings = paragraphs.mapIndexed { index, paragraph -> isHeadingLine(paragraph) || index in extra }
+        var tail = mutableListOf<String>()
+        val headings = paragraphs.mapIndexed { index, paragraph -> index !in noteLines && (isHeadingLine(paragraph) || index in extra) }
         val anyHeading = headings.any { it }
 
         fun close() {
             val current = title
             when {
-                current == null -> if (body.isNotEmpty()) chapters.add(Chapter(if (anyHeading) PREAMBLE else bookTitle, body.joinToString("\n\n")))
-                body.isNotEmpty() -> chapters.add(Chapter(current, body.joinToString("\n\n")))
+                current == null -> if (body.isNotEmpty()) chapters.add(Chapter(if (anyHeading) PREAMBLE else bookTitle, (body + tail).joinToString("\n\n")))
+                body.isNotEmpty() -> chapters.add(Chapter(current, (body + tail).joinToString("\n\n")))
                 else -> notes.add("Bỏ qua mục trống: $current")
             }
         }
@@ -1541,8 +1928,9 @@ object BookImport {
                 close()
                 title = pyStrip(paragraph)
                 body = mutableListOf()
+                tail = mutableListOf()
             } else {
-                body.add(paragraph)
+                (if (index in noteLines) tail else body).add(paragraph)
             }
         }
         close()

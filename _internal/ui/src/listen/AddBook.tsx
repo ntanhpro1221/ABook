@@ -19,20 +19,25 @@ import {
   waitingAfter,
   type QueueItem,
 } from "./importQueue";
+import { FootnoteChoices } from "./FootnoteChoices";
 import { groupSuggestions, setSkipLine, SuggestionChoices } from "./ReadingSuggestions";
 import { useSource } from "./source";
 import {
   chapterPicks,
   defaultPicked,
+  footnotesToSend,
   isBookFile,
   isDefaultPick,
+  NO_FOOTNOTES,
   pickedSuggestions,
   pickedTotals,
   readPreview,
   renameChapter,
+  sameRows,
   splitLabel,
   type ChapterNames,
   type AddedBook,
+  type FootnoteChoice,
   type ImportChoice,
   type ImportKind,
   type ImportPreview,
@@ -116,6 +121,8 @@ export function AddBookDialog({
   // File TXT cả truyện: "Tách theo N dòng “Chương N”" - tích sẵn khi máy chắc (`splitIsSure`: từ 3 dòng), không thì chỉ đề xuất; bỏ tích được,
   // file của người dùng không bị sửa.
   const [split, setSplit] = useState(false);
+  // Chú thích trong sách (EPUB / DOCX): đề xuất "Không đọc số", "Đọc lời chú ở cuối chương" / "Bỏ lời chú" - mặc định không tích gì, sách giữ nguyên như file.
+  const [footnotes, setFootnotes] = useState<FootnoteChoice>(NO_FOOTNOTES);
   // Chương nào vào sách (số thứ tự hàng của bước xem trước) và tên người dùng đã đổi. Mặc định như máy đề xuất: mọi chương trừ mục rất ngắn.
   const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());
   const [names, setNames] = useState<ChapterNames>({});
@@ -145,6 +152,7 @@ export function AddBookDialog({
     setTitle("");
     setSkipped(new Set());
     setSplit(false);
+    setFootnotes(NO_FOOTNOTES);
     setPicked(new Set());
     setNames({});
   };
@@ -184,6 +192,7 @@ export function AddBookDialog({
     setPicked(defaultPicked(result.chapters));
     setTitle(result.title);
     setSplit(sure);
+    setFootnotes(NO_FOOTNOTES);
   };
   const read = async (picked: ImportChoice) => {
     if (onBookFile && isBookFile(picked.ref)) {
@@ -289,24 +298,30 @@ export function AddBookDialog({
     await goNext(plan.items);
   };
   readInitial.current = (value) => (Array.isArray(value) ? startPicked(value) : read(value));
-  // Tích / bỏ tích "Tách thành N chương": đọc lại file với lựa chọn mới, danh sách chương xem trước đổi theo. Tên sách người dùng đã sửa giữ
-  // nguyên; gợi ý ghi công, chương đã bỏ tích và tên chương đã đổi đặt lại vì danh sách chương đã khác.
-  const changeSplit = async (on: boolean) => {
+  // Tích / bỏ tích "Tách thành N chương" hay một đề xuất về chú thích: đọc lại file với lựa chọn mới, danh sách chương xem trước đổi theo. Tên sách
+  // người dùng đã sửa giữ nguyên; gợi ý ghi công, chương đã bỏ tích và tên chương đã đổi đặt lại vì danh sách chương đã khác (còn giữ khi danh
+  // sách chương vẫn y như trước - chú thích chỉ đổi chữ trong chương).
+  const reread = async (next: { split: boolean; footnotes: FootnoteChoice }) => {
     if (!choice) return;
     setBusy("reading");
     try {
-      const result = await importer.preview(choice, { splitChapters: on });
+      const result = await importer.preview(choice, { splitChapters: next.split, footnotes: footnotesToSend(next.footnotes) });
+      if (!(preview && sameRows(preview.chapters, result.chapters))) {
+        setPicked(defaultPicked(result.chapters));
+        setNames({});
+        setSkipped(new Set());
+      }
       setPreview(result);
-      setPicked(defaultPicked(result.chapters));
-      setNames({});
-      setSplit(on);
-      setSkipped(new Set());
+      setSplit(next.split);
+      setFootnotes(next.footnotes);
     } catch (error) {
       toast.error("Chưa đọc lại được file", { description: (error as Error).message });
     } finally {
       setBusy(null);
     }
   };
+  const changeSplit = (on: boolean) => reread({ split: on, footnotes });
+  const changeFootnotes = (next: FootnoteChoice) => reread({ split, footnotes: next });
   const choose = async (kind: ImportKind) => {
     if (!importer.choose) return;
     lastKind.current = kind;
@@ -343,7 +358,11 @@ export function AddBookDialog({
   };
   // Thêm cuốn đang xem đúng như người dùng thấy (tên, chương đã tích, gợi ý đã chọn).
   const addCurrent = async (separate: boolean): Promise<AddedBook> => {
-    const added = await importer.add(choice!, title.trim(), separate, { splitChapters: split, chapters: chapterPicks(preview!.chapters, picked, names) });
+    const added = await importer.add(choice!, title.trim(), separate, {
+      splitChapters: split,
+      footnotes: footnotesToSend(footnotes),
+      chapters: chapterPicks(preview!.chapters, picked, names),
+    });
     // Gợi ý người nghe đã chọn: bỏ dòng ấy khỏi phần đọc của cuốn mới (chữ trong sách không đổi). Hỏng thì sách vẫn đã vào thư
     // viện - gợi ý còn chờ ở trang sách.
     if (added.how === "new") {
@@ -634,6 +653,7 @@ export function AddBookDialog({
               {notes.length > 6 && <p className="mt-1">…và {notes.length - 6} ghi chú nữa.</p>}
             </div>
           )}
+          {preview.footnotes && <FootnoteChoices offer={preview.footnotes} value={footnotes} disabled={busy !== null} onChange={(next) => void changeFootnotes(next)} />}
           {groups.length > 0 && (
             <div className="mt-3 rounded-xl border border-line bg-hover p-3">
               <p className="text-xs font-medium">Gợi ý cho phần đọc - ABook không tự sửa chữ của truyện</p>

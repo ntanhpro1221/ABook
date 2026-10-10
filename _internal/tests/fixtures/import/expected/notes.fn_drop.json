@@ -1,0 +1,35 @@
+{
+ "title": "notes",
+ "author": null,
+ "language": null,
+ "cover": null,
+ "chapters": [
+  {
+   "title": "Chương 1: Bến đò",
+   "text": "Con đò cập bến sau cơn mưa rồi người lái đò buộc dây.\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nKhách xuống đò từng người một, không ai nói gì."
+  },
+  {
+   "title": "Chương 2: Mưa",
+   "text": "Mưa rơi suốt đêm trên mái tôn.\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nRồi trời tạnh."
+  }
+ ],
+ "notes": [],
+ "footnotes": {
+  "found": 4,
+  "marks": 0,
+  "examples": [
+   {
+    "mark": "…đò cập bến sau cơn mưa¹",
+    "note": "Lời chú thứ nhất."
+   },
+   {
+    "mark": "…xuống đò từng người một²",
+    "note": "Lời chú thứ hai."
+   },
+   {
+    "mark": "…Mưa rơi suốt đêm³",
+    "note": "Lời chú cuối sách về cơn mưa."
+   }
+  ]
+ }
+}

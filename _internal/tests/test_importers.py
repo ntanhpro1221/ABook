@@ -472,3 +472,91 @@ def test_clip_title_agrees_with_the_shared_table_and_the_long_first_line_fixture
     long_first = [c.title for c in importers.import_text(FIXTURES / "split.epub").chapters if c.title.endswith("…")]
     assert len(long_first) == 1 and len(long_first[0]) <= importers.TITLE_FROM_LINE + 1, "tên từ dòng đầu dài quá 80 ký tự: cắt ở ranh giới từ + …"
     assert long_first[0].startswith("Lời dẫn dài") and long_first[0].endswith("trong…"), long_first  # không còn "…mụ" cắt ngang từ
+
+
+# --- Chú thích trong sách nhập: đề xuất, mặc định không áp -----------------------------------------------------------------
+
+def read_notes(name: str, **choice: object) -> importers.ImportedBook:
+    return importers.import_text(FIXTURES / name, keep_short=True, footnotes=importers.footnote_choice_from_json(choice or None))
+
+
+def lines_of(chapter: importers.Chapter) -> list[str]:
+    return chapter.text.split("\n\n")
+
+
+@pytest.mark.parametrize("name", list(shared.NOTE_BOOKS))
+def test_footnote_books_give_the_expected_book_by_default_and_with_every_choice(name: str) -> None:
+    stem = name.rsplit(".", 1)[0]
+    assert importers.import_text(FIXTURES / name).to_dict() == expected(stem)
+    for label, choice in shared.NOTE_CHOICES.items():
+        book = importers.import_text(FIXTURES / name, footnotes=importers.footnote_choice_from_json(choice))
+        assert book.to_dict() == expected(f"{stem}.{label}"), label
+
+
+def test_by_default_a_footnote_in_the_middle_of_a_chapter_only_moves_to_its_end_and_every_word_stays() -> None:
+    book = read_notes("notes3.epub")
+    first, second = (lines_of(chapter) for chapter in book.chapters)
+    assert first[-2:] == ["1. Lời chú thứ nhất đứng giữa chương.", "2. Lời chú thứ hai đứng cuối chương."], "lời chú giữa chương xuống cuối, theo thứ tự gặp"
+    assert first[0] == "Con đò cập bến sau cơn mưa 1 và người lái đò buộc dây vào cọc." and "Khách xuống đò [2] từng người một." in first, "số chú thích vẫn đọc"
+    assert second[-1] == "* Lời chú thứ ba, dùng vai ARIA." and second[-2] == "Rồi trời tạnh hẳn."
+    raw = [line for chapter in book.chapters for line in lines_of(chapter)]
+    assert len(raw) == 9 and book.footnote_found == 3 and book.footnote_marks == 3
+    assert [mark for mark, _note in book.footnote_examples] == ["…đò cập bến sau cơn mưa¹", "…Khách xuống đò²", "…Mưa rơi suốt đêm*"]
+    assert book.footnote_examples[0][1] == "Lời chú thứ nhất đứng giữa chương.", "ví dụ bỏ nhãn đầu lời chú"
+
+
+def test_hiding_the_marks_only_drops_recognised_note_numbers_and_the_notes_stay() -> None:
+    marks = read_notes("notes3.epub", hideMarks=True)
+    lines = lines_of(marks.chapters[0])
+    assert lines[0] == "Con đò cập bến sau cơn mưa và người lái đò buộc dây vào cọc." and "Khách xuống đò từng người một." in lines
+    assert lines[-2:] == read_notes("notes3.epub").chapters[0].text.split("\n\n")[-2:], "lời chú còn nguyên"
+    glued = importers.import_text(FIXTURES / "glued.epub", footnotes=importers.FootnoteChoice(hide_marks=True))
+    assert glued.to_dict() == expected("glued"), "<sup>1</sup> không phải liên kết tới lời chú thì không phải dấu gọi: không đụng"
+
+
+def test_a_footnote_chapter_is_kept_but_unticked_and_the_listener_may_read_the_notes_at_the_end_of_each_chapter() -> None:
+    book = read_notes("endnotes.epub")
+    assert [chapter.title for chapter in book.chapters] == ["Chương 1: Bến đò", "Chương 2: Mưa", "Endnotes"]
+    assert book.chapters[2].matter == "Chú thích" and [number for number, _name in importers.default_picks(book)] == [1, 2], "có cờ, không bỏ"
+    assert "Lời chú một, về con đò. ↩︎" in lines_of(book.chapters[2]), "mặc định giữ nguyên chữ của chương Endnotes"
+    ended = read_notes("endnotes.epub", notes="end", hideMarks=True)
+    assert [chapter.title for chapter in ended.chapters] == ["Chương 1: Bến đò", "Chương 2: Mưa"], "Endnotes hết lời chú thì không còn chương"
+    assert lines_of(ended.chapters[0])[-1] == "Lời chú một, về con đò." and lines_of(ended.chapters[1])[-2:] == ["Lời chú hai, về cơn mưa.", "Lời chú ba, về ngọn gió."]
+    assert "↩" not in "".join(chapter.text for chapter in ended.chapters), "nút quay lại không phải chữ truyện"
+    assert lines_of(ended.chapters[1])[0] == "Mưa rơi suốt đêm, gió thổi mạnh."
+
+
+def test_dropping_the_notes_removes_them_everywhere_and_ticking_nothing_gives_the_book_back() -> None:
+    dropped = read_notes("endnotes.epub", notes="drop")
+    assert [chapter.title for chapter in dropped.chapters] == ["Chương 1: Bến đò", "Chương 2: Mưa"]
+    assert "Lời chú" not in "".join(chapter.text for chapter in dropped.chapters) and "Con đò đã cũ 1," in dropped.chapters[0].text, "số vẫn đọc nếu không tích"
+    for name in shared.NOTE_BOOKS:
+        assert read_notes(name, notes="").to_dict() == read_notes(name).to_dict(), name
+    calibre = read_notes("notes2.epub", notes="end")
+    assert [chapter.title for chapter in calibre.chapters] == ["Chương 1: Bến đò", "Chương 2: Mưa"], "trang Chú thích riêng hết lời chú"
+    assert lines_of(calibre.chapters[1])[-2:] == ["1. Lời chú về mưa.", "2. Lời chú về gió."]
+    assert read_notes("notes2.epub").chapters[2].matter == "Chú thích"
+
+
+def test_word_footnotes_never_reach_the_text_unless_the_listener_asks_for_them_at_the_end_of_the_chapter() -> None:
+    plain = read_notes("notes.docx")
+    assert "Lời chú" not in "".join(chapter.text for chapter in plain.chapters) and plain.footnote_found == 4 and plain.footnote_marks == 0
+    assert read_notes("notes.docx", notes="drop").to_dict() == plain.to_dict()
+    ended = read_notes("notes.docx", notes="end")
+    assert lines_of(ended.chapters[0])[-2:] == ["Lời chú thứ nhất.", "Lời chú thứ hai."]
+    assert lines_of(ended.chapters[1])[-2:] == ["Lời chú cuối sách về cơn mưa.", "Lời chú thứ tư."], "chú thích cuối trang và cuối sách theo thứ tự dấu gọi"
+    assert next(mark for mark, _note in plain.footnote_examples) == "…đò cập bến sau cơn mưa¹"
+
+
+def test_text_and_pdf_sources_have_no_footnote_proposal_and_a_bracketed_number_in_a_txt_stays() -> None:
+    txt = importers.import_text(FIXTURES / "whole.txt", footnotes=importers.FootnoteChoice(hide_marks=True, notes="drop"))
+    assert txt.to_dict() == expected("whole") and txt.footnote_found == 0
+    assert "footnotes" not in importers.import_text(FIXTURES / "epub3.epub").to_dict()
+
+
+def test_a_footnote_choice_that_makes_no_sense_is_refused() -> None:
+    assert importers.footnote_choice_from_json(None) == importers.FootnoteChoice()
+    assert importers.footnote_choice_from_json({"hideMarks": True, "notes": "end"}) == importers.FootnoteChoice(True, "end")
+    for bad in ("end", {"notes": "all"}, {"hideMarks": "yes"}, {"notes": 1}, [1]):
+        with pytest.raises(importers.ImportFailed, match="chú thích"):
+            importers.footnote_choice_from_json(bad)

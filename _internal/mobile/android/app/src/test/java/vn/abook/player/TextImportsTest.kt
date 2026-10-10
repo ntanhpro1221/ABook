@@ -104,6 +104,26 @@ class TextImportsTest {
     }
 
     @Test
+    fun the_preview_offers_the_footnotes_it_found_and_the_book_follows_only_what_the_listener_ticked() {
+        val plain = TextImports.preview(stageFile("endnotes.epub").ref)
+        val offer = plain.getJSONObject("footnotes")
+        assertEquals(3, offer.getInt("found"))
+        assertEquals(3, offer.getInt("marks"))
+        assertEquals(3, offer.getJSONArray("examples").length())
+        val rows = plain.getJSONArray("chapters")
+        assertEquals(listOf("Chương 1: Bến đò", "Chương 2: Mưa", "Endnotes"), (0 until rows.length()).map { rows.getJSONObject(it).getString("title") })
+        assertEquals("mặc định giữ chương Endnotes, chưa tích", listOf(true, true, false), (0 until rows.length()).map { rows.getJSONObject(it).getBoolean("included") })
+        assertEquals("Chú thích", rows.getJSONObject(2).getString("matter"))
+
+        val choice = BookImport.footnoteChoiceFromJson(JSONObject("""{"hideMarks": true, "notes": "end"}"""))
+        val ticked = TextImports.preview(stageFile("endnotes.epub").ref, footnotes = choice)
+        val tickedRows = ticked.getJSONArray("chapters")
+        assertEquals(listOf("Chương 1: Bến đò", "Chương 2: Mưa"), (0 until tickedRows.length()).map { tickedRows.getJSONObject(it).getString("title") })
+        assertEquals(offer.toString(), ticked.getJSONObject("footnotes").toString())
+        assertFalse("sách không có chú thích thì không có đề xuất", TextImports.preview(stageFile("epub3.epub").ref).has("footnotes"))
+    }
+
+    @Test
     fun the_preview_already_knows_the_book_is_there_and_a_separate_copy_can_still_be_added() {
         val first = TextImports.create(stageFile("epub3.epub").ref.also { TextImports.preview(it) }, "", cache)
         val again = stageFile("epub3.epub")

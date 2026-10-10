@@ -1,0 +1,40 @@
+{
+ "title": "Chú thích kiểu Calibre",
+ "author": null,
+ "language": "vi",
+ "cover": null,
+ "chapters": [
+  {
+   "title": "Chương 1: Bến đò",
+   "text": "Con đò cập bến sau cơn mưa 1 rồi đi tiếp.\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\n1. Lời chú một của chương một."
+  },
+  {
+   "title": "Chương 2: Mưa",
+   "text": "Mưa rơi 1 suốt đêm.\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nGió thổi 2 mạnh."
+  },
+  {
+   "title": "Chú thích",
+   "text": "1. Lời chú về mưa.\n\n2. Lời chú về gió.",
+   "matter": "Chú thích"
+  }
+ ],
+ "notes": [],
+ "footnotes": {
+  "found": 3,
+  "marks": 3,
+  "examples": [
+   {
+    "mark": "…đò cập bến sau cơn mưa¹",
+    "note": "Lời chú một của chương một."
+   },
+   {
+    "mark": "…Mưa rơi¹",
+    "note": "Lời chú về mưa."
+   },
+   {
+    "mark": "…Gió thổi²",
+    "note": "Lời chú về gió."
+   }
+  ]
+ }
+}

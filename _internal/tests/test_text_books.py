@@ -617,3 +617,29 @@ def test_the_preview_knows_the_same_file_was_added_before_whatever_chapters_were
     # "Thêm bản riêng" cũng nhớ nguồn; đổi tên sách thì tên hiện ra là tên người nghe đặt
     book_edits.set_title(studio._listenable(first["id"]), "Tên tôi đặt")
     assert studio.preview_text_book(source)["sameSource"]["title"] == "Tên tôi đặt"
+
+
+def test_the_preview_offers_the_footnotes_it_found_and_the_book_follows_only_what_the_listener_ticked(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    server = Server(studio, port=0).start()
+    source = str(IMPORTS / "endnotes.epub")
+    try:
+        plain = json.loads(_request(server.port, "POST", "/api/listen/import/preview", headers=TOKEN, body={"path": source})[1])
+        ticked = json.loads(_request(server.port, "POST", "/api/listen/import/preview", headers=TOKEN,
+                                     body={"path": source, "footnotes": {"hideMarks": True, "notes": "end"}})[1])
+        bad = _request(server.port, "POST", "/api/listen/import/preview", headers=TOKEN, body={"path": source, "footnotes": {"notes": "mọi thứ"}})
+        added = json.loads(_request(server.port, "POST", "/api/listen/import", headers=TOKEN,
+                                    body={"path": source, "footnotes": {"hideMarks": True, "notes": "end"}})[1])
+    finally:
+        server.stop()
+    assert plain["footnotes"]["found"] == 3 and plain["footnotes"]["marks"] == 3 and len(plain["footnotes"]["examples"]) == 3, "tìm thấy, kèm ví dụ"
+    assert [(row["title"], row["included"], row.get("matter")) for row in plain["chapters"]] == [
+        ("Chương 1: Bến đò", True, None), ("Chương 2: Mưa", True, None), ("Endnotes", False, "Chú thích")], "mặc định giữ chương Endnotes, chưa tích"
+    assert [row["title"] for row in ticked["chapters"]] == ["Chương 1: Bến đò", "Chương 2: Mưa"] and ticked["footnotes"] == plain["footnotes"]
+    assert bad[0] == 400 and "chú thích" in json.loads(bad[1])["error"]
+    assert added["chapters"] == 2
+    text = (studio._listenable(added["id"]) / "texts" / "1.txt").read_text(encoding="utf-8")
+    assert text.endswith("Lời chú một, về con đò.\n") and "Con đò đã cũ, nhưng" in text
+    again = studio.add_text_book(source)
+    assert again["how"] == "new" and "Con đò đã cũ 1," in (studio._listenable(again["id"]) / "texts" / "1.txt").read_text(encoding="utf-8"), "không tích gì: như trong sách"
+    assert "footnotes" not in studio.preview_text_book(str(IMPORTS / "epub3.epub")), "sách không có chú thích thì không có đề xuất"
