@@ -46,7 +46,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tab Nhân vật: dưới hàng "Người kể chuyện" nói giọng kể đổi ở đâu (cuốn chưa chạy có nút "Đổi giọng kể") hay vì sao không đổi được.
 - Hộp "Xuất…" của dự án có thêm "Sách nói M4B". Tên chương tự đặt từ dòng đầu của file không còn bị cắt giữa từ (nhập EPUB cũng vậy, máy tính và điện thoại cắt giống nhau). Tab "Cần nghe lại" của cuốn chưa thu âm ghi "chưa có câu nào để kiểm".
 - Trang dự án đã bị xoá hiện "Dự án này không còn" và thôi hỏi máy chủ; phần nào của trang bị lỗi thì máy chủ trả lời gì hiện lên trang và nhịp hỏi lại thưa dần.
-- Xoá một dự án hay bỏ một cuốn nhập từ file `.abook` khỏi thư viện có nút "Hoàn tác" trong 30 giây (lỡ tay thì cuốn về đúng chỗ cũ); hết hạn, hay lúc mở / đóng app, cuốn vào Thùng rác của Windows như trước.
+- Xoá một dự án hay bỏ một cuốn nhập từ file `.abook` khỏi thư viện có nút "Hoàn tác" trong 30 giây (lỡ tay thì cuốn về đúng chỗ cũ); hết hạn, hay lúc mở / đóng app, cuốn vào Thùng rác của Windows như trước. Mở lại đúng file `.abook` vừa bỏ trong 30 giây, đổi thư mục thư viện giữa chừng, hay Thùng rác lỗi giữa hai bước đều không làm cuốn đã xoá kẹt lại hay sống lại; cuốn quá lớn so với Thùng rác (Windows sẽ hỏi "xoá hẳn") được hỏi ngay lúc bấm xoá, bấm "Không" thì cuốn ở nguyên chỗ cũ, và đóng app không bao giờ hiện hộp ấy. Ctrl+lăn trên hàng tab là phóng to của trình duyệt, không bị hàng tab nuốt; ghép với chính máy này gõ bằng tên máy (`.local`) hay địa chỉ IPv6 cũng bị từ chối.
 
 ### Nghe ngay (điện thoại)
 
