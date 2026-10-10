@@ -79,6 +79,11 @@ def main() -> None:
             if any(newest[(row["gold"], chapter)] != path for chapter in row["chapters"]):
                 dropped["cũ hơn"] += 1
                 continue
+            if row.get("uncertain"):
+                # Mẻ có câu gold không ai đủ điểm (mọi phương án ~): câu trả lời là một mảnh JSON, không bỏ riêng câu ấy
+                # khỏi loss được, nên bỏ cả mẫu - đừng dạy phương án đầu như thể nó đúng.
+                dropped["câu không ai đủ điểm"] += 1
+                continue
             name = split_of(row["gold"], row["chapters"])
             if name is None:
                 dropped["vắt hai tập"] += 1
