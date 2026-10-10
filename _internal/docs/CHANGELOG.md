@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay và thư viện
+
+- Bản tăng tốc của giọng VieNeu không khởi động được thì đọc ngay bằng bản thường (trước đây có thể im tới hai phút); thẻ giọng không còn khoe số đo của bản tăng tốc đã hỏng, và nói rõ khi máy không chạy được nó (cần Windows 64-bit, CPU có AVX2).
+- Chưa chọn giọng mà máy đã có giọng VieNeu thì Nghe ngay đọc bằng giọng VieNeu (chữ không rời máy) thay vì giọng trực tuyến.
+- Hộp thoại cao hơn cửa sổ (điện thoại, cửa sổ thấp) cuộn được bên trong, nút Đóng luôn thấy; tải tiếp sau Huỷ không còn làm thanh tiến độ tụt về 0.
+- Thư viện: sách không tác giả không còn lấy tên giọng làm phụ đề; hai sách trùng tên hiện ngày thêm; tìm không thấy nói "không có sách nào khớp"; thông báo xoá và xuất nói đúng (Thùng rác, cỡ "0,5 MB", chỉ tên file); nút lớn hơn trên màn hẹp.
+
 ## [0.4.40] - 2026-10-10
 
 ### Việc cần anh và Studio
