@@ -4359,8 +4359,12 @@ Cách làm:
 - Trên bộ 7, F hơn B khoảng +.08 BÊN TRONG từng nửa chương, nhưng tính cả chương thì không hơn.
 - Thử 1b (chọn sau khi đã thấy số): khử xu hướng tuyến tính theo vị trí trong chương. Kết quả làm hỏng CẢ nhúng từng khúc
   (học −.16 đến −.20, bộ 7 −.11). Vậy xu hướng theo vị trí là diễn biến cảnh thật, không phải trôi giả.
-- Nhánh "đọc cả chương, model đông cứng" đóng. Khuyến nghị gửi Lead: không làm bước 2 (LoRA cả chương), vì bộ 7 không có gì
-  để khuếch đại và LoRA từng khúc (STU-LORA) đã thua.
+- Nhánh "đọc cả chương, model đông cứng" đóng. Không làm bước 2 (LoRA cả chương): bộ 7 không có gì để khuếch đại, và LoRA từng
+  khúc (STU-LORA) đã thua.
+- **Lead 10-10 15:4x: ĐÓNG HẲN hướng học sinh** (nhúng + đầu, LoRA, đọc cả chương). Không mở hướng mới khi chưa hỏi Lead.
+- **Phát hiện giữ lại cho thiết kế nhạc:** diễn biến cảnh theo vị trí trong chương là tín hiệu thật và mạnh. Chỉ riêng xu hướng
+  tuyến tính đầu–cuối chương đã gánh khoảng .16–.20 r ở bộ học và .11 ở bộ 7. Mọi thiết kế sau (đường cong cảnh, chọn nhạc)
+  nên coi "chương đi lên/đi xuống" là một trục chính, không coi nó là nhiễu cần khử.
 
 ### 10-10 15:xx - STU-CTX: cho học sinh thấy khúc trước/sau + vị trí chỉ nhích nhẹ, KHÔNG qua
 
