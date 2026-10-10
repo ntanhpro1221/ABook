@@ -182,6 +182,157 @@
    "response": {
     "error": "Thiếu chữ cần xem"
    }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=(1)",
+   "status": 200,
+   "response": {
+    "surface": "(1)",
+    "lines": 1,
+    "reached": 0,
+    "recorded": 0,
+    "blocked": 1,
+    "cost": "chưa thu nên không phải thu lại",
+    "chapters": [],
+    "example": null
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=Tr%E1%BB%9F%20v%E1%BB%81%20(1)",
+   "status": 200,
+   "response": {
+    "surface": "Trở về (1)",
+    "lines": 1,
+    "reached": 0,
+    "recorded": 0,
+    "blocked": 1,
+    "cost": "chưa thu nên không phải thu lại",
+    "chapters": [],
+    "example": null
+   }
+  },
+  {
+   "append_lines": {
+    "chapter": 1,
+    "texts": [
+     "Mở/đóng cửa nhanh lên.",
+     "Xe chạy 60 km/h trên đường.",
+     "Anh ấy vào/ra liên tục."
+    ]
+   }
+  },
+  {
+   "append_lines": {
+    "chapter": 2,
+    "texts": [
+     "Mở/đóng lần nữa.",
+     "Tốc độ 40 km/h là chậm."
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=M%E1%BB%9F/%C4%91%C3%B3ng",
+   "status": 200,
+   "response": {
+    "surface": "Mở/đóng",
+    "lines": 2,
+    "reached": 0,
+    "recorded": 0,
+    "blocked": 2,
+    "cost": "chưa thu nên không phải thu lại",
+    "chapters": [],
+    "example": null
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=km/h",
+   "status": 200,
+   "response": {
+    "surface": "km/h",
+    "lines": 2,
+    "reached": 2,
+    "recorded": 1,
+    "blocked": 0,
+    "cost": "thu lại 1 câu",
+    "chapters": [
+     {
+      "chapterId": 1,
+      "title": "Chương Một",
+      "lines": 1,
+      "recorded": 1
+     },
+     {
+      "chapterId": 2,
+      "title": "Chương 647 · Trở về (2)",
+      "lines": 1,
+      "recorded": 0
+     }
+    ],
+    "example": {
+     "segmentId": 8,
+     "chapterId": 1,
+     "chapterTitle": "Chương Một",
+     "seq": 6,
+     "text": "Xe chạy 60 km/h trên đường.",
+     "speaker": "",
+     "hasAudio": true
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=%C4%91%C3%B3ng",
+   "status": 200,
+   "response": {
+    "surface": "đóng",
+    "lines": 2,
+    "reached": 2,
+    "recorded": 1,
+    "blocked": 0,
+    "cost": "thu lại 1 câu",
+    "chapters": [
+     {
+      "chapterId": 1,
+      "title": "Chương Một",
+      "lines": 1,
+      "recorded": 1
+     },
+     {
+      "chapterId": 2,
+      "title": "Chương 647 · Trở về (2)",
+      "lines": 1,
+      "recorded": 0
+     }
+    ],
+    "example": {
+     "segmentId": 7,
+     "chapterId": 1,
+     "chapterTitle": "Chương Một",
+     "seq": 5,
+     "text": "Mở/đóng cửa nhanh lên.",
+     "speaker": "",
+     "hasAudio": true
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=v%C3%A0o/ra",
+   "status": 200,
+   "response": {
+    "surface": "vào/ra",
+    "lines": 1,
+    "reached": 0,
+    "recorded": 0,
+    "blocked": 1,
+    "cost": "chưa thu nên không phải thu lại",
+    "chapters": [],
+    "example": null
+   }
   }
  ]
 }

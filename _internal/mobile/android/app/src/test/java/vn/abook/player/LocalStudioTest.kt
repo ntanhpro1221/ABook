@@ -81,6 +81,24 @@ class LocalStudioTest {
         }
     }
 
+    /** Bước `append_lines` của ca hợp đồng: như `book_edits_fixtures.append_lines` - chương có audio thì câu mới có mốc giờ (đã thu). */
+    private fun appendLines(spec: JSONObject) {
+        val file = File(dir, "scripts/${spec.getInt("chapter")}.json")
+        val script = JSONObject(file.readText(Charsets.UTF_8))
+        val segments = script.getJSONArray("segments")
+        val timed = script.optBoolean("timed", false)
+        var nextId = (0 until segments.length()).maxOf { segments.getJSONObject(it).getInt("id") } + 1
+        var end = (0 until segments.length()).maxOfOrNull { segments.getJSONObject(it).optDouble("end", 0.0).let { value -> if (value.isNaN()) 0.0 else value } } ?: 0.0
+        val texts = spec.getJSONArray("texts")
+        for (index in 0 until texts.length()) {
+            segments.put(JSONObject().put("id", nextId++).put("paragraph", 1).put("text", texts.getString(index)).put("kind", "narration").put("speaker", "")
+                .put("start", if (timed) Math.round(end * 10) / 10.0 else JSONObject.NULL).put("end", if (timed) Math.round((end + 1.0) * 10) / 10.0 else JSONObject.NULL)
+                .put("status", "verified"))
+            end += 1.0
+        }
+        file.writeText(script.toString(), Charsets.UTF_8)
+    }
+
     private fun dataUrl(): String =
         "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(BookEditsFixtures.bytes("edits/cover_set.cover.jpg"))
 
@@ -90,6 +108,7 @@ class LocalStudioTest {
         for (name in BookEditsFixtures.cases("contract")) {
             // mỗi ca bắt đầu từ cuốn sạch, kho "Nhạc của tôi" trống
             BookEdits.clear(dir)
+            BookEditsFixtures.file("base/scripts").copyRecursively(File(dir, "scripts"), overwrite = true) // bước append_lines của ca trước
             LocalStudio.musicStore = MusicStore(File(root, "music-$name"), FakeTags)
             val case = BookEditsFixtures.obj("contract/$name.json")
             val volatile = case.getJSONArray("volatile").let { list -> (0 until list.length()).map { list.getString(it) }.toSet() }
@@ -99,6 +118,11 @@ class LocalStudioTest {
                 val step = steps.getJSONObject(index)
                 if (step.has("import")) { // nhập một bài mẫu vào kho (bên Python: app.my_music.import_file)
                     LocalStudio.musicStore!!.importFile(BookEditsFixtures.file("track/${step.getString("import")}"))
+                    answers.add(null)
+                    continue
+                }
+                if (step.has("append_lines")) { // nối câu vào cuối một chương của bản sao (bên Python: book_edits_fixtures.append_lines)
+                    appendLines(step.getJSONObject("append_lines"))
                     answers.add(null)
                     continue
                 }

@@ -110,8 +110,8 @@ def reading_reach(project_root: Path, surface: str) -> dict[str, Any]:
 def package_reading_reach(folder: Path, surface: str) -> dict[str, Any]:
     """`reading_reach` của cuốn mở từ file `.abook` (không có xưởng - "Đọc từ này là…" ở trang đọc, máy tính và điện thoại): cùng
     hình dạng, cùng luật khớp, đếm trên chữ đọc theo của gói (đã qua lớp sửa). Câu "đã thu" là câu có mốc thời gian trong một
-    chương có audio - chính những câu Studio sẽ thu lại khi nhận ý muốn. Bản Kotlin: LocalStudio.readingReach (không có
-    `spoken_symbols_to_words` nên không bao giờ báo `blocked`); hai bên đáp chung ca tests/fixtures/book_edits/contract/reading_reach.json."""
+    chương có audio - chính những câu Studio sẽ thu lại khi nhận ý muốn. Bản Kotlin: LocalStudio.readingReach (`blocked` cũng do
+    SpokenSymbols.toWords = `spoken_symbols_to_words`); hai bên đáp chung ca tests/fixtures/book_edits/contract/reading_reach.json."""
     from . import packages
 
     surface = " ".join(str(surface).split())
