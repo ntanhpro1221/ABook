@@ -4337,6 +4337,31 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 15:2x - STU-FULL: học sinh đọc CẢ chương (model đông cứng) nhích ở bộ học, đứng yên ở bộ 7, KHÔNG qua
+
+Ghi trước ở Corpus 1e88175, bổ sung 608dd60. Kết quả ở Corpus 071bb33 và 550834b.
+
+Cách làm:
+- Mỗi khúc lấy trạng thái lớp 14, trung bình theo token, từ một lượt model đọc cả chương (causal: khúc thấy mọi chữ trước nó).
+  Chạy trên Kaggle T4, dataset riêng tư.
+- Chương dài nhất 11.283 token, nên không phải cắt cửa sổ.
+- Lượt đầu hết bộ nhớ GPU: T4 không có flash attention, SDPA dựng ma trận L x L. Lượt hai đọc từng khúc 1024 token nối KV cache;
+  kiểm trên chương dài nhất thấy trùng một lượt (cos ≥ 0,9999997).
+- Ridge và thước giữ nguyên như STU-CTX.
+
+| cặp | học B -> F | bộ 7 B -> F | Δ gộp 62 chương [CI 95 %] |
+|---|---|---|---|
+| q17 L14 | .527 -> .568 | .334 -> .320 | +.023 [−.004, +.049] |
+| q06 | .453 -> .491 | .274 -> .271 | +.025 [−.013, +.065] |
+
+- **THUA cả hai.** Bộ học lên +.04 (đạt mốc .03), bộ 7 không lên.
+- Lợi không đến từ ngữ cảnh: nửa đầu chương (ít ngữ cảnh) được lợi bằng hoặc hơn nửa sau.
+- Trên bộ 7, F hơn B khoảng +.08 BÊN TRONG từng nửa chương, nhưng tính cả chương thì không hơn.
+- Thử 1b (chọn sau khi đã thấy số): khử xu hướng tuyến tính theo vị trí trong chương. Kết quả làm hỏng CẢ nhúng từng khúc
+  (học −.16 đến −.20, bộ 7 −.11). Vậy xu hướng theo vị trí là diễn biến cảnh thật, không phải trôi giả.
+- Nhánh "đọc cả chương, model đông cứng" đóng. Khuyến nghị gửi Lead: không làm bước 2 (LoRA cả chương), vì bộ 7 không có gì
+  để khuếch đại và LoRA từng khúc (STU-LORA) đã thua.
+
 ### 10-10 15:xx - STU-CTX: cho học sinh thấy khúc trước/sau + vị trí chỉ nhích nhẹ, KHÔNG qua
 
 Ghi trước ở Corpus 7f3f3ed, kết quả ở Corpus (stu_ctx.log). q17 L14, ridge, mọi khúc bạc. Mốc B (khúc đơn) khớp đúng đường
