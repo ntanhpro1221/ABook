@@ -278,6 +278,10 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             head_tension = float(scene.get("tension") or 0.0)
         # Bài chạy qua mảnh này theo thời gian: hết một vòng thì nối bài anh em, không có thì lặp.
         length, elapsed = _seconds(scene), 0.0
+        # Truyện bắt đầu có nhạc thật (`music_scenes.music_onsets`): nền chỉ chạy tới đó rồi lặng hết cảnh, như bài kết sớm.
+        music_at = scene.get("musicAt")
+        if music_at is not None:
+            length = min(length, max(0.0, float(music_at) - float(scene.get("start") or 0.0)))
         siblings: list[dict[str, Any]] = []
         while playing and length - elapsed > 1e-9:
             track_seconds = duration(playing) or math.inf
@@ -299,6 +303,9 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
                 playing = sibling
                 used.add(sibling)
                 siblings.append({"at": round(float(scene.get("start") or 0.0) + elapsed, 3), "link": sibling})
+        if music_at is not None and playing:
+            result["stopAt"] = round(float(scene.get("start") or 0.0) + length, 3)
+            playing, stopped, ended = None, heads[index], playing
         if siblings:
             result["siblings"] = siblings
         if link:

@@ -11,7 +11,8 @@ import pytest
 
 from abook.io_utils import atomic_write_json
 from abook.webui import music_plan, music_select
-from abook.webui.music_scenes import book_scenes, chapter_scenes, cue_bounds, cue_kind, hard_break, with_scene_breaks
+from abook.webui.music_scenes import (book_scenes, chapter_scenes, cue_bounds, cue_kind, hard_break, music_onsets,
+                                      with_scene_breaks)
 from abook.webui.music_select import choose, scene_key
 from tests.test_music_scenes import _battle, _calm, _script
 
@@ -181,6 +182,31 @@ def test_a_track_that_ended_early_is_not_reopened_by_the_next_scene(monkeypatch:
     assert [entry["link"] for entry in alone] == [short["link"]] * 2
     cues = music_plan.chapter_cues({"enabled": True, "scenes": alone}, 1)
     assert [(cue["start"], cue["end"]) for cue in cues] == [(0.0, 76.0), (80.0, 150.0)]
+
+
+def test_background_music_stops_where_the_story_starts_playing_music_and_returns_next_scene() -> None:
+    """DIEGETIC (docs/MUSIC_RESEARCH.md 10-10, MUSIC-AUDIT lỗi 2): nền không chồng lên bản nhạc đang vang trong truyện."""
+    onset = "Ngồi xuống trước cây đàn của mình, Lucien lại đặt tay lên bàn phím."
+    lines = (_calm(20) + [(onset, "neutral", 0, 5.0), ("Phần mở đầu chậm rãi và bình yên.", "tender", 1, 6.0),
+                          ("Mọi thứ trong bản sonata đều đẹp như một giấc mơ.", "tender", 1, 6.0)] + _calm(4)
+             + [(SUBHEAD, "neutral", 0, 4.0)] + _calm(20))
+    scenes = chapter_scenes(_script(lines))
+    assert scenes[0]["musicAt"] == 128.0 and "musicAt" not in scenes[-1]
+    chosen = choose(scenes, _near([CALM, BATTLE]), book_key="b", track_info=TRACKS.get)
+    cues = music_plan.chapter_cues({"enabled": True, "scenes": chosen}, 7)
+    assert cues[0]["start"] == 0.0 and cues[0]["end"] == 128.0
+    assert len(cues) == 2 and cues[1]["start"] == scenes[-1]["start"]  # cảnh sau có nhạc lại, mốc riêng sau quãng lặng
+
+
+def test_talk_about_music_is_not_music_playing() -> None:
+    def onsets(*texts: tuple[str, str]) -> list[int]:
+        return music_onsets([{"text": text, "kind": kind} for text, kind in texts])
+
+    assert onsets(("Ta muốn chơi bản sonata cho Silvia nghe, cây đàn ở đâu?", "dialogue")) == []
+    assert onsets(("Hai người nói chuyện về âm nhạc suốt buổi chiều.", "narration")) == []
+    assert onsets(("Đàn ông trong làng kéo nhau ra đồng.", "narration"), ("Trời nắng.", "narration")) == []
+    assert onsets(("Cô khe khẽ hát.", "narration"), ("Giai điệu buồn lan khắp phòng.", "narration")) == [0]
+    assert onsets(("Tiếng đàn vang lên giữa quảng trường.", "narration"), ("Ai cũng dừng lại.", "narration")) == []
 
 
 def _manual(*pieces: tuple[float, float, float, str]) -> list[dict]:
