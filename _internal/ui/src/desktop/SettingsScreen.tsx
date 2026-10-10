@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/shared/media";
-import { Button, Dialog, Kbd, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { Button, Dialog, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { cn } from "@/shared/cn";
 import { api } from "@/studio/api";
@@ -21,6 +21,7 @@ import {
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
 import { SupertonicModuleCard, VieneuModuleCard } from "@/listen/VieneuModuleCard";
 import { EXTEND_GESTURE } from "@/listen/extendGesture";
+import { ShortcutList } from "@/listen/Shortcuts";
 import { MyMusicSection } from "@/listen/MyMusic";
 import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
 import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettingsApi } from "@/listen/VoiceSettings";
@@ -241,16 +242,6 @@ const THEMES = [
   { value: "dark", label: "Tối", icon: Moon },
 ] as const;
 const THEME_VALUES = THEMES.map((theme) => theme.value);
-
-const SHORTCUTS: [ReactNode, string][] = [
-  [<Kbd key="space">Space</Kbd>, "Phát / tạm dừng"],
-  [<><Kbd>←</Kbd> <Kbd>→</Kbd></>, "Lùi / tới 15 giây"],
-  [<><Kbd>Shift</Kbd> + <Kbd>←</Kbd> <Kbd>→</Kbd></>, "Chương trước / sau"],
-  [<Kbd key="b">B</Kbd>, "Thêm dấu trang"],
-  [<Kbd key="m">M</Kbd>, "Tắt / bật tiếng"],
-  [<><Kbd>[</Kbd> <Kbd>]</Kbd></>, "Giảm / tăng tốc độ đọc"],
-  [<Kbd key="esc">Esc</Kbd>, "Thu nhỏ màn hình đang nghe"],
-];
 
 /** App Windows đóng gói: vỏ đã tìm thấy bản mới (đã ký) - cài chỉ khi người dùng bấm, vì app phải đóng rồi mở lại. */
 function UpdateSection({ update, current }: { update: { version: string; notes: string }; current: string }) {
@@ -590,14 +581,7 @@ export function SettingsScreen() {
         )}
         {!touchOnly && (
         <Section id="shortcuts" title="Phím tắt" description="Dùng được ở mọi màn hình, trừ khi đang gõ chữ.">
-          <dl className="max-w-md space-y-2.5 text-sm">
-            {SHORTCUTS.map(([keys, label]) => (
-              <div key={label} className="flex items-center justify-between gap-4">
-                <dt className="text-fg-2">{label}</dt>
-                <dd className="flex items-center gap-1 text-fg-2">{keys}</dd>
-              </div>
-            ))}
-          </dl>
+          <ShortcutList />
         </Section>
         )}
         <Section id="about" title="Giới thiệu">
