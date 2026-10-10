@@ -1,0 +1,25 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "author": "Của tôi"
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Tên bạn đặt",
+  "author": "Của bạn"
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Tên bạn đặt",
+  "author": "Của tôi"
+ },
+ "report": {
+  "adopted": 1,
+  "kept": 1,
+  "conflicts": 1,
+  "cover": null
+ }
+}

@@ -81,7 +81,7 @@ anything), as `capabilities` on every listen book JSON (`/api/listen/library`, `
 | Book | Title | Cover | Character name | Chapter title | Music |
 |---|---|---|---|---|---|
 | workshop (project) | `studio_title.json` | `cover.jpg` + `cover.json` | `names.json` | `chapter_titles.json` (new; read by `store.chapter_names`) | `music_overrides.json` |
-| no workshop (imported .abook / phone) | `edits.json` `title` | `edits/cover.jpg` + `cover` | `characters` | `chapters` | `music` |
+| no workshop (imported .abook / phone) | `edits.json` `title` (and `author`: a workshop project has no author to edit) | `edits/cover.jpg` + `cover` | `characters` | `chapters` | `music` |
 
 Reading transform (no workshop only, text-only books): `edits.json` `skip` - lines the listener left out of the reading (below).
 
@@ -93,6 +93,7 @@ A book with a workshop never has `edits.json`. A book without one never has the 
 ```
 {"format": "abook-edits", "version": 1,
  "title": "Tên mới",                        absent = unchanged
+ "author": "Tên tác giả",                   absent = unchanged; "" = no author (cleared); clean text <= 160 code points
  "cover": null | {"color": "#aabbcc", "width": 96, "height": 128, "version": 1759400000},
                                             absent = unchanged; null = no cover (drawn from the title);
                                             object = use edits/cover.jpg (version = cache-buster the writer picks)
@@ -125,12 +126,12 @@ spaces, no leading/trailing space) - validation REFUSES, it never repairs; `leve
 whole file. No device names or paths are stored (the only times are the `requested_at` stamps of wishes, see P2a). Writers store the minimum: a value equal to the book layer's is
 removed (no-op edits never count), `enabled: true` is never stored.
 
-Counting ("N thay đổi"): title + cover + each character + each chapter + each distinct skipped line (one line skipped in 200 chapters
+Counting ("N thay đổi"): title + author + cover + each character + each chapter + each distinct skipped line (one line skipped in 200 chapters
 counts once) + enabled + levelDb + each silenced cue + each pin + each wish (P2a).
 
 ## Overlay (what the listener sees)
 
-`apply_manifest(book, edits)`: `title`; `parts[].title` = `"<new title> · Phần N"`; `chapters[]` `title` / `subtitle` /
+`apply_manifest(book, edits)`: `title`; `author` (empty = the key is dropped); `parts[].title` = `"<new title> · Phần N"`; `chapters[]` `title` / `subtitle` /
 `fullTitle` (`fullTitle` = `title · subtitle`, or `title` when the subtitle is empty); `cover` -> `null` or
 `{file: "edits/cover.jpg", ...cover}`; `music`. `apply_cast`: `displayName` = the edit, `originalName` = the pre-edit original
 (`originalName`, else `displayName`) unless the edit equals it; `firstChapter` follows a renamed chapter `title`.
@@ -158,6 +159,7 @@ All under `/api/books/<id>`; the server also accepts them for workshop books (sa
 | Request | Response |
 |---|---|
 | `PUT /title {title}` | `{"title"}` (workshop: the project summary, as before) |
+| `PUT /author {author}` | `{"author"}` (clean text; empty = no author; refused for a workshop project) |
 | `PUT /cover {image: dataURL}` (or `{url}`, desktop only) | `{"cover": {color, width, height, version}}` |
 | `DELETE /cover` | `{"cover": null}` |
 | `POST /characters/rename {character, name}` | `{character, name, original, renamed}` |

@@ -1,0 +1,51 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/author",
+   "body": {
+    "author": "  Tác \t giả \n"
+   },
+   "status": 200,
+   "response": {
+    "author": "Tác giả"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 1,
+    "waiting": 0,
+    "wishes": 0
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/author",
+   "body": {
+    "author": "   "
+   },
+   "status": 200,
+   "response": {
+    "author": ""
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0,
+    "wishes": 0
+   }
+  }
+ ]
+}

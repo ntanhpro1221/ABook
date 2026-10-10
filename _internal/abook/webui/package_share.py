@@ -23,7 +23,7 @@ from typing import Any
 from . import book_edits, covers, edits_inbox, listen_view, music_plan, packages
 
 
-_WHAT = {"title": "Tên sách", "cover": "Ảnh bìa", "character": "Tên nhân vật", "chapter": "Tên chương", "reading": "Cách đọc",
+_WHAT = {"title": "Tên sách", "author": "Tác giả", "cover": "Ảnh bìa", "character": "Tên nhân vật", "chapter": "Tên chương", "reading": "Cách đọc",
          "music": "Nhạc nền", "wish": "Việc chờ Studio"}
 
 

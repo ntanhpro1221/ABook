@@ -374,6 +374,12 @@ class App:
             return {"state": "idle"}
         return jobs.status(str(path))
 
+    def running_exports(self) -> dict[str, list[dict[str, Any]]]:
+        """Việc xuất đang chạy theo từng kiểu ("bookfile" | "m4b" | "audiobook"): mỗi việc là trạng thái của `export_job_status` kèm `bookId`. Giao diện vừa
+        mở (hay tải lại ở trang không phải trang sách) hỏi để hiện lại thông báo tiến độ - trước đây chỉ trang sách của cuốn đang xuất mới hỏi."""
+        kinds = {"bookfile": self.bookfile_jobs, "m4b": self.m4b_jobs, "audiobook": self.listen_exports}
+        return {kind: [{"bookId": book_id(Path(key)), **status} for key, status in jobs.running()] for kind, jobs in kinds.items()}
+
     def _listenable(self, value: str) -> Path:
         """Phía Nghe: dự án hoặc cuốn mở từ file `.abook` (webui/packages.py). Studio vẫn chỉ dùng `_book`."""
         path = self.library.resolve_listenable(value)
@@ -800,6 +806,15 @@ class App:
         except OSError as error:
             raise ApiError(HTTPStatus.CONFLICT, f"Không ghi được tên mới: {error}") from error
         return self.summary(path)
+
+    def set_author(self, value: str, author: str) -> dict[str, Any]:
+        """Đặt lại tác giả của một cuốn nhập từ file (lớp sửa của người nghe, book_edits); tên trống là "không rõ tác giả". Dự án Studio
+        không có tác giả để sửa."""
+        self._mutating()
+        path = self._editable(value)
+        if store.is_project(path):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Sách làm trong Studio chưa có mục tác giả")
+        return {"author": book_edits.set_author(path, author)}
 
     def delete(self, value: str) -> dict[str, Any]:
         """Xoá một dự án: chuyển CẢ thư mục dự án vào Thùng rác (khôi phục được). File truyện gốc người dùng chọn lúc tạo
@@ -2800,6 +2815,9 @@ class Handler(BaseHTTPRequestHandler):
     def put_title(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.rename(value, str(self._body().get("title") or "")))
 
+    def put_author(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.set_author(value, str(self._body().get("author") or "")))
+
     def put_chapter_title(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         # Đổi tên một chương (trang nghe, điện thoại): `title` (nhãn, "Chương 12") và/hay `subtitle` (tên phụ, "" là bỏ);
         # `revert` hay cả hai trống là trở về tên gốc. Dự án: chapter_titles.json cạnh sổ; cuốn nhập từ file: lớp sửa.
@@ -3080,6 +3098,9 @@ class Handler(BaseHTTPRequestHandler):
         key = str(self.app._listenable(value))
         jobs.cancel(key)
         self._send_json(HTTPStatus.OK, jobs.status(key))
+
+    def get_export_jobs(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.running_exports())
 
     def get_ffmpeg(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, ffmpeg_setup.status())
@@ -4368,6 +4389,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/reveal"), Handler.post_reveal),
     # Chỉ trên máy này: Studio từ xa (remote_studio.ALLOWED) không có hai đường này.
     ("PUT", re.compile(BOOK + r"/title"), Handler.put_title),
+    ("PUT", re.compile(BOOK + r"/author"), Handler.put_author),
     ("PUT", re.compile(BOOK + r"/chapters/(\d+)/title"), Handler.put_chapter_title),
     ("GET", re.compile(BOOK + r"/suggestions"), Handler.get_suggestions),
     ("PUT", re.compile(BOOK + r"/skip"), Handler.put_skip_line),
@@ -4435,6 +4457,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(LISTEN + r"/audiobook"), Handler.get_audiobook_job),
     ("POST", re.compile(LISTEN + r"/audiobook"), Handler.post_audiobook_job),
     ("POST", re.compile(LISTEN + r"/audiobook/cancel"), Handler.post_audiobook_cancel),
+    ("GET", re.compile(r"/api/export-jobs"), Handler.get_export_jobs),
     ("GET", re.compile(r"/api/ffmpeg"), Handler.get_ffmpeg),
     ("POST", re.compile(r"/api/ffmpeg"), Handler.post_ffmpeg),
     ("POST", re.compile(r"/api/ffmpeg/cancel"), Handler.post_ffmpeg_cancel),

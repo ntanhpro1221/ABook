@@ -36,6 +36,7 @@ object BookEdits {
     const val MAX_EDITS_BYTES = 1024 * 1024
     const val MAX_COVER_BYTES = 8 * 1024 * 1024
     const val TITLE_MAX = 160
+    const val AUTHOR_MAX = TITLE_MAX // tác giả cùng trần với tên sách (book_edits.AUTHOR_MAX)
     const val NAME_MAX = 80
     private const val MAX_CHARACTERS = 2000
     private const val MAX_CHAPTERS = 5000
@@ -50,7 +51,7 @@ object BookEdits {
     private const val LEVEL_MIN = -40.0
     private const val LEVEL_MAX = -6.0
     private const val DEFAULT_LEVEL_DB = -20.0 // music_plan.DEFAULT_LEVEL_DB
-    private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "skip", "readings", "music", "wishes")
+    private val TOP_KEYS = setOf("format", "version", "title", "author", "cover", "characters", "chapters", "skip", "readings", "music", "wishes")
     const val TOO_BIG = "Quá nhiều thay đổi đang chờ trong cuốn này - hãy lưu, áp bớt vào dự án rồi làm tiếp."
     private val COVER_KEYS = setOf("color", "width", "height", "version")
     private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced", "pins", "tracks", "playlist")
@@ -142,13 +143,13 @@ object BookEdits {
     fun isEmpty(edits: JSONObject) = count(edits) == 0
 
     /**
-     * Số thay đổi "áp ngay" người nghe đã làm: tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt nhạc, mức nhạc, mỗi
+     * Số thay đổi "áp ngay" người nghe đã làm: tên sách, tác giả, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt nhạc, mức nhạc, mỗi
      * đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe, danh sách phát đã chọn. Không kể ý muốn chờ Studio ([BookWishes]) - chúng chưa áp vào
      * đâu cả.
      */
     fun countApplied(edits: JSONObject): Int {
         val music = edits.optJSONObject("music")
-        return (if (edits.has("title")) 1 else 0) + (if (edits.has("cover")) 1 else 0) +
+        return (if (edits.has("title")) 1 else 0) + (if (edits.has("author")) 1 else 0) + (if (edits.has("cover")) 1 else 0) +
             (edits.optJSONObject("characters")?.length() ?: 0) + (edits.optJSONObject("chapters")?.length() ?: 0) +
             // Một dòng bỏ ở trăm chương: một thay đổi.
             (edits.optJSONObject("skip")?.let { skip -> names(skip).flatMap { skipLines(skip, it) }.toSet().size } ?: 0) +
@@ -182,6 +183,12 @@ object BookEdits {
             val title = raw.opt("title")
             if (title !is String || title.isEmpty() || !isClean(title, TITLE_MAX)) throw EditsError("Tên sách trong phần sửa không hợp lệ.")
             out.put("title", title)
+        }
+        if (raw.has("author")) {
+            val author = raw.opt("author")
+            // Trống được: sách không rõ tác giả.
+            if (author !is String || !isClean(author, AUTHOR_MAX)) throw EditsError("Tác giả trong phần sửa không hợp lệ.")
+            out.put("author", author)
         }
         if (raw.has("cover")) out.put("cover", validateCover(raw.opt("cover")))
         if (raw.has("characters")) {
@@ -393,7 +400,7 @@ object BookEdits {
         val out = LinkedHashMap<String, Any?>()
         out["format"] = FORMAT
         out["version"] = VERSION
-        for (key in listOf("title", "cover")) if (edits.has(key)) out[key] = edits.opt(key).let { if (key == "cover") orderedCover(it) else it }
+        for (key in listOf("title", "author", "cover")) if (edits.has(key)) out[key] = edits.opt(key).let { if (key == "cover") orderedCover(it) else it }
         edits.optJSONObject("characters")?.takeIf { it.length() > 0 }?.let { people ->
             out["characters"] = names(people).sortedWith { a, b -> byCodePoints(a, b) }.associateWith { people.opt(it) }
         }
@@ -470,7 +477,7 @@ object BookEdits {
     fun merge(local: JSONObject, incoming: JSONObject): Pair<JSONObject, JSONObject> {
         val out = empty()
         var conflicts = 0
-        for (key in listOf("title", "cover")) {
+        for (key in listOf("title", "author", "cover")) {
             if (local.has(key)) {
                 out.put(key, deepCopy(local.opt(key)))
                 if (incoming.has(key) && !StrictJson.equal(incoming.opt(key), local.opt(key))) conflicts++
@@ -597,7 +604,7 @@ object BookEdits {
     /** continuation.continued_title: "Tên · Phần 3", không chồng hậu tố cũ. */
     fun continuedTitle(title: String, part: Int): String = "${baseTitle(title)} · Phần $part"
 
-    /** `book.json` (lớp sách) -> bản người nghe thấy: tên sách (và tên các phần của cả bộ), tên chương, bìa, nhạc. */
+    /** `book.json` (lớp sách) -> bản người nghe thấy: tên sách (và tên các phần của cả bộ), tác giả, tên chương, bìa, nhạc. */
     fun applyManifest(book: JSONObject, edits: JSONObject): JSONObject {
         if (isEmpty(edits)) return book
         val out = shallowCopy(book)
@@ -615,6 +622,11 @@ object BookEdits {
                 }
                 out.put("parts", renamed)
             }
+        }
+        if (edits.has("author")) {
+            // Trống: người nghe đã bỏ tên tác giả - sách không rõ tác giả.
+            val author = edits.getString("author")
+            if (author.isEmpty()) out.remove("author") else out.put("author", author)
         }
         val renamed = edits.optJSONObject("chapters")
         val skip = edits.optJSONObject("skip")
@@ -932,6 +944,20 @@ object BookEdits {
         synchronized(lock) {
             val edits = load(folder)
             if (cleaned == pyText(rawBook(folder).opt("title"))) edits.remove("title") else edits.put("title", cleaned)
+            write(folder, edits)
+        }
+        return cleaned
+    }
+
+    /**
+     * Đặt lại tác giả (người nghe). Tên trống là "không rõ tác giả": sách vốn có tác giả thì ghi "", vốn không có thì không có gì để sửa.
+     * Trả tên đã làm sạch.
+     */
+    fun setAuthor(folder: File, author: String): String {
+        val cleaned = cleanText(author, AUTHOR_MAX)
+        synchronized(lock) {
+            val edits = load(folder)
+            if (cleaned == cleanText(rawBook(folder).opt("author"), AUTHOR_MAX)) edits.remove("author") else edits.put("author", cleaned)
             write(folder, edits)
         }
         return cleaned
@@ -1270,7 +1296,7 @@ object BookEdits {
         val edits = load(folder)
         val book = rawBookOrNull(folder)
         val before = pinnedFiles(edits)
-        for (key in listOf("title", "cover")) {
+        for (key in listOf("title", "author", "cover")) {
             if (!sent.has(key) || !edits.has(key) || !StrictJson.equal(edits.opt(key), sent.opt(key))) continue
             if (key == "cover" && sent.opt(key) is JSONObject && !File(folder, EDITS_COVER).let { it.isFile && sentCover != null && it.readBytes().contentEquals(sentCover) }) continue
             edits.remove(key)

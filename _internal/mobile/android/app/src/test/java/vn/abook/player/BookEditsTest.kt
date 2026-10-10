@@ -323,6 +323,25 @@ class BookEditsTest {
     }
 
     @Test
+    fun the_author_is_set_cleared_and_restored_like_python() {
+        val folder = BookEditsFixtures.copyBase(BookEditsFixtures.tempDir("abook-edits-author"))
+        assertEquals("Tên người", BookEdits.setAuthor(folder, "  Tên \t người  "))
+        assertEquals("Tên người", BookEdits.applyManifest(BookEdits.rawBook(folder), BookEdits.load(folder)).getString("author"))
+        assertEquals(1, BookEdits.count(BookEdits.load(folder)))
+        // Sách vốn không có tác giả: bỏ tên là hết thay đổi.
+        assertEquals("", BookEdits.setAuthor(folder, "   "))
+        assertFalse(File(folder, BookEdits.EDITS_FILE).exists())
+        // Sách vốn có tác giả: bỏ tên là một thay đổi thật (ghi "" chứ không bỏ khoá); đặt lại đúng tên gốc thì hết.
+        val book = BookEdits.rawBook(folder).put("author", "Người làm sách")
+        File(folder, "book.json").writeText(book.toString())
+        assertEquals("", BookEdits.setAuthor(folder, ""))
+        assertEquals("", BookEdits.load(folder).getString("author"))
+        assertFalse(BookEdits.applyManifest(BookEdits.rawBook(folder), BookEdits.load(folder)).has("author"))
+        assertEquals("Người làm sách", BookEdits.setAuthor(folder, "Người làm sách"))
+        assertFalse(File(folder, BookEdits.EDITS_FILE).exists())
+    }
+
+    @Test
     fun a_missing_or_broken_edits_file_is_just_no_edits() {
         val folder = BookEditsFixtures.tempDir("abook-edits-load")
         assertTrue(BookEdits.isEmpty(BookEdits.load(folder)))
