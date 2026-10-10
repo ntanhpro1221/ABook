@@ -7,6 +7,7 @@ import {
   chosenId,
   FALLBACK_SECONDS,
   MINE_PLAYLIST,
+  nextPlaylistBed,
   OFF_PLAYLIST,
   OVERLAP_SECONDS,
   PAUSE_GRACE_MS,
@@ -148,6 +149,29 @@ describe("danh sách phát trên đồng hồ nhạc của cuốn", () => {
     clock.tick(true);
     expect(clock.seconds).toBe(3);
     clock.save(); // không có chỗ nhớ: không lỗi
+  });
+});
+
+describe("trình phát hỏi lại hàng bài", () => {
+  const queue = { tracks, levelDb: -20 };
+
+  it("sang chương: hàng y nguyên thì giữ đúng đối tượng cũ (nhạc chơi tiếp, không dựng lại)", () => {
+    const first = nextPlaylistBed(null, "book:calm", queue);
+    expect(nextPlaylistBed(first, "book:calm", { tracks: tracks.map((track) => ({ ...track })), levelDb: -20 })).toBe(first);
+  });
+
+  it("đổi mức nhạc (máy chủ tính lại gainDb từng bài): dựng lại để âm lượng mới có hiệu lực ngay", () => {
+    const first = nextPlaylistBed(null, "book:calm", queue);
+    const louder = nextPlaylistBed(first, "book:calm", { tracks: tracks.map((track) => ({ ...track, gainDb: (track.gainDb ?? -20) + 6 })), levelDb: -14 });
+    expect(louder).not.toBe(first);
+    expect(louder.levelDb).toBe(-14);
+    expect(louder.cues[0].gainDb).toBe(-16);
+  });
+
+  it("Nhạc của tôi đổi bài mà số bài như cũ (thêm một, bỏ một): hàng mới", () => {
+    const first = nextPlaylistBed(null, "book:mine", queue);
+    const swapped = [{ link: "local:new", src: "/new", duration: 120, gainDb: -20 }, ...tracks.slice(1)];
+    expect(nextPlaylistBed(first, "book:mine", { tracks: swapped, levelDb: -20 }).cues[0].link).toBe("local:new");
   });
 });
 
