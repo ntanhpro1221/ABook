@@ -63,6 +63,10 @@ TAIL_MIN_SECONDS = 20.0
 STEP_DB_PER_TENSION = 6.0
 STEP_MAX_DB = 3.0
 STEP_HOLD_SECONDS = 40.0
+# Mảnh nối tiếp có valence lệch bài đang chơi quá chừng này (bài vui trên đoạn tang...): bài vẫn chạy nhưng nền hạ CLASH_DUCK_DB suốt
+# mảnh (music_plan.chapter_cues). Luật ghi trước: Corpus research/music/PLAN_drift.md.
+CLASH_VALENCE = 0.55
+CLASH_DUCK_DB = -12.0
 
 
 def _tiebreak(book_key: str, link: str) -> float:
@@ -271,6 +275,9 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
         if result.get("continued"):
             tension = float(scene.get("tension") or 0.0)
             result["stepDb"] = max(-STEP_MAX_DB, min(STEP_MAX_DB, STEP_DB_PER_TENSION * (tension - head_tension)))
+            track = info(link) if link else None
+            if track and track.get("valence") is not None and                     abs(float(track["valence"]) - float(scene.get("valence") or 0.0)) > CLASH_VALENCE:
+                result["clash"] = True
         else:
             if link != playing:
                 playing, position = link, 0.0

@@ -164,7 +164,7 @@ TRACK_INFO_KEYS = ("title", "creator", "license", "licenseUrl", "attribution", "
                    "speechBand")
 # phần `choose` / `build` gắn thêm cho từng đoạn
 CHOICE_FIELDS = ("key", "link", "distance", "pinned", "silenced", "pinUnavailable", "continued", "stepDb", "siblings",
-                 "stopAt")
+                 "stopAt", "clash")
 
 
 def scenes_of(plan: dict[str, Any] | None) -> list[dict[str, Any]] | None:
@@ -206,7 +206,7 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
     Bài anh em nối trong cảnh (`siblings` của đoạn, music_select.choose) tách mốc đúng ở điểm kết bài: mốc mới mang
     `sibling: True` (trình phát mờ chéo dài hơn, không nghe như đổi cảnh). Bước âm lượng của các mảnh nối tiếp (`stepDb`) thành
     `steps: [{at, db}]` của mốc - mức (dB, cộng vào `gainDb`) từ giây `at` của chương; mốc bắt đầu ở mức khác 0 thì có bước
-    ngay ở `start`."""
+    ngay ở `start`. Mảnh lệch không khí bài (`clash`) hạ thêm `music_select.CLASH_DUCK_DB` suốt mảnh."""
     if not plan.get("enabled"):
         return []
     cues: list[dict[str, Any]] = []
@@ -214,7 +214,8 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
     for scene in plan.get("scenes") or []:
         if scene.get("chapterId") != chapter_id or not scene.get("link"):
             continue
-        level = float(scene.get("stepDb") or 0.0)
+        # mảnh lệch không khí bài (`clash`, music_select.CLASH_VALENCE): hạ nền suốt mảnh, cộng trên bước tension
+        level = round(float(scene.get("stepDb") or 0.0) + (music_select.CLASH_DUCK_DB if scene.get("clash") else 0.0), 2)
         spans = [(float(scene["start"]), scene["link"], False)]
         spans += [(float(sibling["at"]), sibling["link"], True) for sibling in scene.get("siblings") or []]
         for index, (start, link, sibling) in enumerate(spans):
