@@ -2,8 +2,8 @@ import { friendlyError } from "./errorText";
 
 /** Lỗi của MỘT chương trong danh sách chương: một dòng ngắn cho người nghe (cùng `friendlyError` với khối lỗi của cả cuốn); bấm "Chi tiết"
  *  mở khung nổi có việc nên làm và nguyên văn lỗi kỹ thuật. Hàng chương cao cố định nên khung nổi, không đẩy hàng dưới. */
-export function ChapterError({ raw }: { raw: string }) {
-  const shown = friendlyError(raw);
+export function ChapterError({ raw, studio = false }: { raw: string; studio?: boolean }) {
+  const shown = friendlyError(raw, studio);
   return (
     <details className="relative text-xs text-danger">
       <summary className="cursor-pointer select-none truncate">

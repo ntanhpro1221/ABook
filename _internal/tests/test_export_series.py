@@ -236,3 +236,18 @@ def test_the_estimated_size_counts_the_background_music_that_travels_with_the_bo
     finally:
         server.stop()
     assert (status, alone) == (200, {"bytes": each + 1000, "parts": 1, "musicPending": 1})
+
+
+def test_exporting_again_into_the_same_place_never_overwrites_the_first_export(tmp_path: Path) -> None:
+    """Soát UX a20: xuất lần hai vào cùng thư mục ghi đè im lặng lên bản trước. Giờ thành "tên (2)", "tên (3)"."""
+    from abook.webui.export import free_path
+
+    assert free_path(tmp_path / "Sách.m4b") == tmp_path / "Sách.m4b", "chưa có gì thì giữ tên"
+    (tmp_path / "Sách.m4b").write_bytes(b"x")
+    assert free_path(tmp_path / "Sách.m4b") == tmp_path / "Sách (2).m4b"
+    (tmp_path / "Sách (2).m4b").write_bytes(b"x")
+    assert free_path(tmp_path / "Sách.m4b") == tmp_path / "Sách (3).m4b"
+    (tmp_path / "Bộ truyện").mkdir()
+    assert free_path(tmp_path / "Bộ truyện") == tmp_path / "Bộ truyện (2)", "thư mục: thêm sau tên, không cắt chỗ có dấu chấm"
+    (tmp_path / "Tập 1. Mở đầu").mkdir()
+    assert free_path(tmp_path / "Tập 1. Mở đầu") == tmp_path / "Tập 1. Mở đầu (2)"

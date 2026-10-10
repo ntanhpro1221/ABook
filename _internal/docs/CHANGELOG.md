@@ -10,6 +10,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Làm sách trong Studio (máy tính)
 
 - Hàng tab của trang dự án (và của trang cuốn sách) ở cửa sổ hẹp giờ lăn chuột thường là chạy sang ngang, hai đầu có nút mũi tên tròn báo còn tab; trước đây phải giữ Shift mới lăn được.
+- Bấm "Áp dụng" ở sách đã xong mà Studio không khởi động được (chưa cài, thiếu Ollama...) không còn làm mất các sửa đang chờ: nút "Áp dụng N thay đổi" vẫn còn, và lỗi hiện ngay trên trang kèm nút "Thử lại".
+- Studio đã cài mà mất Ollama (file bị xoá hay hỏng) giờ có thẻ "Sửa Studio" ở màn Dự án tải lại đúng phần ấy; lời khuyên khi Ollama không chạy không còn bảo mở biểu tượng ở khay (Studio dùng Ollama riêng, tự bật). "Nghe thử" khi chưa có Studio có nút dẫn tới chỗ cài; cài Studio dở vì mất mạng nói "Mất mạng giữa chừng - bấm Cài tiếp để làm tiếp" (nguyên văn lỗi nằm trong "Chi tiết").
+- Hộp "Xuất…" chọn "Sách nói M4B" mà máy chưa có công cụ ghép âm thanh (khoảng 31 MB) mời tải ngay trong hộp, thay vì báo lỗi sau khi bấm. Xuất file sách / dự án có nhạc nền chưa tải về máy nói "Đang tải nhạc nền (k/n)…" và có nút "Huỷ xuất" (huỷ thì không ghi file nào).
+- Xuất lần hai vào cùng thư mục không còn ghi đè lên bản trước: file hay thư mục mới thành "tên (2)", "tên (3)".
+- Mở file dự án `.abookproj` sang máy khác giữ được mốc chữ sáng theo giọng đọc (trước đây mất hết vì giờ sửa file đổi khi giải nén). "Mở dự án có sẵn" chọn nhầm thư mục nói rõ cần chọn thư mục dự án; hộp xoá dự án / xoá khỏi thư viện nhắc có 30 giây để "Hoàn tác"; sửa cách đọc tên xong bằng Enter thì tiêu điểm bàn phím về nút "Sửa" của dòng ấy.
+- Thư viện có dự án và bản nhập từ file cùng tên: dưới tên ghi "Dự án" hoặc "Đã nhập" (kèm ngày thêm).
+- Giao diện sáng: viền nút phụ và ô nhập đậm hơn (đạt 3:1 với nền), mục menu đang chọn bằng bàn phím có vòng viền rõ; giao diện tối không đổi.
 
 ### Ghép máy và thêm sách (máy tính và điện thoại)
 

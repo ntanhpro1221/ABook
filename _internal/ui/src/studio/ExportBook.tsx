@@ -1,13 +1,15 @@
 import { AlertTriangle, BookAudio, CheckCircle2, FileAudio, FolderArchive, FolderDown, FolderOpen, RefreshCw } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/shared/cn";
 import { coverArtwork } from "@/shared/cover";
 import { fileName, formatNumber, formatSize } from "@/shared/format";
 import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { FfmpegNeeded } from "@/desktop/AudiobookDialog";
 import { startExport } from "@/desktop/ExportBookFileJob";
-import { api, type BookSummary } from "./api";
+import { ffmpegCancel, ffmpegStart, ffmpegStatus } from "@/desktop/listenExport";
+import { api, ApiError, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
 import { WordTimingsRow } from "./WordTimings";
 
@@ -89,6 +91,25 @@ export function ExportDialog({
   openRef.current = open;
   const loadingToast = useRef<string | number | null>(null);
   const parts = useParts(book.id).data?.parts ?? [];
+  // Giữa lúc đóng gói .abook / .abookproj, máy có thể đang TẢI nhạc nền để đóng kèm (vài phút): hỏi để nói bài thứ mấy và cho Huỷ.
+  const packing = busy && (kind === "abook" || kind === "abookproj");
+  const musicTransfer = useQuery({
+    queryKey: ["music-export", book.id],
+    enabled: packing,
+    queryFn: () => api<{ active: boolean; done: number; total: number }>(`/api/books/${book.id}/music-export`),
+    refetchInterval: 1000,
+    retry: false,
+    gcTime: 0,
+  });
+  const downloading = packing && musicTransfer.data?.active && musicTransfer.data.total > 0 ? musicTransfer.data : null;
+  const [cancelling, setCancelling] = useState(false);
+  useEffect(() => {
+    if (!busy) setCancelling(false);
+  }, [busy]);
+  const cancelPacking = () => {
+    setCancelling(true);
+    void api(`/api/books/${book.id}/music-export/cancel`, { method: "POST", body: {} }).catch(() => setCancelling(false));
+  };
   const missing = book.chapters.missingAudio ?? 0;
   const ready = Math.max(0, book.chapters.completed - missing);
   const total = book.chapters.total;
@@ -101,6 +122,18 @@ export function ExportDialog({
     queryFn: () => api<{ bytes: number; parts: number; musicPending?: number }>(`/api/books/${book.id}/export-size${wholeSeries ? "?series=1" : ""}`),
     staleTime: 10_000,
   });
+  // M4B cần ffmpeg (MP3 / .abook thì không): máy chưa có thì mời tải ngay trong hộp, như hộp "Xuất sách nói" của Nghe ngay.
+  const client = useQueryClient();
+  const ffmpeg = useQuery({
+    queryKey: ["ffmpeg"],
+    enabled: open && kind === "m4b",
+    queryFn: ffmpegStatus,
+    staleTime: 0,
+    retry: false,
+    refetchInterval: (query) => (query.state.data?.downloading ? 800 : false),
+  });
+  const refreshFfmpeg = () => void client.invalidateQueries({ queryKey: ["ffmpeg"] });
+  const needsFfmpeg = kind === "m4b" && ffmpeg.data !== undefined && !ffmpeg.data.ready;
   const bytes = estimate.data?.bytes ?? 0;
   const musicPending = estimate.data?.musicPending ?? 0;
   const countText = kind === "abookproj" ? undefined : wholeSeries ? `${parts.length} phần` : `${ready} chương`;
@@ -190,7 +223,11 @@ export function ExportDialog({
     } catch (error) {
       const pending = loadingToast.current;
       loadingToast.current = null;
-      toast.error(SAVING[kind][2], { id: pending ?? undefined, description: (error as Error).message });
+      if (error instanceof ApiError && error.detail.reason === "cancelled") {
+        toast.info("Đã huỷ xuất", { id: pending ?? undefined, description: "Chưa có file sách nào được ghi.", duration: 6000 });
+      } else {
+        toast.error(SAVING[kind][2], { id: pending ?? undefined, description: (error as Error).message });
+      }
     } finally {
       setBusy(false);
     }
@@ -219,11 +256,23 @@ export function ExportDialog({
       {busy ? (
         <div className="py-2" role="status">
           <Progress value={0} indeterminate size="md" label={SAVING[kind][1]} />
-          <p className="mt-3 text-sm font-semibold">{SAVING[kind][1]}</p>
-          <p className="mt-1 text-sm text-fg-2 text-pretty">
-            {countText ? `${countText}. ` : ""}Sách dài thì có thể mất vài phút. Đóng hộp này cũng được - việc vẫn chạy và báo khi xong.
+          <p className="mt-3 text-sm font-semibold">
+            {cancelling ? "Đang huỷ…" : downloading ? `Đang tải nhạc nền (${downloading.done}/${downloading.total})…` : SAVING[kind][1]}
           </p>
-          <div className="mt-5 flex justify-end">
+          <p className="mt-1 text-sm text-fg-2 text-pretty">
+            {downloading
+              ? "Nhạc nền chưa có trên máy nên phải tải về để đóng kèm vào file - bài nào xong rồi lần sau không phải tải lại. "
+              : countText
+                ? `${countText}. `
+                : ""}
+            Sách dài thì có thể mất vài phút. Đóng hộp này cũng được - việc vẫn chạy và báo khi xong.
+          </p>
+          <div className="mt-5 flex justify-end gap-2">
+            {(downloading || cancelling) && (
+              <Button variant="secondary" disabled={cancelling} onClick={cancelPacking}>
+                Huỷ xuất
+              </Button>
+            )}
             <Button variant="ghost" onClick={() => handleOpenChange(false)}>
               Đóng, cứ để chạy
             </Button>
@@ -339,6 +388,15 @@ export function ExportDialog({
           {musicPending > 0 && ` Còn ${musicPending} bài nhạc nền chưa tải về máy - khi xuất sẽ tải và cộng thêm.`}
         </p>
       )}
+      {needsFfmpeg && ffmpeg.data && (
+        <div className="mt-3">
+          <FfmpegNeeded
+            status={ffmpeg.data}
+            onDownload={() => void ffmpegStart().then(refreshFfmpeg, (error: Error) => toast.error("Chưa tải được công cụ", { description: error.message }))}
+            onStop={() => void ffmpegCancel().then(refreshFfmpeg, () => undefined)}
+          />
+        </div>
+      )}
       {kind === "abook" && !info?.remote && <WordTimingsRow bookId={book.id} running={Boolean(book.running)} />}
       {wholeSeries && kind === "mp3" && (
         <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần một thư mục con (“Phần 1 - …”, “Phần 2 - …”), cùng nằm trong một thư mục của bộ.</p>
@@ -372,7 +430,7 @@ export function ExportDialog({
           variant="primary"
           icon={KINDS.find((item) => item.value === kind)?.icon ?? FolderDown}
           loading={busy}
-          disabled={whole ? Boolean(book.running) : !wholeSeries && !ready}
+          disabled={whole ? Boolean(book.running) : needsFfmpeg || (!wholeSeries && !ready)}
           onClick={() => void run()}
         >
           {info?.dialogs ? "Chọn nơi lưu và xuất" : "Xuất"}
