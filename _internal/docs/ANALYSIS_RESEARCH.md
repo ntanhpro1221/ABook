@@ -43,6 +43,40 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
    một: chấm B9 trên cây mới bằng gold cũ ra villain −46,6 chặt, demonking −18,6 - toàn là thước. Trước khi so hai lượt khác
    cây mã: so chữ đoạn của hai project (một lệnh), lệch thì khoá lại gold theo chữ (`LLM_Train/spkconf/gold_remap.py`).
 
+## 10-10 chiều - Sổ các nhánh: đã đóng, đang chờ, và hai cổng mới (Model)
+
+Đóng:
+- **B7m (thẻ "X nói" trong Hako, xoá lời dẫn) - HOÀ.** b7mmixs1234 vs b9s1234 (pin_wide): F1 giọng +0,34 [-1,3; +1,2], chặt -0,37
+  [-1,9; +1,1]; câu CÓ lời dẫn chặt -2,4 (n=165), câu ngầm +0,0 (n=830). Lead bỏ hạt 1, coi là bằng chứng CHỐNG "xoá lời dẫn".
+  **B7 cỡ x1 / x4 (đường cong lượng bạc) không chạy vì B7m HOÀ**; chỉ B7n (che tên, nhánh giữa) còn trong hàng.
+- **B8-b (tách: adapter chỉ người nói, trên nền B9) - TÁCH CÓ HẠI.** b9sps1234 vs b9s1234: F1 giọng -2,37 [-3,5; -0,0], chặt -2,45
+  [-4,0; +0,4]; nhanh hơn 31 % giây/chương. Nhánh d (chỉ cảm xúc) đang học, chấm khi xong.
+- **B10 (thêm bạc) - ĐÓNG.** Phần B (hạt thêm) bỏ 10-10; chặt B10 < B9 nên theo luật ghi trước không ứng cử mặc định dù F1 +2,2
+  [-0,2; +6,7]. Lưu ý: "B10 trạng thái cảnh" nguyên bản CHƯA từng chạy - lượt mang tên B10 là thêm bạc.
+- **E8P (thí điểm 4B gốc có suy nghĩ) - BỎ, không chạy.** E8 lượt 1: nghĩ hết 2.048 token ngay lô 1 đoạn mà chưa ra JSON. Dù E8P
+  (8k token/lô) thắng, ~2-8k token nghĩ mỗi lô ở ~47 token/s trên card 8 GB = hàng giờ mỗi chương (x10-30 so think=false): không
+  dùng được trong app. Câu hỏi còn lại chỉ là RLVR có suy nghĩ - vượt ngân sách (Modal đang cấm). Nhánh "nghĩ" của 4B gốc: ÂM.
+- **Cổng Trung (Mac, 07-10 chạy, chấm 10-10) - QUA.** B9 vs v4 F1 giọng gộp 88,78 vs 84,70 (+4,08); Tam quốc +1,86, TMA +7,34;
+  chặt 83,73 vs 80,80.
+
+Đang chờ trong hàng GPU (luật ghi trước ở `LLM_Train/errtax_next/PLAN.md`):
+- **B19** (trọng số loss x10 cho lượt lời ngầm + vai phụ): THẮNG khi chặt >= 80,64 VÀ b+d <= 196 trên cổng 19 ch.
+- **GT1** (= B20, +740 mẫu gold TRAIN b/d, 7 truyện), công thức B19 nếu B19 thắng, không thì B9. **GT2** = 8 chương gold Hako
+  mới (1.042 mẫu, 2 người gán + phân xử) chỉ để vào **GTX** = b9 + gt1 + gt2 (5.998 mẫu), chạy chỉ khi GT1 THẮNG; GTX vs GT1 là
+  hiệu ứng LIỀU gold. Sau đó MỘT khối xác nhận >= 3 hạt mỗi bên cho bên tốt hơn (Lead 10-10 11:41).
+- **B18** (lặp mẫu NPC x2): chạy trên Kaggle (2 T4, hạt 1234 + đối chứng), không chạy ở nhà; lượt 2 chỉ đẩy khi ước <= 7,3 h
+  quota còn lại.
+
+Hai cổng mới:
+- **GT3 - cổng phụ ngoài train, 8 chương Hako Nhật** (2.651 dòng, 2 agent gán mù, 25 phân xử). Đồng ý A-B (trần người-người)
+  97,9 %; bộ chấm trên gold đã phát lại 99,6 % chặt. Hai chương (phadao, sevens) thuộc truyện ĐÃ có trong data_b9 (khác chương)
+  -> phán quyết trên 6 truyện chưa thấy. Luật (ghi trước khi có số): ứng viên đổi mặc định phải có F1 giọng >= mốc b9lps1234 - 1,0;
+  tụt hơn -> không đổi mặc định dù cổng chính thắng. Chỉ đo cho bên THẮNG cổng chính (không tốn GPU cho bên thua).
+- **Cổng ĐỔI MẶC ĐỊNH mở rộng (luật 07-10) - dựng sẵn**: 37 truyện / 49 chương = mọi chương gold của truyện không có trong data_b9,
+  data_gt1, data_gt2 (so theo truyện, không theo tên thư mục), bỏ văn Việt gốc + Trung cổ điển (cổng phụ riêng). Dùng lại số đã đo
+  ở cổng 19 ch / BD / GT3; mốc cần thêm ~20 chương (~3 h GPU). Chấm F1 giọng + chặt, TB hạt mỗi bên, KTC cụm truyện
+  (`LLM_Train/errtax_next/wide_gate.tsv`, `wide_gate_eval.sh`, `gold_bd/wide_score.py`).
+
 ## 10-10 - Bộ chấm ứng viên dựng lại THUA log-prob của B9: không dùng làm cờ nghi, đóng hướng
 
 - **Dựng lại** (`LLM_Train/scorer_prod/PLAN.md`): bước 1 PDNC hạt 1234 lặp y lệnh ra loss 0,6153 / test 0,762, lần trước cùng
