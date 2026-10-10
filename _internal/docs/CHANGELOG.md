@@ -13,6 +13,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - "Việc cần duyệt" gọn hơn: số trên tab chỉ đếm việc quyết được ngay (thẻ chỉ áp khi làm lại phân tích nằm nhóm riêng cuối trang), thẻ thu âm lỗi bỏ câu đã chấm ở tab Nghe lại, thẻ giọng chung tự xong khi đã chọn giọng mới, thẻ ngoặc 『』 có "Đúng rồi, giữ nguyên"; vai phụ không tên không còn hiện "Unknown".
 - Mất kết nối tới ABook thì trang dự án vẫn giữ và báo "đang thử lại" thay vì trang lỗi tiếng Anh; sửa người nói hay cách đọc tên mà máy chủ từ chối thì màn hình trở lại đúng như trước; đóng bảng cách đọc chưa lưu hay Ctrl+Z khi không còn gì để hoàn tác đều có lời báo.
 - Nhạc nền chỉ tải khi cần: tắt nhạc không tải gì, "Đổi bài" chỉ tải bài mới, tab Nhạc nền báo "Đang tải sẵn nhạc nền: x MB / y MB" và có nút "Huỷ tải"; bài trên 40 MB (bản dài 30-50 phút) máy chọn bài khác thay vì tải.
+- Tab Kịch bản: có ô tìm chữ trong chương (gõ không dấu cũng thấy, Enter nhảy tới chỗ kế, phím / để gõ), bấm tên người nói là CHỈ xem câu của họ (bấm lại để xem tất cả; thêm "Chưa rõ" cho câu máy chưa biết ai nói), "Thu lại câu này" (nút ↻ hay phím R, cả nhóm câu Shift-chọn), tải lại trang vẫn về đúng câu đang chọn, và hai cửa sổ sửa cùng một câu thì cửa sổ sau được báo "Câu này vừa được sửa ở cửa sổ khác" (không chặn).
+- "Cách đọc tên" thêm "Thêm cách đọc cho từ bất kỳ" (viết tắt, địa danh, ký hiệu liền nhau, không chỉ tên nhân vật): gõ xong thấy có bao nhiêu câu có chữ ấy và bao nhiêu câu đã thu sẽ phải thu lại trước khi lưu.
 
 ## [0.4.46] - 2026-10-11
 

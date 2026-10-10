@@ -47,8 +47,8 @@ from . import bluetooth, precast, remote_books, spelling, tls
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
-from .casting_review import casting_chapter, casting_chapters
-from .name_readings import name_readings
+from .casting_review import casting_chapter, casting_chapters, casting_stamp
+from .name_readings import name_readings, reading_reach
 from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices
 from . import narrator_cards
 from .work_items import open_count, work_items
@@ -3681,6 +3681,17 @@ class Handler(BaseHTTPRequestHandler):
         # Tab "Kịch bản" (casting_review.py): chương nào bao nhiêu câu thoại, bao nhiêu chỗ máy nghi, bao nhiêu câu đã quyết.
         self._send_json(HTTPStatus.OK, self._view(value, "casting", casting_chapters))
 
+    def get_reading_reach(self, query: dict[str, list[str]], value: str) -> None:
+        # Ô "Thêm cách đọc cho từ bất kỳ" (NameReadings.tsx): trước khi lưu, nói cách đọc sẽ chạm tới bao nhiêu câu (name_readings.reading_reach).
+        surface = " ".join(((query.get("surface") or [""])[0]).split())[:80]
+        if not surface:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu chữ cần xem")
+        self._send_json(HTTPStatus.OK, reading_reach(self.app._book(value), surface))
+
+    def get_casting_stamp(self, _query: dict[str, list[str]], value: str) -> None:
+        # Hỏi nhẹ mỗi vài giây: lần ghi yêu cầu cuối (overrides.json) - đổi nghĩa là cửa sổ khác vừa sửa, tab Kịch bản tự làm mới (B19).
+        self._send_json(HTTPStatus.OK, {"stamp": casting_stamp(self.app._book(value))})
+
     def get_casting_chapter(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         if packages.is_package(self.app._listenable(value)):
             raise ApiError(HTTPStatus.NOT_FOUND, "File dự án không kèm từng câu của chương - đọc chữ trong sách")
@@ -3853,6 +3864,9 @@ class Handler(BaseHTTPRequestHandler):
                     raise ApiError(HTTPStatus.BAD_REQUEST, UNNAMED_PROBLEM)
                 raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
         now = time.time()
+        # Cửa sổ khác (hay máy khác) vừa sửa chính câu này: `seen` là điều giao diện này tưởng đang ghi cho từng câu ("" = chưa ai quyết).
+        # Khác với điều thật sự đang ghi thì báo lại để người nghe biết mình vừa ghi đè (soát UX a23 B19) - vẫn ghi, không bao giờ chặn.
+        elsewhere = {} if package else self._edited_elsewhere(path, lines, body.get("seen"))
         if package:
             book_wishes.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
             alias = str(body.get("alias", "") or "").strip()[:200]
@@ -3868,7 +3882,23 @@ class Handler(BaseHTTPRequestHandler):
         if body.get("bracketRule"):
             remembered = bracket_rule.save(path, speaker) or remembered
         self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker, "new": bool(new_gender),
-                                        "alias": remembered, "requestedAt": now})
+                                        "alias": remembered, "requestedAt": now, "elsewhere": elsewhere})
+
+    @staticmethod
+    def _edited_elsewhere(path: Path, lines: list[tuple[str, str]], seen: Any) -> dict[str, str]:
+        """{mã câu: người đang được ghi} cho những câu mà điều đang ghi trong overrides.json khác điều giao diện đã thấy (`seen`)."""
+        if not isinstance(seen, dict):
+            return {}
+        recorded = {entry["stable_id"]: entry for entry in listener_overrides.speaker_requests(listener_overrides.read_overrides(path))}
+        out: dict[str, str] = {}
+        for stable_id, text_sha256 in lines:
+            if stable_id not in seen:
+                continue
+            now_there = recorded.get(stable_id)
+            actual = now_there["speaker"] if now_there is not None and now_there["text_sha256"] == text_sha256 else ""
+            if actual != str(seen[stable_id] or ""):
+                out[stable_id] = actual
+        return out
 
     def get_voice_choices(self, query: dict[str, list[str]], value: str) -> None:
         # Màn "Đổi giọng" của một nhân vật (voice_picker.py): mọi giọng dùng được, giọng máy gợi ý, ai đang dùng giọng nào.
@@ -3959,26 +3989,42 @@ class Handler(BaseHTTPRequestHandler):
         verdict = body.get("verdict")
         if verdict not in (None, "ok", "redo"):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Phán quyết không hợp lệ")
-        stable_id = str(body.get("stableId", ""))[:80]
+        # Một câu (`stableId`) hay cả nhóm (`lines`: Shift-chọn ở tab Kịch bản) - cả nhóm cùng một mốc `now`, nên hộp "Áp dụng"
+        # đếm một lần bấm là một thay đổi (store.BY_CLICK) và bỏ được cả nhóm.
+        refs = body.get("lines")
+        stable_ids = ([str(item.get("stableId", ""))[:80] for item in refs[:2000] if isinstance(item, dict)]
+                      if isinstance(refs, list) else [str(body.get("stableId", ""))[:80]])
         project = self.app._editable(value)
+        now = time.time()
+        # Một câu: lời đáp `{ok}` như trước (điện thoại và hợp đồng ghi sẵn đáp y vậy); nhóm: thêm số câu + mốc để Hoàn tác.
+        reply = (lambda count: {"ok": True, "lines": count, "requestedAt": now}) if isinstance(refs, list) else (lambda _count: {"ok": True})
         if packages.is_package(project):
             # Cuốn không có xưởng chưa có hàng đợi "Cần nghe lại": chỉ phần "Cần thu lại" - ý muốn chờ Studio.
-            found = book_wishes.Lines(project).get(stable_id)
-            if verdict == "redo" and found is not None and found[1].get("textSha256"):
-                book_wishes.request_retakes(project, [(stable_id, str(found[1]["textSha256"]))], now=time.time())
-            elif verdict != "redo":
-                book_wishes.cancel_retake(project, stable_id)
-            self._send_json(HTTPStatus.OK, {"ok": True})
+            lines = book_wishes.Lines(project)
+            asked: list[tuple[str, str]] = []
+            for stable_id in stable_ids:
+                found = lines.get(stable_id)
+                if verdict == "redo" and found is not None and found[1].get("textSha256"):
+                    asked.append((stable_id, str(found[1]["textSha256"])))
+                elif verdict != "redo":
+                    book_wishes.cancel_retake(project, stable_id)
+            if asked:
+                book_wishes.request_retakes(project, asked, now=now)
+            self._send_json(HTTPStatus.OK, reply(len(asked)))
             return
-        self.app.reviews.set(value, stable_id, verdict, int(body.get("chapterId", 0)))
-        # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
-        # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.
-        text_sha256 = store.segment_text_sha256(project, stable_id)
-        if verdict == "redo" and text_sha256:
-            listener_overrides.request_retake(project, stable_id, text_sha256, now=time.time())
-        elif verdict != "redo":
-            listener_overrides.cancel_retake(project, stable_id)
-        self._send_json(HTTPStatus.OK, {"ok": True})
+        chapter_id = int(body.get("chapterId", 0))
+        asked_count = 0
+        for stable_id in stable_ids:
+            self.app.reviews.set(value, stable_id, verdict, chapter_id)
+            # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
+            # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.
+            text_sha256 = store.segment_text_sha256(project, stable_id)
+            if verdict == "redo" and text_sha256:
+                listener_overrides.request_retake(project, stable_id, text_sha256, now=now)
+                asked_count += 1
+            elif verdict != "redo":
+                listener_overrides.cancel_retake(project, stable_id)
+        self._send_json(HTTPStatus.OK, reply(asked_count))
 
     def put_cover(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()
@@ -4848,6 +4894,8 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/music/local/([0-9a-f]{40})/file"), Handler.get_my_music_file),
     ("GET", re.compile(BOOK + r"/parts"), Handler.get_parts),
     ("GET", re.compile(BOOK + r"/pronunciations"), Handler.get_name_readings),
+    ("GET", re.compile(BOOK + r"/pronunciations/reach"), Handler.get_reading_reach),
+    ("GET", re.compile(BOOK + r"/casting/stamp"), Handler.get_casting_stamp),
     ("GET", re.compile(BOOK + r"/casting/(\d+)"), Handler.get_casting_chapter),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),

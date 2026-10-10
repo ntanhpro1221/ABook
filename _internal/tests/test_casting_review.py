@@ -213,3 +213,92 @@ def test_the_script_marks_the_lines_the_model_is_unsure_of_with_the_inbox_budget
     assert not any(line["hint"] for line in casting_chapter(project, 2)["lines"]), "'j' vượt ngân sách của cả cuốn"
     listing = {chapter["chapterId"]: chapter for chapter in casting_chapters(project)["chapters"]}
     assert listing[1]["hints"] == 3 and listing[2]["hints"] == 0
+
+
+def test_a_line_waiting_for_a_retake_says_so_until_the_pipeline_has_done_it(tmp_path: Path) -> None:
+    """Soát UX a23 B11: Kịch bản có "Thu lại câu này" - câu đã xin thu lại hiện "chờ" tới khi dây chuyền thu (listener_retake_at
+    đuổi kịp), câu đổi chữ thì yêu cầu rơi; bản của sách chưa nâng cấp (không có cột) vẫn hiện."""
+    from abook.listener_overrides import request_retake
+
+    project = make_book(tmp_path)
+    request_retake(project, "b", "sha-b", now=100.0)
+    request_retake(project, "c", "sha-cũ", now=100.0)  # câu đã đổi chữ từ lúc xin
+    waiting = {line["stableId"]: line["retake"] for line in casting_chapter(project, 1)["lines"]}
+    assert waiting["b"] == "pending" and waiting["c"] is None and waiting["d"] is None
+
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("ALTER TABLE segments ADD COLUMN listener_retake_at REAL NOT NULL DEFAULT 0")
+    db.execute("UPDATE segments SET listener_retake_at = 50 WHERE stable_id = 'b'")
+    db.commit()
+    assert casting_chapter(project, 1)["lines"][1]["retake"] == "pending", "lần thu lại gần nhất cũ hơn yêu cầu"
+    db.execute("UPDATE segments SET listener_retake_at = 100 WHERE stable_id = 'b'")
+    db.commit()
+    db.close()
+    assert casting_chapter(project, 1)["lines"][1]["retake"] is None, "dây chuyền đã thu theo yêu cầu này"
+
+
+def test_the_script_asks_for_a_retake_of_several_lines_in_one_click(tmp_path: Path) -> None:
+    """Shift-chọn nhiều câu rồi "Thu lại": một lần bấm, một mốc (hộp Áp dụng đếm một thay đổi); đổi ý thì bỏ cả nhóm."""
+    from abook.listener_overrides import read_overrides
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    project = make_book(tmp_path)
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "t"}
+    path = f"/api/books/{book_id(project)}/review"
+    try:
+        refs = [{"stableId": "b"}, {"stableId": "h"}]
+        status, data, _ = _request(server.port, "POST", path, headers=headers, body={"verdict": "redo", "chapterId": 1, "lines": refs})
+        assert status == 200
+        retakes = read_overrides(project)["retakes"]
+        assert sorted(retakes) == ["b", "h"] and retakes["b"]["requested_at"] == retakes["h"]["requested_at"]
+        assert retakes["b"]["text_sha256"] == "sha-b"
+        assert json.loads(data)["lines"] == 2
+        status, _data, _ = _request(server.port, "POST", path, headers=headers, body={"verdict": None, "lines": refs})
+        assert status == 200 and read_overrides(project)["retakes"] == {}
+    finally:
+        server.stop()
+
+
+def test_two_windows_editing_one_line_tell_the_late_one_what_it_replaced(tmp_path: Path) -> None:
+    """Soát UX a23 B19: cửa sổ B đã đổi người nói câu 'd' trong khi cửa sổ A còn thấy chưa ai đổi. A ghi đè thì được báo "câu này vừa được
+    sửa ở nơi khác" (không chặn: lần ghi vẫn vào), và ô hỏi nhẹ `stamp` đổi để cửa sổ kia tự làm mới."""
+    from abook.listener_overrides import read_overrides, request_speakers
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    project = make_book(tmp_path)
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "t"}
+    base = f"/api/books/{book_id(project)}"
+    try:
+        before = json.loads(_request(server.port, "GET", base + "/casting/stamp", headers=headers)[1])["stamp"]
+        assert before == 0, "chưa ai sửa gì: chưa có overrides.json"
+        request_speakers(project, [("d", "sha-d")], "LUCIEN", now=time.time())  # cửa sổ B
+        after = json.loads(_request(server.port, "GET", base + "/casting/stamp", headers=headers)[1])["stamp"]
+        assert after != before
+
+        body = {"lines": [{"stableId": "d", "textSha256": "sha-d"}], "speaker": "HEIDI", "seen": {"d": ""}}  # cửa sổ A còn thấy cũ
+        status, data, _ = _request(server.port, "POST", base + "/speaker", headers=headers, body=body)
+        assert status == 200 and json.loads(data)["elsewhere"] == {"d": "LUCIEN"}
+        assert read_overrides(project)["speakers"]["d"]["speaker"] == "HEIDI", "không chặn: lần ghi vẫn vào"
+
+        body["seen"] = {"d": "HEIDI"}  # A đã thấy bản mới nhất
+        status, data, _ = _request(server.port, "POST", base + "/speaker", headers=headers, body=body)
+        assert status == 200 and json.loads(data)["elsewhere"] == {}
+        body.pop("seen")  # khách cũ không gửi `seen`: không báo gì
+        status, data, _ = _request(server.port, "POST", base + "/speaker", headers=headers, body=body)
+        assert status == 200 and json.loads(data)["elsewhere"] == {}
+    finally:
+        server.stop()
