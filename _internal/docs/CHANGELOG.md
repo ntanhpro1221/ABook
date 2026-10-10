@@ -11,7 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Dự án và thư viện lớn mở nhanh hơn: hộp "Việc cần duyệt" của cuốn 400 chương từ khoảng 3 phút còn vài giây, "Áp dụng N thay đổi" xem trước từ 16 giây còn nửa giây, trang "Cách đọc tên" và "Phân vai" mở trong chưa tới một giây; tab Việc cần duyệt chỉ tải con số, danh sách đầy đủ khi mở tab.
 - Thư viện hàng trăm cuốn: trang Nghe và việc mở một cuốn theo mã nhanh hơn (hỏi thư viện cách 0,14 giây xuống vài chục mili giây), bìa sách tải khi cuộn tới, lưu một cách đọc tên hiện ngay không chờ tải lại cả danh sách, và xoá nhiều cuốn liền không còn mở mỗi lần một luồng chờ.
-- Xuất cả dự án (`.abookproj`) chạy nền: bấm là hộp "Xuất" có ngay thanh tiến độ "Đang đóng gói (k/n)…" và nút "Huỷ xuất" (huỷ thì không còn file nào, kể cả file dở), đóng hộp hay sang trang khác thì việc vẫn chạy và mở lại hộp là thấy tiến độ, đóng app giữa chừng thì dọn gọn; file ra y hệt bản trước từng byte.
+- Xuất cả dự án (`.abookproj`) chạy nền: bấm là hộp "Xuất" có ngay thanh tiến độ "Đang đóng gói (k/n)…" và nút "Huỷ xuất" (huỷ thì không còn file nào, kể cả file dở), đóng hộp hay sang trang khác thì việc vẫn chạy và mở lại hộp là thấy tiến độ, đóng app giữa chừng thì dọn gọn (file tạm sót lại cũng được dọn ở lần mở app sau); file ra y hệt bản trước từng byte. Rời trang giữa lúc đang gói thì thông báo nổi giữ tiến độ và báo khi xong (không còn báo nhầm "Đã huỷ xuất"), chuyển sang phần khác của bộ không mang nút Huỷ hay kết quả sang phần kia, và xuất file sách `.abook` chạy cùng lúc không còn lẫn tiến độ tải nhạc hay bị huỷ chéo.
 
 ## [0.4.44] - 2026-10-10
 

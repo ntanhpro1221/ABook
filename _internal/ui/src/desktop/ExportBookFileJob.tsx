@@ -9,14 +9,14 @@ import { coverArtwork } from "@/shared/cover";
 import { Progress } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
-import { BOOK_FILE_COPY, exportWhereHint, jobView, lastExportHint, lastExportPlace, M4B_COPY, runningExports, type ExportCopy, type ExportJob } from "./bookFileExport";
+import { BOOK_FILE_COPY, exportWhereHint, jobView, lastExportHint, lastExportPlace, M4B_COPY, PROJECT_FILE_COPY, runningExports, type ExportCopy, type ExportJob } from "./bookFileExport";
 import { AUDIOBOOK_COPY } from "./listenExport";
 
 // "Xuất file sách", "Xuất M4B" và "Xuất sách nói" (sách Nghe ngay) chạy nền ở máy chủ (webui/export_jobs.py): menu (hay hộp Xuất sách nói) chỉ chọn
 // nơi lưu rồi báo cho ExportJobHost cùng kiểu; host (sống suốt phiên, ngoài menu) bắt đầu việc, hỏi trạng thái và giữ thông báo - tải lại trang
 // thì mở trang sách là thấy lại tiến độ / kết quả. Mỗi kiểu có bản ghi riêng ở máy chủ, chạy cùng lúc được. Sách nói báo thêm tiến độ và có Huỷ.
 
-export type ExportKind = "bookfile" | "m4b" | "audiobook";
+export type ExportKind = "bookfile" | "m4b" | "audiobook" | "projectfile";
 
 const KINDS: Record<ExportKind, { copy: ExportCopy; pick: string; url: (id: string) => string; cancel?: (id: string) => string }> = {
   bookfile: { copy: BOOK_FILE_COPY, pick: "Chọn nơi lưu file sách", url: (id) => `/api/books/${id}/bookfile-job` },
@@ -27,10 +27,18 @@ const KINDS: Record<ExportKind, { copy: ExportCopy; pick: string; url: (id: stri
     url: (id) => `/api/listen/books/${id}/audiobook`,
     cancel: (id) => `/api/listen/books/${id}/audiobook/cancel`,
   },
+  // Hộp Xuất của Studio (studio/ExportBook.tsx) bắt đầu và theo việc này khi còn mở; host nhận theo dõi khi hộp bị gỡ giữa chừng (`trackExport`) hay app mở lại lúc máy chủ còn gói.
+  projectfile: {
+    copy: PROJECT_FILE_COPY,
+    pick: "Chọn nơi lưu file dự án",
+    url: (id) => `/api/books/${id}/projectfile-job`,
+    cancel: (id) => `/api/books/${id}/projectfile-job/cancel`,
+  },
 };
 
 const POLL_MS = 1000;
 const startEvent = (kind: ExportKind) => `abook-${kind}-export`;
+const trackEvent = (kind: ExportKind) => `abook-${kind}-track`;
 const jobUrl = (kind: ExportKind, id: string) => KINDS[kind].url(id);
 const jobKey = (kind: ExportKind, id: string) => [`${kind}-job`, id];
 const toastId = (kind: ExportKind, id: string) => `${kind}-export-${id}`;
@@ -50,6 +58,11 @@ export interface StartDetail {
 /** Báo cho host của `kind` bắt đầu một lượt xuất (menu và hộp Xuất sách nói dùng chung). */
 export function startExport(kind: ExportKind, detail: StartDetail): void {
   window.dispatchEvent(new CustomEvent<StartDetail>(startEvent(kind), { detail }));
+}
+
+/** Báo cho host của `kind` theo tiếp một việc ĐÃ chạy ở máy chủ (hộp Xuất bị gỡ giữa chừng): host hỏi trạng thái, giữ thông báo, báo khi xong. */
+export function trackExport(kind: ExportKind, id: string): void {
+  window.dispatchEvent(new CustomEvent<string>(trackEvent(kind), { detail: id }));
 }
 
 /** Cuốn đang xuất? Menu dùng để khoá mục và hiện "lần xuất gần nhất". */
@@ -233,6 +246,16 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
     window.addEventListener(startEvent(kind), listener);
     return () => window.removeEventListener(startEvent(kind), listener);
   }, [track, kind, copy]);
+
+  // Hộp Xuất bị gỡ khi việc còn chạy ở máy chủ: theo tiếp.
+  useEffect(() => {
+    const listener = (event: Event) => {
+      stopping.current.delete((event as CustomEvent<string>).detail);
+      track((event as CustomEvent<string>).detail, 0);
+    };
+    window.addEventListener(trackEvent(kind), listener);
+    return () => window.removeEventListener(trackEvent(kind), listener);
+  }, [track, kind]);
 
   // Mở (hay tải lại) trang sách: việc còn chạy thì theo tiếp, vừa xong thì nhắc lại nơi file nằm.
   useEffect(() => {

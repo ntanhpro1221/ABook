@@ -10,6 +10,7 @@ import {
   M4B_COPY,
   missingChaptersNote,
   packingText,
+  PROJECT_FILE_COPY,
   RECENT_SECONDS,
   runningExports,
   type ExportJob,
@@ -147,6 +148,17 @@ describe("runningExports", () => {
     expect(await runningExports("bookfile")).toEqual([]);
   });
 
+  it("also lists a project file (.abookproj) pack still running, so the host can follow it and say when it is done", async () => {
+    setApiTransport(async () => ({
+      bookfile: [],
+      projectfile: [
+        { bookId: "p", state: "running", phase: "hash", done: 10, total: 100 },
+        { bookId: "q", state: "done" },
+      ],
+    }));
+    expect(await runningExports("projectfile")).toEqual(["p"]);
+  });
+
   it("treats a failed or odd answer as nothing running", async () => {
     setApiTransport(async () => {
       throw new Error("mạng chớp");
@@ -177,5 +189,30 @@ describe("M4B export", () => {
     });
     expect(missingChaptersNote({ folder: "D:/x", chapters: 6, chaptersTotal: 6 })).toBe("");
     expect(missingChaptersNote({ folder: "D:/x", file: "D:/x/a.abook" })).toBe("");
+  });
+});
+
+describe("project file export (.abookproj)", () => {
+  it("shows the pack phase and a bar while running, in the listener's words", () => {
+    const view = jobView({ state: "running", elapsed: 12, phase: "listen", done: 100, total: 400 }, 0, false, PROJECT_FILE_COPY);
+    expect(view).toMatchObject({ kind: "loading", title: "Đang đóng gói (100/400 chương)…", description: "đã 0:12" });
+    expect((view as { progress?: number }).progress).toBeGreaterThan(0);
+    expect(jobView({ state: "running", elapsed: 1, phase: "prepare" }, 0, false, PROJECT_FILE_COPY)).toEqual({ kind: "loading", title: "Đang đóng gói…", description: "đã 0:01" });
+  });
+
+  it("says when it is done, counting sources that could not be packed, and when it was cancelled or failed", () => {
+    const done: ExportJob = { state: "done", id: "p", result: { folder: "D:/x", file: "D:/x/Truyện.abookproj", size: 2 * 1048576, missingSources: ["a", "b"] } };
+    expect(jobView(done, 0, false, PROJECT_FILE_COPY)).toEqual({
+      kind: "success",
+      title: "Đã gói dự án",
+      description: "Truyện.abookproj · 2 MB · 2 file nguồn chương đã bị dời hay xoá nên không có trong gói",
+      place: "D:/x/Truyện.abookproj",
+    });
+    expect(jobView({ state: "cancelled" }, 0, false, PROJECT_FILE_COPY)).toMatchObject({ kind: "info", title: "Đã huỷ xuất" });
+    expect(jobView({ state: "error", error: "OSError: [Errno 28] No space left on device" }, 0, false, PROJECT_FILE_COPY)).toMatchObject({
+      kind: "error",
+      title: "Không gói được dự án",
+      description: expect.stringContaining("hết chỗ"),
+    });
   });
 });

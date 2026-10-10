@@ -7,11 +7,11 @@ import { coverArtwork } from "@/shared/cover";
 import { fileName, formatNumber, formatSize } from "@/shared/format";
 import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { FfmpegNeeded } from "@/desktop/AudiobookDialog";
-import { startExport } from "@/desktop/ExportBookFileJob";
+import { startExport, trackExport } from "@/desktop/ExportBookFileJob";
 import { ffmpegCancel, ffmpegStart, ffmpegStatus } from "@/desktop/listenExport";
 import { api, ApiError, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
-import { packError, packView, type PackJob } from "./projectPacking";
+import { followPackJob, PackCancelled, PackDetached, packError, packView, type PackJob } from "./projectPacking";
 import { WordTimingsRow } from "./WordTimings";
 
 // Xuất ngay trong Studio (soát UX a6 01-10, H1-H2: người làm sách phải sang Thư viện nghe mới tìm thấy "Xuất", và bản xuất
@@ -64,9 +64,6 @@ const SAVING: Record<Kind, [string, string, string]> = {
   abookproj: ["Chọn nơi lưu file dự án", "Đang đóng gói dự án…", "Không gói được dự án"],
 };
 
-/** Người dùng bấm Huỷ khi đang gói dự án (máy chủ trả "cancelled"): cùng lời báo với lúc huỷ tải nhạc nền. */
-class PackCancelled extends Error {}
-
 /** Bản xuất đã xong, hiện ngay trong hộp: nói đã lưu ở đâu và cho mở thư mục (trước đây chỉ có một thông báo thoáng qua). */
 type Finished = { title: string; detail: string; folder: string };
 
@@ -100,16 +97,24 @@ export function ExportDialog({
   // Gói cả dự án (.abookproj) là việc nền ở máy chủ (mất cả phút với sách dài): hỏi pha + đã/tổng để hiện thanh tiến độ; đóng hộp hay chuyển trang thì việc vẫn chạy.
   const [packJob, setPackJob] = useState<PackJob | null>(null);
   const alive = useRef(true);
+  // Gỡ màn hình giữa lúc gói dự án: việc vẫn chạy ở máy chủ - giao cho ExportJobHost (thông báo có tiến độ, Huỷ, báo khi xong) thay vì để thông báo "đang gói" của hộp treo mãi.
+  const handoff = useRef({ packing: false, id: book.id });
+  handoff.current = { packing: busy && kind === "abookproj", id: book.id };
   useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
+      if (!handoff.current.packing) return;
+      if (loadingToast.current !== null) toast.dismiss(loadingToast.current);
+      loadingToast.current = null;
+      trackExport("projectfile", handoff.current.id);
     };
   }, []);
   const musicTransfer = useQuery({
-    queryKey: ["music-export", book.id],
+    queryKey: ["music-export", book.id, kind],
     enabled: packing,
-    queryFn: () => api<{ active: boolean; done: number; total: number }>(`/api/books/${book.id}/music-export`),
+    // `.abook` và `.abookproj` có trạng thái nhạc riêng ở máy chủ (khoá theo kiểu xuất): hỏi đúng cái của kiểu đang gói.
+    queryFn: () => api<{ active: boolean; done: number; total: number }>(`/api/books/${book.id}/music-export${kind === "abookproj" ? "?kind=projectfile" : ""}`),
     refetchInterval: 1000,
     retry: false,
     gcTime: 0,
@@ -124,27 +129,9 @@ export function ExportDialog({
     const url = kind === "abookproj" ? `/api/books/${book.id}/projectfile-job/cancel` : `/api/books/${book.id}/music-export/cancel`;
     void api(url, { method: "POST", body: {} }).catch(() => setCancelling(false));
   };
-  /** Theo việc gói dự án của cuốn này tới khi xong (hỏi mỗi giây); trả kết quả, hay ném `PackCancelled` / lỗi của máy chủ. Hỏi hụt vài lần liền mới coi là hỏng. */
-  const followPacking = async () => {
-    let misses = 0;
-    while (alive.current) {
-      let job: PackJob;
-      try {
-        job = await api<PackJob>(`/api/books/${book.id}/projectfile-job`);
-        misses = 0;
-      } catch (error) {
-        if (++misses >= 5) throw error;
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        continue;
-      }
-      if (job.state === "done" && job.result) return job.result;
-      if (job.state === "cancelled") throw new PackCancelled();
-      if (job.state !== "running") throw new Error(job.error ?? "Chưa gói được dự án.");
-      setPackJob(job);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    throw new PackCancelled();
-  };
+  /** Theo việc gói dự án của cuốn này tới khi xong; trả kết quả, hay ném `PackCancelled` / `PackDetached` (màn hình đã gỡ) / lỗi của máy chủ. */
+  const followPacking = () =>
+    followPackJob({ fetchJob: () => api<PackJob>(`/api/books/${book.id}/projectfile-job`), alive: () => alive.current, onJob: setPackJob });
   const missing = book.chapters.missingAudio ?? 0;
   const ready = Math.max(0, book.chapters.completed - missing);
   const total = book.chapters.total;
@@ -262,6 +249,7 @@ export function ExportDialog({
         });
       }
     } catch (error) {
+      if (error instanceof PackDetached) return; // màn hình đã gỡ, việc vẫn chạy: ExportJobHost báo khi xong - không phải huỷ, không đụng thông báo
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (error instanceof PackCancelled || (error instanceof ApiError && error.detail.reason === "cancelled")) {

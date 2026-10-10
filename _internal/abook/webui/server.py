@@ -18,6 +18,7 @@ import secrets
 import shutil
 import socket
 import sqlite3
+import tempfile
 import threading
 import time
 import urllib.error
@@ -36,7 +37,7 @@ from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
-from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, ffmpeg_setup, humanize, listen_view,
+from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
                listen_export, music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
@@ -280,6 +281,10 @@ class App:
         self.listen_exports = export_jobs.BookFileJobs()
         # "Xuất cả dự án (.abookproj)" cũng chạy nền, có tiến độ (pha + đã/tổng) và Huỷ; đóng app thì huỷ gọn (`close`).
         self.projectfile_jobs = export_jobs.BookFileJobs()
+        # Đóng app lúc đang gói dự án quá vài giây (hay máy tắt đột ngột) để lại file `.part` / thư mục tạm: nhớ nơi đã xuất, lần mở sau dọn.
+        self.export_folders = export_leftovers.ExportFolders(preferences.path.with_name("export-folders.json"))
+        if not read_only:
+            self._sweep_export_leftovers_at_start()
         self.export_work_dir = preferences.path.with_name(listen_export.WORK_FOLDER)
         # Hàng đợi sản xuất: hai cuốn chạy cùng lúc tranh nhau GPU (phân tích cần ~6,2 GB trên card 8 GB), nên cuốn
         # thứ hai xếp hàng và tự bắt đầu khi cuốn đang chạy xong. Hàng đợi sống cùng app (đóng app là bỏ hàng).
@@ -910,6 +915,17 @@ class App:
         if self._fake_run():
             return
         threading.Thread(target=lambda: self.sweep_trash(everything=True), name="trash-sweep", daemon=True).start()
+
+    def _sweep_export_leftovers_at_start(self) -> None:
+        """Lúc mở app: dọn file tạm của lượt gói `.abookproj` bị cắt ngang ở phiên trước (`export_leftovers`). Luồng nền - thư mục xuất có thể nằm
+        trên ổ mạng chậm. Giọng giả / bài thử không tự dọn (bài thử gọi `sweep_export_leftovers` trực tiếp)."""
+        if self._fake_run():
+            return
+        threading.Thread(target=self.sweep_export_leftovers, name="export-leftovers", daemon=True).start()
+
+    def sweep_export_leftovers(self) -> list[Path]:
+        folders = [*self.export_folders.recent(), Path(self.preferences.get()["libraryRoot"]) / "Đã xuất"]
+        return export_leftovers.sweep(folders, Path(tempfile.gettempdir()))
 
     def undo_trash(self, token: str) -> dict[str, Any]:
         """"Hoàn tác" một lần xoá: thư mục về đúng đường gốc, thư viện thấy lại. Hàng chờ KHÔNG được xếp lại - ghi trong lời
@@ -1636,6 +1652,12 @@ class App:
             with self._music_exports_lock:
                 if self._music_exports.get(key) is state:
                     del self._music_exports[key]
+
+    @staticmethod
+    def music_key(project: Path, kind: str = "bookfile") -> str:
+        """Khoá `music_exporting` của MỘT kiểu xuất trên cuốn `project`: `.abook` và `.abookproj` có thể cùng chạy (hai việc nền riêng), mỗi bên
+        một khoá nên không ghi đè trạng thái hay huỷ nhầm lượt của nhau. `.abook` giữ khoá cũ (đường dẫn dự án)."""
+        return str(project) if kind == "bookfile" else f"{kind}:{project}"
 
     def music_export_status(self, key: str) -> dict[str, Any]:
         """{active, done, total}: lượt xuất của cuốn `key` đang tải nhạc nền để đóng kèm (bài thứ `done` trong `total` bài chưa có)."""
@@ -3124,7 +3146,7 @@ class Handler(BaseHTTPRequestHandler):
 
         def run() -> dict[str, Any]:
             try:
-                with app.music_exporting(str(project), parts or [project]) as music:
+                with app.music_exporting(app.music_key(project), parts or [project]) as music:
                     def pack(part: Path, folder: Path, name: str) -> dict[str, Any]:
                         path = bookfile.pack(part, free_path(folder / bookfile.default_name(name)), music_track=music)
                         return {"file": str(path), "size": path.stat().st_size}
@@ -3279,14 +3301,19 @@ class Handler(BaseHTTPRequestHandler):
 
         self._send_json(HTTPStatus.ACCEPTED, self.app.word_jobs.start(project, repack))
 
-    def get_music_export(self, _query: dict[str, list[str]], value: str) -> None:
-        # Hộp Xuất hỏi giữa lúc đóng gói: đang tải nhạc nền bài thứ mấy / tổng số.
-        self._send_json(HTTPStatus.OK, self.app.music_export_status(str(self.app._book(value))))
+    def _music_key(self, query: dict[str, list[str]], value: str) -> str:
+        """Khoá nhạc của lượt xuất đang hỏi: `?kind=projectfile` là `.abookproj`, không có là `.abook`."""
+        kind = "projectfile" if (query.get("kind") or [""])[0] == "projectfile" else "bookfile"
+        return self.app.music_key(self.app._book(value), kind)
 
-    def post_music_export_cancel(self, _query: dict[str, list[str]], value: str) -> None:
+    def get_music_export(self, query: dict[str, list[str]], value: str) -> None:
+        # Hộp Xuất hỏi giữa lúc đóng gói: đang tải nhạc nền bài thứ mấy / tổng số.
+        self._send_json(HTTPStatus.OK, self.app.music_export_status(self._music_key(query, value)))
+
+    def post_music_export_cancel(self, query: dict[str, list[str]], value: str) -> None:
         # "Huỷ" xuất có nhạc nền: dừng trước bài kế phải tải, không ghi file sách nào.
         self.app._mutating()
-        self._send_json(HTTPStatus.OK, {"cancelling": self.app.cancel_music_export(str(self.app._book(value)))})
+        self._send_json(HTTPStatus.OK, {"cancelling": self.app.cancel_music_export(self._music_key(query, value))})
 
     def get_export_size(self, query: dict[str, list[str]], value: str) -> None:
         # Cỡ ước lượng của bản xuất `.abook` (audio các chương nghe được; `series=1`: cả bộ) - hộp Xuất báo trước và cảnh
@@ -3309,6 +3336,8 @@ class Handler(BaseHTTPRequestHandler):
         title = store.summarize(project)["title"] or project.name
         app = self.app
         key = str(project)
+        app.export_folders.remember(root)
+        music_key = app.music_key(project, "projectfile")
 
         def progress(phase: str, done: int, total: int) -> None:
             if app.projectfile_jobs.cancelled(key):
@@ -3316,7 +3345,7 @@ class Handler(BaseHTTPRequestHandler):
             app.projectfile_jobs.update(key, phase=phase, done=done, total=total)
 
         def run() -> dict[str, Any]:
-            with app.music_exporting(key, [project]) as music:
+            with app.music_exporting(music_key, [project]) as music:
                 path = projectfile.pack(project, free_path(root / projectfile.default_name(title)),
                                         running=app.runner.running(project), music_track=music, progress=progress)
             with projectfile.ProjectFile(path) as packed:
@@ -3350,7 +3379,7 @@ class Handler(BaseHTTPRequestHandler):
         self.app._mutating()
         key = str(self.app._book(value))
         self.app.projectfile_jobs.cancel(key)
-        self.app.cancel_music_export(key)
+        self.app.cancel_music_export(self.app.music_key(Path(key), "projectfile"))  # chỉ nhạc của chính việc gói dự án, không đụng việc xuất .abook
         self._send_json(HTTPStatus.OK, self.app.projectfile_jobs.status(key))
 
     def get_review(self, query: dict[str, list[str]], value: str) -> None:
