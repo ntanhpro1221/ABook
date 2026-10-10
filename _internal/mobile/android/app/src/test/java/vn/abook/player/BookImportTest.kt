@@ -49,6 +49,20 @@ class BookImportTest {
         }
     }
 
+    /** Hình dạng của sách thật (soát a22, tests/import_fixtures.py): mỗi file một lỗi đã gặp - hai bên cùng ra một cuốn. */
+    @Test
+    fun real_world_book_shapes_give_exactly_what_python_gives() {
+        for (file in listOf("nav_pages.epub", "toc_broken.epub", "toc_missing.epub", "nfd_names.epub", "calibre_split.epub", "hoi.txt", "toc_txt.txt", "gutenberg.txt", "hidden.epub", "dropcap.epub", "glued.epub",
+            "pt_cp1252.txt", "zh_gbk.txt", "bom_join.txt", "declared.epub", "title_h1.docx", "scenes.docx", "roman.docx",
+            "nested.epub", "index_split_003.txt",
+        )) {
+            assertEquals(file, expectedText(file.substringBeforeLast('.')), dump(BookImport.importFile(File(dir, file))))
+            if (file.endsWith(".txt")) { // TXT cả truyện: cả khi người nghe tích "Tách thành N chương"
+                assertEquals(file, expectedText(file.substringBeforeLast('.') + ".split"), dump(BookImport.importFile(File(dir, file), splitChapters = true)))
+            }
+        }
+    }
+
     @Test
     fun the_pdf_rules_layer_gives_what_python_gives_from_the_shared_raw_pages() {
         val raw = StrictJson.parse(File(dir, "pages/story.pages.json").readText(Charsets.UTF_8)) as org.json.JSONObject
@@ -115,7 +129,8 @@ class BookImportTest {
         assertEquals("Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.", book.chapters[1].text)
         assertEquals("Chương hai\n\nTiếng máy nổ trầm đục.", book.chapters[2].text)
         assertTrue(book.chapters[4].text.contains("Mưa rơi suốt chiều."))
-        assertEquals("Bỏ qua mục trống: Chương 3", book.notes[0])
+        assertTrue("Bỏ qua mục trống: Chương 3" in book.notes)
+        assertTrue("tiếng Việt Windows (cp1258)" in book.notes[0])
     }
 
     @Test

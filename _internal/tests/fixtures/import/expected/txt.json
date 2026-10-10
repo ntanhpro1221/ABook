@@ -30,6 +30,7 @@
   }
  ],
  "notes": [
+  "File chữ không phải UTF-8 - đã đọc theo bảng mã tiếng Việt Windows (cp1258). Nếu chữ lạ, lưu lại file dạng UTF-8 rồi nhập lại.",
   "Bỏ qua mục trống: Chương 3",
   "Gợi ý: chương 5 có dòng ghi công ở đầu - “Dịch: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ."
  ]

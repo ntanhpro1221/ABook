@@ -1,0 +1,15 @@
+{
+ "title": "pt cp1252",
+ "author": null,
+ "language": null,
+ "cover": null,
+ "chapters": [
+  {
+   "title": "pt_cp1252",
+   "text": "Capítulo 1\n\nA situação não é fácil, mas a mãe já está aqui com as informações.\nEle sabia que a lição era clara: são as ações que contam, não as palavras."
+  }
+ ],
+ "notes": [
+  "File chữ không phải UTF-8 - đã đọc theo bảng mã Tây Âu (cp1252). Nếu chữ lạ, lưu lại file dạng UTF-8 rồi nhập lại."
+ ]
+}

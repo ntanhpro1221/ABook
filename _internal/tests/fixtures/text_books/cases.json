@@ -618,6 +618,11 @@
       "title": "Chương 2",
       "text": "Đoạn hai.",
       "name": ""
+     },
+     {
+      "title": "Bản quyền",
+      "text": "Bản này tự viết để thử.",
+      "matter": "Trang bản quyền"
      }
     ],
     "textHasTitle": false
@@ -628,10 +633,10 @@
      "title": "Sách có bìa",
      "narrator": "",
      "duration": 0,
-     "chaptersTotal": 3,
+     "chaptersTotal": 4,
      "chaptersAvailable": 0,
      "complete": false,
-     "version": "d8371e7ff57b1c32",
+     "version": "6b865993c3c17a22",
      "chapters": [
       {
        "id": 1,
@@ -668,6 +673,18 @@
        "size": 0,
        "state": "text",
        "text": "texts/3.txt"
+      },
+      {
+       "id": 4,
+       "index": 4,
+       "title": "Bản quyền",
+       "subtitle": "",
+       "fullTitle": "Bản quyền",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/4.txt"
       }
      ],
      "samples": [],
@@ -686,14 +703,19 @@
      "texts/3.txt": {
       "size": 25,
       "sha256": "01b9f94ae6e9af5e3c2e11f9a8078cb3a9ce477bb496f3ca855e3789bfd04303"
+     },
+     "texts/4.txt": {
+      "size": 51,
+      "sha256": "abecfd12d6550b7dcbd0135488318d9439c116d7bb610bcef3f861a401343187"
      }
     },
     "texts": {
      "texts/1.txt": "Bìa\n\n\n",
      "texts/2.txt": "Chương 1\n\nMột đoạn.\n",
-     "texts/3.txt": "Chương 2\n\nĐoạn hai.\n"
+     "texts/3.txt": "Chương 2\n\nĐoạn hai.\n",
+     "texts/4.txt": "Bản quyền\n\nBản này tự viết để thử.\n"
     },
-    "contentKey": "f-4fa22e7d9eea97ca91bad45d",
+    "contentKey": "f-68afe7fdcbe1a4105e287226",
     "preview": {
      "title": "Sách có bìa",
      "author": null,
@@ -724,6 +746,15 @@
        "words": 4,
        "chars": 15,
        "included": true
+      },
+      {
+       "index": 4,
+       "title": "Bản quyền",
+       "firstLine": "Bản quyền",
+       "words": 8,
+       "chars": 26,
+       "included": false,
+       "matter": "Trang bản quyền"
       }
      ],
      "notes": [],

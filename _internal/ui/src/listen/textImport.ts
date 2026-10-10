@@ -16,6 +16,8 @@ export interface ImportPreviewChapter {
   included?: boolean;
   /** Mục rất ngắn: "có thể là bìa / trang bản quyền". */
   short?: boolean;
+  /** Phần có vẻ không phải truyện (bìa, bản quyền, mục lục…), chưa tích: lý do máy thấy, vd "Trang bản quyền". */
+  matter?: string;
 }
 
 /** Danh sách chương của bước xem trước - cùng hàng chữ với danh sách chương của trình tạo sách Studio. */
@@ -142,7 +144,7 @@ export function splitIsSure(preview: Pick<ImportPreview, "splitOffer" | "splitHe
   return Boolean(preview.splitOffer) && (preview.splitHeadings ?? preview.splitOffer ?? 0) >= SURE_SPLIT_HEADINGS;
 }
 
-/** Các hàng tích sẵn: mọi hàng trừ mục rất ngắn. */
+/** Các hàng tích sẵn: mọi hàng trừ mục rất ngắn và phần có vẻ không phải truyện (máy gửi `included: false`). */
 export function defaultPicked(chapters: readonly ImportPreviewChapter[]): ReadonlySet<number> {
   return new Set(chapters.filter((chapter) => chapter.included !== false).map((chapter) => chapter.index));
 }

@@ -9,7 +9,7 @@ import subprocess
 import time
 import unicodedata
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Iterator
 
 
 def natural_key(value: str) -> list[Any]:
@@ -86,10 +86,92 @@ def slugify(text: str, max_length: int = 90) -> str:
 
 
 def decode_text_bytes(raw: bytes) -> str:
-    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
-        return unicodedata.normalize("NFC", raw.decode("utf-16"))
+    return decode_text(raw)[0]
 
-    encodings = ["utf-8-sig", "utf-8", "cp1258", "windows-1252"]
+
+# Chữ Việt có dấu (NFC, hoa lẫn thường); chữ CHỈ tiếng Việt có (ạ ả ấ…, ư, đ, ĩ, ũ) - Bồ Đào Nha đọc nhầm qua cp1258 chỉ ra ă / ơ.
+VIET_LETTERS = frozenset(
+    unicodedata.normalize("NFC", base + tone)
+    for vowel in "aăâeêioôơuưy"
+    for base in (vowel, vowel.upper())
+    for tone in ("", "̀", "́", "̉", "̃", "̣")
+) | {"đ", "Đ"}
+VIET_ONLY = frozenset(char for char in VIET_LETTERS if ord(char) >= 0x1EA0) | set("đĐưƯĩĨũŨ")
+VIET_WORD_MAX = 7  # âm tiết dài nhất: "nghiêng"
+VIET_PLAUSIBLE = 0.9  # từ có dấu là âm tiết Việt được
+VIET_ONLY_SHARE = 0.2  # từ có dấu mang chữ chỉ tiếng Việt có
+LATIN_RUN_MAX = 3  # chữ Tây Âu: dấu nằm rải rác giữa chữ ASCII ("ação"); chữ Trung đọc nhầm qua cp1252 ra cả chuỗi dài "ÄãºÃ"
+LATIN_MARKS = frozenset("“”‘’–—…«»°·€©®™§¡¿")
+CJK = ((0x3400, 0x4DBF), (0x4E00, 0x9FFF), (0xF900, 0xFAFF))
+CJK_MARKS = ((0x3000, 0x303F), (0xFF00, 0xFFEF))
+
+
+def _letter_runs(text: str) -> Iterator[str]:
+    word: list[str] = []
+    for char in text:
+        if char.isalpha() or unicodedata.category(char) == "Mn":
+            word.append(char)
+        elif word:
+            yield "".join(word)
+            word = []
+    if word:
+        yield "".join(word)
+
+
+def looks_vietnamese(text: str) -> bool:
+    """cp1258 nhận gần như mọi byte, nên chỉ tin nó khi chữ ra trông như tiếng Việt: gần hết từ có dấu là âm tiết Việt được (chỉ chữ
+    Việt, không dấu rời, <= 7 chữ) và đủ từ mang chữ chỉ tiếng Việt có."""
+    accented = plausible = only = 0
+    for word in _letter_runs(text):
+        if word.isascii():
+            continue
+        accented += 1
+        plausible += len(word) <= VIET_WORD_MAX and all(char.isascii() or char in VIET_LETTERS for char in word)
+        only += any(char in VIET_ONLY for char in word)
+    return accented == 0 or (plausible >= VIET_PLAUSIBLE * accented and only >= VIET_ONLY_SHARE * accented)
+
+
+def _in(code: int, ranges: tuple[tuple[int, int], ...]) -> bool:
+    return any(low <= code <= high for low, high in ranges)
+
+
+def encoding_score(text: str, encoding: str) -> int:
+    """Chữ ra trông thật đến đâu (chữ đúng trừ hai lần chữ lạ). gb18030: chữ Hán / dấu câu Hán, không dính chữ ASCII ("n中o" là chữ Tây
+    đọc nhầm). cp1252: chuỗi ký tự ngoài ASCII ngắn, toàn chữ cái / dấu câu Tây Âu."""
+    good = bad = 0
+    if encoding == "gb18030":
+        for index, char in enumerate(text):
+            code = ord(char)
+            if code < 0x80:
+                continue
+            near = text[index - 1:index] if index else ""
+            near += text[index + 1:index + 2]
+            if _in(code, CJK) and not any(other.isascii() and other.isalpha() for other in near) or _in(code, CJK_MARKS):
+                good += 1
+            else:
+                bad += 1
+        return good - 2 * bad
+    run: list[str] = []
+    for char in text + "\n":
+        if ord(char) >= 0x80:
+            run.append(char)
+            continue
+        if run:
+            if len(run) <= LATIN_RUN_MAX and all(other.isalpha() or other in LATIN_MARKS for other in run):
+                good += len(run)
+            else:
+                bad += len(run)
+            run = []
+    return good - 2 * bad
+
+
+def decode_text(raw: bytes) -> tuple[str, str]:
+    """(chữ NFC, bảng mã). UTF-16 (BOM, hay nhiều byte 0), UTF-8 (có / không BOM); không thì cp1258 khi chữ ra trông như tiếng Việt
+    (`looks_vietnamese`), còn lại cp1252 hay gb18030 theo `encoding_score` - không im lặng ra chữ rác vì cp1258 nhận mọi byte."""
+    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return unicodedata.normalize("NFC", raw.decode("utf-16")), "utf-16"
+
+    encodings = ["utf-8-sig", "utf-8"]
     if raw:
         even_nuls = raw[0::2].count(0)
         odd_nuls = raw[1::2].count(0)
@@ -99,13 +181,27 @@ def decode_text_bytes(raw: bytes) -> str:
             encodings.insert(0, utf16_encoding)
 
     for encoding in encodings:
-        try:
-            text = raw.decode(encoding)
-            if "�" not in text:
-                return unicodedata.normalize("NFC", text)
-        except UnicodeDecodeError:
-            continue
-    return unicodedata.normalize("NFC", raw.decode("utf-8", errors="replace"))
+        text = _strict(raw, encoding)
+        if text is not None:
+            return text, encoding
+    guesses = {encoding: text for encoding in ("cp1258", "windows-1252", "gb18030") if (text := _strict(raw, encoding)) is not None}
+    if "cp1258" in guesses and looks_vietnamese(guesses["cp1258"]):
+        return guesses["cp1258"], "cp1258"
+    scored = [(encoding_score(guesses[encoding], encoding), encoding) for encoding in ("windows-1252", "gb18030") if encoding in guesses]
+    if scored:
+        encoding = max(scored, key=lambda pair: pair[0])[1]  # hoà điểm: cp1252 (đứng trước)
+        return guesses[encoding], encoding
+    if "cp1258" in guesses:
+        return guesses["cp1258"], "cp1258"
+    return unicodedata.normalize("NFC", raw.decode("utf-8", errors="replace")), "utf-8"
+
+
+def _strict(raw: bytes, encoding: str) -> str | None:
+    try:
+        text = raw.decode(encoding)
+    except UnicodeDecodeError:
+        return None
+    return None if "�" in text else unicodedata.normalize("NFC", text)
 
 
 REPLACE_RETRY_ATTEMPTS = 12

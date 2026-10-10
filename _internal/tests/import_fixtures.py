@@ -228,6 +228,228 @@ def build_epub_split() -> bytes:
     return _zip(entries, stored_first="mimetype")
 
 
+# --- EPUB hình dạng sách thật (soát a22): mỗi file một lỗi đã gặp, chữ tự viết ------------------------------------------
+
+NAV_NS = 'xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"'
+LINE = "Con đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người."
+
+
+def _book(title: str, pages: list[tuple[str, str]], *, nav: str | None = None, ncx: str | None = None, extra: tuple[tuple[str, bytes, str], ...] = (),
+          version: str = "3.0", raw_pages: dict[str, bytes] | None = None, drop: tuple[str, ...] = (), rename: dict[str, str] | None = None) -> bytes:
+    """EPUB nhỏ: `pages` = [(tên file trong OEBPS/text, thân XHTML)] theo thứ tự đọc; `nav` / `ncx` = nội dung tệp mục lục (None = không có);
+    `extra` = [(đường trong OEBPS, byte, media)] khai trong manifest; `raw_pages` thay byte của trang; `drop` = mục khai báo mà không có
+    trong gói; `rename` = tên trong zip khác tên khai báo (zip NFD)."""
+    items, spine, entries = [], [], []
+    for number, (name, body) in enumerate(pages, start=1):
+        items.append(f'<item id="p{number}" href="text/{name}" media-type="application/xhtml+xml"/>')
+        spine.append(f'<itemref idref="p{number}"/>')
+        entries.append((f"OEBPS/text/{name}", (raw_pages or {}).get(name) or _xhtml(body)))
+    if nav is not None:
+        items.append('<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>')
+        entries.append(("OEBPS/nav.xhtml", f'<?xml version="1.0" encoding="utf-8"?>\n<html {NAV_NS}><body>{nav}</body></html>'.encode()))
+    if ncx is not None:
+        items.append('<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>')
+        entries.append(("OEBPS/toc.ncx", ncx.encode()))
+    for path, data, media in extra:
+        items.append(f'<item id="x{len(items)}" href="{path}" media-type="{media}"/>')
+        entries.append((f"OEBPS/{path}", data))
+    toc_attr = ' toc="ncx"' if ncx is not None else ""
+    opf = (f'<?xml version="1.0" encoding="utf-8"?>\n<package xmlns="http://www.idpf.org/2007/opf" version="{version}" unique-identifier="id">'
+           f'<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>{title}</dc:title><dc:language>vi</dc:language></metadata>'
+           f'<manifest>{"".join(items)}</manifest><spine{toc_attr}>{"".join(spine)}</spine></package>')
+    entries = [(name, data) for name, data in entries if name not in drop]
+    entries = [((rename or {}).get(name, name), data) for name, data in entries]
+    return _zip([("mimetype", b"application/epub+zip"), ("META-INF/container.xml", CONTAINER.encode()), ("OEBPS/content.opf", opf.encode()),
+                 *entries], stored_first="mimetype")
+
+
+def build_nav_pages() -> bytes:
+    """EPUB3 kiểu Project Gutenberg: tệp nav có <nav> mốc (landmarks) ĐỨNG TRƯỚC mục lục, và <nav> danh sách số trang trỏ vào giữa
+    chương - chỉ <nav epub:type="toc"> là chương (BUG1)."""
+    pages = [(f"c{n}.xhtml", f"<h2>Chương {n}</h2>\n<p>{LINE}</p>\n<p id=\"page{n}a\">{LINE}</p>\n<p id=\"page{n}b\">{LINE}</p>") for n in (1, 2)]
+    nav = ('<nav epub:type="landmarks"><ol><li><a epub:type="bodymatter" href="text/c1.xhtml">Bắt đầu đọc</a></li></ol></nav>'
+           '<nav epub:type="toc"><ol><li><a href="text/c1.xhtml">Chương 1: Bến đò</a></li><li><a href="text/c2.xhtml">Chương 2: Mưa</a></li></ol></nav>'
+           '<nav epub:type="page-list"><ol>' + "".join(f'<li><a href="text/c{n}.xhtml#page{n}{k}">{n}{k}</a></li>' for n in (1, 2) for k in "ab")
+           + "</ol></nav>")
+    return _book("Mục lục có số trang", pages, nav=nav)
+
+
+def _ncx(points: list[tuple[str, str]]) -> str:
+    body = "".join(f'<navPoint id="n{number}"><navLabel><text>{_esc(label)}</text></navLabel><content src="{src}"/></navPoint>'
+                   for number, (label, src) in enumerate(points, start=1))
+    return f'<?xml version="1.0" encoding="utf-8"?>\n<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><navMap>{body}</navMap></ncx>'
+
+
+def _chapters(count: int, *, names: str = "c{n}.xhtml") -> list[tuple[str, str]]:
+    return [(names.format(n=n), f"<h1>Chương {n}: Bến số {n}</h1>\n<p>{LINE}</p>\n<p>{LINE}</p>") for n in range(1, count + 1)]
+
+
+def build_toc_broken() -> bytes:
+    """NCX hỏng XML (thẻ không đóng): không phải "file hỏng" - đọc theo spine, tên chương từ tiêu đề trong chữ, có ghi chú (BUG3)."""
+    ncx = _ncx([("Chương 1", "text/c1.xhtml")]).replace("</text>", "", 1)
+    return _book("Mục lục hỏng", _chapters(2), ncx=ncx, version="2.0")
+
+
+def build_toc_missing() -> bytes:
+    """Manifest khai toc.ncx và một trang của spine mà gói không có (tải chưa trọn): phần còn lại vẫn đọc được (BUG3)."""
+    return _book("Thiếu tệp", _chapters(3), ncx=_ncx([]), version="2.0", drop=("OEBPS/toc.ncx", "OEBPS/text/c2.xhtml"))
+
+
+def build_calibre_split() -> bytes:
+    """Chương dài bị cắt thành nhiều file (Calibre: index_split_000, _001…), mục lục chỉ trỏ file đầu của mỗi chương: file sau NỐI vào
+    chương trước (BUG2) - trừ file mở bằng tiêu đề chương riêng (mục lục thiếu chương 3) và trang tên sách / trang giới thiệu (BUG6)."""
+    pages = [
+        ("titlepage.xhtml", "<h1>Chuyến đò ngang</h1>\n<p>Lê Thử Nghiệm</p>"),
+        ("index_split_000.xhtml", f"<h2>Chương 1: Bến đò</h2>\n<p>{LINE}</p>"),
+        ("index_split_001.xhtml", f"<p>Phần sau của chương một, Calibre cắt ra file riêng. {LINE}</p>"),
+        ("index_split_002.xhtml", f"<h2>Chương 2: Mưa</h2>\n<p>{LINE}</p>"),
+        ("index_split_003.xhtml", f"<p>Phần sau của chương hai. {LINE}</p>"),
+        ("index_split_004.xhtml", f"<p><b>Chương 3: Nước lên</b></p>\n<p>{LINE}</p>"),
+        ("index_split_005.xhtml", f"<p>Phần sau của chương ba. {LINE}</p>"),
+        ("about.xhtml", f"<p>Sách điện tử này được làm để thử, không bán. {LINE}</p>"),
+    ]
+    ncx = _ncx([("Chương 1: Bến đò", "text/index_split_000.xhtml"), ("Chương 2: Mưa", "text/index_split_002.xhtml")])
+    return _book("Chương cắt nhiều file", pages, ncx=ncx, version="2.0")
+
+
+def build_hoi_txt() -> bytes:
+    """TXT cả truyện chia "Hồi thứ nhất / nhì / ba" (BUG4); "Hồi nhất định…" ở đầu câu không phải tiêu đề."""
+    return ("Ba hồi trên sông\n\nHồi thứ nhất\nCon đò rời bến lúc trời còn tối.\n\nHồi thứ nhì\nMưa xuống trắng mặt sông.\n"
+            "Hồi nhất định phải kể cho hết, ông lái nói thế.\n\nHồi thứ ba\nĐò cập bến bên kia.\n").encode()
+
+
+def build_toc_txt() -> bytes:
+    """TXT cả truyện mở bằng MỤC LỤC: các dòng "Chương N" liền nhau không có chữ là mục lục, không thành chương rỗng; tên sách không
+    phải "MỤC LỤC" (BUG5). Phần mục lục ở lại trong "Mở đầu" (không bỏ chữ), có cờ "Mục lục" (BUG6)."""
+    return ("MỤC LỤC\nChương 1: Bến đò\nChương 2: Mưa\nChương 3: Nước lên\n\n"
+            f"Chương 1: Bến đò\n\n{LINE}\n\nChương 2: Mưa\n\n{LINE}\n\nChương 3: Nước lên\n\n{LINE}\n").encode()
+
+
+def build_gutenberg_txt() -> bytes:
+    """TXT kiểu Project Gutenberg (chữ tự viết): dòng đầu "The Project Gutenberg eBook of …", rồi "Title:" / "Author:", mục lục "CHAPTER I."
+    liền nhau (BUG5) - tên sách / tác giả lấy từ "Title:" / "Author:", không phải cả câu đầu."""
+    return ("﻿The Project Gutenberg eBook of Bến đò ngang\r\n\r\nBản này tự viết để thử, mượn hình dạng của sách Project Gutenberg.\r\n\r\n"
+            "Title: Bến đò ngang\r\n\r\nAuthor: Lê Thử Nghiệm\r\n\r\n*** START OF THE PROJECT GUTENBERG EBOOK BẾN ĐÒ NGANG ***\r\n\r\n"
+            "Contents\r\n\r\n CHAPTER I.   Bến\r\n CHAPTER II.  Mưa\r\n\r\n\r\n"
+            f"CHAPTER I.\r\nBến\r\n\r\n{LINE}\r\n\r\nCHAPTER II.\r\nMưa\r\n\r\n{LINE}\r\n").encode()
+
+
+HIDDEN_CSS = ("/* ẩn */ .an { display: none } span.so-trang, #ghi.chu { visibility: hidden !important }\n"
+              "@media print { .chi-khi-in { display: none } }\n.dep { color: #333 } p a { display: none }")
+
+
+def build_hidden() -> bytes:
+    """Chữ ẩn của nguồn HTML (BUG7) và cách đọc ruby (BUG14): không lọt vào chữ. Luật CSS trong @media print và bộ chọn phức tạp không
+    tính; <img aria-hidden> (thẻ rỗng) không nuốt phần sau; chú thích <aside epub:type="footnote"> vẫn ở lại (không bỏ chữ)."""
+    body = (f"<h2>Chương 1: Chữ ẩn</h2>\n<p>{LINE}</p>\n<p class=\"an\">CSS_AN đăng lại xin ghi nguồn.</p>\n"
+            "<div hidden=\"hidden\"><p>THUOC_TINH_HIDDEN</p></div>\n<p aria-hidden=\"true\">ARIA_AN</p>\n"
+            "<p class=\"dep\">Câu có <span style=\"display: none\">STYLE_AN</span>chữ ẩn giữa câu<span class=\"so-trang\">SO_TRANG_CSS</span>"
+            "<span epub:type=\"pagebreak\" id=\"page7\" title=\"7\">7</span> và <img aria-hidden=\"true\" src=\"x.png\" alt=\"\"/>vẫn liền mạch.</p>\n"
+            "<p id=\"ghi\" class=\"chu\">ID_LOP_AN</p>\n<p class=\"chi-khi-in\">Chỉ ẩn khi in, trên màn hình vẫn đọc.</p>\n"
+            "<p>Đọc <a href=\"#x\">liên kết</a> như chữ thường.</p>\n<noscript><p>NOSCRIPT</p></noscript>\n"
+            "<p>Cô ấy dùng <ruby>魔法<rp>(</rp><rt>まほう</rt><rp>)</rp></ruby> thật.</p>\n"
+            "<p span=\"x\">Câu có chú thích.</p>\n<aside epub:type=\"footnote\" id=\"n1\"><p>Lời chú thích vẫn ở lại.</p></aside>")
+    return _book("Chữ ẩn", [("c1.xhtml", body)], extra=(("style/main.css", HIDDEN_CSS.encode(), "text/css"),),
+                 raw_pages={"c1.xhtml": _xhtml(body, '<link rel="stylesheet" href="../style/main.css"/>').replace(
+                     b'xmlns="http://www.w3.org/1999/xhtml"', b'xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"')})
+
+
+def build_dropcap() -> bytes:
+    """Chữ cái đầu chương vẽ bằng ảnh, alt là đúng chữ ấy (BUG8): "M" + "ọi chuyện" = "Mọi chuyện"; ảnh minh hoạ có alt dài, hay alt một
+    chữ mà chữ sau cách ra, thì không ghép."""
+    body = (f"<h2>Chương 1: Bến đò</h2>\n<p><img class=\"dropcap\" src=\"m.png\" alt=\"M\"/><span class=\"smcap\">ọi chuyện</span> bắt đầu ở bến. {LINE}</p>\n"
+            f"<p><img src=\"h.png\" alt=\"Hình minh hoạ bến đò\"/>Ảnh trên là bến đò.</p>\n<p><img src=\"a.png\" alt=\"A\"/> rời ra một quãng.</p>")
+    return _book("Chữ cái đầu bằng ảnh", [("c1.xhtml", body)])
+
+
+def build_glued() -> bytes:
+    """Thẻ làm dính chữ (BUG9): ô bảng, hr giữa chữ trần, figure / figcaption, aside, <pre> giữ xuống dòng, số chú thích <sup>."""
+    body = (f"<h2>Chương 1: Bảng và thơ</h2>\n<p>{LINE}</p>\n<table><tr><th>Chỉ số</th><th>Giá trị</th></tr><tr><td>Sức mạnh</td><td>120</td></tr></table>\n"
+            "<div>Cảnh một kết thúc.<hr/>Cảnh hai bắt đầu.</div>\n"
+            "<div>Trước ảnh<figure><img src=\"x.png\" alt=\"\"/><figcaption>Bến đò lúc sáng</figcaption></figure>Sau ảnh</div>\n"
+            "<div>Câu trước<aside>Lời bên lề</aside>Câu sau</div>\n<pre>Dòng thơ một\nDòng thơ hai\n  Dòng thơ ba</pre>\n"
+            "<p>Có chú thích<sup>1</sup> rồi nói tiếp<sup>[2]</sup>, mét vuông là m<sup>2</sup> nhé.</p>")
+    return _book("Chữ dính", [("c1.xhtml", body)])
+
+
+def build_pt_cp1252() -> bytes:
+    """TXT tiếng Bồ Đào Nha (tự viết) lưu cp1252 (BUG13): cp1258 nhận được mọi byte nhưng ra "năo", "situaçăo" - phải đọc là cp1252."""
+    return ("Capítulo 1\r\n\r\nA situação não é fácil, mas a mãe já está aqui com as informações.\r\n"
+            "Ele sabia que a lição era clara: são as ações que contam, não as palavras.\r\n").encode("cp1252")
+
+
+def build_zh_gbk() -> bytes:
+    """TXT tiếng Trung (tự viết) lưu GBK (BUG13): cp1258 / cp1252 nhận mọi byte và ra chữ rác - phải đọc là GB18030."""
+    return "第一章 渡口\r\n\r\n他走进房间，看见桌上放着一封信。信上只有一句话：明天早上见。\r\n".encode("gbk")
+
+
+def build_bom_join() -> bytes:
+    """TXT nối từ hai file UTF-8 có BOM (BUG13): dấu BOM giữa file không được làm "Chương 2" mất tư cách tiêu đề, và không lọt vào chữ."""
+    return "﻿Chương 1\nCon đò rời bến.\n\n﻿Chương 2\nMưa xuống trắng mặt sông.\n".encode()
+
+
+def build_declared() -> bytes:
+    """Trang XHTML khai báo bảng mã (BUG13): một trang windows-1258 thật; một trang khai `<meta charset=iso-8859-1>` mà byte là UTF-8
+    (khai sai - UTF-8 đọc trọn được thì tin UTF-8)."""
+    vi = ('<?xml version="1.0" encoding="windows-1258"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>x</title></head><body>\n'
+          "<h2>Chương 1: Bến đò</h2>\n<p>Người lái đò nhớ tên từng khách qua sông. Sáng nào ông cũng ra bến từ khi trời còn tối, ngồi chờ bên chiếc đèn dầu nhỏ, nghe tiếng nước vỗ vào mạn đò. Khách đến thì ông chở, không ai đến thì ông ngồi nhìn sông.</p>\n</body></html>")
+    lying = _xhtml(f"<h2>Chương 2: Mưa</h2>\n<p>{LINE}</p>", head='<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>')
+    return _book("Khai báo bảng mã", [("c1.xhtml", ""), ("c2.xhtml", "")], raw_pages={"c1.xhtml": encode_cp1258(vi), "c2.xhtml": lying})
+
+
+def _bold(text: str, style: str | None = None) -> str:
+    return _para(style=style, runs=f'<w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">{_esc(text)}</w:t></w:r>')
+
+
+def build_docx_title_h1() -> bytes:
+    """DOCX (BUG12): Heading 1 duy nhất ở đầu là tên sách; chương là dòng in đậm "Chương N" - không phải một chương to tên sách."""
+    body = _para("Bến đò ngang", "Heading1")
+    for number, name in ((1, "Bến đò"), (2, "Mưa")):
+        body += _bold(f"Chương {number}: {name}") + _para(LINE) + _para("Người lái đò ngồi chờ khách bên chiếc đèn dầu nhỏ.")
+    return _docx(body, None)
+
+
+def build_docx_scenes() -> bytes:
+    """DOCX (BUG12): Heading 1 là chương, Heading 2 là cảnh - cảnh là một dòng trong chương, không phải chương rỗng + chương "Cảnh 1"."""
+    body = ""
+    for number in (1, 2):
+        body += _para(f"Chương {number}", "Heading1")
+        for scene in (1, 2):
+            body += _para(f"Cảnh {scene}", "Heading2") + _para(LINE)
+    return _docx(body, None)
+
+
+def build_docx_roman() -> bytes:
+    """DOCX (BUG12): chương là dòng in đậm "I. KHỞI ĐẦU" (số La Mã); trang tên sách / tác giả ở đầu file có cờ, không bị bỏ; dòng
+    "V. Năm" KHÔNG in đậm vẫn là chữ."""
+    body = _bold("Bến đò ngang") + _para("Nguyễn Văn Thử")
+    for roman, name in (("I", "KHỞI ĐẦU"), ("II", "MƯA")):
+        body += _bold(f"{roman}. {name}") + _para(LINE) + _para("V. Năm người khách cuối cùng lên đò khi trời đã tối.")
+    return _docx(body, None)
+
+
+def build_nested() -> bytes:
+    """Tên (BUG15): tên sách "… — Mục lục" (tên trang mục lục Wikisource) bỏ đuôi; nút cha "Quyển một" trỏ cùng file với chương con đầu
+    không cướp tên chương ấy."""
+    nav = ('<nav epub:type="toc"><ol><li><a href="text/c1.xhtml">Quyển một</a><ol><li><a href="text/c1.xhtml">Chương 1: Bến đò</a></li>'
+           '<li><a href="text/c2.xhtml">Chương 2: Mưa</a></li></ol></li></ol></nav>')
+    return _book("Bến đò ngang — Mục lục", [("c1.xhtml", f"<p>{LINE}</p>"), ("c2.xhtml", f"<p>{LINE}</p>")], nav=nav)
+
+
+def build_index_split() -> bytes:
+    """Tên (BUG15): file TXT tên do công cụ đặt ("index_split_003") mà dòng đầu là tiêu đề - tên chương là dòng ấy."""
+    return f"Sương sớm\n\n{LINE}\n".encode()
+
+
+def build_nfd_names() -> bytes:
+    """Tên trong zip viết Unicode dạng rời (NFD, zip làm trên macOS), manifest và mục lục viết dạng gộp (BUG3)."""
+    pages = _chapters(2, names="Chương {n}.xhtml")
+    nav = '<nav epub:type="toc"><ol>' + "".join(f'<li><a href="text/{name}">Chương {n}: Bến số {n}</a></li>'
+                                               for n, (name, _body) in enumerate(pages, start=1)) + "</ol></nav>"
+    rename = {f"OEBPS/text/{name}": unicodedata.normalize("NFD", f"OEBPS/text/{name}") for name, _body in pages}
+    return _book("Tên tệp dạng rời", pages, nav=nav, rename=rename)
+
+
 # --- DOCX -------------------------------------------------------------------------------------------------------------
 
 W_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
@@ -471,6 +693,17 @@ SOURCES = {
     "epub3.epub": build_epub3, "epub2.epub": build_epub2, "split.epub": build_epub_split, "headings.docx": build_docx_headings, "plain.docx": build_docx_plain,
     "story.pdf": build_story_pdf, "scan.pdf": build_scan_pdf,
 }
+# Hình dạng sách thật (soát a22): expected/<tên>.json như mọi file trên; BookImportTest.real_world_book_shapes_give_exactly_what_python_gives.
+REAL_WORLD = {
+    "nav_pages.epub": build_nav_pages, "toc_broken.epub": build_toc_broken, "toc_missing.epub": build_toc_missing,
+    "nfd_names.epub": build_nfd_names, "calibre_split.epub": build_calibre_split,
+    "hoi.txt": build_hoi_txt, "toc_txt.txt": build_toc_txt, "gutenberg.txt": build_gutenberg_txt,
+    "hidden.epub": build_hidden, "dropcap.epub": build_dropcap, "glued.epub": build_glued,
+    "pt_cp1252.txt": build_pt_cp1252, "zh_gbk.txt": build_zh_gbk, "bom_join.txt": build_bom_join, "declared.epub": build_declared,
+    "title_h1.docx": build_docx_title_h1, "scenes.docx": build_docx_scenes, "roman.docx": build_docx_roman,
+    "nested.epub": build_nested, "index_split_003.txt": build_index_split,
+}
+SOURCES.update(REAL_WORLD)
 
 
 # Tên chương đặt từ dòng đầu (`importers.clip_title`, Kotlin BookImport.clipTitle): đủ ngắn, rơi giữa từ (lùi về dấu cách), từ cuối quá dài
@@ -525,6 +758,9 @@ def expected_files(root: Path) -> dict[str, bytes]:
     out["expected/whole.split.json"] = dumps(importers.import_text(root / "whole.txt", split_chapters=True).to_dict())
     out["expected/titled.json"] = dumps(importers.import_text(root / "titled.txt").to_dict())
     out["expected/titled.split.json"] = dumps(importers.import_text(root / "titled.txt", split_chapters=True).to_dict())
+    for name in REAL_WORLD:
+        if name.endswith(".txt"):  # TXT cả truyện: cả khi người nghe tích "Tách thành N chương"
+            out[f"expected/{name[:-4]}.split.json"] = dumps(importers.import_text(root / name, split_chapters=True).to_dict())
     # Bước xem trước giữ cả mục rất ngắn (bìa, trang bản quyền) làm chương CHƯA CHỌN, đúng chỗ của chúng trong file (`keep_short`).
     kept = {}
     for name in ("epub3.epub", "split.epub"):
