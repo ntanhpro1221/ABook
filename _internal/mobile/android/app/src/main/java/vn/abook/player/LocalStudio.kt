@@ -7,7 +7,7 @@ import org.json.JSONObject
  * "Studio" nhẹ trên điện thoại: máy chủ giao diện của máy tính (abook/webui/server.py) trả lời `/api/books/<mã>/...` còn điện
  * thoại thì không có máy chủ - giao diện gọi `EbookLibrary.studio({method, path, body})` và nhận đúng JSON máy chủ sẽ trả
  * (docs/EDITING.md, bảng "Routes"). Phần L ("áp ngay", không cần Studio) cho cuốn mở từ file `.abook`: đổi tên sách, bìa, tên
- * nhân vật, tên chương, nhạc nền, xem/bỏ thay đổi; và phần W (ý muốn chờ Studio - [BookWishes]): cách đọc tên, ai nói câu này,
+ * nhân vật, tên chương, nhạc nền, xem/bỏ thay đổi; và phần W (ý muốn chờ Studio - [BookWishes]): cách đọc tên (kèm số câu nó chạm tới), ai nói câu này,
  * gộp tên, cách đọc câu, giọng/giới, thu lại, danh sách chờ và rút. Cộng "Nhạc của tôi" ([MusicStore], docs/MUSIC_IMPORT.md): danh
  * sách bài đã nhập, xoá, và - cho từng cuốn - nhóm bài của tôi trong "Đổi bài" + ghim một bài vào một đoạn nhạc (`PUT /music {pins}`).
  * Cộng "Tìm bìa trên mạng" ([CoverSearch]): `GET /cover/search?q=` và `PUT /cover {url}`. Mọi thứ khác: 404. Sửa được MỌI cuốn trên máy, kể cả
@@ -195,6 +195,7 @@ object LocalStudio {
             "POST" to "/pending-changes/withdraw" -> ::pendingWithdraw
             "POST" to "/characters/merge" -> ::mergeCharacters
             "POST" to "/pronunciation" -> ::pronunciation
+            "GET" to "/pronunciations/reach" -> ::readingReach
             "POST" to "/speaker" -> ::speaker
             "POST" to "/line" -> ::line
             "POST" to "/voice" -> ::voice
@@ -426,6 +427,55 @@ object LocalStudio {
         val at = now()
         BookWishes.requestPronunciation(dir, surface, spoken, at)
         return JSONObject().put("surface", surface).put("spokenForm", spoken).put("requestedAt", at)
+    }
+
+    private const val CHAPTERS_SHOWN = 6
+    private const val NOT_RECORDED = "chưa thu nên không phải thu lại"
+    private const val WORD_CHAR = "[\\p{L}\\p{N}_]" // `\w` của Python (chữ, số, gạch dưới) - không dùng UNICODE_CHARACTER_CLASS: ICU của Android văng
+
+    /**
+     * GET /pronunciations/reach {surface} (`package_reading_reach` của name_readings.py): "Đọc từ này là…" trên cuốn này chạm tới bao nhiêu
+     * câu - khớp nguyên từ, không phân biệt hoa thường, trên chữ đọc theo đã qua lớp sửa - bao nhiêu câu đã thu (có mốc thời gian trong
+     * chương có audio) sẽ phải thu lại, ở chương nào, một câu mẫu. Khoảng trống: điện thoại chưa có `spoken_symbols_to_words` (ký hiệu đổi
+     * thành quãng nghỉ trước khi tra cách đọc) nên không biết câu nào bị ký hiệu chặn - `blocked` luôn 0, mọi câu khớp đều tính là tới.
+     */
+    private fun readingReach(dir: java.io.File, body: JSONObject): Any? {
+        val surface = BookWishes.collapse(BookEdits.cut(BookWishes.collapse(BookEdits.pyText(body.opt("surface"))), 80))
+        if (surface.isEmpty()) throw Api(400, "Thiếu chữ cần xem")
+        val book = BookEdits.rawBook(dir)
+        val chapters = BookEdits.applyManifest(book, BookEdits.load(dir)).optJSONArray("chapters")?.let { list ->
+            (0 until list.length()).mapNotNull { list.optJSONObject(it) }.filter { it.opt("id") is Int || it.opt("id") is Long }
+        } ?: emptyList()
+        val pattern = Regex("(?<!$WORD_CHAR)" + Regex.escape(surface) + "(?!$WORD_CHAR)", RegexOption.IGNORE_CASE)
+        val reached = ArrayList<JSONObject>() // câu mẫu đã dựng sẵn (hình `_example` của work_items.py)
+        val perChapter = LinkedHashMap<Long, IntArray>()
+        for (chapter in chapters) {
+            val chapterId = (chapter.opt("id") as Number).toLong()
+            val title = listOf(chapter.opt("fullTitle"), chapter.opt("title")).firstOrNull { BookEdits.truthy(it) }?.toString() ?: ""
+            val heard = BookEdits.truthy(chapter.opt("available")) && BookEdits.truthy(chapter.opt("file"))
+            val segments = BookEdits.script(dir, book, chapterId)?.optJSONArray("segments") ?: continue
+            for (index in 0 until segments.length()) {
+                val segment = segments.optJSONObject(index) ?: continue
+                val text = segment.opt("text") as? String ?: continue
+                if (!pattern.containsMatchIn(text)) continue
+                val recorded = heard && segment.opt("start") is Number
+                val id = segment.opt("id")
+                reached.add(JSONObject().put("segmentId", if (id is Int || id is Long) (id as Number).toLong() else (index + 1).toLong())
+                    .put("chapterId", chapterId).put("chapterTitle", title).put("seq", index + 1).put("text", text)
+                    .put("speaker", BookEdits.pyText(segment.opt("speaker"))).put("hasAudio", recorded))
+                val counts = perChapter.getOrPut(chapterId) { IntArray(2) }
+                counts[0]++
+                if (recorded) counts[1]++
+            }
+        }
+        val recorded = reached.count { it.getBoolean("hasAudio") }
+        val titles = reached.associate { it.getLong("chapterId") to it.getString("chapterTitle") }
+        return JSONObject().put("surface", surface).put("lines", reached.size).put("reached", reached.size).put("recorded", recorded).put("blocked", 0)
+            .put("cost", if (recorded > 0) "thu lại $recorded câu" else NOT_RECORDED)
+            .put("chapters", JSONArray(perChapter.entries.take(CHAPTERS_SHOWN).map { (chapterId, counts) ->
+                JSONObject().put("chapterId", chapterId).put("title", titles[chapterId] ?: "").put("lines", counts[0]).put("recorded", counts[1])
+            }))
+            .put("example", reached.firstOrNull { it.getBoolean("hasAudio") } ?: reached.firstOrNull() ?: JSONObject.NULL)
     }
 
     /** POST /speaker {stableId, textSha256, speaker, newGender?, alias?} hay {lines: [...], speaker} / {withdraw, lines, requestedAt}. */

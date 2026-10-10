@@ -71,6 +71,16 @@ class LocalStudioTest {
         else -> value
     }
 
+    /** Tham số `?a=b` của một lệnh GET đi trong `body`, như giao diện gửi (android/localStudio.ts) - lõi native không đọc chuỗi hỏi. */
+    private fun queryBody(method: String, path: String): JSONObject? {
+        if (method != "GET" || '?' !in path) return null
+        return JSONObject().also { out ->
+            for (pair in path.substringAfter('?').split('&').filter { it.isNotEmpty() }) {
+                out.put(java.net.URLDecoder.decode(pair.substringBefore('='), "UTF-8"), java.net.URLDecoder.decode(pair.substringAfter('=', ""), "UTF-8"))
+            }
+        }
+    }
+
     private fun dataUrl(): String =
         "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(BookEditsFixtures.bytes("edits/cover_set.cover.jpg"))
 
@@ -99,7 +109,7 @@ class LocalStudioTest {
                         StrictJson.pyFloat(((answers[match.groupValues[1].toInt() - 1] as JSONObject).getDouble("requestedAt")))
                     }
                     JSONObject(text)
-                }
+                } ?: queryBody(step.getString("method"), step.getString("path"))
                 val (status, reply) = call(step.getString("method"), step.getString("path"), body)
                 answers.add(reply)
                 assertEquals("$where: mã trạng thái", step.getInt("status"), status)

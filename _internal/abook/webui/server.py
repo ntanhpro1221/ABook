@@ -48,7 +48,7 @@ from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters, casting_stamp
-from .name_readings import name_readings, reading_reach
+from .name_readings import name_readings, package_reading_reach, reading_reach
 from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices
 from . import narrator_cards
 from .work_items import open_count, work_items
@@ -3686,11 +3686,14 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self._view(value, "casting", casting_chapters))
 
     def get_reading_reach(self, query: dict[str, list[str]], value: str) -> None:
-        # Ô "Thêm cách đọc cho từ bất kỳ" (NameReadings.tsx): trước khi lưu, nói cách đọc sẽ chạm tới bao nhiêu câu (name_readings.reading_reach).
+        # Ô "Thêm cách đọc cho từ bất kỳ" (NameReadings.tsx), và "Đọc từ này là…" ở trang đọc của cuốn mở từ file (LineWishes.tsx):
+        # trước khi lưu, nói cách đọc sẽ chạm tới bao nhiêu câu (name_readings.reading_reach / package_reading_reach).
         surface = " ".join(((query.get("surface") or [""])[0]).split())[:80]
         if not surface:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu chữ cần xem")
-        self._send_json(HTTPStatus.OK, reading_reach(self.app._book(value), surface))
+        path = self.app._listenable(value)
+        reach = package_reading_reach if packages.is_package(path) else reading_reach
+        self._send_json(HTTPStatus.OK, reach(path, surface))
 
     def get_casting_stamp(self, _query: dict[str, list[str]], value: str) -> None:
         # Hỏi nhẹ mỗi vài giây: lần ghi yêu cầu cuối (overrides.json) - đổi nghĩa là cửa sổ khác vừa sửa, tab Kịch bản tự làm mới (B19).

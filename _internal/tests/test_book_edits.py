@@ -187,6 +187,27 @@ def test_every_edit_shows_where_the_listener_looks(imported) -> None:
     assert status == 200 and data[:3] == bytes([0xFF, 0xD8, 0xFF]) and data == (folder / book_edits.EDITS_COVER).read_bytes()
 
 
+def test_a_word_reading_on_an_imported_book_says_which_lines_it_reaches(imported) -> None:
+    """"Đọc từ này là…" trên cuốn mở từ file `.abook` (máy tính và điện thoại): trước khi ghi, nói như ô "Thêm cách đọc cho từ bất kỳ"
+    của Studio - bao nhiêu câu có chữ ấy, bao nhiêu câu đã thu (chương có audio) sẽ phải thu lại, ở chương nào. Tên chương là
+    tên người nghe đã đặt lại."""
+    _app, _folder, _identifier, call = imported
+    assert call("PUT", "/api/books/{id}/chapters/1/title", {"title": "Chương Một", "subtitle": ""})[0] == 200
+
+    status, reach = call("GET", "/api/books/{id}/pronunciations/reach?surface=%20V%E1%BB%81%20")  # " Về ": không phân biệt hoa thường
+
+    assert status == 200
+    assert {key: reach[key] for key in ("surface", "lines", "reached", "recorded", "blocked", "cost")} == {
+        "surface": "Về", "lines": 2, "reached": 2, "recorded": 1, "blocked": 0, "cost": "thu lại 1 câu"}
+    assert reach["chapters"] == [{"chapterId": 1, "title": "Chương Một", "lines": 1, "recorded": 1},
+                                 {"chapterId": 2, "title": "Chương 647 · Trở về (2)", "lines": 1, "recorded": 0}]
+    assert reach["example"]["chapterId"] == 1 and reach["example"]["hasAudio"], "câu mẫu ưu tiên câu đã thu"
+    # Ký hiệu bị đổi thành quãng nghỉ trước khi tra cách đọc ("(1)" -> ", 1"): nói thật, không hứa thu lại.
+    blocked = call("GET", "/api/books/{id}/pronunciations/reach?surface=(1)")[1]
+    assert (blocked["lines"], blocked["reached"], blocked["blocked"], blocked["cost"]) == (1, 0, 1, "chưa thu nên không phải thu lại")
+    assert call("GET", "/api/books/{id}/pronunciations/reach")[0] == 400
+
+
 def test_the_listener_sets_clears_or_restores_the_author_and_every_view_follows(imported) -> None:
     app, folder, identifier, call = imported
     assert app.listen_book(identifier)["author"] == "" and packages.edited_manifest(folder).get("author") is None

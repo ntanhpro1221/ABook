@@ -226,6 +226,8 @@ Code: Python `abook/webui/book_wishes.py` (validate/merge/count, the writers, `p
 - **Same routes, same JSON** (Python server for a package book, `LocalStudio.kt` on the phone): `POST /pronunciation`, `/speaker`,
   `/line`, `/voice`, `/review`, `/characters/merge`, `/chapters/<n>/retake`, `GET /pending-changes`, `POST /pending-changes/withdraw`,
   `GET /wishes` (the reader's per-line view, below);
+  `GET /pronunciations/reach?surface=` (before saving a word reading: lines with the word, recorded lines that would be re-recorded -
+  `name_readings.package_reading_reach`; the phone never reports `blocked`, it has no `spoken_symbols_to_words`);
   `GET /edits` -> `{applied, waiting: 0, wishes}`. Validation uses the script segments (`stableId` + `textSha256`) and `cast.json`
   instead of SQLite; the Vietnamese error sentences are the workshop's. Not on a package: `bracketRule` / `everywhere` (they need
   the analysis database) are ignored; `/review` records only the retake; `/voice` with neither preset nor gender is refused.
