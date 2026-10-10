@@ -25,6 +25,10 @@ DATE_PREFIX = frozenset("ngày mùng mồng hôm".split())  # đã có chữ nà
 WEEKDAY = re.compile(r"thứ (?:hai|ba|tư|năm|sáu|bảy)|chủ nhật")
 TEMP_WORDS = frozenset("độ nhiệt °c oc f".split())
 PER_PHYSICAL = frozenset("h s giờ phút giây min hr sec ms".split())  # "km/h", "cm/s": trên; "10 DP/ngày", "chương/tuần": mỗi
+# "km/h", "50km/h", "kg/m2", "mg/ml": "/" dính liền giữa HAI đơn vị đo là "trên" - để nguyên cả cặp, sea-g2p đọc "ki lô mét trên giờ".
+# Chữ thường như ký hiệu SI (trừ lít "L"): "M/L" là cỡ áo. Bên trái không lũy thừa, bên phải không "s2": sea-g2p đọc "m3/h", "m/s2" sai.
+UNIT_BEFORE = re.compile(r"(?<![^\W\d_])(?:km|cm|dm|mm|m|kg|mg|g|ml|mL|l|L)$")
+UNIT_AFTER = re.compile(r"(?:h|ms|s|giờ|phút|giây|(?:km|cm|dm|mm|m)[23²³]?|kg|mg|g|ml|mL|l|L)(?![^\W_])")
 PER_NOUNS = frozenset("ngày tuần tháng năm máy người lần cái chương tập".split())
 RATIO_WORDS = frozenset("tỉ tỷ lệ chia cược kèo".split())  # "tỉ lệ 7:3", "chia 8:2": hai số liền
 DUEL_WORDS = frozenset("đấu đối trận đơn song solo đánh".split())  # "đấu 1:1": một chọi một
@@ -141,9 +145,17 @@ SILENT = ("", False)
 PAUSE = ("", True)
 
 
+def unit_slash(left: str, right: str) -> bool:
+    """"/" giữa `left` và `right` (chữ hai bên, dính liền) nối hai đơn vị đo: "km/h", "50km/h", "kg/m2". Studio dùng chung
+    (text_processing.spoken_symbols_to_words) để không đổi cặp ấy thành quãng nghỉ."""
+    return bool(UNIT_BEFORE.search(left[-8:]) and UNIT_AFTER.match(right[:8]))
+
+
 def _slash(c: Spot) -> tuple:
     if len(c.sym) > 1:
         return SILENT  # "////", "//" còn lại: trang trí
+    if unit_slash(c.left, c.right):
+        return KEEP  # "50km/h", "3 kg/m2": hai đơn vị đo, sea-g2p đọc cả cặp "ki lô mét trên giờ"
     m = re.search(r"(\d+)\s?$", c.left[-14:])
     k = re.match(r"\s?(\d+)", c.right[:14])
     if m and k:

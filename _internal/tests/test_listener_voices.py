@@ -20,7 +20,7 @@ from abook.database import ProjectDB
 from abook.io_utils import sha256_file
 from abook.listener_overrides import (
     BAD_GENDER,
-    NOT_A_CHARACTER,
+    NARRATOR_VOICE_ONLY,
     UNKNOWN_CHARACTER,
     UNKNOWN_PRESET,
     read_overrides,
@@ -183,7 +183,7 @@ def test_a_picked_voice_takes_a_formant_step_nobody_in_the_chapter_holds(tmp_pat
 
 @pytest.mark.parametrize(("character", "request_", "problem"), [
     ("HEIDI", {}, UNKNOWN_CHARACTER),
-    ("NARRATOR", {"gender": "female"}, NOT_A_CHARACTER),
+    ("NARRATOR", {"gender": "female"}, NARRATOR_VOICE_ONLY),
     ("NOAH", {"preset": "Không có giọng này"}, UNKNOWN_PRESET),
     ("NOAH", {"preset": NARRATOR_VOICE}, UNKNOWN_PRESET),
     ("NOAH", {"gender": "robot"}, BAD_GENDER),
@@ -308,7 +308,8 @@ def test_the_voice_picker_lists_every_castable_voice_with_what_the_listener_need
     assert current[0]["sharedWith"] == [{"label": "Lucien", "chapters": 1}], "Lucien cùng giọng, cùng chương"
     assert current[0]["otherUsers"] == 0
     assert {voice["gender"] for voice in view["voices"] if voice["suggested"]} == {"male", "female"}
-    assert voice_choices(paths.root, "Heidi") is None and voice_choices(paths.root, "NARRATOR") is None
+    assert voice_choices(paths.root, "Heidi") is None
+    assert voice_choices(paths.root, "NARRATOR")["character"]["value"] == "NARRATOR", "người kể có hộp riêng (test_narrator_voice)"
 
     preferences = Preferences(tmp_path / "prefs" / "preferences.json")
     preferences.update({"libraryRoot": str(tmp_path)})

@@ -112,6 +112,33 @@ def book_voices(project_root: Path) -> dict[str, Any]:
     return {**build_settings()["voices"], **(stored if isinstance(stored, dict) else {})}
 
 
+def narrator_voice_in(connection: sqlite3.Connection, voices: dict[str, Any]) -> str:
+    """Giọng người kể ĐANG đọc: preset của hồ sơ người kể trong sổ - người nghe có thể đã đổi ở tab Nhân vật
+    (`listener_overrides.narrator_profile`); trước khi phân vai thì giọng chọn lúc tạo sách (`voices` của cài đặt cuốn).
+    Chỉ tin preset của sổ khi nó là giọng kể chuyện của danh mục (đúng thứ người nghe đổi được); khác thế - giọng máy đọc
+    khác chọn lúc tạo, sổ thử - thì giọng ấy vẫn là giọng lúc tạo, lấy từ cài đặt."""
+    from ..listener_overrides import narrator_profile
+    from ..voice_catalog import narrator_presets
+
+    try:
+        profile = narrator_profile(connection)
+    except sqlite3.Error:  # sổ tối thiểu (bản chụp cũ, bài thử) chưa có bảng giọng
+        profile = None
+    if profile is not None and profile["preset_name"] in {preset["name"] for preset in narrator_presets()}:
+        return str(profile["preset_name"])
+    return str(voices.get("narrator_voice") or "")
+
+
+def narrator_voice(project_root: Path) -> str:
+    """`narrator_voice_in` cho một cuốn theo thư mục."""
+    stored = read_settings(project_root).get("voices")
+    voices = stored if isinstance(stored, dict) else {}
+    if not (Path(project_root) / DB_NAME).is_file():
+        return str(voices.get("narrator_voice") or "")
+    with closing(connect(project_root)) as connection:
+        return narrator_voice_in(connection, voices)
+
+
 def seconds_per_line(connection: sqlite3.Connection) -> tuple[float, bool]:
     """(giây làm một câu, có phải số đo không): tốc độ THẬT của chính cuốn này - thời gian các chương đã xong (bắt đầu -> xong)
     chia số câu của chúng; chưa chương nào xong thì FALLBACK_SECONDS_PER_LINE."""
@@ -447,6 +474,8 @@ def continuation_plan(project_root: Path) -> dict[str, Any]:
         book = connection.execute("SELECT title FROM book WHERE id=1").fetchone()
         segments = connection.execute(
             "SELECT COUNT(*) AS total, SUM(status != 'pending') AS analyzed FROM segments").fetchone()
+        # Người nghe đã đổi giọng người kể ở tab Nhân vật: phần sau đọc tiếp bằng giọng ấy.
+        narrator = narrator_voice_in(connection, voices)
     title = display_title(project_root, str(book["title"]) if book is not None else project_root.name)
     part = continuation.part_number(project_root) + 1
     total = int(segments["total"] or 0)
@@ -461,7 +490,7 @@ def continuation_plan(project_root: Path) -> dict[str, Any]:
         "folder": str(last_input.parent) if last_input else "",
         "lastChapter": last_input.name if last_input else "",
         "profile": str(settings.get("quality_profile") or "high_quality"),
-        "narrator": str(voices.get("narrator_voice") or ""),
+        "narrator": narrator,
         "firstPerson": str(voices.get("first_person_identity") or ""),
         # Model đọc hiểu của phần trước (soát UX a6 01-10, B3): phần sau đọc bằng đúng model ấy - đổi model giữa hai phần
         # là đổi cách gán người nói giữa cuốn. Máy chủ bỏ đi nếu Ollama không còn model ấy.
@@ -534,6 +563,7 @@ def redo_plan(project_root: Path) -> dict[str, Any]:
         "firstPersonChapters": {str(key): str(value) for key, value in chapters.items()} if isinstance(chapters, dict) else {},
         "analysisModel": str((settings.get("analysis") or {}).get("model") or ""),
         "dropCreditLines": bool(text.get("drop_credit_lines")),
+        "dropTailCreditLines": bool(text.get("drop_tail_credit_lines")),
     }
 
 
@@ -706,7 +736,14 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
     từng thay đổi nói bằng lời, số câu sẽ thu lại, ở những chương nào, và thời gian ước theo TỐC ĐỘ THẬT của chính cuốn này
     (`seconds_per_line`; chưa đo được thì số ước dư tay, `measured` False). Cùng cách chọn như `pending_changes` (yêu cầu ghi
     sau `since`, bỏ yêu cầu giữ nguyên) để số mục khớp số trên nút. Câu chưa thu không tốn thêm gì nên không tính."""
-    from ..listener_overrides import character_key, read_overrides, surface_key
+    from ..listener_overrides import (
+        NARRATOR,
+        character_key,
+        narrator_profile,
+        narrator_voiced,
+        read_overrides,
+        surface_key,
+    )
 
     data = read_overrides(project_root)
     fresh: dict[str, dict[str, Any]] = {}
@@ -737,7 +774,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
 
     with closing(connect(project_root)) as connection:
         rows = connection.execute(
-            "SELECT stable_id, chapter_id, text, speaker, kind, wav_path FROM segments ORDER BY chapter_id, seq"
+            "SELECT stable_id, chapter_id, text, speaker, kind, voice_profile_id, wav_path FROM segments ORDER BY chapter_id, seq"
         ).fetchall()
         by_id = {str(row["stable_id"]): row for row in rows}
         recorded = [row for row in rows if row["wav_path"]]
@@ -814,6 +851,10 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
                     by_voice_key[keys_of[speaker]].append(row)
             same_person = by_voice_key.get(key, [])
             ids = [str(row["stable_id"]) for row in same_person if row["wav_path"]]
+            narrating = narrator_profile(connection) if key == NARRATOR else None
+            if narrating is not None:
+                # Giọng người kể: mọi câu đọc bằng giọng ấy, kể cả nội tâm không rõ ai nghĩ - đúng những câu bước áp đặt lại.
+                ids = [str(row["stable_id"]) for row in rows if row["wav_path"] and narrator_voiced(row, int(narrating["id"]))]
             # Khoá giọng là tên đã hạ chữ thường - lấy lại cách viết trong sách từ một câu của người ấy.
             name = who(same_person[0]["speaker"]) if same_person else who(key)
             # Đủ để "Nghe thử" đúng giọng sẽ áp trên một câu của người ấy (POST …/voice/preview, reading_preview.py).
@@ -938,6 +979,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         finished = int(segments["finished"] or 0)
         # Phân vai đã khoá: dàn nhân vật, giọng, cách đọc tên đã có - mốc "Duyệt trước khi thu" (precast.py).
         cast_locked = bool(int(book["casting_finalized"] or 0)) if "casting_finalized" in book.keys() else False
+        narrator = narrator_voice_in(connection, settings.get("voices") if isinstance(settings.get("voices"), dict) else {})
         if status == "paused":
             # Tạm dừng (power_source): dây chuyền ghi status/stage "paused" và nhớ pha cũ trong bộ nhớ. Đoán lại pha từ tiến
             # độ - "Đã dừng" là sai khi tiến trình vẫn sống; tiến trình chết lúc đang tạm dừng thì là "Tạm ngưng lúc ...".
@@ -971,7 +1013,6 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
     else:
         overall = ANALYSIS_WEIGHT * analysis_fraction + (1 - ANALYSIS_WEIGHT) * synthesis_fraction
     active = running or (beat_age is not None and beat_age <= LEASE_FRESH_SECONDS and phase in humanize.WORKING_PHASES)
-    voices = settings.get("voices", {}) if isinstance(settings.get("voices"), dict) else {}
     profile = str(settings.get("quality_profile") or "")
     return {
         "path": str(project_root),
@@ -992,7 +1033,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         "settings": {
             "profile": profile,
             "profileLabel": humanize.PROFILE_LABELS.get(profile, profile),
-            "narrator": str(voices.get("narrator_voice") or ""),
+            "narrator": narrator,
             # Model đã phân tích cuốn này (book_settings.json lúc tạo sách) - đổi model mặc định thì biết cuốn nào làm bằng
             # model cũ.
             "analyzer": str((settings.get("analysis") or {}).get("model") or "")
@@ -1292,6 +1333,7 @@ def cast(project_root: Path) -> dict[str, Any]:
         }
         chapter_numbers = {chapter_id: item["name"] for chapter_id, item in chapter_names(connection, project_root).items()}
         book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
+        narrator_now = narrator_voice_in(connection, voices)
     pending = pending_voices(
         project_root, changes_since(project_root, float(book_row["updated_at"] or 0) if book_row is not None else 0.0))
     lines: dict[str, int] = defaultdict(int)
@@ -1316,10 +1358,12 @@ def cast(project_root: Path) -> dict[str, Any]:
         return _voice_view(profiles.get(votes.most_common(1)[0][0]))
 
     narrator = {
-        "voice": str(voices.get("narrator_voice") or ""),
+        "voice": narrator_now,
         "lines": lines.get("NARRATOR", 0),
         "seconds": round(seconds.get("NARRATOR", 0.0), 1),
         "profile": voice_of("NARRATOR"),
+        # Đổi giọng người kể (tab Nhân vật, hộp "Đổi giọng") chưa vào sách.
+        "pendingVoice": pending.get("NARRATOR"),
     }
     renamed = renames.load(project_root)
 

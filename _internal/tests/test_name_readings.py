@@ -118,15 +118,15 @@ def test_a_reading_for_any_word_says_which_lines_it_reaches_and_what_it_costs(tm
 
 
 def test_a_symbol_the_voice_pass_rewrites_first_cannot_be_read_by_a_word_reading(tmp_path: Path) -> None:
-    """"km/h": trước khi tra cách đọc, dây chuyền đã đổi "/" thành quãng nghỉ ("km, h") (text_processing.spoken_symbols_to_words)
+    """"Mở/đóng": trước khi tra cách đọc, dây chuyền đã đổi "/" thành quãng nghỉ ("Mở, đóng") (text_processing.spoken_symbols_to_words)
     nên cách đọc cho chữ ấy không bao giờ khớp - nói thẳng thay vì hứa "sẽ thu lại 3 câu"."""
     from abook.webui.name_readings import reading_reach
 
     paths, db = _book(tmp_path)
     (paths.root / "take.wav").write_bytes(b"RIFF")
-    _say(db, "c1s1", "“Chạy 60 km/h thôi.”")
+    _say(db, "c1s1", "“Cửa Mở/đóng thôi.”")
 
-    reach = reading_reach(paths.root, "km/h")
+    reach = reading_reach(paths.root, "Mở/đóng")
 
     assert reach["lines"] == 1 and reach["blocked"] == 1
     assert reach["cost"] == "chưa thu nên không phải thu lại", "không câu nào đổi cách đọc nên không câu nào phải thu lại"

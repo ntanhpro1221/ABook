@@ -25,6 +25,9 @@ object Symbols {
     private val WEEKDAY = Regex("thứ (?:hai|ba|tư|năm|sáu|bảy)|chủ nhật")
     private val TEMP_WORDS = "độ nhiệt °c oc f".split(" ").toSet()
     private val PER_PHYSICAL = "h s giờ phút giây min hr sec ms".split(" ").toSet()
+    // "km/h", "50km/h", "kg/m2": "/" dính liền giữa HAI đơn vị đo là "trên" - để nguyên cả cặp cho sea-g2p (symbols.py UNIT_BEFORE / UNIT_AFTER).
+    private val UNIT_BEFORE = Regex("""(?<!\p{L})(?:km|cm|dm|mm|m|kg|mg|g|ml|mL|l|L)$""")
+    private val UNIT_AFTER = Regex("""^(?:h|ms|s|giờ|phút|giây|(?:km|cm|dm|mm|m)[23²³]?|kg|mg|g|ml|mL|l|L)(?![\p{L}\p{N}])""")
     private val PER_NOUNS = "ngày tuần tháng năm máy người lần cái chương tập".split(" ").toSet()
     private val RATIO_WORDS = "tỉ tỷ lệ chia cược kèo".split(" ").toSet()
     val DUEL_WORDS = "đấu đối trận đơn song solo đánh".split(" ").toSet()
@@ -153,8 +156,13 @@ object Symbols {
     private fun say(text: String) = Said(text)
 
     // ---- one symbol: said / silent / keep, with a pause or not --------------------------------------------------------------------------------
+    /** "/" giữa hai đơn vị đo ("km/h", "50km/h", "kg/m2"), như symbols.unit_slash. */
+    private fun unitSlash(left: String, right: String): Boolean =
+        UNIT_BEFORE.containsMatchIn(left.takeLast(8)) && UNIT_AFTER.containsMatchIn(right.take(8))
+
     private fun slash(c: Spot): Said {
         if (c.sym.length > 1) return SILENT
+        if (unitSlash(c.left, c.right)) return KEEP  // "50km/h", "3 kg/m2": sea-g2p đọc cả cặp "ki lô mét trên giờ"
         val m = search("""(\d+)\s?$""", c.left.takeLast(14))
         val k = match("""\s?(\d+)""", c.right.take(14))
         if (m != null && k != null) {

@@ -124,7 +124,7 @@ export interface CastMember {
 }
 
 export interface Cast {
-  narrator: { voice: string; lines: number; seconds: number; profile: VoiceProfile | null };
+  narrator: { voice: string; lines: number; seconds: number; profile: VoiceProfile | null; pendingVoice?: { preset: string; gender: string } | null };
   characters: CastMember[];
   extras: CastMember[];
 }
@@ -177,6 +177,8 @@ export interface ScannedFile {
   bytes: number;
   /** Dòng ghi công người dịch ở đầu chương - trình tạo sách ĐỀ XUẤT bỏ chúng khỏi phần đọc, không bao giờ tự bỏ. */
   credits?: string[];
+  /** Dòng xin ủng hộ / quảng cáo / nguồn ở cuối chương - đề xuất bỏ như `credits`, đồng ý một lần cho cả hai. */
+  tailCredits?: string[];
   /** Một file chứa nhiều tiêu đề "Chương N" (cả truyện trong một file): trình tạo sách ĐỀ XUẤT tách, không tự tách. */
   split?: { chapters: number; titles: string[]; preamble: boolean; titleLine?: string } | null;
 }
@@ -232,6 +234,7 @@ export interface RedoPlan {
   analysisModel: string;
   analysisModelMissing?: string;
   dropCreditLines: boolean;
+  dropTailCreditLines?: boolean;
   /** Cuốn này là phần nối tiếp: id phần trước, để cuốn làm lại vẫn mang dàn nhân vật từ đó. */
   seedFrom: string;
 }

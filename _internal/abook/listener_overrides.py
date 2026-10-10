@@ -39,6 +39,8 @@ BAD_GENDER = "bad_gender"
 BAD_KIND = "bad_kind"
 BAD_EMOTION = "bad_emotion"
 BAD_TEXT = "bad_text"
+VOICE_TAKEN = "voice_taken"
+NARRATOR_VOICE_ONLY = "narrator_voice_only"
 # Chữ đem đọc người nghe sửa cho một câu (lỗi chữ, cách viết lạ - STUDIO_REVIEW mục 7): trần tuyệt đối, và không dài quá
 # bốn lần câu gốc - sửa chữ chứ không viết lại đoạn văn.
 MAX_SPOKEN_CHARS = 2000
@@ -267,7 +269,8 @@ def voice_target(
         return None, BAD_GENDER
     key = " ".join(str(character).strip().casefold().split()).upper()  # = character_registry.canonical_key
     if key == NARRATOR:
-        return None, NOT_A_CHARACTER
+        return _narrator_target(conn, preset=preset, gender=gender, avoid=avoid)
+    voices = narrated_voices(conn, voices)
     row = conn.execute("SELECT id, canonical_name, gender, age, locked FROM characters WHERE canonical_name=?",
                        (key,)).fetchone()
     if row is None:
@@ -315,6 +318,85 @@ def voice_target(
                        and (final_gender != current_gender or not row["locked"]),
         "current_voice_key": str(current["voice_key"]),
         "profile": profile,
+    }, None
+
+
+def narrator_profile(conn: sqlite3.Connection) -> sqlite3.Row | None:
+    """Hồ sơ giọng người kể: hồ sơ `narrator` bước phân vai tạo. Đổi giọng người kể là đổi preset của CHÍNH hồ sơ này (khoá giữ
+    nguyên), nên mọi chỗ tra giọng người kể bằng khoá - câu kể, nội tâm không rõ ai nghĩ, nghe thử, kiểm bản thu - theo cùng lúc.
+    None trước khi phân vai."""
+    return conn.execute("SELECT * FROM voice_profiles WHERE voice_key='narrator' COLLATE NOCASE").fetchone()
+
+
+def narrator_voiced(row: Any, narrator_profile_id: int) -> bool:
+    """Câu này đọc bằng giọng người kể: câu mang hồ sơ người kể, hay câu nội tâm không rõ ai nghĩ
+    (`database.thought_reads_as_narrator`). Đổi giọng người kể thì đúng những câu này (đã thu) phải thu lại."""
+    from .database import thought_reads_as_narrator
+
+    return (row["voice_profile_id"] is not None and int(row["voice_profile_id"]) == int(narrator_profile_id)) or (
+        thought_reads_as_narrator(row["kind"], row["speaker"], row["voice_profile_id"]))
+
+
+def character_presets(conn: sqlite3.Connection) -> dict[str, list[str]]:
+    """{giọng gốc: khoá tên chuẩn những nhân vật đang giữ nó} - giọng trên câu của họ, hay giọng đã ghim (người mang từ phần
+    trước chưa nói câu nào). Người kể không được nhận giọng nào ở đây."""
+    held: dict[str, set[str]] = {}
+    for row in conn.execute(
+        """
+        SELECT c.canonical_name, v.preset_name FROM segments s
+        JOIN characters c ON c.id = s.canonical_character_id JOIN voice_profiles v ON v.id = s.voice_profile_id
+        WHERE c.canonical_name <> 'NARRATOR'
+        UNION
+        SELECT c.canonical_name, v.preset_name FROM characters c JOIN voice_profiles v ON v.voice_key = c.locked_voice_key
+        WHERE c.canonical_name <> 'NARRATOR'
+        """
+    ):
+        if row[1]:
+            held.setdefault(str(row[1]), set()).add(str(row[0]))
+    return {preset: sorted(names) for preset, names in held.items()}
+
+
+def narrated_voices(conn: sqlite3.Connection, voices: dict[str, Any]) -> dict[str, Any]:
+    """`voices` của cài đặt cuốn, thêm giọng người kể ĐANG đọc vào `other_narrators` khi người nghe đã đổi nó: giọng ấy là lời
+    kể của sách, nên mọi phép chọn giọng cho nhân vật (`PresetAllocator.not_for_characters`, danh sách "Đổi giọng") tránh nó
+    như tránh giọng người kể lúc tạo sách."""
+    profile = narrator_profile(conn)
+    current = str(profile["preset_name"] or "") if profile is not None else ""
+    former = [str(name) for name in voices.get("other_narrators", ())]
+    if not current or current in {str(voices.get("narrator_voice") or ""), *former}:
+        return voices
+    return {**voices, "other_narrators": [*former, current]}
+
+
+def _narrator_target(conn: sqlite3.Connection, *, preset: str, gender: str,
+                     avoid: str) -> tuple[dict[str, Any] | None, str | None]:
+    """`voice_target` của người kể: chỉ đổi được giọng (một giọng kể chuyện của danh mục, không phải giọng nhân vật nào đang
+    giữ) - người kể không có giới để ghim, không có ai để tách khỏi. `profile` là hồ sơ người kể mang preset mới."""
+    from .voice_catalog import narrator_presets
+
+    if gender or avoid:
+        return None, NARRATOR_VOICE_ONLY
+    row = conn.execute("SELECT id FROM characters WHERE canonical_name=?", (NARRATOR,)).fetchone()
+    if row is None:
+        return None, UNKNOWN_CHARACTER
+    current = narrator_profile(conn)
+    if current is None:
+        return None, NO_VOICE
+    choices = {str(item["name"]): item for item in narrator_presets()}
+    if preset and preset not in choices:
+        return None, UNKNOWN_PRESET
+    now_reading = str(current["preset_name"] or "")
+    changing = bool(preset) and preset != now_reading
+    if changing and preset in character_presets(conn):
+        return None, VOICE_TAKEN
+    return {
+        "character_id": int(row["id"]),
+        "canonical_name": NARRATOR,
+        "gender": str(choices.get(preset if changing else now_reading, {}).get("gender") or "unknown"),
+        "lock_gender": False,
+        "current_voice_key": now_reading,
+        "profile": {**dict(current), "preset_name": preset} if changing else None,
+        "narrator": True,
     }, None
 
 
