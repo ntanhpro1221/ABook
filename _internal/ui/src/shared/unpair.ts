@@ -1,4 +1,4 @@
-// Gỡ ghép một máy (docs/EDITING.md, P2d): thôi ghép xoá thư mục các cuốn nghe thẳng của máy ấy - phần đã tải và phần sửa chưa gửi
+// Thôi ghép một máy (docs/EDITING.md, P2d): thôi ghép xoá thư mục các cuốn nghe thẳng của máy ấy - phần đã tải và phần sửa chưa gửi
 // của người nghe nằm trong đó - nên hỏi trước, nói bằng lời người nghe nhận ra (mất gì, giữ gì). Dùng chung cho điện thoại (Peers.kt)
 // và máy tính (webui/remote_books.py).
 import { formatSize } from "./format";
@@ -22,7 +22,7 @@ export interface UnpairCopy {
   title: string;
   /** Mỗi ý một dòng: cái gì sẽ mất, và vì sao không gửi được nếu có. */
   lines: string[];
-  /** Nhãn nút "gửi trước rồi gỡ"; null khi máy kia không nhận sửa. */
+  /** Nhãn nút "gửi trước rồi thôi ghép"; null khi máy kia không nhận sửa. */
   send: string | null;
   /** Máy kia đang trả lời: "gửi trước" là nút chính. Máy kia tắt thì nút vẫn có (thử lại được) nhưng không là nút chính - nút chính là Huỷ. */
   sendPrimary: boolean;
@@ -59,11 +59,11 @@ export function unpairCopy(device: string, self: "điện thoại" | "máy tính
     if (!unsent.sendable) {
       lines.push(`${device} không nhận phần sửa - những thay đổi này chỉ có trên ${self} này.`);
     } else if (up) {
-      send = "Gửi trước rồi gỡ";
+      send = "Gửi trước rồi thôi ghép";
     } else {
-      send = "Thử gửi trước rồi gỡ";
+      send = "Thử gửi trước rồi thôi ghép";
       lines.push(`${device} đang tắt hay khác mạng lúc này nên chưa gửi được - mở máy ấy rồi gửi, hay bỏ thay đổi.`);
     }
   }
-  return { title: `Gỡ ghép ${device}?`, lines, send, sendPrimary: edited && up, discard: edited ? "Vẫn gỡ, bỏ thay đổi" : "Thôi ghép", cancel: "Huỷ" };
+  return { title: `Thôi ghép ${device}?`, lines, send, sendPrimary: edited && up, discard: edited ? "Vẫn thôi ghép, bỏ thay đổi" : "Thôi ghép", cancel: "Huỷ" };
 }
