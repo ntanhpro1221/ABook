@@ -1,0 +1,28 @@
+{
+ "title": "toc txt",
+ "author": null,
+ "language": null,
+ "cover": null,
+ "chapters": [
+  {
+   "title": "Mở đầu",
+   "text": "MỤC LỤC\nChương 1: Bến đò\nChương 2: Mưa\nChương 3: Nước lên",
+   "matter": "Mục lục"
+  },
+  {
+   "title": "Chương 1: Bến đò",
+   "text": "Chương 1: Bến đò\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người."
+  },
+  {
+   "title": "Chương 2: Mưa",
+   "text": "Chương 2: Mưa\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người."
+  },
+  {
+   "title": "Chương 3: Nước lên",
+   "text": "Chương 3: Nước lên\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người."
+  }
+ ],
+ "notes": [],
+ "splitOffer": 4,
+ "splitHeadings": 3
+}

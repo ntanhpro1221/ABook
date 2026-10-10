@@ -37,6 +37,11 @@ describe("default choice", () => {
     expect(isDefaultPick(CHAPTERS, new Set([1, 3, 4]))).toBe(false);
   });
 
+  it("leaves a page that is not the story (copyright, contents) unticked", () => {
+    const rows = [row(1, "Bản quyền", 120, { included: false, matter: "Trang bản quyền" }), ...CHAPTERS.slice(1)];
+    expect([...defaultPicked(rows)]).toEqual([2, 3, 4]);
+  });
+
   it("treats a row without the flag as ticked (a source that never says)", () => {
     expect([...defaultPicked([row(1, "A", 1), row(2, "B", 1)])]).toEqual([1, 2]);
   });

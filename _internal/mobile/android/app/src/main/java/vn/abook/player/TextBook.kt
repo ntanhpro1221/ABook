@@ -85,7 +85,8 @@ object TextBook {
 
     /**
      * Danh sách chương cho bước xem trước (`textbook.preview`): tên, dòng đầu, số chữ, số ký tự. `notes` là gợi ý - hiện ra, không tự áp.
-     * Mỗi hàng có `included` (mặc định có vào sách không: mục rất ngắn - bìa, trang bản quyền - hiện ra CHƯA tích, kèm `short`); `index` và
+     * Mỗi hàng có `included` (mặc định có vào sách không: mục rất ngắn - bìa, trang bản quyền - hiện ra CHƯA tích, kèm `short`;
+     * phần không phải truyện - kèm `matter`, lý do như "Trang bản quyền"); `index` và
      * `suggestions[].chapter` là số thứ tự trong danh sách này, không phải mã chương trong sách.
      */
     fun preview(book: BookImport.Book): JSONObject {
@@ -95,7 +96,7 @@ object TextBook {
         for ((index, chapter) in book.chapters.withIndex()) {
             val source = BookImport.chapterSource(book, chapter)
             val count = BookImport.wordCount(source)
-            if (!chapter.short) {
+            if (!chapter.short && chapter.matter.isEmpty()) {
                 words += count
                 chapters++
             }
@@ -103,7 +104,8 @@ object TextBook {
             rows.put(
                 JSONObject().put("index", index + 1).put("title", cleanTitle(chapter.name.ifEmpty { chapter.title }, "Chương ${index + 1}"))
                     .put("firstLine", BookEdits.cut(first, 200)).put("words", count).put("chars", BookImport.charCount(source))
-                    .put("included", !chapter.short).also { if (chapter.short) it.put("short", true) },
+                    .put("included", !chapter.short && chapter.matter.isEmpty()).also { if (chapter.short) it.put("short", true) }
+                    .also { if (chapter.matter.isNotEmpty()) it.put("matter", chapter.matter) },
             )
         }
         return JSONObject().put("title", cleanTitle(book.title, "Sách")).put("author", book.author ?: JSONObject.NULL)
