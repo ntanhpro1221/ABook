@@ -221,8 +221,6 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
             # `stopAt`: bài kết sớm trước ranh giới (music_select.TAIL_MIN_SECONDS), phần còn lại của mảnh lặng.
             last = float(scene["end"]) if scene.get("stopAt") is None else min(float(scene["end"]), float(scene["stopAt"]))
             end = spans[index + 1][0] if index + 1 < len(spans) else last
-            if end - start < 1e-6:
-                continue  # nền tắt ngay từ đầu mảnh (truyện mở cảnh bằng tiếng nhạc thật): không có mốc
             if cues and not rested and cues[-1]["link"] == link and abs(cues[-1]["end"] - start) < 5:
                 cue = cues[-1]
                 cue["end"] = end
@@ -235,7 +233,33 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
                 cue.setdefault("steps", []).append({"at": round(start, 3), "db": level})
             rested = False
         rested = scene.get("stopAt") is not None
+    windows = [window for scene in plan.get("scenes") or [] if scene.get("chapterId") == chapter_id
+               for window in scene.get("musicDuck") or []]
+    for cue in cues:
+        for start, end in windows:
+            _duck(cue, float(start), float(end))
     return cues
+
+
+def _duck(cue: dict[str, Any], start: float, end: float) -> None:
+    """Hạ nền `music_scenes.MUSIC_DUCK_DB` trong [start, end) của mốc (khúc truyện có nhạc thật), giữ các bước sẵn có: bước trong
+    khúc cũng hạ theo, hết khúc thì về mức cũ. Trình phát chỉ cộng bước và trượt dần như mọi bước."""
+    start, end = max(start, float(cue["start"])), min(end, float(cue["end"]))
+    if end - start < 1e-6:
+        return
+    steps = cue.get("steps") or []
+
+    def level(at: float) -> float:
+        return next((step["db"] for step in reversed(steps) if step["at"] <= at), 0.0)
+
+    inside = [dict(step, db=round(step["db"] + music_scenes.MUSIC_DUCK_DB, 2)) for step in steps if start < step["at"] < end]
+    out = [step for step in steps if step["at"] < start]
+    out.append({"at": round(start, 3), "db": round(level(start) + music_scenes.MUSIC_DUCK_DB, 2)})
+    out += inside
+    if end < float(cue["end"]):
+        out.append({"at": round(end, 3), "db": level(end)})
+    out += [step for step in steps if step["at"] > end]
+    cue["steps"] = out
 
 
 def _number(value: Any) -> float | None:

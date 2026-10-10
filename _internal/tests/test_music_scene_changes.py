@@ -184,18 +184,25 @@ def test_a_track_that_ended_early_is_not_reopened_by_the_next_scene(monkeypatch:
     assert [(cue["start"], cue["end"]) for cue in cues] == [(0.0, 76.0), (80.0, 150.0)]
 
 
-def test_background_music_stops_where_the_story_starts_playing_music_and_returns_next_scene() -> None:
-    """DIEGETIC (docs/MUSIC_RESEARCH.md 10-10, MUSIC-AUDIT lỗi 2): nền không chồng lên bản nhạc đang vang trong truyện."""
+def test_background_music_ducks_while_the_story_plays_music() -> None:
+    """DIEGETIC D2 (docs/MUSIC_RESEARCH.md 10-10, MUSIC-AUDIT lỗi 2): nền không chồng to lên bản nhạc đang vang trong truyện -
+    hạ MUSIC_DUCK_DB từ câu mở tới hết khúc còn nói về nhạc (+1 câu), rồi về mức cũ; bài vẫn chạy, không thêm mốc."""
     onset = "Ngồi xuống trước cây đàn của mình, Lucien lại đặt tay lên bàn phím."
     lines = (_calm(20) + [(onset, "neutral", 0, 5.0), ("Phần mở đầu chậm rãi và bình yên.", "tender", 1, 6.0),
                           ("Mọi thứ trong bản sonata đều đẹp như một giấc mơ.", "tender", 1, 6.0)] + _calm(4)
              + [(SUBHEAD, "neutral", 0, 4.0)] + _calm(20))
     scenes = chapter_scenes(_script(lines))
-    assert scenes[0]["musicAt"] == 128.0 and "musicAt" not in scenes[-1]
+    assert scenes[0]["musicDuck"] == [[128.0, 152.2]] and "musicDuck" not in scenes[-1]
     chosen = choose(scenes, _near([CALM, BATTLE]), book_key="b", track_info=TRACKS.get)
     cues = music_plan.chapter_cues({"enabled": True, "scenes": chosen}, 7)
-    assert cues[0]["start"] == 0.0 and cues[0]["end"] == 128.0
-    assert len(cues) == 2 and cues[1]["start"] == scenes[-1]["start"]  # cảnh sau có nhạc lại, mốc riêng sau quãng lặng
+    assert [cue["steps"] for cue in cues] == [[{"at": 128.0, "db": -12.0}, {"at": 152.2, "db": 0.0}]]
+
+
+def test_a_duck_keeps_the_volume_steps_around_it() -> None:
+    cue = {"start": 0.0, "end": 300.0, "link": "x", "steps": [{"at": 100.0, "db": 1.8}, {"at": 200.0, "db": 3.0}]}
+    music_plan._duck(cue, 150.0, 220.0)
+    assert cue["steps"] == [{"at": 100.0, "db": 1.8}, {"at": 150.0, "db": -10.2}, {"at": 200.0, "db": -9.0},
+                            {"at": 220.0, "db": 3.0}]
 
 
 def test_talk_about_music_is_not_music_playing() -> None:
@@ -207,6 +214,13 @@ def test_talk_about_music_is_not_music_playing() -> None:
     assert onsets(("Đàn ông trong làng kéo nhau ra đồng.", "narration"), ("Trời nắng.", "narration")) == []
     assert onsets(("Cô khe khẽ hát.", "narration"), ("Giai điệu buồn lan khắp phòng.", "narration")) == [0]
     assert onsets(("Tiếng đàn vang lên giữa quảng trường.", "narration"), ("Ai cũng dừng lại.", "narration")) == []
+    # D2: buổi diễn đã xong, tiêu đề / link, chữ nhạc tả người, ngâm nga không có tiếng nhạc sau đó
+    assert onsets(("Lucien rời tay khỏi bàn phím, việc chơi đàn đã rút cạn sức lực của cậu.", "narration")) == []
+    assert onsets(("Độc tấu piano Canon in D (link ở cmt)", "narration"), ("Cả thành phố vỗ tay cho bản nhạc.", "narration")) == []
+    assert onsets(("Thomas, nghệ sĩ chơi cello của dàn nhạc, ôm lấy Lucien.", "narration"),
+                  ("“Ngài sẽ là nhạc sĩ nổi tiếng nhất!”", "dialogue")) == []
+    assert onsets(("Daphne ngâm nga, “Ưmm~”, rồi nói tiếp.", "narration"), ("“Cái đám đó đâu có nhân lên được.”", "dialogue"),
+                  ("Subaru gật đầu.", "narration"), ("Cậu nghĩ về khúc nhạc hôm qua.", "narration")) == []
 
 
 def _manual(*pieces: tuple[float, float, float, str]) -> list[dict]:

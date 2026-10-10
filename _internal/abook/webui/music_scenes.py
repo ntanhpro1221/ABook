@@ -135,6 +135,19 @@ MUSIC_KEYBOARD = re.compile(r"\b(?:bàn phím|phím)\b", re.IGNORECASE)
 MUSIC_CONFIRM = re.compile(r"\b(?:nhạc|đàn|giai điệu|sonata|hát|nốt|phím|âm điệu|tiết tấu|hợp âm|khúc|bản nhạc|giao hưởng|adagio|"
                            r"allegro|ca từ|lời ca|du dương)\b", re.IGNORECASE)
 MUSIC_CONFIRM_LINES = 4
+# Câu mở phải là nhạc ĐANG vang: không phải buổi diễn đã xong, hồi tưởng, dự định; không phải tiêu đề / dòng link; không phải chữ
+# nhạc chỉ để tả người ("nghệ sĩ chơi cello của dàn nhạc ôm lấy Lucien"). Ngâm nga cần tiếng nhạc ở câu SAU.
+MUSIC_NOT_NOW = re.compile(r"\b(?:xong|kết thúc|dứt|rời tay|ngừng|sau khi|từng|vẫn còn vang|đọng lại|hồi tưởng|nhớ lại|định|"
+                           r"muốn|sẽ|cải biên|không biết)\b", re.IGNORECASE)
+MUSIC_TITLE = re.compile(r"^\s*chương\s+\d|\blink\b|\bcmt\b", re.IGNORECASE)
+MUSIC_PLAYER = re.compile(r"(?:nghệ sĩ|người|tay|nhạc công)\s*$", re.IGNORECASE)
+MUSIC_HUM = re.compile(r"\b(?:ngâm nga|ngân nga|khe khẽ hát)\b", re.IGNORECASE)
+MUSIC_HUM_LINES = 2
+# Cửa sổ nhạc thật: kéo dài qua các câu còn từ nhạc, dừng sau 2 câu liền không có, cộng 1 câu; trần MUSIC_WINDOW_SECONDS. Nền hạ
+# MUSIC_DUCK_DB trong cửa sổ (music_plan.chapter_cues thêm bước vào `steps`; trình phát trượt dần như mọi bước).
+MUSIC_GAP_LINES = 2
+MUSIC_WINDOW_SECONDS = 90.0
+MUSIC_DUCK_DB = -12.0
 CUE_PLAIN_END = re.compile(r"[.!?…,;:\"”'’)]\s*$")
 CUE_PART_NUMBERS = frozenset({"một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín", "mười", "cuối", "kết", "đầu"})
 CUE_TIME_PLACE = re.compile(
@@ -198,7 +211,11 @@ def music_onsets(segments: list[dict[str, Any]]) -> list[int]:
         if segment.get("kind") != "narration":
             continue
         text = str(segment.get("text") or "")
+        if MUSIC_NOT_NOW.search(text) or MUSIC_TITLE.search(text):
+            continue
         match = MUSIC_ONSET.search(text)
+        if match and MUSIC_PLAYER.search(text[max(0, match.start() - 12):match.start()]):
+            match = None
         if match:
             rest = text[:match.start()] + " " + text[match.end():]
         elif MUSIC_KEYS.search(text) and MUSIC_KEYBOARD.search(text):
@@ -206,9 +223,33 @@ def music_onsets(segments: list[dict[str, Any]]) -> list[int]:
         else:
             continue
         after = " ".join(str(line.get("text") or "") for line in segments[index + 1:index + 1 + MUSIC_CONFIRM_LINES])
+        if match and MUSIC_HUM.fullmatch(match.group(0)):
+            near = " ".join(str(line.get("text") or "") for line in segments[index + 1:index + 1 + MUSIC_HUM_LINES])
+            if not MUSIC_CONFIRM.search(near):
+                continue
         if MUSIC_CONFIRM.search(rest) or MUSIC_CONFIRM.search(after):
             found.append(index)
     return found
+
+
+def music_windows(segments: list[dict[str, Any]], timeline: list[float], seconds: list[float]) -> list[list[float]]:
+    """[[giây bắt đầu, giây hết]] của các khúc truyện có nhạc thật (`music_onsets`): từ câu mở qua các câu còn từ nhạc, dừng sau
+    `MUSIC_GAP_LINES` câu liền không có, cộng một câu; trần `MUSIC_WINDOW_SECONDS`. Khúc chồng nhau thì gộp."""
+    windows: list[list[float]] = []
+    for onset in music_onsets(segments):
+        last, index = onset, onset + 1
+        while index < len(segments) and index - last <= MUSIC_GAP_LINES:
+            if MUSIC_CONFIRM.search(str(segments[index].get("text") or "")):
+                last = index
+            index += 1
+        close = min(last + 1, len(segments) - 1)
+        start = timeline[onset]
+        end = min(timeline[close] + seconds[close], start + MUSIC_WINDOW_SECONDS)
+        if windows and start <= windows[-1][1]:
+            windows[-1][1] = max(windows[-1][1], round(end, 3))
+        else:
+            windows.append([round(start, 3), round(end, 3)])
+    return windows
 
 
 def cue_bounds(segments: list[dict[str, Any]]) -> dict[Any, str]:
@@ -437,8 +478,8 @@ def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = 
     scenes.append(current)
     scenes = _split_long(_merge_short(scenes), segments, seconds)
     spans = _mood_spans(moods, script.get("chapterId"), segments)
-    onsets = music_onsets(segments)
-    views = [_view(scene, segments, timeline, seconds, script, spans, onsets) for scene in scenes]
+    windows = music_windows(segments, timeline, seconds)
+    views = [_view(scene, segments, timeline, seconds, script, spans, windows) for scene in scenes]
     return apply_student(views, student) or apply_chapter_level(views)
 
 
@@ -620,7 +661,7 @@ def _merge_short(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[float], seconds: list[float],
-          script: dict[str, Any], spans: list[tuple[int, int, float, float]] = (), onsets: list[int] = ()) -> dict[str, Any]:
+          script: dict[str, Any], spans: list[tuple[int, int, float, float]] = (), windows: list[list[float]] = ()) -> dict[str, Any]:
     """Một đoạn cho bên ngoài. `valence`/`arousal`/`tension` là trung bình, `sd` là độ lệch chuẩn của các câu trong đoạn
     (đoạn càng lẫn lộn càng khoan dung với bài lệch), `emotions` là 13 cường độ độc lập; ở đường nhãn câu chúng suy từ nhãn.
     `spans` (`_mood_spans`): LLM đã đọc đoạn này thì `valence` / `tension` lấy từ LLM (V, T trên [-2, 2] -> [-1, 1], trung
@@ -657,9 +698,10 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
         "labelValence": round(label_valence, 3),
         "labelTension": round(label_tension, 3),
     }
-    playing = [index for index in onsets if first <= index <= last]
-    if playing:
-        view["musicAt"] = round(timeline[playing[0]], 3)  # truyện bắt đầu có nhạc thật: nền tắt từ đây (music_select.choose)
+    # Khúc truyện có nhạc thật trong đoạn này: nền hạ MUSIC_DUCK_DB ở đó (music_plan.chapter_cues).
+    duck = [[max(a, view["start"]), min(b, view["end"])] for a, b in windows if a < view["end"] and b > view["start"]]
+    if duck:
+        view["musicDuck"] = duck
     return view
 
 
