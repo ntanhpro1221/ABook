@@ -4337,6 +4337,23 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 13:3x - LV-Q17: mức chương từ q17 L14 KHÔNG qua ở cả hai trục
+
+Ghi trước ở Corpus 56c125a, kết quả ở Corpus (lv_q17.log). Thủ tục y hệt LV-Q06, chỉ đổi nhúng mức chương sang q17 L14. Dù vậy,
+MAE CV trên bạc tốt hơn: .148 so với .161 của q06.
+
+| MAE theo câu | học V | học T | bộ 7 V | bộ 7 T |
+|---|---|---|---|---|
+| S-P0 (V nhãn, T P0) | .335 | .291 | .262 | .213 |
+| S-Q06 (app hiện tại ở trục V) | .321 | .337 | .155 | .201 |
+| S-Q17 | .312 | .319 | .171 | .182 |
+
+- **Trục T KHÔNG QUA:** ở bộ học, P0 vẫn hơn (.291 so với .319). r mức T trên bộ học: P0 .92, q17 .87, q06 .82. Nhúng câu chữ
+  không bắt được mức căng của chương bằng LLM được hỏi thẳng.
+- **Trục V KHÔNG QUA:** bộ học tốt hơn q06 .009, bộ 7 tệ hơn .016. Giữ `chapter_head_q06`; app khỏi phải tải thêm q17.
+- Bộ cuối không chạy được: thiếu khoá đặc trưng của bộ ngoài. Vì bộ cuối đã mở và không phải cổng, tôi không sửa.
+- Mức T chương giờ chỉ còn chờ P0-CH (một lời gọi LLM cho cả chương), đang trong hàng GPU.
+
 ### 10-10 13:0x - STU-LORA: tinh chỉnh LoRA học sinh cảnh 1.7B lớp 14 KHÔNG hơn đầu tuyến tính
 
 Ghi trước ở Corpus a14c1f2 (PLAN_stu_lora). Kaggle T4, 4 lượt qua 2.028 cảnh bạc, 112 phút. Mốc là đầu tuyến tính q17 L14
