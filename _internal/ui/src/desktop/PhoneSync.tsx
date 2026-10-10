@@ -154,7 +154,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
       <div className="rounded-xl border border-accent/35 bg-accent-soft p-5" aria-live="polite">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Nhập mã này trên điện thoại</p>
+            <p className="text-sm font-semibold">Nhập mã này trên thiết bị cần ghép</p>
             <ol className="mt-2 list-decimal space-y-1 pl-4 text-[13px] text-fg-2">
               <li>
                 Mở ABook trên điện thoại, vào <span className="font-medium text-fg">Tải sách</span>.
@@ -164,6 +164,12 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
               </li>
               <li>Gõ mã 6 số này. Mã chỉ dùng được một lần.</li>
             </ol>
+            {/* Địa chỉ luôn hiện ở đây (máy tính khác không tự thấy máy này thì gõ địa chỉ), không chỉ khi bật điều khiển sản xuất. */}
+            {sync.addresses.length > 0 && (
+              <p className="mt-2 text-[13px] text-fg-2">
+                Địa chỉ máy này: <Where sync={sync} scheme={false} /> - gõ vào ô “Địa chỉ máy kia” khi ghép từ máy tính khác.
+              </p>
+            )}
             {sync.remoteStudio && (
               <p className="mt-2 text-[13px] text-fg-2">
                 Trình duyệt: mở <Where sync={sync} /> rồi gõ mã. Trình duyệt sẽ báo trang “không an toàn” vì chứng chỉ do
@@ -171,10 +177,11 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
               </p>
             )}
           </div>
-          <div className="text-right">
+          {/* Mã và dòng hết hạn cùng một trục giữa (soát UX a19): khoảng cách chữ thừa sau số cuối đã được bù ở bên trái. */}
+          <div className="text-center">
             <div
               aria-label={`Mã ghép nối: ${code.split("").join(" ")}`}
-              className="text-[34px] font-semibold leading-none tracking-[0.14em] text-accent-text tabular-nums"
+              className="pl-[0.14em] text-[34px] font-semibold leading-none tracking-[0.14em] text-accent-text tabular-nums"
             >
               {code.slice(0, 3)}
               <span className="inline-block w-3" />
@@ -187,9 +194,13 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
         </div>
         {/* Dòng vân tay dài (64 ký tự): để NGOÀI hàng hướng dẫn / mã, không thì nó chiếm hết bề rộng và đẩy mã xuống dưới. */}
         {sync.fingerprint && (
-          <p className="mt-3 break-words text-[12px] text-fg-3">
-            Vân tay chứng chỉ của máy này, để đối chiếu: <span className="tabular-nums">{sync.fingerprint}</span>
-          </p>
+          <details className="group mt-3 text-[12px] text-fg-3">
+            <summary className="cursor-pointer list-none text-fg-2 [&::-webkit-details-marker]:hidden">Chi tiết kỹ thuật</summary>
+            <p className="mt-1 break-words">
+              Vân tay của máy này: <span className="tabular-nums">{sync.fingerprint}</span>. Sau khi ghép, máy kia ghi lại vân tay này; đối chiếu
+              với dòng “Vân tay” dưới tên máy này trên màn ghép của máy kia (máy tính: Cài đặt → Máy tính khác; điện thoại: màn Thiết bị).
+            </p>
+          </details>
         )}
         <div className="mt-4 flex justify-end">
           {/* Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09). */}
@@ -238,7 +249,7 @@ export function PhoneSync() {
     const previous = known.current;
     known.current = new Set(sync.devices.map((device) => device.id));
     const added = previous ? sync.devices.find((device) => !previous.has(device.id)) : undefined;
-    if (added) toast.success(`Đã ghép ${added.name}`, { description: "Điện thoại giờ tải được sách và đồng bộ chỗ đang nghe." });
+    if (added) toast.success(`Đã ghép ${added.name}`, { description: "Thiết bị này giờ tải được sách và đồng bộ chỗ đang nghe." });
   }, [sync]);
 
   if (!sync) return <Skeleton className="h-20" />;
@@ -352,7 +363,7 @@ export function PhoneSync() {
                       </label>
                     )}
                     <Button size="sm" variant="ghost" onClick={() => setRemoving(device)}>
-                      Gỡ
+                      Thôi ghép
                     </Button>
                   </li>
                 ))}
@@ -387,8 +398,8 @@ export function PhoneSync() {
       <Dialog
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
-        title={`Gỡ ${removing?.name ?? "điện thoại"}?`}
-        description="Điện thoại này sẽ không tải sách hay đồng bộ chỗ đang nghe được nữa, cho tới khi ghép lại. Sách đã tải trên điện thoại vẫn nghe được."
+        title={`Thôi ghép ${removing?.name ?? "thiết bị"}?`}
+        description="Thiết bị này sẽ không tải sách hay đồng bộ chỗ đang nghe được nữa, cho tới khi ghép lại. Sách đã tải về thiết bị vẫn nghe được."
       >
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setRemoving(null)}>
@@ -401,7 +412,7 @@ export function PhoneSync() {
               setRemoving(null);
             }}
           >
-            Gỡ điện thoại
+            Thôi ghép
           </Button>
         </div>
       </Dialog>

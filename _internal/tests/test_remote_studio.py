@@ -41,6 +41,7 @@ def _pair_browser(app: App) -> str:
     status, data, headers = _sync_request(app.sync_server.port, "POST", "/sync/v1/pair-browser",
                                      body={"code": code, "device": "Điện thoại của Anh"})
     assert status == 200, data
+    assert json.loads(data)["studio"] is app.sync_view()["remoteStudio"], "trang ghép biết có vào Studio được không"
     cookie = headers["Set-Cookie"]
     assert "HttpOnly" in cookie and "Secure" in cookie and "SameSite=Strict" in cookie
     return cookie.split(";", 1)[0]

@@ -11,6 +11,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Hàng tab của trang dự án (và của trang cuốn sách) ở cửa sổ hẹp giờ lăn chuột thường là chạy sang ngang, hai đầu có nút mũi tên tròn báo còn tab; trước đây phải giữ Shift mới lăn được.
 
+### Ghép máy và thêm sách (máy tính và điện thoại)
+
+- Ghép máy với chính nó (gõ địa chỉ của máy này kèm mã đang hiện) bị từ chối bằng câu rõ ràng thay vì nhân đôi thư viện. Nhập sai mã nói còn mấy lần thử; mã sai 5 lần thì nói phải tạo mã mới ở máy kia.
+- Khung mã ghép luôn ghi địa chỉ máy này (không chỉ khi bật điều khiển sản xuất), vân tay nằm trong "Chi tiết kỹ thuật" và nói đối chiếu với dòng nào bên máy kia; "Hết hạn sau" thẳng hàng dưới mã ở màn hẹp. Lỗi chứng chỉ máy kia đổi bảo "Thôi ghép rồi ghép lại".
+- Trình duyệt ghép xong vào thư viện (chỉ vào Studio khi thiết bị có quyền điều khiển sản xuất). Trang ghép ghi tên máy.
+- Một từ "Thôi ghép" ở mọi nơi; hộp Thôi ghép trong Cài đặt gọi "thiết bị" cho cả máy tính, điện thoại lẫn trình duyệt. Điện thoại hỏi trước khi thôi ghép một máy đang nghe thư viện của nó.
+- Tên sách lấy từ tên file bỏ dấu gạch dưới và chuỗi "--" (Tam_Quoc_Dien_Nghia thành Tam Quoc Dien Nghia; máy tính và điện thoại như nhau). File TXT không có chữ nói rõ tên file và cách thử (mở bằng Notepad, lưu UTF-8).
+- Chip nhạc nền "Máy chọn: …" hiện đủ tên tâm trạng thay vì cắt giữa chữ.
+
 ## [0.4.43] - 2026-10-10
 
 ### Làm sách trong Studio (máy tính)

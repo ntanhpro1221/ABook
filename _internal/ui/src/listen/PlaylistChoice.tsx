@@ -15,6 +15,7 @@ import {
   chosenId,
   MINE_PLAYLIST,
   playlistLabel,
+  shortPlaylistLabel,
   playlistOptions,
   playlistPlaying,
   saveMusicLevel,
@@ -151,7 +152,7 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
       <DropdownMenu.SubTrigger className={MENU_ITEM}>
         <Music2 className="size-4" />
         <span className="flex-1">Nhạc nền</span>
-        <span className="max-w-40 truncate text-xs text-fg-2">{label}</span>
+        <span className="max-w-44 truncate text-xs text-fg-2" title={label}>{shortPlaylistLabel(label)}</span>
         <ChevronRight className="size-4 text-fg-2" />
       </DropdownMenu.SubTrigger>
       <DropdownMenu.Portal>

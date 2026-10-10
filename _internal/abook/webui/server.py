@@ -2305,7 +2305,8 @@ class App:
     def pair_computer(self, address: str, code: str) -> dict[str, Any]:
         self._mutating()
         try:
-            self.computers.pair(address, code, socket_name())
+            self.computers.pair(address, code, socket_name(),
+                                own_port=self.sync_server.port if self.sync_server is not None else None)
         except remote_books.RemoteError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         self.refresh_remote(wait=True)

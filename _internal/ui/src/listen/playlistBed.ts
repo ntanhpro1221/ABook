@@ -275,6 +275,12 @@ export function playlistLabel(view: PlaylistView | undefined, menu: PlaylistMenu
   return nameOf(menu, view.playlist) || "Danh sách đã chọn";
 }
 
+/** Chữ ngắn cho chỗ hẹp (chip trên thanh trình phát, dòng của menu): bỏ "Máy chọn: " để còn đủ tên tâm trạng thay vì cắt giữa chữ; chỗ gọi
+ *  để `title` là `playlistLabel` đầy đủ. */
+export function shortPlaylistLabel(label: string): string {
+  return label.startsWith("Máy chọn: ") ? label.slice("Máy chọn: ".length) : label;
+}
+
 /** Công tắc "Tự chọn nhạc nền" ở Cài đặt > Nhạc nền (máy tính và điện thoại dùng chung lời). */
 export const AUTO_MUSIC_LABEL = "Tự chọn nhạc nền cho sách chỉ có chữ";
 export const AUTO_MUSIC_HINT =
