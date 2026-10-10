@@ -116,3 +116,62 @@ def install(progress: Callable[[int, int], None], cancelled: Callable[[], bool] 
     wheel.unlink(missing_ok=True)
     io_utils.use_downloaded_ffmpeg(exe)
     return exe
+
+
+# ---- tải riêng ffmpeg (xuất sách nói: hộp Xuất mời tải khi máy chưa có) ---------------------------------------------------------
+# Mô-đun "Phân tích nhạc" tải ffmpeg cùng thư viện + model; xuất sách nói chỉ cần ffmpeg (~31 MB) nên có đường tải riêng, cùng `install` và cùng thư mục.
+
+_state: dict[str, object] = {"downloading": False, "done": 0, "total": 0, "error": ""}
+_cancel = threading.Event()
+_thread: threading.Thread | None = None
+
+
+def status() -> dict[str, object]:
+    """Cho giao diện: `ready` (dùng được ngay), `downloading` + `done`/`total` byte, `error` (lần tải gần nhất hỏng, lời tiếng Việt), `bytes` (cỡ tải), `blocked` (rỗng nếu tải được)."""
+    with _lock:
+        state = dict(_state)
+    ok = ready()
+    return {"ready": ok, "downloading": bool(state["downloading"]), "done": state["done"], "total": state["total"], "error": state["error"],
+            "bytes": WHEEL.size, "blocked": "" if ok else cannot_download()}
+
+
+def start() -> None:
+    """Bắt đầu tải ở luồng nền (không làm gì nếu đã có ffmpeg hay đang tải). Không tải được thì `error` ghi lý do."""
+    global _thread
+    with _lock:
+        if ready() or _state["downloading"]:
+            return
+        reason_blocked = cannot_download()
+        if reason_blocked:
+            _state.update(error=reason_blocked[0].upper() + reason_blocked[1:] + ".")
+            return
+        _cancel.clear()
+        _state.update(downloading=True, done=0, total=WHEEL.size, error="")
+        _thread = threading.Thread(target=_download, name="ffmpeg-download", daemon=True)
+        _thread.start()
+
+
+def cancel() -> None:
+    """Dừng tải giữa chừng (phần đã tải được giữ để lần sau làm tiếp)."""
+    _cancel.set()
+
+
+def join(timeout: float | None = None) -> None:
+    """Đợi luồng tải xong (bài thử)."""
+    thread = _thread
+    if thread is not None:
+        thread.join(timeout)
+
+
+def _download() -> None:
+    def progress(done: int, _total: int = 0) -> None:
+        with _lock:
+            _state["done"] = done
+
+    try:
+        install(progress, _cancel.is_set)
+        error = ""
+    except Exception as failure:  # noqa: BLE001 - mọi lỗi tải phải thành lời cho người dùng, không giết luồng im lặng
+        error = "Đã dừng tải." if _cancel.is_set() else reason(failure)[0].upper() + reason(failure)[1:] + "."
+    with _lock:
+        _state.update(downloading=False, error=error)

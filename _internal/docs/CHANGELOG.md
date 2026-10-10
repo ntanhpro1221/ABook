@@ -13,6 +13,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Chưa chọn giọng mà máy đã có giọng VieNeu thì Nghe ngay đọc bằng giọng VieNeu (chữ không rời máy) thay vì giọng trực tuyến.
 - Hộp thoại cao hơn cửa sổ (điện thoại, cửa sổ thấp) cuộn được bên trong, nút Đóng luôn thấy; tải tiếp sau Huỷ không còn làm thanh tiến độ tụt về 0.
 - Thư viện: sách không tác giả không còn lấy tên giọng làm phụ đề; hai sách trùng tên hiện ngày thêm; tìm không thấy nói "không có sách nào khớp"; thông báo xoá và xuất nói đúng (Thùng rác, cỡ "0,5 MB", chỉ tên file); nút lớn hơn trên màn hẹp.
+- Sách chỉ có chữ (EPUB, TXT) xuất được thành sách nói: menu … của sách → "Xuất sách nói (MP3 / M4B)…" chọn MP3 (mỗi chương một file kèm danh sách phát) hay M4B (cả cuốn một file có mục lục chương), giọng đang chọn đọc cả cuốn ở nền (hiện chương i/N, phần trăm, còn bao lâu; nhường cho chương bạn đang nghe). Huỷ hay tắt app giữa chừng thì phần đã làm được giữ, xuất lại làm tiếp từ đó; máy chưa có ffmpeg thì tải ngay trong hộp. Chỉ máy tính; điện thoại chưa có.
 
 ## [0.4.40] - 2026-10-10
 

@@ -1,3 +1,4 @@
+import { spokenDuration } from "@/listen/prepareAhead";
 import { fileName, formatClock, formatSize } from "@/shared/format";
 
 // "Xuất file sách" và "Xuất M4B" (menu "…" của trang sách): nói trước file sẽ nằm đâu, và trong lúc làm nói điều đổi theo thời gian.
@@ -8,6 +9,9 @@ export interface ExportCopy {
   busy: string;
   done: string;
   failed: string;
+  /** Việc có nút Huỷ: lời khi người dùng đã dừng nó ("Đã dừng xuất…") và điều còn lại ("Phần đã làm được giữ…"). */
+  stopped?: string;
+  stoppedNote?: string;
 }
 
 export const BOOK_FILE_COPY: ExportCopy = { busy: "Đang đóng gói sách…", done: "Đã xuất file sách", failed: "Không xuất được file sách" };
@@ -48,8 +52,15 @@ export interface ExportResult {
 }
 
 export interface ExportJob {
-  state: "idle" | "running" | "done" | "error";
+  state: "idle" | "running" | "done" | "error" | "cancelled";
   id?: string;
+  /** Xuất sách nói (listen_export.py) báo tiến độ: pha ("voice" đọc / "encode" ghép file), chương i/N, % theo số chữ, ước còn lại (giây), đang nhường người nghe. */
+  phase?: "voice" | "encode";
+  chapter?: number;
+  chapters?: number;
+  percent?: number;
+  secondsLeft?: number | null;
+  waiting?: "listening" | null;
   /** Giây đã đóng gói (đang chạy). */
   elapsed?: number;
   /** Giây kể từ lúc xong / hỏng. */
@@ -63,7 +74,26 @@ export const RECENT_SECONDS = 30 * 60;
 
 export type JobView =
   | { kind: "none" }
-  | { kind: "loading" | "success" | "error"; title: string; description: string; /** Đường đầy đủ của file vừa xuất: để ở gợi ý khi rê chuột, thông báo chỉ nói tên file. */ place?: string };
+  | {
+      kind: "loading" | "success" | "error" | "info";
+      title: string;
+      description: string;
+      /** Đường đầy đủ của file vừa xuất: để ở gợi ý khi rê chuột, thông báo chỉ nói tên file. */
+      place?: string;
+      /** Việc báo được tiến độ: thanh phần trăm (0-1) dưới dòng mô tả. */
+      progress?: number;
+    };
+
+/** Việc tự báo tiến độ (xuất sách nói): chữ + phần trăm 0-1; không báo thì null. */
+function reportedProgress(job: ExportJob): { fraction: number; text: string } | null {
+  if (job.chapter === undefined || !job.chapters) return null;
+  const where = `Chương ${job.chapter}/${job.chapters}`;
+  if (job.phase === "encode") return { fraction: 1, text: `Đang ghép file âm thanh · ${where}` };
+  const parts = [where, `${job.percent ?? 0}%`];
+  if (job.waiting === "listening") parts.push("nhường cho chương đang nghe");
+  else if (job.secondsLeft != null) parts.push(`còn ${spokenDuration(job.secondsLeft)}`);
+  return { fraction: (job.percent ?? 0) / 100, text: parts.join(" · ") };
+}
 
 /** Nơi file nằm: file sách, hay thư mục khi cả bộ mỗi phần một file. */
 export function exportedPlace(result: ExportResult): string {
@@ -81,9 +111,12 @@ export function missingChaptersNote(result: ExportResult): string {
 export function jobView(job: ExportJob, chapters = 0, announce = false, copy: ExportCopy = BOOK_FILE_COPY): JobView {
   if (job.state === "running") {
     const elapsed = job.elapsed ?? 0;
+    const reported = reportedProgress(job);
+    if (reported) return { kind: "loading", title: copy.busy, description: reported.text, progress: reported.fraction };
     return { kind: "loading", title: copy.busy, description: chapters ? packingText(chapters, elapsed) : `đã ${formatClock(elapsed)}` };
   }
   if (announce && (job.finishedAgo ?? 0) > RECENT_SECONDS) return { kind: "none" };
+  if (job.state === "cancelled") return copy.stopped ? { kind: "info", title: copy.stopped, description: copy.stoppedNote ?? "" } : { kind: "none" };
   if (job.state === "done" && job.result) {
     const details = [job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result)].filter(Boolean);
     const file = job.result.file;
