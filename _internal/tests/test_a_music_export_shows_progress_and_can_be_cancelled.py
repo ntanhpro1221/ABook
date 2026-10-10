@@ -2,17 +2,16 @@
 Giờ hộp hỏi được "đang tải bài k/n" và bấm Huỷ được (dừng trước bài kế, không ghi file sách nào)."""
 from __future__ import annotations
 
-import json
 import threading
 from pathlib import Path
+
+import pytest
 
 from abook.webui import bookfile, export_jobs, music_plan
 from abook.webui.library import book_id
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from tests.test_bookfile_music import BATTLE, CALM, _plan
 from tests.test_webui_listen_and_sync import make_project
-
-import pytest
 
 
 def _slow_app(app, tmp_path: Path, gate: threading.Event | None = None):
