@@ -4337,6 +4337,27 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 sáng - LLM-NT2 (4B tìm chỗ đổi nơi/thời gian): DỪNG sau phần A - LỆCH khỏi luật ghi trước
+
+Biến thể a chạy thật trên bộ học: 318 khúc, 42 chương.
+
+| | lần cắt/giờ | R_NT | P_NT | F1 | sai CHẶT/giờ |
+|---|---|---|---|---|---|
+| C1 (luật hiện tại) | 3,7 | .36 | .59 | .444 | 1,5 |
+| C1 ∪ LLM a | 12,3 | .55 | .27 | .365 | 8,9 |
+
+Phần thêm có P_thêm .16.
+
+Luật dừng sớm ("thêm ≥ 5 NT", được 14) cho PASS, nên theo luật ghi trước phải chạy phần B (b, c, xác nhận 7/8/9, khoảng 3,7 giờ
+GPU). **Lead quyết không chạy, ghi rõ đây là LỆCH luật.** Lý do:
+- trên bộ học đã xa cổng 2 (P_thêm ≥ .35) và cổng 3 (sai CHẶT ≤ 2,0/giờ): cần P tăng hơn gấp đôi và sai CHẶT giảm khoảng 4 lần;
+- b và c chỉ đổi lời hỏi;
+- GPU dành cho model phân tích.
+
+**Bài học:** luật dừng sớm phải có cả điều kiện precision / sai CHẶT như cổng cuối, không chỉ recall.
+
+SPEC và script giữ nguyên, chỉ mở lại khi có ý tưởng đổi được precision (ví dụ tầng lọc riêng). Corpus `PLAN_llm_nt.md`.
+
 ### 11-10 - Cỡ bài: 27/2.382 bài quá 40 MiB; app lọc theo `bytes` có sẵn trong danh mục
 
 App mới chặn bài nhạc lớn hơn 40 MB (`MUSIC_TRACK_MAX_MB`, phần của Lead). Lý do: Studio a23 tải trước 190 MB cho một cuốn. Quét
