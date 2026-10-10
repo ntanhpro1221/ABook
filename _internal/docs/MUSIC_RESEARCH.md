@@ -4337,6 +4337,27 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 13:0x - STU-LORA: tinh chỉnh LoRA học sinh cảnh 1.7B lớp 14 KHÔNG hơn đầu tuyến tính
+
+Ghi trước ở Corpus a14c1f2 (PLAN_stu_lora). Kaggle T4, 4 lượt qua 2.028 cảnh bạc, 112 phút. Mốc là đầu tuyến tính q17 L14
+(học +.527, bộ 7 +.334, thước `stu_curve`). Kiểm ống lượt 0 khớp mốc ± .01: ĐẠT.
+
+| lượt | học TB | Δ | bộ 7 TB | Δ |
+|---|---|---|---|---|
+| 1 | .532 | +.005 | .326 | −.008 |
+| 2 | .533 | +.006 | .310 | −.025 |
+| 3 | .535 | +.008 | .308 | −.026 |
+| 4 (chọn) | .539 | +.012 | .307 | −.028 |
+
+- **THUA cả ba điều kiện.** Δ học +.012 (cần ≥ .03). Δ bộ 7 −.028 (cần ≥ +.02). Δ gộp 62 chương −.001 [−.021, +.018]. Riêng V:
+  +.010 [−.016, +.035].
+- Càng học, bộ học càng nhích lên mà bộ 7 càng tụt. Đây là cùng kiểu học thuộc như STU-FT (07-10), chỉ nhẹ hơn: SD dự đoán không co.
+- Gộp với đường cong 4B (10-10 11:0x): cả encoder lớn hơn lẫn tinh chỉnh đều không làm bộ 7 tốt hơn đầu tuyến tính q17 L14.
+  Nút thắt phía cảnh không nằm ở biểu diễn. Có thể nó nằm ở nhãn bạc, vì 2.028 cảnh là nhãn Claude chứ không phải vàng.
+- Vận hành: hai lần hỏng trước khi chạy được, mỗi lần chỉ vài phút. Lần một vì Kaggle cài torchao 0.10 mà peft mới đòi > 0.16.
+  Lần hai vì dataset không còn gắn ở `/kaggle/input/<slug>`, nên giờ tìm file bằng rglob. Chuỗi chờ giờ chỉ chấm khi kernel
+  COMPLETE và ghi mã thật (lần đầu "mã 0" đã che traceback).
+
 ### 10-10 11:0x - Trục T: mức chương mới là chỗ còn lợi; trộn q06 vào P0 không giúp; 4B lớp 18 không hơn 1.7B ở bộ 7
 
 Ba lượt CPU sau LV-Q06, đều theo thước `cl_apply` (MAE theo câu). Bộ cuối đã mở nên chỉ ghi lại. Mã và log ở Corpus `research/music`.
