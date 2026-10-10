@@ -163,7 +163,8 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
 TRACK_INFO_KEYS = ("title", "creator", "license", "licenseUrl", "attribution", "duration", "source", "landing", "lufs",
                    "speechBand")
 # phần `choose` / `build` gắn thêm cho từng đoạn
-CHOICE_FIELDS = ("key", "link", "distance", "pinned", "silenced", "pinUnavailable", "continued", "stepDb", "siblings")
+CHOICE_FIELDS = ("key", "link", "distance", "pinned", "silenced", "pinUnavailable", "continued", "stepDb", "siblings",
+                 "stopAt")
 
 
 def scenes_of(plan: dict[str, Any] | None) -> list[dict[str, Any]] | None:
@@ -216,7 +217,9 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
         spans = [(float(scene["start"]), scene["link"], False)]
         spans += [(float(sibling["at"]), sibling["link"], True) for sibling in scene.get("siblings") or []]
         for index, (start, link, sibling) in enumerate(spans):
-            end = spans[index + 1][0] if index + 1 < len(spans) else float(scene["end"])
+            # `stopAt`: bài kết sớm trước ranh giới (music_select.TAIL_MIN_SECONDS), phần còn lại của mảnh lặng.
+            last = float(scene["end"]) if scene.get("stopAt") is None else min(float(scene["end"]), float(scene["stopAt"]))
+            end = spans[index + 1][0] if index + 1 < len(spans) else last
             if cues and cues[-1]["link"] == link and abs(cues[-1]["end"] - start) < 5:
                 cue = cues[-1]
                 cue["end"] = end
