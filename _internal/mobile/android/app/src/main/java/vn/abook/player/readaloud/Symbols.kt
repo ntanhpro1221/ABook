@@ -156,8 +156,8 @@ object Symbols {
     private fun say(text: String) = Said(text)
 
     // ---- one symbol: said / silent / keep, with a pause or not --------------------------------------------------------------------------------
-    /** "/" giữa hai đơn vị đo ("km/h", "50km/h", "kg/m2"), như symbols.unit_slash. */
-    private fun unitSlash(left: String, right: String): Boolean =
+    /** "/" giữa hai đơn vị đo ("km/h", "50km/h", "kg/m2"), như symbols.unit_slash (SpokenSymbols dùng chung cho Studio). */
+    fun unitSlash(left: String, right: String): Boolean =
         UNIT_BEFORE.containsMatchIn(left.takeLast(8)) && UNIT_AFTER.containsMatchIn(right.take(8))
 
     private fun slash(c: Spot): Said {
