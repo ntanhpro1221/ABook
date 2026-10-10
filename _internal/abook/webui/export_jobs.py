@@ -24,6 +24,7 @@ class BookFileJobs:
         self._lock = threading.Lock()
         self._state: dict[str, dict[str, Any]] = {}
         self._stops: dict[str, threading.Event] = {}
+        self._threads: dict[str, threading.Thread] = {}
         self._clock = clock
 
     def status(self, key: str) -> dict[str, Any]:
@@ -57,9 +58,25 @@ class BookFileJobs:
             stop.set()
         return running
 
+    def shutdown(self, timeout: float = 3.0) -> None:
+        """App đóng: bảo mọi việc đang chạy dừng ở chỗ an toàn kế tiếp rồi chờ chúng dọn xong (file tạm), tổng cộng không quá `timeout` giây
+        - đóng app không được treo vì một lượt xuất. Việc không có chỗ dừng trong ngần ấy giây thì bỏ lại (luồng nền chết cùng tiến trình)."""
+        with self._lock:
+            running = [key for key, state in self._state.items() if state.get("state") == "running"]
+            stops = [self._stops[key] for key in running if key in self._stops]
+            threads = [self._threads[key] for key in running if key in self._threads]
+        for stop in stops:
+            stop.set()
+        deadline = time.monotonic() + timeout
+        for thread in threads:
+            thread.join(max(0.0, deadline - time.monotonic()))
+
     def cancelled(self, key: str) -> bool:
-        stop = self._stops.get(key)
-        return stop is not None and stop.is_set()
+        """Việc đang chạy của `key` đã bị bảo dừng? (Lượt đã xong / đã huỷ thì không: cờ cũ không được dừng lượt đồng bộ sau đó.)"""
+        with self._lock:
+            stop = self._stops.get(key)
+            running = (self._state.get(key) or {}).get("state") == "running"
+        return running and stop is not None and stop.is_set()
 
     def start(self, key: str, work: Callable[[], dict[str, Any]], *, on_done: Callable[[dict[str, Any]], None] | None = None) -> dict[str, Any]:
         """Bắt đầu một lượt xuất cho cuốn `key`; đang có lượt chạy thì trả lượt ấy (không đóng gói hai lần cùng lúc)."""
@@ -91,5 +108,8 @@ class BookFileJobs:
                 return
             finish(state="done", result=result)
 
-        threading.Thread(target=run, name="bookfile-export", daemon=True).start()
+        thread = threading.Thread(target=run, name="bookfile-export", daemon=True)
+        with self._lock:
+            self._threads[key] = thread
+        thread.start()
         return self.status(key)

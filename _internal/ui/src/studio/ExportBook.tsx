@@ -11,6 +11,7 @@ import { startExport } from "@/desktop/ExportBookFileJob";
 import { ffmpegCancel, ffmpegStart, ffmpegStatus } from "@/desktop/listenExport";
 import { api, ApiError, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
+import { packError, packView, type PackJob } from "./projectPacking";
 import { WordTimingsRow } from "./WordTimings";
 
 // Xuất ngay trong Studio (soát UX a6 01-10, H1-H2: người làm sách phải sang Thư viện nghe mới tìm thấy "Xuất", và bản xuất
@@ -63,6 +64,9 @@ const SAVING: Record<Kind, [string, string, string]> = {
   abookproj: ["Chọn nơi lưu file dự án", "Đang đóng gói dự án…", "Không gói được dự án"],
 };
 
+/** Người dùng bấm Huỷ khi đang gói dự án (máy chủ trả "cancelled"): cùng lời báo với lúc huỷ tải nhạc nền. */
+class PackCancelled extends Error {}
+
 /** Bản xuất đã xong, hiện ngay trong hộp: nói đã lưu ở đâu và cho mở thư mục (trước đây chỉ có một thông báo thoáng qua). */
 type Finished = { title: string; detail: string; folder: string };
 
@@ -93,6 +97,15 @@ export function ExportDialog({
   const parts = useParts(book.id).data?.parts ?? [];
   // Giữa lúc đóng gói .abook / .abookproj, máy có thể đang TẢI nhạc nền để đóng kèm (vài phút): hỏi để nói bài thứ mấy và cho Huỷ.
   const packing = busy && (kind === "abook" || kind === "abookproj");
+  // Gói cả dự án (.abookproj) là việc nền ở máy chủ (mất cả phút với sách dài): hỏi pha + đã/tổng để hiện thanh tiến độ; đóng hộp hay chuyển trang thì việc vẫn chạy.
+  const [packJob, setPackJob] = useState<PackJob | null>(null);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
   const musicTransfer = useQuery({
     queryKey: ["music-export", book.id],
     enabled: packing,
@@ -108,7 +121,29 @@ export function ExportDialog({
   }, [busy]);
   const cancelPacking = () => {
     setCancelling(true);
-    void api(`/api/books/${book.id}/music-export/cancel`, { method: "POST", body: {} }).catch(() => setCancelling(false));
+    const url = kind === "abookproj" ? `/api/books/${book.id}/projectfile-job/cancel` : `/api/books/${book.id}/music-export/cancel`;
+    void api(url, { method: "POST", body: {} }).catch(() => setCancelling(false));
+  };
+  /** Theo việc gói dự án của cuốn này tới khi xong (hỏi mỗi giây); trả kết quả, hay ném `PackCancelled` / lỗi của máy chủ. Hỏi hụt vài lần liền mới coi là hỏng. */
+  const followPacking = async () => {
+    let misses = 0;
+    while (alive.current) {
+      let job: PackJob;
+      try {
+        job = await api<PackJob>(`/api/books/${book.id}/projectfile-job`);
+        misses = 0;
+      } catch (error) {
+        if (++misses >= 5) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        continue;
+      }
+      if (job.state === "done" && job.result) return job.result;
+      if (job.state === "cancelled") throw new PackCancelled();
+      if (job.state !== "running") throw new Error(job.error ?? "Chưa gói được dự án.");
+      setPackJob(job);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    throw new PackCancelled();
   };
   const missing = book.chapters.missingAudio ?? 0;
   const ready = Math.max(0, book.chapters.completed - missing);
@@ -158,9 +193,10 @@ export function ExportDialog({
     }
     if (!open) setFinished(null);
   }, [open]);
-  const run = async () => {
+  const run = async (attach = false, chosen: Kind = kind) => {
+    const kind = chosen; // "attach": mở hộp lúc máy chủ đang gói dự án - `kind` của hộp chưa kịp đổi theo
     let target = "";
-    if (info?.dialogs) {
+    if (info?.dialogs && !attach) {
       const picked = await pickFolder(SAVING[kind][0], "").catch(() => null);
       if (!picked) return;
       target = picked;
@@ -173,16 +209,21 @@ export function ExportDialog({
     }
     setBusy(true);
     setFinished(null);
+    setPackJob(null);
     try {
       const result =
-        kind === "mp3"
+        kind === "abookproj"
+          ? await (attach ? Promise.resolve() : api(`/api/books/${book.id}/projectfile-job`, { method: "POST", body: { target } })).then(
+              followPacking as () => Promise<{ folder: string; file: string; size: number; missingSources?: string[] } & Partial<SeriesResult>>,
+            )
+          : kind === "mp3"
           ? await api<{ folder: string; files: number } & Partial<SeriesResult>>(`/api/books/${book.id}/export`, {
               method: "POST",
               body: { target, cover: coverArtwork(book.title), series: wholeSeries },
             })
           : await api<{ folder: string; file: string; size: number; missingSources?: string[] } & Partial<SeriesResult>>(
-              `/api/books/${book.id}/${kind === "abook" ? "bookfile" : "projectfile"}`,
-              { method: "POST", body: { target, series: wholeSeries, ...(kind === "abook" && wholeSeries ? { single: layout === "single" } : {}) } },
+              `/api/books/${book.id}/bookfile`,
+              { method: "POST", body: { target, series: wholeSeries, ...(wholeSeries ? { single: layout === "single" } : {}) } },
             );
       const lost = "missingSources" in result ? (result.missingSources?.length ?? 0) : 0;
       const skipped = result.skipped?.length ? ` · chưa có chương nào nên bỏ qua: ${result.skipped.map((part) => `Phần ${part.part}`).join(", ")}` : "";
@@ -223,8 +264,25 @@ export function ExportDialog({
     } catch (error) {
       const pending = loadingToast.current;
       loadingToast.current = null;
-      if (error instanceof ApiError && error.detail.reason === "cancelled") {
-        toast.info("Đã huỷ xuất", { id: pending ?? undefined, description: "Chưa có file sách nào được ghi.", duration: 6000 });
+      if (error instanceof PackCancelled || (error instanceof ApiError && error.detail.reason === "cancelled")) {
+        toast.info("Đã huỷ xuất", { id: pending ?? undefined, description: `Chưa có file ${kind === "abookproj" ? "dự án" : "sách"} nào được ghi.`, duration: 6000 });
+      } else if (kind === "abookproj") {
+        const shown = packError((error as Error).message);
+        toast.error(SAVING[kind][2], {
+          id: pending ?? undefined,
+          duration: 15000,
+          description: (
+            <div className="flex flex-col gap-1">
+              <span>{shown.summary}</span>
+              {shown.detail && (
+                <details className="text-xs">
+                  <summary className="cursor-pointer select-none">Chi tiết</summary>
+                  <p className="mt-1 select-text break-words font-mono">{shown.detail}</p>
+                </details>
+              )}
+            </div>
+          ),
+        });
       } else {
         toast.error(SAVING[kind][2], { id: pending ?? undefined, description: (error as Error).message });
       }
@@ -232,6 +290,24 @@ export function ExportDialog({
       setBusy(false);
     }
   };
+  // Mở hộp (hay trang dự án) khi máy chủ đang gói dự án này: theo tiếp thay vì cho bấm gói lần nữa - tiến độ hiện lại trong hộp.
+  useEffect(() => {
+    if (book.running) return;
+    let current = true;
+    api<PackJob>(`/api/books/${book.id}/projectfile-job`)
+      .then((job) => {
+        if (current && job.state === "running") {
+          setKind("abookproj");
+          void run(true, "abookproj");
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      current = false;
+    };
+    // Chỉ khi vào trang của cuốn này; `run` đổi theo từng lần vẽ nhưng việc theo tiếp chỉ cần một lần.
+  }, [book.id]);
+  const packShown = kind === "abookproj" ? packView(packJob) : null;
   const whole = kind === "abookproj";
   const warnings = (
     whole
@@ -255,9 +331,17 @@ export function ExportDialog({
       description={wholeSeries ? `Các chương nghe được của cả ${parts.length} phần sẽ vào bản xuất.` : `${formatNumber(ready)} chương nghe được sẽ vào bản xuất.`}>
       {busy ? (
         <div className="py-2" role="status">
-          <Progress value={0} indeterminate size="md" label={SAVING[kind][1]} />
+          {packShown && !downloading && packShown.fraction !== null ? (
+            <Progress value={packShown.fraction} size="md" label={packShown.title} />
+          ) : (
+            <Progress value={0} indeterminate size="md" label={SAVING[kind][1]} />
+          )}
           <p className="mt-3 text-sm font-semibold">
-            {cancelling ? "Đang huỷ…" : downloading ? `Đang tải nhạc nền (${downloading.done}/${downloading.total})…` : SAVING[kind][1]}
+            {cancelling
+              ? "Đang huỷ…"
+              : downloading
+                ? `Đang tải nhạc nền (${downloading.done}/${downloading.total})…`
+                : (packShown?.title ?? SAVING[kind][1])}
           </p>
           <p className="mt-1 text-sm text-fg-2 text-pretty">
             {downloading
@@ -268,7 +352,7 @@ export function ExportDialog({
             Sách dài thì có thể mất vài phút. Đóng hộp này cũng được - việc vẫn chạy và báo khi xong.
           </p>
           <div className="mt-5 flex justify-end gap-2">
-            {(downloading || cancelling) && (
+            {(downloading || cancelling || kind === "abookproj") && (
               <Button variant="secondary" disabled={cancelling} onClick={cancelPacking}>
                 Huỷ xuất
               </Button>
