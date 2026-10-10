@@ -17,6 +17,7 @@ import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
 import org.json.JSONArray
 import org.json.JSONObject
+import vn.abook.player.readaloud.ReadAloud
 import java.io.File
 import java.net.DatagramPacket
 import java.net.DatagramSocket
@@ -78,11 +79,13 @@ class LibraryPlugin : Plugin() {
         ShareService.changed = { notifyListeners("shareChanged", JSObject()) }
         Mp3Exports.events = { event -> notifyListeners("mp3Export", JSObject.fromJSONObject(event)) }
         M4bExports.events = { event -> notifyListeners("m4bExport", JSObject.fromJSONObject(event)) }
+        ListenExports.events = { event -> notifyListeners("audiobookExport", JSObject.fromJSONObject(event)) }
         Playback.init(context)
         PhoneCast.init(context)
         TextImports.codec = AndroidCoverCodec
         TextImports.sweep() // thư mục tạm của lần "Thêm sách từ file…" bị bỏ dở lần trước
         io.execute { BookShare.sweep(context.cacheDir) } // file đã gửi qua "Chia sẻ…" lần trước: app nhận đã đọc xong từ lâu
+        io.execute { runCatching { ListenExports.sweep(context) } } // chương tạm của "Xuất sách nói" cho cuốn đã xoá
         // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
         if (prefs.getBoolean(SHARE_KEY, false)) io.execute { runCatching { ShareService.enable(context) } }
     }
@@ -1179,6 +1182,87 @@ class LibraryPlugin : Plugin() {
                 throw error
             }
         }
+    }
+
+    // ---- "Xuất sách nói" của sách Nghe ngay (ListenExport, ListenExportWorker) ------------------------------------------
+
+    private fun readingOf(id: String, voice: String) = ListenExport.Reading(voice, ReadAloud.originNow(id), ReadAloud.readingsOf(id))
+
+    /**
+     * Cho hộp "Xuất sách nói": số chương, số chữ, giờ nghe, ước thời gian máy làm (giọng đã đo tốc độ), số chương đã làm sẵn từ lần trước và chỗ trống cần. Đọc chữ nên chạy ở luồng nền.
+     */
+    @PluginMethod
+    fun audiobookPlan(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        val voice = call.getString("voice") ?: return call.reject("thiếu voice")
+        background(call) {
+            val chapters = ListenExport.chapters(id)
+            val speed = runCatching { ReadAloud.speeds().secondsPerChar(voice) }.getOrNull()
+            val plan = ListenExport.plan(chapters, readingOf(id, voice), ListenExport.workFolder(ListenExports.workRoot(context), id), speed)
+            call.resolve(JSObject.fromJSONObject(plan.toJson()))
+        }
+    }
+
+    /**
+     * Xuất sách chỉ có chữ `bookId` thành MỘT file `.m4b` có mục lục chương, đọc bằng giọng `voice`, chạy nền. Hỏi tên và chỗ lưu bằng hộp thoại "tạo file" của hệ thống (mỗi lần).
+     * `cover`: bìa tự vẽ (data URL PNG) khi sách không có bìa thật. Sách chưa có chương nào đọc được thì từ chối ngay, trước khi hỏi chỗ lưu. Trả {started, run, name, chapters}
+     * - tiến độ và kết quả đến qua sự kiện "audiobookExport" mang `run` - hay {started: false} khi huỷ chọn.
+     */
+    @PluginMethod
+    fun exportAudiobook(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        if (call.getString("voice").isNullOrEmpty()) return call.reject("thiếu voice")
+        background(call) {
+            val book = Store.manifest(id) ?: throw Mp3Export.Refused("Sách này chưa tải về điện thoại")
+            if (ListenExport.chapters(id).isEmpty()) throw Mp3Export.Refused("Sách chưa có chương nào có chữ để đọc")
+            val title = book.optString("title").ifEmpty { id }
+            activity.runOnUiThread { startActivityForResult(call, M4bExports.createIntent(title), "pickedAudiobookFile") }
+        }
+    }
+
+    @ActivityCallback
+    private fun pickedAudiobookFile(call: PluginCall?, result: ActivityResult) {
+        if (call == null) return
+        val file = result.data?.data ?: return call.resolve(JSObject().put("started", false))
+        background(call) {
+            try {
+                val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
+                val voice = call.getString("voice") ?: throw IllegalArgumentException("thiếu voice")
+                val title = Store.manifest(id)?.optString("title").orEmpty().ifEmpty { id }
+                val drawn = drawnCover(call.getString("cover"))
+                M4bExports.remember(context, file)
+                val coverFile = drawn?.let { bytes ->
+                    File(context.cacheDir, "audiobook-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
+                }
+                val run = ListenExports.start(context, id, voice, file, coverFile)
+                call.resolve(JSObject().put("started", true).put("run", run).put("name", M4bExport.fileName(title)))
+            } catch (error: Exception) {
+                M4bExports.discard(context, file) // chưa bắt đầu việc nền: file rỗng vừa tạo không để lại
+                throw error
+            }
+        }
+    }
+
+    /** Dừng lượt xuất sách nói của cuốn `bookId` (file dở bị xoá, phần đã đọc xong giữ để xuất lại làm tiếp). */
+    @PluginMethod
+    fun cancelAudiobookExport(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        ListenExports.cancel(context, id)
+        call.resolve()
+    }
+
+    /** Các lượt xuất sách nói đang chạy, tin cuối của từng lượt: giao diện vừa mở lại (hay tải lại) hiện lại thông báo tiến độ. */
+    @PluginMethod
+    fun audiobookJobs(call: PluginCall) {
+        call.resolve(JSObject().put("jobs", JSONArray(ListenExports.running())))
+    }
+
+    /** Mở file vừa xuất bằng app nghe sách nói của máy (nút "Mở" ở thông báo xong). Chỉ địa chỉ `content:` của nơi lưu người dùng chọn, không phải của chính app. */
+    @PluginMethod
+    fun openFile(call: PluginCall) {
+        val uri = call.getString("uri")?.let(Uri::parse) ?: return call.reject("thiếu uri")
+        val allowed = uri.scheme == "content" && uri.authority != "${context.packageName}.fileprovider"
+        call.resolve(JSObject().put("opened", allowed && ListenExports.open(context, uri)))
     }
 
     /**

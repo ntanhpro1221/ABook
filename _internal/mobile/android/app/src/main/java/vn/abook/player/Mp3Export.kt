@@ -144,8 +144,7 @@ object Mp3Export {
             val file = runCatching { Store.file(id, chapter.optString("file")) }.getOrNull()?.takeIf { it.isFile } ?: return@mapIndexedNotNull null
             Chapter(index + 1, chapter.optString("fullTitle"), chapter.optDouble("duration", 0.0).takeIf { !it.isNaN() } ?: 0.0, file)
         }
-        val real = Store.coverFile(id)?.let { runCatching { Id3Tag.Cover.of(it.readBytes()) }.getOrNull() }
-        val cover = real ?: drawnCover?.let(Id3Tag.Cover::of)?.takeIf { it.mime == "image/png" }
+        val (cover, coverName) = coverOf(id, drawnCover)
         return Plan(
             title = book.optString("title").ifEmpty { id },
             narrator = book.optString("narrator"),
@@ -153,9 +152,14 @@ object Mp3Export {
             numbered = listenable.size,
             chaptersTotal = book.optInt("chaptersTotal", chapters?.length() ?: 0),
             cover = cover,
-            // Như máy tính: bìa thật chép thành covers.COVER_FILE, bìa tự vẽ thành cover.png.
-            coverName = if (real != null) "cover.jpg" else "cover.png",
+            coverName = coverName,
         )
+    }
+
+    /** Bìa của bản xuất và tên file bìa: như máy tính, bìa thật chép thành covers.COVER_FILE ("cover.jpg"), bìa giao diện tự vẽ (chỉ khi sách không có bìa thật) thành "cover.png". */
+    fun coverOf(id: String, drawnCover: ByteArray? = null): Pair<Id3Tag.Cover?, String> {
+        val real = Store.coverFile(id)?.let { runCatching { Id3Tag.Cover.of(it.readBytes()) }.getOrNull() }
+        return (real ?: drawnCover?.let(Id3Tag.Cover::of)?.takeIf { it.mime == "image/png" }) to if (real != null) "cover.jpg" else "cover.png"
     }
 
     /**

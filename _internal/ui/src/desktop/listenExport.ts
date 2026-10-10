@@ -70,13 +70,13 @@ export function wholeBookNotice(voice: Pick<ReadAloudVoice, "provider" | "online
 }
 
 /** Dòng nói sách dài bao nhiêu và máy cần bao lâu: "12 chương · khoảng 8 giờ nghe · máy cần khoảng 2 giờ 10 phút." */
-export function planText(plan: AudiobookPlan): string {
+export function planText(plan: Pick<AudiobookPlan, "chapters" | "audioSeconds" | "secondsEstimate">): string {
   const machine = plan.secondsEstimate != null ? ` · máy cần ${spokenDuration(plan.secondsEstimate)}` : "";
   return `${plan.chapters} chương · ${spokenDuration(plan.audioSeconds)} nghe${machine}.`;
 }
 
 /** Nói điều gì sẽ xảy ra với phần đã làm: "Đã có sẵn 3/12 chương từ lần trước - làm tiếp từ đó." */
-export function resumeText(plan: AudiobookPlan): string {
+export function resumeText(plan: Pick<AudiobookPlan, "chapters" | "readyChapters">): string {
   if (!plan.readyChapters) return "";
   if (plan.readyChapters >= plan.chapters) return "Mọi chương đã ghép sẵn từ lần trước - chỉ còn ghép thành file.";
   return `Đã có sẵn ${plan.readyChapters}/${plan.chapters} chương từ lần trước - làm tiếp từ đó.`;
