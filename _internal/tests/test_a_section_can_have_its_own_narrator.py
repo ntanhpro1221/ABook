@@ -281,7 +281,8 @@ def test_a_chapter_already_analysed_says_the_change_waits_for_a_redo(tmp_path: P
     db.commit()
     db.close()
     card = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
-    assert card["narratorSection"]["appliesNote"] == "Chương này đã phân tích xong - đổi sẽ áp khi làm lại sách."
+    assert card["narratorSection"]["appliesNote"] == ("Chương này đã phân tích xong - đổi sẽ áp khi làm lại phân tích từ đầu"
+                                                      " (tạo lại cuốn từ file truyện).")
 
 
 def test_a_book_without_a_narrator_gets_no_card_and_a_stale_range_is_refused(tmp_path: Path) -> None:

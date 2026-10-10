@@ -17,10 +17,8 @@ describe("withReading", () => {
     const next = withReading({ items: [{ ...item, requested: "Lu-si-en" }, other], unseen: 0 }, item, "Lu-xi-ên");
     expect(next.items[0]).toMatchObject({ requested: null, byListener: true });
   });
-  it("adds a name that was not in the list yet", () => {
+  it("a name not in the list yet waits for the server, so a refused reading keeps its box open (soát UX a23)", () => {
     const fresh = { surface: "Hailkes", spoken: "", byListener: false, lines: 0, requested: null, example: null };
-    const next = withReading(data, fresh, "Hên-khơ");
-    expect(next.items.map((entry) => entry.surface)).toEqual(["Lucien", "Heidi", "Hailkes"]);
-    expect(next.items[2]).toMatchObject({ requested: "Hên-khơ" });
+    expect(withReading(data, fresh, "Hên-khơ")).toBe(data);
   });
 });

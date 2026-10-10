@@ -143,6 +143,13 @@ export function useWork(bookId: string, enabled = true) {
   });
 }
 
+/** Việc còn chờ người duyệt mà quyết thì có tác dụng (như webui/work_items.open_count): không tính việc đã quyết (chờ áp dụng), hay
+ *  việc chỉ áp khi làm lại phân tích - thẻ người kể của đoạn đã phân tích xong (soát UX a23: lúc chờ duyệt "Việc cần duyệt 6" toàn
+ *  là những thẻ ấy). */
+export function isOpenWork(item: Pick<WorkItem, "requested" | "redoOnly">): boolean {
+  return !item.requested && !item.redoOnly;
+}
+
 /** Số việc cần làm cho nhãn của tab. `fromList`: danh sách đầy đủ đang được tải/mở (tab Việc cần duyệt, màn Duyệt trước khi thu) thì đếm
  *  từ chính nó; không thì chỉ hỏi con số (`?count=1`) - trang dự án 400 chương từng tải 9,5 MB danh sách chỉ để hiện một con số, và tải
  *  lại sau MỖI quyết định. Khoá nằm dưới ["work", sách] nên mọi chỗ làm mới danh sách cũng làm mới con số. */
@@ -157,7 +164,7 @@ export function useWorkCount(bookId: string, fromList = false) {
     retryOnMount: false,
   });
   // Việc đã quyết (đang chờ áp dụng) không còn là việc cần làm - soát UX 29-09: số không giảm sau khi quyết.
-  if (fromList && list) return list.items.filter((item) => !item.requested).length;
+  if (fromList && list) return list.items.filter(isOpenWork).length;
   return counted?.count ?? 0;
 }
 
@@ -608,7 +615,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          {item.redoOnly ? "Đã ghi - áp khi làm lại sách." : `Đã ghi: ${item.requested}.`}
+          {item.redoOnly ? "Đã ghi - áp khi làm lại phân tích từ đầu." : `Đã ghi: ${item.requested}.`}
         </p>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Người kể của đoạn">
@@ -1045,14 +1052,14 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
   useEffect(() => {
     if (focused.current || !focus || !data) return;
     focused.current = true;
-    const index = data.items.filter((item) => !item.requested && (kind === "all" || item.kind === kind)).findIndex((item) => item.key === focus);
+    const index = data.items.filter((item) => isOpenWork(item) && (kind === "all" || item.kind === kind)).findIndex((item) => item.key === focus);
     if (index >= PAGE) setShown(Math.ceil((index + 1) / PAGE) * PAGE);
     window.setTimeout(() => document.getElementById(`work-${focus}`)?.scrollIntoView({ block: "center" }), 0);
   }, [focus, data, kind]);
   // Quyết xong việc cuối của loại đang lọc: về “Tất cả” cả trong địa chỉ trang, không thì tải lại (hay quay lại) vẫn lọc loại đã hết thẻ (soát UX a11).
   useEffect(() => {
     if (!data || kind === "all") return;
-    if (!data.items.some((item) => !item.requested && item.kind === kind && !inPrecast?.has(item.key))) setKind("all");
+    if (!data.items.some((item) => isOpenWork(item) && item.kind === kind && !inPrecast?.has(item.key))) setKind("all");
     // setKind chỉ ghi state + gọi onKind - không cần gắn lại.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, kind, inPrecast]);
@@ -1065,7 +1072,9 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
     );
   }
   // Việc đã quyết (chờ áp dụng) xuống mục thu gọn cuối trang và không tính vào số đếm.
-  const undecided = data.items.filter((item) => !item.requested);
+  const undecided = data.items.filter(isOpenWork);
+  // Chưa quyết mà chỉ áp khi làm lại phân tích: nhóm riêng cuối trang, không đếm, không đứng chung với việc áp ngay.
+  const later = data.items.filter((item) => !item.requested && item.redoOnly);
   const open = inPrecast ? undecided.filter((item) => !inPrecast.has(item.key)) : undecided;
   const atReview = undecided.length - open.length;
   const answered = data.items.filter((item) => item.requested);
@@ -1130,7 +1139,9 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
       )}
       {!open.length && atReview === 0 && (
         <p className="mt-4 text-sm text-fg-2">
-          Mọi việc đã có quyết định{decided.length > 0 ? ` - ${hint}` : ""}.
+          {later.length > 0
+            ? "Không còn việc nào sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu."
+            : `Mọi việc đã có quyết định${decided.length > 0 ? ` - ${hint}` : ""}.`}
         </p>
       )}
       {decided.length > 0 && (
@@ -1145,9 +1156,23 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
           </ol>
         </details>
       )}
+      {later.length > 0 && (
+        <details className="mt-4 rounded-xl border border-line px-4 py-3">
+          <summary className="cursor-pointer text-sm font-medium text-fg-2">Chỉ áp khi làm lại phân tích · {later.length}</summary>
+          <p className="mt-2 max-w-3xl text-pretty text-xs text-fg-2">
+            Những đoạn này đã phân tích xong: chọn bây giờ thì máy ghi lại, nhưng chỉ có tác dụng khi làm lại phân tích từ đầu (tạo lại
+            cuốn từ file truyện). Không cần quyết để sách chạy tiếp.
+          </p>
+          <ol className="mt-3 space-y-3">
+            {later.map((item) => (
+              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} />
+            ))}
+          </ol>
+        </details>
+      )}
       {redo.length > 0 && (
         <details className="mt-4 rounded-xl border border-line px-4 py-3">
-          <summary className="cursor-pointer text-sm font-medium text-fg-2">Đã ghi, áp khi làm lại sách · {redo.length}</summary>
+          <summary className="cursor-pointer text-sm font-medium text-fg-2">Đã ghi, áp khi làm lại phân tích · {redo.length}</summary>
           <ol className="mt-3 space-y-3">
             {redo.map((item) => (
               <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} />

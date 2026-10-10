@@ -187,6 +187,13 @@ class Reviews:
         os.replace(temporary, self.path)
 
 
+def awaiting(item: dict[str, Any], verdicts: dict[str, Any]) -> bool:
+    """Câu còn chờ người nghe ở "Cần nghe lại": đáng lo (không phải tên khớp cao), chưa chấm, chưa sửa chữ đem đọc. Hộp việc
+    (thẻ "Bản thu lỗi", work_items.py) đếm đúng những câu này - soát UX a23: chấm hết mà thẻ vẫn "Chưa nghe"."""
+    return (item["kind"] != "name" and not (verdicts.get(item["stableId"]) or {}).get("verdict")
+            and item["pendingSpoken"] is None)
+
+
 def review_view(project_root: Path, verdicts: dict[str, Any], *, include_minor: bool) -> dict[str, Any]:
     items = review_items(project_root)
     counts = {kind: 0 for kind in KINDS}
@@ -194,7 +201,7 @@ def review_view(project_root: Path, verdicts: dict[str, Any], *, include_minor: 
     for item in items:
         counts[item["kind"]] += 1
         item["verdict"] = (verdicts.get(item["stableId"]) or {}).get("verdict")
-        if item["kind"] != "name" and not item["verdict"] and item["pendingSpoken"] is None:
+        if awaiting(item, verdicts):
             pending += 1
     redo = sorted({int(value["chapterId"]) for value in verdicts.values() if value.get("verdict") == "redo"})
     shown = items if include_minor else [item for item in items if item["kind"] != "name" or item["verdict"]]

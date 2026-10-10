@@ -7,6 +7,7 @@ import { formatNumber } from "@/shared/format";
 import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "./api";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied, WAITING_STUDIO } from "./decisions";
+import { voiceToUse } from "./MergePeople";
 
 // Tab Nhân vật: "Đổi tên" và "Đổi giới tính" của một người.
 // - Đổi tên chỉ là cái tên trên màn hình (POST /characters/rename -> names.json): không đổi giọng hay audio, có hiệu lực ngay.
@@ -155,6 +156,13 @@ export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved
     >
       <Segmented<Gender> value={(choice ?? "") as Gender} onChange={setChoice} options={GENDERS} label="Giới tính" />
       {waiting && <p className="mt-3 text-sm text-pretty">Giọng đọc của {name} chưa đổi ngay - Studio sẽ làm khi bạn mở file này ở máy có Studio.</p>}
+      {/* Chưa có câu nào được thu: vẫn nói giọng sẽ đổi - đổi giới là đổi giọng (soát UX a23: hộp không nói). */}
+      {!waiting && recorded === 0 && person && choice && choice !== current && (
+        <p className="mt-3 text-sm text-pretty">
+          Nếu giọng {voiceToUse(person) ? `${voiceToUse(person)} ` : ""}đang đọc {name} không hợp giới mới, máy chọn một giọng{" "}
+          {choice === "female" ? "nữ" : "nam"} khác cho người ấy. {when}
+        </p>
+      )}
       {recorded > 0 && (
         <p className="mt-3 text-sm text-pretty">
           {name} đã có {formatNumber(recorded)} câu được thu. Khi bấm “Áp dụng thay đổi”, nếu giọng đang đọc không hợp giới mới,

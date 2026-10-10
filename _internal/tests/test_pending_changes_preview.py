@@ -144,3 +144,18 @@ def test_a_whole_chapter_retake_is_one_change_and_drops_as_one(tmp_path: Path) -
     finally:
         server.stop()
         app.close()
+
+
+def test_keep_as_is_and_let_the_machine_decide_are_not_changes(tmp_path: Path) -> None:
+    """Soát UX a23 B8: "Giữ nguyên" (thẻ chung giọng) và "Để máy quyết" (thẻ giới) ghi một mục giọng rỗng - không đổi gì
+    trong sách. Nút "Áp dụng 8 thay đổi" và hộp "Giọng của Heidi: giọng khác · 7 câu thu lại" từng đếm chúng."""
+    project = _project(tmp_path)
+    since = time.time() - 1
+    listener_overrides.request_voice(project, "LUCIEN", now=time.time())  # giữ nguyên / để máy quyết
+    assert store.pending_changes(project, since) == 0
+    assert store.pending_details(project, since)["items"] == []
+
+    listener_overrides.request_voice(project, "LUCIEN", gender="female", now=time.time())
+    details = store.pending_details(project, since)
+    assert [item["label"] for item in details["items"]] == ["Giọng của Lucien: giọng nữ"]
+    assert store.pending_changes(project, since) == 1

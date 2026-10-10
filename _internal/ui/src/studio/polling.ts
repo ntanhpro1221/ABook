@@ -8,6 +8,24 @@ import { ApiError } from "./api";
 /** Lỗi "không còn nữa" (404): hỏi tiếp cũng vô ích. */
 export const isGone = (error: unknown): boolean => error instanceof ApiError && error.status === 404;
 
+/** Không tới được máy chủ (ABook tắt, mạng rớt): `fetch` ném TypeError - "Failed to fetch" / "Load failed" tiếng Anh, không mã lỗi. */
+export const isOffline = (error: unknown): boolean => error instanceof TypeError;
+
+/** Lời lỗi cho người nghe, tiếng Việt: mất kết nối nói thế (không phải "Failed to fetch"); lỗi máy chủ thì lời máy chủ. */
+export function failureText(error: unknown): string {
+  if (isOffline(error)) return "Mất kết nối tới ABook.";
+  return (error as Error | null)?.message || "Sách có thể đã bị chuyển hoặc xoá.";
+}
+
+/** Trang dự án khi lần hỏi gần nhất hỏng (soát UX a23 B13: một nhịp hỏng ~15 giây biến cả trang thành "Không mở được sách /
+ *  Failed to fetch"): sách đã mất -> "gone"; đã có bản cũ -> "stale" (giữ trang, dải báo + Thử lại); chưa từng có -> "error". */
+export function bookFailure(data: unknown, error: unknown): "gone" | "stale" | "error" | null {
+  if (isGone(error)) return "gone";
+  if (data && error) return "stale";
+  if (!data) return "error";
+  return null;
+}
+
 /** Trần của nhịp lùi: lỗi kéo dài thì cứ hai phút hỏi một lần, đủ để trang tự khỏi khi máy chủ sống lại. */
 const BACKOFF_CAP_MS = 120_000;
 
@@ -35,7 +53,7 @@ export function useSideError(bookId: string): string {
     for (const query of cache.findAll()) {
       const [kind, id] = query.queryKey;
       if (id === bookId && typeof kind === "string" && SIDE_QUERIES.has(kind) && query.state.status === "error" && !isGone(query.state.error)) {
-        return (query.state.error as Error | null)?.message ?? "";
+        return failureText(query.state.error);
       }
     }
     return "";

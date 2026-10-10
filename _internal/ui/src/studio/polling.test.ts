@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "./api";
-import { isGone, pollDelay, retryUnlessGone } from "./polling";
+import { bookFailure, failureText, isGone, pollDelay, retryUnlessGone } from "./polling";
 
 describe("nhịp hỏi máy chủ khi có lỗi", () => {
   it("sách đã mất (404) thì thôi hỏi, không thử lại", () => {
@@ -24,5 +24,20 @@ describe("nhịp hỏi máy chủ khi có lỗi", () => {
     expect(retryUnlessGone(0, broken)).toBe(true);
     expect(retryUnlessGone(1, broken)).toBe(false);
     expect(retryUnlessGone(0, new Error("mất mạng"))).toBe(true);
+  });
+});
+
+// Soát UX a23 B13: một nhịp hỏi hỏng (~15 giây máy chủ không trả lời) biến cả trang dự án thành "Không mở được sách / Failed to fetch".
+describe("trang dự án khi một lần hỏi hỏng", () => {
+  const offline = new TypeError("Failed to fetch");
+  it("đã có bản cũ thì giữ trang (dải báo), chưa từng có mới là màn lỗi", () => {
+    expect(bookFailure({ book: {} }, offline)).toBe("stale");
+    expect(bookFailure(undefined, offline)).toBe("error");
+    expect(bookFailure({ book: {} }, new ApiError(404, "Không có sách này"))).toBe("gone");
+    expect(bookFailure({ book: {} }, null)).toBeNull();
+  });
+  it("lời lỗi tiếng Việt, không phải chữ của trình duyệt", () => {
+    expect(failureText(offline)).toBe("Mất kết nối tới ABook.");
+    expect(failureText(new ApiError(500, "Sổ dự án bị khoá"))).toBe("Sổ dự án bị khoá");
   });
 });

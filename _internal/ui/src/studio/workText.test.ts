@@ -23,6 +23,10 @@ describe("cái giá của đổi giọng", () => {
     expect(rerecordSentence("thu lại 22 câu ở các chương chung")).toBe("Sẽ thu lại 22 câu ở các chương chung bằng giọng mới.");
     expect(rerecordSentence(undefined)).toContain("thu lại");
   });
+  it("chưa thu câu nào thì nói không phải thu lại (soát UX a23)", () => {
+    expect(rerecordSentence("đổi giọng, chưa thu nên không phải thu lại")).toBe("Chưa thu câu nào của người ấy nên không phải thu lại.");
+    expect(rerecordSentence("chưa thu nên không phải thu lại")).not.toMatch(/sẽ/i);
+  });
 });
 
 describe("lời mở đầu hộp việc", () => {

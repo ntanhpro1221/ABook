@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Làm sách trong Studio (máy tính)
+
+- Lời báo nói đúng cái giá: sách chưa thu câu nào thì đổi giọng, giới tính hay cách đọc tên không còn dọa "thu lại N câu"; hộp Dừng / Tiếp tục giữa lúc phân tích nói thẳng có thể ra một cuốn khác và mời "Làm lại phân tích từ đầu"; "Giữ nguyên" hay "Để máy quyết" không còn đếm là thay đổi chờ áp dụng; hộp Gộp và hộp đổi giới tính nói giọng sẽ dùng, người đã gộp có dấu "Chờ áp dụng: gộp vào …".
+- "Việc cần duyệt" gọn hơn: số trên tab chỉ đếm việc quyết được ngay (thẻ chỉ áp khi làm lại phân tích nằm nhóm riêng cuối trang), thẻ thu âm lỗi bỏ câu đã chấm ở tab Nghe lại, thẻ giọng chung tự xong khi đã chọn giọng mới, thẻ ngoặc 『』 có "Đúng rồi, giữ nguyên"; vai phụ không tên không còn hiện "Unknown".
+- Mất kết nối tới ABook thì trang dự án vẫn giữ và báo "đang thử lại" thay vì trang lỗi tiếng Anh; sửa người nói hay cách đọc tên mà máy chủ từ chối thì màn hình trở lại đúng như trước; đóng bảng cách đọc chưa lưu hay Ctrl+Z khi không còn gì để hoàn tác đều có lời báo.
+- Nhạc nền chỉ tải khi cần: tắt nhạc không tải gì, "Đổi bài" chỉ tải bài mới, tab Nhạc nền báo "Đang tải sẵn nhạc nền: x MB / y MB" và có nút "Huỷ tải"; bài trên 40 MB (bản dài 30-50 phút) máy chọn bài khác thay vì tải.
+
 ## [0.4.46] - 2026-10-11
 
 ### Thêm sách từ file (máy tính và điện thoại)

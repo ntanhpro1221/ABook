@@ -16,6 +16,8 @@ export function midSentence(label: string | null | undefined): string {
 /** Cái giá của một lựa chọn đổi giọng, nói theo MỘT cách ("thu lại N câu") ở thẻ lẫn thông báo: ghi chú của nút ("đổi giọng, thu lại 12
  *  câu" / "thu lại 22 câu ở các chương chung") thành câu báo; ghi chú không nói số thì câu chung. */
 export function rerecordSentence(note?: string): string {
+  // Chưa thu câu nào của người ấy (work_items.NOT_RECORDED): không nói "sẽ được thu lại" (soát UX a23).
+  if (note?.includes("chưa thu")) return "Chưa thu câu nào của người ấy nên không phải thu lại.";
   const cost = note?.match(/thu lại \d+ câu[^,]*/)?.[0];
   return cost ? `Sẽ ${cost} bằng giọng mới.` : "Câu đã thu của người ấy sẽ được thu lại bằng giọng mới.";
 }

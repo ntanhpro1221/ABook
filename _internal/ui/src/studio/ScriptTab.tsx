@@ -12,7 +12,7 @@ import { useMediaQuery } from "@/shared/media";
 import { Button, EmptyState, IconButton, Kbd, Segmented, Sheet, Skeleton } from "@/shared/ui";
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
-import { UNDO_MS, undoAction, usePendingNote, useWhenApplied } from "./decisions";
+import { UNDO_MS, optimistic, undoAction, usePendingNote, useWhenApplied } from "./decisions";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
 // đổi người nói của bất kỳ câu thoại hay nội tâm nào. Hộp "Việc cần duyệt" chỉ đưa ra chỗ máy nghi; ở đây người nghe duyệt
@@ -177,20 +177,21 @@ function chapterLabel(chapter: ChapterEntry, compact = false): string {
 }
 
 interface UndoStack {
-  stack: { current: (() => void)[] };
-  push: (undo: () => void) => void;
+  stack: { current: (() => boolean)[] };
+  push: (undo: () => boolean) => void;
 }
 
-/** Ctrl+Z hoàn tác lần ghi gần nhất (soát UX a6 01-10): mọi lần ghi người nói của tab - từng câu hay cả chương - đẩy vào đây. */
+/** Ctrl+Z hoàn tác lần ghi gần nhất (soát UX a6 01-10): mọi lần ghi người nói của tab - từng câu hay cả chương - đẩy vào đây.
+ *  Mỗi mục trả `false` khi lần ấy đã được hoàn tác (bằng nút trên thông báo). */
 function useUndoStack(): UndoStack {
-  const stack = useRef<(() => void)[]>([]);
-  const push = useCallback((undo: () => void) => {
+  const stack = useRef<(() => boolean)[]>([]);
+  const push = useCallback((undo: () => boolean) => {
     stack.current = [...stack.current.slice(-19), undo];
   }, []);
   return { stack, push };
 }
 
-function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => void) => void) {
+function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => boolean) => void) {
   const client = useQueryClient();
   const when = useWhenApplied(bookId);
   return useMutation({
@@ -199,17 +200,15 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => v
         method: "POST",
         body: { lines: lines.map((line) => ({ stableId: line.stableId, textSha256: line.textSha256 })), speaker: value, newGender: newGender ?? "" },
       }),
-    // Hiện ngay trên câu; bản thật về khi chương tải lại.
+    // Hiện ngay trên câu; bản thật về khi chương tải lại. Không ghi được thì câu trở lại như trước (onError).
     onMutate: ({ lines, value, label }) => {
       const ids = new Set(lines.map((line) => line.stableId));
-      client.setQueryData<ChapterScript>(["casting", bookId, chapterId], (data) =>
-        data && {
-          ...data,
-          lines: data.lines.map((item) =>
-            ids.has(item.stableId) ? { ...item, wish: { value, label, state: value === item.current ? "applied" : "pending" } } : item,
-          ),
-        },
-      );
+      return optimistic<ChapterScript>(client, ["casting", bookId, chapterId], (data) => ({
+        ...data,
+        lines: data.lines.map((item) =>
+          ids.has(item.stableId) ? { ...item, wish: { value, label, state: value === item.current ? "applied" : "pending" } } : item,
+        ),
+      }));
     },
     onSuccess: ({ requestedAt }, { lines, value, label }) => {
       const line = lines[0];
@@ -229,9 +228,10 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => v
       );
       let used = false;
       const run = () => {
-        if (used) return;
+        if (used) return false;
         used = true;
         action.onClick();
+        return true;
       };
       onUndoable(run);
       const undo = { action: { label: action.label, onClick: run }, duration: UNDO_MS };
@@ -243,11 +243,17 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => v
         return;
       }
       toast.success(lines.length > 1 ? `Đã ghi: ${lines.length} câu của ${label}` : `Đã ghi: câu này của ${label}`, {
-        description: `Câu đã thu sẽ được thu lại bằng giọng của người ấy. ${when}`,
+        // Chỉ câu đã thu mới phải thu lại - sách chưa thu thì không hứa điều ấy (soát UX a23).
+        description: `${
+          lines.some((item) => item.hasAudio) ? "Câu đã thu sẽ được thu lại bằng giọng của người ấy." : "Câu chưa thu nên không phải thu lại."
+        } ${when}`,
         ...undo,
       });
     },
-    onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
+    onError: (error: Error, _variables, context) => {
+      context?.restore();
+      toast.error("Chưa ghi được người nói", { description: error.message });
+    },
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ["casting", bookId] });
       void client.invalidateQueries({ queryKey: ["work", bookId] });
@@ -257,7 +263,7 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => v
 
 // "Chương này đúng": người nghe đã đọc hết chương - ghi nhận người nói của mọi câu chưa ai quyết, trừ câu máy còn nghi.
 // Mỗi xác nhận là một nhãn đúng cho vòng học (scripts/model_eval/listener_labels.py); dây chuyền áp thì không đổi gì.
-function useConfirmChapter(bookId: string, onUndoable: (undo: () => void) => void) {
+function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => void) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (lines: Line[]) => {
@@ -280,9 +286,10 @@ function useConfirmChapter(bookId: string, onUndoable: (undo: () => void) => voi
       const action = undoAction(client, bookId, "speaker", made, `${count} câu trở lại chờ duyệt.`);
       let used = false;
       const run = () => {
-        if (used) return;
+        if (used) return false;
         used = true;
         action.onClick();
+        return true;
       };
       onUndoable(run);
       toast.success(`Đã xác nhận ${count} câu là đúng`, {
@@ -308,30 +315,32 @@ function useLineFix(bookId: string, chapterId: number) {
         method: "POST",
         body: { stableId: line.stableId, textSha256: line.textSha256, ...change },
       }),
-    onMutate: ({ line, change }) => {
-      client.setQueryData<ChapterScript>(["casting", bookId, chapterId], (data) =>
-        data && {
-          ...data,
-          lines: data.lines.map((item) =>
-            item.stableId === line.stableId
-              ? {
-                  ...item,
-                  lineWish: {
-                    kind: change.kind ?? "",
-                    emotion: change.emotion ?? "",
-                    intensity: change.intensity ?? null,
-                    ...(change.spoken !== undefined ? { spoken: change.spoken } : {}),
-                    state: "pending",
-                  },
-                }
-              : item,
-          ),
-        },
-      );
+    onMutate: ({ line, change }) =>
+      optimistic<ChapterScript>(client, ["casting", bookId, chapterId], (data) => ({
+        ...data,
+        lines: data.lines.map((item) =>
+          item.stableId === line.stableId
+            ? {
+                ...item,
+                lineWish: {
+                  kind: change.kind ?? "",
+                  emotion: change.emotion ?? "",
+                  intensity: change.intensity ?? null,
+                  ...(change.spoken !== undefined ? { spoken: change.spoken } : {}),
+                  state: "pending",
+                },
+              }
+            : item,
+        ),
+      })),
+    onSuccess: (_data, { line }) =>
+      toast.success("Đã ghi cách đọc câu này", {
+        description: `${line.hasAudio ? "Câu đã thu sẽ được thu lại." : "Câu chưa thu nên không phải thu lại."} ${when}`,
+      }),
+    onError: (error: Error, _variables, context) => {
+      context?.restore();
+      toast.error("Chưa ghi được", { description: error.message });
     },
-    onSuccess: () =>
-      toast.success("Đã ghi cách đọc câu này", { description: `Câu đã thu sẽ được thu lại. ${when}` }),
-    onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ["casting", bookId] });
       void client.invalidateQueries({ queryKey: ["work", bookId] });
@@ -350,6 +359,7 @@ export function DeliveryMenu({
   onSave,
   wide = false,
   noWorkshop = false,
+  dirty,
 }: {
   bookId: string;
   line: Line;
@@ -357,6 +367,8 @@ export function DeliveryMenu({
   onSave: (change: Delivery) => void;
   wide?: boolean;
   noWorkshop?: boolean;
+  /** Bảng còn lựa chọn chưa lưu không - chỗ mở bảng báo khi người nghe đóng (Esc, bấm ra ngoài) mà chưa lưu. */
+  dirty?: { current: boolean };
 }) {
   const waiting = line.lineWish?.state === "pending" ? line.lineWish : null;
   const [kind, setKind] = useState(waiting?.kind || line.kind);
@@ -380,6 +392,16 @@ export function DeliveryMenu({
     } else change.spoken = cleaned === line.text.trim() ? "" : cleaned;
   }
   const ready = Object.keys(change).length > 0 && (!needsSpeaker || Boolean(speaker));
+  // Khác lúc mở bảng (kể cả lựa chọn đang chờ áp đã điền sẵn) = còn thứ chưa lưu.
+  const unsaved =
+    kind !== (waiting?.kind || line.kind) ||
+    emotion !== (waiting?.emotion || line.emotion || "neutral") ||
+    level !== (waiting?.intensity ?? line.intensity ?? 0) ||
+    Boolean(speaker) ||
+    words !== (waiting?.spoken || reading);
+  useEffect(() => {
+    if (dirty) dirty.current = unsaved;
+  }, [dirty, unsaved]);
   return (
     <div className={cn("space-y-3 p-1.5", wide ? "w-full" : "w-[min(88vw,340px)]")} data-delivery-menu>
       {/* Mục tên nằm cuối bảng, dưới nếp cuộn - chỉ lối xuống đó ngay đầu bảng (soát UX 29-09). */}
@@ -511,7 +533,16 @@ function DeliveryChip({
   active: boolean;
 }) {
   const phone = useMediaQuery("(max-width: 639px)");
+  const dirty = useRef(false);
   if (line.emotion === null) return null;
+  // Esc / bấm ra ngoài khi còn lựa chọn chưa lưu: bảng đóng và lựa chọn mất - nói ra thay vì lặng lẽ (soát UX a23).
+  const dismiss = (next: boolean) => {
+    if (!next && dirty.current) {
+      toast("Chưa lưu cách đọc của câu này", { description: "Lựa chọn vừa rồi đã bỏ. Mở lại và bấm “Lưu cho câu này” để giữ." });
+    }
+    dirty.current = false;
+    onOpenChange(next);
+  };
   const waiting = line.lineWish?.state === "pending" ? line.lineWish : null;
   const text = waiting
     ? deliveryText(waiting.emotion || line.emotion, waiting.intensity ?? line.intensity)
@@ -544,14 +575,14 @@ function DeliveryChip({
   // Điện thoại: tấm trượt từ đáy, rộng hết màn - bảng nổi neo vào nút 24 px bị ép sát mép, cuộn trong khung thấp.
   if (phone) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange} title="Cách đọc câu này" trigger={trigger} onEscapeKeyDown={keepOpenForNameEditor}>
+      <Sheet open={open} onOpenChange={dismiss} title="Cách đọc câu này" trigger={trigger} onEscapeKeyDown={keepOpenForNameEditor}>
         <LineQuote line={line} />
-        <DeliveryMenu bookId={bookId} line={line} script={script} onSave={onSave} wide />
+        <DeliveryMenu bookId={bookId} line={line} script={script} onSave={onSave} wide dirty={dirty} />
       </Sheet>
     );
   }
   return (
-    <Popover.Root open={open} onOpenChange={onOpenChange}>
+    <Popover.Root open={open} onOpenChange={dismiss}>
       <Popover.Trigger asChild>{trigger}</Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
@@ -563,7 +594,7 @@ function DeliveryChip({
           // Bảng cao hơn màn nhỏ (655 px trong khung 486 px: đỉnh ra ngoài màn, không với tới) - cuộn trong phần còn trống.
           className="z-50 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float"
         >
-          <DeliveryMenu bookId={bookId} line={line} script={script} onSave={onSave} />
+          <DeliveryMenu bookId={bookId} line={line} script={script} onSave={onSave} dirty={dirty} />
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
@@ -953,10 +984,11 @@ function ChapterScriptView({
       if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.key.toLowerCase() !== "z") return;
       // Đang gõ trong ô chữ thì Ctrl+Z là của ô ấy.
       if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable=true]")) return;
-      const undo = undos.current.pop();
-      if (!undo) return;
       event.preventDefault();
-      undo();
+      // Lần đã hoàn tác bằng nút trên thông báo thì bỏ qua, lấy lần trước nữa; hết thì nói ra thay vì im lặng (soát UX a23).
+      let undone = false;
+      while (!undone && undos.current.length) undone = undos.current.pop()!();
+      if (!undone) toast("Không còn gì để hoàn tác", { description: "Ctrl+Z hoàn tác các lần gán người nói vừa làm ở tab này." });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1125,7 +1157,7 @@ function ChapterScriptView({
   );
 }
 
-function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: string; script: ChapterScript; onNext: () => void; onUndoable: (undo: () => void) => void }) {
+function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: string; script: ChapterScript; onNext: () => void; onUndoable: (undo: () => boolean) => void }) {
   const confirm = useConfirmChapter(bookId, onUndoable);
   const open = script.lines.filter((line) => line.editable && !line.wish && !line.hint);
   const doubtful = script.lines.filter((line) => line.editable && !line.wish && line.hint).length;
