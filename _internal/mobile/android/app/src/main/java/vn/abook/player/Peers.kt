@@ -91,6 +91,7 @@ object Peers {
     /** Ghép bằng mã 6 số đang hiện trên thiết bị kia (điện thoại: màn Tải sách; máy tính: Cài đặt). Ghép lại cùng địa chỉ
      *  thì thay chỗ cũ - sách đã tải và chỗ nghe giữ nguyên. */
     fun pair(context: Context, host: String, port: Int, code: String): JSONObject {
+        SyncLink.refuseSelf(host, port)
         val device = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
         val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
         val (reply, fingerprint) = SyncLink.pair(context, "https://$host:$port", body)

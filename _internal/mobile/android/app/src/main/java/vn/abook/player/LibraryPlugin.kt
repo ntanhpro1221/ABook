@@ -384,6 +384,7 @@ class LibraryPlugin : Plugin() {
     fun pair(call: PluginCall) = background(call) {
         val host = call.getString("host") ?: throw IllegalArgumentException("thiếu địa chỉ máy tính")
         val port = call.getInt("port") ?: 47630
+        SyncLink.refuseSelf(host, port)
         val device = call.getString("device") ?: "${Build.MANUFACTURER} ${Build.MODEL}"
         val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
         val (reply, fingerprint) = SyncLink.pair(context, "https://$host:$port", body)

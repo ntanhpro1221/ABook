@@ -29,8 +29,9 @@ import javax.net.ssl.X509TrustManager
  * bị đã ghép (GitHub kiểm bản cập nhật...) vẫn đi đường kiểm chuỗi tin cậy của hệ thống như thường.
  */
 object Pin {
-    const val CHANGED = "Chứng chỉ của máy kia đã khác lúc ghép - máy kia cài lại ABook, hoặc có ai chen vào mạng. " +
-        "Nếu chắc đó vẫn là máy của bạn, thôi ghép rồi ghép lại"
+    // Cùng nghĩa với webui/remote_books.py `_open`: bấm Thôi ghép rồi ghép lại; máy kia không cài lại thì đừng ghép lại.
+    const val CHANGED = "Chứng chỉ bảo mật của máy kia đã khác lúc ghép (máy kia cài lại ABook?) - bấm Thôi ghép rồi ghép lại. " +
+        "Nếu máy kia không cài lại gì thì đừng ghép lại: có thể có ai chen vào mạng"
 
     /** SHA-256 của chứng chỉ DER, 64 ký tự hex thường - cùng dạng với webui/tls.py `fingerprint`. */
     fun fingerprint(der: ByteArray): String =

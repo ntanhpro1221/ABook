@@ -167,6 +167,16 @@ object LibraryServer {
         blocked = false
     }
 
+    /** Lời báo mã sai, như máy tính (webui/sync.py `Devices.wrong_code_message`): còn mấy lần thử, hay phải tạo mã mới. */
+    @Synchronized
+    fun wrongCodeMessage(): String = wrongCodeText(blocked, pairing != null && pairing!!.second > System.currentTimeMillis(), failures)
+
+    internal fun wrongCodeText(blocked: Boolean, active: Boolean, failures: Int): String = when {
+        blocked -> "Nhập sai $PAIRING_ATTEMPTS lần nên mã đã bị huỷ - tạo mã mới ở máy kia rồi nhập lại"
+        active -> "Mã ghép nối sai - còn ${PAIRING_ATTEMPTS - failures} lần thử (sai $PAIRING_ATTEMPTS lần mã sẽ bị huỷ)"
+        else -> "Mã ghép nối sai hoặc đã hết hạn - tạo mã mới ở máy kia"
+    }
+
     @Synchronized
     private fun pair(code: String, device: String): String? {
         val digits = code.filter { it.isDigit() }.take(12)
@@ -326,7 +336,7 @@ object LibraryServer {
         if (request.method == "POST" && path == "/sync/v1/pair") {
             val body = runCatching { JSONObject(String(request.body)) }.getOrDefault(JSONObject())
             val token = pair(body.optString("code"), body.optString("device"))
-            if (token == null) json(output, 403, JSONObject().put("error", "Mã ghép nối sai hoặc đã hết hạn"))
+            if (token == null) json(output, 403, JSONObject().put("error", wrongCodeMessage()))
             else json(output, 200, identity(JSONObject().put("token", token)).put("fingerprint", fingerprint))
             return
         }
