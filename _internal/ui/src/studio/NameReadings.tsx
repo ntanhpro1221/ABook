@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCachedBook } from "./data";
-import { Pause, Play, Search, X } from "lucide-react";
+import { Pause, Play, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
@@ -11,6 +11,7 @@ import { formatNumber, shownReading } from "@/shared/format";
 import { Button } from "@/shared/ui";
 import { api, suggestionOf, urls } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
+import { reachSaved, reachSummary, useReach, type Reach } from "./readingReach";
 import { SharedReadingsOffer, useSharedEntry } from "./sharedReadings";
 import { useTryReading } from "./TryReading";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied, WAITING_STUDIO } from "./decisions";
@@ -86,6 +87,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
   }, [focus, data, castShown]);
   const [query, setQuery] = useState(name);
   const [limit, setLimit] = useState(PAGE);
+  const [adding, setAdding] = useState(false);
   useEffect(() => {
     if (name) setQuery(name);
   }, [name]);
@@ -98,7 +100,8 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
   // Tên chưa có dòng nào (máy không coi là tên riêng, hay chưa gặp): gõ đúng một từ mà KHÔNG khớp tên nào thì mời thêm cách
   // đọc cho nó - chỉ là một nút; ô nhập chỉ mở khi bấm (soát UX 29-09: ô mở sẵn giành con trỏ ngay sau chữ đầu, "Lan"+Enter
   // thành luật "L đọc là an" cho cả cuốn).
-  const addable = !found.length && /^[\p{L}\p{M}'’-]+$/u.test(typed);
+  // Bất kỳ chữ liền nhau nào (không khoảng trắng) - "TP.HCM", "km/h" cũng thêm được, không chỉ tên (soát UX a23 B11).
+  const addable = !found.length && /^\S{1,80}$/u.test(typed);
   const counted = data.items.filter((item) => item.lines > 0).length;
   return (
     <section className="mt-8" aria-labelledby="name-readings-title">
@@ -112,6 +115,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
         Tên riêng máy đọc thế nào. Nghe câu mẫu, sai thì sửa ngay trên dòng - câu đã thu có tên ấy sẽ được thu lại.
       </p>
       <SharedReadingsOffer bookId={bookId} />
+      <AddAnyWord bookId={bookId} open={adding} onOpenChange={setAdding} />
       <div className="relative mt-3 max-w-sm">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-fg-3" aria-hidden />
         <input
@@ -122,7 +126,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
             setQuery(event.target.value);
             setLimit(PAGE);
           }}
-          placeholder="Tìm tên, hoặc gõ một tên để thêm cách đọc"
+          placeholder="Tìm tên, hoặc gõ một chữ để thêm cách đọc"
           aria-label="Tìm tên"
           autoComplete="off"
           spellCheck={false}
@@ -147,7 +151,11 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
           {addable && <ReadingRow key={`new-${typed}`} bookId={bookId} item={{ surface: typed, spoken: "", byListener: false, lines: 0, requested: null, example: null }} fresh />}
         </ul>
       )}
-      {!found.length && !addable && typed && <p className="mt-3 text-sm text-fg-2">Không có tên nào khớp “{typed}”.</p>}
+      {!found.length && !addable && typed && (
+        <p className="mt-3 text-sm text-fg-2">
+          Không có tên nào khớp “{typed}”. Muốn dạy máy đọc một chữ hay ký hiệu khác, dùng “Thêm cách đọc cho từ bất kỳ” ở trên (một chữ liền nhau, không có khoảng trắng).
+        </p>
+      )}
       {found.length > limit && (
         <button type="button" onClick={() => setLimit((value) => value + PAGE * 3)} className="mt-3 text-sm font-medium text-fg-2 hover:text-fg">
           Xem thêm {formatNumber(found.length - limit)} tên
@@ -157,6 +165,60 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
         <p className="mt-2 text-xs text-fg-3">{formatNumber(data.unseen)} tên khác của cuốn không có câu nào trong phần này.</p>
       )}
     </section>
+  );
+}
+
+/** "Thêm cách đọc cho từ bất kỳ": tên nhân vật đã có dòng sẵn, còn chữ khác máy đọc sai ("TP.HCM", "Mr.", một chữ viết tắt) thì gõ vào đây - cách đọc
+ *  ghi cho cả cuốn, đi đúng đường của cách đọc tên (POST /pronunciation). Gõ xong thấy ngay chữ ấy có bao nhiêu câu và bao nhiêu câu đã thu phải thu lại. */
+function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [word, setWord] = useState("");
+  const typed = word.trim();
+  if (!open) {
+    return (
+      <Button size="sm" variant="ghost" className="mt-2" icon={Plus} onClick={() => onOpenChange(true)}>
+        Thêm cách đọc cho từ bất kỳ
+      </Button>
+    );
+  }
+  const single = /^\S{1,80}$/u.test(typed);
+  return (
+    <div className="mt-3 max-w-xl rounded-xl border border-line bg-panel p-3" data-add-any-word>
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor="add-any-word" className="text-sm font-medium">
+          Chữ hay ký hiệu máy đọc sai
+        </label>
+        <button
+          type="button"
+          onClick={() => {
+            setWord("");
+            onOpenChange(false);
+          }}
+          aria-label="Đóng"
+          className="grid size-6 place-items-center rounded-md text-fg-3 hover:text-fg"
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
+      <input
+        id="add-any-word"
+        autoFocus
+        value={word}
+        onChange={(event) => setWord(event.target.value)}
+        placeholder="vd TP.HCM"
+        spellCheck={false}
+        autoComplete="off"
+        className="mt-1.5 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-accent"
+      />
+      <p className="mt-1.5 text-xs text-fg-2">
+        Một chữ liền nhau (không có khoảng trắng); đúng chữ ấy ở mọi chỗ trong cuốn sẽ đọc theo cách bạn gõ. Chữ trong sách giữ nguyên.
+      </p>
+      {typed && !single && <p className="mt-1.5 text-xs text-warning">Gõ một chữ liền nhau, không có khoảng trắng.</p>}
+      {single && (
+        <ul className="mt-2 divide-y divide-line rounded-lg border border-line">
+          <ReadingRow key={typed} bookId={bookId} item={{ surface: typed, spoken: "", byListener: false, lines: 0, requested: null, example: null }} fresh />
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -181,6 +243,8 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
   const example = item.example;
   const id = example ? `reading-${example.segmentId}` : "";
   const playing = Boolean(id) && clip.current === id;
+  // Chữ người nghe vừa gõ để thêm: nói nó chạm tới bao nhiêu câu, bao nhiêu câu đã thu phải thu lại (webui/name_readings.reading_reach).
+  const reach = useReach(bookId, item.surface, fresh).data;
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5">
       {example?.hasAudio ? (
@@ -208,7 +272,9 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
         </div>
         <div className="tabular text-xs text-fg-2">
           {fresh
-            ? "Không có trong danh sách - máy đọc theo chữ"
+            ? reach
+              ? reachSummary(reach)
+              : "Không có trong danh sách - máy đọc theo chữ"
             : !analyzed && !item.lines
               ? "chưa phân tích tới"
               : `${formatNumber(item.lines)} câu · ${item.byListener ? "đã chọn" : item.spoken ? "máy đoán" : "chưa có trong sách"}`}
@@ -222,7 +288,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
         </div>
       </div>
       {editing ? (
-        <EditReading bookId={bookId} item={item} onDone={() => setEditing(false)} fresh={fresh} />
+        <EditReading bookId={bookId} item={item} onDone={() => setEditing(false)} fresh={fresh} reach={fresh ? reach : undefined} />
       ) : (
         <Button ref={editButton} size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`${fresh ? "Thêm" : "Sửa"} cách đọc ${item.surface}`}>
           {fresh ? `Thêm cách đọc cho “${item.surface}”` : "Sửa"}
@@ -283,11 +349,13 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
 /** `waiting`: cuốn không có xưởng (file .abook) - chỉ ghi ý muốn chờ Studio; giá trị là lý do chưa nghe thử / chưa dùng chung được
  *  (nút và ô vẫn hiện, mờ đi kèm lý do). */
 /** `aloud`: trang nghe, cuốn chưa có xưởng (`waiting`) - "Nghe thử" bằng giọng đọc của máy (listen/readings.ts). */
-export function EditReading({ bookId, item, onDone, fresh, waiting, aloud }: {
+export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach }: {
   bookId: string;
   item: NameReading;
   onDone: () => void;
   fresh: boolean;
+  /** Chữ vừa gõ để thêm: nó chạm tới những câu nào (đã đo lúc gõ) - thông báo sau khi lưu nói đúng số ấy. */
+  reach?: Reach;
   waiting?: string;
   aloud?: ReadAloudTry;
 }) {
@@ -357,7 +425,9 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud }: {
       toast.success(`Đã ghi: “${item.surface}” đọc là “${shownReading(spokenForm)}”`, {
         // Tên chưa có câu nào trong phần này (vừa thêm): không có gì để thu lại - nói đúng điều ấy (soát UX 29-09).
         // Câu mẫu là câu ĐÃ THU nếu có (name_readings.py) - mẫu chưa thu nghĩa là chưa thu câu nào có tên này (soát UX a23).
-        description: item.lines
+        description: reach
+          ? `${reachSaved(reach, when)}${shared}`
+          : item.lines
           ? `${item.example?.hasAudio ? "Các câu đã thu có tên này sẽ được thu lại." : "Các câu có tên này chưa thu nên không phải thu lại."} ${when}${shared}`
           : `Phần này chưa có câu nào có tên này - cách đọc sẽ được dùng khi tên xuất hiện.${shared}`,
         ...undo,

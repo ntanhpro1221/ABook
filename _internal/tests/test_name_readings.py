@@ -86,3 +86,80 @@ def test_the_studio_serves_the_list(tmp_path: Path) -> None:
     finally:
         server.stop()
     assert status == 200 and [item["surface"] for item in json.loads(data)["items"]] == ["Lucien"]
+
+
+def _say(db, stable_id: str, text: str, *, recorded: bool = True) -> None:
+    with db.connect() as conn:
+        conn.execute("UPDATE segments SET text=?, wav_path=? WHERE stable_id=?", (text, "take.wav" if recorded else None, stable_id))
+
+
+def test_a_reading_for_any_word_says_which_lines_it_reaches_and_what_it_costs(tmp_path: Path) -> None:
+    """Soát UX a23 B11: "TP.HCM" không phải tên nhân vật nhưng sửa được cho cả cuốn; trước khi lưu nói có bao nhiêu câu có chữ ấy,
+    bao nhiêu câu đã thu phải thu lại (cách đếm của hộp chọn giọng), ở chương nào, kèm một câu mẫu."""
+    from abook.webui.name_readings import reading_reach
+
+    paths, db = _book(tmp_path)
+    (paths.root / "take.wav").write_bytes(b"RIFF")
+    _say(db, "c1s1", "“Ở TP.HCM nóng lắm.”")
+    _say(db, "c1s2", "“Về tp.hcm đi.”", recorded=False)  # không phân biệt hoa thường, nhưng chưa thu
+    _say(db, "c1s3", "“TP.HCMX khác.”")  # dính chữ: không phải chữ này
+
+    reach = reading_reach(paths.root, " TP.HCM ")
+
+    assert reach["surface"] == "TP.HCM" and reach["lines"] == 2 and reach["recorded"] == 1
+    assert reach["cost"] == "thu lại 1 câu" and reach["blocked"] == 0
+    assert [(chapter["lines"], chapter["recorded"]) for chapter in reach["chapters"]] == [(2, 1)]
+    assert reach["example"]["text"] == "“Ở TP.HCM nóng lắm.”" and reach["example"]["hasAudio"], "ví dụ ưu tiên câu đã thu"
+
+    nothing_recorded = reading_reach(paths.root, "Natasha")
+    assert nothing_recorded["lines"] == 1 and nothing_recorded["recorded"] == 1
+    gone = reading_reach(paths.root, "Hà Nội")
+    assert gone["lines"] == 0 and gone["cost"] == "chưa thu nên không phải thu lại" and gone["example"] is None
+
+
+def test_a_symbol_the_voice_pass_rewrites_first_cannot_be_read_by_a_word_reading(tmp_path: Path) -> None:
+    """"km/h": trước khi tra cách đọc, dây chuyền đã đổi "/" thành quãng nghỉ ("km, h") (text_processing.spoken_symbols_to_words)
+    nên cách đọc cho chữ ấy không bao giờ khớp - nói thẳng thay vì hứa "sẽ thu lại 3 câu"."""
+    from abook.webui.name_readings import reading_reach
+
+    paths, db = _book(tmp_path)
+    (paths.root / "take.wav").write_bytes(b"RIFF")
+    _say(db, "c1s1", "“Chạy 60 km/h thôi.”")
+
+    reach = reading_reach(paths.root, "km/h")
+
+    assert reach["lines"] == 1 and reach["blocked"] == 1
+    assert reach["cost"] == "chưa thu nên không phải thu lại", "không câu nào đổi cách đọc nên không câu nào phải thu lại"
+
+
+def test_the_studio_serves_the_reach_of_a_reading(tmp_path: Path) -> None:
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    paths, _db = _book(tmp_path)
+    (paths.root / "book_settings.json").write_text("{}", encoding="utf-8")
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    try:
+        base = f"/api/books/{book_id(paths.root)}/pronunciations/reach"
+        status, data, _ = _request(server.port, "GET", base + "?surface=Natasha", headers={"X-Ebook-Token": "t"})
+        assert status == 200 and json.loads(data)["lines"] == 1
+        status, _data, _ = _request(server.port, "GET", base, headers={"X-Ebook-Token": "t"})
+        assert status == 400
+    finally:
+        server.stop()
+
+
+def test_a_word_that_is_not_a_plain_word_still_counts_its_lines(tmp_path: Path) -> None:
+    """"TP.HCM" người nghe vừa thêm: dòng của nó đếm câu có chữ ấy (khớp nguyên từ như TTS), không luôn là 0 câu."""
+    paths, db = _book(tmp_path)
+    _say(db, "c1s1", "“Ở TP.HCM nóng lắm.”")
+    request_pronunciation(paths.root, "TP.HCM", "Thành-phố Hồ-chí-minh", now=1.0)
+
+    by_name = {item["surface"]: item for item in name_readings(paths.root)["items"]}
+
+    assert by_name["TP.HCM"]["lines"] == 1 and by_name["TP.HCM"]["example"]["text"] == "“Ở TP.HCM nóng lắm.”"
