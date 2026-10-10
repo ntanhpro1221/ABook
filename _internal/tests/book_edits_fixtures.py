@@ -15,12 +15,15 @@ những file này.
     fixtures/book_edits/contract/<ca>.json chuỗi yêu cầu / lời đáp của máy chủ Python cho từng đường "áp ngay" và đường ý muốn
                                           chờ Studio - LocalStudio.kt phải đáp y hệt (trừ trường dễ đổi: `volatile`). Trong thân
                                           yêu cầu, chuỗi "$requestedAt#N" là `requestedAt` của lời đáp bước N (để rút đúng lần bấm)
+                                          Bước {"append_lines": {"chapter", "texts"}} nối câu vào cuối chương của bản sao (chữ mà `base` không có)
     fixtures/book_edits/written/python_v4.abook, kotlin_v4.abook   file phiên bản 4 do từng bên ghi, bên kia phải mở được
                                           (python_v4_pins.abook / kotlin_v4_pins.abook: thêm bài nhạc người nghe đã ghim)
     fixtures/book_edits/written/python_workshop.abookproj, python_pending.abookproj   file dự án phiên bản 3 do Python ghi: một
                                           dự án có xưởng (bí danh, views/, sources/) và một cuốn "chờ dựng xưởng" mang lớp sửa;
                                           kotlin_workshop.abookproj / kotlin_pending.abookproj là bản Kotlin ghi lại từ chúng
     fixtures/book_edits/track/tone.wav    một bài nhạc nhỏ ("Nhạc của tôi") cho các ca ghim bài: nhập vào kho nhạc của máy rồi ghim
+    fixtures/book_edits/spoken_symbols.json  [{text, spoken}]: chữ máy thu sẽ đọc sau khi ký hiệu không nói được đổi thành chữ hay quãng nghỉ
+                                          (`text_processing.spoken_symbols_to_words`; Kotlin: SpokenSymbols.toWords) - cho trường `blocked` của reading_reach
     fixtures/book_edits/readings/speech.json  cách đọc riêng (`readings`) khi đọc to: cùng đoạn chữ -> cùng chữ đem đọc (giọng trên máy:
                                           `vieneu.spoken_tokens`; giọng khác: `readings.spoken_text`) và cùng khoá bộ đệm clip ở hai bên
 
@@ -622,8 +625,9 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "GET", "path": "/pending-changes"},
     ],
     # "Đọc từ này là…" ở trang đọc: trước khi ghi, cách đọc chạm tới bao nhiêu câu, bao nhiêu câu đã thu (name_readings.package_reading_reach).
-    # Tham số của GET nằm trong đường dẫn; điện thoại nhận nó trong `body` (android/localStudio.ts) - test JVM chuyển như vậy. Không có
-    # ca ký hiệu bị đổi thành quãng nghỉ (`blocked`): bản Kotlin chưa có `spoken_symbols_to_words`.
+    # Tham số của GET nằm trong đường dẫn; điện thoại nhận nó trong `body` (android/localStudio.ts) - test JVM chuyển như vậy.
+    # Ký hiệu bị đổi thành quãng nghỉ trước khi tra cách đọc (`spoken_symbols_to_words`, `blocked`): "(1)" và "Mở/đóng" bị xé đôi,
+    # "km/h" thì giữ nguyên - chữ ấy không có trong `base` nên bước append_lines thêm vào cuối hai chương.
     "reading_reach": [
         {"method": "GET", "path": "/pronunciations/reach?surface=%20V%E1%BB%81%20"},
         {"method": "PUT", "path": "/chapters/1/title", "body": {"title": "Chương Một", "subtitle": ""}},
@@ -633,6 +637,14 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "GET", "path": "/pronunciations/reach?surface=TP.HCM"},
         {"method": "GET", "path": "/pronunciations/reach?surface=%20"},
         {"method": "GET", "path": "/pronunciations/reach"},
+        {"method": "GET", "path": "/pronunciations/reach?surface=(1)"},
+        {"method": "GET", "path": "/pronunciations/reach?surface=Tr%E1%BB%9F%20v%E1%BB%81%20(1)"},
+        {"append_lines": {"chapter": 1, "texts": ["Mở/đóng cửa nhanh lên.", "Xe chạy 60 km/h trên đường.", "Anh ấy vào/ra liên tục."]}},
+        {"append_lines": {"chapter": 2, "texts": ["Mở/đóng lần nữa.", "Tốc độ 40 km/h là chậm."]}},
+        {"method": "GET", "path": "/pronunciations/reach?surface=M%E1%BB%9F/%C4%91%C3%B3ng"},
+        {"method": "GET", "path": "/pronunciations/reach?surface=km/h"},
+        {"method": "GET", "path": "/pronunciations/reach?surface=%C4%91%C3%B3ng"},
+        {"method": "GET", "path": "/pronunciations/reach?surface=v%C3%A0o/ra"},
     ],
 }
 
@@ -665,6 +677,22 @@ SPEECH_CASES = [
     ("edge:vi-VN-HoaiMyNeural", "Hạ, Vy đi; hạ vy ở lại.", None),
     ("vieneu:turbo/Thường", "Hạ, Vy đi; hạ vy ở lại.", None),
 ]
+
+
+# Câu thử cho `spoken_symbols_to_words`: mỗi nhánh của hàm (chữ che, ký hiệu thành chữ, ngoặc thành phẩy, dấu hiệu giọng, "/" giữa chữ hay đơn vị, đầu/cuối câu).
+SPOKEN_SYMBOL_TEXTS = [
+    "Mở/đóng cửa", "Xe chạy 60 km/h trên đường.", "Xe chạy 60km/h", "Tải 3 kg/m2 thôi", "Điểm 8.5/10 nhé", "Mạnh hơn / khó tìm hơn", "A / B / C",
+    "Cô nói (nhỏ) rồi đi.", "Hắn thua (Legendary).", "[A-rank] Kiếm Thánh", "Vừa [thở dài] vừa đi", "[Thở  Dài] xong rồi", "Cười [CƯỜI] nữa",
+    "Nấm + Mô = Linh Hồn Than Khóc", "↓ 1.000 Đơn vị", "↑ tăng thêm", "Thường (Common) (C) » Hiếm", "Hỏa Cầu (Fireball) || Sương Giáng",
+    "Cái #&!@! gì thế", "dưới *** à", "Gì ??? hả", "Tăng 25% sức mạnh", "• Mục một", "* Mục hai", "Mục ba *đậm* nè", "a => b", "2 ≥ 1 ≤ 3 × 4 ÷ 2 ^ 2",
+    "Xin chào, (…) ok?", "«Trích dẫn» rồi", "Lúc ... lúc", "Chương 646 - Trở về (1)", "(1)", "Hết)", "(((", "   ", "", "Đi!  (xong)  .", "Giá $5 / người", "Thứ nhất,   (sau đó) ,  hết",
+]
+
+
+def spoken_symbol_cases() -> list[dict[str, str]]:
+    from abook.text_processing import spoken_symbols_to_words
+
+    return [{"text": text, "spoken": spoken_symbols_to_words(text)} for text in SPOKEN_SYMBOL_TEXTS]
 
 
 def speech_cases() -> dict[str, Any]:
@@ -781,6 +809,24 @@ def _write(path: Path, data: Any) -> None:
     path.write_bytes((json.dumps(data, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
 
 
+def append_lines(folder: Path, spec: dict[str, Any]) -> None:
+    """Bước {"append_lines": {"chapter": n, "texts": [...]}} của một ca hợp đồng: nối các câu vào cuối chữ đọc theo của chương `n` trong
+    bản sao sách. Chương có audio thì câu mới có mốc thời gian (đã thu), chương không có thì không. Để ca thử chữ mà `base` không có
+    (vd ký hiệu "/" trong "Mở/đóng") mà không phải đổi `base` - đổi nó là đổi cả bộ ví dụ."""
+    path = folder / "scripts" / f"{spec['chapter']}.json"
+    script = json.loads(path.read_text(encoding="utf-8"))
+    segments = script["segments"]
+    next_id = max(int(segment["id"]) for segment in segments) + 1
+    end = max((float(segment["end"]) for segment in segments if segment.get("end") is not None), default=0.0)
+    for text in spec["texts"]:
+        timed = script.get("timed") is True
+        segments.append({"id": next_id, "paragraph": 1, "text": text, "kind": "narration", "speaker": "",
+                         "start": round(end, 1) if timed else None, "end": round(end + 1.0, 1) if timed else None, "status": "verified"})
+        next_id += 1
+        end += 1.0
+    path.write_bytes((json.dumps(script, ensure_ascii=False, indent=1)).encode("utf-8"))
+
+
 def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Chạy `steps` qua MÁY CHỦ THẬT (Server + App) trên một bản sao của `folder` đặt làm sách nhập; ghi lời đáp."""
     from abook.webui.actions import FakeRunner
@@ -804,6 +850,10 @@ def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str,
             for step in steps:
                 if "import" in step:  # nhập một bài mẫu vào kho "Nhạc của tôi" của máy này
                     app.my_music.import_file(FIXTURES / "track" / step["import"])
+                    recorded.append(step)
+                    continue
+                if "append_lines" in step:  # thêm câu vào cuối một chương của bản sao (bên Kotlin: LocalStudioTest.appendLines)
+                    append_lines(copy, step["append_lines"])
                     recorded.append(step)
                     continue
                 body = step.get("body")
@@ -890,6 +940,7 @@ def generate(*, rebuild_base: bool = False) -> None:
     for name, steps in CONTRACT.items():
         _write(FIXTURES / "contract" / f"{name}.json", {"volatile": VOLATILE, "steps": record_contract(BASE, steps)})
     _write(FIXTURES / "readings" / "speech.json", speech_cases())
+    _write(FIXTURES / "spoken_symbols.json", spoken_symbol_cases())
     python_file = FIXTURES / "written" / "python_v4.abook"
     if rebuild_base or not python_file.exists():
         write_python_v4(python_file)

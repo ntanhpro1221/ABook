@@ -436,8 +436,9 @@ object LocalStudio {
     /**
      * GET /pronunciations/reach {surface} (`package_reading_reach` của name_readings.py): "Đọc từ này là…" trên cuốn này chạm tới bao nhiêu
      * câu - khớp nguyên từ, không phân biệt hoa thường, trên chữ đọc theo đã qua lớp sửa - bao nhiêu câu đã thu (có mốc thời gian trong
-     * chương có audio) sẽ phải thu lại, ở chương nào, một câu mẫu. Khoảng trống: điện thoại chưa có `spoken_symbols_to_words` (ký hiệu đổi
-     * thành quãng nghỉ trước khi tra cách đọc) nên không biết câu nào bị ký hiệu chặn - `blocked` luôn 0, mọi câu khớp đều tính là tới.
+     * chương có audio) sẽ phải thu lại, ở chương nào, một câu mẫu. Trước khi tra cách đọc, ký hiệu máy không nói được đã thành quãng nghỉ
+     * ([SpokenSymbols.toWords] = `spoken_symbols_to_words`): chữ nào bị xé đôi ("Mở/đóng") thì cách đọc không bao giờ khớp - `blocked` đếm các câu đó,
+     * không tính vào `reached`, `recorded`, chương hay câu mẫu.
      */
     private fun readingReach(dir: java.io.File, body: JSONObject): Any? {
         val surface = BookWishes.collapse(BookEdits.cut(BookWishes.collapse(BookEdits.pyText(body.opt("surface"))), 80))
@@ -447,6 +448,7 @@ object LocalStudio {
             (0 until list.length()).mapNotNull { list.optJSONObject(it) }.filter { it.opt("id") is Int || it.opt("id") is Long }
         } ?: emptyList()
         val pattern = Regex("(?<!$WORD_CHAR)" + Regex.escape(surface) + "(?!$WORD_CHAR)", RegexOption.IGNORE_CASE)
+        var matched = 0
         val reached = ArrayList<JSONObject>() // câu mẫu đã dựng sẵn (hình `_example` của work_items.py)
         val perChapter = LinkedHashMap<Long, IntArray>()
         for (chapter in chapters) {
@@ -458,6 +460,8 @@ object LocalStudio {
                 val segment = segments.optJSONObject(index) ?: continue
                 val text = segment.opt("text") as? String ?: continue
                 if (!pattern.containsMatchIn(text)) continue
+                matched++
+                if (!pattern.containsMatchIn(SpokenSymbols.toWords(text))) continue
                 val recorded = heard && segment.opt("start") is Number
                 val id = segment.opt("id")
                 reached.add(JSONObject().put("segmentId", if (id is Int || id is Long) (id as Number).toLong() else (index + 1).toLong())
@@ -470,7 +474,7 @@ object LocalStudio {
         }
         val recorded = reached.count { it.getBoolean("hasAudio") }
         val titles = reached.associate { it.getLong("chapterId") to it.getString("chapterTitle") }
-        return JSONObject().put("surface", surface).put("lines", reached.size).put("reached", reached.size).put("recorded", recorded).put("blocked", 0)
+        return JSONObject().put("surface", surface).put("lines", matched).put("reached", reached.size).put("recorded", recorded).put("blocked", matched - reached.size)
             .put("cost", if (recorded > 0) "thu lại $recorded câu" else NOT_RECORDED)
             .put("chapters", JSONArray(perChapter.entries.take(CHAPTERS_SHOWN).map { (chapterId, counts) ->
                 JSONObject().put("chapterId", chapterId).put("title", titles[chapterId] ?: "").put("lines", counts[0]).put("recorded", counts[1])

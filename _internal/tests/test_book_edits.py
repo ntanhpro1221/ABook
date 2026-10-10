@@ -208,6 +208,17 @@ def test_a_word_reading_on_an_imported_book_says_which_lines_it_reaches(imported
     assert call("GET", "/api/books/{id}/pronunciations/reach")[0] == 400
 
 
+def test_the_shared_spoken_symbol_cases_are_what_the_producer_says() -> None:
+    """Bộ ví dụ `spoken_symbols.json` (điện thoại: SpokenSymbols.toWords, cho `blocked` của "Đọc từ này là…") là đúng lời của
+    `spoken_symbols_to_words` - hai bên cùng đáp từng ca."""
+    from abook.text_processing import spoken_symbols_to_words
+
+    cases = json.loads((shared.FIXTURES / "spoken_symbols.json").read_text(encoding="utf-8"))
+    assert [case["text"] for case in cases] == shared.SPOKEN_SYMBOL_TEXTS
+    for case in cases:
+        assert spoken_symbols_to_words(case["text"]) == case["spoken"], case["text"]
+
+
 def test_the_listener_sets_clears_or_restores_the_author_and_every_view_follows(imported) -> None:
     app, folder, identifier, call = imported
     assert app.listen_book(identifier)["author"] == "" and packages.edited_manifest(folder).get("author") is None
