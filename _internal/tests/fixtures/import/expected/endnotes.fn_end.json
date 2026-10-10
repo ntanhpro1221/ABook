@@ -1,0 +1,35 @@
+{
+ "title": "Chương Endnotes",
+ "author": null,
+ "language": "vi",
+ "cover": null,
+ "chapters": [
+  {
+   "title": "Chương 1: Bến đò",
+   "text": "Con đò đã cũ, nhưng vẫn chạy tốt.\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nLời chú một, về con đò."
+  },
+  {
+   "title": "Chương 2: Mưa",
+   "text": "Mưa rơi suốt đêm, gió thổi mạnh.\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nLời chú hai, về cơn mưa.\n\nLời chú ba, về ngọn gió."
+  }
+ ],
+ "notes": [],
+ "footnotes": {
+  "found": 3,
+  "marks": 3,
+  "examples": [
+   {
+    "mark": "…Con đò đã cũ¹",
+    "note": "Lời chú một, về con đò."
+   },
+   {
+    "mark": "…Mưa rơi²",
+    "note": "Lời chú hai, về cơn mưa."
+   },
+   {
+    "mark": "…rơi suốt đêm, gió thổi³",
+    "note": "Lời chú ba, về ngọn gió."
+   }
+  ]
+ }
+}

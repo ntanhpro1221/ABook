@@ -104,7 +104,10 @@ export function desktopTextImport(dialogs: boolean): TextImport {
     chooseMany: dialogs ? async () => (await pickFiles("Chọn file sách (chọn được nhiều file một lúc)")).map(itemFromPath) : undefined,
     watchDrops: dialogs ? watchAppDrops : watchBrowserDrops,
     preview: (choice, options) =>
-      api<ImportPreview>("/api/listen/import/preview", { method: "POST", body: { path: choice.ref, splitChapters: Boolean(options?.splitChapters) } }),
+      api<ImportPreview>("/api/listen/import/preview", {
+        method: "POST",
+        body: { path: choice.ref, splitChapters: Boolean(options?.splitChapters), ...(options?.footnotes ? { footnotes: options.footnotes } : {}) },
+      }),
     add: (choice, title, separate, options) =>
       api<AddedBook>("/api/listen/import", {
         method: "POST",
@@ -113,6 +116,7 @@ export function desktopTextImport(dialogs: boolean): TextImport {
           title,
           separate: Boolean(separate),
           splitChapters: Boolean(options?.splitChapters),
+          ...(options?.footnotes ? { footnotes: options.footnotes } : {}),
           // Chương người dùng giữ + tên mới; không đổi gì thì không gửi (máy chủ lấy các chương mặc định).
           ...(options?.chapters ? { chapters: options.chapters } : {}),
         },

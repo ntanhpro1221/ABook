@@ -20,6 +20,8 @@
                                              `defaults` = các chương tích sẵn (không có mục ngắn), ghi chú "N mục rất ngắn chưa chọn"
     fixtures/import/expected/clip_title.json  bảng ví dụ của `importers.clip_title` (tên chương cắt ở ranh giới từ + "…"); hai bên cùng khớp
     fixtures/import/expected/name_title.json  bảng ví dụ của `importers.title_from_filename` (tên sách từ tên file: "_" và "--" thành dấu cách); hai bên cùng khớp
+    fixtures/import/notes3.epub, notes2.epub, endnotes.epub, notes.docx   chú thích: EPUB3 (noteref + aside), Calibre (sup + a href), chương Endnotes
+                                             kiểu Standard Ebooks, DOCX (footnotes.xml / endnotes.xml); expected/<tên>.fn_*.json = người nghe tích đề xuất
     fixtures/import/expected/<tên>.json      kết quả mong đợi (ImportedBook.to_dict, hay {"error": ...})
     fixtures/import/pages/story.pages.json   lớp thô của PDF (pypdf VÀ pdf.js phải ra đúng các dòng này)
 
@@ -450,9 +452,63 @@ def build_nfd_names() -> bytes:
     return _book("Tên tệp dạng rời", pages, nav=nav, rename=rename)
 
 
+def _ops(body: str) -> bytes:
+    """Trang XHTML khai báo không gian tên epub: (epub:type="noteref"…)."""
+    return _xhtml(body).replace(b'xmlns="http://www.w3.org/1999/xhtml"', b'xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"')
+
+
+def build_notes_epub3() -> bytes:
+    """Chú thích kiểu EPUB3 (chữ giả): dấu gọi epub:type="noteref" (trong <sup> hay trần) và role="doc-noteref"; lời chú là <aside
+    epub:type="footnote"> hay role="doc-footnote", có cái nằm GIỮA chương (đặt xuống cuối chương, theo thứ tự gặp) có cái ở cuối."""
+    pages = [
+        ("c1.xhtml", (f'<h2>Chương 1: Bến đò</h2>\n<p>Con đò cập bến sau cơn mưa<sup><a epub:type="noteref" href="#fn1" id="r1">1</a></sup> và người lái đò '
+                     f'buộc dây vào cọc.</p>\n<aside epub:type="footnote" id="fn1"><p>1. Lời chú thứ nhất đứng giữa chương.</p></aside>\n<p>{LINE}</p>\n'
+                     '<p>Khách xuống đò<a epub:type="noteref" href="#fn2" id="r2">[2]</a> từng người một.</p>\n'
+                     '<aside epub:type="footnote" id="fn2"><p>2. Lời chú thứ hai đứng cuối chương.</p></aside>')),
+        ("c2.xhtml", (f'<h2>Chương 2: Mưa</h2>\n<p>Mưa rơi suốt đêm<a role="doc-noteref" href="#fn3" id="r3">*</a> trên mái tôn.</p>\n<p>{LINE}</p>\n'
+                     '<div role="doc-footnote" id="fn3"><p>* Lời chú thứ ba, dùng vai ARIA.</p></div>\n<p>Rồi trời tạnh hẳn.</p>')),
+    ]
+    nav = ('<nav epub:type="toc"><ol><li><a href="text/c1.xhtml">Chương 1: Bến đò</a></li><li><a href="text/c2.xhtml">Chương 2: Mưa</a></li></ol></nav>')
+    return _book("Chú thích EPUB3", pages, nav=nav, raw_pages={name: _ops(body) for name, body in pages})
+
+
+def build_notes_epub2() -> bytes:
+    """Chú thích kiểu Calibre (EPUB2, chữ giả): <sup><a href="#fn1">1</a></sup> trỏ tới <p id="fn1"> cuối chương, và <a href="notes.xhtml#n1">
+    <sup>1</sup></a> trỏ sang trang "Chú thích" riêng; nhãn quay lại trong lời chú (<a href="#r1">1</a>) không phải dấu gọi."""
+    pages = [
+        ("c1.xhtml", (f'<h2>Chương 1: Bến đò</h2>\n<p>Con đò cập bến sau cơn mưa<sup class="calibre3"><a id="r1" href="#fn1">1</a></sup> rồi đi tiếp.</p>\n'
+                     f'<p>{LINE}</p>\n<p class="calibre5" id="fn1"><a href="#r1">1</a>. Lời chú một của chương một.</p>')),
+        ("c2.xhtml", (f'<h2>Chương 2: Mưa</h2>\n<p>Mưa rơi<a href="notes.xhtml#n1"><sup>1</sup></a> suốt đêm.</p>\n<p>{LINE}</p>\n'
+                     '<p>Gió thổi<a href="notes.xhtml#n2"><sup>2</sup></a> mạnh.</p>')),
+        ("notes.xhtml", '<h2>Chú thích</h2>\n<div id="n1"><p>1. Lời chú về mưa.</p></div>\n<div id="n2"><p>2. Lời chú về gió.</p></div>'),
+    ]
+    ncx = _ncx([("Chương 1: Bến đò", "text/c1.xhtml"), ("Chương 2: Mưa", "text/c2.xhtml"), ("Chú thích", "text/notes.xhtml")])
+    return _book("Chú thích kiểu Calibre", pages, ncx=ncx, version="2.0")
+
+
+def build_endnotes_epub() -> bytes:
+    """Chương "Endnotes" riêng kiểu Standard Ebooks (chữ giả): dấu gọi epub:type="noteref" trỏ sang endnotes.xhtml#note-N, lời chú là
+    <li epub:type="endnote"> trong <section epub:type="backmatter endnotes"> kèm nút quay lại ↩︎ (epub:type="backlink")."""
+    pages = [
+        ("c1.xhtml", (f'<section id="chapter-1" epub:type="chapter"><h2 epub:type="title">Chương 1: Bến đò</h2>\n<p>Con đò đã cũ<a href="endnotes.xhtml#note-1" '
+                     f'id="noteref-1" epub:type="noteref">1</a>, nhưng vẫn chạy tốt.</p>\n<p>{LINE}</p></section>')),
+        ("c2.xhtml", (f'<section id="chapter-2" epub:type="chapter"><h2 epub:type="title">Chương 2: Mưa</h2>\n<p>Mưa rơi<a href="endnotes.xhtml#note-2" '
+                     f'id="noteref-2" epub:type="noteref">2</a> suốt đêm, gió thổi<a href="endnotes.xhtml#note-3" id="noteref-3" epub:type="noteref">3</a> mạnh.</p>\n'
+                     f'<p>{LINE}</p></section>')),
+        ("endnotes.xhtml", ('<section id="endnotes" epub:type="backmatter endnotes"><h2 epub:type="title">Endnotes</h2>\n<ol>\n'
+                           '<li id="note-1" epub:type="endnote"><p>Lời chú một, về con đò. <a href="c1.xhtml#noteref-1" epub:type="backlink">↩︎</a></p></li>\n'
+                           '<li id="note-2" epub:type="endnote"><p>Lời chú hai, về cơn mưa. <a href="c2.xhtml#noteref-2" epub:type="backlink">↩︎</a></p></li>\n'
+                           '<li id="note-3" epub:type="endnote"><p>Lời chú ba, về ngọn gió. <a href="c2.xhtml#noteref-3" epub:type="backlink">↩︎</a></p></li>\n'
+                           '</ol></section>')),
+    ]
+    nav = ('<nav epub:type="toc"><ol><li><a href="text/c1.xhtml">Chương 1: Bến đò</a></li><li><a href="text/c2.xhtml">Chương 2: Mưa</a></li>'
+           '<li><a href="text/endnotes.xhtml">Endnotes</a></li></ol></nav>')
+    return _book("Chương Endnotes", pages, nav=nav, raw_pages={name: _ops(body) for name, body in pages})
+
+
 # --- DOCX -------------------------------------------------------------------------------------------------------------
 
-W_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+W_NS ='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
 STYLES = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:styles {W_NS}>
   <w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>
@@ -471,7 +527,7 @@ def _para(text: str = "", style: str | None = None, *, runs: str | None = None) 
     return f"<w:p>{props}{body}</w:p>"
 
 
-def _docx(body: str, core: str | None, *, default_namespace: bool = False) -> bytes:
+def _docx(body: str, core: str | None, *, default_namespace: bool = False, extra: tuple[tuple[str, str], ...] = ()) -> bytes:
     document = f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document {W_NS}><w:body>{body}</w:body></w:document>'
     if default_namespace:  # cùng tài liệu, phần tử không có tiền tố (xmlns mặc định) - hợp lệ, vài bộ ghi DOCX làm vậy
         document = document.replace(W_NS, W_NS.replace("xmlns:w", "xmlns") + " " + W_NS).replace("<w:", "<").replace("</w:", "</")
@@ -481,6 +537,7 @@ def _docx(body: str, core: str | None, *, default_namespace: bool = False) -> by
                ("word/styles.xml", STYLES.encode())]
     if core:
         entries.append(("docProps/core.xml", core.encode()))
+    entries += [(name, data.encode()) for name, data in extra]
     return _zip(entries)
 
 
@@ -515,6 +572,38 @@ def build_docx_plain() -> bytes:
             body += _para(paragraph)
     body += _para("Chương trình truyền hình hôm ấy kéo dài đến tận khuya, ai cũng mệt nhoài.")
     return _docx(body, None, default_namespace=True)
+
+
+def _note_ref(kind: str, number: int) -> str:
+    return f'<w:r><w:rPr><w:rStyle w:val="{kind.title()}Reference"/></w:rPr><w:{kind}Reference w:id="{number}"/></w:r>'
+
+
+def _note_part(kind: str, notes: list[tuple[int, str]]) -> str:
+    """word/footnotes.xml hay endnotes.xml: hai lời chú mẫu (separator, continuationSeparator) rồi các lời chú thật."""
+    body = "".join(f'<w:{kind} w:type="{type_}" w:id="{number}"><w:p><w:r><w:{type_}/></w:r></w:p></w:{kind}>'
+                   for number, type_ in ((-1, "separator"), (0, "continuationSeparator")))
+    body += "".join(f'<w:{kind} w:id="{number}"><w:p><w:pPr><w:pStyle w:val="Footnote"/></w:pPr><w:r><w:rPr><w:rStyle w:val="{kind.title()}Reference"/></w:rPr>'
+                    f'<w:{kind}Ref/></w:r><w:r><w:t xml:space="preserve"> {_esc(text)}</w:t></w:r></w:p></w:{kind}>' for number, text in notes)
+    return f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:{kind}s {W_NS}>{body}</w:{kind}s>'
+
+
+def build_notes_docx() -> bytes:
+    """DOCX có chú thích Word thật (chữ giả): w:footnoteReference / w:endnoteReference trong chữ, lời chú ở word/footnotes.xml và endnotes.xml
+    (kèm separator). Số chú thích Word không nằm trong chữ - lời chú thì chưa từng vào sách; nay chỉ đề xuất, tích mới đưa về cuối chương."""
+    def run(text: str) -> str:
+        return f'<w:r><w:t xml:space="preserve">{_esc(text)}</w:t></w:r>'
+
+    body = _para("Chương 1: Bến đò", "Heading1")
+    body += _para(runs=run("Con đò cập bến sau cơn mưa") + _note_ref("footnote", 2) + run(" rồi người lái đò buộc dây."))
+    body += _para(LINE)
+    body += _para(runs=run("Khách xuống đò từng người một") + _note_ref("footnote", 3) + run(", không ai nói gì."))
+    body += _para("Chương 2: Mưa", "Heading1")
+    body += _para(runs=run("Mưa rơi suốt đêm") + _note_ref("endnote", 2) + run(" trên mái tôn."))
+    body += _para(LINE)
+    body += _para(runs=run("Rồi trời tạnh") + _note_ref("footnote", 4) + run("."))
+    extra = (("word/footnotes.xml", _note_part("footnote", [(2, "Lời chú thứ nhất."), (3, "Lời chú thứ hai."), (4, "Lời chú thứ tư.")])),
+             ("word/endnotes.xml", _note_part("endnote", [(2, "Lời chú cuối sách về cơn mưa.")])))
+    return _docx(body, None, extra=extra)
 
 
 # --- PDF (viết tay, chữ qua font Identity-H + ToUnicode nên pypdf và pdf.js đọc ra đúng Unicode) --------------------------
@@ -703,7 +792,12 @@ REAL_WORLD = {
     "title_h1.docx": build_docx_title_h1, "scenes.docx": build_docx_scenes, "roman.docx": build_docx_roman,
     "nested.epub": build_nested, "index_split_003.txt": build_index_split,
 }
+# Chú thích trong sách nhập (BUG10 của a22): đề xuất, mặc định KHÔNG áp. expected/<tên>.json = mặc định; <tên>.<lựa chọn>.json = người nghe tích (NOTE_CHOICES,
+# cùng dạng JSON mà giao diện gửi: `importers.footnote_choice_from_json`). BookImportTest.footnote_books_give_exactly_what_python_gives.
+NOTE_BOOKS = {"notes3.epub": build_notes_epub3, "notes2.epub": build_notes_epub2, "endnotes.epub": build_endnotes_epub, "notes.docx": build_notes_docx}
+NOTE_CHOICES = {"fn_marks": {"hideMarks": True}, "fn_end": {"hideMarks": True, "notes": "end"}, "fn_drop": {"notes": "drop"}}
 SOURCES.update(REAL_WORLD)
+SOURCES.update(NOTE_BOOKS)
 
 
 # Tên chương đặt từ dòng đầu (`importers.clip_title`, Kotlin BookImport.clipTitle): đủ ngắn, rơi giữa từ (lùi về dấu cách), từ cuối quá dài
@@ -758,6 +852,10 @@ def expected_files(root: Path) -> dict[str, bytes]:
     out["expected/whole.split.json"] = dumps(importers.import_text(root / "whole.txt", split_chapters=True).to_dict())
     out["expected/titled.json"] = dumps(importers.import_text(root / "titled.txt").to_dict())
     out["expected/titled.split.json"] = dumps(importers.import_text(root / "titled.txt", split_chapters=True).to_dict())
+    for name in NOTE_BOOKS:
+        for label, choice in NOTE_CHOICES.items():
+            out[f"expected/{name.rsplit('.', 1)[0]}.{label}.json"] = dumps(
+                importers.import_text(root / name, footnotes=importers.footnote_choice_from_json(choice)).to_dict())
     for name in REAL_WORLD:
         if name.endswith(".txt"):  # TXT cả truyện: cả khi người nghe tích "Tách thành N chương"
             out[f"expected/{name[:-4]}.split.json"] = dumps(importers.import_text(root / name, split_chapters=True).to_dict())

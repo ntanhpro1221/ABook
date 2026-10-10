@@ -45,7 +45,13 @@ export const phoneTextImport: TextImport = {
   },
   async preview(choice, options) {
     const pdf = (choice as PickedPdf).pdf;
-    if (!pdf) return EbookLibrary.previewImport({ ref: choice.ref, ...(options?.splitChapters ? { splitChapters: true } : {}) });
+    if (!pdf) {
+      return EbookLibrary.previewImport({
+        ref: choice.ref,
+        ...(options?.splitChapters ? { splitChapters: true } : {}),
+        ...(options?.footnotes ? { footnotes: options.footnotes } : {}),
+      });
+    }
     const pages = await readPdf(Capacitor.convertFileSrc(pdf)).catch((error: Error) => {
       throw new Error(`Không đọc được PDF này: ${error.message}`);
     });

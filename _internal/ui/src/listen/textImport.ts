@@ -40,6 +40,47 @@ export interface ImportPreview {
   splitOffer?: number;
   /** Số dòng "Chương N" ấy; ít hơn `splitOffer` khi chữ trước tiêu đề đầu thành chương "Mở đầu". */
   splitHeadings?: number;
+  /** Sách (EPUB / DOCX) có chú thích: máy tìm thấy bao nhiêu và vài ví dụ. Giao diện đề xuất ([FootnoteChoice], KHÔNG tích sẵn); không có khoá = không có chú thích. */
+  footnotes?: FootnoteOffer;
+}
+
+/** Chú thích máy tìm thấy trong sách. `marks`: số dấu gọi (con số ², [3]…) nằm trong chữ - 0 thì ô "Không đọc số chú thích" vô nghĩa (DOCX: số của Word không vào chữ). */
+export interface FootnoteOffer {
+  found: number;
+  marks: number;
+  /** `mark`: dấu gọi kèm chữ đứng trước ("…trees²"); `note`: lời chú của nó (đã cắt gọn). */
+  examples: { mark: string; note: string }[];
+}
+
+/** Lời chú: "" = như trong sách; "end" = đọc ở cuối chương có dấu gọi; "drop" = bỏ. */
+export type FootnoteNotes = "" | "end" | "drop";
+
+/** Đề xuất về chú thích người dùng tích ở bước xem trước (mặc định không tích gì; bỏ tích là về như cũ). Gửi kèm lúc xem trước lẫn lúc thêm. */
+export interface FootnoteChoice {
+  /** Không đọc số chú thích trong chữ. */
+  hideMarks: boolean;
+  notes: FootnoteNotes;
+}
+
+export const NO_FOOTNOTES: FootnoteChoice = { hideMarks: false, notes: "" };
+
+/** Lựa chọn gửi đi; `undefined` khi chưa tích gì (hai nền tảng tự lấy "như trong sách"). */
+export function footnotesToSend(choice: FootnoteChoice): FootnoteChoice | undefined {
+  return choice.hideMarks || choice.notes ? choice : undefined;
+}
+
+/** Dòng nói máy tìm thấy gì: số chú thích và một ví dụ ("…trees²" -> lời chú "…"). */
+export function footnoteSummary(offer: FootnoteOffer): { title: string; example: string | null } {
+  const first = offer.examples[0];
+  return {
+    title: `Tìm thấy ${formatNumber(offer.found)} chú thích trong sách`,
+    example: first ? `Ví dụ: “${first.mark}” có lời chú “${first.note}”` : null,
+  };
+}
+
+/** Hai danh sách chương là cùng một danh sách (cùng tên, cùng thứ tự): đổi lựa chọn chú thích không làm mất phần người dùng đã tích / đổi tên. */
+export function sameRows(a: readonly ImportPreviewChapter[], b: readonly ImportPreviewChapter[]): boolean {
+  return a.length === b.length && a.every((row, at) => row.title === b[at].title && row.included === b[at].included);
 }
 
 /** Một chương người dùng giữ lại, kèm tên mới nếu họ đổi (chỉ đổi TÊN; chữ của chương không đổi). */
@@ -54,6 +95,8 @@ export interface ImportOptions {
   splitChapters?: boolean;
   /** Các chương được giữ (theo hàng của bước xem trước) và tên mới - chỉ lúc thêm; không có = các chương mặc định ([chapterPicks]). */
   chapters?: ChapterPick[];
+  /** Đề xuất về chú thích đã tích ([footnotesToSend]) - cả lúc xem trước lẫn lúc thêm; không có = như trong sách. */
+  footnotes?: FootnoteChoice;
 }
 
 export interface ImportSuggestion {

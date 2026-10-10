@@ -159,13 +159,17 @@ object TextImports {
 
     /** Đọc thứ đã chọn bằng luật nhập sách và trả danh sách chương (`textbook.preview`). PDF: `pages` là các dòng từng trang do pdf.js lấy.
      *  `splitChapters`: file TXT cả truyện tách theo "Chương N" - cuốn giữ lại là cuốn của lần xem trước cuối, nên [create] thêm đúng thứ người dùng thấy.
-     *  Cuốn giữ lại gồm MỌI hàng của danh sách xem trước (kể cả mục rất ngắn chưa tích); [create] nhận phần người dùng chọn. */
-    fun preview(ref: String, pages: List<List<String>>? = null, title: String = "", author: String = "", splitChapters: Boolean = false): JSONObject {
+     *  Cuốn giữ lại gồm MỌI hàng của danh sách xem trước (kể cả mục rất ngắn chưa tích); [create] nhận phần người dùng chọn.
+     *  `footnotes`: EPUB / DOCX có chú thích - đề xuất người dùng đã tích ([BookImport.footnoteChoiceFromJson]); cuốn giữ lại theo đúng lựa chọn của lần xem trước cuối. */
+    fun preview(
+        ref: String, pages: List<List<String>>? = null, title: String = "", author: String = "", splitChapters: Boolean = false,
+        footnotes: BookImport.FootnoteChoice? = null,
+    ): JSONObject {
         val source = staged(ref)
         val book = if (source.isFile && source.extension.lowercase() == "pdf") {
             BookImport.fromPdfPages(source.nameWithoutExtension, pages ?: throw BookImport.Failed("Chưa lấy được chữ của PDF này - thử lại."), title, author)
         } else {
-            BookImport.importFile(source, splitChapters, keepShort = true)
+            BookImport.importFile(source, splitChapters, keepShort = true, footnotes = footnotes)
         }
         kept[ref] = book
         // Đúng bộ chữ này đã có trong thư viện (với các chương mặc định): hỏi ngay ở bước xem trước ("Mở cuốn đó" / "Thêm bản riêng") - như máy

@@ -1,0 +1,35 @@
+{
+ "title": "Chú thích EPUB3",
+ "author": null,
+ "language": "vi",
+ "cover": null,
+ "chapters": [
+  {
+   "title": "Chương 1: Bến đò",
+   "text": "Con đò cập bến sau cơn mưa 1 và người lái đò buộc dây vào cọc.\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nKhách xuống đò [2] từng người một.\n\n1. Lời chú thứ nhất đứng giữa chương.\n\n2. Lời chú thứ hai đứng cuối chương."
+  },
+  {
+   "title": "Chương 2: Mưa",
+   "text": "Mưa rơi suốt đêm * trên mái tôn.\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nRồi trời tạnh hẳn.\n\n* Lời chú thứ ba, dùng vai ARIA."
+  }
+ ],
+ "notes": [],
+ "footnotes": {
+  "found": 3,
+  "marks": 3,
+  "examples": [
+   {
+    "mark": "…đò cập bến sau cơn mưa¹",
+    "note": "Lời chú thứ nhất đứng giữa chương."
+   },
+   {
+    "mark": "…Khách xuống đò²",
+    "note": "Lời chú thứ hai đứng cuối chương."
+   },
+   {
+    "mark": "…Mưa rơi suốt đêm*",
+    "note": "Lời chú thứ ba, dùng vai ARIA."
+   }
+  ]
+ }
+}
