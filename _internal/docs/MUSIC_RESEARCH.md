@@ -4337,6 +4337,34 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 20:xx - Sửa 3 lỗi Lead soát ra trong TAIL và CUE-DASH (nhánh music/fix-review-1010 6c2fa8c9)
+
+- TAIL: bài kết sớm thì cảnh kế lại chọn đúng bài ấy, và hai mốc cách nhau < 5 s bị gộp nên mất quãng lặng. Sửa: cảnh kế tránh
+  bài vừa kết; `chapter_cues` không gộp sau mốc có `stopAt`.
+- CUE-DASH: "Phần 1: Khởi đầu", "Phần II: Bóng tối", "Phần thứ hai" bị mất tư cách tiêu đề. Sửa: bỏ ":"/"." sau số, nhận
+  "thứ" + số; phần có chữ số hay số La Mã thì không giới hạn 4 chữ.
+- CUE-DASH: lời đáp một từ bao gạch ("— Vâng —", "– Không –") vẫn được nhận là tên. Quét 40 chương đầu của 7.669 sách: dòng một
+  từ bao gạch hầu hết là dấu hết chương ("— Hết —" ở 42 sách), từ tượng thanh ("— Rầm —") và lời đáp. Tất cả đều có chữ có dấu
+  tiếng Việt, còn tên thật thì là tên phiên âm. Sửa: tên một từ không được có chữ có dấu tiếng Việt, và không phải "end"/"fin".
+  Mất có chủ ý: tên Hán Việt một chữ ("— Lâm —").
+- Đo (ghi trước ở Corpus `PLAN_cue_dash.md`):
+  - bộ 4-9: 0/17.795 câu đổi loại;
+  - D, D2, D3: không mất dòng thật nào;
+  - 1/4 Lucien Evans: 0 mốc nhạc đổi;
+  - test: 350 qua; hash 2b33ee3e.
+
+### 10-10 17:5x - P0-CH: hỏi LLM mức căng của CẢ chương thua trung bình P0 từng đoạn - giữ P0
+
+- Ghi trước ở Corpus `research/music/PLAN_p0_ch.md`. Bộ học chọn prompt C0 (MAE .255 so với C1 .315), khoá rồi mới chạy bộ 7
+  và bộ cuối.
+- MAE mức T theo chương:
+  - bộ 7: CH .188, P0 .157 (Δ +.031);
+  - bộ cuối: CH .261, P0 .197 (Δ +.064);
+  - r qua chương: CH .72 / .68, P0 .86 / .80.
+- Luật cần CH tốt hơn P0 .03 ở cả hai bộ, nên KHÔNG QUA. Một lời gọi cả chương cho thang thô (vài mức nguyên), kém trung bình
+  từ nhiều đoạn.
+- Chi phí đã đo: 4,1 giây và khoảng 4.700 token mỗi chương.
+
 ### 10-10 18:3x - CUE-DASH: lời dẫn thoại bao gạch không còn là chỗ đổi cảnh (THẮNG, nhánh music/cue-tail-fixes 7cacb408)
 
 - Lỗi: soát nhạc cả quyển Lucien Evans thấy nhạc đổi bài giữa hội thoại. Nguyên nhân là dòng bao gạch kiểu Việt
