@@ -4364,7 +4364,23 @@ Cách làm:
 - **Lead 10-10 15:4x: ĐÓNG HẲN hướng học sinh** (nhúng + đầu, LoRA, đọc cả chương). Không mở hướng mới khi chưa hỏi Lead.
 - **Phát hiện giữ lại cho thiết kế nhạc:** diễn biến cảnh theo vị trí trong chương là tín hiệu thật và mạnh. Chỉ riêng xu hướng
   tuyến tính đầu–cuối chương đã gánh khoảng .16–.20 r ở bộ học và .11 ở bộ 7. Mọi thiết kế sau (đường cong cảnh, chọn nhạc)
-  nên coi "chương đi lên/đi xuống" là một trục chính, không coi nó là nhiễu cần khử.
+  nên coi "chương đi lên/đi xuống" là một trục chính, không coi nó là nhiễu cần khử. NHƯNG chiều của xu hướng khác nhau giữa
+  các chương (POS-RULE dưới đây), nên trục này phải đọc từ nội dung, không đặt sẵn.
+
+### 10-10 16:1x - POS-RULE: không có luật vị trí chung nào dùng được; học sinh đã chứa phần vị trí
+
+Ghi trước ở Corpus d952f77, kết quả ở Corpus (pos_rule.log). Học sinh S = B06 (ridge trên nhúng q06, học sinh của app).
+Luật R: dự đoán = ±(vị trí tương đối của khúc trong chương), dấu chọn theo bộ học. M trộn hai cái sau khi chuẩn hoá z, trọng
+số chọn theo bộ học.
+
+| | học TB(V,T) | bộ 7 TB |
+|---|---|---|
+| S | .453 | .274 |
+| R vị trí | .080 | −.083 |
+| M, w = .5 | .425 | .232 |
+
+- **THUA.** Trọng số chọn được là 0: thêm vị trí chỉ làm tệ đi.
+- Chương nào cũng có xu hướng đầu–cuối thật, nhưng hướng ấy không chung giữa các chương. App không có gì để thêm.
 
 ### 10-10 15:xx - STU-CTX: cho học sinh thấy khúc trước/sau + vị trí chỉ nhích nhẹ, KHÔNG qua
 
