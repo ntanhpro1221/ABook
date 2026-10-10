@@ -293,7 +293,7 @@ export function PlayerProvider({
   refs.current.expanded = expanded;
   // Dòng ghi công người nghe tích / bỏ tích SAU khi nạp sách (trang sách): hàng đợi theo `skip` mới nhất, để giọng đọc và kịch bản dựng sẵn không còn đọc
   // theo bản cũ (kịch bản cũ nằm lại trong bộ nhớ đệm, màn đọc mở ra vẫn hiện dòng ấy).
-  const { data: playingBook } = useListenBook(track?.bookId);
+  const { data: playingBook } = useListenBook(track?.bookId, false);
   useEffect(() => {
     setQueue((current) => withFreshSkips(current, playingBook?.chapters));
   }, [playingBook]);

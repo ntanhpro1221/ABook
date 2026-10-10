@@ -226,7 +226,7 @@ class App:
         self.library = Library(preferences)
         # Chỗ chờ "Hoàn tác" trước Thùng rác (trash_pending.py): xoá sách / dự án đổi tên vào `<thư viện>/.trash-pending`, hết hạn mới vào Thùng rác.
         self.trash = trash_pending.TrashPending()
-        self._trash_timers: set[threading.Timer] = set()
+        self._trash_sweeper = trash_pending.SweepTimer(self.sweep_trash)
         self.jobs = actions.Jobs(runner)
         self.runner = runner
         self.token = token
@@ -884,15 +884,7 @@ class App:
         thử vào Thùng rác thật); đóng app thì `close` dọn nốt."""
         if self._fake_run():
             return
-
-        def run() -> None:
-            self._trash_timers.discard(timer)
-            self.sweep_trash(root)
-
-        timer = threading.Timer(trash_pending.UNDO_SECONDS + 1, run)
-        timer.daemon = True
-        self._trash_timers.add(timer)
-        timer.start()
+        self._trash_sweeper.schedule(root, trash_pending.UNDO_SECONDS + 1)
 
     def _fake_run(self) -> bool:
         return isinstance(self.runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"
@@ -2100,8 +2092,7 @@ class App:
         self._stop_sync()
         self.cast.close()
         self.previews.shutdown()
-        for timer in list(self._trash_timers):
-            timer.cancel()
+        self._trash_sweeper.cancel()
         # Hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác - trừ cuốn Thùng rác không nhận trọn (Windows sẽ hỏi
         # "xoá hẳn", mà đóng app không được chờ ai bấm): nó ở lại chỗ chờ tới lần mở sau.
         self.sweep_trash(everything=True, ask=False)
@@ -3341,9 +3332,14 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.NOT_FOUND, "File dự án này không kèm bản chụp của màn đó")
         return data
 
-    def get_work(self, _query: dict[str, list[str]], value: str) -> None:
+    def get_work(self, query: dict[str, list[str]], value: str) -> None:
         # "Việc cần duyệt" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
-        self._send_json(HTTPStatus.OK, self._view(value, "work", work_items))
+        view = self._view(value, "work", work_items)
+        if (query.get("count") or [""])[0] == "1":
+            # Nhãn của tab chỉ cần con số (việc đã quyết đang chờ áp dụng không còn là việc cần làm): không gửi/đọc cả danh sách vài MB.
+            self._send_json(HTTPStatus.OK, {"count": sum(1 for item in view["items"] if not item.get("requested"))})
+            return
+        self._send_json(HTTPStatus.OK, view)
 
     def get_music(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.music_view(value))

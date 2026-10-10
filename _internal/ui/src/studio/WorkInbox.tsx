@@ -132,21 +132,33 @@ const KIND_LABEL: Record<WorkKind, string> = {
 
 const PAGE = 40;
 
-export function useWork(bookId: string) {
+export function useWork(bookId: string, enabled = true) {
   return useQuery({
     queryKey: ["work", bookId],
     queryFn: () => api<WorkView>(`/api/books/${bookId}/work`),
-    enabled: Boolean(bookId),
+    enabled: Boolean(bookId) && enabled,
     staleTime: 60_000,
     retry: retryUnlessGone,
     retryOnMount: false, // sổ lỗi: mỗi chỗ gắn thêm một người quan sát không được kéo thêm một lượt hỏi
   });
 }
 
-export function useWorkCount(bookId: string) {
-  const { data } = useWork(bookId);
+/** Số việc cần làm cho nhãn của tab. `fromList`: danh sách đầy đủ đang được tải/mở (tab Việc cần duyệt, màn Duyệt trước khi thu) thì đếm
+ *  từ chính nó; không thì chỉ hỏi con số (`?count=1`) - trang dự án 400 chương từng tải 9,5 MB danh sách chỉ để hiện một con số, và tải
+ *  lại sau MỖI quyết định. Khoá nằm dưới ["work", sách] nên mọi chỗ làm mới danh sách cũng làm mới con số. */
+export function useWorkCount(bookId: string, fromList = false) {
+  const { data: list } = useWork(bookId, fromList);
+  const { data: counted } = useQuery({
+    queryKey: ["work", bookId, "count"],
+    queryFn: () => api<{ count: number }>(`/api/books/${bookId}/work?count=1`),
+    enabled: Boolean(bookId) && !fromList,
+    staleTime: 60_000,
+    retry: retryUnlessGone,
+    retryOnMount: false,
+  });
   // Việc đã quyết (đang chờ áp dụng) không còn là việc cần làm - soát UX 29-09: số không giảm sau khi quyết.
-  return data?.items.filter((item) => !item.requested).length ?? 0;
+  if (fromList && list) return list.items.filter((item) => !item.requested).length;
+  return counted?.count ?? 0;
 }
 
 /** Việc đã quyết chờ gì: sách đang dở thì tự áp khi chạy tiếp; sách ĐÃ XONG không tự chạy lại - phải bấm "Áp dụng thay

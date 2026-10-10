@@ -48,7 +48,7 @@ export function usePrecast(bookId: string, enabled = true) {
  *  cần duyệt" không hiện lại chúng (soát UX a8 05-10, mục 12: cùng một thẻ ở hai tab). Rỗng khi không có màn duyệt. */
 export function usePrecastKeys(bookId: string, enabled: boolean): Set<string> | undefined {
   const { data: view } = usePrecast(bookId, enabled);
-  const { data: work } = useWork(bookId);
+  const { data: work } = useWork(bookId, enabled);
   return useMemo(() => {
     if (!enabled || !view || !work) return undefined;
     const shown = [...castItems(work.items), ...nameItems(work.items), ...lineItems(work.items, view.upcoming.map((chapter) => chapter.id))];

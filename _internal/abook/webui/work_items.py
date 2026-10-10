@@ -19,7 +19,8 @@ from typing import Any, Callable
 from .. import names as renames
 from .. import narrator_sections
 from ..listener_overrides import (
-    NARRATOR, NO_VOICE, UNNAMED, pronunciation_requests, read_overrides, speaker_requests, speaker_target, surface_key, voice_requests,
+    NARRATOR, NO_VOICE, UNNAMED, character_key, pronunciation_requests, read_overrides, speaker_requests, speaker_target, surface_key,
+    voice_requests,
 )
 from .. import speaker_logprobs
 from . import narrator_cards, store
@@ -73,16 +74,19 @@ def _mid(label: str) -> str:
     return label[:1].lower() + label[1:] if label in ("Vai phụ không tên", "Người kể") else label
 
 
-def _has_audio(row: Any, project_root: Path | None) -> bool:
+def _has_audio(row: Any, audio: store.AudioLocator | Path | None) -> bool:
     """Câu này nghe được không - đúng điều nút ▶ cần (`/media/books/ID/samples/N` trả 404 khi file không có). Hàng không có
-    cột `wav_path` là chưa thu."""
+    cột `wav_path` là chưa thu. `audio`: bộ tìm WAV dùng chung cho cả lượt (hoặc thư mục dự án), None = không kiểm."""
     if "wav_path" not in row.keys() or not row["wav_path"]:
         return False
-    return project_root is None or store.segment_audio(project_root, row["wav_path"]) is not None
+    if audio is None:
+        return True
+    locator = audio if isinstance(audio, store.AudioLocator) else store.AudioLocator(audio)
+    return locator.find(row["wav_path"]) is not None
 
 
 def _example(row: Any, names: dict[int, dict[str, Any]], label: Callable[[str], str] = _speaker_label,
-             project_root: Path | None = None) -> dict[str, Any]:
+             project_root: store.AudioLocator | Path | None = None) -> dict[str, Any]:
     chapter = names.get(int(row["chapter_id"]), {})
     return {
         "segmentId": int(row["id"]),
@@ -105,6 +109,7 @@ def _refine_speaker_cards(project_root: Path, items: list[dict[str, Any]]) -> No
     if not cards:
         return
     with closing(store.connect(project_root)) as connection:
+        voiced: set[str] | None = None
         for item in cards:
             example = item["examples"][0]
             rows = connection.execute("SELECT seq, text FROM segments WHERE chapter_id = ? AND seq IN (?, ?)",
@@ -116,8 +121,14 @@ def _refine_speaker_cards(project_root: Path, items: list[dict[str, Any]]) -> No
             lines = item.get("lines") or []
             if len(lines) != 1 or not item.get("choices"):
                 continue
+            # `speaker_target` chỉ trả NO_VOICE cho người chưa có giọng: người đã có giọng thì khỏi hỏi (quét cả bảng câu mỗi lần hỏi
+            # - 7.000 lần trên cuốn 60.000 câu là gần ba phút), cũng không đổi kết quả.
+            if voiced is None:
+                voiced = {str(row[0]) for row in connection.execute(
+                    "SELECT canonical_name FROM characters WHERE id IN"
+                    " (SELECT DISTINCT canonical_character_id FROM segments WHERE voice_profile_id IS NOT NULL)")}
             voiceless = {choice["value"] for choice in item["choices"]
-                         if choice["value"] not in (NARRATOR, UNNAMED)
+                         if choice["value"] not in (NARRATOR, UNNAMED) and character_key(choice["value"]) not in voiced
                          and speaker_target(connection, stable_id=lines[0]["stableId"], text_sha256=lines[0]["textSha256"],
                                             speaker=choice["value"])[1] == NO_VOICE}
             if voiceless:
@@ -126,14 +137,44 @@ def _refine_speaker_cards(project_root: Path, items: list[dict[str, Any]]) -> No
                 item["options"] = [option for option in item["options"] if option not in gone]
 
 
+class _Spoken(list):
+    """Các câu không phải lời kể, theo (chương, seq) - kèm số câu của từng người CÓ TÊN trong từng chương, tính một lần. Thẻ nào
+    cũng hỏi "ai nói nhiều nhất ở những chương này" (hơn hai nghìn lần trên cuốn 400 chương): quét lại cả sách mỗi lần là hàng chục giây."""
+
+    _named_by_chapter: dict[int, dict[str, int]] | None = None
+    _by_chapter: dict[int, list[Any]] | None = None
+
+    def in_chapter(self, chapter_id: int) -> list[Any]:
+        """Các câu của một chương, theo thứ tự câu."""
+        if self._by_chapter is None:
+            index: dict[int, list[Any]] = {}
+            for row in self:
+                index.setdefault(int(row["chapter_id"]), []).append(row)
+            self._by_chapter = index
+        return self._by_chapter.get(chapter_id, [])
+
+    def named_counts(self, chapter_id: int) -> dict[str, int]:
+        if self._named_by_chapter is None:
+            index: dict[int, dict[str, int]] = {}
+            for row in self:
+                speaker = str(row["speaker"])
+                if _is_named(speaker):
+                    counts = index.setdefault(int(row["chapter_id"]), {})
+                    counts[speaker] = counts.get(speaker, 0) + 1
+            self._named_by_chapter = index
+        return self._named_by_chapter.get(chapter_id, {})
+
+
 def _cast_choices(spoken: list[Any], chapter_ids: set[int], leave_out: set[str],
                   label: Callable[[str], str] = _speaker_label) -> list[dict[str, str]]:
     """Người có tên nói nhiều nhất trong những chương ấy - ứng viên hợp lý nhất khi máy không có ý kiến riêng."""
+    if not isinstance(spoken, _Spoken):
+        spoken = _Spoken(spoken)
     counts: dict[str, int] = defaultdict(int)
-    for row in spoken:
-        speaker = str(row["speaker"])
-        if int(row["chapter_id"]) in chapter_ids and _is_named(speaker) and speaker.casefold() not in leave_out:
-            counts[speaker] += 1
+    for chapter_id in sorted(chapter_ids):  # thứ tự chương = thứ tự câu: người xuất hiện trước đứng trước khi bằng số câu
+        for speaker, count in spoken.named_counts(chapter_id).items():
+            if speaker.casefold() not in leave_out:
+                counts[speaker] += count
     ranked = sorted(counts, key=lambda speaker: (-counts[speaker], speaker.casefold()))[:4]
     return [{"label": label(speaker), "value": speaker} for speaker in ranked]
 
@@ -445,12 +486,18 @@ def unsure_speaker_lines(spoken: list[Any], confidences: dict[str, dict[str, Any
 
 def work_items(project_root: Path) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
+    audio = store.AudioLocator(project_root, many=True)  # một bộ tìm WAV cho mọi câu ví dụ của lượt này
     renamed = renames.load(project_root)
+
+    label_of: dict[str, str] = {}
 
     def speaker_label(raw: str) -> str:
         """Tên người nói như Studio đang hiện: tên người nghe đã "Đổi tên" (tab Nhân vật) thay tên gốc. Khoá (`value`,
-        `character`) giữ nguyên - chỉ chữ trên thẻ đổi."""
-        return renamed.get(renames.name_key(str(raw))) or _speaker_label(raw)
+        `character`) giữ nguyên - chỉ chữ trên thẻ đổi. Nhớ theo tên: cả cuốn chỉ vài trăm tên mà hỏi cả trăm nghìn lần."""
+        label = label_of.get(raw)
+        if label is None:
+            label = label_of[raw] = renamed.get(renames.name_key(str(raw))) or _speaker_label(raw)
+        return label
 
     with closing(store.connect(project_root)) as connection:
         names = store.chapter_names(connection, project_root)
@@ -459,11 +506,11 @@ def work_items(project_root: Path) -> dict[str, Any]:
             str(row[0] or "") for row in connection.execute("SELECT input_path FROM chapters")
         ] if "input_path" in {row[1] for row in connection.execute("PRAGMA table_info(chapters)")} else []
         has_wav_path = "wav_path" in {row[1] for row in connection.execute("PRAGMA table_info(segments)")}
-        spoken = connection.execute(
+        spoken = _Spoken(connection.execute(
             "SELECT id, stable_id, chapter_id, seq, text, text_sha256, speaker, kind, voice_profile_id, canonical_character_id"
             + (", wav_path" if has_wav_path else "") + " FROM segments"
             " WHERE kind != 'narration' ORDER BY chapter_id, seq"
-        ).fetchall()
+        ).fetchall())
         characters = {
             int(row["id"]): row
             for row in connection.execute("SELECT id, canonical_name, display_name, gender, locked FROM characters")
@@ -524,7 +571,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "doubt": 0.85,
             "options": list(dict.fromkeys([speaker_label(suggested), speaker_label(current), "Người kể", "Vai phụ không tên"])),
             "current": speaker_label(current),
-            "examples": [_example(row, names, speaker_label, project_root)],
+            "examples": [_example(row, names, speaker_label, audio)],
             **fix,
         })
 
@@ -561,7 +608,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "doubt": 0.8,
             "options": list(dict.fromkeys(["Vai phụ không tên"] + [choice["label"] for choice in choices] + [who])),
             "current": who,
-            "examples": [_example(row, names, speaker_label, project_root) for row in odd_rows[:EXAMPLES]],
+            "examples": [_example(row, names, speaker_label, audio) for row in odd_rows[:EXAMPLES]],
             **fix,
         })
 
@@ -594,7 +641,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "doubt": round(1 - float(found["p_first"]), 3),
                 "options": list(dict.fromkeys([speaker_label(current)] + [choice["label"] for choice in choices])),
                 "current": speaker_label(current),
-                "examples": [_example(row, names, speaker_label, project_root)],
+                "examples": [_example(row, names, speaker_label, audio)],
                 **fix,
             })
 
@@ -643,7 +690,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "doubt": 0.5,
             "options": [f"Không phải {who} kể", f"Giữ {who} là người kể", "Người kể là ai khác…"],
             "current": who,
-            "examples": [_example(row, names, speaker_label, project_root) for row in shown],
+            "examples": [_example(row, names, speaker_label, audio) for row in shown],
             "requested": requested,
             "redoOnly": redo_only,
             "narratorSection": {
@@ -694,7 +741,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "options": ["Nam", "Nữ", "Để máy quyết"],
             # Cùng điều câu trên nói: giọng ĐANG ĐỌC (không phải "Chưa rõ" cạnh "máy đang đọc bằng giọng nam").
             "current": {"male": "Giọng nam", "female": "Giọng nữ"}.get(heard, "Chưa rõ"),
-            "examples": [_example(row, names, speaker_label, project_root) for row in rows[:EXAMPLES]],
+            "examples": [_example(row, names, speaker_label, audio) for row in rows[:EXAMPLES]],
             "voiceChoices": choices,
             "keepCharacters": [key],
             "keepLabel": "Để máy quyết",
@@ -728,7 +775,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "doubt": 0.7,
             "options": ["Chọn người nói khác", "Giữ nguyên"],
             "current": name,
-            "examples": [_example(row, names, speaker_label, project_root)],
+            "examples": [_example(row, names, speaker_label, audio)],
             **fix,
         })
 
@@ -776,8 +823,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
                     "suggested": False,
                     "options": ["Chọn người nói khác", "Giữ nguyên"],
                     "current": speaker_label(speaker),
-                    "examples": [{**_example(lines[0], names, speaker_label, project_root), "changes": False},
-                                 {**_example(lines[1], names, speaker_label, project_root), "changes": True}],
+                    "examples": [{**_example(lines[0], names, speaker_label, audio), "changes": False},
+                                 {**_example(lines[1], names, speaker_label, audio), "changes": True}],
                     **fix,
                 })
                 continue
@@ -793,7 +840,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "suggested": False,
                 "options": ["Chọn người nói khác", "Giữ nguyên"],
                 "current": speaker_label(speaker),
-                "examples": [{**_example(row, names, speaker_label, project_root), "changes": index % 2 == 1} for index, row in enumerate(lines)],
+                "examples": [{**_example(row, names, speaker_label, audio), "changes": index % 2 == 1} for index, row in enumerate(lines)],
                 **fix,
                 # Phạm vi "Cả chuỗi": độc thoại vắt nhiều đoạn của một người khác (lô 18: 3 đoạn gán Heit mà người nói
                 # đang tính "nhắc nhở Heit") - xen kẽ sẽ sai cả ba.
@@ -840,7 +887,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "keepLabel": "Hai người khác nhau",
                 # Tên được hỏi (bí danh) để hiển thị - `current` là nhãn lựa chọn "Hai người khác nhau", không phải tên.
                 "subject": speaker_label(minor),
-                "examples": [_example(row, names, speaker_label, project_root) for row in (named[minor][:2] + named[major][:1])],
+                "examples": [_example(row, names, speaker_label, audio) for row in (named[minor][:2] + named[major][:1])],
                 **fix,
             })
 
@@ -892,7 +939,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "keepLabel": "Hai người khác nhau",
                 # Tên được hỏi (bí danh) để hiển thị - `current` là nhãn lựa chọn "Hai người khác nhau", không phải tên.
                 "subject": speaker_label(minor),
-                "examples": [_example(row, names, speaker_label, project_root) for row in (named[minor][:2] + named[major][:1])],
+                "examples": [_example(row, names, speaker_label, audio) for row in (named[minor][:2] + named[major][:1])],
                 **fix,
             })
 
@@ -939,7 +986,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "doubt": 0.8,
             "options": [choice["label"] for choice in choices],
             "current": f"{len(counts)} người",
-            "examples": [_example(row, names, speaker_label, project_root) for row in rows[:EXAMPLES]],
+            "examples": [_example(row, names, speaker_label, audio) for row in rows[:EXAMPLES]],
             **fix,
             "allLines": every_bracketed,
             "scopeLabels": ["Chương này", "Cả cuốn"],
@@ -957,7 +1004,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             clashes[frozenset(people)].add(chapter_id)
             shared_voice[frozenset(people)] = voice
     for people, chapter_ids in clashes.items():
-        rows = [row for row in spoken if str(row["speaker"]) in people and int(row["chapter_id"]) in chapter_ids]
+        rows = [row for chapter_id in sorted(chapter_ids) for row in spoken.in_chapter(chapter_id) if str(row["speaker"]) in people]
         ordered = sorted(people, key=lambda person: speaker_label(person).casefold())
         labels = [speaker_label(person) for person in ordered]
         keys = [_character_key(person) for person in ordered]
@@ -983,7 +1030,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "doubt": 0.8,
             "options": [f"Đổi giọng {label}" for label in labels] + ["Giữ nguyên"],
             "current": "Chung giọng",
-            "examples": [_example(row, names, speaker_label, project_root) for row in rows[:EXAMPLES]],
+            "examples": [_example(row, names, speaker_label, audio) for row in rows[:EXAMPLES]],
             **({"voiceChoices": choices, "keepCharacters": keys, "keepLabel": "Giữ nguyên"} if choices else {}),
             "requested": f"đổi giọng {', '.join(moving)}" if moving else None,
         })
@@ -1018,7 +1065,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "options": [choice["label"] for choice in choices] + [f"Là một người mới tên “{label[:1].upper() + label[1:]}”", "Mỗi chỗ một người"],
             "current": f"{len(members)} vai phụ riêng",
             # Mọi câu của nhóm (không chỉ vài câu ví dụ): người nghe bỏ chọn từng câu ngay trên thẻ.
-            "examples": [{**_example(row, names, speaker_label, project_root), "stableId": str(row["stable_id"])}
+            "examples": [{**_example(row, names, speaker_label, audio), "stableId": str(row["stable_id"])}
                          for row in rows],
             "lines": [{"stableId": str(row["stable_id"]), "textSha256": str(row["text_sha256"] or "")} for row in rows],
             "choices": choices,
@@ -1057,7 +1104,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "doubt": 0.4,
             "options": ["Là một nhân vật có tên", "Đúng là vai phụ"],
             "current": "Vai phụ không tên",
-            "examples": [_example(row, names, speaker_label, project_root) for row in rows[:EXAMPLES]],
+            "examples": [_example(row, names, speaker_label, audio) for row in rows[:EXAMPLES]],
             **fix,
         })
 
@@ -1084,7 +1131,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "surface": str(row["surface"]),
             "requested": requested.get(surface_key(str(row["surface"]))),
             # Người nói của câu ví dụ không liên quan tới cách đọc tên - bỏ "máy gán: ..." khỏi thẻ này.
-            "examples": [{**_example(example, names, speaker_label, project_root), "speaker": ""} for example in word_examples.get(str(row["surface"]), [])],
+            "examples": [{**_example(example, names, speaker_label, audio), "speaker": ""} for example in word_examples.get(str(row["surface"]), [])],
         })
 
     # 7. Bản thu lỗi (hàng chờ "Cần nghe lại"), gom theo chương.

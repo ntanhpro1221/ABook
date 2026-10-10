@@ -1725,7 +1725,7 @@ function useContinueIntoNextPart() {
  *  `skipId`: tập kế đã có nút "Nghe tiếp" riêng ngay trên - không mời lần nữa. */
 function AfterTheEnd({ skipId }: { skipId?: string }) {
   const { track } = usePlayer();
-  const { data: books } = useListenLibrary();
+  const { data: books } = useListenLibrary(false);
   const speaks = (useReadAloudVoices().data?.length ?? 0) > 0;
   const playBook = usePlayListenBook();
   const navigate = useNavigate();
