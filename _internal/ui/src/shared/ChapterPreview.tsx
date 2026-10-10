@@ -61,14 +61,17 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
             )}
           >
             {choice && (
-              <input
-                type="checkbox"
-                checked={on}
-                disabled={choice.disabled}
-                onChange={(event) => choice.onPick(index, event.target.checked)}
-                aria-label={`Đưa vào sách: ${renamed ?? chapter.title}`}
-                className="size-4 accent-[var(--accent)]"
-              />
+              // Ô chọn 14 px: nhãn bao ngoài nới vùng chạm lên 40 px ở màn hẹp / cảm ứng (touch-hit), bấm vào vùng nới cũng tích / bỏ tích.
+              <label className="touch-hit grid size-5 place-items-center">
+                <input
+                  type="checkbox"
+                  checked={on}
+                  disabled={choice.disabled}
+                  onChange={(event) => choice.onPick(index, event.target.checked)}
+                  aria-label={`Đưa vào sách: ${renamed ?? chapter.title}`}
+                  className="size-4 accent-[var(--accent)]"
+                />
+              </label>
             )}
             <span className="tabular text-xs text-fg-2">{position + 1}</span>
             <div className="min-w-0">

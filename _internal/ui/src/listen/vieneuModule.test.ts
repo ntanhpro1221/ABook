@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   acceleratedNote,
   benchmarkLabel,
+  fastUnsupportedNote,
   initialChoices,
   meteredNotice,
   selectionBytes,
@@ -48,6 +49,14 @@ function status(over: Partial<VieneuStatus> = {}): VieneuStatus {
 }
 
 describe("mô-đun Giọng VieNeu", () => {
+  it("đo lại thì không nói là giọng vừa tải; máy không chạy được bản tăng tốc thì nói thẳng", () => {
+    expect(vieneuLabel(status({ state: "ready", benchmarking: true }))).toContain("vừa tải");
+    const measured = status({ state: "ready", benchmarking: true, benchmark: { turbo: { rtf: 0.2, firstAudioMs: 900 } } });
+    expect(vieneuLabel(measured)).toBe("Đang đo lại tốc độ trên máy này (vài giây)…");
+    expect(fastUnsupportedNote(status())).toBeNull();
+    expect(fastUnsupportedNote(status({ fastUnsupported: "CPU của máy này không có lệnh AVX2" }))).toBe("Bản tăng tốc: máy này không chạy được (CPU của máy này không có lệnh AVX2).");
+  });
+
   it("tính phần dùng chung một lần và bỏ phần máy đã có", () => {
     expect(selectionBytes(status(), ["turbo"])).toBe(256 * MB);
     expect(selectionBytes(status(), ["turbo", "nano"])).toBe(526 * MB);

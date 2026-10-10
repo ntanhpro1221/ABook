@@ -174,3 +174,11 @@ export async function addRest(
   }
   return hooks.openBooks(items);
 }
+
+/** Cuốn mà dòng "Đang …" trong danh sách file đứng ở: đang xem trước thì cuốn đang xem; đang thêm cả lô (`working` là tên cuốn máy đang thêm) thì cuốn ĐANG THÊM chứ
+ *  không phải cuốn xem trước (nó được thêm sau cùng - soát UX a15: dòng "Đang xem" đứng yên ở một cuốn trong khi máy thêm các cuốn khác). Không khớp tên nào thì giữ cuốn đang xem. */
+export function queueFocus(items: readonly QueueItem[], currentId: number | null, working: string): { id: number | null; adding: boolean } {
+  if (!working) return { id: currentId, adding: false };
+  const match = items.find((item) => item.state === "waiting" && item.name === working);
+  return { id: match ? match.id : currentId, adding: true };
+}

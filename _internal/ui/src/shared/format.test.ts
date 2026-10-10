@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { etaOf, excerpt, formatEta, formatFingerprint, formatSize, licenseLabel, shownReading } from "./format";
+import { etaOf, excerpt, fileName, formatEta, formatFingerprint, formatSize, licenseLabel, shownReading } from "./format";
 
 describe("shownReading", () => {
   it("capitalises each word of a name's reading for display", () => {
@@ -68,6 +68,22 @@ describe("formatSize", () => {
     expect(formatSize(850 * 1024 ** 2)).toBe("850 MB");
     expect(formatSize(3.25 * 1024 ** 3)).toBe("3,3 GB");
     expect(formatSize(4 * 1024 ** 3)).toBe("4 GB");
+  });
+  it("keeps one decimal under 10 MB and never says 0 MB", () => {
+    expect(formatSize(0.5 * 1024 ** 2)).toBe("0,5 MB");
+    expect(formatSize(3.25 * 1024 ** 2)).toBe("3,3 MB");
+    expect(formatSize(200 * 1024)).toBe("0,2 MB");
+    expect(formatSize(20 * 1024)).toBe("20 KB");
+    expect(formatSize(10 * 1024 ** 2)).toBe("10 MB");
+  });
+});
+
+describe("fileName", () => {
+  it("keeps only the file name of a Windows or POSIX path", () => {
+    expect(fileName("D:\\Sách\\Đã xuất\\Truyện.abook")).toBe("Truyện.abook");
+    expect(fileName("/home/a/Truyện.m4b")).toBe("Truyện.m4b");
+    expect(fileName("Truyện.abook")).toBe("Truyện.abook");
+    expect(fileName("D:/Sách/Bộ/")).toBe("Bộ");
   });
 });
 

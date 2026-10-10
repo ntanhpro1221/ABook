@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/shared/cn";
 import { coverArtwork } from "@/shared/cover";
-import { formatNumber, formatSize } from "@/shared/format";
+import { fileName, formatNumber, formatSize } from "@/shared/format";
 import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { api, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
@@ -140,6 +140,7 @@ export function ExportDialog({
       const skipped = result.skipped?.length ? ` · chưa có chương nào nên bỏ qua: ${result.skipped.map((part) => `Phần ${part.part}`).join(", ")}` : "";
       // `file` chỉ có khi cả bộ (hay một phần) nằm trong MỘT file; cả bộ mỗi phần một file thì có `parts` mà không có `file`.
       const single = "file" in result && typeof result.file === "string";
+      const filePath = single ? String((result as { file?: string }).file) : "";
       const title = result.parts
         ? kind === "mp3"
           ? `Đã xuất ${result.files ?? 0} chương của ${result.parts.length} phần`
@@ -166,7 +167,8 @@ export function ExportDialog({
       } else {
         toast.success(title, {
           id: pending ?? undefined,
-          description: detail,
+          // Thông báo chỉ nói tên file khi cả bộ nằm trong một file; đường đầy đủ hiện khi rê chuột.
+          description: filePath ? <span title={filePath}>{detail.replace(filePath, fileName(filePath))}</span> : detail,
           action: info?.remote ? undefined : { label: "Mở thư mục", onClick: () => revealFolder(result.folder) },
         });
       }

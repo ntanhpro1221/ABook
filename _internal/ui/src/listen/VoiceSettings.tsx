@@ -274,6 +274,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                           <Button
                             size="sm"
                             variant="ghost"
+                            className="touch-row"
                             icon={playing ? Square : Play}
                             loading={sample.loading === voice.id}
                             onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}

@@ -73,7 +73,7 @@ function ChapterRow({
         onClick={onPlay}
         disabled={!canPlay(chapter)}
         aria-label={current && player.playing ? `Tạm dừng ${chapter.fullTitle}` : `Nghe ${chapter.fullTitle}`}
-        className="touch-hit grid size-9 shrink-0 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
+        className="touch-hit touch-box grid size-9 shrink-0 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
       >
         {current && player.playing ? (
           <Vu className="h-3 text-accent" />
@@ -840,7 +840,7 @@ export function BookScreen({
 
   return (
     <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-5 sm:px-10 sm:pt-7">
-      <button type="button" onClick={() => navigate("/")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+      <button type="button" onClick={() => navigate("/")} className="touch-hit touch-row inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Thư viện
       </button>
       <header className="mt-5 flex flex-col gap-5 sm:flex-row sm:gap-7">

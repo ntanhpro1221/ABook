@@ -430,6 +430,14 @@ export function foldVietnamese(text: string): string {
   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
 }
 
+/** Mã các cuốn mà thư viện còn một cuốn nữa CÙNG TÊN (hai bản của một truyện, hai lần thêm): lưới thêm một dòng phụ để phân biệt (soát UX a15). */
+export function twinBookIds(books: readonly Pick<ListenBook, "id" | "title">[]): Set<string> {
+  const count = new Map<string, number>();
+  const key = (book: Pick<ListenBook, "title">) => foldVietnamese(book.title.trim().replace(/\s+/g, " "));
+  for (const book of books) count.set(key(book), (count.get(key(book)) ?? 0) + 1);
+  return new Set(books.filter((book) => (count.get(key(book)) ?? 0) > 1).map((book) => book.id));
+}
+
 /** Ô "Tìm sách": khớp tên, tác giả hoặc giọng kể, không phân biệt hoa thường và dấu ("nguyen" tìm ra "Nguyễn"). `folded` đã qua foldVietnamese. */
 export function bookMatchesQuery(book: Pick<ListenBook, "title" | "author" | "narrator">, folded: string): boolean {
   return !folded || foldVietnamese(`${book.title} ${book.author ?? ""} ${book.narrator}`).includes(folded);

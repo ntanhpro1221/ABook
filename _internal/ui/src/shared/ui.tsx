@@ -346,7 +346,7 @@ export function Dialog({
         <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-scrim backdrop-blur-[2px]" />
         <DialogPrimitive.Content
           className={cn(
-            "fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-panel p-6 shadow-float focus:outline-none",
+            "fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex max-h-[90dvh] flex-col rounded-2xl border border-line bg-panel p-6 shadow-float focus:outline-none",
             width,
           )}
           onInteractOutside={keepOpenForToasts}
@@ -364,7 +364,7 @@ export function Dialog({
             if (target instanceof HTMLInputElement) target.select();
           }}
         >
-          <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
             <div>
               <DialogPrimitive.Title className="text-lg font-semibold">{title}</DialogPrimitive.Title>
               {description && (
@@ -372,12 +372,13 @@ export function Dialog({
               )}
             </div>
             <DialogPrimitive.Close asChild>
-              <button aria-label="Đóng" className="-m-1 rounded-md p-1 text-fg-3 hover:bg-hover hover:text-fg">
+              <button aria-label="Đóng" className="touch-hit touch-box -m-1 inline-flex items-center justify-center rounded-md p-1 text-fg-3 hover:bg-hover hover:text-fg">
                 <X className="size-5" />
               </button>
             </DialogPrimitive.Close>
           </div>
-          {children}
+          {/* Hộp cao hơn màn (điện thoại, cửa sổ thấp) thì nội dung cuộn trong hộp, nút Đóng ở đầu luôn thấy được (soát UX a15). */}
+          <div className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">{children}</div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
