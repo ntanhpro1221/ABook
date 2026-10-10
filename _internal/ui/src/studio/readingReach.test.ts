@@ -16,7 +16,7 @@ describe("cách đọc cho từ bất kỳ nói trước nó chạm tới bao nh
 
   it("chữ chưa có câu nào, và chữ bị ký hiệu chặn, đều nói thật", () => {
     expect(reachSummary({ ...base, lines: 0, reached: 0, recorded: 0 })).toContain("Chưa có câu nào");
-    const blocked = { ...base, surface: "km/h", lines: 2, reached: 0, recorded: 0, blocked: 2 };
+    const blocked = { ...base, surface: "Mở/đóng", lines: 2, reached: 0, recorded: 0, blocked: 2 };
     expect(reachSummary(blocked)).toContain("chưa dùng được");
     expect(reachSaved(blocked, "x")).not.toContain("thu lại");
   });

@@ -205,8 +205,8 @@ function LastError({ raw }: { raw: string }) {
   );
 }
 
-/** Dưới hàng "Người kể chuyện" của tab Nhân vật: giọng kể chọn lúc tạo sách. Cuốn chưa chạy thì đổi được ngay qua "Sửa thiết lập"
- *  (trình tạo điền sẵn mọi lựa chọn cũ); đã chạy thì giọng kể gắn với cả cuốn - nói thẳng, đừng để người nghe tìm nút không có. */
+/** Dưới hàng "Người kể chuyện" của tab Nhân vật. Cuốn chưa chạy: đổi giọng kể qua "Sửa thiết lập" (trình tạo điền sẵn mọi lựa chọn
+ *  cũ). Đã phân vai: nút "Đổi giọng người kể" ở hàng ấy, như nhân vật (soát UX a23, B21). Đang phân tích: nói khi nào đổi được. */
 function NarratorNote({ book }: { book: BookSummary }) {
   const navigate = useNavigate();
   const remote = Boolean(useAppInfo().data?.remote);
@@ -220,7 +220,8 @@ function NarratorNote({ book }: { book: BookSummary }) {
       </>
     );
   }
-  return <>Giọng kể chọn lúc tạo sách và giữ nguyên cho cả cuốn nên không đổi ở đây; muốn giọng kể khác thì tạo lại cuốn từ file truyện.</>;
+  if (book.castLocked) return <>Đổi giọng kể không phải tạo lại sách: câu kể đã thu sẽ được thu lại bằng giọng mới.</>;
+  return <>Đổi được giọng kể khi máy phân vai xong (ngay sau bước phân tích truyện).</>;
 }
 
 function ProductionPanel({ book }: { book: BookSummary }) {
@@ -1335,6 +1336,7 @@ export function ProjectScreen() {
           <CastList
             bookId={book.id}
             onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })}
+            onPickNarrator={book.castLocked ? () => setPicking({ name: "NARRATOR", displayName: "người kể" }) : undefined}
             onMerge={setMerging}
             onRename={setRenaming}
             onGender={setGendering}

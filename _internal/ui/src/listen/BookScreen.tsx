@@ -354,10 +354,12 @@ function reachedTitles(chapters: ListenChapter[], until: number | undefined): Se
 
 /** `reached`: tên các chương tới chỗ đang nghe (trang nghe) - người chỉ xuất hiện SAU đó bị ẩn tới khi bấm hiện, để dàn nhân
  *  vật không lộ nội dung ("Douglas · từ Chương 738" khi đang nghe Chương 725 - soát UX 29-09). Studio không truyền: hiện hết. */
-export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, reached, waiting, narratorNote }: {
+export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onRename, onGender, reached, waiting, narratorNote }: {
   bookId: string;
-  /** Dưới hàng "Người kể chuyện": giọng kể không đổi được ở danh sách này - nơi đổi được (Studio) hoặc vì sao không. */
+  /** Dưới hàng "Người kể chuyện": đổi giọng kể ở đâu, hay vì sao chưa đổi được. */
   narratorNote?: ReactNode;
+  /** Chỉ Studio, sách đã phân vai: mở màn "Đổi giọng" cho người kể (như nhân vật - câu kể đã thu được thu lại). */
+  onPickNarrator?: () => void;
   onPickVoice?: (person: CastMember) => void;
   onMerge?: (person: CastMember) => void;
   onRename?: (person: CastMember) => void;
@@ -389,9 +391,13 @@ export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, rea
         <div className="min-w-0 flex-1">
           <div className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">Người kể chuyện</div>
           <div className="mt-0.5 font-semibold">{cast.narrator.voice || "Mặc định"}</div>
+          {onPickNarrator && cast.narrator.pendingVoice?.preset && (
+            <div className="mt-0.5 truncate text-xs font-medium text-accent-text">Chờ áp dụng: giọng {cast.narrator.pendingVoice.preset}</div>
+          )}
           <div className="tabular text-xs text-fg-2">{formatNumber(cast.narrator.lines)} câu dẫn truyện{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}</div>
         </div>
         {cast.narrator.voice && <SampleButton id={`voice-${cast.narrator.voice}`} url={source.voiceUrl(cast.narrator.voice)} label={`Nghe giọng ${cast.narrator.voice}`} />}
+        {onPickNarrator && <IconButton label="Đổi giọng người kể" icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}
       </div>
       {narratorNote && <div className="mt-2 text-xs text-fg-2">{narratorNote}</div>}
       <h3 className="mb-3 mt-6 text-sm font-semibold">

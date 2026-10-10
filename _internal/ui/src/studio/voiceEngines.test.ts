@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupByEngine, moduleNote, plainGroupLabels, sharedText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
+import { groupByEngine, moduleNote, plainGroupLabels, sharedText, takenText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
 
 const voice = (over: Partial<EngineVoice> = {}): EngineVoice => ({
   name: "Ngọc Linh", engine: "vieneu", engineLabel: "VieNeu", installed: true, oneStep: false, sharedWith: [], otherUsers: 0, ...over,
@@ -33,6 +33,13 @@ describe("voices grouped by the machine that reads them", () => {
     expect(sharedText(voice(), true)).toBe("Giọng đang đọc cho người này");
     expect(plainGroupLabels([{ engine: "vieneu" }, { engine: "zerotts" }])).toEqual(["Giọng chính", "Giọng thêm"]);
     expect(plainGroupLabels([{ engine: "zerotts" }, { engine: "vieneu" }, { engine: "supertonic" }])).toEqual(["Giọng thêm 1", "Giọng chính", "Giọng thêm 2"]);
+  });
+});
+
+describe("a voice the narrator cannot take", () => {
+  it("names whose voice it is, and counts the rest past three", () => {
+    expect(takenText(["Lucien"])).toBe("Đang là giọng của Lucien - người kể cần giọng riêng");
+    expect(takenText(["An", "Bình", "Chi", "Dũng", "Em"])).toBe("Đang là giọng của An, Bình, Chi và 2 người khác - người kể cần giọng riêng");
   });
 });
 

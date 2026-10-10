@@ -69,7 +69,7 @@ def name_pattern(narrator: str) -> re.Pattern[str]:
 
 
 def section_ids(raw_text: str, rows: Sequence[Mapping[str, Any]], *, max_chars: int = MAX_CHARS,
-                drop_credits: bool = False) -> list[int] | None:
+                drop_credits: bool = False, drop_tail_credits: bool = False) -> list[int] | None:
     """Số đoạn của từng hàng. Bộ chia câu bỏ dòng ngắt cảnh, nên cắt NGUỒN tại các dòng ấy, chia từng khúc bằng đúng bộ chia
     của app, và đối chiếu: ghép các khúc phải ra đúng chữ từng hàng. Lệch (nguồn sửa sau khi chia) -> None, không đoán."""
     chunks: list[list[str]] = [[]]
@@ -81,11 +81,14 @@ def section_ids(raw_text: str, rows: Sequence[Mapping[str, Any]], *, max_chars: 
     ids: list[int] = []
     texts: list[str] = []
     section = 0
-    for chunk in chunks:
+    last = max((index for index, chunk in enumerate(chunks) if "".join(chunk).strip()), default=-1)
+    for position, chunk in enumerate(chunks):
         text = "".join(chunk)
         if not text.strip():
             continue
-        part = segment_chapter_text(1, text, max_chars=max_chars, drop_credits=drop_credits and section == 0)
+        # Dòng ghi công đầu chương ở khúc đầu, dòng ủng hộ / quảng cáo cuối chương ở khúc cuối - như bộ chia cả chương.
+        part = segment_chapter_text(1, text, max_chars=max_chars, drop_credits=drop_credits and section == 0,
+                                    drop_tail_credits=drop_tail_credits and position == last)
         if not part:
             continue
         ids += [section] * len(part)
@@ -113,7 +116,7 @@ def measure(rows: Sequence[Mapping[str, Any]], indexes: Sequence[int], name: re.
 
 
 def detect(raw_text: str, rows: Sequence[Mapping[str, Any]], narrator: str, *, max_chars: int = MAX_CHARS,
-           drop_credits: bool = False) -> list[dict[str, Any]]:
+           drop_credits: bool = False, drop_tail_credits: bool = False) -> list[dict[str, Any]]:
     """Các đoạn của MỘT chương mà người kể có vẻ không phải `narrator` (dùng chữ nguồn + hàng đã chia: `text`, `kind_hint`, `seq`).
 
     Mỗi phần tử: {"from_seq", "to_seq", "r1", "r3", "words"} - gộp các đoạn liền nhau bị báo thành một khoảng. Không có
@@ -121,7 +124,7 @@ def detect(raw_text: str, rows: Sequence[Mapping[str, Any]], narrator: str, *, m
     narrator = narrator.strip()
     if not narrator or not rows:
         return []
-    ids = section_ids(raw_text, rows, max_chars=max_chars, drop_credits=drop_credits)
+    ids = section_ids(raw_text, rows, max_chars=max_chars, drop_credits=drop_credits, drop_tail_credits=drop_tail_credits)
     if ids is None:
         return []
     name = name_pattern(narrator)

@@ -96,12 +96,13 @@ def _key(name: str) -> str:
 
 def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
     from ..character_registry import listener_voice_choice
+    from ..listener_overrides import narrated_voices
     from ..voice_catalog import ENGINE_LABELS, ENGINE_VIENEU, castable_engine_voices, casting_presets
     from .reading_preview import PreviewError, character_line, line_text
 
-    voices = store.book_voices(project_root)
-    not_for_characters = {str(voices.get("narrator_voice") or ""), *map(str, voices.get("other_narrators", ()))}
     key = _key(character)
+    if key == "NARRATOR":
+        return narrator_choices(project_root)
     renamed = renames.load(project_root)
 
     def shown(who: str) -> str:
@@ -109,10 +110,13 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
         return renamed.get(renames.name_key(who)) or speaker_label(who)
 
     with closing(store.connect(project_root)) as connection:
+        # Giọng người kể ĐANG đọc (người nghe có thể đã đổi) cũng không dành cho nhân vật.
+        voices = narrated_voices(connection, store.book_voices(project_root))
+        not_for_characters = {str(voices.get("narrator_voice") or ""), *map(str, voices.get("other_narrators", ()))}
         row = connection.execute(
             "SELECT id, canonical_name, display_name, gender, age FROM characters WHERE canonical_name=?", (key,)
         ).fetchone()
-        if row is None or key == "NARRATOR":
+        if row is None:
             return None
         chapters: dict[str, set[int]] = defaultdict(set)
         presets_of: dict[str, set[str]] = defaultdict(set)
@@ -216,6 +220,64 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
         "rerecord": {"lines": recorded, "seconds": round(recorded * each, 1), "measured": measured},
         # Mô-đun tải thêm của máy đọc khác (engine_module_status): hộp hiện nút tải và tiến độ.
         "modules": {engine: engine_module_status(engine) for engine in engines},
+    }
+
+
+def narrator_choices(project_root: Path) -> dict[str, Any] | None:
+    """Hộp "Đổi giọng" của hàng "Người kể" (soát UX a23, B21): mọi giọng kể chuyện của danh mục (như trình tạo sách), cùng hình
+    với hộp của nhân vật. Giọng một nhân vật đang giữ thì không chọn được (`takenBy`: của ai) - người kể không bao giờ trùng
+    giọng nhân vật (`listener_overrides._narrator_target` từ chối đúng như vậy). Đổi là thu lại mọi câu ĐÃ THU đọc bằng giọng
+    người kể (`listener_overrides.narrator_voiced`). None khi sách chưa phân vai (chưa có giọng người kể để đổi)."""
+    from ..listener_overrides import NARRATOR, character_presets, narrator_profile, narrator_voiced
+    from ..voice_catalog import ENGINE_LABELS, ENGINE_VIENEU, narrator_presets
+    from .reading_preview import PreviewError, character_line, line_text
+
+    renamed = renames.load(project_root)
+    with closing(store.connect(project_root)) as connection:
+        profile = narrator_profile(connection)
+        narrator = connection.execute("SELECT id FROM characters WHERE canonical_name=?", (NARRATOR,)).fetchone()
+        if profile is None or narrator is None:
+            return None
+        current = str(profile["preset_name"] or "")
+        held = character_presets(connection)
+        rows = connection.execute(
+            "SELECT chapter_id, kind, speaker, voice_profile_id, canonical_character_id, wav_path FROM segments").fetchall()
+        recorded = sum(1 for row in rows if row["wav_path"] and narrator_voiced(row, int(profile["id"])))
+        mine = [row for row in rows if row["canonical_character_id"] == int(narrator["id"])]
+        try:
+            line = character_line(connection, NARRATOR)
+            try_line = {"segmentId": int(line["id"]), "text": line_text(line)}
+        except PreviewError:
+            try_line = None
+        book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
+        each, measured = store.seconds_per_line(connection)
+    pending = _pending_request(project_root, NARRATOR, {}, float(book_row["updated_at"] or 0) if book_row is not None else 0.0)
+    entries = []
+    for preset in narrator_presets():
+        name = str(preset["name"])
+        gender = str(preset["gender"])
+        entries.append({
+            "name": voice_label(name), "engine": ENGINE_VIENEU, "engineLabel": ENGINE_LABELS.get(ENGINE_VIENEU, ENGINE_VIENEU),
+            "installed": True, "oneStep": False, "description": "",
+            "gender": gender, "genderLabel": GENDER_LABELS.get(gender, ""), "region": str(preset["region"]),
+            "style": STYLE_LABELS.get(str(preset["style"]), str(preset["style"])),
+            "preview": preview_file(name) is not None,
+            "current": name == current,
+            "pending": pending is not None and pending["preset"] == name,
+            "suggested": False, "sharedWith": [], "otherUsers": 0,
+            "takenBy": sorted((renamed.get(renames.name_key(who)) or speaker_label(who) for who in held.get(name, ())),
+                              key=str.casefold),
+        })
+    return {
+        "character": {"value": NARRATOR, "label": "Người kể", "gender": next(
+            (str(preset["gender"]) for preset in narrator_presets() if preset["name"] == current), "unknown"),
+            "lines": len(mine), "chapters": len({int(row["chapter_id"]) for row in mine})},
+        "current": voice_label(current),
+        "pending": None if pending is None else {"name": voice_label(pending["preset"]), "requestedAt": pending["requestedAt"]},
+        "voices": entries,
+        "tryLine": try_line,
+        "rerecord": {"lines": recorded, "seconds": round(recorded * each, 1), "measured": measured},
+        "modules": {},
     }
 
 

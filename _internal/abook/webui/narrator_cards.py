@@ -44,6 +44,7 @@ def proposals(project_root: Path) -> list[dict[str, Any]]:
     text = settings.get("text") if isinstance(settings.get("text"), dict) else {}
     max_chars = int(tts.get("max_segment_chars") or narrator_sections.MAX_CHARS)
     drop_credits = bool(text.get("drop_credit_lines"))
+    drop_tail_credits = bool(text.get("drop_tail_credit_lines"))
     found: list[dict[str, Any]] = []
     with closing(store.connect(project_root)) as connection:
         # Sổ tối thiểu (test, bản chụp cũ) có thể thiếu cột nguồn / gợi ý loại đoạn: không có gì để đề xuất.
@@ -66,7 +67,7 @@ def proposals(project_root: Path) -> list[dict[str, Any]]:
                 stat = path.stat()
             except OSError:
                 continue
-            key = (str(project_root), index, stat.st_mtime_ns, stat.st_size, narrator, len(rows), max_chars, drop_credits)
+            key = (str(project_root), index, stat.st_mtime_ns, stat.st_size, narrator, len(rows), max_chars, drop_credits, drop_tail_credits)
             if key not in _CACHE:
                 if len(_CACHE) > _CACHE_MAX:
                     _CACHE.clear()
@@ -76,7 +77,8 @@ def proposals(project_root: Path) -> list[dict[str, Any]]:
                     raw = decode_text_bytes(path.read_bytes())
                 except OSError:
                     continue
-                _CACHE[key] = narrator_sections.detect(raw, rows, narrator, max_chars=max_chars, drop_credits=drop_credits)
+                _CACHE[key] = narrator_sections.detect(raw, rows, narrator, max_chars=max_chars, drop_credits=drop_credits,
+                                                         drop_tail_credits=drop_tail_credits)
             found += [{**item, "chapter_id": int(chapter["id"]), "chapter_index": index, "narrator": narrator}
                       for item in _CACHE[key]]
     return found

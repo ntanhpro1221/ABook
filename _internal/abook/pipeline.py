@@ -746,6 +746,7 @@ class BookPipeline:
                 max_chars=max_chars,
                 warnings=segmentation_warnings,
                 drop_credits=self._drop_credit_lines(),
+                drop_tail_credits=self._drop_credit_lines("drop_tail_credit_lines"),
             )
             if not rows:
                 raise RuntimeError(f"Chapter has no readable content: {chapter['input_path']}")
@@ -987,12 +988,13 @@ class BookPipeline:
                 "so stale speaker and voice assignments cannot be republished"
             )
 
-    def _drop_credit_lines(self) -> bool:
+    def _drop_credit_lines(self, key: str = "drop_credit_lines") -> bool:
         # Bỏ dòng ghi công người dịch ("*Edit: Lắc", "TL : NicK") khi tách câu - CHỈ khi người dùng đã đồng ý đề xuất ấy lúc
         # tạo sách (app không bao giờ tự sửa nội dung). Sách không có khoá này - mọi sách khác, kể cả sách tạo trước 29-09 -
         # tách như cũ, nên resume dựng lại đúng từng đoạn đã lưu (AGENTS.md: đổi cách tách = đổi quyển sách).
+        # `key` "drop_tail_credit_lines": dòng xin ủng hộ / quảng cáo ở CUỐI chương, đồng ý riêng.
         text = self.settings.get("text")
-        return bool(text.get("drop_credit_lines")) if isinstance(text, dict) else False
+        return bool(text.get(key)) if isinstance(text, dict) else False
 
     def _segmentation_checkpoint_mismatch(self) -> str | None:
         max_chars = int(self.settings["tts"]["max_segment_chars"])
@@ -1001,6 +1003,7 @@ class BookPipeline:
                 dict(chapter),
                 max_chars=max_chars,
                 drop_credits=self._drop_credit_lines(),
+                drop_tail_credits=self._drop_credit_lines("drop_tail_credit_lines"),
             )
             checkpoint_rows = self.db.list_segments(chapter_id=int(chapter["id"]))
             if len(expected_rows) != len(checkpoint_rows):

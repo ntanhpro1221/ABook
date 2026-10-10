@@ -158,6 +158,33 @@ def test_a_slash_between_digits_keeps_its_reading() -> None:
     assert spoken_symbols_to_words(text) == text
 
 
+UNIT_PAIRS = ("Xe chạy 50km/h.", "Xe chạy 50 km/h.", "Tốc độ km/h thôi.", "Gió 3 m/s.", "Nặng 3 kg/m2.", "Thuốc 5 mg/ml.")
+
+
+def test_a_slash_between_two_units_is_kept_for_the_per_reading() -> None:
+    """"km/h" thành "km, h" đọc "ki lô mét, hát" (soát UX a23). "/" giữa hai đơn vị đo là "trên": để nguyên cả cặp, sea-g2p đọc
+    "ki lô mét trên giờ" - cả khi có số dính liền ("50km/h") hay cách ("50 km/h")."""
+    for text in UNIT_PAIRS:
+        assert spoken_symbols_to_words(text) == text
+
+
+def test_a_slash_that_is_not_between_two_units_keeps_its_old_reading() -> None:
+    assert spoken_symbols_to_words("Chọn và/hoặc bỏ.") == "Chọn và, hoặc bỏ."
+    assert spoken_symbols_to_words("Mở/đóng cửa.") == "Mở, đóng cửa."
+    assert spoken_symbols_to_words("Size M/L thôi.") == "Size M, L thôi."
+    assert spoken_symbols_to_words("Được 10 DP/ngày.") == "Được 10 DP, ngày."
+    assert spoken_symbols_to_words("Hôm ấy ngày 12/3, ăn 1/2 cái.") == "Hôm ấy ngày 12/3, ăn 1/2 cái."
+    assert spoken_symbols_to_words("Cao 1m/kém.") == "Cao 1m, kém.", "chữ sau không phải đơn vị (dính chữ cái)"
+
+
+def test_the_units_are_read_per_all_the_way_to_the_voice() -> None:
+    from sea_g2p import Normalizer
+
+    normalizer = Normalizer()
+    for text in UNIT_PAIRS[:3]:
+        assert "ki lô mét trên giờ" in normalizer.normalize(spoken_symbols_to_words(text), punc_norm=True), text
+
+
 def test_a_comma_before_a_colon_collapses() -> None:
     """"Rare (Hiếm - B):" produced "Rare, Hiếm - B,:" - a comma the conversion introduced,
     left sitting against the colon that follows it."""
@@ -168,7 +195,8 @@ def test_the_slash_rule_is_also_stable_on_fragments() -> None:
     """Same invariant as everything else here: the repair path re-derives pieces of this
     output, and a rule that fires twice moves the boundary text."""
     for sample in ("Sentry (Vệ quân/Hộ vệ): Chuyên gia phòng ngự.",
-                   "Rare (Hiếm - B): Mạnh hơn / khó tìm hơn."):
+                   "Rare (Hiếm - B): Mạnh hơn / khó tìm hơn.",
+                   "Tốc độ (Speed): 50km/h, gió 3 m/s, chọn và/hoặc bỏ."):
         converted = spoken_symbols_to_words(sample)
         assert spoken_symbols_to_words(converted) == converted
         cuts = [i + 1 for i, ch in enumerate(converted) if ch in ",.!?…" and i + 1 < len(converted)]

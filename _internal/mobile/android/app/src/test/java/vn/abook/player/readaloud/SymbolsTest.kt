@@ -67,5 +67,14 @@ class SymbolsTest {
     )
 
     @Test
+    fun aSlashBetweenTwoUnitsIsLeftForThePerReading() = check(
+        "Xe chạy 50km/h, gió 3 m/s và 60 km/h." to "Xe chạy 50km/h, gió 3 m/s và 60 km/h.",
+        "Tốc độ km/h thôi, nặng 3 kg/m2, thuốc 5 mg/ml, đổ 2 L/h." to "Tốc độ km/h thôi, nặng 3 kg/m2, thuốc 5 mg/ml, đổ 2 L/h.",
+        "Chọn và/hoặc bỏ, Mở/đóng cửa, ngày 12/3, ăn 1/2 cái, 10 DP/ngày, size M/L." to
+            "Chọn và, hoặc bỏ, Mở, đóng cửa, ngày 12 tháng 3, ăn 1 phần 2 cái, 10 DP mỗi ngày, size M, L.",
+        "Hạn 10 lần/ngày, 3 chương/tuần." to "Hạn 10 lần mỗi ngày, 3 chương mỗi tuần.",
+    )
+
+    @Test
     fun aPhoneNumberWithoutTheSymbolIsUnchanged() = check("Gọi 0912345678 nhé." to "Gọi 0912345678 nhé.")
 }

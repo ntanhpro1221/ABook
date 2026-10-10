@@ -7,11 +7,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Làm sách trong Studio (máy tính)
+
+- Đổi được giọng người kể mà không phải tạo lại sách: hàng "Người kể" ở tab Nhân vật có nút đổi giọng như một nhân vật (nghe thử, hộp Áp dụng nói trước bao nhiêu câu kể đã thu sẽ thu lại); giọng nhân vật đang dùng thì không chọn được để người kể luôn có giọng riêng.
+- Trình tạo sách gợi ý bỏ cả dòng xin ủng hộ, quảng cáo hay "Đọc truyện tại…" ở cuối chương (ghi "cuối chương"), cùng chỗ với dòng ghi công đầu chương; mặc định vẫn đọc như file truyện, chỉ bỏ khi bạn bấm "Bỏ khỏi phần đọc".
+
 ### Điện thoại và Nghe sách (máy tính và điện thoại)
 
 - Thông báo "có việc mới cần duyệt" trên điện thoại báo đúng con số trên tab Việc cần duyệt của Studio (không còn đếm việc đã quyết hay câu đã chấm), và bản chụp "Việc cần duyệt" trong file dự án chỉ liệt kê việc còn phải quyết.
 - Nhạc nền trên điện thoại như máy tính: bài trên 40 MB không tải mà chọn bài khác, bài tải hỏng thử lại thưa dần rồi thôi thay vì tải đi tải lại mãi.
 - Gộp người trên sách mở từ file có dấu "Chờ áp dụng: gộp vào …" như trong Studio; ý muốn chưa áp (gộp, đổi giọng) không theo file sách hay đồng bộ sang máy khác; "Thu lại" cả nhóm câu chạy cả trên điện thoại.
+- "km/h", "50km/h", "m/s", "kg/m2", "mg/ml" đọc là "ki lô mét trên giờ", "mét trên giây"… thay vì "ki lô mét, hát"; "và/hoặc", ngày "12/3" hay phân số "1/2" vẫn đọc như trước. Cả Studio lẫn Nghe ngay.
 
 ## [0.4.47] - 2026-10-11
 

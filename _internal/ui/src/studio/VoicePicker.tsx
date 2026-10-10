@@ -9,7 +9,7 @@ import { Button, Dialog, Progress, Segmented, Skeleton, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { modulePercent } from "./musicLocal";
-import { groupByEngine, moduleNote, plainGroupLabels, sharedText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
+import { groupByEngine, moduleNote, plainGroupLabels, sharedText, takenText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
 import { useVoiceTry } from "./VoiceTry";
 import { byGender, rerecordText, type GenderFilter, type Rerecord } from "./voiceTryText";
 
@@ -19,7 +19,8 @@ import { byGender, rerecordText, type GenderFilter, type Rerecord } from "./voic
 // người cùng chương), câu đã thu của người ấy được thu lại. Không phải dừng sách. Giọng nhóm theo máy đọc: VieNeu (mọi giọng phân vai
 // tự động) rồi máy khác chỉ chọn tay (ZeroTTS, Supertonic - tải thêm một lần, nút tải ngay trong hộp). Soát UX Studio mục 13:
 // mỗi giọng nghe được cả câu mẫu chung (▶) lẫn một câu của chính nhân vật đọc bằng giọng ấy (VoiceTry.tsx), lọc Nam / Nữ / Tất
-// cả, và hộp nói trước đổi giọng sẽ thu lại bao nhiêu câu, hết chừng bao lâu.
+// cả, và hộp nói trước đổi giọng sẽ thu lại bao nhiêu câu, hết chừng bao lâu. Người kể dùng chính hộp này (soát UX a23, B21:
+// voice_picker.narrator_choices) - giọng kể chuyện của danh mục, giọng nhân vật đang giữ thì không chọn được, không hỏi giới.
 
 type Gender = "male" | "female";
 const GENDER_WORD: Record<Gender, string> = { male: "nam", female: "nữ" };
@@ -36,6 +37,8 @@ interface VoiceOption extends EngineVoice {
   suggested: boolean;
   /** Chất giọng của giọng máy khác ("Nữ · Trưởng thành · Rõ ràng"); rỗng với VieNeu (đã có miền + phong cách). */
   description: string;
+  /** Chỉ hộp người kể: nhân vật đang giữ giọng này - không chọn được. */
+  takenBy?: string[];
 }
 
 interface VoiceChoices {
@@ -57,7 +60,7 @@ function voiceMeta(voice: VoiceOption, withGender = false): string {
   const parts = voice.description ? [voice.description] : [voice.region ? `Miền ${voice.region}` : "", voice.style];
   // Chất giọng của máy khác đã mở đầu bằng giới ("Nữ · Trưởng thành"): không nói hai lần.
   const about = [withGender && !voice.description ? voice.genderLabel : "", ...parts].filter(Boolean).join(" · ");
-  return `${about} · ${sharedText(voice, voice.current)}`;
+  return `${about} · ${voice.takenBy?.length ? takenText(voice.takenBy) : sharedText(voice, voice.current)}`;
 }
 
 /** Tên nhóm của một máy đọc, và - khi máy chưa có giọng ấy - lời nhắn + nút tải (tiến độ hỏi lại mỗi giây). */
@@ -158,6 +161,7 @@ export function VoicePicker({
   const when = useWhenApplied(bookId);
   // Tên như tiêu đề hộp ("Oliver"), không phải khoá sổ in hoa ("OLIVER") - soát UX 30-09.
   const name = person?.displayName || data?.character.label || "";
+  const narrator = data?.character.value === "NARRATOR";
   // Giọng khác giới với nhân vật: hỏi ngay trong hộp trước khi ghi (soát UX a13 #4) - đổi giọng khác giới là đổi luôn giới của người ấy.
   const [crossing, setCrossing] = useState<VoiceOption | null>(null);
   useEffect(() => setCrossing(null), [person?.name]);
@@ -172,9 +176,10 @@ export function VoicePicker({
       // Dòng nhân vật hiện "Chờ áp dụng" ngay (store.pending_voices), không đợi lần làm mới sau 60 giây.
       refreshAfterDecision(client, bookId);
       const character = data!.character;
+      const who = narrator ? "người kể" : "người ấy";
       // Chọn nhầm giọng trong danh sách dài: "Hoàn tác" như thẻ giọng trong hộp việc (studio/decisions.ts).
       toast.success(`Đã ghi: ${name} đọc bằng giọng ${voice.name}${withGender ? ` và là ${GENDER_WORD[voice.gender]}` : ""}`, {
-        description: `${data!.rerecord?.lines ? `Thu lại ${formatNumber(data!.rerecord.lines)} câu đã thu của người ấy bằng giọng mới.` : "Chưa câu nào của người ấy được thu nên không phải thu lại gì."} ${when}`,
+        description: `${data!.rerecord?.lines ? `Thu lại ${formatNumber(data!.rerecord.lines)} câu đã thu của ${who} bằng giọng mới.` : `Chưa câu nào của ${who} được thu nên không phải thu lại gì.`} ${when}`,
         action: undoAction(
           client,
           bookId,
@@ -205,10 +210,10 @@ export function VoicePicker({
     },
     onError: (failure: Error) => toast.error("Chưa bỏ được lựa chọn", { description: failure.message }),
   });
-  // Chọn một giọng: cùng giới (hay chưa biết giới) ghi luôn; khác giới thì hỏi trước.
+  // Chọn một giọng: cùng giới (hay chưa biết giới) ghi luôn; khác giới thì hỏi trước. Người kể không có giới để đổi.
   const choose = (voice: VoiceOption) => {
     const known = data?.character.gender;
-    if ((known === "male" || known === "female") && known !== voice.gender) setCrossing(voice);
+    if (!narrator && (known === "male" || known === "female") && known !== voice.gender) setCrossing(voice);
     else save.mutate({ voice, withGender: false });
   };
   const voices = byGender(data?.voices ?? [], shown);
@@ -301,7 +306,7 @@ export function VoicePicker({
                   })}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-medium">{voice.name}</span>
+                    <span className={cn("font-medium", voice.takenBy?.length && "text-fg-2")}>{voice.name}</span>
                     {voice.current && <span className="rounded-full bg-panel px-2 py-px text-[11px] font-medium text-accent-text">Đang dùng</span>}
                     {voice.pending && !voice.current && (
                       <span className="rounded-full bg-warning-soft px-2 py-px text-[11px] font-medium text-warning">Chờ áp dụng</span>
@@ -310,7 +315,7 @@ export function VoicePicker({
                       <span className="rounded-full bg-info-soft px-2 py-px text-[11px] font-medium text-info">Máy gợi ý</span>
                     )}
                   </div>
-                  <div className={cn("mt-0.5 text-xs", voice.sharedWith.length ? "text-warning" : "text-fg-2")}>
+                  <div className={cn("mt-0.5 text-xs", voice.sharedWith.length && !voice.takenBy?.length ? "text-warning" : "text-fg-2")}>
                     {voiceMeta(voice, shown === "all")}
                   </div>
                 </div>
@@ -323,10 +328,10 @@ export function VoicePicker({
                   <Button
                     size="sm"
                     variant={voice.suggested && !voice.current && !voice.pending ? "primary" : "secondary"}
-                    disabled={voice.current || voice.pending || !voice.installed || save.isPending || keep.isPending}
+                    disabled={voice.current || voice.pending || !voice.installed || Boolean(voice.takenBy?.length) || save.isPending || keep.isPending}
                     onClick={() => choose(voice)}
                   >
-                    {voice.current ? "Đang dùng" : voice.pending ? "Đã chọn" : "Chọn"}
+                    {voice.current ? "Đang dùng" : voice.pending ? "Đã chọn" : voice.takenBy?.length ? "Nhân vật dùng" : "Chọn"}
                   </Button>
                 )}
               </li>
@@ -335,11 +340,18 @@ export function VoicePicker({
               </section>
             ))}
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-fg-3">
-            Giọng đang có người dùng vẫn chọn được: máy lấy bậc âm sắc khác để hai người không nghe giống nhau trong cùng
-            chương. Chọn giọng khác giới thì hộp hỏi trước, vì đó là đổi luôn giới của nhân vật. Các giọng thêm chỉ có một âm sắc: hai người cùng chương
-            chung giọng ấy sẽ nghe giống hệt nhau.
-          </p>
+          {narrator ? (
+            <p className="mt-3 text-xs leading-relaxed text-fg-3">
+              Người kể cần giọng riêng nên giọng nhân vật đang dùng không chọn được. Câu kể đã thu được thu lại bằng giọng mới; câu
+              chưa thu đọc luôn bằng giọng mới. Không phải tạo lại sách.
+            </p>
+          ) : (
+            <p className="mt-3 text-xs leading-relaxed text-fg-3">
+              Giọng đang có người dùng vẫn chọn được: máy lấy bậc âm sắc khác để hai người không nghe giống nhau trong cùng
+              chương. Chọn giọng khác giới thì hộp hỏi trước, vì đó là đổi luôn giới của nhân vật. Các giọng thêm chỉ có một âm sắc: hai người cùng chương
+              chung giọng ấy sẽ nghe giống hệt nhau.
+            </p>
+          )}
         </>
       )}
     </Dialog>

@@ -333,7 +333,8 @@ export interface CastMember {
 }
 
 export interface Cast {
-  narrator: { voice: string; lines: number; seconds: number };
+  /** `pendingVoice`: giọng người kể người nghe đã chọn ở Studio mà dây chuyền chưa áp (store.cast). */
+  narrator: { voice: string; lines: number; seconds: number; pendingVoice?: { preset: string; gender: string } | null };
   characters: CastMember[];
   extras: CastMember[];
   /** Studio, phần nối tiếp: giọng mang từ phần trước của những người chưa nói câu nào ở phần này. */

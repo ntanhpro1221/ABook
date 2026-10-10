@@ -2075,7 +2075,7 @@ object BookImport {
         return found
     }
 
-    // ---- dòng xin ủng hộ / quảng cáo / nguồn ở CUỐI chương (importers.tail_credit_suggestions; cùng chuỗi, sửa một bên thì sửa cả hai) ----
+    // ---- dòng xin ủng hộ / quảng cáo / nguồn ở CUỐI chương (text_processing.tail_credit_line, qua importers.tail_credit_suggestions; cùng chuỗi, sửa một bên thì sửa cả hai) ----
 
     private const val CREDIT_TAIL_SCAN_LINES = 64
     private const val CREDIT_TAIL_MAX = 120

@@ -88,5 +88,18 @@ def test_the_leads_decisions_of_04_10(text: str, said: str) -> None:
     assert _said(text) == said
 
 
+# ---- "/" giữa hai đơn vị đo là "trên": để nguyên cả cặp, sea-g2p đọc "ki lô mét trên giờ" (soát UX a23) ----------------------------------
+@pytest.mark.parametrize("text, said", [
+    ("Xe chạy 50km/h, gió 3 m/s và 60 km/h.", "Xe chạy 50km/h, gió 3 m/s và 60 km/h."),
+    ("Tốc độ km/h thôi, nặng 3 kg/m2, thuốc 5 mg/ml, đổ 2 L/h.", "Tốc độ km/h thôi, nặng 3 kg/m2, thuốc 5 mg/ml, đổ 2 L/h."),
+    # không phải hai đơn vị: luật cũ
+    ("Chọn và/hoặc bỏ, Mở/đóng cửa, ngày 12/3, ăn 1/2 cái, 10 DP/ngày, size M/L.",
+     "Chọn và, hoặc bỏ, Mở, đóng cửa, ngày 12 tháng 3, ăn 1 phần 2 cái, 10 DP mỗi ngày, size M, L."),
+    ("Hạn 10 lần/ngày, 3 chương/tuần.", "Hạn 10 lần mỗi ngày, 3 chương mỗi tuần."),
+])
+def test_a_slash_between_two_units_is_left_for_the_per_reading(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
 def test_a_phone_number_without_the_symbol_is_unchanged() -> None:
     assert _said("Gọi 0912345678 nhé.") == "Gọi 0912345678 nhé."

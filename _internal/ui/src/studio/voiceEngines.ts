@@ -65,6 +65,13 @@ export function sharedText(voice: EngineVoice, current = false): string {
   return `Cùng chương với ${people} - ${after}${others ? ` · ${others}` : ""}`;
 }
 
+/** Hộp "Đổi giọng" của người kể: giọng nhân vật đang giữ không chọn được - nói của ai (tối đa ba tên). */
+export function takenText(takenBy: string[]): string {
+  const named = takenBy.slice(0, 3).join(", ");
+  const rest = takenBy.length > 3 ? ` và ${takenBy.length - 3} người khác` : "";
+  return `Đang là giọng của ${named}${rest} - người kể cần giọng riêng`;
+}
+
 /** Dòng ghi chú dưới tên nhóm của một máy đọc chưa sẵn sàng trên máy này; null khi đã dùng được. */
 export function moduleNote(status: EngineModuleStatus | undefined): string | null {
   if (!status || status.state === "ready") return null;

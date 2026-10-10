@@ -26,7 +26,7 @@ _NOTE_MARKER = re.compile(r"\[" + f"[{_CLASS}]*" + r"note[0-9]+" + f"[{_CLASS}]*
 _SENTENCE_END = ".!?…\"”»’)」』】。！？~–—"  # dấu kết câu ở cuối dòng: dòng như vậy là trọn một đoạn
 _WHOLE_LINE = 200  # dài hơn mọi khổ dòng của máy dàn trang: chắc chắn là trọn một đoạn
 CREDIT_WINDOW = tp.CREDIT_WINDOW_LINES
-CREDIT_TAIL_WINDOW = 6  # số dòng có chữ CUỐI chương mà gợi ý ủng hộ / nguồn ở cuối chương xét (importers.tail_credit_suggestions; Kotlin, TS cùng số)
+CREDIT_TAIL_WINDOW = tp.CREDIT_TAIL_WINDOW_LINES  # số dòng có chữ CUỐI chương mà gợi ý ủng hộ / nguồn ở cuối chương xét (Kotlin, TS cùng số)
 SCENE_BREAK_MS = tp.SCENE_BREAK_MS
 
 

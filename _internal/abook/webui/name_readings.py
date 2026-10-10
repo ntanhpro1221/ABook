@@ -90,7 +90,7 @@ def reading_reach(project_root: Path, surface: str) -> dict[str, Any]:
 
     Khớp đúng như TTS (`tts._load_pronunciations`): nguyên từ, không phân biệt hoa thường, trên chữ máy sẽ đọc (`listener_text` nếu
     người nghe đã sửa câu). Trước khi tra cách đọc, dây chuyền đổi ký hiệu máy không nói được thành quãng nghỉ
-    (`spoken_symbols_to_words`: "km/h" thành "km, h"), nên chữ nào bị chữ ấy xé đôi thì cách đọc không bao giờ khớp: `blocked`
+    (`spoken_symbols_to_words`: "Mở/đóng" thành "Mở, đóng"; "km/h" thì giữ), nên chữ nào bị chữ ấy xé đôi thì cách đọc không bao giờ khớp: `blocked`
     đếm các câu đó, để giao diện nói thật thay vì hứa thu lại."""
     from ..text_processing import spoken_symbols_to_words
 

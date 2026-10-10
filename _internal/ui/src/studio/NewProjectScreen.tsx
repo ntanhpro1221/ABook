@@ -46,6 +46,7 @@ import {
 } from "@/studio/data";
 import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
+import { creditKind, creditSummary, creditWhere, type Credits } from "@/studio/credits";
 import { samePath } from "@/studio/samePath";
 import { splitOutcome } from "@/studio/splitOffer";
 import {
@@ -734,47 +735,31 @@ function carriedText(carries: Seed["carries"]): string {
   return parts.length ? parts.join(" · ") : "những gì phần trước đã có";
 }
 
-interface Credits {
-  lines: number;
-  chapters: number;
-  examples: string[];
-}
-
-/** Dòng ghi công người dịch ở đầu các chương ĐANG CHỌN (bỏ chương hay giới hạn số chương thì đếm lại). */
-function creditSummary(files: ScannedFile[]): Credits {
-  const examples: string[] = [];
-  let lines = 0;
-  let chapters = 0;
-  for (const file of files) {
-    const found = file.credits ?? [];
-    if (!found.length) continue;
-    lines += found.length;
-    chapters += 1;
-    for (const line of found) if (examples.length < 3 && !examples.includes(line)) examples.push(line);
-  }
-  return { lines, chapters, examples };
-}
-
 // Phát hiện được thì ĐỀ XUẤT, không tự làm (chủ sách 29-09: app không bao giờ tự sửa nội dung truyện). Dòng ghi công người
 // dịch ở đầu chương ("TL : NicK", "*Edit: Lắc") bị đọc như một câu kể; chỉ khi bấm "Bỏ khỏi phần đọc" sách mới bỏ chúng,
 // không bấm thì sách giữ nguyên như file truyện. Phải chọn lúc tạo sách: đổi cách tách câu sau khi đã làm là đổi cả quyển.
+// Dòng xin ủng hộ / quảng cáo ở cuối chương (soát UX a23) nằm chung một gợi ý, ghi "(cuối chương)" (studio/credits).
 function CreditSuggestion({ credits, accepted, onChange }: { credits: Credits; accepted: boolean; onChange: (value: boolean) => void }) {
   if (!credits.lines) return null;
-  const quoted = credits.examples.map((line) => `“${line}”`).join(", ");
+  const quoted = credits.examples.join(", ");
   return (
     <div className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
       <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         {accepted ? (
           <>
-            <p className="font-semibold">Sẽ bỏ {formatNumber(credits.lines)} dòng ghi công khỏi phần đọc</p>
+            <p className="font-semibold">
+              Sẽ bỏ {formatNumber(credits.lines)} {creditKind(credits)} khỏi phần đọc
+            </p>
             <p className="mt-1 break-words text-fg-2">
               Những dòng như {quoted} không được đọc và không hiện khi đọc theo. File truyện giữ nguyên.
             </p>
           </>
         ) : (
           <>
-            <p className="font-semibold">Gợi ý: {formatNumber(credits.chapters)} chương có dòng ghi công người dịch ở đầu chương</p>
+            <p className="font-semibold">
+              Gợi ý: {formatNumber(credits.chapters)} chương có {creditWhere(credits)}
+            </p>
             <p className="mt-1 break-words text-fg-2">
               {quoted}
               {credits.lines > credits.examples.length ? " và các dòng khác" : ""}. Hiện máy vẫn đọc chúng như lời kể - file truyện
@@ -1332,7 +1317,7 @@ function ConfirmStep({
   precastWait,
   setPrecastWait,
   dropCredits,
-  creditLines,
+  credits,
   analysisModel,
   restart,
   onReview,
@@ -1353,8 +1338,8 @@ function ConfirmStep({
   setPrecastWait: (value: boolean) => void;
   /** Người dùng đã đồng ý bỏ dòng ghi công khỏi phần đọc. */
   dropCredits: boolean;
-  /** Số dòng ghi công người dịch phát hiện ở các chương đã chọn (gợi ý chưa áp nếu `dropCredits` tắt). */
-  creditLines: number;
+  /** Dòng ghi công / ủng hộ phát hiện ở các chương đã chọn (gợi ý chưa áp nếu `dropCredits` tắt). */
+  credits: Credits;
   analysisModel: string;
   /** "Làm lại phân tích": bản dở của cuốn này vào Thùng rác khi cuốn mới tạo xong. */
   restart?: { title: string };
@@ -1376,8 +1361,8 @@ function ConfirmStep({
           ["Các phần sau", startNow ? "Xếp hàng sau phần trước, tự bắt đầu khi phần trước xong; mang giọng nhân vật và cách đọc tên từ phần trước" : "Bấm bắt đầu phần 1 thì các phần sau tự xếp hàng; mang giọng nhân vật và cách đọc tên từ phần trước"],
         ] as [string, string][])
       : []),
-    ...(dropCredits
-      ? ([["Dòng ghi công", `bỏ ${formatNumber(creditSummary(scan.files).lines)} dòng khỏi phần đọc`]] as [string, string][])
+    ...(dropCredits && credits.lines
+      ? ([[creditKind(credits).replace(/^d/, "D"), `bỏ ${formatNumber(credits.lines)} dòng khỏi phần đọc`]] as [string, string][])
       : []),
     ["Độ dài audio", `khoảng ${formatLength(scan.totals.audioSeconds)}`],
     ["Giọng kể", narrator],
@@ -1446,11 +1431,11 @@ function ConfirmStep({
           </p>
         </div>
       )}
-      {creditLines > 0 && !dropCredits && (
+      {credits.lines > 0 && !dropCredits && (
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-panel p-4 text-sm">
           <Sparkles className="size-4 shrink-0 text-accent-text" />
           <p className="min-w-0 flex-1 text-pretty">
-            Còn một gợi ý chưa áp: {formatNumber(creditLines)} dòng ghi công người dịch ở đầu chương sẽ vẫn được đọc như lời kể.
+            Còn một gợi ý chưa áp: {formatNumber(credits.lines)} {creditWhere(credits)} sẽ vẫn được đọc như lời kể.
             Đổi sau khi đã phân tích là đổi cả quyển, nên chọn ngay bây giờ.
           </p>
           <Button variant="secondary" size="sm" onClick={onReview}>
@@ -1537,7 +1522,7 @@ export function NewProjectScreen() {
       firstPerson: redo.firstPerson,
       ...(redo.analysisModel ? { analysisModel: redo.analysisModel } : {}),
       profile: (PROFILE_VALUES as string[]).includes(redo.profile) ? (redo.profile as Profile) : "high_quality",
-      dropCredits: redo.dropCreditLines,
+      dropCredits: redo.dropCreditLines || redo.dropTailCreditLines,
       replaces: {
         id: redoId,
         title: redo.title,
@@ -1699,7 +1684,8 @@ export function NewProjectScreen() {
         ...(draft.replaces ? { replaces: draft.replaces.id } : {}),
         ...(draft.analysisModel ? { analysisModel: draft.analysisModel } : {}),
         // Chỉ khi người dùng đã đồng ý đề xuất - không gửi gì thì sách giữ nguyên nội dung.
-        ...(draft.dropCredits && creditSummary(scan.files).lines ? { dropCreditLines: true } : {}),
+        ...(draft.dropCredits && creditSummary(scan.files).head ? { dropCreditLines: true } : {}),
+        ...(draft.dropCredits && creditSummary(scan.files).tail ? { dropTailCreditLines: true } : {}),
         start: draft.startNow && !noStudio,
         ...(draft.precastWait ? { precastWait: true } : {}),
       },
@@ -1896,7 +1882,7 @@ export function NewProjectScreen() {
               precastWait={Boolean(draft.precastWait)}
               setPrecastWait={(precastWait) => update({ precastWait })}
               dropCredits={Boolean(draft.dropCredits)}
-              creditLines={creditSummary(scan.files).lines}
+              credits={creditSummary(scan.files)}
               analysisModel={draft.analysisModel ?? ""}
               restart={draft.replaces?.restart ? { title: draft.replaces.title } : undefined}
               onReview={() => go(0)}
