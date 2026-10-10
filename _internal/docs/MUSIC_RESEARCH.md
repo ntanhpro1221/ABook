@@ -4337,6 +4337,18 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 20:xx - Lỗi 1 MUSIC-AUDIT (bài chạy tiếp qua mảnh lệch không khí): luật DRIFT theo valence nhãn THUA
+
+Lỗi: ở 306, bài hài "Batty McFaddin" chạy tiếp 132-250 s qua cáo phó. Luật ghi trước (Corpus `PLAN_drift.md`, bd4d2dc; kết quả
+d462286): mảnh nối tiếp có |V bài − V mảnh| > 0,55 thì hạ nền −12 dB suốt mảnh (qua `steps`, không đổi bài, không đổi mốc).
+
+- Khoảng cách z sẵn có của app không dùng được: ca 306 chỉ z 1,56, trong khi z > 2 đã 11,5 % thời gian.
+- DRIFT trên 571 chương Lucien mới: bắt ca 306; hạ 1,89 % thời lượng; mốc chỉ đổi `steps` ở đúng 45 chương có mảnh hạ - NHƯNG
+  đúng chỉ **11/40 = 27,5 %** (ngưỡng 80 %). Phần lớn mảnh "lệch" là trò chuyện trung tính: valence đường nhãn câu (±0,4) là nhiễu,
+  không phải không khí thật.
+- Nhánh `music/drift` (fd5bc91d) giữ làm hồ sơ, không gộp. Nếu làm lại thì tín hiệu phải là không khí của đoạn chữ (P0 / học sinh
+  cảnh q06), ghi trước và đo trên dữ liệu mới.
+
 ### 10-10 19:1x - Lỗi 2 MUSIC-AUDIT (nền chồng lên đoạn truyện chơi nhạc): luật từ khoá thua hai lần - DỪNG
 
 Lỗi: ở Lucien Evans 115 giây 396 truyện tả người chơi đàn mà nhạc nền vẫn chạy đè lên. Thử nhận "nhạc đang vang trong truyện"
