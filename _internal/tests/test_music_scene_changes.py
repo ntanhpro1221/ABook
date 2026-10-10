@@ -68,6 +68,20 @@ def test_a_dashed_dialogue_tag_or_a_plain_sentence_is_not_a_subhead() -> None:
         assert cue_kind({"text": text}) == "subhead", text
 
 
+def test_a_numbered_part_with_its_title_is_still_a_subhead() -> None:
+    for text in ("Phần 1: Khởi đầu", "Phần II: Bóng tối", "Phần thứ hai", "Phần 3 - Cuộc gặp gỡ định mệnh", "Phần IV"):
+        assert cue_kind({"text": text}) == "subhead", text
+    for text in ("Phần hai của kế hoạch là đánh lạc hướng bọn chúng", "Phần thứ"):
+        assert cue_kind({"text": text}) is None, text
+
+
+def test_a_one_word_reply_sound_or_end_mark_between_dashes_is_not_a_name() -> None:
+    for text in ("— Vâng —", "– Không –", "- Dạ -", "— Ừ —", "— Chạy —", "— Rầm —", "— Hết —", "— End —"):
+        assert cue_kind({"text": text}) is None, text
+    for text in ("— Selia —", "—Nanato—", "— Diệp Phàm —", "— Phần hai —"):
+        assert cue_kind({"text": text}) == "subhead", text
+
+
 def test_a_time_or_place_line_is_no_longer_a_boundary_but_a_time_jump_still_breaks() -> None:
     segments = [{"id": i, "text": text} for i, text in enumerate(["Mở.", "Một.", "Trong khi đó, ở thành phố phía nam.", "Hai."], 1)]
     assert 3 not in cue_bounds(segments) and cue_bounds(segments) == {}
@@ -151,6 +165,22 @@ def test_a_track_ending_just_before_the_music_changes_rests_instead_of_a_short_s
     monkeypatch.setattr(music_select, "TAIL_MIN_SECONDS", 5.0)
     longer = choose(scenes, _near(tracks), book_key="b", track_info={t["link"]: t for t in tracks}.get)
     assert [s["link"] for s in longer[2]["siblings"]] == [sibling["link"] if head == first["link"] else first["link"]]
+
+
+def test_a_track_that_ended_early_is_not_reopened_by_the_next_scene(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Bài kết sớm (TAIL) rồi lặng: cảnh kế tránh nó như tránh bài đang chơi; không còn bài nào khác thì mở lại bài ấy SAU quãng
+    lặng - hai mốc riêng, không gộp thành một mốc lặp bài từ đầu."""
+    monkeypatch.setattr(music_select, "SHORT_TRACK_PENALTY", 0.0)
+    scenes = _manual((0, 80, 0.0, "chapter_start"), (80, 150, 0.0, "separator"))
+    short = _track("short", 0.25, -0.15, 0.0, 76)
+    other = _track("other", 0.1, 0.3, 0.0, 300)
+    tracks = {track["link"]: track for track in (short, other)}
+    chosen = choose(scenes, _near([short, other]), book_key="b", track_info=tracks.get)
+    assert [entry["link"] for entry in chosen] == [short["link"], other["link"]] and chosen[0]["stopAt"] == 76.0
+    alone = choose(scenes, _near([short]), book_key="b", track_info=tracks.get)
+    assert [entry["link"] for entry in alone] == [short["link"]] * 2
+    cues = music_plan.chapter_cues({"enabled": True, "scenes": alone}, 1)
+    assert [(cue["start"], cue["end"]) for cue in cues] == [(0.0, 76.0), (80.0, 150.0)]
 
 
 def _manual(*pieces: tuple[float, float, float, str]) -> list[dict]:
