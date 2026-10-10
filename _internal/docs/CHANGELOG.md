@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.47] - 2026-10-11
+
 ### Làm sách trong Studio (máy tính)
 
 - Lời báo nói đúng cái giá: sách chưa thu câu nào thì đổi giọng, giới tính hay cách đọc tên không còn dọa "thu lại N câu"; hộp Dừng / Tiếp tục giữa lúc phân tích nói thẳng có thể ra một cuốn khác và mời "Làm lại phân tích từ đầu"; "Giữ nguyên" hay "Để máy quyết" không còn đếm là thay đổi chờ áp dụng; hộp Gộp và hộp đổi giới tính nói giọng sẽ dùng, người đã gộp có dấu "Chờ áp dụng: gộp vào …".

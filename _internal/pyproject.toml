@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "abook"
-version = "0.4.46"
+version = "0.4.47"
 description = "Offline Vietnamese expressive audiobook workstation with crash-safe checkpoints"
 requires-python = ">=3.11,<3.13"
 dependencies = [
