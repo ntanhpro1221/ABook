@@ -100,14 +100,18 @@ export class MusicBed {
   private timer: ReturnType<typeof setInterval> | null = null;
   private lastTime = 0;
   private listeners = new Set<(link: string | null) => void>();
+  private loadListeners = new Set<(link: string, ok: boolean) => void>();
   private announced: string | null = null;
   // Bài không phát được (`link` của mốc) -> lúc được thử lại (Date.now()); tải được thì xoá.
   private failed = new Map<string, number>();
 
-  setCues(cues: MusicCue[], levelDb: number): void {
+  /** Mốc mới (`levelDb` bỏ trống = giữ mức chung cũ). `seconds`: chỗ đang tới theo mốc mới - danh sách phát dựng lại hàng bài thì đồng
+   *  hồ nhạc rơi vào chỗ khác của hàng mới. */
+  setCues(cues: MusicCue[], levelDb?: number, seconds = this.lastTime): void {
     this.cues = cues;
-    this.gain = Math.pow(10, levelDb / 20);
-    this.switchTo(this.playableAt(this.lastTime), this.lastTime);
+    if (levelDb !== undefined) this.gain = Math.pow(10, levelDb / 20);
+    this.lastTime = seconds;
+    this.switchTo(this.playableAt(seconds), seconds);
   }
 
   setVolume(volume: number): void {
@@ -145,6 +149,12 @@ export class MusicBed {
     return () => this.listeners.delete(listener);
   }
 
+  /** Báo mỗi bài tải xong (`ok` true) hay hỏng (false) - danh sách phát dựa vào đó cho bài sau dồn lên (PlaylistDriver). */
+  onLoadResult(listener: (link: string, ok: boolean) => void): () => void {
+    this.loadListeners.add(listener);
+    return () => this.loadListeners.delete(listener);
+  }
+
   stop(): void {
     for (const audio of [this.current?.audio, ...this.fading]) audio?.pause();
     this.current = null;
@@ -170,9 +180,11 @@ export class MusicBed {
     this.failed.set(cue.link, Date.now() + RETRY_MS);
     audio.pause();
     this.fading = this.fading.filter((other) => other !== audio);
-    if (this.current?.audio !== audio) return;
-    this.current = null;
-    this.emitActive();
+    if (this.current?.audio === audio) {
+      this.current = null;
+      this.emitActive();
+    }
+    for (const listener of [...this.loadListeners]) listener(cue.link, false);
   }
 
   private emitActive(): void {
@@ -232,6 +244,7 @@ export class MusicBed {
       audio.addEventListener("loadedmetadata", () => {
         this.failed.delete(cue.link);
         if (audio.duration > 0) audio.currentTime = Math.max(0, seconds - cue.start) % audio.duration;
+        for (const listener of [...this.loadListeners]) listener(cue.link, true);
       }, { once: true });
       audio.addEventListener("error", () => this.drop(cue, audio), { once: true });
       const goal = this.target(cue);
