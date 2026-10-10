@@ -60,7 +60,7 @@ export function useExportJob(kind: ExportKind, id: string) {
 function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook; kind: ExportKind; icon: LucideIcon; label: string }) {
   const { data: info } = useAppInfo();
   const { data: preferences } = usePreferences();
-  const { data: job } = useExportJob(kind, book.id);
+  const { data: job, dataUpdatedAt } = useExportJob(kind, book.id);
   const run = async () => {
     let target = "";
     if (info?.dialogs) {
@@ -81,8 +81,8 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
       <Icon className="mt-0.5 size-4 shrink-0 self-start" />
       <span className="min-w-0">
         <span className="block">{label}</span>
-        <span className="block truncate text-xs text-fg-3" title={lastExportPlace(job)}>
-          {lastExportHint(job, KINDS[kind].copy) ?? exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot)}
+        <span className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
+          {lastExportHint(job, KINDS[kind].copy, dataUpdatedAt) ?? exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot)}
         </span>
       </span>
     </DropdownMenu.Item>
@@ -103,7 +103,7 @@ export const OPEN_AUDIOBOOK_EVENT = "abook-audiobook-dialog";
 
 /** Sách Nghe ngay (chỉ có chữ) thành sách nói MP3 / M4B để nghe ở trình phát khác. Định dạng, giọng và nơi lưu chọn trong hộp. */
 export function AudiobookMenuItem({ book }: { book: ListenBook }) {
-  const { data: job } = useExportJob("audiobook", book.id);
+  const { data: job, dataUpdatedAt } = useExportJob("audiobook", book.id);
   return (
     <DropdownMenu.Item
       disabled={!book.chaptersTotal || job?.state === "running"}
@@ -113,8 +113,8 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
       <Headphones className="mt-0.5 size-4 shrink-0 self-start" />
       <span className="min-w-0">
         <span className="block">Xuất sách nói (MP3 / M4B)…</span>
-        <span className="block truncate text-xs text-fg-3" title={lastExportPlace(job)}>
-          {lastExportHint(job, KINDS.audiobook.copy) ?? "Mang sang điện thoại, xe hơi, trình phát khác"}
+        <span className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
+          {lastExportHint(job, KINDS.audiobook.copy, dataUpdatedAt) ?? "Mang sang điện thoại, xe hơi, trình phát khác"}
         </span>
       </span>
     </DropdownMenu.Item>

@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, KeyRound, Play, Square, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Button, StatusPill } from "@/shared/ui";
+import { Button, StatusPill, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import type { ReadAloudVoice } from "./readAloud";
 import {
@@ -104,11 +104,28 @@ export function useVoiceSample(sample: (voiceId: string, text: string) => Promis
 function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: VoiceSettingsApi; onChanged: () => void }) {
   const [key, setKey] = useState("");
   const [region, setRegion] = useState(info.region);
-  const [busy, setBusy] = useState<"" | "check" | "remove">("");
+  const [busy, setBusy] = useState<"" | "check" | "save" | "remove">("");
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   // Gập sẵn (soát UX 05-10: bốn khung dài chiếm hơn nửa Cài đặt trên điện thoại); đã có khóa thì mở sẵn để thấy trạng thái.
   const [open, setOpen] = useState(info.hasKey);
   useEffect(() => setRegion(info.region), [info.region]);
+  const regionChanged = Boolean(info.limits.region) && region.trim() !== info.region;
+  // "Lưu" chỉ cất khóa trên máy này, không gửi gì ra mạng; "Kiểm tra" mới gọi dịch vụ (và cũng lưu khóa đang gõ trước khi kiểm).
+  const save = async () => {
+    setBusy("save");
+    setResult(null);
+    try {
+      if (!key.trim() && !info.hasKey) throw new Error("Dán khóa trước đã.");
+      await api.saveKey(info.id, key.trim(), region.trim());
+      setKey("");
+      setResult({ ok: true, text: "Đã lưu khóa trên máy này. Chưa kiểm tra - bấm “Kiểm tra” khi muốn biết dùng được chưa." });
+    } catch (error) {
+      setResult({ ok: false, text: errorText(error) });
+    } finally {
+      setBusy("");
+      onChanged();
+    }
+  };
   const check = async () => {
     setBusy("check");
     setResult(null);
@@ -187,6 +204,9 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
             />
           </label>
         )}
+        <Button size="md" variant="outline" loading={busy === "save"} disabled={Boolean(busy) || (!key.trim() && !regionChanged)} onClick={() => void save()}>
+          Lưu
+        </Button>
         <Button size="md" icon={KeyRound} loading={busy === "check"} disabled={Boolean(busy) || (!info.hasKey && !key.trim())} onClick={() => void check()}>
           Kiểm tra
         </Button>
@@ -240,8 +260,19 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
           const list = voices.filter((voice) => voice.provider === provider);
           if (!list.length && provider !== "device") return null;
           const notice = provider === "edge" ? ONLINE_NOTICE : list[0] ? onlineNotice(list[0]) : "";
+          // Thứ tự giọng như hiển thị (theo mục): mũi tên đổi chọn, cả nhóm chỉ một điểm dừng Tab (giọng đang chọn, hay giọng đầu nếu
+          // giọng mặc định nằm ở nhóm khác). Nút "Thử giọng" chỉ vào vòng Tab ở đúng giọng ấy - 27 giọng không thành 27 điểm Tab.
+          const ids = voiceSections(list).flatMap((section) => section.voices.map(({ voice }) => voice.id));
           return (
-            <div key={provider} role="radiogroup" aria-label={title}>
+            <div
+              key={provider}
+              role="radiogroup"
+              aria-label={title}
+              onKeyDown={radioGroupKeys(ids, current?.id ?? "", (id) => {
+                chooseDefaultVoice(id);
+                setChosen(id);
+              })}
+            >
               <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</div>
               {!list.length && <p className="py-1 text-[13px] text-fg-2 text-pretty">{deviceHint}</p>}
               {voiceSections(list).map((section) => (
@@ -258,6 +289,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                             type="button"
                             role="radio"
                             aria-checked={selected}
+                            tabIndex={radioTabIndex(ids, current?.id ?? "", ids.indexOf(voice.id))}
                             onClick={() => {
                               chooseDefaultVoice(voice.id);
                               setChosen(voice.id);
@@ -275,6 +307,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                             size="sm"
                             variant="ghost"
                             className="touch-row"
+                            tabIndex={radioTabIndex(ids, current?.id ?? "", ids.indexOf(voice.id))}
                             icon={playing ? Square : Play}
                             loading={sample.loading === voice.id}
                             onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}

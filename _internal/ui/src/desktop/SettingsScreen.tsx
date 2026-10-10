@@ -589,9 +589,13 @@ export function SettingsScreen() {
             ABook {info?.version} - studio sách nói tiếng Việt chạy hoàn toàn trên máy này: phân tích truyện, phân vai, thu âm và
             kiểm tra từng câu.
           </p>
-          {/* Chữ chọn được, không phải liên kết: trong cửa sổ app (WebView) một liên kết có thể điều hướng chính cửa sổ. */}
+          {/* Liên kết mở ở cửa sổ mới (target="_blank", như ghi công nhạc ở trình phát), không điều hướng chính cửa sổ app; Android: SOURCE_URL. */}
           <p className="mt-2 select-text text-sm text-fg-2">
-            Mã nguồn mở, giấy phép MIT: <span className="font-medium text-fg">github.com/ntanhpro1221/ABook</span> - bản mới,
+            Mã nguồn mở, giấy phép MIT:{" "}
+            <a href="https://github.com/ntanhpro1221/ABook/" target="_blank" rel="noopener noreferrer" className="font-medium text-accent-text underline underline-offset-2">
+              github.com/ntanhpro1221/ABook
+            </a>{" "}
+            - bản mới,
             ứng dụng Android và ghi chú từng bản ở mục Releases.
           </p>
           <ThirdPartyButton />

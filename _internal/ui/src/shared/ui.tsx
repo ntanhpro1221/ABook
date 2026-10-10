@@ -2,7 +2,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, ReactNode, Ref } from "react";
 import { cn } from "@/shared/cn";
 
@@ -325,6 +325,32 @@ function keepOpenForToasts(event: { target: EventTarget | null; preventDefault: 
 
 // ---- Hộp thoại --------------------------------------------------------------------------------------------
 
+/** Phần tử "đã mở hộp" từ chỗ con trỏ đang đứng: mục của một menu (Radix DropdownMenu) mất ngay khi menu đóng, nên đó là nút mở menu (menu mang
+ *  `aria-labelledby` = mã nút ấy; menu con thì lần lên tiếp). Phần tử thường thì chính nó. */
+export function dialogOpener(element: Element | null): Element | null {
+  for (let depth = 0; depth < 4 && element; depth++) {
+    const menu = element.closest?.('[role="menu"]');
+    if (!menu) return element;
+    const trigger = menu.getAttribute("aria-labelledby");
+    element = trigger ? element.ownerDocument.getElementById(trigger) : null;
+  }
+  return element;
+}
+
+/** Chỗ con trỏ đứng lần gần nhất, đã quy về "phần tử mở hộp" (`dialogOpener`). Hộp mở từ mục menu: lúc hộp dựng, menu đã đóng và con trỏ về body -
+ *  chỉ có cách nhớ từ trước. */
+let lastFocus: Element | null = null;
+if (typeof document !== "undefined") {
+  document.addEventListener("focusin", (event) => (lastFocus = dialogOpener(event.target instanceof Element ? event.target : null)), true);
+}
+
+/** Phần tử nhận lại con trỏ khi hộp đóng: chính phần tử đã mở hộp, nếu nó còn trong trang (hộp mở bằng hash hay thẻ đã gỡ thì
+ *  không có - để trình duyệt tự lo). `Dialog` điều khiển từ ngoài nên Radix không có nút mở để trả con trỏ về (soát UX a17). */
+export function focusReturnTarget(opener: Element | null, body: Element | null): HTMLElement | null {
+  if (!opener || opener === body || !(opener as HTMLElement).isConnected || typeof (opener as HTMLElement).focus !== "function") return null;
+  return opener as HTMLElement;
+}
+
 export function Dialog({
   open,
   onOpenChange,
@@ -340,6 +366,11 @@ export function Dialog({
   children: ReactNode;
   width?: string;
 }) {
+  // Nhớ phần tử đang giữ con trỏ lúc hộp mở (trước khi Radix chuyển con trỏ vào hộp) để trả về khi đóng.
+  const opener = useRef<Element | null>(null);
+  useLayoutEffect(() => {
+    if (open) opener.current = lastFocus;
+  }, [open]);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -350,6 +381,13 @@ export function Dialog({
             width,
           )}
           onInteractOutside={keepOpenForToasts}
+          onCloseAutoFocus={(event) => {
+            const target = focusReturnTarget(opener.current, document.body);
+            opener.current = null;
+            if (!target) return;
+            event.preventDefault();
+            target.focus();
+          }}
           // Ô mang `data-escape-local` (vd ô đổi tên chương) tự xử lý phím Esc để huỷ việc đang gõ; Esc ở đó không đóng cả hộp.
           onEscapeKeyDown={(event) => {
             if ((event.target as HTMLElement | null)?.closest?.("[data-escape-local]")) event.preventDefault();
@@ -484,8 +522,9 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
 export function radioGroupKeys<T>(values: readonly T[], value: T, onChange: (value: T) => void) {
   return (event: React.KeyboardEvent<HTMLElement>) => {
     const step = ({ ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 } as Record<string, number>)[event.key];
-    const index = Math.max(values.indexOf(value), 0);
-    const next = step ? (index + step + values.length) % values.length : event.key === "Home" ? 0 : event.key === "End" ? values.length - 1 : -1;
+    const index = values.indexOf(value);
+    // Chưa chọn mục nào của nhóm (giá trị nằm ở nhóm khác): mũi tên tới mục đầu / cuối thay vì bỏ qua mục đầu.
+    const next = step && index < 0 ? (step > 0 ? 0 : values.length - 1) : step ? (index + step + values.length) % values.length : event.key === "Home" ? 0 : event.key === "End" ? values.length - 1 : -1;
     if (next < 0) return;
     event.preventDefault();
     onChange(values[next]);

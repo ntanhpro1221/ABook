@@ -159,7 +159,12 @@ export function useListenLibrary() {
 
 /** Sách không có (404) thì báo ngay, đừng thử lại ba lần rồi mới báo. */
 function retryUnlessMissing(count: number, error: unknown): boolean {
-  return (error as { status?: number } | null)?.status !== 404 && count < 2;
+  return !isMissing(error) && count < 2;
+}
+
+/** Lỗi "không có sách này" (404) của nguồn. */
+export function isMissing(error: unknown): boolean {
+  return (error as { status?: number } | null)?.status === 404;
 }
 
 export function useListenBook(id: string | undefined) {
@@ -169,7 +174,8 @@ export function useListenBook(id: string | undefined) {
     enabled: Boolean(id),
     retry: retryUnlessMissing,
     queryFn: () => source.book(id!),
-    refetchInterval: (query) => (query.state.data?.producing ? 5000 : 30000),
+    // Sách đã bị xoá (404) thì thôi hỏi lại mỗi 30 giây - mỗi lần là một dòng đỏ trong console (soát UX a17).
+    refetchInterval: (query) => (isMissing(query.state.error) ? false : query.state.data?.producing ? 5000 : 30000),
   });
 }
 

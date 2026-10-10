@@ -158,15 +158,15 @@ export function MyMusicSection() {
               {canImport &&
                 (removing === track.link ? (
                   <span className="flex shrink-0 gap-1">
-                    <Button size="sm" variant="secondary" icon={Trash2} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
+                    <Button size="sm" variant="secondary" icon={Trash2} aria-label={`Xoá khỏi kho: ${track.title}`} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
                       Xoá khỏi kho
                     </Button>
-                    <Button size="sm" variant="ghost" disabled={remove.isPending} onClick={() => setRemoving(null)}>
+                    <Button size="sm" variant="ghost" aria-label={`Giữ lại: ${track.title}`} disabled={remove.isPending} onClick={() => setRemoving(null)}>
                       Giữ lại
                     </Button>
                   </span>
                 ) : (
-                  <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setRemoving(track.link)}>
+                  <Button size="sm" variant="ghost" icon={Trash2} aria-label={`Xoá: ${track.title}`} onClick={() => setRemoving(track.link)}>
                     Xoá
                   </Button>
                 ))}

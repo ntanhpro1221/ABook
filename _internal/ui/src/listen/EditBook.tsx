@@ -241,6 +241,7 @@ export function EditBookDialog({
   const file = useRef<HTMLInputElement | null>(null);
   const [confirmRevert, setConfirmRevert] = useState(false);
   const [searching, setSearching] = useState(false);
+  // Mở hộp: nạp lại cả hai ô. Lưu một ô (hộp ở nguyên) chỉ nạp ô ấy - chữ gõ dở ở ô kia không mất (soát UX a17).
   useEffect(() => {
     if (open) {
       setTitle(book.title);
@@ -248,7 +249,9 @@ export function EditBookDialog({
       setConfirmRevert(false);
       setSearching(false);
     }
-  }, [open, book.title, book.author]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => setTitle(book.title), [book.title]);
+  useEffect(() => setAuthor(book.author ?? ""), [book.author]);
   const workshop = Boolean(book.capabilities?.workshop);
   const done = (message: string) => {
     refreshAfterEdit(client, book.id);
@@ -256,18 +259,13 @@ export function EditBookDialog({
   };
   const rename = useMutation({
     mutationFn: (next: string) => api(`/api/books/${book.id}/title`, { method: "PUT", body: { title: next } }),
-    onSuccess: () => {
-      done("Đã đổi tên sách");
-      onOpenChange(false); // lưu xong thì đóng hộp: để mở nguyên là không biết đã lưu chưa (soát UX a11)
-    },
+    // Hộp ở nguyên: toast báo đã lưu, ô còn lại giữ chữ đang gõ (trước đây lưu là đóng hộp - mất chữ gõ dở ở ô kia).
+    onSuccess: () => done("Đã đổi tên sách"),
     onError: (error: Error) => toast.error("Chưa đổi được tên sách", { description: error.message }),
   });
   const changeAuthor = useMutation({
     mutationFn: (next: string) => saveAuthor(book.id, next),
-    onSuccess: (saved) => {
-      done(saved ? "Đã đổi tác giả" : "Đã bỏ tên tác giả");
-      onOpenChange(false);
-    },
+    onSuccess: (saved) => done(saved ? "Đã đổi tác giả" : "Đã bỏ tên tác giả"),
     onError: (error: Error) => toast.error("Chưa đổi được tác giả", { description: error.message }),
   });
   const setCover = useMutation({
@@ -349,9 +347,10 @@ export function EditBookDialog({
           </Section>
         )}
         <Section title="Ảnh bìa">
-          <div className="flex items-start gap-4">
+          {/* flex-wrap: ở 375 px cột nút (rộng ~190 px) không vừa cạnh bìa 112 px - xuống dưới bìa thay vì tràn khỏi hộp (soát UX a17). */}
+          <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
             <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} className="w-28 shrink-0" />
-            <div className="flex flex-col items-start gap-1">
+            <div className="flex min-w-0 max-w-full flex-col items-start gap-1">
               <Button variant="outline" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
                 {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
               </Button>
@@ -437,15 +436,23 @@ export function EditBookDialog({
   );
 }
 
-/** Đổi tên một chương: nhãn ("Chương 12") và tên ("Hồi kết"); "Về tên gốc" trả lại tên của người làm sách. */
+/** Tên chương đang hiện trên dòng chương (nhãn + tên phụ nếu có). */
+export function chapterShownName(chapter: Pick<ListenChapter, "title" | "fullTitle"> | null): string {
+  return chapter ? chapter.fullTitle || chapter.title : "";
+}
+
+/** Đổi tên một chương: nhãn ("Chương 12") và tên ("Hồi kết"); "Về tên gốc" trả lại tên của người làm sách. Sách chữ (nhập từ file) chỉ có
+ *  MỘT tên - dòng đầu chương, không tách nhãn / tên: một ô "Tên chương" điền sẵn tên đang thấy, lưu thì tên mới thay hẳn (cùng lệnh PUT,
+ *  nhãn = tên mới, tên phụ trống). Sách Studio giữ hai ô. */
 export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBook; chapter: ListenChapter | null; onClose: () => void }) {
   const client = useQueryClient();
+  const single = book.stage === "text" && !book.capabilities?.workshop;
   const [label, setLabel] = useState("");
   const [name, setName] = useState("");
   useEffect(() => {
-    setLabel(chapter?.title ?? "");
-    setName(chapter?.subtitle ?? "");
-  }, [chapter]);
+    setLabel(single ? chapterShownName(chapter) : (chapter?.title ?? ""));
+    setName(single ? "" : (chapter?.subtitle ?? ""));
+  }, [chapter, single]);
   const save = useMutation({
     mutationFn: (body: { title?: string; subtitle?: string; revert?: boolean }) =>
       api<{ fullTitle: string }>(`/api/books/${book.id}/chapters/${chapter?.id}/title`, { method: "PUT", body }),
@@ -472,7 +479,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
         }}
       >
         <label className="block text-sm">
-          <span className="text-fg-2">Số chương hay nhãn</span>
+          <span className="text-fg-2">{single ? "Tên chương" : "Số chương hay nhãn"}</span>
           <input
             data-autofocus
             value={label}
@@ -481,15 +488,17 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
             className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-accent"
           />
         </label>
-        <label className="block text-sm">
-          <span className="text-fg-2">Tên chương (có thể để trống)</span>
-          <input
-            value={name}
-            maxLength={160}
-            onChange={(event) => setName(event.target.value)}
-            className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-accent"
-          />
-        </label>
+        {!single && (
+          <label className="block text-sm">
+            <span className="text-fg-2">Tên chương (có thể để trống)</span>
+            <input
+              value={name}
+              maxLength={160}
+              onChange={(event) => setName(event.target.value)}
+              className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-accent"
+            />
+          </label>
+        )}
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ revert: true })}>
             Về tên gốc

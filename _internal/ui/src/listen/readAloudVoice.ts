@@ -100,12 +100,30 @@ export function chooseDefaultVoice(voice: string): void {
 /** Câu đọc thử ("Thử giọng" trong Cài đặt): ngắn, có dấu câu để nghe cả chỗ ngắt. */
 export const SAMPLE_TEXT = "Xin chào, tôi sẽ đọc sách cho bạn nghe. Bạn thấy giọng này thế nào?";
 
+/** Giọng VieNeu kể chuyện TRUNG TÍNH, theo thứ tự ưu tiên - giọng cho người nghe chưa chọn gì. Không lấy giọng đầu danh sách: đó là "Adam bựa" (giọng
+ *  có cá tính, không hợp một lời kể đầu tiên). Chọn từ danh sách giọng của Studio (abook/voice_catalog.py): "Phạm Tuyên" là giọng dẫn truyện mặc
+ *  định của Studio cho giọng nam (Nam · Bắc · Tự nhiên, giọng chuẩn ít vùng miền nhất), "Ngọc Linh" là giọng dẫn truyện mặc định cho giọng nữ
+ *  (Nữ · Bắc · Kể chuyện), "Thanh Bình" (Nam · Bắc · Kể chuyện) là giọng kể chuyện chủ sách đã chỉnh trầm xuống cho êm. Cùng danh sách ở bản
+ *  Android (readaloud/NarratorVoice.kt); bộ ví dụ chung tests/fixtures/default_voice. */
+export const NARRATOR_VOICES = ["Phạm Tuyên", "Ngọc Linh", "Thanh Bình"] as const;
+
+/** Giọng VieNeu mặc định trong `voices`: giọng kể chuyện trung tính đầu tiên máy có (ưu tiên theo tên, trước khi xét bản Turbo / Nano), không thì giọng VieNeu đầu danh sách. */
+export function narratorVoice(voices: ReadAloudVoice[]): ReadAloudVoice | undefined {
+  const local = voices.filter((voice) => voice.provider === "vieneu");
+  const nameOf = (voice: ReadAloudVoice) => voice.id.slice(voice.id.indexOf("/") + 1).normalize("NFC");
+  for (const name of NARRATOR_VOICES) {
+    const found = local.find((voice) => nameOf(voice) === name.normalize("NFC"));
+    if (found) return found;
+  }
+  return local[0];
+}
+
 /** Giọng dùng thật: giọng đã chọn nếu còn trong danh sách, không thì giọng mặc định, không thì giọng đầu tiên. Người nghe CHƯA tự chọn giọng nào mà máy đã có
- *  giọng VieNeu thì mặc định là giọng VieNeu đầu danh sách (đọc ngay trên máy, chữ không rời máy) chứ không phải giọng Edge gửi chữ tới Microsoft (soát UX a15). */
+ *  giọng VieNeu thì mặc định là giọng kể chuyện trung tính của VieNeu (`narratorVoice`; đọc ngay trên máy, chữ không rời máy) chứ không phải giọng Edge gửi chữ tới Microsoft (soát UX a15). */
 export function resolveVoice(voices: ReadAloudVoice[], chosen: string): ReadAloudVoice | undefined {
   const exact = voices.find((voice) => voice.id === chosen);
   if (exact) return exact;
-  const local = chosen ? undefined : voices.find((voice) => voice.provider === "vieneu");
+  const local = chosen ? undefined : narratorVoice(voices);
   return local ?? voices.find((voice) => voice.default) ?? voices[0];
 }
 
