@@ -274,6 +274,26 @@ object BookWishes {
 
     private fun list(array: JSONArray?): List<JSONObject> = array?.let { (0 until it.length()).map { index -> it.getJSONObject(index) } } ?: emptyList()
 
+    /**
+     * `book_wishes.mark_merges`: ghi `mergedInto` (tên đang hiện của người nhận) lên người có ý muốn "Gộp vào…" chờ Studio (mục
+     * `aliases`) - như dự án đọc aliases.json. Bí danh khớp tên chuẩn hay tên hiện của người ấy (như [speakerLines]). `people`: dàn đã
+     * qua lớp sửa, sửa tại chỗ.
+     */
+    fun markMerges(people: List<JSONObject>, wishes: JSONObject?) {
+        val merges = list(wishes?.optJSONArray(ALIASES)).map { aliasKey(it.getString("alias")) to it.getString("person") }
+        if (merges.isEmpty()) return
+        fun labels(person: JSONObject): Set<String> =
+            listOf("name", "displayName", "originalName").filter { BookEdits.truthy(person.opt(it)) }.map { aliasKey(person.opt(it).toString()) }.toSet()
+        fun shown(target: String): String {
+            val found = people.firstOrNull { aliasKey(target) in labels(it) } ?: return target
+            return (found.opt("displayName")?.takeIf { BookEdits.truthy(it) } ?: found.opt("name")).toString()
+        }
+        for (person in people) {
+            val mine = labels(person)
+            for ((alias, target) in merges) if (alias in mine && aliasKey(target) !in mine) person.put("mergedInto", shown(target))
+        }
+    }
+
     /** {khoá tên chuẩn: giọng/giới đang chờ} - dòng nhân vật hiện "chờ áp dụng" (như store.pending_voices của dự án). */
     fun pendingVoices(wishes: JSONObject?): Map<String, JSONObject> {
         val out = LinkedHashMap<String, JSONObject>()

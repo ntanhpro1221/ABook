@@ -149,14 +149,15 @@ object Store {
 
     /**
      * Văn bản trong gói như người nghe thấy khi lớp sửa làm nó khác đi: `cast.json` (tên nhân vật đã đổi) và
-     * `scripts/<n>.json` (tên người nói, tên chương). null = không có gì phủ lên - dùng đúng file.
+     * `scripts/<n>.json` (tên người nói, tên chương). null = không có gì phủ lên - dùng đúng file. `shared`: bản gửi máy khác
+     * (không dấu ý muốn chưa áp của máy này - [BookEdits.sharedCast]).
      */
-    fun overlaidText(id: String, relative: String): String? {
+    fun overlaidText(id: String, relative: String, shared: Boolean = false): String? {
         val dir = bookDir(id)
         val edits = BookEdits.load(dir)
         if (BookEdits.isEmpty(edits)) return null
         val book = rawManifest(id) ?: return null
-        return BookEdits.overlaidText(dir, book, edits, relative)
+        return BookEdits.overlaidText(dir, book, edits, relative, shared)
     }
 
     /** Nội dung một file văn bản của gói (đã qua lớp sửa); null khi file không có. */

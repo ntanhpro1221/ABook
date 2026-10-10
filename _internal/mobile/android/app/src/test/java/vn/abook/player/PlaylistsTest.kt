@@ -6,6 +6,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -141,6 +142,48 @@ class PlaylistsTest {
         assertEquals(file, catalog.download(link, good))
         assertEquals("đã có thì không tải lại", emptyList<String>(), asked)
         assertNull("chỉ link https", catalog.download("http://x/y.mp3", null))
+    }
+
+    /** Bài lớn hơn 40 MB (MUSIC_TRACK_MAX_MB của máy tính): máy này không dùng - không tải, không vào hàng phát, nhớ qua lần mở sau. */
+    @Test
+    fun a_track_over_the_size_cap_is_never_downloaded_and_leaves_the_queue() {
+        val over = MusicCatalog.TRACK_MAX_BYTES + 1
+        val asked = mutableListOf<String>()
+        val lengths = mutableMapOf<String, Long?>("https://x/long.mp3" to over, "https://x/unsized.mp3" to null)
+        val open = { url: String ->
+            asked += url
+            if (url == "https://x/unsized.mp3") {
+                object : java.io.InputStream() { // nguồn không báo Content-Length: đếm khi tải
+                    var left = over
+                    override fun read(): Int = if (left-- > 0) 0 else -1
+                    override fun read(b: ByteArray, off: Int, len: Int): Int {
+                        if (left <= 0) return -1
+                        val n = minOf(len.toLong(), left).toInt()
+                        left -= n
+                        return n
+                    }
+                }
+            } else {
+                MusicCatalog.Sized("ID3".toByteArray().inputStream(), lengths[url])
+            }
+        }
+        val catalog = MusicCatalog(File(root, "cache"), "https://catalog/", open = open)
+        val big = JSONObject().put("bytes", over)
+        assertFalse("danh mục ghi cỡ quá trần", catalog.usable("https://x/big.mp3", big))
+        assertTrue(runCatching { catalog.download("https://x/big.mp3", big) }.exceptionOrNull() is MusicCatalog.TrackTooBig)
+        assertEquals("không tải byte nào", emptyList<String>(), asked)
+        for (link in listOf("https://x/long.mp3", "https://x/unsized.mp3")) {
+            assertTrue("chưa biết cỡ: cứ coi là dùng được", catalog.usable(link, null))
+            assertTrue(link, runCatching { catalog.download(link, null) }.exceptionOrNull() is MusicCatalog.TrackTooBig)
+            assertNull(catalog.cached(link))
+            assertFalse(link, catalog.usable(link, null))
+        }
+        assertEquals("không để file dở", emptyList<String>(), File(root, "cache/files").list()?.toList() ?: emptyList<String>())
+        val reopened = MusicCatalog(File(root, "cache"), "https://catalog/", open = open)
+        assertFalse("nhớ qua lần mở sau", reopened.usable("https://x/long.mp3", null))
+        val links = listOf("https://x/small.mp3", "https://x/big.mp3", "https://x/long.mp3")
+        val infos = mapOf("https://x/big.mp3" to big)
+        assertEquals(listOf("https://x/small.mp3"), Playlists.queue(links, infos, -20.0) { reopened.usable(it, infos[it]) }.map { it.link })
     }
 
     @Test

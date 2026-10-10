@@ -28,7 +28,7 @@ TOKEN = {"X-Ebook-Token": "t"}
 
 def _stub_views(monkeypatch: pytest.MonkeyPatch) -> None:
     """Sổ dự án tối thiểu của test không có cột cho các màn thật - thay bằng các hàm cho JSON cố định."""
-    monkeypatch.setitem(project_views.VIEWS, "work", lambda root: {"items": [{"id": "name:Hailkes", "title": "Hailkes"}], "castReady": True})
+    monkeypatch.setitem(project_views.VIEWS, "work", lambda root, _verdicts=None: {"items": [{"id": "name:Hailkes", "title": "Hailkes"}], "castReady": True})
     monkeypatch.setitem(project_views.VIEWS, "casting", lambda root: {"castReady": True, "chapters": [{"chapterId": 1, "lines": 3}]})
     monkeypatch.setitem(project_views.VIEWS, "names", lambda root: {"items": [{"surface": "Hailkes", "spoken": "Hên-khơ"}]})
 
@@ -59,6 +59,34 @@ def test_the_views_travel_in_the_file_and_a_failing_view_does_not_block_the_back
         assert opened.views == ["work", "casting"]
         assert opened.view("work")["items"][0]["title"] == "Hailkes" and opened.view("names") is None
         assert opened.manifest["files"]["views/work.json"]["size"] > 0
+
+
+def test_the_work_snapshot_leaves_out_lines_already_judged_like_the_studio_tab(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Bản chụp "Việc cần duyệt" trong file dự án dùng phán quyết "Cần nghe lại" của máy đóng gói như tab Studio: câu đã chấm
+    không còn là việc (soát parity23). Việc đã quyết / chỉ áp khi làm lại phân tích vẫn đi trong bản chụp - màn đọc tự tách."""
+    _stub_views(monkeypatch)
+
+    def work(_root: Path, verdicts: dict | None = None) -> dict:
+        return {"castReady": True, "items": [{"key": f"audio:{stable_id}", "title": stable_id} for stable_id in ("s2", "s3")
+                                             if stable_id not in (verdicts or {})]}
+
+    monkeypatch.setitem(project_views.VIEWS, "work", work)
+    project = _project(tmp_path)
+    app = _app(tmp_path, project.parent)
+    server = Server(app, port=0).start()
+    book = book_id(project)
+    try:
+        status, data, _ = _request(server.port, "POST", f"/api/books/{book}/review", headers=TOKEN,
+                                   body={"stableId": "s2", "verdict": "ok", "chapterId": 1})
+        assert status == 200, data
+        status, data, _ = _request(server.port, "POST", f"/api/books/{book}/projectfile", headers=TOKEN,
+                                   body={"target": str(tmp_path / "xuat")})
+        assert status == 200, data
+    finally:
+        server.stop()
+        app.close()
+    with ProjectFile(Path(json.loads(data)["file"])) as packed:
+        assert [item["key"] for item in packed.view("work")["items"]] == ["audio:s3"]
 
 
 def test_the_real_view_functions_snapshot_a_project(tmp_path: Path) -> None:

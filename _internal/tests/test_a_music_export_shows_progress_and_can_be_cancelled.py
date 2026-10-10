@@ -92,7 +92,7 @@ def test_the_http_cancel_of_a_projectfile_export_answers_with_the_cancelled_reas
     gate = threading.Event()
     _slow_app(app, tmp_path, gate)
 
-    def pack_two_tracks(project, out, *, running, music_track, progress=None):  # việc đóng gói thật chỉ gọi nguồn nhạc cho từng bài
+    def pack_two_tracks(project, out, *, running, music_track, progress=None, verdicts=None):  # việc đóng gói thật chỉ gọi nguồn nhạc cho từng bài
         music_track(CALM)
         music_track(BATTLE)
         raise AssertionError("đã huỷ thì không tới đây")

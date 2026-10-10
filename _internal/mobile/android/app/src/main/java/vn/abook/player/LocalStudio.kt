@@ -493,20 +493,34 @@ object LocalStudio {
             .put("avoid", avoid).put("requestedAt", at)
     }
 
-    /** POST /review {verdict, stableId}: chưa có hàng đợi "Cần nghe lại" - chỉ phần "Cần thu lại" (ý muốn chờ Studio). */
+    /**
+     * POST /review {verdict, stableId} hay cả nhóm {verdict, lines: [{stableId}...]} (Shift-chọn ở tab Kịch bản): chưa có hàng đợi
+     * "Cần nghe lại" - chỉ phần "Cần thu lại" (ý muốn chờ Studio). Cả nhóm cùng một mốc - một lần bấm là một thay đổi, bỏ được cả
+     * nhóm. Một câu đáp `{ok}`; nhóm đáp thêm số câu đã xin thu lại + mốc (`server.post_review`).
+     */
     private fun review(dir: java.io.File, body: JSONObject): Any? {
         val verdict = body.opt("verdict")
         val none = verdict == null || verdict === JSONObject.NULL
         if (!none && verdict != "ok" && verdict != "redo") throw Api(400, "Phán quyết không hợp lệ")
-        val stableId = BookEdits.cut(field(body, "stableId"), 80)
+        val refs = body.opt("lines") as? JSONArray
+        val stableIds = refs?.let { list ->
+            (0 until minOf(list.length(), 2000)).mapNotNull { list.opt(it) as? JSONObject }
+                .map { BookEdits.cut(BookEdits.pyStr(if (it.has("stableId")) it.opt("stableId") else ""), 80) }
+        } ?: listOf(BookEdits.cut(field(body, "stableId"), 80))
         val (_, index, _) = fresh(dir)
-        val found = index.get(stableId)
-        if (verdict == "redo" && found != null && BookEdits.truthy(found.second.opt("textSha256"))) {
-            BookWishes.requestRetakes(dir, listOf(stableId to BookEdits.pyText(found.second.opt("textSha256"))), now())
-        } else if (verdict != "redo") {
-            BookWishes.cancelRetake(dir, stableId)
+        val at = now()
+        val asked = ArrayList<Pair<String, String>>()
+        for (stableId in stableIds) {
+            val found = index.get(stableId)
+            if (verdict == "redo" && found != null && BookEdits.truthy(found.second.opt("textSha256"))) {
+                asked.add(stableId to BookEdits.pyText(found.second.opt("textSha256")))
+            } else if (verdict != "redo") {
+                BookWishes.cancelRetake(dir, stableId)
+            }
         }
-        return JSONObject().put("ok", true)
+        if (asked.isNotEmpty()) BookWishes.requestRetakes(dir, asked, at)
+        val reply = JSONObject().put("ok", true)
+        return if (refs == null) reply else reply.put("lines", asked.size).put("requestedAt", at)
     }
 
     /** POST /characters/merge {from, into}: mọi câu nói của người này thành ý muốn "là lời của người kia" + bí danh. */

@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại và Nghe sách (máy tính và điện thoại)
+
+- Thông báo "có việc mới cần duyệt" trên điện thoại báo đúng con số trên tab Việc cần duyệt của Studio (không còn đếm việc đã quyết hay câu đã chấm), và bản chụp "Việc cần duyệt" trong file dự án chỉ liệt kê việc còn phải quyết.
+- Nhạc nền trên điện thoại như máy tính: bài trên 40 MB không tải mà chọn bài khác, bài tải hỏng thử lại thưa dần rồi thôi thay vì tải đi tải lại mãi.
+- Gộp người trên sách mở từ file có dấu "Chờ áp dụng: gộp vào …" như trong Studio; ý muốn chưa áp (gộp, đổi giọng) không theo file sách hay đồng bộ sang máy khác; "Thu lại" cả nhóm câu chạy cả trên điện thoại.
+
 ## [0.4.47] - 2026-10-11
 
 ### Làm sách trong Studio (máy tính)

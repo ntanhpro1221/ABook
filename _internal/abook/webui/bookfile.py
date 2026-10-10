@@ -180,7 +180,7 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
     `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì kèm rãnh nhạc.
     `progress("listen", chương đã gom, tổng)` báo tiến độ gom chương (projectfile.pack); nó ném thì việc dừng."""
     book = _packaged_book(project_root)
-    files: dict[str, Path | bytes] = {"cast.json": json_bytes(store.cast(project_root))}
+    files: dict[str, Path | bytes] = {"cast.json": json_bytes(book_edits.shared_cast(store.cast(project_root)))}
     cover = covers.cover_file(project_root)
     if cover is not None:
         files[covers.COVER_FILE] = cover
@@ -301,7 +301,7 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
     if cover is not None:
         files[covers.COVER_FILE] = cover
     cast, samples = _merge_cast([(number, root) for number, root, _ in books], files)
-    files["cast.json"] = json_bytes(cast)
+    files["cast.json"] = json_bytes(book_edits.shared_cast(cast))
     merged: dict[str, Any] = {
         "format": first["format"],
         "title": continuation.base_title(first["title"]),

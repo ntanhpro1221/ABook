@@ -78,4 +78,23 @@ class LibraryServerSharedBooksTest {
         }
         assertTrue(Store.isFileBook(imported) && !Store.isFileBook(fromComputer) && !Store.isFileBook(fromPeer))
     }
+
+    /** Ý muốn chờ Studio của điện thoại này (đổi giọng, "Gộp vào…") không sang máy kia: dàn nhân vật gửi đi không mang dấu
+     *  `pendingVoice` / `mergedInto` - như package_share bên máy tính (book_edits.shared_cast). Trên máy này vẫn hiện hai dấu. */
+    @Test
+    fun the_shared_cast_carries_no_wish_still_waiting_on_this_phone() {
+        File(Store.bookDir(imported), BookEdits.EDITS_FILE).writeBytes(BookEditsFixtures.bytes("edits/wishes.json"))
+        val here = JSONObject(Store.overlaidText(imported, "cast.json")!!).getJSONArray("characters")
+        val heidi = (0 until here.length()).map { here.getJSONObject(it) }.first { it.getString("name") == "HEIDI" }
+        assertEquals("Lucien", heidi.getString("mergedInto"))
+        assertTrue(heidi.optJSONObject("pendingVoice") != null)
+        val (status, cast) = get("/sync/v1/books/$imported/files/cast.json")
+        assertEquals(200, status)
+        val people = cast.getJSONArray("characters").let { list -> (0 until list.length()).map { list.getJSONObject(it) } }
+        assertEquals(listOf("Hây-đi", "Lucien"), people.map { it.getString("displayName") })
+        for (person in people) {
+            assertFalse(person.has("mergedInto"))
+            assertTrue(person.isNull("pendingVoice"))
+        }
+    }
 }

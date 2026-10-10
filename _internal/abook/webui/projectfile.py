@@ -189,12 +189,13 @@ def _snapshot(database: Path, target: Path) -> None:
 
 
 def pack(project_root: Path, out: Path | None = None, *, running: bool = False, producer: str = "ABook",
-         music_track: Callable[[str], Path | None] | None = None, progress: Progress | None = None) -> Path:
+         music_track: Callable[[str], Path | None] | None = None, progress: Progress | None = None,
+         verdicts: dict[str, Any] | None = None) -> Path:
     """Gói một dự án thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file.
 
     `music_track(link)` -> file một bài nhạc nền (bộ đệm của máy, tải khi cần): có thì phần nghe mang cả nhạc nền
     (bookfile.listening_layer); bài không lấy được thì bỏ khỏi gói, chỗ ấy im lặng - như file `.abook`.
-    `progress`: xem `Progress`."""
+    `progress`: xem `Progress`. `verdicts`: phán quyết "Cần nghe lại" của máy này cho bản chụp "Việc cần duyệt" (project_views)."""
     def step(phase: str, done: int = 0, total: int = 0) -> None:
         if progress is not None:
             progress(phase, done, total)
@@ -225,7 +226,7 @@ def pack(project_root: Path, out: Path | None = None, *, running: bool = False, 
         step("prepare")
         book = _listening_book(project_root, files, music_track, progress)
         step("views")
-        files.update(project_views.snapshot(project_root, None if progress is None else lambda: step("views")))
+        files.update(project_views.snapshot(project_root, None if progress is None else lambda: step("views"), verdicts))
         return _seal(out, files, book, producer=producer, title=title, workshop=PRESENT, project_root=str(project_root),
                      sources=[{"path": old, "entry": entry} for old, entry in sources.items()], missing=missing,
                      version=bookfile.package_version(book) if book is not None else 1, progress=progress)

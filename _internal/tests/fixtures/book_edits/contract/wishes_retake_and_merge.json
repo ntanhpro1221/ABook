@@ -11,7 +11,7 @@
    "status": 200,
    "response": {
     "lines": 4,
-    "requestedAt": 1790957769.1710155
+    "requestedAt": 1791666395.345243
    }
   },
   {
@@ -67,7 +67,7 @@
        "c1_s0002_c58b67",
        "c1_s0006_34534a"
       ],
-      "requestedAt": 1790957769.1710155
+      "requestedAt": 1791666395.345243
      },
      {
       "kind": "retake",
@@ -76,7 +76,7 @@
       "lines": 0,
       "section": "retakes",
       "key": "c1_s0003_fa1fe2",
-      "requestedAt": 1790957769.2499242
+      "requestedAt": 1791666395.4313972
      }
     ],
     "lines": 0,
@@ -94,7 +94,7 @@
    "status": 200,
    "response": {
     "lines": 1,
-    "requestedAt": 1790957769.3177805
+    "requestedAt": 1791666395.5143454
    }
   },
   {
@@ -135,6 +135,63 @@
   },
   {
    "method": "GET",
+   "path": "/cast",
+   "status": 200,
+   "response": {
+    "narrator": {
+     "voice": "Đức Trí",
+     "lines": 4,
+     "seconds": 7.0,
+     "profile": {
+      "key": "narrator",
+      "preset": "Đức Trí",
+      "tone": ""
+     }
+    },
+    "characters": [
+     {
+      "name": "HEIDI",
+      "displayName": "Hây-đi",
+      "originalName": "Heidi",
+      "gender": "Nữ",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 2.5,
+      "recorded": 0,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": null,
+      "firstChapter": "Chương 646",
+      "pendingVoice": null,
+      "mergedInto": "Lucien"
+     },
+     {
+      "name": "LUCIEN",
+      "displayName": "Lucien",
+      "gender": "Nam",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 4.0,
+      "recorded": 1,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": 3,
+      "firstChapter": "Chương 646",
+      "pendingVoice": null
+     }
+    ],
+    "extras": [],
+    "carried": []
+   }
+  },
+  {
+   "method": "GET",
    "path": "/pending-changes",
    "status": 200,
    "response": {
@@ -146,7 +203,7 @@
       "lines": 0,
       "section": "speakers",
       "key": "c1_s0006_34534a",
-      "requestedAt": 1790957769.3177805
+      "requestedAt": 1791666395.5143454
      },
      {
       "kind": "retake",
@@ -160,7 +217,7 @@
        "c1_s0002_c58b67",
        "c1_s0006_34534a"
       ],
-      "requestedAt": 1790957769.1710155
+      "requestedAt": 1791666395.345243
      },
      {
       "kind": "retake",
@@ -169,7 +226,7 @@
       "lines": 0,
       "section": "retakes",
       "key": "c1_s0003_fa1fe2",
-      "requestedAt": 1790957769.2499242
+      "requestedAt": 1791666395.4313972
      }
     ],
     "lines": 0,

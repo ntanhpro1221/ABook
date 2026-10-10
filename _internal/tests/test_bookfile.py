@@ -5,6 +5,7 @@ Fixture: cuốn hai chương của test đồng bộ (`make_project`) - chương
 from __future__ import annotations
 
 import json
+import time
 import zipfile
 from pathlib import Path
 
@@ -365,3 +366,33 @@ def test_a_book_that_does_not_fit_the_disk_is_refused_before_anything_is_copied(
         book.extract(tmp_path / "thu_vien")
     assert "cần khoảng" in str(refused.value) and "còn" in str(refused.value)
     assert not any((tmp_path / "thu_vien").iterdir()), "chưa chép gì vào thư viện"
+
+
+def test_a_merge_or_voice_change_not_yet_applied_never_leaves_this_machine(tmp_path: Path) -> None:
+    """"Gộp vào…" / đổi giọng chưa áp là ý muốn của máy này: dàn nhân vật trong file `.abook`, file của cả bộ và cast.json
+    đồng bộ sang điện thoại không mang dấu "chờ gộp vào X" hay "đang chờ đổi giọng" (book_edits.shared_cast) - soát parity23."""
+    from abook import aliases
+    from abook.listener_overrides import request_voice
+    from abook.webui import store
+
+    project = make_project(tmp_path)
+    aliases.add(project, "LUCIEN", "Giáo sư Lucien", now=1.0)
+    request_voice(project, "LUCIEN", preset="Thanh Bình", now=time.time() + 60)
+    (person,) = store.cast(project)["characters"]
+    assert person["mergedInto"] and person["pendingVoice"], "trên máy này tab Nhân vật vẫn hiện hai dấu"
+
+    def shared(cast: dict) -> list[dict]:
+        return [entry for kind in ("characters", "extras", "carried") for entry in cast.get(kind) or []]
+
+    with BookFile(bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}")) as book:
+        packed = json.loads(book.read("cast.json"))
+    with BookFile(bookfile.pack_series([project], tmp_path / f"bo{bookfile.EXTENSION}")) as book:
+        series = json.loads(book.read("cast.json"))
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    listening = Listening(tmp_path / "prefs" / "listening.json")
+    app = SyncApp(Library(preferences), listening, Devices(tmp_path / "devices.json"), "Máy thử")
+    synced = json.loads(app.resolve_file(project, "cast.json"))
+    for cast in (packed, series, synced):
+        people = shared(cast)
+        assert people and all("mergedInto" not in entry and not entry.get("pendingVoice") for entry in people), cast

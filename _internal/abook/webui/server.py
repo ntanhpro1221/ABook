@@ -2235,7 +2235,7 @@ class App:
                 app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote, studio=studio,
                               routes=self.routes,
                               player=self.player, cast=self.cast, music_track=self.music_sync_source(), my_music=self.my_music,
-                              after_edits=lambda value, _report: self._music_after_change(value))
+                              after_edits=lambda value, _report: self._music_after_change(value), reviews=self.reviews)
                 # Danh tính TLS sinh một lần, nằm cạnh tuỳ chọn: đổi nó là mọi thiết bị đã ghép phải ghép lại.
                 identity = tls.load_or_create(self.preferences.path.with_name(tls.FILE_NAME))
                 self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port, identity=identity).start()
@@ -3502,7 +3502,8 @@ class Handler(BaseHTTPRequestHandler):
         def run() -> dict[str, Any]:
             with app.music_exporting(music_key, [project]) as music:
                 path = projectfile.pack(project, free_path(root / projectfile.default_name(title)),
-                                        running=app.runner.running(project), music_track=music, progress=progress)
+                                        running=app.runner.running(project), music_track=music, progress=progress,
+                                        verdicts=app.reviews.get(value))
             with projectfile.ProjectFile(path) as packed:
                 missing = packed.missing_sources
             app.exports.add(str(path.parent))

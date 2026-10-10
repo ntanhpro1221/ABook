@@ -385,8 +385,9 @@ object LibraryServer {
             (request.method == "GET" || request.method == "HEAD") && match.groupValues[3].isNotEmpty() -> {
                 val relative = URLDecoder.decode(match.groupValues[3], "UTF-8")
                 val allowed = relative in allowedFiles(manifest)
-                // Máy kia nhận sách như người nghe thấy: dàn nhân vật / chữ đọc theo đã qua lớp sửa, bìa là bìa họ đặt.
-                val overlaid = if (allowed) Store.overlaidText(book, relative) else null
+                // Máy kia nhận sách như người nghe thấy: dàn nhân vật / chữ đọc theo đã qua lớp sửa, bìa là bìa họ đặt - trừ dấu
+                // ý muốn chưa áp của máy này (chờ đổi giọng, chờ gộp: BookEdits.sharedCast, như package_share bên máy tính).
+                val overlaid = if (allowed) Store.overlaidText(book, relative, shared = true) else null
                 val target = if (!allowed) null else if (relative == "cover.jpg") Store.coverFile(book) else Store.file(book, relative)
                 if (overlaid != null) sendBytes(output, overlaid.toByteArray(Charsets.UTF_8), "application/json; charset=utf-8", request.method == "HEAD")
                 else if (target == null || !target.isFile) json(output, 404, JSONObject().put("error", "Không có file này"))

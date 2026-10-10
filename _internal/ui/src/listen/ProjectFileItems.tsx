@@ -8,6 +8,7 @@ import { cn } from "@/shared/cn";
 import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { useStudioMissing } from "@/studio/data";
+import { isOpenWork } from "@/studio/WorkInbox";
 import type { ListenBook } from "./model";
 import { useSource } from "./source";
 
@@ -170,6 +171,10 @@ interface WorkItem {
   title: string;
   problem?: string;
   affected?: number;
+  /** Đã quyết (chờ áp dụng) - như thẻ của tab Việc cần duyệt. */
+  requested?: string | null;
+  /** Chỉ có tác dụng khi làm lại phân tích từ đầu. */
+  redoOnly?: boolean;
 }
 
 interface WorkSnapshot {
@@ -229,18 +234,34 @@ function Empty({ children }: { children: string }) {
   return <p className="text-fg-3">{children}</p>;
 }
 
+/** Như tab Việc cần duyệt (WorkInbox): chỉ liệt kê việc còn chờ quyết mà quyết thì có tác dụng; việc đã quyết và việc chỉ áp khi
+ *  làm lại phân tích chỉ được đếm ở cuối. */
 function WorkList({ data }: { data?: WorkSnapshot }) {
   if (!data) return null;
-  if (!data.items?.length) return <Empty>Máy không còn chỗ nào nghi ngờ.</Empty>;
+  const items = data.items ?? [];
+  const open = items.filter(isOpenWork);
+  const decided = items.filter((item) => item.requested).length;
+  const later = items.filter((item) => !item.requested && item.redoOnly).length;
+  const rest = [
+    decided > 0 ? `${decided} việc đã quyết, chờ áp dụng` : "",
+    later > 0 ? `${later} việc chỉ có tác dụng khi làm lại phân tích` : "",
+  ].filter(Boolean);
   return (
-    <ul className="divide-y divide-line">
-      {data.items.map((item) => (
-        <li key={item.key} className="py-2">
-          <p>{item.title}</p>
-          {item.problem && <p className="text-xs text-fg-3">{item.problem}</p>}
-        </li>
-      ))}
-    </ul>
+    <>
+      {open.length ? (
+        <ul className="divide-y divide-line">
+          {open.map((item) => (
+            <li key={item.key} className="py-2">
+              <p>{item.title}</p>
+              {item.problem && <p className="text-xs text-fg-3">{item.problem}</p>}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <Empty>{rest.length ? "Không còn việc nào cần quyết." : "Máy không còn chỗ nào nghi ngờ."}</Empty>
+      )}
+      {rest.length > 0 && <p className="mt-3 text-xs text-fg-3">Ngoài ra: {rest.join(" · ")}.</p>}
+    </>
   );
 }
 

@@ -107,14 +107,9 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
 
 
 def _shared_cast(path: Path) -> bytes:
-    """`cast.json` như người nghe thấy (tên nhân vật đã đổi), không dấu "đang chờ đổi giọng" - ý muốn ấy là của máy này, chưa thành giọng nào."""
-    cast = copy.deepcopy(packages.cast(path))
-    if isinstance(cast, dict):
-        for kind in ("characters", "extras", "carried"):
-            for person in cast.get(kind) or []:
-                if isinstance(person, dict) and "pendingVoice" in person:
-                    person["pendingVoice"] = None  # như cast.json của dự án: khoá có, không đang chờ gì
-    return json.dumps(cast, ensure_ascii=False).encode("utf-8")
+    """`cast.json` như người nghe thấy (tên nhân vật đã đổi), không dấu ý muốn chưa áp của máy này (book_edits.shared_cast)."""
+    cast = packages.cast(path)
+    return json.dumps(book_edits.shared_cast(cast) if isinstance(cast, dict) else cast, ensure_ascii=False).encode("utf-8")
 
 
 def resolve_file(path: Path, relative: str) -> Path | bytes | None:

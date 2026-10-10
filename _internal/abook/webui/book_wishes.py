@@ -254,6 +254,28 @@ def pending_voices(wishes: dict[str, Any] | None) -> dict[str, dict[str, str]]:
     return out
 
 
+def mark_merges(people: list[dict[str, Any]], wishes: dict[str, Any] | None) -> None:
+    """Ghi `mergedInto` (tên đang hiện của người nhận) lên người có ý muốn "Gộp vào…" chờ Studio (mục `aliases`) - như
+    `store.cast` của dự án đọc aliases.json: tab Nhân vật không trông như chưa gộp. Bí danh khớp tên chuẩn hay tên hiện của người
+    ấy (như `speaker_lines`: chữ đọc theo ghi người nói bằng tên hiện). `people`: dàn đã qua lớp sửa, sửa tại chỗ."""
+    merges = [(alias_book.key(item["alias"]), item["person"]) for item in (wishes or {}).get(ALIASES) or []]
+    if not merges:
+        return
+
+    def labels(person: dict[str, Any]) -> set[str]:
+        return {alias_book.key(str(person[field])) for field in ("name", "displayName", "originalName") if person.get(field)}
+
+    def shown(target: str) -> str:
+        found = next((person for person in people if alias_book.key(target) in labels(person)), None)
+        return str(found.get("displayName") or found["name"]) if found is not None else target
+
+    for person in people:
+        mine = labels(person)
+        for alias, target in merges:
+            if alias in mine and alias_book.key(target) not in mine:
+                person["mergedInto"] = shown(target)
+
+
 # ---- đọc sách để kiểm một ý muốn trước khi ghi ---------------------------------------------------------------------
 
 

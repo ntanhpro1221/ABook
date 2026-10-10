@@ -51,7 +51,7 @@ def test_the_work_count_is_recomputed_only_when_the_book_changes(library, monkey
     lib, project, listening = library
     calls = []
 
-    def counting(path):
+    def counting(path, _verdicts=None):
         calls.append(path)
         return {"items": [{"kind": "speaker"}] * 3}
 
@@ -100,3 +100,49 @@ def test_the_phone_learns_that_a_book_is_held_for_review_before_recording(librar
     reason["value"] = "listener"
     precast.release(project, now=200.0)
     assert app.studio_view()[0]["precast"]["held"] is False, "đã cho thu tiếp"
+
+
+def test_the_phone_counts_the_same_work_as_the_studio_tab(tmp_path: Path, monkeypatch) -> None:
+    """Thông báo "có việc mới cần duyệt" của điện thoại (StudioAlerts.kt) hiện đúng số trên nhãn tab "Việc cần duyệt": việc đã
+    quyết (chờ áp dụng), thẻ chỉ áp khi làm lại phân tích, và câu đã chấm ở "Cần nghe lại" đều không tính - soát parity23."""
+    from abook.webui import server as server_module
+    from abook.webui import work_items as work_module
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import _request, make_project
+
+    def fake_work(_root, verdicts=None):
+        items = [{"key": "narrator:1", "requested": None, "redoOnly": True},
+                 {"key": "gender:A", "requested": None},
+                 {"key": "gender:B", "requested": "Nam"}]
+        items += [{"key": f"audio:{stable_id}", "requested": None} for stable_id in ("s2", "s3")
+                  if stable_id not in (verdicts or {})]
+        return {"items": items, "counts": {}}
+
+    monkeypatch.setattr(server_module, "work_items", fake_work)
+    monkeypatch.setattr(work_module, "work_items", fake_work)
+    root = tmp_path / "thu_vien"
+    project = make_project(root)
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(root)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="phien")
+    server = Server(app, port=0).start()
+    sync = SyncApp(app.library, app.listening, app.devices, "Máy thử", reviews=app.reviews)
+    headers = {"X-Ebook-Token": "phien"}
+    book = book_id(project)
+
+    def tab_count() -> int:
+        status, data, _ = _request(server.port, "GET", f"/api/books/{book}/work?count=1", headers=headers)
+        assert status == 200, data
+        return json.loads(data)["count"]
+
+    try:
+        assert sync.studio_view()[0]["work"] == tab_count() == 3
+        status, data, _ = _request(server.port, "POST", f"/api/books/{book}/review", headers=headers,
+                                   body={"stableId": "s2", "verdict": "ok", "chapterId": 1})
+        assert status == 200, data
+        assert sync.studio_view()[0]["work"] == tab_count() == 2, "câu vừa chấm: điện thoại đếm lại dù sổ dự án không đổi"
+    finally:
+        server.stop()
+        app.close()
