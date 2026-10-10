@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, ReactNode, Ref } from "react";
 import { cn } from "@/shared/cn";
+import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
@@ -252,10 +253,20 @@ export function TabsList({ children, className }: { children: ReactNode; classNa
     };
     update();
     element.addEventListener("scroll", update, { passive: true });
+    // Lăn chuột thường chạy hàng tab sang ngang (chuột không có lăn ngang, thanh cuộn thì ẩn); tới đầu/cuối hàng thì nhả cho trang cuộn dọc.
+    const onWheel = (event: WheelEvent) => {
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? element.clientWidth : 1;
+      const next = wheelScroll(event.deltaX * unit, event.deltaY * unit, element.scrollLeft, element.clientWidth, element.scrollWidth);
+      if (next === null) return;
+      event.preventDefault();
+      element.scrollLeft = next;
+    };
+    element.addEventListener("wheel", onWheel, { passive: false });
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
     observer?.observe(element);
     return () => {
       element.removeEventListener("scroll", update);
+      element.removeEventListener("wheel", onWheel);
       observer?.disconnect();
     };
   }, []);
@@ -267,10 +278,8 @@ export function TabsList({ children, className }: { children: ReactNode; classNa
     // Chỉ khi tab đang chọn ĐỔI - người dùng tự cuộn hàng tab đi chỗ khác thì không kéo lại.
     if (!element || !active || active === lastActive.current) return;
     lastActive.current = active;
-    if (active.offsetLeft < element.scrollLeft) element.scrollLeft = Math.max(0, active.offsetLeft - FADE);
-    else if (active.offsetLeft + active.offsetWidth > element.scrollLeft + element.clientWidth) {
-      element.scrollLeft = active.offsetLeft + active.offsetWidth - element.clientWidth + FADE;
-    }
+    const next = revealedScroll(active.offsetLeft, active.offsetWidth, element.scrollLeft, element.clientWidth, FADE);
+    if (next !== null) element.scrollLeft = next;
   });
   const mask = edges.left || edges.right
     ? `linear-gradient(to right, ${edges.left ? `transparent, black ${FADE}px` : "black"}, ${
@@ -288,15 +297,19 @@ export function TabsList({ children, className }: { children: ReactNode; classNa
       >
         {children}
       </TabsPrimitive.List>
-      {/* Mũi tên báo còn tab ngoài mép (chỉ màn cảm ứng / hẹp; bàn phím đã có phím mũi tên của hàng tab). */}
+      {/* Mũi tên báo còn tab ngoài mép (mọi cỡ màn: chuột bấm được; bàn phím đã có phím mũi tên của hàng tab). */}
       {edges.left && (
-        <button type="button" tabIndex={-1} aria-label="Xem các tab trước" onClick={() => nudge(-1)} className="touch-hit absolute left-0 top-0 grid h-11 w-7 place-items-center text-fg-2 sm:hidden">
-          <ChevronLeft className="size-4" />
+        <button type="button" tabIndex={-1} aria-label="Xem các tab trước" onClick={() => nudge(-1)} className="absolute left-0 top-0 grid h-11 w-9 place-items-center text-fg-2 hover:text-fg">
+          <span className="grid size-6 place-items-center rounded-full border border-line bg-panel-2 shadow-sm">
+            <ChevronLeft className="size-3.5" />
+          </span>
         </button>
       )}
       {edges.right && (
-        <button type="button" tabIndex={-1} aria-label="Xem các tab sau" onClick={() => nudge(1)} className="touch-hit absolute right-0 top-0 grid h-11 w-7 place-items-center text-fg-2 sm:hidden">
-          <ChevronRight className="size-4" />
+        <button type="button" tabIndex={-1} aria-label="Xem các tab sau" onClick={() => nudge(1)} className="absolute right-0 top-0 grid h-11 w-9 place-items-center text-fg-2 hover:text-fg">
+          <span className="grid size-6 place-items-center rounded-full border border-line bg-panel-2 shadow-sm">
+            <ChevronRight className="size-3.5" />
+          </span>
         </button>
       )}
     </div>
