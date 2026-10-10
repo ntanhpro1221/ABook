@@ -139,7 +139,7 @@ def test_the_server_lists_the_exports_still_running_whatever_page_the_app_opens_
         return json.loads(data)
 
     try:
-        assert listing() == {"bookfile": [], "m4b": [], "audiobook": []}
+        assert listing() == {"bookfile": [], "m4b": [], "audiobook": [], "projectfile": []}
         _post(server, book, "bookfile-job", {"target": str(tmp_path / "xuat")})
         running = listing()
         assert running["m4b"] == [] and running["audiobook"] == []

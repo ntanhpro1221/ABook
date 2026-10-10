@@ -91,6 +91,9 @@ _PATH_COLUMNS = {"project_root", "input_path", "output_mp3", "path"}
 _PART = re.compile(r"[^\x00-\x1f<>:\"|?*\\/]+")
 _VIEW = re.compile(r"views/(?:" + "|".join(project_views.VIEWS) + r")\.json")
 _CHUNK = 1024 * 1024
+# Báo tiến độ đóng gói: progress(pha, đã, tổng) - "prepare" | "listen" (chương) | "views" | "hash" (byte) | "write" (byte). Gọi ở mỗi điểm
+# kiểm giữa hai file; ném `export_jobs.Cancelled` từ đó thì việc dừng, file tạm bị dọn, không có file mang tên thật. Không đổi một byte của file ra.
+Progress = Callable[[str, int, int], None]
 
 
 class ProjectFileError(Exception):
@@ -134,11 +137,12 @@ def _sources(database: Path, project_root: Path) -> dict[str, str]:
 
 
 def _listening_book(project_root: Path, files: dict[str, Path | bytes],
-                    music_track: Callable[[str], Path | None] | None) -> dict[str, Any] | None:
+                    music_track: Callable[[str], Path | None] | None,
+                    progress: Progress | None = None) -> dict[str, Any] | None:
     """Phần nghe của dự án (`book.json` chưa có `package`; các file đi cùng vào `files`), hay None nếu chưa có chương nào
     xong audio và cũng không chương nào còn chữ nguồn để đọc - dự án mới bắt đầu vẫn sao lưu được, chỉ chưa có gì để nghe.
     Chưa có audio nào mà còn chữ: phần nghe là sách chỉ-chữ (`bookfile.listening_layer`)."""
-    book, layer = bookfile.listening_layer(project_root, music_track)
+    book, layer = bookfile.listening_layer(project_root, music_track, progress)
     if not any(chapter.get("file") or chapter.get("text") for chapter in book["chapters"]):
         return None
     files.update(layer)
@@ -185,18 +189,25 @@ def _snapshot(database: Path, target: Path) -> None:
 
 
 def pack(project_root: Path, out: Path | None = None, *, running: bool = False, producer: str = "ABook",
-         music_track: Callable[[str], Path | None] | None = None) -> Path:
+         music_track: Callable[[str], Path | None] | None = None, progress: Progress | None = None) -> Path:
     """Gói một dự án thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file.
 
     `music_track(link)` -> file một bài nhạc nền (bộ đệm của máy, tải khi cần): có thì phần nghe mang cả nhạc nền
-    (bookfile.listening_layer); bài không lấy được thì bỏ khỏi gói, chỗ ấy im lặng - như file `.abook`."""
+    (bookfile.listening_layer); bài không lấy được thì bỏ khỏi gói, chỗ ấy im lặng - như file `.abook`.
+    `progress`: xem `Progress`."""
+    def step(phase: str, done: int = 0, total: int = 0) -> None:
+        if progress is not None:
+            progress(phase, done, total)
+
     project_root = Path(project_root).resolve()
     if not store.is_project(project_root):
         raise ProjectFileError("Thư mục này không phải dự án Studio.")
     if running:
         raise ProjectFileError("Dự án đang chạy. Đóng gói khi nó đã chạy xong hoặc đã dừng.")
+    step("prepare")
     title = store.summarize(project_root, running=False).get("title") or project_root.name
     out = Path(out) if out is not None else project_root.parent / default_name(title)
+    out.parent.mkdir(parents=True, exist_ok=True)  # thư mục đích không ghi được thì hỏng NGAY, không sau vài phút băm
     with tempfile.TemporaryDirectory(prefix="abookproj-") as scratch:
         database = Path(scratch) / store.DB_NAME
         _snapshot(project_root / store.DB_NAME, database)
@@ -211,11 +222,13 @@ def pack(project_root: Path, out: Path | None = None, *, running: bool = False, 
         cover = covers.cover_file(project_root)
         if cover is not None:
             files[covers.COVER_FILE] = cover
-        book = _listening_book(project_root, files, music_track)
-        files.update(project_views.snapshot(project_root))
+        step("prepare")
+        book = _listening_book(project_root, files, music_track, progress)
+        step("views")
+        files.update(project_views.snapshot(project_root, None if progress is None else lambda: step("views")))
         return _seal(out, files, book, producer=producer, title=title, workshop=PRESENT, project_root=str(project_root),
                      sources=[{"path": old, "entry": entry} for old, entry in sources.items()], missing=missing,
-                     version=bookfile.package_version(book) if book is not None else 1)
+                     version=bookfile.package_version(book) if book is not None else 1, progress=progress)
 
 
 def repack(folder: Path, out: Path, *, producer: str = "ABook") -> Path:
@@ -302,26 +315,40 @@ def _kept_manifest(folder: Path) -> dict[str, Any] | None:
             "missingSources": missing, "files": files, "aliases": aliases}
 
 
-def _described(files: dict[str, Path | bytes], known: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Cỡ + mã băm từng mục. Cùng một file trên đĩa (audio chương nằm ở `chapters/` lẫn `project/output/chapters/`) chỉ băm một lần."""
+def _described(files: dict[str, Path | bytes], known: dict[str, dict[str, Any]],
+               progress: Progress | None = None) -> dict[str, dict[str, Any]]:
+    """Cỡ + mã băm từng mục. Cùng một file trên đĩa (audio chương nằm ở `chapters/` lẫn `project/output/chapters/`) chỉ băm một lần.
+    `progress("hash", byte đã băm, tổng byte)` trước mỗi file mới."""
     by_path: dict[str, dict[str, Any]] = {}
     out: dict[str, dict[str, Any]] = {}
-    for name, source in sorted(files.items()):
+    ordered = sorted(files.items())
+    keys = {name: os.path.normcase(str(source.resolve())) for name, source in ordered if isinstance(source, Path)}
+    total = done = 0
+    if progress is not None:  # tổng byte các file trên đĩa (mỗi file một lần) để thanh tiến độ có mẫu số
+        for key in set(keys.values()):
+            total += Path(key).stat().st_size
+    for name, source in ordered:
         if not isinstance(source, Path):
             out[name] = bookfile.describe(source)
             continue
-        key = os.path.normcase(str(source.resolve()))
+        key = keys[name]
         if key not in by_path:
+            if progress is not None:
+                progress("hash", done, total)
             by_path[key] = bookfile.described(name, source, known)
+            done += by_path[key]["size"]
         out[name] = by_path[key]
+    if progress is not None:
+        progress("hash", total, total)
     return out
 
 
 def _seal(out: Path, files: dict[str, Path | bytes], book: dict[str, Any] | None, *, producer: str, title: str, workshop: str,
           project_root: str, sources: list[Any], missing: list[str], version: int,
-          known: dict[str, dict[str, Any]] | None = None) -> Path:
-    """Ghi `book.package` và `project.json` rồi gói ZIP: file tạm cạnh đích, thay nguyên tử. Mục trùng byte thành bí danh."""
-    described = _described(files, known or {})
+          known: dict[str, dict[str, Any]] | None = None, progress: Progress | None = None) -> Path:
+    """Ghi `book.package` và `project.json` rồi gói ZIP: file tạm cạnh đích, thay nguyên tử. Mục trùng byte thành bí danh.
+    `progress`: xem `Progress` (pha "hash" rồi "write"); dừng giữa chừng thì file tạm bị xoá."""
+    described = _described(files, known or {}, progress)
     aliases = aliases_for(described)
     created = datetime.now(UTC).isoformat(timespec="seconds")
     if book is not None:
@@ -355,8 +382,19 @@ def _seal(out: Path, files: dict[str, Path | bytes], book: dict[str, Any] | None
         with zipfile.ZipFile(temporary, "w", allowZip64=True) as archive:
             archive.writestr(_entry("mimetype", stored=True), MIMETYPE)
             archive.writestr(_entry(MANIFEST), json.dumps(manifest, ensure_ascii=False, indent=1).encode("utf-8"))
-            bookfile.write_entries(archive, {name: source for name, source in files.items() if name not in aliases},
-                                   order=_order, stored_suffixes=_STORED)
+            stored = {name: source for name, source in files.items() if name not in aliases}
+            total = sum(described[name]["size"] for name in stored)
+            written = 0
+
+            def before(name: str) -> None:
+                nonlocal written
+                if progress is not None:
+                    progress("write", written, total)
+                written += described[name]["size"]
+
+            bookfile.write_entries(archive, stored, order=_order, stored_suffixes=_STORED, before=before)
+            if progress is not None:
+                progress("write", total, total)
         with temporary.open("rb+") as handle:
             os.fsync(handle.fileno())
         os.replace(temporary, out)
