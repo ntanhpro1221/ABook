@@ -87,8 +87,15 @@ describe("withoutLines", () => {
     const text = "Chương 2\n\nDịch:  Nhóm A\n\nMở đầu.\n\nDịch: Nhóm A";
     expect(paragraphsOf(withoutLines(text, ["Dịch: Nhóm A"]))).toEqual(["Chương 2", "Mở đầu."]);
     expect(withoutLines(text, [])).toBe(text);
-    const late = [1, 2, 3, 4, 5, 6].map((n) => `Dòng ${n}.`).join("\n") + "\nDịch: Nhóm A";
-    expect(paragraphsOf(withoutLines(late, ["Dịch: Nhóm A"]))).toHaveLength(7);
+    const middle = [1, 2, 3, 4, 5, 6].map((n) => `Dòng ${n}.`).join("\n") + "\nDịch: Nhóm A\n" + [7, 8, 9, 10, 11, 12].map((n) => `Dòng ${n}.`).join("\n");
+    expect(paragraphsOf(withoutLines(middle, ["Dịch: Nhóm A"]))).toHaveLength(13); // giữa chương, ngoài 6 dòng đầu và 6 dòng cuối: giữ
+  });
+
+  it("skips the chosen lines among the last six of the chapter too (ủng hộ, nguồn)", () => {
+    const body = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `Dòng ${n}.`).join("\n");
+    const text = `${body}\nXin ủng hộ: Momo 0912345678\nĐọc truyện mới nhất tại truyenthu.vn`;
+    expect(paragraphsOf(withoutLines(text, ["Xin ủng hộ: Momo 0912345678", "Đọc truyện mới nhất tại truyenthu.vn"]))).toHaveLength(8);
+    expect(paragraphsOf(withoutLines(text, ["Xin ủng hộ: Momo 0912345678"]))).toHaveLength(9);
   });
 
   it("is what the reader shows when the listener skipped a credit line", () => {

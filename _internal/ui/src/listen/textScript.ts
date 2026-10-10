@@ -132,23 +132,19 @@ export function paragraphsOf(text: string): string[] {
 
 /** Số dòng có chữ đầu chương mà luật dòng ghi công xét (text_processing.CREDIT_WINDOW_LINES). */
 const CREDIT_WINDOW = 6;
+/** Số dòng có chữ CUỐI chương mà gợi ý ủng hộ / nguồn ở cuối chương xét (readaloud/paragraphs.py CREDIT_TAIL_WINDOW). */
+const CREDIT_TAIL_WINDOW = 6;
 
-/** Chữ của chương trừ các dòng người nghe đã chọn bỏ khỏi phần đọc (lớp sửa `skip` - gợi ý dòng ghi công của bộ nhập sách). Chỉ xét
- *  6 dòng có chữ đầu chương, đúng chỗ luật tìm ra chúng. Chữ của sách không đổi: chỉ màn đọc và đọc to không thấy dòng ấy. Kotlin:
- *  Paragraphs.withoutLines - lõi đọc to của điện thoại phải chia ra đúng các đoạn như màn đọc. */
+/** Chữ của chương trừ các dòng người nghe đã chọn bỏ khỏi phần đọc (lớp sửa `skip` - gợi ý dòng ghi công, ủng hộ, nguồn của bộ nhập sách). Chỉ xét
+ *  6 dòng có chữ đầu chương và 6 dòng có chữ cuối chương, đúng chỗ luật tìm ra chúng. Chữ của sách không đổi: chỉ màn đọc và đọc to không thấy
+ *  dòng ấy. Kotlin: Paragraphs.withoutLines - lõi đọc to của điện thoại phải chia ra đúng các đoạn như màn đọc. */
 export function withoutLines(text: string, skip: readonly string[] | undefined): string {
   if (!skip?.length) return text;
-  let seen = 0;
-  return text
-    .replace(NEWLINES, "\n")
-    .split("\n")
-    .filter((line) => {
-      const shown = squeeze(withoutNoteMarkers(line)); // `skip` ghi từ chữ đã bỏ mã chú thích (BookImport.creditLines)
-      if (!shown || seen >= CREDIT_WINDOW) return true;
-      seen += 1;
-      return !skip.includes(shown);
-    })
-    .join("\n");
+  const lines = text.replace(NEWLINES, "\n").split("\n");
+  const shown = lines.map((line) => squeeze(withoutNoteMarkers(line))); // `skip` ghi từ chữ đã bỏ mã chú thích (BookImport.creditLines)
+  const filled = shown.flatMap((line, index) => (line ? [index] : []));
+  const window = new Set([...filled.slice(0, CREDIT_WINDOW), ...filled.slice(-CREDIT_TAIL_WINDOW)]);
+  return lines.filter((_line, index) => !(window.has(index) && skip.includes(shown[index]))).join("\n");
 }
 
 /** Màn đọc của một chương chỉ có chữ. Đoạn đầu trùng tên chương là tiêu đề (file nguồn của Studio mở đầu bằng tên chương). `skip`: dòng

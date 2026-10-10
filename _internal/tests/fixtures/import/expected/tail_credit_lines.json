@@ -1,0 +1,230 @@
+{
+ "lines": [
+  {
+   "line": "Xin ủng hộ: Momo 0912345678",
+   "suggested": true
+  },
+  {
+   "line": "Xin ủng hộ nhóm dịch qua Agribank 1234567890123",
+   "suggested": true
+  },
+  {
+   "line": "Ủng hộ nhóm dịch tại Momo: 0912 345 678",
+   "suggested": true
+  },
+  {
+   "line": "Donate paypal.me/nhomdich",
+   "suggested": true
+  },
+  {
+   "line": "Ủng hộ qua PayPal: nhom@example.org",
+   "suggested": true
+  },
+  {
+   "line": "Momo: 0912345678",
+   "suggested": true
+  },
+  {
+   "line": "Vietcombank 0011001234567 - NGUYEN VAN A",
+   "suggested": true
+  },
+  {
+   "line": "STK 123456789012 Techcombank",
+   "suggested": true
+  },
+  {
+   "line": "Đọc truyện mới nhất tại truyenthu.vn",
+   "suggested": true
+  },
+  {
+   "line": "Đọc chương mới nhất tại: truyenthu.vn - nhanh nhất",
+   "suggested": true
+  },
+  {
+   "line": "Đọc full tại https://truyenthu.vn/doc/12",
+   "suggested": true
+  },
+  {
+   "line": "Nguồn: truyenthu.vn",
+   "suggested": true
+  },
+  {
+   "line": "Nguồn truyện: https://truyenthu.net/x",
+   "suggested": true
+  },
+  {
+   "line": "Source: www.truyenthu.com",
+   "suggested": true
+  },
+  {
+   "line": "Converter: Nhóm Lục Bình",
+   "suggested": true
+  },
+  {
+   "line": "Translator: NicK",
+   "suggested": true
+  },
+  {
+   "line": "https://truyenthu.vn/chuong-12",
+   "suggested": true
+  },
+  {
+   "line": "www.truyenthu.vn",
+   "suggested": true
+  },
+  {
+   "line": "truyenthu.vn/doc",
+   "suggested": true
+  },
+  {
+   "line": "--- Hết chương ---",
+   "suggested": true
+  },
+  {
+   "line": "[Hết chương 12]",
+   "suggested": true
+  },
+  {
+   "line": "Hết chương",
+   "suggested": true
+  },
+  {
+   "line": "“Anh nhớ ủng hộ quán này nhé,” bà chủ quán nói.",
+   "suggested": false
+  },
+  {
+   "line": "— Xin ủng hộ cho quỹ này, ông nói.",
+   "suggested": false
+  },
+  {
+   "line": "Anh đứng trước cửa ngân hàng Agribank rất lâu, rồi mới bước vào trong.",
+   "suggested": false
+  },
+  {
+   "line": "“Đọc truyện tại truyenthu.vn đi,” cô bảo.",
+   "suggested": false
+  },
+  {
+   "line": "Cô nói: xem trang www.truyenthu.vn đi nhé, rồi cô cười.",
+   "suggested": false
+  },
+  {
+   "line": "Ủng hộ chính sách của thành phố, ông nói và rời đi.",
+   "suggested": false
+  },
+  {
+   "line": "Đọc truyện cho con nghe vào buổi tối ở nhà.",
+   "suggested": false
+  },
+  {
+   "line": "Nguồn: nơi sâu thẳm của con tim.",
+   "suggested": false
+  },
+  {
+   "line": "- Nguồn: truyenthu.vn",
+   "suggested": false
+  },
+  {
+   "line": "Hết.",
+   "suggested": false
+  },
+  {
+   "line": "Ông ngồi nhìn dòng sông.",
+   "suggested": false
+  },
+  {
+   "line": "Xin ủng hộ: Momo 0912345678 Momo 0912345678 Momo 0912345678 Momo 0912345678 Momo 0912345678 Momo 0912345678 Momo 0912345678 Momo 0912345678 Momo 0912345678 Momo 0912345678 ",
+   "suggested": false
+  }
+ ],
+ "sources": [
+  {
+   "source": "Chương 1\n\nLời truyện.\n\nĐọc truyện mới nhất tại truyenthu.vn\nXin ủng hộ: Momo 0912345678\n",
+   "tail": [
+    "Đọc truyện mới nhất tại truyenthu.vn",
+    "Xin ủng hộ: Momo 0912345678"
+   ],
+   "all": [
+    [
+     "Đọc truyện mới nhất tại truyenthu.vn",
+     true
+    ],
+    [
+     "Xin ủng hộ: Momo 0912345678",
+     true
+    ]
+   ]
+  },
+  {
+   "source": "Chương 1\n\nXin ủng hộ: Momo 0912345678\nRồi trời tạnh hẳn.\n",
+   "tail": [],
+   "all": []
+  },
+  {
+   "source": "Chương 1\n\nLời truyện.\n\n---\nNguồn: truyenthu.vn\n***\nXin ủng hộ: Momo 0912345678\n\n\n",
+   "tail": [
+    "Nguồn: truyenthu.vn",
+    "Xin ủng hộ: Momo 0912345678"
+   ],
+   "all": [
+    [
+     "Nguồn: truyenthu.vn",
+     true
+    ],
+    [
+     "Xin ủng hộ: Momo 0912345678",
+     true
+    ]
+   ]
+  },
+  {
+   "source": "Chương 1\nNguồn: truyenthu.vn/1\nNguồn: truyenthu.vn/2\nNguồn: truyenthu.vn/3\nNguồn: truyenthu.vn/4\nNguồn: truyenthu.vn/5\nNguồn: truyenthu.vn/6\nNguồn: truyenthu.vn/7\nNguồn: truyenthu.vn/8\n",
+   "tail": [
+    "Nguồn: truyenthu.vn/3",
+    "Nguồn: truyenthu.vn/4",
+    "Nguồn: truyenthu.vn/5",
+    "Nguồn: truyenthu.vn/6",
+    "Nguồn: truyenthu.vn/7",
+    "Nguồn: truyenthu.vn/8"
+   ],
+   "all": [
+    [
+     "Nguồn: truyenthu.vn/3",
+     true
+    ],
+    [
+     "Nguồn: truyenthu.vn/4",
+     true
+    ],
+    [
+     "Nguồn: truyenthu.vn/5",
+     true
+    ],
+    [
+     "Nguồn: truyenthu.vn/6",
+     true
+    ],
+    [
+     "Nguồn: truyenthu.vn/7",
+     true
+    ],
+    [
+     "Nguồn: truyenthu.vn/8",
+     true
+    ]
+   ]
+  },
+  {
+   "source": "Nguồn: truyenthu.vn\n",
+   "tail": [
+    "Nguồn: truyenthu.vn"
+   ],
+   "all": [
+    [
+     "Nguồn: truyenthu.vn",
+     true
+    ]
+   ]
+  }
+ ]
+}
