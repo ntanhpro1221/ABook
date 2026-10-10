@@ -50,6 +50,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Cũng model ấy giờ đoán cả đoạn nào sôi nổi, đoạn nào lặng trong chương, nên nhạc nhanh/chậm, mạnh/nhẹ đổi theo đúng chỗ truyện hơn hẳn trước (trước đây độ sôi nổi chỉ lấy từ cảm xúc từng câu). Mức sôi nổi chung của chương giữ như cũ.
 - Cũng model ấy giờ đoán mức vui/buồn chung của cả chương, sát hơn cách suy từ cảm xúc từng câu như trước. Ai đã tải model thì chỉ cần cập nhật thêm vài chục KB (không phải tải lại 0,71 GiB) rồi bấm "Tính lại cảm xúc nhạc" cho sách muốn dùng.
 - Nút tải ghi rõ việc và dung lượng thật theo một đơn vị (MB = 1 triệu byte), vd "Tải Phân tích nhạc (57 MB)". Thẻ "Nhạc theo sát từng đoạn" giờ hiện ngay trong Cài đặt > Nhạc nền kể cả khi chưa nhập bài nào, ghi tổng dung lượng gồm cả Phân tích nhạc nếu chưa có, và nói lý do khi máy chưa dùng được thay vì ẩn đi.
+- Trang nhạc không còn khựng vài giây khi kiểm gói model cũ (máy ổ cứng quay, máy yếu): việc kiểm chạy ngầm, trong lúc ấy cỡ cần tải là ước lượng.
 
 ### Nghe ngay
 

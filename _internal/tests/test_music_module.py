@@ -486,7 +486,10 @@ def test_a_scene_update_that_only_adds_one_small_file_counts_and_downloads_just_
     machine.calls.clear()
     small, whole = len(contents[new_file]), sum(len(data) for data in contents.values())
     assert small < whole / 100
+    music_module.status()  # lần hỏi đầu chỉ xếp việc băm file cũ cho luồng nền
+    assert music_module.wait_checks(10)
     status = music_module.status()
+    assert not status["checking"] and not status["scene"]["checking"]
     assert status["state"] == "outdated" and status["scene"]["state"] == "outdated" and _names(status["parts"])["scene_q06"] == "outdated"
     assert status["outdatedBytes"] == small == status["total"] == status["scene"]["bytes"], "chỉ file còn thiếu, không phải cả gói"
     assert next(part["bytes"] for part in status["parts"] if part["id"] == "scene_q06") == whole, "cỡ cả phần vẫn là cả gói"
@@ -506,13 +509,13 @@ def test_the_scene_download_counts_a_wrong_hash_file_again_and_remembers_what_it
     real = studio_setup._sha256
     monkeypatch.setattr(studio_setup, "_sha256", lambda path: hashed.append(path.name) or real(path))
     part = music_module.scene_student_part()
-    assert part.need() == len(contents[new_file]) and sorted(hashed) == sorted(name for name in contents if name != new_file)
+    assert part.need(exact=True) == len(contents[new_file]) and sorted(hashed) == sorted(name for name in contents if name != new_file)
     hashed.clear()
     for _ in range(3):  # giao diện hỏi mỗi giây
         music_module.status()
     assert part.need() == len(contents[new_file]) and hashed == [], "không băm lại file đã băm (đường dẫn, cỡ, giờ sửa không đổi)"
     (directory / "LICENSE").write_bytes(b"x" * len(contents["LICENSE"]))  # cùng cỡ, sai nội dung
-    assert part.need() == len(contents[new_file]) + len(contents["LICENSE"]) and hashed == ["LICENSE"]
+    assert part.need(exact=True) == len(contents[new_file]) + len(contents["LICENSE"]) and hashed == ["LICENSE"]
     (directory / "config.json").unlink()
     assert part.need() == len(contents[new_file]) + len(contents["LICENSE"]) + len(contents["config.json"])
 
@@ -540,3 +543,42 @@ def test_the_real_download_never_touches_the_network_for_files_that_are_already_
         assert studio_setup.download(item, tmp_path / item.name, lambda _have, _total: None, lambda: False) == tmp_path / item.name
     assert opened == ["https://example.invalid/c.bin"], "chỉ file thiếu mới gọi mạng"
     assert (tmp_path / "c.bin").read_bytes() == new
+
+
+def test_the_status_never_hashes_an_old_package_and_says_it_is_checking_until_the_background_hash_is_done(machine: Machine, tmp_path: Path,
+                                                                                                         monkeypatch) -> None:
+    """Băm 0,71 GiB mất ~7 s trên ổ quay: giao diện hỏi status() phải trả ngay (cỡ ước lượng + "checking"), luồng nền băm mỗi file một lần."""
+    import threading
+    import time
+
+    music_module.start()
+    music_module.join(10)
+    directory, contents, new_file = _old_scene_package(tmp_path, monkeypatch)
+    release = threading.Event()
+    hashed: list[str] = []
+    real = studio_setup._sha256
+
+    def slow_sha256(path: Path) -> str:
+        hashed.append(path.name)
+        release.wait(10)
+        return real(path)
+
+    monkeypatch.setattr(studio_setup, "_sha256", slow_sha256)
+    whole = sum(len(data) for data in contents.values())
+    try:
+        for _ in range(3):  # giao diện hỏi liên tục trong lúc băm
+            started = time.monotonic()
+            status = music_module.status()
+            assert time.monotonic() - started < 0.5, "status() không chờ băm"
+            assert status["checking"] and status["scene"]["checking"]
+            assert status["state"] == "outdated" and status["outdatedBytes"] == whole == status["scene"]["bytes"], "chưa băm xong: ước lượng cả gói"
+        assert music_module.wait_checks(0.2) is False
+    finally:
+        release.set()
+    assert music_module.wait_checks(10)
+    assert sorted(hashed) == sorted(name for name in contents if name != new_file), "mỗi file cũ băm đúng một lần dù hỏi nhiều lần"
+    status = music_module.status()
+    assert not status["checking"] and status["outdatedBytes"] == len(contents[new_file]) == status["scene"]["bytes"]
+    music_module.start()
+    music_module.join(10)
+    assert machine.calls[-1:] == [new_file] and music_module._state["total"] == len(contents[new_file])

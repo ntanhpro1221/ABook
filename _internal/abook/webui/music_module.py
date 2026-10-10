@@ -29,9 +29,11 @@ import importlib
 import importlib.util
 import json
 import os
+import queue
 import shutil
 import sys
 import threading
+import time
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -79,8 +81,29 @@ _cancel = threading.Event()  # người dùng bấm Huỷ khi đang tải (cance
 _verified: dict[tuple[str, int, int, str], bool] = {}  # (đường dẫn, cỡ, giờ sửa, SHA-256 ghim) -> file đúng bản ghim
 
 
-def file_ok(item: Any, path: Path) -> bool:
-    """File `path` đã nằm đúng bản `item` ghim (cỡ + SHA-256). Nhớ theo (đường dẫn, cỡ, giờ sửa) để lần hỏi sau không băm lại; sai cỡ thì khỏi băm."""
+_checks: queue.Queue[tuple[tuple[str, int, int, str], Path, str]] = queue.Queue()  # việc băm chờ luồng nền
+_checking: set[tuple[str, int, int, str]] = set()  # khoá đã xếp, chưa băm xong
+_checker: threading.Thread | None = None
+
+
+def _check_loop() -> None:
+    """Luồng nền duy nhất băm các file `file_state` xếp vào: đường hỏi của giao diện không bao giờ băm (0,71 GiB là 0,5 s máy nhanh, ~7 s ổ
+    quay). Băm KHÔNG giữ `_lock`; chỉ lấy khoá để ghi kết quả."""
+    while True:
+        key, path, sha256 = _checks.get()
+        try:
+            ok = studio_setup._sha256(path) == sha256
+        except OSError:
+            ok = False
+        with _lock:
+            _verified[key] = ok
+            _checking.discard(key)
+
+
+def file_state(item: Any, path: Path, wait: bool = False) -> bool | None:
+    """File `path` đã nằm đúng bản `item` ghim chưa (cỡ + SHA-256), nhớ theo (đường dẫn, cỡ, giờ sửa); thiếu / sai cỡ thì False, khỏi băm.
+    Chưa biết: `wait` thì băm ngay ở luồng gọi (luồng tải nền), không thì xếp việc cho luồng băm nền (mỗi khoá một lần) và trả None."""
+    global _checker
     try:
         stat = path.stat()
     except OSError:
@@ -89,9 +112,37 @@ def file_ok(item: Any, path: Path) -> bool:
         return False
     key = (str(path), stat.st_size, stat.st_mtime_ns, item.sha256)
     with _lock:
-        if key not in _verified:
-            _verified[key] = studio_setup._sha256(path) == item.sha256
-        return _verified[key]
+        if key in _verified:
+            return _verified[key]
+        if not wait:
+            if key not in _checking:
+                _checking.add(key)
+                _checks.put((key, path, item.sha256))
+                if _checker is None or not _checker.is_alive():
+                    _checker = threading.Thread(target=_check_loop, name="music-module-check", daemon=True)
+                    _checker.start()
+            return None
+    ok = studio_setup._sha256(path) == item.sha256
+    with _lock:
+        _verified[key] = ok
+    return ok
+
+
+def file_ok(item: Any, path: Path) -> bool:
+    """`file_state` chờ băm xong (chỉ gọi từ luồng nền, vd `_run`)."""
+    return bool(file_state(item, path, wait=True))
+
+
+def wait_checks(timeout: float | None = None) -> bool:
+    """Chờ luồng băm nền làm hết việc đã xếp (bài thử, `timeout` giây); True nếu đã hết."""
+    end = None if timeout is None else time.monotonic() + timeout
+    while True:
+        with _lock:
+            if not _checking:
+                return True
+        if end is not None and time.monotonic() >= end:
+            return False
+        time.sleep(0.01)
 
 
 def _remember_ok(item: Any, path: Path) -> None:
@@ -116,11 +167,19 @@ class Component:
     downloads: list[Any] = field(default_factory=list)
     target: Path | None = None  # thư mục đặt file khi không phải thư mục gói model nhạc
 
-    def need(self) -> int:
-        """Byte còn phải tải: chỉ các file chưa nằm đúng bản ghim ở `target`. Phần không có thư mục đích riêng thì nguyên `size`."""
+    def need(self, exact: bool = False) -> int:
+        """Byte còn phải tải: chỉ các file chưa nằm đúng bản ghim ở `target`. Phần không có thư mục đích riêng thì nguyên `size`. Không `exact`
+        (đường giao diện): file chưa băm xong tính là cần tải (ước lượng, xem `checking`), việc băm sang luồng nền; `exact` (luồng tải) thì
+        băm ngay."""
         if self.target is None or not self.downloads:
             return self.size
-        return sum(item.size for item in self.downloads if not file_ok(item, self.target / item.name))
+        return sum(item.size for item in self.downloads if file_state(item, self.target / item.name, wait=exact) is not True)
+
+    def checking(self) -> bool:
+        """Còn file của phần này đang chờ luồng nền băm (cỡ `need()` lúc này là ước lượng)."""
+        if self.target is None or not self.downloads:
+            return False
+        return any(file_state(item, self.target / item.name) is None for item in self.downloads)
 
 
 # ---- cấu hình -----------------------------------------------------------------------------------------------------------------
@@ -295,11 +354,13 @@ def scene_student_status() -> dict[str, Any]:
     reason = scene_student_offered()
     state = judge_parts([part], _read_stamp())[part.id]
     # `total`: cỡ lần bấm "Tải" của riêng phần này tính cả những phần khác của Phân tích nhạc còn thiếu (ffmpeg, thư viện, model nghe nhạc) -
-    # máy chưa tải Phân tích nhạc thì bấm tải model theo đoạn là tải luôn chúng (`start(scene=True)`).
+    # máy chưa tải Phân tích nhạc thì bấm tải model theo đoạn là tải luôn chúng (`start(scene=True)`). `checking`: còn file cũ đang được băm ở
+    # luồng nền, `bytes` / `total` lúc này là ước lượng (xem `file_state`).
     components = _components(True)
-    total = sum(item.need() for item in _needed(components, _judge(components)))
+    needed = _needed(components, _judge(components))
+    total = sum(item.need() for item in needed)
     return {"state": state, "bytes": part.size if state == "current" else part.need(), "total": total, "blocked": part.blocked,
-            "external": part.external, "offered": not reason, "reason": reason}
+            "external": part.external, "offered": not reason, "reason": reason, "checking": any(item.checking() for item in needed)}
 
 
 # ---- các phần của máy này -----------------------------------------------------------------------------------------------------
@@ -383,6 +444,8 @@ def status() -> dict[str, Any]:
             "restart": bool((pending := _lib_next()) is not None and pending.is_dir() and _lib().is_dir() and _libs_loaded()),
             "analysing": _job == "analysing", "metered": False, "scene": scene_student_status(),
             "cancelled": bool(_state["cancelled"]), "cancellable": True,
+            # Cỡ total / outdatedBytes còn là ước lượng (file cũ đang được băm ở luồng nền, xem `file_state`).
+            "checking": state != "downloading" and any(part.checking() for part in needed),
         }
 
 
@@ -440,8 +503,10 @@ def _run(needed: list[Component]) -> None:
         assert _folder is not None
         finished = 0
         stamp = _read_stamp()
-        for part in needed:
-            need = part.need()  # trước khi tải: file đã đúng bản ghim không tính, không tải lại
+        needs = [part.need(exact=True) for part in needed]  # trước khi tải: file đã đúng bản ghim không tính, không tải lại
+        with _lock:
+            _state["total"] = sum(needs)  # `start` chỉ có ước lượng (không băm ở luồng gọi)
+        for part, need in zip(needed, needs):
 
             def progress(done: int, _total: int = 0, base: int = finished) -> None:
                 """`done` = byte đã tải của riêng phần này; thanh tiến độ chung = các phần đã xong + phần đang tải."""
