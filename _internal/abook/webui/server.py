@@ -10,6 +10,7 @@ import base64
 import binascii
 import contextlib
 import hashlib
+import http.client
 import json
 import mimetypes
 import os
@@ -192,6 +193,10 @@ def _cast_discovery() -> bool:
 
 class MirrorMismatch(OSError):
     """Bản sao dự phòng của bài nhạc không khớp bản gốc (sha1 / số byte) - không phải lỗi mạng."""
+
+
+class DownloadCut(ConnectionError):
+    """Tải bài nhạc đứt giữa chừng (nguồn đóng kết nối trước khi đủ Content-Length, khúc chunked cụt) - lỗi mạng: không giữ file cụt."""
 
 
 class TrackTooBig(OSError):
@@ -2035,11 +2040,11 @@ class App:
             return failed_at is None or now - failed_at >= MUSIC_UNAVAILABLE_SECONDS
 
     @staticmethod
-    def _music_network_failure(exc: OSError) -> bool:
-        """Lỗi tầng mạng (không có mạng, DNS, hết giờ, đứt kết nối) - khác nguồn trả lỗi HTTP hay bản sao sai sha1."""
+    def _music_network_failure(exc: OSError | http.client.HTTPException) -> bool:
+        """Lỗi tầng mạng (không có mạng, DNS, hết giờ, đứt kết nối, trả lời HTTP cụt) - khác nguồn trả lỗi HTTP hay bản sao sai sha1."""
         if isinstance(exc, (urllib.error.HTTPError, MirrorMismatch, TrackTooBig)):
             return False
-        return isinstance(exc, (urllib.error.URLError, socket.timeout, socket.gaierror, ConnectionError))
+        return isinstance(exc, (urllib.error.URLError, socket.timeout, socket.gaierror, ConnectionError, http.client.HTTPException))
 
     def music_track_for_export(self, link: str, **fetch: Any) -> Path | None:
         """Bài nhạc để gói vào file sách: lấy từ bộ đệm / tải về; không lấy được thì None (chỗ ấy im lặng). `fetch`: tiến độ /
@@ -2067,8 +2072,14 @@ class App:
         while True:
             if cancel is not None and cancel.is_set():
                 raise export_jobs.Cancelled()
-            chunk = response.read(1 << 16)
+            try:
+                chunk = response.read(1 << 16)
+            except http.client.HTTPException as exc:  # IncompleteRead của khúc chunked cụt: không phải OSError
+                raise DownloadCut(f"tải đứt sau {copied} byte") from exc
             if not chunk:
+                # http.client trả b"" khi nguồn đóng kết nối sớm, kể cả lúc chưa đủ Content-Length: không coi là xong.
+                if length is not None and copied < length:
+                    raise DownloadCut(f"tải đứt sau {copied}/{length} byte")
                 return
             copied += len(chunk)
             if copied > MUSIC_TRACK_MAX_BYTES:
@@ -2111,7 +2122,7 @@ class App:
         with fetching:
             if target.is_file():
                 return target
-            failure: OSError | None = None
+            failure: OSError | http.client.HTTPException | None = None
             network_only = True
             for url in [link, *mirrors]:
                 part = target.with_name(f"{target.stem}.{secrets.token_hex(4)}.part")
@@ -2130,7 +2141,7 @@ class App:
                     self._music_offline_until = 0.0
                     self._music_mark_too_big(link, exc.size)
                     raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, TOO_BIG_TRACK) from exc
-                except OSError as exc:
+                except (OSError, http.client.HTTPException) as exc:  # HTTPException: dòng trạng thái hỏng, nguồn ngắt giữa chừng
                     failure = exc
                     network_only = network_only and self._music_network_failure(exc)
                 finally:
