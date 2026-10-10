@@ -221,6 +221,8 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
             # `stopAt`: bài kết sớm trước ranh giới (music_select.TAIL_MIN_SECONDS), phần còn lại của mảnh lặng.
             last = float(scene["end"]) if scene.get("stopAt") is None else min(float(scene["end"]), float(scene["stopAt"]))
             end = spans[index + 1][0] if index + 1 < len(spans) else last
+            if end - start < 1e-6:
+                continue  # nền tắt ngay từ đầu mảnh (truyện mở cảnh bằng tiếng nhạc thật): không có mốc
             if cues and not rested and cues[-1]["link"] == link and abs(cues[-1]["end"] - start) < 5:
                 cue = cues[-1]
                 cue["end"] = end

@@ -115,6 +115,26 @@ CUE_NAME_PUNCT = re.compile(r"[.!?…,;:*\"“”]")
 # ("—Nanato—", "— Selia —"). Tên hai, ba từ không xét điều này (docs/MUSIC_RESEARCH.md 10-10 CUE-DASH, sửa sau soát lỗi).
 CUE_VIET_LETTERS = re.compile(r"[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]", re.IGNORECASE)
 CUE_END_WORDS = frozenset({"end", "fin"})
+# Truyện tả có người đang chơi nhạc / hát (DIEGETIC, docs/MUSIC_RESEARCH.md 10-10): nền tắt từ câu dẫn mở màn tới hết cảnh, không
+# chồng một bài khác lên bản nhạc trong truyện. Bắt hành động CHƠI / HÁT / tiếng nhạc vang lên, không bắt chữ "nhạc" (truyện về
+# nhạc sĩ nói chuyện nhạc suốt); câu mở phải có thêm một từ nhạc trong nó hay `MUSIC_CONFIRM_LINES` câu sau.
+MUSIC_INSTRUMENT = (r"(?:đàn|piano|dương cầm|vĩ cầm|violin|cello|ghi-?ta|guitar|organ|phong cầm|sáo|kèn|harp|thụ cầm|nhạc|sonata|"
+                    r"giao hưởng|giai điệu|concerto|nocturne|waltz|minuet|khúc)")
+MUSIC_ONSET = re.compile(
+    r"\b(?:chơi|đánh|gảy|gẩy|kéo|thổi|tấu|độc tấu|hòa tấu|hoà tấu|biểu diễn|trình diễn|dạo)\s+(?:(?:một|lại|tiếp|nốt|lên)\s+)?"
+    r"(?:(?:cây|bản|khúc|bài|đoạn|chương)\s+)?" + MUSIC_INSTRUMENT + r"\b"
+    r"|\bngồi(?:\s+xuống)?\b.{0,25}\b(?:trước|bên|vào)\s+(?:cây|chiếc)\s+(?:đàn|dương cầm|piano)\b"
+    r"|\b(?:đặt|lướt|chạm|gõ)\b.{0,30}\b(?:phím đàn|dây đàn)\b"
+    r"|\b(?:tiếng đàn|tiếng nhạc|tiếng hát|tiếng sáo|tiếng kèn|tiếng vĩ cầm|tiếng piano|tiếng dương cầm|giai điệu|khúc nhạc|"
+    r"bản nhạc|tiếng ca|lời ca|tiếng trống)\b.{0,30}\b(?:vang lên|cất lên|vang vọng|ngân lên|trỗi lên|nổi lên|bắt đầu|"
+    r"tuôn chảy|du dương|réo rắt|văng vẳng|lan tỏa|lan toả|bay bổng)\b"
+    r"|\b(?:cất tiếng hát|cất giọng hát|cất giọng ca|bắt đầu hát|hát vang|ngân nga|ngâm nga|hát lên|khe khẽ hát|cất lên khúc|"
+    r"hát một bài|đồng ca|hợp xướng)\b", re.IGNORECASE)
+MUSIC_KEYS = re.compile(r"\b(?:cây|chiếc)\s+(?:đàn|dương cầm|piano)\b|\bdương cầm\b|\bpiano\b", re.IGNORECASE)
+MUSIC_KEYBOARD = re.compile(r"\b(?:bàn phím|phím)\b", re.IGNORECASE)
+MUSIC_CONFIRM = re.compile(r"\b(?:nhạc|đàn|giai điệu|sonata|hát|nốt|phím|âm điệu|tiết tấu|hợp âm|khúc|bản nhạc|giao hưởng|adagio|"
+                           r"allegro|ca từ|lời ca|du dương)\b", re.IGNORECASE)
+MUSIC_CONFIRM_LINES = 4
 CUE_PLAIN_END = re.compile(r"[.!?…,;:\"”'’)]\s*$")
 CUE_PART_NUMBERS = frozenset({"một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín", "mười", "cuối", "kết", "đầu"})
 CUE_TIME_PLACE = re.compile(
@@ -167,6 +187,28 @@ def cue_kind(segment: dict[str, Any]) -> str | None:
     if TIME_JUMP.match(text) or CUE_TIME_PLACE.match(text):
         return "time_place"
     return None
+
+
+def music_onsets(segments: list[dict[str, Any]]) -> list[int]:
+    """Chỉ số các câu dẫn mở màn một đoạn truyện có người chơi nhạc / hát (`MUSIC_ONSET`, hoặc câu có cả cây đàn lẫn phím), có từ
+    nhạc xác nhận ở phần còn lại của câu hay `MUSIC_CONFIRM_LINES` câu sau. Lời thoại không tính: "Ta muốn chơi nó cho Silvia
+    nghe" là dự định, không phải tiếng nhạc đang vang."""
+    found = []
+    for index, segment in enumerate(segments):
+        if segment.get("kind") != "narration":
+            continue
+        text = str(segment.get("text") or "")
+        match = MUSIC_ONSET.search(text)
+        if match:
+            rest = text[:match.start()] + " " + text[match.end():]
+        elif MUSIC_KEYS.search(text) and MUSIC_KEYBOARD.search(text):
+            rest = MUSIC_KEYBOARD.sub(" ", MUSIC_KEYS.sub(" ", text))
+        else:
+            continue
+        after = " ".join(str(line.get("text") or "") for line in segments[index + 1:index + 1 + MUSIC_CONFIRM_LINES])
+        if MUSIC_CONFIRM.search(rest) or MUSIC_CONFIRM.search(after):
+            found.append(index)
+    return found
 
 
 def cue_bounds(segments: list[dict[str, Any]]) -> dict[Any, str]:
@@ -395,7 +437,8 @@ def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = 
     scenes.append(current)
     scenes = _split_long(_merge_short(scenes), segments, seconds)
     spans = _mood_spans(moods, script.get("chapterId"), segments)
-    views = [_view(scene, segments, timeline, seconds, script, spans) for scene in scenes]
+    onsets = music_onsets(segments)
+    views = [_view(scene, segments, timeline, seconds, script, spans, onsets) for scene in scenes]
     return apply_student(views, student) or apply_chapter_level(views)
 
 
@@ -577,7 +620,7 @@ def _merge_short(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[float], seconds: list[float],
-          script: dict[str, Any], spans: list[tuple[int, int, float, float]] = ()) -> dict[str, Any]:
+          script: dict[str, Any], spans: list[tuple[int, int, float, float]] = (), onsets: list[int] = ()) -> dict[str, Any]:
     """Một đoạn cho bên ngoài. `valence`/`arousal`/`tension` là trung bình, `sd` là độ lệch chuẩn của các câu trong đoạn
     (đoạn càng lẫn lộn càng khoan dung với bài lệch), `emotions` là 13 cường độ độc lập; ở đường nhãn câu chúng suy từ nhãn.
     `spans` (`_mood_spans`): LLM đã đọc đoạn này thì `valence` / `tension` lấy từ LLM (V, T trên [-2, 2] -> [-1, 1], trung
@@ -596,7 +639,7 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
         valence = sum(w * v / 2 for w, v, _t in overlaps) / total
         tension = sum(w * t / 2 for w, _v, t in overlaps) / total
         mood_source = "llm"
-    return {
+    view = {
         "chapterId": script.get("chapterId"),
         "firstSegment": segments[first].get("id"),
         "lastSegment": segments[last].get("id"),
@@ -614,6 +657,10 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
         "labelValence": round(label_valence, 3),
         "labelTension": round(label_tension, 3),
     }
+    playing = [index for index in onsets if first <= index <= last]
+    if playing:
+        view["musicAt"] = round(timeline[playing[0]], 3)  # truyện bắt đầu có nhạc thật: nền tắt từ đây (music_select.choose)
+    return view
 
 
 def book_scenes(scripts: Iterable[dict[str, Any]], moods: list[dict[str, Any]] | None = None,
