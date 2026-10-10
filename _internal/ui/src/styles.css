@@ -50,8 +50,13 @@
   --hover: #eef0f4;
   --line: #e2e5ea;
   --line-strong: #cfd4db;
-  /* Rãnh công tắc đang tắt: ~3:1 trên nền sáng (soát UX 29-09: line-strong chỉ 1,4:1, công tắc tắt gần như vô hình). */
-  --switch-off: #8d97a5;
+  /* Viền NÚT và Ô NHẬP (WCAG 1.4.11: ranh giới của điều khiển >= 3:1 với nền; soát UX a20: --line 1,16:1 nên nút phụ, ô nhập, thẻ
+     bấm được gần như vô hình trên nền sáng). 3,2:1 trên --bg, 3,5:1 trên --panel. --line giữ nguyên cho đường kẻ và viền thẻ
+     (trang trí, không cần). */
+  --control-line: #808a98;
+  --control-line-strong: #6b7685;
+  /* Rãnh công tắc đang tắt: >= 3:1 trên nền sáng (soát UX 29-09: line-strong chỉ 1,4:1, công tắc tắt gần như vô hình). */
+  --switch-off: #808a98;
   --text: #14181d;
   --text-2: #4f5965;
   --text-3: #666f7b;
@@ -88,6 +93,8 @@
   --hover: #1f262f;
   --line: #252d37;
   --line-strong: #333d49;
+  --control-line: #252d37; /* tối: viền nút và ô nhập vẫn là --line như trước */
+  --control-line-strong: #333d49;
   --switch-off: #4b5563;
   --text: #e9ecf0;
   --text-2: #a3acb7;
@@ -125,6 +132,8 @@
   --color-hover: var(--hover);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-control: var(--control-line);
+  --color-control-strong: var(--control-line-strong);
   --color-switch-off: var(--switch-off);
   --color-fg: var(--text);
   --color-fg-2: var(--text-2);
@@ -197,6 +206,24 @@
   input[type="search"]::-webkit-search-cancel-button {
     appearance: none;
   }
+}
+
+/* Ô nhập / chọn / văn bản dùng `border-line` thì viền là viền ĐIỀU KHIỂN (token --control-line): đặt ở đây một lần thay vì sửa từng ô
+   (66 chỗ). Ngoài lớp để thắng tiện ích Tailwind; bỏ qua ô đang tiêu điểm (focus:border-accent) và ô báo lỗi (border-danger không
+   mang lớp `border-line`). */
+input[class~="border-line"]:not(:focus):not(:focus-visible),
+select[class~="border-line"]:not(:focus):not(:focus-visible),
+textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
+  border-color: var(--control-line);
+}
+
+/* Mục menu (Radix) đang chọn bằng bàn phím: chỉ nền --hover (1,1:1 trên nền sáng) thì không thấy mình đang ở mục nào. Radix dồn tiêu điểm vào
+   mục đang chọn, nên :focus-visible chỉ bật khi đi bằng phím - rê chuột vẫn chỉ đổi nền. Màu chữ nhấn (>= 4,5:1 cả hai giao diện). */
+[role="menuitem"]:focus-visible,
+[role="menuitemradio"]:focus-visible,
+[role="menuitemcheckbox"]:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: -2px;
 }
 
 @layer utilities {

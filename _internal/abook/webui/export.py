@@ -34,6 +34,18 @@ def safe_name(text: str, limit: int = 120) -> str:
     return cleaned[:limit].rstrip() or "Sach"
 
 
+def free_path(path: Path) -> Path:
+    """`path` nếu chưa có gì ở đó; không thì "tên (2).đuôi", "tên (3).đuôi"... - xuất lần hai vào cùng thư mục không ghi đè im lặng
+    lên bản xuất trước (soát UX a20: "Chuyến phà cuối ngày.m4b" bị thay mà không một lời)."""
+    if not path.exists():
+        return path
+    for number in range(2, 1000):
+        candidate = path.with_name(f"{path.stem} ({number}){path.suffix}") if path.suffix and path.is_file() else path.with_name(f"{path.name} ({number})")
+        if not candidate.exists():
+            return candidate
+    return path
+
+
 def drawn_cover(folder: Path, cover: str | None) -> Path | None:
     """Ảnh bìa gửi từ giao diện (data URL PNG do trình duyệt vẽ, cùng kiểu bìa trong app)."""
     match = re.fullmatch(r"data:image/png;base64,([A-Za-z0-9+/=]+)", cover or "")
@@ -126,7 +138,7 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     chapters = _listenable(project_root)
     if not chapters:
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
-    folder = target_root / safe_name(folder_name or title)
+    folder = free_path(target_root / safe_name(folder_name or title))
     folder.mkdir(parents=True, exist_ok=True)
     cover_path = copy_real_cover(covers.cover_file(project_root), folder) or drawn_cover(folder, cover)
     ffmpeg = ffmpeg_executable()
@@ -233,7 +245,7 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
     # Định dạng chung theo chương đầu; chương khác tần số / số kênh được ffmpeg đổi theo lúc giải mã - mốc vẫn đúng.
     rate, channels = audio_layout(ffmpeg, chapters[0][1])
     target_root.mkdir(parents=True, exist_ok=True)
-    final = target_root / f"{safe_name(title)}{M4B_EXTENSION}"
+    final = free_path(target_root / f"{safe_name(title)}{M4B_EXTENSION}")
     # File trung gian nằm cạnh file đích (cùng ổ - cuốn dài ra vài trăm MB), thư mục tạm tự dọn kể cả khi hỏng.
     with tempfile.TemporaryDirectory(prefix=".m4b-", dir=target_root) as scratch:
         work = Path(scratch)
@@ -292,7 +304,7 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
     if not chapters:
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
     if not ffmpeg_available():
-        raise ValueError("Máy này chưa có ffmpeg để làm file M4B")
+        raise ValueError("Cần tải thêm công cụ ghép âm thanh (khoảng 31 MB) để làm file M4B - mở Xuất, chọn Sách nói M4B rồi bấm Tải công cụ.")
     final, count = m4b_from_files(ffmpeg_executable(), chapters, target_root, title=title, narrator=narrator,
                                   cover_for=lambda work: covers.cover_file(project_root) or drawn_cover(work, cover))
     return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size,
@@ -349,7 +361,7 @@ def export_series(parts: list[Path], target_root: Path,
     con theo nhãn; .abook: một file mang nhãn). Chỉ chương đã xong như xuất một phần; phần chưa có chương nào bị bỏ qua và
     được kể tên - người dùng thấy bộ thiếu phần nào thay vì nghĩ là xuất sót."""
     listed, skipped = series_split(parts)
-    folder = target_root / safe_name(continuation.base_title(_title_of(parts[0])))
+    folder = free_path(target_root / safe_name(continuation.base_title(_title_of(parts[0]))))
     done = [{"part": number, "title": _title_of(project),
              **export_part(project, folder, f"Phần {number} - {continuation.base_title(_title_of(project))}")}
             for number, project in listed]
@@ -364,7 +376,7 @@ def export_series_file(parts: list[Path], target_root: Path,
     from .bookfile import default_name
 
     listed, skipped = series_split(parts)
-    path = pack(listed, target_root / default_name(continuation.base_title(_title_of(parts[0]))))
+    path = pack(listed, free_path(target_root / default_name(continuation.base_title(_title_of(parts[0])))))
     return {"folder": str(path.parent), "file": str(path), "size": path.stat().st_size,
             "parts": [{"part": number, "title": _title_of(project)} for number, project in listed],
             "skipped": skipped, "partsTotal": len(parts)}

@@ -430,6 +430,11 @@ export function foldVietnamese(text: string): string {
   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
 }
 
+/** Nhãn cho hai cuốn cùng tên: dự án làm ở máy này, hay bản nhập từ file sách. Cuốn khác (sách chỉ-chữ, sách từ máy khác): không nhãn. */
+export function twinKind(book: Pick<ListenBook, "capabilities" | "imported">): string {
+  return book.capabilities?.workshop ? "Dự án" : book.imported ? "Đã nhập" : "";
+}
+
 /** Mã các cuốn mà thư viện còn một cuốn nữa CÙNG TÊN (hai bản của một truyện, hai lần thêm): lưới thêm một dòng phụ để phân biệt (soát UX a15). */
 export function twinBookIds(books: readonly Pick<ListenBook, "id" | "title">[]): Set<string> {
   const count = new Map<string, number>();

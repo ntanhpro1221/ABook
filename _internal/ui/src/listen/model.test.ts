@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookMatchesQuery, bookmarkReadPath, chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, twinBookIds, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
+import { bookMatchesQuery, bookmarkReadPath, chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, twinBookIds, twinKind, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
@@ -255,5 +255,13 @@ describe("twinBookIds", () => {
     ]);
     expect([...twins].sort()).toEqual(["a", "b"]);
     expect(twinBookIds([]).size).toBe(0);
+  });
+});
+
+describe("twinKind", () => {
+  it("phân biệt dự án làm ở máy này với bản nhập từ file", () => {
+    expect(twinKind({ capabilities: { workshop: true } as never, imported: false })).toBe("Dự án");
+    expect(twinKind({ imported: true })).toBe("Đã nhập");
+    expect(twinKind({})).toBe("");
   });
 });

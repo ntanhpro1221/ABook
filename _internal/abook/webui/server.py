@@ -26,7 +26,7 @@ from contextlib import closing
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
-from typing import Any, Callable, Iterable, Protocol
+from typing import Any, Callable, Iterable, Iterator, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, importers, listener_overrides
@@ -269,6 +269,9 @@ class App:
             self._sweep_trash_at_start()
         # Thư mục đã xuất trong phiên này - chỉ những thư mục này được mở bằng "Mở thư mục" sau khi xuất.
         self.exports: set[str] = set()
+        # Xuất .abook / .abookproj có nhạc nền chưa tải thì tải ngầm vài phút: tiến độ + Huỷ theo từng cuốn (`music_exporting`).
+        self._music_exports: dict[str, dict[str, Any]] = {}
+        self._music_exports_lock = threading.Lock()
         # "Xuất file sách" chạy nền, mỗi cuốn nhớ lần xuất gần nhất (export_jobs.py) - tải lại trang vẫn thấy tiến độ / kết quả.
         self.bookfile_jobs = export_jobs.BookFileJobs()
         # "Xuất M4B" cũng chạy nền, bản ghi riêng: đang đóng gói file sách vẫn xuất M4B được và ngược lại.
@@ -666,7 +669,8 @@ class App:
 
     def _launch(self, path: Path) -> None:
         """Khởi động lượt chạy và ghi mốc (store.mark_run_started) - mốc lấy TRƯỚC khi khởi động: yêu cầu ghi trong lúc
-        khởi động vẫn tính là đang chờ; khởi động hỏng thì không ghi gì.
+        khởi động vẫn tính là đang chờ. Khởi động chạy nền (jobs.start) nên mốc chỉ ghi khi nó XONG VÀ KHÔNG LỖI: khởi
+        động hỏng (chưa cài Studio, thiếu Ollama...) thì không ghi gì, sửa chờ áp vẫn còn nút "Áp dụng".
 
         Phần nối tiếp tạo cùng lúc với phần trước ("Tạo nhiều tập", continuation.link_pending) gieo ở đây: tới lượt chạy thì
         phần trước đã phân vai xong, và đây vẫn là sau `create` - trước mọi câu phân tích của phần này."""
@@ -676,8 +680,12 @@ class App:
         except continuation.ContinuationError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         started_at = time.time()
-        self.jobs.start(path)
-        store.mark_run_started(path, started_at)
+
+        def mark_when_started() -> None:
+            if not self.jobs.error(path):
+                store.mark_run_started(path, started_at)
+
+        self.jobs.start(path, on_done=mark_when_started)
         precast.release(path)  # "Thu âm" sau khi tiến trình giữ đã chết: bấm làm tiếp là cho thu, như nút Thu âm lúc đang giữ
         self._queue_successors(path)
         self._watch_precast()
@@ -1599,6 +1607,52 @@ class App:
         return music_plan.TrackSource(self.music_track_for_export, lambda root, key, exclude: self._music_alternatives(
             root, key, exclude, available=self.music_track_available))
 
+    @contextlib.contextmanager
+    def music_exporting(self, key: str, projects: list[Path]) -> Iterator[music_plan.TrackSource]:
+        """Nguồn nhạc cho MỘT lượt xuất của cuốn `key` (đường dẫn dự án), kèm tiến độ tải ("Đang tải nhạc nền (k/n)…" trong hộp
+        Xuất: `music_export_status`) và huỷ (`cancel_music_export`). Huỷ có hiệu lực trước bài kế phải tải; mọi file sách chỉ
+        được ghi SAU khi nhạc đã gom xong (bookfile.listening_layer) nên huỷ ở đây không để lại file dở - việc ném
+        `export_jobs.Cancelled` để chỗ gọi đổi thành lời báo."""
+        from .export import audio_bytes
+
+        _size, pending = audio_bytes(projects, self.music_track_cached)
+        state: dict[str, Any] = {"done": 0, "total": pending, "cancel": threading.Event(), "seen": set()}
+        base = self.music_export_source()
+
+        def file(link: str) -> Path | None:
+            if state["cancel"].is_set():
+                raise export_jobs.Cancelled()
+            fresh = self.music_track_cached(link) is None and link not in state["seen"]
+            path = base.file(link)
+            if fresh:
+                state["seen"].add(link)
+                state["done"] += 1
+            return path
+
+        with self._music_exports_lock:
+            self._music_exports[key] = state
+        try:
+            yield music_plan.TrackSource(file, base.alternatives)
+        finally:
+            with self._music_exports_lock:
+                if self._music_exports.get(key) is state:
+                    del self._music_exports[key]
+
+    def music_export_status(self, key: str) -> dict[str, Any]:
+        """{active, done, total}: lượt xuất của cuốn `key` đang tải nhạc nền để đóng kèm (bài thứ `done` trong `total` bài chưa có)."""
+        with self._music_exports_lock:
+            state = self._music_exports.get(key)
+            if state is None:
+                return {"active": False, "done": 0, "total": 0}
+            return {"active": True, "done": state["done"], "total": max(state["total"], state["done"])}
+
+    def cancel_music_export(self, key: str) -> bool:
+        with self._music_exports_lock:
+            state = self._music_exports.get(key)
+        if state is not None:
+            state["cancel"].set()
+        return state is not None
+
     def music_sync_source(self) -> music_plan.TrackSource:
         """Nguồn file nhạc cho điện thoại nghe / đồng bộ (webui/sync.py): chỉ bài ĐÃ có trong bộ đệm (không tải trong lượt
         hỏi). Bài của plan mà máy này không dùng được (`music_track_available`) thì thay bằng bài kế dùng được - như
@@ -1961,7 +2015,7 @@ class App:
     def open_existing(self, body: dict[str, Any]) -> dict[str, Any]:
         path = Path(str(body.get("path", ""))).expanduser()
         if not store.is_project(path):
-            raise ApiError(HTTPStatus.BAD_REQUEST, "Thư mục này không phải một sách của ABook")
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thư mục này không phải một dự án. Chọn đúng thư mục của dự án sách nói (thư mục ABook đã tạo cho nó); còn file .abook hay .abookproj thì mở từ Thư viện.")
         self.preferences.add_recent(path.resolve())
         return {"id": book_id(path.resolve())}
 
@@ -2695,7 +2749,8 @@ class Handler(BaseHTTPRequestHandler):
             # Studio chính là runtime cạnh mã nguồn).
             "update": self.app.update,
             "studio": None if self.app.studio is None else {"installed": self.app.studio.installed(),
-                                                             "outdated": bool(self.app.studio.outdated())},
+                                                             "outdated": bool(self.app.studio.outdated()),
+                                                             "damaged": bool(self.app.studio.damaged())},
             "libraryRoot": prefs["libraryRoot"],
             "theme": prefs["theme"],
             "playbackRate": prefs["playbackRate"],
@@ -3057,7 +3112,7 @@ class Handler(BaseHTTPRequestHandler):
         # Một cuốn trong một file (bookfile.py) - mở bằng app ở máy khác, gửi cho người khác. Cả bộ: `single` (mặc định của
         # giao diện) gộp mọi phần vào MỘT file phiên bản 3 (bookfile.pack_series); không thì mỗi phần một file trong thư
         # mục bộ - cần khi thẻ nhớ / USB FAT32 không chứa nổi file trên 4 GiB.
-        from .export import export_series, export_series_file
+        from .export import export_series, export_series_file, free_path
 
         project = self.app._book(value)
         body = self._body()
@@ -3066,21 +3121,24 @@ class Handler(BaseHTTPRequestHandler):
         single = bool(body.get("single"))
         app = self.app
 
-        def pack(part: Path, folder: Path, name: str) -> dict[str, Any]:
-            path = bookfile.pack(part, folder / bookfile.default_name(name), music_track=app.music_export_source())
-            return {"file": str(path), "size": path.stat().st_size}
-
         def run() -> dict[str, Any]:
             try:
-                if parts is None:
-                    path = pack(project, root, store.summarize(project)["title"] or project.name)
-                    result = {**path, "folder": str(Path(path["file"]).parent)}
-                elif single:
-                    result = export_series_file(parts, root, lambda listed, file: bookfile.pack_series(
-                        listed, file, music_track=app.music_export_source()))
-                else:
-                    result = export_series(parts, root, pack)
-                    result["size"] = sum(part["size"] for part in result["parts"])
+                with app.music_exporting(str(project), parts or [project]) as music:
+                    def pack(part: Path, folder: Path, name: str) -> dict[str, Any]:
+                        path = bookfile.pack(part, free_path(folder / bookfile.default_name(name)), music_track=music)
+                        return {"file": str(path), "size": path.stat().st_size}
+
+                    if parts is None:
+                        path = pack(project, root, store.summarize(project)["title"] or project.name)
+                        result = {**path, "folder": str(Path(path["file"]).parent)}
+                    elif single:
+                        result = export_series_file(parts, root, lambda listed, file: bookfile.pack_series(
+                            listed, file, music_track=music))
+                    else:
+                        result = export_series(parts, root, pack)
+                        result["size"] = sum(part["size"] for part in result["parts"])
+            except export_jobs.Cancelled as error:
+                raise ApiError(HTTPStatus.CONFLICT, "Đã huỷ xuất.", reason="cancelled") from error
             except (bookfile.BookFileError, ValueError) as error:
                 raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
             app.exports.add(result["folder"])
@@ -3220,6 +3278,15 @@ class Handler(BaseHTTPRequestHandler):
 
         self._send_json(HTTPStatus.ACCEPTED, self.app.word_jobs.start(project, repack))
 
+    def get_music_export(self, _query: dict[str, list[str]], value: str) -> None:
+        # Hộp Xuất hỏi giữa lúc đóng gói: đang tải nhạc nền bài thứ mấy / tổng số.
+        self._send_json(HTTPStatus.OK, self.app.music_export_status(str(self.app._book(value))))
+
+    def post_music_export_cancel(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Huỷ" xuất có nhạc nền: dừng trước bài kế phải tải, không ghi file sách nào.
+        self.app._mutating()
+        self._send_json(HTTPStatus.OK, {"cancelling": self.app.cancel_music_export(str(self.app._book(value)))})
+
     def get_export_size(self, query: dict[str, list[str]], value: str) -> None:
         # Cỡ ước lượng của bản xuất `.abook` (audio các chương nghe được; `series=1`: cả bộ) - hộp Xuất báo trước và cảnh
         # báo khi quá 4 GiB (thẻ nhớ / USB FAT32 không chứa nổi một file lớn hơn).
@@ -3232,14 +3299,19 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_projectfile(self, _query: dict[str, list[str]], value: str) -> None:
         # Cả dự án trong một file (projectfile.py) - chuyển máy, sao lưu, làm tiếp ở chỗ khác.
+        from .export import free_path
+
         project = self.app._book(value)
         root = self._export_root(self._body())
         title = store.summarize(project)["title"] or project.name
         try:
-            path = projectfile.pack(project, root / projectfile.default_name(title),
-                                    running=self.app.runner.running(project), music_track=self.app.music_export_source())
+            with self.app.music_exporting(str(project), [project]) as music:
+                path = projectfile.pack(project, free_path(root / projectfile.default_name(title)),
+                                        running=self.app.runner.running(project), music_track=music)
             with projectfile.ProjectFile(path) as packed:
                 missing = packed.missing_sources
+        except export_jobs.Cancelled as error:
+            raise ApiError(HTTPStatus.CONFLICT, "Đã huỷ xuất.", reason="cancelled") from error
         except projectfile.ProjectFileError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self.app.exports.add(str(path.parent))
@@ -4560,6 +4632,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/m4b-job"), Handler.post_m4b_job),
     ("GET", re.compile(BOOK + r"/m4b-job"), Handler.get_m4b_job),
     ("GET", re.compile(BOOK + r"/export-size"), Handler.get_export_size),
+    ("GET", re.compile(BOOK + r"/music-export"), Handler.get_music_export),
+    ("POST", re.compile(BOOK + r"/music-export/cancel"), Handler.post_music_export_cancel),
     ("GET", re.compile(LISTEN + r"/audiobook/plan"), Handler.get_audiobook_plan),
     ("GET", re.compile(LISTEN + r"/audiobook"), Handler.get_audiobook_job),
     ("POST", re.compile(LISTEN + r"/audiobook"), Handler.post_audiobook_job),

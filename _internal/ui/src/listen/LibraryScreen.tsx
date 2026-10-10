@@ -9,7 +9,7 @@ import { formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { caughtUpDetail, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, isLibrarySort, type LibrarySort } from "./librarySort";
-import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, seriesIndex, twinBookIds, volumeBadge, type ListenBook } from "./model";
+import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, seriesIndex, twinBookIds, twinKind, volumeBadge, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
 import { useListenLibrary, useReadAloudVoices, useSource } from "./source";
 
@@ -155,8 +155,13 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="touch-row mt-2.5 block w-full text-left">
         <div className={cn("line-clamp-2 text-sm font-semibold leading-snug", current && "text-accent-text")}>{book.title}</div>
         <div className="mt-1 text-xs text-fg-2">{bookStatusText(book, speaks)}</div>
-        {/* Hai cuốn cùng tên: thêm ngày vào thư viện để biết cuốn nào là cuốn nào (tác giả, nếu có, đã nằm ở dòng trên). */}
-        {twin && book.addedAt ? <div className="mt-0.5 text-xs text-fg-3">Thêm {formatWhen(book.addedAt)}</div> : null}
+        {/* Hai cuốn cùng tên: nhãn "Dự án" (làm trên máy này) / "Đã nhập" (mở từ file) và ngày vào thư viện để biết cuốn nào là cuốn nào
+            (tác giả, nếu có, đã nằm ở dòng trên). */}
+        {twin && (twinKind(book) || book.addedAt) ? (
+          <div className="mt-0.5 text-xs text-fg-3">
+            {[twinKind(book), book.addedAt ? `Thêm ${formatWhen(book.addedAt)}` : ""].filter(Boolean).join(" · ")}
+          </div>
+        ) : null}
       </button>
     </div>
   );

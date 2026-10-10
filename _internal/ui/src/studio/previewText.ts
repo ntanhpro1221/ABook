@@ -6,7 +6,7 @@ import { excerpt } from "@/shared/format";
 const REFUSALS: Record<string, string> = {
   producing: "Máy đang làm một cuốn sách nên chưa nghe thử được - thử lại khi cuốn ấy xong",
   gpu: "Card đồ hoạ đang bận - thử lại sau ít phút",
-  studio: "Cần cài phần làm sách trước khi nghe thử",
+  studio: "Cần cài phần làm sách (Studio) trước khi nghe thử",
   busy: "Đang nghe thử câu khác - bấm lại sau ít giây",
 };
 

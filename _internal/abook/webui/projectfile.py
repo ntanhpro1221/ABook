@@ -251,6 +251,40 @@ def repack(folder: Path, out: Path, *, producer: str = "ABook") -> Path:
                  sources=sources, missing=missing, version=bookfile.layer_version(book, files, edits), known=known)
 
 
+def restamp_word_timings(project_root: Path) -> int:
+    """Mốc chữ sáng (word_timings/<chương>.json) tin audio chương bằng cỡ + mã băm + MỐC SỬA (word_timing.attach); giải nén
+    ra chỗ mới thì mốc sửa của file audio là giờ giải nén, nên toàn bộ mốc chữ bị coi là của audio khác và mất (soát UX
+    a20). Audio nào còn đúng cỡ + mã băm đã ghi thì ghi lại mốc sửa mới vào dấu - nội dung y hệt, chỉ khác mốc. Trả số chương
+    đã ghi lại dấu. Việc phụ: lỗi nào cũng bỏ qua, dự án vẫn mở được (mốc chữ căn lại được)."""
+    from . import word_timing
+
+    done = 0
+    try:
+        files = sorted((Path(project_root) / word_timing.CACHE_FOLDER).glob("*.json"))
+    except OSError:
+        return 0
+    for file in files:
+        try:
+            chapter_id = int(file.stem)
+            data = json.loads(file.read_text(encoding="utf-8"))
+            stamp = data["audio"]
+            audio = store.chapter_audio_path(project_root, chapter_id)
+            if audio is None or not isinstance(stamp, dict):
+                continue
+            info = audio.stat()
+            if (stamp.get("size") != info.st_size or stamp.get("mtimeNs") == info.st_mtime_ns
+                    or stamp.get("sha256") != word_timing.audio_sha256(audio)):
+                continue
+            data["audio"] = {**stamp, "mtimeNs": info.st_mtime_ns}
+            temporary = file.with_name(file.name + ".part")
+            temporary.write_bytes(json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+            os.replace(temporary, file)
+            done += 1
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    return done
+
+
 def _kept_manifest(folder: Path) -> dict[str, Any] | None:
     """`project.json` mà `ProjectFile.extract` để lại trong thư mục một cuốn nhập từ `.abookproj` (None: cuốn từ file `.abook`)."""
     try:
@@ -507,6 +541,7 @@ class ProjectFile:
         except BaseException:
             shutil.rmtree(staging, ignore_errors=True)
             raise
+        restamp_word_timings(target)
         return target, report
 
     def extract(self, library: Path, folder: str | None = None) -> Path:

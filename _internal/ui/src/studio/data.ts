@@ -38,9 +38,12 @@ export function useAppInfo() {
 
 /** App đóng gói chưa cài (hay cần cập nhật) Studio: xem, nghe, sửa cách đọc / nhạc nền / bìa, xuất sách vẫn làm được - chỉ phần
  *  phân tích và thu âm cần Studio. Bấm chúng thì nói rõ điều đó và chỉ chỗ cài, thay vì để lỗi khởi động hiện ra sau. */
-export function useStudioMissing(): { missing: boolean; update: boolean } {
+export function useStudioMissing(): { missing: boolean; update: boolean; repair: boolean; action: string } {
   const studio = useAppInfo().data?.studio;
-  return { missing: Boolean(studio && (!studio.installed || studio.outdated)), update: Boolean(studio?.installed && studio.outdated) };
+  const update = Boolean(studio?.installed && studio.outdated);
+  const repair = Boolean(update && studio?.damaged);
+  // Tên nút dẫn tới thẻ Studio ở màn Dự án: mất file (repair) là "Sửa", bản cũ là "Cập nhật", chưa có là "Cài".
+  return { missing: Boolean(studio && (!studio.installed || studio.outdated)), update, repair, action: repair ? "Sửa Studio" : update ? "Cập nhật Studio" : "Cài Studio" };
 }
 
 /** `live`: đang ở Studio thì tiến độ sách đang chạy cập nhật 5 giây một lần; ở nơi khác (thanh bên) thì thưa hẳn -

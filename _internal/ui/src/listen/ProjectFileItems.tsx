@@ -78,8 +78,8 @@ function DesktopNeedStudioItem({ title, note }: { title: string; note: string })
       <span className="min-w-0">
         <span className="block">{title}</span>
         <span className="block text-xs text-fg-3">
-          {studio.update ? "Cần cập nhật Studio - " : "Cần cài Studio (card NVIDIA) - "}
-          <span className="font-medium text-accent-text underline">{studio.update ? "Cập nhật Studio" : "Cài Studio"}</span>
+          {studio.repair ? "Studio cần sửa - " : studio.update ? "Cần cập nhật Studio - " : "Cần cài Studio (card NVIDIA) - "}
+          <span className="font-medium text-accent-text underline">{studio.action}</span>
         </span>
       </span>
     </DropdownMenu.Item>

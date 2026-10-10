@@ -1,12 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
-import { Pause, Volume2 } from "lucide-react";
+import { Download, Pause, Volume2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router";
 import { useClip } from "@/listen/clip";
 import type { ReadAloudTry } from "@/listen/readings";
 import { cn } from "@/shared/cn";
 import { Button } from "@/shared/ui";
 import { api, ApiError, suggestionOf, urls } from "./api";
-import { useCachedBook } from "./data";
+import { useAppInfo, useCachedBook, useStudioMissing } from "./data";
 import { previewCaption, refusalText, tryNote } from "./previewText";
 
 // "Nghe thử" trước khi lưu (webui/reading_preview.py): máy thu thử một câu có tên ấy bằng đúng cách đọc đang gõ, đúng giọng và
@@ -43,11 +44,16 @@ export function useTryReading({
   aloud?: ReadAloudTry;
 }): { button: ReactNode; note: ReactNode } {
   const clip = useClip();
+  const navigate = useNavigate();
+  const remote = Boolean(useAppInfo().data?.remote);
+  const studio = useStudioMissing();
   // Sách đang thu (không phải tạm dừng) thì máy chủ từ chối nghe thử - nói trước, đừng đợi bấm mới biết.
   const book = useCachedBook(bookId).data?.book;
   const bookBusy = Boolean(book && (book.running || book.starting) && !book.paused);
   const [heard, setHeard] = useState<{ surface: string; spoken: string; preview: ReadingPreview } | null>(null);
   const [refusal, setRefusal] = useState("");
+  // Máy chủ từ chối vì chưa có Studio: lời báo kèm nút dẫn tới chỗ cài (soát UX a20: chỉ có chữ, không có đường đi).
+  const [needsStudio, setNeedsStudio] = useState(false);
   const play = (preview: ReadingPreview) => clip.toggle(`try-${preview.url}`, urls.readingPreview(preview.url));
   const ask = useMutation({
     mutationFn: () =>
@@ -63,11 +69,15 @@ export function useTryReading({
       }
       const reason = error instanceof ApiError ? error.detail.reason : undefined;
       const named = error instanceof ApiError && Boolean(error.detail.busyBook);
+      setNeedsStudio(reason === "studio");
       const why = refusalText(reason, error.message, named);
       setRefusal(why === error.message && !named ? `Chưa nghe thử được - ${why}` : why);
     },
   });
-  useEffect(() => setRefusal(""), [spoken]);
+  useEffect(() => {
+    setRefusal("");
+    setNeedsStudio(false);
+  }, [spoken]);
   // Đã nghe đúng cách đọc này rồi thì bấm lại là phát lại, không hỏi máy chủ.
   const same = heard !== null && heard.surface === surface && heard.spoken === spoken;
   const playing = same && clip.current === `try-${heard.preview.url}`;
@@ -104,6 +114,7 @@ export function useTryReading({
       loading={ask.isPending}
       onClick={() => {
         setRefusal("");
+        setNeedsStudio(false);
         if (same) play(heard.preview);
         else ask.mutate();
       }}
@@ -125,6 +136,11 @@ export function useTryReading({
   ) : status ? (
     <p role="status" className={cn("text-xs", refusal && !ask.isPending ? "text-warning" : "text-fg-3")}>
       {status}
+      {needsStudio && refusal && !remote && studio.missing && (
+        <Button size="sm" variant="secondary" type="button" icon={Download} className="ml-2 align-middle" onClick={() => navigate("/studio")}>
+          {studio.action}
+        </Button>
+      )}
     </p>
   ) : null;
   return { button, note };
