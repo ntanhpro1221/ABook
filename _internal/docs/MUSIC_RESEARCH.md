@@ -4337,6 +4337,28 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 14:xx - LABEL-CEIL: nhãn bạc KHÔNG phải nút thắt ở bộ học; bộ 7 lưng chừng
+
+Lead hỏi nhãn bạc có phải nút thắt không. Phép đo ấy đã có từ mẻ CẦU NỐI 08-10: đúng quy trình bạc chấm lại 20 chương vàng
+bộ 6 và 20 chương bộ 7. Vì vậy không chấm thêm, không tốn token. Chỉ tính lại bằng CPU với học sinh HIỆN TẠI (q17 L14, ridge,
+mọi khúc bạc, alpha 3e4). Luật ghi trước ở Corpus d182edc, kết quả ở Corpus (label_ceil.log). Thước `bridge7_score`.
+
+| TB r(V,T) trong chương, bỏ chương hằng | bộ 6 (bộ học) | bộ 7 |
+|---|---|---|
+| thầy bạc ~ vàng | .821 | .587 |
+| học sinh ~ vàng | .544 | .461 |
+| Δ thầy − học sinh [KTC 95 %] | +.276 [+.173, +.400] | +.126 [+.004, +.230] |
+| học sinh / thầy | .66 | .79 |
+| hai người chấm vàng A ~ B (cầu nối) | .796 | .833 |
+
+- **Bộ 6:** thầy bạc ngang người chấm vàng (.82 so với .80) và cao hơn học sinh .28. Nhãn KHÔNG phải nút thắt; khoảng cách
+  nằm ở học sinh.
+- **Bộ 7:** lưng chừng. KTC phủ cả hai ngưỡng (.10 và .20), nên theo luật thì đề nghị đợt 2. Ở bộ này thầy bạc cũng thấp hơn hai
+  người chấm vàng nhiều (.59 so với .83). Chương bộ 7 phẳng, nên r trong chương phần lớn là nhiễu (cầu nối 08-10).
+- Gộp với các lượt trước: encoder to hơn (4B), tinh chỉnh LoRA, thêm dữ liệu đều không đóng được khoảng .28 ở bộ học.
+  Khác biệt cấu trúc còn lại giữa thầy và trò: thầy đọc CẢ chương, còn học sinh chỉ thấy nhúng của MỘT khúc (đã trừ TB chương).
+  Hướng kế: cho học sinh ngữ cảnh (khúc trước/sau, vị trí trong chương), CPU.
+
 ### 10-10 13:3x - LV-Q17: mức chương từ q17 L14 KHÔNG qua ở cả hai trục
 
 Ghi trước ở Corpus 56c125a, kết quả ở Corpus (lv_q17.log). Thủ tục y hệt LV-Q06, chỉ đổi nhúng mức chương sang q17 L14. Dù vậy,
