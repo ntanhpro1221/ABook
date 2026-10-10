@@ -503,13 +503,22 @@ def reveal(path: Path) -> None:
         os.startfile(str(path))  # noqa: S606 - mở thư mục của chính người dùng
 
 
+_URL_UNSAFE = '"<>\\'
+
+
 def open_url(url: str) -> None:
     """Mở liên kết ngoài bằng trình duyệt mặc định của máy (cửa sổ app Tauri không tự mở `target=_blank`). Chỉ http/https
-    có tên máy: file:, javascript:, ms-settings:... bị từ chối - đây là cửa vào từ trang web, không được thành lối chạy lệnh."""
-    parts = urlsplit(url.strip())
+    có tên máy: file:, javascript:, ms-settings:... bị từ chối - đây là cửa vào từ trang web, không được thành lối chạy lệnh.
+    Cũng từ chối URL có khoảng trắng, `"`, `<`, `>`, dấu gạch ngược, ký tự điều khiển, hay mà `urlsplit` phải viết lại: chuỗi đưa cho
+    trình duyệt đúng là chuỗi người gọi gửi, không có gì lọt vào dòng lệnh (`ShellExecute`)."""
+    url = url.strip()
+    parts = urlsplit(url)
     if parts.scheme not in ("http", "https") or not parts.hostname or len(url) > 2000:
         raise ValueError("Chỉ mở được liên kết http/https")
-    webbrowser.open(parts.geturl())
+    target = parts.geturl()
+    if target != url or any(char.isspace() or char in _URL_UNSAFE or ord(char) < 32 or ord(char) == 127 for char in target):
+        raise ValueError("Liên kết có ký tự không an toàn")
+    webbrowser.open(target)
 
 
 def recycle_bin_available(path: Path) -> None:
@@ -528,6 +537,80 @@ def recycle_bin_available(path: Path) -> None:
     info = RecycleBinInfo(ctypes.sizeof(RecycleBinInfo), 0, 0)
     if ctypes.windll.shell32.SHQueryRecycleBinW(anchor, ctypes.byref(info)) != 0:
         raise OSError(f"ổ {anchor} không có Thùng rác")
+
+
+class RecycleCancelled(OSError):
+    """Người dùng bấm "Không" ở hộp "xoá hẳn" của Windows: không có gì bị xoá, thư mục còn nguyên chỗ cũ."""
+
+
+BACKSLASH = chr(92)
+
+
+def bin_takes(*, size: int, capacity: int | None, nuke: bool, drive_total: int | None = None) -> bool:
+    """Thư mục `size` byte vào Thùng rác của ổ được không, không bị Windows hỏi "xoá hẳn"? `capacity`: hạn mức Thùng rác của ổ
+    (None: không đọc được - chỉ chắc chắn khi thư mục không quá 1% ổ); `nuke`: ổ đặt "xoá hẳn, không vào Thùng rác"."""
+    if nuke:
+        return False
+    if capacity is None:
+        capacity = drive_total // 100 if drive_total else 0
+    return size <= capacity * 9 // 10
+
+
+def _folder_size(path: Path) -> int | None:
+    total = 0
+    try:
+        for base, _folders, files in os.walk(path):
+            for name in files:
+                try:
+                    total += os.lstat(os.path.join(base, name)).st_size
+                except OSError:
+                    pass
+    except OSError:
+        return None
+    return total
+
+
+def _bin_limits(anchor: str) -> tuple[int | None, bool]:
+    """(hạn mức byte, ổ đặt xoá hẳn) của Thùng rác ổ `anchor` theo sổ đăng ký Windows; không đọc được thì (None, False)."""
+    import ctypes
+    import winreg
+
+    volume = ctypes.create_unicode_buffer(64)
+    if not ctypes.windll.kernel32.GetVolumeNameForVolumeMountPointW(anchor, volume, len(volume)):
+        return None, False
+    guid = volume.value.rstrip(BACKSLASH).rsplit(BACKSLASH, 1)[-1].removeprefix("Volume")  # tên ổ có dạng \\?\Volume{GUID}\
+    key = BACKSLASH.join(("Software", "Microsoft", "Windows", "CurrentVersion", "Explorer", "BitBucket", "Volume", guid))
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key) as handle:
+            values = {}
+            for name in ("MaxCapacity", "NukeOnDelete"):
+                try:
+                    values[name] = int(winreg.QueryValueEx(handle, name)[0])
+                except OSError:
+                    values[name] = None
+    except OSError:
+        return None, False
+    capacity = values["MaxCapacity"]
+    return (capacity * 1024 * 1024 if capacity else None), bool(values["NukeOnDelete"])
+
+
+def recycle_bin_accepts(path: Path) -> bool:
+    """Thùng rác của ổ nhận thư mục `path` mà Windows không hỏi "xoá hẳn" không? Không chắc thì False - nơi gọi chuyển thẳng vào
+    Thùng rác ngay lúc người dùng bấm xoá (hộp hỏi hiện đúng lúc họ đang nhìn), không để hộp bật bất ngờ ở luồng dọn nền."""
+    if os.name != "nt":
+        return True
+    try:
+        recycle_bin_available(path)
+        anchor = path.resolve().anchor
+        size = _folder_size(path)
+        if size is None:
+            return False
+        import shutil
+
+        capacity, nuke = _bin_limits(anchor)
+        return bin_takes(size=size, capacity=capacity, nuke=nuke, drive_total=shutil.disk_usage(anchor).total)
+    except Exception:  # noqa: BLE001 - không đọc được gì thì coi như không chắc
+        return False
 
 
 def move_to_recycle_bin(path: Path) -> None:
@@ -557,7 +640,9 @@ def move_to_recycle_bin(path: Path) -> None:
     # pFrom là danh sách kết thúc bằng HAI ký tự NUL: ctypes thêm một, "\0" ở đây là cái còn lại.
     operation = FileOperation(None, fo_delete, str(resolved) + "\0", None, flags, False, None, None)
     code = ctypes.windll.shell32.SHFileOperationW(ctypes.byref(operation))
-    if code != 0 or operation.fAnyOperationsAborted:
+    if operation.fAnyOperationsAborted or code in (0x75, 0x4C7):  # DE_OPCANCELLED / ERROR_CANCELLED: bấm "Không" ở hộp xoá hẳn
+        raise RecycleCancelled(f"SHFileOperationW bị huỷ ({code:#x})")
+    if code != 0:
         raise OSError(f"SHFileOperationW trả {code:#x}")
     if path.exists():
         raise OSError("Thư mục vẫn còn sau khi chuyển vào Thùng rác")

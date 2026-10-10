@@ -256,7 +256,7 @@ export function TabsList({ children, className }: { children: ReactNode; classNa
     // Lăn chuột thường chạy hàng tab sang ngang (chuột không có lăn ngang, thanh cuộn thì ẩn); tới đầu/cuối hàng thì nhả cho trang cuộn dọc.
     const onWheel = (event: WheelEvent) => {
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? element.clientWidth : 1;
-      const next = wheelScroll(event.deltaX * unit, event.deltaY * unit, element.scrollLeft, element.clientWidth, element.scrollWidth);
+      const next = wheelScroll(event.deltaX * unit, event.deltaY * unit, element.scrollLeft, element.clientWidth, element.scrollWidth, event.ctrlKey);
       if (next === null) return;
       event.preventDefault();
       element.scrollLeft = next;
