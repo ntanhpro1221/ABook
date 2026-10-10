@@ -101,6 +101,17 @@ CUE_SUBHEAD = re.compile(r"^\s*(?:góc nhìn|pov\b|phần\b|interlude|side\b|ph�
 CUE_BRACKETED = re.compile(r"^\s*(?:【[^】]*】|\[[^\]]*\]|「[^」]*」|[—–-]{1,2}\s*[^—–-]{1,40}\s*[—–-]{1,2})\s*$")
 CUE_BRACKET_POV = re.compile(r"\bPOV\b|góc nhìn|side", re.IGNORECASE)  # y regex đã đóng băng (cue_bracket.keep_bracket): "side" không \b
 CUE_SUBHEAD_WORDS = 10
+# Dòng bao gạch còn là lời thoại / lời dẫn thoại kiểu Việt ("– Lizz nói –", "– Đừng lại gần. –") và thông báo trong truyện: chỉ
+# là tiêu đề phụ khi bên trong là hoa văn ("o0o", "0● 0"), từ tiêu đề ("Phần hai"), số, hay TÊN 1-3 từ viết hoa ("—Nanato—").
+# Câu thường mở bằng "Phía sau…", "Phần lớn…" cũng không phải tiêu đề (`subhead_words`). Đo trên 3 tập chữ thật
+# (docs/MUSIC_RESEARCH.md 10-10 CUE-DASH): bỏ 71/75 dòng nhận nhầm, không bỏ dòng thật nào.
+CUE_DECOR = re.compile(r"^[oO0\W\d_]*$")
+CUE_HEAD_WORD = re.compile(r"^(?:phần|chương|hồi|quyển|tập|ngoại\s+truyện|phiên\s+ngoại|chapter|part|interlude|prologue|"
+                           r"epilogue|mở\s+đầu|vĩ\s+thanh|kết)\b", re.IGNORECASE)
+CUE_NUMERAL = re.compile(r"^(?:\d+|[ivxlcdm]+)\.?$", re.IGNORECASE)
+CUE_NAME_PUNCT = re.compile(r"[.!?…,;:*\"“”]")
+CUE_PLAIN_END = re.compile(r"[.!?…,;:\"”'’)]\s*$")
+CUE_PART_NUMBERS = frozenset({"một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín", "mười", "cuối", "kết", "đầu"})
 CUE_TIME_PLACE = re.compile(
     r"^\W*(?:trong\s+khi\s+đó|cùng\s+lúc\s+(?:đó|ấy)|lúc\s+(?:ấy|đó)\s+ở|(?:vài|mấy|một|hai|ba)\s+(?:giờ|tiếng|phút)\s+sau|"
     r"(?:sáng|trưa|chiều|tối|đêm)\s+(?:hôm|ngày)\s+(?:ấy|đó)|ngày\s+hôm\s+đó|quay\s+lại|trở\s+lại\s+với|(?:ở|tại)\s+một\s+nơi\s+khác)",
@@ -108,11 +119,27 @@ CUE_TIME_PLACE = re.compile(
 
 
 def bracket_is_subhead(text: str) -> bool:
-    """Câu dạng ngoặc (`CUE_BRACKETED`) chỉ là tiêu đề phụ khi bao bằng gạch ("-o0o-", "— Phần hai —") hoặc bên trong nói góc nhìn
-    (POV / góc nhìn / side). Luật đóng băng của nghiên cứu (`LLM_Train/music/cue_bracket.py::keep_bracket`)."""
+    """Câu dạng ngoặc (`CUE_BRACKETED`) chỉ là tiêu đề phụ khi bên trong nói góc nhìn (POV / góc nhìn / side; luật đóng băng
+    `LLM_Train/music/cue_bracket.py::keep_bracket`), hoặc khi bao bằng gạch mà bên trong là hoa văn, từ tiêu đề, số hay tên
+    (CUE-DASH, `LLM_Train/music/cue_dash.py`): "-o0o-", "— Phần hai —", "—Nanato—"; không phải "– Lizz nói –"."""
     text = text.strip()
     inner = re.sub(r"^\s*[\[【「(—–-]+\s*|\s*[\]】」)—–-]+\s*$", "", text)
-    return text[:1] in "-–—" or bool(CUE_BRACKET_POV.search(inner))
+    if CUE_BRACKET_POV.search(inner):
+        return True
+    words = inner.split()
+    name = 1 <= len(words) <= 3 and not CUE_NAME_PUNCT.search(inner) and all(word[:1].isupper() for word in words)
+    return text[:1] in "-–—" and bool(CUE_DECOR.match(inner) or CUE_HEAD_WORD.match(inner) or CUE_NUMERAL.match(inner) or name)
+
+
+def subhead_words(text: str) -> bool:
+    """Câu mở bằng từ tiêu đề phụ (`CUE_SUBHEAD`) có thật là tiêu đề: không kết bằng dấu câu văn (trừ ":" ở câu <= 4 chữ như
+    "Phần 4:"), và "phần" phải có số đứng sau ("Phần hai", "Phần 3"). "Phần thưởng:", "Phía sau lưng hắn…" là câu thường."""
+    if CUE_PLAIN_END.search(text) and not (text.endswith(":") and len(text.split()) <= 4):
+        return False
+    words = text.rstrip(":").split()
+    if words and words[0].lower() == "phần":
+        return 2 <= len(words) <= 4 and (words[1].lower() in CUE_PART_NUMBERS or bool(CUE_NUMERAL.match(words[1])))
+    return True
 
 
 def cue_kind(segment: dict[str, Any]) -> str | None:
@@ -123,7 +150,7 @@ def cue_kind(segment: dict[str, Any]) -> str | None:
     if CUE_SYMBOLS.match(text):
         return "separator"
     if len(text.split()) <= CUE_SUBHEAD_WORDS and (
-            CUE_SUBHEAD.match(text) or (CUE_BRACKETED.match(text) and bracket_is_subhead(text))):
+            (CUE_SUBHEAD.match(text) and subhead_words(text)) or (CUE_BRACKETED.match(text) and bracket_is_subhead(text))):
         return "subhead"
     if TIME_JUMP.match(text) or CUE_TIME_PLACE.match(text):
         return "time_place"
