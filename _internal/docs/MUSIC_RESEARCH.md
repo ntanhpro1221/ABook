@@ -4337,6 +4337,40 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 18:3x - CUE-DASH: lời dẫn thoại bao gạch không còn là chỗ đổi cảnh (THẮNG, nhánh music/cue-tail-fixes 7cacb408)
+
+- Lỗi: soát nhạc cả quyển Lucien Evans thấy nhạc đổi bài giữa hội thoại. Nguyên nhân là dòng bao gạch kiểu Việt
+  ("– Lizz nói –", "– Đừng lại gần. –") và câu thường mở bằng "Phần…", "Phía…" bị nhận là tiêu đề phụ.
+- Luật ghi trước rồi mới đo, ba vòng (sổ: Corpus `research/music/PLAN_cue_dash.md`, mã `cue_dash.py`):
+  - N thua: bỏ cả "Phần 4:" thật.
+  - N2 thua trên tập mới D2: bỏ cả tiêu đề góc nhìn ghi tên ("—Nanato—").
+  - N3 thắng trên tập mới D3: dòng bao gạch chỉ là tiêu đề khi bên trong là hoa văn, từ tiêu đề, số, hoặc tên 1-3 từ viết hoa;
+    câu mở bằng từ tiêu đề không được kết bằng dấu câu văn (trừ ":" ở câu ≤ 4 chữ); "phần" phải có số đứng sau.
+- Số của N3, mỗi tập là 8 sách thật trong Corpus, nhãn gắn mù trước khi chạy luật:
+  - D3 (cổng): bỏ 29/32 dòng nhận nhầm, 0/12 dòng thật.
+  - D2: bỏ 25/26, 0/20 thật. D (Lucien Evans): bỏ 17/17.
+  - Gộp: bỏ 71/75 dòng nhận nhầm, không bỏ dòng thật nào.
+  - Bộ vàng cảnh: F1 .2113 và sai 1,54/giờ, không đổi.
+- Còn sót 4 dòng (lời gọi "- Yachiro—", hai dòng kẻ bảng, tít báo "GÓC NHÌN CHUYÊN GIA"); không đáng thêm luật.
+- Code app (`music_scenes.bracket_is_subhead`, `subhead_words`) khớp mã nghiên cứu trên cả 120 dòng đã xem. Hash khoá vẫn 2b33ee3e.
+
+### 10-10 17:4x - TAIL: bài sắp hết thì để kết rồi lặng, không nối bài anh em vài giây (THẮNG, nhánh music/cue-tail-fixes c9a308e1)
+
+- Lỗi: khi bài chính hết mà cảnh chỉ còn vài giây, app nối một bài anh em rồi lại đổi ngay. Nghe như nhạc bị giật.
+- Luật ghi trước (Corpus `research/music/PLAN_tail.md`): nếu phần cảnh còn lại dưới 20 giây thì không nối bài anh em. Bài hết,
+  lặng tới khi nhạc đổi (`music_select.TAIL_MIN_SECONDS`, `stopAt` trong `music_plan.chapter_cues`).
+- Đo trên 1/4 quyển Lucien Evans:
+
+  | | trước | sau |
+  |---|---|---|
+  | mốc anh em | 153 | 142 |
+  | anh em < 20 s | 11 | **0** |
+  | anh em < 30 s | 15 | 4 |
+  | mốc/giờ | 10,7 | 10,4 |
+  | lặng giữa mốc, s/giờ | 0,8 | 2,4 |
+
+- Không mốc nào ngoài phạm vi bị đổi. 8 mốc kết sớm hơn, mỗi chỗ lặng thêm 6,4 đến 19,7 giây.
+
 ### 10-10 15:2x - STU-FULL: học sinh đọc CẢ chương (model đông cứng) nhích ở bộ học, đứng yên ở bộ 7, KHÔNG qua
 
 Ghi trước ở Corpus 1e88175, bổ sung 608dd60. Kết quả ở Corpus 071bb33 và 550834b.
