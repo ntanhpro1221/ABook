@@ -48,7 +48,8 @@ def engine_module_status(engine: str) -> dict[str, Any]:
         state = full["state"] if full["state"] != "unsupported" or not full["reason"] else "unsupported"
         return {"state": state, "done": full["done"], "total": full["total"],
                 "error": full["error"] or (full["reason"] if state == "unsupported" else ""),
-                "bytes": sum(int(choice["bytes"]) for choice in full["choices"])}
+                "bytes": sum(int(choice["bytes"]) for choice in full["choices"]),
+                "cancelled": bool(full["cancelled"]), "cancellable": state == "downloading"}
     raise ValueError(f"Không có máy đọc {engine!r}")
 
 
@@ -71,6 +72,19 @@ def start_engine_module(engine: str) -> dict[str, Any]:
         zerotts_module.start()
     elif engine == "supertonic":
         supertonic_module.start([supertonic_module.CHOICE])
+    else:
+        raise ValueError(f"Không có máy đọc {engine!r}")
+    return engine_module_status(engine)
+
+
+def cancel_engine_module(engine: str) -> dict[str, Any]:
+    """Người nghe bấm "Huỷ" khi hộp "Đổi giọng" đang tải giọng: dừng giữa chừng, phần đã tải giữ để lần sau làm tiếp."""
+    from . import supertonic_module, zerotts_module
+
+    if engine == "zerotts":
+        zerotts_module.cancel()
+    elif engine == "supertonic":
+        supertonic_module.cancel()
     else:
         raise ValueError(f"Không có máy đọc {engine!r}")
     return engine_module_status(engine)
