@@ -4337,6 +4337,49 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 tối - SADFIX: sửa co của q06 bằng học lại / hiệu chỉnh đều THUA; chương buồn cả chương vốn đã ổn
+
+Lead duyệt cả hai hướng của Q06-CALIB, theo thứ tự gốc trước. Ghi trước ở Corpus `research/music/PLAN_sadset.md`
+(4624fa3, sửa trước khi học 689fa02). Khoá bộ mới ở 23902b6. Kết quả ở 5db1396.
+
+**Bộ 10, bộ thử mới giàu chuyện buồn.**
+- Cách chọn: 10 chương, 10 truyện, 7 JP + 3 KR, chọn bằng thể loại Tragedy/Drama + mật độ từ vựng tang/buồn. Không dùng model nào.
+- Nhãn: 2 agent chấm mù rồi phân xử. A-B V r .90.
+- Phân bố lớp theo chữ: sadness 26 %, tension 25 %, joyful_activation 0 %.
+
+**Ứng viên.**
+- (b) học lại ít co: lưới 36 ô, gồm alpha mức chương, alpha đầu lệch và cân khúc V < −0,2. Đầu học trên bạc; chọn ô theo luật đích trên vàng học.
+- (a) isotonic sau.
+- (a)+(b).
+
+**Luật ghi trước.**
+- Bộ 10: buồn→vui ≤ 20 %, vui→vui ≥ 60 %, MAE V ≤ gói + .01.
+- Bộ 7: MAE V và buồn→vui không tệ hơn.
+
+| bộ 10 | buồn→vui | vui→vui | MAE V |
+|---|---|---|---|
+| q06 gói hiện tại | 7,2 % | 8,7 % | .283 |
+| (b) lv1000_dev100_w1 | 7,2 % | 0,0 % | .290 |
+| (a) isotonic | 7,2 % | 8,7 % | .262 |
+| (a)+(b) | 7,2 % | 0,0 % | .277 |
+| trần (V cảnh = vàng) | 0,0 % | 8,7 % | .139 |
+
+**Kết luận: cả ba THUA.**
+- Cả ba trượt vui→vui trên bộ 10.
+- (a) và (a)+(b) còn làm MAE bộ 7 tệ hơn quá .01: gói .129, (a) .144, (a)+(b) .164.
+
+**Đọc:**
+- **Ở chương buồn cả chương, app hôm nay đã không cho bài vui** (7,2 %). q06 vẫn co (câu buồn V −.30, vàng −.71), nhưng đúng chiều.
+- **Vấn đề 43,9 % của Q06-CALIB là đoạn buồn nằm trong chương không buồn.** Đó là chuyện phân biệt trong chương. Hạ alpha hay cân lớp âm
+  không sửa được: trên vàng học, cả lưới không ô nào xuống dưới 31,6 % (gốc 45 %).
+- **Vui→vui ≥ 60 % không đạt được trên bộ 10, kể cả với V vàng** (8,7 %).
+  - Câu vui ở đây là playful nằm giữa chương buồn.
+  - Bộ không qua phân tích nên thiếu nhãn E câu, và catalog chọn bài "giữa".
+  - Điều kiện này cần bộ khác.
+- **Kế (đề xuất, chưa làm):** bộ thử đúng mục tiêu là đoạn buồn ngắn trong chương vui hoặc trung tính. Hai cách sửa gốc:
+  - đặc trưng tương phản trong chương cho đầu lệch;
+  - lấy V đoạn từ P0, như T đang làm.
+
 ### 10-10 21:xx - Q06-CALIB: không khí đoạn của học sinh q06 bị kéo lên ở cảnh buồn / căng (chẩn đoán)
 
 Phát hiện phụ của DRIFT-Q06 (đoạn cáo phó 306 được V +0,13). Đo trên 62 chương vàng (học 4+5+5b+6 + bộ 7, 16,2 giờ), lớp theo
