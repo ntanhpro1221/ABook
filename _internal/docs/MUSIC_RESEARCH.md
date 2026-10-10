@@ -4343,7 +4343,9 @@ Sau FRAG-V tôi thử thêm hai đường, chỉ trên vàng học, luật ghi t
 
 - **LABEL-K.** V = L + γ · (nhãn − TB chương), γ ∈ {1; 1,5; 2; 3}, kèm ngắt. Không ô nào đủ điều kiện: MAE V ≥ .347 trong khi gốc là
   .318, và chính xác ngắt chủ yếu dưới 70 %.
-- **ISO-LABEL.** Hiệu chỉnh đẳng biến khớp ngoài truyện. MAE V mảnh .309 (gốc .265), buồn→vui 40,6, ngắt đúng 56 %. Không qua cổng.
+- **ISO-LABEL (NGOÀI PHÉP).** Lead đã chốt LABEL-K là biến thể CUỐI trên vàng học, nhưng tin ấy tới sau khi tôi chạy ISO-LABEL.
+  Kết quả: MAE V mảnh .309 (gốc .265), buồn→vui 40,6, ngắt đúng 56 %; không qua cổng. Không dùng số này cho quyết định nào. Hiệu
+  chỉnh đẳng biến CHỈ được thử lại khi có vàng học MỚI, độc lập với 262 đoạn đã dùng; thử thêm ô trên cùng tập là lội rừng rẽ nhánh.
 
 Nhãn 9B xếp hạng câu buồn trong chương gần bằng trần: AUC .689, trần .710, gốc .586. Nhưng khoảng cách V giữa các mảnh thì sai,
 mà phép ngắt cần đúng hiệu tuyệt đối. Cả bốn đường V mảnh không cần GPU đều thua:
@@ -4352,7 +4354,9 @@ mà phép ngắt cần đúng hiệu tuyệt đối. Cả bốn đường V mả
 - nhãn hiệu chỉnh đẳng biến;
 - blend cũ.
 
-Cơ chế ngắt vẫn nằm trên nhánh dev. Bước kế là đo bộ 11 (đã ghi trước) và NT2A ranh giới.
+**Bài học.** Thứ tự đúng mà thang sai (nhãn có ngữ cảnh), hay mức đúng mà thứ tự sai (đọc mảnh rời), đều không đủ cho một
+phép cần hiệu tuyệt đối. Cơ chế ngắt vẫn nằm trên nhánh dev. Bước kế là NT2A ranh giới và lần đo cuối trên bộ 11 + bộ 12 GỘP
+(Lead 10-10 khuya).
 
 ### 10-10 23h - FRAG-V: đọc từng mảnh rời làm V tốt lên chắc chắn nhưng chỉ được 1/3 quãng; P0 V mảnh rời không đáng GPU
 
@@ -4362,7 +4366,8 @@ từng mảnh, không ngữ cảnh chương. Nếu trần ấy thấp thì P0 V 
 **Làm.** Lấy 262 đoạn app của vàng học, xáo thứ tự, chia 4 phần cho agent chấm V từ −2 đến 2. Đưa V/2 thẳng vào làm valence đoạn,
 đo với ngắt θ .2 có trễ (ô đã chọn), lấy trung bình 8 book_key.
 
-**Sửa luật trước khi đọc số thật.** Kiểm lực bằng V giả lấy từ trần cho thấy bootstrap buồn→vui theo chương không bao giờ qua
+**SAI LỆCH KHỎI LUẬT GHI TRƯỚC (Lead chấp nhận).** Luật ghi trước 184ddfd có điều kiện bootstrap buồn→vui. Tôi đã thay nó
+GIỮA CHỪNG, sau khi agent bắt đầu chấm, nhưng TRƯỚC khi đọc bất kỳ dòng chấm thật nào. Lý do: Kiểm lực bằng V giả lấy từ trần cho thấy bootstrap buồn→vui theo chương không bao giờ qua
 (khoảng [−14,8; 43,9]), vì giờ buồn của vàng học dồn vào ít chương. Đã thay bằng bootstrap MAE V mảnh. Luật mới:
 - với V giả từ trần: QUA;
 - với V giả từ gốc: THUA.
