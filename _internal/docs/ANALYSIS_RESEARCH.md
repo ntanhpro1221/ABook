@@ -43,6 +43,31 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
    một: chấm B9 trên cây mới bằng gold cũ ra villain −46,6 chặt, demonking −18,6 - toàn là thước. Trước khi so hai lượt khác
    cây mã: so chữ đoạn của hai project (một lệnh), lệch thì khoá lại gold theo chữ (`LLM_Train/spkconf/gold_remap.py`).
 
+## 10-10 đêm - Lỗi hệ thống của bộ dựng bạc: người vô danh mang nhãn kiểu tên (Model; Lead: "gốc A")
+
+Soát tay nhãn người nói của hai tập học (mẫu hạt 1234: B22 60 mẫu / 146 đoạn thoại-nội tâm, R1 40 mẫu / 105 đoạn):
+
+| tập | sai | chắc chắn | loại lỗi |
+|---|---|---|---|
+| B22 (data_b9 + lịch sử nhiễu) | 3,4 % | 3,4 % | vai phụ 5/5 |
+| R1 (data GRPO) | 12,4 % | 7,6 % | vai phụ 10/13, dạng tên 3/13 |
+
+0 lỗi lượt lời / nội tâm / ngôi kể trong mẫu. Mẫu dựng từ chương gold: 0 lỗi. Mọi lỗi nằm ở phần BẠC (đáp của model thầy).
+
+Lỗi hệ thống: người vô danh mang nhãn kiểu tên ("Người đàn ông", "Nữ sinh A", "Thợ rèn") thay vì `NPC_LOCAL:<nhãn>`. Toàn tập:
+gold ~1 % (1/88), bạc B22 ~41 % (118/289), R1 ~87 % (395/452). Khớp số đo B18 (model ghi NPC ít gấp 7 lần dữ liệu) và lỗi vai phụ d
+của mốc (100/281 lỗi cổng 19 ch). Nguồn: luật đồng thuận hai thầy (a2w3) coi nhãn tự đặt là khớp NPC_LOCAL; sổ "nhân vật đã biết"
+nạp lại các nhãn ấy nên lỗi tự nuôi qua các lô.
+
+Quyết định (Lead): sửa NGUỒN (luật đồng thuận, sổ nhân vật) + chuẩn hoá bằng mã (danh xưng của người đã biết -> tên thật, không
+thành NPC) + cổng dữ liệu (soát lại 60 mẫu mới, tỉ lệ đặt tên người vô danh < 10 % trước khi train). B22 trong hàng THAY bằng B22n
+(data chuẩn hoá); R1n dựng sẵn (gộp 7 slug tách cùng truyện, bỏ/sửa chương vỡ dòng 7,2 % mẫu). Luật đo ghi trước: cổng 19 ch, chặt
+>= +1,5 so B9 cùng công thức, không truyện tụt > 2, ΔF1 >= -1, báo riêng d; 1 hạt xem hướng, thắng thì 3 hạt mỗi bên trước khi đổi
+mặc định. B22n đổi cùng lúc lịch sử nhiễu + nhãn: thắng thì lượt tách là B9n (data_b9 chuẩn hoá, không nhiễu).
+
+Gold thêm cùng đêm: GT5 (Rokujouma 027/067/198 + Shimotsuki 320, 1.142 đoạn, A/B mù tương thích 98,3 %) làm cổng JA bổ sung; GT6
+(Rokujouma 045/130 + Make Heroine 003/013, 2.312 đoạn) đang gán. Lint dạng tên gắn vào bước dựng gold (394 dạng thêm ở cổng rộng).
+
 ## 10-10 chiều - Sổ các nhánh: đã đóng, đang chờ, và hai cổng mới (Model)
 
 Đóng:
