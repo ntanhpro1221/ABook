@@ -202,6 +202,23 @@ def test_volume_steps_follow_the_pieces_tension_against_the_scene_head() -> None
     assert cue["steps"] == [{"at": 180.0, "db": 1.8}, {"at": 360.0, "db": 3.0}]
 
 
+def test_a_continued_piece_whose_mood_clashes_with_the_track_ducks_the_bed() -> None:
+    scenes = _manual((0, 180, 0.0, "chapter_start"), (180, 360, 0.3, "length"), (360, 540, 0.0, "length"),
+                     (540, 720, 0.0, "length"))
+    scenes[1]["valence"] = -0.5  # bài êm V .25 trên đoạn tang: lệch .75 > .55
+    scenes[2]["valence"] = -0.25  # lệch .5: chưa tới ngưỡng
+    chosen = choose(scenes, _near([CALM]), book_key="b", track_info=TRACKS.get)
+    assert [entry.get("clash", False) for entry in chosen] == [False, True, False, False]
+    [cue] = music_plan.chapter_cues({"enabled": True, "scenes": chosen}, 1)
+    # hạ -12 dB suốt mảnh lệch, cộng trên bước tension của mảnh; hết mảnh về mức của mảnh sau
+    assert cue["steps"] == [{"at": 180.0, "db": -10.2}, {"at": 360.0, "db": 0.0}]
+    assert (cue["start"], cue["end"], cue["link"]) == (0.0, 720.0, CALM["link"])
+    head = _manual((0, 180, 0.0, "chapter_start"))
+    head[0]["valence"] = -0.9
+    assert "clash" not in choose(head, _near([CALM]), book_key="b", track_info=TRACKS.get)[0], "đầu cảnh không bao giờ bị hạ"
+    assert "clash" in music_plan.CHOICE_FIELDS
+
+
 def test_a_pin_or_a_silence_on_a_piece_still_wins_and_a_kept_track_does_not() -> None:
     scenes = _manual((0, 180, 0.0, "chapter_start"), (180, 360, 0.0, "length"), (360, 540, 0.0, "length"))
     first = choose(scenes, _near([CALM, BATTLE]), book_key="b", track_info=TRACKS.get)
