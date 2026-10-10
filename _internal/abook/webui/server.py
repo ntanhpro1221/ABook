@@ -2406,7 +2406,9 @@ class Handler(BaseHTTPRequestHandler):
         if not length:
             return {}
         try:
-            data = json.loads(self.rfile.read(length).decode("utf-8"))
+            raw = self.rfile.read(length)
+            self._body_read = True
+            data = json.loads(raw.decode("utf-8"))
         except (ValueError, UnicodeDecodeError) as exc:
             raise ApiError(HTTPStatus.BAD_REQUEST, "JSON không hợp lệ") from exc
         return data if isinstance(data, dict) else {}
@@ -2504,6 +2506,27 @@ class Handler(BaseHTTPRequestHandler):
     # ---- định tuyến ------------------------------------------------------------------------------------
 
     def _dispatch(self, method: str) -> None:
+        self._body_read = False
+        try:
+            self._route(method)
+        finally:
+            self._drain_body()
+
+    def _drain_body(self) -> None:
+        """Thân yêu cầu mà handler không đọc (nút Huỷ, "Tải công cụ"... giao diện vẫn gửi `{}`) nằm lại trong kết nối giữ sống: không bỏ đi thì yêu cầu kế
+        tiếp trên kết nối ấy đọc ra dòng đầu `{}GET /...` và nhận 501."""
+        if self._body_read:
+            return
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            length = -1
+        if length < 0 or length > MAX_BODY:
+            self.close_connection = True  # thân lớn / hỏng: không đọc, đóng kết nối sau câu trả lời
+        elif length:
+            self.rfile.read(length)
+
+    def _route(self, method: str) -> None:
         parts = urlsplit(self.path)
         query = parse_qs(parts.query)
         try:
