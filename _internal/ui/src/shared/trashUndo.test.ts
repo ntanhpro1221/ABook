@@ -51,6 +51,32 @@ describe("xoá sách có Hoàn tác", () => {
     expect(restored).not.toHaveBeenCalled();
   });
 
+  it("điện thoại: sau hạn là xoá hẳn (không có Thùng rác) và lời báo nói đúng như thế", () => {
+    expect(removedDescription("", true, "gone")).toBe(`Hoàn tác được trong ${UNDO_SECONDS} giây; sau đó cuốn bị xoá hẳn khỏi điện thoại.`);
+    expect(removedDescription("", false, "gone")).toBe("Cuốn đã bị xoá hẳn khỏi điện thoại.");
+    expect(removedDescription("", true, "gone")).not.toContain("Thùng rác");
+  });
+
+  it("điện thoại: nút Hoàn tác gọi hàm restore của nơi gọi thay vì đường máy chủ", async () => {
+    const restore = vi.fn().mockResolvedValue(undefined);
+    const restored = vi.fn();
+    toastRemoved({ message: "Đã xoá", title: "Sách", undo: "ef".repeat(16), note: "", to: "gone", restore, onRestored: restored });
+    toast.success.mock.calls[0][1].action.onClick();
+    await vi.waitFor(() => expect(restored).toHaveBeenCalledOnce());
+    expect(restore).toHaveBeenCalledWith("ef".repeat(16));
+    expect(api).not.toHaveBeenCalled();
+    expect(toast.success).toHaveBeenLastCalledWith("Đã khôi phục “Sách”", { description: undefined });
+  });
+
+  it("điện thoại: chỗ cũ bị chiếm / quá hạn thì báo lý do, không tải lại", async () => {
+    const restore = vi.fn().mockRejectedValue(new Error("Cuốn này không còn để hoàn tác"));
+    const restored = vi.fn();
+    toastRemoved({ message: "Đã xoá", title: "Sách", undo: "ef".repeat(16), note: "", to: "gone", restore, onRestored: restored });
+    toast.success.mock.calls[0][1].action.onClick();
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalledWith("Chưa hoàn tác được", { description: "Cuốn này không còn để hoàn tác" }));
+    expect(restored).not.toHaveBeenCalled();
+  });
+
   it("không có mã (khác ổ, vào Thùng rác ngay) thì không có nút", () => {
     toastRemoved({ message: "Đã xoá", title: "Sách", note: "", onRestored: () => undefined });
     const [, options] = toast.success.mock.calls[0];

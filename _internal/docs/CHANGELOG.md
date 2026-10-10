@@ -18,6 +18,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Trang dự án đã bị xoá hiện "Dự án này không còn" và thôi hỏi máy chủ; phần nào của trang bị lỗi thì máy chủ trả lời gì hiện lên trang và nhịp hỏi lại thưa dần.
 - Xoá một dự án hay bỏ một cuốn nhập từ file `.abook` khỏi thư viện có nút "Hoàn tác" trong 30 giây (lỡ tay thì cuốn về đúng chỗ cũ); hết hạn, hay lúc mở / đóng app, cuốn vào Thùng rác của Windows như trước.
 
+### Nghe ngay (điện thoại)
+
+- "Xoá khỏi điện thoại" có nút "Hoàn tác" trong 30 giây (lỡ tay thì cuốn về đúng chỗ cũ, cả chỗ đang nghe và phần đã sửa); điện thoại không có Thùng rác nên hết hạn, hay lúc mở lại app, cuốn bị xoá hẳn như trước.
+
 ## [0.4.42] - 2026-10-10
 
 ### Sửa nhỏ khi dùng hằng ngày (máy tính và điện thoại)
