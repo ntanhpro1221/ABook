@@ -21,6 +21,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại nói cùng lời với máy tính khi ghép (cả điện thoại): nhập sai mã vào điện thoại cũng đếm lùi số lần thử, ghép bằng địa chỉ của chính điện thoại bị từ chối, và lỗi chứng chỉ máy kia đổi bảo "Thôi ghép rồi ghép lại".
 - Chip nhạc nền "Máy chọn: …" hiện đủ tên tâm trạng thay vì cắt giữa chữ.
 
+### Nhạc nền (máy tính và điện thoại)
+
+- Bài nhạc hết khi cảnh chỉ còn dưới 20 giây thì để bài kết tự nhiên rồi lặng tới cảnh sau, không còn nối một bài mới chỉ vài giây rồi lại đổi.
+
 ## [0.4.43] - 2026-10-10
 
 ### Làm sách trong Studio (máy tính)

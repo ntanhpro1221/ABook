@@ -56,6 +56,9 @@ SHORT_TRACK_PENALTY = 1.0        # x (1 - độ dài bài / độ dài cảnh): 
 SCENE_LENGTH_CAP = 900.0         # độ dài cảnh tính phạt kẹp ở 15 phút
 HEAD_CANDIDATES = 30             # số bài xếp hạng xét phạt bài ngắn cho đầu cảnh
 SIBLING_CANDIDATES = 50
+# Bài hết mà chỉ còn ít hơn chừng này tới chỗ nhạc đổi (hết cảnh / hết chương) thì KHÔNG nối bài anh em: bài kết tự nhiên rồi
+# lặng tới ranh giới, thay vì một bài mới mờ vào vài giây rồi lại bị đổi (docs/MUSIC_RESEARCH.md 10-10 TAIL).
+TAIL_MIN_SECONDS = 20.0
 # Bước âm lượng trong cảnh: mảnh nối tiếp nhích nhạc theo tension của nó so với đầu cảnh; bước sát bước trước thì giữ mức cũ.
 STEP_DB_PER_TENSION = 6.0
 STEP_MAX_DB = 3.0
@@ -208,8 +211,10 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
 
     heads = scene_heads(scenes)
     lengths: dict[int, float] = {}
+    run_end: dict[int, float] = {}   # giây kết của cả cảnh (chuỗi mảnh cùng đầu cảnh): chỗ nhạc đổi kế tiếp
     for index, head in enumerate(heads):
         lengths[head] = lengths.get(head, 0.0) + _seconds(scenes[index])
+        run_end[head] = max(run_end.get(head, -math.inf), float(scenes[index].get("end") or 0.0))
 
     chosen: list[dict[str, Any]] = []
     recent: list[str] = []
@@ -218,9 +223,10 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
     position = 0.0               # giây đã chơi của bài ấy
     head_tension = 0.0
     intact = True                # mảnh trước y như lần dựng trước (bài, vị trí trong bài) - xem `kept_siblings`
+    stopped = -1                 # đầu cảnh mà bài đã kết sớm (TAIL_MIN_SECONDS): các mảnh còn lại của cảnh ấy lặng
     for index, scene in enumerate(scenes):
         if index == 0 or scene.get("chapterId") != scenes[index - 1].get("chapterId"):
-            used, playing, position, intact = set(), None, 0.0, True
+            used, playing, position, intact, stopped = set(), None, 0.0, True, -1
         key = scene_key(scene)
         result = dict(scene, key=key, pinned=False)
         pin_down = key in pins and not usable(pins[key])
@@ -229,6 +235,8 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             result.update(link=pins[key], pinned=True, distance=None)
         elif key in silenced:
             result.update(link=None, distance=None, silenced=True)
+        elif heads[index] == stopped:
+            result.update(link=None, distance=None, continued=True)
         elif follows:
             result.update(link=playing, distance=None, continued=True)
         else:
@@ -275,6 +283,11 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             position, elapsed = position + step, elapsed + step
             if position < track_seconds - 1e-9:
                 continue
+            now = float(scene.get("start") or 0.0) + elapsed
+            if run_end[heads[index]] - now < TAIL_MIN_SECONDS:
+                result["stopAt"] = round(now, 3)
+                playing, stopped = None, heads[index]
+                break
             if reuse is not None:
                 sibling = reuse.pop(0) if reuse else None
             else:

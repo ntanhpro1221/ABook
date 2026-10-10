@@ -122,6 +122,28 @@ def test_a_track_that_ends_inside_its_scene_hands_over_to_a_sibling_at_its_natur
         (head, 0.0, at, False), (other, at, scenes[2]["end"], True)]
 
 
+def test_a_track_ending_just_before_the_music_changes_rests_instead_of_a_short_sibling(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    """TAIL (docs/MUSIC_RESEARCH.md 10-10): còn < TAIL_MIN_SECONDS tới hết cảnh thì bài kết tự nhiên rồi lặng - không có bài anh
+    em mờ vào vài giây rồi lại bị đổi."""
+    monkeypatch.setattr(music_select, "SHORT_TRACK_PENALTY", 0.0)
+    scenes = _chapter()[:3]
+    played = sum(scene["end"] - scene["start"] for scene in scenes)
+    first = _track("a", 0.25, -0.15, -0.2, played - 10)  # hết 10 s trước khi cảnh hết
+    sibling = _track("b", 0.27, -0.18, -0.2, played - 10)
+    tracks = [first, sibling]
+    chosen = choose(scenes, _near(tracks), book_key="b", track_info={t["link"]: t for t in tracks}.get)
+    head = chosen[0]["link"]
+    stop = round(scenes[2]["end"] - 10, 3)
+    assert not any(entry.get("siblings") for entry in chosen)
+    assert [entry["link"] for entry in chosen] == [head] * 3 and chosen[2]["stopAt"] == stop
+    cues = music_plan.chapter_cues({"enabled": True, "scenes": chosen}, 7)
+    assert [(cue["link"], cue["start"], cue["end"]) for cue in cues] == [(head, 0.0, stop)]
+    monkeypatch.setattr(music_select, "TAIL_MIN_SECONDS", 5.0)
+    longer = choose(scenes, _near(tracks), book_key="b", track_info={t["link"]: t for t in tracks}.get)
+    assert [s["link"] for s in longer[2]["siblings"]] == [sibling["link"] if head == first["link"] else first["link"]]
+
+
 def _manual(*pieces: tuple[float, float, float, str]) -> list[dict]:
     """(start, end, tension, reason) -> đoạn cùng không khí êm, chương 1."""
     return [{"chapterId": 1, "firstSegment": index * 10 + 1, "start": start, "end": end, "valence": 0.25, "arousal": -0.15,
