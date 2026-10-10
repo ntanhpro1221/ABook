@@ -11,6 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Đổi được giọng người kể mà không phải tạo lại sách: hàng "Người kể" ở tab Nhân vật có nút đổi giọng như một nhân vật (nghe thử, hộp Áp dụng nói trước bao nhiêu câu kể đã thu sẽ thu lại); giọng nhân vật đang dùng thì không chọn được để người kể luôn có giọng riêng.
 - Trình tạo sách gợi ý bỏ cả dòng xin ủng hộ, quảng cáo hay "Đọc truyện tại…" ở cuối chương (ghi "cuối chương"), cùng chỗ với dòng ghi công đầu chương; mặc định vẫn đọc như file truyện, chỉ bỏ khi bạn bấm "Bỏ khỏi phần đọc".
+- Khi máy viết tên nhân vật lệch với sách ("Toko" trong khi chương chỉ viết "Tooko", "Kim Jae Hun" cho Kim Jaehun), Kịch bản và danh sách nhân vật hiện đúng tên sách viết; bí danh bạn đã gộp vẫn theo bạn.
 
 ### Điện thoại và Nghe sách (máy tính và điện thoại)
 
