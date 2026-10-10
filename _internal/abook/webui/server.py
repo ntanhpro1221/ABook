@@ -38,7 +38,7 @@ from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, ffmpeg_setup, humanize, listen_view,
                listen_export, music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, packages, project_views,
-               projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, vieneu_module, volumes, word_timing, workshop, zerotts_module)
+               projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -224,6 +224,9 @@ class App:
         self.sync_port = SYNC_PORT
         self.sync_error = ""
         self.library = Library(preferences)
+        # Chỗ chờ "Hoàn tác" trước Thùng rác (trash_pending.py): xoá sách / dự án đổi tên vào `<thư viện>/.trash-pending`, hết hạn mới vào Thùng rác.
+        self.trash = trash_pending.TrashPending()
+        self._trash_timers: set[threading.Timer] = set()
         self.jobs = actions.Jobs(runner)
         self.runner = runner
         self.token = token
@@ -263,6 +266,7 @@ class App:
         self._music_offline_until = 0.0
         if not read_only:
             self._adopt_new_book_ids()
+            self._sweep_trash_at_start()
         # Thư mục đã xuất trong phiên này - chỉ những thư mục này được mở bằng "Mở thư mục" sau khi xuất.
         self.exports: set[str] = set()
         # "Xuất file sách" chạy nền, mỗi cuốn nhớ lần xuất gần nhất (export_jobs.py) - tải lại trang vẫn thấy tiến độ / kết quả.
@@ -827,9 +831,11 @@ class App:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Sách làm trong Studio chưa có mục tác giả")
         return {"author": book_edits.set_author(path, author)}
 
-    def delete(self, value: str) -> dict[str, Any]:
+    def delete(self, value: str, *, undo: bool = False) -> dict[str, Any]:
         """Xoá một dự án: chuyển CẢ thư mục dự án vào Thùng rác (khôi phục được). File truyện gốc người dùng chọn lúc tạo
-        nằm ngoài thư mục ấy, không bị đụng tới. Sách đang chạy phải dừng trước; đang xếp hàng thì bỏ khỏi hàng."""
+        nằm ngoài thư mục ấy, không bị đụng tới. Sách đang chạy phải dừng trước; đang xếp hàng thì bỏ khỏi hàng.
+        `undo` (nút Xoá của người dùng): thư mục nằm chờ `UNDO_SECONDS` giây để "Hoàn tác" (`undo_trash`) rồi mới vào Thùng rác;
+        không thì vào Thùng rác ngay (cuốn cũ bị thay khi "làm lại" - người dùng không thấy gì để hoàn tác)."""
         self._mutating()
         path = self._book(value)
         if self.runner.running(path) or self.jobs.starting(path):
@@ -838,20 +844,87 @@ class App:
         if resolved == Path(resolved.anchor) or resolved == self.library.root.resolve() or not store.is_project(resolved):
             raise ApiError(HTTPStatus.CONFLICT, "Thư mục này không phải một dự án sách - không xoá")
         with self._queue_lock:
-            if value in self.queue:
+            queued = value in self.queue
+            if queued:
                 self.queue.remove(value)
-        try:
-            actions.move_to_recycle_bin(resolved)
-        except OSError as error:
-            raise ApiError(
-                HTTPStatus.CONFLICT,
-                "Không chuyển được vào Thùng rác - có thể một file trong dự án đang mở (đang nghe cuốn này, hay thư mục"
-                f" đang mở trong cửa sổ khác). Đóng rồi thử lại. ({error})",
-            ) from error
+        token = self._discard(
+            resolved, "project", undo=undo, queued=queued,
+            failure="Không chuyển được vào Thùng rác - có thể một file trong dự án đang mở (đang nghe cuốn này, hay thư mục"
+                    " đang mở trong cửa sổ khác). Đóng rồi thử lại. ({error})")
         self.library.forget(path)
-        return {"ok": True, "title": path.name}
+        return {"ok": True, "title": path.name, **({"undo": token} if token else {})}
 
-    def remove_imported(self, value: str) -> dict[str, Any]:
+    def _discard(self, folder: Path, kind: str, *, undo: bool, queued: bool, failure: str) -> str | None:
+        """Đưa thư mục sách đã xoá ra khỏi thư viện: `undo` thì vào chỗ chờ (trả mã hoàn tác) và hẹn dọn vào Thùng rác lúc hết hạn;
+        không (hay thư mục khác ổ với thư viện - đổi tên sẽ là chép) thì vào Thùng rác ngay như trước, trả None. Lỗi: 409 với
+        lời `failure` ({error} là chi tiết)."""
+        root = self.library.root.resolve()
+        try:
+            if undo and self.trash.fits(root, folder):
+                token = self.trash.hold(root, folder, kind, queued=queued)
+                self._schedule_trash_sweep(root)
+                return token
+            actions.move_to_recycle_bin(folder)
+        except OSError as error:
+            raise ApiError(HTTPStatus.CONFLICT, failure.format(error=error)) from error
+        return None
+
+    def _schedule_trash_sweep(self, root: Path) -> None:
+        """Hẹn dọn chỗ chờ ngay sau hạn "Hoàn tác". Bản dùng giọng giả / bài thử không hẹn (không luồng nào tự đẩy thư mục
+        thử vào Thùng rác thật); đóng app thì `close` dọn nốt."""
+        if self._fake_run():
+            return
+
+        def run() -> None:
+            self._trash_timers.discard(timer)
+            self.sweep_trash(root)
+
+        timer = threading.Timer(trash_pending.UNDO_SECONDS + 1, run)
+        timer.daemon = True
+        self._trash_timers.add(timer)
+        timer.start()
+
+    def _fake_run(self) -> bool:
+        return isinstance(self.runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"
+
+    def sweep_trash(self, root: Path | None = None, *, everything: bool = False) -> None:
+        """Chuyển vào Thùng rác những cuốn đã xoá quá hạn "Hoàn tác" (`everything`: mọi cuốn, lúc app mở / đóng). Không văng:
+        dọn không được thì cuốn còn nằm chờ, lần sau dọn tiếp."""
+        if self.read_only:
+            return
+        try:
+            self.trash.sweep(root or self.library.root.resolve(), everything=everything)
+        except Exception:  # noqa: BLE001 - dọn nền; hỏng thì để lần sau
+            pass
+
+    def _sweep_trash_at_start(self) -> None:
+        """Lúc mở app: cuốn còn nằm chờ từ phiên trước (app chết giữa hạn) vào Thùng rác. Luồng nền - cuốn lớn vào Thùng rác
+        mất vài giây, cửa sổ không được chờ. Giọng giả / bài thử không tự dọn (bài thử gọi `sweep_trash` trực tiếp)."""
+        if self._fake_run():
+            return
+        threading.Thread(target=lambda: self.sweep_trash(everything=True), name="trash-sweep", daemon=True).start()
+
+    def undo_trash(self, token: str) -> dict[str, Any]:
+        """"Hoàn tác" một lần xoá: thư mục về đúng đường gốc, thư viện thấy lại. Hàng chờ KHÔNG được xếp lại - ghi trong lời
+        báo (`wasQueued`) để người dùng tự xếp nếu muốn."""
+        self._mutating()
+        root = self.library.root.resolve()
+        try:
+            meta = self.trash.restore(root, token)
+        except trash_pending.NotPending as error:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Hết thời gian hoàn tác - cuốn này đã nằm trong Thùng rác của Windows, "
+                                                 "khôi phục từ đó được.") from error
+        except trash_pending.Occupied as error:
+            raise ApiError(HTTPStatus.CONFLICT, "Đã có sách trùng tên ở đó - đổi tên hay dời cuốn kia đi rồi hoàn tác (cuốn vừa "
+                                                "xoá vẫn nằm chờ trong ít giây nữa).") from error
+        except OSError as error:
+            raise ApiError(HTTPStatus.CONFLICT, f"Không khôi phục được - có thể thư mục đích đang mở. ({error})") from error
+        path = Path(meta["original"])
+        if meta["kind"] == "project" and path.parent.resolve() != root:
+            self.preferences.add_recent(path)  # dự án mở từ nơi khác thư viện: hiện lại qua "gần đây"
+        return {"ok": True, "title": path.name, "wasQueued": bool(meta.get("queued"))}
+
+    def remove_imported(self, value: str, *, undo: bool = False) -> dict[str, Any]:
         """Bỏ một cuốn NHẬP TỪ FILE `.abook` khỏi thư viện: thư mục đã giải nén vào Thùng rác. File `.abook` gốc không bị
         đụng - mở lại là nhập lại. Dự án của Studio xoá trong Studio; sách của máy khác thôi hiện khi gỡ máy ấy."""
         from .remote_books import REMOTE_FOLDER
@@ -866,14 +939,9 @@ class App:
                            "Sách này nằm trên máy tính khác - muốn thôi hiện thì gỡ máy ấy ở Cài đặt → Máy tính khác")
         if path.parent != (root / packages.IMPORTED_FOLDER).resolve() or not packages.is_package(path):
             raise ApiError(HTTPStatus.CONFLICT, "Cuốn này không phải sách đã nhập từ file")
-        try:
-            actions.move_to_recycle_bin(path)
-        except OSError as error:
-            raise ApiError(
-                HTTPStatus.CONFLICT,
-                f"Không chuyển được vào Thùng rác - có thể một chương đang mở (đang nghe cuốn này). Thử lại. ({error})",
-            ) from error
-        return {"ok": True}
+        token = self._discard(path, "imported", undo=undo, queued=False,
+                              failure="Không chuyển được vào Thùng rác - có thể một chương đang mở (đang nghe cuốn này). Thử lại. ({error})")
+        return {"ok": True, **({"undo": token} if token else {})}
 
     def _ollama_base(self) -> str:
         """Địa chỉ Ollama mà dây chuyền gọi: Ollama riêng của Studio (app đóng gói) hay Ollama của máy (chạy từ mã nguồn)."""
@@ -1973,6 +2041,9 @@ class App:
         self._stop_sync()
         self.cast.close()
         self.previews.shutdown()
+        for timer in list(self._trash_timers):
+            timer.cancel()
+        self.sweep_trash(everything=True)  # hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác
 
     def routes(self) -> dict[str, Any]:
         """Các đường tới máy này cho thiết bị vừa ghép: địa chỉ LAN + cổng đồng bộ, và địa chỉ Bluetooth khi cổng
@@ -2821,7 +2892,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.app.set_precast_wait(value, self._body().get("wait") is True))
 
     def delete_listen_book(self, _query: dict[str, list[str]], value: str) -> None:
-        self._send_json(HTTPStatus.OK, self.app.remove_imported(value))
+        self._send_json(HTTPStatus.OK, self.app.remove_imported(value, undo=True))
 
     def put_title(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.rename(value, str(self._body().get("title") or "")))
@@ -2942,7 +3013,10 @@ class Handler(BaseHTTPRequestHandler):
                                         "edits": book_edits.count(book_edits.load(path))})
 
     def delete_book(self, _query: dict[str, list[str]], value: str) -> None:
-        self._send_json(HTTPStatus.OK, self.app.delete(value))
+        self._send_json(HTTPStatus.OK, self.app.delete(value, undo=True))
+
+    def post_trash_undo(self, _query: dict[str, list[str]], token: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.undo_trash(token))
 
     def post_reveal(self, _query: dict[str, list[str]], value: str) -> None:
         actions.reveal(self.app._book(value))
@@ -4434,6 +4508,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/save"), Handler.post_save),
     ("POST", re.compile(BOOK + r"/workshop"), Handler.post_workshop),
     ("DELETE", re.compile(BOOK), Handler.delete_book),
+    # "Hoàn tác" xoá sách (trash_pending.py): đi cùng quyền với hai đường xoá - chỉ trên máy này, remote_studio.ALLOWED không có.
+    ("POST", re.compile(r"/api/trash/([0-9a-f]{32})/undo"), Handler.post_trash_undo),
     ("POST", re.compile(BOOK + r"/export"), Handler.post_export),
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),
     ("GET", re.compile(BOOK + r"/work"), Handler.get_work),

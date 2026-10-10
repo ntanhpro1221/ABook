@@ -80,10 +80,13 @@ def test_a_deleted_project_goes_to_the_recycle_bin_and_leaves_the_list(studio, m
         shutil.rmtree(path)
 
     monkeypatch.setattr(actions, "move_to_recycle_bin", recycle)
+    monkeypatch.setattr(actions, "recycle_bin_available", lambda _path: None)
     app.preferences.add_recent(paths.root)
     source = paths.root.parent / "001.txt"
-    status, _data = _call(server, "DELETE", f"/api/books/{book_id(paths.root)}")
-    assert status == 200 and moved == [paths.root.resolve()]
+    status, data = _call(server, "DELETE", f"/api/books/{book_id(paths.root)}")
+    assert status == 200 and data["undo"] and moved == [], "nằm chờ để Hoàn tác (test_trash_undo.py)"
+    app.sweep_trash(everything=True)
+    assert moved == [paths.root.resolve()]
     status, data = _call(server, "GET", "/api/library")
     assert data["books"] == [] and app.preferences.get()["recents"] == []
     assert source.is_file(), "file truyện gốc nằm ngoài thư mục dự án - không bị đụng"
@@ -92,15 +95,16 @@ def test_a_deleted_project_goes_to_the_recycle_bin_and_leaves_the_list(studio, m
 
 
 def test_a_failed_move_says_what_to_close(studio, monkeypatch: pytest.MonkeyPatch) -> None:
-    from abook.webui import actions
+    from abook.webui import actions, trash_pending
     from abook.webui.library import book_id
 
     paths, _app, server, _runner = studio
 
-    def locked(_path: Path) -> None:
-        raise OSError("SHFileOperationW trả 0x20")
+    def locked(_source, _target) -> None:
+        raise PermissionError("[WinError 5] Access is denied")
 
-    monkeypatch.setattr(actions, "move_to_recycle_bin", locked)
+    monkeypatch.setattr(actions, "recycle_bin_available", lambda _path: None)
+    monkeypatch.setattr(trash_pending.os, "replace", locked)
     status, data = _call(server, "DELETE", f"/api/books/{book_id(paths.root)}")
     assert status == 409 and "đang mở" in data["error"]
     assert paths.root.is_dir()

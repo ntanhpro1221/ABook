@@ -45,6 +45,7 @@ import {
 import { api, type BookSummary, type Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
+import { toastRemoved } from "@/shared/trashUndo";
 import {
   phaseTone,
   useActivity,
@@ -391,15 +392,23 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
   const player = usePlayer();
   const busy = book.running || book.starting;
   const remove = useMutation({
-    mutationFn: () => api<{ ok: boolean }>(`/api/books/${book.id}`, { method: "DELETE" }),
-    onSuccess: () => {
+    mutationFn: () => api<{ ok: boolean; undo?: string }>(`/api/books/${book.id}`, { method: "DELETE" }),
+    onSuccess: (result) => {
       onOpenChange(false);
       navigate("/studio", { replace: true });
       client.removeQueries({ queryKey: ["book", book.id] });
       void client.invalidateQueries({ queryKey: ["library"] });
       void client.invalidateQueries({ queryKey: ["listen"] });
-      toast.success(`Đã chuyển “${book.title}” vào Thùng rác`, {
-        description: "Cần lại thì khôi phục thư mục ấy từ Thùng rác của Windows.",
+      // "Hoàn tác" (trash_pending.py): thư mục nằm chờ vài chục giây trước khi vào Thùng rác.
+      toastRemoved({
+        message: `Đã xoá dự án “${book.title}”`,
+        title: book.title,
+        undo: result.undo,
+        note: "File truyện gốc không bị đụng.",
+        onRestored: () => {
+          void client.invalidateQueries({ queryKey: ["library"] });
+          void client.invalidateQueries({ queryKey: ["listen"] });
+        },
       });
     },
     onError: (error: Error) => toast.error("Chưa xoá được", { description: error.message }),

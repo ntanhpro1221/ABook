@@ -21,6 +21,7 @@ import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { keptEditsTitle } from "@/shared/editsKept";
 import { setExternalOpener } from "@/shared/openExternal";
+import { toastRemoved } from "@/shared/trashUndo";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
 import { NewProjectScreen } from "@/studio/NewProjectScreen";
@@ -147,7 +148,7 @@ function RemoveImportedMenuItem({ book }: { book: ListenBook }) {
 
 /** Sách chỉ có chữ (EPUB / TXT / DOCX / PDF) và sách đóng gói .abook bỏ khỏi thư viện thì khác nhau ở điều người dùng cần biết sau đó: file gốc thế nào, lấy lại cách nào. */
 function removedNote(book: ListenBook): string {
-  return book.stage === "text" ? "Đã chuyển vào Thùng rác - khôi phục được từ đó. File gốc của bạn không bị đụng." : "Mở lại file .abook là nhập lại.";
+  return book.stage === "text" ? "File gốc của bạn không bị đụng." : "Mở lại file .abook là nhập lại.";
 }
 
 function removeAsk(book: ListenBook): string {
@@ -173,12 +174,17 @@ function RemoveImportedHost() {
     // Cuốn đang nghe giữ file chương mở - đóng trình phát trước (nó lưu chỗ nghe lúc sách còn đó).
     if (player.track?.bookId === book.id) player.close();
     try {
-      await api(`/api/listen/books/${book.id}`, { method: "DELETE" });
+      const result = await api<{ ok: boolean; undo?: string }>(`/api/listen/books/${book.id}`, { method: "DELETE" });
       setBook(null);
       navigate("/", { replace: true });
       void client.invalidateQueries({ queryKey: ["listen"] });
-      toast.success(`Đã bỏ “${book.title}” khỏi thư viện`, {
-        description: removedNote(book),
+      // "Hoàn tác" (trash_pending.py): thư mục nằm chờ vài chục giây trước khi vào Thùng rác.
+      toastRemoved({
+        message: `Đã bỏ “${book.title}” khỏi thư viện`,
+        title: book.title,
+        undo: result.undo,
+        note: removedNote(book),
+        onRestored: () => void client.invalidateQueries({ queryKey: ["listen"] }),
       });
     } catch (error) {
       toast.error("Chưa xoá được", { description: (error as Error).message });
