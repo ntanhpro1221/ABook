@@ -26,7 +26,8 @@ import { NewProjectScreen } from "@/studio/NewProjectScreen";
 import { ProjectScreen } from "@/studio/ProjectScreen";
 import { ProjectsScreen } from "@/studio/ProjectsScreen";
 import { desktopTextImport, httpSource } from "./httpSource";
-import { BookFileMenuItem, ExportJobHost, M4bMenuItem } from "./ExportBookFileJob";
+import { AudiobookDialogHost } from "./AudiobookDialog";
+import { AudiobookMenuItem, BookFileMenuItem, ExportJobHost, M4bMenuItem } from "./ExportBookFileJob";
 import { RemoteDownloadMenuItem, RemoteDownloadStatus } from "./RemoteDownload";
 import { SettingsScreen } from "./SettingsScreen";
 import { Shell } from "./Shell";
@@ -480,6 +481,8 @@ export function App() {
               {!info.remote && <RemoveImportedHost />}
               <ExportJobHost kind="bookfile" />
               <ExportJobHost kind="m4b" />
+              {!info.remote && <ExportJobHost kind="audiobook" />}
+              {!info.remote && <AudiobookDialogHost />}
               <Shell>
                 <Routes>
                   <Route path="/" element={<LibraryRoute />} />
@@ -490,7 +493,15 @@ export function App() {
                         extraActions={(book) =>
                           book.imported ? (
                             // Sách của máy khác (remote) thôi hiện khi gỡ máy ấy - không có gì để xoá ở đây; tải về máy được.
-                            info.remote ? null : book.remote ? <RemoteDownloadMenuItem book={book} /> : <RemoveImportedMenuItem book={book} />
+                            info.remote ? null : book.remote ? (
+                              <RemoteDownloadMenuItem book={book} />
+                            ) : (
+                              <>
+                                {/* Sách chỉ có chữ (EPUB / TXT) thành sách nói: giọng của máy đọc cả cuốn rồi ghép file. */}
+                                {book.stage === "text" && <AudiobookMenuItem book={book} />}
+                                <RemoveImportedMenuItem book={book} />
+                              </>
+                            )
                           ) : (
                             <>
                               <BookFileMenuItem book={book} />
