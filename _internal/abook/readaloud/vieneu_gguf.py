@@ -43,7 +43,7 @@ SERVER_EXE = "audiocpp_server.exe"
 MODEL_FILE = "vieneu-v3-turbo-q8_0.gguf"
 SAMPLE_RATE = 48_000  # = vieneu_engine.TURBO_RATE (bài thử giữ hai số khớp nhau)
 IDLE_SECONDS = 300.0  # server rảnh chừng này thì tắt (lấy lại ~1,1 GB RAM); khúc kế khởi lại trong ~0,6 giây
-START_TIMEOUT = 60.0
+START_TIMEOUT = 20.0  # khởi lạnh đo ~1 s; quá 20 s thì người nghe đang chờ tiếng đầu - rơi về ONNX
 REQUEST_TIMEOUT = 300.0
 THREADS = 6  # đã đo ở 6 luồng; máy ít luồng hơn thì theo máy
 AVX2_FEATURE = 40  # IsProcessorFeaturePresent: PF_AVX2_INSTRUCTIONS_AVAILABLE (bản server build nhắm AVX2 + FMA + F16C, không AVX-512)
@@ -307,8 +307,11 @@ class GgufEngine:
                     audio = mono_samples(self._post(body))
                     self._used = time.monotonic()
                     return audio
-                except GgufError as error:
+                except GgufError as error:  # không lên được / WAV hỏng: thử lại cũng thế, chỉ bắt người nghe chờ thêm - rơi về ONNX ngay
                     problem = error
+                    log.warning("bản tăng tốc VieNeu: %s", problem)
+                    self._kill()
+                    break
                 except (OSError, urllib.error.URLError, http.client.HTTPException) as error:
                     problem = GgufError(f"server không trả lời ({error})")
                 log.warning("bản tăng tốc VieNeu: %s", problem)

@@ -29,6 +29,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 port, mode, counter = int(sys.argv[1]), sys.argv[2], sys.argv[3]
 if mode == "crash-at-start":
     sys.exit(3)
+if mode == "hang":
+    time.sleep(60); sys.exit(0)
 def bump():
     n = int(open(counter).read() or 0) + 1 if os.path.exists(counter) else 1
     open(counter, "w").write(str(n)); return n
@@ -169,14 +171,26 @@ def test_a_server_that_dies_in_the_middle_is_started_again_once(fake) -> None:
 def test_a_server_that_never_starts_or_keeps_dying_raises(fake) -> None:
     engine_for, files, _counter, _tmp = fake
     voice = _voice(files)
+    crashing = engine_for("crash-at-start")
     with pytest.raises(GgufError, match="thoát ngay"):
-        engine_for("crash-at-start").speak("a", voice, 1)
+        crashing.speak("a", voice, 1)
+    assert crashing.starts == 1, "không lên được thì không thử lại: người nghe đang chờ tiếng đầu"
     dying = engine_for("always-die")
     with pytest.raises(GgufError):
         dying.speak("a", voice, 1)
     assert dying.starts == 2, "khởi lại đúng một lần rồi bỏ"
     with pytest.raises(GgufError, match="WAV"):
         engine_for("junk").speak("a", voice, 1)
+
+
+def test_a_server_that_never_answers_health_gives_up_once_without_a_second_wait(fake, monkeypatch: pytest.MonkeyPatch) -> None:
+    engine_for, files, _counter, _tmp = fake
+    monkeypatch.setattr(vieneu_gguf, "START_TIMEOUT", 1.0)
+    hanging = engine_for("hang")
+    began = time.monotonic()
+    with pytest.raises(GgufError, match="không sẵn sàng"):
+        hanging.speak("a", _voice(files), 1)
+    assert hanging.starts == 1 and time.monotonic() - began < 2.5 and not hanging.running()
 
 
 class FakeOnnx:
