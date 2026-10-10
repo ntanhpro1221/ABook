@@ -81,6 +81,11 @@ CHAPTER_LEVEL_SHAPE = 0.5
 CHAPTER_LEVEL_T_LABELS = (4.022, -0.056)
 # Hệ số hình của học sinh trong chương (đo ở M3: k = 1; CL của P0 giữ 0.5).
 STUDENT_SHAPE = 1.0
+# Ngắt nối tiếp (`break_continuation`; Corpus/research/music/PLAN_sadwithin.md): mảnh "length" lệch valence đầu cảnh đang chạy
+# >= ngưỡng thì thành đầu cảnh mới (chọn lại bài). Chọn trên vàng học θ .2 + trễ; TẮT (None) tới khi có số thắng trên bộ 11.
+MOOD_BREAK_THETA: float | None = None
+MOOD_BREAK_HYSTERESIS = True
+MOOD_BREAK_REASON = "mood_jump"
 
 SEPARATOR = re.compile(r"^\s*(?:[*~#=_\-·•oO0]\s*){3,}\s*$")
 TIME_JUMP = re.compile(
@@ -396,7 +401,42 @@ def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = 
     scenes = _split_long(_merge_short(scenes), segments, seconds)
     spans = _mood_spans(moods, script.get("chapterId"), segments)
     views = [_view(scene, segments, timeline, seconds, script, spans) for scene in scenes]
-    return apply_student(views, student) or apply_chapter_level(views)
+    return break_continuation(apply_student(views, student) or apply_chapter_level(views))
+
+
+def break_continuation(scenes: list[dict[str, Any]], theta: float | None = None,
+                       hysteresis: bool | None = None) -> list[dict[str, Any]]:
+    """Mảnh `reason="length"` chỉ là cắt cho đủ ngắn, nên `music_select.choose` chơi tiếp bài của đầu cảnh qua nó - kể cả khi
+    không khí đã đổi hẳn (chẩn đoán 10-10: 42/45 điểm "câu buồn dưới bài vui" nằm ở đây). Mảnh lệch valence của MỐC (đầu cảnh
+    đang chạy, hay mảnh vừa ngắt) >= `theta` thì thành đầu cảnh mới (`MOOD_BREAK_REASON`) và làm mốc mới. Trễ: chỉ ngắt khi mảnh
+    "length" KẾ cũng lệch >= `theta` cùng phía (một mảnh lạc không đổi bài). Mốc đặt lại ở mọi ranh giới thật và đầu chương.
+    `theta` None (mặc định `MOOD_BREAK_THETA`) -> trả nguyên. Thuần hàm: không sửa đoạn đưa vào."""
+    theta = MOOD_BREAK_THETA if theta is None else theta
+    hysteresis = MOOD_BREAK_HYSTERESIS if hysteresis is None else hysteresis
+    if theta is None:
+        return scenes
+    out: list[dict[str, Any]] = []
+    reference: dict[str, Any] | None = None
+    for index, scene in enumerate(scenes):
+        same_chapter = index > 0 and scene.get("chapterId") == scenes[index - 1].get("chapterId")
+        if reference is None or not same_chapter or scene.get("reason") != "length":
+            reference = scene
+            out.append(scene)
+            continue
+        delta = float(scene.get("valence") or 0.0) - float(reference.get("valence") or 0.0)
+        jump = abs(delta) >= theta
+        if jump and hysteresis:
+            following = scenes[index + 1] if index + 1 < len(scenes) else None
+            ahead = (float(following.get("valence") or 0.0) - float(reference.get("valence") or 0.0)
+                     if following is not None and following.get("chapterId") == scene.get("chapterId")
+                     and following.get("reason") == "length" else None)
+            jump = ahead is not None and abs(ahead) >= theta and (ahead > 0) == (delta > 0)
+        if jump:
+            reference = dict(scene, reason=MOOD_BREAK_REASON)
+            out.append(reference)
+        else:
+            out.append(scene)
+    return out
 
 
 def apply_chapter_level(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
