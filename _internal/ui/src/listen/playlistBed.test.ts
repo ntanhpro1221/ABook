@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { setApiTransport } from "@/studio/api";
-import type { MusicCue } from "./musicBed";
+import { MusicBed, RETRY_MS, type MusicCue } from "./musicBed";
 import {
   addMusicOutcome,
   autoPlaylistName,
@@ -13,6 +13,7 @@ import {
   PAUSE_GRACE_MS,
   PlaylistClock,
   PlaylistDriver,
+  PlaylistFailures,
   playlistCues,
   playlistLabel,
   shortPlaylistLabel,
@@ -67,6 +68,10 @@ function fakeBed(cues: MusicCue[]) {
   const calls: { seconds: number; playing: boolean; key: string | null }[] = [];
   return {
     calls,
+    setCues(next: MusicCue[]) {
+      cues = next;
+    },
+    onLoadResult: () => () => undefined,
     sync(seconds: number, playing: boolean) {
       calls.push({ seconds, playing, key: cues.find((cue) => seconds >= cue.start && seconds < cue.end)?.key ?? null });
     },
@@ -149,6 +154,103 @@ describe("danh sách phát trên đồng hồ nhạc của cuốn", () => {
     clock.tick(true);
     expect(clock.seconds).toBe(3);
     clock.save(); // không có chỗ nhớ: không lỗi
+  });
+});
+
+describe("bài của danh sách phát tải hỏng: bài sau dồn lên (như MusicBed.kt)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  type Fake = { paused: boolean; fire: (type: "loadedmetadata" | "error") => void };
+  const three: PlaylistTrack[] = ["a", "b", "c"].map((name) => ({ link: name, src: `/${name}`, duration: 100 }));
+
+  /** MusicBed thật, <audio> giả bắn được sự kiện tải xong / hỏng; `failing`: bài nào tải là hỏng ngay. */
+  function setup(failing: Set<string> = new Set()) {
+    vi.useFakeTimers();
+    const made: Record<string, Fake[]> = {};
+    const bed = new MusicBed((src) => {
+      const listeners: Record<string, (() => void)[]> = {};
+      const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration: 100 };
+      const audio = Object.assign(fake, {
+        play: () => { fake.paused = false; return Promise.resolve(); },
+        pause: () => { fake.paused = true; },
+        addEventListener: (type: string, listener: () => void) => { (listeners[type] ??= []).push(listener); },
+        fire: (type: "loadedmetadata" | "error") => listeners[type]?.forEach((listener) => listener()),
+      });
+      (made[src] ??= []).push(audio);
+      if (failing.has(src.slice(1))) queueMicrotask(() => audio.fire("error"));
+      return audio;
+    });
+    const cues = playlistCues(three);
+    bed.setCues(cues, -20);
+    const clock = new PlaylistClock("sach:calm", memory());
+    const driver = new PlaylistDriver(bed, clock, cues);
+    /** Giọng chạy `seconds` giây, mỗi giây một nhịp; trả bài đang kêu ở từng giây. */
+    const play = async (seconds: number) => {
+      const heard: (string | null)[] = [];
+      for (let second = 0; second < seconds; second += 1) {
+        vi.advanceTimersByTime(1000);
+        driver.update(true);
+        await Promise.resolve();
+        heard.push(bed.activeLink);
+      }
+      return heard;
+    };
+    return { bed, made, clock, driver, play };
+  }
+
+  it("bài đang kêu tải hỏng: bài sau vào ngay thay vì im cả khoảng của nó; đồng hồ nhạc không đổi", async () => {
+    const { bed, made, clock, play } = setup();
+    await play(10);
+    expect(bed.activeLink).toBe("a");
+    const at = clock.seconds;
+    made["/a"][0].fire("error");
+    expect(bed.activeLink).toBe("b");
+    expect(clock.seconds).toBe(at);
+    const heard = await play(60);
+    expect(heard.every((link) => link === "b")).toBe(true);
+  });
+
+  it("bài hỏng về hàng ở chỗ đổi bài sau RETRY_MS, không giữa bài", async () => {
+    const { made, play } = setup();
+    await play(10);
+    made["/a"][0].fire("error");
+    const before = await play(RETRY_MS / 1000 - 15);
+    expect(before).not.toContain("a");
+    const after = await play(2 * 294);
+    const back = after.indexOf("a");
+    expect(back).toBeGreaterThanOrEqual(0);
+    expect(after[back - 1]).not.toBe("a");
+    expect(made["/a"].length).toBeGreaterThanOrEqual(2); // tải lại thật khi về hàng
+  });
+
+  it("mọi bài tải hỏng (mất mạng): im lặng, rồi có nhạc lại khi tới hạn thử", async () => {
+    const failing = new Set(["a", "b", "c"]);
+    const { bed, play } = setup(failing);
+    const offline = await play(30);
+    expect(offline.slice(5).every((link) => link === null)).toBe(true); // vài giây đầu: bài kế đang thử tải
+    failing.clear();
+    await play(RETRY_MS / 1000);
+    expect(bed.activeLink).not.toBeNull();
+  });
+
+  it("thử lại thưa dần 5, 10, 20 phút rồi thôi tới phiên sau", () => {
+    let now = 0;
+    const failures = new PlaylistFailures(() => now);
+    for (const wait of [1, 2, 4]) {
+      failures.drop("a");
+      now += wait * RETRY_MS - 1;
+      expect(failures.isFailed("a")).toBe(true);
+      now += 1;
+      expect(failures.isFailed("a")).toBe(false);
+      expect([...failures.takeDue()]).toEqual(["a"]);
+    }
+    failures.drop("a");
+    now += 1000 * RETRY_MS;
+    expect(failures.isFailed("a")).toBe(true);
+    failures.forget("a"); // tải được: lần hỏng sau lại từ 5 phút
+    failures.drop("a");
+    now += RETRY_MS;
+    expect(failures.isFailed("a")).toBe(false);
   });
 });
 
