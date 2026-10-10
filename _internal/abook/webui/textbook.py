@@ -143,6 +143,8 @@ def preview(book: importers.ImportedBook) -> dict[str, Any]:
         **({"splitOffer": book.split_offer, "splitHeadings": book.split_headings} if book.split_offer else {}),
         # Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
         "suggestions": [{"chapter": number, "line": line} for number, line in book.credits],
+        # Chú thích (EPUB / DOCX có cấu trúc): tìm thấy N lời chú - giao diện đề xuất "không đọc số", "đọc lời chú ở cuối chương" / "bỏ lời chú" (mặc định KHÔNG tích).
+        **({"footnotes": book.footnote_offer()} if book.footnote_found else {}),
         "totals": {"chapters": len(kept), "words": sum(row["words"] for row in kept)},
     }
 
@@ -165,13 +167,15 @@ def picks_from_json(raw: Any) -> list[tuple[int, str]] | None:
 
 def add_to_library(source: Path, title: str | None, library_root: Path, projects: Iterable[Path],
                    fingerprints: Fingerprints, *, separate: bool = False,
-                   split_chapters: bool = False, picks: list[tuple[int, str]] | None = None) -> tuple[Path, str, importers.ImportedBook]:
+                   split_chapters: bool = False, picks: list[tuple[int, str]] | None = None,
+                   footnotes: importers.FootnoteChoice | None = None) -> tuple[Path, str, importers.ImportedBook]:
     """Đọc `source` (thư mục TXT / .epub / .docx / .pdf / .txt) và đưa vào thư viện thành sách chỉ-chữ. Trả (thư mục cuốn, cách -
     "new" / "existing" / "updated" như `packages.import_opened`, cuốn đã đọc). `title` (nếu có) thay tên sách của file.
     `separate`: "Thêm bản riêng" - cuốn mới dù thư viện đã có đúng bộ chữ này. `split_chapters`: file .txt cả truyện tách theo "Chương N".
     `picks`: các chương người dùng tích ở bước xem trước (+ tên mới, `picks_from_json`); không có thì các chương mặc định.
+    `footnotes`: đề xuất về chú thích người dùng đã tích (`importers.footnote_choice_from_json`); không có thì như trong sách.
     `importers.ImportFailed` / `bookfile.BookFileError` khi không nhập được."""
-    book = importers.import_text(source, split_chapters=split_chapters, keep_short=picks is not None)
+    book = importers.import_text(source, split_chapters=split_chapters, keep_short=picks is not None, footnotes=footnotes)
     if picks is not None:
         book = importers.select_chapters(book, picks)
     if title and store.clean_title(title):

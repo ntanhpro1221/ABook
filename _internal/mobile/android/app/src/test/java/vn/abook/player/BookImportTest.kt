@@ -63,6 +63,34 @@ class BookImportTest {
         }
     }
 
+    /** Chú thích (đề xuất, mặc định KHÔNG áp): mỗi sách có chú thích ra đúng cùng một cuốn với Python, mặc định lẫn cả ba lựa chọn người nghe có thể tích. */
+    @Test
+    fun footnote_books_give_exactly_what_python_gives_by_default_and_for_every_choice() {
+        val choices = mapOf(
+            "fn_marks" to """{"hideMarks": true}""",
+            "fn_end" to """{"hideMarks": true, "notes": "end"}""",
+            "fn_drop" to """{"notes": "drop"}""",
+        )
+        for (file in listOf("notes3.epub", "notes2.epub", "endnotes.epub", "notes.docx")) {
+            val stem = file.substringBeforeLast('.')
+            assertEquals(file, expectedText(stem), dump(BookImport.importFile(File(dir, file))))
+            for ((label, json) in choices) {
+                val choice = BookImport.footnoteChoiceFromJson(org.json.JSONObject(json))
+                assertEquals("$file $label", expectedText("$stem.$label"), dump(BookImport.importFile(File(dir, file), footnotes = choice)))
+            }
+        }
+    }
+
+    @Test
+    fun a_footnote_choice_that_is_not_the_agreed_shape_is_refused_in_the_same_words_as_python() {
+        assertEquals(BookImport.FootnoteChoice(), BookImport.footnoteChoiceFromJson(null))
+        assertEquals(BookImport.FootnoteChoice(true, "end"), BookImport.footnoteChoiceFromJson(org.json.JSONObject("""{"hideMarks": true, "notes": "end"}""")))
+        for (bad in listOf("""{"hideMarks": "yes"}""", """{"notes": "all"}""", """{"notes": 1}""")) {
+            assertEquals(bad, "Lựa chọn về chú thích không hợp lệ", failure { BookImport.footnoteChoiceFromJson(org.json.JSONObject(bad)) })
+        }
+        assertEquals("Lựa chọn về chú thích không hợp lệ", failure { BookImport.footnoteChoiceFromJson("end") })
+    }
+
     @Test
     fun the_pdf_rules_layer_gives_what_python_gives_from_the_shared_raw_pages() {
         val raw = StrictJson.parse(File(dir, "pages/story.pages.json").readText(Charsets.UTF_8)) as org.json.JSONObject

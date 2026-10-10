@@ -4,8 +4,12 @@ import {
   defaultPicked,
   isDefaultPick,
   pickedSuggestions,
+  footnotesToSend,
+  footnoteSummary,
+  NO_FOOTNOTES,
   pickedTotals,
   renameChapter,
+  sameRows,
   shownTitle,
   splitIsSure,
   splitLabel,
@@ -143,5 +147,28 @@ describe("split label", () => {
   });
   it("says nothing extra when the file starts at its first heading", () => {
     expect(splitLabel({ splitOffer: 3, splitHeadings: 3 })).toBe("Tách theo 3 dòng “Chương N”");
+  });
+});
+
+describe("footnote proposal", () => {
+  const offer = { found: 12, marks: 12, examples: [{ mark: "…trees²", note: "Lời chú về cây." }] };
+
+  it("is never ticked by default and sends nothing until the listener ticks something", () => {
+    expect(NO_FOOTNOTES).toEqual({ hideMarks: false, notes: "" });
+    expect(footnotesToSend(NO_FOOTNOTES)).toBeUndefined();
+    expect(footnotesToSend({ hideMarks: true, notes: "" })).toEqual({ hideMarks: true, notes: "" });
+    expect(footnotesToSend({ hideMarks: false, notes: "drop" })).toEqual({ hideMarks: false, notes: "drop" });
+  });
+
+  it("says what was found with a real example, or just the count when there is none", () => {
+    expect(footnoteSummary(offer)).toEqual({ title: "Tìm thấy 12 chú thích trong sách", example: "Ví dụ: “…trees²” có lời chú “Lời chú về cây.”" });
+    expect(footnoteSummary({ found: 1, marks: 0, examples: [] })).toEqual({ title: "Tìm thấy 1 chú thích trong sách", example: null });
+  });
+
+  it("keeps the listener's picks and names only while the chapter list is the same one", () => {
+    const rows = [row(1, "Chương 1", 10), row(2, "Chương 2", 10), row(3, "Endnotes", 4, { included: false, matter: "Chú thích" })];
+    expect(sameRows(rows, rows.map((one) => ({ ...one, words: 1 })))).toBe(true);
+    expect(sameRows(rows, rows.slice(0, 2))).toBe(false);
+    expect(sameRows(rows, [rows[0], rows[1], { ...rows[2], included: true }])).toBe(false);
   });
 });
