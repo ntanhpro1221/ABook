@@ -427,7 +427,10 @@ export interface EbookLibraryPlugin {
   /** Mở file vừa xuất bằng app nghe sách nói của máy; `opened: false` khi không mở được. */
   openFile(options: { uri: string }): Promise<{ opened: boolean }>;
   addListener(event: "audiobookExport", handler: (event: AudiobookExportEvent) => void): Promise<PluginListenerHandle>;
-  deleteBook(options: { id: string }): Promise<void>;
+  /** Xoá khỏi điện thoại có Hoàn tác (TrashPending.kt): cuốn nằm chờ 30 giây rồi xoá hẳn. `undo`: mã cho `undoDelete`; null khi xoá thẳng (không đổi tên được). */
+  deleteBook(options: { id: string }): Promise<{ undo: string | null }>;
+  /** Đưa cuốn vừa xoá về chỗ cũ; từ chối khi quá hạn (đã xoá hẳn) hay chỗ cũ đã có cuốn cùng mã. */
+  undoDelete(options: { token: string }): Promise<void>;
   /** `bytes`: cả thư viện; `books`: cỡ từng cuốn trên máy (mã thư mục = mã cuốn). */
   storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number }[] }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number }): Promise<ListeningState>;

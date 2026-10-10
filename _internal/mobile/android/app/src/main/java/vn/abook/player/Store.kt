@@ -719,15 +719,47 @@ object Store {
         return dir
     }
 
+    /** Xoá HẲN ngay (không hoàn tác): thư mục sách + dòng của nó trong sổ `prints.json`. Giao diện đi qua [holdBook]. */
     @Synchronized
     fun deleteBook(id: String) {
         deletableBookDir(id).deleteRecursively()
+        forgetPrints(id)
+    }
+
+    private fun forgetPrints(id: String) {
         val all = printsBook()
         if (all.has(id)) {
             all.remove(id)
             writeAtomic(printsFile, all.toString())
         }
     }
+
+    /**
+     * "Xoá khỏi điện thoại" có "Hoàn tác" ([TrashPending]): đưa thư mục sách vào chỗ chờ, trả mã hoàn tác. Thư mục không đổi tên
+     * được (hiếm: cùng filesDir) thì xoá hẳn như trước và trả null - giao diện khi ấy không hứa "Hoàn tác". Dữ liệu đi theo sách
+     * (`prints.json`) giữ nguyên tới lúc xoá hẳn để Hoàn tác trả đủ.
+     */
+    @Synchronized
+    fun holdBook(id: String): String? {
+        val dir = deletableBookDir(id)
+        if (dir.isDirectory) trash().hold(dir, id)?.let { return it }
+        deleteBook(id)
+        return null
+    }
+
+    /** Hoàn tác một lần xoá: cuốn về đúng chỗ cũ. [TrashPending.NotPending] khi mã lạ / quá hạn, [TrashPending.Occupied] khi chỗ cũ bị chiếm. */
+    @Synchronized
+    fun undoBook(token: String): JSONObject = trash().restore(token)
+
+    /** Xoá hẳn những cuốn đã hết hạn Hoàn tác (`everything`: mọi cuốn đang chờ - lúc app mở). Trả số cuốn còn chờ. */
+    @Synchronized
+    fun sweepTrash(everything: Boolean = false): Int = trash().sweep(everything) { meta ->
+        val id = meta.optString("id")
+        // Cuốn cùng mã vừa được tải lại thì sổ ấy là của cuốn mới.
+        if (id.isNotEmpty() && !bookDir(id).exists()) forgetPrints(id)
+    }
+
+    private fun trash() = TrashPending(root)
 
     // ---- một cuốn, hai đường đến -----------------------------------------------------------------------------
     //

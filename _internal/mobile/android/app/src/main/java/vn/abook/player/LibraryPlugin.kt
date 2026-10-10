@@ -85,6 +85,7 @@ class LibraryPlugin : Plugin() {
         TextImports.codec = AndroidCoverCodec
         TextImports.sweep() // thư mục tạm của lần "Thêm sách từ file…" bị bỏ dở lần trước
         io.execute { BookShare.sweep(context.cacheDir) } // file đã gửi qua "Chia sẻ…" lần trước: app nhận đã đọc xong từ lâu
+        io.execute { runCatching { Store.sweepTrash(everything = true) } } // cuốn "Xoá khỏi điện thoại" còn nằm chờ Hoàn tác từ lần trước: nút ấy đã mất, xoá hẳn
         io.execute { runCatching { ListenExports.sweep(context) } } // chương tạm của "Xuất sách nói" cho cuốn đã xoá
         // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
         if (prefs.getBoolean(SHARE_KEY, false)) io.execute { runCatching { ShareService.enable(context) } }
@@ -1396,7 +1397,19 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun deleteBook(call: PluginCall) = background(call) {
         // Thiếu mã thì từ chối (Store.deletableBookDir) - trước đây `?: ""` biến thành xoá CẢ thư mục sách.
-        Store.deleteBook(call.getString("id").orEmpty())
+        // Cuốn nằm chờ UNDO_SECONDS giây (TrashPending) rồi mới xoá hẳn; `undo` là mã để "Hoàn tác" (không có khi xoá thẳng).
+        val undo = Store.holdBook(call.getString("id").orEmpty())
+        if (undo != null) {
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                { io.execute { runCatching { Store.sweepTrash() } } }, (TrashPending.UNDO_SECONDS + 1) * 1000L,
+            )
+        }
+        call.resolve(JSObject().put("undo", undo ?: JSONObject.NULL))
+    }
+
+    @PluginMethod
+    fun undoDelete(call: PluginCall) = background(call) {
+        Store.undoBook(call.getString("token").orEmpty())
         call.resolve()
     }
 
