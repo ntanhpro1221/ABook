@@ -5,7 +5,7 @@ import { refreshAfterEdit } from "./EditBook";
 import type { ListenBook } from "./model";
 import { usePlayer } from "./player";
 
-// Gợi ý của bộ nhập sách cho phần ĐỌC (dòng ghi công của người dịch / biên tập ở đầu chương): người nghe chọn bỏ dòng nào khỏi phần
+// Gợi ý của bộ nhập sách cho phần ĐỌC (dòng ghi công của người dịch / biên tập ở đầu chương, lời xin ủng hộ / nguồn ở cuối chương): người nghe chọn bỏ dòng nào khỏi phần
 // đọc - màn đọc và giọng đọc bỏ qua nó (lớp sửa `skip`, listen/textScript.ts `withoutLines`), chữ của truyện trong sách KHÔNG đổi, bỏ
 // chọn là đọc lại như cũ. Mặc định không bỏ gì. Một dòng hay lặp ở đầu cả trăm chương ("Trans: …"): gộp lại, một lần chọn.
 
@@ -40,7 +40,7 @@ export function setSkipLine(bookId: string, line: string, chapters: number[], sk
 }
 
 function where(chapters: number[]): string {
-  return chapters.length === 1 ? `đầu chương ${chapters[0]}` : `đầu ${chapters.length} chương`;
+  return chapters.length === 1 ? `chương ${chapters[0]}` : `${chapters.length} chương`;
 }
 
 /** Các gợi ý, mỗi dòng một ô "Bỏ dòng này khỏi phần đọc". */
@@ -106,7 +106,7 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
         Gợi ý cho phần đọc{pending ? ` · ${pending} chưa áp` : ""}
       </h2>
       <p className="mt-0.5 text-xs text-fg-2 text-pretty">
-        Dòng ghi công của người dịch, biên tập ở đầu chương. Bỏ dòng này chỉ khiến màn đọc và giọng đọc bỏ qua nó - chữ của sách vẫn giữ
+        Dòng ghi công của người dịch, lời xin ủng hộ hay nguồn truyện ở đầu hoặc cuối chương. Bỏ dòng này chỉ khiến màn đọc và giọng đọc bỏ qua nó - chữ của sách vẫn giữ
         nguyên, bỏ chọn là đọc lại.
         {track?.bookId === book.id && " Chương đang nghe sẽ đổi từ lần nghe sau; các chương khác đổi ngay."}
       </p>

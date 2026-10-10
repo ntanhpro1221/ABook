@@ -25,7 +25,7 @@ export interface ImportPreview {
   title: string;
   author: string | null;
   chapters: ImportPreviewChapter[];
-  /** Gợi ý của máy (vd dòng ghi công ở đầu chương): hiện ra, KHÔNG BAO GIỜ tự áp. */
+  /** Gợi ý của máy (vd dòng ghi công ở đầu chương, lời xin ủng hộ ở cuối chương): hiện ra, KHÔNG BAO GIỜ tự áp. */
   notes: string[];
   /** Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định không bỏ). `chapter`: mã chương trong sách. */
   suggestions?: ImportSuggestion[];

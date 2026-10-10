@@ -43,6 +43,8 @@ SOFT_HYPHEN = "\u00ad"  # dấu nối mềm của máy dàn trang
 SIDECAR = "import.json"  # `extract` ghi cạnh các chương: tên sách, tác giả, ghi chú (đọc lại không phải mở lại file gốc)
 TITLE_FROM_LINE = 80  # tên chương lấy từ dòng đầu khi mục không có tiêu đề: dài hơn thì `clip_title` cắt ở ranh giới từ (Kotlin cùng số)
 CREDIT_HEAD_LINES = 64 # số dòng đầu chương đưa cho `credit_lines` (nó chỉ xem 6 dòng có chữ đầu tiên)
+CREDIT_TAIL_SCAN_LINES = 64  # số dòng CUỐI chương đưa cho `tail_credit_suggestions` (nó chỉ xem `CREDIT_TAIL_WINDOW` dòng có chữ cuối cùng)
+CREDIT_TAIL_MAX = 120  # dòng cuối chương dài hơn thế là chữ truyện, không phải dòng xin ủng hộ / quảng cáo
 
 NS = {
     "c": "urn:oasis:names:tc:opendocument:xmlns:container",
@@ -246,9 +248,10 @@ def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> I
         book.chapters = [chapter for chapter in book.chapters if chapter.text.strip() or chapter.short]
     for number, chapter in enumerate(book.chapters, start=1):
         # Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
-        for line in credit_suggestions(book.chapter_source(chapter)):
+        for line, at_end in chapter_credit_suggestions(book.chapter_source(chapter)):
             book.credits.append((number, line))
-            book.notes.append(f"Gợi ý: chương {number} có dòng ghi công ở đầu - “{line}”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.")
+            book.notes.append(f"Gợi ý: chương {number} có dòng {'ghi công, ủng hộ hay nguồn ở cuối' if at_end else 'ghi công ở đầu'} - “{line}”. "
+                              "Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.")
     return book
 
 
@@ -283,6 +286,73 @@ def credit_suggestions(source: str) -> list[str]:
     from .text_processing import credit_lines
 
     return credit_lines("\n".join(source.split("\n", CREDIT_HEAD_LINES)[:CREDIT_HEAD_LINES]))
+
+
+# Dòng xin ủng hộ / quảng cáo / nguồn ở CUỐI chương (BUG11 của a22). Luật chặt, thà bỏ sót hơn gợi ý nhầm: dòng NGẮN, không dấu ngoặc kép / dấu thoại,
+# và một trong: (A) mở bằng "ủng hộ / donate" kèm tên ngân hàng, ví hay số dài; (B) mở bằng tên ngân hàng / ví kèm số dài; (C) "đọc truyện … tại <tên miền>";
+# (D) "nguồn: <tên miền>"; (E) URL / tên miền đứng một mình; (F) "hết chương"; (G) ghi công người dịch / converter (`CREDIT_LINE_PATTERN`). Kotlin cùng chuỗi
+# (BookImport.TAIL_*): sửa một bên thì sửa cả hai, bộ ví dụ tests/fixtures/import/tail_*.
+_TAIL_DOMAIN = (r"(?:(?:https?://|www\.)[^\s]+|[a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*\.(?:com|net|org|vn|info|me|io|xyz|top|club|cc|co|tv|app|site|online|vip|pro|biz"
+                r"|ws|asia|to|us|fun|store|blog)(?![a-z0-9])[^\s]*)")
+_TAIL_BANKS = (r"(?:momo|zalo ?pay|agribank|vietcombank|vcb|mb ?bank|mbbank|mb|tpbank|techcombank|bidv|vpbank|vietinbank|sacombank|acb|paypal|ko-?fi|patreon|stk)")
+_TAIL_DIGITS = r"[0-9](?:[ .\-]?[0-9]){7,}"
+_TAIL_DECOR = r"*_~#>=\-–—\[\]()\s"
+_TAIL_QUOTES = re.compile("[\"“”„«»「」『』]")
+_TAIL_DIALOGUE = re.compile(r"[—–-]\s*[^—–\-\s*_~#>=]")  # gạch đầu dòng thoại: "— Xin ủng hộ…" là lời nhân vật (nhiều gạch liền nhau "---" thì không)
+_TAIL_EDGE = re.compile(rf"^[{_TAIL_DECOR}]+|[{_TAIL_DECOR}]+$")
+_TAIL_SUPPORT = re.compile(r"^(?:(?:xin|mong|hãy|các bạn|bạn|vui lòng|mọi người)\s+){0,2}(?:ủng hộ|ung ho|donate|donation)(?=[\s:：,\-–—]|$)", re.IGNORECASE)
+_TAIL_PAYMENT = re.compile(rf"(?:^|[^a-z0-9]){_TAIL_BANKS}(?![a-z0-9])|{_TAIL_DIGITS}", re.IGNORECASE)
+_TAIL_BANK_LED = re.compile(rf"^[^a-z0-9]{{0,3}}{_TAIL_BANKS}(?![a-z0-9])", re.IGNORECASE)
+_TAIL_DIGITS_RE = re.compile(_TAIL_DIGITS)
+_TAIL_RULES = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
+    rf"^(?:đọc|xem|đón đọc)\s+(?:truyện|chương|bản|full)(?:\s+[^\s.!?…:：]{{1,12}}){{0,5}}?\s+(?:tại|ở|trên)\s*[:：]?\s*{_TAIL_DOMAIN}(?:\s+[^\s.!?…]{{1,12}}){{0,3}}$",
+    rf"^(?:nguồn|source|via)(?:\s+(?:truyện|dịch|raw|gốc|ảnh))?\s*[:：]\s*(?:[^\s.!?…:：]{{1,15}}\s+){{0,2}}{_TAIL_DOMAIN}(?:\s+[^\s.!?…]{{1,15}}){{0,3}}$",
+    rf"^{_TAIL_DOMAIN}$",
+    r"^hết chương(?:\s+(?:[0-9]+|[ivxlc]+))?\s*[.!]?$",
+))
+
+
+def _tail_credit_line(line: str) -> bool:
+    """Dòng (đã gọn) này có phải dòng xin ủng hộ / quảng cáo / nguồn / ghi công ở cuối chương không (luật ở trên)."""
+    from .text_processing import CREDIT_LINE_PATTERN
+
+    if len(line) > CREDIT_TAIL_MAX or _TAIL_QUOTES.search(line) or _TAIL_DIALOGUE.match(line):
+        return False
+    if CREDIT_LINE_PATTERN.match(line):
+        return True
+    core = _TAIL_EDGE.sub("", line)
+    if _TAIL_SUPPORT.match(core):
+        return bool(_TAIL_PAYMENT.search(core))
+    if _TAIL_BANK_LED.match(core):
+        return bool(_TAIL_DIGITS_RE.search(core))
+    return any(rule.match(core) for rule in _TAIL_RULES)
+
+
+def tail_credit_suggestions(source: str) -> list[str]:
+    """Dòng xin ủng hộ / quảng cáo / nguồn / ghi công ở CUỐI một chương (`source` như file chương): GỢI Ý như `credit_suggestions`, không bao giờ tự bỏ.
+    Chỉ chuỗi liền nhau tính từ dòng có chữ cuối cùng đi lên trong `CREDIT_TAIL_WINDOW` dòng - một dòng truyện chen giữa thì dừng; dòng chỉ toàn
+    gạch / sao ("***") đứng giữa thì bước qua. Theo thứ tự trong chương. Kotlin: BookImport.tailCreditSuggestions."""
+    from .readaloud.paragraphs import CREDIT_TAIL_WINDOW
+    from .text_processing import normalize_text
+
+    tail = "\n".join(source.rstrip().rsplit("\n", CREDIT_TAIL_SCAN_LINES)[-CREDIT_TAIL_SCAN_LINES:])
+    lines = [line.strip() for line in normalize_text(tail).split("\n") if line.strip()]
+    found: list[str] = []
+    for line in reversed(lines[-CREDIT_TAIL_WINDOW:]):
+        if not _TAIL_EDGE.sub("", line):
+            continue
+        if not _tail_credit_line(line):
+            break
+        found.append(line)
+    return found[::-1]
+
+
+def chapter_credit_suggestions(source: str) -> list[tuple[str, bool]]:
+    """Mọi gợi ý dòng ghi công / ủng hộ của một chương sách nhập: (dòng, ở cuối chương?) - dòng đầu chương trước (`credit_suggestions`), rồi dòng cuối
+    chương (`tail_credit_suggestions`; trùng chữ với dòng đầu thì chỉ tính một lần, vì `skip` ghi theo chữ của dòng). Dùng cho sách nhập (bước xem trước
+    và trang sách), KHÔNG cho Studio (nó chỉ bỏ được dòng đầu: text_processing.drop_credit_lines). Kotlin: BookImport.chapterCreditSuggestions."""
+    head = credit_suggestions(source)
+    return [(line, False) for line in head] + [(line, True) for line in tail_credit_suggestions(source) if line not in head]
 
 
 BOM = "\ufeff"  # dấu BOM lọt giữa chữ (nối nhiều file): vô hình, nhưng làm "Chương 1" ở đầu dòng không còn là tiêu đề

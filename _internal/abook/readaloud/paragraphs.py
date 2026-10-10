@@ -26,6 +26,7 @@ _NOTE_MARKER = re.compile(r"\[" + f"[{_CLASS}]*" + r"note[0-9]+" + f"[{_CLASS}]*
 _SENTENCE_END = ".!?…\"”»’)」』】。！？~–—"  # dấu kết câu ở cuối dòng: dòng như vậy là trọn một đoạn
 _WHOLE_LINE = 200  # dài hơn mọi khổ dòng của máy dàn trang: chắc chắn là trọn một đoạn
 CREDIT_WINDOW = tp.CREDIT_WINDOW_LINES
+CREDIT_TAIL_WINDOW = 6  # số dòng có chữ CUỐI chương mà gợi ý ủng hộ / nguồn ở cuối chương xét (importers.tail_credit_suggestions; Kotlin, TS cùng số)
 SCENE_BREAK_MS = tp.SCENE_BREAK_MS
 
 
@@ -91,19 +92,15 @@ def paragraphs_of(text: str) -> list[str]:
 
 
 def without_lines(text: str, skip: list[str] | tuple[str, ...] | None) -> str:
-    """Chữ của chương trừ các dòng người nghe đã chọn bỏ khỏi phần đọc (lớp sửa `skip`); chỉ xét CREDIT_WINDOW dòng có chữ đầu chương (`withoutLines`)."""
+    """Chữ của chương trừ các dòng người nghe đã chọn bỏ khỏi phần đọc (lớp sửa `skip`); chỉ xét CREDIT_WINDOW dòng có chữ đầu chương và
+    CREDIT_TAIL_WINDOW dòng có chữ cuối chương (`withoutLines`)."""
     if not skip:
         return text
-    seen = 0
-    kept: list[str] = []
-    for line in _NEWLINES.sub(chr(10), text).split(chr(10)):
-        shown = squeeze(without_note_markers(line))  # `skip` ghi từ chữ đã bỏ mã chú thích
-        if shown and seen < CREDIT_WINDOW:
-            seen += 1
-            if shown in skip:
-                continue
-        kept.append(line)
-    return chr(10).join(kept)
+    lines = _NEWLINES.sub(chr(10), text).split(chr(10))
+    shown = [squeeze(without_note_markers(line)) for line in lines]  # `skip` ghi từ chữ đã bỏ mã chú thích
+    filled = [index for index, value in enumerate(shown) if value]
+    window = {*filled[:CREDIT_WINDOW], *filled[-CREDIT_TAIL_WINDOW:]}
+    return chr(10).join(line for index, line in enumerate(lines) if not (index in window and shown[index] in skip))
 
 
 def scene_break_gaps(paragraphs: list[Paragraph]) -> list[int]:

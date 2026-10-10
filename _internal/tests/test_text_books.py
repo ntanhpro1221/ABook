@@ -476,6 +476,29 @@ def test_a_credit_line_suggestion_is_skipped_only_when_the_listener_accepts_it(t
     assert "skip" not in studio.listen_book(added["id"])["chapters"][1] and book_edits.load(folder) == book_edits.empty()
 
 
+def test_a_tail_support_line_is_a_pending_suggestion_on_the_book_page_and_skipping_it_reaches_the_reader(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    added = studio.add_text_book(str(IMPORTS / "tail_credits_epub.epub"))
+    preview = studio.preview_text_book(str(IMPORTS / "tail_credits_epub.epub"))
+    assert [(item["chapter"], item["line"]) for item in preview["suggestions"]][:2] == [
+        (1, "Xin ủng hộ nhóm dịch: Momo 0912345678 - Agribank 1234567890123"), (1, "Đọc truyện mới nhất tại truyenthu.vn")]
+    server = Server(studio, port=0).start()
+    try:
+        found = json.loads(_request(server.port, "GET", f"/api/books/{added['id']}/suggestions", headers=TOKEN)[1])["suggestions"]
+        assert [item["line"] for item in found if item["chapter"] == 1] == [
+            "Xin ủng hộ nhóm dịch: Momo 0912345678 - Agribank 1234567890123", "Đọc truyện mới nhất tại truyenthu.vn"]
+        assert not [item for item in found if item["chapter"] == 3], "ca âm: thoại, câu truyện nhắc ngân hàng, URL trong lời thoại"
+        status, _data, _ = _request(server.port, "PUT", f"/api/books/{added['id']}/skip", headers=TOKEN,
+                                    body={"line": "Đọc truyện mới nhất tại truyenthu.vn", "chapters": [1], "skip": True})
+    finally:
+        server.stop()
+    assert status == 200
+    chapter = studio.listen_book(added["id"])["chapters"][0]
+    assert chapter["skip"] == ["Đọc truyện mới nhất tại truyenthu.vn"]
+    text = (studio._listenable(added["id"]) / "texts" / "1.txt").read_text(encoding="utf-8")
+    assert "Đọc truyện mới nhất tại truyenthu.vn" in text, "chữ của sách không đổi"
+
+
 def test_a_text_folder_and_a_docx_come_in_like_an_epub(tmp_path: Path) -> None:
     studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
     folder = studio.add_text_book(str(IMPORTS / "txt"))

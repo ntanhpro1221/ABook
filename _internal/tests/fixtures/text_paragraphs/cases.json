@@ -101,8 +101,8 @@
       ]
     },
     {
-      "name": "a credit line later than the sixth line stays",
-      "text": "Dòng 1.\nDòng 2.\nDòng 3.\nDòng 4.\nDòng 5.\nDòng 6.\nDịch: Nhóm A",
+      "name": "a credit line in the middle of the chapter, outside the first and last six lines, stays",
+      "text": "Dòng 1.\nDòng 2.\nDòng 3.\nDòng 4.\nDòng 5.\nDòng 6.\nDịch: Nhóm A\nDòng 7.\nDòng 8.\nDòng 9.\nDòng 10.\nDòng 11.\nDòng 12.",
       "skip": [
         "Dịch: Nhóm A"
       ],
@@ -113,7 +113,31 @@
         "Dòng 4.",
         "Dòng 5.",
         "Dòng 6.",
-        "Dịch: Nhóm A"
+        "Dịch: Nhóm A",
+        "Dòng 7.",
+        "Dòng 8.",
+        "Dòng 9.",
+        "Dòng 10.",
+        "Dòng 11.",
+        "Dòng 12."
+      ]
+    },
+    {
+      "name": "listener-skipped lines among the last six lines of the chapter are left out",
+      "text": "Dòng 1.\nDòng 2.\nDòng 3.\nDòng 4.\nDòng 5.\nDòng 6.\nDòng 7.\nDòng 8.\nXin ủng hộ: Momo 0912345678\nĐọc truyện mới nhất tại truyenthu.vn",
+      "skip": [
+        "Xin ủng hộ: Momo 0912345678",
+        "Đọc truyện mới nhất tại truyenthu.vn"
+      ],
+      "paragraphs": [
+        "Dòng 1.",
+        "Dòng 2.",
+        "Dòng 3.",
+        "Dòng 4.",
+        "Dòng 5.",
+        "Dòng 6.",
+        "Dòng 7.",
+        "Dòng 8."
       ]
     },
     {

@@ -3994,7 +3994,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"chapterId": int(chapter), "text": text})
 
     def get_suggestions(self, _query: dict[str, list[str]], value: str) -> None:
-        # Gợi ý của bộ nhập sách cho một cuốn chỉ-chữ (dòng ghi công ở đầu chương), kèm chúng đang bỏ khỏi phần đọc hay chưa -
+        # Gợi ý của bộ nhập sách cho một cuốn chỉ-chữ (dòng ghi công ở đầu chương, dòng ủng hộ / nguồn ở cuối chương), kèm chúng đang bỏ khỏi phần đọc hay chưa -
         # trang sách hiện những gợi ý còn chờ để người nghe chấp nhận bất cứ lúc nào.
         path = self.app._listenable(value)
         out: list[dict[str, Any]] = []
@@ -4004,7 +4004,7 @@ class Handler(BaseHTTPRequestHandler):
                     continue
                 text = packages.chapter_text(path, chapter["id"])
                 skipped = set(chapter.get("skip") or [])
-                for line in importers.credit_suggestions(text) if text else []:
+                for line, _at_end in importers.chapter_credit_suggestions(text) if text else []:
                     out.append({"chapter": chapter["id"], "title": chapter.get("fullTitle") or chapter.get("title") or "",
                                 "line": line, "skipped": line in skipped})
         self._send_json(HTTPStatus.OK, {"suggestions": out})

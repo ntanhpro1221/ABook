@@ -273,7 +273,7 @@ object LocalStudio {
             val entry = chapter.optString("text").takeIf { it.startsWith("texts/") } ?: continue
             val file = java.io.File(dir, entry).takeIf { it.isFile } ?: continue
             val skipped = chapter.optJSONArray("skip")?.let { array -> (0 until array.length()).map { array.getString(it) }.toSet() } ?: emptySet()
-            for (line in BookImport.creditSuggestions(file.readText(Charsets.UTF_8))) {
+            for ((line, _) in BookImport.chapterCreditSuggestions(file.readText(Charsets.UTF_8))) {
                 out.put(JSONObject().put("chapter", id).put("title", listOf(chapter.opt("fullTitle"), chapter.opt("title")).firstOrNull { BookEdits.truthy(it) }?.toString() ?: "")
                     .put("line", line).put("skipped", line in skipped))
             }

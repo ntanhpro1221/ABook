@@ -22,6 +22,8 @@
     fixtures/import/expected/name_title.json  bảng ví dụ của `importers.title_from_filename` (tên sách từ tên file: "_" và "--" thành dấu cách); hai bên cùng khớp
     fixtures/import/notes3.epub, notes2.epub, endnotes.epub, notes.docx   chú thích: EPUB3 (noteref + aside), Calibre (sup + a href), chương Endnotes
                                              kiểu Standard Ebooks, DOCX (footnotes.xml / endnotes.xml); expected/<tên>.fn_*.json = người nghe tích đề xuất
+    fixtures/import/tail_credits.txt, tail_credits_epub.epub   chương kết bằng dòng ủng hộ / "đọc tại" / nguồn / converter (gợi ý, mặc định không bỏ) và ca âm (thoại, URL trong lời thoại)
+    fixtures/import/expected/tail_credit_lines.json   từng dòng / từng đoạn cuối chương -> có gợi ý không (`tail_credit_suggestions`); hai bên cùng khớp
     fixtures/import/expected/<tên>.json      kết quả mong đợi (ImportedBook.to_dict, hay {"error": ...})
     fixtures/import/pages/story.pages.json   lớp thô của PDF (pypdf VÀ pdf.js phải ra đúng các dòng này)
 
@@ -334,6 +336,59 @@ def build_gutenberg_txt() -> bytes:
             "Title: Bến đò ngang\r\n\r\nAuthor: Lê Thử Nghiệm\r\n\r\n*** START OF THE PROJECT GUTENBERG EBOOK BẾN ĐÒ NGANG ***\r\n\r\n"
             "Contents\r\n\r\n CHAPTER I.   Bến\r\n CHAPTER II.  Mưa\r\n\r\n\r\n"
             f"CHAPTER I.\r\nBến\r\n\r\n{LINE}\r\n\r\nCHAPTER II.\r\nMưa\r\n\r\n{LINE}\r\n").encode()
+
+
+# Dòng xin ủng hộ / quảng cáo / nguồn ở CUỐI chương (BUG11 của a22; `importers.tail_credit_suggestions`, Kotlin BookImport.tailCreditSuggestions): gợi ý, mặc định
+# không bỏ gì. Chương 1: ủng hộ + "đọc tại"; chương 2: dòng ghi công ở đầu + nguồn / converter / "hết chương" ở cuối (có dòng "***" chen giữa); chương 3 chỉ có ca ÂM:
+# thoại có chữ "ủng hộ", câu truyện nhắc ngân hàng, URL trong lời thoại, và dòng ủng hộ bị một câu truyện chen phía sau -> không gợi ý gì.
+TAIL_CHAPTERS: list[tuple[str, list[str]]] = [
+    ("Chương 1: Bến đò", [LINE, LINE, "Xin ủng hộ nhóm dịch: Momo 0912345678 - Agribank 1234567890123", "Đọc truyện mới nhất tại truyenthu.vn"]),
+    ("Chương 2: Mưa", ["Dịch: Nhóm Lục Bình", LINE, LINE, "***", "Nguồn: truyenthu.vn", "Converter: Nhóm Lục Bình", "--- Hết chương ---"]),
+    ("Chương 3: Nước lên", [LINE, "“Anh nhớ ủng hộ quán này nhé,” bà chủ quán nói với cậu bé.",
+                            "Xin ủng hộ: Momo 0912345678",
+                            "Rồi trời tạnh hẳn, người lái đò thả dây buộc đò vào cọc.",
+                            "Anh đứng trước cửa ngân hàng Agribank rất lâu, rồi mới bước vào trong.",
+                            "“Đọc truyện tại truyenthu.vn đi,” cô bảo."]),
+]
+
+
+# Từng dòng đứng một mình ở cuối chương (`importers.tail_credit_suggestions`, Kotlin tailCreditSuggestions): dòng xin ủng hộ / quảng cáo / nguồn thì được gợi ý,
+# lời thoại, câu truyện nhắc ngân hàng, URL trong lời thoại, dòng quá dài thì KHÔNG (thà bỏ sót hơn gợi ý nhầm). expected/tail_credit_lines.json.
+TAIL_LINE_CASES: list[tuple[str, bool]] = [(line, True) for line in [
+    "Xin ủng hộ: Momo 0912345678", "Xin ủng hộ nhóm dịch qua Agribank 1234567890123", "Ủng hộ nhóm dịch tại Momo: 0912 345 678", "Donate paypal.me/nhomdich",
+    "Ủng hộ qua PayPal: nhom@example.org", "Momo: 0912345678", "Vietcombank 0011001234567 - NGUYEN VAN A", "STK 123456789012 Techcombank",
+    "Đọc truyện mới nhất tại truyenthu.vn", "Đọc chương mới nhất tại: truyenthu.vn - nhanh nhất", "Đọc full tại https://truyenthu.vn/doc/12",
+    "Nguồn: truyenthu.vn", "Nguồn truyện: https://truyenthu.net/x", "Source: www.truyenthu.com", "Converter: Nhóm Lục Bình", "Translator: NicK",
+    "https://truyenthu.vn/chuong-12", "www.truyenthu.vn", "truyenthu.vn/doc", "--- Hết chương ---", "[Hết chương 12]", "Hết chương",
+]] + [(line, False) for line in [
+    "“Anh nhớ ủng hộ quán này nhé,” bà chủ quán nói.", "— Xin ủng hộ cho quỹ này, ông nói.", "Anh đứng trước cửa ngân hàng Agribank rất lâu, rồi mới bước vào trong.",
+    "“Đọc truyện tại truyenthu.vn đi,” cô bảo.", "Cô nói: xem trang www.truyenthu.vn đi nhé, rồi cô cười.", "Ủng hộ chính sách của thành phố, ông nói và rời đi.",
+    "Đọc truyện cho con nghe vào buổi tối ở nhà.", "Nguồn: nơi sâu thẳm của con tim.", "- Nguồn: truyenthu.vn", "Hết.", "Ông ngồi nhìn dòng sông.",
+    "Xin ủng hộ: " + "Momo 0912345678 " * 10,
+]]
+# Nhiều dòng: chuỗi liền nhau từ dòng cuối lên; câu truyện chen giữa thì dừng; dòng "***" bước qua; chỉ 6 dòng cuối được xét.
+TAIL_SOURCE_CASES = [
+    "Chương 1\n\nLời truyện.\n\nĐọc truyện mới nhất tại truyenthu.vn\nXin ủng hộ: Momo 0912345678\n",
+    "Chương 1\n\nXin ủng hộ: Momo 0912345678\nRồi trời tạnh hẳn.\n",
+    "Chương 1\n\nLời truyện.\n\n---\nNguồn: truyenthu.vn\n***\nXin ủng hộ: Momo 0912345678\n\n\n",
+    "Chương 1\n" + "\n".join(f"Nguồn: truyenthu.vn/{n}" for n in range(1, 9)) + "\n",
+    "Nguồn: truyenthu.vn\n",
+]
+
+
+def build_tail_credits_txt() -> bytes:
+    """TXT cả truyện, ba chương kết bằng dòng ủng hộ / nguồn / ca âm (TAIL_CHAPTERS)."""
+    nl = chr(10)
+    chapters = (nl + nl).join(title + nl + nl + (nl + nl).join(lines) for title, lines in TAIL_CHAPTERS)
+    return ("Chuyến đò có ghi công" + nl + nl + chapters + nl).encode()
+
+
+def build_tail_credits_epub() -> bytes:
+    """Như tail_credits.txt (tail_credits_epub.epub) nhưng EPUB3: mỗi chương một file, mỗi dòng một <p>."""
+    pages = [(f"c{n}.xhtml", f"<h2>{_esc(title)}</h2>" + chr(10) + chr(10).join(f"<p>{_esc(line)}</p>" for line in lines))
+             for n, (title, lines) in enumerate(TAIL_CHAPTERS, start=1)]
+    items = "".join(f'<li><a href="text/c{n}.xhtml">{_esc(title)}</a></li>' for n, (title, _lines) in enumerate(TAIL_CHAPTERS, start=1))
+    return _book("Chuyến đò có ghi công", pages, nav='<nav epub:type="toc"><ol>' + items + "</ol></nav>")
 
 
 HIDDEN_CSS = ("/* ẩn */ .an { display: none } span.so-trang, #ghi.chu { visibility: hidden !important }\n"
@@ -791,6 +846,7 @@ REAL_WORLD = {
     "pt_cp1252.txt": build_pt_cp1252, "zh_gbk.txt": build_zh_gbk, "bom_join.txt": build_bom_join, "declared.epub": build_declared,
     "title_h1.docx": build_docx_title_h1, "scenes.docx": build_docx_scenes, "roman.docx": build_docx_roman,
     "nested.epub": build_nested, "index_split_003.txt": build_index_split,
+    "tail_credits.txt": build_tail_credits_txt, "tail_credits_epub.epub": build_tail_credits_epub,
 }
 # Chú thích trong sách nhập (BUG10 của a22): đề xuất, mặc định KHÔNG áp. expected/<tên>.json = mặc định; <tên>.<lựa chọn>.json = người nghe tích (NOTE_CHOICES,
 # cùng dạng JSON mà giao diện gửi: `importers.footnote_choice_from_json`). BookImportTest.footnote_books_give_exactly_what_python_gives.
@@ -869,6 +925,10 @@ def expected_files(root: Path) -> dict[str, bytes]:
     out["expected/clip_title.json"] = dumps([{"text": text, "limit": limit, "clipped": importers.clip_title(text, limit)}
                                              for text, limit in CLIP_TITLE_CASES])
     out["expected/name_title.json"] = dumps([{"stem": stem, "title": importers.title_from_filename(stem)} for stem in NAME_TITLE_CASES])
+    out["expected/tail_credit_lines.json"] = dumps({
+        "lines": [{"line": line, "suggested": importers.tail_credit_suggestions(line + "\n") == [line]} for line, _want in TAIL_LINE_CASES],
+        "sources": [{"source": source, "tail": importers.tail_credit_suggestions(source),
+                     "all": [[line, at_end] for line, at_end in importers.chapter_credit_suggestions(source)]} for source in TAIL_SOURCE_CASES]})
     pages, title, author = importers.pdf_pages(root / "story.pdf")
     out["pages/story.pages.json"] = dumps({"title": title, "author": author, "pages": pages})
     return out

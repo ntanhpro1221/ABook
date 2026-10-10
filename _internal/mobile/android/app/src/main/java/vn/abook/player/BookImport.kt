@@ -12,6 +12,7 @@ import java.text.Normalizer
 import java.util.regex.Pattern
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
+import vn.abook.player.readaloud.Paragraphs
 
 /**
  * Nhập sách từ file người dùng có sẵn: thư mục TXT, EPUB, DOCX, và PDF có lớp chữ (docs/LISTEN_ANYTHING.md, mục 2). Bản Kotlin của
@@ -221,9 +222,10 @@ object BookImport {
         }
         for ((index, chapter) in book.chapters.withIndex()) {
             // Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
-            for (line in creditSuggestions(chapterSource(book, chapter))) {
+            for ((line, atEnd) in chapterCreditSuggestions(chapterSource(book, chapter))) {
                 book.credits.add(index + 1 to line)
-                book.notes.add("Gợi ý: chương ${index + 1} có dòng ghi công ở đầu - “$line”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.")
+                book.notes.add("Gợi ý: chương ${index + 1} có dòng ${if (atEnd) "ghi công, ủng hộ hay nguồn ở cuối" else "ghi công ở đầu"} - “$line”. " +
+                    "Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.")
             }
         }
         return book
@@ -2071,5 +2073,66 @@ object BookImport {
             if (CREDIT_LINE.matcher(stripped).lookingAt()) found.add(stripped)
         }
         return found
+    }
+
+    // ---- dòng xin ủng hộ / quảng cáo / nguồn ở CUỐI chương (importers.tail_credit_suggestions; cùng chuỗi, sửa một bên thì sửa cả hai) ----
+
+    private const val CREDIT_TAIL_SCAN_LINES = 64
+    private const val CREDIT_TAIL_MAX = 120
+    private const val TAIL_DOMAIN = "(?:(?:https?://|www\\.)[^\\s]+|[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9-]+)*\\.(?:com|net|org|vn|info|me|io|xyz|top|club|cc|co|tv|app|site|online|vip|pro|biz" +
+        "|ws|asia|to|us|fun|store|blog)(?![a-z0-9])[^\\s]*)"
+    private const val TAIL_BANKS = "(?:momo|zalo ?pay|agribank|vietcombank|vcb|mb ?bank|mbbank|mb|tpbank|techcombank|bidv|vpbank|vietinbank|sacombank|acb|paypal|ko-?fi|patreon|stk)"
+    private const val TAIL_DIGITS = "[0-9](?:[ .\\-]?[0-9]){7,}"
+    private const val TAIL_DECOR = "*_~#>=\\-–—\\[\\]()\\s"
+    private val TAIL_FLAGS = Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES
+    private val TAIL_QUOTES: Pattern = Pattern.compile("[\"“”„«»「」『』]")
+    private val TAIL_DIALOGUE: Pattern = Pattern.compile("[—–-]\\s*[^—–\\-\\s*_~#>=]")
+    private val TAIL_EDGE: Pattern = Pattern.compile("^[$TAIL_DECOR]+|[$TAIL_DECOR]+\$", UNICODE_CLASSES)
+    private val TAIL_SUPPORT: Pattern = Pattern.compile(
+        "^(?:(?:xin|mong|hãy|các bạn|bạn|vui lòng|mọi người)\\s+){0,2}(?:ủng hộ|ung ho|donate|donation)(?=[\\s:：,\\-–—]|\$)", TAIL_FLAGS)
+    private val TAIL_PAYMENT: Pattern = Pattern.compile("(?:^|[^a-z0-9])$TAIL_BANKS(?![a-z0-9])|$TAIL_DIGITS", TAIL_FLAGS)
+    private val TAIL_BANK_LED: Pattern = Pattern.compile("^[^a-z0-9]{0,3}$TAIL_BANKS(?![a-z0-9])", TAIL_FLAGS)
+    private val TAIL_DIGITS_RE: Pattern = Pattern.compile(TAIL_DIGITS)
+    private val TAIL_RULES: List<Pattern> = listOf(
+        "^(?:đọc|xem|đón đọc)\\s+(?:truyện|chương|bản|full)(?:\\s+[^\\s.!?…:：]{1,12}){0,5}?\\s+(?:tại|ở|trên)\\s*[:：]?\\s*$TAIL_DOMAIN(?:\\s+[^\\s.!?…]{1,12}){0,3}\$",
+        "^(?:nguồn|source|via)(?:\\s+(?:truyện|dịch|raw|gốc|ảnh))?\\s*[:：]\\s*(?:[^\\s.!?…:：]{1,15}\\s+){0,2}$TAIL_DOMAIN(?:\\s+[^\\s.!?…]{1,15}){0,3}\$",
+        "^$TAIL_DOMAIN\$",
+        "^hết chương(?:\\s+(?:[0-9]+|[ivxlc]+))?\\s*[.!]?\$",
+    ).map { Pattern.compile(it, TAIL_FLAGS) }
+
+    private fun tailCreditLine(line: String): Boolean {
+        if (line.length > CREDIT_TAIL_MAX || TAIL_QUOTES.matcher(line).find() || TAIL_DIALOGUE.matcher(line).lookingAt()) return false
+        if (CREDIT_LINE.matcher(line).lookingAt()) return true
+        val core = TAIL_EDGE.matcher(line).replaceAll("")
+        if (TAIL_SUPPORT.matcher(core).lookingAt()) return TAIL_PAYMENT.matcher(core).find()
+        if (TAIL_BANK_LED.matcher(core).lookingAt()) return TAIL_DIGITS_RE.matcher(core).find()
+        return TAIL_RULES.any { it.matcher(core).lookingAt() }
+    }
+
+    /**
+     * Dòng xin ủng hộ / quảng cáo / nguồn / ghi công ở CUỐI một chương (`source` như file chương): GỢI Ý như [creditSuggestions], không bao giờ tự bỏ.
+     * Chỉ chuỗi liền nhau tính từ dòng có chữ cuối cùng đi lên trong `Paragraphs.CREDIT_TAIL_WINDOW` dòng - một dòng truyện chen giữa thì dừng; dòng chỉ
+     * toàn gạch / sao đứng giữa thì bước qua. Theo thứ tự trong chương (`importers.tail_credit_suggestions`).
+     */
+    fun tailCreditSuggestions(source: String): List<String> {
+        val tail = pyStrip(source).split("\n").takeLast(CREDIT_TAIL_SCAN_LINES).joinToString("\n")
+        val lines = normalizeText(tail).split("\n").map { pyStrip(it) }.filter { it.isNotEmpty() }
+        val found = mutableListOf<String>()
+        for (line in lines.takeLast(Paragraphs.CREDIT_TAIL_WINDOW).asReversed()) {
+            if (TAIL_EDGE.matcher(line).replaceAll("").isEmpty()) continue
+            if (!tailCreditLine(line)) break
+            found.add(line)
+        }
+        return found.asReversed()
+    }
+
+    /**
+     * Mọi gợi ý dòng ghi công / ủng hộ của một chương sách nhập: (dòng, ở cuối chương?) - dòng đầu chương trước ([creditSuggestions]), rồi dòng cuối chương
+     * ([tailCreditSuggestions]; trùng chữ với dòng đầu thì chỉ tính một lần, vì `skip` ghi theo chữ của dòng). Cho sách nhập (bước xem trước và trang sách),
+     * không cho Studio (`importers.chapter_credit_suggestions`).
+     */
+    fun chapterCreditSuggestions(source: String): List<Pair<String, Boolean>> {
+        val head = creditSuggestions(source)
+        return head.map { it to false } + tailCreditSuggestions(source).filter { it !in head }.map { it to true }
     }
 }

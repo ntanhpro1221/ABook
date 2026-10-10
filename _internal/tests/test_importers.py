@@ -184,6 +184,38 @@ def test_txt_order_ties_go_by_name_not_by_how_the_disk_lists_them(tmp_path: Path
     assert [path.name for path in discover_txt_files(tmp_path)] == ["001.txt", "01.txt", "1.txt"]
 
 
+def test_tail_credit_lines_are_suggested_never_removed_and_dialogue_is_never_mistaken_for_one() -> None:
+    support = "Xin ủng hộ nhóm dịch: Momo 0912345678 - Agribank 1234567890123"
+    for name, split in (("tail_credits.txt", True), ("tail_credits_epub.epub", False)):
+        book = importers.import_text(FIXTURES / name, split_chapters=split)
+        assert book.credits == [
+            (1, support), (1, "Đọc truyện mới nhất tại truyenthu.vn"), (2, "Dịch: Nhóm Lục Bình"), (2, "Nguồn: truyenthu.vn"),
+            (2, "Converter: Nhóm Lục Bình"), (2, "--- Hết chương ---"),
+        ], name  # chương 3 (thoại có chữ "ủng hộ", câu truyện nhắc ngân hàng, URL trong lời thoại, dòng ủng hộ bị câu truyện chen sau) không gợi ý gì
+        assert support in book.chapters[0].text and "--- Hết chương ---" in book.chapters[1].text, "chữ của truyện giữ nguyên"
+        tail_notes = [note for note in book.notes if "ở cuối" in note]
+        assert len(tail_notes) == 5 and all("không tự bỏ" in note for note in tail_notes)
+    whole = importers.import_text(FIXTURES / "tail_credits.txt")
+    assert whole.credits == [], "cả truyện là MỘT chương (không tách): cuối nó là ca âm"
+
+
+def test_the_tail_rule_is_a_chain_from_the_last_line_and_never_edits_the_head_rule() -> None:
+    assert importers.tail_credit_suggestions("Chương 1\n\nLời truyện.\n---\nNguồn: truyenthu.vn\n***\nXin ủng hộ: Momo 0912345678\n\n") == [
+        "Nguồn: truyenthu.vn", "Xin ủng hộ: Momo 0912345678"]
+    assert importers.tail_credit_suggestions("Xin ủng hộ: Momo 0912345678\nRồi trời tạnh hẳn.\n") == [], "một câu truyện chen giữa thì dừng"
+    many = "\n".join(f"Nguồn: truyenthu.vn/{n}" for n in range(1, 9))
+    assert importers.tail_credit_suggestions(many) == [f"Nguồn: truyenthu.vn/{n}" for n in range(3, 9)], "chỉ 6 dòng cuối"
+    assert importers.credit_suggestions("Chương 1\n\nLời truyện.\n\nXin ủng hộ: Momo 0912345678\n") == [], "Studio chỉ thấy dòng đầu chương"
+    twice = "Dịch: Nhóm A\n" + "".join(f"Dòng {n}.\n" for n in range(1, 10)) + "Dịch: Nhóm A\n"
+    assert importers.chapter_credit_suggestions(twice) == [("Dịch: Nhóm A", False)], "đầu và cuối trùng chữ: một gợi ý (lớp sửa `skip` ghi theo chữ)"
+
+
+@pytest.mark.parametrize(("line", "wanted"), shared.TAIL_LINE_CASES, ids=[line[:30] for line, _wanted in shared.TAIL_LINE_CASES])
+def test_each_tail_line_is_suggested_only_when_it_is_an_ask_for_support_an_ad_or_a_source(line: str, wanted: bool) -> None:
+    assert (importers.tail_credit_suggestions(line + "\n") == [line]) is wanted
+    assert [case["suggested"] for case in expected("tail_credit_lines")["lines"] if case["line"] == line] == [wanted]
+
+
 def test_a_long_book_only_normalises_the_head_of_each_chapter_for_credit_lines() -> None:
     body = "\n".join(f"Dòng {n}." for n in range(5000))
     book = importers._finish(importers.ImportedBook("x", chapters=[importers.Chapter("Chương 1", "Dịch: Nhóm Thử\n\n" + body)]))
