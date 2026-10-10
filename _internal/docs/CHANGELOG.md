@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Trình phát và bàn phím (máy tính)
+
+- Màn "Đang nghe": menu Nhạc nền và Giọng đọc không còn tràn đáy màn điện thoại (danh sách cuộn trong hộp); thanh mini ở cửa sổ 1280 px giữ chỗ cho tên chương dù có đủ nút nhạc / giọng / hẹn giờ; chữ "15" ở nút lùi / tới đủ lớn để đọc.
+- Bàn phím và trình đọc màn hình: Tab đầu tiên là "Bỏ qua tới nội dung"; các tab Đọc theo / Chương / Dấu trang đổi bằng ←/→ (Home/End); hộp Tốc độ và Hẹn giờ có tên, hộp tốc độ mở ra ngay ở mức đang chọn; thanh tua không đọc vị trí quá độ dài chương; Tìm trong sách chọn kết quả bằng ↑/↓. Phím ? (hay nút bàn phím ở màn "Đang nghe") mở bảng phím tắt.
+- Thông báo "Đã thêm dấu trang" hiện ở dưới khi màn "Đang nghe" mở, không che tab Dấu trang; tiêu đề cửa sổ theo chương đang nghe; thẻ "Lần hẹn giờ vừa rồi" không bị nút × đè lên chữ ở màn hẹp.
+
 ## [0.4.41] - 2026-10-10
 
 ### Nghe ngay và thư viện

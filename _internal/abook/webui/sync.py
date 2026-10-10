@@ -34,6 +34,7 @@ import re
 import secrets
 import socket
 import ssl
+import sys
 import tempfile
 import threading
 import time
@@ -252,6 +253,12 @@ class ExclusiveHTTPServer(ThreadingHTTPServer):
         if os.name == "nt":
             self.socket.setsockopt(socket.SOL_SOCKET, getattr(socket, "SO_EXCLUSIVEADDRUSE", -5), 1)
         super().server_bind()
+
+    def handle_error(self, request: Any, client_address: Any) -> None:
+        """Trình duyệt đóng kết nối giữa chừng (tải lại trang, đóng thẻ) là chuyện thường, không phải lỗi: khỏi in traceback."""
+        if isinstance(sys.exc_info()[1], (ConnectionAbortedError, ConnectionResetError, BrokenPipeError)):
+            return
+        super().handle_error(request, client_address)
 
 
 class TlsHTTPServer(ExclusiveHTTPServer):

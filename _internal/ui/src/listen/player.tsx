@@ -1294,7 +1294,8 @@ export function PlayerProvider({
     window.addEventListener("keydown", onTab, true);
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
-      const target = event.target as HTMLElement | null;
+      // Sự kiện bắn thẳng vào `document` (không phải phần tử) thì không có `closest`: bỏ qua thay vì văng lỗi.
+      const target = event.target instanceof HTMLElement ? event.target : null;
       if (!target || !refs.current.track) return;
       if (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
       if (target.closest('[role="menu"],[role="listbox"],[role="dialog"]')) return;

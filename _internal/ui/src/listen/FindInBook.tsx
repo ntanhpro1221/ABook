@@ -53,6 +53,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
   const [query, setQuery] = useState("");
   const [progress, setProgress] = useState<BookSearch | null>(null);
   const cache = useRef(new Map<number, FoldedChapter>());
+  const results = useRef<HTMLUListElement | null>(null);
   const bookId = book.id;
   const chapterList = book.chapters ?? [];
 
@@ -111,6 +112,11 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && hits[0]) pick(hits[0]);
+            // ↓ từ ô tìm xuống kết quả đầu; trong danh sách ↑/↓ đi giữa các kết quả, ↑ ở kết quả đầu về ô tìm.
+            else if (event.key === "ArrowDown" && hits.length) {
+              event.preventDefault();
+              results.current?.querySelector<HTMLElement>("button")?.focus();
+            }
           }}
           aria-label="Chữ hay câu cần tìm"
           placeholder="Chữ hay câu cần tìm…"
@@ -123,7 +129,19 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
         {status}
       </p>
       {hits.length > 0 && (
-        <ul className="-mx-2 mt-2 max-h-[min(55dvh,28rem)] divide-y divide-line overflow-y-auto overscroll-contain">
+        <ul
+          ref={results}
+          onKeyDown={(event) => {
+            const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
+            if (!step) return;
+            const buttons = [...event.currentTarget.querySelectorAll<HTMLElement>("button")];
+            const next = buttons.indexOf(document.activeElement as HTMLElement) + step;
+            event.preventDefault();
+            if (next < 0) event.currentTarget.parentElement?.querySelector<HTMLElement>("input")?.focus();
+            else buttons[Math.min(next, buttons.length - 1)]?.focus();
+          }}
+          className="-mx-2 mt-2 max-h-[min(55dvh,28rem)] divide-y divide-line overflow-y-auto overscroll-contain"
+        >
           {hits.map((hit) => (
             <li key={`${hit.chapterId}:${hit.sentence}`}>
               <button type="button" onClick={() => pick(hit)} className="block w-full rounded-lg px-2 py-2.5 text-left hover:bg-hover">

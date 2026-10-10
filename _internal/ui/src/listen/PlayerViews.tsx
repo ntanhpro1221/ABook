@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import * as Popover from "@radix-ui/react-popover";
 import { coverStyle } from "@/shared/cover";
 import * as Slider from "@radix-ui/react-slider";
@@ -9,6 +10,7 @@ import {
   Check,
   ChevronDown,
   Gauge,
+  Keyboard,
   ListOrdered,
   Loader2,
   Maximize2,
@@ -37,6 +39,7 @@ import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
 import { excerpt, formatClock, formatLength, formatWhen, licenseLabel, spokenClock } from "@/shared/format";
 import { IconButton, Tooltip, Vu } from "@/shared/ui";
@@ -45,6 +48,7 @@ import { levelOptions } from "@/shared/musicLevels";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { COARSE, EXTEND_GESTURE } from "./extendGesture";
+import { openShortcuts } from "./Shortcuts";
 import { useBookMusic } from "./EditBook";
 import { bookmarkReadPath, canPlay, otherBooksToHear, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
@@ -146,7 +150,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
         </Slider.Track>
         <Slider.Thumb
           aria-label="Vị trí trong chương"
-          aria-valuetext={`${spokenClock(shown)} trên ${spokenClock(duration)}`}
+          aria-valuetext={`${spokenClock(clamped)} trên ${spokenClock(duration)}`}
           className={cn(
             "block rounded-full bg-fg shadow transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
             large ? "size-4 opacity-100" : "size-3 opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
@@ -171,9 +175,10 @@ function SeekBar({ large = false }: { large?: boolean }) {
 function skipIcon(Base: typeof RotateCcw) {
   return function SkipGlyph({ className }: { className?: string; strokeWidth?: number }) {
     return (
-      <span className={cn("relative inline-grid place-items-center", className)}>
+      <span className={cn("relative inline-grid scale-[1.2] place-items-center", className)}>
         <Base className="size-full" strokeWidth={1.75} />
-        <span className="tabular absolute inset-0 grid place-items-center pt-[1px] text-[0.42em] font-bold leading-none">
+        {/* Cỡ chữ tuyệt đối, không theo font của nút (0,42em từng ra 5,9 px - không đọc được): 10 px nằm vừa trong vòng mũi tên (biểu tượng nới 1,2 lần để chữ không chạm nét vẽ). */}
+        <span className="tabular absolute inset-0 grid place-items-center pt-[1px] text-[10px] font-bold leading-none tracking-tighter">
           {SKIP_SECONDS}
         </span>
       </span>
@@ -251,6 +256,7 @@ function MenuShell({
   active,
   width = "w-56",
   focusSelector,
+  dialogLabel,
 }: {
   trigger: ReactNode;
   label: string;
@@ -259,6 +265,8 @@ function MenuShell({
   width?: string;
   /** Khi mở, đưa tiêu điểm tới phần tử khớp (lựa chọn đang áp dụng) thay vì phần tử đầu tiên - viền tiêu điểm ở nút đầu trông như "đang chọn". */
   focusSelector?: string;
+  /** Tên của hộp khi mở (trình đọc màn hình đọc khi tiêu điểm vào hộp); mặc định theo nút. Nút đổi chữ theo trạng thái ("Tắt sau 4 phút") thì hộp giữ tên cố định. */
+  dialogLabel?: string;
 }) {
   return (
     <Popover.Root>
@@ -289,7 +297,12 @@ function MenuShell({
             event.preventDefault();
             current.focus();
           }}
-          className={cn("z-50 rounded-xl border border-line bg-panel p-1.5 shadow-float", width)}
+          aria-label={dialogLabel ?? label}
+          // Không bao giờ cao hơn chỗ còn lại của màn (điện thoại 375x812: danh sách nhạc / giọng từng tràn đáy): phần dài cuộn trong hộp.
+          className={cn(
+            "z-50 flex max-h-[var(--radix-popover-content-available-height)] flex-col overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float",
+            width,
+          )}
         >
           {children}
         </Popover.Content>
@@ -301,7 +314,7 @@ function MenuShell({
 export function SpeedMenu() {
   const { rate, setRate } = usePlayer();
   return (
-    <MenuShell label="Tốc độ đọc" active={rate !== 1} trigger={<><Gauge className="size-4" />{speedLabel(rate)}</>}>
+    <MenuShell label="Tốc độ đọc" active={rate !== 1} focusSelector="[data-current-choice]" trigger={<><Gauge className="size-4" />{speedLabel(rate)}</>}>
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Tốc độ đọc · nhớ riêng cho cuốn này</div>
       <div className="grid grid-cols-3 gap-1 p-1">
         {SPEEDS.map((speed) => (
@@ -310,6 +323,7 @@ export function SpeedMenu() {
               type="button"
               onClick={() => setRate(speed)}
               aria-pressed={speed === rate}
+              data-current-choice={speed === rate ? "" : undefined}
               className={cn(
                 "tabular h-9 rounded-lg text-sm hover:bg-hover",
                 speed === rate ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
@@ -399,7 +413,7 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
       width="w-72"
     >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>
-      <div className="flex max-h-[60vh] flex-col gap-0.5 overflow-y-auto p-1">
+      <div role="group" aria-label="Danh sách nhạc nền" className="flex min-h-0 flex-col gap-0.5 overflow-y-auto p-1">
         {options.map((option) => (
           <Popover.Close asChild key={option.id ?? "off"}>
             <button
@@ -463,7 +477,7 @@ function ScrollHint({ className, children }: { className: string; children: Reac
     return () => watcher.disconnect();
   }, [measure]);
   return (
-    <div className="relative">
+    <div className="relative flex min-h-0 flex-col">
       <div ref={box} onScroll={measure} className={className}>
         {children}
       </div>
@@ -491,12 +505,12 @@ export function VoiceMenu() {
     <MenuShell
       label="Giọng đọc"
       // Tên giọng hiện cả trên điện thoại: người nghe thấy ngay giọng nào đang đọc, không chỉ một biểu tượng.
-      trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[1000px]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
+      trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[1200px]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
       width="w-80 max-w-[calc(100vw-1.5rem)]"
     >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Giọng đọc · nhớ riêng cho cuốn này</div>
       {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; "Thử" dùng cùng cách nghe thử. */}
-      <ScrollHint className="max-h-[50vh] overflow-y-auto p-1">
+      <ScrollHint className="min-h-0 flex-1 overflow-y-auto p-1">
         {groupedVoices(voices).map((group) => (
           <div key={group.provider} role="group" aria-label={group.title} className="mb-1.5">
             <div className="px-2 pb-0.5 pt-1 text-[11px] font-semibold uppercase tracking-wider text-fg-3">{group.title}</div>
@@ -748,6 +762,7 @@ function SleepPicker({
   return (
     <MenuShell
       label={name ? `${spoken} trên ${name}` : spoken}
+      dialogLabel={name ? `Hẹn giờ tắt trên ${name}` : "Hẹn giờ tắt"}
       active={active}
       width="w-64"
       focusSelector="[data-current-choice]"
@@ -797,6 +812,7 @@ function SleepPicker({
               type="button"
               disabled={disabled}
               onClick={() => onSet({ kind: "minutes", minutes })}
+              aria-label={`${minutes} phút`}
               aria-pressed={sleep.kind === "minutes" && sleep.minutes === minutes}
               data-current-choice={sleep.kind === "minutes" && sleep.minutes === minutes ? "" : undefined}
               className={cn(
@@ -924,23 +940,27 @@ function VolumeControl() {
 /** Thêm dấu trang kèm thông báo có "Ghi chú" và "Hoàn tác". Dấu trùng chỗ (±5 giây) không tạo thêm. */
 export function useAddBookmark() {
   const { addBookmark, track } = usePlayer();
-  const { setExpanded } = useNowPlaying();
+  const { expanded, setExpanded } = useNowPlaying();
   const source = useSource();
   const client = useQueryClient();
+  const phoneLayout = useMediaQuery("(max-width: 767px)");
+  // Màn "Đang nghe" mở: thông báo ở góc trên phải từng che đúng tab "Dấu trang" (soát UX a16) - xuống đáy, dưới bảng. Bố cục điện thoại (dưới 768 px) thì tab nằm ở đáy: thông báo ở đầu màn. App Android giữ chỗ cũ.
+  const position = expanded && !Capacitor.isNativePlatform() ? (phoneLayout ? "top-center" : "bottom-right") : undefined;
   return useCallback(async () => {
     if (!track) return;
     const mark = await addBookmark().catch(() => null);
     if (!mark) {
-      toast.error("Chưa thêm được dấu trang");
+      toast.error("Chưa thêm được dấu trang", { position });
       return;
     }
     if (mark.existing) {
       toast.dismiss("bookmark");
-      toast("Đã có dấu trang ở chỗ này", { id: "bookmark-existing", description: formatClock(mark.seconds) });
+      toast("Đã có dấu trang ở chỗ này", { id: "bookmark-existing", description: formatClock(mark.seconds), position });
       return;
     }
     toast.success("Đã thêm dấu trang", {
       id: "bookmark",
+      position,
       duration: 8000,
       // Giờ ghi trong dấu trang (đã làm tròn ở nơi lưu) - cùng con số danh sách dấu trang hiện, không đọc lại đồng hồ phát.
       description: `${track.chapterTitle} · ${formatClock(mark.seconds)}`,
@@ -960,7 +980,7 @@ export function useAddBookmark() {
         },
       },
     });
-  }, [addBookmark, client, setExpanded, source, track]);
+  }, [addBookmark, client, position, setExpanded, source, track]);
 }
 
 function BookmarkButton() {
@@ -1298,9 +1318,9 @@ export function PlayerBar({
       <FollowRecord />
       <FadingNotice className="mx-4 mt-2" />
       <PlayerAlert className="mx-4 mt-2" />
-      {/* Cột giữa theo bề rộng CỦA THANH (min(40%, 480px)), không theo cửa sổ (40vw): thanh không gồm thanh bên, 40vw từng
-          chiếm 512/1044 px ở cửa sổ 1280 - tên chương bị cắt, cụm nút phải (266 px) bị ép vào 238 px (soát UX 29-09). */}
-      <div className="grid h-[76px] grid-cols-[minmax(0,1fr)_min(40%,480px)_minmax(max-content,1fr)] items-center @max-[900px]:grid-cols-[minmax(0,1fr)_minmax(0,260px)_minmax(max-content,1fr)] gap-4 px-4">
+      {/* Cột giữa theo bề rộng CỦA THANH (min(36%, 480px)), không theo cửa sổ (40vw): thanh không gồm thanh bên, 40vw từng
+          chiếm 512/1044 px ở cửa sổ 1280 - tên chương bị cắt, cụm nút phải (266 px) bị ép vào 238 px (soát UX 29-09). Cột tên sách có tối thiểu 10rem (soát UX a16: còn ~30 px khi đủ chip nhạc / giọng / hẹn giờ); cột giữa co trước, rồi nhãn chữ của chip ẩn theo bề rộng thanh. */}
+      <div className="grid h-[76px] grid-cols-[minmax(10rem,1fr)_minmax(14rem,min(36%,480px))_auto] items-center @max-[900px]:grid-cols-[minmax(8rem,1fr)_minmax(14rem,260px)_auto] gap-4 px-4">
         <button
           type="button"
           onClick={() => setExpanded(true)}
@@ -1799,6 +1819,18 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
     }
   };
 
+  // Tên cửa sổ / thẻ trình duyệt theo chương đang nghe ("Chương 3 · Tên sách · ABook"); đóng màn này thì trả lại tên của trang bên dưới.
+  const titleChapter = track?.chapterTitle;
+  const titleBook = track?.bookTitle;
+  useEffect(() => {
+    if (!open || !titleChapter) return;
+    const before = document.title;
+    document.title = [titleChapter, titleBook, APP_TITLE].filter(Boolean).join(" · ");
+    return () => {
+      document.title = before;
+    };
+  }, [open, titleChapter, titleBook]);
+
   // Mở: đưa focus vào nút Phát; đóng: trả focus về chỗ đã mở.
   useEffect(() => {
     if (!open) return;
@@ -1836,37 +1868,57 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
     return () => document.removeEventListener("keydown", onKey);
   }, [open, setExpanded]);
 
+  // Tab theo mẫu WAI-ARIA: Tab vào đúng MỘT tab (tab đang chọn), ←/→ (Home/End) đổi sang tab bên cạnh; mỗi tab trỏ tới tabpanel của nó.
+  const selectPanel = (value: Panel) => {
+    setPanel(value);
+    setShowPanel(true);
+  };
+  const onTabKeys = (event: ReactKeyboardEvent<HTMLElement>) => {
+    const index = PANELS.findIndex((item) => item.value === panel);
+    const step = ({ ArrowRight: 1, ArrowLeft: -1 } as Record<string, number>)[event.key];
+    const next = step ? (index + step + PANELS.length) % PANELS.length : event.key === "Home" ? 0 : event.key === "End" ? PANELS.length - 1 : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    selectPanel(PANELS[next].value);
+    event.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
+  };
   const panelTabs = (
-    <div role="tablist" aria-label="Bảng" className="flex min-w-0 gap-1">
-      {PANELS.map((item) => (
-        <button
-          key={item.value}
-          type="button"
-          role="tab"
-          title={item.label}
-          aria-selected={panel === item.value && showPanel}
-          onClick={() => {
-            if (mobile && panel === item.value && showPanel) setShowPanel(false);
-            else {
-              setPanel(item.value);
-              setShowPanel(true);
-            }
-          }}
-          className={cn(
-            "touch-row inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors",
-            panel === item.value && showPanel ? "bg-hover text-fg" : "text-fg-2 hover:text-fg",
-          )}
-        >
-          <item.icon className="size-4" />
-          {/* Cột phải hẹp (cửa sổ ~768 px: hai cột + thanh bên chỉ chừa ~210 px) thì chỉ còn biểu tượng, chữ giữ cho trình đọc màn hình. */}
-          <span className="@max-[20rem]:sr-only">{item.label}</span>
-        </button>
-      ))}
+    <div role="tablist" aria-label="Bảng" onKeyDown={onTabKeys} className="flex min-w-0 gap-1">
+      {PANELS.map((item) => {
+        const selected = panel === item.value && showPanel;
+        return (
+          <button
+            key={item.value}
+            type="button"
+            role="tab"
+            id={`now-tab-${item.value}`}
+            title={item.label}
+            aria-selected={selected}
+            aria-controls={selected ? `now-panel-${item.value}` : undefined}
+            tabIndex={panel === item.value ? 0 : -1}
+            onClick={() => {
+              if (mobile && selected) setShowPanel(false);
+              else selectPanel(item.value);
+            }}
+            className={cn(
+              "touch-row inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors",
+              selected ? "bg-hover text-fg" : "text-fg-2 hover:text-fg",
+            )}
+          >
+            <item.icon className="size-4" />
+            {/* Cột phải hẹp (cửa sổ ~768 px: hai cột + thanh bên chỉ chừa ~210 px) thì chỉ còn biểu tượng, chữ giữ cho trình đọc màn hình. */}
+            <span className="@max-[20rem]:sr-only">{item.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 
-  const panelBody =
-    panel === "text" ? <ReadAlong /> : panel === "chapters" ? <ChapterPanel /> : <BookmarkPanel editingId={editingId} setEditingId={setEditingId} />;
+  const panelBody = (
+    <div role="tabpanel" id={`now-panel-${panel}`} aria-labelledby={`now-tab-${panel}`} className="h-full">
+      {panel === "text" ? <ReadAlong /> : panel === "chapters" ? <ChapterPanel /> : <BookmarkPanel editingId={editingId} setEditingId={setEditingId} />}
+    </div>
+  );
 
   if (!open || !track) return null;
   return (
@@ -1889,10 +1941,14 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
           backgroundImage: `linear-gradient(180deg, color-mix(in oklab, ${track.bookCover?.color || coverStyle(track.bookTitle).from} 42%, transparent) 0%, transparent 58%)`,
         }}
       >
-        <div className="flex items-center justify-between">
-          <IconButton label="Thu nhỏ (Esc)" icon={ChevronDown} className="touch-box" onClick={() => setExpanded(false)} />
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center">
+          <IconButton label="Thu nhỏ (Esc)" icon={ChevronDown} className="touch-box justify-self-start" onClick={() => setExpanded(false)} />
           <span className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">Đang nghe</span>
-          {canGoBack ? <IconButton label="Quay lại chỗ vừa nghe" icon={Undo2} onClick={goBack} /> : <span className="size-9" />}
+          <div className="flex items-center justify-self-end">
+            {canGoBack && <IconButton label="Quay lại chỗ vừa nghe" icon={Undo2} onClick={goBack} />}
+            {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
+            {!COARSE && <IconButton label="Phím tắt (?)" icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts} {...keepFocus} />}
+          </div>
         </div>
         {mobile && showPanel ? (
           <div className="-mx-6 mt-2 min-h-56 flex-1 border-y border-line">{panelBody}</div>
