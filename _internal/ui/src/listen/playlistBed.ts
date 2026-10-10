@@ -9,7 +9,7 @@
 
 import { api } from "@/studio/api";
 import type { ImportResult } from "@/studio/musicLocal";
-import type { MusicBed, MusicCredit, MusicCue } from "./musicBed";
+import { RETRY_MS, type MusicBed, type MusicCredit, type MusicCue } from "./musicBed";
 
 export const MINE_PLAYLIST = "mine";
 /** `music.playlist` = "off": người nghe tắt nhạc nền (khác với không có khoá = để máy chọn). */
@@ -160,20 +160,87 @@ const realTimers: Timers = {
   clearTimeout: (handle) => globalThis.clearTimeout(handle as ReturnType<typeof setTimeout>),
 };
 
+/** Bài danh sách phát tải hỏng thử lại chừng ấy lần (sau 5, 10, 20 phút) rồi bỏ tới phiên sau - như MusicFailures.DOWNLOAD_RETRIES. */
+export const DOWNLOAD_RETRIES = 3;
+
+/** Sổ bài hỏng của danh sách phát (MusicFailures.kt `dropDownload`): hỏng thì chờ RETRY_MS, gấp đôi mỗi lần hỏng tiếp; quá DOWNLOAD_RETRIES
+ *  lần thử lại thì bỏ cả phiên. Tải được thì xoá. */
+export class PlaylistFailures {
+  private retryAt = new Map<string, number>();
+  private counts = new Map<string, number>();
+
+  constructor(private readonly now: () => number = () => Date.now()) {}
+
+  drop(link: string): void {
+    const count = (this.counts.get(link) ?? 0) + 1;
+    this.counts.set(link, count);
+    this.retryAt.set(link, count > DOWNLOAD_RETRIES ? Infinity : this.now() + RETRY_MS * 2 ** (count - 1));
+  }
+
+  isFailed(link: string): boolean {
+    return (this.retryAt.get(link) ?? -Infinity) > this.now();
+  }
+
+  /** Bỏ các bài đã tới hạn thử lại khỏi sổ; trả các bài ấy. */
+  takeDue(): Set<string> {
+    const now = this.now();
+    const due = new Set([...this.retryAt].filter(([, at]) => at <= now).map(([link]) => link));
+    for (const link of due) this.retryAt.delete(link);
+    return due;
+  }
+
+  forget(link: string): void {
+    this.retryAt.delete(link);
+    this.counts.delete(link);
+  }
+}
+
+/** Các mốc còn lại nối lại liền nhau từ giây 0, giữ độ dài và khoá của từng mốc. */
+function layOut(cues: MusicCue[]): MusicCue[] {
+  let at = 0;
+  return cues.map((cue) => {
+    const length = cue.end - cue.start;
+    const out = { ...cue, start: at, end: at + length };
+    at += length;
+    return out;
+  });
+}
+
 /** Lái MusicBed theo đồng hồ nhạc thay cho giây của chương: `update(giọng đang chạy?)` mỗi khi bộ máy phát báo thời gian / phát /
- *  dừng. Giọng dừng quá PAUSE_GRACE_MS thì nhạc dừng theo; dừng ngắn hơn (nối hai đoạn, sang chương) thì nhạc không ngắt. */
+ *  dừng. Giọng dừng quá PAUSE_GRACE_MS thì nhạc dừng theo; dừng ngắn hơn (nối hai đoạn, sang chương) thì nhạc không ngắt.
+ *  Bài tải hỏng rút khỏi hàng ngay - bài sau dồn lên, không im cả khoảng của nó (cùng hành vi PlaylistQueue.kt); tới hạn thử lại
+ *  (PlaylistFailures) thì về hàng ở chỗ đổi bài, kể cả khi hàng rỗng hay bài duy nhất còn lại quay về đầu. Đồng hồ nhạc không đổi:
+ *  cùng các bài hỏng thì cùng chỗ trong hàng. */
 export class PlaylistDriver {
   private playing = false;
   private grace: unknown = null;
   private savedAt = 0;
+  private readonly failures: PlaylistFailures;
+  private active: MusicCue[];
+  private lastKey: string | null = null;
+  private lastOffset = -1;
+  private readonly offLoad: () => void;
 
   constructor(
-    private readonly bed: Pick<MusicBed, "sync">,
+    private readonly bed: Pick<MusicBed, "sync" | "setCues" | "onLoadResult">,
     private readonly clock: PlaylistClock,
     private readonly cues: MusicCue[],
     private readonly timers: Timers = realTimers,
     private readonly now: () => number = () => Date.now(),
-  ) {}
+  ) {
+    this.failures = new PlaylistFailures(now);
+    this.active = cues;
+    this.offLoad = bed.onLoadResult((link, ok) => {
+      if (ok) {
+        this.failures.forget(link);
+        return;
+      }
+      if (!this.active.some((cue) => cue.link === link)) return;
+      this.failures.drop(link);
+      this.relay();
+      this.push();
+    });
+  }
 
   update(voicePlaying: boolean): void {
     if (voicePlaying) {
@@ -198,13 +265,32 @@ export class PlaylistDriver {
 
   /** Thôi lái (đổi cuốn, đổi danh sách, đóng trình phát): ghi chỗ đang tới. */
   stop(): void {
+    this.offLoad();
     this.clearGrace();
     this.clock.tick(false);
     this.clock.save();
   }
 
+  /** Hàng mới = các bài không đang bị bỏ tạm; MusicBed nhận hàng mới ở đúng chỗ đồng hồ nhạc rơi vào. */
+  private relay(): void {
+    this.active = layOut(this.cues.filter((cue) => !this.failures.isFailed(cue.link)));
+    this.bed.setCues(this.active, undefined, wrapSeconds(this.clock.seconds, this.active));
+  }
+
   private push(): void {
-    this.bed.sync(wrapSeconds(this.clock.seconds, this.cues), this.playing);
+    let seconds = wrapSeconds(this.clock.seconds, this.active);
+    let cue = this.active.find((item) => seconds >= item.start && seconds < item.end) ?? null;
+    // Chỗ đổi bài: sang mốc khác, hàng rỗng, hay bài duy nhất quay lại đầu (giây trong bài lùi lại) - bài tới hạn về hàng lúc này.
+    const changing = !cue || cue.key !== this.lastKey || seconds - cue.start < this.lastOffset;
+    const due = changing ? this.failures.takeDue() : new Set<string>();
+    if ([...due].some((link) => this.cues.some((item) => item.link === link))) {
+      this.relay();
+      seconds = wrapSeconds(this.clock.seconds, this.active);
+      cue = this.active.find((item) => seconds >= item.start && seconds < item.end) ?? null;
+    }
+    this.lastKey = cue?.key ?? null;
+    this.lastOffset = cue ? seconds - cue.start : -1;
+    this.bed.sync(seconds, this.playing);
   }
 
   private clearGrace(): void {
