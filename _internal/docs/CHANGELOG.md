@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.48] - 2026-10-11
+
 ### Làm sách trong Studio (máy tính)
 
 - Đổi được giọng người kể mà không phải tạo lại sách: hàng "Người kể" ở tab Nhân vật có nút đổi giọng như một nhân vật (nghe thử, hộp Áp dụng nói trước bao nhiêu câu kể đã thu sẽ thu lại); giọng nhân vật đang dùng thì không chọn được để người kể luôn có giọng riêng.
