@@ -299,6 +299,33 @@ def test_peeking_at_a_books_code_writes_nothing(tmp_path: Path, ollama: str, mon
     assert setup.peek_code(book) == ("a" * 16, setup.root / "code" / ("a" * 16))
 
 
+def test_a_studio_that_lost_its_ollama_offers_to_repair_only_that(tmp_path: Path, ollama: str,
+                                                                  monkeypatch: pytest.MonkeyPatch) -> None:
+    """Soát UX a20: Studio "đã cài" (marker còn) mà ollama.exe mất thì sách không khởi động được, lời bảo "bấm Cài tiếp" mà
+    không có nút nào. Giờ file mất = bước ấy phải làm lại: Studio báo cần sửa, "Cài tiếp" tải lại đúng Ollama."""
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "localappdata"))
+    commands: list[str] = []
+    setup = _setup(tmp_path, ollama, commands)
+    setup.start()
+    setup.wait(30)
+    assert setup.status()["installed"] is True and setup.damaged() == [] and setup.outdated() == []
+
+    (setup.tools / "ollama" / "ollama.exe").unlink()
+    status = setup.status()
+    assert status["damaged"] == ["Ollama"] and status["outdated"] == ["Ollama"] and status["installed"] is True
+    assert [step["id"] for step in status["steps"] if not step["done"]] == ["ollama"]
+    with pytest.raises(RuntimeError, match="Sửa Studio"):
+        StudioRunner(setup).start(tmp_path / "sach")
+
+    commands.clear()
+    setup.fetched.clear()  # type: ignore[attr-defined]
+    setup.start()
+    setup.wait(30)
+    assert setup.damaged() == [] and setup.outdated() == [] and setup.status()["error"] is None
+    assert setup.fetched == ["ollama"], "chỉ tải lại Ollama"  # type: ignore[attr-defined]
+    assert commands == ["Kiểm tra lần cuối"]
+
+
 def test_removing_the_studio_deletes_its_folder_even_read_only_files(tmp_path: Path, ollama: str) -> None:
     import os
     import stat

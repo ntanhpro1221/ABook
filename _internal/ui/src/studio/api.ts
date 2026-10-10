@@ -284,7 +284,7 @@ export interface AppInfo {
   /** App Windows đóng gói (webui/host.py): bản mới vỏ Tauri tìm thấy trên GitHub Releases, chờ người dùng bấm cài. */
   update?: { version: string; notes: string } | null;
   /** App Windows đóng gói: Studio (thư viện + model làm sách) tải thêm đã cài chưa. null: bản dev (runtime cạnh mã). */
-  studio?: { installed: boolean; outdated?: boolean } | null;
+  studio?: { installed: boolean; outdated?: boolean; damaged?: boolean } | null;
   /** Máy này làm được gì (shared/capabilities.ts): `/api/app?book=<mã>` điền thêm `workshop` / `link` của cuốn ấy. */
   capabilities?: Capabilities;
   libraryRoot: string;

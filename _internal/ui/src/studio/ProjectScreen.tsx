@@ -165,9 +165,27 @@ function Step({
   );
 }
 
+/** Lần bấm chạy gần nhất không khởi động được (chưa cài Studio, thiếu Ollama...). Hiện cả ở sách đã xong - nơi "Áp dụng N thay đổi"
+ *  là cách duy nhất để chạy lại, và sửa chờ áp vẫn còn đó (máy chủ không ghi mốc "đã áp" khi khởi động hỏng) - kèm "Thử lại". */
+function StartError({ book }: { book: BookSummary }) {
+  const start = useStart();
+  if (!book.startError) return null;
+  return (
+    <div role="alert" className="mt-3 flex flex-wrap items-start gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
+      <CircleAlert className="mt-0.5 size-4 shrink-0" />
+      <span className="min-w-0 flex-1">Không khởi động được: {book.startError}</span>
+      {!book.starting && !book.running && (
+        <Button variant="secondary" size="sm" icon={RotateCcw} loading={start.isPending} onClick={() => start.mutate(book.id)}>
+          Thử lại
+        </Button>
+      )}
+    </div>
+  );
+}
+
 /** Lỗi của lần làm sách: câu cho người nghe + việc nên làm; nguyên văn kỹ thuật thu vào "Chi tiết". */
 function LastError({ raw }: { raw: string }) {
-  const shown = friendlyError(raw);
+  const shown = friendlyError(raw, Boolean(useAppInfo().data?.studio));
   return (
     <div className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
       <CircleAlert className="mt-0.5 size-4 shrink-0" />
@@ -244,12 +262,7 @@ function ProductionPanel({ book }: { book: BookSummary }) {
       </div>
       {/* Trước mốc phân tích xong: đặt sẵn "Chờ tôi duyệt trước khi thu" cho cuốn này (webui/precast.py). */}
       {!book.castLocked && book.precast && <PrecastWaitSwitch book={book} className="mt-3" />}
-      {book.startError && (
-        <div className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
-          <CircleAlert className="mt-0.5 size-4 shrink-0" />
-          <span>Không khởi động được: {book.startError}</span>
-        </div>
-      )}
+      <StartError book={book} />
       {book.lastError && book.phase === "error" && <LastError raw={book.lastError} />}
     </section>
   );
@@ -418,7 +431,7 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
       open={open}
       onOpenChange={onOpenChange}
       title={`Xoá dự án “${book.title}”?`}
-      description="Cả thư mục dự án - bản thu, phân tích, phân vai và mọi chỗ đã sửa - chuyển vào Thùng rác của Windows, khôi phục được từ đó. File truyện gốc và sách đã xuất ra thư mục khác không bị đụng tới."
+      description="Cả thư mục dự án - bản thu, phân tích, phân vai và mọi chỗ đã sửa - chuyển vào Thùng rác của Windows, khôi phục được từ đó. File truyện gốc và sách đã xuất ra thư mục khác không bị đụng tới. Vừa xoá xong có 30 giây để bấm “Hoàn tác”."
     >
       <p className="break-all rounded-lg bg-panel-2 px-3 py-2 text-xs text-fg-2">{book.path}</p>
       {busy && <p className="mt-3 text-sm text-warning">Sách đang chạy - dừng sách trước rồi mới xoá được.</p>}
@@ -512,9 +525,9 @@ function Actions({ book }: { book: BookSummary }) {
   // Phân tích và thu âm chạy bằng Studio: máy chưa có thì giải thích ở đây, không gửi lệnh rồi nhận lỗi.
   const begin = (id: string) => {
     if (!studio.missing) return start.mutate(id);
-    toast.error(studio.update ? "Cần cập nhật Studio" : "Cần cài Studio", {
+    toast.error(studio.repair ? "Cần sửa Studio" : studio.update ? "Cần cập nhật Studio" : "Cần cài Studio", {
       description: "Phân tích và thu âm chạy bằng Studio.",
-      action: remote ? undefined : { label: studio.update ? "Cập nhật Studio" : "Cài Studio", onClick: () => navigate("/studio") },
+      action: remote ? undefined : { label: studio.action, onClick: () => navigate("/studio") },
     });
   };
   const [confirmStop, setConfirmStop] = useState(false);
@@ -659,12 +672,12 @@ function Actions({ book }: { book: BookSummary }) {
       {studio.missing && !live && (book.phase !== "done" || Boolean(book.pendingChanges)) && (
         <p className="flex basis-full flex-wrap items-center gap-x-3 gap-y-2 text-pretty text-sm text-fg-2">
           <span>
-            Máy này {studio.update ? "cần cập nhật" : "chưa cài"} Studio nên chưa làm tiếp được phần phân tích và thu âm (nghe, xem,
+            Máy này {studio.repair ? "cần sửa" : studio.update ? "cần cập nhật" : "chưa cài"} Studio nên chưa làm tiếp được phần phân tích và thu âm (nghe, xem,
             sửa cách đọc, nhạc nền, bìa và xuất sách vẫn được).
           </span>
           {!remote && (
             <Button variant="secondary" size="sm" icon={Download} onClick={() => navigate("/studio")}>
-              {studio.update ? "Cập nhật Studio" : "Cài Studio"}
+              {studio.action}
             </Button>
           )}
         </p>
@@ -803,6 +816,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
 
 function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) {
   const player = usePlayer();
+  const hasStudio = Boolean(useAppInfo().data?.studio);
   const playChapter = usePlayChapter();
   const current = player.track?.bookId === book.id && player.track.chapterId === chapter.id;
   const working = chapter.status === "synthesizing" || chapter.status === "verifying";
@@ -848,7 +862,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
       <div className="min-w-0">
         <div className={cn("truncate font-medium", current && "text-accent-text")}>{chapter.displayTitle}</div>
         {chapter.lastError ? (
-          <ChapterError raw={chapter.lastError} />
+          <ChapterError raw={chapter.lastError} studio={hasStudio} />
         ) : chapter.subtitle ? (
           <div className="truncate text-xs text-fg-2">{chapter.subtitle}</div>
         ) : null}
@@ -1126,6 +1140,7 @@ export function ProjectScreen() {
       </header>
 
       {book.phase !== "done" && <ProductionPanel book={book} />}
+      {book.phase === "done" && <StartError book={book} />}
       {/* Phân tích xong mà chưa thu bao nhiêu: lối vào "Duyệt trước khi thu" đúng lúc sửa còn miễn phí. */}
       {canReview(book) && tab !== "precast" && (book.precast?.held || book.chapters.completed === 0) && (
         <PrecastBanner book={book} onOpen={() => setParams({ tab: "precast" })} />

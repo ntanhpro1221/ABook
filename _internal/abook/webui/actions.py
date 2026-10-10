@@ -148,7 +148,11 @@ class StudioRunner(BackgroundRunner):
     def start(self, project_root: Path) -> None:
         if not self.setup.installed():
             raise RuntimeError("Máy này chưa cài Studio - vào Dự án, bấm \"Cài Studio\" (một lần, khoảng 20 GB).")
-        outdated = self.setup.status()["outdated"]
+        status = self.setup.status()
+        if status["damaged"]:
+            raise RuntimeError(f"Studio mất {', '.join(status['damaged'])} (file đã bị xoá hay hỏng) - vào Dự án, bấm "
+                               "\"Sửa Studio\" để tải lại đúng phần ấy.")
+        outdated = status["outdated"]
         if outdated:
             # Bản ghim đổi vì bản cũ làm hỏng sách (vd Ollama 0.34.4 - studio_setup.OLLAMA): không chạy bằng bản cũ.
             raise RuntimeError(f"Studio cần cập nhật ({', '.join(outdated)}) trước khi làm sách - vào Dự án, bấm "

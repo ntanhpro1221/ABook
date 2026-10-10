@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCachedBook } from "./data";
 import { Pause, Play, Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import type { ReadAloudTry } from "@/listen/readings";
@@ -144,11 +144,24 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
   );
 }
 
+/** Ô sửa cách đọc đóng lại (Enter lưu, Esc, Huỷ) thì ô nhập mất đi và tiêu điểm rơi về đầu trang (soát UX a20): trả tiêu điểm về nút
+ *  "Sửa" của chính dòng ấy. Chỉ khi tiêu điểm đang rơi vào khoảng trống - người dùng đã bấm sang chỗ khác thì không giành lại. */
+function useReturnFocus(editing: boolean) {
+  const button = useRef<HTMLButtonElement>(null);
+  const was = useRef(false);
+  useEffect(() => {
+    if (was.current && !editing && (!document.activeElement || document.activeElement === document.body)) button.current?.focus();
+    was.current = editing;
+  }, [editing]);
+  return button;
+}
+
 function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: NameReading; fresh?: boolean }) {
   const analyzed = useAnalyzed(bookId);
   const sharedHere = useSharedEntry(item.surface, item.requested ?? item.spoken);
   const clip = useClip();
   const [editing, setEditing] = useState(false);
+  const editButton = useReturnFocus(editing);
   const example = item.example;
   const id = example ? `reading-${example.segmentId}` : "";
   const playing = Boolean(id) && clip.current === id;
@@ -195,7 +208,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
       {editing ? (
         <EditReading bookId={bookId} item={item} onDone={() => setEditing(false)} fresh={fresh} />
       ) : (
-        <Button size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`${fresh ? "Thêm" : "Sửa"} cách đọc ${item.surface}`}>
+        <Button ref={editButton} size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`${fresh ? "Thêm" : "Sửa"} cách đọc ${item.surface}`}>
           {fresh ? `Thêm cách đọc cho “${item.surface}”` : "Sửa"}
         </Button>
       )}
@@ -222,6 +235,7 @@ export function useNamesInLine(bookId: string, text: string, enabled = true): Na
 /** Một tên trong bảng sửa cách đọc của câu (tab Kịch bản): đọc thế nào + sửa ngay - cho CẢ CUỐN, như mục "Cách đọc tên". */
 export function NameInLine({ bookId, item }: { bookId: string; item: NameReading }) {
   const [editing, setEditing] = useState(false);
+  const editButton = useReturnFocus(editing);
   // Trình bày như mục "Cách đọc tên" ở tab Nhân vật: đang đọc gì, và (nếu có) cách đọc đang chờ áp dụng.
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5" data-name-editor>
@@ -242,7 +256,7 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
           <EditReading bookId={bookId} item={item} onDone={() => setEditing(false)} fresh={false} />
         </div>
       ) : (
-        <Button size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`Sửa cách đọc ${item.surface}`}>
+        <Button ref={editButton} size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`Sửa cách đọc ${item.surface}`}>
           Sửa
         </Button>
       )}

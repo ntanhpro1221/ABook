@@ -404,3 +404,36 @@ def test_the_studio_packs_the_music_and_unpacks_it_into_the_music_cache(tmp_path
     other.open_book_file(str(packed))
     cached = other.music_dir / "files" / music_plan.track_name(CALM).split("/")[1]
     assert cached.read_bytes().startswith(b"ID3"), "nhạc đã nằm sẵn trong bộ đệm của máy mới"
+
+
+def test_word_timings_survive_the_move_to_a_new_machine(tmp_path: Path) -> None:
+    """Soát UX a20: mốc chữ sáng tin audio theo cỡ + mã băm + mốc sửa; giải nén ra chỗ mới thì mốc sửa đổi nên cả cuốn mất mốc chữ.
+    Nội dung audio y hệt (cỡ + mã băm khớp) thì dấu được ghi lại; audio khác thì không."""
+    import os
+
+    from abook.webui import word_timing
+
+    project = _project(tmp_path)
+    audio = store.chapter_audio_path(project, 1)
+    assert audio is not None
+    os.utime(audio, ns=(1_700_000_000_000_000_000, 1_700_000_000_000_000_000))  # mốc sửa cũ, chắc chắn khác lúc giải nén
+    text = "Trời đã sáng."
+    segment = {"id": 1, "text": text, "start": 0.0, "end": 1.0}
+    stamp = {"sha256": word_timing.audio_sha256(audio), "size": audio.stat().st_size, "mtimeNs": audio.stat().st_mtime_ns}
+    entry = {"textSha256": word_timing.text_sha(text), "span": [0, 1000], "method": "ctc", "words": [[0, 400], [400, 700], [700, 1000]]}
+    word_timing._save(project, 1, {"version": word_timing.VERSION, "audio": stamp, "lines": {"1": entry}})
+    other = store.chapter_audio_path(project, 2)  # chương 2: cỡ khác -> không được tin
+    if other is not None:
+        word_timing._save(project, 2, {"version": word_timing.VERSION, "audio": {**stamp, "size": stamp["size"] + 1}, "lines": {}})
+    packed = projectfile.pack(project, tmp_path / "chuyen" / "du_an.abookproj")
+
+    with ProjectFile(packed) as opened:
+        target, _report = opened.open_into(tmp_path / "may_moi")
+
+    moved = store.chapter_audio_path(target, 1)
+    assert moved is not None and moved.stat().st_mtime_ns != stamp["mtimeNs"], "giải nén làm đổi mốc sửa"
+    fresh = dict(segment)
+    assert word_timing.attach(target, 1, [fresh], moved) == 1 and fresh["words"] == entry["words"]
+    if other is not None:
+        kept = json.loads(word_timing.cache_file(target, 2).read_text(encoding="utf-8"))
+        assert kept["audio"]["mtimeNs"] == stamp["mtimeNs"], "audio không khớp cỡ thì dấu giữ nguyên"

@@ -491,18 +491,31 @@ class StudioSetup:
         return (self.runtime / ".setup_complete").is_file() and self.pythonw.is_file()
 
     def _state(self) -> dict[str, Any]:
-        try:
-            state = json.loads(self.state_path.read_text(encoding="utf-8"))
-            return state if isinstance(state, dict) else {}
-        except (OSError, ValueError):
-            return {}
+        # Windows: đọc đúng lúc luồng cài đang os.replace file này thì PermissionError - thử lại, đừng coi là "chưa cài gì"
+        # (trả {} ở đây thì _save ghép thay đổi lên {} và XOÁ cả danh sách bước đã xong).
+        for _ in range(20):
+            try:
+                state = json.loads(self.state_path.read_text(encoding="utf-8"))
+                return state if isinstance(state, dict) else {}
+            except PermissionError:
+                time.sleep(0.05)
+            except (OSError, ValueError):
+                return {}
+        return {}
 
     def _save(self, **changes: Any) -> None:
         state = {**self._state(), **changes, "updated": time.time()}
         self.root.mkdir(parents=True, exist_ok=True)
         temporary = self.state_path.with_name(self.state_path.name + ".part")
         temporary.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
-        os.replace(temporary, self.state_path)
+        for attempt in range(20):  # người đọc (status()) đang mở file đích thì Windows từ chối thay - đợi họ đọc xong
+            try:
+                os.replace(temporary, self.state_path)
+                return
+            except PermissionError:
+                if attempt == 19:
+                    raise
+                time.sleep(0.05)
 
     def _pins(self) -> dict[str, str]:
         """Bản ghim của các bước tải công cụ/model. App lên bản mới đổi ghim (nâng uv, Git, Ollama, đổi model phân tích)
@@ -510,15 +523,28 @@ class StudioSetup:
         return {"uv": UV.sha256, "git": MINGIT.sha256, "ollama": OLLAMA.sha256, "llm": self.analysis_model,
                 "assets": STUDIO_ASSETS.sha256, "wordalign": word_align_pin()}
 
+    def damaged(self) -> list[str]:
+        """Bước đã xong mà file của nó mất (người dùng xoá tay, diệt virus dọn): hiện chỉ Ollama riêng - thiếu nó thì sách không
+        khởi động được (ensure_ollama) mà thẻ "Cài tiếp" lại biến mất vì marker vẫn còn (soát UX a20). Máy chưa cài xong thì
+        chưa có gì để gọi là mất."""
+        if self.installed() and "ollama" in set(self._state().get("done") or []) and not self.ollama_executable.is_file():
+            return ["ollama"]
+        return []
+
+    @property
+    def ollama_executable(self) -> Path:
+        return self.tools / "ollama" / "ollama.exe"
+
     def outdated(self) -> list[str]:
         """Bước đã xong nhưng bằng bản ghim khác bản app này mang, hay bước app này có mà Studio cài từ bản app cũ hơn chưa
-        từng làm."""
+        từng làm, hay bước mà file đã mất (`damaged`) - cả ba đều cần chạy lại bước ấy (`_run_all`)."""
         state = self._state()
         done = set(state.get("done") or [])
         pins = state.get("pins") or {}
         installed = self.installed()
+        damaged = set(self.damaged())
         return [step for step, pin in self._pins().items()
-                if (step in done and pins.get(step) != pin) or (step not in done and installed)]
+                if (step in done and pins.get(step) != pin) or (step not in done and installed) or step in damaged]
 
     def status(self) -> dict[str, Any]:
         state = self._state()
@@ -529,6 +555,7 @@ class StudioSetup:
         return {
             "installed": self.installed(),
             "outdated": [label for step, label, _hint in STEPS if step in outdated],
+            "damaged": [label for step, label, _hint in STEPS if step in set(self.damaged())],
             "running": running,
             "step": self._step if running else None,
             "steps": [{"id": step, "label": label, "hint": hint, "done": step in done} for step, label, hint in STEPS],
@@ -1049,9 +1076,9 @@ class StudioSetup:
         chính người dùng (không bao giờ đụng)."""
         if self._ollama_alive():
             return
-        executable = self.tools / "ollama" / "ollama.exe"
+        executable = self.ollama_executable
         if not executable.is_file():
-            raise SetupError("Không thấy Ollama của Studio - bấm Cài tiếp để tải lại.")
+            raise SetupError("Studio mất Ollama (file đã bị xoá hay hỏng) - vào Dự án, bấm \"Sửa Studio\" để tải lại đúng phần ấy.")
         home = self.root / "ollama-home"
         home.mkdir(parents=True, exist_ok=True)
         log = self.root / "logs" / "ollama.log"

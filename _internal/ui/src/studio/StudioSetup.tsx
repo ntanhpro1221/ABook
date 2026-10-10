@@ -7,6 +7,7 @@ import { cn } from "@/shared/cn";
 import { Button, Progress } from "@/shared/ui";
 import { api } from "./api";
 import { useAppInfo, useStudioMissing } from "./data";
+import { friendlySetupError } from "./errorText";
 import { formatSize } from "./musicLocal";
 
 // App Windows đóng gói chỉ mang phần nghe; Studio - thư viện dây chuyền + model, ~20 GB - tải khi người dùng bấm
@@ -23,6 +24,8 @@ interface SetupStatus {
   installed: boolean;
   /** Bước đã cài bằng bản cũ hơn bản app này mang (nhãn) - "Cập nhật Studio" chạy lại đúng các bước ấy. */
   outdated: string[];
+  /** Bước đã cài mà file của nó mất (vd Ollama) - "Sửa Studio" tải lại đúng phần ấy. */
+  damaged?: string[];
   running: boolean;
   step: string | null;
   steps: SetupStep[];
@@ -49,15 +52,15 @@ export function StudioInstallNotice({ className }: { className?: string }) {
     <section aria-label="Cần Studio" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
       <Cpu className="mt-0.5 size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">{studio.update ? "Studio cần cập nhật trước khi làm sách" : "Máy này chưa cài Studio"}</p>
+        <p className="font-semibold">{studio.repair ? "Studio mất một phần, cần sửa trước khi làm sách" : studio.update ? "Studio cần cập nhật trước khi làm sách" : "Máy này chưa cài Studio"}</p>
         <p className="mt-1 text-[13px] leading-relaxed text-fg-2 text-pretty">
           {studio.update ? "" : `${STUDIO_WHAT} ${STUDIO_NEEDS} `}
-          Vẫn tạo dự án được: dự án chờ tới khi {studio.update ? "cập nhật" : "cài"} xong, các bước đã chọn ở đây được giữ nguyên.
+          Vẫn tạo dự án được: dự án chờ tới khi {studio.repair ? "sửa" : studio.update ? "cập nhật" : "cài"} xong, các bước đã chọn ở đây được giữ nguyên.
         </p>
       </div>
       {!info?.remote && (
         <Button variant="secondary" size="sm" icon={Download} onClick={() => navigate("/studio")}>
-          {studio.update ? "Cập nhật Studio" : "Cài Studio"}
+          {studio.action}
         </Button>
       )}
     </section>
@@ -84,7 +87,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
         toast.success("Studio đã sẵn sàng", { description: "Giờ tạo và làm sách nói được trên máy này." });
         void client.invalidateQueries({ queryKey: ["app"] });
       } else if (status.error) {
-        toast.error("Studio chưa xong", { description: status.error });
+        toast.error("Studio chưa xong", { description: friendlySetupError(status.error).summary });
       }
     }
     wasRunning.current = status.running;
@@ -98,6 +101,9 @@ export function StudioSetupCard({ className }: { className?: string }) {
       toast.error("Không cài được Studio", { description: (error as Error).message });
     }
   };
+  const damaged = status.damaged ?? [];
+  const repair = status.installed && damaged.length > 0;
+  const stale = status.outdated.filter((label) => !damaged.includes(label));
   const update = status.installed && status.outdated.length > 0;
   const started = status.steps.some((step) => step.done);
   const current = status.steps.find((step) => step.id === status.step);
@@ -110,10 +116,14 @@ export function StudioSetupCard({ className }: { className?: string }) {
         </div>
         <div className="min-w-0 flex-1">
           <h2 id="studio-setup-title" className="text-base font-semibold">
-            {update ? "Cập nhật Studio" : "Cài Studio để làm sách nói trên máy này"}
+            {repair ? "Sửa Studio" : update ? "Cập nhật Studio" : "Cài Studio để làm sách nói trên máy này"}
           </h2>
           <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-fg-2 text-pretty">
-            {update
+            {repair
+              ? `Studio trên máy này mất ${damaged.join(", ")} (file đã bị xoá hay hỏng) nên chưa làm sách được.${
+                  stale.length > 0 ? ` Cũng cần cập nhật ${stale.join(", ")}.` : ""
+                } Bấm Sửa Studio để tải lại đúng phần ấy; sách đã làm và chỗ đang nghe giữ nguyên.`
+              : update
               ? `Bản ABook này làm sách bằng ${status.outdated.join(", ")} khác với bản Studio đang có - cập nhật rồi làm sách
                 tiếp. Chỉ tải lại đúng phần ấy; sách đã làm và chỗ đang nghe giữ nguyên.`
               : `${STUDIO_WHAT} ${STUDIO_NEEDS} Mất mạng hay tắt máy giữa chừng thì bấm lại là làm tiếp.`}
@@ -126,16 +136,22 @@ export function StudioSetupCard({ className }: { className?: string }) {
             </Button>
           ) : (
             <Button variant="primary" icon={Download} onClick={() => void call("/api/studio/setup")}>
-              {update ? "Cập nhật Studio" : started ? "Cài tiếp" : "Cài Studio"}
+              {repair ? "Sửa Studio" : update ? "Cập nhật Studio" : started ? "Cài tiếp" : "Cài Studio"}
             </Button>
           )}
         </div>
       </div>
 
       {status.error && !status.running && (
-        <p role="alert" className="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-[13px] leading-relaxed text-danger">
-          {status.error}
-        </p>
+        <div role="alert" className="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-[13px] leading-relaxed text-danger">
+          <p>{friendlySetupError(status.error).summary}</p>
+          {friendlySetupError(status.error).detail && (
+            <details className="mt-1 text-xs">
+              <summary className="cursor-pointer select-none">Chi tiết</summary>
+              <p className="mt-1 select-text break-words font-mono">{friendlySetupError(status.error).detail}</p>
+            </details>
+          )}
+        </div>
       )}
 
       {(status.running || started) && (
@@ -230,9 +246,9 @@ export function StudioSettings() {
       <p className="mt-1 text-sm">Studio đã cài{status.gpu ? `, chạy trên ${status.gpu.name}` : ""}.</p>
       {status.outdated.length > 0 && (
         <p className="mt-1 text-[13px] text-fg-2">
-          Cần cập nhật {status.outdated.join(", ")} -{" "}
+          {status.damaged?.length ? `Mất ${status.damaged.join(", ")} (file đã bị xoá hay hỏng)` : `Cần cập nhật ${status.outdated.join(", ")}`} -{" "}
           <button type="button" onClick={() => navigate("/studio")} className="font-medium text-accent-text underline">
-            Cập nhật Studio
+            {status.damaged?.length ? "Sửa Studio" : "Cập nhật Studio"}
           </button>
           .
         </p>

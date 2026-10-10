@@ -153,8 +153,8 @@ function removedNote(book: ListenBook): string {
 
 function removeAsk(book: ListenBook): string {
   return book.stage === "text"
-    ? "Bản trong thư viện chuyển vào Thùng rác, khôi phục được từ đó. File gốc của bạn không bị đụng - thêm lại nó là có sách lại."
-    : "Bản đã nhập trên máy này chuyển vào Thùng rác, khôi phục được từ đó. File .abook gốc không bị đụng - mở lại nó là nhập lại.";
+    ? "Bản trong thư viện chuyển vào Thùng rác, khôi phục được từ đó. File gốc của bạn không bị đụng - thêm lại nó là có sách lại. Vừa xoá xong có 30 giây để bấm “Hoàn tác”."
+    : "Bản đã nhập trên máy này chuyển vào Thùng rác, khôi phục được từ đó. File .abook gốc không bị đụng - mở lại nó là nhập lại. Vừa xoá xong có 30 giây để bấm “Hoàn tác”.";
 }
 
 function RemoveImportedHost() {
