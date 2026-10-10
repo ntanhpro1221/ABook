@@ -80,7 +80,7 @@ export function usePlayListenBook() {
 
 /** Mở lại app: thanh phát có sẵn cuốn đang nghe dở (đang dừng) - bấm Space là nghe tiếp, khỏi đi tìm. */
 export function useRestoreLastListening() {
-  const { data: books } = useListenLibrary();
+  const { data: books } = useListenLibrary(false);
   const player = usePlayer();
   const source = useSource();
   const tried = useRef(false);
@@ -218,7 +218,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
 
 /** Tập kế tiếp của cùng bộ trong thư viện (nghe xong Tập 16 thì mời Tập 17; phần đầu của "Làm tiếp cuốn này" mời Phần 2). */
 export function useNextVolume(bookId: string | undefined, title: string | undefined): ListenBook | null {
-  const { data: books } = useListenLibrary();
+  const { data: books } = useListenLibrary(false);
   if (!bookId || !title || !books) return null;
   const places = seriesIndex(books);
   const here = places.get(bookId);

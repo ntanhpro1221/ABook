@@ -82,12 +82,13 @@ def review_items(project_root: Path) -> list[dict[str, Any]]:
     waiting = {entry["stable_id"]: entry for entry in line_requests(read_overrides(project_root))
                if isinstance(entry.get("spoken"), str)}
     spans: dict[int, dict[int, tuple[float, float]]] = {}
+    audio = store.AudioLocator(project_root)
     items = []
     for row in rows:
         similarity = float(row["asr_similarity"]) if row["asr_similarity"] is not None else None
         kind = _kind(str(row["status"]), str(row["warning_code"] or ""), similarity)
         chapter = names.get(int(row["chapter_id"]), {})
-        playable = store.segment_audio(project_root, row["wav_path"]) is not None
+        playable = store.segment_audio(project_root, row["wav_path"], audio) is not None
         # WAV riêng của câu đã dọn sau khi ghép chương: nghe đúng đoạn ấy trong file chương (mốc như chế độ đọc theo).
         span = None
         if not playable and kind != "failed":
