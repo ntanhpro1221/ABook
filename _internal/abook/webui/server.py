@@ -48,7 +48,7 @@ from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
 from .name_readings import name_readings
-from .voice_picker import engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices
+from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices
 from . import narrator_cards
 from .work_items import work_items
 from .cast import CastError, CastPlayers
@@ -4138,6 +4138,14 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
 
+    def post_studio_engine_cancel(self, _query: dict[str, list[str]], engine: str) -> None:
+        # "Huỷ" khi hộp "Đổi giọng" đang tải giọng: dừng giữa chừng, phần đã tải giữ để lần sau làm tiếp.
+        self.app._mutating()
+        try:
+            self._send_json(HTTPStatus.OK, cancel_engine_module(engine))
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+
     def post_studio_zerotts_remove(self, _query: dict[str, list[str]]) -> None:
         self.app._mutating()
         try:
@@ -4338,6 +4346,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/studio/setup/cancel"), Handler.post_studio_setup_cancel),
     ("GET", re.compile(r"/api/studio/(zerotts|supertonic)"), Handler.get_studio_engine),
     ("POST", re.compile(r"/api/studio/(zerotts|supertonic)"), Handler.post_studio_engine),
+    ("POST", re.compile(r"/api/studio/(zerotts|supertonic)/cancel"), Handler.post_studio_engine_cancel),
     ("POST", re.compile(r"/api/studio/zerotts/remove"), Handler.post_studio_zerotts_remove),
     ("DELETE", re.compile(r"/api/studio/setup"), Handler.delete_studio_setup),
     ("GET", re.compile(r"/api/library"), Handler.get_library),

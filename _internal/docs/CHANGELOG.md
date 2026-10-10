@@ -35,6 +35,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Việc cần anh và Studio
 
+- Hộp "Đổi giọng": đang tải giọng thêm (ZeroTTS, Supertonic) có nút "Huỷ" như ở Cài đặt; huỷ rồi hộp ghi "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng", phần đã tải giữ lại nên bấm "Tải giọng" là tải tiếp, không phải tải lại từ đầu.
 - Thẻ "Người kể của đoạn": đoạn đã phân tích xong thì lựa chọn chỉ áp khi làm lại sách, nên thẻ xuống cuối danh sách, và sau khi bấm nằm trong nhóm riêng "Đã ghi, áp khi làm lại sách" thay vì "chờ áp dụng". Nút nói rõ đổi thành gì ("Không phải X kể - đoạn kể ngôi thứ ba", "Giữ X là người kể").
 - Tab Kịch bản đánh dấu thêm câu máy chỉ chắc vài chục phần trăm ai nói và câu có cách xưng hô lệch - đúng những câu hộp "Việc cần anh" hỏi. "Xác nhận cả chương đúng" có Hoàn tác (nút trên thông báo và Ctrl+Z).
 - Đổi sang giọng khác giới: hộp "Đổi giọng" hỏi "đổi cả giới?" ngay trong hộp, rồi ghi giới theo; dòng chờ áp dụng ở tab Nhân vật hiện giới mới.

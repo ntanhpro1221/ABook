@@ -162,6 +162,7 @@ def status() -> dict[str, Any]:
             "state": state, "done": _core.state["done"] if state == "downloading" else 0,
             "total": _core.state["total"] if state == "downloading" else 0, "error": _core.state["error"],
             "bytes": sum(part.size for part in lacking),
+            "cancelled": bool(_core.state["cancelled"]), "cancellable": state == "downloading",
         }
 
 
@@ -171,12 +172,12 @@ def _install(part: Component, progress: Callable[[int], None]) -> None:
     target = _dir(part.id)
     assert folder is not None and target is not None
     if part.id != "code":
-        voice_module.download_files(part, target, progress)  # file model tải thẳng vào chỗ: chỉ thấy file đủ
+        voice_module.download_files(part, target, progress, _core.cancelled)  # file model tải thẳng vào chỗ: chỉ thấy file đủ
         return
     wheel = folder / voice_module.DOWNLOADS / f"{CODE.name}.whl"
     from .studio_setup import download
 
-    download(CODE, wheel, lambda have, _total: progress(have), lambda: False)
+    download(CODE, wheel, lambda have, _total: progress(have), _core.cancelled)
     staging = target.with_name(target.name + ".part")
     shutil.rmtree(staging, ignore_errors=True)
     staging.mkdir(parents=True)
@@ -201,6 +202,11 @@ def start() -> None:
 
 def join(timeout: float | None = None) -> None:
     _core.join(timeout)
+
+
+def cancel() -> None:
+    """Người dùng bấm Huỷ khi đang tải: dừng giữa chừng, phần đã tải (`.part`) giữ lại để lần sau làm tiếp."""
+    _core.cancel()
 
 
 def remove() -> None:

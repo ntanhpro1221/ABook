@@ -1,4 +1,4 @@
-import { formatSize, modulePercent } from "./musicLocal";
+import { CANCELLED_NOTE, formatSize, modulePercent } from "./musicLocal";
 
 // Giọng trong "Đổi giọng" (webui/voice_picker.py) đến từ nhiều máy đọc: VieNeu (mọi giọng phân vai) và máy khác người nghe chọn tay
 // (ZeroTTS - mô-đun tải thêm, webui/zerotts_module.py). Phần tính toán thuần của hộp ở đây để thử được không cần giao diện.
@@ -21,6 +21,10 @@ export interface EngineModuleStatus {
   total: number;
   bytes: number;
   error: string;
+  /** Lần tải vừa rồi bị người nghe huỷ (phần đã tải giữ lại, bấm tải thì làm tiếp). */
+  cancelled?: boolean;
+  /** Đang tải và huỷ được: hộp hiện nút "Huỷ". */
+  cancellable?: boolean;
 }
 
 export interface EngineGroup<V extends EngineVoice> {
@@ -66,7 +70,8 @@ export function moduleNote(status: EngineModuleStatus | undefined): string | nul
   if (!status || status.state === "ready") return null;
   if (status.state === "downloading") return `Đang tải giọng (${formatSize(status.total)}) ${modulePercent(status)}%`;
   if (status.state === "error") return status.error || "Chưa tải được giọng - thử lại.";
-  if (status.state === "outdated") return `Có bản giọng mới (${formatSize(status.bytes)}) - tải để dùng tiếp.`;
   if (status.state === "unsupported") return "Máy này chưa dùng được những giọng này.";
-  return `Máy đọc khác: cần tải thêm ${formatSize(status.bytes)}, một lần.`;
+  const cancelled = status.cancelled ? `${CANCELLED_NOTE} ` : "";
+  if (status.state === "outdated") return `${cancelled}Có bản giọng mới (${formatSize(status.bytes)}) - tải để dùng tiếp.`;
+  return `${cancelled}Máy đọc khác: cần tải thêm ${formatSize(status.bytes)}, một lần.`;
 }
