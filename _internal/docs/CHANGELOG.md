@@ -18,6 +18,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Trình duyệt ghép xong vào thư viện (chỉ vào Studio khi thiết bị có quyền điều khiển sản xuất). Trang ghép ghi tên máy.
 - Một từ "Thôi ghép" ở mọi nơi; hộp Thôi ghép trong Cài đặt gọi "thiết bị" cho cả máy tính, điện thoại lẫn trình duyệt. Điện thoại hỏi trước khi thôi ghép một máy đang nghe thư viện của nó.
 - Tên sách lấy từ tên file bỏ dấu gạch dưới và chuỗi "--" (Tam_Quoc_Dien_Nghia thành Tam Quoc Dien Nghia; máy tính và điện thoại như nhau). File TXT không có chữ nói rõ tên file và cách thử (mở bằng Notepad, lưu UTF-8).
+- Điện thoại nói cùng lời với máy tính khi ghép (cả điện thoại): nhập sai mã vào điện thoại cũng đếm lùi số lần thử, ghép bằng địa chỉ của chính điện thoại bị từ chối, và lỗi chứng chỉ máy kia đổi bảo "Thôi ghép rồi ghép lại".
 - Chip nhạc nền "Máy chọn: …" hiện đủ tên tâm trạng thay vì cắt giữa chữ.
 
 ## [0.4.43] - 2026-10-10
