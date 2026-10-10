@@ -4337,6 +4337,17 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 20:2x - Lỗi 1: lượt cuối DRIFT-Q06 (không khí đoạn từ học sinh q06) cũng THUA - DỪNG lỗi 1
+
+Cùng luật DRIFT, nhưng valence mảnh lấy từ học sinh cảnh q06 (đường app thật). Ngưỡng chọn máy móc trên mẫu khám phá (θ nhỏ nhất
+có hạ ≤ 1,5 %: 0,65); đo trên 571 chương mới (Corpus `PLAN_drift.md`, ghi trước 181180b, kết quả faf5653).
+
+- Ca 306 KHÔNG bị bắt: q06 chấm đoạn cáo phó V +0,13. Đúng 7/40 = 17,5 % (ngưỡng 80 %). Hạ 1,58 %; mốc chỉ đổi `steps` ở 36 chương
+  có mảnh hạ (hai tiêu chí này qua).
+- Ở Lucien q06 thiên dương (trò chuyện thường được V +0,5), nên bài êm / u tối trên trò chuyện bị coi là "lệch". Hai lượt (nhãn câu
+  11/40, q06 7/40) cho thấy độ lệch valence bài-mảnh không phải tín hiệu "bài trái không khí". Lỗi 1 dừng (Lead); không mở lại nếu
+  không có tín hiệu mới (vd giám khảo nghe bản trộn).
+
 ### 10-10 20:xx - Lỗi 1 MUSIC-AUDIT (bài chạy tiếp qua mảnh lệch không khí): luật DRIFT theo valence nhãn THUA
 
 Lỗi: ở 306, bài hài "Batty McFaddin" chạy tiếp 132-250 s qua cáo phó. Luật ghi trước (Corpus `PLAN_drift.md`, bd4d2dc; kết quả
