@@ -53,19 +53,21 @@ object Paragraphs {
     /** Số dòng có chữ đầu chương mà luật dòng ghi công xét (text_processing.CREDIT_WINDOW_LINES). */
     private const val CREDIT_WINDOW = 6
 
+    /** Số dòng có chữ CUỐI chương mà gợi ý ủng hộ / nguồn ở cuối chương xét (readaloud/paragraphs.py CREDIT_TAIL_WINDOW, BookImport.tailCreditSuggestions). */
+    const val CREDIT_TAIL_WINDOW = 6
+
     /**
-     * Chữ của chương trừ các dòng người nghe đã chọn bỏ khỏi phần đọc (lớp sửa `skip` - gợi ý dòng ghi công của bộ nhập sách) - bản Kotlin
-     * của `withoutLines` (textScript.ts): chỉ xét 6 dòng có chữ đầu chương. Chữ của sách không đổi; lõi đọc to và màn đọc cùng bỏ.
+     * Chữ của chương trừ các dòng người nghe đã chọn bỏ khỏi phần đọc (lớp sửa `skip` - gợi ý dòng ghi công, ủng hộ, nguồn của bộ nhập sách) - bản
+     * Kotlin của `withoutLines` (textScript.ts): chỉ xét 6 dòng có chữ đầu chương và 6 dòng có chữ cuối chương. Chữ của sách không đổi; lõi đọc to
+     * và màn đọc cùng bỏ.
      */
     fun withoutLines(text: String, skip: List<String>): String {
         if (skip.isEmpty()) return text
-        var seen = 0
-        return text.replace(NEWLINES, "\n").split("\n").filter { line ->
-            val shown = squeeze(withoutNoteMarkers(line)) // `skip` ghi từ chữ đã bỏ mã chú thích (BookImport.creditLines)
-            if (shown.isEmpty() || seen >= CREDIT_WINDOW) return@filter true
-            seen++
-            shown !in skip
-        }.joinToString("\n")
+        val lines = text.replace(NEWLINES, "\n").split("\n")
+        val shown = lines.map { squeeze(withoutNoteMarkers(it)) } // `skip` ghi từ chữ đã bỏ mã chú thích (BookImport.creditLines)
+        val filled = shown.indices.filter { shown[it].isNotEmpty() }
+        val window = (filled.take(CREDIT_WINDOW) + filled.takeLast(CREDIT_TAIL_WINDOW)).toSet()
+        return lines.filterIndexed { index, _ -> !(index in window && shown[index] in skip) }.joinToString("\n")
     }
 
     /** Dấu kết câu ở cuối dòng (`SENTENCE_END` của textScript.ts): dòng như vậy là trọn một đoạn, không phải dòng bị bẻ giữa câu. */

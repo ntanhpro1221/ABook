@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Thêm sách từ file (máy tính và điện thoại)
 
 - Sách EPUB và DOCX có chú thích: bước xem trước nói "Tìm thấy N chú thích" kèm ví dụ và đề xuất ba ô, mặc định không tích gì - "Không đọc số chú thích", "Đọc lời chú ở cuối chương" (cả lời chú ở chương Endnotes riêng, hay trong footnotes.xml của Word), "Bỏ lời chú"; lời chú nằm giữa chương được đặt xuống cuối chương cho khỏi cắt ngang câu, chữ không đổi; chương toàn lời chú hiện ra chưa tích với nhãn "Chú thích". ABook không tự bỏ hay sửa chữ của truyện.
+- Dòng xin ủng hộ ("Xin ủng hộ: Momo…, Agribank…"), "Đọc truyện mới nhất tại…", "Nguồn: …", dòng converter và "Hết chương" ở CUỐI chương cũng hiện thành gợi ý "Bỏ dòng này khỏi phần đọc" như dòng ghi công đầu chương (bước xem trước và trang sách), mặc định không bỏ gì; lời thoại hay câu truyện chỉ nhắc đến "ủng hộ", ngân hàng hay một địa chỉ web thì không bị gợi ý nhầm. Máy tính và điện thoại như nhau.
 
 ## [0.4.45] - 2026-10-10
 

@@ -40,8 +40,15 @@ class ParagraphsTest {
         val text = "Chương 2\n\nDịch:  Nhóm A\n\nMở đầu.\n\nDịch: Nhóm A"
         assertEquals(listOf("Chương 2", "Mở đầu."), Paragraphs.of(Paragraphs.withoutLines(text, listOf("Dịch: Nhóm A"))))
         assertEquals(text, Paragraphs.withoutLines(text, emptyList()))
-        val late = (1..6).joinToString("\n") { "Dòng $it." } + "\nDịch: Nhóm A"
-        assertEquals(7, Paragraphs.of(Paragraphs.withoutLines(late, listOf("Dịch: Nhóm A"))).size) // ngoài 6 dòng đầu: giữ
+        val middle = (1..6).joinToString("\n") { "Dòng $it." } + "\nDịch: Nhóm A\n" + (7..12).joinToString("\n") { "Dòng $it." }
+        assertEquals(13, Paragraphs.of(Paragraphs.withoutLines(middle, listOf("Dịch: Nhóm A"))).size) // giữa chương, ngoài 6 dòng đầu và 6 dòng cuối: giữ
+    }
+
+    @Test
+    fun skipsTheChosenLinesAmongTheLastSixOfTheChapterToo() {
+        val text = (1..8).joinToString("\n") { "Dòng $it." } + "\nXin ủng hộ: Momo 0912345678\nĐọc truyện mới nhất tại truyenthu.vn"
+        assertEquals(8, Paragraphs.of(Paragraphs.withoutLines(text, listOf("Xin ủng hộ: Momo 0912345678", "Đọc truyện mới nhất tại truyenthu.vn"))).size)
+        assertEquals(9, Paragraphs.of(Paragraphs.withoutLines(text, listOf("Xin ủng hộ: Momo 0912345678"))).size)
     }
 
     @Test

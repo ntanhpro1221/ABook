@@ -54,7 +54,7 @@ class BookImportTest {
     fun real_world_book_shapes_give_exactly_what_python_gives() {
         for (file in listOf("nav_pages.epub", "toc_broken.epub", "toc_missing.epub", "nfd_names.epub", "calibre_split.epub", "hoi.txt", "toc_txt.txt", "gutenberg.txt", "hidden.epub", "dropcap.epub", "glued.epub",
             "pt_cp1252.txt", "zh_gbk.txt", "bom_join.txt", "declared.epub", "title_h1.docx", "scenes.docx", "roman.docx",
-            "nested.epub", "index_split_003.txt",
+            "nested.epub", "index_split_003.txt", "tail_credits.txt", "tail_credits_epub.epub",
         )) {
             assertEquals(file, expectedText(file.substringBeforeLast('.')), dump(BookImport.importFile(File(dir, file))))
             if (file.endsWith(".txt")) { // TXT cả truyện: cả khi người nghe tích "Tách thành N chương"
@@ -202,6 +202,28 @@ class BookImportTest {
         val long = titles(BookImport.importFile(File(dir, "split.epub"))).filter { it.endsWith("…") }
         assertEquals(1, long.size)
         assertTrue(long[0], long[0].startsWith("Lời dẫn dài") && long[0].endsWith("trong…"))
+    }
+
+    /** Dòng xin ủng hộ / quảng cáo / nguồn ở cuối chương: từng dòng và từng đoạn cuối chương ra đúng gợi ý như Python (tests/import_fixtures.py TAIL_*). */
+    @Test
+    fun tail_credit_lines_are_suggested_exactly_like_python() {
+        val data = StrictJson.parse(expectedText("tail_credit_lines")) as org.json.JSONObject
+        val lines = data.getJSONArray("lines")
+        assertTrue(lines.length() >= 30)
+        for (index in 0 until lines.length()) {
+            val case = lines.getJSONObject(index)
+            val line = case.getString("line")
+            assertEquals(line, if (case.getBoolean("suggested")) listOf(line) else emptyList<String>(), BookImport.tailCreditSuggestions(line + "\n"))
+        }
+        val sources = data.getJSONArray("sources")
+        for (index in 0 until sources.length()) {
+            val case = sources.getJSONObject(index)
+            val source = case.getString("source")
+            val tail = case.getJSONArray("tail")
+            assertEquals(source, (0 until tail.length()).map { tail.getString(it) }, BookImport.tailCreditSuggestions(source))
+            val all = case.getJSONArray("all")
+            assertEquals(source, (0 until all.length()).map { all.getJSONArray(it).getString(0) to all.getJSONArray(it).getBoolean(1) }, BookImport.chapterCreditSuggestions(source))
+        }
     }
 
     @Test
