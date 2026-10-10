@@ -18,6 +18,7 @@
                                              chương "Mở đầu" (expected/titled.json, titled.split.json)
     fixtures/import/expected/keep_short.json epub3 và split đọc với keep_short=True: mục rất ngắn đứng đúng chỗ trong danh sách, short=true,
                                              `defaults` = các chương tích sẵn (không có mục ngắn), ghi chú "N mục rất ngắn chưa chọn"
+    fixtures/import/expected/clip_title.json  bảng ví dụ của `importers.clip_title` (tên chương cắt ở ranh giới từ + "…"); hai bên cùng khớp
     fixtures/import/expected/<tên>.json      kết quả mong đợi (ImportedBook.to_dict, hay {"error": ...})
     fixtures/import/pages/story.pages.json   lớp thô của PDF (pypdf VÀ pdf.js phải ra đúng các dòng này)
 
@@ -471,6 +472,20 @@ SOURCES = {
 }
 
 
+# Tên chương đặt từ dòng đầu (`importers.clip_title`, Kotlin BookImport.clipTitle): đủ ngắn, rơi giữa từ (lùi về dấu cách), từ cuối quá dài
+# (cắt cứng), không dấu cách, đúng sau một từ, dấu câu bị bỏ trước "…", ký tự ngoài mặt phẳng cơ bản (đếm theo ký tự, không theo đơn vị UTF-16).
+CLIP_TITLE_CASES = [
+    ("Chương một", 50),
+    ("Trời hôm ấy rất đẹp, cả làng đều ra đồng gặt lúa sớm hơn mọi năm và không ai nhớ nổi vì sao", 50),
+    ("a" * 60, 50),
+    ("Trời hôm ấy rất đẹp, cả làng đều ra đồng gặt lúa sớm hơn", 52),
+    ("Một hai ba bốn năm sáu bảy tám chín mười, mười một mười hai mười ba", 41),
+    ("Mở đầu " + "x" * 90, 80),
+    ("Chuyện 😀 của chúng ta bắt đầu từ một buổi chiều mưa rất lớn ở bến phà cũ kỹ", 30),
+    ("Một hai ba - bốn năm sáu bảy tám chín mười mười một", 15),
+]
+
+
 def dumps(value: Any) -> bytes:
     return (json.dumps(value, ensure_ascii=False, indent=1) + "\n").encode("utf-8")
 
@@ -508,6 +523,8 @@ def expected_files(root: Path) -> dict[str, bytes]:
         kept[name] = {"chapters": [{"title": chapter.title, "short": chapter.short, "text": chapter.text} for chapter in book.chapters],
                       "defaults": [number for number, _name in importers.default_picks(book)], "notes": book.notes}
     out["expected/keep_short.json"] = dumps(kept)
+    out["expected/clip_title.json"] = dumps([{"text": text, "limit": limit, "clipped": importers.clip_title(text, limit)}
+                                             for text, limit in CLIP_TITLE_CASES])
     pages, title, author = importers.pdf_pages(root / "story.pdf")
     out["pages/story.pages.json"] = dumps({"title": title, "author": author, "pages": pages})
     return out

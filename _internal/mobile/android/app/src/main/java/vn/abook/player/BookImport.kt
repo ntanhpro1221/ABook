@@ -59,6 +59,7 @@ object BookImport {
     private const val MIN_CHARS = 80
     private const val PREAMBLE = "Mở đầu"
     private const val MAX_HEADING = 120
+    private const val TITLE_FROM_LINE = 80
     private const val CREDIT_HEAD_LINES = 64
     private const val BROKEN = "không phải file %s thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
 
@@ -235,8 +236,18 @@ object BookImport {
 
     private fun cpLen(text: String) = text.codePointCount(0, text.length)
 
-    private fun cpTake(text: String, count: Int): String =
-        if (cpLen(text) <= count) text else text.substring(0, text.offsetByCodePoints(0, count))
+    /** `importers.clip_title`: tên hiển thị dài quá `limit` ký tự thì cắt ở ranh giới từ rồi thêm "…" (cùng luật: nhát cắt giữa từ thì
+     *  lùi về dấu cách gần nhất nếu từ cuối không chiếm quá nửa, còn không thì cắt cứng). CHỈ cho tên chương đặt từ dòng đầu. */
+    internal fun clipTitle(text: String, limit: Int): String {
+        if (cpLen(text) <= limit) return text
+        var cut = text.substring(0, text.offsetByCodePoints(0, limit))
+        val next = text.codePointAt(cut.length)
+        if (!(next <= 0xFFFF && isPySpace(next.toChar()))) {
+            val space = cut.lastIndexOf(' ')
+            if (space >= 0 && cpLen(cut.substring(0, space)) >= limit / 2) cut = cut.substring(0, space)
+        }
+        return cut.trimEnd { it in " .,;:!?-–—" } + "…"
+    }
 
     private fun casefold(text: String) = text.lowercase()
 
@@ -887,7 +898,7 @@ object BookImport {
                 }
                 if (lines.isEmpty()) continue
                 val isShort = lines.sumOf { cpLen(it) } < MIN_CHARS && listed.isEmpty() // bìa, trang bản quyền: `finish` bỏ, hay để người dùng tích
-                var title = listed.ifEmpty { heading.ifEmpty { cpTake(lines[0], 80) } }
+                var title = listed.ifEmpty { heading.ifEmpty { clipTitle(lines[0], TITLE_FROM_LINE) } }
                 val first = casefold(lines[0])
                 // Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡ" trong "Chương 2: Gặp gỡ"),
                 // hay lấy nó làm tên khi nó đầy đủ hơn tên mục lục - không để người nghe nghe tên chương hai lần.

@@ -41,7 +41,8 @@ PREAMBLE = "Mở đầu"  # chữ đứng trước tiêu đề chương đầu t
 MAX_HEADING = 120  # dòng dài hơn là một câu văn mở đầu bằng "Chương…", không phải tiêu đề
 SOFT_HYPHEN = "\u00ad"  # dấu nối mềm của máy dàn trang
 SIDECAR = "import.json"  # `extract` ghi cạnh các chương: tên sách, tác giả, ghi chú (đọc lại không phải mở lại file gốc)
-CREDIT_HEAD_LINES = 64  # số dòng đầu chương đưa cho `credit_lines` (nó chỉ xem 6 dòng có chữ đầu tiên)
+TITLE_FROM_LINE = 80  # tên chương lấy từ dòng đầu khi mục không có tiêu đề: dài hơn thì `clip_title` cắt ở ranh giới từ (Kotlin cùng số)
+CREDIT_HEAD_LINES = 64 # số dòng đầu chương đưa cho `credit_lines` (nó chỉ xem 6 dòng có chữ đầu tiên)
 
 NS = {
     "c": "urn:oasis:names:tc:opendocument:xmlns:container",
@@ -560,7 +561,7 @@ def _epub(path: Path) -> ImportedBook:
                 if not lines:
                     continue
                 is_short = sum(len(line) for line in lines) < MIN_CHARS and not listed  # bìa, trang bản quyền: `_finish` bỏ, hay để người dùng tích
-                title = listed or heading or lines[0][:80]
+                title = listed or heading or clip_title(lines[0], TITLE_FROM_LINE)
                 first = lines[0].casefold()
                 # Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡ" trong "Chương 2: Gặp gỡ"),
                 # hay lấy nó làm tên khi nó đầy đủ hơn tên mục lục - không để người nghe nghe tên chương hai lần.

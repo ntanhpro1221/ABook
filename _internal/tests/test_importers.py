@@ -55,7 +55,7 @@ def test_epub_follows_the_spine_names_chapters_from_the_nav_and_takes_the_cover(
 def test_epub_with_several_chapters_in_one_xhtml_splits_at_the_table_of_contents_fragments() -> None:
     book = importers.import_text(FIXTURES / "split.epub")
     assert titles(book) == ["Chương 1: Bến sông", "Chương 2: Chợ nổi", "Chương 3: Gặp gỡ",
-                            "Lời dẫn dài của người ghi chép, đứng trước phần đầu và không có mục nào trong mụ",
+                            "Lời dẫn dài của người ghi chép, đứng trước phần đầu và không có mục nào trong…",
                             "Phần một", "Phần hai", "Mục thứ nhất", "Mục thứ hai", "Một mục lẻ"]
     first, second, third = (chapter.text for chapter in book.chapters[:3])
     assert first.startswith("Buổi sáng ở bến sông") and first.endswith("ra chợ sớm."), "mục không mảnh lấy từ đầu file tới mảnh kế"
@@ -350,3 +350,11 @@ def test_a_chapter_named_from_its_first_line_is_cut_at_a_word_not_in_the_middle_
     # Nhát cắt rơi đúng sau một từ: không lùi thêm từ nào.
     exact = "Trời hôm ấy rất đẹp, cả làng đều ra đồng gặt lúa sớm"
     assert importers.clip_title(exact + " hơn", len(exact)) == exact + "…"
+
+
+def test_clip_title_agrees_with_the_shared_table_and_the_long_first_line_fixture_is_cut_at_a_word() -> None:
+    for case in expected("clip_title"):
+        assert importers.clip_title(case["text"], case["limit"]) == case["clipped"], case
+    long_first = [c.title for c in importers.import_text(FIXTURES / "split.epub").chapters if c.title.endswith("…")]
+    assert len(long_first) == 1 and len(long_first[0]) <= importers.TITLE_FROM_LINE + 1, "tên từ dòng đầu dài quá 80 ký tự: cắt ở ranh giới từ + …"
+    assert long_first[0].startswith("Lời dẫn dài") and long_first[0].endswith("trong…"), long_first  # không còn "…mụ" cắt ngang từ

@@ -85,7 +85,7 @@ class BookImportTest {
         assertEquals(
             listOf(
                 "Chương 1: Bến sông", "Chương 2: Chợ nổi", "Chương 3: Gặp gỡ",
-                "Lời dẫn dài của người ghi chép, đứng trước phần đầu và không có mục nào trong mụ",
+                "Lời dẫn dài của người ghi chép, đứng trước phần đầu và không có mục nào trong…",
                 "Phần một", "Phần hai", "Mục thứ nhất", "Mục thứ hai", "Một mục lẻ",
             ),
             titles(book),
@@ -146,6 +146,19 @@ class BookImportTest {
         }
         assertEquals("Tên truyện", BookImport.titleOnlyPreamble(listOf("Tên truyện", "", "Chương 1"), 2))
         assertEquals("", BookImport.titleOnlyPreamble(listOf("Tên truyện", "Giới thiệu ngắn", "Chương 1"), 2))
+    }
+
+    @Test
+    fun a_chapter_named_from_its_first_line_is_cut_at_a_word_exactly_like_python() {
+        val cases = StrictJson.parse(expectedText("clip_title")) as JSONArray
+        assertTrue(cases.length() >= 8)
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            assertEquals(case.toString(), case.getString("clipped"), BookImport.clipTitle(case.getString("text"), case.getInt("limit")))
+        }
+        val long = titles(BookImport.importFile(File(dir, "split.epub"))).filter { it.endsWith("…") }
+        assertEquals(1, long.size)
+        assertTrue(long[0], long[0].startsWith("Lời dẫn dài") && long[0].endsWith("trong…"))
     }
 
     @Test
