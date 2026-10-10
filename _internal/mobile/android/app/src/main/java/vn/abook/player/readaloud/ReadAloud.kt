@@ -227,8 +227,12 @@ object ReadAloud {
     /** Nạp một cuốn - bằng bất cứ đường nào (giao diện, widget, xe hơi, máy tính điều khiển): đọc bằng giọng đã nhớ của cuốn ấy. Chỉ đặt giọng;
      *  [begin] / [stop] ngay sau đó dựng lại hàng đợi. */
     fun useVoiceOf(bookId: String) {
+        voiceBook = bookId
         voiceId = usableOrDefault(choices?.voiceFor(bookId).orEmpty())
     }
+
+    /** Cuốn mà [voiceId] đang đọc (lần [useVoiceOf] gần nhất). */
+    private var voiceBook = ""
 
     /** Giọng này còn trên máy không? Giọng tải thêm (VieNeu, giọng dùng khoá) chỉ khi còn trong danh sách của máy; Edge và giọng của máy luôn có. */
     internal var stillOffered: (String) -> Boolean = { id ->
@@ -242,13 +246,22 @@ object ReadAloud {
         }
     }
 
-    /** Giọng đã nhớ mà giọng ấy đã gỡ khỏi máy (gỡ VieNeu, xoá khoá) thì đọc bằng đúng giọng giao diện sẽ tự quay về (resolveVoice: giọng mặc định
-     *  của danh sách). Lựa chọn đã nhớ của cuốn (`choices`) giữ nguyên: tải lại giọng thì cuốn tự về giọng cũ ở lần nạp kế. */
-    private fun usableOrDefault(id: String): String = id.takeIf { it.isNotBlank() && stillOffered(it) } ?: DEFAULT_VOICE
+    /** Giọng VieNeu đầu danh sách nếu máy đã tải mô-đun, không thì null. Chữ của người nghe chưa chọn giọng không nên rời máy khi máy đã có giọng chạy trên máy. */
+    internal var localVoice: () -> String? = { context?.let { ctx -> VieneuVoices.voices(ctx).firstOrNull()?.id } }
 
-    /** Một giọng tải thêm vừa mất (gỡ mô-đun VieNeu, xoá khoá): đang đọc bằng nó thì đổi ngay sang giọng mặc định như [setVoice]. Gọi ở luồng chính. */
+    /** Giọng khi người nghe CHƯA chọn: giọng VieNeu đầu danh sách nếu máy có, không thì giọng mặc định - đúng luật `resolveVoice` của giao diện
+     *  (listen/readAloudVoice.ts), nên tên giọng giao diện hiện và giọng lõi đọc là một. */
+    private fun unchosenVoice(): String = localVoice() ?: DEFAULT_VOICE
+
+    /** Chưa chọn giọng: [unchosenVoice]. Giọng đã nhớ mà giọng ấy đã gỡ khỏi máy (gỡ VieNeu, xoá khoá) thì đọc bằng đúng giọng giao diện sẽ tự quay về
+     *  (resolveVoice: giọng mặc định của danh sách). Lựa chọn đã nhớ của cuốn (`choices`) giữ nguyên: tải lại giọng thì cuốn tự về giọng cũ ở lần nạp kế. */
+    private fun usableOrDefault(id: String): String = if (id.isBlank()) unchosenVoice() else id.takeIf { stillOffered(it) } ?: DEFAULT_VOICE
+
+    /** Một giọng tải thêm vừa mất (gỡ mô-đun VieNeu, xoá khoá): đang đọc bằng nó thì đổi ngay sang giọng mặc định như [setVoice] (cuốn chưa chọn giọng
+     *  thì giọng của người chưa chọn: còn giọng VieNeu khác thì dùng nó). Gọi ở luồng chính. */
     fun voicesChanged() {
-        if (!stillOffered(voiceId)) setVoice(DEFAULT_VOICE)
+        if (stillOffered(voiceId)) return
+        setVoice(if (choices?.voiceFor(voiceBook).isNullOrBlank()) "" else DEFAULT_VOICE)
     }
 
     /** Giao diện gửi danh sách nhà cung cấp đã được đồng ý (lúc mở app, mỗi lần người nghe đồng ý): đang dừng nạp ở ranh giới chương vì chưa

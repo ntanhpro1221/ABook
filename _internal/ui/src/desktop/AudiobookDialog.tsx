@@ -39,7 +39,7 @@ export function FfmpegNeeded({ status, onDownload, onStop }: { status: FfmpegSta
   return (
     <div className="rounded-lg border border-line bg-panel-2 p-3 text-sm" role="group" aria-label="Công cụ ghép âm thanh">
       <p className="font-medium">Máy chưa có công cụ ghép âm thanh</p>
-      <p className="mt-0.5 text-fg-2">Cần nó để ghép lời đọc thành file MP3 / M4B. Tải một lần, dùng mãi (khoảng {formatSize(status.bytes)}).</p>
+      <p className="mt-0.5 text-fg-2">Cần nó để ghép lời đọc thành file MP3 / M4B. Tải một lần, dùng mãi (khoảng {formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
       {status.downloading ? (
         <div className="mt-2 flex items-center gap-3">
           <Progress value={ffmpegPercent(status) / 100} size="sm" running label="Đang tải công cụ ghép âm thanh" />
@@ -189,7 +189,7 @@ export function AudiobookDialogHost() {
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
       title={`Xuất sách nói “${book?.title ?? ""}”`}
-      description="Giọng đọc đọc cả cuốn rồi ghép thành file âm thanh, để nghe ở điện thoại, xe hơi hay trình phát khác."
+      description="Máy đọc cả cuốn bằng giọng bên dưới rồi ghép thành file âm thanh, để nghe ở điện thoại, xe hơi hay trình phát khác."
       width="max-w-xl"
     >
       <AudiobookForm

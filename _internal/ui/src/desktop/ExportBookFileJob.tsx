@@ -133,6 +133,10 @@ function ProgressNote({ text, fraction }: { text: string; fraction: number }) {
 
 const STOPPING = { title: "Đang dừng…", note: "Dừng sau đoạn đang đọc - phần đã làm được giữ." };
 
+/** Thông báo cùng mã thay nhau (đang làm -> đang dừng -> đã dừng / xong / lỗi): sonner giữ nút của lần trước nếu lần sau không nói rõ `action`,
+ *  nên mọi lần cập nhật không có nút phải ghi `action: undefined` (soát 10-10: "Đã dừng xuất sách nói" còn nút Huỷ cũ). */
+const NO_ACTION = { action: undefined } as const;
+
 export function ExportJobHost({ kind }: { kind: ExportKind }) {
   const { data: info } = useAppInfo();
   const client = useQueryClient();
@@ -151,7 +155,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
       if (view.kind === "none") return job.state === "running";
       if (view.kind === "loading") {
         if (stopping.current.has(id)) {
-          toast.loading(STOPPING.title, { id: toastId(kind, id), description: STOPPING.note, duration: Infinity });
+          toast.loading(STOPPING.title, { id: toastId(kind, id), description: STOPPING.note, duration: Infinity, ...NO_ACTION });
           return true;
         }
         toast.loading(view.title, {
@@ -163,7 +167,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
                 label: "Huỷ",
                 onClick: () => {
                   stopping.current.add(id);
-                  toast.loading(STOPPING.title, { id: toastId(kind, id), description: STOPPING.note, duration: Infinity });
+                  toast.loading(STOPPING.title, { id: toastId(kind, id), description: STOPPING.note, duration: Infinity, ...NO_ACTION });
                   void api(cancel(id), { method: "POST", body: {} }).catch(() => stopping.current.delete(id));
                 },
               }
@@ -173,7 +177,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
       }
       stopping.current.delete(id);
       if (view.kind === "info") {
-        toast.info(view.title, { id: toastId(kind, id), description: view.description, duration: 15000 });
+        toast.info(view.title, { id: toastId(kind, id), description: view.description, duration: 15000, ...NO_ACTION });
         return false;
       }
       if (view.kind === "success" && job.result) {
@@ -187,7 +191,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
           action: remote ? undefined : { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }) },
         });
       } else {
-        toast.error(view.title, { id: toastId(kind, id), description: view.description, duration: 15000 });
+        toast.error(view.title, { id: toastId(kind, id), description: view.description, duration: 15000, ...NO_ACTION });
       }
       return false;
     },
@@ -221,10 +225,10 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
     const listener = (event: Event) => {
       const { id, chapters, target, cover, extra } = (event as CustomEvent<StartDetail>).detail;
       stopping.current.delete(id);
-      toast.loading(copy.busy, { id: toastId(kind, id), duration: Infinity });
+      toast.loading(copy.busy, { id: toastId(kind, id), duration: Infinity, ...NO_ACTION });
       api<ExportJob>(jobUrl(kind, id), { method: "POST", body: { target, cover, ...extra } })
         .then(() => track(id, chapters))
-        .catch((error: Error) => toast.error(copy.failed, { id: toastId(kind, id), description: error.message }));
+        .catch((error: Error) => toast.error(copy.failed, { id: toastId(kind, id), description: error.message, ...NO_ACTION }));
     };
     window.addEventListener(startEvent(kind), listener);
     return () => window.removeEventListener(startEvent(kind), listener);

@@ -47,6 +47,8 @@ export interface ExportResult {
   file?: string;
   size?: number;
   parts?: unknown[];
+  /** Số file trong thư mục kết quả (xuất sách nói MP3: mỗi chương một file). */
+  files?: number;
   chapters?: number;
   chaptersTotal?: number;
 }
@@ -118,9 +120,12 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
   if (announce && (job.finishedAgo ?? 0) > RECENT_SECONDS) return { kind: "none" };
   if (job.state === "cancelled") return copy.stopped ? { kind: "info", title: copy.stopped, description: copy.stoppedNote ?? "" } : { kind: "none" };
   if (job.state === "done" && job.result) {
-    const details = [job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result)].filter(Boolean);
-    const file = job.result.file;
-    return { kind: "success", title: copy.done, description: [file ? fileName(file) : job.result.folder, ...details].join(" · "), ...(file && fileName(file) !== file ? { place: file } : {}) };
+    // Thông báo chỉ nói TÊN (file, hay thư mục khi mỗi phần một file + số file); đường đầy đủ ở gợi ý khi rê chuột và nút "Mở thư mục".
+    const { file, folder } = job.result;
+    const count = job.result.files ?? job.result.parts?.length;
+    const details = [!file && count ? `${count} file` : "", job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result)].filter(Boolean);
+    const place = file ?? folder;
+    return { kind: "success", title: copy.done, description: [fileName(place), ...details].join(" · "), ...(fileName(place) !== place ? { place } : {}) };
   }
   if (job.state === "error") return { kind: "error", title: copy.failed, description: job.error ?? "" };
   return { kind: "none" };
