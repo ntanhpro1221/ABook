@@ -9029,10 +9029,11 @@ class ProjectDB:
         """Nhân vật người nghe vừa tạo: dòng `characters` (giới + giọng ghim - lô sau phân vai ra đúng như vậy) và hồ sơ
         giọng. Trả đích đã đủ `character_id`, `voice_profile_id` để bước áp gán câu như với một người đã có giọng."""
         from .character_registry import listener_voice_choice
+        from .listener_overrides import narrated_voices
 
         chapter_id = int(target["line"]["chapter_id"])
         profile = listener_voice_choice(
-            conn, voices, str(created["canonical"]), gender=str(target["gender"]), age="unknown", chapters={chapter_id}
+            conn, narrated_voices(conn, voices), str(created["canonical"]), gender=str(target["gender"]), age="unknown", chapters={chapter_id}
         )
         voice_key = str(profile["voice_key"])
         character_id = created.get("existing_id")
@@ -9236,14 +9237,19 @@ class ProjectDB:
             if profile is None and not target["lock_gender"]:
                 return None
             character_id = int(target["character_id"])
-            voice_key = str(profile["voice_key"]) if profile is not None else target["current_voice_key"]
+            # Người kể (listener_overrides._narrator_target): giọng là preset của chính hồ sơ `narrator`, không ghim gì.
+            narrator = bool(target.get("narrator"))
+            if profile is None:
+                voice_key = target["current_voice_key"]
+            else:
+                voice_key = str(profile["preset_name"] if narrator else profile["voice_key"])
             if target["lock_gender"]:
                 conn.execute(
                     "UPDATE characters SET gender=?, locked=1, updated_at=? WHERE id=?",
                     (target["gender"], now, character_id),
                 )
             # Giọng chỉ ghim khi thật sự đổi; chỉ ghim giới thì giọng đang có đã đúng giới, không câu nào phải thu lại.
-            if profile is not None:
+            if profile is not None and not narrator:
                 conn.execute(
                     "UPDATE characters SET locked_voice_key=?, updated_at=? WHERE id=?",
                     (voice_key, now, character_id),
@@ -9251,25 +9257,6 @@ class ProjectDB:
             reset: list[int] = []
             chapters: set[int] = set()
             if profile is not None:
-                existing = conn.execute("SELECT id FROM voice_profiles WHERE voice_key=?", (voice_key,)).fetchone()
-                if existing is not None:
-                    profile_id = int(existing["id"])
-                else:
-                    profile_id = int(conn.execute(
-                        """
-                        INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,pitch_semitones,
-                            formant_ratio,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)
-                        """,
-                        (
-                            voice_key, profile["engine"], profile["preset_name"], profile["description"],
-                            int(profile["seed"]), int(profile["pitch_semitones"]), float(profile["formant_ratio"]),
-                            profile["status"], now, now,
-                        ),
-                    ).lastrowid)
-                rows = conn.execute(
-                    "SELECT id, chapter_id, status, voice_profile_id FROM segments WHERE canonical_character_id=?",
-                    (character_id,),
-                ).fetchall()
                 done = {
                     SegmentStatus.SIGNAL_PASSED.value,
                     SegmentStatus.ASR_PASSED.value,
@@ -9278,11 +9265,40 @@ class ProjectDB:
                     SegmentStatus.FAILED.value,
                 }
                 reason = f"Người nghe đổi giọng {target['canonical_name']}: thu lại bằng giọng mới"
+                if narrator:
+                    from .listener_overrides import narrator_voiced
+
+                    # Khoá hồ sơ giữ nguyên: câu kể, nội tâm không rõ ai nghĩ (tra hồ sơ bằng khoá) đọc giọng mới cùng lúc.
+                    profile_id = int(profile["id"])
+                    conn.execute("UPDATE voice_profiles SET preset_name=?, updated_at=? WHERE id=?",
+                                 (voice_key, now, profile_id))
+                    rows = [row for row in conn.execute(
+                        "SELECT id, chapter_id, status, kind, speaker, voice_profile_id FROM segments ORDER BY id"
+                    ) if narrator_voiced(row, profile_id)]
+                else:
+                    existing = conn.execute("SELECT id FROM voice_profiles WHERE voice_key=?", (voice_key,)).fetchone()
+                    if existing is not None:
+                        profile_id = int(existing["id"])
+                    else:
+                        profile_id = int(conn.execute(
+                            """
+                            INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,pitch_semitones,
+                                formant_ratio,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)
+                            """,
+                            (
+                                voice_key, profile["engine"], profile["preset_name"], profile["description"],
+                                int(profile["seed"]), int(profile["pitch_semitones"]), float(profile["formant_ratio"]),
+                                profile["status"], now, now,
+                            ),
+                        ).lastrowid)
+                    rows = [row for row in conn.execute(
+                        "SELECT id, chapter_id, status, voice_profile_id FROM segments WHERE canonical_character_id=?",
+                        (character_id,),
+                    ).fetchall() if row["voice_profile_id"] != profile_id]
                 for row in rows:
-                    if row["voice_profile_id"] == profile_id:
-                        continue
-                    conn.execute("UPDATE segments SET voice_profile_id=?, updated_at=? WHERE id=?",
-                                 (profile_id, now, int(row["id"])))
+                    if not narrator:
+                        conn.execute("UPDATE segments SET voice_profile_id=?, updated_at=? WHERE id=?",
+                                     (profile_id, now, int(row["id"])))
                     if str(row["status"]) in done:
                         self._reset_segment_pending_conn(conn, int(row["id"]), reason, now)
                         reset.append(int(row["id"]))

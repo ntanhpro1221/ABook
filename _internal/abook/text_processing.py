@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .io_utils import decode_text_bytes, natural_key, sha256_bytes, sha256_file, sha256_text, slugify
+from .readaloud.symbols import unit_slash
 
 
 QUOTE_PATTERN = re.compile(r"([“\"][^”\"]{1,1600}[”\"])", re.DOTALL)
@@ -70,6 +71,47 @@ CREDIT_LINE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 CREDIT_WINDOW_LINES = 6
+CREDIT_TAIL_WINDOW_LINES = 6  # số dòng có chữ CUỐI chương mà luật dòng cuối xét (Kotlin, TS cùng số)
+CREDIT_TAIL_MAX = 120  # dòng cuối chương dài hơn thế là chữ truyện, không phải dòng xin ủng hộ / quảng cáo
+# Dòng xin ủng hộ / quảng cáo / nguồn ở CUỐI chương (BUG11 của a22). Luật chặt, thà bỏ sót hơn gợi ý nhầm: dòng NGẮN, không dấu ngoặc kép / dấu thoại,
+# và một trong: (A) mở bằng "ủng hộ / donate" kèm tên ngân hàng, ví hay số dài; (B) mở bằng tên ngân hàng / ví kèm số dài; (C) "đọc truyện … tại <tên miền>";
+# (D) "nguồn: <tên miền>"; (E) URL / tên miền đứng một mình; (F) "hết chương"; (G) ghi công người dịch / converter (`CREDIT_LINE_PATTERN`). Kotlin cùng chuỗi
+# (BookImport.TAIL_*): sửa một bên thì sửa cả hai, bộ ví dụ tests/fixtures/import/tail_*. Sách nhập (importers.tail_credit_suggestions) và
+# Studio (`tail_credit_lines` / `drop_credit_lines`) dùng chung luật này.
+_TAIL_DOMAIN = (r"(?:(?:https?://|www\.)[^\s]+|[a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*\.(?:com|net|org|vn|info|me|io|xyz|top|club|cc|co|tv|app|site|online|vip|pro|biz"
+                r"|ws|asia|to|us|fun|store|blog)(?![a-z0-9])[^\s]*)")
+_TAIL_BANKS = (r"(?:momo|zalo ?pay|agribank|vietcombank|vcb|mb ?bank|mbbank|mb|tpbank|techcombank|bidv|vpbank|vietinbank|sacombank|acb|paypal|ko-?fi|patreon|stk)")
+_TAIL_DIGITS = r"[0-9](?:[ .\-]?[0-9]){7,}"
+_TAIL_DECOR = r"*_~#>=\-–—\[\]()\s"
+_TAIL_QUOTES = re.compile("[\"“”„«»「」『』]")
+_TAIL_DIALOGUE = re.compile(r"[—–-]\s*[^—–\-\s*_~#>=]")  # gạch đầu dòng thoại: "— Xin ủng hộ…" là lời nhân vật (nhiều gạch liền nhau "---" thì không)
+_TAIL_EDGE = re.compile(rf"^[{_TAIL_DECOR}]+|[{_TAIL_DECOR}]+$")
+_TAIL_SUPPORT = re.compile(r"^(?:(?:xin|mong|hãy|các bạn|bạn|vui lòng|mọi người)\s+){0,2}(?:ủng hộ|ung ho|donate|donation)(?=[\s:：,\-–—]|$)", re.IGNORECASE)
+_TAIL_PAYMENT = re.compile(rf"(?:^|[^a-z0-9]){_TAIL_BANKS}(?![a-z0-9])|{_TAIL_DIGITS}", re.IGNORECASE)
+_TAIL_BANK_LED = re.compile(rf"^[^a-z0-9]{{0,3}}{_TAIL_BANKS}(?![a-z0-9])", re.IGNORECASE)
+_TAIL_DIGITS_RE = re.compile(_TAIL_DIGITS)
+_TAIL_RULES = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
+    rf"^(?:đọc|xem|đón đọc)\s+(?:truyện|chương|bản|full)(?:\s+[^\s.!?…:：]{{1,12}}){{0,5}}?\s+(?:tại|ở|trên)\s*[:：]?\s*{_TAIL_DOMAIN}(?:\s+[^\s.!?…]{{1,12}}){{0,3}}$",
+    rf"^(?:nguồn|source|via)(?:\s+(?:truyện|dịch|raw|gốc|ảnh))?\s*[:：]\s*(?:[^\s.!?…:：]{{1,15}}\s+){{0,2}}{_TAIL_DOMAIN}(?:\s+[^\s.!?…]{{1,15}}){{0,3}}$",
+    rf"^{_TAIL_DOMAIN}$",
+    r"^hết chương(?:\s+(?:[0-9]+|[ivxlc]+))?\s*[.!]?$",
+))
+
+
+def tail_credit_line(line: str) -> bool:
+    """Dòng (đã gọn) này có phải dòng xin ủng hộ / quảng cáo / nguồn / ghi công ở cuối chương không (luật ở trên)."""
+    if len(line) > CREDIT_TAIL_MAX or _TAIL_QUOTES.search(line) or _TAIL_DIALOGUE.match(line):
+        return False
+    if CREDIT_LINE_PATTERN.match(line):
+        return True
+    core = _TAIL_EDGE.sub("", line)
+    if _TAIL_SUPPORT.match(core):
+        return bool(_TAIL_PAYMENT.search(core))
+    if _TAIL_BANK_LED.match(core):
+        return bool(_TAIL_DIGITS_RE.search(core))
+    return any(rule.match(core) for rule in _TAIL_RULES)
+
+
 SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…;:])\s+")
 CLAUSE_BOUNDARY = re.compile(r"(?<=[.!?…;:,])\s+")
 SENTENCE_SPLIT_STRATEGY = "sentence_v1"
@@ -309,6 +351,12 @@ _SPOKEN_TRAILING_COMMA = re.compile(r",(\s*[.!?…:;])")
 # Letters on both sides only, so the book's one real fraction keeps its reading. Checked
 # across all 948 segments: 8 word/word, 1 digit/digit.
 _SPOKEN_WORD_SLASH = re.compile(r"(?<=[^\W\d_])\s*/\s*(?=[^\W\d_])", re.UNICODE)
+
+
+def _word_slash(match: re.Match[str]) -> str:
+    """Except between two units of measure: "km/h" is "ki lô mét trên giờ", not "km, h" - the same
+    rule Nghe ngay uses (readaloud.symbols.unit_slash), so both read it alike."""
+    return match.group() if unit_slash(match.string[:match.start()], match.string[match.end():]) else ", "
 # Separators sitting at either end of the whole text are removed before conversion rather
 # than trimmed away as commas afterwards. Same result, but stable: a fragment of converted
 # text contains no separators at all, so this can never fire a second time. ↓ and ↑ are not
@@ -395,7 +443,7 @@ def spoken_symbols_to_words(text: str) -> str:
     out = "".join(
         span if is_cue else _spoken_symbols_in_span(span) for span, is_cue in spans
     )
-    out = _SPOKEN_WORD_SLASH.sub(", ", out)
+    out = _SPOKEN_WORD_SLASH.sub(_word_slash, out)
     out = _SPOKEN_SPACE_BEFORE_PUNCT.sub(r"\1", out)
     out = _SPOKEN_COMMA_RUN.sub("", out)
     out = _SPOKEN_TRAILING_COMMA.sub(r"\1", out)
@@ -1219,16 +1267,38 @@ def _credit_line_indexes(lines: list[str]) -> set[int]:
     return found
 
 
+def _tail_credit_line_indexes(lines: list[str]) -> set[int]:
+    """Chỉ số các dòng xin ủng hộ / quảng cáo / nguồn ở cuối chương: chuỗi liền nhau tính từ dòng có chữ cuối cùng đi lên trong
+    CREDIT_TAIL_WINDOW_LINES dòng có chữ - một dòng truyện chen giữa thì dừng; dòng chỉ toàn gạch / sao ("***") thì bước qua."""
+    filled = [index for index, line in enumerate(lines) if line.strip()]
+    found: set[int] = set()
+    for index in reversed(filled[-CREDIT_TAIL_WINDOW_LINES:]):
+        line = lines[index].strip()
+        if not _TAIL_EDGE.sub("", line):
+            continue
+        if not tail_credit_line(line):
+            break
+        found.add(index)
+    return found
+
+
 def credit_lines(text: str) -> list[str]:
     """Đúng những dòng `drop_credit_lines` sẽ bỏ - trình tạo sách đếm và cho xem trước khi hỏi người dùng bỏ hay giữ."""
     lines = normalize_text(text).split("\n")
     return [lines[index].strip() for index in sorted(_credit_line_indexes(lines))]
 
 
-def drop_credit_lines(text: str) -> str:
-    """Bỏ dòng ghi công ở đầu chương (`credit_lines`)."""
+def tail_credit_lines(text: str) -> list[str]:
+    """Đúng những dòng cuối chương `drop_credit_lines(..., tail=True)` sẽ bỏ, theo thứ tự trong chương - trình tạo sách liệt kê
+    ("cuối chương"), sách nhập gợi ý (importers.tail_credit_suggestions)."""
+    lines = normalize_text(text).split("\n")
+    return [lines[index].strip() for index in sorted(_tail_credit_line_indexes(lines))]
+
+
+def drop_credit_lines(text: str, *, head: bool = True, tail: bool = False) -> str:
+    """Bỏ dòng ghi công ở đầu chương (`credit_lines`) và / hay dòng xin ủng hộ / quảng cáo ở cuối chương (`tail_credit_lines`)."""
     lines = text.split("\n")
-    drop = _credit_line_indexes(lines)
+    drop = (_credit_line_indexes(lines) if head else set()) | (_tail_credit_line_indexes(lines) if tail else set())
     return re.sub(r"\n{3,}", "\n\n", "\n".join(line for index, line in enumerate(lines) if index not in drop)).strip()
 
 
@@ -1239,6 +1309,7 @@ def segment_chapter_text(
     *,
     warnings: list[str] | None = None,
     drop_credits: bool = False,
+    drop_tail_credits: bool = False,
 ) -> list[dict[str, Any]]:
     """Split a chapter into segments, recovering from a source that never closes a quote.
 
@@ -1265,10 +1336,12 @@ def segment_chapter_text(
     Only a book whose owner ACCEPTED that suggestion in the creation wizard asks for it
     (settings ``text.drop_credit_lines``); the text is never edited on the app's own initiative,
     and every other book - including all made before 29-09 - splits exactly as it always has.
+    ``drop_tail_credits=True`` does the same for support / advert / source lines at the END of
+    the chapter (settings ``text.drop_tail_credit_lines``, its own consent).
     """
     text = normalize_text(text)
-    if drop_credits:
-        text = drop_credit_lines(text)
+    if drop_credits or drop_tail_credits:
+        text = drop_credit_lines(text, head=drop_credits, tail=drop_tail_credits)
     paragraphs = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
 
     close_at_end_of: frozenset[int] = frozenset()
@@ -1346,6 +1419,7 @@ def load_and_segment_chapter(
     *,
     warnings: list[str] | None = None,
     drop_credits: bool = False,
+    drop_tail_credits: bool = False,
 ) -> list[dict[str, Any]]:
     source = Path(chapter["input_path"])
     raw = source.read_bytes()
@@ -1360,4 +1434,5 @@ def load_and_segment_chapter(
         max_chars=max_chars,
         warnings=warnings,
         drop_credits=drop_credits,
+        drop_tail_credits=drop_tail_credits,
     )

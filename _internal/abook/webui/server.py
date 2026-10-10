@@ -121,9 +121,11 @@ LINE_PROBLEMS = {
 VOICE_PROBLEMS = {
     listener_overrides.UNKNOWN_CHARACTER: "Không có nhân vật này trong sách.",
     listener_overrides.NOT_A_CHARACTER: "Giọng người kể chọn khi tạo sách, không đổi ở đây.",
+    listener_overrides.NARRATOR_VOICE_ONLY: "Người kể chỉ đổi được giọng, không có giới để đổi.",
     listener_overrides.NO_VOICE: "Nhân vật này chưa có giọng (chưa qua bước phân vai) - chưa đổi được.",
-    listener_overrides.UNKNOWN_PRESET: "Giọng này không dùng cho nhân vật được (không có, hay là giọng người kể).",
+    listener_overrides.UNKNOWN_PRESET: "Giọng này không dùng được ở đây (không có, hay đang là giọng người kể).",
     listener_overrides.BAD_GENDER: "Giới phải là nam hoặc nữ.",
+    listener_overrides.VOICE_TAKEN: "Giọng này đang là giọng của một nhân vật - người kể cần giọng riêng.",
 }
 # "Hoàn tác" tới sau khi dây chuyền đã đưa quyết định vào sách (ranh giới chương rơi đúng mấy giây ấy).
 WITHDRAW_APPLIED = {
@@ -1044,6 +1046,7 @@ class App:
             settings_overrides=self._analysis_overrides(str(body.get("analysisModel", "") or "")),
             first_person_chapters=first_person_chapters,
             drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
+            drop_tail_credit_lines=body["dropTailCreditLines"] if isinstance(body.get("dropTailCreditLines"), bool) else None,
         )
         if body.get("precastWait") is True:
             precast.set_wait(root, True)  # "Chờ tôi duyệt trước khi thu" chọn ngay lúc tạo (mỗi tập của "Tạo nhiều tập")

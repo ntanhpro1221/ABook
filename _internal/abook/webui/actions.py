@@ -247,6 +247,24 @@ def _credits_at_top(path: Path) -> list[str]:
     return credit_lines(decode_text_bytes(head[:cut] if cut > 0 else head))
 
 
+def _credits_at_end(path: Path) -> list[str]:
+    """Dòng xin ủng hộ / quảng cáo / nguồn ở cuối chương (text_processing.tail_credit_lines, luật chung với sách nhập) - trình
+    tạo sách ĐỀ XUẤT bỏ như dòng ghi công đầu chương. Chỉ đọc 8 KB cuối file."""
+    from ..io_utils import decode_text_bytes
+    from ..text_processing import tail_credit_lines
+
+    try:
+        with path.open("rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            size = handle.tell()
+            handle.seek(max(0, size - 8192))
+            tail = handle.read()
+    except OSError:
+        return []
+    cut = tail.find(b"\n") if size > 8192 else -1
+    return tail_credit_lines(decode_text_bytes(tail[cut + 1:] if cut >= 0 else tail))
+
+
 # Thư mục cha chung có tên chung chung (hay của chính app) không phải tên truyện.
 _GENERIC_FOLDERS = {
     "downloads", "download", "desktop", "documents", "tải xuống", "tai xuong", "tài liệu", "truyen", "truyện", "books",
@@ -353,6 +371,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             "firstLine": _first_line(path),
             # Dòng ghi công ở đầu chương: trình tạo sách ĐỀ XUẤT bỏ chúng khỏi phần đọc (đếm trên đúng các chương còn chọn).
             "credits": _credits_at_top(path),
+            "tailCredits": _credits_at_end(path),  # dòng ủng hộ / quảng cáo cuối chương: đề xuất như trên
             "words": words,
             # Số ký tự có chữ (không tính khoảng trắng): hiện cạnh tên chương để thấy chương nào rỗng / quá dài trước khi tạo.
             "chars": sum(not ch.isspace() for ch in text),
@@ -402,7 +421,7 @@ def first_person_hint(paths: list[str]) -> dict[str, Any]:
 def create_book(library_root: Path, paths: list[str], title: str, profile: str, narrator: str,
                 first_person: str = "", settings_overrides: dict[str, Any] | None = None,
                 first_person_chapters: dict[str, str] | None = None,
-                drop_credit_lines: bool | None = None) -> Path:
+                drop_credit_lines: bool | None = None, drop_tail_credit_lines: bool | None = None) -> Path:
     from ..character_registry import PRONOUNS, normalize_name
     from ..config import build_settings
     from ..project import create_or_open_project
@@ -437,6 +456,9 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
     if drop_credit_lines is not None:
         # Lựa chọn của người dùng ở trình tạo sách; không nói gì thì theo mặc định (config: bỏ).
         overrides["text"] = {**overrides.get("text", {}), "drop_credit_lines": bool(drop_credit_lines)}
+    if drop_tail_credit_lines is not None:
+        # Dòng ủng hộ / quảng cáo cuối chương: khoá riêng, nên sách tạo trước khi có đề xuất này vẫn tách như cũ.
+        overrides["text"] = {**overrides.get("text", {}), "drop_tail_credit_lines": bool(drop_tail_credit_lines)}
     settings = build_settings(profile, overrides or None)
     library_root.mkdir(parents=True, exist_ok=True)
     paths_created, _db, _settings = create_or_open_project(files, library_root, settings, title.strip() or None)
