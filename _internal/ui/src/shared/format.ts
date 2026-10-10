@@ -89,13 +89,16 @@ export function formatEta(seconds: number, fraction?: number): string {
   return `còn khoảng ${formatLength(seconds)}`;
 }
 
-/** Thời gian còn lại của một cuốn đang chạy, theo bước máy đang ước (phân tích / thu âm), hoặc null khi chưa có tốc độ để ước. */
+/** Thời gian còn lại của một cuốn đang chạy, theo bước máy đang ước (phân tích / thu âm), hoặc null khi chưa có tốc độ để ước.
+ *  Nói rõ là của bước nào: cạnh "N% tổng", "sắp xong" trần đọc thành cả cuốn sắp xong trong khi còn các bước sau (soát UX a18). */
 export function etaOf(book: {
   eta: { phase: string; seconds: number } | null;
   progress: { analysis: number; synthesis: number };
 }): string | null {
   if (!book.eta) return null;
-  return formatEta(book.eta.seconds, book.eta.phase === "synthesis" ? book.progress.synthesis : book.progress.analysis);
+  const synthesis = book.eta.phase === "synthesis";
+  const left = formatEta(book.eta.seconds, synthesis ? book.progress.synthesis : book.progress.analysis);
+  return `pha ${synthesis ? "thu âm" : "phân tích"} ${left}`;
 }
 
 export function formatRelative(epochSeconds: number | null | undefined): string {

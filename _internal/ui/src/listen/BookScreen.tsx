@@ -349,8 +349,10 @@ function reachedTitles(chapters: ListenChapter[], until: number | undefined): Se
 
 /** `reached`: tên các chương tới chỗ đang nghe (trang nghe) - người chỉ xuất hiện SAU đó bị ẩn tới khi bấm hiện, để dàn nhân
  *  vật không lộ nội dung ("Douglas · từ Chương 738" khi đang nghe Chương 725 - soát UX 29-09). Studio không truyền: hiện hết. */
-export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, reached, waiting }: {
+export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, reached, waiting, narratorNote }: {
   bookId: string;
+  /** Dưới hàng "Người kể chuyện": giọng kể không đổi được ở danh sách này - nơi đổi được (Studio) hoặc vì sao không. */
+  narratorNote?: ReactNode;
   onPickVoice?: (person: CastMember) => void;
   onMerge?: (person: CastMember) => void;
   onRename?: (person: CastMember) => void;
@@ -386,6 +388,7 @@ export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, rea
         </div>
         {cast.narrator.voice && <SampleButton id={`voice-${cast.narrator.voice}`} url={source.voiceUrl(cast.narrator.voice)} label={`Nghe giọng ${cast.narrator.voice}`} />}
       </div>
+      {narratorNote && <div className="mt-2 text-xs text-fg-2">{narratorNote}</div>}
       <h3 className="mb-3 mt-6 text-sm font-semibold">
         Nhân vật <span className="font-normal text-fg-2">· {cast.characters.length} người có lời thoại</span>
       </h3>

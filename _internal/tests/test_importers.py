@@ -338,3 +338,15 @@ def test_pdf_reading_uses_the_vendored_pypdf_not_an_installed_one() -> None:
     vendor = Path(importers.__file__).resolve().parent / "vendor" / "pypdf"
     assert Path(pypdf.__file__).resolve().parent == vendor
     assert (vendor / "LICENSE").is_file() and "SHA-256 c8b09a59" in (vendor / "README.md").read_text(encoding="utf-8")
+
+
+def test_a_chapter_named_from_its_first_line_is_cut_at_a_word_not_in_the_middle_of_one() -> None:
+    long_line = "Trời hôm ấy rất đẹp, cả làng đều ra đồng gặt lúa sớm hơn mọi năm và không ai nhớ nổi vì sao"
+    assert importers.clip_title("Chương một", 50) == "Chương một", "đủ ngắn thì giữ nguyên"
+    clipped = importers.clip_title(long_line, 50)
+    assert clipped.endswith("…") and len(clipped) <= 51
+    assert clipped == "Trời hôm ấy rất đẹp, cả làng đều ra đồng gặt lúa…", "rơi giữa từ 'sớm' thì lùi về từ trước"
+    assert importers.clip_title("a" * 60, 50) == "a" * 50 + "…", "không có dấu cách nào thì cắt tại chỗ"
+    # Nhát cắt rơi đúng sau một từ: không lùi thêm từ nào.
+    exact = "Trời hôm ấy rất đẹp, cả làng đều ra đồng gặt lúa sớm"
+    assert importers.clip_title(exact + " hơn", len(exact)) == exact + "…"

@@ -224,11 +224,33 @@ def _plain_error(raw: Any) -> str:
 class PreviewError(Exception):
     """Lý do không nghe thử được: `status` HTTP, `reason` mã cho giao diện (câu chữ của nó nằm ở giao diện), `message` cho người."""
 
-    def __init__(self, status: int, message: str, reason: str = "") -> None:
+    def __init__(self, status: int, message: str, reason: str = "", **extra: Any) -> None:
         super().__init__(message)
         self.status = int(status)
         self.message = message
         self.reason = reason
+        self.extra = extra  # gửi kèm lời báo lỗi (cuốn nào đang chặn, ở pha nào)
+
+
+def producing_error(blocker: Any) -> PreviewError:
+    """Máy đang làm một cuốn nên không nghe thử được (card chỉ nhường cho một việc). `blocker`: {title, phase, bookId} của cuốn
+    đang chạy (`App.busy_book`), hoặc chỉ `True`. Nói cuốn NÀO và pha nào, và lối ra thật: Tạm dừng KHÔNG nhả card (worker vẫn giữ
+    model), còn Dừng giữa pha phân tích là đổi quyển sách (AGENTS.md) - nên chỉ pha thu âm mới mời Dừng."""
+    info = blocker if isinstance(blocker, dict) else {}
+    title = str(info.get("title") or "")
+    phase = str(info.get("phase") or "")
+    extra = {"busyBook": title, "busyBookId": info.get("bookId"), "busyPhase": phase} if title else {}
+    if not title:
+        return PreviewError(HTTPStatus.CONFLICT, "Đang làm sách - nghe thử khi máy rảnh.", "producing")
+    if phase in ("analysis", "casting"):
+        message = (f"Máy đang phân tích cuốn “{title}” nên chưa nghe thử được - thử lại khi cuốn ấy làm xong. "
+                   "Đừng bấm Dừng lúc này: dừng giữa lúc phân tích là mất phần đã phân tích.")
+    elif phase == "synthesis":
+        message = (f"Máy đang thu âm cuốn “{title}” nên chưa nghe thử được - thử lại khi cuốn ấy xong, "
+                   "hoặc Dừng nó ở trang của nó (làm tiếp sau, không mất gì) rồi nghe thử.")
+    else:
+        message = f"Máy đang làm cuốn “{title}” nên chưa nghe thử được - thử lại khi cuốn ấy xong."
+    return PreviewError(HTTPStatus.CONFLICT, message, "producing", **extra)
 
 
 class _Died(Exception):
@@ -350,7 +372,7 @@ class ReadingPreviews:
     giọng giả, không đòi Studio hay card đồ hoạ. `busy()`: có cuốn nào đang chạy/khởi động không. `launcher`, `probe`: thay được
     để thử không cần python thứ hai hay card thật."""
 
-    def __init__(self, root: Path, *, studio: Callable[[], Any], fake: Callable[[], bool], busy: Callable[[], bool],
+    def __init__(self, root: Path, *, studio: Callable[[], Any], fake: Callable[[], bool], busy: Callable[[], Any],
                  launcher: Callable[[list[str], dict[str, str], Path], Any] | None = None,
                  probe: Callable[[], tuple[int | None, float | None]] = _free_resources,
                  idle_seconds: float = IDLE_SECONDS, load_timeout: float = LOAD_TIMEOUT,
@@ -438,8 +460,9 @@ class ReadingPreviews:
         target = self.root / book / f"{key}.wav"
         if self._reuse(target):
             return {**view, "url": url, "cached": True}
-        if self.busy():
-            raise PreviewError(HTTPStatus.CONFLICT, "Đang làm sách - nghe thử khi máy rảnh.", "producing")
+        blocker = self.busy()
+        if blocker:
+            raise producing_error(blocker)
         if not fake:
             free_vram, free_ram = self.probe()
             if (free_vram is not None and free_vram < MIN_FREE_VRAM_MIB) or (free_ram is not None and free_ram < MIN_FREE_RAM_GB):
@@ -448,8 +471,9 @@ class ReadingPreviews:
         try:
             if self._reuse(target):  # việc đứng trước vừa thu đúng câu này
                 return {**view, "url": url, "cached": True}
-            if self.busy():
-                raise PreviewError(HTTPStatus.CONFLICT, "Đang làm sách - nghe thử khi máy rảnh.", "producing")
+            blocker = self.busy()
+            if blocker:
+                raise producing_error(blocker)
             self._run(studio, fake, code_root, {"project": str(project), "segment": int(line["id"]), **job}, target, started)
             self._tidy(target.parent)
         finally:

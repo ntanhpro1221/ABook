@@ -14,6 +14,8 @@ import re
 import subprocess
 import threading
 import time
+import webbrowser
+from urllib.parse import urlsplit
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
@@ -495,6 +497,15 @@ def reveal(path: Path) -> None:
         subprocess.Popen(["explorer", "/select,", str(path)])
     else:
         os.startfile(str(path))  # noqa: S606 - mở thư mục của chính người dùng
+
+
+def open_url(url: str) -> None:
+    """Mở liên kết ngoài bằng trình duyệt mặc định của máy (cửa sổ app Tauri không tự mở `target=_blank`). Chỉ http/https
+    có tên máy: file:, javascript:, ms-settings:... bị từ chối - đây là cửa vào từ trang web, không được thành lối chạy lệnh."""
+    parts = urlsplit(url.strip())
+    if parts.scheme not in ("http", "https") or not parts.hostname or len(url) > 2000:
+        raise ValueError("Chỉ mở được liên kết http/https")
+    webbrowser.open(parts.geturl())
 
 
 def move_to_recycle_bin(path: Path) -> None:

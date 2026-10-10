@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { matchPhrase, shortcutHint, spokenEditLabel } from "@/studio/reviewText";
+import { matchPhrase, notRecordedYet, shortcutHint, spokenEditLabel } from "@/studio/reviewText";
 
 describe("chữ tab Cần nghe lại", () => {
   it("độ khớp nói khớp với cái gì", () => {
     expect(matchPhrase("15%")).toBe("máy nghe lại khớp 15% với chữ của câu");
+  });
+
+  it("cuốn chưa thu câu nào thì chưa có gì để kiểm, không phải đã xem hết", () => {
+    expect(notRecordedYet({ recorded: 0 })).toBe(true);
+    expect(notRecordedYet({ recorded: 12 })).toBe(false);
+    expect(notRecordedYet(undefined)).toBe(false);
   });
 
   it("nút sửa cách đọc nói tự nhiên và nhắc câu giống hệt", () => {

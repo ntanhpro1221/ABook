@@ -159,7 +159,7 @@ def test_what_only_makes_sense_on_the_computer_never_passes(studio) -> None:
     cookie = {"Cookie": _pair_browser(app)}
     identifier = book_id(project)
     for method, path in (("POST", "/api/dialog/folder"), ("POST", "/api/dialog/files"),
-                         ("POST", f"/api/books/{identifier}/reveal"), ("POST", "/api/reveal-export"),
+                         ("POST", f"/api/books/{identifier}/reveal"), ("POST", "/api/reveal-export"), ("POST", "/api/open-url"),
                          ("PUT", "/api/preferences"), ("POST", "/api/sync"), ("POST", "/api/sync/pairing"),
                          ("POST", "/api/sync/studio"), ("DELETE", "/api/sync/devices/abc"), ("GET", "/api/remote"),
                          ("POST", "/api/books/open"), ("POST", "/api/listen/open-book-file")):

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from abook.webui import host
+from abook.webui import actions, host
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -152,3 +152,20 @@ def test_the_host_process_exits_when_the_shell_goes_away(app_data: Path) -> None
     finally:
         if process.poll() is None:
             process.kill()
+
+
+def test_external_links_open_in_the_default_browser_only_for_http_and_https(app_data: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Cửa sổ Tauri nuốt target=_blank: trang nhờ máy chủ mở. Không phải lối chạy lệnh - file:, javascript:, ms-settings: bị từ chối.
+    opened: list[str] = []
+    monkeypatch.setattr(actions.webbrowser, "open", lambda url: opened.append(url) or True)
+    shell = Shell()
+    url = shell.start()
+    assert _request(url, "/api/open-url", {"url": "https://github.com/ntanhpro1221/ABook/"}) == {"ok": True}
+    assert opened == ["https://github.com/ntanhpro1221/ABook/"]
+    for bad in ("file:///C:/Windows/System32/calc.exe", "javascript:alert(1)", "ms-settings:network", "C:/x.exe","https://", ""):
+        with pytest.raises(urllib.error.HTTPError) as refused:
+            _request(url, "/api/open-url", {"url": bad})
+        assert refused.value.code == 400, bad
+    assert len(opened) == 1
+    shell.send({"quit": True})
+    shell.thread.join(10)

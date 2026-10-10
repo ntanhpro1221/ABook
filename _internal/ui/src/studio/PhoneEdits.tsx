@@ -6,6 +6,7 @@ import { formatWhen } from "@/shared/format";
 import { Button, IconButton } from "@/shared/ui";
 import { KIND_ICON } from "./ApplyChanges";
 import { api } from "./api";
+import { pollDelay, retryUnlessGone } from "./polling";
 
 // Hộp thư thay đổi từ điện thoại (docs/EDITING.md, P2b; webui/edits_inbox.py). Điện thoại đã ghép gửi phần sửa của cuốn về máy tính:
 // tên sách, bìa, tên nhân vật, tên chương, nhạc áp NGAY (không qua đây); còn những việc cần Studio - đổi giọng, cách đọc, người
@@ -50,7 +51,8 @@ function useInbox(bookId: string, enabled = true) {
     queryKey: ["edits-inbox", bookId],
     queryFn: () => api<EditsInbox>(`/api/books/${bookId}/edits-inbox`),
     enabled: enabled && Boolean(bookId),
-    refetchInterval: 15_000,
+    retry: retryUnlessGone,
+    refetchInterval: (query) => pollDelay(15_000, query.state),
   });
 }
 

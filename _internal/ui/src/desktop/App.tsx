@@ -20,6 +20,7 @@ import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { keptEditsTitle } from "@/shared/editsKept";
+import { setExternalOpener } from "@/shared/openExternal";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
 import { NewProjectScreen } from "@/studio/NewProjectScreen";
@@ -458,6 +459,10 @@ export function App() {
   // Hộp thoại đang mở: thông báo (nhất là cái có nút "Ở lại đây") lên đầu màn, khỏi đè nút chính của hộp ở góc dưới
   // (soát UX 02-10: "Thiết bị khác đã nghe tới chỗ khác" che "Xuất" và "Chọn").
   const modalOpen = useModalOpen();
+  // Cửa sổ app Windows không mở được liên kết ngoài tự thân: nhờ máy chủ mở bằng trình duyệt mặc định (chỉ ở app đóng gói có hộp thoại).
+  useEffect(() => {
+    setExternalOpener(info?.dialogs ? (url) => api("/api/open-url", { method: "POST", body: { url } }).then(() => undefined) : null);
+  }, [info?.dialogs]);
   // "Thêm sách từ file…" đọc file bằng đường dẫn trên máy này: thiết bị điều khiển từ xa (Studio từ xa) không có.
   const source = useMemo(() => (info?.remote ? httpSource : { ...httpSource, textImport: desktopTextImport(Boolean(info?.dialogs)) }), [info?.remote, info?.dialogs]);
   if (!info) return <div className="grid h-full place-items-center text-fg-3">Đang mở ABook…</div>;

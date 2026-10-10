@@ -216,6 +216,19 @@ def _nfc(text: str) -> str:
     return unicodedata.normalize("NFC", text)
 
 
+def clip_title(text: str, limit: int) -> str:
+    """Tên hiển thị dài quá `limit` ký tự thì cắt ở ranh giới từ rồi thêm "…" (cắt trơn để lại "…nư" giữa từ). CHỈ cho tên chương /
+    tên file đặt từ dòng đầu - chữ truyện không qua đây."""
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    if not text[limit].isspace():  # nhát cắt rơi giữa một từ: lùi về dấu cách gần nhất (nếu từ cuối không chiếm quá nửa)
+        space = cut.rfind(" ")
+        if space >= limit // 2:
+            cut = cut[:space]
+    return cut.rstrip(" .,;:!?-–—") + "…"
+
+
 def _words(text: str) -> str:
     """Gộp mọi khoảng trắng thành một dấu cách, Unicode NFC (PDF hay mang chữ tiếng Việt dạng rời; luật nhận tiêu đề cần dạng gộp)."""
     return _nfc(" ".join(text.split()))
@@ -869,7 +882,7 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
     width = max(4, len(str(len(book.chapters))))
     for index, chapter in enumerate(book.chapters, start=1):
         body = book.chapter_source(chapter)
-        label = _words(UNSAFE_NAME.sub(" ", chapter.title))[:50].strip(" .")
+        label = clip_title(_words(UNSAFE_NAME.sub(" ", chapter.title)), 50).strip(" .")
         (folder / f"{index:0{width}d}{' ' + label if label else ''}.txt").write_bytes(body.encode("utf-8"))
     cover = ""
     if book.cover_bytes:

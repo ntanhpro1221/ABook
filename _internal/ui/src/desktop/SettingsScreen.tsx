@@ -6,6 +6,7 @@ import { useMediaQuery } from "@/shared/media";
 import { Button, Dialog, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { cn } from "@/shared/cn";
+import { openExternal } from "@/shared/openExternal";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences, useVoices } from "@/studio/data";
 import { StudioSettings } from "@/studio/StudioSetup";
@@ -28,6 +29,8 @@ import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettin
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
+
+const SOURCE_URL = "https://github.com/ntanhpro1221/ABook/";
 
 // Mặc định cho sách MỚI (soát UX a5 01-10: mỗi lần tạo sách lại chọn giọng kể và chất lượng như lần trước). "Làm tiếp cuốn
 // này" vẫn theo phần trước.
@@ -589,10 +592,10 @@ export function SettingsScreen() {
             ABook {info?.version} - studio sách nói tiếng Việt chạy hoàn toàn trên máy này: phân tích truyện, phân vai, thu âm và
             kiểm tra từng câu.
           </p>
-          {/* Liên kết mở ở cửa sổ mới (target="_blank", như ghi công nhạc ở trình phát), không điều hướng chính cửa sổ app; Android: SOURCE_URL. */}
+          {/* Liên kết mở ở cửa sổ mới (target="_blank", như ghi công nhạc ở trình phát), không điều hướng chính cửa sổ app; cửa sổ app Windows nuốt target nên openExternal nhờ máy chủ mở; Android: SOURCE_URL. */}
           <p className="mt-2 select-text text-sm text-fg-2">
             Mã nguồn mở, giấy phép MIT:{" "}
-            <a href="https://github.com/ntanhpro1221/ABook/" target="_blank" rel="noopener noreferrer" className="font-medium text-accent-text underline underline-offset-2">
+            <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" onClick={(event) => openExternal(SOURCE_URL, event)} className="font-medium text-accent-text underline underline-offset-2">
               github.com/ntanhpro1221/ABook
             </a>{" "}
             - bản mới,

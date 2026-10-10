@@ -62,8 +62,9 @@ export function useTryReading({
         return;
       }
       const reason = error instanceof ApiError ? error.detail.reason : undefined;
-      const why = refusalText(reason, error.message);
-      setRefusal(why === error.message ? `Chưa nghe thử được - ${why}` : why);
+      const named = error instanceof ApiError && Boolean(error.detail.busyBook);
+      const why = refusalText(reason, error.message, named);
+      setRefusal(why === error.message && !named ? `Chưa nghe thử được - ${why}` : why);
     },
   });
   useEffect(() => setRefusal(""), [spoken]);

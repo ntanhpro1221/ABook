@@ -8,6 +8,7 @@ import { formatNumber } from "@/shared/format";
 import { Button, Dialog, EmptyState, Kbd, Segmented } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
+import { retryUnlessGone } from "./polling";
 import { useTryReading } from "./TryReading";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { keepRequests, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
@@ -137,6 +138,8 @@ export function useWork(bookId: string) {
     queryFn: () => api<WorkView>(`/api/books/${bookId}/work`),
     enabled: Boolean(bookId),
     staleTime: 60_000,
+    retry: retryUnlessGone,
+    retryOnMount: false, // sổ lỗi: mỗi chỗ gắn thêm một người quan sát không được kéo thêm một lượt hỏi
   });
 }
 
