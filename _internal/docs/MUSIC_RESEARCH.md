@@ -4337,6 +4337,23 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 khuya - Nhãn 9B đọc cả chương: xếp đúng thứ tự, sai độ lớn; nhánh V mảnh không GPU dừng
+
+Sau FRAG-V tôi thử thêm hai đường, chỉ trên vàng học, luật ghi trước ở Corpus ec7a966 và e80fe91.
+
+- **LABEL-K.** V = L + γ · (nhãn − TB chương), γ ∈ {1; 1,5; 2; 3}, kèm ngắt. Không ô nào đủ điều kiện: MAE V ≥ .347 trong khi gốc là
+  .318, và chính xác ngắt chủ yếu dưới 70 %.
+- **ISO-LABEL.** Hiệu chỉnh đẳng biến khớp ngoài truyện. MAE V mảnh .309 (gốc .265), buồn→vui 40,6, ngắt đúng 56 %. Không qua cổng.
+
+Nhãn 9B xếp hạng câu buồn trong chương gần bằng trần: AUC .689, trần .710, gốc .586. Nhưng khoảng cách V giữa các mảnh thì sai,
+mà phép ngắt cần đúng hiệu tuyệt đối. Cả bốn đường V mảnh không cần GPU đều thua:
+- agent đọc mảnh rời;
+- nhãn giãn thang;
+- nhãn hiệu chỉnh đẳng biến;
+- blend cũ.
+
+Cơ chế ngắt vẫn nằm trên nhánh dev. Bước kế là đo bộ 11 (đã ghi trước) và NT2A ranh giới.
+
 ### 10-10 23h - FRAG-V: đọc từng mảnh rời làm V tốt lên chắc chắn nhưng chỉ được 1/3 quãng; P0 V mảnh rời không đáng GPU
 
 **Hỏi.** Ngắt nối tiếp chỉ đủ bằng chứng khi V từng mảnh tốt hơn. Muốn biết trần của một LLM mạnh (agent Sonnet) chỉ đọc chữ của
