@@ -18,6 +18,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nhạc nền trên điện thoại như máy tính: bài trên 40 MB không tải mà chọn bài khác, bài tải hỏng thử lại thưa dần rồi thôi thay vì tải đi tải lại mãi.
 - Gộp người trên sách mở từ file có dấu "Chờ áp dụng: gộp vào …" như trong Studio; ý muốn chưa áp (gộp, đổi giọng) không theo file sách hay đồng bộ sang máy khác; "Thu lại" cả nhóm câu chạy cả trên điện thoại.
 - "km/h", "50km/h", "m/s", "kg/m2", "mg/ml" đọc là "ki lô mét trên giờ", "mét trên giây"… thay vì "ki lô mét, hát"; "và/hoặc", ngày "12/3" hay phân số "1/2" vẫn đọc như trước. Cả Studio lẫn Nghe ngay.
+- "Đọc từ này là…" trên sách mở từ file (máy tính và điện thoại) nói trước khi lưu từ ấy có trong bao nhiêu câu và bao nhiêu câu đã thu sẽ phải thu lại, ở những chương nào; trên máy tính còn báo khi ký hiệu trong từ khiến cách đọc không dùng được.
 
 ## [0.4.47] - 2026-10-11
 

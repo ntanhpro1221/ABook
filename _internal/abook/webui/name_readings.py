@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from collections.abc import Callable
 from contextlib import closing
 from pathlib import Path
 from typing import Any
@@ -92,46 +93,82 @@ def reading_reach(project_root: Path, surface: str) -> dict[str, Any]:
     người nghe đã sửa câu). Trước khi tra cách đọc, dây chuyền đổi ký hiệu máy không nói được thành quãng nghỉ
     (`spoken_symbols_to_words`: "Mở/đóng" thành "Mở, đóng"; "km/h" thì giữ), nên chữ nào bị chữ ấy xé đôi thì cách đọc không bao giờ khớp: `blocked`
     đếm các câu đó, để giao diện nói thật thay vì hứa thu lại."""
-    from ..text_processing import spoken_symbols_to_words
-
     surface = " ".join(str(surface).split())
     if not surface or not (Path(project_root) / store.DB_NAME).is_file():
-        return {"surface": surface, "lines": 0, "reached": 0, "recorded": 0, "blocked": 0, "cost": _rerecord_cost([]),
-                "chapters": [], "example": None}
-    pattern = re.compile(r"(?<!\w)" + re.escape(surface) + r"(?!\w)", re.IGNORECASE)
+        return _reach(surface, [], {}, lambda row: False, lambda row: {})
     with closing(store.connect(project_root)) as connection:
         columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
         names = store.chapter_names(connection, project_root)
         audio = store.AudioLocator(project_root)
         fields = "id, chapter_id, seq, text, speaker, wav_path" + (", listener_text" if "listener_text" in columns else "")
-        matched: list[Any] = []
-        reached: list[Any] = []
-        for row in connection.execute(f"SELECT {fields} FROM segments ORDER BY chapter_id, seq"):
-            said = str((row["listener_text"] if "listener_text" in columns else "") or row["text"] or "")
-            if not pattern.search(said):
+        rows = [(str((row["listener_text"] if "listener_text" in columns else "") or row["text"] or ""), row)
+                for row in connection.execute(f"SELECT {fields} FROM segments ORDER BY chapter_id, seq")]
+        return _reach(surface, rows, names, lambda row: _has_audio(row, audio),
+                      lambda row: _example(row, names, project_root=audio))
+
+
+def package_reading_reach(folder: Path, surface: str) -> dict[str, Any]:
+    """`reading_reach` của cuốn mở từ file `.abook` (không có xưởng - "Đọc từ này là…" ở trang đọc, máy tính và điện thoại): cùng
+    hình dạng, cùng luật khớp, đếm trên chữ đọc theo của gói (đã qua lớp sửa). Câu "đã thu" là câu có mốc thời gian trong một
+    chương có audio - chính những câu Studio sẽ thu lại khi nhận ý muốn. Bản Kotlin: LocalStudio.readingReach (không có
+    `spoken_symbols_to_words` nên không bao giờ báo `blocked`); hai bên đáp chung ca tests/fixtures/book_edits/contract/reading_reach.json."""
+    from . import packages
+
+    surface = " ".join(str(surface).split())
+    chapters = [chapter for chapter in packages.edited_manifest(folder).get("chapters") or []
+                if isinstance(chapter, dict) and isinstance(chapter.get("id"), int) and not isinstance(chapter.get("id"), bool)]
+    names = {chapter["id"]: {"full": str(chapter.get("fullTitle") or chapter.get("title") or "")} for chapter in chapters}
+    rows: list[tuple[str, dict[str, Any]]] = []
+    for chapter in chapters if surface else []:
+        script = packages.script(folder, chapter["id"])
+        heard = bool(chapter.get("available") and chapter.get("file"))
+        for seq, segment in enumerate((script.get("segments") if isinstance(script, dict) else None) or [], start=1):
+            if not isinstance(segment, dict) or not isinstance(segment.get("text"), str):
                 continue
-            matched.append(row)
-            if pattern.search(spoken_symbols_to_words(said)):
-                reached.append(row)
-        audible = [row for row in reached if _has_audio(row, audio)]
-        audible_ids = {int(row["id"]) for row in audible}
-        per_chapter: dict[int, list[int]] = {}
-        for row in reached:
-            counts = per_chapter.setdefault(int(row["chapter_id"]), [0, 0])
-            counts[0] += 1
-            counts[1] += int(int(row["id"]) in audible_ids)
-        first = (audible or reached or [None])[0]
-        return {
-            "surface": surface,
-            "lines": len(matched),
-            "reached": len(reached),
-            "recorded": len(audible),
-            "blocked": len(matched) - len(reached),
-            "cost": _rerecord_cost(audible),
-            "chapters": [
-                {"chapterId": chapter_id, "title": str(names.get(chapter_id, {}).get("full") or ""), "lines": counts[0],
-                 "recorded": counts[1]}
-                for chapter_id, counts in list(per_chapter.items())[:CHAPTERS_SHOWN]
-            ],
-            "example": _example(first, names, project_root=audio) if first is not None else None,
-        }
+            start = segment.get("start")
+            timed = heard and isinstance(start, (int, float)) and not isinstance(start, bool)
+            # Hàng như của dự án (`wav_path` khác rỗng = đã thu) để dùng chung cách tính giá và câu mẫu (work_items).
+            rows.append((segment["text"], {"id": segment.get("id") if isinstance(segment.get("id"), int) else seq,
+                                           "chapter_id": chapter["id"], "seq": seq, "text": segment["text"],
+                                           "speaker": str(segment.get("speaker") or ""), "wav_path": chapter["file"] if timed else ""}))
+    # Người nói trong chữ đọc theo đã là tên người nghe thấy - không đổi thêm.
+    return _reach(surface, rows, names, lambda row: bool(row["wav_path"]),
+                  lambda row: _example(row, names, label=lambda raw: raw))
+
+
+def _reach(surface: str, rows: list[tuple[str, Any]], names: dict[int, dict[str, Any]], recorded: Callable[[Any], bool],
+           example: Callable[[Any], dict[str, Any]]) -> dict[str, Any]:
+    """Phần đếm chung của `reading_reach` / `package_reading_reach`: `rows` = [(chữ máy sẽ đọc, hàng)] theo thứ tự chương, câu."""
+    from ..text_processing import spoken_symbols_to_words
+
+    pattern = re.compile(r"(?<!\w)" + re.escape(surface) + r"(?!\w)", re.IGNORECASE)
+    matched: list[Any] = []
+    reached: list[Any] = []
+    for said, row in rows if surface else []:
+        if not pattern.search(said):
+            continue
+        matched.append(row)
+        if pattern.search(spoken_symbols_to_words(said)):
+            reached.append(row)
+    audible = [row for row in reached if recorded(row)]
+    audible_ids = {id(row) for row in audible}
+    per_chapter: dict[int, list[int]] = {}
+    for row in reached:
+        counts = per_chapter.setdefault(int(row["chapter_id"]), [0, 0])
+        counts[0] += 1
+        counts[1] += int(id(row) in audible_ids)
+    first = (audible or reached or [None])[0]
+    return {
+        "surface": surface,
+        "lines": len(matched),
+        "reached": len(reached),
+        "recorded": len(audible),
+        "blocked": len(matched) - len(reached),
+        "cost": _rerecord_cost(audible),
+        "chapters": [
+            {"chapterId": chapter_id, "title": str(names.get(chapter_id, {}).get("full") or ""), "lines": counts[0],
+             "recorded": counts[1]}
+            for chapter_id, counts in list(per_chapter.items())[:CHAPTERS_SHOWN]
+        ],
+        "example": example(first) if first is not None else None,
+    }
