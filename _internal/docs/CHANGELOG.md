@@ -32,6 +32,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Bài nhạc hết khi cảnh chỉ còn dưới 20 giây thì để bài kết tự nhiên rồi lặng tới cảnh sau, không còn nối một bài mới chỉ vài giây rồi lại đổi.
 - Lời dẫn thoại bao gạch kiểu "– Lizz nói –" và câu thường mở bằng "Phần…", "Phía…" không còn bị coi là chỗ đổi cảnh, nên nhạc không đổi bài giữa đoạn hội thoại. Tiêu đề góc nhìn ghi tên ("—Nanato—"), "Phần 4:", "-o0o-" vẫn đổi cảnh như cũ.
+- Bài kết sớm trước khi đổi cảnh thì cảnh sau không mở lại đúng bài ấy; nếu không còn bài nào khác, bài mở lại sau quãng lặng chứ không lặp ngay từ đầu.
+- "Phần 1: Khởi đầu", "Phần II: Bóng tối", "Phần thứ hai" lại được nhận là tiêu đề phụ. "— Vâng —", "— Rầm —", "— Hết —" thì không.
 
 ## [0.4.43] - 2026-10-10
 

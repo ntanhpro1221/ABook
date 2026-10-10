@@ -224,9 +224,10 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
     head_tension = 0.0
     intact = True                # mảnh trước y như lần dựng trước (bài, vị trí trong bài) - xem `kept_siblings`
     stopped = -1                 # đầu cảnh mà bài đã kết sớm (TAIL_MIN_SECONDS): các mảnh còn lại của cảnh ấy lặng
+    ended = None                 # bài vừa kết sớm: cảnh kế tránh nó như tránh bài đang chơi (không mở lại đúng bài vừa hết)
     for index, scene in enumerate(scenes):
         if index == 0 or scene.get("chapterId") != scenes[index - 1].get("chapterId"):
-            used, playing, position, intact, stopped = set(), None, 0.0, True, -1
+            used, playing, position, intact, stopped, ended = set(), None, 0.0, True, -1, None
         key = scene_key(scene)
         result = dict(scene, key=key, pinned=False)
         pin_down = key in pins and not usable(pins[key])
@@ -241,7 +242,7 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             result.update(link=playing, distance=None, continued=True)
         else:
             kept = keep.get(key) if key in keep and keep[key] not in banned and usable(keep[key]) else ""
-            if kept != "" and (intact or kept is None or kept != playing):
+            if kept != "" and (intact or kept is None or kept not in (playing, ended)):
                 result.update(link=kept, distance=None)
             else:
                 # Cùng một cách xếp hạng với "Đổi bài" (`rank`); đầu cảnh thêm phạt bài ngắn hơn cảnh. Tránh bài đang chơi
@@ -249,7 +250,7 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
                 want = min(lengths[heads[index]], SCENE_LENGTH_CAP)
                 ahead = scenes[index + 1] if index + 1 < len(scenes) and heads[index + 1] == index + 1 else None
                 after = scene_key(ahead) if ahead and ahead.get("chapterId") == scene.get("chapterId") else None
-                avoid = {playing, pins.get(after) or keep.get(after) if after else None} - {None}
+                avoid = {playing, ended, pins.get(after) or keep.get(after) if after else None} - {None}
                 options = ranked(scene, limit=HEAD_CANDIDATES, exclude=avoid) if avoid else []
                 options = options or ranked(scene, limit=HEAD_CANDIDATES)
                 best = min(options, default=None,
@@ -273,6 +274,7 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
         else:
             if link != playing:
                 playing, position = link, 0.0
+            ended = None
             head_tension = float(scene.get("tension") or 0.0)
         # Bài chạy qua mảnh này theo thời gian: hết một vòng thì nối bài anh em, không có thì lặp.
         length, elapsed = _seconds(scene), 0.0
@@ -286,7 +288,7 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             now = float(scene.get("start") or 0.0) + elapsed
             if run_end[heads[index]] - now < TAIL_MIN_SECONDS:
                 result["stopAt"] = round(now, 3)
-                playing, stopped = None, heads[index]
+                playing, stopped, ended = None, heads[index], playing
                 break
             if reuse is not None:
                 sibling = reuse.pop(0) if reuse else None
