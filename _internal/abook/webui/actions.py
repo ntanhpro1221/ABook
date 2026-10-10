@@ -508,11 +508,28 @@ def open_url(url: str) -> None:
     webbrowser.open(parts.geturl())
 
 
+def recycle_bin_available(path: Path) -> None:
+    """Ổ của `path` có Thùng rác không? Không thì OSError (nơi khác Windows cũng vậy). Hỏi riêng để chỗ chờ "Hoàn tác"
+    (trash_pending) báo lỗi ngay lúc xoá, không đợi tới lúc hết hạn mới biết không chuyển vào Thùng rác được."""
+    if os.name != "nt":
+        raise OSError("Chỉ chuyển được vào Thùng rác trên Windows")
+    import ctypes
+    from ctypes import wintypes
+
+    class RecycleBinInfo(ctypes.Structure):  # SHQUERYRBINFO
+        _fields_ = [("cbSize", wintypes.DWORD), ("i64Size", ctypes.c_longlong), ("i64NumItems", ctypes.c_longlong)]
+
+    anchor = path.resolve().anchor
+    # Ổ không có Thùng rác (USB, ổ mạng) thì "xoá" là XOÁ HẲN - app không bao giờ tự làm vậy; người dùng tự xoá nếu chắc.
+    info = RecycleBinInfo(ctypes.sizeof(RecycleBinInfo), 0, 0)
+    if ctypes.windll.shell32.SHQueryRecycleBinW(anchor, ctypes.byref(info)) != 0:
+        raise OSError(f"ổ {anchor} không có Thùng rác")
+
+
 def move_to_recycle_bin(path: Path) -> None:
     """Chuyển thư mục vào Thùng rác của Windows - khôi phục được từ đó (Shell `SHFileOperationW`, FOF_ALLOWUNDO, không hộp
     thoại nào của Windows). Lỗi (file đang mở, ổ không có Thùng rác...) thành OSError; nơi khác Windows: OSError."""
-    if os.name != "nt":
-        raise OSError("Chỉ chuyển được vào Thùng rác trên Windows")
+    recycle_bin_available(path)
     import ctypes
     from ctypes import wintypes
 
@@ -528,14 +545,7 @@ def move_to_recycle_bin(path: Path) -> None:
             ("lpszProgressTitle", wintypes.LPCWSTR),
         ]
 
-    class RecycleBinInfo(ctypes.Structure):  # SHQUERYRBINFO
-        _fields_ = [("cbSize", wintypes.DWORD), ("i64Size", ctypes.c_longlong), ("i64NumItems", ctypes.c_longlong)]
-
     resolved = path.resolve()
-    # Ổ không có Thùng rác (USB, ổ mạng) thì "xoá" là XOÁ HẲN - app không bao giờ tự làm vậy; người dùng tự xoá nếu chắc.
-    info = RecycleBinInfo(ctypes.sizeof(RecycleBinInfo), 0, 0)
-    if ctypes.windll.shell32.SHQueryRecycleBinW(resolved.anchor, ctypes.byref(info)) != 0:
-        raise OSError(f"ổ {resolved.anchor} không có Thùng rác")
     fo_delete = 3
     # ALLOWUNDO | NOCONFIRMATION | SILENT | NOERRORUI | WANTNUKEWARNING: thư mục quá lớn so với Thùng rác thì Windows HỎI
     # trước khi xoá hẳn (không có cờ cuối, NOCONFIRMATION cho nó xoá hẳn im lặng - một cuốn xong nặng hàng chục GB).
