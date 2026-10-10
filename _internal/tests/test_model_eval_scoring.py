@@ -88,3 +88,19 @@ def test_the_committed_gold_files_parse() -> None:
     gold = load_gold(GOLD_DIR)
     assert len(gold) >= 399
     assert sum(row.spoken for row in gold.values()) >= 150
+
+
+def test_build_training_set_drops_batches_with_uncertain_gold(tmp_path: Path, monkeypatch) -> None:
+    """Mẻ có câu gold không ai đủ điểm (mọi phương án ~): replay chỉ trả tạm phương án đầu, mẫu ấy không được thành đích học."""
+    import json
+
+    import build_training_set
+
+    rows = [{"type": "generator", "gold": "demo", "chapters": ["001"], "system": "s", "prompt": f"p{i}", "format": {},
+             "response": {"segments": []}, "uncertain": ids} for i, ids in enumerate(([], ["S002"], []))]
+    src = tmp_path / "replay.jsonl"
+    src.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["build_training_set.py", str(src), "--out", str(tmp_path / "out")])
+    build_training_set.main()
+    train = (tmp_path / "out" / "train.jsonl").read_text(encoding="utf-8").splitlines()
+    assert [json.loads(line)["messages"][1]["content"] for line in train] == ["p0", "p2"]

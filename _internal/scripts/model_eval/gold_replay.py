@@ -123,7 +123,12 @@ class Replayer:
             if kind is None:
                 kind = allowed_kinds[0]
                 self.conflicts.append(f"{where} loại {sorted(gold.kinds)} bị khoá thành {allowed_kinds}")
-            speaker = next(option for option, credit in gold.speakers if credit == 1.0)
+            speaker = next((option for option, credit in gold.speakers if credit == 1.0), None)
+            if speaker is None:
+                # Mọi phương án đều nửa điểm `~` (vd nội tâm không rõ người nghĩ): lấy phương án đầu CHỈ để mẻ chạy tiếp
+                # (lịch sử ngữ cảnh của mẻ sau); mẫu chứa câu này mang `uncertain` và bị build_training_set bỏ.
+                speaker = gold.speakers[0][0]
+                self.conflicts.append(f"{where} không ai đủ điểm (mọi phương án ~): tạm {speaker}, mẫu không vào dữ liệu học")
             if kind == "narration":
                 speaker = "NARRATOR"
             elif speaker == "NPC*":
@@ -161,8 +166,8 @@ class Replayer:
                              "evidence_quote": quote, "critic_confidence": round(min(cap, max(floor, 0.9)), 2)})
         return {"candidate_hash": candidate_hash, "verdicts": verdicts}
 
-    def _chapters_of(self, request: dict) -> list[str]:
-        """Chương của mẻ - để chia train/dev/test theo CHƯƠNG, không trộn đoạn một chương vào hai tập."""
+    def _window_of(self, request: dict) -> tuple[list[dict], list[dict]]:
+        """(các dòng của câu hỏi, các đoạn project tương ứng); không tìm được -> ([], [])."""
         prompt = request["prompt"]
         try:
             if "Hãy phản biện" in prompt:
@@ -170,10 +175,23 @@ class Replayer:
             else:
                 rows = json.loads(prompt.split("Các đoạn liên tiếp:\n", 1)[1].split("\n\nRàng buộc", 1)[0]
                                   .split("\n\nKết quả lần trước", 1)[0])
-            window = self._locate([str(row["text"]) for row in rows])
+            return rows, self._locate([str(row["text"]) for row in rows])
         except (LookupError, ValueError, KeyError, IndexError):
-            return []
-        return sorted({self.chapter_titles[int(segment["chapter_id"])] for segment in window})
+            return [], []
+
+    def _chapters_of(self, request: dict) -> list[str]:
+        """Chương của mẻ - để chia train/dev/test theo CHƯƠNG, không trộn đoạn một chương vào hai tập."""
+        return sorted({self.chapter_titles[int(segment["chapter_id"])] for segment in self._window_of(request)[1]})
+
+    def _uncertain_of(self, request: dict) -> list[str]:
+        """ID các đoạn mà gold không cho ai đủ điểm: câu trả lời ở đó chỉ là tạm, không được thành đích học."""
+        rows, window = self._window_of(request)
+        out = []
+        for row, segment in zip(rows, window):
+            gold = self._gold_for(segment)
+            if gold is not None and gold.speakers and not any(credit == 1.0 for _option, credit in gold.speakers):
+                out.append(str(row["id"]))
+        return out
 
     def __call__(self, analyzer, request: dict, **_kw) -> dict:
         properties = request["format"].get("properties", {})
@@ -187,7 +205,8 @@ class Replayer:
         if self.out:
             self.out.write(json.dumps({"type": kind, "gold": self.gold_name, "chapters": self._chapters_of(request),
                                        "system": request["system"], "prompt": request["prompt"],
-                                       "format": request["format"], "response": response}, ensure_ascii=False) + "\n")
+                                       "format": request["format"], "response": response,
+                                       "uncertain": self._uncertain_of(request)}, ensure_ascii=False) + "\n")
         return response
 
 
