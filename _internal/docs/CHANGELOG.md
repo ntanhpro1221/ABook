@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.43] - 2026-10-10
+
 ### Làm sách trong Studio (máy tính)
 
 - Bấm liên kết ngoài trong cửa sổ app (trang mã nguồn ở Cài đặt, giấy phép và trang bài nhạc ở màn "Đang nghe") giờ mở bằng trình duyệt mặc định; trước đây không có gì xảy ra.
