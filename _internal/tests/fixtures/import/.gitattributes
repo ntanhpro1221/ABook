@@ -1,0 +1,2 @@
+# Byte-exact on purpose: the .txt fixtures carry CRLF, BOMs and non-UTF-8 encodings the importer must read.
+*.txt -text
