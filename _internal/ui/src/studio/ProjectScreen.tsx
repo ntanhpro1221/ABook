@@ -1007,8 +1007,10 @@ export function ProjectScreen() {
   // Việc từ điện thoại chờ duyệt (webui/edits_inbox.py) cộng vào số của tab: chỉ trên chính máy tính (Studio từ xa không có đường này).
   const { data, isLoading, error } = useBook(id);
   // Thẻ đã nằm ở "Duyệt trước khi thu" thì "Việc cần duyệt" không hiện lại và không đếm lại.
-  const precastKeys = usePrecastKeys(id ?? "", Boolean(data && canReview(data.book)));
-  const workCount = Math.max(0, useWorkCount(id ?? "") - (precastKeys?.size ?? 0)) + useInboxCount(id ?? "", !remoteStudio);
+  const precastOn = Boolean(data && canReview(data.book));
+  const precastKeys = usePrecastKeys(id ?? "", precastOn);
+  // Danh sách đầy đủ chỉ tải khi có chỗ cần nó (tab Việc cần duyệt, màn Duyệt trước khi thu); còn lại chỉ hỏi con số cho nhãn tab.
+  const workCount = Math.max(0, useWorkCount(id ?? "", precastOn || tab === "work" || tab === "precast") - (precastKeys?.size ?? 0)) + useInboxCount(id ?? "", !remoteStudio);
   const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
   const [merging, setMerging] = useState<CastMember | null>(null);
   const [renaming, setRenaming] = useState<CastMember | null>(null);

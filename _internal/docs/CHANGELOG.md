@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Làm sách trong Studio (máy tính)
+
+- Dự án và thư viện lớn mở nhanh hơn: hộp "Việc cần duyệt" của cuốn 400 chương từ khoảng 3 phút còn vài giây, "Áp dụng N thay đổi" xem trước từ 16 giây còn nửa giây, trang "Cách đọc tên" và "Phân vai" mở trong chưa tới một giây; tab Việc cần duyệt chỉ tải con số, danh sách đầy đủ khi mở tab.
+- Thư viện hàng trăm cuốn: trang Nghe và việc mở một cuốn theo mã nhanh hơn (hỏi thư viện cách 0,14 giây xuống vài chục mili giây), bìa sách tải khi cuộn tới, lưu một cách đọc tên hiện ngay không chờ tải lại cả danh sách, và xoá nhiều cuốn liền không còn mở mỗi lần một luồng chờ.
+
 ## [0.4.44] - 2026-10-10
 
 ### Làm sách trong Studio (máy tính)

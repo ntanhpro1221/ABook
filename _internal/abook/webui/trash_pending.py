@@ -23,6 +23,7 @@ Luật giữ cho chỗ này an toàn:
 """
 from __future__ import annotations
 
+import heapq
 import json
 import logging
 import os
@@ -265,3 +266,67 @@ def _folder_id(path: Path) -> list[int] | None:
 
 def _same_folder(path: Path, expected: Any) -> bool:
     return not expected or _folder_id(path) == list(expected)
+
+
+class SweepTimer:
+    """Một bộ hẹn giờ chung cho mọi lần xoá: dọn chỗ chờ ngay sau hạn "Hoàn tác" của lần xoá SỚM NHẤT, rồi hẹn tiếp cho lần kế. Trước đây mỗi lần
+    xoá một `threading.Timer` (một luồng ngủ 31 giây): xoá 20 cuốn liền là 20 luồng, cùng gọi `sweep` trên cùng một thư viện (soát a21). Hạn của
+    lần xoá sau luôn muộn hơn lần trước nên thường chỉ cần một luồng; mỗi lần dọn là dọn cả thư viện nên một lượt gộp được nhiều lần xoá."""
+
+    def __init__(self, sweep: Callable[[Path], Any], clock: Callable[[], float] = time.monotonic) -> None:
+        self._sweep = sweep
+        self._clock = clock
+        self._lock = threading.Lock()
+        self._due: list[tuple[float, Path]] = []
+        self._timer: threading.Timer | None = None
+        self._armed_for = 0.0
+        self._closed = False
+
+    def schedule(self, root: Path, seconds: float) -> None:
+        """Hẹn dọn `root` sau `seconds` giây."""
+        with self._lock:
+            if self._closed:
+                return
+            heapq.heappush(self._due, (self._clock() + seconds, root))
+            self._arm()
+
+    def pending(self) -> int:
+        with self._lock:
+            return len(self._due)
+
+    def cancel(self) -> None:
+        """Đóng app: bỏ mọi hẹn (`close` dọn nốt mọi cuốn đang chờ)."""
+        with self._lock:
+            self._closed = True
+            self._due.clear()
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
+
+    def _arm(self) -> None:
+        """Gọi khi đang giữ khoá: hẹn một luồng tới hạn sớm nhất, trừ khi luồng đang chờ đã hẹn đúng hạn ấy hay sớm hơn."""
+        if not self._due:
+            return
+        first = self._due[0][0]
+        if self._timer is not None and self._armed_for <= first:
+            return
+        if self._timer is not None:
+            self._timer.cancel()
+        self._armed_for = first
+        self._timer = threading.Timer(max(0.0, first - self._clock()), self._fire)
+        self._timer.daemon = True
+        self._timer.start()
+
+    def _fire(self) -> None:
+        roots: list[Path] = []
+        with self._lock:
+            self._timer = None
+            now = self._clock()
+            while self._due and self._due[0][0] <= now:
+                roots.append(heapq.heappop(self._due)[1])
+            self._arm()
+        for root in dict.fromkeys(roots):
+            try:
+                self._sweep(root)
+            except Exception:  # dọn nền; hỏng thì lần sau
+                log.exception("Không dọn được chỗ chờ Thùng rác")

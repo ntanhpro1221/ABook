@@ -12,10 +12,11 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from pathlib import Path
 from typing import Any, Iterable
 
-from . import book_edits, covers, project_views, store
+from . import book_edits, covers, listing_cache, project_views, store
 from .. import continuation
 from .fingerprints import Fingerprints, base_name, identity_prints, is_text_identity
 from .listen_view import FORMAT
@@ -115,10 +116,14 @@ def local_folders(library_root: Path) -> list[Path]:
     """Chỉ các cuốn người dùng nhập từ file, dưới `<thư viện>/Sách đã nhập/` - KHÔNG kể cuốn ảo của máy khác. Phần máy này chia sẻ
     cho máy đã ghép (sync.py) dùng đúng danh sách này: cuốn ảo mà cũng chia sẻ thì máy A soi sách của B, B lại thấy bản soi ấy của A..."""
     imported = Path(library_root).expanduser() / IMPORTED_FOLDER
-    try:
-        return _packages_in(sorted(imported.iterdir()) if imported.is_dir() else [])
-    except OSError:
-        return []
+
+    def build() -> list[Path]:
+        try:
+            return _packages_in(sorted(imported.iterdir()) if imported.is_dir() else [])
+        except OSError:
+            return []
+
+    return list(listing_cache.cached(("local", str(imported)), listing_cache.signature(imported), build))
 
 
 def folders(library_root: Path) -> list[Path]:
@@ -127,14 +132,18 @@ def folders(library_root: Path) -> list[Path]:
     from .remote_books import REMOTE_FOLDER
 
     root = Path(library_root).expanduser()
-    candidates: list[Path] = []
-    try:
-        remote = root / REMOTE_FOLDER
-        for computer in sorted(remote.iterdir()) if remote.is_dir() else []:
-            candidates += sorted(computer.iterdir()) if computer.is_dir() else []
-    except OSError:
-        candidates = []
-    return local_folders(root) + _packages_in(candidates)
+    remote = root / REMOTE_FOLDER
+
+    def build() -> list[Path]:
+        candidates: list[Path] = []
+        try:
+            for computer in sorted(remote.iterdir()) if remote.is_dir() else []:
+                candidates += sorted(computer.iterdir()) if computer.is_dir() else []
+        except OSError:
+            candidates = []
+        return _packages_in(candidates)
+
+    return local_folders(root) + listing_cache.cached(("remote", str(remote)), listing_cache.signature(remote, 2), build)
 
 
 def chapter_prints(book: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -148,13 +157,29 @@ def _prints_by_file(prints: dict[str, dict[str, Any]]) -> set[tuple[str, Any, An
     return {(base_name(name), meta.get("size"), meta.get("sha256")) for name, meta in prints.items()}
 
 
+_LOCATORS: dict[Path, tuple[float, store.AudioLocator]] = {}
+LOCATOR_SECONDS = 2.0
+
+
+def _locator(root: Path) -> store.AudioLocator:
+    """Bộ tìm file của một cuốn, sống vài giây: thư viện 300 cuốn hỏi ~2.000 file trong MỘT lần liệt kê (`listen`), mỗi lần `resolve` lại thư mục
+    cuốn và file (2 -> 4 lần gọi hệ thống) là 1 giây của 1,7 giây. Hết hạn thì dựng lại - thư mục bị thay giữa hai lần hỏi vẫn đúng sau vài giây."""
+    now = time.monotonic()
+    entry = _LOCATORS.get(root)
+    if entry is None or now - entry[0] > LOCATOR_SECONDS:
+        if len(_LOCATORS) > 1024:
+            _LOCATORS.clear()
+        entry = _LOCATORS[root] = (now, store.AudioLocator(root))
+    return entry[1]
+
+
 def _inside(root: Path, relative: Any) -> Path | None:
     """Đường dẫn trong gói - tên lấy từ `book.json`, nên không cho nó trỏ ra ngoài thư mục của cuốn."""
     if not isinstance(relative, str) or not relative:
         return None
-    root = Path(root).resolve()
-    candidate = (root / relative).resolve()
-    return candidate if candidate.is_file() and candidate.is_relative_to(root) else None
+    locator = _locator(Path(root))
+    candidate, is_file = locator.probe(locator.root / relative)
+    return candidate if is_file and locator.within_root(candidate) else None
 
 
 def _file(path: Path, relative: Any) -> Path | None:

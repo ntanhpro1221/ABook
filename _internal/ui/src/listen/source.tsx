@@ -148,12 +148,14 @@ export function useSource(): ListenSource {
   return source;
 }
 
-export function useListenLibrary() {
+/** `poll`: hỏi lại theo nhịp (30 giây, 5 giây khi có sách đang làm). Chỗ chỉ cần danh sách MỘT lần (khôi phục cuốn đang nghe dở khi mở app, mời tập kế)
+ *  truyền false - thư viện lớn (300 cuốn) mất ~1,3 giây mỗi lần hỏi, mà trang dự án đứng đó cả giờ vẫn bị hỏi mỗi 30 giây (soát a21). */
+export function useListenLibrary(poll = true) {
   const source = useSource();
   return useQuery({
     queryKey: ["listen", "library"],
     queryFn: () => source.library(),
-    refetchInterval: (query) => (query.state.data?.some((book) => book.producing) ? 5000 : 30000),
+    refetchInterval: poll ? (query) => (query.state.data?.some((book) => book.producing) ? 5000 : 30000) : false,
   });
 }
 
@@ -167,7 +169,8 @@ export function isMissing(error: unknown): boolean {
   return (error as { status?: number } | null)?.status === 404;
 }
 
-export function useListenBook(id: string | undefined) {
+/** `poll` false: chỉ đọc bản đã có và làm mới khi có chỗ báo đổi (thanh phát trên mọi trang, kể cả trang dự án: nó chỉ cần cờ bỏ qua của chương). */
+export function useListenBook(id: string | undefined, poll = true) {
   const source = useSource();
   return useQuery({
     queryKey: ["listen", "book", id],
@@ -175,7 +178,7 @@ export function useListenBook(id: string | undefined) {
     retry: retryUnlessMissing,
     queryFn: () => source.book(id!),
     // Sách đã bị xoá (404) thì thôi hỏi lại mỗi 30 giây - mỗi lần là một dòng đỏ trong console (soát UX a17).
-    refetchInterval: (query) => (isMissing(query.state.error) ? false : query.state.data?.producing ? 5000 : 30000),
+    refetchInterval: poll ? (query) => (isMissing(query.state.error) ? false : query.state.data?.producing ? 5000 : 30000) : false,
   });
 }
 

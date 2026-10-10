@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from ..listener_overrides import overrides_path
-from . import store
+from . import listing_cache, store
 
 DEFAULT_PREFERENCES: dict[str, Any] = {
     "libraryRoot": "",
@@ -173,7 +173,7 @@ def _read_or_create_key(path: Path) -> bytes:
 
 def book_id(path: Path) -> str:
     """Mã sách của thư mục `path` trên máy này: cùng thư mục (không phân biệt hoa thường, dạng viết) thì cùng mã."""
-    return hmac.new(_id_key(), _key(Path(path).resolve()).encode("utf-8"), hashlib.sha256).hexdigest()[:24]
+    return hmac.new(_id_key(), listing_cache.resolved(Path(path), _key).encode("utf-8"), hashlib.sha256).hexdigest()[:24]
 
 
 def legacy_book_id(path: Path) -> str:
@@ -301,15 +301,21 @@ class Library:
         return Path(self.preferences.get()["libraryRoot"]).expanduser()
 
     def projects(self) -> list[Path]:
-        found: dict[str, Path] = {}
         root = self.root
-        try:
-            children = sorted(root.iterdir()) if root.is_dir() else []
-        except OSError:
-            children = []
-        for child in children:
-            if child.is_dir() and store.is_project(child):
-                found.setdefault(_key(child), child.resolve())
+
+        def scan() -> dict[str, Path]:
+            found: dict[str, Path] = {}
+            try:
+                children = sorted(root.iterdir()) if root.is_dir() else []
+            except OSError:
+                children = []
+            for child in children:
+                if child.is_dir() and store.is_project(child):
+                    found.setdefault(_key(child), child.resolve())
+            return found
+
+        # Thư mục dự án: đệm theo mốc sửa của thư viện và các thư mục con (listing_cache) - mỗi yêu cầu theo mã sách liệt kê lại cả thư viện.
+        found = dict(listing_cache.cached(("projects", str(root)), listing_cache.signature(root), scan))
         for item in self.preferences.get().get("recents", []):
             path = Path(item)
             if store.is_project(path):

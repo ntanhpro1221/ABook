@@ -14,12 +14,13 @@ import json
 import os
 import re
 import sqlite3
+import stat
 import time
 import unicodedata
 from collections import Counter, defaultdict
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, ClassVar, Iterable
 
 from . import humanize, word_timing
 from .. import names as renames
@@ -183,37 +184,103 @@ def chapter_mp3(project_root: Path, recorded_path: str | None) -> Path | None:
     return candidate if candidate.is_file() else None
 
 
-def segment_audio(project_root: Path, recorded_path: str | None) -> Path | None:
+class AudioLocator:
+    """Tìm WAV của câu trong thư mục sách (`segment_audio`) cho CẢ LOẠT câu: thư mục sách và thư mục chứa các file (`chunks/`) chỉ
+    phải `resolve` một lần, mỗi file chỉ còn một `lstat`. Hộp việc hỏi ~15.000 câu ví dụ trên cuốn 400 chương - `resolve` từng file
+    (hai lần `_getfinalpathname`, thêm lần cho thư mục sách) là phần lớn của 8 giây. File là liên kết (symlink/junction) hay đường dẫn
+    có `..` thì vẫn `resolve` đầy đủ như cũ. Một bộ dùng trong MỘT lần gọi: sống lâu thì thư mục bị thay giữa chừng sẽ cho kết quả cũ.
+    `many`: hỏi hàng nghìn file chung vài thư mục thì đọc cả thư mục một lần (60.000 file: 0,14 giây) rẻ hơn `lstat` từng file (0,6 giây)."""
+
+    def __init__(self, project_root: Path, many: bool = False) -> None:
+        self.project_root = project_root
+        self.root = project_root.resolve()
+        self._parents: dict[Path, Path] = {}
+        self._inside: dict[Path, bool] = {}
+        self._listings: dict[Path, dict[str, os.DirEntry[str]]] | None = {} if many else None
+
+    def _lstat(self, path: Path) -> os.stat_result:
+        if self._listings is not None:
+            listing = self._listings.get(path.parent)
+            if listing is None:
+                try:
+                    listing = {entry.name: entry for entry in os.scandir(path.parent)}
+                except OSError:
+                    listing = {}
+                self._listings[path.parent] = listing
+            entry = listing.get(path.name)
+            if entry is not None:
+                try:
+                    return entry.stat(follow_symlinks=False)
+                except OSError:
+                    pass
+        return os.lstat(path)  # không có trong danh sách (khác chữ hoa/thường, mới tạo, chưa có): hỏi thẳng
+
+    def probe(self, path: Path) -> tuple[Path, bool]:
+        """(`path.resolve()`, `path.is_file()`) - cho file thường chỉ tốn một `lstat`."""
+        if not path.name or ".." in path.parts or "." in path.parts:
+            resolved = path.resolve()
+            return resolved, resolved.is_file()
+        parent = self._parents.get(path.parent)
+        if parent is None:
+            parent = self._parents[path.parent] = path.parent.resolve()
+        try:
+            info = self._lstat(path)
+        except OSError:
+            return parent / path.name, False  # chưa có file: `resolve` cũng chỉ nối phần đuôi vào thư mục đã giải
+        if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0):
+            resolved = path.resolve()
+            return resolved, resolved.is_file()
+        return parent / path.name, stat.S_ISREG(info.st_mode)
+
+    def within_root(self, resolved: Path) -> bool:
+        """`resolved` nằm trong thư mục sách - chỉ phụ thuộc thư mục chứa nó, nên nhớ theo thư mục."""
+        inside = self._inside.get(resolved.parent)
+        if inside is None:
+            try:
+                resolved.parent.relative_to(self.root)
+                inside = True
+            except ValueError:
+                inside = False
+            self._inside[resolved.parent] = inside
+        return inside
+
+    def find(self, recorded_path: str | None) -> Path | None:
+        if not recorded_path:
+            return None
+        project_root = self.project_root
+        path = Path(str(recorded_path))
+        try:
+            resolved, is_file = self.probe(path if path.is_absolute() else project_root / path)
+            if self.within_root(resolved) or resolved == self.root:
+                return resolved if is_file else None
+        except (OSError, ValueError):
+            pass
+        # Ngoài thư mục sách: nối phần đuôi từ thư mục con của dự án ("work", "output") vào thư mục sách hiện tại. Rẻ - chỉ
+        # `is_file`, rồi `resolve` đúng một file: hộp việc gọi hàm này cho hàng trăm câu (thử mọi phần đuôi từng làm nó chậm
+        # 0,7 -> 5 giây).
+        parts = Path(str(recorded_path).replace("\\", "/")).parts
+        for index, part in enumerate(parts):
+            if part not in ("work", "output") or ".." in parts[index:]:
+                continue
+            candidate = project_root.joinpath(*parts[index:])
+            if not candidate.is_file():
+                continue
+            try:
+                found, _is_file = self.probe(candidate)
+            except (OSError, ValueError):
+                return None
+            return found if self.within_root(found) else None
+        return None
+
+
+def segment_audio(project_root: Path, recorded_path: str | None, locator: AudioLocator | None = None) -> Path | None:
     """WAV của một câu, chỉ khi nó nằm trong thư mục sách. Đường dẫn trong DB là tuyệt đối lúc thu: sách đã chuyển chỗ (thư
     mục dự án đổi tên 28-09, chép sang máy khác) thì tìm lại theo phần ĐUÔI dài nhất của đường dẫn ấy ngay trong thư mục sách
-    - như `chapter_mp3` tìm MP3 theo tên (soát UX 29-09: câu mẫu báo "chưa có bản thu" dù file vẫn nằm đó)."""
+    - như `chapter_mp3` tìm MP3 theo tên (soát UX 29-09: câu mẫu báo "chưa có bản thu" dù file vẫn nằm đó). Hỏi cho nhiều câu
+    một lượt thì dựng một `AudioLocator` và truyền vào."""
     if not recorded_path:
         return None
-    root = project_root.resolve()
-    path = Path(str(recorded_path))
-    try:
-        resolved = (path if path.is_absolute() else project_root / path).resolve()
-        resolved.relative_to(root)
-        return resolved if resolved.is_file() else None
-    except (OSError, ValueError):
-        pass
-    # Ngoài thư mục sách: nối phần đuôi từ thư mục con của dự án ("work", "output") vào thư mục sách hiện tại. Rẻ - chỉ
-    # `is_file`, rồi `resolve` đúng một file: hộp việc gọi hàm này cho hàng trăm câu (thử mọi phần đuôi từng làm nó chậm
-    # 0,7 -> 5 giây).
-    parts = Path(str(recorded_path).replace("\\", "/")).parts
-    for index, part in enumerate(parts):
-        if part not in ("work", "output") or ".." in parts[index:]:
-            continue
-        candidate = project_root.joinpath(*parts[index:])
-        if not candidate.is_file():
-            continue
-        try:
-            found = candidate.resolve()
-            found.relative_to(root)
-        except (OSError, ValueError):
-            return None
-        return found
-    return None
+    return (locator or AudioLocator(project_root)).find(recorded_path)
 
 
 def lease_age(connection: sqlite3.Connection, now: float) -> float | None:
@@ -601,6 +668,33 @@ def person_label(project_root: Path, raw: Any) -> str:
     return "người kể" if raw.upper() == "NARRATOR" else renames.shown(project_root, raw) or person_name(raw)
 
 
+class _WordIndex:
+    """Từ -> các câu (vị trí trong danh sách) có từ ấy. Khoá hạ chữ kiểu `casefold` (cộng İ/ı về i, hai chữ mà `re.IGNORECASE` coi là
+    một với i) nên mọi câu mà `re.IGNORECASE` khớp trọn từ đều nằm trong tập ứng viên; người gọi vẫn thử lại từng ứng viên bằng regex."""
+
+    _FOLD: ClassVar[dict[int, str]] = {0x130: "i", 0x131: "i"}
+
+    def __init__(self, texts: list[str]) -> None:
+        self._at: dict[str, list[int]] = defaultdict(list)
+        keys: dict[str, str] = {}
+        for position, text in enumerate(texts):
+            found = set()
+            for word in re.findall(r"\w+", text):
+                key = keys.get(word)
+                if key is None:
+                    key = keys[word] = self.key(word)
+                found.add(key)
+            for key in found:
+                self._at[key].append(position)
+
+    @classmethod
+    def key(cls, word: str) -> str:
+        return word.translate(cls._FOLD).casefold()
+
+    def positions(self, word: str) -> list[int]:
+        return self._at.get(self.key(word), [])
+
+
 def pending_details(project_root: Path, since: float) -> dict[str, Any]:
     """Nút "Áp dụng N thay đổi" mở hộp xem trước (soát UX a6 01-10: bấm là chạy ngay, không nói sẽ thu lại gì, hết bao lâu):
     từng thay đổi nói bằng lời, số câu sẽ thu lại, ở những chương nào, và thời gian ước theo TỐC ĐỘ THẬT của chính cuốn này
@@ -652,6 +746,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
                     count += 1
             return count
 
+        words: _WordIndex | None = None
         forms = {}
         if "pronunciations" in _table_names(connection):
             forms = {surface_key(str(row[0])): str(row[1] or "")
@@ -661,7 +756,15 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
                 continue
             surface = str(entry.get("surface") or key)
             pattern = re.compile(rf"(?<![\w]){re.escape(surface)}(?![\w])", re.IGNORECASE)
-            ids = [str(row["stable_id"]) for row in recorded if pattern.search(str(row["text"] or ""))]
+            if re.fullmatch(r"\w+", surface):
+                # Một từ trọn vẹn: chỉ những câu có từ trùng tên (theo chữ hoa/thường) mới đáng thử regex - tách từ cả sách MỘT lần
+                # thay vì quét cả sách cho từng cách đọc chờ áp (150 cách x 60.000 câu = 9 triệu lần `search`, 13 giây).
+                if words is None:
+                    words = _WordIndex([str(row["text"] or "") for row in recorded])
+                candidates = (recorded[position] for position in words.positions(surface))
+            else:
+                candidates = recorded
+            ids = [str(row["stable_id"]) for row in candidates if pattern.search(str(row["text"] or ""))]
             items.append({"kind": "pronunciation", "label": label_pronunciation(surface, entry.get("spoken_form", "")),
                           "lines": hit(ids), **handle("pronunciations", key, entry)})
         speaker_clicks: dict[float, list[str]] = {}
@@ -691,10 +794,20 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             items.append({"kind": "line", "label": label_line(row["text"], entry),
                           "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit([stable_id]),
                           **handle("lines", stable_id, entry)})
+        by_voice_key: dict[str, list[Any]] | None = None
         for key, entry in fresh["voices"].items():
-            ids = [str(row["stable_id"]) for row in recorded if character_key(str(row["speaker"] or "")) == key]
+            if by_voice_key is None:
+                by_voice_key = defaultdict(list)
+                keys_of: dict[str, str] = {}  # cả sách chỉ vài trăm tên người nói
+                for row in rows:
+                    speaker = str(row["speaker"] or "")
+                    if speaker not in keys_of:
+                        keys_of[speaker] = character_key(speaker)
+                    by_voice_key[keys_of[speaker]].append(row)
+            same_person = by_voice_key.get(key, [])
+            ids = [str(row["stable_id"]) for row in same_person if row["wav_path"]]
             # Khoá giọng là tên đã hạ chữ thường - lấy lại cách viết trong sách từ một câu của người ấy.
-            name = next((who(row["speaker"]) for row in rows if character_key(str(row["speaker"] or "")) == key), who(key))
+            name = who(same_person[0]["speaker"]) if same_person else who(key)
             # Đủ để "Nghe thử" đúng giọng sẽ áp trên một câu của người ấy (POST …/voice/preview, reading_preview.py).
             wish = {"character": key, **{field: str(entry.get(field) or "") for field in ("preset", "gender", "avoid")}}
             items.append({"kind": "voice", "label": label_voice(name, entry), "lines": hit(ids), "voice": wish,

@@ -32,12 +32,26 @@ interface NameReading {
 
 const PAGE = 30;
 
+export interface NameReadings {
+  items: NameReading[];
+  unseen: number;
+}
+
 export function useNameReadings(bookId: string, enabled = true) {
   return useQuery({
     queryKey: ["pronunciations", bookId],
     enabled,
-    queryFn: () => api<{ items: NameReading[]; unseen: number }>(`/api/books/${bookId}/pronunciations`),
+    queryFn: () => api<NameReadings>(`/api/books/${bookId}/pronunciations`),
   });
+}
+
+/** Danh sách sau khi lưu `spokenForm` cho `item` - đúng điều máy chủ sẽ trả (`name_readings.py`): cách đọc mới là "chờ áp dụng"; trùng cách đang đọc là
+ *  "giữ" (người nghe đã chọn, không chờ gì). Hiện ngay, không chờ tải lại cả danh sách (hàng nghìn tên); máy chủ trả bản thật sau đó. */
+export function withReading(data: NameReadings, item: NameReading, spokenForm: string): NameReadings {
+  const keep = spokenForm === item.spoken;
+  const updated: NameReading = { ...item, requested: keep ? null : spokenForm, byListener: item.byListener || keep };
+  const known = data.items.some((entry) => entry.surface === item.surface);
+  return { ...data, items: known ? data.items.map((entry) => (entry.surface === item.surface ? updated : entry)) : [...data.items, updated] };
 }
 
 /** So tên không phân biệt hoa thường, dấu, gạch nối hay khoảng trắng: gõ "hen" thấy "Hên-cơ", "dac lat" thấy "Đác-lát",
@@ -297,6 +311,13 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud }: {
         method: "POST",
         body: { surface: item.surface, spokenForm, ...(everywhere ? { everywhere: true } : {}) },
       }),
+    // Lạc quan: dòng đổi ngay khi bấm Lưu; máy chủ từ chối thì trả lại như cũ (cùng ô vẫn mở để sửa).
+    onMutate: async (spokenForm: string) => {
+      await client.cancelQueries({ queryKey: ["pronunciations", bookId] });
+      const previous = client.getQueryData<NameReadings>(["pronunciations", bookId]);
+      if (previous) client.setQueryData<NameReadings>(["pronunciations", bookId], withReading(previous, item, spokenForm));
+      return { previous };
+    },
     onSuccess: ({ spokenForm, requestedAt }) => {
       refreshAfterDecision(client, bookId);
       if (everywhere) void client.invalidateQueries({ queryKey: ["shared-readings"] });
@@ -339,7 +360,8 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud }: {
         ...undo,
       });
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _spokenForm, context) => {
+      if (context?.previous) client.setQueryData(["pronunciations", bookId], context.previous);
       setProblem(error.message);
       setSuggestion(suggestionOf(error));
     },

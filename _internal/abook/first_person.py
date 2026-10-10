@@ -148,12 +148,18 @@ _SAYS_WHO_I_AM = re.compile(
 )
 
 
+@lru_cache(maxsize=4)
+def _non_empty(names: frozenset[str]) -> frozenset[str]:
+    """Bỏ tên rỗng, một lần cho mỗi bộ tên: cả cuốn hỏi từng câu thoại với CÙNG một bộ tên (hàng nghìn tên) - lọc lại mỗi câu là 0,2 giây trên cuốn 25.000 câu."""
+    return frozenset(name for name in names if name)
+
+
 def addressed_names(text: str, names: set[str]) -> set[str]:
     """Những tên trong `names` mà câu thoại `text` GỌI ("Này Kou, ...", "..., Satomi-san.") hoặc nhắc kèm kính ngữ ("Chắc
     Karin-nim sẽ thấy nóng hơn"): người nói câu ấy không phải người mang tên đó - không ai gọi tên chính mình hay tự thêm
     kính ngữ cho mình. Câu tự giới thiệu thì phần GỌI không tính (người nói đọc tên chính mình); kính ngữ vẫn tính.
     Đo 09-10 trên 10 lượt cổng 19 chương: câu thoại gán cho người mà chính câu ấy gọi/kính ngữ - sai 100% theo đáp án."""
-    names = {name for name in names if name}
+    names = _non_empty(names) if isinstance(names, frozenset) else {name for name in names if name}
     if not names:
         return set()
     introduces = _SAYS_WHO_I_AM.search(text) is not None

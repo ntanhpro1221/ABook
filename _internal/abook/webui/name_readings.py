@@ -40,6 +40,7 @@ def name_readings(project_root: Path) -> dict[str, Any]:
         lines: dict[str, int] = defaultdict(int)
         examples: dict[str, Any] = {}
         names = store.chapter_names(connection, project_root) if "segments" in tables else {}
+        audio = store.AudioLocator(project_root)  # một bộ tìm WAV cho mọi câu mẫu (thư mục sách chỉ `resolve` một lần)
         for segment in connection.execute(
             "SELECT id, chapter_id, seq, text, speaker, wav_path FROM segments ORDER BY wav_path IS NULL, chapter_id, seq"
         ) if "segments" in tables else ():
@@ -64,7 +65,7 @@ def name_readings(project_root: Path) -> dict[str, Any]:
                 "confidence": round(float(row["confidence"]), 2) if row is not None else None,
                 "lines": lines.get(key, 0),
                 "requested": wish["spoken_form"] if waiting else None,
-                "example": _example(examples[key], names, project_root=project_root) if key in examples else None,
+                "example": _example(examples[key], names, project_root=audio) if key in examples else None,
             })
     # Bảng mang cả tên của những chương khác trong cuốn (hạt giống từ phần trước): tên máy đoán mà phần này không có câu nào
     # thì không đổi gì ở đây - chỉ đếm (lô 18: 997/1136 dòng).

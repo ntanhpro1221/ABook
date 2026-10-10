@@ -127,12 +127,14 @@ function PhotoCover({
       aria-hidden
     >
       {!square && (
-        <img src={image.url} alt="" draggable={false} className="absolute inset-0 size-full scale-125 object-cover opacity-60 blur-xl" />
+        // Nền mờ cần một bản ảnh thứ hai (cùng địa chỉ nên trình duyệt chỉ tải một lần); lười như ảnh chính - kệ 160 bìa không tải cả 320 ảnh ngay lúc vẽ.
+        <img src={image.url} alt="" draggable={false} loading="lazy" decoding="async" className="absolute inset-0 size-full scale-125 object-cover opacity-60 blur-xl" />
       )}
       <img
         src={image.url}
         alt=""
         draggable={false}
+        loading="lazy"
         decoding="async"
         onError={onError}
         className={cn("relative size-full", square ? "object-cover" : "object-contain")}
