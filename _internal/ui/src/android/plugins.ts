@@ -277,6 +277,42 @@ export interface M4bExportEvent {
   error?: string;
 }
 
+/** Phần trả lời của `audiobookPlan` ("Xuất sách nói", ListenExport.kt): cùng hình với máy tính (desktop/listenExport.ts AudiobookPlan, trừ ffmpeg - điện thoại tự mã hoá), thêm chỗ trống cần. */
+export interface AudiobookPhonePlan {
+  chapters: number;
+  chars: number;
+  audioSeconds: number;
+  /** Máy làm phần còn lại mất chừng này giây (giọng đã đo tốc độ); null: chưa đo. */
+  secondsEstimate: number | null;
+  /** Chương đã ghép sẵn từ một lần xuất bị dừng (cùng giọng, cùng chữ): lần này làm tiếp. */
+  readyChapters: number;
+  /** Chỗ trống cần ở bộ nhớ máy trong lúc làm (byte); xoá khi xong. */
+  bytes: number;
+}
+
+/**
+ * Tin của một lượt "Xuất sách nói" (ListenExportWorker.kt). Tiến độ mang các trường như việc xuất của máy tính (desktop/bookFileExport.ts ExportJob): pha ("voice" đọc / "encode"
+ * ghép file), chương i/N, % theo số chữ, ước còn lại, đang nhường người nghe; xong (`finished`) kèm tên file, cỡ, số chương có trong file / của cả cuốn và địa chỉ để mở.
+ */
+export interface AudiobookExportEvent {
+  bookId: string;
+  run: string;
+  phase?: "voice" | "encode";
+  chapter?: number;
+  chapters?: number;
+  chapterTitle?: string;
+  percent?: number;
+  secondsLeft?: number | null;
+  waiting?: "listening" | null;
+  finished?: boolean;
+  name?: string;
+  size?: number;
+  chaptersTotal?: number;
+  uri?: string;
+  stopped?: boolean;
+  error?: string;
+}
+
 /** "Cho máy khác nghe thư viện này" (LibraryServer.kt, mạng trạm bước 2): điện thoại phục vụ sách đã tải cho máy đã ghép. */
 export interface ShareStatus {
   running: boolean;
@@ -379,6 +415,18 @@ export interface EbookLibraryPlugin {
   /** Dừng lượt xuất M4B đang chạy của cuốn (file dở bị xoá). */
   cancelM4bExport(options: { bookId: string }): Promise<void>;
   addListener(event: "m4bExport", handler: (event: M4bExportEvent) => void): Promise<PluginListenerHandle>;
+  /** "Xuất sách nói" của sách chỉ có chữ (ListenExport.kt): ước trước khi bấm - số chương, giờ nghe, máy cần bao lâu, chương đã làm sẵn từ lần trước. */
+  audiobookPlan(options: { bookId: string; voice: string }): Promise<AudiobookPhonePlan>;
+  /** Đọc cả cuốn bằng giọng `voice` rồi ghép thành MỘT file `.m4b` có mục lục chương, chạy nền. Hệ thống hỏi tên và chỗ lưu (mỗi lần). `cover`: bìa tự vẽ (data URL PNG)
+   *  khi sách không có bìa. Tiến độ / kết quả: sự kiện "audiobookExport" mang cùng `run`. `started: false` khi không chọn chỗ lưu; sách không có chữ để đọc thì từ chối ngay. */
+  exportAudiobook(options: { bookId: string; voice: string; cover?: string }): Promise<{ started: boolean; run?: string; name?: string }>;
+  /** Dừng lượt xuất sách nói của cuốn (file dở bị xoá, phần đã đọc xong giữ để xuất lại làm tiếp). */
+  cancelAudiobookExport(options: { bookId: string }): Promise<void>;
+  /** Các lượt xuất sách nói đang chạy (tin cuối của từng lượt): mở lại giao diện thì hiện lại tiến độ. */
+  audiobookJobs(): Promise<{ jobs: AudiobookExportEvent[] }>;
+  /** Mở file vừa xuất bằng app nghe sách nói của máy; `opened: false` khi không mở được. */
+  openFile(options: { uri: string }): Promise<{ opened: boolean }>;
+  addListener(event: "audiobookExport", handler: (event: AudiobookExportEvent) => void): Promise<PluginListenerHandle>;
   deleteBook(options: { id: string }): Promise<void>;
   /** `bytes`: cả thư viện; `books`: cỡ từng cuốn trên máy (mã thư mục = mã cuốn). */
   storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number }[] }>;

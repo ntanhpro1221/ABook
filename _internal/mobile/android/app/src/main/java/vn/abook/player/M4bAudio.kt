@@ -65,7 +65,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         (0 until extractor.trackCount).firstOrNull { extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true } ?: -1
 
     /** (tần số, số kênh 1|2) của một file - như `_audio_layout` của máy tính. */
-    private fun layout(file: File): Pair<Int, Int> {
+    internal fun layout(file: File): Pair<Int, Int> {
         val extractor = MediaExtractor()
         try {
             extractor.setDataSource(file.absolutePath)
@@ -84,12 +84,22 @@ object M4bAudio : M4bExport.AudioEncoder {
 
     /** Giải mã một chương đổ vào `sink`; trả số khung PCM (theo tần số chung) đã đổ. `fraction(0..1)` theo vị trí đọc trong chương. */
     private fun decodeInto(chapter: Mp3Export.Chapter, sink: AacSink, stopped: () -> Boolean, fraction: (Double) -> Unit): Long {
+        val before = sink.frames
+        decodeFile(chapter.file, sink.rate, sink.channels, stopped, fraction) { pcm, count -> sink.write(pcm, count) }
+        return sink.frames - before
+    }
+
+    /**
+     * Giải mã MỘT file âm thanh (MP3 của chương, hay clip giọng đọc của "Xuất sách nói") ra PCM 16-bit xen kẽ ở (`toRate`, `toChannels`), từng khối đưa cho `write(mẫu, số mẫu)`.
+     * Lỗi của `write` (hết chỗ...) ném ra nguyên văn, không bị nhầm với lỗi giải mã.
+     */
+    internal fun decodeFile(file: File, toRate: Int, toChannels: Int, stopped: () -> Boolean, fraction: (Double) -> Unit = {}, write: (ShortArray, Int) -> Unit) {
         val extractor = MediaExtractor()
         var codec: MediaCodec? = null
         try {
-            extractor.setDataSource(chapter.file.absolutePath)
+            extractor.setDataSource(file.absolutePath)
             val index = audioTrack(extractor)
-            if (index < 0) throw Mp3Export.Refused("Không đọc được âm thanh của ${chapter.file.name}")
+            if (index < 0) throw Mp3Export.Refused("Không đọc được âm thanh của ${file.name}")
             extractor.selectTrack(index)
             val format = extractor.getTrackFormat(index)
             val length = if (format.containsKey(MediaFormat.KEY_DURATION)) format.getLong(MediaFormat.KEY_DURATION).toDouble() else 0.0
@@ -97,12 +107,11 @@ object M4bAudio : M4bExport.AudioEncoder {
             codec.configure(format, null, null, 0)
             codec.start()
             var channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-            var converter = M4bExport.PcmConverter(format.getInteger(MediaFormat.KEY_SAMPLE_RATE), channels, sink.rate, sink.channels)
+            var converter = M4bExport.PcmConverter(format.getInteger(MediaFormat.KEY_SAMPLE_RATE), channels, toRate, toChannels)
             var float = false
             val info = MediaCodec.BufferInfo()
             var inputDone = false
             var idle = 0
-            val before = sink.frames
             while (true) {
                 if (stopped()) throw Mp3Export.Stopped()
                 if (!inputDone) {
@@ -124,7 +133,7 @@ object M4bAudio : M4bExport.AudioEncoder {
                     out == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         val shown = codec.outputFormat
                         channels = shown.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-                        converter = M4bExport.PcmConverter(shown.getInteger(MediaFormat.KEY_SAMPLE_RATE), channels, sink.rate, sink.channels)
+                        converter = M4bExport.PcmConverter(shown.getInteger(MediaFormat.KEY_SAMPLE_RATE), channels, toRate, toChannels)
                         float = shown.containsKey(MediaFormat.KEY_PCM_ENCODING) && shown.getInteger(MediaFormat.KEY_PCM_ENCODING) == AudioFormat.ENCODING_PCM_FLOAT
                     }
                     out >= 0 -> {
@@ -144,7 +153,7 @@ object M4bAudio : M4bExport.AudioEncoder {
                             if (usable > 0) {
                                 val converted = converter.convert(samples, usable)
                                 try {
-                                    sink.write(converted, converted.size)
+                                    write(converted, converted.size)
                                 } catch (error: Exception) {
                                     throw SinkError(error) // lỗi ghi (hết chỗ...) không phải lỗi giải mã chương
                                 }
@@ -153,10 +162,9 @@ object M4bAudio : M4bExport.AudioEncoder {
                         codec.releaseOutputBuffer(out, false)
                         if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) break
                     }
-                    else -> if (inputDone && ++idle > 500) throw Mp3Export.Refused("Không giải mã được ${chapter.file.name}") // 5 giây không ra gì: codec treo
+                    else -> if (inputDone && ++idle > 500) throw Mp3Export.Refused("Không giải mã được ${file.name}") // 5 giây không ra gì: codec treo
                 }
             }
-            return sink.frames - before
         } catch (error: SinkError) {
             throw error.cause as Exception
         } catch (error: Mp3Export.Refused) {
@@ -164,7 +172,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         } catch (error: Mp3Export.Stopped) {
             throw error
         } catch (error: Exception) {
-            throw Mp3Export.Refused("Không giải mã được ${chapter.file.name}")
+            throw Mp3Export.Refused("Không giải mã được ${file.name}")
         } finally {
             runCatching { codec?.stop() }
             runCatching { codec?.release() }
@@ -175,7 +183,7 @@ object M4bAudio : M4bExport.AudioEncoder {
     private class SinkError(override val cause: Exception) : RuntimeException(cause)
 
     /** Bộ mã hoá AAC-LC + MediaMuxer vào file `target`. `write` nhận PCM 16-bit xen kẽ đã ở định dạng chung. */
-    private class AacSink(target: File, val rate: Int, val channels: Int) {
+    internal class AacSink(target: File, val rate: Int, val channels: Int) : ListenExport.PcmOutput {
         private val encoder: MediaCodec
         private var muxer: MediaMuxer? = null
         private var track = -1
@@ -184,7 +192,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         private val info = MediaCodec.BufferInfo()
 
         /** Số khung PCM đã nhận. */
-        var frames = 0L
+        override var frames = 0L
             private set
 
         init {
@@ -204,7 +212,7 @@ object M4bAudio : M4bExport.AudioEncoder {
             }
         }
 
-        fun write(pcm: ShortArray, count: Int) {
+        override fun write(pcm: ShortArray, count: Int) {
             var offset = 0
             while (offset < count) {
                 val slot = encoder.dequeueInputBuffer(TIMEOUT_US)
@@ -225,7 +233,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         }
 
         /** Hết đầu vào: xả nốt bộ mã hoá, đóng file. */
-        fun finish() {
+        override fun finish() {
             var queued = false
             var waited = 0
             while (!queued) {
@@ -252,7 +260,7 @@ object M4bAudio : M4bExport.AudioEncoder {
             encoder.release()
         }
 
-        fun abort() {
+        override fun abort() {
             runCatching { encoder.stop() }
             runCatching { encoder.release() }
             runCatching { if (started) muxer?.stop() }
