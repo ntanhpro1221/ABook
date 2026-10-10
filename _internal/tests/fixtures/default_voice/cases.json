@@ -1,0 +1,13 @@
+{
+  "note": "Giọng VieNeu mặc định cho người nghe CHƯA chọn giọng: ưu tiên theo tên (không theo vị trí trong danh sách, vị trí đầu là 'Adam bựa'), rơi về giọng VieNeu đầu danh sách. Dùng chung ui/src/listen/readAloudVoice.test.ts và NarratorVoiceTest.kt; đổi bên nào phải đổi cả hai (NARRATOR_VOICES / NarratorVoice.PREFERRED).",
+  "preferred": ["Phạm Tuyên", "Ngọc Linh", "Thanh Bình"],
+  "cases": [
+    {"name": "Phạm Tuyên đứng sau Adam bựa trong danh sách vẫn được chọn trước", "ids": ["vieneu:turbo/Adam bựa", "vieneu:turbo/Adam", "vieneu:turbo/Phạm Tuyên", "vieneu:turbo/Ngọc Linh"], "expect": "vieneu:turbo/Phạm Tuyên"},
+    {"name": "không có Phạm Tuyên thì Ngọc Linh", "ids": ["vieneu:turbo/Adam bựa", "vieneu:turbo/Thanh Bình", "vieneu:turbo/Ngọc Linh"], "expect": "vieneu:turbo/Ngọc Linh"},
+    {"name": "chỉ có bản Nano", "ids": ["vieneu:nano/Adam bựa", "vieneu:nano/Ngọc Linh"], "expect": "vieneu:nano/Ngọc Linh"},
+    {"name": "ưu tiên theo tên trước, bản Turbo hay Nano sau", "ids": ["vieneu:turbo/Ngọc Linh", "vieneu:nano/Phạm Tuyên"], "expect": "vieneu:nano/Phạm Tuyên"},
+    {"name": "cùng một tên ở cả hai bản: bản đứng trước trong danh sách", "ids": ["vieneu:turbo/Thanh Bình", "vieneu:nano/Thanh Bình"], "expect": "vieneu:turbo/Thanh Bình"},
+    {"name": "không có giọng nào trong danh sách ưu tiên: giọng VieNeu đầu danh sách", "ids": ["vieneu:turbo/Adam bựa", "vieneu:turbo/Adam"], "expect": "vieneu:turbo/Adam bựa"},
+    {"name": "máy chưa có giọng VieNeu nào", "ids": [], "expect": null}
+  ]
+}

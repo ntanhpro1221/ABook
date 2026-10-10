@@ -353,6 +353,33 @@ export function MusicMenu() {
   return speaking ? <MusicMenuFor bookId={track.bookId} /> : <PackagedMusicMenu bookId={track.bookId} />;
 }
 
+/** "Mức nhạc dưới giọng đọc": các mức (shared/musicLevels.ts), mức hiện tại có dấu. Chung cho nhạc người làm sách gắn và nhạc nền của sách chữ. */
+function LevelButtons({ level, disabled, onChange }: { level: number; disabled: boolean; onChange: (levelDb: number) => void }) {
+  return (
+    <>
+      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Mức nhạc dưới giọng đọc</div>
+      <div className="flex flex-col gap-0.5 p-1">
+        {levelOptions(level).map(([value, name]) => (
+          <button
+            key={value}
+            type="button"
+            disabled={disabled}
+            aria-pressed={value === level}
+            onClick={() => onChange(value)}
+            className={cn(
+              "flex h-9 items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover disabled:hover:bg-transparent",
+              value === level ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
+            )}
+          >
+            <Check className={cn("size-4 shrink-0", value === level ? "text-accent-text" : "invisible")} />
+            {name}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
 function PackagedMusicMenu({ bookId }: { bookId: string }) {
   const { view, change } = useBookMusic(bookId);
   const music = view.data;
@@ -378,25 +405,7 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
         <Switch id={id} label="Nhạc nền" checked={music.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
       </div>
       <div className={cn("transition-opacity", !music.enabled && "opacity-50")}>
-        <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Mức nhạc dưới giọng đọc</div>
-        <div className="flex flex-col gap-0.5 p-1">
-          {levelOptions(music.levelDb).map(([value, name]) => (
-            <button
-              key={value}
-              type="button"
-              disabled={!music.enabled || change.isPending}
-              aria-pressed={value === music.levelDb}
-              onClick={() => change.mutate({ levelDb: value })}
-              className={cn(
-                "flex h-9 items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover disabled:hover:bg-transparent",
-                value === music.levelDb ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
-              )}
-            >
-              <Check className={cn("size-4 shrink-0", value === music.levelDb ? "text-accent-text" : "invisible")} />
-              {name}
-            </button>
-          ))}
-        </div>
+        <LevelButtons level={music.levelDb} disabled={!music.enabled || change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} />
       </div>
       <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này.</p>
     </MenuShell>
@@ -404,7 +413,7 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
 }
 
 function MusicMenuFor({ bookId }: { bookId: string }) {
-  const { options, chosen, label, playing, error, loading, choose, canImport, addMusic } = usePlaylistChoice(bookId);
+  const { options, chosen, label, playing, error, loading, choose, levelDb, setLevel, levelBusy, canImport, addMusic } = usePlaylistChoice(bookId);
   return (
     <MenuShell
       label="Nhạc nền"
@@ -440,6 +449,8 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
         )}
         {loading && <p className="px-2 py-1.5 text-xs text-fg-2">Đang tải các danh sách nhạc…</p>}
       </div>
+      {/* Chỉ khi cuốn đang có nhạc: tắt nhạc thì chỉnh mức chẳng nghe thấy gì. */}
+      {playing && <LevelButtons level={levelDb} disabled={levelBusy} onChange={setLevel} />}
       <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error)}</p>
     </MenuShell>
   );

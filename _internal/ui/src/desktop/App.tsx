@@ -550,11 +550,12 @@ export function App() {
         // Góc trên bên phải: nút chính của các trang Studio nằm ở giữa / bên trái và thanh dưới (thanh phát, thanh Tạo sách) ở đáy -
         // thông báo ở góc dưới phải từng che nút "Tiếp tục" / "Tạo" ngay sau khi bấm (soát UX a8 05-10, mục 22).
         // Màn hẹp (Studio từ xa trên điện thoại): đầu trang dự án là chỗ nhìn trạng thái và nút chính - thông báo nằm đáy, trên
-        // thanh dưới (soát UX a8 07-10: thông báo đè đầu trang). Có hộp thoại mở thì vẫn ở trên như cũ.
-        position={modalOpen ? "top-center" : narrow ? "bottom-center" : "top-right"}
-        offset={{ top: 16, right: 16, left: narrow ? 16 : 96, bottom: "var(--toast-bottom, 96px)" }}
+        // thanh dưới (soát UX a8 07-10: thông báo đè đầu trang). Có hộp thoại mở thì ở trên như cũ, trừ màn hẹp: hộp gần kín màn nên thông
+        // báo ở trên đè tiêu đề + nút Đóng của hộp (soát UX a17, thẻ tiến độ xuất) - xuống đáy sát mép, không có thanh dưới nào che.
+        position={modalOpen && !narrow ? "top-center" : narrow ? "bottom-center" : "top-right"}
+        offset={{ top: 16, right: 16, left: narrow ? 16 : 96, bottom: modalOpen && narrow ? 16 : "var(--toast-bottom, 96px)" }}
         // Dưới 600 px sonner bỏ `offset` mà dùng `mobileOffset` (mặc định 16 px) - thông báo từng đè lên thanh tab dưới ở 390 px.
-        mobileOffset={{ top: 16, right: 16, left: 16, bottom: "var(--toast-bottom, 96px)" }}
+        mobileOffset={{ top: 16, right: 16, left: 16, bottom: modalOpen ? 16 : "var(--toast-bottom, 96px)" }}
         visibleToasts={2}
         // Thông báo vài giây che chữ thẻ bên dưới (soát UX a13 #17): nút ✕ để đọc xong là gạt đi ngay, không phải chờ hết hạn.
         closeButton

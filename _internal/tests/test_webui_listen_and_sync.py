@@ -203,6 +203,18 @@ def test_last_night_is_the_newest_undismissed_night(tmp_path: Path) -> None:
     assert listening.latest_night(now) is None, "gạt đi trên điện thoại thì máy tính cũng thôi nhắc"
 
 
+def test_last_night_skips_books_that_are_gone(tmp_path: Path) -> None:
+    listening = Listening(tmp_path / "listening.json")
+    now = time.time()
+    event = {"type": "timer", "at": now - 3600, "minutes": 30, "position": {"chapterId": 1, "seconds": 10}}
+    listening.save_night("old", {"id": "n1", "startedAt": now - 3600, "events": [event]})
+    listening.save_night("gone", {"id": "n2", "startedAt": now - 1800, "events": [event]})
+    assert listening.latest_night(now)["bookId"] == "gone"
+    assert listening.latest_night(now, exists=lambda book: book != "gone")["bookId"] == "old"
+    assert listening.latest_night(now, exists=lambda book: False) is None, "sách xoá hết thì không còn thẻ 'Tối qua'"
+    assert listening.get("gone")["night"]["id"] == "n2", "nhật ký nghe của sách đã xoá vẫn giữ (khôi phục từ Thùng rác)"
+
+
 # ---- đồng bộ điện thoại ---------------------------------------------------------------------------------------
 
 

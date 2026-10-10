@@ -35,6 +35,7 @@ import re
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -450,8 +451,9 @@ class Listening:
             entry["updatedAt"] = time.time()
             self._save()
 
-    def latest_night(self, now: float | None = None) -> dict[str, Any] | None:
-        """Đêm gần nhất chưa bị gạt đi, trong hồ sơ đang dùng của bất kỳ cuốn nào: `{"bookId", "night"}`."""
+    def latest_night(self, now: float | None = None, exists: Callable[[str], bool] | None = None) -> dict[str, Any] | None:
+        """Đêm gần nhất chưa bị gạt đi, trong hồ sơ đang dùng của bất kỳ cuốn nào: `{"bookId", "night"}`. `exists`: cuốn còn
+        trong thư viện không - cuốn đã xoá thì đêm của nó không còn chỗ để "nghe tiếp", bỏ qua (nhật ký nghe vẫn giữ)."""
         now = time.time() if now is None else now
         with self._lock:
             found: tuple[str, dict[str, Any]] | None = None
@@ -462,6 +464,8 @@ class Listening:
                 if now - float(night.get("endedAt") or night.get("startedAt") or 0) > NIGHT_RECENT_SECONDS:
                     continue
                 if found is None or float(night.get("startedAt") or 0) > float(found[1].get("startedAt") or 0):
+                    if exists is not None and not exists(book):
+                        continue
                     found = (book, night)
             return None if found is None else json.loads(json.dumps({"bookId": found[0], "night": found[1]}))
 

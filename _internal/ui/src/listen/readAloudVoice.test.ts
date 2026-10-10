@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
 import type { ListenSource } from "./source";
@@ -148,6 +149,30 @@ describe("giọng mặc định khi chưa chọn", () => {
   it("defaults to the first VieNeu voice when the listener has chosen nothing and VieNeu is installed", async () => {
     const { module } = await fresh();
     expect(module.resolveVoice([...VOICES, ...nano], "")?.id).toBe("vieneu:nano/adam");
+  });
+
+  it("prefers a neutral storytelling voice over the first one in the list (Adam bựa)", async () => {
+    const { module } = await fresh();
+    const voices = [
+      ...VOICES,
+      { id: "vieneu:turbo/Adam bựa", name: "Adam bựa (VieNeu)", provider: "vieneu", online: false, gender: "male" },
+      { id: "vieneu:turbo/Ngọc Linh", name: "Ngọc Linh (VieNeu)", provider: "vieneu", online: false, gender: "female" },
+    ] as ReadAloudVoice[];
+    expect(module.resolveVoice(voices, "")?.id).toBe("vieneu:turbo/Ngọc Linh");
+    expect(module.resolveVoice(voices, "vieneu:turbo/Adam bựa")?.id).toBe("vieneu:turbo/Adam bựa"); // đã chọn thì giữ
+  });
+
+  it("follows the cases shared with the Android core (tests/fixtures/default_voice)", async () => {
+    const { module } = await fresh();
+    const shared = JSON.parse(readFileSync(new URL("../../../tests/fixtures/default_voice/cases.json", import.meta.url)).toString("utf8")) as {
+      preferred: string[];
+      cases: { name: string; ids: string[]; expect: string | null }[];
+    };
+    expect([...module.NARRATOR_VOICES]).toEqual(shared.preferred);
+    for (const item of shared.cases) {
+      const voices = item.ids.map((id) => ({ id, name: id, provider: "vieneu", online: false })) as ReadAloudVoice[];
+      expect(module.narratorVoice(voices)?.id ?? null, item.name).toBe(item.expect);
+    }
   });
 
   it("keeps a voice the listener chose, and falls back to the machine default when no VieNeu voice exists", async () => {

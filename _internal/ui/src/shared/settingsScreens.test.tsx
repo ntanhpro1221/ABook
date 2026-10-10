@@ -71,6 +71,14 @@ describe("thành phần bên thứ ba", () => {
     expect(parsed[0].items[0].text).toMatch(/^ABook phát hành theo giấy phép MIT/);
   });
 
+  it("người dùng không thấy ghi chú dành cho người bảo trì", async () => {
+    const text = await loadThirdParty();
+    expect(text).toContain("Ghi chú cho người bảo trì"); // vẫn ở file docs cho người phát hành
+    const shown = parseThirdParty(text).flatMap((section) => [section.title, ...section.items.map((item) => item.text)]).join(" | ");
+    expect(shown).not.toMatch(/người bảo trì|RELEASING|_internal\/|dây chuyền sản xuất/);
+    expect(shown).toMatch(/Xuất sách nói/);
+  });
+
   it("dòng tiếp nối nối vào gạch đầu dòng trước nó", () => {
     const parsed = parseThirdParty("# T\n\n## Mục\n\n- Một\n  hai\n- Ba\n\nĐoạn văn\ntiếp.\n");
     expect(parsed).toEqual([
