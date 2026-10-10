@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.41] - 2026-10-10
+
 ### Nghe ngay và thư viện
 
 - Bản tăng tốc của giọng VieNeu không khởi động được thì đọc ngay bằng bản thường (trước đây có thể im tới hai phút); thẻ giọng không còn khoe số đo của bản tăng tốc đã hỏng, và nói rõ khi máy không chạy được nó (cần Windows 64-bit, CPU có AVX2).
