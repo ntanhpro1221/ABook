@@ -1,6 +1,11 @@
 // Chữ của tab "Cần nghe lại" (soát UX a8 07-10), tách ra để kiểm bằng test.
 
 /** "máy nghe khớp 15%" không nói khớp với cái gì - đây là độ khớp giữa điều máy nghe lại được và CHỮ CỦA CÂU. */
+/** Cuốn chưa thu câu nào: "không còn câu nào cần xem" là nói dối (chưa có câu nào để kiểm), phải nói là sẽ có sau khi thu âm. */
+export function notRecordedYet(segments: { recorded: number } | null | undefined): boolean {
+  return Boolean(segments) && segments!.recorded === 0;
+}
+
 export function matchPhrase(percent: string): string {
   return `máy nghe lại khớp ${percent} với chữ của câu`;
 }

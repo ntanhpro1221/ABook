@@ -63,6 +63,7 @@ import { useAfter } from "@/shared/useAfter";
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
 import { ADD_MUSIC_LABEL } from "./playlistBed";
+import { openExternal } from "@/shared/openExternal";
 import { JumpToPlaying, ReadAlongText, sentenceIndexAt, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { canPrepare, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import type { ReadAloudVoice } from "./readAloud";
@@ -1086,7 +1087,7 @@ function MusicCreditLine() {
             <p>
               Giấy phép:{" "}
               {musicCredit.licenseUrl ? (
-                <a href={musicCredit.licenseUrl} target="_blank" rel="noreferrer" className="underline">
+                <a href={musicCredit.licenseUrl} target="_blank" rel="noreferrer" onClick={(event) => openExternal(musicCredit.licenseUrl!, event)} className="underline">
                   {licenseLabel(musicCredit.license, musicCredit.licenseUrl)}
                 </a>
               ) : (
@@ -1096,7 +1097,7 @@ function MusicCreditLine() {
           )}
           {musicCredit.landing && (
             <p>
-              <a href={musicCredit.landing} target="_blank" rel="noreferrer" className="underline">
+              <a href={musicCredit.landing} target="_blank" rel="noreferrer" onClick={(event) => openExternal(musicCredit.landing!, event)} className="underline">
                 Trang của bài nhạc
               </a>
             </p>

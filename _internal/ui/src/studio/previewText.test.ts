@@ -3,7 +3,8 @@ import { previewCaption, refusalText, tryNote } from "./previewText";
 
 describe("refusalText", () => {
   it("says why in plain words for the reasons the server gives", () => {
-    expect(refusalText("producing", "x")).toContain("sau khi xong chương đang làm");
+    expect(refusalText("producing", "x")).toContain("cuốn ấy xong");
+    expect(refusalText("producing", "Máy đang phân tích cuốn “A”", true)).toBe("Máy đang phân tích cuốn “A”");
     expect(refusalText("gpu", "x")).toContain("Card đồ hoạ đang bận");
     expect(refusalText("studio", "x")).toContain("Cần cài phần làm sách");
   });
@@ -35,7 +36,7 @@ describe("tryNote", () => {
   });
 
   it("tells a book that is being recorded up front, in the listener's words", () => {
-    expect(tryNote({ ...idle, bookBusy: true })).toContain("sau khi xong chương đang làm");
+    expect(tryNote({ ...idle, bookBusy: true })).toContain("cuốn này xong");
   });
 
   it("says waiting, then playing, then done - never only a silent button", () => {

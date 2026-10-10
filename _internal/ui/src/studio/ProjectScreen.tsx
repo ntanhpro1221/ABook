@@ -72,6 +72,8 @@ import { CastList } from "@/listen/BookScreen";
 import { analyzerLabel } from "./analyzerLabel";
 import { ApplyChangesDialog } from "./ApplyChanges";
 import { CoverEditor } from "./CoverEditor";
+import { friendlyError } from "./errorText";
+import { isGone, useSideError } from "./polling";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
 import { PhoneEdits, useInboxCount } from "./PhoneEdits";
 import { WorkInbox, useWorkCount } from "./WorkInbox";
@@ -161,6 +163,45 @@ function Step({
   );
 }
 
+/** Lỗi của lần làm sách: câu cho người nghe + việc nên làm; nguyên văn kỹ thuật thu vào "Chi tiết". */
+function LastError({ raw }: { raw: string }) {
+  const shown = friendlyError(raw);
+  return (
+    <div className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
+      <CircleAlert className="mt-0.5 size-4 shrink-0" />
+      <div className="min-w-0">
+        <p>
+          {shown.summary} {shown.hint}
+        </p>
+        {shown.detail && (
+          <details className="mt-1 text-xs">
+            <summary className="cursor-pointer select-none">Chi tiết</summary>
+            <p className="mt-1 select-text break-words font-mono">{shown.detail}</p>
+          </details>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Dưới hàng "Người kể chuyện" của tab Nhân vật: giọng kể chọn lúc tạo sách. Cuốn chưa chạy thì đổi được ngay qua "Sửa thiết lập"
+ *  (trình tạo điền sẵn mọi lựa chọn cũ); đã chạy thì giọng kể gắn với cả cuốn - nói thẳng, đừng để người nghe tìm nút không có. */
+function NarratorNote({ book }: { book: BookSummary }) {
+  const navigate = useNavigate();
+  const remote = Boolean(useAppInfo().data?.remote);
+  if (book.phase === "idle" && !remote) {
+    return (
+      <>
+        Giọng kể chọn lúc tạo sách, đổi được vì cuốn này chưa bắt đầu chạy.{" "}
+        <button type="button" onClick={() => navigate(`/studio/new?redo=${book.id}`)} className="font-medium text-accent-text underline underline-offset-2">
+          Đổi giọng kể
+        </button>
+      </>
+    );
+  }
+  return <>Giọng kể chọn lúc tạo sách và giữ nguyên cho cả cuốn nên không đổi ở đây; muốn giọng kể khác thì tạo lại cuốn từ file truyện.</>;
+}
+
 function ProductionPanel({ book }: { book: BookSummary }) {
   const [analysis, casting, synthesis] = stepStates(book);
   const live = book.running || book.starting;
@@ -207,12 +248,7 @@ function ProductionPanel({ book }: { book: BookSummary }) {
           <span>Không khởi động được: {book.startError}</span>
         </div>
       )}
-      {book.lastError && book.phase === "error" && (
-        <div className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
-          <CircleAlert className="mt-0.5 size-4 shrink-0" />
-          <span>{book.lastError}</span>
-        </div>
-      )}
+      {book.lastError && book.phase === "error" && <LastError raw={book.lastError} />}
     </section>
   );
 }
@@ -954,6 +990,7 @@ export function ProjectScreen() {
   const [renaming, setRenaming] = useState<CastMember | null>(null);
   const [gendering, setGendering] = useState<CastMember | null>(null);
   const { data: cast } = useCast(id);
+  const sideError = useSideError(id ?? "");
   usePageTitle(data ? `${data.book.title} · Studio` : undefined);
   const location = useLocation();
   // Đổi tab tại chỗ thay địa chỉ (không chất lịch sử), nhưng NHẢY từ một thẻ/câu sang tab khác là một bước điều hướng:
@@ -990,6 +1027,19 @@ export function ProjectScreen() {
           </div>
         </div>
       </div>
+    );
+  }
+  if (isGone(error)) {
+    // Sách đã bị xoá hay chuyển đi (tab mở từ trước): thôi hỏi máy chủ, nói thẳng và cho đường về.
+    return (
+      <EmptyState
+        icon={CircleAlert}
+        title="Dự án này không còn"
+        className="mt-20"
+        action={<Button onClick={() => navigate("/studio")}>Về danh sách dự án</Button>}
+      >
+        Cuốn này đã bị xoá hoặc chuyển đi khỏi thư viện.
+      </EmptyState>
     );
   }
   if (error || !data) {
@@ -1071,6 +1121,14 @@ export function ProjectScreen() {
         <PrecastBanner book={book} onOpen={() => setParams({ tab: "precast" })} />
       )}
 
+      {sideError && (
+        <div role="status" className="mt-4 flex gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm">
+          <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
+          <span className="text-pretty">
+            Một phần của trang này chưa tải được: {sideError} Máy thử lại thưa dần; làm mới trang để thử ngay.
+          </span>
+        </div>
+      )}
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-9">
         <TabsList>
           <TabsTrigger value="chapters" count={chapters.length}>
@@ -1170,6 +1228,7 @@ export function ProjectScreen() {
             onMerge={setMerging}
             onRename={setRenaming}
             onGender={setGendering}
+            narratorNote={<NarratorNote book={book} />}
           />
           <NameReadings bookId={book.id} focus={params.get("focus") === "names"} name={params.get("name") ?? ""} />
         </TabsContent>

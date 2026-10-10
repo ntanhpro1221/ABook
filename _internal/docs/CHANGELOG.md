@@ -7,6 +7,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Làm sách trong Studio (máy tính)
+
+- Bấm liên kết ngoài trong cửa sổ app (trang mã nguồn ở Cài đặt, giấy phép và trang bài nhạc ở màn "Đang nghe") giờ mở bằng trình duyệt mặc định; trước đây không có gì xảy ra.
+- "Nghe thử" khi máy đang bận nói rõ cuốn nào đang chiếm máy và đang ở bước phân tích hay thu âm, và nói thật việc nên làm (không mời Dừng giữa lúc phân tích).
+- Thời gian còn lại cạnh "N% tổng" ghi rõ của bước nào ("pha phân tích còn khoảng 2 giờ"), không còn "sắp xong" khi còn bước sau.
+- Lỗi của lần làm sách hiện bằng câu tiếng Việt kèm việc nên làm (card đồ hoạ hết bộ nhớ, Ollama chưa chạy, ổ đĩa đầy); nguyên văn kỹ thuật nằm trong "Chi tiết".
+- Tab Nhân vật: dưới hàng "Người kể chuyện" nói giọng kể đổi ở đâu (cuốn chưa chạy có nút "Đổi giọng kể") hay vì sao không đổi được.
+- Hộp "Xuất…" của dự án có thêm "Sách nói M4B". Tên chương tự đặt từ dòng đầu của file không còn bị cắt giữa từ. Tab "Cần nghe lại" của cuốn chưa thu âm ghi "chưa có câu nào để kiểm".
+- Trang dự án đã bị xoá hiện "Dự án này không còn" và thôi hỏi máy chủ; phần nào của trang bị lỗi thì máy chủ trả lời gì hiện lên trang và nhịp hỏi lại thưa dần.
+
 ## [0.4.42] - 2026-10-10
 
 ### Sửa nhỏ khi dùng hằng ngày (máy tính và điện thoại)

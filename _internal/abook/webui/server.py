@@ -324,7 +324,7 @@ class App:
         # "Nghe thử" một cách đọc tên trước khi lưu (reading_preview.py): một tiến trình giọng dùng chung, tắt trước khi cuốn nào chạy.
         self.previews = reading_preview.ReadingPreviews(
             preferences.path.with_name("reading-previews"), studio=lambda: self.studio, fake=self._fake_engine,
-            busy=lambda: self._busy_elsewhere() is not None)
+            busy=self.busy_book)
         # "Duyệt trước khi thu" (precast.py): người gác mốc phân tích xong sống khi có cuốn đang chạy; báo ra màn hình Windows
         # (giọng giả / bài thử: không báo gì).
         self._precast_lock = threading.RLock()
@@ -567,6 +567,17 @@ class App:
         with self._queue_lock:
             result["queuePosition"] = self.queue.index(result["id"]) + 1 if result["id"] in self.queue else None
         return result
+
+    def busy_book(self) -> dict[str, Any] | None:
+        """Cuốn đang chặn "nghe thử" (cuốn nào đang chạy / khởi động) - tên, mã và pha để lời từ chối nói đúng; None: máy rảnh."""
+        path = self._busy_elsewhere()
+        if path is None:
+            return None
+        try:
+            summary = self.summary(path)
+            return {"title": str(summary["title"]), "bookId": str(summary["id"]), "phase": str(summary["phase"])}
+        except Exception:  # noqa: BLE001 - sổ hỏng cũng không được làm mất lời từ chối
+            return {"title": path.name, "bookId": book_id(path), "phase": ""}
 
     def _busy_elsewhere(self, path: Path | None = None) -> Path | None:
         """Cuốn khác `path` đang chạy hay khởi động (không `path`: cuốn nào cũng tính)."""
@@ -3330,7 +3341,7 @@ class Handler(BaseHTTPRequestHandler):
             result = self.app.previews.preview(path, book_id(path), surface, spoken,
                                                int(segment) if isinstance(segment, int) and not isinstance(segment, bool) else None)
         except reading_preview.PreviewError as error:
-            raise ApiError(error.status, error.message, reason=error.reason) from error
+            raise ApiError(error.status, error.message, reason=error.reason, **error.extra) from error
         self._send_json(HTTPStatus.OK, result)
 
     def post_voice_preview(self, _query: dict[str, list[str]], value: str) -> None:
@@ -3353,7 +3364,7 @@ class Handler(BaseHTTPRequestHandler):
                 segment_id=int(segment) if isinstance(segment, int) and not isinstance(segment, bool) else None)
         except reading_preview.PreviewError as error:
             message = VOICE_PROBLEMS.get(error.reason, error.message) if error.status == HTTPStatus.BAD_REQUEST else error.message
-            raise ApiError(error.status, message, reason=error.reason) from error
+            raise ApiError(error.status, message, reason=error.reason, **error.extra) from error
         self._send_json(HTTPStatus.OK, result)
 
     def media_reading_preview(self, _query: dict[str, list[str]], value: str, key: str) -> None:
@@ -3639,6 +3650,15 @@ class Handler(BaseHTTPRequestHandler):
         if folder not in self.app.exports:
             raise ApiError(HTTPStatus.FORBIDDEN, "Không mở được thư mục này")
         actions.reveal(Path(folder))
+        self._send_json(HTTPStatus.OK, {"ok": True})
+
+    def post_open_url(self, _query: dict[str, list[str]]) -> None:
+        # Cửa sổ Tauri nuốt `target=_blank`: trang nhờ máy chủ mở liên kết ngoài. Chỉ http/https; đường này không có trong
+        # remote_studio.ALLOWED nên thiết bị ở xa không bao giờ chạm tới.
+        try:
+            actions.open_url(str(self._body().get("url", "")))
+        except ValueError as exc:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def get_sync(self, _query: dict[str, list[str]]) -> None:
@@ -4483,6 +4503,7 @@ ROUTES: list[Route] = [
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
     ("DELETE", re.compile(BOOK + r"/cover"), Handler.delete_cover),
     ("POST", re.compile(r"/api/reveal-export"), Handler.post_reveal_export),
+    ("POST", re.compile(r"/api/open-url"), Handler.post_open_url),
     ("GET", re.compile(r"/api/sync"), Handler.get_sync),
     ("POST", re.compile(r"/api/sync"), Handler.post_sync),
     ("POST", re.compile(r"/api/sync/pairing"), Handler.post_sync_pairing),
