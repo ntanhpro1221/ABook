@@ -138,3 +138,22 @@ describe("giọng chạy trên máy để đỡ khi mất mạng", () => {
   });
 });
 
+
+describe("giọng mặc định khi chưa chọn", () => {
+  const nano = [
+    { id: "vieneu:nano/adam", name: "Adam (VieNeu Nano)", provider: "vieneu", online: false, gender: "male" },
+    { id: "vieneu:nano/aihan", name: "Ái Hân (VieNeu Nano)", provider: "vieneu", online: false, gender: "female" },
+  ] as ReadAloudVoice[];
+
+  it("defaults to the first VieNeu voice when the listener has chosen nothing and VieNeu is installed", async () => {
+    const { module } = await fresh();
+    expect(module.resolveVoice([...VOICES, ...nano], "")?.id).toBe("vieneu:nano/adam");
+  });
+
+  it("keeps a voice the listener chose, and falls back to the machine default when no VieNeu voice exists", async () => {
+    const { module } = await fresh();
+    expect(module.resolveVoice([...VOICES, ...nano], "edge:vi-VN-NamMinhNeural")?.id).toBe("edge:vi-VN-NamMinhNeural");
+    expect(module.resolveVoice(VOICES, "")?.id).toBe("edge:vi-VN-HoaiMyNeural");
+    expect(module.resolveVoice([...VOICES, ...nano], "vieneu:nano/gone")?.id).toBe("edge:vi-VN-HoaiMyNeural"); // đã chọn mà giọng không còn: như trước
+  });
+});

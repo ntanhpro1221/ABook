@@ -143,6 +143,17 @@ function RemoveImportedMenuItem({ book }: { book: ListenBook }) {
   );
 }
 
+/** Sách chỉ có chữ (EPUB / TXT / DOCX / PDF) và sách đóng gói .abook bỏ khỏi thư viện thì khác nhau ở điều người dùng cần biết sau đó: file gốc thế nào, lấy lại cách nào. */
+function removedNote(book: ListenBook): string {
+  return book.stage === "text" ? "Đã chuyển vào Thùng rác - khôi phục được từ đó. File gốc của bạn không bị đụng." : "Mở lại file .abook là nhập lại.";
+}
+
+function removeAsk(book: ListenBook): string {
+  return book.stage === "text"
+    ? "Bản trong thư viện chuyển vào Thùng rác, khôi phục được từ đó. File gốc của bạn không bị đụng - thêm lại nó là có sách lại."
+    : "Bản đã nhập trên máy này chuyển vào Thùng rác, khôi phục được từ đó. File .abook gốc không bị đụng - mở lại nó là nhập lại.";
+}
+
 function RemoveImportedHost() {
   const [book, setBook] = useState<ListenBook | null>(null);
   const [busy, setBusy] = useState(false);
@@ -165,7 +176,7 @@ function RemoveImportedHost() {
       navigate("/", { replace: true });
       void client.invalidateQueries({ queryKey: ["listen"] });
       toast.success(`Đã bỏ “${book.title}” khỏi thư viện`, {
-        description: "Thư mục sách đã vào Thùng rác. Mở lại file .abook là nhập lại.",
+        description: removedNote(book),
       });
     } catch (error) {
       toast.error("Chưa xoá được", { description: (error as Error).message });
@@ -178,7 +189,7 @@ function RemoveImportedHost() {
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
       title={`Bỏ “${book?.title ?? ""}” khỏi thư viện?`}
-      description="Bản đã nhập trên máy này chuyển vào Thùng rác, khôi phục được từ đó. File .abook gốc không bị đụng - mở lại nó là nhập lại."
+      description={book ? removeAsk(book) : ""}
     >
       <div className="flex justify-end gap-2">
         <Button variant="ghost" onClick={() => setBook(null)}>
@@ -365,7 +376,7 @@ function OpenBookFileButton({ variant = "secondary" }: { variant?: "secondary" |
     }
   };
   return (
-    <Button variant={variant} icon={FileAudio} disabled={busy} onClick={() => void run()}>
+    <Button variant={variant} icon={FileAudio} className="touch-row" disabled={busy} onClick={() => void run()}>
       {busy ? "Đang mở…" : "Mở file sách"}
     </Button>
   );

@@ -485,15 +485,48 @@ def test_a_failed_trial_marks_the_machine_and_the_next_trial_tries_again(module,
         return {"rtf": 0.5, "firstAudioMs": 1, "loadMs": 1, "audioSeconds": 5.0}
 
     vieneu_module.configure(folder, benchmark=bench)
-    vieneu_module._core._bench("turbo")
+    first = vieneu_module._core._bench("turbo")
+    assert first["engine"] == "onnx", "số đo lần hỏng là của ONNX (bản tăng tốc đã tắt giữa chừng)"
     state = vieneu_module.accelerated()
     assert state["problem"].startswith("server thoát") and not state["active"] and vieneu_module.gguf_files() is None
     assert json.loads((folder / "module.json").read_bytes())["gguf"]["broken"].startswith("server thoát"), "ghi lại: lần sau khỏi thử"
-    vieneu_module._core._bench("turbo")  # "Thử lại tốc độ"
+    again = vieneu_module._core._bench("turbo")  # "Thử lại tốc độ"
+    assert again["engine"] == "gguf"
     assert vieneu_module.accelerated()["problem"] == "" and vieneu_module.gguf_files() is not None
     vieneu_module._core._bench("nano")
     assert attempts == ["turbo", "turbo", "nano"]
     vieneu_gguf.reset_failure()
+
+
+def test_the_turbo_number_measured_with_the_fast_build_is_dropped_once_that_build_failed(module) -> None:
+    folder, _stopped = module
+    _place_gguf(folder)
+    bench = {"turbo": {"rtf": 0.16, "firstAudioMs": 900, "engine": "gguf"}, "nano": {"rtf": 0.3, "firstAudioMs": 500}}
+    assert vieneu_module._current_benchmarks(bench) == bench, "bản tăng tốc còn chạy: số đo còn đúng"
+    vieneu_gguf._fail("server chết giữa phiên")
+    try:
+        assert vieneu_module._current_benchmarks(bench) == {"nano": bench["nano"]}, "hỏng rồi thì số \"nhanh gấp 6 lần\" cũ không còn đúng"
+        onnx = {"turbo": {"rtf": 0.3, "firstAudioMs": 1600, "engine": "onnx"}}
+        assert vieneu_module._current_benchmarks(onnx) == onnx, "số đo bằng ONNX giữ nguyên"
+        unknown = {"turbo": {"rtf": 0.2, "firstAudioMs": 900}}
+        assert vieneu_module._current_benchmarks(unknown) == {}, "không rõ đo bằng gì thì không khẳng định"
+    finally:
+        vieneu_gguf.reset_failure()
+
+
+def test_the_card_says_why_when_the_machine_cannot_run_the_fast_build(module, monkeypatch: pytest.MonkeyPatch) -> None:
+    folder, _stopped = module
+    network = Network()
+    monkeypatch.setattr(studio_setup, "download", network.download)
+    vieneu_module.configure(folder, benchmark=lambda tier: {"rtf": 0.3, "firstAudioMs": 1600, "loadMs": 600, "audioSeconds": 5.0})
+    assert vieneu_module.status()["fastUnsupported"] == "", "chưa tải Giọng VieNeu: chưa có gì để nói"
+    monkeypatch.setattr(vieneu_gguf, "unsupported_reason", lambda: "CPU của máy này không có lệnh AVX2")
+    vieneu_module.start(["turbo"])
+    vieneu_module.join(10)
+    status = vieneu_module.status()
+    assert status["state"] == "ready", status
+    assert status["fastUnsupported"] == "CPU của máy này không có lệnh AVX2", "lựa chọn ẩn đi nhưng thẻ vẫn nói vì sao"
+    assert "fast" not in {choice["id"] for choice in status["choices"]} and status["accelerated"] is None
 
 
 def test_the_fast_choice_is_hidden_when_the_machine_cannot_run_it(module, monkeypatch: pytest.MonkeyPatch) -> None:

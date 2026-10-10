@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookMatchesQuery, bookmarkReadPath, chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
+import { bookMatchesQuery, bookmarkReadPath, chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, twinBookIds, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
@@ -243,5 +243,17 @@ describe("bookmarkReadPath", () => {
     expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 12, quote: "Trời đã sáng." })).toBe("/book/b1/read/3?at=12");
     expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 0, quote: "" })).toBe("/book/b1/read/3?at=0");
     expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 64, note: "", at: 1 })).toBeNull();
+  });
+});
+
+describe("twinBookIds", () => {
+  it("marks books that share a title (ignoring case, accents and spacing) and leaves the others alone", () => {
+    const twins = twinBookIds([
+      { id: "a", title: "Truyện Kiều" },
+      { id: "b", title: "truyen  kieu" },
+      { id: "c", title: "Tắt đèn" },
+    ]);
+    expect([...twins].sort()).toEqual(["a", "b"]);
+    expect(twinBookIds([]).size).toBe(0);
   });
 });

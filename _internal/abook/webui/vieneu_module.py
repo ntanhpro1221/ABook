@@ -104,7 +104,7 @@ CHOICE_TEXT = {
     "turbo": ("Giọng VieNeu", "25 giọng, âm thanh 48 kHz - hay nhất"),
     "nano": ("Giọng VieNeu Nano", "11 giọng, âm thanh 24 kHz - lúc đọc tốn ít bộ nhớ và hợp máy ít lõi hơn Giọng VieNeu; file tải nặng hơn"),
     "aligner": ("Tô đúng từng chữ đang đọc", "Biết chính xác chữ nào đang được đọc. Không tải thì máy ước theo âm tiết, đôi khi lệch một nhịp"),
-    FAST: ("Bản tăng tốc", "Giọng VieNeu đọc nhanh gấp hai lần trở lên và tốn ít bộ nhớ hơn - giọng vẫn như cũ. Dùng kèm Giọng VieNeu"),
+    FAST: ("Bản tăng tốc", "Giọng VieNeu đọc nhanh gấp hai lần trở lên và tốn ít bộ nhớ hơn - giọng vẫn như cũ. Dùng kèm Giọng VieNeu; cần Windows 64-bit, CPU có AVX2 (hầu hết máy từ 2015)"),
 }
 PART_LABEL = {"g2p": "Bộ đọc chữ tiếng Việt", "voices": "Danh sách giọng", "turbo": "Giọng VieNeu", "nano": "Giọng VieNeu Nano",
               "aligner": "Bộ căn chữ", "gguf": "Bản tăng tốc"}
@@ -151,7 +151,9 @@ def _probing(benchmark: Callable[[str], dict[str, Any]] | None) -> Callable[[str
         vieneu_gguf.reset_failure()
         _set_broken("")
         try:
-            return benchmark(tier)
+            result = benchmark(tier)
+            # Ghi số này đo bằng bản nào: bản tăng tốc hỏng về sau thì số ấy không còn nói đúng cách máy đang đọc (status() bỏ nó đi).
+            return {**result, "engine": "onnx" if vieneu_gguf.failure() or gguf_files() is None else "gguf"}
         finally:
             _set_broken(vieneu_gguf.failure())
     return run
@@ -349,6 +351,15 @@ def suggestion(bench: dict[str, Any], tiers: list[str]) -> dict[str, Any] | None
     return {"tier": tier, "rtf": rtf, "switchTo": "online", "installed": True}
 
 
+def _current_benchmarks(bench: dict[str, Any]) -> dict[str, Any]:
+    """Số đo của Turbo đo bằng bản tăng tốc (hay không rõ đo bằng gì) mà nay bản ấy đã hỏng trong phiên / bị ghi là hỏng thì bỏ đi: máy đang đọc bằng ONNX, số
+    "nhanh gấp 6 lần" cũ nói sai. Số đo bằng ONNX giữ nguyên; hết hỏng (bật lại / thử lại tốc độ) thì đo lại, số mới hiện."""
+    turbo = bench.get("turbo")
+    if isinstance(turbo, dict) and turbo.get("engine") != "onnx" and accelerated()["problem"]:
+        return {tier: value for tier, value in bench.items() if tier != "turbo"}
+    return bench
+
+
 def status() -> dict[str, Any]:
     with _lock:
         parts = _parts()
@@ -369,7 +380,7 @@ def status() -> dict[str, Any]:
             state = "outdated" if behind else "ready"
         else:
             state = "unsupported" if blocked else "missing"
-        bench = _core.benchmarks()
+        bench = _current_benchmarks(_core.benchmarks())
         choices = []
         picks = {best, "aligner"} | ({FAST} if best == "turbo" else set())  # bản tăng tốc đi kèm Turbo: máy hợp Turbo thì khuyên cả hai
         for choice in _choices():
@@ -391,6 +402,8 @@ def status() -> dict[str, Any]:
             "benchmarking": _state["benchmarking"], "suggestion": suggestion(bench, tiers) if not _state["benchmarking"] else None,
             "cancelled": bool(_state["cancelled"]), "device": facts, "recommended": best, "restart": _restart_pending(), "slowRtf": SLOW_RTF,
             "accelerated": accelerated() if FAST in have else None,
+            # Máy không chạy được bản tăng tốc: lựa chọn ấy ẩn đi, nhưng thẻ vẫn nói vì sao (không ẩn im lặng).
+            "fastUnsupported": vieneu_gguf.unsupported_reason() if "turbo" in tiers else "",
         }
 
 

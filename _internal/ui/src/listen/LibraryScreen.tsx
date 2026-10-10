@@ -9,10 +9,8 @@ import { formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { caughtUpDetail, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, isLibrarySort, type LibrarySort } from "./librarySort";
-import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, seriesIndex, volumeBadge, type ListenBook } from "./model";
+import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, seriesIndex, twinBookIds, volumeBadge, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
-import { bookVoiceCaption } from "./readAloudVoice";
-import { spokenVoiceName } from "./onlineConsent";
 import { useListenLibrary, useReadAloudVoices, useSource } from "./source";
 
 type Filter = "all" | "listening" | "new" | "finished";
@@ -24,8 +22,8 @@ function stateOf(book: ListenBook): Filter {
 }
 
 /** Dòng trạng thái của một cuốn, cùng một bộ từ ở Thư viện, trang sách và thẻ nghe dở. `speaks`: máy này có giọng đọc (sách chỉ có chữ). */
-export function bookStatusText(book: ListenBook, speaks = false, voice = ""): string {
-  const status = progressText(book, speaks, voice);
+export function bookStatusText(book: ListenBook, speaks = false): string {
+  const status = progressText(book, speaks);
   // Cuốn nằm ở máy khác, nghe thẳng qua mạng - người nghe cần biết mất mạng hay máy kia tắt thì chương chưa tải không nghe được.
   return book.remote ? `${remotePlace(book)} · ${status}` : status;
 }
@@ -35,12 +33,15 @@ export function remotePlace(book: ListenBook): string {
   return typeof book.remote === "object" && book.remote ? `Trên ${book.remote.computer || "máy khác"}` : "Trên máy tính";
 }
 
-function progressText(book: ListenBook, speaks: boolean, voice: string): string {
+function progressText(book: ListenBook, speaks: boolean): string {
   // Sách mới nhập từ EPUB / DOCX / PDF / TXT: có chữ, máy có giọng thì giọng máy đọc (docs/LISTEN_ANYTHING.md mục 1) - cùng lời với trang
   // sách (labels.textBookLine), không ghi "Chỉ có chữ" ngay dưới nút "Nghe ngay".
-  // Dòng phụ là NGƯỜI VIẾT sách (tìm sách theo tác giả được, thẻ cũng phải nói); không có tác giả thì mới nói giọng, và chỉ tên giọng - không nói
-  // máy chủ nào đọc ("Hoài My (Edge)" là chuyện kỹ thuật, soát UX a10).
-  if (book.stage === "text") return `${book.author?.trim() || (speaks ? (voice ? spokenVoiceName(voice) : "Giọng đọc của máy") : "Chỉ có chữ")} · ${book.chaptersTotal} chương`;
+  // Dòng phụ là NGƯỜI VIẾT sách (tìm sách theo tác giả được, thẻ cũng phải nói). Không có tác giả thì chỉ số chương: tên giọng không phải thông tin về cuốn sách
+  // (cuốn nào cũng cùng một giọng), và "Hoài My (Edge)" còn là chuyện kỹ thuật (soát UX a10, a15). Máy chưa có giọng đọc thì nói "Chỉ có chữ".
+  if (book.stage === "text") {
+    const lead = book.author?.trim() || (speaks ? "" : "Chỉ có chữ");
+    return `${lead ? lead + " · " : ""}${book.chaptersTotal} chương`;
+  }
   const chapters = `${book.chaptersAvailable}/${book.chaptersTotal} chương`;
   if (book.progress.finished) return "Đã nghe xong";
   if (book.progress.caughtUp) return `Đã nghe hết phần đã có · ${chapters}`;
@@ -98,7 +99,7 @@ export function useRestoreLastListening() {
   }, [books, player, source]);
 }
 
-function BookTile({ book, badge }: { book: ListenBook; badge?: string }) {
+function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twin?: boolean }) {
   const navigate = useNavigate();
   const playBook = usePlayListenBook();
   const player = usePlayer();
@@ -107,7 +108,6 @@ function BookTile({ book, badge }: { book: ListenBook; badge?: string }) {
   // Sách chỉ có chữ: có giọng đọc trên máy thì nút trên bìa là "Nghe ngay" (giọng máy đọc), không thì vẫn là "Đọc".
   const voices = useReadAloudVoices();
   const speaks = (voices.data?.length ?? 0) > 0;
-  const voice = bookVoiceCaption(voices.data, book.id);
   const textOnly = book.stage === "text" && !speaks;
   return (
     <div className="group">
@@ -120,7 +120,7 @@ function BookTile({ book, badge }: { book: ListenBook; badge?: string }) {
           aria-label={textOnly ? `Đọc ${book.title}` : playingHere ? `Tạm dừng ${book.title}` : book.stage === "text" ? `Nghe ngay ${book.title}` : `Nghe ${book.title}`}
           onClick={() => (textOnly ? navigate(`/book/${book.id}/read`) : current ? player.toggle() : void playBook(book))}
           className={cn(
-            "touch-hit absolute bottom-2.5 right-2.5 grid size-10 place-items-center rounded-full bg-accent text-accent-ink shadow-float transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100",
+            "touch-hit touch-box absolute bottom-2.5 right-2.5 grid size-10 place-items-center rounded-full bg-accent text-accent-ink shadow-float transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100",
             current ? "opacity-100" : "opacity-0",
           )}
         >
@@ -151,9 +151,11 @@ function BookTile({ book, badge }: { book: ListenBook; badge?: string }) {
           </span>
         )}
       </div>
-      <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="mt-2.5 block w-full text-left">
+      <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="touch-row mt-2.5 block w-full text-left">
         <div className={cn("line-clamp-2 text-sm font-semibold leading-snug", current && "text-accent-text")}>{book.title}</div>
-        <div className="mt-1 text-xs text-fg-2">{bookStatusText(book, speaks, voice)}</div>
+        <div className="mt-1 text-xs text-fg-2">{bookStatusText(book, speaks)}</div>
+        {/* Hai cuốn cùng tên: thêm ngày vào thư viện để biết cuốn nào là cuốn nào (tác giả, nếu có, đã nằm ở dòng trên). */}
+        {twin && book.addedAt ? <div className="mt-0.5 text-xs text-fg-3">Thêm {formatWhen(book.addedAt)}</div> : null}
       </button>
     </div>
   );
@@ -167,7 +169,6 @@ function ContinueCard({ book }: { book: ListenBook }) {
   const playingHere = current && player.playing;
   const voices = useReadAloudVoices().data;
   const speaks = (voices?.length ?? 0) > 0;
-  const voice = bookVoiceCaption(voices, book.id);
   const last = book.state.last;
   const chapter = (current ? player.track?.chapterTitle : undefined) || book.lastChapterTitle;
   // Cùng dạng với nút chính của trang sách ("Nghe tiếp · Chương 3 · 12:04").
@@ -185,7 +186,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
           {where}
           {current ? (playingHere ? " · đang phát" : " · đang tạm dừng") : last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
         </p>
-        <p className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks, voice)}</p>
+        <p className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks)}</p>
         <Progress value={book.progress.fraction} size="xs" className="mt-3 max-w-md" label="Đã nghe" />
       </div>
       {book.progress.caughtUp && !current ? (
@@ -253,12 +254,12 @@ function UpcomingCard({ book, onOpen }: { book: ListenBook; onOpen?: (book: List
   );
 }
 
-function Shelf({ books, badges }: { books: ListenBook[]; badges?: Map<string, string> }) {
+function Shelf({ books, badges, twins }: { books: ListenBook[]; badges?: Map<string, string>; twins?: Set<string> }) {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-6">
       {books.map((book, index) => (
         <div key={book.id} className="rise-in" style={{ "--i": index } as CSSProperties}>
-          <BookTile book={book} badge={badges?.get(book.id)} />
+          <BookTile book={book} badge={badges?.get(book.id)} twin={twins?.has(book.id)} />
         </div>
       ))}
     </div>
@@ -275,7 +276,7 @@ function badgesOf(items: { book: ListenBook; volume: number | null; unit: string
 }
 
 /** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
-function SeriesShelves({ books }: { books: ListenBook[] }) {
+function SeriesShelves({ books, twins }: { books: ListenBook[]; twins: Set<string> }) {
   const places = seriesIndex(books);
   const groups = new Map<string, { book: ListenBook; volume: number | null; unit: string; name: string }[]>();
   for (const book of books) {
@@ -294,13 +295,13 @@ function SeriesShelves({ books }: { books: ListenBook[] }) {
           <h2 className="mb-3 flex items-baseline gap-2 text-base font-semibold">
             {items[0].name} <span className="text-sm font-normal text-fg-2">· {items.length} {items[0].unit}</span>
           </h2>
-          <Shelf books={items.map((item) => item.book)} badges={badgesOf(items)} />
+          <Shelf books={items.map((item) => item.book)} badges={badgesOf(items)} twins={twins} />
         </section>
       ))}
       {singles.length > 0 && (
         <section aria-label="Sách lẻ">
           {series.length > 0 && <h2 className="mb-3 text-base font-semibold">Sách khác</h2>}
-          <Shelf books={singles} />
+          <Shelf books={singles} twins={twins} />
         </section>
       )}
     </div>
@@ -338,6 +339,7 @@ export function LibraryScreen({
   const playingId = player.track && player.purpose !== "review" ? player.track.bookId : null;
   const listening = useMemo(() => listeningBook(books ?? [], playingId), [books, playingId]);
   const folded = foldVietnamese(query.trim());
+  const twins = useMemo(() => twinBookIds(books ?? []), [books]);
   const shown = useMemo(
     () =>
       sortBooks(
@@ -432,7 +434,7 @@ export function LibraryScreen({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Tìm sách"
                 title="Tên sách hay giọng kể - gõ không dấu cũng được"
-                className="h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-9 text-sm outline-none placeholder:text-fg-3 focus:border-accent sm:w-80 [&::-webkit-search-cancel-button]:hidden"
+                className="touch-row h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-9 text-sm outline-none placeholder:text-fg-3 focus:border-accent sm:w-80 [&::-webkit-search-cancel-button]:hidden"
               />
               {query && (
                 <button
@@ -448,15 +450,15 @@ export function LibraryScreen({
           </div>
           {shown.length ? (
             filter === "all" && !folded ? (
-              <SeriesShelves books={shown} />
+              <SeriesShelves books={shown} twins={twins} />
             ) : (
               <div className="mt-6">
-                <Shelf books={shown} />
+                <Shelf books={shown} twins={twins} />
               </div>
             )
           ) : (
-            <EmptyState icon={Search} title={query ? `Không có sách nào tên “${query}”` : "Không có sách ở đây"} className="mt-4">
-              {query ? "Thử gõ một phần tên khác." : EMPTY_TEXT[filter]}
+            <EmptyState icon={Search} title={query ? `Không tìm thấy sách nào khớp “${query}”` : "Không có sách ở đây"} className="mt-4">
+              {query ? "Thử gõ một phần tên sách hoặc tên tác giả khác." : EMPTY_TEXT[filter]}
             </EmptyState>
           )}
         </>

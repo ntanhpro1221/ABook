@@ -11,6 +11,7 @@ import {
   addRest,
   advanceQueue,
   planPick,
+  queueFocus,
   queueLabel,
   settle,
   summarize,
@@ -67,7 +68,7 @@ export function AddBookButton({
   if (!source.textImport) return null;
   return (
     <>
-      <Button variant={variant} size={size} icon={BookPlus} onClick={() => setOpen(true)}>
+      <Button variant={variant} size={size} icon={BookPlus} className="touch-row" onClick={() => setOpen(true)}>
         Thêm sách từ file…
       </Button>
       <AddBookDialog open={open} onOpenChange={setOpen} onBookFile={onBookFile} />
@@ -236,10 +237,13 @@ export function AddBookDialog({
     const summary = summarize(items);
     if (summary.failed > 0) return;
     const added = items.filter((item) => item.state === "added");
+    // Đúng một cuốn "đã có": toast cho nút đi thẳng tới cuốn đó (như nút "Mở cuốn đó" của hộp xem trước) thay vì bắt đi tìm trong thư viện.
+    const known = summary.existing === 1 ? items.find((item) => item.state === "existing")?.bookId : undefined;
     clear();
     onOpenChange(false);
     (summary.added || summary.opened ? toast.success : toast)(summaryText(summary), {
       description: summary.added ? READY_NOTE : undefined,
+      action: known ? { label: "Mở cuốn đó", onClick: () => navigate(`/book/${known}`) } : undefined,
     });
     if (added.length === 1 && added[0].bookId && summary.opened === 0) navigate(`/book/${added[0].bookId}`);
   };
@@ -482,7 +486,7 @@ export function AddBookDialog({
               <Loader2 className="size-4 animate-spin" /> Đang đọc file kế tiếp…
             </p>
           )}
-          <QueueList items={queue} currentId={currentId} tall />
+          <QueueList items={queue} currentId={currentId} working={working} tall />
           {busy === null && (
             <div className="mt-5 flex justify-end">
               <Button variant="primary" onClick={() => close(false)}>
@@ -536,7 +540,7 @@ export function AddBookDialog({
         </div>
       ) : (
         <div>
-          {queue && <QueueList items={queue} currentId={currentId} />}
+          {queue && <QueueList items={queue} currentId={currentId} working={working} />}
           <label className={cn("block", queue && "mt-4")}>
             <span className="text-sm font-medium">Tên sách</span>
             <input
@@ -562,12 +566,12 @@ export function AddBookDialog({
                 <button
                   type="button"
                   disabled={busy !== null}
-                  className="text-accent-text hover:underline disabled:opacity-50"
+                  className="touch-row inline-flex items-center text-accent-text hover:underline disabled:opacity-50"
                   onClick={() => setPicked(new Set(preview.chapters.map((chapter) => chapter.index)))}
                 >
                   Chọn hết
                 </button>
-                <button type="button" disabled={busy !== null} className="text-accent-text hover:underline disabled:opacity-50" onClick={() => setPicked(new Set())}>
+                <button type="button" disabled={busy !== null} className="touch-row inline-flex items-center text-accent-text hover:underline disabled:opacity-50" onClick={() => setPicked(new Set())}>
                   Bỏ chọn hết
                 </button>
               </span>
@@ -710,17 +714,18 @@ const STATE_TEXT: Record<Exclude<QueueItem["state"], "waiting">, string> = {
 };
 
 /** Danh sách các file đã chọn kèm tình trạng từng cái: cuốn đang xem, cuốn đã thêm / bỏ, cuốn không đọc được (kèm lý do). */
-function QueueList({ items, currentId, tall }: { items: QueueItem[]; currentId: number | null; tall?: boolean }) {
+function QueueList({ items, currentId, working = "", tall }: { items: QueueItem[]; currentId: number | null; working?: string; tall?: boolean }) {
+  const focus = queueFocus(items, currentId, working);
   return (
     <ul aria-label="Các file đã chọn" className={cn("mt-3 space-y-1.5 overflow-y-auto rounded-xl border border-line bg-hover p-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
       {items.map((item) => {
-        const current = item.state === "waiting" && item.id === currentId;
+        const current = item.state === "waiting" && item.id === focus.id;
         let mark: ReactNode = <span className="block size-3 rounded-full border border-line-strong" />;
         if (item.state === "added" || item.state === "existing" || item.state === "opened") mark = <Check className="size-3.5 text-success" strokeWidth={3} />;
         else if (item.state === "error") mark = <CircleAlert className="size-3.5 text-danger" />;
         else if (item.state === "skipped") mark = <Minus className="size-3.5 text-fg-3" />;
         else if (current) mark = <span className="block size-3 rounded-full bg-accent" />;
-        const said = item.state === "waiting" ? (current ? "Đang xem" : "Chờ") : item.note ?? STATE_TEXT[item.state];
+        const said = item.state === "waiting" ? (current ? (focus.adding ? "Đang thêm" : "Đang xem") : "Chờ") : item.note ?? STATE_TEXT[item.state];
         return (
           <li key={item.id} aria-current={current ? "true" : undefined} className="flex items-start gap-2">
             <span className="mt-0.5 grid size-3.5 shrink-0 place-items-center">{mark}</span>

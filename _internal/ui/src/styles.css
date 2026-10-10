@@ -249,6 +249,7 @@
 @media (pointer: coarse), (max-width: 40rem) {
   [data-sonner-toast] [data-button] {
     position: relative;
+    min-height: 2.5rem; /* nút hành động ("Mở thư mục", "Hoàn tác") cao thật 40 px, không chỉ vùng nới */
   }
   [data-sonner-toast] [data-close-button]::after,
   [data-sonner-toast] [data-button]::after {
