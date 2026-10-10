@@ -105,20 +105,16 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def create_in_ollama(args: argparse.Namespace, gguf: Path) -> int:
-    modelfile = GGUF_DIR / f"{args.name}.Modelfile"
-    if args.like:
-        from ollama_like import modelfile_like  # cùng thư mục scripts/model_eval (sys.path[0])
+    # Qua HTTP, không qua CLI `ollama` (CLI lúc máy chủ tắt tự mở app khay mang bộ tự cập nhật - ollama_like.py).
+    from ollama_like import create_model, modelfile_like  # cùng thư mục scripts/model_eval (sys.path[0])
 
-        modelfile.write_text(modelfile_like(args.like, gguf), encoding="utf-8")
-    else:
-        modelfile.write_text(f"FROM {gguf}\n", encoding="utf-8")
-    command = ["ollama", "create", args.name, "-f", str(modelfile)]
-    if args.quantize:
-        command += ["--quantize", args.quantize]
-    create = subprocess.run(command, text=True, capture_output=True, encoding="utf-8", errors="replace")
-    if create.returncode != 0:
-        print(create.stdout[-2000:], create.stderr[-2000:])
-        raise SystemExit("ollama create thất bại")
+    modelfile = GGUF_DIR / f"{args.name}.Modelfile"
+    modelfile.write_text(modelfile_like(args.like, gguf) if args.like else f"FROM {gguf}\n", encoding="utf-8")
+    try:
+        create_model(args.name, gguf, like=args.like or "", quantize=args.quantize or "")
+    except Exception as error:  # noqa: BLE001 - mọi lỗi tạo model đều dừng lượt như trước
+        print(error)
+        raise SystemExit("ollama create thất bại") from error
     print(f"  xong: ollama model `{args.name}`")
     print(f"  chấm: runtime/.venv/Scripts/python.exe scripts/model_eval/eval_models.py --models {args.name} ...")
     return 0
