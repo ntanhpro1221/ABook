@@ -27,6 +27,7 @@ def recycled(monkeypatch: pytest.MonkeyPatch) -> list[Path]:
 
     monkeypatch.setattr(actions, "move_to_recycle_bin", recycle)
     monkeypatch.setattr(actions, "recycle_bin_available", lambda _path: None)
+    monkeypatch.setattr(actions, "recycle_bin_accepts", lambda _path: True)  # cỡ thật so với Thùng rác: bài riêng
     return moved
 
 
@@ -140,10 +141,11 @@ def test_undo_is_refused_when_the_original_place_is_taken(studio, recycled: list
     [held] = _pending(original.parent)
     assert (held / original.name / "project.sqlite3").is_file(), "cuốn vừa xoá vẫn nằm chờ"
 
-    # Hết hạn mà đường gốc vẫn bị chiếm: không đổi tên đè, không vào Thùng rác từ chỗ chờ - để nguyên, lần sau dọn.
+    # Hết hạn mà đường gốc vẫn bị chiếm: không đè lên, cuốn cũ vào Thùng rác qua tên anh em còn trống (không kẹt mãi ở chỗ chờ).
     app.trash.clock = lambda: time.time() + trash_pending.UNDO_SECONDS + 5
-    assert app.trash.sweep(original.parent) == 1 and recycled == []
-    assert (held / original.name / "project.sqlite3").is_file()
+    assert app.trash.sweep(original.parent) == 0
+    assert [path.parent for path in recycled] == [original.parent] and recycled[0] != original
+    assert (original / "cua_nguoi_khac.txt").is_file() and _pending(original.parent) == []
 
 
 def test_the_pending_folder_is_never_a_book(studio, recycled: list[Path]) -> None:  # noqa: F811
@@ -296,3 +298,179 @@ def test_internal_replacement_deletes_skip_the_waiting_place(studio, recycled: l
     paths, app, _server, _runner = studio
     result = app.delete(book_id(paths.root))
     assert "undo" not in result and recycled == [paths.root.resolve()] and _pending(paths.root.parent) == []
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Lỗi soát: đường gốc bị chiếm, Thùng rác lỗi giữa chừng, người dùng huỷ hộp "xoá hẳn", đổi thư viện giữa hạn.
+
+def _hold(tmp_path: Path, name: str = "Sach", clock=lambda: 0.0):
+    from abook.webui.trash_pending import TrashPending
+
+    library = (tmp_path / "lib").resolve()
+    library.mkdir(exist_ok=True)
+    book = library / name
+    book.mkdir()
+    (book / "a.mp3").write_bytes(b"x" * 10)
+    trash = TrashPending(clock=clock)
+    return trash, library, book, trash.hold(library, book, "imported")
+
+
+def test_a_taken_original_path_still_lets_the_old_copy_reach_the_bin_under_a_free_sibling_name(
+        tmp_path: Path, recycled: list[Path]) -> None:
+    trash, library, book, _token = _hold(tmp_path)
+    book.mkdir()  # mở lại đúng file .abook trong hạn: tên cũ được cấp lại cho cuốn mới
+    (book / "b.mp3").write_bytes(b"y")
+    assert trash.sweep(library, everything=True) == 0
+    assert [path.parent for path in recycled] == [library] and recycled[0].name.startswith("Sach ") and recycled[0] != book
+    assert (book / "b.mp3").read_bytes() == b"y", "cuốn mới nguyên vẹn, không bị đè hay đẩy đi"
+    assert _pending(library) == []
+
+
+def test_a_recycle_that_fails_twice_does_not_let_the_deleted_book_come_back(
+        tmp_path: Path, recycled: list[Path], monkeypatch: pytest.MonkeyPatch) -> None:
+    import os
+
+    from abook.webui import actions, trash_pending
+
+    trash, library, book, token = _hold(tmp_path)
+    item = library / ".trash-pending" / token / "Sach"
+    real_replace = os.replace
+
+    def flaky(source, target):
+        if Path(target) == item:  # đổi tên ngược về chỗ chờ sau khi Thùng rác lỗi
+            raise PermissionError("in use")
+        return real_replace(source, target)
+
+    def failing(_path: Path) -> None:
+        raise OSError("sharing violation")
+
+    good = actions.move_to_recycle_bin
+    monkeypatch.setattr(actions, "move_to_recycle_bin", failing)
+    monkeypatch.setattr(trash_pending.os, "replace", flaky)
+    assert trash.sweep(library, everything=True) == 1
+    monkeypatch.setattr(trash_pending.os, "replace", real_replace)
+    monkeypatch.setattr(actions, "move_to_recycle_bin", good)
+    assert trash.sweep(library, everything=True) == 0, "lần dọn sau tiếp tục đưa vào Thùng rác, không bỏ meta"
+    assert recycled == [book] and _pending(library) == [] and not book.exists()
+
+
+def test_a_book_made_new_at_the_same_path_after_a_dead_recycle_is_not_binned(
+        tmp_path: Path, recycled: list[Path], monkeypatch: pytest.MonkeyPatch) -> None:
+    import os
+
+    from abook.webui import actions, trash_pending
+
+    trash, library, book, token = _hold(tmp_path)
+    item = library / ".trash-pending" / token / "Sach"
+    real_replace = os.replace
+    good = actions.move_to_recycle_bin
+
+    def failing(_path: Path) -> None:
+        raise OSError("khoá")
+
+    def flaky(source, target):
+        if Path(target) == item:
+            raise PermissionError("x")
+        return real_replace(source, target)
+
+    monkeypatch.setattr(actions, "move_to_recycle_bin", failing)
+    monkeypatch.setattr(trash_pending.os, "replace", flaky)
+    assert trash.sweep(library, everything=True) == 1
+    monkeypatch.setattr(trash_pending.os, "replace", real_replace)
+    monkeypatch.setattr(actions, "move_to_recycle_bin", good)
+    shutil.rmtree(book)  # người dùng tự xoá cuốn cũ rồi dựng cuốn khác cùng tên
+    book.mkdir()
+    (book / "moi.txt").write_text("moi", encoding="utf-8")
+    trash.sweep(library, everything=True)
+    assert (book / "moi.txt").is_file() and recycled == [], "cuốn mới không bị nhầm là cuốn đã xoá"
+
+
+def test_a_user_who_declines_the_permanent_delete_box_gets_the_book_back(
+        tmp_path: Path, recycled: list[Path], monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui import actions
+
+    trash, library, book, _token = _hold(tmp_path)
+
+    def declined(_path: Path) -> None:
+        raise actions.RecycleCancelled("người dùng huỷ")
+
+    monkeypatch.setattr(actions, "move_to_recycle_bin", declined)
+    assert trash.sweep(library, everything=True) == 0, "coi như không xoá: không còn gì chờ, không hỏi lặp"
+    assert (book / "a.mp3").is_file() and _pending(library) == [] and recycled == []
+
+
+def test_closing_the_app_never_asks_about_a_book_the_bin_would_refuse(
+        tmp_path: Path, recycled: list[Path], monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui import actions
+
+    trash, library, book, _token = _hold(tmp_path)
+    monkeypatch.setattr(actions, "recycle_bin_accepts", lambda _path: False)
+    assert trash.sweep(library, everything=True, ask=False) == 1, "để lần mở sau"
+    assert recycled == [] and not book.exists() and len(_pending(library)) == 1
+    assert trash.sweep(library, everything=True) == 0 and recycled == [book], "lần mở sau thì dọn (có thể hỏi)"
+
+
+def test_a_book_too_big_for_the_bin_is_not_held_but_goes_to_ask_at_once(studio, recycled: list[Path],  # noqa: F811
+                                                                        monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui import actions
+    from abook.webui.library import book_id
+
+    paths, _app, server, _runner = studio
+    monkeypatch.setattr(actions, "recycle_bin_accepts", lambda _path: False)
+    status, data = _call(server, "DELETE", f"/api/books/{book_id(paths.root)}")
+    assert status == 200 and "undo" not in data
+    assert recycled == [paths.root.resolve()] and _pending(paths.root.parent) == [], "hỏi NGAY lúc xoá như trước"
+
+
+def test_declining_the_permanent_delete_box_at_once_keeps_the_book_and_says_so(studio, recycled: list[Path],  # noqa: F811
+                                                                              monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui import actions
+    from abook.webui.library import book_id
+
+    paths, _app, server, _runner = studio
+
+    def declined(_path: Path) -> None:
+        raise actions.RecycleCancelled("SHFileOperationW bị huỷ (0x4c7)")
+
+    monkeypatch.setattr(actions, "recycle_bin_accepts", lambda _path: False)
+    monkeypatch.setattr(actions, "move_to_recycle_bin", declined)
+    status, data = _call(server, "DELETE", f"/api/books/{book_id(paths.root)}")
+    assert status == 409 and "thôi xoá" in str(data) and "đang mở" not in str(data), data
+    assert paths.root.is_dir()
+    status, books = _call(server, "GET", "/api/library")
+    assert book_id(paths.root) in str(books), "cuốn vẫn trong thư viện"
+
+
+def test_the_bin_capacity_rule() -> None:
+    from abook.webui import actions
+
+    assert actions.bin_takes(size=10, capacity=100, nuke=False)
+    assert not actions.bin_takes(size=95, capacity=100, nuke=False), "gần đầy hạn mức: Windows sẽ hỏi"
+    assert not actions.bin_takes(size=1, capacity=100, nuke=True), "ổ đặt xoá hẳn"
+    assert actions.bin_takes(size=10, capacity=None, nuke=False, drive_total=2000), "không có hạn mức ghi: tới 1% ổ thì chắc"
+    assert not actions.bin_takes(size=100, capacity=None, nuke=False, drive_total=2000)
+
+
+def test_undo_after_the_library_folder_changed_still_finds_the_deleted_book(studio, recycled: list[Path],  # noqa: F811
+                                                                           tmp_path: Path) -> None:
+    paths, app, server, _runner = studio
+    original = paths.root.resolve()
+    token = _delete(server, paths)
+    other = tmp_path / "thu_vien_moi"
+    other.mkdir()
+    app.preferences.update({"libraryRoot": str(other)})
+    status, data = _call(server, "POST", f"/api/trash/{token}/undo")
+    assert status == 200 and data["ok"] is True, data
+    assert original.is_dir() and (original / "project.sqlite3").is_file() and _pending(original.parent) == []
+
+
+def test_closing_after_the_library_folder_changed_still_bins_the_old_one(studio, recycled: list[Path],  # noqa: F811
+                                                                        tmp_path: Path) -> None:
+    paths, app, server, _runner = studio
+    original = paths.root.resolve()
+    _delete(server, paths)
+    other = tmp_path / "thu_vien_moi"
+    other.mkdir()
+    app.preferences.update({"libraryRoot": str(other)})
+    app.close()
+    assert recycled == [original] and _pending(original.parent) == []

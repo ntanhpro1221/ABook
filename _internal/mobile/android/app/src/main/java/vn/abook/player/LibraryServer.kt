@@ -253,6 +253,12 @@ object LibraryServer {
             .distinct().sorted()
     }.getOrDefault(emptyList())
 
+    /** Mọi địa chỉ của chính điện thoại, kể cả IPv6 (để từ chối ghép với chính mình); khác [addresses] chỉ dành cho người dùng đọc. */
+    fun ownAddresses(): List<String> = runCatching {
+        NetworkInterface.getNetworkInterfaces().toList().filter { it.isUp }
+            .flatMap { it.inetAddresses.toList() }.mapNotNull { it.hostAddress }.distinct()
+    }.getOrDefault(emptyList())
+
     // ---- tìm máy (UDP) ---------------------------------------------------------------------------------------------
 
     private fun answer(socket: DatagramSocket) {

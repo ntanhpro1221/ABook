@@ -122,15 +122,31 @@ object SyncLink {
         }
     }
 
-    /** Phần thuần (test được) của [refuseSelf]: `host` là vòng lặp, "localhost" hay một địa chỉ của chính điện thoại, kèm đúng cổng đồng bộ của nó. */
+    /**
+     * Phần thuần (test được) của [refuseSelf]: `host` là vòng lặp (127.x, `::1`, `::ffff:127.x`), "localhost" hay một địa chỉ của chính điện thoại
+     * (IPv4 hay IPv6, viết ngắn hay đầy đủ, có ngoặc vuông / vùng `%`), kèm đúng cổng đồng bộ của nó. Chỉ so địa chỉ dạng số: tên chữ
+     * ("may-khac.local") không tra DNS, và điện thoại không có tên máy đáng tin để so (tên thiết bị là tên người đặt, không phân giải được) -
+     * khác máy tính (remote_books.py `is_own_host` so thêm `<tên máy>.local`).
+     */
     internal fun isOwnAddress(host: String, port: Int, ownPort: Int, own: Collection<String>): Boolean {
-        val clean = host.trim().lowercase()
-        return port == ownPort && (clean in own || clean.startsWith("127.") || clean == "localhost" || clean == "::1")
+        if (port != ownPort) return false
+        val clean = cleanHost(host)
+        if (clean == "localhost" || clean in own) return true
+        val address = literal(clean) ?: return false
+        return address.isLoopbackAddress || own.any { literal(cleanHost(it))?.hostAddress == address.hostAddress }
+    }
+
+    private fun cleanHost(host: String) = host.trim().trim('[', ']').substringBefore('%').trimEnd('.').lowercase()
+
+    /** Địa chỉ số (IPv4 hay IPv6) thành [java.net.InetAddress]; không phải địa chỉ số thì null (không bao giờ tra DNS). `::ffff:a.b.c.d` thành IPv4. */
+    private fun literal(text: String): java.net.InetAddress? {
+        val numeric = ':' in text || Regex("""\d{1,3}(\.\d{1,3}){3}""").matches(text)
+        return if (numeric) runCatching { java.net.InetAddress.getByName(text) }.getOrNull() else null
     }
 
     /** Ghép bằng địa chỉ gõ tay (không phải Bluetooth) với chính điện thoại này nhân đôi cả thư viện: từ chối trước khi gửi mã, như máy tính (remote_books.py `Computers.pair`). */
     fun refuseSelf(host: String, port: Int) {
-        if (isOwnAddress(host, port, LibraryServer.PORT, LibraryServer.addresses())) {
+        if (isOwnAddress(host, port, LibraryServer.PORT, LibraryServer.ownAddresses())) {
             throw IllegalArgumentException("Đây là địa chỉ của chính máy này - nhập địa chỉ máy kia")
         }
     }

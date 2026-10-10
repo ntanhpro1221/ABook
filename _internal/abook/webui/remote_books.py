@@ -21,10 +21,12 @@ from __future__ import annotations
 
 import hashlib
 import http.client
+import ipaddress
 import json
 import re
 import secrets
 import shutil
+import socket
 import threading
 import time
 import zipfile
@@ -254,12 +256,35 @@ def own_addresses() -> set[str]:
     return set(local_addresses()) | {"127.0.0.1"}
 
 
-def is_own_host(host: str) -> bool:
-    """`host` (địa chỉ hay tên) là chính máy này: vòng lặp, địa chỉ LAN của máy, "localhost" hay tên máy."""
-    import socket
+def own_ipv6_addresses() -> set[str]:
+    """Địa chỉ IPv6 của chính máy này (dạng gọn, không vùng `%`)."""
+    found: set[str] = set()
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET6):
+            found.add(str(ipaddress.ip_address(info[4][0].partition("%")[0])))
+    except (OSError, ValueError):
+        pass
+    return found
 
-    clean = host.strip().lower()
-    return clean in own_addresses() or clean.startswith("127.") or clean in ("localhost", "::1", socket.gethostname().lower())
+
+def is_own_host(host: str) -> bool:
+    """`host` (địa chỉ hay tên) là chính máy này: vòng lặp (127.x, ::1, ::ffff:127.x), địa chỉ LAN / IPv6 của máy, "localhost",
+    tên máy hay "<tên máy>.local" (mDNS). Chỉ so với tên máy hệ điều hành báo - không tra DNS (chậm, và tên lạ không phải máy này)."""
+    clean = host.strip().strip("[]").partition("%")[0].rstrip(".").lower()
+    if not clean:
+        return False
+    name = socket.gethostname().lower()
+    if clean in ("localhost", name, f"{name}.local"):
+        return True
+    try:
+        address = ipaddress.ip_address(clean)
+    except ValueError:
+        return False
+    if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped is not None:
+        address = address.ipv4_mapped
+    if address.is_loopback:
+        return True
+    return str(address) in own_addresses() or str(address) in own_ipv6_addresses()
 
 
 def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: list[str] | None = None,
@@ -268,8 +293,6 @@ def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: 
     trả tên + cổng đồng bộ), gom trả lời trong `timeout` giây. Phát tới 255.255.255.255 và địa chỉ broadcast /24 của
     từng card mạng (Windows chỉ đẩy 255.255.255.255 ra một card). Bỏ chính máy này (địa chỉ của máy + cổng đồng bộ
     của máy). Máy kia phải đang bật kết nối - như điện thoại tìm nó."""
-    import socket
-
     from .sync import DISCOVERY_PORT, DISCOVERY_PROBE
 
     own = own_addresses()

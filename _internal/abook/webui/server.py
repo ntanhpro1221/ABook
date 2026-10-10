@@ -873,6 +873,8 @@ class App:
                 self._schedule_trash_sweep(root)
                 return token
             actions.move_to_recycle_bin(folder)
+        except actions.RecycleCancelled as error:
+            raise ApiError(HTTPStatus.CONFLICT, "Đã thôi xoá - cuốn vẫn ở chỗ cũ.") from error
         except OSError as error:
             raise ApiError(HTTPStatus.CONFLICT, failure.format(error=error)) from error
         return None
@@ -895,15 +897,18 @@ class App:
     def _fake_run(self) -> bool:
         return isinstance(self.runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"
 
-    def sweep_trash(self, root: Path | None = None, *, everything: bool = False) -> None:
+    def sweep_trash(self, root: Path | None = None, *, everything: bool = False, ask: bool = True) -> None:
         """Chuyển vào Thùng rác những cuốn đã xoá quá hạn "Hoàn tác" (`everything`: mọi cuốn, lúc app mở / đóng). Không văng:
-        dọn không được thì cuốn còn nằm chờ, lần sau dọn tiếp."""
+        dọn không được thì cuốn còn nằm chờ, lần sau dọn tiếp. Không cho `root`: thư viện hiện tại và cả thư viện cũ còn cuốn
+        nằm chờ (đổi thư viện giữa hạn). `ask=False`: không để Windows hiện hộp (lúc đóng app - xem `TrashPending.sweep`)."""
         if self.read_only:
             return
-        try:
-            self.trash.sweep(root or self.library.root.resolve(), everything=everything)
-        except Exception:  # noqa: BLE001 - dọn nền; hỏng thì để lần sau
-            pass
+        roots = [root] if root else list(dict.fromkeys([self.library.root.resolve(), *self.trash.roots()]))
+        for each in roots:
+            try:
+                self.trash.sweep(each, everything=everything, ask=ask)
+            except Exception:  # noqa: BLE001 - dọn nền; hỏng thì để lần sau
+                pass
 
     def _sweep_trash_at_start(self) -> None:
         """Lúc mở app: cuốn còn nằm chờ từ phiên trước (app chết giữa hạn) vào Thùng rác. Luồng nền - cuốn lớn vào Thùng rác
@@ -918,7 +923,7 @@ class App:
         self._mutating()
         root = self.library.root.resolve()
         try:
-            meta = self.trash.restore(root, token)
+            meta = self.trash.restore(self.trash.root_of(token, root), token)  # thư viện lúc xoá, nếu đã đổi giữa hạn
         except trash_pending.NotPending as error:
             raise ApiError(HTTPStatus.NOT_FOUND, "Hết thời gian hoàn tác - cuốn này đã nằm trong Thùng rác của Windows, "
                                                  "khôi phục từ đó được.") from error
@@ -2097,7 +2102,9 @@ class App:
         self.previews.shutdown()
         for timer in list(self._trash_timers):
             timer.cancel()
-        self.sweep_trash(everything=True)  # hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác
+        # Hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác - trừ cuốn Thùng rác không nhận trọn (Windows sẽ hỏi
+        # "xoá hẳn", mà đóng app không được chờ ai bấm): nó ở lại chỗ chờ tới lần mở sau.
+        self.sweep_trash(everything=True, ask=False)
 
     def routes(self) -> dict[str, Any]:
         """Các đường tới máy này cho thiết bị vừa ghép: địa chỉ LAN + cổng đồng bộ, và địa chỉ Bluetooth khi cổng

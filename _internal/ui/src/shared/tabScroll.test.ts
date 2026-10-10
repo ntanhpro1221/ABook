@@ -14,6 +14,12 @@ describe("wheelScroll", () => {
     expect(wheelScroll(0, 100, 338.87, 347, 686)).toBeNull();
   });
 
+  it("leaves Ctrl+wheel to the browser: that is zoom, not scrolling", () => {
+    expect(wheelScroll(0, 100, 0, 347, 686)).toBe(100);
+    expect(wheelScroll(0, 100, 0, 347, 686, true)).toBeNull();
+    expect(wheelScroll(0, -100, 200, 347, 686, true)).toBeNull();
+  });
+
   it("leaves a row that fits alone, and a wheel that is already sideways", () => {
     expect(wheelScroll(0, 100, 0, 776, 776)).toBeNull();
     expect(wheelScroll(120, 10, 0, 347, 686)).toBeNull();

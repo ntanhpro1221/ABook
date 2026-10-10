@@ -73,6 +73,24 @@ class PairingWordsTest {
     }
 
     @Test
+    fun ownIpv6AndMappedLoopbackAreRefusedToo() {
+        val own = listOf("192.168.1.20", "2402:800:1::20", "fe80::1234%wlan0")
+        assertTrue(SyncLink.isOwnAddress("::1", 47630, 47630, own))
+        assertTrue(SyncLink.isOwnAddress("[::1]", 47630, 47630, own))
+        assertTrue(SyncLink.isOwnAddress("0:0:0:0:0:0:0:1", 47630, 47630, own))
+        assertTrue(SyncLink.isOwnAddress("::ffff:127.0.0.1", 47630, 47630, own))
+        assertTrue(SyncLink.isOwnAddress("::ffff:192.168.1.20", 47630, 47630, own))
+        assertTrue(SyncLink.isOwnAddress("2402:800:1::20", 47630, 47630, own))
+        assertTrue(SyncLink.isOwnAddress("[2402:0800:0001:0000:0000:0000:0000:0020]", 47630, 47630, own))
+        assertTrue(SyncLink.isOwnAddress("fe80::1234%12", 47630, 47630, own))
+        assertTrue(SyncLink.isOwnAddress("127.5.6.7", 47630, 47630, own))
+        assertFalse(SyncLink.isOwnAddress("2402:800:1::21", 47630, 47630, own))
+        assertFalse(SyncLink.isOwnAddress("::ffff:192.168.1.21", 47630, 47630, own))
+        assertFalse(SyncLink.isOwnAddress("may-khac.local", 47630, 47630, own)) // tên chữ không tra DNS: máy khác
+        assertFalse(SyncLink.isOwnAddress("2402:800:1::20", 47631, 47630, own))
+    }
+
+    @Test
     fun refuseSelfSaysWhatToDo() {
         val error = runCatching { SyncLink.refuseSelf("127.0.0.1", LibraryServer.PORT) }.exceptionOrNull()
         assertEquals("Đây là địa chỉ của chính máy này - nhập địa chỉ máy kia", error?.message)
