@@ -50,7 +50,8 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
   [-1,9; +1,1]; câu CÓ lời dẫn chặt -2,4 (n=165), câu ngầm +0,0 (n=830). Lead bỏ hạt 1, coi là bằng chứng CHỐNG "xoá lời dẫn".
   **B7 cỡ x1 / x4 (đường cong lượng bạc) không chạy vì B7m HOÀ**; chỉ B7n (che tên, nhánh giữa) còn trong hàng.
 - **B8-b (tách: adapter chỉ người nói, trên nền B9) - TÁCH CÓ HẠI.** b9sps1234 vs b9s1234: F1 giọng -2,37 [-3,5; -0,0], chặt -2,45
-  [-4,0; +0,4]; nhanh hơn 31 % giây/chương. Nhánh d (chỉ cảm xúc) đang học, chấm khi xong.
+  [-4,0; +0,4]; nhanh hơn 31 % giây/chương. **B8-d (chỉ cảm xúc, người nói gold cho sẵn) - HOÀ**: emotion câu thoại 88,6
+  vs 89,7 (-1,1; chỉ câu B9 gán đúng người -1,4), intensity/pace/volume ±0,8. Tách không giúp phía nào -> B8 ĐÓNG, giữ một lượt joint.
 - **B10 (thêm bạc) - ĐÓNG.** Phần B (hạt thêm) bỏ 10-10; chặt B10 < B9 nên theo luật ghi trước không ứng cử mặc định dù F1 +2,2
   [-0,2; +6,7]. Lưu ý: "B10 trạng thái cảnh" nguyên bản CHƯA từng chạy - lượt mang tên B10 là thêm bạc.
 - **E8P (thí điểm 4B gốc có suy nghĩ) - BỎ, không chạy.** E8 lượt 1: nghĩ hết 2.048 token ngay lô 1 đoạn mà chưa ra JSON. Dù E8P
