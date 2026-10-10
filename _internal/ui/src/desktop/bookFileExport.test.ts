@@ -49,7 +49,10 @@ describe("jobView", () => {
 
   it("says where the file is once done, or the folder when every part has its own file", () => {
     expect(jobView(done)).toEqual({ kind: "success", title: "Đã xuất file sách", description: "Truyện.abook · 5 MB", place: "D:/Sách/Đã xuất/Truyện.abook" });
-    expect(jobView({ state: "done", result: { folder: "D:/Sách/Bộ", parts: [{}, {}] } })).toMatchObject({ description: "D:/Sách/Bộ" });
+    expect(jobView({ state: "done", result: { folder: "D:/Sách/Bộ", parts: [{}, {}] } })).toMatchObject({ description: "Bộ · 2 file", place: "D:/Sách/Bộ" });
+    // Sách nói MP3: thư mục tên sách + số file + cỡ; đường dài của Windows không bày cả ra thông báo.
+    const mp3 = { folder: "C:\\Users\\An\\Audiobooks\\Đã xuất\\Bến sông mùa lũ", files: 6, size: 3 * 1048576 };
+    expect(jobView({ state: "done", result: mp3 })).toMatchObject({ description: "Bến sông mùa lũ · 6 file · 3 MB", place: mp3.folder });
   });
 
   it("reports an error with the server's words", () => {
