@@ -554,6 +554,7 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "POST", "path": "/characters/merge", "body": {"from": "LUCIEN", "into": "lucien"}},
         {"method": "POST", "path": "/characters/merge", "body": {"from": "NOBODY", "into": "LUCIEN"}},
         {"method": "POST", "path": "/characters/merge", "body": {"from": "HEIDI", "into": "NOBODY"}},
+        {"method": "GET", "path": "/cast"},  # dòng Heidi: "chờ gộp vào Lucien" (mergedInto), như tab Nhân vật của dự án
         {"method": "GET", "path": "/pending-changes"},
         {"method": "GET", "path": "/edits"},
         {"method": "POST", "path": "/pending-changes/withdraw", "body": {"section": "speakers", "key": HEIDI_LINE[0], "keys": [HEIDI_LINE[0]], "requestedAt": "$requestedAt#6"}},
@@ -562,6 +563,16 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "POST", "path": "/pending-changes/withdraw", "body": {"section": "dreams", "key": "x", "requestedAt": 5}},
         {"method": "POST", "path": "/review", "body": {"verdict": None, **_LUCIEN}},
         {"method": "GET", "path": "/pending-changes"},
+        {"method": "GET", "path": "/edits"},
+    ],
+    # "Cần thu lại" cả nhóm (Shift-chọn ở tab Kịch bản: `lines`): một mốc cho cả nhóm, đáp {ok, lines, requestedAt}; câu không có
+    # trong sách / mục không phải đối tượng thì bỏ qua; "ổn" cho nhóm bỏ yêu cầu của từng câu.
+    "wishes_review_lines": [
+        {"method": "POST", "path": "/review", "body": {"verdict": "redo", "lines": [_LUCIEN, _NARRATION, {"stableId": "c9_s0001_000000"}, "x"]}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "POST", "path": "/review", "body": {"verdict": "ok", "lines": [{"stableId": LUCIEN_LINE[0]}]}},
+        {"method": "POST", "path": "/review", "body": {"verdict": "redo", "lines": []}},
+        {"method": "POST", "path": "/review", "body": {"verdict": "bogus", "lines": [_NARRATION]}},
         {"method": "GET", "path": "/edits"},
     ],
     # Trang đọc: ý muốn theo từng câu (đánh dấu "đang chờ Studio" ngay trên câu), cạnh cách đọc tên của cả cuốn.

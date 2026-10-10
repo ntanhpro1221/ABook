@@ -44,12 +44,13 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
-from . import covers, edits_inbox, listen_view, music_plan, package_share, packages, precast, remote_studio, store, tls, word_timing
+from . import book_edits, covers, edits_inbox, listen_view, music_plan, package_share, packages, precast, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
 from .listening import RECORD_ID, SYNC_KEYS, Listening
 from .remote_studio import StudioGate
+from .reviews import Reviews
 
 SYNC_PORT = 47630
 DISCOVERY_PORT = 47631
@@ -481,7 +482,7 @@ class SyncApp:
                  studio: StudioGate | None = None, player: Remote | None = None,
                  routes: Callable[[], dict[str, Any]] | None = None, cast: Any = None,
                  music_track: Callable[[str], Path | None] | None = None, my_music: Any = None,
-                 after_edits: Callable[[str, dict[str, Any]], None] | None = None) -> None:
+                 after_edits: Callable[[str, dict[str, Any]], None] | None = None, reviews: Reviews | None = None) -> None:
         self.library = library
         self.listening = listening
         self.devices = devices
@@ -502,8 +503,11 @@ class SyncApp:
         # (dựng lại rãnh nhạc, server.py): điện thoại gửi phần sửa về qua `receive_edits`.
         self.my_music = my_music
         self.after_edits = after_edits
+        # Phán quyết "Cần nghe lại" của máy này (server.py truyền đúng đối tượng của Studio): câu đã chấm không còn là việc -
+        # số điện thoại báo phải bằng số trên tab "Việc cần duyệt".
+        self.reviews = reviews or Reviews(listening.path.with_name("reviews.json"))
         # Số "việc cần duyệt" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
-        self._work: dict[str, tuple[tuple[float, ...], int]] = {}  # đường dẫn -> (dấu thời gian, số việc)
+        self._work: dict[str, tuple[tuple[Any, ...], int]] = {}  # đường dẫn -> (dấu thời gian + phán quyết, số việc)
         # Vân tay chứng chỉ TLS của cổng phục vụ app này (SyncServer điền lúc dựng): đi trong lời đáp ghép nối.
         self.fingerprint = ""
         self._work_lock = threading.Lock()
@@ -550,24 +554,27 @@ class SyncApp:
 
         Đang chạy hay không đọc từ nhịp tim của worker trong DB (`store.summarize`), không từ bộ chạy của cửa sổ app - cổng
         đồng bộ không có bộ chạy, và sách chạy bằng dòng lệnh cũng phải được báo."""
-        from .work_items import work_items
+        from .work_items import open_count, work_items
 
-        def stamp_of(path: Path) -> tuple[float, ...]:
+        def stamp_of(path: Path, verdicts: dict[str, Any]) -> tuple[Any, ...]:
             try:
                 overrides_stamp = (path / "overrides.json").stat().st_mtime
             except OSError:
                 overrides_stamp = 0.0
-            return (store.touched(path), overrides_stamp)
+            judged = hashlib.sha1(json.dumps(verdicts, sort_keys=True).encode()).hexdigest()
+            return (store.touched(path), overrides_stamp, judged)
 
         def work_of(path: Path) -> int | None:
             # Không đếm được (sách đời cũ, DB đang khoá) thì None - điện thoại coi là "không biết", không báo gì.
-            stamp = stamp_of(path)
+            # Đúng phép đếm của nhãn tab "Việc cần duyệt" (server.get_work ?count=1): cùng phán quyết, cùng open_count.
+            verdicts = self.reviews.get(book_id(path))
+            stamp = stamp_of(path, verdicts)
             with self._work_lock:
                 cached = self._work.get(str(path))
             if cached is not None and cached[0] == stamp:
                 return cached[1]
             try:
-                count = len(work_items(path)["items"])
+                count = open_count(work_items(path, verdicts))
             except Exception:  # noqa: BLE001
                 return None
             with self._work_lock:
@@ -692,7 +699,7 @@ class SyncApp:
         if not store.is_project(project_root):
             return package_share.resolve_file(project_root, relative)
         if relative == "cast.json":
-            return json.dumps(store.cast(project_root), ensure_ascii=False).encode("utf-8")
+            return json.dumps(book_edits.shared_cast(store.cast(project_root)), ensure_ascii=False).encode("utf-8")
         if relative == covers.COVER_FILE:
             return covers.cover_file(project_root)
         match = re.fullmatch(r"scripts/(\d+)\.json", relative)

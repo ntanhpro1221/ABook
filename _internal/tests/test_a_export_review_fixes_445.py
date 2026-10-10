@@ -53,7 +53,7 @@ def test_cancelling_the_projectfile_job_leaves_the_bookfile_music_alone(studio, 
     gate = threading.Event()
     _slow_app(app, tmp_path, gate)
 
-    def pack_two_tracks(project, out, *, running, music_track, progress=None):
+    def pack_two_tracks(project, out, *, running, music_track, progress=None, verdicts=None):
         music_track(CALM)
         music_track(BATTLE)
         raise AssertionError("đã huỷ thì không tới đây")

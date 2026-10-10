@@ -34,16 +34,18 @@ def entry(name: str) -> str:
     return f"{FOLDER}/{name}.json"
 
 
-def snapshot(project_root: Path, tick: Callable[[], None] | None = None) -> dict[str, bytes]:
+def snapshot(project_root: Path, tick: Callable[[], None] | None = None,
+             verdicts: dict[str, Any] | None = None) -> dict[str, bytes]:
     """{tên mục trong gói: JSON} của mọi view dựng được. Một view lỗi (sổ dự án thiếu cột của bản app cũ...) thì bỏ riêng nó:
     bản chụp là món quà đi kèm, không được làm hỏng việc sao lưu dự án. `tick()` gọi trước mỗi view (nó ném thì việc dừng: Huỷ khi đang
-    đóng gói không phải chờ cả ba view, mỗi view vài giây trên dự án lớn)."""
+    đóng gói không phải chờ cả ba view, mỗi view vài giây trên dự án lớn). `verdicts`: phán quyết "Cần nghe lại" của máy đóng gói
+    (reviews.Reviews.get) - "Việc cần duyệt" chụp đúng như tab Studio đang hiện, câu đã chấm không còn là việc."""
     out: dict[str, bytes] = {}
     for name, make in VIEWS.items():
         if tick is not None:
             tick()
         try:
-            data = make(Path(project_root))
+            data = make(Path(project_root), verdicts) if name == "work" else make(Path(project_root))
         except Exception:  # noqa: BLE001 - xem docstring
             continue
         out[entry(name)] = json.dumps(data, ensure_ascii=False, indent=1).encode("utf-8")
