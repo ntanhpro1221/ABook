@@ -110,6 +110,11 @@ CUE_HEAD_WORD = re.compile(r"^(?:phần|chương|hồi|quyển|tập|ngoại\s+t
                            r"epilogue|mở\s+đầu|vĩ\s+thanh|kết)\b", re.IGNORECASE)
 CUE_NUMERAL = re.compile(r"^(?:\d+|[ivxlcdm]+)\.?$", re.IGNORECASE)
 CUE_NAME_PUNCT = re.compile(r"[.!?…,;:*\"“”]")
+# Tên MỘT từ bao gạch: dòng như thế trong 7.669 sách hầu hết là dấu hết chương ("— Hết —", "end", "fin"), từ tượng thanh
+# ("— Rầm —", "— Tách —") hay lời đáp ("— Vâng —"), toàn chữ có dấu tiếng Việt; tên thật một từ là tên phiên âm
+# ("—Nanato—", "— Selia —"). Tên hai, ba từ không xét điều này (docs/MUSIC_RESEARCH.md 10-10 CUE-DASH, sửa sau soát lỗi).
+CUE_VIET_LETTERS = re.compile(r"[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]", re.IGNORECASE)
+CUE_END_WORDS = frozenset({"end", "fin"})
 CUE_PLAIN_END = re.compile(r"[.!?…,;:\"”'’)]\s*$")
 CUE_PART_NUMBERS = frozenset({"một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín", "mười", "cuối", "kết", "đầu"})
 CUE_TIME_PLACE = re.compile(
@@ -128,6 +133,8 @@ def bracket_is_subhead(text: str) -> bool:
         return True
     words = inner.split()
     name = 1 <= len(words) <= 3 and not CUE_NAME_PUNCT.search(inner) and all(word[:1].isupper() for word in words)
+    if name and len(words) == 1 and (CUE_VIET_LETTERS.search(inner) or inner.lower() in CUE_END_WORDS):
+        name = False
     return text[:1] in "-–—" and bool(CUE_DECOR.match(inner) or CUE_HEAD_WORD.match(inner) or CUE_NUMERAL.match(inner) or name)
 
 
@@ -138,7 +145,12 @@ def subhead_words(text: str) -> bool:
         return False
     words = text.rstrip(":").split()
     if words and words[0].lower() == "phần":
-        return 2 <= len(words) <= 4 and (words[1].lower() in CUE_PART_NUMBERS or bool(CUE_NUMERAL.match(words[1])))
+        # "Phần hai", "Phần thứ hai" ngắn; "Phần 1: Khởi đầu", "Phần II: Bóng tối", "Phần 3 - Cuộc gặp gỡ…" có tên phần đi kèm.
+        at = 2 if len(words) > 2 and words[1].lower() == "thứ" else 1
+        number = words[at].rstrip(":.").lower() if len(words) > at else ""
+        if CUE_NUMERAL.match(number):
+            return True
+        return len(words) <= at + 3 and number in CUE_PART_NUMBERS
     return True
 
 
