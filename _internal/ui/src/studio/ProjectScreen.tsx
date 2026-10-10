@@ -75,7 +75,8 @@ import { ApplyChangesDialog } from "./ApplyChanges";
 import { CoverEditor } from "./CoverEditor";
 import { ChapterError } from "./ChapterError";
 import { friendlyError } from "./errorText";
-import { isGone, useSideError } from "./polling";
+import { ANALYSIS_CUT_COST, asksBeforeResume, stopAnalysisAdvice } from "./stopText";
+import { bookFailure, failureText, isOffline, useSideError } from "./polling";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
 import { PhoneEdits, useInboxCount } from "./PhoneEdits";
 import { WorkInbox, useWorkCount } from "./WorkInbox";
@@ -225,7 +226,9 @@ function NarratorNote({ book }: { book: BookSummary }) {
 function ProductionPanel({ book }: { book: BookSummary }) {
   const [analysis, casting, synthesis] = stepStates(book);
   const live = book.running || book.starting;
-  const eta = book.paused ? "đang tạm dừng" : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
+  // Giữ chờ duyệt (precast.held) cũng là `paused` nhưng là đợi người nghe, không phải ai bấm Tạm dừng (soát UX a23: "47% tổng"
+  // đứng yên không nói vì sao).
+  const eta = book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "đang tạm dừng") : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
   return (
     <section className="mt-8">
       <div className="mb-3 flex items-baseline justify-between">
@@ -270,6 +273,64 @@ function ProductionPanel({ book }: { book: BookSummary }) {
 
 // ---- Nút hành động ---------------------------------------------------------------------------------------
 
+/** "Tiếp tục" một cuốn mà pha phân tích bị ngắt (soát UX a23 B16: một bấm là chạy, dù làm tiếp = cuốn khác): nói thẳng hệ quả,
+ *  nút chính là làm lại từ đầu, "Vẫn tiếp tục" là phụ. Studio từ xa không tạo lại sách được - chỉ còn "Vẫn tiếp tục". */
+function ResumeAnalysisDialog({ book, remote, open, onOpenChange, onRedo, onResume }: {
+  book: BookSummary;
+  remote: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onRedo: () => void;
+  onResume: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange} title="Tiếp tục phân tích đang dở?">
+      <div className="mb-5 flex gap-3 rounded-xl bg-warning-soft p-4 text-sm leading-relaxed text-fg">
+        <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
+        <div className="text-pretty">
+          <p>
+            <span className="font-semibold">Phân tích của “{book.title}” đã dừng giữa chừng.</span> Làm tiếp từ chỗ ấy {ANALYSIS_CUT_COST} - khác
+            với khi phân tích liền một mạch.
+          </p>
+          <p className="mt-2 text-fg-2">
+            {remote
+              ? "Muốn kết quả như chạy liền một mạch thì làm lại phân tích từ đầu - mở trang này trên máy tính."
+              : "Muốn kết quả như chạy liền một mạch thì làm lại phân tích từ đầu: bản dở được cất đi, thiết lập giữ nguyên."}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          Để sau
+        </Button>
+        <Button
+          variant={remote ? "primary" : "outline"}
+          icon={Play}
+          onClick={() => {
+            onOpenChange(false);
+            onResume();
+          }}
+        >
+          Vẫn tiếp tục
+        </Button>
+        {!remote && (
+          <Button
+            variant="primary"
+            icon={RotateCcw}
+            autoFocus
+            onClick={() => {
+              onOpenChange(false);
+              onRedo();
+            }}
+          >
+            Làm lại phân tích từ đầu
+          </Button>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
 function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boolean; onOpenChange: (open: boolean) => void }) {
   const stop = useStop();
   const pause = usePause();
@@ -295,18 +356,10 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
           <div className="text-pretty">
             <p>
-              <span className="font-semibold">Dừng giữa lúc phân tích thì mất phần đã làm,</span> và chạy lại sẽ ra một cuốn hơi
-              khác: người nói ở đoạn sau chỗ dừng có thể đổi, kéo theo đổi giọng.
+              <span className="font-semibold">Dừng giữa lúc phân tích thì mất phần đã làm,</span> và chạy lại {ANALYSIS_CUT_COST}.
             </p>
             <p className="mt-2 text-fg-2">
-              Nên để chạy hết bước này{eta ? ` (${eta})` : ""}.
-              {book.canPause && (
-                <>
-                  {" "}
-                  Cần nghỉ thì bấm <span className="font-medium text-fg">Tạm dừng</span>: sách đứng yên rồi làm tiếp đúng chỗ,
-                  phần đã phân tích không mất.
-                </>
-              )}
+              Nên để chạy hết bước này{eta ? ` (${eta})` : ""}. {stopAnalysisAdvice(book)}
             </p>
           </div>
         </div>
@@ -532,6 +585,7 @@ function Actions({ book }: { book: BookSummary }) {
   };
   const [confirmStop, setConfirmStop] = useState(false);
   const [confirmApply, setConfirmApply] = useState(false);
+  const [confirmResume, setConfirmResume] = useState(false);
   const [exporting, setExporting] = useState(false);
   const live = book.running;
   const stop = useStop();
@@ -618,24 +672,24 @@ function Actions({ book }: { book: BookSummary }) {
         <Button variant="primary" size="lg" icon={Mic2} loading={start.isPending} onClick={() => begin(book.id)}>
           Thu âm
         </Button>
-      ) : book.phase !== "done" && book.analysisInterrupted ? (
-        // Phân tích bị ngắt: chạy tiếp ra MỘT CUỐN KHÁC (AGENTS.md) - nút chính là làm lại từ đầu, "Tiếp tục" lùi xuống kèm
-        // lời cảnh báo. Làm lại = dự án mới thay bản dở (cần máy tính: Studio từ xa không tạo lại sách được).
+      ) : asksBeforeResume(book) ? (
+        // Phân tích bị ngắt: chạy tiếp ra MỘT CUỐN KHÁC (AGENTS.md) - nút chính là làm lại từ đầu, "Tiếp tục" lùi xuống và hỏi
+        // lại trước khi chạy (ResumeAnalysisDialog). Làm lại = dự án mới thay bản dở (cần máy tính: Studio từ xa không tạo lại sách được).
         <>
           {!remote && (
             <Button variant="primary" size="lg" icon={RotateCcw} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
               Làm lại phân tích từ đầu
             </Button>
           )}
-          <Button variant={remote ? "primary" : "outline"} size="lg" icon={Play} loading={start.isPending} onClick={() => begin(book.id)}>
+          <Button variant={remote ? "primary" : "outline"} size="lg" icon={Play} loading={start.isPending} onClick={() => setConfirmResume(true)}>
             Tiếp tục
           </Button>
           <p className="basis-full text-pretty text-sm text-fg-2">
             Phân tích đã dừng giữa chừng
             {book.segments.total ? ` (còn ${formatNumber(book.segments.pending ?? book.segments.total - book.segments.analyzed)}/${formatNumber(book.segments.total)} câu chưa phân tích)` : ""}.
             {remote
-              ? " “Tiếp tục” vẫn chạy được nhưng ra một cuốn hơi khác so với chạy liền một mạch. Muốn làm lại từ đầu, mở trang này trên máy tính."
-              : " Làm lại từ đầu cho kết quả như chạy liền một mạch (bản dở được cất đi); “Tiếp tục” vẫn chạy được nhưng ra một cuốn hơi khác - người nói ở đoạn sau chỗ dừng có thể đổi."}
+              ? ` “Tiếp tục” vẫn chạy được nhưng ${ANALYSIS_CUT_COST}. Muốn làm lại từ đầu, mở trang này trên máy tính.`
+              : ` Làm lại từ đầu cho kết quả như chạy liền một mạch (bản dở được cất đi); “Tiếp tục” vẫn chạy được nhưng ${ANALYSIS_CUT_COST}.`}
           </p>
         </>
       ) : book.phase !== "done" ? (
@@ -663,6 +717,14 @@ function Actions({ book }: { book: BookSummary }) {
         </span>
       )}
       <StopDialog book={book} open={confirmStop} onOpenChange={setConfirmStop} />
+      <ResumeAnalysisDialog
+        book={book}
+        remote={remote}
+        open={confirmResume}
+        onOpenChange={setConfirmResume}
+        onRedo={() => navigate(`/studio/new?redo=${book.id}`)}
+        onResume={() => begin(book.id)}
+      />
       <ApplyChangesDialog
         bookId={book.id}
         count={book.pendingChanges ?? 0}
@@ -1006,7 +1068,8 @@ export function ProjectScreen() {
   const reviewCount = useReviewCount(id ?? "");
   const remoteStudio = Boolean(useAppInfo().data?.remote);
   // Việc từ điện thoại chờ duyệt (webui/edits_inbox.py) cộng vào số của tab: chỉ trên chính máy tính (Studio từ xa không có đường này).
-  const { data, isLoading, error } = useBook(id);
+  const { data, isLoading, error, refetch, isFetching } = useBook(id);
+  const failure = bookFailure(data, error);
   // Thẻ đã nằm ở "Duyệt trước khi thu" thì "Việc cần duyệt" không hiện lại và không đếm lại.
   const precastOn = Boolean(data && canReview(data.book));
   const precastKeys = usePrecastKeys(id ?? "", precastOn);
@@ -1056,7 +1119,7 @@ export function ProjectScreen() {
       </div>
     );
   }
-  if (isGone(error)) {
+  if (failure === "gone") {
     // Sách đã bị xoá hay chuyển đi (tab mở từ trước): thôi hỏi máy chủ, nói thẳng và cho đường về.
     return (
       <EmptyState
@@ -1069,15 +1132,23 @@ export function ProjectScreen() {
       </EmptyState>
     );
   }
-  if (error || !data) {
+  // Chỉ khi chưa từng có bản nào của sách; đã có thì giữ trang và báo bằng dải bên dưới (bookFailure).
+  if (failure === "error" || !data) {
     return (
       <EmptyState
         icon={CircleAlert}
         title="Không mở được sách"
         className="mt-20"
-        action={<Button onClick={() => navigate("/studio")}>Về Studio</Button>}
+        action={
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button variant="secondary" loading={isFetching} onClick={() => void refetch()}>
+              Thử lại
+            </Button>
+            <Button onClick={() => navigate("/studio")}>Về Studio</Button>
+          </div>
+        }
       >
-        {(error as Error | null)?.message ?? "Sách có thể đã bị chuyển hoặc xoá."}
+        {failureText(error)}
       </EmptyState>
     );
   }
@@ -1098,6 +1169,17 @@ export function ProjectScreen() {
       <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
+      {failure === "stale" && (
+        <div role="status" className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm">
+          <CircleAlert className="size-4 shrink-0 text-warning" />
+          <span className="min-w-0 flex-1 text-pretty">
+            {isOffline(error) ? "Mất kết nối tới ABook, đang thử lại…" : `Chưa tải lại được sách: ${failureText(error)} Đang thử lại…`}
+          </span>
+          <Button size="sm" variant="secondary" loading={isFetching} onClick={() => void refetch()}>
+            Thử lại
+          </Button>
+        </div>
+      )}
       {/* Màn hẹp (điện thoại): bìa nhỏ cạnh tên sách, hàng nút nằm dưới cả hai (soát UX a8 05-10: bìa to + tên + 3 hàng nút
           chiếm ~590 px, tab bắt đầu ở cuối màn). Từ sm trở lên: bìa bên trái, tên và nút bên phải. `contents` làm cột phải biến
           mất khỏi lưới ở màn hẹp để hàng nút tự chiếm cả hai cột mà vẫn chỉ có một bản của các nút. */}
@@ -1149,7 +1231,7 @@ export function ProjectScreen() {
         <PrecastBanner book={book} onOpen={() => setParams({ tab: "precast" })} />
       )}
 
-      {sideError && (
+      {sideError && failure !== "stale" && (
         <div role="status" className="mt-4 flex gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm">
           <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
           <span className="text-pretty">

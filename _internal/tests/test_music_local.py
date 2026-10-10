@@ -33,7 +33,7 @@ def _isolated(monkeypatch):
     """Không luồng tải sẵn nền (chạm mạng); bộ phân tích luôn trả về trạng thái "chưa có" sau mỗi test."""
     from abook.webui.server import App
 
-    monkeypatch.setattr(App, "_warm_music", lambda self, plan, value=None: None)
+    monkeypatch.setattr(App, "_warm_music", lambda self, *args, **kwargs: None)
     music_local.set_analyzer(None)
     yield
     music_local.set_analyzer(None)

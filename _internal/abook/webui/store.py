@@ -651,6 +651,12 @@ def label_line(text: str, entry: dict[str, Any]) -> str:
     return f"{quote_line(text)}: {', '.join(what) or 'cách đọc mới'}"
 
 
+def keeps_voice(entry: Any) -> bool:
+    """Mục giọng rỗng - "Giữ nguyên" (thẻ chung giọng), "Để máy quyết" (thẻ giới): không đổi gì trong sách, không phải thay
+    đổi chờ áp (soát UX a23: "Áp dụng 8 thay đổi" và "Giọng của Heidi: giọng khác · 7 câu thu lại" cho những mục ấy)."""
+    return isinstance(entry, dict) and not any(str(entry.get(field) or "").strip() for field in ("preset", "gender", "avoid"))
+
+
 def label_voice(name: str, entry: dict[str, Any]) -> str:
     change = entry.get("preset") or {"male": "giọng nam", "female": "giọng nữ"}.get(str(entry.get("gender")), "giọng khác")
     return f"Giọng của {name}: {change}"
@@ -796,6 +802,8 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
                           **handle("lines", stable_id, entry)})
         by_voice_key: dict[str, list[Any]] | None = None
         for key, entry in fresh["voices"].items():
+            if keeps_voice(entry):
+                continue
             if by_voice_key is None:
                 by_voice_key = defaultdict(list)
                 keys_of: dict[str, str] = {}  # cả sách chỉ vài trăm tên người nói
@@ -848,19 +856,20 @@ def _requested_after(entry: dict[str, Any], since: float) -> bool:
 
 
 def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> set[tuple[str, str]]:
-    """Số yêu cầu "giữ nguyên" trong `fresh`: người nói bằng đúng người câu đang có, cách đọc bằng đúng cách đang đọc. Chúng
+    """Số yêu cầu "giữ nguyên" trong `fresh`: người nói bằng đúng người câu đang có, cách đọc bằng đúng cách đang đọc, mục
+    giọng rỗng (`keeps_voice`). Chúng
     không đổi gì trong sách nên không phải "thay đổi chờ áp" - soát UX 29-09: sáu lần bấm "Giữ…"/"Đúng rồi" đẩy số trên nút
     "Áp dụng N thay đổi" từ 38 lên 47 trong khi chỉ một lần đổi thật."""
     from ..listener_overrides import surface_key
 
+    kept: set[tuple[str, str]] = {("voices", key) for key, entry in (fresh.get("voices") or {}).items() if keeps_voice(entry)}
     speakers, pronunciations = fresh.get("speakers") or {}, fresh.get("pronunciations") or {}
     if not (speakers or pronunciations) or not (Path(project_root) / DB_NAME).is_file():
-        return set()
+        return kept
 
     def same(left: Any, right: Any) -> bool:
         return " ".join(str(left or "").casefold().split()) == " ".join(str(right or "").casefold().split())
 
-    kept: set[tuple[str, str]] = set()
     try:
         with closing(connect(project_root)) as connection:
             if speakers:
@@ -889,7 +898,7 @@ def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> set[tup
                     if key in forms and isinstance(entry, dict) and same(entry.get("spoken_form"), forms[key])
                 )
     except sqlite3.Error:
-        return set()
+        return {item for item in kept if item[0] == "voices"}
     return kept
 
 
@@ -1319,6 +1328,22 @@ def cast(project_root: Path) -> dict[str, Any]:
         mine = renamed.get(renames.name_key(name))
         return {"displayName": mine, "originalName": original} if mine else {"displayName": original}
 
+    # Nhãn dành riêng của máy ("UNKNOWN") là "Vai phụ không tên" như ở hộp việc và tab Kịch bản - không bao giờ "Unknown" thô
+    # (soát UX a23); tên thường thì như humanize.person_name.
+    from .. import aliases
+    from .reviews import speaker_label
+
+    # "Gộp vào…" chưa áp (aliases.json + câu chờ đổi người nói): người ấy vẫn còn câu dưới tên mình - ghi "chờ gộp vào X" để
+    # tab Nhân vật không trông như chưa gộp (soát UX a23).
+    merging = aliases.load(project_root)
+
+    def merged_into(speaker: str) -> str | None:
+        target = merging.get(aliases.key(speaker))
+        if not target or aliases.key(target) == aliases.key(speaker):
+            return None
+        record = characters.get(target)
+        return shown_name(target, speaker_label(str(record["display_name"] or target) if record else target))["displayName"]
+
     main, extras = [], []
     for speaker, count in lines.items():
         if speaker in ("", "NARRATOR"):
@@ -1326,7 +1351,7 @@ def cast(project_root: Path) -> dict[str, Any]:
         record = characters.get(speaker)
         entry = {
             "name": speaker,
-            **shown_name(speaker, humanize.person_name(str(record["display_name"] or speaker) if record else speaker)),
+            **shown_name(speaker, speaker_label(str(record["display_name"] or speaker) if record else speaker)),
             "gender": humanize.GENDER_LABELS.get(str(record["gender"] if record else ""), ""),
             "age": humanize.AGE_LABELS.get(str(record["age"] if record else ""), ""),
             "lines": count,
@@ -1337,6 +1362,7 @@ def cast(project_root: Path) -> dict[str, Any]:
             "sampleId": samples.get(speaker),
             "firstChapter": chapter_numbers.get(first_seen.get(speaker, -1), ""),
             "pendingVoice": pending.get(speaker_key(speaker)),
+            "mergedInto": merged_into(speaker),
         }
         (main if record is not None else extras).append(entry)
     main.sort(key=lambda entry: (-entry["lines"], entry["displayName"]))
@@ -1351,7 +1377,7 @@ def cast(project_root: Path) -> dict[str, Any]:
     carried = [
         {
             "name": name,
-            **shown_name(name, humanize.person_name(str(record["display_name"] or name))),
+            **shown_name(name, speaker_label(str(record["display_name"] or name))),
             "gender": humanize.GENDER_LABELS.get(str(record["gender"] or ""), ""),
             "age": humanize.AGE_LABELS.get(str(record["age"] or ""), ""),
             "lines": 0,

@@ -7,11 +7,11 @@ import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
 import { formatClock } from "@/shared/format";
 import { MUSIC_LEVELS as LEVELS } from "@/shared/musicLevels";
-import { Button, IconButton } from "@/shared/ui";
+import { Button, IconButton, Progress } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
 import { importMusic } from "./musicImport";
-import { CONTINUED_NOTE, isContinuation, swapButton } from "./musicScenes";
+import { CONTINUED_NOTE, downloadShare, downloadText, isContinuation, swapButton, type MusicDownload } from "./musicScenes";
 import {
   analysisLabel,
   importSummary,
@@ -75,6 +75,8 @@ interface MusicView {
   bannedTracks?: Record<string, TrackInfo>;
   /** Việc nền "Đọc lại không khí các đoạn" của cuốn này. */
   moods?: { running: boolean; error: string };
+  /** Máy đang tải sẵn các bài của rãnh nhạc (để nghe / điện thoại / file sách có nhạc ngay) - huỷ được. */
+  download?: MusicDownload;
   taxonomy: {
     genres?: Record<string, { vi: string }>;
     /** Tên tiếng Việt của 13 cảm xúc (danh mục gửi, đổi được không cần cập nhật app). */
@@ -525,7 +527,8 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
   const { data, isLoading } = useQuery({
     queryKey: key,
     queryFn: () => api<MusicView>(`/api/books/${bookId}/music`),
-    refetchInterval: (query) => (query.state.data?.moods?.running ? 3000 : false), // đang đọc không khí: hỏi lại tới khi xong
+    // Đang đọc không khí / đang tải sẵn nhạc: hỏi lại tới khi xong.
+    refetchInterval: (query) => (query.state.data?.moods?.running ? 3000 : query.state.data?.download?.active ? 2000 : false),
   });
   // Việc "Đọc lại không khí các đoạn" vừa xong: nhạc đã dựng lại, báo trình phát nạp lại mốc nhạc.
   const moodsRunning = useRef(false);
@@ -544,16 +547,29 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       client.setQueryData(key, result);
       setSwapping(null);
       announceChange(bookId);
+      refreshSoon();
       if (result.error) toast.warning("Đã lưu lựa chọn", { description: result.error });
     },
     onError: (error: Error) => toast.error("Không đổi được nhạc nền", { description: error.message }),
   });
+  const cancelDownload = useMutation({
+    mutationFn: () => api<MusicView>(`/api/books/${bookId}/music/download/cancel`, { method: "POST" }),
+    onSuccess: (result) => {
+      // Máy chủ dừng ở khúc kế (một phần giây): ẩn dòng tiến độ ngay thay vì đợi lần hỏi sau.
+      client.setQueryData(key, { ...result, download: undefined });
+      toast("Đã dừng tải nhạc nền", { description: "Bài chưa tải sẽ được tải khi bạn nghe tới đoạn ấy." });
+    },
+    onError: (error: Error) => toast.error("Không dừng được việc tải nhạc", { description: error.message }),
+  });
+  // Đổi bài / Chọn lại nhạc vừa xong: máy bắt đầu tải bài mới ở nền - hỏi lại ngay để hiện tiến độ.
+  const refreshSoon = () => window.setTimeout(() => void client.invalidateQueries({ queryKey: key }), 600);
   const rebuild = useMutation({
     mutationFn: () => api<MusicView>(`/api/books/${bookId}/music/rebuild`, { method: "POST" }),
     onSuccess: (result) => {
       client.setQueryData(key, result);
       setSwapping(null);
       announceChange(bookId);
+      refreshSoon();
     },
     onError: (error: Error) => toast.error("Không chọn lại được nhạc", { description: error.message }),
   });
@@ -640,6 +656,15 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
           <p role="status" className="basis-full text-sm text-fg-2">
             {rebuild.isPending || change.variables?.genre !== undefined ? REBUILDING : SAVING}
           </p>
+        )}
+        {data.download?.active && (
+          <div role="status" className="flex basis-full flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-2">
+            <span className="min-w-0 flex-1">{downloadText(data.download)}</span>
+            <Button size="sm" variant="ghost" icon={Square} loading={cancelDownload.isPending} onClick={() => cancelDownload.mutate()}>
+              Huỷ tải
+            </Button>
+            <Progress value={downloadShare(data.download)} size="sm" label="Tải sẵn nhạc nền" className="basis-full" />
+          </div>
         )}
         {overrides.banned.length > 0 && (
           <details className="basis-full text-sm">

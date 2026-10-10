@@ -210,9 +210,21 @@ export function lastExportPlace(job: ExportJob | undefined): string | undefined 
  *  biết có việc để hiện lại tiến độ. Hỏi hụt thì coi như không có (nhịp sau, hay trang sách, sẽ hỏi lại). */
 export async function runningExports(kind: "bookfile" | "m4b" | "audiobook" | "projectfile"): Promise<string[]> {
   try {
-    const all = await api<Partial<Record<string, (ExportJob & { bookId: string })[]>>>("/api/export-jobs");
+    const all = await allExportJobs();
     return (all[kind] ?? []).filter((job) => job.state === "running").map((job) => job.bookId);
   } catch {
     return [];
   }
+}
+
+type AllExportJobs = Partial<Record<string, (ExportJob & { bookId: string })[]>>;
+let asking: Promise<AllExportJobs> | null = null;
+
+/** Một lượt GET /api/export-jobs cho mọi kiểu xuất hỏi cùng lúc (mở app: bốn kiểu xuất cùng hỏi - soát UX a23 thấy bốn lượt
+ *  gọi giống hệt); xong thì lần hỏi sau gọi lại máy chủ. */
+function allExportJobs(): Promise<AllExportJobs> {
+  asking ??= api<AllExportJobs>("/api/export-jobs").finally(() => {
+    asking = null;
+  });
+  return asking;
 }

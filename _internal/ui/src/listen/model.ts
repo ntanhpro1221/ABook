@@ -328,6 +328,8 @@ export interface CastMember {
   recorded?: number;
   /** Giọng/giới người nghe đã chọn mà dây chuyền chưa áp (store.pending_voices). */
   pendingVoice?: { preset: string; gender: string } | null;
+  /** Đã "Gộp vào…" người khác mà chưa áp (store.cast): tên người sẽ nhận các câu của người này. */
+  mergedInto?: string | null;
 }
 
 export interface Cast {

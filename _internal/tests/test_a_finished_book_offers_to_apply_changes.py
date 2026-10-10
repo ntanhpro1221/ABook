@@ -22,7 +22,9 @@ def test_only_requests_written_after_the_last_run_are_pending(tmp_path: Path) ->
 def test_no_file_or_a_broken_entry_is_not_a_change(tmp_path: Path) -> None:
     assert pending_changes(tmp_path, since=0.0) == 0
     overrides_path(tmp_path).write_text(json.dumps({"speakers": {"s1": "LUCIEN", "s2": {"requested_at": "x"}},
-                                                     "voices": {"A": {"requested_at": 9.0}}}), encoding="utf-8")
+                                                     "voices": {"A": {"preset": "Hải Đăng", "requested_at": 9.0},
+                                                                "B": {"requested_at": 9.0}}}), encoding="utf-8")
+    # B cả ba trống = "giữ nguyên" (listener_overrides.voice_requests): không phải thay đổi (soát UX a23 B8).
     assert pending_changes(tmp_path, since=1.0) == 1
 
 

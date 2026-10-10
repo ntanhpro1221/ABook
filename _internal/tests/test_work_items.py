@@ -687,3 +687,137 @@ def test_a_logprob_card_follows_the_listeners_decision_and_survives_bad_files(tm
 
 def test_without_the_logprob_files_nothing_is_asked(tmp_path: Path) -> None:
     assert not any(item["problem"].startswith("Máy gán") for item in speaker_cards(make_book(tmp_path)))
+
+
+def with_voices(project: Path) -> None:
+    """Sổ giọng của make_book: hồ sơ 2 (Lucien + Rhine) có khoá giọng - thẻ trùng giọng mới có nút "Đổi giọng …"."""
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("CREATE TABLE voice_profiles (id INTEGER PRIMARY KEY, voice_key TEXT, preset_name TEXT)")
+    db.executemany("INSERT INTO voice_profiles VALUES (?,?,?)", [(2, "vieneu:pham-tuyen", "Phạm Tuyên"),
+                                                                 (4, "vieneu:hai-dang", "Hải Đăng")])
+    db.commit()
+    db.close()
+
+
+def test_a_book_not_yet_recorded_says_changing_a_voice_costs_nothing(tmp_path: Path) -> None:
+    """Soát UX a23 B1: sách chưa thu chương nào mà thẻ ghi "thu lại 144 câu" - chỉ câu ĐÃ THU phải thu lại (như hộp chọn giọng)."""
+    project = make_book(tmp_path)
+    with_voices(project)
+    cards = {item["kind"]: item for item in work_items(project)["items"]}
+    notes = [choice["note"] for choice in cards["shared-voice"]["voiceChoices"]]
+    assert notes == ["chưa thu nên không phải thu lại"] * 2
+    assert {choice["note"] for choice in cards["gender"]["voiceChoices"]} <= {"giữ giọng đang đọc",
+                                                                             "đổi giọng, chưa thu nên không phải thu lại"}
+
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("UPDATE segments SET wav_path='chunks/3.wav' WHERE id=3")  # một câu của Lucien đã thu
+    db.execute("UPDATE segments SET wav_path='chunks/4.wav' WHERE id=4")  # một trong hai câu của Áo choàng đen
+    db.commit()
+    db.close()
+    cards = {item["kind"]: item for item in work_items(project)["items"]}
+    notes = {choice["label"]: choice["note"] for choice in cards["shared-voice"]["voiceChoices"]}
+    assert notes == {"Đổi giọng Lucien": "thu lại 1 câu ở các chương chung",
+                     "Đổi giọng Rhine": "chưa thu nên không phải thu lại"}
+    assert "đổi giọng, thu lại 1 câu" in {choice["note"] for choice in cards["gender"]["voiceChoices"]}
+
+
+def test_the_bad_recording_card_drops_the_lines_already_judged(tmp_path: Path) -> None:
+    """Soát UX a23 B9: chấm hết câu ở "Cần nghe lại" mà thẻ "Bản thu lỗi · Chưa nghe" vẫn đứng, số việc không về 0 - hộp việc
+    đếm hàng chờ mà bỏ qua phán quyết (reviews.json). Đi trọn đường API như tab thật."""
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import _request, make_project
+
+    root = tmp_path / "thu_vien"
+    project = make_project(root)
+    db = sqlite3.connect(project / "project.sqlite3")
+    for column in ("stable_id TEXT", "text_sha256 TEXT", "canonical_character_id INTEGER", "asr_text TEXT",
+                   "asr_similarity REAL", "warning_code TEXT"):
+        db.execute(f"ALTER TABLE segments ADD COLUMN {column}")
+    db.execute("ALTER TABLE characters ADD COLUMN locked INTEGER")
+    db.execute("UPDATE segments SET stable_id = 's' || id, text_sha256 = 'h' || id")
+    db.execute("UPDATE segments SET status='warning', asr_text='Đi thối', asr_similarity=0.5 WHERE id IN (2, 3)")
+    db.commit()
+    db.close()
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(root)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="phien")
+    server = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "phien"}
+    work = f"/api/books/{book_id(project)}/work"
+
+    def audio_cards() -> list[dict]:
+        status, data, _ = _request(server.port, "GET", work, headers=headers)
+        assert status == 200, data
+        return [item for item in json.loads(data)["items"] if item["kind"] == "audio"]
+
+    try:
+        assert [card["affected"] for card in audio_cards()] == [2]
+        for stable_id, verdict in (("s2", "ok"), ("s3", "redo")):
+            status, data, _ = _request(server.port, "POST", f"/api/books/{book_id(project)}/review", headers=headers,
+                                       body={"stableId": stable_id, "verdict": verdict, "chapterId": 1})
+            assert status == 200, data
+            if stable_id == "s2":
+                assert [card["affected"] for card in audio_cards()] == [1], "câu đã chấm rơi khỏi thẻ"
+        assert audio_cards() == [], "chấm hết thì thẻ biến mất"
+        status, data, _ = _request(server.port, "GET", work + "?count=1", headers=headers)
+        assert json.loads(data)["count"] == 0
+    finally:
+        server.stop()
+        app.close()
+
+
+def test_choosing_a_new_voice_for_one_of_two_sharing_people_settles_the_shared_voice_card(tmp_path: Path) -> None:
+    """Soát UX a23 B3: đổi giọng Lucien ở tab Nhân vật (chọn hẳn một giọng) mà thẻ "Lucien, Rhine dùng chung một giọng" vẫn mở."""
+    from abook.listener_overrides import request_voice
+
+    project = make_book(tmp_path)
+    with_voices(project)
+    request_voice(project, "LUCIEN", preset="Hải Đăng", now=time.time())
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "shared-voice")
+    assert card["requested"] == "đổi giọng Lucien"
+
+
+def test_the_tab_count_leaves_out_cards_only_a_redo_can_apply(tmp_path: Path, monkeypatch) -> None:
+    """Soát UX a23 B2: lúc chờ duyệt, "Việc cần duyệt 6" toàn là thẻ người kể chỉ áp khi làm lại phân tích - không có gì quyết
+    được ngay mà số vẫn mời vào. Số trên nhãn chỉ đếm việc chưa quyết mà quyết thì có tác dụng."""
+    from abook.webui import server as server_module
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import _request, make_project
+
+    view = {"items": [{"key": "narrator:1", "requested": None, "redoOnly": True},
+                      {"key": "gender:A", "requested": None},
+                      {"key": "gender:B", "requested": "Nam"}], "counts": {}}
+    monkeypatch.setattr(server_module, "work_items", lambda *_args, **_kwargs: view)
+    root = tmp_path / "thu_vien"
+    project = make_project(root)
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(root)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="phien")
+    server = Server(app, port=0).start()
+    try:
+        status, data, _ = _request(server.port, "GET", f"/api/books/{book_id(project)}/work?count=1",
+                                   headers={"X-Ebook-Token": "phien"})
+        assert status == 200 and json.loads(data)["count"] == 1
+    finally:
+        server.stop()
+        app.close()
+
+
+def test_corner_brackets_that_really_are_several_people_can_be_kept_on_the_card(tmp_path: Path) -> None:
+    """Soát UX a23 B7: thẻ 『』 không có "giữ nguyên" - sách thật nhiều người nói 『』 thì thẻ nằm mãi, lối thoát duy nhất là
+    "Xác nhận cả chương" ở Kịch bản. "Đúng rồi, giữ nguyên" ghi như xác nhận chương, nhưng chỉ cho các câu của thẻ."""
+    from abook.listener_overrides import request_speakers
+
+    project = make_bracket_book(tmp_path)
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "bracket")
+    assert card["keepLabel"] == "Đúng rồi, giữ nguyên"
+    groups = {group["speaker"]: [line["stableId"] for line in group["lines"]] for group in card["keepGroups"]}
+    assert groups == {"TOMOBE": ["s1"], "HINA": ["s3"], "TỌA PHU ĐỒNG TỬ": ["s4", "s5"]}, "lời thường “…” không nằm trong nhóm"
+    for group in card["keepGroups"]:
+        request_speakers(project, [(line["stableId"], line["textSha256"]) for line in group["lines"]], group["speaker"],
+                         now=time.time())
+    assert not [item for item in work_items(project)["items"] if item["kind"] == "bracket"], "giữ cả nhóm -> hết hỏi"

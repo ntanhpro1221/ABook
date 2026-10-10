@@ -159,6 +159,19 @@ describe("runningExports", () => {
     expect(await runningExports("projectfile")).toEqual(["p"]);
   });
 
+  it("asks the server once when every kind of export asks at the same time (opening the app)", async () => {
+    let calls = 0;
+    setApiTransport(async () => {
+      calls += 1;
+      return { bookfile: [{ bookId: "x", state: "running" }], m4b: [] };
+    });
+    const answers = await Promise.all((["bookfile", "m4b", "audiobook", "projectfile"] as const).map((kind) => runningExports(kind)));
+    expect(answers).toEqual([["x"], [], [], []]);
+    expect(calls).toBe(1);
+    await runningExports("bookfile");
+    expect(calls).toBe(2);
+  });
+
   it("treats a failed or odd answer as nothing running", async () => {
     setApiTransport(async () => {
       throw new Error("mạng chớp");

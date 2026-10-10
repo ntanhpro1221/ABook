@@ -484,7 +484,7 @@ def test_background_music_reaches_a_paired_device() -> None:
                          ("GET", "/api/music/track")):
         assert remote_studio.permitted(method, path, producing=False), path
     for method, path in (("GET", book + "/music"), ("PUT", book + "/music"), ("POST", book + "/music/rebuild"),
-                         ("GET", book + "/music/scenes/c3-1/alternatives")):
+                         ("POST", book + "/music/download/cancel"), ("GET", book + "/music/scenes/c3-1/alternatives")):
         assert remote_studio.permitted(method, path), path
         assert not remote_studio.permitted(method, path, producing=False), path
     assert not remote_studio.permitted("GET", book + "/music/files/../../preferences.json", producing=False)

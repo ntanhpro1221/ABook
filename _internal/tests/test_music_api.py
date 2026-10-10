@@ -20,7 +20,7 @@ def _no_background_warming(monkeypatch):
     """Luồng tải sẵn chạm mạng thật và dựng lại plan giữa chừng: test gọi `_warm_run` trực tiếp khi cần."""
     from abook.webui.server import App
 
-    monkeypatch.setattr(App, "_warm_music", lambda self, plan, value=None: None)
+    monkeypatch.setattr(App, "_warm_music", lambda self, *args, **kwargs: None)
 
 
 def _with_catalog(app, tmp_path: Path) -> None:
