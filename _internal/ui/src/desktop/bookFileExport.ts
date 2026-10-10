@@ -1,5 +1,6 @@
 import { spokenDuration } from "@/listen/prepareAhead";
 import { fileName, formatClock, formatSize } from "@/shared/format";
+import { api } from "@/studio/api";
 
 // "Xuất file sách" và "Xuất M4B" (menu "…" của trang sách): nói trước file sẽ nằm đâu, và trong lúc làm nói điều đổi theo thời gian.
 // Máy chủ không báo "chương n/N" khi làm - chỉ có thời gian trôi qua là thứ thật để nói.
@@ -131,9 +132,34 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
   return { kind: "none" };
 }
 
-/** Dòng phụ trong menu: lần xuất gần nhất của cuốn này (nếu có), thay cho "Bạn chọn thư mục lưu ở bước kế". */
+/** Chữ dài quá `max` ký tự thì cắt Ở ĐẦU (giữ phần đuôi: đuôi file và số tập là chỗ phân biệt các lần xuất), thêm "…". */
+export function clipStart(text: string, max: number): string {
+  return text.length > max ? `…${text.slice(text.length - (max - 1))}` : text;
+}
+
+/** Số ký tự tối đa của tên file / thư mục trong dòng phụ của menu (dòng phụ cắt ở cuối khi quá rộng - tên không được nằm ở chỗ bị cắt). */
+const HINT_NAME_MAX = 34;
+
+/** Dòng phụ trong menu: lần xuất gần nhất của cuốn này (nếu có), thay cho "Bạn chọn thư mục lưu ở bước kế". Nói TÊN file / thư mục
+ *  (đường đầy đủ ở `lastExportPlace`, hiện khi rê chuột): đường dài bị cắt ngay đầu thì chỉ còn thấy ổ đĩa và thư mục cha. */
 export function lastExportHint(job: ExportJob | undefined, copy: ExportCopy = BOOK_FILE_COPY): string | null {
   if (job?.state === "running") return `${copy.busy.replace(/…$/, "")} - xem thông báo ở góc màn hình`;
-  if (job?.state === "done" && job.result) return `Lần xuất gần nhất: ${exportedPlace(job.result)}`;
+  if (job?.state === "done" && job.result) return `Lần xuất gần nhất: ${clipStart(fileName(exportedPlace(job.result)), HINT_NAME_MAX)}`;
   return null;
+}
+
+/** Đường đầy đủ của lần xuất gần nhất (cho gợi ý khi rê chuột trên dòng phụ); chưa có thì undefined. */
+export function lastExportPlace(job: ExportJob | undefined): string | undefined {
+  return job?.state === "done" && job.result ? exportedPlace(job.result) : undefined;
+}
+
+/** Mã các cuốn đang có lượt xuất `kind` chạy ở máy chủ (GET /api/export-jobs). Mở (hay tải lại) app ở trang khác trang sách: đây là cách duy nhất
+ *  biết có việc để hiện lại tiến độ. Hỏi hụt thì coi như không có (nhịp sau, hay trang sách, sẽ hỏi lại). */
+export async function runningExports(kind: "bookfile" | "m4b" | "audiobook"): Promise<string[]> {
+  try {
+    const all = await api<Partial<Record<string, (ExportJob & { bookId: string })[]>>>("/api/export-jobs");
+    return (all[kind] ?? []).filter((job) => job.state === "running").map((job) => job.bookId);
+  } catch {
+    return [];
+  }
 }

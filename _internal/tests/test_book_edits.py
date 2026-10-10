@@ -16,7 +16,7 @@ from typing import Any
 import pytest
 
 from abook import names as renames
-from abook.webui import book_edits, bookfile, covers, music_plan, packages, store
+from abook.webui import book_edits, bookfile, covers, music_plan, package_share, packages, store
 from abook.webui.actions import FakeRunner
 from abook.webui.bookfile import BookFile, BookFileError
 from abook.webui.library import Preferences, book_id
@@ -185,6 +185,33 @@ def test_every_edit_shows_where_the_listener_looks(imported) -> None:
     assert all(s.get("stableId") and s.get("textSha256") for s in script["segments"]), "lớp sách mang mã ổn định của câu"
     status, data, _headers = call.raw("GET", "/media/books/{id}/cover")
     assert status == 200 and data[:3] == bytes([0xFF, 0xD8, 0xFF]) and data == (folder / book_edits.EDITS_COVER).read_bytes()
+
+
+def test_the_listener_sets_clears_or_restores_the_author_and_every_view_follows(imported) -> None:
+    app, folder, identifier, call = imported
+    assert app.listen_book(identifier)["author"] == "" and packages.edited_manifest(folder).get("author") is None
+    assert call("PUT", "/api/books/{id}/author", {"author": "  Tên \t người  "}) == (200, {"author": "Tên người"})
+    view = app.listen_book(identifier)
+    assert view["author"] == "Tên người" and view["edits"] == 1
+    assert packages.edited_manifest(folder)["author"] == "Tên người", "xuất sách nói, tìm và xếp theo tác giả đọc từ đây"
+    assert package_share.manifest(folder, identifier)["author"] == "Tên người", "máy ghép sang thấy tác giả mới"
+    assert call("PUT", "/api/books/{id}/author", {"author": "   "}) == (200, {"author": ""})
+    assert not (folder / book_edits.EDITS_FILE).exists(), "sách vốn không có tác giả: xoá đi là không còn thay đổi nào"
+    # Sách vốn có tác giả: bỏ tên là một thay đổi thật (ghi "" chứ không bỏ khoá), đặt lại đúng tên gốc thì hết thay đổi.
+    book = json.loads((folder / "book.json").read_text(encoding="utf-8"))
+    (folder / "book.json").write_bytes((json.dumps({**book, "author": "Người làm sách"}, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
+    assert app.listen_book(identifier)["author"] == "Người làm sách"
+    assert call("PUT", "/api/books/{id}/author", {"author": ""}) == (200, {"author": ""})
+    assert book_edits.load(folder)["author"] == "" and app.listen_book(identifier)["author"] == ""
+    assert "author" not in packages.edited_manifest(folder) and app.listen_book(identifier)["edits"] == 1
+    assert call("PUT", "/api/books/{id}/author", {"author": "Người làm sách"})[0] == 200
+    assert not (folder / book_edits.EDITS_FILE).exists() and app.listen_book(identifier)["author"] == "Người làm sách"
+
+
+def test_a_project_has_no_author_to_edit_and_the_producer_skips_one_that_arrives(tmp_path: Path) -> None:
+    project = make_project(tmp_path / "du_an")
+    report = book_edits.fold_edits(project, book_edits.validate({**shared.HEAD, "author": "Ai Đó"}))
+    assert report["applied"] == 0 and report["skipped"] == 1
 
 
 def test_removing_the_cover_draws_one_from_the_title_and_the_book_layer_keeps_its_own(imported) -> None:

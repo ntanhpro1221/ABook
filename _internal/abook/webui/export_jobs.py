@@ -36,6 +36,12 @@ class BookFileJobs:
             state["finishedAgo"] = max(0.0, self._clock() - state["finishedAt"])
         return state
 
+    def running(self) -> list[tuple[str, dict[str, Any]]]:
+        """Các cuốn đang có lượt xuất chạy: [(key, trạng thái)]. Giao diện vừa mở (hay tải lại ở trang khác) hỏi để hiện lại tiến độ."""
+        with self._lock:
+            keys = [key for key, state in self._state.items() if state.get("state") == "running"]
+        return [(key, self.status(key)) for key in keys]
+
     def update(self, key: str, **fields: Any) -> None:
         """Việc đang chạy ghi tiến độ vào bản ghi của nó (giao diện thấy ở lần hỏi kế). Việc đã xong / không có thì bỏ qua."""
         with self._lock:

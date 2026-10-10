@@ -1,0 +1,25 @@
+{
+ "previous": {},
+ "sent": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Tên mới",
+  "author": "Tác giả mới"
+ },
+ "current": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Tên mới",
+  "author": "Tác giả mới"
+ },
+ "marks": {},
+ "left": {
+  "format": "abook-edits",
+  "version": 1
+ },
+ "unmarked": {
+  "format": "abook-edits",
+  "version": 1
+ },
+ "pending": 0
+}

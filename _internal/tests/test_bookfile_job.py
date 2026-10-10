@@ -2,6 +2,7 @@
 hỏi trạng thái lại được sau khi tải lại trang (bản ghi nhớ lần xuất gần nhất của cuốn)."""
 from __future__ import annotations
 
+import json
 import threading
 import time
 from pathlib import Path
@@ -113,3 +114,53 @@ def test_a_second_start_while_running_returns_the_running_job() -> None:
     while jobs.status("a")["state"] == "running" and time.monotonic() < deadline:
         time.sleep(0.01)
     assert jobs.status("a")["state"] == "done" and calls == [1], "không đóng gói hai lần cùng lúc"
+
+
+def test_the_server_lists_the_exports_still_running_whatever_page_the_app_opens_on(tmp_path: Path, monkeypatch) -> None:
+    """Tải lại app ở trang không phải trang sách: GET /api/export-jobs cho biết cuốn nào đang xuất (để hiện lại thông báo tiến độ)."""
+    from abook.webui.library import book_id
+    from tests.test_webui_listen_and_sync import _request
+
+    library = tmp_path / "thu_vien"
+    library.mkdir()
+    book = _part(tmp_path, library, "p1", "Truyện X")
+    app, server = _studio(tmp_path, library)
+    release = threading.Event()
+
+    def hold(*_args, **_kwargs):
+        release.wait(10)
+        raise bookfile.BookFileError("dừng")
+
+    monkeypatch.setattr(bookfile, "pack", hold)
+
+    def listing() -> dict:
+        status, data, _ = _request(server.port, "GET", "/api/export-jobs", headers={"X-Ebook-Token": "t"})
+        assert status == 200
+        return json.loads(data)
+
+    try:
+        assert listing() == {"bookfile": [], "m4b": [], "audiobook": []}
+        _post(server, book, "bookfile-job", {"target": str(tmp_path / "xuat")})
+        running = listing()
+        assert running["m4b"] == [] and running["audiobook"] == []
+        assert [(job["bookId"], job["state"]) for job in running["bookfile"]] == [(book_id(book), "running")]
+        release.set()
+        deadline = time.monotonic() + 10
+        while listing()["bookfile"] and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert listing()["bookfile"] == [], "xong (hay hỏng) thì không còn trong danh sách đang chạy"
+    finally:
+        release.set()
+        server.stop()
+
+
+def test_running_lists_only_the_jobs_that_have_not_finished() -> None:
+    jobs = BookFileJobs()
+    release = threading.Event()
+    jobs.start("dang-chay", lambda: (release.wait(5), {"file": "x", "folder": "d"})[1])
+    jobs.start("da-xong", lambda: {"file": "y", "folder": "d"})
+    deadline = time.monotonic() + 5
+    while jobs.status("da-xong")["state"] == "running" and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert [key for key, _status in jobs.running()] == ["dang-chay"]
+    release.set()

@@ -68,6 +68,8 @@ PINS = {"pins": {"1:0": TRACK_LINK}, "tracks": {TRACK_SHA: TRACK_INFO}}
 # Mốc nhạc của base (xem tests/test_bookfile_music._plan): chương 1, hai bài, mốc 0-60 s (hai đoạn liền cùng bài gộp) và 60-90 s.
 CASES: dict[str, dict[str, Any]] = {
     "title_only": {"title": "Tên mới của tôi"},
+    "author_only": {"author": "Tác giả mới"},
+    "author_cleared": {"author": ""},
     "names": {"characters": {"LUCIEN": "Lu-xi-en", "HEIDI": "Heidi"}},
     "chapters": {"chapters": {"1": {"title": "Chương Một", "subtitle": ""}, "2": {"subtitle": "Hết rồi"}}},
     "music_level_and_silence": {"music": {"levelDb": -24.0, "silenced": ["1:60000"]}},
@@ -134,6 +136,12 @@ INVALID: dict[str, Any] = {
     "title_double_space": {**HEAD, "title": "Tên  sách"},
     "title_padded": {**HEAD, "title": " Tên sách"},
     "title_tab": {**HEAD, "title": "Tên\tsách"},
+    "author_too_long": {**HEAD, "author": "a" * 161},
+    "author_not_text": {**HEAD, "author": 7},
+    "author_control_character": {**HEAD, "author": "Tên\u0007người"},
+    "author_double_space": {**HEAD, "author": "Tên  người"},
+    "author_padded": {**HEAD, "author": " Tên người"},
+    "author_tab": {**HEAD, "author": "Tên\tngười"},
     "character_name_too_long": {**HEAD, "characters": {"LUCIEN": "b" * 81}},
     "character_name_empty": {**HEAD, "characters": {"LUCIEN": ""}},
     "characters_not_an_object": {**HEAD, "characters": ["LUCIEN"]},
@@ -241,6 +249,14 @@ MERGE_CASES = {
         {**HEAD, "title": "Của tôi", "characters": {"LUCIEN": "A"}, "chapters": {"1": {"title": "X"}}},
         {**HEAD, "title": "Của bạn", "characters": {"LUCIEN": "B"}, "chapters": {"1": {"title": "Y", "subtitle": "Z"}}},
     ),
+    "author_local_wins": (
+        {**HEAD, "author": "Của tôi"},
+        {**HEAD, "author": "Của bạn", "title": "Tên bạn đặt"},
+    ),
+    "author_cleared_here_wins": (
+        {**HEAD, "author": ""},
+        {**HEAD, "author": "Của bạn"},
+    ),
     "silence_is_a_union": (
         {**HEAD, "music": {"levelDb": -20.0, "silenced": ["1:0"]}},
         {**HEAD, "music": {"enabled": False, "levelDb": -30.0, "silenced": ["1:60000"]}},
@@ -296,6 +312,15 @@ SENT_CASES: dict[str, dict[str, Any]] = {
     "reading_and_playlist_stay": {
         "sent": {"title": "Tên mới", "readings": {"Lucien": "Lu-xi-en"}, "music": {"levelDb": -24.0, "playlist": "school_light"}},
         "current": {"title": "Tên mới", "readings": {"Lucien": "Lu-xi-en"}, "music": {"levelDb": -24.0, "playlist": "school_light"}},
+    },
+    # Tên sách và tác giả như nhau: máy kia nhận và trả về trong sách, nên gửi xong thì gỡ khỏi lớp sửa; đổi tiếp sau lúc đóng gói thì ở lại.
+    "title_and_author_leave_once_sent": {
+        "sent": {"title": "Tên mới", "author": "Tác giả mới"},
+        "current": {"title": "Tên mới", "author": "Tác giả mới"},
+    },
+    "author_edited_again_after_sending": {
+        "sent": {"title": "Tên mới", "author": "Tác giả mới"},
+        "current": {"title": "Tên mới", "author": "Tác giả khác"},
     },
     "edited_again_after_sending": {
         "previous": {"readings": {"Lucien": "Lu-xi-en"}, "music": {"playlist": "fantasy_calm"}},
@@ -359,6 +384,12 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "PUT", "path": "/title", "body": {"title": "   "}},
         {"method": "GET", "path": "/edits"},
         {"method": "PUT", "path": "/title", "body": {"title": "Sách thử · Tập 1"}},
+        {"method": "GET", "path": "/edits"},
+    ],
+    "author": [
+        {"method": "PUT", "path": "/author", "body": {"author": "  Tác \t giả \n"}},
+        {"method": "GET", "path": "/edits"},
+        {"method": "PUT", "path": "/author", "body": {"author": "   "}},
         {"method": "GET", "path": "/edits"},
     ],
     "characters": [
