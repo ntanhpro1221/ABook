@@ -97,7 +97,14 @@ describe("formatEta", () => {
 
   it("chưa có tốc độ (không có ước lượng) thì không nói gì", () => {
     expect(etaOf({ eta: null, progress: { analysis: 0.2, synthesis: 0 } })).toBeNull();
-    expect(etaOf({ eta: { phase: "analysis", seconds: 30 }, progress: { analysis: 0.21, synthesis: 0 } })).toBe("còn dưới 2 phút");
-    expect(etaOf({ eta: { phase: "synthesis", seconds: 30 }, progress: { analysis: 1, synthesis: 0.97 } })).toBe("sắp xong");
+    expect(etaOf({ eta: { phase: "analysis", seconds: 30 }, progress: { analysis: 0.21, synthesis: 0 } })).toBe("pha phân tích còn dưới 2 phút");
+    expect(etaOf({ eta: { phase: "synthesis", seconds: 30 }, progress: { analysis: 1, synthesis: 0.97 } })).toBe("pha thu âm sắp xong");
+  });
+
+  it("nói rõ ước lượng là của bước nào, để không đọc thành cả cuốn sắp xong", () => {
+    expect(etaOf({ eta: { phase: "analysis", seconds: 7200 }, progress: { analysis: 0.4, synthesis: 0 } })).toBe("pha phân tích còn khoảng 2 giờ");
+    expect(etaOf({ eta: { phase: "synthesis", seconds: 600 }, progress: { analysis: 1, synthesis: 0.5 } })).toBe("pha thu âm còn khoảng 10 phút");
+    // Bước phân tích gần xong vẫn còn thu âm phía sau: câu nói về bước, không hứa về cả cuốn.
+    expect(etaOf({ eta: { phase: "analysis", seconds: 20 }, progress: { analysis: 0.97, synthesis: 0 } })).toBe("pha phân tích sắp xong");
   });
 });

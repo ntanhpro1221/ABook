@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, FileAudio, FolderArchive, FolderDown, FolderOpen, RefreshCw } from "lucide-react";
+import { AlertTriangle, BookAudio, CheckCircle2, FileAudio, FolderArchive, FolderDown, FolderOpen, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -6,6 +6,7 @@ import { cn } from "@/shared/cn";
 import { coverArtwork } from "@/shared/cover";
 import { fileName, formatNumber, formatSize } from "@/shared/format";
 import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { startExport } from "@/desktop/ExportBookFileJob";
 import { api, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
 import { WordTimingsRow } from "./WordTimings";
@@ -13,7 +14,7 @@ import { WordTimingsRow } from "./WordTimings";
 // Xuất ngay trong Studio (soát UX a6 01-10, H1-H2: người làm sách phải sang Thư viện nghe mới tìm thấy "Xuất", và bản xuất
 // lặng lẽ thiếu chương / bỏ qua sửa chưa áp). Hộp nói trước bản xuất sẽ có gì, rồi mới hỏi chỗ lưu.
 
-type Kind = "mp3" | "abook" | "abookproj";
+type Kind = "mp3" | "abook" | "m4b" | "abookproj";
 /** Truyện chia nhiều phần bằng "Làm tiếp cuốn này": xuất riêng phần đang xem hay cả bộ. */
 type Scope = "part" | "series";
 /** Cả bộ ra `.abook`: gộp một file (mặc định), hay mỗi phần một file. */
@@ -38,6 +39,13 @@ const KINDS: { value: Kind; title: string; detail: string; icon: typeof FolderDo
   { value: "mp3", title: "Thư mục MP3", detail: "Mỗi chương một file, có tên sách, tên chương, bìa - nghe bằng mọi trình phát.", icon: FolderDown },
   { value: "abook", title: "File .abook", detail: "Cả cuốn trong một file: bìa, chữ đọc theo, nhân vật - mở bằng ABook ở máy khác.", icon: FileAudio },
   {
+    // Cùng đường với mục "Xuất M4B cho app sách nói" ở menu Thư viện (desktop/ExportBookFileJob.tsx): việc nền, báo tiến độ ngoài hộp.
+    value: "m4b",
+    title: "Sách nói M4B",
+    detail: "Cả cuốn trong một file có mục lục chương - app sách nói (Apple Books, Smart AudioBook Player...) mở là thấy đủ chương.",
+    icon: BookAudio,
+  },
+  {
     value: "abookproj",
     title: "Cả dự án (.abookproj)",
     detail:
@@ -49,6 +57,7 @@ const KINDS: { value: Kind; title: string; detail: string; icon: typeof FolderDo
 const SAVING: Record<Kind, [string, string, string]> = {
   mp3: ["Chọn nơi lưu bản xuất", "Đang xuất sách…", "Không xuất được"],
   abook: ["Chọn nơi lưu file sách", "Đang đóng gói sách…", "Không xuất được"],
+  m4b: ["Chọn nơi lưu file M4B", "Đang làm file M4B…", "Không xuất được M4B"],
   abookproj: ["Chọn nơi lưu file dự án", "Đang đóng gói dự án…", "Không gói được dự án"],
 };
 
@@ -83,7 +92,7 @@ export function ExportDialog({
   const missing = book.chapters.missingAudio ?? 0;
   const ready = Math.max(0, book.chapters.completed - missing);
   const total = book.chapters.total;
-  const wholeSeries = scope === "series" && parts.length > 1 && kind !== "abookproj";
+  const wholeSeries = scope === "series" && parts.length > 1 && kind !== "abookproj" && kind !== "m4b"; // M4B: mỗi phần một file riêng, như menu Thư viện
   const oneFile = kind === "abook" && (!wholeSeries || layout === "single");
   // Cỡ ước lượng của file .abook (audio các chương nghe được): báo trước, và cảnh báo khi vượt giới hạn FAT32.
   const estimate = useQuery({
@@ -122,6 +131,12 @@ export function ExportDialog({
       const picked = await pickFolder(SAVING[kind][0], "").catch(() => null);
       if (!picked) return;
       target = picked;
+    }
+    if (kind === "m4b") {
+      // Việc nền do ExportJobHost (desktop/App.tsx) giữ: tiến độ và kết quả hiện ở thông báo nổi, nên đóng hộp ngay.
+      startExport("m4b", { id: book.id, chapters: ready, target, cover: coverArtwork(book.title) });
+      onOpenChange(false);
+      return;
     }
     setBusy(true);
     setFinished(null);
@@ -234,7 +249,7 @@ export function ExportDialog({
         </div>
       ) : (
       <>
-      {parts.length > 1 && !whole && (
+      {parts.length > 1 && !whole && kind !== "m4b" && (
         <div
           className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm"
           role="radiogroup"

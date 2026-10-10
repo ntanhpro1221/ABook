@@ -193,6 +193,25 @@ def test_a_running_book_or_a_busy_card_is_told_not_waited_for(tmp_path: Path) ->
     assert launcher.children == [], "không khởi động gì"
 
 
+def test_the_refusal_names_the_book_and_the_phase_that_hold_the_card(tmp_path: Path) -> None:
+    paths, _db = _noah(tmp_path)
+
+    def refusal(phase: str) -> PreviewError:
+        busy = lambda: {"title": "Tắt đèn", "bookId": "tat-den", "phase": phase}  # noqa: E731
+        with pytest.raises(PreviewError) as raised:
+            _previews(tmp_path, Launcher(), busy=busy).voice_preview(paths.root, "livre", "NOAH", preset=CANDIDATE)
+        return raised.value
+
+    analysis = refusal("analysis")
+    assert analysis.reason == "producing" and "phân tích cuốn “Tắt đèn”" in analysis.message
+    assert "Đừng bấm Dừng" in analysis.message, "dừng giữa pha phân tích là đổi quyển sách: không mời"
+    assert analysis.extra == {"busyBook": "Tắt đèn", "busyBookId": "tat-den", "busyPhase": "analysis"}
+    synthesis = refusal("synthesis")
+    assert "thu âm cuốn “Tắt đèn”" in synthesis.message and "Dừng nó" in synthesis.message
+    assert "Tạm dừng" not in synthesis.message, "Tạm dừng không nhả card: không hứa điều đó"
+    assert "cuốn “Tắt đèn”" in refusal("").message
+
+
 def test_a_voice_the_change_would_refuse_is_refused_with_the_same_reason(tmp_path: Path) -> None:
     paths, _db = _noah(tmp_path)
     with pytest.raises(PreviewError) as raised:

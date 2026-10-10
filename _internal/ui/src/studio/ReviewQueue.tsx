@@ -7,8 +7,10 @@ import { cn } from "@/shared/cn";
 import { formatPercent } from "@/shared/format";
 import { Button, EmptyState, Kbd, Segmented, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
+import { useCachedBook } from "./data";
+import { retryUnlessGone } from "./polling";
 import { usePendingNote } from "./decisions";
-import { matchPhrase, shortcutHint, spokenEditLabel } from "./reviewText";
+import { matchPhrase, notRecordedYet, shortcutHint, spokenEditLabel } from "./reviewText";
 
 // "Cần nghe lại": câu mà khâu tự kiểm tra không chắc (webui/reviews.py). Nghe từng câu, bấm Ổn hoặc Cần thu lại.
 // "Cần thu lại" ghi một yêu cầu cho dây chuyền (overrides.json `retakes`): câu được thu lại bằng hạt giống MỚI ở lần chạy
@@ -78,6 +80,8 @@ export function useReviewCount(bookId: string) {
     queryFn: () => api<ReviewView>(`/api/books/${bookId}/review`),
     enabled: Boolean(bookId),
     staleTime: 30_000,
+    retry: retryUnlessGone,
+    retryOnMount: false,
   });
   return data?.pending ?? 0;
 }
@@ -367,6 +371,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [continuous, clip]);
+  const unrecorded = notRecordedYet(useCachedBook(bookId).data?.book.segments);
   const { data, isLoading } = useQuery({
     queryKey: ["review", bookId, showMinor],
     queryFn: () => api<ReviewView>(`/api/books/${bookId}/review${showMinor ? "?all=1" : ""}`),
@@ -420,6 +425,8 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
               Còn <span className="font-semibold text-fg">{data.pending} câu</span> máy tự kiểm không chắc - nghe bằng tai rồi bấm Ổn hoặc
               Cần thu lại. Câu hỏng (chưa thu được) không có gì để nghe: sửa cách máy đọc câu ấy - tiếng động, chữ lạ - hay thu lại.
             </>
+          ) : unrecorded ? (
+            "Chưa có câu nào để kiểm - sẽ có sau khi thu âm."
           ) : (
             "Đã xem hết các câu đáng lo."
           )}
@@ -477,8 +484,12 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         </ul>
       ) : (
         <div data-review-row={EMPTY} tabIndex={-1} className="rounded-xl outline-none">
-          <EmptyState icon={ShieldCheck} title={filter === "todo" ? "Không còn câu nào cần xem" : "Chưa đánh dấu câu nào"} className="mt-4">
-            {filter === "todo" ? "Mọi câu đáng lo đều đã có phán quyết." : "Nghe một câu rồi bấm Ổn hoặc Cần thu lại."}
+          <EmptyState icon={ShieldCheck} title={filter === "todo" ? (unrecorded ? "Chưa có câu nào để kiểm" : "Không còn câu nào cần xem") : "Chưa đánh dấu câu nào"} className="mt-4">
+            {filter === "todo"
+              ? unrecorded
+                ? "Máy kiểm từng câu ngay khi thu xong; câu nào đáng lo sẽ hiện ở đây."
+                : "Mọi câu đáng lo đều đã có phán quyết."
+              : "Nghe một câu rồi bấm Ổn hoặc Cần thu lại."}
           </EmptyState>
         </div>
       )}

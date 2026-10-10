@@ -13,6 +13,7 @@ import { formatNumber } from "@/shared/format";
 import { Button, EmptyState } from "@/shared/ui";
 import { api, type BookSummary, type PrecastView } from "./api";
 import { NameReadings } from "./NameReadings";
+import { pollDelay, retryUnlessGone } from "./polling";
 import {
   castItems,
   chapterRange,
@@ -38,7 +39,8 @@ export function usePrecast(bookId: string, enabled = true) {
     queryKey: ["precast", bookId],
     enabled: Boolean(bookId) && enabled,
     queryFn: () => api<PrecastView>(`/api/books/${bookId}/precast`),
-    refetchInterval: 15_000,
+    retry: retryUnlessGone,
+    refetchInterval: (query) => pollDelay(15_000, query.state),
   });
 }
 

@@ -17,6 +17,7 @@ import {
 } from "./api";
 import type { Phase } from "./api";
 import type { Tone } from "@/shared/ui";
+import { pollDelay, retryUnlessGone } from "./polling";
 
 export function phaseTone(phase: Phase, running: boolean): Tone {
   if (phase === "done") return "success";
@@ -69,7 +70,9 @@ export function useBook(id: string | undefined) {
     queryKey: ["book", id],
     enabled: Boolean(id),
     queryFn: () => fetchBook(id),
-    refetchInterval: (query) => (query.state.data?.book.running || query.state.data?.book.starting ? LIVE_MS * 1.5 : IDLE_MS),
+    retry: retryUnlessGone,
+    // Sách đã mất (404) thì thôi hỏi; máy chủ lỗi thì lùi dần (polling.ts).
+    refetchInterval: (query) => pollDelay(query.state.data?.book.running || query.state.data?.book.starting ? LIVE_MS * 1.5 : IDLE_MS, query.state),
   });
 }
 
@@ -78,7 +81,8 @@ export function useCast(id: string | undefined, live: boolean) {
     queryKey: ["cast", id],
     enabled: Boolean(id),
     queryFn: () => api<Cast>(`/api/books/${id}/cast`),
-    refetchInterval: live ? 20000 : false,
+    retry: retryUnlessGone,
+    refetchInterval: (query) => pollDelay(live ? 20000 : false, query.state),
   });
 }
 
@@ -87,7 +91,8 @@ export function useActivity(id: string | undefined, technical: boolean, live: bo
     queryKey: ["activity", id, technical],
     enabled: Boolean(id),
     queryFn: () => api<ActivityItem[]>(`/api/books/${id}/activity${technical ? "?technical=1" : ""}`),
-    refetchInterval: live ? 5000 : false,
+    retry: retryUnlessGone,
+    refetchInterval: (query) => pollDelay(live ? 5000 : false, query.state),
   });
 }
 

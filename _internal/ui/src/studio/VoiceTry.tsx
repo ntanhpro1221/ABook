@@ -57,7 +57,7 @@ export function useVoiceTry(bookId: string): {
         clip.toggle(`voice-${voiceName}`, fallbackUrl);
         setSaid({ text: "Người này chưa có câu nào để đọc thử - đang phát câu mẫu chung của giọng", status: true });
       } else {
-        const why = refusalText(reason, (error as Error).message);
+        const why = refusalText(reason, (error as Error).message, error instanceof ApiError && Boolean(error.detail.busyBook));
         setSaid({ text: fallbackUrl ? `${why} - nút ▶ vẫn nghe được câu mẫu chung của giọng` : why, status: true });
       }
     } finally {

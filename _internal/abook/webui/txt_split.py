@@ -10,7 +10,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
-from ..importers import MAX_HEADING, PREAMBLE, TXT_HEADING, title_only_preamble
+from ..importers import MAX_HEADING, PREAMBLE, TXT_HEADING, clip_title, title_only_preamble
 from ..io_utils import decode_text_bytes
 from .volumes import is_volume_heading
 
@@ -102,7 +102,7 @@ def split(path: Path, root: Path, title: str = "") -> Path:
     folder.mkdir(parents=True, exist_ok=True)
     first = 0 if parts[0][0] == PREAMBLE else 1
     for index, (title, body) in enumerate(parts, start=first):
-        label = " ".join(_UNSAFE_NAME.sub(" ", title).split())[:50].strip(" .")
+        label = clip_title(" ".join(_UNSAFE_NAME.sub(" ", title).split()), 50).strip(" .")
         text = "\n".join(body).strip("\n") + "\n"
         (folder / f"{index:0{width}d}{' ' + label if label else ''}.txt").write_bytes(text.encode("utf-8"))
     return folder
