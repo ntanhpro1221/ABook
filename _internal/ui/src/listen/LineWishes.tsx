@@ -8,6 +8,7 @@ import { Button, Dialog } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { refreshAfterDecision, UNDO_MS, undoAction, WAITING_STUDIO } from "@/studio/decisions";
 import { EditReading } from "@/studio/NameReadings";
+import { reachSummary, useReach } from "@/studio/readingReach";
 import { DeliveryMenu, deliveryText, KINDS, LineQuote, NARRATOR, SpeakerMenu, type ChapterScript, type Delivery, type Line, type Person } from "@/studio/ScriptTab";
 import { cleanName } from "./BookScreen";
 import { refreshAfterEdit } from "./EditBook";
@@ -163,6 +164,8 @@ function WordView({ bookId, text, names, need, onBack, initial = null }: { bookI
   const pending = word ? names.find((item) => sameWord(item.surface, word)) : undefined;
   // Chưa có xưởng để thu thử: "Nghe thử" bằng giọng đọc của máy.
   const aloud = useReadAloudTry(bookId);
+  // Trước khi ghi: từ ấy có trong bao nhiêu câu, bao nhiêu câu đã thu sẽ phải thu lại (như ô "Thêm cách đọc cho từ bất kỳ" của Studio).
+  const reach = useReach(bookId, word ?? "", Boolean(word)).data;
   return (
     <div className="space-y-3">
       <p className="text-sm text-fg-2">Chạm vào từ máy đọc sai (thường là tên riêng). Cách đọc lưu cho cả cuốn: mọi câu có từ ấy.</p>
@@ -197,6 +200,11 @@ function WordView({ bookId, text, names, need, onBack, initial = null }: { bookI
               </span>
             )}
           </div>
+          {reach?.surface === word && (
+            <p className={cn("tabular mb-2 text-xs", reach.blocked ? "text-warning" : "text-fg-2")} data-reading-reach>
+              {reachSummary(reach)}
+            </p>
+          )}
           <EditReading
             key={word}
             bookId={bookId}
@@ -204,6 +212,7 @@ function WordView({ bookId, text, names, need, onBack, initial = null }: { bookI
             fresh={!pending}
             waiting={need}
             aloud={aloud}
+            reach={reach?.surface === word ? reach : undefined}
             onDone={() => setWord(null)}
           />
         </div>

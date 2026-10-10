@@ -1,0 +1,187 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=%20V%E1%BB%81%20",
+   "status": 200,
+   "response": {
+    "surface": "Về",
+    "lines": 2,
+    "reached": 2,
+    "recorded": 1,
+    "blocked": 0,
+    "cost": "thu lại 1 câu",
+    "chapters": [
+     {
+      "chapterId": 1,
+      "title": "Chương 646 · Trở về (1)",
+      "lines": 1,
+      "recorded": 1
+     },
+     {
+      "chapterId": 2,
+      "title": "Chương 647 · Trở về (2)",
+      "lines": 1,
+      "recorded": 0
+     }
+    ],
+    "example": {
+     "segmentId": 1,
+     "chapterId": 1,
+     "chapterTitle": "Chương 646 · Trở về (1)",
+     "seq": 1,
+     "text": "Chương 646 - Trở về (1)",
+     "speaker": "",
+     "hasAudio": true
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/chapters/1/title",
+   "body": {
+    "title": "Chương Một",
+    "subtitle": ""
+   },
+   "status": 200,
+   "response": {
+    "chapterId": 1,
+    "title": "Chương Một",
+    "subtitle": "",
+    "fullTitle": "Chương Một"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=v%E1%BB%81",
+   "status": 200,
+   "response": {
+    "surface": "về",
+    "lines": 2,
+    "reached": 2,
+    "recorded": 1,
+    "blocked": 0,
+    "cost": "thu lại 1 câu",
+    "chapters": [
+     {
+      "chapterId": 1,
+      "title": "Chương Một",
+      "lines": 1,
+      "recorded": 1
+     },
+     {
+      "chapterId": 2,
+      "title": "Chương 647 · Trở về (2)",
+      "lines": 1,
+      "recorded": 0
+     }
+    ],
+    "example": {
+     "segmentId": 1,
+     "chapterId": 1,
+     "chapterTitle": "Chương Một",
+     "seq": 1,
+     "text": "Chương 646 - Trở về (1)",
+     "speaker": "",
+     "hasAudio": true
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=Ch%C3%A0o",
+   "status": 200,
+   "response": {
+    "surface": "Chào",
+    "lines": 1,
+    "reached": 1,
+    "recorded": 1,
+    "blocked": 0,
+    "cost": "thu lại 1 câu",
+    "chapters": [
+     {
+      "chapterId": 1,
+      "title": "Chương Một",
+      "lines": 1,
+      "recorded": 1
+     }
+    ],
+    "example": {
+     "segmentId": 6,
+     "chapterId": 1,
+     "chapterTitle": "Chương Một",
+     "seq": 4,
+     "text": "“Chào anh.”",
+     "speaker": "Hây-đi",
+     "hasAudio": true
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=thu",
+   "status": 200,
+   "response": {
+    "surface": "thu",
+    "lines": 1,
+    "reached": 1,
+    "recorded": 0,
+    "blocked": 0,
+    "cost": "chưa thu nên không phải thu lại",
+    "chapters": [
+     {
+      "chapterId": 2,
+      "title": "Chương 647 · Trở về (2)",
+      "lines": 1,
+      "recorded": 0
+     }
+    ],
+    "example": {
+     "segmentId": 5,
+     "chapterId": 2,
+     "chapterTitle": "Chương 647 · Trở về (2)",
+     "seq": 2,
+     "text": "Chưa thu.",
+     "speaker": "",
+     "hasAudio": false
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=TP.HCM",
+   "status": 200,
+   "response": {
+    "surface": "TP.HCM",
+    "lines": 0,
+    "reached": 0,
+    "recorded": 0,
+    "blocked": 0,
+    "cost": "chưa thu nên không phải thu lại",
+    "chapters": [],
+    "example": null
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach?surface=%20",
+   "status": 400,
+   "response": {
+    "error": "Thiếu chữ cần xem"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pronunciations/reach",
+   "status": 400,
+   "response": {
+    "error": "Thiếu chữ cần xem"
+   }
+  }
+ ]
+}

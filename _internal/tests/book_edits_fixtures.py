@@ -621,6 +621,19 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "GET", "path": "/edits"},
         {"method": "GET", "path": "/pending-changes"},
     ],
+    # "Đọc từ này là…" ở trang đọc: trước khi ghi, cách đọc chạm tới bao nhiêu câu, bao nhiêu câu đã thu (name_readings.package_reading_reach).
+    # Tham số của GET nằm trong đường dẫn; điện thoại nhận nó trong `body` (android/localStudio.ts) - test JVM chuyển như vậy. Không có
+    # ca ký hiệu bị đổi thành quãng nghỉ (`blocked`): bản Kotlin chưa có `spoken_symbols_to_words`.
+    "reading_reach": [
+        {"method": "GET", "path": "/pronunciations/reach?surface=%20V%E1%BB%81%20"},
+        {"method": "PUT", "path": "/chapters/1/title", "body": {"title": "Chương Một", "subtitle": ""}},
+        {"method": "GET", "path": "/pronunciations/reach?surface=v%E1%BB%81"},
+        {"method": "GET", "path": "/pronunciations/reach?surface=Ch%C3%A0o"},
+        {"method": "GET", "path": "/pronunciations/reach?surface=thu"},
+        {"method": "GET", "path": "/pronunciations/reach?surface=TP.HCM"},
+        {"method": "GET", "path": "/pronunciations/reach?surface=%20"},
+        {"method": "GET", "path": "/pronunciations/reach"},
+    ],
 }
 
 
