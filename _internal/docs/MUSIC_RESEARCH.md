@@ -4337,6 +4337,25 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 15:xx - STU-CTX: cho học sinh thấy khúc trước/sau + vị trí chỉ nhích nhẹ, KHÔNG qua
+
+Ghi trước ở Corpus 7f3f3ed, kết quả ở Corpus (stu_ctx.log). q17 L14, ridge, mọi khúc bạc. Mốc B (khúc đơn) khớp đúng đường
+cong (học .527, bộ 7 .334). C thêm nhúng khúc trước, khúc sau và vị trí trong chương. Không có nhãn của khúc lân cận. Chia theo
+chương: bạc và vàng là các truyện khác nhau. App có đủ cả chương lúc chạy (`Head.deviations` căn giữa theo cả chương, chạy sau
+phân tích), nên khúc sau cũng dùng được.
+
+| alpha chọn trên bộ học (3e4 cả hai) | học TB(V,T) | bộ 7 mọi chương | bộ 7 bỏ chương hằng |
+|---|---|---|---|
+| B khúc đơn | .527 | .334 | .461 |
+| C + ngữ cảnh | .535 | .354 | .487 |
+| Δ | +.008 | +.019 | +.026 |
+
+- **THUA.** Δ học +.008 (cần ≥ .03), Δ bộ 7 +.019 (cần ≥ .02), Δ gộp 62 chương +.012 [−.006, +.029].
+- Lợi nhỏ, cùng chiều ở cả hai bộ, nhưng xa mức cần để đóng khoảng .28 tới thầy (LABEL-CEIL).
+- Ở nhánh "học sinh nhúng + đầu tuyến tính", các đòn rẻ đều đã thử và đều thua: encoder 4B, LoRA, ghép lớp, mức q17, ngữ cảnh.
+  Nhúng trung bình một khúc có lẽ đã mất phần thầy dùng để chấm. Đường còn lại nặng hơn: học sinh SINH nhãn (LLM nhỏ tinh chỉnh
+  đọc cả chương), cần GPU.
+
 ### 10-10 14:xx - LABEL-CEIL: nhãn bạc KHÔNG phải nút thắt ở bộ học; bộ 7 lưng chừng
 
 Lead hỏi nhãn bạc có phải nút thắt không. Phép đo ấy đã có từ mẻ CẦU NỐI 08-10: đúng quy trình bạc chấm lại 20 chương vàng
