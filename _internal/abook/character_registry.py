@@ -2822,6 +2822,62 @@ def resolve_first_person_labels(
     return moved
 
 
+def snap_labels_to_chapter_names(
+    db: ProjectDB,
+    settings: dict[str, Any],
+    log: Callable[[str], None],
+) -> int:
+    """Nhãn người nói mà chữ chương không viết về dạng tên chương viết (luật ở name_snap.py) - TRƯỚC mọi lượt gom tên, để
+    "Toko" không thành nhân vật thứ hai bên cạnh Tooko. Tên đã biết: sổ nhân vật (cả bí danh), người kể ngôi thứ nhất (cả
+    cuốn, theo chương, đoạn người dùng đã nhận) và người mà bí danh người nghe trỏ tới. Nhãn người nghe đã gộp (aliases.json)
+    thì không đụng: quyết định của người nghe áp sau, ở `_canonicalize_named_speakers`. Trả về số câu đổi nhãn."""
+    from .aliases import key as alias_key
+    from .aliases import load as listener_aliases
+    from .analysis import first_person_chapters
+    from .name_snap import is_name_label, snap_map
+
+    root = getattr(getattr(db, "path", None), "parent", None)
+    confirmed = listener_aliases(root) if root is not None else {}
+    known = {str(row["canonical_name"]) for row in db.list_characters()}
+    with db.connect() as conn:
+        known.update(str(row["alias"]) for row in conn.execute("SELECT alias FROM character_aliases"))
+    known.update(confirmed.values())
+    identity = str(settings.get("voices", {}).get("first_person_identity", "") or "").strip()
+    if identity.casefold() not in FIRST_PERSON_PRONOUNS:
+        known.add(identity)
+    known.update(first_person_chapters(settings).values())
+    if root is not None:
+        known.update(entry["narrator"] for entries in narrator_sections.accepted(narrator_sections.load(root)).values()
+                     for entry in entries)
+    known = {
+        name for name in known
+        if name and is_name_label(name) and not is_local_speaker(name) and not name.upper().startswith("ANONYMOUS_")
+    }
+    chapter_index = {int(row["id"]): int(row["chapter_index"]) for row in db.list_chapters()}
+    by_chapter: dict[int, list[Any]] = defaultdict(list)
+    for row in db.list_segments():
+        by_chapter[int(row["chapter_id"])].append(row)
+    moved = 0
+    for chapter_id, rows in sorted(by_chapter.items()):
+        snapped = snap_map(((str(row["speaker"]), str(row["text"])) for row in rows), known)
+        for label, name in sorted(snapped.items()):
+            if alias_key(label) in confirmed:
+                continue
+            lines = db.rewrite_speaker(label, name, chapter_ids=[chapter_id])
+            if not lines:
+                continue
+            moved += lines
+            index = chapter_index.get(chapter_id, chapter_id)
+            log(f"  Chương {index}: chữ không viết {label}, chỉ viết {name} - {lines} câu về {name}.")
+            db.event(
+                "info",
+                "SPEAKER_LABEL_SNAPPED_TO_TEXT",
+                f"chapter {index}: {lines} lines labelled {label!r} -> {name!r} (the only close name the chapter writes)",
+                {"chapter_index": index, "label": label, "name": name, "lines": lines},
+            )
+    return moved
+
+
 def build_registry_and_cast(
     db: ProjectDB,
     settings: dict[str, Any],
@@ -2840,6 +2896,7 @@ def build_registry_and_cast(
             db.rewrite_speaker(speaker, reserved)
 
     resolve_first_person_labels(db, settings, log)
+    snap_labels_to_chapter_names(db, settings, log)
 
     _repair_cross_batch_dialogue_continuations(db, log)
     _repair_crowd_dialogue_blocks(db, log)

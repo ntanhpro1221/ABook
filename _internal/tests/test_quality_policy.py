@@ -109,6 +109,9 @@ def test_quality_policy_has_separate_parser_and_casting_fingerprints() -> None:
     assert TEXT_SEGMENTATION_IMPLEMENTATION_FILES == ("text_processing.py",)
     assert "analysis.py" in ANALYSIS_CASTING_IMPLEMENTATION_FILES
     assert "voice_catalog.py" in ANALYSIS_CASTING_IMPLEMENTATION_FILES
+    # Nhãn người nói về dạng tên chương viết (name_snap.py) quyết ai là ai trước khi phân vai.
+    assert "name_snap.py" in ANALYSIS_CASTING_IMPLEMENTATION_FILES
+    assert "name_snap.py" in QUALITY_IMPLEMENTATION_FILES
     assert policy["stage_fingerprints"][TEXT_SEGMENTATION_STAGE] == (
         text_segmentation_implementation_hash()
     )
