@@ -1,15 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { setApiTransport } from "@/studio/api";
 import {
+  clipStart,
   defaultExportFolder,
   exportWhereHint,
   jobView,
   lastExportHint,
+  lastExportPlace,
   M4B_COPY,
   missingChaptersNote,
   packingText,
   RECENT_SECONDS,
+  runningExports,
   type ExportJob,
 } from "./bookFileExport";
+
+afterEach(() => setApiTransport(null));
 
 describe("defaultExportFolder", () => {
   it("joins with the separator the library path already uses", () => {
@@ -69,11 +75,71 @@ describe("jobView", () => {
 
 describe("lastExportHint", () => {
   it("names the last file, or the running state, and is silent when nothing was exported", () => {
-    expect(lastExportHint({ state: "done", result: { folder: "D:/x", file: "D:/x/a.abook" } })).toBe("Lần xuất gần nhất: D:/x/a.abook");
+    expect(lastExportHint({ state: "done", result: { folder: "D:/x", file: "D:/x/a.abook" } })).toBe("Lần xuất gần nhất: a.abook");
     expect(lastExportHint({ state: "running" })).toMatch(/Đang đóng gói/);
     expect(lastExportHint({ state: "idle" })).toBeNull();
     expect(lastExportHint({ state: "error", error: "x" })).toBeNull();
     expect(lastExportHint(undefined)).toBeNull();
+  });
+});
+
+describe("lastExportHint with long paths", () => {
+  const long = "D:\\Sách nói\\Đã xuất\\Một cuốn truyện có cái tên dài dằng dặc từ đầu đến cuối.m4b";
+
+  it("names the file, never the start of the path, and keeps the full path for the tooltip", () => {
+    const job: ExportJob = { state: "done", result: { folder: "D:\\Sách nói\\Đã xuất", file: long } };
+    const hint = lastExportHint(job)!;
+    expect(hint.startsWith("Lần xuất gần nhất: …")).toBe(true);
+    expect(hint.endsWith("đến cuối.m4b")).toBe(true);
+    expect(hint).not.toContain("D:");
+    expect(lastExportPlace(job)).toBe(long);
+  });
+
+  it("names the folder when the result is a folder of MP3s", () => {
+    const job: ExportJob = { state: "done", result: { folder: "D:/Sách nói/Truyện ngắn", files: 12 } };
+    expect(lastExportHint(job)).toBe("Lần xuất gần nhất: Truyện ngắn");
+    expect(lastExportPlace(job)).toBe("D:/Sách nói/Truyện ngắn");
+  });
+
+  it("has no place before anything was exported", () => {
+    expect(lastExportPlace({ state: "running" })).toBeUndefined();
+    expect(lastExportPlace(undefined)).toBeUndefined();
+  });
+});
+
+describe("clipStart", () => {
+  it("cuts at the start so the end of the name stays", () => {
+    expect(clipStart("abcdefghij", 6)).toBe("…fghij");
+    expect(clipStart("abcdef", 6)).toBe("abcdef");
+    expect(clipStart("ab", 6)).toBe("ab");
+  });
+});
+
+describe("runningExports", () => {
+  it("lists the books with a job of this kind still running, from the server's list", async () => {
+    setApiTransport(async (path) => {
+      expect(path).toBe("/api/export-jobs");
+      return {
+        bookfile: [],
+        m4b: [{ bookId: "m", state: "running" }],
+        audiobook: [
+          { bookId: "a", state: "running", chapter: 2, chapters: 9, percent: 20 },
+          { bookId: "b", state: "done" },
+        ],
+      };
+    });
+    expect(await runningExports("audiobook")).toEqual(["a"]);
+    expect(await runningExports("m4b")).toEqual(["m"]);
+    expect(await runningExports("bookfile")).toEqual([]);
+  });
+
+  it("treats a failed or odd answer as nothing running", async () => {
+    setApiTransport(async () => {
+      throw new Error("mạng chớp");
+    });
+    expect(await runningExports("audiobook")).toEqual([]);
+    setApiTransport(async () => ({}));
+    expect(await runningExports("audiobook")).toEqual([]);
   });
 });
 

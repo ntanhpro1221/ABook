@@ -88,6 +88,7 @@ rewritten by a listener's app. What a listener changes lives next to it in `edit
 |---|---|
 | `format`, `version` | `"abook-edits"`, `1` |
 | `title` | book title shown instead of the one in `book.json` |
+| `author` | author shown instead of the one in `book.json`; `""` = the listener cleared it (no author); absent = the book's author. Clean text, at most 160 code points |
 | `cover` | absent: the book's cover; `{color, width, height, version}` and `edits/cover.jpg`: the listener's cover |
 | `characters` | `{canonical name: display name}` |
 | `chapters` | `{chapter id: {title?, subtitle?}}` |

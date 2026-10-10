@@ -12,6 +12,7 @@ và độ dài, không ký tự điều khiển - và file sai thì bị từ ch
 
     {"format": "abook-edits", "version": 1,
      "title": "Tên mới",                                        (không có khoá = giữ tên sách)
+     "author": "Tên tác giả",                                   (không có khoá = giữ tác giả của sách; "" = sách không rõ tác giả)
      "cover": null | {"color": "#aabbcc", "width": 800, "height": 1200, "version": 1759400000},
                                                                 (không có khoá = giữ bìa; null = bỏ bìa, dùng bìa vẽ từ tên;
                                                                  đối tượng = dùng edits/cover.jpg)
@@ -62,6 +63,7 @@ VERSION = 1
 MAX_EDITS_BYTES = 1024 * 1024
 MAX_COVER_BYTES = 8 * 1024 * 1024
 TITLE_MAX = store.TITLE_MAX
+AUTHOR_MAX = TITLE_MAX  # tác giả cùng trần với tên sách
 NAME_MAX = renames.MAX_NAME
 MAX_CHARACTERS = 2000
 MAX_CHAPTERS = 5000
@@ -74,7 +76,7 @@ MAX_READINGS = 2000  # cách đọc riêng của một cuốn
 READING_WORD_MAX = NAME_MAX  # chữ hiện của một cách đọc (một từ)
 READING_SPOKEN_MAX = 200  # chữ đọc
 LEVEL_RANGE = (-40.0, -6.0)
-_TOP_KEYS = {"format", "version", "title", "cover", "characters", "chapters", "skip", "readings", "music", "wishes"}
+_TOP_KEYS = {"format", "version", "title", "author", "cover", "characters", "chapters", "skip", "readings", "music", "wishes"}
 _COVER_KEYS = {"color", "width", "height", "version"}
 _MUSIC_KEYS = {"enabled", "levelDb", "silenced", "pins", "tracks", "playlist"}
 _TRACK_KEYS = {"ext", "title", "creator", "duration", "lufs"}
@@ -122,11 +124,11 @@ def is_empty(edits: dict[str, Any]) -> bool:
 
 
 def count_applied(edits: dict[str, Any]) -> int:
-    """Số thay đổi "áp ngay" người nghe đã làm: tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, mỗi cách đọc riêng, bật/tắt nhạc, mức
+    """Số thay đổi "áp ngay" người nghe đã làm: tên sách, tác giả, bìa, mỗi tên nhân vật, mỗi chương đổi tên, mỗi cách đọc riêng, bật/tắt nhạc, mức
     nhạc, mỗi đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe, danh sách phát đã chọn. Không kể ý muốn chờ Studio (`wishes`) -
     chúng chưa áp vào đâu cả."""
     music = edits.get("music") or {}
-    return (("title" in edits) + ("cover" in edits) + len(edits.get("characters") or {}) + len(edits.get("chapters") or {})
+    return (("title" in edits) + ("author" in edits) + ("cover" in edits) + len(edits.get("characters") or {}) + len(edits.get("chapters") or {})
             + len({line for lines in (edits.get("skip") or {}).values() for line in lines})  # một dòng bỏ ở trăm chương: một thay đổi
             + len(edits.get("readings") or {})
             + ("enabled" in music) + ("levelDb" in music) + len(music.get("silenced") or []) + len(music.get("pins") or {})
@@ -161,6 +163,11 @@ def validate(raw: Any) -> dict[str, Any]:
         if not isinstance(title, str) or not title or not _is_clean(title, TITLE_MAX):
             raise EditsError("Tên sách trong phần sửa không hợp lệ.")
         out["title"] = title
+    if "author" in raw:
+        author = raw["author"]
+        if not isinstance(author, str) or not _is_clean(author, AUTHOR_MAX):  # trống được: sách không rõ tác giả
+            raise EditsError("Tác giả trong phần sửa không hợp lệ.")
+        out["author"] = author
     if "cover" in raw:
         out["cover"] = _validate_cover(raw["cover"])
     if "characters" in raw:
@@ -326,7 +333,7 @@ def dump(edits: dict[str, Any]) -> bytes:
 
 def _ordered(edits: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {"format": FORMAT, "version": VERSION}
-    for key in ("title", "cover"):
+    for key in ("title", "author", "cover"):
         if key in edits:
             out[key] = edits[key]
     if edits.get("characters"):
@@ -406,12 +413,12 @@ def merge_clashes(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict
     def clash(kind: str, key: str, kept: Any = None, lost: Any = None) -> None:
         clashes.append({"kind": kind, "key": key, "kept": kept, "lost": lost})
 
-    for key in ("title", "cover"):
+    for key in ("title", "author", "cover"):
         if key in local:
             out[key] = copy.deepcopy(local[key])
             conflicts += key in incoming and incoming[key] != local[key]
             if key in incoming and incoming[key] != local[key]:
-                clash(key, "", *((local[key], incoming[key]) if key == "title" else ()))
+                clash(key, "", *((local[key], incoming[key]) if key != "cover" else ()))
         elif key in incoming:
             out[key] = copy.deepcopy(incoming[key])
     people = {**(incoming.get("characters") or {}), **(local.get("characters") or {})}
@@ -501,7 +508,7 @@ def apply_chapter(chapter: dict[str, Any], edit: dict[str, str] | None) -> dict[
 
 
 def apply_manifest(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any]:
-    """`book.json` (lớp sách) -> bản người nghe thấy: tên sách (và tên các phần của cả bộ), tên chương, bìa, nhạc."""
+    """`book.json` (lớp sách) -> bản người nghe thấy: tên sách (và tên các phần của cả bộ), tác giả, tên chương, bìa, nhạc."""
     if is_empty(edits):
         return book
     out = copy.copy(book)
@@ -513,6 +520,11 @@ def apply_manifest(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any
             out["parts"] = [{**part, "title": continuation.continued_title(edits["title"], part["part"])}
                             if isinstance(part, dict) and isinstance(part.get("part"), int) else part
                             for part in book["parts"]]
+    if "author" in edits:
+        if edits["author"]:
+            out["author"] = edits["author"]
+        else:
+            out.pop("author", None)  # đã bỏ tên tác giả: sách không rõ tác giả
     renamed, skip = edits.get("chapters") or {}, edits.get("skip") or {}
     if (renamed or skip) and isinstance(book.get("chapters"), list):
         # `skip` của chương: dòng người nghe bỏ khỏi phần đọc (màn đọc và đọc to - listen/textScript.ts `withoutLines`).
@@ -760,6 +772,21 @@ def set_title(folder: Path, title: str) -> str:
             edits.pop("title", None)
         else:
             edits["title"] = cleaned
+        _write(folder, edits)
+    return cleaned
+
+
+def set_author(folder: Path, author: str) -> str:
+    """Đặt lại tác giả (người nghe). Tên trống là "không rõ tác giả" (sách vốn có tác giả thì ghi `""`; vốn không có thì không có gì để sửa).
+    Trả tên đã làm sạch."""
+    cleaned = clean_text(author, AUTHOR_MAX)
+    with _LOCK:
+        edits = load(folder)
+        base = clean_text(_base(folder).get("author"), AUTHOR_MAX)
+        if cleaned == base:
+            edits.pop("author", None)
+        else:
+            edits["author"] = cleaned
         _write(folder, edits)
     return cleaned
 
@@ -1089,7 +1116,7 @@ def subtract(folder: Path, sent: dict[str, Any], sent_cover: bytes | None) -> in
     with _LOCK:
         edits = load(folder)
         before = pinned_files(edits)
-        for key in ("title", "cover"):
+        for key in ("title", "author", "cover"):
             if key not in sent or key not in edits or edits[key] != sent[key]:
                 continue
             if key == "cover" and isinstance(sent[key], dict):
@@ -1517,6 +1544,7 @@ def fold_edits(project: Path, edits: dict[str, Any], *, cover: bytes | None = No
     if "title" in edits:
         store.set_display_title(project, edits["title"])
         applied += 1
+    skipped += "author" in edits  # dự án Studio không có tác giả (chỉ sách nhập từ file mới có)
     if "cover" in edits:
         try:
             if edits["cover"] is None:

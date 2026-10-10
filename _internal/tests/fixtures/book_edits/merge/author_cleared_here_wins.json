@@ -1,0 +1,23 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "author": ""
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "author": "Của bạn"
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "author": ""
+ },
+ "report": {
+  "adopted": 0,
+  "kept": 1,
+  "conflicts": 1,
+  "cover": null
+ }
+}

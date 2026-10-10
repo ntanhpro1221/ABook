@@ -19,7 +19,7 @@ import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
 import { BookReadingsSection } from "./WordReadings";
 
-// Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
+// Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, tác giả, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
 // màn hình cho máy tính và điện thoại - lệnh đi tới `/api/books/<mã>/...`; máy tính là server Python, điện thoại là lõi native
 // (android/localStudio.ts) trả cùng JSON. Cuốn có xưởng (dự án) ghi vào các file riêng của dự án, cuốn nhập từ file ghi vào
 // lớp sửa cạnh sách - người dùng không phải biết khác biệt ấy.
@@ -37,6 +37,22 @@ export function refreshAfterEdit(client: QueryClient, bookId: string): void {
 /** Cuốn này sửa được ngay trên trang nghe không (cuốn của máy này, có xưởng hay không). */
 export function canEditBook(book: Pick<ListenBook, "capabilities"> | undefined): boolean {
   return canEditLayer(book?.capabilities);
+}
+
+/** Chữ người gõ như máy chủ làm sạch (khoảng trắng gộp một dấu cách, bỏ đầu cuối): "Nguyễn  Nhật Ánh " và "Nguyễn Nhật Ánh" là một. */
+function tidy(text: string): string {
+  return text.trim().replace(/\s+/g, " ");
+}
+
+/** Ô "Tác giả" lưu được không: chữ gõ khác tác giả đang hiện (trống cũng là một thay đổi nếu sách đang có tác giả: bỏ tên tác giả). */
+export function authorSaveable(typed: string, shown: string | undefined): boolean {
+  return tidy(typed) !== tidy(shown ?? "");
+}
+
+/** Đặt tác giả của sách (lớp sửa của cuốn nhập từ file); tên trống là "không rõ tác giả". Trả tác giả đã làm sạch. */
+export async function saveAuthor(bookId: string, author: string): Promise<string> {
+  const saved = await api<{ author: string }>(`/api/books/${bookId}/author`, { method: "PUT", body: { author } });
+  return saved.author;
 }
 
 const MAX_SIDE = 1600;
@@ -206,7 +222,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   );
 }
 
-/** Hộp "Sửa sách": tên, bìa, nhạc nền, bỏ mọi thay đổi. Tên nhân vật và tên chương sửa ngay ở tab Nhân vật / dòng chương. */
+/** Hộp "Sửa sách": tên, tác giả, bìa, nhạc nền, bỏ mọi thay đổi. Tên nhân vật và tên chương sửa ngay ở tab Nhân vật / dòng chương. */
 export function EditBookDialog({
   book,
   open,
@@ -221,16 +237,18 @@ export function EditBookDialog({
 }) {
   const client = useQueryClient();
   const [title, setTitle] = useState(book.title);
+  const [author, setAuthor] = useState(book.author ?? "");
   const file = useRef<HTMLInputElement | null>(null);
   const [confirmRevert, setConfirmRevert] = useState(false);
   const [searching, setSearching] = useState(false);
   useEffect(() => {
     if (open) {
       setTitle(book.title);
+      setAuthor(book.author ?? "");
       setConfirmRevert(false);
       setSearching(false);
     }
-  }, [open, book.title]);
+  }, [open, book.title, book.author]);
   const workshop = Boolean(book.capabilities?.workshop);
   const done = (message: string) => {
     refreshAfterEdit(client, book.id);
@@ -243,6 +261,14 @@ export function EditBookDialog({
       onOpenChange(false); // lưu xong thì đóng hộp: để mở nguyên là không biết đã lưu chưa (soát UX a11)
     },
     onError: (error: Error) => toast.error("Chưa đổi được tên sách", { description: error.message }),
+  });
+  const changeAuthor = useMutation({
+    mutationFn: (next: string) => saveAuthor(book.id, next),
+    onSuccess: (saved) => {
+      done(saved ? "Đã đổi tác giả" : "Đã bỏ tên tác giả");
+      onOpenChange(false);
+    },
+    onError: (error: Error) => toast.error("Chưa đổi được tác giả", { description: error.message }),
   });
   const setCover = useMutation({
     mutationFn: async (picked: Blob) => api(`/api/books/${book.id}/cover`, { method: "PUT", body: { image: await imageToDataUrl(picked) } }),
@@ -263,7 +289,7 @@ export function EditBookDialog({
     },
     onError: (error: Error) => toast.error("Chưa bỏ được thay đổi", { description: error.message }),
   });
-  const busy = rename.isPending || setCover.isPending || removeCover.isPending;
+  const busy = rename.isPending || changeAuthor.isPending || setCover.isPending || removeCover.isPending;
   return (
     <Dialog
       open={open}
@@ -298,6 +324,30 @@ export function EditBookDialog({
             </Button>
           </form>
         </Section>
+        {/* Chỉ sách chữ (nhập từ file): sách Studio không có chỗ áp tác giả, sửa ở máy khác rồi gửi về là mất (fold_edits bỏ qua). */}
+        {book.stage === "text" && !workshop && (
+          <Section title="Tác giả" hint="Để trống nếu không rõ tác giả. Hiện ở thư viện, trang sách và trong file sách nói xuất ra.">
+            <form
+              className="flex gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (authorSaveable(author, book.author)) changeAuthor.mutate(author);
+              }}
+            >
+              <input
+                value={author}
+                maxLength={160}
+                aria-label="Tác giả"
+                placeholder="Không rõ tác giả"
+                onChange={(event) => setAuthor(event.target.value)}
+                className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-accent"
+              />
+              <Button type="submit" variant="primary" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>
+                Lưu tác giả
+              </Button>
+            </form>
+          </Section>
+        )}
         <Section title="Ảnh bìa">
           <div className="flex items-start gap-4">
             <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} className="w-28 shrink-0" />

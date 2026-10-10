@@ -9,7 +9,7 @@ import { coverArtwork } from "@/shared/cover";
 import { Progress } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
-import { BOOK_FILE_COPY, exportWhereHint, jobView, lastExportHint, M4B_COPY, type ExportCopy, type ExportJob } from "./bookFileExport";
+import { BOOK_FILE_COPY, exportWhereHint, jobView, lastExportHint, lastExportPlace, M4B_COPY, runningExports, type ExportCopy, type ExportJob } from "./bookFileExport";
 import { AUDIOBOOK_COPY } from "./listenExport";
 
 // "Xuất file sách", "Xuất M4B" và "Xuất sách nói" (sách Nghe ngay) chạy nền ở máy chủ (webui/export_jobs.py): menu (hay hộp Xuất sách nói) chỉ chọn
@@ -81,7 +81,7 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
       <Icon className="mt-0.5 size-4 shrink-0 self-start" />
       <span className="min-w-0">
         <span className="block">{label}</span>
-        <span className="block truncate text-xs text-fg-3">
+        <span className="block truncate text-xs text-fg-3" title={lastExportPlace(job)}>
           {lastExportHint(job, KINDS[kind].copy) ?? exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot)}
         </span>
       </span>
@@ -113,7 +113,7 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
       <Headphones className="mt-0.5 size-4 shrink-0 self-start" />
       <span className="min-w-0">
         <span className="block">Xuất sách nói (MP3 / M4B)…</span>
-        <span className="block truncate text-xs text-fg-3">
+        <span className="block truncate text-xs text-fg-3" title={lastExportPlace(job)}>
           {lastExportHint(job, KINDS.audiobook.copy) ?? "Mang sang điện thoại, xe hơi, trình phát khác"}
         </span>
       </span>
@@ -252,6 +252,18 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
       alive = false;
     };
   }, [pageId, track, show, kind]);
+
+  // Mở (hay tải lại) app ở trang không phải trang sách: máy chủ vẫn đang xuất thì hiện lại thông báo tiến độ (có % và Huỷ) như lúc bắt đầu.
+  useEffect(() => {
+    if (!info) return; // thông báo xong cần biết máy này có phải Studio từ xa không (nút "Mở thư mục"): chờ app biết đã
+    let alive = true;
+    void runningExports(kind).then((ids) => {
+      if (alive) ids.forEach((id) => track(id, 0));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [kind, track, info]);
 
   useEffect(() => {
     const open = timers.current;
