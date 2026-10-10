@@ -4337,6 +4337,20 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 19:1x - Lỗi 2 MUSIC-AUDIT (nền chồng lên đoạn truyện chơi nhạc): luật từ khoá thua hai lần - DỪNG
+
+Lỗi: ở Lucien Evans 115 giây 396 truyện tả người chơi đàn mà nhạc nền vẫn chạy đè lên. Thử nhận "nhạc đang vang trong truyện"
+bằng luật văn bản (câu dẫn có mẫu chơi / ngồi vào đàn / chạm phím / tiếng ... vang lên / hát, có từ nhạc xác nhận ở các câu sau).
+Luật và ngưỡng ghi trước ở Corpus `research/music/PLAN_diegetic.md` (c8c17fb D1, 41b1e28 D2), kết quả bdfe939 (D1), c764ad1 (D2).
+
+- **D1** (tắt nền tới hết đoạn): đúng 27/43 = 63 %, tắt 5,83 % thời lượng Lucien - thua cả hai ngưỡng.
+- **D2** (Lead duyệt: thêm loại trừ thì đã qua / dự định / tiêu đề / người chơi, cửa sổ theo từ nhạc, trần 90 s, HẠ −12 dB qua
+  `steps` của mốc thay vì tắt): bắt ca 115, nền bị hạ chỉ 0,66 % Lucien / 0,07 % bộ 4-9 / 0,09 % 7.669 sách khác, mốc chỉ đổi
+  `steps` ở đúng các chương có cửa sổ - nhưng đúng chỉ **38/60 = 63 %** trên ca mới (Lucien 30/40, sách khác 8/20), ngưỡng 80 %.
+- Ca sai gần như đều là nói VỀ nhạc: thói quen, tiểu sử, giả định, bàn lối chơi, hậu trường, tóm tắt buổi đã qua. Từ khoá không
+  phân biệt "đang vang" với "được nhắc tới"; vá thêm từ là khớp theo dữ liệu đã xem. Cần bộ phân loại thì của câu - chưa làm.
+- Nhánh `music/diegetic` (cc521353) giữ mã D1 + D2 làm hồ sơ, không gộp main. Lỗi 2 dừng ở đây (Lead: thua lần nữa thì dừng).
+
 ### 10-10 20:xx - Sửa 3 lỗi Lead soát ra trong TAIL và CUE-DASH (nhánh music/fix-review-1010 6c2fa8c9)
 
 - TAIL: bài kết sớm thì cảnh kế lại chọn đúng bài ấy, và hai mốc cách nhau < 5 s bị gộp nên mất quãng lặng. Sửa: cảnh kế tránh
