@@ -335,7 +335,7 @@ def _described(files: dict[str, Path | bytes], known: dict[str, dict[str, Any]],
         if key not in by_path:
             if progress is not None:
                 progress("hash", done, total)
-            by_path[key] = bookfile.described(name, source, known)
+            by_path[key] = bookfile.described(name, source, known, None if progress is None else (lambda inside, at=done: progress("hash", at + inside, total)))
             done += by_path[key]["size"]
         out[name] = by_path[key]
     if progress is not None:
@@ -392,7 +392,11 @@ def _seal(out: Path, files: dict[str, Path | bytes], book: dict[str, Any] | None
                     progress("write", written, total)
                 written += described[name]["size"]
 
-            bookfile.write_entries(archive, stored, order=_order, stored_suffixes=_STORED, before=before)
+            def during(name: str, inside: int) -> None:  # giữa một file audio lớn: báo + cho Huỷ
+                progress("write", written - described[name]["size"] + inside, total)
+
+            bookfile.write_entries(archive, stored, order=_order, stored_suffixes=_STORED, before=before,
+                                   during=None if progress is None else during)
             if progress is not None:
                 progress("write", total, total)
         with temporary.open("rb+") as handle:

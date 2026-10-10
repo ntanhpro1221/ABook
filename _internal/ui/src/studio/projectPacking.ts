@@ -45,6 +45,47 @@ export function packView(job: PackJob | null | undefined): PackView {
   return { title: `${base}…`, fraction: job.phase === "prepare" ? null : from };
 }
 
+/** Người dùng bấm Huỷ khi đang gói dự án (máy chủ trả "cancelled"): cùng lời báo với lúc huỷ tải nhạc nền. */
+export class PackCancelled extends Error {}
+
+/** Màn hình gói bị gỡ (đóng trang, sang cuốn khác) giữa lúc máy chủ còn gói: KHÔNG phải huỷ - việc vẫn chạy, nên không được báo "Đã huỷ xuất"; ExportJobHost nhận theo dõi tiếp. */
+export class PackDetached extends Error {}
+
+/** Theo việc gói dự án tới khi xong (hỏi mỗi giây): trả kết quả, hay ném `PackCancelled` (người dùng huỷ) / `PackDetached` (`alive()` hết đúng) / lỗi của máy chủ.
+ *  Hỏi hụt `maxMisses` lần liền mới coi là hỏng (mạng chớp không phải việc hỏng). */
+export async function followPackJob({
+  fetchJob,
+  alive,
+  onJob,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  maxMisses = 5,
+}: {
+  fetchJob: () => Promise<PackJob>;
+  alive: () => boolean;
+  onJob: (job: PackJob) => void;
+  sleep?: (ms: number) => Promise<void>;
+  maxMisses?: number;
+}): Promise<NonNullable<PackJob["result"]>> {
+  let misses = 0;
+  while (alive()) {
+    let job: PackJob;
+    try {
+      job = await fetchJob();
+      misses = 0;
+    } catch (error) {
+      if (++misses >= maxMisses) throw error;
+      await sleep(1000);
+      continue;
+    }
+    if (job.state === "done" && job.result) return job.result;
+    if (job.state === "cancelled") throw new PackCancelled();
+    if (job.state !== "running") throw new Error(job.error ?? "Chưa gói được dự án.");
+    onJob(job);
+    await sleep(1000);
+  }
+  throw new PackDetached();
+}
+
 const KNOWN: { pattern: RegExp; summary: string }[] = [
   { pattern: /No space left|ENOSPC|disk full|WinError 112|not enough space|disk quota/i, summary: "Ổ đĩa hết chỗ trống. Giải phóng dung lượng hoặc chọn thư mục ở ổ khác rồi gói lại." },
   {

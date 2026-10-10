@@ -101,6 +101,7 @@ LISTENING_ENTRY = _CONTENT_V5
 _ROOM_MARGIN = 64 * 1024 * 1024
 _STORED = (".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac")  # đã nén sẵn hay cần đọc thẳng: nén thêm chỉ tốn công khi phát
 _CHUNK = 1024 * 1024
+_TICK = 8 * _CHUNK  # băm / ghi một file lớn: báo tiến độ (và cho dừng) mỗi ngần này byte, không chờ hết cả file
 
 
 class BookFileError(Exception):
@@ -434,24 +435,38 @@ def content_pattern(version: int) -> re.Pattern[str]:
     return _CONTENT_V5 if version >= 5 else _CONTENT_V4 if version >= 4 else _CONTENT_V3 if version >= 3 else _CONTENT
 
 
-def described(name: str, source: Path | bytes, known: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    """Cỡ + mã băm của một mục: lấy từ `known` nếu file còn đúng cỡ ấy (đã kiểm lúc giải nén), không thì băm."""
+def described(name: str, source: Path | bytes, known: dict[str, dict[str, Any]], tick: Callable[[int], None] | None = None) -> dict[str, Any]:
+    """Cỡ + mã băm của một mục: lấy từ `known` nếu file còn đúng cỡ ấy (đã kiểm lúc giải nén), không thì băm (`tick`: xem `describe`)."""
     meta = known.get(name)
     if isinstance(source, Path) and isinstance(meta, dict) and meta.get("size") == source.stat().st_size and isinstance(meta.get("sha256"), str):
         return {"size": meta["size"], "sha256": meta["sha256"]}
-    return describe(source)
+    return describe(source, tick)
 
 
 def write_entries(archive: zipfile.ZipFile, files: dict[str, Path | bytes], *, order: Callable[[str], Any],
-                  stored_suffixes: tuple[str, ...] = _STORED, before: Callable[[str], None] | None = None) -> None:
+                  stored_suffixes: tuple[str, ...] = _STORED, before: Callable[[str], None] | None = None,
+                  during: Callable[[str, int], None] | None = None) -> None:
     """Ghi từng mục vào gói theo `order`: audio và ảnh KHÔNG nén (phát thẳng trong gói), còn lại nén. `before(tên mục)`
-    gọi trước mỗi mục (báo tiến độ; ném thì dừng giữa hai mục)."""
+    gọi trước mỗi mục (báo tiến độ; ném thì dừng giữa hai mục). `during(tên mục, byte đã ghi của mục)`: mỗi `_TICK` byte trong
+    một file lớn (ném thì dừng giữa file); byte ra y hệt `ZipFile.write`."""
     for name in sorted(files, key=order):
         if before is not None:
             before(name)
         source = files[name]
         stored = name.lower().endswith(stored_suffixes)
-        if isinstance(source, Path):
+        if isinstance(source, Path) and during is not None:
+            # Đúng việc `ZipFile.write` làm (cùng ZipInfo, cùng khối 8 KiB) nhưng có điểm kiểm giữa chừng.
+            info = zipfile.ZipInfo.from_file(source, name)
+            info.compress_type = zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED
+            copied = reported = 0
+            with source.open("rb") as handle, archive.open(info, "w") as sink:
+                while chunk := handle.read(8192):
+                    sink.write(chunk)
+                    copied += len(chunk)
+                    if copied - reported >= _TICK:
+                        reported = copied
+                        during(name, copied)
+        elif isinstance(source, Path):
             archive.write(source, name, compress_type=zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED)
         else:
             archive.writestr(_entry(name, stored=stored), source)
@@ -739,14 +754,18 @@ def json_bytes(value: Any) -> bytes:
     return json.dumps(value, ensure_ascii=False, indent=1).encode("utf-8")
 
 
-def describe(source: Path | bytes) -> dict[str, Any]:
+def describe(source: Path | bytes, tick: Callable[[int], None] | None = None) -> dict[str, Any]:
+    """Cỡ + sha256. `tick(byte đã băm)`: mỗi `_TICK` byte trong một file lớn (ném thì dừng giữa file)."""
     digest = hashlib.sha256()
     if isinstance(source, Path):
-        size = 0
+        size = reported = 0
         with source.open("rb") as handle:
             while chunk := handle.read(_CHUNK):
                 digest.update(chunk)
                 size += len(chunk)
+                if tick is not None and size - reported >= _TICK:
+                    reported = size
+                    tick(size)
         return {"size": size, "sha256": digest.hexdigest()}
     digest.update(source)
     return {"size": len(source), "sha256": digest.hexdigest()}

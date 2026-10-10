@@ -64,7 +64,7 @@ class BookFileJobs:
         with self._lock:
             running = [key for key, state in self._state.items() if state.get("state") == "running"]
             stops = [self._stops[key] for key in running if key in self._stops]
-            threads = [self._threads[key] for key in running if key in self._threads]
+            threads = [self._threads[key] for key in running if key in self._threads and self._threads[key].ident is not None]
         for stop in stops:
             stop.set()
         deadline = time.monotonic() + timeout
@@ -80,17 +80,6 @@ class BookFileJobs:
 
     def start(self, key: str, work: Callable[[], dict[str, Any]], *, on_done: Callable[[dict[str, Any]], None] | None = None) -> dict[str, Any]:
         """Bắt đầu một lượt xuất cho cuốn `key`; đang có lượt chạy thì trả lượt ấy (không đóng gói hai lần cùng lúc)."""
-        with self._lock:
-            if (self._state.get(key) or {}).get("state") == "running":
-                running = True
-            else:
-                running = False
-                job_id = uuid.uuid4().hex[:12]
-                self._state[key] = {"state": "running", "id": job_id, "startedAt": self._clock()}
-                self._stops[key] = threading.Event()
-        if running:
-            return self.status(key)
-
         def finish(**changes: Any) -> None:
             with self._lock:
                 self._state[key] = {**self._state[key], **changes, "finishedAt": self._clock()}
@@ -108,8 +97,12 @@ class BookFileJobs:
                 return
             finish(state="done", result=result)
 
-        thread = threading.Thread(target=run, name="bookfile-export", daemon=True)
         with self._lock:
-            self._threads[key] = thread
-        thread.start()
+            if (self._state.get(key) or {}).get("state") != "running":
+                job_id = uuid.uuid4().hex[:12]
+                self._state[key] = {"state": "running", "id": job_id, "startedAt": self._clock()}
+                self._stops[key] = threading.Event()
+                # Luồng được ghi nhận VÀ chạy trong cùng một lần giữ khoá: `shutdown` (đóng app) không bao giờ thấy luồng chưa start để join (RuntimeError).
+                thread = self._threads[key] = threading.Thread(target=run, name="bookfile-export", daemon=True)
+                thread.start()
         return self.status(key)
