@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại và Nghe sách (máy tính và điện thoại)
+
+- Nhạc nền "Nghe ngay" trên điện thoại có lại khi mạng về: mở sách lúc mất mạng (mọi bài tải hỏng) không còn im tới khi mở lại cuốn, và khi chỉ còn một bài lặp thì bài tải hỏng về hàng lúc bài ấy quay lại đầu (thử lại sau 5, 10, 20 phút như đã định).
+- Chỉnh mức nhạc nền của sách "Nghe ngay" trên máy tính có hiệu lực ngay, không phải tải lại trang; "Nhạc của tôi" đổi bài mà số bài như cũ cũng vậy.
+- Bài nhạc nền tải đứt giữa chừng (Wi-Fi rớt, nguồn ngắt kết nối) không còn nằm lại trong máy như bài tốt rồi phát mãi một mẩu đầu bài: máy coi là mất mạng và tải lại sau.
+
 ## [0.4.48] - 2026-10-11
 
 ### Làm sách trong Studio (máy tính)

@@ -69,10 +69,8 @@ object MusicBed {
 
     // ---- danh sách phát ("Nghe ngay") ----
     private var playlist: String? = null // danh sách đang dùng cho cuốn này; null = nhạc theo mốc của sách (hay không nhạc)
-    private var tracks: List<Playlists.Track> = emptyList() // cả hàng bài của danh sách, kể cả bài đang bị bỏ tạm
-    private var spans: List<Playlists.Span> = emptyList()
+    private val queue = PlaylistQueue(failed) // hàng bài trên đồng hồ nhạc, trừ bài đang bị bỏ tạm
     private var infos: Map<String, JSONObject> = emptyMap()
-    private var currentSpan = -1
     private var clockSeconds = 0.0
     private var clockAt = 0L // SystemClock.elapsedRealtime của lần cộng đồng hồ gần nhất; 0 = đồng hồ đang đứng
     private var savedAt = 0L
@@ -167,10 +165,8 @@ object MusicBed {
         cues = emptyList()
         chapter = Int.MIN_VALUE
         playlist = null
-        tracks = emptyList()
-        spans = emptyList()
+        queue.clear()
         infos = emptyMap()
-        currentSpan = -1
         clockAt = 0L
         generation++
     }
@@ -212,8 +208,7 @@ object MusicBed {
                     clockSeconds = prefs(appContext).getFloat(clockKey(), 0f).toDouble()
                 }
                 infos = found
-                this.tracks = tracks
-                spans = Playlists.timeline(tracks)
+                queue.load(tracks)
                 syncPlaylist(playing)
             }
         }
@@ -285,25 +280,10 @@ object MusicBed {
     }
 
     private fun replan(link: String) {
-        if (playlist == null || spans.none { it.track.link == link }) return
-        rebuild()
+        if (playlist != null) queue.drop(link, current?.track)
     }
 
     private fun isFailed(link: String): Boolean = failed.isFailed(link)
-
-    /** Bỏ các bài đã hết hạn chờ khỏi danh sách hỏng; true nếu hàng bài của danh sách phát vì thế đổi. */
-    private fun retryDue(): Boolean {
-        val due = failed.takeDue()
-        if (due.isEmpty()) return false
-        if (playlist == null || tracks.none { it.link in due }) return false
-        rebuild()
-        return true
-    }
-
-    private fun rebuild() {
-        spans = Playlists.timeline(tracks.filter { !isFailed(it.link) })
-        currentSpan = spans.firstOrNull { it.track.link == current?.track }?.index ?: -1
-    }
 
     private fun advanceClock() {
         val now = SystemClock.elapsedRealtime()
@@ -341,24 +321,23 @@ object MusicBed {
             main.removeCallbacks(grace)
             main.postDelayed(grace, PAUSE_GRACE_MS)
         }
-        val found = Playlists.at(spans, clockSeconds)
+        // Sắp đổi bài: bài bỏ tạm vì mất mạng đã tới lúc thử lại thì về hàng (PlaylistQueue.at) - ngay lúc này chứ không giữa bài.
+        val found = queue.at(clockSeconds, current?.track)
         if (found == null) {
             if (current != null) switchTo(null, 1f, 0.0)
             return
         }
         val (span, offset) = found
-        if (span.index != currentSpan) {
-            // Sắp đổi bài: bài bỏ tạm vì mất mạng đã tới lúc thử lại thì đưa về hàng - ngay lúc này chứ không giữa bài, nhạc không nhảy.
-            if (retryDue()) return syncPlaylist(isPlaying)
+        if (span.index != queue.currentSpan) {
             val uri = uriOf(appContext, span.track.link)
             if (uri != null) {
-                currentSpan = span.index
+                queue.currentSpan = span.index
                 switchTo(span.track.link to uri, 10.0.pow(minOf(0.0, span.track.gainDb) / 20.0).toFloat(), offset)
             } else if (current != null) {
                 switchTo(null, 1f, 0.0) // bài này đang tải: bài trước mờ đi, bài này vào ngay khi có file
             }
             // Bài kế tải sẵn trong lúc bài này chơi: sang bài không phải chờ mạng.
-            spans.getOrNull((span.index + 1) % spans.size)?.let { next -> fetch(appContext, next.track.link) }
+            queue.spans.getOrNull((span.index + 1) % queue.spans.size)?.let { next -> fetch(appContext, next.track.link) }
         }
         applyPlaying()
         if (SystemClock.elapsedRealtime() - savedAt > SAVE_EVERY_MS) saveClock()
@@ -409,7 +388,7 @@ object MusicBed {
                         player.release()
                         if (current?.player === player) {
                             current = null
-                            currentSpan = -1
+                            queue.currentSpan = -1
                         }
                         fading.removeAll { it.player === player }
                     }

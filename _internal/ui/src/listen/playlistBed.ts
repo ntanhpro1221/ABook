@@ -82,6 +82,24 @@ export function playlistCues(tracks: PlaylistTrack[]): MusicCue[] {
   });
 }
 
+/** Hàng bài trình phát đang lái (player.tsx): khoá = cuốn + danh sách (khoá đồng hồ nhạc). */
+export interface PlaylistBedState {
+  key: string;
+  cues: MusicCue[];
+  levelDb: number;
+}
+
+/** Hàng bài sau mỗi lần trình phát hỏi lại (sang chương, MUSIC_CHANGED_EVENT): giữ NGUYÊN đối tượng cũ khi hàng không đổi - sang
+ *  chương nhạc chơi tiếp, không dựng lại. So từng bài chứ không chỉ số bài: đổi mức nhạc (máy chủ tính lại `gainDb` từng bài) hay đổi
+ *  bài trong "Nhạc của tôi" mà số bài như cũ thì phải dựng lại, không thì mức / bài mới chỉ có hiệu lực khi tải lại trang. */
+export function nextPlaylistBed(previous: PlaylistBedState | null, key: string, queue: Pick<PlaylistQueue, "tracks" | "levelDb">): PlaylistBedState {
+  const cues = playlistCues(queue.tracks);
+  const same = previous?.key === key && previous.levelDb === queue.levelDb && previous.cues.length === cues.length
+    && previous.cues.every((cue, index) => cue.key === cues[index].key && cue.src === cues[index].src && cue.end === cues[index].end
+      && cue.gainDb === cues[index].gainDb);
+  return same && previous ? previous : { key, cues, levelDb: queue.levelDb };
+}
+
 /** Giây `seconds` của đồng hồ nhạc, quay vòng: hết danh sách thì lại bài đầu. */
 export function wrapSeconds(seconds: number, cues: MusicCue[]): number {
   const total = cues.length ? cues[cues.length - 1].end : 0;

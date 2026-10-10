@@ -7,8 +7,8 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
-import { MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit, type MusicCue } from "./musicBed";
-import { PlaylistClock, PlaylistDriver, playlistCues } from "./playlistBed";
+import { MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit } from "./musicBed";
+import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
 import { canPlay, resumePoint, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
 import { NightRecorder } from "./night";
 import {
@@ -469,7 +469,7 @@ export function PlayerProvider({
   }, [bed, engine, native]);
   // Danh sách phát người nghe chọn cho cả cuốn (sách chỉ có chữ - playlistBed.ts): có bài thì nhạc chạy theo đồng hồ nhạc của cuốn,
   // không theo mốc của chương; hỏi lại khi đổi cuốn hay khi lựa chọn đổi (bedVersion), không hỏi lại mỗi chương.
-  const [playlistBed, setPlaylistBed] = useState<{ key: string; cues: MusicCue[]; levelDb: number } | null>(null);
+  const [playlistBed, setPlaylistBed] = useState<PlaylistBedState | null>(null);
   const playlistAsked = useRef<{ key: string; queue: ReturnType<NonNullable<typeof source.musicPlaylist>> | null } | null>(null);
   useEffect(() => {
     if (!bed || !track || !source.musicCues) return;
@@ -506,8 +506,7 @@ export function PlayerProvider({
           }
           bedCredits.current = result.credits ?? {};
           const key = `${book}:${result.playlist}`;
-          setPlaylistBed((previous) =>
-            previous?.key === key && previous.cues.length === result.tracks.length ? previous : { key, cues: playlistCues(result.tracks), levelDb: result.levelDb });
+          setPlaylistBed((previous) => nextPlaylistBed(previous, key, result));
         },
         () => {
           if (cancelled) return;
