@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.40] - 2026-10-10
+
 ### Việc cần anh và Studio
 
 - Thẻ "Người kể của đoạn": đoạn đã phân tích xong thì lựa chọn chỉ áp khi làm lại sách, nên thẻ xuống cuối danh sách, và sau khi bấm nằm trong nhóm riêng "Đã ghi, áp khi làm lại sách" thay vì "chờ áp dụng". Nút nói rõ đổi thành gì ("Không phải X kể - đoạn kể ngôi thứ ba", "Giữ X là người kể").
