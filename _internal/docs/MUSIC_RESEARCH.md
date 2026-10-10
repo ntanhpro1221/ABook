@@ -4337,6 +4337,46 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 11:0x - Trục T: mức chương mới là chỗ còn lợi; trộn q06 vào P0 không giúp; 4B lớp 18 không hơn 1.7B ở bộ 7
+
+Ba lượt CPU sau LV-Q06, đều theo thước `cl_apply` (MAE theo câu). Bộ cuối đã mở nên chỉ ghi lại. Mã và log ở Corpus `research/music`.
+
+**T-MIX** (ghi trước PLAN_t_mix): mức T = trung bình P0 và mức q06. **KHÔNG QUA**: bộ học +.013 (tệ hơn), bộ 7 −.039, bộ cuối −.007.
+
+**T-STACK** (ghi trước PLAN_t_stack): hồi quy mức T trên P0 và q06, học trên vàng bộ học. Hệ số P0 .97, q06 .20. Kết quả gần như
+đúng bằng P0: bộ học −.002, bộ 7 +.007, bộ cuối −.005. **KHÔNG QUA.** q06 không mang thêm gì về mức T mà P0 chưa có.
+
+**T-DIAG** (chẩn đoán, không có luật thắng): thay MỨC hoặc HÌNH của app bằng vàng ("tiên tri") để xem phần nào còn nhiều lợi hơn.
+
+| lợi MAE_T khi lấy vàng cho | bộ học | bộ 7 | bộ cuối |
+|---|---|---|---|
+| mức chương | .036 | .096 | .101 |
+| hình trong chương | .162 | .056 | .051 |
+
+- Bộ học nghiêng về hình, nhưng bộ học là nơi hình của app vốn được chỉnh. Ở hai bộ mới, MỨC chương T đáng gấp đôi hình.
+- Luật viết trước cộng cả hai bộ, nên chọn "hình" (+.217 vs +.132). Tôi vẫn làm P0-CH (một lời gọi LLM cho cả chương → mức T) vì
+  nó rẻ, và vì hai bộ ngoài đều chỉ về mức. Hình T không có hướng mới (L3 đã thua).
+- FLAT (bỏ hẳn hình) tệ hơn app ở bộ học và bộ cuối. Hình hiện tại có ích.
+
+**P0-CH** (ghi trước PLAN_p0_ch, luật Lead): prompt C0/C1 chọn trên bộ học bằng MAE bỏ-một-truyện, KHOÁ trước khi chạy bộ 7 và bộ cuối.
+Thắng khi tốt hơn P0 ≥ .03 ở CẢ bộ 7 và bộ cuối, và không truyện nào của bộ 7 tệ hơn quá .03. Đang trong hàng GPU của Model, sau B8.
+
+**Đường cong 4B (qwen3.5:4b lớp 18, nhúng bạc trên Mac MPS)**, cùng thủ tục `stu_curve.py` với 1.7B lớp 14 (08-10 19:4x):
+
+| cảnh | học 4B / 1.7B | bộ 7 mọi | bộ 7 bỏ chương hằng | bộ 7 trọng số SD |
+|---|---|---|---|---|
+| 250 | .512 / .448 | .262 / .267 | .363 / .369 | .459 / .435 |
+| 500 | .542 / .478 | .290 / .316 | .403 / .437 | .501 / .504 |
+| 1.000 | .559 / .506 | .270 / .325 | .376 / .449 | .482 / .514 |
+| 2.000 | .572 / .527 | .319 / .335 | .442 / .462 | .526 / .532 |
+
+- 4B hơn rõ ở bộ học (+.045 ở 2.000 cảnh) nhưng KHÔNG hơn ở bộ 7 (−.016 mọi chương, −.020 bỏ chương hằng). Lợi bộ học không
+  chuyển sang truyện mới.
+- 4B nặng gấp đôi 1.7B khi chạy trên máy người dùng. **Không đổi encoder.** Hướng kế cho cảnh là STU-LORA (tinh chỉnh LoRA 1.7B
+  lớp 14 trên Kaggle, ghi trước Corpus a14c1f2), không phải encoder to hơn.
+- Ghi chú vận hành: lần nhúng Mac đầu chết vì tranh RAM với Ollama (16 GB không đủ cho cả hai). Từ đó việc Mac của Music không
+  chạy song song với Ollama, và mỗi mục xả bộ nhớ MPS.
+
 ### 10-10 05:xx - LV-Q06 theo từng truyện: bộ 7 qua cả bốn; bộ cuối lợi lớn nhưng một truyện lệch .004 trên ngưỡng
 
 Lead duyệt LV-Q06 kèm điều kiện: không truyện nào của bộ 7 tệ hơn quá .03 MAE_V. MAE_V từng truyện, app → LV:
