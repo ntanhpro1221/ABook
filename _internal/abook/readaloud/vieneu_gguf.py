@@ -34,13 +34,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from . import vieneu_engine
+# KHÔNG nạp vieneu_engine (numpy) ở đầu file: mô-đun này được webui nạp lúc khởi động, mà numpy chỉ có sau khi tải thư viện chung
+# (Python nhúng của bộ cài không có - smoke_embedded_python bắt lỗi này).
 
 log = logging.getLogger(__name__)
 
 SERVER_EXE = "audiocpp_server.exe"
 MODEL_FILE = "vieneu-v3-turbo-q8_0.gguf"
-SAMPLE_RATE = vieneu_engine.TURBO_RATE
+SAMPLE_RATE = 48_000  # = vieneu_engine.TURBO_RATE (bài thử giữ hai số khớp nhau)
 IDLE_SECONDS = 300.0  # server rảnh chừng này thì tắt (lấy lại ~1,1 GB RAM); khúc kế khởi lại trong ~0,6 giây
 START_TIMEOUT = 60.0
 REQUEST_TIMEOUT = 300.0
@@ -200,6 +201,8 @@ class GgufEngine:
     def __init__(self, files: GgufFiles, *, threads: int | None = None, idle_seconds: float = IDLE_SECONDS,
                  command: Callable[[GgufFiles, int, int], list[str]] = server_command) -> None:
         self.files = files
+        from . import vieneu_engine
+
         self.threads = threads or min(vieneu_engine.default_threads(), THREADS)
         self.idle_seconds = idle_seconds
         self._command = command

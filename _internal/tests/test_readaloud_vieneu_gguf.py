@@ -487,3 +487,16 @@ def test_the_fast_choice_is_hidden_when_the_machine_cannot_run_it(module, monkey
     assert "fast" not in {choice["id"] for choice in vieneu_module.status()["choices"]}
     with pytest.raises(ValueError):
         vieneu_module.start(["fast"])
+
+
+def test_the_accelerated_engine_loads_without_numpy_and_keeps_the_turbo_rate() -> None:
+    """webui nạp vieneu_gguf lúc khởi động, trước khi máy có numpy (Python nhúng của bộ cài): không được nạp vieneu_engine ở đầu file."""
+    import ast
+
+    from abook.readaloud import vieneu_engine, vieneu_gguf
+
+    tree = ast.parse(Path(vieneu_gguf.__file__).read_text(encoding="utf-8"))
+    top = [node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))]
+    names = {alias.name for node in top for alias in node.names} | {node.module or "" for node in top if isinstance(node, ast.ImportFrom)}
+    assert not names & {"numpy", "vieneu_engine"}, names
+    assert vieneu_gguf.SAMPLE_RATE == vieneu_engine.TURBO_RATE
