@@ -1,12 +1,10 @@
 # Thành phần bên thứ ba
 
-ABook phát hành theo giấy phép MIT (`_internal/LICENSE`). Mỗi thành phần bên thứ ba dưới đây giữ giấy phép riêng của
-nó. Source không đóng gói model weights: lần cài đầu tải dependency và model về `_internal/runtime`. Khi phát hành gói cài
-đặt, APK hay model cache, người bảo trì phải kiểm lại phiên bản THẬT SỰ được đóng gói và đính kèm LICENSE/NOTICE tương ứng
-(`RELEASING.md`). Tên giấy phép ghi dưới đây là của bản đang dùng lúc viết - nguồn gốc cuối cùng luôn là file giấy phép
-của chính thành phần ấy.
+ABook phát hành theo giấy phép MIT (file LICENSE đi kèm). Mỗi thành phần bên thứ ba dưới đây giữ giấy phép riêng của
+nó. Tên giấy phép ghi dưới đây là của bản đang dùng lúc viết - nguồn gốc cuối cùng luôn là file giấy phép của chính thành
+phần ấy.
 
-## App máy tính - dây chuyền sản xuất
+## App máy tính - làm sách (Studio)
 
 - Qwen3 qua Ollama (model Qwen: Apache-2.0; Ollama: MIT).
 - VieNeu / `vieneu` (TTS tiếng Việt) - xem giấy phép của model và thư viện trước khi phân phối lại.
@@ -20,12 +18,12 @@ của chính thành phần ấy.
   `abook/vendor/pypdf/` (kèm LICENSE và băm wheel nguồn), không phụ thuộc pyproject/uv.lock hay gói cài sẵn. Nhập EPUB và DOCX chỉ
   dùng thư viện chuẩn của Python (zipfile, xml, html.parser).
 - PySide6 / Qt (LGPLv3) - cửa sổ app máy tính.
-- FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: mô-đun "Phân tích nhạc" (người dùng
-  bấm mới tải, `webui/music_module.py`) tải bánh xe `imageio-ffmpeg` 0.6.0 (PyPI, ghim URL + SHA-256, `webui/ffmpeg_setup.py`) và lấy ra đúng một file, FFmpeg 7.1
+- FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: mô-đun "Phân tích nhạc" và việc "Xuất sách nói" (MP3 / M4B)
+  đều do người dùng bấm mới tải (`webui/music_module.py`, hộp xuất sách nói), cùng tải bánh xe `imageio-ffmpeg` 0.6.0 (PyPI, ghim URL + SHA-256, `webui/ffmpeg_setup.py`) và lấy ra đúng một file, FFmpeg 7.1
   bản "essentials" của gyan.dev (cấu hình GPL-3.0, mã nguồn: https://www.gyan.dev/ffmpeg/builds/); phần bọc imageio-ffmpeg là BSD-2-Clause.
   Tải về thư mục dữ liệu của app (`tools/ffmpeg`), gỡ app là gỡ nó.
 - CMU Pronouncing Dictionary (`cmudict.dict`, dữ liệu từ CMU Sphinx; sử dụng và phân phối không hạn chế, yêu cầu ghi nhận
-  nguồn). Source đi kèm giữ nguyên `_internal/abook/assets/CMUDICT_LICENSE.txt`. `abook/assets/english_phones.txt.gz` (Việt hoá từ tiếng Anh,
+  nguồn). Bản giấy phép của từ điển đi kèm nguyên vẹn (`abook/assets/CMUDICT_LICENSE.txt`). `abook/assets/english_phones.txt.gz` (Việt hoá từ tiếng Anh,
   `scripts/build_english_phones.py`) là bản gọn của chính từ điển này - cách đọc đầu tiên của mỗi từ a-z, gzip - cùng giấy phép; bộ cài máy tính
   mang nó, điện thoại tải khi cần.
 - `abook/readaloud/english_words.txt` (danh sách từ tiếng Anh cho "Nghe ngay", `scripts/build_english_words.py`): các từ nguyên vẹn trong từ vựng `bert-base-uncased` (Apache-2.0, Google) cũng có trong CMU Pronouncing Dictionary (ở trên), cộng danh sách tên gọi và họ Anh / Âu do ABook tự viết. Chỉ là danh sách từ viết thường, không kèm trọng số hay model.
@@ -58,7 +56,7 @@ băm trong `webui/studio_setup.py`):
 - MinGit / Git for Windows (GPL-2.0) - chỉ để cài UTMOSv2 từ đúng commit; ABook không sửa hay phân phối lại.
 - Ollama (MIT) - bản riêng của Studio, đúng bản dây chuyền đã kiểm, kể cả khi máy đã có Ollama; các thư viện của dây
   chuyền theo `shell/python/studio-requirements.txt` (giấy phép như mục
-  "App máy tính - dây chuyền sản xuất" ở trên); model tải từ Hugging Face / Ollama theo giấy phép của từng model,
+  "App máy tính - làm sách (Studio)" ở trên); model tải từ Hugging Face / Ollama theo giấy phép của từng model,
   trong đó model phân tích của chính dự án `abook-analyzer` (huggingface.co/NGDtuanh/abook-analyzer, Apache-2.0 như
   model nền Qwen3-4B-Instruct-2507; thẻ model: `docs/models/`).
 
@@ -166,3 +164,9 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
   phần lớn còn bản quyền, nên kho ở một repo riêng tư. Repo này chỉ giữ đáp án chuẩn (số thứ tự câu và nhãn người nói,
   cảm xúc), không chép văn bản truyện. Hai bản đã hết bảo hộ trong kho, lấy từ Wikisource tiếng Việt: Tam quốc diễn
   nghĩa (Phan Kế Bính dịch 1909, Bùi Kỷ hiệu đính) và Tắt đèn (Ngô Tất Tố, 1937-1939).
+
+## Ghi chú cho người bảo trì (app không hiện mục này)
+
+Source không đóng gói model weights: lần cài đầu tải dependency và model về `_internal/runtime`. Khi phát hành gói cài đặt, APK hay
+model cache, người bảo trì phải kiểm lại phiên bản THẬT SỰ được đóng gói và đính kèm LICENSE/NOTICE tương ứng (`RELEASING.md`).
+Giấy phép MIT của ABook nằm ở `_internal/LICENSE`.

@@ -52,6 +52,8 @@ export interface ExportResult {
   files?: number;
   chapters?: number;
   chaptersTotal?: number;
+  /** Xuất sách nói: "mp3" hay "m4b". */
+  format?: string;
 }
 
 export interface ExportJob {
@@ -140,11 +142,32 @@ export function clipStart(text: string, max: number): string {
 /** Số ký tự tối đa của tên file / thư mục trong dòng phụ của menu (dòng phụ cắt ở cuối khi quá rộng - tên không được nằm ở chỗ bị cắt). */
 const HINT_NAME_MAX = 34;
 
-/** Dòng phụ trong menu: lần xuất gần nhất của cuốn này (nếu có), thay cho "Bạn chọn thư mục lưu ở bước kế". Nói TÊN file / thư mục
- *  (đường đầy đủ ở `lastExportPlace`, hiện khi rê chuột): đường dài bị cắt ngay đầu thì chỉ còn thấy ổ đĩa và thư mục cha. */
-export function lastExportHint(job: ExportJob | undefined, copy: ExportCopy = BOOK_FILE_COPY): string | null {
+/** Loại file của một lần xuất, nói bằng cái người dùng nhận ra: "MP3" / "M4B" (xuất sách nói ghi `format`; file .m4b), "File sách" (.abook), "Dự án" (.abookproj). */
+export function exportFormatLabel(result: ExportResult): string {
+  if (result.format) return result.format.toUpperCase();
+  const extension = (result.file ?? "").toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
+  if (extension === "m4b") return "M4B";
+  if (extension === "abookproj") return "Dự án";
+  if (extension === "abook") return "File sách";
+  return result.file ? "" : "MP3"; // cả thư mục, mỗi chương một file
+}
+
+/** "10/10 14:05" - ngày/tháng giờ:phút theo giờ máy. */
+export function shortWhen(at: Date): string {
+  const two = (value: number) => String(value).padStart(2, "0");
+  return `${two(at.getDate())}/${two(at.getMonth() + 1)} ${two(at.getHours())}:${two(at.getMinutes())}`;
+}
+
+/** Dòng phụ trong menu: lần xuất gần nhất của cuốn này (nếu có), thay cho "Bạn chọn thư mục lưu ở bước kế": loại file, lúc xuất, TÊN file /
+ *  thư mục ("MP3 · 10/10 14:05 · Chuyện thử"). Đường đầy đủ ở `lastExportPlace`, hiện khi rê chuột: đường dài bị cắt ngay đầu thì chỉ còn
+ *  thấy ổ đĩa và thư mục cha. `now`: lúc job được hỏi (giây xong cách đây `finishedAgo` tính từ đó). */
+export function lastExportHint(job: ExportJob | undefined, copy: ExportCopy = BOOK_FILE_COPY, now: number = Date.now()): string | null {
   if (job?.state === "running") return `${copy.busy.replace(/…$/, "")} - xem thông báo ở góc màn hình`;
-  if (job?.state === "done" && job.result) return `Lần xuất gần nhất: ${clipStart(fileName(exportedPlace(job.result)), HINT_NAME_MAX)}`;
+  if (job?.state === "done" && job.result) {
+    const when = job.finishedAgo === undefined ? "" : shortWhen(new Date(now - job.finishedAgo * 1000));
+    const parts = [exportFormatLabel(job.result), when, clipStart(fileName(exportedPlace(job.result)), HINT_NAME_MAX)].filter(Boolean);
+    return `Lần xuất gần nhất: ${parts.join(" · ")}`;
+  }
   return null;
 }
 

@@ -6,7 +6,7 @@ import { formatClock } from "@/shared/format";
 import { usePlayListenBook } from "./LibraryScreen";
 import type { NightEvent, NightSession, Script } from "./model";
 import { sentenceAt } from "./PlayerViews";
-import { chapterScriptQuery, useLastNight, useListenBook, useSource } from "./source";
+import { chapterScriptQuery, isMissing, useLastNight, useListenBook, useSource } from "./source";
 
 // "Tối qua bạn nghe tới đâu?" - thẻ buổi sáng, chung cho máy tính và điện thoại.
 //
@@ -95,7 +95,7 @@ export function MorningRecap({ className }: { className?: string }) {
   );
   const markers = useMemo(() => (session && fresh ? markersOf(session) : []), [session, fresh]);
   const chapterIds = [...new Set(markers.map((marker) => marker.chapterId))];
-  const { data: book } = useListenBook(fresh && chapterIds.length > 0 ? bookId : undefined);
+  const { data: book, error: bookError } = useListenBook(fresh && chapterIds.length > 0 ? bookId : undefined);
   const scripts = useQuery({
     queryKey: ["listen", "night-scripts", bookId, chapterIds.join(",")],
     enabled: fresh && chapterIds.length > 0 && Boolean(book),
@@ -112,7 +112,8 @@ export function MorningRecap({ className }: { className?: string }) {
       ) as Record<number, Script>,
     staleTime: Infinity,
   });
-  if (!fresh || !session || !markers.length) return null;
+  // Sách của đêm ấy đã bị xoá khỏi thư viện: không còn chỗ để nghe tiếp, ẩn thẻ.
+  if (!fresh || !session || !markers.length || isMissing(bookError)) return null;
 
   const dismiss = async () => {
     await source.dismissNight(bookId, session.id);

@@ -7,11 +7,15 @@ export interface ThirdPartySection {
   items: { text: string; bullet: boolean }[];
 }
 
+/** Mục dành cho người bảo trì (cách phát hành, đường trong mã nguồn): nằm trong file docs để người phát hành đọc, app không hiện cho người dùng. */
+export const MAINTAINER_SECTION = "Ghi chú cho người bảo trì";
+
 export async function loadThirdParty(): Promise<string> {
   return (await import("../../../docs/THIRD_PARTY.md?raw")).default;
 }
 
-/** Tách Markdown của THIRD_PARTY.md thành các mục theo tiêu đề `##`; phần mở đầu (dưới tiêu đề `#`) là mục không tên. */
+/** Tách Markdown của THIRD_PARTY.md thành các mục theo tiêu đề `##`; phần mở đầu (dưới tiêu đề `#`) là mục không tên. Mục
+ *  "Ghi chú cho người bảo trì" bị bỏ. */
 export function parseThirdParty(markdown: string): ThirdPartySection[] {
   const sections: ThirdPartySection[] = [{ title: "", items: [] }];
   let open: { text: string; bullet: boolean } | null = null;
@@ -36,5 +40,5 @@ export function parseThirdParty(markdown: string): ThirdPartySection[] {
       open.text += ` ${line}`;
     }
   }
-  return sections.filter((section) => section.items.length);
+  return sections.filter((section) => section.items.length && !section.title.startsWith(MAINTAINER_SECTION));
 }

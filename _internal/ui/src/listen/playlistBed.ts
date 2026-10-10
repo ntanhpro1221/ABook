@@ -50,6 +50,8 @@ export interface PlaylistView {
   playlistAuto?: boolean;
   /** Cuốn chưa chọn nhạc và người dùng đã tắt "tự chọn nhạc nền" trong Cài đặt: chưa có nhạc cho cuốn này. */
   autoOff?: boolean;
+  /** Mức nhạc dưới giọng đọc (dB) người nghe đã chọn cho cuốn, hay mặc định của máy khi chưa chọn. */
+  levelDb?: number;
 }
 
 export interface PlaylistSummary {
@@ -198,6 +200,11 @@ export class PlaylistDriver {
  *  sách, MINE_PLAYLIST, OFF_PLAYLIST = tắt, hay null = xoá lựa chọn để máy tự chọn. Trả màn "Nhạc nền" mới của cuốn. */
 export function savePlaylistChoice<T = PlaylistView>(bookId: string, playlist: string | null): Promise<T> {
   return api<T>(`/api/books/${bookId}/music`, { method: "PUT", body: { playlist } });
+}
+
+/** Lưu mức nhạc dưới giọng đọc của một cuốn (cùng lệnh PUT như chọn danh sách; máy chủ và lõi native áp mức này khi dựng hàng bài). */
+export function saveMusicLevel(bookId: string, levelDb: number): Promise<PlaylistView> {
+  return api<PlaylistView>(`/api/books/${bookId}/music`, { method: "PUT", body: { levelDb } });
 }
 
 export interface PlaylistOption {

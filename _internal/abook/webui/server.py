@@ -3934,7 +3934,8 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def get_night(self, _query: dict[str, list[str]]) -> None:
-        self._send_json(HTTPStatus.OK, self.app.listening.latest_night())
+        library = self.app.library
+        self._send_json(HTTPStatus.OK, self.app.listening.latest_night(exists=lambda book: library.resolve_listenable(book) is not None))
 
     def post_night_dismiss(self, _query: dict[str, list[str]]) -> None:
         body = self._body()

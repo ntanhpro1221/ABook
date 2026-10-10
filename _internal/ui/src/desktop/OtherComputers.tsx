@@ -271,6 +271,12 @@ export function OtherComputers() {
           Kết nối
         </Button>
       </form>
+      {/* Toast biến mất sau vài giây; lý do không ghép được ở lại dưới ô địa chỉ cho tới lần thử kế (soát UX a17). */}
+      {pair.isError && (
+        <p role="alert" className="text-[13px] text-danger text-pretty">
+          Chưa ghép được: {pair.error.message}
+        </p>
+      )}
       {unpaired.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-xs text-fg-2">Không chung Wi-Fi? Chọn thiết bị đã ghép Bluetooth với máy tính này:</p>

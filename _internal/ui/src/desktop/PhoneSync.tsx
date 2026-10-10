@@ -79,6 +79,8 @@ function useSync() {
     onSuccess: (data, enabled) => {
       onSuccess(data);
       if (enabled && !data.enabled) toast.error("Chưa bật được đồng bộ", { description: data.error });
+      // Tắt xong không có gì đổi trên màn ngoài công tắc: nói một câu để biết đã tắt thật (soát UX a17).
+      else if (!enabled && !data.enabled) toast("Đã tắt chia sẻ qua Wi-Fi", { description: "Máy khác không kết nối vào máy này nữa cho tới khi bạn bật lại." });
     },
     onError,
   });

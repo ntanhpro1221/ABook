@@ -4,6 +4,9 @@ import { Button, Progress } from "@/shared/ui";
 import { api } from "./api";
 import { CANCELLED_NOTE, formatSize, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, sceneButton, sceneCard, type LocalMusicView } from "./musicLocal";
 
+/** Nút dài ("Tải model nhạc theo đoạn cùng Phân tích nhạc (820 MB)") xuống dòng thay vì tràn ra ngoài ở màn 375 px (Button mặc định không ngắt dòng, cao 32 px). */
+const WRAP = "h-auto min-h-8 whitespace-normal py-1.5 text-left";
+
 /** Thẻ duy nhất của mô-đun "Phân tích nhạc" (máy tính và điện thoại): nhập nhạc chạy không cần nó, nó chỉ cho máy NGHE nhạc để hiểu không khí
  *  của từng bài. Người dùng thấy tổng dung lượng và bấm mới tải (không bao giờ tự tải, nhất là khi đang dùng dữ liệu di động); có bản mới thì
  *  nói "có bản mới - N MB" và một lần bấm chỉ tải phần đổi; cập nhật xong KHÔNG tự phân tích lại bài cũ - hiện nút "Phân tích lại N bài".
@@ -68,11 +71,11 @@ export function MusicModuleNotice({ view, queryKey, onlyScene = false }: { view:
           {action && (
             <div className="flex flex-wrap items-center gap-2">
               {action === "install" ? (
-                <Button size="sm" variant="secondary" loading={starting} onClick={() => void post("/api/music/local/module")}>
+                <Button size="sm" variant="secondary" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/module")}>
                   {failed ? "Thử lại" : module.stopped ? `Tải lại phần chạy (${formatSize(module.outdatedBytes ?? module.total)})` : updating ? `Cập nhật Phân tích nhạc (${formatSize(module.outdatedBytes ?? module.total)})` : `Tải Phân tích nhạc (${formatSize(module.total)})`}
                 </Button>
               ) : (
-                <Button size="sm" variant="secondary" loading={starting} onClick={() => void post("/api/music/local/reanalyse")}>
+                <Button size="sm" variant="secondary" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/reanalyse")}>
                   {`Phân tích lại ${stale} bài bằng bản mới`}
                 </Button>
               )}
@@ -92,7 +95,7 @@ export function MusicModuleNotice({ view, queryKey, onlyScene = false }: { view:
             <p>{scene.unavailable}.</p>
           ) : (
             !downloadingModule && (
-              <Button size="sm" variant="secondary" loading={starting} onClick={() => void post("/api/music/local/module", { scene: true })}>
+              <Button size="sm" variant="secondary" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/module", { scene: true })}>
                 {sceneButton(scene.scene)}
               </Button>
             )
@@ -113,7 +116,7 @@ export function MusicModuleNotice({ view, queryKey, onlyScene = false }: { view:
           )}
           {precise.state !== "downloading" && (
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" variant="secondary" loading={starting} onClick={() => void post("/api/music/local/precise", { enabled: precise.state !== "ready" })}>
+              <Button size="sm" variant="secondary" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/precise", { enabled: precise.state !== "ready" })}>
                 {precise.state === "error" ? "Thử lại" : precise.state === "missing" ? `Tải tiếp đo cảm xúc (${formatSize(precise.bytes)})` : precise.state === "ready" ? "Tắt đo cảm xúc chính xác hơn" : precise.present ? "Bật đo cảm xúc chính xác hơn" : `Tải và bật đo cảm xúc (${formatSize(precise.bytes)})`}
               </Button>
               {precise.removable && (

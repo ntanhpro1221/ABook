@@ -6,6 +6,7 @@ import { cn } from "@/shared/cn";
 import { api } from "@/studio/api";
 import { importMusic } from "@/studio/musicImport";
 import { MY_MUSIC_KEY, useCanImportMusic } from "./MyMusic";
+import { DEFAULT_LEVEL_DB } from "@/shared/musicLevels";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
 import {
   ADD_MUSIC_LABEL,
@@ -16,6 +17,7 @@ import {
   playlistLabel,
   playlistOptions,
   playlistPlaying,
+  saveMusicLevel,
   savePlaylistChoice,
   type PlaylistMenu,
   type PlaylistOption,
@@ -72,6 +74,16 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
       toast.error("Chưa đổi được nhạc nền", { id: notice ? ADD_TOAST : undefined, description: [notice?.title, error.message].filter(Boolean).join("\n") });
     },
   });
+  // Mức nhạc dưới giọng đọc: nhớ theo cuốn như danh sách; trình phát nạp lại hàng bài (MUSIC_CHANGED_EVENT) với mức mới.
+  const setLevel = useMutation({
+    mutationFn: (levelDb: number) => saveMusicLevel(bookId, levelDb),
+    onSuccess: (view) => {
+      client.setQueryData(key, view);
+      void client.invalidateQueries({ queryKey: ["listen", "book", bookId] });
+      window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: bookId }));
+    },
+    onError: (error: Error) => toast.error("Chưa chỉnh được mức nhạc", { description: error.message }),
+  });
   const addMusic = async () => {
     if (adding) return;
     adding = true;
@@ -102,6 +114,9 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     error: menu.data?.error ?? "",
     loading: menu.isLoading,
     choose: (id: string | null) => choose.mutate({ playlist: id }),
+    levelDb: current.data?.levelDb ?? DEFAULT_LEVEL_DB,
+    setLevel: (levelDb: number) => setLevel.mutate(levelDb),
+    levelBusy: setLevel.isPending,
     canImport,
     addMusic,
   };

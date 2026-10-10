@@ -112,7 +112,8 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
   return (
     <div className="group">
       <div className="relative">
-        <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
+        {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
+        <button type="button" tabIndex={-1} onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
           <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full" />
         </button>
         <button

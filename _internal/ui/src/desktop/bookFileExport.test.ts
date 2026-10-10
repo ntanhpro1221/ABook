@@ -75,11 +75,25 @@ describe("jobView", () => {
 
 describe("lastExportHint", () => {
   it("names the last file, or the running state, and is silent when nothing was exported", () => {
-    expect(lastExportHint({ state: "done", result: { folder: "D:/x", file: "D:/x/a.abook" } })).toBe("Lần xuất gần nhất: a.abook");
+    expect(lastExportHint({ state: "done", result: { folder: "D:/x", file: "D:/x/a.abook" } })).toBe("Lần xuất gần nhất: File sách · a.abook");
     expect(lastExportHint({ state: "running" })).toMatch(/Đang đóng gói/);
     expect(lastExportHint({ state: "idle" })).toBeNull();
     expect(lastExportHint({ state: "error", error: "x" })).toBeNull();
     expect(lastExportHint(undefined)).toBeNull();
+  });
+});
+
+describe("lastExportHint with format and time", () => {
+  const now = new Date(2026, 9, 10, 14, 30).getTime();
+
+  it("says the format, when it was made (from the job's age) and the name", () => {
+    const job: ExportJob = { state: "done", finishedAgo: 25 * 60, result: { folder: "D:/x/Chuyện thử", files: 3, format: "mp3" } };
+    expect(lastExportHint(job, undefined, now)).toBe("Lần xuất gần nhất: MP3 · 10/10 14:05 · Chuyện thử");
+  });
+
+  it("tells M4B and book files from their extension when the job carries no format", () => {
+    const m4b: ExportJob = { state: "done", finishedAgo: 0, result: { folder: "D:/x", file: "D:/x/Hành trình.m4b" } };
+    expect(lastExportHint(m4b, undefined, now)).toBe("Lần xuất gần nhất: M4B · 10/10 14:30 · Hành trình.m4b");
   });
 });
 
@@ -89,7 +103,7 @@ describe("lastExportHint with long paths", () => {
   it("names the file, never the start of the path, and keeps the full path for the tooltip", () => {
     const job: ExportJob = { state: "done", result: { folder: "D:\\Sách nói\\Đã xuất", file: long } };
     const hint = lastExportHint(job)!;
-    expect(hint.startsWith("Lần xuất gần nhất: …")).toBe(true);
+    expect(hint.startsWith("Lần xuất gần nhất: M4B · …")).toBe(true);
     expect(hint.endsWith("đến cuối.m4b")).toBe(true);
     expect(hint).not.toContain("D:");
     expect(lastExportPlace(job)).toBe(long);
@@ -97,7 +111,7 @@ describe("lastExportHint with long paths", () => {
 
   it("names the folder when the result is a folder of MP3s", () => {
     const job: ExportJob = { state: "done", result: { folder: "D:/Sách nói/Truyện ngắn", files: 12 } };
-    expect(lastExportHint(job)).toBe("Lần xuất gần nhất: Truyện ngắn");
+    expect(lastExportHint(job)).toBe("Lần xuất gần nhất: MP3 · Truyện ngắn");
     expect(lastExportPlace(job)).toBe("D:/Sách nói/Truyện ngắn");
   });
 

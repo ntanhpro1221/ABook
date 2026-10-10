@@ -246,10 +246,10 @@ object ReadAloud {
         }
     }
 
-    /** Giọng VieNeu đầu danh sách nếu máy đã tải mô-đun, không thì null. Chữ của người nghe chưa chọn giọng không nên rời máy khi máy đã có giọng chạy trên máy. */
-    internal var localVoice: () -> String? = { context?.let { ctx -> VieneuVoices.voices(ctx).firstOrNull()?.id } }
+    /** Giọng VieNeu kể chuyện trung tính ([NarratorVoice]) nếu máy đã tải mô-đun, không thì null. Chữ của người nghe chưa chọn giọng không nên rời máy khi máy đã có giọng chạy trên máy. */
+    internal var localVoice: () -> String? = { context?.let { ctx -> NarratorVoice.pick(VieneuVoices.voices(ctx).map { it.id }) } }
 
-    /** Giọng khi người nghe CHƯA chọn: giọng VieNeu đầu danh sách nếu máy có, không thì giọng mặc định - đúng luật `resolveVoice` của giao diện
+    /** Giọng khi người nghe CHƯA chọn: giọng VieNeu kể chuyện trung tính nếu máy có, không thì giọng mặc định - đúng luật `resolveVoice` của giao diện
      *  (listen/readAloudVoice.ts), nên tên giọng giao diện hiện và giọng lõi đọc là một. */
     private fun unchosenVoice(): String = localVoice() ?: DEFAULT_VOICE
 

@@ -91,6 +91,8 @@ function ChapterRow({
         type="button"
         onClick={canPlay(chapter) ? onPlay : () => navigate(`/book/${book.id}/read/${chapter.id}`)}
         aria-label={canPlay(chapter) ? undefined : `Đọc ${chapter.fullTitle} (chưa có audio)`}
+        // Nghe được thì nút tên làm đúng việc của nút phát bên trái: bàn phím dừng ở nút phát (đã có tên đầy đủ), chuột vẫn bấm cả dòng.
+        tabIndex={canPlay(chapter) ? -1 : undefined}
         className="touch-hit min-w-0 flex-1 text-left"
       >
         <div className={cn("truncate text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
@@ -970,7 +972,7 @@ export function BookScreen({
                     <>
                       <DropdownMenu.Separator className="my-1 h-px bg-line" />
                       <DropdownMenu.Item onSelect={() => setEditOpen(true)} className={MENU_ITEM}>
-                        <Pencil className="size-4" /> {textOnly ? "Sửa tên, bìa…" : "Sửa tên, bìa, nhạc nền…"}
+                        <Pencil className="size-4" /> {textOnly ? (workshop ? "Sửa tên, bìa…" : "Sửa tên, tác giả, bìa…") : "Sửa tên, bìa, nhạc nền…"}
                       </DropdownMenu.Item>
                       {textOnly && <PlaylistSubmenu bookId={book.id} />}
                       {syncs && <SendEditsItem book={book} />}

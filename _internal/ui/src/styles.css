@@ -60,7 +60,7 @@
   --accent-ink: #1d1304;
   --accent-text: #93560a;
   --accent-soft: #fbeedb;
-  --success: #15835c;
+  --success: #117654; /* pill "Hoàn tất" (chữ trên --success-soft) 4,09:1 -> 4,85:1 (soát UX a17); tối: 5,9-7,0:1 sẵn */
   --success-soft: #dff3ea;
   --danger: #c53a3a;
   --danger-soft: #fbe4e4;

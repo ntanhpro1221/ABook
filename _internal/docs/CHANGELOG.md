@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa nhỏ khi dùng hằng ngày (máy tính và điện thoại)
+
+- Đóng hộp thoại thì con trỏ bàn phím về đúng nút đã mở nó (kể cả khi mở từ menu …); chọn giọng bằng ←/→ và Tab không còn dừng ở từng nút "Thử giọng".
+- Sửa sách: đổi tên hay tác giả xong hộp vẫn mở để sửa tiếp; sách chỉ có chữ đổi tên chương bằng một ô "Tên chương"; menu ghi "Sửa tên, tác giả, bìa…". Có thể đặt mức to nhỏ của nhạc nền ngay trong menu nhạc của sách chỉ có chữ.
+- Xoá sách khỏi máy thì lời chào buổi sáng không còn nhắc đêm nghe của sách đó. Cài đặt giọng: nút "Lưu" khóa mà không cần kiểm tra; Giới thiệu có đường dẫn GitHub bấm được và không còn ghi chú dành cho người bảo trì.
+- Chữ "Hoàn tất" đủ tương phản; "Lần xuất gần nhất" ghi định dạng và giờ; màn 375 px không còn nút tràn hay thông báo che đầu hộp; ghép máy lỗi được đọc ra, tắt chia sẻ Wi-Fi có thông báo; Nhạc của tôi đọc rõ tên bài ở mỗi nút.
+- Chưa chọn giọng thì giọng VieNeu mặc định là giọng dẫn truyện trung tính (Phạm Tuyên, Ngọc Linh, Thanh Bình) thay vì giọng đầu danh sách.
+
 ### Nghe ngay (điện thoại)
 
 - Sách chỉ có chữ (EPUB, TXT) xuất được thành sách nói ngay trên điện thoại: menu … của sách → "Xuất sách nói (M4B)…". Điện thoại đọc cả cuốn bằng giọng đang chọn cho cuốn rồi ghép thành MỘT file M4B có mục lục chương, tên sách, tác giả và bìa; bạn đặt tên và chọn nơi lưu. Việc chạy nền (tắt màn hình vẫn chạy) có thông báo tiến độ và nút "Dừng", nhường cho chương bạn đang nghe; dừng hay app bị đóng giữa chừng thì phần đã đọc xong được giữ, xuất lại làm tiếp từ đó. Giọng trực tuyến gửi cả cuốn ra ngoài nên hộp nói rõ trước khi bắt đầu. Điện thoại chỉ làm M4B (máy tính còn làm được MP3).
