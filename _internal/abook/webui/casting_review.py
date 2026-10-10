@@ -18,8 +18,8 @@ from pathlib import Path
 from typing import Any
 
 from ..listener_overrides import (
-    NARRATOR, NO_VOICE, NOT_SPEECH, SPEECH_KINDS, UNNAMED, line_requests, line_target, read_overrides, speaker_requests,
-    speaker_target,
+    NARRATOR, OVERRIDES_FILE, NO_VOICE, NOT_SPEECH, SPEECH_KINDS, UNNAMED, line_requests, line_target, read_overrides, retake_requests,
+    speaker_requests, speaker_target,
 )
 from . import store
 from .reviews import speaker_label
@@ -174,6 +174,23 @@ def _line_wish(connection: Any, row: Any, wish: dict[str, Any] | None) -> dict[s
     return {**view, "state": "applied" if applied else "pending"}
 
 
+def _retake(row: Any, request: dict[str, Any] | None) -> str | None:
+    """Câu đã xin thu lại mà dây chuyền chưa thu ("pending"): cùng phép thử `apply_listener_retake` - yêu cầu phải mới hơn lần thu
+    lại theo yêu cầu gần nhất của câu, và chữ câu không đổi từ lúc xin. Sách chưa nâng cấp (không có cột) coi như chưa thu lần nào."""
+    if request is None or request["text_sha256"] != str(row["text_sha256"] or ""):
+        return None
+    return "pending" if float(_value(row, "listener_retake_at") or 0) < request["requested_at"] else None
+
+
+def casting_stamp(project_root: Path) -> int:
+    """Lần ghi yêu cầu cuối của người nghe (mốc sửa của overrides.json; 0 = chưa ai sửa gì). Giao diện hỏi nhẹ mỗi vài giây: đổi nghĩa là
+    một cửa sổ khác vừa sửa, nên chương đang xem phải tải lại (soát UX a23 B19) - rẻ hơn nhiều so với tải lại cả chương để so."""
+    try:
+        return (Path(project_root) / OVERRIDES_FILE).stat().st_mtime_ns
+    except OSError:
+        return 0
+
+
 def casting_chapters(project_root: Path) -> dict[str, Any]:
     """Mục lục của tab: mỗi chương có bao nhiêu câu thoại, bao nhiêu chỗ máy nghi, bao nhiêu câu người nghe đã quyết."""
     with closing(store.connect(project_root)) as connection:
@@ -218,7 +235,7 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         if connection.execute("SELECT 1 FROM chapters WHERE id = ?", (chapter_id,)).fetchone() is None:
             return None
         columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
-        extra = [column for column in ("paragraph_index", "wav_path", "emotion", "intensity", "listener_text")
+        extra = [column for column in ("paragraph_index", "wav_path", "emotion", "intensity", "listener_text", "listener_retake_at")
                  if column in columns]
         rows = connection.execute(
             "SELECT id, stable_id, chapter_id, seq, text, text_sha256, speaker, kind"
@@ -228,8 +245,10 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         ).fetchall()
         display = display_names(connection)
         hints = _hints(connection, rows, chapter_id, display, project_root)
-        wishes = {entry["stable_id"]: entry for entry in speaker_requests(read_overrides(project_root))}
-        line_wishes = {entry["stable_id"]: entry for entry in line_requests(read_overrides(project_root))}
+        overrides = read_overrides(project_root)
+        wishes = {entry["stable_id"]: entry for entry in speaker_requests(overrides)}
+        line_wishes = {entry["stable_id"]: entry for entry in line_requests(overrides)}
+        retakes = {entry["stable_id"]: entry for entry in retake_requests(overrides)}
         decided = {
             str(row["stable_id"]): _wish(
                 connection, row, wishes.get(str(row["stable_id"])),
@@ -306,6 +325,8 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
             "lineWish": delivery.get(stable_id),
             # Chữ người nghe sửa đang được đọc thay câu gốc (đã áp); None = đọc đúng chữ sách.
             "spoken": _value(row, "listener_text") or None,
+            # Người nghe đã xin thu lại câu này, chờ dây chuyền thu ("pending"); None = không có yêu cầu nào đang chờ.
+            "retake": _retake(row, retakes.get(stable_id)),
         })
     return {
         "chapterId": chapter_id,

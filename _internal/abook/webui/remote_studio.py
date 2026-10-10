@@ -132,9 +132,11 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("GET", _BOOK + r"/work"),
     ("GET", _BOOK + r"/casting"),
     ("GET", _BOOK + r"/casting/\d+"),
+    ("GET", _BOOK + r"/casting/stamp"),
     ("GET", _BOOK + r"/continuation"),
     ("GET", _BOOK + r"/parts"),
     ("GET", _BOOK + r"/pronunciations"),
+    ("GET", _BOOK + r"/pronunciations/reach"),
     ("POST", _BOOK + r"/pronunciation"),
     # "Nghe thử" cách đọc tên (reading_preview.py): dùng card đồ hoạ của máy tính - chỉ thiết bị được điều khiển sản xuất, không
     # nằm trong LISTEN_ROUTES. Cả lượt (chờ hàng + nạp + đọc) nằm trong FORWARD_SECONDS (reading_preview.REQUEST_BUDGET).
