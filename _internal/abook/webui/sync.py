@@ -342,6 +342,16 @@ class Devices:
             self._save()
             return token
 
+    def wrong_code_message(self) -> str:
+        """Lời báo mã sai, nói rõ còn mấy lần thử (sai `PAIRING_ATTEMPTS` lần thì mã bị huỷ) hay phải tạo mã mới."""
+        with self._lock:
+            if self.blocked:
+                return f"Nhập sai {PAIRING_ATTEMPTS} lần nên mã đã bị huỷ - tạo mã mới ở máy kia rồi nhập lại"
+            if self._pairing and self._pairing[1] > time.time():
+                left = PAIRING_ATTEMPTS - self._failures
+                return f"Mã ghép nối sai - còn {left} lần thử (sai {PAIRING_ATTEMPTS} lần mã sẽ bị huỷ)"
+        return "Mã ghép nối sai hoặc đã hết hạn - tạo mã mới ở máy kia"
+
     def check(self, token: str) -> bool:
         return self.identify(token) is not None
 
@@ -902,7 +912,7 @@ class SyncHandler(BaseHTTPRequestHandler):
                 studio_on = self.app.studio is not None and self.app.studio.allowed()
                 token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")), studio=studio_on)
                 if token is None:
-                    self._json(HTTPStatus.FORBIDDEN, {"error": "Mã ghép nối sai hoặc đã hết hạn"})
+                    self._json(HTTPStatus.FORBIDDEN, {"error": self.app.devices.wrong_code_message()})
                 else:
                     # `fingerprint`: vân tay chứng chỉ của máy này - bên ghép đối chiếu với chứng chỉ nó vừa thấy rồi ghim.
                     self._json(HTTPStatus.OK, {"token": token, "name": self.app.name, "routes": self.app.routes(),
@@ -919,12 +929,13 @@ class SyncHandler(BaseHTTPRequestHandler):
                 # Ghép để NGHE luôn được (cùng mã 6 số người dùng vừa bấm trên máy tính); quyền sản xuất chỉ khi công tắc
                 # đang bật - như ghép điện thoại.
                 body = self._body()
+                studio = self.app.studio.allowed()
                 token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")) or "Trình duyệt",
-                                              studio=self.app.studio.allowed())
+                                              studio=studio)
                 if token is None:
-                    self._json(HTTPStatus.FORBIDDEN, {"error": "Mã ghép nối sai hoặc đã hết hạn"})
+                    self._json(HTTPStatus.FORBIDDEN, {"error": self.app.devices.wrong_code_message()})
                 else:
-                    remote_studio.send_bytes(self, HTTPStatus.OK, json.dumps({"name": self.app.name}).encode("utf-8"),
+                    remote_studio.send_bytes(self, HTTPStatus.OK, json.dumps({"name": self.app.name, "studio": studio}).encode("utf-8"),
                                              "application/json; charset=utf-8",
                                              extra={"Set-Cookie": remote_studio.device_cookie(token)})
                 return

@@ -101,13 +101,36 @@ def test_pairing_refuses_a_bad_code_or_address_with_a_readable_reason(library, t
     app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "nay" / "l.json"))
     try:
         devices.start_pairing()
-        with pytest.raises(ApiError, match="Mã ghép nối sai"):
+        with pytest.raises(ApiError, match="Mã ghép nối sai - còn 4 lần thử"):
             app.pair_computer(f"127.0.0.1:{other.port}", "000000" if devices.pairing()["code"] != "000000" else "111111")
         with pytest.raises(ApiError, match="mã 6 số"):
             app.pair_computer("", "12")
     finally:
         other.stop()
     assert app.computers_view()["computers"] == [] and book_id(tmp_path) != ""
+
+
+def test_this_computer_refuses_to_pair_with_itself(library, tmp_path: Path) -> None:  # noqa: F811
+    """`127.0.0.1:<cổng đồng bộ của máy> + mã đang hiện` từng ghép được máy với chính nó (thư viện nhân đôi)."""
+    import pytest
+
+    from abook.webui.server import ApiError
+
+    own_library, _project, own_listening = library
+    preferences = Preferences(tmp_path / "nay" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path / "nay" / "thu_vien")})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "nay" / "l.json"))
+    app.devices = Devices(tmp_path / "nay" / "devices.json")
+    app.sync_server = SyncServer(SyncApp(own_library, own_listening, app.devices, "Máy này"), host="127.0.0.1", port=0).start()
+    try:
+        code = app.devices.start_pairing()["code"]
+        for address in (f"127.0.0.1:{app.sync_server.port}", f"localhost:{app.sync_server.port}"):
+            with pytest.raises(ApiError, match="chính máy này"):
+                app.pair_computer(address, code)
+        assert app.devices.pairing() is not None and app.devices.list() == [], "từ chối trước khi gửi mã đi đâu"
+        assert app.computers_view()["computers"] == []
+    finally:
+        app.sync_server.stop()
 
 
 def test_a_computer_finds_other_computers_on_the_network_like_phones_do() -> None:

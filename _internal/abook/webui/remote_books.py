@@ -105,9 +105,10 @@ class Computers:
                 data["computers"][computer].update(fields)
                 self._write(data)
 
-    def pair(self, address: str, code: str, device_name: str) -> dict[str, Any]:
+    def pair(self, address: str, code: str, device_name: str, *, own_port: int | None = None) -> dict[str, Any]:
         """Ghép với máy ở `address` ("192.168.1.20" hay "192.168.1.20:47630"; "AA:BB:CC:DD:EE:FF" hay "bt:AA:BB:..." là địa chỉ
-        Bluetooth của máy đã ghép trong Cài đặt Windows - không cần chung Wi-Fi) bằng mã 6 số đang hiện trên máy ấy."""
+        Bluetooth của máy đã ghép trong Cài đặt Windows - không cần chung Wi-Fi) bằng mã 6 số đang hiện trên máy ấy.
+        `own_port`: cổng đồng bộ của CHÍNH máy này - địa chỉ của máy này kèm cổng ấy là ghép với chính mình (thư viện nhân đôi)."""
         digits = re.sub(r"\D", "", code or "")
         by_bluetooth = bluetooth.normalize_address(re.sub(r"(?i)^\s*bt:", "", address or ""))
         match = None if by_bluetooth or re.match(r"(?i)\s*bt:", address or "") else re.fullmatch(
@@ -116,6 +117,8 @@ class Computers:
             raise RemoteError("Nhập địa chỉ máy kia (vd 192.168.1.20, hay địa chỉ Bluetooth AA:BB:CC:DD:EE:FF) và mã 6 số "
                               "đang hiện trên máy ấy")
         host, port = (f"bt:{by_bluetooth}", LIBRARY_PORT) if by_bluetooth else (match.group(1), int(match.group(2) or LIBRARY_PORT))
+        if not by_bluetooth and own_port is not None and port == own_port and is_own_host(host):
+            raise RemoteError("Đây là địa chỉ của chính máy này - nhập địa chỉ máy kia")
         # Lần ghép đầu: chưa có vân tay để đối chiếu (None) - ghi lại chứng chỉ máy kia đưa ra, sau khi nó tự xưng cùng vân tay.
         first = _tunnel(by_bluetooth, None) if by_bluetooth else Endpoint(host, port, None)
         reply, seen = _exchange(first, "POST", "/sync/v1/pair", "", {"code": digits, "device": device_name or "Máy tính"},
@@ -127,7 +130,7 @@ class Computers:
         except (ValueError, KeyError) as error:
             raise RemoteError("Máy kia trả lời lạ - có phải ABook không?") from error
         if not seen or claimed != seen:
-            raise RemoteError("Chứng chỉ máy kia không khớp với vân tay nó báo - dừng ghép, thử lại")
+            raise RemoteError("Máy kia trả lời không đáng tin (chứng chỉ không khớp vân tay nó báo) - chưa ghép, thử lại; vẫn lỗi thì kiểm tra mạng")
         with self._lock:
             data = self._read()
             # Ghép lại cùng một máy (cùng địa chỉ) thì thay chỗ cũ: sách đã tải và chỗ nghe giữ nguyên.
@@ -244,6 +247,21 @@ def send_unsent(library_root: Path, computer: str) -> None:
     refuse_if_unsent(library_root, computer)
 
 
+def own_addresses() -> set[str]:
+    """Địa chỉ của chính máy này: các địa chỉ LAN (`sync.local_addresses`) và vòng lặp."""
+    from .sync import local_addresses
+
+    return set(local_addresses()) | {"127.0.0.1"}
+
+
+def is_own_host(host: str) -> bool:
+    """`host` (địa chỉ hay tên) là chính máy này: vòng lặp, địa chỉ LAN của máy, "localhost" hay tên máy."""
+    import socket
+
+    clean = host.strip().lower()
+    return clean in own_addresses() or clean.startswith("127.") or clean in ("localhost", "::1", socket.gethostname().lower())
+
+
 def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: list[str] | None = None,
              port: int | None = None) -> list[dict[str, Any]]:
     """Máy tính ABook khác trong cùng mạng: gửi đúng lời tìm điện thoại gửi (UDP broadcast - `sync.Discovery` của máy kia
@@ -252,9 +270,9 @@ def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: 
     của máy). Máy kia phải đang bật kết nối - như điện thoại tìm nó."""
     import socket
 
-    from .sync import DISCOVERY_PORT, DISCOVERY_PROBE, local_addresses
+    from .sync import DISCOVERY_PORT, DISCOVERY_PROBE
 
-    own = set(local_addresses()) | {"127.0.0.1"}
+    own = own_addresses()
     if targets is None:
         targets = ["255.255.255.255"] + sorted({address.rsplit(".", 1)[0] + ".255" for address in own
                                                 if address.count(".") == 3 and not address.startswith("127.")})
@@ -578,8 +596,8 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
                 connection.request(method, path, body=data, headers=headers)
             response = connection.getresponse()
         except tls.PinError as error:
-            raise RemoteError("Chứng chỉ của máy kia đã khác lúc ghép - máy kia cài lại ABook, hoặc có ai chen vào mạng. "
-                              "Nếu chắc đó vẫn là máy của anh, gỡ rồi ghép lại") from error
+            raise RemoteError("Chứng chỉ bảo mật của máy kia đã khác lúc ghép (máy kia cài lại ABook?) - bấm Thôi ghép rồi ghép lại. "
+                              "Nếu máy kia không cài lại gì thì đừng ghép lại: có thể có ai chen vào mạng") from error
         except (OSError, http.client.HTTPException) as error:
             raise RemoteError(_unreachable(endpoint)) from error
         if response.status >= 400:

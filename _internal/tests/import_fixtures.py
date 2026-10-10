@@ -19,6 +19,7 @@
     fixtures/import/expected/keep_short.json epub3 và split đọc với keep_short=True: mục rất ngắn đứng đúng chỗ trong danh sách, short=true,
                                              `defaults` = các chương tích sẵn (không có mục ngắn), ghi chú "N mục rất ngắn chưa chọn"
     fixtures/import/expected/clip_title.json  bảng ví dụ của `importers.clip_title` (tên chương cắt ở ranh giới từ + "…"); hai bên cùng khớp
+    fixtures/import/expected/name_title.json  bảng ví dụ của `importers.title_from_filename` (tên sách từ tên file: "_" và "--" thành dấu cách); hai bên cùng khớp
     fixtures/import/expected/<tên>.json      kết quả mong đợi (ImportedBook.to_dict, hay {"error": ...})
     fixtures/import/pages/story.pages.json   lớp thô của PDF (pypdf VÀ pdf.js phải ra đúng các dòng này)
 
@@ -486,6 +487,14 @@ CLIP_TITLE_CASES = [
 ]
 
 
+# Tên sách đặt từ tên file (`importers.title_from_filename`, Kotlin BookImport.titleFromFilename): "_" và "--" trở lên thành dấu cách, "-" đơn
+# và hoa thường giữ nguyên, khoảng trắng gọn lại, tên chỉ toàn gạch thì giữ nguyên.
+NAME_TITLE_CASES = [
+    "Tam_Quoc_Dien_Nghia", "Re-Zero kara Hajimeru", "ten__file--hai___gach", "  _Truyen_  moi _ ", "Sách - Tập 1", "ĐÃ_ĐƯỢC_VIẾT_HOA",
+    "a-b-c", "___", "---", "Chương_1-Mở_đầu", "",
+]
+
+
 def dumps(value: Any) -> bytes:
     return (json.dumps(value, ensure_ascii=False, indent=1) + "\n").encode("utf-8")
 
@@ -525,6 +534,7 @@ def expected_files(root: Path) -> dict[str, bytes]:
     out["expected/keep_short.json"] = dumps(kept)
     out["expected/clip_title.json"] = dumps([{"text": text, "limit": limit, "clipped": importers.clip_title(text, limit)}
                                              for text, limit in CLIP_TITLE_CASES])
+    out["expected/name_title.json"] = dumps([{"stem": stem, "title": importers.title_from_filename(stem)} for stem in NAME_TITLE_CASES])
     pages, title, author = importers.pdf_pages(root / "story.pdf")
     out["pages/story.pages.json"] = dumps({"title": title, "author": author, "pages": pages})
     return out

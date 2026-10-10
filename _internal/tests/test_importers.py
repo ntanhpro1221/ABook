@@ -352,6 +352,22 @@ def test_a_chapter_named_from_its_first_line_is_cut_at_a_word_not_in_the_middle_
     assert importers.clip_title(exact + " hơn", len(exact)) == exact + "…"
 
 
+def test_a_book_named_from_its_file_reads_underscores_and_double_dashes_as_spaces_and_keeps_the_rest() -> None:
+    assert importers.title_from_filename("Tam_Quoc_Dien_Nghia") == "Tam Quoc Dien Nghia"
+    assert importers.title_from_filename("Re-Zero kara Hajimeru") == "Re-Zero kara Hajimeru", "một dấu - là của tên"
+    assert importers.title_from_filename("ĐÃ_viết_Hoa") == "ĐÃ viết Hoa", "không đổi hoa thường"
+    assert importers.title_from_filename("___") == "___", "không còn chữ nào thì giữ tên file"
+    for case in expected("name_title"):
+        assert importers.title_from_filename(case["stem"]) == case["title"], case
+
+
+def test_an_empty_text_file_is_named_in_the_error_with_a_way_out(tmp_path: Path) -> None:
+    empty = tmp_path / "trong.txt"
+    empty.write_bytes(b"  \n")
+    with pytest.raises(importers.ImportFailed, match="trong “trong.txt”.*Notepad.*UTF-8"):
+        importers.import_text(empty)
+
+
 def test_clip_title_agrees_with_the_shared_table_and_the_long_first_line_fixture_is_cut_at_a_word() -> None:
     for case in expected("clip_title"):
         assert importers.clip_title(case["text"], case["limit"]) == case["clipped"], case

@@ -143,17 +143,17 @@ def import_text(path: Path | str, *, split_chapters: bool = False, keep_short: b
         suffix = path.suffix.casefold()
         if suffix == ".pdf":
             pages, title, author = pdf_pages(path)
-            return import_pdf_pages(pages, path.stem, title, author)
+            return import_pdf_pages(pages, title_from_filename(path.stem), title, author)
         reader = {".epub": _epub, ".docx": _docx, ".txt": lambda file: _txt_file(file, split_chapters)}.get(suffix)
         if reader is None:
             raise ImportFailed(f"Chưa đọc được file {suffix or 'không có đuôi'} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
         book = reader(path)
     else:
         raise ImportFailed(f"Không thấy {path}.")
-    return _finish(book, keep_short)
+    return _finish(book, keep_short, path.name)
 
 
-def _finish(book: ImportedBook, keep_short: bool = False) -> ImportedBook:
+def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> ImportedBook:
     """Mọi định dạng đi qua đây: Unicode NFC, và gợi ý (không bỏ) dòng ghi công ở đầu chương."""
     book.title = _nfc(book.title)
     book.author = _nfc(book.author) if book.author else None
@@ -167,7 +167,8 @@ def _finish(book: ImportedBook, keep_short: bool = False) -> ImportedBook:
     if not keep_short:
         book.chapters = [chapter for chapter in book.chapters if not chapter.short]
     if not book.chapters or not any(chapter.text.strip() or chapter.short for chapter in book.chapters):
-        raise ImportFailed("Không có chương nào có chữ")
+        raise ImportFailed(f"Không có chương nào có chữ trong “{source or book.title}” - file rỗng hay mã hoá lạ? "
+                           "Với file .txt: thử mở bằng Notepad rồi lưu lại ở dạng UTF-8.")
     if len(book.chapters) > 1:
         # File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do. Mục rất ngắn mà chỉ có
         # tên (trang đề tựa) thì ở lại: người dùng quyết có tích nó không.
@@ -217,6 +218,13 @@ def _nfc(text: str) -> str:
     return unicodedata.normalize("NFC", text)
 
 
+def title_from_filename(stem: str) -> str:
+    """Tên sách đặt từ tên file/thư mục: "_" và chuỗi "--" trở lên là dấu cách của người đặt tên file ("Tam_Quoc__Dien_Nghia" ->
+    "Tam Quoc Dien Nghia"); một dấu "-" đơn là của tên ("Re-Zero") và hoa thường giữ nguyên. Không còn gì thì giữ nguyên `stem`.
+    Kotlin cùng luật: BookImport.titleFromFilename (bảng ví dụ chung expected/name_title.json)."""
+    return " ".join(re.sub(r"_+|-{2,}", " ", stem).split()) or stem
+
+
 def clip_title(text: str, limit: int) -> str:
     """Tên hiển thị dài quá `limit` ký tự thì cắt ở ranh giới từ rồi thêm "…" (cắt trơn để lại "…nư" giữa từ). CHỈ cho tên chương /
     tên file đặt từ dòng đầu - chữ truyện không qua đây."""
@@ -257,13 +265,13 @@ def _txt_folder(folder: Path) -> ImportedBook:
     files = discover_txt_files(folder)  # đúng luật của Studio: các .txt nằm ngay trong thư mục, xếp tên tự nhiên
     if not files:
         raise ImportFailed("Thư mục này không có file .txt nào nằm ngay bên trong")
-    return ImportedBook(title=folder.resolve().name, chapters=[_txt_chapter(file) for file in files], text_has_title=True)
+    return ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[_txt_chapter(file) for file in files], text_has_title=True)
 
 
 def _txt_file(path: Path, split: bool = False) -> ImportedBook:
     """Một file TXT là một chương - trừ khi nó là CẢ truyện (>= 2 dòng "Chương N") và người dùng tích tách: `split_txt_chapters`."""
     chapter = _txt_chapter(path)
-    book = ImportedBook(title=path.stem, chapters=[chapter], text_has_title=True)
+    book = ImportedBook(title=title_from_filename(path.stem), chapters=[chapter], text_has_title=True)
     parts = split_txt_chapters(chapter.text)
     book.split_offer = len(parts)
     # Chương tách ra từ một dòng tiêu đề mang tên dòng ấy - không bao giờ trùng tên chương "Mở đầu".
@@ -530,7 +538,7 @@ def _epub(path: Path) -> ImportedBook:
         for toc_href, toc_fragment, toc_label in _toc(book, manifest, spine.get("toc", "")):
             titles.setdefault(toc_href, toc_label)
             listed_in.setdefault(toc_href, []).append((toc_fragment, toc_label))
-        result = ImportedBook(title=_meta_text(opf, "title") or path.stem, author=_meta_text(opf, "creator"),
+        result = ImportedBook(title=_meta_text(opf, "title") or title_from_filename(path.stem), author=_meta_text(opf, "creator"),
                               language=_meta_text(opf, "language"))
         cover = _epub_cover(book, opf, manifest)
         if cover:
@@ -673,7 +681,7 @@ def _docx(path: Path) -> ImportedBook:
                 if style == "title" and book_title is None:
                     book_title = line
                 sections[-1][1].append(line)
-    result = ImportedBook(title=meta_title or book_title or path.stem, author=meta_author, language=meta_language)
+    result = ImportedBook(title=meta_title or book_title or title_from_filename(path.stem), author=meta_author, language=meta_language)
     if toc_lines:
         result.notes.append(f"Bỏ qua mục lục của tài liệu ({toc_lines} dòng).")
     if len(sections) == 1:

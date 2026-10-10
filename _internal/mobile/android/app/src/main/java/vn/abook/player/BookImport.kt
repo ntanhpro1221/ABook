@@ -82,7 +82,7 @@ object BookImport {
             }
             else -> throw Failed("Không thấy ${path.path}.")
         }
-        return finish(book, keepShort)
+        return finish(book, keepShort, path.name)
     }
 
     /** Lựa chọn chương mặc định của bước xem trước: mọi chương trừ mục rất ngắn. (số chương 1-based, tên mới ""). `importers.default_picks`. */
@@ -119,7 +119,7 @@ object BookImport {
         if (chars < SCAN_CHARS_PER_PAGE * pages.size) {
             throw Failed("PDF này là ảnh chụp, chưa có chữ để đọc.")
         }
-        val result = Book(title.ifEmpty { stem }, author = author.ifEmpty { null })
+        val result = Book(title.ifEmpty { titleFromFilename(stem) }, author = author.ifEmpty { null })
         val empty = pages.count { it.isEmpty() }
         if (empty > 0) result.notes.add("$empty trang không có chữ (ảnh hay trang trống) - bỏ qua.")
         val (stripped, removed) = stripRunning(pages)
@@ -152,7 +152,7 @@ object BookImport {
 
     private fun sha256(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
-    private fun finish(book: Book, keepShort: Boolean = false): Book {
+    private fun finish(book: Book, keepShort: Boolean = false, source: String = ""): Book {
         book.title = nfc(book.title)
         book.author = book.author?.takeIf { it.isNotEmpty() }?.let(::nfc)
         val all = book.chapters.map { Chapter(nfc(it.title), nfc(it.text), it.short, it.name) }
@@ -164,7 +164,8 @@ object BookImport {
             book.notes.add(if (keepShort) "$short mục rất ngắn chưa chọn - tích nếu muốn giữ." else "Bỏ qua $short mục rất ngắn (bìa, trang bản quyền?).")
         }
         val chapters = if (keepShort) all else all.filter { !it.short }
-        if (chapters.none { pyStrip(it.text).isNotEmpty() || it.short }) throw Failed("Không có chương nào có chữ")
+        if (chapters.none { pyStrip(it.text).isNotEmpty() || it.short }) throw Failed("Không có chương nào có chữ trong “${source.ifEmpty { book.title }}” - file rỗng hay mã hoá lạ? " +
+            "Với file .txt: thử mở bằng Notepad rồi lưu lại ở dạng UTF-8.")
         book.chapters.clear()
         if (chapters.size > 1) {
             // File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do. Mục rất ngắn mà chỉ có
@@ -235,6 +236,10 @@ object BookImport {
     private fun pyRstrip(text: String): String = text.trimEnd { isPySpace(it) }
 
     private fun cpLen(text: String) = text.codePointCount(0, text.length)
+
+    /** `importers.title_from_filename`: tên sách đặt từ tên file/thư mục - "_" và chuỗi "--" trở lên thành dấu cách, "-" đơn và hoa thường giữ nguyên. */
+    internal fun titleFromFilename(stem: String): String =
+        words(stem.replace(Regex("_+|-{2,}"), " ")).let { if (it.isEmpty()) stem else it }
 
     /** `importers.clip_title`: tên hiển thị dài quá `limit` ký tự thì cắt ở ranh giới từ rồi thêm "…" (cùng luật: nhát cắt giữa từ thì
      *  lùi về dấu cách gần nhất nếu từ cuối không chiếm quá nửa, còn không thì cắt cứng). CHỈ cho tên chương đặt từ dòng đầu. */
@@ -307,13 +312,13 @@ object BookImport {
             .filter { it.isFile && suffixOf(it.name).lowercase() == ".txt" }
             .sortedWith { x, y -> naturalOrder.compare(x.name, y.name) }
         if (files.isEmpty()) throw Failed("Thư mục này không có file .txt nào nằm ngay bên trong")
-        return Book(folder.canonicalFile.name, chapters = files.map(::txtChapter).toMutableList(), textHasTitle = true)
+        return Book(titleFromFilename(folder.canonicalFile.name), chapters = files.map(::txtChapter).toMutableList(), textHasTitle = true)
     }
 
     /** Một file TXT là một chương - trừ khi nó là CẢ truyện (>= 2 dòng "Chương N") và người dùng tích tách (`importers._txt_file`). */
     private fun txtFile(file: File, split: Boolean): Book {
         val chapter = txtChapter(file)
-        val book = Book(stemOf(file.name), chapters = mutableListOf(chapter), textHasTitle = true)
+        val book = Book(titleFromFilename(stemOf(file.name)), chapters = mutableListOf(chapter), textHasTitle = true)
         val parts = splitTxtChapters(chapter.text)
         book.splitOffer = parts.size
         // Chương tách ra từ một dòng tiêu đề mang tên dòng ấy - không bao giờ trùng tên chương "Mở đầu".
@@ -865,7 +870,7 @@ object BookImport {
         val titles = linkedMapOf<String, String>() // file -> tên đầu tiên trỏ tới nó
         for (entry in tocEntries) titles.putIfAbsent(entry.href, entry.label)
         val listedIn = tocEntries.groupBy { it.href }
-        val result = Book(metaText(opf, "title") ?: stemOf(file.name), author = metaText(opf, "creator"), language = metaText(opf, "language"))
+        val result = Book(metaText(opf, "title") ?: titleFromFilename(stemOf(file.name)), author = metaText(opf, "creator"), language = metaText(opf, "language"))
         epubCover(zip, opf, manifest)?.let { (bytes, media) ->
             result.cover = bytes
             result.coverType = media
@@ -1018,7 +1023,7 @@ object BookImport {
                 }
             }
         }
-        val result = Book(metaTitle ?: bookTitle ?: stemOf(file.name), author = metaAuthor, language = metaLanguage)
+        val result = Book(metaTitle ?: bookTitle ?: titleFromFilename(stemOf(file.name)), author = metaAuthor, language = metaLanguage)
         if (tocLines > 0) result.notes.add("Bỏ qua mục lục của tài liệu ($tocLines dòng).")
         if (sections.size == 1) {
             // Không có kiểu Heading: tách theo dòng "Chương N" (như PDF).

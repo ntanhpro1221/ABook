@@ -62,7 +62,7 @@ import { bookProgressText, caughtUpDetail, nextChapterLabel, otherBookLine, PREP
 import { useAfter } from "@/shared/useAfter";
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
-import { ADD_MUSIC_LABEL } from "./playlistBed";
+import { ADD_MUSIC_LABEL, shortPlaylistLabel } from "./playlistBed";
 import { openExternal } from "@/shared/openExternal";
 import { JumpToPlaying, ReadAlongText, sentenceIndexAt, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { canPrepare, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
@@ -419,7 +419,7 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
     <MenuShell
       label="Nhạc nền"
       active={playing}
-      trigger={<><Music2 className="size-4" /><span className="max-w-32 truncate max-sm:hidden @max-[1330px]:hidden">{playing ? label : ""}</span></>}
+      trigger={<><Music2 className="size-4" /><span className="max-w-40 truncate max-sm:hidden @max-[1330px]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
     >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>

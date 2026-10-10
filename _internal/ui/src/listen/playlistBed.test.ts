@@ -14,6 +14,7 @@ import {
   PlaylistDriver,
   playlistCues,
   playlistLabel,
+  shortPlaylistLabel,
   playlistOptions,
   playlistPlaying,
   savePlaylistChoice,
@@ -187,6 +188,10 @@ describe("lựa chọn nhạc nền", () => {
     expect(playlistPlaying(view)).toBe(true);
     // menu chưa tải: không nói mã trần cho người nghe
     expect(playlistLabel(view, undefined)).toBe("Máy chọn");
+    // chỗ hẹp bỏ tiền tố để đủ tên tâm trạng, không cắt giữa chữ
+    expect(shortPlaylistLabel("Máy chọn: Kỳ ảo êm đềm")).toBe("Kỳ ảo êm đềm");
+    expect(shortPlaylistLabel("Máy chọn")).toBe("Máy chọn");
+    expect(shortPlaylistLabel("Nhạc của tôi")).toBe("Nhạc của tôi");
   });
 
   it("đã chọn: danh sách cụ thể, Nhạc của tôi, hay Tắt (không còn máy chọn)", () => {

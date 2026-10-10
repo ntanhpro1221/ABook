@@ -162,6 +162,16 @@ class BookImportTest {
     }
 
     @Test
+    fun a_book_named_from_its_file_reads_underscores_and_double_dashes_as_spaces_exactly_like_python() {
+        val cases = StrictJson.parse(expectedText("name_title")) as JSONArray
+        assertTrue(cases.length() >= 8)
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            assertEquals(case.toString(), case.getString("title"), BookImport.titleFromFilename(case.getString("stem")))
+        }
+    }
+
+    @Test
     fun the_preview_keeps_very_short_items_as_unticked_chapters_exactly_like_python() {
         val expected = StrictJson.parse(File(dir, "expected/keep_short.json").readText(Charsets.UTF_8)) as org.json.JSONObject
         val actual = org.json.JSONObject()
@@ -311,7 +321,8 @@ class BookImportTest {
         assertTrue(failure { BookImport.importFile(odd) }.contains("Chưa đọc được"))
         val empty = File(work, "trong").apply { mkdirs() }
         File(empty, "1.txt").writeBytes("  \n".toByteArray())
-        assertEquals("Không có chương nào có chữ", failure { BookImport.importFile(empty) })
+        val emptyReason = failure { BookImport.importFile(empty) }
+        assertTrue(emptyReason, emptyReason.startsWith("Không có chương nào có chữ trong “trong”") && emptyReason.contains("Notepad"))
         assertNotNull(work)
     }
 }

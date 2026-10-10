@@ -295,7 +295,7 @@ export function OtherComputers() {
         <p>
           Cùng Wi-Fi: hai máy phải cùng mạng (ở khác nơi thì vào cùng một mạng riêng ảo rồi gõ địa chỉ của máy kia trong mạng
           ấy). Trên máy kia: Cài đặt → Điện thoại và thiết bị → bật “{SYNC_SWITCH_LABEL}” → “Ghép thiết bị
-          mới” để lấy mã 6 số; địa chỉ máy ấy ghi ở dòng “Trình duyệt” ngay cạnh mã. Điện thoại Android: màn Tải sách → bật “Cho
+          mới” để lấy mã 6 số; địa chỉ máy ấy ghi ở dòng “Địa chỉ máy này” ngay cạnh mã. Điện thoại Android: màn Tải sách → bật “Cho
           máy khác nghe thư viện này” → “Ghép máy mới”. Máy này tên “{data.name}” trong danh sách thiết bị đã ghép của máy kia.
         </p>
         <p>

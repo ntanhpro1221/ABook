@@ -346,7 +346,7 @@ def closed_page(machine: str) -> str:
 
 def pairing_page(machine: str) -> str:
     """Trình duyệt chưa ghép: nhập mã 6 số máy tính đưa ra (như điện thoại), cổng đặt cookie rồi mở Studio."""
-    return _page("Ghép với ABook", f"""
+    return _page(f"Ghép với {machine}", f"""
 <p>Ghép trình duyệt này với ABook trên <b>{html.escape(machine)}</b> để nghe sách của máy ấy. Trên máy tính: Cài đặt →
 Điện thoại và thiết bị → “Ghép thiết bị mới”, rồi nhập mã 6 số vào đây.</p>
 <form id="pair">
@@ -370,7 +370,8 @@ document.getElementById("pair").addEventListener("submit", async (event) => {{
     const data = await response.json().catch(() => ({{}}));
     if (response.ok) {{
       // Cùng đường "/", chỉ khác phần sau #: phải tự tải lại thì cổng mới trả giao diện thay cho trang này.
-      history.replaceState(null, "", "/#/studio");
+      // Có quyền điều khiển sản xuất thì vào Studio; chỉ nghe thì vào thư viện (Studio sẽ báo "chỉ nghe sách").
+      history.replaceState(null, "", data.studio ? "/#/studio" : "/#/");
       location.reload();
     }} else message.textContent = data.error || "Không ghép được";
   }} catch {{

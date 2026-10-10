@@ -7,7 +7,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
-import { Button, EmptyState, Progress } from "@/shared/ui";
+import { Button, Dialog, EmptyState, Progress } from "@/shared/ui";
 import { useUnpair } from "@/shared/useUnpair";
 import { backgroundHelp } from "./backgroundHelp";
 import { useDownloadProgress } from "./downloads";
@@ -484,6 +484,8 @@ function SharePanel() {
     const handle = EbookLibrary.addListener("shareChanged", () => void client.invalidateQueries({ queryKey: ["share"] }));
     return () => void handle.then((listener) => listener.remove());
   }, [client]);
+  // Thôi ghép một máy đang nghe thư viện của điện thoại này: hỏi trước như bên máy tính (máy ấy mất quyền nghe cho tới khi ghép lại).
+  const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
   const [now, setNow] = useState(() => Date.now() / 1000);
   const pairing = status.data?.pairing ?? null;
   useEffect(() => {
@@ -600,7 +602,7 @@ function SharePanel() {
                 <li key={device.id} className="flex items-center gap-3 py-2.5">
                   <Laptop className="size-4 shrink-0 text-fg-2" />
                   <span className="min-w-0 flex-1 truncate text-sm">{device.name}</span>
-                  <button type="button" onClick={() => run.mutate(() => EbookLibrary.shareRevoke({ id: device.id }))} className="text-xs font-medium text-danger">
+                  <button type="button" onClick={() => setRemoving(device)} className="text-xs font-medium text-danger">
                     Thôi ghép
                   </button>
                 </li>
@@ -609,6 +611,27 @@ function SharePanel() {
           )}
         </div>
       )}
+      <Dialog
+        open={removing !== null}
+        onOpenChange={(open) => !open && setRemoving(null)}
+        title={`Thôi ghép ${removing?.name ?? "máy này"}?`}
+        description="Máy này sẽ không nghe được thư viện của điện thoại nữa cho tới khi ghép lại. Sách nó đã tải về vẫn nghe được."
+      >
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setRemoving(null)}>
+            Để nguyên
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => {
+              if (removing) run.mutate(() => EbookLibrary.shareRevoke({ id: removing.id }));
+              setRemoving(null);
+            }}
+          >
+            Thôi ghép
+          </Button>
+        </div>
+      </Dialog>
     </section>
   );
 }
