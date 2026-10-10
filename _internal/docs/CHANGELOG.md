@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.42] - 2026-10-10
+
 ### Sửa nhỏ khi dùng hằng ngày (máy tính và điện thoại)
 
 - Đóng hộp thoại thì con trỏ bàn phím về đúng nút đã mở nó (kể cả khi mở từ menu …); chọn giọng bằng ←/→ và Tab không còn dừng ở từng nút "Thử giọng".
