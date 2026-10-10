@@ -4337,6 +4337,40 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 23h - FRAG-V: đọc từng mảnh rời làm V tốt lên chắc chắn nhưng chỉ được 1/3 quãng; P0 V mảnh rời không đáng GPU
+
+**Hỏi.** Ngắt nối tiếp chỉ đủ bằng chứng khi V từng mảnh tốt hơn. Muốn biết trần của một LLM mạnh (agent Sonnet) chỉ đọc chữ của
+từng mảnh, không ngữ cảnh chương. Nếu trần ấy thấp thì P0 V mảnh trên GPU (9B, yếu hơn) không đáng làm.
+
+**Làm.** Lấy 262 đoạn app của vàng học, xáo thứ tự, chia 4 phần cho agent chấm V từ −2 đến 2. Đưa V/2 thẳng vào làm valence đoạn,
+đo với ngắt θ .2 có trễ (ô đã chọn), lấy trung bình 8 book_key.
+
+**Sửa luật trước khi đọc số thật.** Kiểm lực bằng V giả lấy từ trần cho thấy bootstrap buồn→vui theo chương không bao giờ qua
+(khoảng [−14,8; 43,9]), vì giờ buồn của vàng học dồn vào ít chương. Đã thay bằng bootstrap MAE V mảnh. Luật mới:
+- với V giả từ trần: QUA;
+- với V giả từ gốc: THUA.
+
+**Số** (vàng học):
+
+| | buồn→vui | vui→vui | MAE bài |
+|---|---|---|---|
+| gốc | 45,0 | 57,8 | .358 |
+| gốc + ngắt | 36,5 | 61,4 | .345 |
+| agentV | 31,0 | 63,5 | .357 |
+| agentV + ngắt | 29,7 | 69,6 | .267 |
+| trần + ngắt | 17,1 | 66,7 | .229 |
+
+- MAE V mảnh: gốc .265, agentV .165, trần .002 (đóng 38 %); bootstrap [.066; .137].
+- Buồn→vui đóng 35 % khoảng (gốc + ngắt) → (trần + ngắt).
+- Kết luận: **THUA** luật đã ghi trước (cần ≥ 50 %).
+
+**Đọc.** Phần lớn lợi ích đến từ V tốt hơn, không đến từ ngắt: agentV không ngắt đã ra 31,0. Đọc mảnh rời là không đủ. Hướng kế:
+- đọc mảnh CÓ ngữ cảnh chương;
+- hoặc ranh giới (NT2A).
+
+Cơ chế ngắt vẫn nằm sẵn trên nhánh dev `music/break-continuation`, không chỉnh thêm. Chi tiết ở Corpus `PLAN_sadwithin.md` mục
+FRAG-V (184ddfd, ec0a5a2, 7892598).
+
 ### 10-10 khuya - Đoạn buồn giữa chương: lỗi nằm ở mảnh nối tiếp, không ở V; bộ 11 đã khoá
 
 Lead chỉ hướng: dựng bộ thử đúng mục tiêu trước, rồi thử gốc trên CPU. Ghi trước ở Corpus `research/music/PLAN_sadwithin.md`
