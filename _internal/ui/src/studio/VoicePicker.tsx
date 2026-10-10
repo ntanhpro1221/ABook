@@ -79,6 +79,11 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
     onSuccess: (next) => client.setQueryData(["engine-module", engine], next),
     onError: (failure: Error) => toast.error("Chưa tải được giọng", { description: failure.message }),
   });
+  const cancel = useMutation({
+    mutationFn: () => api<EngineModuleStatus>(`/api/studio/${engine}/cancel`, { method: "POST", body: {} }),
+    onSuccess: (next) => client.setQueryData(["engine-module", engine], next),
+    onError: (failure: Error) => toast.error("Chưa huỷ được việc tải giọng", { description: failure.message }),
+  });
   const note = moduleNote(current);
   return (
     <div className="sticky top-0 z-10 bg-panel pb-1 pt-2">
@@ -91,7 +96,16 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
         )}
       </div>
       {note && <p className={cn("mt-0.5 text-xs", current?.state === "error" ? "text-danger" : "text-fg-2")}>{note}</p>}
-      {current?.state === "downloading" && <Progress className="mt-1" size="xs" running value={modulePercent(current) / 100} label={note ?? ""} />}
+      {current?.state === "downloading" && (
+        <div className="mt-1 flex items-center gap-3">
+          <Progress size="xs" running value={modulePercent(current) / 100} label={note ?? ""} className="flex-1" />
+          {current.cancellable && (
+            <Button size="sm" variant="ghost" loading={cancel.isPending} onClick={() => cancel.mutate()}>
+              Huỷ
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
