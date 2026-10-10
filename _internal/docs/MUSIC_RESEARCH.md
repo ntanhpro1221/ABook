@@ -4337,6 +4337,21 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 10-10 21:xx - Q06-CALIB: không khí đoạn của học sinh q06 bị kéo lên ở cảnh buồn / căng (chẩn đoán)
+
+Phát hiện phụ của DRIFT-Q06 (đoạn cáo phó 306 được V +0,13). Đo trên 62 chương vàng (học 4+5+5b+6 + bộ 7, 16,2 giờ), lớp theo
+GEMS câu vàng; ghi ở Corpus `research/music/CALIB_q06.md` (005fe0b).
+
+- Câu buồn: V vàng −0,36, q06 +0,11 (lệch +0,47); câu căng −0,26 -> +0,07. Phía dương gần đúng (vui −0,10, ấm −0,10). Lệch dương
+  ở câu buồn có mặt ở MỌI truyện có câu buồn.
+- Không phải do độ hạt: đoạn chứa câu buồn có V vàng −0,24; 49,6 % thời lượng câu buồn ở đoạn vàng < −0,2, q06 chỉ 16,9 %.
+  Lỗi câu buồn +0,35 = mức chương +0,22 + lệch trong chương +0,13 (q06 nén lệch còn ~1/3). Bạc học có đủ khúc âm (24 % < −0,2),
+  nên gốc là mô hình co, không phải dữ liệu lệch.
+- Plan app thật trên 62 chương: đường q06 cho câu buồn bài vui **43,9 %** thời lượng (bài buồn 14,7 %); đường nhãn chọn bài
+  "giữa" cho gần hết (câu vui chỉ 10 % bài vui, q06 66 %).
+- Đề xuất (chưa làm): hiệu chỉnh sau trên vàng học + bộ thử MỚI giàu chuyện buồn (bộ 7 chỉ 2,1 % câu buồn); hoặc học lại đầu mức /
+  đầu hình ít co hơn. Luật đề nghị: câu buồn nhận bài vui ≤ 20 %, câu vui nhận bài vui ≥ 60 %, MAE V đoạn không tệ hơn +0,01.
+
 ### 10-10 20:2x - Lỗi 1: lượt cuối DRIFT-Q06 (không khí đoạn từ học sinh q06) cũng THUA - DỪNG lỗi 1
 
 Cùng luật DRIFT, nhưng valence mảnh lấy từ học sinh cảnh q06 (đường app thật). Ngưỡng chọn máy móc trên mẫu khám phá (θ nhỏ nhất
