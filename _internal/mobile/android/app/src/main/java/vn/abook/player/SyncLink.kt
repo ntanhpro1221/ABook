@@ -122,6 +122,19 @@ object SyncLink {
         }
     }
 
+    /** Phần thuần (test được) của [refuseSelf]: `host` là vòng lặp, "localhost" hay một địa chỉ của chính điện thoại, kèm đúng cổng đồng bộ của nó. */
+    internal fun isOwnAddress(host: String, port: Int, ownPort: Int, own: Collection<String>): Boolean {
+        val clean = host.trim().lowercase()
+        return port == ownPort && (clean in own || clean.startsWith("127.") || clean == "localhost" || clean == "::1")
+    }
+
+    /** Ghép bằng địa chỉ gõ tay (không phải Bluetooth) với chính điện thoại này nhân đôi cả thư viện: từ chối trước khi gửi mã, như máy tính (remote_books.py `Computers.pair`). */
+    fun refuseSelf(host: String, port: Int) {
+        if (isOwnAddress(host, port, LibraryServer.PORT, LibraryServer.addresses())) {
+            throw IllegalArgumentException("Đây là địa chỉ của chính máy này - nhập địa chỉ máy kia")
+        }
+    }
+
     /**
      * Ghép với một máy (`root` = "https://host:port", máy tính hay điện thoại chia sẻ): trả lời đáp và VÂN TAY chứng chỉ máy ấy.
      * Lần duy nhất nhận chứng chỉ chưa biết ([Pin.firstUse]); vân tay thấy được phải trùng vân tay máy kia tự báo trong lời đáp,
@@ -134,7 +147,7 @@ object SyncLink {
         val reply = JSONObject(text)
         val fingerprint = seen[0].orEmpty()
         if (fingerprint.isEmpty() || !reply.optString("fingerprint").equals(fingerprint, ignoreCase = true)) {
-            throw IllegalStateException("Chứng chỉ máy kia không khớp với vân tay nó báo - dừng ghép, thử lại")
+            throw IllegalStateException("Máy kia trả lời không đáng tin (chứng chỉ không khớp vân tay nó báo) - chưa ghép, thử lại; vẫn lỗi thì kiểm tra mạng")
         }
         return reply to fingerprint
     }
