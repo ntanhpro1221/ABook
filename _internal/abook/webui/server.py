@@ -278,6 +278,8 @@ class App:
         self.m4b_jobs = export_jobs.BookFileJobs()
         # "Xuất sách nói" của sách Nghe ngay (listen_export.py): bản ghi riêng có tiến độ + huỷ; chương đã ghép dở nằm trong `export_work` để làm tiếp.
         self.listen_exports = export_jobs.BookFileJobs()
+        # "Xuất cả dự án (.abookproj)" cũng chạy nền, có tiến độ (pha + đã/tổng) và Huỷ; đóng app thì huỷ gọn (`close`).
+        self.projectfile_jobs = export_jobs.BookFileJobs()
         self.export_work_dir = preferences.path.with_name(listen_export.WORK_FOLDER)
         # Hàng đợi sản xuất: hai cuốn chạy cùng lúc tranh nhau GPU (phân tích cần ~6,2 GB trên card 8 GB), nên cuốn
         # thứ hai xếp hàng và tự bắt đầu khi cuốn đang chạy xong. Hàng đợi sống cùng app (đóng app là bỏ hàng).
@@ -382,9 +384,9 @@ class App:
         return jobs.status(str(path))
 
     def running_exports(self) -> dict[str, list[dict[str, Any]]]:
-        """Việc xuất đang chạy theo từng kiểu ("bookfile" | "m4b" | "audiobook"): mỗi việc là trạng thái của `export_job_status` kèm `bookId`. Giao diện vừa
+        """Việc xuất đang chạy theo từng kiểu ("bookfile" | "m4b" | "audiobook" | "projectfile"): mỗi việc là trạng thái của `export_job_status` kèm `bookId`. Giao diện vừa
         mở (hay tải lại ở trang không phải trang sách) hỏi để hiện lại thông báo tiến độ - trước đây chỉ trang sách của cuốn đang xuất mới hỏi."""
-        kinds = {"bookfile": self.bookfile_jobs, "m4b": self.m4b_jobs, "audiobook": self.listen_exports}
+        kinds = {"bookfile": self.bookfile_jobs, "m4b": self.m4b_jobs, "audiobook": self.listen_exports, "projectfile": self.projectfile_jobs}
         return {kind: [{"bookId": book_id(Path(key)), **status} for key, status in jobs.running()] for kind, jobs in kinds.items()}
 
     def _listenable(self, value: str) -> Path:
@@ -2092,6 +2094,7 @@ class App:
         self._stop_sync()
         self.cast.close()
         self.previews.shutdown()
+        self.projectfile_jobs.shutdown()  # đang gói dự án: dừng ở file kế, dọn file tạm (không treo tắt app quá vài giây)
         self._trash_sweeper.cancel()
         # Hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác - trừ cuốn Thùng rác không nhận trọn (Windows sẽ hỏi
         # "xoá hẳn", mà đóng app không được chờ ai bấm): nó ở lại chỗ chờ tới lần mở sau.
@@ -3295,26 +3298,60 @@ class Handler(BaseHTTPRequestHandler):
         size, pending = audio_bytes(projects, self.app.music_track_cached)
         self._send_json(HTTPStatus.OK, {"bytes": size, "parts": len(projects), "musicPending": pending})
 
-    def post_projectfile(self, _query: dict[str, list[str]], value: str) -> None:
-        # Cả dự án trong một file (projectfile.py) - chuyển máy, sao lưu, làm tiếp ở chỗ khác.
+    def _projectfile_packer(self, value: str) -> Callable[[], dict[str, Any]]:
+        """Đọc yêu cầu xuất `.abookproj` (thuộc luồng yêu cầu) và trả việc đóng gói chưa chạy: gọi nó thì ghi file, trả {file, folder, size,
+        missingSources} và ghi nhớ thư mục cho "Mở thư mục". Hỏng thì ném `projectfile.ProjectFileError`, huỷ thì `export_jobs.Cancelled`
+        (chỗ gọi đổi thành lời báo). Dùng chung cho `post_projectfile` (đồng bộ) và `post_projectfile_job` (nền, có tiến độ)."""
         from .export import free_path
 
         project = self.app._book(value)
         root = self._export_root(self._body())
         title = store.summarize(project)["title"] or project.name
-        try:
-            with self.app.music_exporting(str(project), [project]) as music:
+        app = self.app
+        key = str(project)
+
+        def progress(phase: str, done: int, total: int) -> None:
+            if app.projectfile_jobs.cancelled(key):
+                raise export_jobs.Cancelled()
+            app.projectfile_jobs.update(key, phase=phase, done=done, total=total)
+
+        def run() -> dict[str, Any]:
+            with app.music_exporting(key, [project]) as music:
                 path = projectfile.pack(project, free_path(root / projectfile.default_name(title)),
-                                        running=self.app.runner.running(project), music_track=music)
+                                        running=app.runner.running(project), music_track=music, progress=progress)
             with projectfile.ProjectFile(path) as packed:
                 missing = packed.missing_sources
+            app.exports.add(str(path.parent))
+            return {"file": str(path), "folder": str(path.parent), "size": path.stat().st_size, "missingSources": missing}
+
+        return run
+
+    def post_projectfile(self, _query: dict[str, list[str]], value: str) -> None:
+        # Cả dự án trong một file (projectfile.py) - chuyển máy, sao lưu, làm tiếp ở chỗ khác.
+        run = self._projectfile_packer(value)
+        try:
+            result = run()
         except export_jobs.Cancelled as error:
             raise ApiError(HTTPStatus.CONFLICT, "Đã huỷ xuất.", reason="cancelled") from error
         except projectfile.ProjectFileError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
-        self.app.exports.add(str(path.parent))
-        self._send_json(HTTPStatus.OK, {"file": str(path), "folder": str(path.parent), "size": path.stat().st_size,
-                                        "missingSources": missing})
+        self._send_json(HTTPStatus.OK, result)
+
+    def post_projectfile_job(self, _query: dict[str, list[str]], value: str) -> None:
+        # Cùng việc đóng gói chạy nền: trả ngay trạng thái (có mã); hỏi tiếp bằng GET (pha + đã/tổng, hay file ra), Huỷ bằng POST .../cancel.
+        # Dự án 400 chương mất ~1,5 phút - đồng bộ thì trình duyệt đứng chờ không biết tiến độ. Một-lúc-một-cuốn: đang chạy thì trả lượt ấy.
+        self._send_json(HTTPStatus.ACCEPTED, self.app.projectfile_jobs.start(str(self.app._book(value)), self._projectfile_packer(value)))
+
+    def get_projectfile_job(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.export_job_status(self.app.projectfile_jobs, value))
+
+    def post_projectfile_job_cancel(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Huỷ": dừng ở điểm kiểm kế (giữa hai file; hay trước bài nhạc kế phải tải), không để lại file nào - cả file tạm.
+        self.app._mutating()
+        key = str(self.app._book(value))
+        self.app.projectfile_jobs.cancel(key)
+        self.app.cancel_music_export(key)
+        self._send_json(HTTPStatus.OK, self.app.projectfile_jobs.status(key))
 
     def get_review(self, query: dict[str, list[str]], value: str) -> None:
         project = self.app._book(value)
@@ -4648,6 +4685,9 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/word-timings"), Handler.get_word_timings),
     ("POST", re.compile(BOOK + r"/word-timings"), Handler.post_word_timings),
     ("POST", re.compile(BOOK + r"/projectfile"), Handler.post_projectfile),
+    ("POST", re.compile(BOOK + r"/projectfile-job"), Handler.post_projectfile_job),
+    ("GET", re.compile(BOOK + r"/projectfile-job"), Handler.get_projectfile_job),
+    ("POST", re.compile(BOOK + r"/projectfile-job/cancel"), Handler.post_projectfile_job_cancel),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
     ("POST", re.compile(BOOK + r"/narrator-section"), Handler.post_narrator_section),
     ("POST", re.compile(BOOK + r"/voice"), Handler.post_voice),

@@ -135,10 +135,12 @@ def _packaged_book(project_root: Path) -> dict[str, Any]:
 
 
 def _add_chapters(project_root: Path, book: dict[str, Any], files: dict[str, Path | bytes], *,
-                  part: int | None = None) -> None:
+                  part: int | None = None, tick: Callable[[int, int], None] | None = None) -> None:
     """Audio + chữ đọc theo của từng chương vào `files`. `part` (cả bộ): chương `book["chapters"]` được sửa tại chỗ sang
-    mã chung của bộ, đường dẫn nằm trong thư mục phần, và mang số phần."""
-    for chapter in book["chapters"]:
+    mã chung của bộ, đường dẫn nằm trong thư mục phần, và mang số phần. `tick(đã gom, tổng)` gọi trước mỗi chương (ném thì dừng)."""
+    for done, chapter in enumerate(book["chapters"]):
+        if tick is not None:
+            tick(done, len(book["chapters"]))
         local = chapter["id"]
         audio = store.chapter_audio_path(project_root, local) if chapter.get("file") else None
         script = store.chapter_script(project_root, local)
@@ -168,18 +170,20 @@ def _add_texts(project_root: Path, book: dict[str, Any], files: dict[str, Path |
             chapter.pop("script", None)
 
 
-def listening_layer(project_root: Path, music_track: Callable[[str], Path | None] | None = None
+def listening_layer(project_root: Path, music_track: Callable[[str], Path | None] | None = None,
+                    progress: Callable[[str, int, int], None] | None = None
                     ) -> tuple[dict[str, Any], dict[str, Path | bytes]]:
     """Phần NGHE của một cuốn: `book.json` (chưa có mục `package`) + các file đi cùng (`cast.json`, bìa, `chapters/`,
     `scripts/`, `samples/`, nhạc nền) - dùng chung cho file `.abook` (`pack`) và phần nghe nằm trong file dự án
     (projectfile.pack; audio chương và câu mẫu là file của dự án, nên trong gói chúng là bí danh chứ không chép hai lần).
-    `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì kèm rãnh nhạc."""
+    `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì kèm rãnh nhạc.
+    `progress("listen", chương đã gom, tổng)` báo tiến độ gom chương (projectfile.pack); nó ném thì việc dừng."""
     book = _packaged_book(project_root)
     files: dict[str, Path | bytes] = {"cast.json": json_bytes(store.cast(project_root))}
     cover = covers.cover_file(project_root)
     if cover is not None:
         files[covers.COVER_FILE] = cover
-    _add_chapters(project_root, book, files)
+    _add_chapters(project_root, book, files, tick=None if progress is None else lambda done, total: progress("listen", done, total))
     if not any(chapter.get("file") for chapter in book["chapters"]):
         _add_texts(project_root, book, files)
     samples = []
@@ -439,9 +443,12 @@ def described(name: str, source: Path | bytes, known: dict[str, dict[str, Any]])
 
 
 def write_entries(archive: zipfile.ZipFile, files: dict[str, Path | bytes], *, order: Callable[[str], Any],
-                  stored_suffixes: tuple[str, ...] = _STORED) -> None:
-    """Ghi từng mục vào gói theo `order`: audio và ảnh KHÔNG nén (phát thẳng trong gói), còn lại nén."""
+                  stored_suffixes: tuple[str, ...] = _STORED, before: Callable[[str], None] | None = None) -> None:
+    """Ghi từng mục vào gói theo `order`: audio và ảnh KHÔNG nén (phát thẳng trong gói), còn lại nén. `before(tên mục)`
+    gọi trước mỗi mục (báo tiến độ; ném thì dừng giữa hai mục)."""
     for name in sorted(files, key=order):
+        if before is not None:
+            before(name)
         source = files[name]
         stored = name.lower().endswith(stored_suffixes)
         if isinstance(source, Path):
