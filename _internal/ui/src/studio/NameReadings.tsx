@@ -46,12 +46,14 @@ export function useNameReadings(bookId: string, enabled = true) {
 }
 
 /** Danh sách sau khi lưu `spokenForm` cho `item` - đúng điều máy chủ sẽ trả (`name_readings.py`): cách đọc mới là "chờ áp dụng"; trùng cách đang đọc là
- *  "giữ" (người nghe đã chọn, không chờ gì). Hiện ngay, không chờ tải lại cả danh sách (hàng nghìn tên); máy chủ trả bản thật sau đó. */
+ *  "giữ" (người nghe đã chọn, không chờ gì). Hiện ngay, không chờ tải lại cả danh sách (hàng nghìn tên); máy chủ trả bản thật sau đó.
+ *  Tên CHƯA có trong danh sách (vừa gõ để thêm) thì chờ máy chủ nhận: thêm sớm làm dòng "Thêm cách đọc…" biến mất cùng ô đang gõ,
+ *  máy chủ chê cách đọc thì ô đã đóng, chữ mất, lỗi không hiện (soát UX a23). */
 export function withReading(data: NameReadings, item: NameReading, spokenForm: string): NameReadings {
   const keep = spokenForm === item.spoken;
   const updated: NameReading = { ...item, requested: keep ? null : spokenForm, byListener: item.byListener || keep };
-  const known = data.items.some((entry) => entry.surface === item.surface);
-  return { ...data, items: known ? data.items.map((entry) => (entry.surface === item.surface ? updated : entry)) : [...data.items, updated] };
+  if (!data.items.some((entry) => entry.surface === item.surface)) return data;
+  return { ...data, items: data.items.map((entry) => (entry.surface === item.surface ? updated : entry)) };
 }
 
 /** So tên không phân biệt hoa thường, dấu, gạch nối hay khoảng trắng: gõ "hen" thấy "Hên-cơ", "dac lat" thấy "Đác-lát",
@@ -107,7 +109,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
         </span>
       </h3>
       <p className="mt-1 max-w-prose text-sm text-fg-2">
-        Tên riêng máy đọc thế nào. Nghe câu mẫu, sai thì sửa ngay trên dòng - các câu có tên ấy sẽ được thu lại.
+        Tên riêng máy đọc thế nào. Nghe câu mẫu, sai thì sửa ngay trên dòng - câu đã thu có tên ấy sẽ được thu lại.
       </p>
       <SharedReadingsOffer bookId={bookId} />
       <div className="relative mt-3 max-w-sm">
@@ -354,8 +356,9 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud }: {
       }
       toast.success(`Đã ghi: “${item.surface}” đọc là “${shownReading(spokenForm)}”`, {
         // Tên chưa có câu nào trong phần này (vừa thêm): không có gì để thu lại - nói đúng điều ấy (soát UX 29-09).
+        // Câu mẫu là câu ĐÃ THU nếu có (name_readings.py) - mẫu chưa thu nghĩa là chưa thu câu nào có tên này (soát UX a23).
         description: item.lines
-          ? `Các câu có tên này sẽ được thu lại. ${when}${shared}`
+          ? `${item.example?.hasAudio ? "Các câu đã thu có tên này sẽ được thu lại." : "Các câu có tên này chưa thu nên không phải thu lại."} ${when}${shared}`
           : `Phần này chưa có câu nào có tên này - cách đọc sẽ được dùng khi tên xuất hiện.${shared}`,
         ...undo,
       });

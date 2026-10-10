@@ -24,7 +24,7 @@ export function applyWhen(
 
 /** Câu đứng riêng, cho thông báo - đứng sau câu nói cái giá ("Câu đã thu sẽ được thu lại."), nên không nhắc "thu lại"
  *  lần nữa; thông báo hiện trên chính trang dự án nên chỉ "đầu trang", không "trang dự án" (soát UX 30-09). */
-const SENTENCE: Record<ApplyWhen, string> = {
+export const SENTENCE: Record<ApplyWhen, string> = {
   start: "Máy dùng ngay từ khi bắt đầu làm sách.",
   cast: "Áp dụng khi phân vai xong.",
   running: "Máy áp từ chương sau, không phải dừng sách.",
@@ -56,6 +56,14 @@ export function useWhenApplied(bookId: string): string {
 
 export function usePendingNote(bookId: string): string {
   return PENDING_NOTE[useApplyWhen(bookId)];
+}
+
+/** Sửa lạc quan trên bộ nhớ đệm của một truy vấn: đổi ngay khi bấm, và trả `restore` để `onError` đặt lại đúng bản trước (máy
+ *  chủ từ chối, mất kết nối). Không đặt lại thì câu vẫn hiện "Đã ghi … - chờ áp dụng" cạnh thông báo lỗi (soát UX a23). */
+export function optimistic<T>(client: QueryClient, key: readonly unknown[], change: (data: T) => T): { restore: () => void } {
+  const previous = client.getQueryData<T>(key);
+  if (previous !== undefined) client.setQueryData<T>(key, change(previous));
+  return { restore: () => previous !== undefined && client.setQueryData<T>(key, previous) };
 }
 
 /** Làm mới mọi chỗ một quyết định của người nghe (người nói, giới, cách đọc tên) chạm tới. */

@@ -51,7 +51,7 @@ from .casting_review import casting_chapter, casting_chapters
 from .name_readings import name_readings
 from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices
 from . import narrator_cards
-from .work_items import work_items
+from .work_items import open_count, work_items
 from .cast import CastError, CastPlayers
 from .cast import search as cast_search
 from .gcast import discover as gcast_discover
@@ -72,6 +72,11 @@ MUSIC_UNAVAILABLE_SECONDS = 24 * 3600  # bài tải hỏng (nguồn gỡ, 404...
 MUSIC_OFFLINE_SECONDS = 300            # tải hỏng vì mạng: cả máy coi như offline 5 phút
 MY_MUSIC_IMPORT_LIMIT = 500             # số file tối đa trong một lượt nhập "Nhạc của tôi"
 MUSIC_WARM_ROUNDS = 3                  # tải sẵn rồi chọn lại bài thay cho bài hỏng: tối đa 3 vòng
+# Bài nhạc nền lớn hơn thế (bản dài 30-50 phút, có bài 110 MB) máy này coi như không dùng được: rãnh nhạc chọn bài khác, không
+# tải (soát UX a23: tải trước cả cuốn mất 190 MB). Cỡ lấy từ danh mục (`bytes`), không có thì Content-Length / số byte đếm được.
+MUSIC_TRACK_MAX_MB = 40
+MUSIC_TRACK_MAX_BYTES = MUSIC_TRACK_MAX_MB * 1024 * 1024
+TOO_BIG_TRACK = f"Bài nhạc này quá lớn (trên {MUSIC_TRACK_MAX_MB} MB) nên máy này không dùng - máy chọn bài khác"
 MAX_BODY = 1024 * 1024
 REFRESH_PATIENCE_SECONDS = 8  # "Hỏi lại thư viện": máy thức trả lời trong ngần này; máy đang ngủ thì chờ tiếp ở nền
 TYPES = {
@@ -187,6 +192,14 @@ class MirrorMismatch(OSError):
     """Bản sao dự phòng của bài nhạc không khớp bản gốc (sha1 / số byte) - không phải lỗi mạng."""
 
 
+class TrackTooBig(OSError):
+    """Bài nhạc lớn hơn MUSIC_TRACK_MAX_MB (Content-Length hay số byte đã đếm) - dừng tải, không phải lỗi mạng."""
+
+    def __init__(self, size: int) -> None:
+        super().__init__(f"bài nhạc {size} byte, quá {MUSIC_TRACK_MAX_MB} MB")
+        self.size = size
+
+
 
 def broken_reason(error: Exception) -> str:
     """Vì sao một dự án không mở được, bằng lời người dùng hiểu: sổ làm việc (SQLite) của sách hỏng hay do bản app khác ghi - không để lộ
@@ -264,6 +277,7 @@ class App:
         # Bài nào dùng được là chuyện của TỪNG MÁY (bộ đệm + mạng của máy này): sổ bài tải hỏng và cửa sổ "đang offline".
         self._music_clock: Callable[[], float] = time.time
         self._music_unavailable = self._read_unavailable()
+        self._music_too_big = self._read_unavailable("too_big.json")  # {link: số byte}: bài quá MUSIC_TRACK_MAX_MB, không tải
         self._music_offline_until = 0.0
         if not read_only:
             self._adopt_new_book_ids()
@@ -1226,7 +1240,8 @@ class App:
         with self._moods_lock:
             moods = dict(self._moods_jobs.get(str(path)) or {"running": False, "error": ""})
         return {"plan": plan, "overrides": overrides, "error": error, "taxonomy": self._music_taxonomy(),
-                "bannedTracks": self._banned_tracks(overrides["banned"], plan), "moods": moods}
+                "bannedTracks": self._banned_tracks(overrides["banned"], plan), "moods": moods,
+                "download": self.music_export_status(self.music_key(path, "warm"))}
 
     def _banned_tracks(self, banned: list[str], plan: dict[str, Any] | None) -> dict[str, dict[str, str]]:
         """Tên các bài đã bỏ ("Bài đã bỏ"): {link: {title, creator}} lấy từ danh mục; mất mạng / bài không còn thì bỏ qua
@@ -1389,16 +1404,24 @@ class App:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không thấy bài này trong Nhạc của tôi")
         return path
 
-    def music_rebuild(self, value: str, *, keep_scenes: bool = False, edited: set[str] | None = None) -> dict[str, Any]:
+    def music_rebuild(self, value: str, *, keep_scenes: bool = False, edited: set[str] | None = None,
+                      warm_all: bool = False) -> dict[str, Any]:
         """Dựng lại rãnh nhạc. `keep_scenes`: chọn lại bài trên các đoạn plan hiện có (người dùng sửa một đoạn - không
         chia lại cả cuốn); mặc định chia lại đoạn ("Chọn lại nhạc", lần dựng đầu). `edited` (cần `keep_scenes`): các đoạn
-        vừa bị sửa - khác None thì mọi đoạn KHÁC giữ bài cũ (trừ bài đã bị bỏ); None thì chọn lại tất cả."""
+        vừa bị sửa - khác None thì mọi đoạn KHÁC giữ bài cũ (trừ bài đã bị bỏ); None thì chọn lại tất cả. Tải sẵn: dựng cả
+        cuốn (hay `warm_all` - vừa bật nhạc) thì mọi bài; sửa vài đoạn thì chỉ bài của đoạn đổi bài (soát UX a23: "Đổi bài"
+        một đoạn tải lại cả cuốn)."""
         path = self._book(value)
         # "Chọn lại nhạc" = muốn dữ liệu mới nhất: đọc lại mục lục (nhỏ) thay vì bản đệm 24 giờ. Sửa một đoạn (ghim, im lặng,
         # bỏ bài) thì dùng bản đệm - mỗi lần bấm không chờ mạng.
         manifest = self.music_catalog().manifest(refresh=edited is None)
-        plan = self._music_build(value, path, manifest, music_plan.read_plan(path) if keep_scenes else None, edited)
-        self._warm_music(plan, value)
+        previous = music_plan.read_plan(path) if keep_scenes else None
+        plan = self._music_build(value, path, manifest, previous, edited)
+        scenes: set[str] | None = None
+        if edited is not None and not warm_all:
+            before = {scene.get("key"): scene.get("link") for scene in (previous or {}).get("scenes") or []}
+            scenes = {scene["key"] for scene in plan.get("scenes") or [] if before.get(scene.get("key")) != scene.get("link")}
+        self._warm_music(plan, value, scenes)
         return plan
 
     def _music_build(self, value: str, path: Path, manifest: dict[str, Any], previous: dict[str, Any] | None,
@@ -1429,13 +1452,13 @@ class App:
         # và đoạn đang dùng bài vừa bỏ mới chọn lại. Đổi thể loại / phong cách là đổi gu của cả cuốn: chọn lại tất cả.
         retaste = "genre" in body or "family" in body
         edited = None if retaste else {str(key) for part in ("pins", "silence") for key in (body.get(part) or {})}
-        return self._music_after_change(value, edited)
+        return self._music_after_change(value, edited, warm_all=body.get("enabled") is True)
 
-    def _music_after_change(self, value: str, edited: set[str] | None = None) -> dict[str, Any]:
+    def _music_after_change(self, value: str, edited: set[str] | None = None, *, warm_all: bool = False) -> dict[str, Any]:
         path = self._book(value)
         error = ""
         try:
-            self.music_rebuild(value, keep_scenes=True, edited=edited)
+            self.music_rebuild(value, keep_scenes=True, edited=edited, warm_all=warm_all)
         except music_catalog.CatalogError as exc:
             error = str(exc)
         return self._music_payload(path, music_plan.read_plan(path), error)
@@ -1664,12 +1687,16 @@ class App:
         return str(project) if kind == "bookfile" else f"{kind}:{project}"
 
     def music_export_status(self, key: str) -> dict[str, Any]:
-        """{active, done, total}: lượt xuất của cuốn `key` đang tải nhạc nền để đóng kèm (bài thứ `done` trong `total` bài chưa có)."""
+        """{active, done, total}: lượt xuất của cuốn `key` đang tải nhạc nền để đóng kèm (bài thứ `done` trong `total` bài chưa có).
+        Lượt tải sẵn (`_warm_run`, khoá kind "warm") thêm {doneBytes, totalBytes}: tab Nhạc báo MB."""
         with self._music_exports_lock:
             state = self._music_exports.get(key)
             if state is None:
                 return {"active": False, "done": 0, "total": 0}
-            return {"active": True, "done": state["done"], "total": max(state["total"], state["done"])}
+            status = {"active": True, "done": state["done"], "total": max(state["total"], state["done"])}
+            if "totalBytes" in state:
+                status.update(doneBytes=state["doneBytes"], totalBytes=max(state["totalBytes"], state["doneBytes"]))
+            return status
 
     def cancel_music_export(self, key: str) -> bool:
         with self._music_exports_lock:
@@ -1849,21 +1876,61 @@ class App:
         target = self.music_dir / "files" / (hashlib.sha1(link.encode("utf-8")).hexdigest() + ".mp3")
         return target if target.is_file() else None
 
-    def _warm_music(self, plan: dict[str, Any] | None, value: str | None = None) -> None:
-        """Tải sẵn các bài của rãnh nhạc vừa dựng (luồng nền): điện thoại và file sách lấy được nhạc ngay."""
-        if any(scene.get("link") for scene in (plan or {}).get("scenes") or []):
-            threading.Thread(target=self._warm_run, args=(plan, value), name="music-warm", daemon=True).start()
+    def _warm_music(self, plan: dict[str, Any] | None, value: str | None = None, scenes: set[str] | None = None) -> None:
+        """Tải sẵn các bài của rãnh nhạc vừa dựng (luồng nền): điện thoại và file sách lấy được nhạc ngay. Nhạc tắt thì không
+        tải gì; `scenes` (khoá đoạn) khác None thì chỉ bài của các đoạn ấy."""
+        if not (plan or {}).get("enabled"):
+            return
+        if any(scene.get("link") and (scenes is None or scene.get("key") in scenes) for scene in plan.get("scenes") or []):
+            threading.Thread(target=self._warm_run, args=(plan, value, scenes), name="music-warm", daemon=True).start()
 
-    def _warm_run(self, plan: dict[str, Any] | None, value: str | None) -> None:
-        """Tải từng bài của plan; bài nào máy này không lấy được (mạng, nguồn hỏng) thì dựng lại plan với các đoạn khác giữ
-        bài cũ - đoạn ấy lấy bài kế dùng được thay vì im lặng - rồi tải sẵn bài mới. Tối đa MUSIC_WARM_ROUNDS vòng."""
+    def _warm_run(self, plan: dict[str, Any] | None, value: str | None, scenes: set[str] | None = None) -> None:
+        """Tải từng bài của plan (chỉ các đoạn `scenes` nếu có); bài nào máy này không lấy được (mạng, nguồn hỏng, quá
+        MUSIC_TRACK_MAX_MB) thì dựng lại plan với các đoạn khác giữ bài cũ - đoạn ấy lấy bài kế dùng được thay vì im lặng -
+        rồi tải sẵn bài mới. Tối đa MUSIC_WARM_ROUNDS vòng. Tiến độ (bài, MB) ở `music_export_status(music_key(cuốn, "warm"))`
+        - tab Nhạc hiện và huỷ được (`cancel_music_export`); các lượt cùng cuốn chạy chồng nhau dùng chung một trạng thái."""
+        key: str | None = None
+        if value is not None:
+            with contextlib.suppress(ApiError):
+                key = self.music_key(self._book(value), "warm")
+        fresh = {"done": 0, "total": 0, "doneBytes": 0, "totalBytes": 0, "cancel": threading.Event(), "seen": set(), "runs": 0}
+        with self._music_exports_lock:
+            state = self._music_exports.get(key) if key is not None else None
+            if state is None or state["cancel"].is_set():
+                state = fresh
+                if key is not None:
+                    self._music_exports[key] = state
+            state["runs"] += 1
+        try:
+            self._warm_rounds(plan, value, scenes, state)
+        finally:
+            with self._music_exports_lock:
+                state["runs"] -= 1
+                if state["runs"] == 0 and key is not None and self._music_exports.get(key) is state:
+                    del self._music_exports[key]
+
+    def _warm_rounds(self, plan: dict[str, Any] | None, value: str | None, scenes: set[str] | None,
+                     state: dict[str, Any]) -> None:
         for _ in range(MUSIC_WARM_ROUNDS):
-            links = sorted({scene["link"] for scene in (plan or {}).get("scenes") or [] if scene.get("link")})
+            links = sorted({scene["link"] for scene in (plan or {}).get("scenes") or []
+                            if scene.get("link") and (scenes is None or scene.get("key") in scenes)})
+            sizes = self._music_sizes([link for link in links if self.music_track_cached(link) is None])
+            with self._music_exports_lock:
+                for link, size in sizes.items():
+                    if link not in state["seen"]:
+                        state["seen"].add(link)
+                        state["total"] += 1
+                        state["totalBytes"] += size or 0
             failed: set[str] = set()
             for link in links:
+                if state["cancel"].is_set():
+                    return  # người dùng huỷ: bài chưa tải để trình phát tải khi cần, không phải bài hỏng
                 path = self.music_track_cached(link)
                 if path is None and self.music_track_available(link):  # đang offline thì khỏi chờ mạng từng bài
-                    path = self.music_track_for_export(link)
+                    try:
+                        path = self._warm_fetch(link, sizes.get(link), state)
+                    except export_jobs.Cancelled:
+                        return
                 if path is None:
                     failed.add(link)
                 else:
@@ -1877,12 +1944,48 @@ class App:
                     return  # người dùng đã sửa / dựng lại trong lúc tải: lần dựng ấy tự lo phần của nó
                 lost = {scene["key"] for scene in plan["scenes"] if scene.get("link") in failed}
                 plan = self._music_build(value, path, self.music_catalog().manifest(), plan, lost)
+                scenes = lost  # vòng sau chỉ tải bài thay cho các đoạn ấy
             except (ApiError, music_catalog.CatalogError, OSError, ValueError):
                 return
 
-    def _read_unavailable(self) -> dict[str, float]:
+    def _music_sizes(self, links: list[str]) -> dict[str, int | None]:
+        """Cỡ (byte) theo danh mục của các bài sắp tải; không biết thì None (Content-Length bù khi bắt đầu tải)."""
         try:
-            data = json.loads((self.music_dir / "unavailable.json").read_text(encoding="utf-8"))
+            known = self.music_catalog().lookup([link for link in links if not music_plan.is_local(link)])
+        except (music_catalog.CatalogError, OSError, ValueError):
+            known = {}
+        sizes: dict[str, int | None] = {}
+        for link in links:
+            size = (known.get(link) or {}).get("bytes")
+            sizes[link] = size if isinstance(size, int) and 0 < size <= MUSIC_TRACK_MAX_BYTES else None
+        return sizes
+
+    def _warm_fetch(self, link: str, size: int | None, state: dict[str, Any]) -> Path | None:
+        """Tải một bài cho lượt tải sẵn, cộng tiến độ MB vào `state`; hỏng thì bỏ phần của bài ấy khỏi tổng."""
+        counted = {"length": size or 0, "copied": 0}
+
+        def progress(copied: int, length: int | None) -> None:
+            with self._music_exports_lock:
+                if not counted["length"] and length:
+                    counted["length"] = length
+                    state["totalBytes"] += length
+                state["doneBytes"] += copied - counted["copied"]
+                counted["copied"] = copied
+
+        path: Path | None = None
+        try:
+            path = self.music_track_for_export(link, progress=progress, cancel=state["cancel"])
+        finally:
+            with self._music_exports_lock:
+                state["done"] += 1
+                if path is None:
+                    state["doneBytes"] -= counted["copied"]
+                    state["totalBytes"] = max(0, state["totalBytes"] - counted["length"])
+        return path
+
+    def _read_unavailable(self, name: str = "unavailable.json") -> dict[str, float]:
+        try:
+            data = json.loads((self.music_dir / name).read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return {}
         if not isinstance(data, dict):
@@ -1903,14 +2006,25 @@ class App:
             with contextlib.suppress(OSError):
                 atomic_write_json(self.music_dir / "unavailable.json", kept)
 
+    def _music_mark_too_big(self, link: str, size: int) -> None:
+        """Ghi "bài này quá MUSIC_TRACK_MAX_MB" (music_dir/too_big.json: {link: số byte}) - không hết hạn: cỡ bài không đổi."""
+        with self._music_lock:
+            if self._music_too_big.get(link) == size:
+                return
+            self._music_too_big = {**self._music_too_big, link: float(size)}
+            with contextlib.suppress(OSError):
+                atomic_write_json(self.music_dir / "too_big.json", self._music_too_big)
+
     def music_track_available(self, link: str) -> bool:
         """Bài này dùng được TRÊN MÁY NÀY không: có trong bộ đệm thì được (kể cả offline); đang offline (tải hỏng vì mạng trong
-        5 phút qua) hay bài đã bị đánh dấu hỏng (chưa quá 24 giờ) thì không; chưa biết thì cứ coi là được."""
+        5 phút qua), bài đã bị đánh dấu hỏng (chưa quá 24 giờ) hay quá MUSIC_TRACK_MAX_MB thì không; chưa biết thì cứ coi là được."""
         if self.music_track_cached(link) is not None:
             return True
         if music_plan.is_local(link):
             return False  # nhạc người dùng nhập không tải được từ đâu: không có file là không dùng được
         with self._music_lock:
+            if self._music_too_big.get(link, 0) > MUSIC_TRACK_MAX_BYTES:
+                return False
             now = self._music_clock()
             if now < self._music_offline_until:
                 return False
@@ -1920,22 +2034,51 @@ class App:
     @staticmethod
     def _music_network_failure(exc: OSError) -> bool:
         """Lỗi tầng mạng (không có mạng, DNS, hết giờ, đứt kết nối) - khác nguồn trả lỗi HTTP hay bản sao sai sha1."""
-        if isinstance(exc, (urllib.error.HTTPError, MirrorMismatch)):
+        if isinstance(exc, (urllib.error.HTTPError, MirrorMismatch, TrackTooBig)):
             return False
         return isinstance(exc, (urllib.error.URLError, socket.timeout, socket.gaierror, ConnectionError))
 
-    def music_track_for_export(self, link: str) -> Path | None:
-        """Bài nhạc để gói vào file sách: lấy từ bộ đệm / tải về; không lấy được thì None (chỗ ấy im lặng)."""
+    def music_track_for_export(self, link: str, **fetch: Any) -> Path | None:
+        """Bài nhạc để gói vào file sách: lấy từ bộ đệm / tải về; không lấy được thì None (chỗ ấy im lặng). `fetch`: tiến độ /
+        huỷ của `music_track_file` (huỷ thì ném export_jobs.Cancelled)."""
         if music_plan.is_local(link):
             return self.my_music.file(link)
         try:
-            return self.music_track_file(link)
+            return self.music_track_file(link, **fetch)
         except (ApiError, OSError):
             return None
 
-    def music_track_file(self, link: str) -> Path:
+    @staticmethod
+    def _music_copy(response: Any, sink: Any, progress: Callable[[int, int | None], None] | None,
+                    cancel: threading.Event | None) -> None:
+        """Chép bài đang tải từng khúc: dừng khi quá MUSIC_TRACK_MAX_MB (Content-Length báo trước, hay đếm thật khi nguồn không
+        báo) và khi người dùng huỷ; `progress(số byte đã chép, Content-Length hay None)` sau mỗi khúc."""
+        headers = getattr(response, "headers", None)
+        try:
+            length = int(headers.get("Content-Length")) if headers is not None and headers.get("Content-Length") else None
+        except (TypeError, ValueError):
+            length = None
+        if length is not None and length > MUSIC_TRACK_MAX_BYTES:
+            raise TrackTooBig(length)
+        copied = 0
+        while True:
+            if cancel is not None and cancel.is_set():
+                raise export_jobs.Cancelled()
+            chunk = response.read(1 << 16)
+            if not chunk:
+                return
+            copied += len(chunk)
+            if copied > MUSIC_TRACK_MAX_BYTES:
+                raise TrackTooBig(copied)
+            sink.write(chunk)
+            if progress is not None:
+                progress(copied, length)
+
+    def music_track_file(self, link: str, *, progress: Callable[[int, int | None], None] | None = None,
+                         cancel: threading.Event | None = None) -> Path:
         """File nhạc của một bài trong danh mục: tải một lần từ nguồn gốc vào bộ nhớ đệm, lần sau dùng lại. Chỉ bài CÓ
-        trong danh mục - máy chủ này không thành chỗ tải hộ link tuỳ ý."""
+        trong danh mục - máy chủ này không thành chỗ tải hộ link tuỳ ý. Bài quá MUSIC_TRACK_MAX_MB thì không tải (ghi sổ
+        `_music_mark_too_big`: rãnh nhạc chọn bài khác)."""
         if not link.startswith("https://"):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Link nhạc không hợp lệ")
         target = self.music_dir / "files" / (hashlib.sha1(link.encode("utf-8")).hexdigest() + ".mp3")
@@ -1955,6 +2098,9 @@ class App:
         size = info.get("bytes") if isinstance(info.get("bytes"), int) else None
         mirrors = [url for url in info.get("mirrors") or [] if isinstance(url, str) and url.startswith("https://")
                    ] if expected else []
+        if size is not None and size > MUSIC_TRACK_MAX_BYTES:
+            self._music_mark_too_big(link, size)
+            raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, TOO_BIG_TRACK)
         target.parent.mkdir(parents=True, exist_ok=True)
         with self._music_lock:
             fetching = self._music_fetching.setdefault(link, threading.Lock())
@@ -1969,7 +2115,7 @@ class App:
                 try:
                     request = urllib.request.Request(url, headers={"User-Agent": music_catalog.USER_AGENT})
                     with urllib.request.urlopen(request, timeout=60) as response, part.open("wb") as sink:
-                        shutil.copyfileobj(response, sink, 1 << 16)
+                        self._music_copy(response, sink, progress, cancel)
                     if url != link and ((size is not None and part.stat().st_size != size)
                                         or hashlib.sha1(part.read_bytes()).hexdigest() != str(expected).lower()):
                         raise MirrorMismatch(f"bản sao khác bản gốc: {url}")
@@ -1977,11 +2123,16 @@ class App:
                     self._music_offline_until = 0.0  # tải được = có mạng
                     self._music_mark(link, failed=False)
                     return target
+                except TrackTooBig as exc:  # bản sao cùng cỡ: khỏi thử
+                    self._music_offline_until = 0.0
+                    self._music_mark_too_big(link, exc.size)
+                    raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, TOO_BIG_TRACK) from exc
                 except OSError as exc:
                     failure = exc
                     network_only = network_only and self._music_network_failure(exc)
+                finally:
                     with contextlib.suppress(OSError):
-                        part.unlink(missing_ok=True)
+                        part.unlink(missing_ok=True)  # thành công thì part đã thành target; hỏng / huỷ: không để file dở
             # Mọi nguồn hỏng vì mạng: cả máy đang offline (không đánh dấu bài - bài vẫn tốt); còn lại: bài này hỏng.
             if network_only:
                 self._music_offline_until = self._music_clock() + MUSIC_OFFLINE_SECONDS
@@ -3404,10 +3555,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_work(self, query: dict[str, list[str]], value: str) -> None:
         # "Việc cần duyệt" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
-        view = self._view(value, "work", work_items)
+        # Câu đã chấm ở "Cần nghe lại" không còn là việc (phán quyết nằm ở reviews.json của máy này, không trong sổ dự án).
+        view = self._view(value, "work", lambda root: work_items(root, self.app.reviews.get(value)))
         if (query.get("count") or [""])[0] == "1":
             # Nhãn của tab chỉ cần con số (việc đã quyết đang chờ áp dụng không còn là việc cần làm): không gửi/đọc cả danh sách vài MB.
-            self._send_json(HTTPStatus.OK, {"count": sum(1 for item in view["items"] if not item.get("requested"))})
+            self._send_json(HTTPStatus.OK, {"count": open_count(view)})
             return
         self._send_json(HTTPStatus.OK, view)
 
@@ -3422,6 +3574,12 @@ class Handler(BaseHTTPRequestHandler):
             self.app.music_rebuild(value)
         except music_catalog.CatalogError as error:
             raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, str(error)) from error
+        self._send_json(HTTPStatus.OK, self.app.music_view(value))
+
+    def post_music_download_cancel(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Huỷ tải" ở tab Nhạc: dừng lượt tải sẵn nhạc nền của cuốn (bài đang tải dở bỏ đi; trình phát vẫn tải bài khi cần).
+        self.app._mutating()
+        self.app.cancel_music_export(self.app.music_key(self.app._book(value), "warm"))
         self._send_json(HTTPStatus.OK, self.app.music_view(value))
 
     def post_music_moods(self, _query: dict[str, list[str]], value: str) -> None:
@@ -4666,6 +4824,7 @@ ROUTES: list[Route] = [
     ("PUT", re.compile(BOOK + r"/music"), Handler.put_music),
     ("POST", re.compile(BOOK + r"/music/rebuild"), Handler.post_music_rebuild),
     ("POST", re.compile(BOOK + r"/music/moods"), Handler.post_music_moods),
+    ("POST", re.compile(BOOK + r"/music/download/cancel"), Handler.post_music_download_cancel),
     ("GET", re.compile(r"/api/music/moods-model"), Handler.get_music_moods_model),
     ("POST", re.compile(r"/api/music/moods-model"), Handler.post_music_moods_model),
     ("GET", re.compile(BOOK + r"/music/scenes/([^/]+)/alternatives"), Handler.get_music_alternatives),

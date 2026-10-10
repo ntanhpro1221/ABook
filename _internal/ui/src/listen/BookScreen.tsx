@@ -283,6 +283,11 @@ export function PersonRow({
               .join(" · ")}
           </div>
         )}
+        {person.mergedInto && (onPickVoice || waiting) && (
+          <div className="mt-0.5 break-words text-xs font-medium text-accent-text">
+            {waiting ? "Đang chờ máy làm sách" : "Chờ áp dụng"}: gộp vào {cleanName(person.mergedInto)}
+          </div>
+        )}
         <div className="tabular mt-1 text-xs text-fg-2">
           {formatNumber(person.lines)} câu
           {person.seconds > 0 ? ` · ${formatLength(person.seconds)}` : ""}
@@ -384,7 +389,7 @@ export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, rea
         <div className="min-w-0 flex-1">
           <div className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">Người kể chuyện</div>
           <div className="mt-0.5 font-semibold">{cast.narrator.voice || "Mặc định"}</div>
-          <div className="tabular text-xs text-fg-2">{formatNumber(cast.narrator.lines)} câu dẫn truyện · {formatLength(cast.narrator.seconds)}</div>
+          <div className="tabular text-xs text-fg-2">{formatNumber(cast.narrator.lines)} câu dẫn truyện{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}</div>
         </div>
         {cast.narrator.voice && <SampleButton id={`voice-${cast.narrator.voice}`} url={source.voiceUrl(cast.narrator.voice)} label={`Nghe giọng ${cast.narrator.voice}`} />}
       </div>

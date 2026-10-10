@@ -26,7 +26,7 @@ from .. import speaker_logprobs
 from . import narrator_cards, store
 from .address_cues import address_doubts, split_doubts
 from .humanize import shown_reading
-from .reviews import review_items
+from .reviews import awaiting, review_items
 from .reviews import speaker_label as _speaker_label
 
 # Độ chói tai khi máy sai ở khía cạnh ấy (1 = người nghe nhận ra ngay: giọng sai người, sai giới).
@@ -83,6 +83,16 @@ def _has_audio(row: Any, audio: store.AudioLocator | Path | None) -> bool:
         return True
     locator = audio if isinstance(audio, store.AudioLocator) else store.AudioLocator(audio)
     return locator.find(row["wav_path"]) is not None
+
+
+NOT_RECORDED = "chưa thu nên không phải thu lại"
+
+
+def _rerecord_cost(rows: list[Any]) -> str:
+    """Cái giá của một lần đổi giọng, như hộp chọn giọng (voice_picker.py): chỉ câu ĐÃ THU phải thu lại - sách chưa thu câu nào
+    của những người ấy thì nói thẳng là không tốn gì (soát UX a23: "thu lại 144 câu" lúc chưa thu chương nào)."""
+    recorded = sum(1 for row in rows if _has_audio(row, None))
+    return f"thu lại {recorded} câu" if recorded else NOT_RECORDED
 
 
 def _example(row: Any, names: dict[int, dict[str, Any]], label: Callable[[str], str] = _speaker_label,
@@ -484,7 +494,15 @@ def unsure_speaker_lines(spoken: list[Any], confidences: dict[str, dict[str, Any
     return unsure, int(len(measured) * LOGPROB_SHARE + 1e-9)
 
 
-def work_items(project_root: Path) -> dict[str, Any]:
+def open_count(view: dict[str, Any]) -> int:
+    """Số trên nhãn tab "Việc cần duyệt": việc chưa quyết mà quyết thì có tác dụng ngay. Không tính việc đã quyết (chờ áp dụng)
+    hay việc chỉ áp khi làm lại phân tích (thẻ người kể của đoạn đã phân tích xong) - soát UX a23: lúc chờ duyệt, "Việc cần
+    duyệt 6" toàn là những thẻ ấy."""
+    return sum(1 for item in view["items"] if not item.get("requested") and not item.get("redoOnly"))
+
+
+def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> dict[str, Any]:
+    """`verdicts`: phán quyết "Cần nghe lại" của cuốn (reviews.Reviews.get) - câu đã chấm rơi khỏi thẻ "Bản thu lỗi"."""
     items: list[dict[str, Any]] = []
     audio = store.AudioLocator(project_root, many=True)  # một bộ tìm WAV cho mọi câu ví dụ của lượt này
     renamed = renames.load(project_root)
@@ -725,7 +743,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
         for gender, label in (("male", "Nam"), ("female", "Nữ")):
             choices.append({"label": label, "character": key, "gender": gender,
                             "done": f"{speaker_label(character['canonical_name'])} là {label.lower()}",
-                            "note": "giữ giọng đang đọc" if heard == gender else f"đổi giọng, thu lại {len(rows)} câu"})
+                            "note": "giữ giọng đang đọc" if heard == gender else f"đổi giọng, {_rerecord_cost(rows)}"})
         items.append({
             "kind": "gender",
             "key": f"gender:{character['canonical_name']}",
@@ -946,8 +964,9 @@ def work_items(project_root: Path) -> dict[str, Any]:
     # 3b. Lời trong ngoặc 『』 - thần giao, linh thể, giọng qua điện thoại, bình luận trên mạng - là một "kênh giọng" riêng
     #     mà máy yếu nhất: đo 28-09 trên bộ LN, câu 『』 sai người nói 56-67% (câu thường 34-41%) - máy gán mỗi câu cho
     #     người đứng gần (Yamiyo: linh thể luôn nói trong 『』 bị chia cho người kể, Hina, Yuusei, "người lạ"). Thường cả
-    #     chương chỉ một người (hay người kể) nói trong 『』: một cú bấm gán cả nhóm. Nhiều người thật thì sửa từng câu ở
-    #     tab Kịch bản - thẻ không có nút giữ nguyên vì nhóm đang mang nhiều nhãn.
+    #     chương chỉ một người (hay người kể) nói trong 『』: một cú bấm gán cả nhóm. Nhiều người thật thì "Đúng rồi, giữ
+    #     nguyên" (`keepGroups`): mỗi câu giữ người nó đang có - ghi như "Xác nhận cả chương" của Kịch bản nhưng chỉ cho các câu
+    #     của thẻ (soát UX a23: trước đó thẻ nằm mãi).
     bracketed: dict[int, list[Any]] = defaultdict(list)
     for row in spoken:
         if str(row["text"]).lstrip().startswith("『"):
@@ -970,9 +989,16 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 offered.add(choice["value"].casefold())
                 choices.append({**choice, "label": f"Tất cả là {choice['label']}", "name": choice["label"]})
         choices.append({"label": "Người kể đọc tất cả", "value": NARRATOR, "name": "Người kể"})
+        # Mọi câu đã được giữ đúng người nó đang có: người nghe xác nhận máy chia đúng.
+        if all((wish := speaker_wishes.get(str(row["stable_id"]))) is not None
+               and wish["speaker"].casefold() == str(row["speaker"]).casefold() for row in rows):
+            continue
         fix = _speaker_fix(rows, choices, "", speaker_wishes, speaker_label)
         if fix is None:
             continue
+        by_speaker: dict[str, list[Any]] = defaultdict(list)
+        for row in rows:
+            by_speaker[str(row["speaker"])].append(row)
         chapter = names.get(chapter_id, {})
         split = ", ".join(f"{speaker_label(speaker)} {count}" for speaker, count in counts.most_common(4))
         items.append({
@@ -980,8 +1006,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "key": f"bracket:{chapter_id}",
             "title": f"Lời trong 『』 ở {chapter.get('full') or chapter.get('title') or 'chương này'} là của một người?",
             "problem": f"{len(rows)} câu trong ngoặc 『』 - thường là thần giao, linh thể, giọng qua điện thoại hay bình"
-                       f" luận - máy chia cho {len(counts)} người ({split}). Máy hay sai loại câu này nhất. Nếu thật là"
-                       " nhiều người, sửa từng câu ở tab Kịch bản.",
+                       f" luận - máy chia cho {len(counts)} người ({split}). Máy hay sai loại câu này nhất. Nếu đúng là"
+                       " những người ấy, bấm “Đúng rồi, giữ nguyên”; sai vài câu thì sửa từng câu ở tab Kịch bản.",
             "affected": len(rows),
             "doubt": 0.8,
             "options": [choice["label"] for choice in choices],
@@ -990,6 +1016,12 @@ def work_items(project_root: Path) -> dict[str, Any]:
             **fix,
             "allLines": every_bracketed,
             "scopeLabels": ["Chương này", "Cả cuốn"],
+            "keepGroups": [
+                {"speaker": speaker, "lines": [{"stableId": str(row["stable_id"]), "textSha256": str(row["text_sha256"] or "")}
+                                               for row in group]}
+                for speaker, group in by_speaker.items()
+            ],
+            "keepLabel": "Đúng rồi, giữ nguyên",
         })
 
     # 4. Hai nhân vật có tên dùng CHUNG một giọng và cùng nói trong một chương: người nghe không phân biệt được.
@@ -1015,12 +1047,17 @@ def work_items(project_root: Path) -> dict[str, Any]:
         avoid = str(profile["voice_key"]) if profile is not None else ""
         # Người ÍT câu hơn đứng đầu: ít câu phải thu lại hơn, và người nghe đã quen giọng của người nói nhiều.
         lines = {person: sum(1 for row in rows if str(row["speaker"]) == person) for person in ordered}
+        costs = {person: _rerecord_cost([row for row in rows if str(row["speaker"]) == person]) for person in ordered}
         choices = [
             {"label": f"Đổi giọng {label}", "character": key, "avoid": avoid, "done": f"đổi giọng {label}",
-             "note": f"thu lại {lines[person]} câu ở các chương chung", "recommended": index == 0}
+             "note": costs[person] if costs[person] == NOT_RECORDED else f"{costs[person]} ở các chương chung",
+             "recommended": index == 0}
             for index, (person, label, key) in enumerate(sorted(zip(ordered, labels, keys), key=lambda item: lines[item[0]]))
         ] if avoid else []
-        moving = [label for label, wish in zip(labels, wishes) if wish is not None and wish["avoid"]]
+        # Chọn hẳn một giọng cho một trong hai người (tab Nhân vật) cũng là tách giọng - như "Đổi giọng …" trên thẻ (soát UX a23).
+        shared_name = str(profile["preset_name"] or "") if profile is not None else ""
+        moving = [label for label, wish in zip(labels, wishes)
+                  if wish is not None and (wish["avoid"] or (wish["preset"] and wish["preset"] != shared_name))]
         items.append({
             "kind": "shared-voice",
             "key": "shared-voice:" + "|".join(sorted(people)),
@@ -1134,10 +1171,10 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "examples": [{**_example(example, names, speaker_label, audio), "speaker": ""} for example in word_examples.get(str(row["surface"]), [])],
         })
 
-    # 7. Bản thu lỗi (hàng chờ "Cần nghe lại"), gom theo chương.
+    # 7. Bản thu lỗi (hàng chờ "Cần nghe lại"), gom theo chương - chỉ câu còn chờ người nghe: chấm hết thì thẻ tự rơi.
     audio_by_chapter: dict[int, list[dict[str, Any]]] = defaultdict(list)
     for entry in review_items(project_root):
-        if entry.get("kind") in ("failed", "unverified", "name-low"):
+        if awaiting(entry, verdicts or {}):
             audio_by_chapter[int(entry["chapterId"])].append(entry)
     for chapter_id, entries in audio_by_chapter.items():
         items.append({
