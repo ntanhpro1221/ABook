@@ -21,6 +21,7 @@ from .config import ANALYSIS_RETRY_POLICY_VERSION
 from . import database as _database
 from . import narrator_sections as _narrator_sections
 from . import speaker_logprobs as _speaker_logprobs
+from . import analysis_hints as _analysis_hints  # B31 (cây đo ABook_b31): gợi ý xưng hô + neo tên
 from .database import (
     INAUDIBLE_DELIVERY_FIELDS,
     critic_delta_fields,
@@ -8005,6 +8006,8 @@ class OllamaBookAnalyzer:
         chapter_titles: list[str] = []
         rows: list[dict[str, Any]] = []
         batch_to_stable: dict[str, str] = {}
+        # B31: cùng danh sách tên với _known_summary() (most_common(80)) - y như khi dựng data_b31 từ prompt.
+        hint_index = _analysis_hints.name_index([name for name, _ in self._speaker_counts.most_common(80)])
         for index, row in enumerate(group):
             chapter_title = self._chapter_titles.get(int(row["chapter_id"]), "")
             if chapter_title not in chapter_titles:
@@ -8034,6 +8037,7 @@ class OllamaBookAnalyzer:
             allowed_emotions = _direct_cue_allowed_emotions(str(row["text"]))
             if allowed_emotions:
                 request_row["allowed_emotions"] = list(allowed_emotions)
+            request_row.update(_analysis_hints.hints(request_row, hint_index))
             rows.append(request_row)
         prompt = (
             f"Các chương hiện tại: {', '.join(chapter_titles)}\n\n"
