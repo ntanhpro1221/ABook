@@ -293,6 +293,8 @@ export interface AppInfo {
   remote?: boolean;
   /** Ở xa và CHỈ được nghe (thiết bị đã ghép nhưng máy tính chưa cho điều khiển sản xuất): ẩn Studio. */
   listenOnly?: boolean;
+  /** Ở xa: tên máy tính phục vụ trang (remote_studio.forward) - trang chỉ nghe nói bật quyền sửa ở máy nào. */
+  machine?: string;
   /** Đang mở Studio của máy tính đã ghép ngay trong app máy này (webui/peer_studio.py, `?peer=`): máy ấy là máy nào. */
   peer?: { id: string; name: string };
   /** App Windows đóng gói (webui/host.py): bản mới vỏ Tauri tìm thấy trên GitHub Releases, chờ người dùng bấm cài. */

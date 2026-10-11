@@ -848,7 +848,7 @@ class SyncHandler(BaseHTTPRequestHandler):
             elif method not in ("GET", "HEAD") and not remote_studio.same_origin(self.headers):
                 self._json(HTTPStatus.FORBIDDEN, {"error": "Yêu cầu không đến từ trang Studio"})
             else:
-                remote_studio.forward(self, method, self.path, studio, listen_only=not producing)
+                remote_studio.forward(self, method, self.path, studio, listen_only=not producing, machine=self.app.name)
             return
         if method not in ("GET", "HEAD"):
             self._json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "Không hỗ trợ"})

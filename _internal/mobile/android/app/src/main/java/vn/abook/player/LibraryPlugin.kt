@@ -552,14 +552,30 @@ class LibraryPlugin : Plugin() {
         studioAlerts(call)
     }
 
-    /** Studio từ xa (StudioActivity.kt): trang Studio của máy tính đã ghép, mang sẵn mã thiết bị. */
+    /** Máy tính mở Studio được (StudioLink.computers): máy tính chính rồi các máy tính ghép thêm - nút "Mở Studio" hỏi chọn khi có hơn một. */
     @PluginMethod
-    fun openStudio(call: PluginCall) {
-        if (prefs.getString("token", "").isNullOrBlank()) {
-            call.reject("Chưa ghép với máy tính nào")
-            return
+    fun studioComputers(call: PluginCall) = background(call) {
+        val out = JSArray()
+        for (computer in StudioLink.computers(context)) out.put(JSObject().put("key", computer.key).put("name", computer.name))
+        call.resolve(JSObject().put("computers", out))
+    }
+
+    /**
+     * Studio từ xa (StudioActivity.kt): trang Studio của một máy tính đã ghép, mang sẵn mã thiết bị. `book`: mã cuốn trên điện thoại này -
+     * mở thẳng cuốn ấy trong Studio của máy tính giữ nó (StudioLink.bookTarget); không thì `computer` (mã máy, "" = máy tính chính) ở
+     * danh sách dự án. Chỉ mã máy và đường trang đi qua Intent, không bao giờ mã thiết bị.
+     */
+    @PluginMethod
+    fun openStudio(call: PluginCall) = background(call) {
+        val book = call.getString("book")
+        val (computer, path) = if (book != null) {
+            val (key, remote) = StudioLink.bookTarget(book) ?: throw IllegalStateException("Cuốn này không làm trên máy tính nào đã ghép")
+            key to StudioLink.bookPath(remote)
+        } else {
+            (call.getString("computer") ?: StudioLink.MAIN) to StudioLink.bookPath(null)
         }
-        activity.startActivity(Intent(activity, StudioActivity::class.java))
+        if (!StudioLink.known(computer, SyncLink.paired(context), Peers.all(context))) throw IllegalStateException("Chưa ghép với máy tính nào")
+        activity.startActivity(Intent(activity, StudioActivity::class.java).putExtra("computer", computer).putExtra("path", path))
         call.resolve()
     }
 

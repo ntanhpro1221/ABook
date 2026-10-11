@@ -1,0 +1,70 @@
+import { renderToString } from "react-dom/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ListenBook } from "@/listen/model";
+
+// "Mở Studio" trên điện thoại (android/StudioOpen.tsx): plugin native và thông báo là bản giả - phần Kotlin có test JVM riêng (StudioLinkTest).
+const library = vi.hoisted(() => ({
+  studioComputers: vi.fn(async () => ({ computers: [] as { key: string; name: string }[] })),
+  openStudio: vi.fn(async (_options?: { computer?: string; book?: string }) => undefined),
+}));
+const toasts = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }));
+vi.mock("./plugins", () => ({ EbookLibrary: library, EbookPlayer: {}, ReadAloud: {} }));
+vi.mock("sonner", () => ({ toast: toasts }));
+
+import { ComputerList, OpenStudioButton, StudioChip, startStudio, studioChoice } from "./StudioOpen";
+
+const home = { key: "", name: "NGDtuanh-Lecoo" };
+const office = { key: "b2c3d4e5", name: "Máy văn phòng" };
+const book = (over: Partial<ListenBook>) => ({ id: "b1", title: "Sách", ...over }) as ListenBook;
+
+beforeEach(() => {
+  library.studioComputers.mockReset();
+  library.openStudio.mockClear();
+  toasts.error.mockClear();
+});
+
+describe("Mở Studio của máy tính trên điện thoại", () => {
+  it("một máy thì mở luôn, nhiều máy thì hỏi chọn, không máy nào thì nói rõ", () => {
+    expect(studioChoice([home])).toEqual({ open: home });
+    expect(studioChoice([home, office])).toEqual({ choose: [home, office] });
+    expect(studioChoice([])).toEqual({ none: "Chưa ghép với máy tính nào" });
+  });
+
+  it("bấm nút: một máy tính mở thẳng máy ấy", async () => {
+    library.studioComputers.mockResolvedValue({ computers: [office] });
+    const choose = vi.fn();
+    await startStudio(choose);
+    expect(library.openStudio).toHaveBeenCalledWith({ computer: "b2c3d4e5" });
+    expect(choose).not.toHaveBeenCalled();
+  });
+
+  it("bấm nút: hai máy tính thì hộp chọn hiện tên từng máy, chưa mở gì", async () => {
+    library.studioComputers.mockResolvedValue({ computers: [home, office] });
+    const choose = vi.fn();
+    await startStudio(choose);
+    expect(choose).toHaveBeenCalledWith([home, office]);
+    expect(library.openStudio).not.toHaveBeenCalled();
+    const html = renderToString(<ComputerList computers={[home, office]} onPick={() => undefined} />);
+    expect(html).toContain("NGDtuanh-Lecoo");
+    expect(html).toContain("Máy văn phòng");
+  });
+
+  it("bấm nút khi chưa ghép máy tính nào: báo, không mở", async () => {
+    library.studioComputers.mockResolvedValue({ computers: [] });
+    await startStudio(vi.fn());
+    expect(toasts.error).toHaveBeenCalledWith("Chưa ghép với máy tính nào");
+    expect(library.openStudio).not.toHaveBeenCalled();
+  });
+
+  it("nút ở màn Tải sách chỉ hiện khi có ít nhất một máy tính mở được Studio, kể cả chỉ ghép máy tính phụ", () => {
+    expect(renderToString(<OpenStudioButton computers={[]} />)).toBe("");
+    expect(renderToString(<OpenStudioButton computers={[office]} />)).toContain("Mở Studio");
+    expect(renderToString(<OpenStudioButton computers={[home, office]} />)).toContain("Mở Studio");
+  });
+
+  it("chip ở trang sách chỉ có ở cuốn là dự án Studio của máy tính", () => {
+    expect(renderToString(<StudioChip book={book({ studio: true })} />)).toContain("Mở Studio");
+    expect(renderToString(<StudioChip book={book({ studio: false })} />)).toBe("");
+    expect(renderToString(<StudioChip book={book({})} />)).toBe("");
+  });
+});

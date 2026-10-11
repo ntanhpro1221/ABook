@@ -36,6 +36,12 @@ export function listenOnlyLine(name: string): string {
   return `Chỉ nghe - bật quyền sửa ở ${name}: Cài đặt > Thiết bị`;
 }
 
+/** Máy cần bật quyền sửa cho trang chỉ nghe: máy tính đang mở qua app này (`peer`), không thì chính máy phục vụ trang (`machine` -
+ *  Studio từ xa trong trình duyệt hay app điện thoại, remote_studio.forward). */
+export function listenOnlyOwner(info: { peer?: { name: string }; machine?: string }): string {
+  return info.peer?.name || info.machine || "máy tính";
+}
+
 /** Dòng ở thanh trên cùng khi đang mở Studio của máy khác: máy ấy không trả lời (câu của máy chủ), chỉ được nghe, hay bình thường. */
 export function peerBarLine(name: string, { silent = "", listenOnly = false }: { silent?: string; listenOnly?: boolean } = {}): string {
   if (silent) return `${silent} - tự nối lại khi máy ấy trả lời`;
