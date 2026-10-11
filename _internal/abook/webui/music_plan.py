@@ -17,6 +17,7 @@ import json
 import math
 import os
 import re
+import sqlite3
 import subprocess
 import time
 from pathlib import Path
@@ -40,6 +41,8 @@ DEFAULT_TRACK_LUFS = -16.6  # trung vị danh mục: bài chưa có `lufs` (plan
 MASKING_CENTER = 0.30  # trung vị `speechBand` của danh mục: bài lấn dải tiếng nói hơn mức này thì hạ thêm
 MASKING_SLOPE_DB = 8.0
 MASKING_LIMIT_DB = 6.0
+# Mốc nhạc cuối chương kết muộn nhất chừng này trước khi file giọng hết: mờ 2 s của trình phát + biên đồng bộ 0,5 s.
+CHAPTER_END_FADE_SECONDS = 2.5
 FAMILIES = ("eastern", "orchestral", "piano", "ambient", "acoustic", "electronic", "other")
 
 
@@ -200,13 +203,16 @@ def read_plan(project_root: Path) -> dict[str, Any] | None:
     return plan if isinstance(plan, dict) and plan.get("version") == PLAN_VERSION else None
 
 
-def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
+def chapter_cues(plan: dict[str, Any], chapter_id: int, duration: float | None = None) -> list[dict[str, Any]]:
     """Nhạc của một chương cho trình phát: [{start, end, link, key}] theo thời gian trong MP3 chương (đoạn im lặng thì
     không có). Hai đoạn liền nhau cùng bài gộp làm một - bài chơi liền, không bắt đầu lại.
     Bài anh em nối trong cảnh (`siblings` của đoạn, music_select.choose) tách mốc đúng ở điểm kết bài: mốc mới mang
     `sibling: True` (trình phát mờ chéo dài hơn, không nghe như đổi cảnh). Bước âm lượng của các mảnh nối tiếp (`stepDb`) thành
     `steps: [{at, db}]` của mốc - mức (dB, cộng vào `gainDb`) từ giây `at` của chương; mốc bắt đầu ở mức khác 0 thì có bước
-    ngay ở `start`."""
+    ngay ở `start`.
+    Mốc kết đúng ở điểm kết bài đã lập lịch (bài anh em vào ngay sau, hay bài kết sớm ở `stopAt`) mang `tail: True`: trình phát
+    thôi lặp ở vòng cuối để bài kết tự nhiên, không quay lại phần dạo đầu. `duration` (giây của chương): mốc kết muộn nhất ở
+    `duration - CHAPTER_END_FADE_SECONDS` để nhạc mờ xong trước khi giọng hết; mốc vì thế rỗng thì bỏ."""
     if not plan.get("enabled"):
         return []
     cues: list[dict[str, Any]] = []
@@ -221,7 +227,9 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
             # `stopAt`: bài kết sớm trước ranh giới (music_select.TAIL_MIN_SECONDS), phần còn lại của mảnh lặng.
             last = float(scene["end"]) if scene.get("stopAt") is None else min(float(scene["end"]), float(scene["stopAt"]))
             end = spans[index + 1][0] if index + 1 < len(spans) else last
-            if cues and not rested and cues[-1]["link"] == link and abs(cues[-1]["end"] - start) < 5:
+            tail = index + 1 < len(spans) or (scene.get("stopAt") is not None and end == float(scene["stopAt"]))
+            if (cues and not rested and cues[-1]["link"] == link
+                    and abs(cues[-1]["end"] - start) < music_select.CUE_MERGE_GAP_SECONDS):
                 cue = cues[-1]
                 cue["end"] = end
             else:
@@ -229,11 +237,56 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
                 if sibling:
                     cue["sibling"] = True
                 cues.append(cue)
+            if tail:
+                cue["tail"] = True
+            else:
+                cue.pop("tail", None)
             if level != (cue["steps"][-1]["db"] if cue.get("steps") else 0.0):
                 cue.setdefault("steps", []).append({"at": round(start, 3), "db": level})
             rested = False
         rested = scene.get("stopAt") is not None
-    return cues
+    return clamp_to_chapter(cues, duration)
+
+
+def clamp_to_chapter(cues: list[dict[str, Any]], duration: float | None) -> list[dict[str, Any]]:
+    """Mốc kết muộn nhất ở `duration - CHAPTER_END_FADE_SECONDS` (giây của chương); mốc vì thế rỗng thì bỏ. Không có độ dài
+    thì để nguyên. Tách khỏi `chapter_cues` để `package` chỉ đọc độ dài cho chương có nhạc."""
+    if duration is None:
+        return cues
+    limit = float(duration) - CHAPTER_END_FADE_SECONDS
+    for cue in cues:
+        if cue["end"] > limit:
+            cue["end"] = limit
+            cue.pop("tail", None)  # kết trước điểm kết bài: trình phát mờ ra như mốc thường
+    return [cue for cue in cues if cue["end"] > cue["start"]]
+
+
+def chapter_seconds(project_root: Path, chapter_id: int) -> float | None:
+    """Độ dài thật của file audio chương (`store.audio_duration`) - cho `chapter_cues(duration=...)`: nhạc phải mờ xong trước khi
+    chính file ấy hết. Chưa có file nghe được hay không đọc được độ dài (thư mục không phải dự án) -> None, mốc không bị kẹp."""
+    try:
+        path = store.chapter_audio_path(Path(project_root), int(chapter_id))
+    except sqlite3.Error:
+        return None
+    return store.audio_duration(path) if path is not None else None
+
+
+def chapter_durations(project_root: Path, chapter_ids: Iterable[int]) -> dict[int, float | None]:
+    """`chapter_seconds` cho nhiều chương bằng MỘT kết nối, MỘT truy vấn - `package` chạy ở mỗi manifest đồng bộ / xuất
+    .abook, sách 3000 chương thì mở kết nối theo từng chương tốn cả chục giây."""
+    out: dict[int, float | None] = dict.fromkeys((int(chapter_id) for chapter_id in chapter_ids), None)
+    if not out:
+        return out
+    try:
+        with contextlib.closing(store.connect(Path(project_root))) as connection:
+            rows = connection.execute("SELECT id, status, last_error, output_mp3 FROM chapters").fetchall()
+    except sqlite3.Error:
+        return out
+    for row in rows:
+        if int(row["id"]) in out and store.heard_chapter(row["status"], row["last_error"]):
+            path = store.chapter_mp3(Path(project_root), row["output_mp3"])
+            out[int(row["id"])] = store.audio_duration(path) if path is not None else None
+    return out
 
 
 def _number(value: Any) -> float | None:
@@ -401,9 +454,12 @@ def package(project_root: Path, chapter_ids: Iterable[int],
                 return other["link"], other, path
         return None
 
-    for chapter_id in chapter_ids:
+    # Mốc trước, độ dài sau: chỉ chương có nhạc mới đọc độ dài, và đọc hàng loạt.
+    planned = {chapter_id: chapter_cues(plan, chapter_id) for chapter_id in chapter_ids}
+    lengths = chapter_durations(project_root, [chapter_id for chapter_id, cues in planned.items() if cues])
+    for chapter_id, planned_cues in planned.items():
         kept = []
-        for cue in chapter_cues(plan, chapter_id):
+        for cue in clamp_to_chapter(planned_cues, lengths.get(int(chapter_id))):
             found = resolve(cue)
             if found is None:
                 continue
@@ -497,12 +553,13 @@ def packaged_cues(music: dict[str, Any] | None, chapter_id: int) -> list[dict[st
 
 
 def _cue_shape(cue: dict[str, Any]) -> dict[str, Any]:
-    """Phần hình dạng của một mốc ngoài bài và độ to: `sibling` (nối bài anh em trong cảnh) và `steps` (bước âm lượng
-    [{at, db}], `at` tăng dần) - chỉ khoá nào có, bước hỏng bị bỏ. Một chỗ cho gói sách (`package`) lẫn sách đã đóng gói
-    (`packaged_cues`)."""
+    """Phần hình dạng của một mốc ngoài bài và độ to: `sibling` (nối bài anh em trong cảnh), `tail` (mốc kết đúng ở điểm kết
+    bài - `chapter_cues`) và `steps` (bước âm lượng [{at, db}], `at` tăng dần) - chỉ khoá nào có, bước hỏng bị bỏ. Một chỗ cho
+    gói sách (`package`) lẫn sách đã đóng gói (`packaged_cues`)."""
     out: dict[str, Any] = {}
-    if cue.get("sibling") is True:
-        out["sibling"] = True
+    for flag in ("sibling", "tail"):
+        if cue.get(flag) is True:
+            out[flag] = True
     raw = cue.get("steps") if isinstance(cue.get("steps"), list) else []
     steps = [{"at": round(float(step["at"]), 3), "db": round(float(step["db"]), 2)} for step in raw
              if isinstance(step, dict) and _number(step.get("at")) is not None and _number(step.get("db")) is not None]

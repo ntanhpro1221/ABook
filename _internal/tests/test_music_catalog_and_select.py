@@ -362,3 +362,32 @@ def test_a_catalog_smaller_than_the_recent_window_reuses_the_track_used_longest_
     assert sorted(links[:3]) == ["https://x/a.mp3", "https://x/b.mp3", "https://x/c.mp3"], "còn bài mới thì không lặp"
     for index in range(3, len(links)):
         assert links[index] == links[index - 3], "hết bài mới thì lấy bài dùng lâu nhất"
+
+
+def _two_pieces(gap: float) -> list[dict]:
+    """Đầu chương 100 s rồi một mảnh chia đều (`length`, chơi tiếp bài) sau khe `gap` giây, tới giây 400."""
+    return [_flat_scene(firstSegment=1, start=0.0, end=100.0, reason="chapter_start"),
+            _flat_scene(firstSegment=20, start=100.0 + gap, end=400.0, reason="length")]
+
+
+def _sibling_at(gap: float) -> tuple[list[dict], float]:
+    tracks = _tracks_at(("a", {"valence": 0.0, "arousal": 0.0, "tension": 0.0}),
+                        ("b", {"valence": 0.02, "arousal": 0.0, "tension": 0.0}))
+    chosen = choose(_two_pieces(gap), lambda v, a: tracks, book_key="b",
+                    track_info={track["link"]: track for track in tracks}.get)
+    [sibling] = chosen[1]["siblings"]
+    return chosen, sibling["at"]
+
+
+def test_the_gap_between_two_pieces_counts_as_playing_time_when_the_track_plays_on() -> None:
+    # Khe 0,6 s < 5 s: chapter_cues gộp hai mảnh thành một mốc, trình phát chơi nhạc liền qua khe - bài 200 s hết ở giây 200
+    # của chương, không phải 200,6.
+    chosen, at = _sibling_at(0.6)
+    assert chosen[1]["link"] == chosen[0]["link"] and chosen[1].get("continued")
+    assert at == 200.0
+
+
+def test_a_gap_long_enough_to_split_the_cue_starts_the_track_again() -> None:
+    # Khe 6 s >= 5 s: hai mốc riêng, trình phát mờ ra rồi mở lại bài từ đầu ở giây 106 - bài hết ở 306.
+    _chosen, at = _sibling_at(6.0)
+    assert at == 306.0

@@ -63,6 +63,9 @@ SIBLING_CANDIDATES = 50
 # Bài hết mà chỉ còn ít hơn chừng này tới chỗ nhạc đổi (hết cảnh / hết chương) thì KHÔNG nối bài anh em: bài kết tự nhiên rồi
 # lặng tới ranh giới, thay vì một bài mới mờ vào vài giây rồi lại bị đổi (docs/MUSIC_RESEARCH.md 10-10 TAIL).
 TAIL_MIN_SECONDS = 20.0
+# Hai mảnh liền nhau cùng bài hở nhau ít hơn chừng này thì chung một mốc nhạc (music_plan.chapter_cues): trình phát chơi liền
+# qua khe, nên vị trí trong bài tính cả khe; hở từ chừng này trở lên thì trình phát mờ ra rồi mở lại bài từ đầu.
+CUE_MERGE_GAP_SECONDS = 5.0
 # Bước âm lượng trong cảnh: mảnh nối tiếp nhích nhạc theo tension của nó so với đầu cảnh; bước sát bước trước thì giữ mức cũ.
 STEP_DB_PER_TENSION = 6.0
 STEP_MAX_DB = 3.0
@@ -280,6 +283,7 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
         if intact and any(old in banned or not usable(old) for old in kept_siblings[key]):
             intact = False  # bài anh em cũ vừa bị bỏ / máy này không lấy được: xếp hạng lại từ đây
         reuse = list(kept_siblings[key]) if intact else None
+        carried = link is not None and link == playing  # bài của mảnh trước chơi tiếp sang mảnh này
         if result.get("continued"):
             tension = float(scene.get("tension") or 0.0)
             result["stepDb"] = max(-STEP_MAX_DB, min(STEP_MAX_DB, STEP_DB_PER_TENSION * (tension - head_tension)))
@@ -288,8 +292,14 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
                 playing, position = link, 0.0
             ended = None
             head_tension = float(scene.get("tension") or 0.0)
-        # Bài chạy qua mảnh này theo thời gian: hết một vòng thì nối bài anh em, không có thì lặp.
-        length, elapsed = _seconds(scene), 0.0
+        # Bài chạy qua mảnh này theo đồng hồ chương: hết một vòng thì nối bài anh em, không có thì lặp. Bài chơi tiếp qua khe
+        # ngắn (chung mốc) thì đồng hồ chạy từ cuối mảnh trước; khe dài thì trình phát mở lại bài từ đầu.
+        start = float(scene.get("start") or 0.0)
+        gap = start - float(scenes[index - 1].get("end") or 0.0) if index else 0.0
+        if carried and gap >= CUE_MERGE_GAP_SECONDS:
+            position = 0.0
+        clock = start - gap if carried and 0.0 < gap < CUE_MERGE_GAP_SECONDS else start
+        length, elapsed = _seconds(scene) + start - clock, 0.0
         siblings: list[dict[str, Any]] = []
         while playing and length - elapsed > 1e-9:
             track_seconds = duration(playing) or math.inf
@@ -297,7 +307,7 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             position, elapsed = position + step, elapsed + step
             if position < track_seconds - 1e-9:
                 continue
-            now = float(scene.get("start") or 0.0) + elapsed
+            now = clock + elapsed
             if run_end[heads[index]] - now < TAIL_MIN_SECONDS:
                 result["stopAt"] = round(now, 3)
                 playing, stopped, ended = None, heads[index], playing
@@ -310,7 +320,7 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             if sibling:
                 playing = sibling
                 used.add(sibling)
-                siblings.append({"at": round(float(scene.get("start") or 0.0) + elapsed, 3), "link": sibling})
+                siblings.append({"at": round(max(start, now), 3), "link": sibling})
         if siblings:
             result["siblings"] = siblings
         if link:

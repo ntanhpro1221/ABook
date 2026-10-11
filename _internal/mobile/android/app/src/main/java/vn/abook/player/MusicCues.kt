@@ -7,9 +7,10 @@ import kotlin.math.pow
  * Mốc nhạc của một chương trong mục `music` của book.json (music_plan.package) - phần thuần dữ liệu của [MusicBed], tách riêng để
  * test JVM chạy được (cùng quy tắc với ui/src/listen/musicBed.ts: `stepDbAt`, mục tiêu âm lượng).
  *
- * Mốc: `{start, end, track, gainDb, steps?, sibling?}`. `steps` = bước âm lượng trong cảnh `[{at, db}]` (`at` = giây của chương,
- * mức là `gainDb + db`); `sibling` = mốc nối bài anh em ở điểm kết bài trong cùng cảnh (mờ chéo dài hơn). Máy chủ tính hết, điện
- * thoại chỉ cộng.
+ * Mốc: `{start, end, track, gainDb, steps?, sibling?, tail?}`. `steps` = bước âm lượng trong cảnh `[{at, db}]` (`at` = giây của
+ * chương, mức là `gainDb + db`); `sibling` = mốc nối bài anh em ở điểm kết bài trong cùng cảnh (mờ chéo dài hơn); `tail` = mốc kết
+ * đúng ở điểm kết bài (bài anh em vào ngay sau, hay bài kết sớm): vòng cuối thôi lặp ([finalLoop]). Máy chủ tính hết, điện thoại
+ * chỉ cộng.
  */
 object MusicCues {
     const val FADE_MS = 2000L
@@ -30,6 +31,7 @@ object MusicCues {
         val gainDb: Double?,
         val steps: List<Step> = emptyList(),
         val sibling: Boolean = false,
+        val tail: Boolean = false,
     )
 
     /** Các mốc của chương `chapterId` trong `music`; mốc hỏng (bài không có trong `tracks`, tên sai) bị bỏ, bước hỏng bị bỏ. */
@@ -46,6 +48,7 @@ object MusicCues {
                 if (cue.has("gainDb")) cue.optDouble("gainDb").takeIf { it.isFinite() } else null,
                 stepsOf(cue),
                 cue.optBoolean("sibling", false),
+                cue.optBoolean("tail", false),
             )
         }
     }
@@ -86,6 +89,18 @@ object MusicCues {
      *  null). Vào giữa chương hay tua thì nhạc cũng ở giữa bài (ui/src/listen/musicBed.ts `align`, soát a26 L8). */
     fun offsetMs(cue: Cue, seconds: Double, durationMs: Long): Long? =
         if (durationMs > 0) ((seconds - cue.start).coerceAtLeast(0.0) * 1000).toLong() % durationMs else null
+
+    /** Mốc `tail` đang ở vòng cuối (ui/src/listen/musicBed.ts `finishTail`): phần còn lại của mốc chưa tới nửa vòng hơn phần còn
+     *  lại của bài (`positionMs` trong vòng hiện tại, `durationMs` độ dài thật; <= 0 = chưa biết) - bài thôi lặp, kết tự nhiên. */
+    fun finalLoop(cue: Cue, seconds: Double, positionMs: Long, durationMs: Long): Boolean {
+        if (!cue.tail || durationMs <= 0) return false
+        val remTrack = (durationMs - positionMs) / 1000.0
+        return cue.end - seconds - remTrack < durationMs / 2000.0
+    }
+
+    /** Mốc kế bắt đầu đúng ở cuối mốc `cue` (bài anh em): bài của `cue` kết sớm hơn mốc thì mốc này vào ngay; null = sau `cue` là
+     *  quãng lặng (bài kết sớm ở `stopAt`). */
+    fun nextAfter(cues: List<Cue>, cue: Cue): Cue? = cues.firstOrNull { it.start == cue.end }
 
     /** Một nhịp dịch âm lượng `volume` về phía `goal`, mỗi nhịp tối đa `perTick`. */
     fun toward(volume: Float, goal: Float, perTick: Float): Float {

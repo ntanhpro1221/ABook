@@ -135,8 +135,8 @@ def test_a_track_that_ends_inside_its_scene_hands_over_to_a_sibling_at_its_natur
     chosen = choose(scenes, _near(tracks), book_key="b", track_info={t["link"]: t for t in tracks}.get)
     head = chosen[0]["link"]
     other = sibling["link"] if head == first["link"] else first["link"]
-    # Bài đầu hết ở giây 200 của nhạc - giữa mảnh 2 (thời gian nhạc chỉ chạy trong các mảnh).
-    at = round(scenes[1]["start"] + 200 - (scenes[0]["end"] - scenes[0]["start"]), 3)
+    # Bài đầu hết ở giây 200 của chương - giữa mảnh 2 (hai mảnh chung một mốc, nhạc chơi liền qua khe giữa chúng).
+    at = round(scenes[0]["start"] + 200, 3)
     assert chosen[1]["siblings"] == [{"at": at, "link": other}]
     # Bài anh em hết ở giây 400: bài đầu đã dùng trong chương, bài lạ quá xa -> lặp, không đổi bài.
     assert [entry["link"] for entry in chosen] == [head, head, other] and "siblings" not in chosen[2]
@@ -151,7 +151,7 @@ def test_a_track_ending_just_before_the_music_changes_rests_instead_of_a_short_s
     em mờ vào vài giây rồi lại bị đổi."""
     monkeypatch.setattr(music_select, "SHORT_TRACK_PENALTY", 0.0)
     scenes = _chapter()[:3]
-    played = sum(scene["end"] - scene["start"] for scene in scenes)
+    played = scenes[2]["end"] - scenes[0]["start"]  # nhạc chơi liền qua khe giữa các mảnh (chung một mốc)
     first = _track("a", 0.25, -0.15, -0.2, played - 10)  # hết 10 s trước khi cảnh hết
     sibling = _track("b", 0.27, -0.18, -0.2, played - 10)
     tracks = [first, sibling]
@@ -238,7 +238,7 @@ def test_steps_and_sibling_cues_travel_through_the_book_package(tmp_path: Path) 
                                                        "scenes": scenes, "tracks": {}})
     cues = music_plan.chapter_cues(music_plan.read_plan(project), 1)
     assert cues == [
-        {"start": 0.0, "end": 250.0, "link": CALM["link"], "key": "1:1", "steps": [{"at": 180.4, "db": 1.8}]},
+        {"start": 0.0, "end": 250.0, "link": CALM["link"], "key": "1:1", "tail": True, "steps": [{"at": 180.4, "db": 1.8}]},
         {"start": 250.0, "end": 360.0, "link": BATTLE["link"], "key": "1:30", "sibling": True,
          "steps": [{"at": 250.0, "db": 1.8}]},
     ]
@@ -252,7 +252,7 @@ def test_steps_and_sibling_cues_travel_through_the_book_package(tmp_path: Path) 
 
     music, _files = music_plan.package(project, [1], file)
     packed = music["chapters"]["1"]
-    assert [cue.get("sibling", False) for cue in packed] == [False, True]
+    assert [(cue.get("sibling", False), cue.get("tail", False)) for cue in packed] == [(False, True), (True, False)]
     assert [cue["steps"] for cue in packed] == [[{"at": 180.4, "db": 1.8}], [{"at": 250.0, "db": 1.8}]]
     # đọc lại như sách đã đóng gói (book.json); bước hỏng bị bỏ, bước xếp theo giây
     packed[0]["steps"] = [{"at": 300, "db": -1}, {"at": "x", "db": 2}, {"at": 180.4, "db": 1.8}]

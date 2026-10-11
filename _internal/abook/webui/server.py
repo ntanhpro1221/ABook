@@ -1855,8 +1855,8 @@ class App:
         if plan is None:
             return {"cues": [], "levelDb": music_plan.DEFAULT_LEVEL_DB, "credits": {}}
         tracks = dict(plan.get("tracks") or {})
-        cues = [dict(cue, src=self._music_src(value, cue["link"]))
-                for cue in self._music_playable(path, music_plan.chapter_cues(plan, chapter_id), tracks)]
+        cues = music_plan.chapter_cues(plan, chapter_id, music_plan.chapter_seconds(path, chapter_id))
+        cues = [dict(cue, src=self._music_src(value, cue["link"])) for cue in self._music_playable(path, cues, tracks)]
         level = plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB)
         music_plan.apply_gain(cues, level, tracks, self.music_track_cached)
         return {"cues": cues, "levelDb": level, "credits": self._music_credits(cues, tracks)}

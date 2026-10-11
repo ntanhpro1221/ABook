@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền (máy tính và điện thoại)
+
+- Bài nhạc kết tự nhiên trước khi bài kế mờ vào, không còn quay lại đoạn dạo đầu; hết chương thì nhạc mờ xong trước khi giọng hết,
+  và sang chương mới không còn nghe sót nhạc của chương trước.
+
 ## [0.4.52] - 2026-10-11
 
 ### Khi có sự cố (máy tính)

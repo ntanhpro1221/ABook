@@ -499,6 +499,7 @@ export function PlayerProvider({
   // không theo mốc của chương; hỏi lại khi đổi cuốn hay khi lựa chọn đổi (bedVersion), không hỏi lại mỗi chương.
   const [playlistBed, setPlaylistBed] = useState<PlaylistBedState | null>(null);
   const playlistAsked = useRef<{ key: string; queue: ReturnType<NonNullable<typeof source.musicPlaylist>> | null } | null>(null);
+  const cuesChapter = useRef("");
   useEffect(() => {
     if (!bed || !track || !source.musicCues) return;
     let cancelled = false;
@@ -506,6 +507,12 @@ export function PlayerProvider({
     const asked = `${book}#${bedVersion}`;
     if (playlistAsked.current?.key !== asked) {
       playlistAsked.current = { key: asked, queue: source.musicPlaylist?.(book) ?? null };
+    }
+    // Sang chương khác: bỏ mốc chương cũ ngay, trước khi hỏi mốc mới - chương mới đã phát từ giây 0 thì không được mở lại bài
+    // đầu hay chơi tiếp bài cuối của chương cũ trong lúc chờ (MIX_QA 3.3). Danh sách phát chạy theo đồng hồ của cuốn: không đụng.
+    if (cuesChapter.current !== bedChapter) {
+      cuesChapter.current = bedChapter;
+      if (!playlistBed) bed.setCues([], undefined, 0);
     }
     const chapterCues = () =>
       source.musicCues!(book, track.chapterId)

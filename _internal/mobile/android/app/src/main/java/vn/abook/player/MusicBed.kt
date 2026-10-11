@@ -49,6 +49,7 @@ object MusicBed {
     private class Bed(val track: String, val player: ExoPlayer, var goal: Float, var perTick: Float, var cue: MusicCues.Cue?) {
         var entering = true
         var fadeStep = 0.001f // âm lượng bớt mỗi nhịp khi mờ đi: bài to và bài nhỏ cùng tắt trong cùng thời gian
+        var early = false // vào sớm: bài trước kết tự nhiên trước đầu mốc này; tới `cue.start` giọng vẫn ở mốc cũ - không chuyển ngược
     }
 
     private val main = Handler(Looper.getMainLooper())
@@ -128,17 +129,42 @@ object MusicBed {
         val seeked = abs(seconds - lastSeconds) > SEEK_JUMP_SECONDS
         lastSeconds = seconds
         playing = isPlaying
-        val cue = MusicCues.at(cues, seconds, failed)
+        var cue = MusicCues.at(cues, seconds, failed)
+        current?.takeIf { it.early }?.let { bed ->
+            // Bài vào sớm giữ chỗ tới đầu mốc của nó; tua thì theo mốc tại chỗ tua như thường.
+            val mine = bed.cue
+            if (!seeked && mine != null && seconds < mine.start) cue = mine else bed.early = false
+        }
         if (cue?.track != current?.track || (seeked && cue != null && current == null)) {
             switchTo(cue?.let { (it.track to Streaming.chapterUri(appContext, book, it.track)) },
                 cue?.let { MusicCues.targetGain(it, seconds, gain) } ?: gain, seconds - (cue?.start ?: 0.0), cue)
         } else if (cue != null) {
             current?.cue = cue // cùng bài sang mốc kề: chơi tiếp, bước âm lượng theo mốc mới
             // Vừa tua trong cùng bài: dời nhạc theo chỗ mới, không chơi tiếp từ chỗ cũ (soát a26 L8).
-            if (seeked) current?.player?.let { player -> MusicCues.offsetMs(cue, seconds, player.duration)?.let(player::seekTo) }
+            if (seeked) current?.player?.let { player ->
+                player.repeatMode = Player.REPEAT_MODE_ONE // vòng cuối của mốc `tail` tính lại theo chỗ mới (finishTail)
+                MusicCues.offsetMs(cue, seconds, player.duration)?.let(player::seekTo)
+            }
         }
         retarget(seconds, seeked)
+        finishTail(appContext, seconds)
         applyPlaying()
+    }
+
+    /** Mốc `tail`: vòng cuối thì thôi lặp ([MusicCues.finalLoop]), bài kết tự nhiên. Bài đã kết trước hết mốc mà mốc kế bắt đầu
+     *  đúng ở đó ([MusicCues.nextAfter]): mốc kế vào ngay, mờ vào như thường, không để quãng im. Không có mốc kế thì im tới hết mốc. */
+    private fun finishTail(appContext: Context, seconds: Double) {
+        val bed = current ?: return
+        val cue = bed.cue?.takeIf { it.tail } ?: return
+        val player = bed.player
+        if (player.repeatMode != Player.REPEAT_MODE_OFF &&
+            MusicCues.finalLoop(cue, seconds, player.currentPosition, player.duration)) {
+            player.repeatMode = Player.REPEAT_MODE_OFF
+        }
+        if (player.playbackState != Player.STATE_ENDED || seconds >= cue.end) return
+        val next = MusicCues.nextAfter(cues, cue)?.takeUnless { it.track == cue.track || isFailed(it.track) } ?: return
+        switchTo(next.track to Streaming.chapterUri(appContext, book, next.track), MusicCues.targetGain(next, seconds, gain), 0.0, next)
+        current?.early = true
     }
 
     /** Mức đích của bài đang kêu đổi (sang bước âm lượng mới): trượt dần [MusicCues.STEP_RAMP_MS]; vừa tua thì vào thẳng mức mới
