@@ -5,8 +5,8 @@ không thể có trong độ dài ấy (ảo giác quen thuộc: "Cảm ơn các
 riêng viết khác chính tả của Whisper - độ khớp trung bình 94%, gần hết là ổn. Nên hàng chờ không liệt kê phẳng: hỏng
 trước, rồi chưa kiểm được, rồi tên riêng có độ khớp thấp; tên riêng khớp cao ẩn đi trừ khi xin xem.
 
-Phán quyết của người nghe ("ổn" / "cần thu lại") lưu ở file riêng cạnh tuỳ chọn, KHÔNG ghi vào SQLite của sách (đó là
-của dây chuyền). Các chương có câu "cần thu lại" là danh sách đúc lại cho ranh giới lô kế tiếp.
+Phán quyết của người nghe ("ổn" / "cần thu lại") lưu ở `reviews.json` trong thư mục dự án (đi theo dự án sang máy khác), KHÔNG
+ghi vào SQLite của sách (đó là của dây chuyền). Các chương có câu "cần thu lại" là danh sách đúc lại cho ranh giới lô kế tiếp.
 """
 from __future__ import annotations
 
@@ -21,13 +21,20 @@ from typing import Any
 from . import store
 
 LOW_SIMILARITY = 0.8
-KINDS = ("failed", "unverified", "name-low", "name")
+KINDS = ("failed", "unverified", "name-low", "text-low", "name", "text")
+# Lệch ít (tên hay chữ thường): thường vẫn ổn - không vào hàng chờ trừ khi mở "cả câu lệch ít".
+MINOR_KINDS = ("name", "text")
 REASONS = {
     "failed": "Thu âm hỏng sau mọi lần thử - chương này chưa xuất được",
     "unverified": "Máy nghe lại không kiểm được (câu quá ngắn) - nên nghe bằng tai",
     "name-low": "Tên riêng đọc khác nhiều so với chữ viết",
     "name": "Tên riêng đọc hơi khác chữ viết - thường vẫn ổn",
+    "text-low": "Máy nghe ra khác nhiều so với chữ viết",
+    "text": "Máy nghe ra hơi khác chữ viết - thường vẫn ổn",
 }
+# Mã cảnh báo nói lệch nằm ở TÊN RIÊNG (asr.py: Whisper viết tên ngoại bằng chữ Latin dù đọc đúng). Mã khác (lệch chữ thường
+# sau mọi lần sửa, nghe chưa tự nhiên...) không được gọi là "tên riêng" (soát UX a24: nhãn ấy gắn cả câu không có tên nào).
+_NAME_CODES = ("ASR_LOCKED_NAME_ANCHOR_MISMATCH", "ASR_LOCKED_NAME_ANCHOR_REVIEW")
 
 
 UNNAMED_LABEL = "Vai phụ không tên"
@@ -61,9 +68,10 @@ def _kind(status: str, code: str, similarity: float | None) -> str:
         return "failed"
     if code == "ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE":
         return "unverified"
+    about_name = any(name_code in code.split("|") for name_code in _NAME_CODES)
     if similarity is not None and similarity < LOW_SIMILARITY:
-        return "name-low"
-    return "name"
+        return "name-low" if about_name else "text-low"
+    return "name" if about_name else "text"
 
 
 def review_items(project_root: Path) -> list[dict[str, Any]]:
@@ -127,70 +135,52 @@ def _pending_spoken(wish: dict[str, Any] | None, row: Any) -> str | None:
     return None if spoken == applied else spoken
 
 
-def reviews_path() -> Path:
-    from .library import preferences_path
-
-    return preferences_path().with_name("reviews.json")
+REVIEWS_NAME = "reviews.json"
 
 
 class Reviews:
-    """Phán quyết theo `stable_id` của câu (bền qua các lần mở lại sách)."""
+    """Phán quyết "Cần nghe lại" theo `stable_id` của câu, nằm trong CHÍNH thư mục dự án (`reviews.json`) - đi theo dự án khi
+    gói `.abookproj` (projectfile mang mọi file của thư mục), mở ở máy hay hồ sơ khác vẫn còn (soát UX a24, A8: trước nằm ở hồ
+    sơ app, mở dự án ở máy khác thì mất cả ba phán quyết). Một khoá cho mọi lần đọc-sửa-ghi trong tiến trình này."""
 
-    def __init__(self, path: Path | None = None) -> None:
-        self.path = path or reviews_path()
+    def __init__(self) -> None:
         self._lock = threading.Lock()
+
+    @staticmethod
+    def path(project_root: Path) -> Path:
+        return Path(project_root) / REVIEWS_NAME
+
+    def _read(self, project_root: Path) -> dict[str, Any]:
         try:
-            self._data: dict[str, Any] = json.loads(self.path.read_text(encoding="utf-8"))
+            data = json.loads(self.path(project_root).read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            self._data = {}
+            return {}
+        return data if isinstance(data, dict) else {}
 
-    def get(self, book: str) -> dict[str, Any]:
+    def get(self, project_root: Path) -> dict[str, Any]:
         with self._lock:
-            return json.loads(json.dumps(self._data.get(book) or {}))
+            return self._read(project_root)
 
-    def set(self, book: str, stable_id: str, verdict: str | None, chapter_id: int) -> None:
+    def set(self, project_root: Path, stable_id: str, verdict: str | None, chapter_id: int) -> None:
         if verdict not in (None, "ok", "redo"):
             raise ValueError("verdict")
         with self._lock:
-            entry = self._data.setdefault(book, {})
+            entry = self._read(project_root)
             if verdict is None:
-                entry.pop(stable_id, None)
+                if entry.pop(stable_id, None) is None:
+                    return
             else:
                 entry[stable_id] = {"verdict": verdict, "chapterId": int(chapter_id), "at": time.time()}
-            self._save()
-
-    def books(self) -> list[str]:
-        with self._lock:
-            return list(self._data)
-
-    def rename_books(self, renamed: dict[str, str]) -> None:
-        """Đổi khoá sách ({mã cũ: mã mới}, library.legacy_ids). Hai khoá về cùng một cuốn: phán quyết mới hơn thắng."""
-        with self._lock:
-            changed = False
-            for old, new in renamed.items():
-                if old == new or old not in self._data:
-                    continue
-                moved = self._data.pop(old) or {}
-                target = self._data.setdefault(new, {})
-                for stable_id, verdict in moved.items():
-                    current = target.get(stable_id)
-                    if current is None or float((verdict or {}).get("at") or 0) > float(current.get("at") or 0):
-                        target[stable_id] = verdict
-                changed = True
-            if changed:
-                self._save()
-
-    def _save(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(self._data, ensure_ascii=False, indent=1), encoding="utf-8")
-        os.replace(temporary, self.path)
+            path = self.path(project_root)
+            temporary = path.with_suffix(".tmp")
+            temporary.write_bytes(json.dumps(entry, ensure_ascii=False, indent=1).encode("utf-8"))
+            os.replace(temporary, path)
 
 
 def awaiting(item: dict[str, Any], verdicts: dict[str, Any]) -> bool:
     """Câu còn chờ người nghe ở "Cần nghe lại": đáng lo (không phải tên khớp cao), chưa chấm, chưa sửa chữ đem đọc. Hộp việc
     (thẻ "Bản thu lỗi", work_items.py) đếm đúng những câu này - soát UX a23: chấm hết mà thẻ vẫn "Chưa nghe"."""
-    return (item["kind"] != "name" and not (verdicts.get(item["stableId"]) or {}).get("verdict")
+    return (item["kind"] not in MINOR_KINDS and not (verdicts.get(item["stableId"]) or {}).get("verdict")
             and item["pendingSpoken"] is None)
 
 
@@ -204,5 +194,5 @@ def review_view(project_root: Path, verdicts: dict[str, Any], *, include_minor: 
         if awaiting(item, verdicts):
             pending += 1
     redo = sorted({int(value["chapterId"]) for value in verdicts.values() if value.get("verdict") == "redo"})
-    shown = items if include_minor else [item for item in items if item["kind"] != "name" or item["verdict"]]
+    shown = items if include_minor else [item for item in items if item["kind"] not in MINOR_KINDS or item["verdict"]]
     return {"counts": counts, "pending": pending, "redoChapters": redo, "items": shown[:600]}

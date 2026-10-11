@@ -99,3 +99,16 @@ def test_a_broken_or_hostile_epub_says_why_instead_of_finding_nothing(tmp_path: 
     scan = actions.scan_inputs([str(broken), str(hostile)], epub_root=tmp_path / "lib")
     assert scan["files"] == [] and len(scan["errors"]) == 2
     assert "hong.epub" in scan["errors"][0] and "entity" in scan["errors"][1]
+
+
+def test_credit_lines_of_an_epub_are_offered_once_not_repeated_as_notes(tmp_path: Path) -> None:
+    """Soát UX a24, A1: dòng ghi công của EPUB đã nằm trong khung gợi ý (credits / tailCredits từng chương) - không lặp thành một
+    ghi chú cho MỖI dòng ở cuối trang quét (sách trăm chương là trăm dòng)."""
+    tail = CH2.replace("<script>bad()</script>", "<p>Nguồn: truyenfull.vn</p><p>Hết chương 2</p>")
+    epub = tmp_path / "ghi_cong.epub"
+    _epub(epub)
+    with zipfile.ZipFile(epub, "a") as book:
+        book.writestr("OEBPS/text/ch 2.xhtml", tail)
+    scan = actions.scan_inputs([str(epub)], epub_root=tmp_path / "lib")
+    assert scan["files"][1]["tailCredits"], "khung gợi ý vẫn có các dòng ấy"
+    assert not [note for note in scan["notes"] if "ghi công" in note], scan["notes"]

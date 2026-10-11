@@ -9,6 +9,7 @@ SQLite mở chỉ đọc như mọi phần của webui.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Callable
 from contextlib import closing
 from pathlib import Path
 from typing import Any
@@ -94,6 +95,24 @@ def _key(name: str) -> str:
     return " ".join(str(name).strip().casefold().split()).upper()
 
 
+def _once(labels: list[str]) -> list[str]:
+    """Mỗi tên một lần, không kể hoa thường, giữ thứ tự."""
+    seen: set[str] = set()
+    return [label for label in labels if not (label.casefold() in seen or seen.add(label.casefold()))]
+
+
+def _shown_names(connection: Any, project_root: Path) -> Callable[[str], str]:
+    """Tên một nhân vật như hàng của nó ở tab Nhân vật (store.cast): tên người nghe đã "Đổi tên", không thì tên sổ viết
+    (`display_name`) - không phải khoá chuẩn viết HOA rồi viết hoa từng chữ ("Áo Choàng Đen", soát UX a24)."""
+    renamed = renames.load(project_root)
+    display = {str(row[0]): str(row[1] or "") for row in connection.execute("SELECT canonical_name, display_name FROM characters")}
+
+    def shown(who: str) -> str:
+        return renamed.get(renames.name_key(who)) or speaker_label(display.get(who) or who)
+
+    return shown
+
+
 def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
     from ..character_registry import listener_voice_choice
     from ..listener_overrides import narrated_voices
@@ -105,11 +124,8 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
         return narrator_choices(project_root)
     renamed = renames.load(project_root)
 
-    def shown(who: str) -> str:
-        """Tên người nghe đã "Đổi tên" (tab Nhân vật) thay tên gốc; khoá `value` giữ nguyên."""
-        return renamed.get(renames.name_key(who)) or speaker_label(who)
-
     with closing(store.connect(project_root)) as connection:
+        shown = _shown_names(connection, project_root)  # khoá `value` giữ nguyên
         # Giọng người kể ĐANG đọc (người nghe có thể đã đổi) cũng không dành cho nhân vật.
         voices = narrated_voices(connection, store.book_voices(project_root))
         not_for_characters = {str(voices.get("narrator_voice") or ""), *map(str, voices.get("other_narrators", ()))}
@@ -159,6 +175,11 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
     pending = _pending_request(project_root, key, suggested,
                                float(book_row["updated_at"] or 0) if book_row is not None else 0.0)
     mine = chapters.get(key, set())
+    # Ý muốn chưa áp cũng giữ giọng (soát UX a24, A2): người khác đã chọn hẳn giọng này thì cũng là "cùng giọng"; giọng người
+    # kể đang chờ đổi sang thì nhân vật không chọn được (POST /voice từ chối đúng như vậy - store.voice_request_problem).
+    wished = store.wished_presets(project_root)
+    for name, people in wished.items():
+        presets_of[name].update(who for who in people if who != "NARRATOR")
     # Máy đọc khác chỉ chọn được khi máy này đã tải giọng của nó (mô-đun tải thêm); chưa tải thì hộp mời tải.
     engines = sorted({str(voice["engine"]) for voice in castable_engine_voices()})
     installed = {ENGINE_VIENEU: True, **{engine: engine_installed(engine) for engine in engines}}
@@ -194,9 +215,12 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
                 "preview": preview_file(name) is not None,
                 "current": name == current,
                 "pending": pending is not None and pending["preset"] == name,
-                "suggested": suggested.get(gender) == name,
+                # Giọng người kể đang chờ đổi sang thì không chọn được - không gắn "Máy gợi ý" lên nó.
+                "suggested": suggested.get(gender) == name and "NARRATOR" not in wished.get(name, ()),
                 "sharedWith": shared[:4],
                 "otherUsers": len(others) - min(len(shared), 4),
+                **({"takenBy": ["Người kể"], "takenNote": "Bạn đã chọn giọng này cho người kể (chờ áp dụng) - nhân vật cần"
+                    " giọng khác"} if "NARRATOR" in wished.get(name, ()) and name != current else {}),
             })
     return {
         "character": {
@@ -232,8 +256,8 @@ def narrator_choices(project_root: Path) -> dict[str, Any] | None:
     from ..voice_catalog import ENGINE_LABELS, ENGINE_VIENEU, narrator_presets
     from .reading_preview import PreviewError, character_line, line_text
 
-    renamed = renames.load(project_root)
     with closing(store.connect(project_root)) as connection:
+        shown = _shown_names(connection, project_root)
         profile = narrator_profile(connection)
         narrator = connection.execute("SELECT id FROM characters WHERE canonical_name=?", (NARRATOR,)).fetchone()
         if profile is None or narrator is None:
@@ -252,6 +276,10 @@ def narrator_choices(project_root: Path) -> dict[str, Any] | None:
         book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
         each, measured = store.seconds_per_line(connection)
     pending = _pending_request(project_root, NARRATOR, {}, float(book_row["updated_at"] or 0) if book_row is not None else 0.0)
+    # Nhân vật đã chọn hẳn giọng ấy mà chưa áp cũng giữ nó (soát UX a24, A2) - nói rõ là đang chờ.
+    waiting = {name: [who for who in people if who != NARRATOR and who not in held.get(name, ())]
+               for name, people in store.wished_presets(project_root).items()}
+
     entries = []
     for preset in narrator_presets():
         name = str(preset["name"])
@@ -265,8 +293,9 @@ def narrator_choices(project_root: Path) -> dict[str, Any] | None:
             "current": name == current,
             "pending": pending is not None and pending["preset"] == name,
             "suggested": False, "sharedWith": [], "otherUsers": 0,
-            "takenBy": sorted((renamed.get(renames.name_key(who)) or speaker_label(who) for who in held.get(name, ())),
-                              key=str.casefold),
+            # Hai khoá cùng một tên hiện ("Lính gác 1" ở hai chương, "lính gác 1" của vai phụ một cảnh) chỉ ghi một lần.
+            "takenBy": _once(sorted((shown(who) for who in held.get(name, ())), key=str.casefold)
+                             + sorted((f"{shown(who)} (chờ áp dụng)" for who in waiting.get(name, ())), key=str.casefold)),
         })
     return {
         "character": {"value": NARRATOR, "label": "Người kể", "gender": next(

@@ -22,6 +22,7 @@ import {
   lineItems,
   nameItems,
   precastInvites,
+  precastKeys,
   PRECAST_STEPS,
   TOP_PEOPLE,
   type PrecastStep,
@@ -51,8 +52,7 @@ export function usePrecastKeys(bookId: string, enabled: boolean): Set<string> | 
   const { data: work } = useWork(bookId, enabled);
   return useMemo(() => {
     if (!enabled || !view || !work) return undefined;
-    const shown = [...castItems(work.items), ...nameItems(work.items), ...lineItems(work.items, view.upcoming.map((chapter) => chapter.id))];
-    return new Set(shown.map((item) => item.key));
+    return precastKeys(work.items, view.upcoming.map((chapter) => chapter.id));
   }, [enabled, view, work]);
 }
 

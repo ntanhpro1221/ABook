@@ -20,10 +20,13 @@ from abook.webui.actions import FakeRunner
 from abook.webui.library import Preferences, book_id, legacy_book_id
 from abook.webui.listening import Listening, default_record_id
 from abook.webui.remote_books import _folder
-from abook.webui.reviews import Reviews
 from abook.webui.server import App, Server
 from abook.webui.sync import Devices, SyncApp, SyncServer
-from tests.test_webui_listen_and_sync import _request, _sync_request, library  # noqa: F401 - library là fixture
+from tests.test_webui_listen_and_sync import (  # noqa: F401 - library là fixture
+    _request,
+    _sync_request,
+    library,
+)
 
 
 def _paired(port: int, devices: Devices) -> str:
@@ -82,20 +85,18 @@ def test_what_was_saved_under_old_ids_moves_to_the_new_ones_once(library) -> Non
         "version": 2, "records": {record: {"name": "Mặc định", "createdAt": 1.0, "state": state}},
         "links": {old: {"records": [record], "active": record}}, "deleted": {}}), encoding="utf-8")
     lib.preferences.remember_position(old, 1, 42.0, 100.0)
-    Reviews(folder / "reviews.json").set(old, "s-1", "redo", 1)
 
     app = App(preferences=lib.preferences, runner=FakeRunner(), token="t")
 
     assert app.listening.books() == [new] and app.listen_book(new)["state"]["last"]["seconds"] == 42.0
     assert [item["id"] for item in app.listening.records(new)] == [record], "hồ sơ giữ mã: điện thoại gộp theo mã hồ sơ"
     assert list(app.preferences.get()["positions"]) == [new]
-    assert app.reviews.books() == [new] and app.reviews.get(new)["s-1"]["verdict"] == "redo"
-    for name in ("listening.json", "preferences.json", "reviews.json"):
+    for name in ("listening.json", "preferences.json"):
         assert old not in (folder / name).read_text(encoding="utf-8")
         assert old in (folder / f"{name}.pre-ids.bak").read_text(encoding="utf-8"), "bản trước khi đổi còn nguyên"
 
     again = App(preferences=Preferences(lib.preferences.path), runner=FakeRunner(), token="t")
-    assert again.listening.books() == [new] and again.reviews.books() == [new], "mở lại: không còn gì để đổi"
+    assert again.listening.books() == [new], "mở lại: không còn gì để đổi"
 
 
 def test_an_old_link_opens_the_book_under_its_new_id(library) -> None:  # noqa: F811 - fixture

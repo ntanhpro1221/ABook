@@ -35,8 +35,9 @@ export interface BookSummary {
   /** Sách đã xong: số yêu cầu sửa của người nghe ghi sau lần chạy cuối - chờ nút "Áp dụng" (store.pending_changes). */
   pendingChanges?: number;
   /** `analyzer`: model đã phân tích cuốn này (book_settings.json), "" ở sách không ghi. */
-  settings: { profile: string; profileLabel: string; narrator: string; analyzer?: string };
-  chapters: { total: number; completed: number; missingAudio?: number; failed: number; working: number };
+  settings: { profile: string; profileLabel: string; narrator: string; analyzer?: string; /** Giọng kể đã chọn, chưa vào sách. */ narratorPending?: string };
+  /** `completed`: chương nghe được, kể cả `redo` - chương chờ thu lại theo sửa của người nghe (bản cũ còn nghe được). */
+  chapters: { total: number; completed: number; redo?: number; missingAudio?: number; failed: number; working: number };
   segments: { total: number; analyzed: number; pending?: number; recorded: number; finished: number; failed: number };
   progress: { overall: number; analysis: number; synthesis: number };
   audioSeconds: number;
@@ -100,6 +101,8 @@ export interface Chapter {
   };
   seconds: number;
   playable: boolean;
+  /** Chương đã xong mà người nghe vừa sửa: chờ thu lại những câu ấy - không phải lỗi, bản cũ vẫn nghe được (`playable`). */
+  redo?: boolean;
   startedAt: number | null;
   completedAt: number | null;
   lastError: string;

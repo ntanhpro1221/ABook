@@ -19,10 +19,18 @@ export interface WorkItemLike {
   affected: number;
   doubt: number;
   requested?: string | null;
+  redoOnly?: boolean | null;
   chapters?: number[];
 }
 
-const open = <T extends WorkItemLike>(items: T[]) => items.filter((item) => !item.requested);
+/** Việc cần làm: chưa quyết, và quyết thì có tác dụng ngay - không tính việc đã quyết (chờ áp dụng) hay việc chỉ áp khi làm lại
+ *  phân tích - thẻ người kể của đoạn đã phân tích xong (soát UX a23: lúc chờ duyệt "Việc cần duyệt 6" toàn là những thẻ ấy). Cùng
+ *  phép đếm với work_items.open_count - con số điện thoại nhận. */
+export function isOpenWork(item: Pick<WorkItemLike, "requested" | "redoOnly">): boolean {
+  return !item.requested && !item.redoOnly;
+}
+
+const open = <T extends WorkItemLike>(items: T[]) => items.filter(isOpenWork);
 
 /** (a) Việc về người và giọng: nam hay nữ, một người hai tên, hai người chung giọng. Giữ thứ tự lợi / lần bấm của hộp việc. */
 export function castItems<T extends WorkItemLike>(items: T[]): T[] {
@@ -40,6 +48,12 @@ export function nameItems<T extends WorkItemLike>(items: T[]): T[] {
 export function lineItems<T extends WorkItemLike>(items: T[], upcoming: number[]): T[] {
   const ahead = new Set(upcoming);
   return open(items).filter((item) => LINE_KINDS.includes(item.kind) && (item.chapters ?? []).some((id) => ahead.has(id)));
+}
+
+/** Mã các thẻ việc nằm trong màn duyệt (ba bước trên). Tab "Duyệt trước khi thu" đếm chúng, "Việc cần duyệt" đếm phần còn lại -
+ *  cộng hai nhãn đúng bằng số việc điện thoại nhận (soát UX a24, A7: điện thoại báo 29, máy tính không đâu có 29). */
+export function precastKeys(items: WorkItemLike[], upcoming: number[]): Set<string> {
+  return new Set([...castItems(items), ...nameItems(items), ...lineItems(items, upcoming)].map((item) => item.key));
 }
 
 export function lineCount(items: WorkItemLike[]): number {

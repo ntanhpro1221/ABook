@@ -74,8 +74,8 @@ def test_the_same_chapter_gives_the_same_answer_in_any_order() -> None:
     assert snap_map(lines) == snap_map(list(reversed(lines))) == {"Toko": "Tooko", "Kim Jae Hun": "Kim Jaehun"}
 
 
-def _chapter_db(tmp_path: Path, chapters: list[list[tuple[str, str]]]) -> ProjectDB:
-    db = ProjectDB(tmp_path / "snap.sqlite3")
+def _chapter_db(tmp_path: Path, chapters: list[list[tuple[str, str]]], file_name: str = "snap.sqlite3") -> ProjectDB:
+    db = ProjectDB(tmp_path / file_name)
     db.initialize_book(title="Book", project_root=tmp_path, settings={}, settings_hash="settings",
                        input_manifest_hash="manifest")
     ids = db.ensure_chapters([
@@ -116,7 +116,7 @@ def test_the_registry_never_sees_the_misspelt_name(tmp_path: Path) -> None:
     assert "Toko" in {str(row["speaker"]) for row in rows if str(row["stable_id"]).startswith("c2")}
     events = [row for row in db.list_events() if str(row["code"]) == "SPEAKER_LABEL_SNAPPED_TO_TEXT"]
     assert [json.loads(str(row["details_json"])) for row in events] == [
-        {"chapter_index": 1, "label": "Toko", "name": "Tooko", "lines": 2}
+        {"chapter_index": 1, "label": "Toko", "name": "Tooko", "lines": 2, "stable_ids": ["c1s2", "c1s5"]}
     ]
     assert any("Toko" in line and "Tooko" in line for line in said)
 
@@ -135,3 +135,60 @@ def test_a_listener_alias_keeps_its_label(tmp_path: Path) -> None:
 
     assert not [row for row in db.list_events() if str(row["code"]) == "SPEAKER_LABEL_SNAPPED_TO_TEXT"]
     assert {str(row["speaker"]) for row in db.list_segments()} == {"NARRATOR", "Mai"}
+
+
+def _snapped_book(tmp_path: Path, misspelt: int) -> ProjectDB:
+    """Sổ dự án thật (project.sqlite3 - Studio đọc nó) có `misspelt` câu model ghi "Toko" ở chương chỉ viết "Tooko"."""
+    lines = [("NARRATOR", "Tooko bước vào lớp."), ("Tooko", '"Hôm nay học gì?"')]
+    lines += [("Toko", f'"Câu {number}."') for number in range(misspelt)]
+    db = _chapter_db(tmp_path, [lines], "project.sqlite3")
+    build_registry_and_cast(db, build_settings(), lambda _message: None)
+    return db
+
+
+def test_the_snap_reads_as_a_line_in_the_story_log(tmp_path: Path) -> None:
+    """Soát UX a24 (SNAP): việc đổi nhãn chỉ hiện mã thô ở "Chi tiết kỹ thuật" - "Diễn biến" phải nói bằng lời."""
+    from abook.webui import store
+
+    _snapped_book(tmp_path, 6)
+
+    texts = [item["text"] for item in store.activity(tmp_path) if item["kind"] == "event"]
+    assert any("máy viết “Toko”, sách chỉ viết “Tooko” - 6 câu về Tooko" in text for text in texts)
+
+
+def test_a_big_snap_asks_once_whether_it_is_one_person(tmp_path: Path) -> None:
+    """Thẻ nhẹ "Việc cần duyệt": đúng (đóng thẻ) hay là người khác (các câu ấy về nhãn cũ, thành người riêng)."""
+    from abook.listener_overrides import read_overrides, request_speakers, speaker_requests
+    from abook.webui.work_items import open_count, work_items
+
+    _snapped_book(tmp_path, 6)
+    view = work_items(tmp_path)
+    cards = [item for item in view["items"] if item["kind"] == "snap"]
+    assert len(cards) == 1
+    card = cards[0]
+    assert card["currentValue"] == "Tooko" and card["newPerson"] == "Toko"
+    assert card["keepLabel"] == "Đúng, cùng một người" and card["newPersonLabel"] == "Không, là người khác"
+    # Chỉ những câu máy đã đổi - câu sách vẫn ghi Tooko (c1s2) không thuộc thẻ.
+    assert sorted(line["stableId"] for line in card["lines"]) == [f"c1s{seq}" for seq in range(3, 9)]
+    assert card["affected"] == 6
+    assert open_count(view) >= 1
+    lines = [(line["stableId"], line["textSha256"]) for line in card["lines"]]
+
+    # "Không, là người khác": các câu về "Toko" như người mới - đúng cơ chế "Người khác…" của thẻ ai nói câu này.
+    request_speakers(tmp_path, lines, "Toko", now=1.0, new_gender="unknown")
+    assert {entry["speaker"] for entry in speaker_requests(read_overrides(tmp_path))} == {"Toko"}
+    again = [item for item in work_items(tmp_path)["items"] if item["kind"] == "snap"]
+    assert again and again[0]["requested"] == "Toko"
+
+    # "Đúng, cùng một người": giữ Tooko - thẻ đóng.
+    request_speakers(tmp_path, lines, "Tooko", now=2.0)
+    assert not [item for item in work_items(tmp_path)["items"] if item["kind"] == "snap"]
+
+
+def test_a_small_snap_does_not_ask(tmp_path: Path) -> None:
+    """Dưới SNAP_MIN_LINES câu: chỉ một dòng ở "Diễn biến", không thẻ."""
+    from abook.webui.work_items import SNAP_MIN_LINES, work_items
+
+    _snapped_book(tmp_path, SNAP_MIN_LINES - 1)
+
+    assert not [item for item in work_items(tmp_path)["items"] if item["kind"] == "snap"]
