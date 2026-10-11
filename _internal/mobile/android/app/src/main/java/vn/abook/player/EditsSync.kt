@@ -211,13 +211,18 @@ object EditsSync {
 
     /**
      * Câu báo xung đột cho người GỬI (webui/edits_inbox.py `sender_label`): thứ gì đã đổi ở máy giữ sách `host` sau lần gửi trước, và bản vừa
-     * gửi đã thay vào. `label` của máy tính là câu cho CHỦ máy ấy ("máy tính đã đặt...") - ở đây nó không đúng góc nhìn.
+     * gửi đã thay vào - hay (`held`: ý muốn cũ hơn thay đổi của máy kia) bản vừa gửi chờ chủ máy ấy chọn. `label` của máy tính là câu cho
+     * CHỦ máy ấy ("máy tính đã đặt...") - ở đây nó không đúng góc nhìn.
      */
     internal fun senderLabel(item: JSONObject, host: String): String {
         val where = if (host.isNotEmpty()) "máy kia ($host)" else "máy kia"
         val what = text(item, "what")
         val lost = text(item, "lost")
         val kept = text(item, "kept")
+        if (item.optBoolean("held") && what.isNotEmpty()) {
+            val changed = if (lost.isNotEmpty()) "đã đổi thành $lost" else "đã đổi khác"
+            return "$what: $where $changed sau khi bạn sửa - bản của bạn${if (kept.isNotEmpty()) " $kept" else ""} chờ chủ máy chọn"
+        }
         return when {
             lost.isNotEmpty() && kept.isNotEmpty() -> "$what: $where đã đổi thành $lost trước đó, bản của bạn $kept đã thay vào"
             what.isNotEmpty() -> "$what: $where đã đổi khác trước đó, bản của bạn đã thay vào"

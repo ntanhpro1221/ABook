@@ -519,9 +519,13 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun unpair(call: PluginCall) {
-        prefs.getString("host", null)?.takeIf { it.startsWith("bt:") }?.let { BluetoothLink.forget(it) }
-        prefs.edit().clear().apply()
-        call.resolve()
+        // Máy tính chính thu hồi mã của điện thoại này (soát a27 lỗi 5): báo trước khi quên địa chỉ - máy tính tắt thì chỉ chờ vài giây.
+        Thread({
+            runCatching { SyncLink.tellUnpaired(context, SyncLink.base(context), SyncLink.token(context)) }
+            prefs.getString("host", null)?.takeIf { it.startsWith("bt:") }?.let { BluetoothLink.forget(it) }
+            prefs.edit().clear().apply()
+            call.resolve()
+        }, "sync-unpair").start()
     }
 
     /** Thông báo Studio (StudioAlerts.kt): công tắc, và Android có cho app đăng thông báo không. */
@@ -931,7 +935,12 @@ class LibraryPlugin : Plugin() {
         val method = call.getString("method") ?: "GET"
         val path = call.getString("path") ?: throw IllegalArgumentException("thiếu đường dẫn")
         val body = call.getObject("body")?.let { JSONObject(it.toString()) }
-        if (method.uppercase() == "GET") fetchStreamedScript(path)
+        if (method.uppercase() == "GET" && !fetchStreamedScript(path)) {
+            // Chữ chương chưa về máy mà máy giữ sách không trả lời: nói đúng thế, không phải "không có chương này" (soát a27 lỗi 12).
+            val error = JSONObject().put("error", "Máy giữ sách này không trả lời (tắt hay mất mạng). Chữ chương này chưa có trên máy này")
+            call.resolve(JSObject().put("status", 503).put("body", JSObject.fromJSONObject(error)))
+            return@background
+        }
         val (status, reply) = LocalStudio.handle(method, path, body)
         if (status == 200 && method.uppercase() != "GET") {
             Regex("/api/books/([A-Za-z0-9_-]+)").find(path)?.groupValues?.get(1)?.let { id ->
@@ -943,16 +952,13 @@ class LibraryPlugin : Plugin() {
         call.resolve(if (reply is JSONObject) answer.put("body", JSObject.fromJSONObject(reply)) else answer.put("body", JSONObject.NULL))
     }
 
-    /** `GET /api/books/<mã>/chapters/<n>/script` của cuốn nghe thẳng: chữ đọc theo của chương chưa về máy thì lấy từ máy giữ sách trước (như [readText]). */
-    private fun fetchStreamedScript(path: String) {
-        val match = Regex("/api/books/([A-Za-z0-9_-]+)/chapters/([0-9]+)/script").matchEntire(path.substringBefore('?')) ?: return
+    /** `GET /api/books/<mã>/chapters/<n>/script` của cuốn nghe thẳng: chữ đọc theo của chương chưa về máy thì lấy từ máy giữ sách trước (như [readText]).
+     *  false: cần lấy mà máy giữ sách không trả lời. */
+    private fun fetchStreamedScript(path: String): Boolean {
+        val match = Regex("/api/books/([A-Za-z0-9_-]+)/chapters/([0-9]+)/script").matchEntire(path.substringBefore('?')) ?: return true
         val id = match.groupValues[1]
-        if (Store.rawManifest(id) != null) return
-        val chapters = Store.streamManifest(id)?.optJSONArray("chapters") ?: return
-        val script = (0 until chapters.length()).mapNotNull { chapters.optJSONObject(it) }
-            .firstOrNull { (it.opt("id") as? Number)?.toLong() == match.groupValues[2].toLong() }?.optString("script").orEmpty()
-        if (script.isBlank() || script == "null" || runCatching { Store.file(id, script).isFile }.getOrDefault(true)) return
-        Streaming.fetchSmall(context, id, script)
+        val script = Streaming.missingScript(id, match.groupValues[2].toLong()) ?: return true
+        return Streaming.fetchSmall(context, id, script) != null
     }
 
     /**

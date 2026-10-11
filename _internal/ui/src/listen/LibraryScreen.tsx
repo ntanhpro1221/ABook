@@ -31,7 +31,18 @@ export function bookStatusText(book: ListenBook, speaks = false): string {
 
 /** "Trên máy tính" (điện thoại nghe máy tính đã ghép) hay "Trên <tên máy>" (máy tính nghe máy tính khác). */
 export function remotePlace(book: ListenBook): string {
-  return typeof book.remote === "object" && book.remote ? `Trên ${book.remote.computer || "máy khác"}` : "Trên máy tính";
+  return `Trên ${remoteName(book)}`;
+}
+
+/** Tên máy đang giữ cuốn nghe thẳng: tên máy tính đã ghép, "máy khác" khi chưa biết tên, "máy tính" khi điện thoại nghe máy tính. */
+export function remoteName(book: ListenBook): string {
+  return typeof book.remote === "object" && book.remote ? book.remote.computer || "máy khác" : "máy tính";
+}
+
+/** Cuốn nghe thẳng chưa xong: chương còn lại đang ở máy kia và tự hiện khi xong - không phải "file cũ, mở bản mới hơn" (soát a27 lỗi 7). */
+export function remoteUnfinishedLine(book: ListenBook): string {
+  const name = remoteName(book);
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)} còn đang làm, chương mới hiện ở đây khi xong`;
 }
 
 function progressText(book: ListenBook, speaks: boolean): string {
@@ -60,7 +71,8 @@ export function usePlayListenBook() {
   const source = useSource();
   const player = usePlayer();
   return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {
-    // Cuốn đang ở trình phát: tiếp tục đúng chỗ đang phát, không nạp lại (nạp lại là lùi về điểm lưu gần nhất).
+    // Cuốn đang ở trình phát: tiếp tục đúng chỗ đang phát, không nạp lại (nạp lại là lùi về điểm lưu gần nhất). player.resume hỏi lại chỗ nghe
+    // trước: thiết bị khác nghe xa hơn thì tới chỗ ấy (soát a27 lỗi 2).
     if (chapterId === undefined && player.track?.bookId === book.id) {
       player.resume();
       return;
@@ -83,11 +95,12 @@ export function usePlayListenBook() {
 /** Chỗ nghe tiếp của một cuốn (model.resumeTarget) - thẻ "Đang nghe dở", nút chính của trang sách nói cùng một chỗ, và đúng chỗ bấm sẽ phát.
  *  Cuốn đang trong trình phát mà đang dừng: chỗ trình phát đứng (giây đổi thì vẽ lại; đang phát thì không theo từng giây). */
 export function useResumeTarget(book: ListenBook | undefined, chapters: ListenChapter[]): ReturnType<typeof resumeTarget> {
-  const { track, playing } = usePlayer();
+  const { track, playing, positionStamp } = usePlayer();
   const here = Boolean(book && track?.bookId === book.id);
   const second = useClock((time) => (here && !playing ? Math.floor(time) : -1));
   if (!book) return null;
-  return resumeTarget(book, chapters, here && track ? { chapterId: track.chapterId, seconds: Math.max(0, second) } : null);
+  // Thiết bị khác nghe xa hơn sau lần cuối máy này lưu: nút nói chỗ của máy kia (resumeTarget), và bấm thì trình phát tới đúng chỗ ấy (player.resume).
+  return resumeTarget(book, chapters, here && track ? { chapterId: track.chapterId, seconds: Math.max(0, second) } : null, positionStamp());
 }
 
 /** Mở lại app: thanh phát có sẵn cuốn đang nghe dở (đang dừng) - bấm Space là nghe tiếp, khỏi đi tìm. */
@@ -161,6 +174,8 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
           >
             <Laptop className="size-3 shrink-0" />
             <ShortName name={typeof book.remote === "object" && book.remote?.computer ? book.remote.computer : "Máy tính"} short={11} className="truncate" />
+            {/* Đã tải đủ về máy này: nghe được cả khi máy kia tắt (soát a27 lỗi 8). */}
+            {typeof book.remote === "object" && book.remote.downloaded && <span className="shrink-0">· Đã tải</span>}
           </span>
         )}
       </div>
@@ -246,8 +261,24 @@ export function useNextVolume(bookId: string | undefined, title: string | undefi
   );
 }
 
-function UpcomingCard({ book, onOpen }: { book: ListenBook; onOpen?: (book: ListenBook) => void }) {
+/** Dòng dưới tên một cuốn "sắp có". Chưa có chương nghe được không có nghĩa là đang làm: sách dừng trước chương đầu, hay audio bị dời chỗ
+ *  (soát UX 29-09). Cuốn của máy khác thì việc làm nằm ở máy ấy: nói tên máy, không mời "bấm để làm tiếp" - Studio ở đây không có dự án ấy
+ *  (soát a27 lỗi 6). */
+export function upcomingStatus(book: ListenBook, canOpen: boolean): string {
+  if (book.remote) {
+    const where = `trên ${remoteName(book)}`;
+    if (book.producing && book.pauseReason) return `Đang tạm dừng ${where}`;
+    return book.producing ? `Đang làm ${where}` : `Chưa có chương nghe được · làm ${where}`;
+  }
   const eta = book.eta && book.eta.phase === "analysis" ? `chương đầu nghe được sau khoảng ${formatLength(book.eta.seconds + 600)}` : "đang chuẩn bị";
+  if (book.producing && book.pauseReason) {
+    return book.pauseReason === "battery" ? "Đang tạm dừng · máy đang chạy pin" : `Đang tạm dừng${canOpen ? " · bấm để làm tiếp" : ""}`;
+  }
+  return book.producing ? `Đang làm · ${eta}` : `Chưa có chương nghe được${canOpen ? " · bấm để làm tiếp" : ""}`;
+}
+
+function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book: ListenBook) => void }) {
+  const onOpen = book.remote ? undefined : open;
   return (
     <button
       type="button"
@@ -258,16 +289,7 @@ function UpcomingCard({ book, onOpen }: { book: ListenBook; onOpen?: (book: List
       <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold">{book.title}</span>
-        {/* Chưa có chương nghe được không có nghĩa là đang làm: sách dừng trước chương đầu, hay audio bị dời chỗ (soát UX 29-09). */}
-        <span className="block text-xs text-fg-2">
-          {book.producing && book.pauseReason
-            ? book.pauseReason === "battery"
-              ? "Đang tạm dừng · máy đang chạy pin"
-              : `Đang tạm dừng${onOpen ? " · bấm để làm tiếp" : ""}`
-            : book.producing
-              ? `Đang làm · ${eta}`
-              : `Chưa có chương nghe được${onOpen ? " · bấm để làm tiếp" : ""}`}
-        </span>
+        <span className="block text-xs text-fg-2">{upcomingStatus(book, Boolean(onOpen))}</span>
       </span>
     </button>
   );

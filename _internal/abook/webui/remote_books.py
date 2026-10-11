@@ -27,6 +27,7 @@ import re
 import secrets
 import shutil
 import socket
+import ssl
 import threading
 import time
 import zipfile
@@ -42,6 +43,7 @@ MANIFEST = "book.json"
 TIMEOUT = 4
 FILE_TIMEOUT = 60
 PAIR_BLUETOOTH_TIMEOUT = 45  # ghép qua Bluetooth: tra SDP + nối RFCOMM + bắt tay TLS, người dùng đang chờ ở một yêu cầu riêng
+REVOKE_TIMEOUT = 3  # báo thôi ghép ở nền: máy kia tắt thì thôi, lần hỏi thư viện sau báo lại
 LIBRARY_PORT = 47630  # cổng đồng bộ mặc định (điện thoại: LibraryServer.PORT); máy ghép bằng Bluetooth không dùng nhưng entry có cổng
 _COMPUTERS: "Computers | None" = None
 
@@ -73,6 +75,7 @@ class Computers:
     def __init__(self, path: Path) -> None:
         self.path = Path(path)
         self._lock = threading.Lock()
+        self._revoking = threading.Lock()  # một lượt báo thôi ghép mỗi lúc
 
     def _read(self) -> dict[str, Any]:
         try:
@@ -100,6 +103,15 @@ class Computers:
                  **({"waking": now} if (now := waking(key)) else {})}
                 for key, entry in sorted(entries.items(), key=lambda item: str(item[1].get("name", "")).casefold())]
 
+    def own_id(self) -> str:
+        """Mã của CHÍNH máy này, gửi lúc ghép (sync.py `Devices.pair` `ident`): máy kia nhận ra cùng máy ghép lại thì thay dòng cũ."""
+        with self._lock:
+            data = self._read()
+            if not re.fullmatch(r"[0-9a-f]{16}", str(data.get("self") or "")):
+                data["self"] = secrets.token_hex(8)
+                self._write(data)
+            return str(data["self"])
+
     def note(self, computer: str, **fields: Any) -> None:
         with self._lock:
             data = self._read()
@@ -123,7 +135,7 @@ class Computers:
             raise RemoteError("Đây là địa chỉ của chính máy này - nhập địa chỉ máy kia")
         # Lần ghép đầu: chưa có vân tay để đối chiếu (None) - ghi lại chứng chỉ máy kia đưa ra, sau khi nó tự xưng cùng vân tay.
         first = _tunnel(by_bluetooth, None) if by_bluetooth else Endpoint(host, port, None)
-        reply, seen = _exchange(first, "POST", "/sync/v1/pair", "", {"code": digits, "device": device_name or "Máy tính"},
+        reply, seen = _exchange(first, "POST", "/sync/v1/pair", "", {"code": digits, "device": device_name or "Máy tính", "id": self.own_id()},
                                 PAIR_BLUETOOTH_TIMEOUT if by_bluetooth else TIMEOUT)
         try:
             reply_data = json.loads(reply.decode("utf-8"))
@@ -185,12 +197,45 @@ class Computers:
             gone = data["computers"].pop(computer, None) or {}
             if gone.get("fingerprint"):
                 data.setdefault("former", {})[str(gone["fingerprint"])] = computer
+            # Máy kia thu hồi mã của máy này ở đó (`POST /sync/v1/unpair`): ghi lại trước, báo ở nền - máy kia đang tắt thì lần hỏi thư
+            # viện sau (`refresh`) báo lại, tới khi nó nghe. Chỉ qua mạng: đường hầm Bluetooth của máy ấy đóng ngay dưới đây.
+            if gone.get("token") and gone.get("fingerprint") and not str(gone.get("host") or "").startswith("bt:"):
+                data.setdefault("revoke", []).append({key: gone[key] for key in ("host", "port", "fingerprint", "token")})
             self._write(data)
         _release_bluetooth(gone, data["computers"].values())
+        threading.Thread(target=self.revoke_pending, name="remote-unpair", daemon=True).start()
         root = Path(library_root).expanduser() / REMOTE_FOLDER
         for child in (root.iterdir() if root.is_dir() else []):
             if child.is_dir() and child.name.endswith(f"({computer[:8]})"):
                 shutil.rmtree(child, ignore_errors=True)
+
+
+    def revoke_pending(self) -> None:
+        """Báo những máy đã thôi ghép mà chưa báo được (`forget`): máy ấy trả lời (kể cả "chưa ghép" - đã tự bỏ) thì xong; không
+        trả lời thì giữ để lần sau."""
+        with self._revoking:
+            with self._lock:
+                pending = list(self._read().get("revoke") or [])
+            done = []
+            for item in pending:
+                endpoint = Endpoint(str(item["host"]), int(item["port"]), str(item["fingerprint"]), target=f"{item['host']}:{item['port']}")
+                try:
+                    _request(endpoint, "POST", "/sync/v1/unpair", str(item["token"]), {}, timeout=REVOKE_TIMEOUT)
+                except RemoteError as error:
+                    if error.status is None or error.status >= 500:
+                        continue  # không tới được máy ấy: để lần sau
+                done.append(item)
+            if done:
+                with self._lock:
+                    data = self._read()
+                    data["revoke"] = [item for item in data.get("revoke") or [] if item not in done]
+                    if not data["revoke"]:
+                        data.pop("revoke")
+                    self._write(data)
+
+    def has_pending_revokes(self) -> bool:
+        with self._lock:
+            return bool(self._read().get("revoke"))
 
 
 class UnsentEdits(RemoteError):
@@ -354,13 +399,27 @@ UNREACHABLE_BLUETOOTH = ("Không kết nối được máy kia qua Bluetooth - m
                          "sóng không?")
 
 
-def _unreachable(endpoint: Endpoint) -> str:
-    """Lời báo không tới được máy kia: đi Bluetooth (hay lùi về Bluetooth) thì nói lý do đường hầm đã ghi."""
+# Máy có ở địa chỉ ấy nhưng cái trả lời không phải cổng ghép của ABook (gõ nhầm cổng giao diện, cổng của phần mềm khác), hay không có gì
+# nghe ở cổng ấy: khác hẳn "máy tắt" - người dùng cần sửa địa chỉ hay mở ABook bên kia, không phải chờ (soát a27 lỗi 9).
+NOT_ABOOK = "Địa chỉ này có trả lời nhưng không phải cổng ghép của ABook - xem lại dòng “Địa chỉ máy này” cạnh mã ghép trên máy kia"
+REFUSED = f"Có máy ở địa chỉ này nhưng ABook trên máy kia chưa mở, chưa bật “{SYNC_SWITCH}”, hay địa chỉ sai cổng"
+
+
+def _unreachable(endpoint: Endpoint, error: BaseException | None = None) -> str:
+    """Lời báo không tới được máy kia: đi Bluetooth (hay lùi về Bluetooth) thì nói lý do đường hầm đã ghi. `error`: lỗi lúc nối - phân
+    biệt "không phải ABook" (bắt tay TLS gặp thứ không nói TLS) và "không có gì ở cổng ấy" với "không trả lời"."""
     address = endpoint.bluetooth or endpoint.fallback
     if not address:
         name = _peer_name(endpoint)
-        return UNREACHABLE.replace("máy kia", _called(name), 1) if name else UNREACHABLE
+        message = NOT_ABOOK if _not_tls(error) else REFUSED if isinstance(error, ConnectionRefusedError) else UNREACHABLE
+        return message.replace("máy kia", _called(name), 1) if name else message
     return bluetooth.last_error(address) or UNREACHABLE_BLUETOOTH
+
+
+def _not_tls(error: BaseException | None) -> bool:
+    """Bắt tay TLS hỏng vì bên kia nói thứ khác (HTTP thường, giao thức khác) - không phải lệch vân tay, không phải bị cắt giữa chừng."""
+    return (isinstance(error, ssl.SSLError)
+            and not isinstance(error, (tls.PinError, ssl.SSLEOFError, ssl.SSLZeroReturnError, ssl.SSLSyscallError)))
 
 
 def _peer_name(endpoint: Endpoint) -> str:
@@ -622,7 +681,7 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
             raise RemoteError("Chứng chỉ bảo mật của máy kia đã khác lúc ghép (máy kia cài lại ABook?) - bấm Thôi ghép rồi ghép lại. "
                               "Nếu máy kia không cài lại gì thì đừng ghép lại: có thể có ai chen vào mạng") from error
         except (OSError, http.client.HTTPException) as error:
-            raise RemoteError(_unreachable(endpoint)) from error
+            raise RemoteError(_unreachable(endpoint, error)) from error
         if response.status >= 400:
             try:
                 message = json.loads(_read(response).decode("utf-8")).get("error")
@@ -697,6 +756,8 @@ def refresh(library_root: Path, computers: Computers, *, asked: bool = False) ->
     thì lần hỏi nền bỏ qua máy ấy một lúc, `asked` (người dùng bấm hỏi lại, vừa ghép) thì chờ lại."""
     report: dict[str, Any] = {}
     workers = []
+    if computers.has_pending_revokes():
+        threading.Thread(target=computers.revoke_pending, name="remote-unpair", daemon=True).start()
     for public in computers.list():
         if asked:
             with _WAKE_LOCK:
@@ -885,12 +946,37 @@ def exchange_state(manifest: dict[str, Any], state: dict[str, Any], *, timeout: 
     return reply if isinstance(reply, dict) else None
 
 
-def fetch(package: Path, relative: str, manifest: dict[str, Any]) -> Path | None:
-    """Tải một file của sách trên máy khác vào thư mục đệm của nó, trả đường dẫn; máy kia không trả lời thì None."""
+def fetch(package: Path, relative: str, manifest: dict[str, Any], *, quiet: bool = True) -> Path | None:
+    """Tải một file của sách trên máy khác vào thư mục đệm của nó, trả đường dẫn; máy kia không trả lời thì None (`quiet` False:
+    `RemoteError` đi lên - lời báo nói tên máy và lý do)."""
     try:
         return _save(Path(package), relative, manifest)
     except RemoteError:
+        if not quiet:
+            raise
         return None
+
+
+_SOON: set[str] = set()
+
+
+def fetch_soon(package: Path, relatives: list[str], manifest: dict[str, Any]) -> None:
+    """Đệm ở nền các file `relatives` (chữ đọc theo của chương vừa nghe) - không chặn người gọi, mỗi file một lượt đang chạy."""
+    for relative in relatives:
+        key = str(Path(package) / relative)
+        with _RECORD_LOCK:
+            if key in _SOON:
+                continue
+            _SOON.add(key)
+
+        def run(relative: str = relative, key: str = key) -> None:
+            try:
+                fetch(package, relative, manifest)
+            finally:
+                with _RECORD_LOCK:
+                    _SOON.discard(key)
+
+        threading.Thread(target=run, name="remote-fetch-soon", daemon=True).start()
 
 
 # ---- tải trọn cuốn về máy này ("Tải về máy", như điện thoại) ---------------------------------------------------------------

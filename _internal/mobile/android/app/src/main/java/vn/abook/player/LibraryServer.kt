@@ -20,7 +20,6 @@ import javax.net.ssl.SSLServerSocket
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.concurrent.Executors
-import android.util.Base64
 
 /**
  * Mạng trạm, bước 2 (chủ sách 27-09): điện thoại PHỤC VỤ thư viện của nó cho máy đã ghép - máy tính (và sau này điện
@@ -53,6 +52,7 @@ object LibraryServer {
     private const val MAX_BODY_BYTES = 2 * 1024 * 1024
     private val PROBE = "ABOOK_DISCOVER".toByteArray()
     private val BOOK_ID = Regex("[A-Za-z0-9_-]+")
+    private val IDENT = Regex("[0-9a-f]{8,64}")
 
     private lateinit var devicesFile: File
     private var server: ServerSocket? = null
@@ -178,7 +178,7 @@ object LibraryServer {
     }
 
     @Synchronized
-    private fun pair(code: String, device: String): String? {
+    private fun pair(code: String, device: String, ident: String = ""): String? {
         val digits = code.filter { it.isDigit() }.take(12)
         val current = pairing ?: return null
         if (current.second <= System.currentTimeMillis()) return null
@@ -191,13 +191,17 @@ object LibraryServer {
             return null
         }
         pairing = null // mã dùng một lần
-        val token = ByteArray(32).also(random::nextBytes)
-            .let { Base64.encodeToString(it, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP) }
+        val token = hex(32)
         val data = readDevices()
-        data.getJSONObject("devices").put(hash(token), JSONObject()
+        // Cùng máy (cùng mã máy nó gửi) ghép lại: thay dòng cũ, mã cũ hết hiệu lực - không thêm dòng trùng (sync.py `Devices.pair`).
+        val same = if (IDENT.matches(ident)) ident else ""
+        val devices = data.getJSONObject("devices")
+        if (same.isNotEmpty()) devices.keys().asSequence().toList().filter { devices.getJSONObject(it).optString("ident") == same }.forEach(devices::remove)
+        devices.put(hash(token), JSONObject()
             .put("name", device.trim().take(80).ifBlank { "Thiết bị" })
             .put("pairedAt", System.currentTimeMillis() / 1000.0)
-            .put("lastSeen", System.currentTimeMillis() / 1000.0))
+            .put("lastSeen", System.currentTimeMillis() / 1000.0)
+            .apply { if (same.isNotEmpty()) put("ident", same) })
         Store.writeAtomic(devicesFile, data.toString())
         return token
     }
@@ -341,7 +345,7 @@ object LibraryServer {
         val path = request.path
         if (request.method == "POST" && path == "/sync/v1/pair") {
             val body = runCatching { JSONObject(String(request.body)) }.getOrDefault(JSONObject())
-            val token = pair(body.optString("code"), body.optString("device"))
+            val token = pair(body.optString("code"), body.optString("device"), body.optString("id"))
             if (token == null) json(output, 403, JSONObject().put("error", wrongCodeMessage()))
             else json(output, 200, identity(JSONObject().put("token", token)).put("fingerprint", fingerprint))
             return
@@ -353,6 +357,12 @@ object LibraryServer {
         }
         if (request.method == "GET" && path == "/sync/v1/library") {
             json(output, 200, identity(JSONObject()).put("books", libraryView()))
+            return
+        }
+        // Máy bên kia thôi ghép điện thoại này: thu hồi mã của nó ở đây luôn (như máy tính, sync.py - soát a27 lỗi 5).
+        if (request.method == "POST" && path == "/sync/v1/unpair") {
+            revoke(hash(token).take(12))
+            json(output, 200, JSONObject().put("ok", true))
             return
         }
         // Mạng trạm bước 4: máy đã ghép xem và điều khiển trình phát của điện thoại này - cùng hình dạng máy tính trả

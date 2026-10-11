@@ -2634,8 +2634,7 @@ class App:
                 summary = self.summary(path)
             except Exception:  # noqa: BLE001 - sách hỏng thì phía Studio báo; phía Nghe bỏ qua
                 continue
-            producing = bool(summary.get("running") or summary.get("starting"))
-            if summary.get("chapters", {}).get("completed", 0) <= 0 and not producing:
+            if not listen_view.on_shelf(summary, bool(summary.get("running") or summary.get("starting"))):
                 continue
             view = listen_view.book(path, summary["id"], summary, self.listening.get(summary["id"]), with_chapters=False)
             view["eta"] = summary.get("eta")
@@ -2722,6 +2721,21 @@ class App:
 Route = tuple[str, re.Pattern[str], Callable[..., Any]]
 
 
+def without_local_paths(value: Any) -> Any:
+    """Lời đáp cho Studio từ xa không mang đường dẫn trên máy này (thư mục thư viện, thư mục từng dự án - có tên người dùng Windows):
+    bỏ `path` của từng cuốn (mục có `id`), để trống `libraryRoot` và `root` của thư viện (soát a27 lỗi 10). Đường file vừa gửi lên
+    (`path` không kèm `id`) giữ nguyên - thiết bị cần gửi lại nó để tạo sách."""
+    if isinstance(value, list):
+        return [without_local_paths(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+    out = {key: without_local_paths(item) for key, item in value.items() if not (key == "path" and "id" in value)}
+    for key in ("libraryRoot", "root") if "libraryRoot" in out or "books" in out else ():
+        if isinstance(out.get(key), str):
+            out[key] = ""
+    return out
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "ABook"
     protocol_version = "HTTP/1.1"
@@ -2746,6 +2760,8 @@ class Handler(BaseHTTPRequestHandler):
         return secrets.compare_digest(supplied, token)
 
     def _send_json(self, status: int, payload: Any) -> None:
+        if self._remote():
+            payload = without_local_paths(payload)
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -3129,8 +3145,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_script(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         path = self.app._listenable(value)
-        script = (packages.script(path, int(chapter)) if packages.is_package(path)
-                  else store.chapter_script(path, int(chapter)))
+        try:
+            script = (packages.script(path, int(chapter), strict=True) if packages.is_package(path)
+                      else store.chapter_script(path, int(chapter)))
+        except remote_books.RemoteError as error:
+            # Sách của máy khác, chữ chương này chưa đệm mà máy kia không trả lời: nói đúng thế, không phải "không có chương" (soát a27 lỗi 12).
+            if error.status == HTTPStatus.NOT_FOUND:
+                raise ApiError(HTTPStatus.NOT_FOUND, "Không có chương này") from error
+            raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, f"{str(error).rstrip('.')}. Chữ chương này chưa có trên máy này") from error
         if script is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có chương này")
         self._send_json(HTTPStatus.OK, script)
@@ -3826,11 +3848,23 @@ class Handler(BaseHTTPRequestHandler):
             book_wishes.request_pronunciation(path, surface, spoken, now=now)
             self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken, "requestedAt": now})
             return
+        # Như người nói (`_edited_elsewhere`): máy/cửa sổ khác vừa đổi cách đọc từ này khác điều giao diện đã thấy - vẫn ghi, báo lại.
+        elsewhere = self._reading_elsewhere(path, surface, body.get("seen"))
         listener_overrides.request_pronunciation(path, surface, spoken, now=now)
         if body.get("everywhere") is True:
             # "Dùng cho mọi sách": cùng cách đọc vào từ điển chung - sách mới có từ này tự nhận nó.
             self.app.put_shared_reading({"surface": surface, "spokenForm": spoken}, source=store.summarize(path)["title"])
-        self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken, "requestedAt": now})
+        self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken, "requestedAt": now, "elsewhere": elsewhere})
+
+    @staticmethod
+    def _reading_elsewhere(path: Path, surface: str, seen: Any) -> dict[str, str]:
+        """{"spokenForm": cách đọc đang ghi ("" = chưa ai sửa)} khi nó khác cách đọc giao diện đã thấy (`seen`); không thì {}."""
+        if not isinstance(seen, str):
+            return {}
+        recorded = {listener_overrides.surface_key(entry["surface"]): entry["spoken_form"]
+                    for entry in listener_overrides.pronunciation_requests(listener_overrides.read_overrides(path))}
+        actual = recorded.get(listener_overrides.surface_key(surface), "")
+        return {"spokenForm": actual} if actual != " ".join(seen.split()) else {}
 
     def _withdraw(self, path: Path, section: str, keys: list[str], body: dict[str, Any], *,
                   restore: Callable[[float], None] | None = None) -> None:
@@ -3898,13 +3932,14 @@ class Handler(BaseHTTPRequestHandler):
         now = time.time()
         # Cửa sổ khác (hay máy khác) vừa sửa chính câu này: `seen` là điều giao diện này tưởng đang ghi cho từng câu ("" = chưa ai quyết).
         # Khác với điều thật sự đang ghi thì báo lại để người nghe biết mình vừa ghi đè (soát UX a23 B19) - vẫn ghi, không bao giờ chặn.
-        elsewhere = {} if package else self._edited_elsewhere(path, lines, body.get("seen"))
+        elsewhere = self._edited_elsewhere(path, lines, body.get("seen"))
         if package:
             book_wishes.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
             alias = str(body.get("alias", "") or "").strip()[:200]
             remembered = bool(alias) and book_wishes.request_alias(path, alias, speaker, now=now)
+            # `elsewhere` chỉ khi lệch: lời đáp thường giữ đúng hợp đồng với LocalStudio của điện thoại (test_book_edits).
             self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker, "new": bool(new_gender),
-                                            "alias": remembered, "requestedAt": now})
+                                            "alias": remembered, "requestedAt": now, **({"elsewhere": elsewhere} if elsewhere else {})})
             return
         listener_overrides.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
         # Thẻ "Một người hai tên": ngoài các câu này, ghi luôn cấp TÊN (aliases.py) - phần sau của cuốn tự hiểu.
@@ -3918,10 +3953,15 @@ class Handler(BaseHTTPRequestHandler):
 
     @staticmethod
     def _edited_elsewhere(path: Path, lines: list[tuple[str, str]], seen: Any) -> dict[str, str]:
-        """{mã câu: người đang được ghi} cho những câu mà điều đang ghi trong overrides.json khác điều giao diện đã thấy (`seen`)."""
+        """{mã câu: người đang được ghi} cho những câu mà điều đang ghi (overrides.json; cuốn không có xưởng: ý muốn trong lớp sửa) khác
+        điều giao diện đã thấy (`seen`)."""
         if not isinstance(seen, dict):
             return {}
-        recorded = {entry["stable_id"]: entry for entry in listener_overrides.speaker_requests(listener_overrides.read_overrides(path))}
+        if packages.is_package(path):
+            wished = (book_edits.load(path).get("wishes") or {}).get("speakers") or {}
+            recorded = {key: {"speaker": entry["speaker"], "text_sha256": entry["text_sha256"]} for key, entry in wished.items()}
+        else:
+            recorded = {entry["stable_id"]: entry for entry in listener_overrides.speaker_requests(listener_overrides.read_overrides(path))}
         out: dict[str, str] = {}
         for stable_id, text_sha256 in lines:
             if stable_id not in seen:
@@ -4045,6 +4085,12 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.OK, reply(len(asked)))
             return
         chapter_id = int(body.get("chapterId", 0))
+        # Phán quyết máy/cửa sổ khác vừa ghi cho câu này khác điều giao diện đã thấy (`seen`: {mã câu: "ok" | "redo" | ""}): vẫn ghi, báo lại
+        # để người dùng chọn giữ của mình hay lấy của máy kia (soát a27 lỗi 4).
+        seen, before = body.get("seen"), self.app.reviews.get(project)
+        elsewhere = {stable_id: str((before.get(stable_id) or {}).get("verdict") or "") for stable_id in stable_ids
+                     if isinstance(seen, dict) and stable_id in seen
+                     and str((before.get(stable_id) or {}).get("verdict") or "") != str(seen[stable_id] or "")}
         asked_count = 0
         for stable_id in stable_ids:
             self.app.reviews.set(project, stable_id, verdict, chapter_id)
@@ -4056,7 +4102,7 @@ class Handler(BaseHTTPRequestHandler):
                 asked_count += 1
             elif verdict != "redo":
                 listener_overrides.cancel_retake(project, stable_id)
-        self._send_json(HTTPStatus.OK, reply(asked_count))
+        self._send_json(HTTPStatus.OK, {**reply(asked_count), **({"elsewhere": elsewhere} if elsewhere else {})})
 
     def put_cover(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()

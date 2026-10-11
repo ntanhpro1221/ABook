@@ -182,8 +182,9 @@ def _inside(root: Path, relative: Any) -> Path | None:
     return candidate if is_file and locator.within_root(candidate) else None
 
 
-def _file(path: Path, relative: Any) -> Path | None:
-    """File trong gói; sách của máy tính khác thì tải về lần đầu cần tới (remote_books.fetch) rồi dùng như file đã có."""
+def _file(path: Path, relative: Any, *, strict: bool = False) -> Path | None:
+    """File trong gói; sách của máy tính khác thì tải về lần đầu cần tới (remote_books.fetch) rồi dùng như file đã có. `strict`: máy kia
+    không trả lời thì để `RemoteError` đi lên (người gọi nói đúng lý do), không thì None như file không có."""
     found = _inside(path, relative)
     if found is not None or not isinstance(relative, str):
         return found
@@ -192,7 +193,7 @@ def _file(path: Path, relative: Any) -> Path | None:
     book = manifest(path)
     if remote_of(book) is None:
         return None
-    fetch(path, relative, book)
+    fetch(path, relative, book, quiet=not strict)
     return _inside(path, relative)
 
 
@@ -225,8 +226,16 @@ def _chapter(book: dict[str, Any], chapter_id: int) -> dict[str, Any] | None:
 
 
 def chapter_file(path: Path, chapter_id: int) -> Path | None:
-    chapter = _chapter(manifest(path), chapter_id)
-    return _file(path, chapter.get("file")) if chapter and chapter.get("available") else None
+    book = manifest(path)
+    chapter = _chapter(book, chapter_id)
+    found = _file(path, chapter.get("file")) if chapter and chapter.get("available") else None
+    if found is not None and _remote(path):
+        # Sách của máy khác: chữ đọc theo của chương đang nghe đệm cùng lúc (ở nền) - máy kia tắt sau đó thì "Đọc theo" vẫn mở được
+        # chương đã nghe (soát a27 lỗi 12).
+        from .remote_books import fetch_soon
+
+        fetch_soon(path, [name for name in (chapter.get("script"), chapter.get("text")) if isinstance(name, str) and not has(path, name)], book)
+    return found
 
 
 def sample_file(path: Path, sample_id: int) -> Path | None:
@@ -247,11 +256,11 @@ def chapter_text(path: Path, chapter_id: int) -> str | None:
     return file.read_text(encoding="utf-8") if file else None
 
 
-def script(path: Path, chapter_id: int) -> Any | None:
-    """Chữ đọc theo của một chương, đã qua lớp sửa (tên người nói, tên chương)."""
+def script(path: Path, chapter_id: int, *, strict: bool = False) -> Any | None:
+    """Chữ đọc theo của một chương, đã qua lớp sửa (tên người nói, tên chương). `strict`: như `_file`."""
     book = manifest(path)
     chapter = _chapter(book, chapter_id)
-    file = _file(path, chapter.get("script")) if chapter else None
+    file = _file(path, chapter.get("script"), strict=strict) if chapter else None
     if not file:
         return None
     result = json.loads(file.read_text(encoding="utf-8"))
@@ -319,7 +328,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "producing": False,
         "paused": False,
         "imported": True,
-        "remote": _remote_view(book) if remote else None,
+        "remote": _remote_view(Path(path)) if remote else None,
         "updatedAt": max((Path(path) / MANIFEST).stat().st_mtime, book_edits.stamp(Path(path))[0] / 1e9),
         # Lúc sách vào thư viện ("Mới thêm"): Windows ghi st_ctime là lúc tạo file; nơi khác là lần đổi gần nhất - vẫn không sớm hơn thật.
         "addedAt": (Path(path) / MANIFEST).stat().st_ctime,
@@ -353,11 +362,13 @@ def _parts(book: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
-def _remote_view(book: dict[str, Any]) -> dict[str, Any]:
-    from .remote_books import computer_name, remote_of
+def _remote_view(path: Path) -> dict[str, Any]:
+    from .remote_books import computer_name, missing, remote_of
 
-    # `device`: máy đã ghép giữ cuốn này - "Phát trên <máy ấy>" chỉ hiện với đúng máy phát được nó.
-    return {"computer": computer_name(book), "device": (remote_of(book) or {}).get("computer", "")}
+    book = manifest(path)
+    # `device`: máy đã ghép giữ cuốn này - "Phát trên <máy ấy>" chỉ hiện với đúng máy phát được nó. `downloaded`: đủ mọi file để nghe khi
+    # máy kia tắt (audio, chữ đọc theo, nhạc - như "Tải về máy" đếm) - Thư viện ghi "Đã tải" (soát a27 lỗi 8).
+    return {"computer": computer_name(book), "device": (remote_of(book) or {}).get("computer", ""), "downloaded": not missing(path, book)}
 
 
 def _folder_name(title: str, key: str) -> str:

@@ -10,6 +10,7 @@ import { api, urls } from "./api";
 import { useCachedBook } from "./data";
 import { retryUnlessGone } from "./polling";
 import { usePendingNote } from "./decisions";
+import { warnElsewhere } from "./elsewhere";
 import { matchPhrase, notRecordedYet, shortcutHint, spokenEditLabel } from "./reviewText";
 
 // "Cần nghe lại": câu mà khâu tự kiểm tra không chắc (webui/reviews.py). Nghe từng câu, bấm Ổn hoặc Cần thu lại.
@@ -382,8 +383,22 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     queryFn: () => api<ReviewView>(`/api/books/${bookId}/review${showMinor ? "?all=1" : ""}`),
   });
   const verdict = useMutation({
-    mutationFn: (body: { stableId: string; chapterId: number; verdict: ReviewItem["verdict"] }) =>
-      api(`/api/books/${bookId}/review`, { method: "POST", body }),
+    // `seen`: phán quyết màn này đang thấy cho câu - máy/cửa sổ khác vừa quyết khác thì hỏi giữ của mình hay lấy của máy kia (soát a27 lỗi 4).
+    mutationFn: (body: { stableId: string; chapterId: number; verdict: ReviewItem["verdict"]; seen: ReviewItem["verdict"] }) =>
+      api<{ elsewhere?: Record<string, string> }>(`/api/books/${bookId}/review`, {
+        method: "POST",
+        body: { stableId: body.stableId, chapterId: body.chapterId, verdict: body.verdict, seen: { [body.stableId]: body.seen ?? "" } },
+      }),
+    onSuccess: ({ elsewhere }, body) => {
+      const theirs = elsewhere?.[body.stableId];
+      if (theirs === undefined) return;
+      warnElsewhere(1, theirs === "ok" ? "“Ổn”" : theirs === "redo" ? "“Cần thu lại”" : "", () =>
+        void api(`/api/books/${bookId}/review`, {
+          method: "POST",
+          body: { stableId: body.stableId, chapterId: body.chapterId, verdict: theirs || null },
+        }).finally(() => void client.invalidateQueries({ queryKey: ["review", bookId] })),
+      );
+    },
     onMutate: async (body) => {
       // Cập nhật ngay trên màn hình; hỏi lại máy chủ sau.
       const key = ["review", bookId, showMinor];
@@ -416,7 +431,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     // Câu vừa phán rời danh sách đang lọc: đưa tiêu điểm sang câu kế (hay câu trước), đừng để nó rơi về đầu trang.
     const leaves = filter === "todo" ? value !== null : value === null;
     if (leaves) setFocusAfter((items[index + 1] ?? items[index - 1])?.stableId ?? EMPTY);
-    verdict.mutate({ stableId: item.stableId, chapterId: item.chapterId, verdict: value });
+    verdict.mutate({ stableId: item.stableId, chapterId: item.chapterId, verdict: value, seen: item.verdict });
   };
   const minor = (data.counts.name ?? 0) + (data.counts.text ?? 0);
   live.current = { items, judge };

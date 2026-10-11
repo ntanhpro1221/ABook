@@ -487,7 +487,8 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
       title={`Xoá dự án “${book.title}”?`}
       description="Cả thư mục dự án - bản thu, phân tích, phân vai và mọi chỗ đã sửa - chuyển vào Thùng rác của Windows, khôi phục được từ đó. File truyện gốc và sách đã xuất ra thư mục khác không bị đụng tới. Vừa xoá xong có 30 giây để bấm “Hoàn tác”."
     >
-      <p className="break-all rounded-lg bg-panel-2 px-3 py-2 text-xs text-fg-2">{book.path}</p>
+      {/* Studio từ xa không nhận đường dẫn trên máy tính (soát a27 lỗi 10). */}
+      {book.path && <p className="break-all rounded-lg bg-panel-2 px-3 py-2 text-xs text-fg-2">{book.path}</p>}
       {busy && <p className="mt-3 text-sm text-warning">Sách đang chạy - dừng sách trước rồi mới xoá được.</p>}
       <div className="mt-5 flex justify-end gap-2">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>

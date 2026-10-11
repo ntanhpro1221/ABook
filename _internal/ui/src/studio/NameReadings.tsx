@@ -15,6 +15,7 @@ import { neverText, reachSaved, reachSummary, useReach, type Reach } from "./rea
 import { SharedReadingsOffer, useSharedEntry } from "./sharedReadings";
 import { useTryReading } from "./TryReading";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied, WAITING_STUDIO } from "./decisions";
+import { warnElsewhere } from "./elsewhere";
 
 // Tab Nhân vật, mục "Cách đọc tên" (webui/name_readings.py): mọi tên riêng máy đọc thế nào - kể cả tên máy chắc và cách
 // người nghe đã chọn, hai thứ hộp việc không bao giờ hỏi lại. Sửa ở đây đi đúng đường của thẻ cách đọc: ghi mong muốn,
@@ -379,9 +380,10 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
   }, [sharedEntry, waiting]);
   const save = useMutation({
     mutationFn: (spokenForm: string) =>
-      api<{ surface: string; spokenForm: string; requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
+      api<{ surface: string; spokenForm: string; requestedAt: number; elsewhere?: { spokenForm?: string } }>(`/api/books/${bookId}/pronunciation`, {
         method: "POST",
-        body: { surface: item.surface, spokenForm, ...(everywhere ? { everywhere: true } : {}) },
+        // `seen`: cách đọc đang ghi mà dòng này thấy (chờ áp, hay người nghe đã giữ) - máy/cửa sổ khác vừa ghi khác thì được báo (soát a27 lỗi 4).
+        body: { surface: item.surface, spokenForm, seen: item.requested ?? (item.byListener ? item.spoken : ""), ...(everywhere ? { everywhere: true } : {}) },
       }),
     // Lạc quan: dòng đổi ngay khi bấm Lưu; máy chủ từ chối thì trả lại như cũ (cùng ô vẫn mở để sửa).
     onMutate: async (spokenForm: string) => {
@@ -390,9 +392,14 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
       if (previous) client.setQueryData<NameReadings>(["pronunciations", bookId], withReading(previous, item, spokenForm));
       return { previous };
     },
-    onSuccess: ({ spokenForm, requestedAt }) => {
+    onSuccess: ({ spokenForm, requestedAt, elsewhere }) => {
       refreshAfterDecision(client, bookId);
       if (everywhere) void client.invalidateQueries({ queryKey: ["shared-readings"] });
+      if (elsewhere?.spokenForm !== undefined) {
+        // "Lấy của máy kia": bỏ lần ghi này - yêu cầu nó thay (của máy kia) trở lại.
+        const back = undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, keep: false }], `“${item.surface}” trở lại cách đọc máy kia đã ghi.`);
+        warnElsewhere(1, elsewhere.spokenForm ? `“${elsewhere.spokenForm}”` : "", back.onClick);
+      }
       const shared = everywhere ? " Đã thêm vào cách đọc chung - sách mới có tên này tự dùng." : "";
       onDone();
       const keep = spokenForm === item.spoken;

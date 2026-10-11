@@ -200,6 +200,47 @@ def test_a_key_the_owner_changed_since_the_last_push_is_a_conflict_and_the_phone
     assert [entry["conflicts"] for entry in edits_inbox.view(project)["recent"]][0] == [third["conflicts"][0]["label"]]
 
 
+HAILKES_AT = shared.WISHES["pronunciations"]["hailkes"]["requested_at"]
+ONLY_HAILKES = {"pronunciations": shared.WISHES["pronunciations"]}
+
+
+def _owner_says(project: Path, spoken: str, at: float) -> None:
+    from abook.listener_overrides import request_pronunciation
+
+    request_pronunciation(project, "Hailkes", spoken, now=at)
+
+
+def test_an_older_wish_never_overwrites_what_the_owner_changed_after_it_when_it_may_produce(tmp_path: Path, project: Path) -> None:
+    # a27: B sửa cách đọc trước, A sửa cùng tên SAU đó, rồi B mới gửi: bản cũ của B không được đè bản mới của A.
+    _owner_says(project, "Hây-kơ", HAILKES_AT + 60)
+    report = edits_inbox.receive(project, DEVICE, "Máy B", package(tmp_path, {"wishes": ONLY_HAILKES}), may_produce=True, now=HAILKES_AT + 600)
+    assert [entry["spoken_form"] for entry in _overrides(project)["pronunciations"].values()] == ["Hây-kơ"]
+    assert report["requests"] == 0 and report["waiting"] == 1, "bản của máy kia chờ chủ máy chọn trong hộp thư"
+    assert [(item["kind"], item.get("held")) for item in report["conflicts"]] == [("wish", True)]
+    assert "chờ" in edits_inbox.sender_label(report["conflicts"][0], "Máy A") and "thay vào" not in edits_inbox.sender_label(report["conflicts"][0], "Máy A")
+    item = edits_inbox.view(project)["devices"][0]["items"][0]
+    assert "Hây-kơ" in item["conflict"]
+
+
+def test_applying_everything_keeps_the_owners_newer_change_and_one_by_one_takes_the_other(tmp_path: Path, project: Path) -> None:
+    edits_inbox.receive(project, DEVICE, "Máy B", package(tmp_path, {"wishes": ONLY_HAILKES}), now=HAILKES_AT + 30)
+    _owner_says(project, "Hây-kơ", HAILKES_AT + 60)
+    everything = edits_inbox.apply(project, DEVICE, None, now=HAILKES_AT + 600)
+    assert (everything["requests"], everything["held"], everything["left"]) == (0, 1, 1)
+    assert [entry["spoken_form"] for entry in _overrides(project)["pronunciations"].values()] == ["Hây-kơ"]
+    item = edits_inbox.view(project)["devices"][0]["items"][0]
+    chosen = edits_inbox.apply(project, DEVICE, [item["id"]], now=HAILKES_AT + 700)
+    assert (chosen["requests"], chosen["left"]) == (1, 0), "chủ máy chọn đúng việc ấy: lấy bản của máy kia"
+    assert [entry["spoken_form"] for entry in _overrides(project)["pronunciations"].values()] == ["Hên-khơ"]
+
+
+def test_a_wish_made_after_the_owners_change_still_wins(tmp_path: Path, project: Path) -> None:
+    _owner_says(project, "Hây-kơ", HAILKES_AT - 60)
+    report = edits_inbox.receive(project, DEVICE, "Máy B", package(tmp_path, {"wishes": ONLY_HAILKES}), may_produce=True, now=HAILKES_AT + 600)
+    assert report["conflicts"] == [] and report["requests"] == 1
+    assert [entry["spoken_form"] for entry in _overrides(project)["pronunciations"].values()] == ["Hên-khơ"]
+
+
 def test_the_same_value_on_both_sides_is_not_a_conflict(tmp_path: Path, project: Path) -> None:
     store.set_display_title(project, "Giống nhau")
     assert edits_inbox.receive(project, DEVICE, "Pixel", package(tmp_path, {"title": "Giống nhau"}))["conflicts"] == []

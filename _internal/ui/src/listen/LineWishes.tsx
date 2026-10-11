@@ -7,6 +7,7 @@ import { studioNeed } from "@/shared/capabilities";
 import { Button, Dialog } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { refreshAfterDecision, UNDO_MS, undoAction, WAITING_STUDIO } from "@/studio/decisions";
+import { warnElsewhere } from "@/studio/elsewhere";
 import { EditReading } from "@/studio/NameReadings";
 import { reachSummary, useReach } from "@/studio/readingReach";
 import { DeliveryMenu, deliveryText, KINDS, LineQuote, NARRATOR, SpeakerMenu, type ChapterScript, type Delivery, type Line, type Person } from "@/studio/ScriptTab";
@@ -277,15 +278,19 @@ export function LineWishDialog({
 
   const speaker = useMutation({
     mutationFn: (person: Person) =>
-      api<{ requestedAt: number }>(`/api/books/${book.id}/speaker`, {
+      api<{ requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${book.id}/speaker`, {
         method: "POST",
-        body: { lines: [ref], speaker: person.value, newGender: person.newGender ?? "" },
+        // `seen`: người nói câu này đang chờ mà hộp thấy - cửa sổ khác vừa ghi khác thì được báo (soát a27 lỗi 4).
+        body: { lines: [ref], speaker: person.value, newGender: person.newGender ?? "", seen: { [ref.stableId]: wish?.speaker?.name ?? "" } },
       }),
-    onSuccess: ({ requestedAt }, person) => {
+    onSuccess: ({ requestedAt, elsewhere }, person) => {
       done();
+      const action = undoAction(client, book.id, "speaker", [{ lines: [ref], requestedAt, keep: false }], "Câu này trở lại như trước khi đổi người nói.");
+      const was = Object.values(elsewhere ?? {});
+      if (was.length) warnElsewhere(1, was[0] ? (people.here.concat(people.others).find((item) => item.value === was[0])?.label ?? was[0]) : "", action.onClick);
       toast.success(`Đã ghi: câu này của ${person.label}`, {
         description: WAITING_STUDIO,
-        action: undoAction(client, book.id, "speaker", [{ lines: [ref], requestedAt, keep: false }], "Câu này trở lại như trước khi đổi người nói."),
+        action,
         duration: UNDO_MS,
       });
       close();

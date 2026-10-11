@@ -299,8 +299,7 @@ def forward(handler: Any, method: str, target: str, gate: StudioGate, *, listen_
                 info.update(dialogs=False, remote=True, listenOnly=listen_only)
             for key in PRIVATE_PREFERENCES:
                 info.pop(key, None)
-            if listen_only and "libraryRoot" in info:
-                info["libraryRoot"] = ""  # thiết bị chỉ nghe không cần biết thư mục (và tên người dùng) trên máy tính
+            # Thư mục thư viện (có tên người dùng Windows): máy chủ giao diện đã để trống cho mọi yêu cầu từ xa (server.without_local_paths).
             _json(handler, HTTPStatus.OK, info)
             return
         handler.send_response(response.status)

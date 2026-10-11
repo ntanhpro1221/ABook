@@ -340,6 +340,15 @@ class EditsSyncTest {
     }
 
     @Test
+    fun a_wish_older_than_the_computers_change_is_said_to_wait_not_to_win() {
+        // edits_inbox.py `sender_label` (held): máy kia đổi cùng khoá SAU lúc mình sửa - bản của mình không đè, chờ chủ máy chọn.
+        val item = JSONObject().put("kind", "wish").put("key", "hailkes").put("label", "x").put("held", true)
+            .put("what", "Cách đọc tên").put("lost", "“Hây-kơ”").put("kept", "“Hên-khơ”")
+        assertEquals("Cách đọc tên: máy kia (Máy A) đã đổi thành “Hây-kơ” sau khi bạn sửa - bản của bạn “Hên-khơ” chờ chủ máy chọn",
+            EditsSync.senderLabel(item, "Máy A"))
+    }
+
+    @Test
     fun a_refusal_or_a_lost_connection_keeps_every_edit_and_says_why() {
         call("PUT", "/title", JSONObject().put("title", "Tên mới"))
         try {

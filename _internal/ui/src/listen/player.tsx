@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
@@ -9,8 +9,9 @@ import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
 import { MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit } from "./musicBed";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
-import { canPlay, resumePoint, startingRate, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
+import { canPlay, newerElsewhere, resumePoint, startingRate, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
 import { NightRecorder } from "./night";
+import { leftWithPeer, watchUntilBack } from "./peerBack";
 import {
   DEFAULT_EXTEND_MINUTES,
   DEFAULT_FADE_SECONDS,
@@ -138,6 +139,8 @@ interface PlayerActions {
   prepare: (book: BookRef, chapters: ListenChapter[], chapterId: number, at: number) => void;
   toggle: () => void;
   resume: () => void;
+  /** "Thử lại" sau lỗi phát: nạp lại nguồn ở đúng chỗ đang đứng (resume chỉ bấm phát lại nguồn đã hỏng - soát a27 lỗi 3). */
+  retry: () => void;
   /** Bỏ thông báo lỗi đang hiện mà không phát gì (vd. mạng đã về: lời "không có mạng" hết đúng, nhưng đừng tự phát lại giữa chừng). */
   dismissError: () => void;
   pause: () => void;
@@ -187,6 +190,8 @@ export function useNowPlaying() {
 export const SPEEDS = [0.75, 0.9, 1, 1.1, 1.2, 1.3, 1.5, 1.75, 2, 2.5, 3];
 export const SKIP_SECONDS = 15;
 const SAVE_EVERY_MS = 10_000;
+/** Nghe tiếp chờ chỗ nghe mới nhất tối đa chừng này (máy chủ đổi chỗ nghe với máy kia trong 1,5 giây, máy kia tắt thì thôi). */
+const FRESH_SPOT_MS = 1600;
 /** Lời nhắn (notice) tự ẩn sau chừng này. */
 const NOTICE_MS = 12_000;
 /** Nhảy xa hơn chừng này (tua, chương, dấu trang) thì mời "quay lại chỗ vừa nghe". */
@@ -261,6 +266,10 @@ export function PlayerProvider({
   const [musicBroken, setMusicBroken] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState("");
+  /** Dừng việc chờ máy kia trả lời lại (peerBack.ts) - đổi chương, gạt lời báo, thử lại. */
+  const stopPeerWatch = useRef<() => void>(() => undefined);
+  const errorRef = useRef(error);
+  errorRef.current = error;
   const [notice, setNotice] = useState("");
   const noticeTimer = useRef<number | undefined>(undefined);
 
@@ -387,6 +396,7 @@ export function PlayerProvider({
   const load = useCallback((next: Track, at: number, autoplay: boolean) => {
     save(true);
     setError("");
+    stopPeerWatch.current();
     setAtEnd("none");
     setTrack(next);
     refs.current.track = next;
@@ -682,11 +692,57 @@ export function PlayerProvider({
   const resume = useCallback(() => {
     const current = refs.current.track;
     if (!current) return;
-    withConsent(current.bookId, refs.current.queue.find((chapter) => chapter.id === current.chapterId), resumeNow);
-  }, [resumeNow, withConsent]);
+    // Nguồn đã hỏng (máy kia tắt, mất mạng): bấm phát ở đâu cũng là nạp lại đúng chỗ - phát lại nguồn hỏng chỉ ra lỗi cũ (soát a27 lỗi 3).
+    if (errorRef.current && !native) {
+      retryRef.current();
+      return;
+    }
+    // Thiết bị khác đã nghe xa hơn SAU lần cuối máy này nạp/lưu: tới chỗ ấy (toast có nút quay lại), đừng phát chỗ cũ rồi lưu đè (soát a27 lỗi 2).
+    // Bản sách đang đệm có thể là lúc trước (cửa sổ vừa đưa lên, hỏi lại 30 s một lần): hỏi lại máy chủ - nó tự đổi chỗ nghe với máy kia - chờ
+    // tối đa FRESH_SPOT_MS rồi mới quyết. Mọi đường nghe tiếp (nút chính trang sách, thẻ, Space, phím tai nghe) đều qua đây.
+    const resumeHere = () => withConsent(current.bookId, refs.current.queue.find((chapter) => chapter.id === current.chapterId), resumeNow);
+    const decide = () => {
+      if (refs.current.track !== current || !engine.paused) return;
+      const book = client.getQueryData<ListenBook>(["listen", "book", current.bookId]);
+      const active = book?.records?.find((record) => record.active)?.id;
+      const away = !(current.recordId && active && current.recordId !== active)
+        ? newerElsewhere(book?.state.last, refs.current.stamp, { chapterId: current.chapterId, seconds: engine.time })
+        : null;
+      if (away && refs.current.queue.some((chapter) => chapter.id === away.chapterId && canPlay(chapter))) {
+        jumpToRef.current(away.chapterId, away.seconds, `Nghe tiếp từ chỗ thiết bị khác đã nghe tới (${formatClock(away.seconds)})`);
+        return;
+      }
+      resumeHere();
+    };
+    if (native || refs.current.purpose !== "listen" || !engine.paused || engine.ended) {
+      resumeHere();
+      return;
+    }
+    const fresh = client.fetchQuery({ queryKey: ["listen", "book", current.bookId], queryFn: () => source.book(current.bookId), staleTime: 0 });
+    void Promise.race([fresh.catch(() => undefined), new Promise((done) => window.setTimeout(done, FRESH_SPOT_MS))]).then(decide);
+  }, [client, engine, native, resumeNow, source, withConsent]);
   const resumeRef = useRef(resume);
   resumeRef.current = resume;
-  const dismissError = useCallback(() => setError(""), []);
+  const retry = useCallback(() => {
+    const current = refs.current.track;
+    if (!current) return;
+    stopPeerWatch.current();
+    if (native) {
+      resume();
+      return;
+    }
+    const at = engine.time;
+    withConsent(current.bookId, refs.current.queue.find((chapter) => chapter.id === current.chapterId), () => {
+      const now = refs.current.track;
+      if (now) load(now, at, true);
+    });
+  }, [engine, load, native, resume, withConsent]);
+  const retryRef = useRef(retry);
+  retryRef.current = retry;
+  const dismissError = useCallback(() => {
+    stopPeerWatch.current();
+    setError("");
+  }, []);
 
   const pause = useCallback(() => {
     night.touch("pause", position(), true);
@@ -756,6 +812,8 @@ export function PlayerProvider({
       if (now) jumpNow(now, chapter, at, note, word);
     });
   }, [jumpNow, withConsent]);
+  const jumpToRef = useRef(jumpTo);
+  jumpToRef.current = jumpTo;
 
   const goBack = useCallback(() => {
     const target = refs.current.history.pop();
@@ -914,6 +972,17 @@ export function PlayerProvider({
     refs.current.history = [];
     setCanGoBack(false);
   }, [applySleep, endFade, engine, night, position, save]);
+
+  // Thôi ghép máy kia khi đang nạp một cuốn của nó: cuốn rời Thư viện thì trình phát đóng và nói vì sao (soát a27 lỗi 11). Chỉ đọc danh sách
+  // Thư viện đã có trong bộ đệm (Thư viện, hộp thôi ghép làm mới nó) - không hỏi thêm.
+  const library = useQuery<ListenBook[]>({ queryKey: ["listen", "library"], enabled: false });
+  useEffect(() => {
+    const book = refs.current.book;
+    if (!track || !book || track.bookId !== book.id || !leftWithPeer(book, library.data)) return;
+    const computer = typeof book.remote === "object" && book.remote ? book.remote.computer : "";
+    close();
+    toast.info(`“${book.title}” đã rời Thư viện`, { description: `Sách này nằm trên ${computer || "máy kia"} - đã thôi ghép nên trình phát đóng lại.` });
+  }, [close, library.data, track]);
 
   const positionStamp = useCallback(() => refs.current.stamp, []);
 
@@ -1116,6 +1185,11 @@ export function PlayerProvider({
         const fallback = native?.error || engine.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
         setError(fallback);
         setBuffering(false);
+        // Không có tiếng thì không phải "đang phát": nút chính về "Phát", thẻ thôi ghi "đang phát" (soát a27 lỗi 3).
+        if (!native) {
+          if (!engine.paused) engine.pause();
+          setPlaying(false);
+        }
         // Sách “Trên máy khác” nghe thẳng trên máy tính: chương chưa tải về mà không phát được thường là máy kia đã tắt / mất mạng - hỏi máy ấy
         // rồi nói đúng lý do, thay vì đổ cho file.
         const bookId = refs.current.book?.id;
@@ -1126,6 +1200,15 @@ export function PlayerProvider({
               if (answer.reachable || refs.current.book?.id !== bookId) return;
               const message = `Máy ${remote.computer || "kia"} không trả lời (tắt hay mất mạng) - chương này chưa tải về máy này.`;
               setError((current) => (current === fallback ? message : current));
+              // Máy ấy trả lời lại thì tự thử một lần, đúng chỗ đang đứng.
+              const chapterId = refs.current.track?.chapterId;
+              stopPeerWatch.current();
+              stopPeerWatch.current = watchUntilBack(
+                () => api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`).then((again) => again.reachable),
+                () => {
+                  if (refs.current.book?.id === bookId && refs.current.track?.chapterId === chapterId) retryRef.current();
+                },
+              );
             })
             .catch(() => undefined);
         }
@@ -1421,10 +1504,10 @@ export function PlayerProvider({
   const value = useMemo<PlayerValue>(() => ({
     track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
     canGoBack, error, notice, options, musicCredit, musicBroken,
-    play, prepare, toggle, resume, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
+    play, prepare, toggle, resume, retry, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
     extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues,
   }), [track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, notice, options, musicCredit, musicBroken, play, prepare, toggle, resume, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart,
+    canGoBack, error, notice, options, musicCredit, musicBroken, play, prepare, toggle, resume, retry, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues]);
 
   // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ

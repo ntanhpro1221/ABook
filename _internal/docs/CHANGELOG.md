@@ -11,6 +11,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Nhạc nền đa dạng hơn: một bài không còn quay lại ở rất nhiều chương. Bài đã dùng trong 100 đoạn gần nhất chỉ được chọn lại khi không còn bài mới hợp; khi ấy lấy bài dùng lâu nhất, và đoạn vẫn có nhạc chứ không im lặng. Ở bộ đo, số bài khác nhau trong một cuốn tăng gấp đôi mà nhạc không kém hợp truyện.
 
+### Liên kết máy và Nghe sách (máy tính và điện thoại)
+
+- Hai máy cùng sửa một chỗ (người nói, cách đọc tên, phán quyết Nghe lại) thì máy hỏi "Lấy của máy kia" hay "Giữ của tôi" thay vì thay im lặng; sửa gửi từ máy khác cho cuốn đã đổi ở đây chờ bạn chọn. Nghe tiếp một cuốn mà máy kia đã nghe xa hơn thì mở ở chỗ mới hơn (có "Quay lại").
+- Thôi ghép ở một máy thì máy kia cũng thôi liệt kê máy này; ghép lại từ cùng máy không thêm dòng trùng. Lỗi ghép nói rõ hơn: ABook bên kia chưa mở hay chưa bật chia sẻ, hay địa chỉ không phải của ABook.
+- Sách của máy tính khác: chương đã nghe vẫn đọc theo được khi máy kia tắt; dự án máy kia chưa làm không còn hiện thành sách, cuốn đang làm ghi "Đang làm trên <máy>"; tải về chỉ báo xong khi đủ cả chữ đọc theo và nhạc nền. Máy kia mất mạng thì "Thử lại" nạp lại đúng chỗ đang nghe và tự phát tiếp khi máy kia trả lời.
+- Bấm một câu ở chương khác rồi dừng ngay không còn đưa trình đọc về đầu chương.
+
 ## [0.4.50] - 2026-10-11
 
 ### Điện thoại và Nghe sách (máy tính và điện thoại)

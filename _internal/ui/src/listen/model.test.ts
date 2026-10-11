@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookMatchesQuery, bookmarkReadPath, chaptersByPart, continuingPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, partToContinue, resumePoint, resumeTarget, seriesIndex, seriesOf, startingRate, twinBookIds, twinKind, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
+import { bookMatchesQuery, bookmarkReadPath, chaptersByPart, continuingPart, foldVietnamese, listeningBook, newerElsewhere, otherBooksToHear, partHeading, partToContinue, resumePoint, resumeTarget, seriesIndex, seriesOf, startingRate, twinBookIds, twinKind, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
@@ -144,6 +144,24 @@ describe("resumePoint", () => {
     const saved = book({ chapterId: 2, seconds: 30 });
     expect(resumeTarget(saved, chapters, { chapterId: 1, seconds: 15 })).toEqual({ chapter: chapters[0], at: 15 });
     expect(resumeTarget(saved, chapters, null)).toEqual({ chapter: chapters[1], at: 30 });
+  });
+
+  // Soát a27 lỗi 2: B nạp chương 1 ở 0:15 rồi dừng (lưu lúc 1000 s); máy A nghe chương 1 tới 1:39 lúc 1100 s. Nút "Nghe tiếp" ở B phải nói
+  // (và phát) 1:39, không phải 0:15 rồi lưu đè chỗ của A.
+  it("a spot heard on another device after this one stopped wins the resume button when it is far away", () => {
+    const away = { complete: true, state: { last: { chapterId: 1, seconds: 99, at: 1100 }, chapters: {} } } as unknown as ListenBook;
+    expect(resumeTarget(away, chapters, { chapterId: 1, seconds: 15 }, 1_000_000)).toEqual({ chapter: chapters[0], at: 99 });
+    expect(resumeTarget(away, chapters, { chapterId: 1, seconds: 15 }, 1_200_000), "chỗ đã lưu là của chính máy này (cũ hơn lần lưu)").toEqual({ chapter: chapters[0], at: 15 });
+    expect(resumeTarget(away, chapters, { chapterId: 1, seconds: 80 }, 1_000_000), "lệch dưới 30 giây: cùng chỗ").toEqual({ chapter: chapters[0], at: 80 });
+  });
+
+  it("names the other device's spot only when it is newer and far (newerElsewhere)", () => {
+    const last = { chapterId: 3, seconds: 99, at: 1100 };
+    expect(newerElsewhere(last, 1_000_000, { chapterId: 3, seconds: 15 })).toEqual(last);
+    expect(newerElsewhere(last, 1_000_000, { chapterId: 2, seconds: 99 }), "chương khác").toEqual(last);
+    expect(newerElsewhere(last, 1_099_500, { chapterId: 3, seconds: 15 }), "ghi trong vòng 1 giây sau lần lưu của máy này: của chính nó").toBeNull();
+    expect(newerElsewhere(last, 1_000_000, { chapterId: 3, seconds: 75 })).toBeNull();
+    expect(newerElsewhere(undefined, 0, { chapterId: 3, seconds: 0 })).toBeNull();
   });
 });
 

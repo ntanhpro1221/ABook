@@ -316,3 +316,40 @@ def test_two_windows_editing_one_line_tell_the_late_one_what_it_replaced(tmp_pat
         assert status == 200 and json.loads(data)["elsewhere"] == {}
     finally:
         server.stop()
+
+
+def test_a_reading_or_a_verdict_another_machine_just_changed_is_told_not_silently_replaced(tmp_path: Path) -> None:
+    """Soát a27 lỗi 4: hai máy cùng sửa cách đọc một tên / phán quyết "Nghe lại" của một câu - người sau đè im lặng. Như người nói
+    (`seen`): điều giao diện đã thấy khác điều đang ghi thì lời đáp mang `elsewhere` để giao diện hỏi giữ của mình hay lấy của máy kia."""
+    from abook.listener_overrides import read_overrides, request_pronunciation
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    project = make_book(tmp_path)
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "t"}
+    base = f"/api/books/{book_id(project)}"
+    try:
+        request_pronunciation(project, "Lucien", "Lu-xi-en", now=time.time())  # máy kia
+        body = {"surface": "Lucien", "spokenForm": "Lu-si-ăng", "seen": ""}  # máy này còn thấy chưa ai sửa
+        status, data, _ = _request(server.port, "POST", base + "/pronunciation", headers=headers, body=body)
+        assert status == 200 and json.loads(data)["elsewhere"] == {"spokenForm": "Lu-xi-en"}, data
+        assert [entry["spoken_form"] for entry in read_overrides(project)["pronunciations"].values()] == ["Lu-si-ăng"], "vẫn ghi"
+        body["seen"] = "Lu-si-ăng"
+        status, data, _ = _request(server.port, "POST", base + "/pronunciation", headers=headers, body=body)
+        assert json.loads(data)["elsewhere"] == {}
+
+        app.reviews.set(project, "b", "ok", 1)  # máy kia: câu b ổn
+        status, data, _ = _request(server.port, "POST", base + "/review", headers=headers,
+                                   body={"verdict": "redo", "chapterId": 1, "stableId": "b", "seen": {"b": ""}})
+        assert status == 200 and json.loads(data) == {"ok": True, "elsewhere": {"b": "ok"}}
+        status, data, _ = _request(server.port, "POST", base + "/review", headers=headers,
+                                   body={"verdict": "ok", "chapterId": 1, "stableId": "b", "seen": {"b": "redo"}})
+        assert json.loads(data) == {"ok": True}, "đã thấy bản mới nhất: lời đáp như cũ"
+    finally:
+        server.stop()

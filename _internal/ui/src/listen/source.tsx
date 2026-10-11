@@ -8,6 +8,7 @@ import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
 import { mergeTimings, VOICE_CHANGED_EVENT, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
 import { bookVoiceCaption, voicesOf } from "./readAloudVoice";
+import { retryChapterText } from "./labels";
 import type { VieneuBackend } from "./VieneuModuleCard";
 import type { PreparePlan, PrepareRequest, PrepareStatus } from "./prepareAhead";
 
@@ -216,6 +217,7 @@ export function useChapterScript(bookId: string | undefined, chapter: ListenChap
     enabled: Boolean(bookId && chapter),
     queryFn: () => chapterScriptQuery(source, bookId!, chapter!).queryFn(),
     staleTime: Infinity,
+    retry: retryChapterText,
   });
 }
 

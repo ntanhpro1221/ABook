@@ -19,9 +19,9 @@ import pytest
 from abook.webui import book_edits, book_wishes, edits_inbox, packages, remote_books, store
 from abook.webui.library import Preferences
 from abook.webui.listening import Listening
-from abook.webui.server import ApiError, App, socket_name
+from abook.webui.server import ApiError, App, Server, socket_name
 from abook.webui.sync import Devices, SyncApp, SyncServer
-from tests.test_webui_listen_and_sync import FakeRunner, library  # noqa: F401 - fixture dùng chung
+from tests.test_webui_listen_and_sync import FakeRunner, _request, library  # noqa: F401 - fixture dùng chung
 
 
 class CountingSync(SyncApp):
@@ -65,6 +65,10 @@ def test_download_takes_every_file_and_the_book_plays_with_the_other_computer_of
     try:
         before = app.remote_download(value, "status")
         assert before["state"] == "none" and before["filesDone"] < before["files"]
+        def shelf() -> dict:
+            return next(item for item in app.listen_library() if item["id"] == value)["remote"]
+
+        assert shelf()["downloaded"] is False, "Thư viện chưa ghi Đã tải (soát a27 lỗi 8)"
         names = [name for name, _size in remote_books.wanted(packages.manifest(path))]
         assert {"chapters/00001_645.mp3", "scripts/1.json", "cast.json", "samples/3.wav"} <= set(names)
         assert "scripts/2.json" not in names, "chương chưa thu chưa có gì để tải"
@@ -75,6 +79,7 @@ def test_download_takes_every_file_and_the_book_plays_with_the_other_computer_of
         remote_audio = next((project / "output" / "chapters").glob("*.mp3"))
         assert (path / "chapters" / "00001_645.mp3").read_bytes() == remote_audio.read_bytes()
         assert not list(path.rglob("*.part")), "không để lại file dở"
+        assert shelf()["downloaded"] is True, "đủ mọi file: Thư viện ghi Đã tải"
     finally:
         other.stop()
 
@@ -87,6 +92,38 @@ def test_download_takes_every_file_and_the_book_plays_with_the_other_computer_of
     assert packages.script(path, chapter["id"])["segments"] and set(packages.cast(path)) >= {"characters", "extras"}
     assert packages.sample_file(path, 3) is not None
     assert app.remote_download(value, "status")["state"] == "done", "mở lại vẫn biết đã tải đủ (tính theo đĩa)"
+
+
+def test_reading_along_a_heard_chapter_works_with_the_other_computer_off(library, tmp_path: Path) -> None:  # noqa: F811
+    """Soát a27 lỗi 12: nghe chương 1 (audio đệm về) rồi tắt máy kia - "Đọc theo" chương ấy vẫn mở (chữ đã đệm cùng audio). Chương chưa
+    có chữ thì nói máy kia không trả lời (503), không nói "không có chương này"."""
+    app, other, _sync, _project, _devices, _computer, value, path = _two_computers(library, tmp_path)
+    ui = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "t"}
+    try:
+        assert packages.chapter_file(path, 1) is not None, "bấm nghe chương 1: audio về máy này"
+        assert _until(lambda: packages.has(path, "scripts/1.json")), "chữ đọc theo chương 1 về cùng (ở nền)"
+        other.stop()
+        status, data, _ = _request(ui.port, "GET", f"/api/books/{value}/chapters/1/script", headers=headers)
+        assert status == 200 and json.loads(data)["segments"], "máy kia tắt: chương đã nghe vẫn đọc theo được"
+        (path / "scripts" / "1.json").unlink()
+        status, data, _ = _request(ui.port, "GET", f"/api/books/{value}/chapters/1/script", headers=headers)
+        message = json.loads(data)["error"]
+        assert status == 503 and "máy kia" in message and "chưa có trên máy này" in message, message
+    finally:
+        ui.stop()
+        other.stop()
+
+
+def _until(check, seconds: float = 5.0) -> bool:
+    import time
+
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        if check():
+            return True
+        time.sleep(0.05)
+    return check()
 
 
 def test_an_interrupted_download_keeps_what_is_done_and_resumes_only_the_rest(library, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
@@ -104,7 +141,7 @@ def test_an_interrupted_download_keeps_what_is_done_and_resumes_only_the_rest(li
     monkeypatch.setattr(remote_books, "_save", save_then_vanish)
     sync.asked.clear()
     failed = app.remote_downloads.start(path, wait=True)
-    assert failed["state"] == "failed" and "Không kết nối được máy kia" in failed["error"]
+    assert failed["state"] == "failed" and "ABook trên máy kia chưa mở" in failed["error"], "máy còn đó, ABook bên kia đã đóng"
     assert failed["filesDone"] == 2 and all((path / name).is_file() for name in saved)
     assert not list(path.rglob("*.part"))
     assert app.remote_download(value, "status")["state"] == "failed", "nói rõ lần trước hỏng, phần đã xong vẫn đếm"
@@ -191,7 +228,7 @@ def test_edits_made_on_this_computer_reach_the_other_computer_like_a_phones(libr
         other.stop()
 
     app.rename(value, "Sửa lúc máy kia tắt")
-    with pytest.raises(ApiError, match="Không kết nối được máy kia"):
+    with pytest.raises(ApiError, match="ABook trên máy kia chưa mở"):
         app.send_remote_edits(value)
     state = app.listen_book(value)["editsSync"]
     assert state["pending"] == 1 and state["last"]["state"] == "error", "lớp sửa giữ nguyên, lần sau gửi lại"

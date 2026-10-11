@@ -322,9 +322,11 @@ class Devices:
                 return None
             return {"code": self._pairing[0], "expiresAt": self._pairing[1]}
 
-    def pair(self, code: str, name: str, studio: bool = False) -> str | None:
+    def pair(self, code: str, name: str, studio: bool = False, ident: str = "") -> str | None:
         """`studio`: thiết bị được điều khiển sản xuất (Studio từ xa) - theo TỪNG thiết bị, không theo công tắc chung:
-        điện thoại ghép từ trước chỉ để nghe không tự có quyền ấy khi người dùng bật Studio từ xa (soát 28-09)."""
+        điện thoại ghép từ trước chỉ để nghe không tự có quyền ấy khi người dùng bật Studio từ xa (soát 28-09). `ident`: mã máy bên
+        ghép tự gửi (remote_books `Computers.own_id`) - cùng máy ghép lại thì THAY dòng cũ (mã cũ hết hiệu lực), không thêm dòng trùng
+        (soát a27 lỗi 5); quyền điều khiển sản xuất đã cho máy ấy đi theo."""
         digits = re.sub(r"[^0-9]", "", code)[:12]  # "482 913" cũng được; compare_digest không nhận chữ ngoài ASCII
         with self._lock:
             if not self._pairing or self._pairing[1] <= time.time():
@@ -337,9 +339,14 @@ class Devices:
                 return None
             self._pairing = None  # mã dùng một lần
             token = secrets.token_urlsafe(32)
+            ident = ident if re.fullmatch(r"[0-9a-f]{8,64}", ident or "") else ""
+            same = [key for key, value in self._data["devices"].items() if ident and value.get("ident") == ident]
+            studio = bool(studio) or any(self._data["devices"][key].get("studio") for key in same)
+            for key in same:
+                del self._data["devices"][key]
             self._data["devices"][_hash(token)] = {"name": name.strip()[:80] or "Điện thoại",
                                                    "pairedAt": time.time(), "lastSeen": time.time(),
-                                                   "studio": bool(studio)}
+                                                   "studio": bool(studio), **({"ident": ident} if ident else {})}
             self._save()
             return token
 
@@ -381,7 +388,8 @@ class Devices:
 
     def list(self) -> list[dict[str, Any]]:
         with self._lock:
-            return [{"id": key[:12], **value} for key, value in self._data["devices"].items()]
+            return [{"id": key[:12], **{field: item for field, item in value.items() if field != "ident"}}
+                    for key, value in self._data["devices"].items()]
 
     def revoke(self, short_id: str) -> None:
         with self._lock:
@@ -676,6 +684,8 @@ class SyncApp:
                 summary = store.summarize(path)
             except Exception:  # noqa: BLE001 - sách hỏng không làm hỏng danh sách
                 continue
+            if not listen_view.on_shelf(summary, bool(summary.get("running"))):  # `running`: nhịp tim của worker (store.summarize)
+                continue
             identifier = book_id(path)
             summary["id"] = identifier
             view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
@@ -834,7 +844,7 @@ class SyncHandler(BaseHTTPRequestHandler):
             elif not remote_studio.permitted(method, path, producing=producing):
                 reason = ("Máy tính chưa cho phép điều khiển sản xuất từ xa" if not studio.allowed()
                           else "Thiết bị này chưa được phép điều khiển sản xuất")
-                self._json(HTTPStatus.FORBIDDEN, {"error": f"{reason} - thiết bị này chỉ nghe sách được"})
+                self._json(HTTPStatus.FORBIDDEN, {"error": f"{reason} - giờ chỉ nghe sách được"})
             elif method not in ("GET", "HEAD") and not remote_studio.same_origin(self.headers):
                 self._json(HTTPStatus.FORBIDDEN, {"error": "Yêu cầu không đến từ trang Studio"})
             else:
@@ -918,7 +928,8 @@ class SyncHandler(BaseHTTPRequestHandler):
                 body = self._body()
                 # Ghép lúc người dùng ĐANG bật Studio từ xa: họ ghép thiết bị này để điều khiển - cho luôn quyền ấy.
                 studio_on = self.app.studio is not None and self.app.studio.allowed()
-                token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")), studio=studio_on)
+                token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")), studio=studio_on,
+                                              ident=str(body.get("id", "") or ""))
                 if token is None:
                     self._json(HTTPStatus.FORBIDDEN, {"error": self.app.devices.wrong_code_message()})
                 else:
@@ -950,6 +961,12 @@ class SyncHandler(BaseHTTPRequestHandler):
             device = self._device()
             if device is None:
                 self._json(HTTPStatus.UNAUTHORIZED, {"error": "Thiết bị chưa ghép nối"})
+                return
+            if method == "POST" and path == "/sync/v1/unpair":
+                # Máy bên kia thôi ghép máy này: thu hồi mã của nó ở đây luôn - không để lại dòng thiết bị và mã còn dùng được (soát a27 lỗi 5).
+                self.app.devices.revoke(device["id"])
+                self.app.remote.forget(device["id"])
+                self._json(HTTPStatus.OK, {"ok": True})
                 return
             if method == "POST" and path == "/sync/v1/remote":
                 body = self._body()

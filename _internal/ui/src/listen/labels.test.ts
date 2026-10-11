@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookProgressText, caughtUpDetail, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel, unquoted } from "./labels";
+import { bookProgressText, caughtUpDetail, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel, unquoted } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -152,5 +152,21 @@ describe("unquoted (soát a26 L6: dấu trang hiện ““…””)", () => {
     expect(unquoted("“Đi thôi.”")).toBe("Đi thôi.");
     expect(unquoted("Lucien nhìn Natasha.")).toBe("Lucien nhìn Natasha.");
     expect(unquoted(" «Ừ» ")).toBe("Ừ");
+  });
+});
+
+// Soát a27 lỗi 12: máy kia tắt mà chữ chương chưa về - nói máy ấy không trả lời, không nói "chương không còn", và không chờ thử lại ba lần.
+describe("chapterOpenProblem", () => {
+  it("names the silent machine instead of a missing chapter", () => {
+    const off = Object.assign(new Error("Máy A không trả lời (tắt hay mất mạng). Chữ chương này chưa có trên máy này"), { status: 503 });
+    expect(chapterOpenProblem(off)).toBe("Máy A không trả lời (tắt hay mất mạng). Chữ chương này chưa có trên máy này.");
+    expect(chapterOpenProblem(Object.assign(new Error("Không có chương này"), { status: 404 }))).toBe("Chương có thể không còn trong sách.");
+    expect(chapterOpenProblem(null)).toBe("Chương có thể không còn trong sách.");
+  });
+  it("does not retry a missing chapter or a silent machine", () => {
+    expect(retryChapterText(0, { status: 503 })).toBe(false);
+    expect(retryChapterText(0, { status: 404 })).toBe(false);
+    expect(retryChapterText(0, { status: 500 })).toBe(true);
+    expect(retryChapterText(2, { status: 500 })).toBe(false);
   });
 });

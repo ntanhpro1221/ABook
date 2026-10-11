@@ -99,6 +99,24 @@ object Streaming {
         return manifest
     }
 
+    /** Chữ đọc theo (`scripts/<n>.json`) của chương `chapterId` trong cuốn nghe thẳng mà máy này chưa có: tên file trong gói; cuốn đã
+     *  tải về, chương không có chữ hay chữ đã về thì null. */
+    fun missingScript(id: String, chapterId: Long): String? {
+        if (Store.rawManifest(id) != null) return null
+        val chapters = Store.streamManifest(id)?.optJSONArray("chapters") ?: return null
+        val script = (0 until chapters.length()).mapNotNull { chapters.optJSONObject(it) }
+            .firstOrNull { (it.opt("id") as? Number)?.toLong() == chapterId }?.optString("script").orEmpty()
+        if (script.isBlank() || script == "null" || runCatching { Store.file(id, script).isFile }.getOrDefault(true)) return null
+        return script
+    }
+
+    /** Chương đang phát của cuốn nghe thẳng: đệm chữ đọc theo của nó ở nền, cùng lúc với audio - máy tính tắt sau đó thì "Đọc theo" vẫn mở
+     *  được chương đã nghe (như máy tính, webui/packages.chapter_file; soát a27 lỗi 12). */
+    fun keepScript(context: Context, id: String, chapterId: Long) {
+        val script = missingScript(id, chapterId) ?: return
+        Thread({ fetchSmall(context, id, script) }, "abook-keep-script").apply { isDaemon = true }.start()
+    }
+
     /**
      * Một file nhỏ của gói (văn bản chương, dàn nhân vật, câu mẫu, bìa): lấy từ máy tính rồi cất đúng chỗ của sách đã
      * tải. Trả về file, hoặc null khi máy tính không có hoặc không kết nối được.
