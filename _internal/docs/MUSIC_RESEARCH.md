@@ -4337,6 +4337,24 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 chiều - SIBSWITCH (lỗi 5 audit-2: đổi bài giữa cảnh vì bài hết): THUA
+
+Ghi trước Corpus 05874c8, kết quả dc4fa2c. Ba hằng được vá trong `choose`:
+- R: lặp bài thay vì nối anh em khi phần cảnh còn lại <= R × độ dài bài.
+- P: phạt bài đầu cảnh ngắn (SHORT_TRACK_PENALTY).
+- H: anh em xếp theo mục tiêu đầu cảnh.
+
+Số chính: đổi bài vô cớ / giờ (cách mọi đầu cảnh vàng > 20 s). Chặn: lặp vòng +3 điểm, lặng +2, r V/E/T −.03. Kiểm lực bằng sàn
+"không bao giờ nối": sàn ấy lặp 21-27% thời lượng nên trượt chặn, tức chặn có răng.
+
+Bộ học chọn R .5, P 2: 5,05 -> 3,66 lần/giờ (−27%). Bộ 7: 9,11 -> 7,06 (−22%, cần −40%), và chặn trượt sát mép (lặp +3,2, r_V
+−.031) → THUA, app giữ nguyên. H làm bài anh em gần bài cũ hơn (nhảy .56 -> .35) nhưng hợp truyện kém đi (r −.04).
+
+Hai điều rút ra:
+1. Ở bộ 7, nửa số đổi vô cớ là đổi ở ranh giới cứng của app không trùng cảnh thật (họ lỗi 1), không phải bài anh em.
+2. Phần anh em chỉ đổi được sang lặp vòng, khoảng 1,5 điểm % lặp cho mỗi lần nối bớt đi. Muốn chọn bên nào phải hỏi tai người
+   nghe, không vặn hằng được.
+
 ### 11-10 chiều - MUSIC-AUDIT-2 (0.4.49, hai đường) và ENERGY (giãn mục tiêu năng lượng): THUA
 
 **MUSIC-AUDIT-2** (agent Sonnet, `LLM_Train/music/audit2/`, đặc tả Corpus 7e36d00). Code nhạc 0.4.49 (fbe96534). 62 chương / 30
