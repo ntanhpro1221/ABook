@@ -122,7 +122,8 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
         moods = music_moods.load(project_root)
         student = music_scene_student.load(project_root)
         scenes = music_scenes.book_scenes(book_scripts(project_root), moods["scenes"] if moods else None,
-                                          student=student["scenes"] if student else None)
+                                          student=student["scenes"] if student else None,
+                                          onsets=music_scene_student.onsets_of(student))
     genres = (taxonomy or {}).get("genres") or {}
     genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
     known: dict[str, dict[str, Any]] = {}
