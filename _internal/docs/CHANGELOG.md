@@ -18,6 +18,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Truyện kể ngôi thứ nhất có dòng như "Góc nhìn của Mai" hay "[POV: Mai]": "Việc cần duyệt" đề xuất luôn "đoạn này kể bởi Mai" (hay
   "kể ở ngôi thứ ba" với "Góc nhìn thứ 3"), bấm "Nhận" là xong; chưa bấm thì máy giữ nguyên. Truyện người kể xưng "ta" không còn bị
   báo nhầm "có vẻ không phải … kể".
+- Truyện viết thoại bằng gạch đầu dòng ("- Đi thôi.", "— Ừ.") không còn bị đọc cả cuộc hội thoại bằng giọng của người nói câu
+  đầu: mỗi dòng gạch là một lượt nói riêng, như với thoại trong ngoặc kép.
 
 ## [0.4.54] - 2026-10-12
 
