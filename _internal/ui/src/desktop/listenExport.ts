@@ -35,7 +35,18 @@ export interface AudiobookPlan {
   /** Chương đã ghép sẵn từ một lần xuất bị dừng (cùng giọng, cùng chữ): lần này làm tiếp. */
   readyChapters: number;
   ffmpeg: FfmpegStatus;
+  /** Ô "Kèm nhạc nền" (webui/music_export.py `packaged_state`): cuốn có nhạc gắn sẵn theo chương không, công tắc Nhạc nền của cuốn đang bật không. */
+  music?: MusicExportState;
 }
+
+/** Ô "Kèm nhạc nền" của hộp xuất sách nói: `available` - cuốn có kế hoạch nhạc (không thì không hiện ô), `enabled` - mặc định của ô. */
+export interface MusicExportState {
+  available: boolean;
+  enabled: boolean;
+}
+
+/** Lời ngắn dưới ô "Kèm nhạc nền". */
+export const MUSIC_MIX_HINT = "Nhạc được trộn thẳng vào file, không tắt riêng được khi nghe.";
 
 /** Công cụ ghép âm thanh (ffmpeg): tải riêng khi máy chưa có (GET/POST /api/ffmpeg). */
 export interface FfmpegStatus {
@@ -58,7 +69,7 @@ export const ffmpegCancel = () => api<FfmpegStatus>("/api/ffmpeg/cancel", { meth
 export const audiobookCancel = (bookId: string) => api<ExportJob>(`/api/listen/books/${bookId}/audiobook/cancel`, { method: "POST", body: {} });
 
 /** Thân yêu cầu bắt đầu xuất (ngoài `target` / `cover` do host thêm). */
-export const audiobookBody = (format: AudiobookFormat, voice: string) => ({ format, voice });
+export const audiobookBody = (format: AudiobookFormat, voice: string, music = false) => ({ format, voice, ...(music ? { music: true } : {}) });
 
 /** Chữ của giọng trực tuyến gửi CẢ CUỐN ra ngoài máy; rỗng khi giọng chạy trên máy. */
 export function wholeBookNotice(voice: Pick<ReadAloudVoice, "provider" | "online">): string {
