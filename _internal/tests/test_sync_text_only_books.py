@@ -1,4 +1,5 @@
-"""Sách chưa có chương nào nghe được vẫn hiện ở máy đã ghép: chữ nguồn đi qua cổng đồng bộ như chương chỉ-chữ (sync.text_layer)."""
+"""Sách chưa có chương nào nghe được: máy đã ghép thấy nó đúng như Thư viện của máy này (đang làm thì có, chưa làm thì không - soát a27
+lỗi 13); gói của nó mang chữ nguồn như chương chỉ-chữ (sync.text_layer)."""
 from __future__ import annotations
 
 import sqlite3
@@ -34,12 +35,16 @@ def _app(tmp_path: Path, root: Path) -> SyncApp:
     return SyncApp(Library(preferences), Listening(tmp_path / "listening.json"), Devices(tmp_path / "devices.json"), "Máy thử")
 
 
-def test_a_book_with_no_audio_chapter_is_listed_for_paired_devices(tmp_path: Path) -> None:
+def test_a_book_with_no_audio_chapter_is_listed_for_paired_devices_only_while_it_is_being_made(tmp_path: Path, monkeypatch) -> None:
     root = tmp_path / "thu_vien"
     root.mkdir()
     _text_only(root)
-    listed = _app(tmp_path, root).library_view()
-    assert [(book["chaptersTotal"], book["chaptersAvailable"], book["complete"]) for book in listed] == [(2, 0, False)]
+    app = _app(tmp_path, root)
+    assert app.library_view() == [], "dự án chưa làm không có ở Thư viện máy này - máy kia cũng không thấy nó thành sách chữ"
+    summarize = sync.store.summarize
+    monkeypatch.setattr(sync.store, "summarize", lambda path: {**summarize(path), "running": True})
+    listed = app.library_view()
+    assert [(book["chaptersTotal"], book["chaptersAvailable"], book["complete"]) for book in listed] == [(2, 0, False)], "đang làm: sắp có"
 
 
 def test_its_chapters_travel_as_text_chapters_and_the_text_is_served(tmp_path: Path) -> None:

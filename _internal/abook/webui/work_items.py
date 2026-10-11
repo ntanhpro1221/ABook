@@ -213,6 +213,10 @@ def _speaker_fix(rows: list[Any], choices: list[dict[str, str]], current: str,
                     if choice["value"].casefold() != current.casefold()],
         "currentValue": current,
         "requested": label(next(iter(pending))) if len(pending) == 1 and None not in asked else None,
+        # Điều thẻ này thấy đang ghi cho từng câu ("" = chưa ai quyết): giao diện gửi lại kèm lần bấm, máy/cửa sổ khác vừa quyết khác
+        # thì được báo (server `_edited_elsewhere`, soát a27 lỗi 4).
+        "seen": {str(row["stable_id"]): (wish["speaker"] if wish is not None and wish.get("text_sha256") == str(row["text_sha256"] or "") else "")
+                 for row, wish in zip(rows, asked)},
     }
 
 

@@ -18,6 +18,23 @@ import javax.net.ssl.HttpsURLConnection
 object SyncLink {
     fun prefs(context: Context): SharedPreferences = context.getSharedPreferences("sync", Context.MODE_PRIVATE)
 
+    /** Mã cố định của chính điện thoại này (16 chữ hex), gửi lúc ghép - như remote_books.py `Computers.own_id` của máy tính. Không nằm trong
+     *  `prefs` (thôi ghép máy tính chính xoá sạch nó). */
+    @Synchronized
+    fun selfId(context: Context): String {
+        val store = context.getSharedPreferences("abook_self", Context.MODE_PRIVATE)
+        store.getString("id", null)?.takeIf { Regex("[0-9a-f]{16}").matches(it) }?.let { return it }
+        val fresh = java.util.UUID.randomUUID().toString().replace("-", "").take(16)
+        store.edit().putString("id", fresh).commit()
+        return fresh
+    }
+
+    /** Báo máy kia thu hồi mã của máy này ở đó (`POST /sync/v1/unpair`, sync.py) - lúc thôi ghép; máy kia tắt thì thôi (chỉ thử một lần). */
+    fun tellUnpaired(context: Context, root: String, token: String) {
+        if (token.isBlank()) return
+        runCatching { send(context, "POST", "/sync/v1/unpair", JSONObject(), false, root, 3000, 1500, token) }
+    }
+
     fun paired(context: Context): Boolean = !prefs(context).getString("token", "").isNullOrBlank()
 
     fun token(context: Context): String = prefs(context).getString("token", "") ?: ""
@@ -158,6 +175,8 @@ object SyncLink {
      */
     fun pair(context: Context, root: String, body: JSONObject): Pair<JSONObject, String> {
         Pin.install(context)
+        // Mã của chính máy này: máy kia nhận ra cùng máy ghép lại thì thay dòng cũ, không thêm dòng trùng (sync.py `Devices.pair` `ident`).
+        if (!body.has("id")) body.put("id", selfId(context))
         val seen = arrayOfNulls<String>(1)
         val text = send(context, "POST", "/sync/v1/pair", body, false, root, 20_000, 5000, null, seen)
         val reply = JSONObject(text)

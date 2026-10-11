@@ -17,7 +17,7 @@ import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
 import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
-import { bookStatusText, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
+import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
 import { bookmarkReadPath, canPlay, chapterHeard, chaptersByPart, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { keepTogether, partialBookLine, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
@@ -889,11 +889,13 @@ export function BookScreen({
               {book.producing && <Vu className="h-2.5" />}
               {book.producing
                 ? "Đang thu âm - chương mới tự hiện ra khi xong"
-                : book.imported
-                  ? "Chưa hoàn thành - file sách này chỉ có các chương đã làm; mở bản mới hơn để nghe tiếp"
-                  : phonePartial
-                    ? partialBookLine(book.chaptersAvailable, book.chaptersTotal)
-                    : "Chưa hoàn thành - việc thu đang dừng"}
+                : book.remote
+                  ? remoteUnfinishedLine(book)
+                  : book.imported
+                    ? "Chưa hoàn thành - file sách này chỉ có các chương đã làm; mở bản mới hơn để nghe tiếp"
+                    : phonePartial
+                      ? partialBookLine(book.chaptersAvailable, book.chaptersTotal)
+                      : "Chưa hoàn thành - việc thu đang dừng"}
               {studioLink?.(book)}
             </p>
           )}

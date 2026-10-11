@@ -644,6 +644,25 @@ def pending_details(folder: Path, wishes: dict[str, Any] | None) -> dict[str, An
 # ---- chủ máy sản xuất: ý muốn thành yêu cầu thật --------------------------------------------------------------------
 
 
+def _wanted(entry: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in entry.items() if key not in ("requested_at", "replaced")}
+
+
+def newer_here(project: Path, wishes: dict[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
+    """{(mục, khoá): yêu cầu của dự án} cho những khoá mà dự án đã đặt KHÁC, SAU lúc người gửi sửa (`requested_at` của ý muốn là
+    giờ của máy gửi lúc bấm): `fold` lúc ấy sẽ đè cái mới hơn bằng cái cũ hơn - nơi gọi giữ của dự án và hỏi chủ máy."""
+    mine = overrides.read_overrides(project)
+    out: dict[tuple[str, str], dict[str, Any]] = {}
+    for section in SECTIONS:
+        ours = mine.get(section) if isinstance(mine.get(section), dict) else {}
+        for key, entry in (wishes.get(section) or {}).items():
+            here = ours.get(key)
+            if (isinstance(here, dict) and isinstance(here.get("requested_at"), (int, float))
+                    and float(here["requested_at"]) > float(entry["requested_at"]) and _wanted(here) != _wanted(entry)):
+                out[(section, key)] = here
+    return out
+
+
 def fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int]:
     """Đọc lại ý muốn của một file `.abook` thành YÊU CẦU của dự án bằng chính các hàm Studio dùng
     (`listener_overrides.request_*`, `aliases.add`) - ghi vào overrides.json như thể người dùng vừa bấm trong Studio, KHÔNG áp:

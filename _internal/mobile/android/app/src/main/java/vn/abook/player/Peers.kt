@@ -161,6 +161,8 @@ object Peers {
      *  `discard` = false thì từ chối, không đổi gì (gọi [unsent] để hỏi người dùng trước). */
     fun forget(context: Context, key: String, discard: Boolean = false) {
         refuseIfUnsent(key, discard)
+        // Máy kia thu hồi mã của điện thoại này ở đó, không để lại dòng thiết bị còn dùng được (soát a27 lỗi 5) - ở nền, trước khi đường hầm đóng.
+        link(context, key)?.let { link -> Thread({ SyncLink.tellUnpaired(context, link.base, link.token) }, "peer-unpair").start() }
         val peers = all(context)
         peers.optJSONObject(key)?.optString("host")?.takeIf { it.startsWith("bt:") }?.let { BluetoothLink.forget(it) }
         peers.optJSONObject(key)?.optString("fingerprint")?.let { rememberFormer(context, it, key) }

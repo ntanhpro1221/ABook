@@ -144,8 +144,8 @@ export interface ListenBook {
   parts?: BookPart[];
   /** Điện thoại: cuốn này nằm trên máy tính, nghe thẳng qua mạng (chưa tải về). */
   /** Cuốn nằm ở máy khác, nghe thẳng qua mạng: điện thoại - `true` (trên máy tính đã ghép); máy tính - tên máy tính
-   *  kia (webui/remote_books.py). */
-  remote?: boolean | { computer: string; device?: string };
+   *  kia (webui/remote_books.py); `downloaded`: máy này đã có đủ để nghe cả khi máy kia tắt. */
+  remote?: boolean | { computer: string; device?: string; downloaded?: boolean };
   /** Phần nối tiếp của "Làm tiếp cuốn này" (continues.json của máy tính): mã phần đầu + thứ tự phần; phần đầu và sách lẻ:
    *  null. Có ở sách của máy tính, sách nghe thẳng và sách đã tải về điện thoại (book.json). */
   series?: SeriesLink | null;
@@ -452,9 +452,28 @@ export function resumeTarget(
   book: ListenBook,
   chapters: ListenChapter[],
   here: { chapterId: number; seconds: number } | null,
+  stampMs = Infinity,
 ): { chapter: ListenChapter; at: number } | null {
+  // Thiết bị khác đã nghe xa hơn SAU lần cuối máy này nạp/lưu (`stampMs`): mọi nút nói chỗ của máy kia - đúng chỗ bấm sẽ phát (soát a27 lỗi 2).
+  if (here && newerElsewhere(book.state.last, stampMs, here)) here = null;
   const chapter = here ? chapters.find((item) => item.id === here.chapterId) : undefined;
   return chapter && here ? { chapter, at: here.seconds } : resumePoint(book, chapters);
+}
+
+/** Lệch (giây) từ đó chỗ nghe của thiết bị khác mới là "chỗ khác" - ít hơn là cùng chỗ (lưu chậm vài giây). */
+export const ELSEWHERE_SECONDS = 30;
+
+/** Chỗ nghe máy chủ đang giữ (`last`) được ghi SAU lần cuối máy này nạp hay lưu (`stampMs`, mili giây) - tức của thiết bị khác - và xa chỗ
+ *  máy này đang đứng (`here`): nghe tiếp ở đây phải đi tới chỗ ấy (có nút quay lại) hay hỏi, đừng phát chỗ cũ rồi lưu đè chỗ mới hơn.
+ *  Không thì null. */
+export function newerElsewhere(
+  last: { chapterId: number; seconds: number; at: number } | null | undefined,
+  stampMs: number,
+  here: { chapterId: number; seconds: number },
+): { chapterId: number; seconds: number; at: number } | null {
+  if (!last || !(last.at * 1000 > stampMs + 1000)) return null;
+  if (last.chapterId === here.chapterId && Math.abs(last.seconds - here.seconds) < ELSEWHERE_SECONDS) return null;
+  return last;
 }
 
 /** Độ dài chương: của gói sách, hay - chương đọc to chưa có audio - độ dài trình phát đã ghi lúc nghe (giây ảo của bộ máy đọc to). */

@@ -299,6 +299,10 @@ export function OtherComputers() {
           máy khác nghe thư viện này” → “Ghép máy mới”. Máy này tên “{data.name}” trong danh sách thiết bị đã ghép của máy kia.
         </p>
         <p>
+          Ghép một chiều: máy này nghe được sách của máy kia. Muốn máy kia nghe sách của máy này thì ghép từ máy kia, với mã tạo ở
+          Cài đặt → Điện thoại và thiết bị của máy này.
+        </p>
+        <p>
           Không chung Wi-Fi: ghép điện thoại với máy tính này qua Bluetooth trong Cài đặt Windows trước, mở ABook trên điện
           thoại, bật “Cho máy khác nghe thư viện này”, rồi chọn điện thoại ở trên và gõ mã 6 số.
         </p>

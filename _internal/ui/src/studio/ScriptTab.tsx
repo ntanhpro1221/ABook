@@ -13,6 +13,7 @@ import { Button, EmptyState, IconButton, Kbd, Segmented, Sheet, Skeleton } from 
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
 import { UNDO_MS, optimistic, undoAction, usePendingNote, useWhenApplied } from "./decisions";
+import { seenFor, warnElsewhere } from "./elsewhere";
 import { findRanges, splitByRanges, wrapIndex } from "./scriptFind";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
@@ -242,7 +243,7 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => b
           speaker: value,
           newGender: newGender ?? "",
           // Điều cửa sổ này đang thấy cho từng câu: máy chủ so với điều thật sự đang ghi, khác thì báo "vừa được sửa ở cửa sổ khác" (B19).
-          seen: Object.fromEntries(lines.map((line) => [line.stableId, line.wish?.value ?? ""])),
+          seen: seenFor(lines, Object.fromEntries(lines.map((line) => [line.stableId, line.wish?.value ?? ""]))),
         },
       }),
     // Hiện ngay trên câu; bản thật về khi chương tải lại. Không ghi được thì câu trở lại như trước (onError).
@@ -258,13 +259,6 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => b
     onSuccess: ({ requestedAt, elsewhere }, { lines, value, label }) => {
       const line = lines[0];
       const replaced = Object.entries(elsewhere ?? {});
-      if (replaced.length) {
-        // Không chặn: lần ghi đã vào; chỉ nói để người nghe biết mình vừa ghi đè lên một lựa chọn mới hơn những gì cửa sổ này thấy.
-        const was = replaced[0][1];
-        toast.warning(replaced.length > 1 ? `${replaced.length} câu vừa được sửa ở cửa sổ khác` : "Câu này vừa được sửa ở cửa sổ khác", {
-          description: `${was ? `Trước đó đang chờ ${nameOf(was)}` : "Trước đó chưa ai quyết khác"} - lần ghi của bạn đã thay nó. Hoàn tác nếu muốn giữ lựa chọn kia.`,
-        });
-      }
       const keep = lines.every((item) => value === item.current);
       // Như hộp việc: gán nhầm người thì "Hoàn tác" trả câu về đúng như trước lần bấm này (studio/decisions.ts). Nút trên
       // thông báo và Ctrl+Z dùng CHUNG một lần hoàn tác - bấm cả hai không hoàn tác hai lần.
@@ -287,6 +281,9 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => b
         return true;
       };
       onUndoable(run);
+      // Không chặn: lần ghi đã vào; nói để người nghe biết mình vừa thay một lựa chọn mới hơn những gì màn này thấy - "Lấy của máy kia"
+      // là hoàn tác lần ghi này (yêu cầu nó thay trở lại).
+      if (replaced.length) warnElsewhere(replaced.length, replaced[0][1] ? nameOf(replaced[0][1]) : "", run);
       const undo = { action: { label: action.label, onClick: run }, duration: UNDO_MS };
       if (keep) {
         toast.success(lines.length > 1 ? `Đã xác nhận ${lines.length} câu của ${label}` : `Đã xác nhận: câu này của ${line.label}`, {
@@ -316,7 +313,7 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => b
 
 // "Chương này đúng": người nghe đã đọc hết chương - ghi nhận người nói của mọi câu chưa ai quyết, trừ câu máy còn nghi.
 // Mỗi xác nhận là một nhãn đúng cho vòng học (scripts/model_eval/listener_labels.py); dây chuyền áp thì không đổi gì.
-function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => void) {
+function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => void, nameOf: (value: string) => string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (lines: Line[]) => {
@@ -324,17 +321,19 @@ function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => 
       for (const line of lines) groups.set(line.current, [...(groups.get(line.current) ?? []), line]);
       // Mỗi nhóm một yêu cầu: giữ `requestedAt` của từng lần ghi để một nút Hoàn tác lùi được cả chương.
       const made: Record<string, unknown>[] = [];
+      const elsewhere: Record<string, string> = {};
       for (const [speaker, group] of groups) {
         const refs = group.map((line) => ({ stableId: line.stableId, textSha256: line.textSha256 }));
-        const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/speaker`, {
+        const answer = await api<{ requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${bookId}/speaker`, {
           method: "POST",
-          body: { speaker, lines: refs },
+          body: { speaker, lines: refs, seen: Object.fromEntries(group.map((line) => [line.stableId, line.wish?.value ?? ""])) },
         });
-        made.push({ lines: refs, requestedAt, keep: true });
+        Object.assign(elsewhere, answer.elsewhere ?? {});
+        made.push({ lines: refs, requestedAt: answer.requestedAt, keep: true });
       }
-      return { count: lines.length, made };
+      return { count: lines.length, made, elsewhere };
     },
-    onSuccess: ({ count, made }) => {
+    onSuccess: ({ count, made, elsewhere }) => {
       // Nút trên thông báo và Ctrl+Z dùng CHUNG một lần hoàn tác (như sửa người nói từng câu).
       const action = undoAction(client, bookId, "speaker", made, `${count} câu trở lại chờ duyệt.`);
       let used = false;
@@ -345,6 +344,8 @@ function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => 
         return true;
       };
       onUndoable(run);
+      const replaced = Object.values(elsewhere);
+      if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? nameOf(replaced[0]) : "", run);
       toast.success(`Đã xác nhận ${count} câu là đúng`, {
         description: "Máy sẽ không hỏi lại những câu này và học từ chúng.",
         action: { label: action.label, onClick: run },
@@ -1397,7 +1398,7 @@ function ChapterScriptView({
 }
 
 function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: string; script: ChapterScript; onNext: () => void; onUndoable: (undo: () => boolean) => void }) {
-  const confirm = useConfirmChapter(bookId, onUndoable);
+  const confirm = useConfirmChapter(bookId, onUndoable, (value) => nameOf(script, value));
   const open = script.lines.filter((line) => line.editable && !line.wish && !line.hint);
   const doubtful = script.lines.filter((line) => line.editable && !line.wish && line.hint).length;
   return (

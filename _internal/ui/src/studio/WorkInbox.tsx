@@ -12,6 +12,7 @@ import { retryUnlessGone } from "./polling";
 import { useTryReading } from "./TryReading";
 import { isOpenWork } from "./precast";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
+import { seenFor, warnElsewhere } from "./elsewhere";
 import { keepRequests, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
 import { decidedTitle, inboxLead, midSentence, rerecordSentence, sentence } from "./workText";
 
@@ -66,6 +67,8 @@ export interface WorkItem {
   /** `name`: tên người khi nhãn nút không phải là tên ("Gộp vào Kati"). */
   choices?: { label: string; value: string; name?: string }[];
   currentValue?: string;
+  /** Người đang được ghi cho từng câu khi thẻ được dựng ("" = chưa ai quyết): gửi lại làm `seen` (soát a27 lỗi 4). */
+  seen?: Record<string, string>;
   /** Nhãn nút giữ nguyên khi "Giữ <người đang nói>" không đúng nghĩa (bí danh: "Hai người khác nhau"). */
   keepLabel?: string;
   /** `false`: máy không đề xuất ai (thẻ theo độ tin logprob chỉ nói máy chưa chắc) - chip đầu không tô như gợi ý của máy. */
@@ -221,6 +224,13 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
   );
 }
 
+/** Tên hiện của một người nói từ mã của họ, theo các lựa chọn của thẻ (báo "trước đó đang là …"). */
+function personOf(item: WorkItem, value: string): string {
+  if (value === item.currentValue) return item.current;
+  const choice = item.choices?.find((option) => option.value === value);
+  return choice?.name ?? choice?.label ?? value;
+}
+
 // Sửa cách đọc một tên ngay trên thẻ. Không chờ gì: ghi xong là xong phần người; dây chuyền áp ở ranh giới chương kế
 // tiếp (hoặc lần chạy tới) và thu lại đúng những câu có tên ấy - kể cả sách đã xong.
 function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item: WorkItem; onOpenNames?: (name: string) => void }) {
@@ -233,11 +243,12 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
   const [suggestion, setSuggestion] = useState("");
   const save = useMutation({
     mutationFn: (spokenForm: string) =>
-      api<{ surface: string; spokenForm: string; requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
+      api<{ surface: string; spokenForm: string; requestedAt: number; elsewhere?: { spokenForm?: string } }>(`/api/books/${bookId}/pronunciation`, {
         method: "POST",
-        body: { surface: item.surface, spokenForm },
+        // `seen`: cách đọc thẻ này đang thấy đã ghi - máy/cửa sổ khác vừa ghi khác thì được báo (soát a27 lỗi 4).
+        body: { surface: item.surface, spokenForm, seen: item.requested ?? "" },
       }),
-    onSuccess: ({ spokenForm, requestedAt }) => {
+    onSuccess: ({ spokenForm, requestedAt, elsewhere }) => {
       refreshAfterDecision(client, bookId);
       const keep = spokenForm === item.current;
       // `previous`: cách máy đọc lúc bấm - máy chủ xin lại cách ấy nếu cách mới đã vào sách.
@@ -250,6 +261,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           ? `Trở lại quyết định trước: “${item.surface}” đọc là “${item.requested}”.`
           : `“${item.surface}” lại đọc là “${item.current}”.`,
       );
+      if (elsewhere?.spokenForm !== undefined) warnElsewhere(1, elsewhere.spokenForm ? `“${elsewhere.spokenForm}”` : "", action.onClick);
       // Giữ đúng cách máy đang đọc thì không có gì để thu lại - soát UX 29-09: báo "sẽ thu lại" làm người nghe hoảng.
       if (keep) {
         toast.success(`Giữ cách đọc “${spokenForm}”`, { description: "Không phải thu lại câu nào.", action, duration: UNDO_MS });
@@ -381,19 +393,20 @@ function SpeakerFix({
   const [name, setName] = useState("");
   const save = useMutation({
     mutationFn: ({ speaker, newGender }: { speaker: string; newGender?: string }) =>
-      api<{ lines: number; speaker: string; alias?: boolean; requestedAt: number }>(`/api/books/${bookId}/speaker`, {
+      api<{ lines: number; speaker: string; alias?: boolean; requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${bookId}/speaker`, {
         method: "POST",
         body: {
           lines,
           speaker,
           newGender: newGender ?? "",
+          seen: seenFor(lines ?? [], item.seen),
           // "Một người hai tên": gộp là quyết cả ở cấp tên - phần sau của cuốn ("Làm tiếp cuốn này") tự hiểu.
           ...(item.kind === "alias" && speaker !== item.currentValue ? { alias: item.currentValue } : {}),
           // Thẻ 『』 phạm vi "Cả cuốn": quy ước của cả cuốn, các phần sau tự áp.
           ...(item.kind === "bracket" && scope === "all" ? { bracketRule: true } : {}),
         },
       }),
-    onSuccess: ({ speaker, alias, requestedAt }) => {
+    onSuccess: ({ speaker, alias, requestedAt, elsewhere }) => {
       refreshAfterDecision(client, bookId);
       const which = (lines?.length ?? 1) > 1 ? `${lines?.length} câu này` : "câu này";
       const keep = speaker === item.currentValue;
@@ -404,6 +417,8 @@ function SpeakerFix({
           ? `${sentence(which)} trở lại chờ duyệt.`
           : `${sentence(which)} lại là của ${midSentence(item.current)}.`;
       const undo = alias ? {} : { action: undoAction(client, bookId, "speaker", [{ lines, requestedAt, keep }], back), duration: UNDO_MS };
+      const replaced = Object.values(elsewhere ?? {});
+      if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? personOf(item, replaced[0]) : "", undo.action?.onClick);
       if (keep) {
         toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${midSentence(item.current)}`, {
           description: "Việc này sẽ không hiện lại.",
@@ -430,17 +445,24 @@ function SpeakerFix({
   const keepAll = useMutation({
     mutationFn: async (requests: SpeakerRequest[]) => {
       const made: Record<string, unknown>[] = [];
+      const replaced: string[] = [];
       for (const request of requests) {
-        const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/speaker`, { method: "POST", body: request });
-        made.push({ lines: request.lines, requestedAt, keep: true });
+        const answer = await api<{ requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${bookId}/speaker`, {
+          method: "POST",
+          body: { ...request, seen: seenFor(request.lines, item.seen) },
+        });
+        replaced.push(...Object.values(answer.elsewhere ?? {}));
+        made.push({ lines: request.lines, requestedAt: answer.requestedAt, keep: true });
       }
-      return made;
+      return { made, replaced };
     },
-    onSuccess: (made) => {
+    onSuccess: ({ made, replaced }) => {
       refreshAfterDecision(client, bookId);
+      const action = undoAction(client, bookId, "speaker", made, "Thẻ hỏi lại như trước khi bấm.");
+      if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? personOf(item, replaced[0]) : "", action.onClick);
       toast.success(`Đã ghi: ${item.keepLabel ?? "Giữ nguyên"}`, {
         description: "Không câu nào phải thu lại; việc này sẽ không hiện lại.",
-        action: undoAction(client, bookId, "speaker", made, "Thẻ hỏi lại như trước khi bấm."),
+        action,
         duration: UNDO_MS,
       });
     },
@@ -894,27 +916,35 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
   const run = async () => {
     setBusy(true);
     const decisions: Record<string, unknown>[] = [];
+    const replaced: string[] = [];
     let done = 0;
     try {
       for (const item of keepable) {
         if (pronunciation) {
-          const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
+          const { requestedAt, elsewhere } = await api<{ requestedAt: number; elsewhere?: { spokenForm?: string } }>(`/api/books/${bookId}/pronunciation`, {
             method: "POST",
-            body: { surface: item.surface, spokenForm: item.current },
+            body: { surface: item.surface, spokenForm: item.current, seen: item.requested ?? "" },
           });
+          if (elsewhere?.spokenForm !== undefined) replaced.push(elsewhere.spokenForm ? `“${elsewhere.spokenForm}”` : "");
           decisions.push({ surface: item.surface, requestedAt, previous: item.current, keep: true });
         } else {
           // Thẻ vai phụ cả cuốn giữ người của từng vai: một yêu cầu cho mỗi vai.
           for (const request of keepRequests(item)) {
-            const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/speaker`, { method: "POST", body: request });
-            decisions.push({ lines: request.lines, requestedAt, keep: true });
+            const answer = await api<{ requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${bookId}/speaker`, {
+              method: "POST",
+              body: { ...request, seen: seenFor(request.lines, item.seen) },
+            });
+            replaced.push(...Object.values(answer.elsewhere ?? {}).map((value) => (value ? personOf(item, value) : "")));
+            decisions.push({ lines: request.lines, requestedAt: answer.requestedAt, keep: true });
           }
         }
         done += 1;
       }
+      const action = undoAction(client, bookId, pronunciation ? "pronunciation" : "speaker", decisions, `${done} thẻ trở lại chờ duyệt.`);
+      if (replaced.length) warnElsewhere(replaced.length, replaced[0], action.onClick);
       toast.success(`Đã giữ như máy đang làm cho ${done} thẻ`, {
         description: "Không câu nào phải thu lại; máy sẽ không hỏi lại những thẻ này.",
-        action: undoAction(client, bookId, pronunciation ? "pronunciation" : "speaker", decisions, `${done} thẻ trở lại chờ duyệt.`),
+        action,
         duration: UNDO_MS,
       });
     } catch (error) {

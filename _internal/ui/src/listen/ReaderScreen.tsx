@@ -12,7 +12,7 @@ import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
 import { canEditBook } from "./EditBook";
 import { FindInBook } from "./FindInBook";
 import { chapterToFollow, firstVisibleIndex, lineToEdit, type LineToEdit } from "./follow";
-import { readerHint } from "./labels";
+import { chapterOpenProblem, readerHint } from "./labels";
 import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { usePlayer } from "./player";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
@@ -92,7 +92,7 @@ export function ReaderScreen({
   const chapter = chapters.find((item) => item.id === chapterId);
   const index = chapters.findIndex((item) => item.id === chapterId);
   usePageTitle(book && chapter ? `${chapter.subtitle || chapter.title} · ${book.title}` : book?.title);
-  const { data: script, isLoading } = useChapterScript(id, chapter);
+  const { data: script, isLoading, error: scriptError } = useChapterScript(id, chapter);
   // Chương chỉ có chữ (sách nhập từ EPUB / DOCX / PDF / TXT, chưa có audio): đọc được, không sửa từng câu; máy có giọng thì giọng máy đọc.
   const textOnly = chapter?.state === "text";
   const { canSpeak, canListen, listenFrom } = useListenFrom(id, book, chapter, script);
@@ -218,7 +218,7 @@ export function ReaderScreen({
   if (!chapter || !script) {
     return (
       <EmptyState icon={BookOpenText} title="Không mở được chương này" className="mt-20" action={<Button onClick={() => navigate(`/book/${id}`)}>Về trang sách</Button>}>
-        Chương có thể không còn trong sách.
+        {chapterOpenProblem(scriptError)}
       </EmptyState>
     );
   }

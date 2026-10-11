@@ -50,7 +50,7 @@ import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { COARSE, EXTEND_GESTURE } from "./extendGesture";
 import { openShortcuts } from "./Shortcuts";
 import { useBookMusic } from "./EditBook";
-import { bookmarkReadPath, canPlay, continuingPart, otherBooksToHear, partToContinue, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
+import { bookmarkReadPath, canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContinue, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepButtonLabel, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
@@ -1133,7 +1133,7 @@ function TrackSubtitle() {
  *  "Đọc bằng …" (đổi giọng cuốn này rồi phát tiếp), chưa thì "Tải giọng VieNeu" (tới thẻ tải giọng trong Cài đặt). Mạng về thì khối tự ẩn.
  *  `overlay`: trong màn "Đang nghe"; ở thanh phát thì không đè lên màn Cài đặt (nơi người nghe đang đi tải giọng). */
 function PlayerAlert({ className, overlay = false }: { className?: string; overlay?: boolean }) {
-  const { error, notice, resume, dismissError, track } = usePlayer();
+  const { error, notice, resume, retry, dismissError, track } = usePlayer();
   const openVoiceSettings = useOpenVoiceSettings();
   const { pathname } = useLocation();
   const voices = useReadAloudVoices().data;
@@ -1169,7 +1169,7 @@ function PlayerAlert({ className, overlay = false }: { className?: string; overl
               Đọc bằng {voiceCaption(local)}
             </button>
           )}
-          <button type="button" onClick={resume} {...keepFocus} className={button}>
+          <button type="button" onClick={retry} {...keepFocus} className={button}>
             Thử lại
           </button>
           {offline && !local && <VieneuDownload button="Tải giọng VieNeu" onOpenSettings={() => openVoiceSettings("vieneu-module")} />}
@@ -1215,13 +1215,12 @@ function FurtherElsewhere() {
   const last = book?.state.last;
   const active = book?.records?.find((record) => record.active)?.id;
   useEffect(() => {
-    if (!track || !last || playing || purpose !== "listen") return;
+    // Cả khi ĐANG PHÁT (soát a27 lỗi 2): máy này đã bấm nghe trước khi chỗ của máy kia về tới - lần lưu kế của nó sẽ đè, nên vẫn phải hỏi.
+    if (!track || !last || purpose !== "listen") return;
     // chỗ nghe trên máy chủ là của hồ sơ khác (máy khác vừa đổi hồ sơ): FollowRecord lo, đây không phải "nghe xa hơn"
     if (track.recordId && active && track.recordId !== active) return;
     const key = `${track.bookId}:${last.at}`;
-    if (asked.current === key || last.at * 1000 <= positionStamp() + 1000) return;
-    const here = readClock().time;
-    if (last.chapterId === track.chapterId && Math.abs(last.seconds - here) < 30) return;
+    if (asked.current === key || !newerElsewhere(last, positionStamp(), { chapterId: track.chapterId, seconds: readClock().time })) return;
     asked.current = key;
     const chapter = queue.find((item) => item.id === last.chapterId);
     if (!chapter || !canPlay(chapter)) return;

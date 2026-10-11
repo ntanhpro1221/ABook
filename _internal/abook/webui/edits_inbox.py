@@ -187,8 +187,12 @@ def conflict(kind: str, key: str, what: str, label: str, lost: Any = None, kept:
 
 
 def sender_label(item: dict[str, Any], host: str) -> str:
-    """Câu báo xung đột cho người GỬI: thứ gì đã đổi ở máy giữ sách `host` sau lần gửi trước, và bản vừa gửi đã thay vào."""
+    """Câu báo xung đột cho người GỬI: thứ gì đã đổi ở máy giữ sách `host` sau lần gửi trước, và bản vừa gửi đã thay vào - hay
+    (`held`: ý muốn cũ hơn thay đổi của máy kia) bản vừa gửi chờ chủ máy ấy chọn."""
     where = f"{HOST} ({host})" if host else HOST
+    if item.get("held"):
+        changed = f"đã đổi thành {item['lost']}" if item.get("lost") else "đã đổi khác"
+        return f"{item['what']}: {where} {changed} sau khi bạn sửa - bản của bạn{' ' + item['kept'] if item.get('kept') else ''} chờ chủ máy chọn"
     if item.get("lost") and item.get("kept"):
         return f"{item['what']}: {where} đã đổi thành {item['lost']} trước đó, bản của bạn {item['kept']} đã thay vào"
     if item.get("what"):
@@ -349,6 +353,38 @@ def _labelled(project: Path, wishes: dict[str, Any], items: list[dict[str, Any]]
     return out
 
 
+_WISH_WHAT = {"pronunciations": "Cách đọc tên", "speakers": "Người nói", "lines": "Cách đọc câu", "voices": "Giọng nhân vật",
+              "retakes": "Thu lại câu"}
+
+
+def _wish_value(project: Path, section: str, entry: dict[str, Any]) -> str:
+    if section == "pronunciations":
+        return str(entry.get("spoken_form") or "")
+    if section == "speakers":
+        return store.person_label(project, str(entry.get("speaker") or ""))
+    if section == "voices":
+        return str(entry.get("preset") or "")
+    if section == "lines":
+        return str(entry.get("spoken") or entry.get("emotion") or "")
+    return ""
+
+
+def _held(project: Path, wishes: dict[str, Any], items: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """{mã mục: xung đột} cho các mục mà chủ máy đã đổi khác SAU lúc máy kia sửa (`book_wishes.newer_here`): không tự áp - chủ máy chọn."""
+    newer = book_wishes.newer_here(project, wishes)
+    out: dict[str, dict[str, Any]] = {}
+    for item in items:
+        section = item["section"]
+        hit = next(((key, newer[(section, key)]) for key in item["keys"] if (section, key) in newer), None)
+        if hit is not None:
+            key, mine = hit
+            what = _WISH_WHAT[section]
+            lost, kept = _wish_value(project, section, mine), _wish_value(project, section, wishes[section][key])
+            out[item["id"]] = {**conflict("wish", key, what, f"{what}: máy này đã đổi{' thành ' + _quoted(lost) if lost else ' khác'} sau lúc máy kia sửa",
+                                          lost, kept), "held": True}
+    return out
+
+
 def waiting(project: Path, device: str | None = None) -> int:
     """Số mục đang chờ chủ máy duyệt (của một thiết bị, hay của mọi thiết bị)."""
     with _LOCK:
@@ -363,7 +399,10 @@ def view(project: Path) -> dict[str, Any]:
         devices = []
         for key, entry in sorted(data["devices"].items(), key=lambda pair: -float(pair[1].get("at") or 0)):
             wishes = entry.get("wishes") or {}
-            items = _labelled(project, wishes, _groups(wishes))
+            groups = _groups(wishes)
+            held = _held(project, wishes, groups)
+            items = [{**item, **({"conflict": f"{held[item['id']]['label']} - “Áp dụng việc này” thay bằng bản của máy kia, “Bỏ qua” giữ của máy này"}
+                                 if item["id"] in held else {})} for item in _labelled(project, wishes, groups)]
             if items:
                 devices.append({"id": key, "name": str(entry.get("name") or "Điện thoại"), "at": float(entry.get("at") or 0), "items": items})
         return {"devices": devices, "waiting": sum(len(device["items"]) for device in devices), "recent": data["recent"]}
@@ -372,19 +411,22 @@ def view(project: Path) -> dict[str, Any]:
 def apply(project: Path, device: str, item_ids: list[str] | None, *, now: float | None = None) -> dict[str, int]:
     """Chủ máy bấm "Áp dụng": các mục (hay mọi mục của thiết bị) thành YÊU CẦU của dự án bằng `book_wishes.fold` - như người dùng
     vừa bấm trong Studio, vào danh sách "Áp dụng N thay đổi", chưa chạy gì. Mục Studio sẽ từ chối ngay (câu đã đổi chữ...) bị bỏ
-    qua và đếm. Xong thì rút khỏi hộp thư. Trả {"requests", "skipped", "left"}."""
+    qua và đếm. "Áp dụng tất cả" (`item_ids` None) KHÔNG lấy mục chủ máy đã đổi khác sau lúc máy kia sửa (`_held`): mục ấy ở lại
+    chờ chủ máy chọn từng việc. Xong thì rút khỏi hộp thư. Trả {"requests", "skipped", "left", "held"}."""
     with _LOCK:
         data = _load(project)
         entry = data["devices"].get(device)
         if entry is None:
-            return {"requests": 0, "skipped": 0, "left": 0}
+            return {"requests": 0, "skipped": 0, "left": 0, "held": 0}
         wishes = entry.get("wishes") or {}
-        chosen = [item for item in _groups(wishes) if item_ids is None or item["id"] in item_ids]
+        groups = _groups(wishes)
+        held = _held(project, wishes, groups) if item_ids is None else {}
+        chosen = [item for item in groups if (item_ids is None and item["id"] not in held) or (item_ids is not None and item["id"] in item_ids)]
         folded = book_wishes.fold(project, _subset(wishes, chosen), now=time.time() if now is None else now) if chosen else {"requests": 0, "skipped": 0}
         left = _without(wishes, chosen)
         _store(data, device, entry, left)
         _save(project, data)
-        return {**folded, "left": len(_groups(left))}
+        return {**folded, "left": len(_groups(left)), "held": len(held)}
 
 
 def skip(project: Path, device: str, item_ids: list[str] | None) -> dict[str, int]:
@@ -436,13 +478,21 @@ def receive(project: Path, device: str, name: str, package: Path, *, my_music: A
         _remember(project, device, layer, cover)
         requests = skipped_wishes = 0
         held = 0
+        waiting_wishes = {} if may_produce else wishes
         if wishes and may_produce:
-            folded = book_wishes.fold(project, wishes, now=now)
-            requests, skipped_wishes = folded["requests"], folded["skipped"]
+            # Chủ máy đã đổi khác SAU lúc máy kia sửa: không đè - vào hộp thư chờ chủ máy chọn, người gửi được báo.
+            groups = _groups(wishes)
+            newer = _held(project, wishes, groups)
+            conflicts += list(newer.values())
+            waiting_wishes = _subset(wishes, [item for item in groups if item["id"] in newer])
+            fresh = _without(wishes, [item for item in groups if item["id"] in newer])
+            if fresh:
+                folded = book_wishes.fold(project, fresh, now=now)
+                requests, skipped_wishes = folded["requests"], folded["skipped"]
         data = _load(project)
-        if wishes and not may_produce:
+        if waiting_wishes:
             previous = (data["devices"].get(device) or {}).get("wishes") or {}
-            merged, _ = book_wishes.merge(wishes, previous)  # bản đến sau thắng từng khoá
+            merged, _ = book_wishes.merge(waiting_wishes, previous)  # bản đến sau thắng từng khoá
             data["devices"][device] = {"name": name, "at": now, "wishes": merged}
         held = len(_groups((data["devices"].get(device) or {}).get("wishes") or {}))
         entry = {"at": now, "device": device, "name": name, "applied": report["applied"], "skipped": report["skipped"] + skipped_wishes,

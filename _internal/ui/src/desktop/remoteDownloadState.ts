@@ -15,11 +15,12 @@ export interface RemoteDownload {
   retry?: boolean;
 }
 
-/** Phần đã tải, 0..1: theo byte (chương, nhạc) khi biết cỡ, không thì theo số file. */
+/** Phần đã tải, 0..1: theo byte (chương, nhạc) khi biết cỡ, không thì theo số file. Chữ đọc theo, dàn nhân vật và file không ghi cỡ
+ *  không có trong số byte: còn thiếu file nào thì chưa bao giờ là 100% (soát a27 lỗi 8 - "Đã có 100%" khi chữ và nhạc chưa tải). */
 export function downloadFraction(status: RemoteDownload): number {
   if (status.state === "done") return 1;
   const fraction = status.bytes > 0 ? status.bytesDone / status.bytes : status.files > 0 ? status.filesDone / status.files : 0;
-  return Math.max(0, Math.min(1, fraction));
+  return Math.max(0, Math.min(status.filesDone < status.files ? 0.99 : 1, fraction));
 }
 
 export interface DownloadNote {
@@ -70,6 +71,10 @@ export function downloadMenuLabel(status: RemoteDownload | null | undefined, com
   if (status?.state === "running") return { label: "Dừng tải về máy", hint: `Đã tải ${Math.floor(downloadFraction(status) * 100)}%`, disabled: false };
   if (status?.state === "done") return { label: "Đã tải về máy", hint: `Nghe được cả khi ${where} tắt`, disabled: true };
   // “Tải nốt” chỉ khi đã có phần thật; 0% thì vẫn là tải từ đầu.
-  if (status && Math.floor(downloadFraction(status) * 100) > 0) return { label: "Tải nốt về máy", hint: `Đã có ${Math.floor(downloadFraction(status) * 100)}% trên máy này`, disabled: false };
+  if (status && Math.floor(downloadFraction(status) * 100) > 0) {
+    // Đủ audio mà còn thiếu file: phần còn lại là chữ đọc theo hay nhạc nền - nói ra, "99%" không cho biết vì sao chưa xong.
+    const rest = status.bytes > 0 && status.bytesDone >= status.bytes ? " - còn chữ đọc theo hay nhạc nền" : "";
+    return { label: "Tải nốt về máy", hint: `Đã có ${Math.floor(downloadFraction(status) * 100)}% trên máy này${rest}`, disabled: false };
+  }
   return { label: "Tải về máy", hint: `Để nghe cả khi ${where} tắt`, disabled: false };
 }
