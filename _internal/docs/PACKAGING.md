@@ -209,6 +209,17 @@ Mỗi bước một commit có test, không bước nào đụng file khoá ch�
    huggingface-hub 1.29, transformers 5.16.1... dù pyproject ghim 1.33, 5.18: đóng băng là bộ cài lùi bản mà không ai
    thấy). Đồng bộ runtime bằng `uv pip install --no-deps` đúng các bản ghim, KHÔNG `uv sync`: uv.lock không mang
    index cu128 nên `uv sync` thay torch CUDA bằng torch CPU.
+
+   **VIỆC MỞ (11-10) - xử lý trước lần đóng băng tới: `uv.lock` và `studio-requirements.txt` lệch nhau.** Hai nguồn
+   sự thật cho cùng một môi trường; bộ cài dùng `studio-requirements.txt`, còn `uv.lock` không ai cài được nguyên vẹn.
+   - torch / torchvision / torchaudio: lock là bản PyPI không đuôi (2.11.0, 0.26.0 - bản CPU trên Windows), danh sách
+     Studio là `+cu128` từ `download.pytorch.org/whl/cu128`; lock không khai index nào ngoài PyPI.
+   - Khác bản: gradio lock 6.20.0 / Studio 6.16.0; setuptools 81.0.0 / 78.1.0; filelock 3.32.2 / 3.32.3;
+     platformdirs 4.11.1 / 4.11.0.
+   - 64 gói có trong danh sách Studio mà lock không có (không khai trong pyproject, cài tay vào runtime): voxcpm,
+     funasr, modelscope, datasets, matplotlib, torchcodec, umap-learn, sentencepiece, pyarrow, jieba...
+   Hướng xử lý (chưa làm): khai index cu128 cho torch trong `[tool.uv]` (index riêng + `explicit = true`), đưa các gói
+   Studio thật cần vào pyproject (hay tách nhóm), khoá lại; đến khi ấy `uv sync` mới thay được cách đồng bộ bằng tay.
 6. Phát hành theo `RELEASING.md` (thêm bộ cài + `latest.json` + APK đã ký).
 
 ## Mẹo thử
