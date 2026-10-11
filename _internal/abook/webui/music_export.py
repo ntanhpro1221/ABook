@@ -18,6 +18,7 @@ import hashlib
 import io
 import json
 import logging
+import math
 import re
 import subprocess
 import tempfile
@@ -37,7 +38,8 @@ log = logging.getLogger(__name__)
 
 TRACK_CACHE_BYTES = 768 * 1024 * 1024  # PCM bài nhạc giữ lại giữa các chương; bài dài nhất danh mục (59 phút, 48 kHz mono) ~340 MB
 # Chương một kênh: bài stereo bị ffmpeg gộp (L+R)/2 - hai kênh khác nhau thì nhỏ hơn lúc phát hai loa tới ~3 dB (MIX-QA tmp50: 2,5-4 dB).
-# Bù đúng chênh độ to BS.1770 của chính bài (`stereo_lufs` bản hai kênh - bản gộp), đo một lần, ghi cạnh file bài; trần MONO_MAX_DB.
+# Bù đúng chênh độ to BS.1770 của ĐOẠN ĐƯỢC PHÁT của bài trong chương (bản hai kênh - bản gộp; bài dài chỉ phát phần đầu thì đo phần
+# đầu - bài 48 phút đầu rộng stereo, cả bài gần mono: bù cả bài thiếu 2 dB), đo một lần mỗi đoạn, ghi cạnh file bài; trần MONO_MAX_DB.
 MONO_SIDECAR = ".mono.json"
 MONO_MAX_DB = 4.0
 
@@ -148,29 +150,62 @@ def _lufs(ffmpeg: str, rate: int, channels: int, feed: Callable[[Any], Any], *, 
     return float(found[-1]) if found and float(found[-1]) > -70 else None
 
 
-def mono_offset_db(ffmpeg: str, path: Path, mono: np.ndarray, rate: int) -> float:
-    """dB bù cho bản gộp một kênh `mono` (int16, đúng PCM sẽ trộn) của bài `path`: độ to lúc phát hai loa (bài giải mã hai kênh) - độ
-    to bản gộp phát hai loa, cả hai BS.1770; kẹp <= MONO_MAX_DB. Bài một kênh -> 0. Ghi `<tên>.mono.json` cạnh bài (đọc lại lần sau);
-    không đo được thì 0 và không ghi."""
+def played_span(elements: Iterable[dict[str, Any]], seconds: float) -> tuple[int, int]:
+    """Khoảng phát (giây trong bài, đầu làm tròn xuống, cuối làm tròn lên) của MỘT bài trong một chương: bao các phần tử dòng thời gian
+    của bài ấy - phần tử thường [position, position + (to - from)], phần tử `loop` hay không rõ điểm hết (`to` vô hạn) tới hết bài
+    (`loop`: cả bài); kẹp vào [0, `seconds`]."""
+    lo, hi = math.inf, -math.inf
+    for element in elements:
+        start = 0.0 if element.get("loop") else float(element["position"])
+        to = float(element["to"])
+        end = seconds if element.get("loop") or not math.isfinite(to) else start + to - float(element["from"])
+        lo, hi = min(lo, start), max(hi, end)
+    if lo > hi:
+        return 0, math.ceil(seconds)
+    return math.floor(max(0.0, lo)), math.ceil(min(seconds, hi))
+
+
+class _Window:
+    """Ống chỉ cho qua byte [lo, hi) của luồng ghi vào nó (đoạn phát của bài, đo độ to)."""
+
+    def __init__(self, sink: Any, lo: int, hi: int) -> None:
+        self.sink, self.lo, self.hi, self.at = sink, lo, hi, 0
+
+    def write(self, data: bytes) -> int:
+        a, b = max(self.lo - self.at, 0), min(self.hi - self.at, len(data))
+        if a < b:
+            self.sink.write(bytes(data[a:b]))
+        self.at += len(data)
+        return len(data)
+
+
+def mono_offset_db(ffmpeg: str, path: Path, mono: np.ndarray, rate: int, span: tuple[int, int]) -> float:
+    """dB bù cho bản gộp một kênh `mono` (int16, đúng PCM sẽ trộn - cả bài) của bài `path`, đo trên ĐOẠN PHÁT `span` (giây, `played_span`):
+    độ to đoạn ấy lúc phát hai loa (bài giải mã hai kênh) - độ to cùng đoạn của bản gộp phát hai loa, cả hai BS.1770; kẹp <= MONO_MAX_DB.
+    Bài một kênh -> 0. Ghi vào `<tên>.mono.json` cạnh bài, khoá "đầu-cuối" (đọc lại lần sau); không đo được thì 0 và không ghi."""
     sidecar = Path(path).with_suffix(MONO_SIDECAR)
+    key = f"{span[0]}-{span[1]}"
     try:
-        cached = json.loads(sidecar.read_text(encoding="utf-8")).get("offsetDb")
-        if isinstance(cached, (int, float)):
-            return float(cached)
+        spans = json.loads(sidecar.read_text(encoding="utf-8")).get("spans")
     except (OSError, ValueError, AttributeError):
-        pass
+        spans = None
+    spans = spans if isinstance(spans, dict) else {}
+    cached = (spans.get(key) or {}).get("offsetDb") if isinstance(spans.get(key), dict) else None
+    if isinstance(cached, (int, float)):
+        return float(cached)
     try:
         if audio_format(ffmpeg, Path(path))[1] < 2:
             return 0.0  # bài một kênh: trình phát cũng phát một kênh ra hai loa, không mất gì khi gộp
     except (OSError, ValueError):
         return 0.0
-    stereo = _lufs(ffmpeg, rate, 2, lambda sink: pump_pcm(ffmpeg, Path(path), rate, 2, sink))
-    folded = _lufs(ffmpeg, rate, 1, lambda sink: sink.write(np.ascontiguousarray(mono, dtype="<i2").tobytes()), dualmono=True)
+    lo, hi = span[0] * rate, span[1] * rate
+    stereo = _lufs(ffmpeg, rate, 2, lambda sink: pump_pcm(ffmpeg, Path(path), rate, 2, _Window(sink, 4 * lo, 4 * hi)))
+    folded = _lufs(ffmpeg, rate, 1, lambda sink: sink.write(np.ascontiguousarray(mono[lo:hi], dtype="<i2").tobytes()), dualmono=True)
     if stereo is None or folded is None:
         return 0.0
     offset = round(min(MONO_MAX_DB, stereo - folded), 2)
     with contextlib.suppress(OSError):
-        atomic_write_json(sidecar, {"offsetDb": offset, "stereoLufs": stereo, "foldedLufs": folded})
+        atomic_write_json(sidecar, {"spans": {**spans, key: {"offsetDb": offset, "stereoLufs": stereo, "foldedLufs": folded}}})
     return offset
 
 
@@ -190,9 +225,7 @@ class TrackPcm:
         buffer = io.BytesIO()
         try:
             pump_pcm(self.ffmpeg, Path(path), rate, channels, buffer)
-            raw = np.frombuffer(buffer.getvalue(), dtype="<i2").reshape(-1, channels)
-            offset = mono_offset_db(self.ffmpeg, Path(path), raw, rate) if channels == 1 else 0.0
-            pcm: _Pcm | None = _Pcm(raw, 10 ** (offset / 20))
+            pcm: _Pcm | None = _Pcm(np.frombuffer(buffer.getvalue(), dtype="<i2").reshape(-1, channels))
         except (OSError, ValueError):
             log.warning("Không giải mã được bài nhạc nền %s - đoạn ấy không có nhạc", path, exc_info=True)
             pcm = None
@@ -263,7 +296,27 @@ class Mixer:
                 info[cue["track"]].update(audibleStart=cue.get("audibleStart"), audibleEnd=cue["audibleEnd"])
         timeline = music_mix.music_timeline(music.cues, seconds, info)
         self.lost[int(chapter_id)] = len({element["cue"] for element in timeline if pcm.get(element["track"]) is None}) + music.dropped
+        if channels == 1:  # bài hai kênh gộp làm một: bù phần độ to mất khi gộp, đo trên đúng đoạn chương này phát
+            timeline = self._fold_offsets(timeline, music.files, pcm, rate)
         return MixSink(sink, rate, channels, timeline, pcm)
+
+    def _fold_offsets(self, timeline: list[dict[str, Any]], files: dict[str, Path], pcm: dict[str, _Pcm | None],
+                      rate: int) -> list[dict[str, Any]]:
+        """Cộng dB bù gộp của từng bài (`mono_offset_db` trên `played_span` của bài trong chương) vào mọi điểm gain của các phần tử của
+        bài ấy; điểm câm (None) giữ nguyên."""
+        out = []
+        offsets: dict[str, float] = {}
+        for element in timeline:
+            name, data = element["track"], pcm.get(element["track"])
+            if data is None:
+                out.append(element)
+                continue
+            if name not in offsets:
+                span = played_span((e for e in timeline if e["track"] == name), len(data) / rate)
+                offsets[name] = mono_offset_db(self.ffmpeg, files[name], data.raw, rate, span)
+            db = offsets[name]
+            out.append({**element, "gain": [[at, None if level is None else level + db] for at, level in element["gain"]]} if db else element)
+        return out
 
     def note(self, chapter_ids: Iterable[int]) -> dict[str, int]:
         """Phần thêm vào kết quả xuất: {"musicMissing": N} khi N đoạn của các chương đã xuất thiếu nhạc (kể cả chương mọi bài đều hỏng)."""
