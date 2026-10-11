@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import json
 import math
+import sqlite3
 from pathlib import Path
 
 import numpy as np
 import soundfile
 
-from abook.webui import music_plan
+from abook.webui import music_plan, store
 from tests.test_webui_listen_and_sync import make_project
 
 TRACKS = [
@@ -205,3 +206,110 @@ def test_a_cue_whose_track_cannot_be_exported_uses_the_first_exportable_alternat
     assert asked and asked[0][1] == [first]
     none = music_plan.package(project, [chapter], music_plan.TrackSource(file, lambda root, key, exclude: []))
     assert none is None
+
+
+def _plan(*scenes: dict) -> dict:
+    return {"enabled": True, "scenes": [{"chapterId": 1, "key": f"1:{index}", **scene} for index, scene in enumerate(scenes)]}
+
+
+def test_a_cue_that_ends_where_its_track_ends_is_marked_as_the_tail() -> None:
+    plan = _plan({"start": 0.0, "end": 100.0, "link": "a"},
+                 {"start": 100.0, "end": 300.0, "link": "a", "continued": True, "siblings": [{"at": 200.0, "link": "b"}]},
+                 {"start": 300.0, "end": 400.0, "link": "c"},
+                 {"start": 400.0, "end": 500.0, "link": "d", "stopAt": 480.0},
+                 {"start": 500.0, "end": 600.0, "link": "e"})
+    cues = music_plan.chapter_cues(plan, 1)
+    assert [(cue["link"], cue["start"], cue["end"], cue.get("tail", False)) for cue in cues] == [
+        ("a", 0.0, 200.0, True),    # bài anh em vào đúng ở điểm kết bài
+        ("b", 200.0, 300.0, False),
+        ("c", 300.0, 400.0, False),
+        ("d", 400.0, 480.0, True),  # bài kết sớm ở `stopAt`
+        ("e", 500.0, 600.0, False),
+    ]
+
+
+def test_the_chapter_length_ends_the_last_cue_before_the_voice_does_and_drops_an_empty_one() -> None:
+    plan = _plan({"start": 0.0, "end": 300.0, "link": "a", "stopAt": 299.0},
+                 {"start": 300.0, "end": 301.0, "link": "b"})
+    limit = 300.0 - music_plan.CHAPTER_END_FADE_SECONDS
+    cues = music_plan.chapter_cues(plan, 1, 300.0)
+    assert [(cue["link"], cue["start"], cue["end"]) for cue in cues] == [("a", 0.0, limit)]
+    assert "tail" not in cues[0], "bị kẹp trước điểm kết bài: không còn là đuôi bài"
+    assert [cue["end"] for cue in music_plan.chapter_cues(plan, 1, 400.0)] == [299.0, 301.0]
+    assert [cue["end"] for cue in music_plan.chapter_cues(plan, 1)] == [299.0, 301.0]
+
+
+def test_the_book_package_carries_the_tail_and_the_clamped_last_cue(tmp_path: Path) -> None:
+    project = make_project(tmp_path)
+    chapter = 1
+    # Chương 12 s thật (file của make_project chỉ là byte giả: không đọc được độ dài thì mốc không bị kẹp).
+    assert music_plan.chapter_seconds(project, chapter) is None
+    soundfile.write(store.chapter_audio_path(project, chapter), np.zeros(8000 * 12, dtype="float32"), 8000, format="WAV")
+    length = music_plan.chapter_seconds(project, chapter)
+    assert length == 12.0
+    plan = {"version": music_plan.PLAN_VERSION, "enabled": True, "levelDb": -20.0, "tracks": {}, "scenes": [
+        {"chapterId": chapter, "key": f"{chapter}:1", "start": 0.0, "end": length, "link": TRACKS[0]["link"],
+         "siblings": [{"at": 5.0, "link": TRACKS[1]["link"]}]}]}
+    (project / music_plan.PLAN_FILE).write_bytes(json.dumps(plan).encode("utf-8"))
+    folder = tmp_path / "cache"
+    folder.mkdir()
+
+    def file(link: str) -> Path:
+        path = folder / music_plan.track_name(link).split("/")[1]
+        path.write_bytes(b"ID3")
+        return path
+
+    music, _files = music_plan.package(project, [chapter], file)
+    packed = music["chapters"][str(chapter)]
+    end = round(length - music_plan.CHAPTER_END_FADE_SECONDS, 3)
+    assert [(cue["start"], cue["end"], cue.get("tail", False)) for cue in packed] == [(0.0, 5.0, True), (5.0, end, False)]
+    back = music_plan.packaged_cues(json.loads(json.dumps(music)), chapter)
+    assert [cue.get("tail", False) for cue in back] == [True, False]
+
+
+def test_the_book_package_reads_chapter_lengths_in_one_go_and_only_for_chapters_with_music(tmp_path: Path,
+                                                                                           monkeypatch) -> None:
+    """Sách 3000 chương: `package` chạy ở mỗi manifest đồng bộ / xuất .abook - số kết nối sqlite không được tăng theo số
+    chương, và chương không có nhạc không bị đọc độ dài file."""
+    project = make_project(tmp_path)
+    mp3 = store.chapter_audio_path(project, 1)
+    soundfile.write(mp3, np.zeros(8000 * 12, dtype="float32"), 8000, format="WAV")
+    with sqlite3.connect(project / "project.sqlite3") as db:
+        db.executemany("INSERT INTO chapters VALUES (?, ?, 'x', 'x.txt', 'completed', 1, ?, 0, 0, '')",
+                       [(chapter, chapter, str(mp3)) for chapter in range(3, 43)])
+    folder = tmp_path / "cache"
+    folder.mkdir()
+
+    def file(link: str) -> Path:
+        path = folder / music_plan.track_name(link).split("/")[1]
+        path.write_bytes(b"ID3")
+        return path
+
+    def write_plan(chapters: list[int]) -> None:
+        plan = {"version": music_plan.PLAN_VERSION, "enabled": True, "levelDb": -20.0, "tracks": {}, "scenes": [
+            {"chapterId": chapter, "key": f"{chapter}:1", "start": 0.0, "end": 30.0, "link": TRACKS[0]["link"]}
+            for chapter in chapters]}
+        (project / music_plan.PLAN_FILE).write_bytes(json.dumps(plan).encode("utf-8"))
+
+    connects: list[Path] = []
+    durations: list[Path] = []
+    real_connect, real_duration = store.connect, store.audio_duration
+    monkeypatch.setattr(store, "connect", lambda root: connects.append(root) or real_connect(root))
+    monkeypatch.setattr(store, "audio_duration", lambda path: durations.append(path) or real_duration(path))
+
+    def opened(chapters: list[int]) -> int:
+        write_plan(chapters)
+        connects.clear()
+        music, _files = music_plan.package(project, chapters, file)
+        assert sorted(music["chapters"]) == sorted(str(chapter) for chapter in chapters)
+        # 12 s thật: mốc 30 s bị kẹp trước khi giọng hết
+        assert {cue["end"] for cues in music["chapters"].values() for cue in cues} == {12.0 - music_plan.CHAPTER_END_FADE_SECONDS}
+        return len(connects)
+
+    assert opened([1, 3]) == opened([1, *range(3, 43)])
+
+    write_plan([1])
+    durations.clear()
+    music, _files = music_plan.package(project, [1, *range(3, 43)], file)
+    assert list(music["chapters"]) == ["1"]
+    assert durations == [mp3], "chương không có nhạc không đọc độ dài"
