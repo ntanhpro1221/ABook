@@ -6,6 +6,7 @@ import type { Bookmark, BookmarkSentence, Cast, ListenBook, ListenChapter, Liste
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
+import type { ChapterText } from "./bookSearch";
 import { mergeTimings, VOICE_CHANGED_EVENT, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
 import { bookVoiceCaption, voicesOf } from "./readAloudVoice";
 import { retryChapterText } from "./labels";
@@ -33,6 +34,9 @@ export interface ListenSource {
   script(bookId: string, chapterId: number): Promise<Script>;
   /** Chữ của chương chỉ-có-chữ (`ListenChapter.state` "text"): màn đọc dựng các đoạn từ đây (textScript.ts). */
   chapterText(bookId: string, chapterId: number): Promise<string>;
+  /** "Tìm trong sách" (bookSearch.ts): chữ của nhiều chương trong MỘT lần hỏi - sách hàng nghìn chương không phải hỏi từng chương. Dùng qua
+   *  `chapterTexts`. Nguồn nào không có (điện thoại đọc file ngay trên máy) thì tìm từng chương như màn đọc. */
+  searchTexts?(bookId: string, chapters: { id: number; text: boolean }[]): Promise<SearchText[]>;
   /** "Thêm sách từ file…" (textImport.ts); nguồn nào chưa có thì giao diện ẩn nút. */
   textImport?: TextImport;
   /** "Nghe ngay" (readAloud.ts): các giọng đọc có trên máy này và việc đọc một đoạn chữ thành clip (audio + mốc từng chữ). Nguồn nào chưa có
@@ -105,6 +109,15 @@ export interface ListenSource {
     /** Gắn hồ sơ sang cuốn `toBook` (bản làm lại của cùng truyện…), thành hồ sơ đang dùng ở đó; trả hồ sơ còn lại của cuốn này. */
     move(bookId: string, recordId: string, toBook: string): Promise<ListeningRecord[]>;
   };
+}
+
+/** Chữ một chương trong kết quả `searchTexts`: chương nghe được thì các câu của kịch bản (chữ + dấu ngăn cảnh), chương chỉ-có-chữ (xin với
+ *  `text: true`) thì chữ thô; `failed` khi chương không đọc được. Máy chủ có thể trả ít chương hơn số xin (chữ quá nhiều). */
+export interface SearchText {
+  id: number;
+  segments?: { text: string; sceneBreak?: boolean }[];
+  text?: string;
+  failed?: boolean;
 }
 
 const SourceContext = createContext<ListenSource | null>(null);
@@ -193,15 +206,38 @@ export function useScript(bookId: string | undefined, chapterId: number | undefi
   });
 }
 
+/** Chương chỉ-có-chữ: màn đọc dựng các đoạn từ chữ thô (`textChapterScript`), không phải kịch bản của máy chủ. */
+const isTextOnly = (chapter: ListenChapter) => chapter.state === "text";
+
+/** Các đoạn màn đọc dựng từ chữ của một chương chỉ-có-chữ (bỏ các dòng người nghe đã bỏ khỏi phần đọc). */
+function textChapterScript(chapter: ListenChapter, text: string): Script {
+  return textScript(chapter.id, chapter.title, text, chapter.skip);
+}
+
+/** Chữ của nhiều chương qua `source.searchTexts` (ô "Tìm trong sách"): cùng các đoạn, cùng chỉ số đoạn với `chapterScriptQuery` của màn đọc.
+ *  Chương không đọc được: null; chương máy chủ chưa trả (lô quá nặng) không có trong kết quả. */
+export async function chapterTexts(source: ListenSource, bookId: string, chapters: readonly ListenChapter[]): Promise<Map<number, ChapterText | null>> {
+  const byId = new Map(chapters.map((chapter) => [chapter.id, chapter]));
+  const out = new Map<number, ChapterText | null>();
+  for (const item of await source.searchTexts!(bookId, chapters.map((chapter) => ({ id: chapter.id, text: isTextOnly(chapter) })))) {
+    const chapter = byId.get(item.id);
+    if (!chapter) continue;
+    if (!item.failed && typeof item.text === "string" && isTextOnly(chapter)) out.set(item.id, textChapterScript(chapter, item.text));
+    else if (!item.failed && Array.isArray(item.segments)) out.set(item.id, { segments: item.segments });
+    else out.set(item.id, null);
+  }
+  return out;
+}
+
 /** Truy vấn kịch bản để ĐỌC của một chương: chương nghe được thì kịch bản có mốc thời gian, chương chỉ-có-chữ thì các đoạn dựng từ chữ. Dùng chung với
  *  trình phát (nó đọc to chương chữ và ghi mốc thời gian vào đúng khoá này - readAloud.ts). */
 export function chapterScriptQuery(source: ListenSource, bookId: string, chapter: ListenChapter) {
-  const textOnly = chapter.state === "text";
+  const textOnly = isTextOnly(chapter);
   return {
     queryKey: ["listen", "script", bookId, chapter.id, textOnly ? "text" : "audio"] as const,
     queryFn: async (): Promise<Script> => {
       if (!textOnly) return source.script(bookId, chapter.id);
-      const script = textScript(chapter.id, chapter.title, await source.chapterText(bookId, chapter.id), chapter.skip);
+      const script = textChapterScript(chapter, await source.chapterText(bookId, chapter.id));
       // Chương đã được đọc to (lõi native tự đọc): mốc thời gian đã có thì gắn vào, màn đọc sáng đoạn / chữ ngay khi mở.
       const timings = await source.readAloudTimings?.(bookId, chapter.id).catch(() => null);
       return timings ? mergeTimings(script, timings) : script;
