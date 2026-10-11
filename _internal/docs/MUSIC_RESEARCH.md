@@ -4337,6 +4337,32 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 chiều - MUSIC-AUDIT-2 (0.4.49, hai đường) và ENERGY (giãn mục tiêu năng lượng): THUA
+
+**MUSIC-AUDIT-2** (agent Sonnet, `LLM_Train/music/audit2/`, đặc tả Corpus 7e36d00). Code nhạc 0.4.49 (fbe96534). 62 chương / 30
+truyện có đáp án, dựng theo hai đường:
+- **LBL**: nhãn câu.
+- **STUDIO**: P0 qwen3.5:4b đã lưu + học sinh q06 nhúng CPU.
+
+8 chương được chấm theo thang lần 1. TB (a)/(b)/(c): LBL 1,25 / 1,40 / 1,73; STUDIO 1,35 / 1,35 / 1,59; lần 1 là 1,23 / 1,27 / 1,5.
+Năm lỗi, đều có ở CẢ HAI đường:
+1. Không đổi nhạc khi truyện ngoặt: 63-65% lần đổi mạnh không có mốc mới trong 60 s; `mood_shift` chỉ 2 lần / 16 giờ. Hai nhánh
+   đang chờ đo.
+2. Cảnh hành động thiếu sức: ~50% thời lượng E ≥ .4 có bài A < .1; r(A bài, E vàng) .14 / .19.
+3. Lặp vòng / đơn điệu: lặp vòng chiếm 5,0% thời lượng ở STUDIO; ở LBL, 8 bài chiếm 51%.
+4. Sai chiều vui-buồn: cảnh buồn mà nhạc sáng 22-28%.
+5. Đổi bài giữa cảnh vì bài hết: 4,1 lần/giờ, gần như ngẫu nhiên so với ranh giới cảnh (chỉ 22-31% rơi trong 20 s quanh đầu
+   cảnh vàng, mức may rủi ~24%).
+
+Bài chọn cho đầu cảnh vẫn khớp mục tiêu (r A .72); lỗi nằm ở mục tiêu và ở mảnh nối tiếp.
+
+**ENERGY** (lỗi 2; ghi trước Corpus 7e36d00 + 20baa1b, kết quả 6487d97 / f567dfc). Biến thể: giãn mục tiêu A và T khi xếp hạng bài.
+- Bộ học: giãn A (s_A ≥ 1,5) nâng r_E lên tới .29, nhưng cảnh nhẹ / im bị nhạc nổi (4,7% → 9-27%), nên trượt chặn.
+- Cấu hình được chọn là s_T 2. Trên bộ 7 nó TỆ hơn app (r_E .199 so với .237) → THUA, app giữ nguyên.
+- Số phụ (Lead): trong riêng cảnh E ≥ .4, r(A, E vàng) ≈ 0 ở mọi cấu hình. Tín hiệu A (TB nhãn câu ở cả hai đường) không phân
+  biệt được mức hành động, nên giãn nó chỉ phóng to nhiễu.
+- Hướng kế cho lỗi 2: đo `dE` của học sinh q06 (đã tính, app chưa dùng) làm nguồn A trước khi đụng tới việc chọn bài.
+
 ### 11-10 chiều - Bước âm lượng ngược chiều truyện (phần âm lượng của lỗi 1 và 3 MUSIC-AUDIT): hằng số hôm nay đã tốt nhất, THUA
 
 Audit thấy nhạc to thêm +1,39 dB qua cáo phó (306) và hạ −1,88 dB ở đòn kết (405). Ghi trước Corpus `research/music/PLAN_gain.md`
