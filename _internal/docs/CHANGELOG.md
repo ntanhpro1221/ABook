@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.52] - 2026-10-11
+
 ### Khi có sự cố (máy tính)
 
 - Máy tắt ngang hay file cài đặt, chỗ nghe, dấu trang bị hỏng thì app không còn lặng lẽ về mặc định rồi ghi đè: bản hỏng được giữ lại cạnh đó (tên có thêm `.hong-` và giờ) và app báo một dòng. Chuyển hay đổi tên thư mục thư viện rồi chọn lại chỗ mới thì chỗ nghe, dấu trang đi theo sách; ổ chứa thư viện chưa cắm thì app nói thẳng thay vì hiện thư viện trống.
