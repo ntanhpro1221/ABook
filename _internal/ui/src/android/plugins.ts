@@ -38,6 +38,8 @@ export interface NativeState {
   error?: string;
   /** Ghi công bài nhạc nền đang kêu (MusicBed.credit); null khi im lặng. */
   musicCredit?: MusicCredit | null;
+  /** Bài nhạc nền của chương đang nghe không phát được (MusicBed.brokenHere): đoạn ấy im lặng. */
+  musicBroken?: boolean;
 }
 
 // Nhật ký đêm của lõi native - cùng hình dạng với listen/model.ts (NightSession).
@@ -491,6 +493,8 @@ export interface ImportEvent {
   title?: string;
   /** Cuốn đã có trên máy và đã có thay đổi của người nghe: số thay đổi được giữ nguyên (BookFileImport.Imported.keptEdits). */
   keptEdits?: number;
+  /** Số bài nhạc nền hỏng trong file đã bị bỏ (BookFileImport.Imported.brokenMusic) - sách vẫn mở, đoạn ấy im lặng. */
+  brokenMusic?: number;
   error?: string;
 }
 

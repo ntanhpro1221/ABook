@@ -5,6 +5,8 @@ import { cn } from "@/shared/cn";
 import { formatClock } from "@/shared/format";
 import { usePlayListenBook } from "./LibraryScreen";
 import type { NightEvent, NightSession, Script } from "./model";
+import { heardSinceNight } from "./night";
+import { unquoted } from "./labels";
 import { sentenceAt } from "./PlayerViews";
 import { chapterScriptQuery, isMissing, useLastNight, useListenBook, useSource } from "./source";
 
@@ -28,11 +30,6 @@ interface Marker {
   chapterTitle: string;
   seconds: number;
   suggested?: boolean;
-}
-
-/** Câu thoại đã mang ngoặc của sách - bỏ trước khi bọc ngoặc trích (soát UX 29-09: ““…””). */
-function unquoted(sentence: string): string {
-  return sentence.replace(/^[\s“"«「『]+|[\s”"»」』]+$/g, "");
 }
 
 /** "Tối qua" chỉ đúng khi lần hẹn giờ kết thúc hôm trước hay lúc rạng sáng; hẹn giờ ban ngày (06:5x sáng nay) thì không. */
@@ -112,8 +109,10 @@ export function MorningRecap({ className }: { className?: string }) {
       ) as Record<number, Script>,
     staleTime: Infinity,
   });
-  // Sách của đêm ấy đã bị xoá khỏi thư viện: không còn chỗ để nghe tiếp, ẩn thẻ.
+  // Sách của đêm ấy đã bị xoá khỏi thư viện: không còn chỗ để nghe tiếp, ẩn thẻ. Đã nghe tiếp sau lúc tự dừng: thẻ không còn đúng,
+  // cũng ẩn - chờ biết chỗ nghe của cuốn rồi mới hiện, đừng hiện rồi biến mất.
   if (!fresh || !session || !markers.length || isMissing(bookError)) return null;
+  if (!book ? !bookError : heardSinceNight(session.endedAt ?? 0, book.state.last?.at)) return null;
 
   const dismiss = async () => {
     await source.dismissNight(bookId, session.id);

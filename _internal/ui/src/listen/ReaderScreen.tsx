@@ -42,6 +42,10 @@ const LEADINGS = [1.6, 1.8, 2];
 const TOUCH = "max-sm:size-[44px]";
 // Thanh nổi dưới câu đang chọn: điện thoại chỉ còn biểu tượng cho nút phụ (nhãn vẫn cho trình đọc màn hình) để cả thanh nằm MỘT hàng, không che chữ đang đọc.
 const BAR_LABEL = "max-sm:sr-only";
+/** Thanh nổi dưới đáy màn đọc: không chiếm chỗ (cao 0, nội dung neo lên từ mép dưới) - nổi trong khoảng đáy để trống của bài (pb-40)
+ *  thay vì đẩy bài dài thêm lúc hiện ra. Hiện ra khi đang ở cuối chương thì thẻ "Chương tiếp theo" vẫn nằm trên nó (soát a26 L9). */
+const FLOATING = "pointer-events-none sticky bottom-6 h-0";
+const FLOATING_BODY = "absolute inset-x-0 bottom-0 flex";
 
 function loadPrefs(): ReaderPrefs {
   try {
@@ -398,68 +402,72 @@ export function ReaderScreen({
           )}
         </article>
         {selected !== null && (
-          <div className="pointer-events-none sticky bottom-6 flex flex-col items-center gap-2">
-            <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
-              {canListen && (
+          <div className={FLOATING}>
+            <div className={cn(FLOATING_BODY, "flex-col items-center gap-2")}>
+              <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
+                {canListen && (
+                  <button
+                    type="button"
+                    onClick={() => listen(selected)}
+                    onMouseDown={(event) => event.preventDefault()}
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-float"
+                  >
+                    <Play className="size-4" fill="currentColor" strokeWidth={0} /> <span className="sm:hidden">Nghe từ đây</span>
+                    <span className="max-sm:hidden">Nghe từ câu này</span>
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => listen(selected)}
-                  onMouseDown={(event) => event.preventDefault()}
-                  className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-float"
-                >
-                  <Play className="size-4" fill="currentColor" strokeWidth={0} /> <span className="sm:hidden">Nghe từ đây</span>
-                  <span className="max-sm:hidden">Nghe từ câu này</span>
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => bookmarkSentence(selected)}
-                onMouseDown={(event) => event.preventDefault()}
-                className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
-              >
-                <BookmarkPlus className="size-4" /> <span className={BAR_LABEL}>Đặt dấu trang ở câu này</span>
-              </button>
-              {readingEdit && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const text = script.segments[selected]?.text ?? "";
-                    setReadingSentence(text);
-                    setReadingAt(selectedWord >= 0 ? selectedWord : undefined);
-                    setReadingWord(selectedWord >= 0 ? wordOf(text, selectedWord) : "");
-                  }}
+                  onClick={() => bookmarkSentence(selected)}
                   onMouseDown={(event) => event.preventDefault()}
                   className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
                 >
-                  <Pencil className="size-4" /> <span className={BAR_LABEL}>Sửa cách đọc</span>
+                  <BookmarkPlus className="size-4" /> <span className={BAR_LABEL}>Đặt dấu trang ở câu này</span>
                 </button>
-              )}
-              {lineEdit && (
-                <button
-                  type="button"
-                  disabled={lineEdit.mode === "blocked"}
-                  onClick={() => {
-                    const stableId = script.segments[selected]?.stableId;
-                    if (lineEdit.mode === "wish") setEditingLine(lineToEdit(script, selected));
-                    else if (lineEdit.mode === "studio" && stableId) onOpenStudioScript?.(id, chapterId, stableId);
-                  }}
-                  onMouseDown={(event) => event.preventDefault()}
-                  className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line disabled:opacity-60"
-                >
-                  <Pencil className="size-4" /> <span className={BAR_LABEL}>{lineEdit.mode === "studio" ? "Sửa trong Studio" : "Sửa câu này"}</span>
-                </button>
+                {readingEdit && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const text = script.segments[selected]?.text ?? "";
+                      setReadingSentence(text);
+                      setReadingAt(selectedWord >= 0 ? selectedWord : undefined);
+                      setReadingWord(selectedWord >= 0 ? wordOf(text, selectedWord) : "");
+                    }}
+                    onMouseDown={(event) => event.preventDefault()}
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
+                  >
+                    <Pencil className="size-4" /> <span className={BAR_LABEL}>Sửa cách đọc</span>
+                  </button>
+                )}
+                {lineEdit && (
+                  <button
+                    type="button"
+                    disabled={lineEdit.mode === "blocked"}
+                    onClick={() => {
+                      const stableId = script.segments[selected]?.stableId;
+                      if (lineEdit.mode === "wish") setEditingLine(lineToEdit(script, selected));
+                      else if (lineEdit.mode === "studio" && stableId) onOpenStudioScript?.(id, chapterId, stableId);
+                    }}
+                    onMouseDown={(event) => event.preventDefault()}
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line disabled:opacity-60"
+                  >
+                    <Pencil className="size-4" /> <span className={BAR_LABEL}>{lineEdit.mode === "studio" ? "Sửa trong Studio" : "Sửa câu này"}</span>
+                  </button>
+                )}
+              </div>
+              {lineEdit?.mode === "blocked" && (
+                <p className="pointer-events-auto max-w-sm rounded-xl bg-panel px-3 py-1.5 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">
+                  Sửa câu này: {lineEdit.note}
+                </p>
               )}
             </div>
-            {lineEdit?.mode === "blocked" && (
-              <p className="pointer-events-auto max-w-sm rounded-xl bg-panel px-3 py-1.5 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">
-                Sửa câu này: {lineEdit.note}
-              </p>
-            )}
           </div>
         )}
         {selected === null && follow.showJump && (
-          <div className="pointer-events-none sticky bottom-6 flex justify-center">
-            <JumpToPlaying onClick={follow.jump} />
+          <div className={FLOATING}>
+            <div className={cn(FLOATING_BODY, "justify-center")}>
+              <JumpToPlaying onClick={follow.jump} />
+            </div>
           </div>
         )}
       </div>

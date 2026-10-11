@@ -63,4 +63,13 @@ class MusicCuesTest {
         volume = MusicCues.toward(volume, 0.4f, perTick)
         assertEquals(0.4f, volume, 1e-5f)
     }
+
+    @Test
+    fun the_place_in_the_track_follows_the_place_in_the_chapter_and_wraps_when_it_loops() {
+        val cue = MusicCues.Cue(start = 100.0, end = 600.0, track = calm, gainDb = -8.0)
+        assertEquals(95_000L, MusicCues.offsetMs(cue, 195.0, 200_000L))
+        assertEquals(50_000L, MusicCues.offsetMs(cue, 350.0, 200_000L))
+        assertEquals(0L, MusicCues.offsetMs(cue, 90.0, 200_000L))
+        assertEquals(null, MusicCues.offsetMs(cue, 195.0, -1L))
+    }
 }

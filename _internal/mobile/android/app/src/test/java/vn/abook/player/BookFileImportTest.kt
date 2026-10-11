@@ -173,18 +173,15 @@ class BookFileImportTest {
         }
     }
 
-    @Test
-    fun a_damaged_entry_is_refused_and_leaves_no_half_book() {
-        val file = seriesFile()
-        // Đổi byte một audio trong gói: cỡ giữ nguyên, mã băm không còn khớp.
-        val broken = File(work, "hong.abook")
+    /** Chép gói `file` sang `name`, thay byte của mục `entry` (book.json giữ nguyên - như file hỏng trên đường chép). */
+    private fun spoiled(file: File, name: String, entry: String, replacement: ByteArray): File {
+        val broken = File(work, name)
         java.util.zip.ZipFile(file).use { zip ->
             ZipOutputStream(broken.outputStream()).use { out ->
-                for (entry in zip.entries().toList()) {
-                    var bytes = zip.getInputStream(entry).use { it.readBytes() }
-                    if (entry.name == "chapters/2/00001.mp3") bytes = "ID3-phan-xxx".toByteArray()
-                    val item = ZipEntry(entry.name)
-                    if (entry.method == ZipEntry.STORED) {
+                for (original in zip.entries().toList()) {
+                    val bytes = if (original.name == entry) replacement else zip.getInputStream(original).use { it.readBytes() }
+                    val item = ZipEntry(original.name)
+                    if (original.method == ZipEntry.STORED) {
                         item.method = ZipEntry.STORED
                         item.size = bytes.size.toLong()
                         item.compressedSize = bytes.size.toLong()
@@ -196,9 +193,47 @@ class BookFileImportTest {
                 }
             }
         }
+        return broken
+    }
+
+    @Test
+    fun a_damaged_entry_is_refused_and_leaves_no_half_book() {
+        // Đổi byte một audio trong gói: cỡ giữ nguyên, mã băm không còn khớp.
+        val broken = spoiled(seriesFile(), "hong.abook", "chapters/2/00001.mp3", "ID3-phan-xxx".toByteArray())
         val message = refusal { BookFileImport.importFile(broken) }
         assertTrue(message, "hỏng" in message)
         assertTrue(File(root, "books").listFiles().orEmpty().none { it.isDirectory })
+    }
+
+    @Test
+    fun a_broken_music_track_leaves_silence_not_an_unopenable_book() {
+        // Soát a26 L4 (bookfile.py cùng luật): một bài nhạc nền hỏng không chặn cả cuốn - bài ấy bị bỏ, đoạn ấy im lặng.
+        val calm = "music/" + "c".repeat(40) + ".mp3"
+        val battle = "music/" + "d".repeat(40) + ".mp3"
+        fun track(name: String) = JSONObject().put("file", name).put("title", name)
+        fun cue(start: Double, end: Double, name: String) = JSONObject().put("start", start).put("end", end).put("track", name)
+        val music = JSONObject().put("levelDb", -18.0).put("tracks", JSONObject().put(calm, track(calm)).put(battle, track(battle)))
+            .put("chapters", JSONObject().put("1", JSONArray().put(cue(0.0, 30.0, calm)).put(cue(30.0, 60.0, battle))))
+        val book = JSONObject().put("title", "Nhạc hỏng").put("chaptersAvailable", 1)
+            .put("chapters", JSONArray().put(JSONObject().put("id", 1).put("file", "chapters/00001.mp3"))).put("music", music)
+        val file = abook("nhac.abook", 2, mapOf("cast.json" to "{}".toByteArray(), "scripts/1.json" to "{}".toByteArray(),
+            "chapters/00001.mp3" to "ID3-chuong".toByteArray(), calm to "ID3-calm".toByteArray(), battle to "ID3-battle".toByteArray()), book)
+        for ((name, bytes) in listOf("cut.abook" to "ID3".toByteArray(), "same.abook" to "ID3-xxxxxx".toByteArray())) {
+            val imported = BookFileImport.importFile(spoiled(file, name, battle, bytes), separate = true)
+            assertEquals(name, 1, imported.brokenMusic)
+            val dir = Store.bookDir(imported.id)
+            assertFalse("bài hỏng không vào thư viện", File(dir, battle).exists())
+            assertEquals("ID3-calm", File(dir, calm).readText())
+            val kept = JSONObject(File(dir, "book.json").readText())
+            assertFalse(kept.getJSONObject("package").getJSONObject("files").has(battle))
+            assertFalse(kept.getJSONObject("music").getJSONObject("tracks").has(battle))
+            val cues = kept.getJSONObject("music").getJSONObject("chapters").getJSONArray("1")
+            assertEquals(1, cues.length())
+            assertEquals(calm, cues.getJSONObject(0).getString("track"))
+        }
+        // Audio chương hỏng thì vẫn từ chối cả file.
+        val message = refusal { BookFileImport.importFile(spoiled(file, "chuong.abook", "chapters/00001.mp3", "ID3".toByteArray()), separate = true) }
+        assertTrue(message, "hỏng" in message)
     }
 
     @Test

@@ -481,6 +481,8 @@ class App:
             result["edits"] = report["edits"]
         if report.get("merge"):
             result["merge"] = report["merge"]
+        if report.get("brokenMusic"):  # bài nhạc nền hỏng đã bỏ - sách vẫn mở, đoạn ấy im lặng; giao diện nói một câu
+            result["brokenMusic"] = report["brokenMusic"]
         return result
 
     def _book_source(self, path: str) -> Path:

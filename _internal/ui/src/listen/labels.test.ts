@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookProgressText, caughtUpDetail, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, caughtUpDetail, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel, unquoted } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -144,5 +144,13 @@ describe("chờ giọng đọc", () => {
   it("chỉ nói 'Đang chuẩn bị giọng đọc…' khi chờ quá ~1,5 giây", () => {
     expect(PREPARING_VOICE_AFTER_MS).toBeGreaterThanOrEqual(1000);
     expect(PREPARING_VOICE_AFTER_MS).toBeLessThanOrEqual(2000);
+  });
+});
+
+describe("unquoted (soát a26 L6: dấu trang hiện ““…””)", () => {
+  it("bỏ ngoặc của chính câu thoại trước khi bọc ngoặc trích", () => {
+    expect(unquoted("“Đi thôi.”")).toBe("Đi thôi.");
+    expect(unquoted("Lucien nhìn Natasha.")).toBe("Lucien nhìn Natasha.");
+    expect(unquoted(" «Ừ» ")).toBe("Ừ");
   });
 });
