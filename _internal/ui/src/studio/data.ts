@@ -51,7 +51,7 @@ export function useStudioMissing(): { missing: boolean; update: boolean; repair:
 export function useLibrary({ live = true }: { live?: boolean } = {}) {
   return useQuery({
     queryKey: ["library"],
-    queryFn: () => api<{ root: string; books: BookSummary[] }>("/api/library"),
+    queryFn: () => api<{ root: string; rootMissing?: boolean; books: BookSummary[] }>("/api/library"),
     refetchInterval: (query) =>
       query.state.data?.books.some((book) => book.running || book.starting) ? (live ? 5000 : 20000) : IDLE_MS,
   });

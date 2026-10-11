@@ -11,6 +11,7 @@ danh sách phát `.m3u8`. File chưa xong ghi ra `.part` rồi mới đổi tên
 from __future__ import annotations
 
 import base64
+import logging
 import os
 import re
 import shutil
@@ -23,6 +24,8 @@ from typing import Any
 from .. import continuation
 from ..io_utils import ffmpeg_available, ffmpeg_executable, run_hidden
 from . import covers, listen_view, music_plan, store
+
+log = logging.getLogger(__name__)
 
 _UNSAFE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
@@ -59,8 +62,28 @@ def drawn_cover(folder: Path, cover: str | None) -> Path | None:
     return path
 
 
+def usable_cover(source: Path | None) -> Path | None:
+    """`source` nếu là ảnh đọc được; ảnh hỏng (file rác, cắt cụt) thì None - ffmpeg gặp bìa hỏng thì hỏng cả lượt xuất MP3 / M4B (soát a28 lỗi 8),
+    nơi gọi dùng bìa vẽ từ tên thay. Máy không có Pillow (bản chỉ-nghe): không kiểm được, giữ nguyên."""
+    if source is None:
+        return None
+    try:
+        from PIL import Image  # Pillow chỉ cần khi sách có ảnh bìa thật
+    except ImportError:
+        return source
+    try:
+        with Image.open(source) as image:
+            image.verify()
+    except Exception:  # PIL ném đủ kiểu cho ảnh hỏng (UnidentifiedImageError, SyntaxError, OSError...)
+        log.warning("Bìa hỏng, xuất bằng bìa vẽ từ tên: %s", source, exc_info=True)
+        return None
+    return source
+
+
 def copy_real_cover(source: Path | None, folder: Path) -> Path | None:
-    """Ảnh bìa thật người dùng đã đặt (covers.py; sách Nghe ngay: book_edits.cover_file) thắng bìa tự vẽ mà giao diện gửi kèm; chép vào thư mục xuất."""
+    """Ảnh bìa thật người dùng đã đặt (covers.py; sách Nghe ngay: book_edits.cover_file) thắng bìa tự vẽ mà giao diện gửi kèm; chép vào thư mục xuất.
+    Ảnh hỏng (`usable_cover`): None - bìa vẽ thay."""
+    source = usable_cover(source)
     if source is None:
         return None
     target = folder / f"cover{source.suffix}"
@@ -102,7 +125,13 @@ def write_chapter(ffmpeg: str, source: Path, final: Path, cover_path: Path | Non
         "-metadata", "genre=Audiobook",
         "-f", "mp3", str(partial),
     ]
-    run_hidden(command, timeout=300)
+    try:
+        run_hidden(command, timeout=300)
+    except subprocess.CalledProcessError as error:
+        # Không để file `.part` nằm lại, không dán lệnh / lời ffmpeg cho người dùng (soát a28 lỗi 8) - lời ffmpeg vào nhật ký.
+        partial.unlink(missing_ok=True)
+        log.warning("ffmpeg không ghi được %s: %s", final.name, (error.stderr or "").strip()[-600:])
+        raise ValueError(f"Không ghi được chương “{title}” - file âm thanh của chương hay ảnh bìa không đọc được.") from error
     os.replace(partial, final)
 
 
@@ -140,12 +169,15 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
     folder = free_path(target_root / safe_name(folder_name or title))
     folder.mkdir(parents=True, exist_ok=True)
-    cover_path = copy_real_cover(covers.cover_file(project_root), folder) or drawn_cover(folder, cover)
+    real = covers.cover_file(project_root)
+    cover_path = copy_real_cover(real, folder) or drawn_cover(folder, cover)
     ffmpeg = ffmpeg_executable()
     sources = [(chapter["fullTitle"], path, chapter["duration"]) for chapter in chapters
                if (path := store.chapter_audio_path(project_root, chapter["id"])) is not None]
     files = write_mp3_folder(ffmpeg, folder, sources, title=title, narrator=narrator, cover_path=cover_path, total=len(sources))
-    return {"folder": str(folder), "files": files, "chaptersTotal": summary["chapters"]["total"]}
+    # Ảnh bìa hỏng: bản xuất mang bìa vẽ từ tên - giao diện nói một câu (coverBroken).
+    return {"folder": str(folder), "files": files, "chaptersTotal": summary["chapters"]["total"],
+            **({"coverBroken": True} if real is not None and usable_cover(real) is None else {})}
 
 
 # ---- M4B: cả cuốn trong một file, có mục lục chương ------------------------------------------------------------------
@@ -288,7 +320,8 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
             run_hidden(command, timeout=3600)
         except subprocess.CalledProcessError as error:
             partial.unlink(missing_ok=True)
-            raise ValueError(f"Không ghép được file M4B: {(error.stderr or '').strip()[-300:]}") from error
+            log.warning("ffmpeg không ghép được M4B: %s", (error.stderr or "").strip()[-600:])
+            raise ValueError("Không ghép được file M4B - ảnh bìa hay một chương không đọc được.") from error
         os.replace(partial, final)
     return final, len(marks)
 
@@ -306,9 +339,11 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
     if not ffmpeg_available():
         raise ValueError("Cần tải thêm công cụ ghép âm thanh (khoảng 31 MB) để làm file M4B - mở Xuất, chọn Sách nói M4B rồi bấm Tải công cụ.")
     final, count = m4b_from_files(ffmpeg_executable(), chapters, target_root, title=title, narrator=narrator,
-                                  cover_for=lambda work: covers.cover_file(project_root) or drawn_cover(work, cover))
+                                  cover_for=lambda work: usable_cover(covers.cover_file(project_root)) or drawn_cover(work, cover))
+    real = covers.cover_file(project_root)
     return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size,
-            "chapters": count, "chaptersTotal": summary["chapters"]["total"]}
+            "chapters": count, "chaptersTotal": summary["chapters"]["total"],
+            **({"coverBroken": True} if real is not None and usable_cover(real) is None else {})}
 
 
 def _title_of(project: Path) -> str:

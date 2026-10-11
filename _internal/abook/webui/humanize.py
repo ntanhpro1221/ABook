@@ -7,7 +7,9 @@ nằm nguyên trong "Chi tiết kỹ thuật".
 from __future__ import annotations
 
 import ast
+import errno
 import re
+from pathlib import Path
 
 from ..voice_catalog import ENGINE_VOICES
 
@@ -185,6 +187,27 @@ def voice_tone(formant: float, pitch: float) -> str:
 def error_text(error: str) -> str:
     text = error.strip().splitlines()[0] if error.strip() else ""
     return text[:240]
+
+
+def is_write_problem(error: BaseException) -> bool:
+    """Lỗi ghi người dùng tự gỡ được: thư mục chỉ đọc / không có quyền, ổ đầy."""
+    return isinstance(error, PermissionError) or (isinstance(error, OSError) and error.errno in (errno.EACCES, errno.EPERM, errno.EROFS, errno.ENOSPC))
+
+
+def write_error(error: OSError) -> str:
+    """Lỗi ghi file bằng lời người dùng (soát a28 lỗi 10): tên THƯ MỤC (không cả đường dẫn - có tên tài khoản Windows) và việc nên làm,
+    thay vì "PermissionError: [Errno 13] Permission denied: '...names.json.part'" hay "[WinError 5] Access is denied"."""
+    where = "thư mục này"
+    if error.filename:
+        path = Path(str(error.filename))
+        folder = path if path.is_dir() else path.parent
+        if folder.name:
+            where = f"thư mục “{folder.name}”"
+    if error.errno == errno.ENOSPC:
+        return f"Ổ đĩa chứa {where} đã đầy - dọn bớt rồi thử lại."
+    if is_write_problem(error):
+        return f"Không ghi được vào {where}: thư mục chỉ đọc hoặc app không có quyền ghi - chọn thư mục khác trong Cài đặt."
+    return f"Không ghi được vào {where} ({error.strerror or error})."
 
 
 def _where(message: str, chapters: dict[int, str]) -> str:

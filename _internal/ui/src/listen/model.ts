@@ -118,6 +118,8 @@ export interface ListenBook {
   chaptersTotal: number;
   chaptersAvailable: number;
   complete: boolean;
+  /** Sách mở từ file: chương file sách có mà trên máy này mất file / file 0 byte - mở lại đúng file .abook ấy để chép bù. */
+  missingFiles?: number;
   producing: boolean;
   /** Chưa làm xong và cũng không đang làm (Studio đã dừng). */
   paused?: boolean;

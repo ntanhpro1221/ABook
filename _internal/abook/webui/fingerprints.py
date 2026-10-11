@@ -17,6 +17,8 @@ import threading
 from pathlib import Path
 from typing import Any, Iterator
 
+from ..io_utils import atomic_write_bytes
+
 CHUNK = 1024 * 1024
 
 
@@ -103,7 +105,4 @@ class Fingerprints:
         return sum(1 for _ in self._matching(project_root, chapters))
 
     def _save(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(self._cache), encoding="utf-8")
-        os.replace(temporary, self.path)
+        atomic_write_bytes(self.path, json.dumps(self._cache).encode("utf-8"))

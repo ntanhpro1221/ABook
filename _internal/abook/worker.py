@@ -21,7 +21,7 @@ from .config import (
     validate_settings,
 )
 from .database import ProjectDB
-from .io_utils import sha256_file
+from .io_utils import atomic_write_json, sha256_file
 from .models import BookStatus, ProjectPaths
 from .notifier import WindowsNotifier
 from .pipeline import BookPipeline, CriticalResourceStop, PipelineStopped
@@ -139,7 +139,7 @@ def _record_gpu_context_loss(paths: ProjectPaths, db: ProjectDB | None) -> dict[
     }
     try:
         marker.parent.mkdir(parents=True, exist_ok=True)
-        marker.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+        atomic_write_json(marker, record)
     except OSError:
         # Without the marker the count cannot advance, so every loss would look like the
         # first. Better that than refusing to resume a book because a file would not write.

@@ -32,14 +32,14 @@ from typing import Any, Callable, Iterable, Iterator, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, importers, listener_overrides
-from ..io_utils import atomic_write_json
+from ..io_utils import atomic_write_bytes, atomic_write_json
 from ..readaloud import azure as readaloud_azure
 from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
-               listen_export, music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, packages, project_views,
+               listen_export, music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -209,12 +209,44 @@ class TrackTooBig(OSError):
 
 
 
+HELD_TEXT = ("sổ làm việc của sách này đang bị một chương trình khác giữ (diệt virus, sao lưu, đồng bộ đám mây...) - chờ một lát rồi "
+             "bấm Thử lại")
+
+
 def broken_reason(error: Exception) -> str:
-    """Vì sao một dự án không mở được, bằng lời người dùng hiểu: sổ làm việc (SQLite) của sách hỏng hay do bản app khác ghi - không để lộ
-    tên cột / lỗi kỹ thuật. Lỗi khác giữ nguyên câu của nó."""
+    """Vì sao một dự án không mở được, bằng lời người dùng hiểu: sổ làm việc (SQLite) của sách đang bị giữ, hỏng hay do bản app khác ghi - không
+    để lộ tên cột / lỗi kỹ thuật. Lỗi khác giữ nguyên câu của nó."""
+    if isinstance(error, sqlite3.OperationalError) and "locked" in str(error).lower():
+        return HELD_TEXT
     if isinstance(error, sqlite3.DatabaseError):
         return "sổ làm việc của sách này bị hỏng hoặc do một bản ABook khác ghi, nên chưa mở được"
     return str(error)
+
+
+def _held_elsewhere(project: Path) -> bool:
+    """File sổ làm việc đang bị chương trình khác khoá kiểu Windows (mở không chia sẻ - diệt virus, sao lưu): chính việc mở để đọc bị từ chối."""
+    try:
+        with (project / store.DB_NAME).open("rb"):
+            return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+
+
+def project_problem(project: Path, error: Exception) -> dict[str, Any]:
+    """Dòng "không đọc được" của một dự án trong danh sách Studio. `brokenKind`: "busy" (chương trình khác đang giữ - tự hết, KHÔNG phải hỏng:
+    đừng dụ người dùng xoá - soát a28 lỗi 5), "damaged" (hỏng thật; `backup`: có bản sao cũ cạnh đó, khôi phục được - lỗi 13), "unfinished"
+    (tạo dở - lỗi 15), "other"."""
+    if isinstance(error, store.ProjectUnfinished):
+        return {"broken": str(error), "brokenKind": "unfinished"}
+    if _held_elsewhere(project) or (isinstance(error, sqlite3.OperationalError) and "locked" in str(error).lower()):
+        return {"broken": HELD_TEXT, "brokenKind": "busy"}
+    if isinstance(error, sqlite3.DatabaseError):
+        backup = bool(store.db_backups(project))
+        text = "sổ làm việc của sách này bị hỏng hoặc do một bản ABook khác ghi, nên chưa mở được"
+        return {"broken": text + (" - có bản sao cũ hơn nằm cạnh nó, khôi phục được" if backup else ""), "brokenKind": "damaged", "backup": backup}
+    return {"broken": broken_reason(error), "brokenKind": "other"}
 
 
 class App:
@@ -377,19 +409,79 @@ class App:
         """Dữ liệu lưu theo mã sách kiểu cũ (đường dẫn base64 - docs/BOOK_IDS.md): đổi khoá sang mã mới, một
         lần. Hồ sơ nghe giữ nguyên mã (điện thoại gộp theo mã hồ sơ). Sao lưu từng file trước lần ghi đầu
         (`*.pre-ids.bak`)."""
+        self._rename_book_ids(legacy_ids(self._listened_ids()), ".pre-ids.bak")
+
+    def _listened_ids(self) -> set[str]:
+        """Mã sách có dữ liệu nghe (hồ sơ nghe, chỗ nghe dở)."""
         positions = self.preferences.get().get("positions")
-        renamed = legacy_ids([*self.listening.books(), *(positions if isinstance(positions, dict) else {})])
+        return {*self.listening.books(), *(positions if isinstance(positions, dict) else {})}
+
+    def _rename_book_ids(self, renamed: dict[str, str], backup_suffix: str, *, fresh_backup: bool = False) -> None:
+        """Đổi khoá dữ liệu nghe {mã cũ: mã mới}, sao lưu từng file trước (`<file><backup_suffix>`; `fresh_backup`: thay bản sao cũ)."""
         if not renamed:
             return
         for file in (self.listening.path, self.preferences.path):
-            backup = file.with_name(file.name + ".pre-ids.bak")
+            backup = file.with_name(file.name + backup_suffix)
             try:
-                if file.is_file() and not backup.exists():
+                if file.is_file() and (fresh_backup or not backup.exists()):
                     shutil.copy2(file, backup)
             except OSError:
                 pass  # không sao lưu được vẫn đổi: mỗi file ghi nguyên tử, mã cũ vẫn được nhận
         self.listening.rename_books(renamed)
         self.preferences.rename_positions(renamed)
+
+    def adopt_moved_library(self, old_root: Path) -> dict[str, str]:
+        """Người dùng trỏ thư viện sang thư mục khác - thường là CHÍNH thư viện cũ đã chuyển chỗ / đổi tên (soát a28 lỗi 2). Mã sách là HMAC
+        của đường dẫn nên mọi cuốn mang mã mới, chỗ nghe / dấu trang / lịch sử mồ côi. Cuốn ở cùng đường tương đối dưới thư viện cũ có dữ
+        liệu nghe theo mã cũ: đổi khoá sang mã mới (như `_adopt_new_book_ids`). Trả {mã cũ: mã mới}."""
+        new_root = self.library.root
+        if os.path.normcase(os.path.normpath(str(old_root))) == os.path.normcase(os.path.normpath(str(new_root))):
+            return {}
+        known = self._listened_ids()
+        base = new_root.resolve()
+        renamed: dict[str, str] = {}
+        for path in [*self.library.projects(), *self.library.packages()]:
+            try:
+                relative = path.resolve().relative_to(base)
+            except ValueError:
+                continue  # cuốn mở ở nơi khác (gần đây): đường dẫn không đổi
+            old, new = book_id(old_root / relative), book_id(path)
+            if old != new and old in known:
+                renamed[old] = new
+        self._rename_book_ids(renamed, ".pre-move.bak", fresh_backup=True)
+        return renamed
+
+    def restore_project_backup(self, value: str) -> dict[str, Any]:
+        """Sổ làm việc hỏng thật (soát a28 lỗi 13): lấy bản sao dây chuyền chụp trước lần nâng cấp gần nhất (`store.db_backups`) làm sổ, sau khi
+        GIỮ bản hỏng (`<tên>.hong-<giờ>`, cùng -wal / -shm của nó). Việc làm sau mốc bản sao mất - giao diện nói trước khi bấm."""
+        self._mutating()
+        path = self._book(value)
+        if self.runner.running(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách này đang chạy - dừng trước khi khôi phục")
+        backups = store.db_backups(path)
+        if not backups:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Sách này không có bản sao cũ để khôi phục")
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        database = path / store.DB_NAME
+        for suffix in ("", "-wal", "-shm"):
+            current = database.with_name(store.DB_NAME + suffix)
+            if current.exists():
+                os.replace(current, current.with_name(f"{current.name}.hong-{stamp}"))
+        shutil.copyfile(backups[0], database)  # mốc sửa mới: bộ đệm tóm tắt (theo mốc sửa sổ) không trả bản cũ
+        from ..database import ProjectDB
+
+        try:
+            ProjectDB(database)  # bản sao chụp trước lần nâng cấp: nâng lên sổ hiện hành
+        except Exception as error:  # bản sao cũng hỏng: nói thật, bản hỏng vẫn còn
+            raise ApiError(HTTPStatus.CONFLICT, f"Bản sao cũng không mở được - bản hỏng vẫn được giữ ({store.DB_NAME}.hong-{stamp})") from error
+        return {"ok": True, "kept": f"{store.DB_NAME}.hong-{stamp}"}
+
+    def require_library_root(self) -> None:
+        """Thư mục thư viện người dùng chọn không còn (ổ rời rút ra, bị đổi tên / xoá khi app đang chạy - soát a28 lỗi 6): nói ra, và KHÔNG
+        để việc nhập / xuất tự tạo lại một thư mục rỗng ở chỗ cũ (thư viện tách đôi)."""
+        if self.library.root_missing():
+            raise ApiError(HTTPStatus.CONFLICT, f"Không thấy thư mục thư viện “{self.library.root.name}” - cắm lại ổ chứa nó, hay chọn thư mục "
+                                                "khác trong Cài đặt.")
 
     # ---- sách ------------------------------------------------------------------------------------------
 
@@ -464,6 +556,7 @@ class App:
                 return {"id": None}
         if not Path(path).is_file():
             raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy file sách này - có thể nó đã bị chuyển hay xoá")
+        self.require_library_root()
         if path.lower().endswith(projectfile.EXTENSION):
             return self.open_project_file(Path(path))
         report: dict[str, Any] = {}
@@ -472,8 +565,10 @@ class App:
                                                report)
         except bookfile.BookFileError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        except bookfile.ZIP_DAMAGE as error:  # ruột gói hỏng: không dán "BadZipFile: Bad CRC-32 ..." (soát a28 lỗi 7)
+            raise ApiError(HTTPStatus.BAD_REQUEST, bookfile.DAMAGED) from error
         except OSError as error:  # ổ đầy giữa chừng, thư viện không ghi được: nói thật thay vì "lỗi máy chủ"
-            raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, f"Không ghi được sách vào thư viện ({error.strerror or error}).") from error
+            raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, humanize.write_error(error)) from error
         result: dict[str, Any] = {"id": book_id(target), "how": how}
         if report.get("edits"):
             # File mang theo thay đổi của người nghe: cuốn của máy này thì chờ người dùng quyết áp vào dự án (`edits` =
@@ -526,6 +621,7 @@ class App:
         `footnotes`: đề xuất về chú thích đã tích, như lúc xem trước."""
         self._mutating()
         source = self._book_source(path)
+        self.require_library_root()
         try:
             folder, how, book = textbook.add_to_library(source, title, self.library.root, self.library.projects(), self.fingerprints,
                                                         separate=separate, split_chapters=split_chapters,
@@ -534,7 +630,7 @@ class App:
         except (importers.ImportFailed, bookfile.BookFileError) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         except OSError as error:
-            raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, f"Không ghi được sách vào thư viện ({error.strerror or error}).") from error
+            raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, humanize.write_error(error)) from error
         return {"id": book_id(folder), "how": how, "chapters": len(book.chapters)}
 
     def open_project_file(self, path: Path) -> dict[str, Any]:
@@ -551,8 +647,10 @@ class App:
                                                      report)
         except (projectfile.ProjectFileError, bookfile.BookFileError) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        except bookfile.ZIP_DAMAGE as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "File dự án bị hỏng hoặc chép chưa xong - chép lại từ nguồn.") from error
         except OSError as error:
-            raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, f"Không ghi được sách vào thư viện ({error.strerror or error}).") from error
+            raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, humanize.write_error(error)) from error
         result: dict[str, Any] = {"id": book_id(target), "how": how}
         if report.get("edits"):
             result["edits"] = report["edits"]
@@ -666,9 +764,9 @@ class App:
             try:
                 books.append(self.summary(path))
             except Exception as exc:  # noqa: BLE001 - một sách hỏng không được làm mất cả thư viện
-                books.append({"id": book_id(path), "path": str(path), "title": path.name, "broken": broken_reason(exc)})
+                books.append({"id": book_id(path), "path": str(path), "title": path.name, **project_problem(path, exc)})
         books.sort(key=lambda book: book.get("updatedAt") or 0, reverse=True)
-        return {"root": str(self.library.root), "books": books}
+        return {"root": str(self.library.root), "rootMissing": self.library.root_missing(), "books": books}
 
     def book_view(self, value: str) -> dict[str, Any]:
         path = self._book(value)
@@ -953,15 +1051,19 @@ class App:
         threading.Thread(target=lambda: self.sweep_trash(everything=True), name="trash-sweep", daemon=True).start()
 
     def _sweep_export_leftovers_at_start(self) -> None:
-        """Lúc mở app: dọn file tạm của lượt gói `.abookproj` bị cắt ngang ở phiên trước (`export_leftovers`). Luồng nền - thư mục xuất có thể nằm
+        """Lúc mở app: dọn file tạm của lượt gói / nhập / xuất / tải nhạc bị cắt ngang ở phiên trước (`export_leftovers`). Luồng nền - thư mục xuất có thể nằm
         trên ổ mạng chậm. Giọng giả / bài thử không tự dọn (bài thử gọi `sweep_export_leftovers` trực tiếp)."""
         if self._fake_run():
             return
         threading.Thread(target=self.sweep_export_leftovers, name="export-leftovers", daemon=True).start()
 
     def sweep_export_leftovers(self) -> list[Path]:
-        folders = [*self.export_folders.recent(), Path(self.preferences.get()["libraryRoot"]) / "Đã xuất"]
-        return export_leftovers.sweep(folders, Path(tempfile.gettempdir()))
+        root = Path(self.preferences.get()["libraryRoot"])
+        folders = [*self.export_folders.recent(), root / "Đã xuất"]
+        removed = export_leftovers.sweep(folders, Path(tempfile.gettempdir()))
+        # Nhập / mở / xuất sách, tải nhạc bị tắt ngang (soát a28 lỗi 12): tên tạm trong thư viện, "Sách đã nhập", %TEMP%, bộ đệm nhạc.
+        return removed + export_leftovers.sweep_crashed(folders, [root, root / packages.IMPORTED_FOLDER], Path(tempfile.gettempdir()),
+                                                        self.music_dir / "files")
 
     def undo_trash(self, token: str) -> dict[str, Any]:
         """"Hoàn tác" một lần xoá: thư mục về đúng đường gốc, thư viện thấy lại. Hàng chờ KHÔNG được xếp lại - ghi trong lời
@@ -1056,6 +1158,7 @@ class App:
     def _create_book(self, body: dict[str, Any], paths: list[str], title: str,
                      first_person_chapters: dict[str, str] | None) -> Path:
         """Tạo một dự án từ các lựa chọn của trình tạo sách - dùng chung cho sách thường và từng tập của "Tạo nhiều tập"."""
+        self.require_library_root()
         root = actions.create_book(
             self.library.root, paths, title, str(body.get("profile", "high_quality")),
             str(body.get("narrator", "")), str(body.get("firstPerson", "")),
@@ -1116,7 +1219,7 @@ class App:
         root = self._create_book(body, paths, str(body.get("title", "")), self._first_person_chapters(body))
         for name, data in kept_covers.items():
             if not (root / name).exists():
-                (root / name).write_bytes(data)
+                atomic_write_bytes(root / name, data)
         replace_error = ""
         unchanged = replaced is not None and root.resolve() == replaced.resolve()
         if unchanged:
@@ -2849,7 +2952,10 @@ class Handler(BaseHTTPRequestHandler):
     def _export_root(self, body: dict[str, Any]) -> Path:
         """Thư mục mọi kiểu xuất ghi vào: nơi người dùng chọn (`target`), không thì "Đã xuất" trong thư viện."""
         target = self._target(body)
-        return Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        if target:
+            return Path(target)
+        self.app.require_library_root()
+        return Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
 
     def _static(self, path_text: str) -> None:
         root = self.app.static_dir
@@ -2934,6 +3040,12 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
         except sqlite3.DatabaseError as error:
             self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": broken_reason(error)})
+        except OSError as error:
+            # Thư viện / thư mục xuất chỉ đọc, ổ đầy (soát a28 lỗi 10): nói tên thư mục và việc nên làm, không dán lỗi Python.
+            if not humanize.is_write_problem(error):
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"{type(error).__name__}: {error}"})
+            else:
+                self._send_json(HTTPStatus.INSUFFICIENT_STORAGE, {"error": humanize.write_error(error)})
         except Exception as error:  # noqa: BLE001 - lỗi bất kỳ vẫn phải về thành JSON cho giao diện
             self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"{type(error).__name__}: {error}"})
 
@@ -2978,6 +3090,8 @@ class Handler(BaseHTTPRequestHandler):
             "sleepExtendMinutes": prefs.get("sleepExtendMinutes", 10),
             "safetyStopHours": prefs.get("safetyStopHours", 2),
             "sleepSchedule": prefs.get("sleepSchedule"),
+            # File trạng thái hỏng đã được giữ lại lúc mở app (notices.keep_broken): giao diện báo một lần.
+            "notices": notices.NOTICES.all(),
         })
 
     def get_library(self, _query: dict[str, list[str]]) -> None:
@@ -3302,6 +3416,9 @@ class Handler(BaseHTTPRequestHandler):
     def post_reveal(self, _query: dict[str, list[str]], value: str) -> None:
         actions.reveal(self.app._book(value))
         self._send_json(HTTPStatus.OK, {"ok": True})
+
+    def post_restore_backup(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.restore_project_backup(value))
 
     def _series_parts(self, value: str, body: dict[str, Any]) -> list[Path] | None:
         """"Cả bộ" trong hộp Xuất: các phần của cuốn (continuation.series_parts), None khi xuất riêng phần này."""
@@ -4752,6 +4869,8 @@ class Handler(BaseHTTPRequestHandler):
     def put_preferences(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
         allowed = {key: body[key] for key in ("theme", "libraryRoot") if key in body}
+        if "libraryRoot" in allowed and not (isinstance(allowed["libraryRoot"], str) and allowed["libraryRoot"].strip()):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Chọn một thư mục cho thư viện")
         # Tốc độ và âm lượng là SỐ trong khoảng giao diện đưa ra (player.SPEEDS 0,75-3; âm lượng 0-1): trình phát nạp lại
         # chúng lúc mở app, và một giá trị hỏng (chuỗi, 5) từng được lưu nguyên.
         for key, low, high in (("playbackRate", 0.5, 3.0), ("volume", 0.0, 1.0)):
@@ -4791,7 +4910,12 @@ class Handler(BaseHTTPRequestHandler):
             elif (isinstance(schedule, dict) and clock.fullmatch(str(schedule.get("from", "")))
                   and clock.fullmatch(str(schedule.get("to", ""))) and schedule.get("minutes") in (15, 30, 45, 60)):
                 allowed["sleepSchedule"] = {"from": schedule["from"], "to": schedule["to"], "minutes": schedule["minutes"]}
-        self._send_json(HTTPStatus.OK, self.app.preferences.update(allowed))
+        old_root = self.app.library.root
+        updated = self.app.preferences.update(allowed)
+        if "libraryRoot" in allowed:
+            self.app.adopt_moved_library(old_root)  # thư viện chuyển chỗ: chỗ nghe, dấu trang đi theo sách (soát a28 lỗi 2)
+            updated = self.app.preferences.get()
+        self._send_json(HTTPStatus.OK, updated)
 
     def post_app_update(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.install_update())
@@ -4919,6 +5043,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/precast"), Handler.get_precast),
     ("PUT", re.compile(BOOK + r"/precast"), Handler.put_precast),
     ("POST", re.compile(BOOK + r"/reveal"), Handler.post_reveal),
+    ("POST", re.compile(BOOK + r"/restore-backup"), Handler.post_restore_backup),
     # Chỉ trên máy này: Studio từ xa (remote_studio.ALLOWED) không có hai đường này.
     ("PUT", re.compile(BOOK + r"/title"), Handler.put_title),
     ("PUT", re.compile(BOOK + r"/author"), Handler.put_author),

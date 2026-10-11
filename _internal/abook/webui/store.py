@@ -24,6 +24,7 @@ from typing import Any, ClassVar, Iterable
 
 from . import humanize, word_timing
 from .. import names as renames
+from ..io_utils import atomic_write_bytes
 
 DB_NAME = "project.sqlite3"
 SETTINGS_NAME = "book_settings.json"
@@ -42,6 +43,19 @@ STABLE_ID = re.compile(r"^c(\d+)_s(\d+)_")
 
 def is_project(path: Path) -> bool:
     return (path / DB_NAME).is_file() and (path / SETTINGS_NAME).is_file()
+
+
+class ProjectUnfinished(ValueError):
+    """Thư mục dự án có sổ làm việc rỗng: app bị tắt giữa lúc tạo dự án. Tạo lại từ cùng file truyện thì dùng lại thư mục ấy (soát a28 lỗi 15)."""
+
+    def __init__(self) -> None:
+        super().__init__("dự án này tạo dở (app bị tắt giữa chừng) - tạo lại từ cùng file truyện là xong")
+
+
+def db_backups(project_root: Path) -> list[Path]:
+    """Bản sao sổ làm việc dây chuyền chụp trước mỗi lần nâng cấp (`database.ProjectDB`: `project.sqlite3.pre-v<a>-to-v<b>.bak`), mới nhất trước."""
+    found = [path for path in project_root.glob(DB_NAME + ".pre-v*.bak") if path.is_file()]
+    return sorted(found, key=lambda path: path.stat().st_mtime, reverse=True)
 
 
 def touched(project_root: Path) -> float:
@@ -247,6 +261,7 @@ class AudioLocator:
         self._parents: dict[Path, Path] = {}
         self._inside: dict[Path, bool] = {}
         self._listings: dict[Path, dict[str, os.DirEntry[str]]] | None = {} if many else None
+        self._empty: set[Path] = set()  # file thường 0 byte `probe` đã gặp (`empty`)
 
     def _lstat(self, path: Path) -> os.stat_result:
         if self._listings is not None:
@@ -280,7 +295,13 @@ class AudioLocator:
         if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0):
             resolved = path.resolve()
             return resolved, resolved.is_file()
+        if info.st_size == 0:
+            self._empty.add(parent / path.name)
         return parent / path.name, stat.S_ISREG(info.st_mode)
+
+    def empty(self, resolved: Path) -> bool:
+        """File (đường dẫn `probe` vừa trả) là file 0 byte - chép hỏng / tắt ngang giữa lúc ghi: có tên mà không nghe được."""
+        return resolved in self._empty
 
     def within_root(self, resolved: Path) -> bool:
         """`resolved` nằm trong thư mục sách - chỉ phụ thuộc thư mục chứa nó, nên nhớ theo thư mục."""
@@ -606,9 +627,7 @@ def clean_title(value: str) -> str:
 
 
 def set_display_title(project_root: Path, title: str) -> None:
-    temporary = project_root / f".{TITLE_FILE}.tmp"
-    temporary.write_text(json.dumps({"title": title}, ensure_ascii=False), encoding="utf-8")
-    os.replace(temporary, project_root / TITLE_FILE)
+    atomic_write_bytes(project_root / TITLE_FILE, json.dumps({"title": title}, ensure_ascii=False).encode("utf-8"))
 
 
 def mark_run_started(project_root: Path, started_at: float) -> None:
@@ -616,7 +635,7 @@ def mark_run_started(project_root: Path, started_at: float) -> None:
     overrides trước mọi việc) - kể cả khi chẳng có gì phải thu lại và dây chuyền không ghi gì vào sổ, nên mốc
     `book.updated_at` một mình thì nút "Áp dụng" không bao giờ tắt."""
     try:
-        (project_root / RUN_MARKER).write_text(json.dumps({"startedAt": started_at}), encoding="utf-8")
+        atomic_write_bytes(project_root / RUN_MARKER, json.dumps({"startedAt": started_at}).encode("utf-8"))
     except OSError:
         pass
 
@@ -996,7 +1015,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
     with closing(connect(project_root)) as connection:
         book = connection.execute("SELECT * FROM book WHERE id=1").fetchone()
         if book is None:
-            raise ValueError(f"{project_root} chưa được khởi tạo")
+            raise ProjectUnfinished()
         chapter_rows = connection.execute("SELECT status, COUNT(*) AS n FROM chapters GROUP BY status").fetchall()
         # Chương "xong" trong sổ mà file MP3 không còn (dời/xoá tay, bản sao thiếu audio): Studio từng báo "43/43 chương nghe
         # được" trong khi thư viện chỉ thấy 3 (soát UX 29-09). Chương chờ thu lại theo sửa của người nghe vẫn nghe được bản cũ.

@@ -44,7 +44,8 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
-from . import book_edits, covers, edits_inbox, listen_view, music_plan, package_share, packages, precast, remote_studio, store, tls, word_timing
+from ..io_utils import atomic_write_json
+from . import book_edits, covers, edits_inbox, listen_view, music_plan, notices, package_share, packages, precast, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
@@ -295,10 +296,11 @@ class Devices:
     def __init__(self, path: Path) -> None:
         self.path = path
         self._lock = threading.Lock()
-        try:
-            self._data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            self._data = {"devices": {}}
+        # Hỏng (cắt nửa, `[1]`, sai kiểu - soát a28 lỗi 1): giữ bản hỏng + báo thay vì coi như chưa ghép máy nào rồi đè mất.
+        self._data: dict[str, Any] = notices.read_json(
+            path, "Danh sách điện thoại đã ghép",
+            lambda data: isinstance(data, dict) and isinstance(data.get("devices"), dict)
+            and all(isinstance(item, dict) for item in data["devices"].values())) or {"devices": {}}
         self._pairing: tuple[str, float] | None = None
         self._failures = 0
         self.blocked = False
@@ -397,10 +399,7 @@ class Devices:
             self._save()
 
     def _save(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(self._data, ensure_ascii=False, indent=1), encoding="utf-8")
-        os.replace(temporary, self.path)
+        atomic_write_json(self.path, self._data)
 
 
 TEXT_STATE = "text"  # `chapters[i].state` của chương chỉ có chữ (bookfile.TEXT_STATE, docs/LISTEN_ANYTHING.md mục 1)

@@ -6,7 +6,7 @@ import { BookCover } from "@/shared/BookCover";
 import { ShortName } from "@/shared/ShortName";
 import { cn } from "@/shared/cn";
 import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
-import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
+import { EmptyState, failedEmpty, LoadError, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { caughtUpDetail, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, isLibrarySort, type LibrarySort } from "./librarySort";
 import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, resumeTarget, seriesIndex, twinBookIds, twinKind, volumeBadge, type ListenBook, type ListenChapter } from "./model";
@@ -368,7 +368,8 @@ export function LibraryScreen({
   /** Máy tính: sách đang làm dở mà chưa có chương nào - mở Studio để xem tiến trình. */
   onOpenUpcoming?: (book: ListenBook) => void;
 }) {
-  const { data: allBooks, isLoading } = useListenLibrary();
+  const libraryQuery = useListenLibrary();
+  const { data: allBooks, isLoading } = libraryQuery;
   // Sách chỉ có chữ chưa có chương nghe được nhưng đã ở trong thư viện (đọc được ngay): không phải sách "sắp có".
   const books = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable > 0 || book.stage === "text"), [allBooks]);
   const upcoming = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable === 0 && book.stage !== "text") ?? [], [allBooks]);
@@ -420,6 +421,8 @@ export function LibraryScreen({
             </div>
           ))}
         </div>
+      ) : failedEmpty(libraryQuery) ? (
+        <LoadError what="thư viện" error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
       ) : !books?.length ? (
         upcoming.length ? null : empty ?? (
           <EmptyState icon={Headphones} title="Chưa có sách nào" className="mt-12">

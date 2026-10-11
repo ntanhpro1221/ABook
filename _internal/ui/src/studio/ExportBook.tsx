@@ -205,7 +205,7 @@ export function ExportDialog({
               followPacking as () => Promise<{ folder: string; file: string; size: number; missingSources?: string[] } & Partial<SeriesResult>>,
             )
           : kind === "mp3"
-          ? await api<{ folder: string; files: number } & Partial<SeriesResult>>(`/api/books/${book.id}/export`, {
+          ? await api<{ folder: string; files: number; coverBroken?: boolean } & Partial<SeriesResult>>(`/api/books/${book.id}/export`, {
               method: "POST",
               body: { target, cover: coverArtwork(book.title), series: wholeSeries },
             })
@@ -236,7 +236,9 @@ export function ExportDialog({
             ? `${result.file} · ${formatSize(result.size ?? 0)}`
             : result.folder) +
         skipped +
-        (lost ? ` · ${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "");
+        (lost ? ` · ${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "") +
+        // Ảnh bìa hỏng (soát a28 lỗi 8): bản xuất mang bìa vẽ từ tên sách thay vì hỏng cả lượt.
+        ("coverBroken" in result && result.coverBroken ? " · ảnh bìa của sách bị hỏng nên bản xuất dùng bìa vẽ từ tên - đặt lại bìa nếu muốn" : "");
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (openRef.current) {

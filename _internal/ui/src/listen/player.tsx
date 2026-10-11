@@ -32,6 +32,7 @@ import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useListenBook, useSource } from "./source";
 import { withFreshSkips } from "./textScript";
 import { caughtUpDetail } from "./labels";
+import { reportSaveFailure } from "./saveFailure";
 
 export type { SleepMode, SleepRequest } from "./sleep";
 
@@ -342,7 +343,7 @@ export function PlayerProvider({
     refs.current.lastSaved = now;
     refs.current.stamp = now;
     refs.current.savedSpot = { chapterId: current.chapterId, seconds: engine.time };
-    void source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId).catch(() => undefined);
+    void source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId).catch(reportSaveFailure);
     if (force) refreshLists(current.bookId);
   }, [engine, native, source, refreshLists]);
 
@@ -1038,7 +1039,7 @@ export function PlayerProvider({
         from: session.from,
         to: { chapterId: current.chapterId, seconds: engine.time },
       }, session.recordId)
-      .catch(() => undefined);
+      .catch(reportSaveFailure);
   }, [engine, source]);
 
   // Chỗ nghe, phiên nghe của cuốn đang nạp vào hồ sơ CŨ (mọi lần lưu mang theo hồ sơ đang phát), ghi và chờ, gỡ cuốn
@@ -1053,7 +1054,7 @@ export function PlayerProvider({
       const moved = !engine.paused || !saved || saved.chapterId !== current.chapterId || Math.abs(saved.seconds - engine.time) > 1;
       const writes = [
         moved
-          ? source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId).catch(() => undefined)
+          ? source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId).catch(reportSaveFailure)
           : undefined,
         closeSession(),
       ];
@@ -1092,7 +1093,7 @@ export function PlayerProvider({
       void source
         .addSession(book, { id: session.id, device: "desktop", startedAt: session.startedAt, endedAt: Date.now() / 1000,
           listened: session.listened, from: session.from, to: at }, session.recordId)
-        .catch(() => undefined);
+        .catch(reportSaveFailure);
     }
     if (!engine.paused) window.setTimeout(() => openSession(), 0);
   };
@@ -1153,7 +1154,7 @@ export function PlayerProvider({
           if (target) {
             load({ ...current, chapterId: target.id, chapterTitle: target.fullTitle }, 0, false);
             if (refs.current.purpose === "listen") {
-              void source.saveProgress(current.bookId, target.id, 0, target.duration, current.recordId).then(() => refreshLists(current.bookId)).catch(() => undefined);
+              void source.saveProgress(current.bookId, target.id, 0, target.duration, current.recordId).then(() => refreshLists(current.bookId)).catch(reportSaveFailure);
             }
           }
           return;

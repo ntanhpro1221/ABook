@@ -22,6 +22,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from ..io_utils import atomic_write_bytes
+
 COVER_FILE = "cover.jpg"
 META_FILE = "cover.json"
 MAX_SIDE = 1400
@@ -136,7 +138,7 @@ def save_cover_bytes(project_root: Path, raw: bytes) -> dict[str, Any]:
     partial = target.with_suffix(".jpg.part")
     partial.write_bytes(jpeg)
     os.replace(partial, target)
-    (project_root / META_FILE).write_text(json.dumps({**meta, "savedAt": time.time()}, ensure_ascii=False), encoding="utf-8")
+    atomic_write_bytes(project_root / META_FILE, json.dumps({**meta, "savedAt": time.time()}, ensure_ascii=False).encode("utf-8"))
     return cover_meta(project_root) or {}
 
 

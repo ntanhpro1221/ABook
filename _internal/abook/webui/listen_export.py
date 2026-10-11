@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..io_utils import ffmpeg_available, ffmpeg_executable, run_hidden
+from ..io_utils import atomic_write_bytes, ffmpeg_available, ffmpeg_executable, run_hidden
 from ..readaloud import paragraphs as px
 from ..readaloud.model import VoiceError
 from ..readaloud.service import MAX_TEXT, ReadAloud
@@ -217,7 +217,7 @@ class _Run:
         samples = export.encode_stream(self.ffmpeg, rate, CHAPTER_CHANNELS, FLAC_ARGS, partial, feed, "FLAC")
         os.replace(partial, final)
         stamp = {"fingerprint": fingerprint(chapter, self.reading), "rate": rate, "seconds": samples / rate}
-        done.write_bytes(json.dumps(stamp).encode("utf-8"))
+        atomic_write_bytes(done, json.dumps(stamp).encode("utf-8"))
         return stamp
 
 
@@ -289,5 +289,5 @@ def _write_m4b(run: _Run, chapters: list[Chapter], target_root: Path, title: str
         run.report(index, chapters[index], "encode")
 
     final, _count = export.m4b_from_files(run.ffmpeg, [(chapter.title, _flac_path(run.work, chapter)) for chapter in chapters], target_root, title=title,
-                                          narrator=author, cover_for=lambda scratch: cover_source or export.drawn_cover(scratch, cover_drawn), on_chapter=before)
+                                          narrator=author, cover_for=lambda scratch: export.usable_cover(cover_source) or export.drawn_cover(scratch, cover_drawn), on_chapter=before)
     return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size}

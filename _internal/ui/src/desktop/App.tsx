@@ -20,10 +20,11 @@ import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { brokenMusicNote, keptEditsTitle, workshopMergeNote } from "@/shared/editsKept";
+import { MissingLibrary } from "@/shared/MissingLibrary";
 import { setExternalOpener } from "@/shared/openExternal";
 import { toastRemoved } from "@/shared/trashUndo";
 import { api } from "@/studio/api";
-import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
+import { pickFolder, useAppInfo, useLibrary, usePreferences } from "@/studio/data";
 import { NewProjectScreen } from "@/studio/NewProjectScreen";
 import { ProjectScreen } from "@/studio/ProjectScreen";
 import { ProjectsScreen } from "@/studio/ProjectsScreen";
@@ -52,12 +53,29 @@ function ClipBridge({ children }: { children: ReactNode }) {
   return <ClipProvider onStart={() => player.playing && player.toggle()}>{children}</ClipProvider>;
 }
 
+const shownNotices = new Set<string>();
+
+/** File trạng thái hỏng đã được giữ lại lúc mở app (máy chủ: notices.keep_broken): báo mỗi dòng một lần - cái gì, đã giữ bản cũ ở đâu
+ *  (soát a28 lỗi 1). Không báo thì người dùng chỉ thấy chỗ nghe / cài đặt "tự mất". */
+function StartupNotices({ notices }: { notices?: { id: string; text: string }[] }) {
+  useEffect(() => {
+    for (const notice of notices ?? []) {
+      if (shownNotices.has(notice.id)) continue;
+      shownNotices.add(notice.id);
+      toast.warning(notice.text, { duration: 30000 });
+    }
+  }, [notices]);
+  return null;
+}
+
 function EmptyLibrary() {
   const navigate = useNavigate();
+  const library = useLibrary({ live: false }).data;
   // Người mới mở app thường có sẵn một file truyện: nghe ngay là việc chính, làm sách nói (Studio) là việc kế. Máy điều khiển từ xa không
   // thêm file được thì Studio vẫn là nút chính.
   const canAdd = Boolean(useSource().textImport);
   const openBookPath = useOpenBookPath();
+  if (library?.rootMissing) return <MissingLibrary root={library.root} className="mt-12 rounded-2xl border border-dashed border-line" />;
   return (
     <EmptyState
       icon={Headphones}
@@ -214,7 +232,7 @@ function RemoveImportedHost() {
 /** Kết quả mở một file sách (`POST /api/listen/open-book-file`, hay cửa sổ app khi bấm đúp file .abook - desktop.py). */
 interface OpenedBook {
   id: string | null;
-  how?: "new" | "existing" | "updated" | "project" | "studio";
+  how?: "new" | "existing" | "updated" | "repaired" | "project" | "studio";
   /** File `.abookproj`: số file nguồn chương không có trong gói (đã bị dời hay xoá ở máy gói). */
   missingSources?: number;
   /** File `.abook` phiên bản 4 mang thay đổi của người nghe (lớp sửa - docs/EDITING.md): số thay đổi. Cuốn là dự án của
@@ -234,6 +252,7 @@ const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, [string, string | unde
   new: ["Đã thêm sách vào thư viện", "Sách đã chép vào thư viện - xoá file gốc cũng không sao."],
   existing: ["Cuốn này đã có trong thư viện", undefined],
   updated: ["Đã cập nhật lên bản nhiều chương hơn", "Chỗ đang nghe, dấu trang vẫn giữ nguyên."],
+  repaired: ["Đã chép bù các file bị mất của cuốn này", "Chỗ đang nghe, dấu trang vẫn giữ nguyên."],
   project: ["Đây là sách do Studio máy này làm", "Mở đúng cuốn ấy, không chép thêm bản nào."],
   studio: ["Đã mở dự án vào Studio", "Dự án đã chép vào thư viện Studio - xoá file gốc cũng không sao."],
 };
@@ -493,6 +512,7 @@ export function App() {
             <HashRouter>
               <OpenedBookListener />
               <UpdateListener />
+              {!info.remote && <StartupNotices notices={info.notices} />}
               {!info.remote && <VolumeSaver />}
               {!info.remote && <RemoveImportedHost />}
               <ExportJobHost kind="bookfile" />

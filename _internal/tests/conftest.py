@@ -194,6 +194,28 @@ def _count_sleeping(request: pytest.FixtureRequest) -> Iterator[None]:
         time.sleep = _REAL_SLEEP
 
 
+_RAM_FLOOR = 8 * 1024**3
+
+
+@pytest.fixture(autouse=True)
+def _enough_ram_for_the_gate(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Cổng tài nguyên của pipeline đọc RAM thật: khi máy chạy test đang bận (huấn luyện chiếm RAM, còn dưới
+    `min_free_ram_gb` 3,5) thì test_pipeline_mock chờ mãi và cả bộ đứng ở 63% (11-10, hai lần). Mọi test thấy ít nhất
+    8 GB khả dụng; bài nào cần số RAM riêng thì tự `monkeypatch.setattr(psutil, "virtual_memory", ...)` - đặt sau
+    fixture này nên thắng."""
+    import psutil
+
+    real = psutil.virtual_memory
+
+    def virtual_memory():  # noqa: ANN202
+        memory = real()
+        if memory.available >= _RAM_FLOOR:
+            return memory
+        return memory._replace(available=_RAM_FLOOR, free=max(memory.free, _RAM_FLOOR))
+
+    monkeypatch.setattr(psutil, "virtual_memory", virtual_memory)
+
+
 @pytest.fixture(autouse=True)
 def _no_real_bluetooth(monkeypatch: pytest.MonkeyPatch) -> None:
     """Không bài thử nào được chạm Bluetooth thật của máy đang chạy test: liệt kê thiết bị đã ghép trả rỗng, tra SDP / nối RFCOMM

@@ -58,6 +58,7 @@ import shutil
 import sys
 import time
 import zipfile
+import zlib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, Self, Sequence
@@ -476,6 +477,21 @@ def write_entries(archive: zipfile.ZipFile, files: dict[str, Path | bytes], *, o
             archive.writestr(_entry(name, stored=stored), source)
 
 
+DAMAGED = "File sách bị hỏng hoặc chép chưa xong - chép lại từ nguồn."
+
+
+def looks_cut(path: Path) -> bool:
+    """Gói zip bị cắt (còn chữ ký "PK" ở đầu) hay file rỗng - khác một file lạ đổi đuôi."""
+    try:
+        with Path(path).open("rb") as handle:
+            head = handle.read(2)
+    except OSError:
+        return False
+    return head in (b"", b"PK")
+# Lỗi khi đọc ruột gói hỏng (lật bit, cụt giữa chừng): "Bad CRC-32 for file ...", dữ liệu nén hỏng, hết file sớm.
+ZIP_DAMAGE = (zipfile.BadZipFile, zlib.error, EOFError)
+
+
 class BookFile:
     """Một file sách đã mở và đã kiểm hình dạng (chưa kiểm mã băm - `verify()`; `extract()` tự kiểm)."""
 
@@ -487,8 +503,12 @@ class BookFile:
         self._edits: dict[str, Any] = book_edits.empty()
         try:
             self._zip = zipfile.ZipFile(self.path)
-        except (zipfile.BadZipFile, OSError) as exc:
-            raise BookFileError("Đây không phải file sách của app (không mở được gói).") from exc
+        except zipfile.BadZipFile as exc:
+            # Gói không đọc được mà đầu file là gói zip (hay file 0 byte): file của app chép / tải chưa xong (soát a28 lỗi 7). Zip lạ đổi đuôi
+            # thì mở được và `_validate` nói "không phải file sách"; file chữ đổi đuôi thì không phải gói.
+            raise BookFileError(DAMAGED if looks_cut(self.path) else "Đây không phải file sách của app.") from exc
+        except OSError as exc:
+            raise BookFileError(f"Không đọc được file sách này ({exc.strerror or exc}).") from exc
         try:
             self.book = self._validate()
         except BaseException:

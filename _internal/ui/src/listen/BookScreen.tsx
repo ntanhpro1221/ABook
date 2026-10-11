@@ -899,6 +899,11 @@ export function BookScreen({
               {studioLink?.(book)}
             </p>
           )}
+          {book.missingFiles ? (
+            <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-warning-soft px-3 py-1 text-xs font-medium text-warning">
+              {book.missingFiles} chương mất file trên máy này - mở lại file sách (.abook) của cuốn này để chép bù
+            </p>
+          ) : null}
           {book.remote && !downloaded && (
             <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-full bg-info-soft px-3 py-1 text-xs font-medium text-info">
               <Laptop className="size-3.5" />{" "}

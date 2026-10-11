@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .. import listener_overrides
-from ..io_utils import decode_text_bytes
+from ..io_utils import atomic_write_bytes, decode_text_bytes
 from . import store
 
 FILE_NAME = "shared_readings.json"
@@ -41,12 +41,7 @@ class SharedReadings:
         return {str(key): value for key, value in entries.items() if isinstance(value, dict)} if isinstance(entries, dict) else {}
 
     def _write(self, entries: dict[str, dict[str, Any]]) -> None:
-        from ..io_utils import _replace_with_retry
-
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.path.with_suffix(".tmp")
-        temporary.write_text(json.dumps({"entries": entries}, ensure_ascii=False, indent=1), encoding="utf-8")
-        _replace_with_retry(temporary, self.path)
+        atomic_write_bytes(self.path, json.dumps({"entries": entries}, ensure_ascii=False, indent=1).encode("utf-8"))
 
     def entries(self) -> list[dict[str, Any]]:
         """Mọi mục, theo chữ cái của từ gốc."""
