@@ -4337,6 +4337,88 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 chiều - Bảng chất lượng tín hiệu theo NGUỒN + phân loại cảnh sai dấu V (Lead giao sau SIBSWITCH / VALENCE)
+
+Sau GAIN, ENERGY, SIBSWITCH, VALENCE (đều thua), Lead hỏi gốc: nguồn tín hiệu nào bẹt, ở mức nào. `signal_table.py` (Corpus
+74b6d8c, CPU) đo mỗi nguồn theo cảnh vàng (TB theo thời lượng câu), so với V vàng / E vàng:
+- TOÀN BỘ;
+- HÌNH: lệch khỏi TB chương, gộp mọi chương;
+- MỨC: TB chương, đo qua các chương.
+
+"thô" là V/A của mảnh. "đích" là sau `target_of`, tức sau khi mảnh có `confidence` < WEAK_MOOD .2 bị kéo về CALM_TARGET.
+STU.thô = LV.V (mức) + dV học sinh (hình); A của STU = TB nhãn (mức) + dE (hình).
+
+Trục V. Ô: r | r trong lớp (|V| >= .5) | AUC buồn (V <= -.5) | sd nguồn / sd vàng.
+
+| nguồn | bộ học 322 cảnh | bộ 7, 77 cảnh |
+|---|---|---|
+| nhãn câu, đích (đường LBL) | .46 / .58 / .73 / .26 | .45 / .38 / .58 / .31 |
+| STUDIO thô | **.73 / .81 / .83** / .55 | **.87 / .81 / .91** / .76 |
+| STUDIO đích (app) | .70 / .78 / .83 / .48 | .86 / .78 / .89 / .73 |
+| HÌNH: dV học sinh → sau `target_of` | .69 → .61 (trong lớp .75 → .66) | .71 → .68 (.67 → .56) |
+| MỨC: LV.V (42 / 20 chương) | .82 | .92 |
+
+Trục E. Ô: r | r trong lớp (E >= .4) | AUC mạnh. Bộ 7 chỉ có 6 cảnh E >= .4, nên cột trong lớp của bộ 7 không đáng tin.
+
+| nguồn | bộ học (61 cảnh mạnh) | bộ 7 |
+|---|---|---|
+| nhãn câu, thô → đích | .43 → .30 / .12 → **-.00** / .71 → .66 | .38 → .34 / - / .91 |
+| STUDIO thô → đích (app) | .63 → .45 / **.37 → .12** / .82 → .75 | .62 → .55 / - / .93 |
+| HÌNH: dE học sinh → sau `target_of` | .67 → .56 (trong lớp .62 → .45) | .72 → .63 |
+| MỨC: TB nhãn thô → đích | .54 → .27 | .31 → .31 |
+| MỨC: LV.E (ridge, LV-E) | .88 | .59 |
+
+Đọc:
+1. **V KHÔNG bẹt trong lớp.** STUDIO xếp đúng thứ tự cả trong nhóm cảnh |V| lớn (r trong lớp .78-.81, AUC buồn .83-.91). Vì thế
+   giãn V (VALENCE) không giúp được: lỗi V không phải do co thang mà nằm ở MỘT SỐ CHƯƠNG (xem phân loại dưới).
+2. **`target_of` làm giảm r ở MỌI nguồn, MỌI mức, cả hai bộ.** Nặng nhất ở E: trong lớp bộ học .37 → .12, hình .62 → .45, mức
+   .54 → .27. sd nguồn/vàng của E tăng .39 → .55, tức nó thêm dao động không liên quan đến vàng. Lý do: `confidence` đếm câu có
+   nhãn cảm xúc, không đo độ chắc của học sinh. Văn trần thuật (đại chiến, kể quá khứ) ít câu nhãn nên bị kéo về nền êm dù học
+   sinh đọc đúng.
+3. Mức E: TB nhãn yếu (.54 / .31). LV.E mạnh hơn rõ (.88 / .59), nhưng LV-E2 đã đóng vì vàng bộ 11+12 không đủ lực.
+4. Đường nhãn (khi chưa có model) kém xa STUDIO ở mọi ô. Gốc của nó là nhóm "hài / thoại vui chứa từ tiêu cực" (bên dưới).
+
+**Phân loại cảnh sai dấu V** (Lead 3b, `wrongsign_dump.py`, bản có chữ chỉ ở LLM_Train). Bộ học chỉ có 37 cảnh |V vàng| >= .5
+mà mục tiêu trái dấu; đọc 30 cảnh nặng nhất.
+
+STUDIO sai 19 cảnh:
+
+| nhóm | phần |
+|---|---|
+| mức chương sai: LV.V dương nhưng chương "bề mặt rom-com / học đường, bên trong cay đắng" (bị từ chối, đơn phương, trả thù); dV trong chương đã đúng chiều | 8/19 (42%) |
+| tiêu cực nhưng không buồn (giận, đe doạ, kinh dị, sốc): mọi nguồn ~0 | 4/19 (21%) |
+| `target_of` lật dấu: STUDIO thô đúng âm (-.11..-.38), bị kéo thành +.06..+.12 | 3/19 (16%) |
+| buồn ngầm dưới bề mặt bình thản | 3/19 (16%) |
+| góc nhìn (thắng lợi kể qua tuyệt vọng của kẻ thù) | 1/19 |
+
+Đường nhãn sai 11 cảnh (STUDIO đúng ở 9): 8/11 là hài / thoại vui chứa từ tiêu cực, 2 là cung cảm xúc đổi trong cảnh, 1 là kinh dị
+nói bằng lời lịch sự. Vàng đáng ngờ khoảng 2-3/30, đều bảo vệ được. Chữ ngắn và hồi tưởng không phải gốc.
+
+Gốc sửa, theo thứ tự rẻ → đắt:
+- (a) `target_of` (code). Thí nghiệm WEAKPULL đề xuất dưới.
+- (b) Mức V của chương (dữ liệu). Thêm chương bạc / vàng kiểu "vui ngoài, buồn trong" cho head LV.V. Hoặc thử ghép mức = LV.V với
+  TB dV của chương.
+- (c) Học sinh gộp "tiêu cực" với "buồn" (dữ liệu / nhãn). Trước hết kiểm xem nhãn bạc có gán V âm cho cảnh giận / kinh dị không.
+
+**ĐỀ XUẤT GHI TRƯỚC - WEAKPULL** (chờ Lead duyệt, chưa chạy biến thể nào):
+- Biến thể:
+  - WEAK_MOOD ∈ {.2 (app), .1, 0}.
+  - Phạm vi: mọi mảnh, hoặc chỉ mảnh có học sinh (đường LBL giữ .2).
+  - Tổng: APP + 4.
+- SÀN: WEAK_MOOD = 10, tức mọi mảnh gần nền êm. SÀN PHẢI trượt chặn hợp truyện (kiểm lực).
+- Thước: hai đường, như ENERGY, theo BÀI thật được chọn.
+  - Chính: Δ(rV + rE)/2.
+  - Chặn: rT >= -.03; `nổi` <= +3 điểm (chặn này giữ lý do tồn tại của nền êm: cảnh nhẹ không bị nhạc to); `lặp` <= +3.
+- Chọn trên bộ học: lớn nhất trong các biến thể qua chặn. Hoà trong .01 thì chọn biến thể đổi ít hơn (WEAK_MOOD lớn hơn, rồi
+  phạm vi hẹp hơn). Chọn trúng APP thì THUA.
+- Thử ngoài bộ 7 (+ bộ 11+12 đường không P0 nếu Lead muốn; không gộp). THẮNG khi đủ:
+  - chính >= +.03;
+  - bootstrap 2.000 theo chương, mép dưới > 0;
+  - chặn giữ;
+  - SÀN trượt.
+- Hướng này NGƯỢC ba lượt chấm mù trước (02/03-10: kéo về nền êm NHIỀU hơn, 0,35 / 0,5, đều không thắng). Không có mâu thuẫn:
+  thước ở đây là độ hợp với vàng, và chặn `nổi` giữ đúng điều ba lượt ấy bảo vệ.
+
 ### 11-10 tối - MONO (lỗi 3 audit-2: một bài quay lại ở nhiều chương): KHÔNG KẾT LUẬN
 
 Chẩn đoán (bộ học, LBL): 8 bài chiếm 49,5% thời lượng; một bài dài gần tâm V/A/T chiếm 14% và có mặt ở 11/42 chương. Nguyên nhân
