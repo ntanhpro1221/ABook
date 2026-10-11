@@ -24,7 +24,16 @@ from pathlib import Path
 from typing import Any
 
 MIX_FILE = Path(__file__).resolve().parent / "assets" / "music_mix.json"
-MIX: dict[str, float] = {key: float(value) for key, value in json.loads(MIX_FILE.read_text(encoding="utf-8")).items()}
+
+
+def _constant(value: Any) -> Any:
+    """Số -> float (sai kiểu thì văng ngay lúc nạp); bảng (`truePeakFir` của bản xuất kèm nhạc, music_render) -> các hàng float."""
+    if isinstance(value, list):
+        return [[float(item) for item in row] for row in value]
+    return float(value)
+
+
+MIX: dict[str, Any] = {key: _constant(value) for key, value in json.loads(MIX_FILE.read_text(encoding="utf-8")).items()}
 LOOP_CROSSFADE_SECONDS = MIX["loopCrossfadeSeconds"]
 _EPS = 1e-6
 

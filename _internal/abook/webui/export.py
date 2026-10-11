@@ -12,18 +12,22 @@ from __future__ import annotations
 
 import base64
 import logging
+import math
 import os
 import re
 import shutil
 import subprocess
 import tempfile
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 from typing import Any
+
+import numpy as np
 
 from .. import continuation
 from ..io_utils import ffmpeg_available, ffmpeg_executable, run_hidden
 from . import covers, listen_view, music_plan, store
+from .music_mix import MIX
 
 log = logging.getLogger(__name__)
 
@@ -159,8 +163,10 @@ def write_mp3_folder(ffmpeg: str, folder: Path, chapters: Iterable[tuple[str, Pa
 
 
 def export_book(project_root: Path, target_root: Path, *, cover: str | None = None,
-                folder_name: str | None = None) -> dict[str, Any]:
-    """`folder_name`: tên thư mục thay cho tên sách - bản xuất cả bộ đặt mỗi phần vào "Phần N - ..."."""
+                folder_name: str | None = None, music: Callable[[str], Path | None] | None = None) -> dict[str, Any]:
+    """`folder_name`: tên thư mục thay cho tên sách - bản xuất cả bộ đặt mỗi phần vào "Phần N - ...".
+    `music`: nguồn file bài nhạc (như gói `.abook`, music_plan.TrackSource) = "Kèm nhạc nền": chương có nhạc được giải mã, trộn
+    (music_export.py) rồi mã hoá lại MP3 cùng bitrate; không có thì chép nguyên luồng như cũ."""
     summary = store.summarize(project_root)
     title = summary["title"] or project_root.name
     narrator = summary["settings"]["narrator"] or ""
@@ -173,12 +179,38 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     cover_path = copy_real_cover(real, folder) or drawn_cover(folder, cover)
     ffmpeg = ffmpeg_executable()
     audio = store.chapter_audio_paths(project_root)
-    sources = [(chapter["fullTitle"], path, chapter["duration"]) for chapter in chapters
-               if (path := audio.get(chapter["id"])) is not None]
-    files = write_mp3_folder(ffmpeg, folder, sources, title=title, narrator=narrator, cover_path=cover_path, total=len(sources))
+    listed = [(chapter["id"], chapter["fullTitle"], path, chapter["duration"]) for chapter in chapters
+              if (path := audio.get(chapter["id"])) is not None]
+    sources = [(full_title, path, duration) for _id, full_title, path, duration in listed]
+    noted: dict[str, Any] = {}
+    if music is None:
+        files = write_mp3_folder(ffmpeg, folder, sources, title=title, narrator=narrator, cover_path=cover_path, total=len(sources))
+    else:
+        from .music_export import Mixer, studio_music  # nhập muộn: music_export dùng pump_pcm của module này
+
+        mixer = Mixer(ffmpeg, studio_music(project_root, [item[0] for item in listed], music))
+        with tempfile.TemporaryDirectory(prefix=".music-", dir=target_root) as scratch:
+            files = write_mp3_folder(ffmpeg, folder, _mixed_mp3(ffmpeg, mixer, listed, Path(scratch)), title=title, narrator=narrator,
+                                     cover_path=cover_path, total=len(sources))
+        noted = mixer.note(item[0] for item in listed)
     # Ảnh bìa hỏng: bản xuất mang bìa vẽ từ tên - giao diện nói một câu (coverBroken).
-    return {"folder": str(folder), "files": files, "chaptersTotal": summary["chapters"]["total"],
+    return {"folder": str(folder), "files": files, "chaptersTotal": summary["chapters"]["total"], **noted,
             **({"coverBroken": True} if real is not None and usable_cover(real) is None else {})}
+
+
+def _mixed_mp3(ffmpeg: str, mixer: Any, listed: list[tuple[int, str, Path, float]], scratch: Path) -> Iterator[tuple[str, Path, float]]:
+    """Nguồn MP3 từng chương cho `write_mp3_folder` khi kèm nhạc: chương có nhạc trộn rồi mã hoá lại (LAME, cùng bitrate với MP3 của
+    chương) vào `scratch` - file dùng xong mới làm chương kế; chương không có nhạc dùng nguyên file."""
+    for chapter_id, full_title, source, duration in listed:
+        if not mixer.has(chapter_id):
+            yield full_title, source, duration
+            continue
+        rate, channels, kbps = audio_format(ffmpeg, source)
+        temp = scratch / f"{chapter_id}.mp3"
+        encode_stream(ffmpeg, rate, channels, ["-c:a", "libmp3lame", "-b:a", f"{kbps or 128}k", "-f", "mp3"], temp,
+                      lambda sink, c=chapter_id, s=source, r=rate, n=channels: pump_mixed(ffmpeg, mixer, c, s, r, n, sink) // (2 * n), "MP3")
+        yield full_title, temp, duration
+        temp.unlink(missing_ok=True)
 
 
 # ---- M4B: cả cuốn trong một file, có mục lục chương ------------------------------------------------------------------
@@ -191,17 +223,31 @@ M4B_EXTENSION = ".m4b"
 # AAC-LC 64 kb/s cho giọng đọc mono đã nghe như bản gốc (MP3 chương của dây chuyền là giọng nói, không phải nhạc) và chỉ
 # ~29 MB một giờ - cuốn 20 giờ vừa ~600 MB. Nguồn stereo (hai kênh khác nhau) mới cần 96 kb/s để không vỡ tiếng.
 _AAC_BITRATE = {1: "64k", 2: "96k"}
+# Bộ aac của ffmpeg ở 64k thỉnh thoảng vọt đỉnh ~+1,5 dB SAU mã hoá (có nhạc hay không; MUSIC_RENDER.md 3b, 5 - không đệm trước mã
+# hoá nào chặn được): mã hoá xong đo đỉnh thật từng chương của file AAC, chương vượt trần (exportCeilingDbtp) được hạ đầu vào đúng phần
+# vượt + _PEAK_MARGIN_DB rồi mã hoá lại cả luồng (vẫn 64k). Mã hoá lại xáo gai sang chương khác, nên hạ CỘNG DỒN: chương đã vượt ở
+# lượt nào cũng giữ mức hạ, lượt sau chỉ hạ thêm - mức chỉ giảm nên hội tụ; tối đa _PEAK_RETRIES lượt, còn vượt thì vẫn xong (ghi log).
+# Không chương nào vượt thì file y như trước.
+_PEAK_MARGIN_DB = 0.1
+_PEAK_RETRIES = 4
 _CHUNK = 1 << 16
 _HIDDEN = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
 
 
-def audio_layout(ffmpeg: str, source: Path) -> tuple[int, int]:
-    """(tần số mẫu, số kênh 1|2) của một file, đọc từ dòng "Audio:" ffmpeg in khi chỉ mở file (app không mang ffprobe)."""
+def audio_format(ffmpeg: str, source: Path) -> tuple[int, int, int | None]:
+    """(tần số mẫu, số kênh 1|2, kb/s hay None) của một file, đọc từ dòng "Audio:" ffmpeg in khi chỉ mở file (app không mang ffprobe)."""
     probe = run_hidden([ffmpeg, "-hide_banner", "-i", str(source)], timeout=60, check=False)
-    match = re.search(r"Audio: [^\n]*?(\d+) Hz, ([^,\n]+)", probe.stderr)
+    match = re.search(r"Audio: [^\n]*?(\d+) Hz, ([^,\n]+)([^\n]*)", probe.stderr)
     if not match:
         raise ValueError(f"Không đọc được âm thanh của {source.name}")
-    return int(match.group(1)), 1 if match.group(2).strip() in ("mono", "1 channels") else 2
+    bitrate = re.search(r"(\d+) kb/s", match.group(3))
+    return int(match.group(1)), 1 if match.group(2).strip() in ("mono", "1 channels") else 2, int(bitrate.group(1)) if bitrate else None
+
+
+def audio_layout(ffmpeg: str, source: Path) -> tuple[int, int]:
+    """(tần số mẫu, số kênh 1|2) của một file (`audio_format`)."""
+    rate, channels, _bitrate = audio_format(ffmpeg, source)
+    return rate, channels
 
 
 def _ffmetadata(text: str) -> str:
@@ -244,6 +290,16 @@ def pump_pcm(ffmpeg: str, source: Path, rate: int, channels: int, sink: Any) -> 
     return size
 
 
+def pump_mixed(ffmpeg: str, mixer: Any, chapter_id: int, source: Path, rate: int, channels: int, sink: Any,
+               seconds: float | None = None) -> int:
+    """Như `pump_pcm` nhưng giọng đi qua bộ trộn nhạc nền của chương (`music_export.Mixer.wrap`): `sink` nhận PCM đã trộn, đúng bằng số
+    byte của giọng (trả lại số ấy). Chung cho MP3 / M4B của Studio và bản tạm chương của sách Nghe ngay."""
+    mixed = mixer.wrap(chapter_id, sink, rate, channels, seconds)
+    size = pump_pcm(ffmpeg, source, rate, channels, mixed)
+    mixed.finish()
+    return size
+
+
 def encode_stream(ffmpeg: str, rate: int, channels: int, codec_args: list[str], destination: Path, feed: Callable[[Any], int], what: str = "âm thanh") -> int:
     """Một bộ mã hoá ffmpeg đọc PCM 16-bit (`rate`, `channels`) từ ống rồi ghi `destination` bằng `codec_args` (codec + bitrate + `-f`). `feed(sink)` đổ PCM
     vào `sink` và trả số mẫu đã đổ; hàm trả lại số ấy. Bộ mã hoá chết giữa chừng / feed hỏng thì dọn tiến trình và ném lỗi có lời. Chung cho M4B (cả cuốn một
@@ -270,11 +326,43 @@ def encode_stream(ffmpeg: str, rate: int, channels: int, codec_args: list[str], 
     return samples
 
 
+def true_peak_dbtp(ffmpeg: str, path: Path, start: float = 0.0, seconds: float | None = None) -> float:
+    """Đỉnh thật (dBTP, ebur128 của ffmpeg - lấy mẫu dày x4) của file âm thanh, hay của đoạn [start, start + seconds); -inf khi im hẳn."""
+    span = ["-ss", f"{start:.6f}", "-t", f"{seconds:.6f}"] if seconds is not None else []
+    run = subprocess.run([ffmpeg, "-hide_banner", "-nostats", *span, "-i", str(path), "-map", "0:a:0", "-af", "ebur128=peak=true", "-f", "null", "-"],
+                         capture_output=True, encoding="utf-8", errors="replace", check=False, creationflags=_HIDDEN)
+    if run.returncode != 0:
+        raise ValueError(f"Không đo được đỉnh âm thanh: {(run.stderr or '').strip()[-300:]}")
+    found = re.findall(r"Peak:\s+(-?[\d.]+|-inf) dBFS", run.stderr or "")
+    return float(found[-1]) if found else -math.inf
+
+
+class _Lowered:
+    """Ống PCM 16-bit hạ `db` dB trước khi tới `sink` (chương có đỉnh AAC vượt trần, lần mã hoá lại)."""
+
+    def __init__(self, sink: Any, db: float) -> None:
+        self.sink, self.factor, self.carry = sink, 10 ** (-db / 20), b""
+
+    def write(self, data: bytes) -> int:
+        block = self.carry + bytes(data)
+        usable = len(block) - len(block) % 2
+        self.carry = block[usable:]
+        if usable:
+            scaled = np.rint(np.frombuffer(block[:usable], dtype="<i2") * self.factor)
+            self.sink.write(np.clip(scaled, -32768, 32767).astype("<i2").tobytes())
+        return len(data)
+
+
 def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: Path, *, title: str, narrator: str,
-                   cover_for: Callable[[Path], Path | None], on_chapter: Callable[[int], None] | None = None) -> tuple[Path, int]:
+                   cover_for: Callable[[Path], Path | None], on_chapter: Callable[[int], None] | None = None,
+                   decode: Callable[[int, Path, int, int, Any], int] | None = None,
+                   on_peaks: Callable[[int, int], None] | None = None) -> tuple[Path, int]:
     """Cả cuốn thành `<tên sách>.m4b` trong `target_root` từ các file chương `chapters` (tên chương, file âm thanh bất kỳ ffmpeg đọc được): AAC, mỗi chương một mục,
     bìa và tag. `cover_for(thư mục làm việc)` trả file bìa (hay None). `on_chapter(i)` gọi trước khi chương thứ i (từ 0) được ghép - chỗ báo tiến độ / dừng (ném
-    lỗi để dừng). Trả (file, số chương)."""
+    lỗi để dừng). `decode(i, file, tần số, kênh, sink)` thay `pump_pcm` cho chương thứ i nếu có (kèm nhạc nền: `pump_mixed`), trả số byte
+    đã đổ. Chương có đỉnh thật AAC vượt trần thì cả luồng được mã hoá lại với chương ấy hạ mức (`_PEAK_RETRIES`; `on_chapter` /
+    `decode` được gọi lại từ đầu). `on_peaks(lượt, số chương vượt)` báo bước ấy: (k, 0) = đang đo đỉnh (sau lần mã hoá thứ k+1),
+    (k, N) = đang mã hoá lại lượt k vì N chương vượt. Trả (file, số chương)."""
     # Định dạng chung theo chương đầu; chương khác tần số / số kênh được ffmpeg đổi theo lúc giải mã - mốc vẫn đúng.
     rate, channels = audio_layout(ffmpeg, chapters[0][1])
     target_root.mkdir(parents=True, exist_ok=True)
@@ -284,19 +372,42 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
         work = Path(scratch)
         audio = work / "audio.m4a"
         marks: list[tuple[str, int, int]] = []
+        lowered: dict[int, float] = {}  # chương (từ 0) -> dB hạ đầu vào ở lần mã hoá lại
 
         def feed(sink: Any) -> int:
             frame = 2 * channels
             position = 0
+            marks.clear()
             for index, (name, source) in enumerate(chapters):
                 if on_chapter is not None:
                     on_chapter(index)
-                length = pump_pcm(ffmpeg, source, rate, channels, sink) // frame
+                target = _Lowered(sink, lowered[index]) if index in lowered else sink
+                size = decode(index, source, rate, channels, target) if decode is not None else pump_pcm(ffmpeg, source, rate, channels, target)
+                length = size // frame
                 marks.append((name, position, position + length))
                 position += length
             return position
 
-        encode_stream(ffmpeg, rate, channels, ["-c:a", "aac", "-b:a", _AAC_BITRATE[channels], "-f", "mp4"], audio, feed, "AAC")
+        codec = ["-c:a", "aac", "-b:a", _AAC_BITRATE[channels], "-f", "mp4"]
+        encode_stream(ffmpeg, rate, channels, codec, audio, feed, "AAC")
+        ceiling = MIX["exportCeilingDbtp"]
+        report = on_peaks or (lambda _round, _over: None)
+        report(0, 0)
+        peaks = [true_peak_dbtp(ffmpeg, audio, start / rate, (end - start) / rate) for _name, start, end in marks]
+        for attempt in range(1, _PEAK_RETRIES + 1):
+            over = {index: peak for index, peak in enumerate(peaks) if peak > ceiling}
+            if not over:
+                break
+            for index, peak in over.items():
+                lowered[index] = lowered.get(index, 0.0) + peak - ceiling + _PEAK_MARGIN_DB
+            report(attempt, len(over))
+            encode_stream(ffmpeg, rate, channels, codec, audio, feed, "AAC")
+            report(attempt, 0)
+            peaks = [true_peak_dbtp(ffmpeg, audio, start / rate, (end - start) / rate) for _name, start, end in marks]
+            log.info("M4B: đỉnh AAC vượt %.1f dBTP ở %d chương, lần mã hoá lại %d (hạ %s) -> đỉnh %s", ceiling, len(over), attempt,
+                     {index + 1: round(db, 2) for index, db in lowered.items()}, {index + 1: round(peaks[index], 2) for index in lowered})
+        if left := {index + 1: round(peak, 2) for index, peak in enumerate(peaks) if peak > ceiling}:
+            log.warning("M4B: sau %d lần mã hoá lại vẫn còn đỉnh AAC vượt %.1f dBTP: %s", _PEAK_RETRIES, ceiling, left)
         meta = work / "chapters.txt"
         meta.write_bytes(_chapter_marks(marks, rate).encode("utf-8"))
         cover_path = cover_for(work)
@@ -327,24 +438,44 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
     return final, len(marks)
 
 
-def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = None) -> dict[str, Any]:
+def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = None, music: Callable[[str], Path | None] | None = None,
+               progress: Callable[[int, int], None] | None = None, peaks: Callable[[int, int], None] | None = None) -> dict[str, Any]:
     """Cả cuốn thành một file `<tên sách>.m4b` trong `target_root`: AAC, mỗi chương một mục (tên chương thật), bìa và tag như
-    bản xuất MP3. Chỉ chương đã nghe được, như mọi kiểu xuất; `chaptersTotal` để giao diện nói chương nào chưa có."""
+    bản xuất MP3. Chỉ chương đã nghe được, như mọi kiểu xuất; `chaptersTotal` để giao diện nói chương nào chưa có.
+    `music`: nguồn file bài nhạc = "Kèm nhạc nền" (như `export_book`): nhạc trộn vào PCM trước bộ mã hoá AAC; `progress(i, N)` báo đang
+    trộn nhạc chương thứ i (từ 1) trong N; `peaks(lượt, số chương vượt)`: bước kiểm đỉnh AAC (`m4b_from_files` on_peaks)."""
     summary = store.summarize(project_root)
     title = summary["title"] or project_root.name
     narrator = summary["settings"]["narrator"] or ""
     audio = store.chapter_audio_paths(project_root)
-    chapters = [(chapter["fullTitle"], path) for chapter in _listenable(project_root)
-                if (path := audio.get(chapter["id"])) is not None]
+    listed = [(chapter["id"], chapter["fullTitle"], path) for chapter in _listenable(project_root)
+              if (path := audio.get(chapter["id"])) is not None]
+    chapters = [(full_title, path) for _id, full_title, path in listed]
     if not chapters:
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
     if not ffmpeg_available():
         raise ValueError("Cần tải thêm công cụ ghép âm thanh (khoảng 31 MB) để làm file M4B - mở Xuất, chọn Sách nói M4B rồi bấm Tải công cụ.")
-    final, count = m4b_from_files(ffmpeg_executable(), chapters, target_root, title=title, narrator=narrator,
-                                  cover_for=lambda work: usable_cover(covers.cover_file(project_root)) or drawn_cover(work, cover))
+    ffmpeg = ffmpeg_executable()
+    ids = [chapter_id for chapter_id, _title, _path in listed]
+    mixer: Any = None
+    if music is not None:
+        from .music_export import Mixer, studio_music  # nhập muộn: music_export dùng pump_pcm của module này
+
+        mixer = Mixer(ffmpeg, studio_music(project_root, ids, music))
+
+    def decode(index: int, source: Path, rate: int, channels: int, sink: Any) -> int:
+        if mixer is None or not mixer.has(ids[index]):
+            return pump_pcm(ffmpeg, source, rate, channels, sink)
+        if progress is not None:
+            progress(index + 1, len(ids))
+        return pump_mixed(ffmpeg, mixer, ids[index], source, rate, channels, sink)
+
+    final, count = m4b_from_files(ffmpeg, chapters, target_root, title=title, narrator=narrator,
+                                  cover_for=lambda work: usable_cover(covers.cover_file(project_root)) or drawn_cover(work, cover),
+                                  decode=decode if mixer is not None else None, on_peaks=peaks)
     real = covers.cover_file(project_root)
     return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size,
-            "chapters": count, "chaptersTotal": summary["chapters"]["total"],
+            "chapters": count, "chaptersTotal": summary["chapters"]["total"], **(mixer.note(ids) if mixer is not None else {}),
             **({"coverBroken": True} if real is not None and usable_cover(real) is None else {})}
 
 

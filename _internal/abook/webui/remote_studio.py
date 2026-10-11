@@ -128,6 +128,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("POST", _BOOK + r"/m4b-job"),  # xuất M4B chạy nền như file sách; nơi ghi vẫn là "Đã xuất" trong thư viện (_target)
     ("GET", _BOOK + r"/m4b-job"),
     ("GET", _BOOK + r"/export-size"),
+    ("GET", _BOOK + r"/export-music"),  # ô "Kèm nhạc nền" của hộp Xuất (chỉ đọc)
     ("GET", _BOOK + r"/review"),
     ("POST", _BOOK + r"/review"),
     ("GET", _BOOK + r"/work"),

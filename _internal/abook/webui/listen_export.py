@@ -8,6 +8,9 @@ Mỗi chương ghép thành MỘT file FLAC tạm (không mất tiếng, nhỏ h
 cùng một dấu `.done` ghi dấu vân tay của chương (giọng + cách đọc + chữ). Huỷ hay tắt app giữa chừng rồi xuất lại thì chương nào còn dấu đúng được bỏ qua; xong cả
 cuốn thì thư mục tạm bị xoá. Rồi mã hoá bằng ffmpeg của app: MP3 = mỗi chương một file (`export.write_mp3_folder`, cùng tag và danh sách phát với MP3 của Studio),
 M4B = một file AAC có mục lục chương (`export.m4b_from_files`, cùng file với M4B của Studio).
+
+"Kèm nhạc nền" (music_export.py, cùng bộ trộn với Studio): chương có nhạc được trộn từ FLAC giọng ra một FLAC tạm thứ hai `<mã>.music.flac` có dấu
+`.music.done` riêng - dấu vân tay gồm cả nhạc của chương, nên đổi nhạc thì chỉ chương ấy trộn lại (giọng đã đọc không phải đọc lại).
 """
 from __future__ import annotations
 
@@ -29,6 +32,7 @@ from ..readaloud.model import VoiceError
 from ..readaloud.service import MAX_TEXT, ReadAloud
 from . import book_edits, export, packages
 from .export_jobs import Cancelled
+from .music_export import ChapterMusic, Mixer
 
 WORK_FOLDER = "export_work"  # dưới thư mục dữ liệu của app
 FORMATS = ("mp3", "m4b")
@@ -85,10 +89,14 @@ def load_chapters(path: Path) -> list[Chapter]:
     return out
 
 
-def fingerprint(chapter: Chapter, reading: Reading) -> str:
-    """Dấu vân tay của chương đã ghép: đổi giọng, cách đọc, gốc hay chữ (kể cả dòng bỏ) thì chương tạm cũ không dùng lại được."""
-    data = json.dumps([reading.voice, reading.origin, sorted(reading.readings.items()),
-                       [[paragraph.text, gap] for paragraph, gap in zip(chapter.paragraphs, chapter.gaps)]], ensure_ascii=False)
+def fingerprint(chapter: Chapter, reading: Reading, music: ChapterMusic | None = None) -> str:
+    """Dấu vân tay của chương đã ghép: đổi giọng, cách đọc, gốc hay chữ (kể cả dòng bỏ) thì chương tạm cũ không dùng lại được. `music`: bản trộn
+    "Kèm nhạc nền" - dấu gồm thêm nhạc của chương (mốc, mức, bài), đổi nhạc thì bản trộn cũ không dùng lại được."""
+    parts: list[Any] = [reading.voice, reading.origin, sorted(reading.readings.items()),
+                        [[paragraph.text, gap] for paragraph, gap in zip(chapter.paragraphs, chapter.gaps)]]
+    if music is not None:
+        parts.append(["music", music.fingerprint()])
+    data = json.dumps(parts, ensure_ascii=False)
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
 
@@ -96,21 +104,22 @@ def work_folder(root: Path, book_id: str) -> Path:
     return Path(root) / re.sub(r"[^A-Za-z0-9_-]", "_", book_id)
 
 
-def _done_path(work: Path, chapter: Chapter) -> Path:
-    return work / f"{chapter.id}.done"
+def _done_path(work: Path, chapter: Chapter, music: ChapterMusic | None = None) -> Path:
+    return work / f"{chapter.id}{'.music' if music is not None else ''}.done"
 
 
-def _flac_path(work: Path, chapter: Chapter) -> Path:
-    return work / f"{chapter.id}.flac"
+def _flac_path(work: Path, chapter: Chapter, music: ChapterMusic | None = None) -> Path:
+    return work / f"{chapter.id}{'.music' if music is not None else ''}.flac"
 
 
-def chapter_ready(work: Path, chapter: Chapter, reading: Reading) -> dict[str, Any] | None:
-    """Dấu `.done` của chương nếu chương tạm còn nguyên và đúng dấu vân tay; không thì None."""
+def chapter_ready(work: Path, chapter: Chapter, reading: Reading, music: ChapterMusic | None = None) -> dict[str, Any] | None:
+    """Dấu `.done` của chương nếu chương tạm còn nguyên và đúng dấu vân tay; không thì None. `music`: bản đã trộn nhạc của chương."""
     try:
-        done = json.loads(_done_path(work, chapter).read_bytes().decode("utf-8"))
+        done = json.loads(_done_path(work, chapter, music).read_bytes().decode("utf-8"))
     except (OSError, ValueError):
         return None
-    if not isinstance(done, dict) or done.get("fingerprint") != fingerprint(chapter, reading) or not _flac_path(work, chapter).is_file():
+    if (not isinstance(done, dict) or done.get("fingerprint") != fingerprint(chapter, reading, music)
+            or not _flac_path(work, chapter, music).is_file()):
         return None
     return done
 
@@ -147,6 +156,11 @@ class _Run:
         self._progress(phase=phase, chapter=index + 1, chapters=len(self.chapters), chapterTitle=chapter.title, waiting=waiting,
                        percent=min(100, round(100 * self.done_chars / self.chars)) if self.chars else 100,
                        chars=self.chars, charsDone=self.done_chars, secondsLeft=left)
+
+    def report_peaks(self, round_: int, over: int) -> None:
+        """Bước kiểm đỉnh AAC của M4B (`export.m4b_from_files` on_peaks): (k, 0) đang đo, (k, N) mã hoá lại lượt k vì N chương vượt."""
+        self.check()
+        self._progress(phase="reencode" if over else "peaks", peakRound=round_, peakOver=over, chapters=len(self.chapters))
 
     def clip_file(self, index: int, chapter: Chapter, text: str) -> Path | None:
         """Clip của một đoạn (từ bộ đệm hay đọc mới); None khi đoạn không có gì giọng đọc được (như Làm trước, bỏ qua). Người nghe đi trước; lỗi thoáng qua thử lại,
@@ -220,13 +234,35 @@ class _Run:
         atomic_write_bytes(done, json.dumps(stamp).encode("utf-8"))
         return stamp
 
+    def mix_chapter(self, index: int, chapter: Chapter, voice: dict[str, Any], mixer: Mixer) -> dict[str, Any]:
+        """Trộn nhạc nền vào chương đã ghép (FLAC giọng -> `<mã>.music.flac`, cùng số mẫu), dấu `.music.done` mang vân tay gồm cả nhạc."""
+        music = mixer.chapter(chapter.id)
+        assert music is not None
+        self.check()
+        self.report(index, chapter, "music")
+        final = _flac_path(self.work, chapter, music)
+        partial = final.with_name(final.name + ".part")
+        done = _done_path(self.work, chapter, music)
+        done.unlink(missing_ok=True)
+        rate = int(voice["rate"])
+        samples = export.encode_stream(self.ffmpeg, rate, CHAPTER_CHANNELS, FLAC_ARGS, partial, lambda sink: export.pump_mixed(
+            self.ffmpeg, mixer, chapter.id, _flac_path(self.work, chapter), rate, CHAPTER_CHANNELS, sink, voice["seconds"]) // (2 * CHAPTER_CHANNELS), "FLAC")
+        os.replace(partial, final)
+        stamp = {"fingerprint": fingerprint(chapter, self.reading, music), "rate": rate, "seconds": samples / rate,
+                 "musicMissing": mixer.lost.get(chapter.id, 0)}
+        atomic_write_bytes(done, json.dumps(stamp).encode("utf-8"))
+        return stamp
+
 
 def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root: Path, *, fmt: str, reading: Reading, book_id: str,
                      cover_drawn: str | None = None, progress: Callable[..., None] = lambda **_fields: None,
-                     cancelled: Callable[[], bool] = lambda: False, sleep: Callable[[float], None] = time.sleep) -> dict[str, Any]:
+                     cancelled: Callable[[], bool] = lambda: False, sleep: Callable[[float], None] = time.sleep,
+                     music: dict[int, ChapterMusic] | None = None) -> dict[str, Any]:
     """Cả cuốn Nghe ngay `path` thành sách nói trong `target_root`: `fmt` "mp3" (thư mục `<tên sách>` mỗi chương một file + .m3u8) hay "m4b" (một file có mục lục chương).
     `progress(**trường)` nhận tiến độ (xem `_Run.report`); `cancelled()` đúng thì dừng ở chỗ an toàn kế (ném `export_jobs.Cancelled`, phần đã làm được giữ trong
-    `work_root`). Trả kết quả như xuất của Studio: MP3 {folder, files, chapters, chaptersTotal, size}; M4B {file, folder, size, chapters, chaptersTotal}."""
+    `work_root`). Trả kết quả như xuất của Studio: MP3 {folder, files, chapters, chaptersTotal, size}; M4B {file, folder, size, chapters, chaptersTotal}.
+    `music` (music_export.packaged_music): "Kèm nhạc nền" - chương có nhạc trộn vào bản tạm trước khi mã hoá (pha tiến độ "music"); kết quả thêm
+    `musicMissing` khi có đoạn thiếu nhạc."""
     if fmt not in FORMATS:
         raise ExportError("Chỉ xuất được MP3 hoặc M4B")
     if not ffmpeg_available():
@@ -241,40 +277,50 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
     work = work_folder(work_root, book_id)
     work.mkdir(parents=True, exist_ok=True)
     run = _Run(reader, ffmpeg, chapters, reading, work, progress, cancelled, sleep)
+    mixer = Mixer(ffmpeg, music) if music is not None else None
     stamps: list[dict[str, Any]] = []
+    sources: list[Path] = []
     for index, chapter in enumerate(chapters):
         run.check()
-        stamp = chapter_ready(work, chapter, reading)
+        chapter_music = mixer.chapter(chapter.id) if mixer is not None else None
+        mixed = chapter_ready(work, chapter, reading, chapter_music) if chapter_music is not None else None
+        stamp = mixed or chapter_ready(work, chapter, reading)
         if stamp is not None:
             run.done_chars += chapter.chars
             run.report(index, chapter, "voice")
         else:
             stamp = run.build_chapter(index, chapter)
+        if chapter_music is not None and mixer is not None:
+            if mixed is None:
+                stamp = run.mix_chapter(index, chapter, stamp, mixer)
+            mixer.lost[chapter.id] = int(stamp.get("musicMissing") or 0)
         stamps.append(stamp)
+        sources.append(_flac_path(work, chapter, chapter_music))
     cover_source = book_edits.cover_file(path)
     try:
         if fmt == "mp3":
-            result = _write_mp3(run, chapters, stamps, target_root, title, author, cover_source, cover_drawn)
+            result = _write_mp3(run, chapters, stamps, sources, target_root, title, author, cover_source, cover_drawn)
         else:
-            result = _write_m4b(run, chapters, target_root, title, author, cover_source, cover_drawn)
+            result = _write_m4b(run, chapters, sources, target_root, title, author, cover_source, cover_drawn)
     except subprocess.CalledProcessError as error:
         raise ExportError(f"Không ghép được file âm thanh: {(error.stderr or '').strip()[-300:]}") from error
     shutil.rmtree(work, ignore_errors=True)
-    return {**result, "format": fmt, "chapters": len(chapters), "chaptersTotal": len(packages.edited_manifest(path).get("chapters") or [])}
+    return {**result, "format": fmt, "chapters": len(chapters), "chaptersTotal": len(packages.edited_manifest(path).get("chapters") or []),
+            **(mixer.note(chapter.id for chapter in chapters) if mixer is not None else {})}
 
 
-def _write_mp3(run: _Run, chapters: list[Chapter], stamps: list[dict[str, Any]], target_root: Path, title: str, author: str,
+def _write_mp3(run: _Run, chapters: list[Chapter], stamps: list[dict[str, Any]], sources: list[Path], target_root: Path, title: str, author: str,
                cover_source: Path | None, cover_drawn: str | None) -> dict[str, Any]:
     folder = target_root / export.safe_name(title)
     folder.mkdir(parents=True, exist_ok=True)
     cover_path = export.copy_real_cover(cover_source, folder) or export.drawn_cover(folder, cover_drawn)
 
     def items() -> Any:
-        for index, (chapter, stamp) in enumerate(zip(chapters, stamps)):
+        for index, (chapter, stamp, source) in enumerate(zip(chapters, stamps, sources)):
             run.check()
             run.report(index, chapter, "encode")
             temp = run.work / f"{chapter.id}.mp3"
-            run_hidden([run.ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(_flac_path(run.work, chapter)), *MP3_ARGS, str(temp)], timeout=3600)
+            run_hidden([run.ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(source), *MP3_ARGS, str(temp)], timeout=3600)
             yield chapter.title, temp, stamp["seconds"]
             temp.unlink(missing_ok=True)
 
@@ -282,12 +328,13 @@ def _write_mp3(run: _Run, chapters: list[Chapter], stamps: list[dict[str, Any]],
     return {"folder": str(folder), "files": files, "size": sum(file.stat().st_size for file in folder.glob("*.mp3"))}
 
 
-def _write_m4b(run: _Run, chapters: list[Chapter], target_root: Path, title: str, author: str,
+def _write_m4b(run: _Run, chapters: list[Chapter], sources: list[Path], target_root: Path, title: str, author: str,
                cover_source: Path | None, cover_drawn: str | None) -> dict[str, Any]:
     def before(index: int) -> None:
         run.check()
         run.report(index, chapters[index], "encode")
 
-    final, _count = export.m4b_from_files(run.ffmpeg, [(chapter.title, _flac_path(run.work, chapter)) for chapter in chapters], target_root, title=title,
-                                          narrator=author, cover_for=lambda scratch: export.usable_cover(cover_source) or export.drawn_cover(scratch, cover_drawn), on_chapter=before)
+    final, _count = export.m4b_from_files(run.ffmpeg, [(chapter.title, source) for chapter, source in zip(chapters, sources)], target_root, title=title,
+                                          narrator=author, cover_for=lambda scratch: export.usable_cover(cover_source) or export.drawn_cover(scratch, cover_drawn), on_chapter=before,
+                                          on_peaks=run.report_peaks)
     return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size}

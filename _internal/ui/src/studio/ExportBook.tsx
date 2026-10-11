@@ -6,9 +6,10 @@ import { cn } from "@/shared/cn";
 import { coverArtwork } from "@/shared/cover";
 import { fileName, formatNumber, formatSize } from "@/shared/format";
 import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
-import { FfmpegNeeded } from "@/desktop/AudiobookDialog";
+import { FfmpegNeeded, MusicMixOption, useMusicChoice } from "@/desktop/AudiobookDialog";
+import { musicMissingNote } from "@/desktop/bookFileExport";
 import { startExport, trackExport } from "@/desktop/ExportBookFileJob";
-import { ffmpegCancel, ffmpegStart, ffmpegStatus } from "@/desktop/listenExport";
+import { ffmpegCancel, ffmpegStart, ffmpegStatus, type MusicExportState } from "@/desktop/listenExport";
 import { api, ApiError, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
 import { redoExportNote } from "./exportText";
@@ -147,18 +148,28 @@ export function ExportDialog({
     queryFn: () => api<{ bytes: number; parts: number; musicPending?: number }>(`/api/books/${book.id}/export-size${wholeSeries ? "?series=1" : ""}`),
     staleTime: 10_000,
   });
-  // M4B cần ffmpeg (MP3 / .abook thì không): máy chưa có thì mời tải ngay trong hộp, như hộp "Xuất sách nói" của Nghe ngay.
+  // "Kèm nhạc nền" (MP3 / M4B): ô chỉ hiện khi cuốn có kế hoạch nhạc, mặc định theo công tắc ở tab Nhạc nền (webui/music_export.py).
+  const audioKind = kind === "mp3" || kind === "m4b";
+  const musicState = useQuery({
+    queryKey: ["export-music", book.id],
+    enabled: open && audioKind,
+    queryFn: () => api<MusicExportState>(`/api/books/${book.id}/export-music`),
+    staleTime: 10_000,
+  });
+  const [withMusic, setWithMusic] = useMusicChoice(musicState.data, book.id);
+  const mixes = audioKind && withMusic;
+  // M4B cần ffmpeg (MP3 / .abook thì không - trừ MP3 kèm nhạc nền, phải mã hoá lại): máy chưa có thì mời tải ngay trong hộp, như hộp "Xuất sách nói" của Nghe ngay.
   const client = useQueryClient();
   const ffmpeg = useQuery({
     queryKey: ["ffmpeg"],
-    enabled: open && kind === "m4b",
+    enabled: open && (kind === "m4b" || mixes),
     queryFn: ffmpegStatus,
     staleTime: 0,
     retry: false,
     refetchInterval: (query) => (query.state.data?.downloading ? 800 : false),
   });
   const refreshFfmpeg = () => void client.invalidateQueries({ queryKey: ["ffmpeg"] });
-  const needsFfmpeg = kind === "m4b" && ffmpeg.data !== undefined && !ffmpeg.data.ready;
+  const needsFfmpeg = (kind === "m4b" || mixes) && ffmpeg.data !== undefined && !ffmpeg.data.ready;
   const bytes = estimate.data?.bytes ?? 0;
   const musicPending = estimate.data?.musicPending ?? 0;
   const countText = kind === "abookproj" ? undefined : wholeSeries ? `${parts.length} phần` : `${ready} chương`;
@@ -193,7 +204,7 @@ export function ExportDialog({
     }
     if (kind === "m4b") {
       // Việc nền do ExportJobHost (desktop/App.tsx) giữ: tiến độ và kết quả hiện ở thông báo nổi, nên đóng hộp ngay.
-      startExport("m4b", { id: book.id, chapters: ready, target, cover: coverArtwork(book.title) });
+      startExport("m4b", { id: book.id, chapters: ready, target, cover: coverArtwork(book.title), ...(mixes ? { extra: { music: true } } : {}) });
       onOpenChange(false);
       return;
     }
@@ -211,9 +222,9 @@ export function ExportDialog({
           : bookJob.current
           ? await api(`/api/books/${book.id}/bookfile-job`, { method: "POST", body: { target } }).then(() => followPacking("bookfile") as Promise<Packed>)
           : kind === "mp3"
-          ? await api<{ folder: string; files: number; coverBroken?: boolean } & Partial<SeriesResult>>(`/api/books/${book.id}/export`, {
+          ? await api<{ folder: string; files: number; coverBroken?: boolean; musicMissing?: number } & Partial<SeriesResult>>(`/api/books/${book.id}/export`, {
               method: "POST",
-              body: { target, cover: coverArtwork(book.title), series: wholeSeries },
+              body: { target, cover: coverArtwork(book.title), series: wholeSeries, ...(mixes ? { music: true } : {}) },
             })
           : await api<{ folder: string; file: string; size: number; missingSources?: string[] } & Partial<SeriesResult>>(
               `/api/books/${book.id}/bookfile`,
@@ -244,7 +255,8 @@ export function ExportDialog({
         skipped +
         (lost ? ` · ${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "") +
         // Ảnh bìa hỏng (soát a28 lỗi 8): bản xuất mang bìa vẽ từ tên sách thay vì hỏng cả lượt.
-        ("coverBroken" in result && result.coverBroken ? " · ảnh bìa của sách bị hỏng nên bản xuất dùng bìa vẽ từ tên - đặt lại bìa nếu muốn" : "");
+        ("coverBroken" in result && result.coverBroken ? " · ảnh bìa của sách bị hỏng nên bản xuất dùng bìa vẽ từ tên - đặt lại bìa nếu muốn" : "") +
+        ("musicMissing" in result && result.musicMissing ? ` · ${musicMissingNote(result)}` : "");
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (openRef.current) {
@@ -463,6 +475,11 @@ export function ExportDialog({
               : "Mỗi phần là một file .abook riêng, cùng nằm trong một thư mục của bộ."}
           </p>
         </>
+      )}
+      {audioKind && musicState.data?.available && (
+        <div className="mt-3">
+          <MusicMixOption checked={withMusic} onChange={setWithMusic} />
+        </div>
       )}
       <p className="mt-3 text-sm text-fg-2 text-pretty">{savePlace}</p>
       {kind === "abook" && bytes > 0 && (

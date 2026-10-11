@@ -27,7 +27,10 @@ def _tone(seconds: float, amplitude: float = 0.1, frequency: float = 1000.0) -> 
 def test_the_mix_constants_are_read_from_the_one_file_the_players_bundle() -> None:
     values = json.loads((Path(music_plan.__file__).parent / "assets" / "music_mix.json").read_text(encoding="utf-8"))
     assert music_mix.MIX_FILE == Path(music_plan.__file__).resolve().parent / "assets" / "music_mix.json"
-    assert music_mix.MIX == {key: float(value) for key, value in values.items()}
+    assert music_mix.MIX == {key: [[float(x) for x in row] for row in value] if isinstance(value, list) else float(value)
+                             for key, value in values.items()}
+    assert all(isinstance(value, float) for key, value in music_mix.MIX.items() if key != "truePeakFir")
+    assert [len(row) for row in music_mix.MIX["truePeakFir"]] == [12] * 4, "bảng nội suy x4 của bộ chặn đỉnh (music_render)"
     assert music_plan.CHAPTER_END_FADE_SECONDS == values["chapterEndFadeSeconds"]
     assert music_plan.VOICE_PLAYED_LUFS == values["voicePlayedLufs"]
     assert music_plan.SHORT_TERM_FLOOR_LU == values["shortTermFloorLu"] == 10

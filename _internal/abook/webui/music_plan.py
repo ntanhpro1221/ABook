@@ -520,14 +520,18 @@ def substituted(cue: dict[str, Any], link: str) -> dict[str, Any]:
 
 
 def package(project_root: Path, chapter_ids: Iterable[int],
-            track_file: Callable[[str], Path | None]) -> tuple[dict[str, Any], dict[str, Path]] | None:
+            track_file: Callable[[str], Path | None], *, include_disabled: bool = False,
+            dropped: list[int] | None = None) -> tuple[dict[str, Any], dict[str, Path]] | None:
     """Nhạc nền đi theo cuốn sách khi xuất (chủ sách 01-10: sách xuất ra mang nhạc người sản xuất đã gắn): mục `music`
     của book.json + các file bài. Bài nào không lấy được file (mất mạng, nguồn gỡ) thì dùng bài thay thế đầu tiên lấy được
     (`TrackSource.alternatives`); không có bài nào thì các mốc của nó bỏ đi - chỗ đó im lặng, sách vẫn xuất được. Rãnh
-    nhạc tắt / chưa dựng -> None (sách không nhạc, định dạng cũ)."""
+    nhạc tắt / chưa dựng -> None (sách không nhạc, định dạng cũ).
+    `include_disabled`: rãnh nhạc đang tắt vẫn gói (bản xuất sách nói người dùng tích "Kèm nhạc nền" - music_export.py). `dropped`:
+    nhận mã chương của mỗi mốc bị bỏ vì không lấy được bài nào - để báo "N đoạn thiếu nhạc"."""
     plan = read_plan(project_root)
-    if plan is None or not plan.get("enabled"):
+    if plan is None or not (plan.get("enabled") or include_disabled):
         return None
+    plan = {**plan, "enabled": True}
     level_db = plan.get("levelDb", DEFAULT_LEVEL_DB)
     files: dict[str, Path] = {}
     tracks: dict[str, dict[str, Any]] = {}
@@ -561,6 +565,8 @@ def package(project_root: Path, chapter_ids: Iterable[int],
         for cue in clamp_to_chapter(planned_cues, lengths.get(int(chapter_id))):
             found = resolve(cue)
             if found is None:
+                if dropped is not None:
+                    dropped.append(int(chapter_id))
                 continue
             link, info, path = found
             if link != cue["link"]:
@@ -653,6 +659,18 @@ def packaged_cues(music: dict[str, Any] | None, chapter_id: int) -> list[dict[st
         item.update(_cue_shape(cue))
         out.append(item)
     return out
+
+
+def packaged_playable(music: dict[str, Any] | None, chapter_id: int) -> tuple[list[dict[str, Any]], float, dict[str, Any]]:
+    """(mốc, mức, {link: thông tin bài}) của một chương trong mục `music` của cuốn đã đóng gói - mốc nào chưa có `gainDb` (sách xuất
+    bởi bản cũ) thì tính theo mức của gói. Chung cho trình phát máy tính (`server.music_cues`) và bản xuất kèm nhạc (music_export)."""
+    cues = packaged_cues(music, chapter_id)
+    level = music.get("levelDb") if isinstance(music, dict) else None
+    level = level if isinstance(level, (int, float)) else DEFAULT_LEVEL_DB
+    tracks = music.get("tracks") if isinstance(music, dict) and isinstance(music.get("tracks"), dict) else {}
+    by_link = {cue["link"]: tracks.get(cue["track"]) for cue in cues}
+    apply_gain(cues, level, by_link)
+    return cues, level, by_link
 
 
 def _cue_shape(cue: dict[str, Any]) -> dict[str, Any]:
