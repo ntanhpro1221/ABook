@@ -424,10 +424,17 @@ object LocalStudio {
             return withdraw(dir, "pronunciations", if (surface.isNotEmpty()) listOf(VietnameseReading.surfaceKey(surface)) else emptyList(), body)
         }
         val spoken = checkedReading(body, surface)
+        // Cách đọc không bao giờ được dùng ("Mở/đóng"): giao diện tắt nút Lưu, gửi thẳng cũng không được - như máy chủ (`never_text` của name_readings.py).
+        if ((readingReach(dir, JSONObject().put("surface", surface)) as JSONObject).optBoolean("never")) throw Api(400, neverText(surface))
         val at = now()
         BookWishes.requestPronunciation(dir, surface, spoken, at)
         return JSONObject().put("surface", surface).put("spokenForm", spoken).put("requestedAt", at)
     }
+
+    /** Vì sao không lưu được cách đọc cho chữ có ký hiệu bị xé đôi - cùng lời với giao diện (`neverText` của readingReach.ts). */
+    private fun neverText(surface: String): String =
+        "Máy đọc ký hiệu trong “$surface” thành một chỗ ngừng trước khi tra cách đọc, nên cách đọc cho chữ này không bao giờ được dùng." +
+            " Muốn đọc khác, sửa “Chữ đem đọc” của từng câu có chữ ấy."
 
     private const val CHAPTERS_SHOWN = 6
     private const val NOT_RECORDED = "chưa thu nên không phải thu lại"

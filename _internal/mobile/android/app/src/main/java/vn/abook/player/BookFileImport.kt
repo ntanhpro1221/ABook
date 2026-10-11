@@ -206,6 +206,12 @@ object BookFileImport {
                 if (editable && BookEdits.count(incoming.edits) > 0) {
                     BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover) { name, destination -> extract(zip, resolve(name), destination) }
                 }
+                // Xưởng của file (máy kia sửa thêm cách đọc, người nói, phán quyết...): gộp vào xưởng trên máy, không bỏ im lặng.
+                if (layout != null && layout.files.has("project/project.sqlite3")) {
+                    mergeWorkshop(Store.bookDir(target), Store.bookDir(target)) { name ->
+                        if (layout.files.has("project/$name")) zip.getEntry(resolve("project/$name"))?.let { readLimited(zip, it, MAX_JSON_BYTES.toInt()) } else null
+                    }
+                }
                 return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"), keptEdits)
             }
             val books = File(Store.root, "books").apply { mkdirs() }
@@ -225,6 +231,10 @@ object BookFileImport {
                     }
                 }
                 if (layout != null) File(staging, ProjectDocument.MANIFEST).writeBytes(layout.manifestBytes)
+                // Bản trên máy bị thay: sửa trong xưởng của nó gộp vào bản mới, không mất theo thư mục cũ.
+                if (layout != null && existing != null && ProjectDocument.kept(staging)?.workshop == ProjectDocument.PRESENT) {
+                    mergeWorkshop(staging, Store.bookDir(target)) { name -> File(staging, "project/$name").takeIf { it.isFile }?.readBytes() }
+                }
                 if (editable) keepLocalEdits(Store.bookDir(target), staging, incoming.edits)
                 else File(staging, BookEdits.EDITS_FILE).delete().also { File(staging, BookEdits.EDITS_COVER).delete() }
                 // Bản sách của app trên máy mang mã thư mục của app (book.json không nằm trong danh sách mã băm).
@@ -236,6 +246,16 @@ object BookFileImport {
             Store.rememberChapters(target, chapters, imported = existing == null || Store.isImported(existing))
             return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"), keptEdits)
         }
+    }
+
+    /**
+     * Cùng cuốn, cả bản trên máy (`local`) lẫn bản của file đều có xưởng: gộp sửa trong xưởng (WorkshopMerge, luật của máy tính) vào
+     * thư mục `into` - bản nào được giữ cũng không bỏ sửa của bản kia. `theirs(tên)`: byte của `project/<tên>` trong bản của file.
+     */
+    private fun mergeWorkshop(into: File, local: File, theirs: (String) -> ByteArray?) {
+        if (ProjectDocument.kept(local)?.workshop != ProjectDocument.PRESENT) return
+        WorkshopMerge.mergeInto(into, { name -> File(local, "project/$name").takeIf { it.isFile }?.readBytes() }, theirs,
+            System.currentTimeMillis() / 1000.0)
     }
 
     /** Phần sửa của người nghe trong file (đã kiểm) và byte ảnh bìa sửa của nó. */

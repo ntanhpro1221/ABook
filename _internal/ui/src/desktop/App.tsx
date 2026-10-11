@@ -19,7 +19,7 @@ import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
-import { keptEditsTitle } from "@/shared/editsKept";
+import { keptEditsTitle, workshopMergeNote } from "@/shared/editsKept";
 import { setExternalOpener } from "@/shared/openExternal";
 import { toastRemoved } from "@/shared/trashUndo";
 import { api } from "@/studio/api";
@@ -222,6 +222,8 @@ interface OpenedBook {
   edits?: number;
   /** Cuốn đã nhập sẵn trên máy: phần sửa trong file được hợp vào, thay đổi của máy này thắng khi trùng. */
   merge?: { adopted: number; kept: number; conflicts: number };
+  /** File `.abookproj` của dự án máy này: sửa trong xưởng của file đã gộp vào dự án (bản mới hơn thắng). */
+  workshop?: { merged: number; kept: number };
   error?: string;
   file?: string;
 }
@@ -259,7 +261,7 @@ function useOpenedBook() {
       void client.invalidateQueries({ queryKey: ["listen"] });
       navigate(`/book/${result.id}`);
       const [said, description] = OPENED_SAID[result.how ?? "new"];
-      toast.success(keptEditsTitle(result.merge?.kept) ?? said, { description: mergeNote(result) ?? description });
+      toast.success(keptEditsTitle(result.merge?.kept) ?? said, { description: workshopMergeNote(result.workshop) ?? mergeNote(result) ?? description });
       if (result.how === "project" && result.edits) offerFold(client, result.id, result.edits);
       return true;
     },

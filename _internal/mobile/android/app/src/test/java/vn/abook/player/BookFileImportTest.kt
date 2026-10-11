@@ -311,6 +311,63 @@ class BookFileImportTest {
     }
 
     @Test
+    fun opening_the_project_file_of_a_book_already_here_merges_the_workshop_edits_of_both() {
+        // Soát UX a25 T5: bản trên máy bị thay bằng bản của file - sửa trong xưởng của bản trên máy (cách đọc Rhine mới hơn, phán
+        // quyết s5) không mất, sửa của file (Heidi) được lấy; project.json mang đúng cỡ + mã băm của file vừa gộp.
+        fun workshop(overrides: String, reviews: String) = mapOf(
+            "project/project.sqlite3" to workshopSqlite, "project/book_settings.json" to "{}".toByteArray(),
+            "project/overrides.json" to overrides.toByteArray(), "project/reviews.json" to reviews.toByteArray(),
+        )
+        val here = BookFileImport.importFile(abookproj(name = "may_nay.abookproj", workshop = workshop(
+            """{"version": 1, "pronunciations": {"rhine": {"surface": "Rhine", "spoken_form": "Rai", "requested_at": 300.0}}}""",
+            """{"s5": {"verdict": "ok", "chapterId": 1, "at": 100.0}}""",
+        )))
+        val again = BookFileImport.importFile(abookproj(name = "may_kia.abookproj", workshop = workshop(
+            """{"version": 1, "pronunciations": {"rhine": {"surface": "Rhine", "spoken_form": "Rai-nơ", "requested_at": 100.0},""" +
+                """ "heidi": {"surface": "Heidi", "spoken_form": "Hai-đi", "requested_at": 200.0}}}""",
+            """{"s6": {"verdict": "redo", "chapterId": 1, "at": 150.0}}""",
+        )))
+
+        assertEquals(here.id, again.id)
+        val dir = Store.bookDir(again.id)
+        val pronunciations = JSONObject(File(dir, "project/overrides.json").readText()).getJSONObject("pronunciations")
+        assertEquals("Rai", pronunciations.getJSONObject("rhine").getString("spoken_form"))
+        assertEquals("Hai-đi", pronunciations.getJSONObject("heidi").getString("spoken_form"))
+        val reviews = JSONObject(File(dir, "project/reviews.json").readText())
+        assertEquals(setOf("s5", "s6"), reviews.keys().asSequence().toSet())
+        val described = JSONObject(File(dir, "project.json").readText()).getJSONObject("files")
+        for (name in listOf("project/overrides.json", "project/reviews.json")) {
+            assertEquals(metaOf(File(dir, name).readBytes()).toString(), described.getJSONObject(name).toString())
+        }
+    }
+
+    @Test
+    fun a_project_file_with_fewer_chapters_than_the_book_here_still_brings_its_workshop_edits() {
+        // Soát UX a25 T5, nhánh giữ bản trên máy (máy này nhiều chương hơn file): sửa trong xưởng của file vẫn được gộp vào.
+        fun workshop(overrides: String) = mapOf(
+            "project/project.sqlite3" to workshopSqlite, "project/book_settings.json" to "{}".toByteArray(),
+            "project/overrides.json" to overrides.toByteArray(),
+        )
+        val here = BookFileImport.importFile(abookproj(name = "may_nay.abookproj", workshop = workshop(
+            """{"version": 1, "pronunciations": {"rhine": {"surface": "Rhine", "spoken_form": "Rai", "requested_at": 300.0}}}""",
+        )))
+        val dir = Store.bookDir(here.id)
+        File(dir, "book.json").writeText(JSONObject(File(dir, "book.json").readText()).put("chaptersAvailable", 2).toString())
+        val again = BookFileImport.importFile(abookproj(name = "may_kia.abookproj", workshop = workshop(
+            """{"version": 1, "pronunciations": {"rhine": {"surface": "Rhine", "spoken_form": "Rai-nơ", "requested_at": 100.0},""" +
+                """ "heidi": {"surface": "Heidi", "spoken_form": "Hai-đi", "requested_at": 200.0}}}""",
+        )))
+
+        assertEquals(here.id, again.id)
+        assertEquals("bản trên máy được giữ", 2, Store.rawManifest(here.id)!!.getInt("chaptersAvailable"))
+        val pronunciations = JSONObject(File(dir, "project/overrides.json").readText()).getJSONObject("pronunciations")
+        assertEquals("Rai", pronunciations.getJSONObject("rhine").getString("spoken_form"))
+        assertEquals("Hai-đi", pronunciations.getJSONObject("heidi").getString("spoken_form"))
+        val described = JSONObject(File(dir, "project.json").readText()).getJSONObject("files")
+        assertEquals(metaOf(File(dir, "project/overrides.json").readBytes()).toString(), described.getJSONObject("project/overrides.json").toString())
+    }
+
+    @Test
     fun a_listening_entry_that_is_an_alias_reads_the_bytes_of_its_real_entry() {
         // Mục nghe có thể là bí danh của một mục trong xưởng (điện thoại / máy khác ghi file có audio nằm ở project/ trước): đọc byte mục thật.
         val sample = ByteArray(1000) { 5 }

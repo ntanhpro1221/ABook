@@ -113,6 +113,7 @@ def test_a_wish_on_a_line_that_changed_or_a_person_with_no_voice_is_refused_on_t
     assert _post(call, "/line", {"stableId": HEIDI_LINE[0], "textSha256": HEIDI_LINE[1], "emotion": "bored"})[0] == 400
     assert _post(call, "/voice", {"character": "NARRATOR", "gender": "male"})[0] == 400
     assert _post(call, "/pronunciation", {"surface": "Hai kes", "spokenForm": "Hên-khơ"})[0] == 400
+    assert _post(call, "/pronunciation", {"surface": "Mở/đóng", "spokenForm": "mở hoặc đóng"})[0] == 400, "không bao giờ được dùng"
     assert list(book_edits.load(folder)["wishes"]) == ["speakers"], "chỉ ý muốn hợp lệ được ghi"
 
 
