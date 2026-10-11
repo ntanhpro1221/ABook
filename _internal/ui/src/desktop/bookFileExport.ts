@@ -71,6 +71,8 @@ export interface ExportResult {
   missingSources?: string[];
   /** Xuất sách nói: "mp3" hay "m4b". */
   format?: string;
+  /** Ảnh bìa của sách hỏng: bản xuất mang bìa vẽ từ tên (export.usable_cover). */
+  coverBroken?: boolean;
 }
 
 export interface ExportJob {
@@ -156,7 +158,8 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
     // Thông báo chỉ nói TÊN (file, hay thư mục khi mỗi phần một file + số file); đường đầy đủ ở gợi ý khi rê chuột và nút "Mở thư mục".
     const { file, folder } = job.result;
     const count = job.result.files ?? job.result.parts?.length;
-    const details = [!file && count ? `${count} file` : "", job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result), missingSourcesNote(job.result)].filter(Boolean);
+    const details = [!file && count ? `${count} file` : "", job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result), missingSourcesNote(job.result),
+      job.result.coverBroken ? "ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên" : ""].filter(Boolean);
     const place = file ?? folder;
     return { kind: "success", title: copy.done, description: [fileName(place), ...details].join(" · "), ...(fileName(place) !== place ? { place } : {}) };
   }

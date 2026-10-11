@@ -30,7 +30,7 @@ from typing import Any
 from urllib.parse import unquote
 from xml.etree import ElementTree
 
-from .io_utils import decode_text, discover_txt_files
+from .io_utils import atomic_write_bytes, decode_text, discover_txt_files
 
 IMPORT_SUFFIXES = (".epub", ".docx", ".pdf")  # file sách mà `import_text` mở (cùng .txt và thư mục TXT)
 MAX_MEMBER = 20 * 1024 * 1024  # một mục XHTML / XML lớn hơn thế là bất thường
@@ -1595,7 +1595,12 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
     folder = folder_root / f"{stem[:80]} - {digest}"
     sidecar = folder / SIDECAR
     if sidecar.is_file() and any(folder.glob("*.txt")):
-        return folder, json.loads(sidecar.read_text(encoding="utf-8"))
+        try:
+            info = json.loads(sidecar.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            info = None  # sidecar hỏng (tắt ngang lúc ghi): tách lại - trước đây nhập file ấy lỗi mãi (soát a28 lỗi 17)
+        if isinstance(info, dict):
+            return folder, info
     book = import_text(path)
     folder.mkdir(parents=True, exist_ok=True)
     width = max(4, len(str(len(book.chapters))))
@@ -1608,5 +1613,6 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
         cover = "cover" + {"image/png": ".png", "image/gif": ".gif", "image/webp": ".webp"}.get(book.cover_type or "", ".jpg")
         (folder / cover).write_bytes(book.cover_bytes)
     info = {"title": book.title, "author": book.author, "language": book.language, "notes": book.notes, "cover": cover}
-    sidecar.write_bytes(json.dumps(info, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
+    # Ghi SAU CÙNG và nguyên tử: có sidecar nghĩa là các chương đã ghi đủ.
+    atomic_write_bytes(sidecar, json.dumps(info, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
     return folder, info

@@ -54,6 +54,11 @@ export interface BookSummary {
   /** Tập tạo cùng lúc với tập trước ("Tạo nhiều tập"): giọng và cách đọc tên gieo từ tập trước lúc tập này bắt đầu chạy. */
   seedPending?: boolean;
   broken?: string;
+  /** Vì sao không mở được (server.project_problem): "busy" = chương trình khác đang giữ sổ làm việc (tự hết - Thử lại), "damaged" = hỏng thật,
+   *  "unfinished" = tạo dở, "other". */
+  brokenKind?: "busy" | "damaged" | "unfinished" | "other";
+  /** Hỏng thật mà có bản sao cũ cạnh sổ làm việc: khôi phục được. */
+  backup?: boolean;
   /** Ảnh bìa thật (webui/covers.py), hoặc null khi dùng bìa vẽ từ tên. */
   cover?: CoverImage | null;
   /** Phân vai đã khoá: dàn nhân vật, giọng, cách đọc tên đã có để duyệt. */
@@ -301,6 +306,8 @@ export interface AppInfo {
   sleepExtendMinutes: number;
   safetyStopHours: number;
   sleepSchedule: { from: string; to: string; minutes: number } | null;
+  /** File trạng thái hỏng đã được giữ lại lúc mở app (webui/notices.py): mỗi dòng báo một lần. */
+  notices?: { id: string; text: string }[];
 }
 
 export interface Preferences {

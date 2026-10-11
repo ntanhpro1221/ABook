@@ -18,6 +18,7 @@ from typing import Any, Iterable
 
 from . import book_edits, covers, listing_cache, project_views, store
 from .. import continuation
+from ..io_utils import atomic_write_bytes
 from .fingerprints import Fingerprints, base_name, identity_prints, is_text_identity
 from .listen_view import FORMAT
 from .listening import book_progress, text_book_progress
@@ -182,6 +183,28 @@ def _inside(root: Path, relative: Any) -> Path | None:
     return candidate if is_file and locator.within_root(candidate) else None
 
 
+def _present(root: Path, relative: Any) -> bool:
+    """File trong gói có trên đĩa và không rỗng (0 byte: chép hỏng / tắt ngang - có tên mà không nghe được, soát a28 lỗi 9)."""
+    found = _inside(root, relative)
+    return found is not None and not _locator(Path(root)).empty(found)
+
+
+def damaged_files(folder: Path) -> list[str]:
+    """File `book.json` của cuốn đã nhập hứa mà trên đĩa mất hay sai cỡ (xoá tay, ổ hỏng, chép thiếu - soát a28 lỗi 9). Mở lại đúng file
+    sách ấy thì chép bù (`import_opened`)."""
+    files = (manifest(folder).get("package") or {}).get("files") or {}
+    damaged = []
+    for name, expected in files.items() if isinstance(files, dict) else ():
+        found = _inside(folder, name)
+        try:
+            size = found.stat().st_size if found is not None else None
+        except OSError:
+            size = None
+        if not isinstance(expected, dict) or size != expected.get("size"):
+            damaged.append(name)
+    return damaged
+
+
 def _file(path: Path, relative: Any, *, strict: bool = False) -> Path | None:
     """File trong gói; sách của máy tính khác thì tải về lần đầu cần tới (remote_books.fetch) rồi dùng như file đã có. `strict`: máy kia
     không trả lời thì để `RemoteError` đi lên (người gọi nói đúng lý do), không thì None như file không có."""
@@ -294,8 +317,11 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
     for chapter in book.get("chapters") or []:
         if not isinstance(chapter, dict):
             continue
-        # Sách của máy tính khác: chương máy kia có là nghe được - file tải về lúc bấm nghe.
-        available = bool(chapter.get("available")) and (remote or _inside(path, chapter.get("file")) is not None)
+        # Sách của máy tính khác: chương máy kia có là nghe được - file tải về lúc bấm nghe. Chương file sách có mà trên đĩa mất / 0 byte:
+        # không nghe được, nhưng cũng không phải "file sách chỉ có các chương đã làm" (`lost` - soát a28 lỗi 9).
+        promised = bool(chapter.get("available"))
+        available = promised and (remote or _present(path, chapter.get("file")))
+        lost = promised and not available
         items.append({
             "id": chapter.get("id"),
             "index": chapter.get("index"),
@@ -309,9 +335,11 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
             "state": TEXT_STATE if chapter.get("text") and not available else None,
             # Dòng người nghe bỏ khỏi phần đọc (lớp sửa `skip`): màn đọc và đọc to bỏ qua chúng; chữ của sách không đổi.
             **({"skip": list(chapter["skip"])} if chapter.get("skip") else {}),
+            **({"lost": True} if lost else {}),
         })
     available = [chapter for chapter in items if chapter["available"]]
-    complete = bool(book.get("complete")) and len(available) == len(items)
+    lost_count = sum(1 for chapter in items if chapter.get("lost"))
+    complete = bool(book.get("complete")) and len(available) + lost_count == len(items)
     state = {key: value for key, value in state.items() if key not in ("night", "sessions")}
     result: dict[str, Any] = {
         "format": FORMAT,
@@ -323,6 +351,8 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "chaptersTotal": max(int(book.get("chaptersTotal") or 0), len(items)),
         "chaptersAvailable": len(available),
         "complete": complete,
+        # Chương có trong file sách mà mất file trên máy này: mở lại đúng file .abook ấy để chép bù.
+        "missingFiles": lost_count,
         # Giai đoạn của cả cuốn: "text" = chỉ có chữ (chưa chương nào có audio); None = như mọi sách nghe được.
         "stage": TEXT_STATE if text_book(book) else None,
         "producing": False,
@@ -383,7 +413,7 @@ def _write_cover_meta(target: Path, book: dict[str, Any]) -> None:
     cover = book.get("cover")
     if isinstance(cover, dict) and (target / covers.COVER_FILE).is_file():
         meta = {key: cover[key] for key in ("color", "width", "height") if cover.get(key)}
-        (target / covers.META_FILE).write_text(json.dumps(meta), encoding="utf-8")
+        atomic_write_bytes(target / covers.META_FILE, json.dumps(meta).encode("utf-8"))
 
 
 def same_book(prints: dict[str, dict[str, Any]], theirs: dict[str, dict[str, Any]]) -> bool:
@@ -446,7 +476,10 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
         if same_book(prints, theirs):
             # Cuốn đã nhập từ file `.abook`, nay gặp file `.abookproj` của nó: nhập lại để cuốn mang phần xưởng (project.json).
             gains_workshop = hasattr(opened, "workshop") and not (existing / PROJECT_MARKER).is_file()
-            if len(prints) < len(theirs) or (len(prints) == len(theirs) and not gains_workshop):
+            # Cuốn trên máy mất / hỏng file mà file này đủ chương: giải nén lại tại chỗ (phần sửa của người nghe được giữ) - mở lại đúng file
+            # sách là cách sửa (soát a28 lỗi 9: trước đây "đã có trong thư viện" và chương mất file mất luôn).
+            repair = len(prints) >= len(theirs) and not _remote(existing) and bool(damaged_files(existing))
+            if not repair and (len(prints) < len(theirs) or (len(prints) == len(theirs) and not gains_workshop)):
                 if report["edits"]:
                     report["merge"] = book_edits.adopt(existing, opened.edits, opened.edits_cover(), opened.copy_member)
                 elif not book_edits.is_empty(local := book_edits.load(existing)):
@@ -457,7 +490,7 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
             report["merge"] = opened.last_merge
             _note_broken_music(opened, report)
             _write_cover_meta(target, opened.book)
-            return target.resolve(), "updated"
+            return target.resolve(), "repaired" if repair and len(prints) == len(theirs) else "updated"
     name = _folder_name(str(opened.book.get("title") or ""), opened.content_key)
     target = opened.extract(imported, _free_folder(imported, name) if separate else name)
     _note_broken_music(opened, report)

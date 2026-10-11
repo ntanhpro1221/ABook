@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
@@ -239,12 +240,18 @@ def _replace_with_retry(temp: Path, path: Path) -> None:
 def atomic_write_bytes(path: Path, data: bytes, *, fsync: bool = True) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(path.suffix + ".part")
-    with temp.open("wb") as handle:
-        handle.write(data)
-        handle.flush()
-        if fsync:
-            os.fsync(handle.fileno())
-    _replace_with_retry(temp, path)
+    try:
+        with temp.open("wb") as handle:
+            handle.write(data)
+            handle.flush()
+            if fsync:
+                os.fsync(handle.fileno())
+        _replace_with_retry(temp, path)
+    except BaseException:
+        # Không ghi / đổi tên được (thư mục chỉ đọc, file đích đang bị giữ): bỏ bản tạm, đừng để `.part` nằm lại cạnh file thật.
+        with contextlib.suppress(OSError):
+            temp.unlink(missing_ok=True)
+        raise
 
 
 def atomic_write_json(path: Path, data: Any, *, fsync: bool = True) -> None:
@@ -254,6 +261,68 @@ def atomic_write_json(path: Path, data: Any, *, fsync: bool = True) -> None:
 
 def atomic_write_text(path: Path, text: str, *, fsync: bool = True) -> None:
     atomic_write_bytes(path, text.encode("utf-8"), fsync=fsync)
+
+
+def file_stamp(path: Path) -> tuple[int, int, int] | None:
+    """Dấu nhận ra file đã bị ghi lại (mốc sửa, cỡ, số hiệu file - ghi nguyên tử đổi số hiệu); chưa có file: None."""
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    return (stat.st_mtime_ns, stat.st_size, stat.st_ino)
+
+
+FILE_LOCK_TIMEOUT_SECONDS = 10.0
+
+
+@contextlib.contextmanager
+def file_lock(path: Path, *, timeout: float = FILE_LOCK_TIMEOUT_SECONDS) -> Iterator[None]:
+    """Khoá GIỮA CÁC TIẾN TRÌNH cho file trạng thái `path` (khoá nằm trên file `<tên>.lock` cạnh nó; tiến trình chết thì hệ điều hành tự
+    nhả - không có khoá mồ côi). Hai tiến trình cùng hồ sơ (soát a28 lỗi 14) đọc-gộp-ghi lần lượt thay vì đè nhau. Chờ quá `timeout`
+    giây (tiến trình kia treo) hay không tạo được file khoá (thư mục chỉ đọc): làm tiếp không khoá - không bao giờ chặn việc lưu."""
+    lock = path.with_name(path.name + ".lock")
+    try:
+        lock.parent.mkdir(parents=True, exist_ok=True)
+        handle = open(lock, "a+b")  # noqa: SIM115 - đóng ở finally
+    except OSError:
+        yield
+        return
+    locked = False
+    try:
+        deadline = time.monotonic() + timeout
+        while True:
+            try:
+                if os.name == "nt":
+                    import msvcrt
+
+                    handle.seek(0)
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                locked = True
+                break
+            except OSError:
+                if time.monotonic() >= deadline:
+                    break
+                time.sleep(0.01)
+        yield
+    finally:
+        if locked:
+            try:
+                if os.name == "nt":
+                    import msvcrt
+
+                    handle.seek(0)
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            except OSError:
+                pass
+        handle.close()
 
 
 def remove_part_files(

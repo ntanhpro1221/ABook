@@ -28,17 +28,19 @@ bắt đầu nhỏ dần, lúc tự dừng - kèm vị trí. Sáng dậy, thẻ 
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
-import os
 import re
 import threading
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
+from ..io_utils import atomic_write_json, file_lock, file_stamp
+from . import notices
 from .library import preferences_path
 
 # Nghe tới cách cuối chương dưới 20 giây là coi như nghe xong chương (đoạn cuối thường là khoảng lặng + lời
@@ -90,6 +92,16 @@ def default_record_id(book: str) -> str:
     return "r-" + hashlib.sha256(f"default:{book}".encode()).hexdigest()[:16]
 
 
+def _well_formed(raw: Any) -> bool:
+    """Bản lưu đọc được: dict; dạng hồ sơ (version 2) thì hồ sơ và liên kết đều là dict."""
+    if not isinstance(raw, dict):
+        return False
+    if raw.get("version") != FORMAT_VERSION:
+        return True
+    return all(isinstance(raw.get(key, {}), dict) and all(isinstance(item, dict) for item in raw.get(key, {}).values())
+               for key in ("records", "links"))
+
+
 def _upgrade(raw: Any) -> dict[str, Any]:
     """Bản lưu nào cũng thành dạng hồ sơ + liên kết. Bản cũ {mã sách: state}: mỗi sách một hồ sơ "Mặc định"."""
     if isinstance(raw, dict) and raw.get("version") == FORMAT_VERSION:
@@ -112,11 +124,26 @@ class Listening:
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or listening_path()
         self._lock = threading.Lock()
-        try:
-            raw: Any = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            raw = {}
-        self._data = _upgrade(raw)
+        self._data = _upgrade(self._read() or {})
+        self._stamp = file_stamp(self.path)
+
+    def _read(self) -> Any:
+        """Bản lưu trên đĩa; chưa có: None. Hỏng (cắt nửa, rỗng, sai hình dạng - soát a28 lỗi 1): giữ bản hỏng + báo (notices), rồi None -
+        trước đây app im lặng coi như chưa nghe gì và lần ghi kế ĐÈ mất hết chỗ nghe, dấu trang."""
+        return notices.read_json(self.path, "Hồ sơ nghe (chỗ nghe dở, dấu trang)", _well_formed)
+
+    @contextlib.contextmanager
+    def _changing(self) -> Iterator[None]:
+        """Sửa dữ liệu nghe: khoá luồng + khoá file; tiến trình khác cùng hồ sơ đã ghi từ lần mình đọc / ghi cuối thì đọc lại trước khi
+        sửa (soát a28 lỗi 14: hai bên giữ cả bảng trong bộ nhớ, bên ghi sau đè mất chỗ nghe của bên kia). File mất / hỏng giữa chừng: giữ
+        bản trong bộ nhớ, lần ghi này đưa nó lại ra đĩa."""
+        with self._lock, file_lock(self.path):
+            if file_stamp(self.path) != self._stamp:
+                raw = self._read()
+                if raw is not None:
+                    self._data = _upgrade(raw)
+                self._stamp = file_stamp(self.path)
+            yield
 
     # ---- liên kết sách - hồ sơ ---------------------------------------------------------------------------------
 
@@ -182,7 +209,7 @@ class Listening:
 
     def create_record(self, book: str, name: str = "") -> dict[str, Any]:
         """Hồ sơ mới cho `book` (nghe từ đầu), thành hồ sơ đang dùng; hồ sơ cũ giữ nguyên."""
-        with self._lock:
+        with self._changing():
             link = self._data["links"].setdefault(book, {"records": []})
             record_id = _new_record_id()
             label = name.strip()[:MAX_RECORD_NAME] or f"Hồ sơ {len(link.get('records', [])) + 1}"
@@ -195,7 +222,7 @@ class Listening:
             return {"id": record_id, "name": label, "active": True}
 
     def activate(self, book: str, record_id: str) -> bool:
-        with self._lock:
+        with self._changing():
             link = self._data["links"].get(book)
             if not link or record_id not in link.get("records", []) or record_id not in self._data["records"]:
                 return False
@@ -205,7 +232,7 @@ class Listening:
             return True
 
     def rename_record(self, record_id: str, name: str) -> bool:
-        with self._lock:
+        with self._changing():
             record = self._data["records"].get(record_id)
             if record is None or not name.strip():
                 return False
@@ -221,7 +248,7 @@ class Listening:
     def move_record(self, record_id: str, to_book: str) -> bool:
         """Gắn hồ sơ sang sách khác (vd. bản sản xuất mới của cùng truyện), thành hồ sơ đang dùng ở đó. `movedAt` của hồ sơ
         là lúc chuyển: đồng bộ với điện thoại theo "lần chuyển sau thắng" (merge_record), như tên theo `nameAt`."""
-        with self._lock:
+        with self._changing():
             if record_id not in self._data["records"]:
                 return False
             self._unlink(record_id)
@@ -233,7 +260,7 @@ class Listening:
             return True
 
     def delete_record(self, record_id: str) -> bool:
-        with self._lock:
+        with self._changing():
             if record_id not in self._data["records"]:
                 return False
             self._unlink(record_id)
@@ -250,7 +277,7 @@ class Listening:
     def rename_books(self, renamed: dict[str, str]) -> None:
         """Đổi khoá sách của bảng liên kết ({mã cũ: mã mới}, library.legacy_ids). Hồ sơ giữ nguyên mã - điện thoại gộp
         theo mã hồ sơ nên vẫn khớp. Hai khoá về cùng một cuốn: gộp danh sách hồ sơ; hồ sơ đang dùng là bên chọn sau."""
-        with self._lock:
+        with self._changing():
             links = self._data["links"]
             changed = False
             for old, new in renamed.items():
@@ -304,7 +331,7 @@ class Listening:
     def progress(self, book: str, chapter_id: int, seconds: float, duration: float,
                  record: str | None = None) -> dict[str, Any]:
         now = time.time()
-        with self._lock:
+        with self._changing():
             entry = self._held(book, record)
             if entry is None:
                 return json.loads(json.dumps(self._active(book, create=False) or _empty_state()))
@@ -320,7 +347,7 @@ class Listening:
             return json.loads(json.dumps(entry))
 
     def set_chapter_done(self, book: str, chapter_id: int, done: bool) -> dict[str, Any]:
-        with self._lock:
+        with self._changing():
             entry = self._book(book)
             chapter = entry["chapters"].setdefault(str(int(chapter_id)), {"heard": 0.0, "done": False})
             chapter["done"] = bool(done)
@@ -331,7 +358,7 @@ class Listening:
             return json.loads(json.dumps(entry))
 
     def set_finished(self, book: str, finished: bool) -> dict[str, Any]:
-        with self._lock:
+        with self._changing():
             entry = self._book(book)
             entry["finished"] = bool(finished)
             entry["finishedAt"] = entry["updatedAt"] = time.time()
@@ -339,7 +366,7 @@ class Listening:
             return json.loads(json.dumps(entry))
 
     def set_rate(self, book: str, rate: float) -> None:
-        with self._lock:
+        with self._changing():
             entry = self._book(book)
             entry["rate"] = float(rate)
             entry["rateAt"] = entry["updatedAt"] = time.time()
@@ -356,7 +383,7 @@ class Listening:
         if index is not None and int(index) >= 0:
             mark["index"] = int(index)
             mark["quote"] = bookmark_quote(quote)
-        with self._lock:
+        with self._changing():
             entry = self._held(book, record) or self._book(book)
             for current in entry["bookmarks"]:
                 if int(current.get("chapterId", -1)) != mark["chapterId"]:
@@ -375,7 +402,7 @@ class Listening:
         return mark
 
     def update_bookmark(self, book: str, mark_id: str, note: str) -> None:
-        with self._lock:
+        with self._changing():
             entry = self._book(book)
             for mark in entry["bookmarks"]:
                 if mark["id"] == mark_id:
@@ -384,7 +411,7 @@ class Listening:
             self._save()
 
     def delete_bookmark(self, book: str, mark_id: str) -> None:
-        with self._lock:
+        with self._changing():
             entry = self._book(book)
             entry["bookmarks"] = [mark for mark in entry["bookmarks"] if mark["id"] != mark_id]
             entry.setdefault("deleted", {})[mark_id] = time.time()
@@ -393,7 +420,7 @@ class Listening:
 
     def restore_bookmark(self, book: str, mark: dict[str, Any]) -> dict[str, Any]:
         """Hoàn tác xoá: đặt lại đúng dấu cũ (cùng id) và gỡ tombstone của nó."""
-        with self._lock:
+        with self._changing():
             entry = self._book(book)
             restored = {"id": str(mark["id"])[:40], "chapterId": int(mark["chapterId"]),
                         "seconds": round(float(mark["seconds"]), 1), "note": str(mark.get("note", ""))[:500],
@@ -423,7 +450,7 @@ class Listening:
             "from": place(session.get("from")),
             "to": place(session.get("to")),
         }
-        with self._lock:
+        with self._changing():
             entry = self._held(book, record)
             if entry is None:
                 return
@@ -437,7 +464,7 @@ class Listening:
 
     def set_reading(self, book: str, chapter_id: int, index: int) -> None:
         """Chỗ đọc dở ở chế độ đọc: câu thứ `index` của chương."""
-        with self._lock:
+        with self._changing():
             entry = self._book(book)
             entry["reading"] = {"chapterId": int(chapter_id), "index": max(0, int(index)), "at": time.time()}
             entry["updatedAt"] = entry["reading"]["at"]
@@ -445,7 +472,7 @@ class Listening:
 
     def save_night(self, book: str, night: dict[str, Any]) -> None:
         """Nhật ký đêm của trình phát trên máy này (điện thoại gửi của nó qua `merge`)."""
-        with self._lock:
+        with self._changing():
             entry = self._book(book)
             entry["night"] = merge_nights(entry.get("night"), _clean_night(night))
             entry["updatedAt"] = time.time()
@@ -470,7 +497,7 @@ class Listening:
             return None if found is None else json.loads(json.dumps({"bookId": found[0], "night": found[1]}))
 
     def dismiss_night(self, book: str, night_id: str) -> None:
-        with self._lock:
+        with self._changing():
             night = (self._active(book, create=False) or {}).get("night")
             if night and night.get("id") == night_id:
                 night["dismissed"] = True
@@ -480,7 +507,7 @@ class Listening:
     def merge(self, book: str, incoming: dict[str, Any]) -> dict[str, Any]:
         """Gộp trạng thái từ thiết bị khác (điện thoại) vào hồ sơ đang dùng của `book`. Mỗi phần mang mốc thời gian
         riêng, bên mới hơn thắng; dấu trang hợp theo id, dấu trang đã xoá ở một bên (tombstone) thì xoá ở cả hai."""
-        with self._lock:
+        with self._changing():
             entry = self._book(book)
             merged = merge_states(entry, incoming)
             entry.clear()
@@ -501,7 +528,7 @@ class Listening:
         Trả trạng thái đã gộp, kèm `record`, `book` (sách hồ sơ gắn ở đây - có thể đã được chuyển), `movedAt` của hồ sơ,
         danh sách hồ sơ của sách (tên + lúc đặt tên + lúc chuyển), `active` {record, at}, mọi bia mộ đã biết (`deletedRecords`); hồ sơ đang dùng ở đây
         khác hồ sơ vừa gộp thì kèm luôn `activeState` của nó."""
-        with self._lock:
+        with self._changing():
             for gone, at in (deleted or {}).items():
                 if isinstance(gone, str) and RECORD_ID.fullmatch(gone):
                     if gone in self._data["records"]:
@@ -556,10 +583,8 @@ class Listening:
             return reply
 
     def _save(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(self._data, ensure_ascii=False, indent=1), encoding="utf-8")
-        os.replace(temporary, self.path)
+        atomic_write_json(self.path, self._data)  # nguyên tử + fsync: mất điện không để lại file rỗng
+        self._stamp = file_stamp(self.path)
 
 
 def book_progress(state: dict[str, Any], chapters: list[dict[str, Any]], *, complete: bool = True) -> dict[str, Any]:

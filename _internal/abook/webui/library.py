@@ -14,6 +14,7 @@ Tuỳ chọn và vị trí nghe dở lưu ở `%LOCALAPPDATA%/ABook/preferences.
 from __future__ import annotations
 
 import base64
+import contextlib
 import hashlib
 import hmac
 import json
@@ -22,14 +23,18 @@ import re
 import secrets
 import threading
 import time
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+from ..io_utils import atomic_write_bytes, atomic_write_json, file_lock, file_stamp
 from ..listener_overrides import overrides_path
-from . import listing_cache, store
+from . import listing_cache, notices, store
 
 DEFAULT_PREFERENCES: dict[str, Any] = {
     "libraryRoot": "",
+    # Thư mục thư viện đã từng thấy có thật (Library.root_missing): nó biến mất thì báo, không tự tạo lại thư mục rỗng.
+    "libraryRootSeen": "",
     "recents": [],
     "theme": "system",
     "positions": {},
@@ -135,9 +140,8 @@ _ID_LOCK = threading.Lock()
 
 def _id_key() -> bytes:
     """Khoá bí mật của mã sách trên máy này: 32 byte ngẫu nhiên, tạo lần đầu cần tới, nằm cạnh preferences.json - đi
-    cùng dữ liệu nghe nó đánh khoá (sao lưu / chép thư mục dữ liệu thì mã giữ nguyên). Tạo bằng O_EXCL: hai tiến trình
-    cùng mở lần đầu thì một bên tạo, bên kia đọc lại khoá ấy. Không ghi được thư mục (ổ chỉ đọc): khoá suy từ đường dẫn
-    thư mục dữ liệu - vẫn ổn định giữa các lần mở, chỉ kém bí mật."""
+    cùng dữ liệu nghe nó đánh khoá (sao lưu / chép thư mục dữ liệu thì mã giữ nguyên). Không ghi được thư mục (ổ chỉ đọc):
+    khoá suy từ đường dẫn thư mục dữ liệu - vẫn ổn định giữa các lần mở, chỉ kém bí mật."""
     path = preferences_path().with_name(ID_KEY_FILE)
     with _ID_LOCK:
         cached = _ID_KEYS.get(str(path))
@@ -148,26 +152,80 @@ def _id_key() -> bytes:
         return key
 
 
+def _parse_key(raw: bytes) -> bytes | None:
+    try:
+        key = bytes.fromhex(raw.decode("ascii").strip())
+    except ValueError:  # gồm UnicodeDecodeError
+        return None
+    return key if len(key) >= 16 else None
+
+
+def _create_exclusive(path: Path, data: bytes) -> bool:
+    """Ghi `data` thành `path` nếu chưa có - trọn vẹn (file tạm + fsync rồi mới hiện tên thật) và chỉ một tiến trình thắng. False: đã có."""
+    temporary = path.with_name(f"{path.name}.{secrets.token_hex(4)}.part")
+    try:
+        with temporary.open("wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        try:
+            # Windows: rename không đè file có sẵn; nơi khác: link cũng vậy (rename thì đè).
+            os.rename(temporary, path) if os.name == "nt" else os.link(temporary, path)
+        except FileExistsError:
+            return False
+        return True
+    finally:
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
+
+
 def _read_or_create_key(path: Path) -> bytes:
+    """Khoá có sẵn, hay tạo mới (cùng bản sao `book_ids.key.bak`). Khoá hỏng (cắt cụt, rỗng, ký tự lạ - soát a28 lỗi 2) mà âm thầm thay
+    bằng khoá khác thì MỌI mã sách đổi: chỗ nghe, dấu trang, lịch sử mồ côi. Nên khoá hỏng được giữ lại (`notices.keep_broken`) và lấy lại
+    từ bản sao; không có bản sao mới phải tạo khoá mới - kèm lời báo."""
+    backup = path.with_name(path.name + ".bak")
     for _attempt in range(20):
         try:
-            key = bytes.fromhex(path.read_text(encoding="ascii").strip())
-            if len(key) >= 16:
-                return key
-        except (OSError, ValueError):
-            pass
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            handle = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        except FileExistsError:
-            time.sleep(0.05)  # tiến trình kia vừa tạo, chưa ghi xong: đọc lại
-            continue
+            key = _parse_key(path.read_bytes())
+        except FileNotFoundError:
+            key = None
+            broken = False
         except OSError:
             break
-        key = secrets.token_bytes(32)
-        with os.fdopen(handle, "w", encoding="ascii") as file:
-            file.write(key.hex())
-        return key
+        else:
+            broken = key is None
+        if key is not None:
+            if not backup.is_file():
+                try:
+                    atomic_write_bytes(backup, key.hex().encode("ascii"))
+                except OSError:
+                    pass
+            return key
+        try:
+            saved = _parse_key(backup.read_bytes())
+        except OSError:
+            saved = None
+        if broken and notices.keep_broken(path, "Khoá mã sách của app", then=(
+                "app lấy lại khoá từ bản sao" if saved else
+                "app phải tạo khoá mới - chỗ nghe, dấu trang đã lưu không còn gắn được với sách")) is None:
+            break  # không dời được file hỏng: dùng khoá suy từ đường dẫn, không đè bản hỏng
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            fresh = saved or secrets.token_bytes(32)
+            created = _create_exclusive(path, fresh.hex().encode("ascii"))
+        except OSError:
+            break
+        if not created:
+            time.sleep(0.05)  # tiến trình kia vừa tạo: đọc lại khoá của nó
+            continue
+        if saved is None:
+            try:
+                atomic_write_bytes(backup, fresh.hex().encode("ascii"))
+            except OSError:
+                pass
+        return fresh
     return hashlib.sha256(b"abook-book-ids:" + str(path.parent).encode("utf-8")).digest()
 
 
@@ -216,36 +274,91 @@ def _key(path: Path) -> str:
     return os.path.normcase(os.path.normpath(str(path)))
 
 
+PREFERENCES_WHAT = "Cài đặt của app"
+CHOICES: dict[str, tuple[str, ...]] = {"theme": ("system", "light", "dark"), "newBookProfile": BOOK_PROFILES}
+
+
+def _fits(key: str, value: Any) -> bool:
+    """Giá trị `value` của tuỳ chọn `key` đúng kiểu chưa (file sửa tay, bản app khác ghi: `[1]`, `null`, `"libraryRoot": 5` - soát a28
+    lỗi 3). Khoá lạ (không có trong DEFAULT_PREFERENCES) không xét."""
+    default = DEFAULT_PREFERENCES.get(key)
+    if key in CHOICES:
+        return value in CHOICES[key]
+    if key == "sleepSchedule":
+        return value is None or isinstance(value, dict)
+    if key == "recents":
+        return isinstance(value, list) and all(isinstance(item, str) for item in value)
+    if key == "positions":
+        return isinstance(value, dict) and all(isinstance(item, dict) for item in value.values())
+    if isinstance(default, bool):
+        return isinstance(value, bool)
+    if isinstance(default, (int, float)):
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    return default is None or isinstance(value, type(default))
+
+
 class Preferences:
+    """Tuỳ chọn + chỗ nghe dở. Hỏng thì giữ bản hỏng + báo (notices); hai tiến trình cùng hồ sơ thì mỗi lần sửa đọc lại file nếu bên kia
+    vừa ghi, sửa trên bản mới nhất rồi ghi - dưới khoá file (`io_utils.file_lock`), không bên nào đè mất cập nhật của bên kia."""
+
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or preferences_path()
         self._lock = threading.Lock()
         self._data = self._load()
+        self._stamp = file_stamp(self.path)
 
-    def _load(self) -> dict[str, Any]:
-        data = json.loads(json.dumps(DEFAULT_PREFERENCES))
+    def _parse(self) -> dict[str, Any] | None:
+        """Tuỳ chọn trên đĩa, khoá sai kiểu đã bỏ; chưa có file / hỏng cả file: None. Có khoá sai kiểu: giữ bản cũ + báo, rồi ghi lại bản
+        sạch ngay (lần mở sau không báo lại)."""
+        raw = notices.read_json(self.path, PREFERENCES_WHAT, lambda data: isinstance(data, dict))
+        if raw is None:
+            return None
+        bad = [key for key, value in raw.items() if key in DEFAULT_PREFERENCES and not _fits(key, value)]
+        if not bad:
+            return raw
+        clean = {key: value for key, value in raw.items() if key not in bad}
+        notices.keep_broken(self.path, "Một vài cài đặt của app", then="các cài đặt ấy về mặc định")
         try:
-            data.update(json.loads(self.path.read_text(encoding="utf-8")))
-        except (OSError, ValueError):
+            atomic_write_json(self.path, clean)
+        except OSError:
             pass
-        if not data.get("libraryRoot"):
+        return clean
+
+    def _load(self, keep: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Tuỳ chọn mặc định đè bằng những gì đọc được. `keep`: file mất / hỏng giữa chừng (đọc lại khi tiến trình khác vừa ghi) thì giữ
+        bản trong bộ nhớ - lần ghi kế đưa nó lại ra đĩa."""
+        parsed = self._parse()
+        if parsed is None and keep is not None:
+            return keep
+        data = json.loads(json.dumps(DEFAULT_PREFERENCES))
+        data.update(parsed or {})
+        if not data["libraryRoot"].strip():
             data["libraryRoot"] = _legacy_output_folder() or str(Path.home() / "Audiobooks")
         return data
+
+    @contextlib.contextmanager
+    def _changing(self) -> Iterator[None]:
+        """Sửa tuỳ chọn: khoá luồng + khoá file, đọc lại nếu tiến trình khác đã ghi từ lần mình đọc / ghi cuối (soát a28 lỗi 14)."""
+        with self._lock, file_lock(self.path):
+            if file_stamp(self.path) != self._stamp:
+                self._data = self._load(keep=self._data)
+                self._stamp = file_stamp(self.path)
+            yield
 
     def get(self) -> dict[str, Any]:
         with self._lock:
             return json.loads(json.dumps(self._data))
 
     def update(self, changes: dict[str, Any]) -> dict[str, Any]:
-        with self._lock:
+        with self._changing():
             for key, value in changes.items():
-                if key in DEFAULT_PREFERENCES:
+                if key in DEFAULT_PREFERENCES and _fits(key, value) and not (key == "libraryRoot" and not value.strip()):
                     self._data[key] = value
             self._save()
             return json.loads(json.dumps(self._data))
 
     def remember_position(self, book: str, chapter_id: int, seconds: float, duration: float) -> None:
-        with self._lock:
+        with self._changing():
             positions = self._data.setdefault("positions", {})
             positions[book] = {"chapterId": int(chapter_id), "seconds": round(float(seconds), 1),
                                "duration": round(float(duration), 1), "at": time.time()}
@@ -253,7 +366,7 @@ class Preferences:
 
     def rename_positions(self, renamed: dict[str, str]) -> None:
         """Đổi khoá chỗ nghe dở ({mã cũ: mã mới}, `legacy_ids`); hai khoá về cùng một cuốn: chỗ ghi sau thắng."""
-        with self._lock:
+        with self._changing():
             positions = self._data.get("positions")
             if not isinstance(positions, dict) or not any(old in positions for old in renamed):
                 return
@@ -267,27 +380,23 @@ class Preferences:
             self._save()
 
     def add_recent(self, path: Path) -> None:
-        with self._lock:
+        with self._changing():
             recents = [item for item in self._data.get("recents", []) if _key(Path(item)) != _key(path)]
             self._data["recents"] = [str(path), *recents][:MAX_RECENTS]
             self._save()
 
     def forget_recent(self, path: Path) -> None:
-        with self._lock:
+        with self._changing():
             recents = [item for item in self._data.get("recents", []) if _key(Path(item)) != _key(path)]
             if recents != self._data.get("recents", []):
                 self._data["recents"] = recents
                 self._save()
 
     def _save(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(self._data, ensure_ascii=False, indent=1), encoding="utf-8")
-        # Supervisor của sách đang chạy đọc file này (power_source, khi máy chạy pin): trên Windows, đổi tên đè lên file đang
-        # mở báo PermissionError - thử lại như file state của dây chuyền (soát QA 29-09).
-        from ..io_utils import _replace_with_retry
-
-        _replace_with_retry(temporary, self.path)
+        # Ghi nguyên tử + fsync (mất điện không để lại file rỗng). Supervisor của sách đang chạy đọc file này (power_source, khi máy chạy pin):
+        # trên Windows, đổi tên đè lên file đang mở báo PermissionError - atomic_write_json thử lại như file state của dây chuyền (soát QA 29-09).
+        atomic_write_json(self.path, self._data)
+        self._stamp = file_stamp(self.path)
 
 
 class Library:
@@ -300,6 +409,23 @@ class Library:
     def root(self) -> Path:
         return Path(self.preferences.get()["libraryRoot"]).expanduser()
 
+    def root_missing(self) -> bool:
+        """Thư mục thư viện không còn: ổ rời rút ra (cả ổ cũng không có), hay thư mục ĐÃ TỪNG có (`libraryRootSeen`) bị đổi tên / chuyển /
+        xoá (soát a28 lỗi 6). Thư mục chưa từng có (lần đầu dùng, mặc định ~/Audiobooks) thì không tính - app tạo nó khi thêm cuốn đầu tiên."""
+        root = self.root
+        if root.is_dir():
+            return False
+        if _key(root) == _key(Path.home() / "Audiobooks"):
+            return False
+        return self.preferences.get().get("libraryRootSeen") == str(root) or not root.parent.is_dir()
+
+    def _saw_root(self, root: Path) -> None:
+        if self.preferences.get().get("libraryRootSeen") != str(root):
+            try:
+                self.preferences.update({"libraryRootSeen": str(root)})
+            except OSError:
+                pass  # thư mục dữ liệu chỉ đọc: chỉ mất lời báo "thư viện biến mất"
+
     def projects(self) -> list[Path]:
         root = self.root
 
@@ -309,6 +435,8 @@ class Library:
                 children = sorted(root.iterdir()) if root.is_dir() else []
             except OSError:
                 children = []
+            if root.is_dir():
+                self._saw_root(root)
             for child in children:
                 if child.is_dir() and store.is_project(child):
                     found.setdefault(_key(child), child.resolve())

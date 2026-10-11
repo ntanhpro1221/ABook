@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .. import names as renames
+from ..io_utils import atomic_write_bytes
 from . import book_edits, book_wishes, covers, packages
 from .library import book_id
 
@@ -164,6 +165,6 @@ def build(folder: Path, library_root: Path, create: Callable[[list[str], str, st
     if cover is not None:
         covers.save_cover_bytes(project, cover.read_bytes())
     folded = book_wishes.fold(project, book_edits.load(folder).get("wishes") or {}, now=time.time())
-    (folder / BUILT_FILE).write_text(json.dumps({"id": book_id(project)}), encoding="utf-8")
+    atomic_write_bytes(folder / BUILT_FILE, json.dumps({"id": book_id(project)}).encode("utf-8"))
     return {"project": project, "chapters": len(paths), "chaptersWithoutText": without, "voices": voices, "names": named,
             "requests": folded["requests"], "skipped": folded["skipped"]}
