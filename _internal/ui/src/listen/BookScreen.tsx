@@ -17,8 +17,8 @@ import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
 import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
-import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
-import { bookmarkReadPath, canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
+import { bookStatusText, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
+import { bookmarkReadPath, canPlay, chapterHeard, chaptersByPart, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { keepTogether, partialBookLine, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerViews";
@@ -788,6 +788,10 @@ export function BookScreen({
     void source.refreshListening(id).then(() => client.invalidateQueries({ queryKey: ["listen", "book", id] })).catch(() => undefined);
   }, [client, id, source]);
 
+  // Cùng chỗ với thẻ "Đang nghe dở" ở Thư viện; cuốn đang nằm trong trình phát thì đúng chỗ trình phát đứng (soát a26 L10).
+  // Hook nên đứng trước các `return` sớm.
+  const point = useResumeTarget(book, book?.chapters ?? []);
+
   if (isLoading) {
     return (
       <div className="mx-auto max-w-[1180px] px-4 pt-6 sm:px-10">
@@ -812,7 +816,6 @@ export function BookScreen({
   const syncs = syncsToComputer(book.capabilities);
   // Cuốn của máy này không có xưởng (file .abook): việc của Studio (giới tính, gộp người...) ghi lại thành ý muốn chờ Studio.
   const waiting = editable && !workshop;
-  const point = resumePoint(book, chapters);
   const listening = player.track?.bookId === book.id;
   const heard = book.progress.heardSeconds;
   const left = Math.max(0, book.duration - heard);

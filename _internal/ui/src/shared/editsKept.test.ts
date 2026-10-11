@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { keptEditsTitle, workshopMergeNote } from "./editsKept";
+import { brokenMusicNote, keptEditsTitle, workshopMergeNote } from "./editsKept";
 
 describe("nhập lại sách đã sửa", () => {
   it("nói thay đổi của người nghe được giữ nguyên", () => {
@@ -20,5 +20,16 @@ describe("mở file dự án đã sửa ở máy khác (soát UX a25 T5)", () =>
   it("không nói gì khi hai bên như nhau", () => {
     expect(workshopMergeNote(undefined)).toBeNull();
     expect(workshopMergeNote({ merged: 0, kept: 0 })).toBeNull();
+  });
+});
+
+describe("file sách có bài nhạc nền hỏng (soát a26 L4)", () => {
+  it("nói một câu, sách vẫn mở", () => {
+    expect(brokenMusicNote(1)).toBe("1 bài nhạc nền trong sách bị hỏng - đoạn ấy sẽ không có nhạc.");
+    expect(brokenMusicNote(2)).toBe("2 bài nhạc nền trong sách bị hỏng - những đoạn ấy sẽ không có nhạc.");
+  });
+  it("không nói gì khi mọi bài đều lành", () => {
+    expect(brokenMusicNote(0)).toBeNull();
+    expect(brokenMusicNote(undefined)).toBeNull();
   });
 });

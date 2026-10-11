@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { etaOf, excerpt, fileName, formatEta, formatFingerprint, formatSize, licenseLabel, shownReading } from "./format";
+import { etaOf, excerpt, fileName, formatEta, formatFingerprint, formatLengthUp, formatSize, licenseLabel, shownReading } from "./format";
 
 describe("shownReading", () => {
   it("capitalises each word of a name's reading for display", () => {
@@ -106,5 +106,14 @@ describe("formatEta", () => {
     expect(etaOf({ eta: { phase: "synthesis", seconds: 600 }, progress: { analysis: 1, synthesis: 0.5 } })).toBe("pha thu âm còn khoảng 10 phút");
     // Bước phân tích gần xong vẫn còn thu âm phía sau: câu nói về bước, không hứa về cả cuốn.
     expect(etaOf({ eta: { phase: "analysis", seconds: 20 }, progress: { analysis: 0.97, synthesis: 0 } })).toBe("pha phân tích sắp xong");
+  });
+});
+
+describe("formatLengthUp (soát a26 L10)", () => {
+  it("làm tròn lên như đồng hồ đếm ngược của thanh phát", () => {
+    expect(formatLengthUp(129)).toBe("3 phút");
+    expect(formatLengthUp(56)).toBe("1 phút");
+    expect(formatLengthUp(3600)).toBe("1 giờ");
+    expect(formatLengthUp(0)).toBe("0 phút");
   });
 });

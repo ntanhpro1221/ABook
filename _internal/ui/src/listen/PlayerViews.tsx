@@ -50,7 +50,7 @@ import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { COARSE, EXTEND_GESTURE } from "./extendGesture";
 import { openShortcuts } from "./Shortcuts";
 import { useBookMusic } from "./EditBook";
-import { bookmarkReadPath, canPlay, otherBooksToHear, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
+import { bookmarkReadPath, canPlay, continuingPart, otherBooksToHear, partToContinue, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepButtonLabel, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
@@ -58,7 +58,7 @@ import { genderLabel, groupedVoices, voiceSections } from "./voiceGroups";
 import { revealVoiceSettings } from "./voiceSettingsLink";
 import { VieneuDownload } from "./VieneuDownload";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, voiceCaption } from "./readAloudVoice";
-import { bookProgressText, caughtUpDetail, nextChapterLabel, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, caughtUpDetail, nextChapterLabel, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, textChapterLine, toggleLabel, unquoted } from "./labels";
 import { useAfter } from "@/shared/useAfter";
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
@@ -383,6 +383,7 @@ function LevelButtons({ level, disabled, onChange }: { level: number; disabled: 
 
 function PackagedMusicMenu({ bookId }: { bookId: string }) {
   const { view, change } = useBookMusic(bookId);
+  const { musicBroken: broken } = usePlayer();
   const music = view.data;
   if (!music?.hasMusic) return null;
   const id = `player-music-${bookId}`;
@@ -405,6 +406,7 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
         </label>
         <Switch id={id} label="Nhạc nền" checked={music.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
       </div>
+      {music.enabled && broken && <p className="px-2 pb-1 text-xs text-warning">Bài nhạc chương này không phát được.</p>}
       <div className={cn("transition-opacity", !music.enabled && "opacity-50")}>
         <LevelButtons level={music.levelDb} disabled={!music.enabled || change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} />
       </div>
@@ -1331,8 +1333,10 @@ export function PlayerBar({
       <FadingNotice className="mx-4 mt-2" />
       <PlayerAlert className="mx-4 mt-2" />
       {/* Cột giữa theo bề rộng CỦA THANH (min(36%, 480px)), không theo cửa sổ (40vw): thanh không gồm thanh bên, 40vw từng
-          chiếm 512/1044 px ở cửa sổ 1280 - tên chương bị cắt, cụm nút phải (266 px) bị ép vào 238 px (soát UX 29-09). Cột tên sách có tối thiểu 10rem (soát UX a16: còn ~30 px khi đủ chip nhạc / giọng / hẹn giờ); cột giữa co trước, rồi nhãn chữ của chip ẩn theo bề rộng thanh. */}
-      <div className="grid h-[76px] grid-cols-[minmax(10rem,1fr)_minmax(14rem,min(36%,480px))_auto] items-center @max-[900px]:grid-cols-[minmax(8rem,1fr)_minmax(14rem,260px)_auto] gap-4 px-4">
+          chiếm 512/1044 px ở cửa sổ 1280 - tên chương bị cắt, cụm nút phải (266 px) bị ép vào 238 px (soát UX 29-09). Cột tên sách có tối thiểu 10rem (soát UX a16: còn ~30 px khi đủ chip nhạc / giọng / hẹn giờ); cột giữa co trước, rồi nhãn chữ của chip ẩn theo bề rộng thanh.
+          Thanh hẹp (cửa sổ 1024): cột giữa đứng ở mức tối thiểu 14rem, phần còn lại cho tên chương; cụm nút không bao giờ xuống dòng -
+          thiếu chỗ thì tên co trước các nút (soát a26 L11: "Chương…" cạnh thanh tua 260 px, chip "Hết chương" rớt dòng). */}
+      <div className="grid h-[76px] grid-cols-[minmax(10rem,1fr)_minmax(14rem,min(36%,480px))_auto] items-center @max-[900px]:grid-cols-[minmax(8rem,1fr)_14rem_auto] gap-4 px-4">
         <button
           type="button"
           onClick={() => setExpanded(true)}
@@ -1351,7 +1355,7 @@ export function PlayerBar({
           <Transport />
           <SeekBar />
         </div>
-        <div className="flex min-w-0 items-center justify-end gap-0.5">
+        <div className="flex min-w-0 items-center justify-end gap-0.5 whitespace-nowrap">
           {extra}
           <MusicMenu />
           <VoiceMenu />
@@ -1523,7 +1527,7 @@ function BookmarkRow({
             {chapter?.available === false && mark.index !== undefined ? "" : `${formatClock(mark.seconds)} · `}
             {formatWhen(mark.at)}
           </span>
-          {quote && <span className="mt-1 line-clamp-2 block text-sm italic leading-snug text-fg">“{quote}”</span>}
+          {quote && <span className="mt-1 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(quote)}”</span>}
         </button>
         <IconButton label="Sửa ghi chú" icon={Pencil} size="sm" onClick={() => onEdit(!editing)} />
         <IconButton label="Xoá dấu trang" icon={Trash2} size="sm" onClick={remove} />
@@ -1708,17 +1712,22 @@ function nextLabel(title: string): string {
  *  nghe chọn. Hẹn giờ "hết chương" dừng trước khi tới đây (atEnd không thành "finished"). Gọi ở PlayerBar - có mặt ở mọi
  *  màn của máy tính lẫn điện thoại. */
 function useContinueIntoNextPart() {
-  const { atEnd, track } = usePlayer();
+  const { atEnd, track, rate, setContinues } = usePlayer();
   const next = useNextVolume(track?.bookId, track?.bookTitle);
   const playBook = usePlayListenBook();
   const continued = useRef("");
+  // Báo trước cho trình phát: hết cuốn này không phải hết sách - nó khỏi nói "Đã nghe hết sách / Nghe lại từ đầu" (soát a26 L1).
+  const continues = continuingPart(next) && track ? track.bookId : null;
+  useEffect(() => setContinues(continues), [continues, setContinues]);
   useEffect(() => {
-    if (atEnd !== "finished" || !track || !next || seriesOf(next.title).unit !== "phần") return;
+    const part = partToContinue(atEnd, next);
+    if (!part || !track) return;
     if (continued.current === track.bookId) return;
     continued.current = track.bookId;
-    toast(`Nghe tiếp ${nextLabel(next.title)}`, { description: "Hết phần trước - phần sau nối liền như một cuốn." });
-    void playBook(next);
-  }, [atEnd, track, next, playBook]);
+    // Phần sau chưa đặt tốc độ riêng thì nghe tiếp đúng tốc độ phần trước (soát a26 L3).
+    toast(`Nghe tiếp ${nextLabel(part.title)}`, { description: "Hết phần trước - phần sau nối liền như một cuốn." });
+    void playBook(part, undefined, undefined, { rate });
+  }, [atEnd, track, next, playBook, rate]);
 }
 
 /** Cuối màn "Đã nghe hết sách": mời nghe cuốn khác (tối đa 3, mỗi cuốn một nút nghe tiếp từ chỗ đã dừng) và đường về thư viện.

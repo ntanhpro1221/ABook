@@ -100,6 +100,10 @@ object MusicBed {
         return out.takeIf { it.length() > 0 }
     }
 
+    /** Có bài nhạc của sách ở chương này đang bị bỏ vì không phát được (đoạn ấy im lặng, chờ thử lại) - giao diện nói ra thay vì chỉ
+     *  "Nhạc nền: Bật" (ui/src/listen/musicBed.ts `failing`, soát a26 L7). */
+    fun brokenHere(): Boolean = playlist == null && cues.any { isFailed(it.track) }
+
     /** Giọng đọc đang ở `seconds` của chương `chapterId` trong cuốn `bookId`; `isPlaying` = giọng đang chạy. */
     fun sync(bookId: String, chapterId: Int?, seconds: Double, isPlaying: Boolean) {
         val appContext = context ?: return
@@ -130,6 +134,8 @@ object MusicBed {
                 cue?.let { MusicCues.targetGain(it, seconds, gain) } ?: gain, seconds - (cue?.start ?: 0.0), cue)
         } else if (cue != null) {
             current?.cue = cue // cùng bài sang mốc kề: chơi tiếp, bước âm lượng theo mốc mới
+            // Vừa tua trong cùng bài: dời nhạc theo chỗ mới, không chơi tiếp từ chỗ cũ (soát a26 L8).
+            if (seeked) current?.player?.let { player -> MusicCues.offsetMs(cue, seconds, player.duration)?.let(player::seekTo) }
         }
         retarget(seconds, seeked)
         applyPlaying()
@@ -375,7 +381,9 @@ object MusicBed {
                         player.removeListener(this)
                         failed.forget(track)
                         val duration = player.duration
-                        if (duration > 0) player.seekTo(offsetMs % duration)
+                        // Nhạc của sách tải xong sau khi giọng đã chạy tiếp (hay vừa tua): theo giây mới nhất của chương (soát a26 L8).
+                        val latest = if (cue != null && current?.player === player) MusicCues.offsetMs(cue, lastSeconds, duration) else null
+                        if (duration > 0) player.seekTo(latest ?: (offsetMs % duration))
                     }
                 }
             })
