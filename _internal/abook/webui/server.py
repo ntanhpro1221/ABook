@@ -43,16 +43,16 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
-from .listening import RECORD_ID, Listening
+from .listening import HEAVY_KEYS, RECORD_ID, Listening
 from . import bluetooth, peer_studio, precast, remote_books, spelling, tls, workshop_merge
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
-from .casting_review import casting_chapter, casting_chapters, casting_stamp
-from .name_readings import name_readings, never_text, package_reading_reach, reading_reach
+from .casting_review import casting_chapter, casting_stamp, casting_view
+from .name_readings import name_readings_view, never_text, package_reading_reach, reading_reach
 from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices, waiting_voice
 from . import narrator_cards
-from .work_items import open_count, work_items
+from .work_items import card_examples, for_page, open_count, work_view
 from .cast import CastError, CastPlayers
 from .cast import search as cast_search
 from .gcast import discover as gcast_discover
@@ -2741,14 +2741,15 @@ class App:
                 continue
             if not listen_view.on_shelf(summary, bool(summary.get("running") or summary.get("starting"))):
                 continue
-            view = listen_view.book(path, summary["id"], summary, self.listening.get(summary["id"]), with_chapters=False)
+            view = listen_view.book(path, summary["id"], summary, self.listening.get(summary["id"], omit=HEAVY_KEYS),
+                                    with_chapters=False)
             view["eta"] = summary.get("eta")
             view["capabilities"] = capabilities_of(path)
             books.append(view)
         for path in self.library.packages():
             value = book_id(path)
             try:
-                view = packages.listen(path, value, self.listening.get(value), with_chapters=False)
+                view = packages.listen(path, value, self.listening.get(value, omit=HEAVY_KEYS), with_chapters=False)
             except (OSError, ValueError):  # gói hỏng: bỏ qua, như sách hỏng
                 continue
             self._built_workshop(view, path)
@@ -3450,9 +3451,10 @@ class Handler(BaseHTTPRequestHandler):
         self.app.exports.add(result["folder"])
         self._send_json(HTTPStatus.OK, result)
 
-    def _bookfile_packer(self, value: str) -> Callable[[], dict[str, Any]]:
+    def _bookfile_packer(self, value: str, progress: Callable[[str, int, int], None] | None = None) -> Callable[[], dict[str, Any]]:
         """Đọc yêu cầu xuất `.abook` (thuộc luồng yêu cầu: thân, `target`, các phần của bộ) và trả việc đóng gói chưa chạy: gọi nó
-        thì ghi file, trả {file, folder, size...} và ghi nhớ thư mục cho "Mở thư mục". Lỗi đóng gói/đầu vào ném ApiError 409."""
+        thì ghi file, trả {file, folder, size...} và ghi nhớ thư mục cho "Mở thư mục". Lỗi đóng gói/đầu vào ném ApiError 409.
+        `progress(pha, đã, tổng)` (bookfile.pack): tiến độ của một cuốn - cả bộ thì không (mỗi phần đếm lại từ đầu)."""
         # Một cuốn trong một file (bookfile.py) - mở bằng app ở máy khác, gửi cho người khác. Cả bộ: `single` (mặc định của
         # giao diện) gộp mọi phần vào MỘT file phiên bản 3 (bookfile.pack_series); không thì mỗi phần một file trong thư
         # mục bộ - cần khi thẻ nhớ / USB FAT32 không chứa nổi file trên 4 GiB.
@@ -3469,7 +3471,8 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 with app.music_exporting(app.music_key(project), parts or [project]) as music:
                     def pack(part: Path, folder: Path, name: str) -> dict[str, Any]:
-                        path = bookfile.pack(part, free_path(folder / bookfile.default_name(name)), music_track=music)
+                        path = bookfile.pack(part, free_path(folder / bookfile.default_name(name)), music_track=music,
+                                             progress=progress if parts is None else None)
                         return {"file": str(path), "size": path.stat().st_size}
 
                     if parts is None:
@@ -3496,8 +3499,25 @@ class Handler(BaseHTTPRequestHandler):
     def post_bookfile_job(self, _query: dict[str, list[str]], value: str) -> None:
         # Cùng việc đóng gói của `post_bookfile` nhưng chạy nền: trả ngay trạng thái (có mã), `get_bookfile_job` hỏi tiếp - tải lại
         # trang giữa chừng hay sau khi xong vẫn hỏi lại được (export_jobs.py). Đang có lượt chạy cho cuốn này thì trả lượt ấy.
-        run = self._bookfile_packer(value)
-        self._send_json(HTTPStatus.ACCEPTED, self.app.bookfile_jobs.start(str(self.app._book(value)), run))
+        # Tiến độ "chương X/N" (rồi byte đã ghi) vào bản ghi của lượt - cùng đường với gói dự án (`_projectfile_packer`).
+        jobs, key = self.app.bookfile_jobs, str(self.app._book(value))
+
+        def progress(phase: str, done: int, total: int) -> None:
+            if jobs.cancelled(key):
+                raise export_jobs.Cancelled()
+            jobs.update(key, phase=phase, done=done, total=total)
+
+        pack = self._bookfile_packer(value, progress)
+
+        def run() -> dict[str, Any]:
+            try:
+                return pack()
+            except ApiError as error:  # huỷ (tải nhạc nền, đóng app): lượt kết thúc "cancelled", không phải lỗi
+                if error.extra.get("reason") == "cancelled":
+                    raise export_jobs.Cancelled() from error
+                raise
+
+        self._send_json(HTTPStatus.ACCEPTED, jobs.start(key, run))
 
     def get_bookfile_job(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.export_job_status(self.app.bookfile_jobs, value))
@@ -3723,12 +3743,25 @@ class Handler(BaseHTTPRequestHandler):
     def get_work(self, query: dict[str, list[str]], value: str) -> None:
         # "Việc cần duyệt" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
         # Câu đã chấm ở "Cần nghe lại" không còn là việc (phán quyết nằm ở reviews.json của dự án, không trong sổ dự án).
-        view = self._view(value, "work", lambda root: work_items(root, self.app.reviews.get(root)))
+        # Nhớ theo chữ ký dự án (work_items.work_view): nhãn tab (`?count=1`) và danh sách hỏi cùng lúc chỉ tính một lần.
+        view = self._view(value, "work", lambda root: work_view(root, self.app.reviews.get(root)))
         if (query.get("count") or [""])[0] == "1":
             # Nhãn của tab chỉ cần con số (việc đã quyết đang chờ áp dụng không còn là việc cần làm): không gửi/đọc cả danh sách vài MB.
             self._send_json(HTTPStatus.OK, {"count": open_count(view)})
             return
-        self._send_json(HTTPStatus.OK, view)
+        self._send_json(HTTPStatus.OK, for_page(view))
+
+    def get_work_examples(self, query: dict[str, list[str]], value: str) -> None:
+        # "Xem thêm" trên thẻ vai phụ cả cuốn: trang kế các câu của thẻ (`/work` chỉ gửi vài câu đầu - work_items.for_page).
+        try:
+            offset, limit = int((query.get("offset") or ["0"])[0]), int((query.get("limit") or ["100"])[0])
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "offset / limit phải là số") from error
+        view = self._view(value, "work", lambda root: work_view(root, self.app.reviews.get(root)))
+        page = card_examples(view, (query.get("key") or [""])[0], offset, limit)
+        if page is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Việc này không còn trong danh sách")
+        self._send_json(HTTPStatus.OK, page)
 
     def get_music(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.music_view(value))
@@ -3842,11 +3875,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_name_readings(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab Nhân vật, mục "Cách đọc tên" (name_readings.py): mọi cách đọc của cuốn, kể cả cách máy chắc và cách đã ghim.
-        self._send_json(HTTPStatus.OK, self._view(value, "names", name_readings))
+        self._send_json(HTTPStatus.OK, self._view(value, "names", name_readings_view))
 
     def get_casting(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab "Kịch bản" (casting_review.py): chương nào bao nhiêu câu thoại, bao nhiêu chỗ máy nghi, bao nhiêu câu đã quyết.
-        self._send_json(HTTPStatus.OK, self._view(value, "casting", casting_chapters))
+        self._send_json(HTTPStatus.OK, self._view(value, "casting", casting_view))
 
     def get_reading_reach(self, query: dict[str, list[str]], value: str) -> None:
         # Ô "Thêm cách đọc cho từ bất kỳ" (NameReadings.tsx), và "Đọc từ này là…" ở trang đọc của cuốn mở từ file (LineWishes.tsx):
@@ -5134,6 +5167,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/export"), Handler.post_export),
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),
     ("GET", re.compile(BOOK + r"/work"), Handler.get_work),
+    ("GET", re.compile(BOOK + r"/work/examples"), Handler.get_work_examples),
     ("GET", re.compile(BOOK + r"/casting"), Handler.get_casting),
     ("GET", re.compile(BOOK + r"/continuation"), Handler.get_continuation),
     ("GET", re.compile(BOOK + r"/redo"), Handler.get_redo),

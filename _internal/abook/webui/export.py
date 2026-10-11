@@ -172,8 +172,9 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     real = covers.cover_file(project_root)
     cover_path = copy_real_cover(real, folder) or drawn_cover(folder, cover)
     ffmpeg = ffmpeg_executable()
+    audio = store.chapter_audio_paths(project_root)
     sources = [(chapter["fullTitle"], path, chapter["duration"]) for chapter in chapters
-               if (path := store.chapter_audio_path(project_root, chapter["id"])) is not None]
+               if (path := audio.get(chapter["id"])) is not None]
     files = write_mp3_folder(ffmpeg, folder, sources, title=title, narrator=narrator, cover_path=cover_path, total=len(sources))
     # Ảnh bìa hỏng: bản xuất mang bìa vẽ từ tên - giao diện nói một câu (coverBroken).
     return {"folder": str(folder), "files": files, "chaptersTotal": summary["chapters"]["total"],
@@ -332,8 +333,9 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
     summary = store.summarize(project_root)
     title = summary["title"] or project_root.name
     narrator = summary["settings"]["narrator"] or ""
+    audio = store.chapter_audio_paths(project_root)
     chapters = [(chapter["fullTitle"], path) for chapter in _listenable(project_root)
-                if (path := store.chapter_audio_path(project_root, chapter["id"])) is not None]
+                if (path := audio.get(chapter["id"])) is not None]
     if not chapters:
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
     if not ffmpeg_available():
@@ -373,8 +375,9 @@ def audio_bytes(projects: list[Path], music_track: Callable[[str], Path | None] 
     links: set[str] = set()
     for project in projects:
         plan = music_plan.read_plan(project) if music_track is not None else None
+        audio = store.chapter_audio_paths(project)
         for chapter in _listenable(project):
-            path = store.chapter_audio_path(project, chapter["id"])
+            path = audio.get(chapter["id"])
             if path is not None:
                 total += path.stat().st_size
             if plan is not None:

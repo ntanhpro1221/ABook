@@ -65,6 +65,8 @@ def bookmark_quote(text: Any) -> str:
 NIGHT_RECENT_SECONDS = 20 * 3600
 NIGHT_MAX_POINTS = 480
 MAX_SESSIONS = 200
+# Phần dài của state không đi theo thẻ sách / trang sách (thẻ "Tối qua", lịch sử nghe hỏi riêng): danh sách và trang bỏ chúng.
+HEAVY_KEYS = ("night", "sessions")
 FORMAT_VERSION = 2
 DEFAULT_RECORD_NAME = "Mặc định"
 MAX_RECORD_NAME = 60
@@ -329,9 +331,14 @@ class Listening:
 
     # ---- trạng thái nghe của hồ sơ đang dùng ---------------------------------------------------------------------
 
-    def get(self, book: str) -> dict[str, Any]:
+    def get(self, book: str, *, omit: tuple[str, ...] = ()) -> dict[str, Any]:
+        """Bản chép state của hồ sơ đang dùng. `omit`: khoá không cần (thư viện: HEAVY_KEYS) - không chép rồi bỏ cả trăm phiên nghe
+        mỗi cuốn (soát a29: 18% thời gian /api/listen/library ở 300 cuốn)."""
         with self._lock:
-            return json.loads(json.dumps(self._active(book, create=False) or _empty_state()))
+            state = self._active(book, create=False) or _empty_state()
+            if omit:
+                state = {key: value for key, value in state.items() if key not in omit}
+            return json.loads(json.dumps(state))
 
     def all(self) -> dict[str, Any]:
         """{mã sách: state của hồ sơ đang dùng}."""
@@ -595,7 +602,7 @@ class Listening:
     def _save(self) -> None:
         if self._unread:
             return  # chưa đọc được bản trên đĩa: ghi bây giờ là đè mất chỗ nghe, dấu trang thật
-        atomic_write_json(self.path, self._data)  # nguyên tử + fsync: mất điện không để lại file rỗng
+        atomic_write_json(self.path, self._data, compact=True)  # nguyên tử + fsync: mất điện không để lại file rỗng; gọn: ghi mỗi 10 giây
         self._stamp = file_stamp(self.path)
 
 

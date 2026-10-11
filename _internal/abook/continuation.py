@@ -260,13 +260,17 @@ def next_chapters(project: Path) -> list[Path]:
     """
     done: set[Path] = set()
     folders: list[Path] = []
+    parents: dict[Path, Path | None] = {}  # thư mục chương -> bản resolve (None: không còn) - cả nghìn chương chung một thư mục
     for part in chain_of(project):
         for path in _input_paths(part):
             done.add(path.resolve())
-            if path.parent.is_dir() and path.parent.resolve() not in folders:
-                folders.append(path.parent.resolve())
-    files = sorted({found.resolve() for folder in folders for found in discover_txt_files(folder)},
-                   key=lambda path: natural_key(path.name))
+            if path.parent not in parents:
+                parents[path.parent] = path.parent.resolve() if path.parent.is_dir() else None
+            folder = parents[path.parent]
+            if folder is not None and folder not in folders:
+                folders.append(folder)
+    # discover_txt_files đã trả đường resolve.
+    files = sorted({found for folder in folders for found in discover_txt_files(folder)}, key=lambda path: natural_key(path.name))
     last = max((index for index, path in enumerate(files) if path in done), default=-1)
     return [path for path in files[last + 1:] if path not in done]
 

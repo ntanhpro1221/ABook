@@ -1,5 +1,5 @@
 import { Locate } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject, type TouchEvent } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject, type TouchEvent } from "react";
 import { cn } from "@/shared/cn";
 import { excerpt } from "@/shared/format";
 import { useClock } from "./clock";
@@ -256,12 +256,7 @@ export function ReadAlongText({
     return segment ? usableWords(segment.text, segment.words) : null;
   }, [playingIndex, script]);
   const tabStop = focused ?? Math.max(0, Math.min(script.segments.length - 1, focusIndex));
-  const paragraphs: { key: number; items: { index: number; segment: ScriptSegment }[] }[] = [];
-  script.segments.forEach((segment, index) => {
-    const last = paragraphs[paragraphs.length - 1];
-    if (last && last.key === segment.paragraph) last.items.push({ index, segment });
-    else paragraphs.push({ key: segment.paragraph, items: [{ index, segment }] });
-  });
+  const paragraphs = useMemo(() => paragraphsOf(script), [script]);
 
   // Giữ ngón tay: hẹn giờ; trượt / nhấc tay sớm thì huỷ. Menu vừa mở thì cú chạm (click) và menu của hệ thống ngay sau đó không tính.
   const press = useRef<{ timer: number; x: number; y: number } | null>(null);
@@ -326,57 +321,170 @@ export function ReadAlongText({
       element.focus();
     }
   };
+  // Từng đoạn là một component nhớ (memo): mở ô tìm, chọn một câu, cuộn (câu đầu màn đổi) chỉ vẽ lại đoạn có câu đổi - chương 1,5 triệu
+  // chữ từng vẽ lại cả chục nghìn câu mỗi lần (soát uxfix30). Hàm xử lý đi qua `live` để đoạn nhận cùng một đối tượng mọi lần vẽ.
+  const live = useRef({ click, wordMenu, focus: setFocused });
+  live.current = { click, wordMenu, focus: setFocused };
+  const actions = useMemo<SentenceActions>(
+    () => ({
+      click: (event, index) => live.current.click(event, index),
+      focus: (index) => live.current.focus(index),
+      menu: (index) => live.current.wordMenu(index),
+    }),
+    [],
+  );
+  const marks: Marks = { playing: playingIndex, litWords, heard: dimHeard && playingIndex >= 0 ? playingIndex : -1, selected, tabStop };
+  const shared = { tappable: Boolean(onTap), menu: Boolean(onWordMenu), speakers, Heading, headingClassName, after, actions };
+  const chunks = useMemo(() => chunksOf(paragraphs), [paragraphs]);
+
+  return (
+    <div className={className} onKeyDown={keys}>
+      {chunks.map((chunk) => (
+        <Chunk key={chunk.first} chunk={chunk} {...narrow(marks, chunk.first, chunk.last)} {...shared} />
+      ))}
+    </div>
+  );
+}
+
+/** Câu đang nghe / đang chọn / nhận Tab... của cả chương. */
+interface Marks {
+  playing: number;
+  litWords: WordSpan[] | null;
+  /** Câu đầu tiên chưa nghe (-1: không làm nhạt câu nào). */
+  heard: number;
+  selected: number | null;
+  tabStop: number;
+}
+
+/** Phần của `marks` thuộc khoảng câu [first, last]; ngoài khoảng thì về giá trị trống - phần không đổi thì memo bỏ qua. */
+function narrow(marks: Marks, first: number, last: number): Marks {
+  const inside = (index: number | null) => index !== null && index >= first && index <= last;
+  const playing = inside(marks.playing) ? marks.playing : -1;
+  return {
+    playing,
+    litWords: playing >= 0 ? marks.litWords : null,
+    heard: marks.heard >= 0 ? Math.min(Math.max(marks.heard, first), last + 1) : -1,
+    selected: inside(marks.selected) ? marks.selected : null,
+    tabStop: inside(marks.tabStop) ? marks.tabStop : -1,
+  };
+}
+
+interface Shared {
+  tappable: boolean;
+  menu: boolean;
+  speakers: boolean;
+  Heading: "h1" | "h2";
+  headingClassName: string;
+  after?: (segment: ScriptSegment) => ReactNode;
+  actions: SentenceActions;
+}
+
+type ChunkItems = { first: number; last: number; paragraphs: ParagraphItems[] };
+/** Số đoạn mỗi nhóm: lần vẽ lại chỉ so ~1/50 số đoạn (chương 11.000 đoạn: 220 nhóm). */
+const CHUNK = 50;
+
+function chunksOf(paragraphs: ParagraphItems[]): ChunkItems[] {
+  const chunks: ChunkItems[] = [];
+  for (let at = 0; at < paragraphs.length; at += CHUNK) {
+    const part = paragraphs.slice(at, at + CHUNK);
+    chunks.push({ first: part[0].first, last: part[part.length - 1].last, paragraphs: part });
+  }
+  return chunks;
+}
+
+const Chunk = memo(function Chunk({ chunk, ...props }: { chunk: ChunkItems } & Marks & Shared) {
+  const marks: Marks = props;
+  return (
+    <>
+      {chunk.paragraphs.map((paragraph) => (
+        <Paragraph key={paragraph.key} paragraph={paragraph} {...props} {...narrow(marks, paragraph.first, paragraph.last)} />
+      ))}
+    </>
+  );
+});
+
+type ParagraphItems = { key: number; first: number; last: number; items: { index: number; segment: ScriptSegment }[] };
+
+/** Câu của chương gom theo đoạn (số `paragraph` liền nhau), kèm chỉ số câu đầu / cuối của đoạn. */
+function paragraphsOf(script: Script): ParagraphItems[] {
+  const paragraphs: ParagraphItems[] = [];
+  script.segments.forEach((segment, index) => {
+    const last = paragraphs[paragraphs.length - 1];
+    if (last && last.key === segment.paragraph) {
+      last.items.push({ index, segment });
+      last.last = index;
+    } else paragraphs.push({ key: segment.paragraph, first: index, last: index, items: [{ index, segment }] });
+  });
+  return paragraphs;
+}
+
+interface SentenceActions {
+  click: (event: MouseEvent<HTMLElement>, index: number) => void;
+  focus: (index: number) => void;
+  menu: (index: number) => Record<string, unknown>;
+}
+
+/** Một đoạn của màn đọc. Chỉ nhận những gì của RIÊNG đoạn này (câu đang nghe / đang chọn / nhận Tab nếu nằm trong đoạn, -1 / null nếu
+ *  không) nên React bỏ qua mọi đoạn không đổi. `heard`: câu đầu chưa nghe trong đoạn (-1: không làm nhạt câu nào). */
+const Paragraph = memo(function Paragraph({
+  paragraph,
+  playing,
+  litWords,
+  heard,
+  selected,
+  tabStop,
+  tappable,
+  menu,
+  speakers,
+  Heading,
+  headingClassName,
+  after,
+  actions,
+}: { paragraph: ParagraphItems } & Marks & Shared) {
   const sentence = (index: number, segment: ScriptSegment) => ({
     "data-index": index,
     "data-sentence": "",
     tabIndex: index === tabStop ? 0 : -1,
-    role: onTap ? "button" : undefined,
-    "aria-current": index === playingIndex ? ("true" as const) : undefined,
-    onFocus: () => setFocused(index),
-    onClick: (event: MouseEvent<HTMLElement>) => click(event, index),
-    ...wordMenu(index),
+    role: tappable ? "button" : undefined,
+    "aria-current": index === playing ? ("true" as const) : undefined,
+    onFocus: () => actions.focus(index),
+    onClick: (event: MouseEvent<HTMLElement>) => actions.click(event, index),
+    ...(menu ? actions.menu(index) : {}),
     className: cn(
       // scroll-mt: câu được cuộn tới không nằm khuất dưới thanh đầu dính (soát UX 29-09).
       "scroll-mt-20 rounded-[4px] outline-none [box-decoration-break:clone] focus-visible:ring-2 focus-visible:ring-accent",
-      onTap && "cursor-pointer",
+      tappable && "cursor-pointer",
       segment.kind === "thought" && "italic",
-      index === playingIndex && "read-along-active",
-      dimHeard && playingIndex >= 0 && index < playingIndex && "text-fg-2",
+      index === playing && "read-along-active",
+      heard >= 0 && index < heard && "text-fg-2",
       // Câu đang chọn: gạch chân màu nhấn - khung bao từng dòng của câu dài thành nhiều ô rời, và gạch chân không lẫn với nền của câu đang phát.
       index === selected && "underline decoration-accent decoration-2 underline-offset-[0.22em]",
     ),
   });
-
+  const first = paragraph.items[0];
+  if (first.segment.kind === "heading") {
+    const { role: _role, ...props } = sentence(first.index, first.segment);
+    return (
+      <Heading {...props} className={cn(props.className, headingClassName)}>
+        {first.segment.text}
+      </Heading>
+    );
+  }
   return (
-    <div className={className} onKeyDown={keys}>
-      {paragraphs.map((paragraph) => {
-        const first = paragraph.items[0];
-        if (first.segment.kind === "heading") {
-          const { role: _role, ...props } = sentence(first.index, first.segment);
-          return (
-            <Heading key={paragraph.key} {...props} className={cn(props.className, headingClassName)}>
-              {first.segment.text}
-            </Heading>
-          );
-        }
-        return (
-          <p key={paragraph.key} className="text-pretty">
-            {paragraph.items.map(({ index, segment }) => (
-              <span key={index}>
-                {speakers && segment.speaker && (segment.kind === "dialogue" || segment.kind === "thought") && (
-                  <span className="mr-1.5 inline-block -translate-y-px rounded bg-accent-soft px-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent-text">
-                    {segment.speaker}
-                  </span>
-                )}
-                <span {...sentence(index, segment)}>
-                  {index === playingIndex && litWords ? <LitWords text={segment.text} words={litWords} /> : segment.text}
-                  {after?.(segment)}
-                </span>{" "}
-              </span>
-            ))}
-          </p>
-        );
-      })}
-    </div>
+    <p className="text-pretty">
+      {paragraph.items.map(({ index, segment }) => (
+        <span key={index}>
+          {speakers && segment.speaker && (segment.kind === "dialogue" || segment.kind === "thought") && (
+            <span className="mr-1.5 inline-block -translate-y-px rounded bg-accent-soft px-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent-text">
+              {segment.speaker}
+            </span>
+          )}
+          <span {...sentence(index, segment)}>
+            {index === playing && litWords ? <LitWords text={segment.text} words={litWords} /> : segment.text}
+            {after?.(segment)}
+          </span>{" "}
+        </span>
+      ))}
+    </p>
   );
-}
+});

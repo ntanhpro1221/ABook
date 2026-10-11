@@ -105,7 +105,6 @@ def test_the_phone_learns_that_a_book_is_held_for_review_before_recording(librar
 def test_the_phone_counts_the_same_work_as_the_studio_tab(tmp_path: Path, monkeypatch) -> None:
     """Thông báo "có việc mới cần duyệt" của điện thoại (StudioAlerts.kt) hiện đúng số trên nhãn tab "Việc cần duyệt": việc đã
     quyết (chờ áp dụng), thẻ chỉ áp khi làm lại phân tích, và câu đã chấm ở "Cần nghe lại" đều không tính - soát parity23."""
-    from abook.webui import server as server_module
     from abook.webui import work_items as work_module
     from abook.webui.actions import FakeRunner
     from abook.webui.library import Preferences, book_id
@@ -120,7 +119,6 @@ def test_the_phone_counts_the_same_work_as_the_studio_tab(tmp_path: Path, monkey
                   if stable_id not in (verdicts or {})]
         return {"items": items, "counts": {}}
 
-    monkeypatch.setattr(server_module, "work_items", fake_work)
     monkeypatch.setattr(work_module, "work_items", fake_work)
     root = tmp_path / "thu_vien"
     project = make_project(root)

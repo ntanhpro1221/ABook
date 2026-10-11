@@ -13,7 +13,7 @@ import { useTryReading } from "./TryReading";
 import { isOpenWork } from "./precast";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { seenFor, warnElsewhere } from "./elsewhere";
-import { keepRequests, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
+import { examplesPage, keepRequests, moreText, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
 import { decidedTitle, inboxLead, midSentence, rerecordSentence, sentence } from "./workText";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
@@ -83,8 +83,11 @@ export interface WorkItem {
   pickVoice?: { name: string; displayName: string };
   /** Chương của các câu thẻ sẽ đổi (hay của câu ví dụ) - "Duyệt trước khi thu" hỏi trước thẻ ở chương sắp thu. */
   chapters?: number[];
-  /** Thẻ vai phụ không tên cả cuốn: `examples` là mọi câu của nhóm, người nghe bỏ chọn câu không phải trước khi chọn người. */
+  /** Thẻ vai phụ không tên cả cuốn: `examples` là các câu của nhóm, người nghe bỏ chọn câu không phải trước khi chọn người. */
   pick?: boolean;
+  /** Thẻ `pick` có nhóm lớn: máy chỉ gửi vài câu đầu trong `examples`, đây là tổng số câu - "Xem thêm" lấy tiếp theo trang
+   *  (GET /work/examples). Không có (bản chụp trong file dự án, nhóm nhỏ): `examples` đã đủ. */
+  examplesTotal?: number;
   /** Giữ nguyên thẻ nhóm: mỗi vai giữ người của nó - một yêu cầu cho mỗi vai. */
   keepGroups?: SpeakerRequest[];
   /** Thẻ vai phụ cả cuốn: tên đề nghị cho "là một người mới tên “…”" (cả nhóm thành MỘT người có giọng riêng). */
@@ -158,13 +161,14 @@ export { isOpenWork };
 
 /** Số việc cần làm cho nhãn của tab. `fromList`: danh sách đầy đủ đang được tải/mở (tab Việc cần duyệt, màn Duyệt trước khi thu) thì đếm
  *  từ chính nó; không thì chỉ hỏi con số (`?count=1`) - trang dự án 400 chương từng tải 9,5 MB danh sách chỉ để hiện một con số, và tải
- *  lại sau MỖI quyết định. Khoá nằm dưới ["work", sách] nên mọi chỗ làm mới danh sách cũng làm mới con số. */
-export function useWorkCount(bookId: string, fromList = false) {
-  const { data: list } = useWork(bookId, fromList);
+ *  lại sau MỖI quyết định. Khoá nằm dưới ["work", sách] nên mọi chỗ làm mới danh sách cũng làm mới con số. `enabled: false`: hoãn hỏi
+ *  (tab đang mở cần máy chủ trước). */
+export function useWorkCount(bookId: string, fromList = false, enabled = true) {
+  const { data: list } = useWork(bookId, fromList && enabled);
   const { data: counted } = useQuery({
     queryKey: ["work", bookId, "count"],
     queryFn: () => api<{ count: number }>(`/api/books/${bookId}/work?count=1`),
-    enabled: Boolean(bookId) && !fromList,
+    enabled: Boolean(bookId) && !fromList && enabled,
     staleTime: 60_000,
     retry: retryUnlessGone,
     retryOnMount: false,
@@ -814,11 +818,26 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
   // Thẻ vai phụ cả cuốn: câu người nghe bỏ chọn (mã câu), và mở cả danh sách hay chỉ vài câu đầu.
   const [left, setLeft] = useState<ReadonlySet<string>>(new Set());
   const [all, setAll] = useState(false);
+  // Câu tải thêm theo trang (thẻ nhóm lớn chỉ mang vài câu đầu - `examplesTotal`).
+  const [more, setMore] = useState<WorkExample[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
   // Gán một phần rồi thì thẻ còn đúng những câu đã bỏ chọn - chúng phải hiện là đang chọn, không phải vẫn bỏ.
   const groupLines = item.pick ? (item.lines ?? []).map((line) => line.stableId).join(" ") : "";
-  useEffect(() => setLeft(new Set()), [groupLines]);
+  useEffect(() => {
+    setLeft(new Set());
+    setMore([]);
+  }, [groupLines]);
   const picked = item.pick && item.lines ? pickedLines(item.lines, left) : undefined;
-  const shownExamples = item.pick && !all ? item.examples.slice(0, PICK_PREVIEW) : item.examples;
+  const { loaded, total, next } = examplesPage(bookId, item.key, item.examples, more, item.examplesTotal, PICK_PAGE);
+  const loadMore = () => {
+    if (!next) return;
+    setLoadingMore(true);
+    api<{ examples: WorkExample[]; total: number }>(next)
+      .then((page) => setMore((current) => [...current, ...page.examples]))
+      .catch((error: Error) => toast.error("Chưa tải thêm được câu", { description: error.message }))
+      .finally(() => setLoadingMore(false));
+  };
+  const shownExamples = item.pick && !all ? loaded.slice(0, PICK_PREVIEW) : loaded;
   const openScript: OpenScript | undefined =
     onOpenScript && ((chapterId, stableId, pick) => onOpenScript(chapterId, stableId, pick, item.key));
   const openNames: OpenNames | undefined = onOpenNames && ((name) => onOpenNames(name, item.key));
@@ -885,10 +904,25 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
           ))}
         </ul>
       )}
-      {item.pick && item.examples.length > PICK_PREVIEW && (
-        <Button size="sm" variant="ghost" className="mt-2" aria-expanded={all} onClick={() => setAll((value) => !value)}>
-          {all ? "Thu gọn" : `Xem cả ${item.examples.length} câu`}
-        </Button>
+      {item.pick && total > PICK_PREVIEW && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-expanded={all}
+            onClick={() => {
+              if (!all && next && more.length === 0) loadMore();
+              setAll((value) => !value);
+            }}
+          >
+            {all ? "Thu gọn" : `Xem cả ${formatNumber(total)} câu`}
+          </Button>
+          {all && next && (
+            <Button size="sm" variant="ghost" disabled={loadingMore} onClick={loadMore}>
+              {loadingMore ? "Đang tải…" : moreText(loaded.length, total, formatNumber)}
+            </Button>
+          )}
+        </div>
       )}
     </li>
   );
@@ -898,8 +932,9 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
 const MAX_CHIPS = 6;
 const GENERIC_PEOPLE = new Set(["Người kể", "Người kể đọc tất cả", "Vai phụ không tên"]);
 
-/** Thẻ vai phụ cả cuốn hiện ngần này câu đầu; "Xem cả N câu" mở hết để bỏ chọn. */
+/** Thẻ vai phụ cả cuốn hiện ngần này câu đầu; "Xem cả N câu" mở hết để bỏ chọn - nhóm lớn thì từng trang PICK_PAGE câu. */
 const PICK_PREVIEW = 3;
+const PICK_PAGE = 100;
 
 // "Giữ như máy đang làm" cho cả loại thẻ đang lọc (soát UX a6 01-10, D2): sau khi soát vài thẻ thấy máy đúng gần hết, người
 // làm sách bấm "giữ" từng thẻ một trong cả trăm thẻ. Một lần bấm (có hỏi lại) ghi đúng quyết định "giữ" mà từng thẻ ghi -

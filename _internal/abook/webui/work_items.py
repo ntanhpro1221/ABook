@@ -10,6 +10,7 @@ quá tự tin. Các tín hiệu ở đây là tín hiệu có cấu trúc, kiể
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sqlite3
@@ -25,7 +26,7 @@ from ..listener_overrides import (
     voice_requests,
 )
 from .. import speaker_logprobs
-from . import narrator_cards, store
+from . import listing_cache, narrator_cards, store
 from .address_cues import address_doubts, split_doubts
 from .humanize import person_name, shown_reading
 from .reviews import awaiting, review_items
@@ -376,9 +377,13 @@ def epithet_links(labels: list[str], folded_book: str) -> dict[tuple[str, str], 
     return links
 
 
-def merged_turns(connection: Any, chapter_id: int | None = None) -> list[tuple[Any, Any]]:
+def merged_turns(connection: Any, chapter_id: int | None = None, project_root: Path | None = None) -> list[tuple[Any, Any]]:
     """Cặp câu thoại liền kề ở hai đoạn văn liền nhau - câu trước đóng ngoặc, câu sau mở ngoặc mới, đoạn sau chỉ có thoại
-    (không lời dẫn riêng) - mà mang CÙNG một người có tên. Project cũ không có số đoạn văn thì không tìm."""
+    (không lời dẫn riêng) - mà mang CÙNG một người có tên. Project cũ không có số đoạn văn thì không tìm.
+    `project_root` (cả cuốn): nhớ theo chữ ký sổ - hộp việc và tab Kịch bản cùng cần nó (bản dùng chung, không sửa)."""
+    if chapter_id is None and project_root is not None:
+        return listing_cache.cached(("merged_turns", str(project_root)), store.db_signature(project_root),
+                                    lambda: merged_turns(connection))
     columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
     if "paragraph_index" not in columns:
         return []
@@ -438,13 +443,18 @@ def minor_role_groups(lines_by_speaker: dict[str, list[Any]], decided: set[str])
     return {key: members for key, members in groups.items() if len(members) > 1}
 
 
-def self_addressed(connection: Any, chapter_id: int | None = None) -> dict[int, list[str]]:
+def self_addressed(connection: Any, chapter_id: int | None = None, project_root: Path | None = None) -> dict[int, list[str]]:
     """segments.id -> những người có tên nói quanh câu (gần nhất trước), cho câu thoại gán cho người mà chính câu ấy GỌI
     ("Lucien, ..." / "..., Satomi-san." / "Karin-nim"): không ai gọi tên chính mình - gần như chắc sai (100% theo đáp án,
     `first_person.addressed_names`). Luật tự sửa của dây chuyền (`_repair_dialogue_turns_by_address`) chỉ sửa khi chắc; câu
     nó để nguyên rơi vào đây, nên hộp việc hỏi đúng những câu ấy. Tính lúc xem từ SQLite - không có dấu nào lưu. Người
-    nói KHÔNG bị đổi. `chapter_id`: chỉ xét câu của chương ấy (người có tên và cách gọi vẫn tính trên cả cuốn)."""
+    nói KHÔNG bị đổi. `chapter_id`: chỉ xét câu của chương ấy (người có tên và cách gọi vẫn tính trên cả cuốn).
+    `project_root` (cả cuốn): nhớ theo chữ ký sổ như `merged_turns`."""
     from ..character_registry import self_addressed as registry_self_addressed  # nặng: chỉ nạp khi dựng hộp việc
+
+    if chapter_id is None and project_root is not None:
+        return listing_cache.cached(("self_addressed", str(project_root)), store.db_signature(project_root),
+                                    lambda: self_addressed(connection))
 
     tables = store._table_names(connection)
     columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
@@ -636,6 +646,36 @@ def open_count(view: dict[str, Any]) -> int:
     return sum(1 for item in view["items"] if not item.get("requested") and not item.get("redoOnly"))
 
 
+# Thẻ vai phụ cả cuốn (`pick`) mang MỌI câu của nhóm - có nhóm cả nghìn câu (soát a29: một thẻ 3 MB). Trang nhận ngần này câu ví dụ đầu
+# (`for_page`), phần còn lại theo trang khi người dùng mở thẻ (`card_examples`); `lines` / `keepGroups` vẫn đủ để một lần bấm áp cả nhóm.
+PICK_FIRST = 20
+
+
+def work_view(project_root: Path, verdicts: dict[str, Any] | None = None) -> dict[str, Any]:
+    """`work_items` nhớ theo chữ ký thư mục dự án (`store.project_signature`: sổ, yêu cầu của người nghe, tên đặt lại, cài đặt...) và
+    phán quyết `verdicts` - nhãn tab (`?count=1`), hộp việc, màn duyệt trước khi thu hỏi cùng lúc mà chỉ tính một lần. Bản dùng chung:
+    không sửa."""
+    digest = hashlib.sha256(json.dumps(verdicts or {}, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
+    signature = store.project_signature(project_root) + ((f"verdicts:{digest}", 0, ()),)
+    return listing_cache.cached(("work_items", str(project_root)), signature, lambda: work_items(project_root, verdicts))
+
+
+def for_page(view: dict[str, Any]) -> dict[str, Any]:
+    """Bản gửi trang: thẻ `pick` chỉ mang PICK_FIRST câu ví dụ đầu, cộng `examplesTotal` (tổng số câu). Không sửa `view`."""
+    items = [{**item, "examples": item["examples"][:PICK_FIRST], "examplesTotal": len(item["examples"])}
+             if item.get("pick") and len(item["examples"]) > PICK_FIRST else item for item in view["items"]]
+    return {**view, "items": items}
+
+
+def card_examples(view: dict[str, Any], key: str, offset: int, limit: int) -> dict[str, Any] | None:
+    """Một trang câu ví dụ của thẻ `key` ("Xem thêm" trên thẻ vai phụ cả cuốn): {examples, total}; không còn thẻ ấy thì None."""
+    item = next((item for item in view["items"] if item["key"] == key), None)
+    if item is None:
+        return None
+    offset, limit = max(0, offset), max(1, min(limit, 500))
+    return {"examples": item["examples"][offset:offset + limit], "total": len(item["examples"])}
+
+
 def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> dict[str, Any]:
     """`verdicts`: phán quyết "Cần nghe lại" của cuốn (reviews.Reviews.get) - câu đã chấm rơi khỏi thẻ "Bản thu lỗi"."""
     items: list[dict[str, Any]] = []
@@ -676,8 +716,8 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             int(row["id"]): row
             for row in connection.execute("SELECT id, voice_key, preset_name FROM voice_profiles")
         } if "voice_profiles" in store._table_names(connection) else {}
-        turns = merged_turns(connection)
-        self_addressed_ids = self_addressed(connection)
+        turns = merged_turns(connection, project_root=project_root)
+        self_addressed_ids = self_addressed(connection, project_root=project_root)
         pronunciations = connection.execute(
             "SELECT surface, spoken_form, confidence, locked FROM pronunciations WHERE confidence < 0.9"
         ).fetchall() if "pronunciations" in store._table_names(connection) else []
