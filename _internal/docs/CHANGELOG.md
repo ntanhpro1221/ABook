@@ -9,6 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Làm sách trong Studio (máy tính)
 
+- Cài Studio nhẹ đi khoảng 258 MiB: bộ cài không còn kéo theo 64 thư viện thí nghiệm mà app không dùng (voxcpm, funasr, modelscope, datasets, pyarrow...); Studio đã cài thì vẫn chạy như cũ.
 - Đổi giọng người kể chắc chắn vào sách: giọng bạn đã chọn cho người kể (dù chưa áp dụng) không còn chọn được cho nhân vật và ngược lại, người kể được áp trước; nếu giọng ấy vẫn không đổi được thì "Việc cần duyệt" có thẻ "Chưa đổi được giọng…" với nút chọn giọng khác. Đầu trang ghi giọng kể sẽ dùng kèm "chờ áp dụng", hàng người kể ghi số câu chờ thu lại, và chương chờ thu lại theo sửa của bạn vẫn nghe được bản cũ thay vì báo "Có lỗi".
 - Trình tạo sách cho "Xem hết" mọi dòng ghi công / xin ủng hộ theo từng chương và bỏ riêng dòng đầu chương hay cuối chương; nhập EPUB không còn chép một dòng gợi ý cho mỗi chương vào danh sách lưu ý.
 - Khi máy gộp hai cách viết một tên ("Toko" về "Tooko"), Diễn biến ghi rõ chương nào, bao nhiêu câu; phép gộp chạm từ 5 câu có thẻ nhẹ "Đúng, cùng một người" / "Không, là người khác". Cách đọc mà ký hiệu trong từ khiến máy không dùng được (như "Mở/đóng") không lưu được nữa và không làm thu lại câu nào; tab Nghe lại chỉ gọi là "tên riêng" khi câu thật sự lệch ở tên.
@@ -23,6 +24,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Phát triển
 
+- `uv.lock` khoá đúng môi trường Studio: torch/torchvision/torchaudio bản CUDA từ index cu128 (trước là bản CPU của PyPI), lock chỉ cho Windows, và một test giữ lock với `studio-requirements.txt` khớp từng gói (kèm `uv lock --check`).
 - Kiểm thượng nguồn so với ghim của origin/main (`--pins-ref`), không với cây đang chạy công cụ: chạy từ checkout cũ từng báo timm, vieneu, sea-g2p "có bản mới" dù main đã ghim bản mới nhất.
 - Đóng băng thư viện Studio từ chối khi runtime dev lệch ghim của pyproject (bộ cài lùi bản mà không ai thấy), và để ngoài bộ cài hai wheel Qt mới của PySide6 6.12 (WebEngine, Pdf).
 

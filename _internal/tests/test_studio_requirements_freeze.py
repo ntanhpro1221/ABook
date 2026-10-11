@@ -48,3 +48,16 @@ def test_the_cuda_build_tag_and_excluded_pins_are_not_drift():
 
 def test_a_pinned_package_missing_from_the_runtime_is_drift():
     assert freeze.drift_from_pins(["torch==2.11.0+cu128"], PYPROJECT) == ["huggingface-hub: runtime không có, pyproject 1.33.0"]
+
+
+def test_a_dev_only_pin_is_not_drift_when_only_the_app_closure_is_frozen():
+    pyproject = PYPROJECT + 'dev2 = ["cryptography==50.0.0"]\n'
+    kept = ["huggingface-hub==1.33.0", "torch==2.11.0+cu128"]
+    assert freeze.drift_from_pins(kept, pyproject, {"huggingface-hub", "torch"}) == []
+    assert freeze.drift_from_pins(kept, pyproject) == ["cryptography: runtime không có, pyproject 50.0.0"]
+
+
+def test_the_runtime_must_match_the_lock_including_the_cuda_tag_and_git_commits():
+    locked = {"torch": "2.11.0+cu128", "utmosv2": "cc27", "timm": "1.0.30"}
+    kept = ["torch==2.11.0", "utmosv2 @ git+https://github.com/x/UTMOSv2.git@cc27", "timm==1.0.30"]
+    assert freeze.drift_from_lock(kept, locked) == ["torch: runtime 2.11.0, uv.lock 2.11.0+cu128"]
