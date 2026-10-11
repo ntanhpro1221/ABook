@@ -50,19 +50,25 @@ import pytest
 _REAL_SLEEP = time.sleep
 _TOTAL_SECONDS = 0.0
 _CALLS = 0
+# Giây ngủ theo test đang chạy (kể cả lời gọi từ luồng nền của test ấy): tổng chỉ báo "có vòng chờ mới", bảng này chỉ ra ở đâu.
+_BY_TEST: dict[str, float] = {}
+_CURRENT_TEST = ""
 
 
-def _counting_sleep(seconds: float) -> None:
+def _tally(seconds: float) -> None:
     global _TOTAL_SECONDS, _CALLS
     _TOTAL_SECONDS += float(seconds)
     _CALLS += 1
+    _BY_TEST[_CURRENT_TEST] = _BY_TEST.get(_CURRENT_TEST, 0.0) + float(seconds)
+
+
+def _counting_sleep(seconds: float) -> None:
+    _tally(seconds)
     _REAL_SLEEP(seconds)
 
 
 def _skipping_sleep(seconds: float) -> None:
-    global _TOTAL_SECONDS, _CALLS
-    _TOTAL_SECONDS += float(seconds)
-    _CALLS += 1
+    _tally(seconds)
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -173,9 +179,11 @@ def _count_sleeping(request: pytest.FixtureRequest) -> Iterator[None]:
     đối tượng**: `import time` trong pipeline trỏ tới chính module ấy. Ghi ra đây để lần sau
     không ai tưởng mình đang vá hẹp hơn thực tế.
     """
+    global _CURRENT_TEST
     if request.node.get_closest_marker("real_sleep") is not None:
         yield
         return
+    _CURRENT_TEST = request.node.nodeid
     if os.environ.get("EBOOK_TESTS_REAL_SLEEP_OFF"):
         time.sleep = _skipping_sleep
     else:
@@ -223,3 +231,6 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config) -> None:  # no
         f"trong {_CALLS} lần time.sleep."
         + ("  (đây là phép đo, không phải cách chạy nhanh hơn)" if skipped else "")
     )
+    worst = sorted(((sec, test) for test, sec in _BY_TEST.items() if sec >= 5), reverse=True)[:10]
+    for seconds, test in worst:
+        terminalreporter.write_line(f"[conftest]   {seconds:7.0f} giây  {test or '(ngoài test)'}")
