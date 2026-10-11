@@ -10,15 +10,17 @@ bản nào nhiều chương hơn thì giữ bản ấy (thay tại chỗ, nên d
 """
 from __future__ import annotations
 
+import functools
 import json
 import re
 import time
+from collections.abc import Callable, Container, Iterable, Iterator
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
-from . import book_edits, covers, listing_cache, project_views, store
 from .. import continuation
 from ..io_utils import atomic_write_bytes
+from . import book_edits, covers, listing_cache, project_views, store
 from .fingerprints import Fingerprints, base_name, identity_prints, is_text_identity
 from .listen_view import FORMAT
 from .listening import HEAVY_KEYS, book_progress, text_book_progress
@@ -300,23 +302,52 @@ def text_book(book: dict[str, Any]) -> bool:
 
 def chapter_text(path: Path, chapter_id: int) -> str | None:
     """Chữ của một chương chỉ-chữ (`texts/<mã>.txt`), hay None khi chương không có chữ."""
-    chapter = _chapter(manifest(path), chapter_id)
+    return _chapter_text(path, _chapter(manifest(path), chapter_id))
+
+
+def _chapter_text(path: Path, chapter: dict[str, Any] | None) -> str | None:
     file = _file(path, chapter.get("text")) if chapter else None
     return file.read_text(encoding="utf-8") if file else None
 
 
 def script(path: Path, chapter_id: int, *, strict: bool = False) -> Any | None:
     """Chữ đọc theo của một chương, đã qua lớp sửa (tên người nói, tên chương). `strict`: như `_file`."""
-    book = manifest(path)
-    chapter = _chapter(book, chapter_id)
+    return _script(path, _chapter(manifest(path), chapter_id), book_edits.load(path), lambda: raw_cast(path), strict=strict)
+
+
+def _script(path: Path, chapter: dict[str, Any] | None, edits: dict[str, Any], cast: Callable[[], Any], *,
+            strict: bool = False) -> Any | None:
+    """`script` với mục chương của book.json, lớp sửa và dàn nhân vật gốc (`cast()`, chỉ đọc khi cần) đã có sẵn - `search_texts`
+    đọc chúng một lần cho cả lô."""
     file = _file(path, chapter.get("script"), strict=strict) if chapter else None
     if not file:
         return None
     result = json.loads(file.read_text(encoding="utf-8"))
-    edits = book_edits.load(path)
     if book_edits.is_empty(edits) or not isinstance(result, dict):
         return result
-    return book_edits.apply_script(result, raw_cast(path), edits, chapter)
+    return book_edits.apply_script(result, cast(), edits, chapter)
+
+
+def search_texts(path: Path, chapter_ids: Iterable[int], text_ids: Container[int]) -> Iterator[tuple[int, list[dict[str, Any]] | str | None]]:
+    """Ô "Tìm trong sách" (server `get_search_texts`): chữ của nhiều chương, book.json + lớp sửa đọc MỘT lần. Chương trong `text_ids` (giao
+    diện coi là chỉ-có-chữ) cho chữ thô như `chapter_text` - giao diện tự chia đoạn như màn đọc (textScript.ts); chương khác cho các câu của
+    `script` (`store.search_segments`), cùng chỉ số câu với màn đọc. Chương không đọc được: None. Lần lượt, theo thứ tự xin."""
+    book = manifest(path)
+    chapters: dict[Any, dict[str, Any]] = {}
+    for chapter in book.get("chapters") or []:
+        if isinstance(chapter, dict):
+            chapters.setdefault(chapter.get("id"), chapter)  # như `_chapter`: mục đầu tiên mang mã ấy
+    edits = book_edits.load(path)
+    cast = functools.cache(lambda: raw_cast(path))
+    for chapter_id in chapter_ids:
+        chapter = chapters.get(chapter_id)
+        found: list[dict[str, Any]] | str | None
+        try:
+            found = (_chapter_text(path, chapter) if chapter_id in text_ids
+                     else store.search_segments(_script(path, chapter, edits, cast)))
+        except (OSError, ValueError, TypeError, AttributeError, KeyError):
+            found = None  # file hỏng / không đọc được: chương ấy báo hỏng, cả lô vẫn đi tiếp
+        yield chapter_id, found
 
 
 def raw_cast(path: Path) -> Any:

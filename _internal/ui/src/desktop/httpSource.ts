@@ -1,7 +1,7 @@
 import type { MusicCredit, MusicCue } from "@/listen/musicBed";
 import type { PlaylistQueue } from "@/listen/playlistBed";
 import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
-import type { ListenSource } from "@/listen/source";
+import type { ListenSource, SearchText } from "@/listen/source";
 import type { EditsSyncState } from "@/shared/editsSync";
 import { itemFromPath } from "@/listen/importQueue";
 import type { AddedBook, ImportPreview, PickedItem, TextImport } from "@/listen/textImport";
@@ -132,6 +132,12 @@ export const httpSource: ListenSource = {
   script: (bookId, chapterId) => api<Script>(`/api/books/${bookId}/chapters/${chapterId}/script`),
   chapterText: async (bookId, chapterId) =>
     (await api<{ text: string }>(`/api/listen/books/${bookId}/chapters/${chapterId}/text`)).text,
+  // Ô "Tìm trong sách": một lần hỏi cho cả lô chương (server.py get_search_texts); `text`: các chương chỉ-có-chữ trong lô.
+  searchTexts: async (bookId, chapters) => {
+    const text = chapters.filter((chapter) => chapter.text).map((chapter) => chapter.id);
+    const query = `chapters=${chapters.map((chapter) => chapter.id).join(",")}${text.length ? `&text=${text.join(",")}` : ""}`;
+    return (await api<{ chapters: SearchText[] }>(`/api/listen/books/${bookId}/search-texts?${query}`)).chapters;
+  },
   cast: (bookId) => api<Cast>(`/api/books/${bookId}/cast`),
   readAloudVoices: async () => {
     const voices = await api<(Omit<ReadAloudVoice, "gainDb"> & { gain_db?: number })[]>("/api/readaloud/voices");

@@ -1318,9 +1318,7 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
     không dồn về cuối chương.
     """
     with closing(connect(project_root)) as connection:
-        chapter = connection.execute(
-            "SELECT id, title, status, last_error, output_mp3 FROM chapters WHERE id = ?", (chapter_id,)
-        ).fetchone()
+        chapter = _script_chapter(connection, chapter_id)
         if chapter is None:
             return None
         # Chương chờ thu lại theo sửa của người nghe: MP3 cũ đi cùng chữ đọc theo CŨ khớp nó (`keep_heard_scripts`).
@@ -1331,19 +1329,15 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
                     "title": chapter_name.get("full") or humanize.chapter_title(str(chapter["title"]))}
         # Tag trình bày của từng câu (cảm xúc, cường độ, nhịp, âm lượng) - có ở mọi sách làm bằng dây chuyền hiện nay,
         # sách rất cũ thì không: chỉ lấy cột nào có.
-        columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
+        columns = _segment_columns(connection)
         tags = [column for column in DELIVERY_TAGS if column in columns]
         # Mã ổn định + băm chữ: định danh câu qua các lần sản xuất lại - lớp sửa của người nghe (docs/EDITING.md) và yêu
         # cầu "ai nói câu này" trỏ tới câu bằng cặp này, nên sách xuất ra mang chúng theo (cộng thêm, không đổi phiên bản).
         identity = [column for column in ("stable_id", "text_sha256") if column in columns]
         # Câu đứng ngay trước một dòng ngăn cảnh ("***"): nhạc nền đổi cảnh ở câu kế (webui/music_scenes.hard_break).
         scene_break = ["scene_break"] if "scene_break" in columns else []
-        rows = connection.execute(
-            "SELECT id, seq, paragraph_index, text, kind, speaker, wav_duration, break_ms, status"
-            + "".join(f", {column}" for column in (*identity, *scene_break, *tags))
-            + " FROM segments WHERE chapter_id = ? ORDER BY seq",
-            (chapter_id,),
-        ).fetchall()
+        rows = _script_rows(connection, chapter_id, ["id", "seq", "paragraph_index", "text", "kind", "speaker", "wav_duration",
+                                                     "break_ms", "status", *identity, *scene_break, *tags])
         names = {
             str(row["canonical_name"]): str(row["display_name"] or row["canonical_name"])
             for row in connection.execute("SELECT canonical_name, display_name FROM characters")
@@ -1380,6 +1374,45 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
         "duration": round(duration, 3),
         "segments": segments,
     }
+
+
+def _script_chapter(connection: sqlite3.Connection, chapter_id: int) -> Any | None:
+    """Dòng chương `chapter_script` cần (tên, trạng thái, MP3 - cho `_kept_script` và mốc thời gian), hay None."""
+    return connection.execute("SELECT id, title, status, last_error, output_mp3 FROM chapters WHERE id = ?", (chapter_id,)).fetchone()
+
+
+def _segment_columns(connection: sqlite3.Connection) -> set[str]:
+    return {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
+
+
+def _script_rows(connection: sqlite3.Connection, chapter_id: int, columns: Iterable[str]) -> list[Any]:
+    """Các câu của chương theo thứ tự đọc (`seq`) - chỉ số trong danh sách này là chỉ số câu của màn đọc (`?at=`)."""
+    return connection.execute(f"SELECT {', '.join(columns)} FROM segments WHERE chapter_id = ? ORDER BY seq", (chapter_id,)).fetchall()
+
+
+def search_segments(script: Any) -> list[dict[str, Any]] | None:
+    """Chỉ chữ + dấu ngăn cảnh của các câu một kịch bản đọc theo (ô "Tìm trong sách" không cần mốc thời gian, người nói...), cùng thứ tự;
+    None khi không có kịch bản hay kịch bản hỏng (câu không có chữ - màn đọc cũng không mở được)."""
+    segments = script.get("segments") if isinstance(script, dict) else None
+    if not isinstance(segments, list) or not all(isinstance(segment, dict) and isinstance(segment.get("text"), str) for segment in segments):
+        return None
+    return [{"text": segment["text"], **({"sceneBreak": True} if segment.get("sceneBreak") else {})} for segment in segments]
+
+
+def search_texts(project_root: Path, chapter_ids: Iterable[int]) -> Iterator[tuple[int, list[dict[str, Any]] | None]]:
+    """Ô "Tìm trong sách" (server `get_search_texts`): các câu (chữ + dấu ngăn cảnh) của nhiều chương qua MỘT kết nối, cùng câu, cùng thứ
+    tự với `chapter_script` (chỉ số câu là `?at=` của màn đọc) mà không dựng mốc thời gian. Chương không có: None. Lần lượt, theo thứ tự xin."""
+    with closing(connect(project_root)) as connection:
+        scene_break = ["scene_break"] if "scene_break" in _segment_columns(connection) else []
+        for chapter_id in chapter_ids:
+            chapter = _script_chapter(connection, chapter_id)
+            found: list[dict[str, Any]] | None = None
+            if chapter is not None:
+                kept = _kept_script(project_root, chapter)
+                found = (search_segments(kept) if kept is not None else
+                         [{"text": str(row["text"]), **({"sceneBreak": True} if scene_break and row["scene_break"] else {})}
+                          for row in _script_rows(connection, chapter_id, ["text", *scene_break])])
+            yield chapter_id, found
 
 
 def _sentence_timeline(project_root: Path, chapter: Any,

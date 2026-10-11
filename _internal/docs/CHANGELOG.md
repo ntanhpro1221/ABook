@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sách rất dài (máy tính)
+
+- Tìm chữ trong sách dài nhanh hơn nhiều: ô "Tìm trong sách" của cuốn 3.000 chương tìm hết trong khoảng 1 giây thay vì 5–20 giây.
+
 ## [0.4.53] - 2026-10-11
 
 ### Nhạc nền (máy tính và điện thoại)

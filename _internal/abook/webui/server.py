@@ -80,6 +80,9 @@ MUSIC_TRACK_MAX_BYTES = MUSIC_TRACK_MAX_MB * 1024 * 1024
 TOO_BIG_TRACK = f"Bài nhạc này quá lớn (trên {MUSIC_TRACK_MAX_MB} MB) nên máy này không dùng - máy chọn bài khác"
 MAX_BODY = 1024 * 1024
 REFRESH_PATIENCE_SECONDS = 8  # "Hỏi lại thư viện": máy thức trả lời trong ngần này; máy đang ngủ thì chờ tiếp ở nền
+# "Tìm trong sách" (get_search_texts): một lần hỏi tối đa ngần này chương (= bookSearch.ts BULK); chữ quá ngần này ký tự thì trả trước phần đã đọc.
+SEARCH_TEXT_CHAPTERS = 64
+SEARCH_TEXT_CHARS = 2_000_000
 TYPES = {
     ".js": "text/javascript; charset=utf-8",
     ".mjs": "text/javascript; charset=utf-8",
@@ -4493,6 +4496,50 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.NOT_FOUND, "Chương này không có chữ riêng")
         self._send_json(HTTPStatus.OK, {"chapterId": int(chapter), "text": text})
 
+    def get_search_texts(self, query: dict[str, list[str]], value: str) -> None:
+        # Ô "Tìm trong sách" (ui listen/bookSearch.ts): chữ của nhiều chương trong MỘT yêu cầu - sách 3000 chương từng phải hỏi 3000 lần
+        # (~20 giây). `chapters`: mã chương theo thứ tự; `text`: những chương giao diện coi là chỉ-có-chữ - trả chữ thô như get_chapter_text,
+        # giao diện chia đoạn như màn đọc; chương khác trả các câu của get_script (chữ + dấu ngăn cảnh), cùng chỉ số câu (`?at=`). Chương không
+        # đọc được: `failed`. Chữ quá SEARCH_TEXT_CHARS thì trả trước các chương đã đọc - giao diện xin tiếp phần còn lại.
+        path = self.app._listenable(value)
+        ids = self._chapter_ids(query, "chapters")
+        text_ids = set(self._chapter_ids(query, "text"))
+        if not ids or len(ids) > SEARCH_TEXT_CHAPTERS:
+            raise ApiError(HTTPStatus.BAD_REQUEST, f"Cần từ 1 tới {SEARCH_TEXT_CHAPTERS} chương")
+        found: Iterable[tuple[int, Any]]
+        if not packages.is_package(path):
+            # Dự án: chương chỉ-có-chữ không có ở đây (get_chapter_text cũng 404).
+            found = ((chapter, None if chapter in text_ids else segments)
+                     for chapter, segments in store.search_texts(path, ids))
+        elif remote_books.remote_of(packages.manifest(path)) is not None:
+            # Sách của máy khác: chữ chưa đệm phải hỏi máy ấy từng chương (get_script) - giao diện tìm từng chương như cũ.
+            raise ApiError(HTTPStatus.CONFLICT, "Sách của máy khác: tìm từng chương")
+        else:
+            found = packages.search_texts(path, ids, text_ids)
+        out: list[dict[str, Any]] = []
+        size = 0
+        for chapter, item in found:
+            if isinstance(item, str):
+                out.append({"id": chapter, "text": item})
+                size += len(item)
+            elif item is not None:
+                out.append({"id": chapter, "segments": item})
+                size += sum(len(segment["text"]) for segment in item)
+            else:
+                out.append({"id": chapter, "failed": True})
+            if size >= SEARCH_TEXT_CHARS:
+                break
+        self._send_json(HTTPStatus.OK, {"chapters": out})
+
+    @staticmethod
+    def _chapter_ids(query: dict[str, list[str]], name: str) -> list[int]:
+        """Danh sách mã chương `?name=1,2,3` (rỗng khi không có); sai dạng thì 400."""
+        raw = ",".join(query.get(name) or [])
+        try:
+            return [int(item) for item in raw.split(",") if item.strip()]
+        except ValueError:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Mã chương phải là số") from None
+
     def get_suggestions(self, _query: dict[str, list[str]], value: str) -> None:
         # Gợi ý của bộ nhập sách cho một cuốn chỉ-chữ (dòng ghi công ở đầu chương, dòng ủng hộ / nguồn ở cuối chương), kèm chúng đang bỏ khỏi phần đọc hay chưa -
         # trang sách hiện những gợi ý còn chờ để người nghe chấp nhận bất cứ lúc nào.
@@ -5271,6 +5318,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/listen/import/preview"), Handler.post_import_preview),
     ("POST", re.compile(r"/api/listen/import"), Handler.post_import_book),
     ("GET", re.compile(LISTEN + r"/chapters/(\d+)/text"), Handler.get_chapter_text),
+    ("GET", re.compile(LISTEN + r"/search-texts"), Handler.get_search_texts),
 
     ("GET", re.compile(LISTEN), Handler.get_listen_book),
     ("GET", re.compile(LISTEN + r"/download"), Handler.get_remote_download),
