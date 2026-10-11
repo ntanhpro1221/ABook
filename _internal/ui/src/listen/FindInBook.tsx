@@ -8,7 +8,7 @@ import type { FindHit, Snippet } from "./findText";
 import { foldedQuery, MIN_QUERY } from "./findText";
 import type { ListenBook } from "./model";
 import { usePlayer } from "./player";
-import { chapterScriptQuery, useSource } from "./source";
+import { chapterScriptQuery, chapterTexts, useSource } from "./source";
 
 // "Tìm trong sách": gõ một chữ / một câu, bấm một kết quả là mở màn đọc đúng câu ấy (`?at=` - ReaderScreen); đang nghe cuốn này thì nghe tiếp từ câu đó.
 // Máy tính và điện thoại dùng chung; chữ lấy qua nguồn dữ liệu (bookSearch.ts), nên sách nói, sách chỉ-chữ và sách nghe thẳng từ máy khác đều tìm được.
@@ -69,13 +69,12 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
     setProgress(null);
     if (!open || !foldedQuery(query)) return undefined;
     const controller = new AbortController();
+    const byId = new Map(chapterList.map((chapter) => [chapter.id, chapter]));
     const timer = window.setTimeout(() => {
       void searchBook({
         chapters: chapterList,
-        load: (chapter) => {
-          const full = chapterList.find((item) => item.id === chapter.id)!;
-          return client.fetchQuery({ ...chapterScriptQuery(source, bookId, full), gcTime: 60_000 });
-        },
+        load: (chapter) => client.fetchQuery({ ...chapterScriptQuery(source, bookId, byId.get(chapter.id)!), gcTime: 60_000 }),
+        loadMany: source.searchTexts ? (lot) => chapterTexts(source, bookId, lot.map((chapter) => byId.get(chapter.id)!)) : undefined,
         query,
         cache: cache.current,
         signal: controller.signal,
