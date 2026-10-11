@@ -4337,6 +4337,62 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 trưa - Lỗi 3 (nhạc nhấc trễ khi truyện căng lên): ranh giới từ học sinh q06 trên lát 45 s THẮNG ở bộ học; chờ thử ngoài bộ 11+12
+
+Ba lượt CPU, 0 token, mỗi lượt ghi trước trong Corpus (`PLAN_t_onset.md`, `PLAN_t_onset2.md`, `PLAN_t_onset3.md`). Luật thắng của
+lượt 2-3 do Lead đặt. Mã ghim ABook_docs_music 399fe2d6.
+
+**Thước.** Mốc lên T là chỗ T vàng tăng ≥ .5, với cảnh ≥ 30 s. Trên đó đo ba thứ:
+- `trễ`: từ mốc tới ranh giới máy đầu tiên, tính cả trượt;
+- `giao30`: phần nhạc đã lên tại mốc + 30 s, với không khí tiên tri;
+- `thừa/giờ`: ranh giới máy không khớp ranh giới vàng nào trong ±20 s.
+
+Ba đường so: APP; SÀN (chỉ ranh giới cứng); BIẾN THỂ. Bộ học là 4+5+5b+6, 49 mốc. Bộ 7 chỉ có 5 mốc nên chỉ ghi lại.
+
+**T-ONSET (chẩn đoán).**
+- Ranh giới app tới trễ trung vị 55 s. Chỉ 24 % mốc có ranh giới trong ±20 s; 20 % không có ranh giới nào.
+- Giao30 58 %, trong khi sàn đã được 50 % mà không cần chia gì. Ngưỡng 50 % ghi trước đã đặt sai: nó trùng sàn. Phán quyết vẫn
+  giữ như đã ghi.
+- Nhãn câu quanh mốc gần như phẳng (+.06).
+
+**Họ A: chỉnh hằng `music_scenes` + căng thẳng vào khoảng cách (108 cấu hình). THUA.**
+- Kiểm mã: cấu hình mặc định trùng app từng ranh giới ở cả 62 chương.
+- Cấu hình chọn (30, .3, 40, 60, wT 1): trễ 57 → 34 s, thừa ×1,10.
+- Nhưng giao30 chỉ +9,58 điểm, cần +10.
+
+**Họ B: học sinh q06 trên lát mịn (48 cấu hình). THẮNG trên bộ học.**
+- Cách làm: cắt chương thành lát ≤ 45 s, không vượt ranh giới cứng. Nhúng Qwen3-0.6B lớp giữa, ridge học trên kho bạc
+  (ngoài mẫu với bộ vàng), trừ trung bình theo chương. Khe có |Δ dT| ≥ 1,5 sd của chương thành ranh giới thêm, cách ranh giới
+  cũ ≥ 60 s, cộng lên nền A*.
+- Học sinh THẤY mốc: Δ tại mốc là +.72 sd, khe khác khoảng 0. Nhãn câu chỉ có +.06.
+
+| bộ học (49 mốc) | trễ trung vị | giao30 | thừa/giờ |
+|---|---|---|---|
+| APP | 57 s | 58,2 % | 13,1 |
+| SÀN | 143 s | 50 % | 0 |
+| BIẾN THỂ | 25 s | 76,0 % | 16,4 (×1,2500) |
+
+- Ba điều kiện:
+  - (1) trễ −32 s: đạt;
+  - (2) giao30 +17,8 điểm so với app và +25,7 so với sàn: đạt;
+  - (3) thừa ×1,25: đạt nhưng đúng mép.
+- Bootstrap 95 %:
+  - Δtrễ [−46, −14] s;
+  - Δgiao30 [+.09, +.27];
+  - thừa/app [1,16; 1,35], tức khoảng một nửa số lượt vượt mép.
+- Bộ 7 (không phán): trễ 59 → 13 s, giao30 65 → 82 %, thừa ×1,33.
+- Cái lợi về độ lên và độ trễ là chắc. Cái giá là ranh giới thừa, và nó nằm sát giới hạn. Cấu hình (45, 2, 2,0, 60, A*) thừa ít
+  hơn (×1,15) nhưng giao30 chỉ 70 %.
+- Chi phí nếu đưa vào app: khoảng 92 lát mỗi giờ âm thanh × 0,37 s CPU, tức khoảng 35 s CPU mỗi giờ sách.
+
+**Chưa đổi app.** Thử ngoài đã ghi trước (Corpus 434d205): cấu hình đóng băng, bộ 11+12 gộp, cùng ba điều kiện.
+- Đạt cả ba thì gửi Lead nhánh đề xuất.
+- Trượt bất kỳ điều kiện nào thì không đề xuất.
+- Nếu chỉ trượt (3) thì báo Lead con số để Lead quyết đánh đổi.
+- Dưới 15 mốc thì không phán.
+
+Chuỗi rời `LLM_Train/music/t_onset3_ext_chain.sh` chạy ngay khi phân tích bộ 11/12 xong trên hàng GPU.
+
 ### 11-10 sáng - LLM-NT2 (4B tìm chỗ đổi nơi/thời gian): DỪNG sau phần A - LỆCH khỏi luật ghi trước
 
 Biến thể a chạy thật trên bộ học: 318 khúc, 42 chương.
