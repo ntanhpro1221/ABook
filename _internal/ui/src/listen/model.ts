@@ -149,6 +149,8 @@ export interface ListenBook {
    *  kia (webui/remote_books.py); `downloaded`: máy này đã có đủ để nghe cả khi máy kia tắt. `device` + `book`: mã máy ấy và mã cuốn ở máy
    *  ấy, `kind`: máy tính hay điện thoại - "Mở Studio" của máy tính ấy ngay tại cuốn này (webui/peer_studio.py). */
   remote?: boolean | { computer: string; device?: string; book?: string; kind?: "computer" | "phone" | ""; downloaded?: boolean };
+  /** Điện thoại: cuốn là dự án Studio ở máy tính giữ nó (đã tải hay nghe thẳng) - "Mở Studio" của máy ấy ngay tại cuốn này. */
+  studio?: boolean;
   /** Phần nối tiếp của "Làm tiếp cuốn này" (continues.json của máy tính): mã phần đầu + thứ tự phần; phần đầu và sách lẻ:
    *  null. Có ở sách của máy tính, sách nghe thẳng và sách đã tải về điện thoại (book.json). */
   series?: SeriesLink | null;

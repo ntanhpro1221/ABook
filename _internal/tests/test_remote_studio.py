@@ -92,6 +92,7 @@ def test_a_paired_browser_listens_without_the_production_switch(studio) -> None:
     status, data, _ = _sync_request(port, "GET", "/api/app", headers=cookie)
     info = json.loads(data)
     assert status == 200 and info["remote"] is True and info["listenOnly"] is True
+    assert info["machine"] == app.sync_view()["name"], "trang Studio đóng nói bật quyền sửa ở máy nào (peerStudio.ts listenOnlyLine)"
     assert info["libraryRoot"] == "", "thiết bị chỉ nghe không thấy thư mục (tên người dùng) trên máy tính"
     status, data, _ = _sync_request(port, "GET", "/api/listen/library", headers=cookie)
     assert status == 200 and json.loads(data), "thư viện nghe của máy tính"

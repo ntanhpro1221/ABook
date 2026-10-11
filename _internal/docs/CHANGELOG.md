@@ -14,6 +14,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - File sách chép dở hay hỏng được gọi đúng tên ("chép lại từ nguồn") thay vì "không phải file sách"; cuốn đã mở mà mất file chương thì trang sách ghi số chương mất, mở lại đúng file sách ấy là chép bù, chỗ nghe giữ nguyên. Ảnh bìa hỏng không còn làm hỏng cả lượt xuất - sách xuất bằng bìa vẽ từ tên.
 - Lưu chỗ nghe không được thì trình phát báo một lần thay vì im lặng; danh sách sách tải lỗi thì hiện lỗi với nút "Thử lại" thay vì "Chưa có sách". Hai cửa sổ app cùng mở không còn ghi đè chỗ nghe, cài đặt của nhau.
 
+### Liên kết máy (điện thoại)
+
+- Điện thoại mở Studio của máy tính như app máy tính: trang cuốn đang làm trên máy tính có “Mở Studio” mở thẳng cuốn ấy; ghép nhiều máy tính thì nút “Mở Studio” ở màn Tải sách hỏi máy nào. Máy tính chưa cho điện thoại sửa thì Studio nói bật ở máy nào, cùng câu với app máy tính.
+- Máy tính tắt hay đổi mạng lúc đang mở Studio thì điện thoại không còn để trang trắng: hiện "Máy … không trả lời - đang chờ nối lại" (có Thử lại, Đóng), tự hỏi lại vài giây một lần và mở lại đúng trang đang xem khi máy tính trả lời. Hai máy khác bản thì báo cập nhật ABook ở hai máy cùng phiên bản.
+
 ## [0.4.51] - 2026-10-11
 
 ### Làm sách trong Studio (máy tính)

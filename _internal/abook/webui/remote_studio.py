@@ -303,10 +303,11 @@ def relay(handler: Any, method: str, response: http.client.HTTPResponse) -> None
         handler.wfile.write(chunk)
 
 
-def forward(handler: Any, method: str, target: str, gate: StudioGate, *, listen_only: bool = False) -> None:
+def forward(handler: Any, method: str, target: str, gate: StudioGate, *, listen_only: bool = False, machine: str = "") -> None:
     """Chuyển một yêu cầu đã qua danh sách trắng sang máy chủ giao diện cục bộ, trả nguyên câu trả lời (kể cả audio
-    theo từng đoạn `Range`). `/api/app` được sửa cho đúng máy đang xem: không có hộp thoại chọn file của máy này, và
-    `listenOnly` khi thiết bị chỉ được nghe (giao diện ẩn Studio)."""
+    theo từng đoạn `Range`). `/api/app` được sửa cho đúng máy đang xem: không có hộp thoại chọn file của máy này,
+    `listenOnly` khi thiết bị chỉ được nghe (giao diện ẩn Studio), và `machine` - tên máy này, để trang chỉ nghe nói bật
+    quyền sửa ở đâu (ui/src/shared/peerStudio.ts listenOnlyLine)."""
     port = gate.port()
     if not port:
         _json(handler, HTTPStatus.SERVICE_UNAVAILABLE, {"error": "Giao diện của máy tính chưa sẵn sàng"})
@@ -327,7 +328,7 @@ def forward(handler: Any, method: str, target: str, gate: StudioGate, *, listen_
         if method == "GET" and path in ("/api/app", "/api/preferences") and response.status == HTTPStatus.OK:
             info = json.loads(response.read().decode("utf-8"))
             if path == "/api/app":
-                info.update(dialogs=False, remote=True, listenOnly=listen_only)
+                info.update(dialogs=False, remote=True, listenOnly=listen_only, machine=machine)
             for key in PRIVATE_PREFERENCES:
                 info.pop(key, None)
             # Thư mục thư viện (có tên người dùng Windows): máy chủ giao diện đã để trống cho mọi yêu cầu từ xa (server.without_local_paths).
