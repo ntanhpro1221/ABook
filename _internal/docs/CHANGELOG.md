@@ -23,6 +23,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   báo nhầm "có vẻ không phải … kể".
 - Truyện viết thoại bằng gạch đầu dòng ("- Đi thôi.", "— Ừ.") không còn bị đọc cả cuộc hội thoại bằng giọng của người nói câu
   đầu: mỗi dòng gạch là một lượt nói riêng, như với thoại trong ngoặc kép.
+- "Việc cần duyệt" hỏi thêm hai chỗ người nghe hay gặp hai giọng cho một người (cả trên điện thoại): hai tên viết gần giống nhau
+  ("Arya" / "Aria") - "Cùng một người" hay "Hai người khác nhau"; và một người không tên nói ngay cạnh lời kể gọi tên một nhân vật
+  ("cô gái tóc đỏ" có phải Mira?) - tên được tô trong lời kể, chọn tên (Hoàn tác được) hay "Không ai trong số này". Chưa bấm thì
+  máy giữ nguyên.
 
 ### Dùng bằng bàn phím và trình đọc màn hình (máy tính và điện thoại)
 

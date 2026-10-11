@@ -16,7 +16,7 @@ from __future__ import annotations
 import unicodedata
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from typing import Any
 
@@ -51,11 +51,14 @@ class NamePair:
 @dataclass(frozen=True)
 class AnonymousCandidate:
     """Nhãn vô danh `speaker` ở chương `chapter_id` có thể là một trong `names` (xếp: nhiều chỗ tên gần câu trước, rồi nhiều
-    câu nói dưới tên trong chương trước). `lines` = số câu của nhãn vô danh trong chương."""
+    câu nói dưới tên trong chương trước). `lines` = số câu của nhãn vô danh trong chương. `evidence`: seq các câu lời kể quanh
+    đó có tên của một ứng viên, `forms`: các dạng tên (đã hạ chữ) của ứng viên - thẻ hiện vài câu ấy và tô tên."""
     chapter_id: int
     speaker: str
     lines: int
     names: tuple[str, ...]
+    evidence: tuple[int, ...] = field(default=(), compare=False)
+    forms: tuple[str, ...] = field(default=(), compare=False)
 
 
 def _is_named(speaker: str) -> bool:
@@ -167,16 +170,19 @@ def anonymous_speaker_candidates(
             if not near:
                 continue
             hits: Counter[str] = Counter()
+            naming: dict[str, list[int]] = {}
             for name, name_forms in forms.items():
                 if not name_forms or not _traits_compatible(speaker_rows, named[name]):
                     continue
-                count = sum(1 for row in near if _text_names(str(row["text"]), name_forms))
-                if count:
-                    hits[name] = count
+                naming[name] = [int(row["seq"]) for row in near if _text_names(str(row["text"]), name_forms)]
+                if naming[name]:
+                    hits[name] = len(naming[name])
             if hits:
                 names = sorted(hits, key=lambda name: (-hits[name], -len(named[name]), name))[:per_card]
-                cards.append(AnonymousCandidate(chapter_id=chapter_id, speaker=speaker, lines=len(speaker_rows),
-                                                names=tuple(names)))
+                cards.append(AnonymousCandidate(
+                    chapter_id=chapter_id, speaker=speaker, lines=len(speaker_rows), names=tuple(names),
+                    evidence=tuple(sorted({seq for name in names for seq in naming[name]})),
+                    forms=tuple(sorted({form for name in names for form in forms[name]}, key=lambda form: (-len(form), form)))))
         cards.sort(key=lambda card: (-card.lines, card.speaker))
         found.extend(cards[:per_chapter])
     return found
