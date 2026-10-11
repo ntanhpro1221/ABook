@@ -1965,8 +1965,9 @@ class App:
 
     def _music_playable(self, path: Path, cues: list[dict[str, Any]], tracks: dict[str, Any]) -> list[dict[str, Any]]:
         """Mốc nhạc mà máy này phát được: mốc có bài không dùng được (offline và chưa có trong bộ đệm, hay nguồn đã hỏng) thì
-        thay bằng bài hợp nhất dùng được cho đoạn ấy; không có bài nào mới bỏ mốc (im lặng). Thông tin bài thay thế thêm vào
-        `tracks` (ghi công, độ to). Plan không đổi - chỉ lượt phát này."""
+        thay bằng bài hợp nhất dùng được cho đoạn ấy (`music_plan.substituted`: bỏ cờ `tail` và số đo của bài gốc); không có bài
+        nào mới bỏ mốc (im lặng). Thông tin bài thay thế thêm vào `tracks` (ghi công, độ to, đoạn nghe được). Plan không đổi - chỉ
+        lượt phát này."""
         playable = []
         for cue in cues:
             if self.music_track_available(cue["link"]):
@@ -1975,7 +1976,7 @@ class App:
             for other in self._music_alternatives(path, cue["key"], [cue["link"]], limit=1,
                                                   available=self.music_track_available):
                 tracks[other["link"]] = {key: other[key] for key in music_plan.TRACK_INFO_KEYS if key in other}
-                playable.append(dict(cue, link=other["link"]))
+                playable.append(music_plan.substituted(cue, other["link"]))
         return playable
 
     @staticmethod
@@ -2059,7 +2060,7 @@ class App:
                 if path is None:
                     failed.add(link)
                 else:
-                    music_plan.measured_lufs(path)  # đo sẵn độ to thật của bài (thắng số danh mục), trình phát khỏi chờ
+                    music_plan.measured_track(path)  # đo sẵn độ to + đoạn nghe được của bài (thắng số danh mục), trình phát khỏi chờ
             if not failed or value is None or plan is None:
                 return
             try:

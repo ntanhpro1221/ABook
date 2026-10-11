@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền (máy tính và điện thoại)
+
+- Bài nhạc lặp lại liền mạch: vòng mới mờ chéo vào từ chỗ có tiếng, không còn khoảng im hay tiếng click ở chỗ nối; bài có đoạn im cuối
+  thì bài kế vào ngay khi tiếng hết.
+- Bài có đoạn quá to được hạ cho vừa, không lấn giọng đọc; mức "Rất nhỏ" ghi rõ là dễ nghe lời nhất.
+- Bài thay cho bài không tải được không còn mang cách kết của bài gốc; trên điện thoại, sang chương mới cùng bài thì nhạc mờ ra rồi vào
+  lại như trên máy tính.
+
 ### Sách rất dài (máy tính)
 
 - Tìm chữ trong sách dài nhanh hơn nhiều: ô "Tìm trong sách" của cuốn 3.000 chương tìm hết trong khoảng 1 giây thay vì 5–20 giây.

@@ -1,0 +1,81 @@
+{
+  "description": "Bài quá ngắn để mờ chéo (E - A < 3X): lặp thường cả file như cũ; mốc tail thôi lặp ở vòng cách hết mốc dưới nửa vòng.",
+  "chapterSeconds": 100,
+  "tracks": {
+    "a": {
+      "seconds": 5,
+      "audibleStart": 0.2,
+      "audibleEnd": 4.9
+    },
+    "b": {
+      "seconds": 4
+    }
+  },
+  "cues": [
+    {
+      "start": 10,
+      "end": 40,
+      "track": "a",
+      "gainDb": -9
+    },
+    {
+      "start": 50,
+      "end": 63,
+      "track": "b",
+      "gainDb": -9,
+      "tail": true
+    }
+  ],
+  "timeline": [
+    {
+      "track": "a",
+      "cue": 0,
+      "enter": "start",
+      "from": 10.0,
+      "to": 42.0,
+      "position": 0.0,
+      "gain": [
+        [
+          10.0,
+          null
+        ],
+        [
+          12.0,
+          -9.0
+        ],
+        [
+          40.0,
+          -9.0
+        ],
+        [
+          42.0,
+          null
+        ]
+      ],
+      "loop": true
+    },
+    {
+      "track": "b",
+      "cue": 1,
+      "enter": "start",
+      "from": 50.0,
+      "to": 62.0,
+      "position": 0.0,
+      "gain": [
+        [
+          50.0,
+          null
+        ],
+        [
+          52.0,
+          -9.0
+        ],
+        [
+          62.0,
+          -9.0
+        ]
+      ],
+      "loop": true
+    }
+  ]
+}

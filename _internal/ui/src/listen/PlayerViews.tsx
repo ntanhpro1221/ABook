@@ -44,7 +44,7 @@ import { useMediaQuery } from "@/shared/media";
 import { excerpt, formatClock, formatLength, formatWhen, licenseLabel, spokenClock } from "@/shared/format";
 import { IconButton, Tooltip, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/PhoneSync";
-import { levelOptions } from "@/shared/musicLevels";
+import { LEVEL_NOTES, levelOptions } from "@/shared/musicLevels";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { COARSE, EXTEND_GESTURE } from "./extendGesture";
@@ -354,8 +354,9 @@ export function MusicMenu() {
   return speaking ? <MusicMenuFor bookId={track.bookId} /> : <PackagedMusicMenu bookId={track.bookId} />;
 }
 
-/** "Mức nhạc dưới giọng đọc": các mức (shared/musicLevels.ts), mức hiện tại có dấu. Chung cho nhạc người làm sách gắn và nhạc nền của sách chữ. */
-function LevelButtons({ level, disabled, onChange }: { level: number; disabled: boolean; onChange: (levelDb: number) => void }) {
+/** "Mức nhạc dưới giọng đọc": các mức (shared/musicLevels.ts), mức hiện tại có dấu, lời kèm mức (nếu có) chữ nhỏ cạnh tên. Chung cho nhạc
+ *  người làm sách gắn và nhạc nền của sách chữ. */
+export function LevelButtons({ level, disabled, onChange }: { level: number; disabled: boolean; onChange: (levelDb: number) => void }) {
   return (
     <>
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Mức nhạc dưới giọng đọc</div>
@@ -374,6 +375,7 @@ function LevelButtons({ level, disabled, onChange }: { level: number; disabled: 
           >
             <Check className={cn("size-4 shrink-0", value === level ? "text-accent-text" : "invisible")} />
             {name}
+            {LEVEL_NOTES[value] && <span className="text-xs font-normal text-fg-2">{LEVEL_NOTES[value]}</span>}
           </button>
         ))}
       </div>

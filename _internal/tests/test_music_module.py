@@ -196,10 +196,11 @@ def test_an_update_does_not_reanalyse_old_tracks_by_itself_but_offers_it(machine
 
 def test_a_pending_track_is_analysed_after_the_download_and_loudness_is_filled_in(machine: Machine, tmp_path: Path, songs, monkeypatch) -> None:  # noqa: F811
     store = LocalMusic(tmp_path / "mine")
-    monkeypatch.setattr(music_plan, "measured_lufs", lambda path, **kwargs: None)  # chưa có ffmpeg
+    monkeypatch.setattr(music_plan, "measured_track", lambda path, **kwargs: {})  # chưa có ffmpeg
     track, _ = store.import_file(songs["wav"])
     assert track["analysed"] is False and "lufs" not in track, "chưa có mô-đun: chưa phân tích, chưa đo độ to"
-    monkeypatch.setattr(music_plan, "measured_lufs", lambda path, **kwargs: -20.5)  # mô-đun đã mang ffmpeg tới
+    monkeypatch.setattr(music_plan, "measured_track", lambda path, **kwargs: {  # mô-đun đã mang ffmpeg tới
+        "lufs": -20.5, "s95": -18.0, "seconds": 62.0, "audibleStart": 0.1, "audibleEnd": 61.0})
     monkeypatch.setattr(music_student, "analyze", lambda path: {"valence": 0.4, "arousal": -0.1})
     monkeypatch.setattr(music_student, "available", lambda: True)
     music_module.configure(tmp_path / "music", after_install=lambda: (store.measure_missing(), store.analyze_pending()))
@@ -207,6 +208,7 @@ def test_a_pending_track_is_analysed_after_the_download_and_loudness_is_filled_i
     music_module.join(10)
     again = store.entries()[0]
     assert again["analysed"] is True and again["lufs"] == -20.5
+    assert (again["s95"], again["audibleStart"], again["audibleEnd"]) == (-18.0, 0.1, 61.0), "đo cùng thể với bài danh mục"
 
 
 def test_a_machine_that_already_has_ffmpeg_and_the_libraries_only_needs_the_model(machine: Machine, monkeypatch) -> None:

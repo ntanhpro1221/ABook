@@ -3,7 +3,10 @@
 // như lời thoại với hình: chỉ cần đổi đúng bài khi sang đoạn mới, chuyển mờ dần, lặp liền, dừng / chạy theo giọng đọc,
 // nhảy đúng chỗ khi người nghe tua. Âm lượng = âm lượng người nghe x `gainDb` của mốc (máy chủ tính từ `levelDb` = nhạc
 // thấp hơn giọng bao nhiêu LU, độ to và độ lấn dải tiếng nói của từng bài - Pha 4 của docs/MUSIC_RESEARCH.md).
-// Android: MusicBed.kt, cùng quy tắc.
+// Lặp bằng MỜ CHÉO vào chính bài trong đoạn nghe được [audibleStart, audibleEnd] (mô hình chung ở webui/music_mix.py), không
+// dùng audio.loop - nối thẳng để lại tiếng tách, đuôi bị cắt, lỗ im (MIX_QA 3.2, 9). Hằng số đọc từ music_mix.json, một file
+// cho cả ba bên. Android: MusicBed.kt, cùng quy tắc.
+import mix from "../../../abook/webui/assets/music_mix.json";
 
 export interface MusicCue {
   start: number;
@@ -23,6 +26,10 @@ export interface MusicCue {
   /** Mốc kết đúng ở điểm kết bài (bài anh em vào ngay sau, hay bài kết sớm - music_plan.chapter_cues): ở vòng cuối bài thôi
    *  lặp để kết tự nhiên, không quay lại phần dạo đầu; hết sớm hơn mốc thì mốc kế vào ngay. */
   tail?: boolean;
+  /** Đoạn nghe được của bài (giây trong bài, > -60 dBFS - music_plan.audible_bounds): lặp mờ chéo từ `audibleEnd` về
+   *  `audibleStart`. Thiếu (sách đóng gói cũ, bài chưa đo) thì 0 và độ dài thật. */
+  audibleStart?: number;
+  audibleEnd?: number;
 }
 
 export interface MusicStep {
@@ -58,9 +65,10 @@ function browserAudio(src: string): BedAudio {
   return audio;
 }
 
-const FADE_SECONDS = 2;
-export const SIBLING_FADE_SECONDS = 6;
-export const STEP_RAMP_SECONDS = 4;
+export const FADE_SECONDS = mix.fadeSeconds;
+export const SIBLING_FADE_SECONDS = mix.siblingFadeSeconds;
+export const STEP_RAMP_SECONDS = mix.stepRampSeconds;
+export const LOOP_CROSSFADE_SECONDS = mix.loopCrossfadeSeconds;
 const STEP_MS = 50;
 /** Bài tải hỏng (mất mạng): đoạn của nó im lặng, chừng ấy sau mới thử lại - như MusicFailures.RETRY_MS của Android. */
 export const RETRY_MS = 5 * 60_000;
@@ -79,16 +87,76 @@ export function stepDbAt(cue: MusicCue, seconds: number): number {
   return db;
 }
 
+/** Vòng lặp của một bài (webui/music_mix.py `loop_bounds`): vào từ `start` (A), hết ở `end` (E), lặp mỗi `period` giây
+ *  (P = E - A - X). `crossfade` false: bài quá ngắn (E - A < 3X) lặp thường cả file như cũ (A 0, E = P = độ dài). */
+export interface LoopBounds {
+  start: number;
+  end: number;
+  period: number;
+  crossfade: boolean;
+}
+
+function finite(value: number | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/** Vòng lặp của bài của mốc `cue`, độ dài thật `duration` (chưa biết: NaN). Chưa biết độ dài lẫn E: bài không bao giờ hết. */
+export function loopBounds(cue: Pick<MusicCue, "audibleStart" | "audibleEnd">, duration: number): LoopBounds {
+  const total = Number.isFinite(duration) && duration > 0 ? duration : null;
+  const start = Math.max(0, finite(cue.audibleStart) ?? 0);
+  const audibleEnd = finite(cue.audibleEnd);
+  let end = audibleEnd !== null && audibleEnd > 0 ? audibleEnd : total;
+  if (end === null) return { start: 0, end: Infinity, period: Infinity, crossfade: false };
+  if (total !== null) end = Math.min(end, total);
+  if (end - start < 3 * LOOP_CROSSFADE_SECONDS) {
+    const whole = total ?? end;
+    return { start: 0, end: whole, period: whole, crossfade: false };
+  }
+  return { start, end, period: end - start - LOOP_CROSSFADE_SECONDS, crossfade: true };
+}
+
+/** Chỗ trong bài ứng với giây `seconds` của chương: A + ((giây - đầu mốc) mod P) - vào giữa chương hay tua thì nhạc cũng ở giữa
+ *  bài, không chạy lại từ đầu (soát a26 L8). */
+export function alignedPosition(cue: MusicCue, seconds: number, bounds: LoopBounds): number {
+  const offset = Math.max(0, seconds - cue.start);
+  return bounds.start + (Number.isFinite(bounds.period) ? offset % bounds.period : offset);
+}
+
+/** Phần tử đang kêu ở `currentTime` đã tới E - X: lúc mở phần tử lặp mới từ A. */
+export function loopDue(bounds: LoopBounds, currentTime: number): boolean {
+  return bounds.crossfade && currentTime >= bounds.end - LOOP_CROSSFADE_SECONDS;
+}
+
+/** Mốc `tail` đang ở vòng cuối: phần còn lại của mốc hơn phần còn lại của bài (tới E) chưa tới nửa chu kỳ - không mở phần tử lặp
+ *  nữa, bài chơi tới E là hết (lô 1, tính theo E thay vì độ dài file). Chưa biết độ dài bài: chưa phải. */
+export function finalLoop(cue: MusicCue, seconds: number, currentTime: number, bounds: LoopBounds): boolean {
+  return !!cue.tail && Number.isFinite(bounds.end) && cue.end - seconds - (bounds.end - currentTime) < bounds.period / 2;
+}
+
+/** Bài đã hết: chơi tới E (phần sau là im) hay `ended`. */
+export function finished(bounds: LoopBounds, currentTime: number, ended: boolean): boolean {
+  return ended || currentTime >= bounds.end;
+}
+
+/** Nối bài anh em: bài cũ mờ ra trong SIBLING_FADE_SECONDS, hay trong phần còn lại thật của nó (tới E) nếu ngắn hơn - không bao
+ *  giờ bị cắt khi còn kêu (MIX_QA 3.5). */
+export function siblingFadeSeconds(bounds: LoopBounds, currentTime: number): number {
+  return Math.max(STEP_MS / 1000, Math.min(SIBLING_FADE_SECONDS, bounds.end - currentTime));
+}
+
 interface Playing {
   cue: MusicCue;
   audio: BedAudio;
   /** Âm lượng đang hướng tới, và mỗi nhịp STEP_MS nhích bao nhiêu. */
   goal: number;
   perTick: number;
-  /** Đang mờ vào (bài mới): tua lúc này không nhảy thẳng tới mức. */
+  /** Đang mờ vào (bài mới, phần tử lặp): tua lúc này không nhảy thẳng tới mức; mờ vào trong `fadeSeconds` giây. */
   entering: boolean;
+  fadeSeconds: number;
   /** Vào sớm: bài trước đã kết tự nhiên trước đầu mốc này. Tới `cue.start` giọng vẫn ở mốc cũ - không chuyển ngược. */
   early?: boolean;
+  /** Vòng cuối của mốc `tail`: không mở phần tử lặp nữa, bài chơi tới E là hết. */
+  final?: boolean;
 }
 
 export class MusicBed {
@@ -142,6 +210,7 @@ export class MusicBed {
     }
     this.retarget(seeked);
     this.finishTail(seconds);
+    this.crossLoop(seconds);
     for (const audio of [this.current?.audio, ...this.fading]) {
       if (!audio) continue;
       if (playing && audio.paused && !audio.ended) void audio.play().catch(() => undefined);
@@ -231,7 +300,7 @@ export class MusicBed {
     if (Math.abs(goal - playing.goal) < 1e-6) return;
     playing.goal = goal;
     if (playing.entering) {
-      playing.perTick = (goal * STEP_MS) / 1000 / (playing.cue.sibling ? SIBLING_FADE_SECONDS : FADE_SECONDS);
+      playing.perTick = (goal * STEP_MS) / 1000 / playing.fadeSeconds;
     } else if (seeked) {
       playing.audio.volume = goal;
       return;
@@ -241,28 +310,65 @@ export class MusicBed {
     this.startFade();
   }
 
-  /** Mốc `tail`: ở vòng cuối (phần còn lại của mốc chưa tới nửa vòng hơn phần còn lại của bài - theo độ dài thật của bài, không
-   *  theo số danh mục) bài thôi lặp và kết tự nhiên. Bài đã kết trước hết mốc mà mốc kế bắt đầu đúng ở đó: mốc kế vào ngay, mờ vào
-   *  như thường (bài anh em SIBLING_FADE_SECONDS), không để quãng im. Không có mốc kế (bài kết sớm) thì im tới hết mốc. */
+  /** Mốc `tail`: ở vòng cuối (`finalLoop` - theo độ dài thật của bài, không theo số danh mục) bài thôi lặp và kết tự nhiên ở E.
+   *  Bài đã kết trước hết mốc (tới E hay `ended`) mà mốc kế bắt đầu đúng ở đó: mốc kế vào ngay, mờ vào như thường (bài anh em
+   *  SIBLING_FADE_SECONDS), không để quãng im. Không có mốc kế (bài kết sớm) thì im tới hết mốc. */
   private finishTail(seconds: number): void {
     const playing = this.current;
     if (!playing?.cue.tail) return;
     const { audio, cue } = playing;
-    if (audio.loop && audio.duration > 0) {
-      const remTrack = audio.duration - audio.currentTime;
-      if (cue.end - seconds - remTrack < audio.duration / 2) audio.loop = false;
+    const bounds = loopBounds(cue, audio.duration);
+    if (!playing.final && audio.duration > 0 && finalLoop(cue, seconds, audio.currentTime, bounds)) {
+      playing.final = true;
+      audio.loop = false; // bài quá ngắn lặp thường: chơi nốt vòng này rồi thôi
     }
-    if (!audio.ended || seconds >= cue.end) return;
+    const done = playing.final ? finished(bounds, audio.currentTime, !!audio.ended) : !!audio.ended;
+    if (!done || seconds >= cue.end) return;
     const next = this.playableAt(cue.end);
     if (!next || next.start !== cue.end || next.link === cue.link) return;
     this.switchTo(next, seconds);
     if (this.current?.cue === next) this.current.early = true;
   }
 
-  /** Đặt bài `audio` của mốc `cue` vào đúng chỗ ứng với giây `seconds` của chương (lặp bài thì theo vòng) - vào giữa chương hay tua
-   *  thì nhạc cũng ở giữa bài, không chạy lại từ đầu (soát a26 L8). Chưa biết độ dài bài thì chờ `loadedmetadata`. */
+  /** Lặp mờ chéo: phần tử đang kêu tới E - X thì một phần tử MỚI của chính bài vào từ A, mờ chéo LOOP_CROSSFADE_SECONDS; phần
+   *  tử cũ mờ đi rồi dừng. Vòng cuối của mốc `tail` (`finishTail`) và bài quá ngắn (lặp thường) thì không. */
+  private crossLoop(seconds: number): void {
+    const playing = this.current;
+    if (!playing || playing.final || seconds >= playing.cue.end || !(playing.audio.duration > 0)) return;
+    const bounds = loopBounds(playing.cue, playing.audio.duration);
+    if (!loopDue(bounds, playing.audio.currentTime)) return;
+    const old = playing.audio;
+    this.fadeStep.set(old, (Math.max(old.volume, 0.01) * STEP_MS) / 1000 / LOOP_CROSSFADE_SECONDS);
+    this.fading.push(old);
+    this.current = { ...this.open(playing.cue, seconds, LOOP_CROSSFADE_SECONDS, bounds.start), early: playing.early };
+    this.startFade();
+  }
+
+  /** Đặt bài `audio` của mốc `cue` vào đúng chỗ ứng với giây `seconds` của chương (`alignedPosition`). Chưa biết độ dài bài thì
+   *  chờ `loadedmetadata`. */
   private align(audio: BedAudio, cue: MusicCue, seconds: number): void {
-    if (audio.duration > 0) audio.currentTime = Math.max(0, seconds - cue.start) % audio.duration;
+    if (audio.duration > 0) audio.currentTime = alignedPosition(cue, seconds, loopBounds(cue, audio.duration));
+  }
+
+  /** Một phần tử <audio> mới của mốc `cue`, mờ vào trong `fadeSeconds` giây. `startAt` (phần tử lặp): vào đúng chỗ ấy (A), không căn
+   *  theo giây chương - đồng hồ bài lệch giọng vài phần giây thì căn lại có khi rơi về cuối vòng. */
+  private open(cue: MusicCue, seconds: number, fadeSeconds: number, startAt?: number): Playing {
+    const audio = this.createAudio(cue.src);
+    audio.loop = !loopBounds(cue, audio.duration).crossfade;
+    audio.volume = 0;
+    if (startAt !== undefined) audio.currentTime = startAt; // chưa có metadata: trình duyệt nhớ làm chỗ bắt đầu
+    audio.addEventListener("loadedmetadata", () => {
+      this.failed.delete(cue.link);
+      audio.loop = !loopBounds(cue, audio.duration).crossfade && !(this.current?.audio === audio && this.current.final);
+      // Bài tải xong sau khi giọng đã chạy tiếp (hay vừa tua): theo giây mới nhất, không phải giây lúc tạo bài.
+      if (startAt === undefined) this.align(audio, cue, this.current?.audio === audio ? this.lastTime : seconds);
+      else if (Math.abs(audio.currentTime - startAt) > 0.25) audio.currentTime = startAt;
+      for (const listener of [...this.loadListeners]) listener(cue.link, true);
+    }, { once: true });
+    audio.addEventListener("error", () => this.drop(cue, audio), { once: true });
+    const goal = this.target(cue);
+    if (this.playing) void audio.play().catch(() => undefined);
+    return { cue, audio, goal, perTick: (goal * STEP_MS) / 1000 / fadeSeconds, entering: true, fadeSeconds };
   }
 
   private switchTo(cue: MusicCue | null, seconds: number, seeked = false): void {
@@ -270,34 +376,26 @@ export class MusicBed {
       // Cùng bài (đoạn kề): chơi tiếp, không bắt đầu lại. Vừa tua (hay vừa nạp chương ở giữa): dời nhạc theo chỗ mới.
       this.current.cue = cue;
       if (seeked) {
-        this.current.audio.loop = true; // vòng cuối của mốc `tail` tính lại theo chỗ mới (finishTail)
+        // Vòng cuối của mốc `tail` tính lại theo chỗ mới (finishTail).
+        this.current.final = false;
+        this.current.audio.loop = !loopBounds(cue, this.current.audio.duration).crossfade;
         this.align(this.current.audio, cue, seconds);
       }
       return;
     }
     const fadeSeconds = cue?.sibling ? SIBLING_FADE_SECONDS : FADE_SECONDS;
     if (this.current) {
-      const old = this.current.audio;
-      this.fadeStep.set(old, (Math.max(old.volume, 0.01) * STEP_MS) / 1000 / fadeSeconds);
-      if (cue?.sibling) old.loop = false; // bài cũ vừa hết vòng: chơi nốt rồi thôi, không quay lại đầu bài
+      const { audio: old, cue: was } = this.current;
+      let fade = fadeSeconds;
+      if (cue?.sibling) {
+        old.loop = false; // bài cũ vừa hết vòng: chơi nốt rồi thôi, không quay lại đầu bài
+        if (old.duration > 0) fade = siblingFadeSeconds(loopBounds(was, old.duration), old.currentTime);
+      }
+      this.fadeStep.set(old, (Math.max(old.volume, 0.01) * STEP_MS) / 1000 / fade);
       this.fading.push(old);
       this.current = null;
     }
-    if (cue) {
-      const audio = this.createAudio(cue.src);
-      audio.loop = true;
-      audio.volume = 0;
-      audio.addEventListener("loadedmetadata", () => {
-        this.failed.delete(cue.link);
-        // Bài tải xong sau khi giọng đã chạy tiếp (hay vừa tua): theo giây mới nhất, không phải giây lúc tạo bài.
-        this.align(audio, cue, this.current?.audio === audio ? this.lastTime : seconds);
-        for (const listener of [...this.loadListeners]) listener(cue.link, true);
-      }, { once: true });
-      audio.addEventListener("error", () => this.drop(cue, audio), { once: true });
-      const goal = this.target(cue);
-      this.current = { cue, audio, goal, perTick: (goal * STEP_MS) / 1000 / fadeSeconds, entering: true };
-      if (this.playing) void audio.play().catch(() => undefined);
-    }
+    if (cue) this.current = this.open(cue, seconds, fadeSeconds);
     this.emitActive();
     this.startFade();
   }

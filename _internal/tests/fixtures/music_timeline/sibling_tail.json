@@ -1,0 +1,147 @@
+{
+  "description": "Ba bài anh em có tail: a còn kêu ở cuối mốc thì mờ trong phần còn lại (2 s < 6 s); b hết ở E trước mốc thì c vào sớm.",
+  "chapterSeconds": 500,
+  "tracks": {
+    "a": {
+      "seconds": 120,
+      "audibleStart": 2,
+      "audibleEnd": 110
+    },
+    "b": {
+      "seconds": 120,
+      "audibleStart": 0,
+      "audibleEnd": 115
+    },
+    "c": {
+      "seconds": 200,
+      "audibleStart": 1,
+      "audibleEnd": 199
+    }
+  },
+  "cues": [
+    {
+      "start": 0,
+      "end": 212,
+      "track": "a",
+      "gainDb": -12,
+      "tail": true
+    },
+    {
+      "start": 212,
+      "end": 330,
+      "track": "b",
+      "gainDb": -14,
+      "sibling": true,
+      "tail": true
+    },
+    {
+      "start": 330,
+      "end": 450,
+      "track": "c",
+      "gainDb": -10,
+      "sibling": true
+    }
+  ],
+  "timeline": [
+    {
+      "track": "a",
+      "cue": 0,
+      "enter": "start",
+      "from": 0.0,
+      "to": 108.0,
+      "position": 2.0,
+      "gain": [
+        [
+          0.0,
+          null
+        ],
+        [
+          2.0,
+          -12.0
+        ],
+        [
+          106.0,
+          -12.0
+        ],
+        [
+          108.0,
+          null
+        ]
+      ]
+    },
+    {
+      "track": "a",
+      "cue": 0,
+      "enter": "loop",
+      "from": 106.0,
+      "to": 214.0,
+      "position": 2.0,
+      "gain": [
+        [
+          106.0,
+          null
+        ],
+        [
+          108.0,
+          -12.0
+        ],
+        [
+          212.0,
+          -12.0
+        ],
+        [
+          214.0,
+          null
+        ]
+      ]
+    },
+    {
+      "track": "b",
+      "cue": 1,
+      "enter": "start",
+      "from": 212.0,
+      "to": 327.0,
+      "position": 0.0,
+      "gain": [
+        [
+          212.0,
+          null
+        ],
+        [
+          218.0,
+          -14.0
+        ],
+        [
+          327.0,
+          -14.0
+        ]
+      ]
+    },
+    {
+      "track": "c",
+      "cue": 2,
+      "enter": "early",
+      "from": 327.0,
+      "to": 452.0,
+      "position": 1.0,
+      "gain": [
+        [
+          327.0,
+          null
+        ],
+        [
+          333.0,
+          -10.0
+        ],
+        [
+          450.0,
+          -10.0
+        ],
+        [
+          452.0,
+          null
+        ]
+      ]
+    }
+  ]
+}

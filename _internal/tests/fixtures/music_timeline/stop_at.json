@@ -1,0 +1,105 @@
+{
+  "description": "Bài kết sớm ở stopAt (mốc tail, không có mốc kế): vòng cuối chơi tới E đúng hết mốc, không mờ, rồi lặng tới mốc sau.",
+  "chapterSeconds": 400,
+  "tracks": {
+    "a": {
+      "seconds": 120,
+      "audibleStart": 2,
+      "audibleEnd": 110
+    },
+    "b": {
+      "seconds": 150
+    }
+  },
+  "cues": [
+    {
+      "start": 0,
+      "end": 214,
+      "track": "a",
+      "gainDb": -12,
+      "tail": true
+    },
+    {
+      "start": 240,
+      "end": 300,
+      "track": "b",
+      "gainDb": -15
+    }
+  ],
+  "timeline": [
+    {
+      "track": "a",
+      "cue": 0,
+      "enter": "start",
+      "from": 0.0,
+      "to": 108.0,
+      "position": 2.0,
+      "gain": [
+        [
+          0.0,
+          null
+        ],
+        [
+          2.0,
+          -12.0
+        ],
+        [
+          106.0,
+          -12.0
+        ],
+        [
+          108.0,
+          null
+        ]
+      ]
+    },
+    {
+      "track": "a",
+      "cue": 0,
+      "enter": "loop",
+      "from": 106.0,
+      "to": 214.0,
+      "position": 2.0,
+      "gain": [
+        [
+          106.0,
+          null
+        ],
+        [
+          108.0,
+          -12.0
+        ],
+        [
+          214.0,
+          -12.0
+        ]
+      ]
+    },
+    {
+      "track": "b",
+      "cue": 1,
+      "enter": "start",
+      "from": 240.0,
+      "to": 302.0,
+      "position": 0.0,
+      "gain": [
+        [
+          240.0,
+          null
+        ],
+        [
+          242.0,
+          -15.0
+        ],
+        [
+          300.0,
+          -15.0
+        ],
+        [
+          302.0,
+          null
+        ]
+      ]
+    }
+  ]
+}
