@@ -679,14 +679,17 @@ def apply_music(music: dict[str, Any] | None, edits: dict[str, Any]) -> dict[str
             tracks.setdefault(name, _pinned_track(link, name, shown[sha]))
             cue["track"] = name
             info = tracks[name]
-            cue["gainDb"] = music_plan.cue_gain_db(level, _track_number(info, "lufs"), _track_number(info, "speechBand"))
+            cue["gainDb"] = music_plan.cue_gain_db(level, _track_number(info, "lufs"), _track_number(info, "speechBand"),
+                                                   _track_number(info, "s95"))
+            for key in ("audibleStart", "audibleEnd"):  # đoạn nghe được của bài cũ: bài ghim dùng 0 và độ dài thật
+                cue.pop(key, None)
     if "levelDb" in changes:
         out["levelDb"] = changes["levelDb"]
         for cues in (out.get("chapters") or {}).values():
             for cue in cues:
                 info = tracks.get(cue.get("track"))
                 cue["gainDb"] = music_plan.cue_gain_db(changes["levelDb"], _track_number(info, "lufs"),
-                                                       _track_number(info, "speechBand"))
+                                                       _track_number(info, "speechBand"), _track_number(info, "s95"))
     if changes.get("enabled") is False:
         out["chapters"] = {}
         return out

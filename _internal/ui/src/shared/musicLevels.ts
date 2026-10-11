@@ -10,6 +10,17 @@ export const MUSIC_LEVELS: [number, string][] = [
   [-28, "Rất nhỏ"],
 ];
 
+/** Lời kèm vài mức để người nghe biết chọn mức nào: -28 là mức nhạc khó che lời đọc nhất (MIX_QA mục 7.1). */
+export const LEVEL_NOTES: Record<number, string> = {
+  [-28]: "dễ nghe lời nhất",
+};
+
+/** Chữ một mức trong ô chọn: tên mức, thêm lời kèm trong ngoặc nếu có ("Rất nhỏ (dễ nghe lời nhất)"). */
+export function levelText(value: number, name: string): string {
+  const note = LEVEL_NOTES[value];
+  return note ? `${name} (${note})` : name;
+}
+
 /** Danh sách mức cho ô chọn: các mức có sẵn, thêm mức hiện tại của sách nếu nó không trùng mức nào (sách đóng gói ở -18 dB). */
 export function levelOptions(current: number): [number, string][] {
   return MUSIC_LEVELS.some(([value]) => value === current)

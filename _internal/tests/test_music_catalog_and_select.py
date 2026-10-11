@@ -391,3 +391,27 @@ def test_a_gap_long_enough_to_split_the_cue_starts_the_track_again() -> None:
     # Khe 6 s >= 5 s: hai mốc riêng, trình phát mờ ra rồi mở lại bài từ đầu ở giây 106 - bài hết ở 306.
     _chosen, at = _sibling_at(6.0)
     assert at == 306.0
+
+
+def _audible_tracks(*names: str) -> list[dict]:
+    """Bài 200,5 s thật (`seconds` của danh mục), im 2 s đầu và 10,5 s cuối: phần nghe được A = 2, E = 190 (E - A = 188)."""
+    return [{**track, "seconds": 200.5, "audibleStart": 2.0, "audibleEnd": 190.0}
+            for track in _tracks_at(*((name, {"valence": 0.02 * index, "arousal": 0.0, "tension": 0.0})
+                                      for index, name in enumerate(names)))]
+
+
+def test_a_track_ends_where_its_audible_part_ends_not_at_its_catalog_length() -> None:
+    # Trình phát lặp mờ chéo trong [A, E] (music_mix): bài anh em vào khi bài cũ chơi tới E, 188 s sau khi vào từ A.
+    tracks = _audible_tracks("a", "b")
+    chosen = choose(_two_pieces(0.0), lambda v, a: tracks, book_key="b", track_info={t["link"]: t for t in tracks}.get)
+    assert [sibling["at"] for sibling in chosen[1]["siblings"]] == [188.0]
+
+
+def test_a_looping_track_comes_round_every_period_of_its_audible_part_less_the_crossfade() -> None:
+    # Một bài, không anh em: lặp mỗi P = E - A - X = 186 s. Hết vòng đầu ở 188 (chơi tới E), vòng sau hết ở 188 + 186 = 374 -
+    # còn 16 s < TAIL_MIN_SECONDS tới hết cảnh (390) nên bài kết ở đó.
+    tracks = _audible_tracks("a")
+    scenes = [_flat_scene(firstSegment=1, start=0.0, end=100.0, reason="chapter_start"),
+              _flat_scene(firstSegment=20, start=100.0, end=390.0, reason="length")]
+    chosen = choose(scenes, lambda v, a: tracks, book_key="b", track_info={t["link"]: t for t in tracks}.get)
+    assert "siblings" not in chosen[1] and chosen[1]["stopAt"] == 374.0

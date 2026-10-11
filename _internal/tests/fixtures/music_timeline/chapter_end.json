@@ -1,0 +1,55 @@
+{
+  "description": "Kẹp cuối chương: mốc kết muộn nhất ở độ dài chương - 2,5 s (bỏ tail), mờ 2 s xong trước khi giọng hết; mốc rỗng bị bỏ.",
+  "chapterSeconds": 250,
+  "tracks": {
+    "a": {
+      "seconds": 300
+    },
+    "b": {
+      "seconds": 200
+    }
+  },
+  "cues": [
+    {
+      "start": 100,
+      "end": 260,
+      "track": "a",
+      "gainDb": -11,
+      "tail": true
+    },
+    {
+      "start": 260,
+      "end": 300,
+      "track": "b",
+      "gainDb": -11
+    }
+  ],
+  "timeline": [
+    {
+      "track": "a",
+      "cue": 0,
+      "enter": "start",
+      "from": 100.0,
+      "to": 249.5,
+      "position": 0.0,
+      "gain": [
+        [
+          100.0,
+          null
+        ],
+        [
+          102.0,
+          -11.0
+        ],
+        [
+          247.5,
+          -11.0
+        ],
+        [
+          249.5,
+          null
+        ]
+      ]
+    }
+  ]
+}

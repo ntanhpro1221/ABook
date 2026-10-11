@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
 import { formatClock } from "@/shared/format";
-import { MUSIC_LEVELS as LEVELS } from "@/shared/musicLevels";
+import { MUSIC_LEVELS as LEVELS, levelText } from "@/shared/musicLevels";
 import { Button, IconButton, Progress } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
@@ -640,11 +640,11 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
             id="music-level"
             value={String(overrides.levelDb)}
             onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
-            className="mt-1 h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-accent sm:w-48"
+            className="mt-1 h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-accent sm:w-60"
           >
             {LEVELS.map(([value, label]) => (
               <option key={value} value={String(value)}>
-                {label}
+                {levelText(value, label)}
               </option>
             ))}
           </select>
