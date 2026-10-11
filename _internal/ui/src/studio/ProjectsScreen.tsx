@@ -1,14 +1,16 @@
-import { FolderOpen, Plus, Wand2 } from "lucide-react";
-import { useMemo } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { FolderOpen, History, Plus, RotateCw, Wand2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { RowBoundary } from "@/shared/RowBoundary";
 import { etaOf, formatPercent, formatRelative } from "@/shared/format";
-import { Button, EmptyState, Progress, Skeleton, StatusPill } from "@/shared/ui";
-import type { BookSummary } from "./api";
-import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook } from "./data";
+import { Button, Dialog, EmptyState, failedEmpty, LoadError, Progress, Skeleton, StatusPill } from "@/shared/ui";
+import { MissingLibrary } from "@/shared/MissingLibrary";
+import { api, type BookSummary } from "./api";
+import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook, useReveal } from "./data";
 import { ProjectMenu } from "./ProjectScreen";
 import { StudioSetupCard } from "./StudioSetup";
 import { groupParts, splitLive, type Entry } from "./projectGroups";
@@ -31,21 +33,72 @@ function ProjectRow({ book }: { book: BookSummary }) {
   );
 }
 
+/** Dự án không mở được. Đang bị chương trình khác giữ (diệt virus, sao lưu) thì KHÔNG phải hỏng - chỉ Thử lại / Mở thư mục, không mời xoá
+ *  (soát a28 lỗi 5). Hỏng thật: mở thư mục, khôi phục từ bản sao cũ cạnh nó nếu có (lỗi 13), hay xoá (vào Thùng rác). */
+function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
+  const client = useQueryClient();
+  const reveal = useReveal();
+  const [asking, setAsking] = useState(false);
+  const busy = book.brokenKind === "busy";
+  const restore = useMutation({
+    mutationFn: () => api(`/api/books/${book.id}/restore-backup`, { method: "POST" }),
+    onSuccess: () => {
+      setAsking(false);
+      toast.success(`Đã khôi phục “${book.title}” từ bản sao`);
+    },
+    onError: (error: Error) => toast.error("Chưa khôi phục được", { description: error.message }),
+    onSettled: () => void client.invalidateQueries({ queryKey: ["library"] }),
+  });
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-dashed border-line px-4 py-2 text-sm">
+      <span className="min-w-0 max-w-full truncate font-medium">{book.title}</span>
+      <span className={cn("min-w-0 flex-1 text-xs", busy ? "text-warning" : "text-danger")}>
+        {busy ? "Chưa mở được: " : "Không đọc được: "}
+        {book.broken}
+      </span>
+      <div className="flex items-center gap-1.5">
+        {busy && (
+          <Button variant="secondary" size="sm" icon={RotateCw} onClick={() => void client.invalidateQueries({ queryKey: ["library"] })}>
+            Thử lại
+          </Button>
+        )}
+        {book.backup && local && (
+          <Button variant="secondary" size="sm" icon={History} onClick={() => setAsking(true)}>
+            Khôi phục bản sao
+          </Button>
+        )}
+        {local && (
+          <Button variant="ghost" size="sm" icon={FolderOpen} onClick={() => reveal.mutate(book.id)}>
+            Mở thư mục
+          </Button>
+        )}
+        {local && !busy && <ProjectMenu book={book} rename={false} />}
+      </div>
+      <Dialog
+        open={asking}
+        onOpenChange={setAsking}
+        title={`Khôi phục “${book.title}” từ bản sao cũ?`}
+        description="Bản sao được chụp lúc app nâng cấp sổ làm việc của sách này. Những gì làm sau lúc ấy (phân tích, sửa, chương thu sau đó) sẽ phải làm lại; chương đã thu vẫn nằm trong thư mục sách. Bản hỏng được giữ lại cạnh đó."
+      >
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setAsking(false)}>
+            Để sau
+          </Button>
+          <Button variant="primary" icon={History} loading={restore.isPending} onClick={() => restore.mutate()}>
+            Khôi phục
+          </Button>
+        </div>
+      </Dialog>
+    </div>
+  );
+}
+
 function ProjectRowBody({ book }: { book: BookSummary }) {
   const navigate = useNavigate();
   // Đổi tên / xoá chỉ trên máy này (remote_studio.ALLOWED không có hai đường ấy).
   const local = !useAppInfo().data?.remote;
   const live = book.running || book.starting;
-  if (book.broken) {
-    // Dự án hỏng không mở được - trước đây cũng không bỏ được khỏi danh sách; giờ xoá được (vào Thùng rác).
-    return (
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4 rounded-xl border border-dashed border-line px-4 py-2 text-sm">
-        <span className="truncate font-medium">{book.title}</span>
-        <span className="text-xs text-danger">Không đọc được: {book.broken}</span>
-        {local ? <ProjectMenu book={book} rename={false} /> : <span />}
-      </div>
-    );
-  }
+  if (book.broken) return <BrokenRow book={book} local={local} />;
   const detail =
     book.phase === "done"
       ? `${book.chapters.completed}/${book.chapters.total} chương xong`
@@ -141,7 +194,8 @@ function EntryView({ entry, inset = false }: { entry: Entry; inset?: boolean }) 
 const entryKey = (entry: Entry) => (entry.kind === "book" ? entry.book.id : `series:${entry.name}`);
 
 export function ProjectsScreen() {
-  const { data, isLoading } = useLibrary();
+  const libraryQuery = useLibrary();
+  const { data, isLoading } = libraryQuery;
   const { data: info } = useAppInfo();
   const navigate = useNavigate();
   const open = useOpenBook();
@@ -191,6 +245,10 @@ export function ProjectsScreen() {
             <Skeleton key={index} className="h-16 rounded-xl" />
           ))}
         </div>
+      ) : failedEmpty({ isError: libraryQuery.isError, data: data?.books }) ? (
+        <LoadError what="danh sách dự án" error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
+      ) : data?.rootMissing ? (
+        <MissingLibrary root={data.root} className="mt-12" />
       ) : !books.length ? (
         <EmptyState
           icon={Wand2}

@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Khi có sự cố (máy tính)
+
+- Máy tắt ngang hay file cài đặt, chỗ nghe, dấu trang bị hỏng thì app không còn lặng lẽ về mặc định rồi ghi đè: bản hỏng được giữ lại cạnh đó (tên có thêm `.hong-` và giờ) và app báo một dòng. Chuyển hay đổi tên thư mục thư viện rồi chọn lại chỗ mới thì chỗ nghe, dấu trang đi theo sách; ổ chứa thư viện chưa cắm thì app nói thẳng thay vì hiện thư viện trống.
+- Cuốn đang bị chương trình khác giữ (diệt virus, sao lưu, đồng bộ đám mây) thì app nói vậy, kèm nút "Thử lại" và "Mở thư mục", không gợi ý xoá; sổ dự án hỏng mà còn bản sao tự chụp trước lần nâng cấp thì có nút "Khôi phục bản sao". Thư mục chỉ đọc hay ổ đầy thì app nói đúng như vậy và chỉ cách chọn thư mục khác.
+- File sách chép dở hay hỏng được gọi đúng tên ("chép lại từ nguồn") thay vì "không phải file sách"; cuốn đã mở mà mất file chương thì trang sách ghi số chương mất, mở lại đúng file sách ấy là chép bù, chỗ nghe giữ nguyên. Ảnh bìa hỏng không còn làm hỏng cả lượt xuất - sách xuất bằng bìa vẽ từ tên.
+- Lưu chỗ nghe không được thì trình phát báo một lần thay vì im lặng; danh sách sách tải lỗi thì hiện lỗi với nút "Thử lại" thay vì "Chưa có sách". Hai cửa sổ app cùng mở không còn ghi đè chỗ nghe, cài đặt của nhau.
+
 ## [0.4.51] - 2026-10-11
 
 ### Làm sách trong Studio (máy tính)

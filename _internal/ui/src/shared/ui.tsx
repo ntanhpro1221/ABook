@@ -1,7 +1,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, RotateCw, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, ReactNode, Ref } from "react";
 import { cn } from "@/shared/cn";
@@ -509,6 +509,30 @@ export function EmptyState({
       {children && <p className="mt-1.5 max-w-md text-sm leading-relaxed text-fg-2">{children}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
+  );
+}
+
+/** Danh sách tải lỗi mà chưa có gì để hiện: phải nói là LỖI, không phải "chưa có gì" (soát a28 lỗi 4 - thư viện báo "Chưa có sách" khi máy
+ *  chủ trả 500). Đã có dữ liệu từ lần trước thì cứ hiện dữ liệu ấy. */
+export function failedEmpty(query: { isError: boolean; data?: readonly unknown[] | null }): boolean {
+  return query.isError && !query.data?.length;
+}
+
+export function LoadError({ what, error, onRetry, className }: { what: string; error?: unknown; onRetry: () => void; className?: string }) {
+  const detail = error instanceof Error ? error.message : "";
+  return (
+    <EmptyState
+      icon={AlertTriangle}
+      title={`Chưa tải được ${what}`}
+      className={className}
+      action={
+        <Button variant="secondary" icon={RotateCw} onClick={onRetry}>
+          Thử lại
+        </Button>
+      }
+    >
+      {detail || "Có lỗi khi đọc thư viện trên máy này."} Sách của bạn vẫn còn nguyên - bấm Thử lại sau một lát.
+    </EmptyState>
   );
 }
 

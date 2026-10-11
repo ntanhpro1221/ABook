@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .. import importers
+from ..io_utils import atomic_write_bytes
 from . import bookfile, covers, packages, store
 from .fingerprints import Fingerprints
 
@@ -87,7 +88,7 @@ def source_digest(source: Path) -> str:
 
 def remember_source(folder: Path, digest: str) -> None:
     """Ghi lại cuốn này do file nguồn nào thêm vào (bước xem trước lần sau nhận ra cùng một file)."""
-    (Path(folder) / SOURCE_FILE).write_bytes(json.dumps({"sha256": digest}).encode("utf-8"))
+    atomic_write_bytes(Path(folder) / SOURCE_FILE, json.dumps({"sha256": digest}).encode("utf-8"))
 
 
 def find_same_source(digest: str, library_root: Path) -> Path | None:

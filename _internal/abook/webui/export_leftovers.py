@@ -93,3 +93,70 @@ def sweep(folders: Iterable[Path], scratch_root: Path | None, *, now: float | No
             except OSError:
                 log.debug("Không dọn được %s", entry, exc_info=True)
     return removed
+
+
+# ---- rác của các việc khác bị tắt ngang (soát a28 lỗi 12) ---------------------------------------------------------------------------
+# Nhập / mở / xuất sách và tải nhạc đều ghi ra tên tạm rồi mới đổi sang tên thật; app bị tắt ngang thì tên tạm nằm lại mãi (một cuốn TXT
+# 11 MB, một file sách 34 MB...). Chỉ đúng mẫu tên của chính app, và chỉ khi đã cũ hơn `CRASH_AGE` - một việc còn chạy thì có file mới.
+CRASH_AGE = 3600.0
+BOOKFILE_PART = re.compile(r"^\..+\.abook\.[0-9a-f]{8}\.part$")  # bookfile.pack: f".{out.name}.{secrets.token_hex(4)}.part"
+M4B_SCRATCH = re.compile(r"^\.m4b-[a-z0-9_]{8}$")  # export.m4b_from_files: TemporaryDirectory(prefix=".m4b-", dir=nơi lưu)
+STAGING = re.compile(r"^\..+\.[0-9a-f]{8}\.part$")  # bookfile / projectfile extract, open_into: thư mục tạm trong thư viện
+RETIRED = re.compile(r"^\.(?P<name>.+)\.[0-9a-f]{8}\.old$")  # bookfile / projectfile extract: bản cũ chờ xoá sau khi thay
+TEMP_SCRATCH = re.compile(r"^abook-(?:text|wishes)-[a-z0-9_]{8}$")  # textbook / book_wishes: TemporaryDirectory trong %TEMP%
+MUSIC_PART = re.compile(r"^.+\.[0-9a-f]{8}\.part$")  # server: bài nhạc đang tải f"{target.stem}.{secrets.token_hex(4)}.part"
+
+
+def _age(path: Path, now: float) -> float:
+    return now - (_newest(path) if path.is_dir() else path.stat().st_mtime)
+
+
+def _drop(path: Path) -> None:
+    if path.is_dir():
+        shutil.rmtree(path)
+    else:
+        path.unlink()
+
+
+def _entries(folder: Path, pattern: re.Pattern[str]) -> list[Path]:
+    try:
+        return [entry for entry in folder.iterdir() if pattern.match(entry.name)]
+    except OSError:
+        return []  # thư mục đã dời / ổ rời không cắm
+
+
+def sweep_crashed(export_folders: Iterable[Path], library_folders: Iterable[Path], scratch_root: Path | None, music_files: Path | None,
+                  *, now: float | None = None, min_age: float = CRASH_AGE) -> list[Path]:
+    """Dọn tên tạm của nhập / mở / xuất sách và tải nhạc bị tắt ngang, cũ hơn `min_age` giây. Bản cũ `.<tên>.<hex>.old` mà bản chính không còn
+    (tắt ngang đúng giữa hai lần đổi tên) thì được ĐỔI TÊN LẠI thành `<tên>` - đó là cuốn sách của người dùng, không phải rác. Trả những gì đã
+    xoá / trả lại. Lỗi từng mục bỏ qua."""
+    now = time.time() if now is None else now
+    found: list[Path] = []
+    restored: list[Path] = []
+    for folder in dict.fromkeys(export_folders):
+        found += _entries(folder, BOOKFILE_PART) + _entries(folder, M4B_SCRATCH)
+    for folder in dict.fromkeys(library_folders):
+        found += _entries(folder, STAGING)
+        for retired in _entries(folder, RETIRED):
+            original = folder / RETIRED.match(retired.name)["name"]  # type: ignore[index] - _entries chỉ trả tên khớp
+            try:
+                if original.exists():
+                    found.append(retired)
+                elif _age(retired, now) >= min_age:
+                    os.replace(retired, original)
+                    restored.append(original)
+            except OSError:
+                log.debug("Không trả lại được %s", retired, exc_info=True)
+    if scratch_root is not None:
+        found += [entry for entry in _entries(scratch_root, TEMP_SCRATCH) if entry.is_dir()]
+    if music_files is not None:
+        found += [entry for entry in _entries(music_files, MUSIC_PART) if entry.is_file()]
+    removed: list[Path] = []
+    for entry in found:
+        try:
+            if _age(entry, now) >= min_age:
+                _drop(entry)
+                removed.append(entry)
+        except OSError:
+            log.debug("Không dọn được %s", entry, exc_info=True)
+    return removed + restored

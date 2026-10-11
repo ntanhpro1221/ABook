@@ -436,8 +436,11 @@ class ProjectFile:
         self._cover: bytes | None = None
         try:
             self._zip = zipfile.ZipFile(self.path)
-        except (zipfile.BadZipFile, OSError) as exc:
-            raise ProjectFileError("Đây không phải file dự án ABook (không mở được gói).") from exc
+        except zipfile.BadZipFile as exc:
+            raise ProjectFileError("File dự án bị hỏng hoặc chép chưa xong - chép lại từ nguồn." if bookfile.looks_cut(self.path)
+                                   else "Đây không phải file dự án ABook (không mở được gói).") from exc
+        except OSError as exc:
+            raise ProjectFileError(f"Không đọc được file dự án này ({exc.strerror or exc}).") from exc
         try:
             self.manifest = self._validate()
         except BaseException:

@@ -34,6 +34,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
+from ..io_utils import atomic_write_bytes
 from . import actions
 
 log = logging.getLogger(__name__)
@@ -87,7 +88,7 @@ class TrashPending:
             folder.mkdir(parents=True)
             try:
                 meta = {"original": str(path), "name": path.name, "kind": kind, "deletedAt": self.clock(), "queued": queued}
-                (folder / META).write_bytes(json.dumps(meta, ensure_ascii=False).encode("utf-8"))
+                atomic_write_bytes(folder / META, json.dumps(meta, ensure_ascii=False).encode("utf-8"))
                 os.replace(path, folder / path.name)
                 self._roots[token] = root
             except OSError:
@@ -200,7 +201,8 @@ class TrashPending:
     def _write_meta(folder: Path, meta: dict[str, Any]) -> None:
         """Ghi lại meta; `meta` không có `phase` thì là bản gốc (bỏ dấu đang dọn)."""
         try:
-            (folder / META).write_bytes(json.dumps(meta, ensure_ascii=False).encode("utf-8"))
+            # Ghi tạm rồi đổi tên: tắt ngang đúng lúc ghi thì meta cũ còn nguyên - meta cụt làm sách kẹt mãi trong chỗ chờ (soát a28 lỗi 16).
+            atomic_write_bytes(folder / META, json.dumps(meta, ensure_ascii=False).encode("utf-8"))
         except OSError:
             pass
 
