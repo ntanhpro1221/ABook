@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Làm sách trong Studio (máy tính)
+
+- Nhạc nền đa dạng hơn: một bài không còn quay lại ở rất nhiều chương. Bài đã dùng trong 100 đoạn gần nhất chỉ được chọn lại khi không còn bài mới hợp; khi ấy lấy bài dùng lâu nhất, và đoạn vẫn có nhạc chứ không im lặng. Ở bộ đo, số bài khác nhau trong một cuốn tăng gấp đôi mà nhạc không kém hợp truyện.
+
 ## [0.4.50] - 2026-10-11
 
 ### Điện thoại và Nghe sách (máy tính và điện thoại)
