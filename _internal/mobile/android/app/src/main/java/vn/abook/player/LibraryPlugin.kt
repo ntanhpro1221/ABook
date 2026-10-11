@@ -21,7 +21,6 @@ import vn.abook.player.readaloud.ReadAloud
 import java.io.File
 import java.net.DatagramPacket
 import java.net.DatagramSocket
-import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.net.URL
@@ -646,23 +645,13 @@ class LibraryPlugin : Plugin() {
     // ---- tải sách --------------------------------------------------------------------------------------------
 
     /** Kết nối tới một file của sách bên máy kia (đã ghim chứng chỉ, mang mã thiết bị); `resumeFrom` > 0 thì xin tiếp từ byte ấy. */
-    private fun connect(link: Peers.Link, remote: String, relative: String, resumeFrom: Long): HttpURLConnection {
-        Pin.install(context)
-        val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
-        connection.connectTimeout = 5000
-        connection.readTimeout = 30000
-        connection.setRequestProperty("Authorization", "Bearer ${link.token}")
-        if (resumeFrom > 0) connection.setRequestProperty("Range", "bytes=$resumeFrom-")
-        return connection
-    }
-
     private fun fetchFile(id: String, relative: String, expectedSize: Long, link: Peers.Link, remote: String): Long {
         val target = Store.file(id, relative)
         if (expectedSize > 0 && target.isFile && target.length() == expectedSize) return 0
         target.parentFile?.mkdirs()
         val partial = File(target.path + ".part")
         val resumeFrom = if (partial.isFile) partial.length() else 0L
-        val connection = connect(link, remote, relative, resumeFrom)
+        val connection = SyncLink.bookFile(context, link, remote, relative, resumeFrom)
         val code = Pin.guard { connection.responseCode }
         if (code >= 400) throw IllegalStateException("Không tải được $relative (mã $code)")
         val append = code == 206
@@ -749,15 +738,7 @@ class LibraryPlugin : Plugin() {
         }
         tracks.forEachIndexed { index, track ->
             // Một bài không tải được (sai cỡ / mã băm, máy kia ngắt) thì bỏ bài ấy: sách vẫn lưu, chỗ đó nghe thẳng từ máy kia khi có mạng.
-            BookMusic.fetch(Store.bookDir(id), track) { name ->
-                val connection = connect(link, remote, name, 0)
-                if (Pin.guard { connection.responseCode } != 200) {
-                    connection.disconnect()
-                    null
-                } else {
-                    BookMusic.Source(connection.inputStream, connection.contentLengthLong, connection::disconnect)
-                }
-            }
+            BookMusic.fetch(Store.bookDir(id), track) { name -> SyncLink.musicSource(context, link, remote, name) }
             done += track.size
             if (announce) {
                 notifyListeners("download", JSObject().put("bookId", id).put("done", done).put("total", total)
@@ -1179,6 +1160,19 @@ class LibraryPlugin : Plugin() {
         startActivityForResult(call, M4bExports.createIntent(plan.title), "pickedM4bFile")
     }
 
+    /**
+     * Ô "Kèm nhạc nền" của hộp xuất cuốn `bookId` (`packaged_state` của máy tính): {available: có mốc nhạc ở ít nhất một chương, enabled: mặc định của ô theo
+     * công tắc Nhạc nền của cuốn}.
+     */
+    @PluginMethod
+    fun m4bMusicState(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        background(call) {
+            val (available, enabled) = BookMusic.exportState(id)
+            call.resolve(JSObject().put("available", available).put("enabled", enabled))
+        }
+    }
+
     /** Dừng lượt xuất M4B của cuốn `bookId` (nút "Dừng" trong app; thông báo của hệ thống có nút riêng). File dở bị xoá. */
     @PluginMethod
     fun cancelM4bExport(call: PluginCall) {
@@ -1200,7 +1194,7 @@ class LibraryPlugin : Plugin() {
                 val coverFile = drawn?.let { bytes ->
                     File(context.cacheDir, "m4b-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
                 }
-                val run = M4bExports.start(context, id, file, coverFile)
+                val run = M4bExports.start(context, id, file, coverFile, call.getBoolean("music", false) == true)
                 call.resolve(JSObject().put("started", true).put("run", run).put("name", M4bExport.fileName(plan.title)).put("chapters", plan.chapters.size))
             } catch (error: Exception) {
                 M4bExports.discard(context, file) // chưa bắt đầu việc nền: file rỗng vừa tạo không để lại
@@ -1215,16 +1209,23 @@ class LibraryPlugin : Plugin() {
 
     /**
      * Cho hộp "Xuất sách nói": số chương, số chữ, giờ nghe, ước thời gian máy làm (giọng đã đo tốc độ), số chương đã làm sẵn từ lần trước và chỗ trống cần. Đọc chữ nên chạy ở luồng nền.
+     * `music`: ô "Kèm nhạc nền" (thiếu = mặc định theo cuốn); kết quả thêm `music` {available, enabled} và `rereads` (đoạn phải đọc lại vì đổi nhạc).
      */
     @PluginMethod
     fun audiobookPlan(call: PluginCall) {
         val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
         val voice = call.getString("voice") ?: return call.reject("thiếu voice")
+        val wanted = call.getBoolean("music")
         background(call) {
             val chapters = ListenExport.chapters(id)
             val speed = runCatching { ReadAloud.speeds().secondsPerChar(voice) }.getOrNull()
-            val plan = ListenExport.plan(chapters, readingOf(id, voice), ListenExport.workFolder(ListenExports.workRoot(context), id), speed)
-            call.resolve(JSObject.fromJSONObject(plan.toJson()))
+            val (available, enabled) = BookMusic.exportState(id)
+            val (music, extra) = if (available && (wanted ?: enabled)) ExportMusic.listenPlan(context, id, chapters) else emptyMap<Int, MusicExport.ChapterMusic>() to 0L
+            val reading = readingOf(id, voice)
+            val cache = ReadAloud.cache()
+            val plan = ListenExport.plan(chapters, reading, ListenExport.workFolder(ListenExports.workRoot(context), id), speed,
+                music = { MusicExport.audible(music, it) }, cached = { text -> cache.contains(voice, text, reading.origin, reading.readings) }, extra = extra)
+            call.resolve(JSObject.fromJSONObject(plan.toJson().put("music", JSONObject().put("available", available).put("enabled", enabled))))
         }
     }
 
@@ -1259,7 +1260,7 @@ class LibraryPlugin : Plugin() {
                 val coverFile = drawn?.let { bytes ->
                     File(context.cacheDir, "audiobook-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
                 }
-                val run = ListenExports.start(context, id, voice, file, coverFile)
+                val run = ListenExports.start(context, id, voice, file, coverFile, call.getBoolean("music", false) == true)
                 call.resolve(JSObject().put("started", true).put("run", run).put("name", M4bExport.fileName(title)))
             } catch (error: Exception) {
                 M4bExports.discard(context, file) // chưa bắt đầu việc nền: file rỗng vừa tạo không để lại

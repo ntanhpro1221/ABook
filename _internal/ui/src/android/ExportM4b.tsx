@@ -1,32 +1,51 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { BookAudio } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { jobView, M4B_COPY, type ExportJob } from "@/desktop/bookFileExport";
+import type { MusicExportState } from "@/desktop/listenExport";
+import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
+import { Button, Dialog } from "@/shared/ui";
+import { chargerHint } from "./ExportAudiobook";
 import { EbookLibrary, type M4bExportEvent } from "./plugins";
 
 // "Xuất M4B cho app sách nói" trên điện thoại: cùng chữ, cùng file với máy tính (desktop/ExportBookFileJob.tsx M4bMenuItem). Việc chạy
 // nền (M4bExportWorker.kt): app đang mở thì thông báo trong app theo tiến độ; ra ngoài app thì thông báo của hệ thống, có nút "Dừng".
-// Khác xuất MP3: một file duy nhất, nên mỗi lần hệ thống hỏi tên và chỗ lưu (không nhớ thư mục).
+// Khác xuất MP3: một file duy nhất, nên mỗi lần hệ thống hỏi tên và chỗ lưu (không nhớ thư mục). Cuốn có nhạc nền gắn theo chương thì
+// mục menu mở một hộp nhỏ có ô "Kèm nhạc nền" (M4bMusicDialogHost); cuốn không có nhạc thì bấm là chạy như trước.
+
+/** Hộp nhỏ "Kèm nhạc nền" được mở từ menu của trang sách. */
+export const OPEN_M4B_EVENT = "abook-phone-m4b-dialog";
 
 /** Lượt đang theo dõi của mỗi cuốn: tin của lượt cũ (bị thay bằng lượt mới) không được đè lên lượt mới. */
 const runs = new Map<string, { run: string; book: ListenBook }>();
 
 const toastId = (bookId: string) => `m4b-export-${bookId}`;
 
-/** "3/10 chương · 27%" lúc đang làm; trước tin đầu chỉ có số chương. */
-export function progressText(event: Pick<M4bExportEvent, "done" | "total" | "percent">, chapters: number): string {
+type ProgressFields = Pick<M4bExportEvent, "done" | "total" | "percent" | "phase" | "chapter" | "chapters" | "peakRound" | "peakOver">;
+
+/**
+ * "3/10 chương · 27%" lúc đang làm; trước tin đầu chỉ có số chương. Lượt kèm nhạc báo pha như máy tính: "Đang tải nhạc nền 1/3 bài",
+ * "Đang trộn nhạc chương 3/10", "Đang kiểm đỉnh âm…", "Mã hoá lại vì 2 chương vượt đỉnh (lượt 1)".
+ */
+export function progressText(event: ProgressFields, chapters: number): string {
+  if (event.phase) {
+    const job: ExportJob = { state: "running", ...event };
+    const view = jobView(job, 0, false, M4B_COPY);
+    if (view.kind === "loading") return view.description;
+  }
   if (!event.total) return `${chapters} chương`;
   const percent = event.percent === undefined ? "" : ` · ${Math.max(0, Math.min(99, event.percent))}%`;
   return `${event.done ?? 0}/${event.total} chương${percent}`;
 }
 
-/** Thông báo "xong": cùng chữ với máy tính (tên file · cỡ · lưu ý khi còn chương chưa làm xong). */
-export function finishedView(event: Pick<M4bExportEvent, "name" | "size" | "chapters" | "chaptersTotal">) {
+/** Thông báo "xong": cùng chữ với máy tính (tên file · cỡ · lưu ý khi còn chương chưa làm xong · đoạn thiếu nhạc). */
+export function finishedView(event: Pick<M4bExportEvent, "name" | "size" | "chapters" | "chaptersTotal" | "musicMissing">) {
   const job: ExportJob = {
     state: "done",
-    result: { folder: "", file: event.name, size: event.size, chapters: event.chapters, chaptersTotal: event.chaptersTotal },
+    result: { folder: "", file: event.name, size: event.size, chapters: event.chapters, chaptersTotal: event.chaptersTotal, musicMissing: event.musicMissing },
   };
   return jobView(job, 0, false, M4B_COPY);
 }
@@ -40,17 +59,29 @@ function showProgress(book: ListenBook, progress: string) {
   });
 }
 
-/** Bắt đầu xuất: hệ thống hỏi tên và chỗ lưu file; huỷ ở bước ấy thì không có gì xảy ra. */
-async function exportM4b(book: ListenBook) {
+/** Bắt đầu xuất: hệ thống hỏi tên và chỗ lưu file; huỷ ở bước ấy thì không có gì xảy ra. `music`: ô "Kèm nhạc nền". */
+export async function exportM4b(book: ListenBook, music = false) {
   try {
     // Như máy tính: bìa tự vẽ chỉ dùng khi sách không có ảnh bìa thật.
-    const result = await EbookLibrary.exportM4b({ bookId: book.id, cover: book.cover ? undefined : coverArtwork(book.title) });
+    const result = await EbookLibrary.exportM4b({ bookId: book.id, cover: book.cover ? undefined : coverArtwork(book.title), music });
     if (!result.started || !result.run) return;
     runs.set(book.id, { run: result.run, book });
     showProgress(book, progressText({}, result.chapters ?? book.chaptersAvailable));
   } catch (error) {
     toast.error(M4B_COPY.failed, { id: toastId(book.id), description: (error as Error).message });
   }
+}
+
+/** Mục menu: cuốn có nhạc nền theo chương thì mở hộp nhỏ; không thì chạy ngay (không thêm bước). */
+export async function chooseM4b(book: ListenBook) {
+  let state: MusicExportState | undefined;
+  try {
+    state = await EbookLibrary.m4bMusicState({ bookId: book.id });
+  } catch {
+    state = undefined; // không hỏi được: xuất như trước
+  }
+  if (state?.available) window.dispatchEvent(new CustomEvent<M4bDialogDetail>(OPEN_M4B_EVENT, { detail: { book, state } }));
+  else void exportM4b(book);
 }
 
 /** Theo dõi các lượt xuất từ lúc app mở (App.tsx): tiến độ, xong, dừng, lỗi. */
@@ -69,11 +100,57 @@ export function watchM4bExports(): () => void {
     } else if (event.error) {
       runs.delete(event.bookId);
       toast.error(M4B_COPY.failed, { id, description: event.error, action: undefined });
-    } else if (event.total) {
+    } else if (event.total || event.phase) {
       showProgress(current.book, progressText(event, current.book.chaptersAvailable));
     }
   });
   return () => void handle.then((listener) => listener.remove());
+}
+
+export interface M4bDialogDetail {
+  book: ListenBook;
+  state: MusicExportState;
+}
+
+/** Thân hộp nhỏ (thuần hiển thị): ô "Kèm nhạc nền" và gợi ý cắm sạc khi cuốn dài. */
+export function M4bMusicForm({ music, onMusic, chapters }: { music: boolean; onMusic: (on: boolean) => void; chapters: number }) {
+  const hint = chargerHint(music, chapters);
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-fg-2">Một file có mục lục chương: app nghe sách nói nào cũng mở được, nhớ chỗ nghe dở.</p>
+      <MusicMixOption checked={music} onChange={onMusic} />
+      {hint && <p className="text-xs text-fg-3">{hint}</p>}
+    </div>
+  );
+}
+
+/** Hộp nhỏ của "Xuất M4B" cho cuốn có nhạc nền (App.tsx): ô "Kèm nhạc nền" (mặc định theo công tắc Nhạc nền của cuốn) + "Bắt đầu". */
+export function M4bMusicDialogHost() {
+  const [open, setOpen] = useState<M4bDialogDetail | null>(null);
+  const [music, setMusic] = useMusicChoice(open?.state, open?.book.id ?? "");
+  useEffect(() => {
+    const listener = (event: Event) => setOpen((event as CustomEvent<M4bDialogDetail>).detail);
+    window.addEventListener(OPEN_M4B_EVENT, listener);
+    return () => window.removeEventListener(OPEN_M4B_EVENT, listener);
+  }, []);
+  const start = () => {
+    if (!open) return;
+    setOpen(null);
+    void exportM4b(open.book, music);
+  };
+  return (
+    <Dialog open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title={`Xuất M4B “${open?.book.title ?? ""}”`} width="max-w-md">
+      <M4bMusicForm music={music} onMusic={setMusic} chapters={open?.book.chaptersAvailable ?? 0} />
+      <div className="mt-5 flex justify-end gap-2">
+        <Button variant="ghost" onClick={() => setOpen(null)}>
+          Để sau
+        </Button>
+        <Button variant="primary" icon={BookAudio} onClick={start}>
+          Bắt đầu
+        </Button>
+      </div>
+    </Dialog>
+  );
 }
 
 /** Mục "…" của trang sách trên điện thoại. Sách chỉ có chữ thì không có (không có audio để xuất). */
@@ -83,7 +160,7 @@ export function ExportM4bMenuItem({ book }: { book: ListenBook }) {
     <DropdownMenu.Item
       // Chưa có chương nào nghe được thì không có gì để xuất (như máy tính).
       disabled={!book.chaptersAvailable}
-      onSelect={() => void exportM4b(book)}
+      onSelect={() => void chooseM4b(book)}
       className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
       <BookAudio className="size-4" /> Xuất M4B cho app sách nói

@@ -1,7 +1,8 @@
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { ReadAloudVoice } from "@/listen/readAloud";
-import { AudiobookForm, MusicMixOption, musicChecked } from "./AudiobookDialog";
+import { AudiobookForm } from "./AudiobookDialog";
+import { MusicMixOption, musicChecked } from "./musicMix";
 import { jobView, M4B_COPY, musicMissingNote, type ExportJob } from "./bookFileExport";
 import { AUDIOBOOK_COPY, audiobookBody, MUSIC_MIX_HINT, type AudiobookPlan, type FfmpegStatus } from "./listenExport";
 

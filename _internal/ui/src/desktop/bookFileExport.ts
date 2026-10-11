@@ -90,8 +90,9 @@ export interface ExportJob {
   id?: string;
   /** Xuất sách nói (listen_export.py) báo tiến độ: pha ("voice" đọc / "music" trộn nhạc nền / "encode" ghép file), chương i/N, % theo số chữ, ước còn lại (giây),
    *  đang nhường người nghe. Xuất M4B kèm nhạc nền chỉ báo pha "music" + chương i/N. Mọi M4B: "peaks" đang kiểm đỉnh âm sau mã hoá, "reencode"
-   *  mã hoá lại lượt `peakRound` vì `peakOver` chương vượt đỉnh (export.m4b_from_files). Gói dự án báo pha riêng (`PackPhase`) cùng `done`/`total`. */
-  phase?: "voice" | "music" | "encode" | "peaks" | "reencode" | PackPhase;
+   *  mã hoá lại lượt `peakRound` vì `peakOver` chương vượt đỉnh (export.m4b_from_files). Gói dự án báo pha riêng (`PackPhase`) cùng `done`/`total`.
+   *  Điện thoại còn "music-fetch": đang tải bài nhạc thiếu thứ `done` + 1 trong `total` trước khi trộn (ExportMusic.kt). */
+  phase?: "voice" | "music" | "music-fetch" | "encode" | "peaks" | "reencode" | PackPhase;
   peakRound?: number;
   peakOver?: number;
   done?: number;
@@ -126,6 +127,10 @@ export type JobView =
 
 /** Việc tự báo tiến độ (xuất sách nói): chữ + phần trăm 0-1; không báo thì null. */
 function reportedProgress(job: ExportJob): { fraction: number; text: string } | null {
+  if (job.phase === "music-fetch" && job.total) {
+    const done = job.done ?? 0;
+    return { fraction: done / job.total, text: `Đang tải nhạc nền ${Math.min(done + 1, job.total)}/${job.total} bài` };
+  }
   if (job.phase === "peaks") return { fraction: 1, text: "Đang kiểm đỉnh âm…" };
   // Lượt mã hoá lại chạy lại từng chương (pha "encode" / "music" báo chương) - vẫn nói vì sao.
   const again = job.peakOver ? `Mã hoá lại vì ${job.peakOver} chương vượt đỉnh (lượt ${job.peakRound ?? 1})` : "";
