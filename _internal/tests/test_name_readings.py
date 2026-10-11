@@ -207,3 +207,48 @@ def test_a_reading_some_symbols_break_redoes_only_the_lines_it_reaches(tmp_path:
     result = db.apply_listener_pronunciation(surface="km/h", normalized_surface="km/h", spoken_form="ki lô mét giờ",
                                              source=LISTENER_PRONUNCIATION_SOURCE)
     assert result["reset_segments"] == 1
+
+
+def test_reopening_the_list_does_not_read_the_whole_book_again_until_a_reading_changes(tmp_path: Path, monkeypatch) -> None:
+    """Mục "Cách đọc tên" của dự án 50.000 câu quét mọi câu (~0,3 s): mở lại khi dự án chưa đổi dùng bản đã tính; người nghe
+    thêm cách đọc (file yêu cầu trong dự án đổi) thì tính lại và thấy ngay."""
+    import os
+    import time
+
+    from abook.webui import name_readings as module
+
+    paths, db = _book(tmp_path)
+    _pronounce(db, "Lucien", "Lu-si-en", confidence=0.98)
+
+    def settle() -> None:
+        past = time.time() - 60
+        for path in [*paths.root.rglob("*"), paths.root]:
+            os.utime(path, (past, past))
+
+    settle()
+    real, built = module.name_readings, []
+    monkeypatch.setattr(module, "name_readings", lambda root: built.append(1) or real(root))
+    first = module.name_readings_view(paths.root)
+    assert module.name_readings_view(paths.root) == first and len(built) == 1
+    request_pronunciation(paths.root, "Lucien", "Lu-xi-en", now=1.0)
+    settle()
+    lucien = next(item for item in module.name_readings_view(paths.root)["items"] if item["surface"] == "Lucien")
+    assert len(built) == 2 and lucien["requested"] == "Lu-xi-en"
+
+
+def test_a_book_without_any_reading_lists_nothing_without_reading_its_lines(tmp_path: Path, monkeypatch) -> None:
+    """Cuốn chưa có cách đọc tên nào: danh sách rỗng, trả ngay - không quét câu nào (soát uxfix30: 50.000 câu, 0,26 s cho 26 byte)."""
+    from abook.webui import store
+
+    paths, _db = _book(tmp_path)
+    asked: list[str] = []
+    real = store.connect
+
+    def connect(root):
+        connection = real(root)
+        connection.set_trace_callback(asked.append)
+        return connection
+
+    monkeypatch.setattr(store, "connect", connect)
+    assert name_readings(paths.root) == {"items": [], "unseen": 0}
+    assert asked and not [sql for sql in asked if "FROM segments ORDER BY" in sql], asked

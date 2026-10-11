@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { ShortName } from "@/shared/ShortName";
+import { Windowed } from "@/shared/Windowed";
 import { cn } from "@/shared/cn";
 import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
 import { EmptyState, failedEmpty, LoadError, Progress, Segmented, Skeleton } from "@/shared/ui";
@@ -295,14 +296,32 @@ function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book
   );
 }
 
+const SHELF_GRID = "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-6";
+/** Thư viện vài trăm cuốn: dựng từng khối 60 cuốn gần màn hình (shared/Windowed). 60 chia hết cho 2-6 cột: mỗi khối là một lưới
+ *  cùng cột, hàng cuối của khối không hụt giữa chừng. */
+const SHELF_BLOCK = 60;
+
 function Shelf({ books, badges, twins }: { books: ListenBook[]; badges?: Map<string, string>; twins?: Set<string> }) {
+  const tile = (book: ListenBook, index: number) => (
+    // Hiện dần chỉ cho khối đầu: khối sau dựng khi cuộn tới, không nhún lại mỗi lần.
+    <div key={book.id} className={index < SHELF_BLOCK ? "rise-in" : undefined} style={{ "--i": index } as CSSProperties}>
+      <BookTile book={book} badge={badges?.get(book.id)} twin={twins?.has(book.id)} />
+    </div>
+  );
+  if (books.length <= SHELF_BLOCK * 2) return <div className={SHELF_GRID}>{books.map(tile)}</div>;
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-6">
-      {books.map((book, index) => (
-        <div key={book.id} className="rise-in" style={{ "--i": index } as CSSProperties}>
-          <BookTile book={book} badge={badges?.get(book.id)} twin={twins?.has(book.id)} />
-        </div>
-      ))}
+    <div role="list" aria-label="Sách" className="space-y-7">
+      <Windowed
+        items={books}
+        block={SHELF_BLOCK}
+        estimate={90}
+        className={SHELF_GRID}
+        row={(book, index) => (
+          <div key={book.id} role="listitem" aria-posinset={index + 1} aria-setsize={books.length}>
+            {tile(book, index)}
+          </div>
+        )}
+      />
     </div>
   );
 }

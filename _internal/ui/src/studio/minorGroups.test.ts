@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { keepRequests, pickedLines, pickNote, toggleLine } from "@/studio/minorGroups";
+import { examplesPage, keepRequests, moreText, pickedLines, pickNote, toggleLine } from "@/studio/minorGroups";
 
 const line = (stableId: string) => ({ stableId, textSha256: `sha-${stableId}` });
 
@@ -43,5 +43,24 @@ describe("giữ nguyên", () => {
 
   it("thẻ không có người đang nói thì không giữ được", () => {
     expect(keepRequests({ lines: [line("a")] })).toEqual([]);
+  });
+});
+
+describe("thẻ nhóm lớn: vài câu đầu, Xem thêm theo trang", () => {
+  const first = ["a", "b", "c"];
+
+  it("hỏi trang kế từ câu đã có, tới khi đủ tổng", () => {
+    const page = examplesPage("sach", "pick:NGƯỜI HẦU", first, [], 7, 2);
+    expect(page).toEqual({ loaded: first, total: 7, next: "/api/books/sach/work/examples?key=pick%3ANG%C6%AF%E1%BB%9CI%20H%E1%BA%A6U&offset=3&limit=2" });
+    expect(examplesPage("sach", "k", first, ["d", "e"], 7, 2).next).toContain("offset=5&limit=2");
+    expect(examplesPage("sach", "k", first, ["d", "e", "f", "g"], 7, 2)).toMatchObject({ loaded: ["a", "b", "c", "d", "e", "f", "g"], next: null });
+  });
+
+  it("thẻ đã mang đủ câu (bản chụp trong file dự án, nhóm nhỏ) không hỏi thêm", () => {
+    expect(examplesPage("sach", "k", first, [], undefined, 100)).toEqual({ loaded: first, total: 3, next: null });
+  });
+
+  it("nút nói đang hiện bao nhiêu trên tổng", () => {
+    expect(moreText(20, 900)).toBe("Xem thêm (đang hiện 20/900 câu)");
   });
 });

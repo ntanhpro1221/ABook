@@ -396,3 +396,87 @@ def test_a_merge_or_voice_change_not_yet_applied_never_leaves_this_machine(tmp_p
     for cast in (packed, series, synced):
         people = shared(cast)
         assert people and all("mergedInto" not in entry and not entry.get("pendingVoice") for entry in people), cast
+
+
+def _long_project(tmp_path: Path, chapters: int, *, heard: bool = False) -> Path:
+    """Cuốn `make_project` thêm chương 3..`chapters` (chưa thu - `heard`: đã thu, dùng chung MP3 của chương 1 -, mỗi chương một
+    câu), mốc sửa đẩy về quá khứ để bộ nhớ đệm theo mốc sửa dùng được ngay (listing_cache.RACY_SECONDS)."""
+    import os
+    import sqlite3
+
+    project = make_project(tmp_path / str(chapters))
+    db = sqlite3.connect(project / "project.sqlite3")
+    mp3 = str(project / "output" / "chapters" / "00001_645.mp3") if heard else ""
+    db.executemany("INSERT INTO chapters VALUES (?, ?, ?, '', ?, 1, ?, NULL, NULL, '')",
+                   [(c, c, str(c), "completed" if heard else "analyzed", mp3) for c in range(3, chapters + 1)])
+    db.executemany("INSERT INTO segments VALUES (?,?,1,0,0,?,'narration','NARRATOR',1,'analyzed','','',NULL,0)",
+                   [(10 + c, c, f"Chương {c} - Ngày thứ {c}") for c in range(3, chapters + 1)])
+    db.commit()
+    db.close()
+    past = time.time() - 60
+    for path in project.rglob("*"):
+        os.utime(path, (past, past))
+    os.utime(project, (past, past))
+    return project
+
+
+def test_packing_work_grows_with_the_chapters_not_their_square(tmp_path: Path, monkeypatch) -> None:
+    """Xuất cuốn rất dài: tên chương dựng một lần cho cả cuốn, không dựng lại cho TỪNG chương (soát a29: 3000 chương mất 4-7
+    phút). Đếm số lần đặt tên một chương: 4 lần số chương thì ~4 lần việc, không phải ~16 lần."""
+    from abook.webui import humanize
+
+    named = []
+    real = humanize.chapter_names
+    monkeypatch.setattr(humanize, "chapter_names", lambda *args: named.append(1) or real(*args))
+    work = []
+    for chapters in (300, 1200):
+        named.clear()
+        bookfile.pack(_long_project(tmp_path, chapters), tmp_path / f"{chapters}{bookfile.EXTENSION}")
+        work.append(len(named))
+    assert work[1] <= 5 * work[0], work
+
+
+def test_packing_reports_each_chapter_then_the_bytes_written(tmp_path: Path) -> None:
+    """Xuất .abook báo "chương X/N" rồi phần ghi file - trang Xuất hiện tiến độ thay vì vòng quay không biết bao giờ xong."""
+    project = _long_project(tmp_path, 5)
+    seen: list[tuple[str, int, int]] = []
+    bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", progress=lambda phase, done, total: seen.append((phase, done, total)))
+    listen = [(done, total) for phase, done, total in seen if phase == "listen"]
+    assert listen == [(done, 5) for done in range(5)], seen
+    write = [(done, total) for phase, done, total in seen if phase == "write"]
+    assert write and write[-1][0] == write[-1][1] > 0 and [d for d, _ in write] == sorted(d for d, _ in write), seen
+    assert [phase for phase, *_ in seen].index("listen") < [phase for phase, *_ in seen].index("write")
+
+
+def test_a_progress_that_raises_stops_the_export_and_leaves_no_file(tmp_path: Path) -> None:
+    """Người dùng huỷ giữa chừng: hàm báo tiến độ ném, việc dừng, không để lại file sách dở."""
+    project = _long_project(tmp_path, 5)
+
+    class Stop(Exception):
+        pass
+
+    def progress(phase: str, done: int, _total: int) -> None:
+        if phase == "listen" and done == 2:
+            raise Stop
+
+    target = tmp_path / f"sach{bookfile.EXTENSION}"
+    with pytest.raises(Stop):
+        bookfile.pack(project, target, progress=progress)
+    assert not target.exists() and not list(tmp_path.glob("*.tmp*"))
+
+
+def test_the_phone_list_of_a_long_book_opens_the_project_a_fixed_number_of_times(tmp_path: Path, monkeypatch) -> None:
+    """Danh sách chương gửi điện thoại (`sync.manifest`, cũng là đầu việc xuất sách) hỏi audio cả cuốn một lần, không mở sổ
+    dự án cho TỪNG chương (soát a29: 3000 chương mất 19 giây)."""
+    from abook.webui import store
+
+    opened = []
+    real = store.connect
+    monkeypatch.setattr(store, "connect", lambda root: opened.append(1) or real(root))
+    counts = []
+    for chapters in (50, 200):
+        project = _long_project(tmp_path, chapters, heard=True)
+        opened.clear()
+        manifest(project, book_id(project), bookfile._NoListening())
+        counts.append(len(opened))
+    assert counts[0] == counts[1], counts

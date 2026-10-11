@@ -1,10 +1,10 @@
 import { spokenDuration } from "@/listen/prepareAhead";
 import { fileName, formatClock, formatSize } from "@/shared/format";
 import { api } from "@/studio/api";
-import { packError, packView, type PackJob, type PackPhase } from "@/studio/projectPacking";
+import { BOOK_FILE_SPAN, packError, packView, type PackJob, type PackPhase } from "@/studio/projectPacking";
 
 // "Xuất file sách" và "Xuất M4B" (menu "…" của trang sách): nói trước file sẽ nằm đâu, và trong lúc làm nói điều đổi theo thời gian.
-// Máy chủ không báo "chương n/N" khi làm - chỉ có thời gian trôi qua là thứ thật để nói.
+// Việc có báo tiến độ (file sách, gói dự án) nói pha + đã/tổng; việc không báo (M4B) nói thời gian đã trôi - thứ thật duy nhất để nói.
 
 /** Chữ riêng của từng kiểu xuất chạy nền; phần còn lại (hỏi trạng thái, thông báo, nhắc lại khi mở trang) dùng chung. */
 export interface ExportCopy {
@@ -20,7 +20,15 @@ export interface ExportCopy {
   explain?: (raw: string) => string;
 }
 
-export const BOOK_FILE_COPY: ExportCopy = { busy: "Đang đóng gói sách…", done: "Đã xuất file sách", failed: "Không xuất được file sách" };
+/** File sách (.abook): việc nền có pha + "chương X/N" (webui/server.py `post_bookfile_job`, bookfile.pack). */
+export const BOOK_FILE_COPY: ExportCopy = {
+  busy: "Đang đóng gói sách…",
+  done: "Đã xuất file sách",
+  failed: "Không xuất được file sách",
+  stopped: "Đã huỷ xuất",
+  stoppedNote: "Chưa có file sách nào được ghi.",
+  progress: (job) => packView(job as unknown as PackJob, BOOK_FILE_SPAN),
+};
 export const M4B_COPY: ExportCopy = { busy: "Đang làm file M4B…", done: "Đã xuất M4B", failed: "Không xuất được M4B" };
 /** Gói cả dự án (.abookproj): việc nền ở máy chủ, có pha + đã/tổng và Huỷ (webui/server.py `post_projectfile_job`). */
 export const PROJECT_FILE_COPY: ExportCopy = {
@@ -146,7 +154,8 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
     const elapsed = job.elapsed ?? 0;
     const reported = reportedProgress(job);
     if (reported) return { kind: "loading", title: copy.busy, description: reported.text, progress: reported.fraction };
-    if (copy.progress) {
+    // Chưa có pha nào (cả bộ không báo tiến độ, hay lượt vừa bắt đầu): nói như việc không báo tiến độ.
+    if (copy.progress && job.phase) {
       const packing = copy.progress(job);
       return { kind: "loading", title: packing.title, description: `đã ${formatClock(elapsed)}`, ...(packing.fraction !== null ? { progress: packing.fraction } : {}) };
     }

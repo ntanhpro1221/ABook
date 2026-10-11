@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type { ReadAloudVoice } from "@/listen/readAloud";
 import { setApiTransport } from "@/studio/api";
 import { AudiobookForm, FfmpegNeeded } from "./AudiobookDialog";
-import { jobView, lastExportHint, type ExportJob } from "./bookFileExport";
+import { jobView, lastExportHint, M4B_COPY, type ExportJob } from "./bookFileExport";
 import {
   AUDIOBOOK_COPY,
   audiobookBody,
@@ -118,7 +118,8 @@ describe("jobView for the audiobook", () => {
   });
 
   it("says nothing about a stopped run for an export that cannot be stopped", () => {
-    expect(jobView({ state: "cancelled" }, 0, false).kind).toBe("none");
+    // M4B không có nút Huỷ (file sách thì có từ uxfix30 - BOOK_FILE_COPY.stopped).
+    expect(jobView({ state: "cancelled" }, 0, false, M4B_COPY).kind).toBe("none");
   });
 
   it("hints at the last file after a finished run", () => {
