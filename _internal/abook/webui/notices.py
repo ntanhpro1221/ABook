@@ -58,16 +58,35 @@ def keep_broken(path: Path, what: str, *, then: str = "app dùng mặc định")
     return kept
 
 
+class Unreadable(OSError):
+    """File trạng thái CÓ trên đĩa mà không đọc được (chương trình khác giữ - diệt virus, sao lưu, đồng bộ; quyền; ổ lỗi). Người gọi KHÔNG được
+    coi như file trống rồi ghi đè: dùng mặc định trong bộ nhớ, không ghi, đọc lại ở lần sửa kế."""
+
+
+READ_ATTEMPTS = 15
+READ_PAUSE_SECONDS = 0.2
+
+
+def unreadable(what: str) -> None:
+    NOTICES.add(f"{what} đang bị một chương trình khác giữ nên chưa đọc được - app tạm dùng mặc định và chưa lưu thay đổi vào đó cho tới "
+                "khi đọc được (thường chỉ vài giây).")
+
+
 def read_json(path: Path, what: str, valid: Callable[[Any], bool] = lambda _data: True) -> Any:
-    """Nội dung JSON của `path`; chưa có file hay không đọc được (quyền, ổ rời): None. Có mà hỏng (cắt nửa, rỗng, sai hình dạng theo
-    `valid`): giữ bản hỏng (`keep_broken`) rồi None."""
-    try:
-        raw = path.read_bytes()
-    except FileNotFoundError:
-        return None
-    except OSError:
-        log.warning("Không đọc được %s", path, exc_info=True)
-        return None
+    """Nội dung JSON của `path`; chưa có file: None. Có mà hỏng (cắt nửa, rỗng, sai hình dạng theo `valid`): giữ bản hỏng (`keep_broken`)
+    rồi None. Có mà không đọc được: thử lại vài giây rồi `Unreadable` (+ báo) - trước đây trả None và lần ghi kế ĐÈ file thật bằng mặc định."""
+    for attempt in range(READ_ATTEMPTS):
+        try:
+            raw = path.read_bytes()
+            break
+        except FileNotFoundError:
+            return None
+        except OSError as error:
+            if attempt == READ_ATTEMPTS - 1:
+                log.warning("Không đọc được %s", path, exc_info=True)
+                unreadable(what)
+                raise Unreadable(f"không đọc được {path.name}") from error
+            time.sleep(READ_PAUSE_SECONDS)
     try:
         data = json.loads(raw.decode("utf-8"))
     except ValueError:  # gồm UnicodeDecodeError, JSONDecodeError

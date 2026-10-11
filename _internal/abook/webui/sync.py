@@ -296,11 +296,13 @@ class Devices:
     def __init__(self, path: Path) -> None:
         self.path = path
         self._lock = threading.Lock()
-        # Hỏng (cắt nửa, `[1]`, sai kiểu - soát a28 lỗi 1): giữ bản hỏng + báo thay vì coi như chưa ghép máy nào rồi đè mất.
-        self._data: dict[str, Any] = notices.read_json(
-            path, "Danh sách điện thoại đã ghép",
-            lambda data: isinstance(data, dict) and isinstance(data.get("devices"), dict)
-            and all(isinstance(item, dict) for item in data["devices"].values())) or {"devices": {}}
+        # Hỏng (cắt nửa, `[1]`, sai kiểu - soát a28 lỗi 1): giữ bản hỏng + báo thay vì coi như chưa ghép máy nào rồi đè mất. Có mà không đọc
+        # được (chương trình khác giữ): danh sách trống trong bộ nhớ, không ghi đè - `_save` đọc lại và gộp.
+        self._unread = False
+        try:
+            self._data: dict[str, Any] = self._read() or {"devices": {}}
+        except notices.Unreadable:
+            self._data, self._unread = {"devices": {}}, True
         self._pairing: tuple[str, float] | None = None
         self._failures = 0
         self.blocked = False
@@ -398,7 +400,21 @@ class Devices:
             self._data["devices"] = {key: value for key, value in self._data["devices"].items() if key[:12] != short_id}
             self._save()
 
+    def _read(self) -> dict[str, Any] | None:
+        return notices.read_json(
+            self.path, "Danh sách điện thoại đã ghép",
+            lambda data: isinstance(data, dict) and isinstance(data.get("devices"), dict)
+            and all(isinstance(item, dict) for item in data["devices"].values()))
+
     def _save(self) -> None:
+        if self._unread:
+            try:
+                disk = self._read() or {"devices": {}}
+            except notices.Unreadable:
+                return  # vẫn chưa đọc được: ghi bây giờ là đè mất các máy đã ghép
+            # trong bộ nhớ chỉ có các máy ghép từ lúc mở app: gộp lên bản trên đĩa
+            self._data = {**disk, "devices": {**disk["devices"], **self._data["devices"]}}
+            self._unread = False
         atomic_write_json(self.path, self._data)
 
 

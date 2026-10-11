@@ -124,7 +124,12 @@ class Listening:
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or listening_path()
         self._lock = threading.Lock()
-        self._data = _upgrade(self._read() or {})
+        # Có file mà không đọc được (chương trình khác giữ): hồ sơ trống trong bộ nhớ, KHÔNG ghi đè file thật; đọc lại ở lần sửa kế.
+        self._unread = False
+        try:
+            self._data = _upgrade(self._read() or {})
+        except notices.Unreadable:
+            self._data, self._unread = _upgrade({}), True
         self._stamp = file_stamp(self.path)
 
     def _read(self) -> Any:
@@ -138,10 +143,15 @@ class Listening:
         sửa (soát a28 lỗi 14: hai bên giữ cả bảng trong bộ nhớ, bên ghi sau đè mất chỗ nghe của bên kia). File mất / hỏng giữa chừng: giữ
         bản trong bộ nhớ, lần ghi này đưa nó lại ra đĩa."""
         with self._lock, file_lock(self.path):
-            if file_stamp(self.path) != self._stamp:
-                raw = self._read()
-                if raw is not None:
-                    self._data = _upgrade(raw)
+            if self._unread or file_stamp(self.path) != self._stamp:
+                try:
+                    raw = self._read()
+                except notices.Unreadable:
+                    pass
+                else:
+                    if raw is not None or self._unread:
+                        self._data = _upgrade(raw or {})
+                    self._unread = False
                 self._stamp = file_stamp(self.path)
             yield
 
@@ -583,6 +593,8 @@ class Listening:
             return reply
 
     def _save(self) -> None:
+        if self._unread:
+            return  # chưa đọc được bản trên đĩa: ghi bây giờ là đè mất chỗ nghe, dấu trang thật
         atomic_write_json(self.path, self._data)  # nguyên tử + fsync: mất điện không để lại file rỗng
         self._stamp = file_stamp(self.path)
 

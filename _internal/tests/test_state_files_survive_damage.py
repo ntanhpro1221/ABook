@@ -348,3 +348,67 @@ def test_a_cut_epub_sidecar_is_redone_not_a_permanent_import_error(tmp_path: Pat
     assert again == folder and same == info
     assert json.loads((folder / importers.SIDECAR).read_text(encoding="utf-8")) == info
     assert not list(folder.glob("*.tmp")) and not list(folder.glob("*.part"))
+
+
+class _Held:
+    """`path.read_bytes()` báo PermissionError (chương trình khác giữ file kiểu Windows) cho tới khi `release()`."""
+
+    def __init__(self, monkeypatch: pytest.MonkeyPatch, path: Path) -> None:
+        self.held = True
+        real = Path.read_bytes
+        target = path
+
+        def read_bytes(self_path: Path) -> bytes:
+            if self.held and self_path == target:
+                raise PermissionError(13, "held by another program")
+            return real(self_path)
+
+        monkeypatch.setattr(Path, "read_bytes", read_bytes)
+        monkeypatch.setattr(notices, "READ_PAUSE_SECONDS", 0)
+
+    def release(self) -> None:
+        self.held = False
+
+
+def test_a_held_preferences_file_is_never_overwritten(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "preferences.json"
+    original = json.dumps({"theme": "dark", "recents": ["a.abook"], "libraryRoot": str(tmp_path)}).encode()
+    path.write_bytes(original)
+    held = _Held(monkeypatch, path)
+    preferences = Preferences(path)
+    assert any("đang bị một chương trình khác giữ" in item["text"] for item in notices.NOTICES.all())
+    preferences.update({"theme": "light"})
+    assert path.open("rb").read() == original
+    held.release()
+    preferences.update({"theme": "light"})
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    assert saved["theme"] == "light" and saved["recents"] == ["a.abook"] and saved["libraryRoot"] == str(tmp_path)
+
+
+def test_a_held_listening_file_is_never_overwritten(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "listening.json"
+    before = Listening(path)
+    before.progress("book-a", 1, 30.0, 100.0)
+    original = path.open("rb").read()
+    held = _Held(monkeypatch, path)
+    listening = Listening(path)
+    listening.progress("book-b", 2, 10.0, 100.0)
+    assert path.open("rb").read() == original
+    held.release()
+    listening.progress("book-b", 2, 10.0, 100.0)
+    assert set(Listening(path).books()) == {"book-a", "book-b"}
+
+
+def test_a_held_devices_file_is_merged_not_overwritten(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "devices.json"
+    first = Devices(path)
+    assert first.pair(first.start_pairing()["code"], "Điện thoại cũ")
+    original = path.open("rb").read()
+    held = _Held(monkeypatch, path)
+    devices = Devices(path)
+    assert devices.pair(devices.start_pairing()["code"], "Điện thoại mới")
+    assert path.open("rb").read() == original
+    held.release()
+    assert devices.pair(devices.start_pairing()["code"], "Điện thoại thứ ba")
+    names = {item.get("name") for item in json.loads(path.read_text(encoding="utf-8"))["devices"].values()}
+    assert names == {"Điện thoại cũ", "Điện thoại mới", "Điện thoại thứ ba"}

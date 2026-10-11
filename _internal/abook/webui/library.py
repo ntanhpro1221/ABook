@@ -304,7 +304,12 @@ class Preferences:
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or preferences_path()
         self._lock = threading.Lock()
-        self._data = self._load()
+        # Có file mà không đọc được (chương trình khác giữ): mặc định trong bộ nhớ, KHÔNG ghi đè file thật; đọc lại ở lần sửa kế.
+        self._unread = False
+        try:
+            self._data = self._load()
+        except notices.Unreadable:
+            self._data, self._unread = self._defaults({}), True
         self._stamp = file_stamp(self.path)
 
     def _parse(self) -> dict[str, Any] | None:
@@ -330,8 +335,12 @@ class Preferences:
         parsed = self._parse()
         if parsed is None and keep is not None:
             return keep
+        return self._defaults(parsed or {})
+
+    @staticmethod
+    def _defaults(parsed: dict[str, Any]) -> dict[str, Any]:
         data = json.loads(json.dumps(DEFAULT_PREFERENCES))
-        data.update(parsed or {})
+        data.update(parsed)
         if not data["libraryRoot"].strip():
             data["libraryRoot"] = _legacy_output_folder() or str(Path.home() / "Audiobooks")
         return data
@@ -340,8 +349,12 @@ class Preferences:
     def _changing(self) -> Iterator[None]:
         """Sửa tuỳ chọn: khoá luồng + khoá file, đọc lại nếu tiến trình khác đã ghi từ lần mình đọc / ghi cuối (soát a28 lỗi 14)."""
         with self._lock, file_lock(self.path):
-            if file_stamp(self.path) != self._stamp:
-                self._data = self._load(keep=self._data)
+            if self._unread or file_stamp(self.path) != self._stamp:
+                try:
+                    self._data = self._load(keep=None if self._unread else self._data)
+                    self._unread = False
+                except notices.Unreadable:
+                    pass
                 self._stamp = file_stamp(self.path)
             yield
 
@@ -395,6 +408,8 @@ class Preferences:
     def _save(self) -> None:
         # Ghi nguyên tử + fsync (mất điện không để lại file rỗng). Supervisor của sách đang chạy đọc file này (power_source, khi máy chạy pin):
         # trên Windows, đổi tên đè lên file đang mở báo PermissionError - atomic_write_json thử lại như file state của dây chuyền (soát QA 29-09).
+        if self._unread:
+            return  # chưa đọc được bản trên đĩa: ghi bây giờ là đè mất cài đặt thật
         atomic_write_json(self.path, self._data)
         self._stamp = file_stamp(self.path)
 
