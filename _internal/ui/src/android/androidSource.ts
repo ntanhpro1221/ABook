@@ -60,6 +60,8 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     parts: book.parts ?? [],
     // Nghe thẳng từ thiết bị ghép (Peers.kt): "Trên <tên máy>"; từ máy tính chính: "Trên máy tính".
     remote: book.sourceName ? { computer: book.sourceName } : Boolean(book.streamed),
+    // Dự án Studio của máy tính nhận phần sửa của cuốn (máy tính chính hay máy tính ghép thêm): mở Studio của máy ấy ở đúng cuốn.
+    studio: Boolean(book.studio && book.capabilities?.sync),
     records: book.records,
     capabilities: book.capabilities,
     edits: book.edits ?? 0,

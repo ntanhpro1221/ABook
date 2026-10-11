@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { homePage, listenOnlyLine, peerBarLine, peerOf, peerPage, throughPeer } from "./peerStudio";
+import { homePage, listenOnlyLine, listenOnlyOwner, peerBarLine, peerOf, peerPage, throughPeer } from "./peerStudio";
 
 describe("Studio của máy tính đã ghép (webui/peer_studio.py)", () => {
   it("chỉ nhận mã máy đúng dạng trong chuỗi truy vấn", () => {
@@ -29,5 +29,11 @@ describe("Studio của máy tính đã ghép (webui/peer_studio.py)", () => {
     expect(peerBarLine("Máy phòng khách", { silent: "Máy phòng khách không trả lời (tắt hay mất mạng)", listenOnly: true })).toBe(
       "Máy phòng khách không trả lời (tắt hay mất mạng) - tự nối lại khi máy ấy trả lời",
     );
+  });
+
+  it("trang chỉ nghe nói đúng máy cần bật: máy đang mở qua app này, hay chính máy phục vụ trang (Studio từ xa, app điện thoại)", () => {
+    expect(listenOnlyOwner({ peer: { name: "Máy phòng khách" }, machine: "DESKTOP-1" })).toBe("Máy phòng khách");
+    expect(listenOnlyOwner({ machine: "DESKTOP-1" })).toBe("DESKTOP-1");
+    expect(listenOnlyOwner({})).toBe("máy tính");
   });
 });

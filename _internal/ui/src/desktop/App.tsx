@@ -23,7 +23,7 @@ import { brokenMusicNote, keptEditsTitle, workshopMergeNote } from "@/shared/edi
 import { MissingLibrary } from "@/shared/MissingLibrary";
 import { setExternalOpener } from "@/shared/openExternal";
 import { toastRemoved } from "@/shared/trashUndo";
-import { homePage, listenOnlyLine, peerPage } from "@/shared/peerStudio";
+import { homePage, listenOnlyLine, listenOnlyOwner, peerPage } from "@/shared/peerStudio";
 import { watchUntilBack } from "@/listen/peerBack";
 import { api, ApiError, currentPeer, type AppInfo } from "@/studio/api";
 import { pickFolder, useAppInfo, useLibrary, usePreferences } from "@/studio/data";
@@ -487,26 +487,15 @@ function StudioClosed({ children }: { children: ReactNode }) {
   const { data: info } = useAppInfo();
   const navigate = useNavigate();
   if (!info?.listenOnly) return <>{children}</>;
-  if (info.peer)
-    return (
-      <EmptyState
-        icon={Clapperboard}
-        title={listenOnlyLine(info.peer.name)}
-        className="mt-24"
-        action={<Button onClick={() => navigate("/")}>Về Thư viện</Button>}
-      >
-        Sách của máy ấy vẫn nghe được ở Thư viện.
-      </EmptyState>
-    );
+  // Cùng một câu ở mọi nơi mở Studio của máy khác: app máy tính (`peer`), trình duyệt và app điện thoại (`machine`).
   return (
     <EmptyState
       icon={Clapperboard}
-      title="Thiết bị này chỉ nghe sách"
+      title={listenOnlyLine(listenOnlyOwner(info))}
       className="mt-24"
       action={<Button onClick={() => navigate("/")}>Về Thư viện</Button>}
     >
-      Muốn làm sách từ đây: trên máy tính, Cài đặt → Điện thoại và thiết bị → bật “Cho phép điều khiển sản xuất từ thiết bị
-      đã ghép” và “Điều khiển sản xuất” ở dòng của thiết bị này, rồi tải lại trang.
+      Sách của máy ấy vẫn nghe được ở Thư viện.
     </EmptyState>
   );
 }

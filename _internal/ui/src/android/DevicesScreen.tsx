@@ -1,6 +1,6 @@
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BatteryCharging, Bluetooth, CheckCircle2, ChevronRight, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi } from "lucide-react";
+import { BatteryCharging, Bluetooth, CheckCircle2, ChevronRight, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -13,6 +13,7 @@ import { backgroundHelp } from "./backgroundHelp";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
 import { hasNewWords } from "./bookUpdates";
+import { OpenStudioButton, useStudioComputers } from "./StudioOpen";
 import { booksBySize, useStorage } from "./storage";
 import { useListenLibrary } from "@/listen/source";
 import { EbookLibrary, type DownloadEvent, type RemoteBook, type ShareStatus } from "./plugins";
@@ -678,6 +679,7 @@ export function DevicesScreen() {
   });
   const storage = useStorage();
   const progress = useDownloadProgress();
+  const studioComputers = useStudioComputers();
 
   const unpair = async () => {
     await EbookLibrary.unpair();
@@ -694,7 +696,11 @@ export function DevicesScreen() {
       </div>
       <div className="mt-5">
         {!connection.data?.paired ? (
-          <PairPanel />
+          <>
+            <PairPanel />
+            {/* Chưa ghép máy tính chính mà đã ghép máy tính khác (Peers): Studio của máy ấy vẫn mở được từ đây. */}
+            <OpenStudioButton computers={studioComputers} className="mt-3 w-full" />
+          </>
         ) : (
           <>
             <div className="flex items-center gap-3 rounded-2xl border border-line bg-panel p-4">
@@ -722,15 +728,8 @@ export function DevicesScreen() {
                 một lần khi còn ở nhà - điện thoại tự nhớ đường.
               </p>
             )}
-            {/* Studio từ xa: điện thoại không sản xuất, nhưng điều khiển được việc sản xuất của máy tính. */}
-            <Button
-              variant="secondary"
-              icon={Clapperboard}
-              className="mt-3 w-full"
-              onClick={() => void EbookLibrary.openStudio().catch((error: Error) => toast.error(error.message))}
-            >
-              Studio của máy tính
-            </Button>
+            {/* Studio từ xa: điện thoại không sản xuất, nhưng điều khiển được việc sản xuất của máy tính - hỏi máy nào khi ghép nhiều máy tính. */}
+            <OpenStudioButton computers={studioComputers} className="mt-3 w-full" />
             <StudioAlertsRow />
             <div className="mt-5 divide-y divide-line">
               {remote.data?.books.length ? (

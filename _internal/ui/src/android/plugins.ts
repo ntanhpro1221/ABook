@@ -198,6 +198,12 @@ export interface ManifestChapter {
   skip?: string[];
 }
 
+/** Máy tính đã ghép có Studio: `key` "" là máy tính chính, còn lại là mã máy ghép thêm (Peers.kt). */
+export interface StudioComputer {
+  key: string;
+  name: string;
+}
+
 export interface LocalBook {
   format: string;
   id: string;
@@ -224,6 +230,8 @@ export interface LocalBook {
   streamed?: boolean;
   /** Nghe thẳng từ thiết bị ghép (Peers.kt): tên thiết bị ấy. */
   sourceName?: string;
+  /** Cuốn là dự án Studio ở máy tính giữ nó (sync.py book_manifest) - trang sách có "Mở Studio". */
+  studio?: boolean;
   /** Hồ sơ nghe gắn với cuốn (Store.records) - chỉ có khi mở một cuốn. */
   records?: ListeningRecord[];
   /** Máy này làm được gì với cuốn (shared/capabilities.ts): điện thoại không có xưởng, không có Studio; `link` = cuốn của máy tính. */
@@ -354,8 +362,11 @@ export interface EbookLibraryPlugin {
   /** `fingerprint`: vân tay chứng chỉ TLS máy tính đã ghi lúc ghép (hex; Pin.kt) - để đối chiếu, "" nếu chưa có. */
   connection(): Promise<{ paired: boolean; host: string; port: number; name: string; fingerprint?: string }>;
   unpair(): Promise<void>;
-  /** Studio từ xa: mở trang Studio của máy tính đã ghép (StudioActivity.kt, webui/remote_studio.py). */
-  openStudio(): Promise<void>;
+  /** Máy tính mở Studio được (StudioLink.kt): máy tính chính (`key` "") rồi các máy tính ghép thêm. */
+  studioComputers(): Promise<{ computers: StudioComputer[] }>;
+  /** Studio từ xa: mở trang Studio của máy tính đã ghép (StudioActivity.kt, webui/remote_studio.py) - máy `computer` ("" = máy tính
+   *  chính), hay thẳng cuốn `book` (mã trên điện thoại này) trong Studio của máy tính giữ nó. */
+  openStudio(options?: { computer?: string; book?: string }): Promise<void>;
   /** Mở trang / file APK của bản phát hành mới bằng trình duyệt của máy (chỉ đường GitHub của ABook - updates.ts). */
   openRelease(options: { url: string }): Promise<void>;
   /** Thông báo Studio (StudioAlerts.kt): sách xong, dừng vì lỗi, có việc mới cần duyệt. `permitted`: Android cho đăng
