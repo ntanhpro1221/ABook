@@ -4396,8 +4396,8 @@ nói bằng lời lịch sự. Vàng đáng ngờ khoảng 2-3/30, đều bảo 
 
 Gốc sửa, theo thứ tự rẻ → đắt:
 - (a) `target_of` (code). Thí nghiệm WEAKPULL đề xuất dưới.
-- (b) Mức V của chương (dữ liệu). Thêm chương bạc / vàng kiểu "vui ngoài, buồn trong" cho head LV.V. Hoặc thử ghép mức = LV.V với
-  TB dV của chương.
+- (b) Mức V của chương (dữ liệu). Thêm chương bạc / vàng kiểu "vui ngoài, buồn trong" cho head LV.V. dV không giúp được mức:
+  nó đã bị trừ TB chương (TB theo thời lượng ~0 ở mọi chương), nên mức chỉ có thể đến từ head chương.
 - (c) Học sinh gộp "tiêu cực" với "buồn" (dữ liệu / nhãn). Trước hết kiểm xem nhãn bạc có gán V âm cho cảnh giận / kinh dị không.
 
 **ĐỀ XUẤT GHI TRƯỚC - WEAKPULL** (chờ Lead duyệt, chưa chạy biến thể nào):
