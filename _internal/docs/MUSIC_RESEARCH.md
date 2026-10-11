@@ -4352,7 +4352,7 @@ Kết quả:
 - Bộ 7 trượt cả ba điều kiện → THUA, app giữ nguyên.
 
 Gộp GAIN / ENERGY / SIBSWITCH / VALENCE: không lỗi nào của audit-2 sửa được bằng cách vặn hằng ở khâu chọn bài. Hai chỗ còn lại:
-1. Nguồn không khí: dấu và độ mạnh của V/A từ nhãn câu / P0. Học sinh q06 đã tính dE nhưng app chưa dùng.
+1. Nguồn không khí: dấu và độ mạnh của V/A từ nhãn câu / P0. Ở STUDIO, hình E trong chương đã lấy từ dE của học sinh (Q06-E); mức E của chương vẫn là TB nhãn câu.
 2. Mảnh nối tiếp giữ bài cũ qua chỗ truyện ngoặt (lỗi 1). Hai nhánh break-continuation và onset-tiles đang chờ đo cuối.
 
 ### 11-10 chiều - SIBSWITCH (lỗi 5 audit-2: đổi bài giữa cảnh vì bài hết): THUA
@@ -4397,7 +4397,9 @@ Bài chọn cho đầu cảnh vẫn khớp mục tiêu (r A .72); lỗi nằm �
 - Cấu hình được chọn là s_T 2. Trên bộ 7 nó TỆ hơn app (r_E .199 so với .237) → THUA, app giữ nguyên.
 - Số phụ (Lead): trong riêng cảnh E ≥ .4, r(A, E vàng) ≈ 0 ở mọi cấu hình. Tín hiệu A (TB nhãn câu ở cả hai đường) không phân
   biệt được mức hành động, nên giãn nó chỉ phóng to nhiễu.
-- Hướng kế cho lỗi 2: đo `dE` của học sinh q06 (đã tính, app chưa dùng) làm nguồn A trước khi đụng tới việc chọn bài.
+- Đính chính (11-10 tối): đường STUDIO ĐÃ dùng `dE` của học sinh cho hình E trong chương (`music_scenes.apply_student`, Q06-E 10-10);
+  docstring đầu music_scene_student.py ghi "app KHÔNG dùng" là cũ. Chỗ còn lại cho lỗi 2 là MỨC E của chương (vẫn TB nhãn câu),
+  như LV-Q06 đã làm cho mức V.
 
 ### 11-10 chiều - Bước âm lượng ngược chiều truyện (phần âm lượng của lỗi 1 và 3 MUSIC-AUDIT): hằng số hôm nay đã tốt nhất, THUA
 

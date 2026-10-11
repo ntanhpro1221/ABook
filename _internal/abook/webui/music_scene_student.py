@@ -4,8 +4,8 @@ V/E/T của đoạn hôm nay là LLM đọc từng đoạn (music_moods.py) rồ
 một học sinh nhỏ đoán HÌNH dạng không khí TRONG chương tốt hơn hẳn LLM: nhúng chữ đoạn bằng Qwen3-0.6B cắt còn 14 lớp đầu, căn giữa nhúng
 trong chương, rồi hồi quy tuyến tính (ridge) ra độ LỆCH V/E/T của từng đoạn quanh mức chương. Mô-đun này chỉ tính độ lệch (`dV`, `dE`, `dT`
 trên thang [-1, 1], cùng thang `valence` / `arousal` / `tension` của đoạn) và ghi `music_scene_student.json`; `music_scenes.apply_student`
-cộng V và T vào mức chương khi dựng đoạn (music_plan.build đọc file này như đọc music_moods.json). `dE` được tính nhưng app KHÔNG dùng:
-arousal vẫn lấy từ nhãn câu (chưa đo riêng nên chưa thay). Ranh giới đoạn vẫn của app.
+cộng cả ba vào mức chương khi dựng đoạn (music_plan.build đọc file này như đọc music_moods.json); mức E của chương vẫn là TB nhãn câu,
+hình E trong chương lấy từ `dE` (Q06-E 10-10). Ranh giới đoạn vẫn của app.
 
 Gói model (thư mục `scene_q06/` trong repo Hugging Face NGDtuanh/abook-music-student, cùng repo với mô-đun "Phân tích nhạc"; Qwen3 theo
 Apache-2.0, (c) Qwen team, cắt 14 lớp): `config.json`, `model.safetensors` (bf16, 0,71 GiB cả gói), `tokenizer.json`, `tokenizer_config.json`,
