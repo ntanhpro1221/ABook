@@ -8,8 +8,6 @@ from typing import Any, Callable, Iterable
 
 from . import narrator_sections
 from .analysis import (
-    DIALOGUE_CLOSERS,
-    DIALOGUE_OPENERS,
     LOCAL_SPEAKER_REQUEST_PREFIX,
     _canonical_speaker,
     _explicit_speaker_attribution,
@@ -2289,10 +2287,9 @@ def _repair_cross_batch_dialogue_continuations(
                 and adjacent_paragraph
                 and previous["kind"] == "dialogue"
                 and current["kind"] == "dialogue"
-                and previous_text
-                and text
-                and previous_text[-1] not in DIALOGUE_CLOSERS
-                and text[0] not in DIALOGUE_OPENERS
+                # Cùng phép thử với bước sửa trong lô: gạch đầu dòng ("- ...") hay ngoặc đơn cũng mở lượt mới,
+                # không chỉ dấu ngoặc kép - sách thoại gạch từng bị chép người nói câu đầu cho cả cuộc thoại.
+                and not opens_a_new_turn(previous_text, text)
             )
             if continuation and current["speaker"] != previous["speaker"]:
                 repaired += db.rewrite_segment_speakers(
