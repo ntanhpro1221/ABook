@@ -4337,6 +4337,21 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 tối - MONO (lỗi 3 audit-2: một bài quay lại ở nhiều chương): KHÔNG KẾT LUẬN
+
+Chẩn đoán (bộ học, LBL): 8 bài chiếm 49,5% thời lượng; một bài dài gần tâm V/A/T chiếm 14% và có mặt ở 11/42 chương. Nguyên nhân
+là mục tiêu bẹt cộng ưu bài dài; phạt "vừa dùng" chỉ nhớ 3 bài.
+
+MONO (ghi trước Corpus 98fa3a5, kết quả 9668ae5) đo trên cuốn GHÉP các chương của một bộ, 5 thứ tự chương, biến thể là cửa sổ
+RECENT_SCENES và hệ số phạt.
+- Hệ số phạt không đổi gì: bài đã nằm trong cửa sổ thì không bao giờ được chọn lại. Chỉ độ dài cửa sổ là quan trọng.
+- Bộ học chọn cửa sổ 100: số bài hiệu dụng 50 -> 115.
+- Bộ 7: 34 -> 70 (x2, hơn ở cả 5 thứ tự); 8 bài nhiều nhất 49 -> 22%. Chặn hợp truyện qua.
+- Nhưng sàn "không bao giờ lặp" cũng qua, r còn nhích lên, nên chặn không có răng: KHÔNG KẾT LUẬN.
+
+Theo mọi thước hợp truyện ta có, đa dạng là miễn phí, vì danh mục đủ rộng. Nên lặp bài bao nhiêu (đa dạng tối đa, hay vài bài làm
+chủ đề quay lại) là câu hỏi gu người nghe, Lead / chủ sách quyết. Nếu chọn đa dạng: RECENT_SCENES 30-100, hằng một dòng.
+
 ### 11-10 tối - LV-E (mức năng lượng của chương từ nhúng q06): THUA theo luật, trượt đúng một điều kiện
 
 Chẩn đoán (bộ học, đường STUDIO): hình E trong chương (dE học sinh) r .56, nhưng MỨC E chương (TB nhãn câu) r qua chương chỉ .27.
