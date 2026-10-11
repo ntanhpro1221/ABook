@@ -33,6 +33,8 @@ import { chapterScriptQuery, useListenBook, useSource } from "./source";
 import { withFreshSkips } from "./textScript";
 import { caughtUpDetail } from "./labels";
 import { reportSaveFailure } from "./saveFailure";
+import { letterShortcutsOn } from "@/shared/letterShortcuts";
+import { prefersReducedMotion } from "@/shared/motion";
 
 export type { SleepMode, SleepRequest } from "./sleep";
 
@@ -1410,6 +1412,8 @@ export function PlayerProvider({
       if (target.closest('[role="menu"],[role="listbox"],[role="dialog"]')) return;
       const widget = target.closest('[role="slider"],[role="tab"],[role="radio"],[role="option"],[role="menuitem"]');
       const keyboardFocused = target !== document.body && keyboardNavigation;
+      // Phím một chữ cái (B, M, [ ]) tắt ở Cài đặt › Phím tắt (WCAG 2.1.4); Space và mũi tên vẫn chạy.
+      if (event.key.length === 1 && event.key !== " " && !letterShortcutsOn()) return;
       switch (event.key) {
         case " ": {
           // Thanh trượt không dùng Space vào việc gì: Space trên thanh tua vẫn là phát/tạm dừng.
@@ -1528,7 +1532,7 @@ export function PlayerProvider({
     // cảnh rỗng khi cửa sổ không được vẽ (thu nhỏ, ẩn) bị trình duyệt huỷ thành lỗi console (soát UX 29-09).
     if (expandedNow.current === value) return;
     const start = (document as Document & { startViewTransition?: (update: () => void) => unknown }).startViewTransition;
-    if (!start || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    if (!start || prefersReducedMotion()) {
       setExpanded(value);
       return;
     }

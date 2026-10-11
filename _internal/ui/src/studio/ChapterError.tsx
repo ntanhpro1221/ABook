@@ -11,7 +11,7 @@ export function ChapterError({ raw, studio = false }: { raw: string; studio?: bo
       </summary>
       <div className="absolute left-0 top-full z-20 mt-1 w-[min(32rem,calc(100vw-3rem))] rounded-lg border border-line bg-panel p-3 text-fg shadow-float">
         <p className="text-fg-2">{shown.hint}</p>
-        {shown.detail && <p className="mt-2 max-h-40 select-text overflow-auto break-words font-mono text-[11px] text-fg-2">{shown.detail}</p>}
+        {shown.detail && <p className="mt-2 max-h-40 select-text overflow-auto break-words font-mono text-[0.6875rem] text-fg-2">{shown.detail}</p>}
       </div>
     </details>
   );

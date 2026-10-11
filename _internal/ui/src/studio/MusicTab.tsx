@@ -6,8 +6,9 @@ import { toast } from "sonner";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
 import { formatClock } from "@/shared/format";
+import { spokenProgress } from "@/shared/progressSpeech";
 import { MUSIC_LEVELS as LEVELS, levelText } from "@/shared/musicLevels";
-import { Button, IconButton, Progress } from "@/shared/ui";
+import { Button, IconButton, LiveText, Progress } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
 import { importMusic } from "./musicImport";
@@ -622,7 +623,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
             title={genreName || "Chưa chọn"}
             onChange={(event) => change.mutate({ genre: event.target.value || null })}
             // Rộng vừa tên thể loại dài nhất ("Dị giới / kỳ ảo phương Tây (…)") - không cắt chữ; hẹp màn thì thôi ở bề ngang ô.
-            className="mt-1 h-9 w-full max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-accent sm:w-auto sm:min-w-64"
+            className="mt-1 h-9 w-full max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-auto sm:min-w-64"
           >
             <option value="">Chưa chọn</option>
             {genres.map(([value, genre]) => (
@@ -640,7 +641,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
             id="music-level"
             value={String(overrides.levelDb)}
             onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
-            className="mt-1 h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-accent sm:w-60"
+            className="mt-1 h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-60"
           >
             {LEVELS.map(([value, label]) => (
               <option key={value} value={String(value)}>
@@ -658,8 +659,11 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
           </p>
         )}
         {data.download?.active && (
-          <div role="status" className="flex basis-full flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-2">
-            <span className="min-w-0 flex-1">{downloadText(data.download)}</span>
+          <div className="flex basis-full flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-2">
+            {/* MB đổi mỗi 2 giây: trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
+            <span role="status" className="min-w-0 flex-1">
+              <LiveText shown={downloadText(data.download)} spoken={spokenProgress("Đang tải sẵn nhạc nền", downloadShare(data.download))} />
+            </span>
             <Button size="sm" variant="ghost" icon={Square} loading={cancelDownload.isPending} onClick={() => cancelDownload.mutate()}>
               Huỷ tải
             </Button>

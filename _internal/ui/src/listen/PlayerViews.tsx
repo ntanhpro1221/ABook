@@ -96,6 +96,10 @@ export function sentenceAt(script: Script | undefined, seconds: number): string 
 
 // ---- Thanh tua -------------------------------------------------------------------------------------------
 
+// Thanh tua / âm lượng nhỏ chỉ cao 14 px: vùng bấm nới (::after của chính thanh - bấm vào đó là bấm vào thanh) thành 24 px, phần lớn
+// dồn xuống dưới để không lấn nút phát ngay bên trên (soát a31, 2.5.8).
+const SLIDER_REACH = "after:absolute after:inset-x-0 after:top-[-3px] after:bottom-[-7px] after:content-['']";
+
 function SeekBar({ large = false }: { large?: boolean }) {
   const { seek, skip, track, rate } = usePlayer();
   const second = usePlaybackSecond();
@@ -129,7 +133,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
     <div className={cn("w-full", large ? "space-y-1.5" : "flex items-center gap-3")}>
       {!large && <span className="tabular w-12 shrink-0 text-right text-xs text-fg-2">{formatClock(clamped)}</span>}
       <Slider.Root
-        className={cn("group relative flex touch-none select-none items-center", large ? "h-5 w-full" : "h-4 flex-1")}
+        className={cn("group relative flex touch-none select-none items-center", large ? "h-5 w-full" : cn("h-4 flex-1", SLIDER_REACH))}
         min={0}
         max={max}
         step={1}
@@ -153,7 +157,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
           aria-label="Vị trí trong chương"
           aria-valuetext={`${spokenClock(clamped)} trên ${spokenClock(duration)}`}
           className={cn(
-            "block rounded-full bg-fg shadow transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+            "block rounded-full bg-fg shadow transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
             large ? "size-4 opacity-100" : "size-3 opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
           )}
         />
@@ -179,7 +183,7 @@ function skipIcon(Base: typeof RotateCcw) {
       <span className={cn("relative inline-grid scale-[1.2] place-items-center", className)}>
         <Base className="size-full" strokeWidth={1.75} />
         {/* Cỡ chữ tuyệt đối, không theo font của nút (0,42em từng ra 5,9 px - không đọc được): 10 px nằm vừa trong vòng mũi tên (biểu tượng nới 1,2 lần để chữ không chạm nét vẽ). */}
-        <span className="tabular absolute inset-0 grid place-items-center pt-[1px] text-[10px] font-bold leading-none tracking-tighter">
+        <span className="tabular absolute inset-0 grid place-items-center pt-[1px] text-[0.625rem] font-bold leading-none tracking-tighter">
           {SKIP_SECONDS}
         </span>
       </span>
@@ -279,7 +283,7 @@ function MenuShell({
             {...keepFocus}
             className={cn(
               // Điện thoại (màn "Đang nghe"): đủ 44 px để chạm.
-              "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[13px] font-semibold transition-colors hover:bg-hover max-sm:h-[44px] max-sm:min-w-[44px]",
+              "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[44px] max-sm:min-w-[44px]",
               active ? "text-accent-text" : "text-fg-2",
             )}
           >
@@ -291,7 +295,8 @@ function MenuShell({
         <Popover.Content
           sideOffset={8}
           collisionPadding={12}
-          onCloseAutoFocus={(event) => event.preventDefault()}
+          // Esc hay chọn xong: Radix tự trả tiêu điểm về nút mở (bấm ra ngoài thì không) - trước đây chặn nên rơi về BODY (soát a31 K1). Mở
+          // bằng chuột thì nút không bật chú thích (Tooltip quietFocus).
           onOpenAutoFocus={(event) => {
             const current = focusSelector ? (event.currentTarget as HTMLElement).querySelector<HTMLElement>(focusSelector) : null;
             if (!current) return;
@@ -499,7 +504,7 @@ function ScrollHint({ className, children }: { className: string; children: Reac
       </div>
       {more && (
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 flex h-12 items-end justify-center bg-gradient-to-t from-panel via-panel/80 to-transparent pb-1">
-          <span className="rounded-full bg-panel px-2.5 py-0.5 text-[11px] font-medium text-fg-2 ring-1 ring-line">Kéo xuống còn giọng khác</span>
+          <span className="rounded-full bg-panel px-2.5 py-0.5 text-[0.6875rem] font-medium text-fg-2 ring-1 ring-line">Kéo xuống còn giọng khác</span>
         </div>
       )}
     </div>
@@ -529,7 +534,7 @@ export function VoiceMenu() {
       <ScrollHint className="min-h-0 flex-1 overflow-y-auto p-1">
         {groupedVoices(voices).map((group) => (
           <div key={group.provider} role="group" aria-label={group.title} className="mb-1.5">
-            <div className="px-2 pb-0.5 pt-1 text-[11px] font-semibold uppercase tracking-wider text-fg-3">{group.title}</div>
+            <div className="px-2 pb-0.5 pt-1 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">{group.title}</div>
             {voiceSections(group.voices).map((section) => (
               <div key={section.label ?? ""}>
                 {section.label && <div className="px-2 pb-0.5 pt-1 text-xs font-medium text-fg-2">{section.label}</div>}
@@ -905,7 +910,7 @@ function VolumeControl() {
   };
   const slider = (className: string) => (
     <Slider.Root
-      className={cn("group relative h-4 touch-none select-none items-center", className)}
+      className={cn("group relative h-4 touch-none select-none items-center", SLIDER_REACH, className)}
       min={0}
       max={1}
       step={0.05}
@@ -919,7 +924,7 @@ function VolumeControl() {
       <Slider.Thumb
         aria-label="Âm lượng"
         aria-valuetext={`Âm lượng ${Math.round(volume * 100)}%`}
-        className="block size-3 rounded-full bg-fg opacity-0 shadow group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-accent"
+        className="block size-3 rounded-full bg-fg opacity-0 shadow group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-focus"
       />
     </Slider.Root>
   );
@@ -1074,7 +1079,7 @@ function MusicCreditLine() {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         title={musicCredit.attribution || label}
-        className="max-w-full truncate rounded outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="max-w-full truncate rounded outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         Nhạc nền: {label}
       </button>
@@ -1122,7 +1127,7 @@ function TrackSubtitle() {
   return (
     <>
       {purpose === "review" && (
-        <span className="mr-1.5 inline-block rounded bg-info-soft px-1.5 text-[11px] font-semibold uppercase tracking-wide text-info">Nghe kiểm</span>
+        <span className="mr-1.5 inline-block rounded bg-info-soft px-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-info">Nghe kiểm</span>
       )}
       {preparing ? PREPARING_VOICE : atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : track.bookTitle}
     </>
@@ -1298,7 +1303,14 @@ export function PlayerBar({
         <FadingNotice className="mx-3 mt-2" />
         <PlayerAlert className="mx-3 mt-2" />
         <div className="flex h-16 items-center gap-3 px-3">
-          <button type="button" onClick={() => setExpanded(true)} className="touch-row flex min-w-0 flex-1 items-center gap-3 text-left" aria-label="Mở màn hình đang nghe">
+          {/* title: tên chương / sách bị cắt "Chương 3 · Đ…" khi phóng chữ hay cửa sổ hẹp - rê chuột đọc được đủ (soát a31 Z1). */}
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="touch-row flex min-w-0 flex-1 items-center gap-3 text-left"
+            aria-label="Mở màn hình đang nghe"
+            title={`${track.chapterTitle} · ${track.bookTitle}`}
+          >
             <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className={cn("size-11", !expanded && "cover-morph")} />
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold">{track.chapterTitle}</div>
@@ -1343,6 +1355,7 @@ export function PlayerBar({
           onClick={() => setExpanded(true)}
           className="flex min-w-0 items-center gap-3 rounded-lg p-1 text-left hover:bg-hover"
           aria-label="Mở màn hình đang nghe"
+          title={`${track.chapterTitle} · ${track.bookTitle}`}
         >
           <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className={cn("size-12", !expanded && "cover-morph")} />
           <div className="min-w-0">
@@ -1402,7 +1415,7 @@ function ReadAlong() {
   return (
     <div className="relative h-full">
       <div ref={container} onScroll={follow.onScroll} {...follow.input} className="h-full overflow-y-auto px-6 py-8 sm:px-10">
-        <div className="mx-auto max-w-[62ch] text-[17px] leading-[1.75]">
+        <div className="mx-auto max-w-[62ch] text-[1.0625rem] leading-[1.75]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải "chưa có audio". */}
           {!script.timed && current?.state !== "text" && (
             <p className="mb-5 rounded-lg bg-hover px-4 py-3 text-sm text-fg-2">Chương này chưa có audio hoàn chỉnh - đang hiện văn bản, chưa đọc theo được.</p>
@@ -1558,13 +1571,13 @@ function BookmarkRow({
               }}
               placeholder="Ghi chú cho dấu trang này"
               aria-label="Ghi chú"
-              className="h-9 min-w-0 flex-1 rounded-md border border-line bg-bg px-2 text-sm outline-none focus:border-accent"
+              className="h-9 min-w-0 flex-1 rounded-md border border-line bg-bg px-2 text-sm outline-none focus:border-focus"
             />
             <button type="submit" className="rounded-md bg-accent px-3 text-sm font-medium text-accent-ink">
               Lưu
             </button>
           </div>
-          <div className="tabular text-right text-[11px] text-fg-2">{note.length}/500</div>
+          <div className="tabular text-right text-[0.6875rem] text-fg-2">{note.length}/500</div>
         </form>
       ) : mark.note ? (
         <p className="mt-1.5 whitespace-pre-wrap rounded-md bg-sunken px-2.5 py-1.5 text-sm text-fg-2">{mark.note}</p>
@@ -1947,6 +1960,9 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
     <section
       ref={section}
       className={cn("now-playing absolute inset-0 z-30 flex bg-bg", mobile && "flex-col")}
+      // Mở ra thì đây là nội dung chính: <main> của trang nằm dưới đã khoá (inert) và ra khỏi cây trợ năng - phím "tới vùng chính" của
+      // trình đọc màn hình phải tới đây (soát a31 A3). role thay vì thẻ <main>: tài liệu chỉ được có một thẻ <main>.
+      role="main"
       aria-label="Đang nghe"
     >
       <aside
@@ -1990,7 +2006,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
           </div>
         )}
         <div className="mt-5 w-full text-center">
-          <h2 className="truncate text-lg font-semibold">{track.chapterTitle}</h2>
+          <h2 className="truncate text-lg font-semibold" title={track.chapterTitle}>{track.chapterTitle}</h2>
           <p className="mt-0.5 truncate text-sm text-fg-2">
             <TrackSubtitle />
           </p>

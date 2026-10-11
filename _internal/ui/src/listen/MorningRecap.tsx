@@ -200,9 +200,9 @@ export function MorningRecap({ className }: { className?: string }) {
               key={segment.id}
               type="button"
               onClick={() => void resume(suggested.chapterId, segment.start ?? 0)}
-              className="block w-full border-t border-line px-3 py-2.5 text-left text-[15px] leading-snug hover:bg-hover active:bg-hover"
+              className="block w-full border-t border-line px-3 py-2.5 text-left text-[0.9375rem] leading-snug hover:bg-hover active:bg-hover"
             >
-              {segment.speaker && <span className="mr-1.5 text-[11px] font-semibold uppercase text-accent-text">{segment.speaker}</span>}
+              {segment.speaker && <span className="mr-1.5 text-[0.6875rem] font-semibold uppercase text-accent-text">{segment.speaker}</span>}
               {segment.text}
             </button>
           ))}

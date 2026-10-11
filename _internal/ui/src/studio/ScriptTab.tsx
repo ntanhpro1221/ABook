@@ -14,6 +14,7 @@ import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
 import { UNDO_MS, optimistic, undoAction, usePendingNote, useWhenApplied } from "./decisions";
 import { seenDelivery, seenFor, theirDelivery, verdictWord, warnElsewhere, type SeenDelivery } from "./elsewhere";
+import { scrollMotion } from "@/shared/motion";
 import { findRanges, splitByRanges, wrapIndex } from "./scriptFind";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
@@ -573,19 +574,19 @@ export function DeliveryMenu({
       {names.length > 0 && (
         <button
           type="button"
-          onClick={(event) => event.currentTarget.closest("[data-delivery-menu]")?.querySelector("[data-names-section]")?.scrollIntoView({ block: "nearest", behavior: "smooth" })}
+          onClick={(event) => event.currentTarget.closest("[data-delivery-menu]")?.querySelector("[data-names-section]")?.scrollIntoView({ block: "nearest", behavior: scrollMotion() })}
           className="text-xs font-medium text-accent-text hover:underline"
         >
           Sửa cách đọc {names.length} tên trong câu ↓
         </button>
       )}
       <div>
-        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Loại đoạn</div>
+        <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Loại đoạn</div>
         <Segmented label="Loại đoạn" value={kind} onChange={setKind} options={KINDS} />
       </div>
       {needsSpeaker && (
         <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Ai nói câu này?</div>
+          <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Ai nói câu này?</div>
           <div className="flex flex-wrap gap-1.5">
             {script.cast.slice(0, 8).map((person) => (
               <button
@@ -606,7 +607,7 @@ export function DeliveryMenu({
       )}
       {line.emotion !== null && (
         <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Cảm xúc</div>
+          <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Cảm xúc</div>
           <div className="grid grid-cols-3 gap-1">
             {EMOTIONS.map(([value, label]) => (
               <button
@@ -627,18 +628,18 @@ export function DeliveryMenu({
       )}
       {line.intensity !== null && (
         <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Mức</div>
+          <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Mức</div>
           <Segmented
             label="Mức"
             value={String(level)}
             onChange={(value) => setLevel(Number(value))}
             options={LEVELS.map((label, index) => ({ value: String(index), label }))}
           />
-          <p className="mt-1.5 text-[11px] leading-snug text-fg-3">Máy giữ mức trong tầm giọng đọc được: thì thầm, dịu dàng tối đa "Vừa".</p>
+          <p className="mt-1.5 text-[0.6875rem] leading-snug text-fg-3">Máy giữ mức trong tầm giọng đọc được: thì thầm, dịu dàng tối đa "Vừa".</p>
         </div>
       )}
       <label className="block">
-        <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-fg-3">Chữ đem đọc</span>
+        <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Chữ đem đọc</span>
         <textarea
           id={`spoken-${line.stableId}`}
           aria-label="Chữ máy sẽ đọc thay cho câu này"
@@ -646,9 +647,9 @@ export function DeliveryMenu({
           value={words}
           onChange={(event) => setWords(event.target.value)}
           rows={Math.min(5, Math.max(2, Math.ceil(words.length / 42)))}
-          className="w-full resize-y rounded-lg border border-line bg-panel px-2.5 py-1.5 text-sm leading-relaxed outline-none focus:border-accent"
+          className="w-full resize-y rounded-lg border border-line bg-panel px-2.5 py-1.5 text-sm leading-relaxed outline-none focus:border-focus"
         />
-        <span className="mt-1 block text-[11px] leading-snug text-fg-3">
+        <span className="mt-1 block text-[0.6875rem] leading-snug text-fg-3">
           Sửa lỗi chữ hay cách viết lạ của riêng câu này; sách và phần đọc theo giữ nguyên.
           {line.spoken ? " Xoá hết rồi lưu để trả về chữ của sách." : ""}
         </span>
@@ -665,7 +666,7 @@ export function DeliveryMenu({
           Nhân vật) - tách khỏi nút "Lưu cách đọc" vốn chỉ cho riêng câu này. */}
       {names.length > 0 && (
         <div className="border-t border-line pt-3" data-names-section>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Tên trong câu · sửa cho cả cuốn</div>
+          <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Tên trong câu · sửa cho cả cuốn</div>
           <div className="space-y-2">
             {names.map((item) => (
               <NameInLine key={item.surface} bookId={bookId} item={item} />
@@ -723,7 +724,7 @@ function DeliveryChip({
       aria-label={`Cách đọc: ${text}. Bấm để sửa`}
       className={cn(
         // Màn cảm ứng: nút chỉ 24 px - nới vùng chạm theo chiều dọc lên ~44 px (soát UX 29-09).
-        "relative inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
+        "relative inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[0.6875rem] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
         // Màn chạm không có hover: nhãn hiện mờ thay vì ẩn hẳn (soát UX a13 #16).
         hidden && !open && "opacity-0 group-hover:opacity-100 pointer-coarse:opacity-60",
         waiting && "text-fg-2",
@@ -754,7 +755,6 @@ function DeliveryChip({
           align="start"
           sideOffset={6}
           collisionPadding={12}
-          onCloseAutoFocus={(event) => event.preventDefault()}
           onEscapeKeyDown={keepOpenForNameEditor}
           // Bảng cao hơn màn nhỏ (655 px trong khung 486 px: đỉnh ra ngoài màn, không với tới) - cuộn trong phần còn trống.
           className="z-50 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float"
@@ -786,7 +786,7 @@ export function SpeakerMenu({ line, script, onPick, phone = false }: { line: Lin
         onClick={() => onPick(person)}
         className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none pointer-coarse:h-11"
       >
-        <span className="avatar grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-bold" style={hue(person.label)} aria-hidden>
+        <span className="avatar grid size-6 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold" style={hue(person.label)} aria-hidden>
           {hotkey ?? person.label.slice(0, 1).toUpperCase()}
         </span>
         <span className="min-w-0 flex-1 truncate">
@@ -798,7 +798,7 @@ export function SpeakerMenu({ line, script, onPick, phone = false }: { line: Lin
   };
   return (
     <div>
-      <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-panel-2 px-2.5 focus-within:border-accent">
+      <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-panel-2 px-2.5 focus-within:border-focus">
         <Search className="size-4 shrink-0 text-fg-3" />
         <input
           autoFocus={!phone}
@@ -847,17 +847,17 @@ export function SpeakerMenu({ line, script, onPick, phone = false }: { line: Lin
           <>
             {suggested && suggested.value !== line.current && (
               <>
-                <div className="px-2 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-warning">Máy gợi ý</div>
+                <div className="px-2 pb-1 pt-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-warning">Máy gợi ý</div>
                 {item(suggested)}
               </>
             )}
             {script.cast.length > 0 && (
               <>
-                <div className="px-2 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Nói trong chương này</div>
+                <div className="px-2 pb-1 pt-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Nói trong chương này</div>
                 {script.cast.map((person, index) => item(person, index < HOTKEYS ? index + 1 : undefined))}
               </>
             )}
-            <div className="px-2 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Khác</div>
+            <div className="px-2 pb-1 pt-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Khác</div>
             {FIXED.map((person) => item(person))}
           </>
         )}
@@ -889,7 +889,7 @@ function SpeakerChip({
       tabIndex={-1}
       disabled={!script.castReady || !line.editable}
       aria-label={`${line.kind === "thought" ? "Người nghĩ" : "Người nói"}: ${shown}. Bấm để đổi`}
-      className="avatar inline-flex h-7 max-w-full items-center gap-1 rounded-full px-2.5 text-[13px] font-semibold transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
+      className="avatar inline-flex h-7 max-w-full items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-semibold transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
       style={hue(shown)}
     >
       <span className="truncate">{shown}</span>
@@ -915,7 +915,6 @@ function SpeakerChip({
           align="start"
           sideOffset={6}
           collisionPadding={12}
-          onCloseAutoFocus={(event) => event.preventDefault()}
           className="z-50 w-72 rounded-xl border border-line bg-panel p-1.5 shadow-float"
         >
           <SpeakerMenu line={line} script={script} onPick={onPick} />
@@ -997,7 +996,7 @@ function ScriptRow({
         gap && "mt-3",
         active && "bg-hover",
         selected && "bg-accent-soft ring-1 ring-inset ring-accent/40",
-        speech && "focus-visible:ring-2 focus-visible:ring-accent/50",
+        speech && "focus-visible:ring-2 focus-visible:ring-focus",
         context && "opacity-45",
         marks?.length && !selected && (markNow ? "ring-2 ring-inset ring-warning/60" : "ring-1 ring-inset ring-warning/25"),
       )}
@@ -1006,8 +1005,8 @@ function ScriptRow({
         {speech && <SpeakerChip line={line} script={script} open={menuOpen} onOpenChange={onMenu} onPick={onPick} />}
       </div>
       <div className="min-w-0">
-        <p className={cn("text-[15px] leading-relaxed", speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
-          {line.kind === "thought" && <span className="mr-1.5 rounded bg-hover px-1.5 py-px align-[1px] text-[11px] font-medium not-italic text-fg-2">nghĩ</span>}
+        <p className={cn("text-[0.9375rem] leading-relaxed", speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
+          {line.kind === "thought" && <span className="mr-1.5 rounded bg-hover px-1.5 py-px align-[1px] text-[0.6875rem] font-medium not-italic text-fg-2">nghĩ</span>}
           {marks?.length ? (
             splitByRanges(line.text, marks).map(([part, hit], index) =>
               hit ? (
@@ -1360,7 +1359,7 @@ function ChapterScriptView({
   return (
     <>
       {selected.length > 1 && (
-        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-accent-soft px-3 py-1.5 text-[13px]" role="status">
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-accent-soft px-3 py-1.5 text-[0.8125rem]" role="status">
           <span className="font-semibold">Đang chọn {selected.length} câu</span>
           <span className="text-fg-2">- phím số hay chọn người ở một câu trong nhóm gán cả {selected.length} câu · Esc bỏ chọn</span>
           {(() => {
@@ -1466,7 +1465,7 @@ function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: string;
         </span>
       )}
       {script.next !== null && (
-        <button type="button" onClick={onNext} className="inline-flex items-center gap-1 text-sm font-medium text-fg-2 hover:text-fg">
+        <button type="button" onClick={onNext} className="touch-row inline-flex items-center gap-1 text-sm font-medium text-fg-2 hover:text-fg">
           Chương sau <ChevronRight className="size-4" />
         </button>
       )}
@@ -1602,7 +1601,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
             aria-label="Chương"
             value={chapterId}
             onChange={(event) => go(Number(event.target.value))}
-            className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent sm:w-[440px] sm:flex-initial"
+            className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus sm:w-[440px] sm:flex-initial"
           >
             {chapters.map((chapter) => (
               <option key={chapter.chapterId} value={chapter.chapterId}>
@@ -1613,7 +1612,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           <IconButton label="Chương sau" icon={ChevronRight} disabled={!data?.next} onClick={() => go(data?.next ?? null)} />
         </div>
         {narrow && entry && <p className="w-full text-xs text-fg-3">{chapterExtras(entry)}</p>}
-        <div className="relative flex h-9 w-full items-center rounded-lg border border-line bg-panel focus-within:border-accent sm:w-60">
+        <div className="relative flex h-9 w-full items-center rounded-lg border border-line bg-panel focus-within:border-focus sm:w-60">
           <Search className="pointer-events-none ml-2.5 size-4 shrink-0 text-fg-3" aria-hidden />
           <input
             id="script-find"
@@ -1666,12 +1665,12 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                 title={person.value === UNNAMED ? "Câu máy chưa biết ai nói, và vai phụ không tên" : undefined}
                 onClick={() => setWho(who === person.value ? null : person.value)}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1.5 rounded-full border py-0 pl-1 pr-2.5 text-[13px] font-medium transition-opacity",
+                  "inline-flex h-7 items-center gap-1.5 rounded-full border py-0 pl-1 pr-2.5 text-[0.8125rem] font-medium transition-opacity",
                   who === person.value ? "border-line-strong bg-panel" : "border-transparent hover:bg-hover",
                   who && who !== person.value && "opacity-50",
                 )}
               >
-                <span className="avatar grid size-5 place-items-center rounded-full text-[10px] font-bold" style={hue(person.label)} aria-hidden>
+                <span className="avatar grid size-5 place-items-center rounded-full text-[0.625rem] font-bold" style={hue(person.label)} aria-hidden>
                   {badge}
                 </span>
                 {person.label}
@@ -1711,7 +1710,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           {/* Chương kể ngôi thứ nhất: máy gán nhầm câu của người khác cho "tôi" nhiều nhất (8B-v5 trên bộ LN: 97/276 câu gán cho
               người kể là sai) - mời soát riêng câu của người kể trước. */}
           {data.castReady && data.firstPerson?.chip && who !== data.firstPerson.chip && (
-            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-fg-2">
+            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] text-fg-2">
               <span className="text-pretty">
                 Chương kể ngôi thứ nhất: máy hay nhầm câu của người khác thành của “tôi”.
               </span>

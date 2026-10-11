@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Button, Progress } from "@/shared/ui";
+import { spokenProgress } from "@/shared/progressSpeech";
+import { Button, LiveText, Progress } from "@/shared/ui";
 import { api } from "./api";
 import { CANCELLED_NOTE, formatSize, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, sceneButton, sceneCard, type LocalMusicView } from "./musicLocal";
 
@@ -57,7 +58,10 @@ export function MusicModuleNotice({ view, queryKey, onlyScene = false }: { view:
     <div role="status" className="space-y-3 text-xs text-fg-2">
       {showModule && (
         <div className="space-y-1.5">
-          <p className={failed ? "text-danger" : undefined}>{label}</p>
+          {/* Đang tải: % đổi liên tục trong vùng role=status - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
+          <p className={failed ? "text-danger" : undefined}>
+            {downloadingModule ? <LiveText shown={label} spoken={spokenProgress("Đang tải Phân tích nhạc", modulePercent(module) / 100)} /> : label}
+          </p>
           {downloadingModule && (
             <div className="flex items-center gap-3">
               <Progress value={modulePercent(module) / 100} size="sm" running label="Đang tải Phân tích nhạc" className="flex-1" />
@@ -105,7 +109,13 @@ export function MusicModuleNotice({ view, queryKey, onlyScene = false }: { view:
       {precise && (
         <div className="space-y-1.5">
           <p className="font-medium text-fg">Đo cảm xúc nhạc chính xác hơn</p>
-          <p className={precise.state === "error" ? "text-danger" : undefined}>{preciseLabel(precise)}</p>
+          <p className={precise.state === "error" ? "text-danger" : undefined}>
+            {precise.state === "downloading" ? (
+              <LiveText shown={preciseLabel(precise)} spoken={spokenProgress("Đang tải bộ đo cảm xúc chính xác hơn", precise.total > 0 ? precise.done / precise.total : null)} />
+            ) : (
+              preciseLabel(precise)
+            )}
+          </p>
           {precise.state === "downloading" && (
             <Progress value={precise.total > 0 ? precise.done / precise.total : 0} size="sm" running label="Đang tải bộ đo cảm xúc chính xác hơn" />
           )}

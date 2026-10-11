@@ -169,7 +169,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
           // "TẬP n" ở góc dưới trái thì huy hiệu nhích lên trên nhãn.
           <span
             className={cn(
-              "pointer-events-none absolute left-2.5 inline-flex max-w-[calc(100%-4.5rem)] items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white",
+              "pointer-events-none absolute left-2.5 inline-flex max-w-[calc(100%-4.5rem)] items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[0.625rem] font-medium text-white",
               book.series?.part || badge ? "bottom-9" : "bottom-2.5",
             )}
           >
@@ -417,7 +417,7 @@ export function LibraryScreen({
       {/* Hai nút cạnh tiêu đề không được bóp tiêu đề thành "Thư / viện" ở 390 px (soát UX 05-10): tiêu đề giữ một dòng, nút xuống dưới. */}
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="shrink-0">
-          <h1 className="whitespace-nowrap text-2xl font-bold tracking-tight sm:text-[28px]">Thư viện</h1>
+          <h1 className="whitespace-nowrap text-2xl font-bold tracking-tight sm:text-[1.75rem]">Thư viện</h1>
           <p className="mt-1 text-sm text-fg-2">{books?.length ? `${books.length} cuốn` : ""}</p>
         </div>
         {/* Thư viện trống: nút giữa màn (`empty`) là lời mời chính - nút thứ hai cùng tên ở đầu trang chỉ lặp lại (soát UX a9). */}
@@ -459,8 +459,9 @@ export function LibraryScreen({
             <Segmented<Filter>
               label="Lọc sách"
               // Điện thoại: mỗi nút lọc đủ 44 px để chạm; cả thanh trải hết bề ngang, các nút chia đều - chữ to (cỡ chữ hệ thống 1,3) không bị cắt "Nghe xong".
+              // Chữ to hơn nữa (cỡ chữ trình duyệt 32 px, soát uxfix32) thì nhãn xuống dòng trong nút thay vì đè lên nút bên cạnh.
               className="max-sm:flex max-sm:w-full"
-              itemClassName="max-sm:h-[44px] max-sm:min-w-0 max-sm:flex-1 max-sm:px-1"
+              itemClassName="max-sm:h-auto max-sm:min-h-[44px] max-sm:min-w-0 max-sm:flex-1 max-sm:px-1 max-sm:whitespace-normal"
               value={filter}
               onChange={setFilter}
               options={[
@@ -479,7 +480,7 @@ export function LibraryScreen({
                   setSort(event.target.value);
                   saveLibrarySort(event.target.value);
                 }}
-                className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2 text-sm text-fg outline-none focus:border-accent max-sm:h-[44px]"
+                className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2 text-sm text-fg outline-none focus:border-focus max-sm:h-[44px]"
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -497,7 +498,7 @@ export function LibraryScreen({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Tìm sách"
                 title="Tên sách hay giọng kể - gõ không dấu cũng được"
-                className="touch-row h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-9 text-sm outline-none placeholder:text-fg-3 focus:border-accent sm:w-80 [&::-webkit-search-cancel-button]:hidden"
+                className="touch-row h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-9 text-sm outline-none placeholder:text-fg-3 focus:border-focus sm:w-80 [&::-webkit-search-cancel-button]:hidden"
               />
               {query && (
                 <button

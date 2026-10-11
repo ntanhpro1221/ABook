@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import type { ListenBook } from "@/listen/model";
 import { cn } from "@/shared/cn";
 import { endSentence } from "@/shared/format";
-import { Button, Progress } from "@/shared/ui";
+import { spokenProgress } from "@/shared/progressSpeech";
+import { Button, LiveText, Progress } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { downloadFraction, downloadMenuLabel, downloadNote, type RemoteDownload } from "./remoteDownloadState";
 
@@ -86,7 +87,8 @@ export function RemoteDownloadStatus({ book }: { book: ListenBook }) {
       )}
     >
       <p className="inline-flex items-center gap-1.5 font-medium">
-        <Icon className="size-3.5 shrink-0" /> {note.title}
+        <Icon className="size-3.5 shrink-0" />{" "}
+        {note.tone === "running" ? <LiveText shown={note.title} spoken={spokenProgress("Đang tải về máy", downloadFraction(status))} /> : note.title}
       </p>
       {note.detail && <p className="mt-0.5 text-pretty">{note.detail}</p>}
       {note.tone === "running" && <Progress value={downloadFraction(status)} size="xs" className="mt-2" label="Đã tải về máy" />}

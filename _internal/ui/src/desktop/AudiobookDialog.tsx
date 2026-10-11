@@ -93,7 +93,7 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
             onClick={() => onFormat(choice.id)}
             className={cn(
               "rounded-lg border p-3 text-left transition-colors",
-              format === choice.id ? "border-accent bg-accent/10" : "border-line hover:bg-hover",
+              format === choice.id ? "border-focus bg-accent/10" : "border-line hover:bg-hover",
             )}
           >
             <span className="block text-sm font-medium">{choice.label}</span>

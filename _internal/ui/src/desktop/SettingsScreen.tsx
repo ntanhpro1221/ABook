@@ -22,10 +22,11 @@ import {
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
 import { SupertonicModuleCard, VieneuModuleCard } from "@/listen/VieneuModuleCard";
 import { EXTEND_GESTURE } from "@/listen/extendGesture";
-import { ShortcutList } from "@/listen/Shortcuts";
+import { LETTER_SHORTCUTS_HINT, ShortcutList } from "@/listen/Shortcuts";
 import { MyMusicSection } from "@/listen/MyMusic";
 import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
 import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettingsApi } from "@/listen/VoiceSettings";
+import { scrollMotion } from "@/shared/motion";
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
@@ -37,7 +38,7 @@ const SOURCE_URL = "https://github.com/ntanhpro1221/ABook/";
 function NewBookDefaults() {
   const { data: preferences, update } = usePreferences();
   const { data: voices } = useVoices();
-  const selectClass = "h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent";
+  const selectClass = "h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus";
   return (
     <div className="mb-4 grid max-w-xl gap-3 sm:grid-cols-2">
       <label htmlFor="new-book-narrator" className="block">
@@ -99,12 +100,12 @@ function BookTemplates() {
   return (
     <div className="mb-4 max-w-xl">
       <div className="text-sm font-medium">Mẫu thiết lập cho sách mới</div>
-      <p className="mt-0.5 text-[13px] text-fg-2 text-pretty">
+      <p className="mt-0.5 text-[0.8125rem] text-fg-2 text-pretty">
         Bộ lựa chọn đặt tên sẵn (giọng kể, chất lượng...) để chọn lại ở trình tạo sách; “Mặc định” ở đó là giọng kể và chất lượng đặt
         ngay phía trên. Muốn lưu mẫu mới: chọn xong ở trình tạo sách rồi bấm “Lưu thành mẫu…”.
       </p>
       {!templates.length ? (
-        <p className="mt-2 text-[13px] text-fg-3">Chưa có mẫu nào.</p>
+        <p className="mt-2 text-[0.8125rem] text-fg-3">Chưa có mẫu nào.</p>
       ) : (
         <ul className="mt-2 divide-y divide-line rounded-lg border border-line">
           {templates.map((template) => (
@@ -130,7 +131,7 @@ function BookTemplates() {
                     onKeyDown={(event) => {
                       if (event.key === "Escape") setRenaming(null);
                     }}
-                    className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus:border-accent"
+                    className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus:border-focus"
                   />
                   <Button type="submit" size="sm" variant="primary" disabled={!typed.trim()}>
                     Lưu
@@ -138,13 +139,13 @@ function BookTemplates() {
                   <Button size="sm" variant="ghost" onClick={() => setRenaming(null)}>
                     Huỷ
                   </Button>
-                  {problem && <p role="alert" className="basis-full text-[13px] text-danger">{problem}</p>}
+                  {problem && <p role="alert" className="basis-full text-[0.8125rem] text-danger">{problem}</p>}
                 </form>
               ) : (
                 <>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{template.name}</div>
-                    <div className="truncate text-[13px] text-fg-2">
+                    <div className="truncate text-[0.8125rem] text-fg-2">
                       {[template.narrator || "Giọng máy đề xuất", PROFILE_LABEL[template.profile], template.startNow ? "bắt đầu ngay" : "chờ bấm bắt đầu"].join(" · ")}
                     </div>
                   </div>
@@ -187,7 +188,7 @@ function Section({ id, title, description, children }: { id?: string; title: str
     <section id={id} className="grid scroll-mt-4 gap-4 border-b border-line py-7 last:border-b-0 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-8">
       <div>
         <h2 className="text-base font-semibold">{title}</h2>
-        {description && <p className="mt-1 text-[13px] leading-relaxed text-fg-2 text-pretty">{description}</p>}
+        {description && <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{description}</p>}
       </div>
       <div className="min-w-0">{children}</div>
     </section>
@@ -208,8 +209,7 @@ function SectionIndex({ root }: { root: { current: HTMLElement | null } }) {
   });
   if (items.length < 4) return null;
   const jump = (id: string) => {
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    document.getElementById(id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    document.getElementById(id)?.scrollIntoView({ behavior: scrollMotion(), block: "start" });
   };
   return (
     <nav aria-label="Các mục của Cài đặt" className="mt-4 flex flex-wrap gap-1.5">
@@ -218,7 +218,7 @@ function SectionIndex({ root }: { root: { current: HTMLElement | null } }) {
           key={item.id}
           type="button"
           onClick={() => jump(item.id)}
-          className="touch-row h-8 rounded-full border border-line bg-panel px-3 text-[13px] font-medium text-fg-2 transition-colors hover:border-line-strong hover:text-fg"
+          className="touch-row h-8 rounded-full border border-line bg-panel px-3 text-[0.8125rem] font-medium text-fg-2 transition-colors hover:border-line-strong hover:text-fg"
         >
           {item.title}
         </button>
@@ -232,7 +232,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-2">
       <div className="min-w-0">
         <div className="text-sm font-medium">{label}</div>
-        {hint && <div className="mt-0.5 text-[13px] text-fg-2">{hint}</div>}
+        {hint && <div className="mt-0.5 text-[0.8125rem] text-fg-2">{hint}</div>}
       </div>
       {children}
     </div>
@@ -274,7 +274,7 @@ function UpdateSection({ update, current }: { update: { version: string; notes: 
         <p className="text-sm">
           <span className="font-semibold">ABook {update.version}</span> đã có{current ? ` - máy này đang dùng ${current}` : ""}.
         </p>
-        {update.notes && <p className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
+        {update.notes && <p className="mt-2 whitespace-pre-line text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
         <Button className="mt-3" icon={Download} disabled={busy} onClick={() => void install()}>
           {busy ? "Đang tải bản mới…" : "Cập nhật và mở lại"}
         </Button>
@@ -321,7 +321,7 @@ export function SettingsScreen() {
   const extend = String(preferences?.sleepExtendMinutes ?? 10) as "5" | "10" | "15";
   return (
     <div ref={page} className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">Cài đặt</h1>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">Cài đặt</h1>
       <div className="max-w-[980px]">
         <SectionIndex root={page} />
         {!remote && info?.update && <UpdateSection update={info.update} current={info.version} />}
@@ -372,7 +372,7 @@ export function SettingsScreen() {
                   onClick={() => update({ theme: theme.value })}
                   className={cn(
                     "flex flex-col items-center gap-2 rounded-xl border bg-panel py-4 text-sm font-medium transition-colors",
-                    selected ? "border-accent ring-1 ring-accent" : "border-line hover:border-line-strong",
+                    selected ? "border-focus ring-1 ring-focus" : "border-line hover:border-line-strong",
                   )}
                 >
                   <Icon className="size-5" />
@@ -476,7 +476,7 @@ export function SettingsScreen() {
               hint="Dừng dưới 5 phút: không lùi. Từ 5 phút tới 1 giờ: lùi 10 giây. Lâu hơn (ngủ dậy): lùi 30 giây."
             >
               {/* Thông tin, không phải lựa chọn (soát UX 29-09: chữ "Tự động" trông như một nút mà không bấm được). */}
-              <span className="inline-flex items-center gap-1 text-[13px] text-fg-2">
+              <span className="inline-flex items-center gap-1 text-[0.8125rem] text-fg-2">
                 <Check className="size-3.5 text-success" /> Luôn bật
               </span>
             </Field>
@@ -511,11 +511,13 @@ export function SettingsScreen() {
         >
           <div className="mb-5 flex max-w-2xl items-start justify-between gap-6">
             <label htmlFor="auto-music" className="min-w-0 cursor-pointer">
-              <span className="block text-sm font-medium">{AUTO_MUSIC_LABEL}</span>
-              <span className="mt-0.5 block text-[13px] text-fg-2 text-pretty">{AUTO_MUSIC_HINT}</span>
+              <span id="auto-music-name" className="block text-sm font-medium">{AUTO_MUSIC_LABEL}</span>
+              <span id="auto-music-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{AUTO_MUSIC_HINT}</span>
             </label>
             <Switch
               id="auto-music"
+              labelledBy="auto-music-name"
+              describedBy="auto-music-hint"
               checked={preferences?.autoMusic !== false}
               onCheckedChange={(value) =>
                 update(
@@ -551,18 +553,20 @@ export function SettingsScreen() {
           >
             {/* Trạng thái Studio (đã cài / chưa cài + Gỡ hay Cài) ở đầu mục; chưa cài thì các tuỳ chọn bên dưới chỉ có tác dụng khi đã có Studio: mờ đi nhưng vẫn xem và chỉnh được. */}
             <StudioSettings />
-            {!info.studio.installed && <p className="mb-3 text-[13px] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p>}
+            {!info.studio.installed && <p className="mb-3 text-[0.8125rem] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p>}
             <div className={cn(!info.studio.installed && "opacity-60")}>
               <div className="mb-4 flex max-w-xl items-start justify-between gap-6">
                 <label htmlFor="pause-on-battery" className="min-w-0 cursor-pointer">
-                  <span className="block text-sm font-medium">Tạm dừng khi rút sạc</span>
-                  <span className="mt-0.5 block text-[13px] text-fg-2 text-pretty">
+                  <span id="pause-on-battery-name" className="block text-sm font-medium">Tạm dừng khi rút sạc</span>
+                  <span id="pause-on-battery-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">
                     Máy tính xách tay chạy pin thì làm sách rất chậm mà hao pin. Sách đứng yên và tự làm tiếp đúng chỗ khi cắm sạc
                     lại - kể cả giữa lúc phân tích truyện.
                   </span>
                 </label>
                 <Switch
                   id="pause-on-battery"
+                  labelledBy="pause-on-battery-name"
+                  describedBy="pause-on-battery-hint"
                   checked={preferences?.pauseOnBattery !== false}
                   onCheckedChange={(value) => update({ pauseOnBattery: value })}
                 />
@@ -584,6 +588,19 @@ export function SettingsScreen() {
         )}
         {!touchOnly && (
         <Section id="shortcuts" title="Phím tắt" description="Dùng được ở mọi màn hình, trừ khi đang gõ chữ.">
+          <div className="mb-5 flex max-w-2xl items-start justify-between gap-6">
+            <label htmlFor="letter-shortcuts" className="min-w-0 cursor-pointer">
+              <span id="letter-shortcuts-name" className="block text-sm font-medium">Phím tắt một chữ cái</span>
+              <span id="letter-shortcuts-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{LETTER_SHORTCUTS_HINT}</span>
+            </label>
+            <Switch
+              id="letter-shortcuts"
+              labelledBy="letter-shortcuts-name"
+              describedBy="letter-shortcuts-hint"
+              checked={preferences?.letterShortcuts !== false}
+              onCheckedChange={(value) => update({ letterShortcuts: value })}
+            />
+          </div>
           <ShortcutList />
         </Section>
         )}

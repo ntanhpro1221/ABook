@@ -543,7 +543,7 @@ export function AddBookDialog({
                 onChange={(event) => setTyped(event.target.value)}
                 aria-label="Đường dẫn file hay thư mục"
                 placeholder={importer.choose ? "…hoặc dán đường dẫn file hay thư mục" : "Dán đường dẫn file sách (EPUB, Word, PDF, TXT) hay thư mục TXT, ví dụ D:\\Truyện\\Tên truyện.epub"}
-                className="h-10 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent"
+                className="h-10 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus"
               />
               <Button type="submit" disabled={!cleanPath(typed) || busy !== null} loading={busy === "reading" && !importer.choose}>
                 Mở
@@ -567,7 +567,7 @@ export function AddBookDialog({
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               aria-invalid={!title.trim()}
-              className="mt-1.5 h-11 w-full rounded-xl border border-line bg-bg px-3.5 text-[15px] font-medium outline-none focus:border-accent"
+              className="mt-1.5 h-11 w-full rounded-xl border border-line bg-bg px-3.5 text-[0.9375rem] font-medium outline-none focus:border-focus"
               placeholder="Tên hiển thị trong thư viện"
             />
           </label>

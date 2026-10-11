@@ -45,6 +45,18 @@ describe("Cài đặt", () => {
     expect(html).toContain("Thành phần bên thứ ba");
   });
 
+  it("máy tính: mục Phím tắt có công tắc phím một chữ cái, tên ngắn và mô tả đọc riêng (soát a31: 2.1.4, tên công tắc 300+ chữ)", async () => {
+    const { SettingsScreen } = await import("@/desktop/SettingsScreen");
+    const html = wrap(<SettingsScreen />);
+    expect(sections(html).shortcuts).toBe("Phím tắt");
+    expect(html).toMatch(/id="letter-shortcuts-name"[^>]*>Phím tắt một chữ cái</);
+    const control = html.match(/<button[^>]*id="letter-shortcuts"[^>]*>/)?.[0] ?? "";
+    expect(control).toContain('role="switch"');
+    expect(control).toContain('aria-labelledby="letter-shortcuts-name"');
+    expect(control).toContain('aria-describedby="letter-shortcuts-hint"');
+    expect(html).toMatch(/<button[^>]*id="auto-music"[^>]*aria-describedby="auto-music-hint"/);
+  });
+
   it("điện thoại có nhóm Nhạc nền và Giới thiệu", async () => {
     const { SettingsScreen } = await import("@/android/SettingsScreen");
     const html = wrap(<SettingsScreen />);

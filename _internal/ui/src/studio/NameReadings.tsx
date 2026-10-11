@@ -13,6 +13,7 @@ import { api, suggestionOf, urls } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { neverText, reachSaved, reachSummary, useReach, type Reach } from "./readingReach";
 import { SharedReadingsOffer, useSharedEntry } from "./sharedReadings";
+import { scrollMotion } from "@/shared/motion";
 import { useTryReading } from "./TryReading";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied, WAITING_STUDIO } from "./decisions";
 import { warnElsewhere } from "./elsewhere";
@@ -84,7 +85,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
   useEffect(() => {
     if (!focus || !data || !castShown) return;
     const frame = requestAnimationFrame(() =>
-      document.getElementById("name-readings-title")?.scrollIntoView({ block: "start", behavior: "smooth" }),
+      document.getElementById("name-readings-title")?.scrollIntoView({ block: "start", behavior: scrollMotion() }),
     );
     return () => cancelAnimationFrame(frame);
   }, [focus, data, castShown]);
@@ -133,7 +134,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
           aria-label="Tìm tên"
           autoComplete="off"
           spellCheck={false}
-          className="h-9 w-full rounded-lg border border-line bg-panel pl-8 pr-8 text-sm outline-none focus-visible:border-accent [&::-webkit-search-cancel-button]:hidden"
+          className="h-9 w-full rounded-lg border border-line bg-panel pl-8 pr-8 text-sm outline-none focus-visible:border-focus [&::-webkit-search-cancel-button]:hidden"
         />
         {query && (
           <button
@@ -210,7 +211,7 @@ function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: bool
         placeholder="vd TP.HCM"
         spellCheck={false}
         autoComplete="off"
-        className="mt-1.5 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-accent"
+        className="mt-1.5 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
       />
       <p className="mt-1.5 text-xs text-fg-2">
         Một chữ liền nhau (không có khoảng trắng); đúng chữ ấy ở mọi chỗ trong cuốn sẽ đọc theo cách bạn gõ. Chữ trong sách giữ nguyên.
@@ -502,7 +503,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
         spellCheck={false}
         autoComplete="off"
         className={cn(
-          "h-8 min-w-0 flex-1 rounded-lg border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent sm:w-44 sm:flex-none",
+          "h-8 min-w-0 flex-1 rounded-lg border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus sm:w-44 sm:flex-none",
           problem ? "border-danger" : "border-line",
         )}
       />

@@ -20,7 +20,7 @@ function Inline({ text }: { text: string }) {
 
 export function ThirdPartySections({ sections }: { sections: ThirdPartySection[] }) {
   return (
-    <div className="space-y-4 text-[13px] leading-relaxed text-fg-2">
+    <div className="space-y-4 text-[0.8125rem] leading-relaxed text-fg-2">
       {sections.map((section, index) => (
         <section key={index}>
           {section.title && <h3 className="mb-1 text-sm font-semibold text-fg"><Inline text={section.title} /></h3>}

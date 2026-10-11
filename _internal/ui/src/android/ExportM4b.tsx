@@ -7,7 +7,8 @@ import type { MusicExportState } from "@/desktop/listenExport";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
-import { Button, Dialog } from "@/shared/ui";
+import { spokenProgress } from "@/shared/progressSpeech";
+import { Button, Dialog, LiveText } from "@/shared/ui";
 import { chargerHint } from "./ExportAudiobook";
 import { EbookLibrary, type M4bExportEvent } from "./plugins";
 
@@ -50,10 +51,11 @@ export function finishedView(event: Pick<M4bExportEvent, "name" | "size" | "chap
   return jobView(job, 0, false, M4B_COPY);
 }
 
-function showProgress(book: ListenBook, progress: string) {
+/** `fraction`: phần đã xong (0-1) - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */
+function showProgress(book: ListenBook, progress: string, fraction?: number) {
   toast.loading(M4B_COPY.busy, {
     id: toastId(book.id),
-    description: progress,
+    description: <LiveText shown={progress} spoken={spokenProgress(M4B_COPY.busy, fraction)} />,
     duration: Infinity,
     action: { label: "Dừng", onClick: () => void EbookLibrary.cancelM4bExport({ bookId: book.id }) },
   });
@@ -101,7 +103,8 @@ export function watchM4bExports(): () => void {
       runs.delete(event.bookId);
       toast.error(M4B_COPY.failed, { id, description: event.error, action: undefined });
     } else if (event.total || event.phase) {
-      showProgress(current.book, progressText(event, current.book.chaptersAvailable));
+      showProgress(current.book, progressText(event, current.book.chaptersAvailable),
+        event.total ? (event.done ?? 0) / event.total : undefined);
     }
   });
   return () => void handle.then((listener) => listener.remove());

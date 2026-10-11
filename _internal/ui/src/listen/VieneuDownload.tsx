@@ -64,8 +64,8 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
           )}
         </div>
       )}
-      {note && <p className={cn("text-[13px] text-pretty", failed ? "text-danger" : "text-fg-2")}>{note}</p>}
-      {metered && <p className="text-[13px] text-fg-2 text-pretty">{metered}</p>}
+      {note && <p className={cn("text-[0.8125rem] text-pretty", failed ? "text-danger" : "text-fg-2")}>{note}</p>}
+      {metered && <p className="text-[0.8125rem] text-fg-2 text-pretty">{metered}</p>}
       <div className={idle ? "contents" : "flex flex-wrap items-center gap-2"}>
         {!downloading && status.state !== "unsupported" && missing.length > 0 && (
           <button

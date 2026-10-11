@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Button, Progress } from "@/shared/ui";
+import { spokenProgress } from "@/shared/progressSpeech";
+import { Button, LiveText, Progress } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { api } from "@/studio/api";
 import { formatSize } from "@/studio/musicLocal";
@@ -107,6 +108,8 @@ export function VieneuModuleCard({
   // (số "còn thiếu" của lựa chọn co lại mỗi khi một phần dùng chung tải xong: 313 -> 297 MB giữa chừng).
   const peak = useRef(0);
   const sizes = useRef<Record<string, number>>({});
+  // Ô chọn giọng: tên = tên giọng + cỡ tải; đoạn giới thiệu dài đọc riêng là mô tả (soát a31: tên ô 300+ chữ).
+  const ids = useId();
   if (!status) return null;
   const downloading = status.state === "downloading";
   peak.current = downloading ? Math.max(peak.current, status.done) : 0;
@@ -152,7 +155,10 @@ export function VieneuModuleCard({
   return (
     <div className="max-w-xl space-y-3">
       <h3 className="text-sm font-semibold">{copy.title}</h3>
-      <p role="status" className={cn("text-sm text-pretty", failed ? "text-danger" : "text-fg-2")}>{vieneuLabel(shown, copy)}</p>
+      <p role="status" className={cn("text-sm text-pretty", failed ? "text-danger" : "text-fg-2")}>
+        {/* Đang tải: % đổi liên tục - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
+        {status.state === "downloading" ? <LiveText shown={vieneuLabel(shown, copy)} spoken={spokenProgress(`Đang tải ${lowerName}`, vieneuPercent(shown) / 100)} /> : vieneuLabel(shown, copy)}
+      </p>
       {status.state === "downloading" && (
         <div className="flex items-center gap-3">
           <Progress value={vieneuPercent(shown) / 100} size="sm" running label={`Đang tải ${lowerName}`} className="flex-1" />
@@ -164,8 +170,9 @@ export function VieneuModuleCard({
         </div>
       )}
       <ul className="divide-y divide-line rounded-xl border border-line">
-        {status.choices.map((choice) => {
+        {status.choices.map((choice, index) => {
           const on = picked.includes(choice.id);
+          const id = `${ids}-${index}`;
           return (
             <li key={choice.id}>
               <label className={cn("flex items-start gap-3 px-3 py-2.5", canPick && !choice.installed ? "cursor-pointer" : "cursor-default")}>
@@ -175,17 +182,19 @@ export function VieneuModuleCard({
                   checked={choice.installed || on}
                   disabled={!canPick || choice.installed}
                   onChange={(event) => toggle(choice.id, event.target.checked)}
+                  aria-labelledby={`${id}-name ${id}-size`}
+                  aria-describedby={`${id}-detail`}
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
+                  <span id={`${id}-name`} className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
                     {choice.label}
                     {choice.recommended && !choice.installed && (
-                      <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent-text">Khuyên dùng</span>
+                      <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.6875rem] font-semibold text-accent-text">Khuyên dùng</span>
                     )}
                   </span>
-                  <span className="mt-0.5 block text-[13px] text-fg-2 text-pretty">{choice.detail}</span>
+                  <span id={`${id}-detail`} className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{choice.detail}</span>
                 </span>
-                <span className="shrink-0 pt-0.5 text-xs text-fg-2">
+                <span id={`${id}-size`} className="shrink-0 pt-0.5 text-xs text-fg-2">
                   {choice.installed ? "Đã có" : (downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) > 0 ? formatSize(downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) : "Đã có sẵn"}
                 </span>
                 {choice.installed && choice.removable && backend.remove && canPick && (
@@ -207,21 +216,22 @@ export function VieneuModuleCard({
               checked={status.accelerated.on}
               disabled={!canPick || busy}
               onChange={(event) => void run(() => backend.accelerate!(event.target.checked), "Chưa đổi được cách đọc")}
+              aria-describedby={`${ids}-fast`}
             />
             Dùng bản tăng tốc
           </label>
-          <p className="text-[13px] text-fg-2 text-pretty">{acceleratedNote(status.accelerated)}</p>
+          <p id={`${ids}-fast`} className="text-[0.8125rem] text-fg-2 text-pretty">{acceleratedNote(status.accelerated)}</p>
         </div>
       )}
-      {fastUnsupportedNote(status) && <p className="text-[13px] text-fg-3 text-pretty">{fastUnsupportedNote(status)}</p>}
+      {fastUnsupportedNote(status) && <p className="text-[0.8125rem] text-fg-3 text-pretty">{fastUnsupportedNote(status)}</p>}
       {copy.tiers.map((tier) =>
         status.benchmark[tier] ? (
-          <p key={tier} className="text-[13px] text-fg-2 text-pretty">{benchmarkLabel(tier, status.benchmark[tier]!, status.slowRtf)}</p>
+          <p key={tier} className="text-[0.8125rem] text-fg-2 text-pretty">{benchmarkLabel(tier, status.benchmark[tier]!, status.slowRtf)}</p>
         ) : null,
       )}
-      {metered && <p className="text-[13px] text-fg-2 text-pretty">{metered}</p>}
+      {metered && <p className="text-[0.8125rem] text-fg-2 text-pretty">{metered}</p>}
       {suggestion && (
-        <div className="rounded-xl border border-warning/40 bg-warning-soft px-3 py-2.5 text-[13px] text-pretty">
+        <div className="rounded-xl border border-warning/40 bg-warning-soft px-3 py-2.5 text-[0.8125rem] text-pretty">
           <p>{suggestion.message}</p>
           <Button size="sm" variant="secondary" className="mt-2" loading={busy} onClick={() => void switchTo()}>
             {suggestion.action}

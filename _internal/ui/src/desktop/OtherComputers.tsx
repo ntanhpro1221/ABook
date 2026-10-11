@@ -180,7 +180,7 @@ export function OtherComputers() {
                 )}
                 {computer.fingerprint && (
                   // 8 ký tự đầu đủ để đối chiếu với máy kia; đủ 64 ký tự ở chú giải khi rê chuột vào.
-                  <div className="mt-0.5 break-words text-[11px] text-fg-3" title={formatFingerprint(computer.fingerprint)}>
+                  <div className="mt-0.5 break-words text-[0.6875rem] text-fg-3" title={formatFingerprint(computer.fingerprint)}>
                     Vân tay <span className="tabular-nums">{formatFingerprint(computer.fingerprint).slice(0, 9)}</span>…
                   </div>
                 )}
@@ -271,7 +271,7 @@ export function OtherComputers() {
             inputMode="url"
             autoComplete="off"
             spellCheck={false}
-            className="mt-1 block h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
+            className="mt-1 block h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
         <label className="w-32 text-xs text-fg-2" htmlFor="other-computer-code">
@@ -284,7 +284,7 @@ export function OtherComputers() {
             placeholder="123456"
             inputMode="numeric"
             autoComplete="off"
-            className="tabular mt-1 block h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
+            className="tabular mt-1 block h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
         <Button type="submit" size="md" variant="secondary" loading={pair.isPending} disabled={!address.trim() || code.replace(/\D/g, "").length !== 6}>
@@ -293,7 +293,7 @@ export function OtherComputers() {
       </form>
       {/* Toast biến mất sau vài giây; lý do không ghép được ở lại dưới ô địa chỉ cho tới lần thử kế (soát UX a17). */}
       {pair.isError && (
-        <p role="alert" className="text-[13px] text-danger text-pretty">
+        <p role="alert" className="text-[0.8125rem] text-danger text-pretty">
           Chưa ghép được: {pair.error.message}
         </p>
       )}

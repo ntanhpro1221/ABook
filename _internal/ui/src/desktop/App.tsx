@@ -21,6 +21,7 @@ import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { brokenMusicNote, keptEditsTitle, workshopMergeNote } from "@/shared/editsKept";
 import { MissingLibrary } from "@/shared/MissingLibrary";
+import { setLetterShortcuts } from "@/shared/letterShortcuts";
 import { setExternalOpener } from "@/shared/openExternal";
 import { toastRemoved } from "@/shared/trashUndo";
 import { homePage, listenOnlyLine, listenOnlyOwner, peerPage } from "@/shared/peerStudio";
@@ -519,6 +520,8 @@ export function App() {
   const retry = useCallback(() => void refetch(), [refetch]);
   const { data: preferences } = usePreferences();
   useTheme(preferences?.theme ?? info?.theme);
+  // Cài đặt › Phím tắt: bộ bắt phím của trình phát, Việc cần duyệt, Cần nghe lại đọc cờ này lúc có phím.
+  useEffect(() => setLetterShortcuts(preferences?.letterShortcuts !== false), [preferences?.letterShortcuts]);
   // Chương có audio phát bằng <audio>; chương chỉ-có-chữ ("Nghe ngay") đi qua bộ máy đọc to (listen/readAloud.ts).
   const engine = useMemo(() => new RoutedEngine(new WebAudioEngine()), []);
   // Màn hẹp (Studio từ xa trên điện thoại): thông báo ở đầu màn như app Android - ở đáy nó đè trình phát nhỏ và thanh
@@ -642,6 +645,7 @@ export function App() {
         // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.
         className="pointer-events-auto"
         toastOptions={{
+          closeButtonAriaLabel: "Đóng thông báo",
           classNames: {
             toast: "!bg-panel !border !border-line !text-fg !shadow-float !rounded-xl",
             description: "!text-fg-2",

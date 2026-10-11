@@ -101,7 +101,7 @@ function PairPanel() {
                   onClick={() => setTarget(computer)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl border p-3.5 text-left",
-                    target?.host === computer.host ? "border-accent bg-accent-soft" : "border-line bg-panel",
+                    target?.host === computer.host ? "border-focus bg-accent-soft" : "border-line bg-panel",
                   )}
                 >
                   <Laptop className="size-5 text-fg-2" />
@@ -137,7 +137,7 @@ function PairPanel() {
                   onClick={() => setTarget({ host: `bt:${device.address}`, port: 0, name: device.name })}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl border p-3.5 text-left",
-                    target?.host === `bt:${device.address}` ? "border-accent bg-accent-soft" : "border-line bg-panel",
+                    target?.host === `bt:${device.address}` ? "border-focus bg-accent-soft" : "border-line bg-panel",
                   )}
                 >
                   <Bluetooth className="size-5 text-fg-2" />
@@ -167,7 +167,7 @@ function PairPanel() {
           onChange={(event) => setAddress(event.target.value)}
           inputMode="url"
           placeholder="Ví dụ 192.168.1.20:47630"
-          className="h-12 w-full rounded-xl border border-line bg-panel px-4 text-base outline-none focus:border-accent"
+          className="h-12 w-full rounded-xl border border-line bg-panel px-4 text-base outline-none focus:border-focus"
         />
       )}
 
@@ -179,7 +179,7 @@ function PairPanel() {
           inputMode="numeric"
           autoComplete="one-time-code"
           placeholder="••••••"
-          className="tabular mt-1.5 h-14 w-full rounded-xl border border-line bg-panel text-center text-2xl font-semibold tracking-[0.5em] outline-none focus:border-accent"
+          className="tabular mt-1.5 h-14 w-full rounded-xl border border-line bg-panel text-center text-2xl font-semibold tracking-[0.5em] outline-none focus:border-focus"
         />
       </label>
       <Button variant="primary" size="lg" className="w-full" disabled={!ready} loading={pair.isPending} onClick={() => pair.mutate()}>
@@ -204,7 +204,7 @@ function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?
           {book.chaptersAvailable}/{book.chaptersTotal} chương · {formatLength(book.duration)}
           {!book.complete && " · đang làm"}
         </div>
-        {downloading && <Progress value={fraction} running size="xs" className="mt-2" />}
+        {downloading && <Progress value={fraction} running size="xs" className="mt-2" label="Đã tải về điện thoại" />}
       </div>
       {downloading ? (
         <span className="tabular w-12 text-right text-xs font-semibold text-accent-text">{Math.round(fraction * 100)}%</span>
@@ -239,7 +239,7 @@ function StudioAlertsRow() {
   return (
     <div className="mt-3 flex items-center justify-between gap-4 rounded-2xl border border-line bg-panel px-4 py-3.5">
       <div className="min-w-0">
-        <div className="text-[15px] font-medium">Báo khi sách xong hay có việc cần duyệt</div>
+        <div className="text-[0.9375rem] font-medium">Báo khi sách xong hay có việc cần duyệt</div>
         <div className="mt-0.5 text-xs leading-snug text-fg-2">
           {enabled && state.data && !state.data.permitted
             ? "Android đang chặn thông báo của ABook."
@@ -251,7 +251,7 @@ function StudioAlertsRow() {
         disabled={change.isPending || state.isLoading}
         onCheckedChange={(value) => change.mutate(value)}
         aria-label="Báo khi sách xong hay có việc cần duyệt"
-        className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
+        className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
       >
         <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
       </Switch.Root>
@@ -265,7 +265,7 @@ function Fingerprint({ value }: { value?: string }) {
   const shown = formatFingerprint(value);
   if (!shown) return null;
   return (
-    <div className="mt-0.5 break-words text-[11px] text-fg-3">
+    <div className="mt-0.5 break-words text-[0.6875rem] text-fg-3">
       Vân tay <span className="tabular-nums">{shown}</span>
     </div>
   );
@@ -371,7 +371,7 @@ function PeersPanel() {
                   onClick={() => setAddress(`bt:${device.address}`)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl border p-3 text-left",
-                    address === `bt:${device.address}` ? "border-accent bg-accent-soft" : "border-line",
+                    address === `bt:${device.address}` ? "border-focus bg-accent-soft" : "border-line",
                   )}
                 >
                   <Bluetooth className="size-5 text-fg-2" />
@@ -397,7 +397,7 @@ function PeersPanel() {
                   onClick={() => setAddress(`${item.host}:${item.port}`)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl border p-3 text-left",
-                    address === `${item.host}:${item.port}` ? "border-accent bg-accent-soft" : "border-line",
+                    address === `${item.host}:${item.port}` ? "border-focus bg-accent-soft" : "border-line",
                   )}
                 >
                   {item.kind === "phone" ? <Smartphone className="size-5 text-fg-2" /> : <Laptop className="size-5 text-fg-2" />}
@@ -416,14 +416,14 @@ function PeersPanel() {
             onChange={(event) => setAddress(event.target.value)}
             inputMode="url"
             placeholder="Địa chỉ, ví dụ 192.168.1.25:47630"
-            className="h-11 w-full rounded-xl border border-line bg-panel px-3 text-base outline-none focus:border-accent"
+            className="h-11 w-full rounded-xl border border-line bg-panel px-3 text-base outline-none focus:border-focus"
           />
           <input
             value={code}
             onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
             inputMode="numeric"
             placeholder="Mã 6 số"
-            className="tabular h-11 w-full rounded-xl border border-line bg-panel px-3 text-center text-lg tracking-[0.3em] outline-none focus:border-accent"
+            className="tabular h-11 w-full rounded-xl border border-line bg-panel px-3 text-center text-lg tracking-[0.3em] outline-none focus:border-focus"
           />
           <Button variant="primary" className="w-full" disabled={!ready} loading={pair.isPending} onClick={() => pair.mutate()}>
             Ghép
@@ -501,7 +501,7 @@ function SharePanel() {
     <section className="mt-8 rounded-2xl border border-line bg-panel p-4" aria-labelledby="share-title">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <h2 id="share-title" className="text-[15px] font-medium">Cho máy khác nghe thư viện này</h2>
+          <h2 id="share-title" className="text-[0.9375rem] font-medium">Cho máy khác nghe thư viện này</h2>
           <p className="mt-0.5 text-xs leading-snug text-fg-2">
             Máy đã ghép nghe thẳng những cuốn bạn tự thêm từ file vào điện thoại này, không phải chép sang. Chia sẻ chạy cả khi ABook ở nền, cho
             tới khi tắt ở đây hay ở thông báo. Máy OPPO, Xiaomi… có thể cho ABook "ngủ" khi ở nền: máy tính sẽ chờ lâu hơn - mở ABook
@@ -513,7 +513,7 @@ function SharePanel() {
           disabled={run.isPending || status.isLoading}
           onCheckedChange={(value) => run.mutate(() => EbookLibrary.setShare({ enabled: value }))}
           aria-label="Cho máy khác nghe thư viện này"
-          className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
+          className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
         >
           <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
         </Switch.Root>

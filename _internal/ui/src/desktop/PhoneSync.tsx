@@ -122,6 +122,8 @@ export function Switch({
   onCheckedChange,
   disabled,
   label,
+  labelledBy,
+  describedBy,
 }: {
   id?: string;
   checked: boolean;
@@ -129,15 +131,21 @@ export function Switch({
   disabled?: boolean;
   /** Tên cho trình đọc màn hình khi không có <label htmlFor> trỏ tới công tắc (soát UX 29-09: "Lịch đêm" chỉ đọc "switch"). */
   label?: string;
+  /** <label> bọc cả tên lẫn đoạn mô tả dài: tên là phần tử mang mã này, đoạn mô tả đọc riêng (`describedBy`) - không thì tên đọc lên dài
+   *  300+ chữ (soát a31). */
+  labelledBy?: string;
+  describedBy?: string;
 }) {
   return (
     <SwitchPrimitive.Root
       id={id}
       aria-label={label}
+      aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
       checked={checked}
       onCheckedChange={onCheckedChange}
       disabled={disabled}
-      className="touch-hit relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-switch-off transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 data-[state=checked]:bg-accent"
+      className="touch-hit relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-switch-off transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 data-[state=checked]:bg-focus"
     >
       <SwitchPrimitive.Thumb className="block size-5 translate-x-0.5 rounded-full bg-white shadow-sm transition-transform duration-150 data-[state=checked]:translate-x-[22px]" />
     </SwitchPrimitive.Root>
@@ -155,7 +163,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="min-w-0">
             <p className="text-sm font-semibold">Nhập mã này trên thiết bị cần ghép</p>
-            <ol className="mt-2 list-decimal space-y-1 pl-4 text-[13px] text-fg-2">
+            <ol className="mt-2 list-decimal space-y-1 pl-4 text-[0.8125rem] text-fg-2">
               <li>
                 Mở ABook trên điện thoại, vào <span className="font-medium text-fg">Tải sách</span>.
               </li>
@@ -166,17 +174,17 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
             </ol>
             {/* Địa chỉ luôn hiện ở đây (máy tính khác không tự thấy máy này thì gõ địa chỉ), không chỉ khi bật điều khiển sản xuất. */}
             {sync.addresses.length > 0 && (
-              <p className="mt-2 text-[13px] text-fg-2">
+              <p className="mt-2 text-[0.8125rem] text-fg-2">
                 Địa chỉ máy này: <Where sync={sync} scheme={false} /> - gõ vào ô “Địa chỉ máy kia” khi ghép từ máy tính khác.
               </p>
             )}
             {/* Ghép một chiều (soát a27 lỗi 9): ghép xong máy kia nghe sách của máy này, không ngược lại. */}
-            <p className="mt-2 text-[13px] text-fg-2">
+            <p className="mt-2 text-[0.8125rem] text-fg-2">
               Ghép một chiều: thiết bị kia nghe được sách của máy này. Muốn máy này nghe sách của máy tính kia thì ghép thêm từ máy
               này, ở Cài đặt → Máy tính khác.
             </p>
             {sync.remoteStudio && (
-              <p className="mt-2 text-[13px] text-fg-2">
+              <p className="mt-2 text-[0.8125rem] text-fg-2">
                 Trình duyệt: mở <Where sync={sync} /> rồi gõ mã. Trình duyệt sẽ báo trang “không an toàn” vì chứng chỉ do
                 chính máy này cấp - cứ chọn tiếp tục.
               </p>
@@ -186,7 +194,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
           <div className="text-center">
             <div
               aria-label={`Mã ghép nối: ${code.split("").join(" ")}`}
-              className="pl-[0.14em] text-[34px] font-semibold leading-none tracking-[0.14em] text-accent-text tabular-nums"
+              className="pl-[0.14em] text-[2.125rem] font-semibold leading-none tracking-[0.14em] text-accent-text tabular-nums"
             >
               {code.slice(0, 3)}
               <span className="inline-block w-3" />
@@ -199,7 +207,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
         </div>
         {/* Dòng vân tay dài (64 ký tự): để NGOÀI hàng hướng dẫn / mã, không thì nó chiếm hết bề rộng và đẩy mã xuống dưới. */}
         {sync.fingerprint && (
-          <details className="group mt-3 text-[12px] text-fg-3">
+          <details className="group mt-3 text-[0.75rem] text-fg-3">
             <summary className="cursor-pointer list-none text-fg-2 [&::-webkit-details-marker]:hidden">Chi tiết kỹ thuật</summary>
             <p className="mt-1 break-words">
               Vân tay của máy này: <span className="tabular-nums">{sync.fingerprint}</span>. Sau khi ghép, máy kia ghi lại vân tay này; đối chiếu
@@ -222,7 +230,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
         <ShieldAlert className="mt-0.5 size-[18px] shrink-0 text-warning" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">Mã đã bị huỷ vì nhập sai 5 lần</p>
-          <p className="mt-0.5 text-[13px] text-fg-2">
+          <p className="mt-0.5 text-[0.8125rem] text-fg-2">
             Nếu gõ nhầm thì tạo mã mới. Nếu không phải, có thiết bị lạ trong mạng đang đoán mã - đừng tạo mã khi
             chưa cần.
           </p>
@@ -267,7 +275,7 @@ export function PhoneSync() {
       <div className="flex items-start justify-between gap-6">
         <label htmlFor="phone-sync" className="min-w-0 cursor-pointer">
           <span className="block text-sm font-medium">{SYNC_SWITCH_LABEL}</span>
-          <span className={cn("mt-0.5 block text-[13px]", failing ? "text-danger" : "text-fg-2")}>
+          <span className={cn("mt-0.5 block text-[0.8125rem]", failing ? "text-danger" : "text-fg-2")}>
             {sync.enabled
               ? `Điện thoại và máy tính cùng mạng sẽ thấy máy này với tên “${sync.name}”.`
               : failing
@@ -296,7 +304,7 @@ export function PhoneSync() {
           <div className="flex items-start justify-between gap-6">
             <label htmlFor="remote-studio" className="min-w-0 cursor-pointer">
               <span className="block text-sm font-medium">Cho phép điều khiển sản xuất từ thiết bị đã ghép</span>
-              <span className="mt-0.5 block text-[13px] text-fg-2 text-pretty">
+              <span id="remote-studio-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">
                 {studioWanted ? (
                   <>
                     Trên điện thoại, máy tính bảng hay máy tính khác, mở <Where sync={sync} /> để xem tiến độ, bắt đầu
@@ -310,6 +318,7 @@ export function PhoneSync() {
             <Switch
               id="remote-studio"
               label="Cho phép điều khiển sản xuất từ thiết bị đã ghép"
+              describedBy="remote-studio-hint"
               checked={studioWanted}
               disabled={studio.isPending}
               onCheckedChange={(value) => (value ? setConfirmStudio(true) : studio.mutate(false))}
@@ -342,7 +351,7 @@ export function PhoneSync() {
             {sync.devices.length === 0 ? (
               // Người mới chưa có app trên điện thoại: nói chỗ lấy (chữ chọn được, không phải liên kết - trong cửa sổ app một
               // liên kết có thể điều hướng chính cửa sổ).
-              <p className="mt-2 select-text text-[13px] leading-relaxed text-fg-2">
+              <p className="mt-2 select-text text-[0.8125rem] leading-relaxed text-fg-2">
                 Chưa có thiết bị nào. Điện thoại Android chưa có app: tải file <span className="font-medium text-fg">.apk</span> ở{" "}
                 <span className="font-medium text-fg">github.com/ntanhpro1221/ABook/releases</span> rồi cài. iPhone, iPad: không cần
                 app - ghép rồi nghe bằng trình duyệt.

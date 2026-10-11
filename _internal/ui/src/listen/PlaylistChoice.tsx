@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronRight, Music2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/shared/cn";
+import { spokenProgress } from "@/shared/progressSpeech";
+import { LiveText } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { importMusic } from "@/studio/musicImport";
 import { MY_MUSIC_KEY, useCanImportMusic } from "./MyMusic";
@@ -89,7 +91,10 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     if (adding) return;
     adding = true;
     try {
-      const { result, error } = await importMusic((done, total) => void toast.loading(`Đang thêm nhạc ${done}/${total}…`, { id: ADD_TOAST }));
+      // Trình đọc màn hình chỉ đọc mốc 25 %, không đọc lại sau mỗi bài (soát a31 A6).
+      const { result, error } = await importMusic(
+        (done, total) => void toast.loading(<LiveText shown={`Đang thêm nhạc ${done}/${total}…`} spoken={spokenProgress("Đang thêm nhạc", done / total)} />, { id: ADD_TOAST }),
+      );
       if (result) {
         client.setQueryData(MY_MUSIC_KEY, result);
         void client.invalidateQueries({ queryKey: ["music", "playlists"] }); // số bài của "Nhạc của tôi"

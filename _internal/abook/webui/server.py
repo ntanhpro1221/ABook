@@ -5047,6 +5047,8 @@ class Handler(BaseHTTPRequestHandler):
             allowed["pauseOnBattery"] = body["pauseOnBattery"]
         if isinstance(body.get("autoMusic"), bool):
             allowed["autoMusic"] = body["autoMusic"]
+        if isinstance(body.get("letterShortcuts"), bool):
+            allowed["letterShortcuts"] = body["letterShortcuts"]
         # Mặc định của trình tạo sách: chất lượng là một trong ba mức; giọng kể là tên giọng có thật ("" = máy đề xuất).
         if body.get("newBookProfile") in ("fast", "balanced", "high_quality"):
             allowed["newBookProfile"] = body["newBookProfile"]

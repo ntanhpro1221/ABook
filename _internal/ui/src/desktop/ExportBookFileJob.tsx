@@ -6,7 +6,7 @@ import { useMatch } from "react-router";
 import { toast } from "sonner";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
-import { Progress } from "@/shared/ui";
+import { LiveText, Progress } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
 import { BOOK_FILE_COPY, exportWhereHint, jobView, lastExportHint, lastExportPlace, M4B_COPY, PROJECT_FILE_COPY, runningExports, type ExportCopy, type ExportJob } from "./bookFileExport";
@@ -134,12 +134,19 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
   );
 }
 
-/** Thông báo đang làm có thanh tiến độ dưới dòng mô tả. */
-function ProgressNote({ text, fraction }: { text: string; fraction: number }) {
+/** Thông báo đang làm có thanh tiến độ dưới dòng mô tả. Thông báo nằm trong vùng aria-live: trình đọc màn hình chỉ đọc `spoken` (pha / mốc
+ *  25 %), không đọc dòng chữ và thanh đổi mỗi giây (soát a31 A6). */
+export function ProgressNote({ text, spoken, fraction }: { text: string; spoken: string; fraction?: number }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span>{text}</span>
-      <Progress value={fraction} size="sm" running label={text} />
+      <span>
+        <LiveText shown={text} spoken={spoken} />
+      </span>
+      {fraction !== undefined && (
+        <div aria-hidden>
+          <Progress value={fraction} size="sm" running label={spoken} />
+        </div>
+      )}
     </div>
   );
 }
@@ -173,7 +180,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
         }
         toast.loading(view.title, {
           id: toastId(kind, id),
-          description: view.progress !== undefined ? <ProgressNote text={view.description} fraction={view.progress} /> : view.description,
+          description: <ProgressNote text={view.description} spoken={view.spoken ?? ""} fraction={view.progress} />,
           duration: Infinity,
           action: cancel
             ? {

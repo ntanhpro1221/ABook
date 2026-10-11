@@ -314,12 +314,12 @@ export function VoicePicker({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className={cn("font-medium", voice.takenBy?.length && "text-fg-2")}>{voice.name}</span>
-                    {voice.current && <span className="rounded-full bg-panel px-2 py-px text-[11px] font-medium text-accent-text">Đang dùng</span>}
+                    {voice.current && <span className="rounded-full bg-panel px-2 py-px text-[0.6875rem] font-medium text-accent-text">Đang dùng</span>}
                     {voice.pending && !voice.current && (
-                      <span className="rounded-full bg-warning-soft px-2 py-px text-[11px] font-medium text-warning">Chờ áp dụng</span>
+                      <span className="rounded-full bg-warning-soft px-2 py-px text-[0.6875rem] font-medium text-warning">Chờ áp dụng</span>
                     )}
                     {voice.suggested && !voice.current && !voice.pending && (
-                      <span className="rounded-full bg-info-soft px-2 py-px text-[11px] font-medium text-info">Máy gợi ý</span>
+                      <span className="rounded-full bg-info-soft px-2 py-px text-[0.6875rem] font-medium text-info">Máy gợi ý</span>
                     )}
                   </div>
                   <div className={cn("mt-0.5 text-xs", voice.sharedWith.length && !voice.takenBy?.length ? "text-warning" : "text-fg-2")}>

@@ -108,7 +108,7 @@ function ChapterRow({
               ? textChapterLine(Boolean(chapter.speech), voice)
               : chapterStatusLabel(book.producing)}
           {prepared && (
-            <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-accent-soft px-1 align-[1px] text-[11px] font-medium text-accent-text">
+            <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-accent-soft px-1 align-[1px] text-[0.6875rem] font-medium text-accent-text">
               <CloudDownload className="size-3" aria-hidden />
               Đã làm sẵn
             </span>
@@ -413,13 +413,13 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onRenam
           .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}
       </div>
       {reached && ahead(cast.characters, reached) > 0 && (
-        <button type="button" onClick={() => setLater((value) => !value)} className="mt-3 text-sm font-medium text-fg-2 hover:text-fg">
+        <button type="button" onClick={() => setLater((value) => !value)} className="touch-row mt-3 text-sm font-medium text-fg-2 hover:text-fg">
           {later ? "Ẩn" : "Hiện"} {ahead(cast.characters, reached)} người chỉ xuất hiện ở chương sau chỗ đang nghe
         </button>
       )}
       {cast.extras.length > 0 && (
         <div className="mt-6">
-          <button type="button" onClick={() => setExtras((value) => !value)} className="text-sm font-medium text-fg-2 hover:text-fg">
+          <button type="button" onClick={() => setExtras((value) => !value)} className="touch-row text-sm font-medium text-fg-2 hover:text-fg">
             {extras ? "Ẩn" : "Hiện"} {cast.extras.length} vai phụ chỉ xuất hiện trong một cảnh
           </button>
           {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}</div>}
@@ -549,7 +549,7 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
         const chosen = others.find((item) => item.id === event.target.value);
         if (chosen) onChange({ id: chosen.id, title: chosen.title });
       }}
-      className="h-10 rounded-lg border border-line bg-panel px-2 text-sm outline-none focus:border-accent"
+      className="h-10 rounded-lg border border-line bg-panel px-2 text-sm outline-none focus:border-focus"
     >
       <option value="" disabled>
         Chọn cuốn…
@@ -709,7 +709,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               placeholder="Tên hồ sơ"
               value={dialog?.name ?? ""}
               onChange={(event) => setDialog((current) => (current ? { ...current, name: event.target.value } : current))}
-              className="h-10 rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-accent"
+              className="h-10 rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
             />
           )}
           <div className="flex justify-end gap-2">
@@ -876,8 +876,8 @@ export function BookScreen({
       <header className="mt-5 flex flex-col gap-5 sm:flex-row sm:gap-7">
         <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-40 max-sm:mx-auto sm:w-44" />
         <div className="min-w-0 flex-1 max-sm:text-center">
-          <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[30px]">{book.title}</h1>
-          {book.author && <p className="mt-1.5 text-[15px] text-fg-2">{book.author}</p>}
+          <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[1.875rem]">{book.title}</h1>
+          {book.author && <p className="mt-1.5 text-[0.9375rem] text-fg-2">{book.author}</p>}
           <p className="tabular mt-2 text-sm text-fg-2">
             {book.narrator && `Giọng kể ${book.narrator} · `}
             {textOnly
@@ -1053,7 +1053,7 @@ export function BookScreen({
         </div>
       </header>
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-8">
-        <TabsList>
+        <TabsList label="Mục của sách">
           <TabsTrigger value="chapters" count={chapters.length}>Chương</TabsTrigger>
           <TabsTrigger value="bookmarks" count={book.state.bookmarks.length || undefined}>Dấu trang</TabsTrigger>
           <TabsTrigger value="history">Lịch sử</TabsTrigger>

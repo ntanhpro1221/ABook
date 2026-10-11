@@ -3,8 +3,9 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, RotateCw, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { ButtonHTMLAttributes, ComponentType, CSSProperties, ReactNode, Ref } from "react";
+import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, ReactNode, Ref } from "react";
 import { cn } from "@/shared/cn";
+import { scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -23,9 +24,9 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-8 px-3 text-[13px] gap-1.5 rounded-lg",
+  sm: "h-8 px-3 text-[0.8125rem] gap-1.5 rounded-lg",
   md: "h-9 px-3.5 text-sm gap-2 rounded-lg",
-  lg: "h-11 px-5 text-[15px] gap-2 rounded-xl",
+  lg: "h-11 px-5 text-[0.9375rem] gap-2 rounded-xl",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -115,11 +116,23 @@ export function IconButton({
 
 export const TooltipProvider = TooltipPrimitive.Provider;
 
+/** Tiêu điểm vào nút mà KHÔNG phải do đi bằng bàn phím (app trả tiêu điểm về nút mở sau khi chọn bằng chuột trong bảng Tốc độ...): không bật
+ *  chú thích - chỉ Tab / phím mới bật. Trình duyệt không hiểu :focus-visible thì bật như cũ. */
+function quietFocus(event: FocusEvent<HTMLElement>) {
+  try {
+    if (!event.currentTarget.matches(":focus-visible")) event.preventDefault();
+  } catch {
+    // :focus-visible không được hỗ trợ
+  }
+}
+
 export function Tooltip({ label, children, side = "top" }: { label: ReactNode; children: ReactNode; side?: "top" | "bottom" | "left" | "right" }) {
   if (!label) return <>{children}</>;
   return (
     <TooltipPrimitive.Root>
-      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Trigger asChild onFocus={quietFocus}>
+        {children}
+      </TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           side={side}
@@ -158,7 +171,8 @@ export function Progress({
   running?: boolean;
   size?: "xs" | "sm" | "md" | "lg";
   className?: string;
-  label?: string;
+  /** Tên thanh cho trình đọc màn hình ("Đã nghe", "Tiến độ: <tên sách>") - không có thì chỉ nghe "thanh tiến độ 47" (soát a31 A1). */
+  label: string;
   /** Việc chạy mà không báo được tiến độ (đóng gói file): vạch chạy qua lại thay vì phần trăm. */
   indeterminate?: boolean;
 }) {
@@ -182,6 +196,17 @@ export function Progress({
         />
       )}
     </div>
+  );
+}
+
+/** Chữ tiến độ đổi liên tục (đồng hồ, MB, %) trong vùng aria-live / role=status: mắt thấy `shown` (trình đọc màn hình bỏ qua), trình đọc
+ *  màn hình đọc `spoken` - chữ chỉ đổi khi đổi pha hay qua mốc 25 % (spokenProgress, shared/progressSpeech.ts), không phải mỗi giây (soát a31 A6). */
+export function LiveText({ shown, spoken }: { shown: ReactNode; spoken: string }) {
+  return (
+    <>
+      <span aria-hidden>{shown}</span>
+      <span className="sr-only">{spoken}</span>
+    </>
   );
 }
 
@@ -238,7 +263,8 @@ export const TabsContent = TabsPrimitive.Content;
 
 const FADE = 36;
 
-export function TabsList({ children, className }: { children: ReactNode; className?: string }) {
+/** `label`: tên của hàng tab cho trình đọc màn hình ("Mục của sách") - không có thì chỉ nghe "danh sách tab" (soát a31 K7/A2). */
+export function TabsList({ children, className, label }: { children: ReactNode; className?: string; label: string }) {
   // Hàng tab không vừa (điện thoại, hay cửa sổ hẹp có thanh bên) thì cuộn ngang thay vì tràn ra ngoài trang, và mép nào
   // còn tab bị che thì mờ dần - không thì "Nhân v" bị cắt trông như lỗi, không ai biết là còn tab (soát UX 29-09).
   const list = useRef<HTMLDivElement>(null);
@@ -287,11 +313,12 @@ export function TabsList({ children, className }: { children: ReactNode; classNa
       })`
     : undefined;
   const style: CSSProperties | undefined = mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined;
-  const nudge = (direction: -1 | 1) => list.current?.scrollBy({ left: direction * list.current.clientWidth * 0.7, behavior: "smooth" });
+  const nudge = (direction: -1 | 1) => list.current?.scrollBy({ left: direction * list.current.clientWidth * 0.7, behavior: scrollMotion() });
   return (
     <div className="relative">
       <TabsPrimitive.List
         ref={list}
+        aria-label={label}
         style={style}
         className={cn("flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none]", className)}
       >
@@ -324,7 +351,7 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
     >
       {children}
       {count !== undefined && (
-        <span className="tabular rounded-full bg-hover px-1.5 py-px text-[11px] font-semibold text-fg-2">{count}</span>
+        <span className="tabular rounded-full bg-hover px-1.5 py-px text-[0.6875rem] font-semibold text-fg-2">{count}</span>
       )}
     </TabsPrimitive.Trigger>
   );
@@ -460,7 +487,7 @@ export function Sheet({
         <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-scrim" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
-          onCloseAutoFocus={(event) => event.preventDefault()}
+          // Đóng (Esc, nút Đóng, chạm nền): Radix tự trả tiêu điểm về nút mở (Trigger) - trước đây chặn việc ấy nên tiêu điểm rơi về BODY (soát a31 K1).
           onEscapeKeyDown={onEscapeKeyDown}
           onInteractOutside={keepOpenForToasts}
           className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-line bg-panel px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2 shadow-float focus:outline-none"
@@ -538,7 +565,7 @@ export function LoadError({ what, error, onRetry, className }: { what: string; e
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-line-strong bg-panel-2 px-1 font-sans text-[11px] font-medium text-fg-2">
+    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-line-strong bg-panel-2 px-1 font-sans text-[0.6875rem] font-medium text-fg-2">
       {children}
     </kbd>
   );
@@ -640,7 +667,7 @@ export function Segmented<T extends string>({
           tabIndex={radioTabIndex(values, value, index)}
           onClick={() => onChange(option.value)}
           className={cn(
-            "touch-row h-7 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors",
+            "touch-row h-7 whitespace-nowrap rounded-md px-3 text-[0.8125rem] font-medium transition-colors",
             value === option.value ? "bg-panel text-fg shadow-card" : "text-fg-2 hover:text-fg",
             itemClassName,
           )}

@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { cn } from "@/shared/cn";
 import { coverArtwork } from "@/shared/cover";
 import { fileName, formatNumber, formatSize } from "@/shared/format";
-import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { spokenProgress } from "@/shared/progressSpeech";
+import { Button, Dialog, LiveText, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { FfmpegNeeded } from "@/desktop/AudiobookDialog";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
 import { musicMissingNote } from "@/desktop/bookFileExport";
@@ -352,7 +353,7 @@ export function ExportDialog({
             {cancelling
               ? "Đang huỷ…"
               : downloading
-                ? `Đang tải nhạc nền (${downloading.done}/${downloading.total})…`
+                ? <LiveText shown={`Đang tải nhạc nền (${downloading.done}/${downloading.total})…`} spoken={spokenProgress("Đang tải nhạc nền", downloading.done / downloading.total)} />
                 : (packShown?.title ?? SAVING[kind][1])}
           </p>
           <p className="mt-1 text-sm text-fg-2 text-pretty">
@@ -432,7 +433,7 @@ export function ExportDialog({
             onClick={() => setKind(value)}
             className={cn(
               "flex items-start gap-3 rounded-xl border p-3 text-left text-sm",
-              kind === value ? "border-accent bg-accent-soft" : "border-line hover:bg-hover",
+              kind === value ? "border-focus bg-accent-soft" : "border-line hover:bg-hover",
             )}
           >
             <Icon className="mt-0.5 size-4 shrink-0 text-accent-text" />

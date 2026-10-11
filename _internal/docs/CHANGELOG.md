@@ -24,6 +24,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Truyện viết thoại bằng gạch đầu dòng ("- Đi thôi.", "— Ừ.") không còn bị đọc cả cuộc hội thoại bằng giọng của người nói câu
   đầu: mỗi dòng gạch là một lượt nói riêng, như với thoại trong ngoặc kép.
 
+### Dùng bằng bàn phím và trình đọc màn hình (máy tính và điện thoại)
+
+- Đóng ô Tốc độ, Hẹn giờ hay bảng bên, quyết xong một việc ở "Việc cần duyệt" hay sang trang khác thì con trỏ bàn phím nằm ngay chỗ
+  đang làm, không phải Tab lại từ đầu trang; vòng chỉ chỗ đang chọn rõ ở giao diện sáng; trình đọc màn hình đọc chương thành đoạn văn
+  (không còn "nút" trước mỗi câu) và không đọc lại tiến độ xuất sách mỗi giây.
+- Cài đặt › Phím tắt có công tắc "Phím tắt một chữ cái" để tắt các phím B, M, [ ], ?, J, K, số…; chữ cả app to theo cỡ chữ của
+  trình duyệt; vòng quay "đang tải" đứng yên khi máy đặt giảm chuyển động.
+
 ## [0.4.54] - 2026-10-12
 
 ### Nhạc nền (máy tính và điện thoại)

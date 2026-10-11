@@ -45,7 +45,7 @@ function NumberBox({ value, label, onCommit }: { value: number; label: string; o
         }
       }}
       className={cn(
-        "h-8 w-16 rounded-lg border bg-bg px-2 text-center text-sm tabular-nums outline-none focus:border-accent",
+        "h-8 w-16 rounded-lg border bg-bg px-2 text-center text-sm tabular-nums outline-none focus:border-focus",
         bad ? "border-danger" : "border-line",
       )}
     />
@@ -216,7 +216,7 @@ function AddCut({ starts, total, onAdd }: { starts: number[]; total: number; onA
           }
         }}
         className={cn(
-          "h-8 w-28 rounded-lg border bg-bg px-2 text-center text-sm tabular-nums outline-none placeholder:text-fg-3 focus:border-accent",
+          "h-8 w-28 rounded-lg border bg-bg px-2 text-center text-sm tabular-nums outline-none placeholder:text-fg-3 focus:border-focus",
           bad ? "border-danger" : "border-line",
         )}
       />
