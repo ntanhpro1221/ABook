@@ -4337,6 +4337,19 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 chiều - WEAKPULL (bỏ / hạ kéo "không khí yếu" về nền êm): THUA ở bộ 7
+
+Ghi trước Corpus 5a547dd, đóng băng 8dfb4bc, kết quả 8e883ab. Biến thể WEAK_MOOD ∈ {.2, .1, 0} × phạm vi {mọi mảnh, chỉ mảnh
+có học sinh}. Thước chính (rV + rE) / 2 theo BÀI thật, hai đường. SÀN = mọi mảnh về nền êm.
+- Bộ học: APP .278 → bỏ hẳn kéo (0, mọi mảnh) .364 (+.086; rV +.076, rE +.097). `nổi` +.2. SÀN .180, kiểm lực đạt.
+- Bộ 7: APP .428 → .404 (**-.024**), bootstrap [-.062; +.023] → THUA. Phần mất nằm ở rE của đường nhãn (.187 → .114). STUDIO
+  rV vẫn tăng (.790 → .813).
+- Báo cáo phụ bộ 11+12: chờ bộ 12 phân tích xong.
+
+Đọc: lần thứ năm liên tiếp (GAIN, ENERGY, SIBSWITCH, VALENCE, WEAKPULL) một thay đổi thắng rõ trên bộ học thì thua hay hoà trên bộ
+7. Lần này chỉ chọn trong 5 biến thể, nên khó gọi là học quá khớp. Trên bộ 7, bỏ kéo vẫn làm r của ĐÍCH tăng (bảng tín hiệu), mà
+r theo BÀI thì không. Giữ WEAK_MOOD = .2.
+
 ### 11-10 chiều - Bảng chất lượng tín hiệu theo NGUỒN + phân loại cảnh sai dấu V (Lead giao sau SIBSWITCH / VALENCE)
 
 Sau GAIN, ENERGY, SIBSWITCH, VALENCE (đều thua), Lead hỏi gốc: nguồn tín hiệu nào bẹt, ở mức nào. `signal_table.py` (Corpus
