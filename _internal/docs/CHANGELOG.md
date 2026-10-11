@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.54] - 2026-10-12
+
 ### Nhạc nền (máy tính và điện thoại)
 
 - Bài nhạc lặp lại liền mạch: vòng mới mờ chéo vào từ chỗ có tiếng, không còn khoảng im hay tiếng click ở chỗ nối; bài có đoạn im cuối
