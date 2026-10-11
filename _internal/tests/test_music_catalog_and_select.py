@@ -346,3 +346,19 @@ def test_a_kept_track_that_is_unavailable_is_chosen_again_and_an_available_one_s
     assert stays["link"] == "https://x/calm.mp3"
     [moved] = choose([scene], near, book_key="b", keep=keep, available=lambda link: link != "https://x/calm.mp3")
     assert moved["link"] == "https://x/calm2.mp3"
+
+
+def test_a_catalog_smaller_than_the_recent_window_reuses_the_track_used_longest_ago() -> None:
+    from abook.webui.music_select import RECENT_SCENES, choose as pick
+
+    # Ba bài cùng tâm trạng, hơi xa mục tiêu: khoảng cách + phạt "vừa dùng" vượt ngưỡng im lặng, nhưng lặp bài vẫn hơn im lặng.
+    tracks = _tracks_at(("a", {"valence": 0.35, "arousal": 0.35, "tension": 0.0}),
+                        ("b", {"valence": 0.36, "arousal": 0.35, "tension": 0.0}),
+                        ("c", {"valence": 0.37, "arousal": 0.35, "tension": 0.0}))
+    scenes = [_flat_scene(firstSegment=i * 40) for i in range(7)]
+    assert len(scenes) < RECENT_SCENES
+    links = [entry["link"] for entry in pick(scenes, lambda v, a: tracks, book_key="b")]
+    assert None not in links, "không đoạn nào im lặng chỉ vì mọi bài đều vừa dùng"
+    assert sorted(links[:3]) == ["https://x/a.mp3", "https://x/b.mp3", "https://x/c.mp3"], "còn bài mới thì không lặp"
+    for index in range(3, len(links)):
+        assert links[index] == links[index - 3], "hết bài mới thì lấy bài dùng lâu nhất"

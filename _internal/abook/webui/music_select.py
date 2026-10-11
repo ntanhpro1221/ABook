@@ -43,8 +43,12 @@ PENALTY_UNIT = math.sqrt(SCENE_SD_DEFAULT ** 2 + TRACK_SD_DEFAULT ** 2 + TAU ** 
 STYLE_HALF_PENALTY = 0.3 / PENALTY_UNIT    # phong cách chỉ "dùng được" (0,5) với thể loại của cuốn
 FAMILY_PENALTY = 0.35 / PENALTY_UNIT
 FOREGROUND_PENALTY = 0.25 / PENALTY_UNIT   # x (1 - độ hợp làm nền)
-RECENT_PENALTY = 0.3 / PENALTY_UNIT        # bài đã dùng trong RECENT_SCENES đoạn trước
-RECENT_SCENES = 3
+# Bài đã dùng trong RECENT_SCENES đoạn trước bị phạt RECENT_PENALTY x (1..2), bài dùng càng gần càng nặng: còn bài mới gần mục tiêu
+# thì không bao giờ chọn lại bài vừa dùng; hết bài mới (danh mục nhỏ hơn cửa sổ) thì lấy bài dùng lâu nhất. Phạt này chỉ để XẾP
+# HẠNG, không tính vào ngưỡng im lặng MAX_Z: lặp bài vẫn hơn im lặng. Cửa sổ 100 đoạn (MONO 11-10, docs/MUSIC_RESEARCH.md): số bài
+# hiệu dụng của cuốn gấp đôi, không mất độ hợp truyện; 3 đoạn cũ để vài bài gần tâm quay lại ở rất nhiều chương.
+RECENT_PENALTY = 0.3 / PENALTY_UNIT
+RECENT_SCENES = 100
 MIN_TRACK_SECONDS = 60
 WEAK_MOOD = 0.2                 # đoạn không có không khí rõ (ít câu có cảm xúc) ...
 CALM_TARGET = (0.15, -0.55)     # ... thì nhạc nền nhẹ, êm - nhạc mặc định bật (chủ sách 01-10)
@@ -132,9 +136,10 @@ def style_fit(track: dict[str, Any], genre_styles: dict[str, float] | None) -> f
     return float(genre_styles.get(style, 0.0)) if style else 0.5
 
 
-def score(track: dict[str, Any], target: tuple[float, ...], *, family: str | None, recent: list[str],
+def score(track: dict[str, Any], target: tuple[float, ...], *, family: str | None,
           genre_styles: dict[str, float] | None = None, sigma: dict[str, float] | None = None) -> float:
-    """Khoảng cách theo độ không chắc (`z_distance`) cộng các phạt; chưa có số hạng cảm xúc (xem `rank`)."""
+    """Khoảng cách theo độ không chắc (`z_distance`) cộng các phạt; chưa có phạt "vừa dùng" (`recent_penalty`) và số hạng
+    cảm xúc (xem `rank`)."""
     distance = z_distance(track, target, sigma)
     penalty = 0.0
     if style_fit(track, genre_styles) < 1.0:
@@ -144,9 +149,16 @@ def score(track: dict[str, Any], target: tuple[float, ...], *, family: str | Non
     background = track.get("background")
     if background is not None and track.get("source") != "incompetech":
         penalty += FOREGROUND_PENALTY * (1.0 - float(background))
-    if track.get("link") in recent:
-        penalty += RECENT_PENALTY
     return distance + penalty
+
+
+def recent_penalty(link: str, recent: list[str]) -> float:
+    """Phạt bài đã dùng trong cửa sổ `recent` (cũ trước, mới sau): RECENT_PENALTY x (1 + vị trí lần dùng gần nhất / độ dài cửa sổ),
+    nên bài dùng lâu nhất phạt nhẹ nhất. 0 nếu chưa dùng."""
+    for index in range(len(recent) - 1, -1, -1):
+        if recent[index] == link:
+            return RECENT_PENALTY * (1.0 + (index + 1) / len(recent))
+    return 0.0
 
 
 def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float], Iterable[dict[str, Any]]], *,
@@ -370,6 +382,7 @@ def rank(scene: dict[str, Any], candidates_near: Callable[[float, float], Iterab
     Mỗi mục: `{...bài, score}`, điểm càng thấp càng hợp."""
     banned, exclude = set(banned), set(exclude)
     target = (*target_of(scene), float(scene.get("tension") or 0.0))
+    window = (recent or [])[-RECENT_SCENES:]
     ceiling = MAX_Z + (FAMILY_PENALTY if family else 0.0)
     sigma = scene_sigma(scene)
     ranked: list[tuple[float, dict[str, Any]]] = []
@@ -383,10 +396,10 @@ def rank(scene: dict[str, Any], candidates_near: Callable[[float, float], Iterab
         seen.add(link)
         if int(track.get("duration") or 0) < MIN_TRACK_SECONDS or style_fit(track, genre_styles) <= 0.0:
             continue
-        value = score(track, target, family=family, recent=(recent or [])[-RECENT_SCENES:], genre_styles=genre_styles,
-                      sigma=sigma)
+        value = score(track, target, family=family, genre_styles=genre_styles, sigma=sigma)
         value += _tiebreak(book_key, link)
-        if value <= ceiling:  # ngưỡng im lặng chỉ tính trên khoảng cách + phạt; cosine chỉ xếp hạng các bài đã qua ngưỡng
+        if value <= ceiling:  # ngưỡng im lặng chỉ tính khoảng cách + phạt (trừ "vừa dùng"); cosine, "vừa dùng" chỉ xếp hạng
+            value += recent_penalty(link, window)
             similarity = emotion_cosine(scene.get("emotions"), track.get("emotions"))
             ranked.append((value - EMOTION_WEIGHT * (similarity or 0.0), track))
     ranked.sort(key=lambda item: item[0])
