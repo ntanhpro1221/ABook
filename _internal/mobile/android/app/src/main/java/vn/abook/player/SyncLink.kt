@@ -111,6 +111,27 @@ object SyncLink {
         return Peers.Link(base(context), token(context)) to bookId
     }
 
+    /** Một file của cuốn `remote` trên máy giữ sách `link` (chưa mở kết nối); `resumeFrom` > 0 = tải tiếp từ byte ấy. */
+    fun bookFile(context: Context, link: Peers.Link, remote: String, relative: String, resumeFrom: Long = 0): HttpURLConnection {
+        Pin.install(context)
+        val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
+        connection.connectTimeout = 5000
+        connection.readTimeout = 30000
+        connection.setRequestProperty("Authorization", "Bearer ${link.token}")
+        if (resumeFrom > 0) connection.setRequestProperty("Range", "bytes=$resumeFrom-")
+        return connection
+    }
+
+    /** Nguồn một bài nhạc nền của cuốn cho [BookMusic.fetch]: null khi máy kia không có (mã khác 200). */
+    fun musicSource(context: Context, link: Peers.Link, remote: String, name: String): BookMusic.Source? {
+        val connection = bookFile(context, link, remote, name)
+        if (Pin.guard { connection.responseCode } != 200) {
+            connection.disconnect()
+            return null
+        }
+        return BookMusic.Source(connection.inputStream, connection.contentLengthLong, connection::disconnect)
+    }
+
     /** Mã thiết bị cho một địa chỉ (trình phát nghe thẳng): thiết bị ghép có địa chỉ ấy, không thì máy tính chính. */
     fun tokenFor(context: Context, uri: android.net.Uri): String = Peers.tokenFor(context, uri) ?: token(context)
 

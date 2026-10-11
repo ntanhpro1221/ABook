@@ -8,6 +8,7 @@ import type { KeyCheck, OnlineProviderInfo } from "@/listen/VoiceSettings";
 import type { Capabilities } from "@/shared/capabilities";
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { AddedBook, ImportPreview } from "@/listen/textImport";
+import type { MusicExportState } from "@/desktop/listenExport";
 import type { ImportResult } from "@/studio/musicLocal";
 import type { VieneuChoiceId, VieneuStatus } from "@/listen/vieneuModule";
 
@@ -277,12 +278,22 @@ export interface M4bExportEvent {
   done?: number;
   total?: number;
   percent?: number;
+  /** "Kèm nhạc nền": pha như máy tính (desktop/bookFileExport.ts ExportJob) - "music-fetch" tải bài thiếu (`done`/`total` bài), "music" trộn chương
+   *  `chapter`/`chapters`, "peaks" kiểm đỉnh âm, "reencode" mã hoá lại lượt `peakRound` vì `peakOver` chương vượt đỉnh; không có = mã hoá thường. */
+  phase?: "music-fetch" | "music" | "peaks" | "reencode";
+  chapter?: number;
+  chapters?: number;
+  peakRound?: number;
+  peakOver?: number;
   finished?: boolean;
   /** Tên file đã ghi, cỡ (byte), số chương có trong file / của cả cuốn (chương chưa làm xong không vào file). */
   name?: string;
   size?: number;
-  chapters?: number;
   chaptersTotal?: number;
+  /** Số đoạn không có nhạc vì bài chưa tải được. */
+  musicMissing?: number;
+  /** Chương còn vượt đỉnh sau mọi lượt hạ (vẫn xong, chỉ ghi số). */
+  overCeiling?: { chapter: number; dbtp: number }[];
   stopped?: boolean;
   error?: string;
 }
@@ -298,6 +309,10 @@ export interface AudiobookPhonePlan {
   readyChapters: number;
   /** Chỗ trống cần ở bộ nhớ máy trong lúc làm (byte); xoá khi xong. */
   bytes: number;
+  /** Đoạn phải đọc lại: chương đã có giọng nhưng phải ghép lại vì đổi (bật / tắt) nhạc nền, mà clip đoạn ấy không còn trong bộ đệm. */
+  rereads?: number;
+  /** Ô "Kèm nhạc nền" (BookMusic.exportState): cuốn có kế hoạch nhạc không, mặc định của ô. */
+  music?: MusicExportState;
 }
 
 /**
@@ -307,10 +322,17 @@ export interface AudiobookPhonePlan {
 export interface AudiobookExportEvent {
   bookId: string;
   run: string;
-  phase?: "voice" | "encode";
+  phase?: "voice" | "music" | "music-fetch" | "peaks" | "reencode" | "encode";
   chapter?: number;
   chapters?: number;
   chapterTitle?: string;
+  /** Pha "music-fetch": bài thứ `done` + 1 trong `total`. */
+  done?: number;
+  total?: number;
+  peakRound?: number;
+  peakOver?: number;
+  musicMissing?: number;
+  overCeiling?: { chapter: number; dbtp: number }[];
   percent?: number;
   secondsLeft?: number | null;
   waiting?: "listening" | null;
@@ -424,15 +446,17 @@ export interface EbookLibraryPlugin {
   /** "Xuất M4B cho app sách nói" (M4bExport.kt): cả cuốn một file `.m4b` có mục lục chương, chạy nền. Hệ thống hỏi tên và chỗ lưu
    *  (mỗi lần). `cover`: bìa tự vẽ (data URL PNG) khi sách không có bìa. Tiến độ / kết quả: sự kiện "m4bExport" mang cùng `run`.
    *  `started: false` khi không chọn chỗ lưu; sách chưa có chương nghe được thì từ chối ngay. */
-  exportM4b(options: { bookId: string; cover?: string }): Promise<{ started: boolean; run?: string; name?: string; chapters?: number }>;
+  exportM4b(options: { bookId: string; cover?: string; music?: boolean }): Promise<{ started: boolean; run?: string; name?: string; chapters?: number }>;
+  /** Ô "Kèm nhạc nền" của "Xuất M4B": cuốn có kế hoạch nhạc không, mặc định theo công tắc Nhạc nền của cuốn. */
+  m4bMusicState(options: { bookId: string }): Promise<MusicExportState>;
   /** Dừng lượt xuất M4B đang chạy của cuốn (file dở bị xoá). */
   cancelM4bExport(options: { bookId: string }): Promise<void>;
   addListener(event: "m4bExport", handler: (event: M4bExportEvent) => void): Promise<PluginListenerHandle>;
   /** "Xuất sách nói" của sách chỉ có chữ (ListenExport.kt): ước trước khi bấm - số chương, giờ nghe, máy cần bao lâu, chương đã làm sẵn từ lần trước. */
-  audiobookPlan(options: { bookId: string; voice: string }): Promise<AudiobookPhonePlan>;
+  audiobookPlan(options: { bookId: string; voice: string; music?: boolean }): Promise<AudiobookPhonePlan>;
   /** Đọc cả cuốn bằng giọng `voice` rồi ghép thành MỘT file `.m4b` có mục lục chương, chạy nền. Hệ thống hỏi tên và chỗ lưu (mỗi lần). `cover`: bìa tự vẽ (data URL PNG)
    *  khi sách không có bìa. Tiến độ / kết quả: sự kiện "audiobookExport" mang cùng `run`. `started: false` khi không chọn chỗ lưu; sách không có chữ để đọc thì từ chối ngay. */
-  exportAudiobook(options: { bookId: string; voice: string; cover?: string }): Promise<{ started: boolean; run?: string; name?: string }>;
+  exportAudiobook(options: { bookId: string; voice: string; cover?: string; music?: boolean }): Promise<{ started: boolean; run?: string; name?: string }>;
   /** Dừng lượt xuất sách nói của cuốn (file dở bị xoá, phần đã đọc xong giữ để xuất lại làm tiếp). */
   cancelAudiobookExport(options: { bookId: string }): Promise<void>;
   /** Các lượt xuất sách nói đang chạy (tin cuối của từng lượt): mở lại giao diện thì hiện lại tiến độ. */

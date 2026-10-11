@@ -1,9 +1,7 @@
 package vn.abook.player
 
-import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
-import android.media.MediaMuxer
 import vn.abook.player.readaloud.Wav
 import java.io.File
 import java.io.RandomAccessFile
@@ -61,8 +59,7 @@ object ListenAudio : M4bExport.AudioEncoder {
     override val delay: Int get() = M4bAudio.delay
 
     override fun encode(plan: Mp3Export.Plan, target: File, stopped: () -> Boolean, progress: (Int, Int, Double) -> Unit): List<Mp4Finish.Mark> {
-        val muxer = MediaMuxer(target.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-        var started = false
+        var output: M4bAudio.AacTrack? = null
         var rate = 0
         var channels = 0
         var offset = 0L // khung AAC đã ghi
@@ -70,7 +67,6 @@ object ListenAudio : M4bExport.AudioEncoder {
         try {
             progress(0, plan.chapters.size, 0.0)
             val track = ByteBuffer.allocate(BUFFER)
-            var trackIndex = -1
             plan.chapters.forEachIndexed { index, chapter ->
                 if (stopped()) throw Mp3Export.Stopped()
                 val extractor = MediaExtractor()
@@ -81,28 +77,23 @@ object ListenAudio : M4bExport.AudioEncoder {
                     val format = extractor.getTrackFormat(source)
                     val chapterRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                     val chapterChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-                    if (!started) {
+                    if (output == null) {
                         rate = chapterRate
                         channels = chapterChannels
-                        trackIndex = muxer.addTrack(format)
-                        muxer.start()
-                        started = true
+                        output = M4bAudio.AacTrack(target, format, rate)
                     } else if (chapterRate != rate || chapterChannels != channels) {
                         throw Mp3Export.Refused("Các chương làm ở hai lần khác nhau không cùng tần số - xuất lại từ đầu")
                     }
                     extractor.selectTrack(source)
                     starts += offset
-                    val info = MediaCodec.BufferInfo()
                     var frames = 0L
                     while (true) {
                         track.clear()
                         val size = extractor.readSampleData(track, 0)
                         if (size < 0) break
                         if (frames % 256 == 0L && stopped()) throw Mp3Export.Stopped()
-                        val flags = if (extractor.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC != 0) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0
                         // Mốc giờ đếm theo khung (mỗi khung AAC-LC đúng 1024 mẫu): các chương nối liền nhau, không phụ thuộc mốc giờ trong từng file chương.
-                        info.set(0, size, (offset + frames) * ListenExport.AAC_FRAME * 1_000_000L / rate, flags)
-                        muxer.writeSampleData(trackIndex, track, info)
+                        output!!.write(track, size, offset + frames)
                         frames += 1
                         extractor.advance()
                     }
@@ -113,14 +104,12 @@ object ListenAudio : M4bExport.AudioEncoder {
                 }
                 progress(index + 1, plan.chapters.size, (index + 1.0) / plan.chapters.size)
             }
-            muxer.stop()
+            (output ?: throw Mp3Export.Refused("Không có âm thanh nào để ghi")).finish()
         } catch (error: Throwable) {
-            runCatching { if (started) muxer.stop() }
-            runCatching { muxer.release() }
+            output?.abort()
             target.delete()
             throw error
         }
-        muxer.release()
         return marks(plan.chapters.map { it.fullTitle }, starts, offset, rate, delay)
     }
 
