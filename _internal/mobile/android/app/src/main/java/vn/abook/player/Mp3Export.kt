@@ -62,14 +62,19 @@ object Mp3Export {
         }
     }
 
-    class Chapter(val number: Int, val fullTitle: String, val duration: Double, val file: File)
+    /** `id`: mã chương trong sách (mốc nhạc nền theo chương - [MusicExport.Mixer]). */
+    class Chapter(val number: Int, val fullTitle: String, val duration: Double, val file: File, val id: Int = number)
 
     /**
      * Việc xuất một cuốn: tên sách, giọng kể, các chương sẽ ghi, số chương nghe được (`numbered` - số thứ tự "n/tổng" đếm trên chúng,
-     * như máy tính), tổng số chương của sách, bìa.
+     * như máy tính), tổng số chương của sách, bìa. Chỉ M4B: `music` = "Kèm nhạc nền" (bộ trộn của lượt xuất), `guard` = hằng số đo đỉnh
+     * thật sau mã hoá ([AacJoin]; null = không kiểm).
      */
     class Plan(val title: String, val narrator: String, val chapters: List<Chapter>, val numbered: Int, val chaptersTotal: Int,
-               val cover: Id3Tag.Cover?, val coverName: String)
+               val cover: Id3Tag.Cover?, val coverName: String, val music: MusicExport.Mixer? = null, val guard: MusicRender.Params? = null) {
+        fun with(music: MusicExport.Mixer?, guard: MusicRender.Params?) =
+            Plan(title, narrator, chapters, numbered, chaptersTotal, cover, coverName, music, guard)
+    }
 
     class Result(val folder: String, val files: Int, val chaptersTotal: Int, val uri: String? = null)
 
@@ -142,7 +147,7 @@ object Mp3Export {
         if (listenable.isEmpty()) throw Refused("Sách chưa có chương nào nghe được để xuất")
         val planned = listenable.mapIndexedNotNull { index, chapter ->
             val file = runCatching { Store.file(id, chapter.optString("file")) }.getOrNull()?.takeIf { it.isFile } ?: return@mapIndexedNotNull null
-            Chapter(index + 1, chapter.optString("fullTitle"), chapter.optDouble("duration", 0.0).takeIf { !it.isNaN() } ?: 0.0, file)
+            Chapter(index + 1, chapter.optString("fullTitle"), chapter.optDouble("duration", 0.0).takeIf { !it.isNaN() } ?: 0.0, file, chapter.optInt("id", index + 1))
         }
         val (cover, coverName) = coverOf(id, drawnCover)
         return Plan(

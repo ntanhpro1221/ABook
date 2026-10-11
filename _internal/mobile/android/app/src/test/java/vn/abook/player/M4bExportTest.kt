@@ -421,4 +421,17 @@ class M4bExportTest {
         assertTrue(small > (16L shl 20))
         assertTrue(small < (17L shl 20)) // 25 giây AAC mono: chưa tới 1 MB
     }
+
+    @Test
+    fun theMusicPhasesReachTheScreenWithTheDesktopNames() {
+        fun shown(name: String?, chapter: Int, round: Int, over: Int) = M4bExports.phase(JSONObject().put("done", 1), name, chapter, 9, round, over)
+        assertEquals("""{"done":1}""", shown(null, 2, 0, 0).toString())
+        val music = shown("music", 3, 0, 0)
+        assertEquals(listOf("music", 3, 9), listOf(music.getString("phase"), music.getInt("chapter"), music.getInt("chapters")))
+        val peaks = shown("peaks", 0, 2, 0)
+        assertEquals(listOf("peaks", 2), listOf(peaks.getString("phase"), peaks.getInt("peakRound")))
+        assertFalse(peaks.has("peakOver"))
+        val again = shown("reencode", 0, 1, 4)
+        assertEquals(listOf("reencode", 1, 4), listOf(again.getString("phase"), again.getInt("peakRound"), again.getInt("peakOver")))
+    }
 }

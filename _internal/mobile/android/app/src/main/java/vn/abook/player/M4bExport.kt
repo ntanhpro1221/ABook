@@ -32,9 +32,14 @@ object M4bExport {
 
     /**
      * Chỗ trống cần cho file trung gian (AAC mono 64 kb/s theo thời lượng các chương, dư 25% vì thời lượng trong sách chỉ là ước lượng,
-     * cộng ít byte cho phần đầu cuối). Sách stereo cần nhiều hơn, nhưng hết chỗ thật sự vẫn được bắt ở lúc ghi.
+     * cộng ít byte cho phần đầu cuối). Sách stereo cần nhiều hơn, nhưng hết chỗ thật sự vẫn được bắt ở lúc ghi. Kèm nhạc nền
+     * (`plan.music`): khung AAC nằm ở kho tạm trước khi ghi file ([AacJoin]) nên gấp đôi, cộng `musicBytes` cho bộ đệm PCM bài
+     * ([BookMusic.pcmBytes]).
      */
-    fun estimatedBytes(plan: Mp3Export.Plan): Long = (plan.chapters.sumOf { it.duration } * 8000 * 1.25).toLong() + (16L shl 20)
+    fun estimatedBytes(plan: Mp3Export.Plan, musicBytes: Long = 0): Long {
+        val audio = (plan.chapters.sumOf { it.duration } * 8000 * 1.25).toLong()
+        return audio * (if (plan.music != null) 2 else 1) + musicBytes + (16L shl 20)
+    }
 
     private class Counting(out: OutputStream) : FilterOutputStream(out) {
         var written = 0L

@@ -32,6 +32,7 @@ object ListenExports {
     private const val KEY_VOICE = "voice"
     private const val KEY_FILE = "file"
     private const val KEY_COVER = "cover"
+    private const val KEY_MUSIC = "music"
     private const val WORK_FOLDER = "export_work"
 
     /** Giao diện đang mở thì nghe tin của việc nền ("audiobookExport" của EbookLibrary): tiến độ, xong, dừng, lỗi. */
@@ -64,9 +65,12 @@ object ListenExports {
         }
     }
 
-    /** Bắt đầu xuất cuốn `bookId` bằng giọng `voice` vào `file` (thay lượt đang chạy của cuốn ấy). Trả mã lượt - tin của lượt mang mã này. */
-    fun start(context: Context, bookId: String, voice: String, file: Uri, drawnCover: File?): String {
-        val data = Data.Builder().putString(KEY_BOOK, bookId).putString(KEY_VOICE, voice).putString(KEY_FILE, file.toString())
+    /**
+     * Bắt đầu xuất cuốn `bookId` bằng giọng `voice` vào `file` (thay lượt đang chạy của cuốn ấy); `music` = ô "Kèm nhạc nền". Trả mã lượt - tin của lượt mang
+     * mã này.
+     */
+    fun start(context: Context, bookId: String, voice: String, file: Uri, drawnCover: File?, music: Boolean = false): String {
+        val data = Data.Builder().putString(KEY_BOOK, bookId).putString(KEY_VOICE, voice).putString(KEY_FILE, file.toString()).putBoolean(KEY_MUSIC, music)
         drawnCover?.let { data.putString(KEY_COVER, it.absolutePath) }
         val request = OneTimeWorkRequestBuilder<ListenExportWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
@@ -85,10 +89,11 @@ object ListenExports {
 
     internal fun finished(context: Context, bookId: String, title: String, text: String) = Mp3Exports.finished(context, bookId, title, text, TAG)
 
-    internal class Inputs(val bookId: String?, val voice: String?, val file: Uri?, val cover: File?)
+    internal class Inputs(val bookId: String?, val voice: String?, val file: Uri?, val cover: File?, val music: Boolean = false)
 
     internal fun inputs(data: Data) = Inputs(
         data.getString(KEY_BOOK), data.getString(KEY_VOICE), data.getString(KEY_FILE)?.let(Uri::parse), data.getString(KEY_COVER)?.let(::File),
+        data.getBoolean(KEY_MUSIC, false),
     )
 
     /** Mở file vừa xuất bằng app nghe sách nói của máy; false khi không có app nào mở được (hay quyền đã hết). */
@@ -121,6 +126,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
         fun event() = JSONObject().put("bookId", bookId).put("run", run)
         var done = 0
         var retrying = false
+        var music: ExportMusic? = null
         try {
             val book = Store.manifest(bookId) ?: throw Mp3Export.Refused("Không tìm thấy sách này trên điện thoại")
             title = book.optString("title").ifEmpty { bookId }
@@ -130,7 +136,14 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             val work = ListenExport.workFolder(ListenExports.workRoot(context), bookId).apply { mkdirs() }
             // Không vào được dịch vụ nền (Android 12+ khi app đã ở nền lúc việc bắt đầu): vẫn chạy, chỉ không có thông báo đứng.
             runCatching { setForegroundAsync(ListenExports.foreground(context, id, bookId, title, 0, chapters.size, 0.0)).get() }
-            val need = ListenExport.plan(chapters, reading, work, null).bytes
+            music = ExportMusic.open(context, bookId, run, chapters.map { it.id }, input.music, { isStopped }) { index, count ->
+                ListenExports.emit(event().put("phase", "music-fetch").put("done", index).put("total", count))
+            }
+            val mixer = music.mixer
+            val guard = music.guard
+            val runMusic = if (mixer != null && guard != null) ListenExport.Music(mixer, guard) { audio -> M4bAudio.truePeak(audio, guard) { isStopped } } else null
+            val extra = music.music?.let { ExportMusic.listenBytes(Store.bookDir(bookId), it, chapters) } ?: 0L
+            val need = ListenExport.plan(chapters, reading, work, null, music = { mixer?.chapter(it) }, extra = extra).bytes
             if (work.usableSpace < need) {
                 throw Mp3Export.Refused("Điện thoại không đủ chỗ trống để làm sách nói (cần khoảng ${need shr 20} MB) - dọn bớt rồi xuất lại")
             }
@@ -153,6 +166,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
                 decoder = Clips, outputs = ListenAudio.outputs, progress = ::show, stopped = { isStopped },
                 live = { ReadAloud.liveJobs() > 0 },
                 timed = { chars, seconds -> runCatching { ReadAloud.speeds().record(voice, chars, seconds) } },
+                music = runMusic,
             )
             val stamps = runner.build()
 
@@ -164,9 +178,21 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
                 M4bExport.run(exportPlan, joined, stream, ListenAudio, progress = { joinedChapters, total, _ -> show(ListenExport.encodeProgress(chapters, joinedChapters, total)) }, stopped = { isStopped })
             }
             work.deleteRecursively()
-            ListenExports.finished(context, bookId, "Đã xuất sách nói", "$title · ${result.chapters} chương, ${megabytes(result.size)} MB.")
-            ListenExports.emit(event().put("finished", true).put("name", result.name).put("size", result.size).put("chapters", result.chapters)
-                .put("chaptersTotal", result.chaptersTotal).put("uri", file.toString()))
+            val missing = mixer?.missing(chapters.map { it.id }) ?: 0
+            val lost = if (missing > 0) " $missing đoạn thiếu nhạc vì chưa tải được bài." else ""
+            ListenExports.finished(context, bookId, "Đã xuất sách nói", "$title · ${result.chapters} chương, ${megabytes(result.size)} MB.$lost")
+            val finished = event().put("finished", true).put("name", result.name).put("size", result.size).put("chapters", result.chapters)
+                .put("chaptersTotal", result.chaptersTotal).put("uri", file.toString())
+            if (missing > 0) finished.put("musicMissing", missing)
+            // Còn vượt trần sau mọi lượt hạ: vẫn xong, ghi số (như máy tính ghi nhật ký).
+            val over = chapters.indices.mapNotNull { index ->
+                stamps[index].peakDbtp?.takeIf { guard != null && it > guard.ceilingDbtp }?.let { index + 1 to it }
+            }
+            if (over.isNotEmpty()) {
+                android.util.Log.w("ListenExport", "sau ${ListenExport.Run.PEAK_RETRIES} lượt mã hoá lại vẫn vượt trần: $over")
+                finished.put("overCeiling", org.json.JSONArray(over.map { (chapter, dbtp) -> JSONObject().put("chapter", chapter).put("dbtp", dbtp) }))
+            }
+            ListenExports.emit(finished)
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
             // Hệ thống dừng việc (không phải người dùng): WorkManager chạy lại, file đích, quyền ghi và phần đã làm đều còn.
@@ -185,6 +211,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             ListenExports.emit(event().put("error", message))
             return Result.failure()
         } finally {
+            music?.close()
             if (!retrying) {
                 input.cover?.delete()
                 M4bExports.release(context, file)

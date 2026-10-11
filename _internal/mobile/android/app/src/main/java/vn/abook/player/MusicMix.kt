@@ -14,6 +14,12 @@ class MusicMix(json: JSONObject) {
     val stepRampMs = millis(json, "stepRampSeconds")
     /** X của lặp mờ chéo: tới E - X thì phần tử mới của chính bài vào từ A (MIX_QA 3.2). */
     val loopCrossfadeSeconds = json.getDouble("loopCrossfadeSeconds")
+    // Số giây đúng như trong file - dòng thời gian của bản xuất ([MusicTimeline]) tính bằng giây như máy tính, không qua ms làm tròn.
+    val fadeSeconds = json.getDouble("fadeSeconds")
+    val siblingFadeSeconds = json.getDouble("siblingFadeSeconds")
+    val stepRampSeconds = json.getDouble("stepRampSeconds")
+    /** Mốc cuối kết muộn nhất ở (độ dài chương - số này) để nhạc mờ xong trước khi giọng hết (music_plan.clamp_to_chapter). */
+    val chapterEndFadeSeconds = json.getDouble("chapterEndFadeSeconds")
 
     companion object {
         const val FILE = "music_mix.json"

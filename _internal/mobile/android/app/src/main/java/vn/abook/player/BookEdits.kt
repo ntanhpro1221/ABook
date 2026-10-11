@@ -50,7 +50,7 @@ object BookEdits {
     private const val READING_SPOKEN_MAX = 200 // chữ đọc
     private const val LEVEL_MIN = -40.0
     private const val LEVEL_MAX = -6.0
-    private const val DEFAULT_LEVEL_DB = -20.0 // music_plan.DEFAULT_LEVEL_DB
+    internal const val DEFAULT_LEVEL_DB = -20.0 // music_plan.DEFAULT_LEVEL_DB
     private val TOP_KEYS = setOf("format", "version", "title", "author", "cover", "characters", "chapters", "skip", "readings", "music", "wishes")
     const val TOO_BIG = "Quá nhiều thay đổi đang chờ trong cuốn này - hãy lưu, áp bớt vào dự án rồi làm tiếp."
     private val COVER_KEYS = setOf("color", "width", "height", "version")
@@ -750,7 +750,7 @@ object BookEdits {
         return out
     }
 
-    private fun trackNumber(info: Any?, key: String): Double? {
+    internal fun trackNumber(info: Any?, key: String): Double? {
         val value = (info as? JSONObject)?.opt(key)
         return if (isNumber(value) && value !is Boolean) (value as Number).toDouble() else null
     }

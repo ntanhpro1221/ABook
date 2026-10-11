@@ -7,11 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
-### Nhạc nền (máy tính)
+### Nhạc nền (máy tính và điện thoại)
 
 - Xuất sách nói MP3 / M4B có ô "Kèm nhạc nền": nhạc của cuốn được trộn thẳng vào file, vào ra đúng chỗ như khi nghe trong app và
   không bao giờ làm vỡ tiếng; ô tích sẵn khi cuốn đang bật nhạc nền. Sách nói M4B, có nhạc hay không, cũng không còn chỗ chát tiếng
   do nén.
+- Trên điện thoại: "Xuất M4B cho app sách nói" và "Xuất sách nói" của sách Nghe ngay cũng có ô "Kèm nhạc nền". Bài nhạc chưa có trong
+  máy được tải trước khi trộn; bài không tải được thì báo "N đoạn thiếu nhạc vì chưa tải được bài" khi xong. Đổi nhạc nền rồi xuất lại
+  sách Nghe ngay có thể phải đọc lại vài đoạn - hộp xuất báo trước số đoạn. Cuốn dài (trên 20 chương) kèm nhạc thì nên cắm sạc.
 
 ### Làm sách trong Studio (máy tính)
 

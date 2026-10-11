@@ -48,6 +48,93 @@ object BookMusic {
         return Track(name, size, sha1)
     }
 
+    // ---- "Kèm nhạc nền" khi xuất sách nói (music_export.packaged_music / packaged_state của máy tính) -----------------------------
+
+    /**
+     * Mục `music` của cuốn `id` cho bản xuất "Kèm nhạc nền": lớp sửa của người nghe (mức, đoạn im lặng, bài ghim) phủ lên gói, riêng
+     * công tắc tắt bị bỏ qua - người dùng đã tích ô (`_book_music(include_disabled=True)`). Sách không có nhạc -> null.
+     */
+    fun exportMusic(id: String): JSONObject? {
+        val raw = Store.rawManifest(id)?.opt("music")?.takeIf { it is JSONObject } ?: return null
+        val edits = BookEdits.load(Store.bookDir(id))
+        val shown = if (edits.optJSONObject("music")?.has("enabled") == true) {
+            JSONObject(edits.toString()).also { it.getJSONObject("music").remove("enabled") }
+        } else {
+            edits
+        }
+        return BookEdits.applyMusic(raw, shown) as? JSONObject
+    }
+
+    /**
+     * Ô "Kèm nhạc nền" của hộp xuất (`packaged_state`): `available` = có mốc nhạc ở ít nhất một chương (danh sách phát của sách chỉ có
+     * chữ không tính), `enabled` = mặc định của ô theo công tắc Nhạc nền của cuốn.
+     */
+    fun exportState(id: String): Pair<Boolean, Boolean> {
+        val chapters = exportMusic(id)?.optJSONObject("chapters")
+        val available = chapters != null && chapters.keys().asSequence().any { (chapters.optJSONArray(it)?.length() ?: 0) > 0 }
+        val enabled = available && BookEdits.load(Store.bookDir(id)).optJSONObject("music")?.opt("enabled") != false
+        return available to enabled
+    }
+
+    /** Các bài mà mốc của `music` dùng nhưng chưa có (hay hỏng) trong thư mục sách `dir` - cần tải trước khi xuất. */
+    fun missing(dir: File, music: JSONObject?): List<Track> = tracks(music).filter { track ->
+        val file = runCatching { Store.contained(dir, track.name) }.getOrNull()
+        file != null && !(file.isFile && problem(file, track) == null)
+    }
+
+    /**
+     * Nhạc từng chương cho bộ trộn ([MusicExport.Mixer]) - `packaged_music`: mốc của chương (mốc thiếu `gainDb` - sách đóng gói bởi bản
+     * cũ - lấy mức chung như trình phát), file bài trong thư mục sách `dir`. Mốc mà bài không có hay hỏng ([problem]) bị bỏ và đếm vào
+     * `dropped` ("N đoạn thiếu nhạc vì chưa tải được bài"). Chương không có mốc nào: không có trong kết quả.
+     */
+    fun chapterMusic(dir: File, music: JSONObject?, chapterIds: Iterable<Int>): Map<Int, MusicExport.ChapterMusic> {
+        if (music == null) return emptyMap()
+        val level = BookEdits.trackNumber(music, "levelDb") ?: BookEdits.DEFAULT_LEVEL_DB
+        val tracks = music.optJSONObject("tracks") ?: JSONObject()
+        val described = tracks(music).associateBy { it.name }
+        val usable = HashMap<String, File?>()
+        val out = LinkedHashMap<Int, MusicExport.ChapterMusic>()
+        for (chapterId in chapterIds) {
+            val cues = MusicCues.of(music, chapterId).map { cue ->
+                if (cue.gainDb != null) cue
+                else {
+                    val info = tracks.optJSONObject(cue.track)
+                    cue.copy(gainDb = MusicGain.cueGainDb(level, BookEdits.trackNumber(info, "lufs"), BookEdits.trackNumber(info, "speechBand"),
+                        BookEdits.trackNumber(info, "s95")))
+                }
+            }
+            if (cues.isEmpty()) continue
+            val files = LinkedHashMap<String, File>()
+            for (name in cues.map { it.track }.distinct()) {
+                val file = usable.getOrPut(name) {
+                    val track = described[name] ?: return@getOrPut null
+                    runCatching { Store.contained(dir, name) }.getOrNull()?.takeIf { it.isFile && problem(it, track) == null }
+                }
+                if (file != null) files[name] = file
+            }
+            val kept = cues.filter { it.track in files }
+            out[chapterId] = MusicExport.ChapterMusic(kept, files, cues.size - kept.size)
+        }
+        return out
+    }
+
+    /**
+     * Chỗ trống thêm cho bộ đệm PCM bài của một lượt xuất ([TrackPcmCache]): cỡ PCM ở `rate`/`channels` của bài dài nhất mà mốc dùng, x3
+     * (K2_SPEC 2.2). Độ dài theo số đo trong gói (`seconds`, `duration`); không có thì ước theo cỡ file, 12 000 byte một giây (MP3 96 kb/s -
+     * bài nén nặng hơn thì ước dư).
+     */
+    fun pcmBytes(dir: File, music: JSONObject?, rate: Int, channels: Int): Long {
+        val info = music?.optJSONObject("tracks") ?: return 0
+        val longest = tracks(music).maxOfOrNull { track ->
+            val known = info.optJSONObject(track.name)
+            BookEdits.trackNumber(known, "seconds") ?: BookEdits.trackNumber(known, "duration") ?: run {
+                val length = runCatching { Store.contained(dir, track.name).length() }.getOrDefault(0L)
+                (if (length > 0) length else track.size) / 12000.0
+            }
+        } ?: return 0
+        return TrackPcmCache.bytesFor(longest, rate, channels) * 3
+    }
+
     /** null = file đúng bài này; không thì lý do. `announced`: cỡ máy kia báo trước (-1 = không báo). */
     fun problem(file: File, track: Track, announced: Long = -1): String? {
         val length = file.length()

@@ -1,0 +1,282 @@
+[
+ {
+  "name": "same",
+  "seconds": 10,
+  "left": [
+   {
+    "freq": 1000,
+    "amp": 0.3
+   }
+  ],
+  "right": [
+   {
+    "freq": 1000,
+    "amp": 0.3
+   }
+  ],
+  "rate": 24000,
+  "stereoLufs": -10.4,
+  "foldedLufs": -10.4,
+  "offsetDb": 0.0
+ },
+ {
+  "name": "wide",
+  "seconds": 10,
+  "left": [
+   {
+    "freq": 1000,
+    "amp": 0.3
+   }
+  ],
+  "right": [
+   {
+    "freq": 1500,
+    "amp": 0.3
+   }
+  ],
+  "rate": 24000,
+  "stereoLufs": -9.7,
+  "foldedLufs": -12.7,
+  "offsetDb": 3.0
+ },
+ {
+  "name": "mixed",
+  "seconds": 12,
+  "left": [
+   {
+    "freq": 100,
+    "amp": 0.2
+   },
+   {
+    "freq": 440,
+    "amp": 0.15
+   },
+   {
+    "freq": 3000,
+    "amp": 0.1
+   },
+   {
+    "freq": 8000,
+    "amp": 0.05
+   }
+  ],
+  "right": [
+   {
+    "freq": 100,
+    "amp": 0.2
+   },
+   {
+    "freq": 440,
+    "amp": 0.15,
+    "phase": 2.0
+   },
+   {
+    "freq": 5000,
+    "amp": 0.1
+   }
+  ],
+  "rate": 24000,
+  "stereoLufs": -11.6,
+  "foldedLufs": -13.5,
+  "offsetDb": 1.9
+ },
+ {
+  "name": "gated",
+  "seconds": 14,
+  "left": [
+   {
+    "freq": 700,
+    "amp": 0.3,
+    "to": 3
+   },
+   {
+    "freq": 700,
+    "amp": 0.003,
+    "from": 3,
+    "to": 7
+   },
+   {
+    "freq": 2500,
+    "amp": 0.2,
+    "from": 7
+   }
+  ],
+  "right": [
+   {
+    "freq": 900,
+    "amp": 0.25,
+    "to": 3
+   },
+   {
+    "freq": 2500,
+    "amp": 0.2,
+    "from": 7,
+    "phase": 1.0
+   }
+  ],
+  "rate": 24000,
+  "stereoLufs": -11.3,
+  "foldedLufs": -12.9,
+  "offsetDb": 1.6
+ },
+ {
+  "name": "flip",
+  "seconds": 10,
+  "left": [
+   {
+    "freq": 1000,
+    "amp": 0.3
+   }
+  ],
+  "right": [
+   {
+    "freq": 1000,
+    "amp": -0.27
+   }
+  ],
+  "rate": 24000,
+  "stereoLufs": -10.9,
+  "foldedLufs": -36.4,
+  "offsetDb": 4.0
+ },
+ {
+  "name": "same",
+  "seconds": 10,
+  "left": [
+   {
+    "freq": 1000,
+    "amp": 0.3
+   }
+  ],
+  "right": [
+   {
+    "freq": 1000,
+    "amp": 0.3
+   }
+  ],
+  "rate": 48000,
+  "stereoLufs": -10.5,
+  "foldedLufs": -10.5,
+  "offsetDb": 0.0
+ },
+ {
+  "name": "wide",
+  "seconds": 10,
+  "left": [
+   {
+    "freq": 1000,
+    "amp": 0.3
+   }
+  ],
+  "right": [
+   {
+    "freq": 1500,
+    "amp": 0.3
+   }
+  ],
+  "rate": 48000,
+  "stereoLufs": -9.7,
+  "foldedLufs": -12.7,
+  "offsetDb": 3.0
+ },
+ {
+  "name": "mixed",
+  "seconds": 12,
+  "left": [
+   {
+    "freq": 100,
+    "amp": 0.2
+   },
+   {
+    "freq": 440,
+    "amp": 0.15
+   },
+   {
+    "freq": 3000,
+    "amp": 0.1
+   },
+   {
+    "freq": 8000,
+    "amp": 0.05
+   }
+  ],
+  "right": [
+   {
+    "freq": 100,
+    "amp": 0.2
+   },
+   {
+    "freq": 440,
+    "amp": 0.15,
+    "phase": 2.0
+   },
+   {
+    "freq": 5000,
+    "amp": 0.1
+   }
+  ],
+  "rate": 48000,
+  "stereoLufs": -11.6,
+  "foldedLufs": -13.6,
+  "offsetDb": 2.0
+ },
+ {
+  "name": "gated",
+  "seconds": 14,
+  "left": [
+   {
+    "freq": 700,
+    "amp": 0.3,
+    "to": 3
+   },
+   {
+    "freq": 700,
+    "amp": 0.003,
+    "from": 3,
+    "to": 7
+   },
+   {
+    "freq": 2500,
+    "amp": 0.2,
+    "from": 7
+   }
+  ],
+  "right": [
+   {
+    "freq": 900,
+    "amp": 0.25,
+    "to": 3
+   },
+   {
+    "freq": 2500,
+    "amp": 0.2,
+    "from": 7,
+    "phase": 1.0
+   }
+  ],
+  "rate": 48000,
+  "stereoLufs": -11.4,
+  "foldedLufs": -12.9,
+  "offsetDb": 1.5
+ },
+ {
+  "name": "flip",
+  "seconds": 10,
+  "left": [
+   {
+    "freq": 1000,
+    "amp": 0.3
+   }
+  ],
+  "right": [
+   {
+    "freq": 1000,
+    "amp": -0.27
+   }
+  ],
+  "rate": 48000,
+  "stereoLufs": -10.9,
+  "foldedLufs": -36.5,
+  "offsetDb": 4.0
+ }
+]

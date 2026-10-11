@@ -25,7 +25,7 @@ vi.mock("./plugins", () => ({ EbookLibrary: library, EbookPlayer: {}, ReadAloud:
 vi.mock("sonner", () => ({ toast: toasts }));
 vi.mock("@capacitor/core", () => ({ Capacitor: { convertFileSrc: (path: string) => path } }));
 
-import { AudiobookPhoneForm, finishedView, progressView, spaceText, watchAudiobookExports } from "./ExportAudiobook";
+import { AudiobookPhoneForm, chargerHint, finishedView, progressView, rereadText, spaceText, watchAudiobookExports } from "./ExportAudiobook";
 
 beforeAll(() => {
   const store = new Map<string, string>();
@@ -108,6 +108,49 @@ describe("hộp xuất sách nói trên điện thoại", () => {
     expect(text(renderToString(<AudiobookPhoneForm voice={undefined} plan={undefined} planError="" />))).toContain("Máy chưa có giọng đọc nào");
     expect(text(renderToString(<AudiobookPhoneForm voice={local} plan={undefined} planError="" />))).toContain("Đang tính độ dài…");
     expect(text(renderToString(<AudiobookPhoneForm voice={local} plan={undefined} planError="Sách chưa tải về điện thoại" />))).toContain("Sách chưa tải về điện thoại");
+  });
+});
+
+describe("kèm nhạc nền", () => {
+  const text = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+  const onMusic = () => undefined;
+
+  it("ô chỉ hiện khi cuốn có kế hoạch nhạc, cùng chữ với máy tính, tích theo lựa chọn", () => {
+    const shown = renderToString(<AudiobookPhoneForm voice={local} plan={plan({ music: { available: true, enabled: true } })} planError="" music onMusic={onMusic} />);
+    expect(text(shown)).toContain("Kèm nhạc nền");
+    expect(text(shown)).toContain("Nhạc được trộn thẳng vào file, không tắt riêng được khi nghe.");
+    expect(shown).toMatch(/<input type="checkbox"[^>]*checked=""/);
+    const off = renderToString(<AudiobookPhoneForm voice={local} plan={plan({ music: { available: true, enabled: true } })} planError="" music={false} onMusic={onMusic} />);
+    expect(off).not.toMatch(/checked=""/);
+    expect(text(renderToString(<AudiobookPhoneForm voice={local} plan={plan({ music: { available: false, enabled: false } })} planError="" onMusic={onMusic} />))).not.toContain("Kèm nhạc nền");
+    expect(text(renderToString(<AudiobookPhoneForm voice={local} plan={plan()} planError="" onMusic={onMusic} />))).not.toContain("Kèm nhạc nền");
+  });
+
+  it("đổi nhạc phải đọc lại đoạn đã bị dọn: báo trước số đoạn", () => {
+    expect(rereadText({ rereads: 12 })).toBe("12 đoạn phải đọc lại vì đổi nhạc nền (bản đọc cũ đã được dọn khỏi máy).");
+    expect(rereadText({ rereads: 0 })).toBe("");
+    const html = text(renderToString(<AudiobookPhoneForm voice={local} plan={plan({ rereads: 7, music: { available: true, enabled: true } })} planError="" music onMusic={onMusic} />));
+    expect(html).toContain("7 đoạn phải đọc lại");
+  });
+
+  it("lượt kèm nhạc trên 20 chương: gợi ý cắm sạc, không chặn", () => {
+    expect(chargerHint(true, 21)).toContain("cắm sạc");
+    expect(chargerHint(true, 20)).toBe("");
+    expect(chargerHint(false, 99)).toBe("");
+    expect(text(renderToString(<AudiobookPhoneForm voice={local} plan={plan({ chapters: 30, music: { available: true, enabled: true } })} planError="" music onMusic={onMusic} />))).toContain("cắm sạc");
+  });
+
+  it("pha trộn nhạc, tải bài, kiểm đỉnh, mã hoá lại: chữ của máy tính", () => {
+    expect(progressView({ phase: "music", chapter: 3, chapters: 12, percent: 40 })).toMatchObject({ description: "Đang trộn nhạc chương 3/12" });
+    expect(progressView({ phase: "music-fetch", done: 0, total: 3 })).toMatchObject({ description: "Đang tải nhạc nền 1/3 bài" });
+    expect(progressView({ phase: "peaks", chapter: 3, chapters: 12, peakRound: 0 })).toMatchObject({ description: "Đang kiểm đỉnh âm…" });
+    expect(progressView({ phase: "reencode", chapter: 3, chapters: 12, peakRound: 1, peakOver: 1 })).toMatchObject({ description: "Mã hoá lại vì 1 chương vượt đỉnh (lượt 1)" });
+  });
+
+  it("xong mà có đoạn thiếu nhạc: nói số đoạn", () => {
+    expect(finishedView({ name: "Truyện.m4b", size: 3 * 1048576, chapters: 6, chaptersTotal: 6, musicMissing: 4 })).toMatchObject({
+      description: "Truyện.m4b · 3 MB · 4 đoạn thiếu nhạc vì chưa tải được bài",
+    });
   });
 });
 

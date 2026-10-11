@@ -26,7 +26,7 @@ import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import { androidSource } from "./androidSource";
 import { DevicesScreen } from "./DevicesScreen";
 import { AudiobookPhoneDialogHost, ExportAudiobookMenuItem, watchAudiobookExports } from "./ExportAudiobook";
-import { ExportM4bMenuItem, watchM4bExports } from "./ExportM4b";
+import { ExportM4bMenuItem, M4bMusicDialogHost, watchM4bExports } from "./ExportM4b";
 import { ExportMp3MenuItem, watchMp3Exports } from "./ExportMp3";
 import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
@@ -281,6 +281,7 @@ export function AndroidApp() {
               <ImportWatcher />
               <RemoveFromPhoneHost />
               <AudiobookPhoneDialogHost />
+              <M4bMusicDialogHost />
               <MobileShell>
                 <Routes>
                   <Route path="/" element={<LibraryPage />} />
