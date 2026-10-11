@@ -1,0 +1,359 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0003_fa1fe2",
+    "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5",
+    "speaker": "HEIDI"
+   },
+   "status": 200,
+   "response": {
+    "lines": 1,
+    "speaker": "HEIDI",
+    "new": false,
+    "alias": false,
+    "requestedAt": 1791710452.2051666
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0003_fa1fe2",
+    "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5",
+    "speaker": "LUCIEN",
+    "seen": {
+     "c1_s0003_fa1fe2": ""
+    }
+   },
+   "status": 200,
+   "response": {
+    "lines": 1,
+    "speaker": "LUCIEN",
+    "new": false,
+    "alias": false,
+    "requestedAt": 1791710452.2442744,
+    "elsewhere": {
+     "c1_s0003_fa1fe2": "HEIDI"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0003_fa1fe2",
+    "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5",
+    "speaker": "HEIDI",
+    "seen": {
+     "c1_s0003_fa1fe2": "LUCIEN"
+    }
+   },
+   "status": 200,
+   "response": {
+    "lines": 1,
+    "speaker": "HEIDI",
+    "new": false,
+    "alias": false,
+    "requestedAt": 1791710452.2725344
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "lines": [
+     {
+      "stableId": "c1_s0003_fa1fe2",
+      "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+     },
+     {
+      "stableId": "c1_s0006_34534a",
+      "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0"
+     }
+    ],
+    "speaker": "LUCIEN",
+    "seen": {
+     "c1_s0003_fa1fe2": "LUCIEN",
+     "c1_s0006_34534a": ""
+    }
+   },
+   "status": 200,
+   "response": {
+    "lines": 2,
+    "speaker": "LUCIEN",
+    "new": false,
+    "alias": false,
+    "requestedAt": 1791710452.3031237,
+    "elsewhere": {
+     "c1_s0003_fa1fe2": "HEIDI"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/line",
+   "body": {
+    "stableId": "c1_s0006_34534a",
+    "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0",
+    "emotion": "sad"
+   },
+   "status": 200,
+   "response": {
+    "stableId": "c1_s0006_34534a",
+    "kind": "",
+    "emotion": "sad",
+    "intensity": null,
+    "spoken": null
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/line",
+   "body": {
+    "stableId": "c1_s0006_34534a",
+    "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0",
+    "emotion": "angry",
+    "seen": null
+   },
+   "status": 200,
+   "response": {
+    "stableId": "c1_s0006_34534a",
+    "kind": "",
+    "emotion": "angry",
+    "intensity": null,
+    "spoken": null,
+    "elsewhere": {
+     "delivery": {
+      "kind": "",
+      "emotion": "sad",
+      "intensity": null,
+      "spoken": null
+     }
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/line",
+   "body": {
+    "stableId": "c1_s0006_34534a",
+    "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0",
+    "spoken": "Chào.",
+    "seen": {
+     "kind": "",
+     "emotion": "angry",
+     "intensity": null
+    }
+   },
+   "status": 200,
+   "response": {
+    "stableId": "c1_s0006_34534a",
+    "kind": "",
+    "emotion": "",
+    "intensity": null,
+    "spoken": "Chào."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/line",
+   "body": {
+    "stableId": "c1_s0006_34534a",
+    "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0",
+    "intensity": 2,
+    "seen": {
+     "kind": "",
+     "emotion": "angry",
+     "intensity": null
+    }
+   },
+   "status": 200,
+   "response": {
+    "stableId": "c1_s0006_34534a",
+    "kind": "",
+    "emotion": "",
+    "intensity": 2,
+    "spoken": null,
+    "elsewhere": {
+     "delivery": {
+      "kind": "",
+      "emotion": "angry",
+      "intensity": null,
+      "spoken": "Chào."
+     }
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/review",
+   "body": {
+    "verdict": "redo",
+    "stableId": "c1_s0002_c58b67",
+    "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c",
+    "chapterId": 1
+   },
+   "status": 200,
+   "response": {
+    "ok": true
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/review",
+   "body": {
+    "verdict": "redo",
+    "stableId": "c1_s0002_c58b67",
+    "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c",
+    "chapterId": 1,
+    "seen": {
+     "c1_s0002_c58b67": ""
+    }
+   },
+   "status": 200,
+   "response": {
+    "ok": true,
+    "elsewhere": {
+     "c1_s0002_c58b67": "redo"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/review",
+   "body": {
+    "verdict": null,
+    "stableId": "c1_s0002_c58b67",
+    "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c",
+    "chapterId": 1,
+    "seen": {
+     "c1_s0002_c58b67": "redo"
+    }
+   },
+   "status": 200,
+   "response": {
+    "ok": true
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/review",
+   "body": {
+    "verdict": "redo",
+    "lines": [
+     {
+      "stableId": "c1_s0002_c58b67",
+      "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c"
+     },
+     {
+      "stableId": "c1_s0003_fa1fe2",
+      "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+     }
+    ],
+    "chapterId": 1,
+    "seen": {
+     "c1_s0002_c58b67": "redo",
+     "c1_s0003_fa1fe2": ""
+    }
+   },
+   "status": 200,
+   "response": {
+    "ok": true,
+    "lines": 2,
+    "requestedAt": 1791710452.5310493,
+    "elsewhere": {
+     "c1_s0002_c58b67": ""
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI",
+    "gender": "male"
+   },
+   "status": 200,
+   "response": {
+    "character": "HEIDI",
+    "preset": "",
+    "gender": "male",
+    "avoid": "",
+    "requestedAt": 1791710452.5613666
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI",
+    "gender": "female",
+    "seen": 0
+   },
+   "status": 200,
+   "response": {
+    "character": "HEIDI",
+    "preset": "",
+    "gender": "female",
+    "avoid": "",
+    "requestedAt": 1791710452.586368,
+    "elsewhere": {
+     "voice": "",
+     "gender": "male"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI",
+    "gender": "male",
+    "seen": "$requestedAt#14"
+   },
+   "status": 200,
+   "response": {
+    "character": "HEIDI",
+    "preset": "",
+    "gender": "male",
+    "avoid": "",
+    "requestedAt": 1791710452.6139562
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "LUCIEN",
+    "gender": "female",
+    "seen": 0
+   },
+   "status": 200,
+   "response": {
+    "character": "LUCIEN",
+    "preset": "",
+    "gender": "female",
+    "avoid": "",
+    "requestedAt": 1791710452.6507516
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0,
+    "wishes": 5
+   }
+  }
+ ]
+}

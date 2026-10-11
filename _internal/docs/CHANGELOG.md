@@ -22,10 +22,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Liên kết máy và Nghe sách (máy tính và điện thoại)
 
-- Hai máy cùng sửa một chỗ (người nói, cách đọc tên, phán quyết Nghe lại) thì máy hỏi "Lấy của máy kia" hay "Giữ của tôi" thay vì thay im lặng; sửa gửi từ máy khác cho cuốn đã đổi ở đây chờ bạn chọn. Nghe tiếp một cuốn mà máy kia đã nghe xa hơn thì mở ở chỗ mới hơn (có "Quay lại").
+- Hai máy cùng sửa một chỗ (người nói, giọng nhân vật, cách đọc tên hay từng câu, phán quyết Nghe lại, “Thu lại”; cả trên điện thoại) thì máy hỏi "Lấy của máy kia" hay "Giữ của tôi" thay vì thay im lặng; sửa gửi từ máy khác cho cuốn đã đổi ở đây chờ bạn chọn. Nghe tiếp một cuốn mà máy kia đã nghe xa hơn thì mở ở chỗ mới hơn (có "Quay lại").
 - Thôi ghép ở một máy thì máy kia cũng thôi liệt kê máy này; ghép lại từ cùng máy không thêm dòng trùng. Lỗi ghép nói rõ hơn: ABook bên kia chưa mở hay chưa bật chia sẻ, hay địa chỉ không phải của ABook.
 - Sách của máy tính khác: chương đã nghe vẫn đọc theo được khi máy kia tắt; dự án máy kia chưa làm không còn hiện thành sách, cuốn đang làm ghi "Đang làm trên <máy>"; tải về chỉ báo xong khi đủ cả chữ đọc theo và nhạc nền. Máy kia mất mạng thì "Thử lại" nạp lại đúng chỗ đang nghe và tự phát tiếp khi máy kia trả lời.
 - Bấm một câu ở chương khác rồi dừng ngay không còn đưa trình đọc về đầu chương.
+- Mở Studio của máy tính đã ghép ngay trong app: nút “Mở Studio” ở dòng máy ấy (Cài đặt) và ở trang cuốn đang làm trên máy ấy - không ghép lần hai, không cảnh báo chứng chỉ. Máy ấy chưa cho sửa thì app nói bật ở đâu; máy ấy tắt thì app báo và tự nối lại khi nó bật. Danh sách máy đã ghép bị hỏng thì bản hỏng được giữ lại và app báo một dòng, không còn mất im lặng.
+- Lời tác giả / người dịch ở cuối chương (“Lời tác giả:”, “A/N”, “T/N”, lời xin bình luận, ủng hộ…) được gợi ý bỏ khỏi phần đọc như dòng ghi công - mặc định vẫn đọc, bạn bấm mới bỏ.
 
 ### Bảo mật (máy tính)
 

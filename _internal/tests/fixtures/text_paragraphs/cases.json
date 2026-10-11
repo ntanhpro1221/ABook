@@ -101,8 +101,8 @@
       ]
     },
     {
-      "name": "a credit line in the middle of the chapter, outside the first and last six lines, stays",
-      "text": "Dòng 1.\nDòng 2.\nDòng 3.\nDòng 4.\nDòng 5.\nDòng 6.\nDịch: Nhóm A\nDòng 7.\nDòng 8.\nDòng 9.\nDòng 10.\nDòng 11.\nDòng 12.",
+      "name": "a credit line in the middle of the chapter, outside the first six and last twelve lines, stays",
+      "text": "Dòng 1.\nDòng 2.\nDòng 3.\nDòng 4.\nDòng 5.\nDòng 6.\nDịch: Nhóm A\nDòng 7.\nDòng 8.\nDòng 9.\nDòng 10.\nDòng 11.\nDòng 12.\nDòng 13.\nDòng 14.\nDòng 15.\nDòng 16.\nDòng 17.\nDòng 18.",
       "skip": [
         "Dịch: Nhóm A"
       ],
@@ -119,7 +119,13 @@
         "Dòng 9.",
         "Dòng 10.",
         "Dòng 11.",
-        "Dòng 12."
+        "Dòng 12.",
+        "Dòng 13.",
+        "Dòng 14.",
+        "Dòng 15.",
+        "Dòng 16.",
+        "Dòng 17.",
+        "Dòng 18."
       ]
     },
     {

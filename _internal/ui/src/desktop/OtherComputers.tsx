@@ -1,11 +1,12 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bluetooth, Check, Laptop, Moon, Radar, RefreshCw, Smartphone, Unplug } from "lucide-react";
+import { Bluetooth, Check, Clapperboard, Laptop, Moon, Radar, RefreshCw, Smartphone, Unplug } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatRelative } from "@/shared/format";
+import { peerPage } from "@/shared/peerStudio";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
 import { Button, IconButton, Skeleton, Tooltip } from "@/shared/ui";
 import type { UnsentEdits } from "@/shared/unpair";
@@ -38,6 +39,8 @@ interface Computer {
 interface ComputersView {
   name: string;
   computers: Computer[];
+  /** Danh sách máy đã ghép bị hỏng và đã làm lại: một dòng cho người dùng (máy chủ giữ bản hỏng). */
+  broken?: string;
 }
 
 /** Máy tính ABook đang bật kết nối trong mạng (remote_books.discover - cùng cách điện thoại tìm máy tính). */
@@ -142,6 +145,11 @@ export function OtherComputers() {
   const unpaired = devices.filter((device) => !pairedAddresses.has(device.address));
   return (
     <div className="space-y-4">
+      {data.broken && (
+        <p className="text-sm text-warning" role="status">
+          {data.broken}
+        </p>
+      )}
       {data.computers.length > 0 && (
         <ul className="divide-y divide-line rounded-xl border border-line">
           {data.computers.map((computer) => (
@@ -179,6 +187,18 @@ export function OtherComputers() {
               </div>
               {/* Điện thoại không có chú giải khi rê chuột: ba nút chỉ có biểu tượng thành ba nút có chữ, xuống hàng riêng (soát UX a11). */}
               <div className="ml-auto flex shrink-0 items-center gap-1 max-sm:w-full max-sm:justify-end max-sm:gap-2">
+              {/* Studio của máy tính ấy ngay trong app này, bằng ghép sẵn có - không ghép lần hai (webui/peer_studio.py). */}
+              {computer.kind === "computer" && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={Clapperboard}
+                  onClick={() => window.location.assign(peerPage(window.location.search, computer.id))}
+                  aria-label={`Mở Studio của ${computer.name}`}
+                >
+                  Mở Studio
+                </Button>
+              )}
               {!isBluetoothHost(computer.host) && (
                 <BluetoothFallback
                   computer={computer}

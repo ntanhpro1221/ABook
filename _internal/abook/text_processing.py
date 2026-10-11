@@ -98,6 +98,20 @@ _TAIL_RULES = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
 ))
 
 
+# Ghi chú CUỐI chương của tác giả / người dịch (uxfix28 D, bộ dò nghiên cứu notes_rule.note_start): trong CREDIT_NOTE_WINDOW_LINES dòng có chữ
+# cuối chương (trừ CREDIT_WINDOW_LINES dòng đầu chương - chương ngắn), dòng đầu tiên mở ghi chú -> từ đó tới hết chương là ghi chú. Mở ghi chú: nhãn ở đầu
+# dòng (`_NOTE_HEADER`: "Lời tác giả:", "A/N", "(Trans: …)"), dòng cuối chương theo luật trên (`tail_credit_line`, trừ dòng ghi công kiểu đầu chương), hay dòng ngắn không phải lời
+# thoại / câu kể có lời nói mà nhắc "bản dịch hoàn thành", "chương tiếp theo", donate, ủng hộ, bình luận (`_NOTE_WORDS`). Sau dòng mở còn lời thoại
+# thì là truyện, không phải ghi chú. Kotlin cùng chuỗi (BookImport.NOTE_*).
+CREDIT_NOTE_WINDOW_LINES = 12
+_NOTE_HEADER = re.compile(
+    r"^[\s*_~#>(\[]*(?:tác note|lời (?:của )?(?:tác giả|người dịch|dịch giả|trans|editor)|note (?:của )?(?:tác giả|người dịch|trans)"
+    r"|ghi chú (?:của )?(?:tác giả|người dịch)|a/n|t/n|trans|tl|editor|biên tập)\s*(?:[:：()\]]|$)",
+    re.IGNORECASE,
+)
+_NOTE_WORDS = re.compile(r"bản dịch hoàn thành|chương tiếp theo|donate|ủng hộ|bình luận", re.IGNORECASE)
+
+
 def tail_credit_line(line: str) -> bool:
     """Dòng (đã gọn) này có phải dòng xin ủng hộ / quảng cáo / nguồn / ghi công ở cuối chương không (luật ở trên)."""
     if len(line) > CREDIT_TAIL_MAX or _TAIL_QUOTES.search(line) or _TAIL_DIALOGUE.match(line):
@@ -1267,9 +1281,19 @@ def _credit_line_indexes(lines: list[str]) -> set[int]:
     return found
 
 
+def _note_start(line: str) -> bool:
+    """Dòng (đã gọn) này có mở đoạn ghi chú cuối chương không (luật ở `CREDIT_NOTE_WINDOW_LINES`). Dòng ghi công kiểu đầu chương ("Dịch: Nhóm
+    A") thì không: ở cuối một đoạn chữ chưa tách chương nó là đầu chương sau, chữ theo sau là truyện."""
+    if _NOTE_HEADER.match(line) or (tail_credit_line(line) and not CREDIT_LINE_PATTERN.match(line)):
+        return True
+    return (len(line) <= CREDIT_TAIL_MAX and not _TAIL_QUOTES.search(line) and not _TAIL_DIALOGUE.match(line)
+            and not SPEECH_VERB_PATTERN.search(line) and bool(_NOTE_WORDS.search(line)))
+
+
 def _tail_credit_line_indexes(lines: list[str]) -> set[int]:
     """Chỉ số các dòng xin ủng hộ / quảng cáo / nguồn ở cuối chương: chuỗi liền nhau tính từ dòng có chữ cuối cùng đi lên trong
-    CREDIT_TAIL_WINDOW_LINES dòng có chữ - một dòng truyện chen giữa thì dừng; dòng chỉ toàn gạch / sao ("***") thì bước qua."""
+    CREDIT_TAIL_WINDOW_LINES dòng có chữ - một dòng truyện chen giữa thì dừng; dòng chỉ toàn gạch / sao ("***") thì bước qua. Cùng với
+    đoạn ghi chú cuối chương (`_note_start`): từ dòng mở ghi chú tới hết chương."""
     filled = [index for index, line in enumerate(lines) if line.strip()]
     found: set[int] = set()
     for index in reversed(filled[-CREDIT_TAIL_WINDOW_LINES:]):
@@ -1279,6 +1303,14 @@ def _tail_credit_line_indexes(lines: list[str]) -> set[int]:
         if not tail_credit_line(line):
             break
         found.add(index)
+    worded = [index for index in filled if _TAIL_EDGE.sub("", lines[index].strip())]  # dòng chỉ toàn gạch / sao không tính
+    for position in range(max(CREDIT_WINDOW_LINES, len(filled) - CREDIT_NOTE_WINDOW_LINES), len(filled)):
+        index = filled[position]
+        rest = [later for later in worded if later > index]
+        if index in worded and _note_start(lines[index].strip()) and not any(
+                _TAIL_QUOTES.search(lines[later]) or _TAIL_DIALOGUE.match(lines[later].strip()) for later in rest):
+            found.update([index, *rest])
+            break
     return found
 
 

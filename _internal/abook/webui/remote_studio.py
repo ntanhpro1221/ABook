@@ -261,14 +261,14 @@ def send_page(handler: Any, status: int, page: str) -> None:
     send_bytes(handler, status, page.encode("utf-8"), "text/html; charset=utf-8")
 
 
-def forward(handler: Any, method: str, target: str, gate: StudioGate, *, listen_only: bool = False) -> None:
-    """Chuyển một yêu cầu đã qua danh sách trắng sang máy chủ giao diện cục bộ, trả nguyên câu trả lời (kể cả audio
-    theo từng đoạn `Range`). `/api/app` được sửa cho đúng máy đang xem: không có hộp thoại chọn file của máy này, và
-    `listenOnly` khi thiết bị chỉ được nghe (giao diện ẩn Studio)."""
-    port = gate.port()
-    if not port:
-        _json(handler, HTTPStatus.SERVICE_UNAVAILABLE, {"error": "Giao diện của máy tính chưa sẵn sàng"})
-        return
+# Header của yêu cầu đi theo sang máy chủ được chuyển tới, và header của câu trả lời đi ngược về (audio theo đoạn `Range`, bộ đệm).
+FORWARD_HEADERS = ("Content-Type", "Range", "If-None-Match", "If-Modified-Since")
+RELAY_HEADERS = ("Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "Cache-Control", "ETag", "Last-Modified")
+
+
+def read_body(handler: Any) -> tuple[bool, bytes | None]:
+    """Thân yêu cầu sẽ chuyển tiếp: (được nhận không, thân hay None). Không được thì đã trả lời lỗi: quá lớn, Content-Length hỏng,
+    hay không phải JSON - trang lạ trong trình duyệt không gửi được JSON sang máy khác mà không qua CORS."""
     try:
         length = int(handler.headers.get("Content-Length") or 0)
     except ValueError:
@@ -278,13 +278,44 @@ def forward(handler: Any, method: str, target: str, gate: StudioGate, *, listen_
         handler.close_connection = True
         _json(handler, HTTPStatus.REQUEST_ENTITY_TOO_LARGE if length > 0 else HTTPStatus.BAD_REQUEST,
               {"error": "Yêu cầu quá lớn" if length > 0 else "Content-Length không hợp lệ"})
-        return
+        return False, None
     body = handler.rfile.read(length) if length else None
     if body is not None and not (handler.headers.get("Content-Type") or "").startswith("application/json"):
         _json(handler, HTTPStatus.UNSUPPORTED_MEDIA_TYPE, {"error": "Chỉ nhận JSON"})
+        return False, None
+    return True, body
+
+
+def relay(handler: Any, method: str, response: http.client.HTTPResponse) -> None:
+    """Trả nguyên câu trả lời của máy chủ được chuyển tới (trạng thái, header `RELAY_HEADERS`, thân theo từng khúc)."""
+    handler.send_response(response.status)
+    for name in RELAY_HEADERS:
+        value = response.getheader(name)
+        if value:
+            handler.send_header(name, value)
+    handler.end_headers()
+    if method == "HEAD":
+        return
+    while True:
+        chunk = response.read(CHUNK)
+        if not chunk:
+            break
+        handler.wfile.write(chunk)
+
+
+def forward(handler: Any, method: str, target: str, gate: StudioGate, *, listen_only: bool = False) -> None:
+    """Chuyển một yêu cầu đã qua danh sách trắng sang máy chủ giao diện cục bộ, trả nguyên câu trả lời (kể cả audio
+    theo từng đoạn `Range`). `/api/app` được sửa cho đúng máy đang xem: không có hộp thoại chọn file của máy này, và
+    `listenOnly` khi thiết bị chỉ được nghe (giao diện ẩn Studio)."""
+    port = gate.port()
+    if not port:
+        _json(handler, HTTPStatus.SERVICE_UNAVAILABLE, {"error": "Giao diện của máy tính chưa sẵn sàng"})
+        return
+    accepted, body = read_body(handler)
+    if not accepted:
         return
     headers = {"Host": f"127.0.0.1:{port}", "X-Ebook-Token": gate.token or "", REMOTE_HEADER: "1"}
-    for name in ("Content-Type", "Range", "If-None-Match", "If-Modified-Since"):
+    for name in FORWARD_HEADERS:
         value = handler.headers.get(name)
         if value:
             headers[name] = value
@@ -302,20 +333,7 @@ def forward(handler: Any, method: str, target: str, gate: StudioGate, *, listen_
             # Thư mục thư viện (có tên người dùng Windows): máy chủ giao diện đã để trống cho mọi yêu cầu từ xa (server.without_local_paths).
             _json(handler, HTTPStatus.OK, info)
             return
-        handler.send_response(response.status)
-        for name in ("Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "Cache-Control", "ETag",
-                     "Last-Modified"):
-            value = response.getheader(name)
-            if value:
-                handler.send_header(name, value)
-        handler.end_headers()
-        if method == "HEAD":
-            return
-        while True:
-            chunk = response.read(CHUNK)
-            if not chunk:
-                break
-            handler.wfile.write(chunk)
+        relay(handler, method, response)
     finally:
         connection.close()
 

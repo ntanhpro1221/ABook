@@ -117,6 +117,31 @@ def test_a_wish_on_a_line_that_changed_or_a_person_with_no_voice_is_refused_on_t
     assert list(book_edits.load(folder)["wishes"]) == ["speakers"], "chỉ ý muốn hợp lệ được ghi"
 
 
+def test_a_wish_another_window_just_changed_is_told_not_silently_replaced(imported) -> None:  # noqa: F811
+    """uxfix28 A: như người nói (`seen`), cách đọc một câu, "Thu lại" và giọng của cuốn không có xưởng cũng báo `elsewhere` khi điều
+    giao diện đã thấy khác điều đang ghi - lần ghi vẫn vào; khách không gửi `seen` (hay đã thấy bản mới nhất) nhận lời đáp như cũ."""
+    _app, folder, _identifier, call = imported
+    line = {"stableId": HEIDI_LINE[0], "textSha256": HEIDI_LINE[1]}
+    assert _post(call, "/line", {**line, "emotion": "sad"})[0] == 200  # cửa sổ kia
+    status, answer = _post(call, "/line", {**line, "emotion": "angry", "seen": None})
+    assert status == 200 and answer["elsewhere"] == {"delivery": {"kind": "", "emotion": "sad", "intensity": None, "spoken": None}}
+    assert book_edits.load(folder)["wishes"]["lines"][HEIDI_LINE[0]]["emotion"] == "angry", "không chặn: lần ghi vẫn vào"
+    status, answer = _post(call, "/line", {**line, "emotion": "happy", "seen": {"kind": "", "emotion": "angry", "intensity": None}})
+    assert "elsewhere" not in answer, "đã thấy bản mới nhất"
+
+    assert _post(call, "/review", {"verdict": "redo", "stableId": NARRATION[0], "chapterId": 1})[0] == 200  # cửa sổ kia
+    assert _post(call, "/review", {"verdict": "redo", "stableId": NARRATION[0], "chapterId": 1,
+                                   "seen": {NARRATION[0]: ""}})[1] == {"ok": True, "elsewhere": {NARRATION[0]: "redo"}}
+    assert _post(call, "/review", {"verdict": None, "stableId": NARRATION[0], "chapterId": 1,
+                                   "seen": {NARRATION[0]: "redo"}})[1] == {"ok": True}
+
+    first = _post(call, "/voice", {"character": "HEIDI", "gender": "male"})[1]  # cửa sổ kia
+    status, answer = _post(call, "/voice", {"character": "HEIDI", "gender": "female", "seen": 0})
+    assert status == 200 and answer["elsewhere"] == {"voice": "", "gender": "male"}
+    status, answer = _post(call, "/voice", {"character": "HEIDI", "gender": "male", "seen": answer["requestedAt"]})
+    assert "elsewhere" not in answer and first["requestedAt"] != answer["requestedAt"]
+
+
 def test_a_wish_is_found_in_the_second_chapter_whatever_its_id_says(imported) -> None:
     _app_, folder, _identifier, call = imported
     assert _post(call, "/review", {"verdict": "redo", "stableId": SECOND_CHAPTER[0], "chapterId": 2})[0] == 200

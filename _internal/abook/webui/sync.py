@@ -525,9 +525,10 @@ class SyncApp:
         return self.library.resolve_sharable(value)
 
     def book_manifest(self, path: Path, key: str) -> dict[str, Any]:
-        """`book.json` của cuốn `path` - dự án hay cuốn nhập từ file, cùng hình dạng."""
+        """`book.json` của cuốn `path` - dự án hay cuốn nhập từ file, cùng hình dạng. `studio`: cuốn là dự án Studio của máy này - máy
+        tính đã ghép mở được Studio của máy này ngay tại cuốn ấy (peer_studio.py); file sách xuất ra không mang nó (bookfile.py)."""
         if store.is_project(path):
-            return manifest(path, key, self.listening, self.music_track)
+            return {**manifest(path, key, self.listening, self.music_track), "studio": True}
         return package_share.manifest(path, key)
 
     def player_view(self) -> dict[str, Any]:
