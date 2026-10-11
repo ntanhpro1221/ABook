@@ -1,7 +1,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
-import { useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { holderName } from "@/shared/editsSync";
@@ -9,6 +9,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { syncsToComputer } from "@/shared/capabilities";
 import { usePageTitle } from "@/shared/title";
+import { reveal, useScrollMemory } from "@/shared/scrollMemory";
 import { Windowed } from "@/shared/Windowed";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { toneLabel } from "./voiceTone";
@@ -792,6 +793,13 @@ export function BookScreen({
   // Cùng chỗ với thẻ "Đang nghe dở" ở Thư viện; cuốn đang nằm trong trình phát thì đúng chỗ trình phát đứng (soát a26 L10).
   // Hook nên đứng trước các `return` sớm.
   const point = useResumeTarget(book, book?.chapters ?? []);
+  // Quay lại từ trình phát / màn đọc / Thư viện: về đúng chỗ đang xem trong danh sách chương; mở lần đầu trong phiên thì đưa chương
+  // đang nghe vào khung (soát a30 L3 - sách 3000 chương luôn mở ở đầu).
+  const chapterList = useRef<HTMLDivElement>(null);
+  useScrollMemory(book && tab === "chapters" ? `book.${book.id}` : null, chapterList, (scroller) => {
+    const row = point && chapterList.current?.querySelector(`[data-chapter="${CSS.escape(String(point.chapter.id))}"]`);
+    if (row) reveal(scroller, row);
+  });
 
   if (isLoading) {
     return (
@@ -1051,7 +1059,7 @@ export function BookScreen({
           <TabsTrigger value="history">Lịch sử</TabsTrigger>
           {!textOnly && <TabsTrigger value="cast">Nhân vật</TabsTrigger>}
         </TabsList>
-        <TabsContent value="chapters" className="mt-2">
+        <TabsContent value="chapters" className="mt-2" ref={chapterList}>
           {chaptersByPart(chapters, book.parts).map((group, index) => (
             <section key={group.heading ?? index} aria-label={group.heading ?? undefined}>
               {group.heading && <h3 className="px-2 pb-1 pt-4 text-sm font-semibold text-fg-2 sm:px-3">{group.heading}</h3>}
@@ -1060,9 +1068,10 @@ export function BookScreen({
                 <Windowed
                   items={group.chapters}
                   estimate={54}
+                  memory={`book.${book.id}.${index}`}
                   keep={point ? group.chapters.findIndex((chapter) => chapter.id === point.chapter.id) : undefined}
                   row={(chapter, index) => (
-                    <div key={chapter.id} role="listitem" aria-posinset={index + 1} aria-setsize={group.chapters.length}>
+                    <div key={chapter.id} role="listitem" aria-posinset={index + 1} aria-setsize={group.chapters.length} data-chapter={chapter.id}>
                       <ChapterRow
                         book={book}
                         chapter={chapter}

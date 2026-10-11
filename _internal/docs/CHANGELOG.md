@@ -15,9 +15,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bài thay cho bài không tải được không còn mang cách kết của bài gốc; trên điện thoại, sang chương mới cùng bài thì nhạc mờ ra rồi vào
   lại như trên máy tính.
 
-### Sách rất dài (máy tính)
+### Sách rất dài (máy tính và điện thoại)
 
-- Tìm chữ trong sách dài nhanh hơn nhiều: ô "Tìm trong sách" của cuốn 3.000 chương tìm hết trong khoảng 1 giây thay vì 5–20 giây.
+- Tìm chữ trong sách dài nhanh hơn nhiều: ô "Tìm trong sách" của cuốn 3.000 chương tìm hết trong khoảng 1 giây thay vì 5–20 giây
+  (máy tính).
+- Danh sách chương dài và thư viện vài trăm cuốn không còn giật hay nhảy chỗ khi cuộn lên, kể cả sau khi đổi cỡ cửa sổ; mở chương hay
+  Thư viện rồi quay lại thì trang sách (và danh sách chương trong Studio) về đúng chỗ đang xem, mở sách lần đầu thì thấy ngay chương đang
+  nghe; dùng bàn phím cuộn xa rồi bấm Tab vẫn đi tiếp từ chương đang chọn.
 
 ## [0.4.53] - 2026-10-11
 

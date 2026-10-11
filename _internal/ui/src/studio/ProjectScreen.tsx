@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import {
@@ -46,6 +46,7 @@ import { api, type BookSummary, type Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
 import { Windowed } from "@/shared/Windowed";
+import { useScrollMemory } from "@/shared/scrollMemory";
 import { toastRemoved } from "@/shared/trashUndo";
 import {
   phaseTone,
@@ -959,8 +960,11 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
 }
 
 function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[] }) {
+  // Bấm một chương (sang tab Kịch bản) rồi Back: về đúng chỗ đang xem, không về đầu danh sách (soát a30 L3).
+  const table = useRef<HTMLDivElement>(null);
+  useScrollMemory(`project.${book.id}`, table);
   return (
-    <div role="table" aria-label="Danh sách chương" aria-rowcount={chapters.length} className="mt-2">
+    <div ref={table} role="table" aria-label="Danh sách chương" aria-rowcount={chapters.length} className="mt-2">
       <div className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 border-b border-line px-2 text-[11px] font-semibold uppercase tracking-wider text-fg-3">
         <span className="text-center">#</span>
         <span>Chương</span>
@@ -974,7 +978,8 @@ function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[
       <div role="rowgroup" className="mt-1 space-y-px">
         <Windowed
           items={chapters}
-          estimate={57}
+          estimate={50}
+          memory={`project.${book.id}`}
           className="space-y-px"
           row={(chapter, index) => <ChapterRow key={chapter.id} book={book} chapter={chapter} rowIndex={index + 1} />}
         />
