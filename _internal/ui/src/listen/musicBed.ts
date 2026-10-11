@@ -128,7 +128,7 @@ export class MusicBed {
     const current = this.current?.cue;
     // Mốc anh em có thể cùng khoá đoạn với mốc trước (nối giữa một đoạn): phân biệt bằng cả giây bắt đầu.
     if (cue?.key !== current?.key || cue?.start !== current?.start || (seeked && cue)) {
-      this.switchTo(cue, seconds);
+      this.switchTo(cue, seconds, seeked);
     }
     this.retarget(seeked);
     for (const audio of [this.current?.audio, ...this.fading]) {
@@ -136,6 +136,13 @@ export class MusicBed {
       if (playing && audio.paused && !audio.ended) void audio.play().catch(() => undefined);
       if (!playing && !audio.paused) audio.pause();
     }
+  }
+
+  /** Có bài của chương này đang bị bỏ vì không phát được (đoạn ấy im lặng, chờ thử lại) - hộp "Nhạc nền" nói ra thay vì chỉ "Bật"
+   *  (soát a26 L7). */
+  get failing(): boolean {
+    const now = Date.now();
+    return this.cues.some((cue) => (this.failed.get(cue.link) ?? 0) > now);
   }
 
   /** Bài đang phát (null = im lặng) - cho giao diện và bài thử. */
@@ -223,10 +230,17 @@ export class MusicBed {
     this.startFade();
   }
 
-  private switchTo(cue: MusicCue | null, seconds: number): void {
+  /** Đặt bài `audio` của mốc `cue` vào đúng chỗ ứng với giây `seconds` của chương (lặp bài thì theo vòng) - vào giữa chương hay tua
+   *  thì nhạc cũng ở giữa bài, không chạy lại từ đầu (soát a26 L8). Chưa biết độ dài bài thì chờ `loadedmetadata`. */
+  private align(audio: BedAudio, cue: MusicCue, seconds: number): void {
+    if (audio.duration > 0) audio.currentTime = Math.max(0, seconds - cue.start) % audio.duration;
+  }
+
+  private switchTo(cue: MusicCue | null, seconds: number, seeked = false): void {
     if (this.current && cue && this.current.cue.link === cue.link) {
-      // Cùng bài (đoạn kề, hay vừa tua trong đoạn): chơi tiếp, không bắt đầu lại.
+      // Cùng bài (đoạn kề): chơi tiếp, không bắt đầu lại. Vừa tua (hay vừa nạp chương ở giữa): dời nhạc theo chỗ mới.
       this.current.cue = cue;
+      if (seeked) this.align(this.current.audio, cue, seconds);
       return;
     }
     const fadeSeconds = cue?.sibling ? SIBLING_FADE_SECONDS : FADE_SECONDS;
@@ -243,7 +257,8 @@ export class MusicBed {
       audio.volume = 0;
       audio.addEventListener("loadedmetadata", () => {
         this.failed.delete(cue.link);
-        if (audio.duration > 0) audio.currentTime = Math.max(0, seconds - cue.start) % audio.duration;
+        // Bài tải xong sau khi giọng đã chạy tiếp (hay vừa tua): theo giây mới nhất, không phải giây lúc tạo bài.
+        this.align(audio, cue, this.current?.audio === audio ? this.lastTime : seconds);
         for (const listener of [...this.loadListeners]) listener(cue.link, true);
       }, { once: true });
       audio.addEventListener("error", () => this.drop(cue, audio), { once: true });

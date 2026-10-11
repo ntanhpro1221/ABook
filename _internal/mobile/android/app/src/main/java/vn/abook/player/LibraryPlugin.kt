@@ -119,6 +119,7 @@ class LibraryPlugin : Plugin() {
         val event = try {
             val imported = BookFileImport.import(context, uri)
             JSObject().put("bookId", imported.id).put("title", imported.title).put("keptEdits", imported.keptEdits)
+                .put("brokenMusic", imported.brokenMusic)
         } catch (error: BookFileImport.Refused) {
             JSObject().put("error", error.message)
         } catch (error: Exception) {

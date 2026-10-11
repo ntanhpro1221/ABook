@@ -184,7 +184,7 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
     `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì kèm rãnh nhạc.
     `progress("listen", chương đã gom, tổng)` báo tiến độ gom chương (projectfile.pack); nó ném thì việc dừng."""
     book = _packaged_book(project_root)
-    files: dict[str, Path | bytes] = {"cast.json": json_bytes(book_edits.shared_cast(store.cast(project_root)))}
+    files: dict[str, Path | bytes] = {"cast.json": json_bytes(book_edits.shared_cast(store.recorded_cast(project_root)))}
     cover = covers.cover_file(project_root)
     if cover is not None:
         files[covers.COVER_FILE] = cover
@@ -348,7 +348,7 @@ def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes]) -
     narrator: dict[str, Any] | None = None
     samples: list[str] = []
     for number, root in parts:
-        cast = store.cast(root)
+        cast = store.recorded_cast(root)
         narrator = narrator or cast["narrator"]
         for kind in ("characters", "extras"):
             for person in cast[kind]:
@@ -482,6 +482,8 @@ class BookFile:
     def __init__(self, path: Path) -> None:
         self.path = Path(path)
         self.last_merge: dict[str, Any] | None = None
+        # Bài nhạc nền hỏng trong gói (sai cỡ lúc mở, sai mã băm lúc giải nén): bỏ bài ấy, sách vẫn mở - đoạn ấy im lặng (soát a26 L4).
+        self.broken_music: set[str] = set()
         self._edits: dict[str, Any] = book_edits.empty()
         try:
             self._zip = zipfile.ZipFile(self.path)
@@ -549,6 +551,8 @@ class BookFile:
         files = self.book["package"]["files"]
         try:
             for entry in [MANIFEST, READIUM_MANIFEST, *self.content]:
+                if entry in self.broken_music:
+                    continue
                 destination = staging.joinpath(*entry.split("/"))
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 digest = hashlib.sha256()
@@ -560,7 +564,13 @@ class BookFile:
                         size += len(chunk)
                 expected = files.get(entry)  # book.json / manifest.json không nằm trong danh sách mã băm
                 if expected is not None and (size != expected["size"] or digest.hexdigest() != expected["sha256"]):
-                    raise BookFileError(f"File sách bị hỏng hoặc bị sửa ({entry}). Hãy chép lại file từ nguồn.")
+                    if not _is_music(entry):
+                        raise BookFileError(f"File sách bị hỏng hoặc bị sửa ({entry}). Hãy chép lại file từ nguồn.")
+                    destination.unlink()
+                    self.broken_music.add(entry)
+            if self.broken_music:
+                _drop_tracks(self.book, self.broken_music)
+                staging.joinpath(MANIFEST).write_bytes(json_bytes(self.book))
             self.last_merge = self._keep_local_edits(target, staging) if target.exists() else None
             if target.exists():
                 retired = library / f".{name}.{secrets.token_hex(4)}.old"
@@ -621,9 +631,12 @@ class BookFile:
         if not isinstance(files, dict) or set(files) != content:
             raise BookFileError("Danh sách file trong sách không khớp nội dung gói.")
         for name, meta in files.items():
-            if (not isinstance(meta, dict) or self._zip.getinfo(name).file_size != meta.get("size")
-                    or not isinstance(meta.get("sha256"), str)):
+            if not isinstance(meta, dict) or not isinstance(meta.get("sha256"), str):
                 raise BookFileError(f"Mô tả file {name!r} không khớp gói.")
+            if self._zip.getinfo(name).file_size != meta.get("size"):
+                if not _is_music(name):
+                    raise BookFileError(f"Mô tả file {name!r} không khớp gói.")
+                self.broken_music.add(name)
         music = book.get("music")
         if music is not None:
             tracks = music.get("tracks") if isinstance(music, dict) else None
@@ -678,6 +691,24 @@ class BookFile:
             return json.loads(self._zip.read(name).decode("utf-8"))
         except (UnicodeDecodeError, ValueError) as exc:
             raise BookFileError(f"{name} hỏng.") from exc
+
+
+def _is_music(name: str) -> bool:
+    """Mục là một bài nhạc nền của gói - thứ duy nhất được bỏ khi hỏng (audio, chữ, phụ đề chương hỏng thì từ chối cả file)."""
+    return bool(music_plan.TRACK_FILE.fullmatch(name))
+
+
+def _drop_tracks(book: dict[str, Any], names: set[str]) -> None:
+    """Bỏ các bài `names` khỏi mô tả sách: danh sách file, danh sách bài, và mốc nhạc trỏ tới chúng (đoạn ấy im lặng)."""
+    for name in names:
+        book["package"]["files"].pop(name, None)
+    music = book.get("music")
+    if isinstance(music, dict):
+        for name in names:
+            music["tracks"].pop(name, None)
+        for chapter, cues in music["chapters"].items():
+            if isinstance(cues, list):
+                music["chapters"][chapter] = [cue for cue in cues if not (isinstance(cue, dict) and cue.get("track") in names)]
 
 
 def keep_local_edits(target: Path, staging: Path, incoming: dict[str, Any]) -> dict[str, Any] | None:

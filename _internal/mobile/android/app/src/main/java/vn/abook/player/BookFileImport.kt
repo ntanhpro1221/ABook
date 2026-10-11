@@ -45,7 +45,10 @@ object BookFileImport {
     private const val MAX_ENTRIES = 20_000
     private const val MAX_TOTAL_BYTES = 64L shl 30
     private const val MAX_JSON_BYTES = 32L shl 20
-    private const val COMMON = """cast\.json|cover\.jpg|scripts/\d+\.json|samples/\d+\.wav|music/[0-9a-f]{40}\.(?:mp3|m4a|ogg|opus|flac|wav)"""
+    /** Một bài nhạc nền trong gói (music_plan.TRACK_FILE bên Python) - mục duy nhất được bỏ khi hỏng (soát a26 L4). */
+    private const val MUSIC_TRACK = """music/[0-9a-f]{40}\.(?:mp3|m4a|ogg|opus|flac|wav)"""
+    private val MUSIC = Regex(MUSIC_TRACK)
+    private const val COMMON = """cast\.json|cover\.jpg|scripts/\d+\.json|samples/\d+\.wav|$MUSIC_TRACK"""
     private val CONTENT = Regex("""$COMMON|chapters/[0-9A-Za-z_.\-]+\.mp3""")
     /** Phiên bản 3 thêm thư mục phần: chapters/<phần>/<tên>.mp3 (phiên bản 1-2 không có - gặp thì là mục lạ). */
     private val CONTENT_V3 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3""")
@@ -60,7 +63,7 @@ object BookFileImport {
 
     /** `keptEdits`: số thay đổi của người nghe đã có sẵn trên cuốn này và được giữ nguyên (0 = cuốn mới hay chưa sửa gì) - giao
      *  diện nói "giữ nguyên N chỉnh sửa của bạn". */
-    data class Imported(val id: String, val title: String, val keptEdits: Int = 0)
+    data class Imported(val id: String, val title: String, val keptEdits: Int = 0, val brokenMusic: Int = 0)
 
     /** Chép từ content:// (trình quản lý file, Zalo, Drive...) vào bộ nhớ đệm rồi nhập. */
     fun import(context: Context, uri: Uri): Imported {
@@ -219,6 +222,8 @@ object BookFileImport {
             val needed = if (layout != null) layout.neededBytes() else total
             requireRoom(books, needed + ROOM_MARGIN, freeSpace)
             val staging = File(books, ".$target.${System.nanoTime()}.part")
+            // Bài nhạc nền hỏng (chép dở, đổi byte): bỏ bài ấy, sách vẫn mở - đoạn ấy im lặng (bookfile.py, soát a26 L4).
+            val brokenMusic = HashSet<String>()
             try {
                 val expectedFiles = layout?.files ?: files
                 val wanted = if (layout != null) listOf("book.json") + layout.materialize
@@ -227,9 +232,12 @@ object BookFileImport {
                     val (size, sha256) = extract(zip, resolve(name), File(staging, name))
                     val expected = expectedFiles.optJSONObject(name) ?: continue
                     if (size != expected.optLong("size", -1) || sha256 != expected.optString("sha256")) {
-                        throw Refused("File sách bị hỏng hoặc bị sửa ($name). Hãy chép lại file từ nguồn.")
+                        if (layout != null || !MUSIC.matches(name)) throw Refused("File sách bị hỏng hoặc bị sửa ($name). Hãy chép lại file từ nguồn.")
+                        File(staging, name).delete()
+                        brokenMusic.add(name)
                     }
                 }
+                if (brokenMusic.isNotEmpty()) dropTracks(book, brokenMusic)
                 if (layout != null) File(staging, ProjectDocument.MANIFEST).writeBytes(layout.manifestBytes)
                 // Bản trên máy bị thay: sửa trong xưởng của nó gộp vào bản mới, không mất theo thư mục cũ.
                 if (layout != null && existing != null && ProjectDocument.kept(staging)?.workshop == ProjectDocument.PRESENT) {
@@ -244,7 +252,25 @@ object BookFileImport {
                 staging.deleteRecursively()
             }
             Store.rememberChapters(target, chapters, imported = existing == null || Store.isImported(existing))
-            return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"), keptEdits)
+            return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"), keptEdits, brokenMusic.size)
+        }
+    }
+
+    /** Bỏ các bài `names` khỏi mô tả sách: danh sách file, danh sách bài, và mốc nhạc trỏ tới chúng (bookfile._drop_tracks). */
+    private fun dropTracks(book: JSONObject, names: Set<String>) {
+        val files = book.optJSONObject("package")?.optJSONObject("files")
+        for (name in names) files?.remove(name)
+        val music = book.optJSONObject("music") ?: return
+        for (name in names) music.optJSONObject("tracks")?.remove(name)
+        val chapters = music.optJSONObject("chapters") ?: return
+        for (chapter in chapters.keys().asSequence().toList()) {
+            val cues = chapters.optJSONArray(chapter) ?: continue
+            val kept = org.json.JSONArray()
+            for (index in 0 until cues.length()) {
+                val cue = cues.opt(index)
+                if (!(cue is JSONObject && cue.optString("track") in names)) kept.put(cue)
+            }
+            chapters.put(chapter, kept)
         }
     }
 

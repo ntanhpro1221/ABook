@@ -14,6 +14,15 @@ const MAX_POINTS = 480;
 /** Hẹn giờ lại trong vòng chừng này sau lúc tự dừng (tỉnh giấc, nghe thêm) vẫn là cùng một đêm. */
 const SAME_NIGHT_MS = 45 * 60_000;
 
+/** Lần lưu chỗ nghe sát lúc tự dừng (hẹn "hết chương" lưu chương kế ở 0:00) vẫn thuộc đêm ấy, chưa phải nghe tiếp. */
+const SAVED_AT_STOP_SECONDS = 60;
+
+/** Sau lúc phiên đêm kết thúc (`endedAt`, giây Unix) người nghe đã nghe tiếp cuốn ấy chưa - chỗ nghe lưu lần cuối (`lastAt`) muộn hơn
+ *  hẳn? Rồi thì thẻ "Tối qua - nghe tới đâu rồi thiếp đi?" mời quay lại chỗ cũ là lùi họ về (soát a26 L2): MorningRecap ẩn thẻ. */
+export function heardSinceNight(endedAt: number, lastAt: number | null | undefined): boolean {
+  return lastAt != null && lastAt > endedAt + SAVED_AT_STOP_SECONDS;
+}
+
 function newId(): string {
   return Math.random().toString(16).slice(2, 14).padEnd(12, "0");
 }

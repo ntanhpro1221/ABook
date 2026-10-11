@@ -191,6 +191,25 @@ export function seriesOf(title: string): SeriesPlace {
   return { key: `title:${series}`, series, volume: Number(match[3]), unit: word === "quyển" || word === "phần" ? word : "tập" };
 }
 
+/** Cuốn kế (`next`, useNextVolume) là PHẦN sau của cùng cuốn ("Làm tiếp cuốn này"): hết phần này là nghe nối sang nó - trả nó.
+ *  Tập khác của một bộ ("Tập 17") chỉ được mời, không tự nghe: null (soát a26 L1). */
+export function continuingPart(next: ListenBook | null | undefined): ListenBook | null {
+  return next && seriesOf(next.title).unit === "phần" ? next : null;
+}
+
+/** Hết một phần (`atEnd` "finished") mà có phần sau để nghe nối (continuingPart): trả phần ấy. */
+export function partToContinue(atEnd: string, next: ListenBook | null | undefined): ListenBook | null {
+  return atEnd === "finished" ? continuingPart(next) : null;
+}
+
+/** Tốc độ khi nạp một cuốn: tốc độ riêng của nó; chưa có thì tốc độ mang sang (`carried` - nghe nối từ phần trước, soát a26 L3), cuối
+ *  cùng là mặc định. `keep`: tốc độ mang sang thành tốc độ riêng của cuốn này - hôm khác mở lại phần sau vẫn đúng tốc độ ấy. */
+export function startingRate(own: number | null | undefined, carried: number | undefined, fallback: number): { rate: number; keep: boolean } {
+  if (own != null) return { rate: own, keep: false };
+  if (carried !== undefined && carried !== fallback) return { rate: carried, keep: true };
+  return { rate: fallback, keep: false };
+}
+
 /** Bộ và số tập của mọi cuốn trong thư viện. Phần của một cuốn làm nhiều đợt ("Làm tiếp cuốn này") đi theo chuỗi máy chủ
  * biết (`series`) - đổi tên một phần không làm mất nhóm; nhóm mang tên phần đầu. Còn lại theo tên (`seriesOf`), thêm một
  * luật: cuốn KHÔNG đánh số mà tên đúng bằng tên một bộ có tập đánh số là tập 1 của bộ ấy (sách nhập từ file .abook, máy chủ
@@ -393,8 +412,20 @@ export function otherBooksToHear(books: readonly ListenBook[], currentId: string
   return [...listening, ...open.filter((book) => !started(book))].slice(0, limit);
 }
 
+/** Còn ít hơn chừng này giây là "nghe gần hết" một chương: nghe tiếp thì sang chương kế. */
+const NEAR_END_SECONDS = 15;
+
+/** Giây nghe tiếp trong một chương khi vào nó không qua chỗ nghe cuối: chỗ xa nhất đã nghe (`heard`) nếu chương chưa xong và chưa
+ *  gần hết - chương đã nghe 111 giây mở lại không về 0:00 (soát a26 L10). */
+function chapterResumeAt(state: ListeningState, chapter: ListenChapter): number {
+  const record = state.chapters[String(chapter.id)];
+  if (!record || record.done || !(record.heard > 0)) return 0;
+  const length = knownDuration(state, chapter);
+  return length > 0 && length - record.heard < NEAR_END_SECONDS ? 0 : record.heard;
+}
+
 /** Chương nên phát khi bấm "Nghe": chỗ đang nghe dở nếu chương ấy còn nghe được (nghe gần hết thì sang chương
- *  kế), không thì chương đầu tiên chưa nghe xong, cuối cùng là chương đầu. */
+ *  kế, từ chỗ đã nghe tới trong chương ấy), không thì chương đầu tiên chưa nghe xong, cuối cùng là chương đầu. */
 export function resumePoint(book: ListenBook, chapters: ListenChapter[]): { chapter: ListenChapter; at: number } | null {
   const playable = chapters.filter(canPlay);
   if (!playable.length) return null;
@@ -404,15 +435,26 @@ export function resumePoint(book: ListenBook, chapters: ListenChapter[]): { chap
     if (index >= 0) {
       const chapter = playable[index];
       const length = knownDuration(book.state, chapter);
-      const nearEnd = length > 0 && length - last.seconds < 15;
+      const nearEnd = length > 0 && length - last.seconds < NEAR_END_SECONDS;
       if (!nearEnd) return { chapter, at: last.seconds };
-      if (playable[index + 1]) return { chapter: playable[index + 1], at: 0 };
+      if (playable[index + 1]) return { chapter: playable[index + 1], at: chapterResumeAt(book.state, playable[index + 1]) };
       // Nghe tới cuối chương cuối ĐÃ CÓ của một cuốn còn đang làm: đứng yên ở đó, đừng quay về chương đầu.
       if (!book.complete) return { chapter, at: last.seconds };
     }
   }
   const unheard = playable.find((chapter) => !book.state.chapters[String(chapter.id)]?.done);
-  return { chapter: unheard ?? playable[0], at: 0 };
+  return unheard ? { chapter: unheard, at: chapterResumeAt(book.state, unheard) } : { chapter: playable[0], at: 0 };
+}
+
+/** Chỗ nghe tiếp mà MỌI thẻ và nút nói - và phát khi bấm (soát a26 L10): cuốn đang nằm trong trình phát thì đúng chỗ trình phát đang
+ *  đứng (`here` - chỗ đã lưu có thể cũ, chỉ làm mới khi dừng), không thì `resumePoint`. */
+export function resumeTarget(
+  book: ListenBook,
+  chapters: ListenChapter[],
+  here: { chapterId: number; seconds: number } | null,
+): { chapter: ListenChapter; at: number } | null {
+  const chapter = here ? chapters.find((item) => item.id === here.chapterId) : undefined;
+  return chapter && here ? { chapter, at: here.seconds } : resumePoint(book, chapters);
 }
 
 /** Độ dài chương: của gói sách, hay - chương đọc to chưa có audio - độ dài trình phát đã ghi lúc nghe (giây ảo của bộ máy đọc to). */

@@ -546,8 +546,11 @@ def apply_manifest(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any
 def shared_cast(cast: dict[str, Any]) -> dict[str, Any]:
     """`cast.json` khi rời máy này (file `.abook` / `.abookproj`, đồng bộ sang máy đã ghép): không dấu "đang chờ đổi giọng"
     (`pendingVoice`) hay "chờ gộp vào X" (`mergedInto`) - đó là ý muốn chưa áp của máy này, chưa thành giọng hay người nói nào;
-    máy nhận tự dựng dấu của nó từ lớp sửa nó có (`apply_cast`). Mọi đường xuất / đồng bộ dàn nhân vật đi qua đây."""
+    máy nhận tự dựng dấu của nó từ lớp sửa nó có (`apply_cast`). Cũng không số câu kể "chờ thu lại" (`redo`) - việc của Studio, người
+    nghe chỉ có bản đã thu (soát a26 L5). Mọi đường xuất / đồng bộ dàn nhân vật đi qua đây."""
     out = copy.deepcopy(cast)
+    if isinstance(out.get("narrator"), dict):
+        out["narrator"].pop("redo", None)
     for kind in ("characters", "extras", "carried"):
         for person in out.get(kind) or []:
             if isinstance(person, dict):

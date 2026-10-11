@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { ImportChoice } from "@/listen/textImport";
-import { keptEditsTitle } from "@/shared/editsKept";
+import { brokenMusicNote, keptEditsTitle } from "@/shared/editsKept";
 import { EbookLibrary } from "./plugins";
 import { stagedChoice } from "./textImport";
 
@@ -27,7 +27,7 @@ export function watchImports(client: QueryClient, open: (bookId: string) => void
     void client.invalidateQueries({ queryKey: ["listen"] });
     void client.invalidateQueries({ queryKey: ["storage"] });
     toast.success(keptEditsTitle(event.keptEdits) ?? "Đã thêm sách vào Thư viện", {
-      description: event.title || undefined,
+      description: [event.title, brokenMusicNote(event.brokenMusic)].filter(Boolean).join(" · ") || undefined,
       action: { label: "Mở sách", onClick: () => open(bookId) },
     });
   });

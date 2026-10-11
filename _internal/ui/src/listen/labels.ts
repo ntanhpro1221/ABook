@@ -8,6 +8,11 @@ export const PREPARING_VOICE = "Đang chuẩn bị giọng đọc…";
 /** Chờ giọng ngắn hơn mức này thì không nói gì (chỉ vòng quay ở nút phát). */
 export const PREPARING_VOICE_AFTER_MS = 1500;
 
+/** Câu thoại đã mang ngoặc của sách - bỏ trước khi bọc ngoặc trích (soát UX 29-09: ““…””). Thẻ "Tối qua" và dấu trang (soát a26 L6). */
+export function unquoted(sentence: string): string {
+  return sentence.replace(/^[\s“"«「『]+|[\s”"»」』]+$/g, "");
+}
+
 /** Chỗ nghe tiếp: "Chương 3 · 12:04" - cùng một dạng ở thẻ "Đang nghe dở" của Thư viện và nút chính của trang sách. */
 export function resumeWhere(chapterTitle: string, seconds: number): string {
   return chapterTitle ? `${chapterTitle} · ${formatClock(seconds)}` : formatClock(seconds);

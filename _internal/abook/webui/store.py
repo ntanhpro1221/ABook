@@ -1336,6 +1336,7 @@ def keep_heard_scripts(project_root: Path) -> int:
     with closing(connect(project_root)) as connection:
         rows = connection.execute("SELECT id, output_mp3 FROM chapters WHERE status = 'completed'").fetchall()
     kept = 0
+    voices: dict[str, Any] | None = None  # giọng của bản đã thu: một lần cho mọi chương chụp lần này (`heard_voices`)
     for row in rows:
         mp3 = chapter_mp3(project_root, row["output_mp3"])
         if mp3 is None:
@@ -1349,14 +1350,18 @@ def keep_heard_scripts(project_root: Path) -> int:
         script = chapter_script(project_root, int(row["id"]))
         if script is None or not script["timed"]:
             continue
-        atomic_write_json(target, {"mp3Size": mp3.stat().st_size, "script": script}, fsync=False)
+        if voices is None:
+            now = cast(project_root)
+            voices = {"narrator": now["narrator"]["voice"], "narratorProfile": now["narrator"]["profile"],
+                      "people": {person["name"]: person["voice"] for person in now["characters"] + now["extras"]}}
+        atomic_write_json(target, {"mp3Size": mp3.stat().st_size, "script": script, "voices": voices}, fsync=False)
         kept += 1
     return kept
 
 
-def _kept_script(project_root: Path, chapter: Any) -> dict[str, Any] | None:
-    """Chữ đọc theo đã chụp của một chương chờ thu lại (`keep_heard_scripts`), khi nó còn khớp đúng MP3 đang có; None với chương
-    khác (chương đã xong dựng mốc từ sổ như thường). `chapter` cần `status`, `last_error`, `output_mp3`."""
+def _kept_snapshot(project_root: Path, chapter: Any) -> dict[str, Any] | None:
+    """Bản chụp (`keep_heard_scripts`) của một chương chờ thu lại, khi nó còn khớp đúng MP3 đang có; None với chương khác (chương đã
+    xong dựng mốc từ sổ như thường). `chapter` cần `status`, `last_error`, `output_mp3`."""
     if str(chapter["status"]) == "completed" or not heard_chapter(chapter["status"], chapter["last_error"]):
         return None
     mp3 = chapter_mp3(project_root, chapter["output_mp3"])
@@ -1364,12 +1369,45 @@ def _kept_script(project_root: Path, chapter: Any) -> dict[str, Any] | None:
         return None
     try:
         data = json.loads(_heard_script_path(mp3).read_text(encoding="utf-8"))
-        script = data["script"]
-        if int(data["mp3Size"]) != mp3.stat().st_size or not script.get("timed"):
+        if int(data["mp3Size"]) != mp3.stat().st_size or not data["script"].get("timed"):
             return None
     except (OSError, ValueError, KeyError, TypeError, AttributeError):
         return None
-    return script
+    return data
+
+
+def _kept_script(project_root: Path, chapter: Any) -> dict[str, Any] | None:
+    """Chữ đọc theo đã chụp của một chương chờ thu lại (`_kept_snapshot`)."""
+    kept = _kept_snapshot(project_root, chapter)
+    return kept["script"] if kept is not None else None
+
+
+def heard_voices(project_root: Path) -> dict[str, Any] | None:
+    """Giọng của bản ĐÃ THU khi phần lớn chương nghe được của cuốn là chương chờ thu lại còn mang MP3 cũ (soát a26 L5): người kể
+    (`narrator` - tên giọng, `narratorProfile`) và giọng từng người nói (`people`: {tên chuẩn: giọng}), như `keep_heard_scripts` chụp
+    ngay trước khi áp sửa. None khi không phải thế - giọng trong sổ (đã áp sửa) là giọng của audio."""
+    if not (Path(project_root) / DB_NAME).is_file():
+        return None
+    with closing(connect(project_root)) as connection:
+        rows = connection.execute("SELECT status, last_error, output_mp3 FROM chapters ORDER BY id").fetchall()
+    heard = [row for row in rows if heard_chapter(row["status"], row["last_error"])]
+    kept = [voices for row in heard if isinstance(voices := (_kept_snapshot(project_root, row) or {}).get("voices"), dict)]
+    return kept[0] if kept and 2 * len(kept) >= len(heard) else None
+
+
+def recorded_cast(project_root: Path) -> dict[str, Any]:
+    """`cast` với giọng của bản ĐÃ THU (`heard_voices`) - dàn nhân vật đi ra khỏi Studio cùng audio (file sách, điện thoại tải về) nói
+    đúng giọng người nghe sẽ nghe, không phải giọng mới còn chờ thu lại."""
+    out = cast(project_root)
+    heard = heard_voices(project_root)
+    if heard is None:
+        return out
+    out["narrator"] = {**out["narrator"], "voice": heard.get("narrator"), "profile": heard.get("narratorProfile")}
+    people = heard.get("people") or {}
+    for person in out["characters"] + out["extras"]:
+        if person["name"] in people:
+            person["voice"] = people[person["name"]]
+    return out
 
 
 def chapter_spans(project_root: Path, chapter_id: int) -> dict[int, tuple[float, float]]:

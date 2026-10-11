@@ -82,6 +82,11 @@ object MusicCues {
             ?: minOf(1f, fallback * 10.0.pow(step / 20.0).toFloat())
     }
 
+    /** Chỗ trong bài (ms) ứng với giây `seconds` của chương: từ đầu mốc, lặp bài thì theo vòng (`durationMs` <= 0: chưa biết độ dài,
+     *  null). Vào giữa chương hay tua thì nhạc cũng ở giữa bài (ui/src/listen/musicBed.ts `align`, soát a26 L8). */
+    fun offsetMs(cue: Cue, seconds: Double, durationMs: Long): Long? =
+        if (durationMs > 0) ((seconds - cue.start).coerceAtLeast(0.0) * 1000).toLong() % durationMs else null
+
     /** Một nhịp dịch âm lượng `volume` về phía `goal`, mỗi nhịp tối đa `perTick`. */
     fun toward(volume: Float, goal: Float, perTick: Float): Float {
         val move = maxOf(perTick, 1e-5f)

@@ -188,6 +188,7 @@ object Playback {
             .put("sleep", SleepTimer.describe())
             .put("error", lastError)
             .put("musicCredit", MusicBed.credit() ?: JSONObject.NULL)
+            .put("musicBroken", MusicBed.brokenHere())
     }
 
     /** Lỗi phát gần nhất, cho giao diện - rỗng khi đang ổn. */

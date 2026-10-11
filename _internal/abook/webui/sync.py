@@ -459,7 +459,8 @@ def manifest(project_root: Path, book: str, listening: Listening,
         "format": listen_view.FORMAT,
         "id": book,
         "title": view["title"],
-        "narrator": view["narrator"],
+        # Chương chờ thu lại vẫn mang MP3 cũ: tên giọng kể theo bản đã thu, không phải giọng mới chưa thu (soát a26 L5).
+        "narrator": (store.heard_voices(project_root) or {}).get("narrator") or view["narrator"],
         "duration": view["duration"],
         "chaptersTotal": view["chaptersTotal"],
         "chaptersAvailable": sum(1 for chapter in chapters if chapter["available"]),
@@ -699,7 +700,7 @@ class SyncApp:
         if not store.is_project(project_root):
             return package_share.resolve_file(project_root, relative)
         if relative == "cast.json":
-            return json.dumps(book_edits.shared_cast(store.cast(project_root)), ensure_ascii=False).encode("utf-8")
+            return json.dumps(book_edits.shared_cast(store.recorded_cast(project_root)), ensure_ascii=False).encode("utf-8")
         if relative == covers.COVER_FILE:
             return covers.cover_file(project_root)
         match = re.fullmatch(r"scripts/(\d+)\.json", relative)

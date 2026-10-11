@@ -107,6 +107,54 @@ def test_a_music_entry_without_its_file_is_refused(tmp_path: Path) -> None:
         BookFile(broken)
 
 
+def _spoil(path: Path, target: Path, name: str, data: bytes) -> Path:
+    """Chép gói `path` sang `target`, thay byte của mục `name` (book.json giữ nguyên - như file hỏng trên đường chép)."""
+    with zipfile.ZipFile(path) as source, zipfile.ZipFile(target, "w") as sink:
+        for info in source.infolist():
+            sink.writestr(info, data if info.filename == name else source.read(info.filename))
+    return target
+
+
+@pytest.mark.parametrize("spoiled", [b"ID3", None], ids=["cut-short", "same-size"])
+def test_a_broken_music_track_leaves_silence_not_an_unopenable_book(studio, tmp_path: Path, spoiled: bytes | None) -> None:  # noqa: F811
+    """Soát a26 L4: một bài nhạc nền hỏng (chép dở, đổi byte) không chặn cả cuốn - sách vẫn mở, bài ấy bị bỏ (đoạn ấy im lặng),
+    và người dùng được nói một câu. Cụt (sai cỡ - kiểm lúc mở) hay cùng cỡ mà khác byte (sai mã băm - kiểm lúc giải nén) như nhau."""
+    _paths, app, server, _runner = studio
+    project = make_project(tmp_path / "may_khac")
+    _plan(project)
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    battle = music_plan.track_name(BATTLE)
+    with zipfile.ZipFile(path) as archive:
+        size = archive.getinfo(battle).file_size
+    broken = _spoil(path, tmp_path / f"hong{bookfile.EXTENSION}", battle, spoiled if spoiled is not None else b"X" * size)
+    opened = app.open_book_file(str(broken))
+    assert opened["how"] == "new" and opened["brokenMusic"] == 1
+    folder = app.library.resolve_listenable(opened["id"])
+    assert not (folder / battle).exists(), "bài hỏng không vào thư viện"
+    manifest = json.loads((folder / "book.json").read_text(encoding="utf-8"))
+    assert battle not in manifest["package"]["files"] and battle not in manifest["music"]["tracks"]
+    assert [cue["track"] for cue in manifest["music"]["chapters"]["1"]] == [music_plan.track_name(CALM)]
+    status, cues = _call(server, "GET", f"/api/books/{opened['id']}/music/chapters/1")
+    assert status == 200 and [cue["gainDb"] for cue in cues["cues"]] == [-7.39], "bài lành vẫn phát, đoạn bài hỏng im lặng"
+
+
+def test_a_broken_chapter_audio_still_refuses_the_book(tmp_path: Path) -> None:
+    """Chỉ nhạc nền được bỏ qua: audio chương hỏng thì cuốn sách hỏng thật - từ chối như cũ."""
+    project = make_project(tmp_path)
+    _plan(project)
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    with zipfile.ZipFile(path) as archive:
+        chapter = next(name for name in archive.namelist() if name.startswith("chapters/"))
+        size = archive.getinfo(chapter).file_size
+    with pytest.raises(BookFileError, match="không khớp gói"):
+        BookFile(_spoil(path, tmp_path / f"cut{bookfile.EXTENSION}", chapter, b"ID3"))
+    with (
+        BookFile(_spoil(path, tmp_path / f"same{bookfile.EXTENSION}", chapter, b"X" * size)) as book,
+        pytest.raises(BookFileError, match="hỏng hoặc bị sửa"),
+    ):
+        book.extract(tmp_path / "thu_vien")
+
+
 def test_a_book_opened_from_a_file_plays_its_packaged_music(studio, tmp_path: Path) -> None:  # noqa: F811
     _paths, app, server, _runner = studio
     project = make_project(tmp_path / "may_khac")

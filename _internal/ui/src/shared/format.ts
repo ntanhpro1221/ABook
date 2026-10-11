@@ -79,6 +79,13 @@ export function formatLength(seconds: number): string {
   return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
 }
 
+/** Như `formatLength` nhưng làm tròn LÊN tới phút: thời gian còn lại nói cạnh đồng hồ đếm ngược của thanh phát ("-2:09" là "3 phút",
+ *  không phải "2 phút" - soát a26 L10). */
+export function formatLengthUp(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "0 phút";
+  return formatLength(Math.ceil(seconds / 60) * 60);
+}
+
 /** Từ mức này của bước đang làm thì "còn dưới 2 phút" mới là "sắp xong" (soát UX a8: sách mới 21% mà đã ghi "sắp xong"). */
 const NEAR_DONE = 0.85;
 

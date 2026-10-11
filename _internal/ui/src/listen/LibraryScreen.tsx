@@ -5,13 +5,14 @@ import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { ShortName } from "@/shared/ShortName";
 import { cn } from "@/shared/cn";
-import { formatLength, formatWhen } from "@/shared/format";
+import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { caughtUpDetail, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, isLibrarySort, type LibrarySort } from "./librarySort";
-import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, seriesIndex, twinBookIds, twinKind, volumeBadge, type ListenBook } from "./model";
+import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, resumeTarget, seriesIndex, twinBookIds, twinKind, volumeBadge, type ListenBook, type ListenChapter } from "./model";
 import { usePlayer, type WordTarget } from "./player";
-import { useListenLibrary, useReadAloudVoices, useSource } from "./source";
+import { useClock } from "./clock";
+import { useListenBook, useListenLibrary, useReadAloudVoices, useSource } from "./source";
 
 type Filter = "all" | "listening" | "new" | "finished";
 
@@ -51,13 +52,14 @@ function progressText(book: ListenBook, speaks: boolean): string {
   }
   const left = Math.max(0, book.duration - book.progress.heardSeconds);
   if (book.progress.heardSeconds <= 0) return formatLength(book.duration);
-  return `Còn ${formatLength(left)}`;
+  // Ở tốc độ của cuốn, làm tròn lên - như số giờ còn lại ở thanh phát (soát a26 L10: "Còn 1 phút" cạnh "-2:09").
+  return `Còn ${formatLengthUp(left / (book.state.rate ?? 1))}`;
 }
 
 export function usePlayListenBook() {
   const source = useSource();
   const player = usePlayer();
-  return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget }) => {
+  return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {
     // Cuốn đang ở trình phát: tiếp tục đúng chỗ đang phát, không nạp lại (nạp lại là lùi về điểm lưu gần nhất).
     if (chapterId === undefined && player.track?.bookId === book.id) {
       player.resume();
@@ -74,8 +76,18 @@ export function usePlayListenBook() {
       return;
     }
     const point = resumePoint(full, chapters);
-    if (point) player.play(full, chapters, point.chapter.id, point.at);
+    if (point) player.play(full, chapters, point.chapter.id, point.at, extra);
   };
+}
+
+/** Chỗ nghe tiếp của một cuốn (model.resumeTarget) - thẻ "Đang nghe dở", nút chính của trang sách nói cùng một chỗ, và đúng chỗ bấm sẽ phát.
+ *  Cuốn đang trong trình phát mà đang dừng: chỗ trình phát đứng (giây đổi thì vẽ lại; đang phát thì không theo từng giây). */
+export function useResumeTarget(book: ListenBook | undefined, chapters: ListenChapter[]): ReturnType<typeof resumeTarget> {
+  const { track, playing } = usePlayer();
+  const here = Boolean(book && track?.bookId === book.id);
+  const second = useClock((time) => (here && !playing ? Math.floor(time) : -1));
+  if (!book) return null;
+  return resumeTarget(book, chapters, here && track ? { chapterId: track.chapterId, seconds: Math.max(0, second) } : null);
 }
 
 /** Mở lại app: thanh phát có sẵn cuốn đang nghe dở (đang dừng) - bấm Space là nghe tiếp, khỏi đi tìm. */
@@ -176,10 +188,11 @@ function ContinueCard({ book }: { book: ListenBook }) {
   const voices = useReadAloudVoices().data;
   const speaks = (voices?.length ?? 0) > 0;
   const last = book.state.last;
-  const chapter = (current ? player.track?.chapterTitle : undefined) || book.lastChapterTitle;
-  // Cùng dạng với nút chính của trang sách ("Nghe tiếp · Chương 3 · 12:04").
-  // Cuốn đang nằm trong trình phát: chỗ nghe đã lưu có thể cũ (chỉ làm mới khi dừng) - nói chương đang phát, không nói giờ cũ.
-  const where = current ? (chapter ?? "") : last ? resumeWhere(chapter ?? "", last.seconds) : "";
+  // Cùng chỗ với nút chính của trang sách ("Nghe tiếp · Chương 3 · 12:04") và đúng chỗ bấm sẽ phát (useResumeTarget). Đang phát thì chỉ
+  // nói chương - giờ chạy liên tục.
+  const full = useListenBook(book.id, false).data;
+  const point = useResumeTarget(full ?? book, full?.chapters ?? book.chapters ?? []);
+  const where = !point ? "" : playingHere ? point.chapter.title : resumeWhere(point.chapter.title, point.at);
   return (
     <section className="flex items-center gap-4 rounded-2xl border border-line bg-panel p-4 shadow-card sm:gap-5 sm:p-5">
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={`Mở ${book.title}`}>

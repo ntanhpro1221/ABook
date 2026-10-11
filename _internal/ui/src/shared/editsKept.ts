@@ -13,3 +13,12 @@ export function workshopMergeNote(merge: { merged: number; kept: number } | null
   const kept = merge.kept ? `${merge.kept} sửa giữ bản của máy này vì mới hơn` : "";
   return `${[taken, kept].filter(Boolean).join(", ")}.`;
 }
+
+/** File sách mang bài nhạc nền hỏng (chép dở, bị đổi byte): sách vẫn mở, bài ấy bị bỏ - nói MỘT câu (soát a26 L4). `null` khi không
+ *  có bài nào hỏng. Dùng chung cho máy tính (desktop/App.tsx) và Android (imports.ts - BookFileImport.Imported.brokenMusic). */
+export function brokenMusicNote(broken: number | null | undefined): string | null {
+  if (!broken || broken <= 0) return null;
+  return broken === 1
+    ? "1 bài nhạc nền trong sách bị hỏng - đoạn ấy sẽ không có nhạc."
+    : `${broken} bài nhạc nền trong sách bị hỏng - những đoạn ấy sẽ không có nhạc.`;
+}

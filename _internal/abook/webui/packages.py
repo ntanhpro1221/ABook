@@ -417,7 +417,7 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
 
     File phiên bản 4 mang lớp sửa của người nghe (book_edits.py): cuốn đã nhập thì phần sửa được HỢP với phần sửa trên máy
     (máy này thắng, không bị xoá); cuốn là dự án của chính máy này thì phần sửa được cất chờ người dùng đồng ý áp vào dự án
-    (`book_edits.fold`). `report` (nếu có) nhận {"edits": số thay đổi trong file, "merge": báo cáo hợp}. `separate`: người dùng
+    (`book_edits.fold`). `report` (nếu có) nhận {"edits": số thay đổi trong file, "merge": báo cáo hợp, "brokenMusic": số bài nhạc nền hỏng đã bỏ}. `separate`: người dùng
     chọn "Thêm bản riêng" dù cuốn đã có - không tìm cuốn trùng, luôn là cuốn mới ở thư mục riêng."""
     report = report if report is not None else {}
     prints = opened.chapter_prints
@@ -444,9 +444,17 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
                 return existing, "existing"
             target = opened.extract(imported, existing.name)
             report["merge"] = opened.last_merge
+            _note_broken_music(opened, report)
             _write_cover_meta(target, opened.book)
             return target.resolve(), "updated"
     name = _folder_name(str(opened.book.get("title") or ""), opened.content_key)
     target = opened.extract(imported, _free_folder(imported, name) if separate else name)
+    _note_broken_music(opened, report)
     _write_cover_meta(target, opened.book)
     return target.resolve(), "new"
+
+
+def _note_broken_music(opened: Any, report: dict[str, Any]) -> None:
+    """Bài nhạc nền hỏng mà `extract` đã bỏ (`bookfile.BookFile.broken_music`; file dự án không có) -> `report["brokenMusic"]`."""
+    if broken := len(getattr(opened, "broken_music", ())):
+        report["brokenMusic"] = broken

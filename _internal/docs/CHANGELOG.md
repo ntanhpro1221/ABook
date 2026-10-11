@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại và Nghe sách (máy tính và điện thoại)
+
+- File sách có một bài nhạc nền hỏng vẫn mở được: đoạn ấy chỉ không có nhạc, máy báo một dòng; sách xuất lúc còn chương chờ thu lại ghi đúng giọng đang nghe trong file, không lộ số "câu chờ thu lại". Bài nhạc của chương không phát được thì hộp "Nhạc nền" nói ra, và tua giữa chương thì nhạc theo đúng chỗ.
+- Hết phần 1 nghe nối sang phần 2 không còn báo "Đã nghe hết sách", và phần 2 giữ tốc độ đang nghe; thẻ "Tối qua nghe tới đâu" ẩn khi bạn đã nghe tiếp sau đó; thẻ "Đang nghe dở" và nút trên trang sách cùng một chỗ nghe tiếp (chương nghe dở giữa chừng mở lại đúng chỗ, không về 0:00), "Còn x phút" khớp thanh phát.
+- Thanh "Nghe từ câu này" không che thẻ "Chương tiếp theo"; ở cửa sổ hẹp tên chương trên thanh phát co trước các nút; dấu trang không còn hai lớp ngoặc kép.
+
 ## [0.4.49] - 2026-10-11
 
 ### Làm sách trong Studio (máy tính)

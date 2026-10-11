@@ -60,6 +60,11 @@ export class NativeAudioEngine implements NativeEngine {
     return this.current?.musicCredit ?? null;
   }
 
+  /** Bài nhạc nền của chương đang nghe không phát được (MusicBed.brokenHere). */
+  get musicBroken(): boolean {
+    return this.current?.musicBroken ?? false;
+  }
+
   loadQueue(queue: NativeQueue): void {
     const files = chapterFiles.get(queue.bookId);
     void EbookPlayer.load({

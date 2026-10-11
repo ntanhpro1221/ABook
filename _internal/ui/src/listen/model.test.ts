@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookMatchesQuery, bookmarkReadPath, chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, twinBookIds, twinKind, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
+import { bookMatchesQuery, bookmarkReadPath, chaptersByPart, continuingPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, partToContinue, resumePoint, resumeTarget, seriesIndex, seriesOf, startingRate, twinBookIds, twinKind, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
@@ -129,6 +129,21 @@ describe("resumePoint", () => {
 
   it("starts with the first chapter not heard to the end", () => {
     expect(resumePoint(book(null, true, [1]), chapters)).toEqual({ chapter: chapters[1], at: 0 });
+  });
+  // Soát a26 L10: chỗ nghe cuối gần hết chương 1, chương 2 đã nghe 111 giây - nghe tiếp từ 1:51, không về 0:00.
+  const partly = (last: { chapterId: number; seconds: number } | null, heard: number) =>
+    ({ complete: true, state: { last, chapters: { "2": { done: false, heard } } } }) as unknown as ListenBook;
+
+  it("moves on into the next chapter where it was heard to", () => {
+    expect(resumePoint(partly({ chapterId: 1, seconds: 590 }, 111), chapters)).toEqual({ chapter: chapters[1], at: 111 });
+    expect(resumePoint(partly(null, 111), chapters), "chương chưa xong đầu tiên cũng vậy").toEqual({ chapter: chapters[0], at: 0 });
+    expect(resumePoint(partly({ chapterId: 1, seconds: 590 }, 595), chapters), "chương kế cũng đã gần hết: từ đầu").toEqual({ chapter: chapters[1], at: 0 });
+  });
+
+  it("every card and button names the player's spot for the book in the player (resumeTarget)", () => {
+    const saved = book({ chapterId: 2, seconds: 30 });
+    expect(resumeTarget(saved, chapters, { chapterId: 1, seconds: 15 })).toEqual({ chapter: chapters[0], at: 15 });
+    expect(resumeTarget(saved, chapters, null)).toEqual({ chapter: chapters[1], at: 30 });
   });
 });
 
@@ -263,5 +278,33 @@ describe("twinKind", () => {
     expect(twinKind({ capabilities: { workshop: true } as never, imported: false })).toBe("Dự án");
     expect(twinKind({ imported: true })).toBe("Đã nhập");
     expect(twinKind({})).toBe("");
+  });
+});
+
+describe("nghe nối sang phần sau (soát a26 L1, L3)", () => {
+  const part = (title: string, rate?: number) => ({ id: title, title, state: { chapters: {}, bookmarks: [], ...(rate ? { rate } : {}) } }) as unknown as ListenBook;
+
+  it("hết phần thì nối sang phần sau - lời hết sách không còn đúng", () => {
+    expect(partToContinue("finished", part("Truyện · Phần 2"))?.id).toBe("Truyện · Phần 2");
+  });
+  it("chưa hết, hết phần đã có, không có phần sau, hay tập khác của bộ: không tự nghe", () => {
+    expect(partToContinue("none", part("Truyện · Phần 2"))).toBeNull();
+    expect(partToContinue("caughtUp", part("Truyện · Phần 2"))).toBeNull();
+    expect(partToContinue("finished", null)).toBeNull();
+    expect(partToContinue("finished", part("Bộ · Tập 17"))).toBeNull();
+  });
+  it("trình phát biết trước khi hết phần là có phần sau - để khỏi nói \"Đã nghe hết sách\" rồi mới nối", () => {
+    expect(continuingPart(part("Truyện · Phần 2"))?.id).toBe("Truyện · Phần 2");
+    expect(continuingPart(part("Bộ · Tập 17"))).toBeNull();
+    expect(continuingPart(undefined)).toBeNull();
+  });
+
+  it("phần sau chưa có tốc độ riêng thì nghe tiếp đúng tốc độ phần trước, và nhớ luôn cho phần ấy", () => {
+    expect(startingRate(undefined, 1.5, 1)).toEqual({ rate: 1.5, keep: true });
+  });
+  it("tốc độ riêng của phần sau thắng; không mang gì thì về mặc định", () => {
+    expect(startingRate(1.25, 1.5, 1)).toEqual({ rate: 1.25, keep: false });
+    expect(startingRate(undefined, undefined, 1.1)).toEqual({ rate: 1.1, keep: false });
+    expect(startingRate(undefined, 1, 1), "mang sang đúng mặc định: khỏi ghi").toEqual({ rate: 1, keep: false });
   });
 });

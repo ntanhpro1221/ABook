@@ -254,6 +254,24 @@ describe("bài tải hỏng thử lại sau RETRY_MS (như MusicBed.kt)", () => 
     expect(made["/a"]).toHaveLength(3);
   });
 
+  it("bài của chương không phát được thì nói ra (failing) - hết khi tải được hay sang chương khác (soát a26 L7)", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithEvents();
+    bed.setCues([{ start: 0, end: 1000, link: "a", key: "1:1", src: "/a" }], -20);
+    bed.sync(10, true);
+    expect(bed.failing).toBe(false);
+    made["/a"][0].fire("error");
+    expect(bed.failing).toBe(true);
+    bed.setCues([{ start: 0, end: 1000, link: "b", key: "2:1", src: "/b" }], -20);
+    expect(bed.failing, "chương khác, bài khác").toBe(false);
+    bed.setCues([{ start: 0, end: 1000, link: "a", key: "1:1", src: "/a" }], -20);
+    expect(bed.failing).toBe(true);
+    vi.advanceTimersByTime(RETRY_MS);
+    bed.sync(20, true);
+    made["/a"][1].fire("loadedmetadata");
+    expect(bed.failing).toBe(false);
+  });
+
   it("chỉ bài hỏng im lặng: mốc khác vẫn phát, nối bài anh em vẫn mờ chéo", () => {
     vi.useFakeTimers();
     const { bed, made } = bedWithEvents();
@@ -279,5 +297,46 @@ describe("bài tải hỏng thử lại sau RETRY_MS (như MusicBed.kt)", () => 
     expect(made["/a"][0].paused).toBe(true);
     expect(made["/c"][0].volume).toBeCloseTo(Math.pow(10, -10 / 20), 3);
     expect(bed.activeLink).toBe("c");
+  });
+});
+
+describe("vị trí trong bài theo vị trí trong chương (soát a26 L8)", () => {
+  function fakes() {
+    const made: { currentTime: number; duration: number; fire: () => void }[] = [];
+    const bed = new MusicBed(() => {
+      let loaded: (() => void) | undefined;
+      const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration: Number.NaN };
+      const audio = Object.assign(fake, {
+        play: () => { fake.paused = false; return Promise.resolve(); },
+        pause: () => { fake.paused = true; },
+        addEventListener: (type: string, listener: () => void) => { if (type === "loadedmetadata") loaded = listener; },
+        fire: () => { fake.duration = 200; loaded?.(); },
+      });
+      made.push(audio);
+      return audio;
+    });
+    return { bed, made };
+  }
+
+  it("vào giữa chương: bài tải xong thì đứng ở giây mới nhất của chương, không phải từ đầu bài", () => {
+    const { bed, made } = fakes();
+    bed.setCues([{ start: 0, end: 600, link: "a", key: "1:1", src: "/a" }], -20, 0);
+    bed.sync(95, true, true);
+    made[0].fire();
+    expect(made).toHaveLength(1);
+    expect(made[0].currentTime).toBe(95);
+  });
+
+  it("tua trong cùng một bài thì nhạc dời theo (lặp bài thì theo vòng); không tua thì chơi tiếp", () => {
+    const { bed, made } = fakes();
+    bed.setCues([{ start: 0, end: 600, link: "a", key: "1:1", src: "/a" }], -20, 0);
+    bed.sync(0, true);
+    made[0].fire();
+    made[0].currentTime = 12;
+    bed.sync(12.5, true);
+    expect(made[0].currentTime, "không tua: không động vào nhạc").toBe(12);
+    bed.sync(250, true, true);
+    expect(made).toHaveLength(1);
+    expect(made[0].currentTime).toBe(50);
   });
 });
