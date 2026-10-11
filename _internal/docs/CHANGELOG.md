@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Làm sách trong Studio (máy tính)
+
+- Đổi giọng người kể chắc chắn vào sách: giọng bạn đã chọn cho người kể (dù chưa áp dụng) không còn chọn được cho nhân vật và ngược lại, người kể được áp trước; nếu giọng ấy vẫn không đổi được thì "Việc cần duyệt" có thẻ "Chưa đổi được giọng…" với nút chọn giọng khác. Đầu trang ghi giọng kể sẽ dùng kèm "chờ áp dụng", hàng người kể ghi số câu chờ thu lại, và chương chờ thu lại theo sửa của bạn vẫn nghe được bản cũ thay vì báo "Có lỗi".
+- Trình tạo sách cho "Xem hết" mọi dòng ghi công / xin ủng hộ theo từng chương và bỏ riêng dòng đầu chương hay cuối chương; nhập EPUB không còn chép một dòng gợi ý cho mỗi chương vào danh sách lưu ý.
+- Khi máy gộp hai cách viết một tên ("Toko" về "Tooko"), Diễn biến ghi rõ chương nào, bao nhiêu câu; phép gộp chạm từ 5 câu có thẻ nhẹ "Đúng, cùng một người" / "Không, là người khác". Cách đọc mà ký hiệu trong từ khiến máy không dùng được (như "Mở/đóng") không lưu được nữa và không làm thu lại câu nào; tab Nghe lại chỉ gọi là "tên riêng" khi câu thật sự lệch ở tên.
+- Phán quyết ở tab Nghe lại đi theo dự án (cả trong file .abookproj); tab "Duyệt trước khi thu" có con số, cộng với "Việc cần duyệt" đúng bằng số điện thoại báo.
+
 ### Điện thoại và Nghe sách (máy tính và điện thoại)
 
 - Nhạc nền "Nghe ngay" trên điện thoại có lại khi mạng về: mở sách lúc mất mạng (mọi bài tải hỏng) không còn im tới khi mở lại cuốn, và khi chỉ còn một bài lặp thì bài tải hỏng về hàng lúc bài ấy quay lại đầu (thử lại sau 5, 10, 20 phút như đã định).

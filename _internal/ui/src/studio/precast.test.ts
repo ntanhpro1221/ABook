@@ -5,10 +5,12 @@ import {
   castItems,
   chapterRange,
   freeNote,
+  isOpenWork,
   lineCount,
   lineItems,
   nameItems,
   precastInvites,
+  precastKeys,
   type WorkItemLike,
 } from "@/studio/precast";
 
@@ -97,5 +99,26 @@ describe("sửa lúc duyệt trước khi thu áp khi nào", () => {
     expect(applyWhen({ ...book, castLocked: false })).toBe("cast");
     expect(applyWhen({ ...book, castLocked: true })).toBe("paused");
     expect(applyWhen({ ...book, paused: null, castLocked: true })).toBe("running");
+  });
+});
+
+describe("số việc ở hai tab cộng lại đúng số điện thoại nhận (soát UX a24, A7)", () => {
+  it("thẻ ở màn duyệt không đếm lại ở Việc cần duyệt, thẻ đã quyết / chỉ áp khi làm lại không đếm ở đâu", () => {
+    const items = [
+      item("speaker", "s1", { chapters: [1] }),
+      item("turn", "t9", { chapters: [9] }),
+      item("shared-voice", "v"),
+      item("shared-voice", "v-done", { requested: "Giữ nguyên" }),
+      item("pronunciation", "p"),
+      item("narrator", "n", { redoOnly: true }),
+      item("speaker", "s-redo", { chapters: [1], redoOnly: true }),
+      item("audio", "w"),
+    ];
+    const inPrecast = precastKeys(items, [1, 2]);
+    expect([...inPrecast].sort()).toEqual(["p", "s1", "v"]);
+    const workTab = items.filter((card) => isOpenWork(card) && !inPrecast.has(card.key)).length;
+    // Con số điện thoại = work_items.open_count = mọi thẻ isOpenWork.
+    expect(inPrecast.size + workTab).toBe(items.filter(isOpenWork).length);
+    expect(workTab).toBe(2);
   });
 });

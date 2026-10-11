@@ -122,7 +122,116 @@ def test_studio_lists_narrator_voices_counts_the_redo_and_shows_the_wait(tmp_pat
     cast = store.cast(paths.root)
     assert cast["narrator"]["voice"] == NARRATOR_VOICE and cast["narrator"]["pendingVoice"]["preset"] == FREE[0]
     assert voice_choices(paths.root, "NARRATOR")["pending"]["name"] == FREE[0]
+    # Đầu trang dự án: giọng SẼ dùng (chờ áp dụng), không phải giọng cũ như chưa có gì (soát UX a24, lặt vặt).
+    settings = store.summarize(paths.root)["settings"]
+    assert settings["narrator"] == NARRATOR_VOICE and settings["narratorPending"] == FREE[0]
 
     _apply(db, "NARRATOR", preset=FREE[0])
     assert store.cast(paths.root)["narrator"]["voice"] == FREE[0], "dòng người kể nói giọng đang đọc, không phải giọng lúc tạo"
     assert store.narrator_voice(paths.root) == FREE[0]
+
+
+def test_a_voice_waiting_for_the_narrator_is_not_offered_to_a_character_and_the_other_way(tmp_path: Path) -> None:
+    """Soát UX a24, A2: ý muốn CHƯA ÁP cũng giữ giọng - người kể chờ giọng X thì nhân vật không chọn được X (và hộp nói vì
+    sao), nhân vật chờ giọng Y thì người kể không chọn được Y."""
+    from abook.config import save_settings
+    from abook.webui import store
+    from abook.webui.voice_picker import voice_choices
+
+    paths, _db = _book(tmp_path)
+    save_settings(paths.settings, SETTINGS)
+    waiting, wanted = FREE[0], FREE[1]
+    request_voice(paths.root, "NARRATOR", preset=waiting, now=10.0**10)
+
+    assert store.voice_request_problem(paths.root, "NOAH", preset=waiting) == store.NARRATOR_WISHED
+    assert store.voice_request_problem(paths.root, "NOAH", preset=wanted) is None
+    entry = next(voice for voice in voice_choices(paths.root, "NOAH")["voices"] if voice["name"] == waiting)
+    assert entry["takenBy"] == ["Người kể"] and "người kể" in entry["takenNote"]
+
+    request_voice(paths.root, "NOAH", preset=wanted, now=10.0**10)
+    assert store.voice_request_problem(paths.root, "NARRATOR", preset=wanted) == VOICE_TAKEN
+    by_name = {voice["name"]: voice for voice in voice_choices(paths.root, "NARRATOR")["voices"]}
+    assert by_name[wanted]["takenBy"] == ["Noah (chờ áp dụng)"]
+    assert store.voice_request_problem(paths.root, "NARRATOR", preset=waiting) is None, "chính ý muốn của người kể"
+
+
+def test_the_narrator_gets_the_voice_first_and_the_blocked_wish_becomes_a_card(tmp_path: Path) -> None:
+    """Người kể và LUCIEN (xếp trước NARRATOR theo tên) cùng chờ một giọng (ghi từ trước khi có kiểm tra): người kể áp
+    trước nên giữ giọng; ý muốn của Lucien bị từ chối và thành một thẻ "Việc cần duyệt" - không mất lặng lẽ."""
+    from abook.config import save_settings
+    from abook.webui.work_items import work_items
+
+    paths, db = _book(tmp_path)
+    save_settings(paths.settings, SETTINGS)
+    picked = FREE[0]
+    request_voice(paths.root, "LUCIEN", preset=picked, now=1.0)
+    request_voice(paths.root, "NARRATOR", preset=picked, now=2.0)
+    pipeline = _Pipeline(paths, db)
+    pipeline.settings = SETTINGS
+
+    pipeline._apply_listener_overrides()
+
+    assert _narrator_preset(db) == picked
+    cards = [item for item in work_items(paths.root)["items"] if item["kind"] == "voice-wish"]
+    assert [card["key"] for card in cards] == ["voice-wish:LUCIEN"]
+    assert picked in cards[0]["title"] and cards[0]["keepCharacters"] == ["LUCIEN"]
+
+    request_voice(paths.root, "LUCIEN", now=3.0)  # "Giữ giọng đang dùng"
+    assert not [item for item in work_items(paths.root)["items"] if item["kind"] == "voice-wish"]
+
+
+def test_a_narrator_wish_a_character_took_meanwhile_becomes_a_card(tmp_path: Path) -> None:
+    from abook.config import save_settings
+    from abook.webui.work_items import work_items
+
+    paths, _db = _book(tmp_path)
+    save_settings(paths.settings, SETTINGS)
+    lucien = str(CAST["LUCIEN"][1]["name"])
+    request_voice(paths.root, "NARRATOR", preset=lucien, now=1.0)  # bước phân vai đã cấp giọng ấy cho Lucien
+
+    (card,) = [item for item in work_items(paths.root)["items"] if item["kind"] == "voice-wish"]
+    assert card["key"] == "voice-wish:NARRATOR" and "Lucien" in card["problem"] and card["affected"] == 1
+
+
+def test_a_chapter_waiting_to_redo_a_listener_change_is_not_an_error_and_still_plays(tmp_path: Path) -> None:
+    """Soát UX a24, A3: sau "Áp dụng" (đổi giọng người kể), chương đã xong chờ thu lại các câu ấy - không phải "Có lỗi khi làm sách"
+    với chữ thô "Người nghe đổi giọng NARRATOR…", và MP3 cũ vẫn nghe được, đầu trang vẫn đếm là chương nghe được."""
+    from abook.webui import store
+
+    paths, db = _book(tmp_path)
+    mp3 = paths.root / "output" / "chapters" / "001.mp3"
+    mp3.parent.mkdir(parents=True, exist_ok=True)
+    mp3.write_bytes(b"ID3")
+    assert store.chapters(paths.root)[0]["playable"]
+
+    _apply(db, "NARRATOR", preset=FREE[0])
+
+    (chapter,) = store.chapters(paths.root)
+    assert chapter["status"] == "warning" and chapter["redo"] and chapter["lastError"] == ""
+    assert chapter["statusLabel"] == "Chờ thu lại theo sửa của bạn" and chapter["playable"]
+    summary = store.summarize(paths.root)
+    assert summary["chapters"]["completed"] == 1 and summary["chapters"]["redo"] == 1
+    # Hàng "Người kể chuyện" của tab Nhân vật nói các câu kể đang chờ thu lại bằng giọng mới (soát UX a24, lặt vặt).
+    assert store.cast(paths.root)["narrator"]["redo"] > 0
+    assert store.chapter_audio_path(paths.root, chapter["id"]) == mp3.resolve()
+
+    db.update_chapter_status(chapter["id"], "synthesizing")  # dây chuyền bắt đầu làm lại: hết "chờ thu lại"
+    (chapter,) = store.chapters(paths.root)
+    assert not chapter["redo"] and not chapter["playable"]
+
+
+def test_the_narrator_box_names_people_as_the_cast_tab_does_and_once(tmp_path: Path) -> None:
+    """Soát UX a24 (lặt vặt): hộp "Đổi giọng" của người kể ghi khoá chuẩn viết hoa từng chữ ("Lính Gác 1") và ghi lặp khi hai
+    người cùng một tên hiện. Ghi như hàng ở tab Nhân vật (tên sổ viết), mỗi tên một lần."""
+    import sqlite3
+
+    from abook.webui.voice_picker import voice_choices
+
+    paths, db = _book(tmp_path)
+    with sqlite3.connect(db.path) as connection:
+        connection.execute("UPDATE characters SET display_name='Lính gác 1' WHERE canonical_name IN ('LUCIEN', 'RHINE')")
+    view = voice_choices(paths.root, "NARRATOR")
+    assert view is not None
+    lucien = str(CAST["LUCIEN"][1]["name"])
+    (voice,) = [entry for entry in view["voices"] if entry["name"] == lucien]
+    assert voice["takenBy"] == ["Lính gác 1"]

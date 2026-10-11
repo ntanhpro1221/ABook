@@ -56,6 +56,7 @@ from .text_processing import (
     SPLIT_MAX_CHARS_FIELD,
     SPLIT_STRATEGY_FIELD,
     is_standalone_ha_gasp,
+    spoken_symbols_to_words,
 )
 from .tts_contract import (
     HA_VOCALIZATION_DELIVERY_PROFILE,
@@ -87,6 +88,10 @@ QUALITY_SCOPES = {QUALITY_SCOPE_SEGMENT, QUALITY_SCOPE_CHAPTER}
 # rather than in cli.py because the table lives here and `relock_machine_pronunciation` has
 # to know what it must never touch; cli.py imports it back.
 LISTENER_PRONUNCIATION_SOURCE = "listener_choice"
+# Mở đầu `chapters.last_error` của chương đã xong mà người nghe vừa sửa (đổi giọng, cách đọc, người nói, thu lại câu): chương
+# chờ thu lại những câu ấy, KHÔNG phải lỗi - Studio nói "chờ thu lại theo sửa của bạn" và MP3 cũ vẫn nghe được tới khi có bản
+# mới (webui/store.py). Dây chuyền xoá nó khi bắt đầu làm lại chương như mọi lý do khác.
+LISTENER_REDO = "listener_redo: "
 SEGMENT_AUDIO_QUALITY_STAGE = "segment_audio_v1"
 SEGMENT_ASR_DECODE_QUALITY_STAGE = "segment_asr_decode_v1"
 SEGMENT_PERCEPTUAL_QUALITY_STAGE = "segment_perceptual_v1"
@@ -8899,7 +8904,9 @@ class ProjectDB:
                     SegmentStatus.FAILED.value,
                 ),
             ).fetchall()
-            affected = [row for row in recorded if word.search(str(row["text"]))] if respeak else []
+            # Như TTS: ký hiệu máy không nói được thành quãng nghỉ TRƯỚC khi tra cách đọc ("Mở/đóng" -> "Mở, đóng"), nên câu
+            # mà chữ ấy bị xé đôi không bao giờ đọc theo cách mới - thu lại là vô ích (soát UX a24, A4).
+            affected = [row for row in recorded if word.search(spoken_symbols_to_words(str(row["text"])))] if respeak else []
             reason = f"Người nghe đổi cách đọc {surface!r} thành {spoken_form!r}: thu lại với cách đọc mới"
             for row in affected:
                 self._reset_segment_pending_conn(conn, int(row["id"]), reason, now)
@@ -8908,7 +8915,7 @@ class ProjectDB:
                 self._refresh_chapter_counts_conn(conn, chapter_id)
                 conn.execute(
                     "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                    (reason, chapter_id, ChapterStatus.COMPLETED.value),
+                    (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
                 )
             details = {
                 "surface": surface,
@@ -9002,7 +9009,7 @@ class ProjectDB:
                 self._refresh_chapter_counts_conn(conn, chapter_id)
                 conn.execute(
                     "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                    (reason, chapter_id, ChapterStatus.COMPLETED.value),
+                    (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
                 )
             details = {
                 "stable_id": stable_id,
@@ -9117,7 +9124,7 @@ class ProjectDB:
                 self._refresh_chapter_counts_conn(conn, chapter_id)
                 conn.execute(
                     "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                    (reason, chapter_id, ChapterStatus.COMPLETED.value),
+                    (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
                 )
             return {"stable_id": stable_id, "chapter_id": chapter_id, "retakes": retakes, "reset": reset}
 
@@ -9181,7 +9188,7 @@ class ProjectDB:
                 self._refresh_chapter_counts_conn(conn, chapter_id)
                 conn.execute(
                     "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                    (reason, chapter_id, ChapterStatus.COMPLETED.value),
+                    (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
                 )
             details = {
                 "stable_id": stable_id,
@@ -9307,7 +9314,7 @@ class ProjectDB:
                     self._refresh_chapter_counts_conn(conn, chapter_id)
                     conn.execute(
                         "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                        (reason, chapter_id, ChapterStatus.COMPLETED.value),
+                        (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
                     )
             if target["lock_gender"]:
                 conn.execute(

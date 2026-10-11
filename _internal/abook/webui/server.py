@@ -127,6 +127,7 @@ VOICE_PROBLEMS = {
     listener_overrides.UNKNOWN_PRESET: "Giọng này không dùng được ở đây (không có, hay đang là giọng người kể).",
     listener_overrides.BAD_GENDER: "Giới phải là nam hoặc nữ.",
     listener_overrides.VOICE_TAKEN: "Giọng này đang là giọng của một nhân vật - người kể cần giọng riêng.",
+    store.NARRATOR_WISHED: "Bạn đã chọn giọng này cho người kể (chờ áp dụng) - nhân vật cần giọng khác.",
 }
 # "Hoàn tác" tới sau khi dây chuyền đã đưa quyết định vào sách (ranh giới chương rơi đúng mấy giây ấy).
 WITHDRAW_APPLIED = {
@@ -255,7 +256,7 @@ class App:
         self.read_only = read_only
         self.static_dir = static_dir
         self.version = version
-        self.reviews = Reviews(preferences.path.with_name("reviews.json"))
+        self.reviews = Reviews()  # phán quyết "Cần nghe lại" nằm trong thư mục từng dự án (reviews.REVIEWS_NAME)
         # Nhạc nền (webui/music_*.py): địa chỉ danh mục lấy từ cấu hình từ xa có chữ ký (remote_config.py), không ghi cứng.
         self.remote_config = remote_config.RemoteConfig(preferences.path.with_name("remote"))
         self.music_dir = preferences.path.with_name("music")
@@ -377,11 +378,10 @@ class App:
         lần. Hồ sơ nghe giữ nguyên mã (điện thoại gộp theo mã hồ sơ). Sao lưu từng file trước lần ghi đầu
         (`*.pre-ids.bak`)."""
         positions = self.preferences.get().get("positions")
-        renamed = legacy_ids([*self.listening.books(), *(positions if isinstance(positions, dict) else {}),
-                              *self.reviews.books()])
+        renamed = legacy_ids([*self.listening.books(), *(positions if isinstance(positions, dict) else {})])
         if not renamed:
             return
-        for file in (self.listening.path, self.preferences.path, self.reviews.path):
+        for file in (self.listening.path, self.preferences.path):
             backup = file.with_name(file.name + ".pre-ids.bak")
             try:
                 if file.is_file() and not backup.exists():
@@ -390,7 +390,6 @@ class App:
                 pass  # không sao lưu được vẫn đổi: mỗi file ghi nguyên tử, mã cũ vẫn được nhận
         self.listening.rename_books(renamed)
         self.preferences.rename_positions(renamed)
-        self.reviews.rename_books(renamed)
 
     # ---- sách ------------------------------------------------------------------------------------------
 
@@ -3517,7 +3516,7 @@ class Handler(BaseHTTPRequestHandler):
             with app.music_exporting(music_key, [project]) as music:
                 path = projectfile.pack(project, free_path(root / projectfile.default_name(title)),
                                         running=app.runner.running(project), music_track=music, progress=progress,
-                                        verdicts=app.reviews.get(value))
+                                        verdicts=app.reviews.get(project))
             with projectfile.ProjectFile(path) as packed:
                 missing = packed.missing_sources
             app.exports.add(str(path.parent))
@@ -3554,7 +3553,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_review(self, query: dict[str, list[str]], value: str) -> None:
         project = self.app._book(value)
-        verdicts = self.app.reviews.get(value)
+        verdicts = self.app.reviews.get(project)
         self._send_json(HTTPStatus.OK, review_view(project, verdicts, include_minor=query.get("all") == ["1"]))
 
     def _view(self, value: str, name: str, make: Callable[[Path], Any]) -> Any:
@@ -3570,8 +3569,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_work(self, query: dict[str, list[str]], value: str) -> None:
         # "Việc cần duyệt" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
-        # Câu đã chấm ở "Cần nghe lại" không còn là việc (phán quyết nằm ở reviews.json của máy này, không trong sổ dự án).
-        view = self._view(value, "work", lambda root: work_items(root, self.app.reviews.get(value)))
+        # Câu đã chấm ở "Cần nghe lại" không còn là việc (phán quyết nằm ở reviews.json của dự án, không trong sổ dự án).
+        view = self._view(value, "work", lambda root: work_items(root, self.app.reviews.get(root)))
         if (query.get("count") or [""])[0] == "1":
             # Nhãn của tab chỉ cần con số (việc đã quyết đang chờ áp dụng không còn là việc cần làm): không gửi/đọc cả danh sách vài MB.
             self._send_json(HTTPStatus.OK, {"count": open_count(view)})
@@ -4033,7 +4032,7 @@ class Handler(BaseHTTPRequestHandler):
         chapter_id = int(body.get("chapterId", 0))
         asked_count = 0
         for stable_id in stable_ids:
-            self.app.reviews.set(value, stable_id, verdict, chapter_id)
+            self.app.reviews.set(project, stable_id, verdict, chapter_id)
             # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
             # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.
             text_sha256 = store.segment_text_sha256(project, stable_id)

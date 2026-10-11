@@ -219,15 +219,17 @@ def speaker_target(
 
 
 def voice_requests(overrides: dict[str, Any]) -> list[dict[str, str]]:
-    """Các yêu cầu giọng/giới cho một nhân vật, theo thứ tự khoá tên chuẩn.
+    """Các yêu cầu giọng/giới cho một nhân vật: người kể trước, rồi theo thứ tự khoá tên chuẩn.
 
+    Người kể trước (soát UX a24): người kể và một nhân vật cùng chờ một giọng thì người kể giữ nó - xếp theo tên thì "KRAI"
+    tới trước "NARRATOR", lấy mất giọng và người kể bị từ chối.
     `preset` rỗng = để máy chọn (đúng phép chọn của bước phân vai, người khác giữ nguyên); `gender` rỗng = giữ giới đang
     có; `avoid` = khoá giọng phải tránh (hai người đang dùng chung giọng ấy). Cả ba rỗng = người nghe bảo "giữ nguyên"."""
     entries = overrides.get("voices")
     if not isinstance(entries, dict):
         return []
     requests: list[dict[str, str]] = []
-    for character in sorted(entries):
+    for character in sorted(entries, key=lambda name: (character_key(str(name)) != NARRATOR, name)):
         entry = entries[character]
         if not isinstance(entry, dict) or not str(character).strip():
             continue

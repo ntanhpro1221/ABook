@@ -15,6 +15,7 @@
     "reached": 2,
     "recorded": 1,
     "blocked": 0,
+    "never": false,
     "cost": "thu lại 1 câu",
     "chapters": [
      {
@@ -66,6 +67,7 @@
     "reached": 2,
     "recorded": 1,
     "blocked": 0,
+    "never": false,
     "cost": "thu lại 1 câu",
     "chapters": [
      {
@@ -102,6 +104,7 @@
     "reached": 1,
     "recorded": 1,
     "blocked": 0,
+    "never": false,
     "cost": "thu lại 1 câu",
     "chapters": [
      {
@@ -132,6 +135,7 @@
     "reached": 1,
     "recorded": 0,
     "blocked": 0,
+    "never": false,
     "cost": "chưa thu nên không phải thu lại",
     "chapters": [
      {
@@ -162,6 +166,7 @@
     "reached": 0,
     "recorded": 0,
     "blocked": 0,
+    "never": false,
     "cost": "chưa thu nên không phải thu lại",
     "chapters": [],
     "example": null
@@ -193,6 +198,7 @@
     "reached": 0,
     "recorded": 0,
     "blocked": 1,
+    "never": true,
     "cost": "chưa thu nên không phải thu lại",
     "chapters": [],
     "example": null
@@ -208,6 +214,7 @@
     "reached": 0,
     "recorded": 0,
     "blocked": 1,
+    "never": true,
     "cost": "chưa thu nên không phải thu lại",
     "chapters": [],
     "example": null
@@ -242,6 +249,7 @@
     "reached": 0,
     "recorded": 0,
     "blocked": 2,
+    "never": true,
     "cost": "chưa thu nên không phải thu lại",
     "chapters": [],
     "example": null
@@ -257,6 +265,7 @@
     "reached": 2,
     "recorded": 1,
     "blocked": 0,
+    "never": false,
     "cost": "thu lại 1 câu",
     "chapters": [
      {
@@ -293,6 +302,7 @@
     "reached": 2,
     "recorded": 1,
     "blocked": 0,
+    "never": false,
     "cost": "thu lại 1 câu",
     "chapters": [
      {
@@ -329,6 +339,7 @@
     "reached": 0,
     "recorded": 0,
     "blocked": 1,
+    "never": true,
     "cost": "chưa thu nên không phải thu lại",
     "chapters": [],
     "example": null

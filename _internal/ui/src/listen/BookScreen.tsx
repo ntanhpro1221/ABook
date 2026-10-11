@@ -394,7 +394,9 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onRenam
           {onPickNarrator && cast.narrator.pendingVoice?.preset && (
             <div className="mt-0.5 truncate text-xs font-medium text-accent-text">Chờ áp dụng: giọng {cast.narrator.pendingVoice.preset}</div>
           )}
-          <div className="tabular text-xs text-fg-2">{formatNumber(cast.narrator.lines)} câu dẫn truyện{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}</div>
+          <div className="tabular text-xs text-fg-2">{formatNumber(cast.narrator.lines)} câu dẫn truyện{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
+            {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}
+            {cast.narrator.redo ? ` · ${formatNumber(cast.narrator.redo)} câu chờ thu lại` : ""}</div>
         </div>
         {cast.narrator.voice && <SampleButton id={`voice-${cast.narrator.voice}`} url={source.voiceUrl(cast.narrator.voice)} label={`Nghe giọng ${cast.narrator.voice}`} />}
         {onPickNarrator && <IconButton label="Đổi giọng người kể" icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}

@@ -11,7 +11,7 @@ import { formatNumber, shownReading } from "@/shared/format";
 import { Button } from "@/shared/ui";
 import { api, suggestionOf, urls } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
-import { reachSaved, reachSummary, useReach, type Reach } from "./readingReach";
+import { neverText, reachSaved, reachSummary, useReach, type Reach } from "./readingReach";
 import { SharedReadingsOffer, useSharedEntry } from "./sharedReadings";
 import { useTryReading } from "./TryReading";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied, WAITING_STUDIO } from "./decisions";
@@ -28,6 +28,8 @@ interface NameReading {
   lines: number;
   /** Cách đọc người nghe đã ghi mà dây chuyền chưa áp. */
   requested: string | null;
+  /** Cách đọc này không bao giờ được dùng (ký hiệu xé đôi chữ ấy trước khi tra cách đọc - "Mở/đóng"). */
+  never?: boolean;
   example: { segmentId: number; chapterTitle: string; seq: number; text: string; hasAudio: boolean } | null;
 }
 
@@ -277,7 +279,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
               : "Không có trong danh sách - máy đọc theo chữ"
             : !analyzed && !item.lines
               ? "chưa phân tích tới"
-              : `${formatNumber(item.lines)} câu · ${item.byListener ? "đã chọn" : item.spoken ? "máy đoán" : "chưa có trong sách"}`}
+              : `${formatNumber(item.lines)} câu · ${item.never ? "máy không dùng được cách đọc này (ký hiệu)" : item.byListener ? "đã chọn" : item.spoken ? "máy đoán" : "chưa có trong sách"}`}
           {sharedHere && <span className="text-fg-3"> · dùng chung</span>}
           {item.requested && (
             <span className="font-medium text-accent-text">
@@ -395,7 +397,8 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
       onDone();
       const keep = spokenForm === item.spoken;
       if (waiting) {
-        toast.success(`Đã ghi: “${item.surface}” đọc là “${shownReading(spokenForm)}”`, {
+        // Đúng chữ người nghe gõ - không viết hoa từng chữ như dòng cách đọc tên ("Mở Hoặc Đóng" - soát UX a24).
+      toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
           description: WAITING_STUDIO,
           action: undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, keep: false }], `Đã bỏ cách đọc vừa ghi cho “${item.surface}”.`),
           duration: UNDO_MS,
@@ -422,7 +425,8 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
         toast.success(`Giữ cách đọc “${shownReading(spokenForm)}”`, { description: `Không phải thu lại câu nào.${shared}`, ...undo });
         return;
       }
-      toast.success(`Đã ghi: “${item.surface}” đọc là “${shownReading(spokenForm)}”`, {
+      // Đúng chữ người nghe gõ - không viết hoa từng chữ như dòng cách đọc tên ("Mở Hoặc Đóng" - soát UX a24).
+      toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
         // Tên chưa có câu nào trong phần này (vừa thêm): không có gì để thu lại - nói đúng điều ấy (soát UX 29-09).
         // Câu mẫu là câu ĐÃ THU nếu có (name_readings.py) - mẫu chưa thu nghĩa là chưa thu câu nào có tên này (soát UX a23).
         description: reach
@@ -441,6 +445,8 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
   });
   const typed = value.trim();
   const inputId = `reading-${fold(item.surface)}`;
+  // Ký hiệu xé đôi chữ ấy trước khi tra cách đọc ("Mở/đóng"): lưu cũng không bao giờ được dùng - tắt "Lưu", nói vì sao (soát UX a24).
+  const never = reach?.never ?? item.never ?? false;
   const use = (spoken: string) => {
     setValue(spoken);
     setProblem("");
@@ -467,7 +473,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
       className="flex w-full flex-wrap items-center gap-2"
       onSubmit={(event) => {
         event.preventDefault();
-        if (typed) save.mutate(asStored(typed));
+        if (typed && !never) save.mutate(asStored(typed));
       }}
     >
       <input
@@ -504,7 +510,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
         type="submit"
         loading={save.isPending}
         // Chưa đổi gì (ô hiện chữ đầu viết hoa - so không phân biệt hoa thường) thì chỉ lưu khi đưa vào cách đọc chung.
-        disabled={!typed || (!fresh && !everywhere && asStored(typed) === (item.requested ?? item.spoken))}
+        disabled={!typed || never || (!fresh && !everywhere && asStored(typed) === (item.requested ?? item.spoken))}
       >
         Lưu
       </Button>
@@ -520,6 +526,11 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
       </label>
     </form>
       {tryIt.note}
+      {never && (
+        <p className="text-xs text-warning" data-reading-never>
+          {neverText(item.surface)}
+        </p>
+      )}
       <ReadingProblem id={`${inputId}-problem`} problem={problem} suggestion={suggestion} onUse={use} className="" />
     </div>
   );
