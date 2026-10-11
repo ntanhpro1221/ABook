@@ -10,7 +10,7 @@ import { api, urls } from "./api";
 import { useCachedBook } from "./data";
 import { retryUnlessGone } from "./polling";
 import { usePendingNote } from "./decisions";
-import { warnElsewhere } from "./elsewhere";
+import { verdictWord, warnElsewhere } from "./elsewhere";
 import { matchPhrase, notRecordedYet, shortcutHint, spokenEditLabel } from "./reviewText";
 
 // "Cần nghe lại": câu mà khâu tự kiểm tra không chắc (webui/reviews.py). Nghe từng câu, bấm Ổn hoặc Cần thu lại.
@@ -392,7 +392,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     onSuccess: ({ elsewhere }, body) => {
       const theirs = elsewhere?.[body.stableId];
       if (theirs === undefined) return;
-      warnElsewhere(1, theirs === "ok" ? "“Ổn”" : theirs === "redo" ? "“Cần thu lại”" : "", () =>
+      warnElsewhere(1, verdictWord(theirs), () =>
         void api(`/api/books/${bookId}/review`, {
           method: "POST",
           body: { stableId: body.stableId, chapterId: body.chapterId, verdict: theirs || null },

@@ -31,3 +31,40 @@ export function warnElsewhere(count: number, was: string, takeTheirs?: () => voi
 export function seenFor(lines: readonly { stableId: string }[], known: Readonly<Record<string, string>> | undefined): Record<string, string> {
   return Object.fromEntries(lines.map((line) => [line.stableId, known?.[line.stableId] ?? ""]));
 }
+
+/** Cách đọc một câu như máy chủ so (`_line_elsewhere`): loại đoạn, cảm xúc, cường độ, chữ đem đọc. */
+export interface SeenDelivery {
+  kind: string;
+  emotion: string;
+  intensity: number | null;
+  spoken?: string | null;
+}
+
+/** `seen` của lần sửa cách đọc một câu: cách đọc màn này đang thấy (bỏ trạng thái chờ/đã áp), null = chưa ai sửa câu này. */
+export function seenDelivery(wish: SeenDelivery | null | undefined): SeenDelivery | null {
+  if (!wish) return null;
+  return { kind: wish.kind, emotion: wish.emotion, intensity: wish.intensity, ...(wish.spoken != null ? { spoken: wish.spoken } : {}) };
+}
+
+/** "Lấy của máy kia" cho cách đọc một câu: ghi lại đúng những gì máy kia đã đặt. null = máy kia không đặt gì - không có gì để lấy lại. */
+export function theirDelivery(theirs: SeenDelivery | null): { kind?: string; emotion?: string; intensity?: number; spoken?: string } | null {
+  if (!theirs) return null;
+  const change = {
+    ...(theirs.kind ? { kind: theirs.kind } : {}),
+    ...(theirs.emotion ? { emotion: theirs.emotion } : {}),
+    ...(theirs.intensity != null ? { intensity: theirs.intensity } : {}),
+    ...(theirs.spoken != null ? { spoken: theirs.spoken } : {}),
+  };
+  return Object.keys(change).length ? change : null;
+}
+
+/** Phán quyết "Nghe lại" nói bằng lời ("" = chưa ai quyết). */
+export function verdictWord(verdict: string | null | undefined): string {
+  return verdict === "ok" ? "“Ổn”" : verdict === "redo" ? "“Cần thu lại”" : "";
+}
+
+/** Lựa chọn giọng máy kia đã đặt cho nhân vật (`elsewhere` của POST /voice), nói bằng lời ("" = không có gì chờ). */
+export function voiceWas(theirs: { voice: string; gender: string }): string {
+  if (theirs.voice) return `giọng ${theirs.voice}`;
+  return theirs.gender === "female" ? "nhân vật nữ" : theirs.gender === "male" ? "nhân vật nam" : "";
+}

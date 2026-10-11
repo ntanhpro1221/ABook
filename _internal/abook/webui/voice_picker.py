@@ -310,9 +310,9 @@ def narrator_choices(project_root: Path) -> dict[str, Any] | None:
     }
 
 
-def _pending_request(project_root: Path, key: str, suggested: dict[str, str], written_at: float) -> dict[str, Any] | None:
-    """Yêu cầu giọng/giới của nhân vật này ghi SAU lần dây chuyền ghi sổ cuối (như store.pending_voices), kèm giọng gốc nó
-    sẽ thành: giọng đã chọn, hay giọng máy chọn cho giới đã chọn (thẻ "Nam hay nữ"); "tránh trùng giọng" thì chưa biết."""
+def _waiting(project_root: Path, key: str, written_at: float) -> dict[str, Any] | None:
+    """Yêu cầu giọng/giới của nhân vật này ghi SAU lần dây chuyền ghi sổ cuối (như store.pending_voices), nguyên như đã ghi:
+    {"preset", "gender", "requestedAt"}; None khi không có gì chờ."""
     from ..listener_overrides import read_overrides
 
     entries = read_overrides(project_root).get("voices")
@@ -329,4 +329,20 @@ def _pending_request(project_root: Path, key: str, suggested: dict[str, str], wr
     gender = str(entry.get("gender") or "")
     if not (preset or gender or entry.get("avoid")):
         return None
-    return {"preset": preset or suggested.get(gender, ""), "requestedAt": requested_at}
+    return {"preset": preset, "gender": gender, "requestedAt": requested_at}
+
+
+def waiting_voice(project_root: Path, key: str) -> dict[str, Any] | None:
+    """Lựa chọn giọng/giới đang chờ áp của nhân vật `key` (khoá tên chuẩn) - điều hộp "Đổi giọng" hiện là "Chờ áp dụng" (`_waiting`)."""
+    with closing(store.connect(project_root)) as connection:
+        book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
+    return _waiting(project_root, key, float(book_row["updated_at"] or 0) if book_row is not None else 0.0)
+
+
+def _pending_request(project_root: Path, key: str, suggested: dict[str, str], written_at: float) -> dict[str, Any] | None:
+    """Lựa chọn đang chờ (`_waiting`) kèm giọng gốc nó sẽ thành: giọng đã chọn, hay giọng máy chọn cho giới đã chọn (thẻ "Nam
+    hay nữ"); "tránh trùng giọng" thì chưa biết."""
+    waiting = _waiting(project_root, key, written_at)
+    if waiting is None:
+        return None
+    return {"preset": waiting["preset"] or suggested.get(waiting["gender"], ""), "requestedAt": waiting["requestedAt"]}

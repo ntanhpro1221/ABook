@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterator, NamedTuple
 from urllib.parse import quote
 
+from ..io_utils import _replace_with_retry, atomic_write_bytes, atomic_write_json
 from . import bluetooth, book_edits, route, tls
 
 REMOTE_FOLDER = "Trên máy khác"
@@ -69,26 +70,51 @@ def _folder(name: str, key: str) -> str:
     return f"{clean} ({key[:8]})"
 
 
+def broken_note(kept: str | None) -> str:
+    """Một dòng cho người dùng khi danh sách máy đã ghép hỏng và được làm lại (`Computers.broken`: tên bản hỏng giữ bên cạnh)."""
+    return (f"Danh sách máy tính đã ghép trên máy này bị hỏng nên các máy ấy phải ghép lại - bản hỏng được giữ lại ({kept})."
+            if kept else "")
+
+
 class Computers:
     """Máy tính khác đã ghép: địa chỉ, tên, mã thiết bị máy kia cấp, lần thấy cuối."""
+
+    READ_ATTEMPTS = 12  # như io_utils._replace_with_retry: ~0,6 giây cho lúc tiến trình khác đang đổi tên đè lên file
+    READ_RETRY_SECONDS = 0.05
 
     def __init__(self, path: Path) -> None:
         self.path = Path(path)
         self._lock = threading.Lock()
         self._revoking = threading.Lock()  # một lượt báo thôi ghép mỗi lúc
+        self.broken: str | None = None  # tên bản hỏng đã giữ lại (`broken_note`), None = không có gì hỏng
 
     def _read(self) -> dict[str, Any]:
+        """Chưa có file = chưa ghép máy nào. Đọc không được (Windows: đang có người đổi tên đè lên file) thì thử lại một thoáng rồi
+        nâng lỗi - KHÔNG coi là rỗng, vì lần ghi kế tiếp sẽ xoá sạch danh sách. File hỏng (ghi dở, không phải JSON) thì giữ nó sang
+        bên (`computers.json.hong-<lúc>`) trước khi làm lại từ đầu, và báo người dùng (`broken`)."""
+        for attempt in range(self.READ_ATTEMPTS):
+            try:
+                raw = self.path.read_bytes()
+                break
+            except FileNotFoundError:
+                return {"computers": {}}
+            except OSError:
+                if attempt == self.READ_ATTEMPTS - 1:
+                    raise
+                time.sleep(self.READ_RETRY_SECONDS)
         try:
-            data = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return {"computers": {}}
-        return data if isinstance(data, dict) and isinstance(data.get("computers"), dict) else {"computers": {}}
+            data = json.loads(raw.decode("utf-8"))
+        except ValueError:
+            data = None
+        if isinstance(data, dict) and isinstance(data.get("computers"), dict):
+            return data
+        kept = self.path.with_name(f"{self.path.name}.hong-{time.strftime('%Y%m%d-%H%M%S')}")
+        _replace_with_retry(self.path, kept)
+        self.broken = kept.name
+        return {"computers": {}}
 
     def _write(self, data: dict[str, Any]) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-        temporary.replace(self.path)
+        atomic_write_json(self.path, data)
 
     def get(self, computer: str) -> dict[str, Any] | None:
         with self._lock:
@@ -655,13 +681,15 @@ def _read(response: http.client.HTTPResponse, size: int | None = None) -> bytes:
 @contextmanager
 def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str, Any] | None = None,
           timeout: float = TIMEOUT, upload: tuple[Path, str] | None = None,
-          wake: bool = False, extra: dict[str, str] | None = None) -> Iterator[tuple[http.client.HTTPResponse, str]]:
+          wake: bool = False, extra: dict[str, str] | None = None, raw: bytes | None = None, passthrough: bool = False,
+          read_timeout: float | None = None) -> Iterator[tuple[http.client.HTTPResponse, str]]:
     """Một yêu cầu qua TLS ghim vân tay, thân trả lời CHƯA đọc: (trả lời, vân tay chứng chỉ máy kia đã đưa ra). Máy kia trả lỗi
-    thì `RemoteError` mang câu của nó và mã trạng thái. `upload`: (file, kiểu nội dung) gửi làm thân thay cho JSON. `wake`:
-    máy kia đang ngủ thì chờ nó dậy (`_Wait`)."""
+    thì `RemoteError` mang câu của nó và mã trạng thái - trừ khi `passthrough` (cầu nối Studio, peer_studio.py: trả nguyên lỗi
+    cho trang). `upload`: (file, kiểu nội dung) gửi làm thân thay cho JSON; `raw`: thân JSON đã mã hoá sẵn. `wake`: máy kia đang
+    ngủ thì chờ nó dậy (`_Wait`). `read_timeout`: chờ trả lời lâu hơn lúc nối (`timeout`) - máy tắt thì biết sau `timeout` giây."""
     if endpoint.fingerprint == "":
         raise RemoteError("Máy này chưa ghi vân tay của máy kia - ghép lại với máy kia")
-    data = json.dumps(body).encode("utf-8") if body is not None else None
+    data = raw if raw is not None else json.dumps(body).encode("utf-8") if body is not None else None
     headers = {"Authorization": f"Bearer {token}"} if token else {}
     headers.update(extra or {})
     if data is not None:
@@ -670,6 +698,8 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
     try:
         try:
             connection = _connect(endpoint, timeout, wake=wake)
+            if read_timeout is not None and connection.sock is not None:
+                connection.sock.settimeout(read_timeout)
             if upload is not None:
                 headers.update({"Content-Type": upload[1], "Content-Length": str(upload[0].stat().st_size)})
                 with upload[0].open("rb") as handle:
@@ -682,7 +712,7 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
                               "Nếu máy kia không cài lại gì thì đừng ghép lại: có thể có ai chen vào mạng") from error
         except (OSError, http.client.HTTPException) as error:
             raise RemoteError(_unreachable(endpoint, error)) from error
-        if response.status >= 400:
+        if response.status >= 400 and not passthrough:
             try:
                 message = json.loads(_read(response).decode("utf-8")).get("error")
             except (ValueError, AttributeError):
@@ -816,9 +846,7 @@ def _manifests(folder: Path, suffix: str = "") -> list[tuple[Path, dict[str, Any
 
 
 def _write_manifest(target: Path, manifest: dict[str, Any]) -> None:
-    temporary = target / (MANIFEST + ".tmp")
-    temporary.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
-    temporary.replace(target / MANIFEST)
+    atomic_write_json(target / MANIFEST, manifest)
 
 
 def _follow_renamed(entry: dict[str, Any], computer: str, folder: Path, listed: set[str]) -> None:
@@ -872,9 +900,10 @@ def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str,
         try:
             data = _request(_base(entry), "GET", f"/sync/v1/books/{book}/files/cover.jpg", entry["token"],
                             timeout=FILE_TIMEOUT)
-            (target / "cover.jpg").write_bytes(data)
+            # Ghi tạm rồi đổi tên: bìa ghi dở (tắt máy giữa chừng) không bao giờ bị coi là đã có.
+            atomic_write_bytes(target / "cover.jpg", data)
             meta = {key: new_cover[key] for key in ("color", "width", "height") if new_cover.get(key)}
-            (target / "cover.json").write_text(json.dumps(meta), encoding="utf-8")
+            atomic_write_json(target / "cover.json", meta)
         except RemoteError:
             pass
 
@@ -924,10 +953,20 @@ def remote_of(manifest: dict[str, Any]) -> dict[str, str] | None:
     return remote if isinstance(remote, dict) and remote.get("computer") and remote.get("book") else None
 
 
-def computer_name(manifest: dict[str, Any]) -> str:
+def _paired_entry(manifest: dict[str, Any]) -> dict[str, Any] | None:
     remote = remote_of(manifest)
-    entry = _COMPUTERS.get(remote["computer"]) if remote and _COMPUTERS is not None else None
+    return _COMPUTERS.get(remote["computer"]) if remote and _COMPUTERS is not None else None
+
+
+def computer_name(manifest: dict[str, Any]) -> str:
+    entry = _paired_entry(manifest)
     return str(entry.get("name") or "") if entry else ""
+
+
+def computer_kind(manifest: dict[str, Any]) -> str:
+    """"computer" / "phone" của máy giữ cuốn này ("" khi chưa biết): chỉ máy tính có Studio để mở (peer_studio.py)."""
+    entry = _paired_entry(manifest)
+    return str(entry.get("kind") or "") if entry else ""
 
 
 def exchange_state(manifest: dict[str, Any], state: dict[str, Any], *, timeout: float = TIMEOUT) -> dict[str, Any] | None:
@@ -1016,9 +1055,7 @@ def _note(package: Path, relative: str, version: Any, *, absent: bool = False) -
         data = _record(package)
         data["absent" if absent else "files"][relative] = version
         data["files" if absent else "absent"].pop(relative, None)
-        temporary = package / (DOWNLOAD_FILE + ".tmp")
-        temporary.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        temporary.replace(package / DOWNLOAD_FILE)
+        atomic_write_json(package / DOWNLOAD_FILE, data)
 
 
 def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | None = None,
@@ -1071,7 +1108,7 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
                     raise RemoteError(_cut(endpoint))
             if size is not None and temporary.stat().st_size != size:
                 raise RemoteError("File tải về không đủ - thử lại")
-            temporary.replace(target)
+            _replace_with_retry(temporary, target)
         finally:
             if not keep:
                 temporary.unlink(missing_ok=True)
@@ -1304,9 +1341,7 @@ def pending_changes(package: Path, edits: dict[str, Any] | None = None) -> int:
 def _remember_send(package: Path, state: dict[str, Any]) -> None:
     if "kept" not in state and _sent_marks(package):
         state = {**state, "kept": _sent_marks(package)}  # lần gửi lỗi không làm quên cái đã gửi trước đó
-    temporary = package / (EDITS_STATE + ".tmp")
-    temporary.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
-    temporary.replace(package / EDITS_STATE)
+    atomic_write_json(package / EDITS_STATE, state)
 
 
 def send_edits(package: Path) -> dict[str, Any]:

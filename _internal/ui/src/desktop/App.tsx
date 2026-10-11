@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { Clapperboard, Compass, FileAudio, FolderDown, Headphones, Trash2 } from "lucide-react";
+import { Clapperboard, Compass, FileAudio, FolderDown, Headphones, Laptop, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { HashRouter, Route, Routes, useNavigate } from "react-router";
 import { Toaster, toast } from "sonner";
@@ -23,7 +23,9 @@ import { brokenMusicNote, keptEditsTitle, workshopMergeNote } from "@/shared/edi
 import { MissingLibrary } from "@/shared/MissingLibrary";
 import { setExternalOpener } from "@/shared/openExternal";
 import { toastRemoved } from "@/shared/trashUndo";
-import { api } from "@/studio/api";
+import { homePage, listenOnlyLine, peerPage } from "@/shared/peerStudio";
+import { watchUntilBack } from "@/listen/peerBack";
+import { api, ApiError, currentPeer, type AppInfo } from "@/studio/api";
 import { pickFolder, useAppInfo, useLibrary, usePreferences } from "@/studio/data";
 import { NewProjectScreen } from "@/studio/NewProjectScreen";
 import { ProjectScreen } from "@/studio/ProjectScreen";
@@ -423,6 +425,41 @@ function StudioChipLink({ id }: { id: string }) {
   );
 }
 
+/** Cuốn đang làm trên máy tính đã ghép: mở Studio của máy ấy ngay tại cuốn này, trong app máy này (webui/peer_studio.py). */
+function PeerStudioChipLink({ device, book }: { device: string; book: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => window.location.assign(peerPage(window.location.search, device, `/studio/${book}`))}
+      className="font-semibold underline underline-offset-2 hover:no-underline"
+    >
+      Mở Studio
+    </button>
+  );
+}
+
+/** Cuốn của máy khác mở Studio được ở máy ấy: máy tính đã ghép (không phải điện thoại), biết mã cuốn ở máy ấy. */
+function peerStudioOf(book: ListenBook): { device: string; book: string } | null {
+  const remote = typeof book.remote === "object" ? book.remote : null;
+  return remote?.device && remote.book && remote.kind === "computer" ? { device: remote.device, book: remote.book } : null;
+}
+
+/** Trang mở Studio của máy khác mà chưa vào được: máy ấy không trả lời (tự nối lại khi nó trả lời), hay hai máy khác phiên bản. */
+function PeerTrouble({ error, retry }: { error: unknown; retry: () => void }) {
+  const silent = error instanceof ApiError && error.detail.unreachable === true;
+  useEffect(() => (silent ? watchUntilBack(() => api<AppInfo>("/api/app").then(() => true), retry) : undefined), [silent, retry]);
+  return (
+    <EmptyState
+      icon={Laptop}
+      title={(error as Error).message || "Máy kia không trả lời"}
+      className="mt-24"
+      action={<Button onClick={() => window.location.assign(homePage(window.location.search))}>Về máy này</Button>}
+    >
+      {silent ? "Studio tự mở khi máy ấy trả lời lại." : null}
+    </EmptyState>
+  );
+}
+
 function LibraryRoute() {
   const navigate = useNavigate();
   const { data: info } = useAppInfo();
@@ -450,6 +487,17 @@ function StudioClosed({ children }: { children: ReactNode }) {
   const { data: info } = useAppInfo();
   const navigate = useNavigate();
   if (!info?.listenOnly) return <>{children}</>;
+  if (info.peer)
+    return (
+      <EmptyState
+        icon={Clapperboard}
+        title={listenOnlyLine(info.peer.name)}
+        className="mt-24"
+        action={<Button onClick={() => navigate("/")}>Về Thư viện</Button>}
+      >
+        Sách của máy ấy vẫn nghe được ở Thư viện.
+      </EmptyState>
+    );
   return (
     <EmptyState
       icon={Clapperboard}
@@ -478,7 +526,8 @@ function NotFound() {
 }
 
 export function App() {
-  const { data: info } = useAppInfo();
+  const { data: info, error, refetch } = useAppInfo();
+  const retry = useCallback(() => void refetch(), [refetch]);
   const { data: preferences } = usePreferences();
   useTheme(preferences?.theme ?? info?.theme);
   // Chương có audio phát bằng <audio>; chương chỉ-có-chữ ("Nghe ngay") đi qua bộ máy đọc to (listen/readAloud.ts).
@@ -495,6 +544,7 @@ export function App() {
   }, [info?.dialogs]);
   // "Thêm sách từ file…" đọc file bằng đường dẫn trên máy này: thiết bị điều khiển từ xa (Studio từ xa) không có.
   const source = useMemo(() => (info?.remote ? httpSource : { ...httpSource, textImport: desktopTextImport(Boolean(info?.dialogs)) }), [info?.remote, info?.dialogs]);
+  if (!info && error && currentPeer()) return <PeerTrouble error={error} retry={retry} />;
   if (!info) return <div className="grid h-full place-items-center text-fg-3">Đang mở ABook…</div>;
   return (
     <TooltipProvider delayDuration={350} skipDelayDuration={150}>
@@ -548,7 +598,10 @@ export function App() {
                             </>
                           )
                         }
-                        studioLink={(book) => (book.imported ? null : <StudioChipLink id={book.id} />)}
+                        studioLink={(book) => {
+                          const peer = info.remote ? null : peerStudioOf(book);
+                          return peer ? <PeerStudioChipLink {...peer} /> : book.imported ? null : <StudioChipLink id={book.id} />;
+                        }}
                         notice={(book) => (book.remote && !info.remote ? <RemoteDownloadStatus book={book} /> : null)}
                         editing={
                           info.remote

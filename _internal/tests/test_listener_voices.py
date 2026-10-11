@@ -374,3 +374,39 @@ def test_the_voice_picker_shows_a_choice_still_waiting_and_can_drop_it_after_the
         assert len(waiting) == 1 and waiting[0]["gender"] == "female" and waiting[0]["suggested"]
     finally:
         server.stop()
+
+
+def test_a_voice_another_window_just_picked_is_told_not_silently_replaced(tmp_path: Path) -> None:
+    """uxfix28 A: hộp "Đổi giọng" gửi `seen` - mốc của lựa chọn đang chờ nó thấy (0 = không có gì chờ). Cửa sổ/máy khác vừa chọn
+    giọng khác thì lời đáp mang `elsewhere` (giọng ấy) để hộp hỏi giữ của mình hay lấy của máy kia; lần ghi vẫn vào."""
+    from abook.config import save_settings
+    from abook.webui.humanize import voice_label
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
+    from abook.webui.voice_picker import voice_choices
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    paths, _db = _book(tmp_path)
+    save_settings(paths.settings, SETTINGS)
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    book = f"/api/books/{book_id(paths.root)}"
+    headers = {"X-Ebook-Token": "t"}
+    theirs, mine = str(MALE[2]["name"]), str(MALE[3]["name"])
+    try:
+        status, data, _ = _request(server.port, "POST", book + "/voice", body={"character": "RHINE", "preset": theirs}, headers=headers)
+        assert status == 200 and "elsewhere" not in json.loads(data), "khách không gửi `seen`: lời đáp như cũ"
+        status, data, _ = _request(server.port, "POST", book + "/voice", body={"character": "RHINE", "preset": mine, "seen": 0},
+                                   headers=headers)
+        assert status == 200, data
+        assert json.loads(data)["elsewhere"] == {"voice": voice_label(theirs), "gender": ""}
+        assert read_overrides(paths.root)["voices"]["RHINE"]["preset"] == mine, "không chặn: lần ghi vẫn vào"
+        seen = voice_choices(paths.root, "Rhine")["pending"]["requestedAt"]
+        status, data, _ = _request(server.port, "POST", book + "/voice", body={"character": "RHINE", "preset": theirs, "seen": seen},
+                                   headers=headers)
+        assert status == 200 and "elsewhere" not in json.loads(data), "đã thấy lựa chọn mới nhất"
+    finally:
+        server.stop()

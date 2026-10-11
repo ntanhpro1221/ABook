@@ -14,6 +14,7 @@ import { formatPercent } from "@/shared/format";
 import { Progress, Vu } from "@/shared/ui";
 import { useAppInfo, useLibrary } from "@/studio/data";
 import { usePrecastInvites } from "@/studio/PrecastReview";
+import { PeerBar } from "./PeerBar";
 import { HandOffButton, RemoteBars, ThisPlayerReporter } from "./RemotePhone";
 
 // Máy tính = phía Nghe (giống hệt trình phát Android) + Studio sản xuất. Thanh bên tách hai khu rõ ràng.
@@ -226,6 +227,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <div className="relative flex min-w-0 flex-1 flex-col">
+        <PeerBar />
         <main ref={main} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto outline-none" inert={expanded}>
           {children}
         </main>

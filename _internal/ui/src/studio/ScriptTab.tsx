@@ -13,7 +13,7 @@ import { Button, EmptyState, IconButton, Kbd, Segmented, Sheet, Skeleton } from 
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
 import { UNDO_MS, optimistic, undoAction, usePendingNote, useWhenApplied } from "./decisions";
-import { seenFor, warnElsewhere } from "./elsewhere";
+import { seenDelivery, seenFor, theirDelivery, verdictWord, warnElsewhere, type SeenDelivery } from "./elsewhere";
 import { findRanges, splitByRanges, wrapIndex } from "./scriptFind";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
@@ -65,6 +65,8 @@ export interface Line {
   spoken: string | null;
   /** Người nghe đã xin thu lại câu này và dây chuyền chưa thu; null = không có yêu cầu nào đang chờ. */
   retake?: "pending" | null;
+  /** Phán quyết "Nghe lại" của câu (reviews.json): "Thu lại" gửi nó làm `seen` - máy kia vừa quyết khác thì được hỏi. */
+  verdict?: "ok" | "redo" | null;
 }
 
 interface LineWish {
@@ -157,6 +159,17 @@ export const KINDS = [
 export function deliveryText(emotion: string, intensity: number | null): string {
   const label = EMOTION_LABEL[emotion] ?? emotion;
   return intensity ? `${label} · ${LEVELS[intensity]?.toLowerCase() ?? intensity}` : label;
+}
+
+/** Cách đọc một câu nói bằng lời ("loại câu: nội tâm, cảm xúc: buồn"); "" khi không đặt gì. */
+export function deliveryWords({ kind, emotion, intensity, spoken }: SeenDelivery): string {
+  return [
+    kind ? `loại câu: ${KINDS.find((item) => item.value === kind)?.label.toLowerCase() ?? kind}` : "",
+    emotion ? `cảm xúc: ${deliveryText(emotion, intensity).toLowerCase()}` : "",
+    spoken != null ? (spoken ? `đọc là “${spoken}”` : "trả về chữ của sách") : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
 function hue(label: string): CSSProperties {
@@ -369,22 +382,40 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
     verdict,
     chapterId,
     lines: lines.map((line) => ({ stableId: line.stableId })),
+    // Phán quyết màn này thấy cho từng câu: máy/cửa sổ khác vừa quyết khác thì hỏi giữ của mình hay lấy của máy kia (uxfix28 A).
+    seen: Object.fromEntries(lines.map((line) => [line.stableId, line.verdict ?? ""])),
   });
+  type Answer = { elsewhere?: Record<string, string> };
+  // Lần ghi đã vào; máy kia vừa quyết khác thì hỏi - "Lấy của máy kia" ghi lại đúng phán quyết máy kia đã đặt cho từng câu.
+  const warn = ({ elsewhere }: Answer) => {
+    const replaced = Object.entries(elsewhere ?? {});
+    if (!replaced.length) return;
+    warnElsewhere(replaced.length, verdictWord(replaced[0][1]), () =>
+      void Promise.all(
+        replaced.map(([stableId, verdict]) => api(`/api/books/${bookId}/review`, { method: "POST", body: { verdict: verdict || null, stableId, chapterId } })),
+      )
+        .catch((error: Error) => toast.error("Chưa lấy lại được", { description: error.message }))
+        .finally(refresh),
+    );
+  };
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ["casting", bookId] });
     void client.invalidateQueries({ queryKey: ["work", bookId] });
     void client.invalidateQueries({ queryKey: ["book", bookId] });
   };
   const cancel = useMutation({
-    mutationFn: (lines: Line[]) => api(`/api/books/${bookId}/review`, { method: "POST", body: body(null, lines) }),
+    mutationFn: (lines: Line[]) => api<Answer>(`/api/books/${bookId}/review`, { method: "POST", body: body(null, lines) }),
     onMutate: (lines) => {
       const ids = new Set(lines.map((line) => line.stableId));
       return optimistic<ChapterScript>(client, ["casting", bookId, chapterId], (data) => ({
         ...data,
-        lines: data.lines.map((item) => (ids.has(item.stableId) ? { ...item, retake: null } : item)),
+        lines: data.lines.map((item) => (ids.has(item.stableId) ? { ...item, retake: null, verdict: null } : item)),
       }));
     },
-    onSuccess: () => toast.success("Đã bỏ yêu cầu thu lại", { description: "Câu giữ nguyên bản thu hiện có." }),
+    onSuccess: (answer) => {
+      warn(answer);
+      toast.success("Đã bỏ yêu cầu thu lại", { description: "Câu giữ nguyên bản thu hiện có." });
+    },
     onError: (error: Error, _lines, context) => {
       context?.restore();
       toast.error("Chưa bỏ được", { description: error.message });
@@ -392,15 +423,16 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
     onSettled: refresh,
   });
   const ask = useMutation({
-    mutationFn: (lines: Line[]) => api(`/api/books/${bookId}/review`, { method: "POST", body: body("redo", lines) }),
+    mutationFn: (lines: Line[]) => api<Answer>(`/api/books/${bookId}/review`, { method: "POST", body: body("redo", lines) }),
     onMutate: (lines) => {
       const ids = new Set(lines.map((line) => line.stableId));
       return optimistic<ChapterScript>(client, ["casting", bookId, chapterId], (data) => ({
         ...data,
-        lines: data.lines.map((item) => (ids.has(item.stableId) ? { ...item, retake: "pending" as const } : item)),
+        lines: data.lines.map((item) => (ids.has(item.stableId) ? { ...item, retake: "pending" as const, verdict: "redo" as const } : item)),
       }));
     },
-    onSuccess: (_data, lines) => {
+    onSuccess: (answer, lines) => {
+      warn(answer);
       let used = false;
       const run = () => {
         if (used) return false;
@@ -430,11 +462,16 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
 function useLineFix(bookId: string, chapterId: number) {
   const client = useQueryClient();
   const when = useWhenApplied(bookId);
+  const refresh = () => {
+    void client.invalidateQueries({ queryKey: ["casting", bookId] });
+    void client.invalidateQueries({ queryKey: ["work", bookId] });
+  };
   return useMutation({
     mutationFn: ({ line, change }: { line: Line; change: Delivery }) =>
-      api(`/api/books/${bookId}/line`, {
+      api<{ elsewhere?: { delivery: SeenDelivery | null } }>(`/api/books/${bookId}/line`, {
         method: "POST",
-        body: { stableId: line.stableId, textSha256: line.textSha256, ...change },
+        // `seen`: cách đọc màn này đang thấy cho câu - máy/cửa sổ khác vừa đổi khác thì được hỏi (uxfix28 A).
+        body: { stableId: line.stableId, textSha256: line.textSha256, ...change, seen: seenDelivery(line.lineWish) },
       }),
     onMutate: ({ line, change }) =>
       optimistic<ChapterScript>(client, ["casting", bookId, chapterId], (data) => ({
@@ -454,18 +491,25 @@ function useLineFix(bookId: string, chapterId: number) {
             : item,
         ),
       })),
-    onSuccess: (_data, { line }) =>
+    onSuccess: ({ elsewhere }, { line }) => {
+      if (elsewhere) {
+        // "Lấy của máy kia": ghi lại những gì máy kia đã đặt (cách đọc câu không có Hoàn tác riêng); máy kia đã bỏ hết thì chỉ báo.
+        const theirs = theirDelivery(elsewhere.delivery);
+        const takeTheirs = () =>
+          void api(`/api/books/${bookId}/line`, { method: "POST", body: { stableId: line.stableId, textSha256: line.textSha256, ...theirs } })
+            .catch((error: Error) => toast.error("Chưa lấy lại được", { description: error.message }))
+            .finally(refresh);
+        warnElsewhere(1, elsewhere.delivery ? deliveryWords(elsewhere.delivery) : "", theirs ? takeTheirs : undefined);
+      }
       toast.success("Đã ghi cách đọc câu này", {
         description: `${line.hasAudio ? "Câu đã thu sẽ được thu lại." : "Câu chưa thu nên không phải thu lại."} ${when}`,
-      }),
+      });
+    },
     onError: (error: Error, _variables, context) => {
       context?.restore();
       toast.error("Chưa ghi được", { description: error.message });
     },
-    onSettled: () => {
-      void client.invalidateQueries({ queryKey: ["casting", bookId] });
-      void client.invalidateQueries({ queryKey: ["work", bookId] });
-    },
+    onSettled: refresh,
   });
 }
 

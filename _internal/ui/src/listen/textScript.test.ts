@@ -87,8 +87,8 @@ describe("withoutLines", () => {
     const text = "Chương 2\n\nDịch:  Nhóm A\n\nMở đầu.\n\nDịch: Nhóm A";
     expect(paragraphsOf(withoutLines(text, ["Dịch: Nhóm A"]))).toEqual(["Chương 2", "Mở đầu."]);
     expect(withoutLines(text, [])).toBe(text);
-    const middle = [1, 2, 3, 4, 5, 6].map((n) => `Dòng ${n}.`).join("\n") + "\nDịch: Nhóm A\n" + [7, 8, 9, 10, 11, 12].map((n) => `Dòng ${n}.`).join("\n");
-    expect(paragraphsOf(withoutLines(middle, ["Dịch: Nhóm A"]))).toHaveLength(13); // giữa chương, ngoài 6 dòng đầu và 6 dòng cuối: giữ
+    const middle = [1, 2, 3, 4, 5, 6].map((n) => `Dòng ${n}.`).join("\n") + "\nDịch: Nhóm A\n" + Array.from({ length: 12 }, (_, n) => `Dòng ${n + 7}.`).join("\n");
+    expect(paragraphsOf(withoutLines(middle, ["Dịch: Nhóm A"]))).toHaveLength(19); // giữa chương, ngoài 6 dòng đầu và 12 dòng cuối: giữ
   });
 
   it("skips the chosen lines among the last six of the chapter too (ủng hộ, nguồn)", () => {

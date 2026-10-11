@@ -2,6 +2,7 @@ import type { Capabilities } from "@/shared/capabilities";
 import type { CoverImage } from "@/shared/cover";
 import type { VolumeProposal } from "@/studio/volumes";
 import type { BookTemplate } from "@/studio/bookTemplates";
+import { PEER_SILENT_EVENT, peerOf, throughPeer } from "@/shared/peerStudio";
 // Hợp đồng với server Python (abook/webui/server.py). Mọi chữ hiển thị đã được server dịch sẵn
 // sang tiếng Việt (humanize.py); ở đây chỉ định kiểu và gọi.
 
@@ -292,6 +293,8 @@ export interface AppInfo {
   remote?: boolean;
   /** Ở xa và CHỈ được nghe (thiết bị đã ghép nhưng máy tính chưa cho điều khiển sản xuất): ẩn Studio. */
   listenOnly?: boolean;
+  /** Đang mở Studio của máy tính đã ghép ngay trong app máy này (webui/peer_studio.py, `?peer=`): máy ấy là máy nào. */
+  peer?: { id: string; name: string };
   /** App Windows đóng gói (webui/host.py): bản mới vỏ Tauri tìm thấy trên GitHub Releases, chờ người dùng bấm cài. */
   update?: { version: string; notes: string } | null;
   /** App Windows đóng gói: Studio (thư viện + model làm sách) tải thêm đã cài chưa. null: bản dev (runtime cạnh mã). */
@@ -343,6 +346,14 @@ const token: string = (() => {
   }
 })();
 
+// "Mở Studio" của máy tính đã ghép (shared/peerStudio.ts): trang mang `?peer=<mã máy>` thì mọi lời gọi đi qua cầu nối của máy này.
+const peer: string = typeof window === "undefined" ? "" : peerOf(window.location.search);
+
+/** Mã máy đang mở Studio (trang `?peer=`), "" khi là trang của chính máy này. */
+export function currentPeer(): string {
+  return peer;
+}
+
 export class ApiError extends Error {
   status: number;
   /** Các trường máy chủ gửi kèm lời báo lỗi - `suggestion`: cách đọc bị từ chối, viết lại đúng chính tả. */
@@ -373,7 +384,7 @@ export function setApiTransport(next: ApiTransport | null): void {
 
 export async function api<T>(path: string, init?: ApiInit): Promise<T> {
   if (transport) return (await transport(path, init)) as T;
-  const response = await fetch(path, {
+  const response = await fetch(throughPeer(path, peer), {
     method: init?.method ?? "GET",
     headers: {
       "X-Ebook-Token": token,
@@ -384,13 +395,16 @@ export async function api<T>(path: string, init?: ApiInit): Promise<T> {
   const text = await response.text();
   const data = text ? JSON.parse(text) : null;
   if (!response.ok) {
+    // Máy kia tắt / mất mạng giữa chừng: thanh "Studio của <máy>" báo và tự nối lại (desktop/PeerBar.tsx).
+    if (peer && data?.unreachable) window.dispatchEvent(new CustomEvent(PEER_SILENT_EVENT, { detail: String(data.error ?? "") }));
     throw new ApiError(response.status, (data && data.error) || `Lỗi ${response.status}`, data && typeof data === "object" ? data : {});
   }
   return data as T;
 }
 
 export function mediaUrl(path: string): string {
-  return token ? `${path}${path.includes("?") ? "&" : "?"}t=${encodeURIComponent(token)}` : path;
+  const routed = throughPeer(path, peer);
+  return token ? `${routed}${routed.includes("?") ? "&" : "?"}t=${encodeURIComponent(token)}` : routed;
 }
 
 export const urls = {

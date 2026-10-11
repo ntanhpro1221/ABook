@@ -8,6 +8,7 @@ import { excerpt, formatNumber } from "@/shared/format";
 import { Button, Dialog, Progress, Segmented, Skeleton, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
+import { voiceWas, warnElsewhere } from "./elsewhere";
 import { modulePercent } from "./musicLocal";
 import { groupByEngine, moduleNote, plainGroupLabels, sharedText, takenText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
 import { useVoiceTry } from "./VoiceTry";
@@ -169,27 +170,31 @@ export function VoicePicker({
   useEffect(() => setCrossing(null), [person?.name]);
   const save = useMutation({
     mutationFn: ({ voice, withGender }: { voice: VoiceOption; withGender: boolean }) =>
-      api<{ requestedAt: number }>(`/api/books/${bookId}/voice`, {
+      api<{ requestedAt: number; elsewhere?: { voice: string; gender: string } }>(`/api/books/${bookId}/voice`, {
         method: "POST",
         // Có `gender` thì giới ghi cùng giọng (cùng đường overrides `voices`): dòng "chờ áp dụng" ở tab Nhân vật hiện giới mới.
-        body: { character: data!.character.value, preset: voice.name, ...(withGender ? { gender: voice.gender } : {}) },
+        // `seen`: mốc của lựa chọn đang chờ hộp này thấy (0 = không có) - máy/cửa sổ khác vừa chọn khác thì được hỏi (uxfix28 A).
+        body: { character: data!.character.value, preset: voice.name, ...(withGender ? { gender: voice.gender } : {}), seen: data!.pending?.requestedAt ?? 0 },
       }),
-    onSuccess: ({ requestedAt }, { voice, withGender }) => {
+    onSuccess: ({ requestedAt, elsewhere }, { voice, withGender }) => {
       // Dòng nhân vật hiện "Chờ áp dụng" ngay (store.pending_voices), không đợi lần làm mới sau 60 giây.
       refreshAfterDecision(client, bookId);
       const character = data!.character;
       const who = narrator ? "người kể" : "người ấy";
+      const undo = undoAction(
+        client,
+        bookId,
+        "voice",
+        [{ character: character.value, requestedAt, keep: false }],
+        // Không nói tên giọng cũ: người ấy có thể đang có một giọng chờ áp khác, và hoàn tác trả về đúng giọng chờ ấy.
+        `Giọng${withGender ? " và giới" : ""} của ${name} trở lại như trước khi đổi.`,
+      );
+      // Không chặn: "Lấy của máy kia" là hoàn tác lần ghi này - lựa chọn của máy kia (yêu cầu nó thay) trở lại.
+      if (elsewhere) warnElsewhere(1, voiceWas(elsewhere), undo.onClick);
       // Chọn nhầm giọng trong danh sách dài: "Hoàn tác" như thẻ giọng trong hộp việc (studio/decisions.ts).
       toast.success(`Đã ghi: ${name} đọc bằng giọng ${voice.name}${withGender ? ` và là ${GENDER_WORD[voice.gender]}` : ""}`, {
         description: `${data!.rerecord?.lines ? `Thu lại ${formatNumber(data!.rerecord.lines)} câu đã thu của ${who} bằng giọng mới.` : `Chưa câu nào của ${who} được thu nên không phải thu lại gì.`} ${when}`,
-        action: undoAction(
-          client,
-          bookId,
-          "voice",
-          [{ character: character.value, requestedAt, keep: false }],
-          // Không nói tên giọng cũ: người ấy có thể đang có một giọng chờ áp khác, và hoàn tác trả về đúng giọng chờ ấy.
-          `Giọng${withGender ? " và giới" : ""} của ${name} trở lại như trước khi đổi.`,
-        ),
+        action: undo,
         duration: UNDO_MS,
       });
       close();

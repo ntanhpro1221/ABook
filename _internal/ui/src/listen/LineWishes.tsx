@@ -7,10 +7,10 @@ import { studioNeed } from "@/shared/capabilities";
 import { Button, Dialog } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { refreshAfterDecision, UNDO_MS, undoAction, WAITING_STUDIO } from "@/studio/decisions";
-import { warnElsewhere } from "@/studio/elsewhere";
+import { seenDelivery, theirDelivery, verdictWord, warnElsewhere, type SeenDelivery } from "@/studio/elsewhere";
 import { EditReading } from "@/studio/NameReadings";
 import { reachSummary, useReach } from "@/studio/readingReach";
-import { DeliveryMenu, deliveryText, KINDS, LineQuote, NARRATOR, SpeakerMenu, type ChapterScript, type Delivery, type Line, type Person } from "@/studio/ScriptTab";
+import { DeliveryMenu, deliveryWords, LineQuote, NARRATOR, SpeakerMenu, type ChapterScript, type Delivery, type Line, type Person } from "@/studio/ScriptTab";
 import { cleanName } from "./BookScreen";
 import { refreshAfterEdit } from "./EditBook";
 import type { Cast, CastMember, ListenBook, Script, ScriptSegment } from "./model";
@@ -109,13 +109,7 @@ function waitingItems(wish: LineWish | undefined): { key: string; text: string; 
   const items: { key: string; text: string; section: string; requestedAt: number }[] = [];
   if (wish?.speaker) items.push({ key: "speaker", text: `Người nói: ${wish.speaker.shown}`, section: "speakers", requestedAt: wish.speaker.requestedAt });
   if (wish?.delivery) {
-    const { kind, emotion, intensity, spoken } = wish.delivery;
-    const parts = [
-      kind ? `loại câu: ${KINDS.find((item) => item.value === kind)?.label.toLowerCase() ?? kind}` : "",
-      emotion ? `cảm xúc: ${deliveryText(emotion, intensity).toLowerCase()}` : "",
-      spoken !== undefined ? (spoken ? `đọc là “${spoken}”` : "trả về chữ của sách") : "",
-    ].filter(Boolean);
-    items.push({ key: "delivery", text: `Cách đọc câu - ${parts.join(", ") || "đã ghi"}`, section: "lines", requestedAt: wish.delivery.requestedAt });
+    items.push({ key: "delivery", text: `Cách đọc câu - ${deliveryWords(wish.delivery) || "đã ghi"}`, section: "lines", requestedAt: wish.delivery.requestedAt });
   }
   if (wish?.retake) items.push({ key: "retake", text: "Thu lại câu này", section: "retakes", requestedAt: wish.retake.requestedAt });
   return items;
@@ -298,18 +292,44 @@ export function LineWishDialog({
     onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
   });
   const delivery = useMutation({
-    mutationFn: (change: Delivery) => api(`/api/books/${book.id}/line`, { method: "POST", body: { ...ref, ...change } }),
-    onSuccess: () => {
+    // `seen`: cách đọc câu này đang chờ mà hộp thấy - cửa sổ/máy khác vừa ghi khác thì được hỏi (uxfix28 A).
+    mutationFn: (change: Delivery) =>
+      api<{ elsewhere?: { delivery: SeenDelivery | null } }>(`/api/books/${book.id}/line`, {
+        method: "POST",
+        body: { ...ref, ...change, seen: seenDelivery(wish?.delivery) },
+      }),
+    onSuccess: ({ elsewhere }) => {
       done();
+      if (elsewhere) {
+        const theirs = theirDelivery(elsewhere.delivery);
+        const takeTheirs = () =>
+          void api(`/api/books/${book.id}/line`, { method: "POST", body: { ...ref, ...theirs } })
+            .then(done)
+            .catch((error: Error) => toast.error("Chưa lấy lại được", { description: error.message }));
+        warnElsewhere(1, elsewhere.delivery ? deliveryWords(elsewhere.delivery) : "", theirs ? takeTheirs : undefined);
+      }
       toast.success("Đã ghi cách đọc câu này", { description: WAITING_STUDIO });
       close();
     },
     onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
   });
   const retake = useMutation({
-    mutationFn: () => api(`/api/books/${book.id}/review`, { method: "POST", body: { verdict: "redo", stableId: ref.stableId, chapterId: script.chapterId } }),
-    onSuccess: () => {
+    // `seen`: hộp có thấy câu này đang chờ thu lại không - máy kia vừa xin/bỏ khác thì được hỏi (uxfix28 A).
+    mutationFn: () =>
+      api<{ elsewhere?: Record<string, string> }>(`/api/books/${book.id}/review`, {
+        method: "POST",
+        body: { verdict: "redo", stableId: ref.stableId, chapterId: script.chapterId, seen: { [ref.stableId]: wish?.retake ? "redo" : "" } },
+      }),
+    onSuccess: ({ elsewhere }) => {
       done();
+      const theirs = elsewhere?.[ref.stableId];
+      if (theirs !== undefined) {
+        warnElsewhere(1, verdictWord(theirs), () =>
+          void api(`/api/books/${book.id}/review`, { method: "POST", body: { verdict: theirs || null, stableId: ref.stableId, chapterId: script.chapterId } })
+            .then(done)
+            .catch((error: Error) => toast.error("Chưa lấy lại được", { description: error.message })),
+        );
+      }
       toast.success("Đã ghi: thu lại câu này", {
         description: WAITING_STUDIO,
         action: {

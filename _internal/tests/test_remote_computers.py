@@ -34,7 +34,9 @@ def test_this_computer_listens_to_a_book_on_another_computer(library, tmp_path: 
         books = app.listen_library()
         (book,) = [item for item in books if item.get("remote")]
         (computer_id,) = [computer["id"] for computer in view["computers"]]
-        assert book["remote"] == {"computer": "Máy kia", "device": computer_id, "downloaded": False} and book["chaptersAvailable"] == 1
+        assert book["remote"] == {"computer": "Máy kia", "device": computer_id, "book": book_id(project), "kind": "computer",
+                                  "downloaded": False}
+        assert book["chaptersAvailable"] == 1
         path = app._listenable(book["id"])
         assert REMOTE_FOLDER in str(path) and packages.is_package(path)
         chapter = app.listen_book(book["id"])["chapters"][0]

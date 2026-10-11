@@ -132,11 +132,11 @@ export function paragraphsOf(text: string): string[] {
 
 /** Số dòng có chữ đầu chương mà luật dòng ghi công xét (text_processing.CREDIT_WINDOW_LINES). */
 const CREDIT_WINDOW = 6;
-/** Số dòng có chữ CUỐI chương mà gợi ý ủng hộ / nguồn ở cuối chương xét (readaloud/paragraphs.py CREDIT_TAIL_WINDOW). */
-const CREDIT_TAIL_WINDOW = 6;
+/** Số dòng có chữ CUỐI chương mà gợi ý ủng hộ / nguồn / ghi chú cuối chương xét (readaloud/paragraphs.py CREDIT_TAIL_WINDOW). */
+const CREDIT_TAIL_WINDOW = 12;
 
 /** Chữ của chương trừ các dòng người nghe đã chọn bỏ khỏi phần đọc (lớp sửa `skip` - gợi ý dòng ghi công, ủng hộ, nguồn của bộ nhập sách). Chỉ xét
- *  6 dòng có chữ đầu chương và 6 dòng có chữ cuối chương, đúng chỗ luật tìm ra chúng. Chữ của sách không đổi: chỉ màn đọc và đọc to không thấy
+ *  6 dòng có chữ đầu chương và 12 dòng có chữ cuối chương, đúng chỗ luật tìm ra chúng. Chữ của sách không đổi: chỉ màn đọc và đọc to không thấy
  *  dòng ấy. Kotlin: Paragraphs.withoutLines - lõi đọc to của điện thoại phải chia ra đúng các đoạn như màn đọc. */
 export function withoutLines(text: string, skip: readonly string[] | undefined): string {
   if (!skip?.length) return text;

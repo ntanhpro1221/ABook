@@ -86,3 +86,40 @@ def test_narrator_sections_split_the_same_way(tmp_path: Path) -> None:
     rows = segment_chapter_text(1, TAIL, drop_tail_credits=True)
     assert narrator_sections.section_ids(TAIL, rows, drop_tail_credits=True) is not None
     assert narrator_sections.section_ids(TAIL, rows) is None, "chia khác cách sách đã chia thì không đoán"
+
+
+# Ghi chú cuối chương của tác giả / người dịch (uxfix28 D): chỉ xét 12 dòng có chữ cuối chương; dòng đầu tiên khớp (nhãn ghi chú - h1, hay
+# dòng ngắn nói với người đọc / luật ghi công - h3) -> từ đó tới hết chương là ghi chú. Câu tự viết, không phải chữ truyện.
+STORY = "".join(f"Đoạn truyện thứ {n}, người lái đò chèo qua sông rồi dừng lại.\n\n" for n in range(1, 15))
+
+
+def _chapter(*tail: str) -> str:
+    return "Chương 3: Bến cũ\n\n" + STORY + "\n\n".join(tail) + "\n"
+
+
+def test_an_authors_or_translators_note_at_the_end_is_offered_from_its_first_line_to_the_end() -> None:
+    for header in ("Lời tác giả:", "Lời của người dịch: hôm nay hơi bận", "Tác note: chương sau ra muộn", "Note của tác giả", "A/N: cảm ơn mọi người",
+                   "T/N: chữ này là tên riêng", "(Trans: ở đây chơi chữ)", "TL: tên riêng giữ nguyên", "Editor: đã soát lỗi", "*Biên tập:*"):
+        note = [header, "Mấy hôm nay mình ốm nên dịch chậm.", "Cảm ơn mọi người đã đọc tới đây."]
+        assert tail_credit_lines(_chapter(*note)) == note, header
+    words = ["Bản dịch hoàn thành ngày 3 tháng 10.", "Đoạn này thì để nguyên cho dễ hiểu."]
+    assert tail_credit_lines(_chapter(*words)) == words
+    for line in ("Chương tiếp theo sẽ ra vào thứ bảy.", "Mọi người nhớ bình luận nhé!", "Xin cảm ơn các bạn đã ủng hộ.", "Donate cho nhóm ở trang chủ."):
+        assert tail_credit_lines(_chapter(line, "Hẹn gặp lại.")) == [line, "Hẹn gặp lại."], line
+    assert drop_credit_lines(_chapter("Lời tác giả:", "Cảm ơn."), tail=True).endswith("dừng lại."), "đồng ý thì bỏ cả đoạn ghi chú"
+    assert drop_credit_lines(_chapter("Lời tác giả:", "Cảm ơn.")).endswith("Cảm ơn."), "mặc định không bỏ gì"
+
+
+def test_ordinary_lines_with_those_words_are_not_a_note() -> None:
+    mid = "Chương 4\n\nLời tác giả viết trong cuốn sách ấy làm cô bật khóc.\n\nMọi người bình luận về chuyến đò suốt buổi chiều.\n\n" + STORY
+    assert tail_credit_lines(mid) == [], "giữa chương: không xét"
+    for tail in (["Lời tác giả viết trong cuốn sách ấy làm cô bật khóc.", "Rồi cô gấp sách lại."],  # "tác giả" không phải nhãn
+                 ["“Mọi người ủng hộ tôi chứ?” anh hỏi.", "Cả làng im lặng."],  # lời thoại
+                 ["— Bình luận gì nữa, ông nói.", "Cả làng im lặng."],  # gạch thoại
+                 ["Ông ủng hộ chuyến đi, ông nói rồi đứng dậy.", "Trời tối dần."],  # câu kể có lời nói
+                 ["Mọi người nhớ bình luận nhé!", "“Về thôi,” cô bảo.", "Họ quay về."],  # sau đó còn lời thoại: là truyện
+                 ["Mọi người nhớ bình luận nhé! " + "Trời tối dần, sông lặng như tờ và gió thổi qua bãi lau. " * 2]):  # dòng dài là truyện
+        assert tail_credit_lines(_chapter(*tail)) == [], tail
+    assert tail_credit_lines("Chương 5\n\nMọi người nhớ bình luận nhé!\n\nRồi trời tạnh hẳn.\n") == [], "đầu chương ngắn không phải ghi chú cuối chương"
+    far = _chapter("Lời tác giả: cảm ơn.", *[f"Câu kết thứ {n} của chương, nước lên dần." for n in range(1, 13)])
+    assert tail_credit_lines(far) == [], "chỉ 12 dòng có chữ cuối chương"

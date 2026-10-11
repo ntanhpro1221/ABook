@@ -353,3 +353,47 @@ def test_a_reading_or_a_verdict_another_machine_just_changed_is_told_not_silentl
         assert json.loads(data) == {"ok": True}, "đã thấy bản mới nhất: lời đáp như cũ"
     finally:
         server.stop()
+
+
+def test_a_delivery_or_a_retake_another_machine_just_changed_is_told_from_the_script_tab(tmp_path: Path) -> None:
+    """uxfix28 A: cách đọc một câu và "Thu lại" ở tab Kịch bản cũng gửi `seen` - tab biết phán quyết của từng câu (`verdict`) để so."""
+    from abook.listener_overrides import read_overrides, request_line
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    project = make_book(tmp_path)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.executescript("ALTER TABLE segments ADD COLUMN emotion TEXT; ALTER TABLE segments ADD COLUMN intensity INTEGER;")
+    db.close()
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "t"}
+    base = f"/api/books/{book_id(project)}"
+    try:
+        request_line(project, "b", "sha-b", emotion="sad", now=time.time())  # máy kia
+        body = {"stableId": "b", "textSha256": "sha-b", "emotion": "angry", "seen": None}  # máy này còn thấy chưa ai sửa
+        status, data, _ = _request(server.port, "POST", base + "/line", headers=headers, body=body)
+        assert status == 200, data
+        assert json.loads(data)["elsewhere"] == {"delivery": {"kind": "", "emotion": "sad", "intensity": None, "spoken": None}}
+        assert read_overrides(project)["lines"]["b"]["emotion"] == "angry", "vẫn ghi"
+        view = json.loads(_request(server.port, "GET", base + "/casting/1", headers=headers)[1])
+        shown = next(line for line in view["lines"] if line["stableId"] == "b")
+        body["seen"] = {key: shown["lineWish"][key] for key in ("kind", "emotion", "intensity")}  # đúng điều tab đang thấy
+        status, data, _ = _request(server.port, "POST", base + "/line", headers=headers, body=body)
+        assert "elsewhere" not in json.loads(data)
+        body.pop("seen")
+        assert "elsewhere" not in json.loads(_request(server.port, "POST", base + "/line", headers=headers, body=body)[1])
+
+        assert shown["verdict"] is None
+        app.reviews.set(project, "b", "ok", 1)  # máy kia: câu b ổn
+        view = json.loads(_request(server.port, "GET", base + "/casting/1", headers=headers)[1])
+        assert next(line for line in view["lines"] if line["stableId"] == "b")["verdict"] == "ok"
+        status, data, _ = _request(server.port, "POST", base + "/review", headers=headers,
+                                   body={"verdict": "redo", "chapterId": 1, "lines": [{"stableId": "b"}], "seen": {"b": ""}})
+        assert status == 200 and json.loads(data)["elsewhere"] == {"b": "ok"}
+    finally:
+        server.stop()
