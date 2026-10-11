@@ -14,7 +14,7 @@ import { isOpenWork } from "./precast";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { seenFor, warnElsewhere } from "./elsewhere";
 import { examplesPage, keepRequests, moreText, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
-import { decidedTitle, inboxLead, midSentence, narratorButtons, rerecordSentence, sentence } from "./workText";
+import { decidedTitle, inboxLead, markNames, midSentence, narratorButtons, rerecordSentence, sentence } from "./workText";
 import { focusAfterChange, type WorkLists } from "./workFocus";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
 
@@ -40,6 +40,9 @@ interface WorkExample {
   /** Thẻ “Ai nói câu này”: câu liền trước và liền sau (mọi người nói) làm ngữ cảnh để quyết ai nói. */
   before?: string;
   after?: string;
+  /** Thẻ “Người này có phải X?”: câu lời kể quanh câu được hỏi (không ai “nói” nó), và tên ứng viên để tô trong câu. */
+  narration?: boolean;
+  names?: string[];
 }
 
 export interface WorkItem {
@@ -224,10 +227,23 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
           <div className="text-xs text-fg-3">
             {example.chapterTitle} · {example.seq === 0 ? "tiêu đề chương" : `câu ${example.seq}`}
             {example.speaker && ` · máy gán: ${example.speaker}`}
+            {example.narration && " · lời kể"}
             {example.changes && <span className="font-semibold text-accent-text"> · sẽ đổi</span>}
             {!example.hasAudio && " · chưa thu"}
           </div>
-          <p className="text-fg">{example.text}</p>
+          <p className={example.narration ? "text-fg-2" : "text-fg"}>
+            {example.names?.length
+              ? markNames(example.text, example.names).map((part, index) =>
+                  part.mark ? (
+                    <mark key={index} className="rounded bg-accent-soft px-0.5 font-semibold text-accent-text">
+                      {part.text}
+                    </mark>
+                  ) : (
+                    part.text
+                  ),
+                )
+              : example.text}
+          </p>
         </div>
         {example.after && <p className="line-clamp-2 text-fg-3" aria-label="Câu liền sau">{example.after}</p>}
       </div>

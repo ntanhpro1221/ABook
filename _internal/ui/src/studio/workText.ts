@@ -80,6 +80,23 @@ export function inboxLead(book: { running: boolean; paused?: unknown; phase: str
   return `${first} Đây là những chỗ máy không chắc, xếp theo lợi: việc ở trên sửa một lần được nhiều câu nhất. Cách đọc tên, người nói, giới và giọng nhân vật đều sửa ngay tại đây.`;
 }
 
+/** Câu lời kể chia thành mảnh thường / mảnh tô (`mark`) ở mỗi chỗ có một trong `names` (dạng tên đã hạ chữ, work_items gửi kèm
+ *  câu): nguyên chữ, không phân biệt hoa thường, tên dài trước - thẻ "Người này có phải X?" tô tên ứng viên quanh câu được hỏi. */
+export function markNames(text: string, names?: string[]): { text: string; mark: boolean }[] {
+  const forms = [...new Set((names ?? []).map((name) => name.trim()).filter(Boolean))].sort((a, b) => b.length - a.length);
+  if (!forms.length) return [{ text, mark: false }];
+  const pattern = new RegExp(`(?<![\\p{L}\\p{N}])(?:${forms.map((form) => form.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(?![\\p{L}\\p{N}])`, "giu");
+  const parts: { text: string; mark: boolean }[] = [];
+  let last = 0;
+  for (const match of text.matchAll(pattern)) {
+    if (match.index > last) parts.push({ text: text.slice(last, match.index), mark: false });
+    parts.push({ text: match[0], mark: true });
+    last = match.index + match[0].length;
+  }
+  if (last < text.length || !parts.length) parts.push({ text: text.slice(last), mark: false });
+  return parts;
+}
+
 /** Tên hiển thị trùng nhau (ba “Lính gác”): khoá so sánh - bỏ gạch dưới, dấu cách thừa, hoa thường. */
 export function nameKey(name: string): string {
   return name.replace(/_/g, " ").replace(/\s+/g, " ").trim().toLocaleLowerCase("vi");

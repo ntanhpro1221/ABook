@@ -19,6 +19,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any, Callable
 
+from .. import aliases as alias_book
 from .. import names as renames
 from .. import narrator_sections
 from ..listener_overrides import (
@@ -66,6 +67,13 @@ TURN_CHAIN_MAX = 8
 # Thẻ biệt danh (3a): số lần sách viết danh hiệu SÁT tên (cách một dấu cách, hay "được mệnh danh/gọi là") mới hỏi.
 EPITHET_EVIDENCE = 3
 EPITHET_LINKS = ("được mệnh danh là", "được mệnh danh", "được gọi là", "được biết đến là")
+# Khả năng máy sai của hai thẻ gợi ý người nói (abook/speaker_suggestions.py, số đo trong docstring ấy): cặp tên viết gần giống
+# đúng là một người 19/33 thẻ; nhãn vô danh đúng là một ứng viên ~21%.
+NAME_PAIR_DOUBT = 0.55
+ANONYMOUS_DOUBT = 0.21
+# Thẻ "Người này có phải X?": ngần này câu của nhãn vô danh và ngần này câu lời kể có tên (gần câu đầu nhất) làm ví dụ.
+ANONYMOUS_LINES_SHOWN = 2
+ANONYMOUS_EVIDENCE_SHOWN = 2
 _BOOK_TEXT: dict[tuple, str] = {}  # văn bản sách đã bỏ dấu, theo (file, mtime, cỡ) - chỉ giữ cuốn gần nhất
 LEADING = re.compile(r"^[\s\-–—“”\"'‘’«»]+")
 
@@ -477,6 +485,40 @@ def self_addressed(connection: Any, chapter_id: int | None = None, project_root:
     return registry_self_addressed(rows, aliases, lambda row: chapter_id is None or int(row["chapter_id"]) == chapter_id)
 
 
+def speaker_suggestions(connection: Any, project_root: Path | None = None) -> tuple[list[Any], list[Any], dict[tuple[int, int], Any]]:
+    """Hai gợi ý người nói của cả cuốn (abook/speaker_suggestions.py): (cặp tên viết gần giống - NamePair, nhãn vô danh có thể là
+    một người có tên - AnonymousCandidate, {(chương, seq): câu lời kể có tên ứng viên}). Chỉ đọc sổ. `project_root`: nhớ theo chữ
+    ký sổ như `merged_turns` - mỗi lần bấm chỉ đổi overrides.json, nên hộp việc dựng lại mà không quét lại cả cuốn."""
+    from ..speaker_suggestions import anonymous_speaker_candidates, name_pair_candidates
+
+    if project_root is not None:
+        return listing_cache.cached(("speaker_suggestions", str(project_root)), store.db_signature(project_root),
+                                    lambda: speaker_suggestions(connection))
+    columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
+    optional = [column if column in columns else f"NULL AS {column}" for column in ("paragraph_index", "wav_path")]
+    optional += [column if column in columns else f"'unknown' AS {column}" for column in ("gender", "age")]
+    rows = connection.execute(
+        "SELECT id, chapter_id, seq, kind, speaker, text, " + ", ".join(optional) + " FROM segments ORDER BY chapter_id, seq"
+    ).fetchall()
+    line_counts = Counter(str(row["speaker"]) for row in rows if row["kind"] != "narration" and _is_named(str(row["speaker"])))
+    gender_of = {str(row[0]).upper(): str(row[1] or "unknown")
+                 for row in connection.execute("SELECT canonical_name, gender FROM characters")} \
+        if "characters" in store._table_names(connection) else {}
+    pairs = name_pair_candidates(line_counts, {speaker: gender_of.get(speaker.upper(), "unknown") for speaker in line_counts})
+    # Sổ cũ / tối thiểu không có số đoạn văn: không biết lời kể nào nằm "quanh" câu - không hỏi.
+    paragraphed = [row for row in rows if row["paragraph_index"] is not None] if "paragraph_index" in columns else []
+    anonymous = anonymous_speaker_candidates(paragraphed)
+    wanted = {(card.chapter_id, seq) for card in anonymous for seq in card.evidence}
+    evidence = {(int(row["chapter_id"]), int(row["seq"])): row for row in paragraphed
+                if (int(row["chapter_id"]), int(row["seq"])) in wanted}
+    return pairs, anonymous, evidence
+
+
+def _or_list(labels: list[str], last: str) -> str:
+    """"A", "A hay B", "A, B hay C" (`last` = "hay" / "và")."""
+    return labels[0] if len(labels) == 1 else f"{', '.join(labels[:-1])} {last} {labels[-1]}"
+
+
 def first_person_lookup(project_root: Path, chapter_index: dict[int, int]) -> tuple[str, dict, Callable[[int], str], Callable[[Any], str] | None]:
     """Người kể "tôi" của sách: (người kể cả cuốn, người kể theo chương, `narrator_of(chapter_id)`, `row_narrator(câu)` hay None).
     `row_narrator` chỉ có khi người dùng đã nhận một đoạn có người kể riêng (narrator_sections.json): câu trong đoạn theo người
@@ -718,6 +760,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         } if "voice_profiles" in store._table_names(connection) else {}
         turns = merged_turns(connection, project_root=project_root)
         self_addressed_ids = self_addressed(connection, project_root=project_root)
+        name_pairs, anonymous_cards, anonymous_evidence = speaker_suggestions(connection, project_root)
         pronunciations = connection.execute(
             "SELECT surface, spoken_form, confidence, locked FROM pronunciations WHERE confidence < 0.9"
         ).fetchall() if "pronunciations" in store._table_names(connection) else []
@@ -1062,6 +1105,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
     #    nhóm câu của vai phụ; "Hai người khác nhau" giữ nguyên cả nhóm và thẻ không hiện lại.
     named = {speaker: rows for speaker, rows in lines_by_speaker.items() if _is_named(speaker)}
     by_character = {str(character["canonical_name"]).upper(): character for character in characters.values()}
+    alias_pairs: set[frozenset[str]] = set()  # cặp tên thẻ 3 / 3a đã hỏi - thẻ 3c không hỏi lại
     speakers = sorted(named, key=lambda speaker: (-len(named[speaker]), speaker))
     for index, major in enumerate(speakers):
         for minor in speakers[index + 1:]:
@@ -1077,6 +1121,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             if a is not None and b is not None and "unknown" not in (a["gender"], b["gender"]) and a["gender"] != b["gender"]:
                 continue
             into = speaker_label(major)
+            alias_pairs.add(frozenset((major, minor)))
             fix = _speaker_fix(named[minor], [{"label": f"Gộp vào {into}", "value": major, "name": into}], minor,
                                speaker_wishes, speaker_label)
             if fix is None:
@@ -1123,6 +1168,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             if pair in asked or both < EPITHET_EVIDENCE or partners[epithet] != {name} or partners[name] != {epithet}:
                 continue
             asked.add(pair)
+            alias_pairs.add(pair)
             major, minor = sorted(pair, key=lambda speaker: (-len(named[speaker]), speaker))
             a, b = by_character.get(major.upper()), by_character.get(minor.upper())
             if a is not None and b is not None and "unknown" not in (a["gender"], b["gender"]) and a["gender"] != b["gender"]:
@@ -1150,6 +1196,40 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
                 "examples": [_example(row, names, speaker_label, audio) for row in (named[minor][:2] + named[major][:1])],
                 **fix,
             })
+
+    # 3c. Hai tên viết GẦN giống nhau ("Arya" / "Aria" - speaker_suggestions.name_pair_candidates): có thể là một người máy viết
+    #     hai cách, hai giọng cho một người. Gộp tự động thì nhập nhầm người thật ở mọi ngưỡng, nên chỉ hỏi. Bấm như hai thẻ
+    #     trên: "Cùng một người" = câu của tên ít câu về tên nhiều câu + bí danh cấp tên (aliases.json); "Hai người khác nhau" giữ
+    #     từng câu, thẻ không hiện lại. Cặp đã ghi là bí danh thì không hỏi.
+    confirmed = alias_book.load(project_root)
+    for pair in name_pairs:
+        major, minor = pair.major, pair.minor
+        if frozenset((major, minor)) in alias_pairs or major not in named or minor not in named:
+            continue
+        if alias_book.key(confirmed.get(alias_book.key(minor), "")) == alias_book.key(major) \
+                or alias_book.key(confirmed.get(alias_book.key(major), "")) == alias_book.key(minor):
+            continue
+        into, who = speaker_label(major), speaker_label(minor)
+        fix = _speaker_fix(named[minor], [{"label": "Cùng một người", "value": major, "name": into}], minor,
+                           speaker_wishes, speaker_label)
+        if fix is None:
+            continue
+        items.append({
+            "kind": "alias",
+            "key": f"alias:{major}|{minor}",
+            "title": f"“{who}” và “{into}” - hai tên này có phải một người?",
+            "problem": f"Hai tên viết gần giống nhau mà máy đang đọc bằng hai giọng: {who} {len(named[minor])} câu, {into}"
+                       f" {len(named[major])} câu. Cùng một người thì {len(named[minor])} câu của {who} đọc bằng giọng của {into};"
+                       " hai người khác nhau thì giữ nguyên.",
+            "affected": len(named[minor]),
+            "doubt": NAME_PAIR_DOUBT,
+            "options": ["Cùng một người", "Hai người khác nhau"],
+            "current": "Hai người khác nhau",
+            "keepLabel": "Hai người khác nhau",
+            "subject": who,
+            "examples": [_example(row, names, speaker_label, audio) for row in (named[minor][:2] + named[major][:2])],
+            **fix,
+        })
 
     # 3b. Lời trong ngoặc 『』 - thần giao, linh thể, giọng qua điện thoại, bình luận trên mạng - là một "kênh giọng" riêng
     #     mà máy yếu nhất: đo 28-09 trên bộ LN, câu 『』 sai người nói 56-67% (câu thường 34-41%) - máy gán mỗi câu cho
@@ -1307,6 +1387,9 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         })
 
     # 5b. Người nói không tên (vai phụ cục bộ không nằm trong thẻ cả cuốn): có thể là một nhân vật có tên trong chương.
+    anonymous: dict[str, Any] = {}
+    for card in anonymous_cards:
+        anonymous.setdefault(card.speaker, card)
     for speaker, rows in lines_by_speaker.items():
         if not speaker.startswith("NPC_LOCAL") or speaker in grouped:
             continue
@@ -1316,6 +1399,44 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         if not open_rows and len({speaker_wishes[str(row["stable_id"])]["speaker"].casefold() for row in rows}) > 1:
             continue
         rows = open_rows or rows
+        found = anonymous.get(speaker)
+        if found is not None:
+            # 5c. "Người này có phải X?" (speaker_suggestions.anonymous_speaker_candidates): lời kể quanh câu của nhãn vô danh gọi
+            #     tên một người cũng nói DƯỚI TÊN trong chương - người nghe đang nghe hai giọng cho một người. Chỉ ~1/5 thẻ đúng là
+            #     một ứng viên, nên máy không tự đổi, không tô ứng viên nào, và thẻ đứng sau mọi thẻ khác (`askLast`). Thay thẻ 5b
+            #     của đúng nhãn ấy (một câu một thẻ); chọn tên = yêu cầu "ai nói câu này" cho các câu, hoàn tác như mọi thẻ ấy.
+            fix = _speaker_fix(rows, [{"label": speaker_label(name), "value": name} for name in found.names], speaker,
+                               speaker_wishes, speaker_label)
+            if fix is None:
+                continue
+            who, people = speaker_label(speaker), [speaker_label(name) for name in found.names]
+            first = int(rows[0]["seq"])
+            nearest = sorted(found.evidence, key=lambda seq: (abs(seq - first), seq))[:ANONYMOUS_EVIDENCE_SHOWN]
+            context = [anonymous_evidence[(found.chapter_id, seq)] for seq in nearest if (found.chapter_id, seq) in anonymous_evidence]
+            shown = sorted(rows[:ANONYMOUS_LINES_SHOWN] + context, key=lambda row: int(row["seq"]))
+            chapter = names.get(found.chapter_id, {}).get("name") or "chương này"
+            items.append({
+                "kind": "unnamed",
+                "key": f"unnamed:{speaker}",
+                "title": f"“{who}” có phải {_or_list(people, 'hay')}?",
+                "problem": f"Ở {chapter}, máy để “{who}” là vai phụ không tên với giọng riêng ({len(rows)} câu), nhưng lời kể quanh"
+                           f" đó nhắc tới {_or_list(people, 'và')} - người cũng nói trong chương này. Nếu đúng là một người trong"
+                           " số đó, chọn tên ấy để các câu này đọc bằng giọng của họ. Máy hay đoán nhầm chỗ này nên không tự đổi.",
+                "affected": len(rows),
+                "doubt": ANONYMOUS_DOUBT,
+                "suggested": False,
+                "askLast": True,
+                "options": people + ["Không ai trong số này"],
+                "current": "Vai phụ không tên",
+                "keepLabel": "Không ai trong số này",
+                # Lời kể làm bằng chứng: không có "máy gán", tên ứng viên được tô (`names`: các dạng tên, đã hạ chữ).
+                "examples": [_example(row, names, speaker_label, audio) if row["kind"] != "narration"
+                             else {**_example(row, names, speaker_label, audio), "speaker": "", "narration": True,
+                                   "names": list(found.forms)}
+                             for row in shown],
+                **fix,
+            })
+            continue
         # Chọn một người có tên thì MỌI câu của vai này về người ấy (giọng của họ); "Đúng là vai phụ" giữ cả nhóm.
         choices = _cast_choices(spoken, {int(row["chapter_id"]) for row in rows}, set(), speaker_label)
         fix = _speaker_fix(rows, choices, speaker, speaker_wishes, speaker_label)
@@ -1394,8 +1515,9 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         undo = _undo_of(item, overrides)
         if undo is not None:
             item["undo"] = undo
-    # Việc chỉ áp được khi làm lại sách (thẻ người kể của đoạn đã phân tích xong) đứng sau mọi việc áp được ngay, điểm cao cũng vậy.
-    items.sort(key=lambda item: (bool(item.get("redoOnly")), -item["score"]))
+    # Việc chỉ áp được khi làm lại sách (thẻ người kể của đoạn đã phân tích xong) đứng sau mọi việc áp được ngay, điểm cao cũng vậy;
+    # thẻ máy hay đoán nhầm (`askLast`: "Người này có phải X?") đứng sau mọi việc áp được ngay khác.
+    items.sort(key=lambda item: (bool(item.get("redoOnly")), bool(item.get("askLast")), -item["score"]))
     counts: dict[str, int] = defaultdict(int)
     for item in items:
         counts[item["kind"]] += 1

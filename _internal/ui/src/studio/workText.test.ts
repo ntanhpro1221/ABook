@@ -1,6 +1,34 @@
 import { describe, expect, it } from "vitest";
 import { PENDING_NOTE } from "@/studio/decisions";
-import { decidedTitle, inboxLead, narratorButtons, narratorDecidedTitle, nameKey, rerecordSentence, sameNames } from "@/studio/workText";
+import { decidedTitle, inboxLead, markNames, narratorButtons, narratorDecidedTitle, nameKey, rerecordSentence, sameNames } from "@/studio/workText";
+
+describe("tô tên ứng viên trong lời kể (thẻ “Người này có phải X?”)", () => {
+  const marked = (text: string, names?: string[]) => markNames(text, names).filter((part) => part.mark).map((part) => part.text);
+
+  it("tô mọi chỗ có tên, không phân biệt hoa thường, ghép lại đúng nguyên câu", () => {
+    const parts = markNames("Mira bước vào, theo sau là Lena. MIRA cười.", ["mira", "lena"]);
+    expect(parts.map((part) => part.text).join("")).toBe("Mira bước vào, theo sau là Lena. MIRA cười.");
+    expect(parts.filter((part) => part.mark).map((part) => part.text)).toEqual(["Mira", "Lena", "MIRA"]);
+  });
+
+  it("chỉ tô nguyên chữ, và tên dài thắng phần của nó", () => {
+    expect(marked("Miranda và Mira", ["mira"])).toEqual(["Mira"]);
+    expect(marked("Giáo sư Fernando đến.", ["fernando", "giáo sư fernando"])).toEqual(["Giáo sư Fernando"]);
+    expect(marked("Ảnh nhìn Đào Ảnh", ["ảnh"])).toEqual(["Ảnh", "Ảnh"]);
+  });
+
+  it("không có tên thì giữ nguyên câu; ký tự đặc biệt trong tên không làm vỡ phép tìm", () => {
+    expect(markNames("Không ai cả.", [])).toEqual([{ text: "Không ai cả.", mark: false }]);
+    expect(markNames("Không ai cả.")).toEqual([{ text: "Không ai cả.", mark: false }]);
+    expect(marked("Tre'ainar (A.) đứng đó", ["tre'ainar", "a."])).toEqual(["Tre'ainar", "A."]);
+  });
+});
+
+describe("tiêu đề thẻ hai tên gần giống sau khi quyết", () => {
+  it("nói kết quả theo tên được hỏi, như thẻ một người hai tên", () => {
+    expect(decidedTitle({ kind: "alias", current: "Hai người khác nhau", subject: "Aria", requested: "Arya" })).toBe("“Aria” là Arya");
+  });
+});
 
 describe("tiêu đề thẻ người kể sau khi quyết", () => {
   it("không lặp tiền tố của nhãn lựa chọn", () => {
