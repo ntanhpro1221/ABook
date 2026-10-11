@@ -4337,6 +4337,35 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 chiều - Lực của bộ 7: phần lớn các lần "thua" là luật chặt hoặc thiếu lực; bộ 7 chỉ có 4 truyện
+
+Corpus 97d81b3 (`POWER_set7.md`). Xác suất bộ 7 qua luật ghi trước nếu hiệu thật = hiệu bộ học. Xấp xỉ chuẩn, se lấy từ bootstrap
+theo chương đã chạy; bỏ qua các điều kiện phụ.
+
+| thí nghiệm | hiệu học | ngưỡng | lực @ hiệu học | @ nửa |
+|---|---|---|---|---|
+| ENERGY rE | +.042 | +.10 | 6% | 2% |
+| SIBSWITCH U | -27% | -40% | 6% | 0% |
+| VALENCE SC | -6% | -30% | 3% | 3% |
+| LV-E rE | +.136 | +.03 & bootstrap | 46% | 15% |
+| WEAKPULL (rV+rE)/2 | +.086 | +.03 & bootstrap | 98% | 51% |
+
+- ENERGY, SIBSWITCH, VALENCE: ngưỡng lớn hơn chính hiệu bộ học. Chúng gần như không thể thắng dù hiệu là thật.
+- LV-E: thiếu lực.
+- WEAKPULL: đủ lực theo chương, và -.024 cách hiệu học 5 se, nên đó là khác biệt thật. Nhưng tách theo truyện thì không có một
+  chiều chung:
+  - LBL rE tăng ở 3/4 truyện, mà r gộp vẫn tụt (do chênh mức giữa các truyện);
+  - STUDIO rE tụt ở 3/4;
+  - LBL rV tụt ở cả 4.
+- Bộ 7 là 20 chương của **4 truyện**. Theo truyện chỉ có 4 đơn vị độc lập, nên mọi se ở trên đều lạc quan.
+- Kết luận 5 lần trước GIỮ NGUYÊN.
+- Đề xuất giao thức mới **CV-TRUYỆN** (ghi trước riêng):
+  - gộp vàng học + 7 + 11 + 12 (~60 truyện) và chia 5 phần theo truyện;
+  - chọn trên 4 phần, đo trên phần còn lại;
+  - bootstrap theo truyện.
+- Lực dự kiến ở hiệu +.05: thước rE khoảng 63%, (rV+rE)/2 khoảng 94%. Vàng có mục đích (~10 truyện, Lead duyệt) thêm vào làm bộ
+  ngoài thật cho thí nghiệm nào thắng CV.
+
 ### 11-10 chiều - WEAKPULL (bỏ / hạ kéo "không khí yếu" về nền êm): THUA ở bộ 7
 
 Ghi trước Corpus 5a547dd, đóng băng 8dfb4bc, kết quả 8e883ab. Biến thể WEAK_MOOD ∈ {.2, .1, 0} × phạm vi {mọi mảnh, chỉ mảnh
