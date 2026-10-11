@@ -375,12 +375,15 @@ def epithet_links(labels: list[str], folded_book: str) -> dict[tuple[str, str], 
 def merged_turns(connection: Any, chapter_id: int | None = None) -> list[tuple[Any, Any]]:
     """Cặp câu thoại liền kề ở hai đoạn văn liền nhau - câu trước đóng ngoặc, câu sau mở ngoặc mới, đoạn sau chỉ có thoại
     (không lời dẫn riêng) - mà mang CÙNG một người có tên. Project cũ không có số đoạn văn thì không tìm."""
-    if "paragraph_index" not in {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}:
+    columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
+    if "paragraph_index" not in columns:
         return []
     where, parameters = (" WHERE chapter_id = ?", (chapter_id,)) if chapter_id is not None else ("", ())
+    # wav_path: thẻ hiện câu đã thu hay chưa (`_has_audio`) - thiếu cột thì mọi câu thành "chưa thu" (soát UX a25 T1).
+    audio = ", wav_path" if "wav_path" in columns else ""
     rows = [
         row for row in connection.execute(
-            "SELECT id, stable_id, chapter_id, seq, paragraph_index, text, text_sha256, speaker, kind FROM segments"
+            "SELECT id, stable_id, chapter_id, seq, paragraph_index, text, text_sha256, speaker, kind" + audio + " FROM segments"
             + where + " ORDER BY chapter_id, seq",
             parameters,
         )

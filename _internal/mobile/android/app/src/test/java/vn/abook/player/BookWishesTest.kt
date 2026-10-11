@@ -116,6 +116,7 @@ class BookWishesTest {
         assertEquals(400, post("/line", line(heidi).put("emotion", "bored")).first)
         assertEquals(400, post("/voice", JSONObject().put("character", "NARRATOR").put("gender", "male")).first)
         assertEquals(400, post("/pronunciation", JSONObject().put("surface", "Hai kes").put("spokenForm", "Hên-khơ")).first)
+        assertEquals("không bao giờ được dùng", 400, post("/pronunciation", JSONObject().put("surface", "Mở/đóng").put("spokenForm", "mở hoặc đóng")).first)
         assertEquals(listOf("speakers"), BookEdits.names(wishes()))
     }
 

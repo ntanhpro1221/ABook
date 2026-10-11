@@ -130,6 +130,20 @@ def test_a_decision_shows_waiting_then_applied_and_a_refused_one_says_so(tmp_pat
     assert casting_chapters(project)["chapters"][0]["decided"] == 5
 
 
+def test_a_new_person_the_listener_creates_waits_and_is_not_called_refused(tmp_path: Path) -> None:
+    """Soát UX a25 T3: người nghe TẠO người nói mới - một câu ("Ai nói câu này" -> "Người khác…" có giới) hay cả nhóm câu
+    (thẻ "hai cách viết một tên" -> "Không, là người khác", giới "unknown") - dây chuyền áp được (`speaker_target` với
+    `new_gender`), nên Kịch bản phải hiện "đang chờ", không phải "không áp được... dây chuyền sẽ bỏ qua"."""
+    from abook.listener_overrides import request_speakers
+
+    project = make_book(tmp_path)
+    request_speakers(project, [("e", "sha-e")], "BÀ CHỦ", now=time.time(), new_gender="female")
+    request_speakers(project, [("c", "sha-c"), ("d", "sha-d")], "Glas", now=time.time(), new_gender="unknown")
+    wishes = {line["stableId"]: line["wish"] for line in casting_chapter(project, 1)["lines"]}
+    assert wishes["e"]["state"] == "pending" and "reason" not in wishes["e"]
+    assert wishes["c"]["state"] == wishes["d"]["state"] == "pending"
+
+
 def test_before_casting_nobody_can_be_chosen_yet(tmp_path: Path) -> None:
     """Chỉ người đã có giọng mới gán được; trước bước phân vai thì chưa ai có - tab nói rõ thay vì để nút bấm rồi hỏng."""
     project = make_book(tmp_path, cast=False)

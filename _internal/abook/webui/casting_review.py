@@ -144,7 +144,8 @@ def _wish(connection: Any, row: Any, wish: dict[str, str] | None, as_kind: str =
     view: dict[str, Any] = {"value": value, "label": label(value, display)}
     # `as_kind`: câu đang chờ đổi từ lời kể thành lời thoại (yêu cầu `lines`) - xét như dây chuyền sẽ xét sau bước ấy.
     target, problem = speaker_target(
-        connection, stable_id=str(row["stable_id"]), text_sha256=wish["text_sha256"], speaker=value, as_kind=as_kind
+        connection, stable_id=str(row["stable_id"]), text_sha256=wish["text_sha256"], speaker=value, as_kind=as_kind,
+        new_gender=wish.get("new_gender", ""),
     )
     if target is None:
         return {**view, "state": "refused", "reason": REFUSED.get(str(problem), "Dây chuyền sẽ không áp được yêu cầu này.")}

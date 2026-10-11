@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { creditKind, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS } from "./credits";
+import { creditKind, creditLine, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS } from "./credits";
 
 describe("lines the book creator offers to leave out", () => {
   it("counts the first lines as before when no chapter ends with a support line", () => {
@@ -48,5 +48,12 @@ describe("xem hết rồi bỏ riêng đầu / cuối chương (soát UX a24, A9
     expect(droppedLines(credits, { head: true, tail: false })).toBe(1);
     expect(droppedLines(credits, { head: false, tail: true })).toBe(3);
     expect(droppedLines(credits, { head: true, tail: true })).toBe(4);
+  });
+
+  it("chỉ bỏ cuối chương: danh sách nói rõ dòng đầu chương vẫn được đọc (soát UX a25 T8)", () => {
+    const drop = { head: false, tail: true };
+    expect(creditLine("Dịch: Nhóm Lục Bình", "head", drop)).toEqual({ text: "“Dịch: Nhóm Lục Bình” (đầu chương, vẫn đọc)", dropped: false });
+    expect(creditLine("Ủng hộ qua Momo", "tail", drop)).toEqual({ text: "“Ủng hộ qua Momo” (cuối chương, bỏ)", dropped: true });
+    expect(creditLine("TL : NicK", "head", KEEP_CREDITS)).toEqual({ text: "“TL : NicK” (đầu chương)", dropped: false });
   });
 });

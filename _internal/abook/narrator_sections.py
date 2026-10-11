@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 import unicodedata
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -183,10 +184,13 @@ def load(project_root: Path | str) -> dict[int, list[dict[str, Any]]]:
                 continue
             if last < first:
                 continue
+            at = entry.get("at")
             sections.setdefault(chapter, []).append({
                 "from_seq": first, "to_seq": last, "narrator": str(entry.get("narrator") or "").strip(),
                 "source": "owner" if entry.get("source") == "owner" else "auto",
-                "accepted": bool(entry.get("accepted")), "dismissed": bool(entry.get("dismissed"))})
+                "accepted": bool(entry.get("accepted")), "dismissed": bool(entry.get("dismissed")),
+                # Lúc quyết: mở file dự án của cùng dự án thì quyết định mới hơn thắng (webui/workshop_merge.py).
+                **({"at": float(at)} if isinstance(at, (int, float)) and not isinstance(at, bool) else {})})
     return sections
 
 
@@ -205,12 +209,13 @@ def narrator_at(sections: Mapping[int, Sequence[Mapping[str, Any]]], chapter_ind
 
 
 def decide(project_root: Path | str, chapter_index: int, from_seq: int, to_seq: int, *, accepted: bool,
-           narrator: str = "", source: str = "auto") -> None:
+           narrator: str = "", source: str = "auto", now: float | None = None) -> None:
     """Ghi quyết định cho đoạn (chương, từ câu, đến câu): nhận (`accepted`, kèm người kể - "" = ngôi ba) hay bỏ qua."""
     sections = load(project_root)
     entries = [entry for entry in sections.get(int(chapter_index), []) if (entry["from_seq"], entry["to_seq"]) != (from_seq, to_seq)]
     entries.append({"from_seq": int(from_seq), "to_seq": int(to_seq), "narrator": narrator.strip()[:MAX_NAME],
-                    "source": "owner" if source == "owner" else "auto", "accepted": bool(accepted), "dismissed": not accepted})
+                    "source": "owner" if source == "owner" else "auto", "accepted": bool(accepted), "dismissed": not accepted,
+                    "at": time.time() if now is None else now})
     sections[int(chapter_index)] = sorted(entries, key=lambda entry: entry["from_seq"])
     _write(project_root, sections)
 

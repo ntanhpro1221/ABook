@@ -44,12 +44,12 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
-from . import bluetooth, precast, remote_books, spelling, tls
+from . import bluetooth, precast, remote_books, spelling, tls, workshop_merge
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters, casting_stamp
-from .name_readings import name_readings, package_reading_reach, reading_reach
+from .name_readings import name_readings, never_text, package_reading_reach, reading_reach
 from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices
 from . import narrator_cards
 from .work_items import open_count, work_items
@@ -570,8 +570,18 @@ class App:
             project = Path(min(same, key=continuation.part_number))
             if edits:
                 book_edits.stash_incoming(project, opened.edits, opened.edits_cover(), opened.copy_member)
+
+            def member(name: str) -> bytes | None:
+                try:
+                    return opened.read(f"project/{name}")
+                except KeyError:
+                    return None
+
+            # Sửa trong xưởng của file (máy kia sửa thêm): gộp, không bỏ im lặng (soát UX a25 T5) - và nói đã gộp gì.
+            merged = workshop_merge.merge_workshop(project, member, self.reviews, time.time())
             self.library.preferences.add_recent(project)
-            return {"id": book_id(project), "how": "project", **({"edits": edits} if edits else {})}
+            return {"id": book_id(project), "how": "project", **({"edits": edits} if edits else {}),
+                    **({"workshop": merged} if any(merged.values()) else {})}
         target, report = opened.open_into(self.library.root)
         missing = len(opened.missing_sources)
         opened.copy_music(self.music_dir / "files")  # nhạc nền đi cùng gói: không phải tải lại
@@ -3806,6 +3816,9 @@ class Handler(BaseHTTPRequestHandler):
                            if usable else None)
             return
         spoken = self._checked_reading(body, surface)
+        # Cách đọc không bao giờ được dùng ("Mở/đóng"): giao diện tắt nút Lưu, gửi thẳng qua API cũng không được (soát UX a25 T2).
+        if (package_reading_reach if package else reading_reach)(path, surface)["never"]:
+            raise ApiError(HTTPStatus.BAD_REQUEST, never_text(surface))
         now = time.time()
         if package:
             book_wishes.request_pronunciation(path, surface, spoken, now=now)

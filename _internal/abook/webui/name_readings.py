@@ -144,6 +144,13 @@ def package_reading_reach(folder: Path, surface: str) -> dict[str, Any]:
                   lambda row: _example(row, names, label=lambda raw: raw))
 
 
+def never_text(surface: str) -> str:
+    """Vì sao không lưu được cách đọc cho chữ có ký hiệu bị xé đôi - cùng lời với giao diện (ui/src/studio/readingReach.ts
+    `neverText`), để máy chủ từ chối yêu cầu gửi thẳng qua API như giao diện chặn nút Lưu (soát UX a25 T2)."""
+    return (f"Máy đọc ký hiệu trong “{surface}” thành một chỗ ngừng trước khi tra cách đọc, nên cách đọc cho chữ này không bao"
+            " giờ được dùng. Muốn đọc khác, sửa “Chữ đem đọc” của từng câu có chữ ấy.")
+
+
 def never_used(pattern: re.Pattern[str], surface: str, matched: int, reached: int) -> bool:
     """Cách đọc cho `surface` không bao giờ được dùng (soát UX a24, A4): mọi câu có chữ ấy đều bị ký hiệu xé đôi trước khi tra
     cách đọc - hay, khi chưa câu nào có chữ ấy, chính chữ ấy bị xé đôi ("Mở/đóng" -> "Mở, đóng"). Giao diện không cho lưu."""

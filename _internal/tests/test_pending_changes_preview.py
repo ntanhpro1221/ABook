@@ -159,3 +159,31 @@ def test_keep_as_is_and_let_the_machine_decide_are_not_changes(tmp_path: Path) -
     details = store.pending_details(project, since)
     assert [item["label"] for item in details["items"]] == ["Giọng của Lucien: giọng nữ"]
     assert store.pending_changes(project, since) == 1
+
+
+def test_a_line_given_to_someone_with_the_same_voice_is_not_counted_as_a_retake(tmp_path: Path) -> None:
+    """Soát UX a25 T4: hộp đếm 1 câu thu lại khi gán câu cho người dùng CÙNG giọng - bước áp (database.apply_listener_speaker)
+    giữ bản thu ấy. Hộp đếm theo đúng luật đặt lại ấy; người khác giọng vẫn tính."""
+    project = _project(tmp_path)
+    db = sqlite3.connect(project / "project.sqlite3")
+    for column in ("canonical_character_id INTEGER", "text_sha256 TEXT", "gender TEXT"):
+        db.execute(f"ALTER TABLE segments ADD COLUMN {column}")
+    db.execute("UPDATE segments SET text_sha256 = 'x', canonical_character_id = CASE speaker WHEN 'LUCIEN' THEN 1 END")
+    db.execute("INSERT INTO voice_profiles VALUES (3, 'preset_mai_huong', 'Mai Hương', 0, 1.0)")
+    db.executemany("INSERT INTO characters VALUES (?, ?, ?, ?, 'young', 'main', 5, '')",
+                   [(2, "RHINE", "Rhine", "male"), (3, "HEIDI", "Heidi", "female")])
+    db.executemany(
+        "INSERT INTO segments (id, chapter_id, seq, text, kind, speaker, voice_profile_id, status, canonical_character_id,"
+        " stable_id, text_sha256) VALUES (?, 2, ?, ?, 'dialogue', ?, ?, 'verified', ?, ?, 'x')",
+        [(6, 3, "“Chào.”", "RHINE", 2, 2, "s6"), (7, 4, "“Ừ.”", "HEIDI", 3, 3, "s7")],
+    )
+    db.commit()
+    db.close()
+    since = time.time() - 1
+    listener_overrides.request_speaker(project, "s3", "x", "RHINE", now=time.time())
+    details = store.pending_details(project, since)
+    assert [item["lines"] for item in details["items"]] == [0] and details["lines"] == 0, "Rhine cùng giọng Thanh Bình"
+
+    listener_overrides.request_speaker(project, "s3", "x", "HEIDI", now=time.time())
+    details = store.pending_details(project, since)
+    assert [item["lines"] for item in details["items"]] == [1] and details["lines"] == 1

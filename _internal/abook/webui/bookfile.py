@@ -132,6 +132,10 @@ def _packaged_book(project_root: Path) -> dict[str, Any]:
     book = sync.manifest(project_root, book_id(project_root), _NoListening())
     for key in ("id", "series", "wordsVersion"):
         book.pop(key, None)
+    # Chương chờ thu lại theo sửa của người nghe vẫn mang bản thu cũ: file có audio của mọi chương là cuốn trọn vẹn, không phải
+    # "chỉ có các chương đã làm" (soát UX a25 T7 - file ghi "3/3 chương có audio" mà vẫn "Chưa hoàn thành").
+    if book["chaptersTotal"] and book["chaptersAvailable"] == book["chaptersTotal"]:
+        book["complete"] = True
     return book
 
 

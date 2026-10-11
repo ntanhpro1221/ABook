@@ -9,10 +9,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Làm sách trong Studio (máy tính)
 
-- Đổi giọng người kể chắc chắn vào sách: giọng bạn đã chọn cho người kể (dù chưa áp dụng) không còn chọn được cho nhân vật và ngược lại, người kể được áp trước; nếu giọng ấy vẫn không đổi được thì "Việc cần duyệt" có thẻ "Chưa đổi được giọng…" với nút chọn giọng khác. Đầu trang ghi giọng kể sẽ dùng kèm "chờ áp dụng", hàng người kể ghi số câu chờ thu lại, và chương chờ thu lại theo sửa của bạn vẫn nghe được bản cũ thay vì báo "Có lỗi".
-- Trình tạo sách cho "Xem hết" mọi dòng ghi công / xin ủng hộ theo từng chương và bỏ riêng dòng đầu chương hay cuối chương; nhập EPUB không còn chép một dòng gợi ý cho mỗi chương vào danh sách lưu ý.
-- Khi máy gộp hai cách viết một tên ("Toko" về "Tooko"), Diễn biến ghi rõ chương nào, bao nhiêu câu; phép gộp chạm từ 5 câu có thẻ nhẹ "Đúng, cùng một người" / "Không, là người khác". Cách đọc mà ký hiệu trong từ khiến máy không dùng được (như "Mở/đóng") không lưu được nữa và không làm thu lại câu nào; tab Nghe lại chỉ gọi là "tên riêng" khi câu thật sự lệch ở tên.
+- Đổi giọng người kể chắc chắn vào sách: giọng bạn đã chọn cho người kể (dù chưa áp dụng) không còn chọn được cho nhân vật và ngược lại, người kể được áp trước; nếu giọng ấy vẫn không đổi được thì "Việc cần duyệt" có thẻ "Chưa đổi được giọng…" với nút chọn giọng khác. Đầu trang ghi giọng kể sẽ dùng kèm "chờ áp dụng", hàng người kể ghi số câu chờ thu lại, và chương chờ thu lại theo sửa của bạn vẫn nghe được bản cũ (cùng chữ đọc theo của bản ấy) thay vì báo "Có lỗi"; hộp Xuất sách báo bao nhiêu chương đang chờ thu lại và sách xuất dùng bản thu cũ, file .abook như thế vẫn là sách trọn vẹn.
+- Trình tạo sách cho "Xem hết" mọi dòng ghi công / xin ủng hộ theo từng chương và bỏ riêng dòng đầu chương hay cuối chương, danh sách ghi rõ dòng nào bỏ, dòng nào vẫn đọc; nhập EPUB không còn chép một dòng gợi ý cho mỗi chương vào danh sách lưu ý.
+- Khi máy gộp hai cách viết một tên ("Toko" về "Tooko"), Diễn biến ghi rõ chương nào, bao nhiêu câu; phép gộp chạm từ 5 câu có thẻ nhẹ "Đúng, cùng một người" / "Không, là người khác". Cách đọc mà ký hiệu trong từ khiến máy không dùng được (như "Mở/đóng") không lưu được nữa (cả trên điện thoại) và không làm thu lại câu nào; tab Nghe lại chỉ gọi là "tên riêng" khi câu thật sự lệch ở tên.
 - Phán quyết ở tab Nghe lại đi theo dự án (cả trong file .abookproj); tab "Duyệt trước khi thu" có con số, cộng với "Việc cần duyệt" đúng bằng số điện thoại báo.
+- Mở file .abookproj của dự án đã có trên máy (máy tính và điện thoại) gộp sửa của cả hai bên (cách đọc, người nói, giọng, phán quyết Nghe lại, thẻ đã quyết) thay vì bỏ một bên: sửa chỉ có ở một bên thì giữ, cùng một chỗ sửa khác nhau thì bản sửa sau thắng, và máy báo "Đã gộp N sửa từ file, M sửa giữ bản của máy này vì mới hơn".
+- Giao câu cho người mới ở tab Kịch bản không còn bị báo "không áp được"; thẻ lượt thoại không còn ghi "chưa thu" cho câu đã thu; hộp Áp dụng không đếm là thu lại khi câu được giao cho người cùng giọng.
 
 ### Điện thoại và Nghe sách (máy tính và điện thoại)
 

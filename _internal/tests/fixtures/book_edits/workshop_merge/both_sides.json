@@ -1,0 +1,73 @@
+{
+ "now": 2000.0,
+ "local": {
+  "overrides.json": {
+   "version": 1,
+   "pronunciations": {
+    "rhine": {"surface": "Rhine", "spoken_form": "Rai-nơ", "requested_at": 100.0},
+    "glast": {"surface": "Glast", "spoken_form": "Gờ-lát", "requested_at": 300.0}
+   },
+   "speakers": {
+    "s1": {"speaker": "LUCIEN", "text_sha256": "sha-s1", "requested_at": 150.0}
+   },
+   "voices": {
+    "HEIDI": {"preset": "Mai Hương", "gender": "", "avoid": "", "requested_at": 120.0}
+   }
+  },
+  "reviews.json": {
+   "s5": {"verdict": "ok", "chapterId": 1, "at": 100.0},
+   "s6": {"verdict": "redo", "chapterId": 1, "at": 400.0}
+  }
+ },
+ "incoming": {
+  "overrides.json": {
+   "version": 1,
+   "pronunciations": {
+    "rhine": {"surface": "Rhine", "spoken_form": "Rai-nơ", "requested_at": 90.0},
+    "glast": {"surface": "Glast", "spoken_form": "Gờ-lát-xơ", "requested_at": 200.0},
+    "heidi": {"surface": "Heidi", "spoken_form": "Hai-đi", "requested_at": 250.0}
+   },
+   "speakers": {
+    "s1": {"speaker": "RHINE", "text_sha256": "sha-s1", "requested_at": 180.0,
+           "replaced": {"speaker": "LUCIEN", "text_sha256": "sha-s1", "requested_at": 150.0}}
+   },
+   "retakes": {
+    "s7": {"text_sha256": "sha-s7", "requested_at": 260.0}
+   },
+   "voices": {
+    "HEIDI": {"preset": "Ngọc Huyền", "gender": "", "avoid": "", "requested_at": 120.0}
+   }
+  },
+  "reviews.json": {
+   "s5": {"verdict": "redo", "chapterId": 1, "at": 200.0},
+   "s6": {"verdict": "ok", "chapterId": 1, "at": 300.0},
+   "s8": {"verdict": "redo", "chapterId": 2}
+  }
+ },
+ "merged": {
+  "overrides.json": {
+   "version": 1,
+   "pronunciations": {
+    "rhine": {"surface": "Rhine", "spoken_form": "Rai-nơ", "requested_at": 100.0},
+    "glast": {"surface": "Glast", "spoken_form": "Gờ-lát", "requested_at": 300.0},
+    "heidi": {"surface": "Heidi", "spoken_form": "Hai-đi", "requested_at": 250.0, "merged_at": 2000.0}
+   },
+   "speakers": {
+    "s1": {"speaker": "RHINE", "text_sha256": "sha-s1", "requested_at": 180.0,
+           "replaced": {"speaker": "LUCIEN", "text_sha256": "sha-s1", "requested_at": 150.0}, "merged_at": 2000.0}
+   },
+   "retakes": {
+    "s7": {"text_sha256": "sha-s7", "requested_at": 260.0, "merged_at": 2000.0}
+   },
+   "voices": {
+    "HEIDI": {"preset": "Mai Hương", "gender": "", "avoid": "", "requested_at": 120.0}
+   }
+  },
+  "reviews.json": {
+   "s5": {"verdict": "redo", "chapterId": 1, "at": 200.0},
+   "s6": {"verdict": "redo", "chapterId": 1, "at": 400.0},
+   "s8": {"verdict": "redo", "chapterId": 2}
+  }
+ },
+ "report": {"merged": 5, "kept": 3}
+}

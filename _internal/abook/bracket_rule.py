@@ -16,6 +16,7 @@ import json
 import os
 import time
 from pathlib import Path
+from typing import Any
 
 FILE_NAME = "bracket_rule.json"
 OPENER = "『"
@@ -36,12 +37,15 @@ def save(project_root: Path, speaker: str, *, now: float | None = None) -> bool:
     speaker = str(speaker).strip()[:MAX_NAME]
     if not speaker or load(project_root) == speaker:
         return False
+    _write(project_root, {"version": 1, "speaker": speaker, "at": time.time() if now is None else now})
+    return True
+
+
+def _write(project_root: Path, data: dict[str, Any]) -> None:
     target = Path(project_root) / FILE_NAME
     temporary = target.with_name(f".{FILE_NAME}.tmp")
-    temporary.write_text(json.dumps({"version": 1, "speaker": speaker, "at": time.time() if now is None else now},
-                                    ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(temporary, target)
-    return True
 
 
 def carry(source_root: Path, target_root: Path) -> bool:

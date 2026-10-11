@@ -46,7 +46,7 @@ import {
 } from "@/studio/data";
 import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
-import { creditKind, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS, type CreditDrop, type Credits } from "@/studio/credits";
+import { creditKind, creditLine, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS, type CreditDrop, type Credits } from "@/studio/credits";
 import { samePath } from "@/studio/samePath";
 import { splitOutcome } from "@/studio/splitOffer";
 import {
@@ -778,7 +778,12 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
             {creditRows(files, chapterLabel).map((row, index) => (
               <li key={`${index}-${row.chapter}`} className="break-words">
                 <span className="font-medium text-fg">{row.chapter}:</span>{" "}
-                {[...row.head.map((line) => `“${line}” (đầu chương)`), ...row.tail.map((line) => `“${line}” (cuối chương)`)].join(" · ")}
+                {[...row.head.map((line) => creditLine(line, "head", drop)), ...row.tail.map((line) => creditLine(line, "tail", drop))].map((line, at) => (
+                  <span key={at}>
+                    {at > 0 && " · "}
+                    <span className={line.dropped ? "text-fg-3 line-through" : undefined}>{line.text}</span>
+                  </span>
+                ))}
               </li>
             ))}
           </ul>

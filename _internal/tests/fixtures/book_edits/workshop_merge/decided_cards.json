@@ -1,0 +1,63 @@
+{
+ "now": 3000.0,
+ "local": {
+  "aliases.json": {
+   "version": 1,
+   "aliases": [
+    {"alias": "Toko", "person": "Tooko", "at": 100.0}
+   ]
+  },
+  "bracket_rule.json": {"version": 1, "speaker": "NARRATOR", "at": 300.0},
+  "narrator_sections.json": {
+   "version": 1,
+   "sections": {
+    "3": [
+     {"from_seq": 10, "to_seq": 20, "narrator": "", "source": "auto", "accepted": false, "dismissed": true}
+    ]
+   }
+  }
+ },
+ "incoming": {
+  "aliases.json": {
+   "version": 1,
+   "aliases": [
+    {"alias": "toko", "person": "Tomoko", "at": 200.0},
+    {"alias": "Krai", "person": "Krai Andrey", "at": 50.0}
+   ]
+  },
+  "bracket_rule.json": {"version": 1, "speaker": "HEIDI", "at": 250.0},
+  "narrator_sections.json": {
+   "version": 1,
+   "sections": {
+    "3": [
+     {"from_seq": 10, "to_seq": 20, "narrator": "Rhine", "source": "owner", "accepted": true, "dismissed": false, "at": 120.0}
+    ],
+    "5": [
+     {"from_seq": 0, "to_seq": 4, "narrator": "", "source": "auto", "accepted": true, "dismissed": false, "at": 130.0}
+    ]
+   }
+  }
+ },
+ "merged": {
+  "aliases.json": {
+   "version": 1,
+   "aliases": [
+    {"alias": "Krai", "person": "Krai Andrey", "at": 50.0},
+    {"alias": "toko", "person": "Tomoko", "at": 200.0}
+   ]
+  },
+  "bracket_rule.json": {"version": 1, "speaker": "NARRATOR", "at": 300.0},
+  "narrator_sections.json": {
+   "version": 1,
+   "sections": {
+    "3": [
+     {"from_seq": 10, "to_seq": 20, "narrator": "Rhine", "source": "owner", "accepted": true, "dismissed": false, "at": 120.0}
+    ],
+    "5": [
+     {"from_seq": 0, "to_seq": 4, "narrator": "", "source": "auto", "accepted": true, "dismissed": false, "at": 130.0}
+    ]
+   }
+  }
+ },
+ "report": {"merged": 4, "kept": 1}
+}

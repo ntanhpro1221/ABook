@@ -73,3 +73,11 @@ export function creditRows<F extends { credits?: string[]; tailCredits?: string[
     .filter((file) => (file.credits?.length ?? 0) + (file.tailCredits?.length ?? 0) > 0)
     .map((file) => ({ chapter: label(file), head: file.credits ?? [], tail: file.tailCredits ?? [] }));
 }
+
+/** Một dòng trong danh sách "Xem hết": ở đâu trong chương, và - khi người dùng đã chọn bỏ một loại - dòng này bị bỏ hay vẫn được
+ *  đọc (soát UX a25 T8: dưới "Sẽ bỏ 5 dòng" danh sách vẫn kể dòng đầu chương sẽ GIỮ như thể cũng bị bỏ). */
+export function creditLine(line: string, place: "head" | "tail", drop: CreditDrop): { text: string; dropped: boolean } {
+  const where = place === "head" ? "đầu chương" : "cuối chương";
+  if (!drop.head && !drop.tail) return { text: `“${line}” (${where})`, dropped: false };
+  return drop[place] ? { text: `“${line}” (${where}, bỏ)`, dropped: true } : { text: `“${line}” (${where}, vẫn đọc)`, dropped: false };
+}

@@ -643,11 +643,8 @@ def pending_changes(project_root: Path, since: float) -> int:
         entries = data.get(section)
         chosen: dict[str, Any] = {}
         for key, entry in (entries.items() if isinstance(entries, dict) else ()):
-            try:
-                if float(entry.get("requested_at") or 0) > since:
-                    chosen[str(key)] = entry
-            except (AttributeError, TypeError, ValueError):
-                continue
+            if isinstance(entry, dict) and _requested_after(entry, since):
+                chosen[str(key)] = entry
         fresh[section] = chosen
     kept = _kept_as_is(project_root, fresh)
     # Một lần bấm gán / thu lại nhiều câu (cả nhóm vai phụ, "Gộp vào…", "Thu lại cả chương", Shift-chọn ở Kịch bản) ghi
@@ -765,6 +762,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
         narrator_profile,
         narrator_voiced,
         read_overrides,
+        speaker_target,
         surface_key,
     )
     from ..text_processing import spoken_symbols_to_words
@@ -837,6 +835,25 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
                    if pattern.search(spoken_symbols_to_words(str(row["text"] or "")))]
             items.append({"kind": "pronunciation", "label": label_pronunciation(surface, entry.get("spoken_form", "")),
                           "lines": hit(ids), **handle("pronunciations", key, entry)})
+        columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
+
+        def revoiced(stable_ids: list[str]) -> list[str]:
+            # Đúng luật đặt lại của bước áp (database.apply_listener_speaker): câu sang người dùng CÙNG giọng thì giữ bản thu
+            # (soát UX a25 T4). Người mới (`create`) chưa biết sẽ được giọng nào - tính là thu lại. Sổ thiếu cột thì như cũ.
+            if not {"canonical_character_id", "text_sha256", "gender"} <= columns:
+                return stable_ids
+            kept = []
+            for stable_id in stable_ids:
+                entry = fresh["speakers"][stable_id]
+                target, _problem = speaker_target(
+                    connection, stable_id=stable_id, text_sha256=str(entry.get("text_sha256") or ""),
+                    speaker=str(entry.get("speaker") or ""), new_gender=str((entry.get("new") or {}).get("gender") or ""),
+                )
+                if not (target is not None and "create" not in target
+                        and target["voice_profile_id"] == by_id[stable_id]["voice_profile_id"]):
+                    kept.append(stable_id)
+            return kept
+
         speaker_clicks: dict[float, list[str]] = {}
         for stable_id, entry in fresh["speakers"].items():
             row = by_id.get(stable_id)
@@ -848,14 +865,14 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             row = by_id[stable_ids[0]]
             if len(stable_ids) == 1:
                 items.append({"kind": "speaker", "label": label_speaker(row["text"], who(entry.get("speaker")), 1),
-                              "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit(stable_ids),
+                              "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit(revoiced(stable_ids)),
                               **handle("speakers", stable_ids[0], entry)})
                 continue
             # Một lần bấm cho nhiều câu (nhóm vai phụ, "Gộp vào…", Shift-chọn): một mục, bỏ thì bỏ cả nhóm.
             places = sorted({int(by_id[stable_id]["chapter_id"]) for stable_id in stable_ids})
             items.append({"kind": "speaker", "label": label_speaker("", who(entry.get("speaker")), len(stable_ids)),
                           "chapter": titles.get(places[0], "") + (f" và {len(places) - 1} chương khác" if len(places) > 1 else ""),
-                          "lines": hit(stable_ids), "section": "speakers", "key": stable_ids[0], "keys": stable_ids,
+                          "lines": hit(revoiced(stable_ids)), "section": "speakers", "key": stable_ids[0], "keys": stable_ids,
                           "requestedAt": at})
         for stable_id, entry in fresh["lines"].items():
             row = by_id.get(stable_id)
@@ -917,8 +934,10 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
 
 
 def _requested_after(entry: dict[str, Any], since: float) -> bool:
+    """Yêu cầu ghi sau lần chạy cuối `since` - hay vừa gộp vào từ file dự án của máy khác (`merged_at`, workshop_merge.py): với
+    máy này nó là sửa mới dù mốc gốc cũ hơn lần chạy."""
     try:
-        return float(entry.get("requested_at") or 0) > since
+        return max(float(entry.get("requested_at") or 0), float(entry.get("merged_at") or 0)) > since
     except (TypeError, ValueError):
         return False
 
@@ -1216,10 +1235,16 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
     """
     with closing(connect(project_root)) as connection:
         chapter = connection.execute(
-            "SELECT id, title, status, output_mp3 FROM chapters WHERE id = ?", (chapter_id,)
+            "SELECT id, title, status, last_error, output_mp3 FROM chapters WHERE id = ?", (chapter_id,)
         ).fetchone()
         if chapter is None:
             return None
+        # Chương chờ thu lại theo sửa của người nghe: MP3 cũ đi cùng chữ đọc theo CŨ khớp nó (`keep_heard_scripts`).
+        kept = _kept_script(project_root, chapter)
+        if kept is not None:
+            chapter_name = chapter_names(connection, project_root).get(int(chapter["id"]), {})
+            return {**kept, "chapterId": int(chapter["id"]),
+                    "title": chapter_name.get("full") or humanize.chapter_title(str(chapter["title"]))}
         # Tag trình bày của từng câu (cảm xúc, cường độ, nhịp, âm lượng) - có ở mọi sách làm bằng dây chuyền hiện nay,
         # sách rất cũ thì không: chỉ lấy cột nào có.
         columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
@@ -1292,13 +1317,73 @@ def _sentence_timeline(project_root: Path, chapter: Any,
     return timed, spans, mp3, real if real else elapsed
 
 
+HEARD_SCRIPT = ".script.json"
+
+
+def _heard_script_path(mp3: Path) -> Path:
+    return mp3.with_name(mp3.name + HEARD_SCRIPT)
+
+
+def keep_heard_scripts(project_root: Path) -> int:
+    """Chụp chữ đọc theo (chữ, người nói, mốc từng câu - `chapter_script`) của mỗi chương ĐÃ XONG thành file cạnh MP3 của nó,
+    nếu chưa có bản chụp mới hơn MP3. Dây chuyền gọi ngay TRƯỚC khi áp sửa của người nghe (pipeline._apply_listener_overrides):
+    bước đặt lại xoá thời lượng câu, nên chương chờ thu lại không dựng được mốc nữa trong khi MP3 cũ vẫn là bản nghe được
+    (soát UX a25 T7). Gọi ở đó chứ không lúc chương xong: một chỗ gọi, ngay trước mọi lần đặt lại. Trả số chương vừa chụp."""
+    from ..io_utils import atomic_write_json
+
+    if not (Path(project_root) / DB_NAME).is_file():
+        return 0
+    with closing(connect(project_root)) as connection:
+        rows = connection.execute("SELECT id, output_mp3 FROM chapters WHERE status = 'completed'").fetchall()
+    kept = 0
+    for row in rows:
+        mp3 = chapter_mp3(project_root, row["output_mp3"])
+        if mp3 is None:
+            continue
+        target = _heard_script_path(mp3)
+        try:
+            if target.stat().st_mtime_ns >= mp3.stat().st_mtime_ns:
+                continue
+        except OSError:
+            pass
+        script = chapter_script(project_root, int(row["id"]))
+        if script is None or not script["timed"]:
+            continue
+        atomic_write_json(target, {"mp3Size": mp3.stat().st_size, "script": script}, fsync=False)
+        kept += 1
+    return kept
+
+
+def _kept_script(project_root: Path, chapter: Any) -> dict[str, Any] | None:
+    """Chữ đọc theo đã chụp của một chương chờ thu lại (`keep_heard_scripts`), khi nó còn khớp đúng MP3 đang có; None với chương
+    khác (chương đã xong dựng mốc từ sổ như thường). `chapter` cần `status`, `last_error`, `output_mp3`."""
+    if str(chapter["status"]) == "completed" or not heard_chapter(chapter["status"], chapter["last_error"]):
+        return None
+    mp3 = chapter_mp3(project_root, chapter["output_mp3"])
+    if mp3 is None:
+        return None
+    try:
+        data = json.loads(_heard_script_path(mp3).read_text(encoding="utf-8"))
+        script = data["script"]
+        if int(data["mp3Size"]) != mp3.stat().st_size or not script.get("timed"):
+            return None
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
+    return script
+
+
 def chapter_spans(project_root: Path, chapter_id: int) -> dict[int, tuple[float, float]]:
     """{mã câu: (đầu, cuối) giây trong MP3 chương} - rỗng khi chương chưa xuất hay chưa có mốc. Hàng "Cần nghe lại" dùng để
     nghe một câu ngay trong chương khi WAV riêng của câu đã được dọn."""
     with closing(connect(project_root)) as connection:
-        chapter = connection.execute("SELECT status, output_mp3 FROM chapters WHERE id = ?", (chapter_id,)).fetchone()
+        chapter = connection.execute(
+            "SELECT status, last_error, output_mp3 FROM chapters WHERE id = ?", (chapter_id,)
+        ).fetchone()
         if chapter is None:
             return {}
+        kept = _kept_script(project_root, chapter)
+        if kept is not None:
+            return {int(segment["id"]): (float(segment["start"]), float(segment["end"])) for segment in kept["segments"]}
         rows = connection.execute(
             "SELECT id, wav_duration, break_ms FROM segments WHERE chapter_id = ? ORDER BY seq", (chapter_id,)
         ).fetchall()
@@ -1339,12 +1424,10 @@ def pending_voices(project_root: Path, since: float) -> dict[str, dict[str, str]
     entries = read_overrides(project_root).get("voices")
     pending: dict[str, dict[str, str]] = {}
     for key, entry in (entries.items() if isinstance(entries, dict) else ()):
-        try:
-            waiting = float(entry.get("requested_at") or 0) > since
-        except (AttributeError, TypeError, ValueError):
+        if not isinstance(entry, dict):
             continue
         preset, gender = str(entry.get("preset") or ""), str(entry.get("gender") or "")
-        if waiting and (preset or gender):
+        if _requested_after(entry, since) and (preset or gender):
             pending[speaker_key(str(key))] = {"preset": preset,
                                               "gender": humanize.GENDER_LABELS.get(gender, "")}
     return pending

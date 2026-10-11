@@ -11,6 +11,7 @@ import { startExport, trackExport } from "@/desktop/ExportBookFileJob";
 import { ffmpegCancel, ffmpegStart, ffmpegStatus } from "@/desktop/listenExport";
 import { api, ApiError, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
+import { redoExportNote } from "./exportText";
 import { followPackJob, PackCancelled, PackDetached, packError, packView, type PackJob } from "./projectPacking";
 import { WordTimingsRow } from "./WordTimings";
 
@@ -304,6 +305,7 @@ export function ExportDialog({
           !wholeSeries && ready < total && `${formatNumber(total - ready)}/${formatNumber(total)} chương chưa có audio${missing ? ` (${missing} chương mất file)` : ""} - không có trong bản xuất.`,
           wholeSeries && "Phần nào chưa có chương xong sẽ bị bỏ qua; phần đang chạy chỉ có các chương đã xong tới lúc này.",
           !wholeSeries && book.running && "Sách đang chạy - bản xuất chỉ gồm các chương đã xong tới lúc này.",
+          !wholeSeries && redoExportNote(book.chapters.redo ?? 0, kind === "abook"),
           oneFile &&
             bytes > FAT32_LIMIT &&
             `File này sẽ lớn hơn 4 GB - thẻ nhớ hay USB định dạng FAT32 không chứa nổi.${wholeSeries ? " Chọn “Mỗi phần một file” nếu định chép vào đó." : ""}`,
