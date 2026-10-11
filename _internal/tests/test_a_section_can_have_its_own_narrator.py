@@ -217,15 +217,17 @@ THIRD = ("Kakeru bước vào lớp. Kakeru nhìn quanh và thấy cả phòng y
          "Kakeru mở sách ra đọc.")
 
 
-def _book(root: Path, identity: str = "Kakeru") -> tuple[Path, list[dict[str, Any]]]:
+def _book(root: Path, identity: str = "Kakeru", text: str = "", chapters: dict[str, str] | None = None,
+          more: tuple[str, ...] = ()) -> tuple[Path, list[dict[str, Any]]]:
+    """Dự án một chương (`text`), hay nhiều chương liền nhau (`more`: chữ của chương 2, 3...). Trả về các câu của chương 1."""
     project = root / "sach"
     project.mkdir()
-    source = root / "001.txt"
-    text = f"Chương 1\n\n{FIRST}\n\n***\n\n{THIRD}\n\n***\n\n{FIRST}\n"
-    source.write_bytes(text.encode("utf-8"))
-    settings = {"voices": {"first_person_identity": identity} if identity else {}, "tts": {"max_segment_chars": 340}}
+    text = text or f"Chương 1\n\n{FIRST}\n\n***\n\n{THIRD}\n\n***\n\n{FIRST}\n"
+    voices: dict[str, Any] = {"first_person_identity": identity} if identity else {}
+    if chapters is not None:
+        voices["first_person_chapters"] = chapters
+    settings = {"voices": voices, "tts": {"max_segment_chars": 340}}
     (project / "book_settings.json").write_text(json.dumps(settings), encoding="utf-8")
-    rows = segment_chapter_text(1, text, max_chars=340)
     db = sqlite3.connect(project / "project.sqlite3")
     db.executescript(
         """
@@ -239,15 +241,23 @@ def _book(root: Path, identity: str = "Kakeru") -> tuple[Path, list[dict[str, An
         CREATE TABLE pronunciations (surface TEXT, spoken_form TEXT, confidence REAL, locked INTEGER);
         """
     )
-    db.execute("INSERT INTO chapters VALUES (1, 1, '001', ?)", (str(source),))
-    db.executemany(
-        "INSERT INTO segments (id, stable_id, chapter_id, seq, text, kind, kind_hint, speaker, status, text_sha256)"
-        " VALUES (?,?,1,?,?,?,?,?,'pending',?)",
-        [(index + 1, row["stable_id"], row["seq"], row["text"], row["kind"], row["kind_hint"], "NARRATOR", row["text_sha256"])
-         for index, row in enumerate(rows)])
+    first_rows: list[dict[str, Any]] = []
+    segment_id = 0
+    for number, chapter_text in enumerate((text, *more), start=1):
+        source = root / f"{number:03d}.txt"
+        source.write_bytes(chapter_text.encode("utf-8"))
+        rows = segment_chapter_text(number, chapter_text, max_chars=340)
+        first_rows = first_rows or rows
+        db.execute("INSERT INTO chapters VALUES (?, ?, ?, ?)", (number, number, f"{number:03d}", str(source)))
+        db.executemany(
+            "INSERT INTO segments (id, stable_id, chapter_id, seq, text, kind, kind_hint, speaker, status, text_sha256)"
+            " VALUES (?,?,?,?,?,?,?,?,'pending',?)",
+            [(segment_id + index + 1, row["stable_id"], number, row["seq"], row["text"], row["kind"], row["kind_hint"],
+              "NARRATOR", row["text_sha256"]) for index, row in enumerate(rows)])
+        segment_id += len(rows)
     db.commit()
     db.close()
-    return project, rows
+    return project, first_rows
 
 
 def test_the_inbox_offers_the_section_and_a_decision_is_stored_beside_the_database(tmp_path: Path) -> None:
@@ -366,3 +376,118 @@ def test_overlapping_name_fragments_keep_the_longest_name_that_does_not_overlap(
     assert not any(narrator_cards._overlap(a, b) for a in names for b in names if a != b), names
     assert not narrator_cards._overlap("Lâm Hạ", "Hạ Vy"), "chung một chữ vẫn là hai người"
     assert narrator_cards._overlap("Krai", "Krai Andrey")
+
+
+# ---- dòng tiêu đề góc nhìn: đề xuất CÓ TÊN ---------------------------------------------------------------------------------
+HEADED = f"Chương 1\n\n{FIRST}\n\n***\n\nGóc nhìn của Mai\n\n{FIRST}\n\n***\n\n{FIRST}\n"
+
+
+def _narrator_cards(project: Path) -> list[dict[str, Any]]:
+    from abook.webui.work_items import work_items
+
+    return [item for item in work_items(project)["items"] if item["kind"] == "narrator"]
+
+
+def test_a_pov_heading_card_names_the_narrator_and_accepting_stores_that_name(tmp_path: Path) -> None:
+    from abook.webui import narrator_cards
+
+    project, rows = _book(tmp_path, text=HEADED)
+    cards = _narrator_cards(project)
+    assert len(cards) == 1, [card["title"] for card in cards]
+    card, section = cards[0], cards[0]["narratorSection"]
+    heading = next(row["seq"] for row in rows if row["text"] == "Góc nhìn của Mai")
+    assert (section["fromSeq"], section["toSeq"]) == (heading, heading + 1)
+    assert card["title"].endswith(f"câu {heading}–{heading + 1}: đoạn này kể bởi Mai")
+    assert card["problem"].startswith("Theo dòng “Góc nhìn của Mai” ở đầu đoạn.") and "Chưa trả lời thì máy giữ nguyên" in card["problem"]
+    assert section["heading"] == {"line": "Góc nhìn của Mai", "narrator": "Mai", "label": "Mai"}
+    assert card["requested"] is None and narrator_sections.load(project) == {}, "đề xuất, chưa áp"
+    result = narrator_cards.decide(project, {"chapterIndex": 1, "fromSeq": heading, "toSeq": heading + 1, "action": "accept"})
+    assert result == {"action": "accept", "narrator": "Mai"}
+    stored = narrator_sections.load(project)[1][0]
+    assert (stored["narrator"], stored["source"], stored["accepted"]) == ("Mai", "auto", True)
+    assert narrator_sections.narrator_at(narrator_sections.load(project), 1, heading + 1) == "Mai"
+    assert _narrator_cards(project)[0]["requested"] == "Người kể: Mai"
+    narrator_cards.decide(project, {"chapterIndex": 1, "fromSeq": heading, "toSeq": heading + 1, "action": "keep"})
+    assert _narrator_cards(project)[0]["requested"] == "Giữ nguyên", "bỏ qua: như thẻ cũ"
+    assert narrator_sections.narrator_at(narrator_sections.load(project), 1, heading + 1) is None
+
+
+def test_a_pov_heading_takes_the_name_the_project_already_uses(tmp_path: Path) -> None:
+    from abook import aliases
+
+    project, _rows = _book(tmp_path, text=HEADED)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("INSERT INTO characters VALUES (1, 'MAI SAKURA', 'Mai Sakura', 'female', 0, '')")
+    db.commit()
+    db.close()
+    card = _narrator_cards(project)[0]
+    assert card["narratorSection"]["heading"]["narrator"] == "MAI SAKURA", "một chữ của đúng một tên trong sổ"
+    aliases.add(project, "Mai", "SAKURA MAI")
+    assert _narrator_cards(project)[0]["narratorSection"]["heading"]["narrator"] == "SAKURA MAI", "bí danh đã xác nhận thắng"
+
+
+def test_a_pov_heading_for_the_books_own_narrator_or_a_third_person_book_gets_no_card(tmp_path: Path) -> None:
+    (tmp_path / "own").mkdir()
+    project, _rows = _book(tmp_path / "own", identity="Mai Sakura", text=HEADED)
+    assert _narrator_cards(project) == []
+    # Sách ngôi ba: dây chuyền không đọc người kể theo đoạn ở sách không có người kể "tôi" - một lần nhận không đổi được gì.
+    (tmp_path / "third").mkdir()
+    project, _rows = _book(tmp_path / "third", identity="", text=HEADED)
+    assert _narrator_cards(project) == []
+
+
+def test_a_third_person_chapter_of_a_first_person_book_still_gets_a_named_heading(tmp_path: Path) -> None:
+    project, _rows = _book(tmp_path, text=HEADED.replace(FIRST, THIRD), chapters={"1": ""})
+    cards = _narrator_cards(project)
+    assert [card["narratorSection"]["heading"]["narrator"] for card in cards] == ["Mai"], "D im ở chương ngôi ba"
+    assert cards[0]["current"] == "" and cards[0]["options"][1] == "Giữ nguyên"
+
+
+def test_a_third_person_heading_proposes_that_the_section_has_no_narrator(tmp_path: Path) -> None:
+    from abook.webui import narrator_cards
+
+    project, _rows = _book(tmp_path, text=HEADED.replace("Góc nhìn của Mai", "Quay lại góc nhìn thứ 3 nào"))
+    card = _narrator_cards(project)[0]
+    assert card["title"].endswith("đoạn này kể ở ngôi thứ ba") and card["narratorSection"]["heading"]["label"] == ""
+    section = card["narratorSection"]
+    narrator_cards.decide(project, {"chapterIndex": 1, "fromSeq": section["fromSeq"], "toSeq": section["toSeq"], "action": "accept"})
+    assert narrator_sections.narrator_at(narrator_sections.load(project), 1, section["toSeq"]) == ""
+    assert _narrator_cards(project)[0]["requested"] == "Đổi người kể"
+
+
+# ---- đại từ của người kể theo CỬA SỔ CHƯƠNG (DCHECK_12-10 phụ lục 04:1x) ---------------------------------------------------
+TA = "Ta bước vào đại điện. Ta nhìn quanh, cả điện im phăng phắc, ta ngồi xuống ghế quen, ta mở quyển sổ ra đọc."
+TOI_CHAPTER = "\n\n".join([FIRST] * 3) + "\n"
+TA_CHAPTER = f"{TA}\n\n***\n\n{TA}\n\n{TA}\n"
+
+
+def _chapters_with_cards(project: Path) -> list[int]:
+    from abook.webui import narrator_cards
+
+    return sorted({item["chapter_index"] for item in narrator_cards.proposals(project)})
+
+
+def test_a_ta_chapter_among_toi_chapters_is_still_asked_about(tmp_path: Path) -> None:
+    """Luật cửa sổ: đại từ của người kể tính trên chương ấy và tối đa 2 chương mỗi bên (cùng người kể). Bốn chương "tôi" quanh
+    một chương "ta": cửa sổ vẫn là "tôi", nên chương "ta" (không có "tôi" nào) vẫn có thẻ - người kể có thể đã đổi thật."""
+    project, _rows = _book(tmp_path, text=TOI_CHAPTER, more=(TOI_CHAPTER, TA_CHAPTER, TOI_CHAPTER, TOI_CHAPTER))
+    assert _chapters_with_cards(project) == [3]
+
+
+def test_a_narrator_who_says_ta_is_not_flagged_for_it(tmp_path: Path) -> None:
+    """Ba chương "ta" liền nhau: cửa sổ quanh mỗi chương là "ta" - không thẻ nào. Chữ của chương bên cạnh đổi thì đề xuất của
+    chương 3 tính lại dù file của chính nó không đổi (khoá bộ nhớ đệm gồm cả mẫu đại từ)."""
+    project, _rows = _book(tmp_path, text=TOI_CHAPTER, more=(TA_CHAPTER, TA_CHAPTER, TA_CHAPTER, TOI_CHAPTER))
+    assert _chapters_with_cards(project) == []
+    for number in (2, 4):
+        (tmp_path / f"{number:03d}.txt").write_bytes(TOI_CHAPTER.encode("utf-8"))
+    assert _chapters_with_cards(project) == [3], "chương 3 giờ nằm giữa các chương 'tôi' (chương 2, 4 lệch câu đã chia: im)"
+
+
+def test_only_chapters_with_the_same_narrator_count_in_the_window(tmp_path: Path) -> None:
+    # Chương 2 và 4 do người khác kể (theo chương) nên không vào cửa sổ của chương 3: còn chương 1, 3, 5 đều "ta" -> không thẻ.
+    # Nếu tính cả chúng thì cửa sổ là "tôi" (64 "tôi" với 36 "ta") và chương 3 sẽ có thẻ - phép thử có lực.
+    heavy = "\n\n".join([FIRST] * 8) + "\n"
+    project, _rows = _book(tmp_path, text=TA_CHAPTER, more=(heavy, TA_CHAPTER, heavy, TA_CHAPTER),
+                           chapters={"2": "Mai", "4": "Mai"})
+    assert 3 not in _chapters_with_cards(project)

@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Làm sách trong Studio (máy tính)
+
+- Truyện kể ngôi thứ nhất có dòng như "Góc nhìn của Mai" hay "[POV: Mai]": "Việc cần duyệt" đề xuất luôn "đoạn này kể bởi Mai" (hay
+  "kể ở ngôi thứ ba" với "Góc nhìn thứ 3"), bấm "Nhận" là xong; chưa bấm thì máy giữ nguyên. Truyện người kể xưng "ta" không còn bị
+  báo nhầm "có vẻ không phải … kể".
+
 ## [0.4.54] - 2026-10-12
 
 ### Nhạc nền (máy tính và điện thoại)

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections import Counter
 from contextlib import closing
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,11 @@ from . import store
 # hộp việc mở lại nhiều lần.
 _CACHE: dict[tuple, list[dict[str, Any]]] = {}
 _CACHE_MAX = 4000
+# Đại từ người kể đếm trên chữ nguồn từng chương, theo (tệp, mtime, cỡ): cửa sổ của mỗi chương cộng số đếm của các chương quanh nó.
+_COUNTS: dict[tuple, Counter[str]] = {}
+# Cửa sổ đại từ: chương đang xét và tối đa ngần này chương mỗi bên cùng người kể (DCHECK_12-10 phụ lục 04:1x: không tính cả cuốn -
+# cuốn thật có thể xưng "tôi" ở đa số chương mà vài chương liền nhau do người xưng "ta" kể).
+PRONOUN_WINDOW = 2
 
 
 def narrators(project_root: Path) -> tuple[str, dict[int, str]]:
@@ -34,8 +40,41 @@ def narrators(project_root: Path) -> tuple[str, dict[int, str]]:
     return ("" if identity.casefold() in FIRST_PERSON_PRONOUNS else identity), first_person_chapters(settings)
 
 
+def known_name(project_root: Path, connection: Any, name: str) -> str:
+    """Tên trong dự án của người mà một dòng tiêu đề góc nhìn gọi tới: bí danh đã xác nhận (aliases.json), tên trong sổ nhân vật
+    (tên gốc, tên hiển thị, bí danh) - đủ tên, hay một chữ của đúng MỘT tên trong sổ ("Saito" -> "SAITO AYANE"). Không khớp thì
+    giữ nguyên chữ của tiêu đề."""
+    from .. import aliases
+
+    key = aliases.key(name)
+    person = aliases.load(project_root).get(key)
+    if person:
+        return person
+    tables = store._table_names(connection)
+    known: list[tuple[str, str]] = []  # (cách viết, tên gốc)
+    if "characters" in tables:
+        for row in connection.execute("SELECT canonical_name, display_name FROM characters"):
+            known += [(str(row["canonical_name"] or ""), str(row["canonical_name"] or "")),
+                      (str(row["display_name"] or ""), str(row["canonical_name"] or ""))]
+        if "character_aliases" in tables:
+            known += [(str(row[1] or ""), str(row[0] or "")) for row in connection.execute(
+                "SELECT c.canonical_name, a.alias FROM character_aliases a JOIN characters c ON c.id = a.character_id")]
+    known = [(written, canonical) for written, canonical in known if written.strip() and canonical.strip()]
+    exact = {canonical for written, canonical in known if aliases.key(written) == key}
+    if len(exact) == 1:
+        return exact.pop()
+    if len(key.split()) == 1:
+        partial = {canonical for written, canonical in known if key in aliases.key(written).split()}
+        if len(partial) == 1:
+            return partial.pop()
+    return name
+
+
 def proposals(project_root: Path) -> list[dict[str, Any]]:
-    """Mọi đoạn có vẻ không do người kể của sách kể: {chapter_id, chapter_index, narrator, from_seq, to_seq, r1, r3, words}."""
+    """Mọi đoạn có vẻ không do người kể của sách kể: {chapter_id, chapter_index, narrator, from_seq, to_seq, r1, r3, words}; đoạn
+    mở bằng dòng tiêu đề góc nhìn có thêm `heading` (dòng ấy) và `suggested` (người kể nó gọi, theo tên trong dự án; "" = ngôi
+    ba). Chỉ sách có người kể "tôi": dây chuyền (analysis._bind_narrator_sections) chỉ đọc quyết định ở những sách ấy, nên ở
+    sách ngôi ba một lần nhận sẽ không đổi được gì."""
     identity, by_chapter = narrators(project_root)
     if not identity and not by_chapter:
         return []
@@ -52,10 +91,12 @@ def proposals(project_root: Path) -> list[dict[str, Any]]:
             if not needed <= {row[1] for row in connection.execute(f"PRAGMA table_info({table})")}:
                 return []
         chapters = connection.execute("SELECT id, chapter_index, input_path FROM chapters ORDER BY chapter_index").fetchall()
-        for chapter in chapters:
+        tellers = [by_chapter.get(int(chapter["chapter_index"]), identity) for chapter in chapters]
+        for position, chapter in enumerate(chapters):
             index = int(chapter["chapter_index"])
-            narrator = by_chapter.get(index, identity)
-            if not narrator or not chapter["input_path"]:
+            # Chương kể ngôi ba ("" theo chương) vẫn được xét: D im ở đó, nhưng dòng "Góc nhìn của X" vẫn là một đề xuất.
+            narrator = tellers[position]
+            if not chapter["input_path"]:
                 continue
             rows = connection.execute(
                 "SELECT seq, text, kind_hint FROM segments WHERE chapter_id=? ORDER BY seq", (int(chapter["id"]),)
@@ -67,21 +108,55 @@ def proposals(project_root: Path) -> list[dict[str, Any]]:
                 stat = path.stat()
             except OSError:
                 continue
-            key = (str(project_root), index, stat.st_mtime_ns, stat.st_size, narrator, len(rows), max_chars, drop_credits, drop_tail_credits)
+            pron = narrator_sections.PRON
+            if narrator:
+                window: Counter[str] = Counter()
+                for other in range(max(0, position - PRONOUN_WINDOW), min(len(chapters), position + PRONOUN_WINDOW + 1)):
+                    if tellers[other] == narrator and chapters[other]["input_path"]:
+                        window.update(_pronoun_counts(Path(str(chapters[other]["input_path"]))))
+                pron = narrator_sections.pronoun_pattern(window)
+            key = (str(project_root), index, stat.st_mtime_ns, stat.st_size, narrator, len(rows), max_chars, drop_credits, drop_tail_credits,
+                   pron.pattern)
             if key not in _CACHE:
                 if len(_CACHE) > _CACHE_MAX:
                     _CACHE.clear()
-                from ..io_utils import decode_text_bytes
-
-                try:
-                    raw = decode_text_bytes(path.read_bytes())
-                except OSError:
+                raw = _read(path)
+                if raw is None:
                     continue
                 _CACHE[key] = narrator_sections.detect(raw, rows, narrator, max_chars=max_chars, drop_credits=drop_credits,
-                                                         drop_tail_credits=drop_tail_credits)
-            found += [{**item, "chapter_id": int(chapter["id"]), "chapter_index": index, "narrator": narrator}
-                      for item in _CACHE[key]]
+                                                         drop_tail_credits=drop_tail_credits, pron=pron)
+            for item in _CACHE[key]:
+                if "heading" in item:
+                    suggested = known_name(project_root, connection, item["suggested"]) if item["suggested"] else ""
+                    if narrator_sections.same_narrator(suggested, narrator):
+                        continue  # tên trong sổ hoá ra là người kể của sách
+                    item = {**item, "suggested": suggested}
+                found.append({**item, "chapter_id": int(chapter["id"]), "chapter_index": index, "narrator": narrator})
     return found
+
+
+def _read(path: Path) -> str | None:
+    from ..io_utils import decode_text_bytes
+
+    try:
+        return decode_text_bytes(path.read_bytes())
+    except OSError:
+        return None
+
+
+def _pronoun_counts(path: Path) -> Counter[str]:
+    """Đại từ người kể trên chữ nguồn một chương (narrator_sections.pronoun_counts), nhớ theo tệp; tệp không đọc được = không đếm."""
+    try:
+        stat = path.stat()
+    except OSError:
+        return Counter()
+    key = (str(path), stat.st_mtime_ns, stat.st_size)
+    if key not in _COUNTS:
+        if len(_COUNTS) > _CACHE_MAX:
+            _COUNTS.clear()
+        raw = _read(path)
+        _COUNTS[key] = narrator_sections.pronoun_counts(raw) if raw is not None else Counter()
+    return _COUNTS[key]
 
 
 def decision_of(sections: dict[int, list[dict[str, Any]]], chapter_index: int, from_seq: int, to_seq: int) -> dict[str, Any] | None:
@@ -121,10 +196,16 @@ def decide(project_root: Path, body: dict[str, Any]) -> dict[str, Any]:
     action = "undo" if body.get("withdraw") else str(body.get("action") or "")
     if action not in ("accept", "choose", "keep", "undo"):
         raise ValueError("Lựa chọn không hợp lệ")
-    if action != "undo" and not any((item["chapter_index"], item["from_seq"], item["to_seq"]) == (chapter_index, first, last)
-                                    for item in proposals(project_root)):
+    proposal = None if action == "undo" else next(
+        (item for item in proposals(project_root) if (item["chapter_index"], item["from_seq"], item["to_seq"]) == (chapter_index, first, last)),
+        None)
+    if action != "undo" and proposal is None:
         raise ValueError("Đoạn này không còn là một đề xuất (chữ nguồn đã khác?)")
     narrator = " ".join(str(body.get("narrator") or "").split())[:narrator_sections.MAX_NAME]
+    if action == "accept" and proposal is not None and "heading" in proposal:
+        # Nhận đề xuất của dòng tiêu đề góc nhìn: người kể là người dòng ấy gọi (máy đề xuất -> source "auto").
+        narrator_sections.decide(project_root, chapter_index, first, last, accepted=True, narrator=proposal["suggested"], source="auto")
+        return {"action": action, "narrator": proposal["suggested"]}
     if action == "choose":
         from ..character_registry import PRONOUNS, normalize_name
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PENDING_NOTE } from "@/studio/decisions";
-import { decidedTitle, inboxLead, narratorDecidedTitle, nameKey, rerecordSentence, sameNames } from "@/studio/workText";
+import { decidedTitle, inboxLead, narratorButtons, narratorDecidedTitle, nameKey, rerecordSentence, sameNames } from "@/studio/workText";
 
 describe("tiêu đề thẻ người kể sau khi quyết", () => {
   it("không lặp tiền tố của nhãn lựa chọn", () => {
@@ -14,6 +14,19 @@ describe("tiêu đề thẻ người kể sau khi quyết", () => {
     expect(decidedTitle({ kind: "narrator", current: "Lâm", requested: null })).toBeNull();
     expect(decidedTitle({ kind: "speaker", current: "Lâm", requested: "Vai phụ không tên", lines: [1] })).toBe("Câu này của vai phụ không tên");
     expect(decidedTitle({ kind: "pronunciation", current: "Hên-khơ", surface: "Hailkes", requested: "Hên-khơ" })).toBe("Giữ: “Hailkes” đọc là “Hên-khơ”");
+  });
+});
+
+describe("nút của thẻ người kể", () => {
+  it("đoạn mở bằng dòng tiêu đề góc nhìn: nút nhận nói đúng tên dòng ấy gọi", () => {
+    expect(narratorButtons("Lâm", { label: "Mai" })).toEqual({ accept: "Nhận: Mai kể đoạn này", keep: "Giữ Lâm là người kể", accepted: "Người kể: Mai" });
+    expect(narratorButtons("Lâm", { label: "" })).toEqual({ accept: "Nhận: đoạn kể ngôi thứ ba", keep: "Giữ Lâm là người kể", accepted: "Đổi người kể" });
+  });
+  it("thẻ cũ giữ nguyên chữ; chương kể ngôi thứ ba không nói 'Giữ  là người kể'", () => {
+    expect(narratorButtons("Lâm")).toEqual({ accept: "Không phải Lâm kể - đoạn kể ngôi thứ ba", keep: "Giữ Lâm là người kể", accepted: "Đổi người kể" });
+    expect(narratorButtons("", { label: "Mai" }).keep).toBe("Giữ nguyên ngôi thứ ba");
+    expect(narratorDecidedTitle("", "Giữ nguyên")).toBe("Đoạn này vẫn kể ở ngôi thứ ba");
+    expect(narratorDecidedTitle("", "Người kể: Mai")).toBe("Đoạn này do Mai kể");
   });
 });
 

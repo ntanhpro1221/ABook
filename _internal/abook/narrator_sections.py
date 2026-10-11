@@ -5,9 +5,14 @@ ba): model vẫn được dặn "người kể là X", nên gán thừa cho X nh
 D dưới đây bắt 22/28 lỗi gán thừa kiểu ấy, báo nhầm 3/64 đoạn. Mỏng, nên app chỉ ĐỀ XUẤT; người dùng nhận mới áp.
 
 D chỉ dùng chữ nguồn + tên người kể của sách (không nhãn model, không đáp án). Ngưỡng ĐÚNG như b14err/P_RULE.md, cố định:
-báo "người kể của đoạn khác" khi (r3 >= 2 và r3 > r1/4) hoặc r1 < 1, với r1 = số "tôi"/"tớ" và r3 = số lần tên người kể (đủ hay
+báo "người kể của đoạn khác" khi (r3 >= 2 và r3 > r1/4) hoặc r1 < 1, với r1 = số "tôi"/"tớ" (và đại từ ưu thế của người kể ở
+các chương quanh đó nếu không phải "tôi" - `narrator_pronouns`) và r3 = số lần tên người kể (đủ hay
 một token tên riêng) trên 1.000 chữ LỜI DẪN của đoạn (lời dẫn = đoạn không nằm trong ngoặc thoại: `kind_hint == "narration"`).
 Đoạn không có chữ lời dẫn nào thì không quyết được và KHÔNG bị báo.
+
+Dòng tiêu đề góc nhìn ("[POV: Mai]", "~ Góc nhìn của Mai ~", "Quay lại góc nhìn thứ 3"): cũng là ranh đoạn, và nói thẳng ai kể -
+đoạn mở bằng nó được đề xuất CÓ TÊN thay vì D. Đo 12-10 (LLM_Train/runs/DCHECK_12-10.md): 6 dòng trên 56 chương, cả 6 là mốc đổi
+góc nhìn thật, trong đó có ca D không thấy được ("tôi" đổi sang người khác, 118 câu thoại).
 """
 from __future__ import annotations
 
@@ -16,6 +21,7 @@ import os
 import re
 import time
 import unicodedata
+from collections import Counter
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -29,6 +35,54 @@ MIN_PROPOSAL_WORDS = 20
 COMMON_WORDS = frozenset({"Người", "Đưa", "Tang", "Master"})
 BREAK_NUMBER = re.compile(r"^\s*(?:\d{1,3}|[IVXLC]{1,6})\s*[.)]?\s*$")
 PRON = re.compile(r"(?<!\w)(?:tôi|tớ)(?!\w)", re.IGNORECASE)
+# Người kể không xưng "tôi" (DCHECK_12-10 phụ lục 04:1x: người kể xưng "ta" thì r1 = 0 cả chương, D báo nhầm cả chương). Đại từ ưu
+# thế đếm trên dòng lời dẫn của các chương quanh đó; mẫu = tôi|tớ ∪ {ưu thế}. "ta" đứng sau đại từ / danh từ chỉ người ("chúng ta",
+# "hắn ta", "cô ta"...) không phải người kể.
+NARRATOR_PRONOUNS = ("tôi", "tớ", "ta", "tao", "tại hạ", "bản tọa", "bổn tọa", "lão phu", "bổn vương", "trẫm")
+_TA_AFTER = "".join(f"(?<!{word} )" for word in ("chúng", "hắn", "cô", "anh", "bọn", "gã", "lão", "bà", "ông", "mụ", "y", "nó"))
+_DIALOGUE_START = tuple("\"“”「『-—'")
+# Dưới ngần này chữ đại từ ứng viên (cả cửa sổ) thì không đủ để nói người kể xưng gì: một chương kể ngôi nhất thường có hàng chục
+# "tôi" trong lời dẫn, còn vài chữ lẻ có thể chỉ là một câu trích - dùng mẫu mặc định.
+MIN_PRONOUN_HITS = 20
+
+
+def _pronoun_regex(words: Sequence[str]) -> re.Pattern[str]:
+    # Lọc "chúng/hắn/cô... " chỉ cho "ta": "chúng tôi", "anh tôi" vẫn là người kể như ở PRON.
+    alternatives = "|".join((_TA_AFTER if word == "ta" else "") + re.escape(word) for word in sorted(words, key=len, reverse=True))
+    return re.compile(r"(?<!\w)(?:" + alternatives + r")(?!\w)", re.IGNORECASE)
+
+
+_CANDIDATES = {word: _pronoun_regex([word]) for word in NARRATOR_PRONOUNS}
+
+
+def pronoun_counts(text: str) -> Counter[str]:
+    """Số lần mỗi đại từ ứng viên của người kể trên các dòng LỜI DẪN của chữ nguồn (dòng mở bằng ngoặc / gạch thoại không tính)."""
+    counts: Counter[str] = Counter()
+    for line in _nfc(text).splitlines():
+        line = line.strip()
+        if not line or line.startswith(_DIALOGUE_START):
+            continue
+        for word, pattern in _CANDIDATES.items():
+            found = len(pattern.findall(line))
+            if found:
+                counts[word] += found
+    return counts
+
+
+def pronoun_pattern(counts: Mapping[str, int]) -> re.Pattern[str]:
+    """Mẫu đại từ của người kể từ số đếm (`pronoun_counts` cộng lại): PRON khi ưu thế là "tôi"/"tớ" hay chưa đủ chữ."""
+    if sum(counts.values()) < MIN_PRONOUN_HITS:
+        return PRON
+    dominant = max(NARRATOR_PRONOUNS, key=lambda word: counts.get(word, 0))
+    return PRON if dominant in ("tôi", "tớ") else _pronoun_regex(["tôi", "tớ", dominant])
+
+
+def narrator_pronouns(texts: Sequence[str]) -> re.Pattern[str]:
+    """Mẫu đại từ của người kể cho các chữ nguồn `texts` (chương đang xét và các chương quanh nó cùng người kể)."""
+    total: Counter[str] = Counter()
+    for text in texts:
+        total.update(pronoun_counts(text))
+    return pronoun_pattern(total)
 # Dòng ngắt cảnh: toàn ký hiệu (* ◇ ◆ ─ ~ ・ ...) hoặc một số/số La Mã đứng riêng.
 RULE_GLYPHS = frozenset("*~-=_#+·•‧・—–―‒─━═┄┈╌")
 ORNAMENT_GLYPHS = frozenset("◆◇◈○●◎□■▪▫▲△▽▼★☆✦✧✱✲✶✷✻✽❖❀✿❁※⁂⁕⋆◦♦♢◊⸻§")
@@ -69,6 +123,67 @@ def name_pattern(narrator: str) -> re.Pattern[str]:
     return re.compile(r"(?<!\w)(?:" + pattern + r")(?!\w)")
 
 
+def same_narrator(name: str, narrator: str) -> bool:
+    """Hai cách viết cùng một người kể: đủ tên hay một token tên riêng của tên kia ("Minato" / "TANAKA MINATO"), hoa thường tuỳ ý."""
+    name, narrator = " ".join(_nfc(name).split()), " ".join(_nfc(narrator).split())
+    if not name or not narrator:
+        return name == narrator
+    return any(name_pattern(one).fullmatch(other) or name_pattern(one).fullmatch(other.title())
+               for one, other in ((narrator, name), (name, narrator)))
+
+
+# Dòng tiêu đề góc nhìn: dòng ngắn, TRỌN dòng là tiêu đề (bỏ ngoặc / ký hiệu trang trí hai đầu và số thứ tự khúc "4 - " ở đầu).
+HEADING_MAX_CHARS = 60
+POV_WORD = re.compile(r"(?i)\bP\.?O\.?V\b|góc nhìn")
+_HEADING_EDGES = "[](){}<>【】「」『』《》〈〉«»\"'“”‘’*~=#+_|:·•・—–―‒─━═-" + "".join(ORNAMENT_GLYPHS)
+_SECTION_NUMBER = re.compile(r"^(?:(?:[Pp]hần|[Pp]art)\s+)?(?:\d{1,3}|[IVXLC]{1,6})\s*[-.:)–—]\s*")
+# "Trở lại / Quay về / Chuyển sang góc nhìn của X" (kể cả gõ nhầm "Trờ lại" như một bản dịch thật); câu thường mở bằng chữ khác
+# ("Từ góc nhìn của tôi...") không khớp.
+_POV_LEAD = re.compile(r"(?i)^(?:(?:trở|trờ|quay|chuyển|đổi|back)(?:\s+(?:lại|về|sang|qua|to))?\s+)?(?:góc\s+nhìn|p\.?o\.?v\.?)"
+                       r"(?:\s*(?:của|from|of)(?!\w))?\s*[:\-–—]?\s*(?P<who>.*)$")
+_POV_TAIL = re.compile(r"(?i)^(?P<who>.+?)(?:['’]s)?\s+p\.?o\.?v\.?$")  # "Mai's POV", "Third person POV"
+_FILLER = re.compile(r"(?i)\s+(?:nào|nhé|nha|đây)$")
+_THIRD_PERSON = re.compile(r"(?i)^(?:(?:ngôi\s+)?thứ\s*(?:3|ba)|người\s+(?:dẫn|kể)\s+chuyện|(?:third|3rd)[\s-]+person|narrator|tác\s+giả)$")
+_NAME_TOKEN = re.compile(r"[^\W\d_][\w'’.-]*")
+
+
+def pov_heading(line: str) -> str | None:
+    """Tên người kể mà một dòng tiêu đề góc nhìn gọi ("Góc nhìn của Mai" -> "Mai"), "" khi dòng nói ngôi ba ("Góc nhìn thứ 3",
+    "Góc nhìn người dẫn chuyện"), None khi dòng không phải tiêu đề góc nhìn - kể cả câu thường có chữ "góc nhìn"."""
+    text = " ".join(_nfc(line).split())
+    if not text or len(text) > HEADING_MAX_CHARS or not POV_WORD.search(text):
+        return None
+    text = _SECTION_NUMBER.sub("", text.strip(_HEADING_EDGES + " ")).strip(_HEADING_EDGES + " ")
+    match = _POV_LEAD.match(text) or _POV_TAIL.match(text)
+    if match is None:
+        return None
+    who = _FILLER.sub("", match.group("who").strip(_HEADING_EDGES + " ")).strip()
+    if _THIRD_PERSON.match(who):
+        return ""
+    tokens = who.split()
+    # Tên riêng: 1-4 chữ, chữ nào cũng viết hoa chữ đầu ("của tôi thì...", "của cô ấy" không phải tên).
+    if not 1 <= len(tokens) <= 4 or not all(_NAME_TOKEN.fullmatch(token) and token[0].isupper() for token in tokens):
+        return None
+    return who
+
+
+def heading_section_ids(rows: Sequence[Mapping[str, Any]], ids: Sequence[int]) -> list[int]:
+    """Số đoạn của `section_ids` thêm ranh ở mỗi hàng là dòng tiêu đề góc nhìn (đánh số lại liên tục). Không đổi cách cắt chữ
+    nguồn. Tiêu đề đứng một mình trước dòng ngắt cảnh thì đoạn của nó kéo sang khúc kế: tiêu đề nói về phần chữ phía sau."""
+    out: list[int] = []
+    section, previous, only_heading = -1, None, False
+    for row, old in zip(rows, ids):
+        heading = pov_heading(str(row["text"])) is not None
+        if heading or (old != previous and not only_heading):
+            section += 1
+            only_heading = heading
+        else:
+            only_heading = False
+        previous = old
+        out.append(section)
+    return out
+
+
 def section_ids(raw_text: str, rows: Sequence[Mapping[str, Any]], *, max_chars: int = MAX_CHARS,
                 drop_credits: bool = False, drop_tail_credits: bool = False) -> list[int] | None:
     """Số đoạn của từng hàng. Bộ chia câu bỏ dòng ngắt cảnh, nên cắt NGUỒN tại các dòng ấy, chia từng khúc bằng đúng bộ chia
@@ -100,55 +215,69 @@ def section_ids(raw_text: str, rows: Sequence[Mapping[str, Any]], *, max_chars: 
     return ids
 
 
-def measure(rows: Sequence[Mapping[str, Any]], indexes: Sequence[int], name: re.Pattern[str]) -> dict[str, Any]:
-    """r1, r3 và cờ của một đoạn (`indexes` = vị trí các hàng của đoạn trong `rows`)."""
+def measure(rows: Sequence[Mapping[str, Any]], indexes: Sequence[int], name: re.Pattern[str] | None,
+            pron: re.Pattern[str] = PRON) -> dict[str, Any]:
+    """r1, r3 và cờ của một đoạn (`indexes` = vị trí các hàng của đoạn trong `rows`). Không có tên người kể (`name` None): chỉ
+    đếm chữ lời dẫn, r3 None, không cờ."""
     words = pronouns = names = 0
     for index in indexes:
         if rows[index]["kind_hint"] != "narration":
             continue
         text = _nfc(str(rows[index]["text"]))
         words += len(text.split())
-        pronouns += len(PRON.findall(text))
-        names += len(name.findall(text))
+        pronouns += len(pron.findall(text))
+        names += len(name.findall(text)) if name is not None else 0
     r1 = pronouns * 1000.0 / words if words else None
-    r3 = names * 1000.0 / words if words else None
-    flagged = bool(words) and bool((r3 >= 2 and r3 > r1 / 4) or r1 < 1)
+    r3 = names * 1000.0 / words if words and name is not None else None
+    flagged = r3 is not None and r1 is not None and bool((r3 >= 2 and r3 > r1 / 4) or r1 < 1)
     return {"words": words, "r1": r1, "r3": r3, "flagged": flagged}
 
 
 def detect(raw_text: str, rows: Sequence[Mapping[str, Any]], narrator: str, *, max_chars: int = MAX_CHARS,
-           drop_credits: bool = False, drop_tail_credits: bool = False) -> list[dict[str, Any]]:
+           drop_credits: bool = False, drop_tail_credits: bool = False, pron: re.Pattern[str] = PRON) -> list[dict[str, Any]]:
     """Các đoạn của MỘT chương mà người kể có vẻ không phải `narrator` (dùng chữ nguồn + hàng đã chia: `text`, `kind_hint`, `seq`).
 
-    Mỗi phần tử: {"from_seq", "to_seq", "r1", "r3", "words"} - gộp các đoạn liền nhau bị báo thành một khoảng. Không có
-    người kể (sách ngôi ba) hay không đối chiếu được chữ nguồn với các hàng thì trả rỗng: không có gì để đề xuất."""
+    Mỗi phần tử: {"from_seq", "to_seq", "r1", "r3", "words"} - gộp các đoạn liền nhau bị D báo thành một khoảng. Đoạn mở bằng
+    dòng tiêu đề góc nhìn thì thay vào đó: {"from_seq", "to_seq", "heading": dòng ấy, "suggested": người kể nó gọi ("" = ngôi
+    ba), "r1": None, "r3": None, "words"} - chỉ khi người ấy khác `narrator` (sách ngôi ba: chỉ tiêu đề CÓ TÊN). Không đối chiếu
+    được chữ nguồn với các hàng thì trả rỗng: không có gì để đề xuất."""
     narrator = narrator.strip()
-    if not narrator or not rows:
+    if not rows:
         return []
     ids = section_ids(raw_text, rows, max_chars=max_chars, drop_credits=drop_credits, drop_tail_credits=drop_tail_credits)
     if ids is None:
         return []
-    name = name_pattern(narrator)
+    ids = heading_section_ids(rows, ids)
+    name = name_pattern(narrator) if narrator else None
     members: dict[int, list[int]] = {}
     for index, section in enumerate(ids):
         members.setdefault(section, []).append(index)
     found: list[dict[str, Any]] = []
     for section in sorted(members):
         indexes = members[section]
-        result = measure(rows, indexes, name)
-        if not result["flagged"]:
+        span = {"from_seq": int(rows[indexes[0]]["seq"]), "to_seq": int(rows[indexes[-1]]["seq"]), "_section": section}
+        heading = pov_heading(str(rows[indexes[0]]["text"]))
+        if heading is not None:
+            # Hai loại không trùng nhau: đoạn có tiêu đề tin tiêu đề, không chạy D.
+            if not same_narrator(heading, narrator):
+                found.append({**span, "heading": " ".join(str(rows[indexes[0]]["text"]).split()), "suggested": heading,
+                              "r1": None, "r3": None, "words": measure(rows, indexes, None)["words"]})
             continue
-        found.append({"from_seq": int(rows[indexes[0]]["seq"]), "to_seq": int(rows[indexes[-1]]["seq"]),
-                      "r1": result["r1"], "r3": result["r3"], "words": result["words"], "_section": section})
+        if name is None:
+            continue
+        result = measure(rows, indexes, name, pron)
+        if result["flagged"]:
+            found.append({**span, "r1": result["r1"], "r3": result["r3"], "words": result["words"]})
     merged: list[dict[str, Any]] = []
     for item in found:
-        if merged and item["_section"] == merged[-1]["_section"] + 1:
+        if (merged and item["_section"] == merged[-1]["_section"] + 1
+                and "heading" not in item and "heading" not in merged[-1]):
             merged[-1].update(to_seq=item["to_seq"], words=merged[-1]["words"] + item["words"], _section=item["_section"])
         else:
             merged.append(dict(item))
     for item in merged:
         item.pop("_section")
-    return [item for item in merged if item["words"] >= MIN_PROPOSAL_WORDS]
+    return [item for item in merged if "heading" in item or item["words"] >= MIN_PROPOSAL_WORDS]
 
 
 # --- Lựa chọn của người dùng, lưu cạnh sổ dự án ------------------------------------------------------------------------
