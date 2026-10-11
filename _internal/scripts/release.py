@@ -48,7 +48,7 @@ def _edit(path: Path, change) -> None:
 
 
 def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> list[Path]:
-    """Nâng số phiên bản ở đúng 7 file của một commit phát hành; trả về các file đã đổi."""
+    """Nâng số phiên bản ở đúng 8 file của một commit phát hành; trả về các file đã đổi."""
     assert VERSION.match(new), f"số phiên bản lạ: {new}"
     old = current_version(root)
     assert old != new, f"đã là {new}"
@@ -56,6 +56,10 @@ def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> lis
     def json_version(text: str) -> str:
         # Chỉ "version" của CHÍNH gói (đầu package.json; gốc + packages."" trong lock), không đụng phụ thuộc trùng số.
         return re.sub(rf'("version": "){re.escape(old)}(")', rf"\g<1>{new}\g<2>", text, count=2)
+
+    def uv_lock(text: str) -> str:
+        # Mục của chính gói trong uv.lock (`uv lock --check` đỏ nếu lệch pyproject); không đụng phụ thuộc trùng số.
+        return re.sub(rf'(name = "abook"\r?\nversion = "){re.escape(old)}(")', rf"\g<1>{new}\g<2>", text, count=1)
 
     def gradle(text: str) -> str:
         code = int(re.search(r"versionCode (\d+)", text).group(1))
@@ -65,6 +69,7 @@ def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> lis
     day = (today or datetime.date.today()).isoformat()
     edits = {
         "pyproject.toml": lambda t: t.replace(f'version = "{old}"', f'version = "{new}"', 1),
+        "uv.lock": uv_lock,
         "ui/package.json": json_version,
         "ui/package-lock.json": json_version,
         "mobile/package.json": json_version,

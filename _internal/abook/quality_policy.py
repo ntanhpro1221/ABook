@@ -93,11 +93,16 @@ QUALITY_IMPLEMENTATION_FILES = (
 # sau đó ASR lại cả cuốn và dựng lại mọi MP3 (29-09: 0.4.3, 0.4.4, 0.4.5 trong cùng một ngày). Thư viện phụ thuộc - thứ
 # thật sự đổi âm thanh - vẫn nằm trong hash như cũ.
 PROJECT_VERSION_LINE = re.compile(rb'(?m)^version\s*=\s*"[^"\r\n]*"')
+# uv.lock ghi lại đúng con số ấy ở mục của chính gói (`name = "abook"` ngay trên `version`); bản phát hành nâng cả hai (11-10:
+# lock còn 0.4.48 khi pyproject đã 0.4.49 -> `uv lock --check` đỏ). Chỉ mục ấy - phiên bản của phụ thuộc vẫn vào hash.
+LOCK_OWN_VERSION = re.compile(rb'(?m)^(name = "abook"\r?\nversion = )"[^"\r\n]*"')
 
 
 def _hashed_bytes(filename: str, data: bytes) -> bytes:
     if filename == "../pyproject.toml":
         return PROJECT_VERSION_LINE.sub(b'version = "*"', data, count=1)
+    if filename == "../uv.lock":
+        return LOCK_OWN_VERSION.sub(rb'\1"*"', data, count=1)
     return data
 
 
