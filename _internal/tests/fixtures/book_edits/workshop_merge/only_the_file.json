@@ -1,0 +1,26 @@
+{
+ "now": 3000.0,
+ "local": {},
+ "incoming": {
+  "overrides.json": {
+   "version": 1,
+   "pronunciations": {
+    "heidi": {"surface": "Heidi", "spoken_form": "Hai-đi", "requested_at": 250.0}
+   }
+  },
+  "reviews.json": {
+   "s5": {"verdict": "ok", "chapterId": 1, "at": 200.0}
+  }
+ },
+ "merged": {
+  "overrides.json": {
+   "pronunciations": {
+    "heidi": {"surface": "Heidi", "spoken_form": "Hai-đi", "requested_at": 250.0, "merged_at": 3000.0}
+   }
+  },
+  "reviews.json": {
+   "s5": {"verdict": "ok", "chapterId": 1, "at": 200.0}
+  }
+ },
+ "report": {"merged": 2, "kept": 0}
+}

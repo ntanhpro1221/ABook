@@ -325,6 +325,20 @@ def test_quoted_paragraphs_in_a_row_given_to_one_person_are_one_card_that_altern
     assert card["score"] > 0.8, "đo 28-09: 38/42 cặp như thế máy sai - xếp trên lời gọi đầu câu"
 
 
+def test_a_turn_card_plays_the_lines_already_recorded(tmp_path: Path) -> None:
+    """Soát UX a25 T1: thẻ "Lượt đối đáp" ghi "· chưa thu" cho câu đã thu - cặp câu đọc không có cột wav_path."""
+    project = make_dialogue_book(tmp_path, first_person="ED ROSTAILER")
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("UPDATE segments SET wav_path='chunks/' || stable_id || '.wav' WHERE stable_id IN ('s1', 's2')")
+    db.commit()
+    db.close()
+    (project / "chunks").mkdir()
+    for stable_id in ("s1", "s2"):
+        (project / "chunks" / f"{stable_id}.wav").write_bytes(b"RIFF")
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "turn")
+    assert [example["hasAudio"] for example in card["examples"]] == [True, True, False]
+
+
 def test_a_lone_pair_keeps_its_two_line_card(tmp_path: Path) -> None:
     project = make_dialogue_book(tmp_path, first_person="ED ROSTAILER")
     db = sqlite3.connect(project / "project.sqlite3")

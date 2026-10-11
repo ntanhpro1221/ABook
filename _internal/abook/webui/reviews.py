@@ -14,6 +14,7 @@ import json
 import os
 import threading
 import time
+from collections.abc import Callable
 from contextlib import closing
 from pathlib import Path
 from typing import Any
@@ -171,10 +172,21 @@ class Reviews:
                     return
             else:
                 entry[stable_id] = {"verdict": verdict, "chapterId": int(chapter_id), "at": time.time()}
-            path = self.path(project_root)
-            temporary = path.with_suffix(".tmp")
-            temporary.write_bytes(json.dumps(entry, ensure_ascii=False, indent=1).encode("utf-8"))
-            os.replace(temporary, path)
+            self._write(project_root, entry)
+
+    def merge(self, project_root: Path, combine: Callable[[dict[str, Any]], tuple[dict[str, Any], int, int]]) -> tuple[int, int]:
+        """Gộp phán quyết từ nơi khác (workshop_merge.merge_workshop) trong cùng khoá: `combine(của máy này)` -> (kết quả, lấy, giữ)."""
+        with self._lock:
+            merged, taken, kept = combine(self._read(project_root))
+            if taken:
+                self._write(project_root, merged)
+        return taken, kept
+
+    def _write(self, project_root: Path, entry: dict[str, Any]) -> None:
+        path = self.path(project_root)
+        temporary = path.with_suffix(".tmp")
+        temporary.write_bytes(json.dumps(entry, ensure_ascii=False, indent=1).encode("utf-8"))
+        os.replace(temporary, path)
 
 
 def awaiting(item: dict[str, Any], verdicts: dict[str, Any]) -> bool:

@@ -1188,6 +1188,14 @@ class BookPipeline:
         if not self.db.casting_is_finalized():
             return set()
         overrides = read_overrides(self.paths.root)
+        if overrides:
+            # Trước mọi lần đặt lại: chương đã xong giữ chữ đọc theo khớp MP3 cũ - chương chờ thu lại vẫn đọc theo được.
+            from .webui.store import keep_heard_scripts
+
+            try:
+                keep_heard_scripts(self.paths.root)
+            except OSError as exc:
+                self.log(f"Không chụp được chữ đọc theo của các chương đã xong: {exc}")
         changed = False
         reset_chapters: set[int] = set()
         for request in pronunciation_requests(overrides):
