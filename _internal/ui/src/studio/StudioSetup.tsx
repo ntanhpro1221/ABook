@@ -53,7 +53,7 @@ export function StudioInstallNotice({ className }: { className?: string }) {
       <Cpu className="mt-0.5 size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">{studio.repair ? "Studio mất một phần, cần sửa trước khi làm sách" : studio.update ? "Studio cần cập nhật trước khi làm sách" : "Máy này chưa cài Studio"}</p>
-        <p className="mt-1 text-[13px] leading-relaxed text-fg-2 text-pretty">
+        <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
           {studio.update ? "" : `${STUDIO_WHAT} ${STUDIO_NEEDS} `}
           Vẫn tạo dự án được: dự án chờ tới khi {studio.repair ? "sửa" : studio.update ? "cập nhật" : "cài"} xong, các bước đã chọn ở đây được giữ nguyên.
         </p>
@@ -118,7 +118,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
           <h2 id="studio-setup-title" className="text-base font-semibold">
             {repair ? "Sửa Studio" : update ? "Cập nhật Studio" : "Cài Studio để làm sách nói trên máy này"}
           </h2>
-          <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-fg-2 text-pretty">
+          <p className="mt-1 max-w-2xl text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
             {repair
               ? `Studio trên máy này mất ${damaged.join(", ")} (file đã bị xoá hay hỏng) nên chưa làm sách được.${
                   stale.length > 0 ? ` Cũng cần cập nhật ${stale.join(", ")}.` : ""
@@ -143,7 +143,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
       </div>
 
       {status.error && !status.running && (
-        <div role="alert" className="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-[13px] leading-relaxed text-danger">
+        <div role="alert" className="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-[0.8125rem] leading-relaxed text-danger">
           <p>{friendlySetupError(status.error).summary}</p>
           {friendlySetupError(status.error).detail && (
             <details className="mt-1 text-xs">
@@ -159,7 +159,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
           {status.steps.map((step) => {
             const active = status.running && step.id === status.step;
             return (
-              <li key={step.id} className="flex min-w-0 items-center gap-2.5 text-[13px]">
+              <li key={step.id} className="flex min-w-0 items-center gap-2.5 text-[0.8125rem]">
                 {step.done ? (
                   <Check className="size-4 shrink-0 text-accent-text" aria-label="xong" />
                 ) : active ? (
@@ -216,7 +216,7 @@ export function StudioSettings() {
       <div className="mb-6 max-w-xl">
         <h3 className="text-sm font-semibold">Studio trên máy này</h3>
         <p className="mt-1 text-sm">Chưa cài.</p>
-        <p className="mt-1 text-[13px] leading-relaxed text-fg-2 text-pretty">{STUDIO_NEEDS}</p>
+        <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{STUDIO_NEEDS}</p>
         <Button className="mt-3" variant="primary" icon={Download} onClick={() => navigate("/studio")}>
           Cài Studio
         </Button>
@@ -245,7 +245,7 @@ export function StudioSettings() {
       <h3 className="text-sm font-semibold">Studio trên máy này</h3>
       <p className="mt-1 text-sm">Studio đã cài{status.gpu ? `, chạy trên ${status.gpu.name}` : ""}.</p>
       {status.outdated.length > 0 && (
-        <p className="mt-1 text-[13px] text-fg-2">
+        <p className="mt-1 text-[0.8125rem] text-fg-2">
           {status.damaged?.length ? `Mất ${status.damaged.join(", ")} (file đã bị xoá hay hỏng)` : `Cần cập nhật ${status.outdated.join(", ")}`} -{" "}
           <button type="button" onClick={() => navigate("/studio")} className="font-medium text-accent-text underline">
             {status.damaged?.length ? "Sửa Studio" : "Cập nhật Studio"}
@@ -253,7 +253,7 @@ export function StudioSettings() {
           .
         </p>
       )}
-      <p className="mt-1 break-all text-[13px] text-fg-2">{status.root}</p>
+      <p className="mt-1 break-all text-[0.8125rem] text-fg-2">{status.root}</p>
       <Button className="mt-3" variant={armed ? "danger" : "secondary"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
         {busy ? "Đang gỡ…" : armed ? "Bấm lần nữa để gỡ" : "Gỡ Studio"}
       </Button>

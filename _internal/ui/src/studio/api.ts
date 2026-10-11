@@ -333,6 +333,8 @@ export interface Preferences {
   newBookProfile?: string;
   /** Mẫu thiết lập có tên cho sách mới (studio/bookTemplates.ts), tối đa 20. */
   bookTemplates?: BookTemplate[];
+  /** Phím tắt một chữ cái (B, M, [ ], ?, J/K/1-9, O/R) - mặc định bật (shared/letterShortcuts.ts). */
+  letterShortcuts?: boolean;
 }
 
 // Mã phiên do cửa sổ app gắn vào URL (?t=...). Giữ lại trong phiên để điều hướng nội bộ không làm mất nó.

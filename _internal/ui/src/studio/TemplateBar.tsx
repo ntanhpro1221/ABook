@@ -109,10 +109,10 @@ export function TemplateBar({ draft, onPick }: {
         )}
       </div>
       {modified && active && (
-        <p className="mt-2 text-[13px] text-fg-2">Bạn đã đổi so với mẫu “{active.name}”. Bấm lại tên mẫu để trở về như đã lưu.</p>
+        <p className="mt-2 text-[0.8125rem] text-fg-2">Bạn đã đổi so với mẫu “{active.name}”. Bấm lại tên mẫu để trở về như đã lưu.</p>
       )}
       {!templates.length && !saving && !remote && (
-        <p className="mt-2 text-[13px] text-fg-2">Lưu các lựa chọn dưới đây thành mẫu để dùng lại cho những cuốn sau.</p>
+        <p className="mt-2 text-[0.8125rem] text-fg-2">Lưu các lựa chọn dưới đây thành mẫu để dùng lại cho những cuốn sau.</p>
       )}
       {saving && (
         <form
@@ -138,7 +138,7 @@ export function TemplateBar({ draft, onPick }: {
               onKeyDown={(event) => {
                 if (event.key === "Escape") close();
               }}
-              className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent sm:max-w-xs"
+              className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus sm:max-w-xs"
             />
             {confirming ? (
               <>
@@ -160,9 +160,9 @@ export function TemplateBar({ draft, onPick }: {
               </>
             )}
           </div>
-          {confirming && <p className="mt-2 text-[13px] text-fg-2">Đã có mẫu “{findTemplate(templates, name)?.name}”. Ghi đè bằng các lựa chọn hiện tại?</p>}
-          {problem && <p role="alert" className="mt-2 text-[13px] text-danger">{problem}</p>}
-          <p className="mt-2 text-[13px] text-fg-3">Mẫu nhớ giọng kể, chất lượng, bộ phân tích truyện và chuyện có bắt đầu ngay không. Không nhớ truyện, tên sách hay dòng ghi công.</p>
+          {confirming && <p className="mt-2 text-[0.8125rem] text-fg-2">Đã có mẫu “{findTemplate(templates, name)?.name}”. Ghi đè bằng các lựa chọn hiện tại?</p>}
+          {problem && <p role="alert" className="mt-2 text-[0.8125rem] text-danger">{problem}</p>}
+          <p className="mt-2 text-[0.8125rem] text-fg-3">Mẫu nhớ giọng kể, chất lượng, bộ phân tích truyện và chuyện có bắt đầu ngay không. Không nhớ truyện, tên sách hay dòng ghi công.</p>
         </form>
       )}
     </div>

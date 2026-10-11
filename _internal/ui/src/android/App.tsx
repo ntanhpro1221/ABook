@@ -16,7 +16,7 @@ import { ReaderScreen } from "@/listen/ReaderScreen";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
 import { PlayerProvider, useNowPlaying, usePlayer } from "@/listen/player";
 import { SourceProvider } from "@/listen/source";
-import { usePageEnter } from "@/shared/motion";
+import { pageFocusKey, usePageEnter, usePageFocus } from "@/shared/motion";
 import { watchDownloads, watchEditsSync } from "./downloads";
 import { watchReadAloud } from "./readAloud";
 import { watchImports } from "./imports";
@@ -88,7 +88,7 @@ function Tab({ to, icon: Icon, label }: { to: string; icon: typeof Library; labe
       to={to}
       end={to === "/"}
       className={({ isActive }) =>
-        cn("flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium", isActive ? "text-accent-text" : "text-fg-3")
+        cn("flex flex-1 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium", isActive ? "text-accent-text" : "text-fg-3")
       }
     >
       <Icon className="size-[22px]" strokeWidth={1.9} />
@@ -109,6 +109,7 @@ function MobileShell({ children }: { children: ReactNode }) {
   const main = useRef<HTMLElement | null>(null);
   // Điện thoại giữ chỗ cuộn: thư viện -> sách -> quay lại không mất chỗ đang xem.
   usePageEnter(main, pathname, { resetScroll: false });
+  usePageFocus(main, pageFocusKey(pathname));
   return (
     <div className="relative flex h-full flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       {/* Màn "Đang nghe" phủ kín: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}
@@ -320,6 +321,7 @@ export function AndroidApp() {
         // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.
         className="pointer-events-auto"
         toastOptions={{
+          closeButtonAriaLabel: "Đóng thông báo",
           classNames: {
             toast: "!bg-panel !border !border-line !text-fg !rounded-xl",
             description: "!text-fg-2",

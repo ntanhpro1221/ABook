@@ -50,7 +50,7 @@ describe("jobView", () => {
   const done: ExportJob = { state: "done", id: "a", finishedAgo: 5, result: { folder: "D:/Sách/Đã xuất", file: "D:/Sách/Đã xuất/Truyện.abook", size: 5 * 1048576 } };
 
   it("shows the time passed while packing, with the chapter count only when it is known", () => {
-    expect(jobView({ state: "running", elapsed: 75 }, 4)).toEqual({ kind: "loading", title: "Đang đóng gói sách…", description: "4 chương · đã 1:15" });
+    expect(jobView({ state: "running", elapsed: 75 }, 4)).toEqual({ kind: "loading", title: "Đang đóng gói sách…", description: "4 chương · đã 1:15", spoken: "Đang đóng gói sách…" });
     expect(jobView({ state: "running", elapsed: 75 })).toMatchObject({ kind: "loading", description: "đã 1:15" });
   });
 
@@ -219,7 +219,7 @@ describe("project file export (.abookproj)", () => {
     const view = jobView({ state: "running", elapsed: 12, phase: "listen", done: 100, total: 400 }, 0, false, PROJECT_FILE_COPY);
     expect(view).toMatchObject({ kind: "loading", title: "Đang đóng gói (100/400 chương)…", description: "đã 0:12" });
     expect((view as { progress?: number }).progress).toBeGreaterThan(0);
-    expect(jobView({ state: "running", elapsed: 1, phase: "prepare" }, 0, false, PROJECT_FILE_COPY)).toEqual({ kind: "loading", title: "Đang đóng gói…", description: "đã 0:01" });
+    expect(jobView({ state: "running", elapsed: 1, phase: "prepare" }, 0, false, PROJECT_FILE_COPY)).toEqual({ kind: "loading", title: "Đang đóng gói…", description: "đã 0:01", spoken: "Đang đóng gói…" });
   });
 
   it("says when it is done, counting sources that could not be packed, and when it was cancelled or failed", () => {

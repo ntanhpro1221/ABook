@@ -152,7 +152,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
           <select
             value={String(data.levelDb)}
             onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
-            className="mt-1 h-9 rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
+            className="mt-1 h-9 rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           >
             {levelOptions(data.levelDb).map(([value, label]) => (
               <option key={value} value={String(value)}>
@@ -315,7 +315,7 @@ export function EditBookDialog({
               maxLength={160}
               aria-label="Tên sách"
               onChange={(event) => setTitle(event.target.value)}
-              className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-accent"
+              className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
             />
             <Button type="submit" variant="primary" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>
               Lưu tên
@@ -338,7 +338,7 @@ export function EditBookDialog({
                 aria-label="Tác giả"
                 placeholder="Không rõ tác giả"
                 onChange={(event) => setAuthor(event.target.value)}
-                className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-accent"
+                className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
               />
               <Button type="submit" variant="primary" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>
                 Lưu tác giả
@@ -485,7 +485,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
             value={label}
             maxLength={160}
             onChange={(event) => setLabel(event.target.value)}
-            className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-accent"
+            className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
           />
         </label>
         {!single && (
@@ -495,7 +495,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
               value={name}
               maxLength={160}
               onChange={(event) => setName(event.target.value)}
-              className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-accent"
+              className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
             />
           </label>
         )}

@@ -174,7 +174,8 @@ describe("theo dõi việc nền", () => {
     expect(toasts.loading).toHaveBeenCalledTimes(1);
     const [title, options] = toasts.loading.mock.calls[0];
     expect(title).toBe("Đang làm sách nói…");
-    expect(options).toMatchObject({ id: "audiobook-export-b1", description: "Chương 2/5 · 30%" });
+    // Chữ nhìn đổi theo %, lời đọc của trình đọc màn hình chỉ theo mốc 25 % (soát a31 A6).
+    expect(options).toMatchObject({ id: "audiobook-export-b1", description: { props: { shown: "Chương 2/5 · 30%", spoken: "Đang xuất 5 chương · 25%" } } });
     options.action.onClick();
     expect(library.cancelAudiobookExport).toHaveBeenCalledWith({ bookId: "b1" });
   });
@@ -211,6 +212,9 @@ describe("theo dõi việc nền", () => {
     library.audiobookJobs.mockResolvedValue({ jobs: [{ bookId: "b7", run: "r7", phase: "voice", chapter: 6, chapters: 9, percent: 61, secondsLeft: 600, waiting: null }] });
     await watch();
     await Promise.resolve();
-    expect(toasts.loading).toHaveBeenCalledWith("Đang làm sách nói…", expect.objectContaining({ id: "audiobook-export-b7", description: "Chương 6/9 · 61% · còn khoảng 10 phút" }));
+    expect(toasts.loading).toHaveBeenCalledWith("Đang làm sách nói…", expect.objectContaining({
+        id: "audiobook-export-b7",
+        description: expect.objectContaining({ props: { shown: "Chương 6/9 · 61% · còn khoảng 10 phút", spoken: "Đang xuất 9 chương · 50%" } }),
+      }));
   });
 });

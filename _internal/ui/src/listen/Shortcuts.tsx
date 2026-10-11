@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { letterShortcutsOn, useLetterShortcuts } from "@/shared/letterShortcuts";
 import { Dialog, Kbd } from "@/shared/ui";
 
 // Phím tắt của máy tính: MỘT danh sách cho Cài đặt › Phím tắt và cho hộp mở bằng phím "?" (hay nút "Phím tắt" ở màn Đang nghe).
@@ -10,27 +11,43 @@ export function openShortcuts() {
   window.dispatchEvent(new CustomEvent(SHORTCUTS_EVENT));
 }
 
-const SHORTCUTS: [ReactNode, string][] = [
-  [<Kbd key="space">Space</Kbd>, "Phát / tạm dừng"],
-  [<><Kbd>←</Kbd> <Kbd>→</Kbd></>, "Lùi / tới 15 giây"],
-  [<><Kbd>Shift</Kbd> + <Kbd>←</Kbd> <Kbd>→</Kbd></>, "Chương trước / sau"],
-  [<Kbd key="b">B</Kbd>, "Thêm dấu trang"],
-  [<Kbd key="m">M</Kbd>, "Tắt / bật tiếng"],
-  [<><Kbd>[</Kbd> <Kbd>]</Kbd></>, "Giảm / tăng tốc độ đọc"],
-  [<Kbd key="esc">Esc</Kbd>, "Thu nhỏ màn hình đang nghe"],
-  [<Kbd key="help">?</Kbd>, "Xem các phím tắt này"],
+/** [phím, việc, là phím một chữ cái (tắt được ở Cài đặt › Phím tắt)]. */
+const SHORTCUTS: [ReactNode, string, boolean][] = [
+  [<Kbd key="space">Space</Kbd>, "Phát / tạm dừng", false],
+  [<><Kbd>←</Kbd> <Kbd>→</Kbd></>, "Lùi / tới 15 giây", false],
+  [<><Kbd>Shift</Kbd> + <Kbd>←</Kbd> <Kbd>→</Kbd></>, "Chương trước / sau", false],
+  [<Kbd key="b">B</Kbd>, "Thêm dấu trang", true],
+  [<Kbd key="m">M</Kbd>, "Tắt / bật tiếng", true],
+  [<><Kbd>[</Kbd> <Kbd>]</Kbd></>, "Giảm / tăng tốc độ đọc", true],
+  [<Kbd key="esc">Esc</Kbd>, "Thu nhỏ màn hình đang nghe", false],
+  [<Kbd key="help">?</Kbd>, "Xem các phím tắt này", true],
 ];
 
+/** Dòng mô tả công tắc "Phím tắt một chữ cái" (Cài đặt › Phím tắt). */
+export const LETTER_SHORTCUTS_HINT =
+  "B, M, [ ], ? khi nghe; J, K, 1–9 ở Việc cần duyệt; O, R khi nghe lại liền. Tắt nếu bạn nhập bằng giọng nói hay hay lỡ chạm phím - Space, mũi tên và Esc vẫn dùng được.";
+
 export function ShortcutList() {
+  const letters = useLetterShortcuts();
   return (
-    <dl className="max-w-md space-y-2.5 text-sm">
-      {SHORTCUTS.map(([keys, label]) => (
-        <div key={label} className="flex items-center justify-between gap-4">
-          <dt className="text-fg-2">{label}</dt>
-          <dd className="flex items-center gap-1 text-fg-2">{keys}</dd>
-        </div>
-      ))}
-    </dl>
+    <>
+      <dl className="max-w-md space-y-2.5 text-sm">
+        {SHORTCUTS.map(([keys, label, letter]) => (
+          <div key={label} className="flex items-center justify-between gap-4">
+            <dt className="text-fg-2">
+              {label}
+              {letter && !letters && " (đang tắt)"}
+            </dt>
+            <dd className={letter && !letters ? "flex items-center gap-1 text-fg-2 line-through" : "flex items-center gap-1 text-fg-2"}>{keys}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-3 max-w-md text-[0.8125rem] text-fg-2 text-pretty">
+        {letters
+          ? "Phím một chữ cái (B, M, [ ], ?, và J, K, 1–9, O, R ở Studio) tắt được ở Cài đặt › Phím tắt."
+          : "Phím một chữ cái đang tắt - bật lại ở Cài đặt › Phím tắt. Space, mũi tên và Esc vẫn dùng được; nút “Phím tắt” ở màn Đang nghe mở hộp này."}
+      </p>
+    </>
   );
 }
 
@@ -45,7 +62,7 @@ export function ShortcutsHost() {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "?" || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.key !== "?" || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || !letterShortcutsOn()) return;
       if (isTyping(event.target) || document.querySelector("[role='dialog']")) return;
       event.preventDefault();
       setOpen(true);

@@ -175,7 +175,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
         {status}
       </button>
       {open && <div>
-      <p className="mt-1 text-[13px] text-fg-2 text-pretty">
+      <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">
         {info.limits.free}. {info.limits.timings === "exact" ? "Tô đúng từng chữ đang đọc." : "Tô từng chữ đang đọc theo ước lượng."}
       </p>
       <p className="mt-1 text-xs text-fg-3 text-pretty">{KEY_HELP[info.id]}</p>
@@ -216,7 +216,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
           </Button>
         )}
       </div>
-      {result && <p className={cn("mt-2 text-[13px] text-pretty", result.ok ? "text-success" : "text-danger")} role="status">{result.text}</p>}
+      {result && <p className={cn("mt-2 text-[0.8125rem] text-pretty", result.ok ? "text-success" : "text-danger")} role="status">{result.text}</p>}
       </div>}
     </div>
   );
@@ -253,8 +253,8 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
   const current = voices?.length ? resolveVoice(voices, chosen) : undefined;
   return (
     <div className="grid gap-5">
-      {loadError && <p className="text-[13px] text-danger">{loadError}</p>}
-      {voices === null && <p className="text-[13px] text-fg-2">Đang tìm các giọng…</p>}
+      {loadError && <p className="text-[0.8125rem] text-danger">{loadError}</p>}
+      {voices === null && <p className="text-[0.8125rem] text-fg-2">Đang tìm các giọng…</p>}
       {voices &&
         VOICE_GROUPS.map(({ provider, title }) => {
           const list = voices.filter((voice) => voice.provider === provider);
@@ -274,10 +274,10 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
               })}
             >
               <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</div>
-              {!list.length && <p className="py-1 text-[13px] text-fg-2 text-pretty">{deviceHint}</p>}
+              {!list.length && <p className="py-1 text-[0.8125rem] text-fg-2 text-pretty">{deviceHint}</p>}
               {voiceSections(list).map((section) => (
                 <div key={section.label ?? ""}>
-                  {section.label && <div className="mb-0.5 mt-2 text-[13px] font-medium text-fg-2">{section.label}</div>}
+                  {section.label && <div className="mb-0.5 mt-2 text-[0.8125rem] font-medium text-fg-2">{section.label}</div>}
                   <ul className="divide-y divide-line">
                     {section.voices.map(({ voice, shown }) => {
                       const selected = voice.id === current?.id;
@@ -318,7 +318,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                           </div>
                           {/* Lỗi nghe thử nằm ngay dưới hàng giọng vừa bấm, không ở cuối cả nhóm. */}
                           {sample.failed?.voice === voice.id && (
-                            <p className="mt-1 text-[13px] text-danger text-pretty" role="alert">{sample.failed.message}</p>
+                            <p className="mt-1 text-[0.8125rem] text-danger text-pretty" role="alert">{sample.failed.message}</p>
                           )}
                         </li>
                       );
@@ -334,7 +334,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
       {providers.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold">Giọng trực tuyến dùng khóa của bạn</h3>
-          <p className="mt-1 text-[13px] text-fg-2 text-pretty">
+          <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">
             Có tài khoản ở một trong các dịch vụ dưới đây thì dán khóa vào để dùng giọng của họ. Khi đọc, chữ của sách được gửi tới dịch vụ đó, và
             dịch vụ có thể tính tiền vào tài khoản của bạn khi vượt phần miễn phí. Khóa chỉ lưu trên máy này. Khóa hết hạn mức hay bị từ chối thì
             đoạn ấy tạm đọc bằng giọng Edge hoặc giọng của máy, không dừng.

@@ -98,7 +98,7 @@ export function MergeDialog({
           autoFocus
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Tìm người trong truyện…"
-          className="h-9 w-full rounded-lg border border-line bg-bg pl-8 pr-2.5 text-sm outline-none focus-visible:border-accent"
+          className="h-9 w-full rounded-lg border border-line bg-bg pl-8 pr-2.5 text-sm outline-none focus-visible:border-focus"
         />
       </label>
       <ul className="mt-2 max-h-64 overflow-y-auto rounded-xl border border-line" role="listbox" aria-label="Gộp vào ai">

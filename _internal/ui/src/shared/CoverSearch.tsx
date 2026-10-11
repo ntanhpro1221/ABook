@@ -90,7 +90,7 @@ export function CoverSearchDialog({
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Tên sách (tiếng Anh thường cho nhiều kết quả hơn)"
           aria-label="Tên sách để tìm bìa"
-          className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-accent"
+          className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
         />
         <Button type="submit" variant="primary" icon={Search} loading={search.isPending}>
           Tìm
@@ -119,7 +119,7 @@ export function CoverSearchDialog({
                   )}
                 </div>
                 <div className="mt-1.5 line-clamp-2 text-xs font-medium">{found.title}</div>
-                <div className="truncate text-[11px] text-fg-3">{found.provider}</div>
+                <div className="truncate text-[0.6875rem] text-fg-3">{found.provider}</div>
               </button>
             ))}
           </div>

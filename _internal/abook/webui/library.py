@@ -63,6 +63,9 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     # Nhạc nền MÁY TỰ CHỌN cho sách chỉ có chữ chưa được chọn nhạc (Cài đặt > Nhạc nền; mặc định bật): tắt thì sách chưa chọn gì không có nhạc, cuốn
     # nào người nghe đã chọn nhạc (menu "Nhạc nền" của sách) vẫn phát. Đọc ở server._auto_playlist.
     "autoMusic": True,
+    # Phím tắt MỘT CHỮ CÁI của máy tính (B, M, [ ], ?, J/K/1-9 ở Việc cần duyệt, O/R ở Cần nghe lại; Cài đặt > Phím tắt; mặc định bật):
+    # tắt cho người dùng phần mềm nhập bằng giọng nói / phím dính (WCAG 2.1.4). Space, mũi tên, Esc và phím có Ctrl/Alt vẫn chạy.
+    "letterShortcuts": True,
 }
 MAX_RECENTS = 30
 BOOK_PROFILES = ("fast", "balanced", "high_quality")

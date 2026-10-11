@@ -8,7 +8,7 @@ import { ShortcutsHost } from "@/listen/Shortcuts";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
-import { usePageEnter } from "@/shared/motion";
+import { pageFocusKey, usePageEnter, usePageFocus } from "@/shared/motion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
 import { Progress, Vu } from "@/shared/ui";
@@ -30,7 +30,7 @@ function Brand() {
           <span className="h-[10px] w-[3px] rounded-sm bg-current" />
         </span>
       </div>
-      <div className="text-[15px] font-bold tracking-tight">ABook</div>
+      <div className="text-[0.9375rem] font-bold tracking-tight">ABook</div>
     </div>
   );
 }
@@ -77,7 +77,7 @@ function TabItem({ to, icon: Icon, match, children }: { to: string; icon: typeof
       onClick={() => setExpanded(false)}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium",
+        "flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-[0.6875rem] font-medium",
         active ? "text-accent-text" : "text-fg-2",
       )}
     >
@@ -114,8 +114,8 @@ function Producing() {
               <span className="truncate">{book.title}</span>
             </div>
             <div className="mt-1 flex items-center gap-2">
-              <Progress value={book.progress.overall} running={!book.paused} size="xs" className="flex-1" />
-              <span className="tabular text-[11px] text-fg-2">{book.starting ? "…" : formatPercent(book.progress.overall)}</span>
+              <Progress value={book.progress.overall} running={!book.paused} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />
+              <span className="tabular text-[0.6875rem] text-fg-2">{book.starting ? "…" : formatPercent(book.progress.overall)}</span>
             </div>
           </div>
         </button>
@@ -141,7 +141,7 @@ function UpdateNotice() {
     >
       <Download className="size-4 shrink-0 text-accent-text" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-semibold">Có ABook {info.update.version}</span>
+        <span className="block truncate text-[0.8125rem] font-semibold">Có ABook {info.update.version}</span>
         <span className="block text-xs text-fg-2">Bấm để cập nhật</span>
       </span>
     </button>
@@ -179,6 +179,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const phoneWidth = useMediaQuery("(max-width: 767px)");
   const compactBar = useMediaQuery("(max-width: 1023px)");
   usePageEnter(main, pathname);
+  usePageFocus(main, pageFocusKey(pathname));
 
   // Tên chung theo đường dẫn; màn nào biết tên cụ thể (sách, chương, dự án) thì `usePageTitle` ghi đè sau đó.
   useLayoutEffect(() => {

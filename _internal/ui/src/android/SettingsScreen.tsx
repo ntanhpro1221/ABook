@@ -51,7 +51,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
     // từng bóp lời giải thích còn một chữ mỗi dòng (soát UX a9).
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3.5">
       <div className="min-w-0 flex-[1_1_12rem]">
-        <div className="text-[15px] font-medium">{label}</div>
+        <div className="text-[0.9375rem] font-medium">{label}</div>
         {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2">{hint}</div>}
       </div>
       <div className="ml-auto shrink-0">{children}</div>
@@ -102,7 +102,7 @@ export function AboutGroup({ version }: { version: string | null }) {
         trigger={
           <button type="button" className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left">
             <span className="min-w-0">
-              <span className="block text-[15px] font-medium">Thành phần bên thứ ba</span>
+              <span className="block text-[0.9375rem] font-medium">Thành phần bên thứ ba</span>
               <span className="mt-0.5 block text-xs leading-snug text-fg-2">Thư viện, giọng đọc và nhạc ABook dùng, cùng giấy phép của từng thứ.</span>
             </span>
             <ChevronRight className="size-5 shrink-0 text-fg-3" />
@@ -157,7 +157,7 @@ export function SettingsScreen() {
             checked={settings.shakeToExtend}
             onCheckedChange={(value) => change({ shakeToExtend: value })}
             aria-label="Lắc máy để nghe thêm"
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
           >
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -167,7 +167,7 @@ export function SettingsScreen() {
             checked={settings.flipToPause ?? false}
             onCheckedChange={(value) => change({ flipToPause: value })}
             aria-label="Úp máy để tạm dừng"
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
           >
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -177,7 +177,7 @@ export function SettingsScreen() {
             checked={Boolean(settings.sleepSchedule)}
             onCheckedChange={(value) => change({ sleepSchedule: value ? { from: "22:00", to: "06:00", minutes: 30 } : null })}
             aria-label="Lịch đêm"
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
           >
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -232,7 +232,7 @@ export function SettingsScreen() {
           onClick={() => setSleepMore((value) => !value)}
           className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left"
         >
-          <span className="text-[15px] font-medium">Tuỳ chỉnh thêm</span>
+          <span className="text-[0.9375rem] font-medium">Tuỳ chỉnh thêm</span>
           <ChevronDown className={cn("size-5 shrink-0 text-fg-3 transition-transform", sleepMore && "rotate-180")} />
         </button>
         {sleepMore && (
@@ -291,7 +291,7 @@ export function SettingsScreen() {
             checked={settings.headsetSkips ?? false}
             onCheckedChange={(value) => change({ headsetSkips: value })}
             aria-label="Nút tai nghe lùi/tới"
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
           >
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -317,7 +317,7 @@ export function SettingsScreen() {
             checked={settings.autoMusic !== false}
             onCheckedChange={(value) => change({ autoMusic: value })}
             aria-label={AUTO_MUSIC_LABEL}
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
           >
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>

@@ -101,7 +101,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   disabled={choice.disabled}
                   onClick={() => setEditing(index)}
                   title="Bấm để đổi tên chương"
-                  className="group flex w-full items-start gap-1.5 rounded text-left text-sm font-medium hover:text-accent-text focus-visible:outline-2 focus-visible:outline-accent"
+                  className="group flex w-full items-start gap-1.5 rounded text-left text-sm font-medium hover:text-accent-text focus-visible:outline-2 focus-visible:outline-focus"
                 >
                   <span className="line-clamp-2 min-w-0 break-words">{title}</span>
                   <Pencil className="mt-0.5 size-3 shrink-0 text-fg-3 group-hover:text-accent-text" aria-hidden />

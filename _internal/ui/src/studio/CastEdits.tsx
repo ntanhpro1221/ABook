@@ -71,7 +71,7 @@ export function RenamePersonDialog({
           maxLength={80}
           onChange={(event) => setValue(event.target.value)}
           aria-label={`Tên mới của ${name}`}
-          className="h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-accent"
+          className="h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
         />
         {person?.originalName && <p className="mt-2 text-xs text-fg-2">Tên gốc: {cleanName(person.originalName)}</p>}
         <div className="mt-5 flex justify-end gap-2">

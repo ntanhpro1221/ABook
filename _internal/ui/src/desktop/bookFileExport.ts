@@ -1,5 +1,6 @@
 import { spokenDuration } from "@/listen/prepareAhead";
 import { fileName, formatClock, formatSize } from "@/shared/format";
+import { spokenProgress } from "@/shared/progressSpeech";
 import { api } from "@/studio/api";
 import { BOOK_FILE_SPAN, packError, packView, type PackJob, type PackPhase } from "@/studio/projectPacking";
 
@@ -123,29 +124,37 @@ export type JobView =
       place?: string;
       /** Việc báo được tiến độ: thanh phần trăm (0-1) dưới dòng mô tả. */
       progress?: number;
+      /** Đang làm: lời cho trình đọc màn hình - chỉ đổi khi đổi pha hay qua mốc 25 % (dòng mô tả có đồng hồ chạy từng giây; soát a31 A6). */
+      spoken?: string;
     };
 
-/** Việc tự báo tiến độ (xuất sách nói): chữ + phần trăm 0-1; không báo thì null. */
-function reportedProgress(job: ExportJob): { fraction: number; text: string } | null {
+/** Việc tự báo tiến độ (xuất sách nói): chữ + phần trăm 0-1 + lời đọc (pha / mốc 25 %); không báo thì null. */
+function reportedProgress(job: ExportJob): { fraction: number; text: string; spoken: string } | null {
   if (job.phase === "music-fetch" && job.total) {
     const done = job.done ?? 0;
-    return { fraction: done / job.total, text: `Đang tải nhạc nền ${Math.min(done + 1, job.total)}/${job.total} bài` };
+    const fraction = done / job.total;
+    return { fraction, text: `Đang tải nhạc nền ${Math.min(done + 1, job.total)}/${job.total} bài`, spoken: spokenProgress("Đang tải nhạc nền", fraction) };
   }
-  if (job.phase === "peaks") return { fraction: 1, text: "Đang kiểm đỉnh âm…" };
+  if (job.phase === "peaks") return { fraction: 1, text: "Đang kiểm đỉnh âm…", spoken: "Đang kiểm đỉnh âm" };
   // Lượt mã hoá lại chạy lại từng chương (pha "encode" / "music" báo chương) - vẫn nói vì sao.
   const again = job.peakOver ? `Mã hoá lại vì ${job.peakOver} chương vượt đỉnh (lượt ${job.peakRound ?? 1})` : "";
-  if (job.phase === "reencode") return { fraction: 1, text: again };
+  if (job.phase === "reencode") return { fraction: 1, text: again, spoken: again };
   if (job.chapter === undefined || !job.chapters) return null;
   const where = `Chương ${job.chapter}/${job.chapters}`;
-  if (job.phase === "encode") return { fraction: 1, text: again ? `${again} · ${where}` : `Đang ghép file âm thanh · ${where}` };
+  if (job.phase === "encode") {
+    return { fraction: 1, text: again ? `${again} · ${where}` : `Đang ghép file âm thanh · ${where}`, spoken: again || "Đang ghép file âm thanh" };
+  }
   if (job.phase === "music") {
     const text = `Đang trộn nhạc chương ${job.chapter}/${job.chapters}`;
-    return { fraction: job.percent !== undefined ? job.percent / 100 : (job.chapter - 1) / job.chapters, text: again ? `${again} · ${text}` : text };
+    const fraction = job.percent !== undefined ? job.percent / 100 : (job.chapter - 1) / job.chapters;
+    return { fraction, text: again ? `${again} · ${text}` : text, spoken: again || spokenProgress("Đang trộn nhạc nền", fraction) };
   }
   const parts = [where, `${job.percent ?? 0}%`];
   if (job.waiting === "listening") parts.push("nhường cho chương đang nghe");
   else if (job.secondsLeft != null) parts.push(`còn ${spokenDuration(job.secondsLeft)}`);
-  return { fraction: (job.percent ?? 0) / 100, text: parts.join(" · ") };
+  const fraction = (job.percent ?? 0) / 100;
+  const spoken = job.waiting === "listening" ? "Tạm nhường cho chương đang nghe" : spokenProgress(`Đang xuất ${job.chapters} chương`, fraction);
+  return { fraction, text: parts.join(" · "), spoken };
 }
 
 /** Nơi file nằm: file sách, hay thư mục khi cả bộ mỗi phần một file. */
@@ -176,13 +185,19 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
   if (job.state === "running") {
     const elapsed = job.elapsed ?? 0;
     const reported = reportedProgress(job);
-    if (reported) return { kind: "loading", title: copy.busy, description: reported.text, progress: reported.fraction };
+    if (reported) return { kind: "loading", title: copy.busy, description: reported.text, progress: reported.fraction, spoken: reported.spoken };
     // Chưa có pha nào (cả bộ không báo tiến độ, hay lượt vừa bắt đầu): nói như việc không báo tiến độ.
     if (copy.progress && job.phase) {
       const packing = copy.progress(job);
-      return { kind: "loading", title: packing.title, description: `đã ${formatClock(elapsed)}`, ...(packing.fraction !== null ? { progress: packing.fraction } : {}) };
+      return {
+        kind: "loading",
+        title: packing.title,
+        description: `đã ${formatClock(elapsed)}`,
+        spoken: spokenProgress(packing.title, packing.fraction),
+        ...(packing.fraction !== null ? { progress: packing.fraction } : {}),
+      };
     }
-    return { kind: "loading", title: copy.busy, description: chapters ? packingText(chapters, elapsed) : `đã ${formatClock(elapsed)}` };
+    return { kind: "loading", title: copy.busy, description: chapters ? packingText(chapters, elapsed) : `đã ${formatClock(elapsed)}`, spoken: copy.busy };
   }
   if (announce && (job.finishedAgo ?? 0) > RECENT_SECONDS) return { kind: "none" };
   if (job.state === "cancelled") return copy.stopped ? { kind: "info", title: copy.stopped, description: copy.stoppedNote ?? "" } : { kind: "none" };

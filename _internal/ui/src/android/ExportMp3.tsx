@@ -3,6 +3,8 @@ import { FolderDown } from "lucide-react";
 import { toast } from "sonner";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
+import { spokenProgress } from "@/shared/progressSpeech";
+import { LiveText } from "@/shared/ui";
 import { EbookLibrary, type Mp3ExportEvent } from "./plugins";
 
 // "Xuất MP3 để nghe ở app khác" trên điện thoại: cùng chữ, cùng bản xuất với máy tính (desktop/App.tsx ExportMenuItem). Việc chạy nền
@@ -13,10 +15,11 @@ const runs = new Map<string, { run: string; folder: string; book: ListenBook }>(
 
 const toastId = (bookId: string) => `mp3-export-${bookId}`;
 
-function showProgress(book: ListenBook, folder: string, progress: string) {
+/** `fraction`: phần đã xong (0-1) - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */
+function showProgress(book: ListenBook, folder: string, progress: string, fraction?: number) {
   toast.loading("Đang xuất sách…", {
     id: toastId(book.id),
-    description: `${progress} · vào ${folder}`,
+    description: <LiveText shown={`${progress} · vào ${folder}`} spoken={`${spokenProgress("Đang xuất sách", fraction)} vào ${folder}`} />,
     action: { label: "Đổi thư mục", onClick: () => void exportMp3(book, true) },
   });
 }
@@ -70,7 +73,7 @@ export function watchMp3Exports(): () => void {
       runs.delete(event.bookId);
       toast.error("Không xuất được", { id, description: event.error, action: undefined });
     } else if (event.total) {
-      showProgress(current.book, current.folder, `${event.done ?? 0}/${event.total} chương`);
+      showProgress(current.book, current.folder, `${event.done ?? 0}/${event.total} chương`, (event.done ?? 0) / event.total);
     }
   });
   return () => void handle.then((listener) => listener.remove());

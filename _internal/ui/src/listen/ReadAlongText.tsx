@@ -1,5 +1,5 @@
 import { Locate } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject, type TouchEvent } from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject, type TouchEvent } from "react";
 import { cn } from "@/shared/cn";
 import { excerpt } from "@/shared/format";
 import { useClock } from "./clock";
@@ -8,12 +8,15 @@ import { usePlayListenBook } from "./LibraryScreen";
 import type { ListenBook, ListenChapter, Script, ScriptSegment } from "./model";
 import { usePlayer } from "./player";
 import { estimatedStarts } from "./readAloud";
+import { scrollMotion } from "@/shared/motion";
 import { wordAtPoint } from "./wordTap";
 import { splitPieces, usableWords, wordIndexAt, type WordSpan } from "./words";
 
 // Văn bản chương đi cùng giọng đọc - MỘT chỗ cho màn đọc (ReaderScreen) và tab "Đọc theo" của trình phát (PlayerViews): câu đang nghe sáng lên,
 // chữ đang đọc sáng đậm hơn, bấm một chữ là nghe từ đúng chữ ấy, khung tự cuộn theo giọng (luật ở follow.ts), bàn phím đi qua các câu bằng mũi
-// tên (một điểm dừng Tab cho cả văn bản, không phải mỗi chữ một điểm) và Enter là nghe từ câu ấy.
+// tên (một điểm dừng Tab cho cả văn bản, không phải mỗi chữ một điểm) và Enter là nghe từ câu ấy. Câu là chữ thường trong đoạn <p>, không phải
+// "nút": chương 22.000 câu từng là 22.000 nút, trình đọc màn hình đọc "nút" trước mỗi câu và mất cấu trúc đoạn (soát a31 A5). Câu nhận Tab
+// mang lời chỉ cách dùng phím (aria-describedby).
 
 /** Câu đang đọc ở giây `seconds` (tìm nhị phân trên mốc bắt đầu). */
 export function sentenceIndexAt(starts: number[], seconds: number): number {
@@ -100,8 +103,7 @@ export function useFollowVoice(container: RefObject<HTMLElement | null>, playing
     const box = container.current;
     const place = measure();
     if (!box || !place) return;
-    const still = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    box.scrollTo({ top: followScrollTop(place.rect, place.view, box.scrollTop), behavior: animate && !still ? "smooth" : "auto" });
+    box.scrollTo({ top: followScrollTop(place.rect, place.view, box.scrollTop), behavior: scrollMotion(animate) });
   }, [container, measure]);
 
   useEffect(() => {
@@ -334,11 +336,18 @@ export function ReadAlongText({
     [],
   );
   const marks: Marks = { playing: playingIndex, litWords, heard: dimHeard && playingIndex >= 0 ? playingIndex : -1, selected, tabStop };
-  const shared = { tappable: Boolean(onTap), menu: Boolean(onWordMenu), speakers, Heading, headingClassName, after, actions };
+  const hintId = useId();
+  const hint = onTap ? hintId : undefined;
+  const shared = { tappable: Boolean(onTap), menu: Boolean(onWordMenu), speakers, Heading, headingClassName, after, actions, hint };
   const chunks = useMemo(() => chunksOf(paragraphs), [paragraphs]);
 
   return (
     <div className={className} onKeyDown={keys}>
+      {hint && (
+        <p id={hint} className="sr-only">
+          Mũi tên lên, xuống: sang câu trước, câu sau. Enter: nghe từ câu này.
+        </p>
+      )}
       {chunks.map((chunk) => (
         <Chunk key={chunk.first} chunk={chunk} {...narrow(marks, chunk.first, chunk.last)} {...shared} />
       ))}
@@ -377,6 +386,8 @@ interface Shared {
   headingClassName: string;
   after?: (segment: ScriptSegment) => ReactNode;
   actions: SentenceActions;
+  /** Mã lời chỉ cách dùng phím (chỉ khi câu bấm được): gắn vào câu đang nhận Tab. */
+  hint?: string;
 }
 
 type ChunkItems = { first: number; last: number; paragraphs: ParagraphItems[] };
@@ -440,19 +451,20 @@ const Paragraph = memo(function Paragraph({
   headingClassName,
   after,
   actions,
+  hint,
 }: { paragraph: ParagraphItems } & Marks & Shared) {
   const sentence = (index: number, segment: ScriptSegment) => ({
     "data-index": index,
     "data-sentence": "",
     tabIndex: index === tabStop ? 0 : -1,
-    role: tappable ? "button" : undefined,
+    "aria-describedby": index === tabStop ? hint : undefined,
     "aria-current": index === playing ? ("true" as const) : undefined,
     onFocus: () => actions.focus(index),
     onClick: (event: MouseEvent<HTMLElement>) => actions.click(event, index),
     ...(menu ? actions.menu(index) : {}),
     className: cn(
       // scroll-mt: câu được cuộn tới không nằm khuất dưới thanh đầu dính (soát UX 29-09).
-      "scroll-mt-20 rounded-[4px] outline-none [box-decoration-break:clone] focus-visible:ring-2 focus-visible:ring-accent",
+      "scroll-mt-20 rounded-[4px] outline-none [box-decoration-break:clone] focus-visible:ring-2 focus-visible:ring-focus",
       tappable && "cursor-pointer",
       segment.kind === "thought" && "italic",
       index === playing && "read-along-active",
@@ -463,7 +475,7 @@ const Paragraph = memo(function Paragraph({
   });
   const first = paragraph.items[0];
   if (first.segment.kind === "heading") {
-    const { role: _role, ...props } = sentence(first.index, first.segment);
+    const props = sentence(first.index, first.segment);
     return (
       <Heading {...props} className={cn(props.className, headingClassName)}>
         {first.segment.text}
@@ -475,7 +487,7 @@ const Paragraph = memo(function Paragraph({
       {paragraph.items.map(({ index, segment }) => (
         <span key={index}>
           {speakers && segment.speaker && (segment.kind === "dialogue" || segment.kind === "thought") && (
-            <span className="mr-1.5 inline-block -translate-y-px rounded bg-accent-soft px-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent-text">
+            <span className="mr-1.5 inline-block -translate-y-px rounded bg-accent-soft px-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-accent-text">
               {segment.speaker}
             </span>
           )}
