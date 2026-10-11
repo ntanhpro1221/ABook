@@ -14,6 +14,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nhạc nền "Nghe ngay" trên máy tính như điện thoại: bài tải hỏng thì bài sau vào ngay thay vì im cả khoảng của bài ấy; bài hỏng thử lại sau 5, 10, 20 phút ở chỗ đổi bài rồi thôi tới lần mở sau.
 - Bài nhạc nền tải đứt giữa chừng (Wi-Fi rớt, nguồn ngắt kết nối) không còn nằm lại trong máy như bài tốt rồi phát mãi một mẩu đầu bài: máy coi là mất mạng và tải lại sau.
 
+### Phát triển
+
+- Kiểm thượng nguồn so với ghim của origin/main (`--pins-ref`), không với cây đang chạy công cụ: chạy từ checkout cũ từng báo timm, vieneu, sea-g2p "có bản mới" dù main đã ghim bản mới nhất.
+- Đóng băng thư viện Studio từ chối khi runtime dev lệch ghim của pyproject (bộ cài lùi bản mà không ai thấy), và để ngoài bộ cài hai wheel Qt mới của PySide6 6.12 (WebEngine, Pdf).
+
 ## [0.4.48] - 2026-10-11
 
 ### Làm sách trong Studio (máy tính)
