@@ -32,10 +32,19 @@ export interface PackView {
   fraction: number | null;
 }
 
-export function packView(job: PackJob | null | undefined): PackView {
+/** File sách `.abook` (webui/bookfile.py `pack`, cùng các pha): gom chương (chữ đọc theo từng chương) là gần hết thời gian, rồi ghi gói. */
+export const BOOK_FILE_SPAN: Record<PackPhase, [number, number]> = {
+  prepare: [0, 0.02],
+  listen: [0.02, 0.85],
+  views: [0.85, 0.85],
+  hash: [0.85, 0.85],
+  write: [0.85, 1],
+};
+
+export function packView(job: PackJob | null | undefined, spans: Record<PackPhase, [number, number]> = SPAN): PackView {
   const base = "Đang đóng gói";
   if (!job || !job.phase || job.state !== "running") return { title: `${base}…`, fraction: null };
-  const [from, to] = SPAN[job.phase];
+  const [from, to] = spans[job.phase];
   const total = job.total ?? 0;
   const done = Math.min(job.done ?? 0, total);
   const inner = total > 0 ? done / total : 0;

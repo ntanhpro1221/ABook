@@ -796,7 +796,7 @@ def test_choosing_a_new_voice_for_one_of_two_sharing_people_settles_the_shared_v
 def test_the_tab_count_leaves_out_cards_only_a_redo_can_apply(tmp_path: Path, monkeypatch) -> None:
     """Soát UX a23 B2: lúc chờ duyệt, "Việc cần duyệt 6" toàn là thẻ người kể chỉ áp khi làm lại phân tích - không có gì quyết
     được ngay mà số vẫn mời vào. Số trên nhãn chỉ đếm việc chưa quyết mà quyết thì có tác dụng."""
-    from abook.webui import server as server_module
+    from abook.webui import work_items as work_module
     from abook.webui.actions import FakeRunner
     from abook.webui.library import Preferences, book_id
     from abook.webui.server import App, Server
@@ -805,7 +805,7 @@ def test_the_tab_count_leaves_out_cards_only_a_redo_can_apply(tmp_path: Path, mo
     view = {"items": [{"key": "narrator:1", "requested": None, "redoOnly": True},
                       {"key": "gender:A", "requested": None},
                       {"key": "gender:B", "requested": "Nam"}], "counts": {}}
-    monkeypatch.setattr(server_module, "work_items", lambda *_args, **_kwargs: view)
+    monkeypatch.setattr(work_module, "work_items", lambda *_args, **_kwargs: view)
     root = tmp_path / "thu_vien"
     project = make_project(root)
     preferences = Preferences(tmp_path / "prefs" / "preferences.json")
@@ -835,3 +835,69 @@ def test_corner_brackets_that_really_are_several_people_can_be_kept_on_the_card(
         request_speakers(project, [(line["stableId"], line["textSha256"]) for line in group["lines"]], group["speaker"],
                          now=time.time())
     assert not [item for item in work_items(project)["items"] if item["kind"] == "bracket"], "giữ cả nhóm -> hết hỏi"
+
+
+def _settled(project: Path) -> None:
+    """Đẩy mốc sửa của dự án về quá khứ: bộ nhớ đệm theo mốc sửa chỉ nhớ thư mục đã yên (listing_cache.RACY_SECONDS)."""
+    import os
+
+    past = time.time() - 60
+    for path in [*project.rglob("*"), project]:
+        os.utime(path, (past, past))
+
+
+def test_the_inbox_is_worked_out_once_while_the_project_stays_the_same(tmp_path: Path, monkeypatch) -> None:
+    """Dự án 50.000 câu: nhãn tab, hộp việc và màn duyệt trước khi thu cùng hỏi danh sách việc (~1 giây mỗi lần). Tính một lần
+    cho tới khi dự án đổi (yêu cầu mới của người nghe, sổ ghi thêm) hay phán quyết "Cần nghe lại" đổi."""
+    from abook.webui import work_items as work_module
+
+    project = make_book(tmp_path)
+    _settled(project)
+    real, built = work_module.work_items, []
+    monkeypatch.setattr(work_module, "work_items", lambda root, verdicts=None: built.append(1) or real(root, verdicts))
+    first = work_module.work_view(project)
+    assert work_module.work_view(project) == first and len(built) == 1
+    work_module.work_view(project, {"s1": {"verdict": "ok"}})
+    assert len(built) == 2, "phán quyết khác là danh sách khác"
+    (project / "listener_requests.json").write_text("{}", encoding="utf-8")
+    _settled(project)
+    work_module.work_view(project)
+    assert len(built) == 3, "dự án đổi thì tính lại"
+
+
+def test_a_big_group_card_sends_its_first_lines_and_pages_the_rest(tmp_path: Path, monkeypatch) -> None:
+    """Thẻ vai phụ cả cuốn (vd "Người hầu", 900 câu) không gửi cả 900 câu cho trang: 20 câu đầu + tổng, "Xem thêm" hỏi trang kế."""
+    from abook.webui import work_items as work_module
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import _request, make_project
+
+    lines = [{"stableId": f"s{index}"} for index in range(45)]
+    view = {"items": [{"key": "pick:NGƯỜI HẦU", "pick": True, "requested": None, "examples": lines},
+                      {"key": "gender:A", "requested": None, "examples": lines[:3]}], "counts": {}}
+    monkeypatch.setattr(work_module, "work_items", lambda *_args, **_kwargs: view)
+    page = work_module.for_page(view)
+    assert page["items"][0]["examples"] == lines[:20] and page["items"][0]["examplesTotal"] == 45
+    assert page["items"][1] is view["items"][1] and len(view["items"][0]["examples"]) == 45, "bản gốc không bị cắt"
+    root = tmp_path / "thu_vien"
+    project = make_project(root)
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(root)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="phien")
+    server = Server(app, port=0).start()
+    base = f"/api/books/{book_id(project)}/work"
+    headers = {"X-Ebook-Token": "phien"}
+    try:
+        status, data, _ = _request(server.port, "GET", base, headers=headers)
+        assert status == 200 and json.loads(data)["items"][0]["examplesTotal"] == 45
+        status, data, _ = _request(server.port, "GET", f"{base}/examples?key=pick:NG%C6%AF%E1%BB%9CI%20H%E1%BA%A6U&offset=20&limit=100",
+                                   headers=headers)
+        assert status == 200 and json.loads(data) == {"examples": lines[20:], "total": 45}
+        status, _data, _ = _request(server.port, "GET", f"{base}/examples?key=pick:AI&offset=0", headers=headers)
+        assert status == 404
+        status, _data, _ = _request(server.port, "GET", f"{base}/examples?key=gender:A&offset=x", headers=headers)
+        assert status == 400
+    finally:
+        server.stop()
+        app.close()

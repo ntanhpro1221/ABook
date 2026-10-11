@@ -379,3 +379,28 @@ def test_each_record_says_where_it_stopped(tmp_path: Path) -> None:
     listening.create_record("sach", "Lần nghe 2")
     fresh = next(item for item in listening.records("sach") if item["active"])
     assert fresh["last"] is None, "hồ sơ mới chưa nghe chỗ nào"
+
+
+def test_the_listening_file_is_written_compact(tmp_path: Path) -> None:
+    """Hồ sơ nghe ghi lại mỗi lần lưu chỗ đang nghe: ghi gọn (không thụt dòng) - hồ sơ 4,8 MB ghi 166 ms còn ~34 ms (soát a29) -
+    mà đọc lại vẫn đúng như cũ."""
+    path = tmp_path / "listening.json"
+    listening = Listening(path)
+    listening.set_chapter_done("sach", 1, True)
+    listening.progress("sach", 2, 12.5, 600.0)
+    raw = path.read_text(encoding="utf-8")
+    assert "\n" not in raw.strip() and ", " not in raw and '": ' not in raw
+    assert Listening(path).get("sach")["last"]["seconds"] == 12.5
+
+
+def test_the_library_reads_a_book_without_its_listening_sessions(tmp_path: Path) -> None:
+    """Thư viện chỉ cần chỗ đang nghe của mỗi cuốn: không chép kèm cả trăm phiên nghe (tab Lịch sử) rồi bỏ đi."""
+    from abook.webui.listening import HEAVY_KEYS
+
+    listening = Listening(tmp_path / "listening.json")
+    listening.set_chapter_done("sach", 1, True)
+    listening.add_session("sach", {"startedAt": 1.0, "endedAt": 2.0, "listened": 1.0})
+    whole = listening.get("sach")
+    light = listening.get("sach", omit=HEAVY_KEYS)
+    assert whole["sessions"] and "sessions" not in light and "night" not in light
+    assert light == {key: value for key, value in whole.items() if key not in HEAVY_KEYS}

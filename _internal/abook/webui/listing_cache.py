@@ -34,6 +34,24 @@ def signature(directory: Path, depth: int = 1) -> tuple:
     return tuple(sorted(found))
 
 
+def stamps(directory: Path, current: tuple) -> dict[str, int]:
+    """{đường dẫn thư mục con (mọi tầng có trong chữ ký `current` của `directory`): mốc sửa} - để dựng lại danh sách chỉ phải xét lại
+    những thư mục đã đổi (`settled`, packages._packages_in)."""
+    found: dict[str, int] = {}
+    base = str(Path(directory))
+    for name, mtime, children in current:
+        path = os.path.join(base, name)  # chuỗi như str(Path(directory) / name), không dựng Path cho từng cuốn
+        found[path] = int(mtime)
+        if children:
+            found.update(stamps(Path(path), children))
+    return found
+
+
+def settled(mtime_ns: int) -> bool:
+    """Mốc sửa đã cũ hơn RACY_SECONDS: điều suy từ thư mục có mốc này nhớ được (xem `cached`)."""
+    return mtime_ns <= time.time_ns() - int(RACY_SECONDS * 1e9)
+
+
 _RESOLVED: dict[str, tuple[float, str]] = {}
 
 
@@ -60,17 +78,54 @@ def _newest(current: tuple) -> int:
 def cached(key: Any, current: tuple, build: Callable[[], Any]) -> Any:
     """`build()` được nhớ dưới `key` tới khi chữ ký `current` đổi hay hết tuổi. Kết quả trả về là bản dùng chung: người gọi không được sửa nó.
     Thư mục mới sửa trong RACY_SECONDS giây thì không nhớ: mốc sửa chỉ nhích theo nhịp đồng hồ hệ thống (vài chục mili giây, ổ thô 2 giây), nên
-    file thêm vào ngay sau lần liệt kê trước có thể để nguyên mốc, và chữ ký sẽ không báo gì."""
-    now = time.monotonic()
+    file thêm vào ngay sau lần liệt kê trước có thể để nguyên mốc, và chữ ký sẽ không báo gì.
+    Cùng `key` thì mỗi lúc chỉ một lượt `build()`: yêu cầu đến giữa chừng chờ rồi dùng kết quả ấy - mở tab Kịch bản bắn cùng lúc mấy yêu cầu
+    cần cùng một phép tính, tính song song chỉ tranh nhau GIL (soát a29: 4-5 giây thay vì 1)."""
+    entry = _fresh(key, current)
+    if entry is not None:
+        return entry[2]
+    with _LOCK:
+        gate = _BUILDING.setdefault(key, threading.Lock())
+    with gate:
+        entry = _fresh(key, current)  # lượt vừa xong trong lúc chờ
+        if entry is not None:
+            return entry[2]
+        now = time.monotonic()
+        value = build()
+        if _newest(current) > time.time_ns() - int(RACY_SECONDS * 1e9):
+            return value
+        with _LOCK:
+            if len(_ENTRIES) > 256:
+                _ENTRIES.clear()
+            _ENTRIES[key] = (now, current, value)
+    return value
+
+
+_BUILDING: dict[Any, threading.Lock] = {}
+
+
+def _fresh(key: Any, current: tuple) -> tuple[float, Any, Any] | None:
     with _LOCK:
         entry = _ENTRIES.get(key)
-    if entry is not None and entry[1] == current and now - entry[0] < MAX_AGE_SECONDS:
-        return entry[2]
-    value = build()
-    if _newest(current) > time.time_ns() - int(RACY_SECONDS * 1e9):
-        return value
+    if entry is not None and entry[1] == current and time.monotonic() - entry[0] < MAX_AGE_SECONDS:
+        return entry
+    return None
+
+
+def files_signature(*paths: Path) -> tuple:
+    """Chữ ký của vài file cho `cached` (cùng dạng `signature`: tên kèm cỡ, mốc sửa): file chưa có thì không có mục - sinh ra hay mất đi
+    cũng đổi chữ ký. Sổ SQLite của dự án: file chính VÀ `-wal` (ghi vào `-wal` trước, file chính đổi khi checkpoint)."""
+    found = []
+    for path in paths:
+        try:
+            info = os.stat(path)
+        except OSError:
+            continue
+        found.append((f"{Path(path).name}:{info.st_size}", info.st_mtime_ns, ()))
+    return tuple(found)
+
+
+def forget(key: Any) -> None:
+    """Bỏ mục đã nhớ dưới `key` (người gọi biết nó đã cũ vì lý do chữ ký không thấy)."""
     with _LOCK:
-        if len(_ENTRIES) > 256:
-            _ENTRIES.clear()
-        _ENTRIES[key] = (now, current, value)
-    return value
+        _ENTRIES.pop(key, None)

@@ -12,7 +12,7 @@ import { ffmpegCancel, ffmpegStart, ffmpegStatus } from "@/desktop/listenExport"
 import { api, ApiError, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
 import { redoExportNote } from "./exportText";
-import { followPackJob, PackCancelled, PackDetached, packError, packView, type PackJob } from "./projectPacking";
+import { BOOK_FILE_SPAN, followPackJob, PackCancelled, PackDetached, packError, packView, type PackJob } from "./projectPacking";
 import { WordTimingsRow } from "./WordTimings";
 
 // Xuất ngay trong Studio (soát UX a6 01-10, H1-H2: người làm sách phải sang Thư viện nghe mới tìm thấy "Xuất", và bản xuất
@@ -95,12 +95,14 @@ export function ExportDialog({
   const parts = useParts(book.id).data?.parts ?? [];
   // Giữa lúc đóng gói .abook / .abookproj, máy có thể đang TẢI nhạc nền để đóng kèm (vài phút): hỏi để nói bài thứ mấy và cho Huỷ.
   const packing = busy && (kind === "abook" || kind === "abookproj");
-  // Gói cả dự án (.abookproj) là việc nền ở máy chủ (mất cả phút với sách dài): hỏi pha + đã/tổng để hiện thanh tiến độ; đóng hộp hay chuyển trang thì việc vẫn chạy.
+  // Gói cả dự án (.abookproj) và file sách (.abook) một cuốn là việc nền ở máy chủ (mất cả phút với sách dài): hỏi pha + đã/tổng ("chương X/N")
+  // để hiện thanh tiến độ; đóng hộp hay chuyển trang thì việc vẫn chạy.
   const [packJob, setPackJob] = useState<PackJob | null>(null);
+  const bookJob = useRef(false); // lượt đang chạy là file sách theo việc nền (cả bộ thì không - mỗi phần đếm lại từ đầu)
   const alive = useRef(true);
-  // Gỡ màn hình giữa lúc gói dự án: việc vẫn chạy ở máy chủ - giao cho ExportJobHost (thông báo có tiến độ, Huỷ, báo khi xong) thay vì để thông báo "đang gói" của hộp treo mãi.
-  const handoff = useRef({ packing: false, id: book.id });
-  handoff.current = { packing: busy && kind === "abookproj", id: book.id };
+  // Gỡ màn hình giữa lúc gói: việc vẫn chạy ở máy chủ - giao cho ExportJobHost (thông báo có tiến độ, Huỷ, báo khi xong) thay vì để thông báo "đang gói" của hộp treo mãi.
+  const handoff = useRef<{ packing: boolean; id: string; kind: "projectfile" | "bookfile" }>({ packing: false, id: book.id, kind: "projectfile" });
+  handoff.current = { packing: busy && (kind === "abookproj" || bookJob.current), id: book.id, kind: kind === "abookproj" ? "projectfile" : "bookfile" };
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -108,7 +110,7 @@ export function ExportDialog({
       if (!handoff.current.packing) return;
       if (loadingToast.current !== null) toast.dismiss(loadingToast.current);
       loadingToast.current = null;
-      trackExport("projectfile", handoff.current.id);
+      trackExport(handoff.current.kind, handoff.current.id);
     };
   }, []);
   const musicTransfer = useQuery({
@@ -131,8 +133,8 @@ export function ExportDialog({
     void api(url, { method: "POST", body: {} }).catch(() => setCancelling(false));
   };
   /** Theo việc gói dự án của cuốn này tới khi xong; trả kết quả, hay ném `PackCancelled` / `PackDetached` (màn hình đã gỡ) / lỗi của máy chủ. */
-  const followPacking = () =>
-    followPackJob({ fetchJob: () => api<PackJob>(`/api/books/${book.id}/projectfile-job`), alive: () => alive.current, onJob: setPackJob });
+  const followPacking = (job: "projectfile" | "bookfile" = "projectfile") =>
+    followPackJob({ fetchJob: () => api<PackJob>(`/api/books/${book.id}/${job}-job`), alive: () => alive.current, onJob: setPackJob });
   const missing = book.chapters.missingAudio ?? 0;
   const ready = Math.max(0, book.chapters.completed - missing);
   const total = book.chapters.total;
@@ -195,15 +197,19 @@ export function ExportDialog({
       onOpenChange(false);
       return;
     }
+    bookJob.current = kind === "abook" && !wholeSeries;
     setBusy(true);
     setFinished(null);
     setPackJob(null);
     try {
+      type Packed = { folder: string; file: string; size: number; missingSources?: string[] } & Partial<SeriesResult>;
       const result =
         kind === "abookproj"
           ? await (attach ? Promise.resolve() : api(`/api/books/${book.id}/projectfile-job`, { method: "POST", body: { target } })).then(
-              followPacking as () => Promise<{ folder: string; file: string; size: number; missingSources?: string[] } & Partial<SeriesResult>>,
+              () => followPacking() as Promise<Packed>,
             )
+          : bookJob.current
+          ? await api(`/api/books/${book.id}/bookfile-job`, { method: "POST", body: { target } }).then(() => followPacking("bookfile") as Promise<Packed>)
           : kind === "mp3"
           ? await api<{ folder: string; files: number; coverBroken?: boolean } & Partial<SeriesResult>>(`/api/books/${book.id}/export`, {
               method: "POST",
@@ -278,6 +284,7 @@ export function ExportDialog({
         toast.error(SAVING[kind][2], { id: pending ?? undefined, description: (error as Error).message });
       }
     } finally {
+      bookJob.current = false;
       setBusy(false);
     }
   };
@@ -298,7 +305,7 @@ export function ExportDialog({
     };
     // Chỉ khi vào trang của cuốn này; `run` đổi theo từng lần vẽ nhưng việc theo tiếp chỉ cần một lần.
   }, [book.id]);
-  const packShown = kind === "abookproj" ? packView(packJob) : null;
+  const packShown = kind === "abookproj" ? packView(packJob) : busy && bookJob.current ? packView(packJob, BOOK_FILE_SPAN) : null;
   const whole = kind === "abookproj";
   const warnings = (
     whole

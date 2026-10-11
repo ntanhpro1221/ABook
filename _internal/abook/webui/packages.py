@@ -21,7 +21,7 @@ from .. import continuation
 from ..io_utils import atomic_write_bytes
 from .fingerprints import Fingerprints, base_name, identity_prints, is_text_identity
 from .listen_view import FORMAT
-from .listening import book_progress, text_book_progress
+from .listening import HEAVY_KEYS, book_progress, text_book_progress
 
 TEXT_STATE = "text"  # = bookfile.TEXT_STATE
 MANIFEST = "book.json"  # = bookfile.MANIFEST (bookfile nhập library, library nhập module này - nên không nhập ở đây)
@@ -109,8 +109,30 @@ def is_package(path: Path) -> bool:
         return False
 
 
-def _packages_in(candidates: Iterable[Path]) -> list[Path]:
-    return [child.resolve() for child in candidates if child.is_dir() and not child.name.startswith(".") and is_package(child)]
+# Thư mục con đã xét: đường dẫn -> (mốc sửa của thư mục, đường đã `resolve` nếu là cuốn đã nhập, không thì None). Nhập một cuốn đổi mốc sửa
+# thư mục "Sách đã nhập" nên danh sách phải dựng lại, nhưng chỉ cuốn vừa đổi phải xét lại: trước đây mỗi lần nhập xét lại cả thư viện
+# (`is_package` + `resolve` từng cuốn), 300 cuốn ~100 ms mỗi lần (soát a29).
+_CHILDREN: dict[str, tuple[int, Path | None]] = {}
+
+
+def _packages_in(candidates: Iterable[Path], stamps: dict[str, int] | None = None) -> list[Path]:
+    """Các cuốn đã nhập trong `candidates`. `stamps` (listing_cache.stamps): mốc sửa của từng thư mục - thư mục chưa đổi (và đã cũ hơn
+    nhịp đồng hồ thô) dùng lại kết quả lần trước. Thêm / xoá / thay `book.json` (ghi nguyên tử) đều đổi mốc sửa thư mục chứa nó."""
+    found = []
+    for child in candidates:
+        stamp = (stamps or {}).get(str(child))
+        known = _CHILDREN.get(str(child)) if stamp is not None and listing_cache.settled(stamp) else None
+        if known is not None and known[0] == stamp:
+            result = known[1]
+        else:
+            result = child.resolve() if child.is_dir() and not child.name.startswith(".") and is_package(child) else None
+            if stamp is not None:
+                if len(_CHILDREN) > 65536:
+                    _CHILDREN.clear()
+                _CHILDREN[str(child)] = (stamp, result)
+        if result is not None:
+            found.append(result)
+    return found
 
 
 def local_folders(library_root: Path) -> list[Path]:
@@ -118,13 +140,15 @@ def local_folders(library_root: Path) -> list[Path]:
     cho máy đã ghép (sync.py) dùng đúng danh sách này: cuốn ảo mà cũng chia sẻ thì máy A soi sách của B, B lại thấy bản soi ấy của A..."""
     imported = Path(library_root).expanduser() / IMPORTED_FOLDER
 
+    current = listing_cache.signature(imported)
+
     def build() -> list[Path]:
         try:
-            return _packages_in(sorted(imported.iterdir()) if imported.is_dir() else [])
+            return _packages_in(sorted(imported.iterdir()) if imported.is_dir() else [], listing_cache.stamps(imported, current))
         except OSError:
             return []
 
-    return list(listing_cache.cached(("local", str(imported)), listing_cache.signature(imported), build))
+    return list(listing_cache.cached(("local", str(imported)), current, build))
 
 
 def folders(library_root: Path) -> list[Path]:
@@ -135,6 +159,8 @@ def folders(library_root: Path) -> list[Path]:
     root = Path(library_root).expanduser()
     remote = root / REMOTE_FOLDER
 
+    current = listing_cache.signature(remote, 2)
+
     def build() -> list[Path]:
         candidates: list[Path] = []
         try:
@@ -142,9 +168,9 @@ def folders(library_root: Path) -> list[Path]:
                 candidates += sorted(computer.iterdir()) if computer.is_dir() else []
         except OSError:
             candidates = []
-        return _packages_in(candidates)
+        return _packages_in(candidates, listing_cache.stamps(remote, current))
 
-    return local_folders(root) + listing_cache.cached(("remote", str(remote)), listing_cache.signature(remote, 2), build)
+    return local_folders(root) + listing_cache.cached(("remote", str(remote)), current, build)
 
 
 def chapter_prints(book: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -340,7 +366,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
     available = [chapter for chapter in items if chapter["available"]]
     lost_count = sum(1 for chapter in items if chapter.get("lost"))
     complete = bool(book.get("complete")) and len(available) + lost_count == len(items)
-    state = {key: value for key, value in state.items() if key not in ("night", "sessions")}
+    state = {key: value for key, value in state.items() if key not in HEAVY_KEYS}
     result: dict[str, Any] = {
         "format": FORMAT,
         "id": book_id,

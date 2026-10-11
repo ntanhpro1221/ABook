@@ -66,6 +66,15 @@ describe("jobView", () => {
     expect(jobView({ state: "error", error: "Ổ đĩa đầy" })).toEqual({ kind: "error", title: "Không xuất được file sách", description: "Ổ đĩa đầy" });
   });
 
+  it("says which chapter a long book is at, then the bytes written, and that a cancelled export left no file", () => {
+    const at = (phase: string, done: number, total: number) => jobView({ state: "running", elapsed: 42, phase, done, total } as ExportJob, 3000);
+    expect(at("listen", 120, 3000)).toMatchObject({ kind: "loading", title: "Đang đóng gói (120/3000 chương)…", description: "đã 0:42" });
+    expect(at("listen", 120, 3000)).toMatchObject({ progress: expect.closeTo(0.02 + 0.83 * (120 / 3000)) });
+    expect(at("write", 50 * 1048576, 200 * 1048576)).toMatchObject({ title: "Đang đóng gói (50 MB/200 MB)…" });
+    expect(at("write", 1, 1)).toMatchObject({ progress: 1 });
+    expect(jobView({ state: "cancelled" })).toEqual({ kind: "info", title: "Đã huỷ xuất", description: "Chưa có file sách nào được ghi." });
+  });
+
   it("on reopening the page only repeats what finished recently, but always follows a running job", () => {
     expect(jobView(done, 0, true).kind).toBe("success");
     expect(jobView({ ...done, finishedAgo: RECENT_SECONDS + 1 }, 0, true)).toEqual({ kind: "none" });

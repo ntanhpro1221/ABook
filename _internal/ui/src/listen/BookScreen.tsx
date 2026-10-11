@@ -9,6 +9,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { syncsToComputer } from "@/shared/capabilities";
 import { usePageTitle } from "@/shared/title";
+import { Windowed } from "@/shared/Windowed";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { toneLabel } from "./voiceTone";
 import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
@@ -1054,17 +1055,26 @@ export function BookScreen({
           {chaptersByPart(chapters, book.parts).map((group, index) => (
             <section key={group.heading ?? index} aria-label={group.heading ?? undefined}>
               {group.heading && <h3 className="px-2 pb-1 pt-4 text-sm font-semibold text-fg-2 sm:px-3">{group.heading}</h3>}
-              {group.chapters.map((chapter) => (
-                <ChapterRow
-                  key={chapter.id}
-                  book={book}
-                  chapter={chapter}
-                  onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })}
-                  onRename={editable ? setRenamingChapter : undefined}
-                  prepared={chapter.state === "text" && prepared.has(chapter.id)}
-                  voice={voice}
+              {/* Sách vài nghìn chương: chỉ dựng các chương gần màn hình (shared/Windowed); chương đang nghe luôn có sẵn. */}
+              <div role="list" aria-label={group.heading ?? "Danh sách chương"}>
+                <Windowed
+                  items={group.chapters}
+                  estimate={54}
+                  keep={point ? group.chapters.findIndex((chapter) => chapter.id === point.chapter.id) : undefined}
+                  row={(chapter, index) => (
+                    <div key={chapter.id} role="listitem" aria-posinset={index + 1} aria-setsize={group.chapters.length}>
+                      <ChapterRow
+                        book={book}
+                        chapter={chapter}
+                        onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })}
+                        onRename={editable ? setRenamingChapter : undefined}
+                        prepared={chapter.state === "text" && prepared.has(chapter.id)}
+                        voice={voice}
+                      />
+                    </div>
+                  )}
                 />
-              ))}
+              </div>
             </section>
           ))}
         </TabsContent>

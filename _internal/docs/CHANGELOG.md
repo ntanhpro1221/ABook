@@ -12,6 +12,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bài nhạc kết tự nhiên trước khi bài kế mờ vào, không còn quay lại đoạn dạo đầu; hết chương thì nhạc mờ xong trước khi giọng hết,
   và sang chương mới không còn nghe sót nhạc của chương trước.
 
+### Sách rất dài (máy tính và điện thoại)
+
+- Sách vài nghìn chương không còn ì: trang sách 3.000 chương mở trong khoảng 0,1 giây thay vì 0,7 giây, danh sách chương trong Studio 0,3 giây thay vì 1–1,6 giây, thư viện vài trăm cuốn cũng nhanh hơn. Chương rất dài (hơn một triệu chữ) mở ô "Tìm trong sách" trong khoảng 0,2 giây thay vì 0,6–0,9 giây.
+- Làm sách dài trong Studio: tạo sách từ thư mục 3.000 chương mất khoảng 6 giây thay vì 12 giây; xuất file sách 3.000 chương mất khoảng 18 giây thay vì gần 4 phút và báo đang ở chương nào; mở tab Kịch bản của dự án lớn khoảng 1,3 giây thay vì 6–8 giây; điện thoại lấy danh sách chương của sách 3.000 chương dưới 1 giây thay vì gần 20 giây.
+- Lưu chỗ nghe nhanh hơn ba lần khi đã nghe nhiều sách (khoảng 0,06 giây thay vì 0,2 giây mỗi lần), file chỗ nghe nhỏ còn một nửa; nhập vài trăm file sách cũng nhanh hơn.
+
 ## [0.4.52] - 2026-10-11
 
 ### Khi có sự cố (máy tính)

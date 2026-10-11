@@ -410,7 +410,7 @@ class Preferences:
         # trên Windows, đổi tên đè lên file đang mở báo PermissionError - atomic_write_json thử lại như file state của dây chuyền (soát QA 29-09).
         if self._unread:
             return  # chưa đọc được bản trên đĩa: ghi bây giờ là đè mất cài đặt thật
-        atomic_write_json(self.path, self._data)
+        atomic_write_json(self.path, self._data, compact=True)  # ghi lại mỗi lần đổi một cài đặt
         self._stamp = file_stamp(self.path)
 
 

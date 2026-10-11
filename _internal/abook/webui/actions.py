@@ -9,6 +9,8 @@ gần nhất; AGENTS.md: GUI chỉ có MỘT lệnh Dừng).
 """
 from __future__ import annotations
 
+import hashlib
+import io
 import os
 import re
 import subprocess
@@ -17,10 +19,10 @@ import time
 import webbrowser
 from urllib.parse import urlsplit
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Iterable, Protocol
 
 from .. import importers
-from ..io_utils import discover_txt_files, natural_key, sha256_file
+from ..io_utils import discover_txt_files, natural_key
 from . import humanize
 
 # Tiếng Việt đọc ~4,3 âm tiết/giây ở tốc độ kể chuyện; một "từ" tách bằng dấu cách là một âm tiết.
@@ -200,12 +202,25 @@ class FakeRunner:
         return str(project_root) in self._running
 
 
-def _decode_head(path: Path) -> str:
-    try:
-        with path.open("rb") as handle:
-            raw = handle.read(SCAN_WORD_LIMIT_BYTES)
-    except OSError:
-        return ""
+_TAIL_BYTES = 8192
+
+
+def _read_chapter(path: Path) -> tuple[bytes, bytes, int, str]:
+    """Mọi thứ trình tạo sách cần của một file chương trong MỘT lần mở: `SCAN_WORD_LIMIT_BYTES` đầu, 8 KB cuối, cỡ và sha256 (như
+    io_utils.sha256_file). Thư mục 3000 chương từng mở mỗi file năm lần, mỗi lần mở ~1 ms trên Windows (soát uxfix30)."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        head = handle.read(SCAN_WORD_LIMIT_BYTES)
+        digest.update(head)
+        size, tail = len(head), head[-_TAIL_BYTES:]
+        while chunk := handle.read(1024 * 1024):
+            digest.update(chunk)
+            size += len(chunk)
+            tail = (tail + chunk)[-_TAIL_BYTES:]
+    return head, tail, size, digest.hexdigest()
+
+
+def _decode_head(raw: bytes) -> str:
     for encoding in ("utf-8-sig", "cp1258"):
         try:
             return raw.decode(encoding)
@@ -217,11 +232,15 @@ def _decode_head(path: Path) -> str:
 def _first_line(path: Path) -> str:
     try:
         with path.open("r", encoding="utf-8-sig", errors="replace") as handle:
-            for line in handle:
-                if line.strip():
-                    return line.strip()[:120]
+            return _first_text_line(handle)
     except OSError:
-        pass
+        return ""
+
+
+def _first_text_line(lines: Iterable[str]) -> str:
+    for line in lines:
+        if line.strip():
+            return line.strip()[:120]
     return ""
 
 
@@ -232,36 +251,24 @@ def _title_line(path: Path) -> str:
     return "" if humanize.is_heading(first) else first
 
 
-def _credits_at_top(path: Path) -> list[str]:
+def _credits_at_top(head: bytes) -> list[str]:
     """Dòng ghi công người dịch / biên tập ở đầu chương (text_processing.credit_lines) - để trình tạo sách ĐỀ XUẤT bỏ
-    chúng khỏi phần đọc; chỉ áp dụng khi người dùng đồng ý. Chỉ đọc 8 KB đầu file."""
+    chúng khỏi phần đọc; chỉ áp dụng khi người dùng đồng ý. Chỉ xét 8 KB đầu file (`head`: phần đầu file)."""
     from ..io_utils import decode_text_bytes
     from ..text_processing import credit_lines
 
-    try:
-        with path.open("rb") as handle:
-            head = handle.read(8192)
-    except OSError:
-        return []
+    head = head[:_TAIL_BYTES]
     cut = head.rfind(b"\n")
     return credit_lines(decode_text_bytes(head[:cut] if cut > 0 else head))
 
 
-def _credits_at_end(path: Path) -> list[str]:
+def _credits_at_end(tail: bytes, size: int) -> list[str]:
     """Dòng xin ủng hộ / quảng cáo / nguồn ở cuối chương (text_processing.tail_credit_lines, luật chung với sách nhập) - trình
-    tạo sách ĐỀ XUẤT bỏ như dòng ghi công đầu chương. Chỉ đọc 8 KB cuối file."""
+    tạo sách ĐỀ XUẤT bỏ như dòng ghi công đầu chương. Chỉ xét 8 KB cuối (`tail`) của file `size` byte."""
     from ..io_utils import decode_text_bytes
     from ..text_processing import tail_credit_lines
 
-    try:
-        with path.open("rb") as handle:
-            handle.seek(0, os.SEEK_END)
-            size = handle.tell()
-            handle.seek(max(0, size - 8192))
-            tail = handle.read()
-    except OSError:
-        return []
-    cut = tail.find(b"\n") if size > 8192 else -1
+    cut = tail.find(b"\n") if size > _TAIL_BYTES else -1
     return tail_credit_lines(decode_text_bytes(tail[cut + 1:] if cut >= 0 else tail))
 
 
@@ -286,12 +293,10 @@ def _shared_folder_name(files: list[Path]) -> str:
     return "" if not name or name.casefold() in _GENERIC_FOLDERS else name
 
 
-def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, Any]:
-    """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên. File EPUB / DOCX /
-    PDF (importers.py) được tách thành thư mục chương TXT trong `epub_root` (thư viện; không có thì cạnh file) rồi quét như một
-    thư mục."""
-    from . import txt_split, volumes
-
+def _gather_inputs(paths: list[str], epub_root: Path | None = None) -> tuple[list[Path], dict[str, Any]]:
+    """Các file chương của `scan_inputs` theo thứ tự trong sách, cùng những gì phải nói với người dùng về nguồn (bỏ qua, không
+    thấy, thư mục con gợi ý, lỗi, ghi chú, tên sách của file EPUB) - chưa đọc chương nào. Tạo sách chỉ cần danh sách này: thư
+    mục 3000 chương từng bị đọc lại hết (ghi công, sha256...) chỉ để lấy đường dẫn (soát uxfix30)."""
     files: list[Path] = []
     seen: set[str] = set()
     skipped: list[str] = []
@@ -359,45 +364,64 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
                 seen.add(key)
                 files.append(candidate.resolve())
     files.sort(key=lambda path: (group_of.get(os.path.normcase(str(path)), 0), natural_key(path.name)))
+    return files, {"skipped": skipped, "missing": missing, "subfolders": subfolders, "errors": errors, "notes": notes,
+                   "bookTitle": book_title}
+
+
+def input_files(paths: list[str]) -> list[Path]:
+    """Đúng các file chương `scan_inputs(paths)` liệt kê, không đọc chương nào."""
+    return _gather_inputs(paths)[0]
+
+
+def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, Any]:
+    """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên. File EPUB / DOCX /
+    PDF (importers.py) được tách thành thư mục chương TXT trong `epub_root` (thư viện; không có thì cạnh file) rồi quét như một
+    thư mục."""
+    from . import txt_split, volumes
+
+    files, found = _gather_inputs(paths, epub_root)
     rows = []
     total_words = 0
     for path in files:
-        text = _decode_head(path)
+        head, tail, size, sha256 = _read_chapter(path)
+        text = _decode_head(head)
         words = len(text.split())
         total_words += words
         rows.append({
             "path": str(path),
             "name": path.name,
             "title": humanize.chapter_title(path.stem),
-            "firstLine": _first_line(path),
+            # Cả file nằm trong phần đầu đã đọc thì lấy dòng đầu từ đó; file dài hơn (hiếm) đọc lại như trước.
+            "firstLine": _first_text_line(io.TextIOWrapper(io.BytesIO(head), encoding="utf-8-sig", errors="replace"))
+            if size == len(head) else _first_line(path),
             # Dòng ghi công ở đầu chương: trình tạo sách ĐỀ XUẤT bỏ chúng khỏi phần đọc (đếm trên đúng các chương còn chọn).
-            "credits": _credits_at_top(path),
-            "tailCredits": _credits_at_end(path),  # dòng ủng hộ / quảng cáo cuối chương: đề xuất như trên
+            "credits": _credits_at_top(head),
+            "tailCredits": _credits_at_end(tail, size),  # dòng ủng hộ / quảng cáo cuối chương: đề xuất như trên
             "words": words,
             # Số ký tự có chữ (không tính khoảng trắng): hiện cạnh tên chương để thấy chương nào rỗng / quá dài trước khi tạo.
             "chars": sum(not ch.isspace() for ch in text),
-            "bytes": path.stat().st_size,
+            "bytes": size,
             # Như chapters.input_sha256 của dây chuyền: nhận ra truyện đã có dự án (App.existing_projects).
-            "sha256": sha256_file(path),
+            "sha256": sha256,
             # Một file chứa nhiều "Chương N": ĐỀ XUẤT tách (txt_split) - chỉ khi người dùng đưa vào vài file, không đọc lại
             # cả nghìn file chương của một thư mục bình thường.
             "split": txt_split.plan(path) if len(files) <= 3 else None,
         })
-    title = book_title
+    title = found["bookTitle"]
     if files and not title:
         from ..project import infer_book_title
 
         title = _shared_folder_name(files) or (_title_line(files[0]) if len(files) == 1 else "") or infer_book_title(files)
     return {
         "files": rows,
-        "skipped": skipped,
-        "missing": missing,
+        "skipped": found["skipped"],
+        "missing": found["missing"],
         # EPUB / DOCX / PDF không tách được (hỏng, PDF scan, không có chương nào có chữ...): nói lý do thay vì "không có chương nào".
-        "errors": errors,
+        "errors": found["errors"],
         # Không phải lỗi nhưng người dùng nên biết (thư mục có cả TXT lẫn EPUB: chỉ lấy TXT; trang chỉ có ảnh bị bỏ; gợi ý bỏ dòng ghi công).
-        "notes": notes,
+        "notes": found["notes"],
         # Tối đa MAX_VOLUMES: giao diện hiện vài thư mục đầu, và "dùng cả các thư mục này, mỗi thư mục một tập" cần đủ bộ.
-        "subfolders": subfolders[:volumes.MAX_VOLUMES],
+        "subfolders": found["subfolders"][:volumes.MAX_VOLUMES],
         # Nhiều tập trong một nguồn (mỗi thư mục / EPUB một tập, hay tiêu đề "Tập 2"): ĐỀ XUẤT chia, None khi chỉ một tập.
         "volumes": volumes.propose(rows),
         "suggestedTitle": title,
@@ -413,7 +437,7 @@ def first_person_hint(paths: list[str]) -> dict[str, Any]:
     """Truyện kể ngôi thứ nhất? + gợi ý "tôi" là ai, cho câu hỏi của bước chọn giọng (first_person.py)."""
     from ..first_person import first_person_hint as hint
 
-    files = [Path(row["path"]) for row in scan_inputs(paths)["files"]]
+    files = input_files(paths)
     if not files:
         return {"rate": 0.0, "firstPerson": False, "suggestions": [], "chapters": []}
     return hint(files)
@@ -427,7 +451,7 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
     from ..config import build_settings
     from ..project import create_or_open_project
 
-    files = [Path(row["path"]) for row in scan_inputs(paths)["files"]]
+    files = input_files(paths)
     if not files:
         raise ValueError("Chưa có file TXT nào để làm sách")
     first_person = first_person.strip()

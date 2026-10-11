@@ -45,6 +45,7 @@ import {
 import { api, type BookSummary, type Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
+import { Windowed } from "@/shared/Windowed";
 import { toastRemoved } from "@/shared/trashUndo";
 import {
   phaseTone,
@@ -80,7 +81,7 @@ import { bookFailure, failureText, isOffline, useSideError } from "./polling";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
 import { PhoneEdits, useInboxCount } from "./PhoneEdits";
 import { WorkInbox, useWorkCount } from "./WorkInbox";
-import { ScriptTab } from "./ScriptTab";
+import { ScriptTab, useCastingContents } from "./ScriptTab";
 import { MusicTab } from "./MusicTab";
 import { NameReadings } from "./NameReadings";
 import { VoicePicker } from "./VoicePicker";
@@ -879,7 +880,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
   );
 }
 
-function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) {
+function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: Chapter; rowIndex?: number }) {
   const player = usePlayer();
   const hasStudio = Boolean(useAppInfo().data?.studio);
   const playChapter = usePlayChapter();
@@ -894,6 +895,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
   return (
     <div
       role="row"
+      aria-rowindex={rowIndex}
       onDoubleClick={onPlay}
       className={cn(
         "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 rounded-lg px-2 text-sm",
@@ -958,7 +960,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
 
 function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[] }) {
   return (
-    <div role="table" aria-label="Danh sách chương" className="mt-2">
+    <div role="table" aria-label="Danh sách chương" aria-rowcount={chapters.length} className="mt-2">
       <div className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 border-b border-line px-2 text-[11px] font-semibold uppercase tracking-wider text-fg-3">
         <span className="text-center">#</span>
         <span>Chương</span>
@@ -968,10 +970,14 @@ function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[
         <span className="hidden text-right lg:block">Xong lúc</span>
         <span />
       </div>
-      <div className="mt-1 space-y-px">
-        {chapters.map((chapter) => (
-          <ChapterRow key={chapter.id} book={book} chapter={chapter} />
-        ))}
+      {/* Dự án vài nghìn chương: chỉ dựng các dòng gần màn hình (shared/Windowed). */}
+      <div role="rowgroup" className="mt-1 space-y-px">
+        <Windowed
+          items={chapters}
+          estimate={57}
+          className="space-y-px"
+          row={(chapter, index) => <ChapterRow key={chapter.id} book={book} chapter={chapter} rowIndex={index + 1} />}
+        />
       </div>
     </div>
   );
@@ -1076,7 +1082,10 @@ export function ProjectScreen() {
   const precastOn = Boolean(data && canReview(data.book));
   const precastKeys = usePrecastKeys(id ?? "", precastOn);
   // Danh sách đầy đủ chỉ tải khi có chỗ cần nó (tab Việc cần duyệt, màn Duyệt trước khi thu); còn lại chỉ hỏi con số cho nhãn tab.
-  const workCount = Math.max(0, useWorkCount(id ?? "", precastOn || tab === "work" || tab === "precast") - (precastKeys?.size ?? 0)) + useInboxCount(id ?? "", !remoteStudio);
+  // Tab Kịch bản mở trước: số việc (cả cuốn phải soát lại, dự án 50.000 câu ~1,3 s) chờ mục lục về rồi mới hỏi, không tranh nhau.
+  const scriptListed = useCastingContents(id ?? "", false).isFetched;
+  const scriptFirst = tab === "script" && !failure && !scriptListed;
+  const workCount = Math.max(0, useWorkCount(id ?? "", precastOn || tab === "work" || tab === "precast", !scriptFirst) - (precastKeys?.size ?? 0)) + useInboxCount(id ?? "", !remoteStudio);
   const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
   const [merging, setMerging] = useState<CastMember | null>(null);
   const [renaming, setRenaming] = useState<CastMember | null>(null);

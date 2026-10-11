@@ -449,8 +449,9 @@ def manifest(project_root: Path, book: str, listening: Listening,
     summary["id"] = book
     view = listen_view.book(project_root, book, summary, listening.get(book))
     chapters = []
+    audio = store.chapter_audio_paths(project_root)
     for chapter in view.get("chapters", []):
-        path = store.chapter_audio_path(project_root, chapter["id"]) if chapter["available"] else None
+        path = audio.get(chapter["id"]) if chapter["available"] else None
         chapters.append({
             **chapter,
             "available": path is not None,
@@ -751,8 +752,9 @@ class SyncApp:
             return music_plan.track_file_named(project_root, relative, self.music_track)
         match = re.fullmatch(r"chapters/([^/\\]+\.mp3)", relative)
         if match:
+            audio = store.chapter_audio_paths(project_root)
             for chapter in store.chapters(project_root):
-                path = store.chapter_audio_path(project_root, chapter["id"]) if chapter["playable"] else None
+                path = audio.get(chapter["id"]) if chapter["playable"] else None
                 if path is not None and path.name == match.group(1):
                     return path
         return None

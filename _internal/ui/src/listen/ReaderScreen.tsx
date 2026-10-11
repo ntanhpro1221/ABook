@@ -17,7 +17,7 @@ import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { usePlayer } from "./player";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { wordOf } from "./readings";
-import type { Script } from "./model";
+import type { Script, ScriptSegment } from "./model";
 import { useChapterScript, useListenBook, useListenMutations, useSource } from "./source";
 import { WordReadingDialog } from "./WordReadings";
 
@@ -100,6 +100,12 @@ export function ReaderScreen({
   // nghe thẳng từ máy khác hay chưa cài Studio: nút vẫn hiện, mờ đi, kèm lý do.
   const lineEdit = editing && !textOnly ? lineEditing(book?.capabilities) : null;
   const wishes = useWishes(id, lineEdit?.mode === "wish");
+  // Dấu "đang chờ Studio" sau câu: một hàm cố định tới khi danh sách việc chờ đổi - màn đọc vẽ lại theo từng đoạn (ReadAlongText), hàm mới
+  // mỗi lần vẽ thì đoạn nào cũng vẽ lại.
+  const waitingMark = useCallback(
+    (segment: ScriptSegment) => (segment.stableId && wishes.data?.lines[segment.stableId] ? <WaitingMark /> : null),
+    [wishes.data],
+  );
   // "Đọc từ này là…": cuốn chỉ có chữ của máy này - giữ (hay bấm chuột phải) một chữ để dạy giọng đọc cách đọc nó cho cả cuốn.
   const readingEdit = editing && textOnly && canEditBook(book);
   const [readingWord, setReadingWord] = useState<string | null>(null);
@@ -371,7 +377,13 @@ export function ReaderScreen({
       </header>
 
       <div ref={container} onScroll={onScroll} {...follow.input} className="relative min-h-0 flex-1 overflow-y-auto">
-        <article className="mx-auto max-w-[68ch] px-6 pb-40 pt-8" style={{ fontSize: prefs.size, lineHeight: prefs.leading }}>
+        {/* Hộp (Radix) mở / đóng thì đặt lên body pointer-events:none và biến --removed-body-scroll-bar-size (khoá cuộn) - cả hai đều
+            kế thừa, chương 1,5 triệu chữ phải tính lại kiểu chữ của mọi câu: ~400 ms mỗi lần mở / đóng ô "Tìm trong sách" (soát uxfix30).
+            Giá trị riêng ở đây chặn thay đổi lan xuống; lớp phủ của hộp vẫn che trang nên bấm ra ngoài vẫn không tới chữ. */}
+        <article
+          className="pointer-events-auto mx-auto max-w-[68ch] px-6 pb-40 pt-8 [--removed-body-scroll-bar-size:0px]"
+          style={{ fontSize: prefs.size, lineHeight: prefs.leading }}
+        >
           {hint && (
             <p className={cn("mb-6 text-sm leading-relaxed text-fg-2", (textOnly || !script.timed) && "rounded-lg bg-hover px-4 py-3")}>{hint}</p>
           )}
@@ -385,7 +397,7 @@ export function ReaderScreen({
             heading="h1"
             headingClassName="pb-2 text-[1.5em] font-bold leading-snug tracking-tight"
             className="space-y-[0.9em]"
-            after={(segment) => (segment.stableId && wishes.data?.lines[segment.stableId] ? <WaitingMark /> : null)}
+            after={waitingMark}
           />
           {index < chapters.length - 1 && (
             <button

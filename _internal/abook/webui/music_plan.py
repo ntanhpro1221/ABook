@@ -278,14 +278,12 @@ def chapter_durations(project_root: Path, chapter_ids: Iterable[int]) -> dict[in
     if not out:
         return out
     try:
-        with contextlib.closing(store.connect(Path(project_root))) as connection:
-            rows = connection.execute("SELECT id, status, last_error, output_mp3 FROM chapters").fetchall()
+        paths = store.chapter_audio_paths(Path(project_root))
     except sqlite3.Error:
         return out
-    for row in rows:
-        if int(row["id"]) in out and store.heard_chapter(row["status"], row["last_error"]):
-            path = store.chapter_mp3(Path(project_root), row["output_mp3"])
-            out[int(row["id"])] = store.audio_duration(path) if path is not None else None
+    for chapter_id in out:
+        if (path := paths.get(chapter_id)) is not None:
+            out[chapter_id] = store.audio_duration(path)
     return out
 
 

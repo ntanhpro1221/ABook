@@ -18,11 +18,11 @@ import stat
 import time
 import unicodedata
 from collections import Counter, defaultdict
-from contextlib import closing
+from contextlib import closing, contextmanager
 from pathlib import Path
-from typing import Any, ClassVar, Iterable
+from typing import Any, ClassVar, Iterable, Iterator
 
-from . import humanize, word_timing
+from . import humanize, listing_cache, word_timing
 from .. import names as renames
 from ..io_utils import atomic_write_bytes
 
@@ -76,6 +76,19 @@ def connect(project_root: Path) -> sqlite3.Connection:
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA query_only=ON")
     return connection
+
+
+@contextmanager
+def held_open(project_root: Path) -> Iterator[None]:
+    """Giữ một kết nối chỉ đọc mở suốt khối lệnh. Mỗi `connect` mới khi KHÔNG còn kết nối nào khác mở phải dựng lại chỉ mục WAL,
+    ~6 ms; có một kết nối đang mở thì ~0,5 ms. Việc hỏi sổ theo TỪNG chương trên cả cuốn (đóng gói 3000 chương: ~36.000 lần) bọc
+    trong đây - kết quả không đổi, chỉ đỡ thời gian (soát a29)."""
+    connection = connect(project_root)
+    try:
+        connection.execute("SELECT 1 FROM sqlite_master LIMIT 1").fetchall()
+        yield
+    finally:
+        connection.close()
 
 
 def speaker_request_problem(project_root: Path, stable_id: str, text_sha256: str, speaker: str,
@@ -401,10 +414,60 @@ def _first_line(path: Any) -> str | None:
     return next((line.strip() for line in text.splitlines() if line.strip()), None)
 
 
+def db_signature(project_root: Path, *extra: str) -> tuple:
+    """Chữ ký sổ dự án cho `listing_cache.cached`: file DB + `-wal`, cộng các file `extra` (tên trong thư mục dự án) mà kết quả cũng phụ
+    thuộc. Đổi khi dây chuyền hay người dùng ghi gì - kết quả tính từ sổ nhớ được tới lần ghi kế (sổ vừa ghi trong vài giây thì không nhớ)."""
+    root = Path(project_root)
+    return _quiet_wal(listing_cache.files_signature(root / DB_NAME, root / (DB_NAME + "-wal"), *(root / name for name in extra)))
+
+
+def _quiet_wal(signature: tuple) -> tuple:
+    """Bỏ `-wal` rỗng khỏi chữ ký: lần đọc đầu (kết nối chỉ đọc) tạo một `-wal` 0 byte - sổ không đổi gì, không phải tính lại."""
+    return tuple(entry for entry in signature if entry[0] != f"{DB_NAME}-wal:0")
+
+
+def project_signature(project_root: Path) -> tuple:
+    """Chữ ký mọi file và thư mục con NGAY trong thư mục dự án (sổ, `-wal`, yêu cầu của người nghe, tên đặt lại, cài đặt, đoạn người kể...)
+    cho màn tính từ nhiều file của dự án (hộp việc, tab Kịch bản). Trừ `-shm`: người chỉ đọc sổ cũng ghi vào nó."""
+    root = Path(project_root)
+    try:
+        with os.scandir(root) as entries:
+            names = sorted(entry.name for entry in entries if not entry.name.endswith("-shm"))
+    except OSError:
+        return ()
+    return _quiet_wal(listing_cache.files_signature(*(root / name for name in names)))
+
+
 def chapter_names(connection: sqlite3.Connection, project_root: Path | None = None) -> dict[int, dict[str, Any]]:
     """chapter_id -> {index, name, subtitle, full} theo dòng tiêu đề đầu chương (xem `humanize.chapter_names`). Có
-    `project_root` thì tên người nghe đặt lại (`CHAPTER_TITLES_FILE`) thay tên suy ra - mọi nơi hiện tên chương như nhau."""
+    `project_root` thì tên người nghe đặt lại (`CHAPTER_TITLES_FILE`) thay tên suy ra - mọi nơi hiện tên chương như nhau.
+
+    Có `project_root` thì nhớ theo chữ ký sổ (`db_signature`): dựng tên phải quét mọi câu, mà nhiều nơi hỏi theo TỪNG chương
+    (`chapter_script`) - đóng gói cuốn 3000 chương dựng lại 6000 lần, 4-7 phút (soát a29). Chương chưa tách câu lấy tên từ dòng đầu file
+    nguồn: các file ấy được kiểm mốc sửa mỗi lần dùng bản nhớ."""
+    if project_root is None:
+        return _chapter_names(connection, None)[0]
+    key = ("chapter_names", str(project_root))
+    signature = db_signature(project_root, CHAPTER_TITLES_FILE)
+    out, sources = listing_cache.cached(key, signature, lambda: _chapter_names(connection, project_root))
+    if any(_mtime_ns(path) != stamp for path, stamp in sources):
+        listing_cache.forget(key)
+        out, sources = _chapter_names(connection, project_root)
+    return dict(out)  # bản riêng của bảng; từng mục dùng chung với bản nhớ nên người gọi chỉ đọc
+
+
+def _mtime_ns(path: Any) -> int | None:
+    try:
+        return os.stat(path).st_mtime_ns
+    except (OSError, TypeError, ValueError):
+        return None
+
+
+def _chapter_names(connection: sqlite3.Connection,
+                   project_root: Path | None) -> tuple[dict[int, dict[str, Any]], tuple[tuple[str, int | None], ...]]:
+    """(tên chương như `chapter_names`, (file nguồn đã đọc dòng đầu, mốc sửa của nó))."""
     renamed = chapter_title_overrides(project_root) if project_root is not None else {}
+    sources: list[tuple[str, int | None]] = []
     headings = {
         int(row["chapter_id"]): str(row["text"] or "")
         for row in connection.execute("SELECT chapter_id, text, MIN(seq) FROM segments GROUP BY chapter_id")
@@ -417,6 +480,8 @@ def chapter_names(connection: sqlite3.Connection, project_root: Path | None = No
             # Chương chưa tách câu (dự án chưa chạy tới): dòng đầu FILE nguồn, như danh sách chương của trình tạo - tên file
             # lệch một so với truyện ("767.txt" mở đầu "Chương 768 - ...") làm ranh giới hai phần trông như lặp chương
             # (soát UX 29-09).
+            if row["input_path"]:
+                sources.append((str(row["input_path"]), _mtime_ns(row["input_path"])))
             heading = _first_line(row["input_path"])
         name, subtitle = humanize.chapter_names(str(row["title"]), heading)
         name, subtitle = apply_chapter_title(name, subtitle, renamed.get(int(row["id"])))
@@ -426,7 +491,7 @@ def chapter_names(connection: sqlite3.Connection, project_root: Path | None = No
             "subtitle": subtitle,
             "full": chapter_full_title(name, subtitle),
         }
-    return out
+    return out, tuple(sources)
 
 
 def chapter_full_title(name: str, subtitle: str) -> str:
@@ -1455,6 +1520,18 @@ def chapter_audio_path(project_root: Path, chapter_id: int) -> Path | None:
         row = connection.execute(
             "SELECT status, last_error, output_mp3 FROM chapters WHERE id = ?", (chapter_id,)
         ).fetchone()
+    return _heard_mp3(project_root, row)
+
+
+def chapter_audio_paths(project_root: Path) -> dict[int, Path]:
+    """{mã chương: MP3 nghe được} (như `chapter_audio_path`) của mọi chương - một kết nối, một truy vấn. Nơi đi qua cả cuốn (manifest
+    đồng bộ, đóng gói) dùng hàm này: mỗi kết nối mới đọc lại lược đồ sổ, ~3 ms; cuốn 3000 chương mất 19 giây chỉ để mở kết nối (soát a29)."""
+    with closing(connect(project_root)) as connection:
+        rows = connection.execute("SELECT id, status, last_error, output_mp3 FROM chapters").fetchall()
+    return {int(row["id"]): path for row in rows if (path := _heard_mp3(project_root, row)) is not None}
+
+
+def _heard_mp3(project_root: Path, row: Any) -> Path | None:
     if row is None or not heard_chapter(row["status"], row["last_error"]):
         return None
     return chapter_mp3(project_root, row["output_mp3"])

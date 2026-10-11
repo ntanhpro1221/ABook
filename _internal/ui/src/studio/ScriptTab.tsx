@@ -1474,6 +1474,16 @@ function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: string;
   );
 }
 
+/** Mục lục tab Kịch bản. `enabled: false`: chỉ đọc bản trong bộ nhớ đệm (vẫn mang queryFn thật - xem useCachedBook), để trang dự án
+ *  biết mục lục đã về chưa mà hoãn những lượt hỏi nặng khác (số việc cần duyệt) cho tab mở trước. */
+export function useCastingContents(bookId: string, enabled = true) {
+  return useQuery({
+    queryKey: ["casting", bookId],
+    queryFn: () => api<Contents>(`/api/books/${bookId}/casting`),
+    enabled,
+  });
+}
+
 export function ScriptTab({ bookId }: { bookId: string }) {
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>("all");
@@ -1504,10 +1514,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
   const [added, setAdded] = useState<Person[]>([]);
   const undo = useUndoStack();
   const narrow = useMediaQuery("(max-width: 639px)");
-  const contents = useQuery({
-    queryKey: ["casting", bookId],
-    queryFn: () => api<Contents>(`/api/books/${bookId}/casting`),
-  });
+  const contents = useCastingContents(bookId);
   const chapters = contents.data?.chapters ?? [];
   // Hai cửa sổ cùng sửa một sách (B19): hỏi nhẹ lần ghi yêu cầu cuối mỗi vài giây khi tab đang hiện; đổi thì chương đang xem tải lại.
   const client = useQueryClient();

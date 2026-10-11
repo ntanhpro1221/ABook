@@ -30,10 +30,15 @@ def discover_txt_files(directory: Path) -> list[Path]:
         raise NotADirectoryError(directory)
     # Tên bằng nhau theo thứ tự tự nhiên ("1.txt" và "01.txt") xếp theo tên gốc - không theo thứ tự hệ thống tệp liệt kê, vốn
     # khác nhau giữa các máy (app điện thoại cũng xếp như vậy: BookImport.naturalOrder).
-    return sorted(
-        (path.resolve() for path in directory.iterdir() if path.is_file() and path.suffix.casefold() == ".txt"),
-        key=lambda path: (natural_key(path.name), path.name),
-    )
+    # File con của thư mục đã resolve chỉ đổi đường khi chính nó là liên kết: chỉ resolve những file ấy (thư mục 3000 chương:
+    # 3000 lần resolve ~0,4 s mỗi lần mở "Làm tiếp cuốn này" - soát uxfix30).
+    found = []
+    with os.scandir(directory) as entries:
+        for entry in entries:
+            path = Path(entry.path)
+            if path.suffix.casefold() == ".txt" and entry.is_file():
+                found.append(path.resolve() if entry.is_symlink() else path)
+    return sorted(found, key=lambda path: (natural_key(path.name), path.name))
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -254,8 +259,13 @@ def atomic_write_bytes(path: Path, data: bytes, *, fsync: bool = True) -> None:
         raise
 
 
-def atomic_write_json(path: Path, data: Any, *, fsync: bool = True) -> None:
-    payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+def atomic_write_json(path: Path, data: Any, *, fsync: bool = True, compact: bool = False) -> None:
+    """`compact`: không thụt dòng - cho file trạng thái lớn ghi lại liên tục (chỗ nghe mỗi 10 giây): json.dumps có indent chạy bộ mã hoá
+    Python thuần, chậm gấp ~5 lần bộ mã hoá C (hồ sơ nghe 4,8 MB: 166 ms so với 34 ms - soát a29)."""
+    if compact:
+        payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    else:
+        payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
     atomic_write_bytes(path, payload, fsync=fsync)
 
 

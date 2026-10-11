@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from . import covers, store
-from .listening import book_progress
+from .listening import HEAVY_KEYS, book_progress
 
 FORMAT = "abook-book/1"  # không ai đọc trường này, mã phiên bản gói không tính nó
 
@@ -60,7 +60,7 @@ def book(project_root: Path, book_id: str, summary: dict[str, Any], state: dict[
     available = [chapter for chapter in items if chapter["available"]]
     complete = summary["phase"] == "done" and len(available) == len(items)
     # Nhật ký đêm không đi theo danh sách/sách (có thể dài vài trăm mốc): thẻ "Tối qua" hỏi riêng.
-    state = {key: value for key, value in state.items() if key not in ("night", "sessions")}
+    state = {key: value for key, value in state.items() if key not in HEAVY_KEYS}
     result: dict[str, Any] = {
         "format": FORMAT,
         "id": book_id,

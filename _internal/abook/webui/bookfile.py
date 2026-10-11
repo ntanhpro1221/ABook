@@ -144,11 +144,12 @@ def _add_chapters(project_root: Path, book: dict[str, Any], files: dict[str, Pat
                   part: int | None = None, tick: Callable[[int, int], None] | None = None) -> None:
     """Audio + chữ đọc theo của từng chương vào `files`. `part` (cả bộ): chương `book["chapters"]` được sửa tại chỗ sang
     mã chung của bộ, đường dẫn nằm trong thư mục phần, và mang số phần. `tick(đã gom, tổng)` gọi trước mỗi chương (ném thì dừng)."""
+    paths = store.chapter_audio_paths(project_root)
     for done, chapter in enumerate(book["chapters"]):
         if tick is not None:
             tick(done, len(book["chapters"]))
         local = chapter["id"]
-        audio = store.chapter_audio_path(project_root, local) if chapter.get("file") else None
+        audio = paths.get(local) if chapter.get("file") else None
         script = store.chapter_script(project_root, local)
         if part is not None:
             if not 0 < local < PART_SPAN:
@@ -184,39 +185,45 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
     (projectfile.pack; audio chương và câu mẫu là file của dự án, nên trong gói chúng là bí danh chứ không chép hai lần).
     `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì kèm rãnh nhạc.
     `progress("listen", chương đã gom, tổng)` báo tiến độ gom chương (projectfile.pack); nó ném thì việc dừng."""
-    book = _packaged_book(project_root)
-    files: dict[str, Path | bytes] = {"cast.json": json_bytes(book_edits.shared_cast(store.recorded_cast(project_root)))}
-    cover = covers.cover_file(project_root)
-    if cover is not None:
-        files[covers.COVER_FILE] = cover
-    _add_chapters(project_root, book, files, tick=None if progress is None else lambda done, total: progress("listen", done, total))
-    if not any(chapter.get("file") for chapter in book["chapters"]):
-        _add_texts(project_root, book, files)
-    samples = []
-    for name in book["samples"]:
-        path = store.sample_audio_path(project_root, int(name.split("/")[1].split(".")[0]))
-        if path is not None:
-            files[name] = path
-            samples.append(name)
-    book["samples"] = samples
-    music = None
-    if music_track is not None:
-        music = music_plan.package(project_root, [c["id"] for c in book["chapters"] if c.get("file")], music_track)
-    if music is not None:
-        book["music"], tracks = music
-        files.update(tracks)
+    # Hỏi sổ theo từng chương suốt cả cuốn (căn chữ, chữ đọc theo, audio): giữ một kết nối mở cho mỗi lần mở sổ rẻ.
+    with store.held_open(project_root):
+        book = _packaged_book(project_root)
+        files: dict[str, Path | bytes] = {"cast.json": json_bytes(book_edits.shared_cast(store.recorded_cast(project_root)))}
+        cover = covers.cover_file(project_root)
+        if cover is not None:
+            files[covers.COVER_FILE] = cover
+        _add_chapters(project_root, book, files, tick=None if progress is None else lambda done, total: progress("listen", done, total))
+        if not any(chapter.get("file") for chapter in book["chapters"]):
+            _add_texts(project_root, book, files)
+        samples = []
+        for name in book["samples"]:
+            path = store.sample_audio_path(project_root, int(name.split("/")[1].split(".")[0]))
+            if path is not None:
+                files[name] = path
+                samples.append(name)
+        book["samples"] = samples
+        music = None
+        if music_track is not None:
+            music = music_plan.package(project_root, [c["id"] for c in book["chapters"] if c.get("file")], music_track)
+        if music is not None:
+            book["music"], tracks = music
+            files.update(tracks)
     return book, files
 
 
 def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook",
-         music_track: Callable[[str], Path | None] | None = None) -> Path:
+         music_track: Callable[[str], Path | None] | None = None,
+         progress: Callable[[str, int, int], None] | None = None) -> Path:
     """Gói một cuốn thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file.
 
-    `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì gói kèm rãnh nhạc."""
+    `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì gói kèm rãnh nhạc.
+    `progress(pha, đã, tổng)`: như `projectfile.Progress` - "prepare", "listen" (chương đã gom), "write" (byte đã ghi); ném thì dừng."""
     project_root = Path(project_root)
-    book, files = listening_layer(project_root, music_track)
+    if progress is not None:
+        progress("prepare", 0, 0)
+    book, files = listening_layer(project_root, music_track, progress)
     out = Path(out) if out is not None else project_root / "output" / default_name(book["title"])
-    return seal(book, files, out, producer=producer, version=package_version(book))
+    return seal(book, files, out, producer=producer, version=package_version(book), progress=progress)
 
 
 def book_layer(folder: Path) -> tuple[dict[str, Any], dict[str, Path | bytes], dict[str, dict[str, Any]], dict[str, Any]]:
@@ -399,11 +406,13 @@ def _merge_music(parts: list[tuple[int, dict[str, Any]]]) -> dict[str, Any] | No
 
 
 def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, producer: str, version: int,
-         known: dict[str, dict[str, Any]] | None = None, edits: dict[str, Any] | None = None) -> Path:
+         known: dict[str, dict[str, Any]] | None = None, edits: dict[str, Any] | None = None,
+         progress: Callable[[str, int, int], None] | None = None) -> Path:
     """Ghi `book.package` (cỡ + mã băm từng file) rồi gói ZIP: file tạm cạnh đích, thay nguyên tử. Sách phải có gì để nghe hay
     để đọc: audio chương, hay (phiên bản 5) chữ chương - sách chỉ-chữ không có audio nào vẫn là sách.
     `known`: cỡ + mã băm đã biết của một số file (sách đã nhập, đã kiểm lúc giải nén) - file đúng cỡ ấy khỏi băm lại.
-    `edits`: lớp sửa của người nghe - `manifest.json` (Readium, cho app khác) mang tên sách / tên chương đã sửa."""
+    `edits`: lớp sửa của người nghe - `manifest.json` (Readium, cho app khác) mang tên sách / tên chương đã sửa.
+    `progress("write", byte đã ghi, tổng byte)` trước mỗi mục và giữa file lớn (ném thì dừng, file tạm bị xoá); byte ra y hệt."""
     if not any(name.startswith(("chapters/", "texts/")) for name in files):
         raise BookFileError("Sách chưa có chương nào nghe được hay đọc được để xuất.")
     known = known or {}
@@ -425,7 +434,20 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
             archive.writestr(_entry("mimetype", stored=True), MIMETYPE)
             archive.writestr(_entry(MANIFEST), json_bytes(book))
             archive.writestr(_entry(READIUM_MANIFEST), json_bytes(_readium(book_edits.apply_manifest(book, edits or {}))))
-            write_entries(archive, files, order=_order)
+            if progress is None:
+                write_entries(archive, files, order=_order)
+            else:
+                sizes = {name: int(meta["size"]) for name, meta in book["package"]["files"].items()}
+                total, written = sum(sizes.values()), 0
+
+                def before(name: str) -> None:
+                    nonlocal written
+                    progress("write", written, total)
+                    written += sizes[name]
+
+                write_entries(archive, files, order=_order, before=before,
+                              during=lambda name, inside: progress("write", written - sizes[name] + inside, total))
+                progress("write", total, total)
         with temporary.open("rb+") as handle:
             os.fsync(handle.fileno())
         os.replace(temporary, out)

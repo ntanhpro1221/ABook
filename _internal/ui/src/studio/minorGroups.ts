@@ -46,3 +46,17 @@ export function pickNote(picked: number, total: number): string {
   if (picked === 0) return `Chưa chọn câu nào trong ${total} câu`;
   return `Đang chọn ${picked}/${total} câu`;
 }
+
+/** Thẻ nhóm lớn chỉ mang vài câu đầu (`examplesTotal` là tổng - webui/work_items.for_page); "Xem thêm" lấy từng trang `page` câu
+ *  (GET /work/examples). Trả câu đã có, tổng, và đường hỏi trang kế (null: đã đủ). */
+export function examplesPage<T>(bookId: string, key: string, first: T[], more: T[], total: number | undefined, page: number) {
+  const loaded = more.length > 0 ? [...first, ...more] : first;
+  const all = Math.max(total ?? 0, loaded.length);
+  const next = loaded.length < all ? `/api/books/${bookId}/work/examples?key=${encodeURIComponent(key)}&offset=${loaded.length}&limit=${page}` : null;
+  return { loaded, total: all, next };
+}
+
+/** Chữ nút "Xem thêm" của thẻ nhóm lớn. */
+export function moreText(shown: number, total: number, format: (value: number) => string = String): string {
+  return `Xem thêm (đang hiện ${format(shown)}/${format(total)} câu)`;
+}

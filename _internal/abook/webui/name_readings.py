@@ -13,10 +13,17 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
-from . import store
+from . import listing_cache, store
 from .work_items import _example, _has_audio, _rerecord_cost
 
 WORD = re.compile(r"\w+")
+
+
+def name_readings_view(project_root: Path) -> dict[str, Any]:
+    """`name_readings` nhớ theo chữ ký thư mục dự án (như `work_items.work_view`): mở lại mục "Cách đọc tên" không quét lại cả cuốn.
+    Bản dùng chung: không sửa."""
+    return listing_cache.cached(("name_readings", str(project_root)), store.project_signature(project_root),
+                                lambda: name_readings(project_root))
 
 
 def name_readings(project_root: Path) -> dict[str, Any]:
@@ -48,9 +55,10 @@ def name_readings(project_root: Path) -> dict[str, Any]:
         odd = {key: re.compile(r"(?<!\w)" + re.escape(key) + r"(?!\w)", re.IGNORECASE)
                for key in surfaces if not WORD.fullmatch(key)}
         reached: dict[str, int] = defaultdict(int)  # câu chữ "lạ" còn nguyên sau khi ký hiệu thành quãng nghỉ (`never_used`)
+        # Cuốn chưa có tên nào trong bảng (và người nghe chưa thêm): không câu nào khớp được - khỏi quét cả 50.000 câu (soát uxfix30).
         for segment in connection.execute(
             "SELECT id, chapter_id, seq, text, speaker, wav_path FROM segments ORDER BY wav_path IS NULL, chapter_id, seq"
-        ) if "segments" in tables else ():
+        ) if "segments" in tables and surfaces else ():
             text = str(segment["text"] or "")
             hit = {word.casefold() for word in WORD.findall(text)} & surfaces.keys()
             odd_hit = {key for key, pattern in odd.items() if pattern.search(text)}

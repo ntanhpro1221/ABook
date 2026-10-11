@@ -21,7 +21,7 @@ from ..listener_overrides import (
     NARRATOR, OVERRIDES_FILE, NO_VOICE, NOT_SPEECH, SPEECH_KINDS, UNNAMED, line_requests, line_target, read_overrides, retake_requests,
     speaker_requests, speaker_target,
 )
-from . import store
+from . import listing_cache, store
 from .reviews import speaker_label
 from .address_cues import _same_person, address_doubts
 from .work_items import first_person_lookup, merged_turns, self_addressed, unsure_speaker_lines
@@ -73,7 +73,7 @@ def _hints(connection: Any, rows: list[Any], chapter_id: int | None,
     speech = [row for row in rows if str(row["kind"]) != "narration"]
     if project_root is not None:
         _weak_hints(connection, speech, chapter_id, display, project_root, hints)
-    calling = self_addressed(connection, chapter_id)
+    calling = self_addressed(connection, chapter_id, project_root)
     for row in speech:
         if int(row["id"]) in calling:
             name = label(str(row["speaker"]), display)
@@ -82,7 +82,7 @@ def _hints(connection: Any, rows: list[Any], chapter_id: int | None,
                 "note": f"Câu này gọi tên {name} - người được gọi thường là người nghe, không phải người nói.",
             }
     order = {str(row["stable_id"]): index for index, row in enumerate(speech)}
-    for first, second in merged_turns(connection, chapter_id):
+    for first, second in merged_turns(connection, chapter_id, project_root):
         name = label(str(second["speaker"]), display)
         hint: dict[str, Any] = {
             "kind": "turn",
@@ -190,6 +190,12 @@ def casting_stamp(project_root: Path) -> int:
         return (Path(project_root) / OVERRIDES_FILE).stat().st_mtime_ns
     except OSError:
         return 0
+
+
+def casting_view(project_root: Path) -> dict[str, Any]:
+    """`casting_chapters` nhớ theo chữ ký thư mục dự án (như `work_items.work_view`). Bản dùng chung: không sửa."""
+    return listing_cache.cached(("casting_chapters", str(project_root)), store.project_signature(project_root),
+                                lambda: casting_chapters(project_root))
 
 
 def casting_chapters(project_root: Path) -> dict[str, Any]:
