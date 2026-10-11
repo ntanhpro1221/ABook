@@ -20,12 +20,14 @@ import {
   ffmpegStart,
   ffmpegStatus,
   FORMAT_CHOICES,
+  MUSIC_MIX_HINT,
   planText,
   resumeText,
   wholeBookNotice,
   type AudiobookFormat,
   type AudiobookPlan,
   type FfmpegStatus,
+  type MusicExportState,
 } from "./listenExport";
 
 // Hộp "Xuất sách nói (MP3 / M4B)…" của sách Nghe ngay: chọn định dạng, xem giọng + thời gian ước + lời cảnh báo giọng trực tuyến, rồi "Bắt đầu".
@@ -62,6 +64,41 @@ export function FfmpegNeeded({ status, onDownload, onStop }: { status: FfmpegSta
   );
 }
 
+/** Ô "Kèm nhạc nền" của các hộp xuất sách nói (sách Nghe ngay ở đây, Studio ở studio/ExportBook.tsx). Cuốn không có kế hoạch nhạc: không hiện. */
+export function MusicMixOption({ checked, onChange, disabled }: { checked: boolean; onChange: (on: boolean) => void; disabled?: boolean }) {
+  return (
+    <label className="flex items-start gap-2.5 text-sm">
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
+      />
+      <span className="min-w-0">
+        <span className="block font-medium">Kèm nhạc nền</span>
+        <span className="block text-xs text-fg-2">{MUSIC_MIX_HINT}</span>
+      </span>
+    </label>
+  );
+}
+
+/** Lựa chọn "Kèm nhạc nền" của hộp cho cuốn `bookId`: theo công tắc Nhạc nền của cuốn (`state.enabled`) cho tới khi người dùng tự tích / bỏ tích
+ *  (nhớ riêng cho cuốn ấy - hộp mở cho cuốn khác thì lại theo công tắc). Cuốn không có kế hoạch nhạc: luôn tắt. */
+export function useMusicChoice(state: MusicExportState | undefined, bookId: string): [boolean, (on: boolean) => void] {
+  const [chosen, setChosen] = useState<MusicChosen | null>(null);
+  return [musicChecked(state, chosen, bookId), (on) => setChosen({ bookId, on })];
+}
+
+/** Lần tích / bỏ tích gần nhất của người dùng, của cuốn nào. */
+export type MusicChosen = { bookId: string; on: boolean };
+
+/** Ô "Kèm nhạc nền" đang tích không (`useMusicChoice`). */
+export function musicChecked(state: MusicExportState | undefined, chosen: MusicChosen | null, bookId: string): boolean {
+  if (!state?.available) return false;
+  return chosen?.bookId === bookId ? chosen.on : state.enabled;
+}
+
 export interface AudiobookFormProps {
   format: AudiobookFormat;
   onFormat: (format: AudiobookFormat) => void;
@@ -72,9 +109,12 @@ export interface AudiobookFormProps {
   ffmpeg: FfmpegStatus | undefined;
   onDownload: () => void;
   onStopDownload: () => void;
+  /** "Kèm nhạc nền": chỉ hiện khi `plan.music.available`. */
+  music?: boolean;
+  onMusic?: (on: boolean) => void;
 }
 
-export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg, onDownload, onStopDownload }: AudiobookFormProps) {
+export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg, onDownload, onStopDownload, music = false, onMusic }: AudiobookFormProps) {
   const notice = voice ? wholeBookNotice(voice) : "";
   return (
     <div className="flex flex-col gap-4">
@@ -112,6 +152,8 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
         </p>
         {plan && resumeText(plan) && <p className="mt-1 text-fg-2">{resumeText(plan)}</p>}
       </div>
+
+      {plan?.music?.available && onMusic && <MusicMixOption checked={music} onChange={onMusic} />}
 
       {notice && (
         <p role="note" className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
@@ -160,6 +202,7 @@ export function AudiobookDialogHost() {
     refetchInterval: (query) => (query.state.data?.downloading ? 800 : false),
   });
   const refresh = () => void client.invalidateQueries({ queryKey: ["ffmpeg"] });
+  const [music, setMusic] = useMusicChoice(plan.data?.music, book?.id ?? "");
 
   const start = async () => {
     if (!book || !voice) return;
@@ -176,7 +219,7 @@ export function AudiobookDialogHost() {
         chapters: plan.data?.chapters ?? book.chaptersTotal,
         target,
         cover: coverArtwork(book.title),
-        extra: audiobookBody(format, voice.id),
+        extra: audiobookBody(format, voice.id, music),
       });
       setBook(null);
     } finally {
@@ -201,6 +244,8 @@ export function AudiobookDialogHost() {
         ffmpeg={ffmpeg.data}
         onDownload={() => void ffmpegStart().then(refresh, (error: Error) => toast.error("Chưa tải được công cụ", { description: error.message }))}
         onStopDownload={() => void ffmpegCancel().then(refresh, () => undefined)}
+        music={music}
+        onMusic={setMusic}
       />
       <div className="mt-5 flex justify-end gap-2">
         <Button variant="ghost" onClick={() => setBook(null)}>

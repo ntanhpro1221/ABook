@@ -81,14 +81,19 @@ export interface ExportResult {
   format?: string;
   /** Ảnh bìa của sách hỏng: bản xuất mang bìa vẽ từ tên (export.usable_cover). */
   coverBroken?: boolean;
+  /** Xuất "Kèm nhạc nền": số đoạn không có nhạc vì bài không tải / không đọc được (webui/music_export.py). */
+  musicMissing?: number;
 }
 
 export interface ExportJob {
   state: "idle" | "running" | "done" | "error" | "cancelled";
   id?: string;
-  /** Xuất sách nói (listen_export.py) báo tiến độ: pha ("voice" đọc / "encode" ghép file), chương i/N, % theo số chữ, ước còn lại (giây), đang nhường người nghe.
-   *  Gói dự án báo pha riêng (`PackPhase`) cùng `done`/`total` (số chương / byte). */
-  phase?: "voice" | "encode" | PackPhase;
+  /** Xuất sách nói (listen_export.py) báo tiến độ: pha ("voice" đọc / "music" trộn nhạc nền / "encode" ghép file), chương i/N, % theo số chữ, ước còn lại (giây),
+   *  đang nhường người nghe. Xuất M4B kèm nhạc nền chỉ báo pha "music" + chương i/N. Mọi M4B: "peaks" đang kiểm đỉnh âm sau mã hoá, "reencode"
+   *  mã hoá lại lượt `peakRound` vì `peakOver` chương vượt đỉnh (export.m4b_from_files). Gói dự án báo pha riêng (`PackPhase`) cùng `done`/`total`. */
+  phase?: "voice" | "music" | "encode" | "peaks" | "reencode" | PackPhase;
+  peakRound?: number;
+  peakOver?: number;
   done?: number;
   total?: number;
   chapter?: number;
@@ -121,9 +126,17 @@ export type JobView =
 
 /** Việc tự báo tiến độ (xuất sách nói): chữ + phần trăm 0-1; không báo thì null. */
 function reportedProgress(job: ExportJob): { fraction: number; text: string } | null {
+  if (job.phase === "peaks") return { fraction: 1, text: "Đang kiểm đỉnh âm…" };
+  // Lượt mã hoá lại chạy lại từng chương (pha "encode" / "music" báo chương) - vẫn nói vì sao.
+  const again = job.peakOver ? `Mã hoá lại vì ${job.peakOver} chương vượt đỉnh (lượt ${job.peakRound ?? 1})` : "";
+  if (job.phase === "reencode") return { fraction: 1, text: again };
   if (job.chapter === undefined || !job.chapters) return null;
   const where = `Chương ${job.chapter}/${job.chapters}`;
-  if (job.phase === "encode") return { fraction: 1, text: `Đang ghép file âm thanh · ${where}` };
+  if (job.phase === "encode") return { fraction: 1, text: again ? `${again} · ${where}` : `Đang ghép file âm thanh · ${where}` };
+  if (job.phase === "music") {
+    const text = `Đang trộn nhạc chương ${job.chapter}/${job.chapters}`;
+    return { fraction: job.percent !== undefined ? job.percent / 100 : (job.chapter - 1) / job.chapters, text: again ? `${again} · ${text}` : text };
+  }
   const parts = [where, `${job.percent ?? 0}%`];
   if (job.waiting === "listening") parts.push("nhường cho chương đang nghe");
   else if (job.secondsLeft != null) parts.push(`còn ${spokenDuration(job.secondsLeft)}`);
@@ -140,6 +153,11 @@ export function missingChaptersNote(result: ExportResult): string {
   const { chapters, chaptersTotal } = result;
   if (chapters === undefined || chaptersTotal === undefined || chapters >= chaptersTotal) return "";
   return `${chapters}/${chaptersTotal} chương - chương chưa xong không có trong file`;
+}
+
+/** "3 đoạn thiếu nhạc vì chưa tải được bài" khi bản xuất kèm nhạc nền thiếu đoạn nào; rỗng khi đủ. */
+export function musicMissingNote(result: ExportResult): string {
+  return result.musicMissing ? `${result.musicMissing} đoạn thiếu nhạc vì chưa tải được bài` : "";
 }
 
 /** "3 file nguồn chương đã bị dời hay xoá nên không có trong gói" khi gói dự án thiếu file nguồn; rỗng khi đủ. */
@@ -167,7 +185,7 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
     // Thông báo chỉ nói TÊN (file, hay thư mục khi mỗi phần một file + số file); đường đầy đủ ở gợi ý khi rê chuột và nút "Mở thư mục".
     const { file, folder } = job.result;
     const count = job.result.files ?? job.result.parts?.length;
-    const details = [!file && count ? `${count} file` : "", job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result), missingSourcesNote(job.result),
+    const details = [!file && count ? `${count} file` : "", job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result), missingSourcesNote(job.result), musicMissingNote(job.result),
       job.result.coverBroken ? "ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên" : ""].filter(Boolean);
     const place = file ?? folder;
     return { kind: "success", title: copy.done, description: [fileName(place), ...details].join(" · "), ...(fileName(place) !== place ? { place } : {}) };

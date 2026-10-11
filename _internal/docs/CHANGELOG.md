@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền (máy tính)
+
+- Xuất sách nói MP3 / M4B có ô "Kèm nhạc nền": nhạc của cuốn được trộn thẳng vào file, vào ra đúng chỗ như khi nghe trong app và
+  không bao giờ làm vỡ tiếng; ô tích sẵn khi cuốn đang bật nhạc nền. Sách nói M4B, có nhạc hay không, cũng không còn chỗ chát tiếng
+  do nén.
+
 ### Làm sách trong Studio (máy tính)
 
 - Truyện kể ngôi thứ nhất có dòng như "Góc nhìn của Mai" hay "[POV: Mai]": "Việc cần duyệt" đề xuất luôn "đoạn này kể bởi Mai" (hay

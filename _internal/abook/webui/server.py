@@ -39,7 +39,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
-               listen_export, music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
+               listen_export, music_catalog, music_export, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -1846,13 +1846,8 @@ class App:
         if packages.is_package(path):
             # Cuốn mở từ file `.abook`: nhạc người sản xuất đã gắn nằm sẵn trong gói (bookfile.py, music_plan.package).
             music = packages.edited_manifest(path).get("music")  # đã qua lớp sửa: tắt, mức mới, đoạn im lặng
-            cues = [dict(cue, src=f"/api/books/{quote(value, safe='')}/music/files/{cue['track'].split('/')[1]}")
-                    for cue in music_plan.packaged_cues(music, chapter_id)]
-            level = music.get("levelDb") if isinstance(music, dict) else None
-            level = level if isinstance(level, (int, float)) else music_plan.DEFAULT_LEVEL_DB
-            tracks = music.get("tracks") if isinstance(music, dict) and isinstance(music.get("tracks"), dict) else {}
-            by_link = {cue["link"]: tracks.get(cue["track"]) for cue in cues}
-            music_plan.apply_gain(cues, level, by_link)  # sách xuất bởi bản cũ: mốc chưa có gainDb (không có file để đo)
+            cues, level, by_link = music_plan.packaged_playable(music, chapter_id)
+            cues = [dict(cue, src=f"/api/books/{quote(value, safe='')}/music/files/{cue['track'].split('/')[1]}") for cue in cues]
             return {"cues": cues, "levelDb": level, "credits": self._music_credits(cues, by_link)}
         plan = music_plan.read_plan(path)
         if plan is None:
@@ -3443,12 +3438,14 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         root = self._export_root(body)
         parts = self._series_parts(value, body)
+        # "Kèm nhạc nền": bài chưa có trên máy được tải như khi gói `.abook` (music_export.py).
+        music = self.app.music_export_source() if body.get("music") is True else None
         try:
             if parts is None:
-                result = export_book(project, root, cover=body.get("cover"))
+                result = export_book(project, root, cover=body.get("cover"), music=music)
             else:
                 result = export_series(parts, root, lambda part, folder, label: export_book(
-                    part, folder, cover=body.get("cover"), folder_name=label))
+                    part, folder, cover=body.get("cover"), folder_name=label, music=music))
                 result["files"] = sum(part["files"] for part in result["parts"])
         except ValueError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
@@ -3535,9 +3532,16 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         root = self._export_root(body)
         app = self.app
+        music = app.music_export_source() if body.get("music") is True else None
+
+        def mixing(chapter: int, chapters: int) -> None:  # tiến độ "Đang trộn nhạc chương X/N"
+            app.m4b_jobs.update(str(project), phase="music", chapter=chapter, chapters=chapters)
+
+        def peaks(round_: int, over: int) -> None:  # "Đang kiểm đỉnh âm…" / "Mã hoá lại vì N chương vượt đỉnh (lượt k)"
+            app.m4b_jobs.update(str(project), phase="reencode" if over else "peaks", peakRound=round_, peakOver=over)
 
         def run() -> dict[str, Any]:
-            result = export_m4b(project, root, cover=body.get("cover"))
+            result = export_m4b(project, root, cover=body.get("cover"), music=music, progress=mixing, peaks=peaks)
             app.exports.add(result["folder"])
             return result
 
@@ -3545,6 +3549,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_m4b_job(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.export_job_status(self.app.m4b_jobs, value))
+
+    def get_export_music(self, _query: dict[str, list[str]], value: str) -> None:
+        # Ô "Kèm nhạc nền" của hộp Xuất (MP3 / M4B): hiện khi cuốn có kế hoạch nhạc, mặc định theo công tắc Nhạc nền của cuốn.
+        self._send_json(HTTPStatus.OK, music_export.studio_state(self.app._book(value)))
 
     # ---- xuất sách nói của sách Nghe ngay (listen_export.py) --------------------------------------------------------------
 
@@ -3571,7 +3579,7 @@ class Handler(BaseHTTPRequestHandler):
         voice = (query.get("voice") or [""])[0]
         _path, reading, chapters = self._audiobook_inputs(value, voice)
         info = listen_export.plan(chapters, reading, listen_export.work_folder(self.app.export_work_dir, value), self.app.readaloud.speed(voice))
-        self._send_json(HTTPStatus.OK, {**info, "ffmpeg": ffmpeg_setup.status()})
+        self._send_json(HTTPStatus.OK, {**info, "ffmpeg": ffmpeg_setup.status(), "music": music_export.packaged_state(_path)})
 
     def post_audiobook_job(self, _query: dict[str, list[str]], value: str) -> None:
         # Việc nền như "Xuất M4B", có tiến độ (chương i/N, %, ước còn lại) và Huỷ; tải lại trang vẫn hỏi lại được. Đang có lượt cho cuốn này thì trả lượt ấy.
@@ -3590,11 +3598,12 @@ class Handler(BaseHTTPRequestHandler):
         app = self.app
         jobs = app.listen_exports
         key = str(path)
+        music = music_export.packaged_music(path, [chapter.id for chapter in chapters]) if body.get("music") is True else None
 
         def run() -> dict[str, Any]:
             result = listen_export.export_audiobook(
                 app.readaloud, path, root, app.export_work_dir, fmt=fmt, reading=reading, book_id=value, cover_drawn=cover,
-                progress=lambda **fields: jobs.update(key, **fields), cancelled=lambda: jobs.cancelled(key))
+                progress=lambda **fields: jobs.update(key, **fields), cancelled=lambda: jobs.cancelled(key), music=music)
             app.exports.add(result["folder"])
             return result
 
@@ -5264,6 +5273,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/bookfile-job"), Handler.get_bookfile_job),
     ("POST", re.compile(BOOK + r"/m4b-job"), Handler.post_m4b_job),
     ("GET", re.compile(BOOK + r"/m4b-job"), Handler.get_m4b_job),
+    ("GET", re.compile(BOOK + r"/export-music"), Handler.get_export_music),
     ("GET", re.compile(BOOK + r"/export-size"), Handler.get_export_size),
     ("GET", re.compile(BOOK + r"/music-export"), Handler.get_music_export),
     ("POST", re.compile(BOOK + r"/music-export/cancel"), Handler.post_music_export_cancel),
