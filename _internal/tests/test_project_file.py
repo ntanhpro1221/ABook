@@ -437,3 +437,20 @@ def test_word_timings_survive_the_move_to_a_new_machine(tmp_path: Path) -> None:
     if other is not None:
         kept = json.loads(word_timing.cache_file(target, 2).read_text(encoding="utf-8"))
         assert kept["audio"]["mtimeNs"] == stamp["mtimeNs"], "audio không khớp cỡ thì dấu giữ nguyên"
+
+
+def test_review_verdicts_travel_with_the_project(tmp_path: Path) -> None:
+    """Soát UX a24, A8: phán quyết "Cần nghe lại" (Ổn / Cần thu lại) nằm trong thư mục dự án, không ở hồ sơ app - mở `.abookproj`
+    ở máy hay hồ sơ khác vẫn còn, và hộp việc ở đó không hỏi lại những câu đã chấm."""
+    from abook.webui.reviews import Reviews
+
+    project = _project(tmp_path)
+    Reviews().set(project, "c1s1", "ok", 1)
+    packed = projectfile.pack(project, tmp_path / "chuyen" / "du_an.abookproj")
+
+    with ProjectFile(packed) as opened:
+        target, _report = opened.open_into(tmp_path / "may_moi")
+
+    assert Reviews().get(target)["c1s1"]["verdict"] == "ok"
+    Reviews().set(target, "c1s1", None, 1)
+    assert Reviews().get(target) == {} and Reviews().get(project)["c1s1"]["verdict"] == "ok", "mỗi dự án một sổ phán quyết"

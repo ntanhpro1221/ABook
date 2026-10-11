@@ -104,4 +104,5 @@ def test_the_review_verdict_writes_and_withdraws_the_request(tmp_path: Path) -> 
         assert status == 200 and read_overrides(paths.root)["retakes"] == {}
     finally:
         server.stop()
-    assert json.loads((tmp_path / "prefs" / "reviews.json").read_text(encoding="utf-8"))
+    assert json.loads((paths.root / "reviews.json").read_text(encoding="utf-8")), "phán quyết nằm trong thư mục dự án"
+    assert not (tmp_path / "prefs" / "reviews.json").exists()

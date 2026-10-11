@@ -37,8 +37,10 @@ interface VoiceOption extends EngineVoice {
   suggested: boolean;
   /** Chất giọng của giọng máy khác ("Nữ · Trưởng thành · Rõ ràng"); rỗng với VieNeu (đã có miền + phong cách). */
   description: string;
-  /** Chỉ hộp người kể: nhân vật đang giữ giọng này - không chọn được. */
+  /** Hộp người kể: nhân vật đang giữ (hay đã chọn) giọng này - không chọn được. Hộp nhân vật: người kể đã chọn nó. */
   takenBy?: string[];
+  /** Lời giải thích khi `takenBy` không phải "nhân vật đang giữ" (hộp nhân vật: giọng người kể đang chờ đổi sang). */
+  takenNote?: string;
 }
 
 interface VoiceChoices {
@@ -60,7 +62,7 @@ function voiceMeta(voice: VoiceOption, withGender = false): string {
   const parts = voice.description ? [voice.description] : [voice.region ? `Miền ${voice.region}` : "", voice.style];
   // Chất giọng của máy khác đã mở đầu bằng giới ("Nữ · Trưởng thành"): không nói hai lần.
   const about = [withGender && !voice.description ? voice.genderLabel : "", ...parts].filter(Boolean).join(" · ");
-  return `${about} · ${voice.takenBy?.length ? takenText(voice.takenBy) : sharedText(voice, voice.current)}`;
+  return `${about} · ${voice.takenNote ?? (voice.takenBy?.length ? takenText(voice.takenBy) : sharedText(voice, voice.current))}`;
 }
 
 /** Tên nhóm của một máy đọc, và - khi máy chưa có giọng ấy - lời nhắn + nút tải (tiến độ hỏi lại mỗi giây). */
@@ -331,7 +333,7 @@ export function VoicePicker({
                     disabled={voice.current || voice.pending || !voice.installed || Boolean(voice.takenBy?.length) || save.isPending || keep.isPending}
                     onClick={() => choose(voice)}
                   >
-                    {voice.current ? "Đang dùng" : voice.pending ? "Đã chọn" : voice.takenBy?.length ? "Nhân vật dùng" : "Chọn"}
+                    {voice.current ? "Đang dùng" : voice.pending ? "Đã chọn" : voice.takenNote ? "Người kể dùng" : voice.takenBy?.length ? "Nhân vật dùng" : "Chọn"}
                   </Button>
                 )}
               </li>

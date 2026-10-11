@@ -505,7 +505,7 @@ class SyncApp:
         self.after_edits = after_edits
         # Phán quyết "Cần nghe lại" của máy này (server.py truyền đúng đối tượng của Studio): câu đã chấm không còn là việc -
         # số điện thoại báo phải bằng số trên tab "Việc cần duyệt".
-        self.reviews = reviews or Reviews(listening.path.with_name("reviews.json"))
+        self.reviews = reviews or Reviews()
         # Số "việc cần duyệt" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
         self._work: dict[str, tuple[tuple[Any, ...], int]] = {}  # đường dẫn -> (dấu thời gian + phán quyết, số việc)
         # Vân tay chứng chỉ TLS của cổng phục vụ app này (SyncServer điền lúc dựng): đi trong lời đáp ghép nối.
@@ -567,7 +567,7 @@ class SyncApp:
         def work_of(path: Path) -> int | None:
             # Không đếm được (sách đời cũ, DB đang khoá) thì None - điện thoại coi là "không biết", không báo gì.
             # Đúng phép đếm của nhãn tab "Việc cần duyệt" (server.get_work ?count=1): cùng phán quyết, cùng open_count.
-            verdicts = self.reviews.get(book_id(path))
+            verdicts = self.reviews.get(path)
             stamp = stamp_of(path, verdicts)
             with self._work_lock:
                 cached = self._work.get(str(path))

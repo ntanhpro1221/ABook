@@ -163,3 +163,47 @@ def test_a_word_that_is_not_a_plain_word_still_counts_its_lines(tmp_path: Path) 
     by_name = {item["surface"]: item for item in name_readings(paths.root)["items"]}
 
     assert by_name["TP.HCM"]["lines"] == 1 and by_name["TP.HCM"]["example"]["text"] == "“Ở TP.HCM nóng lắm.”"
+
+
+def test_a_reading_the_symbols_always_break_is_never_used_and_costs_nothing(tmp_path: Path) -> None:
+    """Soát UX a24, A4: "Mở/đóng" - mọi câu có chữ ấy bị "/" xé đôi trước khi tra cách đọc, nên cách đọc không bao giờ được dùng:
+    `never` (giao diện tắt nút Lưu), kể cả khi sách chưa có câu nào (chính chữ ấy bị xé đôi). Một phần bị chặn thì vẫn lưu được,
+    nhưng hộp "Áp dụng" và dây chuyền chỉ đếm / thu lại những câu cách đọc thật sự chạm tới."""
+    from abook.webui import store
+    from abook.webui.name_readings import reading_reach
+
+    paths, db = _book(tmp_path)
+    (paths.root / "take.wav").write_bytes(b"RIFF")
+    assert reading_reach(paths.root, "Mở/đóng")["never"], "chưa câu nào: chính chữ ấy bị xé đôi"
+    assert not reading_reach(paths.root, "km/h")["never"] and not reading_reach(paths.root, "Hà Nội")["never"]
+
+    _say(db, "c1s1", "“Cửa Mở/đóng thôi.”")
+    _say(db, "c1s2", "“Mở/đóng nữa à?”")
+    assert reading_reach(paths.root, "Mở/đóng")["never"]
+    request_pronunciation(paths.root, "Mở/đóng", "mở hoặc đóng", now=10.0**10)
+    by_name = {item["surface"]: item for item in name_readings(paths.root)["items"]}
+    assert by_name["Mở/đóng"]["never"]
+    (item,) = [entry for entry in store.pending_details(paths.root, 0.0)["items"] if entry["kind"] == "pronunciation"]
+    assert item["lines"] == 0, "không câu nào đọc theo cách ấy nên không câu nào phải thu lại"
+    result = db.apply_listener_pronunciation(surface="Mở/đóng", normalized_surface="mở/đóng", spoken_form="mở hoặc đóng",
+                                             source=LISTENER_PRONUNCIATION_SOURCE)
+    assert result is not None and result["reset_segments"] == 0
+    assert {row["status"] for row in db.list_segments()} == {"verified"}
+
+
+def test_a_reading_some_symbols_break_redoes_only_the_lines_it_reaches(tmp_path: Path) -> None:
+    from abook.webui import store
+    from abook.webui.name_readings import reading_reach
+
+    paths, db = _book(tmp_path)
+    (paths.root / "take.wav").write_bytes(b"RIFF")
+    _say(db, "c1s1", "“Xe chạy 60 km/h.”")
+    _say(db, "c1s2", "“km/hkm/h lạ.”")  # dính chữ: không khớp
+    reach = reading_reach(paths.root, "km/h")
+    assert reach["lines"] == 1 and not reach["never"]
+    request_pronunciation(paths.root, "km/h", "ki lô mét giờ", now=10.0**10)
+    (item,) = [entry for entry in store.pending_details(paths.root, 0.0)["items"] if entry["kind"] == "pronunciation"]
+    assert item["lines"] == 1
+    result = db.apply_listener_pronunciation(surface="km/h", normalized_surface="km/h", spoken_form="ki lô mét giờ",
+                                             source=LISTENER_PRONUNCIATION_SOURCE)
+    assert result["reset_segments"] == 1

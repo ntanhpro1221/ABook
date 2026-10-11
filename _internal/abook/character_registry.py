@@ -2873,7 +2873,9 @@ def snap_labels_to_chapter_names(
                 "info",
                 "SPEAKER_LABEL_SNAPPED_TO_TEXT",
                 f"chapter {index}: {lines} lines labelled {label!r} -> {name!r} (the only close name the chapter writes)",
-                {"chapter_index": index, "label": label, "name": name, "lines": lines},
+                # stable_ids: câu đã đổi - thẻ "cùng một người?" của Studio trả đúng những câu ấy về nhãn cũ khi người nghe bảo khác.
+                {"chapter_index": index, "label": label, "name": name, "lines": lines,
+                 "stable_ids": [str(row["stable_id"]) for row in rows if str(row["speaker"]) == label]},
             )
     return moved
 

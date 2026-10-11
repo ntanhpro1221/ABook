@@ -46,7 +46,7 @@ import {
 } from "@/studio/data";
 import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
-import { creditKind, creditSummary, creditWhere, type Credits } from "@/studio/credits";
+import { creditKind, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS, type CreditDrop, type Credits } from "@/studio/credits";
 import { samePath } from "@/studio/samePath";
 import { splitOutcome } from "@/studio/splitOffer";
 import {
@@ -148,8 +148,9 @@ interface Draft {
   limit?: number | null;
   /** "Chia thành nhiều tập" (B7): đường dẫn chương đầu mỗi tập người dùng đã đồng ý chia; null/không có = một sách. */
   volumeStarts?: string[] | null;
-  /** Người dùng ĐỒNG Ý bỏ dòng ghi công người dịch khỏi phần đọc. Mặc định không: app không tự sửa nội dung truyện. */
-  dropCredits?: boolean;
+  /** Người dùng ĐỒNG Ý bỏ dòng ghi công (đầu chương) / xin ủng hộ (cuối chương) khỏi phần đọc - chọn riêng. Mặc định không: app
+   *  không tự sửa nội dung truyện. */
+  dropCredits?: CreditDrop;
   /** Model đọc hiểu truyện chỉ cho cuốn này ("" hay không có = mặc định của app). */
   analysisModel?: string;
   /** Tên mẫu thiết lập đang theo (studio/bookTemplates.ts); không có = mặc định của app. Mẫu bị xoá/đổi tên thì coi như không có. */
@@ -300,8 +301,8 @@ function SourceStep({
   /** Chỉ làm `count` chương đầu (theo thứ tự tên file, sau các chương bỏ tay), hay tất cả khi null. */
   onLimit: (count: number | null) => void;
   problem: { text: string; subfolders: string[] } | null;
-  dropCredits: boolean;
-  onDropCredits: (value: boolean) => void;
+  dropCredits: CreditDrop;
+  onDropCredits: (value: CreditDrop) => void;
   /** Tách một file cả truyện thành các chương (máy ghi thư mục mới), rồi quét thư mục ấy thay cho file. */
   onSplit: (path: string) => Promise<void>;
   /** "Làm tiếp": file chương cuối của phần trước - phần này phải bắt đầu ngay sau nó. */
@@ -626,7 +627,7 @@ function SourceStep({
             }
             suggestsSplit={!splitting && Boolean(scan?.volumes)}
           />
-          <CreditSuggestion credits={creditSummary(files)} accepted={dropCredits} onChange={onDropCredits} />
+          <CreditSuggestion files={files} drop={dropCredits} onChange={onDropCredits} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
             <div className="tabular text-sm text-fg-2">
               <span className="font-semibold text-fg">{files.length} chương</span> · {formatNumber(scan!.totals.words)} chữ · khoảng{" "}
@@ -739,20 +740,25 @@ function carriedText(carries: Seed["carries"]): string {
 // dịch ở đầu chương ("TL : NicK", "*Edit: Lắc") bị đọc như một câu kể; chỉ khi bấm "Bỏ khỏi phần đọc" sách mới bỏ chúng,
 // không bấm thì sách giữ nguyên như file truyện. Phải chọn lúc tạo sách: đổi cách tách câu sau khi đã làm là đổi cả quyển.
 // Dòng xin ủng hộ / quảng cáo ở cuối chương (soát UX a23) nằm chung một gợi ý, ghi "(cuối chương)" (studio/credits).
-function CreditSuggestion({ credits, accepted, onChange }: { credits: Credits; accepted: boolean; onChange: (value: boolean) => void }) {
+function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; drop: CreditDrop; onChange: (value: CreditDrop) => void }) {
+  // Soát UX a24, A9: xem hết mọi dòng (theo chương) trước khi bỏ, và bỏ riêng dòng đầu chương / cuối chương - hai cài đặt riêng của sách.
+  const [all, setAll] = useState(false);
+  const credits = creditSummary(files);
   if (!credits.lines) return null;
   const quoted = credits.examples.join(", ");
+  const dropped = droppedLines(credits, drop);
+  const both = credits.head > 0 && credits.tail > 0;
   return (
     <div className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
       <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
-        {accepted ? (
+        {dropped ? (
           <>
             <p className="font-semibold">
-              Sẽ bỏ {formatNumber(credits.lines)} {creditKind(credits)} khỏi phần đọc
+              Sẽ bỏ {formatNumber(dropped)} {creditKind({ ...credits, head: drop.head ? credits.head : 0, tail: drop.tail ? credits.tail : 0 })} khỏi phần đọc
             </p>
             <p className="mt-1 break-words text-fg-2">
-              Những dòng như {quoted} không được đọc và không hiện khi đọc theo. File truyện giữ nguyên.
+              Những dòng ấy không được đọc và không hiện khi đọc theo. File truyện giữ nguyên.
             </p>
           </>
         ) : (
@@ -767,16 +773,38 @@ function CreditSuggestion({ credits, accepted, onChange }: { credits: Credits; a
             </p>
           </>
         )}
-        <div className="mt-2.5">
-          {accepted ? (
-            <Button size="sm" variant="ghost" onClick={() => onChange(false)}>
+        {all && (
+          <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-lg bg-hover/50 p-2 text-xs text-fg-2" aria-label="Mọi dòng gợi ý theo chương">
+            {creditRows(files, chapterLabel).map((row, index) => (
+              <li key={`${index}-${row.chapter}`} className="break-words">
+                <span className="font-medium text-fg">{row.chapter}:</span>{" "}
+                {[...row.head.map((line) => `“${line}” (đầu chương)`), ...row.tail.map((line) => `“${line}” (cuối chương)`)].join(" · ")}
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          {both ? (
+            <>
+              <Button size="sm" variant={drop.head ? "ghost" : "secondary"} aria-pressed={drop.head} onClick={() => onChange({ ...drop, head: !drop.head })}>
+                {drop.head ? "Đọc lại dòng đầu chương" : `Bỏ ${formatNumber(credits.head)} dòng đầu chương`}
+              </Button>
+              <Button size="sm" variant={drop.tail ? "ghost" : "secondary"} aria-pressed={drop.tail} onClick={() => onChange({ ...drop, tail: !drop.tail })}>
+                {drop.tail ? "Đọc lại dòng cuối chương" : `Bỏ ${formatNumber(credits.tail)} dòng cuối chương`}
+              </Button>
+            </>
+          ) : dropped ? (
+            <Button size="sm" variant="ghost" onClick={() => onChange(KEEP_CREDITS)}>
               Thôi, cứ đọc như file truyện
             </Button>
           ) : (
-            <Button size="sm" variant="secondary" onClick={() => onChange(true)}>
+            <Button size="sm" variant="secondary" onClick={() => onChange({ head: credits.head > 0, tail: credits.tail > 0 })}>
               Bỏ khỏi phần đọc
             </Button>
           )}
+          <Button size="sm" variant="ghost" aria-expanded={all} onClick={() => setAll((value) => !value)}>
+            {all ? "Thu gọn" : `Xem hết ${formatNumber(credits.lines)} dòng`}
+          </Button>
         </div>
       </div>
     </div>
@@ -1336,8 +1364,8 @@ function ConfirmStep({
   setStartNow: (value: boolean) => void;
   precastWait: boolean;
   setPrecastWait: (value: boolean) => void;
-  /** Người dùng đã đồng ý bỏ dòng ghi công khỏi phần đọc. */
-  dropCredits: boolean;
+  /** Người dùng đã đồng ý bỏ dòng ghi công khỏi phần đọc (đầu / cuối chương riêng). */
+  dropCredits: CreditDrop;
   /** Dòng ghi công / ủng hộ phát hiện ở các chương đã chọn (gợi ý chưa áp nếu `dropCredits` tắt). */
   credits: Credits;
   analysisModel: string;
@@ -1361,8 +1389,11 @@ function ConfirmStep({
           ["Các phần sau", startNow ? "Xếp hàng sau phần trước, tự bắt đầu khi phần trước xong; mang giọng nhân vật và cách đọc tên từ phần trước" : "Bấm bắt đầu phần 1 thì các phần sau tự xếp hàng; mang giọng nhân vật và cách đọc tên từ phần trước"],
         ] as [string, string][])
       : []),
-    ...(dropCredits && credits.lines
-      ? ([[creditKind(credits).replace(/^d/, "D"), `bỏ ${formatNumber(credits.lines)} dòng khỏi phần đọc`]] as [string, string][])
+    ...(droppedLines(credits, dropCredits)
+      ? ([[
+          creditKind({ ...credits, head: dropCredits.head ? credits.head : 0, tail: dropCredits.tail ? credits.tail : 0 }).replace(/^d/, "D"),
+          `bỏ ${formatNumber(droppedLines(credits, dropCredits))} dòng khỏi phần đọc`,
+        ]] as [string, string][])
       : []),
     ["Độ dài audio", `khoảng ${formatLength(scan.totals.audioSeconds)}`],
     ["Giọng kể", narrator],
@@ -1431,7 +1462,7 @@ function ConfirmStep({
           </p>
         </div>
       )}
-      {credits.lines > 0 && !dropCredits && (
+      {credits.lines > 0 && !droppedLines(credits, dropCredits) && (
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-panel p-4 text-sm">
           <Sparkles className="size-4 shrink-0 text-accent-text" />
           <p className="min-w-0 flex-1 text-pretty">
@@ -1522,7 +1553,7 @@ export function NewProjectScreen() {
       firstPerson: redo.firstPerson,
       ...(redo.analysisModel ? { analysisModel: redo.analysisModel } : {}),
       profile: (PROFILE_VALUES as string[]).includes(redo.profile) ? (redo.profile as Profile) : "high_quality",
-      dropCredits: redo.dropCreditLines || redo.dropTailCreditLines,
+      dropCredits: { head: Boolean(redo.dropCreditLines), tail: Boolean(redo.dropTailCreditLines) },
       replaces: {
         id: redoId,
         title: redo.title,
@@ -1684,8 +1715,8 @@ export function NewProjectScreen() {
         ...(draft.replaces ? { replaces: draft.replaces.id } : {}),
         ...(draft.analysisModel ? { analysisModel: draft.analysisModel } : {}),
         // Chỉ khi người dùng đã đồng ý đề xuất - không gửi gì thì sách giữ nguyên nội dung.
-        ...(draft.dropCredits && creditSummary(scan.files).head ? { dropCreditLines: true } : {}),
-        ...(draft.dropCredits && creditSummary(scan.files).tail ? { dropTailCreditLines: true } : {}),
+        ...(draft.dropCredits?.head && creditSummary(scan.files).head ? { dropCreditLines: true } : {}),
+        ...(draft.dropCredits?.tail && creditSummary(scan.files).tail ? { dropTailCreditLines: true } : {}),
         start: draft.startNow && !noStudio,
         ...(draft.precastWait ? { precastWait: true } : {}),
       },
@@ -1820,7 +1851,7 @@ export function NewProjectScreen() {
                 });
               }}
               problem={problem}
-              dropCredits={Boolean(draft.dropCredits)}
+              dropCredits={draft.dropCredits ?? KEEP_CREDITS}
               onDropCredits={(value) => update({ dropCredits: value })}
               previousLast={draft.seed?.lastChapter}
               replaces={draft.replaces}
@@ -1881,7 +1912,7 @@ export function NewProjectScreen() {
               setStartNow={(startNow) => update({ startNow })}
               precastWait={Boolean(draft.precastWait)}
               setPrecastWait={(precastWait) => update({ precastWait })}
-              dropCredits={Boolean(draft.dropCredits)}
+              dropCredits={draft.dropCredits ?? KEEP_CREDITS}
               credits={creditSummary(scan.files)}
               analysisModel={draft.analysisModel ?? ""}
               restart={draft.replaces?.restart ? { title: draft.replaces.title } : undefined}

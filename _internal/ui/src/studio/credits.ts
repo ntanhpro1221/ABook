@@ -50,3 +50,26 @@ export function creditWhere(credits: Credits): string {
   if (!credits.head) return "dòng xin ủng hộ, quảng cáo hay nguồn ở cuối chương";
   return "dòng ghi công ở đầu chương hay dòng xin ủng hộ, quảng cáo ở cuối chương";
 }
+
+/** Người dùng đồng ý bỏ dòng nào: đầu chương (`dropCreditLines`) và cuối chương (`dropTailCreditLines`) chọn riêng (soát UX a24, A9). */
+export interface CreditDrop {
+  head: boolean;
+  tail: boolean;
+}
+
+export const KEEP_CREDITS: CreditDrop = { head: false, tail: false };
+
+/** Số dòng sẽ bỏ theo lựa chọn - chỉ loại có trong sách. */
+export function droppedLines(credits: Credits, drop: CreditDrop): number {
+  return (drop.head ? credits.head : 0) + (drop.tail ? credits.tail : 0);
+}
+
+/** Mọi dòng gợi ý, theo chương - "Xem hết N dòng" trước khi bỏ. `label`: tên chương như danh sách chương hiện. */
+export function creditRows<F extends { credits?: string[]; tailCredits?: string[] }>(
+  files: F[],
+  label: (file: F) => string,
+): { chapter: string; head: string[]; tail: string[] }[] {
+  return files
+    .filter((file) => (file.credits?.length ?? 0) + (file.tailCredits?.length ?? 0) > 0)
+    .map((file) => ({ chapter: label(file), head: file.credits ?? [], tail: file.tailCredits ?? [] }));
+}

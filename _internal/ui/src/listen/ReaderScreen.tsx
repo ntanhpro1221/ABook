@@ -11,12 +11,13 @@ import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
 import { canEditBook } from "./EditBook";
 import { FindInBook } from "./FindInBook";
-import { chapterToFollow, firstVisibleIndex } from "./follow";
+import { chapterToFollow, firstVisibleIndex, lineToEdit, type LineToEdit } from "./follow";
 import { readerHint } from "./labels";
 import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { usePlayer } from "./player";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { wordOf } from "./readings";
+import type { Script } from "./model";
 import { useChapterScript, useListenBook, useListenMutations, useSource } from "./source";
 import { WordReadingDialog } from "./WordReadings";
 
@@ -107,7 +108,8 @@ export function ReaderScreen({
   const coarse = useMediaQuery("(pointer: coarse)");
   const [prefs, setPrefs] = useState<ReaderPrefs>(loadPrefs);
   const [selected, setSelected] = useState<number | null>(null);
-  const [editingLine, setEditingLine] = useState<number | null>(null);
+  // Hộp "Sửa câu này" giữ đúng câu đã mở (chương + bản chữ lúc mở), không theo giọng sang chương sau (follow.lineToEdit).
+  const [editingLine, setEditingLine] = useState<LineToEdit<Script> | null>(null);
   const [current, setCurrent] = useState(0);
   const [finding, setFinding] = useState(false);
   const container = useRef<HTMLDivElement | null>(null);
@@ -294,7 +296,7 @@ export function ReaderScreen({
           const held = wordOf(script.segments[sentence].text, word);
           if (!held) return;
           setWishWord(held);
-          setEditingLine(sentence);
+          setEditingLine(lineToEdit(script, sentence));
         }
       : undefined;
   const name = chapter.subtitle || chapter.title;
@@ -438,7 +440,7 @@ export function ReaderScreen({
                   disabled={lineEdit.mode === "blocked"}
                   onClick={() => {
                     const stableId = script.segments[selected]?.stableId;
-                    if (lineEdit.mode === "wish") setEditingLine(selected);
+                    if (lineEdit.mode === "wish") setEditingLine(lineToEdit(script, selected));
                     else if (lineEdit.mode === "studio" && stableId) onOpenStudioScript?.(id, chapterId, stableId);
                   }}
                   onMouseDown={(event) => event.preventDefault()}
@@ -466,8 +468,8 @@ export function ReaderScreen({
       {lineEdit?.mode === "wish" && (
         <LineWishDialog
           book={book}
-          script={script}
-          segmentIndex={editingLine}
+          script={editingLine?.script ?? script}
+          segmentIndex={editingLine?.index ?? null}
           wishes={wishes.data}
           word={wishWord}
           onClose={() => {

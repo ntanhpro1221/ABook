@@ -249,9 +249,18 @@ def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> I
         # Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
         for line, at_end in chapter_credit_suggestions(book.chapter_source(chapter)):
             book.credits.append((number, line))
-            book.notes.append(f"Gợi ý: chương {number} có dòng {'ghi công, ủng hộ hay nguồn ở cuối' if at_end else 'ghi công ở đầu'} - “{line}”. "
+            book.notes.append(f"{CREDIT_NOTE}{number} có dòng {'ghi công, ủng hộ hay nguồn ở cuối' if at_end else 'ghi công ở đầu'} - “{line}”. "
                               "Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.")
     return book
+
+
+CREDIT_NOTE = "Gợi ý: chương "  # mở đầu ghi chú của một dòng ghi công (`book.credits` mang chính dòng ấy)
+
+
+def is_credit_note(note: str) -> bool:
+    """Ghi chú lặp lại một gợi ý ghi công: trình tạo sách của Studio đã có khung gợi ý cho chúng (soát UX a24, A1) - một sách
+    trăm chương không cần thêm trăm dòng ghi chú."""
+    return str(note).startswith(CREDIT_NOTE)
 
 
 def default_picks(book: ImportedBook) -> list[tuple[int, str]]:

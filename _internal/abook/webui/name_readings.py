@@ -24,6 +24,7 @@ def name_readings(project_root: Path) -> dict[str, Any]:
     nguyên từ, không phân biệt hoa thường. Câu mẫu ưu tiên câu đã thu, để nghe máy đang đọc tên ấy thế nào."""
     from ..database import LISTENER_PRONUNCIATION_SOURCE
     from ..listener_overrides import pronunciation_requests, read_overrides, surface_key
+    from ..text_processing import spoken_symbols_to_words
 
     wishes = {surface_key(entry["surface"]): entry for entry in pronunciation_requests(read_overrides(project_root))}
     if not (Path(project_root) / store.DB_NAME).is_file():
@@ -46,12 +47,18 @@ def name_readings(project_root: Path) -> dict[str, Any]:
         # bằng regex nguyên từ như TTS, chỉ cho vài chữ ấy.
         odd = {key: re.compile(r"(?<!\w)" + re.escape(key) + r"(?!\w)", re.IGNORECASE)
                for key in surfaces if not WORD.fullmatch(key)}
+        reached: dict[str, int] = defaultdict(int)  # câu chữ "lạ" còn nguyên sau khi ký hiệu thành quãng nghỉ (`never_used`)
         for segment in connection.execute(
             "SELECT id, chapter_id, seq, text, speaker, wav_path FROM segments ORDER BY wav_path IS NULL, chapter_id, seq"
         ) if "segments" in tables else ():
             text = str(segment["text"] or "")
             hit = {word.casefold() for word in WORD.findall(text)} & surfaces.keys()
-            hit |= {key for key, pattern in odd.items() if pattern.search(text)}
+            odd_hit = {key for key, pattern in odd.items() if pattern.search(text)}
+            hit |= odd_hit
+            if odd_hit:
+                said = spoken_symbols_to_words(text)
+                for key in odd_hit:
+                    reached[key] += int(bool(odd[key].search(said)))
             for word in hit:
                 lines[word] += 1
                 examples.setdefault(word, segment)
@@ -73,6 +80,7 @@ def name_readings(project_root: Path) -> dict[str, Any]:
                 "confidence": round(float(row["confidence"]), 2) if row is not None else None,
                 "lines": lines.get(key, 0),
                 "requested": wish["spoken_form"] if waiting else None,
+                "never": key in odd and never_used(odd[key], key, lines.get(key, 0), reached.get(key, 0)),
                 "example": _example(examples[key], names, project_root=audio) if key in examples else None,
             })
     # Bảng mang cả tên của những chương khác trong cuốn (hạt giống từ phần trước): tên máy đoán mà phần này không có câu nào
@@ -136,6 +144,14 @@ def package_reading_reach(folder: Path, surface: str) -> dict[str, Any]:
                   lambda row: _example(row, names, label=lambda raw: raw))
 
 
+def never_used(pattern: re.Pattern[str], surface: str, matched: int, reached: int) -> bool:
+    """Cách đọc cho `surface` không bao giờ được dùng (soát UX a24, A4): mọi câu có chữ ấy đều bị ký hiệu xé đôi trước khi tra
+    cách đọc - hay, khi chưa câu nào có chữ ấy, chính chữ ấy bị xé đôi ("Mở/đóng" -> "Mở, đóng"). Giao diện không cho lưu."""
+    from ..text_processing import spoken_symbols_to_words
+
+    return not reached if matched else not pattern.search(spoken_symbols_to_words(surface))
+
+
 def _reach(surface: str, rows: list[tuple[str, Any]], names: dict[int, dict[str, Any]], recorded: Callable[[Any], bool],
            example: Callable[[Any], dict[str, Any]]) -> dict[str, Any]:
     """Phần đếm chung của `reading_reach` / `package_reading_reach`: `rows` = [(chữ máy sẽ đọc, hàng)] theo thứ tự chương, câu."""
@@ -164,6 +180,9 @@ def _reach(surface: str, rows: list[tuple[str, Any]], names: dict[int, dict[str,
         "reached": len(reached),
         "recorded": len(audible),
         "blocked": len(matched) - len(reached),
+        # Cách đọc này không bao giờ được dùng (soát UX a24, A4): mọi câu có chữ ấy đều bị ký hiệu xé đôi - hay, khi sách chưa có
+        # câu nào, chính chữ ấy bị xé đôi ("Mở/đóng" -> "Mở, đóng"). Giao diện không cho lưu và nói vì sao.
+        "never": bool(surface) and never_used(pattern, surface, len(matched), len(reached)),
         "cost": _rerecord_cost(audible),
         "chapters": [
             {"chapterId": chapter_id, "title": str(names.get(chapter_id, {}).get("full") or ""), "lines": counts[0],

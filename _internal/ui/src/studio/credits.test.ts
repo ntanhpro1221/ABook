@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { creditKind, creditSummary, creditWhere } from "./credits";
+import { creditKind, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS } from "./credits";
 
 describe("lines the book creator offers to leave out", () => {
   it("counts the first lines as before when no chapter ends with a support line", () => {
@@ -25,5 +25,28 @@ describe("lines the book creator offers to leave out", () => {
     const credits = creditSummary([{ tailCredits: ["Hết chương 8"] }]);
     expect(credits.examples).toEqual(["“Hết chương 8” (cuối chương)"]);
     expect(creditWhere(credits)).toBe("dòng xin ủng hộ, quảng cáo hay nguồn ở cuối chương");
+  });
+});
+
+describe("xem hết rồi bỏ riêng đầu / cuối chương (soát UX a24, A9)", () => {
+  const files = [
+    { name: "1.txt", credits: ["TL : NicK"], tailCredits: ["Ủng hộ qua Momo"] },
+    { name: "2.txt", credits: [] },
+    { name: "3.txt", tailCredits: ["Hết chương 3", "Nguồn: truyenfull.vn"] },
+  ];
+
+  it("liệt kê MỌI dòng theo chương, không chỉ ba dòng mẫu", () => {
+    expect(creditRows(files, (file) => file.name)).toEqual([
+      { chapter: "1.txt", head: ["TL : NicK"], tail: ["Ủng hộ qua Momo"] },
+      { chapter: "3.txt", head: [], tail: ["Hết chương 3", "Nguồn: truyenfull.vn"] },
+    ]);
+  });
+
+  it("bỏ riêng từng loại: đếm đúng số dòng sẽ bỏ", () => {
+    const credits = creditSummary(files);
+    expect(droppedLines(credits, KEEP_CREDITS)).toBe(0);
+    expect(droppedLines(credits, { head: true, tail: false })).toBe(1);
+    expect(droppedLines(credits, { head: false, tail: true })).toBe(3);
+    expect(droppedLines(credits, { head: true, tail: true })).toBe(4);
   });
 });

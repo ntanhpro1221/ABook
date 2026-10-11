@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { reachSaved, reachSummary, type Reach } from "@/studio/readingReach";
+import { neverText, reachSaved, reachSummary, type Reach } from "@/studio/readingReach";
 
-const base: Reach = { surface: "TP.HCM", lines: 3, reached: 3, recorded: 2, blocked: 0, cost: "thu lại 2 câu", chapters: [], example: null };
+const base: Reach = { surface: "TP.HCM", lines: 3, reached: 3, recorded: 2, blocked: 0, never: false, cost: "thu lại 2 câu", chapters: [], example: null };
 
 describe("cách đọc cho từ bất kỳ nói trước nó chạm tới bao nhiêu câu", () => {
   it("nói số câu, số câu đã thu phải thu lại và chương", () => {
@@ -16,8 +16,16 @@ describe("cách đọc cho từ bất kỳ nói trước nó chạm tới bao nh
 
   it("chữ chưa có câu nào, và chữ bị ký hiệu chặn, đều nói thật", () => {
     expect(reachSummary({ ...base, lines: 0, reached: 0, recorded: 0 })).toContain("Chưa có câu nào");
-    const blocked = { ...base, surface: "Mở/đóng", lines: 2, reached: 0, recorded: 0, blocked: 2 };
-    expect(reachSummary(blocked)).toContain("chưa dùng được");
-    expect(reachSaved(blocked, "x")).not.toContain("thu lại");
+    const blocked = { ...base, surface: "Mở/đóng", lines: 2, reached: 0, recorded: 0, blocked: 2, never: true };
+    expect(reachSummary(blocked)).toBe("Có 2 câu có chữ này, nhưng máy không dùng được cách đọc cho chữ có ký hiệu này.");
+    // Chưa câu nào có chữ ấy mà chính chữ ấy bị xé đôi: không hứa "sẽ được dùng khi chữ xuất hiện" (soát UX a24, A4).
+    const none = { ...blocked, lines: 0, blocked: 0 };
+    expect(reachSummary(none)).toBe("Máy không dùng được cách đọc cho chữ có ký hiệu này.");
+    expect(neverText("Mở/đóng")).toContain("“Mở/đóng” thành một chỗ ngừng");
+    expect(neverText("Mở/đóng")).toContain("Chữ đem đọc");
+  });
+
+  it("một phần bị ký hiệu chặn: vẫn lưu được, chỉ đếm câu đọc theo cách mới", () => {
+    expect(reachSummary({ ...base, lines: 4, reached: 3, blocked: 1 })).toBe("3 câu có chữ này · 2 câu đã thu sẽ được thu lại (1 câu khác không dùng được vì ký hiệu)");
   });
 });

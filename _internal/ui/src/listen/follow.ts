@@ -69,3 +69,15 @@ export const SCROLL_KEYS = new Set(["PageUp", "PageDown", "Home", "End", "ArrowU
 export function chapterToFollow(before: number | null, after: number | null, shown: number): number | null {
   return before !== null && after !== null && before !== after && before === shown ? after : null;
 }
+
+/** Câu mà hộp "Sửa câu này" đang sửa: bản chữ của CHÍNH chương lúc mở và thứ tự câu trong đó - không phải "câu thứ N của chương đang hiện".
+ *  Giọng tự sang chương sau thì màn đọc đi theo (`chapterToFollow`), hộp thì không: lưu lúc ấy vẫn sửa đúng câu đã mở (soát UX a24, A5:
+ *  hộp đổi sang câu cùng thứ tự của chương mới, lưu là sửa nhầm câu). null: không có câu ấy. */
+export interface LineToEdit<S> {
+  script: S;
+  index: number;
+}
+
+export function lineToEdit<S extends { segments: readonly unknown[] }>(script: S, index: number): LineToEdit<S> | null {
+  return index >= 0 && index < script.segments.length ? { script, index } : null;
+}

@@ -17,7 +17,7 @@ import { matchPhrase, notRecordedYet, shortcutHint, spokenEditLabel } from "./re
 // tới - sách đã xong thì nút "Áp dụng thay đổi" ở trang dự án. Lỗi đọc sai chữ/tên thì sửa ở tab Kịch bản, thu lại y chữ
 // không chữa được.
 
-type Kind = "failed" | "unverified" | "name-low" | "name";
+type Kind = "failed" | "unverified" | "name-low" | "text-low" | "name" | "text";
 
 interface ReviewItem {
   segmentId: number;
@@ -64,14 +64,19 @@ const KIND_LABEL: Record<Kind, string> = {
   failed: "Hỏng",
   unverified: "Chưa kiểm được",
   "name-low": "Tên riêng lệch nhiều",
+  // Câu lệch không vì tên riêng (soát UX a24): không gọi là "tên riêng".
+  "text-low": "Đọc lệch nhiều",
   name: "Tên riêng lệch ít",
+  text: "Đọc lệch ít",
 };
 
 const KIND_TONE: Record<Kind, string> = {
   failed: "bg-danger-soft text-danger",
   unverified: "bg-warning-soft text-warning",
   "name-low": "bg-info-soft text-info",
+  "text-low": "bg-info-soft text-info",
   name: "bg-hover text-fg-2",
+  text: "bg-hover text-fg-2",
 };
 
 export function useReviewCount(bookId: string) {
@@ -413,7 +418,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     if (leaves) setFocusAfter((items[index + 1] ?? items[index - 1])?.stableId ?? EMPTY);
     verdict.mutate({ stableId: item.stableId, chapterId: item.chapterId, verdict: value });
   };
-  const minor = data.counts.name;
+  const minor = (data.counts.name ?? 0) + (data.counts.text ?? 0);
   live.current = { items, judge };
   const playableCount = items.filter((item) => clipOf(bookId, item)).length;
   return (
@@ -495,7 +500,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       )}
       {minor > 0 && (
         <button type="button" onClick={() => setShowMinor((value) => !value)} className="mt-4 text-sm font-medium text-fg-2 hover:text-fg">
-          {showMinor ? "Ẩn" : "Hiện"} {minor} câu tên riêng lệch ít (thường vẫn ổn)
+          {showMinor ? "Ẩn" : "Hiện"} {minor} câu lệch ít (thường vẫn ổn)
         </button>
       )}
     </div>

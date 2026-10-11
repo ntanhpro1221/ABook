@@ -249,6 +249,23 @@ def _reconciled(message: str, _chapters: dict[int, str]) -> str:
     return f"Nhận ra “{match.group(1)}” chính là {person_name(match.group(2))} (chương thứ {match.group(4)})"
 
 
+_SNAPPED = re.compile(r"chapter (\d+): (\d+) lines labelled (.+) -> (.+) \(the only close name")
+
+
+def _snapped(message: str, chapters: dict[int, str]) -> str:
+    """character_registry.snap_labels_to_chapter_names: nhãn model viết mà chương không viết, về tên chương viết."""
+    match = _SNAPPED.match(message)
+    if not match:
+        return ""
+    try:
+        label, name = (str(ast.literal_eval(match.group(group))) for group in (3, 4))
+    except (ValueError, SyntaxError):
+        return ""
+    index = int(match.group(1))
+    return (f"{chapters.get(index, f'Chương {index}')}: máy viết “{person_name(label)}”, sách chỉ viết “{person_name(name)}”"
+            f" - {match.group(2)} câu về {person_name(name)}")
+
+
 def _resumed(_message: str, _chapters: dict[int, str]) -> str:
     return "Bắt đầu chạy - đã kiểm tra lại dữ liệu cũ"
 
@@ -260,6 +277,7 @@ EVENT_TEXT = {
     "ANALYSIS_DIRECTOR_CRITIC_PROTESTED": _protest,
     "LOCAL_IDENTITY_RECONCILED": _reconciled,
     "RECOVERY_SCAN": _resumed,
+    "SPEAKER_LABEL_SNAPPED_TO_TEXT": _snapped,
 }
 
 _EVENT_LEVEL = {
@@ -270,6 +288,7 @@ _EVENT_LEVEL = {
     "NAME_PRONUNCIATION_UNCERTAIN_SKIPPED": "info",
     "LOCAL_IDENTITY_RECONCILED": "info",
     "RECOVERY_SCAN": "info",
+    "SPEAKER_LABEL_SNAPPED_TO_TEXT": "info",
 }
 
 

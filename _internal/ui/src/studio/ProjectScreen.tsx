@@ -70,7 +70,7 @@ import {
   formatTime,
 } from "@/shared/format";
 import { CastList } from "@/listen/BookScreen";
-import { analyzerLabel } from "./analyzerLabel";
+import { analyzerLabel, narratorLabel } from "./analyzerLabel";
 import { ApplyChangesDialog } from "./ApplyChanges";
 import { CoverEditor } from "./CoverEditor";
 import { ChapterError } from "./ChapterError";
@@ -945,7 +945,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
         )}
       </div>
       <div className="tabular hidden text-right text-xs text-fg-2 lg:block">
-        {chapter.status === "completed" ? formatLength(chapter.seconds) : chapter.segments.total ? `${formatNumber(chapter.segments.total)} câu` : ""}
+        {chapter.status === "completed" || chapter.redo ? formatLength(chapter.seconds) : chapter.segments.total ? `${formatNumber(chapter.segments.total)} câu` : ""}
       </div>
       <div className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
         {chapter.completedAt ? formatRelative(chapter.completedAt) : ""}
@@ -1158,7 +1158,7 @@ export function ProjectScreen() {
   const live = book.running || book.starting;
   const meta = [
     `${book.chapters.total} chương`,
-    book.settings.narrator && `Giọng kể ${book.settings.narrator}`,
+    narratorLabel(book.settings),
     book.settings.profileLabel,
     // Model đã phân tích cuốn này - đổi model mặc định thì biết cuốn nào làm bằng model cũ.
     book.settings.analyzer && analyzerLabel(book.settings.analyzer),
@@ -1213,6 +1213,7 @@ export function ProjectScreen() {
               {book.chapters.missingAudio ? (
                 <span className="font-medium text-warning"> · {book.chapters.missingAudio} chương mất file audio</span>
               ) : null}
+              {book.chapters.redo ? <span> · {book.chapters.redo} chương chờ thu lại theo sửa của bạn</span> : null}
               {book.position && (
                 <span className="text-fg-3 max-sm:hidden"> · lần nghe cuối {formatRelative(book.position.at)} ở {formatClock(book.position.seconds)}</span>
               )}
@@ -1245,7 +1246,12 @@ export function ProjectScreen() {
           <TabsTrigger value="chapters" count={chapters.length}>
             Chương
           </TabsTrigger>
-          {canReview(book) && <TabsTrigger value="precast">Duyệt trước khi thu</TabsTrigger>}
+          {canReview(book) && (
+            // Cùng phép đếm với "Việc cần duyệt" (thẻ ở đây không đếm lại bên kia): cộng hai nhãn = số việc điện thoại báo.
+            <TabsTrigger value="precast" count={precastKeys?.size || undefined}>
+              Duyệt trước khi thu
+            </TabsTrigger>
+          )}
           <TabsTrigger value="work" count={workCount || undefined}>
             Việc cần duyệt
           </TabsTrigger>
@@ -1321,6 +1327,7 @@ export function ProjectScreen() {
               jump({ tab: "script", chapter: String(chapterId), line: stableId, ...(pick ? {} : { pick: "0" }) }, "work", card)
             }
             onOpenNames={(name, card) => jump({ tab: "cast", focus: "names", ...(name ? { name } : {}) }, "work", card)}
+            onPickVoice={setPicking}
           />
         </TabsContent>
         <TabsContent value="script">

@@ -10,6 +10,7 @@ import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { retryUnlessGone } from "./polling";
 import { useTryReading } from "./TryReading";
+import { isOpenWork } from "./precast";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { keepRequests, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
 import { decidedTitle, inboxLead, midSentence, rerecordSentence, sentence } from "./workText";
@@ -18,7 +19,7 @@ import { decidedTitle, inboxLead, midSentence, rerecordSentence, sentence } from
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
 // (bước 2): mong muốn ghi vào overrides.json, dây chuyền áp ở ranh giới chương và thu lại những câu có tên ấy.
 
-export type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator";
+export type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator" | "voice-wish" | "snap";
 
 interface WorkExample {
   segmentId: number;
@@ -75,6 +76,8 @@ export interface WorkItem {
    *  ghi yêu cầu rỗng cho từng người trong `keepCharacters` (thẻ thôi hỏi). */
   voiceChoices?: VoiceChoice[];
   keepCharacters?: string[];
+  /** Thẻ "Giọng chưa đổi được": người có giọng đã chọn mà không áp được - nút "Chọn giọng khác…" mở hộp "Đổi giọng" của họ. */
+  pickVoice?: { name: string; displayName: string };
   /** Chương của các câu thẻ sẽ đổi (hay của câu ví dụ) - "Duyệt trước khi thu" hỏi trước thẻ ở chương sắp thu. */
   chapters?: number[];
   /** Thẻ vai phụ không tên cả cuốn: `examples` là mọi câu của nhóm, người nghe bỏ chọn câu không phải trước khi chọn người. */
@@ -83,6 +86,8 @@ export interface WorkItem {
   keepGroups?: SpeakerRequest[];
   /** Thẻ vai phụ cả cuốn: tên đề nghị cho "là một người mới tên “…”" (cả nhóm thành MỘT người có giọng riêng). */
   newPerson?: string;
+  /** Chữ của nút người mới khi thẻ hỏi theo kiểu có / không ("Không, là người khác" - thẻ hai cách viết một tên). */
+  newPersonLabel?: string;
   /** Thẻ đã quyết: cách rút đúng lần bấm ấy (`POST /{endpoint}` với `withdraw`) - nút "Hoàn tác" của mục "Đã quyết". */
   undo?: { endpoint: string; decisions: Record<string, unknown>[] };
   /** Thẻ người kể của đoạn (webui/narrator_cards.py): đoạn nào, người kể của sách, ứng viên, và điều cần biết trước khi bấm
@@ -128,6 +133,8 @@ const KIND_LABEL: Record<WorkKind, string> = {
   unnamed: "Vai phụ không tên",
   audio: "Bản thu lỗi",
   narrator: "Người kể của đoạn",
+  "voice-wish": "Giọng chưa đổi được",
+  snap: "Hai cách viết một tên",
 };
 
 const PAGE = 40;
@@ -143,12 +150,8 @@ export function useWork(bookId: string, enabled = true) {
   });
 }
 
-/** Việc còn chờ người duyệt mà quyết thì có tác dụng (như webui/work_items.open_count): không tính việc đã quyết (chờ áp dụng), hay
- *  việc chỉ áp khi làm lại phân tích - thẻ người kể của đoạn đã phân tích xong (soát UX a23: lúc chờ duyệt "Việc cần duyệt 6" toàn
- *  là những thẻ ấy). */
-export function isOpenWork(item: Pick<WorkItem, "requested" | "redoOnly">): boolean {
-  return !item.requested && !item.redoOnly;
-}
+// Việc còn chờ người duyệt: một phép đếm cho hộp việc, màn duyệt trước khi thu và con số điện thoại nhận (precast.isOpenWork).
+export { isOpenWork };
 
 /** Số việc cần làm cho nhãn của tab. `fromList`: danh sách đầy đủ đang được tải/mở (tab Việc cần duyệt, màn Duyệt trước khi thu) thì đếm
  *  từ chính nó; không thì chỉ hỏi con số (`?count=1`) - trang dự án 400 chương từng tải 9,5 MB danh sách chỉ để hiện một con số, và tải
@@ -510,7 +513,7 @@ function SpeakerFix({
         {/* Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng. */}
         {item.newPerson && (
           <Button data-choice size="sm" variant="secondary" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
-            Là một người mới tên “{item.newPerson}”
+            {item.newPersonLabel ?? `Là một người mới tên “${item.newPerson}”`}
           </Button>
         )}
         {item.keepGroups && item.keepGroups.length > 0 && (
@@ -754,6 +757,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
 type OpenScript = (chapterId: number, stableId: string, pick?: boolean, card?: string) => void;
 type OpenNames = (name: string, card?: string) => void;
 type OpenReview = (card?: string) => void;
+type PickVoice = (person: { name: string; displayName: string }) => void;
 
 // "Hoàn tác" bền của một mục đã quyết: toast chỉ sống vài giây, mà người duyệt thường nhận ra bấm nhầm khi đã xem sang thẻ khác.
 // Đi đúng đường hoàn tác của toast (decisions.undoAction): máy chủ bỏ yêu cầu của đúng lần bấm ấy, hay nói thật khi dây chuyền
@@ -782,7 +786,7 @@ function UndoDecision({ bookId, item }: { bookId: string; item: WorkItem }) {
   );
 }
 
-function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = false }: { bookId: string; item: WorkItem; onOpenReview: OpenReview; onOpenScript?: OpenScript; onOpenNames?: OpenNames; active?: boolean }) {
+function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoice, active = false }: { bookId: string; item: WorkItem; onOpenReview: OpenReview; onOpenScript?: OpenScript; onOpenNames?: OpenNames; onPickVoice?: PickVoice; active?: boolean }) {
   // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
   const [scope, setScope] = useState<Scope>("alternate");
   // Thẻ vai phụ cả cuốn: câu người nghe bỏ chọn (mã câu), và mở cả danh sách hay chỉ vài câu đầu.
@@ -820,6 +824,15 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = 
         <PronunciationFix bookId={bookId} item={item} onOpenNames={openNames} />
       ) : item.kind === "narrator" && item.narratorSection ? (
         <NarratorFix bookId={bookId} item={item} />
+      ) : item.kind === "voice-wish" ? (
+        <div className="flex flex-wrap items-end gap-2">
+          {item.pickVoice && onPickVoice && (
+            <Button size="sm" variant="secondary" className="mt-3" onClick={() => onPickVoice(item.pickVoice!)}>
+              Chọn giọng khác…
+            </Button>
+          )}
+          <VoiceFix bookId={bookId} item={item} />
+        </div>
       ) : item.voiceChoices && item.voiceChoices.length > 0 ? (
         <VoiceFix bookId={bookId} item={item} />
       ) : item.lines && item.choices ? (
@@ -945,6 +958,7 @@ interface InboxProps {
   onOpenReview: OpenReview;
   onOpenScript?: OpenScript;
   onOpenNames?: OpenNames;
+  onPickVoice?: PickVoice;
   /** Bộ lọc loại việc và thẻ cần cuộn tới, nằm trong địa chỉ trang - Back từ Kịch bản trở lại đúng chỗ đang duyệt. */
   kind?: string | null;
   focus?: string | null;
@@ -955,18 +969,19 @@ interface InboxProps {
 }
 
 /** Một nhóm thẻ việc chọn sẵn (màn "Duyệt trước khi thu"): đúng thẻ của hộp việc, sửa ngay trên thẻ như ở đó. */
-export function WorkCards({ book, items, onOpenReview, onOpenScript, onOpenNames }: {
+export function WorkCards({ book, items, onOpenReview, onOpenScript, onOpenNames, onPickVoice }: {
   book: BookSummary;
   items: WorkItem[];
   onOpenReview: OpenReview;
   onOpenScript?: OpenScript;
   onOpenNames?: OpenNames;
+  onPickVoice?: PickVoice;
 }) {
   return (
     <PendingHint.Provider value={PENDING_NOTE[applyWhen(book)]}>
       <ol className="mt-3 space-y-3">
         {items.map((item) => (
-          <Card key={item.key} bookId={book.id} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} />
+          <Card key={item.key} bookId={book.id} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
         ))}
       </ol>
     </PendingHint.Provider>
@@ -995,7 +1010,7 @@ export function waitingChanges(decided: WorkItem[]): number {
   return changes.size;
 }
 
-function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: kindParam, focus, onKind, inPrecast, onOpenPrecast }: InboxProps) {
+function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVoice, kind: kindParam, focus, onKind, inPrecast, onOpenPrecast }: InboxProps) {
   const bookId = book.id;
   const hint = useContext(PendingHint);
   const [kind, setKindState] = useState<WorkKind | "all">(
@@ -1129,7 +1144,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
       </p>
       <ol className={cn("mt-3 space-y-3")}>
         {items.slice(0, shown).map((item, index) => (
-          <Card key={item.key} bookId={bookId} item={item} active={index === at} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} />
+          <Card key={item.key} bookId={bookId} item={item} active={index === at} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
         ))}
       </ol>
       {items.length > shown && (
@@ -1151,7 +1166,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
           </summary>
           <ol className="mt-3 space-y-3">
             {decided.map((item) => (
-              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} />
+              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
             ))}
           </ol>
         </details>
@@ -1165,7 +1180,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
           </p>
           <ol className="mt-3 space-y-3">
             {later.map((item) => (
-              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} />
+              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
             ))}
           </ol>
         </details>
@@ -1175,7 +1190,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
           <summary className="cursor-pointer text-sm font-medium text-fg-2">Đã ghi, áp khi làm lại phân tích · {redo.length}</summary>
           <ol className="mt-3 space-y-3">
             {redo.map((item) => (
-              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} />
+              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
             ))}
           </ol>
         </details>

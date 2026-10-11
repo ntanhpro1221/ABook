@@ -314,7 +314,8 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             errors.append(f"{book.name}: {error}")
             return []
         book_title = book_title or str(info.get("title") or "")
-        notes.extend(f"{book.name}: {note}" for note in info.get("notes") or [])
+        # Dòng ghi công đã có khung gợi ý riêng (credits/tailCredits của từng chương) - không lặp thành ghi chú (soát UX a24, A1).
+        notes.extend(f"{book.name}: {note}" for note in info.get("notes") or [] if not importers.is_credit_note(note))
         groups += 1
         for chapter in chapter_files:
             group_of[os.path.normcase(str(chapter.resolve()))] = groups

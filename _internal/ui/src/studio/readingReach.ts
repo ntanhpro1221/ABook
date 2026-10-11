@@ -11,6 +11,9 @@ export interface Reach {
   reached: number;
   recorded: number;
   blocked: number;
+  /** Cách đọc này không bao giờ được dùng: mọi câu có chữ ấy bị ký hiệu xé đôi (hay chưa có câu nào mà chính chữ ấy bị xé đôi)
+   *  - không cho lưu (webui/name_readings.never_used). */
+  never: boolean;
   cost: string;
   chapters: { chapterId: number; title: string; lines: number; recorded: number }[];
   example: { segmentId: number; chapterTitle: string; seq: number; text: string; hasAudio: boolean } | null;
@@ -42,12 +45,16 @@ function where(reach: Reach): string {
   return named.length ? ` · ở ${named.join(", ")}${more > 0 ? ` và ${more} chương nữa` : ""}` : "";
 }
 
+/** Vì sao không lưu được cách đọc cho chữ có ký hiệu bị xé đôi ("Mở/đóng"), và làm gì thay vào đó. */
+export function neverText(surface: string): string {
+  return `Máy đọc ký hiệu trong “${surface}” thành một chỗ ngừng trước khi tra cách đọc, nên cách đọc cho chữ này không bao giờ được dùng. Muốn đọc khác, sửa “Chữ đem đọc” của từng câu có chữ ấy.`;
+}
+
 /** Dòng dưới ô khi đang thêm cách đọc: có bao nhiêu câu, bao nhiêu câu đã thu sẽ phải thu lại. */
 export function reachSummary(reach: Reach): string {
+  // Lời giải thích đầy đủ (`neverText`) nằm ngay dưới ô sửa, cạnh nút "Lưu" đã tắt.
+  if (reach.never) return `${reach.lines ? `Có ${reach.lines} câu có chữ này, nhưng m` : "M"}áy không dùng được cách đọc cho chữ có ký hiệu này.`;
   if (!reach.lines) return "Chưa có câu nào có chữ này - cách đọc sẽ được dùng khi chữ xuất hiện.";
-  if (!reach.reached) {
-    return `Có ${reach.lines} câu có chữ này, nhưng ký hiệu trong đó bị đổi thành quãng nghỉ trước khi tra cách đọc nên máy chưa dùng được cách đọc cho chữ này.`;
-  }
   const cost = reach.recorded ? `${reach.recorded} câu đã thu sẽ được thu lại` : "chưa thu câu nào nên không phải thu lại";
   const blocked = reach.blocked ? ` (${reach.blocked} câu khác không dùng được vì ký hiệu)` : "";
   return `${reach.reached} câu có chữ này · ${cost}${where(reach)}${blocked}`;
@@ -56,6 +63,5 @@ export function reachSummary(reach: Reach): string {
 /** Vế "câu đã thu thì thu lại" của thông báo sau khi lưu, theo số đo thật. */
 export function reachSaved(reach: Reach, when: string): string {
   if (!reach.lines) return "Phần này chưa có câu nào có chữ này - cách đọc sẽ được dùng khi chữ xuất hiện.";
-  if (!reach.reached) return "Máy chưa dùng được cách đọc này cho chữ có ký hiệu bị đổi thành quãng nghỉ - câu giữ nguyên.";
   return `${reach.recorded ? `${reach.recorded} câu đã thu có chữ này sẽ được thu lại.` : "Các câu có chữ này chưa thu nên không phải thu lại."} ${when}`;
 }

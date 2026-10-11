@@ -474,7 +474,10 @@ object LocalStudio {
         }
         val recorded = reached.count { it.getBoolean("hasAudio") }
         val titles = reached.associate { it.getLong("chapterId") to it.getString("chapterTitle") }
+        // Cách đọc không bao giờ được dùng (`never_used` của name_readings.py): mọi câu có chữ ấy bị xé đôi - hay chưa câu nào có mà chính chữ ấy bị xé đôi.
+        val never = if (matched > 0) reached.isEmpty() else !pattern.containsMatchIn(SpokenSymbols.toWords(surface))
         return JSONObject().put("surface", surface).put("lines", matched).put("reached", reached.size).put("recorded", recorded).put("blocked", matched - reached.size)
+            .put("never", never)
             .put("cost", if (recorded > 0) "thu lại $recorded câu" else NOT_RECORDED)
             .put("chapters", JSONArray(perChapter.entries.take(CHAPTERS_SHOWN).map { (chapterId, counts) ->
                 JSONObject().put("chapterId", chapterId).put("title", titles[chapterId] ?: "").put("lines", counts[0]).put("recorded", counts[1])

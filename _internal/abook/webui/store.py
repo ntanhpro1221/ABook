@@ -96,12 +96,35 @@ def voice_request_problem(project_root: Path, character: str, *, preset: str = "
                           avoid: str = "") -> str | None:
     """Mã lý do dây chuyền sẽ từ chối yêu cầu giọng/giới của một nhân vật, hoặc None - hỏi bằng ĐÚNG phép dây chuyền dùng
     (`listener_overrides.voice_target`), trên SQLite chỉ đọc."""
-    from ..listener_overrides import voice_target
+    from ..listener_overrides import NARRATOR, VOICE_TAKEN, voice_target
 
     with closing(connect(project_root)) as connection:
         _target, problem = voice_target(connection, book_voices(project_root), character=character, preset=preset,
                                         gender=gender, avoid=avoid)
-    return problem
+    if problem is not None or not preset:
+        return problem
+    # Ý muốn chưa áp của người khác cũng giữ giọng (soát UX a24, A2): người kể chờ đổi sang giọng X thì nhân vật không chọn
+    # X, và ngược lại - không thì lúc áp một bên bị từ chối, mất lặng lẽ.
+    key = speaker_key(character)
+    wished = wished_presets(project_root)
+    if key == NARRATOR:
+        return VOICE_TAKEN if any(who != NARRATOR for who in wished.get(preset, ())) else None
+    return NARRATOR_WISHED if NARRATOR in wished.get(preset, ()) else None
+
+
+NARRATOR_WISHED = "narrator_wished"  # giọng người kể đang chờ đổi sang - nhân vật không chọn được
+
+
+def wished_presets(project_root: Path) -> dict[str, list[str]]:
+    """{giọng gốc: khoá tên chuẩn những người đã CHỌN HẲN giọng ấy} theo overrides.json `voices` - kể cả ý muốn chưa áp.
+    Ý muốn đã áp thì sổ cũng nói y vậy; chỉ giới (máy chọn giọng) thì chưa biết giọng nào, không tính."""
+    from ..listener_overrides import read_overrides, voice_requests
+
+    wished: dict[str, list[str]] = defaultdict(list)
+    for wish in voice_requests(read_overrides(project_root)):
+        if wish["preset"]:
+            wished[wish["preset"]].append(speaker_key(wish["character"]))
+    return dict(wished)
 
 
 def book_voices(project_root: Path) -> dict[str, Any]:
@@ -744,6 +767,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
         read_overrides,
         surface_key,
     )
+    from ..text_processing import spoken_symbols_to_words
 
     data = read_overrides(project_root)
     fresh: dict[str, dict[str, Any]] = {}
@@ -807,7 +831,10 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
                 candidates = (recorded[position] for position in words.positions(surface))
             else:
                 candidates = recorded
-            ids = [str(row["stable_id"]) for row in candidates if pattern.search(str(row["text"] or ""))]
+            # Chỉ câu cách đọc thật sự chạm tới (như dây chuyền - database.apply_listener_pronunciation): câu mà ký hiệu xé đôi
+            # chữ ấy ("Mở/đóng") không đọc theo cách mới, thu lại là vô ích (soát UX a24, A4).
+            ids = [str(row["stable_id"]) for row in candidates
+                   if pattern.search(spoken_symbols_to_words(str(row["text"] or "")))]
             items.append({"kind": "pronunciation", "label": label_pronunciation(surface, entry.get("spoken_form", "")),
                           "lines": hit(ids), **handle("pronunciations", key, entry)})
         speaker_clicks: dict[float, list[str]] = {}
@@ -953,11 +980,11 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
             raise ValueError(f"{project_root} chưa được khởi tạo")
         chapter_rows = connection.execute("SELECT status, COUNT(*) AS n FROM chapters GROUP BY status").fetchall()
         # Chương "xong" trong sổ mà file MP3 không còn (dời/xoá tay, bản sao thiếu audio): Studio từng báo "43/43 chương nghe
-        # được" trong khi thư viện chỉ thấy 3 (soát UX 29-09).
-        missing_audio = sum(
-            1 for row in connection.execute("SELECT output_mp3 FROM chapters WHERE status = 'completed'")
-            if chapter_mp3(project_root, row[0]) is None
-        )
+        # được" trong khi thư viện chỉ thấy 3 (soát UX 29-09). Chương chờ thu lại theo sửa của người nghe vẫn nghe được bản cũ.
+        heard_rows = [row for row in connection.execute("SELECT status, last_error, output_mp3 FROM chapters")
+                      if heard_chapter(row["status"], row["last_error"])]
+        missing_audio = sum(1 for row in heard_rows if chapter_mp3(project_root, row["output_mp3"]) is None)
+        redo_chapters = [row for row in heard_rows if str(row["status"]) != "completed"]
         segments = connection.execute(
             "SELECT COUNT(*) AS total,"
             " SUM(status != 'pending') AS analyzed,"
@@ -970,6 +997,9 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
             "SELECT COALESCE(SUM(s.wav_duration), 0) + COALESCE(SUM(s.break_ms), 0) / 1000.0 AS seconds"
             " FROM segments s JOIN chapters c ON c.id = s.chapter_id WHERE c.status = 'completed'"
         ).fetchone()
+        # Chương chờ thu lại: câu đã đặt lại không còn độ dài - lấy độ dài thật của MP3 cũ (vẫn nghe được).
+        redo_seconds = sum(audio_duration(mp3) or 0.0 for mp3 in
+                           (chapter_mp3(project_root, row["output_mp3"]) for row in redo_chapters) if mp3 is not None)
         beat_age = lease_age(connection, now)
         status = str(book["status"])
         stage = str(book["stage"] or "")
@@ -1034,6 +1064,9 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
             "profile": profile,
             "profileLabel": humanize.PROFILE_LABELS.get(profile, profile),
             "narrator": narrator,
+            # Giọng kể người nghe đã chọn mà chưa vào sách: đầu trang ghi giọng SẼ dùng + "chờ áp dụng", không phải giọng cũ (soát UX a24).
+            "narratorPending": pending_voices(project_root, changes_since(project_root, float(book["updated_at"] or 0)))
+            .get("NARRATOR", {}).get("preset", ""),
             # Model đã phân tích cuốn này (book_settings.json lúc tạo sách) - đổi model mặc định thì biết cuốn nào làm bằng
             # model cũ.
             "analyzer": str((settings.get("analysis") or {}).get("model") or "")
@@ -1041,7 +1074,9 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         },
         "chapters": {
             "total": chapter_total,
-            "completed": chapters.get("completed", 0),
+            # "Nghe được": chương xong, cả chương chờ thu lại theo sửa của người nghe (MP3 cũ còn) - `redo` đếm riêng những chương ấy.
+            "completed": chapters.get("completed", 0) + len(redo_chapters),
+            "redo": len(redo_chapters),
             "missingAudio": missing_audio,
             "failed": chapters.get("failed", 0),
             "working": chapters.get("synthesizing", 0) + chapters.get("verifying", 0),
@@ -1059,7 +1094,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
             "analysis": round(analysis_fraction, 4),
             "synthesis": round(synthesis_fraction, 4),
         },
-        "audioSeconds": round(float(audio["seconds"] or 0.0), 1),
+        "audioSeconds": round(float(audio["seconds"] or 0.0) + redo_seconds, 1),
         "eta": eta,
     }
 
@@ -1089,7 +1124,9 @@ def chapters(project_root: Path) -> list[dict[str, Any]]:
     for row in rows:
         counts = per_chapter.get(int(row["id"]))
         status = str(row["status"])
-        mp3 = chapter_mp3(project_root, row["output_mp3"]) if status == "completed" else None
+        heard = heard_chapter(status, row["last_error"])
+        redo = heard and status != "completed"
+        mp3 = chapter_mp3(project_root, row["output_mp3"]) if heard else None
         out.append({
             "id": int(row["id"]),
             "index": int(row["chapter_index"]),
@@ -1098,8 +1135,10 @@ def chapters(project_root: Path) -> list[dict[str, Any]]:
             "subtitle": names[int(row["id"])]["subtitle"],
             "fullTitle": names[int(row["id"])]["full"],
             "status": status,
-            "statusLabel": "Mất file audio" if status == "completed" and mp3 is None
-            else humanize.chapter_status_label(status),
+            "statusLabel": "Mất file audio" if heard and mp3 is None
+            else REDO_LABEL if redo else humanize.chapter_status_label(status),
+            # Chờ thu lại các câu người nghe vừa sửa - không phải lỗi; MP3 cũ nghe được tới khi có bản mới (soát UX a24, A3).
+            "redo": redo,
             "segments": {
                 "total": int(counts["total"]) if counts else int(row["total_segments"] or 0),
                 "analyzed": int(counts["analyzed"] or 0) if counts else 0,
@@ -1108,13 +1147,25 @@ def chapters(project_root: Path) -> list[dict[str, Any]]:
                 "failed": int(counts["failed"] or 0) if counts else 0,
                 "warnings": int(counts["warnings"] or 0) if counts else 0,
             },
-            "seconds": round(float(counts["seconds"] or 0.0), 1) if counts else 0.0,
+            "seconds": round(audio_duration(mp3) or 0.0, 1) if redo and mp3 is not None
+            else round(float(counts["seconds"] or 0.0), 1) if counts else 0.0,
             "playable": mp3 is not None,
             "startedAt": float(row["started_at"]) if row["started_at"] else None,
             "completedAt": float(row["completed_at"]) if row["completed_at"] else None,
-            "lastError": humanize.error_text(str(row["last_error"] or "")),
+            "lastError": "" if redo else humanize.error_text(str(row["last_error"] or "")),
         })
     return out
+
+
+REDO_LABEL = "Chờ thu lại theo sửa của bạn"
+
+
+def heard_chapter(status: Any, last_error: Any) -> bool:
+    """Chương nghe được trong sổ: đã xong, hay đã xong rồi người nghe sửa (đổi giọng, cách đọc, người nói, thu lại câu) nên chờ thu
+    lại những câu ấy (`database.LISTENER_REDO`) - MP3 cũ vẫn là bản nghe được tới khi có bản mới, không phải "có lỗi" (soát UX a24, A3)."""
+    from ..database import LISTENER_REDO
+
+    return str(status) == "completed" or (str(status) == "warning" and str(last_error or "").startswith(LISTENER_REDO))
 
 
 _DURATION_CACHE: dict[tuple[str, float], float] = {}
@@ -1260,9 +1311,9 @@ def chapter_spans(project_root: Path, chapter_id: int) -> dict[int, tuple[float,
 def chapter_audio_path(project_root: Path, chapter_id: int) -> Path | None:
     with closing(connect(project_root)) as connection:
         row = connection.execute(
-            "SELECT status, output_mp3 FROM chapters WHERE id = ?", (chapter_id,)
+            "SELECT status, last_error, output_mp3 FROM chapters WHERE id = ?", (chapter_id,)
         ).fetchone()
-    if row is None or str(row["status"]) != "completed":
+    if row is None or not heard_chapter(row["status"], row["last_error"]):
         return None
     return chapter_mp3(project_root, row["output_mp3"])
 
@@ -1307,6 +1358,8 @@ def speaker_key(name: str) -> str:
 def cast(project_root: Path) -> dict[str, Any]:
     """Ai nói trong CUỐN NÀY, bằng giọng nào. Sổ nhân vật của một lô là sổ cộng dồn cả sách (636 người ở lô 16,
     88 người thật sự lên tiếng), nên chỉ lấy những ai có câu trong bảng `segments` của project này."""
+    from ..database import LISTENER_REDO
+
     settings = read_settings(project_root)
     voices = settings.get("voices", {}) if isinstance(settings.get("voices"), dict) else {}
     with closing(connect(project_root)) as connection:
@@ -1334,6 +1387,12 @@ def cast(project_root: Path) -> dict[str, Any]:
         chapter_numbers = {chapter_id: item["name"] for chapter_id, item in chapter_names(connection, project_root).items()}
         book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
         narrator_now = narrator_voice_in(connection, voices)
+        # Câu kể của chương đã nghe được mà sửa của người nghe (đổi giọng kể) đặt lại - chờ thu lại bằng giọng mới (soát UX a24).
+        narrator_redo = int(connection.execute(
+            "SELECT COUNT(*) FROM segments s JOIN chapters c ON c.id = s.chapter_id WHERE s.speaker = 'NARRATOR'"
+            " AND (s.wav_path IS NULL OR s.wav_path = '') AND c.status = 'warning' AND substr(c.last_error, 1, ?) = ?",
+            (len(LISTENER_REDO), LISTENER_REDO),
+        ).fetchone()[0])
     pending = pending_voices(
         project_root, changes_since(project_root, float(book_row["updated_at"] or 0) if book_row is not None else 0.0))
     lines: dict[str, int] = defaultdict(int)
@@ -1364,6 +1423,7 @@ def cast(project_root: Path) -> dict[str, Any]:
         "profile": voice_of("NARRATOR"),
         # Đổi giọng người kể (tab Nhân vật, hộp "Đổi giọng") chưa vào sách.
         "pendingVoice": pending.get("NARRATOR"),
+        "redo": narrator_redo,
     }
     renamed = renames.load(project_root)
 

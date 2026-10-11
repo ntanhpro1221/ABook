@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chapterToFollow, firstVisibleIndex, followScrollTop, needsFollowScroll, placementOf, SETTLE_MS, shouldResumeFollowing, showJumpToPlaying } from "./follow";
+import { chapterToFollow, firstVisibleIndex, followScrollTop, lineToEdit, needsFollowScroll, placementOf, SETTLE_MS, shouldResumeFollowing, showJumpToPlaying } from "./follow";
 
 const VIEW = { top: 100, bottom: 700 }; // khung cuộn cao 600 px
 
@@ -85,5 +85,19 @@ describe("màn đọc theo giọng sang chương kế", () => {
     expect(chapterToFollow(null, 2, 2)).toBeNull();
     expect(chapterToFollow(2, null, 2)).toBeNull();
     expect(chapterToFollow(2, 2, 2)).toBeNull();
+  });
+});
+
+describe("hộp “Sửa câu này” khi giọng sang chương sau", () => {
+  it("giữ đúng câu đã mở của chương cũ, không đổi sang câu cùng thứ tự của chương mới", () => {
+    const one = { chapterId: 1, segments: [{ stableId: "c1s0", text: "Một" }, { stableId: "c1s1", text: "Hai" }] };
+    const two = { chapterId: 2, segments: [{ stableId: "c2s0", text: "Chương 2 - Ngoài thành" }, { stableId: "c2s1", text: "Khác" }] };
+    const open = lineToEdit(one, 1);
+    // Trang đọc đi theo sang chương 2 (chapterToFollow) - hộp vẫn sửa câu c1s1.
+    expect(chapterToFollow(1, 2, 1)).toBe(2);
+    expect(open?.script.chapterId).toBe(1);
+    expect(open && open.script.segments[open.index]).toEqual({ stableId: "c1s1", text: "Hai" });
+    expect(two.segments[1].stableId).not.toBe("c1s1");
+    expect(lineToEdit(one, 5)).toBeNull();
   });
 });
