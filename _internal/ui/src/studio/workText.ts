@@ -25,10 +25,20 @@ export function rerecordSentence(note?: string): string {
 /** Tiêu đề thẻ người kể của đoạn sau khi đã quyết - nói KẾT QUẢ, không lặp tiền tố của nhãn ("Người kể: Mai" -> "Đoạn này do
  *  Mai kể", soát UX a8: từng ra "Đoạn này: Người kể: Mai kể"). */
 export function narratorDecidedTitle(current: string, answer: string): string {
-  if (answer === "Giữ nguyên") return `Đoạn này vẫn do ${current} kể`;
+  if (answer === "Giữ nguyên") return current ? `Đoạn này vẫn do ${current} kể` : "Đoạn này vẫn kể ở ngôi thứ ba";
   if (answer === "Đổi người kể") return `Đoạn này không phải ${current} kể`;
   const name = answer.replace(/^Người kể:\s*/, "").trim();
   return `Đoạn này do ${name || answer} kể`;
+}
+
+/** Hai nút đầu của thẻ người kể của đoạn, và lựa chọn đã ghi (`requested`) ứng với nút nhận. `current`: người kể máy đang dùng
+ *  ("" = chương kể ngôi thứ ba); `heading`: đoạn mở bằng dòng tiêu đề góc nhìn ("Góc nhìn của Mai") - nút nhận nói đúng tên ấy. */
+export function narratorButtons(current: string, heading?: { label: string } | null): { accept: string; keep: string; accepted: string } {
+  const keep = current ? `Giữ ${current} là người kể` : "Giữ nguyên ngôi thứ ba";
+  if (!heading) return { accept: `Không phải ${current} kể - đoạn kể ngôi thứ ba`, keep, accepted: "Đổi người kể" };
+  return heading.label
+    ? { accept: `Nhận: ${heading.label} kể đoạn này`, keep, accepted: `Người kể: ${heading.label}` }
+    : { accept: "Nhận: đoạn kể ngôi thứ ba", keep, accepted: "Đổi người kể" };
 }
 
 /** Phần của thẻ việc mà tiêu đề đã quyết cần. */

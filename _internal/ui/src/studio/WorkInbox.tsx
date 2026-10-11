@@ -14,7 +14,7 @@ import { isOpenWork } from "./precast";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { seenFor, warnElsewhere } from "./elsewhere";
 import { examplesPage, keepRequests, moreText, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
-import { decidedTitle, inboxLead, midSentence, rerecordSentence, sentence } from "./workText";
+import { decidedTitle, inboxLead, midSentence, narratorButtons, rerecordSentence, sentence } from "./workText";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
@@ -105,6 +105,8 @@ export interface WorkItem {
     narrator: string;
     appliesNote: string;
     choices: { label: string; value: string }[];
+    /** Đoạn mở bằng dòng tiêu đề góc nhìn ("Góc nhìn của Mai"): dòng ấy và người kể nó gọi ("" = ngôi thứ ba). */
+    heading?: { line: string; narrator: string; label: string };
   };
 }
 
@@ -612,14 +614,16 @@ function SpeakerFix({
   );
 }
 
-// Người kể của một ĐOẠN khác người kể "tôi" của sách: ba lựa chọn - đúng (đoạn không do người ấy kể), không (giữ nguyên), hay chọn
-// người khác. Lô phân tích chưa chạy sẽ theo lựa chọn; đoạn đã phân tích xong thì chỉ áp khi làm lại sách (thẻ nói rõ).
+// Người kể của một ĐOẠN khác người kể "tôi" của sách: ba lựa chọn - đúng (đoạn không do người ấy kể; đoạn mở bằng dòng tiêu đề góc
+// nhìn thì: do người dòng ấy gọi kể), không (giữ nguyên), hay chọn người khác. Lô phân tích chưa chạy sẽ theo lựa chọn; đoạn đã
+// phân tích xong thì chỉ áp khi làm lại sách (thẻ nói rõ).
 function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const client = useQueryClient();
   const section = item.narratorSection!;
   const [choosing, setChoosing] = useState(false);
   const [name, setName] = useState("");
   const where = { chapterIndex: section.chapterIndex, fromSeq: section.fromSeq, toSeq: section.toSeq };
+  const buttons = narratorButtons(section.narrator, section.heading);
   const save = useMutation({
     mutationFn: (body: { action: "accept" | "choose" | "keep"; narrator?: string }) =>
       api<{ action: string; narrator: string }>(`/api/books/${bookId}/narrator-section`, { method: "POST", body: { ...where, ...body } }),
@@ -627,7 +631,11 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       refreshAfterDecision(client, bookId);
       const back = item.requested ? `Trở lại quyết định trước: ${item.requested}.` : "Thẻ hỏi lại như trước khi bấm.";
       toast.success(
-        action === "keep" ? `Giữ nguyên: đoạn này vẫn do ${item.current} kể` : narrator ? `Đã ghi: đoạn này do ${narrator} kể` : `Đã ghi: đoạn này không phải ${item.current} kể`,
+        action === "keep"
+          ? item.current ? `Giữ nguyên: đoạn này vẫn do ${item.current} kể` : "Giữ nguyên: đoạn này vẫn kể ở ngôi thứ ba"
+          : narrator
+            ? `Đã ghi: đoạn này do ${section.heading?.narrator === narrator ? section.heading.label : narrator} kể`
+            : `Đã ghi: đoạn này không phải ${item.current} kể`,
         {
           description: section.appliesNote || "Phần chưa phân tích sẽ theo lựa chọn này.",
           action: undoAction(client, bookId, "narrator-section", [where], back),
@@ -648,11 +656,11 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
         </p>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Người kể của đoạn">
-        <Button data-choice size="sm" variant={item.requested === "Đổi người kể" ? "primary" : "secondary"} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
-          Không phải {item.current} kể - đoạn kể ngôi thứ ba
+        <Button data-choice size="sm" variant={item.requested === buttons.accepted ? "primary" : "secondary"} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
+          {buttons.accept}
         </Button>
         <Button data-choice size="sm" variant={item.requested === "Giữ nguyên" ? "primary" : "ghost"} disabled={save.isPending} onClick={() => save.mutate({ action: "keep" })}>
-          Giữ {item.current} là người kể
+          {buttons.keep}
         </Button>
         <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} onClick={() => setChoosing((value) => !value)}>
           Người kể là ai khác…
@@ -854,7 +862,8 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
           Ảnh hưởng <span className="tabular font-semibold text-fg">{formatNumber(item.allLines && scope === "all" ? item.allLines.length : item.affected)}</span> câu
         </span>
         <span>
-          {item.kind === "audio" ? "Trạng thái" : item.kind === "narrator" ? "Máy coi người kể là" : "Máy đang dùng"}: <span className="font-medium text-fg">{item.current}</span>
+          {item.kind === "audio" ? "Trạng thái" : item.kind === "narrator" ? "Máy coi người kể là" : "Máy đang dùng"}:{" "}
+          <span className="font-medium text-fg">{item.kind === "narrator" && !item.current ? "không ai - chương kể ở ngôi thứ ba" : item.current}</span>
         </span>
       </div>
       {item.kind === "audio" ? (

@@ -866,22 +866,36 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         else:
             requested = f"Người kể: {speaker_label(decision['narrator'])}" if decision["narrator"] else "Đổi người kể"
         chapter_name = names.get(chapter_id, {}).get("name") or f"Chương {proposal['chapter_index']}"
-        if proposal["r1"] is not None and proposal["r1"] < 1:
-            why = "Lời kể ở đây hầu như không có “tôi”, khác với phần còn lại của chương."
+        where = f"câu {first}" if first == last else f"câu {first}–{last}"
+        heading = proposal.get("heading")
+        if heading is not None:
+            # Đoạn mở bằng dòng tiêu đề góc nhìn ("Góc nhìn của Mai"): đề xuất CÓ TÊN, theo chính chữ của sách.
+            told_by = speaker_label(proposal["suggested"]) if proposal["suggested"] else ""
+            title = f"{chapter_name}, {where}: " + (f"đoạn này kể bởi {told_by}" if told_by else "đoạn này kể ở ngôi thứ ba")
+            problem = (f"Theo dòng “{heading}” ở đầu đoạn. "
+                       + (f"Nhận thì máy coi {told_by} là người xưng “tôi” ở đoạn này" + (f", không phải {who}." if who else ".")
+                          if told_by else f"Nhận thì máy thôi gán lời kể ở đoạn này cho {who}."))
+            options = [f"{told_by} kể đoạn này" if told_by else "Đoạn kể ngôi thứ ba",
+                       f"Giữ {who} là người kể" if who else "Giữ nguyên", "Người kể là ai khác…"]
         else:
-            why = f"Lời kể gọi tên {who} như nói về một người khác, và ít “tôi” hơn hẳn phần còn lại."
+            if proposal["r1"] is not None and proposal["r1"] < 1:
+                why = "Lời kể ở đây hầu như không có “tôi”, khác với phần còn lại của chương."
+            else:
+                why = f"Lời kể gọi tên {who} như nói về một người khác, và ít “tôi” hơn hẳn phần còn lại."
+            title = f"{chapter_name}, {where}: có vẻ không phải {who} kể"
+            problem = f"{why} Nếu người kể ở đây là người khác, máy sẽ thôi gán lời họ cho {who}."
+            options = [f"Không phải {who} kể", f"Giữ {who} là người kể", "Người kể là ai khác…"]
         # Đoạn đã phân tích XONG: lựa chọn chỉ áp khi làm lại sách (applies_note) - thẻ này không làm được gì ngay, nên xuống
         # cuối danh sách (xem sort ở cuối) và sau khi bấm không tính vào "chờ áp dụng".
         redo_only = total > 0 and done >= total
         items.append({
             "kind": "narrator",
             "key": f"narrator:{proposal['chapter_index']}:{first}:{last}",
-            "title": f"{chapter_name}, {'câu ' + str(first) if first == last else f'câu {first}–{last}'}: có vẻ không phải {who} kể",
-            "problem": f"{why} Nếu người kể ở đây là người khác, máy sẽ thôi gán lời họ cho {who}."
-                       + ("" if decision is not None else " Chưa trả lời thì máy giữ nguyên."),
+            "title": title,
+            "problem": problem + ("" if decision is not None else " Chưa trả lời thì máy giữ nguyên."),
             "affected": total,
             "doubt": 0.5,
-            "options": [f"Không phải {who} kể", f"Giữ {who} là người kể", "Người kể là ai khác…"],
+            "options": options,
             "current": who,
             "examples": [_example(row, names, speaker_label, audio) for row in shown],
             "requested": requested,
@@ -890,6 +904,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
                 "chapterIndex": proposal["chapter_index"], "fromSeq": first, "toSeq": last, "narrator": who,
                 "appliesNote": narrator_cards.applies_note(total, done),
                 "choices": narrator_choices,
+                **({"heading": {"line": heading, "narrator": proposal["suggested"], "label": told_by}} if heading is not None else {}),
             },
         })
 
