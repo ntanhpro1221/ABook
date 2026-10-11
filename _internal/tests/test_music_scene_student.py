@@ -292,6 +292,53 @@ def test_stopping_keeps_the_embeddings_and_the_next_run_continues(package: Path,
     assert len(student.load(project)["scenes"]) == 6
 
 
+def test_with_the_onset_flag_the_tiles_are_embedded_and_their_tension_jumps_cut_the_scenes(package: Path, tmp_path: Path,
+                                                                                            monkeypatch: pytest.MonkeyPatch) -> None:
+    # Ranh giới "lên căng" (music_scenes.onset_starts, SPEC_app_onset.md). Chương một khúc 36 câu x 6 s (chia đôi vì quá 3 phút):
+    # lát 8 câu bắt đầu ở giây 0; 51,2; 102,4; 153,6; 204,8 - chỉ khe cuối cách đầu chương và chỗ chia đôi (115,2) đủ 60 s. Ngưỡng 0
+    # để khe ấy chắc được nhận (đầu ngẫu nhiên).
+    book = [_chapter(1, 1, seed=1, blocks=3), _chapter(2, 101, seed=2, blocks=3)]
+    for script in book:
+        lines = [segment for segment in script["segments"] if segment["text"] != "***"]
+        for index, segment in enumerate(lines):
+            segment["start"], segment["end"] = index * 6.4, index * 6.4 + 6.0
+        script["segments"] = lines
+    monkeypatch.setattr(music_plan, "book_scripts", lambda _root: iter(book))
+    monkeypatch.setattr(student, "ONSET_TILES", True)
+    monkeypatch.setattr(music_scenes, "ONSET_THRESHOLD", 0.0)
+    project, spy = tmp_path / "project", Spy(monkeypatch)
+    _compute(project)
+    saved = student.load(project)
+    assert saved["version"] == student.VERSION + 1 and set(saved["onsets"]) == {"1", "2"}
+    head = student.Head(package / student.HEAD_FILE)
+    for script in book:
+        segments = script["segments"]
+        tiles = music_scenes.onset_tiles(script)
+        texts = ["\n".join(segments[i]["text"] for i in range(first, last + 1)) for first, last in tiles]
+        tensions = head.deviations([_reference_embedding(package, text) for text in texts], [len(text.split()) for text in texts])[:, 2]
+        starts = saved["onsets"][str(script["chapterId"])]
+        assert starts and starts == music_scenes.onset_starts(script, [float(t) for t in tensions])
+        scenes = music_scenes.chapter_scenes(script, onsets=starts)
+        assert "tension_shift" in {s["reason"] for s in scenes}
+        mine = [item for item in saved["scenes"] if item["chapterId"] == script["chapterId"]]
+        assert [(i["firstSegment"], i["lastSegment"]) for i in mine] == [(s["firstSegment"], s["lastSegment"]) for s in scenes]
+    # Nhạc dựng đoạn theo đúng các ranh giới ấy, và học sinh áp được lên mọi đoạn.
+    built = music_scenes.book_scenes(book, student=saved["scenes"], onsets=student.onsets_of(saved))
+    assert [(s["firstSegment"], s["lastSegment"]) for s in built] == [(i["firstSegment"], i["lastSegment"]) for i in saved["scenes"]]
+    assert {s["moodSource"] for s in built} == {"student"}
+    # Lần sau: lát và đoạn đều đã nằm trong bộ nhớ đệm.
+    spy.embeds.clear()
+    assert _compute(project) == 0 and not spy.embeds
+    # Tắt cờ: file có `onsets` thành sai phiên bản -> không dùng; tính lại thì như hôm nay.
+    monkeypatch.setattr(student, "ONSET_TILES", False)
+    assert student.load(project) is None
+    _compute(project)
+    plain = student.load(project)
+    assert plain["version"] == student.VERSION and "onsets" not in plain
+    assert [(i["firstSegment"], i["lastSegment"]) for i in plain["scenes"]] == [
+        (s["firstSegment"], s["lastSegment"]) for script in book for s in music_scenes.chapter_scenes(script)]
+
+
 def test_pausing_waits_between_scenes_without_embedding(package: Path, book: list[dict], tmp_path: Path,
                                                         monkeypatch: pytest.MonkeyPatch) -> None:
     spy, sleeps = Spy(monkeypatch), []

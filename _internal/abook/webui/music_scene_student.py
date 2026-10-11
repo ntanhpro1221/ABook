@@ -81,6 +81,10 @@ CPU_DTYPE_FILE = "cpu_dtype.json"
 FILE = "music_scene_student.json"
 CACHE_FILE = "music_scene_student.npz"
 VERSION = 1
+# Ranh giới "lên căng" (music_scenes.onset_starts; Corpus research/music/SPEC_app_onset.md): học sinh đoán T từng lát ~45 s, khe T đổi
+# mạnh thành ranh giới không khí. TẮT cho tới khi thử ngoài bộ 11+12 (PLAN_t_onset3.md) qua; ABOOK_MUSIC_ONSET_TILES=1 bật để thử.
+# Bật thì `compute` nhúng thêm các lát (~92 lát mỗi giờ audio), ghi `onsets` vào file và tăng phiên bản file (file cũ tính lại).
+ONSET_TILES = os.environ.get("ABOOK_MUSIC_ONSET_TILES") == "1"
 CPU_THREADS = 6
 BENCH_TOKENS = 512  # khúc đo kiểu số trên CPU
 _DEPENDENCIES = ("numpy", "torch", "transformers", "safetensors")
@@ -340,9 +344,20 @@ def load(project_root: Path) -> dict[str, Any] | None:
         value = json.loads((Path(project_root) / FILE).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
-    if not isinstance(value, dict) or value.get("version") != VERSION or not isinstance(value.get("scenes"), list):
+    if not isinstance(value, dict) or value.get("version") != file_version() or not isinstance(value.get("scenes"), list):
         return None
     return value
+
+
+def file_version() -> int:
+    """Phiên bản `music_scene_student.json`: bật ranh giới "lên căng" thì đoạn khác nên file cũ phải tính lại."""
+    return VERSION + 1 if ONSET_TILES else VERSION
+
+
+def onsets_of(value: dict[str, Any] | None) -> dict[str, list[Any]] | None:
+    """{str(chapterId): id câu mở đoạn "lên căng"} của file đã `load` - None khi cờ tắt hay file không có (đường thường)."""
+    onsets = (value or {}).get("onsets")
+    return onsets if ONSET_TILES and isinstance(onsets, dict) else None
 
 
 def _load_cache(path: Path) -> dict[str, Any]:
@@ -385,32 +400,51 @@ def compute(project_root: Path, *, stop_requested: Callable[[], bool] = lambda: 
     used: set[str] = set()
     embedder: _Embedder | None = None
     items: list[dict[str, Any]] = []
+    onsets: dict[str, list[Any]] = {}
     embedded = 0
     dirty = finished = False
+
+    def ensure(texts: list[str]) -> list[str] | None:
+        """Khoá bộ nhớ đệm của các chữ, nhúng chữ chưa có; None = người dùng dừng giữa chừng."""
+        nonlocal embedder, embedded, dirty
+        keys = [hashlib.sha256(text.encode("utf-8")).hexdigest() + package for text in texts]
+        used.update(keys)
+        for text, key in zip(texts, keys):
+            if key in cache:
+                continue
+            while pause_requested() and not stop_requested():
+                time.sleep(1.0)
+            if stop_requested():
+                return None
+            if embedder is None:
+                embedder = _Embedder(directory, head, text)
+            cache[key] = embedder.embed(text)
+            embedded += 1
+            dirty = True
+        return keys
 
     try:
         for script in music_plan.book_scripts(project_root):
             segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
             position = {segment.get("id"): index for index, segment in enumerate(segments)}
-            scenes = music_scenes.chapter_scenes(script)
+            starts = None
+            if ONSET_TILES and segments:
+                # T học sinh của từng lát -> chỗ "lên căng"; các đoạn (và nhúng đoạn bên dưới) theo ranh giới mới.
+                tile_texts = [music_moods.scene_text(segments, first, last) for first, last in music_scenes.onset_tiles(script)]
+                tile_keys = ensure(tile_texts)
+                if tile_keys is None:
+                    return embedded
+                tensions = head.deviations([cache[key] for key in tile_keys], [max(1, len(text.split())) for text in tile_texts])[:, 2]
+                starts = music_scenes.onset_starts(script, [float(value) for value in tensions])
+                onsets[str(script.get("chapterId"))] = starts
+            scenes = music_scenes.chapter_scenes(script, onsets=starts)
             spans = [(position.get(scene["firstSegment"]), position.get(scene["lastSegment"])) for scene in scenes]
             if not scenes or any(first is None or last is None for first, last in spans):
                 continue
             texts = [music_moods.scene_text(segments, first, last) for first, last in spans]
-            keys = [hashlib.sha256(text.encode("utf-8")).hexdigest() + package for text in texts]
-            used.update(keys)
-            for text, key in zip(texts, keys):
-                if key in cache:
-                    continue
-                while pause_requested() and not stop_requested():
-                    time.sleep(1.0)
-                if stop_requested():
-                    return embedded
-                if embedder is None:
-                    embedder = _Embedder(directory, head, text)
-                cache[key] = embedder.embed(text)
-                embedded += 1
-                dirty = True
+            keys = ensure(texts)
+            if keys is None:
+                return embedded
             vectors, weights = [cache[key] for key in keys], [max(1, len(text.split())) for text in texts]
             deviations = head.deviations(vectors, weights)
             # Mức V của cả chương (cùng giá trị ở mọi đoạn của chương; thiếu đầu mức chương thì không ghi): đo từ nhúng đã có, không chạy model thêm.
@@ -418,8 +452,8 @@ def compute(project_root: Path, *, stop_requested: Callable[[], bool] = lambda: 
             items += [{"chapterId": scene["chapterId"], "firstSegment": scene["firstSegment"], "lastSegment": scene["lastSegment"],
                        "dV": round(float(dev[0]), 4), "dE": round(float(dev[1]), 4), "dT": round(float(dev[2]), 4), **level}
                       for scene, dev in zip(scenes, deviations)]
-            atomic_write_json(project_root / FILE, {"version": VERSION, "package": package, "built": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-                                                    "scenes": items})
+            atomic_write_json(project_root / FILE, {"version": file_version(), "package": package, "built": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                                                    "scenes": items, **({"onsets": onsets} if ONSET_TILES else {})})
             log(f"Hình không khí trong chương: xong chương {script.get('chapterId')} ({len(items)} đoạn)")
             if dirty:
                 _save_cache(cache_path, cache)

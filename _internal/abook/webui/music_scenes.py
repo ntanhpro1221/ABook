@@ -10,6 +10,8 @@ Mỗi cảm xúc là một điểm trên hai trục của mô hình tròn cảm 
 2. Trong khúc giữa hai ranh giới cứng: không khí trượt (trung bình theo thời lượng đọc, cửa sổ ~45 giây) đổi XA khỏi không khí
    của đoạn đang mở và GIỮ đủ lâu thì cắt đoạn mới - một câu kêu lên giữa cảnh bình yên không đổi nhạc.
 3. Đoạn ngắn hơn MIN_SCENE_SECONDS gộp vào đoạn kề gần không khí nhất.
+4. (Tuỳ chọn, khi học sinh q06 đã đọc từng lát ~45 s của chương - `onset_starts`) cắt thêm ở chỗ căng thẳng lên / xuống mạnh,
+   để nhạc theo kịp lúc truyện căng lên thay vì trễ gần một phút.
 
 Câu kể trung tính (phần lớn văn bản) nặng ít hơn: nó không nói lên không khí, chỉ là nền. `confidence` = phần trọng số đến
 từ câu CÓ cảm xúc - thấp thì đoạn không có không khí rõ (chọn nhạc nhẹ hay để im lặng là việc của bước chọn nhạc).
@@ -81,6 +83,17 @@ CHAPTER_LEVEL_SHAPE = 0.5
 CHAPTER_LEVEL_T_LABELS = (4.022, -0.056)
 # Hệ số hình của học sinh trong chương (đo ở M3: k = 1; CL của P0 giữ 0.5).
 STUDENT_SHAPE = 1.0
+# Ranh giới "lên căng" (lỗi 3 MUSIC-AUDIT: nhạc nhấc trễ ~55 s khi truyện căng lên; docs/MUSIC_RESEARCH.md 11-10, Corpus
+# research/music/PLAN_t_onset3.md + SPEC_app_onset.md). Nhãn câu quanh chỗ căng lên gần như phẳng, nhưng học sinh q06 đọc từng
+# LÁT ~45 s thì thấy: T lát sau trừ lát trước (theo sd của chương) lệch +.72 sd tại chỗ ấy, ~0 ở khe khác. Chương có giá trị T
+# của lát (`music_scene_student.compute`) thì: ranh giới không khí chia bằng bộ hằng ONSET_TUNING (cửa sổ 30 s, khoảng cách .3,
+# căng thẳng của câu cộng vào arousal khi tính điểm chia), rồi cắt thêm ở khe lát có |Δ| >= ONSET_THRESHOLD sd, cách mọi ranh
+# giới khác >= ONSET_GAP_SECONDS. Hằng ĐÓNG BĂNG theo nghiên cứu (cấu hình (45, 1, 1.5, 60, A*)) - muốn đổi phải đo lại.
+ONSET_TILE_SECONDS = 45.0
+ONSET_THRESHOLD = 1.5
+ONSET_GAP_SECONDS = 60.0
+# (SMOOTH_SECONDS, SHIFT_DISTANCE, SHIFT_HOLD_SECONDS, MIN_SCENE_SECONDS, trọng số line_tension cộng vào arousal của điểm chia)
+ONSET_TUNING = (30.0, 0.3, 40.0, 60.0, 1.0)
 
 SEPARATOR = re.compile(r"^\s*(?:[*~#=_\-·•oO0]\s*){3,}\s*$")
 TIME_JUMP = re.compile(
@@ -324,33 +337,118 @@ class _Accumulator:
                 for name in EMOTION_CLASSES}
 
 
-def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = None,
-                   boundaries: Mapping[str, Mapping[Any, str]] | None = None,
-                   student: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
-    """Các đoạn của một chương (`store.chapter_script` / `scripts/<n>.json` của `.abook`). `moods`: kết quả LLM đọc cả
-    đoạn (`music_moods.load()["scenes"]`) - chỉ đổi valence / tension của đoạn, KHÔNG bao giờ đổi ranh giới đoạn.
-    `boundaries`: ranh giới có lý do tính sẵn của chương này theo nguồn, {"llm": {id câu bắt đầu cảnh: loại}} - vào thành cờ
-    `sceneBreak` như dấu hiệu đổi cảnh (`with_scene_breaks`). `student`: hình dạng không khí trong chương do học sinh đoán
-    (`music_scene_student.load()["scenes"]`) - đoạn lấy hình từ đó (`apply_student`), cũng không đổi ranh giới."""
-    segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
-    if not segments:
-        return []
-    segments = with_scene_breaks(segments, boundaries)
-    seconds = _durations(segments)
-    points = [line_point(segment) for segment in segments]
+def _timeline(segments: list[dict[str, Any]], seconds: list[float]) -> list[float]:
+    """Giây bắt đầu của từng câu: `start` của câu nếu có audio, không thì cộng dồn thời lượng ước."""
     timeline = []
     clock = 0.0
     for segment, length in zip(segments, seconds):
         start = float(segment["start"]) if segment.get("start") is not None else clock
         timeline.append(start)
         clock = start + length
+    return timeline
+
+
+def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = None,
+                   boundaries: Mapping[str, Mapping[Any, str]] | None = None,
+                   student: list[dict[str, Any]] | None = None,
+                   onsets: Iterable[Any] | None = None) -> list[dict[str, Any]]:
+    """Các đoạn của một chương (`store.chapter_script` / `scripts/<n>.json` của `.abook`). `moods`: kết quả LLM đọc cả
+    đoạn (`music_moods.load()["scenes"]`) - chỉ đổi valence / tension của đoạn, KHÔNG bao giờ đổi ranh giới đoạn.
+    `boundaries`: ranh giới có lý do tính sẵn của chương này theo nguồn, {"llm": {id câu bắt đầu cảnh: loại}} - vào thành cờ
+    `sceneBreak` như dấu hiệu đổi cảnh (`with_scene_breaks`). `student`: hình dạng không khí trong chương do học sinh đoán
+    (`music_scene_student.load()["scenes"]`) - đoạn lấy hình từ đó (`apply_student`), cũng không đổi ranh giới.
+    `onsets`: id câu mở đoạn "lên căng" của chương (`onset_starts`; None = đường thường). Có thì ranh giới không khí chia bằng
+    ONSET_TUNING rồi cắt thêm ở các câu ấy (lý do "tension_shift" - ranh giới không khí, KHÔNG phải chỗ đổi bài); không khí
+    của đoạn vẫn tính như đường thường."""
+    segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
+    if not segments:
+        return []
+    segments = with_scene_breaks(segments, boundaries)
+    seconds = _durations(segments)
+    timeline = _timeline(segments, seconds)
+    if onsets is None:
+        scenes = _mood_scenes(segments, seconds, timeline)
+    else:
+        base = _mood_scenes(segments, seconds, timeline, ONSET_TUNING)
+        position = {segment.get("id"): index for index, segment in enumerate(segments)}
+        reasons = {scene["first"]: scene["reason"] for scene in base}
+        reasons.update({position[i]: "tension_shift" for i in onsets if position.get(i) not in (None, 0) and position[i] not in reasons})
+        firsts = sorted(reasons)
+        scenes = []
+        for k, first in enumerate(firsts):
+            last = firsts[k + 1] - 1 if k + 1 < len(firsts) else len(segments) - 1
+            scene = {"first": first, "last": last, "reason": reasons[first], "acc": _Accumulator()}
+            for j in range(first, last + 1):
+                scene["acc"].add_line(segments[j], seconds[j])
+            scenes.append(scene)
+    spans = _mood_spans(moods, script.get("chapterId"), segments)
+    views = [_view(scene, segments, timeline, seconds, script, spans) for scene in scenes]
+    return apply_student(views, student) or apply_chapter_level(views)
+
+
+def onset_tiles(script: dict[str, Any]) -> list[tuple[int, int]]:
+    """Các LÁT của chương cho học sinh đoán T (vị trí câu đầu, vị trí câu cuối): câu liền nhau gom tới khi đủ ONSET_TILE_SECONDS,
+    lát đóng trước câu có ranh giới cứng (`hard_break`). Chữ của lát = `music_moods.scene_text` của khúc ấy."""
+    segments = with_scene_breaks([segment for segment in script.get("segments") or [] if isinstance(segment, dict)])
+    seconds = _durations(segments)
+    out: list[tuple[int, int]] = []
+    start, total = 0, 0.0
+    for index, segment in enumerate(segments):
+        if index > start and (total >= ONSET_TILE_SECONDS or hard_break(segment, segments[index - 1])):
+            out.append((start, index - 1))
+            start, total = index, 0.0
+        total += seconds[index]
+    if segments:
+        out.append((start, len(segments) - 1))
+    return out
+
+
+def onset_starts(script: dict[str, Any], tensions: list[float]) -> list[Any]:
+    """Id câu mở đoạn "lên căng" (đưa vào `chapter_scenes(onsets=...)`) từ T học sinh đoán cho từng lát của `onset_tiles(script)`
+    (cùng thứ tự; chỉ HIỆU giữa các lát có nghĩa nên thang / độ dịch của T không quan trọng). Khe giữa lát j-1 và j:
+    Δ = (T_j - T_{j-1}) / sd (sd của T các lát, trọng số thời lượng); duyệt |Δ| giảm dần, nhận khe có |Δ| >= ONSET_THRESHOLD, ở
+    giây >= ONSET_GAP_SECONDS của chương và cách mọi ranh giới (của ONSET_TUNING và khe đã nhận) >= ONSET_GAP_SECONDS. Cả lên lẫn
+    xuống. Khớp `LLM_Train/music/t_onset3.py::measure_b` với cấu hình đóng băng."""
+    segments = with_scene_breaks([segment for segment in script.get("segments") or [] if isinstance(segment, dict)])
+    tiles = onset_tiles(script)
+    if len(tiles) < 2 or len(tensions) != len(tiles):
+        return []
+    seconds = _durations(segments)
+    timeline = _timeline(segments, seconds)
+    weights = [sum(seconds[first:last + 1]) for first, last in tiles]
+    total = sum(weights)
+    mean = sum(w * t for w, t in zip(weights, tensions)) / total
+    sd = math.sqrt(sum(w * (t - mean) ** 2 for w, t in zip(weights, tensions)) / total) or 1e-9
+    gaps = sorted(((tiles[j][0], timeline[tiles[j][0]] - timeline[0], (tensions[j] - tensions[j - 1]) / sd)
+                   for j in range(1, len(tiles))), key=lambda gap: -abs(gap[2]))
+    times = [timeline[scene["first"]] - timeline[0] for scene in _mood_scenes(segments, seconds, timeline, ONSET_TUNING)[1:]]
+    out = []
+    for first, at, delta in gaps:
+        if abs(delta) >= ONSET_THRESHOLD and at >= ONSET_GAP_SECONDS and all(abs(at - other) >= ONSET_GAP_SECONDS for other in times):
+            out.append(segments[first].get("id"))
+            times.append(at)
+    return out
+
+
+def _mood_scenes(segments: list[dict[str, Any]], seconds: list[float], timeline: list[float],
+                 tuning: tuple[float, float, float, float, float] | None = None) -> list[dict[str, Any]]:
+    """Ranh giới cứng + ranh giới đổi không khí + gộp đoạn ngắn + chia đoạn dài: các đoạn {first, last, reason, acc}. `tuning`
+    (SMOOTH_SECONDS, SHIFT_DISTANCE, SHIFT_HOLD_SECONDS, MIN_SCENE_SECONDS, trọng số căng thẳng) - None = hằng của module, trọng
+    số 0. Trọng số khác 0 thì arousal của điểm mỗi câu cộng thêm trọng số x `line_tension` (kẹp [-1, 1]); khi ấy `acc` của đoạn
+    mang điểm đã cộng, chỉ dùng cho ranh giới (`chapter_scenes` dựng lại đoạn bằng điểm thường)."""
+    smooth_seconds, shift_distance, hold_seconds, min_scene, tension_weight = tuning or (
+        SMOOTH_SECONDS, SHIFT_DISTANCE, SHIFT_HOLD_SECONDS, MIN_SCENE_SECONDS, 0.0)
+    points = [line_point(segment) for segment in segments]
+    if tension_weight:
+        points = [(v, max(-1.0, min(1.0, a + tension_weight * line_tension(segment))), w, affective)
+                  for (v, a, w, affective), segment in zip(points, segments)]
 
     # Không khí trượt: trung bình có trọng số các câu trong SMOOTH_SECONDS trước đó.
     smooth: list[tuple[float, float]] = []
     window: list[int] = []
     for index in range(len(segments)):
         window.append(index)
-        while window and timeline[index] - timeline[window[0]] > SMOOTH_SECONDS:
+        while window and timeline[index] - timeline[window[0]] > smooth_seconds:
             window.pop(0)
         acc = _Accumulator()
         for j in window:
@@ -370,14 +468,14 @@ def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = 
             scenes.append(current)
             current = open_scene(index, reason)
             pending_shift = None
-        elif current["acc"].seconds >= MIN_SCENE_SECONDS:
+        elif current["acc"].seconds >= min_scene:
             here = current["acc"].point()
-            moved = math.dist(here, smooth[index]) >= SHIFT_DISTANCE
+            moved = math.dist(here, smooth[index]) >= shift_distance
             if moved and pending_shift is None:
                 pending_shift = index
             elif not moved:
                 pending_shift = None
-            if pending_shift is not None and timeline[index] - timeline[pending_shift] >= SHIFT_HOLD_SECONDS:
+            if pending_shift is not None and timeline[index] - timeline[pending_shift] >= hold_seconds:
                 # Cắt ở chỗ không khí BẮT ĐẦU đổi, không ở chỗ phát hiện: các câu từ đó thuộc đoạn mới.
                 tail = _Accumulator()
                 for j in range(pending_shift, index):
@@ -393,10 +491,7 @@ def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = 
         current["acc"].add_line(segments[index], seconds[index], points[index])
         current["last"] = index
     scenes.append(current)
-    scenes = _split_long(_merge_short(scenes), segments, seconds)
-    spans = _mood_spans(moods, script.get("chapterId"), segments)
-    views = [_view(scene, segments, timeline, seconds, script, spans) for scene in scenes]
-    return apply_student(views, student) or apply_chapter_level(views)
+    return _split_long(_merge_short(scenes, min_scene), segments, seconds)
 
 
 def apply_chapter_level(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -555,7 +650,7 @@ def _split_long(scenes: list[dict[str, Any]], segments: list[dict[str, Any]], se
     return out
 
 
-def _merge_short(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _merge_short(scenes: list[dict[str, Any]], min_seconds: float | None = None) -> list[dict[str, Any]]:
     """Đoạn ngắn hơn MIN_SCENE_SECONDS gộp vào đoạn kề có không khí gần nhất (ranh giới cứng cũng nhường: một dòng `***`
     trước hai câu cuối chương không đáng một bản nhạc riêng)."""
     merged = list(scenes)
@@ -563,7 +658,7 @@ def _merge_short(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     while changed and len(merged) > 1:
         changed = False
         for index, scene in enumerate(merged):
-            if scene["acc"].seconds >= MIN_SCENE_SECONDS:
+            if scene["acc"].seconds >= (MIN_SCENE_SECONDS if min_seconds is None else min_seconds):
                 continue
             neighbours = [j for j in (index - 1, index + 1) if 0 <= j < len(merged)]
             target = min(neighbours, key=lambda j: math.dist(merged[j]["acc"].point(), scene["acc"].point()))
@@ -618,8 +713,11 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
 
 def book_scenes(scripts: Iterable[dict[str, Any]], moods: list[dict[str, Any]] | None = None,
                 boundaries: Mapping[Any, Mapping[str, Mapping[Any, str]]] | None = None,
-                student: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+                student: list[dict[str, Any]] | None = None,
+                onsets: Mapping[str, Iterable[Any]] | None = None) -> list[dict[str, Any]]:
     """Các đoạn của cả cuốn, theo thứ tự chương. `moods`, `student`: xem `chapter_scenes`; `boundaries`: {chapterId: ranh giới theo
-    nguồn của chương ấy} (xem `chapter_scenes`)."""
+    nguồn của chương ấy} (xem `chapter_scenes`); `onsets`: {str(chapterId): id câu mở đoạn "lên căng"} (`music_scene_student.onsets_of`)
+    - chương không có trong đó đi đường thường."""
     return [scene for script in scripts
-            for scene in chapter_scenes(script, moods, (boundaries or {}).get(script.get("chapterId")), student)]
+            for scene in chapter_scenes(script, moods, (boundaries or {}).get(script.get("chapterId")), student,
+                                        (onsets or {}).get(str(script.get("chapterId"))))]
