@@ -4337,6 +4337,20 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 tối - LV-E (mức năng lượng của chương từ nhúng q06): THUA theo luật, trượt đúng một điều kiện
+
+Chẩn đoán (bộ học, đường STUDIO): hình E trong chương (dE học sinh) r .56, nhưng MỨC E chương (TB nhãn câu) r qua chương chỉ .27.
+Mức chương chiếm 32% phương sai E vàng.
+
+LV-E (ghi trước Corpus 16e0728, kết quả 4a09014): ridge trên TB nhúng q06 học mức E của 542 chương bạc, như LV-Q06 cho V; không
+chọn gì trên vàng.
+- Bộ học: rE .247 -> .383; mức E r .54 -> .88, MAE .150 -> .095. Phần thời lượng cảnh E >= .4 mà nhạc yếu: 53 -> 39%.
+- Bộ 7: rE .287 -> .325, MAE .115 -> .098, yếu 33 -> 18%.
+- Chặn và sàn đều đạt.
+- Chỉ trượt bootstrap bộ 7 ([−.096; +.190]): bộ 7 có ít lực cho thứ đo ở mức chương (sd mức E vàng .096 so với .241 ở bộ học).
+
+Theo luật: THUA, app giữ nguyên. Thử lại trên bộ 11+12 chưa nhìn hay không do Lead quyết.
+
 ### 11-10 chiều - VALENCE (lỗi 4 audit-2: cảnh buồn mà nhạc sáng): THUA
 
 Chẩn đoán trên bộ học (val_diag.log):
