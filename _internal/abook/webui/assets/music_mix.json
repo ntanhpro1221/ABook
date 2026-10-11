@@ -1,0 +1,12 @@
+{
+  "fadeSeconds": 2,
+  "siblingFadeSeconds": 6,
+  "stepRampSeconds": 4,
+  "chapterEndFadeSeconds": 2.5,
+  "cueMergeGapSeconds": 5,
+  "tailMinSeconds": 20,
+  "loopCrossfadeSeconds": 2,
+  "audibleThresholdDbfs": -60,
+  "voicePlayedLufs": -16.989700043360187,
+  "shortTermFloorLu": 10
+}

@@ -1,5 +1,22 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MusicBed, RETRY_MS, SIBLING_FADE_SECONDS, STEP_RAMP_SECONDS, stepDbAt, type MusicCue } from "./musicBed";
+import mix from "../../../abook/webui/assets/music_mix.json";
+import {
+  FADE_SECONDS,
+  LOOP_CROSSFADE_SECONDS,
+  MusicBed,
+  RETRY_MS,
+  SIBLING_FADE_SECONDS,
+  STEP_RAMP_SECONDS,
+  alignedPosition,
+  finalLoop,
+  finished,
+  loopBounds,
+  loopDue,
+  siblingFadeSeconds,
+  stepDbAt,
+  type MusicCue,
+} from "./musicBed";
 
 const cues: MusicCue[] = [
   { start: 0, end: 120, link: "a", key: "1:1", src: "/a" },
@@ -191,7 +208,7 @@ describe("bước âm lượng trong cảnh và nối bài anh em", () => {
     bed.sync(151, true);
     expect(bed.activeLink).toBe("c");
     expect(made["/a"].loop).toBe(false);
-    expect(made["/c"].loop).toBe(true);
+    expect(made["/c"].loop, "bài đủ dài lặp bằng mờ chéo vào chính nó, không audio.loop").toBe(false);
     vi.advanceTimersByTime(3000); // nửa đường mờ chéo: cả hai còn kêu
     expect(made["/a"].volume).toBeGreaterThan(0.05);
     expect(made["/c"].volume).toBeGreaterThan(0.05);
@@ -327,7 +344,7 @@ describe("vị trí trong bài theo vị trí trong chương (soát a26 L8)", ()
     expect(made[0].currentTime).toBe(95);
   });
 
-  it("tua trong cùng một bài thì nhạc dời theo (lặp bài thì theo vòng); không tua thì chơi tiếp", () => {
+  it("tua trong cùng một bài thì nhạc dời theo (lặp bài thì theo chu kỳ độ dài - X); không tua thì chơi tiếp", () => {
     const { bed, made } = fakes();
     bed.setCues([{ start: 0, end: 600, link: "a", key: "1:1", src: "/a" }], -20, 0);
     bed.sync(0, true);
@@ -337,7 +354,7 @@ describe("vị trí trong bài theo vị trí trong chương (soát a26 L8)", ()
     expect(made[0].currentTime, "không tua: không động vào nhạc").toBe(12);
     bed.sync(250, true, true);
     expect(made).toHaveLength(1);
-    expect(made[0].currentTime).toBe(50);
+    expect(made[0].currentTime).toBe(250 - (200 - LOOP_CROSSFADE_SECONDS));
   });
 });
 
@@ -364,28 +381,33 @@ describe("đuôi bài: kết tự nhiên, bài kế vào ngay (MIX_QA 3.1, 3.3)"
     { start: 400, end: 600, link: "c", key: "1:1", src: "/c", gainDb: -10, sibling: true },
   ];
 
-  it("mốc tail: còn lặp ở vòng trước, thôi lặp ở vòng cuối (theo độ dài thật của bài)", () => {
+  it("mốc tail: vòng trước mở phần tử lặp, vòng cuối thì không (theo độ dài thật của bài)", () => {
     const { bed, made } = bedWithClock();
     bed.setCues(tail, -20, 0);
     bed.sync(10, true);
     const a = made["/a"][0];
-    a.currentTime = 150;
-    bed.sync(150, true);
-    expect(a.loop, "vòng đầu: còn một vòng nữa").toBe(true);
-    a.currentTime = 10;
-    bed.sync(210, true);
-    expect(a.loop, "vòng cuối: chơi nốt rồi thôi").toBe(false);
+    a.currentTime = 200 - LOOP_CROSSFADE_SECONDS;
+    bed.sync(198, true);
+    expect(made["/a"], "vòng đầu: còn một vòng nữa").toHaveLength(2);
+    const again = made["/a"][1];
+    again.currentTime = 196;
+    bed.sync(394, true);
+    again.currentTime = 200 - LOOP_CROSSFADE_SECONDS;
+    bed.sync(396, true);
+    expect(made["/a"], "vòng cuối: chơi nốt rồi thôi").toHaveLength(2);
     bed.sync(20, true, true);
-    expect(a.loop, "tua về vòng đầu: lặp lại như cũ").toBe(true);
+    again.currentTime = 200 - LOOP_CROSSFADE_SECONDS;
+    bed.sync(21, true);
+    expect(made["/a"], "tua về vòng đầu: lặp lại như cũ").toHaveLength(3);
   });
 
   it("mốc thường không bao giờ thôi lặp", () => {
     const { bed, made } = bedWithClock();
     bed.setCues([{ ...tail[0], tail: undefined }], -20, 0);
     bed.sync(10, true);
-    made["/a"][0].currentTime = 10;
-    bed.sync(210, true);
-    expect(made["/a"][0].loop).toBe(true);
+    made["/a"][0].currentTime = 200 - LOOP_CROSSFADE_SECONDS;
+    bed.sync(396, true);
+    expect(made["/a"]).toHaveLength(2);
   });
 
   it("bài cũ hết trước mốc: bài anh em vào ngay, không chuyển ngược trước đầu mốc của nó; tua thì theo mốc như thường", () => {
@@ -445,4 +467,209 @@ describe("đuôi bài: kết tự nhiên, bài kế vào ngay (MIX_QA 3.1, 3.3)"
     expect(made["/b"]).toHaveLength(2);
     expect(old.paused, "bài cũ không phát tiếp").toBe(true);
   });
+});
+
+describe("lặp mờ chéo trong đoạn nghe được (lô 2 mix-loop, MIX_QA 3.2, 3.5, 9)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  type Fake = { volume: number; loop: boolean; paused: boolean; currentTime: number; duration: number; ended: boolean };
+  function bedWithClock(duration = 120) {
+    const made: Record<string, Fake[]> = {};
+    const bed = new MusicBed((src) => {
+      const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration, ended: false };
+      (made[src] ??= []).push(fake);
+      return Object.assign(fake, {
+        play: () => { fake.paused = false; return Promise.resolve(); },
+        pause: () => { fake.paused = true; },
+        addEventListener: () => undefined,
+      });
+    });
+    return { bed, made };
+  }
+  // Bài 120 s, im 2 s đầu và 10 s cuối: A 2, E 110, chu kỳ P = 106.
+  const a: MusicCue = { start: 0, end: 600, link: "a", key: "1:1", src: "/a", gainDb: -10, audibleStart: 2, audibleEnd: 110 };
+  const db = (value: number) => Math.pow(10, value / 20);
+
+  it("hằng số trộn đọc từ music_mix.json, không chép tay", () => {
+    expect([FADE_SECONDS, SIBLING_FADE_SECONDS, STEP_RAMP_SECONDS, LOOP_CROSSFADE_SECONDS])
+      .toEqual([mix.fadeSeconds, mix.siblingFadeSeconds, mix.stepRampSeconds, mix.loopCrossfadeSeconds]);
+  });
+
+  it("tới E - X thì một phần tử mới vào từ A, mờ chéo X giây; phần tử cũ dừng khi mờ xong", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithClock();
+    bed.setCues([a], -20, 0);
+    bed.sync(10, true);
+    vi.advanceTimersByTime(3000);
+    const first = made["/a"][0];
+    expect(first.loop, "không lặp bằng audio.loop (nối thẳng có tách / lỗ im)").toBe(false);
+    first.currentTime = 107.9;
+    bed.sync(105.9, true);
+    expect(made["/a"]).toHaveLength(1);
+    first.currentTime = 110 - LOOP_CROSSFADE_SECONDS;
+    bed.sync(106, true);
+    expect(made["/a"]).toHaveLength(2);
+    const second = made["/a"][1];
+    expect(second.currentTime, "vào từ A").toBe(2);
+    expect(bed.activeLink).toBe("a");
+    vi.advanceTimersByTime((LOOP_CROSSFADE_SECONDS * 1000) / 2);
+    expect(first.volume).toBeGreaterThan(0.05);
+    expect(second.volume).toBeGreaterThan(0.05);
+    vi.advanceTimersByTime((LOOP_CROSSFADE_SECONDS * 1000) / 2 + 200);
+    expect(first.volume).toBe(0);
+    expect(first.paused).toBe(true);
+    expect(second.volume).toBeCloseTo(db(-10), 3);
+  });
+
+  it("thiếu A/E (sách đóng gói cũ): A = 0, E = độ dài thật", () => {
+    const { bed, made } = bedWithClock();
+    bed.setCues([{ ...a, audibleStart: undefined, audibleEnd: undefined }], -20, 0);
+    bed.sync(10, true);
+    made["/a"][0].currentTime = 120 - LOOP_CROSSFADE_SECONDS - 0.1;
+    bed.sync(117.9, true);
+    expect(made["/a"]).toHaveLength(1);
+    made["/a"][0].currentTime = 120 - LOOP_CROSSFADE_SECONDS;
+    bed.sync(118, true);
+    expect(made["/a"]).toHaveLength(2);
+    expect(made["/a"][1].currentTime).toBe(0);
+  });
+
+  it("bài quá ngắn để mờ chéo (E - A < 3X) lặp thường cả file như cũ", () => {
+    const { bed, made } = bedWithClock(5);
+    bed.setCues([{ ...a, audibleStart: 0.2, audibleEnd: 4.9 }], -20, 0);
+    bed.sync(10, true);
+    expect(made["/a"][0].loop).toBe(true);
+    made["/a"][0].currentTime = 4.95;
+    bed.sync(14.95, true);
+    expect(made["/a"]).toHaveLength(1);
+  });
+
+  it("tua: vị trí A + ((giây - đầu mốc) mod P)", () => {
+    const { bed, made } = bedWithClock();
+    bed.setCues([a], -20, 0);
+    bed.sync(0, true);
+    bed.sync(250, true, true);
+    expect(made["/a"]).toHaveLength(1);
+    expect(made["/a"][0].currentTime).toBe(2 + (250 % 106));
+  });
+
+  it("vòng cuối của mốc tail không mở phần tử mới; bài chơi tới E thì mốc anh em kế vào sớm", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithClock();
+    bed.setCues([
+      { ...a, end: 214, tail: true },
+      { start: 214, end: 400, link: "c", key: "1:1", src: "/c", gainDb: -10, sibling: true },
+    ], -20, 0);
+    bed.sync(1, true);
+    made["/a"][0].currentTime = 108;
+    bed.sync(106, true);
+    expect(made["/a"], "vòng đầu: 108 s nữa mốc mới hết").toHaveLength(2);
+    const last = made["/a"][1];
+    last.currentTime = 108;
+    bed.sync(212, true);
+    expect(made["/a"], "vòng cuối: không mở phần tử mới").toHaveLength(2);
+    last.currentTime = 109.9;
+    bed.sync(213.5, true);
+    expect(bed.activeLink).toBe("a");
+    last.currentTime = 110; // tới E (bài thật lệch số danh mục 0,4 s): phần sau E là im
+    bed.sync(213.6, true);
+    expect(bed.activeLink, "vào sớm khi tới E, không chờ ended").toBe("c");
+    expect(made["/c"][0].currentTime).toBe(0);
+    bed.sync(213.8, true);
+    expect(bed.activeLink, "không chuyển ngược trước đầu mốc").toBe("c");
+  });
+
+  it("nối bài anh em: bài cũ mờ ra trong phần còn lại thật của nó khi ngắn hơn SIBLING_FADE_SECONDS", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithClock();
+    bed.setCues([
+      { ...a, end: 212, tail: true },
+      { start: 212, end: 400, link: "c", key: "1:1", src: "/c", gainDb: -10, sibling: true },
+    ], -20, 0);
+    bed.sync(1, true);
+    vi.advanceTimersByTime(3000);
+    const old = made["/a"][0];
+    old.currentTime = 108; // còn 2 s tới E
+    bed.sync(212, true);
+    expect(bed.activeLink).toBe("c");
+    vi.advanceTimersByTime(1000);
+    expect(old.volume, "giữa đường mờ 2 s").toBeGreaterThan(0.05);
+    expect(old.volume).toBeLessThan(db(-10) * 0.6);
+    vi.advanceTimersByTime(1200);
+    expect(old.volume, "hết mờ đúng lúc bài hết, không bị cắt khi còn kêu").toBe(0);
+    expect(made["/c"][0].volume, "bài mới vẫn mờ vào 6 s").toBeLessThan(db(-10) - 0.05);
+  });
+});
+
+describe("dòng thời gian chung với máy chủ và Android (tests/fixtures/music_timeline)", () => {
+  type Track = { seconds: number; audibleStart?: number; audibleEnd?: number };
+  type Cue = { start: number; end: number; track: string; gainDb: number; sibling?: boolean; tail?: boolean };
+  type Element = { track: string; cue: number; enter: "start" | "loop" | "early"; from: number; to: number; position: number; loop?: boolean };
+  type Case = { chapterSeconds: number; tracks: Record<string, Track>; cues: Cue[]; timeline: Element[] };
+  const NAMES = ["loop_crossfade", "sibling_tail", "stop_at", "chapter_end", "short_track"];
+
+  function load(name: string): Case {
+    return JSON.parse(readFileSync(new URL(`../../../tests/fixtures/music_timeline/${name}.json`, import.meta.url)).toString("utf8")) as Case;
+  }
+
+  /** Mốc như trình phát nhận (máy chủ đã kẹp cuối chương - music_plan.clamp_to_chapter), dạng MusicCue. */
+  function playerCues(data: Case): MusicCue[] {
+    const limit = data.chapterSeconds - mix.chapterEndFadeSeconds;
+    return data.cues
+      .map((cue) => ({ ...cue, end: Math.min(cue.end, limit), tail: cue.end > limit ? undefined : cue.tail }))
+      .filter((cue) => cue.end > cue.start)
+      .map((cue) => ({ ...cue, link: cue.track, key: cue.track, src: `/${cue.track}`,
+        audibleStart: data.tracks[cue.track].audibleStart, audibleEnd: data.tracks[cue.track].audibleEnd }));
+  }
+
+  for (const name of NAMES) {
+    it(name, () => {
+      const data = load(name);
+      const cues = playerCues(data);
+      data.timeline.forEach((element, index) => {
+        const cue = cues[element.cue];
+        const bounds = loopBounds(cue, data.tracks[element.track].seconds);
+        const at = (other: Element, seconds: number) => other.position + seconds - other.from;
+        expect(!!element.loop, `${name} #${index}: lặp thường hay mờ chéo`).toBe(!bounds.crossfade);
+        if (element.enter !== "early") {
+          expect(alignedPosition(cue, element.from, bounds), `${name} #${index}: vị trí căn`).toBeCloseTo(element.position, 6);
+        }
+        const before = data.timeline[index - 1];
+        if (element.enter === "loop") {
+          const position = at(before, element.from);
+          expect(loopDue(bounds, position), `${name} #${index}: mở phần tử lặp ở E - X`).toBe(true);
+          expect(loopDue(bounds, position - 0.05)).toBe(false);
+          expect(finalLoop(cue, element.from, position, bounds), `${name} #${index}: chưa phải vòng cuối`).toBe(false);
+          expect(element.position).toBe(bounds.start);
+        }
+        if (element.enter === "early") {
+          const previous = loopBounds(cues[before.cue], data.tracks[before.track].seconds);
+          expect(finished(previous, at(before, element.from), false), `${name} #${index}: vào sớm khi bài trước tới E`).toBe(true);
+          expect(finished(previous, at(before, element.from) - 0.05, false)).toBe(false);
+          expect(cues[before.cue].end).toBe(cue.start);
+          expect(element.from).toBeLessThan(cue.start);
+          expect(element.position).toBe(bounds.start);
+        }
+        const looped = data.timeline.slice(index + 1).some((other) => other.cue === element.cue && other.enter === "loop");
+        if (cue.tail && bounds.crossfade) {
+          const position = bounds.end - LOOP_CROSSFADE_SECONDS;
+          const seconds = element.from + position - element.position;
+          expect(finalLoop(cue, seconds, position, bounds), `${name} #${index}: vòng cuối = không có phần tử lặp sau`).toBe(!looped);
+        }
+        if (cue.tail && !bounds.crossfade) {
+          expect(finalLoop(cue, element.to - bounds.period, 0, bounds), `${name} #${index}: vòng cuối của lặp thường`).toBe(true);
+          expect(finalLoop(cue, element.to - 2 * bounds.period, 0, bounds)).toBe(false);
+        }
+        const following = cues[element.cue + 1];
+        if (following?.sibling && following.start === cue.end && element.to > cue.end && !looped) {
+          expect(element.to - cue.end, `${name} #${index}: anh em cũ mờ trong phần còn lại`)
+            .toBeCloseTo(siblingFadeSeconds(bounds, at(element, cue.end)), 6);
+        }
+        if (!following?.sibling && element.to > cue.end + 1e-9 && !looped) {
+          expect(element.to - cue.end, `${name} #${index}: mờ ra cuối mốc`).toBeCloseTo(FADE_SECONDS, 6);
+        }
+        expect(element.to, `${name} #${index}: nhạc mờ xong trước khi giọng hết`).toBeLessThanOrEqual(data.chapterSeconds - 0.5);
+      });
+    });
+  }
 });

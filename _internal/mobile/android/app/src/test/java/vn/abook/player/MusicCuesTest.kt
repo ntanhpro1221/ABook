@@ -4,7 +4,9 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
+import java.io.File
 import kotlin.math.pow
 
 /**
@@ -21,6 +23,11 @@ class MusicCuesTest {
             {"start": 500, "end": 600, "track": "music/nope.mp3"}
         ]}}""",
     )
+
+    @Before
+    fun loadMix() {
+        MusicCues.mix = MusicMix.parse(File("../../../abook/webui/assets/music_mix.json").readText())
+    }
 
     @Test
     fun steps_and_the_sibling_flag_come_through_and_broken_steps_are_dropped() {
@@ -57,7 +64,7 @@ class MusicCuesTest {
         assertEquals(0.5f, MusicCues.toward(0.45f, 0.5f, 0.1f), 0f)
         // 4 s trượt ở nhịp 50 ms: 80 nhịp từ mức cũ tới mức mới
         var volume = 0.2f
-        val perTick = (0.4f - 0.2f) * 50 / MusicCues.STEP_RAMP_MS
+        val perTick = (0.4f - 0.2f) * 50 / MusicCues.mix.stepRampMs
         repeat(79) { volume = MusicCues.toward(volume, 0.4f, perTick) }
         assertTrue(volume < 0.4f)
         volume = MusicCues.toward(volume, 0.4f, perTick)
@@ -66,9 +73,10 @@ class MusicCuesTest {
 
     @Test
     fun the_place_in_the_track_follows_the_place_in_the_chapter_and_wraps_when_it_loops() {
+        // Sách cũ không có đoạn nghe được: A = 0, E = 200 s, lặp mờ chéo nên chu kỳ P = 200 - X = 198 s.
         val cue = MusicCues.Cue(start = 100.0, end = 600.0, track = calm, gainDb = -8.0)
         assertEquals(95_000L, MusicCues.offsetMs(cue, 195.0, 200_000L))
-        assertEquals(50_000L, MusicCues.offsetMs(cue, 350.0, 200_000L))
+        assertEquals(52_000L, MusicCues.offsetMs(cue, 350.0, 200_000L))
         assertEquals(0L, MusicCues.offsetMs(cue, 90.0, 200_000L))
         assertEquals(null, MusicCues.offsetMs(cue, 195.0, -1L))
     }
@@ -87,14 +95,15 @@ class MusicCuesTest {
     }
 
     @Test
-    fun only_the_last_loop_of_a_tail_cue_stops_repeating_by_the_real_track_length() {
+    fun only_the_last_loop_of_a_tail_cue_stops_repeating_by_the_end_of_the_audible_part() {
         val (tail, next, plain) = MusicCues.of(tailed, 1)
-        // Bài 200 s, mốc 0-400: vòng đầu còn một vòng nữa, vòng cuối thì chơi nốt rồi thôi.
-        assertFalse(MusicCues.finalLoop(tail, 150.0, 150_000L, 200_000L))
-        assertTrue(MusicCues.finalLoop(tail, 210.0, 10_000L, 200_000L))
-        assertFalse("chưa biết độ dài bài", MusicCues.finalLoop(tail, 210.0, 10_000L, -1L))
-        assertFalse("mốc thường", MusicCues.finalLoop(next, 590.0, 190_000L, 200_000L))
-        assertFalse(MusicCues.finalLoop(plain, 690.0, 70_000L, 200_000L))
+        // Bài 200 s (A = 0, E = 200, P = 198), mốc 0-400: vòng đầu còn một vòng nữa, vòng cuối thì chơi tới E rồi thôi.
+        val bounds = MusicCues.loopBounds(tail, 200.0)
+        assertFalse(MusicCues.finalLoop(tail, 150.0, 150.0, bounds))
+        assertTrue(MusicCues.finalLoop(tail, 210.0, 12.0, bounds))
+        assertFalse("chưa biết độ dài bài", MusicCues.finalLoop(tail, 210.0, 12.0, MusicCues.loopBounds(tail, Double.NaN)))
+        assertFalse("mốc thường", MusicCues.finalLoop(next, 590.0, 190.0, bounds))
+        assertFalse(MusicCues.finalLoop(plain, 690.0, 70.0, bounds))
     }
 
     @Test

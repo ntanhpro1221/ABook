@@ -24,8 +24,8 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from ..config import DEFAULT_SETTINGS
-from ..io_utils import atomic_write_json, atomic_write_text, ffmpeg_available, ffmpeg_executable, run_hidden
-from . import music_moods, music_scene_student, music_scenes, music_select, store
+from ..io_utils import atomic_write_json, ffmpeg_available, ffmpeg_executable, run_hidden
+from . import music_mix, music_moods, music_scene_student, music_scenes, music_select, store
 
 PLAN_FILE = "music_plan.json"
 OVERRIDES_FILE = "music_overrides.json"
@@ -35,14 +35,19 @@ DEFAULT_LEVEL_DB = -20.0
 VOICE_LUFS = float(DEFAULT_SETTINGS["audio"]["loudness_lufs"])  # giọng mọi chương được chuẩn hoá về mức này
 # Chương giọng đọc là file MỘT kênh, chuẩn hoá về VOICE_LUFS đo một kênh; phát ra hai loa / tai nghe thì BS.1770 cộng hai
 # kênh giống nhau -> to hơn 3,01 dB. Nhạc đo đúng như lúc phát (hai kênh, `stereo_lufs`), nên mốc giọng cũng tính như lúc phát.
-VOICE_PLAYED_LUFS = VOICE_LUFS + 10 * math.log10(2)
-LUFS_SIDECAR = ".lufs2"  # 2: đo hai kênh như lúc phát; số cũ (`.lufs`, trộn xuống một kênh) thấp 0,5-3 dB với bài stereo rộng
+# Số này (= VOICE_LUFS + 10 log10 2) nằm trong music_mix.json, một nguồn cho cả ba bên.
+VOICE_PLAYED_LUFS = music_mix.MIX["voicePlayedLufs"]
+# Đoạn to nhất của bài (p95 độ to ngắn hạn, `short_term_p95`) vẫn dưới giọng ít nhất chừng này LU (MIX_QA 3.4, Torcoli 2019).
+SHORT_TERM_FLOOR_LU = music_mix.MIX["shortTermFloorLu"]
+AUDIBLE_THRESHOLD_DBFS = music_mix.MIX["audibleThresholdDbfs"]  # dưới mức này là im: đoạn nghe được của bài (`audible_bounds`)
+MEASURE_SIDECAR = ".measure.json"  # số đo của một file bài (`measured_track`), ghi cạnh file
+LUFS_SIDECAR = ".lufs2"  # bản cũ chỉ ghi độ to: 2 = đo hai kênh như lúc phát; `.lufs` (trộn xuống một kênh) thấp 0,5-3 dB, bỏ qua
 DEFAULT_TRACK_LUFS = -16.6  # trung vị danh mục: bài chưa có `lufs` (plan / danh mục cũ) và chưa có file để đo
 MASKING_CENTER = 0.30  # trung vị `speechBand` của danh mục: bài lấn dải tiếng nói hơn mức này thì hạ thêm
 MASKING_SLOPE_DB = 8.0
 MASKING_LIMIT_DB = 6.0
 # Mốc nhạc cuối chương kết muộn nhất chừng này trước khi file giọng hết: mờ 2 s của trình phát + biên đồng bộ 0,5 s.
-CHAPTER_END_FADE_SECONDS = 2.5
+CHAPTER_END_FADE_SECONDS = music_mix.MIX["chapterEndFadeSeconds"]
 FAMILIES = ("eastern", "orchestral", "piano", "ambient", "acoustic", "electronic", "other")
 
 
@@ -164,7 +169,7 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
 
 # Thông tin bài ghi vào plan["tracks"] (ghi công, độ to) - bài thay thế tạm lúc phát cũng mang đúng bộ này.
 TRACK_INFO_KEYS = ("title", "creator", "license", "licenseUrl", "attribution", "duration", "source", "landing", "lufs",
-                   "speechBand")
+                   "speechBand", "s95", "audibleStart", "audibleEnd")
 # phần `choose` / `build` gắn thêm cho từng đoạn
 CHOICE_FIELDS = ("key", "link", "distance", "pinned", "silenced", "pinUnavailable", "continued", "stepDb", "siblings",
                  "stopAt")
@@ -287,8 +292,7 @@ def chapter_durations(project_root: Path, chapter_ids: Iterable[int]) -> dict[in
     return out
 
 
-def _number(value: Any) -> float | None:
-    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) else None
+_number = music_mix.number
 
 
 def stereo_lufs(audio: Any, sample_rate: int) -> float | None:
@@ -309,73 +313,159 @@ def stereo_lufs(audio: Any, sample_rate: int) -> float | None:
     return value if math.isfinite(value) else None
 
 
-def measured_lufs(path: Path, *, measure: bool = True) -> float | None:
-    """Độ to (`stereo_lufs`) của file bài nhạc, đo một lần rồi ghi cạnh file (`<tên>.lufs2`) cho lần sau. `measure=False`:
-    chỉ đọc số đã ghi, không giải mã (đường nóng của trình phát). Không đo được -> None."""
-    sidecar = Path(path).with_suffix(LUFS_SIDECAR)
+# Độ to NGẮN HẠN p95 (MIX_QA 3.4, lô 2) - chép nguyên từ LLM_Train/music/mixqa/st_loudness.py, cùng hàm danh mục dùng để đo
+# `s95` (build_catalog.py): số trên máy và số danh mục so được với nhau. Chỉ thêm: nhập numpy / scipy trong hàm như `stereo_lufs`.
+RATE = 48000
+_SHELF = ([1.53512485958697, -2.69169618940638, 1.19839281085285], [1.0, -1.69065929318241, 0.73248077421585])
+_HIGHPASS = ([1.0, -2.0, 1.0], [1.0, -1.99004745483398, 0.99007225036621])
+
+
+def short_term_p95(audio, sample_rate: int = RATE) -> float | None:
+    """`audio` (mẫu x kênh, 48 kHz) như lúc phát hai loa (một kênh -> chép ra hai). Không đủ 3 s hay im hẳn -> None."""
+    import numpy as np
+    from scipy.signal import lfilter
+
+    if sample_rate != RATE:
+        return None
+    frames = np.asarray(audio, dtype=np.float64)
+    frames = frames[:, None] if frames.ndim == 1 else frames
+    frames = np.repeat(frames, 2, axis=1) if frames.shape[1] == 1 else frames[:, :2]
+    window, hop = 3 * RATE, RATE // 10
+    if frames.shape[0] < window:
+        return None
+    power = np.zeros(frames.shape[0])
+    for channel in range(2):
+        weighted = lfilter(*_HIGHPASS, lfilter(*_SHELF, frames[:, channel]))
+        power += weighted * weighted
+    total = np.concatenate(([0.0], np.cumsum(power)))
+    starts = np.arange(0, frames.shape[0] - window + 1, hop)
+    mean = (total[starts + window] - total[starts]) / window
+    with np.errstate(divide="ignore"):
+        loud = -0.691 + 10 * np.log10(mean)
+    kept = loud[loud > -70]
+    if not len(kept):
+        return None
+    relative = -0.691 + 10 * math.log10(float(np.mean(10 ** ((kept + 0.691) / 10)))) - 20
+    kept = kept[kept > relative]
+    return round(float(np.percentile(kept, 95)), 2) if len(kept) else None
+
+
+def audible_bounds(audio: Any, sample_rate: int, threshold_dbfs: float = AUDIBLE_THRESHOLD_DBFS) -> tuple[float, float] | None:
+    """Đoạn nghe được của bài (MIX_QA 3.2, 9): (A, E) giây của mẫu đầu và hết mẫu cuối có |x| > 10^(ngưỡng/20) sau khi trộn
+    mono - trình phát lặp mờ chéo trong đoạn này, bỏ im lặng đầu / cuối. Im hẳn -> None."""
+    import numpy as np
+
+    frames = np.asarray(audio, dtype=np.float64)
+    mono = frames.mean(axis=1) if frames.ndim == 2 else frames
+    loud = np.flatnonzero(np.abs(mono) > 10 ** (threshold_dbfs / 20))
+    if sample_rate <= 0 or not len(loud):
+        return None
+    return round(int(loud[0]) / sample_rate, 3), round((int(loud[-1]) + 1) / sample_rate, 3)
+
+
+# Số đo của một file bài (`measured_track`): độ to tích hợp, p95 ngắn hạn, độ dài thật, đoạn nghe được.
+MEASURE_KEYS = ("lufs", "s95", "seconds", "audibleStart", "audibleEnd")
+# Phần số đo đi theo bài tới gain và trình phát (`track_measure`): file trên máy thắng danh mục, khoá nào cũng vậy.
+TRACK_MEASURE_KEYS = ("lufs", "s95", "audibleStart", "audibleEnd")
+
+
+def measured_track(path: Path, *, measure: bool = True) -> dict[str, float]:
+    """Số đo (MEASURE_KEYS) của file bài nhạc, đo một lần rồi ghi cạnh file (`<tên>.measure.json`) cho lần sau. Bộ đệm cũ chỉ có
+    `<tên>.lufs2` (độ to) vẫn đọc được: dùng nó tới khi đo lại được đủ. `measure=False`: chỉ đọc số đã ghi, không giải mã
+    (đường nóng của trình phát). Khoá nào không đo được thì không có."""
+    path = Path(path)
+    sidecar = path.with_suffix(MEASURE_SIDECAR)
     try:
-        cached = _number(float(sidecar.read_text(encoding="utf-8").strip()))
+        cached = json.loads(sidecar.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         cached = None
-    if cached is not None or not measure or not ffmpeg_available():  # chưa có ffmpeg (mô-đun "Phân tích nhạc"): chưa đo, dùng mức mặc định
-        return cached
-    wav = Path(path).with_suffix(f".{os.getpid()}.measure.wav")
+    if isinstance(cached, dict):
+        return {key: value for key in MEASURE_KEYS if (value := _number(cached.get(key))) is not None}
+    try:
+        old = _number(float(path.with_suffix(LUFS_SIDECAR).read_text(encoding="utf-8").strip()))
+    except (OSError, ValueError):
+        old = None
+    known = {"lufs": old} if old is not None else {}
+    if not measure or not ffmpeg_available():  # chưa có ffmpeg (mô-đun "Phân tích nhạc"): chưa đo, dùng mức mặc định
+        return known
+    wav = path.with_suffix(f".{os.getpid()}.measure.wav")
     try:
         command = [ffmpeg_executable(), "-hide_banner", "-nostats", "-loglevel", "error", "-nostdin", "-y", "-i",
-                   str(path), "-map", "0:a:0", "-ar", "48000", "-codec:a", "pcm_f32le", str(wav)]
+                   str(path), "-map", "0:a:0", "-ar", str(RATE), "-codec:a", "pcm_f32le", str(wav)]
         if run_hidden(command, timeout=300, check=False).returncode != 0:
-            return None
+            return known
         import soundfile
 
         audio, rate = soundfile.read(wav, dtype="float32", always_2d=True)
-        value = stereo_lufs(audio, int(rate))
+        lufs = stereo_lufs(audio, int(rate))
+        if lufs is None:
+            return known
+        bounds = audible_bounds(audio, int(rate))
+        # Làm tròn đúng số ghi cạnh file: lần đo đầu và các lần đọc lại cho cùng gainDb.
+        values = {"lufs": round(lufs, 2), "s95": short_term_p95(audio, int(rate)), "seconds": round(len(audio) / rate, 3),
+                  "audibleStart": bounds[0] if bounds else None, "audibleEnd": bounds[1] if bounds else None}
     except (OSError, ValueError, subprocess.SubprocessError, RuntimeError, ImportError):
-        return None
+        return known
     finally:
         with contextlib.suppress(OSError):
             wav.unlink(missing_ok=True)
-    if value is None:
-        return None
-    value = round(value, 2)  # đúng số ghi cạnh file: lần đo đầu và các lần đọc lại cho cùng gainDb
     with contextlib.suppress(OSError):
-        atomic_write_text(sidecar, f"{value:.2f}\n")
-    return value
+        atomic_write_json(sidecar, values)
+    return {key: value for key, value in values.items() if value is not None}
+
+
+def measured_lufs(path: Path, *, measure: bool = True) -> float | None:
+    """Độ to (`stereo_lufs`) của file bài nhạc - phần `lufs` của `measured_track`. Không đo được -> None."""
+    return measured_track(path, measure=measure).get("lufs")
+
+
+def track_measure(info: dict[str, Any] | None, path: Path | None, *, measure: bool = True) -> dict[str, float]:
+    """Số đo của một bài (TRACK_MEASURE_KEYS): của chính file trên máy (chính xác nhất - danh mục có bài chỉ ước lượng từ vài
+    đoạn) thắng số danh mục, khoá nào thiếu thì không có. Có `lufs` danh mục thì không bắt giải mã khi `measure=False`."""
+    out = {key: value for key in TRACK_MEASURE_KEYS if (value := _number((info or {}).get(key))) is not None}
+    if path is not None:
+        measured = measured_track(path, measure=measure or "lufs" not in out)
+        out.update((key, value) for key, value in measured.items() if key in TRACK_MEASURE_KEYS)
+    return out
 
 
 def track_lufs(info: dict[str, Any] | None, path: Path | None, *, measure: bool = True) -> float | None:
-    """Độ to của một bài: số đo từ chính file trên máy (chính xác nhất - danh mục có bài chỉ ước lượng từ vài đoạn), không thì
-    `lufs` của danh mục, không thì None. Có số danh mục thì không bắt giải mã khi `measure=False`."""
-    known = _number((info or {}).get("lufs"))
-    if path is not None:
-        measured = measured_lufs(path, measure=measure or known is None)
-        if measured is not None:
-            return measured
-    return known
+    """Độ to của một bài - phần `lufs` của `track_measure`; không có -> None."""
+    return track_measure(info, path, measure=measure).get("lufs")
 
 
-def cue_gain_db(level_db: float, lufs: float | None, speech_band: float | None) -> float:
+def cue_gain_db(level_db: float, lufs: float | None, speech_band: float | None, s95: float | None = None) -> float:
     """Độ khuếch đại (dB, <= 0) cho một bài để nó nằm `level_db` LU dưới giọng: VOICE_PLAYED_LUFS + level_db - lufs - bù, với bù
-    = 8 x (speechBand - 0,30) kẹp +-6 (bài lấn dải tiếng nói nhiều thì thấp thêm, ít thì cao hơn). MỘT chỗ tính duy nhất:
-    hai trình phát (musicBed.ts, MusicBed.kt) chỉ áp con số này. Thiếu `lufs` -> trung vị danh mục; thiếu `speechBand`
-    -> không bù."""
+    = 8 x (speechBand - 0,30) kẹp +-6 (bài lấn dải tiếng nói nhiều thì thấp thêm, ít thì cao hơn). Có `s95` (p95 độ to ngắn hạn)
+    thì không quá VOICE_PLAYED_LUFS - SHORT_TERM_FLOOR_LU - s95: đoạn to nhất của bài vẫn dưới giọng ít nhất SHORT_TERM_FLOOR_LU
+    (MIX_QA 3.4). MỘT chỗ tính duy nhất: hai trình phát (musicBed.ts, MusicBed.kt) chỉ áp con số này. Thiếu `lufs` -> trung vị
+    danh mục; thiếu `speechBand` -> không bù; thiếu `s95` -> không chặn."""
     loudness = DEFAULT_TRACK_LUFS if lufs is None else lufs
     band = MASKING_CENTER if speech_band is None else speech_band
     masking = max(-MASKING_LIMIT_DB, min(MASKING_LIMIT_DB, MASKING_SLOPE_DB * (band - MASKING_CENTER)))
-    return round(min(0.0, VOICE_PLAYED_LUFS + level_db - loudness - masking), 2)  # volume HTML / ExoPlayer tối đa 1
+    gain = VOICE_PLAYED_LUFS + level_db - loudness - masking
+    if s95 is not None:
+        gain = min(gain, VOICE_PLAYED_LUFS - SHORT_TERM_FLOOR_LU - s95)
+    return round(min(0.0, gain), 2)  # volume HTML / ExoPlayer tối đa 1
 
 
 def apply_gain(cues: list[dict[str, Any]], level_db: float, tracks: dict[str, Any],
                track_path: Callable[[str], Path | None] | None = None) -> None:
-    """Gắn `gainDb` cho từng mốc chưa có (mốc của gói sách xuất bởi bản mới đã mang sẵn). `tracks`: {link: thông tin bài};
-    `track_path(link)` -> file bài ĐÃ có trên máy (không tải): số đo của nó thắng `lufs` danh mục; chỉ giải mã khi danh mục
+    """Gắn `gainDb` cho từng mốc chưa có (mốc của gói sách xuất bởi bản mới đã mang sẵn) và đoạn nghe được của bài
+    (`audibleStart` / `audibleEnd`, trình phát lặp mờ chéo trong đoạn ấy - music_mix) khi biết. `tracks`: {link: thông tin bài};
+    `track_path(link)` -> file bài ĐÃ có trên máy (không tải): số đo của nó thắng số danh mục; chỉ giải mã khi danh mục
     thiếu `lufs` (còn lại dùng số đã đo sẵn, `server` đo nền lúc tải bài)."""
     for cue in cues:
-        if _number(cue.get("gainDb")) is not None:
+        if all(_number(cue.get(key)) is not None for key in ("gainDb", "audibleStart", "audibleEnd")):
             continue
         info = tracks.get(cue["link"])
         info = info if isinstance(info, dict) else {}
         path = track_path(cue["link"]) if track_path is not None else None
-        cue["gainDb"] = cue_gain_db(level_db, track_lufs(info, path, measure=False), _number(info.get("speechBand")))
+        measured = track_measure(info, path, measure=False)
+        if _number(cue.get("gainDb")) is None:
+            cue["gainDb"] = cue_gain_db(level_db, measured.get("lufs"), _number(info.get("speechBand")), measured.get("s95"))
+        if "audibleStart" in measured and "audibleEnd" in measured and _number(cue.get("audibleEnd")) is None:
+            cue["audibleStart"], cue["audibleEnd"] = measured["audibleStart"], measured["audibleEnd"]
 
 
 # Bài của danh mục luôn là .mp3; bài người dùng tự nhập ("Nhạc của tôi", music_local.py) giữ nguyên định dạng của file.
@@ -419,6 +509,16 @@ class TrackSource:
         return self.file(link)
 
 
+SUBSTITUTE_DROPS = ("tail", "gainDb", "audibleStart", "audibleEnd")
+
+
+def substituted(cue: dict[str, Any], link: str) -> dict[str, Any]:
+    """Mốc `cue` chuyển sang bài thay `link` (bài đã chọn không lấy được): bỏ những gì chỉ đúng cho bài đã lập lịch - cờ `tail`
+    (bài kết đúng ở cuối mốc; bài thay dài ngắn khác) và độ khuếch đại / đoạn nghe được (tính lại theo bài thay). Một chỗ cho trình
+    phát máy tính (`server._music_playable`) lẫn gói sách (`package`)."""
+    return {**{key: value for key, value in cue.items() if key not in SUBSTITUTE_DROPS}, "link": link}
+
+
 def package(project_root: Path, chapter_ids: Iterable[int],
             track_file: Callable[[str], Path | None]) -> tuple[dict[str, Any], dict[str, Path]] | None:
     """Nhạc nền đi theo cuốn sách khi xuất (chủ sách 01-10: sách xuất ra mang nhạc người sản xuất đã gắn): mục `music`
@@ -434,6 +534,7 @@ def package(project_root: Path, chapter_ids: Iterable[int],
     chapters: dict[str, list[dict[str, Any]]] = {}
     alternatives = getattr(track_file, "alternatives", None)
     names: dict[str, str] = {}  # link -> tên file trong gói, của các bài đã có file
+    audible: dict[str, dict[str, float]] = {}  # tên file trong gói -> đoạn nghe được của bài (`audible_bounds`)
     failed: set[str] = set()  # bài đã thử mà không lấy được: không thử lại ở mốc khác
 
     def resolve(cue: dict[str, Any]) -> tuple[str, dict[str, Any], Path] | None:
@@ -462,6 +563,8 @@ def package(project_root: Path, chapter_ids: Iterable[int],
             if found is None:
                 continue
             link, info, path = found
+            if link != cue["link"]:
+                cue = substituted(cue, link)
             name = names.get(link)
             if name is None:
                 name = names[link] = track_name(link, path)
@@ -469,16 +572,18 @@ def package(project_root: Path, chapter_ids: Iterable[int],
                 tracks[name] = {"file": name, "link": link,
                                 **{key: info.get(key) for key in ("title", "creator", "license", "licenseUrl",
                                                                   "attribution", "landing") if info.get(key)}}
-                # Độ to + độ lấn dải tiếng nói đi theo bài (sách đọc lại / cập nhật mà không cần danh mục); số đo từ
-                # chính file đang đóng gói thắng số danh mục.
-                lufs = track_lufs(info, path)
-                for key, value in (("lufs", lufs), ("speechBand", _number(info.get("speechBand")))):
+                # Độ to, p95 ngắn hạn + độ lấn dải tiếng nói đi theo bài (sách đọc lại / đổi mức / cập nhật mà không cần
+                # danh mục); số đo từ chính file đang đóng gói thắng số danh mục. Đoạn nghe được đi theo từng mốc.
+                measured = track_measure(info, path)
+                for key, value in (("lufs", measured.get("lufs")), ("speechBand", _number(info.get("speechBand"))),
+                                   ("s95", measured.get("s95"))):
                     if value is not None:
                         tracks[name][key] = round(value, 2)
+                audible[name] = {key: measured[key] for key in ("audibleStart", "audibleEnd") if key in measured}
             kept.append({"start": round(cue["start"], 3), "end": round(cue["end"], 3), "track": name,
                          "gainDb": cue_gain_db(level_db, _number(tracks[name].get("lufs")),
-                                               _number(tracks[name].get("speechBand"))),
-                         **_cue_shape(cue)})
+                                               _number(tracks[name].get("speechBand")), _number(tracks[name].get("s95"))),
+                         **_cue_shape({**cue, **audible[name]})})
         if kept:
             chapters[str(chapter_id)] = kept
     if not chapters:
@@ -552,12 +657,16 @@ def packaged_cues(music: dict[str, Any] | None, chapter_id: int) -> list[dict[st
 
 def _cue_shape(cue: dict[str, Any]) -> dict[str, Any]:
     """Phần hình dạng của một mốc ngoài bài và độ to: `sibling` (nối bài anh em trong cảnh), `tail` (mốc kết đúng ở điểm kết
-    bài - `chapter_cues`) và `steps` (bước âm lượng [{at, db}], `at` tăng dần) - chỉ khoá nào có, bước hỏng bị bỏ. Một chỗ cho
-    gói sách (`package`) lẫn sách đã đóng gói (`packaged_cues`)."""
+    bài - `chapter_cues`), `steps` (bước âm lượng [{at, db}], `at` tăng dần) và đoạn nghe được của bài (`audibleStart` /
+    `audibleEnd`, giây trong bài - trình phát lặp mờ chéo trong đó; sách cũ không có thì trình phát dùng 0 và độ dài thật) - chỉ
+    khoá nào có, bước hỏng bị bỏ. Một chỗ cho gói sách (`package`) lẫn sách đã đóng gói (`packaged_cues`)."""
     out: dict[str, Any] = {}
     for flag in ("sibling", "tail"):
         if cue.get(flag) is True:
             out[flag] = True
+    start, end = _number(cue.get("audibleStart")), _number(cue.get("audibleEnd"))
+    if start is not None and end is not None and 0 <= start < end:
+        out["audibleStart"], out["audibleEnd"] = round(start, 3), round(end, 3)
     raw = cue.get("steps") if isinstance(cue.get("steps"), list) else []
     steps = [{"at": round(float(step["at"]), 3), "db": round(float(step["db"]), 2)} for step in raw
              if isinstance(step, dict) and _number(step.get("at")) is not None and _number(step.get("db")) is not None]

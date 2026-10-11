@@ -76,7 +76,8 @@ def test_an_imported_file_is_copied_by_content_with_its_own_tags_and_measured_lo
         "Đêm trăng sáng", "Nghệ sĩ Việt", "Tuyển tập", "Ambient"), "thẻ UTF-8 đọc đúng"
     assert track["duration"] == 62 and track["source"] == "local" and track["name"] == "Đêm trăng.mp3"
     assert isinstance(track["lufs"], float), "độ to đo bằng đúng mã đo của music_plan"
-    assert (tmp_path / "mine" / "files" / f"{digest}.lufs2").is_file(), "số đo ghi cạnh file như bài danh mục"
+    assert (tmp_path / "mine" / "files" / f"{digest}.measure.json").is_file(), "số đo ghi cạnh file như bài danh mục"
+    assert all(isinstance(track[key], float) for key in ("s95", "audibleStart", "audibleEnd")), "đo cùng thể với bài danh mục"
     assert store.file(track["link"]).read_bytes() == songs["mp3"].read_bytes()
     # Mở lại app: sổ còn nguyên.
     assert LocalMusic(tmp_path / "mine").entries()[0]["title"] == "Đêm trăng sáng"

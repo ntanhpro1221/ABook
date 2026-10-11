@@ -87,6 +87,13 @@ def _finite(value: Any) -> float | None:
     return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) else None
 
 
+def _measures(path: Path) -> dict[str, float]:
+    """Phần số đo của file đi theo bài (music_plan.measured_track, TRACK_MEASURE_KEYS): độ to, p95 ngắn hạn, đoạn nghe được -
+    khoá nào chưa đo được thì không có."""
+    measured = music_plan.measured_track(path)
+    return {key: measured[key] for key in music_plan.TRACK_MEASURE_KEYS if key in measured}
+
+
 def _clip(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
 
@@ -237,8 +244,9 @@ class LocalMusic:
         info.update(entry.get("analysis") or {})
         if entry.get("auto") in AUTO_VALUES:
             info["auto"] = entry["auto"]  # công tắc của người dùng: "on" = tự chọn dù đầu dò báo có lời, "off" = không bao giờ tự chọn
-        if entry.get("lufs") is not None:
-            info["lufs"] = entry["lufs"]  # số đo từ chính file thắng số của bộ phân tích
+        for key in music_plan.TRACK_MEASURE_KEYS:  # số đo từ chính file thắng số của bộ phân tích
+            if entry.get(key) is not None:
+                info[key] = entry[key]
         return info
 
     def entries(self) -> list[dict[str, Any]]:
@@ -344,7 +352,9 @@ class LocalMusic:
                                      "title": tags.get("title") or (fallback or {}).get("title") or "",
                                      "artist": tags.get("artist") or (fallback or {}).get("artist") or "", "album": tags.get("album") or "",
                                      "genre": tags.get("genre") or "", "analysis": None, "lufs": None}
-            entry["lufs"] = music_plan.measured_lufs(target)  # độ to thật của file - cue_gain_db dùng; chưa có ffmpeg thì None (mức mặc định)
+            # Số đo thật của file (độ to, p95 ngắn hạn, đoạn nghe được) - cue_gain_db và trình phát dùng; chưa có ffmpeg thì chưa có
+            # (mức mặc định, lặp cả file) tới `measure_missing`.
+            entry.update(_measures(target))
             entry["analysis"] = analyze(target)
             if entry["analysis"]:
                 entry["by"] = analyzer_id()
@@ -361,7 +371,7 @@ class LocalMusic:
                 return False
             self._save()
             path = self._path(digest, entry)
-            for leftover in (path, path.with_suffix(music_plan.LUFS_SIDECAR)):
+            for leftover in (path, path.with_suffix(music_plan.LUFS_SIDECAR), path.with_suffix(music_plan.MEASURE_SIDECAR)):
                 with contextlib.suppress(OSError):
                     leftover.unlink(missing_ok=True)
             return True
@@ -434,16 +444,17 @@ class LocalMusic:
         return done
 
     def measure_missing(self) -> int:
-        """Đo độ to các bài nhập lúc máy chưa có ffmpeg (mô-đun "Phân tích nhạc" vừa tải xong). Trả số bài vừa có số đo."""
+        """Đo các bài nhập lúc máy chưa có ffmpeg (mô-đun "Phân tích nhạc" vừa tải xong) hay nhập bởi bản chỉ đo độ to (chưa có đoạn
+        nghe được). Trả số bài vừa có số đo."""
         done = 0
         with self._lock:
             for digest, entry in self._tracks().items():
                 path = self._path(digest, entry)
-                if entry.get("lufs") is not None or not path.is_file():
+                if (entry.get("lufs") is not None and entry.get("audibleEnd") is not None) or not path.is_file():
                     continue
-                value = music_plan.measured_lufs(path)
-                if value is not None:
-                    entry["lufs"] = value
+                measured = _measures(path)
+                if any(entry.get(key) != value for key, value in measured.items()):
+                    entry.update(measured)
                     done += 1
             if done:
                 self._save()

@@ -71,13 +71,13 @@ object Playlists {
 
     /**
      * `music_playlist.queue` + `music_plan.apply_gain`: hàng bài theo đúng thứ tự `links`, bỏ bài máy này không dùng được (`available`);
-     * mỗi bài nằm `levelDb` LU dưới giọng theo độ to (`lufs`) và độ lấn dải tiếng nói (`speechBand`) của nó trong `infos`.
+     * mỗi bài nằm `levelDb` LU dưới giọng theo độ to (`lufs`), độ lấn dải tiếng nói (`speechBand`) và đoạn to nhất (`s95`) của nó trong `infos`.
      */
     fun queue(links: List<String>, infos: Map<String, JSONObject>, levelDb: Double, available: (String) -> Boolean = { true }): List<Track> =
         links.filter(available).map { link ->
             val info = infos[link]
             val duration = number(info?.opt("duration"))?.takeIf { it > 0 }
-            Track(link, duration, MusicGain.cueGainDb(levelDb, number(info?.opt("lufs")), number(info?.opt("speechBand"))))
+            Track(link, duration, MusicGain.cueGainDb(levelDb, number(info?.opt("lufs")), number(info?.opt("speechBand")), number(info?.opt("s95"))))
         }
 
     /** Khoảng của một bài trên đồng hồ nhạc của cuốn: [start, end) giây. */

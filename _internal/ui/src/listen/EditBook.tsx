@@ -9,7 +9,7 @@ import { CoverSearchDialog } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { holderName } from "@/shared/editsSync";
 import { fileName, formatClock } from "@/shared/format";
-import { levelOptions } from "@/shared/musicLevels";
+import { levelOptions, levelText } from "@/shared/musicLevels";
 import { Switch } from "@/desktop/PhoneSync";
 import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
@@ -128,7 +128,7 @@ export function useBookMusic(bookId: string, onChanged?: () => void) {
 
 /** Nhạc nền của cuốn nhập từ file: người làm sách đã gắn sẵn - người nghe bật/tắt, chỉnh mức, cho im lặng từng đoạn, và đổi một đoạn
  *  sang bài trong "Nhạc của tôi" (bài ấy đi cùng file sách khi lưu). */
-function MusicSection({ book }: { book: ListenBook }) {
+export function MusicSection({ book }: { book: ListenBook }) {
   const [swapping, setSwapping] = useState<string | null>(null); // khoá đoạn đang mở "Đổi bài"
   const { view, change } = useBookMusic(book.id, () => setSwapping(null));
   const { data, isLoading } = view;
@@ -156,7 +156,7 @@ function MusicSection({ book }: { book: ListenBook }) {
           >
             {levelOptions(data.levelDb).map(([value, label]) => (
               <option key={value} value={String(value)}>
-                {label}
+                {levelText(value, label)}
               </option>
             ))}
           </select>

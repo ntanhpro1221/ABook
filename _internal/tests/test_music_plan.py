@@ -120,7 +120,7 @@ def test_cues_get_their_gain_from_the_catalog_loudness_or_measure_a_cached_file(
     assert abs(cues[1]["gainDb"] - (-17.0)) < 1.0, "độ to đo từ file: ~ -20 LUFS -> hạ ~17 dB"
     assert cues[2]["gainDb"] == music_plan.cue_gain_db(-20.0, None, None), "chưa có file: trung vị danh mục"
     assert cues[3]["gainDb"] == -3.0, "mốc đã có gainDb (sách đóng gói) giữ nguyên"
-    assert cached.with_suffix(".lufs2").is_file(), "đo một lần rồi ghi cạnh bộ đệm"
+    assert cached.with_suffix(".measure.json").is_file(), "đo một lần rồi ghi cạnh bộ đệm"
     cached.unlink()  # chỉ còn số đã ghi: lần sau không giải mã lại
     again = [{"link": "https://x/b.mp3", "key": "b"}]
     music_plan.apply_gain(again, -20.0, tracks, lambda _link: cached)

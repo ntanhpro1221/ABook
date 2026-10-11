@@ -22,7 +22,7 @@ import hashlib
 import math
 from typing import Any, Callable, Iterable
 
-from . import music_scenes
+from . import music_mix, music_scenes
 
 # Điểm Lớp 1-2 của docs/MUSIC_THEORY.md §5.3. Mọi hằng số dưới đây là GIÁ TRỊ KHỞI ĐẦU lấy từ tài liệu ấy và sẽ được học
 # (E4: Bradley-Terry trên phán quyết cặp mù của máy chấm - nghe bằng model âm thanh + Claude chấm mù; chủ sách không chấm).
@@ -62,10 +62,10 @@ HEAD_CANDIDATES = 30             # số bài xếp hạng xét phạt bài ngắ
 SIBLING_CANDIDATES = 50
 # Bài hết mà chỉ còn ít hơn chừng này tới chỗ nhạc đổi (hết cảnh / hết chương) thì KHÔNG nối bài anh em: bài kết tự nhiên rồi
 # lặng tới ranh giới, thay vì một bài mới mờ vào vài giây rồi lại bị đổi (docs/MUSIC_RESEARCH.md 10-10 TAIL).
-TAIL_MIN_SECONDS = 20.0
+TAIL_MIN_SECONDS = music_mix.MIX["tailMinSeconds"]
 # Hai mảnh liền nhau cùng bài hở nhau ít hơn chừng này thì chung một mốc nhạc (music_plan.chapter_cues): trình phát chơi liền
 # qua khe, nên vị trí trong bài tính cả khe; hở từ chừng này trở lên thì trình phát mờ ra rồi mở lại bài từ đầu.
-CUE_MERGE_GAP_SECONDS = 5.0
+CUE_MERGE_GAP_SECONDS = music_mix.MIX["cueMergeGapSeconds"]
 # Bước âm lượng trong cảnh: mảnh nối tiếp nhích nhạc theo tension của nó so với đầu cảnh; bước sát bước trước thì giữ mức cũ.
 STEP_DB_PER_TENSION = 6.0
 STEP_MAX_DB = 3.0
@@ -221,8 +221,14 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             known.setdefault(track["link"], track)
         return found
 
-    def duration(link: str) -> float:
-        return float((info(link) or {}).get("duration") or 0.0)
+    def loop(link: str) -> tuple[float, float]:
+        """(giây từ A tới E, chu kỳ lặp) của bài theo đoạn nghe được (music_mix.loop_bounds): bài chơi tới E là hết - bài anh em
+        vào lúc ấy; không có anh em thì phần tử lặp đã vào từ A ở E - X, nên vòng sau hết sau một chu kỳ P = E - A - X. Độ dài
+        thật lấy `seconds` (danh mục đo), không thì `duration`; chưa biết thì bài không bao giờ hết."""
+        track = info(link) or {}
+        first, last, period, _ = music_mix.loop_bounds(track.get("seconds") or track.get("duration"),
+                                                       track.get("audibleStart"), track.get("audibleEnd"))
+        return last - first, period
 
     heads = scene_heads(scenes)
     lengths: dict[int, float] = {}
@@ -235,7 +241,7 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
     recent: list[str] = []
     used: set[str] = set()
     playing: str | None = None   # bài đang kêu ở cuối mảnh trước (kể cả bài anh em vừa nối)
-    position = 0.0               # giây đã chơi của bài ấy
+    position = 0.0               # giây đã chơi của bài ấy, tính từ đầu đoạn nghe được (A)
     head_tension = 0.0
     intact = True                # mảnh trước y như lần dựng trước (bài, vị trí trong bài) - xem `kept_siblings`
     stopped = -1                 # đầu cảnh mà bài đã kết sớm (TAIL_MIN_SECONDS): các mảnh còn lại của cảnh ấy lặng
@@ -302,7 +308,7 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
         length, elapsed = _seconds(scene) + start - clock, 0.0
         siblings: list[dict[str, Any]] = []
         while playing and length - elapsed > 1e-9:
-            track_seconds = duration(playing) or math.inf
+            track_seconds, period = loop(playing)
             step = min(length - elapsed, track_seconds - position)
             position, elapsed = position + step, elapsed + step
             if position < track_seconds - 1e-9:
@@ -316,7 +322,7 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
                 sibling = reuse.pop(0) if reuse else None
             else:
                 sibling = _sibling(info(playing), ranked(scene, exclude=used | {playing}, limit=SIBLING_CANDIDATES))
-            position = 0.0
+            position = 0.0 if sibling else track_seconds - period  # lặp: phần tử mới đã chơi X giây (lặp thường: 0)
             if sibling:
                 playing = sibling
                 used.add(sibling)

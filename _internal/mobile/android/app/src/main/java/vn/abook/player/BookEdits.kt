@@ -799,7 +799,10 @@ object BookEdits {
                 if (!tracks.has(name)) tracks.put(name, pinnedTrack(link, name, shown.getJSONObject(sha)))
                 cue.put("track", name)
                 val info = tracks.opt(name)
-                cue.put("gainDb", MusicGain.cueGainDb(level, trackNumber(info, "lufs"), trackNumber(info, "speechBand")))
+                cue.put("gainDb", MusicGain.cueGainDb(level, trackNumber(info, "lufs"), trackNumber(info, "speechBand"), trackNumber(info, "s95")))
+                // Đoạn nghe được của bài cũ: bài ghim dùng 0 và độ dài thật.
+                cue.remove("audibleStart")
+                cue.remove("audibleEnd")
             }
         }
         if (changes.has("levelDb")) {
@@ -809,7 +812,7 @@ object BookEdits {
                 for (index in 0 until cues.length()) {
                     val cue = cues.optJSONObject(index) ?: continue
                     val info = (cue.opt("track") as? String)?.let { tracks.opt(it) }
-                    cue.put("gainDb", MusicGain.cueGainDb(level, trackNumber(info, "lufs"), trackNumber(info, "speechBand")))
+                    cue.put("gainDb", MusicGain.cueGainDb(level, trackNumber(info, "lufs"), trackNumber(info, "speechBand"), trackNumber(info, "s95")))
                 }
             }
         }

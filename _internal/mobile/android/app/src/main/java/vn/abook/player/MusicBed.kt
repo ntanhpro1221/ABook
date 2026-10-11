@@ -31,12 +31,15 @@ import kotlin.math.pow
  * (SharedPreferences "music_bed"), mở lại sách là nghe tiếp đúng bài. Giọng ngừng giây lát giữa hai đoạn / hai chương thì nhạc
  * không ngắt ([PAUSE_GRACE_MS]).
  *
- * Một ExoPlayer riêng cho mỗi bài đang kêu (hai khi đang chuyển mờ), lặp liền, KHÔNG giành audio focus: trình phát giọng
+ * Một ExoPlayer riêng cho mỗi bài đang kêu (hai khi đang chuyển mờ), KHÔNG giành audio focus: trình phát giọng
  * đọc giữ focus, nhạc chỉ chạy khi giọng đang chạy (`sync` từ Playback mỗi nhịp 0,5 giây và mỗi lần phát / dừng / tua).
  * Mọi thao tác ở luồng chính, như Playback; danh mục / tải bài ở một luồng nền riêng.
+ *
+ * Nhạc của sách lặp bằng mờ chéo trong đoạn nghe được (lô 2 mix-loop, [MusicCues.loopBounds]): tới E - X một ExoPlayer MỚI của chính
+ * bài vào từ A, cái cũ mờ đi trong X giây ([crossLoop]); bài quá ngắn và danh sách phát thì vẫn REPEAT_MODE_ONE.
  */
 object MusicBed {
-    private const val STEP_MS = 50L
+    private const val STEP_MS = MusicCues.TICK_MS
     private const val SEEK_JUMP_SECONDS = 3.0
     private const val PAUSE_GRACE_MS = 2500L
     private const val MAX_STEP_SECONDS = 3.0 // đồng hồ nhạc không nhảy xa khi máy ngủ giữa hai nhịp
@@ -45,11 +48,24 @@ object MusicBed {
     private val CREDIT_KEYS = listOf("title", "creator", "attribution", "landing", "license", "licenseUrl")
 
     /** Một bài đang kêu. `goal` = âm lượng đang hướng tới, `perTick` = mỗi nhịp STEP_MS nhích bao nhiêu; `entering` = đang mờ vào
-     *  (tua lúc này không nhảy thẳng tới mức); `cue` = mốc đang phát (bước âm lượng), null với danh sách phát. */
-    private class Bed(val track: String, val player: ExoPlayer, var goal: Float, var perTick: Float, var cue: MusicCues.Cue?) {
+     *  (tua lúc này không nhảy thẳng tới mức) trong `fadeMs`; `cue` = mốc đang phát (bước âm lượng), null với danh sách phát. */
+    private class Bed(val track: String, val player: ExoPlayer, var goal: Float, var perTick: Float, var cue: MusicCues.Cue?, val fadeMs: Long) {
         var entering = true
         var fadeStep = 0.001f // âm lượng bớt mỗi nhịp khi mờ đi: bài to và bài nhỏ cùng tắt trong cùng thời gian
         var early = false // vào sớm: bài trước kết tự nhiên trước đầu mốc này; tới `cue.start` giọng vẫn ở mốc cũ - không chuyển ngược
+        var final = false // vòng cuối của mốc `tail`: không mở phần tử lặp nữa, bài chơi tới E là hết
+    }
+
+    /** Vòng lặp của bài `player` theo mốc `cue` (độ dài thật chưa biết: NaN). */
+    private fun boundsOf(cue: MusicCues.Cue, player: ExoPlayer): MusicCues.Loop =
+        MusicCues.loopBounds(cue, if (player.duration > 0) player.duration / 1000.0 else Double.NaN)
+
+    /** Bài của mốc `cue` lặp thường (REPEAT_MODE_ONE) chỉ khi quá ngắn để mờ chéo; vòng cuối của mốc `tail` thì không lặp. Danh sách
+     *  phát (`cue` null) lặp thường như cũ. */
+    private fun repeatFor(cue: MusicCues.Cue?, player: ExoPlayer, final: Boolean = false): Int = when {
+        cue == null -> Player.REPEAT_MODE_ONE
+        final || boundsOf(cue, player).crossfade -> Player.REPEAT_MODE_OFF
+        else -> Player.REPEAT_MODE_ONE
     }
 
     private val main = Handler(Looper.getMainLooper())
@@ -81,6 +97,7 @@ object MusicBed {
 
     fun init(appContext: Context) {
         context = appContext.applicationContext
+        MusicCues.mix = MusicMix.load(appContext)
     }
 
     /** Lớp sửa của cuốn `bookId` vừa đổi (nhạc bật/tắt, mức, im lặng một đoạn, danh sách phát): lần `sync` kế đọc lại. */
@@ -122,7 +139,8 @@ object MusicBed {
             syncPlaylist(isPlaying)
             return
         }
-        if ((chapterId ?: Int.MIN_VALUE) != chapter) {
+        val newChapter = (chapterId ?: Int.MIN_VALUE) != chapter
+        if (newChapter) {
             chapter = chapterId ?: Int.MIN_VALUE
             cues = MusicCues.of(music, chapterId)
         }
@@ -135,39 +153,64 @@ object MusicBed {
             val mine = bed.cue
             if (!seeked && mine != null && seconds < mine.start) cue = mine else bed.early = false
         }
-        if (cue?.track != current?.track || (seeked && cue != null && current == null)) {
+        if (!MusicCues.continues(current?.track, cue, newChapter) && (cue != null || current != null)) {
             switchTo(cue?.let { (it.track to Streaming.chapterUri(appContext, book, it.track)) },
                 cue?.let { MusicCues.targetGain(it, seconds, gain) } ?: gain, seconds - (cue?.start ?: 0.0), cue)
         } else if (cue != null) {
             current?.cue = cue // cùng bài sang mốc kề: chơi tiếp, bước âm lượng theo mốc mới
             // Vừa tua trong cùng bài: dời nhạc theo chỗ mới, không chơi tiếp từ chỗ cũ (soát a26 L8).
-            if (seeked) current?.player?.let { player ->
-                player.repeatMode = Player.REPEAT_MODE_ONE // vòng cuối của mốc `tail` tính lại theo chỗ mới (finishTail)
-                MusicCues.offsetMs(cue, seconds, player.duration)?.let(player::seekTo)
+            if (seeked) current?.let { bed ->
+                bed.final = false // vòng cuối của mốc `tail` tính lại theo chỗ mới (finishTail)
+                bed.player.repeatMode = repeatFor(cue, bed.player)
+                MusicCues.offsetMs(cue, seconds, bed.player.duration)?.let(bed.player::seekTo)
             }
         }
         retarget(seconds, seeked)
         finishTail(appContext, seconds)
+        crossLoop(seconds)
         applyPlaying()
     }
 
-    /** Mốc `tail`: vòng cuối thì thôi lặp ([MusicCues.finalLoop]), bài kết tự nhiên. Bài đã kết trước hết mốc mà mốc kế bắt đầu
-     *  đúng ở đó ([MusicCues.nextAfter]): mốc kế vào ngay, mờ vào như thường, không để quãng im. Không có mốc kế thì im tới hết mốc. */
+    /** Mốc `tail`: vòng cuối thì thôi lặp ([MusicCues.finalLoop]), bài chơi tới E là hết ([MusicCues.finished]). Bài đã hết trước
+     *  hết mốc mà mốc kế bắt đầu đúng ở đó ([MusicCues.nextAfter]): mốc kế vào ngay, mờ vào như thường, không để quãng im. Không có mốc
+     *  kế thì im tới hết mốc. */
     private fun finishTail(appContext: Context, seconds: Double) {
         val bed = current ?: return
         val cue = bed.cue?.takeIf { it.tail } ?: return
         val player = bed.player
-        if (player.repeatMode != Player.REPEAT_MODE_OFF &&
-            MusicCues.finalLoop(cue, seconds, player.currentPosition, player.duration)) {
-            player.repeatMode = Player.REPEAT_MODE_OFF
+        val bounds = boundsOf(cue, player)
+        val position = player.currentPosition / 1000.0
+        if (!bed.final && player.duration > 0 && MusicCues.finalLoop(cue, seconds, position, bounds)) {
+            bed.final = true
+            player.repeatMode = Player.REPEAT_MODE_OFF // bài quá ngắn lặp thường: chơi nốt vòng này rồi thôi
         }
-        if (player.playbackState != Player.STATE_ENDED || seconds >= cue.end) return
+        val ended = player.playbackState == Player.STATE_ENDED
+        val done = if (bed.final) MusicCues.finished(bounds, position, ended) else ended
+        if (!done || seconds >= cue.end) return
         val next = MusicCues.nextAfter(cues, cue)?.takeUnless { it.track == cue.track || isFailed(it.track) } ?: return
         switchTo(next.track to Streaming.chapterUri(appContext, book, next.track), MusicCues.targetGain(next, seconds, gain), 0.0, next)
         current?.early = true
     }
 
-    /** Mức đích của bài đang kêu đổi (sang bước âm lượng mới): trượt dần [MusicCues.STEP_RAMP_MS]; vừa tua thì vào thẳng mức mới
+    /** Lặp mờ chéo: bài đang kêu tới E - X ([MusicCues.loopDue]) thì một ExoPlayer MỚI của chính bài vào từ A, mờ chéo X giây; cái
+     *  cũ mờ đi rồi nhả. Vòng cuối của mốc `tail` ([finishTail]), bài quá ngắn (lặp thường) và danh sách phát thì không. */
+    private fun crossLoop(seconds: Double) {
+        val bed = current ?: return
+        val cue = bed.cue ?: return
+        val player = bed.player
+        if (bed.final || seconds >= cue.end || player.duration <= 0) return
+        val bounds = boundsOf(cue, player)
+        if (!MusicCues.loopDue(bounds, player.currentPosition / 1000.0)) return
+        val appContext = context ?: return
+        val fadeMs = Math.round(MusicCues.mix.loopCrossfadeSeconds * 1000)
+        bed.fadeStep = maxOf(player.volume, 0.01f) * STEP_MS / fadeMs
+        fading += bed
+        current = open(appContext, bed.track to Streaming.chapterUri(appContext, book, bed.track), bed.goal, 0.0, cue, fadeMs, bounds.start)
+            .also { it.early = bed.early }
+        startFade()
+    }
+
+    /** Mức đích của bài đang kêu đổi (sang bước âm lượng mới): trượt dần trong stepRampSeconds; vừa tua thì vào thẳng mức mới
      *  (trừ lúc bài đang mờ vào). */
     private fun retarget(seconds: Double, seeked: Boolean) {
         val bed = current ?: return
@@ -176,12 +219,12 @@ object MusicBed {
         if (abs(goal - bed.goal) < 1e-6f) return
         bed.goal = goal
         when {
-            bed.entering -> bed.perTick = goal * STEP_MS / (if (cue.sibling) MusicCues.SIBLING_FADE_MS else MusicCues.FADE_MS)
+            bed.entering -> bed.perTick = goal * STEP_MS / bed.fadeMs
             seeked -> {
                 bed.player.volume = goal
                 return
             }
-            else -> bed.perTick = abs(goal - bed.player.volume) * STEP_MS / MusicCues.STEP_RAMP_MS
+            else -> bed.perTick = abs(goal - bed.player.volume) * STEP_MS / MusicCues.mix.stepRampMs
         }
         startFade()
     }
@@ -378,62 +421,80 @@ object MusicBed {
     // ---- nhạc theo mốc của sách --------------------------------------------------------------------------------
 
     /** Bài đang kêu mờ đi; `next` = (tên bài, file) thì bài ấy vào, bắt đầu ở giây `offsetSeconds` của nó, lên tới `targetGain`.
-     *  `cue`: mốc của sách (bước âm lượng; mốc `sibling` = nối bài anh em ở điểm kết bài: mờ chéo [MusicCues.SIBLING_FADE_MS], bài cũ
-     *  chơi nốt rồi thôi, không quay lại đầu bài). */
+     *  `cue`: mốc của sách (bước âm lượng; mốc `sibling` = nối bài anh em ở điểm kết bài: mờ chéo dài hơn, bài cũ chơi nốt rồi thôi,
+     *  không quay lại đầu bài, mờ trong phần còn lại tới E nếu ngắn hơn - [MusicCues.siblingFadeSeconds]). */
     private fun switchTo(next: Pair<String, Uri>?, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue? = null) {
-        val fadeMs = if (cue?.sibling == true) MusicCues.SIBLING_FADE_MS else MusicCues.FADE_MS
+        val mix = MusicCues.mix
+        val fadeMs = if (cue?.sibling == true) mix.siblingFadeMs else mix.fadeMs
         current?.let {
-            it.fadeStep = maxOf(it.player.volume, 0.01f) * STEP_MS / fadeMs
-            if (cue?.sibling == true) it.player.repeatMode = Player.REPEAT_MODE_OFF
+            var oldFadeMs = fadeMs
+            if (cue?.sibling == true) {
+                it.player.repeatMode = Player.REPEAT_MODE_OFF
+                val was = it.cue
+                if (was != null && it.player.duration > 0) {
+                    oldFadeMs = Math.round(MusicCues.siblingFadeSeconds(boundsOf(was, it.player), it.player.currentPosition / 1000.0) * 1000)
+                }
+            }
+            it.fadeStep = maxOf(it.player.volume, 0.01f) * STEP_MS / oldFadeMs
             fading += it
         }
         current = null
         val appContext = context ?: return
-        if (next != null) {
-            val (track, uri) = next
-            val player = ExoPlayer.Builder(appContext)
-                .setAudioAttributes(
-                    AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
-                    false,
-                )
-                .setMediaSourceFactory(Streaming.mediaSourceFactory(appContext))
-                .build()
-            player.repeatMode = Player.REPEAT_MODE_ONE
-            player.volume = 0f
-            val offsetMs = (offsetSeconds.coerceAtLeast(0.0) * 1000).toLong()
-            player.addListener(object : Player.Listener {
-                override fun onPlaybackStateChanged(state: Int) {
-                    if (state == Player.STATE_READY) {
-                        player.removeListener(this)
-                        failed.forget(track)
-                        val duration = player.duration
-                        // Nhạc của sách tải xong sau khi giọng đã chạy tiếp (hay vừa tua): theo giây mới nhất của chương (soát a26 L8).
-                        val latest = if (cue != null && current?.player === player) MusicCues.offsetMs(cue, lastSeconds, duration) else null
-                        if (duration > 0) player.seekTo(latest ?: (offsetMs % duration))
-                    }
-                }
-            })
-            player.addListener(object : Player.Listener {
-                // Nhạc của sách hỏng (file thiếu trong gói, mạng tới máy tính rớt khi nghe thẳng): đoạn này im lặng, RETRY_MS sau thử
-                // lại như máy tính. Bài của danh sách phát phát hỏng (file hỏng) thì bỏ cả phiên - tải hỏng đã có fetch lo.
-                override fun onPlayerError(error: PlaybackException) {
-                    main.post {
-                        drop(track, retry = playlist == null)
-                        player.release()
-                        if (current?.player === player) {
-                            current = null
-                            queue.currentSpan = -1
-                        }
-                        fading.removeAll { it.player === player }
-                    }
-                }
-            })
-            player.setMediaItem(MediaItem.fromUri(uri))
-            player.prepare()
-            if (playing) player.play()
-            current = Bed(track, player, targetGain, targetGain * STEP_MS / fadeMs, cue)
-        }
+        if (next != null) current = open(appContext, next, targetGain, offsetSeconds, cue, fadeMs)
         startFade()
+    }
+
+    /** Một ExoPlayer mới cho bài `next`, mờ vào tới `targetGain` trong `fadeMs`. `startAt` (phần tử lặp, giây trong bài): vào đúng
+     *  chỗ ấy (A), không căn theo giây chương - đồng hồ bài lệch giọng vài phần giây thì căn lại có khi rơi về cuối vòng. */
+    private fun open(appContext: Context, next: Pair<String, Uri>, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue?,
+                     fadeMs: Long, startAt: Double? = null): Bed {
+        val (track, uri) = next
+        val player = ExoPlayer.Builder(appContext)
+            .setAudioAttributes(
+                AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
+                false,
+            )
+            .setMediaSourceFactory(Streaming.mediaSourceFactory(appContext))
+            .build()
+        player.repeatMode = Player.REPEAT_MODE_ONE // biết độ dài bài (STATE_READY) mới biết lặp mờ chéo hay lặp thường
+        player.volume = 0f
+        val offsetMs = (offsetSeconds.coerceAtLeast(0.0) * 1000).toLong()
+        val bed = Bed(track, player, targetGain, targetGain * STEP_MS / fadeMs, cue, fadeMs)
+        player.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_READY) {
+                    player.removeListener(this)
+                    failed.forget(track)
+                    val duration = player.duration
+                    player.repeatMode = repeatFor(bed.cue, player, bed.final)
+                    if (startAt != null || duration <= 0) return
+                    // Nhạc của sách tải xong sau khi giọng đã chạy tiếp (hay vừa tua): theo giây mới nhất của chương (soát a26 L8).
+                    val mine = bed.cue
+                    val latest = if (mine != null && current === bed) MusicCues.offsetMs(mine, lastSeconds, duration) else null
+                    player.seekTo(latest ?: (offsetMs % duration))
+                }
+            }
+        })
+        player.addListener(object : Player.Listener {
+            // Nhạc của sách hỏng (file thiếu trong gói, mạng tới máy tính rớt khi nghe thẳng): đoạn này im lặng, RETRY_MS sau thử
+            // lại như máy tính. Bài của danh sách phát phát hỏng (file hỏng) thì bỏ cả phiên - tải hỏng đã có fetch lo.
+            override fun onPlayerError(error: PlaybackException) {
+                main.post {
+                    drop(track, retry = playlist == null)
+                    player.release()
+                    if (current?.player === player) {
+                        current = null
+                        queue.currentSpan = -1
+                    }
+                    fading.removeAll { it.player === player }
+                }
+            }
+        })
+        if (startAt != null) player.setMediaItem(MediaItem.fromUri(uri), (startAt * 1000).toLong())
+        else player.setMediaItem(MediaItem.fromUri(uri))
+        player.prepare()
+        if (playing) player.play()
+        return bed
     }
 
     private fun startFade() {
