@@ -4337,6 +4337,31 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 chiều - Bước âm lượng ngược chiều truyện (phần âm lượng của lỗi 1 và 3 MUSIC-AUDIT): hằng số hôm nay đã tốt nhất, THUA
+
+Audit thấy nhạc to thêm +1,39 dB qua cáo phó (306) và hạ −1,88 dB ở đòn kết (405). Ghi trước Corpus `research/music/PLAN_gain.md`
+(6aef29e), kết quả 5973322. CPU, 0 token; code app ghim ở main e35a2afe, plan dựng bằng `music_plan.build` thật.
+
+Thước: mảnh nối tiếp, đích `db* = clamp(6 × ΔT vàng, ±3)` (đúng hằng thiết kế 06-10), kỹ năng = 1 − MSE(db, db*) / MSE(0, db*).
+Sàn (không bước) = 0. Điểm = TB hai đường nhãn câu (LBL) và P0 qwen3.5:4b + mức chương. Họ: `db = clamp(K × ((1−m)Δtension +
+m Δarousal), ±3)`, K ∈ {3, 6, 9, 12}, m ∈ {0; .5; 1}.
+
+Bộ học 4+5+5b+6 (42 chương, 11,9 giờ, 209 mảnh nối tiếp):
+
+| K, m | Điểm | LBL | P0 |
+|---|---|---|---|
+| sàn | 0 | 0 | 0 |
+| 3, 0 | +.201 | +.062 | +.339 |
+| **6, 0 (app)** | **+.215** | +.078 | +.351 |
+| 9, 0 | +.180 | +.049 | +.311 |
+| 6, .5 | +.154 | −.005 | +.312 |
+
+Đọc:
+- App là đỉnh của họ, nên theo luật không thử ngoài, không đổi app.
+- Bước hôm nay có ích, nhất là khi có P0. Ở đường nhãn câu tension yếu (r .36 với ΔT vàng), nên 26% bước sai chiều. Audit chạy
+  đường nhãn câu nên gặp đúng các ca ấy.
+- Đổi hằng không sửa được: muốn hết sai chiều phải có tín hiệu tốt hơn (P0, học sinh q06), và app đã dùng chúng khi có.
+
 ### 11-10 trưa - Lỗi 3 (nhạc nhấc trễ khi truyện căng lên): ranh giới từ học sinh q06 trên lát 45 s THẮNG ở bộ học; chờ thử ngoài bộ 11+12
 
 Ba lượt CPU, 0 token, mỗi lượt ghi trước trong Corpus (`PLAN_t_onset.md`, `PLAN_t_onset2.md`, `PLAN_t_onset3.md`). Luật thắng của
