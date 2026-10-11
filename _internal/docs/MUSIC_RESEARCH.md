@@ -4337,6 +4337,24 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 11-10 chiều - VALENCE (lỗi 4 audit-2: cảnh buồn mà nhạc sáng): THUA
+
+Chẩn đoán trên bộ học (val_diag.log):
+- Nhạc sáng trên cảnh V vàng <= −.5 chiếm 21% (LBL) / 29% (STUDIO) thời lượng có nhạc.
+- Nguyên nhân: 51% / 68% là do mục tiêu V của mảnh không âm (TB chỉ −.09); 0% do chọn bài đầu cảnh; phần còn lại do mảnh nối tiếp
+  giữ bài cũ hoặc bài anh em.
+
+Ghi trước Corpus dc4fa2c / f9a6eda, kết quả 63facfc. Biến thể: giãn mục tiêu V (s_V 1-3) và đổi V của CALM_TARGET (+.15 / 0).
+Kết quả:
+- Giãn làm sai chiều TĂNG (19,8 -> 27%), vì thứ tự V đúng nhưng dấu hay sai, giãn đẩy cả phần sai ra xa.
+- CALM V 0 chỉ chuyển "sáng trên buồn" sang "u trên vui".
+- Bỏ V khỏi mục tiêu cho ít sai chiều nhất (12%) nhưng mất r_V (.35 -> .21). Thước "sai chiều" thưởng nhạc trung tính.
+- Bộ 7 trượt cả ba điều kiện → THUA, app giữ nguyên.
+
+Gộp GAIN / ENERGY / SIBSWITCH / VALENCE: không lỗi nào của audit-2 sửa được bằng cách vặn hằng ở khâu chọn bài. Hai chỗ còn lại:
+1. Nguồn không khí: dấu và độ mạnh của V/A từ nhãn câu / P0. Học sinh q06 đã tính dE nhưng app chưa dùng.
+2. Mảnh nối tiếp giữ bài cũ qua chỗ truyện ngoặt (lỗi 1). Hai nhánh break-continuation và onset-tiles đang chờ đo cuối.
+
 ### 11-10 chiều - SIBSWITCH (lỗi 5 audit-2: đổi bài giữa cảnh vì bài hết): THUA
 
 Ghi trước Corpus 05874c8, kết quả dc4fa2c. Ba hằng được vá trong `choose`:
