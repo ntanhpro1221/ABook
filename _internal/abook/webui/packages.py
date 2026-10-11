@@ -393,12 +393,16 @@ def _parts(book: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _remote_view(path: Path) -> dict[str, Any]:
-    from .remote_books import computer_name, missing, remote_of
+    from .remote_books import computer_kind, computer_name, missing, remote_of
 
     book = manifest(path)
     # `device`: máy đã ghép giữ cuốn này - "Phát trên <máy ấy>" chỉ hiện với đúng máy phát được nó. `downloaded`: đủ mọi file để nghe khi
     # máy kia tắt (audio, chữ đọc theo, nhạc - như "Tải về máy" đếm) - Thư viện ghi "Đã tải" (soát a27 lỗi 8).
-    return {"computer": computer_name(book), "device": (remote_of(book) or {}).get("computer", ""), "downloaded": not missing(path, book)}
+    # `book`: mã cuốn ở máy kia khi nó là dự án Studio ở máy ấy (`studio` của sync.book_manifest), `kind`: máy ấy là máy tính hay điện
+    # thoại - "Mở Studio" của máy tính ấy ngay tại cuốn này (peer_studio.py).
+    remote = remote_of(book) or {}
+    return {"computer": computer_name(book), "device": remote.get("computer", ""), "book": remote.get("book", "") if book.get("studio") else "",
+            "kind": computer_kind(book), "downloaded": not missing(path, book)}
 
 
 def _folder_name(title: str, key: str) -> str:

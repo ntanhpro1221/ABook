@@ -44,13 +44,13 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
-from . import bluetooth, precast, remote_books, spelling, tls, workshop_merge
+from . import bluetooth, peer_studio, precast, remote_books, spelling, tls, workshop_merge
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters, casting_stamp
 from .name_readings import name_readings, never_text, package_reading_reach, reading_reach
-from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices
+from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices, waiting_voice
 from . import narrator_cards
 from .work_items import open_count, work_items
 from .cast import CastError, CastPlayers
@@ -2653,7 +2653,9 @@ class App:
                 continue
 
     def computers_view(self) -> dict[str, Any]:
-        return {"name": socket_name(), "computers": self.computers.list()}
+        computers = self.computers.list()
+        # Danh sách hỏng vừa được làm lại (bản hỏng giữ bên cạnh): nói một dòng thay vì để các máy đã ghép biến mất không lời.
+        return {"name": socket_name(), "computers": computers, **({"broken": note} if (note := remote_books.broken_note(self.computers.broken)) else {})}
 
     def discover_computers(self) -> dict[str, Any]:
         """Máy tính ABook khác đang bật kết nối trong mạng (cùng cách điện thoại tìm máy tính) - để khỏi gõ địa chỉ."""
@@ -3863,9 +3865,14 @@ class Handler(BaseHTTPRequestHandler):
     def get_casting_chapter(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         if packages.is_package(self.app._listenable(value)):
             raise ApiError(HTTPStatus.NOT_FOUND, "File dự án không kèm từng câu của chương - đọc chữ trong sách")
-        view = casting_chapter(self.app._book(value), int(chapter))
+        project = self.app._book(value)
+        view = casting_chapter(project, int(chapter))
         if view is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có chương này")
+        # Phán quyết "Nghe lại" của từng câu (reviews.json): "Thu lại" ở tab gửi nó làm `seen` (post_review), máy kia vừa quyết khác thì được hỏi.
+        reviews = self.app.reviews.get(project)
+        for line in view["lines"]:
+            line["verdict"] = (reviews.get(line["stableId"]) or {}).get("verdict")
         self._send_json(HTTPStatus.OK, view)
 
     def _checked_reading(self, body: dict[str, Any], surface: str) -> str:
@@ -4074,11 +4081,7 @@ class Handler(BaseHTTPRequestHandler):
         điều giao diện đã thấy (`seen`)."""
         if not isinstance(seen, dict):
             return {}
-        if packages.is_package(path):
-            wished = (book_edits.load(path).get("wishes") or {}).get("speakers") or {}
-            recorded = {key: {"speaker": entry["speaker"], "text_sha256": entry["text_sha256"]} for key, entry in wished.items()}
-        else:
-            recorded = {entry["stable_id"]: entry for entry in listener_overrides.speaker_requests(listener_overrides.read_overrides(path))}
+        recorded = {entry["stable_id"]: entry for entry in listener_overrides.speaker_requests(Handler._requests_here(path))}
         out: dict[str, str] = {}
         for stable_id, text_sha256 in lines:
             if stable_id not in seen:
@@ -4088,6 +4091,57 @@ class Handler(BaseHTTPRequestHandler):
             if actual != str(seen[stable_id] or ""):
                 out[stable_id] = actual
         return out
+
+    @staticmethod
+    def _requests_here(path: Path) -> dict[str, Any]:
+        """Những gì đang ghi cho cuốn này, theo hình dạng overrides.json: cuốn không có xưởng giữ ý muốn trong lớp sửa (book_wishes) -
+        cùng hình dạng mục, nên đọc bằng cùng các hàm `listener_overrides.*_requests`."""
+        if packages.is_package(path):
+            return book_edits.load(path).get("wishes") or {}
+        return listener_overrides.read_overrides(path)
+
+    @staticmethod
+    def _delivery(entry: Any) -> dict[str, Any] | None:
+        """Cách đọc một câu để so (`_line_elsewhere`): loại đoạn, cảm xúc, cường độ, chữ đem đọc; None = chưa ai sửa câu này."""
+        if not isinstance(entry, dict):
+            return None
+        intensity = entry.get("intensity")
+        return {"kind": str(entry.get("kind") or ""), "emotion": str(entry.get("emotion") or ""),
+                "intensity": int(intensity) if isinstance(intensity, (int, float)) and not isinstance(intensity, bool) else None,
+                "spoken": entry["spoken"] if isinstance(entry.get("spoken"), str) else None}
+
+    @staticmethod
+    def _line_elsewhere(path: Path, stable_id: str, text_sha256: str, body: dict[str, Any]) -> dict[str, Any]:
+        """{"delivery": cách đọc đang ghi cho câu (None = chưa ai sửa)} khi nó khác điều giao diện đã thấy (`seen`: cách đọc ấy, null =
+        chưa thấy ai sửa); không gửi `seen` (khách cũ) thì {}."""
+        if "seen" not in body:
+            return {}
+        recorded = next((entry for entry in listener_overrides.line_requests(Handler._requests_here(path))
+                         if entry["stable_id"] == stable_id and entry["text_sha256"] == text_sha256), None)
+        actual = Handler._delivery(recorded)
+        return {"delivery": actual} if actual != Handler._delivery(body["seen"]) else {}
+
+    @staticmethod
+    def _voice_elsewhere(path: Path, character: str, body: dict[str, Any]) -> dict[str, str]:
+        """{"voice": giọng đang chờ ("" = để máy chọn / không có), "gender": giới đang chờ} khi lựa chọn giọng đang ghi cho nhân vật khác
+        lựa chọn hộp "Đổi giọng" đã thấy. `seen` = mốc của lựa chọn đang chờ hộp thấy (0 = không có gì chờ): cùng mốc là cùng lựa chọn
+        (dù dây chuyền đã áp nó); hộp không thấy gì chờ mà điều đang ghi đã áp rồi thì cũng không lệch."""
+        seen = body.get("seen")
+        if not isinstance(seen, (int, float)) or isinstance(seen, bool):
+            return {}
+        key = listener_overrides.character_key(character)
+        recorded = (Handler._requests_here(path).get("voices") or {}).get(key)
+        recorded = recorded if isinstance(recorded, dict) else None
+        try:
+            recorded_at = float(recorded.get("requested_at") or 0) if recorded else 0.0
+        except (TypeError, ValueError):
+            recorded_at = 0.0
+        # Cuốn không có xưởng không bao giờ áp ý muốn: có là đang chờ.
+        waiting = recorded if packages.is_package(path) else waiting_voice(path, key)
+        if abs(recorded_at - float(seen)) < 1e-6 or (not seen and waiting is None):
+            return {}
+        preset = str((waiting or {}).get("preset") or "")
+        return {"voice": humanize.voice_label(preset) if preset else "", "gender": str((waiting or {}).get("gender") or "")}
 
     def get_voice_choices(self, query: dict[str, list[str]], value: str) -> None:
         # Màn "Đổi giọng" của một nhân vật (voice_picker.py): mọi giọng dùng được, giọng máy gợi ý, ai đang dùng giọng nào.
@@ -4125,11 +4179,13 @@ class Handler(BaseHTTPRequestHandler):
                                                  intensity=intensity, speaker=speaker, spoken=spoken)
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, LINE_PROBLEMS.get(problem, "Không đổi được cách đọc câu này"))
+        # Như người nói: máy/cửa sổ khác vừa đổi cách đọc câu này khác điều giao diện đã thấy - vẫn ghi, báo lại (chỉ khi lệch).
+        elsewhere = self._line_elsewhere(path, stable_id, text_sha256, body)
         write = book_wishes.request_line if package else listener_overrides.request_line
         write(path, stable_id, text_sha256, kind=kind, emotion=emotion, intensity=intensity,
               speaker=speaker, spoken=spoken, now=time.time())
         self._send_json(HTTPStatus.OK, {"stableId": stable_id, "kind": kind, "emotion": emotion, "intensity": intensity,
-                                        "spoken": spoken})
+                                        "spoken": spoken, **({"elsewhere": elsewhere} if elsewhere else {})})
 
     def post_narrator_section(self, _query: dict[str, list[str]], value: str) -> None:
         # Thẻ "người kể của đoạn khác" (narrator_cards.py): quyết định lưu ở narrator_sections.json cạnh sổ dự án; dây chuyền
@@ -4167,10 +4223,12 @@ class Handler(BaseHTTPRequestHandler):
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, VOICE_PROBLEMS.get(problem, "Không đổi được giọng nhân vật này"))
         now = time.time()
+        # Như người nói: máy/cửa sổ khác vừa chọn giọng khác cho người này - vẫn ghi, báo lại (chỉ khi lệch: lời đáp thường như cũ).
+        elsewhere = self._voice_elsewhere(path, character, body)
         write = book_wishes.request_voice if package else listener_overrides.request_voice
         write(path, character, preset=preset, gender=gender, avoid=avoid, now=now)
         self._send_json(HTTPStatus.OK, {"character": character, "preset": preset, "gender": gender,
-                                        "avoid": avoid, "requestedAt": now})
+                                        "avoid": avoid, "requestedAt": now, **({"elsewhere": elsewhere} if elsewhere else {})})
 
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()  # ghi reviews.json và (Cần thu lại) overrides.json - như mọi yêu cầu sửa khác
@@ -4187,6 +4245,17 @@ class Handler(BaseHTTPRequestHandler):
         now = time.time()
         # Một câu: lời đáp `{ok}` như trước (điện thoại và hợp đồng ghi sẵn đáp y vậy); nhóm: thêm số câu + mốc để Hoàn tác.
         reply = (lambda count: {"ok": True, "lines": count, "requestedAt": now}) if isinstance(refs, list) else (lambda _count: {"ok": True})
+        # Phán quyết máy/cửa sổ khác vừa ghi cho câu này khác điều giao diện đã thấy (`seen`: {mã câu: "ok" | "redo" | ""}): vẫn ghi, báo lại
+        # để người dùng chọn giữ của mình hay lấy của máy kia (soát a27 lỗi 4). Cuốn không có xưởng chỉ có "Cần thu lại" (ý muốn chờ Studio).
+        seen = body.get("seen")
+        if packages.is_package(project):
+            retakes = (self._requests_here(project).get("retakes") or {})
+            before = {stable_id: {"verdict": "redo"} for stable_id in stable_ids if stable_id in retakes}
+        else:
+            before = self.app.reviews.get(project)
+        elsewhere = {stable_id: str((before.get(stable_id) or {}).get("verdict") or "") for stable_id in stable_ids
+                     if isinstance(seen, dict) and stable_id in seen
+                     and str((before.get(stable_id) or {}).get("verdict") or "") != str(seen[stable_id] or "")}
         if packages.is_package(project):
             # Cuốn không có xưởng chưa có hàng đợi "Cần nghe lại": chỉ phần "Cần thu lại" - ý muốn chờ Studio.
             lines = book_wishes.Lines(project)
@@ -4199,15 +4268,9 @@ class Handler(BaseHTTPRequestHandler):
                     book_wishes.cancel_retake(project, stable_id)
             if asked:
                 book_wishes.request_retakes(project, asked, now=now)
-            self._send_json(HTTPStatus.OK, reply(len(asked)))
+            self._send_json(HTTPStatus.OK, {**reply(len(asked)), **({"elsewhere": elsewhere} if elsewhere else {})})
             return
         chapter_id = int(body.get("chapterId", 0))
-        # Phán quyết máy/cửa sổ khác vừa ghi cho câu này khác điều giao diện đã thấy (`seen`: {mã câu: "ok" | "redo" | ""}): vẫn ghi, báo lại
-        # để người dùng chọn giữ của mình hay lấy của máy kia (soát a27 lỗi 4).
-        seen, before = body.get("seen"), self.app.reviews.get(project)
-        elsewhere = {stable_id: str((before.get(stable_id) or {}).get("verdict") or "") for stable_id in stable_ids
-                     if isinstance(seen, dict) and stable_id in seen
-                     and str((before.get(stable_id) or {}).get("verdict") or "") != str(seen[stable_id] or "")}
         asked_count = 0
         for stable_id in stable_ids:
             self.app.reviews.set(project, stable_id, verdict, chapter_id)
@@ -4361,6 +4424,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_computer_reachable(self, _query: dict[str, list[str]], computer: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.computer_reachable(computer))
+
+    def peer_studio(self, _query: dict[str, list[str]], computer: str, _path: str) -> None:
+        # "Mở Studio" của máy tính đã ghép: máy chủ này chuyển tiếp sang máy ấy, mã thiết bị không xuống trang (peer_studio.py).
+        self._body_read = True  # cầu nối tự đọc (hay tự từ chối) thân yêu cầu
+        peer_studio.bridge(self, computer, self.app.computers, self.app.version)
 
     def get_computer_unsent(self, _query: dict[str, list[str]], computer: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.unsent_computer_edits(computer))
@@ -5162,6 +5230,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/computers/([0-9a-f]{12})/unsent"), Handler.get_computer_unsent),
     ("GET", re.compile(r"/api/computers/([0-9a-f]{12})/reachable"), Handler.get_computer_reachable),
     ("DELETE", re.compile(r"/api/computers/([0-9a-f]{12})"), Handler.delete_computer),
+    *((verb, peer_studio.PATH, Handler.peer_studio) for verb in ("GET", "POST", "PUT", "DELETE")),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
     ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),
     # Thêm sách từ EPUB / DOCX / PDF / TXT: xem trước danh sách chương, rồi nhập thành sách chỉ-chữ (chỉ trên máy này).

@@ -508,11 +508,62 @@ object LocalStudio {
             if (problem != null) throw Api(400, SPEAKER_PROBLEMS[problem] ?: "Không đổi được người nói câu này")
         }
         val at = now()
+        // Máy/cửa sổ khác vừa sửa chính câu này khác điều giao diện đã thấy (`seen`): vẫn ghi, báo lại - chỉ khi lệch (server `_edited_elsewhere`).
+        val elsewhere = speakerElsewhere(dir, lines, body.opt("seen"))
         BookWishes.requestSpeakers(dir, lines, speaker, at, newGender)
         val alias = clip(orText(body, "alias"), 200)
         val remembered = alias.isNotEmpty() && BookWishes.requestAlias(dir, alias, speaker, at)
-        return JSONObject().put("lines", lines.size).put("speaker", speaker).put("new", newGender.isNotEmpty())
-            .put("alias", remembered).put("requestedAt", at)
+        return withElsewhere(JSONObject().put("lines", lines.size).put("speaker", speaker).put("new", newGender.isNotEmpty())
+            .put("alias", remembered).put("requestedAt", at), elsewhere)
+    }
+
+    // ---- hai máy sửa cùng một chỗ (soát a27 lỗi 4, uxfix28): `seen` = điều giao diện đã thấy; lệch thì lời đáp mang `elsewhere` ----
+
+    /** Ý muốn đang ghi của mục `section` (lớp sửa, hình dạng mục của overrides.json) - server `_requests_here`. */
+    private fun wished(dir: java.io.File, section: String): JSONObject =
+        BookEdits.load(dir).optJSONObject("wishes")?.optJSONObject(section) ?: JSONObject()
+
+    private fun withElsewhere(reply: JSONObject, elsewhere: JSONObject): JSONObject =
+        if (elsewhere.length() > 0) reply.put("elsewhere", elsewhere) else reply
+
+    /** {mã câu: người đang được ghi ("" = chưa ai quyết)} cho những câu mà điều đang ghi khác `seen` (server `_edited_elsewhere`). */
+    private fun speakerElsewhere(dir: java.io.File, lines: List<Pair<String, String>>, seen: Any?): JSONObject {
+        val out = JSONObject()
+        if (seen !is JSONObject) return out
+        val recorded = wished(dir, "speakers")
+        for ((stableId, sha) in lines) {
+            if (!seen.has(stableId)) continue
+            val entry = recorded.optJSONObject(stableId)
+            val actual = if (entry != null && BookEdits.pyText(entry.opt("text_sha256")) == sha) BookEdits.pyText(entry.opt("speaker")) else ""
+            if (actual != BookEdits.pyText(seen.opt(stableId))) out.put(stableId, actual)
+        }
+        return out
+    }
+
+    /** Cách đọc một câu để so (server `_delivery`); NULL = chưa ai sửa câu này. */
+    private fun delivery(entry: Any?): Any {
+        if (entry !is JSONObject) return JSONObject.NULL
+        val intensity = entry.opt("intensity")
+        return JSONObject().put("kind", BookEdits.pyText(entry.opt("kind"))).put("emotion", BookEdits.pyText(entry.opt("emotion")))
+            .put("intensity", if (intensity is Number) intensity.toLong() else JSONObject.NULL)
+            .put("spoken", entry.opt("spoken") as? String ?: JSONObject.NULL)
+    }
+
+    /** {"delivery": cách đọc đang ghi} khi nó khác `seen` (server `_line_elsewhere`); không gửi `seen` thì rỗng. */
+    private fun lineElsewhere(dir: java.io.File, stableId: String, sha: String, body: JSONObject): JSONObject {
+        if (!body.has("seen")) return JSONObject()
+        val entry = wished(dir, "lines").optJSONObject(stableId)
+        val actual = delivery(if (entry != null && BookEdits.pyText(entry.opt("text_sha256")) == sha) entry else null)
+        return if (StrictJson.equal(actual, delivery(body.opt("seen")))) JSONObject() else JSONObject().put("delivery", actual)
+    }
+
+    /** {"voice", "gender"} của lựa chọn đang chờ khi mốc của nó khác `seen` - mốc lựa chọn hộp đã thấy, 0 = không có (server `_voice_elsewhere`). */
+    private fun voiceElsewhere(dir: java.io.File, character: String, body: JSONObject): JSONObject {
+        val seen = (body.opt("seen") as? Number)?.toDouble() ?: return JSONObject()
+        val entry = wished(dir, "voices").optJSONObject(BookWishes.characterKey(character))
+        val recordedAt = (entry?.opt("requested_at") as? Number)?.toDouble() ?: 0.0
+        if (Math.abs(recordedAt - seen) < 1e-6 || (seen == 0.0 && entry == null)) return JSONObject()
+        return JSONObject().put("voice", BookEdits.pyText(entry?.opt("preset"))).put("gender", BookEdits.pyText(entry?.opt("gender")))
     }
 
     /** POST /line {stableId, textSha256, kind?, emotion?, intensity?, speaker?, spoken?}. */
@@ -532,9 +583,10 @@ object LocalStudio {
         val (_, index, cast) = fresh(dir)
         val problem = BookWishes.lineProblem(index, cast, stableId, sha, kind, emotion, speaker, spoken)
         if (problem != null) throw Api(400, LINE_PROBLEMS[problem] ?: "Không đổi được cách đọc câu này")
+        val elsewhere = lineElsewhere(dir, stableId, sha, body)
         BookWishes.requestLine(dir, stableId, sha, kind, emotion, intensity, speaker, spoken, now())
-        return JSONObject().put("stableId", stableId).put("kind", kind).put("emotion", emotion)
-            .put("intensity", intensity ?: JSONObject.NULL).put("spoken", spoken ?: JSONObject.NULL)
+        return withElsewhere(JSONObject().put("stableId", stableId).put("kind", kind).put("emotion", emotion)
+            .put("intensity", intensity ?: JSONObject.NULL).put("spoken", spoken ?: JSONObject.NULL), elsewhere)
     }
 
     /** POST /voice {character, gender?, preset?, avoid?} / {character, withdraw, requestedAt}. */
@@ -552,9 +604,10 @@ object LocalStudio {
         val problem = BookWishes.voiceProblem(cast, character, gender)
         if (problem != null) throw Api(400, VOICE_PROBLEMS[problem] ?: "Không đổi được giọng nhân vật này")
         val at = now()
+        val elsewhere = voiceElsewhere(dir, character, body)
         BookWishes.requestVoice(dir, character, preset, gender, avoid, at)
-        return JSONObject().put("character", character).put("preset", preset).put("gender", gender)
-            .put("avoid", avoid).put("requestedAt", at)
+        return withElsewhere(JSONObject().put("character", character).put("preset", preset).put("gender", gender)
+            .put("avoid", avoid).put("requestedAt", at), elsewhere)
     }
 
     /**
@@ -573,6 +626,14 @@ object LocalStudio {
         } ?: listOf(BookEdits.cut(field(body, "stableId"), 80))
         val (_, index, _) = fresh(dir)
         val at = now()
+        // "Cần thu lại" máy/cửa sổ khác vừa xin hay bỏ khác điều giao diện đã thấy (`seen`: {mã câu: "redo" | ""}): báo lại (server post_review).
+        val seen = body.opt("seen") as? JSONObject
+        val retakes = wished(dir, "retakes")
+        val elsewhere = JSONObject()
+        for (stableId in stableIds) {
+            val before = if (retakes.has(stableId)) "redo" else ""
+            if (seen != null && seen.has(stableId) && before != BookEdits.pyText(seen.opt(stableId))) elsewhere.put(stableId, before)
+        }
         val asked = ArrayList<Pair<String, String>>()
         for (stableId in stableIds) {
             val found = index.get(stableId)
@@ -584,7 +645,7 @@ object LocalStudio {
         }
         if (asked.isNotEmpty()) BookWishes.requestRetakes(dir, asked, at)
         val reply = JSONObject().put("ok", true)
-        return if (refs == null) reply else reply.put("lines", asked.size).put("requestedAt", at)
+        return withElsewhere(if (refs == null) reply else reply.put("lines", asked.size).put("requestedAt", at), elsewhere)
     }
 
     /** POST /characters/merge {from, into}: mọi câu nói của người này thành ý muốn "là lời của người kia" + bí danh. */

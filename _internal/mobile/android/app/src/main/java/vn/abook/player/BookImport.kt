@@ -2109,21 +2109,51 @@ object BookImport {
         return TAIL_RULES.any { it.matcher(core).lookingAt() }
     }
 
+    private const val CREDIT_TAIL_WINDOW_LINES = 6 // text_processing.CREDIT_TAIL_WINDOW_LINES: chuỗi dòng cuối liền nhau
+
+    // Ghi chú cuối chương của tác giả / người dịch (text_processing._note_start; cửa sổ = Paragraphs.CREDIT_TAIL_WINDOW = CREDIT_NOTE_WINDOW_LINES).
+    private val NOTE_HEADER: Pattern = Pattern.compile(
+        "^[\\s*_~#>(\\[]*(?:tác note|lời (?:của )?(?:tác giả|người dịch|dịch giả|trans|editor)|note (?:của )?(?:tác giả|người dịch|trans)" +
+            "|ghi chú (?:của )?(?:tác giả|người dịch)|a/n|t/n|trans|tl|editor|biên tập)\\s*(?:[:：()\\]]|\$)",
+        TAIL_FLAGS,
+    )
+    private val NOTE_WORDS: Pattern = Pattern.compile("bản dịch hoàn thành|chương tiếp theo|donate|ủng hộ|bình luận", TAIL_FLAGS)
+    private val SPEECH_VERB: Pattern = Pattern.compile(
+        "\\b(?:nói|hỏi|đáp|trả lời|quát|hét|gào|thì thầm|lẩm bẩm|kêu|bảo|ra lệnh|cười)\\b", TAIL_FLAGS) // text_processing.SPEECH_VERB_PATTERN
+
+    private fun noteStart(line: String): Boolean {
+        if (NOTE_HEADER.matcher(line).lookingAt() || (tailCreditLine(line) && !CREDIT_LINE.matcher(line).lookingAt())) return true
+        return line.length <= CREDIT_TAIL_MAX && !TAIL_QUOTES.matcher(line).find() && !TAIL_DIALOGUE.matcher(line).lookingAt() &&
+            !SPEECH_VERB.matcher(line).find() && NOTE_WORDS.matcher(line).find()
+    }
+
     /**
      * Dòng xin ủng hộ / quảng cáo / nguồn / ghi công ở CUỐI một chương (`source` như file chương): GỢI Ý như [creditSuggestions], không bao giờ tự bỏ.
-     * Chỉ chuỗi liền nhau tính từ dòng có chữ cuối cùng đi lên trong `Paragraphs.CREDIT_TAIL_WINDOW` dòng - một dòng truyện chen giữa thì dừng; dòng chỉ
-     * toàn gạch / sao đứng giữa thì bước qua. Theo thứ tự trong chương (`importers.tail_credit_suggestions`).
+     * Chuỗi liền nhau tính từ dòng có chữ cuối cùng đi lên trong `CREDIT_TAIL_WINDOW_LINES` dòng - một dòng truyện chen giữa thì dừng; dòng chỉ
+     * toàn gạch / sao đứng giữa thì bước qua. Cùng với đoạn ghi chú cuối chương ([noteStart]): trong `Paragraphs.CREDIT_TAIL_WINDOW` dòng cuối (trừ
+     * `CREDIT_WINDOW_LINES` dòng đầu), dòng đầu tiên mở ghi chú mà sau nó không còn lời thoại -> tới hết chương. Theo thứ tự trong chương
+     * (`text_processing._tail_credit_line_indexes`, `importers.tail_credit_suggestions`).
      */
     fun tailCreditSuggestions(source: String): List<String> {
         val tail = pyStrip(source).split("\n").takeLast(CREDIT_TAIL_SCAN_LINES).joinToString("\n")
         val lines = normalizeText(tail).split("\n").map { pyStrip(it) }.filter { it.isNotEmpty() }
-        val found = mutableListOf<String>()
-        for (line in lines.takeLast(Paragraphs.CREDIT_TAIL_WINDOW).asReversed()) {
-            if (TAIL_EDGE.matcher(line).replaceAll("").isEmpty()) continue
-            if (!tailCreditLine(line)) break
-            found.add(line)
+        val found = sortedSetOf<Int>()
+        for (index in lines.indices.toList().takeLast(CREDIT_TAIL_WINDOW_LINES).asReversed()) {
+            if (TAIL_EDGE.matcher(lines[index]).replaceAll("").isEmpty()) continue
+            if (!tailCreditLine(lines[index])) break
+            found.add(index)
         }
-        return found.asReversed()
+        val worded = lines.indices.filter { TAIL_EDGE.matcher(lines[it]).replaceAll("").isNotEmpty() } // dòng chỉ toàn gạch / sao không tính
+        for (index in maxOf(CREDIT_WINDOW_LINES, lines.size - Paragraphs.CREDIT_TAIL_WINDOW) until lines.size) {
+            val rest = worded.filter { it > index }
+            if (index in worded && noteStart(lines[index]) &&
+                rest.none { TAIL_QUOTES.matcher(lines[it]).find() || TAIL_DIALOGUE.matcher(lines[it]).lookingAt() }) {
+                found.add(index)
+                found.addAll(rest)
+                break
+            }
+        }
+        return found.map { lines[it] }
     }
 
     /**

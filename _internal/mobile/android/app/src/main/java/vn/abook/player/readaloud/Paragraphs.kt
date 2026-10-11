@@ -53,12 +53,12 @@ object Paragraphs {
     /** Số dòng có chữ đầu chương mà luật dòng ghi công xét (text_processing.CREDIT_WINDOW_LINES). */
     private const val CREDIT_WINDOW = 6
 
-    /** Số dòng có chữ CUỐI chương mà gợi ý ủng hộ / nguồn ở cuối chương xét (readaloud/paragraphs.py CREDIT_TAIL_WINDOW, BookImport.tailCreditSuggestions). */
-    const val CREDIT_TAIL_WINDOW = 6
+    /** Số dòng có chữ CUỐI chương mà gợi ý ủng hộ / nguồn / ghi chú cuối chương xét (readaloud/paragraphs.py CREDIT_TAIL_WINDOW = text_processing.CREDIT_NOTE_WINDOW_LINES; BookImport.tailCreditSuggestions dùng chung). */
+    const val CREDIT_TAIL_WINDOW = 12
 
     /**
      * Chữ của chương trừ các dòng người nghe đã chọn bỏ khỏi phần đọc (lớp sửa `skip` - gợi ý dòng ghi công, ủng hộ, nguồn của bộ nhập sách) - bản
-     * Kotlin của `withoutLines` (textScript.ts): chỉ xét 6 dòng có chữ đầu chương và 6 dòng có chữ cuối chương. Chữ của sách không đổi; lõi đọc to
+     * Kotlin của `withoutLines` (textScript.ts): chỉ xét 6 dòng có chữ đầu chương và 12 dòng có chữ cuối chương. Chữ của sách không đổi; lõi đọc to
      * và màn đọc cùng bỏ.
      */
     fun withoutLines(text: String, skip: List<String>): String {

@@ -373,6 +373,14 @@ TAIL_SOURCE_CASES = [
     "Chương 1\n\nLời truyện.\n\n---\nNguồn: truyenthu.vn\n***\nXin ủng hộ: Momo 0912345678\n\n\n",
     "Chương 1\n" + "\n".join(f"Nguồn: truyenthu.vn/{n}" for n in range(1, 9)) + "\n",
     "Nguồn: truyenthu.vn\n",
+    # Ghi chú cuối chương của tác giả / người dịch (uxfix28 D): từ dòng mở ghi chú trong 12 dòng có chữ cuối tới hết chương; sau đó còn lời thoại thì là truyện.
+    "Chương 1\n\n" + "".join(f"Đoạn truyện {n}.\n" for n in range(1, 10)) + "Lời tác giả: tuần này ra hai chương.\nCảm ơn mọi người.\n",
+    "Chương 1\n\n" + "".join(f"Đoạn truyện {n}.\n" for n in range(1, 10)) + "(T/N: tên riêng giữ nguyên)\n***\nHẹn gặp lại.\n",
+    "Chương 1\n\n" + "".join(f"Đoạn truyện {n}.\n" for n in range(1, 10)) + "Mọi người nhớ bình luận nhé!\nChương tiếp theo ra thứ bảy.\n",
+    "Chương 1\n\n" + "".join(f"Đoạn truyện {n}.\n" for n in range(1, 10)) + "Mọi người nhớ bình luận nhé!\n“Về thôi,” cô bảo.\n",
+    "Chương 1\n\n" + "".join(f"Đoạn truyện {n}.\n" for n in range(1, 10)) + "Ông ủng hộ chuyến đi, ông nói.\nTrời tối dần.\n",
+    "Chương 1\n\n" + "".join(f"Đoạn truyện {n}.\n" for n in range(1, 10)) + "Dịch: Nhóm Lục Bình\nRồi trời tạnh hẳn.\n",
+    "Chương 1\n\nMọi người nhớ bình luận nhé!\nRồi trời tạnh hẳn.\n",
 ]
 
 
