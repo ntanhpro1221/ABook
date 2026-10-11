@@ -18,6 +18,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Sách của máy tính khác: chương đã nghe vẫn đọc theo được khi máy kia tắt; dự án máy kia chưa làm không còn hiện thành sách, cuốn đang làm ghi "Đang làm trên <máy>"; tải về chỉ báo xong khi đủ cả chữ đọc theo và nhạc nền. Máy kia mất mạng thì "Thử lại" nạp lại đúng chỗ đang nghe và tự phát tiếp khi máy kia trả lời.
 - Bấm một câu ở chương khác rồi dừng ngay không còn đưa trình đọc về đầu chương.
 
+### Bảo mật (máy tính)
+
+- App Windows dùng Python 3.14.8: bản vá bảo mật cho kết nối mã hoá giữa các máy trong nhà (OpenSSL 3.5.9 và hai lỗi của SSLContext).
+
 ## [0.4.50] - 2026-10-11
 
 ### Điện thoại và Nghe sách (máy tính và điện thoại)
