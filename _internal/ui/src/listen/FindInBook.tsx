@@ -121,7 +121,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           placeholder="Chữ hay câu cần tìm…"
           autoComplete="off"
           enterKeyHint="search"
-          className="h-11 w-full rounded-xl border border-line bg-bg pl-9 pr-3 text-base outline-none focus:border-accent"
+          className="h-11 w-full rounded-xl border border-line bg-bg pl-9 pr-3 text-base outline-none focus:border-focus"
         />
       </div>
       <p role="status" className="mt-2 text-xs text-fg-2">

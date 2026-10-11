@@ -76,7 +76,7 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
       <summary className="cursor-pointer text-sm font-medium text-fg-2 hover:text-fg">
         Nâng cao: bộ phân tích truyện{value ? ` - bản thử nghiệm` : ""}
       </summary>
-      <p className="mt-2 text-[13px] text-fg-2 text-pretty">
+      <p className="mt-2 text-[0.8125rem] text-fg-2 text-pretty">
         Bộ phân tích đoán ai nói câu nào, cảm xúc ra sao. Không chắc thì để mặc định - bản khác chỉ dùng cho cuốn này, khi muốn thử một
         bản mới trên sách thật.
       </p>
@@ -87,7 +87,7 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
         id="analysis-model"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-9 w-full max-w-lg rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
+        className="mt-2 h-9 w-full max-w-lg rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
       >
         <option value="">Mặc định của ABook (khuyên dùng)</option>
         <optgroup label="Bản khác (thử nghiệm)">
@@ -99,7 +99,7 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
         </optgroup>
       </select>
       {/* Tên kỹ thuật (tag trong Ollama) chỉ ở chú thích nhỏ, cho người cần biết đúng bản nào. */}
-      <p className="mt-1.5 text-[13px] text-fg-2 text-pretty">
+      <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">
         {value
           ? "Bản thử nghiệm: chưa được kiểm trên nhiều truyện, kết quả có thể kém hơn mặc định."
           : "Mặc định: máy đề xuất cho hầu hết các truyện, không cần chỉnh gì."}

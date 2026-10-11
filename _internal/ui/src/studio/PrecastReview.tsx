@@ -73,10 +73,10 @@ export function PrecastWaitSwitch({ book, className }: { book: BookSummary; clas
   const id = `precast-wait-${book.id}`;
   return (
     <label htmlFor={id} className={cn("flex items-start gap-3 rounded-xl border border-line bg-panel p-4", className)}>
-      <Switch id={id} checked={wait} disabled={save.isPending} onCheckedChange={(value) => save.mutate(value)} />
+      <Switch id={id} labelledBy={`${id}-name`} describedBy={`${id}-hint`} checked={wait} disabled={save.isPending} onCheckedChange={(value) => save.mutate(value)} />
       <span>
-        <span className="block text-sm font-medium">Chờ tôi duyệt trước khi thu</span>
-        <span className="mt-0.5 block text-[13px] leading-relaxed text-fg-2">
+        <span id={`${id}-name`} className="block text-sm font-medium">Chờ tôi duyệt trước khi thu</span>
+        <span id={`${id}-hint`} className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
           {passed
             ? "Áp dụng cho lần phân tích xong của cuốn này - đã qua rồi. Muốn sách đứng lại lúc này thì bấm “Tạm dừng”."
             : wait

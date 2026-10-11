@@ -10,6 +10,7 @@ import { api, urls } from "./api";
 import { useCachedBook } from "./data";
 import { retryUnlessGone } from "./polling";
 import { usePendingNote } from "./decisions";
+import { letterShortcutsOn } from "@/shared/letterShortcuts";
 import { verdictWord, warnElsewhere } from "./elsewhere";
 import { matchPhrase, notRecordedYet, shortcutHint, spokenEditLabel } from "./reviewText";
 
@@ -148,7 +149,7 @@ function SpokenEditor({
         onKeyDown={(event) => {
           if (event.key === "Escape") onDone(null);
         }}
-        className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-[15px] outline-none focus-visible:border-accent"
+        className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-[0.9375rem] outline-none focus-visible:border-focus"
       />
       <p className="mt-1 text-xs text-fg-3">Viết như cách đọc thành tiếng, ví dụ “Tách tách tách” thành “tách, tách, tách”. Để trống là đọc đúng chữ sách.</p>
       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -230,9 +231,9 @@ function Row({
             </span>
           )}
         </div>
-        <p className="mt-1 text-[15px] leading-snug">{item.text}</p>
+        <p className="mt-1 text-[0.9375rem] leading-snug">{item.text}</p>
         {item.heard && (
-          <p className="mt-1 text-[13px] leading-snug text-fg-2">
+          <p className="mt-1 text-[0.8125rem] leading-snug text-fg-2">
             <Ear className="mr-1 inline size-3.5 -translate-y-px" />
             Máy nghe ra: “{item.heard}”
           </p>
@@ -364,7 +365,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
   useEffect(() => {
     if (!continuous) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.ctrlKey || event.metaKey || event.altKey || !letterShortcutsOn()) return;
       if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable=true]")) return;
       const key = event.key.toLowerCase();
       if (key !== "o" && key !== "r") return;
@@ -514,7 +515,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         </div>
       )}
       {minor > 0 && (
-        <button type="button" onClick={() => setShowMinor((value) => !value)} className="mt-4 text-sm font-medium text-fg-2 hover:text-fg">
+        <button type="button" onClick={() => setShowMinor((value) => !value)} className="touch-row mt-4 text-sm font-medium text-fg-2 hover:text-fg">
           {showMinor ? "Ẩn" : "Hiện"} {minor} câu lệch ít (thường vẫn ổn)
         </button>
       )}

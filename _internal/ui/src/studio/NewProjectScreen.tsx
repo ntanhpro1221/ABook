@@ -29,7 +29,8 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
 import { formatLength, formatNumber } from "@/shared/format";
-import { Button, Segmented, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { spokenProgress } from "@/shared/progressSpeech";
+import { Button, LiveText, Segmented, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import type { ContinuationPlan, FirstPersonHint, ScannedFile, ScanResult, Voice } from "@/studio/api";
 import {
   pickFiles,
@@ -466,7 +467,9 @@ function SourceStep({
               >
                 <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${percent}%` }} />
               </div>
-              <p className="tabular mt-1.5 text-xs text-fg-2">{progressLabel(uploading)}</p>
+              <p className="tabular mt-1.5 text-xs text-fg-2">
+                <LiveText shown={progressLabel(uploading)} spoken={spokenProgress("Đang gửi các chương", uploading.totalBytes ? uploading.bytes / uploading.totalBytes : null)} />
+              </p>
             </div>
           )}
           {info?.dialogs && (
@@ -485,7 +488,7 @@ function SourceStep({
               type="button"
               aria-expanded={false}
               onClick={() => setAdvanced(true)}
-              className="mt-5 text-[13px] text-fg-2 underline-offset-2 hover:text-fg hover:underline"
+              className="mt-5 text-[0.8125rem] text-fg-2 underline-offset-2 hover:text-fg hover:underline"
             >
               Nâng cao: dán đường dẫn của một thư mục trên máy tính
             </button>
@@ -507,7 +510,7 @@ function SourceStep({
                   aria-describedby={problem ? "source-problem" : undefined}
                   placeholder={info?.dialogs ? "…hoặc dán đường dẫn" : "Dán đường dẫn thư mục hay file"}
                   className={cn(
-                    "h-10 min-w-0 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent",
+                    "h-10 min-w-0 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus",
                     problem ? "border-danger" : "border-line",
                   )}
                 />
@@ -567,13 +570,13 @@ function SourceStep({
               aria-invalid={!title.trim()}
               aria-describedby={!title.trim() ? "title-problem" : undefined}
               className={cn(
-                "mt-1.5 h-11 w-full rounded-xl border bg-panel px-3.5 text-[15px] font-medium outline-none focus:border-accent",
+                "mt-1.5 h-11 w-full rounded-xl border bg-panel px-3.5 text-[0.9375rem] font-medium outline-none focus:border-focus",
                 title.trim() ? "border-line" : "border-danger",
               )}
               placeholder="Tên hiển thị trong thư viện"
             />
             {!title.trim() && (
-              <span id="title-problem" role="alert" className="mt-1 block text-[13px] text-danger">
+              <span id="title-problem" role="alert" className="mt-1 block text-[0.8125rem] text-danger">
                 Sách cần có tên để hiện trong thư viện.
               </span>
             )}
@@ -599,7 +602,7 @@ function SourceStep({
                       <span className="min-w-0 break-words">
                         “{project.title}” · {project.shared === project.chapters ? `cả ${project.chapters} chương` : `trùng ${project.shared}/${project.chapters} chương`} · {project.statusLabel}
                       </span>
-                      <Link to={`/studio/${project.id}`} className="font-medium text-accent-text hover:underline">
+                      <Link to={`/studio/${project.id}`} className="touch-reach font-medium text-accent-text hover:underline">
                         Mở dự án
                       </Link>
                     </li>
@@ -667,20 +670,27 @@ function SourceStep({
               {limit !== null && later > 0 && <span>· còn {formatNumber(later)} chương cho đợt sau</span>}
             </div>
           )}
-          <div className="mt-3 max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel">
+          {/* Danh sách thật cho trình đọc màn hình ("danh sách 12 mục", soát a31 A4); vạch "Phần N" chỉ để nhìn - lời của nó đọc ở đầu mục. */}
+          <div role="list" aria-label="Các chương sẽ làm" className="mt-3 max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel">
             {files.map((file, index) => {
               // Chia phần: một vạch "Phần N bắt đầu" trước chương đầu mỗi phần - khỏi phải đối số chương với ô "từ chương" ở trên.
               const part = splitting && volumeStarts && volumeStarts.length > 1 ? volumeStarts.indexOf(index + 1) : -1;
               return (
                 <Fragment key={file.path}>
                   {part >= 0 && (
-                    <div className="flex items-center gap-2 border-b border-accent/30 bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-text">
+                    <div aria-hidden className="flex items-center gap-2 border-b border-accent/30 bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-text">
                       <Layers className="size-3.5 shrink-0" />
                       <span className="min-w-0 truncate">Phần {part + 1} bắt đầu</span>
                     </div>
                   )}
-                  <div className="group grid grid-cols-[40px_minmax(0,1fr)_90px_36px] items-center gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0">
-                    <span className="tabular text-xs text-fg-2">{index + 1}</span>
+                  <div
+                    role="listitem"
+                    className="group grid grid-cols-[40px_minmax(0,1fr)_90px_36px] items-center gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0"
+                  >
+                    <span className="tabular text-xs text-fg-2">
+                      {part >= 0 && <span className="sr-only">Phần {part + 1} bắt đầu. </span>}
+                      {index + 1}
+                    </span>
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{file.firstLine || file.title}</div>
                       <div className="truncate text-xs text-fg-2">{file.name}</div>
@@ -694,7 +704,7 @@ function SourceStep({
                       aria-label={`Bỏ chương ${file.name}`}
                       title="Bỏ chương này"
                       onClick={() => onRemove(file.path)}
-                      className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
+                      className="touch-hit grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -930,7 +940,7 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
       <button
         type="button"
         onClick={onDrop}
-        className="self-start whitespace-nowrap text-[13px] text-fg-2 underline-offset-2 hover:text-fg hover:underline max-sm:basis-full max-sm:pl-7 max-sm:text-left"
+        className="self-start whitespace-nowrap text-[0.8125rem] text-fg-2 underline-offset-2 hover:text-fg hover:underline max-sm:basis-full max-sm:pl-7 max-sm:text-left"
       >
         Bỏ nối tiếp
       </button>
@@ -959,7 +969,7 @@ function VoiceCard({
     <div
       className={cn(
         "relative flex items-center gap-3 rounded-xl border bg-panel p-3.5 transition-colors",
-        selected ? "border-accent ring-1 ring-accent" : "border-line hover:border-line-strong",
+        selected ? "border-focus ring-1 ring-focus" : "border-line hover:border-line-strong",
       )}
     >
       <button
@@ -982,14 +992,14 @@ function VoiceCard({
         tabIndex={focusable ? 0 : -1}
         data-voice={voice.name}
         onClick={onSelect}
-        className="min-w-0 flex-1 text-left outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent"
+        className="min-w-0 flex-1 text-left outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-focus"
       >
         <span className="block font-semibold leading-snug">{voice.name}</span>
         <span className="mt-0.5 block text-xs text-fg-2">
           {voice.gender} · Miền {voice.region} · {voice.style}
         </span>
         {voice.recommended && (
-          <span className="mt-1.5 inline-block rounded-md bg-accent-soft px-1.5 py-px text-[11px] font-semibold uppercase tracking-wide text-accent-text">
+          <span className="mt-1.5 inline-block rounded-md bg-accent-soft px-1.5 py-px text-[0.6875rem] font-semibold uppercase tracking-wide text-accent-text">
             Đề xuất
           </span>
         )}
@@ -1124,7 +1134,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, povOff, setPovO
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder="Tên nhân vật xưng “tôi” (để trống nếu kể ngôi thứ ba)"
-          className="mt-1.5 h-11 w-full rounded-xl border border-line bg-panel px-3.5 text-[15px] font-medium text-fg outline-none focus:border-accent"
+          className="mt-1.5 h-11 w-full rounded-xl border border-line bg-panel px-3.5 text-[0.9375rem] font-medium text-fg outline-none focus:border-focus"
         />
       </label>
       <PovChapters hint={hint} narrator={value} off={povOff} onOffChange={setPovOff} />
@@ -1284,11 +1294,11 @@ function QualityStep({
               onClick={() => setProfile(option.value)}
               className={cn(
                 "relative flex flex-col rounded-2xl border bg-panel p-5 text-left transition-colors",
-                selected ? "border-accent ring-1 ring-accent" : "border-line hover:border-line-strong",
+                selected ? "border-focus ring-1 ring-focus" : "border-line hover:border-line-strong",
               )}
             >
               {option.value === "high_quality" && (
-                <span className="absolute -top-2.5 left-4 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-ink">
+                <span className="absolute -top-2.5 left-4 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[0.6875rem] font-semibold text-accent-ink">
                   <Sparkles className="size-3" /> Nên dùng
                 </span>
               )}
@@ -1304,7 +1314,7 @@ function QualityStep({
                 <Gauge className="size-3.5" /> {option.pace}
               </div>
               <p className="mt-3 text-sm text-fg-2">{option.summary}</p>
-              <ul className="mt-4 space-y-2 text-[13px]">
+              <ul className="mt-4 space-y-2 text-[0.8125rem]">
                 {option.points.map((point) => (
                   <li key={point} className="flex gap-2">
                     <Check className="mt-0.5 size-3.5 shrink-0 text-success" strokeWidth={3} />
@@ -1312,7 +1322,7 @@ function QualityStep({
                   </li>
                 ))}
               </ul>
-              <div className="mt-4 flex items-start gap-1.5 border-t border-line pt-3 text-[13px] text-fg-2">
+              <div className="mt-4 flex items-start gap-1.5 border-t border-line pt-3 text-[0.8125rem] text-fg-2">
                 <Clock3 className="mt-0.5 size-3.5 shrink-0" />
                 {noStudio ? (
                   <span>Thời gian làm tính được khi Studio đã cài.</span>
@@ -1480,10 +1490,17 @@ function ConfirmStep({
         </div>
       )}
       <label className="mt-4 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="start-now">
-        <Switch id="start-now" checked={startNow && !noStudio} disabled={noStudio} onCheckedChange={setStartNow} />
+        <Switch
+          id="start-now"
+          labelledBy="start-now-name"
+          describedBy="start-now-hint"
+          checked={startNow && !noStudio}
+          disabled={noStudio}
+          onCheckedChange={setStartNow}
+        />
         <span>
-          <span className="block text-sm font-medium">Bắt đầu tạo ngay</span>
-          <span className="mt-0.5 block text-[13px] leading-relaxed text-fg-2">
+          <span id="start-now-name" className="block text-sm font-medium">Bắt đầu tạo ngay</span>
+          <span id="start-now-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
             {noStudio
               ? "Chưa có Studio nên sách chưa chạy được. Sách được tạo và chờ; cài Studio xong thì bấm “Bắt đầu tạo sách nói” ở trang dự án."
               : startNow
@@ -1493,10 +1510,10 @@ function ConfirmStep({
         </span>
       </label>
       <label className="mt-3 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="precast-wait">
-        <Switch id="precast-wait" checked={precastWait} onCheckedChange={setPrecastWait} />
+        <Switch id="precast-wait" labelledBy="precast-wait-name" describedBy="precast-wait-hint" checked={precastWait} onCheckedChange={setPrecastWait} />
         <span>
-          <span className="block text-sm font-medium">Chờ tôi duyệt trước khi thu</span>
-          <span className="mt-0.5 block text-[13px] leading-relaxed text-fg-2">
+          <span id="precast-wait-name" className="block text-sm font-medium">Chờ tôi duyệt trước khi thu</span>
+          <span id="precast-wait-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
             {precastWait
               ? "Phân tích xong, sách tạm dừng để bạn xem giọng, cách đọc tên và người nói - bấm “Thu âm” để thu tiếp."
               : "Phân tích xong thì thu luôn. Vẫn duyệt được bất cứ lúc nào; sửa ở chương chưa thu thì không phải thu lại."}
@@ -1780,7 +1797,7 @@ export function NewProjectScreen() {
       <button type="button" onClick={() => navigate("/studio")} className="inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[28px]">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</h1>
+      <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[1.75rem]">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</h1>
       {draft.seed && (
         <SeedBanner
           seed={draft.seed}
@@ -1809,7 +1826,7 @@ export function NewProjectScreen() {
                 setRawScan(null);
                 go(0);
               }}
-              className="mt-4 px-2.5 text-[13px] text-fg-2 hover:text-fg"
+              className="touch-row mt-4 px-2.5 text-[0.8125rem] text-fg-2 hover:text-fg"
             >
               Bắt đầu lại từ đầu
             </button>

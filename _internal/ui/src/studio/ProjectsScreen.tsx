@@ -148,7 +148,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
           ) : (
             <>
               <div className="flex items-center gap-2">
-                <Progress value={book.progress.overall} running={live} tone={live ? "accent" : "muted"} size="sm" />
+                <Progress value={book.progress.overall} running={live} tone={live ? "accent" : "muted"} size="sm" label={`Tiến độ: ${book.title}`} />
                 <span className="tabular w-9 text-right text-xs font-semibold">{formatPercent(book.progress.overall)}</span>
               </div>
               <div className="mt-1 truncate text-xs text-fg-2">{detail}</div>
@@ -220,7 +220,7 @@ export function ProjectsScreen() {
       <header className="flex flex-wrap items-end justify-between gap-4 md:gap-6">
         <div className="min-w-0">
           <div className="text-xs font-semibold uppercase tracking-wider text-accent-text">Studio</div>
-          <h1 className="mt-1 text-[28px] font-bold tracking-tight">Dự án sách nói</h1>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-tight">Dự án sách nói</h1>
           <p className="mt-1 text-sm text-fg-2">
             {books.length ? `${books.length} dự án` : "Chưa có dự án"}
           </p>

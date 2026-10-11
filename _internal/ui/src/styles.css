@@ -57,6 +57,9 @@
   --control-line-strong: #6b7685;
   /* Rãnh công tắc đang tắt: >= 3:1 trên nền sáng (soát UX 29-09: line-strong chỉ 1,4:1, công tắc tắt gần như vô hình). */
   --switch-off: #808a98;
+  /* Vòng tiêu điểm, viền thẻ đang chọn, công tắc bật (WCAG 1.4.11 / 2.4.7: >= 3:1 với mọi nền; soát a31 K3/C4/C5: --accent #e39a2d chỉ
+     2,1-2,4:1 trên nền sáng). 3,7-4,6:1 trên --bg/--panel/--hover/--accent-soft. --accent giữ cho nút chính, tiến độ, trang trí. */
+  --focus: #a8650d;
   --text: #14181d;
   --text-2: #4f5965;
   --text-3: #666f7b;
@@ -93,9 +96,12 @@
   --hover: #1f262f;
   --line: #252d37;
   --line-strong: #333d49;
-  --control-line: #252d37; /* tối: viền nút và ô nhập vẫn là --line như trước */
-  --control-line-strong: #333d49;
-  --switch-off: #4b5563;
+  /* tối: viền nút và ô nhập >= 3:1 (soát a31 C3: --line #252d37 chỉ 1,36:1, ô nhập gần như vô hình): 3,3:1 trên --hover, 3,8:1 trên
+     --panel, 4,1:1 trên --bg. Rãnh công tắc tắt cũng vậy (C5: #4b5563 chỉ 2,3:1). */
+  --control-line: #6b7685;
+  --control-line-strong: #808a98;
+  --switch-off: #6b7685;
+  --focus: #f2a93f; /* = --accent: 7,6-9,8:1 trên nền tối */
   --text: #e9ecf0;
   --text-2: #a3acb7;
   --text-3: #8a94a1;
@@ -135,6 +141,7 @@
   --color-control: var(--control-line);
   --color-control-strong: var(--control-line-strong);
   --color-switch-off: var(--switch-off);
+  --color-focus: var(--focus);
   --color-fg: var(--text);
   --color-fg-2: var(--text-2);
   --color-fg-3: var(--text-3);
@@ -168,12 +175,14 @@
   #root {
     height: 100%;
   }
+  /* Cỡ chữ theo rem, gốc = cỡ chữ mặc định của trình duyệt / hệ thống (16 px nếu người dùng không đổi): người đặt chữ to thì cả app to
+     theo, không chỉ phần dùng text-sm (WCAG 1.4.4, soát a31 Z2). Cỡ riêng lẻ viết text-[0.8125rem] (= 13 px ở gốc 16), không viết px. */
   html {
-    font-size: 16px;
+    font-size: 100%;
   }
   body {
     margin: 0;
-    font-size: 14px;
+    font-size: 0.875rem;
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-sans);
@@ -196,12 +205,17 @@
     cursor: default;
   }
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--focus);
     outline-offset: 2px;
   }
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--line-strong) transparent;
+  }
+  /* Chữ gợi ý trong ô nhập: màu chữ phụ (sáng 4,7-5,1:1, tối 5,7:1). Mặc định của Tailwind là 50% màu chữ = 3,4:1 trên nền sáng (soát a31 C1). */
+  ::placeholder {
+    color: var(--text-3);
+    opacity: 1;
   }
   input[type="search"]::-webkit-search-cancel-button {
     appearance: none;
@@ -271,6 +285,23 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
       transform: translateY(-50%);
     }
   }
+}
+/* Thông báo của sonner: sonner tự tắt viền tiêu điểm (outline: none, ngoài mọi layer nên thắng :focus-visible chung) - người đi bằng phím
+ * (F6 / Alt+T vào vùng thông báo) không thấy mình đang ở đâu (soát a31 K6). Nút ✕ của sonner 20 px: vùng bấm nới tới 24 px trên màn rộng. */
+[data-sonner-toaster] [data-sonner-toast]:focus-visible,
+[data-sonner-toaster] [data-sonner-toast] [data-close-button]:focus-visible,
+[data-sonner-toaster] [data-sonner-toast] [data-button]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+[data-sonner-toast] [data-close-button]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 1.5rem);
+  height: max(100%, 1.5rem);
+  transform: translate(-50%, -50%);
 }
 /* Nút ✕ và nút hành động ("Quay lại chỗ cũ", "Hoàn tác") trong thông báo của sonner: 20-24 px, cùng quy tắc nới vùng bấm. */
 @media (pointer: coarse), (max-width: 40rem) {
@@ -464,6 +495,11 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) {
+    animation: none !important;
+  }
+  /* Vòng quay và nhấp nháy "đang làm" (soát a31 M1): đứng yên - chữ cạnh nó đã nói đang làm gì. */
+  .animate-spin,
+  .animate-pulse {
     animation: none !important;
   }
   .sheen::after,

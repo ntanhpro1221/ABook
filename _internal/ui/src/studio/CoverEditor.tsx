@@ -113,7 +113,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           disabled={busy}
           onClick={() => input.current?.click()}
           aria-label={book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}
-          className="touch-box inline-flex h-8 items-center gap-1.5 rounded-lg px-1.5 text-[13px] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 sm:px-2"
+          className="touch-box inline-flex h-8 items-center gap-1.5 rounded-lg px-1.5 text-[0.8125rem] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 sm:px-2"
         >
           <ImagePlus className="size-4" /> <span className="max-sm:hidden">{book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}</span>
         </button>

@@ -148,7 +148,7 @@ function Step({
             state === "done" && "bg-success text-white",
             state === "active" && "bg-accent text-accent-ink",
             state === "paused" && "bg-fg-3 text-bg",
-            state === "pending" && "bg-hover text-fg-3",
+            state === "pending" && "bg-hover text-fg-2", // số bước: --fg-3 trên --hover chỉ 4,46:1 (soát a31 C2)
           )}
         >
           {state === "done" ? <Check className="size-4" strokeWidth={3} /> : state === "active" ? <Icon className="size-3.5" /> : index}
@@ -160,7 +160,7 @@ function Step({
       <p className={cn("mt-2 text-xs leading-relaxed", state === "pending" ? "text-fg-3" : "text-fg-2")}>{detail}</p>
       {progress !== undefined && state !== "pending" && (
         <div className="mt-3 flex items-center gap-2">
-          <Progress value={progress} running={state === "active"} tone={state === "done" ? "success" : state === "paused" ? "muted" : "accent"} size="sm" />
+          <Progress value={progress} running={state === "active"} tone={state === "done" ? "success" : state === "paused" ? "muted" : "accent"} size="sm" label={title} />
           <span className="tabular w-9 text-right text-xs font-semibold">{formatPercent(progress)}</span>
         </div>
       )}
@@ -439,7 +439,7 @@ function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
           maxLength={160}
           data-autofocus
           autoComplete="off"
-          className="mt-1.5 h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-accent"
+          className="mt-1.5 h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
         />
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -903,7 +903,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
         current ? "bg-accent-soft" : "hover:bg-hover",
       )}
     >
-      <div className="flex justify-center">
+      <div role="cell" className="flex justify-center">
         {chapter.playable ? (
           <button
             type="button"
@@ -927,7 +927,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
           <span className="tabular text-xs text-fg-3">{chapter.index}</span>
         )}
       </div>
-      <div className="min-w-0">
+      <div role="cell" className="min-w-0">
         <div className={cn("truncate font-medium", current && "text-accent-text")}>{chapter.displayTitle}</div>
         {chapter.lastError ? (
           <ChapterError raw={chapter.lastError} studio={hasStudio} />
@@ -935,10 +935,10 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
           <div className="truncate text-xs text-fg-2">{chapter.subtitle}</div>
         ) : null}
       </div>
-      <div>
+      <div role="cell">
         {working ? (
           <div className="flex items-center gap-2" title={book.running ? "Đang thu âm" : "Tạm dừng giữa chương"}>
-            <Progress value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" />
+            <Progress value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" label="Đã thu âm" />
             <span className="tabular text-xs text-fg-2">
               {book.running ? "" : "dừng ở "}
               {chapter.segments.finished}/{chapter.segments.total}
@@ -948,13 +948,15 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
           <StatusPill label={chapter.statusLabel} tone={chapterTone(chapter)} />
         )}
       </div>
-      <div className="tabular hidden text-right text-xs text-fg-2 lg:block">
+      <div role="cell" className="tabular hidden text-right text-xs text-fg-2 lg:block">
         {chapter.status === "completed" || chapter.redo ? formatLength(chapter.seconds) : chapter.segments.total ? `${formatNumber(chapter.segments.total)} câu` : ""}
       </div>
-      <div className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
+      <div role="cell" className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
         {chapter.completedAt ? formatRelative(chapter.completedAt) : ""}
       </div>
-      <ChapterMenu book={book} chapter={chapter} onPlay={onPlay} />
+      <div role="cell" className="flex">
+        <ChapterMenu book={book} chapter={chapter} onPlay={onPlay} />
+      </div>
     </div>
   );
 }
@@ -964,15 +966,26 @@ function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[
   const table = useRef<HTMLDivElement>(null);
   useScrollMemory(`project.${book.id}`, table);
   return (
-    <div ref={table} role="table" aria-label="Danh sách chương" aria-rowcount={chapters.length} className="mt-2">
-      <div className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 border-b border-line px-2 text-[11px] font-semibold uppercase tracking-wider text-fg-3">
-        <span className="text-center">#</span>
-        <span>Chương</span>
-        <span>Trạng thái</span>
+    // Bảng ARIA đủ phần (soát a31 A4): hàng tiêu đề là columnheader, mỗi ô của hàng chương là cell - trình đọc màn hình đọc "Trạng thái:
+    // Đang thu âm" khi đi theo cột, thay vì chuỗi chữ rời. Hàng tiêu đề là hàng 1, nên hàng chương đánh số từ 2.
+    <div ref={table} role="table" aria-label="Danh sách chương" aria-rowcount={chapters.length + 1} className="mt-2">
+      <div
+        role="row"
+        aria-rowindex={1}
+        className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 border-b border-line px-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3"
+      >
+        <span role="columnheader" className="text-center">
+          <span aria-hidden>#</span>
+          <span className="sr-only">Số chương</span>
+        </span>
+        <span role="columnheader">Chương</span>
+        <span role="columnheader">Trạng thái</span>
         {/* Màn hẹp (điện thoại, Studio từ xa) chỉ còn #, chương, trạng thái - soát UX 29-09: 5 cột cố định vỡ ở 375px. */}
-        <span className="hidden text-right lg:block" title="Số phút khi chương đã có audio; chưa có thì số câu của chương">Độ dài</span>
-        <span className="hidden text-right lg:block">Xong lúc</span>
-        <span />
+        <span role="columnheader" className="hidden text-right lg:block" title="Số phút khi chương đã có audio; chưa có thì số câu của chương">Độ dài</span>
+        <span role="columnheader" className="hidden text-right lg:block">Xong lúc</span>
+        <span role="columnheader">
+          <span className="sr-only">Thêm</span>
+        </span>
       </div>
       {/* Dự án vài nghìn chương: chỉ dựng các dòng gần màn hình (shared/Windowed). */}
       <div role="rowgroup" className="mt-1 space-y-px">
@@ -981,7 +994,7 @@ function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[
           estimate={50}
           memory={`project.${book.id}`}
           className="space-y-px"
-          row={(chapter, index) => <ChapterRow key={chapter.id} book={book} chapter={chapter} rowIndex={index + 1} />}
+          row={(chapter, index) => <ChapterRow key={chapter.id} book={book} chapter={chapter} rowIndex={index + 2} />}
         />
       </div>
     </div>
@@ -1035,7 +1048,7 @@ function ActivityView({ book }: { book: BookSummary }) {
           Diễn biến sẽ hiện ở đây khi sách bắt đầu chạy.
         </EmptyState>
       ) : mode === "technical" ? (
-        <div className="mt-4 max-h-[560px] overflow-auto rounded-xl border border-line bg-sunken p-3 font-mono text-[12px] leading-relaxed">
+        <div className="mt-4 max-h-[560px] overflow-auto rounded-xl border border-line bg-sunken p-3 font-mono text-[0.75rem] leading-relaxed">
           {(data ?? []).map((item) => (
             <div key={item.id} className="flex gap-3 whitespace-pre-wrap break-words">
               <span className="shrink-0 text-fg-3">{formatTime(item.at)}</span>
@@ -1208,7 +1221,7 @@ export function ProjectScreen() {
             tone={book.paused ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused}
           />
-          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-[30px]">{book.title}</h1>
+          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-[1.875rem]">{book.title}</h1>
           {/* Điện thoại: một dòng gọn (số chương) + "Chi tiết" gập - giọng kể, chất lượng, model, ngày tạo từng chiếm 3 dòng đầu
               trang (soát UX a8 07-10). */}
           <p className="mt-2 text-sm text-fg-2">
@@ -1257,7 +1270,7 @@ export function ProjectScreen() {
         </div>
       )}
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-9">
-        <TabsList>
+        <TabsList label="Mục của dự án">
           <TabsTrigger value="chapters" count={chapters.length}>
             Chương
           </TabsTrigger>
