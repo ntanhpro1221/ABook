@@ -89,6 +89,12 @@ def test_the_apps_own_version_number_does_not_retire_quality_evidence() -> None:
     assert _hashed_bytes("../pyproject.toml", new_voice_engine) != _hashed_bytes("../pyproject.toml", pyproject)
     assert _hashed_bytes("analysis.py", b'version = "1"\n') == b'version = "1"\n', "chỉ pyproject được bỏ số phiên bản"
 
+    # uv.lock ghi lại số ấy ở mục của chính gói: bỏ nó, giữ phiên bản phụ thuộc (cả khi file xuống dòng CRLF).
+    lock = b'[[package]]\nname = "abook"\nversion = "0.4.5"\n\n[[package]]\nname = "vieneu"\nversion = "3.8.1"\n'
+    for text in (lock, lock.replace(b"\n", b"\r\n")):
+        assert _hashed_bytes("../uv.lock", text.replace(b'"0.4.5"', b'"0.4.6"')) == _hashed_bytes("../uv.lock", text)
+        assert _hashed_bytes("../uv.lock", text.replace(b'"3.8.1"', b'"3.9.0"')) != _hashed_bytes("../uv.lock", text)
+
 
 def test_quality_policy_locks_installed_dependency_versions_and_direct_urls() -> None:
     policy = build_quality_policy(build_settings())

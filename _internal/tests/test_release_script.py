@@ -1,4 +1,4 @@
-"""scripts/release.py: nâng số phiên bản đúng 7 file (chạy trên bản sao các file thật) và ghi chú GitHub Release - 2026-10-01."""
+"""scripts/release.py: nâng số phiên bản đúng 8 file (chạy trên bản sao các file thật) và ghi chú GitHub Release - 2026-10-01."""
 from __future__ import annotations
 
 import datetime
@@ -14,7 +14,7 @@ spec = importlib.util.spec_from_file_location("release_script", ROOT / "scripts/
 release = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(release)
 
-FILES = ["pyproject.toml", "ui/package.json", "ui/package-lock.json", "mobile/package.json", "mobile/package-lock.json",
+FILES = ["pyproject.toml", "uv.lock", "ui/package.json", "ui/package-lock.json", "mobile/package.json", "mobile/package-lock.json",
          "mobile/android/app/build.gradle", "docs/CHANGELOG.md"]
 
 
@@ -46,6 +46,9 @@ def test_bump_changes_exactly_the_package_versions_the_build_number_and_the_chan
         # Chỉ "version" của chính gói (1 chỗ ở package.json, 2 chỗ ở lock), không đụng phụ thuộc nào.
         assert text.count(f'"version": "{new}"') - was.count(f'"version": "{new}"') == (2 if "lock" in lock else 1), lock
         assert len(text) == len(was) + (len(new) - len(old)) * (2 if "lock" in lock else 1), lock
+    lock, was = (root / "uv.lock").read_text(encoding="utf-8"), before["uv.lock"].decode("utf-8")
+    assert re.search(rf'name = "abook"\r?\nversion = "{re.escape(new)}"', lock), "uv.lock: mục của chính gói"
+    assert len(lock) == len(was) + len(new) - len(old), "uv.lock: chỉ một chỗ đổi"
     gradle = (root / "mobile/android/app/build.gradle").read_text(encoding="utf-8")
     assert f"versionCode {code + 1}" in gradle and f'versionName "{new}"' in gradle
     changelog = (root / "docs/CHANGELOG.md").read_text(encoding="utf-8")
