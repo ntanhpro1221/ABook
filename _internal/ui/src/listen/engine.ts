@@ -97,9 +97,17 @@ export function isNative(engine: AudioEngine): engine is NativeEngine {
   return (engine as Partial<NativeEngine>).native === true;
 }
 
+/** Lần nhảy tới chỗ bắt đầu của chương mới (bấm câu ở chương khác) mà trình duyệt bỏ dở và đặt về đầu chương (bị dừng giữa lúc đang
+ *  nhảy - Chrome dừng tiếng tắt ở thẻ nền "để tiết kiệm pin"): trả lại chỗ cần nhảy lại, còn không thì null (soát a27 X1). */
+export function missedSeek(target: number | null, landed: number): number | null {
+  return target !== null && target >= 1 && landed < 0.5 ? target : null;
+}
+
 export class WebAudioEngine implements AudioEngine {
   private audio = new Audio();
   private pendingSeek: number | null = null;
+  /** Chỗ vừa nhảy tới khi chương mới có độ dài, chờ `seeked` xác nhận (missedSeek). */
+  private landing: number | null = null;
 
   constructor() {
     this.audio.preload = "auto";
@@ -107,14 +115,21 @@ export class WebAudioEngine implements AudioEngine {
     this.audio.muted = new URLSearchParams(window.location.search).get("mute") === "1";
     this.audio.addEventListener("loadedmetadata", () => {
       if (this.pendingSeek !== null) {
-        this.audio.currentTime = Math.min(this.pendingSeek, Math.max(0, (this.audio.duration || 0) - 1));
+        this.landing = Math.min(this.pendingSeek, Math.max(0, (this.audio.duration || 0) - 1));
+        this.audio.currentTime = this.landing;
         this.pendingSeek = null;
       }
+    });
+    this.audio.addEventListener("seeked", () => {
+      const again = missedSeek(this.landing, this.audio.currentTime);
+      this.landing = null;
+      if (again !== null) this.audio.currentTime = again;
     });
   }
 
   load(track: TrackInfo, startAt: number, autoplay: boolean): void {
     this.pendingSeek = startAt > 0 ? startAt : null;
+    this.landing = null;
     this.audio.src = track.url;
     if ("mediaSession" in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -138,6 +153,7 @@ export class WebAudioEngine implements AudioEngine {
   seek(seconds: number): void {
     const limit = Number.isFinite(this.audio.duration) ? this.audio.duration : seconds;
     const target = Math.max(0, Math.min(limit, seconds));
+    this.landing = null; // người nghe tự tua: chỗ ấy thắng chỗ bắt đầu của lần nạp
     if (this.audio.readyState < 1) this.pendingSeek = target;
     else this.audio.currentTime = target;
   }
@@ -158,7 +174,8 @@ export class WebAudioEngine implements AudioEngine {
   }
 
   get time(): number {
-    return this.pendingSeek ?? (this.audio.currentTime || 0);
+    const now = this.audio.currentTime || 0;
+    return this.pendingSeek ?? missedSeek(this.landing, now) ?? now;
   }
 
   get duration(): number {

@@ -170,6 +170,11 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
                 Địa chỉ máy này: <Where sync={sync} scheme={false} /> - gõ vào ô “Địa chỉ máy kia” khi ghép từ máy tính khác.
               </p>
             )}
+            {/* Ghép một chiều (soát a27 lỗi 9): ghép xong máy kia nghe sách của máy này, không ngược lại. */}
+            <p className="mt-2 text-[13px] text-fg-2">
+              Ghép một chiều: thiết bị kia nghe được sách của máy này. Muốn máy này nghe sách của máy tính kia thì ghép thêm từ máy
+              này, ở Cài đặt → Máy tính khác.
+            </p>
             {sync.remoteStudio && (
               <p className="mt-2 text-[13px] text-fg-2">
                 Trình duyệt: mở <Where sync={sync} /> rồi gõ mã. Trình duyệt sẽ báo trang “không an toàn” vì chứng chỉ do
@@ -270,7 +275,8 @@ export function PhoneSync() {
                 : "Đang tắt - điện thoại và máy tính khác không tìm thấy máy này."}
           </span>
         </label>
-        <Switch id="phone-sync" checked={wanted} disabled={toggle.isPending} onCheckedChange={(value) => toggle.mutate(value)} />
+        {/* Tên ngắn cho trình đọc màn hình: nhãn bọc cả dòng mô tả dài (soát a27 lỗi 11). */}
+        <Switch id="phone-sync" label={SYNC_SWITCH_LABEL} checked={wanted} disabled={toggle.isPending} onCheckedChange={(value) => toggle.mutate(value)} />
       </div>
 
       {failing && (
@@ -303,6 +309,7 @@ export function PhoneSync() {
             </label>
             <Switch
               id="remote-studio"
+              label="Cho phép điều khiển sản xuất từ thiết bị đã ghép"
               checked={studioWanted}
               disabled={studio.isPending}
               onCheckedChange={(value) => (value ? setConfirmStudio(true) : studio.mutate(false))}
@@ -356,6 +363,7 @@ export function PhoneSync() {
                       <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs text-fg-2">
                         Điều khiển sản xuất
                         <Switch
+                          label={`Điều khiển sản xuất từ ${device.name}`}
                           checked={Boolean(device.studio)}
                           disabled={deviceStudio.isPending}
                           onCheckedChange={(enabled) => deviceStudio.mutate({ id: device.id, enabled })}

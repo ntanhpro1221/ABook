@@ -496,6 +496,7 @@ object Playback {
             ReadAloud.onClipChanged()
             applyVolume()
             onChapterChanged()
+            if (slot == null) item.mediaId.toLongOrNull()?.let { Streaming.keepScript(appContext, bookId, it) }
             return
         }
         val sameChapter = slot.chapterIndex == lastClipChapter

@@ -34,7 +34,7 @@ def test_this_computer_listens_to_a_book_on_another_computer(library, tmp_path: 
         books = app.listen_library()
         (book,) = [item for item in books if item.get("remote")]
         (computer_id,) = [computer["id"] for computer in view["computers"]]
-        assert book["remote"] == {"computer": "Máy kia", "device": computer_id} and book["chaptersAvailable"] == 1
+        assert book["remote"] == {"computer": "Máy kia", "device": computer_id, "downloaded": False} and book["chaptersAvailable"] == 1
         path = app._listenable(book["id"])
         assert REMOTE_FOLDER in str(path) and packages.is_package(path)
         chapter = app.listen_book(book["id"])["chapters"][0]
@@ -230,7 +230,7 @@ def test_this_computer_sees_and_controls_the_player_of_another_computer(library,
             app.remote_send(peer["device"], {"action": "load", "bookId": "khongcosach", "chapterId": 1, "seconds": 0})
     finally:
         other.stop()
-    with pytest.raises(ApiError, match="Không kết nối được"):
+    with pytest.raises(ApiError, match="ABook trên máy kia chưa mở"):  # cổng đã đóng: máy còn đó, ABook thì không (soát a27 lỗi 9)
         app.remote_send(peer["device"], {"action": "play"})
 
 

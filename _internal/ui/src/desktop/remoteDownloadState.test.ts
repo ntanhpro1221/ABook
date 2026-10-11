@@ -27,6 +27,17 @@ describe("tải sách của máy khác về máy này", () => {
     expect(downloadMenuLabel(status({ state: "running", bytesDone: 345 }), "").label).toBe("Dừng tải về máy");
   });
 
+  it("đủ audio mà chữ đọc theo / nhạc chưa có: chưa phải 100%, nói phần còn thiếu (soát a27 lỗi 8)", () => {
+    const partial = status({ bytesDone: 1000, filesDone: 3 });
+    expect(downloadFraction(partial)).toBe(0.99);
+    expect(downloadMenuLabel(partial, "Máy A")).toEqual({
+      label: "Tải nốt về máy",
+      hint: "Đã có 99% trên máy này - còn chữ đọc theo hay nhạc nền",
+      disabled: false,
+    });
+    expect(downloadFraction(status({ bytesDone: 1000, filesDone: 4 }))).toBe(1);
+  });
+
   it("không biết cỡ file: tính theo số file", () => {
     expect(downloadFraction(status({ bytes: 0, filesDone: 1 }))).toBe(0.25);
   });

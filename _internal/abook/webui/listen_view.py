@@ -18,6 +18,13 @@ FORMAT = "abook-book/1"  # không ai đọc trường này, mã phiên bản gó
 _CACHE: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 
 
+def on_shelf(summary: dict[str, Any], producing: bool) -> bool:
+    """Dự án có mặt ở Thư viện nghe: đã có ít nhất một chương xong, hay đang làm (chưa có chương nào - "sắp có"). Cùng một luật cho
+    Thư viện của chính máy này và danh sách máy đã ghép thấy (/sync/v1/library) - dự án chưa làm không thành "sách chữ" ở máy kia
+    (soát a27 lỗi 13)."""
+    return summary.get("chapters", {}).get("completed", 0) > 0 or producing
+
+
 def chapters(project_root: Path) -> list[dict[str, Any]]:
     """Danh sách chương cho người nghe, đệm theo lần ghi cuối của DB - thư viện hỏi lại mỗi vài giây."""
     stamp = store.touched(project_root)

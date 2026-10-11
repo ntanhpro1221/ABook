@@ -146,6 +146,13 @@ def test_a_browser_pairs_with_the_code_then_runs_the_studio(studio) -> None:
     status, data, _ = _sync_request(port, "GET", "/api/library", headers=cookie)
     assert status == 200 and len(json.loads(data)["books"]) == 1
     identifier = book_id(project)
+    # Soát a27 lỗi 10: thiết bị được điều khiển sản xuất vẫn không thấy đường dẫn (tên người dùng Windows) trên máy tính.
+    assert str(project) not in data.decode("utf-8") and json.loads(data)["root"] == ""
+    status, data, _ = _sync_request(port, "GET", f"/api/books/{identifier}", headers=cookie)
+    assert status == 200 and "path" not in json.loads(data)["book"] and str(project) not in data.decode("utf-8")
+    status, data, _ = _sync_request(port, "GET", "/api/preferences", headers=cookie)
+    assert status == 200 and json.loads(data)["libraryRoot"] == ""
+    assert "path" in app.book_view(identifier)["book"], "trên chính máy tính vẫn có đường dẫn"
     status, _data, _ = _sync_request(port, "POST", f"/api/books/{identifier}/start", headers=cookie, body={})
     assert status == 202, "bấm Bắt đầu từ điện thoại chạy đúng đường của cửa sổ app"
     status, data, headers = _sync_request(port, "GET", f"/media/books/{identifier}/chapters/1", headers={

@@ -20,6 +20,8 @@ interface InboxItem {
   chapter?: string;
   /** Số câu cùng một lần bấm (gán người nói cả nhóm, thu lại cả chương). */
   lines: number;
+  /** Máy này đã đổi khác SAU lúc máy kia sửa: “Áp dụng tất cả” không lấy việc này - chủ máy chọn từng việc. */
+  conflict?: string;
 }
 
 interface InboxDevice {
@@ -81,15 +83,21 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
   const decide = async (verb: "apply" | "skip", device: InboxDevice, item?: InboxItem) => {
     setBusy(`${device.id}:${item?.id ?? "all"}`);
     try {
-      const reply = await api<{ requests?: number; skipped?: number; removed?: number }>(`/api/books/${bookId}/edits-inbox/${verb}`, {
+      const reply = await api<{ requests?: number; skipped?: number; removed?: number; held?: number }>(`/api/books/${bookId}/edits-inbox/${verb}`, {
         method: "POST",
         body: { device: device.id, ...(item ? { items: [item.id] } : {}) },
       });
       if (verb === "apply") {
         const made = reply.requests ?? 0;
         const skipped = reply.skipped ?? 0;
+        const held = reply.held ?? 0;
         toast.success(made ? `Đã ghi ${made} việc vào “Áp dụng thay đổi”` : "Không có việc nào ghi được", {
-          description: skipped ? `${skipped} việc không còn khớp với sách nên bị bỏ qua.` : "Chưa thu lại gì - bấm “Áp dụng thay đổi” khi muốn máy làm.",
+          description: [
+            skipped ? `${skipped} việc không còn khớp với sách nên bị bỏ qua.` : "Chưa thu lại gì - bấm “Áp dụng thay đổi” khi muốn máy làm.",
+            held ? `${held} việc máy này đã đổi khác sau đó vẫn chờ bạn chọn từng việc.` : "",
+          ]
+            .filter(Boolean)
+            .join(" "),
         });
       } else {
         toast("Đã bỏ qua", { description: "Không có gì thay đổi trong sách." });
@@ -136,6 +144,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
                   <span className="min-w-0 flex-1 text-pretty">
                     {item.label}
                     {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
+                    {item.conflict && <span className="mt-0.5 block text-xs text-warning">{item.conflict}</span>}
                   </span>
                   <IconButton size="sm" icon={Check} label="Áp dụng việc này" className="-my-1.5" disabled={busy !== null} onClick={() => void decide("apply", device, item)} />
                   <IconButton size="sm" icon={X} label="Bỏ qua việc này" className="-my-1.5 -mr-1.5" disabled={busy !== null} onClick={() => void decide("skip", device, item)} />

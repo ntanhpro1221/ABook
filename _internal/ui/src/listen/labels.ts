@@ -129,3 +129,16 @@ export function caughtUpDetail(producing?: boolean): string {
 export function partialBookLine(available: number, total: number): string {
   return `Sách này có ${available}/${total} chương đã thu - các chương sau chưa có audio`;
 }
+
+/** Màn đọc không mở được chữ một chương: máy giữ sách không trả lời (503 - sách của máy khác, chữ chương chưa về máy này) thì nói đúng lời
+ *  máy chủ, không thì chương không còn (soát a27 lỗi 12). */
+export function chapterOpenProblem(error: unknown): string {
+  const problem = error as { status?: number; message?: string } | null;
+  return problem?.status === 503 && problem.message ? `${problem.message.replace(/\.$/, "")}.` : "Chương có thể không còn trong sách.";
+}
+
+/** Hỏi lại chữ chương sau lỗi: không khi chương không có (404) hay máy giữ sách không trả lời (503 - đã chờ máy ấy rồi). */
+export function retryChapterText(count: number, error: unknown): boolean {
+  const status = (error as { status?: number } | null)?.status;
+  return status !== 404 && status !== 503 && count < 2;
+}
