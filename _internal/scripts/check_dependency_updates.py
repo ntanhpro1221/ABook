@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 import time
 import urllib.error
@@ -27,6 +28,8 @@ from typing import Any
 
 
 PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
+# Ghim được so là ghim của nhánh này (worktree dùng chung ref với repo), không phải của cây đang chạy công cụ.
+PINS_REF = "origin/main"
 PIN_PATTERN = re.compile(r'"([A-Za-z0-9_.\-]+)==([^"]+)"')
 GITHUB_PROJECTS = {
     "ollama": "ollama/ollama",
@@ -46,9 +49,36 @@ def _get_json(url: str, *, github: bool = False) -> Any:
         return json.load(response)
 
 
-def read_pins() -> list[tuple[str, str]]:
-    text = PYPROJECT.read_text(encoding="utf-8")
-    return PIN_PATTERN.findall(text)
+def pinned_file(relpath: str, ref: str | None = None) -> str:
+    """`relpath` (tính từ `_internal/`) như ở `ref`; ref rỗng hay git không trả lời được thì đọc file trên đĩa.
+
+    Vì sao không đọc thẳng đĩa: 11-10 công cụ chạy từ một checkout cũ (0.4.10) và báo timm, vieneu, sea-g2p
+    "có bản mới" trong khi main đã ghim đúng bản mới nhất. Ghim thật là ghim của main, không phải của cây đang chạy.
+    """
+    ref = PINS_REF if ref is None else ref
+    if ref:
+        try:
+            shown = subprocess.run(
+                ["git", "-C", str(PYPROJECT.parent), "show", f"{ref}:./{relpath}"],
+                capture_output=True,
+                check=True,
+                timeout=REQUEST_TIMEOUT_SECONDS,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            return shown.stdout.decode("utf-8")
+        except (OSError, subprocess.SubprocessError, UnicodeDecodeError):
+            pass
+    return (PYPROJECT.parent / relpath).read_text(encoding="utf-8")
+
+
+def read_pins(ref: str | None = None) -> list[tuple[str, str]]:
+    return PIN_PATTERN.findall(pinned_file("pyproject.toml", ref))
+
+
+def pinned_revision(constant: str, ref: str | None = None) -> str:
+    """Revision HF ghim ở hằng số `constant` của `abook/runtime_contract.py` (theo `ref`); "" nếu không có."""
+    match = re.search(rf'^{re.escape(constant)}\s*=\s*"([0-9a-f]+)"', pinned_file("abook/runtime_contract.py", ref), re.MULTILINE)
+    return match.group(1) if match else ""
 
 
 def local_version(name: str) -> str:
@@ -256,14 +286,9 @@ def check_hf_models(*, offline: bool) -> list[dict[str, Any]]:
     """Revision đang ghim so với `main`, và file nào khác nhau giữa hai bên."""
     if offline:
         return []
-    try:
-        sys.path.insert(0, str(PYPROJECT.parent))
-        from abook import runtime_contract
-    except Exception:  # noqa: BLE001
-        runtime_contract = None
     rows = []
     for repo, constant in HF_PINNED_MODELS.items():
-        pinned = str(getattr(runtime_contract, constant, "")) if (runtime_contract and constant) else ""
+        pinned = pinned_revision(constant) if constant else ""
         row: dict[str, Any] = {"repo": repo, "pinned": pinned[:12], "main": "", "changed_files": []}
         try:
             info = _get_json(f"https://huggingface.co/api/models/{repo}")
@@ -289,7 +314,7 @@ def check_hf_models(*, offline: bool) -> list[dict[str, Any]]:
 def check_git_pins(*, offline: bool) -> list[dict[str, Any]]:
     if offline:
         return []
-    text = PYPROJECT.read_text(encoding="utf-8")
+    text = pinned_file("pyproject.toml")
     rows = []
     for name, (repo, pattern) in GIT_PINS.items():
         match = re.search(pattern, text)
@@ -432,11 +457,19 @@ def vietnamese_tts_landscape(*, offline: bool, seen_path: Path) -> list[dict[str
 
 
 def main() -> int:
+    global PINS_REF
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", dest="json_out", type=Path, default=None)
     parser.add_argument("--offline", action="store_true", help="Skip every network lookup")
+    parser.add_argument(
+        "--pins-ref",
+        default=PINS_REF,
+        help=f"git ref whose pyproject.toml holds the pins (default {PINS_REF}; empty = the file next to this script)",
+    )
     args = parser.parse_args()
+    PINS_REF = args.pins_ref
+    print(f"Pins from {args.pins_ref or PYPROJECT}")
 
     pypi = check_pypi(read_pins(), offline=args.offline)
     github = check_github(offline=args.offline)
@@ -534,6 +567,7 @@ def main() -> int:
                 json.dumps(
                     {
                         "checked_at": time.time(),
+                        "pins_ref": PINS_REF,
                         "outdated_packages": outdated,
                         "drifted_packages": drifted,
                         "vieneu_sdk": vieneu_sdk,

@@ -205,6 +205,10 @@ Mỗi bước một commit có test, không bước nào đụng file khoá ch�
    nhất mà torch đòi <82 (bỏ `--seed`, ghim theo runtime dev); huggingface_hub 1.29 dò symlink có tranh chấp giữa các
    luồng tải -> WinError 1314 trên máy không bật Developer Mode (`HF_HUB_DISABLE_SYMLINKS=1`). `pip check` chỉ ghi
    nhật ký: chính runtime làm ra sách cũng có xung đột khai báo vô hại (datasets khai fsspec cũ).
+   Từ 11-10 công cụ đóng băng TỪ CHỐI khi runtime lệch ghim `==` của pyproject (khi ấy runtime/.venv còn
+   huggingface-hub 1.29, transformers 5.16.1... dù pyproject ghim 1.33, 5.18: đóng băng là bộ cài lùi bản mà không ai
+   thấy). Đồng bộ runtime bằng `uv pip install --no-deps` đúng các bản ghim, KHÔNG `uv sync`: uv.lock không mang
+   index cu128 nên `uv sync` thay torch CUDA bằng torch CPU.
 6. Phát hành theo `RELEASING.md` (thêm bộ cài + `latest.json` + APK đã ký).
 
 ## Mẹo thử
