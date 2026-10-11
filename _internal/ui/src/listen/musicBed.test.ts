@@ -340,3 +340,109 @@ describe("vị trí trong bài theo vị trí trong chương (soát a26 L8)", ()
     expect(made[0].currentTime).toBe(50);
   });
 });
+
+describe("đuôi bài: kết tự nhiên, bài kế vào ngay (MIX_QA 3.1, 3.3)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  type Fake = { volume: number; loop: boolean; paused: boolean; currentTime: number; duration: number; ended: boolean };
+  function bedWithClock() {
+    const made: Record<string, Fake[]> = {};
+    const bed = new MusicBed((src) => {
+      const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration: 200, ended: false };
+      (made[src] ??= []).push(fake);
+      return Object.assign(fake, {
+        play: () => { fake.paused = false; return Promise.resolve(); },
+        pause: () => { fake.paused = true; },
+        addEventListener: () => undefined,
+      });
+    });
+    return { bed, made };
+  }
+  // Bài 200 s chơi hai vòng trong mốc 0-400, bài anh em vào đúng ở điểm kết bài.
+  const tail: MusicCue[] = [
+    { start: 0, end: 400, link: "a", key: "1:1", src: "/a", gainDb: -10, tail: true },
+    { start: 400, end: 600, link: "c", key: "1:1", src: "/c", gainDb: -10, sibling: true },
+  ];
+
+  it("mốc tail: còn lặp ở vòng trước, thôi lặp ở vòng cuối (theo độ dài thật của bài)", () => {
+    const { bed, made } = bedWithClock();
+    bed.setCues(tail, -20, 0);
+    bed.sync(10, true);
+    const a = made["/a"][0];
+    a.currentTime = 150;
+    bed.sync(150, true);
+    expect(a.loop, "vòng đầu: còn một vòng nữa").toBe(true);
+    a.currentTime = 10;
+    bed.sync(210, true);
+    expect(a.loop, "vòng cuối: chơi nốt rồi thôi").toBe(false);
+    bed.sync(20, true, true);
+    expect(a.loop, "tua về vòng đầu: lặp lại như cũ").toBe(true);
+  });
+
+  it("mốc thường không bao giờ thôi lặp", () => {
+    const { bed, made } = bedWithClock();
+    bed.setCues([{ ...tail[0], tail: undefined }], -20, 0);
+    bed.sync(10, true);
+    made["/a"][0].currentTime = 10;
+    bed.sync(210, true);
+    expect(made["/a"][0].loop).toBe(true);
+  });
+
+  it("bài cũ hết trước mốc: bài anh em vào ngay, không chuyển ngược trước đầu mốc của nó; tua thì theo mốc như thường", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithClock();
+    bed.setCues(tail, -20, 0);
+    bed.sync(10, true);
+    const a = made["/a"][0];
+    a.currentTime = 10;
+    bed.sync(210, true);
+    a.ended = true; // bài thật ngắn hơn số danh mục: hết ở 399,2
+    bed.sync(399.25, true);
+    expect(bed.activeLink).toBe("c");
+    expect(made["/c"]).toHaveLength(1);
+    expect(made["/c"][0].currentTime).toBe(0);
+    vi.advanceTimersByTime(3000);
+    expect(made["/c"][0].volume, "mờ vào như nối bài anh em (6 s)").toBeLessThan(Math.pow(10, -10 / 20) - 0.05);
+    bed.sync(399.5, true);
+    bed.sync(399.75, true);
+    expect(bed.activeLink).toBe("c");
+    expect(made["/a"]).toHaveLength(1);
+    bed.sync(400.1, true);
+    expect(bed.activeLink).toBe("c");
+    expect(made["/c"]).toHaveLength(1);
+    bed.sync(399.5, true, true);
+    expect(bed.activeLink, "tua: bỏ vào sớm, theo mốc tại chỗ tua").toBe("a");
+    expect(made["/a"]).toHaveLength(2);
+  });
+
+  it("bài kết ở stopAt (không có mốc kế): im tới hết mốc như cũ", () => {
+    const { bed, made } = bedWithClock();
+    bed.setCues([tail[0], { start: 420, end: 600, link: "c", key: "1:9", src: "/c" }], -20, 0);
+    bed.sync(10, true);
+    made["/a"][0].currentTime = 10;
+    bed.sync(210, true);
+    made["/a"][0].ended = true;
+    bed.sync(399.5, true);
+    expect(bed.activeLink).toBe("a");
+    expect(made["/c"]).toBeUndefined();
+  });
+
+  it("đổi chương: xoá mốc cũ ở giây 0 thì bài cũ thôi, mốc mới cùng bài vẫn mở bài từ đầu", () => {
+    vi.useFakeTimers();
+    const { bed, made } = bedWithClock();
+    bed.setCues([{ start: 0, end: 600, link: "b", key: "1:1", src: "/b", gainDb: -10 }], -20, 0);
+    bed.sync(590, true);
+    const old = made["/b"][0];
+    bed.setCues([], undefined, 0);
+    expect(bed.activeLink).toBeNull();
+    bed.sync(0, true, true);
+    expect(bed.activeLink, "giây 0 của chương mới: mốc cũ không còn").toBeNull();
+    vi.advanceTimersByTime(3000);
+    expect(old.paused).toBe(true);
+    expect(old.volume).toBe(0);
+    bed.setCues([{ start: 0, end: 500, link: "b", key: "2:1", src: "/b", gainDb: -10 }], -20);
+    bed.sync(0.5, true);
+    expect(made["/b"]).toHaveLength(2);
+    expect(old.paused, "bài cũ không phát tiếp").toBe(true);
+  });
+});

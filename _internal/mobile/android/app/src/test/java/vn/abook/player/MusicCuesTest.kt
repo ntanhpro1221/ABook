@@ -72,4 +72,37 @@ class MusicCuesTest {
         assertEquals(0L, MusicCues.offsetMs(cue, 90.0, 200_000L))
         assertEquals(null, MusicCues.offsetMs(cue, 195.0, -1L))
     }
+
+    private val tailed = JSONObject(
+        """{"tracks": {"$calm": {}, "$sibling": {}}, "chapters": {"1": [
+            {"start": 0, "end": 400, "track": "$calm", "tail": true},
+            {"start": 400, "end": 600, "track": "$sibling", "sibling": true},
+            {"start": 620, "end": 700, "track": "$calm"}
+        ]}}""",
+    )
+
+    @Test
+    fun the_tail_flag_comes_through_and_defaults_to_off() {
+        assertEquals(listOf(true, false, false), MusicCues.of(tailed, 1).map { it.tail })
+    }
+
+    @Test
+    fun only_the_last_loop_of_a_tail_cue_stops_repeating_by_the_real_track_length() {
+        val (tail, next, plain) = MusicCues.of(tailed, 1)
+        // Bài 200 s, mốc 0-400: vòng đầu còn một vòng nữa, vòng cuối thì chơi nốt rồi thôi.
+        assertFalse(MusicCues.finalLoop(tail, 150.0, 150_000L, 200_000L))
+        assertTrue(MusicCues.finalLoop(tail, 210.0, 10_000L, 200_000L))
+        assertFalse("chưa biết độ dài bài", MusicCues.finalLoop(tail, 210.0, 10_000L, -1L))
+        assertFalse("mốc thường", MusicCues.finalLoop(next, 590.0, 190_000L, 200_000L))
+        assertFalse(MusicCues.finalLoop(plain, 690.0, 70_000L, 200_000L))
+    }
+
+    @Test
+    fun the_next_cue_is_the_one_that_starts_where_this_one_ends() {
+        val (tail, next, plain) = MusicCues.of(tailed, 1)
+        val cues = MusicCues.of(tailed, 1)
+        assertEquals(next, MusicCues.nextAfter(cues, tail))
+        assertEquals(null, MusicCues.nextAfter(cues, next)) // khoảng lặng 600-620: không có mốc kế liền
+        assertEquals(null, MusicCues.nextAfter(cues, plain))
+    }
 }

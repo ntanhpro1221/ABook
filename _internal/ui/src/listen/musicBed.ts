@@ -20,6 +20,9 @@ export interface MusicCue {
   /** Mốc nối bài anh em ở điểm kết bài trong cùng cảnh: mờ chéo dài SIBLING_FADE_SECONDS, bài cũ chơi nốt phần còn lại rồi
    *  thôi (không quay lại đầu bài). */
   sibling?: boolean;
+  /** Mốc kết đúng ở điểm kết bài (bài anh em vào ngay sau, hay bài kết sớm - music_plan.chapter_cues): ở vòng cuối bài thôi
+   *  lặp để kết tự nhiên, không quay lại phần dạo đầu; hết sớm hơn mốc thì mốc kế vào ngay. */
+  tail?: boolean;
 }
 
 export interface MusicStep {
@@ -84,6 +87,8 @@ interface Playing {
   perTick: number;
   /** Đang mờ vào (bài mới): tua lúc này không nhảy thẳng tới mức. */
   entering: boolean;
+  /** Vào sớm: bài trước đã kết tự nhiên trước đầu mốc này. Tới `cue.start` giọng vẫn ở mốc cũ - không chuyển ngược. */
+  early?: boolean;
 }
 
 export class MusicBed {
@@ -124,13 +129,19 @@ export class MusicBed {
     this.lastTime = seconds;
     this.playing = playing;
     // Mốc của bài vừa tải hỏng tính như khoảng không nhạc; tới hạn thử lại thì lần đồng bộ này vào bài như mốc mới.
-    const cue = this.playableAt(seconds);
+    let cue = this.playableAt(seconds);
     const current = this.current?.cue;
+    if (this.current?.early) {
+      // Bài vào sớm giữ chỗ tới đầu mốc của nó; tua thì theo mốc tại chỗ tua như thường.
+      if (!seeked && seconds < this.current.cue.start) cue = this.current.cue;
+      else this.current.early = false;
+    }
     // Mốc anh em có thể cùng khoá đoạn với mốc trước (nối giữa một đoạn): phân biệt bằng cả giây bắt đầu.
     if (cue?.key !== current?.key || cue?.start !== current?.start || (seeked && cue)) {
       this.switchTo(cue, seconds, seeked);
     }
     this.retarget(seeked);
+    this.finishTail(seconds);
     for (const audio of [this.current?.audio, ...this.fading]) {
       if (!audio) continue;
       if (playing && audio.paused && !audio.ended) void audio.play().catch(() => undefined);
@@ -230,6 +241,24 @@ export class MusicBed {
     this.startFade();
   }
 
+  /** Mốc `tail`: ở vòng cuối (phần còn lại của mốc chưa tới nửa vòng hơn phần còn lại của bài - theo độ dài thật của bài, không
+   *  theo số danh mục) bài thôi lặp và kết tự nhiên. Bài đã kết trước hết mốc mà mốc kế bắt đầu đúng ở đó: mốc kế vào ngay, mờ vào
+   *  như thường (bài anh em SIBLING_FADE_SECONDS), không để quãng im. Không có mốc kế (bài kết sớm) thì im tới hết mốc. */
+  private finishTail(seconds: number): void {
+    const playing = this.current;
+    if (!playing?.cue.tail) return;
+    const { audio, cue } = playing;
+    if (audio.loop && audio.duration > 0) {
+      const remTrack = audio.duration - audio.currentTime;
+      if (cue.end - seconds - remTrack < audio.duration / 2) audio.loop = false;
+    }
+    if (!audio.ended || seconds >= cue.end) return;
+    const next = this.playableAt(cue.end);
+    if (!next || next.start !== cue.end || next.link === cue.link) return;
+    this.switchTo(next, seconds);
+    if (this.current?.cue === next) this.current.early = true;
+  }
+
   /** Đặt bài `audio` của mốc `cue` vào đúng chỗ ứng với giây `seconds` của chương (lặp bài thì theo vòng) - vào giữa chương hay tua
    *  thì nhạc cũng ở giữa bài, không chạy lại từ đầu (soát a26 L8). Chưa biết độ dài bài thì chờ `loadedmetadata`. */
   private align(audio: BedAudio, cue: MusicCue, seconds: number): void {
@@ -240,7 +269,10 @@ export class MusicBed {
     if (this.current && cue && this.current.cue.link === cue.link) {
       // Cùng bài (đoạn kề): chơi tiếp, không bắt đầu lại. Vừa tua (hay vừa nạp chương ở giữa): dời nhạc theo chỗ mới.
       this.current.cue = cue;
-      if (seeked) this.align(this.current.audio, cue, seconds);
+      if (seeked) {
+        this.current.audio.loop = true; // vòng cuối của mốc `tail` tính lại theo chỗ mới (finishTail)
+        this.align(this.current.audio, cue, seconds);
+      }
       return;
     }
     const fadeSeconds = cue?.sibling ? SIBLING_FADE_SECONDS : FADE_SECONDS;
