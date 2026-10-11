@@ -51,7 +51,27 @@ abook = "abook.gui:run_gui"
 abook-headless = "abook.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest==9.1.1", "ruff==0.16.10"]
+# cryptography: chỉ test dùng (ký catalog nhạc, chứng chỉ TLS thử); app kiểm Ed25519 bằng Python thuần.
+dev = ["pytest==9.1.1", "ruff==0.16.10", "cryptography==50.0.0"]
+
+[tool.uv]
+# Lock chỉ cho Windows: runtime dev và bộ cài Studio đều là Windows; index cu128 không có wheel macOS.
+environments = ["sys_platform == 'win32'"]
+# Giữ đúng bản runtime dev đang chạy và bộ cài Studio đang cài (shell/python/studio-requirements.txt) cho các gói
+# không ghim trực tiếp; tests/test_lock_matches_studio_requirements.py giữ hai bên khớp từng gói.
+constraint-dependencies = ["gradio==6.16.0", "setuptools==78.1.0", "filelock==3.32.3", "platformdirs==4.11.0"]
+
+# torch bản CUDA: PyPI chỉ có bản CPU trên Windows, và `uv` coi 2.11.0+cpu là thoả torch==2.11.0 - chạy chậm hàng
+# chục lần mà không lỗi gì (abook/runtime_contract.py). Lấy cả ba từ index cu128, và chỉ ba gói này.
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchaudio = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
 
 [tool.setuptools.packages.find]
 include = ["abook*"]
