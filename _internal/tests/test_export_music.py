@@ -334,6 +334,14 @@ def test_the_text_book_m4b_job_reports_the_peak_check_and_the_re_encode(tmp_path
     assert any(step["phase"] == "encode" for step in steps[after:]), "lượt mã hoá lại vẫn báo từng chương"
 
 
+def _fold_offset(folder: Path) -> tuple[str, float]:
+    """(khoá đoạn phát, dB bù) duy nhất trong `<bài>.mono.json`."""
+    spans = json.loads((folder / "t.mono.json").read_text(encoding="utf-8"))["spans"]
+    assert len(spans) == 1
+    key = next(iter(spans))
+    return key, spans[key]["offsetDb"]
+
+
 def test_a_stereo_track_folded_into_a_mono_chapter_is_raised_by_its_own_measured_loss(tmp_path: Path) -> None:
     voice = np.zeros(10 * RATE)
     cues = [{"start": 0.0, "end": 10.0, "track": "t", "gainDb": -12.0}]
@@ -343,8 +351,8 @@ def test_a_stereo_track_folded_into_a_mono_chapter_is_raised_by_its_own_measured
         (tmp_path / name).mkdir()
     out_same, _ = _mix(tmp_path / "same", voice, cues, {"t": same})
     out_wide, _ = _mix(tmp_path / "wide", voice, cues, {"t": wide})
-    assert json.loads((tmp_path / "same" / "t.mono.json").read_text(encoding="utf-8"))["offsetDb"] == pytest.approx(0.0, abs=0.1)
-    offset = json.loads((tmp_path / "wide" / "t.mono.json").read_text(encoding="utf-8"))["offsetDb"]
+    assert _fold_offset(tmp_path / "same")[1] == pytest.approx(0.0, abs=0.1)
+    key, offset = _fold_offset(tmp_path / "wide")
     assert offset == pytest.approx(3.0, abs=0.3), "bù đúng phần mất khi gộp, đo bằng BS.1770 của chính bài"
     # bù xong: mỗi tông của bản gộp = 0,15 x 10^(bù/20) ~ 0,212, bằng tông chung của bài hai kênh giống nhau (0,3) hạ 3 dB
     assert _amp(out_wide, 1000, 3, 7.5) == pytest.approx(0.15 * 10 ** (offset / 20) * 10 ** (-12 / 20), rel=0.03)
@@ -352,11 +360,27 @@ def test_a_stereo_track_folded_into_a_mono_chapter_is_raised_by_its_own_measured
 
     flip = np.stack([_tone(12, 1000, 0.3), -0.9 * _tone(12, 1000, 0.3)], axis=1)  # gần triệt tiêu khi gộp: trần +4 dB
     _mix(tmp_path / "flip", voice, cues, {"t": flip})
-    assert json.loads((tmp_path / "flip" / "t.mono.json").read_text(encoding="utf-8"))["offsetDb"] == music_export.MONO_MAX_DB
+    assert _fold_offset(tmp_path / "flip")[1] == music_export.MONO_MAX_DB
     sidecar = tmp_path / "wide" / "t.mono.json"
-    sidecar.write_text(json.dumps({"offsetDb": 1.0}), encoding="utf-8")
+    sidecar.write_text(json.dumps({"spans": {key: {"offsetDb": 1.0}}}), encoding="utf-8")
     again, _ = _mix(tmp_path / "wide", voice, cues, {"t": wide})
     assert _amp(again, 1000, 3, 7.5) == pytest.approx(0.15 * 10 ** (1.0 / 20) * 10 ** (-12 / 20), rel=0.03), "đo một lần, đọc lại số cạnh bài"
+
+
+def test_the_fold_offset_is_measured_on_the_stretch_the_chapter_plays_not_the_whole_track(tmp_path: Path) -> None:
+    # bài 60 s: 12 s đầu hai kênh khác nhau (gộp mất ~3 dB), phần còn lại hai kênh giống nhau (gộp không mất gì) - cả bài chỉ mất ~0,5 dB
+    left = _tone(60, 1000, 0.3)
+    right = np.concatenate([_tone(12, 1500, 0.3), _tone(60, 1000, 0.3)[12 * RATE:]])
+    track = np.stack([left, right], axis=1)
+    cues = [{"start": 0.0, "end": 8.0, "track": "t", "gainDb": -12.0}]
+    out, _ = _mix(tmp_path, np.zeros(10 * RATE), cues, {"t": track}, seconds=10.0)
+    key, offset = _fold_offset(tmp_path)
+    start, end = map(int, key.split("-"))
+    assert start == 0 and 8 <= end <= 12, "khoảng phát = phần đầu bài chương này phát (giây nguyên)"
+    assert offset == pytest.approx(3.0, abs=0.3), "đo trên đoạn phát (rộng stereo), không trên cả bài"
+    assert _amp(out, 1000, 3, 7) == pytest.approx(0.15 * 10 ** (offset / 20) * 10 ** (-12 / 20), rel=0.03)
+    whole = music_export.played_span([{"track": "t", "position": 0.0, "from": 0.0, "to": 5.0, "loop": True}], 60.0)
+    assert whole == (0, 60), "phần tử lặp phát cả bài"
 
 
 def test_the_text_book_m4b_shares_the_peak_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
