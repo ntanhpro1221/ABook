@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.49] - 2026-10-11
+
 ### Làm sách trong Studio (máy tính)
 
 - Cài Studio nhẹ đi khoảng 258 MiB: bộ cài không còn kéo theo 64 thư viện thí nghiệm mà app không dùng (voxcpm, funasr, modelscope, datasets, pyarrow...); Studio đã cài thì vẫn chạy như cũ.
