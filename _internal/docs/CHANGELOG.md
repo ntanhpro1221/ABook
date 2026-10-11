@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.50] - 2026-10-11
+
 ### Điện thoại và Nghe sách (máy tính và điện thoại)
 
 - File sách có một bài nhạc nền hỏng vẫn mở được: đoạn ấy chỉ không có nhạc, máy báo một dòng; sách xuất lúc còn chương chờ thu lại ghi đúng giọng đang nghe trong file, không lộ số "câu chờ thu lại". Bài nhạc của chương không phát được thì hộp "Nhạc nền" nói ra, và tua giữa chương thì nhạc theo đúng chỗ.
