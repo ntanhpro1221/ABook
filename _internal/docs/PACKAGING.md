@@ -220,6 +220,24 @@ Mỗi bước một commit có test, không bước nào đụng file khoá ch�
    `constraint-dependencies` giữ bản runtime cho gói không ghim; freeze chỉ giữ bao đóng phụ thuộc của dự án theo lock
    và từ chối khi runtime lệch lock (kể cả đuôi +cu128, commit gói git). Danh sách Studio còn 101 gói, pip check sạch.
    `uv sync` lên runtime/.venv vẫn KHÔNG nên: nó gỡ 64 gói thí nghiệm mà luồng Model còn dùng (để `--inexact`).
+
+   *Vì sao bỏ được 64 gói.* Không gói nào nằm trong bao đóng phụ thuộc của `abook` theo lock, và không gói nào được nạp
+   động: mọi `importlib.import_module` / `find_spec` trong `abook/`, `shell/`, `scripts/` chỉ dò numpy, onnxruntime,
+   torch, transformers, safetensors, librosa, sea_g2p và các gói `CRITICAL_RUNTIME_DISTRIBUTIONS` - đều trong 101 gói;
+   chỗ duy nhất nhắc tên gói bị bỏ (`worker.py`, `datasets.config`) đi qua `sys.modules.get`, vắng thì thôi. GGUF của
+   giọng VieNeu là máy chủ tải riêng, không phải `llama_cpp` từ pip. Smoke cài thật 11-10 (venv tạm Python 3.11 từ
+   danh sách mới, `--no-deps`, CPU `CUDA_VISIBLE_DEVICES=-1`, `uv pip check` sạch): webui trả `/api/app`, `/api/library`,
+   `/api/voices`; VieNeu (SDK Studio, v3 Turbo ONNX CPU) đọc một câu 3,9 s; faster-whisper CPU chép lại đúng từng chữ;
+   UTMOSv2 CPU 3,11; nhập EPUB3 fixture ra 3 chương. Gói lấy từ cache uv (0 byte); model VieNeu CPU tải 581 MiB vào
+   cache tạm (runtime dev chỉ có bản GPU). Cài mới: wheel ngoài bộ torch 297 MiB theo `size` của lock, cộng torch cu128.
+
+   *Một engine sau này cần gói mới* (vd voxcpm, funasr): khai gói trong `pyproject.toml` - `dependencies` nếu Studio
+   nào cũng cần, extra riêng (`[project.optional-dependencies]`) nếu chỉ engine tuỳ chọn cần, và khi ấy thêm extra vào
+   chỗ `lock_closure` bắt đầu duyệt; `uv lock`; cài vào runtime bằng `uv pip install --no-deps` đúng bản lock ghi;
+   chạy lại `scripts/freeze_studio_requirements.py`; chạy `tests/test_lock_matches_studio_requirements.py` +
+   `test_studio_requirements_freeze.py`. Đổi pyproject/uv.lock đổi hash chất lượng (cả hai nằm trong
+   `QUALITY_IMPLEMENTATION_FILES`) - sự kiện phiên bản như mọi lần nâng thư viện. Cài tay vào runtime mà không khai thì
+   freeze bỏ qua gói ấy: Studio sẽ không có nó.
 6. Phát hành theo `RELEASING.md` (thêm bộ cài + `latest.json` + APK đã ký).
 
 ## Mẹo thử
