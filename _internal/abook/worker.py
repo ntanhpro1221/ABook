@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -196,6 +197,21 @@ def _emit(queue: Queue, kind: str, payload: dict[str, Any] | None = None) -> Non
         queue.put({"kind": kind, **(payload or {})})
     except Exception:
         pass
+
+
+def apply_teller_voice(root: Path, db: Any, settings: dict[str, Any], log: Any) -> None:
+    """A+ (abook/teller_voice.py): sách kể ngôi thứ nhất - giọng dẫn cùng giới người kể "tôi", nội tâm của chính "tôi" đọc bằng giọng
+    dẫn. Chạy sau khi phân vai khoá và trước mỗi lần chạy (resume vá trường hợp worker chết giữa hai mốc). Lỗi không bao giờ làm hỏng
+    lượt - nhưng không im lặng: sự kiện cảnh báo."""
+    log = log or (lambda _message: None)
+    try:
+        from .teller_voice import ensure
+
+        ensure(root, db, settings, log)
+    except Exception as exc:  # noqa: BLE001
+        log(f"Bỏ qua giọng người kể “tôi”: {exc}")
+        with contextlib.suppress(Exception):
+            db.event("warning", "TELLER_VOICE_SKIPPED", str(exc))
 
 
 def run_music_after_analysis(root: Path, base_url: str, stop_requested: Any, log: Any, emit: Any, *, pause_requested: Any) -> None:
@@ -641,6 +657,7 @@ def run_worker(
             return dict(settings["resources"])
 
         def music_moods_after_analysis(base_url: str) -> None:
+            apply_teller_voice(paths.root, db, settings, pipeline.log)  # trước nhạc: nhạc có thể bị dừng giữa chừng và không chạy lại
             run_music_after_analysis(paths.root, base_url, stop_event.is_set, pipeline.log, emit,
                                      pause_requested=pause_event.is_set)
 
@@ -664,6 +681,7 @@ def run_worker(
             },
         )
         pipeline.prepare_recovery()
+        apply_teller_voice(paths.root, db, settings, getattr(pipeline, "log", None))
         pipeline.run(recovery_already_run=True)
         _emit_pipeline_result(message_queue, db)
     except PipelineStopped:

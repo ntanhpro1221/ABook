@@ -1167,6 +1167,7 @@ class App:
             str(body.get("narrator", "")), str(body.get("firstPerson", "")),
             settings_overrides=self._analysis_overrides(str(body.get("analysisModel", "") or "")),
             first_person_chapters=first_person_chapters,
+            first_person_gender=str(body.get("firstPersonGender") or "").strip(),
             drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
             drop_tail_credit_lines=body["dropTailCreditLines"] if isinstance(body.get("dropTailCreditLines"), bool) else None,
         )
