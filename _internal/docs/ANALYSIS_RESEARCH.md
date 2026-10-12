@@ -43,6 +43,53 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
    một: chấm B9 trên cây mới bằng gold cũ ra villain −46,6 chặt, demonking −18,6 - toàn là thước. Trước khi so hai lượt khác
    cây mã: so chữ đoạn của hai project (một lệnh), lệch thì khoá lại gold theo chữ (`LLM_Train/spkconf/gold_remap.py`).
 
+## 12-10 trưa - Đoạn LẬT giữa hai lượt chạy: lật theo lô, cơ chế đều đã có ứng viên; B35 ghép pha + vô danh (Model; Lead FLIPCAUSE, ĐX-2)
+
+Câu hỏi: khi hai lượt chạy (hai hạt học, hai lần suy luận, hai công thức) gán khác người cho cả một chuỗi câu, đó là cơ chế gì,
+ở đâu trong lô, và có tín hiệu nào lúc suy luận (không cần đáp án) báo trước không. Chỉ CPU, trên các lượt có sẵn.
+Chi tiết: `LLM_Train/runs/FLIPCAUSE_12-10.md`, `SELFV_CARD_12-10.md`; luật B35 trong `LLM_Train/errtax_next/PLAN.md` (12-10 12:36).
+
+**Đoạn lật lớn** (>= 3 câu nói liền mà hai lượt gán khác người): 461 đoạn.
+- Cơ chế đều là loại đã có ứng viên:
+  - lệch pha / người kề: 43 % đoạn giữa hai hạt;
+  - tráo người kể "tôi": 29 % giữa hai hạt, 54 % giữa hai công thức;
+  - vô danh <-> tên: 16 %.
+- "Kéo về người được nhắc" và "ngoài cảnh" chỉ là phần lẻ (7 đoạn).
+- Cùng trọng số, cùng chữ (lặp suy luận Q4/Q8, đổi cây mã): vẫn 10-11 % câu bất đồng, gần nửa nằm trong đoạn lật. Lật là chuyện của lấy mẫu.
+
+**Lật đi theo LÔ.**
+- Một lô trung bình chỉ có 2,8 câu nói, nên phần lớn đoạn tự nhiên vắt qua ranh lô.
+- Đoạn lật BẮT ĐẦU ở đầu lô gấp 2,07 lần mức nền; 30 % đoạn trùng khít ranh lô cả đầu lẫn cuối (nền ~13 %).
+- Lô trước đã lật thì lô sau lật 55,7 %.
+- Bên đúng theo đáp án đối xứng (61 / 67 đoạn), và 56 % đoạn mỗi bên đúng một phần.
+- => Quyết định mở lô không ổn định, rồi lan theo lối teacher forcing (khớp mục 11-10 về lỗi lan theo nhãn tự sinh).
+
+**Tín hiệu không cần đáp án yếu** (b9lps1234 cổng rộng, nền 12,8 % lô chứa chuỗi sai lớn):
+- precision 18-25 %; AUC của p_first 0,673 (model sai với độ tự tin cao).
+- "Nhãn bị gọi tên trong chính câu" có precision 38 % nhưng chỉ chạm 2 % lô.
+- Thẻ "vocative" có sẵn của app làm việc này tốt hơn (precision 97 %). Lỗ duy nhất: câu kind `thought` kèm kính ngữ (+5 câu, 5/5 sai) - đã giao sửa ở `webui/work_items.py`.
+
+**Đóng: "lô bị cờ -> phân tích lại"** (phía app).
+- Mô phỏng trên cặp hạt (thay lô bị cờ bằng một mẫu mới, đối chứng cờ ngẫu nhiên): lợi nhờ chọn lô chỉ +0,45 ± 0,27 điểm.
+- Trần oracle +2,64 < Δ phát hiện được 2,92 của luật VR1. Muốn đạt trần phải có bộ chọn, tức là bỏ phiếu, đã loại.
+- Ngữ cảnh rộng hơn cũng không giúp: tín hiệu đã nằm trong cửa sổ ở 33/36 chuỗi (PHASECUE).
+
+**Trần theo cơ chế** (mất điểm trong chuỗi sai lớn của b9lps1234, cổng rộng): tráo "tôi" 5,21, pha 1,92, vô danh 1,79 điểm.
+- Chỉ "tôi" vượt Δ phát hiện được của VR1 (2,92 ở σu 0, 3,88 ở σu 0,06) => B16P-N lên trước trong hàng.
+- Pha và vô danh, đo riêng, dù sửa sạch cũng không lộ => ghép làm một.
+
+**B35 (ĐX-2) = MỘT DPO pha + vô danh, THAY B16P bậc 1 và R1n hai hạt.** Luật cũ của hai ứng viên ấy giữ làm lưu trữ.
+- Data `data_b35`:
+  - cặp pha = data_b16 601;
+  - cặp vô danh 503, dựng bằng mã từ nhãn R1n đã chuẩn hoá (ds_r1n) và data_b9:
+    - U1 = cả vai `NPC_LOCAL` -> người có tên gần nhất;
+    - U2 = một dòng người có tên -> vai `NPC_LOCAL` kề.
+  - Tỉ lệ 601 : 503 (46 % vô danh, không lặp mẫu); dev 170 theo truyện; rò rỉ cổng 0.
+- Công thức như B16P: ghép cặp khởi tạo B9 s1234 / B9 s1; beta 0,1, lr 2e-5, 1 epoch, sft-alpha 1, speaker-mask.
+- Kiểm có học: dev chung +0,10 VÀ từng phần +0,05.
+- Bậc 1 cổng 19 như cũ. Bậc 2 theo VR1: mốc 4 hạt B9, c lấy từ σu đo được.
+- Đã biết trước: trần 3,71 chỉ vượt Δ phát hiện được khi σu thấp.
+
 ## 10-10 đêm - Lỗi hệ thống của bộ dựng bạc: người vô danh mang nhãn kiểu tên (Model; Lead: "gốc A")
 
 Soát tay nhãn người nói của hai tập học (mẫu hạt 1234: B22 60 mẫu / 146 đoạn thoại-nội tâm, R1 40 mẫu / 105 đoạn):
