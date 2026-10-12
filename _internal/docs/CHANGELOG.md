@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.57] - 2026-10-12
+
 ### Người kể “tôi” (máy tính và điện thoại)
 
 - Sách đã thu xong mà bạn bật hay tắt “Người kể xưng “tôi” tự kể chuyện” (hay đổi giọng một người) thì trang dự án giờ có nút
