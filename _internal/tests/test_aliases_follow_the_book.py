@@ -105,10 +105,16 @@ def test_merging_two_names_in_the_inbox_is_remembered_by_name(tmp_path: Path) ->
         status, data = _call(server, "POST", route, {"lines": [{"stableId": "c1s3", "textSha256": "sha-c1s3"}],
                                                      "speaker": "LUCIEN", "alias": "NATASHA"})
         assert status == 200 and data["alias"] is True
+        merged_at = data["requestedAt"]
         # Sửa một câu bình thường (không từ thẻ "Một người hai tên") thì không ghi gì ở cấp tên.
         status, data = _call(server, "POST", route, {"lines": [{"stableId": "c1s2", "textSha256": "sha-c1s2"}],
                                                      "speaker": "NATASHA"})
         assert status == 200 and data["alias"] is False
+        assert aliases.load(paths.root) == {"natasha": "LUCIEN"}
+        # Hoàn tác lần gộp: bí danh ghi CÙNG mốc với các câu nên đi cùng (trước đây mốc lệch, bí danh ở lại).
+        status, _data = _call(server, "POST", route, {"lines": [{"stableId": "c1s3", "textSha256": "sha-c1s3"}],
+                                                      "withdraw": True, "requestedAt": merged_at})
+        assert status == 200
     finally:
         server.stop()
-    assert aliases.load(paths.root) == {"natasha": "LUCIEN"}
+    assert aliases.load(paths.root) == {}
