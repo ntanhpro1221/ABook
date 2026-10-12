@@ -4337,6 +4337,43 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 12-10 - SCENE-GAP: 82 % giây nhạc sai rõ đến từ cảnh bị GỘP; ranh oracle một mình giảm nửa; nhãn tốt hơn trên ranh app không cứu được
+
+Corpus 2f10217 (`scenegap.py`, `SCENEGAP_12-10.md`); CPU, cây ghim ABook_cover (như STU-CCC); bộ 11+12+13, 29 chương, 6,35 giờ.
+
+**Thước (cố định trước):** giây nhạc sai rõ. Trên V, E hay T, vàng rõ (|g| >= 0,25) mà bài nghiêng ngược phía (|bài| > 0,2). Đếm theo giây
+câu, TB 8 book_key, mọi ô chung book_key. Cờ scene_break dựng lại từ nguồn (DB Mac thiếu cột): 6 cờ.
+
+- **App sai rõ 23,2 % giây** (835 s/giờ nghe), dàn 21/29 chương. Trục E 12,3, V 6,8, T 4,9.
+- **Nguyên nhân** (bài chọn theo mảnh đầu <= 180 s rồi chơi tiếp):
+  - gộp (thiếu ranh) 81,7 %;
+  - nhãn sai 18,0 %;
+  - lệch ranh 0,3 %;
+  - chọn bài 0 %.
+
+  App 1,4 ranh có lý do/giờ, vàng 22/giờ. Mỗi cảnh nhạc app ôm 4,4 cảnh vàng.
+
+| ô | sai rõ % | đổi bài/h | A−X [KTC 90 %] |
+|---|---|---|---|
+| A app | 23,2 | 7,1 | — |
+| B ranh app + vàng V,E,T | 19,7 | 7,4 | +3,5 [−3,2; +9,7] |
+| B ranh app + vàng V / T | 25,8 / 27,8 | | −2,6 / −4,6 |
+| **C ranh vàng + học sinh chạy lại** | **12,4** | 20,2 | **+10,9 [+5,7; +15,9]** |
+| D ranh vàng + vàng V,E,T | 0,9 | 20,5 | +22,3 |
+| K1 mọi mảnh length chọn lại bài | 16,3 | 18,6 | +6,9 [+0,8; +13,7] |
+
+**Đọc:**
+- Khớp BOUND-ORACLE (cần cả hai). Thước giây thấy được phần ranh, vì ô C thắng cả 3 bộ, còn thước buồn→vui (2 chương) thì không.
+- Nhãn sắc hơn trên khúc bị gộp làm bài sai rõ hơn: độ co của học sinh là đích an toàn khi khúc ôm nhiều cảnh. Vì thế thắng MAE
+  (STU-CCC) chưa chắc thắng giây nghe khi ranh còn như hôm nay.
+- K1 là hành vi trước đặc tả 06-10 (a)+(b) (cắt đều thì chơi tiếp cùng bài). Đặc tả ấy được quyết bằng P ranh, chưa từng đo bằng giây
+  nghe; theo thước giây, chơi tiếp tốn khoảng 7 điểm.
+- Đề xuất cho Lead (chưa thả):
+  - (1) K2: mảnh length chọn lại bài khi đích xa bài đang chơi quá θ, chọn θ trên bộ học;
+  - (2) ranh LLM (CS-SEG Y) + học sinh chạy lại trên khúc, trần = ô C.
+
+  Đo xác nhận trên 8/9/10 (MDE80 khoảng 6,7 điểm) hay đủ 80 chương (khoảng 5,3 điểm).
+
 ### 12-10 - STU-CCC: học lại đầu q06 có phạt co; ridge alpha 1e4 co QUÁ mức ngay cả theo MSE ngoài-nếp; bộ 11+12 thiếu lực
 
 **Hỏi** (Lead, sau CALIB-VT): sửa độ co của học sinh ở GỐC (lúc học), không hậu kỳ.
