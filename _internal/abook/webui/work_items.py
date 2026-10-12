@@ -166,6 +166,19 @@ def _refine_speaker_cards(project_root: Path, items: list[dict[str, Any]]) -> No
                 item["options"] = [option for option in item["options"] if option not in gone]
 
 
+def _with_voice(project_root: Path, row: Any, names: tuple[str, ...] | list[str], voiced: dict[str, set[str]]) -> list[str]:
+    """Những tên trong `names` đã có giọng trong sách - gán câu `row` cho họ thì dây chuyền nhận (`listener_overrides.speaker_target`,
+    cùng phép thử với lúc ghi yêu cầu). `voiced` giữ tập người có giọng giữa các thẻ (quét cả bảng câu một lần)."""
+    with closing(store.connect(project_root)) as connection:
+        if "names" not in voiced:
+            voiced["names"] = {str(item[0]) for item in connection.execute(
+                "SELECT canonical_name FROM characters WHERE id IN"
+                " (SELECT DISTINCT canonical_character_id FROM segments WHERE voice_profile_id IS NOT NULL)")}
+        return [name for name in names if character_key(name) in voiced["names"]
+                or speaker_target(connection, stable_id=str(row["stable_id"]), text_sha256=str(row["text_sha256"] or ""),
+                                  speaker=name)[1] != NO_VOICE]
+
+
 class _Spoken(list):
     """Các câu không phải lời kể, theo (chương, seq) - kèm số câu của từng người CÓ TÊN trong từng chương, tính một lần. Thẻ nào
     cũng hỏi "ai nói nhiều nhất ở những chương này" (hơn hai nghìn lần trên cuốn 400 chương): quét lại cả sách mỗi lần là hàng chục giây."""
@@ -234,8 +247,9 @@ def _speaker_fix(rows: list[Any], choices: list[dict[str, str]], current: str,
 def _undo_of(item: dict[str, Any], overrides: dict[str, Any]) -> dict[str, Any] | None:
     """Cách rút lại quyết định đã ghi của một thẻ ("Đã quyết, chờ áp dụng" có nút Hoàn tác cho TỪNG mục, không chỉ toast vài
     giây): đúng thân yêu cầu `withdraw` mà thông báo hoàn tác đã gửi - `endpoint` + từng `decisions[i]` kèm `requestedAt` của lần
-    bấm ấy. Thẻ gộp tên / quy ước 『』 còn ghi ở cấp tên cho các phần sau - hoàn tác chỉ lùi được phần câu nên không mời."""
-    if not item.get("requested") or item["kind"] in ("alias", "bracket"):
+    bấm ấy. Thẻ gộp tên lùi được cả bí danh cấp tên (ghi cùng mốc với các câu, server `_withdraw`); quy ước 『』 cả cuốn thì không có
+    mốc để lùi nên không mời."""
+    if not item.get("requested") or item["kind"] == "bracket":
         return None
     if item["kind"] == "narrator":
         section = item["narratorSection"]
@@ -1271,14 +1285,16 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
     # 3c. Hai tên viết GẦN giống nhau ("Arya" / "Aria" - speaker_suggestions.name_pair_candidates): có thể là một người máy viết
     #     hai cách, hai giọng cho một người. Gộp tự động thì nhập nhầm người thật ở mọi ngưỡng, nên chỉ hỏi. Bấm như hai thẻ
     #     trên: "Cùng một người" = câu của tên ít câu về tên nhiều câu + bí danh cấp tên (aliases.json); "Hai người khác nhau" giữ
-    #     từng câu, thẻ không hiện lại. Cặp đã ghi là bí danh thì không hỏi.
+    #     từng câu, thẻ không hiện lại. Cặp đã ghi là bí danh thì không hỏi - trừ khi câu của tên ít câu còn chờ áp (vừa bấm "Cùng một
+    #     người"): thẻ nằm ở "Đã quyết" với nút Hoàn tác, rút cả câu lẫn bí danh ghi cùng mốc.
     confirmed = alias_book.load(project_root)
     for pair in name_pairs:
         major, minor = pair.major, pair.minor
         if frozenset((major, minor)) in alias_pairs or major not in named or minor not in named:
             continue
-        if alias_book.key(confirmed.get(alias_book.key(minor), "")) == alias_book.key(major) \
-                or alias_book.key(confirmed.get(alias_book.key(major), "")) == alias_book.key(minor):
+        if (alias_book.key(confirmed.get(alias_book.key(minor), "")) == alias_book.key(major)
+                or alias_book.key(confirmed.get(alias_book.key(major), "")) == alias_book.key(minor)) \
+                and not any(str(row["stable_id"]) in speaker_wishes for row in named[minor]):
             continue
         into, who = speaker_label(major), speaker_label(minor)
         fix = _speaker_fix(named[minor], [{"label": "Cùng một người", "value": major, "name": into}], minor,
@@ -1459,6 +1475,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
 
     # 5b. Người nói không tên (vai phụ cục bộ không nằm trong thẻ cả cuốn): có thể là một nhân vật có tên trong chương.
     anonymous: dict[str, Any] = {}
+    voiced: dict[str, set[str]] = {}
     for card in anonymous_cards:
         anonymous.setdefault(card.speaker, card)
     for speaker, rows in lines_by_speaker.items():
@@ -1471,16 +1488,18 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             continue
         rows = open_rows or rows
         found = anonymous.get(speaker)
-        if found is not None:
+        # Ứng viên chưa có giọng trong sách: bấm vào chỉ ra lỗi "chưa gán được" - bỏ khỏi thẻ; không còn ai thì hỏi như 5b.
+        candidates = _with_voice(project_root, rows[0], found.names, voiced) if found is not None else []
+        if candidates:
             # 5c. "Người này có phải X?" (speaker_suggestions.anonymous_speaker_candidates): lời kể quanh câu của nhãn vô danh gọi
             #     tên một người cũng nói DƯỚI TÊN trong chương - người nghe đang nghe hai giọng cho một người. Chỉ ~1/5 thẻ đúng là
             #     một ứng viên, nên máy không tự đổi, không tô ứng viên nào, và thẻ đứng sau mọi thẻ khác (`askLast`). Thay thẻ 5b
             #     của đúng nhãn ấy (một câu một thẻ); chọn tên = yêu cầu "ai nói câu này" cho các câu, hoàn tác như mọi thẻ ấy.
-            fix = _speaker_fix(rows, [{"label": speaker_label(name), "value": name} for name in found.names], speaker,
+            fix = _speaker_fix(rows, [{"label": speaker_label(name), "value": name} for name in candidates], speaker,
                                speaker_wishes, speaker_label)
             if fix is None:
                 continue
-            who, people = speaker_label(speaker), [speaker_label(name) for name in found.names]
+            who, people = speaker_label(speaker), [speaker_label(name) for name in candidates]
             first = int(rows[0]["seq"])
             nearest = sorted(found.evidence, key=lambda seq: (abs(seq - first), seq))[:ANONYMOUS_EVIDENCE_SHOWN]
             context = [anonymous_evidence[(found.chapter_id, seq)] for seq in nearest if (found.chapter_id, seq) in anonymous_evidence]

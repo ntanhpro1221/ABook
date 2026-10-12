@@ -22,6 +22,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   Nhân vật. Sách đã thu âm thì hộp xác nhận nói trước phải thu lại bao nhiêu câu, mất khoảng bao lâu, và chỉ những câu đổi giọng bị
   thu lại. Tắt công tắc thì mọi thứ trở về đúng như trước khi bật.
 
+### Sửa lỗi
+
+- Thẻ “Hai tên này có phải một người?”: bấm “Cùng một người” rồi đổi ý, nút Hoàn tác giờ rút cả hai tên khỏi danh sách bí danh,
+  không chỉ các câu (trước đây bí danh ở lại và phần sau của cuốn vẫn gộp hai tên). Thẻ vừa quyết nằm ở “Đã quyết” với nút
+  Hoàn tác cho tới khi được áp.
+- Thẻ “Người này có phải X?” không còn đưa ra người chưa có giọng trong sách (bấm vào chỉ báo “chưa gán được”); không còn ai
+  thì thẻ hỏi “… là ai?” như trước.
+
 ## [0.4.55] - 2026-10-12
 
 ### Nhạc nền (máy tính và điện thoại)

@@ -16,9 +16,9 @@ from abook.webui.work_items import work_items
 GIRL = "NPC_LOCAL::c00001::r1::cô gái tóc đỏ"
 
 
-def make_book(root: Path) -> Path:
+def make_book(root: Path, voiceless: tuple[str, ...] = ()) -> Path:
     """Arya (6 câu) / Aria (2 câu): một tên viết hai cách. Cô gái tóc đỏ (vô danh, 20 câu) nói cạnh lời kể gọi tên Mira và Lena,
-    hai người cũng nói dưới tên trong chương."""
+    hai người cũng nói dưới tên trong chương. Người có tên có giọng (hồ sơ = mã nhân vật), trừ những người trong `voiceless`."""
     project = root / "sach"
     project.mkdir(parents=True)
     (project / "book_settings.json").write_bytes(b"{}")
@@ -49,9 +49,9 @@ def make_book(root: Path) -> Path:
     rows += [(f"y{index}", 50 + index, "“Đi nào.”", "dialogue", "ARYA", 1) for index in range(6)]
     rows += [(f"r{index}", 70 + index, "“Đợi đã.”", "dialogue", "ARIA", 2) for index in range(2)]
     db.executemany(
-        "INSERT INTO segments (stable_id, chapter_id, seq, paragraph_index, text, kind, speaker, canonical_character_id, status,"
-        " text_sha256) VALUES (?, 1, ?, ?, ?, ?, ?, ?, 'verified', 'sha-' || ?)",
-        [(stable, paragraph, paragraph, text, kind, speaker, character, stable)
+        "INSERT INTO segments (stable_id, chapter_id, seq, paragraph_index, text, kind, speaker, canonical_character_id, voice_profile_id,"
+        " status, text_sha256) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, 'verified', 'sha-' || ?)",
+        [(stable, paragraph, paragraph, text, kind, speaker, character, None if speaker in voiceless else character, stable)
          for stable, paragraph, text, kind, speaker, character in rows],
     )
     db.commit()
@@ -79,6 +79,24 @@ def test_two_names_written_almost_alike_ask_whether_they_are_one_person(tmp_path
     # Hai câu mỗi bên để người nghe so hai giọng.
     assert [example["speaker"] for example in card["examples"]] == ["Aria", "Aria", "Arya", "Arya"]
     assert card["requested"] is None, "chưa bấm thì không đổi gì"
+
+
+def test_one_person_stays_decided_with_an_undo_that_takes_back_the_alias_too(tmp_path: Path) -> None:
+    project = make_book(tmp_path)
+    card = _card(project, "alias:ARYA|ARIA")
+    at = time.time()
+    # "Cùng một người" (đường POST /speaker với `alias`): các câu + bí danh cấp tên, cùng một mốc.
+    request_speakers(project, _lines(card), "ARYA", now=at)
+    aliases.add(project, "ARIA", "ARYA", now=at)
+    decided = _card(project, "alias:ARYA|ARIA")
+    assert decided is not None and decided["requested"] == "Arya", "chờ áp: thẻ nằm ở Đã quyết"
+    assert decided["undo"] == {"endpoint": "speaker", "decisions": [{"lines": card["lines"], "requestedAt": at}]}
+    # Hoàn tác (như server `_withdraw`): bỏ câu và bí danh của đúng lần bấm ấy - thẻ hỏi lại như trước.
+    withdraw_requests(project, "speakers", list(requests_made_at(read_overrides(project), "speakers", ["r0", "r1"], at)), at)
+    aliases.remove_added_at(project, at)
+    assert aliases.load(project) == {}
+    again = _card(project, "alias:ARYA|ARIA")
+    assert again is not None and again["requested"] is None
 
 
 def test_two_different_people_is_remembered_and_can_be_undone(tmp_path: Path) -> None:
@@ -123,6 +141,20 @@ def test_an_unnamed_speaker_beside_named_people_asks_which_of_them_it_is(tmp_pat
     # Điểm cao hơn thẻ hai tên mà vẫn đứng sau: sau mọi thẻ áp được ngay.
     assert card["score"] > _card(project, "alias:ARYA|ARIA")["score"]
     assert items[-1]["key"] == card["key"]
+
+
+def test_a_candidate_without_a_voice_is_not_offered(tmp_path: Path) -> None:
+    # Lena chưa có giọng: bấm "Lena" thì dây chuyền từ chối ("chưa gán được") - thẻ chỉ hỏi về Mira.
+    card = _card(make_book(tmp_path, voiceless=("LENA",)), f"unnamed:{GIRL}")
+    assert card["title"].endswith("có phải Mira?"), card["title"]
+    assert [choice["value"] for choice in card["choices"]] == ["MIRA"]
+    assert card["options"] == ["Mira", "Không ai trong số này"]
+    assert "Lena" not in card["problem"]
+
+
+def test_with_no_voiced_candidate_the_card_asks_who_it_is_instead(tmp_path: Path) -> None:
+    card = _card(make_book(tmp_path, voiceless=("MIRA", "LENA")), f"unnamed:{GIRL}")
+    assert card["title"] == "“cô gái tóc đỏ” là ai?" and not card.get("askLast")
 
 
 def test_choosing_a_name_writes_the_speaker_request_and_can_be_undone(tmp_path: Path) -> None:
