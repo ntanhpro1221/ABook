@@ -2,6 +2,7 @@ import { BookmarkPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button, Segmented } from "@/shared/ui";
+import { useAvailableModelNames } from "@/studio/AnalysisModelPicker";
 import { useAppInfo, usePreferences } from "@/studio/data";
 import {
   DEFAULT_LABEL,
@@ -10,6 +11,8 @@ import {
   findTemplate,
   isFull,
   isModified,
+  missingModel,
+  missingModelNote,
   nameProblem,
   templateFromDraft,
   templatesOf,
@@ -43,7 +46,9 @@ export function TemplateBar({ draft, onPick }: {
   }, [saving]);
 
   const active = findTemplate(templates, draft.template);
-  const modified = active ? isModified(draft, active) : false;
+  const modelNames = useAvailableModelNames();
+  const modified = active ? isModified(draft, active, modelNames) : false;
+  const lostModel = missingModel(active, modelNames);
   if (!templates.length && remote) return null;
 
   const close = () => {
@@ -111,6 +116,7 @@ export function TemplateBar({ draft, onPick }: {
       {modified && active && (
         <p className="mt-2 text-[0.8125rem] text-fg-2">Bạn đã đổi so với mẫu “{active.name}”. Bấm lại tên mẫu để trở về như đã lưu.</p>
       )}
+      {lostModel && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingModelNote(lostModel)}</p>}
       {!templates.length && !saving && !remote && (
         <p className="mt-2 text-[0.8125rem] text-fg-2">Lưu các lựa chọn dưới đây thành mẫu để dùng lại cho những cuốn sau.</p>
       )}
@@ -162,7 +168,7 @@ export function TemplateBar({ draft, onPick }: {
           </div>
           {confirming && <p className="mt-2 text-[0.8125rem] text-fg-2">Đã có mẫu “{findTemplate(templates, name)?.name}”. Ghi đè bằng các lựa chọn hiện tại?</p>}
           {problem && <p role="alert" className="mt-2 text-[0.8125rem] text-danger">{problem}</p>}
-          <p className="mt-2 text-[0.8125rem] text-fg-3">Mẫu nhớ giọng kể, chất lượng, bộ phân tích truyện và chuyện có bắt đầu ngay không. Không nhớ truyện, tên sách hay dòng ghi công.</p>
+          <p className="mt-2 text-[0.8125rem] text-fg-3">Mẫu nhớ giọng kể, chất lượng, bộ phân tích truyện, chuyện có bắt đầu ngay không và có chờ bạn duyệt trước khi thu không. Không nhớ truyện, tên sách hay dòng ghi công.</p>
         </form>
       )}
     </div>

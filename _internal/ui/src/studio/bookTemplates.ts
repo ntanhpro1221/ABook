@@ -1,7 +1,7 @@
 // Mẫu thiết lập có tên cho sách mới (backlog H4): lưu một bộ lựa chọn của trình tạo sách dưới một cái tên rồi dùng lại.
 // Phần thuần ở đây - máy chủ kiểm lại cùng luật (webui/library.py clean_book_templates).
 //
-// Mẫu CHỈ mang lựa chọn thường: giọng kể, chất lượng, model đọc hiểu, "bắt đầu ngay". Không bao giờ mang nguồn truyện, tên
+// Mẫu CHỈ mang lựa chọn thường: giọng kể, chất lượng, model đọc hiểu, "bắt đầu ngay", "chờ tôi duyệt trước khi thu". Không bao giờ mang nguồn truyện, tên
 // sách, ngôi kể, hay `dropCredits` (bỏ dòng ghi công là đồng ý riêng từng cuốn - app không tự sửa chữ của truyện).
 
 export type Profile = "fast" | "balanced" | "high_quality";
@@ -20,6 +20,8 @@ export interface BookTemplate {
   /** "" = model mặc định của app. */
   analysisModel: string;
   startNow: boolean;
+  /** "Chờ tôi duyệt trước khi thu" (webui/precast.py). */
+  precastWait: boolean;
 }
 
 /** Phần của nháp trình tạo sách mà mẫu đọc và ghi. `template`: tên mẫu đang theo (nháp nhớ qua lần tải lại trang). */
@@ -28,7 +30,23 @@ export interface TemplateFields {
   profile: Profile;
   analysisModel?: string;
   startNow: boolean;
+  precastWait?: boolean;
   template?: string;
+}
+
+const modelKey = (name: string) => name.replace(/:latest$/, "");
+
+/** Model của mẫu mà máy không còn: tên model, "" nếu dùng được. `available` = tên các model Ollama đang có (chưa biết - chưa tải
+ * xong hay Ollama tắt - thì không kết luận gì, coi như dùng được). */
+export function missingModel(template: Pick<BookTemplate, "analysisModel"> | undefined, available?: readonly string[]): string {
+  const wanted = template?.analysisModel ?? "";
+  if (!wanted || !available?.length) return "";
+  return available.some((name) => modelKey(name) === modelKey(wanted)) ? "" : wanted;
+}
+
+/** Lời nhắc khi áp mẫu mà bỏ qua model của nó. */
+export function missingModelNote(model: string): string {
+  return `Model ${modelKey(model)} trong mẫu không còn trên máy - giữ model đang chọn.`;
 }
 
 export function cleanName(value: string): string {
@@ -43,7 +61,7 @@ export function templatesOf(value: unknown): BookTemplate[] {
   const found: BookTemplate[] = [];
   for (const item of value) {
     if (!item || typeof item !== "object") continue;
-    const { name, narrator, profile, analysisModel, startNow } = item as Record<string, unknown>;
+    const { name, narrator, profile, analysisModel, startNow, precastWait } = item as Record<string, unknown>;
     if (typeof name !== "string" || !name || typeof profile !== "string" || !PROFILES.includes(profile)) continue;
     found.push({
       name,
@@ -51,6 +69,7 @@ export function templatesOf(value: unknown): BookTemplate[] {
       profile: profile as Profile,
       analysisModel: typeof analysisModel === "string" ? analysisModel : "",
       startNow: startNow !== false,
+      precastWait: precastWait === true,
     });
   }
   return found;
@@ -85,30 +104,40 @@ export function templateFromDraft(draft: TemplateFields, name: string): BookTemp
     profile: draft.profile,
     analysisModel: draft.analysisModel ?? "",
     startNow: draft.startNow,
+    precastWait: Boolean(draft.precastWait),
   };
 }
 
-/** Áp mẫu lên nháp: chỉ bốn lựa chọn ấy + tên mẫu, mọi thứ khác (nguồn, tên sách, ngôi kể...) giữ nguyên. Giọng kể của mẫu
- * không còn trong danh sách giọng (`voiceNames`, nếu đã tải) thì giữ giọng đang chọn thay vì chọn một giọng không có. */
-export function applyTemplate<T extends TemplateFields>(draft: T, template: BookTemplate, voiceNames?: readonly string[]): T {
+/** Áp mẫu lên nháp: chỉ năm lựa chọn ấy + tên mẫu, mọi thứ khác (nguồn, tên sách, ngôi kể...) giữ nguyên. Giọng kể của mẫu
+ * không còn trong danh sách giọng (`voiceNames`, nếu đã tải) thì giữ giọng đang chọn thay vì chọn một giọng không có; model
+ * của mẫu không còn trong danh sách model (`modelNames`) cũng vậy. */
+export function applyTemplate<T extends TemplateFields>(
+  draft: T,
+  template: BookTemplate,
+  voiceNames?: readonly string[],
+  modelNames?: readonly string[],
+): T {
   const usable = template.narrator && (!voiceNames || voiceNames.includes(template.narrator));
   return {
     ...draft,
     narrator: usable ? template.narrator : draft.narrator,
     profile: template.profile,
-    analysisModel: template.analysisModel,
+    analysisModel: missingModel(template, modelNames) ? (draft.analysisModel ?? "") : template.analysisModel,
     startNow: template.startNow,
+    precastWait: template.precastWait,
     template: template.name,
   };
 }
 
-/** Người dùng đã đổi lựa chọn nào đó sau khi áp mẫu. Mẫu không ghi giọng kể ("" = máy đề xuất) thì giọng không tính. */
-export function isModified(draft: TemplateFields, template: BookTemplate): boolean {
+/** Người dùng đã đổi lựa chọn nào đó sau khi áp mẫu. Mẫu không ghi giọng kể ("" = máy đề xuất) thì giọng không tính; model mẫu
+ * mang mà máy không còn (`modelNames`) cũng không tính - mẫu không áp được nó. */
+export function isModified(draft: TemplateFields, template: BookTemplate, modelNames?: readonly string[]): boolean {
   return (
     (template.narrator !== "" && draft.narrator !== template.narrator) ||
     draft.profile !== template.profile ||
-    (draft.analysisModel ?? "") !== template.analysisModel ||
-    draft.startNow !== template.startNow
+    (!missingModel(template, modelNames) && (draft.analysisModel ?? "") !== template.analysisModel) ||
+    draft.startNow !== template.startNow ||
+    Boolean(draft.precastWait) !== template.precastWait
   );
 }
 

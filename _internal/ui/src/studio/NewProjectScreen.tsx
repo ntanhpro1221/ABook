@@ -65,7 +65,7 @@ import {
   type Picked,
   type UploadProgress,
 } from "@/studio/upload";
-import { AnalysisModelPicker, analysisChoiceLabel, modelLabel, useAnalysisModels } from "@/studio/AnalysisModelPicker";
+import { AnalysisModelPicker, analysisChoiceLabel, modelLabel, useAnalysisModels, useAvailableModelNames } from "@/studio/AnalysisModelPicker";
 import { DEFAULT_LABEL, applyTemplate, type BookTemplate, type Profile } from "@/studio/bookTemplates";
 import { StudioInstallNotice } from "@/studio/StudioSetup";
 import { TemplateBar } from "@/studio/TemplateBar";
@@ -1602,6 +1602,7 @@ export function NewProjectScreen() {
   const create = useCreateBook();
   const { data: voices } = useVoices();
   const { data: preferences } = usePreferences();
+  const modelNames = useAvailableModelNames();
   const [draft, setDraft] = useState<Draft>(loadDraft);
   const [rawScan, setRawScan] = useState<ScanResult | null>(null);
   const [problem, setProblem] = useState<{ text: string; subfolders: string[] } | null>(null);
@@ -1704,11 +1705,12 @@ export function NewProjectScreen() {
       profile: (PROFILE_VALUES as string[]).includes(preferences?.newBookProfile ?? "") ? (preferences?.newBookProfile as Profile) : "high_quality",
       analysisModel: "",
       startNow: true,
+      precastWait: false,
     };
     // Mẫu có ghi giọng kể là lựa chọn của người dùng; "Mặc định" và mẫu không ghi giọng thì máy vẫn chọn giọng dẫn theo giới người kể "tôi".
     setDraft((current) =>
       template
-        ? { ...applyTemplate(current, template, voices?.map((voice) => voice.name)), narratorPicked: Boolean(template.narrator) }
+        ? { ...applyTemplate(current, template, voices?.map((voice) => voice.name), modelNames), narratorPicked: Boolean(template.narrator) }
         : { ...applyTemplate(current, fallback), template: undefined, narratorPicked: false },
     );
   };

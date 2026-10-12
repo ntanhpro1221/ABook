@@ -4,6 +4,8 @@ import {
   applyTemplate,
   isFull,
   isModified,
+  missingModel,
+  missingModelNote,
   nameProblem,
   removeTemplate,
   renameTemplate,
@@ -15,8 +17,8 @@ import {
   type TemplateFields,
 } from "./bookTemplates";
 
-const ln: BookTemplate = { name: "Light novel", narrator: "Đức Trí", profile: "balanced", analysisModel: "qwen3:8b", startNow: false };
-const tienHiep: BookTemplate = { name: "Tiên hiệp", narrator: "", profile: "fast", analysisModel: "", startNow: true };
+const ln: BookTemplate = { name: "Light novel", narrator: "Đức Trí", profile: "balanced", analysisModel: "qwen3:8b", startNow: false, precastWait: true };
+const tienHiep: BookTemplate = { name: "Tiên hiệp", narrator: "", profile: "fast", analysisModel: "", startNow: true, precastWait: false };
 
 interface Draft extends TemplateFields {
   title: string;
@@ -35,9 +37,9 @@ describe("applyTemplate", () => {
   it("sets the four choices and the template name, and nothing else", () => {
     const before = draft();
     const after = applyTemplate(before, ln);
-    expect(after).toMatchObject({ narrator: "Đức Trí", profile: "balanced", analysisModel: "qwen3:8b", startNow: false, template: "Light novel" });
-    expect({ ...after, narrator: 0, profile: 0, analysisModel: 0, startNow: 0, template: 0 })
-      .toEqual({ ...before, narrator: 0, profile: 0, analysisModel: 0, startNow: 0, template: 0 });
+    expect(after).toMatchObject({ narrator: "Đức Trí", profile: "balanced", analysisModel: "qwen3:8b", startNow: false, precastWait: true, template: "Light novel" });
+    expect({ ...after, narrator: 0, profile: 0, analysisModel: 0, startNow: 0, precastWait: 0, template: 0 })
+      .toEqual({ ...before, narrator: 0, profile: 0, analysisModel: 0, startNow: 0, precastWait: 0, template: 0 });
     expect(after.dropCredits).toBe(true);
   });
 
@@ -67,6 +69,8 @@ describe("isModified", () => {
     expect(isModified({ ...applied, profile: "fast" }, ln)).toBe(true);
     expect(isModified({ ...applied, analysisModel: "" }, ln)).toBe(true);
     expect(isModified({ ...applied, startNow: true }, ln)).toBe(true);
+    expect(isModified({ ...applied, precastWait: false }, ln)).toBe(true);
+    expect(isModified({ ...applyTemplate(draft(), tienHiep), precastWait: undefined }, tienHiep)).toBe(false);
   });
 
   it("ignores everything the template does not carry", () => {
@@ -86,8 +90,8 @@ describe("templateFromDraft", () => {
   it("captures only the plain choices and trims the name", () => {
     const source = draft({ analysisModel: undefined });
     const saved = templateFromDraft(source, "  Tiên   hiệp ");
-    expect(saved).toEqual({ name: "Tiên hiệp", narrator: "Thục Anh", profile: "high_quality", analysisModel: "", startNow: true });
-    expect(Object.keys(saved).sort()).toEqual(["analysisModel", "name", "narrator", "profile", "startNow"]);
+    expect(saved).toEqual({ name: "Tiên hiệp", narrator: "Thục Anh", profile: "high_quality", analysisModel: "", startNow: true, precastWait: false });
+    expect(Object.keys(saved).sort()).toEqual(["analysisModel", "name", "narrator", "precastWait", "profile", "startNow"]);
   });
 });
 
@@ -136,6 +140,51 @@ describe("templatesOf", () => {
   });
 
   it("fills the optional fields", () => {
-    expect(templatesOf([{ name: "A", profile: "fast" }])).toEqual([{ name: "A", narrator: "", profile: "fast", analysisModel: "", startNow: true }]);
+    expect(templatesOf([{ name: "A", profile: "fast" }])).toEqual([{ name: "A", narrator: "", profile: "fast", analysisModel: "", startNow: true, precastWait: false }]);
+  });
+});
+
+describe("precastWait", () => {
+  it("is captured from the draft, applied by the template and replaces the draft's own", () => {
+    expect(templateFromDraft(draft({ precastWait: true }), "A").precastWait).toBe(true);
+    expect(applyTemplate(draft({ precastWait: false }), ln).precastWait).toBe(true);
+    expect(applyTemplate(draft({ precastWait: true }), tienHiep).precastWait).toBe(false);
+  });
+
+  it("is read back from preferences as off unless exactly true", () => {
+    expect(templatesOf([{ name: "A", profile: "fast", precastWait: true }])[0].precastWait).toBe(true);
+    expect(templatesOf([{ name: "A", profile: "fast", precastWait: "yes" }])[0].precastWait).toBe(false);
+  });
+});
+
+describe("a template model the machine no longer has", () => {
+  const installed = ["qwen3.5:9b", "qwen3:8b:latest"];
+
+  it("is found only when the model list is known and lacks it", () => {
+    expect(missingModel(ln, ["qwen3.5:9b"])).toBe("qwen3:8b");
+    expect(missingModel(ln, installed)).toBe("");
+    expect(missingModel({ analysisModel: "qwen3:8b:latest" }, ["qwen3:8b"])).toBe("");
+    expect(missingModel(tienHiep, ["qwen3.5:9b"])).toBe("");
+    expect(missingModel(ln, undefined)).toBe("");
+    expect(missingModel(ln, [])).toBe("");
+  });
+
+  it("is not applied: the draft keeps its own model, everything else still follows the template", () => {
+    const after = applyTemplate(draft({ analysisModel: "chosen:1b" }), ln, undefined, ["qwen3.5:9b"]);
+    expect(after.analysisModel).toBe("chosen:1b");
+    expect(after).toMatchObject({ profile: "balanced", startNow: false, precastWait: true, template: "Light novel" });
+    expect(applyTemplate(draft(), ln, undefined, ["qwen3.5:9b"]).analysisModel).toBe("");
+  });
+
+  it("is applied when the model is installed, or when the list is unknown", () => {
+    expect(applyTemplate(draft(), ln, undefined, installed).analysisModel).toBe("qwen3:8b");
+    expect(applyTemplate(draft(), ln).analysisModel).toBe("qwen3:8b");
+  });
+
+  it("does not make the template look modified, and the note names the model", () => {
+    const applied = applyTemplate(draft(), ln, undefined, ["qwen3.5:9b"]);
+    expect(isModified(applied, ln)).toBe(true);
+    expect(isModified(applied, ln, ["qwen3.5:9b"])).toBe(false);
+    expect(missingModelNote("qwen3:8b:latest")).toBe("Model qwen3:8b trong mẫu không còn trên máy - giữ model đang chọn.");
   });
 });
