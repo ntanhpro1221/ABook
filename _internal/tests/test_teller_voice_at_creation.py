@@ -94,6 +94,16 @@ def test_the_command_line_marks_the_machines_choice_by_the_same_rule(tmp_path: P
     assert not (_cli_create(tmp_path, capsys) / teller_voice.FILE_NAME).exists()
 
 
+def test_the_command_line_can_turn_the_teller_switch_on(tmp_path: Path, capsys) -> None:
+    from abook import cli
+
+    assert teller_voice.read(_cli_create(tmp_path, capsys, "--first-person", "Mai", "--teller-mode"))["mode"] == "teller"
+    assert teller_voice.read(_cli_create(tmp_path, capsys, "--first-person-chapter", "1=Mai", "--teller-mode"))["mode"] == "teller"
+    code = cli.main(["create", "--source-dir", str(_source(tmp_path)), "--range", "001..002", "--output-root",
+                     str(tmp_path / "none"), "--title", "T", "--json", "--teller-mode"])
+    assert code != cli.EXIT_OK and not (tmp_path / "none").exists(), "không có người kể “tôi”: từ chối trước khi tạo gì"
+
+
 def test_the_teller_switch_is_off_unless_asked_for_and_needs_a_teller(tmp_path: Path) -> None:
     source = [str(_source(tmp_path))]
     off = actions.create_book(tmp_path / "lib", source, "Thử", "balanced", "", "Mai")

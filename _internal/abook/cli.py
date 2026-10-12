@@ -831,6 +831,10 @@ def _command_create(args: argparse.Namespace) -> CommandResult:
         width=args.width,
     )
     settings = _settings_from_args(args)
+    voices = settings.get("voices") or {}
+    if getattr(args, "teller_mode", False) and not (str(voices.get("first_person_identity") or "").strip() or any(
+            str(name).strip() for name in (voices.get("first_person_chapters") or {}).values())):
+        raise CliUsageError("--teller-mode needs a first-person narrator: --first-person NAME (or --first-person-chapter)")
     output_root = Path(args.output_root)
     preview = preview_project_creation(files, output_root, settings, args.title)
     preview["dry_run"] = bool(args.dry_run)
@@ -849,6 +853,10 @@ def _command_create(args: argparse.Namespace) -> CommandResult:
                                           _chapter_narrators(getattr(args, "first_person_chapter", None)),
                                           str(getattr(args, "narrator", "") or "")):
             teller_voice.mark_auto(paths.root)
+    if getattr(args, "teller_mode", False):
+        from . import teller_voice
+
+        teller_voice.set_mode(paths.root, "teller")  # B: áp sau khi phân vai khoá (worker `apply_teller_voice`)
     book = db.book()
     chapters = db.list_chapters()
     created = dict(preview)
@@ -1489,6 +1497,14 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "A chapter told by someone else's 'I' (light novels switch point of view by chapter): chapter "
             "number = narrator, or N= for a chapter told in the third person. Repeatable."
+        ),
+    )
+    create.add_argument(
+        "--teller-mode",
+        action="store_true",
+        help=(
+            "Let the first-person narrator tell the story in their own voice: narration of the sections they "
+            "tell (and their own thoughts) is read with that character's voice instead of the narration voice"
         ),
     )
     create.add_argument(
