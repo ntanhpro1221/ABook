@@ -406,6 +406,12 @@ def _count_heard(connection: sqlite3.Connection, ids: list[str], extra: str = ""
     return total, heard
 
 
+def _shown_name(connection: sqlite3.Connection, character_id: Any, label: str) -> str:
+    """Tên người kể như tab Nhân vật hiện (display_name), không phải nhãn người nói ("MAI") trong câu."""
+    row = connection.execute("SELECT display_name FROM characters WHERE id=?", (character_id,)).fetchone()
+    return str(row[0]).strip() if row is not None and row[0] and str(row[0]).strip() else label
+
+
 def mode_plan(connection: sqlite3.Connection, project_root: Path | str, tellers: Tellers) -> dict[str, Any]:
     """Cái giá của việc đổi chế độ, cho hộp xác nhận: {"direction": "on"/"off", "lines": số câu đổi giọng, "recorded": số câu trong đó đã
     thu (phải thu lại), "tellers": những người kể bị chạm}. Bật: câu lời kể của đoạn do người kể "tôi" kể + nội tâm A+ đã chuyển
@@ -419,13 +425,13 @@ def mode_plan(connection: sqlite3.Connection, project_root: Path | str, tellers:
             total, heard = _count_heard(connection, [str(item) for item in group.get("lines") or []],
                                         " AND canonical_character_id=? AND voice_profile_id=?", (group["character_id"], group["profile_id"]))
             lines, recorded = lines + total, recorded + heard
-            names.append(str(group.get("speaker") or ""))
+            names.append(_shown_name(connection, group.get("character_id"), str(group.get("speaker") or "")))
         thought_ids, direction = [str(item) for item in state.get("thoughts") or {}], "off"
     else:
         groups, _skipped = teller_lines(connection, tellers)
         lines = sum(len(rows) for rows in groups.values())
         recorded = sum(1 for rows in groups.values() for row in rows if "wav_path" in row.keys() and row["wav_path"] and _heard(row))  # noqa: SIM118 - sqlite3.Row: `in` xét giá trị
-        names = [label for _character, _profile, label in groups]
+        names = [_shown_name(connection, character, label) for character, _profile, label in groups]
         thought_ids, direction = [str(item) for item in applied.get("thoughts") or {}], "on"
     total, heard = _count_heard(connection, thought_ids)
     return {"direction": direction, "lines": lines + total, "recorded": recorded + heard, "tellers": sorted(set(names), key=str.casefold)}

@@ -26,6 +26,7 @@ export function TellerModeSwitch({ book, className }: { book: BookSummary; class
       client.setQueryData(["narrator-mode", book.id], view);
       for (const key of ["book", "work", "cast", "script"]) void client.invalidateQueries({ queryKey: [key, book.id] });
       void client.invalidateQueries({ queryKey: ["library"] });
+      void client.invalidateQueries({ queryKey: ["listen", "cast", book.id] });  // số câu của người kể và nhân vật trong tab Nhân vật
       setAsking(null);
       if (view.castLocked && view.mode === "teller" && view.applied) toast.success("Đã đổi", { description: "Bấm “Tiếp tục” để thu lại những câu đổi giọng." });
     },
