@@ -4337,6 +4337,45 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 12-10 - BOUND-ORACLE: nút thắt buồn→vui cần CẢ ranh cảnh LẪN V; ranh đúng mà V sai, hay V đúng mà ranh sai, đều không đủ
+
+**Hỏi** (câu hỏi mở Lead đặt sau break_final2, khi nhánh sadwithin đã đóng): buồn bị phát nhạc vui vì V đoán sai, hay vì ranh khúc
+của app không trùng ranh cảnh thật? Khúc app ~3 phút có thể ôm cả cảnh vui lẫn cảnh buồn rồi lấy V trung bình.
+
+**Cấu trúc trước khi đo.** Ranh khúc app gần như toàn bộ là cắt đều 180 s. Ở bộ 11+12 (19 chương, 101 ranh cảnh vàng), chỉ có 4 đầu khúc
+không phải "length", và cả 4 đều nằm ngoài ranh vàng. Bộ 7 có 1/51. Điều này khớp với SPLIT 06-10.
+
+**Làm.** Bảng 2x2: ranh {app, vàng} × V {app, vàng}, cùng thước break_plan2 (TB 8 book_key, theo chương).
+- Khúc theo ranh vàng dựng bằng chính `chapter_scenes`: `hard_break` = đầu cảnh vàng; tắt mood_shift, cờ sceneBreak và
+  `BOUNDARY_SOURCES`.
+- Giữ `_merge_short` / `_split_long` của app. Gộp ngắn nuốt 17/101 ranh vàng ở bộ 11+12, 3/51 ở bộ 7.
+- Kiểm lực: thay V app bằng V vàng thì ô C trùng ô D, hiệu 0.
+- Ghi trước ở Corpus 58afae4, kết quả ở 832bb0b (`PLAN_boundary_oracle.md`, `boundary_oracle.py`).
+
+| bộ 11+12 | buồn→vui | vui→vui | MAE bài | khúc/h | đổi bài/h |
+|---|---|---|---|---|---|
+| A ranh app + V app (gốc) | 23,9 | 51,9 | .293 | 6,0 | 7,0 |
+| B ranh app + V vàng | 32,6 | 67,9 | .272 | 6,0 | 8,7 |
+| C ranh vàng + V app | 22,7 | 74,8 | .241 | 24,8 | 21,0 |
+| D ranh vàng + V vàng | 12,3 | 87,8 | .102 | 24,8 | 21,0 |
+
+Bộ 7: A 28,4, C 0,0, D 0,0. Nhưng bộ 7 chỉ có 0,09 giờ câu buồn, nên số này rất mỏng.
+
+**Kết luận theo luật ghi trước: CẦN CẢ RANH LẪN V, không nhánh đơn nào đủ.**
+- D = 12,3 < 15 %, nên không phải lỗi chọn bài.
+- C chỉ đóng 10 % khoảng A→D. Bootstrap (A − C) có KTC 90 % [−11,2; 11,8].
+- Bộ 7 cùng chiều.
+
+**Đọc.**
+- Hai thứ chỉ có ích khi đi cùng nhau.
+  - V vàng trên khúc app làm buồn→vui TỆ hơn (32,6), vì khúc trộn cảnh buồn với cảnh không buồn.
+  - Ranh vàng với V app gần như không đổi.
+  - Có cả hai thì hạ 11,6 điểm.
+- Ranh vàng một mình đã nâng vui→vui (51,9 → 74,8) và MAE bài (.293 → .241).
+- Cái giá: khúc dày gấp 4 lần, đổi bài 21 so với 7 lần/giờ.
+- **Lượt kế (Lead duyệt 12-10):** ranh ĐOÁN (cue cứng + model) với V chạy trên chính khúc ấy, cùng thước. Luật ghi trước phải có trần
+  đổi bài/giờ.
+
 ### 11-10 chiều - Lực của bộ 7: phần lớn các lần "thua" là luật chặt hoặc thiếu lực; bộ 7 chỉ có 4 truyện
 
 Corpus 97d81b3 (`POWER_set7.md`). Xác suất bộ 7 qua luật ghi trước nếu hiệu thật = hiệu bộ học. Xấp xỉ chuẩn, se lấy từ bootstrap
