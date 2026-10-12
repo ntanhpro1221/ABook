@@ -54,7 +54,7 @@ def test_the_price_is_shown_before_anything_changes(studio) -> None:
 
     assert status == 200 and view["available"] is True and view["mode"] == "narrator" and view["applied"] is False
     assert view["plan"]["direction"] == "on" and view["plan"]["lines"] == 3 and view["plan"]["recorded"] == 3
-    assert view["plan"]["seconds"] > 0 and view["plan"]["tellers"] == ["MAI"]
+    assert view["plan"]["seconds"] > 0 and view["plan"]["tellers"] == ["Mai"]
     assert _speakers(db)["c1s0"] == "NARRATOR", "xem giá không đổi gì"
 
 

@@ -96,7 +96,7 @@ def test_turning_it_on_after_recording_resets_only_the_lines_whose_voice_changes
     teller_voice.set_mode(paths.root, "teller")
     with db.connect() as conn:
         plan = teller_voice.mode_plan(conn, paths.root, teller_voice.tellers_of(paths.root, settings, conn))
-    assert plan == {"direction": "on", "lines": 3, "recorded": 3, "tellers": ["MAI"]}
+    assert plan == {"direction": "on", "lines": 3, "recorded": 3, "tellers": ["Mai"]}
 
     result = teller_voice.ensure(paths.root, db, settings)
 
