@@ -4383,7 +4383,15 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
 - Phần 11 % nhu cầu căng từ đoạn yếu là nhu cầu có cơ sở.
 
 **Hệ quả.** Lỗ trục căng phải lấp bằng DANH MỤC (bài căng ở V trung tính), không bằng bộ chọn. Đang đo 30 bài Freesound đề xuất bằng
-đúng thước danh mục (COV30, ghi trước Corpus dac5ce6: giữ −0,2 ≤ V < 0,2 và T ≥ 0,6). Lô thêm vào danh mục chờ Lead duyệt.
+đúng thước danh mục (COV30, ghi trước Corpus dac5ce6: giữ −0,2 ≤ V < 0,2 và T ≥ 0,6).
+
+**COV30: giữ 0/30** (Corpus 0a8cab8).
+- 16 bài có T ≥ 0,6, nhưng V của tất cả ≤ −0,31: truy vấn "suspense / dark / ominous" ra đúng loại bài cột V 0–1 vốn đã có.
+- Thước V nhạc gộp căng vào phía buồn: câu "tense ominous music" nằm ở phía âm của VALENCE; trên danh mục corr(V, T) = −0,45.
+- Phía văn bản cũng thế: vàng corr(V, T) = −0,735 trên 804 cảnh; câu căng có V TB −0,38, chỉ 29 % ở V ≥ −0,2.
+- Danh mục có 25 % bài căng ở V ≥ −0,2, xấp xỉ phía vàng. Vậy đây không phải lỗi thước.
+- Lỗ thật: căng + V trung tính + năng lượng thấp–vừa (ô 2_0 – 2_2). Lượt tìm kế dùng kiểu "căng mà không tối": pizzicato, đồng hồ,
+  điều tra / heist.
 
 ### 12-10 - BOUND-PRED (ranh đoán từ lát 45 s + V học sinh nhúng lại trên chính khúc): THUA; buồn→vui của bộ 11+12 thực chất là hai chương
 
