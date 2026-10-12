@@ -4358,7 +4358,10 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   - vui→vui −4,1;
   - bootstrap 90 % [−0,102; 0,064].
 - Hàm học được phóng mạnh (f_T(0,7) = 0,835), không mang sang bộ khác: bộ 11 M 0,327 → 0,473, bộ 7 0,123 → 0,319.
-- q06 không học trên bộ học (trùng 0 chương / 0 truyện), nên đây không phải rò rỉ. Độ dốc vàng theo học sinh khác nhau giữa các bộ.
+- Gói q06 xuất xưởng học cả vàng bộ 4 / 5 / 5b / 6 / 7: đầu lệch học đoạn app của các bộ ấy, đầu mức học chương vàng. Bản đầu
+  của dòng này ghi "không học trên bộ học", SAI, vì chỉ so phần bạc.
+- Vậy đầu ra trên bộ học là trong mẫu, trên bộ 11 / 12 là ngoài mẫu. Hiệu chỉnh học trên phân phối này rồi áp lên phân phối kia là
+  lỗi thiết kế, góp phần vào thua.
 - buồn→vui 23,9 → 13,3 là hiệu ứng phụ của việc phóng V âm, chỉ dựa trên hai chương; không kết luận. Đợi số bộ 14.
 
 **Hệ quả.** Không hiệu chỉnh hậu kỳ học sinh. Hoãn luôn "đoạn yếu giữ T, chỉ kéo năng lượng" như Lead dặn.
