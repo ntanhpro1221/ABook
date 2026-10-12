@@ -4337,6 +4337,34 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 12-10 - STU-CCC: học lại đầu q06 có phạt co; ridge alpha 1e4 co QUÁ mức ngay cả theo MSE ngoài-nếp; bộ 11+12 thiếu lực
+
+**Hỏi** (Lead, sau CALIB-VT): sửa độ co của học sinh ở GỐC (lúc học), không hậu kỳ.
+
+**Làm** (ghi trước Corpus a374b57, số 1837382).
+- Hàm mất mát = ridge (alpha như gói: đầu lệch 1e4, đầu mức 1e3) + λ·N·(sd đầu ra − sd đích)².
+- Không dùng CCC thuần: nó bằng λ → ∞, và với r ≈ 0,67 thì tăng MSE khoảng 20 %.
+- Giải đúng trong toạ độ trị riêng (`LLM_Train/music/stu_ccc_fit.py`): λ = 0 tái tạo cả hai đầu của gói, lệch ≤ 5e-9.
+- Chọn λ_s (đầu lệch, cột V/T) × λ_c (đầu mức, cột V) trên lưới 7 × 7, bằng leave-one-set-out trên bộ 4 / 5 / 5b / 6. Mỗi nếp bỏ vàng
+  của bộ ấy khỏi cả hai đầu rồi đoán bằng đúng đường app.
+
+**Thấy (ngoài-nếp, 4 bộ gộp):**
+
+| ô | M (câu T vàng ≥ 0,6) | MAE V | MAE T | sd V | sd T |
+|---|---|---|---|---|---|
+| (0, 0) = gói | .449 | .3145 | .3766 | .260 | .285 |
+| λ_s 4, λ_c 0 | .430 | **.3067** | **.3689** | .307 | .330 |
+| λ_s 8, λ_c 8 (ô chọn, góc lưới) | .420 | .3110 | .3687 | .354 | .335 |
+
+- **Phát hiện riêng: phạt độ co ở đầu lệch trong chương hạ CẢ MAE V lẫn MAE T ngoài-nếp.** Tức ridge alpha 1e4 co quá mức tối ưu MSE
+  trên vàng ngoài-nếp, không chỉ "co về giữa" do chọn câu theo vàng. Bốn nếp cùng chiều về M.
+- Đầu mức chương (λ_c) giảm M nhưng tăng MAE V nhẹ.
+
+**Kiểm lực trên 11+12: THIẾU** (thế giới "B đúng" chỉ 35 % lượt qua, cần ≥ 80 %; X = 0,035). Dừng, chưa đọc vàng 11+12.
+- Bộ 11+12 chỉ có khoảng 0,35 giờ câu căng.
+- Lead duyệt bộ thử mở rộng 11+12+13+8+9+10 (khoảng 80 chương, đều ngoài mọi dữ liệu học): phân tích 8/9/10 trên Mac.
+- Lượt đo sau ghi trước lại: lưới mở rộng (LOSO), λ_s = 4 là ứng viên phụ, kiểm lực trên đúng 80 chương.
+
 ### 12-10 - GAP-FILL đóng lỗ căng ở V trung tính; CALIB-VT (hiệu chỉnh độ co V/T của học sinh) THUA
 
 **GAP-FILL** (ghi trước Corpus eeadb94, kết quả f4ce047, đóng 082543d).
