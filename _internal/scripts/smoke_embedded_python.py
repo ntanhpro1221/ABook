@@ -21,7 +21,8 @@ from pathlib import Path
 
 # Mô-đun chỉ chạy được khi đã có mô-đun "Phân tích nhạc" (numpy, onnxruntime, librosa: webui/music_module.py tải khi cần) hay
 # Studio: bộ cài chỉ-nghe không nạp được chúng. Mọi mô-đun khác của webui PHẢI nạp được.
-NEEDS_OPTIONAL_LIBRARIES = {"abook.webui.music_acoustic", "abook.webui.music_mel"}
+NEEDS_OPTIONAL_LIBRARIES = {"abook.webui.music_acoustic", "abook.webui.music_mel",
+                            "abook.webui.music_render"}  # bus nhạc của bản xuất kèm nhạc: nạp muộn sau music_export.need_numpy
 
 
 def main() -> int:
