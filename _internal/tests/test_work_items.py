@@ -77,6 +77,35 @@ def test_the_inbox_finds_each_kind_of_doubt_and_ranks_by_benefit(tmp_path: Path)
     assert time.time() - started < 5
 
 
+def test_the_vocative_card_also_asks_about_a_thought_that_calls_its_thinker_with_an_honorific(tmp_path: Path) -> None:
+    """Câu model gán kind `thought` mà chính câu ấy gọi người được gán kèm kính ngữ ("Heidi-san") cũng bị hỏi; gọi trần hay
+    nhắc tên giữa câu không kính ngữ thì không (nghĩ thầm tự gọi mình vẫn có thể); câu thoại vẫn như trước."""
+    from abook.webui.work_items import self_addressed
+
+    project = make_book(tmp_path)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.executemany(
+        "INSERT INTO segments (id, stable_id, chapter_id, seq, text, kind, speaker, voice_profile_id,"
+        " canonical_character_id, status, text_sha256) VALUES (?,?,1,?,?,?,?,3,2,'verified',?)",
+        [
+            (11, "t1", 8, "Heidi-san, mình nên làm gì đây.", "thought", "HEIDI", "sha-t1"),
+            (12, "t2", 9, "Heidi, mày nghĩ gì vậy.", "thought", "HEIDI", "sha-t2"),
+            (13, "t3", 10, "Sao Rhine-kun lại ở đây.", "thought", "HEIDI", "sha-t3"),
+        ],
+    )
+    db.commit()
+    db.row_factory = sqlite3.Row
+    found = dict(self_addressed(db))
+    db.close()
+    assert found.get(11), "nghĩ thầm gọi Heidi-san, gán cho Heidi: hỏi, kèm người nói quanh đó"
+    assert 12 not in found, "gọi trần trong câu nghĩ thầm: không hỏi"
+    assert 13 not in found, "kính ngữ của người khác: không hỏi"
+    assert 2 in found, "câu thoại gọi Heidi vẫn bị hỏi như cũ"
+    card_lines = [line["stableId"] for item in work_items(project)["items"] if item["kind"] == "vocative"
+                  for line in item["lines"]]
+    assert "t1" in card_lines and "t2" not in card_lines and "b" in card_lines
+
+
 def test_a_pronunciation_card_has_lines_to_hear_and_shows_a_waiting_request(tmp_path: Path) -> None:
     """Bước 2: người nghe nghe máy đang đọc tên thế nào (câu đã thu trước), sửa ngay trên thẻ; mong muốn chưa áp thì thẻ
     nói "đang chờ" thay vì im lặng như chưa sửa."""

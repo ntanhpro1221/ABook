@@ -472,7 +472,7 @@ def self_addressed(connection: Any, chapter_id: int | None = None, project_root:
     ("Lucien, ..." / "..., Satomi-san." / "Karin-nim"): không ai gọi tên chính mình - gần như chắc sai (100% theo đáp án,
     `first_person.addressed_names`). Luật tự sửa của dây chuyền (`_repair_dialogue_turns_by_address`) chỉ sửa khi chắc; câu
     nó để nguyên rơi vào đây, nên hộp việc hỏi đúng những câu ấy. Tính lúc xem từ SQLite - không có dấu nào lưu. Người
-    nói KHÔNG bị đổi. `chapter_id`: chỉ xét câu của chương ấy (người có tên và cách gọi vẫn tính trên cả cuốn).
+    nói KHÔNG bị đổi. Thêm câu nghĩ thầm gọi người được gán kèm kính ngữ (`_self_honorific_thoughts`). `chapter_id`: chỉ xét câu của chương ấy (người có tên và cách gọi vẫn tính trên cả cuốn).
     `project_root` (cả cuốn): nhớ theo chữ ký sổ như `merged_turns`."""
     from ..character_registry import self_addressed as registry_self_addressed  # nặng: chỉ nạp khi dựng hộp việc
 
@@ -498,7 +498,46 @@ def self_addressed(connection: Any, chapter_id: int | None = None, project_root:
         str(row["speaker"]): found.get(int(row["canonical_character_id"] or 0), set()) - {""}
         for row in rows
     }
-    return registry_self_addressed(rows, aliases, lambda row: chapter_id is None or int(row["chapter_id"]) == chapter_id)
+    def in_scope(row: Any) -> bool:
+        return chapter_id is None or int(row["chapter_id"]) == chapter_id
+
+    return {
+        **_self_honorific_thoughts(rows, aliases, in_scope),
+        **registry_self_addressed(rows, aliases, in_scope),
+    }
+
+
+def _self_honorific_thoughts(
+    rows: list[Any],
+    aliases_by_speaker: dict[str, set[str]],
+    wanted: Callable[[Any], bool] = lambda _row: True,
+) -> dict[int, list[str]]:
+    """Như `character_registry.self_addressed` nhưng cho câu NGHĨ THẦM (`kind = 'thought'`): thẻ của dây chuyền chỉ xét câu
+    thoại, bỏ câu model gán kind thought mà chính câu ấy gọi người được gán kèm kính ngữ ("Koutarou-kun"). Chỉ tính cách gọi
+    CÓ kính ngữ - nghĩ thầm mà gọi trần hay nhắc tên giữa câu thì người nghĩ vẫn có thể gọi chính mình. Đo 12-10: 5/5 sai theo
+    đáp án. Không đụng `first_person.addressed_names`/`address_index` (luật tự sửa của dây chuyền dùng chung)."""
+    from ..character_registry import _address_owners, speakers_near  # nặng: chỉ nạp khi dựng hộp việc
+    from ..first_person import _HONORIFIC, _name_pattern
+
+    named, owners = _address_owners(rows, aliases_by_speaker)
+    if not owners:
+        return {}
+    pattern = _name_pattern(frozenset(owners))
+    by_chapter: dict[int, dict[int, Any]] = defaultdict(dict)
+    for row in rows:
+        by_chapter[int(row["chapter_id"])][int(row["seq"])] = row
+    found: dict[int, list[str]] = {}
+    for row in rows:
+        speaker = str(row["speaker"])
+        if str(row["kind"]) != "thought" or speaker not in named or not wanted(row):
+            continue
+        text = str(row["text"])
+        for match in pattern.finditer(text):
+            suffix = text[match.end(1):match.end()]
+            if suffix and _HONORIFIC.search(suffix) and speaker in owners[match.group(1)]:
+                found[int(row["id"])] = speakers_near(by_chapter[int(row["chapter_id"])], int(row["seq"]), speaker, named)
+                break
+    return found
 
 
 def speaker_suggestions(connection: Any, project_root: Path | None = None) -> tuple[list[Any], list[Any], dict[tuple[int, int], Any]]:

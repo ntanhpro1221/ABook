@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Thẻ “Ai nói câu này” giờ cũng hỏi khi một câu nghĩ thầm gọi chính người được gán bằng tên kèm kính ngữ (-kun, -san…), như đã hỏi với lời nói ra. Bạn chọn người nói khác thì mới đổi, mặc định giữ nguyên.
+
 ## [0.4.56] - 2026-10-12
 
 ### Truyện kể ngôi thứ nhất (máy tính và điện thoại)
