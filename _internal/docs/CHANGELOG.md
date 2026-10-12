@@ -16,6 +16,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   Bạn không chọn giọng kể thì ô giọng ghi “máy chọn, cùng giới với người kể”.
 - Sách đã thu âm rồi (hay bạn đã chọn giọng kể riêng) thì máy không tự đổi: “Việc cần duyệt” hiện hai thẻ “Giọng lời dẫn” và
   “Nội tâm của người kể”, mặc định không áp, bạn bấm mới đổi và chỉ những câu bị ảnh hưởng mới phải thu lại.
+- Tuỳ chọn mới, mặc định tắt: “Người kể xưng “tôi” tự kể chuyện”. Bật thì cả lời dẫn của những đoạn do “tôi” kể cũng đọc bằng
+  giọng của chính họ (và nội tâm của họ cũng vậy), nghe như một người đang kể lại chuyện của mình; đoạn do người khác kể thì theo
+  người ấy, đoạn ngôi ba vẫn dùng giọng dẫn. Công tắc nằm ở bước “Tôi là ai?” khi tạo sách và dưới hàng “Người kể chuyện” ở tab
+  Nhân vật. Sách đã thu âm thì hộp xác nhận nói trước phải thu lại bao nhiêu câu, mất khoảng bao lâu, và chỉ những câu đổi giọng bị
+  thu lại. Tắt công tắc thì mọi thứ trở về đúng như trước khi bật.
 
 ## [0.4.55] - 2026-10-12
 

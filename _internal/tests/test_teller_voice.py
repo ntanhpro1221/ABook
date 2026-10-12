@@ -20,14 +20,16 @@ from abook.voice_catalog import casting_presets, preset_by_name
 
 NARRATOR_VOICE = str(build_settings()["voices"]["narrator_voice"])
 FEMALE_NARRATOR = "Ngọc Linh"
-# Chương 1: kể, lời của Mai, nội tâm của Mai, nội tâm của Bảo. Chương 2: nội tâm của Mai, nội tâm của Bảo.
+# Chương 1: kể, lời của Mai, nội tâm của Mai, nội tâm của Bảo, kể. Chương 2: nội tâm của Mai, nội tâm của Bảo, kể.
 LINES = [
     (1, "c1s0", "narration", "NARRATOR", "Một câu kể."),
     (1, "c1s1", "dialogue", "MAI", "Một lời nói."),
     (1, "c1s2", "thought", "MAI", "Một ý nghĩ thứ nhất."),
     (1, "c1s3", "thought", "BAO", "Một ý nghĩ thứ hai."),
+    (1, "c1s4", "narration", "NARRATOR", "Một câu kể nữa."),
     (2, "c2s0", "thought", "MAI", "Một ý nghĩ thứ ba."),
     (2, "c2s1", "thought", "BAO", "Một ý nghĩ thứ tư."),
+    (2, "c2s2", "narration", "NARRATOR", "Một câu kể ở chương hai."),
 ]
 
 
@@ -231,7 +233,7 @@ def test_the_teller_of_a_section_beats_the_chapter_and_the_book(tmp_path: Path) 
 
 
 def test_the_sidecar_survives_a_broken_file_and_new_books_decide_auto_by_the_same_rule(tmp_path: Path) -> None:
-    assert teller_voice.read(tmp_path) == {"narratorAuto": False, "applied": {}}
+    assert teller_voice.read(tmp_path) == {"narratorAuto": False, "mode": "narrator", "applied": {}}
     (tmp_path / teller_voice.FILE_NAME).write_bytes(b"{khong phai json")
     assert teller_voice.read(tmp_path)["narratorAuto"] is False
     teller_voice.mark_auto(tmp_path)

@@ -93,6 +93,7 @@ import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { ExportDialog } from "@/studio/ExportBook";
 import { PrecastBanner, PrecastReview, PrecastWaitSwitch, usePrecastKeys } from "./PrecastReview";
+import { TellerModeSwitch } from "./TellerModeSwitch";
 import { canReview } from "./precast";
 
 /** Phát một chương ngay trong Studio (nghe kiểm tra) bằng chính trình phát của phía Nghe - ở chế độ "nghe kiểm":
@@ -1375,7 +1376,7 @@ export function ProjectScreen() {
             onMerge={setMerging}
             onRename={setRenaming}
             onGender={setGendering}
-            narratorNote={<NarratorNote book={book} />}
+            narratorNote={<><NarratorNote book={book} /><TellerModeSwitch book={book} /></>}
           />
           <NameReadings bookId={book.id} focus={params.get("focus") === "names"} name={params.get("name") ?? ""} />
         </TabsContent>

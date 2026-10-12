@@ -619,8 +619,11 @@ def _teller_cards(project_root: Path, overrides: dict[str, Any], names: dict[int
     from .humanize import voice_label
 
     cards: list[dict[str, Any]] = []
+    record = teller_voice.read(project_root)
+    if record["mode"] == "teller":
+        return []  # B: người kể "tôi" tự kể chuyện - giọng dẫn và nội tâm đã là giọng của chính họ, không còn gì để hỏi
     settings = store.read_settings(project_root)
-    skip = set(teller_voice.read(project_root)["applied"].get("thoughts") or {})
+    skip = set(record["applied"].get("thoughts") or {})
     with closing(store.connect(project_root)) as connection:
         try:
             tellers = teller_voice.tellers_of(project_root, settings, connection)

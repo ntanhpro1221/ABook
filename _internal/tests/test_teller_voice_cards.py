@@ -89,3 +89,13 @@ def test_the_screenplay_and_the_inbox_ask_who_is_the_teller_by_one_rule(tmp_path
     assert row_of is not None and row_of({"chapter_id": 10, "seq": 2}) == "Bao" and row_of({"chapter_id": 10, "seq": 0}) == "Mai"
     (narrator_dir / "book_settings.json").write_bytes(json.dumps(_settings(identity="")).encode("utf-8"))
     assert work.first_person_lookup(narrator_dir, {10: 1})[3] is None
+
+
+def test_in_the_tellers_own_voice_mode_there_is_nothing_left_to_ask(tmp_path: Path) -> None:
+    paths, _db, settings = _book(tmp_path, recorded=True)
+    root = _with_settings(paths, settings)
+    assert _cards(root, "teller-voice") and _cards(root, "teller-thought")
+
+    teller_voice.set_mode(root, "teller")
+
+    assert _cards(root, "teller-voice") == [] and _cards(root, "teller-thought") == []

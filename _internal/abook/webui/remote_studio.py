@@ -121,6 +121,9 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     # "Duyệt trước khi thu" (precast.py): xem mốc và bật/tắt "Chờ tôi duyệt"; "Thu âm" là /pause ở trên.
     ("GET", _BOOK + r"/precast"),
     ("PUT", _BOOK + r"/precast"),
+    # "Người kể xưng “tôi” tự kể chuyện" (teller_mode.py): xem cái giá và bật/tắt.
+    ("GET", _BOOK + r"/narrator-mode"),
+    ("PUT", _BOOK + r"/narrator-mode"),
     ("POST", _BOOK + r"/export"),
     ("POST", _BOOK + r"/bookfile"),
     ("POST", _BOOK + r"/bookfile-job"),  # xuất file sách chạy nền (export_jobs.py): bắt đầu + hỏi trạng thái

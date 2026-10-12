@@ -44,7 +44,7 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import HEAVY_KEYS, RECORD_ID, Listening
-from . import bluetooth, peer_studio, precast, remote_books, spelling, tls, workshop_merge
+from . import bluetooth, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
@@ -869,6 +869,27 @@ class App:
         precast.set_wait(self._book(value), wait)
         return self.precast_view(value)
 
+    # ---- "Người kể xưng “tôi” tự kể chuyện" (teller_mode.py, B của teller_voice.py) ----
+
+    def teller_mode_view(self, value: str) -> dict[str, Any]:
+        path = self._book(value)
+        if packages.is_package(path):
+            return {"available": False, "mode": "narrator", "castLocked": True, "applied": False, "plan": None}
+        return teller_mode.view(path)
+
+    def set_teller_mode(self, value: str, mode: str) -> dict[str, Any]:
+        """Bật / tắt B. Sách đã phân vai thì áp ngay (người dùng đã thấy số câu phải thu lại); sách đang chạy thì từ chối."""
+        self._mutating()
+        path = self._book(value)
+        if packages.is_package(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách mở từ file không đổi được giọng người kể ở đây - mở dự án của nó")
+        try:
+            return teller_mode.set_mode(path, mode, running=self.runner.running(path) or self.jobs.starting(path))
+        except teller_mode.Busy as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+
     def _watch_precast(self) -> None:
         # ABOOK_PRECAST_WATCH=0: bài thử (tests/conftest.py) gọi từng vòng `_precast_tick` - không luồng nền ngủ thay chúng.
         with self._precast_lock:
@@ -1168,6 +1189,7 @@ class App:
             settings_overrides=self._analysis_overrides(str(body.get("analysisModel", "") or "")),
             first_person_chapters=first_person_chapters,
             first_person_gender=str(body.get("firstPersonGender") or "").strip(),
+            teller_mode=body.get("tellerMode") is True,
             drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
             drop_tail_credit_lines=body["dropTailCreditLines"] if isinstance(body.get("dropTailCreditLines"), bool) else None,
         )
@@ -3286,6 +3308,12 @@ class Handler(BaseHTTPRequestHandler):
     def get_precast(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.precast_view(value))
 
+    def get_narrator_mode(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.teller_mode_view(value))
+
+    def put_narrator_mode(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.set_teller_mode(value, str(self._body().get("mode") or "")))
+
     def put_precast(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.set_precast_wait(value, self._body().get("wait") is True))
 
@@ -5203,6 +5231,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/pause"), Handler.post_pause),
     ("GET", re.compile(BOOK + r"/precast"), Handler.get_precast),
     ("PUT", re.compile(BOOK + r"/precast"), Handler.put_precast),
+    ("GET", re.compile(BOOK + r"/narrator-mode"), Handler.get_narrator_mode),
+    ("PUT", re.compile(BOOK + r"/narrator-mode"), Handler.put_narrator_mode),
     ("POST", re.compile(BOOK + r"/reveal"), Handler.post_reveal),
     ("POST", re.compile(BOOK + r"/restore-backup"), Handler.post_restore_backup),
     # Chỉ trên máy này: Studio từ xa (remote_studio.ALLOWED) không có hai đường này.
