@@ -569,6 +569,9 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "GET", "path": "/cast"},
         {"method": "POST", "path": "/voice", "body": {"character": "HEIDI", "withdraw": True, "requestedAt": "$requestedAt#1"}},
         {"method": "GET", "path": "/edits"},
+        {"method": "POST", "path": "/voice", "body": {"character": "NARRATOR", "preset": "Thiện Minh"}},
+        {"method": "POST", "path": "/voice", "body": {"character": "NARRATOR", "avoid": "preset_a"}},
+        {"method": "GET", "path": "/edits"},
     ],
     "wishes_retake_and_merge": [
         {"method": "POST", "path": "/chapters/1/retake"},

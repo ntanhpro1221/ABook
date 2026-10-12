@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+import threading
 import time
 import unicodedata
 from pathlib import Path
@@ -283,6 +284,18 @@ def file_stamp(path: Path) -> tuple[int, int, int] | None:
 
 
 FILE_LOCK_TIMEOUT_SECONDS = 10.0
+
+_PROJECT_LOCKS: dict[str, threading.RLock] = {}
+_PROJECT_LOCKS_GUARD = threading.Lock()
+
+
+def project_write_lock(project_root: Path | str) -> threading.RLock:
+    """Khoá ghi của MỘT dự án trong tiến trình này (cùng đường dẫn, cùng khoá; vào lại được). Máy chủ Studio nhiều luồng, mà yêu cầu của
+    người nghe (`overrides.json`, `aliases.json`) được đọc-sửa-ghi cả file: hai lần bấm sát nhau không khoá thì lần ghi sau nuốt lần ghi
+    trước mà cả hai vẫn trả 200 (soát UX a32, lỗi 9). Chỉ Studio ghi các file ấy, nên khoá trong tiến trình là đủ."""
+    key = str(Path(project_root).resolve())
+    with _PROJECT_LOCKS_GUARD:
+        return _PROJECT_LOCKS.setdefault(key, threading.RLock())
 
 
 @contextlib.contextmanager

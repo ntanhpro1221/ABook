@@ -205,6 +205,7 @@ object LocalStudio {
             // Bản chụp chỉ đọc của xưởng trong file dự án (ProjectDocument.view, project_views.py): cùng JSON với đường của Studio.
             "GET" to "/work" -> { dir, _ -> projectView(dir, "work") }
             "GET" to "/casting" -> { dir, _ -> projectView(dir, "casting") }
+            "GET" to "/narrator-mode" -> { dir, _ -> narratorMode(dir) }
             "GET" to "/pronunciations" -> { dir, _ -> projectView(dir, "names") }
             else -> null
         }
@@ -357,7 +358,7 @@ object LocalStudio {
     )
     private val VOICE_PROBLEMS = mapOf(
         BookWishes.UNKNOWN_CHARACTER to "Không có nhân vật này trong sách.",
-        BookWishes.NOT_A_CHARACTER to "Giọng người kể chọn khi tạo sách, không đổi ở đây.",
+        BookWishes.NARRATOR_VOICE_ONLY to "Người kể chỉ đổi được giọng, không có giới để đổi.",
         BookWishes.NO_VOICE to "Nhân vật này chưa có giọng (chưa qua bước phân vai) - chưa đổi được.",
         BookWishes.BAD_GENDER to "Giới phải là nam hoặc nữ.",
     )
@@ -601,7 +602,7 @@ object LocalStudio {
         if (character.isEmpty()) throw Api(400, "Thiếu nhân vật")
         if (preset.isEmpty() && gender.isEmpty() && avoid.isEmpty()) throw Api(400, "Thiếu giọng hoặc giới tính")
         val (_, _, cast) = fresh(dir)
-        val problem = BookWishes.voiceProblem(cast, character, gender)
+        val problem = BookWishes.voiceProblem(cast, character, gender, avoid)
         if (problem != null) throw Api(400, VOICE_PROBLEMS[problem] ?: "Không đổi được giọng nhân vật này")
         val at = now()
         val elsewhere = voiceElsewhere(dir, character, body)
@@ -692,6 +693,22 @@ object LocalStudio {
     /** GET /work, /casting, /pronunciations: bản chụp trong file dự án; 404 khi cuốn không có (cuốn từ file `.abook`, hay file không kèm). */
     private fun projectView(dir: java.io.File, name: String): Any? =
         ProjectDocument.view(dir, name) ?: throw Api(404, "File dự án này không kèm bản chụp của màn đó")
+
+    /**
+     * GET /narrator-mode: công tắc B "Người kể xưng “tôi” tự kể chuyện" CHỈ ĐỌC. Việc đổi nó ghi thẳng vào sổ dự án và đặt lại bản thu
+     * (webui/teller_mode.py) nên chỉ làm được ở máy có Studio - không mang `teller_voice` sang đây. Sổ `studio_narrator.json` nằm trong
+     * `project/` của file dự án (copy nguyên byte); chưa có thì không biết sách có người kể "tôi" hay không → `available: false`
+     * (công tắc ẩn, như sách ngôi ba). `editableHere: false` để giao diện hiện công tắc khoá kèm lời chỉ sang máy tính.
+     */
+    private fun narratorMode(dir: java.io.File): Any? {
+        val record = runCatching { JSONObject(java.io.File(dir, "project/studio_narrator.json").readText()) }.getOrNull() ?: JSONObject()
+        val mode = record.optString("mode").takeIf { it == "narrator" || it == "teller" } ?: "narrator"
+        val applied = record.optJSONObject("applied") ?: JSONObject()
+        // Sổ chỉ có dấu vết A+/B khi sách thật sự có người kể "tôi".
+        val available = mode == "teller" || applied.has("teller") || applied.has("narrator") || applied.has("thoughts")
+        return JSONObject().put("available", available).put("mode", mode).put("castLocked", true).put("applied", applied.has("teller"))
+            .put("plan", JSONObject.NULL).put("editableHere", false)
+    }
 
     /** GET /chapters/<n>/script: chữ đọc theo đã qua lớp sửa. */
     private fun script(dir: java.io.File, chapter: String): Any? =

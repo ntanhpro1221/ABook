@@ -66,7 +66,7 @@ import {
   type UploadProgress,
 } from "@/studio/upload";
 import { AnalysisModelPicker, analysisChoiceLabel, modelLabel, useAnalysisModels, useAvailableModelNames } from "@/studio/AnalysisModelPicker";
-import { DEFAULT_LABEL, applyTemplate, type BookTemplate, type Profile } from "@/studio/bookTemplates";
+import { DEFAULT_LABEL, applyTemplate, changedChoices, templateChoices, type BookTemplate, type Profile } from "@/studio/bookTemplates";
 import { StudioInstallNotice } from "@/studio/StudioSetup";
 import { TemplateBar } from "@/studio/TemplateBar";
 import { VolumeSplit } from "@/studio/VolumeSplit";
@@ -146,6 +146,8 @@ interface Draft {
   tellerMode?: boolean;
   /** Chương đổi góc kể (gợi ý của máy) mà người dùng bỏ chọn - số chương trong sách. */
   povOff?: number[];
+  /** "Sửa thiết lập": chương đổi người kể đã chọn lúc tạo - đổi thành `povOff` ngay khi máy đọc xong gợi ý đổi góc kể của truyện. */
+  povKept?: Record<string, string>;
   profile: Profile;
   startNow: boolean;
   /** "Chờ tôi duyệt trước khi thu" (webui/precast.py): phân tích xong thì sách tạm dừng chờ người duyệt. Mặc định tắt. */
@@ -1146,7 +1148,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder="Tên nhân vật xưng “tôi” (để trống nếu kể ngôi thứ ba)"
-          className="mt-1.5 h-11 w-full rounded-xl border border-line bg-panel px-3.5 text-[0.9375rem] font-medium text-fg outline-none focus:border-focus"
+          className="mt-1.5 h-11 w-full rounded-xl border border-line bg-panel px-3.5 text-[0.9375rem] font-medium text-fg outline-none focus:border-focus focus-visible:ring-2 focus-visible:ring-focus"
         />
       </label>
       {value.trim() && (
@@ -1638,7 +1640,12 @@ export function NewProjectScreen() {
       title: redo.title,
       titleEdited: true,
       narrator: redo.narrator,
+      // Giọng do máy chọn lúc tạo thì vẫn là máy chọn, không thành lựa chọn tay (soát UX a32, #8).
+      narratorPicked: !redo.narratorAuto,
       firstPerson: redo.firstPerson,
+      ...(redo.firstPersonGender ? { firstPersonGender: redo.firstPersonGender } : {}),
+      ...(redo.tellerMode ? { tellerMode: true } : {}),
+      ...(Object.keys(redo.firstPersonChapters ?? {}).length ? { povKept: redo.firstPersonChapters } : {}),
       ...(redo.analysisModel ? { analysisModel: redo.analysisModel } : {}),
       profile: (PROFILE_VALUES as string[]).includes(redo.profile) ? (redo.profile as Profile) : "high_quality",
       dropCredits: { head: Boolean(redo.dropCreditLines), tail: Boolean(redo.dropTailCreditLines) },
@@ -1708,11 +1715,24 @@ export function NewProjectScreen() {
       precastWait: false,
     };
     // Mẫu có ghi giọng kể là lựa chọn của người dùng; "Mặc định" và mẫu không ghi giọng thì máy vẫn chọn giọng dẫn theo giới người kể "tôi".
-    setDraft((current) =>
+    const apply = (current: Draft): Draft =>
       template
-        ? { ...applyTemplate(current, template, voices?.map((voice) => voice.name), modelNames), narratorPicked: Boolean(template.narrator) }
-        : { ...applyTemplate(current, fallback), template: undefined, narratorPicked: false },
-    );
+        ? {
+            ...applyTemplate(current, template, voices?.map((voice) => voice.name), modelNames, fallback.narrator),
+            narratorPicked: Boolean(template.narrator),
+          }
+        : { ...applyTemplate(current, fallback), template: undefined, narratorPicked: false };
+    const before = templateChoices(draft);
+    const changed = changedChoices(before, templateChoices(apply(draft)));
+    setDraft(apply);
+    // Áp mẫu ghi đè giọng / chất lượng / chờ duyệt bạn vừa chọn: nói đã đổi gì và cho trả lại (soát UX a32).
+    if (changed.length) {
+      toast.success(`Đã áp ${template ? `mẫu “${template.name}”` : "lựa chọn mặc định"}`, {
+        description: `Đổi: ${changed.join(", ")}.`,
+        action: { label: "Hoàn tác", onClick: () => setDraft((current) => ({ ...current, ...before })) },
+        duration: 8000,
+      });
+    }
   };
 
   // Quét lại chỉ khi danh sách nguồn đổi; bỏ một chương là lọc ngay ở đây, không đọc lại cả thư mục.
@@ -1765,6 +1785,14 @@ export function NewProjectScreen() {
 
   // Cùng khoá truy vấn với bước "Tôi là ai?": lấy từ bộ nhớ đệm, không đọc lại sách.
   const { data: firstPersonHint } = useFirstPersonHint(scan?.files.map((file) => file.path) ?? [], draft.seed?.id);
+  // "Sửa thiết lập": chương nào của gợi ý mà lúc tạo bạn không giữ thì tắt đi; chương giữ thì vẫn bật.
+  useEffect(() => {
+    if (!draft.povKept || !firstPersonHint) return;
+    const kept = draft.povKept;
+    const book = draft.firstPerson.trim().toUpperCase();
+    const off = (firstPersonHint.chapters ?? []).filter((chapter) => chapter.name !== book && !(String(chapter.chapter) in kept)).map((chapter) => chapter.chapter);
+    setDraft((current) => ({ ...current, povKept: undefined, povOff: off }));
+  }, [draft.povKept, draft.firstPerson, firstPersonHint]);
   const povChapters = chosenPovChapters(firstPersonHint, draft.firstPerson, draft.povOff ?? []);
   const autoNarrator = narratorIsAuto(draft, preferences?.newBookNarrator, voices);
 
@@ -1910,7 +1938,7 @@ export function NewProjectScreen() {
         </aside>
         <section className="min-w-0 flex-1">
           {/* Mẫu thiết lập chỉ cho sách mới: "Làm tiếp cuốn này" theo phần trước. */}
-          {step > 0 && !draft.seed && <TemplateBar draft={draft} onPick={pickTemplate} />}
+          {step > 0 && !draft.seed && <TemplateBar draft={draft} onPick={pickTemplate} narratorAuto={autoNarrator} />}
           {step === 0 && <StudioInstallNotice className="mb-6" />}
           {step === 0 && (
             <SourceStep

@@ -18,7 +18,7 @@
     "preset": "",
     "gender": "male",
     "avoid": "",
-    "requestedAt": 1790957768.4683938
+    "requestedAt": 1791785639.4743245
    }
   },
   {
@@ -42,7 +42,7 @@
    },
    "status": 400,
    "response": {
-    "error": "Giọng người kể chọn khi tạo sách, không đổi ở đây."
+    "error": "Người kể chỉ đổi được giọng, không có giới để đổi."
    }
   },
   {
@@ -153,7 +153,7 @@
     "preset": "Thiện Minh",
     "gender": "",
     "avoid": "preset_a",
-    "requestedAt": 1790957768.5178444
+    "requestedAt": 1791785639.5657122
    }
   },
   {
@@ -227,7 +227,7 @@
       "lines": 0,
       "section": "voices",
       "key": "HEIDI",
-      "requestedAt": 1790957768.5178444
+      "requestedAt": 1791785639.5657122
      }
     ],
     "lines": 0,
@@ -330,6 +330,44 @@
     "applied": 0,
     "waiting": 0,
     "wishes": 0
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "NARRATOR",
+    "preset": "Thiện Minh"
+   },
+   "status": 200,
+   "response": {
+    "character": "NARRATOR",
+    "preset": "Thiện Minh",
+    "gender": "",
+    "avoid": "",
+    "requestedAt": 1791785639.6853054
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "NARRATOR",
+    "avoid": "preset_a"
+   },
+   "status": 400,
+   "response": {
+    "error": "Người kể chỉ đổi được giọng, không có giới để đổi."
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0,
+    "wishes": 1
    }
   }
  ]

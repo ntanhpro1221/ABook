@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import binascii
 import contextlib
+import functools
 import hashlib
 import http.client
 import json
@@ -32,7 +33,7 @@ from typing import Any, Callable, Iterable, Iterator, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, importers, listener_overrides
-from ..io_utils import atomic_write_bytes, atomic_write_json
+from ..io_utils import atomic_write_bytes, atomic_write_json, project_write_lock
 from ..readaloud import azure as readaloud_azure
 from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
@@ -2864,6 +2865,23 @@ def without_local_paths(value: Any) -> Any:
     return out
 
 
+def _serialized_per_book(method: Callable[..., None]) -> Callable[..., None]:
+    """Đường ghi yêu cầu của người nghe (overrides.json, aliases.json): cả lần đọc-sửa-ghi chạy dưới khoá ghi của dự án, nên ba lần
+    bấm sát nhau không nuốt nhau (soát UX a32, lỗi 9). Sách không tìm thấy thì để chính đường ấy báo lỗi."""
+
+    @functools.wraps(method)
+    def wrapper(self: Handler, query: dict[str, list[str]], value: str, *rest: str) -> None:
+        try:
+            path = self.app._book(value)
+        except ApiError:
+            method(self, query, value, *rest)
+            return
+        with project_write_lock(path):
+            method(self, query, value, *rest)
+
+    return wrapper
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "ABook"
     protocol_version = "HTTP/1.1"
@@ -3144,6 +3162,7 @@ class Handler(BaseHTTPRequestHandler):
         wishes = book_edits.load(project).get("wishes") if packages.is_package(project) else None
         self._send_json(HTTPStatus.OK, book_wishes.by_line(project, wishes))
 
+    @_serialized_per_book
     def post_pending_withdraw(self, _query: dict[str, list[str]], value: str) -> None:
         # Bỏ một thay đổi khỏi hộp "Áp dụng N thay đổi" trước khi áp (soát UX a6 01-10: muốn bỏ một mục thì phải đi tìm lại
         # đúng thẻ / đúng câu ở ba tab khác nhau). Chỉ khi sách KHÔNG chạy: đang chạy thì dây chuyền có thể đang áp chính
@@ -3182,6 +3201,7 @@ class Handler(BaseHTTPRequestHandler):
                 aliases.remove_added_at(path, requested_at)
         self._send_json(HTTPStatus.OK, {"withdrawn": len(mine)})
 
+    @_serialized_per_book
     def post_merge_character(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab Nhân vật: "Gộp vào…" (soát UX a6 01-10: máy tách một người thành hai - "Lucien" và "Giáo sư Lucien" - mà Studio
         # chỉ sửa được từng câu). Đi đúng đường có sẵn: mọi câu nói của người này thành câu của người kia (overrides.json
@@ -3247,6 +3267,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"character": character, "name": now_shown or original,
                                         "original": original, "renamed": bool(now_shown)})
 
+    @_serialized_per_book
     def post_chapter_retake(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         # Menu "…" của một chương: thu lại MỌI câu đã thu của chương bằng hạt giống mới (soát UX a5/a6 01-10: cả chương nghe
         # không ổn thì phải bấm "Cần thu lại" từng câu). Cùng đường với "Cần thu lại" một câu (overrides.json `retakes`),
@@ -4012,6 +4033,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.NOT_FOUND, "Bản nghe thử này không còn - bấm Nghe thử lại.")
         self._send_file(target, cache=True)
 
+    @_serialized_per_book
     def post_pronunciation(self, _query: dict[str, list[str]], value: str) -> None:
         # Sửa cách đọc một tên. Giao diện KHÔNG ghi SQLite của sách: nó ghi mong muốn vào overrides.json, dây chuyền áp
         # ở ranh giới chương kế tiếp (hoặc lần chạy tới) và thu lại mọi câu đã thu có tên ấy - listener_overrides.py.
@@ -4099,6 +4121,7 @@ class Handler(BaseHTTPRequestHandler):
             aliases.remove_added_at(path, requested_at)
         self._send_json(HTTPStatus.OK, {"undone": len(removed), "restored": False})
 
+    @_serialized_per_book
     def post_speaker(self, _query: dict[str, list[str]], value: str) -> None:
         # "Ai nói câu này": như cách đọc tên - ghi mong muốn vào overrides.json, dây chuyền áp ở ranh giới chương. Hỏi
         # SQLite (chỉ đọc) ngay bây giờ để từ chối tại chỗ những gì dây chuyền chắc chắn sẽ từ chối: câu đã đổi chữ, câu
@@ -4229,6 +4252,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.NOT_FOUND, "Nhân vật này chưa có giọng trong sách")
         self._send_json(HTTPStatus.OK, view)
 
+    @_serialized_per_book
     def post_line(self, _query: dict[str, list[str]], value: str) -> None:
         # Cách đọc một câu (tab Kịch bản): loại đoạn, cảm xúc, cường độ - và người nói khi câu từ lời kể thành lời thoại.
         # Như người nói: ghi mong muốn vào overrides.json, dây chuyền áp ở ranh giới chương; từ chối tại chỗ những gì dây
@@ -4277,6 +4301,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         self._send_json(HTTPStatus.OK, result)
 
+    @_serialized_per_book
     def post_voice(self, _query: dict[str, list[str]], value: str) -> None:
         # Giọng / giới của MỘT nhân vật (thẻ "Nam hay nữ", "Chung giọng"): như người nói - ghi mong muốn vào overrides.json,
         # dây chuyền áp ở ranh giới chương; hỏi SQLite chỉ đọc bằng đúng phép dây chuyền dùng để từ chối tại chỗ.
@@ -4297,7 +4322,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Giọng này cần tải thêm trước khi chọn")
         if package and not (preset or gender or avoid):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hoặc giới tính")
-        problem = (book_wishes.voice_problem(book_wishes.people(path), character, gender=gender) if package
+        problem = (book_wishes.voice_problem(book_wishes.people(path), character, gender=gender, avoid=avoid) if package
                    else store.voice_request_problem(path, character, preset=preset, gender=gender, avoid=avoid))
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, VOICE_PROBLEMS.get(problem, "Không đổi được giọng nhân vật này"))
@@ -4309,6 +4334,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"character": character, "preset": preset, "gender": gender,
                                         "avoid": avoid, "requestedAt": now, **({"elsewhere": elsewhere} if elsewhere else {})})
 
+    @_serialized_per_book
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()  # ghi reviews.json và (Cần thu lại) overrides.json - như mọi yêu cầu sửa khác
         body = self._body()

@@ -22,14 +22,19 @@ export interface TellerModeView {
   castLocked: boolean;
   applied: boolean;
   plan: TellerPlan | null;
+  /** `false` ở điện thoại mở file dự án: chỉ xem được, đổi ở máy tính có Studio (cần thu lại). */
+  editableHere?: boolean;
 }
 
 export const TELLER_TITLE = "Người kể xưng “tôi” tự kể chuyện";
 
+/** Câu thay cho nút đổi ở nơi không đổi được (điện thoại mở file dự án). */
+export const TELLER_ELSEWHERE = "Đổi ở máy tính có Studio (cần thu lại).";
+
 export function tellerHint(on: boolean): string {
   return on
     ? "Cả lời dẫn của những đoạn do “tôi” kể cũng đọc bằng giọng của họ, nên đoạn nghe như một người đang kể lại. Đoạn do người khác kể và đoạn ngôi ba vẫn dùng giọng dẫn."
-    : "Mặc định: lời dẫn do một người kể đọc (cùng giới với “tôi”), còn lời “tôi” nói ra vẫn là giọng của họ.";
+    : "Mặc định: lời dẫn do giọng kể chuyện của sách đọc, còn lời “tôi” nói ra vẫn là giọng của họ.";
 }
 
 /** Có cần hỏi lại trước khi đổi không: chỉ khi đã có câu thu sẽ bị bỏ. */
@@ -45,5 +50,6 @@ export function costText(plan: TellerPlan | null | undefined, turningOn: boolean
     ? `${formatNumber(plan.lines)} câu lời kể sẽ đọc bằng giọng của ${who}`
     : `${formatNumber(plan.lines)} câu lời kể sẽ trở về giọng dẫn`;
   if (!plan.recorded) return `${what}. Chưa câu nào trong số đó được thu nên không phải thu lại gì.`;
-  return `${what}. Thu lại ${formatNumber(plan.recorded)} câu đã thu, ${estimateText(plan.seconds, plan.measured)}.`;
+  // Bản thu hiện có của những câu ấy bị bỏ, không lấy lại được: nói số ấy ra, ở cả hai chiều.
+  return `${what}. ${formatNumber(plan.recorded)} bản thu hiện có của những câu ấy sẽ bị bỏ và thu lại, ${estimateText(plan.seconds, plan.measured)}. Bản thu cũ không lấy lại được.`;
 }

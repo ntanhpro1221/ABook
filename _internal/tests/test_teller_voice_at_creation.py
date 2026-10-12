@@ -104,6 +104,18 @@ def test_the_command_line_can_turn_the_teller_switch_on(tmp_path: Path, capsys) 
     assert code != cli.EXIT_OK and not (tmp_path / "none").exists(), "không có người kể “tôi”: từ chối trước khi tạo gì"
 
 
+def test_a_refused_create_prints_the_error_and_no_stray_empty_object(tmp_path: Path, capsys) -> None:
+    """Soát UX a32 #17: lệnh bị từ chối trước khi tạo gì in thêm một dòng `{}` vô nghĩa ở stdout trước dòng ERROR."""
+    from abook import cli
+
+    capsys.readouterr()
+    code = cli.main(["create", "--source-dir", str(_source(tmp_path)), "--range", "001..002", "--output-root",
+                     str(tmp_path / "none"), "--title", "T", "--teller-mode"])
+    shown = capsys.readouterr()
+    assert code != cli.EXIT_OK
+    assert shown.out.strip() == "" and "--teller-mode needs a first-person narrator" in shown.err
+
+
 def test_the_teller_switch_is_off_unless_asked_for_and_needs_a_teller(tmp_path: Path) -> None:
     source = [str(_source(tmp_path))]
     off = actions.create_book(tmp_path / "lib", source, "Thử", "balanced", "", "Mai")

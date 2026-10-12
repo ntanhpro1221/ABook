@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button, Segmented } from "@/shared/ui";
 import { useAvailableModelNames } from "@/studio/AnalysisModelPicker";
-import { useAppInfo, usePreferences } from "@/studio/data";
+import { useAppInfo, usePreferences, useVoices } from "@/studio/data";
 import {
   DEFAULT_LABEL,
   NAME_MAX,
@@ -13,6 +13,8 @@ import {
   isModified,
   missingModel,
   missingModelNote,
+  missingVoice,
+  missingVoiceNote,
   nameProblem,
   templateFromDraft,
   templatesOf,
@@ -24,8 +26,10 @@ import {
 // "Mẫu thiết lập" ở trình tạo sách: chọn một mẫu đã lưu thì giọng kể, chất lượng, model đọc hiểu và "bắt đầu ngay" của nháp
 // theo mẫu (nguồn truyện, tên sách... không đụng tới); "Lưu thành mẫu…" chụp các lựa chọn hiện tại. Qua Studio từ xa chỉ chọn
 // được - ghi tuỳ chọn là việc của chính máy tính (remote_studio.py không mở PUT /api/preferences), nên nút lưu ẩn đi.
-export function TemplateBar({ draft, onPick }: {
+export function TemplateBar({ draft, onPick, narratorAuto = false }: {
   draft: TemplateFields;
+  /** Giọng kể đang do máy chọn (bạn chưa bấm giọng nào): mẫu lưu ra ghi "máy chọn", không ghim tên giọng. */
+  narratorAuto?: boolean;
   /** null = "Mặc định": các lựa chọn mặc định của app cho sách mới. */
   onPick: (template: BookTemplate | null) => void;
 }) {
@@ -49,6 +53,8 @@ export function TemplateBar({ draft, onPick }: {
   const modelNames = useAvailableModelNames();
   const modified = active ? isModified(draft, active, modelNames) : false;
   const lostModel = missingModel(active, modelNames);
+  const { data: voices } = useVoices();
+  const lostVoice = missingVoice(active, voices?.map((voice) => voice.name));
   if (!templates.length && remote) return null;
 
   const close = () => {
@@ -67,7 +73,7 @@ export function TemplateBar({ draft, onPick }: {
       setConfirming(true);
       return;
     }
-    const saved = templateFromDraft(draft, name);
+    const saved = templateFromDraft(draft, name, narratorAuto);
     update(
       { bookTemplates: upsertTemplate(templates, saved) },
       {
@@ -116,6 +122,7 @@ export function TemplateBar({ draft, onPick }: {
       {modified && active && (
         <p className="mt-2 text-[0.8125rem] text-fg-2">Bạn đã đổi so với mẫu “{active.name}”. Bấm lại tên mẫu để trở về như đã lưu.</p>
       )}
+      {lostVoice && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingVoiceNote(lostVoice)}</p>}
       {lostModel && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingModelNote(lostModel)}</p>}
       {!templates.length && !saving && !remote && (
         <p className="mt-2 text-[0.8125rem] text-fg-2">Lưu các lựa chọn dưới đây thành mẫu để dùng lại cho những cuốn sau.</p>

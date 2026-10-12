@@ -137,10 +137,12 @@ def character_ids(connection: sqlite3.Connection, name: str) -> set[int]:
     return near if len(near) == 1 else set()
 
 
-def teller_gender(connection: sqlite3.Connection, name: str) -> str:
-    """Giới ("male"/"female") của người kể `name` trong sổ nhân vật; "" khi chưa rõ hay không tìm ra họ."""
+def teller_gender(connection: sqlite3.Connection, name: str, *, locked_only: bool = False) -> str:
+    """Giới ("male"/"female") của người kể `name` trong sổ nhân vật; "" khi chưa rõ hay không tìm ra họ. `locked_only`: chỉ giới do
+    người dùng nói (đã ghim), không tính suy đoán của model."""
     genders = {str(row[0]) for row in connection.execute(
-        f"SELECT gender FROM characters WHERE id IN ({','.join(str(i) for i in character_ids(connection, name)) or 'NULL'})")}
+        f"SELECT gender FROM characters WHERE id IN ({','.join(str(i) for i in character_ids(connection, name)) or 'NULL'})"
+        + (" AND locked=1" if locked_only else ""))}
     genders &= set(GENDERS)
     return genders.pop() if len(genders) == 1 else ""
 

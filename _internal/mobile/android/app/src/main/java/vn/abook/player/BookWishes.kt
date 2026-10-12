@@ -54,7 +54,7 @@ object BookWishes {
     const val NOT_SPEECH = "not_speech"
     const val NO_VOICE = "no_voice"
     const val UNKNOWN_CHARACTER = "unknown_character"
-    const val NOT_A_CHARACTER = "not_a_character"
+    const val NARRATOR_VOICE_ONLY = "narrator_voice_only"
     const val BAD_GENDER = "bad_gender"
     const val BAD_KIND = "bad_kind"
     const val BAD_EMOTION = "bad_emotion"
@@ -423,10 +423,13 @@ object BookWishes {
         return null
     }
 
-    /** Mã lý do Studio sẽ từ chối giọng/giới của một nhân vật, hay null. Tên giọng không kiểm ở đây - bước áp kiểm lại. */
-    fun voiceProblem(cast: List<JSONObject>, character: String, gender: String = ""): String? {
+    /**
+     * Mã lý do Studio sẽ từ chối giọng/giới của một nhân vật, hay null. Tên giọng không kiểm ở đây - bước áp kiểm lại. Người kể chỉ
+     * đổi được giọng (như `book_wishes.voice_problem`): thẻ "Lời dẫn nên đọc bằng giọng nữ…" của bản chụp dự án phải bấm được ở đây.
+     */
+    fun voiceProblem(cast: List<JSONObject>, character: String, gender: String = "", avoid: String = ""): String? {
         if (gender !in listOf("", "male", "female")) return BAD_GENDER
-        if (characterKey(character) == NARRATOR) return NOT_A_CHARACTER
+        if (characterKey(character) == NARRATOR) return if (gender.isNotEmpty() || avoid.isNotEmpty()) NARRATOR_VOICE_ONLY else null
         val who = person(cast, character) ?: return UNKNOWN_CHARACTER
         return if (BookEdits.truthy(who.opt("voice"))) null else NO_VOICE
     }
@@ -599,21 +602,33 @@ object BookWishes {
         change(folder) { cancelRetake(it, stableId) }
     }
 
-    /** "`alias` là `person`": cất để chủ máy sản xuất ghi vào aliases.json của dự án. Cùng tên bí danh thì mới thay cũ. Trả true khi có gì mới được ghi. */
+    /**
+     * "`alias` là `person`": cất để chủ máy sản xuất ghi vào aliases.json của dự án, theo đúng quy tắc của `aliases.add` bên Python
+     * (`decide`): bỏ chiều ngược, ai đang trỏ về `alias` được trỏ thẳng về `person`, đúng cặp đã có thì không làm gì. Trả true khi có
+     * gì mới được ghi.
+     */
     fun requestAlias(folder: File, alias: String, person: String, now: Double): Boolean {
         val from = BookEdits.cleanText(alias, ALIAS_MAX)
         val to = BookEdits.cleanText(person, ALIAS_MAX)
-        if (from.isEmpty() || to.isEmpty() || aliasKey(from) == aliasKey(to)) return false
         var wrote = false
         change(folder, aliases = { entries ->
-            if (entries.any { it.getString("alias") == from && it.getString("person") == to }) {
-                entries
-            } else {
-                wrote = true
-                entries.filter { it.getString("alias") != from } + JSONObject().put("alias", from).put("person", to).put("at", now)
-            }
+            val decided = decideAlias(entries, from, to, now)
+            if (decided == null) entries else { wrote = true; decided }
         }) { }
         return wrote
+    }
+
+    /** `aliases.decide`: danh sách sau quyết định "`alias` là `person`", hay null khi không có gì đổi. */
+    internal fun decideAlias(entries: List<JSONObject>, alias: String, person: String, now: Double): List<JSONObject>? {
+        if (alias.isEmpty() || person.isEmpty() || aliasKey(alias) == aliasKey(person)) return null
+        if (entries.any { aliasKey(it.getString("alias")) == aliasKey(alias) && aliasKey(it.getString("person")) == aliasKey(person) }) return null
+        val kept = entries.filter {
+            aliasKey(it.getString("alias")) != aliasKey(alias) &&
+                !(aliasKey(it.getString("alias")) == aliasKey(person) && aliasKey(it.getString("person")) == aliasKey(alias))
+        }.map { entry ->
+            if (aliasKey(entry.getString("person")) == aliasKey(alias)) BookEdits.deepCopy(entry).let { it as JSONObject }.put("person", person) else entry
+        }
+        return kept + JSONObject().put("alias", alias).put("person", person).put("at", now)
     }
 
     fun madeAt(folder: File, section: String, keys: List<String>, requestedAt: Double): Map<String, JSONObject> =

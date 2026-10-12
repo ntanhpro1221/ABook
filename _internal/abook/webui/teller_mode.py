@@ -1,7 +1,7 @@
 """Công tắc B "Người kể xưng “tôi” tự kể chuyện" của một cuốn (abook/teller_voice.py): xem cái giá và bật/tắt.
 
 Bật khi sách chưa phân vai: chỉ ghi ý muốn, worker áp ngay sau khi phân vai. Đã phân vai: áp ngay trong lời gọi này (người dùng đã xác
-nhận số câu phải thu lại ở hộp xác nhận) - nên chỉ khi sách KHÔNG chạy, dây chuyền không sửa cùng lúc. Câu đã thu mà đổi giọng được đặt
+nhận số câu phải thu lại ở hộp xác nhận) - nên chỉ khi sách KHÔNG chạy (bấm “Dừng” - Tạm dừng chưa đủ), dây chuyền không sửa cùng lúc. Câu đã thu mà đổi giọng được đặt
 lại như mọi lần người nghe đổi giọng; chương xong chuyển sang "thu lại" và chạy tiếp (Tiếp tục) là thu.
 """
 from __future__ import annotations
@@ -48,7 +48,7 @@ def set_mode(project_root: Path, mode: str, *, running: bool) -> dict[str, Any]:
     if not current["available"]:
         raise ValueError("Sách này không có người kể xưng “tôi”")
     if current["castLocked"] and running and current["mode"] != mode:
-        raise Busy("Sách đang chạy - hãy tạm dừng hẳn rồi đổi.")
+        raise Busy("Sách đang chạy - bấm “Dừng” rồi đổi (Tạm dừng chưa đủ).")
     teller_voice.set_mode(project_root, mode)
     if current["castLocked"]:
         db = ProjectDB(ProjectPaths.build(project_root).db)

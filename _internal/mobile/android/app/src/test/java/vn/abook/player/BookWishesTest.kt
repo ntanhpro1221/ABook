@@ -177,6 +177,70 @@ class BookWishesTest {
     }
 
     @Test
+    fun the_narrator_can_be_given_a_voice_but_not_a_gender_like_on_the_desktop() {
+        assertEquals(200, post("/voice", JSONObject().put("character", "NARRATOR").put("preset", "Thiện Minh")).first)
+        assertTrue(wishes().getJSONObject("voices").has("NARRATOR"))
+        val refused = post("/voice", JSONObject().put("character", "NARRATOR").put("gender", "female"))
+        assertEquals(400, refused.first)
+        assertEquals("Người kể chỉ đổi được giọng, không có giới để đổi.", (refused.second as JSONObject).getString("error"))
+        assertEquals(400, post("/voice", JSONObject().put("character", "NARRATOR").put("avoid", "preset_a")).first)
+    }
+
+    /** Bí danh đi cùng một lần chọn người nói (bí danh đơn lẻ không được tính là thay đổi nên không tự giữ file sửa). */
+    private fun withAWish() {
+        assertEquals(200, post("/speaker", line(lucien).put("speaker", "HEIDI")).first)
+    }
+
+    @Test
+    fun the_tellers_switch_is_shown_read_only_from_the_project_notebook() {
+        assertEquals(false, (get("/narrator-mode").second as JSONObject).getBoolean("available"))
+        File(dir, "project").mkdirs()
+        File(dir, "project/studio_narrator.json").writeText("""{"narratorAuto": true, "mode": "teller", "applied": {"teller": {"at": 1}}}""")
+        val view = get("/narrator-mode").second as JSONObject
+        assertEquals(200, get("/narrator-mode").first)
+        assertTrue(view.getBoolean("available"))
+        assertEquals("teller", view.getString("mode"))
+        assertTrue(view.getBoolean("applied"))
+        assertFalse("đổi công tắc ở máy có Studio", view.getBoolean("editableHere"))
+        // Chỉ A+ chạy (B chưa bật): vẫn là sách có người kể "tôi", công tắc tắt.
+        File(dir, "project/studio_narrator.json").writeText("""{"narratorAuto": true, "applied": {"narrator": {"to": "x"}}}""")
+        val off = get("/narrator-mode").second as JSONObject
+        assertTrue(off.getBoolean("available"))
+        assertEquals("narrator", off.getString("mode"))
+        assertFalse(off.getBoolean("applied"))
+        // Sổ chỉ có `narratorAuto` (sách ngôi ba): công tắc ẩn.
+        File(dir, "project/studio_narrator.json").writeText("""{"narratorAuto": true, "applied": {}}""")
+        assertFalse((get("/narrator-mode").second as JSONObject).getBoolean("available"))
+    }
+
+    private fun aliasPairs(): List<Pair<String, String>> {
+        val list = wishes().optJSONArray("aliases") ?: return emptyList()
+        return (0 until list.length()).map { list.getJSONObject(it).let { entry -> entry.getString("alias") to entry.getString("person") } }
+    }
+
+    @Test
+    fun a_new_decision_about_two_names_wins_like_aliases_add() {
+        withAWish()
+        assertTrue(BookWishes.requestAlias(dir, "Mai", "Hạ", 1790950001.0))
+        assertFalse("đúng cặp đã có: không ghi lại", BookWishes.requestAlias(dir, "mai", "HẠ", 1790950002.0))
+        assertFalse("hai cách viết một tên", BookWishes.requestAlias(dir, "Hạ", "hạ", 1790950003.0))
+        // Chiều ngược: người ấy từng bị ghi là bí danh của `alias` thì bản cũ bỏ đi.
+        assertTrue(BookWishes.requestAlias(dir, "Hạ", "Mai", 1790950004.0))
+        assertEquals(listOf("Hạ" to "Mai"), aliasPairs())
+    }
+
+    @Test
+    fun whoever_pointed_at_a_renamed_alias_is_pointed_straight_at_the_new_person() {
+        withAWish()
+        assertTrue(BookWishes.requestAlias(dir, "Mai", "Hạ", 1790950001.0))
+        assertTrue(BookWishes.requestAlias(dir, "Hạ", "Lan", 1790950002.0))
+        assertEquals(listOf("Mai" to "Lan", "Hạ" to "Lan"), aliasPairs())
+        // Bí danh từng trỏ về người khác: bản cũ thay bằng quyết định mới.
+        assertTrue(BookWishes.requestAlias(dir, "Mai", "Cúc", 1790950003.0))
+        assertEquals(listOf("Hạ" to "Lan", "Mai" to "Cúc"), aliasPairs())
+    }
+
+    @Test
     fun keys_fold_case_like_python() {
         assertEquals("école ss", VietnameseReading.surfaceKey("  ÉCOLE  SS "))
         assertEquals("HEIDI MAI SS", BookWishes.characterKey(" heidi  Mai ß"))
