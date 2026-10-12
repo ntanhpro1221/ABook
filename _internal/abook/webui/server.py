@@ -4094,6 +4094,9 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.OK, {"undone": len(mine), "restored": True})
             return
         removed = listener_overrides.withdraw_requests(path, section, list(mine), requested_at)
+        if section == "speakers" and removed:
+            # Thẻ gộp tên ghi cả bí danh cùng mốc với các câu: rút lần bấm là rút luôn bí danh (như hộp "Áp dụng").
+            aliases.remove_added_at(path, requested_at)
         self._send_json(HTTPStatus.OK, {"undone": len(removed), "restored": False})
 
     def post_speaker(self, _query: dict[str, list[str]], value: str) -> None:
@@ -4143,7 +4146,8 @@ class Handler(BaseHTTPRequestHandler):
         listener_overrides.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
         # Thẻ "Một người hai tên": ngoài các câu này, ghi luôn cấp TÊN (aliases.py) - phần sau của cuốn tự hiểu.
         alias = str(body.get("alias", "") or "").strip()[:200]
-        remembered = bool(alias) and aliases.add(path, alias, speaker)
+        # Cùng mốc với các câu: hoàn tác lần bấm (`_withdraw`) bỏ luôn bí danh ghi đúng mốc ấy.
+        remembered = bool(alias) and aliases.add(path, alias, speaker, now=now)
         # Thẻ 『』 với phạm vi "Cả cuốn": quy ước của cuốn (bracket_rule.py) - các phần sau tự áp trước khi phân vai.
         if body.get("bracketRule"):
             remembered = bracket_rule.save(path, speaker) or remembered
