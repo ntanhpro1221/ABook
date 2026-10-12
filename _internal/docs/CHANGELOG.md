@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.56] - 2026-10-12
+
 ### Truyện kể ngôi thứ nhất (máy tính và điện thoại)
 
 - Truyện có người xưng “tôi”: lời dẫn giờ đọc bằng giọng cùng giới với người kể (người kể là nữ thì giọng dẫn nữ, nam thì giọng dẫn
