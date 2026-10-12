@@ -4337,6 +4337,42 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 12-10 - BOUND-PRED (ranh đoán từ lát 45 s + V học sinh nhúng lại trên chính khúc): THUA; buồn→vui của bộ 11+12 thực chất là hai chương
+
+**Hỏi** (lượt kế của BOUND-ORACLE, Lead duyệt): ranh do MÁY đoán, cộng V của học sinh q06 nhúng lại trên chính khúc mới, có hạ được
+buồn→vui khi vẫn giữ trần đổi bài A + 5 lần/giờ không?
+
+**Làm.**
+- Máy đoán ranh là máy của nhánh `music/onset-tiles`, chép sang mã ghim 0b554bfa:
+  - nền ONSET_TUNING;
+  - cắt thêm ở khe lát 45 s có |Δ| ≥ θ sd, cách ranh khác ≥ 60 s.
+- Tín hiệu: dT (onset đóng băng), dV, hoặc VT. θ chọn trong {1; 1,5; 2}.
+- V khúc lấy bằng đúng đường `music_scene_student.compute`. Kiểm: nhúng lại khúc app trùng gói, hiệu 0.
+- Kiểm lực QUA: đường dựng tái tạo ô D, E = D thắng, E = A thua. Bootstrap thiếu lực nên chỉ báo.
+- Chọn ô trên bộ học, đo một lần trên bộ 11+12. Ghi trước ở Corpus 4f5646f, kết quả 453af40.
+
+**Bộ học** (A: 40,4 % buồn→vui, 9,7 lần đổi/giờ):
+- Hạ buồn→vui được, nhưng ô hạ mạnh nhất (E-V 1.0, 27,3) vượt trần đổi bài và tụt vui→vui 9 điểm.
+- Chỉ E-V 2.0 và E-VT 2.0 hợp lệ. Chọn E-V 2.0 (36,6).
+
+| bộ 11+12 | buồn→vui | vui→vui | MAE bài | đổi bài/giờ |
+|---|---|---|---|---|
+| A (app) | 23,9 | 56,4 | .297 | 7,7 |
+| E-V 2.0 | 31,0 | 56,8 | .278 | 12,8 |
+
+- **THUA:** buồn→vui TĂNG 7,1 điểm; đổi bài 12,8 > trần 12,7.
+- Bộ 7: buồn→vui không đổi, 28,4.
+- Bootstrap (A − E): KTC 90 % [−19,6; 1,9].
+
+**Đọc.**
+- **Thước bộ 11+12 mỏng hơn ta tưởng.** Lỗi buồn→vui của A nằm gọn trong 2/12 chương có câu buồn: 5002 (243/299 s) và 5008
+  (305/305 s). Mọi phán quyết buồn→vui trên bộ này thực chất là hai chương, nên bootstrap theo chương không bao giờ đủ lực, kể cả cho
+  trần. Muốn đo tiếp hướng ranh / V thì cần bộ đo có nhiều chương lỗi hơn trước khi đặt luật mới.
+- **Trên main hiện nay (0b554bfa), ranh vàng + V vàng cho buồn→vui 0,0.** BOUND-ORACLE chạy trên 1648c359 ra 12,3. Mã chọn bài đổi
+  giữa hai commit (cửa sổ 100 cảnh, bài kết tự nhiên, vòng lặp liền). Vậy phần còn lại hoàn toàn nằm ở ĐOÁN ranh và V, không ở chọn bài.
+- Ranh từ lát dV của học sinh dày thêm khúc (14 so với 6 khúc/giờ) nhưng không trúng chỗ buồn. V lát của học sinh không đủ tốt để
+  đặt ranh. Điều này khớp FRAG-V và L3: V mảnh không ngữ cảnh chỉ đạt khoảng 1/3 quãng.
+
 ### 12-10 - BOUND-ORACLE: nút thắt buồn→vui cần CẢ ranh cảnh LẪN V; ranh đúng mà V sai, hay V đúng mà ranh sai, đều không đủ
 
 **Hỏi** (câu hỏi mở Lead đặt sau break_final2, khi nhánh sadwithin đã đóng): buồn bị phát nhạc vui vì V đoán sai, hay vì ranh khúc
