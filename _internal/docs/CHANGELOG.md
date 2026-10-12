@@ -21,6 +21,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   người ấy, đoạn ngôi ba vẫn dùng giọng dẫn. Công tắc nằm ở bước “Tôi là ai?” khi tạo sách và dưới hàng “Người kể chuyện” ở tab
   Nhân vật. Sách đã thu âm thì hộp xác nhận nói trước phải thu lại bao nhiêu câu, mất khoảng bao lâu, và chỉ những câu đổi giọng bị
   thu lại. Tắt công tắc thì mọi thứ trở về đúng như trước khi bật.
+- Dòng lệnh: `abook create ... --first-person TÊN --teller-mode` bật tuỳ chọn này ngay lúc tạo sách.
 
 ### Sửa lỗi
 
