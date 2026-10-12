@@ -23,6 +23,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   thu lại. Tắt công tắc thì mọi thứ trở về đúng như trước khi bật.
 - Dòng lệnh: `abook create ... --first-person TÊN --teller-mode` bật tuỳ chọn này ngay lúc tạo sách.
 
+### Mẫu thiết lập khi tạo sách (máy tính)
+
+- Mẫu thiết lập giờ nhớ thêm “Chờ tôi duyệt trước khi thu”: lưu mẫu thì lưu cả lựa chọn này, chọn mẫu thì nó được điền sẵn (bạn vẫn
+  đổi được trước khi tạo), và danh sách mẫu ở Cài đặt ghi “chờ bạn duyệt trước khi thu” cho mẫu có bật.
+- Mẫu dùng một model phân tích mà máy không còn: ABook giữ model bạn đang chọn thay vì chọn một model không có, và nhắc một dòng
+  “Model … trong mẫu không còn trên máy - giữ model đang chọn”. Các lựa chọn khác của mẫu vẫn được điền như thường.
+
 ### Sửa lỗi
 
 - Thẻ “Hai tên này có phải một người?”: bấm “Cùng một người” rồi đổi ý, nút Hoàn tác giờ rút cả hai tên khỏi danh sách bí danh,

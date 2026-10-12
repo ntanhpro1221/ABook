@@ -17,7 +17,14 @@ def test_a_template_is_cleaned_to_its_known_fields() -> None:
     from abook.webui.library import clean_book_templates
 
     cleaned = clean_book_templates([_template("  Tiên   hiệp ", dropCredits=True, title="x", paths=["a"])], VOICES)
-    assert cleaned == [{"name": "Tiên hiệp", "narrator": "Đức Trí", "profile": "balanced", "analysisModel": "", "startNow": False}]
+    assert cleaned == [{"name": "Tiên hiệp", "narrator": "Đức Trí", "profile": "balanced", "analysisModel": "", "startNow": False, "precastWait": False}]
+
+
+def test_precast_wait_is_kept_and_defaults_to_off() -> None:
+    from abook.webui.library import clean_book_templates
+
+    assert clean_book_templates([_template(precastWait=True)], VOICES)[0]["precastWait"] is True
+    assert clean_book_templates([_template()], VOICES)[0]["precastWait"] is False
 
 
 @pytest.mark.parametrize("name", ["", "   ", "x" * 41, None, 5])
@@ -51,7 +58,7 @@ def test_at_most_twenty_templates() -> None:
 
 @pytest.mark.parametrize("changes", [
     {"profile": "ultra"}, {"profile": None},
-    {"startNow": "yes"}, {"analysisModel": 7}, {"analysisModel": "m" * 201},
+    {"startNow": "yes"}, {"precastWait": "yes"}, {"precastWait": None}, {"analysisModel": 7}, {"analysisModel": "m" * 201},
 ])
 def test_an_unknown_choice_is_refused(changes) -> None:
     from abook.webui.library import clean_book_templates

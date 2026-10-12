@@ -64,6 +64,12 @@ export function useAnalysisModels() {
   });
 }
 
+/** Tên các model dùng được cho một cuốn (model mặc định + model Ollama đang có), hay undefined khi chưa biết (chưa tải xong, Ollama tắt). */
+export function useAvailableModelNames(): string[] | undefined {
+  const { data } = useAnalysisModels();
+  return data?.reachable ? [data.default, ...data.models.map((model) => model.name)] : undefined;
+}
+
 /** Ô chọn ở bước Chất lượng; không có model nào khác mặc định (hay Ollama tắt) thì không hiện gì - không có gì để chọn. */
 export function AnalysisModelPicker({ value, onChange }: { value: string; onChange: (model: string) => void }) {
   const { data } = useAnalysisModels();
