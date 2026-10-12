@@ -4337,6 +4337,32 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 12-10 - GAP-FILL đóng lỗ căng ở V trung tính; CALIB-VT (hiệu chỉnh độ co V/T của học sinh) THUA
+
+**GAP-FILL** (ghi trước Corpus eeadb94, kết quả f4ce047, đóng 082543d).
+- Quét mọi bài trên đĩa (kho 4.763 + 30 bài COV30), kể cả bài bị loại, bằng đúng thước danh mục (kiểm thước: 2.382 bài trùng 100 %).
+- Ô 2_0 / 2_1 / 2_2 với T ≥ 0,6: TRƯỚC 0 / 0 / 0, SAU 0 / 0 / 0, không cả nhóm biên. T max ba ô: −0,06 / 0,49 / 0,52.
+- Lý do: thước T nhạc dính năng lượng (corr(A, T) = 0,77 trên kho), và nhãn người cũng thế (0,63).
+- Phía cảnh: theo vàng, lỗ chỉ 0,45 % số câu (ô 2_0 = 0 câu). Nhu cầu thô theo V/A/T cảnh của học sinh 0,71 % số giờ. Con số 2,9 %
+  của COVERAGE là sau `target_of` (nửa bộ 5, nửa cuốn 2).
+- Trên câu T vàng ≥ 0,6: V vàng TB −0,37, học sinh −0,07; T học sinh +0,35. Học sinh co cả V lẫn T về giữa.
+- **Lead đóng:** không tìm nguồn mới cho 2_0 – 2_2.
+
+**CALIB-VT** (ghi trước Corpus 082543d / ac66a17, kết quả d81d382).
+- Isotonic vàng theo đầu ra học sinh, học trên bộ 4 / 5 / 5b / 6; đo một lần trên bộ 11+12. Số chính M = sai số (V + T) / 2 trên
+  câu T vàng ≥ 0,6.
+- Kiểm lực hai thế giới giả: X = 0,02; thế giới co 100 % qua, thế giới không co 3 % qua.
+- **THUA:**
+  - M 0,381 → 0,414;
+  - MAE T mọi câu 0,269 → 0,345;
+  - vui→vui −4,1;
+  - bootstrap 90 % [−0,102; 0,064].
+- Hàm học được phóng mạnh (f_T(0,7) = 0,835), không mang sang bộ khác: bộ 11 M 0,327 → 0,473, bộ 7 0,123 → 0,319.
+- q06 không học trên bộ học (trùng 0 chương / 0 truyện), nên đây không phải rò rỉ. Độ dốc vàng theo học sinh khác nhau giữa các bộ.
+- buồn→vui 23,9 → 13,3 là hiệu ứng phụ của việc phóng V âm, chỉ dựa trên hai chương; không kết luận. Đợi số bộ 14.
+
+**Hệ quả.** Không hiệu chỉnh hậu kỳ học sinh. Hoãn luôn "đoạn yếu giữ T, chỉ kéo năng lượng" như Lead dặn.
+
 ### 12-10 - COVERAGE (độ phủ danh mục theo nhu cầu thật) và CALM-T (đoạn "không khí yếu" kéo cả căng về nền êm): thiếu nhạc căng ở V trung tính; CALM-T THUA, T của học sinh vẫn mang thông tin ở đoạn yếu
 
 **Hỏi** (Lead giao): danh mục 5880ea7b (2.382 bài) thiếu nhạc ở đâu, tính theo số giờ app thật sự cần?
