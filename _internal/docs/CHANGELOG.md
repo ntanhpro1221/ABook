@@ -7,6 +7,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Truyện kể ngôi thứ nhất (máy tính và điện thoại)
+
+- Truyện có người xưng “tôi”: lời dẫn giờ đọc bằng giọng cùng giới với người kể (người kể là nữ thì giọng dẫn nữ, nam thì giọng dẫn
+  nam) và những câu “tôi” tự nghĩ trong đầu nghe liền mạch với lời dẫn. Lời “tôi” nói ra vẫn giữ giọng của nhân vật; nội tâm của
+  người khác và truyện kể ngôi thứ ba giữ nguyên như trước. Giọng kể bạn đã tự chọn không bao giờ bị máy đổi.
+- Lúc tạo sách, sau ô tên người kể “tôi” có thêm “Người kể là” (Chưa rõ / Nam / Nữ). Chưa rõ thì máy tự đoán sau khi đọc truyện.
+  Bạn không chọn giọng kể thì ô giọng ghi “máy chọn, cùng giới với người kể”.
+- Sách đã thu âm rồi (hay bạn đã chọn giọng kể riêng) thì máy không tự đổi: “Việc cần duyệt” hiện hai thẻ “Giọng lời dẫn” và
+  “Nội tâm của người kể”, mặc định không áp, bạn bấm mới đổi và chỉ những câu bị ảnh hưởng mới phải thu lại.
+
 ## [0.4.55] - 2026-10-12
 
 ### Nhạc nền (máy tính và điện thoại)

@@ -26,7 +26,7 @@ from ..listener_overrides import (
     NARRATOR, NO_VOICE, UNNAMED, character_key, pronunciation_requests, read_overrides, speaker_requests, speaker_target, surface_key,
     voice_requests,
 )
-from .. import speaker_logprobs
+from .. import speaker_logprobs, teller_voice
 from . import listing_cache, narrator_cards, store
 from .address_cues import address_doubts, split_doubts
 from .humanize import person_name, shown_reading
@@ -47,6 +47,8 @@ SEVERITY = {
     "audio": 0.9,
     "voice-wish": 0.6,  # giọng đã chọn mà không áp được: ý muốn của người nghe đang mất
     "snap": 0.4,  # máy đã đổi nhãn về tên chương viết - luật đo 0 câu xấu đi / ~11.000 câu, nên hỏi nhẹ, sau các thẻ người nói
+    "teller-voice": 0.5,  # giọng dẫn khác giới người kể "tôi": sở thích hơn là lỗi
+    "teller-thought": 0.5,  # nội tâm của chính "tôi" đọc bằng giọng nhân vật: như trên
     "narrator": 0.9,  # đoạn kể bởi người khác mà máy cứ gán lời họ cho "tôi": sai người ở cả một đoạn
 }
 EXAMPLES = 3
@@ -258,7 +260,7 @@ def _undo_of(item: dict[str, Any], overrides: dict[str, Any]) -> dict[str, Any] 
             entry = (overrides.get("voices") or {}).get(character)
             at = stamp("voices", character)
             # Thẻ chung giọng: chỉ người đã bị đổi giọng (có `avoid`) là phần của quyết định này.
-            if at and (item["kind"] == "gender" or (isinstance(entry, dict) and entry.get("avoid"))):
+            if at and (item["kind"] in ("gender", "teller-voice") or (isinstance(entry, dict) and entry.get("avoid"))):
                 decisions.append({"character": character, "requestedAt": at, "keep": False})
         return {"endpoint": "voice", "decisions": decisions} if decisions else None
     if item.get("lines"):
@@ -523,23 +525,9 @@ def first_person_lookup(project_root: Path, chapter_index: dict[int, int]) -> tu
     """Người kể "tôi" của sách: (người kể cả cuốn, người kể theo chương, `narrator_of(chapter_id)`, `row_narrator(câu)` hay None).
     `row_narrator` chỉ có khi người dùng đã nhận một đoạn có người kể riêng (narrator_sections.json): câu trong đoạn theo người
     kể của đoạn, không của chương. Dùng chung với tab Kịch bản (casting_review) để hai nơi nghi xưng hô cùng một phép."""
-    voices_settings = store.read_settings(project_root).get("voices")
-    voices_settings = voices_settings if isinstance(voices_settings, dict) else {}
-    book_narrator = str(voices_settings.get("first_person_identity") or "").strip()
-    chapter_narrators = voices_settings.get("first_person_chapters") if isinstance(voices_settings.get("first_person_chapters"), dict) else {}
-
-    def narrator_of(chapter_id: int) -> str:
-        index = str(chapter_index.get(chapter_id, ""))
-        return str(chapter_narrators[index]).strip() if index in chapter_narrators else book_narrator
-
-    # Người kể theo ĐOẠN người dùng đã nhận (narrator_sections.json): câu trong đoạn theo người kể của đoạn, không của chương.
-    accepted_sections = narrator_sections.accepted(narrator_sections.load(project_root)) if (book_narrator or chapter_narrators) else {}
-
-    def row_narrator(row: Any) -> str:
-        found = narrator_sections.narrator_at(accepted_sections, int(chapter_index.get(int(row["chapter_id"]), 0)), int(row["seq"]))
-        return narrator_of(int(row["chapter_id"])) if found is None else found
-
-    return book_narrator, chapter_narrators, narrator_of, row_narrator if accepted_sections else None
+    # Luật "người kể của câu này" nằm ở teller_voice.Tellers (giọng dẫn và nội tâm của "tôi" dùng cùng phép).
+    tellers = teller_voice.Tellers(store.read_settings(project_root), project_root, chapter_index)
+    return tellers.identity, tellers.chapters, tellers.chapter, tellers.row_narrator if tellers.sections else None
 
 
 def unsure_speaker_lines(spoken: list[Any], confidences: dict[str, dict[str, Any]],
@@ -614,6 +602,86 @@ def _snapped_labels(project_root: Path, spoken: Any, names: dict[int, dict[str, 
             "keepLabel": "Đúng, cùng một người",
             "newPerson": who,  # tên như người đọc thấy ("Glas", không phải khoá "GLAS") - cũng là tên người mới
             "newPersonLabel": "Không, là người khác",
+            **fix,
+        })
+    return cards
+
+
+def _teller_cards(project_root: Path, overrides: dict[str, Any], names: dict[int, dict[str, Any]],
+                  speaker_wishes: dict[str, dict[str, str]], speaker_label: Callable[[str], str],
+                  audio: store.AudioLocator | Path | None) -> list[dict[str, Any]]:
+    """Giọng của người kể "tôi" (abook/teller_voice.py): hai thẻ cho sách mà máy KHÔNG tự áp được nữa (đã có câu thu âm, hay người
+    dùng đã chọn giọng dẫn) - mặc định không áp, người dùng bấm mới đổi, và đổi bằng đúng đường ý muốn người nghe có sẵn (giọng người kể
+    / người nói câu này), nên câu đã thu được thu lại đúng chỗ.
+    1. Giọng dẫn khác giới người kể "tôi" (đã rõ giới), còn giọng cùng giới chưa ai giữ.
+    2. Câu nội tâm do chính người kể "tôi" nghĩ đang đọc bằng giọng nhân vật."""
+    from ..listener_overrides import narrator_profile, narrator_voiced
+    from .humanize import voice_label
+
+    cards: list[dict[str, Any]] = []
+    settings = store.read_settings(project_root)
+    skip = set(teller_voice.read(project_root)["applied"].get("thoughts") or {})
+    with closing(store.connect(project_root)) as connection:
+        try:
+            tellers = teller_voice.tellers_of(project_root, settings, connection)
+            if not tellers.active:
+                return []
+            mismatch = teller_voice.narrator_mismatch(connection, tellers)
+            thoughts = teller_voice.teller_thoughts(connection, tellers, skip=skip)
+            profile = narrator_profile(connection)
+            narrated = [row for row in connection.execute(
+                "SELECT id, kind, speaker, voice_profile_id" + (", wav_path" if "wav_path" in {r[1] for r in connection.execute("PRAGMA table_info(segments)")} else "")
+                + " FROM segments") if narrator_voiced(row, int(profile["id"]))] if mismatch and profile is not None else []
+        except sqlite3.OperationalError:  # sổ tối thiểu của test: chưa có bảng giọng / nhân vật
+            return []
+
+    if mismatch is not None:
+        wish = next((entry for entry in voice_requests(overrides) if character_key(entry["character"]) == NARRATOR), None)
+        female = mismatch["gender"] == "female"
+        if wish is None or wish["preset"]:  # "giữ nguyên" đã ghi (yêu cầu rỗng) = thôi hỏi
+            new, now = voice_label(mismatch["preset"]), voice_label(mismatch["reading"])
+            done = f"Lời dẫn đọc bằng {new}"
+            cards.append({
+                "kind": "teller-voice",
+                "key": "teller-voice",
+                "title": f"Lời dẫn nên đọc bằng giọng {'nữ' if female else 'nam'} như người kể “tôi”?",
+                "problem": f"Người kể xưng “tôi” là {'nữ' if female else 'nam'} nhưng lời dẫn đang đọc bằng giọng {'nam' if female else 'nữ'} ({now}). "
+                           f"Đổi sang {new} thì lời dẫn cùng giới với người kể. Lời “tôi” nói ra vẫn giữ giọng nhân vật.",
+                "affected": len(narrated),
+                "doubt": 0.4,
+                "options": [f"Đổi sang {new}", "Giữ giọng hiện tại"],
+                "current": now,
+                "examples": [],
+                "voiceChoices": [{"label": f"Đổi sang {new}", "character": NARRATOR, "preset": mismatch["preset"], "done": done,
+                                  "note": _rerecord_cost(narrated)}],
+                "keepCharacters": [NARRATOR],
+                "keepLabel": "Giữ giọng hiện tại",
+                "subject": "Lời dẫn",
+                "requested": done if wish is not None and wish["preset"] == mismatch["preset"] else None,
+            })
+
+    by_speaker: dict[str, list[Any]] = defaultdict(list)
+    for row in thoughts:
+        wish = speaker_wishes.get(str(row["stable_id"]))
+        if wish is None or wish["speaker"] == NARRATOR:  # đã chọn người khác / "giữ nguyên" thì không giẫm lên
+            by_speaker[str(row["speaker"])].append(row)
+    for speaker, rows in sorted(by_speaker.items()):
+        fix = _speaker_fix(rows, [{"label": "Người kể", "value": NARRATOR}], speaker, speaker_wishes, speaker_label)
+        if fix is None:
+            continue
+        who = speaker_label(speaker)
+        cards.append({
+            "kind": "teller-thought",
+            "key": f"teller-thought:{speaker}",
+            "title": f"Nội tâm của “{who}” đọc bằng giọng người kể?",
+            "problem": f"{who} là người kể xưng “tôi”: lời nghĩ trong đầu nghe như người kể tự nói với mình. Máy đang đọc những câu này "
+                       f"bằng giọng nhân vật {who}; đọc bằng giọng người kể thì liền mạch với lời dẫn quanh nó. Lời {who} nói ra vẫn giữ giọng của họ.",
+            "affected": len(rows),
+            "doubt": 0.4,
+            "options": ["Đọc bằng giọng người kể", "Giữ giọng nhân vật"],
+            "current": who,
+            "examples": [_example(row, names, speaker_label, audio) for row in rows[:EXAMPLES]],
+            "keepLabel": "Giữ giọng nhân vật",
             **fix,
         })
     return cards
@@ -1483,6 +1551,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         })
 
     items.extend(_blocked_voice_wishes(project_root, overrides, characters, spoken, speaker_label))
+    items.extend(_teller_cards(project_root, overrides, names, speaker_wishes, speaker_label, audio))
     items.extend(_snapped_labels(project_root, spoken, names, speaker_wishes, speaker_label, audio))
 
     # 7. Bản thu lỗi (hàng chờ "Cần nghe lại"), gom theo chương - chỉ câu còn chờ người nghe: chấm hết thì thẻ tự rơi.

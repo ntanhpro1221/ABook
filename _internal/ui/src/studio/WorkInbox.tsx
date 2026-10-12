@@ -22,7 +22,7 @@ import { letterShortcutsOn } from "@/shared/letterShortcuts";
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
 // (bước 2): mong muốn ghi vào overrides.json, dây chuyền áp ở ranh giới chương và thu lại những câu có tên ấy.
 
-export type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator" | "voice-wish" | "snap";
+export type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator" | "voice-wish" | "snap" | "teller-voice" | "teller-thought";
 
 interface WorkExample {
   segmentId: number;
@@ -148,6 +148,8 @@ const KIND_LABEL: Record<WorkKind, string> = {
   narrator: "Người kể của đoạn",
   "voice-wish": "Giọng chưa đổi được",
   snap: "Hai cách viết một tên",
+  "teller-voice": "Giọng lời dẫn",
+  "teller-thought": "Nội tâm của người kể",
 };
 
 const PAGE = 40;
