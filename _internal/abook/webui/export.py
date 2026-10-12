@@ -22,8 +22,6 @@ from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 from .. import continuation
 from ..io_utils import ffmpeg_available, ffmpeg_executable, run_hidden
 from . import covers, listen_view, music_plan, store
@@ -270,10 +268,12 @@ def _tail(errors: Any) -> str:
     return errors.read().decode("utf-8", "replace").strip()[-300:]
 
 
-def pump_pcm(ffmpeg: str, source: Path, rate: int, channels: int, sink: Any) -> int:
-    """Giải mã một chương ra PCM 16-bit (đổi về `rate`/`channels` chung của cuốn) đổ vào `sink`; trả số byte đã đổ."""
+def pump_pcm(ffmpeg: str, source: Path, rate: int, channels: int, sink: Any, lower_db: float = 0.0) -> int:
+    """Giải mã một chương ra PCM 16-bit (đổi về `rate`/`channels` chung của cuốn) đổ vào `sink`; trả số byte đã đổ. `lower_db` > 0: hạ
+    mức ngay trong ffmpeg (lần mã hoá lại M4B có chương vượt trần - không cần numpy, bản cài chỉ để nghe không có nó)."""
+    lowering = ["-af", f"volume={-lower_db:.4f}dB"] if lower_db > 0 else []
     with tempfile.TemporaryFile() as errors:
-        decoder = subprocess.Popen([ffmpeg, "-hide_banner", "-loglevel", "error", "-i", str(source), "-map", "0:a:0",
+        decoder = subprocess.Popen([ffmpeg, "-hide_banner", "-loglevel", "error", "-i", str(source), "-map", "0:a:0", *lowering,
                                     "-f", "s16le", "-ar", str(rate), "-ac", str(channels), "pipe:1"],
                                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=errors, creationflags=_HIDDEN)
         assert decoder.stdout is not None
@@ -338,12 +338,16 @@ def true_peak_dbtp(ffmpeg: str, path: Path, start: float = 0.0, seconds: float |
 
 
 class _Lowered:
-    """Ống PCM 16-bit hạ `db` dB trước khi tới `sink` (chương có đỉnh AAC vượt trần, lần mã hoá lại)."""
+    """Ống PCM 16-bit hạ `db` dB trước khi tới `sink` (chương có đỉnh AAC vượt trần, lần mã hoá lại) - chỉ cho chương đi qua bộ trộn nhạc
+    (`decode`), nơi numpy đã có (music_export.Mixer bảo đảm); chương không nhạc được hạ ngay trong ffmpeg (`pump_pcm(lower_db=)`)."""
 
     def __init__(self, sink: Any, db: float) -> None:
-        self.sink, self.factor, self.carry = sink, 10 ** (-db / 20), b""
+        import numpy as np
+
+        self.np, self.sink, self.factor, self.carry = np, sink, 10 ** (-db / 20), b""
 
     def write(self, data: bytes) -> int:
+        np = self.np
         block = self.carry + bytes(data)
         usable = len(block) - len(block) % 2
         self.carry = block[usable:]
@@ -381,8 +385,12 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
             for index, (name, source) in enumerate(chapters):
                 if on_chapter is not None:
                     on_chapter(index)
-                target = _Lowered(sink, lowered[index]) if index in lowered else sink
-                size = decode(index, source, rate, channels, target) if decode is not None else pump_pcm(ffmpeg, source, rate, channels, target)
+                if decode is not None:
+                    size = decode(index, source, rate, channels, _Lowered(sink, lowered[index]) if index in lowered else sink)
+                elif index in lowered:
+                    size = pump_pcm(ffmpeg, source, rate, channels, sink, lower_db=lowered[index])
+                else:
+                    size = pump_pcm(ffmpeg, source, rate, channels, sink)
                 length = size // frame
                 marks.append((name, position, position + length))
                 position += length

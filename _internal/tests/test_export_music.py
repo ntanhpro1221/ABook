@@ -11,6 +11,7 @@ import re
 import shutil
 import sqlite3
 import subprocess
+import sys
 import threading
 from collections.abc import Callable
 from pathlib import Path
@@ -448,3 +449,31 @@ def test_a_text_book_chapter_is_mixed_into_its_own_temp_file_and_changing_the_mu
     # chương 2,9 s: mốc kẹp ở 2,9 - chapterEndFadeSeconds = 0,4 s, đang mờ vào (tới 0,2 mức) thì mờ ra - đo đỉnh ấy, ở mức MỚI (-18)
     assert 0.15 * 0.5 * 10 ** (-18 / 20) < _amp(out, 1000, 0.3, 0.5) < 0.2 * 0.5 * 10 ** (-18 / 20) * 1.15
     assert "musicMissing" not in result
+
+
+def test_the_player_only_install_starts_and_lowers_m4b_peaks_without_numpy(tmp_path: Path) -> None:
+    # Bản cài chỉ để nghe không có numpy (tải theo mô-đun Phân tích nhạc): server phải nạp được, và lần mã hoá lại M4B của chương
+    # không nhạc hạ mức trong ffmpeg (không qua numpy). Chặn numpy trong một tiến trình riêng.
+    if not ffmpeg_available():
+        pytest.skip("cần ffmpeg")
+    wav = tmp_path / "tone.wav"
+    soundfile.write(wav, (0.5 * np.sin(2 * np.pi * 220 * np.arange(24000) / 24000)).astype("float32"), 24000, subtype="PCM_16")
+    script = (
+        "import io, sys\n"
+        "class Block:\n"
+        "    def find_spec(self, name, path=None, target=None):\n"
+        "        if name.split('.')[0] == 'numpy': raise ImportError('numpy bị chặn')\n"
+        "sys.meta_path.insert(0, Block())\n"
+        "from abook.webui import server, export\n"
+        "from abook.io_utils import ffmpeg_executable\n"
+        "from pathlib import Path\n"
+        "plain, low = io.BytesIO(), io.BytesIO()\n"
+        "export.pump_pcm(ffmpeg_executable(), Path(sys.argv[1]), 24000, 1, plain)\n"
+        "export.pump_pcm(ffmpeg_executable(), Path(sys.argv[1]), 24000, 1, low, lower_db=6.0)\n"
+        "peak = lambda data: max(abs(int.from_bytes(data[i:i + 2], 'little', signed=True)) for i in range(0, len(data), 2))\n"
+        "print(len(plain.getvalue()) == len(low.getvalue()), round(peak(low.getvalue()) / peak(plain.getvalue()), 3))\n")
+    run = subprocess.run([sys.executable, "-c", script, str(wav)], capture_output=True, encoding="utf-8", check=False,
+                         cwd=Path(export.__file__).parents[2])
+    assert run.returncode == 0, run.stderr
+    same_length, ratio = run.stdout.split()
+    assert same_length == "True" and float(ratio) == pytest.approx(10 ** (-6 / 20), rel=0.01)

@@ -26,13 +26,15 @@ from collections import OrderedDict
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
-
-import numpy as np
+from typing import TYPE_CHECKING, Any
 
 from ..io_utils import atomic_write_json
-from . import book_edits, music_mix, music_plan, music_render, packages
+from . import book_edits, music_mix, music_plan, packages
 from .export import _HIDDEN, audio_format, pump_pcm
+
+if TYPE_CHECKING:  # numpy + music_render chỉ nạp lúc thật sự trộn: bản cài chỉ để nghe không có numpy (`need_numpy`)
+    import numpy as np
+
 
 log = logging.getLogger(__name__)
 
@@ -113,6 +115,27 @@ def packaged_state(path: Path) -> dict[str, bool]:
     return {"available": available, "enabled": available and (book_edits.load(path).get("music") or {}).get("enabled") is not False}
 
 
+def need_numpy() -> None:
+    """Trộn nhạc cần numpy. Bản cài chỉ để nghe không có sẵn: lấy phần thư viện chung của mô-đun nhạc (music_module - đã tải thì chỉ
+    đưa vào sys.path, chưa thì tải ~27 MB một lần, như khi bật "Phân tích nhạc"). Không lấy được -> ValueError có lời."""
+    try:
+        import numpy
+        return
+    except ImportError:
+        pass
+    from . import music_module
+
+    if not music_module.activate_libs():
+        problem = music_module.libs_problem()
+        if problem:
+            raise ValueError(f"Không trộn được nhạc nền: {problem}")
+        music_module.install_libs_part(lambda _done, _total: None)
+    try:
+        import numpy  # noqa: F401
+    except ImportError as error:
+        raise ValueError("Không trộn được nhạc nền: chưa lấy được thư viện numpy (tải lại ở mục Phân tích nhạc)") from error
+
+
 class _Pcm:
     """PCM 16-bit của một bài (khung, kênh) đọc như mảng float64 [-1, 1) nhân `gain` - dạng `music_render.render_bus` cần."""
 
@@ -123,7 +146,7 @@ class _Pcm:
         return len(self.raw)
 
     def __getitem__(self, index: Any) -> np.ndarray:
-        return self.raw[index].astype(np.float64) * self.scale
+        return self.raw[index].astype("float64") * self.scale
 
 
 def _lufs(ffmpeg: str, rate: int, channels: int, feed: Callable[[Any], Any], *, dualmono: bool = False) -> float | None:
@@ -200,7 +223,7 @@ def mono_offset_db(ffmpeg: str, path: Path, mono: np.ndarray, rate: int, span: t
         return 0.0
     lo, hi = span[0] * rate, span[1] * rate
     stereo = _lufs(ffmpeg, rate, 2, lambda sink: pump_pcm(ffmpeg, Path(path), rate, 2, _Window(sink, 4 * lo, 4 * hi)))
-    folded = _lufs(ffmpeg, rate, 1, lambda sink: sink.write(np.ascontiguousarray(mono[lo:hi], dtype="<i2").tobytes()), dualmono=True)
+    folded = _lufs(ffmpeg, rate, 1, lambda sink: sink.write(mono[lo:hi].astype("<i2", copy=False).tobytes()), dualmono=True)
     if stereo is None or folded is None:
         return 0.0
     offset = round(min(MONO_MAX_DB, stereo - folded), 2)
@@ -222,6 +245,8 @@ class TrackPcm:
         if key in self._kept:
             self._kept.move_to_end(key)
             return self._kept[key]
+        import numpy as np
+
         buffer = io.BytesIO()
         try:
             pump_pcm(self.ffmpeg, Path(path), rate, channels, buffer)
@@ -240,6 +265,11 @@ class MixSink:
     giữ (ra đúng bằng số mẫu giọng). Chỗ không có nhạc: từng mẫu y hệt giọng."""
 
     def __init__(self, sink: Any, rate: int, channels: int, timeline: list[dict[str, Any]], pcm: dict[str, _Pcm | None]) -> None:
+        import numpy as np
+
+        from . import music_render
+
+        self.np, self.render = np, music_render
         self.sink, self.rate, self.channels, self.timeline, self.pcm = sink, rate, channels, timeline, pcm
         self.stream = music_render.GuardStream(rate, channels)
         self.position = 0
@@ -250,8 +280,8 @@ class MixSink:
         usable = len(block) - len(block) % (2 * self.channels)
         self.carry = block[usable:]
         if usable:
-            voice = np.frombuffer(block[:usable], dtype="<i2").reshape(-1, self.channels).astype(np.float64) / 32768.0
-            bus, _missing = music_render.render_bus(self.timeline, len(voice), self.rate, self.channels, self.pcm.get, start=self.position)
+            voice = self.np.frombuffer(block[:usable], dtype="<i2").reshape(-1, self.channels).astype("float64") / 32768.0
+            bus, _missing = self.render.render_bus(self.timeline, len(voice), self.rate, self.channels, self.pcm.get, start=self.position)
             self.position += len(voice)
             self._out(self.stream.feed(voice, bus))
         return len(data)
@@ -261,7 +291,7 @@ class MixSink:
 
     def _out(self, mixed: np.ndarray) -> None:
         if len(mixed):
-            self.sink.write(music_render.to_int16(mixed).astype("<i2", copy=False).tobytes())
+            self.sink.write(self.render.to_int16(mixed).astype("<i2", copy=False).tobytes())
 
 
 @dataclass
@@ -276,6 +306,8 @@ class Mixer:
     def __post_init__(self) -> None:
         if self.tracks is None:
             self.tracks = TrackPcm(self.ffmpeg)
+        if any(self.chapter(chapter_id) is not None for chapter_id in self.music):
+            need_numpy()
 
     def chapter(self, chapter_id: int) -> ChapterMusic | None:
         """Nhạc của chương nếu có gì để trộn (có mốc lấy được bài); không thì None - chương ấy xuất y như không kèm nhạc."""
