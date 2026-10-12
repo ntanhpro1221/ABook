@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.55] - 2026-10-12
+
 ### Nhạc nền (máy tính và điện thoại)
 
 - Xuất sách nói MP3 / M4B có ô "Kèm nhạc nền": nhạc của cuốn được trộn thẳng vào file, vào ra đúng chỗ như khi nghe trong app và
