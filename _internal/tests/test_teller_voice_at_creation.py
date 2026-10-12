@@ -92,3 +92,13 @@ def test_the_command_line_marks_the_machines_choice_by_the_same_rule(tmp_path: P
     assert teller_voice.read(_cli_create(tmp_path, capsys, "--first-person", "Mai"))["narratorAuto"] is True
     assert teller_voice.read(_cli_create(tmp_path, capsys, "--first-person", "Mai", "--narrator", "Thái Sơn"))["narratorAuto"] is False
     assert not (_cli_create(tmp_path, capsys) / teller_voice.FILE_NAME).exists()
+
+
+def test_the_teller_switch_is_off_unless_asked_for_and_needs_a_teller(tmp_path: Path) -> None:
+    source = [str(_source(tmp_path))]
+    off = actions.create_book(tmp_path / "lib", source, "Thử", "balanced", "", "Mai")
+    on = actions.create_book(tmp_path / "lib2", source, "Thử", "balanced", "", "Mai", teller_mode=True)
+
+    assert teller_voice.read(off)["mode"] == "narrator" and teller_voice.read(on)["mode"] == "teller"
+    with pytest.raises(ValueError):
+        actions.create_book(tmp_path / "lib3", source, "Thử", "balanced", "", "", teller_mode=True)
