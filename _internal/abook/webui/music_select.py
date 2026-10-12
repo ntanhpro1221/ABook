@@ -56,6 +56,10 @@ CALM_TARGET = (0.15, -0.55)     # ... thì nhạc nền nhẹ, êm - nhạc mặ
 # (chia đều đoạn dài) chơi tiếp bài của đoạn trước; trong một cảnh, bài hết thì nối sang bài ANH EM (gần bài đang chơi) đúng ở
 # điểm kết tự nhiên của nó; bài cho đầu cảnh bị phạt nếu ngắn hơn cảnh (phải lặp nhiều vòng).
 SIBLING_Z = 0.8                  # z_distance tối đa từ bài anh em tới bài đang chơi (chọn trên bộ 4+5)
+# K2 (SCENE-GAP 12-10, Corpus PLAN_scenegap_confirm.md): mảnh `length` CHỌN LẠI bài khi z_distance(bài đang chơi, đích của mảnh)
+# vượt ngưỡng này. Đo bằng giây nhạc sai rõ: 82 % giây sai của app do một bài chọn theo vài phút đầu chơi suốt nhiều cảnh.
+# inf = luôn chơi tiếp (hành vi đặc tả 06-10); ngưỡng chọn trên bộ học, xác nhận trên bộ 8/9/10 trước khi đặt.
+LENGTH_SWITCH_Z = math.inf
 SHORT_TRACK_PENALTY = 1.0        # x (1 - độ dài bài / độ dài cảnh): phạt bài ngắn hơn cảnh
 SCENE_LENGTH_CAP = 900.0         # độ dài cảnh tính phạt kẹp ở 15 phút
 HEAD_CANDIDATES = 30             # số bài xếp hạng xét phạt bài ngắn cho đầu cảnh
@@ -253,6 +257,15 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
         result = dict(scene, key=key, pinned=False)
         pin_down = key in pins and not usable(pins[key])
         follows = heads[index] != index and playing is not None
+        if follows and _drifted(info(playing), scene):
+            # Mảnh cắt đều mà không khí đã xa bài đang chơi: thành đầu cảnh mới (chọn bài như đầu cảnh), các mảnh sau theo nó.
+            old = heads[index]
+            for j in range(index, len(scenes)):
+                if heads[j] == old:
+                    heads[j] = index
+            lengths[index] = sum(_seconds(scenes[j]) for j in range(index, len(scenes)) if heads[j] == index)
+            run_end[index] = run_end[old]
+            follows = False
         if key in pins and not pin_down:
             result.update(link=pins[key], pinned=True, distance=None)
         elif key in silenced:
@@ -362,6 +375,15 @@ def _shortfall(track: dict[str, Any], want: float) -> float:
         return 0.0
     length = float(track.get("duration") or 0.0) or want
     return max(0.0, 1.0 - length / want)
+
+
+def _drifted(track: dict[str, Any] | None, scene: dict[str, Any]) -> bool:
+    """Mảnh nối tiếp `scene` đã xa bài đang chơi `track` hơn LENGTH_SWITCH_Z (z_distance tới đích của chính mảnh, độ không chắc của
+    mảnh) - khi ấy mảnh chọn bài lại (K2). Không biết bài (danh mục cũ) hay ngưỡng vô hạn thì chơi tiếp."""
+    if not track or not math.isfinite(LENGTH_SWITCH_Z) or track.get("valence") is None or track.get("arousal") is None:
+        return False
+    target = (*target_of(scene), float(scene.get("tension") or 0.0))
+    return z_distance(track, target, scene_sigma(scene)) > LENGTH_SWITCH_Z
 
 
 def _sibling(current: dict[str, Any] | None, candidates: list[dict[str, Any]]) -> str | None:

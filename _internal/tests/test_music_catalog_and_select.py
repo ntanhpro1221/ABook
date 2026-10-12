@@ -415,3 +415,21 @@ def test_a_looping_track_comes_round_every_period_of_its_audible_part_less_the_c
               _flat_scene(firstSegment=20, start=100.0, end=390.0, reason="length")]
     chosen = choose(scenes, lambda v, a: tracks, book_key="b", track_info={t["link"]: t for t in tracks}.get)
     assert "siblings" not in chosen[1] and chosen[1]["stopAt"] == 374.0
+
+
+def test_a_length_piece_whose_mood_drifted_far_from_the_playing_track_chooses_again(monkeypatch) -> None:
+    # K2 (SCENE-GAP 12-10): mảnh cắt đều chơi tiếp bài, TRỪ khi không khí của mảnh đã xa bài đang chơi quá LENGTH_SWITCH_Z.
+    from abook.webui import music_select
+
+    tracks = _tracks_at(("calm", {"valence": 0.0, "arousal": -0.6, "tension": -0.6}),
+                        ("loud", {"valence": 0.0, "arousal": 0.8, "tension": 0.8}))
+    scenes = [_flat_scene(firstSegment=1, start=0.0, end=150.0, reason="chapter_start", arousal=-0.6, tension=-0.6),
+              _flat_scene(firstSegment=20, start=150.0, end=300.0, reason="length", arousal=0.8, tension=0.8),
+              _flat_scene(firstSegment=40, start=300.0, end=450.0, reason="length", arousal=0.8, tension=0.8)]
+    info = {track["link"]: track for track in tracks}.get
+    plays_on = choose(scenes, lambda v, a: tracks, book_key="b", track_info=info)
+    assert [entry["link"] for entry in plays_on] == ["https://x/calm.mp3"] * 3, "mặc định (vô hạn): luôn chơi tiếp"
+    monkeypatch.setattr(music_select, "LENGTH_SWITCH_Z", 1.0)
+    switched = choose(scenes, lambda v, a: tracks, book_key="b", track_info=info)
+    assert [entry["link"] for entry in switched] == ["https://x/calm.mp3", "https://x/loud.mp3", "https://x/loud.mp3"]
+    assert not switched[1].get("continued") and switched[2].get("continued"), "mảnh đổi thành đầu cảnh, mảnh sau theo nó"
