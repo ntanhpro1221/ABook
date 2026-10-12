@@ -4337,6 +4337,54 @@ GPU 06:45-07:59 trong hàng của Model. Lệnh `l3_runs.py score`. Thước: r 
   điều này khớp.
 - Không đào tiếp L3 bằng prompt. Muốn hơn phải có tín hiệu mới (huấn luyện trên đáp án cảnh), không phải đổi cách hỏi.
 
+### 12-10 - COVERAGE (độ phủ danh mục theo nhu cầu thật) và CALM-T (đoạn "không khí yếu" kéo cả căng về nền êm): thiếu nhạc căng ở V trung tính; CALM-T THUA, T của học sinh vẫn mang thông tin ở đoạn yếu
+
+**Hỏi** (Lead giao): danh mục 5880ea7b (2.382 bài) thiếu nhạc ở đâu, tính theo số giờ app thật sự cần?
+
+**Làm (COVERAGE).**
+- Mã ghim 3998f27d, 4 book_key. Dữ liệu: các bộ có kịch bản đo, cộng cuốn 2 trọn 44 chương.
+- Ghi từng đầu cảnh:
+  - điểm cần tìm;
+  - bài được chọn và khoảng cách z tới điểm ấy;
+  - số bài sát (z ≤ 1,0);
+  - lặp bài.
+- Báo cáo `LLM_Train/music/runs/COVERAGE_12-10.md`, bản chép ở Corpus 50cc8db.
+
+**Thấy.**
+- 32 giờ đầu cảnh, 187 đầu cảnh. Không cảnh nào im vì thiếu bài. Khoảng cách bài chọn TB 0,35, p90 0,82.
+- Lặp bài:
+  - trong cùng chương: 0;
+  - trong 3 chương liền: 1/44 chương ở cuốn 2 và 1/20 chương ở bộ 7.
+- 74 % số giờ rơi vào ba ô 2_1, 2_2, 3_2. Không ô V/A nào thiếu bài theo số lượng.
+- **Lỗ thật nằm ở trục căng:**
+  - ô 2_0, 2_1, 2_2 có 0 bài T ≥ 0,6;
+  - cảnh cần T ≥ 0,6 chiếm 5,5 % số giờ, và khoảng cách bài chọn ở đó có trung vị 0,94;
+  - 11 % nhu cầu ấy đến từ `target_of`: đoạn yếu bị kéo V/E về nền êm nhưng vẫn giữ T, nên bộ chọn bị hỏi "êm mà căng".
+- Nhạc căng trong danh mục hầu hết bị chấm V âm, vì CLAP gộp "ominous" vào phía buồn của V.
+
+**CALM-T (thử vá phía app).**
+- `CALM_TARGET` thêm T = −0,32 (trung vị T của 120 bài ô 2_1). `target_of` kéo cả ba trục với cùng trọng số.
+- Ghi trước ở Corpus ad7610c. Số đo chính là MAE_T yếu: |T bài − T vàng| trên câu thuộc đoạn có confidence < 0,2, gộp các bộ
+  4, 5, 5b, 6, 7, 11, 12. Kèm năm điều "không phá" ở bộ 7, 11, 12 và cuốn 2.
+- Kết quả ở Corpus 36840bf.
+
+| | MAE_T yếu | bộ 11 vui→vui | bộ 11 MAE_T | bộ 12 MAE_T | cuốn 2 đổi bài/giờ |
+|---|---|---|---|---|---|
+| A (app) | .395 | 65,2 | .242 | .331 | 8,6 |
+| CALM-T | .422 | 58,6 | .262 | .372 | 7,8 |
+
+- **THUA:** số đo chính TỆ đi 0,027, trong khi luật cần giảm 0,03. Bootstrap A−B: 90 % [−.061; .004].
+- Bộ 7 thì tốt lên (.137 → .081), nhưng bộ 11 và 12 trượt.
+
+**Đọc (chẩn đoán sau khi có kết quả):** đoạn app chấm "không khí yếu" KHÔNG phải đoạn êm theo vàng.
+- Trên 3,42 giờ đoạn yếu, T vàng có TB +0,03, trung vị 0, p25/p75 ±0,375. 63 % số giờ có T vàng ≥ 0.
+- T của học sinh q06 trên chính đoạn ấy sai TB 0,32; kéo về −0,32 thì sai 0,50.
+- Nghĩa là confidence thấp chỉ vì V/E không rõ. **T của học sinh vẫn mang thông tin**, nên đừng kéo T theo confidence của V/E.
+- Phần 11 % nhu cầu căng từ đoạn yếu là nhu cầu có cơ sở.
+
+**Hệ quả.** Lỗ trục căng phải lấp bằng DANH MỤC (bài căng ở V trung tính), không bằng bộ chọn. Đang đo 30 bài Freesound đề xuất bằng
+đúng thước danh mục (COV30, ghi trước Corpus dac5ce6: giữ −0,2 ≤ V < 0,2 và T ≥ 0,6). Lô thêm vào danh mục chờ Lead duyệt.
+
 ### 12-10 - BOUND-PRED (ranh đoán từ lát 45 s + V học sinh nhúng lại trên chính khúc): THUA; buồn→vui của bộ 11+12 thực chất là hai chương
 
 **Hỏi** (lượt kế của BOUND-ORACLE, Lead duyệt): ranh do MÁY đoán, cộng V của học sinh q06 nhúng lại trên chính khúc mới, có hạ được
