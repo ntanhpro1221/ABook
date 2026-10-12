@@ -447,11 +447,12 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
                 first_person: str = "", settings_overrides: dict[str, Any] | None = None,
                 first_person_chapters: dict[str, str] | None = None,
                 drop_credit_lines: bool | None = None, drop_tail_credit_lines: bool | None = None,
-                first_person_gender: str = "") -> Path:
+                first_person_gender: str = "", teller_mode: bool = False) -> Path:
     """`narrator` rỗng = người dùng không chọn giọng dẫn: sách có người kể "tôi" thì máy chọn giọng dẫn cùng giới người ấy
     (abook/teller_voice.py). `first_person_gender` ("male"/"female"/"" = chưa rõ): người dùng nói giới người kể "tôi" ngay lúc tạo -
     ghim giới ấy cho nhân vật (như một người nghe ghim) và, khi không chọn giọng dẫn, giọng dẫn cùng giới được đặt NGAY, để bước phân vai
-    tránh nó."""
+    tránh nó. `teller_mode` (B, tuỳ chọn, mặc định tắt): người kể "tôi" tự kể chuyện - câu lời kể của đoạn họ kể cũng đọc bằng giọng
+    của chính họ (teller_voice.set_mode)."""
     from .. import teller_voice
     from ..character_registry import PRONOUNS, normalize_name
     from ..config import build_settings
@@ -464,6 +465,8 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
     if first_person and normalize_name(first_person) in PRONOUNS:
         raise ValueError(f'"{first_person}" là một đại từ, không phải một nhân vật - điền tên của người xưng "tôi"')
     voices: dict[str, Any] = {}
+    if teller_mode and not (first_person or any(str(name).strip() for name in (first_person_chapters or {}).values())):
+        raise ValueError("Chế độ người kể “tôi” tự kể chuyện chỉ có nghĩa khi đã điền tên người kể")
     if first_person_gender and (first_person_gender not in teller_voice.GENDERS or not first_person):
         raise ValueError("Giới của người kể “tôi” phải là nam hoặc nữ, và chỉ có nghĩa khi đã điền tên người kể")
     if narrator:
@@ -502,6 +505,8 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
             teller_voice.mark_auto(paths_created.root)
         if first_person_gender:
             db.lock_character_gender(first_person, first_person_gender)  # ghim như người nghe: thắng suy đoán của model
+        if teller_mode:
+            teller_voice.set_mode(paths_created.root, "teller")
     return paths_created.root
 
 

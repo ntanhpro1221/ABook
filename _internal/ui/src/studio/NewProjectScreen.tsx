@@ -48,6 +48,7 @@ import {
 import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
 import { narratorIsAuto, recommendedFor, type TellerGender } from "@/studio/narratorChoice";
+import { TELLER_TITLE, tellerHint } from "@/studio/tellerMode";
 import { creditKind, creditLine, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS, type CreditDrop, type Credits } from "@/studio/credits";
 import { samePath } from "@/studio/samePath";
 import { splitOutcome } from "@/studio/splitOffer";
@@ -141,6 +142,8 @@ interface Draft {
   firstPerson: string;
   /** Giới của người kể "tôi" (người dùng nói; không có = chưa rõ, máy tự đoán sau khi đọc truyện). */
   firstPersonGender?: TellerGender;
+  /** B (tuỳ chọn, mặc định tắt): người kể "tôi" tự kể chuyện - lời kể của đoạn họ kể cũng đọc bằng giọng của họ (abook/teller_voice.py). */
+  tellerMode?: boolean;
   /** Chương đổi góc kể (gợi ý của máy) mà người dùng bỏ chọn - số chương trong sách. */
   povOff?: number[];
   profile: Profile;
@@ -1080,13 +1083,15 @@ function PovChapters({ hint, narrator, off, onOffChange }: {
   );
 }
 
-function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGender, povOff, setPovOff }: {
+function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGender, tellerMode, onTellerMode, povOff, setPovOff }: {
   paths: string[];
   seedFrom?: string;
   value: string;
   onChange: (name: string) => void;
   gender?: TellerGender;
   onGender: (gender: TellerGender | undefined) => void;
+  tellerMode?: boolean;
+  onTellerMode: (on: boolean) => void;
   povOff: number[];
   setPovOff: (off: number[]) => void;
 }) {
@@ -1159,6 +1164,13 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
           <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">
             Chưa rõ thì máy đoán sau khi đọc truyện. Lời dẫn dùng giọng cùng giới với người kể, trừ khi bạn chọn giọng kể ở dưới.
           </p>
+          <label className="mt-3 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="teller-mode">
+            <Switch id="teller-mode" labelledBy="teller-mode-name" describedBy="teller-mode-hint" checked={Boolean(tellerMode)} onCheckedChange={onTellerMode} />
+            <span>
+              <span id="teller-mode-name" className="block text-sm font-medium">{TELLER_TITLE}</span>
+              <span id="teller-mode-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">{tellerHint(Boolean(tellerMode))}</span>
+            </span>
+          </label>
         </div>
       )}
       <PovChapters hint={hint} narrator={value} off={povOff} onOffChange={setPovOff} />
@@ -1176,6 +1188,8 @@ function VoiceStep({
   setFirstPerson,
   firstPersonGender,
   setFirstPersonGender,
+  tellerMode,
+  setTellerMode,
   narratorAuto,
   povOff,
   setPovOff,
@@ -1189,6 +1203,8 @@ function VoiceStep({
   setFirstPerson: (name: string) => void;
   firstPersonGender?: TellerGender;
   setFirstPersonGender: (gender: TellerGender | undefined) => void;
+  tellerMode?: boolean;
+  setTellerMode: (on: boolean) => void;
   /** Giọng kể đang do máy chọn (người dùng chưa bấm giọng nào): đổi theo giới người kể "tôi". */
   narratorAuto: boolean;
   povOff: number[];
@@ -1230,6 +1246,8 @@ function VoiceStep({
         onChange={setFirstPerson}
         gender={firstPersonGender}
         onGender={setFirstPersonGender}
+        tellerMode={tellerMode}
+        onTellerMode={setTellerMode}
         povOff={povOff}
         setPovOff={setPovOff}
       />
@@ -1391,6 +1409,7 @@ function ConfirmStep({
   narratorAuto,
   firstPerson,
   firstPersonGender,
+  tellerMode,
   povChapters,
   profile,
   seed,
@@ -1414,6 +1433,7 @@ function ConfirmStep({
   narratorAuto: boolean;
   firstPerson: string;
   firstPersonGender?: TellerGender;
+  tellerMode?: boolean;
   povChapters: Record<string, string>;
   profile: Profile;
   seed?: Seed;
@@ -1457,6 +1477,7 @@ function ConfirmStep({
     ...(firstPerson
       ? ([["Người kể “tôi”", firstPersonGender ? `${firstPerson} (${firstPersonGender === "female" ? "nữ" : "nam"})` : firstPerson]] as [string, string][])
       : []),
+    ...(tellerMode ? ([["Lời kể", "đọc bằng giọng của người kể “tôi”"]] as [string, string][]) : []),
     ...(Object.keys(povChapters).length
       ? ([["Chương đổi người kể", Object.entries(povChapters).map(([chapter, name]) => `chương ${chapter}: ${name}`).join(", ")]] as [string, string][])
       : []),
@@ -1784,6 +1805,7 @@ export function NewProjectScreen() {
         narrator: autoNarrator ? "" : draft.narrator,
         firstPerson: draft.firstPerson.trim(),
         ...(draft.firstPerson.trim() && draft.firstPersonGender ? { firstPersonGender: draft.firstPersonGender } : {}),
+        ...(draft.firstPerson.trim() && draft.tellerMode ? { tellerMode: true } : {}),
         ...(Object.keys(povChapters).length ? { firstPersonChapters: povChapters } : {}),
         ...(draft.seed ? { seedFrom: draft.seed.id } : draft.replaces?.seedFrom ? { seedFrom: draft.replaces.seedFrom } : {}),
         ...(draft.replaces ? { replaces: draft.replaces.id } : {}),
@@ -1963,13 +1985,15 @@ export function NewProjectScreen() {
               seedFrom={draft.seed?.id}
               previousNarrator={draft.seed?.narrator}
               firstPerson={draft.firstPerson}
-              setFirstPerson={(firstPerson) => update({ firstPerson, ...(firstPerson.trim() ? {} : { firstPersonGender: undefined }) })}
+              setFirstPerson={(firstPerson) => update({ firstPerson, ...(firstPerson.trim() ? {} : { firstPersonGender: undefined, tellerMode: false }) })}
               firstPersonGender={draft.firstPersonGender}
               setFirstPersonGender={(firstPersonGender) => {
                 // Máy chọn giọng dẫn thì giọng hiện trong lưới theo giới vừa chọn (máy chủ đặt đúng giọng ấy lúc tạo).
                 const suggested = autoNarrator ? recommendedFor(voices, firstPersonGender) : undefined;
                 update({ firstPersonGender, ...(suggested ? { narrator: suggested } : {}) });
               }}
+              tellerMode={draft.tellerMode}
+              setTellerMode={(tellerMode) => update({ tellerMode })}
               narratorAuto={autoNarrator}
               povOff={draft.povOff ?? []}
               setPovOff={(povOff) => update({ povOff })}
@@ -1987,6 +2011,7 @@ export function NewProjectScreen() {
               narratorAuto={autoNarrator}
               firstPerson={draft.firstPerson.trim()}
               firstPersonGender={draft.firstPerson.trim() ? draft.firstPersonGender : undefined}
+              tellerMode={draft.firstPerson.trim() ? draft.tellerMode : false}
               povChapters={povChapters}
               profile={draft.profile}
               seed={draft.seed}
