@@ -7,6 +7,27 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Người kể “tôi” (máy tính và điện thoại)
+
+- Sách đã thu xong mà bạn bật hay tắt “Người kể xưng “tôi” tự kể chuyện” (hay đổi giọng một người) thì trang dự án giờ có nút
+  “Tiếp tục” để thu lại những chương chờ, và danh sách sách ghi “N chương chờ thu lại”. Khi sách đang chạy, công tắc nói thẳng
+  là cần bấm “Dừng” (Tạm dừng chưa đủ) mà vẫn giữ lời giải thích công tắc; “Sửa thiết lập” điền sẵn giới của người kể “tôi”,
+  công tắc này và chương đổi người kể. Nhật ký “Chi tiết kỹ thuật” kể việc máy tự đổi giọng dẫn bằng câu dễ đọc.
+- Điện thoại mở file dự án: thẻ “Lời dẫn nên đọc bằng giọng nữ…” bấm được như trên máy tính, và công tắc của người kể “tôi” hiện
+  ở dạng khoá kèm câu “Đổi ở máy tính có Studio (cần thu lại)” thay vì biến mất.
+
+### Mẫu thiết lập (máy tính)
+
+- Mẫu để giọng kể cho máy chọn thì lưu đúng như vậy; áp mẫu ấy rồi, ô giọng và bước “Xác nhận” cùng nói “máy chọn”, không còn
+  tô sáng giọng cũ. Mẫu trỏ tới giọng đã gỡ khỏi máy được nhắc như với model. Áp mẫu giờ báo đã đổi những gì và có nút
+  “Hoàn tác” trả lại lựa chọn trước đó.
+
+### Thẻ người nói (máy tính và điện thoại)
+
+- Bấm nhanh nhiều thẻ liền nhau không còn làm mất câu nào. Thẻ “hai tên một người” có Hoàn tác, và dòng “Chờ áp dụng: gộp vào X”
+  có nút “Bỏ gộp” (cả lúc đang “Duyệt trước khi thu”). Quyết xong một thẻ thì tiêu điểm sang thẻ kế; mở “Người khác…” thì con
+  trỏ vào ô nhập; thẻ gọi người bằng tên hiển thị như tab Nhân vật; trình đọc màn hình đọc được tên từng thẻ. Trên điện thoại,
+  gộp hai tên cho kết quả giống hệt máy tính.
 - Thẻ “Ai nói câu này” giờ cũng hỏi khi một câu nghĩ thầm gọi chính người được gán bằng tên kèm kính ngữ (-kun, -san…), như đã hỏi với lời nói ra. Bạn chọn người nói khác thì mới đổi, mặc định giữ nguyên.
 
 ## [0.4.56] - 2026-10-12

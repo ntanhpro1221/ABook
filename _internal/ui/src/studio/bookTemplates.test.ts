@@ -2,13 +2,17 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_TEMPLATES,
   applyTemplate,
+  changedChoices,
   isFull,
   isModified,
   missingModel,
   missingModelNote,
+  missingVoice,
+  missingVoiceNote,
   nameProblem,
   removeTemplate,
   renameTemplate,
+  templateChoices,
   templateFromDraft,
   templatesOf,
   upsertTemplate,
@@ -186,5 +190,43 @@ describe("a template model the machine no longer has", () => {
     expect(isModified(applied, ln)).toBe(true);
     expect(isModified(applied, ln, ["qwen3.5:9b"])).toBe(false);
     expect(missingModelNote("qwen3:8b:latest")).toBe("Model qwen3:8b trong mẫu không còn trên máy - giữ model đang chọn.");
+  });
+});
+
+describe("a narrator the machine picks", () => {
+  it("is saved as an empty narrator, not the name the machine happened to pick", () => {
+    expect(templateFromDraft(draft({ narrator: "Ngọc Linh" }), "A", true).narrator).toBe("");
+    expect(templateFromDraft(draft({ narrator: "Ngọc Linh" }), "A", false).narrator).toBe("Ngọc Linh");
+  });
+
+  it("puts the voice back to the machine's when applied, so the old voice is no longer highlighted", () => {
+    expect(applyTemplate(draft({ narrator: "Bấm tay" }), tienHiep, undefined, undefined, "Ngọc Linh").narrator).toBe("Ngọc Linh");
+    expect(applyTemplate(draft({ narrator: "Bấm tay" }), tienHiep).narrator).toBe("Bấm tay");
+    expect(applyTemplate(draft({ narrator: "Bấm tay" }), ln, undefined, undefined, "Ngọc Linh").narrator).toBe("Đức Trí");
+  });
+});
+
+describe("a template voice the machine no longer has", () => {
+  it("is found only when the voice list is known and lacks it", () => {
+    expect(missingVoice(ln, ["Thục Anh"])).toBe("Đức Trí");
+    expect(missingVoice(ln, ["Đức Trí"])).toBe("");
+    expect(missingVoice(tienHiep, ["Thục Anh"])).toBe("");
+    expect(missingVoice(ln, undefined)).toBe("");
+    expect(missingVoiceNote("Đức Trí")).toBe("Giọng Đức Trí trong mẫu không còn trên máy - giữ giọng đang chọn.");
+  });
+});
+
+describe("what applying a template changed", () => {
+  it("names only the choices the person had already made and the template overwrote", () => {
+    const before = draft({ narrator: "Bấm tay", profile: "high_quality", startNow: true });
+    const after = applyTemplate(before, ln);
+    expect(changedChoices(before, after)).toEqual(["giọng kể", "chất lượng", "model đọc hiểu", "bắt đầu ngay", "chờ bạn duyệt trước khi thu"]);
+    expect(changedChoices(after, applyTemplate(after, ln))).toEqual([]);
+  });
+
+  it("is enough to put the previous choices back", () => {
+    const before = draft({ narrator: "Bấm tay", analysisModel: "qwen3:8b" });
+    const after = applyTemplate(before, tienHiep);
+    expect({ ...after, ...templateChoices(before) }).toEqual({ ...before, analysisModel: "qwen3:8b", precastWait: false, template: undefined });
   });
 });

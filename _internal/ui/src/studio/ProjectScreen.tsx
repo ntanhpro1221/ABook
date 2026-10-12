@@ -74,6 +74,7 @@ import {
 import { CastList } from "@/listen/BookScreen";
 import { analyzerLabel, narratorLabel } from "./analyzerLabel";
 import { ApplyChangesDialog } from "./ApplyChanges";
+import { useUnmerge } from "./useUnmerge";
 import { CoverEditor } from "./CoverEditor";
 import { ChapterError } from "./ChapterError";
 import { friendlyError } from "./errorText";
@@ -598,13 +599,14 @@ function Actions({ book }: { book: BookSummary }) {
   // Phân tích xong thì sổ nhân vật đã đủ để làm tiếp; nút chỉ hiện khi thư mục truyện có chương mới sau chương cuối.
   const analyzed = book.segments.total > 0 && book.segments.analyzed === book.segments.total;
   const next = useContinuation(book.id, analyzed).data?.paths.length ?? 0;
+  const redoWaiting = book.phase === "done" ? (book.chapters.redo ?? 0) : 0;
   return (
     <div className="flex flex-wrap items-center gap-2 sm:mt-5">
       {book.chapters.completed > 0 && (
         // Một nút chính mỗi lúc: sách xong mà còn thay đổi chờ áp thì "Áp dụng" là việc chính, không phải hai nút cam cạnh nhau
         // (soát UX 29-09).
         <Button
-          variant={book.phase === "done" && !book.pendingChanges ? "primary" : "secondary"}
+          variant={book.phase === "done" && !book.pendingChanges && !redoWaiting ? "primary" : "secondary"}
           size="lg"
           icon={Headphones}
           className="max-sm:basis-full"
@@ -707,6 +709,17 @@ function Actions({ book }: { book: BookSummary }) {
         <Button variant="primary" size="lg" icon={RefreshCw} loading={start.isPending} onClick={() => setConfirmApply(true)}>
           Áp dụng {book.pendingChanges} thay đổi
         </Button>
+      ) : redoWaiting > 0 ? (
+        // Chương chờ thu lại mà không còn yêu cầu nào để "áp" (đổi người kể “tôi”, hay một lần chạy áp sửa rồi bị dừng giữa chừng): chạy tiếp
+        // là thu những câu ấy. Không có nút này thì sách "Hoàn tất" mà chương cứ chờ mãi (soát UX a32, #1).
+        <>
+          <Button variant="primary" size="lg" icon={Play} loading={start.isPending} onClick={() => begin(book.id)}>
+            Tiếp tục
+          </Button>
+          <p className="basis-full text-pretty text-sm text-fg-2">
+            {redoWaiting === 1 ? "1 chương đang chờ thu lại" : `${redoWaiting} chương đang chờ thu lại`} theo sửa của bạn. Bản cũ vẫn nghe được cho tới khi thu xong.
+          </p>
+        </>
       ) : null}
       {next > 0 && (
         <Button variant="secondary" size="lg" icon={BookPlus} onClick={() => navigate(`/studio/new?continue=${book.id}`)}>
@@ -737,7 +750,7 @@ function Actions({ book }: { book: BookSummary }) {
         onOpenChange={setConfirmApply}
         onApply={() => begin(book.id)}
       />
-      {studio.missing && !live && (book.phase !== "done" || Boolean(book.pendingChanges)) && (
+      {studio.missing && !live && (book.phase !== "done" || Boolean(book.pendingChanges) || redoWaiting > 0) && (
         <p className="flex basis-full flex-wrap items-center gap-x-3 gap-y-2 text-pretty text-sm text-fg-2">
           <span>
             Máy này {studio.repair ? "cần sửa" : studio.update ? "cần cập nhật" : "chưa cài"} Studio nên chưa làm tiếp được phần phân tích và thu âm (nghe, xem,
@@ -1107,6 +1120,7 @@ export function ProjectScreen() {
   const workCount = Math.max(0, useWorkCount(id ?? "", precastOn || tab === "work" || tab === "precast", !scriptFirst) - (precastKeys?.size ?? 0)) + useInboxCount(id ?? "", !remoteStudio);
   const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
   const [merging, setMerging] = useState<CastMember | null>(null);
+  const unmerge = useUnmerge(id ?? "");
   const [renaming, setRenaming] = useState<CastMember | null>(null);
   const [gendering, setGendering] = useState<CastMember | null>(null);
   const { data: cast } = useCast(id);
@@ -1306,6 +1320,7 @@ export function ProjectScreen() {
               book={book}
               onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })}
               onMerge={setMerging}
+              onUnmerge={(person) => unmerge.mutate(person)}
               onRename={setRenaming}
               onGender={setGendering}
               onOpenReview={(card) => jump({ tab: "review" }, "precast", card)}
@@ -1374,6 +1389,7 @@ export function ProjectScreen() {
             onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })}
             onPickNarrator={book.castLocked ? () => setPicking({ name: "NARRATOR", displayName: "người kể" }) : undefined}
             onMerge={setMerging}
+            onUnmerge={(person) => unmerge.mutate(person)}
             onRename={setRenaming}
             onGender={setGendering}
             narratorNote={<><NarratorNote book={book} /><TellerModeSwitch book={book} /></>}

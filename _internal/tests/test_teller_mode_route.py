@@ -79,7 +79,7 @@ def test_a_running_book_is_refused_and_nothing_is_written(studio) -> None:
 
     status, body = _call(server, "PUT", _url(paths), {"mode": "teller"})
 
-    assert status == 409 and "tạm dừng" in json.dumps(body, ensure_ascii=False)
+    assert status == 409 and "Dừng" in json.dumps(body, ensure_ascii=False)
     assert teller_voice.read(paths.root)["mode"] == "narrator" and _speakers(db)["c1s0"] == "NARRATOR"
 
 

@@ -53,6 +53,17 @@ def load(project_root: Path) -> dict[str, str]:
     return resolved
 
 
+def added_at(project_root: Path) -> dict[str, float]:
+    """{khoá bí danh: mốc ghi} - mốc cũng là `requested_at` của các câu cùng lần "Gộp vào…" (đường rút `remove_added_at`)."""
+    stamps: dict[str, float] = {}
+    for entry in _entries(project_root):
+        try:
+            stamps[key(entry["alias"])] = float(entry.get("at") or 0)
+        except (TypeError, ValueError):
+            continue
+    return stamps
+
+
 def _write(project_root: Path, entries: list[dict[str, Any]]) -> None:
     target = Path(project_root) / FILE_NAME
     temporary = target.with_name(f".{FILE_NAME}.tmp")
@@ -60,22 +71,30 @@ def _write(project_root: Path, entries: list[dict[str, Any]]) -> None:
     os.replace(temporary, target)
 
 
-def add(project_root: Path, alias: str, person: str, *, now: float | None = None) -> bool:
-    """Ghi "`alias` là `person`". Quyết định mới nhất thắng: bí danh ấy từng trỏ về người khác, hay người ấy từng bị ghi là
-    bí danh của `alias` (chiều ngược), thì bản cũ bỏ đi. Ai đang trỏ về `alias` được trỏ thẳng về `person`. Trả về True khi
-    file đổi."""
-    alias, person = str(alias).strip()[:MAX_NAME], str(person).strip()[:MAX_NAME]
+def decide(entries: list[dict[str, Any]], alias: str, person: str, now: float) -> list[dict[str, Any]] | None:
+    """Danh sách bí danh sau quyết định "`alias` là `person`", hay None khi không có gì đổi (tên rỗng, hai tên là một, hay đúng
+    cặp ấy đã có). Quyết định mới nhất thắng: bí danh ấy từng trỏ về người khác, hay người ấy từng bị ghi là bí danh của `alias`
+    (chiều ngược), thì bản cũ bỏ đi. Ai đang trỏ về `alias` được trỏ thẳng về `person`. Dùng chung cho `add` và lớp ý muốn của
+    người nghe (`webui.book_wishes.request_alias`; Kotlin: BookWishes.requestAlias) - ba nơi phải ra cùng một danh sách."""
     if not alias or not person or key(alias) == key(person):
-        return False
-    entries = _entries(project_root)
+        return None
     if any(key(entry["alias"]) == key(alias) and key(entry["person"]) == key(person) for entry in entries):
-        return False
-    kept = [entry for entry in entries if key(entry["alias"]) != key(alias)
+        return None
+    kept = [dict(entry) for entry in entries if key(entry["alias"]) != key(alias)
             and not (key(entry["alias"]) == key(person) and key(entry["person"]) == key(alias))]
     for entry in kept:
         if key(entry["person"]) == key(alias):
             entry["person"] = person
-    kept.append({"alias": alias, "person": person, "at": time.time() if now is None else now})
+    kept.append({"alias": alias, "person": person, "at": now})
+    return kept
+
+
+def add(project_root: Path, alias: str, person: str, *, now: float | None = None) -> bool:
+    """Ghi "`alias` là `person`" (quy tắc ở `decide`). Trả về True khi file đổi."""
+    alias, person = str(alias).strip()[:MAX_NAME], str(person).strip()[:MAX_NAME]
+    kept = decide(_entries(project_root), alias, person, time.time() if now is None else now)
+    if kept is None:
+        return False
     _write(project_root, kept)
     return True
 

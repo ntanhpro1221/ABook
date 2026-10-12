@@ -260,3 +260,26 @@ def test_a_failure_of_the_teller_voice_never_stops_the_run_but_leaves_a_warning(
     worker.apply_teller_voice(paths.root, db, settings, None)  # pipeline giả không có `log`
 
     assert _events(db, "TELLER_VOICE_SKIPPED") == 2 and "hỏng giữa chừng" in messages[0]
+
+
+def test_the_technical_log_says_what_the_machine_did_in_one_line(tmp_path: Path) -> None:
+    """Nhật ký > Chi tiết kỹ thuật (soát UX a32, lỗi 6): máy đổi người nói bằng đường của người nghe nên mỗi câu ghi "Người nghe gán câu …";
+    lô ấy gộp thành MỘT dòng nói máy làm, và sự kiện tổng kết có câu người đọc."""
+    from abook.webui import store
+
+    paths, db, settings = _book(tmp_path)
+    teller_voice.ensure(paths.root, db, settings)
+
+    with db.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM runtime_events WHERE code='SPEAKER_SET_BY_LISTENER'").fetchone()[0] == 2
+    lines = [item["text"] for item in store.activity(paths.root, technical=True)]
+    assert not any("Người nghe gán" in line for line in lines), lines
+    assert "Máy chuyển 2 câu nghĩ thầm của Mai sang giọng dẫn" in lines
+    assert any(line.startswith("Máy đổi giọng dẫn từ ") and "Ngọc Linh" in line for line in lines)
+    assert not any("inner thoughts" in line or "narration voice" in line for line in lines), "không còn mã thô tiếng Anh"
+    story = [item["text"] for item in store.activity(paths.root)]
+    assert "Máy chuyển 2 câu nghĩ thầm của người kể “tôi” sang giọng dẫn" in story
+
+    # Người nghe tự đổi một câu: dòng của người nghe vẫn là "Người nghe", không bị gộp nhầm vào việc của máy.
+    db.apply_listener_speaker(stable_id="c1s3", text_sha256="sha-c1s3", speaker="MAI")
+    assert any(line.startswith("Người nghe gán câu c1s3") for line in (item["text"] for item in store.activity(paths.root, technical=True)))

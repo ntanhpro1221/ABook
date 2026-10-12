@@ -111,10 +111,39 @@ def test_a_wish_on_a_line_that_changed_or_a_person_with_no_voice_is_refused_on_t
     assert _post(call, "/speaker", {"stableId": LUCIEN_LINE[0], "textSha256": LUCIEN_LINE[1], "speaker": "ANONYMOUS_X",
                                     "newGender": "female"})[0] == 400
     assert _post(call, "/line", {"stableId": HEIDI_LINE[0], "textSha256": HEIDI_LINE[1], "emotion": "bored"})[0] == 400
-    assert _post(call, "/voice", {"character": "NARRATOR", "gender": "male"})[0] == 400
+    assert _post(call, "/voice", {"character": "NARRATOR", "gender": "male"})[0] == 400, "người kể không có giới để đổi"
+    assert _post(call, "/voice", {"character": "NARRATOR", "avoid": "preset_a"})[0] == 400
     assert _post(call, "/pronunciation", {"surface": "Hai kes", "spokenForm": "Hên-khơ"})[0] == 400
     assert _post(call, "/pronunciation", {"surface": "Mở/đóng", "spokenForm": "mở hoặc đóng"})[0] == 400, "không bao giờ được dùng"
     assert list(book_edits.load(folder)["wishes"]) == ["speakers"], "chỉ ý muốn hợp lệ được ghi"
+
+
+def test_the_narrator_voice_can_be_asked_for_on_a_package_like_on_the_desktop(imported) -> None:  # noqa: F811
+    """Soát a32 P1: thẻ "Lời dẫn nên đọc bằng giọng nữ…" của bản chụp dự án bấm được ở sách .abook - chỉ giọng, không giới."""
+    _app, folder, _identifier, call = imported
+    assert _post(call, "/voice", {"character": "NARRATOR", "preset": "Thiện Minh"})[0] == 200
+    assert "NARRATOR" in book_edits.load(folder)["wishes"]["voices"]
+
+
+def test_a_new_decision_about_two_names_wins_like_aliases_add(imported) -> None:  # noqa: F811
+    """Điện thoại cất lời gộp theo CÙNG quy tắc `aliases.add` (Kotlin: BookWishesTest) - điều người nghe thấy là điều Studio sẽ ghi."""
+    _app, folder, _identifier, _call = imported
+    # Bí danh đi cùng một lần chọn người nói (bí danh đơn lẻ không được tính là thay đổi nên không tự giữ file sửa).
+    book_wishes.request_speakers(folder, [(LUCIEN_LINE[0], LUCIEN_LINE[1])], "HEIDI", now=1790950000.0)
+
+    def pairs() -> list[tuple[str, str]]:
+        return [(item["alias"], item["person"]) for item in book_edits.load(folder)["wishes"].get("aliases") or []]
+
+    assert book_wishes.request_alias(folder, "Mai", "Hạ", now=1790950001.0)
+    assert not book_wishes.request_alias(folder, "mai", "HẠ", now=1790950002.0), "đúng cặp đã có"
+    assert not book_wishes.request_alias(folder, "Hạ", "hạ", now=1790950003.0), "hai cách viết một tên"
+    assert book_wishes.request_alias(folder, "Hạ", "Mai", now=1790950004.0)
+    assert pairs() == [("Hạ", "Mai")], "chiều ngược bị bỏ"
+    assert book_wishes.request_alias(folder, "Mai", "Hạ", now=1790950005.0)
+    assert book_wishes.request_alias(folder, "Hạ", "Lan", now=1790950006.0)
+    assert pairs() == [("Mai", "Lan"), ("Hạ", "Lan")], "ai trỏ về bí danh được trỏ thẳng về người mới"
+    assert book_wishes.request_alias(folder, "Mai", "Cúc", now=1790950007.0)
+    assert pairs() == [("Hạ", "Lan"), ("Mai", "Cúc")]
 
 
 def test_a_wish_another_window_just_changed_is_told_not_silently_replaced(imported) -> None:  # noqa: F811

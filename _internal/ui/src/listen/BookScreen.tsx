@@ -225,6 +225,7 @@ export function PersonRow({
   person,
   onPickVoice,
   onMerge,
+  onUnmerge,
   onRename,
   onGender,
   waiting,
@@ -239,6 +240,8 @@ export function PersonRow({
   onPickVoice?: (person: CastMember) => void;
   /** Chỉ Studio: "Gộp vào…" - máy tách một người thành hai tên. */
   onMerge?: (person: CastMember) => void;
+  /** Chỉ Studio: "Bỏ gộp" - rút lần "Gộp vào…" đang chờ áp dụng của người này. */
+  onUnmerge?: (person: CastMember) => void;
   /** Chỉ Studio: "Đổi tên" - tên trên màn hình, không đổi gì trong audio. */
   onRename?: (person: CastMember) => void;
   /** Chỉ Studio: "Đổi giới tính" - một thay đổi chờ "Áp dụng thay đổi" (POST /voice). */
@@ -288,6 +291,16 @@ export function PersonRow({
         {person.mergedInto && (onPickVoice || waiting) && (
           <div className="mt-0.5 break-words text-xs font-medium text-accent-text">
             {waiting ? "Đang chờ máy làm sách" : "Chờ áp dụng"}: gộp vào {cleanName(person.mergedInto)}
+            {onUnmerge && typeof person.mergedAt === "number" && (
+              <button
+                type="button"
+                className="ml-2 rounded-md font-medium underline underline-offset-2 hover:text-fg"
+                aria-label={`Bỏ gộp ${name} vào ${cleanName(person.mergedInto)}`}
+                onClick={() => onUnmerge(person)}
+              >
+                Bỏ gộp
+              </button>
+            )}
           </div>
         )}
         <div className="tabular mt-1 text-xs text-fg-2">
@@ -356,7 +369,7 @@ function reachedTitles(chapters: ListenChapter[], until: number | undefined): Se
 
 /** `reached`: tên các chương tới chỗ đang nghe (trang nghe) - người chỉ xuất hiện SAU đó bị ẩn tới khi bấm hiện, để dàn nhân
  *  vật không lộ nội dung ("Douglas · từ Chương 738" khi đang nghe Chương 725 - soát UX 29-09). Studio không truyền: hiện hết. */
-export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onRename, onGender, reached, waiting, narratorNote }: {
+export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmerge, onRename, onGender, reached, waiting, narratorNote }: {
   bookId: string;
   /** Dưới hàng "Người kể chuyện": đổi giọng kể ở đâu, hay vì sao chưa đổi được. */
   narratorNote?: ReactNode;
@@ -364,6 +377,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onRenam
   onPickNarrator?: () => void;
   onPickVoice?: (person: CastMember) => void;
   onMerge?: (person: CastMember) => void;
+  onUnmerge?: (person: CastMember) => void;
   onRename?: (person: CastMember) => void;
   onGender?: (person: CastMember) => void;
   reached?: Set<string>;
@@ -410,7 +424,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onRenam
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {cast.characters
           .filter((person) => later || !reached || !person.firstChapter || reached.has(person.firstChapter))
-          .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}
+          .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}
       </div>
       {reached && ahead(cast.characters, reached) > 0 && (
         <button type="button" onClick={() => setLater((value) => !value)} className="touch-row mt-3 text-sm font-medium text-fg-2 hover:text-fg">
@@ -422,7 +436,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onRenam
           <button type="button" onClick={() => setExtras((value) => !value)} className="touch-row text-sm font-medium text-fg-2 hover:text-fg">
             {extras ? "Ẩn" : "Hiện"} {cast.extras.length} vai phụ chỉ xuất hiện trong một cảnh
           </button>
-          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}</div>}
+          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}</div>}
         </div>
       )}
       {/* Phần nối tiếp: dàn mang sang chưa nói ở phần này (soát UX a6 01-10, B2 - tab từng ghi "Chưa có dàn"). Mở sẵn khi chưa ai

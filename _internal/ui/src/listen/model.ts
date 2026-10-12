@@ -354,6 +354,8 @@ export interface CastMember {
   pendingVoice?: { preset: string; gender: string } | null;
   /** Đã "Gộp vào…" người khác mà chưa áp (store.cast): tên người sẽ nhận các câu của người này. */
   mergedInto?: string | null;
+  /** Mốc của lần “Gộp vào…” ấy (cùng mốc với các câu đã đổi người nói) - đủ để tìm lại và rút (“Bỏ gộp”). Chỉ ở dự án có xưởng. */
+  mergedAt?: number | null;
 }
 
 export interface Cast {

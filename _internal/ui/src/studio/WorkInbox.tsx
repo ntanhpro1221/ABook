@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioLines, Check, Pause, Play, RotateCcw, Search, UserPlus } from "lucide-react";
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
@@ -15,7 +15,8 @@ import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, use
 import { seenFor, warnElsewhere } from "./elsewhere";
 import { examplesPage, keepRequests, moreText, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
 import { decidedTitle, inboxLead, markNames, midSentence, narratorButtons, rerecordSentence, sentence } from "./workText";
-import { focusAfterChange, type WorkLists } from "./workFocus";
+import { focusCard, useCardFocus, type CardFocusEnds } from "./useCardFocus";
+import type { WorkLists } from "./workFocus";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
@@ -364,7 +365,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           aria-invalid={problem ? true : undefined}
           aria-describedby={problem ? `${inputId}-problem` : undefined}
           className={cn(
-            "h-8 w-40 rounded-lg border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus",
+            "h-8 w-40 rounded-lg border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus",
             problem ? "border-danger" : "border-line",
           )}
         />
@@ -420,6 +421,11 @@ function SpeakerFix({
   // gõ tên + chọn giới, dây chuyền tạo người ấy và cấp giọng riêng như bước phân vai.
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
+  // Mở “Người khác…” để gõ tên thì con trỏ vào ô luôn (bàn phím không phải Tab qua cả hàng nút để tìm nó).
+  const nameInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (creating) nameInput.current?.focus();
+  }, [creating]);
   const save = useMutation({
     mutationFn: ({ speaker, newGender }: { speaker: string; newGender?: string }) =>
       api<{ lines: number; speaker: string; alias?: boolean; requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${bookId}/speaker`, {
@@ -439,13 +445,14 @@ function SpeakerFix({
       refreshAfterDecision(client, bookId);
       const which = (lines?.length ?? 1) > 1 ? `${lines?.length} câu này` : "câu này";
       const keep = speaker === item.currentValue;
-      // Gộp tên / quy ước 『』 cả cuốn còn ghi ở cấp TÊN cho các phần sau - hoàn tác chỉ lùi được phần câu, nên không mời.
+      // Thẻ "hai tên một người": máy chủ rút luôn bí danh ghi cùng mốc (server._withdraw) nên hoàn tác được. Quy ước 『』 cả cuốn còn ghi ở
+      // cấp cuốn cho các phần sau - hoàn tác chỉ lùi được phần câu, nên không mời.
       const back = item.requested
         ? `Trở lại quyết định trước: ${which} của ${midSentence(item.requested)}.`
         : item.pick
           ? `${sentence(which)} trở lại chờ duyệt.`
           : `${sentence(which)} lại là của ${midSentence(item.current)}.`;
-      const undo = alias ? {} : { action: undoAction(client, bookId, "speaker", [{ lines, requestedAt, keep }], back), duration: UNDO_MS };
+      const undo = alias && item.kind === "bracket" ? {} : { action: undoAction(client, bookId, "speaker", [{ lines, requestedAt, keep }], back), duration: UNDO_MS };
       const replaced = Object.values(elsewhere ?? {});
       if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? personOf(item, replaced[0]) : "", undo.action?.onClick);
       if (keep) {
@@ -541,7 +548,7 @@ function SpeakerFix({
             : "Câu xen kẽ: chỉ những câu đánh dấu “sẽ đổi”. Cả chuỗi: mọi câu của chuỗi này - khi cả chuỗi là lời của một người."}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Ai nói câu này">
+      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
         {shownChoices.map((choice, index) => (
           <Button data-choice
             key={choice.value}
@@ -605,12 +612,13 @@ function SpeakerFix({
             </div>
           )}
           <input
+            ref={nameInput}
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder={sample ? `Tên người nói (vd ${sample})` : "Tên người nói"}
             aria-label="Tên người nói mới"
             maxLength={80}
-            className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus"
+            className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
           />
           <span className="text-xs text-fg-2">Giới (bấm để lưu):</span>
           {(
@@ -645,6 +653,10 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const section = item.narratorSection!;
   const [choosing, setChoosing] = useState(false);
   const [name, setName] = useState("");
+  const nameInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (choosing) nameInput.current?.focus();
+  }, [choosing]);
   const where = { chapterIndex: section.chapterIndex, fromSeq: section.fromSeq, toSeq: section.toSeq };
   const buttons = narratorButtons(section.narrator, section.heading);
   const save = useMutation({
@@ -678,7 +690,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
           {item.redoOnly ? "Đã ghi - áp khi làm lại phân tích từ đầu." : `Đã ghi: ${item.requested}.`}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Người kể của đoạn">
+      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
         <Button data-choice size="sm" variant={item.requested === buttons.accepted ? "primary" : "secondary"} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
           {buttons.accept}
         </Button>
@@ -697,12 +709,13 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             </Button>
           ))}
           <input
+            ref={nameInput}
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="Tên người kể"
             aria-label="Tên người kể của đoạn"
             maxLength={80}
-            className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus"
+            className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
           />
           <Button size="sm" variant="primary" disabled={!typed || save.isPending} onClick={() => save.mutate({ action: "choose", narrator: typed })}>
             Đặt người kể
@@ -878,12 +891,13 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       id={`work-${item.key}`}
       data-work-key={item.key}
       tabIndex={-1}
+      aria-labelledby={`work-${item.key}-title`}
       aria-current={active ? "true" : undefined}
       className={cn("scroll-mt-24 rounded-xl border bg-panel p-4", active ? "border-focus ring-1 ring-focus" : "border-line")}
     >
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="rounded-full bg-hover px-2 py-0.5 text-[0.6875rem] font-medium text-fg-2">{KIND_LABEL[item.kind]}</span>
-        <h3 className="text-[0.9375rem] font-semibold">{decidedTitle(item) ?? item.title}</h3>
+        <h3 id={`work-${item.key}-title`} className="text-[0.9375rem] font-semibold">{decidedTitle(item) ?? item.title}</h3>
         {item.requested && item.undo && <UndoDecision bookId={bookId} item={item} />}
       </div>
       <p className="mt-1.5 text-sm text-fg-2">{item.problem}</p>
@@ -1072,6 +1086,9 @@ interface InboxProps {
   onOpenPrecast?: () => void;
 }
 
+/** Hộp "Việc cần duyệt": hết thẻ thì tiêu điểm về dòng báo cuối danh sách, không có thì lời mở đầu. */
+const INBOX_ENDS: CardFocusEnds = { end: "work-end", lead: "work-lead" };
+
 /** Một nhóm thẻ việc chọn sẵn (màn "Duyệt trước khi thu"): đúng thẻ của hộp việc, sửa ngay trên thẻ như ở đó. */
 export function WorkCards({ book, items, onOpenReview, onOpenScript, onOpenNames, onPickVoice }: {
   book: BookSummary;
@@ -1134,12 +1151,6 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
     setCursorState(value);
   };
   const keys = useRef<{ items: WorkItem[] }>({ items: [] });
-  /** Đặt tiêu điểm vào thẻ (hay dòng báo cuối danh sách `work-end`; không có dòng ấy thì lời mở đầu `work-lead`) và cuộn cho thấy. */
-  const focusCard = (id: string) => {
-    const element = document.getElementById(id) ?? (id === "work-end" ? document.getElementById("work-lead") : null);
-    element?.focus({ preventScroll: true });
-    element?.scrollIntoView({ block: "nearest" });
-  };
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey || event.altKey) return;
@@ -1153,7 +1164,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
         event.preventDefault();
         const next = current === null ? 0 : Math.min(Math.max(current + (event.key === "j" ? 1 : -1), 0), list.length - 1);
         setCursor(next);
-        window.setTimeout(() => focusCard(`work-${list[next].key}`), 0);
+        window.setTimeout(() => focusCard(`work-${list[next].key}`, INBOX_ENDS), 0);
       } else if (/^[1-9]$/.test(event.key) && current !== null) {
         const choices = document.querySelectorAll<HTMLButtonElement>(`#work-${CSS.escape(list[current].key)} [data-choice]:not(:disabled)`);
         const choice = choices[Number(event.key) - 1];
@@ -1170,36 +1181,9 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
     // setCursor chỉ ghi ref + state - không cần gắn lại.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Quyết / hoàn tác làm thẻ đang giữ tiêu điểm rời danh sách: tiêu điểm sang thẻ kế thay vì rơi về BODY (soát a31 K4; luật ở workFocus.ts).
-  // `lastCard`: thẻ chứa tiêu điểm lần gần nhất, "toast" nếu tiêu điểm ở thông báo (nút Hoàn tác), null nếu ở chỗ khác.
-  const lastCard = useRef<string | null>(null);
+  // Quyết / hoàn tác làm thẻ đang giữ tiêu điểm rời danh sách: tiêu điểm sang thẻ kế thay vì rơi về BODY (useCardFocus.ts).
   const lists = useRef<WorkLists | null>(null);
-  const seen = useRef<WorkLists | null>(null);
-  useEffect(() => {
-    const onFocus = (event: FocusEvent) => {
-      const target = event.target instanceof Element ? event.target : null;
-      const card = target?.closest<HTMLElement>("[data-work-key]");
-      lastCard.current = card ? (card.dataset.workKey ?? null) : target?.closest("[data-sonner-toast]") ? "toast" : null;
-    };
-    document.addEventListener("focusin", onFocus);
-    return () => document.removeEventListener("focusin", onFocus);
-  }, []);
-  useLayoutEffect(() => {
-    const before = seen.current;
-    const now = lists.current;
-    seen.current = now;
-    if (!before || !now || lastCard.current === null) return;
-    const active = document.activeElement;
-    // Nút Hoàn tác nằm trong thông báo sắp tắt: thẻ vừa quay lại nhận tiêu điểm luôn, không chờ thông báo tắt rồi rơi về BODY.
-    const inToast = Boolean(active?.closest("[data-sonner-toast]"));
-    if (active && active !== document.body && active.isConnected && !inToast) return;
-    const target = focusAfterChange(before, now, lastCard.current === "toast" ? null : lastCard.current);
-    if (target === null) return;
-    const id = target === "end" ? "work-end" : `work-${target}`;
-    focusCard(id);
-    // Rời vùng thông báo thì sonner trả tiêu điểm về chỗ đứng TRƯỚC khi vào thông báo (thẻ cũ) - đặt lại một lần nữa sau đó.
-    if (inToast) window.setTimeout(() => focusCard(id), 0);
-  });
+  useCardFocus(lists, INBOX_ENDS);
   const { data, isLoading } = useQuery({
     queryKey: ["work", bookId],
     queryFn: () => api<WorkView>(`/api/books/${bookId}/work`),

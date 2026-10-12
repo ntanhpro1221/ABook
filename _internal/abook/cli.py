@@ -1659,9 +1659,8 @@ def _print_text_result(command: str, result: CommandResult) -> None:
         output = str(result.data.get("output", ""))
         if output:
             print(output, end="" if output.endswith("\n") else "\n")
-    elif command == "create":
-        print(json.dumps(result.data, ensure_ascii=False, indent=2))
-    elif command in {"status", "validate", "report", "doctor", "run", "resume", "stop"}:
+    elif command in {"create", "status", "validate", "report", "doctor", "run", "resume", "stop"} and result.data:
+        # Lệnh lỗi trước khi có gì để báo (data rỗng) chỉ in dòng ERROR: một dòng `{}` thừa phía trên không nói gì.
         print(json.dumps(result.data, ensure_ascii=False, indent=2))
     if result.error:
         print(f"ERROR: {result.error}", file=sys.stderr)

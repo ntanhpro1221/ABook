@@ -188,6 +188,23 @@ def test_a_speaker_card_offers_clickable_choices_and_hides_once_the_listener_kee
     assert not [item for item in work_items(project)["items"] if item["kind"] == "speaker"]
 
 
+def test_a_speaker_card_calls_a_person_by_the_name_the_cast_tab_shows(tmp_path: Path) -> None:
+    """Soát UX a32 #17: thẻ gọi "Mai" còn tab Nhân vật gọi "Mai Hạ" - cùng một người, hai tên. Thẻ dùng tên hiển thị của sổ nhân vật;
+    khoá (`value`) vẫn là tên chuẩn."""
+    import sqlite3
+    from contextlib import closing
+
+    project = make_book(tmp_path)
+    unsure_line(project, "c")
+    with closing(sqlite3.connect(project / "project.sqlite3")) as db:
+        db.execute("UPDATE characters SET display_name = 'Heidi Mai' WHERE canonical_name = 'HEIDI'")
+        db.commit()
+
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "speaker")
+    heidi = next(choice for choice in card["choices"] if choice["value"] == "HEIDI")
+    assert heidi["label"] == "Heidi Mai"
+
+
 def test_a_speaker_card_shows_the_neighbouring_lines_and_offers_only_people_with_a_voice(tmp_path: Path) -> None:
     """Một câu không đủ để quyết ai nói: thẻ mang câu liền trước và liền sau; người chưa nói câu nào (chưa có giọng) không phải chip vì
     bấm vào chỉ ra lỗi - cùng phép thử `speaker_target` với lúc ghi yêu cầu."""

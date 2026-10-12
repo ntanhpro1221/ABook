@@ -12,15 +12,14 @@ export interface NarratorDraft {
   /** Người dùng đã bấm một giọng (hay "Dùng lại" giọng phần trước, hay áp mẫu có ghi giọng kể). */
   narratorPicked?: boolean;
   firstPerson: string;
-  /** "Làm tiếp cuốn này" / "Sửa thiết lập": giọng kể đến từ sách trước, đã là lựa chọn. */
+  /** "Làm tiếp cuốn này": giọng kể đến từ sách trước, đã là lựa chọn. ("Sửa thiết lập" điền `narratorPicked` đúng như lúc tạo.) */
   seed?: unknown;
-  replaces?: unknown;
 }
 
-/** Giọng dẫn là của máy (gửi `narrator` rỗng): có người kể "tôi", người dùng chưa chọn giọng nào, không phải sách nối tiếp / sửa thiết lập, và
+/** Giọng dẫn là của máy (gửi `narrator` rỗng): có người kể "tôi", người dùng chưa chọn giọng nào, không phải sách nối tiếp, và
  *  giọng đang hiện không phải giọng mặc định người dùng đã đặt trong Cài đặt. */
 export function narratorIsAuto(draft: NarratorDraft, preferred: string | undefined, voices: readonly Pick<Voice, "name">[] | undefined): boolean {
-  if (!draft.firstPerson.trim() || draft.narratorPicked || draft.seed || draft.replaces) return false;
+  if (!draft.firstPerson.trim() || draft.narratorPicked || draft.seed) return false;
   return !(preferred && voices?.some((voice) => voice.name === preferred));
 }
 
