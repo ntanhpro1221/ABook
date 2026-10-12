@@ -841,6 +841,14 @@ def _command_create(args: argparse.Namespace) -> CommandResult:
         return CommandResult(data=preview)
 
     paths, db, used_settings = create_or_open_project(files, output_root, settings, args.title)
+    if args.settings_file is None and not db.casting_is_finalized():
+        # Người kể "tôi" mà không chọn --narrator: giọng dẫn là mặc định máy, máy chọn cùng giới người ấy sau phân vai.
+        from . import teller_voice
+
+        if teller_voice.auto_for_new_book(str(getattr(args, "first_person", "") or ""),
+                                          _chapter_narrators(getattr(args, "first_person_chapter", None)),
+                                          str(getattr(args, "narrator", "") or "")):
+            teller_voice.mark_auto(paths.root)
     book = db.book()
     chapters = db.list_chapters()
     created = dict(preview)

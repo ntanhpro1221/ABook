@@ -446,7 +446,13 @@ def first_person_hint(paths: list[str]) -> dict[str, Any]:
 def create_book(library_root: Path, paths: list[str], title: str, profile: str, narrator: str,
                 first_person: str = "", settings_overrides: dict[str, Any] | None = None,
                 first_person_chapters: dict[str, str] | None = None,
-                drop_credit_lines: bool | None = None, drop_tail_credit_lines: bool | None = None) -> Path:
+                drop_credit_lines: bool | None = None, drop_tail_credit_lines: bool | None = None,
+                first_person_gender: str = "") -> Path:
+    """`narrator` rỗng = người dùng không chọn giọng dẫn: sách có người kể "tôi" thì máy chọn giọng dẫn cùng giới người ấy
+    (abook/teller_voice.py). `first_person_gender` ("male"/"female"/"" = chưa rõ): người dùng nói giới người kể "tôi" ngay lúc tạo -
+    ghim giới ấy cho nhân vật (như một người nghe ghim) và, khi không chọn giọng dẫn, giọng dẫn cùng giới được đặt NGAY, để bước phân vai
+    tránh nó."""
+    from .. import teller_voice
     from ..character_registry import PRONOUNS, normalize_name
     from ..config import build_settings
     from ..project import create_or_open_project
@@ -458,8 +464,12 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
     if first_person and normalize_name(first_person) in PRONOUNS:
         raise ValueError(f'"{first_person}" là một đại từ, không phải một nhân vật - điền tên của người xưng "tôi"')
     voices: dict[str, Any] = {}
+    if first_person_gender and (first_person_gender not in teller_voice.GENDERS or not first_person):
+        raise ValueError("Giới của người kể “tôi” phải là nam hoặc nữ, và chỉ có nghĩa khi đã điền tên người kể")
     if narrator:
         voices["narrator_voice"] = narrator
+    elif first_person_gender:
+        voices["narrator_gender"] = first_person_gender  # giọng dẫn mặc định của giới ấy (config.build_settings)
     if first_person:
         # Cùng cài đặt với `cli create --first-person`: prompt phân tích nói cho model biết "tôi" là ai, và sau phân
         # tích các nhãn đại từ được gộp về người ấy.
@@ -486,7 +496,12 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
         overrides["text"] = {**overrides.get("text", {}), "drop_tail_credit_lines": bool(drop_tail_credit_lines)}
     settings = build_settings(profile, overrides or None)
     library_root.mkdir(parents=True, exist_ok=True)
-    paths_created, _db, _settings = create_or_open_project(files, library_root, settings, title.strip() or None)
+    paths_created, db, _settings = create_or_open_project(files, library_root, settings, title.strip() or None)
+    if not db.casting_is_finalized():  # sách đã phân vai (mở lại đúng sách cũ) thì giọng dẫn đã là chuyện đã rồi
+        if teller_voice.auto_for_new_book(first_person, chapters, narrator):
+            teller_voice.mark_auto(paths_created.root)
+        if first_person_gender:
+            db.lock_character_gender(first_person, first_person_gender)  # ghim như người nghe: thắng suy đoán của model
     return paths_created.root
 
 

@@ -47,6 +47,7 @@ import {
 } from "@/studio/data";
 import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
+import { narratorIsAuto, recommendedFor, type TellerGender } from "@/studio/narratorChoice";
 import { creditKind, creditLine, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS, type CreditDrop, type Credits } from "@/studio/credits";
 import { samePath } from "@/studio/samePath";
 import { splitOutcome } from "@/studio/splitOffer";
@@ -134,8 +135,12 @@ interface Draft {
   title: string;
   titleEdited: boolean;
   narrator: string;
+  /** Người dùng đã tự chọn giọng kể (bấm một giọng, hay áp mẫu có ghi giọng): không thì máy chọn giọng dẫn cùng giới người kể "tôi". */
+  narratorPicked?: boolean;
   /** Người xưng "tôi" ở truyện kể ngôi thứ nhất ("" = ngôi thứ ba). */
   firstPerson: string;
+  /** Giới của người kể "tôi" (người dùng nói; không có = chưa rõ, máy tự đoán sau khi đọc truyện). */
+  firstPersonGender?: TellerGender;
   /** Chương đổi góc kể (gợi ý của máy) mà người dùng bỏ chọn - số chương trong sách. */
   povOff?: number[];
   profile: Profile;
@@ -1075,11 +1080,13 @@ function PovChapters({ hint, narrator, off, onOffChange }: {
   );
 }
 
-function FirstPersonQuestion({ paths, seedFrom, value, onChange, povOff, setPovOff }: {
+function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGender, povOff, setPovOff }: {
   paths: string[];
   seedFrom?: string;
   value: string;
   onChange: (name: string) => void;
+  gender?: TellerGender;
+  onGender: (gender: TellerGender | undefined) => void;
   povOff: number[];
   setPovOff: (off: number[]) => void;
 }) {
@@ -1137,6 +1144,23 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, povOff, setPovO
           className="mt-1.5 h-11 w-full rounded-xl border border-line bg-panel px-3.5 text-[0.9375rem] font-medium text-fg outline-none focus:border-focus"
         />
       </label>
+      {value.trim() && (
+        <div className="mt-3">
+          <Segmented
+            label="Người kể là"
+            value={gender ?? "unknown"}
+            onChange={(next) => onGender(next === "male" || next === "female" ? next : undefined)}
+            options={[
+              { value: "unknown", label: "Chưa rõ" },
+              { value: "male", label: "Nam" },
+              { value: "female", label: "Nữ" },
+            ]}
+          />
+          <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">
+            Chưa rõ thì máy đoán sau khi đọc truyện. Lời dẫn dùng giọng cùng giới với người kể, trừ khi bạn chọn giọng kể ở dưới.
+          </p>
+        </div>
+      )}
       <PovChapters hint={hint} narrator={value} off={povOff} onOffChange={setPovOff} />
     </section>
   );
@@ -1150,6 +1174,9 @@ function VoiceStep({
   previousNarrator,
   firstPerson,
   setFirstPerson,
+  firstPersonGender,
+  setFirstPersonGender,
+  narratorAuto,
   povOff,
   setPovOff,
 }: {
@@ -1160,6 +1187,10 @@ function VoiceStep({
   previousNarrator?: string;
   firstPerson: string;
   setFirstPerson: (name: string) => void;
+  firstPersonGender?: TellerGender;
+  setFirstPersonGender: (gender: TellerGender | undefined) => void;
+  /** Giọng kể đang do máy chọn (người dùng chưa bấm giọng nào): đổi theo giới người kể "tôi". */
+  narratorAuto: boolean;
   povOff: number[];
   setPovOff: (off: number[]) => void;
 }) {
@@ -1197,9 +1228,16 @@ function VoiceStep({
         seedFrom={seedFrom}
         value={firstPerson}
         onChange={setFirstPerson}
+        gender={firstPersonGender}
+        onGender={setFirstPersonGender}
         povOff={povOff}
         setPovOff={setPovOff}
       />
+      {narratorAuto && (
+        <p className="mt-4 max-w-2xl text-sm text-fg-2 text-pretty">
+          Giọng kể đang để máy chọn: lời dẫn dùng giọng cùng giới với người kể “tôi”. Bấm một giọng bên dưới nếu bạn muốn giọng khác.
+        </p>
+      )}
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Segmented label="Giới tính" value={gender} onChange={setGender} options={[
           { value: "all", label: "Mọi giọng" },
@@ -1350,7 +1388,9 @@ function ConfirmStep({
   title,
   scan,
   narrator,
+  narratorAuto,
   firstPerson,
+  firstPersonGender,
   povChapters,
   profile,
   seed,
@@ -1371,7 +1411,9 @@ function ConfirmStep({
   title: string;
   scan: ScanResult;
   narrator: string;
+  narratorAuto: boolean;
   firstPerson: string;
+  firstPersonGender?: TellerGender;
   povChapters: Record<string, string>;
   profile: Profile;
   seed?: Seed;
@@ -1411,8 +1453,10 @@ function ConfirmStep({
         ]] as [string, string][])
       : []),
     ["Độ dài audio", `khoảng ${formatLength(scan.totals.audioSeconds)}`],
-    ["Giọng kể", narrator],
-    ...(firstPerson ? ([["Người kể “tôi”", firstPerson]] as [string, string][]) : []),
+    ["Giọng kể", narratorAuto ? `máy chọn, cùng giới với người kể “tôi” (đang là ${narrator})` : narrator],
+    ...(firstPerson
+      ? ([["Người kể “tôi”", firstPersonGender ? `${firstPerson} (${firstPersonGender === "female" ? "nữ" : "nam"})` : firstPerson]] as [string, string][])
+      : []),
     ...(Object.keys(povChapters).length
       ? ([["Chương đổi người kể", Object.entries(povChapters).map(([chapter, name]) => `chương ${chapter}: ${name}`).join(", ")]] as [string, string][])
       : []),
@@ -1640,7 +1684,12 @@ export function NewProjectScreen() {
       analysisModel: "",
       startNow: true,
     };
-    setDraft((current) => (template ? applyTemplate(current, template, voices?.map((voice) => voice.name)) : { ...applyTemplate(current, fallback), template: undefined }));
+    // Mẫu có ghi giọng kể là lựa chọn của người dùng; "Mặc định" và mẫu không ghi giọng thì máy vẫn chọn giọng dẫn theo giới người kể "tôi".
+    setDraft((current) =>
+      template
+        ? { ...applyTemplate(current, template, voices?.map((voice) => voice.name)), narratorPicked: Boolean(template.narrator) }
+        : { ...applyTemplate(current, fallback), template: undefined, narratorPicked: false },
+    );
   };
 
   // Quét lại chỉ khi danh sách nguồn đổi; bỏ một chương là lọc ngay ở đây, không đọc lại cả thư mục.
@@ -1694,6 +1743,7 @@ export function NewProjectScreen() {
   // Cùng khoá truy vấn với bước "Tôi là ai?": lấy từ bộ nhớ đệm, không đọc lại sách.
   const { data: firstPersonHint } = useFirstPersonHint(scan?.files.map((file) => file.path) ?? [], draft.seed?.id);
   const povChapters = chosenPovChapters(firstPersonHint, draft.firstPerson, draft.povOff ?? []);
+  const autoNarrator = narratorIsAuto(draft, preferences?.newBookNarrator, voices);
 
   const title = draft.title;
   const allowed = !scan?.files.length || !title.trim() ? 0 : !draft.narrator ? 1 : STEPS.length - 1;
@@ -1730,8 +1780,10 @@ export function NewProjectScreen() {
         ...(volumeStarts.length > 1 ? { volumeStarts } : {}),
         title: title.trim(),
         profile: draft.profile,
-        narrator: draft.narrator,
+        // Máy chọn giọng dẫn: gửi rỗng - máy chủ đặt giọng cùng giới người kể "tôi" và ghi nhớ đó là lựa chọn của máy.
+        narrator: autoNarrator ? "" : draft.narrator,
         firstPerson: draft.firstPerson.trim(),
+        ...(draft.firstPerson.trim() && draft.firstPersonGender ? { firstPersonGender: draft.firstPersonGender } : {}),
         ...(Object.keys(povChapters).length ? { firstPersonChapters: povChapters } : {}),
         ...(draft.seed ? { seedFrom: draft.seed.id } : draft.replaces?.seedFrom ? { seedFrom: draft.replaces.seedFrom } : {}),
         ...(draft.replaces ? { replaces: draft.replaces.id } : {}),
@@ -1906,12 +1958,19 @@ export function NewProjectScreen() {
           {step === 1 && (
             <VoiceStep
               narrator={draft.narrator}
-              setNarrator={(narrator) => update({ narrator })}
+              setNarrator={(narrator) => update({ narrator, narratorPicked: true })}
               paths={scan?.files.map((file) => file.path) ?? []}
               seedFrom={draft.seed?.id}
               previousNarrator={draft.seed?.narrator}
               firstPerson={draft.firstPerson}
-              setFirstPerson={(firstPerson) => update({ firstPerson })}
+              setFirstPerson={(firstPerson) => update({ firstPerson, ...(firstPerson.trim() ? {} : { firstPersonGender: undefined }) })}
+              firstPersonGender={draft.firstPersonGender}
+              setFirstPersonGender={(firstPersonGender) => {
+                // Máy chọn giọng dẫn thì giọng hiện trong lưới theo giới vừa chọn (máy chủ đặt đúng giọng ấy lúc tạo).
+                const suggested = autoNarrator ? recommendedFor(voices, firstPersonGender) : undefined;
+                update({ firstPersonGender, ...(suggested ? { narrator: suggested } : {}) });
+              }}
+              narratorAuto={autoNarrator}
               povOff={draft.povOff ?? []}
               setPovOff={(povOff) => update({ povOff })}
             />
@@ -1925,7 +1984,9 @@ export function NewProjectScreen() {
               title={title.trim()}
               scan={scan}
               narrator={draft.narrator}
+              narratorAuto={autoNarrator}
               firstPerson={draft.firstPerson.trim()}
+              firstPersonGender={draft.firstPerson.trim() ? draft.firstPersonGender : undefined}
               povChapters={povChapters}
               profile={draft.profile}
               seed={draft.seed}
