@@ -106,7 +106,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
         ? etaOf(book)
         : `${book.chapters.completed}/${book.chapters.total} chương xong`;
   const needs = [
-    book.pendingChanges ? `${book.pendingChanges} thay đổi chờ áp` : "",
+    book.pendingChanges ? `${book.pendingChanges} thay đổi chờ áp` : book.phase === "done" && book.chapters.redo ? `${book.chapters.redo} chương chờ thu lại` : "",
     book.chapters.missingAudio ? `${book.chapters.missingAudio} chương mất audio` : "",
   ].filter(Boolean);
   return (

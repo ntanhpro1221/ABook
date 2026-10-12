@@ -849,13 +849,15 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
     renamed = renames.load(project_root)
 
     label_of: dict[str, str] = {}
+    display_of: dict[str, str] = {}  # tên chuẩn -> tên hiển thị của sổ nhân vật (điền ngay khi mở sổ bên dưới)
 
     def speaker_label(raw: str) -> str:
-        """Tên người nói như Studio đang hiện: tên người nghe đã "Đổi tên" (tab Nhân vật) thay tên gốc. Khoá (`value`,
-        `character`) giữ nguyên - chỉ chữ trên thẻ đổi. Nhớ theo tên: cả cuốn chỉ vài trăm tên mà hỏi cả trăm nghìn lần."""
+        """Tên người nói như Studio đang hiện: tên người nghe đã "Đổi tên" (tab Nhân vật) thay tên gốc, không thì tên hiển thị của
+        sổ nhân vật ("Mai Hạ", như tab Nhân vật - không phải khoá "Mai"). Khoá (`value`, `character`) giữ nguyên - chỉ chữ trên
+        thẻ đổi. Nhớ theo tên: cả cuốn chỉ vài trăm tên mà hỏi cả trăm nghìn lần."""
         label = label_of.get(raw)
         if label is None:
-            label = label_of[raw] = renamed.get(renames.name_key(str(raw))) or _speaker_label(raw)
+            label = label_of[raw] = renamed.get(renames.name_key(str(raw))) or _speaker_label(display_of.get(raw) or raw)
         return label
 
     with closing(store.connect(project_root)) as connection:
@@ -874,6 +876,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             int(row["id"]): row
             for row in connection.execute("SELECT id, canonical_name, display_name, gender, locked FROM characters")
         }
+        display_of.update({str(row["canonical_name"]): str(row["display_name"]) for row in characters.values() if row["display_name"]})
         # Số chương trong sách (first_person_chapters của settings khoá theo nó) - cho thẻ xưng hô (0b).
         chapter_index = {int(row[0]): int(row[1] or 0) for row in connection.execute("SELECT id, chapter_index FROM chapters")}
         # Giọng đang dùng của mỗi hồ sơ: khoá (để tránh khi tách hai người chung giọng) và giới của preset (thẻ giới nói

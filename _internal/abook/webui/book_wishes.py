@@ -387,13 +387,14 @@ def line_problem(lines: Lines, cast: list[dict[str, Any]], stable_id: str, text_
     return None
 
 
-def voice_problem(cast: list[dict[str, Any]], character: str, *, gender: str = "") -> str | None:
+def voice_problem(cast: list[dict[str, Any]], character: str, *, gender: str = "", avoid: str = "") -> str | None:
     """Mã lý do Studio sẽ từ chối giọng/giới của một nhân vật, hoặc None. Tên giọng (`preset`) không kiểm ở đây - bảng giọng
-    dùng được nằm ở máy có Studio, nơi bước áp kiểm lại (UNKNOWN_PRESET)."""
+    dùng được nằm ở máy có Studio, nơi bước áp kiểm lại (UNKNOWN_PRESET). Người kể (NARRATOR) chỉ đổi được giọng, như `voice_target`:
+    thẻ "Lời dẫn nên đọc bằng giọng nữ…" của bản chụp dự án phải bấm được cả ở đây (soát UX a32, P1)."""
     if gender not in ("", "male", "female"):
         return overrides.BAD_GENDER
     if overrides.character_key(character) == overrides.NARRATOR:
-        return overrides.NOT_A_CHARACTER
+        return overrides.NARRATOR_VOICE_ONLY if gender or avoid else None
     person = _person(cast, character)
     if person is None:
         return overrides.UNKNOWN_CHARACTER
@@ -499,18 +500,18 @@ def cancel_retake(folder: Path, stable_id: str) -> None:
 
 
 def request_alias(folder: Path, alias: str, person: str, *, now: float) -> bool:
-    """"`alias` là `person`" (thẻ "Một người hai tên", "Gộp vào…"): cất để chủ máy sản xuất ghi vào aliases.json của dự án.
-    Cùng tên bí danh thì mới thay cũ. Trả True khi có gì mới được ghi."""
+    """"`alias` là `person`" (thẻ "Một người hai tên", "Gộp vào…"): cất để chủ máy sản xuất ghi vào aliases.json của dự án, theo
+    đúng quy tắc của `aliases.add` (bỏ chiều ngược, dẫn xích) - để điều người nghe thấy trên điện thoại là điều Studio sẽ ghi.
+    Trả True khi có gì mới được ghi."""
     alias, person = book_edits.clean_text(alias, alias_book.MAX_NAME), book_edits.clean_text(person, alias_book.MAX_NAME)
-    if not alias or not person or alias_book.key(alias) == alias_book.key(person):
-        return False
     wrote: list[bool] = []
 
     def keep(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        if any(item["alias"] == alias and item["person"] == person for item in entries):
+        decided = alias_book.decide(entries, alias, person, float(now))
+        if decided is None:
             return entries
         wrote.append(True)
-        return [item for item in entries if item["alias"] != alias] + [{"alias": alias, "person": person, "at": float(now)}]
+        return decided
 
     _change(folder, lambda scratch: None, aliases=keep)
     return bool(wrote)

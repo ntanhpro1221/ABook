@@ -22,9 +22,12 @@ describe("narratorIsAuto", () => {
     expect(narratorIsAuto({ firstPerson: "Mai" }, "Giọng C", voices)).toBe(false);
     expect(narratorIsAuto({ firstPerson: "Mai" }, "Giọng đã xoá", voices)).toBe(true);
   });
-  it("sách nối tiếp và sửa thiết lập mang giọng kể của sách trước", () => {
+  it("sách nối tiếp mang giọng kể của sách trước", () => {
     expect(narratorIsAuto({ firstPerson: "Mai", seed: { id: "x" } }, undefined, voices)).toBe(false);
-    expect(narratorIsAuto({ firstPerson: "Mai", replaces: { id: "x" } }, undefined, voices)).toBe(false);
+  });
+  it("sửa thiết lập giữ đúng điều đã chọn lúc tạo: máy chọn vẫn là máy chọn, bạn chọn vẫn là bạn chọn", () => {
+    expect(narratorIsAuto({ firstPerson: "Mai", narratorPicked: false }, undefined, voices)).toBe(true);
+    expect(narratorIsAuto({ firstPerson: "Mai", narratorPicked: true }, undefined, voices)).toBe(false);
   });
 });
 

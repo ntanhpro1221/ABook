@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ClipboardCheck, MessageSquareQuote, SpellCheck, Users } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Switch } from "@/desktop/PhoneSync";
@@ -28,7 +28,9 @@ import {
   type PrecastStep,
 } from "./precast";
 import { nameKey, sameNames } from "./workText";
+import { useCardFocus, type CardFocusEnds } from "./useCardFocus";
 import { useWork, WorkCards } from "./WorkInbox";
+import type { WorkLists } from "./workFocus";
 
 // "Duyệt trước khi thu" (webui/precast.py, docs/STUDIO_REVIEW.md): ngay khi phân tích xong và trước khi thu tới những chương đầu,
 // dẫn qua đúng thứ tự người duyệt cần - người nói nhiều nhất và giọng, cách đọc tên lạ, rồi "ai nói câu này" ở chương sắp thu.
@@ -104,6 +106,9 @@ function Intro({ book, view }: { book: BookSummary; view: PrecastView }) {
   );
 }
 
+/** Hết thẻ ở bước đang mở thì tiêu điểm về đầu vùng của bước (không có dòng báo cuối riêng). */
+const PRECAST_ENDS: CardFocusEnds = { end: "precast-end", lead: "precast-step" };
+
 const STEP_TITLE: Record<PrecastStep, string> = {
   cast: "Nhân vật và giọng",
   names: "Cách đọc tên",
@@ -115,6 +120,7 @@ const STEP_ICON = { cast: Users, names: SpellCheck, lines: MessageSquareQuote, d
 type Open = {
   onPickVoice: (person: CastMember) => void;
   onMerge: (person: CastMember) => void;
+  onUnmerge: (person: CastMember) => void;
   onRename: (person: CastMember) => void;
   onGender: (person: CastMember) => void;
   onOpenReview: (card?: string) => void;
@@ -134,6 +140,9 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
   const step: PrecastStep = PRECAST_STEPS.includes(stepParam as PrecastStep) ? (stepParam as PrecastStep) : "cast";
   // Điện thoại: bốn bước phải nằm ở màn đầu - lời giới thiệu và công tắc gập lại (soát UX a8 07-10).
   const narrow = useMediaQuery("(max-width: 639px)");
+  // Quyết xong một thẻ thì thẻ rời danh sách: tiêu điểm sang thẻ kế (hết thẻ thì về đầu vùng bước), không rơi về BODY (useCardFocus.ts).
+  const lists = useRef<WorkLists | null>(null);
+  useCardFocus(lists, PRECAST_ENDS);
   if (!view || isLoading || !work) return <div className="mt-6 text-sm text-fg-2">Đang gom những gì cần duyệt…</div>;
 
   const people = (cast?.characters ?? []).slice(0, TOP_PEOPLE);
@@ -149,6 +158,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
     lines: lineCards.length ? `${lineCount(lineCards)} câu` : "ổn",
     done: "",
   };
+  lists.current = { open: (step === "cast" ? castCards : step === "names" ? nameCards : step === "lines" ? lineCards : []).map((item) => item.key), decided: [] };
   const index = PRECAST_STEPS.indexOf(step);
   const next = () => setStep(PRECAST_STEPS[Math.min(index + 1, PRECAST_STEPS.length - 1)]);
   const cards = { book, onOpenReview: open.onOpenReview, onOpenScript: open.onOpenScript, onOpenNames: open.onOpenNames };
@@ -205,7 +215,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
         })}
       </ol>
 
-      <section className="mt-5" aria-label={STEP_TITLE[step]}>
+      <section id="precast-step" tabIndex={-1} className="mt-5 outline-none" aria-label={STEP_TITLE[step]}>
         {step === "cast" && (
           <>
             <p className="max-w-3xl text-sm text-fg-2">
@@ -220,6 +230,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                     person={person}
                     onPickVoice={open.onPickVoice}
                     onMerge={open.onMerge}
+                    onUnmerge={open.onUnmerge}
                     onRename={open.onRename}
                     onGender={open.onGender}
                   />

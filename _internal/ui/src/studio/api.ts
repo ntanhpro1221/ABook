@@ -240,6 +240,10 @@ export interface RedoPlan {
   narrator: string;
   firstPerson: string;
   firstPersonChapters: Record<string, string>;
+  /** Giới của “tôi” bạn đã nói lúc tạo ("" = chưa rõ), công tắc “người kể tự kể chuyện”, và giọng kể do máy chọn (không phải bạn bấm). */
+  firstPersonGender?: "male" | "female" | "";
+  tellerMode?: boolean;
+  narratorAuto?: boolean;
   analysisModel: string;
   analysisModelMissing?: string;
   dropCreditLines: boolean;

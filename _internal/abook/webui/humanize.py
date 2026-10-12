@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import errno
+import json
 import re
 from pathlib import Path
 
@@ -289,6 +290,40 @@ def _snapped(message: str, chapters: dict[int, str]) -> str:
             f" - {match.group(2)} câu về {person_name(name)}")
 
 
+# ---- người kể "tôi" (teller_voice.py): máy tự đổi giọng, nói như người nghe nhận ra ------------------------------------
+
+_TELLER_THOUGHTS = re.compile(r"^(\d+) inner thoughts")
+_TELLER_ALIGNED = re.compile(r"^narration voice (.+?) -> (.+?) to match")
+_TELLER_MOVED = re.compile(r"^(\d+) narration lines are (?:read in|back in)[^(]*\((\d+) (?:re-recorded|to re-record)\)")
+
+
+def _teller_thoughts(message: str, _chapters: dict[int, str]) -> str:
+    match = _TELLER_THOUGHTS.match(message)
+    return f"Máy chuyển {match.group(1)} câu nghĩ thầm của người kể “tôi” sang giọng dẫn" if match else ""
+
+
+def _teller_aligned(message: str, _chapters: dict[int, str]) -> str:
+    match = _TELLER_ALIGNED.match(message)
+    return f"Máy đổi giọng dẫn từ {match.group(1)} sang {match.group(2)} cho hợp giới của người kể “tôi”" if match else ""
+
+
+def _teller_to_teller(message: str, _chapters: dict[int, str]) -> str:
+    match = _TELLER_MOVED.match(message)
+    if not match:
+        return ""
+    redo = int(match.group(2))
+    return (f"Người kể “tôi” tự đọc {match.group(1)} câu lời kể của mình"
+            + (f" - {redo} câu đã thu phải thu lại" if redo else ""))
+
+
+def _teller_to_narrator(message: str, _chapters: dict[int, str]) -> str:
+    match = _TELLER_MOVED.match(message)
+    if not match:
+        return ""
+    redo = int(match.group(2))
+    return (f"Trả {match.group(1)} câu lời kể về giọng dẫn" + (f" - {redo} câu đã thu phải thu lại" if redo else ""))
+
+
 def _resumed(_message: str, _chapters: dict[int, str]) -> str:
     return "Bắt đầu chạy - đã kiểm tra lại dữ liệu cũ"
 
@@ -301,6 +336,10 @@ EVENT_TEXT = {
     "LOCAL_IDENTITY_RECONCILED": _reconciled,
     "RECOVERY_SCAN": _resumed,
     "SPEAKER_LABEL_SNAPPED_TO_TEXT": _snapped,
+    "TELLER_THOUGHTS_TO_NARRATOR": _teller_thoughts,
+    "NARRATOR_ALIGNED_TO_TELLER": _teller_aligned,
+    "TELLER_NARRATION_TO_TELLER": _teller_to_teller,
+    "TELLER_NARRATION_TO_NARRATOR": _teller_to_narrator,
 }
 
 _EVENT_LEVEL = {
@@ -313,6 +352,52 @@ _EVENT_LEVEL = {
     "RECOVERY_SCAN": "info",
     "SPEAKER_LABEL_SNAPPED_TO_TEXT": "info",
 }
+
+
+# Máy đổi người nói của từng câu bằng đúng đường người nghe dùng (`apply_listener_speaker`), nên mỗi câu ghi một sự kiện "Người nghe gán
+# câu …" dù người làm là máy. Ngay sau lô ấy máy ghi MỘT sự kiện tổng kết có đếm: lô gộp thành một dòng và nói máy làm.
+_SET_BY_LISTENER = "SPEAKER_SET_BY_LISTENER"
+_MACHINE_BATCH = {"TELLER_THOUGHTS_TO_NARRATOR": "lines", "TELLER_NARRATION_TO_TELLER": "thoughts_back",
+                  "TELLER_NARRATION_TO_NARRATOR": "thoughts"}
+_TELLER_EVENT_TEXT = {"TELLER_THOUGHTS_TO_NARRATOR": _teller_thoughts, "TELLER_NARRATION_TO_TELLER": _teller_to_teller,
+                      "TELLER_NARRATION_TO_NARRATOR": _teller_to_narrator}
+
+
+def _json(raw: object) -> dict:
+    try:
+        value = json.loads(str(raw or "{}"))
+    except ValueError:
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def technical_events(rows: list) -> list[dict]:
+    """"Chi tiết kỹ thuật" của Nhật ký: các sự kiện gần nhất (`rows` mới nhất trước: id, timestamp, level, code, message, details_json),
+    nguyên văn - trừ việc máy tự đổi giọng người kể "tôi": lô "Người nghe gán câu …" do máy làm gộp thành một dòng ("Máy chuyển N câu
+    nghĩ thầm của <tên> sang giọng dẫn"), sự kiện tổng kết của nó nói bằng lời thường."""
+    kept: list[tuple[dict, dict]] = []  # (dòng, chi tiết), cũ trước: sự kiện tổng kết nuốt lô đứng ngay trước nó
+    for row in reversed(rows):
+        code, message = str(row["code"]), str(row["message"])
+        item = {"id": f"e{row['id']}", "at": float(row["timestamp"] or 0), "level": str(row["level"]), "code": code, "text": message}
+        details = _json(row["details_json"])
+        field = _MACHINE_BATCH.get(code)
+        if field is not None:
+            batch: list[dict] = []
+            for _ in range(int(details.get(field) or 0)):
+                if not kept or kept[-1][0]["code"] != _SET_BY_LISTENER:
+                    break
+                batch.append(kept.pop()[1])
+            text = _TELLER_EVENT_TEXT[code](message, {})
+            who = ", ".join(sorted({person_name(str(entry.get("previous_speaker") or "")) for entry in batch} - {""})) or "người kể “tôi”"
+            if code == "TELLER_THOUGHTS_TO_NARRATOR" and batch:
+                text = f"Máy chuyển {len(batch)} câu nghĩ thầm của {who} sang giọng dẫn"
+            elif batch and text:
+                text += f"; máy cũng đưa {len(batch)} câu nghĩ thầm của {who} về giọng cũ"
+            item["text"] = text or message
+        elif code == "NARRATOR_ALIGNED_TO_TELLER":
+            item["text"] = _teller_aligned(message, {}) or message
+        kept.append((item, details))
+    return [item for item, _details in reversed(kept)]
 
 
 def event_text(code: str, message: str, chapters: dict[int, str]) -> str:

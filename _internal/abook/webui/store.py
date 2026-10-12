@@ -652,13 +652,17 @@ def redo_plan(project_root: Path) -> dict[str, Any]:
     """"Sửa thiết lập" của sách chưa bắt đầu (soát UX a5 01-10, #4): mọi lựa chọn lúc tạo - chương, tên, chất lượng, giọng
     kể, người xưng "tôi", model đọc hiểu, bỏ dòng ghi công - cho trình tạo sách điền sẵn. Tạo xong cuốn mới thì cuốn này
     vào Thùng rác (`create` với `replaces`)."""
-    from .. import continuation
+    from .. import continuation, teller_voice
 
     settings = read_settings(project_root)
     voices = settings.get("voices") if isinstance(settings.get("voices"), dict) else {}
     text = settings.get("text") if isinstance(settings.get("text"), dict) else {}
+    first_person = str(voices.get("first_person_identity") or "")
     with closing(connect(project_root)) as connection:
         book = connection.execute("SELECT title FROM book WHERE id=1").fetchone()
+        # Giới của "tôi" bạn đã nói lúc tạo (ghim trong sổ nhân vật) - không lấy suy đoán của model.
+        gender = teller_voice.teller_gender(connection, first_person, locked_only=True) if first_person else ""
+    notes = teller_voice.read(project_root)
     chapters = voices.get("first_person_chapters")
     return {
         "started": not can_redo(project_root),
@@ -668,8 +672,12 @@ def redo_plan(project_root: Path) -> dict[str, Any]:
         "title": display_title(project_root, str(book["title"]) if book is not None else project_root.name),
         "profile": str(settings.get("quality_profile") or "high_quality"),
         "narrator": str(voices.get("narrator_voice") or ""),
-        "firstPerson": str(voices.get("first_person_identity") or ""),
+        "firstPerson": first_person,
         "firstPersonChapters": {str(key): str(value) for key, value in chapters.items()} if isinstance(chapters, dict) else {},
+        # Giới của "tôi", công tắc B và "giọng kể do máy chọn" lúc tạo - điền lại đủ, không biến thành lựa chọn tay.
+        "firstPersonGender": gender,
+        "tellerMode": notes["mode"] == "teller",
+        "narratorAuto": bool(notes["narratorAuto"]),
         "analysisModel": str((settings.get("analysis") or {}).get("model") or ""),
         "dropCreditLines": bool(text.get("drop_credit_lines")),
         "dropTailCreditLines": bool(text.get("drop_tail_credit_lines")),
@@ -1690,6 +1698,7 @@ def cast(project_root: Path) -> dict[str, Any]:
     # "Gộp vào…" chưa áp (aliases.json + câu chờ đổi người nói): người ấy vẫn còn câu dưới tên mình - ghi "chờ gộp vào X" để
     # tab Nhân vật không trông như chưa gộp (soát UX a23).
     merging = aliases.load(project_root)
+    merge_stamps = aliases.added_at(project_root)
 
     def merged_into(speaker: str) -> str | None:
         target = merging.get(aliases.key(speaker))
@@ -1717,6 +1726,8 @@ def cast(project_root: Path) -> dict[str, Any]:
             "firstChapter": chapter_numbers.get(first_seen.get(speaker, -1), ""),
             "pendingVoice": pending.get(speaker_key(speaker)),
             "mergedInto": merged_into(speaker),
+            # Mốc của lần "Gộp vào…" ấy: đủ để tìm lại đúng yêu cầu mà rút ("Bỏ gộp").
+            "mergedAt": merge_stamps.get(aliases.key(speaker)) if merged_into(speaker) else None,
         }
         (main if record is not None else extras).append(entry)
     main.sort(key=lambda entry: (-entry["lines"], entry["displayName"]))
@@ -1775,14 +1786,10 @@ def activity(project_root: Path, *, technical: bool = False, limit: int = 200) -
             if "runtime_events" not in tables:
                 return []
             rows = connection.execute(
-                "SELECT id, timestamp, level, code, message FROM runtime_events ORDER BY id DESC LIMIT ?",
+                "SELECT id, timestamp, level, code, message, details_json FROM runtime_events ORDER BY id DESC LIMIT ?",
                 (limit,),
             ).fetchall()
-            return [
-                {"id": f"e{row['id']}", "at": float(row["timestamp"] or 0), "level": str(row["level"]),
-                 "code": str(row["code"]), "text": str(row["message"])}
-                for row in rows
-            ]
+            return humanize.technical_events(rows)
         names = chapter_names(connection, project_root)
         chapter_titles = {item["index"]: item["name"] for item in names.values()}
         items: list[dict[str, Any]] = []

@@ -63,6 +63,20 @@ def test_a_book_not_started_comes_back_with_its_choices_and_is_replaced(studio, 
     assert (tmp_path / "nguon" / "002.txt").is_file(), "file truyện gốc không bị đụng"
 
 
+def test_redo_returns_the_first_person_gender_teller_switch_and_machine_voice(studio, tmp_path: Path) -> None:  # noqa: F811
+    """"Mọi lựa chọn cũ đã điền sẵn" phải đúng: giới của "tôi", công tắc B và "giọng kể do máy chọn" (soát UX a32, #8)."""
+    _paths, _app, server, _runner = studio
+    auto = _created(server, tmp_path, firstPerson="Mai", firstPersonGender="female", tellerMode=True)
+    status, plan = _call(server, "GET", f"/api/books/{auto}/redo")
+    assert status == 200, plan
+    assert (plan["firstPersonGender"], plan["tellerMode"], plan["narratorAuto"]) == ("female", True, True)
+
+    chosen = _created(server, tmp_path, firstPerson="Mai", narrator="Phạm Tuyên")
+    status, plan = _call(server, "GET", f"/api/books/{chosen}/redo")
+    assert status == 200, plan
+    assert (plan["firstPersonGender"], plan["tellerMode"], plan["narratorAuto"], plan["narrator"]) == ("", False, False, "Phạm Tuyên")
+
+
 def test_a_book_that_has_started_is_not_replaced(studio, tmp_path: Path, recycled: list[Path]) -> None:  # noqa: F811
     from abook.webui.library import book_id
 
