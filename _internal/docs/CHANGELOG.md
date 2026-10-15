@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.69] - 2026-10-16
+
 ### Nghe ngay
 
 - Ký hiệu trong truyện giờ được đọc theo ngữ cảnh kỹ hơn (máy tính và điện thoại): "-50% Nhanh nhẹn", "HP -20" đọc "trừ", còn "nhiệt độ -5", "năm -2324" đọc "âm"; "4/5 sao" đọc "bốn trên năm", "3/4 cốc" là "ba phần tư", "8/3" là ngày 8 tháng 3; "Tầng 8x", "năm 200x", "19××" đọc "ích" cho phần bị che, còn "3x tốc độ" là "gấp ba lần"; "a >= 3" đọc "lớn hơn hoặc bằng", "y=ax²" đọc "bằng"; "Trans+Edit" đọc "và"; "DEF↓" đọc "giảm"; "８－２＝６" viết kiểu toàn khổ đọc như số thường.
