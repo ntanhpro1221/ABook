@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.62] - 2026-10-15
+
 ### Nghe ngay
 
 - Truyện Nhật và truyện Hàn có nhiều tên phương Tây lẫn vào (kiểu tên nhân vật phép thuật) giờ được nhận ra đúng hơn: bạn ít phải tự chọn xuất xứ
