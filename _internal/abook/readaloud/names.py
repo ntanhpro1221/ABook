@@ -37,7 +37,14 @@ HON_NAMES = 3  # và ít nhất chừng ấy tên khác nhau như vậy
 HON_JA_SHARE = 0.3  # khi có dấu hiệu hậu tố, tỉ lệ ja chỉ cần từ đây
 KO_SHARE = 0.70  # như trên cho RR; luật RR dễ tính (Mirabelle, Ruel, Alon của truyện Hàn cũng tách được) nên đòi thêm KO_ONLY_SHARE (04-10: 0,85 -> 0,70)
 KO_ONLY_SHARE = 0.5  # phần lần xuất hiện của tên đọc được bằng RR mà KHÔNG đọc được bằng romaji (Si-eun, Seo-ram...); 0,4 nhận "ko" cho truyện Hàn toàn tên Âu (Cale Henituse) -> đọc tên Âu theo RR: giữ 0,5
-RULE_VERSION = 3  # đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại
+JA_MARKED = 8  # số tên khác nhau CHỈ romaji đọc được (RR không) mà dài từ JA_MARKED_SYLLABLES âm tiết: bằng chứng Nhật không cần tỉ lệ cao (truyện Nhật lẫn tên Âu). Đo 15-10 (3131 cuốn có nhãn, nửa A thiết kế, nửa B kiểm): 8 là mức 2 bậc trên chỗ bắt đầu nhận nhầm (6)
+JA_MARKED_SYLLABLES = 3
+KO_MARKED = 5  # như trên cho Hàn: tên CHỈ RR đọc được mà có cặp chữ đặc trưng Hàn (`KO_MARKS`); 5 là 2 bậc trên chỗ bắt đầu nhận nhầm (3)
+KO_MARKS = ("eo", "eu", "ung", "ong", "hyun")  # cặp chữ RR mà tên Âu / Nhật hiếm gặp (độ chính xác theo tên >= 0,88 trên kho thử; "ae", "ui", "oe", "hee", "ng" cuối thì kém hơn nên không dùng)
+JA_TERMS = 80  # số lần hậu tố gọi Nhật nối gạch (-san, -kun, -chan, -sama, -senpai...) trong phần mẫu: truyện Hàn / Trung / Việt hầu như không có (đo 15-10: 98% cuốn không-Nhật dưới 61; 40 thì bắt đầu nhận nhầm một cuốn)
+KO_TERMS = 8  # số lần hậu tố / tiếng gọi chỉ Hàn có (-ssi, -nim, hyung, oppa, unnie, noona): cuốn không-Hàn gần như không có (nhận nhầm đầu tiên ở 5)
+MARKED_RATIO = 2  # bên nào có bằng chứng gấp đôi bên kia mới thắng (cuốn có cả tên Nhật lẫn Hàn thì để luật tỉ lệ quyết)
+RULE_VERSION = 4  # đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại
 ENGLISH_READING = 1  # đổi khi đổi cách Việt hoá từ Anh (`english_vi`, `english_reading`): clip đã đệm của giọng Việt hoá được đọc lại (dấu "en<số>" của khoá clip)
 _ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 HONORIFICS = ("san", "kun", "chan", "sama", "senpai", "sensei", "dono")  # hậu tố gọi Nhật nối gạch (JA_SUFFIXES còn "tan", "nee", "nii": dễ lẫn với chữ thường nên chỉ đi theo tên đã nhận)
@@ -328,14 +335,28 @@ def spoken_names(toks: list[str], origin: str | None, speaks_english: bool, out:
 
 # ---- gốc của cuốn ---------------------------------------------------------------------------------------------------------
 
-def scan_names(texts: Iterable[str]) -> tuple[collections.Counter[str], collections.Counter[str]]:
-    """(mỗi tên đã bỏ hậu tố gọi và số lần nó xuất hiện, riêng những lần nó đi kèm hậu tố gọi kiểu Nhật: Haruto-kun, Aqua-sama). Tên: chữ viết hoa chữ đầu,
-    Latin, không phải từ Anh / âm tiết Việt / tiếng reo."""
+def term_origin(core: str) -> str | None:
+    """"ja" khi `core` mang hậu tố gọi Nhật nối gạch ("Haruto-kun", "onii-chan"), "ko" khi mang hậu tố / là tiếng gọi chỉ Hàn có ("Soleum-ssi", "oppa"), None khi không."""
+    lowered = core.lower()
+    if "-" in lowered:
+        last = lowered.rsplit("-", 1)[1]
+        return "ja" if last in HONORIFICS else "ko" if last in KOREAN_TERMS else None
+    return "ko" if lowered in KOREAN_ALONE else None
+
+
+def scan_names(texts: Iterable[str]) -> tuple[collections.Counter[str], collections.Counter[str], collections.Counter[str]]:
+    """(mỗi tên đã bỏ hậu tố gọi và số lần nó xuất hiện, riêng những lần nó đi kèm hậu tố gọi kiểu Nhật: Haruto-kun, Aqua-sama; số lần hậu tố / tiếng gọi
+    của từng hệ: khoá "ja" / "ko", `term_origin`, kể cả khi không viết hoa). Tên: chữ viết hoa chữ đầu, Latin, không phải từ Anh / âm tiết Việt / tiếng reo."""
     found: collections.Counter[str] = collections.Counter()
     suffixed: collections.Counter[str] = collections.Counter()
+    terms: collections.Counter[str] = collections.Counter()
     for text in texts:
         for token in text.split():
             _, core, _ = split_token(token)
+            if len(core) >= 3 and core.isascii():
+                term = term_origin(core)
+                if term:
+                    terms[term] += 1
             if len(core) < 2 or not core[0].isupper():
                 continue
             head = _head(core)
@@ -343,37 +364,62 @@ def scan_names(texts: Iterable[str]) -> tuple[collections.Counter[str], collecti
                 found[head] += 1
                 if head != core:
                     suffixed[head] += 1
-    return found, suffixed
+    return found, suffixed, terms
 
 
 def name_counts(texts: Iterable[str]) -> collections.Counter[str]:
     return scan_names(texts)[0]
 
 
-def origin_shares(counts: collections.Counter[str], suffixed: collections.Counter[str] | None = None) -> dict[str, float | int]:
+def origin_shares(counts: collections.Counter[str], suffixed: collections.Counter[str] | None = None,
+                  terms: collections.Counter[str] | None = None) -> dict[str, float | int]:
     """Số liệu để quyết gốc: `total` lần xuất hiện, `names` tên khác nhau, `ja` / `ko` tỉ lệ lần xuất hiện đọc được, `ko_only` phần chỉ RR đọc được,
     `ja_names` / `ko_names` số tên khác nhau đọc được; `honorific` / `honorific_names`: lần xuất hiện / số tên khác nhau của tên đọc được bằng romaji
-    mà đi kèm hậu tố gọi (`suffixed`)."""
+    mà đi kèm hậu tố gọi (`suffixed`); `ja_marked` / `ko_marked`: số tên khác nhau chỉ MỘT hệ đọc được và mang dấu hiệu riêng của hệ ấy (`marked_ja`, `marked_ko`);
+    `ja_terms` / `ko_terms`: số lần hậu tố / tiếng gọi của từng hệ (`terms` của `scan_names`)."""
     total = sum(counts.values())
     ja = ko = ko_only = 0
-    ja_names = ko_names = 0
+    ja_names = ko_names = ja_marked = ko_marked = 0
     for name, times in counts.items():
-        by_ja = romanized_reading(name, "ja") is not None
-        by_ko = romanized_reading(name, "ko") is not None
-        ja += times if by_ja else 0
-        ko += times if by_ko else 0
-        ko_only += times if by_ko and not by_ja else 0
-        ja_names += by_ja
-        ko_names += by_ko
+        by_ja = romanized_reading(name, "ja")
+        by_ko = romanized_reading(name, "ko")
+        ja += times if by_ja is not None else 0
+        ko += times if by_ko is not None else 0
+        ko_only += times if by_ko is not None and by_ja is None else 0
+        ja_names += by_ja is not None
+        ko_names += by_ko is not None
+        ja_marked += marked_ja(by_ja, by_ko)
+        ko_marked += marked_ko(name, by_ja, by_ko)
     share = (lambda value: value / total) if total else (lambda value: 0.0)
     honorific = {name: times for name, times in (suffixed or {}).items() if romanized_reading(name, "ja") is not None}
     return {"total": total, "names": len(counts), "ja": share(ja), "ko": share(ko), "ko_only": share(ko_only), "ja_names": ja_names, "ko_names": ko_names,
-            "honorific": sum(honorific.values()), "honorific_names": len(honorific)}
+            "honorific": sum(honorific.values()), "honorific_names": len(honorific), "ja_marked": ja_marked, "ko_marked": ko_marked,
+            "ja_terms": (terms or {}).get("ja", 0), "ko_terms": (terms or {}).get("ko", 0)}
+
+
+def marked_ja(by_ja: str | None, by_ko: str | None) -> bool:
+    """Tên chỉ romaji đọc được (RR không) mà đọc ra từ JA_MARKED_SYLLABLES âm tiết: tên Âu đọc được bằng romaji hiếm khi dài vậy ("Tsukikage", "Yanase")."""
+    return by_ja is not None and by_ko is None and len(by_ja.replace(" ", "-").split("-")) >= JA_MARKED_SYLLABLES
+
+
+def marked_ko(name: str, by_ja: str | None, by_ko: str | None) -> bool:
+    """Tên chỉ RR đọc được (romaji không) mà có cặp chữ đặc trưng Hàn (`KO_MARKS`: "Seo-yeon", "Hyunseok", "Jung-tae")."""
+    lowered = name.lower()
+    return by_ko is not None and by_ja is None and any(mark in lowered for mark in KO_MARKS)
+
+
+def _leads(mine: int, least: int, other: int) -> bool:
+    return mine >= least and mine >= MARKED_RATIO * other
 
 
 def decide(shares: dict[str, float | int]) -> str | None:
     if shares["total"] < MIN_OCCURRENCES:
         return None
+    ja_marked, ko_marked, ja_terms, ko_terms = shares["ja_marked"], shares["ko_marked"], shares["ja_terms"], shares["ko_terms"]
+    if _leads(ko_marked, KO_MARKED, ja_marked) or _leads(ko_terms, KO_TERMS, ja_terms):
+        return "ko"  # đủ bằng chứng riêng của Hàn: thắng cả tỉ lệ romaji cao (tên Hàn viết quen cũng đọc được bằng romaji)
+    if _leads(ja_marked, JA_MARKED, ko_marked) or _leads(ja_terms, JA_TERMS, ko_terms):
+        return "ja"
     if shares["ja_names"] >= MIN_NAMES and shares["ja"] >= JA_SHARE:
         return "ja"
     if shares["honorific"] >= HON_MIN and shares["honorific_names"] >= HON_NAMES and shares["ja_names"] >= MIN_NAMES and shares["ja"] >= HON_JA_SHARE:

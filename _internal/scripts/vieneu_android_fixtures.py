@@ -335,6 +335,10 @@ SOUND_PARAGRAPHS = [
 JA_NAMES = "Haruto Yuki Sakura Kyouko Takeshi Hiroshi Akira Kenji Yamato Naoki Satoshi Ayaka Reiji Tsubasa Shinji Kaori".split()
 KO_NAMES = "Si-eun So-hye Hwi-min Seo-ram Deok-gu Kang-ho Ha-jin Joo-seon Min-jun Seo-yeon Ji-ho Geun-hye".split()
 WEST_NAMES = "Alberu Eruhaben Henituse Harol Witira Cale Mirabelle Ruel Alon Gideon Damien Aurora Nora Stella".split()
+# Names only one system reads (see names.marked_ja / marked_ko): Japanese ones the RR rules cannot read and that give >= 3 syllables, Korean ones the romaji rules cannot read with a Korean letter pair
+JA_MARKED_NAMES = "Tsukikage Fujiwara Ryuuzaki Kagurazaka Tsubasa Tsukiyomi Shuuichi Jinguuji Hyuuga Tsunade".split()
+KO_MARKED_NAMES = "Hyunseok Seongjin Yeongsu Dongcheol Myeongho Seoyeon Jungkook Hyeonwoo".split()
+UNREAD_NAMES = "Cale Bryce Dwight Bernd Gregor Cordelia Lilith Kendrick Gerhard".split()  # no rule reads them: they only add to the total
 
 
 def _name_text(names: list[str], rounds: int) -> str:
@@ -357,6 +361,19 @@ ORIGIN_CASES = [
     ([_name_text(WEST_NAMES * 2 + JA_NAMES, 4) + " " + (" ".join(f"{name}-san nói." for name in JA_NAMES[:4]) + " ") * 8], None),
     ([_name_text(WEST_NAMES * 2 + JA_NAMES, 4) + " " + (" ".join(f"{name}-san nói." for name in WEST_NAMES[:4]) + " ") * 8], None),
     ([_name_text(WEST_NAMES * 2 + JA_NAMES, 4) + " " + (" ".join(f"{name}-dono nói." for name in JA_NAMES[:2]) + " ") * 8], None),
+    # specific names: a cast that no rule reads with eight or more names only romaji reads is Japanese, seven is not; five names only RR reads (with a Korean letter pair) is Korean, four is not
+    ([_name_text(UNREAD_NAMES, 6) + " " + _name_text(JA_MARKED_NAMES[:8], 2)], None),
+    ([_name_text(UNREAD_NAMES, 6) + " " + _name_text(JA_MARKED_NAMES[:7], 2)], None),
+    ([_name_text(UNREAD_NAMES, 6) + " " + _name_text(KO_MARKED_NAMES[:5], 2)], None),
+    ([_name_text(UNREAD_NAMES, 6) + " " + _name_text(KO_MARKED_NAMES[:4], 2)], None),
+    # one side needs twice the other's evidence
+    ([_name_text(UNREAD_NAMES, 6) + " " + _name_text(KO_MARKED_NAMES[:5], 2) + " " + _name_text(JA_MARKED_NAMES[:2], 2)], None),
+    ([_name_text(UNREAD_NAMES, 6) + " " + _name_text(KO_MARKED_NAMES[:5], 2) + " " + _name_text(JA_MARKED_NAMES[:3], 2)], None),
+    # honorific and call counts, with no name the rules read: Japanese -san / -kun / -chan 80 times, Korean -ssi / -nim / oppa 8 times
+    ([_name_text(UNREAD_NAMES, 6) + " " + "Cale-san nói với Bryce-kun. onii-chan ơi. " * 27], None),
+    ([_name_text(UNREAD_NAMES, 6) + " " + "Cale-san nói với Bryce-kun. onii-chan ơi. " * 26 + "Cale-san nói."], None),
+    ([_name_text(UNREAD_NAMES, 6) + " " + "Dwight-nim nói. Oppa ơi. " * 4], None),
+    ([_name_text(UNREAD_NAMES, 6) + " " + "Dwight-nim nói. Oppa ơi. " * 3 + "Dwight-nim nói."], None),
 ]
 
 # Clips made on the desktop for VieneuOnDeviceTest: a paragraph of two sentences that is two units for Nano (140 chars) and one for Turbo.
@@ -402,7 +419,7 @@ def text_fixture() -> dict:
     for texts, sample in ORIGIN_CASES:
         shares = names.origin_shares(*names.scan_names(texts[:sample or names.SAMPLE_CHAPTERS]))
         origins.append({"texts": texts, **({"sample": sample} if sample else {}), "origin": names.book_origin(texts, **({"sample": sample} if sample else {})),
-                        **{key: shares[key] for key in ("total", "names", "ja_names", "ko_names", "honorific", "honorific_names")}})
+                        **{key: shares[key] for key in ("total", "names", "ja_names", "ko_names", "honorific", "honorific_names", "ja_marked", "ko_marked", "ja_terms", "ko_terms")}})
     return {"sea_g2p": "0.9.1", "sentences": len(SENTENCES), "g2p": g2p, "normalize": normalize, "units": units, "frames": frames, "seeds": seeds,
             "origins": origins}
 

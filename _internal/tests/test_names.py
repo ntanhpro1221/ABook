@@ -124,7 +124,9 @@ def test_the_origin_thresholds_measured_on_the_corpus() -> None:
     assert names.book_origin([korean]) == "ko"
     shares = names.origin_shares(*names.scan_names([mixed]))
     assert 0.70 <= shares["ko"] < 0.85 and 0.4 <= shares["ko_only"] < 0.5
-    assert names.book_origin([mixed]) is None
+    # chỉ xét luật tỉ lệ: bằng chứng đặc thù (tên có cặp chữ Hàn) được bỏ ra riêng, vì mười hai tên Hàn này tự nó đã đủ làm sách Hàn
+    assert names.decide({**shares, "ko_marked": 0, "ja_marked": 0, "ko_terms": 0, "ja_terms": 0}) is None
+    assert names.book_origin([mixed]) == "ko"
 
 
 @pytest.mark.parametrize("texts", [
@@ -211,13 +213,35 @@ def test_the_clip_key_only_changes_for_text_the_origin_changes(fake_voices, tmp_
     assert service.clip(voice, "Haruto đến cùng Kate và Mike.", cached_only=True) == plain
 
 
+# ---- bằng chứng đặc thù: tên chỉ một hệ đọc được, từ xưng hô -------------------------------------------------------------------------
+def test_specific_names_and_terms_decide_a_book_whose_cast_is_mostly_western() -> None:
+    def cast(listed: str, rounds: int = 3) -> str:
+        return " ".join([listed] * rounds)
+
+    western = cast("Cale Bryce Dwight Bernd Gregor Cordelia", 10)
+    ja = "Tsukikage Fujiwara Ryuuzaki Kagurazaka Tsubasa Tsukiyomi Shuuichi Jinguuji"
+    ko = "Hyunseok Seongjin Yeongsu Dongcheol Myeongho"
+    assert names.book_origin([western + " " + cast(ja, 4)]) == "ja"
+    assert names.book_origin([western + " " + cast(" ".join(ja.split()[:7]), 4)]) is None
+    assert names.book_origin([western + " " + cast(ko, 6)]) == "ko"
+    assert names.book_origin([western + " " + cast(" ".join(ko.split()[:4]), 6)]) is None
+    assert names.book_origin([western + " " + "Cale-san nói với Bryce-kun. " * 41]) == "ja"
+    assert names.book_origin([western + " " + "Dwight-nim nói. " * 8]) == "ko"
+    assert names.book_origin([western + " " + "Dwight-nim nói. " * 7]) is None
+
+
+def test_a_vietnamese_or_english_book_never_gets_the_specific_rules() -> None:
+    assert names.book_origin(["Hà Nội mùa thu. Nguyễn Trãi, Lê Lợi và Trần Hưng Đạo đứng ở Thăng Long. " * 40]) is None
+    assert names.book_origin(["Edmund Walter Brandon Alice Harriet Oliver Winston and Bertram talked in London. " * 20]) is None
+
+
 # ---- bộ ví dụ dùng chung với Kotlin (scripts/vieneu_android_fixtures.py) -------------------------------------------------------------
 def test_the_shared_origin_cases_match() -> None:
     cases = json.loads(FIXTURE.read_text(encoding="utf-8"))["origins"]
-    assert len(cases) >= 13 and {case["origin"] for case in cases} == {"ja", "ko", None}
+    assert len(cases) >= 23 and {case["origin"] for case in cases} == {"ja", "ko", None}
     for case in cases:
         texts, sample = case["texts"], case.get("sample") or names.SAMPLE_CHAPTERS
-        keys = ("total", "names", "ja_names", "ko_names", "honorific", "honorific_names")
+        keys = ("total", "names", "ja_names", "ko_names", "honorific", "honorific_names", "ja_marked", "ko_marked", "ja_terms", "ko_terms")
         shares = names.origin_shares(*names.scan_names(texts[:sample]))
         assert names.book_origin(texts, sample=sample) == case["origin"]
         assert {key: shares[key] for key in keys} == {key: case[key] for key in keys}

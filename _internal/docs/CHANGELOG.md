@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Truyện Nhật và truyện Hàn có nhiều tên phương Tây lẫn vào (kiểu tên nhân vật phép thuật) giờ được nhận ra đúng hơn: bạn ít phải tự chọn xuất xứ
+  sách nữa, tên Nhật và tên Hàn trong những truyện này được đọc theo âm Nhật/Hàn thay vì đọc như tiếng Anh. Xuất xứ bạn đã chọn tay vẫn được giữ nguyên.
+
 ## [0.4.61] - 2026-10-15
 
 ### Nghe ngay

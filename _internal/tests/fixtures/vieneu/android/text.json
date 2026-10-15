@@ -10011,7 +10011,11 @@
    "ja_names": 16,
    "ko_names": 15,
    "honorific": 0,
-   "honorific_names": 0
+   "honorific_names": 0,
+   "ja_marked": 1,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10025,7 +10029,11 @@
    "ja_names": 16,
    "ko_names": 15,
    "honorific": 0,
-   "honorific_names": 0
+   "honorific_names": 0,
+   "ja_marked": 1,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10037,7 +10045,11 @@
    "ja_names": 4,
    "ko_names": 12,
    "honorific": 0,
-   "honorific_names": 0
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 5,
+   "ja_terms": 0,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10049,7 +10061,11 @@
    "ja_names": 3,
    "ko_names": 9,
    "honorific": 0,
-   "honorific_names": 0
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10061,7 +10077,11 @@
    "ja_names": 4,
    "ko_names": 4,
    "honorific": 0,
-   "honorific_names": 0
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10073,7 +10093,11 @@
    "ja_names": 12,
    "ko_names": 12,
    "honorific": 0,
-   "honorific_names": 0
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10085,7 +10109,11 @@
    "ja_names": 9,
    "ko_names": 15,
    "honorific": 0,
-   "honorific_names": 0
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10097,7 +10125,11 @@
    "ja_names": 0,
    "ko_names": 0,
    "honorific": 0,
-   "honorific_names": 0
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10153,7 +10185,11 @@
    "ja_names": 3,
    "ko_names": 9,
    "honorific": 0,
-   "honorific_names": 0
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10210,7 +10246,11 @@
    "ja_names": 19,
    "ko_names": 24,
    "honorific": 0,
-   "honorific_names": 0
+   "honorific_names": 0,
+   "ja_marked": 1,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10222,7 +10262,11 @@
    "ja_names": 19,
    "ko_names": 24,
    "honorific": 32,
-   "honorific_names": 4
+   "honorific_names": 4,
+   "ja_marked": 1,
+   "ko_marked": 0,
+   "ja_terms": 32,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10234,7 +10278,11 @@
    "ja_names": 19,
    "ko_names": 24,
    "honorific": 8,
-   "honorific_names": 1
+   "honorific_names": 1,
+   "ja_marked": 1,
+   "ko_marked": 0,
+   "ja_terms": 32,
+   "ko_terms": 0
   },
   {
    "texts": [
@@ -10246,7 +10294,171 @@
    "ja_names": 19,
    "ko_names": 24,
    "honorific": 16,
-   "honorific_names": 2
+   "honorific_names": 2,
+   "ja_marked": 1,
+   "ko_marked": 0,
+   "ja_terms": 16,
+   "ko_terms": 0
+  },
+  {
+   "texts": [
+    "Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Tsukikage nói với Fujiwara. Fujiwara nói với Ryuuzaki. Ryuuzaki nói với Kagurazaka. Kagurazaka nói với Tsubasa. Tsubasa nói với Tsukiyomi. Tsukiyomi nói với Shuuichi. Shuuichi nói với Jinguuji. Jinguuji nói với Tsukikage. Tsukikage nói với Fujiwara. Fujiwara nói với Ryuuzaki. Ryuuzaki nói với Kagurazaka. Kagurazaka nói với Tsubasa. Tsubasa nói với Tsukiyomi. Tsukiyomi nói với Shuuichi. Shuuichi nói với Jinguuji. Jinguuji nói với Tsukikage."
+   ],
+   "origin": "ja",
+   "total": 140,
+   "names": 17,
+   "ja_names": 8,
+   "ko_names": 0,
+   "honorific": 0,
+   "honorific_names": 0,
+   "ja_marked": 8,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
+  },
+  {
+   "texts": [
+    "Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Tsukikage nói với Fujiwara. Fujiwara nói với Ryuuzaki. Ryuuzaki nói với Kagurazaka. Kagurazaka nói với Tsubasa. Tsubasa nói với Tsukiyomi. Tsukiyomi nói với Shuuichi. Shuuichi nói với Tsukikage. Tsukikage nói với Fujiwara. Fujiwara nói với Ryuuzaki. Ryuuzaki nói với Kagurazaka. Kagurazaka nói với Tsubasa. Tsubasa nói với Tsukiyomi. Tsukiyomi nói với Shuuichi. Shuuichi nói với Tsukikage."
+   ],
+   "origin": null,
+   "total": 136,
+   "names": 16,
+   "ja_names": 7,
+   "ko_names": 0,
+   "honorific": 0,
+   "honorific_names": 0,
+   "ja_marked": 7,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 0
+  },
+  {
+   "texts": [
+    "Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Hyunseok nói với Seongjin. Seongjin nói với Yeongsu. Yeongsu nói với Dongcheol. Dongcheol nói với Myeongho. Myeongho nói với Hyunseok. Hyunseok nói với Seongjin. Seongjin nói với Yeongsu. Yeongsu nói với Dongcheol. Dongcheol nói với Myeongho. Myeongho nói với Hyunseok."
+   ],
+   "origin": "ko",
+   "total": 128,
+   "names": 14,
+   "ja_names": 0,
+   "ko_names": 5,
+   "honorific": 0,
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 5,
+   "ja_terms": 0,
+   "ko_terms": 0
+  },
+  {
+   "texts": [
+    "Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Hyunseok nói với Seongjin. Seongjin nói với Yeongsu. Yeongsu nói với Dongcheol. Dongcheol nói với Hyunseok. Hyunseok nói với Seongjin. Seongjin nói với Yeongsu. Yeongsu nói với Dongcheol. Dongcheol nói với Hyunseok."
+   ],
+   "origin": null,
+   "total": 124,
+   "names": 13,
+   "ja_names": 0,
+   "ko_names": 4,
+   "honorific": 0,
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 4,
+   "ja_terms": 0,
+   "ko_terms": 0
+  },
+  {
+   "texts": [
+    "Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Hyunseok nói với Seongjin. Seongjin nói với Yeongsu. Yeongsu nói với Dongcheol. Dongcheol nói với Myeongho. Myeongho nói với Hyunseok. Hyunseok nói với Seongjin. Seongjin nói với Yeongsu. Yeongsu nói với Dongcheol. Dongcheol nói với Myeongho. Myeongho nói với Hyunseok. Tsukikage nói với Fujiwara. Fujiwara nói với Tsukikage. Tsukikage nói với Fujiwara. Fujiwara nói với Tsukikage."
+   ],
+   "origin": "ko",
+   "total": 136,
+   "names": 16,
+   "ja_names": 2,
+   "ko_names": 5,
+   "honorific": 0,
+   "honorific_names": 0,
+   "ja_marked": 2,
+   "ko_marked": 5,
+   "ja_terms": 0,
+   "ko_terms": 0
+  },
+  {
+   "texts": [
+    "Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Hyunseok nói với Seongjin. Seongjin nói với Yeongsu. Yeongsu nói với Dongcheol. Dongcheol nói với Myeongho. Myeongho nói với Hyunseok. Hyunseok nói với Seongjin. Seongjin nói với Yeongsu. Yeongsu nói với Dongcheol. Dongcheol nói với Myeongho. Myeongho nói với Hyunseok. Tsukikage nói với Fujiwara. Fujiwara nói với Ryuuzaki. Ryuuzaki nói với Tsukikage. Tsukikage nói với Fujiwara. Fujiwara nói với Ryuuzaki. Ryuuzaki nói với Tsukikage."
+   ],
+   "origin": null,
+   "total": 140,
+   "names": 17,
+   "ja_names": 3,
+   "ko_names": 5,
+   "honorific": 0,
+   "honorific_names": 0,
+   "ja_marked": 3,
+   "ko_marked": 5,
+   "ja_terms": 0,
+   "ko_terms": 0
+  },
+  {
+   "texts": [
+    "Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. "
+   ],
+   "origin": "ja",
+   "total": 162,
+   "names": 9,
+   "ja_names": 0,
+   "ko_names": 0,
+   "honorific": 0,
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 0,
+   "ja_terms": 81,
+   "ko_terms": 0
+  },
+  {
+   "texts": [
+    "Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói với Bryce-kun. onii-chan ơi. Cale-san nói."
+   ],
+   "origin": null,
+   "total": 161,
+   "names": 9,
+   "ja_names": 0,
+   "ko_names": 0,
+   "honorific": 0,
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 0,
+   "ja_terms": 79,
+   "ko_terms": 0
+  },
+  {
+   "texts": [
+    "Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Dwight-nim nói. Oppa ơi. Dwight-nim nói. Oppa ơi. Dwight-nim nói. Oppa ơi. Dwight-nim nói. Oppa ơi. "
+   ],
+   "origin": "ko",
+   "total": 116,
+   "names": 11,
+   "ja_names": 1,
+   "ko_names": 1,
+   "honorific": 0,
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 8
+  },
+  {
+   "texts": [
+    "Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Cale nói với Bryce. Bryce nói với Dwight. Dwight nói với Bernd. Bernd nói với Gregor. Gregor nói với Cordelia. Cordelia nói với Lilith. Lilith nói với Kendrick. Kendrick nói với Gerhard. Gerhard nói với Cale. Dwight-nim nói. Oppa ơi. Dwight-nim nói. Oppa ơi. Dwight-nim nói. Oppa ơi. Dwight-nim nói."
+   ],
+   "origin": null,
+   "total": 115,
+   "names": 11,
+   "ja_names": 1,
+   "ko_names": 1,
+   "honorific": 0,
+   "honorific_names": 0,
+   "ja_marked": 0,
+   "ko_marked": 0,
+   "ja_terms": 0,
+   "ko_terms": 7
   }
  ]
 }
