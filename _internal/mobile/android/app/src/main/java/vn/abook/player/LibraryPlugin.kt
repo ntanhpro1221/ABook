@@ -555,7 +555,16 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun studioComputers(call: PluginCall) = background(call) {
         val out = JSArray()
-        for (computer in StudioLink.computers(context)) out.put(JSObject().put("key", computer.key).put("name", computer.name))
+        for (computer in StudioLink.computers(context)) {
+            // Máy tính chỉ cho điện thoại này nghe: nút "Mở Studio" nói thẳng thay vì mở một trang Studio đóng (`listenOnly`). Không hỏi được = coi như mở được.
+            val listenOnly = StudioLink.link(context, computer.key)?.let { link ->
+                runCatching {
+                    StudioLink.listenOnly(SyncLink.request(context, "GET", "/api/app", auth = false, root = link.base, token = link.token,
+                        readTimeoutMs = 3000, connectTimeoutMs = 2000))
+                }.getOrDefault(false)
+            } ?: false
+            out.put(JSObject().put("key", computer.key).put("name", computer.name).put("listenOnly", listenOnly))
+        }
         call.resolve(JSObject().put("computers", out))
     }
 

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { RowBoundary } from "@/shared/RowBoundary";
 import { etaOf, formatPercent, formatRelative } from "@/shared/format";
 import { Button, Dialog, EmptyState, failedEmpty, LoadError, Progress, Skeleton, StatusPill } from "@/shared/ui";
@@ -73,6 +74,8 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
           </Button>
         )}
         {local && !busy && <ProjectMenu book={book} rename={false} />}
+        {/* Studio từ xa: khôi phục bản sao, mở thư mục, xoá đều là việc ngay trên máy tính - nói thẳng thay vì để dòng trống. */}
+        {!local && !busy && <OnComputerOnly verb="Khôi phục hoặc xoá" />}
       </div>
       <Dialog
         open={asking}
@@ -95,7 +98,7 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
 
 function ProjectRowBody({ book }: { book: BookSummary }) {
   const navigate = useNavigate();
-  // Đổi tên / xoá chỉ trên máy này (remote_studio.ALLOWED không có hai đường ấy).
+  // Dự án hỏng: khôi phục / mở thư mục / xoá chỉ trên máy này. Dự án bình thường: menu nào cũng hiện, Studio từ xa chỉ thay dòng Xoá bằng lý do.
   const local = !useAppInfo().data?.remote;
   const live = book.running || book.starting;
   if (book.broken) return <BrokenRow book={book} local={local} />;
@@ -115,10 +118,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
       <button
         type="button"
         onClick={() => navigate(`/studio/${book.id}`)}
-        className={cn(
-          "grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-x-4 gap-y-1.5 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-hover md:grid-cols-[48px_minmax(0,1fr)_160px_170px] md:gap-y-4 xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]",
-          local && "pr-12",
-        )}
+        className="grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-x-4 gap-y-1.5 rounded-xl px-3 py-2.5 pr-12 text-left transition-colors hover:bg-hover md:grid-cols-[48px_minmax(0,1fr)_160px_170px] md:gap-y-4 xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]"
       >
         {/* Màn hẹp (Studio từ xa trên điện thoại): trạng thái và tiến độ xếp dưới tên, không chia cột. */}
         <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="row-span-3 size-12 self-start md:row-span-1 md:self-center" />
@@ -161,14 +161,12 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
           {live ? (book.paused ? "tạm dừng" : "đang chạy") : formatRelative(book.updatedAt)}
         </div>
       </button>
-      {local && (
-        <div className="absolute right-2 top-2.5 md:top-1/2 md:-translate-y-1/2">
-          <ProjectMenu
-            book={book}
-            className="opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100"
-          />
-        </div>
-      )}
+      <div className="absolute right-2 top-2.5 md:top-1/2 md:-translate-y-1/2">
+        <ProjectMenu
+          book={book}
+          className="opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100"
+        />
+      </div>
     </div>
   );
 }

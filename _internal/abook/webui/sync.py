@@ -858,11 +858,12 @@ class SyncHandler(BaseHTTPRequestHandler):
             if device is None:
                 self._json(HTTPStatus.UNAUTHORIZED, {"error": "Thiết bị chưa ghép nối"})
             elif not remote_studio.permitted(method, path):
-                self._json(HTTPStatus.FORBIDDEN, {"error": "Việc này chỉ làm được trên chính máy tính"})
+                self._json(HTTPStatus.FORBIDDEN, {"error": f"Việc này chỉ làm được trên chính máy tính {self.app.name}"})
             elif not remote_studio.permitted(method, path, producing=producing):
                 reason = ("Máy tính chưa cho phép điều khiển sản xuất từ xa" if not studio.allowed()
                           else "Thiết bị này chưa được phép điều khiển sản xuất")
-                self._json(HTTPStatus.FORBIDDEN, {"error": f"{reason} - giờ chỉ nghe sách được"})
+                # `listenOnly`: giao diện thấy cờ này thì hỏi lại /api/app và bỏ các nút Studio (ui/src/shared/peerStudio.ts LISTEN_ONLY_EVENT).
+                self._json(HTTPStatus.FORBIDDEN, {"error": f"{reason} - giờ chỉ nghe sách được", "listenOnly": True})
             elif method not in ("GET", "HEAD") and not remote_studio.same_origin(self.headers):
                 self._json(HTTPStatus.FORBIDDEN, {"error": "Yêu cầu không đến từ trang Studio"})
             else:

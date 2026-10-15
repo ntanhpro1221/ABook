@@ -6,7 +6,9 @@ import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { excerpt, formatNumber } from "@/shared/format";
 import { Button, Dialog, Progress, Segmented, Skeleton, Vu } from "@/shared/ui";
+import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { api, urls } from "./api";
+import { useAppInfo } from "./data";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 import { voiceWas, warnElsewhere } from "./elsewhere";
 import { modulePercent } from "./musicLocal";
@@ -69,11 +71,13 @@ function voiceMeta(voice: VoiceOption, withGender = false): string {
 /** Tên nhóm của một máy đọc, và - khi máy chưa có giọng ấy - lời nhắn + nút tải (tiến độ hỏi lại mỗi giây). */
 function EngineHeader({ engine, label, status, onReady }: { engine: string; label: string; status?: EngineModuleStatus; onReady: () => void }) {
   const client = useQueryClient();
+  // Studio từ xa: tải giọng là việc của máy tính (GET / POST /api/studio/... không qua) - chỉ nói tải ở đâu, không nút, không hỏi tiến độ.
+  const remote = Boolean(useAppInfo().data?.remote);
   const { data } = useQuery({
     queryKey: ["engine-module", engine],
     queryFn: () => api<EngineModuleStatus>(`/api/studio/${engine}`),
     initialData: status,
-    enabled: status !== undefined,
+    enabled: status !== undefined && !remote,
     refetchInterval: (query) => (query.state.data?.state === "downloading" ? 1000 : false),
   });
   const current = data ?? status;
@@ -95,17 +99,20 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
     <div className="sticky top-0 z-10 bg-panel pb-1 pt-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs font-semibold tracking-wide text-fg-3">{label}</span>
-        {current && ["missing", "error", "outdated"].includes(current.state) && (
-          <Button size="sm" variant="secondary" loading={start.isPending} onClick={() => start.mutate()}>
-            {current.state === "error" ? "Tải lại" : "Tải giọng"}
-          </Button>
-        )}
+        {current && ["missing", "error", "outdated"].includes(current.state) &&
+          (remote ? (
+            <OnComputerOnly verb="Tải giọng" />
+          ) : (
+            <Button size="sm" variant="secondary" loading={start.isPending} onClick={() => start.mutate()}>
+              {current.state === "error" ? "Tải lại" : "Tải giọng"}
+            </Button>
+          ))}
       </div>
       {note && <p className={cn("mt-0.5 text-xs", current?.state === "error" ? "text-danger" : "text-fg-2")}>{note}</p>}
       {current?.state === "downloading" && (
         <div className="mt-1 flex items-center gap-3">
           <Progress size="xs" running value={modulePercent(current) / 100} label={note ?? ""} className="flex-1" />
-          {current.cancellable && (
+          {current.cancellable && !remote && (
             <Button size="sm" variant="ghost" loading={cancel.isPending} onClick={() => cancel.mutate()}>
               Huỷ
             </Button>

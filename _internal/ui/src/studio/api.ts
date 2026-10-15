@@ -2,7 +2,7 @@ import type { Capabilities } from "@/shared/capabilities";
 import type { CoverImage } from "@/shared/cover";
 import type { VolumeProposal } from "@/studio/volumes";
 import type { BookTemplate } from "@/studio/bookTemplates";
-import { PEER_SILENT_EVENT, peerOf, throughPeer } from "@/shared/peerStudio";
+import { LISTEN_ONLY_EVENT, PEER_SILENT_EVENT, peerOf, throughPeer } from "@/shared/peerStudio";
 // Hợp đồng với server Python (abook/webui/server.py). Mọi chữ hiển thị đã được server dịch sẵn
 // sang tiếng Việt (humanize.py); ở đây chỉ định kiểu và gọi.
 
@@ -405,6 +405,7 @@ export async function api<T>(path: string, init?: ApiInit): Promise<T> {
   if (!response.ok) {
     // Máy kia tắt / mất mạng giữa chừng: thanh "Studio của <máy>" báo và tự nối lại (desktop/PeerBar.tsx).
     if (peer && data?.unreachable) window.dispatchEvent(new CustomEvent(PEER_SILENT_EVENT, { detail: String(data.error ?? "") }));
+    if (response.status === 403 && data?.listenOnly === true) window.dispatchEvent(new Event(LISTEN_ONLY_EVENT));
     throw new ApiError(response.status, (data && data.error) || `Lỗi ${response.status}`, data && typeof data === "object" ? data : {});
   }
   return data as T;

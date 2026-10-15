@@ -105,6 +105,14 @@ class StudioLinkTest {
     }
 
     @Test
+    fun theComputerSaysWhenThisPhoneMayOnlyListen() {
+        assertTrue(StudioLink.listenOnly("""{"version":"0.4.58","remote":true,"listenOnly":true,"machine":"NGD-PC"}"""))
+        assertFalse(StudioLink.listenOnly("""{"version":"0.4.58","remote":true,"listenOnly":false}"""))
+        assertFalse("máy cũ chưa có cờ này", StudioLink.listenOnly("""{"version":"0.4.50"}"""))
+        assertFalse("không đọc được thì nút vẫn mở", StudioLink.listenOnly("không phải json"))
+    }
+
+    @Test
     fun aStoppedWatchNeverReloads() {
         val clock = FakeClock()
         var back = 0

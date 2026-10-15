@@ -41,14 +41,15 @@ def bridge(handler: Any, computer: str, computers: remote_books.Computers, versi
     if not remote_studio.same_origin(handler.headers):
         remote_studio._json(handler, HTTPStatus.FORBIDDEN, {"error": "Yêu cầu không đến từ trang ABook của máy này"})
         return
-    if not remote_studio.permitted(method, path):
-        remote_studio._json(handler, HTTPStatus.FORBIDDEN, {"error": "Việc này chỉ làm được trên chính máy ấy"})
-        return
     entry = computers.get(computer)
     if entry is None:
         remote_studio._json(handler, HTTPStatus.NOT_FOUND, {"error": "Máy này không ghép với máy ấy"})
         return
     name = str(entry.get("name") or "Máy kia")
+    if not remote_studio.permitted(method, path):
+        # Nói máy nào (thanh trên cùng của trang đã nói "Studio của <máy>"): việc ấy chỉ làm được ngay trên máy tính đó.
+        remote_studio._json(handler, HTTPStatus.FORBIDDEN, {"error": f"Việc này chỉ làm được trên chính máy tính {name}"})
+        return
     if entry.get("kind") == "phone":
         remote_studio._json(handler, HTTPStatus.NOT_FOUND, {"error": f"{name} là điện thoại - không có Studio"})
         return

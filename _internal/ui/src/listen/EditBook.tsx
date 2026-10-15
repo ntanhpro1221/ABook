@@ -228,12 +228,15 @@ export function EditBookDialog({
   open,
   onOpenChange,
   onOpenStudio,
+  computer,
 }: {
   book: ListenBook;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Máy tính, cuốn có xưởng: nhạc nền chỉnh đầy đủ ở tab Nhạc nền của Studio. */
   onOpenStudio?: () => void;
+  /** Studio từ xa: tên máy tính đang giữ sách - sửa áp lên sách ở đó. */
+  computer?: string;
 }) {
   const client = useQueryClient();
   const [title, setTitle] = useState(book.title);
@@ -295,9 +298,11 @@ export function EditBookDialog({
       width="max-w-xl"
       title="Sửa sách"
       description={
-        syncsToComputer(book.capabilities)
-          ? `Đổi có hiệu lực ngay trên máy này và được gửi về ${holderName(book.remote)} khi kết nối - audio và chữ của người làm sách giữ nguyên.`
-          : "Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
+        computer
+          ? `Đổi có hiệu lực ngay trên máy tính ${computer} - audio và chữ của người làm sách giữ nguyên.`
+          : syncsToComputer(book.capabilities)
+            ? `Đổi có hiệu lực ngay trên máy này và được gửi về ${holderName(book.remote)} khi kết nối - audio và chữ của người làm sách giữ nguyên.`
+            : "Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
       }
     >
       <div className="max-h-[68vh] space-y-4 overflow-y-auto pr-1">

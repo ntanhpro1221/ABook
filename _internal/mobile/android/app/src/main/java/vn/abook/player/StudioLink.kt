@@ -53,6 +53,12 @@ object StudioLink {
         return newBase + rest
     }
 
+    /**
+     * `/api/app` của máy tính nói thiết bị này chỉ được nghe (remote_studio.forward: `listenOnly`, khi công tắc "Điều khiển từ xa" hay quyền riêng
+     * của điện thoại tắt). Không đọc được = không biết = false: nút vẫn mở, trang Studio của máy ấy tự nói.
+     */
+    fun listenOnly(appJson: String): Boolean = runCatching { JSONObject(appJson).optBoolean("listenOnly", false) }.getOrDefault(false)
+
     /** Máy ấy trả lời `/api/app` với bản `theirs`: lệch bản của điện thoại thì không mở. Bản chạy từ mã nguồn ("" / "dev") không so được. */
     fun mismatched(theirs: String, ours: String): Boolean = theirs.isNotBlank() && theirs != "dev" && theirs != ours
 
