@@ -457,6 +457,142 @@ describe("nghe dở và lỗi", () => {
   });
 });
 
+describe("cách đọc riêng vừa đổi ('Đọc từ này là…')", () => {
+  const changed = (s: Setup, surfaces: string[], bookId = "b1", all = false) =>
+    (s.engine as unknown as { readingsChanged(detail: { bookId: string; surfaces: string[]; all?: boolean }): void }).readingsChanged({ bookId, surfaces, all });
+
+  it("xoá bản đọc đã làm của cuốn (all): mọi đoạn đã đọc sẵn bị bỏ clip, đoạn đang nói nói nốt", async () => {
+    const s = setup();
+    s.track.bookId = "b1";
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    for (const text of TEXTS.slice(0, 3)) await s.arrive(text);
+    const requested = s.requests.length;
+    changed(s, [], "b2", true); // cuốn khác: không đụng
+    expect(audioOf(s, TEXTS[1])!.released).toBe(false);
+    changed(s, [], "b1", true);
+    await flush();
+    expect(audioOf(s, TEXTS[0])!.released).toBe(false);
+    expect(audioOf(s, TEXTS[1])!.released).toBe(true);
+    expect(audioOf(s, TEXTS[2])!.released).toBe(true);
+    const again = s.requests.slice(requested).map((request) => request.text);
+    expect(again).toEqual(expect.arrayContaining([TEXTS[1], TEXTS[2]])); // xin lại để lần phát sau có clip mới
+  });
+
+  it("đoạn đã đọc sẵn có từ ấy bị bỏ clip và xin lại; đoạn không có từ ấy giữ nguyên; đoạn đang nói nói nốt", async () => {
+    const s = setup();
+    s.track.bookId = "b1";
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    for (const text of TEXTS.slice(0, 3)) await s.arrive(text);
+    const requested = s.requests.length;
+    changed(s, ["năm"]); // đoạn 2 ("Ba bốn năm sáu.") đã đọc sẵn, chưa tới
+    await flush();
+    expect(audioOf(s, TEXTS[0])!.released).toBe(false);
+    expect(audioOf(s, TEXTS[2])!.released).toBe(false);
+    expect(audioOf(s, TEXTS[1])!.released).toBe(true);
+    expect(s.requests.length).toBe(requested + 1);
+    expect(s.requests.at(-1)!.text).toBe(TEXTS[1]);
+    expect(s.published.at(-1)!.segments[1].words).toBeUndefined();
+    // đoạn đang nói (đoạn 1) có từ ấy: không cắt ngang
+    changed(s, ["hai"]);
+    expect(audioOf(s, TEXTS[0])!.released).toBe(false);
+    expect(audioOf(s, TEXTS[0])!.plays).toBe(1);
+  });
+
+  it("nghe lại đúng đoạn đang nói (đã đổi cách đọc) thì xin clip mới thay vì phát lại clip cũ", async () => {
+    const s = setup();
+    s.track.bookId = "b1";
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    await s.arrive(TEXTS[0]);
+    const requested = s.requests.length;
+    changed(s, ["hai"]);
+    expect(s.requests.length).toBe(requested); // chưa xin: đoạn còn đang nói
+    s.engine.seekWord(0, 0); // người nghe bấm lại đoạn ấy
+    await flush();
+    expect(s.requests.length).toBe(requested + 1);
+    expect(s.requests.at(-1)!.text).toBe(TEXTS[0]);
+  });
+
+  it("clip về từ lượt hỏi cũ (trước khi đổi) bị bỏ, clip của lượt hỏi mới được dùng", async () => {
+    const s = setup();
+    s.track.bookId = "b1";
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    const first = s.requests.filter((r) => r.text === TEXTS[1]);
+    expect(first.length).toBe(1); // đoạn 2 đang được đọc trước
+    changed(s, ["năm"]);
+    first[0].resolve(); // lượt cũ về sau khi đổi
+    await flush();
+    expect(audioOf(s, TEXTS[1])).toBeUndefined(); // không dựng audio từ clip theo cách đọc cũ
+    expect(s.requests.filter((r) => r.text === TEXTS[1]).length).toBe(2); // đã xin lại
+  });
+
+  it("cuốn khác, hay chưa nạp xong, thì không làm gì", async () => {
+    const s = setup();
+    s.track.bookId = "b1";
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    for (const text of TEXTS.slice(0, 3)) await s.arrive(text);
+    const requested = s.requests.length;
+    changed(s, ["năm"], "khác");
+    await flush();
+    expect(s.requests.length).toBe(requested);
+    expect(audioOf(s, TEXTS[1])!.released).toBe(false);
+  });
+});
+
+describe("nhảy tới câu xa: lượt xin cũ không chặn câu vừa nhảy tới", () => {
+  const LONG = Array.from({ length: 14 }, (_, n) => `Đoạn số ${n} nói.`);
+  const chapter = LONG.join("\n\n");
+  const asked = (s: Setup) => s.requests.map((request) => request.text);
+
+  it("giọng chạy trên máy: xin lần lượt, câu đang chờ trước; cách cũ (trực tuyến) xin cả cửa sổ cùng lúc", async () => {
+    const online = setup({ chapter });
+    online.engine.load(online.trackInfo, 0, true);
+    await flush();
+    expect(asked(online)).toEqual(LONG.slice(0, 4));
+
+    const local = setup({ chapter });
+    local.track.serial = () => true;
+    local.engine.load(local.trackInfo, 0, true);
+    await flush();
+    expect(asked(local)).toEqual([LONG[0]]);
+    await local.arrive(LONG[0]);
+    expect(asked(local)).toEqual([LONG[0], LONG[1]]);
+  });
+
+  it("nhảy: các lượt chưa gửi của cửa sổ cũ bị bỏ, câu vừa nhảy tới đi ngay sau lượt đang chạy", async () => {
+    const s = setup({ chapter });
+    s.track.serial = () => true;
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    expect(asked(s)).toEqual([LONG[0]]); // 1, 2, 3 đang xếp hàng
+    s.engine.seekWord(9, 0); // nhảy xa trong lúc đoạn 0 còn đang được làm
+    await flush();
+    expect(asked(s)).toEqual([LONG[0]]); // đoạn 0 chiếm chỗ duy nhất, chưa gửi thêm gì
+    await s.arrive(LONG[0]);
+    expect(asked(s)).toEqual([LONG[0], LONG[9]]); // không phải đoạn 1 của cửa sổ cũ
+    await s.arrive(LONG[9]);
+    expect(asked(s)).toEqual([LONG[0], LONG[9], LONG[10]]);
+    // nhảy về chỗ cũ: đoạn 0 đã có clip, đoạn 1 (đã bỏ khỏi hàng) được xin lại như mới
+    s.engine.seekWord(0, 0);
+    await s.arrive(LONG[10]);
+    expect(asked(s)).toContain(LONG[1]);
+  });
+
+  it("nhảy sang đoạn kế (còn trong cửa sổ): lượt đã xếp hàng được giữ", async () => {
+    const s = setup({ chapter });
+    s.track.serial = () => true;
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    s.engine.seekWord(2, 0);
+    await s.arrive(LONG[0]);
+    expect(asked(s).slice(0, 2)).toEqual([LONG[0], LONG[2]]);
+  });
+});
+
 describe("dòng ngăn cảnh: quãng lặng 1,5 giây", () => {
   const CHAPTER_WITH_BREAK = "Một hai.\n\n* * *\n\nBa bốn.";
 

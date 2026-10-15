@@ -90,6 +90,8 @@ object BookImport {
     private const val MAX_COVER = 20L * 1024 * 1024
     private const val MIN_CHARS = 80
     private const val PREAMBLE = "Mở đầu"
+    private const val PREAMBLE_MATTER_WORDS = 60
+    private const val PREAMBLE_MATTER = "Phần đầu file (tên truyện, tác giả…)"
     private const val MAX_HEADING = 120
     private const val TITLE_FROM_LINE = 80
     private const val CREDIT_HEAD_LINES = 64
@@ -396,21 +398,40 @@ object BookImport {
         book.splitOffer = parts.size
         // Chương tách ra từ một dòng tiêu đề mang tên dòng ấy - không bao giờ trùng tên chương "Mở đầu".
         book.splitHeadings = parts.count { it.title != PREAMBLE }
+        var fromText = "" // tên sách lấy từ dòng đầu của chữ (không phải từ tên file)
         if (parts.isNotEmpty()) {
             // Cả truyện: tên sách gợi ý là dòng tiêu đề đầu file, không phải tên file (importers._txt_file).
-            titleFromLine(firstTextLine(chapter.text)).takeIf { it.isNotEmpty() }?.let { book.title = it }
+            fromText = titleFromLine(firstTextLine(chapter.text))
             val lines = chapter.text.split("\n")
             val alone = titleOnlyPreamble(lines, txtCuts(lines).firstOrNull() ?: 0)
             if (split && alone.isNotEmpty()) book.notes.add("Dòng đầu “$alone” là tên truyện - dùng làm tên sách, không đọc thành một chương.")
+        } else {
+            fromText = standaloneTitle(chapter.text) // file một chương mà mở bằng một dòng tên riêng: tên ấy, không phải tên file
         }
+        if (fromText.isNotEmpty()) book.title = fromText
         val (title, author) = gutenbergHeader(chapter.text)
         if (title.isNotEmpty()) book.title = title
         book.author = author.ifEmpty { null }
         if (split && parts.isNotEmpty()) {
             book.chapters.clear()
             book.chapters.addAll(parts)
+        } else if (fromText.isNotEmpty() && title.isEmpty() && chapter.title == chapterTitle(stemOf(file.name))) {
+            // Chương một mình mang tên file ("chuong_dai") thì dùng tên truyện ở dòng đầu thay cho tên file (importers._txt_file).
+            book.chapters[0] = Chapter(fromText, chapter.text)
         }
         return book
+    }
+
+    /** `importers.standalone_title`: dòng đầu nếu nó trông là tên truyện VÀ đứng riêng một đoạn (dòng kế là dòng trống); không thì "". */
+    internal fun standaloneTitle(text: String): String {
+        val lines = text.split("\n")
+        for ((index, line) in lines.withIndex()) {
+            if (pyStrip(line).isNotEmpty()) {
+                val alone = index + 1 < lines.size && pyStrip(lines[index + 1]).isEmpty() && !pyRstrip(line).lastOrNull().let { it != null && it.isDigit() }
+                return if (alone) titleFromLine(line) else ""
+            }
+        }
+        return ""
     }
 
     private val PG_FIELD = Regex("(title|author)\\s*:\\s*(.+)", RegexOption.IGNORE_CASE)
@@ -474,7 +495,11 @@ object BookImport {
         if (cuts.size < 2) return emptyList()
         val chapters = mutableListOf<Chapter>()
         // Chữ dẫn chỉ là một dòng tên truyện thì không thành chương "Mở đầu" - nó là tên sách (titleOnlyPreamble).
-        if (lines.subList(0, cuts[0]).any { pyStrip(it).isNotEmpty() } && titleOnlyPreamble(lines, cuts[0]).isEmpty()) chapters.add(Chapter(PREAMBLE, lines.subList(0, cuts[0]).joinToString("\n").trim('\n')))
+        if (lines.subList(0, cuts[0]).any { pyStrip(it).isNotEmpty() } && titleOnlyPreamble(lines, cuts[0]).isEmpty()) {
+            val lead = lines.subList(0, cuts[0]).joinToString("\n").trim('\n')
+            // Chữ dẫn ngắn (tên truyện, tác giả…) không phải truyện: chưa tích sẵn như `Chapter.matter` (importers.PREAMBLE_MATTER_WORDS).
+            chapters.add(Chapter(PREAMBLE, lead, matter = textMatter(PREAMBLE, lead).ifEmpty { if (wordCount(lead) <= PREAMBLE_MATTER_WORDS) PREAMBLE_MATTER else "" }))
+        }
         for ((position, start) in cuts.withIndex()) {
             val end = if (position + 1 < cuts.size) cuts[position + 1] else lines.size
             chapters.add(Chapter(pyStrip(lines[start]), lines.subList(start, end).joinToString("\n").trim('\n')))
@@ -2135,7 +2160,10 @@ object BookImport {
      * (`text_processing._tail_credit_line_indexes`, `importers.tail_credit_suggestions`).
      */
     fun tailCreditSuggestions(source: String): List<String> {
-        val tail = pyStrip(source).split("\n").takeLast(CREDIT_TAIL_SCAN_LINES).joinToString("\n")
+        val scanned = pyStrip(source).split("\n").takeLast(CREDIT_TAIL_SCAN_LINES)
+        // File TXT cả tập chưa tách: chỉ xét từ dòng "Chương N" cuối cùng (importers.tail_credit_suggestions).
+        val from = (scanned.size - 1 downTo 1).firstOrNull { isHeadingLine(scanned[it], TXT_HEADING) } ?: 0
+        val tail = scanned.drop(from).joinToString("\n")
         val lines = normalizeText(tail).split("\n").map { pyStrip(it) }.filter { it.isNotEmpty() }
         val found = sortedSetOf<Int>()
         for (index in lines.indices.toList().takeLast(CREDIT_TAIL_WINDOW_LINES).asReversed()) {

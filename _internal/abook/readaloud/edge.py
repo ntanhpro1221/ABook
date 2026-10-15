@@ -1,14 +1,14 @@
 """Giọng trực tuyến: dịch vụ đọc to của Microsoft Edge (giọng thần kinh vi-VN HoaiMy, NamMinh), nói chuyện bằng WebSocket thuần thư viện chuẩn.
 
-Giao thức theo dự án mã nguồn mở `edge-tts` (rany2/edge-tts 7.2.8, LGPL-3.0; ở đây viết lại từ đặc tả giao thức, không chép mã): một kết nối
+Giao thức theo dự án mã nguồn mở `edge-tts` (rany2/edge-tts, LGPL-3.0; client này viết lại từ đặc tả giao thức, riêng mã token `Sec-MS-GEC` v2 ở edge_token.py chuyển từ `drm.py` của dự án ấy): một kết nối
 mỗi đoạn <= 4096 byte chữ; gửi `speech.config` (bật WordBoundary, MP3 24 kHz 48 kbps đơn kênh) rồi một SSML; nhận khung nhị phân (đầu 2 byte
 độ dài header + header + MP3) và khung văn bản `audio.metadata` (WordBoundary: Offset / Duration tính bằng tick 100 ns) tới `turn.end`.
 Dịch vụ không chính thức: có thể đổi mã/chữ ký bất cứ lúc nào (hằng số bên dưới là điểm sửa duy nhất); lỗi nói rõ lý do để giao diện đổi
 sang giọng máy. Mạng không có -> `EdgeOffline` (reason "offline").
+Mọi người cùng bị HTTP 403 (reason "rejected") dù đồng hồ đúng = Microsoft lại đổi cách tính token (đã đổi v1 -> v2 tháng 10/2026): đối chiếu `drm.py` / `constants.py` của edge-tts bản mới nhất.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import secrets
@@ -22,14 +22,14 @@ from urllib.parse import quote
 from xml.sax.saxutils import escape, unescape
 
 from . import websocket
+from .edge_token import TRUSTED_CLIENT_TOKEN, generate_sec_ms_gec_v2
 from .mapping import Boundary
 from .model import Synthesis, VoiceError
 
 HOST = "speech.platform.bing.com"
 PATH = "/consumer/speech/synthesize/readaloud/edge/v1"
-TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
 CHROMIUM_FULL_VERSION = "143.0.3650.75"
-SEC_MS_GEC_VERSION = f"1-{CHROMIUM_FULL_VERSION}"
+SEC_MS_GEC_VERSION = f"2-{CHROMIUM_FULL_VERSION}"  # "2-" = token v2 (edge_token.py); v1 (SHA-256 thường) bị dịch vụ từ chối 403 từ tháng 10/2026
 OUTPUT_FORMAT = "audio-24khz-48kbitrate-mono-mp3"
 BITRATE_BPS = 48_000  # CBR: byte -> thời gian chính xác, dùng để cộng dồn mốc giữa các đoạn và đo độ dài clip
 TICKS_PER_MS = 10_000
@@ -69,11 +69,8 @@ _clock_skew = 0.0  # giây: lệch giữa đồng hồ máy và đồng hồ má
 
 
 def gec_token(now: float | None = None, skew: float | None = None) -> str:
-    """`Sec-MS-GEC`: SHA-256 (chữ hoa) của "<thời gian Windows file time làm tròn xuống 5 phút><token>"."""
-    seconds = (time.time() if now is None else now) + (_clock_skew if skew is None else skew) + 11_644_473_600
-    seconds -= seconds % 300
-    ticks = int(seconds * 10_000_000)
-    return hashlib.sha256(f"{ticks}{TRUSTED_CLIENT_TOKEN}".encode("ascii")).hexdigest().upper()
+    """`Sec-MS-GEC` (v2): "<CS64>-<SHA-256 biến thể>" của "<Windows file time làm tròn xuống 5 phút><token>" - xem edge_token.py."""
+    return generate_sec_ms_gec_v2((time.time() if now is None else now) + (_clock_skew if skew is None else skew))
 
 
 _CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")

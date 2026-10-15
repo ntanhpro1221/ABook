@@ -7,6 +7,22 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Giọng Edge (Hoài My, Nam Minh) đọc lại được trên cả máy tính và điện thoại - Microsoft đã đổi cách xác thực nên mấy hôm nay giọng này báo lỗi với mọi người.
+- Khi giọng Edge bị từ chối hay không phản hồi, bạn thấy thêm lối đi (đổi giọng, dùng giọng trên máy) thay vì chỉ nút "Thử lại"; bấm "Thử lại" là thử lại thật, không bị nhớ lỗi cũ.
+- Sau khi bạn dạy giọng đọc một từ ("Đọc từ này là…"), các câu đã nạp sẵn đọc lại ngay theo cách mới, không cần mở lại chương (máy tính và điện thoại).
+- Nhảy liên tiếp tới những câu xa bằng giọng chạy trên máy (VieNeu, Supertonic): tiếng đầu đến sớm hơn, không phải chờ máy đọc nốt các câu của lần nhảy trước.
+- Nhãn giọng ở thanh phát và ở màn "Đang nghe" đổi ngay khi bạn đổi giọng, không còn trễ một bước.
+- Máy tính: menu "Giọng đọc" cho biết bản đọc đã làm chiếm bao nhiêu chỗ (của cuốn này và của cả máy) và có nút "Xoá bản đọc đã làm"; trước "Làm trước" cũng có ước lượng giờ nghe và thời gian máy cần, như trên điện thoại.
+- Máy tính: bấm "Làm trước" bỏ qua các dòng bạn đã bỏ khỏi phần đọc, đúng như lúc nghe.
+
+### Thêm sách từ file
+
+- Chương nào bạn thấy chưa tích trong bước xem trước thì không bị nhập: trang tựa của file DOCX (và đoạn "Mở đầu" của file TXT chia theo "Chương N") nằm chưa tích, nhập xong đúng như bạn thấy (máy tính và điện thoại).
+- File TXT một chương không có dòng "Tác giả:" lấy tên truyện từ dòng đầu thay vì tên file.
+- File TXT cả tập chưa tách chương không còn gợi ý bỏ cả truyện của chương sau như "ghi chú cuối chương" (máy tính và điện thoại).
+
 ## [0.4.66] - 2026-10-15
 
 ### Nhạc nền

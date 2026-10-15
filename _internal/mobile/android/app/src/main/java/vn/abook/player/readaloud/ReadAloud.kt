@@ -286,6 +286,23 @@ object ReadAloud {
         val exo = Playback.player ?: return
         val slot = currentSlot() ?: return
         if (slot.segment < 0) return
+        requeueAhead(exo, slot)
+    }
+
+    /** Cách đọc riêng của cuốn vừa đổi ("Đọc từ này là…", [LocalStudio]): các đoạn đã đọc sẵn mà chưa tới bỏ đi, đoạn kế đọc lại với cách đọc mới (bộ đệm khoá theo cách đọc
+     *  nên đoạn không có chữ ấy lấy lại ngay). Đoạn đang phát nói nốt. Gọi từ luồng nào cũng được. */
+    fun readingsChanged(bookId: String) {
+        if (!active) return
+        Playback.onMain {
+            if (!active || Playback.bookId != bookId) return@onMain
+            val exo = Playback.player ?: return@onMain
+            val slot = currentSlot()?.takeIf { it.segment >= 0 } ?: return@onMain
+            requeueAhead(exo, slot)
+        }
+    }
+
+    /** Bỏ hàng đợi sau đoạn đang phát và nạp lại từ đoạn kế (đổi giọng, đổi cách đọc). */
+    private fun requeueAhead(exo: Player, slot: Slot) {
         generation += 1
         inFlight = false
         failure = null

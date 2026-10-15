@@ -57,7 +57,7 @@ import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, voiceSections } from "./voiceGroups";
 import { revealVoiceSettings } from "./voiceSettingsLink";
 import { VieneuDownload } from "./VieneuDownload";
-import { chooseVoice, chosenVoice, isNoOfflineVoice, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, voiceCaption } from "./readAloudVoice";
+import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, unusableVoiceMessage, voiceCaption } from "./readAloudVoice";
 import { bookProgressText, caughtUpDetail, nextChapterLabel, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, textChapterLine, toggleLabel, unquoted } from "./labels";
 import { useAfter } from "@/shared/useAfter";
 import { spokenVoiceName } from "./onlineConsent";
@@ -65,9 +65,9 @@ import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./Playlist
 import { ADD_MUSIC_LABEL, shortPlaylistLabel } from "./playlistBed";
 import { openExternal } from "@/shared/openExternal";
 import { JumpToPlaying, ReadAlongText, sentenceIndexAt, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
-import { canPrepare, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
-import type { ReadAloudVoice } from "./readAloud";
-import { chapterScriptQuery, useBookVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource } from "./source";
+import { cacheLabel, canPrepare, clearCacheQuestion, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
+import { READINGS_CHANGED_EVENT, type ReadAloudVoice, type ReadingsChanged } from "./readAloud";
+import { chapterScriptQuery, useBookVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource, useChosenVoice } from "./source";
 
 export function speedLabel(rate: number): string {
   return `${rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}×`;
@@ -516,11 +516,10 @@ export function VoiceMenu() {
   const { track, queue } = usePlayer();
   const source = useSource();
   const { data: voices } = useReadAloudVoices();
-  const [chosen, setChosen] = useState("");
+  const chosen = useChosenVoice(track?.bookId); // thanh phát và màn "Đang nghe" đều có menu này: đổi ở một nơi, nơi kia cũng đổi nhãn ngay
   const speaking = queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
   const sample = useVoiceSample((voiceId, text) => source.readAloudSample!(voiceId, text));
   const openVoiceSettings = useOpenVoiceSettings();
-  useEffect(() => setChosen(track ? chosenVoice(track.bookId) : ""), [track]);
   if (!track || !speaking || !voices?.length) return null;
   const current = resolveVoice(voices, chosen);
   return (
@@ -548,10 +547,7 @@ export function VoiceMenu() {
                         <button
                           type="button"
                           aria-pressed={selected}
-                          onClick={() => {
-                            chooseVoice(track.bookId, voice.id);
-                            setChosen(voice.id);
-                          }}
+                          onClick={() => chooseVoice(track.bookId, voice.id)}
                           className={cn(
                             "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover max-sm:min-h-[44px]",
                             selected ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
@@ -592,6 +588,7 @@ export function VoiceMenu() {
       {current && canPrepare(current, Boolean(source.readAloudPrepareOnline)) && (
         <PrepareAhead voice={current} bookId={track.bookId} chapterId={track.chapterId} />
       )}
+      {source.readAloudCache && <ReadAloudCache bookId={track.bookId} />}
     </MenuShell>
   );
 }
@@ -609,10 +606,11 @@ function usePrepareStatus(enabled = true) {
 
 /** Các chương của cuốn này đã làm sẵn bằng giọng của cuốn (dấu "Đã làm sẵn" ở danh sách chương). */
 export function usePreparedChapters(bookId: string, enabled: boolean): Set<number> {
-  // Chỉ nguồn báo từng chương (điện thoại); máy tính làm theo đoạn, không có dấu - khỏi hỏi máy chủ.
+  // Chỉ nguồn báo từng chương (điện thoại, có "Chỉ khi đang sạc"); máy tính làm theo đoạn, không có dấu - khỏi hỏi máy chủ.
   const source = useSource();
-  const { data } = usePrepareStatus(enabled && Boolean(source.readAloudPreparePlan));
-  return useMemo(() => readyChapterIds(data, bookId, chosenVoice(bookId)), [data, bookId]);
+  const { data } = usePrepareStatus(enabled && Boolean(source.readAloudPrepareOptions));
+  const voice = useChosenVoice(bookId); // đổi giọng thì dấu "Đã làm sẵn" theo giọng mới, không giữ dấu của giọng cũ
+  return useMemo(() => readyChapterIds(data, bookId, voice), [data, bookId, voice]);
 }
 
 /** "Làm trước": máy đọc sẵn các chương tới ở nền - giọng chậm hơn tốc độ nghe (VieNeu) vẫn nghe liền mạch; trên điện thoại cả giọng trực tuyến,
@@ -627,7 +625,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
   const request = {
     voice: voice.id,
     bookId,
-    chapters: upcoming.map(({ id, title }) => ({ id, title })),
+    chapters: upcoming.map(({ id, title, skip }) => ({ id, title, skip })),
     label: upcoming.length === 1 ? upcoming[0].title : `${upcoming.length} chương tới`,
   };
   const mine = Boolean(status && status.voice === voice.id && (!status.bookId || status.bookId === bookId));
@@ -679,6 +677,53 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
           </label>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Bản đọc đã làm (máy tính): các đoạn đã đọc xong nằm trong bộ đệm của máy - nói rõ chiếm bao nhiêu (cuốn này / cả máy) và cho xoá phần của cuốn,
+ *  hỏi lại ngay tại chỗ (không hộp thoại). Xoá xong, các đoạn đã nạp sẵn trong lúc nghe cũng bỏ để lần phát sau đọc lại. */
+function ReadAloudCache({ bookId }: { bookId: string }) {
+  const source = useSource();
+  const client = useQueryClient();
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const key = ["readaloud", "cache", bookId];
+  const { data: usage } = useQuery({ queryKey: key, queryFn: () => source.readAloudCache!(bookId), refetchInterval: 15000 });
+  if (!usage) return null;
+  const clear = async () => {
+    setBusy(true);
+    try {
+      client.setQueryData(key, await source.readAloudCacheClear!(bookId));
+      window.dispatchEvent(new CustomEvent<ReadingsChanged>(READINGS_CHANGED_EVENT, { detail: { bookId, surfaces: [], all: true } }));
+    } catch (error) {
+      toast.error("Chưa xoá được bản đọc", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+      setAsking(false);
+    }
+  };
+  return (
+    <div className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
+      <p className="text-pretty">{cacheLabel(usage)}</p>
+      {usage.book > 0 &&
+        (asking ? (
+          <div role="alertdialog" aria-label="Xoá bản đọc đã làm" className="mt-1.5">
+            <p className="text-pretty text-fg">{clearCacheQuestion(usage)}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <button type="button" disabled={busy} className="rounded-lg px-2 py-1 font-medium text-danger hover:bg-hover disabled:opacity-45" onClick={() => void clear()}>
+                Xoá
+              </button>
+              <button type="button" disabled={busy} className="rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => setAsking(false)}>
+                Giữ lại
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className="mt-1.5 rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => setAsking(true)}>
+            Xoá bản đọc đã làm
+          </button>
+        ))}
     </div>
   );
 }
@@ -1146,6 +1191,8 @@ function PlayerAlert({ className, overlay = false }: { className?: string; overl
   const { pathname } = useLocation();
   const voices = useReadAloudVoices().data;
   const offline = Boolean(error) && isNoOfflineVoice(error);
+  // Mất mạng, hay giọng có mạng mà hỏng (dịch vụ từ chối, lỗi, không phản hồi) và máy không có giọng nào khác: cùng một câu ngắn + cùng đường ra.
+  const stuck = Boolean(error) && isVoiceStuck(error);
   useEffect(() => {
     if (!offline) return;
     window.addEventListener("online", dismissError);
@@ -1154,15 +1201,15 @@ function PlayerAlert({ className, overlay = false }: { className?: string; overl
   if (error) {
     if (!overlay && pathname.startsWith("/settings")) return null;
     const current = voices && track ? resolveVoice(voices, chosenVoice(track.bookId)) : undefined;
-    const local = offline && voices ? localVoiceFor(voices, current) : undefined;
+    const local = stuck && voices ? localVoiceFor(voices, current) : undefined;
     const button = "min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[44px]";
     return (
       <div role="alert" className={cn("flex items-start gap-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
         <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
         {/* Lời báo + cụm nút xuống hàng khi hẹp; nút ✕ đứng riêng ở góc trên phải nên không thêm hàng nào và không bao giờ trôi xuống dưới cụm nút. */}
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="min-w-0 flex-1 basis-[14rem]">{offline && current ? noOfflineMessage(spokenVoiceName(current.name)) : error}</span>
-          {offline && local && track && (
+          <span className="min-w-0 flex-1 basis-[14rem]">{stuck && current ? (offline ? noOfflineMessage : unusableVoiceMessage)(spokenVoiceName(current.name)) : error}</span>
+          {stuck && local && track && (
             <button
               type="button"
               onClick={() => {
@@ -1180,7 +1227,7 @@ function PlayerAlert({ className, overlay = false }: { className?: string; overl
           <button type="button" onClick={retry} {...keepFocus} className={button}>
             Thử lại
           </button>
-          {offline && !local && <VieneuDownload button="Tải giọng VieNeu" onOpenSettings={() => openVoiceSettings("vieneu-module")} />}
+          {stuck && !local && <VieneuDownload button="Tải giọng VieNeu" onOpenSettings={() => openVoiceSettings("vieneu-module")} />}
         </div>
         {/* Gạt đi tới lần lỗi mới: khối này nằm trên mọi màn, người đang làm việc khác (Cài đặt, Thư viện) không bị nó đè mãi. */}
         <button

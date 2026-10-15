@@ -206,6 +206,10 @@ def test_the_tail_rule_is_a_chain_from_the_last_line_and_never_edits_the_head_ru
     many = "\n".join(f"Nguồn: truyenthu.vn/{n}" for n in range(1, 9))
     assert importers.tail_credit_suggestions(many) == [f"Nguồn: truyenthu.vn/{n}" for n in range(3, 9)], "chỉ 6 dòng cuối"
     assert importers.credit_suggestions("Chương 1\n\nLời truyện.\n\nXin ủng hộ: Momo 0912345678\n") == [], "Studio chỉ thấy dòng đầu chương"
+    unsplit = ("Chuyện một\n\n" + "".join(f"Đoạn truyện {n}.\n\n" for n in range(1, 9)) +
+               "Đọc truyện mới nhất tại truyenthu.vn\n\nChương 2: Cánh cửa gỗ\n\nCánh cửa mở ra, bà cụ nhìn ra ngoài.\n\nTrời tối dần.\n")
+    assert importers.tail_credit_suggestions(unsplit) == [], "file cả tập chưa tách: ghi công giữa file không kéo cả truyện chương sau vào gợi ý"
+    assert importers.tail_credit_suggestions(unsplit + "\nXin ủng hộ: Momo 0912345678\n") == ["Xin ủng hộ: Momo 0912345678"], "ghi công ở cuối thật vẫn gợi ý"
     twice = "Dịch: Nhóm A\n" + "".join(f"Dòng {n}.\n" for n in range(1, 10)) + "Dịch: Nhóm A\n"
     assert importers.chapter_credit_suggestions(twice) == [("Dịch: Nhóm A", False)], "đầu và cuối trùng chữ: một gợi ý (lớp sửa `skip` ghi theo chữ)"
 

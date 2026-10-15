@@ -50,8 +50,8 @@ describe("default choice", () => {
     expect([...defaultPicked([row(1, "A", 1), row(2, "B", 1)])]).toEqual([1, 2]);
   });
 
-  it("sends nothing when the listener changed nothing, so the other side uses its own default", () => {
-    expect(chapterPicks(CHAPTERS, defaultPicked(CHAPTERS), {})).toBeUndefined();
+  it("sends the ticked rows explicitly even when nothing changed, so what was shown is exactly what is added", () => {
+    expect(chapterPicks(CHAPTERS, defaultPicked(CHAPTERS), {})).toEqual([{ index: 2 }, { index: 3 }, { index: 4 }]);
   });
 });
 
@@ -98,7 +98,7 @@ describe("what is sent when adding", () => {
   });
 
   it("ignores the name of a row that is not ticked", () => {
-    expect(chapterPicks(CHAPTERS, defaultPicked(CHAPTERS), { 1: "Trang đề tựa" })).toBeUndefined();
+    expect(chapterPicks(CHAPTERS, defaultPicked(CHAPTERS), { 1: "Trang đề tựa" })).toEqual([{ index: 2 }, { index: 3 }, { index: 4 }]);
   });
 
   it("lets the listener leave out everything (the dialog refuses to add it)", () => {

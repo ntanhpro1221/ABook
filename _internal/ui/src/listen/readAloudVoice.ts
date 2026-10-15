@@ -27,6 +27,18 @@ export function isNoOfflineVoice(message: string): boolean {
   return message.startsWith(NO_OFFLINE_LEAD);
 }
 
+/** Giọng trực tuyến có mạng mà vẫn không đọc được (dịch vụ từ chối, trả lỗi, không phản hồi) và máy không có giọng nào đọc không cần mạng: câu ngắn
+ *  nói tên giọng, giao diện đưa cùng đường ra như khi mất mạng. Bản của lõi điện thoại (ClipReader.NO_USABLE_VOICE) chưa kèm tên giọng. */
+export function unusableVoiceMessage(name: string): string {
+  return `Giọng ${name} đang không dùng được.`;
+}
+export const NO_USABLE_VOICE = "Giọng đang chọn đang không dùng được.";
+
+/** Lời báo "giọng đang chọn không đọc được và máy không có giọng nào khác" (mất mạng hay giọng hỏng): giao diện đưa nút "Đọc bằng …" / "Tải giọng VieNeu". */
+export function isVoiceStuck(message: string): boolean {
+  return isNoOfflineVoice(message) || /^Giọng .+ đang không dùng được\.$/.test(message);
+}
+
 /** Giọng chạy trên máy (đã tải: VieNeu, Supertonic…; không kể giọng của máy, nó đã tự đỡ) để đổi sang khi mất mạng; cùng giới với giọng đang chọn nếu có. */
 export function localVoiceFor(voices: ReadAloudVoice[], current: ReadAloudVoice | undefined): ReadAloudVoice | undefined {
   const local = voices.filter((voice) => !voice.online && voice.provider !== "device");
@@ -34,6 +46,10 @@ export function localVoiceFor(voices: ReadAloudVoice[], current: ReadAloudVoice 
 }
 
 const FALLBACK_REASONS = new Set(["offline", "timeout", "rejected", "service", "auth", "quota"]);
+/** Giọng trực tuyến có mạng mà hỏng: dịch vụ từ chối (Microsoft đổi giao thức...), trả lỗi, không phản hồi. */
+const TROUBLE_REASONS = new Set(["timeout", "rejected", "service"]);
+/** Nhà cung cấp vừa hỏng kiểu ấy thì nghỉ chừng này rồi mới thử lại (không để mỗi đoạn, mỗi lần mở sách đập thêm 4 kết nối + thử lại). */
+const TROUBLE_MS = 5 * 60_000;
 /** Tên nhà cung cấp của giọng dùng khoá riêng (abook/readaloud/byok.py, điện thoại OnlineVoices.kt). */
 export const KEYED_PROVIDERS: Record<string, string> = { azure: "Azure Speech", google: "Google Cloud", fpt: "FPT.AI", viettel: "Viettel AI" };
 
@@ -69,6 +85,7 @@ export function chosenVoice(bookId: string): string {
 export function chooseVoice(bookId: string, voice: string): void {
   write(`abook-readaloud-voice-${bookId}`, voice);
   write(GLOBAL_KEY, voice);
+  troubled.clear();
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: bookId }));
 }
 
@@ -127,6 +144,12 @@ export function resolveVoice(voices: ReadAloudVoice[], chosen: string): ReadAlou
   return local ?? voices.find((voice) => voice.default) ?? voices[0];
 }
 
+/** Giọng chạy trên máy này (VieNeu, Supertonic, giọng của máy) hay trực tuyến: trình phát xin clip của giọng trên máy lần lượt ([SpeechTrack.serial]); chưa biết giọng thì
+ *  như trực tuyến (xin song song, cách cũ). */
+export function runsOnThisMachine(voice: Pick<ReadAloudVoice, "online"> | undefined): boolean {
+  return voice !== undefined && !voice.online;
+}
+
 /** Giọng đang đọc cuốn này, viết cho người nghe thấy ở Thư viện: "Đức Trí (VieNeu)", "Hoài My (Edge)"; giọng của máy (hay chưa biết) thì "Giọng đọc của máy" (như Cài đặt). */
 export function voiceCaption(voice: ReadAloudVoice | undefined): string {
   if (!voice || voice.provider === "device") return "Giọng đọc của máy";
@@ -143,18 +166,36 @@ export function bookVoiceCaption(voices: ReadAloudVoice[] | undefined, bookId: s
 let fellBack = false; // lời nhắn rơi sang giọng máy: một lần cho cả phiên, không mỗi chương một lần
 const told = new Set<string>(); // lời nhắn của giọng dùng khoá: một lần mỗi (nhà cung cấp, lý do) cho cả phiên
 const benched = new Map<string, string>(); // nhà cung cấp có khoá bị từ chối / hết hạn mức: các đoạn sau đi thẳng sang giọng kế
+const troubled = new Map<string, { reason: string; until: number }>(); // nhà cung cấp (không dùng khoá) vừa từ chối / lỗi / không phản hồi: nghỉ TROUBLE_MS
 
 let known = new WeakMap<ListenSource, Promise<ReadAloudVoice[]>>();
 if (typeof window !== "undefined") {
   window.addEventListener(ONLINE_KEYS_CHANGED_EVENT, () => {
     known = new WeakMap();
     benched.clear();
+    troubled.clear();
   });
+}
+
+/** Người nghe bấm "Thử lại" (hay đổi giọng): quên các giọng đã bị cho là hỏng, lần đọc kế gọi lại dịch vụ thật. */
+export function forgetVoiceTrouble(): void {
+  troubled.clear();
+}
+
+function troubleOf(provider: string): string | undefined {
+  const found = troubled.get(provider);
+  if (!found) return undefined;
+  if (found.until <= Date.now()) {
+    troubled.delete(provider);
+    return undefined;
+  }
+  return found.reason;
 }
 
 /** Danh sách giọng của máy vừa đổi (tải xong giọng VieNeu): hỏi lại ở lần sau. */
 export function forgetVoices(): void {
   known = new WeakMap();
+  troubled.clear();
 }
 
 /** Danh sách giọng của nguồn (nhớ cho cả phiên; lần hỏi hỏng thì hỏi lại lần sau). */
@@ -218,18 +259,28 @@ export function speechFetcher(source: ListenSource, bookId: string, notify: (mes
     let failed: { voice: ReadAloudVoice; reason: string } | null = null;
     for (const [index, candidate] of chain.entries()) {
       const last = index === chain.length - 1;
-      const benchedFor = benched.get(candidate.provider);
+      const troubleNow = troubleOf(candidate.provider);
+      const benchedFor = benched.get(candidate.provider) ?? troubleNow;
       if (benchedFor && !last) {
         failed = { voice: candidate, reason: benchedFor };
         continue;
+      }
+      const shortName = voice.name.replace(/\s*\([^)]*\)\s*$/, "").trim() || voice.name;
+      // Giọng này vừa hỏng và không còn giọng nào đọc không cần mạng: nói ngay, không gọi lại dịch vụ ở mỗi đoạn.
+      if (last && troubleNow && !options?.cachedOnly && chain.every((item) => item.online)) {
+        throw Object.assign(new Error(unusableVoiceMessage(shortName)), { reason: troubleNow });
       }
       if (failed) tell(failed.voice, failed.reason, candidate);
       try {
         return await fetchWith(candidate, text, options);
       } catch (error) {
         const why = (error as { reason?: string }).reason ?? "";
-        if (last && why === "offline" && !options?.cachedOnly && chain.every((item) => item.online)) {
-          throw Object.assign(new Error(noOfflineMessage(voice.name.replace(/\s*\([^)]*\)\s*$/, "").trim() || voice.name)), { reason: "offline" });
+        if (candidate.online && TROUBLE_REASONS.has(why) && !KEYED_PROVIDERS[candidate.provider] && !options?.cachedOnly) {
+          troubled.set(candidate.provider, { reason: why, until: Date.now() + TROUBLE_MS });
+        }
+        if (last && !options?.cachedOnly && chain.every((item) => item.online)) {
+          if (why === "offline") throw Object.assign(new Error(noOfflineMessage(shortName)), { reason: "offline" });
+          if (TROUBLE_REASONS.has(why)) throw Object.assign(new Error(unusableVoiceMessage(shortName)), { reason: why });
         }
         if (!candidate.online || !FALLBACK_REASONS.has(why) || last) throw error;
         if (KEYED_PROVIDERS[candidate.provider] && (why === "auth" || why === "quota")) {

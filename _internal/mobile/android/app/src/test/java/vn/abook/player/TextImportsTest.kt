@@ -225,8 +225,11 @@ class TextImportsTest {
         val split = TextImports.preview(ref, splitChapters = true)
         assertEquals(listOf("Mở đầu", "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3"), titles(split))
         assertEquals(4, split.getInt("splitOffer"))
+        // Phần "Mở đầu" (tên truyện) hiện chưa tích, nên không tính vào tổng và không vào sách nếu người nghe không tích (như Python).
+        assertFalse(split.getJSONArray("chapters").getJSONObject(0).getBoolean("included"))
+        assertEquals(3, split.getJSONObject("totals").getInt("chapters"))
         val added = TextImports.create(ref, "", cache)
-        assertEquals(4, added.getInt("chapters"))
+        assertEquals(3, added.getInt("chapters"))
         assertFalse(TextImports.preview(stageFile("epub3.epub").ref).has("splitOffer")) // không có gì để tách thì không có khoá
     }
 

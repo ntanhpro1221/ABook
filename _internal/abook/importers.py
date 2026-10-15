@@ -38,6 +38,8 @@ MAX_TOTAL = 300 * 1024 * 1024
 MAX_COVER = 20 * 1024 * 1024
 MIN_CHARS = 80  # mục EPUB ngắn hơn (bìa, trang bản quyền) bỏ qua - trừ khi mục lục gọi nó là một chương
 PREAMBLE = "Mở đầu"  # chữ đứng trước tiêu đề chương đầu tiên (như txt_split)
+PREAMBLE_MATTER_WORDS = 60  # chữ dẫn của file TXT cả truyện ngắn chừng này trở xuống (tên truyện, tác giả…) không phải truyện: chưa tích sẵn, như `Chapter.matter`
+PREAMBLE_MATTER = "Phần đầu file (tên truyện, tác giả…)"
 MAX_HEADING = 120  # dòng dài hơn là một câu văn mở đầu bằng "Chương…", không phải tiêu đề
 SOFT_HYPHEN = "\u00ad"  # dấu nối mềm của máy dàn trang
 SIDECAR = "import.json"  # `extract` ghi cạnh các chương: tên sách, tác giả, ghi chú (đọc lại không phải mở lại file gốc)
@@ -298,10 +300,17 @@ def credit_suggestions(source: str) -> list[str]:
 
 def tail_credit_suggestions(source: str) -> list[str]:
     """Dòng xin ủng hộ / quảng cáo / nguồn / ghi công ở CUỐI một chương (`source` như file chương): GỢI Ý như `credit_suggestions`, không bao giờ tự bỏ.
-    Luật là của Studio (`text_processing.tail_credit_lines`, dùng chung); chỉ đưa phần cuối chương. Kotlin: BookImport.tailCreditSuggestions."""
+    Luật là của Studio (`text_processing.tail_credit_lines`, dùng chung); chỉ đưa phần cuối chương. File TXT cả tập chưa tách chương: một dòng "Chương N" nằm
+    giữa là đầu chương kế, nên chỉ xét từ tiêu đề cuối cùng ấy - dòng ghi công ở cuối phần TRƯỚC nó không phải cuối chương này, và luật "ghi chú cuối chương"
+    sẽ gom cả truyện của chương sau vào gợi ý. Kotlin: BookImport.tailCreditSuggestions."""
     from .text_processing import tail_credit_lines
 
-    return tail_credit_lines("\n".join(source.rstrip().rsplit("\n", CREDIT_TAIL_SCAN_LINES)[-CREDIT_TAIL_SCAN_LINES:]))
+    lines = source.rstrip().rsplit("\n", CREDIT_TAIL_SCAN_LINES)[-CREDIT_TAIL_SCAN_LINES:]
+    for at in range(len(lines) - 1, 0, -1):
+        if is_heading_line(lines[at], TXT_HEADING):
+            lines = lines[at:]
+            break
+    return tail_credit_lines("\n".join(lines))
 
 
 def chapter_credit_suggestions(source: str) -> list[tuple[str, bool]]:
@@ -436,18 +445,39 @@ def _txt_file(path: Path, split: bool = False) -> ImportedBook:
     book.split_offer = len(parts)
     # Chương tách ra từ một dòng tiêu đề mang tên dòng ấy - không bao giờ trùng tên chương "Mở đầu".
     book.split_headings = sum(part.title != PREAMBLE for part in parts)
+    from_text = ""  # tên sách lấy từ dòng đầu của chữ (không phải từ tên file)
     if parts:
         # Cả truyện: tên sách gợi ý là dòng tiêu đề đầu file ("Ngọn đèn cuối cùng"), không phải tên file ("ngon_den_cuoi_cung").
-        book.title = title_from_line(first_text_line(chapter.text)) or book.title
+        from_text = title_from_line(first_text_line(chapter.text))
         lines = chapter.text.split("\n")
         alone = title_only_preamble(lines, next(iter(_txt_cuts(lines)), 0))
         if split and alone:
             book.notes.append(f"Dòng đầu “{alone}” là tên truyện - dùng làm tên sách, không đọc thành một chương.")
+    else:
+        from_text = standalone_title(chapter.text)  # file một chương mà mở bằng một dòng tên riêng ("Chuyện dài một chương"): tên ấy, không phải tên file
+    book.title = from_text or book.title
     title, author = gutenberg_header(chapter.text)
     book.title, book.author = title or book.title, author or None
     if split and parts:
         book.chapters = parts
+    elif from_text and not title:
+        # Chương một mình mang tên file ("chuong_dai") thì dùng tên truyện ở dòng đầu thay cho tên file.
+        from .webui.humanize import chapter_title
+
+        if chapter.title == chapter_title(path.stem):
+            book.chapters = [Chapter(from_text, chapter.text)]
     return book
+
+
+def standalone_title(text: str) -> str:
+    """Dòng đầu của `text` nếu nó trông là tên truyện (`title_from_line`) VÀ đứng riêng một đoạn (dòng kế là dòng trống) VÀ không kết bằng số
+    ("Capítulo 1", "Part 2" là tiêu đề chương của một ngôn ngữ ta chưa biết, không phải tên truyện); không thì "". Kotlin: BookImport.standaloneTitle."""
+    lines = text.split("\n")
+    for index, line in enumerate(lines):
+        if line.strip():
+            alone = index + 1 < len(lines) and not lines[index + 1].strip() and not line.rstrip()[-1:].isdigit()
+            return title_from_line(line) if alone else ""
+    return ""
 
 
 _PG_FIELD = re.compile(r"(title|author)\s*:\s*(.+)", re.IGNORECASE)
@@ -523,7 +553,9 @@ def split_txt_chapters(text: str) -> list[Chapter]:
         return []
     # Chữ dẫn chỉ là một dòng tên truyện thì không thành chương "Mở đầu" - nó là tên sách (`title_only_preamble`).
     lead = any(line.strip() for line in lines[: cuts[0]]) and not title_only_preamble(lines, cuts[0])
-    chapters = [Chapter(PREAMBLE, "\n".join(lines[: cuts[0]]).strip("\n"))] if lead else []
+    lead_text = "\n".join(lines[: cuts[0]]).strip("\n")
+    lead_matter = text_matter(PREAMBLE, lead_text) or (PREAMBLE_MATTER if len(lead_text.split()) <= PREAMBLE_MATTER_WORDS else "")  # lý do cụ thể (mục lục, Gutenberg) trước
+    chapters = [Chapter(PREAMBLE, lead_text, matter=lead_matter)] if lead else []
     for position, start in enumerate(cuts):
         end = cuts[position + 1] if position + 1 < len(cuts) else len(lines)
         chapters.append(Chapter(lines[start].strip(), "\n".join(lines[start:end]).strip("\n")))

@@ -120,9 +120,13 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
 ## Giọng đọc của "Nghe ngay" (không đóng gói giọng nào)
 
 - Edge TTS: dịch vụ đọc to trực tuyến của Microsoft Edge (giọng neural vi-VN Hoài My, Nam Minh), gọi thẳng qua WebSocket - không
-  thư viện nào được đóng gói. Máy khách viết lại theo giao thức mà dự án mã nguồn mở `edge-tts` (rany2, LGPL-3.0) mô tả; không chép mã
-  của dự án ấy (`abook/readaloud/edge.py`, `websocket.py`; Android `readaloud/EdgeTts.kt`, `WebSocket.kt`). Chữ của đoạn đang
-  đọc được gửi tới Microsoft; app nói rõ điều này lần đầu dùng.
+  thư viện nào được đóng gói. Máy khách viết lại theo giao thức mà dự án mã nguồn mở `edge-tts` (rany2, LGPL-3.0) mô tả
+  (`abook/readaloud/edge.py`, `websocket.py`; Android `readaloud/EdgeTts.kt`, `WebSocket.kt`) - TRỪ phần tính mã `Sec-MS-GEC` v2
+  (Microsoft đổi cách xác thực tháng 10/2026): `abook/readaloud/edge_token.py` và `readaloud/EdgeToken.kt` (Android) được chuyển từ
+  `drm.py` của edge-tts 7.3.1 (https://github.com/rany2/edge-tts, (c) rany2, LGPL-3.0) và HAI FILE ẤY vẫn nằm dưới LGPL-3.0, không
+  phải MIT như phần còn lại của app (đầu mỗi file ghi rõ). Giấy phép: https://www.gnu.org/licenses/lgpl-3.0.txt . Mã nguồn đầy đủ của
+  app (gồm hai file này, tách riêng, sửa/thay được) là repo công khai của ABook. Chữ của đoạn đang đọc được gửi tới Microsoft; app nói
+  rõ điều này lần đầu dùng.
 - Giọng của máy: Windows OneCore (`Windows.Media.SpeechSynthesis`, qua PowerShell) trên máy tính, Android `TextToSpeech` trên điện
   thoại - dùng giọng người dùng đã cài, không phân phối giọng nào.
 - Giọng VieNeu (mô-đun tải khi người dùng bấm, `webui/vieneu_module.py`; không nằm trong bộ cài): model VieNeu-TTS v3 Turbo int8 và

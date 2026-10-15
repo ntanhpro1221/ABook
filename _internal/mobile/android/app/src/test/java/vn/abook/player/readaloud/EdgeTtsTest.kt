@@ -28,9 +28,21 @@ class EdgeTtsTest {
     // ---- giao thức ----------------------------------------------------------------------------
 
     @Test
-    fun secMsGecIsTheUppercaseSha256OfTheFiveMinuteWindowAndTheToken() {
-        // Số kỳ vọng tính bằng edge-tts (drm.py) cho giờ 1700000000.5.
-        assertEquals("42301B335578FEFDAE2637DED1ABD614505D432559EC08032B82048483726AFF", EdgeProtocol.secMsGec(1_700_000_000.5))
+    fun secMsGecMatchesTheSharedV2Vectors() {
+        // Bộ ví dụ dùng chung với pytest (tests/fixtures/readaloud/edge/gec_v2_vectors.json, sinh bằng drm.py của edge-tts 7.3.1).
+        val file = File("../../../tests/fixtures/readaloud/edge/gec_v2_vectors.json")
+        assertTrue("Không thấy ${file.absoluteFile}", file.isFile)
+        val vectors = org.json.JSONArray(file.readText(Charsets.UTF_8))
+        assertTrue(vectors.length() >= 5)
+        for (i in 0 until vectors.length()) {
+            val vector = vectors.getJSONObject(i)
+            assertEquals("unix ${vector.getDouble("unix_seconds")}", vector.getString("token"), EdgeProtocol.secMsGec(vector.getDouble("unix_seconds")))
+        }
+    }
+
+    @Test
+    fun secMsGecIsV2Shaped() {
+        assertTrue(Regex("[0-9A-F]{16}-[0-9A-F]{64}").matches(EdgeProtocol.secMsGec(1_700_000_000.5)))
     }
 
     @Test
@@ -44,8 +56,8 @@ class EdgeTtsTest {
     fun theUrlCarriesTokenConnectionIdAndVersion() {
         val url = EdgeProtocol.url("abc123", 1_700_000_000.5)
         assertTrue(url.startsWith("wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4"))
-        assertTrue(url.contains("&ConnectionId=abc123&Sec-MS-GEC=42301B33"))
-        assertTrue(url.endsWith("&Sec-MS-GEC-Version=1-143.0.3650.75"))
+        assertTrue(url.contains("&ConnectionId=abc123&Sec-MS-GEC="))
+        assertTrue(url.endsWith("&Sec-MS-GEC-Version=2-143.0.3650.75"))
     }
 
     @Test

@@ -6,7 +6,8 @@
  "chapters": [
   {
    "title": "Mở đầu",
-   "text": "Chuyến phà cuối ngày\nMột truyện ngắn thử nghiệm."
+   "text": "Chuyến phà cuối ngày\nMột truyện ngắn thử nghiệm.",
+   "matter": "Phần đầu file (tên truyện, tác giả…)"
   },
   {
    "title": "Chương 1: Bến phà lúc bình minh",

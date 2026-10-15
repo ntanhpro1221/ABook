@@ -4,6 +4,7 @@
 
 import type { ListenChapter } from "./model";
 import type { ReadAloudVoice } from "./readAloud";
+import { formatSize } from "@/shared/format";
 import { splitParagraphs, withoutLines } from "./textScript";
 
 /** Khoá react-query của trạng thái làm trước (một việc một lúc cho cả máy): menu Giọng đọc và dấu "Đã làm sẵn" ở danh sách chương dùng chung. */
@@ -46,7 +47,8 @@ export interface PrepareStatus {
 export interface PrepareRequest {
   voice: string;
   bookId: string;
-  chapters: Pick<ListenChapter, "id" | "title">[];
+  /** `skip`: dòng người nghe đã bỏ khỏi phần đọc - đoạn làm trước phải chia đúng như lúc nghe (cùng khoá bộ đệm). */
+  chapters: Pick<ListenChapter, "id" | "title" | "skip">[];
   label: string;
   chargingOnly?: boolean;
 }
@@ -57,6 +59,23 @@ export interface PreparePlan {
   offered: number;
   audioSeconds: number;
   secondsEstimate: number | null;
+}
+
+/** Bản đọc đã làm (clip trong bộ đệm của máy) chiếm bao nhiêu, tính bằng byte: của cuốn đang nghe và của cả máy (máy tính: webui `/api/readaloud/cache`). */
+export interface ReadAloudCacheUsage {
+  book: number;
+  total: number;
+}
+
+/** Dòng nói bản đọc đã làm nặng bao nhiêu: "Đã lưu 12 MB bản đọc của cuốn này (cả máy: 148 MB)." */
+export function cacheLabel(usage: ReadAloudCacheUsage): string {
+  const whole = usage.total > 0 ? `cả máy: ${formatSize(usage.total)}` : "cả máy: chưa có";
+  return usage.book > 0 ? `Đã lưu ${formatSize(usage.book)} bản đọc của cuốn này (${whole}).` : `Cuốn này chưa lưu bản đọc nào (${whole}).`;
+}
+
+/** Câu hỏi lại trước khi xoá bản đọc của cuốn: nói điều người nghe sẽ thấy sau đó. */
+export function clearCacheQuestion(usage: ReadAloudCacheUsage): string {
+  return `Xoá ${formatSize(usage.book)} bản đọc đã làm của cuốn này? Nghe tới đâu máy đọc lại tới đó (giọng trực tuyến cần có mạng).`;
 }
 
 /** Các chương chỉ-có-chữ ngay sau chương đang nghe (tối đa `limit`). */

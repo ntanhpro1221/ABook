@@ -26,7 +26,7 @@ import {
   type SleepRequest,
 } from "./sleep";
 import type { ReadAloudVoice, SpeechTrack } from "./readAloud";
-import { chooseVoice, chosenVoice, ONLINE_NOTICE, resolveVoice, speechFetcher, voicesOf } from "./readAloudVoice";
+import { chooseVoice, chosenVoice, forgetVoiceTrouble, ONLINE_NOTICE, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
 import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useListenBook, useSource } from "./source";
@@ -367,6 +367,8 @@ export function PlayerProvider({
     return {
       script: () => client.fetchQuery(query),
       voice: () => chosenVoice(bookId),
+      serial: () => runsOnThisMachine(voicesRef.current ? resolveVoice(voicesRef.current, chosenVoice(bookId)) : undefined),
+      bookId,
       fetchClip: speechFetcher(source, bookId, (message) => message !== ONLINE_NOTICE && showNotice(message)),
       onScript: (script) => client.setQueryData(query.queryKey, script),
     };
@@ -748,6 +750,7 @@ export function PlayerProvider({
   const retry = useCallback(() => {
     const current = refs.current.track;
     if (!current) return;
+    forgetVoiceTrouble(); // "Thử lại" gọi lại dịch vụ thật, không nhắc lại lỗi cũ của giọng trực tuyến
     stopPeerWatch.current();
     if (native) {
       resume();
@@ -910,8 +913,15 @@ export function PlayerProvider({
     applyRate(value);
     night.touch("rate", position());
     const current = refs.current.track;
-    if (current && !native && refs.current.purpose !== "review") void source.setRate(current.bookId, value).catch(() => undefined);
-  }, [applyRate, native, night, position, source]);
+    if (current && !native && refs.current.purpose !== "review") {
+      // Tốc độ nhớ riêng của cuốn cũng nằm trong bộ nhớ của trang sách / thư viện (ListenBook.state.rate): đổi ngay ở đó, không thì "Nghe lại từ đầu" /
+      // "Nghe tiếp" ngay sau phím [ ] nạp lại tốc độ cũ của cuốn đè lên tốc độ vừa chọn (adoptBook).
+      const remember = (book: ListenBook): ListenBook => ({ ...book, state: { ...(book.state ?? { chapters: {} }), rate: value } });
+      client.setQueryData<ListenBook>(["listen", "book", current.bookId], (book) => book && remember(book));
+      client.setQueryData<ListenBook[]>(["listen", "library"], (books) => books?.map((book) => (book.id === current.bookId ? remember(book) : book)));
+      void source.setRate(current.bookId, value).catch(() => undefined);
+    }
+  }, [applyRate, client, native, night, position, source]);
 
   const setVolume = useCallback((value: number) => {
     const clamped = Math.max(0, Math.min(1, value));
