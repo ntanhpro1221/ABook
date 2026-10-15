@@ -87,14 +87,32 @@ object Names {
         return parts.joinToString("-") { if (it == "o") "o_" else it }
     }
 
-    /** Cách đọc nối gạch của `core` (đã bỏ dấu câu quanh) khi nó là tên theo luật của `origin`, null khi để nguyên. */
+    /** Dáng chữ Âu mà tên Hàn viết RR không có - `WESTERN_KO`: hai nguyên âm liền mà RR không viết, l trước nguyên âm, e cuối sau phụ âm. */
+    private val WESTERN_KO = Regex("ia|io|ea|ai|au|ue|ie|.l[aeiouy]|[bcdfghjklmnpqrstvwxz]e$")
+    /** Seah, Jiah: -ah của tên Hàn (h câm của tiếng gọi -a) - `KOREAN_AH`. */
+    private val KOREAN_AH = Regex("[aeiou]ah$")
+
+    /**
+     * Tên mà luật RR đọc được nhưng mang dáng chữ Âu ([WESTERN_KO]) và KHÔNG có dấu hiệu Hàn nào (tên nối gạch, cặp chữ [KO_MARKS], họ, tiếng gọi, -ah): truyện Hàn đầy tên Âu mà RR dễ tính vẫn tách
+     * được. Hậu tố gọi Hàn đi sau không tính ("Ian-nim" xét "Ian") - `western_in_korean`.
+     */
+    private fun westernInKorean(head: String): Boolean {
+        val parts = head.split("-").toMutableList()
+        while (parts.size > 1 && lower(parts.last()) in KOREAN_TERMS) parts.removeAt(parts.size - 1)
+        if (parts.size > 1) return false
+        val low = lower(parts[0])
+        if (low in KOREAN_SURNAMES || low in KOREAN_TERMS || KO_MARKS.any { it in low } || KOREAN_AH.containsMatchIn(low)) return false
+        return WESTERN_KO.containsMatchIn(low)
+    }
+
+    /** Cách đọc nối gạch của `core` (đã bỏ dấu câu quanh) khi nó là tên theo luật của `origin`, null khi để nguyên (kể cả tên Âu trong truyện Hàn: [westernInKorean]). */
     fun nameReading(core: String, origin: String?): String? {
         if (origin == null || origin !in ORIGINS) return null
         val key = "$origin|$core"
         val hit = readings[key]
         if (hit != null) return hit.ifEmpty { null }
         val head = head(core)
-        val found = if (head == null || knownWord(head)) null else loneSyllable(Romanization.reading(core, origin))
+        val found = if (head == null || knownWord(head) || (origin == "ko" && westernInKorean(head))) null else loneSyllable(Romanization.reading(core, origin))
         if (readings.size > 8192) readings.clear()
         readings[key] = found ?: ""
         return found

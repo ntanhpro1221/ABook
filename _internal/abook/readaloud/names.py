@@ -17,6 +17,7 @@ from __future__ import annotations
 import collections
 import json
 import os
+import re
 import threading
 from functools import lru_cache
 from itertools import islice
@@ -44,6 +45,8 @@ KO_MARKS = ("eo", "eu", "ung", "ong", "hyun")  # cặp chữ RR mà tên Âu / N
 JA_TERMS = 80  # số lần hậu tố gọi Nhật nối gạch (-san, -kun, -chan, -sama, -senpai...) trong phần mẫu: truyện Hàn / Trung / Việt hầu như không có (đo 15-10: 98% cuốn không-Nhật dưới 61; 40 thì bắt đầu nhận nhầm một cuốn)
 KO_TERMS = 8  # số lần hậu tố / tiếng gọi chỉ Hàn có (-ssi, -nim, hyung, oppa, unnie, noona): cuốn không-Hàn gần như không có (nhận nhầm đầu tiên ở 5)
 MARKED_RATIO = 2  # bên nào có bằng chứng gấp đôi bên kia mới thắng (cuốn có cả tên Nhật lẫn Hàn thì để luật tỉ lệ quyết)
+WESTERN_KO = re.compile(r"ia|io|ea|ai|au|ue|ie|.l[aeiouy]|[bcdfghjklmnpqrstvwxz]e$")  # dáng chữ Âu mà tên Hàn viết RR không có (đo 15-10, 220 tên mỗi nửa: Hàn đọc nhầm 21 -> 10 nửa A, 18 -> 13 nửa B): hai nguyên âm liền mà RR không viết (ia io ea ai au ue ie), l trước nguyên âm (RR viết r), e cuối sau phụ âm
+KOREAN_AH = re.compile(r"[aeiou]ah$")  # Seah, Jiah: -ah của tên Hàn (h câm của tiếng gọi -a)
 RULE_VERSION = 4  # đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại
 ENGLISH_READING = 1  # đổi khi đổi cách Việt hoá từ Anh (`english_vi`, `english_reading`): clip đã đệm của giọng Việt hoá được đọc lại (dấu "en<số>" của khoá clip)
 _ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
@@ -123,13 +126,27 @@ def lone_syllable(reading: str | None) -> str | None:
     return "-".join("o_" if part == "o" else part for part in parts)
 
 
+def western_in_korean(head: str) -> bool:
+    """Tên mà luật RR đọc được nhưng mang dáng chữ Âu (`WESTERN_KO`) và KHÔNG có dấu hiệu Hàn nào: truyện Hàn đầy tên Âu (Cale, Aranea, Ruel, Elise) mà RR dễ tính vẫn tách được,
+    đọc theo RR thì thành "Ruel" -> "ru-en". Dấu hiệu Hàn (tên nối gạch, cặp chữ `KO_MARKS`, họ, tiếng gọi, -ah) giữ cách đọc RR; hậu tố gọi Hàn đi sau không tính ("Ian-nim" xét "Ian")."""
+    parts = head.split("-")
+    while len(parts) > 1 and parts[-1].lower() in KOREAN_TERMS:
+        parts.pop()
+    if len(parts) > 1:
+        return False
+    low = parts[0].lower()
+    if low in KOREAN_SURNAMES or low in KOREAN_TERMS or any(mark in low for mark in KO_MARKS) or KOREAN_AH.search(low):
+        return False
+    return WESTERN_KO.search(low) is not None
+
+
 @lru_cache(maxsize=8192)
 def name_reading(core: str, origin: str | None) -> str | None:
-    """Cách đọc nối gạch của `core` (đã bỏ dấu câu quanh) khi nó là tên theo luật của `origin`, None khi để nguyên."""
+    """Cách đọc nối gạch của `core` (đã bỏ dấu câu quanh) khi nó là tên theo luật của `origin`, None khi để nguyên (kể cả tên Âu trong truyện Hàn: `western_in_korean`)."""
     if origin not in ORIGINS:
         return None
     head = _head(core)
-    if head is None or _known_word(head):
+    if head is None or _known_word(head) or (origin == "ko" and western_in_korean(head)):
         return None
     return lone_syllable(romanized_reading(core, origin))
 

@@ -78,6 +78,28 @@ def test_a_korean_book_reads_romanized_korean_names() -> None:
     assert _said("Seo-yeon gặp Ji-ho và Geun-hye.", "ko") == ["Xeo-gion", "gặp", "Gi-hô", "và", "Cưn-hê."]
 
 
+@pytest.mark.parametrize("token", ["Ruel", "Aranea", "Elise", "Jude", "Rosanne", "Alishi", "Selephin", "Darion", "Ian-nim"])
+def test_a_western_looking_name_stays_english_in_a_korean_book(token: str) -> None:
+    # RR đọc được (Ruel -> ru-en) nhưng tên mang dáng chữ Âu và không có dấu hiệu Hàn nào: để nguyên cho giọng đọc theo âm Anh
+    assert _said(f"Rồi {token}.", "ko")[1] == f"{token}."
+    assert names.western_in_korean(token) is True
+
+
+@pytest.mark.parametrize("token, reading", [
+    ("Seo-yeon", "Xeo-gion"), ("Hyunseok", "Hi-un-xe-óc"), ("Jiah", "Gi-a"), ("Seah", "Xê-a"), ("Kang", "Cang"), ("Woo", "U"), ("Hana", "Ha-na"), ("Ji-ho", "Gi-hô"),
+    ("Minjun", "Min-giun"), ("Baek", "Béc"),
+])
+def test_a_korean_name_keeps_its_rr_reading_beside_the_western_cues(token: str, reading: str) -> None:
+    assert _said(f"Rồi {token}.", "ko")[1] == f"{reading}." and names.western_in_korean(token) is False
+
+
+def test_the_western_cues_leave_the_japanese_side_and_the_origin_guess_alone() -> None:
+    assert names.name_reading("Aranea", "ko") is None and names.name_reading("Aranea", "ja") is not None
+    assert names.honorific_reading("Ian-nim", "ko") == "Ian-nim"  # hậu tố -nim đọc theo bảng, tên Âu giữ chữ
+    korean = " ".join(["Ruel Aranea Ariane Jude Rosanne Mirabelle Ariel Elise Alishi Darion Selephin Hyunseok Seongjin Yeongsu Dongcheol Myeongho"] * 8)
+    assert names.origin_shares(*names.scan_names([korean]))["ko_names"] >= 10  # RR vẫn "đọc được" những tên này: bằng chứng gốc của cuốn không đổi
+
+
 def test_the_shown_words_and_their_count_never_change() -> None:
     text = "Haruto-kun, Kyouko-san đã đến. “Yamato!” Kate hỏi Mike, còn Rose và Hana thì cười. Seo-yeon cũng ở đó."
     for origin in (None, "ja", "ko"):

@@ -302,6 +302,9 @@ NAME_PARAGRAPHS = [
     ("Seo-yeon và Ji-ho là đôi bạn. Kim Min-jun đến Seoul cùng Park, Geun-hye và Chang-dok.", "ko"),
     ("Haruto-kun, Kyouko-san đã đến. Kate hỏi Mike, còn Rose và Hana thì cười.", "ko"),
     ("Haruto-kun, Kyouko-san đã đến. Kate hỏi Mike, còn Rose và Hana thì cười.", None),
+    # Western names in a Korean book stay English (names.western_in_korean); Korean ones, hyphenated, with a Korean pair, a surname or -ah keep the RR reading
+    ("Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim. Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Hana cũng ở đó.", "ko"),
+    ("Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim. Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Hana cũng ở đó.", "ja"),
 ]
 # Paragraphs for the reading-only sounds (abbreviations.py letter names, shouts.py stretched sounds and Latin interjections, names.honorific_reading suffixes): read with
 # and without a book origin. Written for these fixtures (no book text).

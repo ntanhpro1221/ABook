@@ -2152,6 +2152,34 @@
   },
   {
    "sentences": [
+    "Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim.",
+    "Xeo-gion, Gi-a, Xê-a, Hi-un-xe-óc, Cang U và Ha-na cũng ở đó."
+   ],
+   "phonemes": "rjˈuːəl, ˈæɹənˌiə, ᵻlˈiːz, dʒˈuːd vˌaː2 ɹˈɑːsæn ɣˈa6p ˈiːən nˈim. sˈɛw zˈɔn, z ˈaː, sˈe ˈaː, hˈi ˈu2n sˈɛ ˈɔɜk, kˈaːŋ ˈu vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+  },
+  {
+   "sentences": [
+    "Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim.",
+    "Xeo-gion, Gi-a, Xê-a, Hi-un-xe-óc, Cang U và Ha-na cũng ở đó."
+   ],
+   "phonemes": "rjˈuːəl, ˈæɹənˌiə, ᵻlˈiːz, dʒˈuːd vˌaː2 ɹˈɑːsæn ɣˈa6p ˈiːən nˈim. sˈɛw zˈɔn, z ˈaː, sˈe ˈaː, hˈi ˈu2n sˈɛ ˈɔɜk, kˈaːŋ ˈu vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+  },
+  {
+   "sentences": [
+    "Ruel, a-ra-ne-a, Elise, Giu-đe và Rô-xan-ne gặp Ian-nim.",
+    "Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Ha-na cũng ở đó."
+   ],
+   "phonemes": "rjˈuːəl, ˈaː ɹˈaː nˈɛ ɐ, ᵻlˈiːz, zˈu ɗˈɛ vˌaː2 ɹˈo sˈaːn nˈɛ ɣˈa6p ˈiːən nˈim. sˈɛw jˈoʊn, dʒˈaɪə, sˈiː, hˈaɪʌn sɪˈɑːk, kˈæŋ wˈuː vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+  },
+  {
+   "sentences": [
+    "Ruel, a-ra-ne-a, Elise, Giu-đe và Rô-xan-ne gặp Ian-nim.",
+    "Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Ha-na cũng ở đó."
+   ],
+   "phonemes": "rjˈuːəl, ˈaː ɹˈaː nˈɛ ɐ, ᵻlˈiːz, zˈu ɗˈɛ vˌaː2 ɹˈo sˈaːn nˈɛ ɣˈa6p ˈiːən nˈim. sˈɛw jˈoʊn, dʒˈaɪə, sˈiː, hˈaɪʌn sɪˈɑːk, kˈæŋ wˈuː vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+  },
+  {
+   "sentences": [
     "Chỉ số hát pê và em pê của cô còn 15%.",
     "en pê xê đứng cạnh SSR, VIP, ID, OK, TV, GOTY.",
     "LINE, MAX, YES, TIP, BAKA, ha ha.",
@@ -6729,6 +6757,154 @@
    ]
   },
   {
+   "text": "Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim. Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Hana cũng ở đó.",
+   "max": 256,
+   "tokens": 19,
+   "units": [
+    {
+     "first": 0,
+     "last": 18,
+     "pieces": [
+      "Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim.",
+      "Xeo-gion, Gi-a, Xê-a, Hi-un-xe-óc, Cang U và Ha-na cũng ở đó."
+     ],
+     "phonemes": "rjˈuːəl, ˈæɹənˌiə, ᵻlˈiːz, dʒˈuːd vˌaː2 ɹˈɑːsæn ɣˈa6p ˈiːən nˈim. sˈɛw zˈɔn, z ˈaː, sˈe ˈaː, hˈi ˈu2n sˈɛ ˈɔɜk, kˈaːŋ ˈu vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+    }
+   ],
+   "origin": "ko"
+  },
+  {
+   "text": "Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim. Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Hana cũng ở đó.",
+   "max": 140,
+   "tokens": 19,
+   "units": [
+    {
+     "first": 0,
+     "last": 18,
+     "pieces": [
+      "Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim.",
+      "Xeo-gion, Gi-a, Xê-a, Hi-un-xe-óc, Cang U và Ha-na cũng ở đó."
+     ],
+     "phonemes": "rjˈuːəl, ˈæɹənˌiə, ᵻlˈiːz, dʒˈuːd vˌaː2 ɹˈɑːsæn ɣˈa6p ˈiːən nˈim. sˈɛw zˈɔn, z ˈaː, sˈe ˈaː, hˈi ˈu2n sˈɛ ˈɔɜk, kˈaːŋ ˈu vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+    }
+   ],
+   "origin": "ko"
+  },
+  {
+   "text": "Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim. Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Hana cũng ở đó.",
+   "max": 40,
+   "tokens": 19,
+   "units": [
+    {
+     "first": 0,
+     "last": 2,
+     "pieces": [
+      "Ruel, Aranea, Elise,"
+     ],
+     "phonemes": "rjˈuːəl, ˈæɹənˌiə, ᵻlˈiːz."
+    },
+    {
+     "first": 3,
+     "last": 7,
+     "pieces": [
+      "Jude và Rosanne gặp Ian-nim."
+     ],
+     "phonemes": "dʒˈuːd vˌaː2 ɹˈɑːsæn ɣˈa6p ˈiːən nˈim."
+    },
+    {
+     "first": 8,
+     "last": 11,
+     "pieces": [
+      "Xeo-gion, Gi-a, Xê-a, Hi-un-xe-óc,"
+     ],
+     "phonemes": "sˈɛw zˈɔn, z ˈaː, sˈe ˈaː, hˈi ˈu2n sˈɛ ˈɔɜk."
+    },
+    {
+     "first": 12,
+     "last": 18,
+     "pieces": [
+      "Cang U và Ha-na cũng ở đó."
+     ],
+     "phonemes": "kˈaːŋ ˈu vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+    }
+   ],
+   "origin": "ko"
+  },
+  {
+   "text": "Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim. Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Hana cũng ở đó.",
+   "max": 256,
+   "tokens": 19,
+   "units": [
+    {
+     "first": 0,
+     "last": 18,
+     "pieces": [
+      "Ruel, a-ra-ne-a, Elise, Giu-đe và Rô-xan-ne gặp Ian-nim.",
+      "Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Ha-na cũng ở đó."
+     ],
+     "phonemes": "rjˈuːəl, ˈaː ɹˈaː nˈɛ ɐ, ᵻlˈiːz, zˈu ɗˈɛ vˌaː2 ɹˈo sˈaːn nˈɛ ɣˈa6p ˈiːən nˈim. sˈɛw jˈoʊn, dʒˈaɪə, sˈiː, hˈaɪʌn sɪˈɑːk, kˈæŋ wˈuː vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+    }
+   ],
+   "origin": "ja"
+  },
+  {
+   "text": "Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim. Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Hana cũng ở đó.",
+   "max": 140,
+   "tokens": 19,
+   "units": [
+    {
+     "first": 0,
+     "last": 18,
+     "pieces": [
+      "Ruel, a-ra-ne-a, Elise, Giu-đe và Rô-xan-ne gặp Ian-nim.",
+      "Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Ha-na cũng ở đó."
+     ],
+     "phonemes": "rjˈuːəl, ˈaː ɹˈaː nˈɛ ɐ, ᵻlˈiːz, zˈu ɗˈɛ vˌaː2 ɹˈo sˈaːn nˈɛ ɣˈa6p ˈiːən nˈim. sˈɛw jˈoʊn, dʒˈaɪə, sˈiː, hˈaɪʌn sɪˈɑːk, kˈæŋ wˈuː vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+    }
+   ],
+   "origin": "ja"
+  },
+  {
+   "text": "Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim. Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Hana cũng ở đó.",
+   "max": 40,
+   "tokens": 19,
+   "units": [
+    {
+     "first": 0,
+     "last": 2,
+     "pieces": [
+      "Ruel, a-ra-ne-a, Elise,"
+     ],
+     "phonemes": "rjˈuːəl, ˈaː ɹˈaː nˈɛ ɐ, ᵻlˈiːz."
+    },
+    {
+     "first": 3,
+     "last": 7,
+     "pieces": [
+      "Giu-đe và Rô-xan-ne gặp Ian-nim."
+     ],
+     "phonemes": "zˈu ɗˈɛ vˌaː2 ɹˈo sˈaːn nˈɛ ɣˈa6p ˈiːən nˈim."
+    },
+    {
+     "first": 8,
+     "last": 11,
+     "pieces": [
+      "Seo-yeon, Jiah, Seah, Hyunseok,"
+     ],
+     "phonemes": "sˈɛw jˈoʊn, dʒˈaɪə, sˈiː, hˈaɪʌn sɪˈɑːk."
+    },
+    {
+     "first": 12,
+     "last": 18,
+     "pieces": [
+      "Kang Woo và Ha-na cũng ở đó."
+     ],
+     "phonemes": "kˈæŋ wˈuː vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+    }
+   ],
+   "origin": "ja"
+  },
+  {
    "text": "Chỉ số HP và MP của cô còn 15%. NPC đứng cạnh SSR, VIP, ID, OK, TV, GOTY. LINE, MAX, YES, TIP, BAKA, HAHA. 10KG, LV5, A12-B, TP.HCM, PGS.TS.",
    "max": 256,
    "tokens": 29,
@@ -9024,6 +9200,16 @@
    "phonemes": "pˈɪn kˌɔ2n nˈam fˈə2n tʃˈam, kˈə2n sˈaː6c ŋˈaj.",
    "syllables": 8,
    "cap": 118
+  },
+  {
+   "phonemes": "rjˈuːəl, ˈaː ɹˈaː nˈɛ ɐ, ᵻlˈiːz, zˈu ɗˈɛ vˌaː2 ɹˈo sˈaːn nˈɛ ɣˈa6p ˈiːən nˈim. sˈɛw jˈoʊn, dʒˈaɪə, sˈiː, hˈaɪʌn sɪˈɑːk, kˈæŋ wˈuː vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ.",
+   "syllables": 31,
+   "cap": 348
+  },
+  {
+   "phonemes": "rjˈuːəl, ˈæɹənˌiə, ᵻlˈiːz, dʒˈuːd vˌaː2 ɹˈɑːsæn ɣˈa6p ˈiːən nˈim. sˈɛw zˈɔn, z ˈaː, sˈe ˈaː, hˈi ˈu2n sˈɛ ˈɔɜk, kˈaːŋ ˈu vˌaː2 hˈaː nˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ.",
+   "syllables": 31,
+   "cap": 330
   },
   {
    "phonemes": "stˈoʊn, mˈu6c t̪ˈiɛw kˌuə4 mˈɪstɚ lˈaɪl tˈoj.",

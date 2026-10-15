@@ -11,6 +11,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Truyện Nhật và truyện Hàn có nhiều tên phương Tây lẫn vào (kiểu tên nhân vật phép thuật) giờ được nhận ra đúng hơn: bạn ít phải tự chọn xuất xứ
   sách nữa, tên Nhật và tên Hàn trong những truyện này được đọc theo âm Nhật/Hàn thay vì đọc như tiếng Anh. Xuất xứ bạn đã chọn tay vẫn được giữ nguyên.
+- Khi bạn nghe truyện Hàn có nhân vật phương Tây (Ruel, Elise, Aranea, Jude...), những tên đó không còn bị đọc như tên Hàn mà được đọc như tiếng Anh,
+  còn tên Hàn quen thuộc (Seo-yeon, Hyunseok, Jiah...) vẫn giữ âm Hàn.
 
 ## [0.4.61] - 2026-10-15
 
