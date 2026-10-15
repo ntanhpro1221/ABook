@@ -87,6 +87,10 @@ EDGE: list[tuple[str, str | None]] = [
     ("Hamsuke", "ja"), ("Shimbun", "ja"), ("Reidi", "ja"), ("Direkuresu", "ja"), ("Kasuya", "ja"), ("Yukinoshita", "ja"),
     ("unnie", "ko"), ("Muyoung", "ko"), ("Young", "ko"), ("Chaeyeon", "ko"), ("Yeeun", "ko"), ("Jeongeun", "ko"), ("Luda", "ko"), ("Leon", "ko"), ("Lena", "ko"), ("Hatta", "ko"), ("Hatta", "ja"), ("Yejin", "ko"), ("Yerin", "ko"), ("Seoyeon", "ko"), ("Sapporo", "ja"),
     ("Aoi", "ja"), ("Tomoe", "ja"), ("Fumio", "ja"), ("Koizumi", "ja"), ("Nissan", "ja"), ("Taruー", "ja"), ("Taruー-san", "ja"), ("Fii", "ja"), ("Fuji", "ja"), ("Hyunn", "ko"), ("Gyu", "ko"), ("Gyuri", "ko"), ("Hyu", "ko"), ("Kyu", "ko"),
+    # tn8: tên Hàn viết quen mà RR không viết (hee, oh cuối, yi đầu), chỗ tách nghiêng hẳn (n + yeo / yong, ngwoo, a + eu), và chữ Tây giống dáng ấy vẫn để nguyên
+    ("Sehee", "ko"), ("Sanghee", "ko"), ("Heeyoung", "ko"), ("Hee-jung", "ko"), ("Noh", "ko"), ("Roh", "ko"), ("Yi", "ko"), ("Yi-hyun", "ko"), ("Yiseo", "ko"),
+    ("Jinyoung", "ko"), ("Jinyong", "ko"), ("Junyeol", "ko"), ("Jungwoo", "ko"), ("Myeongwoo", "ko"), ("Haeun", "ko"), ("Gaeul", "ko"),
+    ("Cheese", "ko"), ("Sheep", "ko"), ("Heehee", "ko"), ("Yin", "ko"), ("Kenyon", "ko"), ("Daewoo", "ko"), ("Mango", "ko"), ("Jungyeong", "ko"), ("Oh", "ko"), ("Pooh", "ko"),
 ]
 
 

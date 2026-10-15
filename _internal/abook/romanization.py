@@ -382,6 +382,12 @@ def _ko_parses(word: str, start: int, previous_coda: str | None, out: list[list[
 
 
 _KO_SILENT_H = re.compile(r"ah(?![aeiouy])")
+# Cách viết quen của tên Hàn mà RR không viết (tn8, đo 15-10 trên đầu tên của mọi cuốn đoán gốc Hàn): hee = hui (Sehee, Heejung: cả đoạn "hee" đã có ở _KO_SPELLINGS; không đứng sau c / s / t / w / r / p
+# vì Cheese, Sheep, Wheel, Thee, Rhee, Phee là chữ Anh), oh cuối từ sau chữ khác là o (Noh, Doh, Roh: h câm như ah), yi đầu đoạn là i khi âm tiết không khép phụ âm (Yi, Yi-hyun, Yiseo; Yin, Yip để nguyên)
+_KO_HEE = re.compile(r"(?<![cstwrp])hee")
+_KO_LAUGH = re.compile(r"(?:h[aeiouy]+){2,}")  # Heehee, Hehehehee: tiếng cười toàn h + nguyên âm, không phải tên
+_KO_FINAL_OH = re.compile(r"(?<=[^o])oh$")
+_KO_INITIAL_YI = re.compile(r"^yi(?=$|[^aeiouy]+[aeiouy])")
 _KO_FINAL_IE = re.compile(r"(?<=[bcdfghjklmnpqrstvwxz])ie$")
 _KO_FINAL_NN = re.compile(r"nn$")
 
@@ -405,6 +411,15 @@ def _ko_spelling(word: str, flags: list[str]) -> str:
     if _KO_SILENT_H.search(word):
         flags.append("analogy:ko_ah")
         word = _KO_SILENT_H.sub("a", word)
+    if _KO_HEE.search(word) and not _KO_LAUGH.fullmatch(word):
+        flags.append("analogy:ko_hee")
+        word = _KO_HEE.sub("hui", word)
+    if _KO_FINAL_OH.search(word):
+        flags.append("analogy:ko_oh")
+        word = _KO_FINAL_OH.sub("o", word)
+    if _KO_INITIAL_YI.search(word):
+        flags.append("analogy:ko_yi")
+        word = _KO_INITIAL_YI.sub("i", word)
     return word
 
 
@@ -427,8 +442,35 @@ _KO_FIXED_SYLS: dict[str, tuple[tuple[str, str, str], ...]] = {
 }
 
 
+# Chỗ RR viết giống hai cách tách mà tên Hàn nghiêng hẳn về một bên (tn8): n + yeo, hay n + yo khép ng, là n khép rồi âm tiết yeo / yong (Jin-young, Jun-yeol, Jin-yong), không phải âm tiết nyeo / nyong (hầu như không có
+# trong tên; yo khép n / mở thì để nguyên vì Kenyon, Canyon, Banyo là chữ Tây);
+# "ngwoo" thì chữ w cho biết ng khép rồi woo (Jung-woo), vì "gwoo" không có; a / o + eu viết ra là a + eun, o + eul (Ha-eun, Ga-eul), không phải ae / oe + un (Hae-un; Daewoo có woo, không phải eu)
+_KO_NY_VOWELS = ("yeo", "yo")  # yo chỉ khi khép ng (`_ko_resolved`)
+_KO_NGWOO = re.compile(r"ngwoo")
+_KO_EU_BEFORE = ("ae", "oe")
+
+
+def _ko_resolved(raw: str, chosen: list[tuple[str, str, str]], other: list[tuple[str, str, str]]) -> bool:
+    """`other` (cùng số âm tiết với `chosen`, chỉ khác ở chỗ tách) có phải cách tách mà tên Hàn nghiêng hẳn về (xem trên)?"""
+    for left, right, alt in zip(chosen, chosen[1:], other):
+        if left[2] == "" and right[0] == "n" and right[1] in _KO_NY_VOWELS and alt[2] == "n" and (right[1] == "yeo" or right[2] == "ng"):
+            return True
+        if left[2] == "n" and right[0] == "g" and right[1] == "u" and alt[2] == "ng" and _KO_NGWOO.search(raw):
+            return True
+    return False
+
+
+def _ko_eu(parse: list[tuple[str, str, str]]) -> bool:
+    return any(entry[1] == "eu" for entry in parse)
+
+
+def _ko_ae_u(parse: list[tuple[str, str, str]]) -> bool:
+    return any(left[1] in _KO_EU_BEFORE and right[0] == "" and right[1] == "u" for left, right in zip(parse, parse[1:]))
+
+
 def _ko_best(word: str, flags: list[str]) -> list[tuple[str, str, str]] | None:
     """Cách tách duy nhất của một đoạn RR thành (phụ âm đầu, vần, phụ âm cuối), hay None khi không tách được / không chắc."""
+    raw = word
     word = _ko_spelling(word, flags)
     if word in _KO_FIXED_PARSES:
         return list(_KO_FIXED_PARSES[word])
@@ -444,6 +486,12 @@ def _ko_best(word: str, flags: list[str]) -> list[tuple[str, str, str]] | None:
 
     top = min(rank(parse) for parse in parses)
     best = [parse for parse in parses if rank(parse) == top]
+    if any(parse != best[0] for parse in best) and "eu" in raw:
+        # Ha-eun / Hae-un: a / o + eu thắng ae / oe + u (xem trên)
+        with_eu = [parse for parse in best if _ko_eu(parse) and not _ko_ae_u(parse)]
+        if len(with_eu) == 1 and all(_ko_ae_u(parse) for parse in best if parse is not with_eu[0]):
+            flags.append("analogy:ko_eu_tie")
+            best = with_eu
     if any(parse != best[0] for parse in best):
         # kk là phụ âm đầu căng (ㄲ), không phải c khép + k mở: tokki -> to-kki -> tô-ki (chủ sách 04-10 lần 8). Chỉ kk; pp, tt, ss, jj còn để không đoán (Oppa)
         tense = [parse for parse in best if any(entry[0] == "kk" for entry in parse)]
@@ -455,7 +503,11 @@ def _ko_best(word: str, flags: list[str]) -> list[tuple[str, str, str]] | None:
             tense = split
         best = tense
     chosen = best[0]
-    # ng hay n + g: RR viết giống nhau (Yong-in / Yon-gin, Han-gang / Hang-ang) - còn cách tách khác cùng số âm tiết thì không đoán
+    # ng hay n + g: RR viết giống nhau (Yong-in / Yon-gin, Han-gang / Hang-ang) - còn cách tách khác cùng số âm tiết thì không đoán, trừ ba chỗ nghiêng hẳn (`_ko_resolved`)
+    others = [parse for parse in parses if parse != chosen and len(parse) == len(chosen)]
+    if len(others) == 1 and _ko_resolved(raw, chosen, others[0]):
+        flags.append("analogy:ko_tie")
+        return others[0]
     for parse in parses:
         if parse != chosen and len(parse) == len(chosen):
             for left, right, other in zip(chosen, chosen[1:], parse):

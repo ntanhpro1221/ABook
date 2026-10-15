@@ -15,6 +15,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   sách nữa, tên Nhật và tên Hàn trong những truyện này được đọc theo âm Nhật/Hàn thay vì đọc như tiếng Anh. Xuất xứ bạn đã chọn tay vẫn được giữ nguyên.
 - Khi bạn nghe truyện Hàn có nhân vật phương Tây (Ruel, Elise, Aranea, Jude...), những tên đó không còn bị đọc như tên Hàn mà được đọc như tiếng Anh,
   còn tên Hàn quen thuộc (Seo-yeon, Hyunseok, Jiah...) vẫn giữ âm Hàn.
+- Nhiều tên Hàn viết theo lối quen (Sehee, Heejung, Noh, Yi, Jinyoung, Jungwoo, Haeun...) trước đây bị đọc như tiếng Anh, giờ bạn nghe đúng âm Hàn;
+  cả máy tính lẫn điện thoại.
 
 ## [0.4.61] - 2026-10-15
 

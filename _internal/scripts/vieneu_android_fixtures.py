@@ -305,6 +305,9 @@ NAME_PARAGRAPHS = [
     # Western names in a Korean book stay English (names.western_in_korean); Korean ones, hyphenated, with a Korean pair, a surname or -ah keep the RR reading
     ("Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim. Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Hana cũng ở đó.", "ko"),
     ("Ruel, Aranea, Elise, Jude và Rosanne gặp Ian-nim. Seo-yeon, Jiah, Seah, Hyunseok, Kang Woo và Hana cũng ở đó.", "ja"),
+    # tn8: Korean names the RR rule could not read before (hee, final oh, initial yi, n + yeong, ngwoo, a + eu); the look-alike English words stay English
+    ("Sehee, Noh, Yi-hyun, Jinyoung, Jungwoo và Haeun gặp Cheese, Sheep, Yin, Kenyon và Hehehehee.", "ko"),
+    ("Sehee, Noh, Yi-hyun, Jinyoung, Jungwoo và Haeun gặp Cheese, Sheep, Yin, Kenyon và Hehehehee.", "ja"),
 ]
 # Paragraphs for the reading-only sounds (abbreviations.py letter names, shouts.py stretched sounds and Latin interjections, names.honorific_reading suffixes): read with
 # and without a book origin. Written for these fixtures (no book text).
