@@ -15,7 +15,7 @@ from .listening import HEAVY_KEYS, book_progress
 FORMAT = "abook-book/1"  # không ai đọc trường này, mã phiên bản gói không tính nó
 
 
-_CACHE: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+_CACHE: dict[str, tuple[tuple, list[dict[str, Any]]]] = {}
 
 
 def on_shelf(summary: dict[str, Any], producing: bool) -> bool:
@@ -26,8 +26,9 @@ def on_shelf(summary: dict[str, Any], producing: bool) -> bool:
 
 
 def chapters(project_root: Path) -> list[dict[str, Any]]:
-    """Danh sách chương cho người nghe, đệm theo lần ghi cuối của DB - thư viện hỏi lại mỗi vài giây."""
-    stamp = store.touched(project_root)
+    """Danh sách chương cho người nghe, đệm theo lần ghi cuối của DB - thư viện hỏi lại mỗi vài giây. Tên chương người nghe đặt lại nằm ở file
+    riêng cạnh sổ (store.CHAPTER_TITLES_FILE), không đổi sổ: dấu của nó cũng thuộc chữ ký, không thì đổi tên xong trang vẫn trả tên cũ."""
+    stamp = store.db_signature(project_root, store.CHAPTER_TITLES_FILE)
     cached = _CACHE.get(str(project_root))
     if cached and cached[0] == stamp:
         return cached[1]

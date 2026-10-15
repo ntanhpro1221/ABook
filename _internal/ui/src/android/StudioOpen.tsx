@@ -10,9 +10,12 @@ import { EbookLibrary, type StudioComputer } from "./plugins";
 // và chip ở trang sách (desktop/App.tsx PeerStudioChipLink). Trang là của chính máy tính ấy; điện thoại chỉ chọn máy và trang.
 
 /** Lời nói thẳng khi máy tính chỉ cho điện thoại nghe - cùng ý với trang "Chỉ nghe" của chính Studio (shared/peerStudio.ts listenOnlyLine), nhưng nói
- *  trước khi bấm, từ phía điện thoại. */
-export function studioListenOnlyLine(name: string): string {
-  return `Máy tính ${name} chỉ cho nghe - bật quyền sửa ở Cài đặt > Thiết bị trên máy tính`;
+ *  trước khi bấm, từ phía điện thoại. Nhiều máy cùng chỉ cho nghe: nêu tên cả hai; hơn hai máy thì nói chung "các máy tính đã ghép". */
+export function studioListenOnlyLine(names: string | string[]): string {
+  const list = typeof names === "string" ? [names] : names;
+  if (list.length > 2) return "Các máy tính đã ghép đều chỉ cho nghe - bật quyền sửa ở Cài đặt > Thiết bị trên máy tính";
+  if (list.length === 2) return `Máy tính ${list[0]} và ${list[1]} đều chỉ cho nghe - bật quyền sửa ở Cài đặt > Thiết bị trên từng máy tính`;
+  return `Máy tính ${list[0] ?? ""} chỉ cho nghe - bật quyền sửa ở Cài đặt > Thiết bị trên máy tính`;
 }
 
 /** Máy tính còn mở Studio được (không phải máy chỉ cho nghe). */
@@ -25,7 +28,7 @@ function openable(computers: StudioComputer[]): StudioComputer[] {
 export function studioChoice(computers: StudioComputer[]): { open: StudioComputer } | { choose: StudioComputer[] } | { none: string } {
   if (computers.length === 0) return { none: "Chưa ghép với máy tính nào" };
   const usable = openable(computers);
-  if (usable.length === 0) return { none: studioListenOnlyLine(computers[0].name) };
+  if (usable.length === 0) return { none: studioListenOnlyLine(computers.map((computer) => computer.name)) };
   return usable.length === 1 ? { open: usable[0] } : { choose: usable };
 }
 
@@ -81,7 +84,7 @@ export function OpenStudioButton({ computers, className }: { computers: StudioCo
         <Button variant="secondary" icon={Clapperboard} className={className} disabled>
           Mở Studio
         </Button>
-        <p className="mt-1.5 text-pretty text-xs text-fg-2">{studioListenOnlyLine(computers[0].name)}</p>
+        <p className="mt-1.5 text-pretty text-xs text-fg-2">{studioListenOnlyLine(computers.map((computer) => computer.name))}</p>
       </>
     );
   }
@@ -101,9 +104,21 @@ export function OpenStudioButton({ computers, className }: { computers: StudioCo
   );
 }
 
-/** Chip ở trang sách: cuốn đang làm ở máy tính đã ghép mở thẳng trong Studio của máy ấy. Cuốn không phải dự án Studio: không có gì. */
-export function StudioChip({ book }: { book: ListenBook }) {
+/** Chip ở trang sách: cuốn đang làm ở máy tính đã ghép mở thẳng trong Studio của máy ấy. Cuốn không phải dự án Studio: không có gì.
+ *  `computers`: các máy tính đã ghép; mọi máy chỉ cho nghe thì chip mờ kèm lý do, như nút "Mở Studio" ở màn Tải sách. */
+export function StudioChip({ book, computers = [] }: { book: ListenBook; computers?: StudioComputer[] }) {
   if (!book.studio) return null;
+  if (computers.length > 0 && openable(computers).length === 0) {
+    const reason = studioListenOnlyLine(computers.map((computer) => computer.name));
+    return (
+      <>
+        <button type="button" disabled title={reason} className="font-semibold opacity-60">
+          Mở Studio
+        </button>
+        <span className="basis-full text-pretty font-normal text-fg-2">{reason}</span>
+      </>
+    );
+  }
   return (
     <button
       type="button"
@@ -113,4 +128,10 @@ export function StudioChip({ book }: { book: ListenBook }) {
       Mở Studio
     </button>
   );
+}
+
+/** `StudioChip` cho app: hỏi các máy tính đã ghép để biết có máy nào còn mở Studio được. */
+export function StudioChipHost({ book }: { book: ListenBook }) {
+  const computers = useStudioComputers();
+  return <StudioChip book={book} computers={computers} />;
 }

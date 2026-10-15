@@ -508,7 +508,7 @@ export function SettingsScreen() {
               />
             )}
           </div>
-          <ShortcutList />
+          <ShortcutList remote={remote} />
         </Section>
         )}
         <Section id="about" title="Giới thiệu">

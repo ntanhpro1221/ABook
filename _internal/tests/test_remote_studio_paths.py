@@ -18,7 +18,7 @@ from abook.webui.library import book_id
 from abook.webui.server import is_local_path, without_local_paths
 from tests.test_remote_studio import _pair_browser, studio  # noqa: F401 - fixture dùng chung
 from tests.test_webui_listen_and_sync import library  # noqa: F401
-from tests.test_webui_listen_and_sync import _sync_request
+from tests.test_webui_listen_and_sync import _request, _sync_request
 
 ABSOLUTE = re.compile(r"^[A-Za-z]:[\\/]")
 # Chỗ giữ cho từng nhóm ký tự của danh sách trắng khi dựng một đường thật để gọi (cùng bảng với test_every_allowed_route_exists_on_the_computer).
@@ -260,17 +260,113 @@ def test_a_remote_redo_refuses_a_reference_that_no_longer_matches_and_a_bare_rep
     assert old.exists()
 
 
-def test_an_uploaded_source_still_comes_back_with_its_folder(studio) -> None:
-    """Nguồn do chính thiết bị gửi lên là thứ duy nhất thiết bị phải cầm đường dẫn: gửi lại để quét và tạo sách."""
+def _upload(port: int, cookie: dict[str, str], folder: str, name: str, text: str) -> dict[str, str]:
+    status, data, _ = _sync_request(port, "POST", "/api/sources/upload", headers=cookie, body={
+        "folder": folder, "name": name, "data": base64.b64encode(text.encode()).decode()})
+    assert status == 200, data
+    return {"raw": data, **json.loads(data)}
+
+
+def test_an_uploaded_source_comes_back_as_a_reference_that_scans_and_creates(studio) -> None:
+    """Nguồn do chính thiết bị gửi lên: nó cầm `up:...` (không đường dẫn nào của máy tính) và gửi lại đúng chuỗi ấy để quét, tạo sách."""
     app, _project = studio
     cookie = _cookie_with_studio(app)
     port = app.sync_server.port
-    status, data, _ = _sync_request(port, "POST", "/api/sources/upload", headers=cookie, body={
-        "folder": "Truyện", "name": "001.txt", "data": base64.b64encode("Chương 1\n\nTrời sáng.".encode()).decode()})
-    uploaded = json.loads(data)
-    assert status == 200 and is_local_path(uploaded["folder"]) and is_local_path(uploaded["path"])
+    uploaded = _upload(port, cookie, "Truyện", "001.txt", "Chương 1\n\nTrời sáng.")
+    assert uploaded["folder"] == "up:Truyện" and uploaded["path"] == "up:Truyện/001.txt"
+    assert not is_local_path(uploaded["folder"]) and not is_local_path(uploaded["path"])
     status, data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [uploaded["folder"]]})
     assert status == 200 and len(json.loads(data)["files"]) == 1
+    status, data, _ = _sync_request(port, "POST", "/api/books", headers=cookie, body={"paths": [uploaded["folder"]], "title": "Từ tải lên"})
+    assert status == 201, data
+    assert [path.name for path in continuation._input_paths(app.library.resolve(json.loads(data)["id"]))] == ["001.txt"]
+    # Cửa sổ app trên chính máy tính vẫn nhận đường thật, y như trước.
+    local = {"X-Ebook-Token": "phien", "Host": f"127.0.0.1:{app.local_port}"}
+    status, data, _ = _request(app.local_port, "POST", "/api/sources/upload", headers=local, body={
+        "folder": "Lần gửi d5", "name": "1.txt", "data": base64.b64encode(b"Chuong 1").decode()})
+    assert status == 200 and is_local_path(json.loads(data)["folder"]) and is_local_path(json.loads(data)["path"])
+
+
+def test_an_upload_reference_round_trips_and_one_parser_refuses_every_escape(tmp_path: Path) -> None:
+    uploads = tmp_path / "Nguồn tải lên"
+    token = remote_sources.make_upload(uploads / "Lần gửi" / "Tập 1" / "01 Mở đầu.txt", uploads)
+    assert token == "up:Lần gửi/Tập 1/01 Mở đầu.txt"
+    assert remote_sources.parse(token) == ("up", "", 0, "Lần gửi/Tập 1/01 Mở đầu.txt")
+    assert remote_sources.upload_path("Lần gửi/Tập 1", uploads) == uploads / "Lần gửi" / "Tập 1"
+    assert remote_sources.make_upload(tmp_path / "ngoai.txt", uploads) is None and remote_sources.make_upload(uploads, uploads) is None
+    assert remote_sources.parse("ref:redo:abc:0:a.txt")[0] == "redo", "một bộ phân tích cho cả hai kiểu tham chiếu"
+    for bad in ("up:", "up:..", "up:../x", "up:a/../x", "up:/x", "up:C:/x", "up:a\\b", "up:\\\\may\\share", "up://may/share", "up:a//b", "up:a/CON",
+                "up:a/nul.txt", "up:a/b.", "up:a/b ", "up:a/b:c", "up:a/b*", "up:a/\x00", "C:\\x", "up"):
+        assert remote_sources.parse(bad) is None, bad
+
+
+def test_no_remote_post_answers_with_an_absolute_path(studio, tmp_path: Path) -> None:
+    """Đi qua cả chuỗi upload -> quét (thư mục có thư mục con, nhiều tập, file cả truyện) -> tách chương -> hỏi ngôi kể -> tạo sách:
+    lời đáp nào cũng không mang đường dẫn Windows tuyệt đối hay thư mục thư viện / dự án / thư mục tạm của máy tính (soát a34)."""
+    app, project = studio
+    cookie = _cookie_with_studio(app)
+    port = app.sync_server.port
+    library = Path(app.preferences.get()["libraryRoot"])
+    private = [str(library), str(project), str(tmp_path), "Users", "AppData"]
+    seen: list[str] = []
+
+    def post(route: str, body: dict[str, Any], expect: int = 200) -> Any:
+        status, data, _ = _sync_request(port, "POST", route, headers=cookie, body=body)
+        assert status == expect, (route, status, data)
+        assert _leaks(data, private) == [], (route, _leaks(data, private))
+        seen.append(route)
+        return json.loads(data)
+
+    for volume in ("Tập 1", "Tập 2"):
+        for number in (1, 2):
+            sent = _upload(port, cookie, f"Lần gửi a1/Bộ truyện/{volume}", f"{number:02d}.txt", f"Chương {number}\n\nTôi đi tiếp.")
+            assert _leaks(sent["raw"], private) == []
+    whole = _upload(port, cookie, "Cả truyện", "tron bo.txt", "Chương 1\n\nTrời sáng.\n\nChương 2\n\nTrời tối.\n")
+    assert _leaks(whole["raw"], private) == []
+
+    # Thư mục chỉ có thư mục con: gợi ý các thư mục con (mỗi cái một tham chiếu), không có file nào.
+    parent = post("/api/scan", {"paths": ["up:Lần gửi a1/Bộ truyện"]})
+    assert parent["files"] == [] and parent["subfolders"] == ["up:Lần gửi a1/Bộ truyện/Tập 1", "up:Lần gửi a1/Bộ truyện/Tập 2"]
+    # "Dùng cả các thư mục": hai tập -> đề xuất chia tập mang thứ tự và điểm bắt đầu cũng là tham chiếu.
+    both = post("/api/scan", {"paths": parent["subfolders"]})
+    assert len(both["files"]) == 4 and all(remote_sources.parse(row["path"]) for row in both["files"])
+    proposal = both["volumes"]
+    assert proposal and all(remote_sources.parse(item) for item in proposal["order"])
+    assert all(remote_sources.parse(volume["startPath"]) for volume in proposal["volumes"])
+    # Mọi tham chiếu trong lời đáp đều là chính chuỗi quét lại được.
+    post("/api/scan", {"paths": [row["path"] for row in both["files"]]})
+    post("/api/first-person", {"paths": [row["path"] for row in both["files"]]})
+    # File ghi nhầm / không có: nói tên tham chiếu thiết bị đã gửi, không phải đường thật.
+    gone = post("/api/scan", {"paths": ["up:Lần gửi a1/khong-co"]})
+    assert gone["files"] == [] and gone["missing"] == ["up:Lần gửi a1/khong-co"]
+    # File cả truyện: đề xuất tách rồi quét thư mục chương.
+    scan = post("/api/scan", {"paths": [whole["path"]]})
+    assert scan["files"][0]["path"] == whole["path"] and scan["files"][0]["split"]["chapters"] == 2
+    split = post("/api/sources/split", {"path": whole["path"]})
+    assert remote_sources.parse(split["folder"]) and len(post("/api/scan", {"paths": [split["folder"]]})["files"]) == 2
+    made = post("/api/books", {"paths": [row["path"] for row in both["files"]], "title": "Bộ truyện", "profile": "fast", "narrator": "",
+                               "firstPerson": ""}, expect=201)
+    assert sorted(path.name for path in continuation._input_paths(app.library.resolve(made["id"]))) == ["01.txt", "01.txt", "02.txt", "02.txt"]
+    assert len(seen) >= 8
+
+
+def test_a_remote_epub_is_unpacked_inside_the_upload_folder_so_its_chapters_can_be_sent_back(studio, tmp_path: Path) -> None:
+    from tests.test_epub_import import _epub
+
+    app, _project = studio
+    cookie = _cookie_with_studio(app)
+    port = app.sync_server.port
+    epub = _epub(tmp_path / "truyen.epub")
+    sent = _upload(port, cookie, "Lần gửi e1", "truyen.epub", "")
+    assert sent["path"] == "up:Lần gửi e1/truyen.epub"
+    (Path(app.preferences.get()["libraryRoot"]) / "Nguồn tải lên" / "Lần gửi e1" / "truyen.epub").write_bytes(epub.read_bytes())
+    status, data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [sent["path"]]})
+    scan = json.loads(data)
+    assert status == 200 and len(scan["files"]) == 2 and scan["errors"] == [], data
+    assert _leaks(data, [str(tmp_path), str(Path(app.preferences.get()["libraryRoot"]))]) == []
+    assert all(remote_sources.parse(row["path"]) for row in scan["files"])
+    status, data, _ = _sync_request(port, "POST", "/api/books", headers=cookie, body={"paths": [row["path"] for row in scan["files"]], "title": "EPUB từ xa"})
+    assert status == 201, data
 
 
 def test_a_loose_uploaded_file_names_the_book_after_the_file_not_the_random_batch_folder(tmp_path: Path) -> None:
