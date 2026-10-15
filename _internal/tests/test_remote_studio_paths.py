@@ -129,6 +129,27 @@ def test_no_remote_get_answers_with_an_absolute_path(studio, tmp_path: Path) -> 
     assert app.preferences.get()["libraryRootSeen"] == str(library), "máy tính vẫn nhớ thư mục của nó"
 
 
+def test_a_remote_device_reads_ffmpeg_readings_and_suggestions_without_any_path(studio, tmp_path: Path) -> None:
+    """Soát a35: trang sách chữ và hộp Xuất từ máy khác từng nhận 403 ở ba đường chỉ-đọc này (và hộp "Cách đọc tên" báo "Chưa có từ nào" oan).
+    Nay trả lời được, không mang đường dẫn nào; tải ffmpeg vẫn chỉ ở máy tính; ghi cách đọc / bỏ dòng chỉ cho thiết bị có quyền sửa."""
+    app, project = studio
+    cookie = _cookie_with_studio(app)
+    port = app.sync_server.port
+    identifier = book_id(project)
+    private = [str(Path(app.preferences.get()["libraryRoot"])), str(project), str(tmp_path), "Users", "AppData"]
+    for path, key in ((f"/api/books/{identifier}/suggestions", "suggestions"), (f"/api/books/{identifier}/readings", "readings"),
+                      ("/api/ffmpeg", "ready")):
+        status, data, _ = _sync_request(port, "GET", path, headers=cookie)
+        assert status == 200 and key in json.loads(data), (path, status, data)
+        assert _leaks(data, private) == [], (path, _leaks(data, private))
+    assert remote_studio.permitted("GET", f"/api/books/{identifier}/readings", producing=False)
+    assert remote_studio.permitted("GET", f"/api/books/{identifier}/suggestions", producing=False)
+    for method, path in (("PUT", f"/api/books/{identifier}/readings"), ("PUT", f"/api/books/{identifier}/skip")):
+        assert remote_studio.permitted(method, path) and not remote_studio.permitted(method, path, producing=False), (method, path)
+    for method, path in (("POST", "/api/ffmpeg"), ("POST", "/api/ffmpeg/cancel")):
+        assert not remote_studio.permitted(method, path), (method, path)
+
+
 def test_a_finished_export_tells_a_remote_device_only_the_file_name(studio) -> None:
     app, project = studio
     cookie = _cookie_with_studio(app)
@@ -390,3 +411,40 @@ def test_a_loose_uploaded_file_names_the_book_after_the_file_not_the_random_batc
     elsewhere.write_text("x", encoding="utf-8")
     assert actions._loose_upload_title([elsewhere]) is None, "nguồn không phải tải lên: infer_book_title lo như cũ"
     assert actions._loose_upload_title([]) is None
+
+
+def test_a_remote_device_with_edit_rights_teaches_readings_and_skips_credit_lines_but_a_listen_only_one_gets_403(studio, tmp_path: Path) -> None:
+    """Người nghe sửa được phần ĐỌC của sách chữ từ máy khác (như đổi tên chương): thiết bị có quyền sửa thì ghi được và máy tính đổi theo;
+    thiết bị chỉ nghe thì 403; lời đáp không mang đường dẫn nào."""
+    from abook.webui import book_edits
+    from tests import import_fixtures
+
+    app, _project = studio
+    added = app.add_text_book(str(import_fixtures.FIXTURES / "epub3.epub"))
+    folder = app._listenable(added["id"])
+    private = [str(Path(app.preferences.get()["libraryRoot"])), str(folder), str(tmp_path), "Users", "AppData"]
+    editor = _cookie_with_studio(app)  # thiết bị có quyền "Điều khiển sản xuất"
+    known = {device["id"] for device in app.sync_view()["devices"]}
+    listen_only = {"Cookie": _pair_browser(app)}  # thiết bị thứ hai: ghép được nhưng chỉ nghe
+    assert app.devices.set_studio(next(device["id"] for device in app.sync_view()["devices"] if device["id"] not in known), False)
+    port = app.sync_server.port
+    reading = {"surface": "Lucien", "spoken": "Lu-xi-en"}
+    skip = {"line": "Dịch: Nhóm Lục Bình", "chapters": [2], "skip": True}
+    for path, body in ((f"/api/books/{added['id']}/readings", reading), (f"/api/books/{added['id']}/skip", skip)):
+        status, data, _ = _sync_request(port, "PUT", path, headers=listen_only, body=body)
+        assert status == 403, (path, status, data)
+    assert book_edits.load(folder) == book_edits.empty(), "chỉ nghe thì máy tính không đổi gì"
+    for path in (f"/api/books/{added['id']}/readings", f"/api/books/{added['id']}/suggestions"):
+        assert _sync_request(port, "GET", path, headers=listen_only)[0] == 200, "chỉ nghe vẫn xem được"
+
+    for path, body in ((f"/api/books/{added['id']}/readings", reading), (f"/api/books/{added['id']}/skip", skip)):
+        status, data, _ = _sync_request(port, "PUT", path, headers=editor, body=body)
+        assert status == 200, (path, status, data)
+        assert _leaks(data, private) == [], (path, _leaks(data, private))
+    assert app.listen_book(added["id"])["chapters"][1]["skip"] == ["Dịch: Nhóm Lục Bình"]
+    status, data, _ = _sync_request(port, "GET", f"/api/books/{added['id']}/readings", headers=editor)
+    assert status == 200 and {"surface": "Lucien", "spoken": "Lu-xi-en"} in json.loads(data)["readings"] and _leaks(data, private) == []
+    status, data, _ = _sync_request(port, "PUT", f"/api/books/{added['id']}/readings", headers=editor, body={"surface": "Lucien", "spoken": ""})
+    assert status == 200 and json.loads(data)["readings"] == [], "bỏ cách đọc"
+    status, data, _ = _sync_request(port, "PUT", f"/api/books/{added['id']}/readings", headers=editor, body={"spoken": "x"})
+    assert status == 400 and _leaks(data, private) == [], "thiếu từ: máy tính từ chối như ở chỗ mình"

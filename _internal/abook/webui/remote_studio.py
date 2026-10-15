@@ -84,6 +84,10 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
     ("GET", _BOOK + r"/cast"),
     ("GET", _BOOK + r"/chapters/\d+/script"),
     ("GET", _LISTEN + r"/chapters/\d+/text"),  # chữ của chương trong sách chỉ-chữ (textbook.py)
+    # Trang sách chữ (listen/ReadingSuggestions.tsx, WordReadings.tsx): gợi ý bỏ dòng ghi công và danh sách "Cách đọc tên" của chính cuốn đang mở -
+    # chỉ chữ, cùng loại với chữ chương ở trên; ghi (PUT) vẫn chỉ ở máy tính.
+    ("GET", _BOOK + r"/suggestions"),
+    ("GET", _BOOK + r"/readings"),
     ("GET", _LISTEN + r"/search-texts"),  # "Tìm trong sách": chữ của nhiều chương trong một lần hỏi (chỉ đọc, như hai đường trên)
     ("GET", r"/media/voices/[^/]+"),
     ("GET", _MEDIA + r"/samples/\d+"),
@@ -120,6 +124,10 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     # Đổi tên / tác giả sách: chỉ nhận chữ, không mang đường dẫn nào (cùng loại với tên chương ở trên).
     ("PUT", _BOOK + r"/title"),
     ("PUT", _BOOK + r"/author"),
+    # Sửa phần ĐỌC của sách chữ (ReadingSuggestions.tsx, WordReadings.tsx): "Đọc từ này là…" và bỏ / đọc lại một dòng ghi công - chỉ nhận chữ, chữ của sách
+    # không đổi. Cùng loại với tên chương ở trên nên chỉ thiết bị được điều khiển sản xuất; chỉ nghe vẫn 403. Hai GET cùng trang nằm ở LISTEN_ROUTES.
+    ("PUT", _BOOK + r"/readings"),
+    ("PUT", _BOOK + r"/skip"),
     ("POST", _BOOK + r"/start"),
     ("POST", _BOOK + r"/stop"),
     ("POST", _BOOK + r"/pause"),
@@ -169,6 +177,8 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("POST", _BOOK + r"/shared-readings"),
     ("GET", r"/api/readings"),
     ("GET", r"/api/analysis-models"),
+    # Hộp Xuất (ExportBook.tsx): máy tính có ffmpeg chưa - chỉ đọc, không mang đường dẫn (ffmpeg_setup.status); tải / huỷ tải ffmpeg vẫn chỉ ở máy tính.
+    ("GET", r"/api/ffmpeg"),
     ("POST", r"/api/readings"),
     ("POST", _BOOK + r"/speaker"),
     ("POST", _BOOK + r"/narrator-section"),  # thẻ "người kể của đoạn khác" (narrator_cards.py): cùng thẻ "Việc cần duyệt" từ điện thoại
