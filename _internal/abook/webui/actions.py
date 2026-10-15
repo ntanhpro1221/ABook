@@ -259,16 +259,38 @@ def _title_line(path: Path) -> str:
     return "" if humanize.is_heading(first) else first
 
 
+def _upload_place(path: Path) -> list[str] | None:
+    """Các tầng của file gửi từ thiết bị ở xa dưới thư mục tải lên: [lần gửi, (thư mục đã chọn, thư mục con...), tên file]. None khi file
+    không nằm trong thư mục tải lên."""
+    parts = path.resolve().parts
+    for index in range(len(parts) - 1, -1, -1):
+        if parts[index] == UPLOAD_FOLDER:
+            return list(parts[index + 1:])
+    return None
+
+
+def _common_name(names: list[str]) -> str:
+    """Phần chung của vài tên ("Mùa mưa 1", "Mùa mưa 2" -> "Mùa mưa"), bỏ số thứ tự / dấu ở đuôi; không có thì rỗng."""
+    return re.sub(r"[\s._\-–—(\[\d]+$", "", os.path.commonprefix(names)).strip()
+
+
 def _loose_upload_title(files: list[Path]) -> str | None:
-    """File lẻ gửi từ thiết bị ở xa nằm trong thư mục của lần gửi (`Nguồn tải lên/<lần gửi>/`, tên có mã ngẫu nhiên): tên ấy không phải
-    tên truyện. Lấy tên file ("Mùa mưa") - nhiều file thì phần chung của tên ("Mùa mưa 1", "Mùa mưa 2" -> "Mùa mưa"); không có thì
-    để trống, người dùng tự đặt. None với mọi nguồn khác (infer_book_title lo)."""
-    if not files or any(path.resolve().parent.parent.name != UPLOAD_FOLDER for path in files):
+    """File gửi từ thiết bị ở xa nằm trong thư mục của lần gửi (`Nguồn tải lên/<lần gửi>/`, tên có mã ngẫu nhiên): tên ấy không phải
+    tên truyện. File lẻ: lấy tên file ("Mùa mưa") - nhiều file thì phần chung của tên ("Mùa mưa 1", "Mùa mưa 2" -> "Mùa mưa"); có
+    thư mục đã chọn (kể cả lẫn với file lẻ) thì lấy tên thư mục ấy - không bao giờ tên chương đầu ("Chương 1"); nhiều thư mục thì
+    phần chung của tên chúng. Không có thì để trống, người dùng tự đặt. None với mọi nguồn khác (infer_book_title lo)."""
+    places = [_upload_place(path) for path in files]
+    if not files or any(place is None or len(place) < 2 for place in places):
         return None
+    folders = sorted({place[1] for place in places if place is not None and len(place) >= 3})
+    if len(folders) == 1:
+        return folders[0]
+    if folders:
+        return _common_name(folders)
     stems = [path.stem for path in files]
     if len(stems) == 1:
         return stems[0].strip()
-    return re.sub(r"[\s._\-–—(\[\d]+$", "", os.path.commonprefix(stems)).strip()
+    return _common_name(stems)
 
 
 def _credits_at_top(head: bytes) -> list[str]:
@@ -432,7 +454,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
         from ..project import infer_book_title
 
         loose = _loose_upload_title(files)
-        title = _shared_folder_name(files) or (_title_line(files[0]) if len(files) == 1 else "") or (
+        title = (_shared_folder_name(files) if loose is None else "") or (_title_line(files[0]) if len(files) == 1 else "") or (
             loose if loose is not None else infer_book_title(files))
     return {
         "files": rows,

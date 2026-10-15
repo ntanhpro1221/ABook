@@ -7,6 +7,20 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Bấm "Chọn lại nhạc" đúng lúc mạng vừa rớt không còn làm mất nhạc đang có: nhạc cũ được giữ nguyên và bạn thấy thông báo "Không tải được nhạc vì mất mạng" ngay cả ở lần bấm đầu tiên.
+
+### Điều khiển từ máy khác
+
+- Từ máy khác đã được bật quyền sửa, bạn dạy giọng đọc một từ ("Đọc từ này là…") ngay ở trang đọc của sách chữ; máy chỉ được nghe thì không thấy mục này.
+- Máy chỉ được nghe không còn nút "…" với menu trống ở trang sách, và không còn báo lỗi quyền khi mở trang sách.
+- Danh sách "Cách đọc tên" ở hộp "Sửa sách" luôn là bản mới nhất, kể cả khi máy khác vừa đổi một từ.
+
+### Tạo sách
+
+- Tải lên lẫn file lẻ và một thư mục, tên sách gợi ý là tên thư mục, không còn là "Chương 1".
+
 ## [0.4.64] - 2026-10-15
 
 ### Nhạc nền

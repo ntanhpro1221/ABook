@@ -542,6 +542,13 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
     }
     moodsRunning.current = running;
   }, [bookId, data?.moods?.running, data?.moods?.error]);
+  // Lượt tải sẵn vừa dừng vì mất mạng (máy chủ giữ nhạc cũ và ghi lý do vào `error`): báo ngay, không để dòng chữ cuối trang nằm im.
+  const downloading = useRef(false);
+  useEffect(() => {
+    const active = Boolean(data?.download?.active);
+    if (downloading.current && !active && data?.error) toast.warning("Chưa tải được nhạc", { description: data.error });
+    downloading.current = active;
+  }, [data?.download?.active, data?.error]);
   const change = useMutation({
     mutationFn: (body: Record<string, unknown>) => api<MusicView>(`/api/books/${bookId}/music`, { method: "PUT", body }),
     onSuccess: (result) => {

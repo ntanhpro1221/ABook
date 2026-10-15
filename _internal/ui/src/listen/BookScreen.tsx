@@ -30,6 +30,7 @@ import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFi
 import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
 import { useBookVoice, useCast, useListenBook, useListenLibrary, useListenMutations, useSource } from "./source";
+import { moreMenuHasItems } from "./bookMenu";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
@@ -843,6 +844,15 @@ export function BookScreen({
   // Cuốn của máy này không có xưởng (file .abook): việc của Studio (giới tính, gộp người...) ghi lại thành ý muốn chờ Studio.
   const remoteEdit = editing !== false && Boolean(editing.remote);
   const waiting = editable && !workshop && !remoteEdit;
+  const extra = extraActions?.(book);
+  // Nút "…" chỉ khi menu có mục (thiết bị chỉ được nghe: sách chỉ có chữ thì menu rỗng).
+  const moreMenu = moreMenuHasItems({
+    records: Boolean(source.records) && book.records?.length === 1,
+    finishedToggle: !textOnly,
+    edit: editing !== false && editable,
+    platform: editing !== false && !remoteEdit,
+    extra,
+  });
   const listening = player.track?.bookId === book.id;
   const heard = book.progress.heardSeconds;
   const left = Math.max(0, book.duration - heard);
@@ -998,7 +1008,7 @@ export function BookScreen({
                 </Button>
               </Tooltip>
             )}
-            <DropdownMenu.Root>
+            {moreMenu && <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
                 <IconButton label="Tuỳ chọn khác" icon={MoreHorizontal} size="lg" />
               </DropdownMenu.Trigger>
@@ -1063,10 +1073,10 @@ export function BookScreen({
                   {editing !== false && !remoteEdit && <StudioOnlyItem book={book} />}
                   {editing !== false && !remoteEdit && <ProjectFileItems book={book} onViews={() => setViewsOpen(true)} />}
                   {editing !== false && !remoteEdit && <TextBookItems book={book} />}
-                  {extraActions?.(book)}
+                  {extra}
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+            </DropdownMenu.Root>}
           </div>
         </div>
       </header>

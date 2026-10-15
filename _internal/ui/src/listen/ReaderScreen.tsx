@@ -17,7 +17,7 @@ import { chapterOpenProblem, readerHint } from "./labels";
 import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { usePlayer } from "./player";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
-import { wordOf } from "./readings";
+import { canTeachWords, wordOf } from "./readings";
 import type { Script, ScriptSegment } from "./model";
 import { useChapterScript, useListenBook, useListenMutations, useSource } from "./source";
 import { WordReadingDialog } from "./WordReadings";
@@ -71,13 +71,16 @@ function visibleSentence(box: HTMLElement | null): number {
   return firstVisibleIndex(items, view);
 }
 
-/** `editing`: false ở thiết bị điều khiển từ xa (không sửa sách ở đó). `onOpenStudioScript`: máy tính, cuốn có xưởng - mở đúng câu ở
+/** `editing`: false ở thiết bị điều khiển từ xa (sửa từng câu / mở Studio không có ở đó). `teachWords`: dạy giọng đọc một từ (PUT readings, máy
+ *  tính cho cả thiết bị từ xa có quyền sửa) - mặc định theo `editing`. `onOpenStudioScript`: máy tính, cuốn có xưởng - mở đúng câu ở
  *  tab Kịch bản của Studio, nơi sửa thật. */
 export function ReaderScreen({
   editing = true,
+  teachWords = editing,
   onOpenStudioScript,
 }: {
   editing?: boolean;
+  teachWords?: boolean;
   onOpenStudioScript?: (bookId: string, chapterId: number, stableId: string) => void;
 }) {
   const { id = "", chapterId: chapterParam } = useParams();
@@ -110,7 +113,7 @@ export function ReaderScreen({
   // "Đọc từ này là…": cuốn chỉ có chữ của máy này - giữ (hay bấm chuột phải) một chữ để dạy giọng đọc cách đọc nó cho cả cuốn.
   // Thiết bị chỉ được nghe thì không dạy giọng đọc từ đây (máy tính từ chối): việc ấy ở máy tính, trang sách có dòng nói rõ.
   const { data: appInfo } = useAppInfo();
-  const readingEdit = editing && textOnly && canEditBook(book) && !appInfo?.listenOnly;
+  const readingEdit = canTeachWords({ allowed: teachWords, textOnly, canEdit: canEditBook(book), listenOnly: Boolean(appInfo?.listenOnly) });
   const [readingWord, setReadingWord] = useState<string | null>(null);
   // Câu của hộp "Đọc từ này là…" mở từ nút “Sửa cách đọc” (cho chọn từ trong câu); giữ một chữ thì cũng kèm câu để đổi sang từ khác.
   const [readingSentence, setReadingSentence] = useState("");

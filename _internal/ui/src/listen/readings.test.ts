@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readerHint } from "./labels";
-import { cleanSpoken, MAX_PHRASE_WORDS, phraseKey, pickWord, readingFor, sentenceTokens, trialReadings, wordCore, wordOf } from "./readings";
+import { canTeachWords, cleanSpoken, MAX_PHRASE_WORDS, phraseKey, pickWord, readingFor, sentenceTokens, trialReadings, wordCore, wordOf } from "./readings";
 
 // "Đọc từ này là…": chữ người nghe giữ ra khoá gì, cách đọc gõ vào gửi đi thế nào (cùng luật khoá với abook/readaloud/readings.py,
 // Readings.kt - bộ ví dụ chung tests/fixtures/book_edits/readings/).
@@ -93,5 +93,20 @@ describe("cụm chữ liền nhau trong một câu (chọn nhiều chữ để s
 
   it("câu không có chữ nào: không có chữ để chọn", () => {
     expect(sentenceTokens("… !").every((token) => !token.core)).toBe(true);
+  });
+});
+
+describe("ai được dạy giọng đọc một từ", () => {
+  const text = { textOnly: true, canEdit: true, listenOnly: false };
+  it("máy tính tại chỗ và thiết bị từ xa có quyền sửa: có", () => {
+    expect(canTeachWords({ allowed: true, ...text })).toBe(true);
+  });
+  it("thiết bị chỉ được nghe: không (máy tính từ chối PUT)", () => {
+    expect(canTeachWords({ allowed: true, ...text, listenOnly: true })).toBe(false);
+  });
+  it("nơi dựng màn không cho, cuốn có audio hay cuốn không sửa được: không", () => {
+    expect(canTeachWords({ allowed: false, ...text })).toBe(false);
+    expect(canTeachWords({ allowed: true, ...text, textOnly: false })).toBe(false);
+    expect(canTeachWords({ allowed: true, ...text, canEdit: false })).toBe(false);
   });
 });

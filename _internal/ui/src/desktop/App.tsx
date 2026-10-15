@@ -641,6 +641,8 @@ export function App() {
                     element={
                       <ReaderScreen
                         editing={!info.remote}
+                        // Thiết bị từ xa có quyền sửa dạy được giọng đọc một từ (PUT readings ở remote_studio.ALLOWED); sửa từng câu / Studio thì không.
+                        teachWords={!info.listenOnly}
                         onOpenStudioScript={(bookId, chapterId, stableId) =>
                           window.location.assign(`#/studio/${bookId}?tab=script&chapter=${chapterId}&line=${encodeURIComponent(stableId)}`)
                         }

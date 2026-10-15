@@ -166,6 +166,8 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
   /** Cuốn đã bấm Huỷ mà máy chủ chưa dừng (dừng sau đoạn đang đọc): thông báo nói "Đang dừng…" thay vì tiến độ. */
   const stopping = useRef(new Set<string>());
   const remote = Boolean(info?.remote);
+  // Thiết bị chỉ được nghe: máy tính từ chối mọi việc xuất (403) - không hỏi trạng thái, khỏi 403 mỗi lần mở trang sách.
+  const listenOnly = Boolean(info?.listenOnly);
   const { copy, cancel } = KINDS[kind];
 
   /** Hiện thông báo cho trạng thái hiện có của cuốn; trả true khi việc còn chạy. */
@@ -271,7 +273,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
 
   // Mở (hay tải lại) trang sách: việc còn chạy thì theo tiếp, vừa xong thì nhắc lại nơi file nằm.
   useEffect(() => {
-    if (!pageId) return;
+    if (!pageId || listenOnly) return;
     let alive = true;
     api<ExportJob>(jobUrl(kind, pageId))
       .then((job) => {
@@ -286,11 +288,11 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
     return () => {
       alive = false;
     };
-  }, [pageId, track, show, kind]);
+  }, [pageId, track, show, kind, listenOnly]);
 
   // Mở (hay tải lại) app ở trang không phải trang sách: máy chủ vẫn đang xuất thì hiện lại thông báo tiến độ (có % và Huỷ) như lúc bắt đầu.
   useEffect(() => {
-    if (!info) return; // thông báo xong cần biết máy này có phải Studio từ xa không (nút "Mở thư mục"): chờ app biết đã
+    if (!info || info.listenOnly) return; // thông báo xong cần biết máy này có phải Studio từ xa không (nút "Mở thư mục"): chờ app biết đã; chỉ nghe thì không có việc xuất
     let alive = true;
     void runningExports(kind).then((ids) => {
       if (alive) ids.forEach((id) => track(id, 0));

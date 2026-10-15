@@ -80,6 +80,26 @@ def test_loose_uploads_next_to_an_uploaded_folder_do_not_show_the_internal_batch
     assert two is not None and two["source"] == "folders" and {item["label"] for item in two["volumes"]} == {"Tập 2", "Truyện hay"}
 
 
+def test_uploads_mixing_loose_files_and_a_folder_suggest_the_folder_name_never_a_chapter_title(tmp_path: Path) -> None:
+    """Soát a36: lẫn file lẻ + thư mục -> tên sách gợi ý là "Chương 1" (tên chương đầu)."""
+    batch = tmp_path / actions.UPLOAD_FOLDER / "Tải lên 05-10-2026 18h22 ab12"
+    loose = _chapters(batch, ["Chương 1", "Chương 2"])
+    folder = _chapters(batch / "Truyện hay", ["Chương 3", "Chương 4"], start=3)
+    mixed = actions.scan_inputs([str(loose / "001.txt"), str(loose / "002.txt"), str(folder)])
+    assert mixed["suggestedTitle"] == "Truyện hay"
+    # Cùng thư mục nhưng thứ tự chọn khác: vẫn tên thư mục.
+    assert actions.scan_inputs([str(folder), str(loose / "001.txt")])["suggestedTitle"] == "Truyện hay"
+    # Chỉ thư mục (như trước), và thư mục có thư mục con (tên thư mục ngoài cùng).
+    assert actions.scan_inputs([str(folder)])["suggestedTitle"] == "Truyện hay"
+    nested = _chapters(batch / "Re Zero" / "Tập 1", ["Chương 1"])
+    _chapters(batch / "Re Zero" / "Tập 2", ["Chương 1"])
+    assert actions.scan_inputs([str(nested), str(batch / "Re Zero" / "Tập 2")])["suggestedTitle"] == "Re Zero"
+    # Hai thư mục người dùng: không bao giờ lấy tên lần gửi ("Tải lên ...") làm tên sách.
+    other = _chapters(batch / "Truyện hay 2", ["Chương 1"])
+    assert "Tải lên" not in actions.scan_inputs([str(folder), str(other)])["suggestedTitle"]
+    assert not actions.scan_inputs([str(loose / "001.txt"), str(folder)])["suggestedTitle"].startswith("Chương")
+
+
 def test_epub_folders_are_labelled_by_the_epub_name_not_its_hash(tmp_path: Path) -> None:
     root = tmp_path / "Nguồn EPUB"
     a = _chapters(root / "Re Zero Vol 1 - 1a2b3c4d", ["Mở đầu", "Một"])
