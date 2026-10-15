@@ -58,7 +58,7 @@ class ReadingsTest {
     @Test
     fun a_paragraph_without_the_word_keeps_its_old_clip() {
         val text = "Trời mưa."
-        assertEquals(ClipCache.key("edge", "vi-VN-HoaiMyNeural", text),
+        assertEquals(ClipCache.key("edge", "vi-VN-HoaiMyNeural", text, SpokenText.TAG),
             ClipCache.key("edge", "vi-VN-HoaiMyNeural", text, ClipCache.reading("edge:vi-VN-HoaiMyNeural", text, null, mapOf("Haruto" to "Ha-ru-tô"))))
     }
 

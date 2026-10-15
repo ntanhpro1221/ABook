@@ -116,7 +116,7 @@ class ClipCacheTest {
             put(cache, "edge:v", "c", 1000)
             assertTrue("đoạn ghim cũ nhất vẫn còn", cache.contains("edge:v", "a"))
             assertFalse("đoạn thường cũ nhất đi trước", cache.contains("edge:v", "b"))
-            assertEquals(1000L + File(dir, ClipCache.key("edge", "v", "a") + ".json").length(), cache.pinnedBytes())
+            assertEquals(1000L + File(dir, ClipCache.key("edge", "v", "a", SpokenText.TAG) + ".json").length(), cache.pinnedBytes())
             // Ghim nhớ qua lần mở app sau.
             val reopened = ClipCache(dir, 2500, pins) { now }
             assertTrue(reopened.isPinned("edge:v", "a"))

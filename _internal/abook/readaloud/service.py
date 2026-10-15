@@ -9,7 +9,7 @@ import threading
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol
 
-from . import azure, edge, fpt, google, loudness, names, readings as book_readings, supertonic, vieneu, viettel, windows
+from . import azure, edge, fpt, google, loudness, names, readings as book_readings, spoken, supertonic, vieneu, viettel, windows
 from .byok import KeyedProvider
 from .cache import ClipBooks, ClipCache, clip_key
 from .keys import KeyStore
@@ -33,6 +33,7 @@ class Provider(Protocol):
 class EdgeProvider:
     id = "edge"
     speaks_english = True  # đo 04-10: Edge đọc "Rose", "Mike", "laptop" để nguyên ra tiếng Anh nhận được
+    normalises_text = True  # nhận chữ đã chuẩn hoá như giọng trên máy (spoken.py; đo a39: âm tiết sai 29% -> 12%); giọng khác không có cờ này nhận chữ thô
 
     def __init__(self, client: edge.EdgeClient | None = None) -> None:
         self.client = client or edge.EdgeClient()
@@ -172,7 +173,8 @@ class ReadAloud:
              readings: Mapping[str, str] | None = None, book: str | None = None) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
         `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ. `origin`: gốc của cuốn ("ja" / "ko", `names.BookOrigins`) - giọng đọc
-        trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); giọng khác bỏ qua.
+        trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); Edge (`normalises_text`) nhận
+        đúng chữ mà giọng trên máy nhận (`spoken.layout`: tên, tiếng kêu, số, ký hiệu, viết tắt), mốc từng chữ về đủ chữ hiện; giọng dùng khoá bỏ qua.
         `readings`: cách đọc riêng của cuốn ({chữ hiện: chữ đọc}, readings.py) - MỌI giọng: giọng trên máy áp sau bước đọc tên, giọng khác nhận chữ
         đem đọc đã thay (cùng số chữ, nên mốc từng chữ vẫn khớp chữ hiện); khoá bộ đệm có dấu của những cách đọc có trong đoạn.
         `book`: mã cuốn đang nghe - clip được ghi vào sổ của cuốn để biết "bản đọc đã làm" của cuốn nặng bao nhiêu và xoá được ([cache_usage], [clear_book])."""
@@ -182,7 +184,12 @@ class ReadAloud:
             raise ValueError("Đoạn chữ quá dài để đọc một lượt")
         provider, native = self._resolve(voice_id)
         reads_names = hasattr(provider, "reading_tag")
-        tags = (provider.reading_tag(text, origin) if reads_names else "", book_readings.tag(text, readings))
+        normalised = getattr(provider, "normalises_text", False)
+        if reads_names:
+            name_tag = provider.reading_tag(text, origin)
+        else:
+            name_tag = spoken.tag(text, origin, provider.speaks_english) if normalised else ""
+        tags = (name_tag, book_readings.tag(text, readings))
         key = clip_key(provider.id, native, text, "+".join(tag for tag in tags if tag))
         hit = self.cache.get(key)
         if hit is None:
@@ -195,7 +202,12 @@ class ReadAloud:
                 with lock:  # hai yêu cầu cùng đoạn (đọc trước + bấm nghe) chỉ đọc một lần
                     hit = self.cache.get(key)
                     if hit is None:
-                        said, slots = (text, None) if reads_names else book_readings.spoken_layout(text, readings)
+                        spans = None
+                        if normalised and not reads_names:
+                            said, spans = spoken.layout(text, origin, provider.speaks_english, readings)
+                            slots = None
+                        else:
+                            said, slots = (text, None) if reads_names else book_readings.spoken_layout(text, readings)
                         if not reads_names:
                             made = provider.synthesize(said, native)
                         elif tags[1]:
@@ -203,7 +215,9 @@ class ReadAloud:
                         else:
                             made = provider.synthesize(text, native, origin)
                         words = made.words if made.words is not None else map_boundaries(said, made.boundaries, made.duration_ms)
-                        if slots is not None:  # cụm đọc ngắn hơn số chữ hiện: chữ đã mất khỏi chuỗi nhận mốc rỗng
+                        if spans is not None:  # chữ hiện thành nhiều chữ đọc, hay không còn chữ nào: mốc về đủ chữ hiện
+                            words = spoken.expand_words(words, spans)
+                        elif slots is not None:  # cụm đọc ngắn hơn số chữ hiện: chữ đã mất khỏi chuỗi nhận mốc rỗng
                             words = book_readings.expand_words(words, slots)
                         hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
             finally:

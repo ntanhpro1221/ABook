@@ -24,8 +24,8 @@ những file này.
     fixtures/book_edits/track/tone.wav    một bài nhạc nhỏ ("Nhạc của tôi") cho các ca ghim bài: nhập vào kho nhạc của máy rồi ghim
     fixtures/book_edits/spoken_symbols.json  [{text, spoken}]: chữ máy thu sẽ đọc sau khi ký hiệu không nói được đổi thành chữ hay quãng nghỉ
                                           (`text_processing.spoken_symbols_to_words`; Kotlin: SpokenSymbols.toWords) - cho trường `blocked` của reading_reach
-    fixtures/book_edits/readings/speech.json  cách đọc riêng (`readings`) khi đọc to: cùng đoạn chữ -> cùng chữ đem đọc (giọng trên máy:
-                                          `vieneu.spoken_tokens`; giọng khác: `readings.spoken_text`) và cùng khoá bộ đệm clip ở hai bên
+    fixtures/book_edits/readings/speech.json  cách đọc riêng (`readings`) khi đọc to: cùng đoạn chữ -> cùng chữ đem đọc (giọng trên máy và Edge:
+                                          `vieneu.spoken_tokens`; giọng dùng khoá: `readings.spoken_text`) và cùng khoá bộ đệm clip ở hai bên
 
 Sinh lại (chỉ khi cố ý đổi hành vi hay giao ước):  runtime/.venv/Scripts/python.exe -m tests.book_edits_fixtures
 (thêm --rebuild-base để dựng lại cả `base`; không thì giữ nguyên nó và chỉ sinh lại các file mong đợi)
@@ -723,19 +723,23 @@ def spoken_symbol_cases() -> list[dict[str, str]]:
 
 def speech_cases() -> dict[str, Any]:
     """Bộ ví dụ `readings/speech.json`: cùng chữ + cùng cách đọc riêng -> cùng chữ hiện, chữ đem đọc, dấu và khoá clip ở Python và Kotlin."""
-    from abook.readaloud import cache, readings, supertonic, vieneu
+    from abook.readaloud import cache, readings, spoken, supertonic, vieneu
+    from abook.readaloud.service import EdgeProvider
     from abook.webui.word_timing import tokens
 
     on_this_computer = {provider.id: provider for provider in (vieneu.VieneuProvider, supertonic.SupertonicProvider)}  # giọng có `reading_tag`
+    normalised = {EdgeProvider.id: EdgeProvider}  # giọng nhận chữ đã chuẩn hoá như giọng trên máy (`spoken.py`)
     cases = []
     for voice, text, origin in SPEECH_CASES:
         provider, _, native = voice.partition(":")
         local = on_this_computer.get(provider)
+        same = local or normalised.get(provider)  # cùng `vieneu.spoken_tokens`
         tag = readings.tag(text, READINGS)
-        reading = "+".join(part for part in ((vieneu.reading_tag(text, origin, local.speaks_english) if local else ""), tag) if part)
-        layout = None if local else readings.spoken_layout(text, READINGS)
+        name_tag = vieneu.reading_tag(text, origin, local.speaks_english) if local else spoken.tag(text, origin, same.speaks_english) if same else ""
+        reading = "+".join(part for part in (name_tag, tag) if part)
+        layout = None if same else readings.spoken_layout(text, READINGS)
         cases.append({"voice": voice, "text": text, "origin": origin, "tokens": tokens(text),
-                      "spokenTokens": vieneu.spoken_tokens(tokens(text), origin, local.speaks_english, READINGS) if local else None,
+                      "spokenTokens": vieneu.spoken_tokens(tokens(text), origin, same.speaks_english, READINGS) if same else None,
                       "spokenText": layout and layout[0], "spokenSlots": layout and layout[1],
                       "tag": tag, "key": cache.clip_key(provider, native, text, reading)})
     return {"readings": READINGS, "cases": cases}

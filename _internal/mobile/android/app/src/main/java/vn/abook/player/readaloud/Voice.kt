@@ -27,9 +27,15 @@ interface Voice {
     fun synthesize(text: String, out: File, origin: String?): Clip = synthesize(text, out)
     /**
      * Như trên với cách đọc riêng người nghe đặt cho cuốn ([Readings]): giọng nhận chữ đem đọc đã thay ([Readings.spokenLayout]; chữ hiện cuối một cụm đọc ngắn hơn
-     * mất khỏi chuỗi nên `words` được [Readings.expandWords] về đủ chữ hiện); giọng trên máy (VieNeu, Supertonic) áp trong `VieneuUnits.spokenTokens`, sau bước đọc tên.
+     * mất khỏi chuỗi nên `words` được [Readings.expandWords] về đủ chữ hiện); giọng trên máy (VieNeu, Supertonic) áp trong `VieneuUnits.spokenTokens`, sau bước đọc tên;
+     * giọng nhận chữ đã chuẩn hoá ([SpokenText.normalises]: Edge) nhận chữ của `VieneuUnits.spokenTokens` luôn cả cách đọc riêng ([SpokenText.layout]).
      */
     fun synthesize(text: String, out: File, origin: String?, readings: Map<String, String>?): Clip {
+        if (SpokenText.normalises(id)) { // Edge: đúng chữ giọng trên máy nhận (tên, tiếng kêu, số, ký hiệu, viết tắt + cách đọc riêng), mốc về đủ chữ hiện
+            val (said, spans) = SpokenText.layout(text, origin, readings)
+            val clip = synthesize(said, out)
+            return Clip(clip.file, clip.durationMs, SpokenText.expandWords(clip.words, spans), clip.voice)
+        }
         if (readings.isNullOrEmpty()) return synthesize(text, out, origin)
         val (said, slots) = Readings.spokenLayout(text, readings)
         val clip = synthesize(said, out, origin)
