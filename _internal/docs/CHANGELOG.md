@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.59] - 2026-10-15
+
 ### Studio từ xa
 
 - Làm lại phân tích từ đầu, “Sửa thiết lập” và “Làm tiếp cuốn này” giờ dùng được ngay trên trình duyệt hay điện thoại của bạn:
