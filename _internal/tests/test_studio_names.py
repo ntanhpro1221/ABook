@@ -110,7 +110,7 @@ def test_a_japanese_book_reads_its_names_by_rule_and_asks_the_model_only_for_the
 
     stored = _stored(db)
     for name in JAPANESE:
-        assert stored[name] == (name_reading(name, "ja"), RULE_ROMANIZATION_PRONUNCIATION_SOURCE), "the same reading as Nghe ngay"
+        assert stored[name] == (name_reading(name, "ja").replace("_", ""), RULE_ROMANIZATION_PRONUNCIATION_SOURCE), "the same reading as Nghe ngay, without its lone-o mark"
     assert stored["Haruto-kun"] == ("Ha-ru-tô-cun", RULE_ROMANIZATION_PRONUNCIATION_SOURCE)
     assert stored["Rose"] == ("Rose", KEEP_ENGLISH_PRONUNCIATION_SOURCE)
     assert sent == [["Xenlor"]], "only the name no rule reads reaches the model"

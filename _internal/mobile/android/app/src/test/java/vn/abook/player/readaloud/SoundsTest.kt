@@ -39,7 +39,7 @@ class SoundsTest {
         for (token in listOf("Hp", "hp", "NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "ĐH", "CÁC")) assertEquals(token, listOf("Rồi", token, "đến."), said("Rồi $token đến."))
         assertEquals(listOf("“hát pê,”", "(em pê)", "en pê xê!", "3MP", "level 5", "5HP"), said("“HP,” (MP) NPC! 3MP LV5 5HP"))
         assertEquals(listOf("CÚT", "ĐI,", "AI", "ĐÓ"), said("CÚT ĐI, AI ĐÓ"))
-        assertEquals(listOf("o-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"), said("ONII-CHAN LO LẮNG CHO CON KÌA"))
+        assertEquals(listOf("o_-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"), said("ONII-CHAN LO LẮNG CHO CON KÌA"))
         assertEquals(listOf("hát pê", "em pê", "ét pê"), said("HP MP SP"))
         assertEquals(listOf("Chương", "bốn,", "hát pê."), said("Chương IV, HP."))
         assertEquals("i i i i", Abbreviations.spelled("IIII"))
@@ -58,7 +58,7 @@ class SoundsTest {
     fun aStretchedSoundIsTheSoundThenAnEllipsisThenTheVowel() {
         val cases = listOf(
             "Aaaa" to "a… a", "Haaa" to "ha… a", "Uuu" to "u… u", "Viiiiii" to "vi… i", "Taaa" to "ta… a", "oaaaa" to "oa… a", "Eeee" to "e… e",
-            "rồiiiii" to "rồi… ì", "tớơơơơ" to "tớ… ớ", "chứứứứ" to "chứ… ứ", "quẹooo" to "quẹo… ọ", "đâuuuu" to "đâu… u", "màaaa" to "mà… à", "nhaaa" to "nha… a", "tooo" to "to… o",
+            "rồiiiii" to "rồi… ì", "tớơơơơ" to "tớ… ớ", "chứứứứ" to "chứ… ứ", "quẹooo" to "quẹo… ọ", "đâuuuu" to "đâu… u", "màaaa" to "mà… à", "nhaaa" to "nha… a", "tooo" to "to… o_",
             "Khônggg" to "không…", "Emmmm" to "em…", "Hầyyy" to "hầy…", "rấtttt" to "rất…", "hiếppppp" to "hiếp…", "Oáppp" to "oáp…", "Haizzz" to "hai…",
             "Hmmm" to "hừm…", "Ummm" to "ừm…", "Shhhh" to "suỵt…", "Ahhhh" to "a…", "Aaah" to "a… a", "Oooh" to "ô… ô", "Ughhh" to "ức…",
             "Kyaaa" to "ki-a… a", "Uwaaa" to "u-oa… a", "Yaaa" to "gia… a",
@@ -95,9 +95,23 @@ class SoundsTest {
     }
 
     @Test
+    fun aKoreanSurnameBesideAKoreanNameIsReadByTheKoreanRulesEvenWithoutAKoreanBook() {
+        assertEquals(listOf("Pắc", "Guôn-he-óc", "xem,", "Xin", "Giun-xe-ong."), said("Park Won-hyeok xem, Shin Yoon-seong."))
+        assertEquals(listOf("Im", "Gie-bôm", "và", "Mun", "Chun-xu"), said("Im Jae-Bom và Moon Chul-soo", "ja"))
+        assertEquals(listOf("“Pắc", "Gie-ưn", "cúi", "đầu,”", "Li", "Min-hô", "nói."), said("“Park Yeeun cúi đầu,” Lee Min-ho nói.", "ko"))
+    }
+
+    @Test
+    fun koreanSurnamesThatAreEnglishWordsAndHyphenatedEnglishAreLeftAloneWithoutAKoreanNameBesideThem() {
+        assertEquals(listOf("Park", "Avenue,", "Han", "Solo", "và", "Moon", "Knight"), said("Park Avenue, Han Solo và Moon Knight"))
+        assertEquals(listOf("Bye-bye,", "Ding-dong,", "Hip-hop,", "E-mail;", "Won-hyeok", "đến"), said("Bye-bye, Ding-dong, Hip-hop, E-mail; Won-hyeok đến"))
+        assertEquals(listOf("ô,", "Won-hyeok!", "Lee,", "Min-ho."), said("Oh, Won-hyeok! Lee, Min-ho."))
+    }
+
+    @Test
     fun koreanTermsAreReadAloneAndAfterAName() {
         assertEquals(listOf("“óp-pa,", "un-ni!", "hi-ung", "nu-na”"), said("“Oppa, unnie! hyung noona”"))
-        assertEquals(listOf("hi-ung-nim,", "Soleum-xi,", "Minho-óp-pa"), said("Hyung-nim, Soleum-ssi, Minho-oppa"))
+        assertEquals(listOf("hi-ung-nim,", "Xôn-ưm-xi,", "Minho-óp-pa,", "Ian-nim"), said("Hyung-nim, Soleum-ssi, Minho-oppa, Ian-nim"))
         for (token in listOf("san", "sama", "nim", "ssi", "tan", "nee", "nii", "Kun", "con-sans", "Ra-TAN")) assertEquals(token, token, said("Rồi $token đến.")[1])
     }
 
@@ -148,7 +162,7 @@ class SoundsTest {
 
     @Test
     fun aCapitalOStartingAHyphenatedNameIsASyllableNotALetter() {
-        assertEquals(listOf("o-xu-ki-xan,", "o-ca-gia-ma,", "o-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
+        assertEquals(listOf("o_-xu-ki-xan,", "o_-ca-gia-ma,", "o_-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
     }
 
     @Test
@@ -161,7 +175,7 @@ class SoundsTest {
     // ---- TN "Nghe ngay" lượt 4 (cùng các ca với tests/test_readaloud_sounds.py): gọi viết hoa cả, danh xưng viết tắt, mũi tên chữ ----
     @Test
     fun aShoutedHonorificIsReadLikeItsLowerCaseForm() {
-        assertEquals("o-ni-chan, o-ni-chan LO LẮNG!", said("ONII-CHAN, ONII-CHAN LO LẮNG!").joinToString(" "))
+        assertEquals("o_-ni-chan, o_-ni-chan LO LẮNG!", said("ONII-CHAN, ONII-CHAN LO LẮNG!").joinToString(" "))
         assertEquals("“ne-xan!” và óp-pa, ariel-xa-ma.", said("“NEE-SAN!” và OPPA, ARIEL-SAMA.").joinToString(" "))
         assertEquals("Kiểm tra ét a en và xen-pai", said("Kiểm tra SAN và SENPAI").joinToString(" "))
     }

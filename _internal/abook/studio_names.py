@@ -52,7 +52,7 @@ def rule_reading(surface: str, origin: str | None) -> str | None:
     readings = [readaloud_names.name_reading(word, origin) for word in words]
     if any(reading is None for reading in readings):
         return None
-    spoken = " ".join(readings)
+    spoken = " ".join(readings).replace("_", "")  # "o_" là dấu riêng của "Nghe ngay" (giữ chữ "o" lẻ qua sea-g2p); Studio lưu chữ thường
     return spoken if valid_spoken_form(spoken) else None
 
 
