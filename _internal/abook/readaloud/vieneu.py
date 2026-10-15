@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
+from ..analysis import is_vietnamese_syllable
 from . import abbreviations, names, readings as book_readings, shouts, symbols
 from .model import Synthesis, Voice, VoiceError
 
@@ -61,6 +62,7 @@ ARROW_STATS = frozenset("hp mp sp exp xp lv lvl level cấp hạng rank điểm 
 ARROW_COUNTED = frozenset("trang chương tập bước phần mục tầng ngày tháng năm hồi bài page step chapter từ tuyến đường bay".split())  # đánh số / chỉ đường: mũi tên là "đến"
 ARROW_TIME = re.compile(r"[0-9]{1,2}(?:[hHgG][0-9]{0,2}|:[0-9]{2})")  # 8h, 8h30, 10g, 8:00
 ARROW_TIME_WORDS = frozenset("giờ sáng trưa chiều tối khuya".split())
+GOLD_G = re.compile(r"(?<=[0-9])G(?![^\W\d_])")  # "10G", "9,999G": tiền G / 5G / 1G, sea-g2p đọc "gờ"; chữ cái G là "giê" (không dính chữ sau: "15GB", "3Gb" để nguyên)
 RANGE_CODES = frozenset("lớp phòng tầng combo feed số thắng thua truyện".split())  # "lớp 1-7", "phòng 4-13": mã, hai số đọc liền không có "đến"
 RANGE_RATIO = frozenset("tỉ tỷ lệ".split())  # "tỉ lệ 3-7"
 GLUED = re.compile(r"((?:\.{2,}|[…—–])+|(?<=[^\W\d_])\((?=[^\W\d_]))")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên): "…", "—", và ngoặc mở giữa hai chữ ("Jigen(trong")
@@ -135,6 +137,17 @@ def numbered_by(toks: list[str], index: int) -> bool:
     if f"{earlier} {before}".lower() in NUMBERED_PAIRS:
         return True
     return _capitalised(before) and _capitalised(earlier)
+
+
+def ordinal_one(toks: list[str], index: int, token: str) -> bool:
+    """Chữ "I" một mình là số một ("Toán I,", "Julianus I sẽ") khi từ trước là một chữ viết hoa không phải từ tiếng Anh và "I" khép cụm (dấu câu theo sau, hay hết đoạn) hay chữ sau là tiếng Việt;
+    còn "But I never", "Tom I think" (chữ trước hay chữ sau là tiếng Anh) là đại từ."""
+    before = _word(toks[index - 1])
+    if not (before.isalpha() and before[0].isupper() and before.lower() not in names.english_words()):
+        return False
+    after = _word(toks[index + 1]).lower() if index + 1 < len(toks) else ""
+    closes = token.lstrip(OPENERS + FRAMES_OPEN) != "I"  # "I," "I." "I)": dấu câu sát sau
+    return closes or not after or (after not in names.english_words() and is_vietnamese_syllable(after))
 
 
 def _digit(char: str) -> bool:
@@ -335,14 +348,14 @@ def _range_mode(plain: list[str], index: int) -> str:
 
 
 def _numbers(out: list[str], toks: list[str] | None = None) -> None:
-    """Số mà sea-g2p đọc chưa đúng ý người nghe: "3-4000" là "ba đến bốn nghìn", "1-1" / "1-3-1" là các số liền ("lớp 1-7", "tỉ lệ 3-7" cũng liền, "đấu 1-1" là "một chọi một"). Phân số, "x2", "$5"
+    """Số mà sea-g2p đọc chưa đúng ý người nghe: "10G" là "mười giê" (chữ G, không phải "gờ"), "3-4000" là "ba đến bốn nghìn", "1-1" / "1-3-1" là các số liền ("lớp 1-7", "tỉ lệ 3-7" cũng liền, "đấu 1-1" là "một chọi một"). Phân số, "x2", "$5"
     nằm ở `symbols`."""
     plain = toks if toks is not None and len(toks) == len(out) else out
     for index, token in enumerate(out):
         if not any(char.isdigit() for char in token):
             continue
         mode = _range_mode(plain, index) if RANGE.search(token) else ""
-        out[index] = RANGE.sub(lambda match: _range(match, mode), token)
+        out[index] = GOLD_G.sub(" giê", RANGE.sub(lambda match: _range(match, mode), token))
 
 
 def _emoticons(out: list[str]) -> None:
@@ -522,10 +535,10 @@ def _roman_numbers(toks: list[str], out: list[str]) -> None:
         if index == 0:  # đề mục "I. Mở đầu": số có dấu chấm / ngoặc ngay sau và còn chữ theo sau
             if len(toks) < 2 or token.lstrip(OPENERS)[len(core):] not in (".", ")"):
                 continue
-        else:  # sau một từ có chữ thường, không dính dấu câu (sau dấu câu là chữ "I" của câu mới); hay nối tiếp số La Mã vừa đọc ("Mục II, III")
+        else:  # sau một từ có chữ thường (kể cả tên nối gạch "El-Melloi II"), không dính dấu câu (sau dấu câu là chữ "I" của câu mới); hay nối tiếp số La Mã vừa đọc ("Mục II, III")
             before = toks[index - 1].lstrip(OPENERS).rstrip(CLOSERS)
             if out[index - 1] == toks[index - 1]:
-                if not (before.isalpha() and any(c.islower() for c in before)) or (len(core) == 1 and not numbered_by(toks, index)):
+                if not (before.replace("-", "").isalpha() and any(c.islower() for c in before)) or (len(core) == 1 and not (numbered_by(toks, index) or (core == "I" and ordinal_one(toks, index, token)))):
                     continue
         out[index] = token.replace(core, vietnamese_number(value), 1)
 

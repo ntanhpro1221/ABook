@@ -81,7 +81,31 @@ def test_a_stretched_sound_is_the_sound_then_an_ellipsis_then_the_vowel(token: s
     assert _said(f"Rồi {token}, đến.", "ja") == _said(f"Rồi {token}, đến.", "ko") == _said(f"Rồi {token}, đến.", None, False)
 
 
-@pytest.mark.parametrize("core", ["Weisss", "wwww", "zzz", "kkkkk", "Onii-channnn", "XXX", "III", "Hmm,Aa", "Aa", "Haiz"])
+# tn9: chữ cuối lặp HAI lần (h z m), "h" thở ra sau nguyên âm kéo, chữ phụ âm lặp, "Um" / "Uh" / "Mm"
+@pytest.mark.parametrize("token, reading", [
+    ("Ahh", "a…"), ("Ehh", "ê…"), ("Ohh", "ô…"), ("Uhh", "ờ…"), ("Ughh", "ức…"), ("Hahh", "ha…"), ("Wahhh", "oa…"), ("Uwahhh", "u-oa…"), ("Haizz", "hai…"), ("Aizz", "ai…"),
+    ("Ừmm", "ừm…"), ("Hừmm", "hừm…"), ("Ưmm", "ưm…"), ("Uhmm", "ừm…"),
+    ("Haaah", "ha… a"), ("Waaah", "oa… a"), ("Uwaaah", "u-oa… a"), ("Gaaah", "ga… a"), ("Kyaaah", "ki-a… a"), ("Uuuh", "ờ…"),
+    ("Mmm", "ừm…"), ("kkkkk", "khà khà…"), ("Grrr", "gừ…"), ("Pfffft", "phụt…"), ("Sssss", "xì…"), ("Hhhh", "ha ha…"),
+    ("Um", "ừm"), ("Uh", "ờ"), ("Uhm", "ừm"), ("Mm", "ừm"), ("mm", "ừm"),
+])
+def test_tn9_a_doubled_last_letter_a_breath_h_and_a_run_of_consonants_are_stretched_sounds(token: str, reading: str) -> None:
+    assert _said(f"Rồi {token}, đến.") == ["Rồi", f"{reading},", "đến."]
+    assert _said(f"Rồi {token}, đến.", "ja") == _said(f"Rồi {token}, đến.", "ko") == _said(f"Rồi {token}, đến.", None, False)
+
+
+def test_tn9_mm_is_a_unit_after_a_quantity_or_a_number_and_a_cry_otherwise() -> None:
+    assert _said("Dài 127 mm, vài mm, một mm, 55mm.") == ["Dài", "127", "mm,", "vài", "mm,", "một", "mm,", "55mm."], "đơn vị: để sea-g2p đọc mi-li-mét"
+    assert _said("Mm, vậy.") == ["ừm,", "vậy."]
+    assert _said("55mm ss1 a ss") == ["55mm", "ss1", "a", "ss"], "chữ dính số, và \"ss\" lẻ, không phải tiếng kêu"
+
+
+def test_tn9_a_cry_glued_to_another_cry_reads_both_and_xanh_um_tum_stays() -> None:
+    assert _said("Um....Umm…, giờ.") == ["ừm....ừm…,", "giờ."]
+    assert _said("xanh um tùm") == ["xanh", "um", "tùm"]
+
+
+@pytest.mark.parametrize("core", ["Weisss", "wwww", "zzz", "Onii-channnn", "XXX", "III", "Hmm,Aa", "Aa", "Haiz", "Boss", "Class", "Jess", "Tamm", "Grimm", "Jazz", "Buzz", "Dizz", "SSS", "MMM", "UH", "um", "Yosssh"])
 def test_what_cannot_be_traced_to_a_sound_is_left_alone(core: str) -> None:
     assert shouts.stretch_reading(core) is None
 

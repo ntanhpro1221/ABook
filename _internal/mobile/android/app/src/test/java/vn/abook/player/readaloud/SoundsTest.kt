@@ -73,7 +73,34 @@ class SoundsTest {
 
     @Test
     fun whatCannotBeTracedToASoundIsLeftAlone() {
-        for (core in listOf("Weisss", "wwww", "zzz", "kkkkk", "Onii-channnn", "XXX", "III", "Hmm,Aa", "Aa", "Haiz")) assertNull(core, Shouts.stretchReading(core))
+        for (core in listOf("Weisss", "wwww", "zzz", "Onii-channnn", "XXX", "III", "Hmm,Aa", "Aa", "Haiz", "Boss", "Class", "Jess", "Tamm", "Grimm", "Jazz", "Buzz", "Dizz", "SSS", "MMM", "UH", "um", "Yosssh"))
+            assertNull(core, Shouts.stretchReading(core))
+    }
+
+    /** tn9: a doubled last letter (h z m), a breath "h" after a stretched vowel, a run of consonants, "Um" / "Uh" / "Mm". */
+    @Test
+    fun aDoubledLastLetterABreathHAndARunOfConsonantsAreStretchedSounds() {
+        val cases = listOf(
+            "Ahh" to "a…", "Ehh" to "ê…", "Ohh" to "ô…", "Uhh" to "ờ…", "Ughh" to "ức…", "Hahh" to "ha…", "Wahhh" to "oa…", "Uwahhh" to "u-oa…", "Haizz" to "hai…", "Aizz" to "ai…",
+            "Ừmm" to "ừm…", "Hừmm" to "hừm…", "Ưmm" to "ưm…", "Uhmm" to "ừm…",
+            "Haaah" to "ha… a", "Waaah" to "oa… a", "Uwaaah" to "u-oa… a", "Gaaah" to "ga… a", "Kyaaah" to "ki-a… a", "Uuuh" to "ờ…",
+            "Mmm" to "ừm…", "kkkkk" to "khà khà…", "Grrr" to "gừ…", "Pfffft" to "phụt…", "Sssss" to "xì…", "Hhhh" to "ha ha…",
+            "Um" to "ừm", "Uh" to "ờ", "Uhm" to "ừm", "Mm" to "ừm", "mm" to "ừm",
+        )
+        for ((token, reading) in cases) {
+            val want = listOf("Rồi", "$reading,", "đến.")
+            assertEquals(token, want, said("Rồi $token, đến."))
+            for (origin in listOf("ja", "ko")) assertEquals(token, want, said("Rồi $token, đến.", origin))
+        }
+    }
+
+    @Test
+    fun mmIsAUnitAfterAQuantityAndACryOtherwiseAndACryGluedToACryReadsBoth() {
+        assertEquals(listOf("Dài", "127", "mm,", "vài", "mm,", "một", "mm,", "55mm."), said("Dài 127 mm, vài mm, một mm, 55mm."))
+        assertEquals(listOf("ừm,", "vậy."), said("Mm, vậy."))
+        assertEquals(listOf("55mm", "ss1", "a", "ss"), said("55mm ss1 a ss"))
+        assertEquals(listOf("ừm....ừm…,", "giờ."), said("Um....Umm…, giờ."))
+        assertEquals(listOf("xanh", "um", "tùm"), said("xanh um tùm"))
     }
 
     @Test
