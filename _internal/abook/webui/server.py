@@ -338,6 +338,8 @@ class App:
         # Xuất .abook / .abookproj có nhạc nền chưa tải thì tải ngầm vài phút: tiến độ + Huỷ theo từng cuốn (`music_exporting`).
         self._music_exports: dict[str, dict[str, Any]] = {}
         self._music_exports_lock = threading.Lock()
+        # Lượt tải sẵn nhạc dừng vì mất mạng (giữ plan cũ): lời báo cho tab Nhạc, {khoá "warm": (lời, giờ)}; hết hạn cùng cửa sổ offline.
+        self._music_warm_notice: dict[str, tuple[str, float]] = {}
         # "Xuất file sách" chạy nền, mỗi cuốn nhớ lần xuất gần nhất (export_jobs.py) - tải lại trang vẫn thấy tiến độ / kết quả.
         self.bookfile_jobs = export_jobs.BookFileJobs()
         # "Xuất M4B" cũng chạy nền, bản ghi riêng: đang đóng gói file sách vẫn xuất M4B được và ngược lại.
@@ -1395,9 +1397,15 @@ class App:
         overrides = music_plan.read_overrides(path)
         with self._moods_lock:
             moods = dict(self._moods_jobs.get(str(path)) or {"running": False, "error": ""})
-        return {"plan": plan, "overrides": overrides, "error": error, "taxonomy": self._music_taxonomy(),
+        return {"plan": plan, "overrides": overrides, "error": error or self._music_warm_notice_of(path), "taxonomy": self._music_taxonomy(),
                 "bannedTracks": self._banned_tracks(overrides["banned"], plan), "moods": moods,
                 "download": self.music_export_status(self.music_key(path, "warm"))}
+
+    def _music_warm_notice_of(self, path: Path) -> str:
+        """Lời báo của lượt tải sẵn gần nhất của cuốn nếu nó dừng vì mất mạng (còn trong cửa sổ offline), không thì rỗng."""
+        with self._music_exports_lock:
+            message, when = self._music_warm_notice.get(self.music_key(path, "warm"), ("", 0.0))
+        return message if message and self._music_clock() - when < MUSIC_OFFLINE_SECONDS else ""
 
     def _banned_tracks(self, banned: list[str], plan: dict[str, Any] | None) -> dict[str, dict[str, str]]:
         """Tên các bài đã bỏ ("Bài đã bỏ"): {link: {title, creator}} lấy từ danh mục; mất mạng / bài không còn thì bỏ qua
@@ -1573,6 +1581,8 @@ class App:
         manifest = self.music_catalog().manifest(refresh=edited is None)
         previous = music_plan.read_plan(path) if keep_scenes else None
         plan = self._music_build(value, path, manifest, previous, edited, guard=True)
+        with self._music_exports_lock:
+            self._music_warm_notice.pop(self.music_key(path, "warm"), None)  # dựng lại được: lời báo cũ hết giá trị
         scenes: set[str] | None = None
         if edited is not None and not warm_all:
             before = {scene.get("key"): scene.get("link") for scene in (previous or {}).get("scenes") or []}
@@ -2068,8 +2078,10 @@ class App:
                 if key is not None:
                     self._music_exports[key] = state
             state["runs"] += 1
+            if key is not None:
+                self._music_warm_notice.pop(key, None)  # lượt mới: lời báo của lượt trước hết giá trị
         try:
-            self._warm_rounds(plan, value, scenes, state)
+            self._warm_rounds(plan, value, scenes, state, key)
         finally:
             with self._music_exports_lock:
                 state["runs"] -= 1
@@ -2077,7 +2089,7 @@ class App:
                     del self._music_exports[key]
 
     def _warm_rounds(self, plan: dict[str, Any] | None, value: str | None, scenes: set[str] | None,
-                     state: dict[str, Any]) -> None:
+                     state: dict[str, Any], key: str | None = None) -> None:
         for _ in range(MUSIC_WARM_ROUNDS):
             links = sorted({scene["link"] for scene in (plan or {}).get("scenes") or []
                             if scene.get("link") and (scenes is None or scene.get("key") in scenes)})
@@ -2110,8 +2122,14 @@ class App:
                 if on_disk is None or on_disk.get("built") != plan.get("built"):
                     return  # người dùng đã sửa / dựng lại trong lúc tải: lần dựng ấy tự lo phần của nó
                 lost = {scene["key"] for scene in plan["scenes"] if scene.get("link") in failed}
-                plan = self._music_build(value, path, self.music_catalog().manifest(), plan, lost)
+                # guard: bài hỏng VÌ MẠNG mà dựng lại sẽ ghi plan trống thì giữ plan cũ và báo, như lúc người dùng bấm.
+                plan = self._music_build(value, path, self.music_catalog().manifest(), plan, lost, guard=True)
                 scenes = lost  # vòng sau chỉ tải bài thay cho các đoạn ấy
+            except MusicOffline as exc:
+                if key is not None:
+                    with self._music_exports_lock:
+                        self._music_warm_notice[key] = (str(exc), self._music_clock())
+                return
             except (ApiError, music_catalog.CatalogError, OSError, ValueError):
                 return
 

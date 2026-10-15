@@ -103,8 +103,17 @@ export function useBookReadings(bookId: string, enabled = true) {
     queryKey: ["book", bookId, "readings"],
     queryFn: async () => (await api<{ readings: BookReading[] }>(`/api/books/${bookId}/readings`)).readings,
     enabled: enabled && Boolean(bookId),
-    staleTime: 60_000,
+    // Máy khác (hay lần khác) có thể vừa đổi một từ: mỗi lần mở hộp lại hỏi - danh sách nhỏ, rẻ - rồi mới tin bản đệm (soát a36: thiết bị
+    // từ xa thấy danh sách cũ tới khi tải lại trang).
+    staleTime: 0,
+    refetchOnMount: "always",
   });
+}
+
+/** Màn đọc có cho dạy giọng đọc một từ ("Đọc từ này là…") không: `allowed` là ý của nơi dựng màn (máy tính tại chỗ, hay thiết bị từ xa
+ *  được quyền sửa), rồi cuốn phải chỉ có chữ + sửa được, và máy không ở chế độ chỉ nghe (máy tính từ chối PUT, 403). */
+export function canTeachWords({ allowed, textOnly, canEdit, listenOnly }: { allowed: boolean; textOnly: boolean; canEdit: boolean; listenOnly: boolean }): boolean {
+  return allowed && textOnly && canEdit && !listenOnly;
 }
 
 /** Đặt (hay bỏ - `spoken` rỗng) cách đọc của một từ cho cả cuốn. Xong thì làm mới danh sách và số thay đổi của sách. */
