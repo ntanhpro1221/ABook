@@ -15,6 +15,14 @@ describe("phím tắt một chữ cái", () => {
     expect(html).toContain("tắt được ở Cài đặt › Phím tắt");
   });
 
+  it("thiết bị ở xa không đổi được cài đặt của máy tính: câu cuối không chỉ tới Cài đặt › Phím tắt", () => {
+    expect(renderToString(<ShortcutList remote />)).not.toContain("Cài đặt › Phím tắt");
+    setLetterShortcuts(false);
+    const html = renderToString(<ShortcutList remote />);
+    expect(html).not.toContain("Cài đặt › Phím tắt");
+    expect(html).toContain("Space, mũi tên và Esc vẫn dùng được");
+  });
+
   it("tắt: bộ bắt phím đọc cờ lúc có phím, hộp Phím tắt đánh dấu B / M / [ ] / ? là đang tắt", () => {
     setLetterShortcuts(false);
     expect(letterShortcutsOn()).toBe(false);

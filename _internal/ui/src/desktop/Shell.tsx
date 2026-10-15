@@ -199,7 +199,7 @@ export function Shell({ children }: { children: ReactNode }) {
           Bỏ qua tới nội dung
         </button>
       )}
-      <ShortcutsHost />
+      <ShortcutsHost remote={remote} />
       <aside className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex">
         <Brand />
         <nav aria-label="Điều hướng">
