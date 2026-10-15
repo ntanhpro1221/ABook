@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.66] - 2026-10-15
+
 ### Nhạc nền
 
 - Trên điện thoại, mất mạng không còn làm một bài nhạc bị bỏ: bài vẫn tốt, được thử lại khi có mạng thay vì im lặng cả phiên nghe. Một nguồn nhạc lỗi mạng chỉ tạm nghỉ riêng nguồn ấy, bài ở nguồn khác vẫn chạy.
