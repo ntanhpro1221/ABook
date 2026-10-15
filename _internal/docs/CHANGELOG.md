@@ -22,6 +22,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   thiết bị mang tên file chứ không mang mã ngẫu nhiên của lần gửi.
 - Điện thoại: nút “Mở Studio” mờ kèm lý do nếu máy tính chỉ cho điện thoại này nghe.
 
+### Nhạc nền
+
+- Nhạc nền đổi bài đúng chỗ đổi cảnh hơn (máy đã tải model đọc không khí).
+
 ## [0.4.58] - 2026-10-15
 
 ### Mẫu thiết lập (Studio từ xa)

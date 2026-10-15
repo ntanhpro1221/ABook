@@ -109,7 +109,7 @@ def compute(project_root: Path, base_url: str, *, stop_requested: Callable[[], b
     """Hỏi LLM cho từng đoạn (ranh giới của app) chưa có kết quả và ghi `music_moods.json` sau mỗi chương. Cùng prompt và
     cùng digest model thì giữ kết quả đã có (làm tiếp được); khác thì làm lại cả cuốn. Trả số lượt đã hỏi.
     `pause_requested`: nút "Tạm dừng" / gác pin - đứng chờ giữa hai lượt (sách dài có thể mất nửa giờ GPU)."""
-    from . import music_plan
+    from . import music_bounds, music_plan
 
     project_root = Path(project_root)
     digest = model_digest(base_url)
@@ -119,10 +119,11 @@ def compute(project_root: Path, base_url: str, *, stop_requested: Callable[[], b
     kept = {_key(item): item for item in (old["scenes"] if old and old.get("digest") == digest else [])
             if isinstance(item, dict)}
     # Mọi đoạn của cuốn tính trước (không cần model): sổ chỉ giữ đoạn còn đúng ranh giới hiện tại.
+    bounds = music_bounds.load(project_root) or {}  # ranh LLM chia cảnh: cùng đoạn với music_plan.build
     chapters = []
     for script in music_plan.book_scripts(project_root):
         segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
-        chapters.append((script, segments, music_scenes.chapter_scenes(script)))
+        chapters.append((script, segments, music_scenes.chapter_scenes(script, boundaries=bounds.get(script.get("chapterId")))))
     current = {_key(scene) for _script, _segments, scenes in chapters for scene in scenes}
     results = {key: item for key, item in kept.items() if key in current}
     asked = failed = 0

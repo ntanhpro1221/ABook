@@ -215,16 +215,18 @@ def apply_teller_voice(root: Path, db: Any, settings: dict[str, Any], log: Any) 
 
 
 def run_music_after_analysis(root: Path, base_url: str, stop_requested: Any, log: Any, emit: Any, *, pause_requested: Any) -> None:
-    """Sau pha phân tích, nhạc nền tính không khí của đoạn (import muộn: worker không nạp webui khi không cần): LLM nhỏ đọc cả đoạn nếu
-    người dùng đã tải, rồi - khi Ollama đã dỡ model - học sinh đoán hình không khí trong chương nếu máy có gói. Hai việc độc lập: lỗi của
-    việc trước không chặn việc sau (và không nuốt: ném lại sau cùng để dây chuyền ghi `music_moods_skipped`); học sinh không bao giờ ném."""
-    from .webui import music_moods, music_scene_student
+    """Sau pha phân tích, nhạc nền tính ranh giới cảnh và không khí của đoạn (import muộn: worker không nạp webui khi không cần): LLM nhỏ
+    chia cảnh (music_bounds), rồi cùng model ấy đọc cả đoạn (music_moods) nếu người dùng đã tải, rồi - khi Ollama đã dỡ model - học sinh
+    đoán hình không khí trong chương nếu máy có gói. Các việc độc lập: lỗi của việc trước không chặn việc sau (và không nuốt: ném lại
+    sau cùng, việc lỗi đầu tiên, để dây chuyền ghi `music_moods_skipped`); học sinh không bao giờ ném."""
+    from .webui import music_bounds, music_moods, music_scene_student
 
     failure: Exception | None = None
-    try:
-        music_moods.run_after_analysis(root, base_url, stop_requested, log, emit, pause_requested=pause_requested)
-    except Exception as exc:  # noqa: BLE001 - hoãn tới sau học sinh
-        failure = exc
+    for step in (music_bounds, music_moods):  # chia cảnh TRƯỚC: không khí và học sinh đọc đúng các đoạn đã chia
+        try:
+            step.run_after_analysis(root, base_url, stop_requested, log, emit, pause_requested=pause_requested)
+        except Exception as exc:  # noqa: BLE001 - hoãn tới sau học sinh
+            failure = failure or exc
     if music_scene_student.package_dir() is None:  # worker là tiến trình riêng: không có cấu hình của server
         from .webui.library import preferences_path
 
