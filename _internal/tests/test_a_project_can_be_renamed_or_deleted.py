@@ -55,7 +55,8 @@ def test_a_rename_shows_everywhere_and_leaves_the_pipeline_book_alone(studio) ->
     status, data = _call(server, "PUT", path + "/title", {"title": " \n "})
     assert status == 400 and "trống" in data["error"]
     assert paths.db.read_bytes() == before, "chỉ dây chuyền được ghi SQLite của sách"
-    assert not permitted("PUT", path + "/title") and not permitted("DELETE", path), "Studio từ xa không đổi tên, không xoá"
+    assert permitted("PUT", path + "/title") and not permitted("DELETE", path), "Studio từ xa đổi tên được (chỉ là chữ), không xoá"
+    assert not permitted("PUT", path + "/title", producing=False), "thiết bị chỉ nghe thì không đổi tên"
 
 
 def test_a_running_book_is_not_deleted(studio) -> None:

@@ -28,7 +28,7 @@ import urllib.request
 from contextlib import closing
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Callable, Iterable, Iterator, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
@@ -52,7 +52,7 @@ from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_stamp, casting_view
 from .name_readings import name_readings_view, never_text, package_reading_reach, reading_reach
 from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices, waiting_voice
-from . import narrator_cards
+from . import narrator_cards, remote_sources
 from .work_items import card_examples, for_page, open_count, work_view
 from .cast import CastError, CastPlayers
 from .cast import search as cast_search
@@ -2302,6 +2302,12 @@ class App:
         self._pinned_model(plan)
         return plan
 
+    def source_files(self, kind: str, value: str) -> list[Path]:
+        """File nguồn mà một `ref:<kind>:<mã cuốn>:...` của thiết bị ở xa trỏ tới (webui/remote_sources.py): "redo" - chương lúc tạo cuốn ấy
+        ("Sửa thiết lập"); "next" - chương kế tiếp của nó ("Làm tiếp cuốn này")."""
+        project = self._book(value)
+        return continuation._input_paths(project) if kind == "redo" else continuation.next_chapters(project)
+
     def continuation(self, value: str) -> dict[str, Any]:
         """"Làm tiếp cuốn này": chương kế tiếp, cài đặt và thứ sẽ mang theo - trình tạo sách điền sẵn từ đây. Tính từ phần
         MỚI NHẤT của cuốn (bấm ở phần 1 khi đã có phần 2 thì nối sau phần 2); `sourceId` là phần ấy - gieo từ nó."""
@@ -2850,16 +2856,32 @@ class App:
 Route = tuple[str, re.Pattern[str], Callable[..., Any]]
 
 
+LOCAL_PATH = re.compile(r"^(?:[A-Za-z]:[\\/]|[\\/]{2})")
+
+
+def is_local_path(value: Any) -> bool:
+    """Chuỗi trông như đường dẫn tuyệt đối của Windows trên máy này (ổ đĩa hay UNC)."""
+    return isinstance(value, str) and LOCAL_PATH.match(value) is not None
+
+
 def without_local_paths(value: Any) -> Any:
     """Lời đáp cho Studio từ xa không mang đường dẫn trên máy này (thư mục thư viện, thư mục từng dự án - có tên người dùng Windows):
-    bỏ `path` của từng cuốn (mục có `id`), để trống `libraryRoot` và `root` của thư viện (soát a27 lỗi 10). Đường file vừa gửi lên
-    (`path` không kèm `id`) giữ nguyên - thiết bị cần gửi lại nó để tạo sách."""
+    bỏ `path` của từng cuốn (mục có `id`), để trống `libraryRoot` / `libraryRootSeen` và `root` của thư viện (soát a27 lỗi 10), bỏ `folder`
+    và chỉ giữ TÊN của `file` (kết quả xuất, tiến độ: thiết bị ở xa chỉ cần biết file nào, nó nằm ở máy tính - soát a33 lỗi 5). Đường file
+    vừa gửi lên (`path` không kèm `id`) giữ nguyên - thiết bị cần gửi lại nó để tạo sách - nên hai đường gửi lên / tách chương trả lời
+    với `keep_paths` (Handler._send_json)."""
     if isinstance(value, list):
         return [without_local_paths(item) for item in value]
     if not isinstance(value, dict):
         return value
-    out = {key: without_local_paths(item) for key, item in value.items() if not (key == "path" and "id" in value)}
-    for key in ("libraryRoot", "root") if "libraryRoot" in out or "books" in out else ():
+    out: dict[str, Any] = {}
+    for key, item in value.items():
+        if key == "path" and "id" in value:
+            continue
+        if key == "folder" and is_local_path(item):
+            continue
+        out[key] = PureWindowsPath(item).name if key == "file" and is_local_path(item) else without_local_paths(item)
+    for key in ("libraryRoot", "libraryRootSeen", "root") if "libraryRoot" in out or "books" in out else ():
         if isinstance(out.get(key), str):
             out[key] = ""
     return out
@@ -2905,8 +2927,8 @@ class Handler(BaseHTTPRequestHandler):
         supplied = self.headers.get("X-Ebook-Token") or (query.get("t") or [""])[0]
         return secrets.compare_digest(supplied, token)
 
-    def _send_json(self, status: int, payload: Any) -> None:
-        if self._remote():
+    def _send_json(self, status: int, payload: Any, *, keep_paths: bool = False) -> None:
+        if self._remote() and not keep_paths:
             payload = without_local_paths(payload)
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
@@ -2976,17 +2998,67 @@ class Handler(BaseHTTPRequestHandler):
         dẫn tuỳ ý trên máy này - kể cả đường UNC, thứ khiến Windows tự nối SMB tới máy khác (soát bảo mật 28-09)."""
         return self.headers.get(REMOTE_HEADER) == "1"
 
-    def _source_paths(self, raw: Any, seed_from: Any = None) -> list[str]:
+    def _ref_sources(self, raw: Iterable[Any]) -> dict[str, str]:
+        """{tham chiếu: đường thật} cho các `ref:...` trong `raw` (webui/remote_sources.py). Máy tính tự liệt kê file của cuốn ấy (mỗi
+        cuốn một lần) và kiểm tên file ở vị trí đó khớp: thư mục truyện đổi giữa hai lần bấm thì báo, không đọc nhầm chương khác."""
+        listed: dict[tuple[str, str], list[Path]] = {}
+        out: dict[str, str] = {}
+        for item in raw:
+            found = remote_sources.parse(str(item))
+            if found is None:
+                continue
+            kind, book, number, name = found
+            files = listed.get((kind, book))
+            if files is None:
+                files = listed[(kind, book)] = self.app.source_files(kind, book)
+            if number >= len(files) or files[number].name != name:
+                raise ApiError(HTTPStatus.CONFLICT, "Các chương của sách ấy đã đổi từ lúc bạn mở trang này - mở lại trang rồi làm lại.")
+            out[str(item)] = str(files[number])
+        return out
+
+    def _source_paths(self, raw: Any) -> list[str]:
+        """Các file nguồn của một lời gọi tạo sách. Từ xa: chỉ file đã gửi lên máy tính, hay `ref:...` - chương kế tiếp của "Làm tiếp cuốn này"
+        và chương của "Sửa thiết lập" do CHÍNH máy này tính (thiết bị không biết đường dẫn nào trên máy tính), đổi ra đường thật ở đây."""
         paths = [str(item) for item in (raw or [])]
-        if self._remote():
-            uploads = Path(self.app.preferences.get()["libraryRoot"]) / actions.UPLOAD_FOLDER
-            # "Làm tiếp cuốn này" từ xa: chương kế tiếp do CHÍNH máy này tính từ dự án phần trước - thiết bị chỉ chọn trong
-            # danh sách ấy. So nguyên chuỗi, không `resolve()` chuỗi thiết bị gửi (đường UNC làm Windows tự nối SMB).
-            following = ({str(path) for path in continuation.next_chapters(self.app._book(str(seed_from)))}
-                         if seed_from else set())
-            if not all(path in following or actions.inside_folder(path, uploads) for path in paths):
-                raise ApiError(HTTPStatus.FORBIDDEN, "Từ xa chỉ dùng được các chương đã gửi lên máy tính")
-        return paths
+        if not self._remote():
+            return paths
+        refs = self._ref_sources(paths)
+        uploads = Path(self.app.preferences.get()["libraryRoot"]) / actions.UPLOAD_FOLDER
+        # So nguyên chuỗi, không `resolve()` chuỗi thiết bị gửi (đường UNC làm Windows tự nối SMB).
+        if not all(path in refs or actions.inside_folder(path, uploads) for path in paths):
+            raise ApiError(HTTPStatus.FORBIDDEN, "Từ xa chỉ dùng được các chương đã gửi lên máy tính")
+        return [refs.get(path, path) for path in paths]
+
+    def _hide_sources(self, result: dict[str, Any], raw: Any) -> dict[str, Any]:
+        """Kết quả quét cho thiết bị ở xa: chương nào đến từ một `ref:...` thì trả lại đúng tham chiếu ấy thay cho đường thật; đường nào
+        còn lại mà không nằm trong thư mục tải lên thì chỉ còn tên file. Không có tham chiếu nào trong yêu cầu thì giữ nguyên."""
+        refs = self._ref_sources(str(item) for item in (raw or []))
+        if not refs:
+            return result
+        uploads = Path(self.app.preferences.get()["libraryRoot"]) / actions.UPLOAD_FOLDER
+        back: dict[str, str] = {}
+        for ref, real in refs.items():
+            back[real] = back[os.path.normcase(str(Path(real).resolve()))] = ref
+
+        def alias(text: Any) -> Any:
+            if not isinstance(text, str):
+                return text
+            found = back.get(text) or back.get(os.path.normcase(str(Path(text).resolve())))
+            if found:
+                return found
+            return text if not is_local_path(text) or actions.inside_folder(text, uploads) else PureWindowsPath(text).name
+
+        for row in result.get("files", []):
+            row["path"] = alias(row["path"])
+        for key in ("missing", "skipped", "subfolders"):
+            result[key] = [alias(item) for item in result.get(key, [])]
+        proposal = result.get("volumes")
+        if isinstance(proposal, dict):
+            if proposal.get("order"):
+                proposal["order"] = [alias(item) for item in proposal["order"]]
+            for volume in proposal.get("volumes", []):
+                volume["startPath"] = alias(volume.get("startPath"))
+        return result
 
     def _target(self, body: dict[str, Any]) -> str:
         """Nơi xuất: từ xa luôn là thư mục mặc định trong thư viện, không bao giờ một đường do thiết bị ở xa chỉ."""
@@ -3928,10 +4000,17 @@ class Handler(BaseHTTPRequestHandler):
         self._send_file(self.app.music_track_file((query.get("link") or [""])[0]), cache=True)
 
     def get_redo(self, _query: dict[str, list[str]], value: str) -> None:
-        self._send_json(HTTPStatus.OK, self.app.redo(value))
+        plan = self.app.redo(value)
+        if self._remote():
+            # Thiết bị ở xa không biết đường dẫn nào trên máy tính: chương nguồn chỉ là tham chiếu theo mã cuốn cũ, máy tính tự tìm lại file.
+            plan["paths"] = [remote_sources.make("redo", value, number, path) for number, path in enumerate(plan["paths"])]
+        self._send_json(HTTPStatus.OK, plan)
 
     def get_continuation(self, _query: dict[str, list[str]], value: str) -> None:
-        self._send_json(HTTPStatus.OK, self.app.continuation(value))
+        plan = self.app.continuation(value)
+        if self._remote():
+            plan["paths"] = [remote_sources.make("next", plan["sourceId"], number, path) for number, path in enumerate(plan["paths"])]
+        self._send_json(HTTPStatus.OK, plan)
 
     def get_parts(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, {"parts": self.app.parts(value)})
@@ -4804,19 +4883,27 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_create(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        self._source_paths(body.get("paths"), body.get("seedFrom"))
-        if body.get("replaces") and self._remote():
-            # Thay = bỏ cuốn cũ vào Thùng rác: như xoá, chỉ từ chính máy này.
-            raise ApiError(HTTPStatus.FORBIDDEN, "Sửa thiết lập (làm lại sách) chỉ làm được trên máy tính")
+        paths = self._source_paths(body.get("paths"))
+        if self._remote():
+            if body.get("replaces"):
+                # Thay = bỏ cuốn cũ vào Thùng rác: như xoá, chỉ từ chính máy này.
+                raise ApiError(HTTPStatus.FORBIDDEN, "Sửa thiết lập (làm lại sách) chỉ làm được trên máy tính")
+            # "Sửa thiết lập" / "Làm lại phân tích" từ xa: thiết bị nói cuốn nào làm lại (`redoOf`), chương nguồn là các `ref:redo:...` của cuốn ấy.
+            # Cuốn cũ vẫn chỉ vào Thùng rác khi nó còn làm lại được (App.create kiểm `can_redo`).
+            redo_of = str(body.pop("redoOf", "") or "")
+            refs = [found for found in map(remote_sources.parse, map(str, body.get("paths") or [])) if found is not None]
+            if redo_of and any(found[0] != "redo" or found[1] != redo_of for found in refs):
+                # Cuốn bỏ vào Thùng rác phải đúng là cuốn có các chương ấy.
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Các chương không thuộc cuốn đang làm lại - mở lại trang rồi làm lại.")
+            body ={**body, "paths": paths, **({"replaces": redo_of} if redo_of else {})}
         self._send_json(HTTPStatus.CREATED, self.app.create(body))
 
     def post_scan(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
         # EPUB tách vào thư viện (như "Nguồn tải lên"), không ghi cạnh file của người dùng.
-        result = actions.scan_inputs(self._source_paths(body.get("paths"), body.get("seedFrom")),
-                                     epub_root=self.app.library.root / "Nguồn EPUB")
+        result = actions.scan_inputs(self._source_paths(body.get("paths")), epub_root=self.app.library.root / "Nguồn EPUB")
         result["existing"] = self.app.existing_projects([str(row.get("sha256") or "") for row in result["files"]])
-        self._send_json(HTTPStatus.OK, result)
+        self._send_json(HTTPStatus.OK, self._hide_sources(result, body.get("paths")) if self._remote() else result)
 
     def post_source_split(self, _query: dict[str, list[str]]) -> None:
         # Người dùng bấm "Tách thành N chương" (đề xuất của bước 1): các chương ghi vào thư mục mới trong thư viện, file
@@ -4836,7 +4923,7 @@ class Handler(BaseHTTPRequestHandler):
             folder = txt_split.split(source, root, str(body.get("title") or ""))
         except (OSError, ValueError) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, f"Không tách được: {error}") from error
-        self._send_json(HTTPStatus.OK, {"folder": str(folder)})
+        self._send_json(HTTPStatus.OK, {"folder": str(folder)}, keep_paths=True)  # thiết bị gửi lại đường này để quét tiếp
 
     def post_source_upload(self, _query: dict[str, list[str]]) -> None:
         # Studio từ xa: điện thoại không có đường dẫn nào trên máy này để gõ - nó gửi từng chương TXT, rồi trình tạo sách
@@ -4850,11 +4937,11 @@ class Handler(BaseHTTPRequestHandler):
         target = actions.upload_source(Path(self.app.preferences.get()["libraryRoot"]), str(body.get("folder", "")),
                                        str(body.get("name", "")), data)
         # `path`: file lẻ được quét như khi chọn từng file (tách một file cả truyện thì thư mục chương thay chỗ nó).
-        self._send_json(HTTPStatus.OK, {"folder": str(target.parent), "path": str(target)})
+        self._send_json(HTTPStatus.OK, {"folder": str(target.parent), "path": str(target)}, keep_paths=True)
 
     def post_first_person(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        self._send_json(HTTPStatus.OK, actions.first_person_hint(self._source_paths(body.get("paths"), body.get("seedFrom"))))
+        self._send_json(HTTPStatus.OK, actions.first_person_hint(self._source_paths(body.get("paths"))))
 
     def get_voices(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.voices())
@@ -5272,7 +5359,7 @@ ROUTES: list[Route] = [
     ("PUT", re.compile(BOOK + r"/narrator-mode"), Handler.put_narrator_mode),
     ("POST", re.compile(BOOK + r"/reveal"), Handler.post_reveal),
     ("POST", re.compile(BOOK + r"/restore-backup"), Handler.post_restore_backup),
-    # Chỉ trên máy này: Studio từ xa (remote_studio.ALLOWED) không có hai đường này.
+    # Đổi tên / tác giả chỉ nhận chữ: Studio từ xa (remote_studio.ALLOWED) có cả hai.
     ("PUT", re.compile(BOOK + r"/title"), Handler.put_title),
     ("PUT", re.compile(BOOK + r"/author"), Handler.put_author),
     ("PUT", re.compile(BOOK + r"/chapters/(\d+)/title"), Handler.put_chapter_title),

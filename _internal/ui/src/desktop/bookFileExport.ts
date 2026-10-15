@@ -68,7 +68,7 @@ export function packingText(chapters: number, elapsedSeconds: number): string {
 /** Kết quả của một lượt xuất: một file (`file`), hay cả bộ mỗi phần một file (chỉ có `folder` + `parts`). M4B kể thêm số chương
  *  có trong file / của cả cuốn - chương chưa làm xong không vào file. */
 export interface ExportResult {
-  folder: string;
+  folder?: string;
   file?: string;
   size?: number;
   parts?: unknown[];
@@ -159,7 +159,7 @@ function reportedProgress(job: ExportJob): { fraction: number; text: string; spo
 
 /** Nơi file nằm: file sách, hay thư mục khi cả bộ mỗi phần một file. */
 export function exportedPlace(result: ExportResult): string {
-  return result.file ?? result.folder;
+  return result.file ?? result.folder ?? ""; // Studio từ xa: cả bộ mỗi phần một file thì máy chủ không trả thư mục
 }
 
 /** "4/6 chương - chương chưa xong không có trong file" khi bản xuất thiếu chương; rỗng khi đủ hay không biết. */
@@ -207,8 +207,8 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
     const count = job.result.files ?? job.result.parts?.length;
     const details = [!file && count ? `${count} file` : "", job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result), missingSourcesNote(job.result), musicMissingNote(job.result),
       job.result.coverBroken ? "ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên" : ""].filter(Boolean);
-    const place = file ?? folder;
-    return { kind: "success", title: copy.done, description: [fileName(place), ...details].join(" · "), ...(fileName(place) !== place ? { place } : {}) };
+    const place = file ?? folder ?? "";
+    return { kind: "success", title: copy.done, description: [fileName(place), ...details].filter(Boolean).join(" · "), ...(fileName(place) !== place ? { place } : {}) };
   }
   if (job.state === "error") return { kind: "error", title: copy.failed, description: copy.explain ? copy.explain(job.error ?? "") : (job.error ?? "") };
   return { kind: "none" };
@@ -221,6 +221,13 @@ export function clipStart(text: string, max: number): string {
 
 /** Số ký tự tối đa của tên file / thư mục trong dòng phụ của menu (dòng phụ cắt ở cuối khi quá rộng - tên không được nằm ở chỗ bị cắt). */
 const HINT_NAME_MAX = 34;
+
+/** Studio từ xa: file xuất nằm trên máy tính, không về máy đang xem - nói thẳng máy nào và (nếu biết) tên file / thư mục. Máy chủ chỉ trả TÊN
+ *  (server.without_local_paths), không đường dẫn. `detail`: phần còn lại của dòng ("5 MB", "6 file"). */
+export function exportedOnComputer(computer: string, name: string, detail = ""): string {
+  const where = computer && computer !== "máy tính" ? `Đã xuất vào máy tính ${computer}` : "Đã xuất vào máy tính";
+  return [name ? `${where}: ${name}` : where, detail].filter(Boolean).join(" · ");
+}
 
 /** Loại file của một lần xuất, nói bằng cái người dùng nhận ra: "MP3" / "M4B" (xuất sách nói ghi `format`; file .m4b), "File sách" (.abook), "Dự án" (.abookproj). */
 export function exportFormatLabel(result: ExportResult): string {

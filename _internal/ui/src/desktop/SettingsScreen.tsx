@@ -7,6 +7,7 @@ import { Button, Dialog, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } 
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { cn } from "@/shared/cn";
 import { openExternal } from "@/shared/openExternal";
+import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences, useVoices } from "@/studio/data";
 import { StudioSettings } from "@/studio/StudioSetup";
@@ -494,13 +495,18 @@ export function SettingsScreen() {
               <span id="letter-shortcuts-name" className="block text-sm font-medium">Phím tắt một chữ cái</span>
               <span id="letter-shortcuts-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{LETTER_SHORTCUTS_HINT}</span>
             </label>
-            <Switch
-              id="letter-shortcuts"
-              labelledBy="letter-shortcuts-name"
-              describedBy="letter-shortcuts-hint"
-              checked={preferences?.letterShortcuts !== false}
-              onCheckedChange={(value) => update({ letterShortcuts: value })}
-            />
+            {/* Công tắc này lưu ở máy tính (PUT /api/preferences không qua Studio từ xa): ở xa thì nói đổi ở đâu thay vì để nó bấm ra 403 im lặng. */}
+            {remote ? (
+              <OnComputerOnly verb="Đổi" className="shrink-0" />
+            ) : (
+              <Switch
+                id="letter-shortcuts"
+                labelledBy="letter-shortcuts-name"
+                describedBy="letter-shortcuts-hint"
+                checked={preferences?.letterShortcuts !== false}
+                onCheckedChange={(value) => update({ letterShortcuts: value })}
+              />
+            )}
           </div>
           <ShortcutList />
         </Section>

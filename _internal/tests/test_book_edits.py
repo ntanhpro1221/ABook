@@ -348,7 +348,7 @@ def test_a_project_has_a_workshop_and_the_chapter_title_lives_next_to_its_book(t
         assert status == 409 and "Xuất" in json.loads(data)["error"], "dự án có xưởng: dùng Xuất"
     finally:
         server.stop()
-    assert permitted("PUT", f"/api/books/{identifier}/chapters/1/title") and not permitted("PUT", f"/api/books/{identifier}/title")
+    assert permitted("PUT", f"/api/books/{identifier}/chapters/1/title") and permitted("PUT", f"/api/books/{identifier}/title")
 
 
 # ---- lưu thành file, mở lại, nhập lại ---------------------------------------------------------------------------------

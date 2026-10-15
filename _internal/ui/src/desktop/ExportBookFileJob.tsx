@@ -9,7 +9,8 @@ import { coverArtwork } from "@/shared/cover";
 import { LiveText, Progress } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
-import { BOOK_FILE_COPY, exportWhereHint, jobView, lastExportHint, lastExportPlace, M4B_COPY, PROJECT_FILE_COPY, runningExports, type ExportCopy, type ExportJob } from "./bookFileExport";
+import { listenOnlyOwner } from "@/shared/peerStudio";
+import { BOOK_FILE_COPY, exportedOnComputer, exportWhereHint, jobView, lastExportHint, lastExportPlace, M4B_COPY, PROJECT_FILE_COPY, runningExports, type ExportCopy, type ExportJob } from "./bookFileExport";
 import { AUDIOBOOK_COPY } from "./listenExport";
 
 // "Xuất file sách", "Xuất M4B" và "Xuất sách nói" (sách Nghe ngay) chạy nền ở máy chủ (webui/export_jobs.py): menu (hay hộp Xuất sách nói) chỉ chọn
@@ -205,7 +206,11 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
         toast.success(view.title, {
           id: toastId(kind, id),
           // Thông báo chỉ nói tên file; đường đầy đủ hiện khi rê chuột (nút “Mở thư mục” đưa tới đúng chỗ).
-          description: view.place ? <span title={view.place}>{view.description}</span> : view.description,
+          description: remote
+            ? exportedOnComputer(listenOnlyOwner(info ?? {}), view.description)
+            : view.place
+              ? <span title={view.place}>{view.description}</span>
+              : view.description,
           duration: 15000,
           // Studio từ xa: thư mục nằm trên máy tính, không mở được từ máy đang xem.
           action: remote ? undefined : { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }) },
@@ -215,7 +220,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
       }
       return false;
     },
-    [client, remote, kind, copy, cancel],
+    [client, remote, info, kind, copy, cancel],
   );
 
   const track = useCallback(

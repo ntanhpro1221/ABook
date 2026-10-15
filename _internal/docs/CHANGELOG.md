@@ -7,6 +7,21 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio từ xa
+
+- Làm lại phân tích từ đầu, “Sửa thiết lập” và “Làm tiếp cuốn này” giờ dùng được ngay trên trình duyệt hay điện thoại của bạn:
+  máy tính tự tìm lại các chương của cuốn cũ, nên phân tích bị ngắt không còn buộc bạn bấm “Tiếp tục” rồi ra một cuốn khác.
+- Đổi tên sách, tác giả, ảnh bìa, nhạc nền, tên chương và tên nhân vật làm được từ xa. Hộp “Thay đổi từ máy khác” (việc điện
+  thoại gửi về) cũng duyệt được từ xa.
+- Xuất file sách, MP3, M4B từ xa có thanh tiến độ và nút “Huỷ”, tải lại trang vẫn thấy việc đang chạy. Xong thì app nói file nằm
+  ở máy tính nào (“Đã xuất vào máy tính … : tên file”); file không tải về thiết bị của bạn.
+- Việc chỉ làm được trên máy tính (xoá dự án, tải giọng, đổi phím tắt chữ, thêm chữ sáng theo giọng đọc) giờ ghi rõ “… ở máy
+  tính <tên máy>” thay vì biến mất. Thiết bị chỉ được nghe không còn thấy mục xuất file hay “Mở trong Studio”; nếu quyền sửa bị
+  thu hồi giữa chừng, trang tự đổi sang “Chỉ nghe” thay vì cứ “Đang thử lại…”.
+- Thiết bị ở xa không bao giờ nhận đường dẫn thư mục trên máy tính của bạn (nơi có tên người dùng Windows). Sách tải lên từ
+  thiết bị mang tên file chứ không mang mã ngẫu nhiên của lần gửi.
+- Điện thoại: nút “Mở Studio” mờ kèm lý do nếu máy tính chỉ cho điện thoại này nghe.
+
 ## [0.4.58] - 2026-10-15
 
 ### Mẫu thiết lập (Studio từ xa)

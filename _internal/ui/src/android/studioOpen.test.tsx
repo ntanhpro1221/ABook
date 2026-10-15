@@ -4,7 +4,7 @@ import type { ListenBook } from "@/listen/model";
 
 // "Mở Studio" trên điện thoại (android/StudioOpen.tsx): plugin native và thông báo là bản giả - phần Kotlin có test JVM riêng (StudioLinkTest).
 const library = vi.hoisted(() => ({
-  studioComputers: vi.fn(async () => ({ computers: [] as { key: string; name: string }[] })),
+  studioComputers: vi.fn(async () => ({ computers: [] as { key: string; name: string; listenOnly?: boolean }[] })),
   openStudio: vi.fn(async (_options?: { computer?: string; book?: string }) => undefined),
 }));
 const toasts = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }));
@@ -66,5 +66,26 @@ describe("Mở Studio của máy tính trên điện thoại", () => {
     expect(renderToString(<StudioChip book={book({ studio: true })} />)).toContain("Mở Studio");
     expect(renderToString(<StudioChip book={book({ studio: false })} />)).toBe("");
     expect(renderToString(<StudioChip book={book({})} />)).toBe("");
+  });
+});
+
+describe("máy tính chỉ cho điện thoại nghe", () => {
+  const listenOnlyHome = { ...home, listenOnly: true };
+
+  it("máy chỉ cho nghe không nằm trong lựa chọn; còn mỗi máy ấy thì nói vì sao", () => {
+    expect(studioChoice([listenOnlyHome, office])).toEqual({ open: office });
+    expect(studioChoice([listenOnlyHome])).toEqual({
+      none: "Máy tính NGDtuanh-Lecoo chỉ cho nghe - bật quyền sửa ở Cài đặt > Thiết bị trên máy tính",
+    });
+  });
+
+  it("nút mờ kèm lý do khi mọi máy tính chỉ cho nghe, không mở trang Studio đóng", async () => {
+    const html = renderToString(<OpenStudioButton computers={[listenOnlyHome]} />);
+    expect(html).toContain("disabled");
+    expect(html).toContain("chỉ cho nghe - bật quyền sửa ở Cài đặt");
+    library.studioComputers.mockResolvedValue({ computers: [listenOnlyHome] });
+    await startStudio(vi.fn());
+    expect(library.openStudio).not.toHaveBeenCalled();
+    expect(toasts.error).toHaveBeenCalledWith(expect.stringContaining("chỉ cho nghe"));
   });
 });

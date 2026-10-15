@@ -203,6 +203,9 @@ export interface ManifestChapter {
 export interface StudioComputer {
   key: string;
   name: string;
+  /** Máy tính chỉ cho điện thoại này nghe (`/api/app` của nó: công tắc "Điều khiển từ xa" hay quyền riêng của điện thoại tắt): Studio của máy ấy
+   *  chỉ hiện trang "Chỉ nghe". Không hỏi được thì không có cờ (nút vẫn mở). */
+  listenOnly?: boolean;
 }
 
 export interface LocalBook {

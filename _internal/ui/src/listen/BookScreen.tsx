@@ -750,6 +750,9 @@ export interface EditingOptions {
   pickFolder?: () => Promise<string | null>;
   /** Máy tính, cuốn có xưởng: mở tab Nhạc nền của Studio. */
   onOpenStudio?: (book: ListenBook) => void;
+  /** Studio từ xa (remote_studio.ALLOWED): chỉ những sửa chỉ-là-chữ / ảnh bìa / nhạc nền / tên nhân vật chạy được trên máy tính; lưu thành file,
+   *  gửi về, việc chờ Studio, file dự án đều là việc của chính máy tính - không hiện ở đây. */
+  remote?: string;
 }
 
 export function BookScreen({
@@ -838,7 +841,8 @@ export function BookScreen({
   // Cuốn tải từ máy tính (điện thoại): phần sửa gửi về máy tính thay vì lưu thành file.
   const syncs = syncsToComputer(book.capabilities);
   // Cuốn của máy này không có xưởng (file .abook): việc của Studio (giới tính, gộp người...) ghi lại thành ý muốn chờ Studio.
-  const waiting = editable && !workshop;
+  const remoteEdit = editing !== false && Boolean(editing.remote);
+  const waiting = editable && !workshop && !remoteEdit;
   const listening = player.track?.bookId === book.id;
   const heard = book.progress.heardSeconds;
   const left = Math.max(0, book.duration - heard);
@@ -1025,7 +1029,7 @@ export function BookScreen({
                       </DropdownMenu.Item>
                       {textOnly && <PlaylistSubmenu bookId={book.id} />}
                       {syncs && <SendEditsItem book={book} />}
-                      {!workshop && !syncs && !book.capabilities?.local && saver.available && (
+                      {!remoteEdit && !workshop && !syncs && !book.capabilities?.local && saver.available && (
                         <>
                           <DropdownMenu.Item
                             disabled={!book.edits || saver.busy}
@@ -1048,17 +1052,17 @@ export function BookScreen({
                           )}
                         </>
                       )}
-                      {!workshop && Boolean(book.wishes) && (
+                      {!remoteEdit && !workshop && Boolean(book.wishes) && (
                         <DropdownMenu.Item onSelect={() => setWishesOpen(true)} className={MENU_ITEM}>
                           <Hourglass className="size-4" /> Việc đang chờ {syncs ? `gửi về ${holderName(book.remote)}` : "máy làm sách"} ({book.wishes})
                         </DropdownMenu.Item>
                       )}
                     </>
                   )}
-                  {editing !== false && <EditBlockedItem book={book} />}
-                  {editing !== false && <StudioOnlyItem book={book} />}
-                  {editing !== false && <ProjectFileItems book={book} onViews={() => setViewsOpen(true)} />}
-                  {editing !== false && <TextBookItems book={book} />}
+                  {editing !== false && !remoteEdit && <EditBlockedItem book={book} />}
+                  {editing !== false && !remoteEdit && <StudioOnlyItem book={book} />}
+                  {editing !== false && !remoteEdit && <ProjectFileItems book={book} onViews={() => setViewsOpen(true)} />}
+                  {editing !== false && !remoteEdit && <TextBookItems book={book} />}
                   {extraActions?.(book)}
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
@@ -1120,11 +1124,15 @@ export function BookScreen({
       </Tabs>
       {editing !== false && editable && (
         <>
-          <EditBookDialog book={book} open={editOpen} onOpenChange={setEditOpen} onOpenStudio={editing.onOpenStudio ? () => editing.onOpenStudio?.(book) : undefined} />
+          <EditBookDialog book={book} open={editOpen} onOpenChange={setEditOpen} onOpenStudio={editing.onOpenStudio ? () => editing.onOpenStudio?.(book) : undefined} computer={editing.remote} />
           <RenameChapterDialog book={book} chapter={renamingChapter} onClose={() => setRenamingChapter(null)} />
           <RenamePersonDialog bookId={book.id} person={renamingPerson} onClose={() => setRenamingPerson(null)} onSaved={() => refreshAfterEdit(client, book.id)} />
-          <SaveAsDialog book={book} open={saveAsOpen} onOpenChange={setSaveAsOpen} pickFolder={editing.pickFolder} />
-          <ProjectViewsDialog book={book} open={viewsOpen} onOpenChange={setViewsOpen} />
+          {!remoteEdit && (
+            <>
+              <SaveAsDialog book={book} open={saveAsOpen} onOpenChange={setSaveAsOpen} pickFolder={editing.pickFolder} />
+              <ProjectViewsDialog book={book} open={viewsOpen} onOpenChange={setViewsOpen} />
+            </>
+          )}
           {waiting && (
             <>
               <GenderDialog bookId={book.id} person={genderPerson} onClose={() => setGenderPerson(null)} waiting onSaved={() => refreshAfterEdit(client, book.id)} />

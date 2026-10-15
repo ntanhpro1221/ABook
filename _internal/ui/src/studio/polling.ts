@@ -8,6 +8,10 @@ import { ApiError } from "./api";
 /** Lỗi "không còn nữa" (404): hỏi tiếp cũng vô ích. */
 export const isGone = (error: unknown): boolean => error instanceof ApiError && error.status === 404;
 
+/** Thiết bị này vừa bị đổi sang chỉ nghe (403 `listenOnly`): lệnh Studio sẽ bị từ chối mãi - không thử lại, không hỏi định kỳ. App hỏi lại /api/app
+ *  (shared/peerStudio.ts LISTEN_ONLY_EVENT) và trang Studio được thay bằng "Chỉ nghe". */
+export const isListenOnly = (error: unknown): boolean => error instanceof ApiError && error.status === 403 && error.detail.listenOnly === true;
+
 /** Không tới được máy chủ (ABook tắt, mạng rớt): `fetch` ném TypeError - "Failed to fetch" / "Load failed" tiếng Anh, không mã lỗi. */
 export const isOffline = (error: unknown): boolean => error instanceof TypeError;
 
@@ -32,14 +36,14 @@ const BACKOFF_CAP_MS = 120_000;
 /** Nhịp hỏi kế tiếp của một truy vấn có nhịp cơ sở `base` (ms, hay false = không hỏi theo nhịp): 404 -> dừng hẳn; lỗi khác -> gấp đôi
  *  theo số lần lỗi liên tiếp, tới trần; không lỗi -> `base`. */
 export function pollDelay(base: number | false, state: { error: unknown; fetchFailureCount?: number; errorUpdateCount: number }): number | false {
-  if (isGone(state.error)) return false;
+  if (isGone(state.error) || isListenOnly(state.error)) return false;
   if (!state.error || base === false) return base;
   return Math.min(base * 2 ** Math.min(state.errorUpdateCount, 8), BACKOFF_CAP_MS);
 }
 
 /** `retry` của truy vấn: 404 không thử lại; lỗi khác thử lại một lần như mặc định của app. */
 export function retryUnlessGone(failureCount: number, error: unknown): boolean {
-  return !isGone(error) && failureCount < 1;
+  return !isGone(error) && !isListenOnly(error) && failureCount < 1;
 }
 
 /** Truy vấn phụ của trang dự án (sổ làm việc, hàng nghe lại, hộp thư điện thoại...): lỗi của chúng không làm mất cả trang nên

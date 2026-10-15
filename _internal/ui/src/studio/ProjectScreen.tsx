@@ -44,6 +44,7 @@ import {
 } from "@/shared/ui";
 import { api, type BookSummary, type Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
+import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { usePageTitle } from "@/shared/title";
 import { Windowed } from "@/shared/Windowed";
 import { useScrollMemory } from "@/shared/scrollMemory";
@@ -79,7 +80,7 @@ import { CoverEditor } from "./CoverEditor";
 import { ChapterError } from "./ChapterError";
 import { friendlyError } from "./errorText";
 import { ANALYSIS_CUT_COST, asksBeforeResume, stopAnalysisAdvice } from "./stopText";
-import { bookFailure, failureText, isOffline, useSideError } from "./polling";
+import { bookFailure, failureText, isListenOnly, isOffline, useSideError } from "./polling";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
 import { PhoneEdits, useInboxCount } from "./PhoneEdits";
 import { WorkInbox, useWorkCount } from "./WorkInbox";
@@ -213,8 +214,7 @@ function LastError({ raw }: { raw: string }) {
  *  cũ). Đã phân vai: nút "Đổi giọng người kể" ở hàng ấy, như nhân vật (soát UX a23, B21). Đang phân tích: nói khi nào đổi được. */
 function NarratorNote({ book }: { book: BookSummary }) {
   const navigate = useNavigate();
-  const remote = Boolean(useAppInfo().data?.remote);
-  if (book.phase === "idle" && !remote) {
+  if (book.phase === "idle") {
     return (
       <>
         Giọng kể chọn lúc tạo sách, đổi được vì cuốn này chưa bắt đầu chạy.{" "}
@@ -280,9 +280,8 @@ function ProductionPanel({ book }: { book: BookSummary }) {
 
 /** "Tiếp tục" một cuốn mà pha phân tích bị ngắt (soát UX a23 B16: một bấm là chạy, dù làm tiếp = cuốn khác): nói thẳng hệ quả,
  *  nút chính là làm lại từ đầu, "Vẫn tiếp tục" là phụ. Studio từ xa không tạo lại sách được - chỉ còn "Vẫn tiếp tục". */
-function ResumeAnalysisDialog({ book, remote, open, onOpenChange, onRedo, onResume }: {
+function ResumeAnalysisDialog({ book, open, onOpenChange, onRedo, onResume }: {
   book: BookSummary;
-  remote: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRedo: () => void;
@@ -297,11 +296,7 @@ function ResumeAnalysisDialog({ book, remote, open, onOpenChange, onRedo, onResu
             <span className="font-semibold">Phân tích của “{book.title}” đã dừng giữa chừng.</span> Làm tiếp từ chỗ ấy {ANALYSIS_CUT_COST} - khác
             với khi phân tích liền một mạch.
           </p>
-          <p className="mt-2 text-fg-2">
-            {remote
-              ? "Muốn kết quả như chạy liền một mạch thì làm lại phân tích từ đầu - mở trang này trên máy tính."
-              : "Muốn kết quả như chạy liền một mạch thì làm lại phân tích từ đầu: bản dở được cất đi, thiết lập giữ nguyên."}
-          </p>
+          <p className="mt-2 text-fg-2">Muốn kết quả như chạy liền một mạch thì làm lại phân tích từ đầu: bản dở được cất đi, thiết lập giữ nguyên.</p>
         </div>
       </div>
       <div className="flex flex-wrap justify-end gap-2">
@@ -309,7 +304,7 @@ function ResumeAnalysisDialog({ book, remote, open, onOpenChange, onRedo, onResu
           Để sau
         </Button>
         <Button
-          variant={remote ? "primary" : "outline"}
+          variant="outline"
           icon={Play}
           onClick={() => {
             onOpenChange(false);
@@ -318,19 +313,17 @@ function ResumeAnalysisDialog({ book, remote, open, onOpenChange, onRedo, onResu
         >
           Vẫn tiếp tục
         </Button>
-        {!remote && (
-          <Button
-            variant="primary"
-            icon={RotateCcw}
-            autoFocus
-            onClick={() => {
-              onOpenChange(false);
-              onRedo();
-            }}
-          >
-            Làm lại phân tích từ đầu
-          </Button>
-        )}
+        <Button
+          variant="primary"
+          icon={RotateCcw}
+          autoFocus
+          onClick={() => {
+            onOpenChange(false);
+            onRedo();
+          }}
+        >
+          Làm lại phân tích từ đầu
+        </Button>
       </div>
     </Dialog>
   );
@@ -520,6 +513,8 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
 export function ProjectMenu({ book, rename = true, className }: { book: BookSummary; rename?: boolean; className?: string }) {
   const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
   const navigate = useNavigate();
+  // Studio từ xa: đổi tên và làm tiếp chạy được; xoá dự án chỉ làm được trên máy tính (DELETE không nằm trong remote_studio.ALLOWED).
+  const remote = Boolean(useAppInfo().data?.remote);
   // `?.`: tóm tắt của dự án hỏng là {broken: "..."} - không có segments.
   const analyzed = (book.segments?.analyzed ?? 0) > 0;
   return (
@@ -563,14 +558,20 @@ export function ProjectMenu({ book, rename = true, className }: { book: BookSumm
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
               </>
             )}
-            <DropdownMenu.Item onSelect={() => setDialog("delete")} className={cn(MENU_ITEM, "text-danger")}>
-              <Trash2 className="size-4" /> Xoá dự án…
-            </DropdownMenu.Item>
+            {remote ? (
+              <div className="px-2 py-1.5">
+                <OnComputerOnly verb="Xoá dự án" />
+              </div>
+            ) : (
+              <DropdownMenu.Item onSelect={() => setDialog("delete")} className={cn(MENU_ITEM, "text-danger")}>
+                <Trash2 className="size-4" /> Xoá dự án…
+              </DropdownMenu.Item>
+            )}
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
       <RenameDialog book={book} open={dialog === "rename"} onOpenChange={(open) => setDialog(open ? "rename" : null)} />
-      <DeleteDialog book={book} open={dialog === "delete"} onOpenChange={(open) => setDialog(open ? "delete" : null)} />
+      {!remote && <DeleteDialog book={book} open={dialog === "delete"} onOpenChange={(open) => setDialog(open ? "delete" : null)} />}
     </>
   );
 }
@@ -667,11 +668,9 @@ function Actions({ book }: { book: BookSummary }) {
           </Button>
           {/* Chưa chạy bước nào: chọn lại chương, giọng kể, chất lượng, "tôi" (soát UX a5 01-10, #4). Cài đặt khoá theo sách
               nên là tạo lại - trình tạo điền sẵn mọi lựa chọn cũ, cuốn cũ vào Thùng rác khi cuốn mới tạo xong. */}
-          {!remote && (
-            <Button variant="ghost" size="lg" icon={SlidersHorizontal} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
-              Sửa thiết lập
-            </Button>
-          )}
+          <Button variant="ghost" size="lg" icon={SlidersHorizontal} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
+            Sửa thiết lập
+          </Button>
         </>
       ) : book.precast?.held && book.phase !== "done" ? (
         // Sách đang chờ duyệt mà tiến trình đã chết (máy chủ khởi động lại): vẫn là "Thu âm", không phải "Tiếp tục tạo" cạnh
@@ -681,22 +680,18 @@ function Actions({ book }: { book: BookSummary }) {
         </Button>
       ) : asksBeforeResume(book) ? (
         // Phân tích bị ngắt: chạy tiếp ra MỘT CUỐN KHÁC (AGENTS.md) - nút chính là làm lại từ đầu, "Tiếp tục" lùi xuống và hỏi
-        // lại trước khi chạy (ResumeAnalysisDialog). Làm lại = dự án mới thay bản dở (cần máy tính: Studio từ xa không tạo lại sách được).
+        // lại trước khi chạy (ResumeAnalysisDialog). Làm lại = dự án mới thay bản dở; Studio từ xa cũng làm được (gửi `redoOf`, máy tính tự tìm chương nguồn).
         <>
-          {!remote && (
-            <Button variant="primary" size="lg" icon={RotateCcw} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
-              Làm lại phân tích từ đầu
-            </Button>
-          )}
-          <Button variant={remote ? "primary" : "outline"} size="lg" icon={Play} loading={start.isPending} onClick={() => setConfirmResume(true)}>
+          <Button variant="primary" size="lg" icon={RotateCcw} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
+            Làm lại phân tích từ đầu
+          </Button>
+          <Button variant="outline" size="lg" icon={Play} loading={start.isPending} onClick={() => setConfirmResume(true)}>
             Tiếp tục
           </Button>
           <p className="basis-full text-pretty text-sm text-fg-2">
             Phân tích đã dừng giữa chừng
             {book.segments.total ? ` (còn ${formatNumber(book.segments.pending ?? book.segments.total - book.segments.analyzed)}/${formatNumber(book.segments.total)} câu chưa phân tích)` : ""}.
-            {remote
-              ? ` “Tiếp tục” vẫn chạy được nhưng ${ANALYSIS_CUT_COST}. Muốn làm lại từ đầu, mở trang này trên máy tính.`
-              : ` Làm lại từ đầu cho kết quả như chạy liền một mạch (bản dở được cất đi); “Tiếp tục” vẫn chạy được nhưng ${ANALYSIS_CUT_COST}.`}
+ Làm lại từ đầu cho kết quả như chạy liền một mạch (bản dở được cất đi); “Tiếp tục” vẫn chạy được nhưng {ANALYSIS_CUT_COST}.
           </p>
         </>
       ) : book.phase !== "done" ? (
@@ -727,17 +722,14 @@ function Actions({ book }: { book: BookSummary }) {
         </Button>
       )}
       {/* Hai nút biểu tượng đi thành một cụm: màn hẹp xuống dòng thì xuống cùng nhau, không để "…" đứng một mình một hàng.
-          Đổi tên / xoá chỉ trên máy này - Studio từ xa không có hai đường ấy (remote_studio.ALLOWED). */}
-      {!remote && (
-        <span className="inline-flex items-center gap-2">
-          <IconButton label="Mở thư mục sách" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />
-          <ProjectMenu book={book} />
-        </span>
-      )}
+          Mở thư mục chỉ có trên máy tính; xoá dự án ở Studio từ xa là dòng "Xoá dự án ở máy tính <tên>" trong menu. */}
+      <span className="inline-flex items-center gap-2">
+        {!remote && <IconButton label="Mở thư mục sách" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}
+        <ProjectMenu book={book} />
+      </span>
       <StopDialog book={book} open={confirmStop} onOpenChange={setConfirmStop} />
       <ResumeAnalysisDialog
         book={book}
-        remote={remote}
         open={confirmResume}
         onOpenChange={setConfirmResume}
         onRedo={() => navigate(`/studio/new?redo=${book.id}`)}
@@ -1106,8 +1098,6 @@ export function ProjectScreen() {
   const [params, setParams] = useSearchParams();
   const tab = ["chapters", "precast", "work", "script", "review", "cast", "music", "activity"].includes(params.get("tab") ?? "") ? params.get("tab")! : "chapters";
   const reviewCount = useReviewCount(id ?? "");
-  const remoteStudio = Boolean(useAppInfo().data?.remote);
-  // Việc từ điện thoại chờ duyệt (webui/edits_inbox.py) cộng vào số của tab: chỉ trên chính máy tính (Studio từ xa không có đường này).
   const { data, isLoading, error, refetch, isFetching } = useBook(id);
   const failure = bookFailure(data, error);
   // Thẻ đã nằm ở "Duyệt trước khi thu" thì "Việc cần duyệt" không hiện lại và không đếm lại.
@@ -1117,7 +1107,8 @@ export function ProjectScreen() {
   // Tab Kịch bản mở trước: số việc (cả cuốn phải soát lại, dự án 50.000 câu ~1,3 s) chờ mục lục về rồi mới hỏi, không tranh nhau.
   const scriptListed = useCastingContents(id ?? "", false).isFetched;
   const scriptFirst = tab === "script" && !failure && !scriptListed;
-  const workCount = Math.max(0, useWorkCount(id ?? "", precastOn || tab === "work" || tab === "precast", !scriptFirst) - (precastKeys?.size ?? 0)) + useInboxCount(id ?? "", !remoteStudio);
+  // Việc từ điện thoại chờ duyệt (webui/edits_inbox.py) cộng vào số của tab; Studio từ xa duyệt được như chủ máy (remote_studio.ALLOWED).
+  const workCount = Math.max(0, useWorkCount(id ?? "", precastOn || tab === "work" || tab === "precast", !scriptFirst) - (precastKeys?.size ?? 0)) + useInboxCount(id ?? "");
   const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
   const [merging, setMerging] = useState<CastMember | null>(null);
   const unmerge = useUnmerge(id ?? "");
@@ -1213,7 +1204,7 @@ export function ProjectScreen() {
       <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
-      {failure === "stale" && (
+      {failure === "stale" && !isListenOnly(error) && (
         <div role="status" className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm">
           <CircleAlert className="size-4 shrink-0 text-warning" />
           <span className="min-w-0 flex-1 text-pretty">
@@ -1347,7 +1338,7 @@ export function ProjectScreen() {
           )}
         </TabsContent>
         <TabsContent value="work">
-          {!remoteStudio && <PhoneEdits bookId={book.id} />}
+          <PhoneEdits bookId={book.id} />
           <WorkInbox
             book={book}
             kind={params.get("kind")}

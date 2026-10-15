@@ -9,10 +9,24 @@ import { EbookLibrary, type StudioComputer } from "./plugins";
 // "Mở Studio" của máy tính đã ghép trên điện thoại (StudioActivity.kt) - chẵn với nút cùng tên của máy tính (desktop/OtherComputers.tsx)
 // và chip ở trang sách (desktop/App.tsx PeerStudioChipLink). Trang là của chính máy tính ấy; điện thoại chỉ chọn máy và trang.
 
-/** Bấm "Mở Studio": không có máy tính nào -> lời báo; một máy -> mở luôn; nhiều máy -> hỏi chọn theo tên. */
+/** Lời nói thẳng khi máy tính chỉ cho điện thoại nghe - cùng ý với trang "Chỉ nghe" của chính Studio (shared/peerStudio.ts listenOnlyLine), nhưng nói
+ *  trước khi bấm, từ phía điện thoại. */
+export function studioListenOnlyLine(name: string): string {
+  return `Máy tính ${name} chỉ cho nghe - bật quyền sửa ở Cài đặt > Thiết bị trên máy tính`;
+}
+
+/** Máy tính còn mở Studio được (không phải máy chỉ cho nghe). */
+function openable(computers: StudioComputer[]): StudioComputer[] {
+  return computers.filter((computer) => !computer.listenOnly);
+}
+
+/** Bấm "Mở Studio": không có máy tính nào -> lời báo; một máy -> mở luôn; nhiều máy -> hỏi chọn theo tên. Máy chỉ cho nghe không nằm trong lựa chọn;
+ *  còn mỗi máy như vậy thì nói vì sao thay vì mở một trang đóng. */
 export function studioChoice(computers: StudioComputer[]): { open: StudioComputer } | { choose: StudioComputer[] } | { none: string } {
   if (computers.length === 0) return { none: "Chưa ghép với máy tính nào" };
-  return computers.length === 1 ? { open: computers[0] } : { choose: computers };
+  const usable = openable(computers);
+  if (usable.length === 0) return { none: studioListenOnlyLine(computers[0].name) };
+  return usable.length === 1 ? { open: usable[0] } : { choose: usable };
 }
 
 /** Hỏi các máy tính rồi mở hay đưa danh sách cho `choose` (hộp chọn máy). Lỗi thành thông báo. */
@@ -60,6 +74,17 @@ export function useStudioComputers(): StudioComputer[] {
 export function OpenStudioButton({ computers, className }: { computers: StudioComputer[]; className?: string }) {
   const [choices, setChoices] = useState<StudioComputer[]>([]);
   if (computers.length === 0) return null;
+  // Mọi máy tính đã ghép chỉ cho nghe: nút mờ kèm lý do, không bấm ra một trang đóng.
+  if (openable(computers).length === 0) {
+    return (
+      <>
+        <Button variant="secondary" icon={Clapperboard} className={className} disabled>
+          Mở Studio
+        </Button>
+        <p className="mt-1.5 text-pretty text-xs text-fg-2">{studioListenOnlyLine(computers[0].name)}</p>
+      </>
+    );
+  }
   const pick = (computer: StudioComputer) => {
     setChoices([]);
     void EbookLibrary.openStudio({ computer: computer.key }).catch((error: Error) => toast.error(error.message));

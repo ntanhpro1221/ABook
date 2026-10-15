@@ -117,6 +117,9 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("POST", _BOOK + r"/characters/merge"),
     ("POST", _BOOK + r"/characters/rename"),
     ("PUT", _BOOK + r"/chapters/\d+/title"),
+    # Đổi tên / tác giả sách: chỉ nhận chữ, không mang đường dẫn nào (cùng loại với tên chương ở trên).
+    ("PUT", _BOOK + r"/title"),
+    ("PUT", _BOOK + r"/author"),
     ("POST", _BOOK + r"/start"),
     ("POST", _BOOK + r"/stop"),
     ("POST", _BOOK + r"/pause"),
@@ -132,6 +135,11 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("GET", _BOOK + r"/bookfile-job"),
     ("POST", _BOOK + r"/m4b-job"),  # xuất M4B chạy nền như file sách; nơi ghi vẫn là "Đã xuất" trong thư viện (_target)
     ("GET", _BOOK + r"/m4b-job"),
+    # Hộp Xuất: tiến độ tải nhạc nền để đóng kèm, "Huỷ", và việc xuất còn chạy sau khi tải lại trang (export_jobs.py). Lời đáp không mang đường
+    # dẫn nào: server.without_local_paths chỉ để lại TÊN file.
+    ("GET", _BOOK + r"/music-export"),
+    ("POST", _BOOK + r"/music-export/cancel"),
+    ("GET", r"/api/export-jobs"),
     ("GET", _BOOK + r"/export-size"),
     ("GET", _BOOK + r"/export-music"),  # ô "Kèm nhạc nền" của hộp Xuất (chỉ đọc)
     ("GET", _BOOK + r"/review"),
@@ -142,6 +150,12 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("GET", _BOOK + r"/casting/\d+"),
     ("GET", _BOOK + r"/casting/stamp"),
     ("GET", _BOOK + r"/continuation"),
+    # "Sửa thiết lập" / "Làm lại phân tích": kế hoạch trả chương nguồn dưới dạng tham chiếu (remote_sources.py), không phải đường dẫn.
+    ("GET", _BOOK + r"/redo"),
+    # Hộp "Thay đổi từ máy khác" (edits_inbox.py): xem và quyết từng việc điện thoại gửi về - thiết bị được điều khiển sản xuất quyết được như chủ máy.
+    ("GET", _BOOK + r"/edits-inbox"),
+    ("POST", _BOOK + r"/edits-inbox/apply"),
+    ("POST", _BOOK + r"/edits-inbox/skip"),
     ("GET", _BOOK + r"/parts"),
     ("GET", _BOOK + r"/pronunciations"),
     ("GET", _BOOK + r"/pronunciations/reach"),
