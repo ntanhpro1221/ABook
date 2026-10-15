@@ -639,7 +639,7 @@ def test_the_moods_model_and_recompute_endpoints(studio, tmp_path: Path, monkeyp
     chưa có model hay khi cuốn đang chạy; bản chạy từ mã nguồn không tải model từ đây."""
     import time
 
-    from abook.webui import music_moods
+    from abook.webui import music_bounds, music_moods
     from abook.webui.remote_studio import permitted
     from abook.webui.server import App
 
@@ -652,6 +652,7 @@ def test_the_moods_model_and_recompute_endpoints(studio, tmp_path: Path, monkeyp
     monkeypatch.setattr(music_moods, "model_digest", lambda _base: digest[0])
     monkeypatch.setattr(music_moods, "release", lambda _base: None)
     done: list[str] = []
+    monkeypatch.setattr(music_bounds, "compute", lambda root, base, **_kw: done.append("bounds") or 2)
     monkeypatch.setattr(music_moods, "compute", lambda root, base, **_kw: done.append("compute") or 3)
     real_rebuild = App.music_rebuild
     monkeypatch.setattr(App, "music_rebuild", lambda self, value, **kw: done.append("rebuild") or real_rebuild(self, value, **kw))
@@ -679,6 +680,6 @@ def test_the_moods_model_and_recompute_endpoints(studio, tmp_path: Path, monkeyp
             break
         time.sleep(0.05)
     view = _call(server, "GET", f"/api/books/{book}/music")[1]
-    assert done == ["compute", "rebuild"] and view["moods"] == {"running": False, "error": ""}
+    assert done == ["bounds", "compute", "rebuild"] and view["moods"] == {"running": False, "error": ""}  # chia cảnh trước, rồi đọc không khí
     assert permitted("POST", f"/api/books/{book}/music/moods") and permitted("GET", "/api/music/moods-model")
     assert not permitted("POST", "/api/music/moods-model"), "tải 3,2 GB về máy chủ sách chỉ làm trên chính máy ấy"

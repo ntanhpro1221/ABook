@@ -1360,6 +1360,7 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
         heading = index == 0 and humanize.is_heading(str(row["text"]))
         segments.append({
             "id": int(row["id"]),
+            "seq": int(row["seq"]),  # số câu trong chương: LLM chia cảnh của nhạc nền (music_bounds.py) nhìn số này, không nhìn `id`
             "paragraph": int(row["paragraph_index"] or 0),
             "text": str(row["text"]),
             "kind": "heading" if heading else str(row["kind"] or "narration"),

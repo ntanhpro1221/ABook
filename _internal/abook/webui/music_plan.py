@@ -14,6 +14,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import json
+import logging
 import math
 import os
 import re
@@ -25,11 +26,14 @@ from typing import Any, Callable, Iterable
 
 from ..config import DEFAULT_SETTINGS
 from ..io_utils import atomic_write_json, ffmpeg_available, ffmpeg_executable, run_hidden
-from . import music_mix, music_moods, music_scene_student, music_scenes, music_select, store
+from . import music_bounds, music_mix, music_moods, music_scene_student, music_scenes, music_select, store
 
 PLAN_FILE = "music_plan.json"
 OVERRIDES_FILE = "music_overrides.json"
 PLAN_VERSION = 1
+# Trần đổi bài mỗi giờ của cả cuốn (PLAN_densgate mục 5): ĐỔI BÀI, không phải đoạn - Y có ~31 đoạn/giờ nhưng 21,4 đổi bài/giờ.
+# Chỉ đếm và báo (`switches_per_hour`), không đổi hành vi.
+SWITCH_CAP_PER_HOUR = 22.0
 # `levelDb` = nhạc nền thấp hơn GIỌNG bao nhiêu LU (Pha 4, docs/MUSIC_RESEARCH.md: -20 + bù theo bài -> 94% cặp ESTOI >= 0,9).
 DEFAULT_LEVEL_DB = -20.0
 VOICE_LUFS = float(DEFAULT_SETTINGS["audio"]["loudness_lufs"])  # giọng mọi chương được chuẩn hoá về mức này
@@ -114,14 +118,18 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
           book_key: str | None = None, taxonomy: dict[str, Any] | None = None,
           scenes: list[dict[str, Any]] | None = None,
           keep: dict[str, str | None] | None = None, kept_siblings: dict[str, list[str]] | None = None,
-          available: Callable[[str], bool] | None = None) -> dict[str, Any]:
+          available: Callable[[str], bool] | None = None, log: Callable[[str], None] | None = None,
+          emit: Callable[[str, dict[str, Any]], None] | None = None) -> dict[str, Any]:
     """Dựng lại music_plan.json: chia đoạn cả cuốn, chọn bài theo lựa chọn của người dùng, gắn thông tin bài.
     `scenes`: các đoạn đã có (từ plan cũ, qua `scenes_of`) - chọn lại bài trên đúng các đoạn ấy, không chia lại sách;
     người dùng sửa một đoạn thì các đoạn khác không đổi theo (chỉ "Chọn lại nhạc" mới chia lại).
     `keep`: {khoá đoạn: bài cũ} (từ `kept_tracks`) - đoạn nào có trong đó giữ nguyên bài, trừ khi bài đã bị bỏ hoặc không
     còn trong danh mục (không dùng được nữa) thì chọn lại như thường. `kept_siblings` (từ `kept_siblings`): bài anh em cũ của
     các đoạn ấy - đoạn không bị sửa lan thì nối đúng các bài cũ (music_select.choose).
-    `available(link)`: bài dùng được trên máy này không (music_select.choose) - bài không lấy được thì đoạn chọn bài kế."""
+    `available(link)`: bài dùng được trên máy này không (music_select.choose) - bài không lấy được thì đoạn chọn bài kế.
+    `log(dòng)` và `emit(loại, nội dung)`: mỗi lần dựng ghi số đổi bài mỗi giờ của cả cuốn; trên `SWITCH_CAP_PER_HOUR` thì phát thêm
+    `music_switches_high` {perHour}. Không truyền thì ghi vào nhật ký chạy của dự án (`runtime_events`, như `BookPipeline.log`), dự án
+    không có sổ (sách đóng gói) thì vào `logging`. Chỉ đếm, không đổi plan."""
     project_root = Path(project_root)
     overrides = read_overrides(project_root)
     if scenes is None:
@@ -129,7 +137,9 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
         # sinh đoán hình không khí trong chương (music_scene_student.py) thì nó chỉnh tiếp V / E / T quanh mức chương.
         moods = music_moods.load(project_root)
         student = music_scene_student.load(project_root)
+        # Ranh giới cảnh do LLM chia (music_bounds.py) nếu có - moods và học sinh dùng cùng ranh, nên khoá đoạn của chúng khớp đoạn ở đây.
         scenes = music_scenes.book_scenes(book_scripts(project_root), moods["scenes"] if moods else None,
+                                          boundaries=music_bounds.load(project_root),
                                           student=student["scenes"] if student else None)
     genres = (taxonomy or {}).get("genres") or {}
     genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
@@ -164,7 +174,71 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
         "tracks": {link: {key: tracks.get(link, {}).get(key) for key in TRACK_INFO_KEYS} for link in links},
     }
     atomic_write_json(project_root / PLAN_FILE, plan)
+    report_switches(plan, log or project_log(project_root), emit or project_emit(project_root))
     return plan
+
+
+def record_event(project_root: Path, level: str, code: str, message: str, details: dict[str, Any] | None = None) -> bool:
+    """Ghi một dòng vào `runtime_events` của dự án (nhật ký chạy, như `ProjectDB.event`). Dự án không có sổ, sổ khoá hay chưa có bảng
+    thì False - người gọi rơi về `logging`. Mở thẳng sqlite, không qua `ProjectDB` (không nâng cấp, không chạm gì khác trong sổ)."""
+    path = Path(project_root) / store.DB_NAME
+    if not path.is_file():
+        return False
+    try:
+        with contextlib.closing(sqlite3.connect(path, timeout=5.0)) as connection:
+            if not connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='runtime_events'").fetchone():
+                return False
+            with connection:
+                connection.execute("INSERT INTO runtime_events(timestamp,level,code,message,details_json) VALUES(?,?,?,?,?)",
+                                   (time.time(), level, code, message,
+                                    json.dumps(details, ensure_ascii=False) if details else None))
+    except sqlite3.Error:
+        return False
+    return True
+
+
+def project_log(project_root: Path) -> Callable[[str], None]:
+    """`log` của `build` ghi vào nhật ký chạy của dự án (code LOG như `BookPipeline.log`); không ghi được thì `logging`."""
+    def log(line: str) -> None:
+        if not record_event(project_root, "info", "LOG", line):
+            logging.getLogger(__name__).info(line)
+
+    return log
+
+
+def project_emit(project_root: Path) -> Callable[[str, dict[str, Any]], None]:
+    """`emit` của `build` ghi sự kiện vào nhật ký chạy của dự án (code = tên sự kiện); không ghi được thì `logging`."""
+    def emit(kind: str, payload: dict[str, Any]) -> None:
+        if not record_event(project_root, "warning", kind, f"{kind} {json.dumps(payload, ensure_ascii=False)}", payload):
+            logging.getLogger(__name__).warning("%s %s", kind, payload)
+
+    return emit
+
+
+def switches_per_hour(plan: dict[str, Any]) -> float | None:
+    """Đổi bài mỗi giờ của cả cuốn: tổng (số mốc nhạc của chương - 1) / số giờ của các đoạn. Plan tắt hay không có đoạn -> None."""
+    if not plan.get("enabled"):
+        return None
+    chapters: dict[Any, list[dict[str, Any]]] = {}
+    for scene in plan.get("scenes") or []:
+        chapters.setdefault(scene.get("chapterId"), []).append(scene)
+    switches, seconds = 0, 0.0
+    for chapter_id, scenes in chapters.items():
+        switches += max(0, len(chapter_cues({"enabled": True, "scenes": scenes}, chapter_id)) - 1)
+        seconds += max(float(scene["end"]) for scene in scenes) - min(float(scene["start"]) for scene in scenes)
+    return switches / (seconds / 3600.0) if seconds > 0 else None
+
+
+def report_switches(plan: dict[str, Any], log: Callable[[str], None] | None = None,
+                    emit: Callable[[str, dict[str, Any]], None] | None = None) -> None:
+    """Ghi số đổi bài/giờ của cuốn; trên trần thì phát `music_switches_high`. Chỉ đếm."""
+    rate = switches_per_hour(plan)
+    if rate is None:
+        return
+    (log or logging.getLogger(__name__).info)(f"Nhạc nền: {rate:.1f} đổi bài/giờ cả cuốn (trần {SWITCH_CAP_PER_HOUR:.0f})")
+    if rate > SWITCH_CAP_PER_HOUR:
+        emit = emit or (lambda kind, payload: logging.getLogger(__name__).warning("%s %s", kind, payload))
+        emit("music_switches_high", {"perHour": round(rate, 1)})
 
 
 # Thông tin bài ghi vào plan["tracks"] (ghi công, độ to) - bài thay thế tạm lúc phát cũng mang đúng bộ này.

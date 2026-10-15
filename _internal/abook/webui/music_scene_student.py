@@ -51,7 +51,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from ..io_utils import atomic_write_bytes, atomic_write_json
-from . import music_moods, music_scenes
+from . import music_bounds, music_moods, music_scenes
 
 REPO_ID = "NGDtuanh/abook-music-student"
 SUBFOLDER = "scene_q06"
@@ -388,11 +388,12 @@ def compute(project_root: Path, *, stop_requested: Callable[[], bool] = lambda: 
     embedded = 0
     dirty = finished = False
 
+    bounds = music_bounds.load(project_root) or {}  # ranh LLM chia cảnh: cùng đoạn với music_plan.build
     try:
         for script in music_plan.book_scripts(project_root):
             segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
             position = {segment.get("id"): index for index, segment in enumerate(segments)}
-            scenes = music_scenes.chapter_scenes(script)
+            scenes = music_scenes.chapter_scenes(script, boundaries=bounds.get(script.get("chapterId")))
             spans = [(position.get(scene["firstSegment"]), position.get(scene["lastSegment"])) for scene in scenes]
             if not scenes or any(first is None or last is None for first, last in spans):
                 continue
