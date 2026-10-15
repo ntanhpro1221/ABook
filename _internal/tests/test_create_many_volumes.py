@@ -65,6 +65,21 @@ def test_one_folder_per_volume_is_proposed_in_natural_order_with_the_boundaries_
     assert scan["totals"]["chapters"] == 7, "đề xuất không đổi gì ở danh sách chương"
 
 
+def test_loose_uploads_next_to_an_uploaded_folder_do_not_show_the_internal_batch_folder_as_a_volume(tmp_path: Path) -> None:
+    """Soát a35: gửi lẫn file lẻ và một thư mục -> gợi ý "nhiều tập" gọi thư mục lô "Tải lên dd-mm-yyyy hhmm xxxx" là một tập."""
+    batch = tmp_path / actions.UPLOAD_FOLDER / "Tải lên 05-10-2026 18h22 ab12"
+    loose = _chapters(batch, ["Chương 1", "Chương 2"])
+    folder = _chapters(batch / "Truyện hay", ["Chương 3", "Chương 4"], start=3)
+    scan = actions.scan_inputs([str(loose / "001.txt"), str(loose / "002.txt"), str(folder)])
+    proposal = scan["volumes"]
+    assert proposal is None or all("Tải lên" not in item["label"] for item in proposal["volumes"]), proposal
+    assert scan["totals"]["chapters"] == 4
+    # Hai thư mục người dùng chọn (không có file lẻ) vẫn là hai tập, tên tập là tên thư mục của họ.
+    other = _chapters(batch / "Tập 2", ["Chương 1"])
+    two = actions.scan_inputs([str(batch / "Truyện hay"), str(other)])["volumes"]
+    assert two is not None and two["source"] == "folders" and {item["label"] for item in two["volumes"]} == {"Tập 2", "Truyện hay"}
+
+
 def test_epub_folders_are_labelled_by_the_epub_name_not_its_hash(tmp_path: Path) -> None:
     root = tmp_path / "Nguồn EPUB"
     a = _chapters(root / "Re Zero Vol 1 - 1a2b3c4d", ["Mở đầu", "Một"])

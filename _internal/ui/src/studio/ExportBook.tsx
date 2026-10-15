@@ -501,6 +501,7 @@ export function ExportDialog({
         <div className="mt-3">
           <FfmpegNeeded
             status={ffmpeg.data}
+            remote={Boolean(info?.remote)}
             onDownload={() => void ffmpegStart().then(refreshFfmpeg, (error: Error) => toast.error("Chưa tải được công cụ", { description: error.message }))}
             onStop={() => void ffmpegCancel().then(refreshFfmpeg, () => undefined)}
           />

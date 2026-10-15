@@ -119,7 +119,7 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
           scenes: list[dict[str, Any]] | None = None,
           keep: dict[str, str | None] | None = None, kept_siblings: dict[str, list[str]] | None = None,
           available: Callable[[str], bool] | None = None, log: Callable[[str], None] | None = None,
-          emit: Callable[[str, dict[str, Any]], None] | None = None) -> dict[str, Any]:
+          emit: Callable[[str, dict[str, Any]], None] | None = None, persist: bool = True) -> dict[str, Any]:
     """Dựng lại music_plan.json: chia đoạn cả cuốn, chọn bài theo lựa chọn của người dùng, gắn thông tin bài.
     `scenes`: các đoạn đã có (từ plan cũ, qua `scenes_of`) - chọn lại bài trên đúng các đoạn ấy, không chia lại sách;
     người dùng sửa một đoạn thì các đoạn khác không đổi theo (chỉ "Chọn lại nhạc" mới chia lại).
@@ -129,7 +129,8 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
     `available(link)`: bài dùng được trên máy này không (music_select.choose) - bài không lấy được thì đoạn chọn bài kế.
     `log(dòng)` và `emit(loại, nội dung)`: mỗi lần dựng ghi số đổi bài mỗi giờ của cả cuốn; trên `SWITCH_CAP_PER_HOUR` thì phát thêm
     `music_switches_high` {perHour}. Không truyền thì ghi vào nhật ký chạy của dự án (`runtime_events`, như `BookPipeline.log`), dự án
-    không có sổ (sách đóng gói) thì vào `logging`. Chỉ đếm, không đổi plan."""
+    không có sổ (sách đóng gói) thì vào `logging`. Chỉ đếm, không đổi plan.
+    `persist` False: chỉ tính, chưa ghi (người gọi xem plan rồi mới `save_plan`)."""
     project_root = Path(project_root)
     overrides = read_overrides(project_root)
     if scenes is None:
@@ -173,9 +174,17 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
         "scenes": chosen,
         "tracks": {link: {key: tracks.get(link, {}).get(key) for key in TRACK_INFO_KEYS} for link in links},
     }
+    if persist:
+        save_plan(project_root, plan, log, emit)
+    return plan
+
+
+def save_plan(project_root: Path, plan: dict[str, Any], log: Callable[[str], None] | None = None,
+              emit: Callable[[str, dict[str, Any]], None] | None = None) -> None:
+    """Ghi plan đã tính bằng `build(persist=False)` và báo số đổi bài mỗi giờ."""
+    project_root = Path(project_root)
     atomic_write_json(project_root / PLAN_FILE, plan)
     report_switches(plan, log or project_log(project_root), emit or project_emit(project_root))
-    return plan
 
 
 def record_event(project_root: Path, level: str, code: str, message: str, details: dict[str, Any] | None = None) -> bool:

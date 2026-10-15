@@ -18,6 +18,8 @@ import {
   type ReadAloudTry,
 } from "./readings";
 import { cn } from "@/shared/cn";
+import { OnComputerOnly } from "@/shared/OnComputerOnly";
+import { useAppInfo } from "@/studio/data";
 
 // "Đọc từ này là…" (giữ / bấm chuột phải vào một chữ ở màn đọc của cuốn chỉ có chữ) và danh sách "Cách đọc tên" của hộp "Sửa sách": dạy
 // giọng đọc một từ hay một cụm chữ liền nhau cho cả cuốn. Chỉ giọng đọc đổi, chữ của sách giữ nguyên (listen/readings.ts).
@@ -179,6 +181,13 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
   const save = useSaveReading(bookId);
   const [editing, setEditing] = useState<string | null>(null);
   const list: BookReading[] = readings.data ?? [];
+  // Thiết bị chỉ được nghe: xem danh sách được, sửa / bỏ thì làm ở máy tính (nút bấm vào chỉ ra 403).
+  const { data: info } = useAppInfo();
+  const listenOnly = Boolean(info?.listenOnly);
+  // Không đọc được danh sách thì nói thẳng - đừng bảo "chưa có từ nào" khi chỉ là chưa lấy được.
+  if (readings.isError) return <p className="text-xs text-danger">Chưa đọc được danh sách cách đọc: {(readings.error as Error).message}</p>;
+  if (readings.isPending) return <p className="text-xs text-fg-2">Đang đọc danh sách…</p>;
+  if (!list.length && listenOnly) return <p className="text-xs text-fg-2">Chưa có từ nào.</p>;
   if (!list.length) {
     return <p className="text-xs text-fg-2">Chưa có từ nào. Ở màn đọc, giữ (hay bấm chuột phải) vào một từ đọc sai rồi chọn cách đọc.</p>;
   }
@@ -200,19 +209,21 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
                 onClick={() => void aloud.play(item.surface, item.spoken)}
               />
             )}
-            <IconButton size="sm" label={`Sửa cách đọc ${item.surface}`} icon={Pencil} onClick={() => setEditing(editing === item.surface ? null : item.surface)} />
-            <IconButton
-              size="sm"
-              label={`Bỏ cách đọc ${item.surface}`}
-              icon={Trash2}
-              disabled={save.isPending}
-              onClick={() =>
-                save.mutate(
-                  { surface: item.surface, spoken: "" },
-                  { onError: (error) => toast.error("Chưa bỏ được cách đọc", { description: (error as Error).message }) },
-                )
-              }
-            />
+            {!listenOnly && <IconButton size="sm" label={`Sửa cách đọc ${item.surface}`} icon={Pencil} onClick={() => setEditing(editing === item.surface ? null : item.surface)} />}
+            {!listenOnly && (
+              <IconButton
+                size="sm"
+                label={`Bỏ cách đọc ${item.surface}`}
+                icon={Trash2}
+                disabled={save.isPending}
+                onClick={() =>
+                  save.mutate(
+                    { surface: item.surface, spoken: "" },
+                    { onError: (error) => toast.error("Chưa bỏ được cách đọc", { description: (error as Error).message }) },
+                  )
+                }
+              />
+            )}
           </div>
           {editing === item.surface && (
             <div className="mt-2">
@@ -222,6 +233,11 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
         </li>
       ))}
       {aloud.failed && editing === null && <li className="px-3 py-2 text-xs text-danger">{aloud.failed}</li>}
+      {listenOnly && (
+        <li className="px-3 py-2">
+          <OnComputerOnly verb="Sửa cách đọc" />
+        </li>
+      )}
     </ul>
   );
 }

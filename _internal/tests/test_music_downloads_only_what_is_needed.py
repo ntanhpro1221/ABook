@@ -130,8 +130,8 @@ def test_the_music_tab_shows_download_progress_and_can_cancel_it(studio, tmp_pat
         threading.Event().wait(0.01)
     _status, view = _call(server, "GET", f"/api/books/{book}/music")
     assert view["download"]["active"] is True and view["download"]["total"] == 2 and view["download"]["done"] == 0
-    status, _ = _call(server, "POST", f"/api/books/{book}/music/download/cancel")
-    assert status == 200
+    status, stopped = _call(server, "POST", f"/api/books/{book}/music/download/cancel")
+    assert status == 200 and stopped["download"]["active"] is False, "lời đáp của Huỷ tải phải là trạng thái SAU khi dừng"
     gate.set()
     _settle()
     assert len(calls) == 1, "huỷ rồi mà vẫn tải bài kế"

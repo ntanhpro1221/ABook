@@ -9,6 +9,7 @@ import { useReadAloudVoices } from "@/listen/source";
 import { coverArtwork } from "@/shared/cover";
 import { cn } from "@/shared/cn";
 import { formatSize } from "@/shared/format";
+import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { pickFolder, useAppInfo } from "@/studio/data";
 import { OPEN_AUDIOBOOK_EVENT, startExport } from "./ExportBookFileJob";
@@ -34,12 +35,12 @@ import {
 
 const FORMATS = FORMAT_CHOICES.map((choice) => choice.id);
 
-/** Khối "máy chưa có ffmpeg": mời tải, hiện tiến độ tải, báo lỗi. */
-export function FfmpegNeeded({ status, onDownload, onStop }: { status: FfmpegStatus; onDownload: () => void; onStop: () => void }) {
+/** Khối "máy chưa có ffmpeg": mời tải, hiện tiến độ tải, báo lỗi. `remote`: đang ở máy khác điều khiển máy tính - công cụ nằm ở máy tính, tải ở đó. */
+export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { status: FfmpegStatus; onDownload: () => void; onStop: () => void; remote?: boolean }) {
   if (status.ready) return null;
   return (
     <div className="rounded-lg border border-line bg-panel-2 p-3 text-sm" role="group" aria-label="Công cụ ghép âm thanh">
-      <p className="font-medium">Máy chưa có công cụ ghép âm thanh</p>
+      <p className="font-medium">{remote ? "Máy tính chưa có công cụ ghép âm thanh" : "Máy chưa có công cụ ghép âm thanh"}</p>
       <p className="mt-0.5 text-fg-2">Cần nó để ghép lời đọc thành file MP3 / M4B. Tải một lần, dùng mãi (khoảng {formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
       {status.downloading ? (
         <div className="mt-2 flex items-center gap-3">
@@ -49,6 +50,10 @@ export function FfmpegNeeded({ status, onDownload, onStop }: { status: FfmpegSta
             Dừng
           </Button>
         </div>
+      ) : remote ? (
+        <p className="mt-2">
+          <OnComputerOnly verb="Tải công cụ ghép âm thanh" />
+        </p>
       ) : status.blocked ? (
         <p className="mt-2 text-warning">{status.blocked}</p>
       ) : (

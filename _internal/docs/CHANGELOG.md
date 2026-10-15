@@ -7,6 +7,22 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Một nguồn nhạc bị lỗi mạng giờ chỉ tạm nghỉ riêng nguồn ấy, các bài ở nguồn khác vẫn dùng bình thường. Khi mất mạng thật, "Chọn lại nhạc" không còn ghi
+  đè nhạc đang có bằng một rãnh trống: bạn thấy thông báo "Không tải được nhạc vì mất mạng", nhạc cũ được giữ nguyên để thử lại sau.
+
+### Điều khiển từ máy khác
+
+- Trang sách chữ mở từ máy khác giờ hiện được gợi ý bỏ dòng ghi công và danh sách "Cách đọc tên"; nếu không đọc được, hộp báo rõ thay vì ghi "Chưa có từ nào".
+- Từ máy khác đã được bật quyền sửa, bạn dạy giọng đọc một từ ("Đọc từ này là…") và bỏ dòng ghi công khỏi phần đọc của sách chữ như ngay trên máy tính; máy chỉ
+  được nghe thì chỉ xem và hiện "ở máy tính <tên máy>" thay cho nút sửa.
+- Hộp Xuất mở từ máy khác biết máy tính đã có công cụ ghép âm thanh chưa, và nhắc bạn tải nó ở máy tính khi còn thiếu.
+
+### Tạo sách
+
+- Gửi cùng lúc file lẻ và một thư mục, gợi ý chia nhiều tập không còn gọi nhóm file lẻ bằng tên thư mục lần gửi ("Tải lên 05-10-2026 18h22 ab12").
+
 ## [0.4.63] - 2026-10-15
 
 ### Nghe ngay

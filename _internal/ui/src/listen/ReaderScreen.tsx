@@ -9,6 +9,7 @@ import { useMediaQuery } from "@/shared/media";
 import { excerpt } from "@/shared/format";
 import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
+import { useAppInfo } from "@/studio/data";
 import { canEditBook } from "./EditBook";
 import { FindInBook } from "./FindInBook";
 import { chapterToFollow, firstVisibleIndex, lineToEdit, type LineToEdit } from "./follow";
@@ -107,7 +108,9 @@ export function ReaderScreen({
     [wishes.data],
   );
   // "Đọc từ này là…": cuốn chỉ có chữ của máy này - giữ (hay bấm chuột phải) một chữ để dạy giọng đọc cách đọc nó cho cả cuốn.
-  const readingEdit = editing && textOnly && canEditBook(book);
+  // Thiết bị chỉ được nghe thì không dạy giọng đọc từ đây (máy tính từ chối): việc ấy ở máy tính, trang sách có dòng nói rõ.
+  const { data: appInfo } = useAppInfo();
+  const readingEdit = editing && textOnly && canEditBook(book) && !appInfo?.listenOnly;
   const [readingWord, setReadingWord] = useState<string | null>(null);
   // Câu của hộp "Đọc từ này là…" mở từ nút “Sửa cách đọc” (cho chọn từ trong câu); giữ một chữ thì cũng kèm câu để đổi sang từ khác.
   const [readingSentence, setReadingSentence] = useState("");

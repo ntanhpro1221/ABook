@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type { ReadAloudVoice } from "@/listen/readAloud";
@@ -200,5 +201,16 @@ describe("the dialog body", () => {
     const blocked = renderToString(<FfmpegNeeded status={{ ...ffmpegMissing, blocked: "Máy này không tải được." }} onDownload={noop} onStop={noop} />);
     expect(blocked).toContain("Máy này không tải được.");
     expect(blocked).not.toContain("Tải công cụ");
+  });
+
+  it("from another device says the computer lacks ffmpeg and where to install it, with no download button that would be refused", () => {
+    const remote = renderToString(
+      <QueryClientProvider client={new QueryClient()}>
+        <FfmpegNeeded status={ffmpegMissing} remote onDownload={noop} onStop={noop} />
+      </QueryClientProvider>,
+    );
+    expect(remote).toContain("Máy tính chưa có công cụ ghép âm thanh");
+    expect(remote).toContain("ở máy tính");
+    expect(remote).not.toContain("Tải công cụ<");
   });
 });
