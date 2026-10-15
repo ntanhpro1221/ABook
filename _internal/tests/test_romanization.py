@@ -282,3 +282,35 @@ def test_the_ninth_round_flags_what_it_infers():
     assert romanized_reading_flags("unnie", "ko")[1] == ("analogy:ko_ie",)
     assert romanized_reading_flags("Jeongeun", "ko")[1] == () and romanized_reading_flags("Luda", "ko")[1] == ()
     assert romanized_reading("Leon", "ko") is None and romanized_reading("Lena", "ko") is None
+
+
+@pytest.mark.parametrize("token,reading", [
+    # tn8: hee = hui trong tên liền (Sehee, Heejung), oh cuối từ là o (Noh), yi đầu đoạn là i (Yi, Yi-hyun)
+    ("Sehee", "Xê-hưi"), ("Sanghee", "Xang-hưi"), ("Heeyoung", "Hưi-giong"), ("Heejung", "Hưi-giung"), ("Hee-jung", "Hưi-giung"),
+    ("Noh", "Nô"), ("Doh", "Tô"), ("Yi", "I"), ("Yi-hyun", "I-hi-un"), ("Yiseo", "I-xeo"),
+    # n + yeo / yong là n khép rồi yeo / yong; ngwoo là ng khép rồi woo; a / o + eu là a + eun (Ha-eun), không ae + un
+    ("Jinyoung", "Gin-giong"), ("Junyeol", "Giun-gion"), ("Jinyong", "Gin-giông"), ("Jungwoo", "Giung-u"), ("Myeongwoo", "Me-ong-u"), ("Haeun", "Ha-ưn"), ("Gaeul", "Ca-ưn"),
+])
+def test_tn8_korean_names_the_rule_could_not_read(token, reading):
+    assert romanized_reading(token, "ko") == reading
+
+
+@pytest.mark.parametrize("token", [
+    # chữ Tây giống dáng ấy vẫn không đọc: hee sau c / s / t / w / r / p, yi + phụ âm khép, yon / yo mở, woo / ae không phải eu, tách ng / n + g chưa ngã về bên nào, Oh đứng riêng
+    "Cheese", "Sheep", "Wheel", "Thee", "Rhee", "Heehee", "Hehehehee", "Yin", "Yip", "Kenyon", "Canyon", "Banyo", "Anya", "Daewoo", "Taewoon", "Mango", "Pangea", "Jungyeong", "Gyeongwon", "Hangang", "Oh", "Pooh", "Ooh",
+])
+def test_tn8_western_look_alikes_and_real_ties_stay_unread(token):
+    assert romanized_reading(token, "ko") is None
+
+
+def test_tn8_flags_what_it_infers():
+    assert romanized_reading_flags("Noh", "ko")[1] == ("analogy:ko_oh",)
+    assert romanized_reading_flags("Yi", "ko")[1] == ("analogy:ko_yi",)
+    assert "analogy:ko_hee" in romanized_reading_flags("Sehee", "ko")[1]
+    assert romanized_reading_flags("Jungwoo", "ko")[1] == ("analogy:ko_tie",)
+    assert romanized_reading_flags("Haeun", "ko")[1] == ("analogy:ko_eu_tie",)
+    assert romanized_reading_flags("Hee-jung", "ko")[1] == ("open:ko_rare_vowels",)  # cả đoạn "hee" là ca cũ của chủ sách, không cờ mới
+
+
+def test_tn8_japanese_is_untouched():
+    assert romanized_reading("Noh", "ja") == "Nô" and romanized_reading("Sehee", "ja") == "Xe-he"

@@ -32,7 +32,7 @@ object Names {
     /** Bên nào có bằng chứng gấp đôi bên kia mới thắng. */
     const val MARKED_RATIO = 2
     /** Đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại. */
-    const val RULE_VERSION = 4
+    const val RULE_VERSION = 5
     private const val ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 
     /** (dấu câu đầu, lõi từ chữ cái đầu tới chữ cái cuối, dấu câu cuối). */

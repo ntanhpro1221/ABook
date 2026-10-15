@@ -331,6 +331,11 @@ object Romanization {
     }
 
     private val KO_SILENT_H = Regex("ah(?![aeiouy])")
+    // Cách viết quen của tên Hàn mà RR không viết (tn8): hee = hui (không đứng sau c / s / t / w / r / p: Cheese, Sheep, Wheel là chữ Anh), oh cuối từ sau chữ khác là o (Noh, Doh), yi đầu đoạn là i khi âm tiết không khép phụ âm (Yi, Yi-hyun; Yin, Yip để nguyên)
+    private val KO_HEE = Regex("(?<![cstwrp])hee")
+    private val KO_LAUGH = Regex("(?:h[aeiouy]+){2,}") // Heehee, Hehehehee: tiếng cười toàn h + nguyên âm, không phải tên
+    private val KO_FINAL_OH = Regex("(?<=[^o])oh$")
+    private val KO_INITIAL_YI = Regex("^yi(?=$|[^aeiouy]+[aeiouy])")
     private val KO_FINAL_NN = Regex("nn$")
     private val JA_PROLONGED = Regex("ー+(?=$|[\\s-])")
     private val KO_FINAL_IE = Regex("(?<=[bcdfghjklmnpqrstvwxz])ie$")
@@ -358,6 +363,18 @@ object Romanization {
             flags.add("analogy:ko_ah")
             word = KO_SILENT_H.replace(word, "a")
         }
+        if (KO_HEE.containsMatchIn(word) && !KO_LAUGH.matches(word)) {
+            flags.add("analogy:ko_hee")
+            word = KO_HEE.replace(word, "hui")
+        }
+        if (KO_FINAL_OH.containsMatchIn(word)) {
+            flags.add("analogy:ko_oh")
+            word = KO_FINAL_OH.replace(word, "o")
+        }
+        if (KO_INITIAL_YI.containsMatchIn(word)) {
+            flags.add("analogy:ko_yi")
+            word = KO_INITIAL_YI.replace(word, "i")
+        }
         return word
     }
 
@@ -380,6 +397,27 @@ object Romanization {
         "ryu" to listOf(Triple("r", "i", ""), Triple("", "u", "")),
     )
 
+    // Chỗ RR viết giống hai cách tách mà tên Hàn nghiêng hẳn về một bên (tn8): n + yeo, hay n + yo khép ng, là n khép rồi âm tiết yeo / yong (Jin-young, Jun-yeol, Jin-yong), không phải nyeo / nyong; "ngwoo" thì chữ w cho biết
+    // ng khép rồi woo (Jung-woo); a / o + eu viết ra là a + eun, o + eul (Ha-eun, Ga-eul), không phải ae / oe + un (Hae-un; Daewoo có woo, không phải eu)
+    private val KO_NY_VOWELS = listOf("yeo", "yo")
+    private val KO_NGWOO = Regex("ngwoo")
+    private val KO_EU_BEFORE = listOf("ae", "oe")
+
+    private fun koResolved(raw: String, chosen: List<Triple<String, String, String>>, other: List<Triple<String, String, String>>): Boolean {
+        for (k in 0 until chosen.size - 1) {
+            val left = chosen[k]
+            val right = chosen[k + 1]
+            if (left.third == "" && right.first == "n" && right.second in KO_NY_VOWELS && other[k].third == "n" && (right.second == "yeo" || right.third == "ng")) return true
+            if (left.third == "n" && right.first == "g" && right.second == "u" && other[k].third == "ng" && KO_NGWOO.containsMatchIn(raw)) return true
+        }
+        return false
+    }
+
+    private fun koEu(parse: List<Triple<String, String, String>>): Boolean = parse.any { it.second == "eu" }
+
+    private fun koAeU(parse: List<Triple<String, String, String>>): Boolean =
+        (0 until parse.size - 1).any { parse[it].second in KO_EU_BEFORE && parse[it + 1].first == "" && parse[it + 1].second == "u" }
+
     private fun koBest(raw: String, flags: MutableList<String>): List<Triple<String, String, String>>? {
         val word = koSpelling(raw, flags)
         KO_FIXED_PARSES[word]?.let { return it }
@@ -391,6 +429,14 @@ object Romanization {
         val ranks = parses.map { rank(it) }
         val top = ranks.minWithOrNull(compareBy<Pair<Int, Int>>({ it.first }, { it.second }))!!
         var best = parses.filterIndexed { index, _ -> ranks[index] == top }
+        if (best.any { it != best[0] } && "eu" in raw) {
+            // Ha-eun / Hae-un: a / o + eu thắng ae / oe + u (xem trên)
+            val withEu = best.filter { koEu(it) && !koAeU(it) }
+            if (withEu.size == 1 && best.all { it === withEu[0] || koAeU(it) }) {
+                flags.add("analogy:ko_eu_tie")
+                best = withEu
+            }
+        }
         if (best.any { it != best[0] }) {
             // kk là phụ âm đầu căng (ㄲ), không phải c khép + k mở: tokki -> to-kki -> tô-ki (chủ sách 04-10 lần 8)
             var tense = best.filter { parse -> parse.any { it.first == "kk" } }
@@ -403,6 +449,11 @@ object Romanization {
             best = tense
         }
         val chosen = best[0]
+        val others = parses.filter { it != chosen && it.size == chosen.size }
+        if (others.size == 1 && koResolved(raw, chosen, others[0])) {
+            flags.add("analogy:ko_tie")
+            return others[0]
+        }
         for (parse in parses) {
             if (parse != chosen && parse.size == chosen.size) {
                 for (k in 0 until chosen.size - 1) {

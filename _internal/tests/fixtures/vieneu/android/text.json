@@ -6905,6 +6905,134 @@
    "origin": "ja"
   },
   {
+   "text": "Sehee, Noh, Yi-hyun, Jinyoung, Jungwoo và Haeun gặp Cheese, Sheep, Yin, Kenyon và Hehehehee.",
+   "max": 256,
+   "tokens": 14,
+   "units": [
+    {
+     "first": 0,
+     "last": 13,
+     "pieces": [
+      "Xê-hưi, Nô, i-hi-un, Gin-giong, Giung-u và Ha-ưn gặp Cheese, Sheep, Yin, Kenyon và Hehehehee."
+     ],
+     "phonemes": "sˈe hˈyj, nˈo, ˈi hˈi ˈu2n, zˈi2n zˈɔŋ, zˈuŋ ˈu vˌaː2 hˈaː ˈyn ɣˈa6p tʃˈiːz, ʃˈiːp, jˈɪn, kˈɛnɪən vˌaː2 hˈɛheɪ ˈɛhiː."
+    }
+   ],
+   "origin": "ko"
+  },
+  {
+   "text": "Sehee, Noh, Yi-hyun, Jinyoung, Jungwoo và Haeun gặp Cheese, Sheep, Yin, Kenyon và Hehehehee.",
+   "max": 140,
+   "tokens": 14,
+   "units": [
+    {
+     "first": 0,
+     "last": 13,
+     "pieces": [
+      "Xê-hưi, Nô, i-hi-un, Gin-giong, Giung-u và Ha-ưn gặp Cheese, Sheep, Yin, Kenyon và Hehehehee."
+     ],
+     "phonemes": "sˈe hˈyj, nˈo, ˈi hˈi ˈu2n, zˈi2n zˈɔŋ, zˈuŋ ˈu vˌaː2 hˈaː ˈyn ɣˈa6p tʃˈiːz, ʃˈiːp, jˈɪn, kˈɛnɪən vˌaː2 hˈɛheɪ ˈɛhiː."
+    }
+   ],
+   "origin": "ko"
+  },
+  {
+   "text": "Sehee, Noh, Yi-hyun, Jinyoung, Jungwoo và Haeun gặp Cheese, Sheep, Yin, Kenyon và Hehehehee.",
+   "max": 40,
+   "tokens": 14,
+   "units": [
+    {
+     "first": 0,
+     "last": 3,
+     "pieces": [
+      "Xê-hưi, Nô, i-hi-un, Gin-giong,"
+     ],
+     "phonemes": "sˈe hˈyj, nˈo, ˈi hˈi ˈu2n, zˈi2n zˈɔŋ."
+    },
+    {
+     "first": 4,
+     "last": 10,
+     "pieces": [
+      "Giung-u và Ha-ưn gặp Cheese, Sheep, Yin,"
+     ],
+     "phonemes": "zˈuŋ ˈu vˌaː2 hˈaː ˈyn ɣˈa6p tʃˈiːz, ʃˈiːp, jˈɪn."
+    },
+    {
+     "first": 11,
+     "last": 13,
+     "pieces": [
+      "Kenyon và Hehehehee."
+     ],
+     "phonemes": "kˈɛnɪən vˌaː2 hˈɛheɪ ˈɛhiː."
+    }
+   ],
+   "origin": "ko"
+  },
+  {
+   "text": "Sehee, Noh, Yi-hyun, Jinyoung, Jungwoo và Haeun gặp Cheese, Sheep, Yin, Kenyon và Hehehehee.",
+   "max": 256,
+   "tokens": 14,
+   "units": [
+    {
+     "first": 0,
+     "last": 13,
+     "pieces": [
+      "Xe-he, Nô, Yi-hyun, Jinyoung, Jungwoo và Ha-e-un gặp Cheese, Sheep, Yin, Ke-ni-ôn và He-he-he-he."
+     ],
+     "phonemes": "sˈɛ hˈɛ, nˈo, ji hˈaɪʌn, dʒˈɪnɪˌʌŋ, jˈʊŋwuː vˌaː2 hˈaː ˈɛ ˈu2n ɣˈa6p tʃˈiːz, ʃˈiːp, jˈɪn, kˈɛ nˈi ˈon vˌaː2 hˈɛ hˈɛ hˈɛ hˈɛ."
+    }
+   ],
+   "origin": "ja"
+  },
+  {
+   "text": "Sehee, Noh, Yi-hyun, Jinyoung, Jungwoo và Haeun gặp Cheese, Sheep, Yin, Kenyon và Hehehehee.",
+   "max": 140,
+   "tokens": 14,
+   "units": [
+    {
+     "first": 0,
+     "last": 13,
+     "pieces": [
+      "Xe-he, Nô, Yi-hyun, Jinyoung, Jungwoo và Ha-e-un gặp Cheese, Sheep, Yin, Ke-ni-ôn và He-he-he-he."
+     ],
+     "phonemes": "sˈɛ hˈɛ, nˈo, ji hˈaɪʌn, dʒˈɪnɪˌʌŋ, jˈʊŋwuː vˌaː2 hˈaː ˈɛ ˈu2n ɣˈa6p tʃˈiːz, ʃˈiːp, jˈɪn, kˈɛ nˈi ˈon vˌaː2 hˈɛ hˈɛ hˈɛ hˈɛ."
+    }
+   ],
+   "origin": "ja"
+  },
+  {
+   "text": "Sehee, Noh, Yi-hyun, Jinyoung, Jungwoo và Haeun gặp Cheese, Sheep, Yin, Kenyon và Hehehehee.",
+   "max": 40,
+   "tokens": 14,
+   "units": [
+    {
+     "first": 0,
+     "last": 3,
+     "pieces": [
+      "Xe-he, Nô, Yi-hyun, Jinyoung,"
+     ],
+     "phonemes": "sˈɛ hˈɛ, nˈo, ji hˈaɪʌn, dʒˈɪnɪˌʌŋ."
+    },
+    {
+     "first": 4,
+     "last": 10,
+     "pieces": [
+      "Jungwoo và Ha-e-un gặp Cheese, Sheep, Yin,"
+     ],
+     "phonemes": "jˈʊŋwuː vˌaː2 hˈaː ˈɛ ˈu2n ɣˈa6p tʃˈiːz, ʃˈiːp, jˈɪn."
+    },
+    {
+     "first": 11,
+     "last": 13,
+     "pieces": [
+      "Ke-ni-ôn và He-he-he-he."
+     ],
+     "phonemes": "kˈɛ nˈi ˈon vˌaː2 hˈɛ hˈɛ hˈɛ hˈɛ."
+    }
+   ],
+   "origin": "ja"
+  },
+  {
    "text": "Chỉ số HP và MP của cô còn 15%. NPC đứng cạnh SSR, VIP, ID, OK, TV, GOTY. LINE, MAX, YES, TIP, BAKA, HAHA. 10KG, LV5, A12-B, TP.HCM, PGS.TS.",
    "max": 256,
    "tokens": 29,
