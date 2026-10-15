@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pytest
 
-from abook.webui import music_plan, remote_studio, tls
+from abook.webui import music_plan, remote_sources, remote_studio, tls
 from abook.webui.actions import FakeRunner
 from abook.webui.library import book_id
-from abook.webui.server import ROUTES, App, Server
+from abook.webui.server import ROUTES, App, Server, is_local_path
 from tests.test_webui_listen_and_sync import _request, _sync_request, library, make_project  # noqa: F401 - fixture dùng chung
 
 
@@ -233,13 +233,16 @@ def test_a_phone_sends_chapters_then_creates_the_book_from_them(studio) -> None:
         status, data, _ = _sync_request(port, "POST", "/api/sources/upload", headers=cookie, body={
             "folder": "../Truyện của Anh", "name": name, "data": base64.b64encode(chapter).decode("ascii")})
         assert status == 200, data
-    folder = Path(json.loads(data)["folder"])
+    token = json.loads(data)["folder"]
     root = Path(app.preferences.get()["libraryRoot"])
-    assert folder == root / "Nguồn tải lên" / "Truyện của Anh", "không ra ngoài thư mục tải lên"
-    assert sorted(path.name for path in folder.iterdir()) == ["001.txt", "002.txt"]
+    assert token == "up:Truyện của Anh", "thiết bị chỉ cầm tham chiếu, không cầm đường dẫn của máy tính"
+    folder = root / "Nguồn tải lên" / "Truyện của Anh"
+    assert sorted(path.name for path in folder.iterdir()) == ["001.txt", "002.txt"], "không ra ngoài thư mục tải lên"
     assert (folder / "001.txt").read_bytes() == chapter
-    status, data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [str(folder)]})
+    status, data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [token]})
     assert status == 200 and len(json.loads(data)["files"]) == 2, "trình tạo sách đi tiếp như khi chọn thư mục"
+    status, _data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [str(folder)]})
+    assert status == 403, "đường dẫn trần không nhận từ xa, kể cả nằm trong thư mục tải lên"
     status, data, _ = _sync_request(port, "POST", "/api/sources/upload", headers=cookie, body={
         "folder": "x", "name": "anh.jpg", "data": base64.b64encode(b"\xff\xd8").decode("ascii")})
     assert status == 400 and ".txt" in json.loads(data)["error"]
@@ -263,19 +266,24 @@ def test_a_whole_book_sent_from_a_phone_can_be_split_into_chapters(studio, tmp_p
     book = "Chương 1\n\nTrời đã sáng.\n\nChương 2\n\nTrời tối.\n".encode()
     _status, data, _ = _sync_request(port, "POST", "/api/sources/upload", headers=cookie, body={
         "folder": "Cả truyện", "name": "tron bo.txt", "data": base64.b64encode(book).decode("ascii")})
-    whole = str(Path(json.loads(data)["folder"]) / "tron bo.txt")
+    whole = json.loads(data)["path"]
+    assert whole == "up:Cả truyện/tron bo.txt"
     status, data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [whole]})
     assert status == 200 and json.loads(data)["files"][0]["split"]["chapters"] == 2
+    assert json.loads(data)["files"][0]["path"] == whole
     status, data, _ = _sync_request(port, "POST", "/api/sources/split", headers=cookie, body={"path": whole})
     assert status == 200, data
-    folder = Path(json.loads(data)["folder"])
-    assert folder.parent.parent == Path(app.preferences.get()["libraryRoot"]) / "Nguồn tải lên"
-    status, data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [str(folder)]})
+    folder = json.loads(data)["folder"]
+    assert folder.startswith("up:") and not is_local_path(folder)
+    assert (Path(app.preferences.get()["libraryRoot"]) / "Nguồn tải lên" / remote_sources.parse(folder)[3]).is_dir()
+    status, data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [folder]})
     assert status == 200 and len(json.loads(data)["files"]) == 2
     outside = tmp_path / "ngoai.txt"
     outside.write_bytes(book)
     status, _data, _ = _sync_request(port, "POST", "/api/sources/split", headers=cookie, body={"path": str(outside)})
     assert status == 403
+    status, _data, _ = _sync_request(port, "POST", "/api/sources/split", headers=cookie, body={"path": "up:../ngoai.txt"})
+    assert status == 403, "tham chiếu ra ngoài thư mục tải lên cũng bị từ chối"
 
 
 def _send(port: int, cookie: dict, folder: str, name: str, data: bytes) -> tuple[int, dict]:
@@ -295,18 +303,18 @@ def test_a_picked_folder_keeps_its_name_inside_its_own_upload(studio) -> None:
     for name in ("10.txt", "2.txt", "1.txt"):
         status, data = _send(port, cookie, "Lần gửi a1/Truyện Thử", name, f"Chương {name}\n\nTrời sáng.".encode())
         assert status == 200, data
-    folder = Path(data["folder"])
-    assert folder == root / "Lần gửi a1" / "Truyện Thử"
-    status, raw, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [str(folder)]})
+    folder = data["folder"]
+    assert folder == "up:Lần gửi a1/Truyện Thử" and (root / "Lần gửi a1" / "Truyện Thử").is_dir()
+    status, raw, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [folder]})
     scan = json.loads(raw)
     assert status == 200 and [row["name"] for row in scan["files"]] == ["1.txt", "2.txt", "10.txt"]
     assert scan["suggestedTitle"] == "Truyện Thử", "tên thư mục đã chọn, không phải tên lần gửi"
     # Lần gửi khác cùng thư mục: chỗ riêng, không đụng nguồn đã có.
     status, data = _send(port, cookie, "Lần gửi b2/Truyện Thử", "1.txt", b"khac")
-    assert status == 200 and Path(data["folder"]) == root / "Lần gửi b2" / "Truyện Thử"
+    assert status == 200 and data["folder"] == "up:Lần gửi b2/Truyện Thử"
     # Mỗi tầng bị làm sạch như tên một thư mục: "..", tầng rỗng, ký tự lạ không đưa ra ngoài; tối đa ba tầng.
     status, data = _send(port, cookie, "../..//x:/../Tập 1\\..\\a/b/c", "1.txt", b"a")
-    assert status == 200 and Path(data["folder"]) == root / "x" / "Tập 1" / "a"
+    assert status == 200 and data["folder"] == "up:x/Tập 1/a" and (root / "x" / "Tập 1" / "a").is_dir()
     status, data = _send(port, cookie, "Lần gửi c3/NUL/Tập 1", "1.txt", b"a")
     assert status == 400, "tên thiết bị ở tầng nào cũng không nhận"
 
@@ -360,7 +368,10 @@ def test_remote_paths_stay_inside_the_upload_folder(studio, tmp_path: Path) -> N
     private = tmp_path / "rieng"
     private.mkdir()
     (private / "ghi_chu.txt").write_text("Dòng đầu tiên của một file riêng tư", encoding="utf-8")
-    for path in (str(private), r"\\may-khac\share\x", "//may-khac/share", r"\\?\C:\x"):
+    # Tham chiếu `up:` chỉ đi xuống từ thư mục tải lên: ra ngoài, ổ đĩa, UNC, tên thiết bị Windows đều bị từ chối trước khi chạm đĩa hay mạng.
+    escapes = ("up:../rieng", "up:a/../../rieng", "up:/rieng", "up:C:/Windows", "up:C:\\Windows", "up:\\\\may-khac\\share", "up://may-khac/share", "up:",
+               "up:a//b", "up:a/./b", "up:a\\..\\..\\b", "up:x/CON", "up:NUL.txt", "up:a/b ", "up:a/b.", "up:a/b:c")
+    for path in (str(private), r"\\may-khac\share\x", "//may-khac/share", r"\\?\C:\x", *escapes):
         for route in ("/api/scan", "/api/first-person"):
             status, data, _ = _sync_request(port, "POST", route, headers=cookie, body={"paths": [path]})
             assert status == 403 and "đã gửi lên" in json.loads(data)["error"], (route, path)
@@ -515,6 +526,7 @@ def test_a_remote_studio_continues_a_book_only_with_its_next_chapters(studio, tm
         "seedFrom": identifier,
     })
     assert status == 201, data
+    assert str(tmp_path).encode() not in data and str(project).encode() not in data, "lời đáp tạo sách không mang đường dẫn nào"
     created = app.library.resolve(json.loads(data)["id"])
     assert continuation.chain_of(created)[0] == project.resolve()
     assert [path.name for path in continuation._input_paths(created)] == ["647.txt"]

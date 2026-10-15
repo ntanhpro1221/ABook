@@ -1,6 +1,8 @@
 import { FolderX, Settings } from "lucide-react";
 import { useNavigate } from "react-router";
+import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { Button, EmptyState } from "@/shared/ui";
+import { useAppInfo } from "@/studio/data";
 
 /** Tên thư mục cuối của một đường dẫn (Windows hay POSIX) - không hiện cả đường dẫn (có tên tài khoản Windows). */
 export function folderName(path: string): string {
@@ -11,15 +13,21 @@ export function folderName(path: string): string {
  *  một thư viện trống im lặng. Chọn lại thư mục (kể cả chỗ mới của chính nó) thì chỗ nghe, dấu trang đi theo sách. */
 export function MissingLibrary({ root, className }: { root: string; className?: string }) {
   const navigate = useNavigate();
+  // Studio từ xa: thư mục thư viện là của máy tính (đường dẫn không tới thiết bị này, cài đặt không đổi được từ đây).
+  const remote = Boolean(useAppInfo().data?.remote);
   return (
     <EmptyState
       icon={FolderX}
-      title={`Không thấy thư mục thư viện “${folderName(root)}”`}
+      title={remote || !root ? "Không thấy thư mục thư viện" : `Không thấy thư mục thư viện “${folderName(root)}”`}
       className={className}
       action={
-        <Button variant="primary" icon={Settings} onClick={() => navigate("/settings")}>
-          Chọn thư mục trong Cài đặt
-        </Button>
+        remote ? (
+          <OnComputerOnly verb="Chọn lại thư mục thư viện" />
+        ) : (
+          <Button variant="primary" icon={Settings} onClick={() => navigate("/settings")}>
+            Chọn thư mục trong Cài đặt
+          </Button>
+        )
       }
     >
       Có thể ổ chứa nó chưa được cắm, hoặc thư mục đã bị đổi tên hay chuyển đi. Cắm lại ổ, hoặc chọn chỗ mới của thư mục ấy - chỗ đang nghe và

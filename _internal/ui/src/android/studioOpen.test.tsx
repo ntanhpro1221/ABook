@@ -88,4 +88,24 @@ describe("máy tính chỉ cho điện thoại nghe", () => {
     expect(library.openStudio).not.toHaveBeenCalled();
     expect(toasts.error).toHaveBeenCalledWith(expect.stringContaining("chỉ cho nghe"));
   });
+
+  it("chip ở trang sách cũng mờ kèm lý do khi mọi máy tính chỉ cho nghe, và vẫn bấm được khi còn một máy mở được", () => {
+    const html = renderToString(<StudioChip book={book({ studio: true })} computers={[listenOnlyHome]} />);
+    expect(html).toContain("disabled");
+    expect(html).toContain("Máy tính NGDtuanh-Lecoo chỉ cho nghe");
+    const open = renderToString(<StudioChip book={book({ studio: true })} computers={[listenOnlyHome, office]} />);
+    expect(open).not.toContain("disabled");
+    expect(open).not.toContain("chỉ cho nghe");
+  });
+
+  it("nhiều máy cùng chỉ cho nghe: lý do nêu tên cả hai, hơn hai máy thì nói chung", () => {
+    const second = { ...office, listenOnly: true };
+    expect(studioChoice([listenOnlyHome, second])).toEqual({
+      none: "Máy tính NGDtuanh-Lecoo và Máy văn phòng đều chỉ cho nghe - bật quyền sửa ở Cài đặt > Thiết bị trên từng máy tính",
+    });
+    const third = { key: "c3", name: "Máy ba", listenOnly: true };
+    const html = renderToString(<OpenStudioButton computers={[listenOnlyHome, second, third]} />);
+    expect(html).toContain("Các máy tính đã ghép đều chỉ cho nghe");
+    expect(html).not.toContain("Máy ba");
+  });
 });

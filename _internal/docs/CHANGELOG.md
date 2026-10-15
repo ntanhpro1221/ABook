@@ -7,6 +7,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio từ xa
+
+- Chương bạn gửi lên từ trình duyệt hay điện thoại (cả thư mục có nhiều tập, file cả truyện được tách chương, EPUB/DOCX/PDF) giờ cũng
+  không để lộ đường dẫn trên máy tính của bạn: danh sách chương, các thư mục con gợi ý và kết quả tách chỉ hiện tên. Tạo sách từ
+  chúng vẫn như trước.
+- Điện thoại: nút “Mở Studio” ở trang sách cũng mờ kèm lý do khi máy tính chỉ cho điện thoại này nghe; nếu có nhiều máy tính cùng
+  chỉ cho nghe, lý do nêu tên cả hai (hơn hai máy thì nói “các máy tính đã ghép”).
+- Ở chế độ từ xa hay chỉ nghe, hộp “Phím tắt” và thông báo thiếu thư mục thư viện không còn chỉ bạn tới Cài đặt mà bạn không đổi
+  được từ đó; chỗ cần đổi ghi “… ở máy tính <tên máy>”.
+- Đổi tên một chương xong, trang sách hiện tên mới ngay (trước đây vẫn hiện tên cũ cho tới khi sách có thay đổi khác).
+
 ## [0.4.59] - 2026-10-15
 
 ### Studio từ xa

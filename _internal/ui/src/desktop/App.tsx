@@ -553,7 +553,11 @@ export function App() {
     setExternalOpener(info?.dialogs ? (url) => api("/api/open-url", { method: "POST", body: { url } }).then(() => undefined) : null);
   }, [info?.dialogs]);
   // "Thêm sách từ file…" đọc file bằng đường dẫn trên máy này: thiết bị điều khiển từ xa (Studio từ xa) không có.
-  const source = useMemo(() => (info?.remote ? httpSource : { ...httpSource, textImport: desktopTextImport(Boolean(info?.dialogs)) }), [info?.remote, info?.dialogs]);
+  // Giọng đọc của máy là việc của máy tính (/api/readaloud/* không mở cho thiết bị ở xa): không hỏi, khỏi một lời 403 ở mỗi trang sách.
+  const source = useMemo(
+    () => (info?.remote ? { ...httpSource, readAloudVoices: undefined } : { ...httpSource, textImport: desktopTextImport(Boolean(info?.dialogs)) }),
+    [info?.remote, info?.dialogs],
+  );
   if (!info && error && currentPeer()) return <PeerTrouble error={error} retry={retry} />;
   if (!info) return <div className="grid h-full place-items-center text-fg-3">Đang mở ABook…</div>;
   return (

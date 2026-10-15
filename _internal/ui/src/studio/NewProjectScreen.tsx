@@ -52,6 +52,7 @@ import { narratorIsAuto, recommendedFor, type TellerGender } from "@/studio/narr
 import { TELLER_TITLE, tellerHint } from "@/studio/tellerMode";
 import { creditKind, creditLine, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS, type CreditDrop, type Credits } from "@/studio/credits";
 import { samePath } from "@/studio/samePath";
+import { isSourceRef, sourceName } from "@/studio/sourceRef";
 import { splitOutcome } from "@/studio/splitOffer";
 import {
   UPLOAD_ACCEPT,
@@ -554,14 +555,15 @@ function SourceStep({
                     <button
                       key={folder}
                       type="button"
-                      title={folder}
+                      title={isSourceRef(folder) ? sourceName(folder) : folder}
                       onClick={() => onPaths([folder])}
                       className="flex w-full items-center gap-2 truncate rounded-lg border border-line bg-panel px-3 py-2 text-left text-fg hover:border-accent"
                     >
                       <Folder className="size-4 shrink-0 text-fg-2" />
                       {/* Tên thư mục đứng trước: hai thư mục "Tập 1", "Tập 2" cùng một đường dẫn dài thì đuôi bị cắt nhìn y hệt nhau. */}
-                      <span className="shrink-0 font-medium">{folder.split(/[\\/]/).filter(Boolean).pop() ?? folder}</span>
-                      <span className="min-w-0 truncate text-xs text-fg-3">{folder}</span>
+                      <span className="shrink-0 font-medium">{sourceName(folder)}</span>
+                      {/* Tham chiếu của máy tính (Studio từ xa) không phải thứ để đọc: chỉ có tên. */}
+                      {!isSourceRef(folder) && <span className="min-w-0 truncate text-xs text-fg-3">{folder}</span>}
                     </button>
                   ))}
                   {problem.subfolders.length > 8 && (
@@ -1756,7 +1758,7 @@ export function NewProjectScreen() {
             result.errors?.length
               ? { text: `Không mở được ${result.errors[0]}`, subfolders: [] }
               : result.missing.length
-              ? { text: `Không tìm thấy “${result.missing[0]}”. Kiểm tra lại đường dẫn.`, subfolders: [] }
+              ? { text: isSourceRef(result.missing[0]) ? `Không tìm thấy “${sourceName(result.missing[0])}” trên máy tính. Gửi lại rồi thử lần nữa.` : `Không tìm thấy “${result.missing[0]}”. Kiểm tra lại đường dẫn.`, subfolders: [] }
               : { text: "Thư mục này không có file .txt (hay .epub, .docx, .pdf) nằm ngay bên trong.", subfolders: result.subfolders },
           );
           return;
@@ -1974,7 +1976,7 @@ export function NewProjectScreen() {
               onLimit={(count) => update({ limit: count })}
               onRemove={(path) => {
                 update({ excluded: [...draft.excluded, path] });
-                const name = path.split(/[\\/]/).pop();
+                const name = sourceName(path);
                 toast(`Đã bỏ ${name}`, {
                   id: `removed-${path}`,
                   action: {

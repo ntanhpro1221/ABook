@@ -32,7 +32,7 @@ import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { NativeAudioEngine } from "./nativeEngine";
 import { SettingsScreen } from "./SettingsScreen";
-import { StudioChip } from "./StudioOpen";
+import { StudioChipHost } from "./StudioOpen";
 import { UpdateNotice } from "./UpdateNotice";
 import { applyTheme, loadSettings, pushSettings } from "./settings";
 import { dismissTopLayer } from "./backLayers";
@@ -290,7 +290,7 @@ export function AndroidApp() {
                     path="/book/:id"
                     element={
                       <BookScreen
-                        studioLink={(book) => <StudioChip book={book} />}
+                        studioLink={(book) => <StudioChipHost book={book} />}
                         extraActions={(book) =>
                           book.remote ? (
                             <DownloadMenuItem book={book} />

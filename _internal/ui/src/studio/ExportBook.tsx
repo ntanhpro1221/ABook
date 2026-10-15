@@ -309,8 +309,9 @@ export function ExportDialog({
     }
   };
   // Mở hộp (hay trang dự án) khi máy chủ đang gói dự án này: theo tiếp thay vì cho bấm gói lần nữa - tiến độ hiện lại trong hộp.
+  // Studio từ xa không gói dự án (chỉ máy tính làm được): không hỏi, khỏi một lời 403 ở mỗi lần mở hộp.
   useEffect(() => {
-    if (book.running) return;
+    if (book.running || info?.remote) return;
     let current = true;
     api<PackJob>(`/api/books/${book.id}/projectfile-job`)
       .then((job) => {

@@ -31,6 +31,7 @@ SCAN_WORD_LIMIT_BYTES = 4 * 1024 * 1024
 # Studio từ xa: chương TXT gửi từ máy khác nằm ở đây, trong thư viện - dây chuyền còn đọc lại nguồn mỗi lần chạy tiếp.
 UPLOAD_FOLDER = "Nguồn tải lên"
 SPLIT_FOLDER = "Nguồn tách chương"
+UPLOAD_EPUB_FOLDER = "Sách đã tách"  # trong UPLOAD_FOLDER: chương tách từ EPUB / DOCX / PDF mà thiết bị ở xa gửi lên
 MAX_SOURCE_UPLOAD = 8 * 1024 * 1024  # một chương; chương dài nhất của kho truyện ~200 KB
 _UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 # Tên thiết bị của Windows: làm tên thư mục hay file là ghi vào THIẾT BỊ, không vào đĩa.
@@ -47,6 +48,13 @@ def inside_folder(path: str, root: Path) -> bool:
         return Path(text).resolve().is_relative_to(root.resolve())
     except (OSError, ValueError):
         return False
+
+
+def is_upload_part(part: str) -> bool:
+    """`part` là MỘT tầng đường dẫn hợp lệ trong "Nguồn tải lên"? Đúng dạng `upload_source` / `txt_split.split` ghi ra: không rỗng, không "."
+    / "..", không ký tự Windows không nhận (cả "/" "\\" ":"), không kết bằng dấu chấm / cách, không phải tên thiết bị (CON, NUL...)."""
+    return bool(part) and part not in (".", "..") and not part.endswith((" ", ".")) and not _UNSAFE_NAME.search(part) \
+        and not _DEVICE_NAME.match(part)
 
 
 def _upload_name(text: str, limit: int) -> str:
