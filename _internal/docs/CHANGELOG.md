@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.67] - 2026-10-16
+
 ### Nghe ngay
 
 - Giọng Edge (Hoài My, Nam Minh) đọc lại được trên cả máy tính và điện thoại - Microsoft đã đổi cách xác thực nên mấy hôm nay giọng này báo lỗi với mọi người.
