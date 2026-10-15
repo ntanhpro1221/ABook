@@ -33,6 +33,10 @@ object VieneuUnits {
     private const val DASHES = "—–―"
     /** Dấu câu CJK: sea-g2p bỏ qua, người nghe mất nhịp. */
     private val FULLWIDTH = mapOf('，' to ',', '：' to ':', '；' to ';', '。' to '.', '！' to '!', '？' to '?', '、' to ',')
+    /** Số, chữ và dấu viết rộng ("１２", "ＡＢＣ", "８－２＝６") về dạng thường - `HALFWIDTH`. */
+    private const val WIDE_SIGNS = "＋－＝＜＞＆＠＃＄％＊／＼＾～＿｜"
+    private fun halfwidth(char: Char): Char =
+        if (char.code in 0xFF10..0xFF19 || char.code in 0xFF21..0xFF3A || char.code in 0xFF41..0xFF5A || char in WIDE_SIGNS) (char.code - 0xFEE0).toChar() else char
     private const val ANGLE_OPEN = "<《〈"
     private const val ANGLE_CLOSE = ">》〉"
     /** The opening and the closing angle bracket are at most this many shown words apart. */
@@ -54,6 +58,9 @@ object VieneuUnits {
     private val STUTTER = Regex("""([^$W]*)(\p{L}{1,3})-+(\p{L}.*)""", RegexOption.DOT_MATCHES_ALL)
     private val STUTTER_ALONE = Regex("""([^$W]*)(\p{L}{1,3})-+([^$W]*)""")
     private val CENSORED = Regex("""([^$W]*)(\p{L})\*+([^$W]*)""")
+    /** "hent*i", "E**alibur": dấu che giữa hai chữ cái; "*boing**boing*": chữ đầu chữ là dấu nhấn. */
+    private val INSIDE_STAR = Regex("""(?<=\p{L})\*+(?=\p{L})""")
+    private val WRAPPED_STAR = Regex("""^[^$W*]*\*""")
     /** "->", "-->", "=>", "→": sea-g2p reads "sang" / "đến" / "suy ra"; "<->" (both ways) stays. */
     private val ARROW_FORWARD = Regex("""(?<![<=-])(?:-+|=+)>|[→⇒➜➡➔⟶⟹]""")
     /** "<-", "<--", "←": no way to say it aloud (sea-g2p reads "nhỏ hơn"), so it goes; "<=" is a comparison and stays. */
@@ -192,21 +199,40 @@ object VieneuUnits {
         }
         fun stat(word: String) = word.lowercase().let { it in ARROW_STATS || it.trimEnd { c -> c in '0'..'9' } in ARROW_STATS } // "Lv5" -> "lv"
         fun scale(at: Int) = at in plain.indices && plain[at].any { it == '★' || it == '☆' } // "★★★☆☆ -> ★★★★☆": a star scale changes
+        if (arrowCount(plain, index) >= 2) return "rồi" // a chain of two or more arrows in a sentence ("A -> B -> C")
+        fun named(word: String) = word.length >= 3 && word.all { it.isLetter() } && word[0].isUpperCase() && word.drop(1).all { it.isLowerCase() }
+        if (arrowHeading(plain, index, token, match, ::stat)) return "" // "Biến hóa → Honnoshi mở miệng nói.": a short heading then a whole sentence - only a pause
         if (labels.any { stat(it) } || stat(left) || stat(right) || scale(leftAt) || scale(rightAt)) return "thành"
         fun numeric(word: String) = word.any { it.isDigit() }
         if ((numeric(left) || numeric(right)) && plain.subList(maxOf(0, index - 6), index).any { ':' in it }) return "thành" // "Thể lực : 120 ⇒ 240 ⇒ 480": a stat table changing
-        if (arrowCount(plain, index) >= 2) return "rồi"
+        if (leftAt >= 2 && plain.subList(leftAt - 2, leftAt) == plain.subList(minOf(rightAt, plain.size), minOf(rightAt + 2, plain.size)) && plain.subList(leftAt - 2, leftAt).all { w -> core(w).let { c -> c.isNotEmpty() && c.all { ch -> ch.isLetter() } } }) return "thành" // "Vương quốc A -> Vương quốc B": the same title on both sides
         fun time(word: String) = ARROW_TIME.matches(word) || word.lowercase() in ARROW_TIME_WORDS
-        if (labels.any { it in ARROW_COUNTED } || time(left) || time(right)) return "đến"
+        if (labels.any { it in ARROW_COUNTED && (it != "từ" || numeric(left) || numeric(right) || named(left)) } || time(left) || time(right)) return "đến"
         if (colon) return "thành"
-        fun named(word: String) = word.length >= 3 && word.all { it.isLetter() } && word[0].isUpperCase() && word.drop(1).all { it.isLowerCase() }
         val beside = listOf(leftAt - 1, rightAt + 1).map { if (it in plain.indices) plain[it] else "" } // a name of several words ("Tân Thủ -> Pháp Sư") is not surely a place
         if (named(left) && named(right) && beside.none { named(core(it)) }) return "đến"
         val clause = plain.subList(maxOf(0, index - 4), index).count { core(it).let { c -> c.isNotEmpty() && c.all { ch -> ch.isLetter() } } } >= 3 // the left side is long enough to be a clause
         return if (right.firstOrNull()?.isLowerCase() == true && clause) "nên" else "thành"
     }
 
-    /** Arrows around `plain[index]` (up to 4 words each side, not across a word that ends a sentence / clause): two or more is a chain of steps ("A -> B -> C") - `_arrow_count`. */
+    /** An arrow right after a short heading (1-3 words, no number, no ":", no stat label) at the start of a sentence and before a whole capitalised sentence: a bullet, not read - `_arrow_heading`. */
+    private fun arrowHeading(plain: List<String>, index: Int, token: String, match: MatchResult, stat: (String) -> Boolean): Boolean {
+        fun ends(word: String): Boolean = word.trimEnd { it in CLOSERS }.lastOrNull()?.let { it in SENTENCE_END } == true
+        var start = index
+        while (start > 0 && index - start <= 3 && !ends(plain[start - 1])) start--
+        if (index - start > 3) return false // far from the start of the sentence: not a heading
+        val head = (plain.subList(start, index).map { core(it) } + core(token.substring(0, match.range.first))).filter { it.isNotEmpty() }
+        val after = ArrayList<String>()
+        for (word in listOf(token.substring(match.range.last + 1)) + plain.subList(index + 1, plain.size)) {
+            if (core(word).isNotEmpty()) after.add(core(word))
+            if (ends(word)) break
+        }
+        if (head.size !in 1..3 || after.size < 3 || ':' in plain.subList(start, index).joinToString(" ") || head.any { w -> !w.all { it.isLetter() } || stat(w) }) return false
+        val sentence = after.drop(1).any { it.firstOrNull()?.isLowerCase() == true } // the right side is a whole sentence, not a name
+        return sentence && after[0].firstOrNull()?.isUpperCase() == true && after[0].lowercase() != head[0].lowercase() // "Tomenari A -> Tomenari B": the same name on both sides is a rename
+    }
+
+    /** Arrows around `plain[index]` (up to 40 words each side, not across a word that ends a sentence / clause): two or more is a chain of steps ("A -> B -> C") - `_arrow_count`. */
     private fun arrowCount(plain: List<String>, index: Int): Int {
         fun ends(word: String): Boolean {
             val core = word.trimEnd { it in CLOSERS }
@@ -214,8 +240,8 @@ object VieneuUnits {
         }
         var first = index
         var last = index
-        while (first > maxOf(0, index - 4) && !ends(plain[first - 1])) first--
-        while (last < minOf(plain.size - 1, index + 4) && !ends(plain[last])) last++
+        while (first > maxOf(0, index - 40) && !ends(plain[first - 1])) first--
+        while (last < minOf(plain.size - 1, index + 40) && !ends(plain[last])) last++
         return ARROW_FORWARD.findAll(plain.subList(first, last + 1).joinToString(" ")).count()
     }
 
@@ -224,7 +250,7 @@ object VieneuUnits {
         fun replace(match: MatchResult, wordIn: String): String {
             val left = token.getOrNull(match.range.first - 1)
             val right = token.getOrNull(match.range.last + 1)
-            var word = if (left == null && atStart) "" else wordIn // "-> Bước tiếp": an arrow opening a line is only a bullet
+            var word = if ((left == null && atStart) || (left != null && left in OPENERS && token.substring(0, match.range.first).trim { it in OPENERS }.isEmpty())) "" else wordIn // "-> Bước tiếp", "\"→ Tiếng kêu": an arrow opening a line / after an opening bracket is only a bullet
             if (atEnd && token.substring(match.range.last + 1).trim { it in CLOSERS || it in PUNCT_MARKS || it in "〙】」』〕" }.isEmpty()) word = "" // "Khu Hẻm Tử Thần→〙": an arrow ending the paragraph points to nothing
             if (word.isNotEmpty()) return (if (left != null && (left.isLetterOrDigit() || left in "%)]”’")) " " else "") + word + (if (right != null && (right.isLetterOrDigit() || right in "$([“‘")) " " else "")
             return if (left != null && left.isLetterOrDigit() && right != null && right.isLetterOrDigit()) " " else ""
@@ -243,7 +269,7 @@ object VieneuUnits {
             val token = out[index]
             if (token.none { it in "<>=→⇒➜➡➔⟶⟹←⇐⟵⟸" }) continue
             val before = if (index > 0) out[index - 1].trimEnd { it in CLOSERS } else ""
-            out[index] = arrow(token, before.isEmpty() || before.last() in SENTENCE_END, index + 1 == out.size) { arrowSays(plain, index, token, it) }
+            out[index] = arrow(token, index == 0 || (before.isNotEmpty() && before.last() in SENTENCE_END), index + 1 == out.size) { arrowSays(plain, index, token, it) }
         }
     }
 
@@ -306,6 +332,7 @@ object VieneuUnits {
 
     private fun range(match: MatchResult, mode: String = ""): String {
         val parts = listOf(match.groupValues[1]) + match.groupValues[2].split("-").drop(1)
+        if (mode == "minus") return parts.joinToString(" trừ ") // "8-2=6": phép trừ
         if (parts.size == 2) {
             val (first, second) = parts
             if (mode == "duel" && first == "1" && second == "1") return "1 chọi 1" // "đấu 1-1": một chọi một
@@ -335,7 +362,7 @@ object VieneuUnits {
         for ((index, original) in out.withIndex()) {
             if (original.none { it.isDigit() }) continue
             val mode = if (RANGE.containsMatchIn(original)) rangeMode(plain, index) else ""
-            out[index] = GOLD_G.replace(RANGE.replace(original) { m -> range(m, mode) }, " giê")
+            out[index] = GOLD_G.replace(RANGE.replace(original) { m -> range(m, if (original.getOrNull(m.range.last + 1) == '=' || (m.range.first > 0 && original[m.range.first - 1] == '=')) "minus" else mode) }, " giê")
         }
     }
 
@@ -356,12 +383,18 @@ object VieneuUnits {
         return (STUTTER_SOUND[onset] ?: onset) + "ờ"
     }
 
-    /** "*" is decoration ("*từ*", "(*)"): it goes; a letter before a censoring star ("đ*") is read like a stutter ("đờ…") - `_stars`. */
+    /** "*" is decoration ("*từ*", "(*)"): it goes; a letter before a censoring star ("đ*") is read like a stutter ("đờ…"); a mask between letters ("hent*i") leaves a pause ("hent… i"); between two
+     *  stressed words ("*Khụ*Khụ*") a comma - `_stars`. */
     private fun stars(out: MutableList<String>) {
         for ((index, token) in out.withIndex()) {
             if ('*' !in token) continue
             val censored = CENSORED.matchEntire(token)
-            out[index] = if (censored != null) censored.groupValues[1] + stutterSound(censored.groupValues[2], censored.groupValues[2]) + "…" + censored.groupValues[3] else token.replace("*", "")
+            if (censored != null) {
+                out[index] = censored.groupValues[1] + stutterSound(censored.groupValues[2], censored.groupValues[2]) + "…" + censored.groupValues[3]
+                continue
+            }
+            val wrapped = WRAPPED_STAR.containsMatchIn(token) // "*boing**boing*": hai tiếng động nối nhau; "hent*i", "E**alibur", "Ma*beep*o": chữ bị che
+            out[index] = INSIDE_STAR.replace(token, if (wrapped) ", " else "… ").replace("*", "")
         }
     }
 
@@ -403,14 +436,16 @@ object VieneuUnits {
         }
     }
 
-    /** CJK punctuation ("đi，nhà ta", "734：Chúng ta") becomes the ordinary mark; glued to the next word it gets a space - `_fullwidth`. */
+    /** Full-width digits, letters and signs ("８－２＝６", "１２", "ＡＢＣ") become the ordinary ones; CJK punctuation ("đi，nhà ta", "734：Chúng ta") becomes the ordinary mark, glued to the next word it gets a space
+     *  (except ":" between two digits, "２２：３３", a time) - `_fullwidth`. */
     private fun fullwidth(out: MutableList<String>) {
-        for ((index, token) in out.withIndex()) {
+        for (index in out.indices) {
+            val token = out[index].map { halfwidth(it) }.joinToString("").also { out[index] = it }
             if (token.none { it in FULLWIDTH }) continue
             val said = StringBuilder()
             for ((at, char) in token.withIndex()) {
                 said.append(FULLWIDTH[char] ?: char)
-                if (char in FULLWIDTH && token.getOrNull(at + 1)?.isLetterOrDigit() == true) said.append(' ')
+                if (char in FULLWIDTH && token.getOrNull(at + 1)?.isLetterOrDigit() == true && !(char == '：' && at > 0 && token[at - 1].isDigit() && token[at + 1].isDigit())) said.append(' ')
             }
             out[index] = said.toString()
         }

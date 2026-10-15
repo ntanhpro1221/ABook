@@ -50,6 +50,7 @@ SYSTEM_OPEN = "【〔[{"  # khung của bảng trạng thái / thông báo hệ 
 SYSTEM_CLOSE = "】〕]}"
 DASHES = "—–―"
 FULLWIDTH = {"，": ",", "：": ":", "；": ";", "。": ".", "！": "!", "？": "?", "、": ","}  # dấu câu CJK: sea-g2p bỏ qua, người nghe mất nhịp
+HALFWIDTH = {code: code - 0xFEE0 for code in (*range(0xFF10, 0xFF1A), *range(0xFF21, 0xFF3B), *range(0xFF41, 0xFF5B), *map(ord, "＋－＝＜＞＆＠＃＄％＊／＼＾～＿｜"))}  # số, chữ, dấu viết rộng ("１２", "ＡＢＣ", "８－２＝６") về dạng thường
 ANGLE_OPEN = "<《〈"
 ANGLE_CLOSE = ">》〉"
 ANGLE_REACH = 24  # ngoặc nhọn mở và đóng cách nhau tối đa bấy nhiêu chữ hiện (lời nghĩ trong <...> có thể dài cả câu)
@@ -218,19 +219,23 @@ def _arrow_says(plain: list[str], index: int, token: str, match: re.Match) -> st
         labels.append(_core(word).lower())
     stat = lambda word: word.lower() in ARROW_STATS or word.lower().rstrip("0123456789") in ARROW_STATS  # "Lv5" -> "lv"
     scale = lambda at: 0 <= at < len(plain) and any(char in "★☆" for char in plain[at])  # "★★★☆☆ -> ★★★★☆": thang sao đổi
+    if _arrow_count(plain, index) >= 2:
+        return "rồi"  # chuỗi từ hai mũi tên trở lên trong một câu ("A -> B -> C", "Tiến hóa -> Vô hiệu hóa -> Cận chiến")
+    named = lambda word: len(word) >= 3 and word.isalpha() and word[0].isupper() and word[1:].islower()
+    if _arrow_heading(plain, index, token, match, stat):
+        return ""  # "Biến hóa → Honnoshi mở miệng nói.": tiêu đề ngắn rồi cả một câu - chỉ là ngắt
     if any(stat(word) for word in labels) or stat(left) or stat(right) or scale(left_at) or scale(right_at):
         return "thành"
     numeric = lambda word: any(char.isdigit() for char in word)
     if (numeric(left) or numeric(right)) and any(":" in word for word in plain[max(0, index - 6):index]):
         return "thành"  # "Thể lực : 120 ⇒ 240 ⇒ 480": bảng chỉ số đang đổi
-    if _arrow_count(plain, index) >= 2:
-        return "rồi"
+    if left_at >= 2 and plain[left_at - 2:left_at] == plain[right_at:right_at + 2] and all(_core(word).isalpha() for word in plain[left_at - 2:left_at]):
+        return "thành"  # "Vương quốc A -> Vương quốc B": cùng một danh xưng hai bên là đổi tên / trạng thái
     when = lambda word: bool(ARROW_TIME.fullmatch(word)) or word.lower() in ARROW_TIME_WORDS
-    if any(word in ARROW_COUNTED for word in labels) or when(left) or when(right):
+    if any(word in ARROW_COUNTED and (word != "từ" or numeric(left) or numeric(right) or named(left)) for word in labels) or when(left) or when(right):
         return "đến"
     if colon:
         return "thành"
-    named = lambda word: len(word) >= 3 and word.isalpha() and word[0].isupper() and word[1:].islower()
     beside = [plain[at] if 0 <= at < len(plain) else "" for at in (left_at - 1, right_at + 1)]  # tên nhiều chữ ("Tân Thủ -> Pháp Sư") không chắc là nơi chốn
     if named(left) and named(right) and not any(named(_core(word)) for word in beside):
         return "đến"
@@ -238,13 +243,35 @@ def _arrow_says(plain: list[str], index: int, token: str, match: re.Match) -> st
     return "nên" if right[:1].islower() and clause else "thành"
 
 
+def _arrow_heading(plain: list[str], index: int, token: str, match: re.Match, stat: Callable[[str], bool]) -> bool:
+    """Mũi tên ngay sau một tiêu đề ngắn (1-3 chữ, không số, không ":", không nhãn chỉ số) ở đầu câu và trước cả một câu viết hoa ("Biến hóa → Honnoshi mở miệng nói."): dấu đầu mục, không đọc."""
+    ends = lambda word: word.rstrip(CLOSERS)[-1:] in tuple(SENTENCE_END)
+    start = index
+    while start > 0 and index - start <= 3 and not ends(plain[start - 1]):
+        start -= 1
+    if index - start > 3:
+        return False  # xa đầu câu: không phải tiêu đề
+    head = [_core(word) for word in plain[start:index]] + [_core(token[:match.start()])]
+    head = [word for word in head if word]
+    after: list[str] = []
+    for word in [token[match.end():]] + plain[index + 1:]:
+        if _core(word):
+            after.append(_core(word))
+        if ends(word):
+            break
+    if not 1 <= len(head) <= 3 or len(after) < 3 or ":" in " ".join(plain[start:index]) or any(not word.isalpha() or stat(word) for word in head):
+        return False
+    sentence = any(word[:1].islower() for word in after[1:])  # vế phải là cả một câu ("Honnoshi mở miệng nói"), không phải một tên ("Pháp Sư")
+    return sentence and after[0][:1].isupper() and after[0].lower() != head[0].lower()  # "Tomenari A -> Tomenari B" cùng tên hai bên là đổi tên
+
+
 def _arrow_count(plain: list[str], index: int) -> int:
-    """Số mũi tên quanh `plain[index]` (tới 4 chữ mỗi bên, không qua chữ hết câu): từ hai trở lên là chuỗi bước ("A -> B -> C"), hai mũi tên xa nhau ("64 -> 79, Nhanh nhẹn 59 -> 74") thì không."""
+    """Số mũi tên quanh `plain[index]` (tới 40 chữ mỗi bên, không qua chữ hết câu): từ hai trở lên là chuỗi bước ("A -> B -> C"), hai mũi tên xa nhau ("64 -> 79, Nhanh nhẹn 59 -> 74") thì không."""
     ends = lambda word: (bool(word.rstrip(CLOSERS)) and word.rstrip(CLOSERS)[-1] in SENTENCE_END + ",;") or word.lower() in ("và", "hoặc", "and", "or")  # hết câu / vế: mũi tên hai bên là hai việc riêng
     first, last = index, index
-    while first > max(0, index - 4) and not ends(plain[first - 1]):
+    while first > max(0, index - 40) and not ends(plain[first - 1]):
         first -= 1
-    while last < min(len(plain) - 1, index + 4) and not ends(plain[last]):
+    while last < min(len(plain) - 1, index + 40) and not ends(plain[last]):
         last += 1
     return len(ARROW_FORWARD.findall(" ".join(plain[first:last + 1])))
 
@@ -253,8 +280,8 @@ def _arrow(token: str, at_start: bool, says: Callable[[re.Match], str], at_end: 
     def replace(match: re.Match, word: str) -> str:
         left = token[match.start() - 1] if match.start() else ""
         right = token[match.end()] if match.end() < len(token) else ""
-        if not left and at_start:
-            word = ""  # "-> Bước tiếp": mũi tên đầu dòng chỉ là dấu đầu mục
+        if (not left and at_start) or (bool(left) and left in OPENERS and not token[:match.start()].strip(OPENERS)):
+            word = ""  # "-> Bước tiếp", "\"→ Tiếng kêu": mũi tên đầu dòng / sau ngoặc mở chỉ là dấu đầu mục
         if at_end and not token[match.end():].strip(CLOSERS + PUNCT_MARKS + "〙】」』〕"):
             word = ""  # "Khu Hẻm Tử Thần→〙": mũi tên cuối đoạn chỉ về phía không có gì
         if word:
@@ -272,7 +299,7 @@ def _arrows(out: list[str], toks: list[str] | None = None) -> None:
         if not any(char in token for char in "<>=→⇒➜➡➔⟶⟹←⇐⟵⟸"):
             continue
         before = out[index - 1].rstrip(CLOSERS) if index else ""
-        out[index] = _arrow(token, not before or before[-1] in SENTENCE_END, lambda match: _arrow_says(plain, index, token, match), index + 1 == len(out))
+        out[index] = _arrow(token, index == 0 or (bool(before) and before[-1] in SENTENCE_END), lambda match: _arrow_says(plain, index, token, match), index + 1 == len(out))
 
 
 def _angle(out: list[str]) -> None:
@@ -321,6 +348,8 @@ def _angle(out: list[str]) -> None:
 
 def _range(match: re.Match, mode: str = "") -> str:
     parts = [match.group(1)] + match.group(2).split("-")[1:]
+    if mode == "minus":
+        return " trừ ".join(parts)  # "8-2=6": phép trừ
     if len(parts) == 2:
         first, second = parts
         if mode == "duel" and first == second == "1":
@@ -355,7 +384,7 @@ def _numbers(out: list[str], toks: list[str] | None = None) -> None:
         if not any(char.isdigit() for char in token):
             continue
         mode = _range_mode(plain, index) if RANGE.search(token) else ""
-        out[index] = GOLD_G.sub(" giê", RANGE.sub(lambda match: _range(match, mode), token))
+        out[index] = GOLD_G.sub(" giê", RANGE.sub(lambda match: _range(match, "minus" if "=" in (token[match.end():match.end() + 1], token[match.start() - 1:match.start()]) else mode), token))
 
 
 def _emoticons(out: list[str]) -> None:
@@ -377,12 +406,17 @@ def stutter_sound(frag: str, rest: str) -> str:
 
 
 def _stars(out: list[str]) -> None:
-    """"*" là trang trí / nhấn ("*từ*", "(*)", "*Kà-ran*"): bỏ. Chữ cái đứng trước dấu kiểm duyệt ("đ*") đọc như nói lắp ("đờ…")."""
+    """"*" là trang trí / nhấn ("*từ*", "(*)", "*Kà-ran*"): bỏ. Chữ cái đứng trước dấu kiểm duyệt ("đ*") đọc như nói lắp ("đờ…"); dấu che giữa các chữ cái ("hent*i", "E**alibur") đọc phần
+    thấy được với một quãng ngắt ở chỗ che ("hent… i"), không dính thành một từ sai; giữa hai tiếng nhấn liền nhau ("*Khụ*Khụ*") là dấu phẩy ("Khụ, Khụ")."""
     for index, token in enumerate(out):
         if "*" not in token:
             continue
         censored = re.fullmatch(r"([^\w]*)([^\W\d_])\*+([^\w]*)", token)
-        out[index] = censored.group(1) + stutter_sound(censored.group(2), censored.group(2)) + "…" + censored.group(3) if censored else token.replace("*", "")
+        if censored:
+            out[index] = censored.group(1) + stutter_sound(censored.group(2), censored.group(2)) + "…" + censored.group(3)
+            continue
+        wrapped = re.match(r"[^\w*]*\*", token) is not None  # "*boing**boing*": hai tiếng động nối nhau; "hent*i", "E**alibur", "Ma*beep*o": chữ bị che
+        out[index] = re.sub(r"(?<=[^\W\d_])\*+(?=[^\W\d_])", ", " if wrapped else "… ", token).replace("*", "")
 
 
 _QUESTION_BANG = re.compile(r"[?!]{2,}")
@@ -422,14 +456,16 @@ def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_englis
 
 
 def _fullwidth(out: list[str]) -> None:
-    """Dấu câu CJK ("đi，nhà ta", "734：Chúng ta") thành dấu thường; dính liền chữ sau thì thêm một khoảng trắng."""
+    """Số, chữ và dấu viết rộng ("８－２＝６", "１２", "ＡＢＣ", "＋") thành dạng thường; dấu câu CJK ("đi，nhà ta", "734：Chúng ta") thành dấu thường, dính liền chữ sau thì thêm một khoảng trắng
+    (trừ ":" giữa hai số, "２２：３３", là giờ)."""
     for index, token in enumerate(out):
+        token = out[index] = token.translate(HALFWIDTH)
         if not any(char in FULLWIDTH for char in token):
             continue
         said = []
         for at, char in enumerate(token):
             said.append(FULLWIDTH.get(char, char))
-            if char in FULLWIDTH and token[at + 1:at + 2].isalnum():
+            if char in FULLWIDTH and token[at + 1:at + 2].isalnum() and not (char == "：" and token[at - 1:at].isdigit() and token[at + 1:at + 2].isdigit()):
                 said.append(" ")
         out[index] = "".join(said)
 

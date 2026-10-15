@@ -49,13 +49,13 @@ class ReadingMarksTest {
     fun aSlashBetweenTwoWordsIsAPause() = check(
         "Bị 【Đóng băng / yếu】 rồi." to "Bị, 【Đóng băng, yếu】, rồi.",
         "Chạy / bay." to "Chạy, bay.",
-        "HP: 5813 / 5813 và 3/5, 15/8, 3 / 5." to "hát pê: 5813 / 5813 và 3 phần 5, 15/8, 3 / 5.",
+        "HP: 5813 / 5813 và 3/5, 15/8, 3 / 5." to "hát pê: 5813 / 5813 và 3 phần 5, 15 tháng 8, 3 / 5.",
         "Mở/đóng và km/h." to "Mở, đóng và km/h.",
     )
 
     @Test
     fun numbersAreReadTheWayAListenerHearsThem() = check(
-        "Chia 3/5 chai, 1/2 và 180/300, 5/3 và 15/8." to "Chia 3 phần 5 chai, 1 phần 2 và 180/300, 5/3 và 15/8.",
+        "Chia 3/5 chai, 1/2 và 180/300, 5/3 và 15/8." to "Chia 3 phần 5 chai, 1 phần 2 và 180/300, 5 tháng 3 và 15 tháng 8.",
         "Lớp 1-1, được 1-3-1, dài 3-4000 từ, 3-5 người." to "Lớp 1 1, được 1 3 1, dài 3 đến 4000 từ, 3 đến 5 người.",
         "Ngày 01-10-2026, số 090-123-4567, tỉ số 3-1, giờ 9-5." to "Ngày 01-10-2026, số 090-123-4567, tỉ số 3 1, giờ 9 5.",
         "Sự kiện x2 và ×3, (\$1 USD) và \$5." to "Sự kiện nhân 2 và nhân 3, (1 đô la u ét đê) và 5 đô la.",
