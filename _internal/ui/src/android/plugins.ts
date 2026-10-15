@@ -41,6 +41,8 @@ export interface NativeState {
   musicCredit?: MusicCredit | null;
   /** Bài nhạc nền của chương đang nghe không phát được (MusicBed.brokenHere): đoạn ấy im lặng. */
   musicBroken?: boolean;
+  /** Lời báo "mất mạng" khi nhạc nền đang bị giữ lại vì mạng (MusicBed.offlineNotice); rỗng khi ổn. */
+  musicOffline?: string;
 }
 
 // Nhật ký đêm của lõi native - cùng hình dạng với listen/model.ts (NightSession).
@@ -206,6 +208,8 @@ export interface StudioComputer {
   /** Máy tính chỉ cho điện thoại này nghe (`/api/app` của nó: công tắc "Điều khiển từ xa" hay quyền riêng của điện thoại tắt): Studio của máy ấy
    *  chỉ hiện trang "Chỉ nghe". Không hỏi được thì không có cờ (nút vẫn mở). */
   listenOnly?: boolean;
+  /** Máy tính này GIỮ cuốn đã hỏi (`studioComputers({ book })`): "Mở Studio" ở trang sách đi thẳng tới máy ấy. */
+  holdsBook?: boolean;
 }
 
 export interface LocalBook {
@@ -388,7 +392,7 @@ export interface EbookLibraryPlugin {
   connection(): Promise<{ paired: boolean; host: string; port: number; name: string; fingerprint?: string }>;
   unpair(): Promise<void>;
   /** Máy tính mở Studio được (StudioLink.kt): máy tính chính (`key` "") rồi các máy tính ghép thêm. */
-  studioComputers(): Promise<{ computers: StudioComputer[] }>;
+  studioComputers(options?: { book?: string }): Promise<{ computers: StudioComputer[] }>;
   /** Studio từ xa: mở trang Studio của máy tính đã ghép (StudioActivity.kt, webui/remote_studio.py) - máy `computer` ("" = máy tính
    *  chính), hay thẳng cuốn `book` (mã trên điện thoại này) trong Studio của máy tính giữ nó. */
   openStudio(options?: { computer?: string; book?: string }): Promise<void>;

@@ -424,6 +424,7 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
 
 function MusicMenuFor({ bookId }: { bookId: string }) {
   const { options, chosen, label, playing, error, loading, choose, levelDb, setLevel, levelBusy, canImport, addMusic } = usePlaylistChoice(bookId);
+  const { musicOffline } = usePlayer();
   return (
     <MenuShell
       label="Nhạc nền"
@@ -461,7 +462,7 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
       </div>
       {/* Chỉ khi cuốn đang có nhạc: tắt nhạc thì chỉnh mức chẳng nghe thấy gì. */}
       {playing && <LevelButtons level={levelDb} disabled={levelBusy} onChange={setLevel} />}
-      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error)}</p>
+      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error || musicOffline)}</p>
     </MenuShell>
   );
 }

@@ -189,6 +189,7 @@ object Playback {
             .put("error", lastError)
             .put("musicCredit", MusicBed.credit() ?: JSONObject.NULL)
             .put("musicBroken", MusicBed.brokenHere())
+            .put("musicOffline", MusicBed.offlineNotice())
     }
 
     /** Lỗi phát gần nhất, cho giao diện - rỗng khi đang ổn. */
