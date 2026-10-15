@@ -122,6 +122,30 @@ def test_a_paired_browser_listens_without_the_production_switch(studio) -> None:
     assert status == 200
 
 
+def test_setup_templates_are_managed_by_operation_only_with_the_production_switch(studio) -> None:
+    from abook.webui.remote_studio import permitted
+
+    assert permitted("POST", "/api/book-templates") and not permitted("POST", "/api/book-templates", producing=False)
+    assert not permitted("PUT", "/api/book-templates") and not permitted("PUT", "/api/preferences")
+    app, _project = studio
+    port = app.sync_server.port
+    cookie = {"Cookie": _pair_browser(app)}
+    body = {"op": "save", "template": {"name": "Từ xa", "narrator": "", "profile": "fast", "analysisModel": "", "startNow": True}}
+    status, data, _ = _sync_request(port, "POST", "/api/book-templates", headers=cookie, body=body)
+    assert status == 403 and "chỉ nghe" in json.loads(data)["error"], "chế độ chỉ nghe vẫn chỉ đọc"
+    assert app.preferences.get()["bookTemplates"] == []
+    app.set_remote_studio(True)
+    assert app.devices.set_studio(next(device["id"] for device in app.sync_view()["devices"]), True)
+    status, data, _ = _sync_request(port, "POST", "/api/book-templates", headers=cookie, body=body)
+    assert status == 200, data
+    assert [item["name"] for item in json.loads(data)["bookTemplates"]] == ["Từ xa"]
+    assert [item["name"] for item in app.preferences.get()["bookTemplates"]] == ["Từ xa"]
+    status, data, _ = _sync_request(port, "POST", "/api/book-templates", headers=cookie, body={"op": "delete", "name": "Không có"})
+    assert status == 404 and "Không còn mẫu" in json.loads(data)["error"]
+    status, _data, _ = _sync_request(port, "PUT", "/api/preferences", headers=cookie, body={"bookTemplates": []})
+    assert status == 403, "ghi cả danh sách vẫn không qua"
+
+
 def test_a_browser_pairs_with_the_code_then_runs_the_studio(studio) -> None:
     app, project = studio
     app.set_remote_studio(True)

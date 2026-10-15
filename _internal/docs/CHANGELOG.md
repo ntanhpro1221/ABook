@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Mẫu thiết lập (Studio từ xa)
+
+- Dùng Studio của máy tính qua mạng (trình duyệt, điện thoại) giờ lưu được mẫu thiết lập mới, ghi đè mẫu trùng tên, và vào
+  Cài đặt để đổi tên hay xoá mẫu (xoá có “Hoàn tác”, mẫu về đúng chỗ cũ). Chế độ chỉ nghe vẫn không sửa được mẫu.
+- Hai thiết bị cùng sửa mẫu một lúc không còn đè mất mẫu của nhau; mẫu vừa bị máy khác xoá hay đổi tên thì app báo và tải lại
+  danh sách.
+
 ## [0.4.57] - 2026-10-12
 
 ### Người kể “tôi” (máy tính và điện thoại)

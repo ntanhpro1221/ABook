@@ -18,6 +18,7 @@ import {
 import type { Phase } from "./api";
 import type { Tone } from "@/shared/ui";
 import { pollDelay, retryUnlessGone } from "./polling";
+import { staleTemplateError, type BookTemplateOp } from "./bookTemplates";
 
 export function phaseTone(phase: Phase, running: boolean): Tone {
   if (phase === "done") return "success";
@@ -296,6 +297,21 @@ export function usePreferences() {
     },
   });
   return { ...query, update: mutation.mutate, updating: mutation.isPending };
+}
+
+/** Lưu / đổi tên / xoá / đặt lại một mẫu thiết lập (studio/bookTemplates.ts). Mỗi thao tác đi riêng lên máy tính (không ghi cả danh sách tuỳ chọn:
+ *  hai thiết bị cùng sửa sẽ đè mất nhau, và Studio từ xa không có PUT /api/preferences); máy tính trả lại cả tuỳ chọn, ta ghi thẳng vào bộ nhớ đệm.
+ *  Mẫu không còn / tên trùng (404, 409): tải lại tuỳ chọn để màn này thấy danh sách thật; lời báo của máy chủ do chỗ gọi hiện. */
+export function useBookTemplateOp() {
+  const client = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: (op: BookTemplateOp) => api<Preferences>("/api/book-templates", { method: "POST", body: op }),
+    onSuccess: (data) => client.setQueryData(["preferences"], data),
+    onError: (error) => {
+      if (staleTemplateError(error)) void client.invalidateQueries({ queryKey: ["preferences"] });
+    },
+  });
+  return { run: mutation.mutate, running: mutation.isPending };
 }
 
 export async function pickFolder(title: string, start = ""): Promise<string | null> {

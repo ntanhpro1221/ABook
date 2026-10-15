@@ -43,7 +43,7 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
                listen_export, music_catalog, music_export, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
-from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
+from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
 from .listening import HEAVY_KEYS, RECORD_ID, Listening
 from . import bluetooth, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
 from .. import names as renames
@@ -5115,12 +5115,6 @@ class Handler(BaseHTTPRequestHandler):
             narrator = body["newBookNarrator"].strip()[:80]
             if not narrator or narrator in {voice["name"] for voice in self.app.voices()}:
                 allowed["newBookNarrator"] = narrator
-        # Mẫu thiết lập có tên: sai (tên trùng, quá 20 mẫu...) thì báo lại để người dùng sửa, không lặng lẽ bỏ mất mẫu vừa lưu.
-        if "bookTemplates" in body:
-            try:
-                allowed["bookTemplates"] = clean_book_templates(body["bookTemplates"], {voice["name"] for voice in self.app.voices()})
-            except ValueError as error:
-                raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         if "sleepSchedule" in body:
             schedule = body["sleepSchedule"]
             clock = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
@@ -5134,6 +5128,18 @@ class Handler(BaseHTTPRequestHandler):
         if "libraryRoot" in allowed:
             self.app.adopt_moved_library(old_root)  # thư viện chuyển chỗ: chỗ nghe, dấu trang đi theo sách (soát a28 lỗi 2)
             updated = self.app.preferences.get()
+        self._send_json(HTTPStatus.OK, updated)
+
+    def post_book_templates(self, _query: dict[str, list[str]]) -> None:
+        """Mẫu thiết lập có tên: MỘT thao tác (lưu / đổi tên / xoá / đặt lại) áp lên danh sách mới nhất, không ghi cả danh sách - hai thiết bị
+        cùng sửa không đè mất nhau. Trả cả tuỳ chọn như PUT /api/preferences."""
+        body = self._body()
+        voices = {voice["name"] for voice in self.app.voices()}
+        try:
+            updated = self.app.preferences.modify(
+                lambda prefs: {"bookTemplates": apply_book_template_op(prefs.get("bookTemplates") or [], body, voices)})
+        except BookTemplateError as error:
+            raise ApiError(error.status, str(error)) from error
         self._send_json(HTTPStatus.OK, updated)
 
     def post_app_update(self, _query: dict[str, list[str]]) -> None:
@@ -5238,6 +5244,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)/check"), Handler.post_readaloud_online_check),
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),
     ("PUT", re.compile(r"/api/preferences"), Handler.put_preferences),
+    ("POST", re.compile(r"/api/book-templates"), Handler.post_book_templates),
     ("POST", re.compile(r"/api/scan"), Handler.post_scan),
     ("POST", re.compile(r"/api/sources/upload"), Handler.post_source_upload),
     ("POST", re.compile(r"/api/sources/split"), Handler.post_source_split),

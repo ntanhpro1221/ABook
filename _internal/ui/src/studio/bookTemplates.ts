@@ -194,21 +194,25 @@ export function isModified(draft: TemplateFields, template: BookTemplate, modelN
   );
 }
 
-/** Danh sách sau khi lưu `template`: trùng tên (không phân biệt hoa thường) thì thay chỗ cũ, không thì thêm cuối. */
-export function upsertTemplate(templates: readonly BookTemplate[], template: BookTemplate): BookTemplate[] {
-  const at = templates.findIndex((item) => same(item.name, template.name));
-  if (at < 0) return [...templates, template];
-  return templates.map((item, index) => (index === at ? template : item));
+/** Một thao tác lên danh sách mẫu (POST /api/book-templates, webui/library.py apply_book_template_op): máy chủ áp nó lên danh sách MỚI
+ * NHẤT, nên hai thiết bị cùng sửa không đè mất nhau. `save`: `replace` = đè mẫu trùng tên tại chỗ (không thì trùng tên là 409). `restore`:
+ * đặt lại mẫu ở chỗ `index` (Hoàn tác sau khi xoá). */
+export type BookTemplateOp =
+  | { op: "save"; template: BookTemplate; replace?: boolean }
+  | { op: "rename"; from: string; to: string }
+  | { op: "delete"; name: string }
+  | { op: "restore"; template: BookTemplate; index: number };
+
+/** Chỗ của mẫu `name` trong danh sách (không phân biệt hoa thường), -1 nếu không có - để "Hoàn tác" việc xoá đặt lại đúng chỗ. */
+export function templateIndex(templates: readonly BookTemplate[], name: string): number {
+  return templates.findIndex((item) => same(item.name, name));
 }
 
-export function removeTemplate(templates: readonly BookTemplate[], name: string): BookTemplate[] {
-  return templates.filter((item) => !same(item.name, name));
-}
-
-/** Đổi tên một mẫu, giữ nguyên chỗ trong danh sách. Tên mới không dùng được thì trả danh sách như cũ. */
-export function renameTemplate(templates: readonly BookTemplate[], from: string, to: string): BookTemplate[] {
-  if (nameProblem(templates, to, from)) return [...templates];
-  return templates.map((item) => (same(item.name, from) ? { ...item, name: cleanName(to) } : item));
+/** Lỗi do danh sách trên máy tính đã khác với màn này (mẫu vừa bị thiết bị khác xoá = 404, hay vừa có tên ấy = 409): màn này nên tải lại tuỳ
+ * chọn để thấy danh sách thật. */
+export function staleTemplateError(error: unknown): boolean {
+  const status = (error as { status?: unknown } | null)?.status;
+  return status === 404 || status === 409;
 }
 
 /** Tên mức chất lượng như người dùng thấy (Cài đặt, danh sách mẫu). */
