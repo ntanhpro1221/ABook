@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.61] - 2026-10-15
+
 ### Nghe ngay
 
 - Tên và từ Nhật bắt đầu bằng chữ "o" (Otsuki-san, Okayama, onii-sama, otaku) giờ được đọc là "o", không còn bị đọc thành "ô"; cả máy tính lẫn
