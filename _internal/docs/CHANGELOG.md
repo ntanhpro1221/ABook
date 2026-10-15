@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Nhạc nền đổi bài đúng chỗ đổi cảnh hơn (máy đã tải model đọc không khí).
+
 ## [0.4.57] - 2026-10-12
 
 ### Người kể “tôi” (máy tính và điện thoại)
