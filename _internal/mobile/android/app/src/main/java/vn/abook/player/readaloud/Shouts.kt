@@ -86,7 +86,7 @@ object Shouts {
         val letter = plain(chars[runs.last().first])
         val append = if (runs.last().second == chars.size && letter.singleOrNull() in STANDALONE)
             Normalizer.normalize(Normalizer.normalize(letter, Normalizer.Form.NFD) + tone(base), Normalizer.Form.NFC) else ""
-        return "$base…" + if (append.isNotEmpty()) " $append" else ""
+        return "$base…" + if (append.isNotEmpty()) " ${Names.loneSyllable(append)}" else ""
     }
 
     private val readings = ConcurrentHashMap<String, String>()
@@ -129,7 +129,7 @@ object Shouts {
             }
             if (letter.singleOrNull() in STANDALONE) append = Normalizer.normalize(Normalizer.normalize(letter, Normalizer.Form.NFD) + tone(base), Normalizer.Form.NFC)
         }
-        return "$base…" + if (append.isNotEmpty() && letter.singleOrNull() in STANDALONE) " $append" else ""
+        return "$base…" + if (append.isNotEmpty() && letter.singleOrNull() in STANDALONE) " ${Names.loneSyllable(append)}" else ""
     }
 
     /**

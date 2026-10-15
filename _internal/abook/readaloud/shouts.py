@@ -117,7 +117,7 @@ def stretch_reading(core: str) -> str | None:
             return None
         if letter in STANDALONE:
             append = unicodedata.normalize("NFC", unicodedata.normalize("NFD", letter) + _tone(base))
-    return f"{base}…" + (f" {append}" if append and letter in STANDALONE else "")
+    return f"{base}…" + (f" {names.lone_syllable(append)}" if append and letter in STANDALONE else "")
 
 
 def _collapsed(chars: list[str], runs: list[tuple[int, int]]) -> str | None:
@@ -134,7 +134,7 @@ def _collapsed(chars: list[str], runs: list[tuple[int, int]]) -> str | None:
         return None
     letter = _plain(chars[runs[-1][0]])
     append = unicodedata.normalize("NFC", unicodedata.normalize("NFD", letter) + _tone(base)) if runs[-1][1] == len(chars) and letter in STANDALONE else ""
-    return f"{base}…" + (f" {append}" if append else "")
+    return f"{base}…" + (f" {names.lone_syllable(append)}" if append else "")
 
 
 def read_shouts(toks: list[str], out: list[str]) -> None:

@@ -43,6 +43,8 @@ _ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 HONORIFICS = ("san", "kun", "chan", "sama", "senpai", "sensei", "dono")  # hậu tố gọi Nhật nối gạch (JA_SUFFIXES còn "tan", "nee", "nii": dễ lẫn với chữ thường nên chỉ đi theo tên đã nhận)
 KOREAN_TERMS = {"oppa": "óp-pa", "unnie": "un-ni", "noona": "nu-na", "hyung": "hi-ung", "ssi": "xi", "nim": "nim"}  # tiếng gọi Hàn cố định (bộ thử TN, chủ sách 04-10: Oppa o ngắn); luật RR chưa khớp quy ước ở "ssi", "unnie"
 KOREAN_ALONE = ("oppa", "unnie", "noona", "hyung")  # đứng riêng cũng đọc (không cần tên đi trước)
+KOREAN_SURNAMES = frozenset(("park", "kim", "lee", "song", "han", "hong", "min", "moon", "oh", "shin", "choi", "jung", "kang", "cho", "yoon", "jang", "lim", "seo", "kwon", "hwang", "ahn", "yoo",
+                             "baek", "bae", "jeon", "ryu", "nam", "im"))  # họ Hàn thường gặp: đọc theo RR khi bên cạnh là một tên Hàn (park, kim, lee, song, han, hong, min, moon, oh trùng từ tiếng Anh nên cuốn gốc Hàn cũng để nguyên chữ Anh)
 _SUFFIXES = frozenset(HONORIFICS) | frozenset(KOREAN_TERMS)
 # Từ đã vào từ điển tiếng Việt (gold_spec: "từ điển thắng"): đọc như từ Việt với MỌI cuốn và giọng, không để sea-g2p đọc âm Anh.
 DICTIONARY_WORDS = {"sofa": "xô-pha", "logic": "lô-gích", "video": "vi-đê-ô", "violin": "vi-ô-lông", "piano": "pi-a-nô", "sandal": "xăng-đan",
@@ -101,10 +103,17 @@ def _known_word(head: str) -> bool:
 
 
 def lone_syllable(reading: str | None) -> str | None:
-    """"O-xu-ki-xan" -> "o-xu-ki-xan": một chữ HOA đứng riêng đầu âm tiết của tên nối gạch là âm tiết, không phải viết tắt - sea-g2p đánh vần nó ("O" thành "ô")."""
-    if reading and reading[1:2] == "-" and reading[0].isupper():
-        return reading[0].lower() + reading[1:]
-    return reading
+    """Âm tiết MỘT chữ cái của tên nối gạch là âm tiết, không phải chữ cái đọc tên: "O-xu-ki-xan" -> "o_-xu-ki-xan". Chữ HOA đầu hạ thường (sea-g2p đánh vần "O" thành "ô");
+    mà "o" trần giữa câu tiếng Việt cũng bị nó đánh vần thành "ô" ("o-ni-chan", "o-ca-gia-ma": đáp án TN là "o" ngắn như "Oppa o ngắn"), nên "o" thành "o_": bộ chuẩn hoá bỏ dấu "_" ("o_-xu" ra "o xu")
+    và G2P đọc đúng "o"."""
+    if not reading:
+        return reading
+    if "-" not in reading:
+        return "o_" if reading == "o" else reading
+    parts = reading.split("-")
+    if len(parts[0]) == 1 and parts[0].isupper():
+        parts[0] = parts[0].lower()
+    return "-".join("o_" if part == "o" else part for part in parts)
 
 
 @lru_cache(maxsize=8192)
@@ -116,6 +125,64 @@ def name_reading(core: str, origin: str | None) -> str | None:
     if head is None or _known_word(head):
         return None
     return lone_syllable(romanized_reading(core, origin))
+
+
+@lru_cache(maxsize=8192)
+def korean_suffixed_name(core: str) -> str | None:
+    """Cách đọc RR của tên đứng trước hậu tố gọi CHỈ có ở tiếng Hàn ("Soleum-ssi", "Woojin-nim"), None khi không phải: hậu tố ấy là dấu hiệu đủ mạnh để đọc tên theo RR cả khi cuốn không có
+    gốc Hàn (`book_origin` trượt: truyện Hàn lẫn tên Âu). Tên mà luật Nhật cũng đọc được ("Ian-nim", "Sora-nim") hay không phải tên (từ Anh, âm tiết Việt) giữ nguyên chữ."""
+    parts = core.split("-")
+    if len(parts) < 2 or parts[-1].lower() not in KOREAN_TERMS:
+        return None
+    head = "-".join(parts[:-1])
+    if head.lower() in KOREAN_TERMS or romanized_reading(head, "ja") is not None or name_reading(head, "ko") is None:
+        return None
+    return name_reading(core, "ko")
+
+
+@lru_cache(maxsize=8192)
+def korean_hyphenated_name(core: str) -> str | None:
+    """Cách đọc RR của tên nối gạch ("Won-hyeok", "Jae-Bom"), mỗi bộ phận từ hai chữ cái; chỉ dùng khi liền một họ Hàn (`read_korean_names`): đứng riêng, nối gạch kiểu ấy cũng là "Bye-bye",
+    "Ding-dong", "Hip-hop", mà luật Hàn đọc được hết."""
+    parts = core.split("-")
+    if len(parts) < 2 or parts[-1].lower() in JA_SUFFIXES or any(len(part) < 2 for part in parts):
+        return None
+    return name_reading(core, "ko")
+
+
+def read_korean_names(toks: list[str], out: list[str], origin: str | None) -> None:
+    """Cách đọc Hàn khi tên không đủ gốc cuốn để đọc: (1) tên đứng trước hậu tố gọi chỉ Hàn có (-ssi, -nim...) ở cuốn không gốc Hàn; (2) họ Hàn ("Park", "Kim", "Lee"...) liền với một tên Hàn
+    ("Park Yeeun"; họ trùng từ tiếng Anh bị để nguyên chữ Anh dù cuốn gốc Hàn) - cả họ lẫn tên nối gạch đi cùng ("Park Won-hyeok", "Shin Yoon-seong") đọc theo RR, cuốn không gốc Hàn cũng vậy.
+    Thay tại chỗ trong `out`, giữ dấu câu quanh; số chữ không đổi."""
+    if origin != "ko":
+        for index, token in enumerate(toks):
+            if out[index] != token:
+                continue
+            before, core, after = split_token(token)
+            reading = korean_suffixed_name(core) if core else None
+            if reading:
+                out[index] = before + reading + after
+    for index, token in enumerate(toks):
+        before, core, after = split_token(token)
+        if out[index] != token or core.lower() not in KOREAN_SURNAMES or core != core.capitalize():
+            continue
+        beside = []  # chữ liền bên, cùng một cụm tên (không cách bởi dấu câu)
+        if index + 1 < len(toks) and not after:
+            beside.append(index + 1)
+        if index and not split_token(toks[index - 1])[2]:
+            beside.append(index - 1)
+        found = [(at, split_token(toks[at])) for at in beside]
+        if origin == "ko":
+            named = [at for at, (_, neighbour, _) in found if neighbour and name_reading(neighbour, "ko")]
+        else:
+            named = [at for at, (_, neighbour, _) in found if neighbour and korean_hyphenated_name(neighbour)]
+        if not named:
+            continue
+        out[index] = before + (romanized_reading(core, "ko") or core) + after
+        for at in named:
+            if out[at] == toks[at]:
+                head, neighbour, tail = split_token(toks[at])
+                out[at] = head + (name_reading(neighbour, "ko") or neighbour) + tail
 
 
 def read_names(toks: list[str], out: list[str], origin: str | None) -> None:
@@ -134,6 +201,7 @@ def read_names(toks: list[str], out: list[str], origin: str | None) -> None:
 def closing(after: str, reading: str) -> str:
     """Dấu câu sau chữ, đổi cho vừa với cách đọc: sea-g2p đọc nháy đơn đóng sau MỘT chữ cái ("a’", "nha… a'") là "phẩy", nên khi cách đọc kết thúc bằng một chữ cái
     đứng riêng thì ’ và ' thành dấu ngoặc kép đóng ” (bỏ qua khi đọc)."""
+    reading = reading.removesuffix("_")  # "o_" (`lone_syllable`) là chữ "o" đứng riêng
     lone = len(reading) >= 1 and reading[-1].isalpha() and not reading[-2:-1].isalpha()
     return after.replace("’", "”").replace("'", "”") if lone else after
 
@@ -219,7 +287,7 @@ def loanword_reading(core: str) -> str | None:
     lowered = core.lower()
     if lowered in DICTIONARY_WORDS:
         return DICTIONARY_WORDS[lowered]
-    return romanized_reading(lowered, "ja") if lowered in JAPANESE_COMMON else None
+    return lone_syllable(romanized_reading(lowered, "ja")) if lowered in JAPANESE_COMMON else None
 
 
 def _after_number(toks: list[str], index: int) -> bool:
@@ -250,6 +318,7 @@ def spoken_names(toks: list[str], origin: str | None, speaks_english: bool, out:
     if out is None:
         out = list(toks)
     read_names(toks, out, origin)
+    read_korean_names(toks, out, origin)
     read_honorifics(toks, out, origin)
     read_loanwords(toks, out)
     if not speaks_english:

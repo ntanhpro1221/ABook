@@ -63,7 +63,7 @@ ARROW_TIME = re.compile(r"[0-9]{1,2}(?:[hHgG][0-9]{0,2}|:[0-9]{2})")  # 8h, 8h30
 ARROW_TIME_WORDS = frozenset("giờ sáng trưa chiều tối khuya".split())
 RANGE_CODES = frozenset("lớp phòng tầng combo feed số thắng thua truyện".split())  # "lớp 1-7", "phòng 4-13": mã, hai số đọc liền không có "đến"
 RANGE_RATIO = frozenset("tỉ tỷ lệ".split())  # "tỉ lệ 3-7"
-GLUED = re.compile(r"((?:\.{2,}|[…—–])+)")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên)
+GLUED = re.compile(r"((?:\.{2,}|[…—–])+|(?<=[^\W\d_])\((?=[^\W\d_]))")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên): "…", "—", và ngoặc mở giữa hai chữ ("Jigen(trong")
 STUTTER_ONSETS = ("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")  # phụ âm đầu ghép của tiếng Việt: nói lắp "C-Chuyện" là "chờ… chuyện"
 STUTTER_SOUND = {"k": "c", "w": "v", "z": "d", "j": "gi", "f": "ph"}
 STUTTER = re.compile(r"([^\w]*)([^\W\d_]{1,3})-+([^\W\d_].*)$", re.DOTALL)
@@ -520,7 +520,7 @@ def _roman_numbers(toks: list[str], out: list[str]) -> None:
 
 
 def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_english: bool) -> None:
-    """Các bước đọc từng chữ (cấp độ, viết tắt, tên, từ mượn). Chữ dính liền hai từ qua "…" hay "—" ("rồi…Senpai", "Babi—người", "DP?”…Tốn") được tách tạm thành từng mảnh để mỗi từ được xét riêng
+    """Các bước đọc từng chữ (cấp độ, viết tắt, tên, từ mượn). Chữ dính liền hai từ qua "…" hay "—" ("rồi…Senpai", "Babi—người", "Jigen(trong", "DP?”…Tốn") được tách tạm thành từng mảnh để mỗi từ được xét riêng
     rồi ghép lại; chữ đã bị đổi ở bước trước giữ nguyên."""
     pieces: list[str] = []
     said: list[str] = []

@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Tên và từ Nhật bắt đầu bằng chữ "o" (Otsuki-san, Okayama, onii-sama, otaku) giờ được đọc là "o", không còn bị đọc thành "ô"; cả máy tính lẫn
+  điện thoại. Tên Hàn có đuôi -ssi/-nim hoặc đứng cạnh họ Hàn (Park Yeeun, Won-hyeok) được đọc theo âm Hàn thay vì đọc như từ tiếng Anh, và tên dính
+  sát dấu ngoặc ("Jigen(trong") cũng được tách ra đọc đúng.
+
 ## [0.4.60] - 2026-10-15
 
 ### Studio từ xa

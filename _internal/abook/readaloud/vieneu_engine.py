@@ -294,6 +294,7 @@ class ByteBPE:
 
 # ---- chữ -> phoneme (sea-g2p) ----------------------------------------------------------------------------------------------------
 _g2p_lock = threading.Lock()
+LONE_O = re.compile(r"o[.,!?;:…]*")
 _pipeline: Any = None
 
 
@@ -313,6 +314,15 @@ def normalize(sentences: Sequence[str]) -> str:
     return " ".join(part for part in (pipeline.normalizer.normalize(text, punc_norm=False) for text in sentences) if part)
 
 
+def keep_lone_o(chunk: str, normalised: str) -> str:
+    """Lần chuẩn hoá thứ hai của sea-g2p (trong `run`) đánh vần mọi "o" đứng riêng giữa câu tiếng Việt thành chữ cái "ô". Cách đọc tên của app (`names.lone_syllable`: "o_-ni-chan") đã qua lần
+    thứ nhất với "o" trần (dấu "_" bị bỏ); chữ "o" ấy là âm tiết "o" của tên, nên lần hai không được đổi nó: chỗ nào `chunk` có "o" mà `normalised` thành "ô" thì trả lại "o"."""
+    before, after = chunk.split(), normalised.split()
+    if len(before) != len(after):
+        return normalised
+    return " ".join("o" + word[1:] if LONE_O.fullmatch(was) and word[:1] == "ô" else word for was, word in zip(before, after))
+
+
 def phonemize(sentences: Sequence[str]) -> str:
     """Phoneme của MỘT khúc gồm các câu `sentences`, đúng chuỗi của vieneu 3.8.1 cho khúc ấy: chuẩn hoá từng câu (`normalize`), chốt dấu cuối
     của cả khúc (`punc_norm`), rồi sea-g2p (chuẩn hoá + G2P, punc_norm bật) như `phonemize_text_with_emotions`.
@@ -324,7 +334,8 @@ def phonemize(sentences: Sequence[str]) -> str:
     chunk = punc_norm(text)
     if not chunk.strip():
         return ""
-    phonemes = _sea().run(chunk, punc_norm=True)
+    pipeline = _sea()
+    phonemes = pipeline.g2p.convert(keep_lone_o(chunk, pipeline.normalizer.normalize(chunk, punc_norm=True)))  # = pipeline.run(chunk, punc_norm=True) + `keep_lone_o`
     if phonemes.endswith(".") and ("?" in text or "!" in text):
         written = _sea().run(text, punc_norm=False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
         if written.endswith(("?", "!")):

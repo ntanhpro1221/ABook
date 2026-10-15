@@ -61,7 +61,7 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
         val text = normalizeUnit(sentences)
         val chunk = puncNorm(text)
         if (chunk.isBlank()) return ""
-        val phonemes = g2p(normalize(chunk, true))
+        val phonemes = g2p(keepLoneO(chunk, normalize(chunk, true)))
         if (phonemes.endsWith(".") && (text.contains('?') || text.contains('!'))) {
             val written = g2p(normalize(text, false)).trimEnd()
             if (written.endsWith("?") || written.endsWith("!")) return phonemes.dropLast(1) + written.last()
@@ -76,6 +76,17 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
     }
 
     companion object {
+        private val LONE_O = Regex("o[.,!?;:…]*")
+
+        /** `vieneu_engine.keep_lone_o`: the second normalisation of sea-g2p spells every lone "o" of a Vietnamese sentence as the letter "ô"; the "o" of a name's syllable
+         *  (`Names.loneSyllable`: "o_-ni-chan", its "_" already gone after the first pass) stays "o" where [chunk] had "o" and [normalised] says "ô". */
+        fun keepLoneO(chunk: String, normalised: String): String {
+            val before = chunk.split(' ').filter { it.isNotEmpty() }
+            val after = normalised.split(' ').filter { it.isNotEmpty() }
+            if (before.size != after.size) return normalised
+            return before.indices.joinToString(" ") { i -> if (LONE_O.matches(before[i]) && after[i].startsWith("ô")) "o" + after[i].substring(1) else after[i] }
+        }
+
         private var shared: SeaG2p? = null
 
         /** The reader of this process, opened from [library] + [dictionary] the first time: the JNI library stays mapped from its first path, so

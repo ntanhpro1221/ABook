@@ -22,7 +22,7 @@ def studio_tn(text: str, origin: str | None, speaks_english: bool,
     if not matches:
         return text, identity
     toks = [match.group() for match in matches]
-    said = vieneu.spoken_tokens(toks, origin, speaks_english)
+    said = [w if w == t else w.replace("_", "") for t, w in zip(toks, vieneu.spoken_tokens(toks, origin, speaks_english))]  # "o_": dấu giữ chữ "o" lẻ riêng của Nghe ngay (vieneu_engine.keep_lone_o), Studio không dùng
     for index, match in enumerate(matches):
         if any(match.start() < end and match.end() > start for start, end in protected_spans):
             said[index] = toks[index]

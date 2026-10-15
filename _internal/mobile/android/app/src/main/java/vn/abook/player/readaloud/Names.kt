@@ -67,9 +67,14 @@ object Names {
 
     private val readings = ConcurrentHashMap<String, String>()
 
-    /** "O-xu-ki-xan" -> "o-xu-ki-xan": một chữ HOA đứng riêng đầu âm tiết của tên nối gạch là âm tiết, không phải viết tắt (sea-g2p đánh vần nó) - `lone_syllable`. */
-    fun loneSyllable(reading: String?): String? =
-        if (reading != null && reading.length >= 2 && reading[1] == '-' && reading[0].isUpperCase()) reading[0].lowercaseChar() + reading.substring(1) else reading
+    /** Âm tiết MỘT chữ cái của tên nối gạch là âm tiết, không phải chữ cái đọc tên: "O-xu-ki-xan" -> "o_-xu-ki-xan" - chữ HOA đầu hạ thường, "o" thành "o_" (bộ chuẩn hoá của sea-g2p bỏ "_", `keepLoneO` giữ "o" qua lần hai) - `lone_syllable`. */
+    fun loneSyllable(reading: String?): String? {
+        if (reading == null) return null
+        if ('-' !in reading) return if (reading == "o") "o_" else reading
+        val parts = reading.split("-").toMutableList()
+        if (parts[0].length == 1 && parts[0][0].isUpperCase()) parts[0] = parts[0].lowercase()
+        return parts.joinToString("-") { if (it == "o") "o_" else it }
+    }
 
     /** Cách đọc nối gạch của `core` (đã bỏ dấu câu quanh) khi nó là tên theo luật của `origin`, null khi để nguyên. */
     fun nameReading(core: String, origin: String?): String? {
@@ -95,6 +100,73 @@ object Names {
         }
     }
 
+    /** Họ Hàn thường gặp: đọc theo RR khi bên cạnh là một tên Hàn - `KOREAN_SURNAMES`. */
+    private val KOREAN_SURNAMES = setOf("park", "kim", "lee", "song", "han", "hong", "min", "moon", "oh", "shin", "choi", "jung", "kang", "cho", "yoon", "jang", "lim", "seo", "kwon", "hwang", "ahn", "yoo",
+        "baek", "bae", "jeon", "ryu", "nam", "im")
+    private val koreanSuffixed = ConcurrentHashMap<String, String>()
+    private val koreanHyphenated = ConcurrentHashMap<String, String>()
+
+    /**
+     * Cách đọc RR của tên đứng trước hậu tố gọi CHỈ có ở tiếng Hàn ("Soleum-ssi", "Woojin-nim"), null khi không phải: đủ để đọc tên theo RR cả khi cuốn không có gốc Hàn. Tên mà luật Nhật
+     * cũng đọc được ("Ian-nim") hay không phải tên giữ nguyên chữ - `korean_suffixed_name`.
+     */
+    fun koreanSuffixedName(core: String): String? {
+        koreanSuffixed[core]?.let { return it.ifEmpty { null } }
+        val parts = core.split("-")
+        var found: String? = null
+        if (parts.size >= 2 && lower(parts.last()) in KOREAN_TERMS) {
+            val head = parts.dropLast(1).joinToString("-")
+            if (lower(head) !in KOREAN_TERMS && Romanization.reading(head, "ja") == null && nameReading(head, "ko") != null) found = nameReading(core, "ko")
+        }
+        if (koreanSuffixed.size > 8192) koreanSuffixed.clear()
+        koreanSuffixed[core] = found ?: ""
+        return found
+    }
+
+    /** Cách đọc RR của tên nối gạch ("Won-hyeok", "Jae-Bom"), mỗi bộ phận từ hai chữ cái; chỉ dùng khi liền một họ Hàn ([readKoreanNames]) - `korean_hyphenated_name`. */
+    fun koreanHyphenatedName(core: String): String? {
+        koreanHyphenated[core]?.let { return it.ifEmpty { null } }
+        val parts = core.split("-")
+        val found = if (parts.size >= 2 && lower(parts.last()) !in Romanization.JA_SUFFIXES && parts.none { it.length < 2 }) nameReading(core, "ko") else null
+        if (koreanHyphenated.size > 8192) koreanHyphenated.clear()
+        koreanHyphenated[core] = found ?: ""
+        return found
+    }
+
+    /**
+     * Cách đọc Hàn khi tên không đủ gốc cuốn để đọc: (1) tên đứng trước hậu tố gọi chỉ Hàn có (-ssi, -nim...) ở cuốn không gốc Hàn; (2) họ Hàn ("Park", "Kim", "Lee"...) liền với một tên Hàn
+     * ("Park Yeeun"; họ trùng từ tiếng Anh bị để nguyên chữ Anh dù cuốn gốc Hàn) - cả họ lẫn tên nối gạch đi cùng đọc theo RR, cuốn không gốc Hàn cũng vậy. Thay tại chỗ trong `out`,
+     * giữ dấu câu quanh; số chữ không đổi - `read_korean_names`.
+     */
+    fun readKoreanNames(toks: List<String>, out: MutableList<String>, origin: String?) {
+        if (origin != "ko") {
+            for ((index, token) in toks.withIndex()) {
+                if (out[index] != token) continue
+                val (before, core, after) = splitToken(token)
+                val reading = if (core.isEmpty()) null else koreanSuffixedName(core)
+                if (reading != null) out[index] = before + reading + after
+            }
+        }
+        for ((index, token) in toks.withIndex()) {
+            val (before, core, after) = splitToken(token)
+            if (out[index] != token || core.isEmpty() || lower(core) !in KOREAN_SURNAMES || core != lower(core).replaceFirstChar { it.uppercaseChar() }) continue
+            val beside = ArrayList<Int>() // chữ liền bên, cùng một cụm tên (không cách bởi dấu câu)
+            if (index + 1 < toks.size && after.isEmpty()) beside.add(index + 1)
+            if (index > 0 && splitToken(toks[index - 1]).third.isEmpty()) beside.add(index - 1)
+            val named = beside.filter { at ->
+                val neighbour = splitToken(toks[at]).second
+                neighbour.isNotEmpty() && (if (origin == "ko") nameReading(neighbour, "ko") else koreanHyphenatedName(neighbour)) != null
+            }
+            if (named.isEmpty()) continue
+            out[index] = before + (Romanization.reading(core, "ko") ?: core) + after
+            for (at in named) {
+                if (out[at] != toks[at]) continue
+                val (head, neighbour, tail) = splitToken(toks[at])
+                out[at] = head + (nameReading(neighbour, "ko") ?: neighbour) + tail
+            }
+        }
+    }
+
     /** Hậu tố gọi Nhật nối gạch (JA_SUFFIXES còn "tan", "nee", "nii": dễ lẫn với chữ thường nên chỉ đi theo tên đã nhận) - `HONORIFICS` của names.py. */
     private val HONORIFICS = setOf("san", "kun", "chan", "sama", "senpai", "sensei", "dono")
     /** Tiếng gọi Hàn cố định (bộ thử TN) - `KOREAN_TERMS`. */
@@ -115,7 +187,8 @@ object Names {
      * thì ’ và ' thành dấu ngoặc kép đóng ” (bỏ qua khi đọc) - `closing`.
      */
     fun closing(after: String, reading: String): String {
-        val lone = reading.isNotEmpty() && reading.last().isLetter() && !(reading.length >= 2 && reading[reading.length - 2].isLetter())
+        val plain = reading.removeSuffix("_") // "o_" (loneSyllable) là chữ "o" đứng riêng
+        val lone = plain.isNotEmpty() && plain.last().isLetter() && !(plain.length >= 2 && plain[plain.length - 2].isLetter())
         return if (lone) after.replace("’", "”").replace("'", "”") else after
     }
 
@@ -154,7 +227,7 @@ object Names {
     fun loanwordReading(core: String): String? {
         val lowered = lower(core)
         DICTIONARY_WORDS[lowered]?.let { return it }
-        return if (lowered in JAPANESE_COMMON) Romanization.reading(lowered, "ja") else null
+        return if (lowered in JAPANESE_COMMON) loneSyllable(Romanization.reading(lowered, "ja")) else null
     }
 
     private fun afterNumber(toks: List<String>, index: Int): Boolean {
