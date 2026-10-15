@@ -47,4 +47,21 @@ class SpokenNumeralsTest {
             listOf(1, 4, 5, 10, 11, 14, 15, 20, 21, 24, 25, 30, 31, 35, 39).map(VieneuUnits::vietnameseNumber))
         assertEquals(listOf(1, 4, 9, 14, 39, null, null, null, null), listOf("I", "IV", "IX", "XIV", "XXXIX", "XL", "IIII", "VX", "").map(VieneuUnits::romanValue))
     }
+
+    /** tn9: a hyphenated name before a numeral, and a lone "I" before a non-English capitalised word (same cases as test_readaloud_vieneu.py). */
+    @Test
+    fun aHyphenatedNameAndALoneOneBeforeANonEnglishWordAreNumbered() {
+        assertEquals("Lord El-Melloi hai và Zi-O hai.", said("Lord El-Melloi II và Zi-O II."))
+        assertEquals("91 điểm Toán một, 88 điểm Toán hai.", said("91 điểm Toán I, 88 điểm Toán II."))
+        assertEquals("Julianus một sẽ đến. Ở Khu một. Diablo một, nghe rõ.", said("Julianus I sẽ đến. Ở Khu I. Diablo I, nghe rõ."))
+        assertEquals("But I never, When I was, Anh I love you.", said("But I never, When I was, Anh I love you."))
+    }
+
+    /** tn9: a capital G after a number is the letter G. */
+    @Test
+    fun aCapitalGAfterANumberIsTheLetterG() {
+        assertEquals("Giá 10 giê, 9999 giê và 30.000 giê.", said("Giá 10G, 9,999G và 30.000G."))
+        assertEquals("Mạng 5 giê và 1 giê trọng lực.", said("Mạng 5G và 1G trọng lực."))
+        assertEquals("15GB, 3Gb, 100g, G10 và 4Gx.", said("15GB, 3Gb, 100g, G10 và 4Gx."))
+    }
 }

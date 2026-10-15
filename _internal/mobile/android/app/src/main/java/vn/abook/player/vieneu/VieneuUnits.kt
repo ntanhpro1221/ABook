@@ -1,6 +1,8 @@
 package vn.abook.player.vieneu
 
+import vn.abook.player.VietnameseReading
 import vn.abook.player.readaloud.Abbreviations
+import vn.abook.player.readaloud.EnglishWords
 import vn.abook.player.readaloud.Names
 import vn.abook.player.readaloud.Readings
 import vn.abook.player.readaloud.Shouts
@@ -40,6 +42,8 @@ object VieneuUnits {
     private const val W = """\p{L}\p{N}_"""
     /** 3-4000, 1-1, 1-3-1. */
     private val RANGE = Regex("""(?<![$W/.,-])([0-9]{1,4})((?:-[0-9]{1,4})+)(?![$W/-]|[.,][0-9])""")
+    /** "10G", "9,999G": game gold / 5G / 1G, sea-g2p reads "gờ"; the letter G is "giê" (not glued to a letter after it: "15GB", "3Gb" stay) - `GOLD_G`. */
+    private val GOLD_G = Regex("""(?<=[0-9])G(?![^\W\d_])""")
     /** "lớp 1-7", "phòng 4-13": a code, the two numbers are read in a row without "đến". */
     private val RANGE_CODES = "lớp phòng tầng combo feed số thắng thua truyện".split(" ").toSet()
     private val RANGE_RATIO = "tỉ tỷ lệ".split(" ").toSet()
@@ -111,6 +115,18 @@ object VieneuUnits {
         val earlier = if (index >= 2) word(toks[index - 2]) else ""
         if ("$earlier $before".lowercase() in NUMBERED_PAIRS) return true
         return capitalised(before) && capitalised(earlier)
+    }
+
+    /**
+     * A lone "I" is the number one ("Toán I,", "Julianus I sẽ") when the word before is a capitalised word that is not English and the "I" closes the phrase (a mark right after it, or the
+     * paragraph ends) or the next word is Vietnamese; "But I never", "Tom I think" (English word before or after) is the pronoun - `ordinal_one`.
+     */
+    fun ordinalOne(toks: List<String>, index: Int, token: String): Boolean {
+        val before = word(toks[index - 1])
+        if (!(before.isNotEmpty() && before.all { it.isLetter() } && before[0].isUpperCase() && before.lowercase() !in EnglishWords.ALL)) return false
+        val after = if (index + 1 < toks.size) word(toks[index + 1]).lowercase() else ""
+        val closes = token.trimStart { it in OPENERS || it in FRAMES_OPEN } != "I"
+        return closes || after.isEmpty() || (after !in EnglishWords.ALL && VietnameseReading.isSyllable(after))
     }
 
     private fun digit(char: Char?): Boolean = char != null && char in '0'..'9'
@@ -318,7 +334,7 @@ object VieneuUnits {
         for ((index, original) in out.withIndex()) {
             if (original.none { it.isDigit() }) continue
             val mode = if (RANGE.containsMatchIn(original)) rangeMode(plain, index) else ""
-            out[index] = RANGE.replace(original) { m -> range(m, mode) }
+            out[index] = GOLD_G.replace(RANGE.replace(original) { m -> range(m, mode) }, " giê")
         }
     }
 
@@ -461,7 +477,8 @@ object VieneuUnits {
             } else {
                 val before = toks[index - 1].trimStart { it in OPENERS }.trimEnd { it in CLOSERS }
                 if (out[index - 1] == toks[index - 1] &&
-                    (!(before.isNotEmpty() && before.all { it.isLetter() } && before.any { it.isLowerCase() }) || (core.length == 1 && !numberedBy(toks, index)))) continue
+                    (!(before.isNotEmpty() && before.replace("-", "").all { it.isLetter() } && before.any { it.isLowerCase() }) ||
+                        (core.length == 1 && !(numberedBy(toks, index) || (core == "I" && ordinalOne(toks, index, token)))))) continue
             }
             out[index] = token.replaceFirst(core, vietnameseNumber(value))
         }

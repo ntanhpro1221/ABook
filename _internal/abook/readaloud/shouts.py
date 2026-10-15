@@ -20,7 +20,11 @@ from . import names
 from .names import split_token
 
 INTERJECTIONS = {"umm": "ừm", "ugh": "ức", "boom": "bùm", "oh": "ô", "hmm": "hừm", "shh": "suỵt", "ah": "a", "eh": "ê", "hm": "hừm", "huh": "hả", "ooh": "ô",
-                 "hic": "hích", "urgh": "ức"}
+                 "hic": "hích", "urgh": "ức", "um": "ừm", "uhm": "ừm", "uh": "ờ", "mm": "ừm",  # "Um", "Uh", "Mm" (sea-g2p đọc "mm" là "mi li mét")
+                 "grr": "gừ", "pff": "phụt", "pfft": "phụt", "kkk": "khà khà", "hhh": "ha ha", "sss": "xì"}  # chữ phụ âm lặp: "grrr", "pfffft", "kkkk", "hhhh", "ssss" ("mmm" là "mm" ở trên)
+SHORT_CASED = frozenset(("um", "uhm", "uh", "mm"))  # chữ ngắn này viết HOA cả ("UH-60", "MM", "SSS") là viết tắt / hạng, không phải tiếng kêu
+COUNT_WORDS = frozenset(("vài", "mấy", "mười"))  # ngoài `names.NUMBER_WORDS`: "vài mm"
+PAIR_LETTERS = "hzm"  # chữ cuối lặp HAI lần cũng là kéo ("Ahh", "Haizz", "Hừmm"): ba lần thì mọi chữ, hai lần chỉ ba chữ này (Boss, Class, Jess là từ thật)
 LAUGH_SYLLABLES = {"ha": "ha", "he": "hê", "hi": "hi", "ho": "hô", "fu": "phu"}  # tiếng cười lặp ("Haha" -> "ha ha", "Hehe" -> "hê hê", "fufu" -> "phu phu")
 LAUGH = re.compile(r"(?:ha|he|hi|ho|fu){2,}", re.IGNORECASE)
 TONE_MARKS = "\u0300\u0301\u0303\u0309\u0323"  # huyền, sắc, ngã, hỏi, nặng (còn lại là dấu mũ / móc / trăng: thuộc về chữ)
@@ -89,11 +93,16 @@ def stretch_reading(core: str) -> str | None:
     if not chars or (core.isupper() and ROMAN_LETTERS.issuperset(chars) and len(chars) >= MIN_RUN):  # "III", "XXX": số La Mã / chữ X, không phải tiếng kéo
         return None
     word = "".join(chars)
-    if word in INTERJECTIONS:
+    if core.isupper() and (word in SHORT_CASED or (len(set(chars)) == 1 and _plain(chars[0]) not in VOWELS)):  # "UH-60", "MMM", "SSS": viết tắt, không phải tiếng kêu
+        return None
+    if word in INTERJECTIONS and not (word == "um" and core.islower()):  # "um" thường là chữ Việt ("xanh um tùm"); "Um" hoa là tiếng ừm
         return INTERJECTIONS[word]
     if LAUGH.fullmatch(word) and all(word[i:i + 2] == word[:2] for i in range(0, len(word), 2)):
         return " ".join(LAUGH_SYLLABLES[word[i:i + 2]] for i in range(0, len(word), 2))
     runs = _runs(chars)
+    pair = not runs and len(chars) >= 3 and chars[-1] == chars[-2] and chars[-1] in PAIR_LETTERS and (chars[-1] != "z" or [_plain(char) for char in chars[-4:-2]] == ["a", "i"])
+    if pair:  # "Ahh", "Haizz", "Hừmm": chữ cuối lặp hai lần
+        runs = [(len(chars) - 2, len(chars))]
     if len(runs) != 1:
         return _collapsed(chars, runs)
     start, end = runs[0]
@@ -103,8 +112,12 @@ def stretch_reading(core: str) -> str | None:
     append = base if base in ("a", "ô", "ê") else ""
     if base is None:
         ascii_word = one.isascii()
+        if pair and chars[-1] == "m" and ascii_word:
+            return None  # "Tamm", "Grimm", "Flamm" là tên; chỉ thán từ trong bảng hay "Hừmm", "Ưmm" (có dấu) mới là tiếng kéo
         japanese = romanized_reading(one, "ja") if ascii_word else None
         consonant = "".join(chars[:start] + chars[end:])
+        if not japanese and ascii_word and letter == "h" and JAPANESE_CRY.search(consonant):
+            japanese = romanized_reading(consonant, "ja")  # "Wahhh", "Uwahhh": chữ kéo là "h" thở ra
         if ascii_word and JAPANESE_CRY.search(one) and japanese:
             base = japanese
         elif is_vietnamese_syllable(one):
@@ -114,7 +127,8 @@ def stretch_reading(core: str) -> str | None:
         elif japanese:
             base = japanese
         else:
-            return None
+            trimmed = word.rstrip("h")
+            return stretch_reading(trimmed) if letter in VOWELS and trimmed != word and len(trimmed) >= MIN_RUN else None  # "Haaah" -> "Haaa": "h" cuối là hơi thở
         if letter in STANDALONE:
             append = unicodedata.normalize("NFC", unicodedata.normalize("NFD", letter) + _tone(base))
     return f"{base}…" + (f" {names.lone_syllable(append)}" if append and letter in STANDALONE else "")
@@ -137,22 +151,36 @@ def _collapsed(chars: list[str], runs: list[tuple[int, int]]) -> str | None:
     return f"{base}…" + (f" {names.lone_syllable(append)}" if append else "")
 
 
+def _counted(word: str) -> bool:
+    """Chữ đứng trước là số lượng ("127", "một", "vài"): chữ "mm" sau nó là đơn vị."""
+    word = word.strip(CLOSING).lower()
+    return word[-1:].isdigit() or word in names.NUMBER_WORDS or word in COUNT_WORDS
+
+
+def _read_segment(segment: str, toks: list[str], index: int, first: bool) -> str:
+    """Đọc `segment` (token, hay phần token sau một chỗ dính liền) theo `read_shouts`; không phải tiếng kêu thì trả nguyên. Chữ đầu là tiếng kêu thì phần sau chỗ dính cũng được xét ("Um....Umm…")."""
+    glued = GLUE.search(segment, len(split_token(segment)[0]))
+    head, rest = (segment[:glued.start()], segment[glued.start():]) if glued else (segment, "")
+    before, core, after = split_token(head)
+    previous = toks[index - 1] if first and index else ""
+    if not core or any(char.isdigit() for char in before + after) or (core.isupper() and (after.startswith("+") or previous.lower().strip(CLOSING) in RANK_NOUNS)):
+        return segment  # chữ dính số ("55mm", "ss1") không phải tiếng kêu
+    reading = stretch_reading(core)
+    if not reading or (core.lower() == "mm" and _counted(previous)):  # "127 mm", "vài mm" là mi-li-mét, "Mm…" là tiếng ừm
+        return segment
+    if rest:
+        joint = GLUE.match(rest).end()
+        rest = rest[:joint] + _read_segment(rest[joint:], toks, index, False)
+    rest = rest.lstrip("~") if reading.endswith("…") else rest
+    if reading.endswith("…") and rest[:1] in ("…", "."):
+        reading = reading[:-1]  # "…" đã có ngay sau chữ
+    return before + reading + names.closing(after.replace("-", "") if "…" in reading else after, reading) + rest
+
+
 def read_shouts(toks: list[str], out: list[str]) -> None:
     """Thay tại chỗ, trong `out`, token (chưa bị đổi so với `toks`) là thán từ / tiếng kêu kéo dài bằng cách đọc của nó, giữ dấu câu quanh (dấu "-" đuôi của
-    "Xoạttt-" bỏ); số chữ không đổi. Chữ dính liền vào phần sau qua "…", "..", "~" hay "—" ("Ummm…Ý", "màaaa—nếu") thì chỉ xét phần trước. Chữ hoa cả là hạng
+    "Xoạttt-" bỏ); số chữ không đổi. Chữ dính liền vào phần sau qua "…", "..", "~" hay "—" ("Ummm…Ý", "màaaa—nếu", "Um....Umm") thì mỗi phần được xét riêng. Chữ hoa cả là hạng
     ("hạng AAA", "AAA+++") thì để viết tắt đọc."""
     for index, token in enumerate(toks):
-        if out[index] != token:
-            continue
-        glued = GLUE.search(token, len(split_token(token)[0]))
-        head, rest = (token[:glued.start()], token[glued.start():]) if glued else (token, "")
-        before, core, after = split_token(head)
-        if not core or (core.isupper() and (after.startswith("+") or (index and toks[index - 1].lower().strip(CLOSING) in RANK_NOUNS))):
-            continue
-        reading = stretch_reading(core)
-        if not reading:
-            continue
-        rest = rest.lstrip("~") if reading.endswith("…") else rest
-        if reading.endswith("…") and rest[:1] in ("…", "."):
-            reading = reading[:-1]  # "…" đã có ngay sau chữ
-        out[index] = before + reading + names.closing(after.replace("-", "") if "…" in reading else after, reading) + rest
+        if out[index] == token:
+            out[index] = _read_segment(token, toks, index, True)

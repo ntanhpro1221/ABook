@@ -337,6 +337,12 @@ SOUND_PARAGRAPHS = [
     ("HP: 1780 --> 1940. A -> B, C => D, E → F. 1780->1940 và A-->B. A <- B và C ← D, E<-F. -> Bước tiếp. A <-> B, x <= 5, a -> b <- c.", None),
     # TN lượt 5: mũi tên "thành" (đổi giá trị) hay "đến" (hướng đi / khoảng / trình tự) tuỳ ngữ cảnh
     ("Lv 5 -> Lv 6. Giá 100 -> 200. Cấp D => C. Nghề: Tân Thủ -> Pháp Sư. Cân lực : 22000 ⇒ 66000. Họ bay Tokyo → Osaka lúc 8h -> 10h. Bước 1 -> Bước 2, trang 3 -> 5. HP 10%->20%.", None),
+    # tn9: thán từ có chữ cuối lặp HAI lần, chữ phụ âm lặp, "h" thở ra sau nguyên âm kéo, "Um" / "Mm" (không phải đơn vị), "10G", số La Mã sau tên nối gạch và "I" một mình
+    ("Ahh, Ehh, Ohh, Uhh, Ughh. Hahh! Wahhh, Uwahhh, Haizz, Aizz, Ừmm, Hừmm, Ưmm, Uhmm. Haaah! Waaah, Uwaaah, Gaaah, Uuuh, Kyaaah.", None),
+    ("Um, Uh, Uhm, Mm. xanh um tùm, UM, UH-60. Mm-hm, Mm... mm? Dài 5 mm, vài mm, một mm, 12mm. Mmm, kkkk, Grrr, Pfffft, Sssss, SSS, MMM. Boss, Class, Jess, Tamm, Jazz, ss1, a ss.", None),
+    ("Um....Umm…, giờ. Ummm…Ý nhỉ; Xong~rồiii, Ừ…Ahh rồi.", None),
+    ("Giá 10G, 9,999G, 30.000G, 5G, 1G trọng lực, 15GB, 3Gb, 100g.", None),
+    ("Toán I, Toán II. Julianus I sẽ đến. Ở Khu I. El-Melloi II và Zi-O II. But I never, Tom I think. Chương IV, Henry VIII. Diablo I, nghe rõ.", None),
 ]
 JA_NAMES = "Haruto Yuki Sakura Kyouko Takeshi Hiroshi Akira Kenji Yamato Naoki Satoshi Ayaka Reiji Tsubasa Shinji Kaori".split()
 KO_NAMES = "Si-eun So-hye Hwi-min Seo-ram Deok-gu Kang-ho Ha-jin Joo-seon Min-jun Seo-yeon Ji-ho Geun-hye".split()

@@ -17,6 +17,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   còn tên Hàn quen thuộc (Seo-yeon, Hyunseok, Jiah...) vẫn giữ âm Hàn.
 - Nhiều tên Hàn viết theo lối quen (Sehee, Heejung, Noh, Yi, Jinyoung, Jungwoo, Haeun...) trước đây bị đọc như tiếng Anh, giờ bạn nghe đúng âm Hàn;
   cả máy tính lẫn điện thoại.
+- Tiếng thở dài, ngập ngừng và gầm gừ trong truyện (Ahh, Ehh, Haizz, Ừmm, Um, Uh, "Mm", Haaah, Grrr, kkkk, Pfffft...) giờ bạn nghe thành tiếng kêu thật
+  thay vì bị đọc lên từng chữ cái hay đọc sai; "Mm" không còn bị đọc thành "mi-li-mét" (số đo như "5 mm" vẫn đọc đúng). Cả máy tính lẫn điện thoại.
+- Tiền trong game như "10G" hay "9,999G" giờ bạn nghe "mười giê", "chín nghìn chín trăm chín mươi chín giê" thay vì "gờ"; số La Mã sau tên nối gạch
+  ("El-Melloi II") và chữ "I" đánh số sau tên hay môn học ("Toán I", "Khu I") cũng được đọc thành số, còn chữ "I" tiếng Anh ("But I...") vẫn giữ nguyên.
 
 ## [0.4.61] - 2026-10-15
 
