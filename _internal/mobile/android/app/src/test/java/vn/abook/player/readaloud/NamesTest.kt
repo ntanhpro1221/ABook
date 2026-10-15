@@ -60,6 +60,15 @@ class NamesTest {
     }
 
     @Test
+    fun aWesternLookingNameStaysEnglishInAKoreanBookButNotInAJapaneseOne() {
+        assertEquals(listOf("Ruel", "Aranea", "Ariane", "Jude", "Ian-nim"), said("Ruel Aranea Ariane Jude Ian-nim", "ko"))
+        assertEquals(listOf("Xeo-gion", "Hi-un-xe-óc", "Gi-a", "Xê-a", "Cang", "U", "Ha-na", "Min-giun", "Béc"), said("Seo-yeon Hyunseok Jiah Seah Kang Woo Hana Minjun Baek", "ko"))
+        assertNull(Names.nameReading("Aranea", "ko"))
+        assertEquals("a-ra-ne-a", Names.nameReading("Aranea", "ja"))
+        assertEquals("Ian-nim", Names.honorificReading("Ian-nim", "ko"))
+    }
+
+    @Test
     fun aLoneOSyllableOfANameIsMarkedSoTheNormaliserKeepsItAnO() {
         assertEquals(listOf("o_-xu-ki-xan,", "o_-ca-gia-ma,", "o_-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
         assertEquals(listOf("Ca-o_-ri,", "o_-cô-nô-mi-a-ki"), said("Kaori, okonomiyaki", "ja"))
