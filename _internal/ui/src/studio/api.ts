@@ -390,6 +390,11 @@ export function setApiTransport(next: ApiTransport | null): void {
   transport = next;
 }
 
+/** Đang chạy trong app điện thoại (có đường truyền vào lõi native, không có máy chủ): các đường chỉ máy chủ có (`/api/app`...) không có để hỏi. */
+export function hasLocalTransport(): boolean {
+  return transport !== null;
+}
+
 export async function api<T>(path: string, init?: ApiInit): Promise<T> {
   if (transport) return (await transport(path, init)) as T;
   const response = await fetch(throughPeer(path, peer), {

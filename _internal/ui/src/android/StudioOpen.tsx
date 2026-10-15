@@ -62,12 +62,12 @@ export function ComputerList({ computers, onPick }: { computers: StudioComputer[
 
 /** Máy tính mở Studio được lúc này. Hỏi lại khi máy tính chính đổi (`connection`) và sau mỗi lượt hỏi thư viện thiết bị ghép
  *  (`peer-libraries`): máy ghép thêm chỉ được biết là máy tính sau khi nó trả lời lần đầu (Peers.kt rememberKind). */
-export function useStudioComputers(): StudioComputer[] {
+export function useStudioComputers(book?: string): StudioComputer[] {
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
   const peers = useQuery({ queryKey: ["peer-libraries"], queryFn: () => EbookLibrary.peerLibraries(), retry: 0 });
   const computers = useQuery({
-    queryKey: ["studio-computers", connection.dataUpdatedAt, peers.dataUpdatedAt],
-    queryFn: () => EbookLibrary.studioComputers(),
+    queryKey: ["studio-computers", book ?? "", connection.dataUpdatedAt, peers.dataUpdatedAt],
+    queryFn: () => EbookLibrary.studioComputers(book ? { book } : undefined),
   });
   return computers.data?.computers ?? [];
 }
@@ -105,11 +105,14 @@ export function OpenStudioButton({ computers, className }: { computers: StudioCo
 }
 
 /** Chip ở trang sách: cuốn đang làm ở máy tính đã ghép mở thẳng trong Studio của máy ấy. Cuốn không phải dự án Studio: không có gì.
- *  `computers`: các máy tính đã ghép; mọi máy chỉ cho nghe thì chip mờ kèm lý do, như nút "Mở Studio" ở màn Tải sách. */
+ *  `computers`: các máy tính đã ghép (máy GIỮ cuốn này mang `holdsBook`); chip đi tới máy giữ cuốn nên mờ kèm lý do khi CHÍNH máy ấy chỉ cho nghe -
+ *  còn mở được ở máy khác cũng vậy. Chưa biết máy nào giữ cuốn thì mờ khi mọi máy chỉ cho nghe, như nút "Mở Studio" ở màn Tải sách. */
 export function StudioChip({ book, computers = [] }: { book: ListenBook; computers?: StudioComputer[] }) {
   if (!book.studio) return null;
-  if (computers.length > 0 && openable(computers).length === 0) {
-    const reason = studioListenOnlyLine(computers.map((computer) => computer.name));
+  const holder = computers.find((computer) => computer.holdsBook);
+  const blocked = holder ? holder.listenOnly === true : computers.length > 0 && openable(computers).length === 0;
+  if (blocked) {
+    const reason = studioListenOnlyLine(holder ? [holder.name] : computers.map((computer) => computer.name));
     return (
       <>
         <button type="button" disabled title={reason} className="font-semibold opacity-60">
@@ -132,6 +135,6 @@ export function StudioChip({ book, computers = [] }: { book: ListenBook; compute
 
 /** `StudioChip` cho app: hỏi các máy tính đã ghép để biết có máy nào còn mở Studio được. */
 export function StudioChipHost({ book }: { book: ListenBook }) {
-  const computers = useStudioComputers();
+  const computers = useStudioComputers(book.id);
   return <StudioChip book={book} computers={computers} />;
 }

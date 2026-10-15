@@ -52,6 +52,8 @@ export interface PlaylistView {
   autoOff?: boolean;
   /** Mức nhạc dưới giọng đọc (dB) người nghe đã chọn cho cuốn, hay mặc định của máy khi chưa chọn. */
   levelDb?: number;
+  /** Có bài của danh sách đang bị giữ lại vì mất mạng (lõi native điện thoại; máy tính nói ở tab Nhạc của Studio): lời báo cho người nghe. */
+  error?: string;
 }
 
 export interface PlaylistSummary {

@@ -3,11 +3,13 @@ package vn.abook.player
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FilterInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URL
 import java.security.MessageDigest
 import java.util.concurrent.Executors
@@ -49,6 +51,19 @@ class MusicCatalog(
      *  `TrackTooBig` của webui/server.py. Không phải lỗi mạng: không thử lại. */
     class TrackTooBig(val size: Long) : IOException("bài nhạc quá $TRACK_MAX_MB MB")
 
+    /** Nguồn trả lời nhưng báo lỗi HTTP (404, 403...): nguồn vẫn nối được, chỉ bài / file ấy hỏng - KHÔNG phải lỗi mạng (như `urllib.error.HTTPError`). */
+    class HttpFailure(val code: Int) : IOException("HTTP $code")
+
+    /** Lỗi tại chỗ không do mạng (bản sao khác bản gốc, không ghi được file): bài ấy hỏng thật. */
+    class LocalFailure(message: String) : IOException(message)
+
+    /** Mọi nguồn của bài hỏng vì MẠNG (không phân giải được tên, không nối được, hết giờ, đứt giữa chừng, bắt tay SSL): bài vẫn tốt, chỉ chưa
+     *  tải được - người gọi không tính vào số lần bỏ bài, thử lại khi có mạng (như `network_only` của `music_track_file`). */
+    class Offline(message: String = "không có mạng") : IOException(message)
+
+    /** Kết quả [lookupPartial]: dữ liệu các link tìm được + các mảnh không tải được (mạng) - bài thuộc mảnh ấy chưa biết, chờ tải lại. */
+    class Lookup(val found: Map<String, JSONObject>, val missingShards: Set<String>)
+
     /** Luồng tải biết trước cỡ (Content-Length của [openUrl]; null = nguồn không báo) để bỏ bài quá lớn trước khi tải. */
     class Sized(input: InputStream, val length: Long?) : FilterInputStream(input)
 
@@ -58,7 +73,41 @@ class MusicCatalog(
     private var manifest: JSONObject? = null
     private val parts = HashMap<String, JSONObject>()
 
-    private fun fetch(relative: String): ByteArray = open(source + relative).use { it.readBytes() }
+    private fun fetch(relative: String): ByteArray {
+        val url = source + relative
+        try {
+            return open(url).use { it.readBytes() }.also { note(url, failed = false) }
+        } catch (error: IOException) {
+            note(url, failed = isNetworkFailure(error))
+            throw error
+        }
+    }
+
+    // ---- cờ mạng theo NGUỒN (host), như `_music_note` / `_music_host_down` của server.py ----------------------------------------
+    // Một nguồn chết (hay bị chặn) chỉ khoá bài của nguồn ấy; nguồn trả lời được (tải xong, hay trả lỗi HTTP) thì xoá cờ.
+    private val hostLock = Any()
+    private val hosts = HashMap<String, Pair<Boolean, Long>>() // host -> (hỏng vì mạng?, lúc ghi)
+
+    private fun hostOf(url: String): String = runCatching { URI(url).authority }.getOrNull().orEmpty().lowercase()
+
+    private fun note(url: String, failed: Boolean) {
+        val host = hostOf(url)
+        synchronized(hostLock) { hosts[host] = failed to clock() }
+    }
+
+    /** Nguồn của `url` vừa hỏng vì mạng (chưa quá [HOST_REST_MS]): đừng chờ nó hết giờ thêm lần nữa. */
+    fun hostDown(url: String): Boolean = synchronized(hostLock) {
+        hosts[hostOf(url)]?.let { (failed, at) -> failed && clock() - at < HOST_REST_MS } ?: false
+    }
+
+    /** Có nguồn nào đang nghỉ vì mạng không (`_music_degraded`): bài của nguồn ấy chưa tải được - giao diện nói "mất mạng". */
+    fun degraded(): Boolean = synchronized(hostLock) {
+        val now = clock()
+        hosts.values.any { (failed, at) -> failed && now - at < HOST_REST_MS }
+    }
+
+    /** Lời báo "mất mạng" cho giao diện (cùng chữ `MUSIC_OFFLINE_MESSAGE` của server.py) khi có bài đang bị giữ vì mạng, không thì rỗng. */
+    fun offlineNotice(): String = if (degraded()) OFFLINE_MESSAGE else ""
 
     /** Mục lục đã kiểm: chữ ký đúng khoá, JSON đúng hình dạng, có `issued` và `files`. Không thì null (không ném lỗi). */
     private fun accept(raw: ByteArray, signature: ByteArray): JSONObject? {
@@ -164,17 +213,26 @@ class MusicCatalog(
         return value
     }
 
-    /** Dữ liệu đã gắn cho các link (link không có trong danh mục thì vắng). Các mảnh chưa cất tải song song. */
-    fun lookup(links: List<String>): Map<String, JSONObject> {
+    /** Dữ liệu đã gắn cho các link (link không có trong danh mục thì vắng). Các mảnh chưa cất tải song song. Mảnh không tải được (mạng) thì bỏ
+     *  qua, các mảnh còn lại vẫn dùng - xem [lookupPartial] để biết mảnh nào còn thiếu mà tải lại. */
+    fun lookup(links: List<String>): Map<String, JSONObject> = lookupPartial(links).found
+
+    /** Như [lookup] nhưng nói rõ các mảnh hỏng: một mảnh lỗi mạng không làm mất cả danh sách phát. Mục lục không có (mất mạng lần đầu) vẫn ném
+     *  [CatalogError]. Mảnh lệch sha256 / không được liệt kê là vắng thật (không tải lại được), không nằm trong `missingShards`. */
+    fun lookupPartial(links: List<String>): Lookup {
         val existing = manifest().optJSONArray("shards")?.let { list -> (0 until list.length()).map { list.optString(it) }.toSet() } ?: emptySet()
         val wanted = links.groupBy(::shardOf).filterKeys { it in existing }
         val pool = Executors.newFixedThreadPool(SHARD_WORKERS)
-        val loaded = try {
-            wanted.keys.map { shard -> shard to pool.submit<JSONObject?> { part("tracks/$shard.json") } }.associate { (shard, job) ->
-                shard to try {
-                    job.get()
+        val loaded = HashMap<String, JSONObject?>()
+        val missing = LinkedHashSet<String>()
+        try {
+            val jobs = wanted.keys.map { shard -> shard to pool.submit<JSONObject?> { part("tracks/$shard.json") } }
+            for ((shard, job) in jobs) {
+                try {
+                    loaded[shard] = job.get()
                 } catch (error: java.util.concurrent.ExecutionException) {
-                    throw error.cause as? CatalogError ?: CatalogError("Không tải được danh mục nhạc nền - kiểm tra mạng.")
+                    log("danh mục nhạc: mảnh tracks/$shard.json chưa tải được (${error.cause?.message}) - các mảnh khác vẫn dùng, thử lại sau")
+                    missing += shard
                 }
             }
         } finally {
@@ -182,7 +240,7 @@ class MusicCatalog(
         }
         val found = LinkedHashMap<String, JSONObject>()
         for ((shard, items) in wanted) for (link in items) loaded[shard]?.optJSONObject(link)?.let { found[link] = it }
-        return found
+        return Lookup(found, missing)
     }
 
     /** File bài đã tải về máy (không tải); chưa có thì null. */
@@ -251,21 +309,34 @@ class MusicCatalog(
             (0 until list.length()).mapNotNull { (list.opt(it) as? String)?.takeIf { url -> url.startsWith("https://") } }
         } ?: emptyList()
         target.parentFile?.mkdirs()
+        // Như `music_track_file`: mọi nguồn hỏng vì MẠNG thì bài vẫn tốt ([Offline], các nguồn ấy nghỉ [HOST_REST_MS]); còn lại: bài hỏng thật (null).
+        var networkOnly = true
+        val attempted = mutableListOf<String>()
         for (url in listOf(link) + mirrors) {
+            if (hostDown(url)) continue // nguồn này vừa hỏng vì mạng: khỏi chờ nó hết giờ lần nữa (nguồn khác vẫn thử)
+            attempted += url
             val part = File(target.path + ".${System.nanoTime()}.part")
             try {
                 open(url).use { input -> part.outputStream().use { copyCapped(input, it) } }
-                if (url != link && ((size != null && part.length() != size) || sha1(part.readBytes()) != expected)) throw IOException("bản sao khác bản gốc")
-                if (!part.renameTo(target) && !target.isFile) throw IOException("không ghi được")
+                if (url != link && ((size != null && part.length() != size) || sha1(part.readBytes()) != expected)) throw LocalFailure("bản sao khác bản gốc")
+                if (!part.renameTo(target) && !target.isFile) throw LocalFailure("không ghi được")
+                note(url, failed = false) // tải được = nguồn ấy có mạng
                 return target
             } catch (error: TrackTooBig) { // bản sao cùng cỡ: khỏi thử
+                note(url, failed = false)
                 markTooBig(link, error.size)
                 throw error
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 // thử nguồn kế
+                networkOnly = networkOnly && isNetworkFailure(error)
+                if (error is HttpFailure) note(url, failed = false) // nguồn trả lời (404...): nối được, chỉ bài hỏng
             } finally {
                 part.delete()
             }
+        }
+        if (networkOnly) {
+            for (url in attempted) note(url, failed = true)
+            throw Offline()
         }
         return null
     }
@@ -280,6 +351,10 @@ class MusicCatalog(
         const val TRACK_MAX_MB = 40
         const val TRACK_MAX_BYTES = TRACK_MAX_MB * 1024L * 1024
         private const val SHARD_WORKERS = 8
+        /** Nguồn tải hỏng vì mạng nghỉ chừng này (`MUSIC_OFFLINE_SECONDS`): bài của nó chờ, bài của nguồn khác vẫn chạy. */
+        const val HOST_REST_MS = 300_000L
+        /** Chữ báo khi bài nhạc bị giữ lại vì mạng - đúng chữ `MUSIC_OFFLINE_MESSAGE` của webui/server.py. */
+        const val OFFLINE_MESSAGE = "Không tải được nhạc vì mất mạng - giữ nguyên nhạc hiện tại, bạn thử lại sau nhé"
         private const val USER_AGENT = "ABook (+https://github.com/ntanhpro1221/ABook)"
         private val SHA1 = Regex("[0-9a-f]{40}")
 
@@ -291,6 +366,11 @@ class MusicCatalog(
         private fun logWarning(message: String) {
             runCatching { android.util.Log.w("MusicCatalog", message) }
         }
+
+        /** Lỗi tầng mạng (không phân giải được tên, không nối được, hết giờ, đứt giữa chừng, bắt tay SSL) - khác nguồn trả lỗi HTTP, bản sao sai,
+         *  bài quá lớn, lỗi ghi file (`_music_network_failure` của server.py). Lỗi không phải IOException cũng không phải lỗi mạng. */
+        fun isNetworkFailure(error: Throwable): Boolean =
+            error is IOException && error !is HttpFailure && error !is LocalFailure && error !is TrackTooBig && error !is FileNotFoundException
 
         /** `music_catalog.shard_of`: hai ký tự đầu sha1 của link. */
         fun shardOf(link: String): String = sha1(link.toByteArray(Charsets.UTF_8)).take(2)
@@ -304,7 +384,7 @@ class MusicCatalog(
             connection.setRequestProperty("User-Agent", USER_AGENT)
             if (connection.responseCode !in 200..299) {
                 connection.disconnect()
-                throw IOException("HTTP ${connection.responseCode}")
+                throw HttpFailure(connection.responseCode)
             }
             return Sized(connection.inputStream, connection.contentLengthLong.takeIf { it >= 0 })
         }

@@ -232,6 +232,8 @@ object MusicBed {
     /** Dừng hẳn (đổi cuốn, tắt dịch vụ phát): nhả mọi trình phát nhạc, ghi chỗ đang tới của danh sách phát. */
     fun stop() {
         main.removeCallbacks(grace)
+        catalogRetry?.let(main::removeCallbacks)
+        catalogRetry = null
         advanceClock()
         saveClock()
         for (bed in listOfNotNull(current) + fading) bed.player.release()
@@ -274,7 +276,7 @@ object MusicBed {
         val ticket = generation
         worker.execute {
             val choice = stored.ifEmpty { runCatching { autoChoice(appContext, dir) }.getOrNull() }
-            val (tracks, found) = choice?.let { runCatching { resolve(appContext, it, levelDb) }.getOrNull() } ?: (emptyList<Playlists.Track>() to emptyMap())
+            val resolved = choice?.let { runCatching { resolve(appContext, it, levelDb) }.getOrNull() }
             main.post {
                 if (ticket != generation) return@post
                 if (stored.isEmpty()) {
@@ -282,9 +284,11 @@ object MusicBed {
                     playlist = choice
                     clockSeconds = prefs(appContext).getFloat(clockKey(), 0f).toDouble()
                 }
-                infos = found
-                queue.load(tracks)
+                infos = resolved?.infos ?: emptyMap()
+                queue.load(resolved?.tracks ?: emptyList())
                 syncPlaylist(playing)
+                // Danh mục chưa đủ (mất mạng lần đầu, một mảnh lỗi): chơi các bài đã có, tải lại phần thiếu - không để danh sách im lặng tới khi mở lại cuốn.
+                if (choice != null && (resolved == null || resolved.incomplete)) retryCatalogLater(appContext, choice, levelDb, ticket)
             }
         }
     }
@@ -296,19 +300,55 @@ object MusicBed {
     }
 
     /** Hàng bài của lựa chọn `choice` (luồng nền: danh mục cần mạng lần đầu): bài + thông tin bài (để tải / bản sao). */
-    private fun resolve(appContext: Context, choice: String, levelDb: Double): Pair<List<Playlists.Track>, Map<String, JSONObject>> {
+    private fun resolve(appContext: Context, choice: String, levelDb: Double): Resolved {
         if (choice == Playlists.MINE) {
             val store = DeviceMusic.store(appContext)
             val entries = store.entries().reversed() // cũ trước: bài mới nhập nối vào cuối, chỗ đang nghe không xô lệch
             val found = entries.associateBy { it.getString("link") }
-            return Playlists.queue(found.keys.toList(), found, levelDb) { store.file(it) != null } to found
+            return Resolved(Playlists.queue(found.keys.toList(), found, levelDb) { store.file(it) != null }, found, false)
         }
         val catalog = DeviceMusic.catalog(appContext)
         val links = Playlists.linksOf(catalog.playlists(), choice)
-        val found = if (links.isEmpty()) emptyMap() else catalog.lookup(links)
+        val partial = if (links.isEmpty()) MusicCatalog.Lookup(emptyMap(), emptySet()) else catalog.lookupPartial(links)
+        val found = partial.found
         // Bài quá MusicCatalog.TRACK_MAX_MB (theo `bytes` của danh mục, hay lần tải trước) không vào hàng: bài sau dồn lên, như máy tính.
-        return Playlists.queue(links, found, levelDb) { catalog.usable(it, found[it]) } to found
+        // Bài thuộc mảnh chưa tải được (mạng) cũng chưa vào: chưa biết độ dài / độ to - các bài còn lại phát, mảnh về sau thì thêm vào.
+        val tracks = Playlists.queue(links, found, levelDb) { MusicCatalog.shardOf(it) !in partial.missingShards && catalog.usable(it, found[it]) }
+        return Resolved(tracks, found, partial.missingShards.isNotEmpty())
     }
+
+    /** Kết quả [resolve]: hàng bài + thông tin bài; `incomplete`: còn mảnh danh mục chưa tải được (mạng) - tải lại sau. */
+    private class Resolved(val tracks: List<Playlists.Track>, val infos: Map<String, JSONObject>, val incomplete: Boolean)
+
+    /** Một lần tải lại danh mục đang chờ ([retryCatalogLater]); null = không có. */
+    private var catalogRetry: Runnable? = null
+
+    /** Danh mục chưa đủ: sau [MusicFailures.RETRY_MS] tải lại phần thiếu (một việc chờ duy nhất, không vòng lặp bận); đủ rồi thì thêm các bài
+     *  mới vào hàng, chưa đủ thì chờ lần nữa. Đổi cuốn / đổi lựa chọn ([generation]) thì thôi. */
+    private fun retryCatalogLater(appContext: Context, choice: String, levelDb: Double, ticket: Int) {
+        catalogRetry?.let(main::removeCallbacks)
+        val job = Runnable {
+            catalogRetry = null
+            if (ticket != generation) return@Runnable
+            worker.execute {
+                val resolved = runCatching { resolve(appContext, choice, levelDb) }.getOrNull()
+                main.post {
+                    if (ticket != generation) return@post
+                    if (resolved != null) {
+                        infos = resolved.infos
+                        queue.replace(resolved.tracks, current?.track, clockSeconds)
+                    }
+                    if (resolved == null || resolved.incomplete) retryCatalogLater(appContext, choice, levelDb, ticket)
+                }
+            }
+        }
+        catalogRetry = job
+        main.postDelayed(job, MusicFailures.RETRY_MS)
+    }
+
+    /** Lời báo "mất mạng" khi có bài của danh sách phát đang bị giữ lại vì mạng (một nguồn nhạc nghỉ vì mạng) - giao diện nói ra thay vì để nhạc
+     *  im lặng không lời; rỗng khi ổn. */
+    fun offlineNotice(): String = if (playlist != null) context?.let { DeviceMusic.catalog(it).offlineNotice() }.orEmpty() else ""
 
     /** File của một bài để phát; bài danh mục chưa tải thì tải ở luồng nền (lần `sync` sau mới phát) và trả null. */
     private fun uriOf(appContext: Context, link: String): Uri? {
@@ -325,10 +365,14 @@ object MusicBed {
         val info = infos[link]
         worker.execute {
             var tooBig = false
+            var offline = false
             val file = try {
                 DeviceMusic.catalog(appContext).download(link, info)
             } catch (_: MusicCatalog.TrackTooBig) {
                 tooBig = true
+                null
+            } catch (_: MusicCatalog.Offline) {
+                offline = true
                 null
             } catch (_: Exception) {
                 null
@@ -338,7 +382,11 @@ object MusicBed {
                 when {
                     file != null -> {}
                     tooBig -> drop(link) // quá MusicCatalog.TRACK_MAX_MB: máy này không dùng bài ấy, bài khác thay
-                    else -> { // không tải được (mạng, nguồn gỡ bài): bỏ qua bài này một lúc, lùi dần, có hạn
+                    offline -> { // mất mạng: bài vẫn tốt - bỏ qua một lúc, thử lại khi có mạng, không tính vào số lần bỏ bài (như máy tính)
+                        failed.dropOffline(link)
+                        replan(link)
+                    }
+                    else -> { // nguồn gỡ bài, bản sao sai...: bỏ qua bài này một lúc, lùi dần, có hạn
                         failed.dropDownload(link)
                         replan(link)
                     }

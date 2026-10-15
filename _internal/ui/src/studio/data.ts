@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   api,
+  hasLocalTransport,
   type ActivityItem,
   type AppInfo,
   type BookSummary,
@@ -33,8 +34,14 @@ export function phaseTone(phase: Phase, running: boolean): Tone {
 const LIVE_MS = 2000;
 const IDLE_MS = 15000;
 
+/** Thông tin máy chủ (`/api/app`). Điện thoại tự phục vụ bằng lõi native (LocalStudio.kt) nên không có đường này - không hỏi (khỏi 404 rồi thử lại):
+ *  data vắng = máy này không phải thiết bị chỉ-nghe. Máy ở xa (Studio từ xa, thư viện máy tính) vẫn hỏi như cũ. */
+export function appInfoQuery() {
+  return { queryKey: ["app"], queryFn: () => api<AppInfo>("/api/app"), staleTime: Infinity, enabled: !hasLocalTransport() };
+}
+
 export function useAppInfo() {
-  return useQuery({ queryKey: ["app"], queryFn: () => api<AppInfo>("/api/app"), staleTime: Infinity });
+  return useQuery(appInfoQuery());
 }
 
 /** App đóng gói chưa cài (hay cần cập nhật) Studio: xem, nghe, sửa cách đọc / nhạc nền / bìa, xuất sách vẫn làm được - chỉ phần

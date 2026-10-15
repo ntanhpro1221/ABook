@@ -22,6 +22,12 @@ class MusicFailures(private val now: () -> Long) {
         retryAt[link] = if (failures > DOWNLOAD_RETRIES) Long.MAX_VALUE else now() + (RETRY_MS shl (failures - 1))
     }
 
+    /** Tải bài danh mục hỏng vì MẠNG (không phải bài hỏng - [MusicCatalog.Offline]): chờ [RETRY_MS] rồi thử lại, KHÔNG tính vào số lần bỏ bài
+     *  ([DOWNLOAD_RETRIES]) - mất mạng lâu cũng không làm bài tốt bị bỏ cả phiên (máy tính không đánh dấu bài vì lỗi mạng). */
+    fun dropOffline(link: String) {
+        retryAt[link] = now() + RETRY_MS
+    }
+
     fun isFailed(link: String): Boolean = (retryAt[link] ?: return false) > now()
 
     /** Bỏ các bài đã tới hạn thử lại khỏi danh sách hỏng; trả các bài ấy. */
