@@ -128,7 +128,12 @@ def propose(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
     origins: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
         origins.setdefault(_origin(row), []).append(row)
-    if 2 <= len(origins) <= MAX_VOLUMES:
+    # File lẻ gửi từ trình duyệt nằm ngay trong thư mục của lần gửi ("Nguồn tải lên/Tải lên 05-10-2026 18h22 ab12"): đó là tên nội bộ, không
+    # phải một tập. Gửi lẫn file lẻ và thư mục thì không đề xuất chia theo thư mục (khỏi hiện tên ấy làm tên tập); còn tiêu đề "Tập N" của chương.
+    from .actions import UPLOAD_FOLDER
+
+    batch_root = any(Path(folder).parent.name == UPLOAD_FOLDER for folder in origins)
+    if 2 <= len(origins) <= MAX_VOLUMES and not batch_root:
         folders = sorted(origins, key=lambda folder: natural_key(Path(folder).name))
         ordered = [row for folder in folders for row in origins[folder]]
         starts, position = [], 0

@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { api } from "@/studio/api";
+import { useAppInfo } from "@/studio/data";
 import { refreshAfterEdit } from "./EditBook";
 import type { ListenBook } from "./model";
 import { usePlayer } from "./player";
@@ -79,6 +81,9 @@ export function SuggestionChoices({ groups, isOn, onChange, disabled }: {
 export function BookSuggestions({ book }: { book: ListenBook }) {
   const client = useQueryClient();
   const { track } = usePlayer();
+  // Thiết bị chỉ được nghe: thấy gợi ý nhưng không bỏ dòng được - việc ấy ở máy tính.
+  const { data: info } = useAppInfo();
+  const listenOnly = Boolean(info?.listenOnly);
   const query = useQuery({
     queryKey: ["book", book.id, "suggestions"],
     queryFn: () => api<{ suggestions: Suggestion[] }>(`/api/books/${book.id}/suggestions`),
@@ -114,9 +119,14 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
         <SuggestionChoices
           groups={groups}
           isOn={(group) => group.skipped}
-          disabled={toggle.isPending}
+          disabled={toggle.isPending || listenOnly}
           onChange={(group, on) => toggle.mutate({ group, on })}
         />
+        {listenOnly && (
+          <p className="mt-2">
+            <OnComputerOnly verb="Bỏ dòng khỏi phần đọc" />
+          </p>
+        )}
       </div>
     </section>
   );
