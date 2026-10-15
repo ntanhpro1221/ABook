@@ -102,6 +102,8 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
 ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method, re.compile(pattern)) for method, pattern in (
     ("GET", r"/api/library"),
     ("GET", r"/api/voices"),
+    # Mẫu thiết lập (lưu / đổi tên / xoá / đặt lại): mỗi thao tác áp lên danh sách mới nhất của máy tính; PUT /api/preferences vẫn đóng.
+    ("POST", r"/api/book-templates"),
     ("POST", r"/api/scan"),
     ("POST", r"/api/sources/upload"),
     ("POST", r"/api/sources/split"),

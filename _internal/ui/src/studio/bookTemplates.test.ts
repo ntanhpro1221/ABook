@@ -10,12 +10,11 @@ import {
   missingVoice,
   missingVoiceNote,
   nameProblem,
-  removeTemplate,
-  renameTemplate,
+  staleTemplateError,
+  templateIndex,
   templateChoices,
   templateFromDraft,
   templatesOf,
-  upsertTemplate,
   type BookTemplate,
   type Profile,
   type TemplateFields,
@@ -116,17 +115,17 @@ describe("nameProblem", () => {
 });
 
 describe("list helpers", () => {
-  it("upsert replaces a same-name template in place (any case) and appends a new one", () => {
-    const replaced = upsertTemplate([ln, tienHiep], { ...ln, name: "light novel", profile: "fast" });
-    expect(replaced.map((item) => item.name)).toEqual(["light novel", "Tiên hiệp"]);
-    expect(replaced[0].profile).toBe("fast");
-    expect(upsertTemplate([ln], tienHiep).map((item) => item.name)).toEqual(["Light novel", "Tiên hiệp"]);
+  it("finds a template's place ignoring case, -1 when it is gone", () => {
+    expect(templateIndex([ln, tienHiep], "TIÊN HIỆP")).toBe(1);
+    expect(templateIndex([ln, tienHiep], "Không có")).toBe(-1);
   });
 
-  it("remove and rename keep the order; a bad rename changes nothing", () => {
-    expect(removeTemplate([ln, tienHiep], "LIGHT NOVEL")).toEqual([tienHiep]);
-    expect(renameTemplate([ln, tienHiep], "Light novel", " Truyện Nhật ").map((item) => item.name)).toEqual(["Truyện Nhật", "Tiên hiệp"]);
-    expect(renameTemplate([ln, tienHiep], "Light novel", "Tiên hiệp")).toEqual([ln, tienHiep]);
+  it("a gone or clashing template (404, 409) means the list on screen is stale; other errors do not", () => {
+    expect(staleTemplateError({ status: 404 })).toBe(true);
+    expect(staleTemplateError({ status: 409 })).toBe(true);
+    expect(staleTemplateError({ status: 400 })).toBe(false);
+    expect(staleTemplateError(new Error("mạng"))).toBe(false);
+    expect(staleTemplateError(null)).toBe(false);
   });
 
   it("is full at the limit", () => {
