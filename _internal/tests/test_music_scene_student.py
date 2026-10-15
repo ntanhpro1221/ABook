@@ -21,7 +21,7 @@ pytest.importorskip("transformers")
 from tokenizers import Tokenizer, models, pre_tokenizers  # noqa: E402
 from transformers import AutoModel, AutoTokenizer, PreTrainedTokenizerFast, Qwen3Config  # noqa: E402
 
-from abook.webui import music_module, music_plan, music_scene_student as student, music_scenes  # noqa: E402
+from abook.webui import music_bounds, music_module, music_plan, music_scene_student as student, music_scenes  # noqa: E402
 
 WIDTH, LAYER, MAX_TOKENS = 32, 2, 7
 VOCAB = ["[UNK]"] + [f"w{i}" for i in range(24)]
@@ -409,9 +409,10 @@ def test_the_hook_skips_a_book_with_its_music_turned_off(package: Path, book: li
 
 def test_the_worker_hook_runs_the_student_even_when_the_llm_part_fails(package: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from abook import worker
-    from abook.webui import music_moods
+    from abook.webui import music_bounds, music_moods
 
     calls: list[str] = []
+    monkeypatch.setattr(music_bounds, "run_after_analysis", lambda *_a, **_k: None)
     monkeypatch.setattr(music_moods, "run_after_analysis", lambda *_a, **_k: (_ for _ in ()).throw(ConnectionError("Ollama chết")))
     monkeypatch.setattr(student, "run_after_analysis", lambda *_a, **_k: calls.append("student"))
     with pytest.raises(ConnectionError):  # lỗi của LLM vẫn tới dây chuyền (ghi music_moods_skipped), sau khi học sinh đã chạy
@@ -598,6 +599,24 @@ def test_chapter_scenes_takes_the_shape_from_the_student_and_falls_back_to_the_c
     assert music_scenes.chapter_scenes(script, None, None, items[:2]) == plain
     everything = music_scenes.book_scenes(book, moods, student=items)  # chương 2 không có mục nào (và không có LLM): đường nhãn
     assert everything[:3] == got and {s["moodSource"] for s in everything[3:]} == {"labels"}
+
+
+def test_the_students_scenes_are_the_scenes_of_the_llm_bounds_the_plan_uses(package: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    rng = np.random.default_rng(5)
+    segments = [{"id": 10 + 2 * index, "text": _text(rng), "kind": "narration", "emotion": "neutral", "intensity": 0,
+                 "start": index * 6.4, "end": index * 6.4 + 6.0} for index in range(60)]
+    script = {"chapterId": 1, "segments": segments}
+    monkeypatch.setattr(music_plan, "book_scripts", lambda _root: iter([script]))
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "music_bounds.json").write_text(json.dumps({"version": 1, "prompt": music_bounds.PROMPT_VERSION,
+                                                             "chapters": {"1": [segments[20]["id"], segments[40]["id"]]}}), encoding="utf-8")
+    bounds = music_bounds.load(project)
+    assert len(music_scenes.chapter_scenes(script, boundaries=bounds[1])) > len(music_scenes.chapter_scenes(script))
+    _compute(project)
+    wanted = music_scenes.chapter_scenes(script, boundaries=bounds[1])
+    got = [(i["chapterId"], i["firstSegment"], i["lastSegment"]) for i in student.load(project)["scenes"]]
+    assert got == [(s["chapterId"], s["firstSegment"], s["lastSegment"]) for s in wanted]
 
 
 def test_the_plan_is_built_from_the_students_file(package: Path, book: list[dict], tmp_path: Path) -> None:
