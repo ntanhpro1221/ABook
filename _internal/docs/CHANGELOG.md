@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.58] - 2026-10-15
+
 ### Mẫu thiết lập (Studio từ xa)
 
 - Dùng Studio của máy tính qua mạng (trình duyệt, điện thoại) giờ lưu được mẫu thiết lập mới, ghi đè mẫu trùng tên, và vào
