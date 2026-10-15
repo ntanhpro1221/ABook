@@ -61,7 +61,7 @@ object VieneuUnits {
     private val ARROW_TIME = Regex("[0-9]{1,2}(?:[hHgG][0-9]{0,2}|:[0-9]{2})")
     private val ARROW_TIME_WORDS = "giờ sáng trưa chiều tối khuya".split(" ").toSet()
     /** Chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên). */
-    private val GLUED = Regex("""(?:\.{2,}|[…—–])+""")
+    private val GLUED = Regex("""(?:\.{2,}|[…—–])+|(?<=\p{L})\((?=\p{L})""")
     /** English thousands: 1,500 is "một nghìn năm trăm"; Vietnamese decimals ("1,5") do not match. */
     private val THOUSANDS = Regex("(?<![0-9.,])[0-9]{1,3}(?:,[0-9]{3})+(?![0-9]|[.,][0-9])")
     /** I..XXXIX (the empty string matches too and is rejected apart). */
@@ -471,7 +471,7 @@ object VieneuUnits {
     }
 
     /**
-     * The per-word steps (Roman numerals, level, abbreviations, names, loanwords). A word glued to the next through "…" or "—" ("rồi…Senpai", "Babi—người", "DP?”…Tốn") is split
+     * The per-word steps (Roman numerals, level, abbreviations, names, loanwords). A word glued to the next through "…" or "—" ("rồi…Senpai", "Babi—người", "Jigen(trong", "DP?”…Tốn") is split
      * apart for a moment so each word is judged alone, then put back; a word an earlier step changed stays as it is - `_read_words`.
      */
     private fun readWords(toks: List<String>, out: MutableList<String>, origin: String?) {
@@ -493,6 +493,7 @@ object VieneuUnits {
         Abbreviations.readShoutedHonorifics(pieces, said, origin)
         Abbreviations.spellAbbreviations(pieces, said)
         Names.readNames(pieces, said, origin)
+        Names.readKoreanNames(pieces, said, origin)
         Names.readHonorifics(pieces, said, origin)
         Names.readLoanwords(pieces, said)
         val rebuilt = Array(toks.size) { "" }

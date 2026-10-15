@@ -47,7 +47,7 @@ def test_punctuation_around_an_abbreviation_is_kept_and_a_number_before_it_stops
 
 def test_a_shouted_sentence_is_not_a_row_of_abbreviations() -> None:
     assert _said("CÚT ĐI, AI ĐÓ") == ["CÚT", "ĐI,", "AI", "ĐÓ"]
-    assert _said("ONII-CHAN LO LẮNG CHO CON KÌA") == ["o-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"], "chỉ tiếng gọi được đọc, phần gào còn lại để nguyên"
+    assert _said("ONII-CHAN LO LẮNG CHO CON KÌA") == ["o_-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"], "chỉ tiếng gọi được đọc, phần gào còn lại để nguyên"
     assert _said("HP MP SP") == ["hát pê", "em pê", "ét pê"], "một dãy toàn viết tắt thì vẫn đọc"
 
 
@@ -66,7 +66,7 @@ def test_a_fixed_latin_interjection_is_read_as_a_vietnamese_sound(token: str, re
     # nguyên âm đứng riêng: gốc, "…", nguyên âm một lần
     ("Aaaa", "a… a"), ("Haaa", "ha… a"), ("Uuu", "u… u"), ("Viiiiii", "vi… i"), ("Taaa", "ta… a"), ("oaaaa", "oa… a"), ("Eeee", "e… e"),
     # kéo nguyên âm mang thanh của âm gốc
-    ("rồiiiii", "rồi… ì"), ("tớơơơơ", "tớ… ớ"), ("chứứứứ", "chứ… ứ"), ("quẹooo", "quẹo… ọ"), ("đâuuuu", "đâu… u"), ("màaaa", "mà… à"), ("nhaaa", "nha… a"), ("tooo", "to… o"),
+    ("rồiiiii", "rồi… ì"), ("tớơơơơ", "tớ… ớ"), ("chứứứứ", "chứ… ứ"), ("quẹooo", "quẹo… ọ"), ("đâuuuu", "đâu… u"), ("màaaa", "mà… à"), ("nhaaa", "nha… a"), ("tooo", "to… o_"),
     # phụ âm / "y": chỉ gốc và "…"
     ("Khônggg", "không…"), ("Emmmm", "em…"), ("Hầyyy", "hầy…"), ("rấtttt", "rất…"), ("hiếppppp", "hiếp…"), ("Oáppp", "oáp…"), ("Haizzz", "hai…"),
     # thán từ Latin: gốc trong bảng
@@ -124,7 +124,19 @@ def test_an_honorific_suffix_is_read_with_any_book_origin(token: str, reading: s
 
 def test_korean_terms_are_read_alone_and_after_a_name() -> None:
     assert _said("“Oppa, unnie! hyung noona”") == ["“óp-pa,", "un-ni!", "hi-ung", "nu-na”"]
-    assert _said("Hyung-nim, Soleum-ssi, Minho-oppa") == ["hi-ung-nim,", "Soleum-xi,", "Minho-óp-pa"]
+    assert _said("Hyung-nim, Soleum-ssi, Minho-oppa, Ian-nim") == ["hi-ung-nim,", "Xôn-ưm-xi,", "Minho-óp-pa,", "Ian-nim"], "a name only the Korean rules read, before a Korean-only suffix, is read by them (any book)"
+
+
+def test_a_korean_surname_beside_a_korean_name_is_read_by_the_korean_rules_even_without_a_korean_book() -> None:
+    assert _said("Park Won-hyeok xem, Shin Yoon-seong.") == ["Pắc", "Guôn-he-óc", "xem,", "Xin", "Giun-xe-ong."]
+    assert _said("Im Jae-Bom và Moon Chul-soo", "ja") == ["Im", "Gie-bôm", "và", "Mun", "Chun-xu"]
+    assert _said("“Park Yeeun cúi đầu,” Lee Min-ho nói.", "ko") == ["“Pắc", "Gie-ưn", "cúi", "đầu,”", "Li", "Min-hô", "nói."]
+
+
+def test_korean_surnames_that_are_english_words_and_hyphenated_english_are_left_alone_without_a_korean_name_beside_them() -> None:
+    assert _said("Park Avenue, Han Solo và Moon Knight") == ["Park", "Avenue,", "Han", "Solo", "và", "Moon", "Knight"]
+    assert _said("Bye-bye, Ding-dong, Hip-hop, E-mail; Won-hyeok đến") == ["Bye-bye,", "Ding-dong,", "Hip-hop,", "E-mail;", "Won-hyeok", "đến"]
+    assert _said("Oh, Won-hyeok! Lee, Min-ho.", None) == ["ô,", "Won-hyeok!", "Lee,", "Min-ho."], "a mark between the two ends the name"
 
 
 @pytest.mark.parametrize("token", ["san", "sama", "nim", "ssi", "tan", "nee", "nii", "Kun", "con-sans", "Ra-TAN"])
@@ -193,7 +205,21 @@ def test_won_yen_and_kwan_are_units_only_after_a_number() -> None:
 
 
 def test_a_capital_o_starting_a_hyphenated_name_is_a_syllable_not_a_letter() -> None:
-    assert _said("Otsuki-san, Okayama, Onii-sama", "ja") == ["o-xu-ki-xan,", "o-ca-gia-ma,", "o-ni-xa-ma"]
+    assert _said("Otsuki-san, Okayama, Onii-sama", "ja") == ["o_-xu-ki-xan,", "o_-ca-gia-ma,", "o_-ni-xa-ma"]
+
+
+def test_a_lone_o_syllable_is_marked_so_the_normaliser_keeps_it_an_o_and_not_the_letter_o_circumflex() -> None:
+    """sea-g2p spells a bare "o" in a Vietnamese sentence as the letter "ô"; "o_" loses the "_" in its first pass and `keep_lone_o` protects it in the second, so the engine says "o" (the TN answer)."""
+    assert _said("Kaori, okonomiyaki", "ja") == ["Ca-o_-ri,", "o_-cô-nô-mi-a-ki"]
+    assert names.lone_syllable("O-xu-ki-xan") == "o_-xu-ki-xan" and names.lone_syllable("A-ri") == "a-ri" and names.lone_syllable("ca-o-ri") == "ca-o_-ri" and names.lone_syllable("o") == "o_" and names.lone_syllable("ô") == "ô"
+    pytest.importorskip("sea_g2p")
+    from abook.readaloud import vieneu_engine
+
+    pieces = " ".join(_said("Hẳn là Otsuki-san rất thích nấu ăn."))
+    assert vieneu_engine.normalize([pieces]).startswith("hẳn là o xu ki xan rất")
+    assert " ˈɔ sˈu kˈi " in vieneu_engine.phonemize([pieces]), "VieNeu's second normalisation must not turn the syllable into the letter ô (ˈo)"
+    assert " ˈo bˈeɜ " in vieneu_engine.phonemize(["Tôi đi o bế con."]), "a real Vietnamese 'o' is still spelled like sea-g2p does"
+    assert vieneu_engine.keep_lone_o("a o, b", "a ô, b") == "a o, b" and vieneu_engine.keep_lone_o("a o b", "a ô b c") == "a ô b c"
 
 
 def test_a_parenthesised_abbreviation_glued_to_a_word_is_spelled() -> None:
@@ -202,12 +228,13 @@ def test_a_parenthesised_abbreviation_glued_to_a_word_is_spelled() -> None:
 
 def test_two_words_glued_by_an_ellipsis_or_a_dash_are_read_one_by_one() -> None:
     assert _said("rồi…Senpai.” Babi—người") == ["rồi…xen-pai.”", "Babi, người"]
+    assert _said("nhìn Jigen(trong Lupin III), rồi", "ja") == ["nhìn", "Gi-ghen(trong", "Lupin", "ba),", "rồi"], "a name glued to an opening bracket is judged alone"
     assert _said("Thế chiến II—thời kỳ") == ["Thế", "chiến", "hai, thời", "kỳ"]
 
 
 # ---- TN "Nghe ngay" lượt 4: gọi viết hoa cả, danh xưng viết tắt, mũi tên chữ -----------------------------------------------------------------------
 @pytest.mark.parametrize("text, said", [
-    ("ONII-CHAN, ONII-CHAN LO LẮNG!", "o-ni-chan, o-ni-chan LO LẮNG!"),
+    ("ONII-CHAN, ONII-CHAN LO LẮNG!", "o_-ni-chan, o_-ni-chan LO LẮNG!"),
     ("“NEE-SAN!” và OPPA, ARIEL-SAMA.", "“ne-xan!” và óp-pa, ariel-xa-ma."),
     ("Kiểm tra SAN và SENPAI", "Kiểm tra ét a en và xen-pai"),  # hậu tố đứng một mình không có tên đi trước: SAN vẫn là viết tắt, senpai là từ mượn quen
 ])

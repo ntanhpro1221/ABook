@@ -56,6 +56,22 @@ class NamesTest {
     }
 
     @Test
+    fun aLoneOSyllableOfANameIsMarkedSoTheNormaliserKeepsItAnO() {
+        assertEquals(listOf("o_-xu-ki-xan,", "o_-ca-gia-ma,", "o_-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
+        assertEquals(listOf("Ca-o_-ri,", "o_-cô-nô-mi-a-ki"), said("Kaori, okonomiyaki", "ja"))
+        assertEquals("o_-xu-ki-xan", Names.loneSyllable("O-xu-ki-xan"))
+        assertEquals("a-ri", Names.loneSyllable("A-ri"))
+        assertEquals("ca-o_-ri", Names.loneSyllable("ca-o-ri"))
+        assertEquals("o_", Names.loneSyllable("o"))
+        assertNull(Names.loneSyllable(null))
+    }
+
+    @Test
+    fun aNameGluedToAnOpeningBracketIsJudgedAlone() {
+        assertEquals(listOf("nhìn", "Gi-ghen(trong", "Lupin", "ba),", "rồi"), said("nhìn Jigen(trong Lupin III), rồi", "ja"))
+    }
+
+    @Test
     fun theReadingTagIsEmptyWhenNothingChanges() {
         assertEquals("ja", VieneuUnits.readingTag("Haruto đến.", "ja"))
         assertEquals("", VieneuUnits.readingTag("Haruto đến.", null))
