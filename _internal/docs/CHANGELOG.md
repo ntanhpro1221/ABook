@@ -7,6 +7,21 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Trên điện thoại, mất mạng không còn làm một bài nhạc bị bỏ: bài vẫn tốt, được thử lại khi có mạng thay vì im lặng cả phiên nghe. Một nguồn nhạc lỗi mạng chỉ tạm nghỉ riêng nguồn ấy, bài ở nguồn khác vẫn chạy.
+- Một phần danh mục nhạc không tải được không còn làm cả danh sách nhạc nền im lặng: điện thoại phát các bài đã có, phần còn thiếu được tải lại khi có mạng.
+- Khi nhạc nền bị giữ lại vì mất mạng, điện thoại cũng báo "Không tải được nhạc vì mất mạng - giữ nguyên nhạc hiện tại, bạn thử lại sau nhé" như máy tính.
+
+### Điều khiển từ máy khác
+
+- Ở trang sách trên điện thoại, nút "Mở Studio" mờ kèm lý do khi máy tính đang giữ cuốn ấy chỉ cho nghe, dù máy tính khác vẫn mở được.
+
+### Nghe ngay
+
+- Đọc to trên điện thoại hiểu "10Gà" là một chữ liền như trên máy tính (không đọc thành "10 giê à"), còn "10G" vẫn là "10 giê".
+- Sau khi app cập nhật cách đọc, các đoạn đã đọc hoặc "Làm trước" từ bản cũ được đọc lại theo cách mới, không còn giữ cách đọc cũ (máy tính và điện thoại).
+
 ## [0.4.65] - 2026-10-15
 
 ### Nhạc nền

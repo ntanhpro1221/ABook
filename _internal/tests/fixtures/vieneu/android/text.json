@@ -2804,6 +2804,13 @@
   },
   {
    "sentences": [
+    "1 giê trọng lực, 15GB, 3Gb, 100g, 10Gà,",
+    "7Gỗ, 4Gx và 2 giê."
+   ],
+   "phonemes": "mˈo6t̪ zˈe tʃˈɔ6ŋ lˈy6c, mˈyə2j lˈam ɡˈɪɡəbˌaɪt, bˈaː ɡˈɪɡəbˌaɪt, mˈo6t̪ tʃˈam ɣˈaːm, mˈyə2j ɣˈaː2 bˈa4j ɣˈo5, bˈoɜn dʒˌiːˈɛks vˌaː2 hˈaːj zˈe."
+  },
+  {
+   "sentences": [
     "Toán một, Toán hai.",
     "Julianus một sẽ đến.",
     "Ở Khu một.",
@@ -8933,39 +8940,39 @@
    ]
   },
   {
-   "text": "Giá 10G, 9,999G, 30.000G, 5G, 1G trọng lực, 15GB, 3Gb, 100g.",
+   "text": "Giá 10G, 9,999G, 30.000G, 5G, 1G trọng lực, 15GB, 3Gb, 100g, 10Gà, 7Gỗ, 4Gx và 2G.",
    "max": 256,
-   "tokens": 11,
+   "tokens": 16,
    "units": [
     {
      "first": 0,
-     "last": 10,
+     "last": 15,
      "pieces": [
-      "Giá 10 giê, 9999 giê, 30.000 giê, 5 giê, 1 giê trọng lực, 15GB, 3Gb, 100g."
+      "Giá 10 giê, 9999 giê, 30.000 giê, 5 giê, 1 giê trọng lực, 15GB, 3Gb, 100g, 10Gà, 7Gỗ, 4Gx và 2 giê."
      ],
-     "phonemes": "zˈaːɜ mˈyə2j zˈe, tʃˈiɜn ŋˈi2n tʃˈiɜn tʃˈam tʃˈiɜn mˈyəj tʃˈiɜn zˈe, bˈaː mˈyəj ŋˈi2n zˈe, nˈam zˈe, mˈo6t̪ zˈe tʃˈɔ6ŋ lˈy6c, mˈyə2j lˈam ɡˈɪɡəbˌaɪt, bˈaː ɡˈɪɡəbˌaɪt, mˈo6t̪ tʃˈam ɣˈaːm."
+     "phonemes": "zˈaːɜ mˈyə2j zˈe, tʃˈiɜn ŋˈi2n tʃˈiɜn tʃˈam tʃˈiɜn mˈyəj tʃˈiɜn zˈe, bˈaː mˈyəj ŋˈi2n zˈe, nˈam zˈe, mˈo6t̪ zˈe tʃˈɔ6ŋ lˈy6c, mˈyə2j lˈam ɡˈɪɡəbˌaɪt, bˈaː ɡˈɪɡəbˌaɪt, mˈo6t̪ tʃˈam ɣˈaːm, mˈyə2j ɣˈaː2, bˈa4j ɣˈo5, bˈoɜn dʒˌiːˈɛks vˌaː2 hˈaːj zˈe."
     }
    ]
   },
   {
-   "text": "Giá 10G, 9,999G, 30.000G, 5G, 1G trọng lực, 15GB, 3Gb, 100g.",
+   "text": "Giá 10G, 9,999G, 30.000G, 5G, 1G trọng lực, 15GB, 3Gb, 100g, 10Gà, 7Gỗ, 4Gx và 2G.",
    "max": 140,
-   "tokens": 11,
+   "tokens": 16,
    "units": [
     {
      "first": 0,
-     "last": 10,
+     "last": 15,
      "pieces": [
-      "Giá 10 giê, 9999 giê, 30.000 giê, 5 giê, 1 giê trọng lực, 15GB, 3Gb, 100g."
+      "Giá 10 giê, 9999 giê, 30.000 giê, 5 giê, 1 giê trọng lực, 15GB, 3Gb, 100g, 10Gà, 7Gỗ, 4Gx và 2 giê."
      ],
-     "phonemes": "zˈaːɜ mˈyə2j zˈe, tʃˈiɜn ŋˈi2n tʃˈiɜn tʃˈam tʃˈiɜn mˈyəj tʃˈiɜn zˈe, bˈaː mˈyəj ŋˈi2n zˈe, nˈam zˈe, mˈo6t̪ zˈe tʃˈɔ6ŋ lˈy6c, mˈyə2j lˈam ɡˈɪɡəbˌaɪt, bˈaː ɡˈɪɡəbˌaɪt, mˈo6t̪ tʃˈam ɣˈaːm."
+     "phonemes": "zˈaːɜ mˈyə2j zˈe, tʃˈiɜn ŋˈi2n tʃˈiɜn tʃˈam tʃˈiɜn mˈyəj tʃˈiɜn zˈe, bˈaː mˈyəj ŋˈi2n zˈe, nˈam zˈe, mˈo6t̪ zˈe tʃˈɔ6ŋ lˈy6c, mˈyə2j lˈam ɡˈɪɡəbˌaɪt, bˈaː ɡˈɪɡəbˌaɪt, mˈo6t̪ tʃˈam ɣˈaːm, mˈyə2j ɣˈaː2, bˈa4j ɣˈo5, bˈoɜn dʒˌiːˈɛks vˌaː2 hˈaːj zˈe."
     }
    ]
   },
   {
-   "text": "Giá 10G, 9,999G, 30.000G, 5G, 1G trọng lực, 15GB, 3Gb, 100g.",
+   "text": "Giá 10G, 9,999G, 30.000G, 5G, 1G trọng lực, 15GB, 3Gb, 100g, 10Gà, 7Gỗ, 4Gx và 2G.",
    "max": 40,
-   "tokens": 11,
+   "tokens": 16,
    "units": [
     {
      "first": 0,
@@ -8977,11 +8984,12 @@
     },
     {
      "first": 5,
-     "last": 10,
+     "last": 15,
      "pieces": [
-      "1 giê trọng lực, 15GB, 3Gb, 100g."
+      "1 giê trọng lực, 15GB, 3Gb, 100g, 10Gà,",
+      "7Gỗ, 4Gx và 2 giê."
      ],
-     "phonemes": "mˈo6t̪ zˈe tʃˈɔ6ŋ lˈy6c, mˈyə2j lˈam ɡˈɪɡəbˌaɪt, bˈaː ɡˈɪɡəbˌaɪt, mˈo6t̪ tʃˈam ɣˈaːm."
+     "phonemes": "mˈo6t̪ zˈe tʃˈɔ6ŋ lˈy6c, mˈyə2j lˈam ɡˈɪɡəbˌaɪt, bˈaː ɡˈɪɡəbˌaɪt, mˈo6t̪ tʃˈam ɣˈaːm, mˈyə2j ɣˈaː2 bˈa4j ɣˈo5, bˈoɜn dʒˌiːˈɛks vˌaː2 hˈaːj zˈe."
     }
    ]
   },
@@ -9745,6 +9753,11 @@
    "phonemes": "mˈo6t̪ tʃˈiɛɜc sˈɛ hˈɑːndə ˈɛɜt̪ hˈaːɜt̪ ɗˈo5 tʃˈyəɜc kˈyə4.",
    "syllables": 10,
    "cap": 144
+  },
+  {
+   "phonemes": "mˈo6t̪ zˈe tʃˈɔ6ŋ lˈy6c, mˈyə2j lˈam ɡˈɪɡəbˌaɪt, bˈaː ɡˈɪɡəbˌaɪt, mˈo6t̪ tʃˈam ɣˈaːm, mˈyə2j ɣˈaː2 bˈa4j ɣˈo5, bˈoɜn dʒˌiːˈɛks vˌaː2 hˈaːj zˈe.",
+   "syllables": 26,
+   "cap": 310
   },
   {
    "phonemes": "mˈo6t̪ ŋˈi2n lˈɛ4 mˈo6t̪ ɗˈem lˌaː2 kˈə1w tʃwˈiɛ6n nˈo4j t̪ˈiɛɜŋ.",

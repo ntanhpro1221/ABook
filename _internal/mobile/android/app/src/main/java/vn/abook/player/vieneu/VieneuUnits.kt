@@ -42,8 +42,9 @@ object VieneuUnits {
     private const val W = """\p{L}\p{N}_"""
     /** 3-4000, 1-1, 1-3-1. */
     private val RANGE = Regex("""(?<![$W/.,-])([0-9]{1,4})((?:-[0-9]{1,4})+)(?![$W/-]|[.,][0-9])""")
-    /** "10G", "9,999G": game gold / 5G / 1G, sea-g2p reads "gờ"; the letter G is "giê" (not glued to a letter after it: "15GB", "3Gb" stay) - `GOLD_G`. */
-    private val GOLD_G = Regex("""(?<=[0-9])G(?![^\W\d_])""")
+    /** "10G", "9,999G": game gold / 5G / 1G, sea-g2p reads "gờ"; the letter G is "giê" (not glued to a letter after it: "15GB", "3Gb", "10Gà" stay) - `GOLD_G`.
+     *  Python's `[^\W\d_]` is Unicode, but `\W` on the JVM / Android is ASCII-only, so the letters are spelled out here (letters + the non-decimal numbers `str.isalnum` also counts); never (?U) / UNICODE_CHARACTER_CLASS: Android ICU crashes on them. */
+    private val GOLD_G = Regex("""(?<=[0-9])G(?![\p{L}\p{Nl}\p{No}])""")
     /** "lớp 1-7", "phòng 4-13": a code, the two numbers are read in a row without "đến". */
     private val RANGE_CODES = "lớp phòng tầng combo feed số thắng thua truyện".split(" ").toSet()
     private val RANGE_RATIO = "tỉ tỷ lệ".split(" ").toSet()

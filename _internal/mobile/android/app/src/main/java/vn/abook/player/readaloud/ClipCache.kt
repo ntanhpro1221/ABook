@@ -8,7 +8,7 @@ import vn.abook.player.vieneu.VieneuUnits
 
 /**
  * Bộ nhớ đệm các đoạn đã đọc, trong thư mục cache của app (`readaloud/`): mỗi đoạn hai file `<khoá>.<mp3|wav>` + `<khoá>.json` (độ dài, mốc từng chữ), khoá =
- * sha256(nhà cung cấp | giọng | chữ) - cùng chữ cùng giọng thì nghe lại không đọc lại, đổi giọng thì đoạn mới. Giọng VieNeu đọc tên Nhật / Hàn theo luật phiên âm
+ * sha256(phiên bản luật đọc | nhà cung cấp | giọng | chữ) - cùng chữ cùng giọng thì nghe lại không đọc lại, đổi giọng thì đoạn mới. Giọng VieNeu đọc tên Nhật / Hàn theo luật phiên âm
  * ([Names]): đoạn nào gốc của cuốn làm nghe khác thì khoá thêm "|gốc", đoạn khác không đổi khoá (tham số `origin` của các hàm dưới đây). Cách đọc riêng người nghe
  * đặt cho cuốn ([Readings], mọi giọng) cũng thế: chỉ đoạn có từ ấy thêm dấu của các cách đọc có mặt (tham số `readings`). Quá `capBytes` (300 MB) thì xoá đoạn lâu không
  * dùng nhất trước (LRU theo giờ sửa file, mỗi lần dùng được cập nhật). Android tự dọn thư mục cache khi máy đầy, nên mất đoạn nào cũng chỉ là đọc lại.
@@ -27,8 +27,16 @@ class ClipCache(
         const val CAP_BYTES = 300L * 1024 * 1024
         private val EXTENSIONS = setOf("mp3", "wav")
 
-        fun key(provider: String, voice: String, text: String, reading: String = ""): String =
-            MessageDigest.getInstance("SHA-256").digest("$provider|$voice|$text${if (reading.isEmpty()) "" else "|$reading"}".toByteArray(Charsets.UTF_8))
+        /**
+         * Luật đọc nằm trong khoá (`cache.py` `rules_version`): đổi luật thì clip làm trước / đã nghe KHÔNG còn trúng đệm - cách đọc mới được làm lại. Số riêng của mô-đun
+         * có phiên bản ([Names.RULE_VERSION]) + [CACHE_RULES]; một thay đổi luật đọc mà mô-đun của nó không có số riêng thì tăng [CACHE_RULES], ở CẢ HAI nơi (cache.py `CACHE_RULES`).
+         */
+        const val CACHE_RULES = 1
+        const val RULES = "${Names.RULE_VERSION}.$CACHE_RULES"
+
+        /** `rules`: phiên bản luật đọc trong khoá (mặc định [RULES]; test đổi để thấy khoá đổi theo). */
+        fun key(provider: String, voice: String, text: String, reading: String = "", rules: String = RULES): String =
+            MessageDigest.getInstance("SHA-256").digest("$rules|$provider|$voice|$text${if (reading.isEmpty()) "" else "|$reading"}".toByteArray(Charsets.UTF_8))
                 .joinToString("") { "%02x".format(it) }
 
         /**

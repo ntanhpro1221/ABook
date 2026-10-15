@@ -65,6 +65,11 @@ export class NativeAudioEngine implements NativeEngine {
     return this.current?.musicBroken ?? false;
   }
 
+  /** Lời báo "mất mạng" khi nhạc nền đang bị giữ lại vì mạng (MusicBed.offlineNotice); rỗng khi ổn. */
+  get musicOffline(): string {
+    return this.current?.musicOffline ?? "";
+  }
+
   loadQueue(queue: NativeQueue): void {
     const files = chapterFiles.get(queue.bookId);
     void EbookPlayer.load({

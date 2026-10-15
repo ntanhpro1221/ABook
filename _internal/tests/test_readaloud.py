@@ -2,6 +2,7 @@
 trên máy này), bộ đệm, và các đường dẫn của máy chủ giao diện với một giọng giả. Gọi dịch vụ Edge thật: ABOOK_NET_TESTS=1."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import random
@@ -392,6 +393,21 @@ def test_the_cache_stores_reads_and_trims_the_least_recently_used(tmp_path: Path
     assert store.get(keys[0]) is not None and store.get(keys[2]) is not None
     assert store.size() <= 2500 + 200
     assert not [entry for entry in (tmp_path / "c").iterdir() if entry.name.endswith(".part")]
+
+
+def test_the_clip_key_carries_the_reading_rules_version(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Đổi luật đọc (số riêng của mô-đun hay số của bộ đệm) thì clip cũ KHÔNG trúng: không giữ cách đọc cũ cho tới khi bị dọn."""
+    from abook.readaloud import names
+
+    base = clip_cache.clip_key("edge", "v", "x")
+    assert hashlib.sha256(f"{names.RULE_VERSION}.{clip_cache.CACHE_RULES}|edge|v|x".encode("utf-8")).hexdigest() == base
+    assert clip_cache.rules_version() == f"{names.RULE_VERSION}.{clip_cache.CACHE_RULES}"
+    monkeypatch.setattr(clip_cache, "CACHE_RULES", clip_cache.CACHE_RULES + 1)
+    bumped = clip_cache.clip_key("edge", "v", "x")
+    assert bumped != base
+    monkeypatch.setattr(names, "RULE_VERSION", names.RULE_VERSION + 1)
+    assert clip_cache.clip_key("edge", "v", "x") not in (base, bumped)
+    assert clip_cache.clip_key("edge", "v", "x", "ja") != clip_cache.clip_key("edge", "v", "x")
 
 
 def test_the_cache_only_serves_well_formed_names(tmp_path: Path) -> None:

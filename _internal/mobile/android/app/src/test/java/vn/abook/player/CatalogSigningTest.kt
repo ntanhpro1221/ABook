@@ -139,10 +139,35 @@ class CatalogSigningTest {
         cachedPart.writeText(cachedPart.readText().replace(calm, "https://y/calm.mp3"))
         assertEquals("mảnh đã cất bị sửa trên đĩa: tải lại bản đúng", setOf(calm), catalog(cloud).lookup(listOf(calm)).keys)
         assertEquals(File(CatalogSigning.fixture, "good/tracks/$shard.json").readText(), cachedPart.readText())
-        cloud.deleteRecursively() // mất mạng, mảnh cất lại hỏng: bỏ chứ không dùng
+        cloud.deleteRecursively() // mất mạng, mảnh cất lại hỏng: bỏ chứ không dùng - không ném lỗi, báo mảnh nào còn thiếu để tải lại
         cachedPart.writeText("{}")
-        val message = problem { catalog(cloud).lookup(listOf(calm)) }
-        assertTrue(message.toString(), message?.contains("mạng") == true)
+        val partial = catalog(cloud).lookupPartial(listOf(calm))
+        assertTrue(partial.found.isEmpty())
+        assertEquals(setOf(shard), partial.missingShards)
+        assertTrue(logged.any { it.contains("tracks/$shard.json") })
+    }
+
+    /** Một mảnh lỗi mạng không làm im cả danh sách phát: các mảnh khác vẫn dùng, mảnh lỗi được báo để tải lại, về mạng thì có đủ. */
+    @Test
+    fun one_failing_shard_does_not_take_the_others_with_it() {
+        val cloud = CatalogSigning.cloud(root)
+        val shardOfCalm = MusicCatalog.shardOf(calm)
+        val shardOfBattle = MusicCatalog.shardOf(battle)
+        org.junit.Assume.assumeTrue("hai bài phải nằm hai mảnh", shardOfCalm != shardOfBattle)
+        var down = true
+        val catalog = MusicCatalog(File(root, "cache"), cloud.path, clock = { now }, publicKey = CatalogSigning.publicKey, log = { logged += it }, open = { url ->
+            if (down && url.contains("tracks/$shardOfCalm.json")) throw java.net.SocketTimeoutException("hết giờ")
+            MusicCatalog.openUrl(url)
+        })
+        val partial = catalog.lookupPartial(listOf(calm, battle))
+        assertEquals(setOf(battle), partial.found.keys)
+        assertEquals(setOf(shardOfCalm), partial.missingShards)
+        assertEquals("lookup trả những gì có", setOf(battle), catalog.lookup(listOf(calm, battle)).keys)
+        assertTrue(catalog.degraded())
+        down = false
+        val again = catalog.lookupPartial(listOf(calm, battle))
+        assertEquals(setOf(calm, battle), again.found.keys)
+        assertTrue(again.missingShards.isEmpty())
     }
 
     @Test

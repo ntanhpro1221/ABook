@@ -26,6 +26,14 @@ class PlaylistQueue(private val failures: MusicFailures) {
 
     fun clear() = load(emptyList())
 
+    /** Hàng bài đổi giữa chừng (một mảnh danh mục vừa tải lại được: có thêm bài): nạp lại nhưng bài đang kêu giữ nguyên nếu vẫn là bài ở
+     *  giây `seconds` của đồng hồ mới - không khởi động lại bài giữa chừng. */
+    fun replace(tracks: List<Playlists.Track>, playing: String?, seconds: Double) {
+        load(tracks)
+        val now = Playlists.at(spans, seconds)?.first
+        if (now != null && now.track.link == playing) currentSpan = now.index
+    }
+
     /** Bài `link` vừa bị bỏ (đã ghi vào [failures]): rút khỏi hàng. `playing`: bài đang kêu, để [currentSpan] theo chỉ số mới. */
     fun drop(link: String, playing: String?) {
         if (spans.none { it.track.link == link }) return

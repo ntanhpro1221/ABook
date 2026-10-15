@@ -68,6 +68,8 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
         });
       }
       client.setQueryData(key, view);
+      // Chọn xong mà nhạc đang bị giữ vì mất mạng (điện thoại): lựa chọn đã lưu, bài tải khi có mạng - như Studio ("Đã lưu lựa chọn").
+      if (view.error) toast.warning("Đã lưu lựa chọn", { id: "music-offline", description: view.error });
       void client.invalidateQueries({ queryKey: ["listen", "book", bookId] }); // số thay đổi của cuốn
       void client.invalidateQueries({ queryKey: ["listen", "library"] });
       window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: bookId }));
@@ -117,7 +119,7 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     chosen,
     label: playlistLabel(current.data, menu.data),
     playing: playlistPlaying(current.data),
-    error: menu.data?.error ?? "",
+    error: menu.data?.error || current.data?.error || "",
     loading: menu.isLoading,
     choose: (id: string | null) => choose.mutate({ playlist: id }),
     levelDb: current.data?.levelDb ?? DEFAULT_LEVEL_DB,

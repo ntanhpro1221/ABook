@@ -341,7 +341,7 @@ SOUND_PARAGRAPHS = [
     ("Ahh, Ehh, Ohh, Uhh, Ughh. Hahh! Wahhh, Uwahhh, Haizz, Aizz, Ừmm, Hừmm, Ưmm, Uhmm. Haaah! Waaah, Uwaaah, Gaaah, Uuuh, Kyaaah.", None),
     ("Um, Uh, Uhm, Mm. xanh um tùm, UM, UH-60. Mm-hm, Mm... mm? Dài 5 mm, vài mm, một mm, 12mm. Mmm, kkkk, Grrr, Pfffft, Sssss, SSS, MMM. Boss, Class, Jess, Tamm, Jazz, ss1, a ss.", None),
     ("Um....Umm…, giờ. Ummm…Ý nhỉ; Xong~rồiii, Ừ…Ahh rồi.", None),
-    ("Giá 10G, 9,999G, 30.000G, 5G, 1G trọng lực, 15GB, 3Gb, 100g.", None),
+    ("Giá 10G, 9,999G, 30.000G, 5G, 1G trọng lực, 15GB, 3Gb, 100g, 10Gà, 7Gỗ, 4Gx và 2G.", None),
     ("Toán I, Toán II. Julianus I sẽ đến. Ở Khu I. El-Melloi II và Zi-O II. But I never, Tom I think. Chương IV, Henry VIII. Diablo I, nghe rõ.", None),
 ]
 JA_NAMES = "Haruto Yuki Sakura Kyouko Takeshi Hiroshi Akira Kenji Yamato Naoki Satoshi Ayaka Reiji Tsubasa Shinji Kaori".split()

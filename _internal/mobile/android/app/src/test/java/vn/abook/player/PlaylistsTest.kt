@@ -128,7 +128,7 @@ class PlaylistsTest {
         val asked = mutableListOf<String>()
         val catalog = MusicCatalog(File(root, "cache"), "https://catalog/", open = { url ->
             asked += url
-            served[url]?.inputStream() ?: throw java.io.IOException("404")
+            served[url]?.inputStream() ?: throw MusicCatalog.HttpFailure(404)
         })
         val link = "https://x/gone.mp3"
         val bad = JSONObject().put("sha1", sha).put("bytes", bytes.size).put("mirrors", JSONArray(listOf("https://mirror/bad.mp3")))
@@ -235,6 +235,31 @@ class PlaylistsTest {
     }
 
     private fun musicView(id: String): JSONObject = LocalStudio.handle("GET", "/api/books/$id/music", null).second as JSONObject
+
+    /** Điện thoại nói "mất mạng" như Studio (`_music_payload`): danh sách đang dùng mà bài bị giữ vì mạng thì màn "Nhạc nền" mang `error`. */
+    @Test
+    fun the_music_screen_says_the_network_is_down_when_tracks_are_held_back_by_it() {
+        BookEditsFixtures.useStoreRoot(root)
+        val id = "f-0123456789abcdef01234567"
+        textBook(id)
+        val cloud = cloud(withPicker = true)
+        var now = 1_000_000L
+        val catalog = MusicCatalog(File(root, "cache"), cloud.path, open = { url ->
+            if (url.startsWith("https://x/")) throw java.net.UnknownHostException("x") else MusicCatalog.openUrl(url)
+        }, clock = { now }, publicKey = CatalogSigning.publicKey)
+        LocalStudio.catalog = catalog
+        assertTrue("chưa có gì hỏng: không lời báo", !musicView(id).has("error"))
+        assertTrue(runCatching { catalog.download("https://x/calm.mp3", null) }.exceptionOrNull() is MusicCatalog.Offline)
+        assertEquals(MusicCatalog.OFFLINE_MESSAGE, musicView(id).getString("error"))
+        assertEquals("cùng chữ với máy tính", "Không tải được nhạc vì mất mạng - giữ nguyên nhạc hiện tại, bạn thử lại sau nhé", MusicCatalog.OFFLINE_MESSAGE)
+        val (_, saved) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "calm"))
+        assertEquals(MusicCatalog.OFFLINE_MESSAGE, (saved as JSONObject).getString("error"))
+        val (_, off) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "off"))
+        assertTrue("đã tắt nhạc: không có gì bị giữ", !(off as JSONObject).has("error"))
+        LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "calm"))
+        now += MusicCatalog.HOST_REST_MS
+        assertTrue("hết cửa sổ nghỉ: lời báo tự hết", !musicView(id).has("error"))
+    }
 
     @Test
     fun a_text_book_with_no_choice_shows_the_machines_pick_until_the_listener_chooses_or_turns_it_off() {

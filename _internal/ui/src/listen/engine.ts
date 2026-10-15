@@ -91,6 +91,8 @@ export interface NativeEngine extends AudioEngine {
   readonly musicCredit: MusicCredit | null;
   /** Bài nhạc nền của chương đang nghe không phát được (MusicBed.kt brokenHere): đoạn ấy im lặng. */
   readonly musicBroken: boolean;
+  /** Lời báo "mất mạng" khi nhạc nền đang bị giữ lại vì mạng (MusicBed.kt offlineNotice); rỗng khi ổn. */
+  readonly musicOffline: string;
 }
 
 export function isNative(engine: AudioEngine): engine is NativeEngine {

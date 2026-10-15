@@ -1,4 +1,4 @@
-"""Bộ nhớ đệm clip trên đĩa: `<khoá>.mp3|wav` + `<khoá>.json` (độ dài, mốc từng chữ), khoá = sha256(nhà cung cấp | giọng | chữ).
+"""Bộ nhớ đệm clip trên đĩa: `<khoá>.mp3|wav` + `<khoá>.json` (độ dài, mốc từng chữ), khoá = sha256(phiên bản luật đọc | nhà cung cấp | giọng | chữ).
 
 Clip ở tốc độ 1,0 (đổi tốc độ là việc của trình phát), nên mọi tốc độ dùng chung một clip. Đầy quá `limit` thì bỏ clip lâu không dùng nhất
 (LRU theo thời gian truy cập: mỗi lần trúng đệm ghi lại mtime của file JSON). Ghi qua file tạm rồi đổi tên: máy chủ đọc không bao giờ thấy file dở.
@@ -13,14 +13,26 @@ import threading
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import names
+
 LIMIT_BYTES = 500 * 1024 * 1024
 NAME = re.compile(r"[0-9a-f]{64}\.(mp3|wav)")
 TYPES = {"mp3": "audio/mpeg", "wav": "audio/wav"}
 
 
+# Luật đọc (chuẩn hoá chữ) nằm trong khoá: đổi luật thì clip làm trước (kể cả "Làm trước" đã ghim) KHÔNG còn trúng đệm - cách đọc mới được làm lại, không giữ cách đọc cũ.
+# Khoá = phiên bản luật của các mô-đun có số riêng (`names.RULE_VERSION`) + số này; Android (ClipCache.kt `RULES`) tính CÙNG cách, từ `Names.RULE_VERSION` +
+# `ClipCache.CACHE_RULES`. Một thay đổi luật đọc mà mô-đun của nó không có số riêng (romanization, shouts, vieneu units...) thì tăng số này, ở CẢ HAI nơi.
+CACHE_RULES = 1
+
+
+def rules_version() -> str:
+    return f"{names.RULE_VERSION}.{CACHE_RULES}"
+
+
 def clip_key(provider: str, voice: str, text: str, reading: str = "") -> str:
-    """`reading`: dấu của cách đọc riêng của cuốn (gốc Nhật / Hàn làm tên đọc khác: `VieneuProvider.reading_tag`); rỗng thì khoá y như trước."""
-    return hashlib.sha256((f"{provider}|{voice}|{text}" + (f"|{reading}" if reading else "")).encode("utf-8")).hexdigest()
+    """`reading`: dấu của cách đọc riêng của cuốn (gốc Nhật / Hàn làm tên đọc khác: `VieneuProvider.reading_tag`); rỗng thì không thêm gì sau chữ."""
+    return hashlib.sha256((f"{rules_version()}|{provider}|{voice}|{text}" + (f"|{reading}" if reading else "")).encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)

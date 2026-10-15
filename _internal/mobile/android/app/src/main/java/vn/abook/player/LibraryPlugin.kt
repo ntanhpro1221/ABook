@@ -555,6 +555,9 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun studioComputers(call: PluginCall) = background(call) {
         val out = JSArray()
+        // `book` (mã cuốn trên điện thoại này): máy tính GIỮ cuốn ấy - "Mở Studio" ở trang sách đi thẳng tới máy ấy (openStudio), nên chip phải xét quyền của
+        // chính máy ấy chứ không của cả danh sách (`holdsBook`).
+        val holder = call.getString("book")?.let { StudioLink.bookTarget(it)?.first }
         for (computer in StudioLink.computers(context)) {
             // Máy tính chỉ cho điện thoại này nghe: nút "Mở Studio" nói thẳng thay vì mở một trang Studio đóng (`listenOnly`). Không hỏi được = coi như mở được.
             val listenOnly = StudioLink.link(context, computer.key)?.let { link ->
@@ -563,7 +566,7 @@ class LibraryPlugin : Plugin() {
                         readTimeoutMs = 3000, connectTimeoutMs = 2000))
                 }.getOrDefault(false)
             } ?: false
-            out.put(JSObject().put("key", computer.key).put("name", computer.name).put("listenOnly", listenOnly))
+            out.put(JSObject().put("key", computer.key).put("name", computer.name).put("listenOnly", listenOnly).apply { if (computer.key == holder) put("holdsBook", true) })
         }
         call.resolve(JSObject().put("computers", out))
     }

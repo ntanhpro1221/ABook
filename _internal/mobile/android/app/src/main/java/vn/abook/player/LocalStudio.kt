@@ -312,7 +312,18 @@ object LocalStudio {
 
     /** `_with_auto_playlist` của server.py: màn "Nhạc nền" + danh sách máy chọn - sách chưa có lựa chọn nào (`playlist` không có khoá) và không có
      *  nhạc của người làm sách thì `playlist` là mã máy chọn, kèm `playlistAuto` true. Đã chọn (kể cả "off") thì giữ nguyên. */
-    private fun withAutoPlaylist(dir: java.io.File, view: JSONObject): JSONObject {
+    private fun withAutoPlaylist(dir: java.io.File, view: JSONObject): JSONObject = withOfflineNotice(dir, withAutoChoice(dir, view))
+
+    /** `error` của màn "Nhạc nền" như `_music_payload` của server.py: danh sách phát đang dùng mà có bài bị giữ lại vì mất mạng ([MusicCatalog.degraded])
+     *  thì nói "mất mạng" (cùng chữ với máy tính) - nhạc đang kêu giữ nguyên, bài còn lại tải khi có mạng. Nhạc của người làm sách / đã tắt: không. */
+    private fun withOfflineNotice(dir: java.io.File, view: JSONObject): JSONObject {
+        val playlist = view.optString("playlist")
+        if (playlist.isEmpty() || playlist == Playlists.OFF || playlist == Playlists.MINE || BookEdits.truthy(BookEdits.rawBook(dir).opt("music"))) return view
+        val notice = catalog?.offlineNotice().orEmpty()
+        return if (notice.isEmpty()) view else view.put("error", notice)
+    }
+
+    private fun withAutoChoice(dir: java.io.File, view: JSONObject): JSONObject {
         if (view.has("playlist") || BookEdits.truthy(BookEdits.rawBook(dir).opt("music"))) return view
         // Mục lục danh mục chưa tải được (máy mới, chưa có mạng) thì dùng luật đóng kèm: chọn được tên danh sách ngay, bài tải sau.
         val manifest = runCatching { catalog?.manifest() }.getOrNull()

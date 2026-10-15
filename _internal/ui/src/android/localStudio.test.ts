@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError, api, setApiTransport } from "@/studio/api";
+import { appInfoQuery } from "@/studio/data";
 import { localStudioTransport } from "./localStudio";
 
 describe("đường truyền sửa sách trên điện thoại", () => {
@@ -25,6 +26,17 @@ describe("đường truyền sửa sách trên điện thoại", () => {
     } finally {
       setApiTransport(null);
     }
+  });
+
+  it("điện thoại không hỏi /api/app (lõi native không có đường ấy); máy tính và Studio từ xa vẫn hỏi", () => {
+    expect(appInfoQuery().enabled).toBe(true);
+    setApiTransport(localStudioTransport(async () => ({ status: 404, body: {} })));
+    try {
+      expect(appInfoQuery().enabled).toBe(false);
+    } finally {
+      setApiTransport(null);
+    }
+    expect(appInfoQuery().enabled).toBe(true);
   });
 
   it("mã lỗi thành ApiError mang câu của lõi native, như fetch thật", async () => {

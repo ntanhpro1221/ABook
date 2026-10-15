@@ -98,6 +98,17 @@ describe("máy tính chỉ cho điện thoại nghe", () => {
     expect(open).not.toContain("chỉ cho nghe");
   });
 
+  it("chip đi tới máy GIỮ cuốn: mờ khi chính máy ấy chỉ cho nghe dù còn máy khác mở được, và mở được khi máy giữ cuốn mở được", () => {
+    const holder = { ...listenOnlyHome, holdsBook: true };
+    const blocked = renderToString(<StudioChip book={book({ studio: true })} computers={[holder, office]} />);
+    expect(blocked).toContain("disabled");
+    expect(blocked).toContain("Máy tính NGDtuanh-Lecoo chỉ cho nghe");
+    expect(blocked).not.toContain("Máy văn phòng");
+    const open = renderToString(<StudioChip book={book({ studio: true })} computers={[listenOnlyHome, { ...office, holdsBook: true }]} />);
+    expect(open).not.toContain("disabled");
+    expect(open).not.toContain("chỉ cho nghe");
+  });
+
   it("nhiều máy cùng chỉ cho nghe: lý do nêu tên cả hai, hơn hai máy thì nói chung", () => {
     const second = { ...office, listenOnly: true };
     expect(studioChoice([listenOnlyHome, second])).toEqual({

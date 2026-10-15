@@ -31,10 +31,15 @@ class ClipCacheTest {
     }
 
     @Test
-    fun keyIsSha256OfProviderVoiceAndText() {
-        val expected = java.security.MessageDigest.getInstance("SHA-256").digest("edge|vi-VN-HoaiMyNeural|Xin chào".toByteArray(Charsets.UTF_8))
+    fun keyIsSha256OfRulesProviderVoiceAndText() {
+        val rules = "${Names.RULE_VERSION}.${ClipCache.CACHE_RULES}"
+        assertEquals("giống `rules_version` của cache.py", rules, ClipCache.RULES)
+        val expected = java.security.MessageDigest.getInstance("SHA-256").digest("$rules|edge|vi-VN-HoaiMyNeural|Xin chào".toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
         assertEquals(expected, ClipCache.key("edge", "vi-VN-HoaiMyNeural", "Xin chào"))
+        // Đổi luật đọc (phiên bản trong khoá) thì cùng chữ cùng giọng là một clip KHÁC: clip làm trước từ bản cũ không còn trúng.
+        assertNotEquals(ClipCache.key("edge", "a", "x"), ClipCache.key("edge", "a", "x", rules = "${Names.RULE_VERSION}.${ClipCache.CACHE_RULES + 1}"))
+        assertNotEquals(ClipCache.key("edge", "a", "x"), ClipCache.key("edge", "a", "x", rules = "${Names.RULE_VERSION + 1}.${ClipCache.CACHE_RULES}"))
         assertNotEquals(ClipCache.key("edge", "a", "x"), ClipCache.key("device", "a", "x"))
         assertNotEquals(ClipCache.key("edge", "a", "x"), ClipCache.key("edge", "b", "x"))
         assertEquals("edge" to "vi-VN-X", ClipCache.split("edge:vi-VN-X"))

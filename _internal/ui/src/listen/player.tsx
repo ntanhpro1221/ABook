@@ -128,6 +128,8 @@ interface PlayerState {
   musicCredit: MusicCredit | null;
   /** Bài nhạc nền của chương đang nghe không phát được (file hỏng, mất kết nối): đoạn ấy im lặng - hộp "Nhạc nền" nói ra. */
   musicBroken: boolean;
+  /** Lời báo "mất mạng" khi nhạc nền đang bị giữ lại vì mạng (điện thoại, MusicBed.kt): bài còn lại tải khi có mạng - hộp "Nhạc nền" nói ra; rỗng khi ổn. */
+  musicOffline: string;
   canGoBack: boolean;
   error: string;
   /** Lời nhắn không phải lỗi, vẫn đang phát (giọng trực tuyến hỏng - tạm đọc bằng giọng của máy); tự ẩn. */
@@ -267,6 +269,7 @@ export function PlayerProvider({
   const [canGoBack, setCanGoBack] = useState(false);
   const [musicCredit, setMusicCredit] = useState<MusicCredit | null>(null);
   const [musicBroken, setMusicBroken] = useState(false);
+  const [musicOffline, setMusicOffline] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState("");
   /** Dừng việc chờ máy kia trả lời lại (peerBack.ts) - đổi chương, gạt lời báo, thử lại. */
@@ -464,8 +467,16 @@ export function PlayerProvider({
     if (native) {
       // Điện thoại: lõi native chơi nhạc nền (MusicBed.kt) và gửi ghi công bài đang kêu trong trạng thái của nó.
       let last = "";
+      let lastOffline = "";
       const sync = () => {
         setMusicBroken(native.musicBroken);
+        const offline = native.musicOffline;
+        if (offline !== lastOffline) {
+          // Như máy tính (Studio báo khi tải nhạc dừng vì mất mạng): nói một lần lúc nhạc vừa bị giữ lại, không im lặng.
+          if (offline) toast.warning("Chưa tải được nhạc", { id: "music-offline", description: offline });
+          lastOffline = offline;
+          setMusicOffline(offline);
+        }
         const credit = native.musicCredit;
         const key = JSON.stringify(credit);
         if (key === last) return;
@@ -478,6 +489,7 @@ export function PlayerProvider({
         off();
         setMusicCredit(null);
         setMusicBroken(false);
+        setMusicOffline("");
       };
     }
     if (!bed) {
@@ -1515,11 +1527,11 @@ export function PlayerProvider({
 
   const value = useMemo<PlayerValue>(() => ({
     track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, notice, options, musicCredit, musicBroken,
+    canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline,
     play, prepare, toggle, resume, retry, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
     extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues,
   }), [track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, notice, options, musicCredit, musicBroken, play, prepare, toggle, resume, retry, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart,
+    canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline, play, prepare, toggle, resume, retry, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues]);
 
   // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ
