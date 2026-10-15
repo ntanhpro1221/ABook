@@ -98,6 +98,27 @@ def test_other_capitals_and_headings_are_left_alone(text: str, said: str) -> Non
     assert _said(text) == said
 
 
+@pytest.mark.parametrize("text, said", [
+    # tn9: số La Mã sau tên nối gạch
+    ("Lord El-Melloi II và Zi-O II.", "Lord El-Melloi hai và Zi-O hai."),
+    # tn9: "I" một mình sau một chữ viết hoa không phải từ Anh, khi nó khép cụm hay chữ sau là tiếng Việt
+    ("91 điểm Toán I, 88 điểm Toán II.", "91 điểm Toán một, 88 điểm Toán hai."),
+    ("Julianus I sẽ đến. Ở Khu I. Diablo I, nghe rõ.", "Julianus một sẽ đến. Ở Khu một. Diablo một, nghe rõ."),
+    ("But I never, When I was, Anh I love you.", "But I never, When I was, Anh I love you."),  # chữ trước hay sau là tiếng Anh: đại từ
+])
+def test_tn9_a_hyphenated_name_and_a_lone_one_before_a_non_english_word(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
+@pytest.mark.parametrize("text, said", [
+    ("Giá 10G, 9,999G và 30.000G.", "Giá 10 giê, 9999 giê và 30.000 giê."),  # chữ cái G (giê), không phải "gờ"
+    ("Mạng 5G và 1G trọng lực.", "Mạng 5 giê và 1 giê trọng lực."),
+    ("15GB, 3Gb, 100g, G10 và 4Gx.", "15GB, 3Gb, 100g, G10 và 4Gx."),  # dính chữ sau, hay G thường (gam), hay G đứng trước số
+])
+def test_tn9_a_capital_g_after_a_number_is_the_letter_g(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
 # ---- dấu sea-g2p đọc sai thành lời (vieneu.reading_marks): "~", nghìn kiểu Anh, <ngoặc nhọn>, " / " ---------------------------------------
 @pytest.mark.parametrize("text, said", [
     ("Hmm~ Har~kun? EMMMMM~!", "hừm Har kun? em…!"),  # kéo giọng: bỏ; có chữ ngay sau thì thành khoảng trắng
