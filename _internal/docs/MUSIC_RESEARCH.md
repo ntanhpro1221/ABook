@@ -5900,3 +5900,13 @@ Agent nhúng lại `autotagging_moodtheme_audio-00..02.tar` bằng `vox_mtg_full
 Kết luận: giữ VOX như đã cài; không học lại. Ghi vào MUSIC_IMPORT: "đầu dò có thể bỏ sót khoảng 1/3 bài có lời ngoài danh mục;
 người dùng luôn có thể tự bỏ chọn bài". Muốn đo chặt hơn cần nhãn có lời / không lời đáng tin trên nhạc pop (MF trên vài trăm
 bài MTG đã nhúng, GPU), xếp sau.
+
+### 15-10 - Y vào app: ranh cảnh do LLM chia (`webui/music_bounds.py`)
+
+Phán quyết đo ở Corpus `research/music/PLAN_scenegap_confirm.md` mục 11 (4e19399): ranh cảnh do qwen3.5:4b chia (prompt và cửa sổ của `LLM_Train/music/seg_scenes.py`, chép nguyên văn) thắng bản gộp +6,5 điểm giây nhạc sai rõ (Holm p 0,013). Đặc tả vào app: `SCENEY_SPEC.md`; hai phép đo M1 (v4 thay base?) và M2 (Y khi có llmVT) chạy trên Mac và ghi vào mục 12 của PLAN trước khi gộp vào main.
+
+- Chạy trong móc sau pha phân tích (`worker.run_music_after_analysis`: Y -> llmVT -> học sinh) và ở nút "Tính lại" của tab Nhạc, chỉ khi máy đã tải qwen3.5:4b và nhạc của cuốn bật. Ghi `music_bounds.json` sau MỖI chương; một chương hoặc có đủ ranh Y hoặc dùng luật dấu hiệu A.
+- `music_plan.build`, `music_moods.compute` và `music_scene_student.compute` đọc cùng file ấy và đưa vào `music_scenes.chapter_scenes(boundaries=...)`, nên khoá đoạn của llmVT và học sinh khớp đoạn của plan. Điện thoại nhận Y qua mốc giây trong mục `music` của `book.json`.
+- Số câu model nhìn là `seq` của câu trong chương (như phép đo), không phải `id` DB; `store.chapter_script` giờ trả thêm `seq`.
+- Chỉ ĐẾM, không đổi hành vi (SCENEY_SPEC 5b): mỗi chương một dòng nhật ký đoạn/giờ; chương > 36 đoạn/giờ vào `dense` của `music_bounds.json` và phát `music_bounds_dense`. Trần 22 là ĐỔI BÀI/giờ của cả cuốn (Y ~31 đoạn/giờ nhưng 21,4 đổi bài/giờ): `music_plan.build` ghi nó mỗi lần dựng và phát `music_switches_high` khi vượt. Cổng mật độ (gộp 90 s) đóng.
+- Chi phí đo trên card 8 GB: 14,8 s/chương, khoảng 2,6 % thời gian pha phân tích. Temperature 0, không seed, nên cùng digest và cùng chữ ra cùng ranh.

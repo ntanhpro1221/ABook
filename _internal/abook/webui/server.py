@@ -40,7 +40,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
-               listen_export, music_catalog, music_export, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
+               listen_export, music_bounds, music_catalog, music_export, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
@@ -1631,7 +1631,7 @@ class App:
             raise ApiError(HTTPStatus.CONFLICT, str(exc)) from exc
 
     def music_moods_compute(self, value: str) -> dict[str, Any]:
-        """Người dùng bấm "Tính lại cảm xúc nhạc": chạy `music_moods.compute` (nếu model đọc không khí đã tải) rồi học sinh đoán hình không khí
+        """Người dùng bấm "Tính lại cảm xúc nhạc": chia cảnh bằng LLM (`music_bounds.compute`) rồi `music_moods.compute` (nếu model đọc không khí đã tải), rồi học sinh đoán hình không khí
         (nếu máy có gói, `music_scene_student`), rồi dựng lại rãnh nhạc (chia lại đoạn) ở luồng nền. Hai việc độc lập. Không chạy khi cuốn đang
         có dây chuyền (hai việc giành GPU) hay máy chưa có cái nào trong hai."""
         self._mutating()
@@ -1672,11 +1672,12 @@ class App:
         error = ""
         try:
             failure: Exception | None = None
-            try:
-                if music_moods.model_digest(base) is not None:
-                    music_moods.compute(path, base)
-            except Exception as exc:  # noqa: BLE001 - lỗi P0 không chặn học sinh; báo sau khi đã dựng lại
-                failure = exc
+            if music_moods.model_digest(base) is not None:
+                for step in (music_bounds, music_moods):  # chia cảnh TRƯỚC: không khí đọc đúng các đoạn đã chia
+                    try:
+                        step.compute(path, base)
+                    except Exception as exc:  # noqa: BLE001 - lỗi không chặn việc sau và học sinh; báo sau khi đã dựng lại
+                        failure = failure or exc
             self._scene_student_run(path)
             self.music_rebuild(value)
             if failure is not None:
