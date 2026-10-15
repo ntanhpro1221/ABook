@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.63] - 2026-10-15
+
 ## [0.4.62] - 2026-10-15
 
 ### Nghe ngay
