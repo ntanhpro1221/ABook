@@ -27,14 +27,14 @@ class NamesTest {
     @Test
     fun everySharedOriginCaseGivesPythonsAnswer() {
         val cases = JSONObject(File(dir, "text.json").readText(Charsets.UTF_8)).getJSONArray("origins")
-        assertTrue(cases.length() >= 13)
+        assertTrue(cases.length() >= 23)
         for (n in 0 until cases.length()) {
             val case = cases.getJSONObject(n)
             val array = case.getJSONArray("texts")
             val texts = (0 until array.length()).map { array.getString(it) }
             val sample = if (case.has("sample")) case.getInt("sample") else Names.SAMPLE_CHAPTERS
-            val (counts, suffixed) = Names.scanNames(texts.asSequence().take(sample))
-            val shares = Names.originShares(counts, suffixed)
+            val scan = Names.scanNames(texts.asSequence().take(sample))
+            val shares = Names.originShares(scan.found, scan.suffixed, scan.terms)
             val want = if (case.isNull("origin")) null else case.getString("origin")
             assertEquals("ca $n", want, Names.bookOrigin(texts.asSequence(), sample))
             assertEquals("ca $n total", case.getInt("total"), shares.total)
@@ -43,6 +43,10 @@ class NamesTest {
             assertEquals("ca $n ko_names", case.getInt("ko_names"), shares.koNames)
             assertEquals("ca $n honorific", case.getInt("honorific"), shares.honorific)
             assertEquals("ca $n honorific_names", case.getInt("honorific_names"), shares.honorificNames)
+            assertEquals("ca $n ja_marked", case.getInt("ja_marked"), shares.jaMarked)
+            assertEquals("ca $n ko_marked", case.getInt("ko_marked"), shares.koMarked)
+            assertEquals("ca $n ja_terms", case.getInt("ja_terms"), shares.jaTerms)
+            assertEquals("ca $n ko_terms", case.getInt("ko_terms"), shares.koTerms)
         }
     }
 

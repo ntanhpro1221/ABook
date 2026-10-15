@@ -20,8 +20,19 @@ object Names {
     const val HON_JA_SHARE = 0.3
     const val KO_SHARE = 0.70
     const val KO_ONLY_SHARE = 0.5
+    /** Số tên khác nhau CHỈ romaji đọc được (RR không) mà dài từ JA_MARKED_SYLLABLES âm tiết: bằng chứng Nhật không cần tỉ lệ cao - `JA_MARKED` của names.py. */
+    const val JA_MARKED = 8
+    const val JA_MARKED_SYLLABLES = 3
+    /** Như trên cho Hàn: tên CHỈ RR đọc được mà có cặp chữ đặc trưng Hàn ([KO_MARKS]). */
+    const val KO_MARKED = 5
+    private val KO_MARKS = listOf("eo", "eu", "ung", "ong", "hyun")
+    /** Số lần hậu tố gọi Nhật nối gạch / hậu tố và tiếng gọi chỉ Hàn có trong phần mẫu. */
+    const val JA_TERMS = 80
+    const val KO_TERMS = 8
+    /** Bên nào có bằng chứng gấp đôi bên kia mới thắng. */
+    const val MARKED_RATIO = 2
     /** Đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại. */
-    const val RULE_VERSION = 3
+    const val RULE_VERSION = 4
     private const val ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 
     /** (dấu câu đầu, lõi từ chữ cái đầu tới chữ cái cuối, dấu câu cuối). */
@@ -259,13 +270,31 @@ object Names {
 
     // ---- gốc của cuốn ---------------------------------------------------------------------------------------------------------
 
-    /** (mỗi tên đã bỏ hậu tố gọi và số lần nó xuất hiện, riêng những lần nó đi kèm hậu tố gọi kiểu Nhật). `scan_names` của names.py. */
-    fun scanNames(texts: Sequence<String>): Pair<Map<String, Int>, Map<String, Int>> {
+    /** "ja" khi [core] mang hậu tố gọi Nhật nối gạch, "ko" khi mang hậu tố / là tiếng gọi chỉ Hàn có, null khi không - `term_origin`. */
+    fun termOrigin(core: String): String? {
+        val lowered = lower(core)
+        if ('-' in lowered) {
+            val last = lowered.substringAfterLast('-')
+            return if (last in HONORIFICS) "ja" else if (last in KOREAN_TERMS) "ko" else null
+        }
+        return if (lowered in KOREAN_ALONE) "ko" else null
+    }
+
+    /** Kết quả quét: tên + số lần, số lần có hậu tố gọi Nhật, số lần hậu tố / tiếng gọi của từng hệ ("ja" / "ko"). */
+    class Scan(val found: Map<String, Int>, val suffixed: Map<String, Int>, val terms: Map<String, Int>)
+
+    /** (mỗi tên đã bỏ hậu tố gọi và số lần nó xuất hiện, riêng những lần nó đi kèm hậu tố gọi kiểu Nhật, số lần hậu tố / tiếng gọi từng hệ). `scan_names` của names.py. */
+    fun scanNames(texts: Sequence<String>): Scan {
         val found = LinkedHashMap<String, Int>()
         val suffixed = LinkedHashMap<String, Int>()
+        val terms = LinkedHashMap<String, Int>()
         for (text in texts) {
             for (range in WordTokens.tokens(text)) {
                 val (_, core, _) = splitToken(text.substring(range.first, range.last + 1))
+                if (core.length >= 3 && core.all { it.code < 128 }) {
+                    val term = termOrigin(core)
+                    if (term != null) terms[term] = (terms[term] ?: 0) + 1
+                }
                 if (core.length < 2 || !core[0].isUpperCase()) continue
                 val head = head(core)
                 if (head != null && !knownWord(head)) {
@@ -274,39 +303,59 @@ object Names {
                 }
             }
         }
-        return found to suffixed
+        return Scan(found, suffixed, terms)
     }
 
-    fun nameCounts(texts: Sequence<String>): Map<String, Int> = scanNames(texts).first
+    fun nameCounts(texts: Sequence<String>): Map<String, Int> = scanNames(texts).found
 
     class Shares(
         val total: Int, val names: Int, val ja: Double, val ko: Double, val koOnly: Double, val jaNames: Int, val koNames: Int,
-        val honorific: Int = 0, val honorificNames: Int = 0,
+        val honorific: Int = 0, val honorificNames: Int = 0, val jaMarked: Int = 0, val koMarked: Int = 0, val jaTerms: Int = 0, val koTerms: Int = 0,
     )
 
-    fun originShares(counts: Map<String, Int>, suffixed: Map<String, Int> = emptyMap()): Shares {
+    /** Tên chỉ romaji đọc được (RR không) mà đọc ra từ [JA_MARKED_SYLLABLES] âm tiết - `marked_ja`. */
+    private fun markedJa(byJa: String?, byKo: String?) = byJa != null && byKo == null && byJa.replace(" ", "-").split("-").size >= JA_MARKED_SYLLABLES
+
+    /** Tên chỉ RR đọc được (romaji không) mà có cặp chữ đặc trưng Hàn ([KO_MARKS]) - `marked_ko`. */
+    private fun markedKo(name: String, byJa: String?, byKo: String?): Boolean {
+        val lowered = lower(name)
+        return byKo != null && byJa == null && KO_MARKS.any { it in lowered }
+    }
+
+    fun originShares(counts: Map<String, Int>, suffixed: Map<String, Int> = emptyMap(), terms: Map<String, Int> = emptyMap()): Shares {
         val total = counts.values.sum()
         var ja = 0
         var ko = 0
         var koOnly = 0
         var jaNames = 0
         var koNames = 0
+        var jaMarked = 0
+        var koMarked = 0
         for ((name, times) in counts) {
-            val byJa = Romanization.reading(name, "ja") != null
-            val byKo = Romanization.reading(name, "ko") != null
+            val readJa = Romanization.reading(name, "ja")
+            val readKo = Romanization.reading(name, "ko")
+            val byJa = readJa != null
+            val byKo = readKo != null
             if (byJa) ja += times
             if (byKo) ko += times
             if (byKo && !byJa) koOnly += times
             if (byJa) jaNames++
             if (byKo) koNames++
+            if (markedJa(readJa, readKo)) jaMarked++
+            if (markedKo(name, readJa, readKo)) koMarked++
         }
         fun share(value: Int) = if (total == 0) 0.0 else value.toDouble() / total
         val honorific = suffixed.filterKeys { Romanization.reading(it, "ja") != null }
-        return Shares(total, counts.size, share(ja), share(ko), share(koOnly), jaNames, koNames, honorific.values.sum(), honorific.size)
+        return Shares(total, counts.size, share(ja), share(ko), share(koOnly), jaNames, koNames, honorific.values.sum(), honorific.size, jaMarked, koMarked,
+            terms["ja"] ?: 0, terms["ko"] ?: 0)
     }
+
+    private fun leads(mine: Int, least: Int, other: Int) = mine >= least && mine >= MARKED_RATIO * other
 
     fun decide(shares: Shares): String? {
         if (shares.total < MIN_OCCURRENCES) return null
+        if (leads(shares.koMarked, KO_MARKED, shares.jaMarked) || leads(shares.koTerms, KO_TERMS, shares.jaTerms)) return "ko"
+        if (leads(shares.jaMarked, JA_MARKED, shares.koMarked) || leads(shares.jaTerms, JA_TERMS, shares.koTerms)) return "ja"
         if (shares.jaNames >= MIN_NAMES && shares.ja >= JA_SHARE) return "ja"
         if (shares.honorific >= HON_MIN && shares.honorificNames >= HON_NAMES && shares.jaNames >= MIN_NAMES && shares.ja >= HON_JA_SHARE) return "ja"
         if (shares.koNames >= MIN_NAMES && shares.ko >= KO_SHARE && shares.koOnly >= KO_ONLY_SHARE) return "ko"
@@ -315,5 +364,5 @@ object Names {
 
     /** "ja" / "ko" khi tên trong cuốn gần như toàn là romaji Nhật / RR Hàn, null khi không chắc. Chỉ `sample` chương đầu được xét (null = hết). */
     fun bookOrigin(texts: Sequence<String>, sample: Int? = SAMPLE_CHAPTERS): String? =
-        scanNames(if (sample == null) texts else texts.take(sample)).let { (counts, suffixed) -> decide(originShares(counts, suffixed)) }
+        scanNames(if (sample == null) texts else texts.take(sample)).let { decide(originShares(it.found, it.suffixed, it.terms)) }
 }
