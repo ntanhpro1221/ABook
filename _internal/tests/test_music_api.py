@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 from pathlib import Path
 from urllib.parse import quote
 
@@ -513,12 +514,13 @@ def test_warming_rebuilds_the_plan_around_a_track_that_cannot_be_fetched(studio,
     assert calls == [CALM, CALM2] and app.music_track_cached(CALM2) is not None
 
 
-def test_warming_offline_keeps_only_cached_tracks_and_stops(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+def test_warming_offline_keeps_the_plan_and_reports_it_and_stops(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
     import socket
     import urllib.error
     import urllib.request
 
     from abook.webui import music_plan
+    from abook.webui.server import MUSIC_OFFLINE_MESSAGE
 
     paths, app, server, _runner = studio
     _with_catalog(app, tmp_path)
@@ -532,10 +534,12 @@ def test_warming_offline_keeps_only_cached_tracks_and_stops(studio, tmp_path: Pa
         raise urllib.error.URLError(socket.gaierror(11001, "getaddrinfo failed"))
 
     monkeypatch.setattr(urllib.request, "urlopen", no_network)
+    old = (paths.root / "music_plan.json").read_bytes()
     app._warm_run(music_plan.read_plan(paths.root), book)
-    assert [scene["link"] for scene in music_plan.read_plan(paths.root)["scenes"]] == [None, None]
+    assert (paths.root / "music_plan.json").read_bytes() == old, "mạng rớt: giữ nguyên nhạc, không ghi plan trống"
     assert calls == [CALM], "hỏng vì mạng một lần là đủ biết offline, không chờ từng bài"
     assert not (app.music_dir / "unavailable.json").exists()
+    assert _call(server, "GET", f"/api/books/{book}/music")[1]["error"] == MUSIC_OFFLINE_MESSAGE, "người dùng phải biết vì sao"
     # Một bài đã có trong bộ đệm thì dùng được: lần dựng sau (vẫn offline) chọn nó thay vì im lặng.
     _cache(app, CALM2)
     _forced_plan(paths, CALM, count=2)
@@ -796,3 +800,95 @@ def test_a_book_without_a_music_plan_does_not_get_an_empty_one_while_offline(stu
     app._music_note("https://a.example/x.mp3", failed=False)
     status, data = _call(server, "POST", f"/api/books/{book}/music/rebuild")
     assert status == 200 and _linked(data["plan"])
+
+
+def test_a_download_round_that_loses_every_track_to_the_network_keeps_the_plan_and_says_why(  # noqa: F811
+        studio, tmp_path: Path, monkeypatch) -> None:
+    """Soát a36: "Chọn lại nhạc" lúc mạng vừa rớt (cờ nguồn chưa đặt) - vòng tải sẵn thất bại hết, plan phải giữ nguyên từng byte."""
+    import socket
+    import urllib.error
+    import urllib.request
+
+    from abook.webui import music_plan
+    from abook.webui.server import MUSIC_OFFLINE_MESSAGE
+
+    paths, app, server, _runner = studio
+    _two_host_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")  # có plan, có link (nguồn chưa bị đánh dấu hỏng)
+    plan_file = paths.root / "music_plan.json"
+    old = plan_file.read_bytes()
+    assert _linked(music_plan.read_plan(paths.root)) and not app._music_hosts
+
+    def no_network(request, timeout=0):
+        raise urllib.error.URLError(socket.gaierror(11001, "getaddrinfo failed"))
+
+    monkeypatch.setattr(urllib.request, "urlopen", no_network)
+    app._warm_run(music_plan.read_plan(paths.root), book)
+    # Vòng 1 hỏng ở nguồn a -> thử b (đổi link, vẫn đủ nhạc); vòng 2 hỏng nốt ở b -> giữ plan, không ghi plan trống.
+    assert len(_linked(music_plan.read_plan(paths.root))) == len(_linked(json.loads(old))), "mạng rớt không được xoá nhạc của cuốn"
+    status, view = _call(server, "GET", f"/api/books/{book}/music")
+    assert status == 200 and view["error"] == MUSIC_OFFLINE_MESSAGE and view["download"]["active"] is False
+    # Hết cửa sổ offline thì lời báo hết giá trị; dựng lại được thì cũng xoá.
+    app._music_clock = lambda: time.time() + 10_000
+    assert _call(server, "GET", f"/api/books/{book}/music")[1]["error"] == ""
+
+
+def test_a_download_round_replaces_scenes_lost_with_one_dead_host_onto_the_good_one(  # noqa: F811
+        studio, tmp_path: Path, monkeypatch) -> None:
+    import io
+    import socket
+    import urllib.error
+    import urllib.request
+
+    from abook.webui import music_plan
+
+    paths, app, server, _runner = studio
+    _two_host_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    plan = music_plan.read_plan(paths.root)
+    # Ép mọi đoạn dùng bài ở nguồn a.example (hỏng), rồi để vòng tải sẵn tự dựng lại sang b.example.
+    for scene in plan["scenes"]:
+        if scene.get("link"):
+            scene["link"] = scene["link"].replace("https://b.example/", "https://a.example/")
+    plan["tracks"] = {link.replace("https://b.example/", "https://a.example/"): info for link, info in plan["tracks"].items()}
+    (paths.root / "music_plan.json").write_bytes(json.dumps(plan).encode("utf-8"))
+
+    def open_(request, timeout=0):
+        if "a.example" in request.full_url:
+            raise urllib.error.URLError(socket.gaierror(11001, "getaddrinfo failed"))
+        return io.BytesIO(b"ID3" + b"\0" * 100)
+
+    monkeypatch.setattr(urllib.request, "urlopen", open_)
+    app._warm_run(music_plan.read_plan(paths.root), book)
+    rebuilt = _linked(music_plan.read_plan(paths.root))
+    assert rebuilt and all(link.startswith("https://b.example/") for link in rebuilt), rebuilt
+    assert all(app.music_track_cached(link) is not None for link in set(rebuilt))
+    assert _call(server, "GET", f"/api/books/{book}/music")[1]["error"] == ""
+
+
+def test_a_download_round_replaces_a_scene_whose_track_is_gone_with_http_404_even_if_another_host_is_down(  # noqa: F811
+        studio, tmp_path: Path, monkeypatch) -> None:
+    """Lỗi HTTP (404) không phải lỗi mạng: bài ấy bị thay như trước, không bị guard giữ lại."""
+    import io
+    import urllib.error
+    import urllib.request
+
+    from abook.webui import music_plan
+
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    _forced_plan(paths, CALM, count=3)
+
+    def open_(request, timeout=0):
+        if request.full_url == CALM:
+            raise urllib.error.HTTPError(request.full_url, 404, "gone", {}, None)
+        return io.BytesIO(b"ID3" + b"\0" * 100)
+
+    monkeypatch.setattr(urllib.request, "urlopen", open_)
+    app._warm_run(music_plan.read_plan(paths.root), book)
+    assert [scene["link"] for scene in music_plan.read_plan(paths.root)["scenes"]] == [CALM2] * 3
+    assert _call(server, "GET", f"/api/books/{book}/music")[1]["error"] == ""
