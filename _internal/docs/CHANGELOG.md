@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.60] - 2026-10-15
+
 ### Studio từ xa
 
 - Chương bạn gửi lên từ trình duyệt hay điện thoại (cả thư mục có nhiều tập, file cả truyện được tách chương, EPUB/DOCX/PDF) giờ cũng
