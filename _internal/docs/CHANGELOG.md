@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.64] - 2026-10-15
+
 ### Nhạc nền
 
 - Một nguồn nhạc bị lỗi mạng giờ chỉ tạm nghỉ riêng nguồn ấy, các bài ở nguồn khác vẫn dùng bình thường. Khi mất mạng thật, "Chọn lại nhạc" không còn ghi
