@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.65] - 2026-10-15
+
 ### Nhạc nền
 
 - Bấm "Chọn lại nhạc" đúng lúc mạng vừa rớt không còn làm mất nhạc đang có: nhạc cũ được giữ nguyên và bạn thấy thông báo "Không tải được nhạc vì mất mạng" ngay cả ở lần bấm đầu tiên.
