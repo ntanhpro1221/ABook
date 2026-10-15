@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button, Segmented } from "@/shared/ui";
 import { useAvailableModelNames } from "@/studio/AnalysisModelPicker";
-import { useAppInfo, usePreferences, useVoices } from "@/studio/data";
+import { useBookTemplateOp, usePreferences, useVoices } from "@/studio/data";
 import {
   DEFAULT_LABEL,
   NAME_MAX,
@@ -18,14 +18,13 @@ import {
   nameProblem,
   templateFromDraft,
   templatesOf,
-  upsertTemplate,
   type BookTemplate,
   type TemplateFields,
 } from "@/studio/bookTemplates";
 
 // "Mẫu thiết lập" ở trình tạo sách: chọn một mẫu đã lưu thì giọng kể, chất lượng, model đọc hiểu và "bắt đầu ngay" của nháp
-// theo mẫu (nguồn truyện, tên sách... không đụng tới); "Lưu thành mẫu…" chụp các lựa chọn hiện tại. Qua Studio từ xa chỉ chọn
-// được - ghi tuỳ chọn là việc của chính máy tính (remote_studio.py không mở PUT /api/preferences), nên nút lưu ẩn đi.
+// theo mẫu (nguồn truyện, tên sách... không đụng tới); "Lưu thành mẫu…" chụp các lựa chọn hiện tại. Lưu là MỘT thao tác gửi lên
+// máy tính (useBookTemplateOp, POST /api/book-templates) nên Studio từ xa lưu được như trên máy tính; trùng tên thì hỏi ghi đè.
 export function TemplateBar({ draft, onPick, narratorAuto = false }: {
   draft: TemplateFields;
   /** Giọng kể đang do máy chọn (bạn chưa bấm giọng nào): mẫu lưu ra ghi "máy chọn", không ghim tên giọng. */
@@ -33,9 +32,8 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
   /** null = "Mặc định": các lựa chọn mặc định của app cho sách mới. */
   onPick: (template: BookTemplate | null) => void;
 }) {
-  const { data: preferences, update, updating } = usePreferences();
-  const { data: info } = useAppInfo();
-  const remote = Boolean(info?.remote);
+  const { data: preferences } = usePreferences();
+  const { run, running } = useBookTemplateOp();
   const templates = templatesOf(preferences?.bookTemplates);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
@@ -55,7 +53,6 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
   const lostModel = missingModel(active, modelNames);
   const { data: voices } = useVoices();
   const lostVoice = missingVoice(active, voices?.map((voice) => voice.name));
-  if (!templates.length && remote) return null;
 
   const close = () => {
     setSaving(false);
@@ -74,8 +71,9 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
       return;
     }
     const saved = templateFromDraft(draft, name, narratorAuto);
-    update(
-      { bookTemplates: upsertTemplate(templates, saved) },
+    // Trùng tên: máy tính giữ chỗ cũ của mẫu và chỉ đè khi đã được hỏi ("replace"). Máy khác vừa lưu cùng tên (409): danh sách tải lại, bấm Lưu lần nữa sẽ hỏi ghi đè.
+    run(
+      { op: "save", template: saved, replace: Boolean(existing) },
       {
         onSuccess: () => {
           toast.success(`Đã lưu mẫu “${saved.name}”`);
@@ -103,7 +101,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
             ]}
           />
         )}
-        {!remote && !saving && (
+        {!saving && (
           <Button
             ref={saveButton}
             size="sm"
@@ -124,7 +122,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
       )}
       {lostVoice && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingVoiceNote(lostVoice)}</p>}
       {lostModel && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingModelNote(lostModel)}</p>}
-      {!templates.length && !saving && !remote && (
+      {!templates.length && !saving && (
         <p className="mt-2 text-[0.8125rem] text-fg-2">Lưu các lựa chọn dưới đây thành mẫu để dùng lại cho những cuốn sau.</p>
       )}
       {saving && (
@@ -155,7 +153,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
             />
             {confirming ? (
               <>
-                <Button type="submit" size="sm" variant="primary" loading={updating}>
+                <Button type="submit" size="sm" variant="primary" loading={running}>
                   Ghi đè
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
@@ -164,7 +162,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
               </>
             ) : (
               <>
-                <Button type="submit" size="sm" variant="primary" loading={updating} disabled={!cleanName(name)}>
+                <Button type="submit" size="sm" variant="primary" loading={running} disabled={!cleanName(name)}>
                   Lưu
                 </Button>
                 <Button size="sm" variant="ghost" onClick={close}>

@@ -10,16 +10,9 @@ import { openExternal } from "@/shared/openExternal";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences, useVoices } from "@/studio/data";
 import { StudioSettings } from "@/studio/StudioSetup";
-import {
-  NAME_MAX,
-  PROFILE_LABEL,
-  nameProblem,
-  removeTemplate,
-  renameTemplate,
-  templatesOf,
-  type BookTemplate,
-} from "@/studio/bookTemplates";
+import { PROFILE_LABEL } from "@/studio/bookTemplates";
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
+import { BookTemplates } from "./BookTemplates";
 import { SupertonicModuleCard, VieneuModuleCard } from "@/listen/VieneuModuleCard";
 import { EXTEND_GESTURE } from "@/listen/extendGesture";
 import { LETTER_SHORTCUTS_HINT, ShortcutList } from "@/listen/Shortcuts";
@@ -72,103 +65,6 @@ function NewBookDefaults() {
           ))}
         </select>
       </label>
-    </div>
-  );
-}
-
-// Mẫu thiết lập đã lưu từ trình tạo sách (studio/bookTemplates.ts): đổi tên, xoá (có "Hoàn tác"). Lưu mẫu mới làm ở trình tạo.
-function BookTemplates() {
-  const { data: preferences, update } = usePreferences();
-  const templates = templatesOf(preferences?.bookTemplates);
-  const [renaming, setRenaming] = useState<string | null>(null);
-  const [typed, setTyped] = useState("");
-  const [problem, setProblem] = useState("");
-  const save = (next: BookTemplate[], onSuccess?: () => void) =>
-    update({ bookTemplates: next }, { onSuccess, onError: (error) => toast.error("Không lưu được mẫu", { description: error.message }) });
-  const finishRename = (from: string) => {
-    const wrong = nameProblem(templates, typed, from);
-    if (wrong) {
-      setProblem(wrong);
-      return;
-    }
-    save(renameTemplate(templates, from, typed), () => setRenaming(null));
-  };
-  const remove = (template: BookTemplate) =>
-    save(removeTemplate(templates, template.name), () =>
-      toast(`Đã xoá mẫu “${template.name}”`, { duration: 10000, action: { label: "Hoàn tác", onClick: () => save(templates) } }),
-    );
-  return (
-    <div className="mb-4 max-w-xl">
-      <div className="text-sm font-medium">Mẫu thiết lập cho sách mới</div>
-      <p className="mt-0.5 text-[0.8125rem] text-fg-2 text-pretty">
-        Bộ lựa chọn đặt tên sẵn (giọng kể, chất lượng...) để chọn lại ở trình tạo sách; “Mặc định” ở đó là giọng kể và chất lượng đặt
-        ngay phía trên. Muốn lưu mẫu mới: chọn xong ở trình tạo sách rồi bấm “Lưu thành mẫu…”.
-      </p>
-      {!templates.length ? (
-        <p className="mt-2 text-[0.8125rem] text-fg-3">Chưa có mẫu nào.</p>
-      ) : (
-        <ul className="mt-2 divide-y divide-line rounded-lg border border-line">
-          {templates.map((template) => (
-            <li key={template.name} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2">
-              {renaming === template.name ? (
-                <form
-                  className="flex min-w-0 flex-1 flex-wrap items-center gap-2"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    finishRename(template.name);
-                  }}
-                >
-                  <input
-                    autoFocus
-                    value={typed}
-                    maxLength={NAME_MAX}
-                    aria-label={`Tên mới của mẫu “${template.name}”`}
-                    aria-invalid={Boolean(problem)}
-                    onChange={(event) => {
-                      setTyped(event.target.value);
-                      setProblem("");
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") setRenaming(null);
-                    }}
-                    className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus:border-focus"
-                  />
-                  <Button type="submit" size="sm" variant="primary" disabled={!typed.trim()}>
-                    Lưu
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setRenaming(null)}>
-                    Huỷ
-                  </Button>
-                  {problem && <p role="alert" className="basis-full text-[0.8125rem] text-danger">{problem}</p>}
-                </form>
-              ) : (
-                <>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{template.name}</div>
-                    <div className="truncate text-[0.8125rem] text-fg-2">
-                      {[template.narrator || "Giọng máy đề xuất", PROFILE_LABEL[template.profile], template.startNow ? "bắt đầu ngay" : "chờ bấm bắt đầu", ...(template.precastWait ? ["chờ bạn duyệt trước khi thu"] : [])].join(" · ")}
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setRenaming(template.name);
-                      setTyped(template.name);
-                      setProblem("");
-                    }}
-                  >
-                    Đổi tên
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => remove(template)}>
-                    Xoá
-                  </Button>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
@@ -333,6 +229,11 @@ export function SettingsScreen() {
                 : "Sách, dự án và việc sản xuất ở đây là của máy tính."}{" "}
               Cài đặt của máy tính - thư mục thư viện, giao diện, hẹn giờ ngủ, thiết bị đã ghép - chỉ đổi được trên chính máy tính.
             </p>
+          </Section>
+        )}
+        {remote && !info?.listenOnly && (
+          <Section id="templates" title="Mẫu thiết lập" description="Bộ lựa chọn đặt tên sẵn cho sách mới - đổi tên, xoá được ngay từ đây.">
+            <BookTemplates />
           </Section>
         )}
         {!info?.listenOnly && (

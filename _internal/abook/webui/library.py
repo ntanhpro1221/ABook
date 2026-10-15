@@ -23,7 +23,7 @@ import re
 import secrets
 import threading
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -112,6 +112,85 @@ def clean_book_templates(raw: Any, voice_names: set[str]) -> list[dict[str, Any]
         cleaned.append({"name": name, "narrator": narrator.strip(), "profile": item["profile"],
                         "analysisModel": model.strip(), "startNow": start_now, "precastWait": precast_wait})
     return cleaned
+
+
+class BookTemplateError(ValueError):
+    """Một thao tác mẫu không làm được: `status` = 400 (sai dạng), 404 (mẫu không còn - máy khác vừa xoá), 409 (trùng tên)."""
+
+    def __init__(self, status: int, message: str) -> None:
+        super().__init__(message)
+        self.status = status
+
+
+def _template_key(name: Any) -> str:
+    return " ".join(name.split()).casefold() if isinstance(name, str) else ""
+
+
+def apply_book_template_op(templates: list[dict[str, Any]], body: dict[str, Any], voice_names: set[str]) -> list[dict[str, Any]]:
+    """Một thao tác của `POST /api/book-templates` áp lên danh sách mẫu MỚI NHẤT -> danh sách sau thao tác (đã qua `clean_book_templates`).
+
+    Ghi cả danh sách từ giao diện là cách hai thiết bị đè mất mẫu của nhau; ở đây mỗi thiết bị chỉ nói việc mình làm: `save`
+    (thêm, hay `replace` đè mẫu trùng tên tại chỗ), `rename`, `delete`, `restore` (đặt lại ở chỗ cũ - "Hoàn tác" sau khi xoá).
+    Mẫu không còn -> 404, trùng tên -> 409, sai dạng -> 400 (cùng lời báo của `clean_book_templates`)."""
+    op = body.get("op")
+    current = list(templates)
+
+    def find(name: Any) -> int:
+        key = _template_key(name)
+        return next((at for at, item in enumerate(current) if _template_key(item.get("name")) == key), -1)
+
+    def missing(name: Any) -> BookTemplateError:
+        return BookTemplateError(404, f"Không còn mẫu “{' '.join(str(name).split())}”")
+
+    def one(raw: Any) -> dict[str, Any]:
+        if not isinstance(raw, dict):
+            raise BookTemplateError(400, "Mẫu không hợp lệ")
+        return clean_book_templates([raw], voice_names)[0]
+
+    if op == "save":
+        replace = body.get("replace", False)
+        if not isinstance(replace, bool):
+            raise BookTemplateError(400, "Thao tác mẫu không hợp lệ")
+        template = one(body.get("template"))
+        at = find(template["name"])
+        if at < 0:
+            current.append(template)
+        elif replace:
+            current[at] = template
+        else:
+            raise BookTemplateError(409, f"Đã có mẫu tên “{template['name']}”")
+    elif op == "rename":
+        if not isinstance(body.get("from"), str) or not isinstance(body.get("to"), str):
+            raise BookTemplateError(400, "Thao tác mẫu không hợp lệ")
+        at = find(body["from"])
+        if at < 0:
+            raise missing(body["from"])
+        target = " ".join(body["to"].split())
+        clash = find(target)
+        if clash >= 0 and clash != at:
+            raise BookTemplateError(409, f"Đã có mẫu tên “{target}”")
+        current[at] = {**current[at], "name": target}
+    elif op == "delete":
+        if not isinstance(body.get("name"), str):
+            raise BookTemplateError(400, "Thao tác mẫu không hợp lệ")
+        at = find(body["name"])
+        if at < 0:
+            raise missing(body["name"])
+        del current[at]
+    elif op == "restore":
+        index = body.get("index")
+        if not isinstance(index, int) or isinstance(index, bool):
+            raise BookTemplateError(400, "Thao tác mẫu không hợp lệ")
+        template = one(body.get("template"))
+        if find(template["name"]) >= 0:
+            raise BookTemplateError(409, f"Đã có mẫu tên “{template['name']}”")
+        current.insert(max(0, min(index, len(current))), template)
+    else:
+        raise BookTemplateError(400, "Thao tác mẫu không hợp lệ")
+    try:
+        return clean_book_templates(current, voice_names)
+    except ValueError as error:
+        raise BookTemplateError(400, str(error)) from error
 
 
 APP_DATA_FOLDER = "ABook"
@@ -368,11 +447,23 @@ class Preferences:
         with self._lock:
             return json.loads(json.dumps(self._data))
 
+    def _apply(self, changes: dict[str, Any]) -> None:
+        for key, value in changes.items():
+            if key in DEFAULT_PREFERENCES and _fits(key, value) and not (key == "libraryRoot" and not value.strip()):
+                self._data[key] = value
+
     def update(self, changes: dict[str, Any]) -> dict[str, Any]:
         with self._changing():
-            for key, value in changes.items():
-                if key in DEFAULT_PREFERENCES and _fits(key, value) and not (key == "libraryRoot" and not value.strip()):
-                    self._data[key] = value
+            self._apply(changes)
+            self._save()
+            return json.loads(json.dumps(self._data))
+
+    def modify(self, change: Callable[[dict[str, Any]], dict[str, Any]]) -> dict[str, Any]:
+        """Sửa theo giá trị MỚI NHẤT: `change` nhận tuỳ chọn hiện có (bản sao, sau khi đọc lại file nếu tiến trình khác vừa ghi) và trả những
+        khoá cần đổi. Cả đọc lẫn ghi nằm trong cùng một khoá như `update` - hai thiết bị cùng sửa một danh sách (mẫu thiết lập) không đè
+        mất nhau. `change` ném lỗi thì không ghi gì."""
+        with self._changing():
+            self._apply(change(json.loads(json.dumps(self._data))))
             self._save()
             return json.loads(json.dumps(self._data))
 
