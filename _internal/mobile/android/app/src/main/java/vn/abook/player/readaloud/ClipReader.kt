@@ -27,6 +27,10 @@ class ClipReader(
          *  (readAloudVoice.ts), thay "đang chọn" bằng tên giọng và đưa nút theo tình huống: "Đọc bằng …" nếu đã có giọng chạy trên máy, "Tải giọng VieNeu" nếu chưa. */
         const val NO_OFFLINE_LEAD = "Không có mạng - giọng "
         const val NO_OFFLINE_VOICE = "${NO_OFFLINE_LEAD}đang chọn cần mạng."
+        /** Có mạng mà giọng trực tuyến vẫn hỏng (dịch vụ từ chối - Edge 403 -, trả lỗi, không phản hồi) và máy không có giọng nào đọc không cần mạng: cùng đường ra như
+         *  [NO_OFFLINE_VOICE]. Giao diện (readAloudVoice.ts `isVoiceStuck`) nhận ra dạng "Giọng … đang không dùng được.", thay "đang chọn" bằng tên giọng. */
+        const val NO_USABLE_VOICE = "Giọng đang chọn đang không dùng được."
+        private val TROUBLE_REASONS = setOf("rejected", "service", "timeout")
 
         private fun provider(voice: Voice) = voice.id.substringBefore(':')
         /** Đọc trên máy nhưng có thể chưa sẵn sàng (mô-đun tải thêm): hỏng thì đỡ bằng giọng của máy. */
@@ -69,8 +73,12 @@ class ClipReader(
             }
         }.distinctBy { it.id }
         val noOfflineVoice = chain.all { online(it) }
-        fun offlineHelp(error: VoiceException?) =
-            if (noOfflineVoice && error?.offline == true) VoiceException(NO_OFFLINE_VOICE, offline = true, cause = error, reason = error.reason) else null
+        fun offlineHelp(error: VoiceException?) = when {
+            !noOfflineVoice || error == null -> null
+            error.offline -> VoiceException(NO_OFFLINE_VOICE, offline = true, cause = error, reason = error.reason)
+            error.reason in TROUBLE_REASONS -> VoiceException(NO_USABLE_VOICE, cause = error, reason = error.reason)
+            else -> null
+        }
         var first: VoiceException? = null // lỗi của giọng đã chọn: câu chính khi mọi giọng đều hỏng
         var failed: Voice? = null
         var problem: VoiceException? = null

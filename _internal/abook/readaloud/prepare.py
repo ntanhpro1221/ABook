@@ -27,25 +27,39 @@ def bytes_per_second(voice: str) -> int:
     return next((rate for prefix, rate in BYTES_PER_SECOND.items() if voice.startswith(prefix)), OTHER_BYTES_PER_SECOND)
 
 
-def accept(voice: str, texts: list[str], budget: int) -> list[str]:
-    """Các đoạn đầu tiên (theo thứ tự) vừa `budget` byte bộ đệm; luôn nhận ít nhất một đoạn."""
-    out: list[str] = []
+def fit(voice: str, chars: list[int], budget: int) -> int:
+    """Bao nhiêu phần đầu (đoạn hay chương, mỗi phần có `chars` ký tự) vừa `budget` byte bộ đệm; luôn nhận ít nhất một."""
     used = 0.0
     rate = bytes_per_second(voice)
-    for text in texts:
-        size = len(text) / CHARS_PER_SECOND * rate
-        if out and used + size > budget:
+    count = 0
+    for size in (n / CHARS_PER_SECOND * rate for n in chars):
+        if count and used + size > budget:
             break
-        out.append(text)
+        count += 1
         used += size
-    return out
+    return count
+
+
+def accept(voice: str, texts: list[str], budget: int) -> list[str]:
+    """Các đoạn đầu tiên (theo thứ tự) vừa `budget` byte bộ đệm; luôn nhận ít nhất một đoạn."""
+    return texts[:fit(voice, [len(text) for text in texts], budget)]
+
+
+def estimate(voice: str, chapter_chars: list[int], budget: int, rtf: float | None) -> dict[str, Any]:
+    """Ước trước khi bấm "Làm trước" (cùng hình dạng `PreparePlan` của ui/src/listen/prepareAhead.ts, như PreparePlan.kt trên điện thoại): số chương nhận
+    (vừa phần bộ đệm dành cho làm trước), giờ nghe của phần ấy, máy cần bao lâu (None: chưa đo tốc độ giọng này). Chương không có chữ thì bỏ."""
+    sizes = [n for n in chapter_chars if n > 0]
+    taken = sizes[:fit(voice, sizes, budget)]
+    chars = sum(taken)
+    return {"chapters": len(taken), "offered": len(sizes), "audioSeconds": round(chars / CHARS_PER_SECOND),
+            "secondsEstimate": round(chars / CHARS_PER_SECOND * rtf) if rtf and taken else None}
 
 
 class Prepare:
-    """`clip(voice, text, origin, readings)`: ReadAloud.clip (đánh dấu là việc nền; `origin`, `readings`: gốc và cách đọc riêng của cuốn, xem `start`); `live()`: số clip của người đang nghe đang làm; `budget`: byte bộ đệm dành
+    """`clip(voice, text, origin, readings, book)`: ReadAloud.clip (đánh dấu là việc nền; `origin`, `readings`, `book`: gốc, cách đọc riêng và mã của cuốn, xem `start`); `live()`: số clip của người đang nghe đang làm; `budget`: byte bộ đệm dành
     cho việc làm trước; `rtf(voice)`: tốc độ đo được của giọng (ước thời gian lúc chưa làm đoạn nào), None nếu chưa đo."""
 
-    def __init__(self, clip: Callable[[str, str, str | None, Mapping[str, str] | None], Any], live: Callable[[], int], budget: int,
+    def __init__(self, clip: Callable[[str, str, str | None, Mapping[str, str] | None, str | None], Any], live: Callable[[], int], budget: int,
                  rtf: Callable[[str], float | None] = lambda _voice: None) -> None:
         self._clip, self._live, self.budget, self._rtf = clip, live, budget, rtf
         self._lock = threading.Lock()
@@ -54,8 +68,9 @@ class Prepare:
         self._job: dict[str, Any] = {"state": "idle"}
 
     def start(self, voice: str, texts: list[str], label: str = "", origin: str | None = None,
-              readings: Mapping[str, str] | None = None) -> dict[str, Any]:
-        """`origin`: gốc của cuốn ("ja" / "ko"), `readings`: cách đọc riêng của cuốn - cùng thứ người nghe sẽ dùng, nên cùng khoá bộ đệm với lúc nghe."""
+              readings: Mapping[str, str] | None = None, book: str | None = None) -> dict[str, Any]:
+        """`origin`: gốc của cuốn ("ja" / "ko"), `readings`: cách đọc riêng của cuốn - cùng thứ người nghe sẽ dùng, nên cùng khoá bộ đệm với lúc nghe;
+        `book`: mã cuốn, để clip làm ra được tính vào "bản đọc đã làm" của cuốn (ClipBooks)."""
         texts = [text for text in texts if isinstance(text, str) and text.strip()]
         taken = accept(voice, texts, self.budget)
         self.cancel()
@@ -65,9 +80,13 @@ class Prepare:
                          "done": 0, "failed": 0, "chars": sum(len(text) for text in taken), "charsDone": 0, "charsTimed": 0, "seconds": 0.0,
                          "audioSeconds": round(sum(len(text) for text in taken) / CHARS_PER_SECOND), "error": "", "started": time.time()}
             if taken:
-                self._thread = threading.Thread(target=self._run, args=(voice, taken, self._stop, origin, readings), name="readaloud-prepare", daemon=True)
+                self._thread = threading.Thread(target=self._run, args=(voice, taken, self._stop, origin, readings, book), name="readaloud-prepare", daemon=True)
                 self._thread.start()
         return self.status()
+
+    def plan(self, voice: str, chapter_chars: list[int]) -> dict[str, Any]:
+        """Ước trước khi bấm (xem [estimate]) với phần bộ đệm dành cho làm trước và tốc độ đo được của giọng."""
+        return estimate(voice, chapter_chars, self.budget, self._rtf(voice))
 
     def cancel(self) -> None:
         self._stop.set()
@@ -95,7 +114,8 @@ class Prepare:
                 job["secondsLeft"] = round(left / CHARS_PER_SECOND * rtf) if rtf else None
         return job
 
-    def _run(self, voice: str, texts: list[str], stop: threading.Event, origin: str | None, readings: Mapping[str, str] | None) -> None:
+    def _run(self, voice: str, texts: list[str], stop: threading.Event, origin: str | None, readings: Mapping[str, str] | None,
+             book: str | None) -> None:
         for text in texts:
             while self._live() > 0 and not stop.is_set():  # người đang nghe đi trước
                 time.sleep(0.2)
@@ -103,7 +123,7 @@ class Prepare:
                 return
             began = time.perf_counter()
             try:
-                self._clip(voice, text, origin, readings)
+                self._clip(voice, text, origin, readings, book)
                 ok = True
             except VoiceError as error:
                 ok = False

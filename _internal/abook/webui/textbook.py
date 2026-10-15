@@ -176,9 +176,10 @@ def add_to_library(source: Path, title: str | None, library_root: Path, projects
     `picks`: các chương người dùng tích ở bước xem trước (+ tên mới, `picks_from_json`); không có thì các chương mặc định.
     `footnotes`: đề xuất về chú thích người dùng đã tích (`importers.footnote_choice_from_json`); không có thì như trong sách.
     `importers.ImportFailed` / `bookfile.BookFileError` khi không nhập được."""
-    book = importers.import_text(source, split_chapters=split_chapters, keep_short=picks is not None, footnotes=footnotes)
-    if picks is not None:
-        book = importers.select_chapters(book, picks)
+    # Danh sách chương như bước xem trước (mục rất ngắn vẫn nằm trong đó); không có `picks` thì đúng các chương xem trước đã tích sẵn
+    # (`default_picks`: bỏ mục rất ngắn VÀ mục không phải truyện như trang tên sách) - cuốn thêm vào là cuốn người dùng đã thấy.
+    book = importers.import_text(source, split_chapters=split_chapters, keep_short=True, footnotes=footnotes)
+    book = importers.select_chapters(book, picks if picks is not None else importers.default_picks(book))
     if title and store.clean_title(title):
         book.title = title
     with tempfile.TemporaryDirectory(prefix="abook-text-") as scratch:

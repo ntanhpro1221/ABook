@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "@/studio/api";
 import { useClip } from "./clip";
+import { READINGS_CHANGED_EVENT, type ReadingsChanged } from "./readAloud";
 import { refreshAfterEdit } from "./EditBook";
 import { chosenVoice, resolveVoice } from "./readAloudVoice";
 import { useReadAloudVoices, useSource } from "./source";
@@ -122,9 +123,13 @@ export function useSaveReading(bookId: string) {
   return useMutation({
     mutationFn: ({ surface, spoken }: BookReading) =>
       api<{ readings: BookReading[] }>(`/api/books/${bookId}/readings`, { method: "PUT", body: { surface, spoken: cleanSpoken(spoken) } }),
-    onSuccess: (view) => {
+    onSuccess: (view, { surface }) => {
       client.setQueryData(["book", bookId, "readings"], view.readings);
       refreshAfterEdit(client, bookId);
+      // Đoạn có từ này mà trình phát đã đọc sẵn (clip nằm trong bộ nhớ của trang) phải được đọc lại, không giữ cách đọc cũ tới khi tải lại trang (soát a38).
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent<ReadingsChanged>(READINGS_CHANGED_EVENT, { detail: { bookId, surfaces: [wordCore(surface)] } }));
+      }
     },
   });
 }

@@ -85,6 +85,42 @@ class ClipCache:
     def mime(file: str) -> str:
         return TYPES.get(file.rsplit(".", 1)[-1], "application/octet-stream")
 
+    def usage(self, keys: "set[str] | frozenset[str]") -> tuple[int, set[str]]:
+        """Byte của các clip trong `keys` còn nằm trong bộ đệm, và tập khoá còn lại (clip đã bị dọn khỏi đĩa thì không có)."""
+        used, present = 0, set()
+        for key in keys:
+            size = sum(self._size_of(self.folder / f"{key}.{ext}") for ext in ("json", *TYPES))
+            if size:
+                used += size
+                present.add(key)
+        return used, present
+
+    def remove(self, keys: "set[str] | frozenset[str]") -> int:
+        """Xoá các clip trong `keys` khỏi bộ đệm; trả số byte giải phóng."""
+        freed = 0
+        with self._lock:
+            for key in keys:
+                for ext in ("json", *TYPES):
+                    path = self.folder / f"{key}.{ext}"
+                    size = self._size_of(path)
+                    if not size:
+                        continue
+                    try:
+                        path.unlink()
+                    except OSError:
+                        continue
+                    freed += size
+            if self._size is not None:
+                self._size = max(0, self._size - freed)
+        return freed
+
+    @staticmethod
+    def _size_of(path: Path) -> int:
+        try:
+            return path.stat().st_size
+        except OSError:
+            return 0
+
     def _write(self, path: Path, data: bytes) -> None:
         temp = path.with_name(path.name + ".part")
         temp.write_bytes(data)
@@ -130,3 +166,65 @@ class ClipCache:
                         self._size = (self._size or 0) - size
                     except OSError:
                         pass
+
+
+class ClipBooks:
+    """Cuốn nào đã làm ra clip nào ("bản đọc đã làm" của cuốn): khoá clip là băm nên bộ đệm tự nó không biết clip thuộc cuốn nào.
+    Ghi nối thêm từng dòng JSON `[cuốn, khoá]` ở file cạnh thư mục bộ đệm (không nằm trong đó - bộ đệm tự dọn file lâu không dùng). Khoá của clip đã bị
+    bộ đệm dọn thì bỏ ở lần hỏi kế; clip làm trước khi có file này không thuộc cuốn nào (chỉ có trong tổng)."""
+
+    def __init__(self, path: Path | str) -> None:
+        self.path = Path(path)
+        self._lock = threading.Lock()
+        self._books: dict[str, set[str]] | None = None
+
+    def _load(self) -> dict[str, set[str]]:
+        if self._books is None:
+            books: dict[str, set[str]] = {}
+            try:
+                lines = self.path.read_bytes().decode("utf-8").splitlines()
+            except OSError:
+                lines = []
+            for line in lines:
+                try:
+                    book, key = json.loads(line)
+                except (ValueError, TypeError):
+                    continue
+                if isinstance(book, str) and isinstance(key, str):
+                    books.setdefault(book, set()).add(key)
+            self._books = books
+        return self._books
+
+    def note(self, book: str, key: str) -> None:
+        with self._lock:
+            keys = self._load().setdefault(book, set())
+            if key in keys:
+                return
+            keys.add(key)
+            try:
+                self.path.parent.mkdir(parents=True, exist_ok=True)
+                with self.path.open("ab") as handle:
+                    handle.write(json.dumps([book, key], ensure_ascii=False).encode("utf-8") + b"\n")
+            except OSError:
+                pass  # chỉ là sổ ghi chú: mất dòng này thì clip chỉ không được tính cho cuốn
+
+    def keys(self, book: str) -> set[str]:
+        with self._lock:
+            return set(self._load().get(book, ()))
+
+    def forget(self, book: str, keys: "set[str] | frozenset[str]") -> None:
+        """Bỏ `keys` khỏi sổ của `book` (đã xoá khỏi bộ đệm, hay đã bị dọn) và ghi lại file gọn."""
+        with self._lock:
+            books = self._load()
+            if book in books:
+                books[book] -= set(keys)
+                if not books[book]:
+                    del books[book]
+            body = b"".join(json.dumps([name, key], ensure_ascii=False).encode("utf-8") + b"\n" for name, keys_ in books.items() for key in sorted(keys_))
+            try:
+                self.path.parent.mkdir(parents=True, exist_ok=True)
+                temp = self.path.with_name(self.path.name + ".part")
+                temp.write_bytes(body)
+                os.replace(temp, self.path)
+            except OSError:
+                pass

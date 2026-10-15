@@ -1,7 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { setApiTransport, type ApiInit } from "@/studio/api";
 import type { ListenChapter } from "./model";
 import {
+  cacheLabel,
   canPrepare,
+  clearCacheQuestion,
   paragraphsFor,
   planLabel,
   prepareIntro,
@@ -14,6 +17,52 @@ import {
 
 const chapter = (id: number, state: "text" | null = "text"): ListenChapter =>
   ({ id, index: id, title: `Chương ${id}`, subtitle: "", fullTitle: "", duration: 0, available: state !== "text", state }) as ListenChapter;
+
+describe("bản đọc đã làm (máy tính)", () => {
+  it("nói bao nhiêu của cuốn này và cả máy", () => {
+    expect(cacheLabel({ book: 12.3 * 1024 ** 2, total: 148 * 1024 ** 2 })).toBe("Đã lưu 12 MB bản đọc của cuốn này (cả máy: 148 MB).");
+    expect(cacheLabel({ book: 0, total: 3 * 1024 ** 3 })).toBe("Cuốn này chưa lưu bản đọc nào (cả máy: 3 GB).");
+    expect(cacheLabel({ book: 0, total: 0 })).toBe("Cuốn này chưa lưu bản đọc nào (cả máy: chưa có).");
+  });
+
+  it("hỏi lại trước khi xoá, nói điều sẽ xảy ra", () => {
+    const question = clearCacheQuestion({ book: 5 * 1024 ** 2, total: 9 * 1024 ** 2 });
+    expect(question).toContain("5 MB");
+    expect(question).toContain("đọc lại");
+  });
+});
+
+afterEach(() => setApiTransport(null));
+
+describe("máy tính: ước trước khi làm trước và bản đọc đã làm", () => {
+  it("gửi số ký tự từng chương (đã bỏ dòng người nghe bỏ) để máy chủ ước", async () => {
+    const calls: [string, ApiInit | undefined][] = [];
+    setApiTransport(async (path, init) => {
+      calls.push([path, init]);
+      if (path.endsWith("/text")) return { text: path.includes("/chapters/2/") ? "Dịch: A\n\nĐoạn một." : "Hai ba." };
+      return { chapters: 2, offered: 2, audioSeconds: 3, secondsEstimate: null };
+    });
+    const { httpSource } = await import("@/desktop/httpSource");
+    const plan = await httpSource.readAloudPreparePlan!({ voice: "vieneu:turbo/A", bookId: "s", label: "", chapters: [{ ...chapter(2), skip: ["Dịch: A"] }, chapter(3)] });
+    expect(plan.chapters).toBe(2);
+    expect(calls.at(-1)).toEqual(["/api/readaloud/prepare/plan", { method: "POST", body: { voice: "vieneu:turbo/A", chars: [9, 7] } }]);
+  });
+
+  it("hỏi và xoá bản đọc đã làm của đúng cuốn", async () => {
+    const calls: [string, ApiInit | undefined][] = [];
+    setApiTransport(async (path, init) => {
+      calls.push([path, init]);
+      return { book: 0, total: 1 };
+    });
+    const { httpSource } = await import("@/desktop/httpSource");
+    await httpSource.readAloudCache!("sách a");
+    await httpSource.readAloudCacheClear!("sách a");
+    expect(calls).toEqual([
+      ["/api/readaloud/cache?bookId=s%C3%A1ch%20a", undefined],
+      ["/api/readaloud/cache?bookId=s%C3%A1ch%20a", { method: "DELETE" }],
+    ]);
+  });
+});
 
 describe("Làm trước", () => {
   it("lấy các chương chỉ có chữ ngay sau chương đang nghe", () => {

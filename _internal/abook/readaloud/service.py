@@ -11,7 +11,7 @@ from typing import Any, Callable, Mapping, Protocol
 
 from . import azure, edge, fpt, google, loudness, names, readings as book_readings, supertonic, vieneu, viettel, windows
 from .byok import KeyedProvider
-from .cache import ClipCache, clip_key
+from .cache import ClipBooks, ClipCache, clip_key
 from .keys import KeyStore
 from .mapping import fold, map_boundaries
 from .model import Synthesis, Voice, VoiceError
@@ -95,7 +95,9 @@ class ReadAloud:
         self._rtf = rtf
         # Gốc Nhật / Hàn của từng cuốn (máy đoán + người dùng ghi đè); cạnh thư mục bộ đệm, không nằm trong đó (bộ đệm dọn mọi file .json lâu không dùng).
         self.origins = names.BookOrigins(self.folder.with_name(self.folder.name + "-book-origins.json"))
-        self.prepare = Prepare(lambda voice, text, origin, readings: self.clip(voice, text, background=True, origin=origin, readings=readings),
+        # Cuốn nào đã làm ra clip nào ("bản đọc đã làm" của cuốn): cạnh thư mục bộ đệm như `origins`.
+        self.books = ClipBooks(self.folder.with_name(self.folder.name + "-clip-books.jsonl"))
+        self.prepare = Prepare(lambda voice, text, origin, readings, book: self.clip(voice, text, background=True, origin=origin, readings=readings, book=book),
                                lambda: self._live, int(self.cache.limit * PREPARE_SHARE), rtf)
 
     @property
@@ -167,12 +169,13 @@ class ReadAloud:
         return {**provider.check(), "provider": provider.describe()}
 
     def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False, origin: str | None = None,
-             readings: Mapping[str, str] | None = None) -> dict[str, Any]:
+             readings: Mapping[str, str] | None = None, book: str | None = None) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
         `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ. `origin`: gốc của cuốn ("ja" / "ko", `names.BookOrigins`) - giọng đọc
         trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); giọng khác bỏ qua.
         `readings`: cách đọc riêng của cuốn ({chữ hiện: chữ đọc}, readings.py) - MỌI giọng: giọng trên máy áp sau bước đọc tên, giọng khác nhận chữ
-        đem đọc đã thay (cùng số chữ, nên mốc từng chữ vẫn khớp chữ hiện); khoá bộ đệm có dấu của những cách đọc có trong đoạn."""
+        đem đọc đã thay (cùng số chữ, nên mốc từng chữ vẫn khớp chữ hiện); khoá bộ đệm có dấu của những cách đọc có trong đoạn.
+        `book`: mã cuốn đang nghe - clip được ghi vào sổ của cuốn để biết "bản đọc đã làm" của cuốn nặng bao nhiêu và xoá được ([cache_usage], [clear_book])."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
@@ -207,4 +210,23 @@ class ReadAloud:
                 with self._locks_guard:
                     self._locks.pop(key, None)
                     self._live -= 0 if background else 1
+        if book:
+            self.books.note(book, key)
         return {"file": hit.file, "duration_ms": hit.duration_ms, "words": hit.words}
+
+    def cache_usage(self, book: str | None) -> dict[str, int]:
+        """Dung lượng bản đọc đã làm: `book` (của cuốn này) và `total` (cả bộ đệm, mọi cuốn), tính bằng byte."""
+        mine = 0
+        if book:
+            keys = self.books.keys(book)
+            mine, present = self.cache.usage(keys)
+            if len(present) < len(keys):
+                self.books.forget(book, keys - present)  # bộ đệm đã dọn những clip này
+        return {"book": mine, "total": self.cache.size()}
+
+    def clear_book(self, book: str) -> dict[str, int]:
+        """Xoá bản đọc đã làm của cuốn `book` (chỉ clip nó đã làm ra / đã nghe; cuốn khác không bị đụng, trừ đoạn trùng chữ y hệt); trả [cache_usage] sau đó."""
+        keys = self.books.keys(book)
+        self.cache.remove(keys)
+        self.books.forget(book, keys)
+        return self.cache_usage(book)

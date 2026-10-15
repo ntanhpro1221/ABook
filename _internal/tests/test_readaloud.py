@@ -359,13 +359,24 @@ def test_a_silent_service_times_out(fake_edge) -> None:
     assert caught.value.reason in ("timeout", "offline")
 
 
-def test_the_gec_token_follows_the_published_recipe() -> None:
-    import hashlib
+GEC_VECTORS = json.loads((FIXTURES / "edge" / "gec_v2_vectors.json").read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("vector", GEC_VECTORS, ids=[str(v["unix_seconds"]) for v in GEC_VECTORS])
+def test_the_gec_token_matches_the_shared_v2_vectors(vector: dict) -> None:
+    # Vectors sinh bằng mã gốc của edge-tts 7.3.1 (drm.py); bản Kotlin (EdgeTokenTest) đọc cùng file.
+    assert edge.gec_token(vector["unix_seconds"], 0.0) == vector["token"]
+
+
+def test_the_gec_token_is_v2_shaped_and_stable_inside_a_five_minute_window() -> None:
+    import re
 
     now = 1_791_021_607.0  # 2026-10-03 10:00:07 UTC
-    ticks = int(((now + 11_644_473_600) - (now + 11_644_473_600) % 300) * 10_000_000)
-    assert edge.gec_token(now, 0.0) == hashlib.sha256(f"{ticks}{edge.TRUSTED_CLIENT_TOKEN}".encode()).hexdigest().upper()
-    assert edge.gec_token(now, 0.0) == edge.gec_token(now + 200, 0.0)  # cùng khung 5 phút
+    assert re.fullmatch(r"[0-9A-F]{16}-[0-9A-F]{64}", edge.gec_token(now, 0.0))
+    assert edge.SEC_MS_GEC_VERSION == f"2-{edge.CHROMIUM_FULL_VERSION}"
+    start = now - (now + 11_644_473_600) % 300
+    assert edge.gec_token(start, 0.0) == edge.gec_token(start + 299.9, 0.0) != edge.gec_token(start + 300, 0.0)
+    assert edge.gec_token(now, 5.0) == edge.gec_token(now + 5.0, 0.0)  # độ lệch đồng hồ cộng vào giờ
 
 
 def test_metadata_parse_ignores_other_types() -> None:
@@ -560,6 +571,85 @@ def test_provider_failures_become_json_errors_with_a_reason(tmp_path: Path, reas
         got, data, _ = _request(server.port, "POST", "/api/readaloud/clip", headers={"X-Ebook-Token": "t"},
                                 body={"voice": "fake:la", "text": "Xin chào"})
         assert got == HTTPStatus.BAD_REQUEST and json.loads(data)["reason"] == "voice"
+    finally:
+        server.stop()
+
+
+# ---- bản đọc đã làm của cuốn: dung lượng, xoá, ước "Làm trước" --------------------------------------------------------------
+
+
+def test_each_book_knows_which_clips_it_made_and_can_clear_just_those(tmp_path: Path) -> None:
+    service = ReadAloud(tmp_path / "cache", [FakeProvider()])
+    service.clip("fake:ngoc", "Một hai ba.", book="a")
+    service.clip("fake:ngoc", "Bốn năm sáu.", book="a")
+    service.clip("fake:ngoc", "Bảy tám chín.", book="b")
+    service.clip("fake:ngoc", "Không thuộc cuốn nào.")
+    usage = service.cache_usage("a")
+    assert usage["total"] > usage["book"] > 0 and service.cache_usage("b")["book"] < usage["book"] * 2
+    assert service.cache_usage("chưa nghe")["book"] == 0 and service.cache_usage(None)["book"] == 0
+    after = service.clear_book("a")
+    assert after["book"] == 0 and after["total"] == usage["total"] - usage["book"]
+    assert service.clip("fake:ngoc", "Bảy tám chín.", cached_only=True)["words"], "cuốn khác còn nguyên"
+    with pytest.raises(VoiceError):
+        service.clip("fake:ngoc", "Một hai ba.", cached_only=True)
+    # sổ nhớ qua lần mở app sau, và bỏ khoá của clip bộ đệm đã dọn
+    again = ReadAloud(tmp_path / "cache", [FakeProvider()])
+    assert again.cache_usage("b")["book"] == service.cache_usage("b")["book"] > 0
+    key = next(iter(again.books.keys("b")))
+    again.cache.remove({key})
+    assert again.cache_usage("b")["book"] == 0 and again.books.keys("b") == set()
+
+
+def test_a_cache_hit_by_another_book_counts_for_that_book_too(tmp_path: Path) -> None:
+    service = ReadAloud(tmp_path / "cache", [FakeProvider()])
+    service.clip("fake:ngoc", "Một hai ba.")  # làm từ trước khi có sổ cuốn
+    assert service.cache_usage("a")["book"] == 0
+    service.clip("fake:ngoc", "Một hai ba.", book="a")
+    assert service.cache_usage("a")["book"] > 0
+
+
+def test_prepare_tags_its_clips_with_the_book(tmp_path: Path) -> None:
+    service = ReadAloud(tmp_path / "cache", [FakeProvider()])
+    service.prepare.start("fake:ngoc", ["Một hai ba.", "Bốn năm sáu."], "Chương 1", None, None, "a")
+    service.prepare.join(10)
+    assert service.prepare.status()["state"] == "done" and service.cache_usage("a")["book"] > 0
+
+
+def test_the_prepare_estimate_matches_what_the_phone_shows() -> None:
+    from abook.readaloud import prepare
+
+    # Turbo: 96 000 byte/giây nghe; mỗi chương 1 400 ký tự = 100 giây nghe = 9,6 MB
+    chars = [1400, 0, 1400, 1400]
+    assert prepare.estimate("vieneu:turbo/A", chars, 96_000 * 250, 2.0) == {"chapters": 2, "offered": 3, "audioSeconds": 200, "secondsEstimate": 400}
+    assert prepare.estimate("vieneu:turbo/A", chars, 1, None) == {"chapters": 1, "offered": 3, "audioSeconds": 100, "secondsEstimate": None}
+    assert prepare.estimate("edge:x", [], 1, 1.0) == {"chapters": 0, "offered": 0, "audioSeconds": 0, "secondsEstimate": None}
+    texts = ["x" * 1400] * 3
+    assert len(prepare.accept("vieneu:turbo/A", texts, 96_000 * 250)) == prepare.estimate("vieneu:turbo/A", [1400] * 3, 96_000 * 250, None)["chapters"]
+
+
+def test_the_cache_and_estimate_endpoints(tmp_path: Path) -> None:
+    from tests.test_webui_listen_and_sync import _request
+
+    provider = FakeProvider()
+    server = _server(tmp_path, provider)
+    headers = {"X-Ebook-Token": "t"}
+    try:
+        body = {"voice": "fake:ngoc", "text": "Xin chào các bạn.", "bookId": "sách-a"}
+        assert _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body=body)[0] == 200
+        status, data, _ = _request(server.port, "GET", "/api/readaloud/cache?bookId=s%C3%A1ch-a", headers=headers)
+        usage = json.loads(data)
+        assert status == 200 and usage["book"] > 0 and usage["total"] >= usage["book"]
+        status, data, _ = _request(server.port, "GET", "/api/readaloud/cache", headers=headers)
+        assert json.loads(data)["book"] == 0
+        status, data, _ = _request(server.port, "POST", "/api/readaloud/prepare/plan", headers=headers, body={"voice": "fake:ngoc", "chars": [1400, 2800]})
+        assert status == 200 and json.loads(data) == {"chapters": 2, "offered": 2, "audioSeconds": 300, "secondsEstimate": None}
+        assert _request(server.port, "POST", "/api/readaloud/prepare/plan", headers=headers, body={"voice": "fake:ngoc", "chars": ["x"]})[0] == 400
+        assert _request(server.port, "POST", "/api/readaloud/prepare/plan", headers=headers, body={"voice": "ghost:x", "chars": [1]})[0] == 400
+        assert _request(server.port, "DELETE", "/api/readaloud/cache", headers=headers)[0] == 400
+        status, data, _ = _request(server.port, "DELETE", "/api/readaloud/cache?bookId=s%C3%A1ch-a", headers=headers)
+        assert status == 200 and json.loads(data)["book"] == 0
+        status, data, _ = _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body={**body, "cachedOnly": True})
+        assert json.loads(data) == {"cached": False, "reason": "uncached"}
     finally:
         server.stop()
 
