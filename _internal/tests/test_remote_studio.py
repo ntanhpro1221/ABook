@@ -343,7 +343,9 @@ def test_a_device_paired_to_listen_needs_its_own_permission(studio) -> None:
     phone = json.loads(data)["token"]
     app.set_remote_studio(True)
     status, data, _ = _sync_request(port, "GET", "/api/library", phone)
-    assert status == 403 and "chưa được phép" in json.loads(data)["error"], "bật Studio không tự cho điện thoại cũ"
+    refusal = json.loads(data)
+    assert status == 403 and "chưa được phép" in refusal["error"], "bật Studio không tự cho điện thoại cũ"
+    assert refusal["listenOnly"] is True, "giao diện thấy cờ này thì hỏi lại /api/app và bỏ nút Studio (không hỏi lại mãi lệnh bị từ chối)"
     short_id = app.devices.identify(phone)["id"]
     assert app.devices.set_studio(short_id, True)
     status, _data, _ = _sync_request(port, "GET", "/api/library", phone)
@@ -466,11 +468,13 @@ def test_every_allowed_route_exists_on_the_computer() -> None:
 
 
 def test_a_remote_studio_continues_a_book_only_with_its_next_chapters(studio, tmp_path: Path) -> None:
-    """"Làm tiếp cuốn này" từ điện thoại: chương kế tiếp là file TRÊN MÁY TÍNH, nhưng do máy tính tự tính từ dự án phần trước
-    (continuation.next_chapters) - thiết bị chỉ chọn trong danh sách ấy, không mở được đường dẫn nào khác."""
+    """"Làm tiếp cuốn này" từ điện thoại: chương kế tiếp là file TRÊN MÁY TÍNH, do máy tính tự tính từ dự án phần trước
+    (continuation.next_chapters) và chỉ đưa cho thiết bị dưới dạng tham chiếu `ref:next:...` (không đường dẫn: soát a33 lỗi 5) - thiết bị chỉ
+    chọn trong danh sách ấy, không mở được đường dẫn nào khác."""
     import sqlite3
 
     from abook import continuation
+    from abook.webui import remote_sources
 
     app, project = studio
     app.set_remote_studio(True)
@@ -489,23 +493,31 @@ def test_a_remote_studio_continues_a_book_only_with_its_next_chapters(studio, tm
 
     status, data, _ = _sync_request(port, "GET", f"/api/books/{identifier}/continuation", headers=cookie)
     plan = json.loads(data)
-    assert status == 200 and [Path(path).name for path in plan["paths"]] == ["647.txt"]
+    assert status == 200 and [remote_sources.parse(path)[3] for path in plan["paths"]] == ["647.txt"]
+    assert "folder" not in plan and str(story) not in data.decode("utf-8"), "thiết bị không biết thư mục nào trên máy tính"
     for route in ("/api/scan", "/api/first-person"):
         status, _data, _ = _sync_request(port, "POST", route, headers=cookie, body={"paths": plan["paths"], "seedFrom": identifier})
         assert status == 200, route
-        status, _data, _ = _sync_request(port, "POST", route, headers=cookie, body={"paths": plan["paths"]})
-        assert status == 403, "không nói làm tiếp cuốn nào thì vẫn chỉ được thư mục gửi lên"
-        status, _data, _ = _sync_request(port, "POST", route, headers=cookie,
-                                    body={"paths": [str(story / "645.txt")], "seedFrom": identifier})
+        status, _data, _ = _sync_request(port, "POST", route, headers=cookie, body={"paths": [str(story / "647.txt")], "seedFrom": identifier})
+        assert status == 403, "đường thật của chương kế tiếp cũng không qua: chỉ tham chiếu máy tính vừa đưa"
+        status, _data, _ = _sync_request(port, "POST", route, headers=cookie, body={"paths": [str(story / "645.txt")], "seedFrom": identifier})
         assert status == 403, "chương đã làm không phải chương kế tiếp"
+        status, _data, _ = _sync_request(port, "POST", route, headers=cookie, body={
+            "paths": [remote_sources.make("next", identifier, 0, story / "645.txt")]})
+        assert status == 409, "tham chiếu có tên chương khác chỗ ấy: thư mục đã đổi, không đọc nhầm"
+    status, data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": plan["paths"]})
+    scan = json.loads(data)
+    assert [row["name"] for row in scan["files"]] == ["647.txt"] and str(story) not in data.decode("utf-8")
+    assert remote_sources.parse(scan["files"][0]["path"]), "chương trả lại đúng tham chiếu để gửi tiếp khi tạo sách"
 
     status, data, _ = _sync_request(port, "POST", "/api/books", headers=cookie, body={
-        "paths": plan["paths"], "title": plan["title"], "profile": "high_quality", "narrator": "", "firstPerson": "",
+        "paths": [row["path"] for row in scan["files"]], "title": plan["title"], "profile": "high_quality", "narrator": "", "firstPerson": "",
         "seedFrom": identifier,
     })
     assert status == 201, data
     created = app.library.resolve(json.loads(data)["id"])
     assert continuation.chain_of(created)[0] == project.resolve()
+    assert [path.name for path in continuation._input_paths(created)] == ["647.txt"]
 
 
 def test_background_music_reaches_a_paired_device() -> None:

@@ -27,6 +27,7 @@ import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { listenOnlyOwner } from "@/shared/peerStudio";
 import { usePageTitle } from "@/shared/title";
 import { formatLength, formatNumber } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
@@ -492,7 +493,8 @@ function SourceStep({
               </Button>
             </div>
           )}
-          {browser && !advanced ? (
+          {info?.remote ? null : browser && !advanced ? (
+            // Studio từ xa: đường dẫn trên máy tính chỉ máy tính có - thiết bị gửi chương lên (hay "Làm lại" / "Làm tiếp" dùng chương của chính cuốn ấy).
             // Đường dẫn trên máy tính chỉ người rành máy mới cần (thư mục đã có sẵn trên máy tính, file quá 8 MB).
             <button
               type="button"
@@ -1328,6 +1330,9 @@ function QualityStep({
   noStudio?: boolean;
 }) {
   const guess = estimate(words, chapters);
+  // Studio từ xa: số đo là của máy tính đang làm sách, không phải của máy đang cầm.
+  const { data: info } = useAppInfo();
+  const where = info?.remote ? `máy tính ${listenOnlyOwner(info)}` : "máy này";
   return (
     <div>
       <h2 className="text-xl font-semibold">Chọn mức chất lượng</h2>
@@ -1386,11 +1391,11 @@ function QualityStep({
                   <span>Thời gian làm tính được khi Studio đã cài.</span>
                 ) : option.value === "high_quality" ? (
                   <span>
-                    Trên máy này: <span className="font-semibold text-fg">{lengthRange(guess.totalLow, guess.totalHigh)}</span> cho{" "}
+                    Trên {where}: <span className="font-semibold text-fg">{lengthRange(guess.totalLow, guess.totalHigh)}</span> cho{" "}
                     {chapters} chương
                   </span>
                 ) : (
-                  <span>Nhanh hơn Chất lượng cao; chưa đo trên máy này.</span>
+                  <span>Nhanh hơn Chất lượng cao; chưa đo trên {where}.</span>
                 )}
               </div>
             </button>
@@ -1610,6 +1615,7 @@ export function NewProjectScreen() {
   const [problem, setProblem] = useState<{ text: string; subfolders: string[] } | null>(null);
   const submitting = useRef(false);
   const noStudio = useStudioMissing().missing;
+  const remote = Boolean(useAppInfo().data?.remote);
   const update = (changes: Partial<Draft>) => setDraft((current) => ({ ...current, ...changes }));
 
   useEffect(() => saveDraft(draft), [draft]);
@@ -1838,7 +1844,8 @@ export function NewProjectScreen() {
         ...(draft.firstPerson.trim() && draft.tellerMode ? { tellerMode: true } : {}),
         ...(Object.keys(povChapters).length ? { firstPersonChapters: povChapters } : {}),
         ...(draft.seed ? { seedFrom: draft.seed.id } : draft.replaces?.seedFrom ? { seedFrom: draft.replaces.seedFrom } : {}),
-        ...(draft.replaces ? { replaces: draft.replaces.id } : {}),
+        // Studio từ xa không nói tên đường dẫn nào: chương nguồn là `ref:...` của cuốn cũ, máy tính tự đổi ra file và tự thay cuốn cũ.
+        ...(draft.replaces ? (remote ? { redoOf: draft.replaces.id } : { replaces: draft.replaces.id }) : {}),
         ...(draft.analysisModel ? { analysisModel: draft.analysisModel } : {}),
         // Chỉ khi người dùng đã đồng ý đề xuất - không gửi gì thì sách giữ nguyên nội dung.
         ...(draft.dropCredits?.head && creditSummary(scan.files).head ? { dropCreditLines: true } : {}),

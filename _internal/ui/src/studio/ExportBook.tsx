@@ -3,13 +3,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/shared/cn";
+import { OnComputerOnly } from "@/shared/OnComputerOnly";
+import { listenOnlyOwner } from "@/shared/peerStudio";
 import { coverArtwork } from "@/shared/cover";
 import { fileName, formatNumber, formatSize } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { Button, Dialog, LiveText, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { FfmpegNeeded } from "@/desktop/AudiobookDialog";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
-import { musicMissingNote } from "@/desktop/bookFileExport";
+import { exportedOnComputer, musicMissingNote } from "@/desktop/bookFileExport";
 import { startExport, trackExport } from "@/desktop/ExportBookFileJob";
 import { ffmpegCancel, ffmpegStart, ffmpegStatus, type MusicExportState } from "@/desktop/listenExport";
 import { api, ApiError, type BookSummary } from "./api";
@@ -177,9 +179,12 @@ export function ExportDialog({
   const countText = kind === "abookproj" ? undefined : wholeSeries ? `${parts.length} phần` : `${ready} chương`;
   // Chỗ lưu nói trước khi bấm "Xuất": có hộp chọn thư mục của máy thì người dùng tự chọn, không thì vào thư mục "Đã xuất" của thư viện.
   const root = info?.libraryRoot ?? "";
+  const computer = info?.remote ? listenOnlyOwner(info) : "";
   const savePlace = info?.dialogs
     ? "Bấm nút bên dưới rồi chọn thư mục để lưu."
-    : root
+    : info?.remote
+      ? `Sẽ lưu vào thư mục “Đã xuất” trong thư viện của máy tính${computer && computer !== "máy tính" ? ` ${computer}` : ""} - file nằm ở máy tính, không tải về máy này.`
+      : root
       ? `Sẽ lưu vào thư mục “Đã xuất” trong thư viện: ${root}${root.includes("\\") ? "\\" : "/"}Đã xuất`
       : "Sẽ lưu vào thư mục “Đã xuất” trong thư viện.";
   const handleOpenChange = (next: boolean) => {
@@ -248,12 +253,13 @@ export function ExportDialog({
           : kind === "abook"
             ? "Đã xuất file sách"
             : "Đã gói dự án";
+      // Studio từ xa: máy chủ chỉ trả TÊN file / thư mục (hay không trả thư mục) - nói file nằm ở máy tính nào.
+      const perPart = Boolean(result.parts && kind === "abook" && !single);
+      const placeText = perPart ? `${result.folder} · mỗi phần một file .abook riêng` : single ? `${result.file} · ${formatSize(result.size ?? 0)}` : result.folder;
       const detail =
-        (result.parts && kind === "abook" && !single
-          ? `${result.folder} · mỗi phần một file .abook riêng`
-          : single
-            ? `${result.file} · ${formatSize(result.size ?? 0)}`
-            : result.folder) +
+        (info?.remote
+          ? exportedOnComputer(computer, perPart ? "" : single ? fileName(result.file as string) : fileName(result.folder ?? ""), [perPart ? "mỗi phần một file .abook riêng" : "", single ? formatSize(result.size ?? 0) : ""].filter(Boolean).join(" · "))
+          : placeText) +
         skipped +
         (lost ? ` · ${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "") +
         // Ảnh bìa hỏng (soát a28 lỗi 8): bản xuất mang bìa vẽ từ tên sách thay vì hỏng cả lượt.
@@ -499,7 +505,14 @@ export function ExportDialog({
           />
         </div>
       )}
-      {kind === "abook" && !info?.remote && <WordTimingsRow bookId={book.id} running={Boolean(book.running)} />}
+      {kind === "abook" &&
+        (info?.remote ? (
+          <p className="mt-3">
+            <OnComputerOnly verb="Thêm chữ sáng theo giọng đọc" />
+          </p>
+        ) : (
+          <WordTimingsRow bookId={book.id} running={Boolean(book.running)} />
+        ))}
       {wholeSeries && kind === "mp3" && (
         <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần một thư mục con (“Phần 1 - …”, “Phần 2 - …”), cùng nằm trong một thư mục của bộ.</p>
       )}

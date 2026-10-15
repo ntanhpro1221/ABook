@@ -31,6 +31,10 @@ export function homePage(search: string): string {
 /** Tên sự kiện cửa sổ khi máy kia không trả lời (câu của máy chủ trong `detail`): thanh "Studio của <máy>" báo và tự nối lại. */
 export const PEER_SILENT_EVENT = "abook-peer-silent";
 
+/** Máy chủ vừa từ chối một việc của Studio vì thiết bị này chỉ được nghe (403 mang `listenOnly`): quyền bị thu hồi giữa phiên - app hỏi lại
+ *  /api/app để bỏ các nút Studio, thay vì cứ hỏi lại các lệnh bị từ chối. */
+export const LISTEN_ONLY_EVENT = "abook-listen-only";
+
 /** Máy kia chưa cho dòng thiết bị của máy này "Điều khiển sản xuất" - cùng câu máy chủ trả (peer_studio.listen_only). */
 export function listenOnlyLine(name: string): string {
   return `Chỉ nghe - bật quyền sửa ở ${name}: Cài đặt > Thiết bị`;
@@ -46,4 +50,10 @@ export function listenOnlyOwner(info: { peer?: { name: string }; machine?: strin
 export function peerBarLine(name: string, { silent = "", listenOnly = false }: { silent?: string; listenOnly?: boolean } = {}): string {
   if (silent) return `${silent} - tự nối lại khi máy ấy trả lời`;
   return listenOnly ? listenOnlyLine(name) : `Đang mở Studio của ${name}`;
+}
+
+/** Việc chỉ làm được ngay trên máy tính phục vụ trang ("Làm ở máy tính NGD-PC", "Đổi ở máy tính NGD-PC"): thay cho nút ẩn im lặng hay nút
+ *  bấm ra 403 (soát a33). `verb`: việc người dùng đang tìm. Chưa biết tên máy thì chỉ nói "máy tính". */
+export function onComputerLine(verb: string, name: string): string {
+  return name && name !== "máy tính" ? `${verb} ở máy tính ${name}` : `${verb} ở máy tính`;
 }

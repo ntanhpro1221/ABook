@@ -79,13 +79,13 @@ def test_the_studio_of_a_paired_computer_opens_here_without_pairing_again(two) -
 
 
 def test_routes_outside_the_list_or_from_another_page_never_leave_this_computer(two) -> None:
-    a, _b, port, computer, _name, book = two
+    a, _b, port, computer, name, book = two
     _allow(a)
     root = f"/api/peers/{computer}/studio"
     for method, path in (("GET", "/api/remote"), ("POST", "/api/dialog/folder"), ("PUT", "/api/preferences"),
                          ("POST", f"/api/books/{book}/reveal"), ("GET", "/sync/v1/library")):
         status, data, _ = _request(port, method, root + path, headers=PAGE, body={} if method != "GET" else None)
-        assert status == 403 and "chính máy ấy" in json.loads(data)["error"], (method, path)
+        assert status == 403 and f"chính máy tính {name}" in json.loads(data)["error"], (method, path)
     status, _data, _ = _request(port, "POST", f"{root}/api/books/{book}/stop", headers={**PAGE, "Sec-Fetch-Site": "cross-site"}, body={})
     assert status == 403, "trang lạ trên máy này không mượn được cầu nối"
     status, _data, _ = _request(port, "GET", f"{root}/api/library", headers={"X-Ebook-Token": "t", "Origin": "http://ke-la.example"})

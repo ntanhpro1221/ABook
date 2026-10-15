@@ -19,12 +19,13 @@ import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
+import { fileName } from "@/shared/format";
 import { brokenMusicNote, keptEditsTitle, workshopMergeNote } from "@/shared/editsKept";
 import { MissingLibrary } from "@/shared/MissingLibrary";
 import { setLetterShortcuts } from "@/shared/letterShortcuts";
 import { setExternalOpener } from "@/shared/openExternal";
 import { toastRemoved } from "@/shared/trashUndo";
-import { homePage, listenOnlyLine, listenOnlyOwner, peerPage } from "@/shared/peerStudio";
+import { homePage, LISTEN_ONLY_EVENT, listenOnlyLine, listenOnlyOwner, peerPage } from "@/shared/peerStudio";
 import { watchUntilBack } from "@/listen/peerBack";
 import { api, ApiError, currentPeer, type AppInfo } from "@/studio/api";
 import { pickFolder, useAppInfo, useLibrary, usePreferences } from "@/studio/data";
@@ -34,6 +35,7 @@ import { ProjectsScreen } from "@/studio/ProjectsScreen";
 import { desktopTextImport, httpSource } from "./httpSource";
 import { AudiobookDialogHost } from "./AudiobookDialog";
 import { AudiobookMenuItem, BookFileMenuItem, ExportJobHost, M4bMenuItem } from "./ExportBookFileJob";
+import { exportedOnComputer } from "./bookFileExport";
 import { RemoteDownloadMenuItem, RemoteDownloadStatus } from "./RemoteDownload";
 import { SettingsScreen } from "./SettingsScreen";
 import { Shell } from "./Shell";
@@ -125,13 +127,18 @@ function ExportMenuItem({ book }: { book: ListenBook }) {
     }
     const pending = toast.loading("Đang xuất sách…", { description: `${book.chaptersAvailable} chương` });
     try {
-      const result = await api<{ folder: string; files: number; chaptersTotal: number }>(`/api/books/${book.id}/export`, {
+      const result = await api<{ folder?: string; files: number; chaptersTotal: number }>(`/api/books/${book.id}/export`, {
         method: "POST",
         body: { target, cover: coverArtwork(book.title) },
       });
       toast.success(`Đã xuất ${result.files} chương`, {
         id: pending,
-        description: result.files < result.chaptersTotal ? "Các chương chưa làm xong sẽ không có trong bản xuất." : result.folder,
+        description:
+          result.files < result.chaptersTotal
+            ? "Các chương chưa làm xong sẽ không có trong bản xuất."
+            : info?.remote
+              ? exportedOnComputer(listenOnlyOwner(info), result.folder ? fileName(result.folder) : "")
+              : result.folder,
         // Studio từ xa: thư mục nằm trên máy tính, không mở được từ máy đang xem.
         action: info?.remote ? undefined : {
           label: "Mở thư mục",
@@ -365,6 +372,17 @@ function OpenedBookListener() {
   return null;
 }
 
+/** Quyền sửa bị thu hồi giữa phiên (Studio từ xa, hay Studio của máy khác): hỏi lại /api/app để bỏ các nút Studio (api.ts phát sự kiện khi gặp 403 `listenOnly`). */
+function ListenOnlyListener() {
+  const client = useQueryClient();
+  useEffect(() => {
+    const refresh = () => void client.invalidateQueries({ queryKey: ["app"] });
+    window.addEventListener(LISTEN_ONLY_EVENT, refresh);
+    return () => window.removeEventListener(LISTEN_ONLY_EVENT, refresh);
+  }, [client]);
+  return null;
+}
+
 /** App Windows đóng gói: vỏ tìm thấy bản mới sau khi trang đã mở - đọc lại thông tin app để hiện nút "Cập nhật";
  *  tải bản mới hỏng (mất mạng, chữ ký sai) thì nói rõ, bấm lại được. */
 function UpdateListener() {
@@ -554,6 +572,7 @@ export function App() {
             <HashRouter>
               <OpenedBookListener />
               <UpdateListener />
+              <ListenOnlyListener />
               {!info.remote && <StartupNotices notices={info.notices} />}
               {!info.remote && <VolumeSaver />}
               {!info.remote && <RemoveImportedHost />}
@@ -582,26 +601,33 @@ export function App() {
                               </>
                             )
                           ) : (
-                            <>
-                              <BookFileMenuItem book={book} />
-                              <ExportMenuItem book={book} />
-                              <M4bMenuItem book={book} />
-                              <StudioMenuItem id={book.id} />
-                            </>
+                            // Thiết bị chỉ được nghe (remote_studio.LISTEN_ROUTES): xuất file và Studio đều chỉ kết thúc bằng 403 - không hiện.
+                            info.listenOnly ? null : (
+                              <>
+                                <BookFileMenuItem book={book} />
+                                <ExportMenuItem book={book} />
+                                <M4bMenuItem book={book} />
+                                <StudioMenuItem id={book.id} />
+                              </>
+                            )
                           )
                         }
                         studioLink={(book) => {
                           const peer = info.remote ? null : peerStudioOf(book);
-                          return peer ? <PeerStudioChipLink {...peer} /> : book.imported ? null : <StudioChipLink id={book.id} />;
+                          return peer ? <PeerStudioChipLink {...peer} /> : book.imported || info.listenOnly ? null : <StudioChipLink id={book.id} />;
                         }}
                         notice={(book) => (book.remote && !info.remote ? <RemoteDownloadStatus book={book} /> : null)}
                         editing={
-                          info.remote
+                          // Studio từ xa: đổi tên sách / tác giả / bìa / nhạc nền / tên chương / tên nhân vật chạy trên máy tính (ALLOWED); thiết bị
+                          // chỉ được nghe thì không sửa gì.
+                          info.listenOnly
                             ? false
-                            : {
-                                pickFolder: info.dialogs ? () => pickFolder("Chọn nơi lưu file sách", "").catch(() => null) : undefined,
-                                onOpenStudio: (book) => window.location.assign(`#/studio/${book.id}?tab=music`),
-                              }
+                            : info.remote
+                              ? { remote: listenOnlyOwner(info) }
+                              : {
+                                  pickFolder: info.dialogs ? () => pickFolder("Chọn nơi lưu file sách", "").catch(() => null) : undefined,
+                                  onOpenStudio: (book) => window.location.assign(`#/studio/${book.id}?tab=music`),
+                                }
                         }
                       />
                     }
