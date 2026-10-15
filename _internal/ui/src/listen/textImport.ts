@@ -93,7 +93,7 @@ export interface ChapterPick {
 export interface ImportOptions {
   /** Tích "Tách thành N chương theo các dòng “Chương N”" - gửi kèm cả lúc xem trước lẫn lúc thêm. */
   splitChapters?: boolean;
-  /** Các chương được giữ (theo hàng của bước xem trước) và tên mới - chỉ lúc thêm; không có = các chương mặc định ([chapterPicks]). */
+  /** Các chương được giữ (theo hàng của bước xem trước) và tên mới - chỉ lúc thêm; giao diện luôn gửi ([chapterPicks]), không có = các chương mặc định của bên nhận (`default_picks`). */
   chapters?: ChapterPick[];
   /** Đề xuất về chú thích đã tích ([footnotesToSend]) - cả lúc xem trước lẫn lúc thêm; không có = như trong sách. */
   footnotes?: FootnoteChoice;
@@ -218,10 +218,9 @@ export function pickedTotals(chapters: readonly ImportPreviewChapter[], picked: 
   return { chapters: rows.length, words: rows.reduce((sum, chapter) => sum + chapter.words, 0) };
 }
 
-/** Lựa chọn gửi lúc thêm; `undefined` khi người dùng không đổi gì (các chương mặc định, tên của file) - máy chủ / điện thoại tự lấy mặc định. */
-export function chapterPicks(chapters: readonly ImportPreviewChapter[], picked: ReadonlySet<number>, names: ChapterNames): ChapterPick[] | undefined {
-  const renamed = chapters.some((chapter) => picked.has(chapter.index) && names[chapter.index]?.trim());
-  if (!renamed && isDefaultPick(chapters, picked)) return undefined;
+/** Lựa chọn gửi lúc thêm: LUÔN danh sách tường minh các hàng đang tích (kể cả khi đúng mặc định) - cuốn được thêm là đúng cuốn người dùng đã thấy,
+ *  không phụ thuộc mặc định của bên nhận (soát a38: DOCX có trang "Mở đầu" hiện chưa tích mà vẫn vào sách). */
+export function chapterPicks(chapters: readonly ImportPreviewChapter[], picked: ReadonlySet<number>, names: ChapterNames): ChapterPick[] {
   return chapters
     .filter((chapter) => picked.has(chapter.index))
     .map((chapter) => {

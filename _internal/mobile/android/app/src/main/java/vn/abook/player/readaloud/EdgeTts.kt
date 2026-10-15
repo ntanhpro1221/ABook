@@ -7,20 +7,20 @@ import java.io.OutputStream
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Locale
 
 /**
  * Phần giao thức của dịch vụ đọc to của Edge (không đụng mạng, kiểm thử được): theo dự án mã mở edge-tts (rany2/edge-tts, `constants.py`, `drm.py`,
  * `communicate.py`, đọc 03-10, bản Chromium 143). Dịch vụ không chính thức: hằng số dưới đây đổi khi Microsoft đổi (thường là [CHROMIUM_FULL_VERSION] và cách
- * tính Sec-MS-GEC) - hỏng thì giọng Edge báo lỗi và app tự rơi về giọng của máy.
+ * tính Sec-MS-GEC) - hỏng thì giọng Edge báo lỗi và app tự rơi về giọng của máy. Token là v2 từ tháng 10/2026 (v1 bị từ chối 403 với mọi người): mã ở
+ * [EdgeToken] (chuyển từ `drm.py` của edge-tts, LGPL-3.0); khi hỏng lần nữa đối chiếu `drm.py` / `constants.py` của edge-tts bản mới nhất.
  */
 object EdgeProtocol {
-    const val TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
+    const val TRUSTED_CLIENT_TOKEN = EdgeToken.TRUSTED_CLIENT_TOKEN
     const val CHROMIUM_FULL_VERSION = "143.0.3650.75"
     val CHROMIUM_MAJOR = CHROMIUM_FULL_VERSION.substringBefore('.')
-    val SEC_MS_GEC_VERSION = "1-$CHROMIUM_FULL_VERSION"
+    val SEC_MS_GEC_VERSION = "2-$CHROMIUM_FULL_VERSION"
     const val WSS_BASE = "wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1"
     const val OUTPUT_FORMAT = "audio-24khz-48kbitrate-mono-mp3"
     /** 48 kbps không đổi = 6000 byte mỗi giây: độ dài và độ lệch giữa các lần gọi tính chính xác từ số byte. */
@@ -32,17 +32,11 @@ object EdgeProtocol {
      * một hằng số cho cả giọng, cộng vào mọi mốc trước khi khớp với chữ.
      */
     const val BOUNDARY_SHIFT_MS = 100L
-    private const val WIN_EPOCH = 11_644_473_600L
 
     fun userAgent() = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$CHROMIUM_MAJOR.0.0.0 Safari/537.36 Edg/$CHROMIUM_MAJOR.0.0.0"
 
-    /** Sec-MS-GEC: sha256 (hoa) của "<giờ Windows file time làm tròn xuống 5 phút, đơn vị 100 ns><token>". `unixSeconds` đã cộng độ lệch đồng hồ. */
-    fun secMsGec(unixSeconds: Double): String {
-        val seconds = Math.floor(unixSeconds).toLong() + WIN_EPOCH
-        val ticks = (seconds - seconds % 300) * 10_000_000L
-        return MessageDigest.getInstance("SHA-256").digest("$ticks$TRUSTED_CLIENT_TOKEN".toByteArray(Charsets.US_ASCII))
-            .joinToString("") { "%02X".format(it) }
-    }
+    /** Sec-MS-GEC (v2): "<CS64>-<SHA-256 biến thể>" của "<giờ Windows file time làm tròn xuống 5 phút><token>" - xem [EdgeToken]. `unixSeconds` đã cộng độ lệch đồng hồ. */
+    fun secMsGec(unixSeconds: Double): String = EdgeToken.secMsGecV2(unixSeconds)
 
     fun connectionId(random: SecureRandom = SecureRandom()): String = ByteArray(16).also(random::nextBytes).joinToString("") { "%02x".format(it) }
 
@@ -294,7 +288,7 @@ class EdgeTts(
                     continue
                 }
                 if (error.status == 429 || error.status >= 500) throw Dropped("Giọng Edge đang bận (HTTP ${error.status})", error)
-                throw VoiceException("Dịch vụ giọng Edge từ chối (${error.status}) - có thể đã đổi cách dùng", cause = error)
+                throw VoiceException("Dịch vụ giọng Edge từ chối (${error.status}) - có thể đã đổi cách dùng", cause = error, reason = "rejected")
             } catch (error: UnknownHostException) {
                 throw offline(error)
             } catch (error: ConnectException) {

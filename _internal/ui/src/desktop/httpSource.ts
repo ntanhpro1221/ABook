@@ -10,7 +10,7 @@ import { ApiError, api, mediaUrl } from "@/studio/api";
 import { pickFiles, pickFolder } from "@/studio/data";
 import { batchName, pickedFromDrop, planUpload, sendPlan, UPLOAD_LIMIT, type Picked } from "@/studio/upload";
 import { toast } from "sonner";
-import { paragraphsFor, type PrepareStatus } from "@/listen/prepareAhead";
+import { paragraphsFor, type PreparePlan, type PrepareStatus, type ReadAloudCacheUsage } from "@/listen/prepareAhead";
 
 function fileName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
@@ -166,6 +166,15 @@ export const httpSource: ListenSource = {
     return api<PrepareStatus>("/api/readaloud/prepare", { method: "POST", body: { voice, texts, label, bookId } });
   },
   readAloudPrepareStatus: () => api<PrepareStatus>("/api/readaloud/prepare"),
+  // Ước trước khi bấm: số ký tự từng chương (chia đoạn đúng như lúc làm), máy chủ biết phần bộ đệm dành cho làm trước và tốc độ đo của giọng.
+  readAloudPreparePlan: async ({ voice, bookId, chapters }) => {
+    const chars = await Promise.all(
+      chapters.map(async (chapter) => (await paragraphsFor([chapter], (id) => httpSource.chapterText(bookId, id))).reduce((sum, text) => sum + text.length, 0)),
+    );
+    return api<PreparePlan>("/api/readaloud/prepare/plan", { method: "POST", body: { voice, chars } });
+  },
+  readAloudCache: (bookId) => api<ReadAloudCacheUsage>(`/api/readaloud/cache?bookId=${encodeURIComponent(bookId)}`),
+  readAloudCacheClear: (bookId) => api<ReadAloudCacheUsage>(`/api/readaloud/cache?bookId=${encodeURIComponent(bookId)}`, { method: "DELETE" }),
   // Máy tính xách tay cũng mất mạng (tàu, máy bay): giọng trực tuyến làm trước vào bộ đệm clip như VieNeu (readaloud/prepare.py chung mọi giọng).
   readAloudPrepareOnline: true,
   readAloudPrepareCancel: () => api<PrepareStatus>("/api/readaloud/prepare", { method: "DELETE" }),

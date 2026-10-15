@@ -5076,6 +5076,12 @@ class Handler(BaseHTTPRequestHandler):
             return {}
         return dict(book_edits.load(path).get("readings") or {}) if packages.is_package(path) else {}
 
+    @staticmethod
+    def _clip_book(body: dict[str, Any]) -> str | None:
+        """Mã cuốn đang nghe (để tính clip vào "bản đọc đã làm" của cuốn), nếu yêu cầu có."""
+        book = body.get("bookId")
+        return book if isinstance(book, str) and book else None
+
     def post_readaloud_clip(self, _query: dict[str, list[str]]) -> None:
         # Một đoạn chữ -> một clip (audio tốc độ 1,0 + mốc từng chữ). Lỗi nói đúng lý do (`reason`) để trình phát đổi sang giọng máy hay báo người nghe.
         body = self._body()
@@ -5084,7 +5090,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hay chữ")
         try:
             clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")), origin=self._reading_origin(body),
-                                           readings=self._book_readings(body))
+                                           readings=self._book_readings(body), book=self._clip_book(body))
         except VoiceError as error:
             if error.reason == "uncached":
                 # Chỉ tra bộ đệm mà chưa có là câu trả lời bình thường (trình phát hỏi hàng loạt lúc nạp chương), không phải lỗi: 200 để
@@ -5203,7 +5209,31 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error), reason=error.reason) from error
         texts = [text for text in texts if len(text) <= readaloud.MAX_TEXT]
         self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.start(voice, texts, str(body.get("label") or "")[:200], self._reading_origin(body),
-                                                                         self._book_readings(body)))
+                                                                         self._book_readings(body), self._clip_book(body)))
+
+    def post_readaloud_prepare_plan(self, _query: dict[str, list[str]]) -> None:
+        # Ước trước khi bấm "Làm trước": giao diện gửi số ký tự từng chương sắp nghe; máy chủ biết phần bộ đệm dành cho làm trước và tốc độ đo của giọng.
+        body = self._body()
+        voice, chars = body.get("voice"), body.get("chars")
+        if not isinstance(voice, str) or not isinstance(chars, list) or not all(isinstance(n, int) and not isinstance(n, bool) and n >= 0 for n in chars):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hay số ký tự")
+        try:
+            self.app.readaloud._resolve(voice)
+        except VoiceError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error), reason=error.reason) from error
+        self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.plan(voice, chars))
+
+    def get_readaloud_cache(self, query: dict[str, list[str]]) -> None:
+        # Bản đọc đã làm chiếm bao nhiêu: của cuốn `bookId` và cả bộ đệm.
+        self._send_json(HTTPStatus.OK, self.app.readaloud.cache_usage((query.get("bookId") or [""])[0] or None))
+
+    def delete_readaloud_cache(self, query: dict[str, list[str]]) -> None:
+        # "Xoá bản đọc đã làm" của cuốn `bookId` (nghe tới đâu đọc lại tới đó).
+        self.app._mutating()
+        book = (query.get("bookId") or [""])[0]
+        if not book:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu cuốn")
+        self._send_json(HTTPStatus.OK, self.app.readaloud.clear_book(book))
 
     def delete_readaloud_prepare(self, _query: dict[str, list[str]]) -> None:
         self.app._mutating()
@@ -5404,6 +5434,9 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/readaloud/vieneu"), Handler.get_readaloud_vieneu),
     ("GET", re.compile(r"/api/readaloud/prepare"), Handler.get_readaloud_prepare),
     ("POST", re.compile(r"/api/readaloud/prepare"), Handler.post_readaloud_prepare),
+    ("POST", re.compile(r"/api/readaloud/prepare/plan"), Handler.post_readaloud_prepare_plan),
+    ("GET", re.compile(r"/api/readaloud/cache"), Handler.get_readaloud_cache),
+    ("DELETE", re.compile(r"/api/readaloud/cache"), Handler.delete_readaloud_cache),
     ("DELETE", re.compile(r"/api/readaloud/prepare"), Handler.delete_readaloud_prepare),
     ("POST", re.compile(r"/api/readaloud/vieneu"), Handler.post_readaloud_vieneu),
     ("POST", re.compile(r"/api/readaloud/vieneu/measure"), Handler.post_readaloud_vieneu_measure),

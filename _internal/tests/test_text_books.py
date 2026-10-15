@@ -326,9 +326,11 @@ def test_a_whole_story_txt_is_split_into_chapters_only_when_the_listener_ticks_i
         server.stop()
     assert plain["totals"]["chapters"] == 1 and plain["splitOffer"] == 4, "mặc định một chương, và cho biết tách sẽ ra bao nhiêu"
     assert plain["splitHeadings"] == 3, "nhãn: 3 dòng 'Chương N', thêm phần 'Mở đầu' thành 4 chương"
-    assert split["totals"]["chapters"] == 4 and split["splitOffer"] == 4
+    assert split["totals"]["chapters"] == 3 and split["splitOffer"] == 4, "phần 'Mở đầu' (tên truyện) hiện chưa tích nên không tính vào tổng"
     assert [row["title"] for row in split["chapters"]][:2] == ["Mở đầu", "Chương 1: Bến phà lúc bình minh"]
-    assert added["chapters"] == 4 and len(studio.listen_book(added["id"])["chapters"]) == 4
+    assert [row["included"] for row in split["chapters"]][:2] == [False, True]
+    # Cuốn thêm vào là cuốn người dùng đã thấy: không gửi danh sách chương (người gọi khác) thì cũng bỏ phần chưa tích sẵn.
+    assert added["chapters"] == 3 and len(studio.listen_book(added["id"])["chapters"]) == 3
     assert "splitOffer" not in studio.preview_text_book(str(IMPORTS / "epub3.epub")), "sách không có gì để tách thì không có gợi ý"
 
 
@@ -342,6 +344,19 @@ def test_the_preview_lists_very_short_items_unticked_and_the_totals_count_only_t
     assert "1 mục rất ngắn chưa chọn - tích nếu muốn giữ." in preview["notes"]
     assert preview["suggestions"] == [{"chapter": 3, "line": "Dịch: Nhóm Lục Bình"}], "gợi ý đánh số theo danh sách xem trước"
     assert studio.preview_text_book(str(IMPORTS / "epub3.epub"))["existing"] is None
+
+
+@pytest.mark.parametrize("name, split", [("calibre_split.epub", False), ("epub3.epub", False), ("headings.docx", False), ("plain.docx", False),
+                                         ("gutenberg.txt", True), ("toc_txt.txt", True), ("whole.txt", True), ("titled.txt", True)])
+def test_adding_without_a_chapter_list_adds_exactly_the_chapters_the_preview_ticked(tmp_path: Path, name: str, split: bool) -> None:
+    # Soát a38: trang tên sách của DOCX hiện chưa tích mà vẫn vào sách khi người gọi không gửi danh sách chương.
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    source = str(IMPORTS / name)
+    preview = studio.preview_text_book(source, split_chapters=split)
+    ticked = [row["title"] for row in preview["chapters"] if row["included"]]
+    added = studio.add_text_book(source, split_chapters=split)
+    assert [chapter["title"] for chapter in studio.listen_book(added["id"])["chapters"]] == ticked
+    assert added["chapters"] == preview["totals"]["chapters"] == len(ticked)
 
 
 def test_the_preview_says_why_a_page_that_is_not_the_story_is_unticked(tmp_path: Path) -> None:

@@ -8,10 +8,10 @@ import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
 import type { ChapterText } from "./bookSearch";
 import { mergeTimings, VOICE_CHANGED_EVENT, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
-import { bookVoiceCaption, voicesOf } from "./readAloudVoice";
+import { bookVoiceCaption, chosenVoice, voicesOf } from "./readAloudVoice";
 import { retryChapterText } from "./labels";
 import type { VieneuBackend } from "./VieneuModuleCard";
-import type { PreparePlan, PrepareRequest, PrepareStatus } from "./prepareAhead";
+import type { PreparePlan, PrepareRequest, PrepareStatus, ReadAloudCacheUsage } from "./prepareAhead";
 
 // Nguồn dữ liệu của phía Nghe. Giao diện chỉ nói chuyện với giao diện này:
 // máy tính cài bằng HTTP tới server cục bộ, Android cài bằng file gói sách trên máy.
@@ -55,6 +55,9 @@ export interface ListenSource {
   /** Điện thoại: ước trước khi bấm, "Chỉ khi đang sạc", dấu "Đã làm sẵn" từng chương. */
   readAloudPreparePlan?(request: PrepareRequest): Promise<PreparePlan>;
   readAloudPrepareOptions?(options: { chargingOnly: boolean }): Promise<PrepareStatus>;
+  /** Máy tính: bản đọc đã làm (bộ đệm clip) của cuốn và của cả máy, và xoá phần của cuốn ("Xoá bản đọc đã làm" ở menu Giọng đọc). */
+  readAloudCache?(bookId: string): Promise<ReadAloudCacheUsage>;
+  readAloudCacheClear?(bookId: string): Promise<ReadAloudCacheUsage>;
   /** Làm trước được cả giọng trực tuyến - để nghe khi không có mạng (điện thoại, và máy tính xách tay lúc đi tàu / máy bay). */
   readAloudPrepareOnline?: boolean;
   /** Nơi tự đọc chương (lõi native Android) cho biết mốc thời gian câu / chữ đã có của một chương chỉ-có-chữ; chưa có gì thì null. */
@@ -343,13 +346,24 @@ export function useListenMutations(bookId: string) {
   };
 }
 
-/** Tên giọng đang đọc cuốn `bookId` ("Hoài My (Edge)", "Giọng đọc của máy"); "" khi máy chưa báo giọng nào. Đổi giọng giữa chừng thì cập nhật ngay. */
-export function useBookVoice(bookId: string | undefined): string {
-  const voices = useReadAloudVoices().data;
+/** Vẽ lại khi người nghe đổi giọng đọc ở BẤT KỲ đâu (menu giọng khác, Cài đặt): mọi chỗ đọc `chosenVoice` lúc vẽ dùng cái này để không giữ giọng cũ. */
+function useVoiceChanged(): void {
   const [, bump] = useReducer((count: number) => count + 1, 0);
   useEffect(() => {
     window.addEventListener(VOICE_CHANGED_EVENT, bump);
     return () => window.removeEventListener(VOICE_CHANGED_EVENT, bump);
   }, []);
+}
+
+/** Giọng đã chọn cho cuốn `bookId` ("" = mặc định của máy); đổi giọng ở nơi khác cũng cập nhật ngay. */
+export function useChosenVoice(bookId: string | undefined): string {
+  useVoiceChanged();
+  return bookId ? chosenVoice(bookId) : "";
+}
+
+/** Tên giọng đang đọc cuốn `bookId` ("Hoài My (Edge)", "Giọng đọc của máy"); "" khi máy chưa báo giọng nào. Đổi giọng giữa chừng thì cập nhật ngay. */
+export function useBookVoice(bookId: string | undefined): string {
+  const voices = useReadAloudVoices().data;
+  useVoiceChanged();
   return bookId ? bookVoiceCaption(voices, bookId) : "";
 }

@@ -381,6 +381,9 @@ TAIL_SOURCE_CASES = [
     "Chương 1\n\n" + "".join(f"Đoạn truyện {n}.\n" for n in range(1, 10)) + "Ông ủng hộ chuyến đi, ông nói.\nTrời tối dần.\n",
     "Chương 1\n\n" + "".join(f"Đoạn truyện {n}.\n" for n in range(1, 10)) + "Dịch: Nhóm Lục Bình\nRồi trời tạnh hẳn.\n",
     "Chương 1\n\nMọi người nhớ bình luận nhé!\nRồi trời tạnh hẳn.\n",
+    # File cả tập chưa tách (BUG-4 a38): dòng ghi công giữa file, rồi tiêu đề chương kế - chỉ xét từ tiêu đề cuối cùng; ghi công ở cuối thật vẫn được gợi ý.
+    "Chuyện một\n\n" + "".join(f"Đoạn truyện {n}.\n\n" for n in range(1, 9)) + "Đọc truyện mới nhất tại truyenthu.vn\n\nChương 2: Cánh cửa gỗ\n\nCánh cửa mở ra, một bà cụ đưa mắt nhìn ra ngoài.\n\nTrời tối dần.\n",
+    "Chuyện một\n\n" + "".join(f"Đoạn truyện {n}.\n\n" for n in range(1, 9)) + "Đọc truyện mới nhất tại truyenthu.vn\n\nChương 2: Mưa\n\nTruyện tiếp.\n\nXin ủng hộ: Momo 0912345678\n",
 ]
 
 

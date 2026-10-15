@@ -65,6 +65,11 @@ export interface SpeechTrack {
   /** Giọng đang chọn, hỏi lại trước mỗi clip ("" = giọng mặc định): đổi giọng giữa chừng có hiệu lực từ đoạn kế. */
   voice(): string;
   fetchClip: ClipFetcher;
+  /** Cuốn đang nghe: để biết cách đọc riêng nào vừa đổi ([READINGS_CHANGED_EVENT]) là của cuốn này. */
+  bookId?: string;
+  /** Giọng đang chọn chạy trên máy này (hỏi lại trước mỗi lượt): nó dùng hết CPU cho MỘT đoạn, xin 4 đoạn cùng lúc thì đoạn người nghe đang chờ chỉ nhận một phần
+   *  tư máy (nhảy tới câu xa: 3-5 s thay vì ~1,3 s) - nên xin lần lượt, đoạn gần chỗ nghe nhất trước. Vắng / false (giọng trực tuyến): cả cửa sổ đọc trước chạy song song. */
+  serial?(): boolean;
   /** Kịch bản có mốc thời gian mới (mỗi khi clip về) - trình phát ghi vào bộ nhớ của react-query để màn đọc sáng đúng đoạn / chữ. */
   onScript(script: Script): void;
 }
@@ -91,6 +96,15 @@ export const CHARS_PER_SECOND = 14;
 export const MIN_SEGMENT_SECONDS = 0.6;
 /** Sự kiện cửa sổ: người nghe đổi giọng đọc (readAloudVoice.ts). */
 export const VOICE_CHANGED_EVENT = "abook:readaloud-voice";
+/** Sự kiện cửa sổ: người nghe vừa đặt / bỏ cách đọc riêng của một từ trong cuốn ("Đọc từ này là…", readings.ts) - các đoạn có từ ấy mà đã đọc sẵn phải đọc lại.
+ *  `detail`: { bookId, surfaces }. */
+export const READINGS_CHANGED_EVENT = "abook:readaloud-readings";
+export interface ReadingsChanged {
+  bookId: string;
+  surfaces: string[];
+  /** Mọi đoạn của cuốn đều phải lấy lại (người nghe vừa xoá bản đọc đã làm của cuốn: file clip không còn nữa). */
+  all?: boolean;
+}
 // Máy tính: đọc trước 3 đoạn (rẻ - clip chỉ vài chục KB; đoạn ngắn liên tiếp không còn bắt người nghe chờ). Điện thoại tự đọc trước (ReadAloud.AHEAD).
 const READ_AHEAD = 3;
 const RESTORE_LIMIT = 400;
@@ -172,6 +186,10 @@ interface Slot {
   fetching: boolean;
   /** Số lần lấy clip đã hỏng liên tiếp (Edge thỉnh thoảng trả 502 thoáng qua). */
   failures: number;
+  /** Tăng mỗi khi clip của đoạn bị bỏ vì cách đọc đổi: clip về từ lượt hỏi cũ (epoch cũ) thì không dùng. */
+  epoch: number;
+  /** Cách đọc có chữ trong đoạn này vừa đổi mà đoạn đang nói (không cắt ngang): lần phát lại kế tiếp lấy clip mới. */
+  stale: boolean;
 }
 
 interface Target {
@@ -202,6 +220,9 @@ export class ReadAloudEngine implements AudioEngine {
   private finished = false;
   private ready = false;
   private loadId = 0;
+  /** Lượt xin clip đang chờ tới lượt gửi (đoạn gần chỗ nghe nhất đi trước) và số lượt đang chạy ([pump]). */
+  private queued: { index: number; epoch: number }[] = [];
+  private inflight = 0;
   private rate = 1;
   private volume = 1;
   private loadingTime = 0;
@@ -212,6 +233,7 @@ export class ReadAloudEngine implements AudioEngine {
   private silenceTimer: ReturnType<typeof setInterval> | null = null;
   private silenceAt = 0;
   private onVoice = () => this.voiceChanged();
+  private onReadings = (event: Event) => this.readingsChanged((event as CustomEvent<ReadingsChanged>).detail);
 
   constructor(options: ReadAloudOptions = {}) {
     this.createAudio = options.createAudio ?? realAudio;
@@ -232,7 +254,10 @@ export class ReadAloudEngine implements AudioEngine {
     this.ready = false;
     this.lastError = "";
     this.loadingTime = Math.max(0, startAt);
-    if (typeof window !== "undefined") window.addEventListener(VOICE_CHANGED_EVENT, this.onVoice);
+    if (typeof window !== "undefined") {
+      window.addEventListener(VOICE_CHANGED_EVENT, this.onVoice);
+      window.addEventListener(READINGS_CHANGED_EVENT, this.onReadings);
+    }
     if (autoplay) {
       this.fire("play");
       this.fire("waiting");
@@ -395,6 +420,8 @@ export class ReadAloudEngine implements AudioEngine {
       started: false,
       fetching: false,
       failures: 0,
+      epoch: 0,
+      stale: false,
     };
   }
 
@@ -491,6 +518,7 @@ export class ReadAloudEngine implements AudioEngine {
     const slot = this.slots[target.index];
     if (slot) slot.started = false;
     this.releaseOutside();
+    this.dropQueuedOutside();
     this.fire("time");
     if (this.wanted) this.playCurrent();
   }
@@ -511,6 +539,7 @@ export class ReadAloudEngine implements AudioEngine {
       }
       return;
     }
+    if (slot.stale && !slot.started) this.dropClip(slot); // cách đọc đổi lúc đoạn này đang nói: nghe lại thì lấy clip mới
     this.prefetch(index);
     if (!slot.clip) {
       this.fire("waiting");
@@ -597,17 +626,72 @@ export class ReadAloudEngine implements AudioEngine {
     }
     if (slot.fetching) return;
     slot.fetching = true;
+    this.queued.push({ index, epoch: slot.epoch });
+    this.pump();
+  }
+
+  /** Gửi các lượt xin đang chờ, tối đa [SpeechTrack.parallel] lượt cùng lúc; mỗi lần chọn đoạn gần chỗ đang nghe nhất (đoạn đang chờ trước, rồi các đoạn sau). */
+  private pump(): void {
+    const speech = this.speech;
+    if (!speech) return;
+    const limit = speech.serial?.() ? 1 : this.readAhead + 1;
+    while (this.inflight < limit) {
+      const next = this.takeQueued();
+      if (next === null) return;
+      this.send(next);
+    }
+  }
+
+  private takeQueued(): number | null {
+    const target = this.target.index;
+    const rank = (index: number) => (index >= target ? index - target : this.slots.length + target - index);
+    let best = -1;
+    for (let i = this.queued.length - 1; i >= 0; i -= 1) {
+      const { index, epoch } = this.queued[i];
+      const slot = this.slots[index];
+      if (!slot || !slot.fetching || slot.clip || slot.epoch !== epoch) {
+        this.queued.splice(i, 1); // đã có clip, hay cách đọc / giọng đổi sau khi xếp hàng
+        if (best > i) best -= 1;
+        continue;
+      }
+      if (best < 0 || rank(index) < rank(this.queued[best].index)) best = i;
+    }
+    return best < 0 ? null : this.queued.splice(best, 1)[0].index;
+  }
+
+  /** Nhảy tới chỗ khác: lượt xin chưa gửi của các đoạn ngoài cửa sổ mới bỏ (đoạn đã gửi thì máy chủ làm nốt, clip về vẫn dùng được); lượt của đoạn
+   *  vừa nhảy tới nhờ vậy được gửi trước, không chờ cả cửa sổ cũ. */
+  private dropQueuedOutside(): void {
+    const low = this.target.index;
+    const high = this.target.index + this.readAhead;
+    this.queued = this.queued.filter(({ index, epoch }) => {
+      const slot = this.slots[index];
+      if (!slot) return false;
+      if (index >= low && index <= high) return true;
+      if (slot.epoch === epoch) slot.fetching = false;
+      return false;
+    });
+  }
+
+  private send(index: number): void {
+    const speech = this.speech;
+    const slot = this.slots[index];
+    if (!speech || !slot) return;
     const id = this.loadId;
+    const epoch = slot.epoch;
+    this.inflight += 1;
     speech
       .fetchClip(speech.voice(), slot.text)
       .then((clip) => {
         if (id !== this.loadId) return;
+        // Cách đọc đổi trong lúc đoạn này đang được đọc: clip này theo cách đọc cũ - bỏ (lượt hỏi mới đã được xếp bởi [readingsChanged]).
+        if (epoch !== slot.epoch) return;
         slot.fetching = false;
         slot.failures = 0;
         this.onClip(index, clip);
       })
       .catch((error) => {
-        if (id !== this.loadId) return;
+        if (id !== this.loadId || epoch !== slot.epoch) return;
         slot.fetching = false;
         slot.failures += 1;
         if (index !== this.target.index || !this.wanted) return;
@@ -621,6 +705,11 @@ export class ReadAloudEngine implements AudioEngine {
           return;
         }
         this.fail(error);
+      })
+      .finally(() => {
+        if (id !== this.loadId) return;
+        this.inflight -= 1;
+        this.pump();
       });
   }
 
@@ -714,6 +803,7 @@ export class ReadAloudEngine implements AudioEngine {
     }
     this.target = { index: next, offset: 0 };
     this.releaseOutside();
+    this.dropQueuedOutside();
     this.fire("time");
     this.playCurrent();
   }
@@ -737,6 +827,39 @@ export class ReadAloudEngine implements AudioEngine {
     slot.audio = null;
     slot.detach = null;
     slot.started = false;
+  }
+
+  /** Bỏ clip của đoạn (thả audio, độ dài về ước tính) để lần sau lấy lại. */
+  private dropClip(slot: Slot): void {
+    this.releaseSlot(slot);
+    slot.clip = null;
+    slot.words = null;
+    slot.duration = slot.estimate;
+    slot.stale = false;
+    slot.epoch += 1;
+  }
+
+  /** Cách đọc riêng của cuốn vừa đổi: mọi đoạn có từ ấy mà đã đọc sẵn bỏ clip để lần phát sau hỏi máy chủ lại (khoá bộ đệm của máy chủ đã gồm cách đọc). Đoạn đang
+   *  nói nói nốt; nghe lại đoạn ấy thì lấy clip mới ([playCurrent]). */
+  private readingsChanged(detail: ReadingsChanged | undefined): void {
+    if (!this.ready || !this.speech || !detail || !detail.bookId || this.speech.bookId !== detail.bookId) return;
+    const surfaces = detail.surfaces.map((surface) => surface.normalize("NFC")).filter(Boolean);
+    let changed = false;
+    this.slots.forEach((slot, i) => {
+      if (!slot.speakable || (!slot.clip && !slot.fetching) || !(detail.all || surfaces.some((surface) => slot.text.normalize("NFC").includes(surface)))) return;
+      if (i === this.target.index && slot.clip) {
+        slot.stale = true;
+        return;
+      }
+      this.dropClip(slot);
+      slot.fetching = false;
+      changed = true;
+    });
+    if (!changed) return;
+    this.layout();
+    this.publish();
+    this.fire("duration");
+    if (this.wanted) this.prefetch(this.target.index);
   }
 
   private voiceChanged(): void {
@@ -771,7 +894,12 @@ export class ReadAloudEngine implements AudioEngine {
   private dispose(): void {
     this.stopSilence(false);
     this.loadId += 1;
-    if (typeof window !== "undefined") window.removeEventListener(VOICE_CHANGED_EVENT, this.onVoice);
+    this.queued = [];
+    this.inflight = 0;
+    if (typeof window !== "undefined") {
+      window.removeEventListener(VOICE_CHANGED_EVENT, this.onVoice);
+      window.removeEventListener(READINGS_CHANGED_EVENT, this.onReadings);
+    }
     for (const slot of this.slots) this.releaseSlot(slot);
     this.slots = [];
     this.base = null;

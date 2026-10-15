@@ -2,6 +2,7 @@ package vn.abook.player.readaloud
 
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
@@ -136,13 +137,24 @@ class ClipReaderTest {
 
     @Test
     fun withNoDeviceVoiceTheServiceErrorIsWhatTheListenerSees() {
-        // Có mạng mà dịch vụ hỏng: lời của chính dịch vụ (mất mạng thì là NO_OFFLINE_VOICE - test ở trên).
+        // Có mạng mà dịch vụ hỏng (Edge 403, 503...): cùng đường ra như mất mạng - câu NO_USABLE_VOICE, giao diện đưa "Đọc bằng …" / "Tải giọng VieNeu".
         val edge = FakeVoice("edge:v", VoiceException("Dịch vụ đọc to đang bận (HTTP 503)"))
         try {
             reader(edge, null).read("Xin", "edge:v")
             fail("đáng ra lỗi")
         } catch (error: VoiceException) {
-            assertEquals("Dịch vụ đọc to đang bận (HTTP 503)", error.message)
+            assertEquals(ClipReader.NO_USABLE_VOICE, error.message)
+            assertEquals("Giọng đang chọn đang không dùng được.", error.message)
+            assertFalse(error.offline)
+            assertEquals("service", error.reason)
+        }
+        val rejected = FakeVoice("edge:v", VoiceException("Dịch vụ giọng Edge từ chối (403) - có thể đã đổi cách dùng", reason = "rejected"))
+        try {
+            reader(rejected, null).read("Xin", "edge:v")
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertEquals(ClipReader.NO_USABLE_VOICE, error.message)
+            assertEquals("rejected", error.reason)
         }
     }
 

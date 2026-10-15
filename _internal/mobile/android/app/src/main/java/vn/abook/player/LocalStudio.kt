@@ -289,7 +289,7 @@ object LocalStudio {
         val surface = body.opt("surface")
         val spoken = if (body.has("spoken")) body.opt("spoken") else ""
         if (surface !is String || spoken !is String) throw BookEdits.EditsError("Thiếu từ hoặc cách đọc")
-        return BookEdits.setReading(dir, surface, spoken)
+        return BookEdits.setReading(dir, surface, spoken).also { vn.abook.player.readaloud.ReadAloud.readingsChanged(dir.name) }
     }
 
     /** PUT /skip {line, chapters, skip}: người nghe chấp nhận (hay bỏ chấp nhận) một gợi ý - dòng bị bỏ khỏi phần đọc của các chương ấy,
