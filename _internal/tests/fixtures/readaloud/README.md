@@ -36,3 +36,9 @@ Python (`abook/readaloud/mapping.py`, `tests/test_readaloud.py`) và Kotlin (đi
 5. Làm sạch theo thứ tự chữ: `start = min(max(start, startTrước), durationMs)`, `end = min(max(end, start), durationMs)`; rồi `end[i] = min(end[i], start[i+1])`.
 
 Thêm ca mới: viết file `*.json` với `words` tính tay (đừng chép kết quả của chương trình), chạy `tests/test_readaloud.py`.
+
+## `spoken/` - chữ gửi Edge (đã chuẩn hoá như giọng trên máy)
+
+`spoken/layout.json` (`[{id, origin, readings?, text, spoken, spans}]`: `spoken` = chuỗi gửi Edge, `spans[i]` = [chữ đọc đầu, chữ đọc cuối] của chữ hiện `i`, null khi chữ ấy không còn chữ đọc nào)
+và `spoken/words.json` (mốc Edge báo trên chuỗi đọc -> `words` của từng chữ hiện, tính tay). Python `abook/readaloud/spoken.py` (`tests/test_readaloud_spoken.py`) và Kotlin `SpokenText.kt`
+(`SpokenTextTest`) đọc cùng hai file này. 21 ca layout là ca đo a39 (Whisper: âm tiết sai 29% chữ thô -> 12% chữ chuẩn hoá).

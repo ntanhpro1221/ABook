@@ -32,7 +32,8 @@ xuất, người nghe đồng ý mới áp).
 **Nghe ngay**:
 - VieNeu: chỉ có luật số La Mã của app (`readaloud/vieneu.spoken_tokens`), rồi sea-g2p. KHÔNG có bảng tên.
 - Supertonic: sea-g2p normalize rồi làm sạch ký hiệu.
-- Edge và giọng dùng khoá: chữ thô; nhà cung cấp tự chuẩn hoá.
+- Edge: nhận CHÍNH chữ mà giọng trên máy nhận (`readaloud/spoken.py` -> `vieneu.spoken_tokens`, `speaks_english` True; điện thoại `SpokenText.kt`). Đo a39 (Whisper, 74 câu bịa x 2 giọng): âm tiết sai 29% (thô) -> 12%; tên Nhật + kính ngữ 33% -> 2%, tiếng kêu, "1,500", "+50" "x2" "3-5" "100/250", viết tắt thắng lớn; xấu hơn ở 5 ca nhỏ (mức nhiễu của ASR).
+- Giọng dùng khoá (Azure, Google, FPT, Viettel): chữ thô; nhà cung cấp tự chuẩn hoá (chưa đo).
 
 ### sea-g2p chạy thật trên câu kiểu truyện
 

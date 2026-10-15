@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Giọng Edge (Hoài My, Nam Minh) giờ đọc đúng như giọng trên máy: tên Nhật/Hàn, tiếng kêu (Grrr, Hmm, Uh…), số kiểu 1,500, ký hiệu +50 / x2 / 3-5 / 100/250, chữ viết tắt (máy tính và điện thoại).
+
 ## [0.4.67] - 2026-10-16
 
 ### Nghe ngay

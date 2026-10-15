@@ -40,12 +40,18 @@ class ClipCache(
                 .joinToString("") { "%02x".format(it) }
 
         /**
-         * Dấu cách đọc của đoạn trong khoá (`service.clip`): gốc của cuốn (`VieneuProvider.reading_tag` - chỉ giọng đọc tên theo gốc cuốn - VieNeu, Supertonic - và chỉ đoạn mà gốc làm nghe khác) và
+         * Dấu cách đọc của đoạn trong khoá (`service.clip`): gốc của cuốn (`VieneuProvider.reading_tag` - chỉ giọng đọc tên theo gốc cuốn - VieNeu, Supertonic - và chỉ đoạn mà gốc làm nghe khác; giọng nhận chữ chuẩn hoá - Edge - thêm cả [SpokenText.TAG]) và
          * cách đọc riêng có mặt trong đoạn ([Readings.tag], mọi giọng), nối bằng "+"; không có gì thì "".
          */
         fun reading(voiceId: String, text: String, origin: String?, readings: Map<String, String>? = null): String =
-            listOf(if (origin != null && (voiceId.startsWith("vieneu:") || voiceId.startsWith("supertonic:"))) VieneuUnits.readingTag(text, origin) else "", Readings.tag(text, readings))
-                .filter { it.isNotEmpty() }.joinToString("+")
+            listOf(
+                when {
+                    SpokenText.normalises(voiceId) -> SpokenText.tag(text, origin)
+                    origin != null && (voiceId.startsWith("vieneu:") || voiceId.startsWith("supertonic:")) -> VieneuUnits.readingTag(text, origin)
+                    else -> ""
+                },
+                Readings.tag(text, readings),
+            ).filter { it.isNotEmpty() }.joinToString("+")
 
         /** "edge:vi-VN-X" -> ("edge", "vi-VN-X"). */
         fun split(voiceId: String): Pair<String, String> = voiceId.substringBefore(':') to voiceId.substringAfter(':', "")

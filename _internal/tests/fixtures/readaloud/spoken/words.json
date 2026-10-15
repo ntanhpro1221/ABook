@@ -1,0 +1,180 @@
+[
+ {
+  "note": "một chữ hiện thành hai chữ đọc (Haaah -> ha… a): mốc trải từ đầu chữ đọc đầu tới cuối chữ đọc cuối",
+  "text": "Haaah, cuối cùng cũng xong.",
+  "origin": null,
+  "durationMs": 1500,
+  "boundaries": [
+   {
+    "text": "ha",
+    "start": 0,
+    "end": 300
+   },
+   {
+    "text": "a",
+    "start": 300,
+    "end": 500
+   },
+   {
+    "text": "cuối",
+    "start": 700,
+    "end": 900
+   },
+   {
+    "text": "cùng",
+    "start": 900,
+    "end": 1100
+   },
+   {
+    "text": "cũng",
+    "start": 1100,
+    "end": 1200
+   },
+   {
+    "text": "xong",
+    "start": 1200,
+    "end": 1400
+   }
+  ],
+  "words": [
+   [
+    0,
+    500
+   ],
+   [
+    700,
+    900
+   ],
+   [
+    900,
+    1100
+   ],
+   [
+    1100,
+    1200
+   ],
+   [
+    1200,
+    1400
+   ]
+  ]
+ },
+ {
+  "note": "viết tắt thành nhiều chữ cái (HP -> hát pê): mỗi chữ hiện nhận mốc của cả cụm",
+  "text": "Dùng HP và MP của anh đi.",
+  "origin": null,
+  "durationMs": 2100,
+  "boundaries": [
+   {
+    "text": "Dùng",
+    "start": 0,
+    "end": 300
+   },
+   {
+    "text": "hát",
+    "start": 300,
+    "end": 500
+   },
+   {
+    "text": "pê",
+    "start": 500,
+    "end": 700
+   },
+   {
+    "text": "và",
+    "start": 700,
+    "end": 900
+   },
+   {
+    "text": "em",
+    "start": 900,
+    "end": 1100
+   },
+   {
+    "text": "pê",
+    "start": 1100,
+    "end": 1300
+   },
+   {
+    "text": "của",
+    "start": 1300,
+    "end": 1500
+   },
+   {
+    "text": "anh",
+    "start": 1500,
+    "end": 1800
+   },
+   {
+    "text": "đi",
+    "start": 1800,
+    "end": 2000
+   }
+  ],
+  "words": [
+   [
+    0,
+    300
+   ],
+   [
+    300,
+    700
+   ],
+   [
+    700,
+    900
+   ],
+   [
+    900,
+    1300
+   ],
+   [
+    1300,
+    1500
+   ],
+   [
+    1500,
+    1800
+   ],
+   [
+    1800,
+    2000
+   ]
+  ]
+ },
+ {
+  "note": "cách đọc riêng ngắn hơn số chữ hiện: chữ hiện cuối cụm không còn chữ đọc, đứng ở cuối mốc chữ trước",
+  "text": "Hạ Vy cười.",
+  "origin": null,
+  "readings": {
+   "Hạ Vy": "Hạ"
+  },
+  "durationMs": 1000,
+  "boundaries": [
+   {
+    "text": "Hạ",
+    "start": 0,
+    "end": 400
+   },
+   {
+    "text": "cười",
+    "start": 500,
+    "end": 900
+   }
+  ],
+  "words": [
+   [
+    0,
+    400
+   ],
+   [
+    400,
+    400
+   ],
+   [
+    500,
+    900
+   ]
+  ]
+ }
+]

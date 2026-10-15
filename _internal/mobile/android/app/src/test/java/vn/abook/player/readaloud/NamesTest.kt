@@ -95,7 +95,8 @@ class NamesTest {
     fun theCacheKeyOnlyChangesForTextTheOriginChanges() {
         assertEquals(ClipCache.key("vieneu", "nano/Adam", "t"), ClipCache.key("vieneu", "nano/Adam", "t", ""))
         assertTrue(ClipCache.key("vieneu", "nano/Adam", "t", "ja") != ClipCache.key("vieneu", "nano/Adam", "t"))
-        assertEquals("", ClipCache.reading("edge:vi-VN-X", "Haruto đến.", "ja"))
+        assertEquals("ja+tn", ClipCache.reading("edge:vi-VN-X", "Haruto đến.", "ja")) // Edge nhận chữ chuẩn hoá: thêm dấu tn
+        assertEquals("", ClipCache.reading("azure:vi-VN-X", "Haruto đến.", "ja"))
         assertEquals("ja", ClipCache.reading("vieneu:nano/Adam", "Haruto đến.", "ja"))
         assertEquals("", ClipCache.reading("vieneu:nano/Adam", "Kate đến.", "ja"))
     }
