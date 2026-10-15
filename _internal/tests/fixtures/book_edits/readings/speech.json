@@ -20,15 +20,15 @@
     "Kate",
     "nói."
    ],
-   "spokenTokens": null,
-   "spokenText": "“Ha-ru-tô,” Kết nói.",
-   "spokenSlots": [
-    0,
-    1,
-    2
+   "spokenTokens": [
+    "“Ha-ru-tô,”",
+    "Kết",
+    "nói."
    ],
+   "spokenText": null,
+   "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "b0ef71923ccb6a29beed7abe904517ec774bbb2e6de8c60ef63a3d9d31a0f983"
+   "key": "323aa82a4fa8af226630c57b303b7bd5cee0e9af02e1909c641f07cb469b4212"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -87,25 +87,25 @@
     "thì",
     "không."
    ],
-   "spokenTokens": null,
-   "spokenText": "Kết gặp Kết ở Tô-ky-ô - còn haruto, Harutoo và Haruto-kun thì không.",
-   "spokenSlots": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12
+   "spokenTokens": [
+    "Kết",
+    "gặp",
+    "Kết",
+    "ở",
+    "Tô-ky-ô",
+    "-",
+    "còn",
+    "haruto,",
+    "Harutoo",
+    "và",
+    "Ha-ru-tô-cun",
+    "thì",
+    "không."
    ],
+   "spokenText": null,
+   "spokenSlots": null,
    "tag": "r669e9aea4c533d44",
-   "key": "6eab899ff7bb60dd674399495fc5e66c342c4a91b49e72d45736e1de8790617c"
+   "key": "6c4ee6938faf15a6d4ad283b99ae2a006b4a4562b1d0de66b04231c26af33d71"
   },
   {
    "voice": "vieneu:nano/Nhẹ",
@@ -157,17 +157,17 @@
     "nào",
     "cả."
    ],
-   "spokenTokens": null,
-   "spokenText": "Không có tên nào cả.",
-   "spokenSlots": [
-    0,
-    1,
-    2,
-    3,
-    4
+   "spokenTokens": [
+    "Không",
+    "có",
+    "tên",
+    "nào",
+    "cả."
    ],
+   "spokenText": null,
+   "spokenSlots": null,
    "tag": "",
-   "key": "74807dea4d6121fde7deedd289f55c40482b7f73aa5c9e346a0f7d6b20691286"
+   "key": "17100962812ad2ad2c38eb3366eb0d86a1d6fea81af7027533857c7b3d130dd9"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -294,16 +294,16 @@
     "Kate",
     "nói."
    ],
-   "spokenTokens": null,
-   "spokenText": "“Hà Vi,” Kết nói.",
-   "spokenSlots": [
-    0,
-    1,
-    2,
-    3
+   "spokenTokens": [
+    "“Hà",
+    "Vi,”",
+    "Kết",
+    "nói."
    ],
+   "spokenText": null,
+   "spokenSlots": null,
    "tag": "r81c6e74e07144399",
-   "key": "e2e69f06fd57cb884d1b83261a0f78e668d199fa1c4401b0669a7779d1d8a6e3"
+   "key": "89d7c1380bbd788d2be80b0cf1e93faec070c42f5c913e978490606a21041406"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -342,22 +342,22 @@
     "và",
     "Hạ."
    ],
-   "spokenTokens": null,
-   "spokenText": "Lý-Tiểu Long gặp Tứ rồi Hà Vi và Há.",
-   "spokenSlots": [
-    0,
-    1,
-    2,
-    3,
-    null,
-    4,
-    5,
-    6,
-    7,
-    8
+   "spokenTokens": [
+    "Lý-Tiểu",
+    "Long",
+    "gặp",
+    "Tứ",
+    "",
+    "rồi",
+    "Hà",
+    "Vi",
+    "và",
+    "Há."
    ],
+   "spokenText": null,
+   "spokenSlots": null,
    "tag": "r3e4375453368fca7",
-   "key": "8aa9787fe81d31a26f53733bb5c0ccc01774764367c3556b4ef4fbe57ac511f2"
+   "key": "9d161645d23450f543a29612b91c199d898f7b0d35424af410ecc5188c5b7c93"
   },
   {
    "voice": "vieneu:nano/Nhẹ",
@@ -405,19 +405,19 @@
     "Tư",
     "nói."
    ],
-   "spokenTokens": null,
-   "spokenText": "Anh gọi: Tứ! Ông Tư nói.",
-   "spokenSlots": [
-    0,
-    1,
-    2,
-    null,
-    3,
-    4,
-    5
+   "spokenTokens": [
+    "Anh",
+    "gọi:",
+    "Tứ!",
+    "",
+    "Ông",
+    "Tư",
+    "nói."
    ],
+   "spokenText": null,
+   "spokenSlots": null,
    "tag": "raff1e6190a9d81a9",
-   "key": "a546b1e677a1f68acfa4ea7a2ed79d8d6d58361871042bb073f4af3587acc99d"
+   "key": "52cd94ec017260ef8b9ce55c1acb7075906566d99be416e6e768d9db13177cef"
   },
   {
    "voice": "supertonic:F1",
@@ -459,19 +459,19 @@
     "ở",
     "lại."
    ],
-   "spokenTokens": null,
-   "spokenText": "Há, Vy đi; hạ vy ở lại.",
-   "spokenSlots": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6
+   "spokenTokens": [
+    "Há,",
+    "Vy",
+    "đi;",
+    "hạ",
+    "vy",
+    "ở",
+    "lại."
    ],
+   "spokenText": null,
+   "spokenSlots": null,
    "tag": "r7f137f8486d33d82",
-   "key": "008431642a6691694dffcf2614ff8ffbe64089bd1ca1050ffcbbfd9c87c66c60"
+   "key": "841013d1a8fda6937e73cf4956e26e1504e669a96a93f46cba75249053f77b64"
   },
   {
    "voice": "vieneu:turbo/Thường",

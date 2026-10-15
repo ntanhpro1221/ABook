@@ -1,0 +1,620 @@
+[
+ {
+  "id": "ja1",
+  "note": "a39 names_ja: Edge raw vs normalised",
+  "origin": "ja",
+  "text": "Tanaka-san đã đến trước cửa.",
+  "spoken": "Ta-na-ca-xan đã đến trước cửa.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    4
+   ]
+  ]
+ },
+ {
+  "id": "ja2",
+  "note": "a39 names_ja: Edge raw vs normalised",
+  "origin": "ja",
+  "text": "Haruto-kun, Sakura-chan đang chờ ở đó.",
+  "spoken": "Ha-ru-tô-cun, Xa-cu-ra-chan đang chờ ở đó.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    4
+   ],
+   [
+    5,
+    5
+   ]
+  ]
+ },
+ {
+  "id": "ja5",
+  "note": "a39 names_ja: Edge raw vs normalised",
+  "origin": "ja",
+  "text": "Sensei dặn Kouta-kun nộp bài.",
+  "spoken": "Xen-xây dặn Câu-ta-cun nộp bài.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    4
+   ]
+  ]
+ },
+ {
+  "id": "ja8",
+  "note": "a39 names_ja: Edge raw vs normalised",
+  "origin": "ja",
+  "text": "Cô ấy nói rồi…Senpai bỏ đi.",
+  "spoken": "Cô ấy nói rồi…Xen-pai bỏ đi.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    4
+   ],
+   [
+    5,
+    5
+   ]
+  ]
+ },
+ {
+  "id": "ko1",
+  "note": "a39 names_ko: Edge raw vs normalised",
+  "origin": "ko",
+  "text": "Park Jiah mỉm cười.",
+  "spoken": "Pắc Gi-a mỉm cười.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ]
+  ]
+ },
+ {
+  "id": "ko3",
+  "note": "a39 names_ko: Edge raw vs normalised",
+  "origin": "ko",
+  "text": "Minjun-ssi, mời anh ngồi.",
+  "spoken": "Min-giun-xi, mời anh ngồi.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ]
+  ]
+ },
+ {
+  "id": "ko5",
+  "note": "a39 names_ko: Edge raw vs normalised",
+  "origin": "ko",
+  "text": "Oppa, anh đi đâu thế?",
+  "spoken": "Óp-pa, anh đi đâu thế?",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    4
+   ]
+  ]
+ },
+ {
+  "id": "ko8",
+  "note": "a39 names_en_in_ko: Edge raw vs normalised",
+  "origin": "ko",
+  "text": "Ruel nhìn Elise rồi gật đầu.",
+  "spoken": "Ruel nhìn Elise rồi gật đầu.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    4
+   ],
+   [
+    5,
+    5
+   ]
+  ]
+ },
+ {
+  "id": "en1",
+  "note": "a39 english: Edge raw vs normalised",
+  "origin": null,
+  "text": "Rose và Mike mở Facebook.",
+  "spoken": "Rose và Mike mở Facebook.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    4
+   ]
+  ]
+ },
+ {
+  "id": "sh1",
+  "note": "a39 shouts: Edge raw vs normalised",
+  "origin": null,
+  "text": "Kyaaa! Đừng lại gần tôi!",
+  "spoken": "ki-a… a! Đừng lại gần tôi!",
+  "spans": [
+   [
+    0,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    4
+   ],
+   [
+    5,
+    5
+   ]
+  ]
+ },
+ {
+  "id": "sh4",
+  "note": "a39 shouts: Edge raw vs normalised",
+  "origin": null,
+  "text": "Grrr, tao sẽ giết mày.",
+  "spoken": "gừ…, tao sẽ giết mày.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    4
+   ]
+  ]
+ },
+ {
+  "id": "sh7",
+  "note": "a39 shouts: Edge raw vs normalised",
+  "origin": null,
+  "text": "Hmm~ để xem nào.",
+  "spoken": "hừm để xem nào.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ]
+  ]
+ },
+ {
+  "id": "sh10",
+  "note": "a39 shouts: Edge raw vs normalised",
+  "origin": null,
+  "text": "Haaah, cuối cùng cũng xong.",
+  "spoken": "ha… a, cuối cùng cũng xong.",
+  "spans": [
+   [
+    0,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    4
+   ],
+   [
+    5,
+    5
+   ]
+  ]
+ },
+ {
+  "id": "sh12",
+  "note": "a39 shouts: Edge raw vs normalised",
+  "origin": null,
+  "text": "Uh... vâng.",
+  "spoken": "ờ... vâng.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ]
+  ]
+ },
+ {
+  "id": "u2",
+  "note": "a39 units: Edge raw vs normalised",
+  "origin": null,
+  "text": "Hắn có 9,999G trong túi.",
+  "spoken": "Hắn có 9999 giê trong túi.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    3
+   ],
+   [
+    4,
+    4
+   ],
+   [
+    5,
+    5
+   ]
+  ]
+ },
+ {
+  "id": "u12",
+  "note": "a39 units: Edge raw vs normalised",
+  "origin": null,
+  "text": "Được 1,500 vàng.",
+  "spoken": "Được 1500 vàng.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ]
+  ]
+ },
+ {
+  "id": "r1",
+  "note": "a39 roman: Edge raw vs normalised",
+  "origin": null,
+  "text": "Henry VIII lên ngôi.",
+  "spoken": "Henry tám lên ngôi.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ]
+  ]
+ },
+ {
+  "id": "a1",
+  "note": "a39 abbrev: Edge raw vs normalised",
+  "origin": null,
+  "text": "Dùng HP và MP của anh đi.",
+  "spoken": "Dùng hát pê và em pê của anh đi.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    5
+   ],
+   [
+    6,
+    6
+   ],
+   [
+    7,
+    7
+   ],
+   [
+    8,
+    8
+   ]
+  ]
+ },
+ {
+  "id": "s1",
+  "note": "a39 symbols: Edge raw vs normalised",
+  "origin": null,
+  "text": "ATK +50, DEF x2.",
+  "spoken": "a tê ca +50, đê e ép nhân 2.",
+  "spans": [
+   [
+    0,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    6
+   ],
+   [
+    7,
+    8
+   ]
+  ]
+ },
+ {
+  "id": "s5",
+  "note": "a39 symbols: Edge raw vs normalised",
+  "origin": null,
+  "text": "Có 3-5 người.",
+  "spoken": "Có 3 đến 5 người.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    3
+   ],
+   [
+    4,
+    4
+   ]
+  ]
+ },
+ {
+  "id": "p8",
+  "note": "a39 punct: Edge raw vs normalised",
+  "origin": null,
+  "text": "T-tôi không biết.",
+  "spoken": "tờ… tôi không biết.",
+  "spans": [
+   [
+    0,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ]
+  ]
+ },
+ {
+  "id": "readings_shorter",
+  "note": "cách đọc riêng ngắn hơn số chữ hiện: chữ cuối mất khỏi chuỗi",
+  "origin": null,
+  "readings": {
+   "Hạ Vy": "Hạ"
+  },
+  "text": "Hạ Vy cười.",
+  "spoken": "Hạ cười.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   null,
+   [
+    1,
+    1
+   ]
+  ]
+ },
+ {
+  "id": "readings_wins",
+  "note": "cách đọc riêng của cuốn thắng bước đọc tên",
+  "origin": "ja",
+  "readings": {
+   "Haruto": "Ha ru tô"
+  },
+  "text": "Onii-chan Haruto cười.",
+  "spoken": "o-ni-chan Ha-ru-tô cười.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ]
+  ]
+ }
+]
