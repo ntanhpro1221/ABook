@@ -292,6 +292,15 @@ PARAGRAPHS = [
     "Nhận được [Quặng sắt x4] và R-Lọ mana x10, rồi 1x Cuộn phép. Chia tiền 7:3 nhé. Hai người đấu 1:1 ở sân sau, rồi đấu 1-1 tiếp. Kèo cược 3.17:1 là cao. Độ thiện cảm: -20, rồi -50% Nhanh nhẹn, [Sức mạnh -5], Mất thêm -15%. Điểm Lv.-1 hiện ra.",
     "#KHÔNG là thẻ, S#.1 mở màn. Mục Q&A, ban nhạc S&M, kiếm & khiên. Kiếm + khiên thì hợp, +Hỏa cầu. Thầy giáo > Học trò > Sơ sinh, 5 > 3. Vương đô = Thủ đô, 2 + 3 = 5, nhìn =)) xong. Xem tại https://example.org/abc?x=1 nhé.",
     "★★☆ -> ★★★ rồi. Tộc: Elf ♀, giới: ♂, Ayame♀ xong. Tấn công (↑1), phòng thủ ▲(0.15). Boost 3x, 100x cấp độ, 0.5x tốc độ. Aki × Rin là một cặp, Bảng Nhiệm Vụ × Nhiệm Vụ Phụ mở ra, 3 × 4. Cô ấy ≠ chị ta.",
+    # tn10 (16-10): quy ước đọc ký hiệu vòng 2 ("-" trước số, "/", mũi tên, "x", "↓", "=", "*", toàn khổ, "+").
+    "Nhiệt độ -5 độ, tọa độ (-3, 4) và năm -2324. Bị [Thất bại: -90%], HP -20, Blue -1, MK-2, rồi 10 - 3 = 7 và 8-2=6.",
+    "Còn -50% Nhanh nhẹn, thanh máu của Shido -1. Tôi mười tám (-2) nhé.",
+    "Đánh giá 4/5 sao, điểm 9.7/10, hết 1/4 máu, rồi 24/7. Ngày 8/3 là ngày hội, còn 3/4 cốc nước.",
+    "Hầm trú -> Một ngày mới -> Mặt trời. → Biến hóa → Honnoshi. Tokyo → Osaka. Máu 10 → 20 → 30.",
+    "Bá Vương bị chọc giận. ATK↑ DEF↓. Lượt đọc: ↓ và Đông 4↓ xong.",
+    "Cho y=ax² và x >= 3, a <= 5. ８－２＝６ ＡＢＣ １２ ＋ xong.",
+    "Trans+Edit và 2+3=5, A + B. Tầng 8x và năm 200x, 19××, từ 0x đến 1x. Tăng 3x tốc độ, 5x damage.",
+    "Hình hent*i và E**alibur, *boing**boing* rồi “*Khụ*Khụ*” xong.",
 ]
 
 # Paragraphs read with a book origin (abook/readaloud/names.py): Japanese / Korean names read by the romanization rules, English names and Vietnamese

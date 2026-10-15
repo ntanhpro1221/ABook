@@ -223,7 +223,7 @@ class SoundsTest {
         assertEquals("1780 thành 1940 và A thành B", arrows("1780->1940 và A-->B"))
         assertEquals("A B và C D, E F", arrows("A <- B và C ← D, E<-F"))
         assertEquals("Bước tiếp. Xong", arrows("-> Bước tiếp. → Xong"))
-        assertEquals("A <-> B, x <= 5, a >= 3, a thành b c", arrows("A <-> B, x <= 5, a >= 3, a -> b <- c"))
+        assertEquals("A <-> B, x nhỏ hơn hoặc bằng 5, a lớn hơn hoặc bằng 3, a thành b c", arrows("A <-> B, x <= 5, a >= 3, a -> b <- c"))
     }
 
     @Test
