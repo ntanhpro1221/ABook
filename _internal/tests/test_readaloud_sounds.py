@@ -294,7 +294,7 @@ def test_a_title_has_a_fixed_vietnamised_form_for_a_voice_that_cannot_say_englis
     ("1780->1940 và A-->B", "1780 thành 1940 và A thành B"),
     ("A <- B và C ← D, E<-F", "A B và C D, E F"),  # mũi tên ngược không có lời để đọc
     ("-> Bước tiếp. → Xong", "Bước tiếp. Xong"),  # đầu đoạn / đầu câu: dấu đầu mục
-    ("A <-> B, x <= 5, a >= 3, a -> b <- c", "A <-> B, x <= 5, a >= 3, a thành b c"),  # hai chiều và so sánh để nguyên
+    ("A <-> B, x <= 5, a >= 3, a -> b <- c", "A <-> B, x nhỏ hơn hoặc bằng 5, a lớn hơn hoặc bằng 3, a thành b c"),  # hai chiều để nguyên; "<=" ">=" sea-g2p đọc thiếu "hoặc" nên có lời
 ])
 def test_a_text_arrow_is_thanh_or_nothing(text: str, said: str) -> None:
     assert " ".join(piece for piece in _said(text) if piece) == said
