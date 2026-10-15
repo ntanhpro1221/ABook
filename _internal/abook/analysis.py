@@ -96,6 +96,59 @@ ALLOWED_KINDS = {"narration", "dialogue", "thought"}
 # 9 (không phải 4 như lúc v8 học): đo 05-10 (E2) cùng model v8 - Nhật +2,3 F1 giọng, lỗi lặp người câu trước -68 %; Hàn +0,9;
 # giá như cũ (docs/ANALYSIS_RESEARCH.md "04-10 Đột phá").
 PREVIOUS_TURNS = 9
+
+
+# --- CHẨN ĐOÁN lịch sử (Model 15-10, Lead duyệt; cây ABook_hdiag, KHÔNG vào app) ---
+# ABOOK_HIST_MODE = gold | strip | chainstart, ABOOK_HIST_TABLE = errtax_next/hdiag_table.json, ABOOK_HIST_SHORT = mã truyện của cổng rộng.
+# Chỉ đổi khối "Các đoạn ngay trước": gold = loại + người nói gold cho MỌI dòng; strip = bỏ người nói (giữ chữ + thẻ loại);
+# chainstart = chỉ dòng là câu đầu chuỗi xen kẽ gold mới mang loại + người nói gold. Không đặt biến -> y hệt 33cfba1e.
+_HIST_DIAG: dict[str, Any] = {}
+
+
+def _hist_mode() -> str:
+    mode = os.environ.get("ABOOK_HIST_MODE", "")
+    return mode if mode in {"gold", "strip", "chainstart"} else ""
+
+
+def _hist_diag(db: Any, before: list[Any], chapter_rows: list[Any], chapter_id: int) -> list[Any]:
+    mode = _hist_mode()
+    if mode not in {"gold", "chainstart"}:
+        return before
+    if "table" not in _HIST_DIAG:
+        import json as _json
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "model_eval"))
+        from score_models import speaker_key  # noqa: PLC0415
+        table = _json.loads(Path(os.environ["ABOOK_HIST_TABLE"]).read_text(encoding="utf-8"))
+        _HIST_DIAG["table"] = table.get(os.environ.get("ABOOK_HIST_SHORT", ""), {})
+        _HIST_DIAG["key"] = speaker_key
+    speaker_key = _HIST_DIAG["key"]
+    title = next((str(c["title"]) for c in db.list_chapters() if int(c["id"]) == int(chapter_id)), "")
+    rows = _HIST_DIAG["table"].get(title, {})
+    surface: dict[str, str] = {}
+    for row in chapter_rows:
+        label = str(row["speaker"] or "")
+        if label and not label.startswith("NPC_LOCAL"):
+            surface.setdefault(speaker_key(label), label)
+    out = []
+    for row in before:
+        item = {key: row[key] for key in row.keys()}
+        entry = rows.get(str(int(row["seq"])))
+        if entry is not None and (mode == "gold" or entry.get("start")):
+            kind = str(item.get("kind") or "narration")
+            kinds = entry["kinds"]
+            if kind not in kinds:
+                kind = next((k for k in ("dialogue", "thought", "narration") if k in kinds), kind)
+            item["kind"] = kind
+            ok = entry.get("ok") or []
+            if kind in {"dialogue", "thought"} and ok and speaker_key(str(item.get("speaker") or "")) not in ok:
+                key = ok[0]
+                if key == "NPC*":
+                    item["speaker"] = "NPC_LOCAL:" + (entry.get("npc") or "người lạ")
+                else:
+                    item["speaker"] = surface.get(key) or key.title()
+        out.append(item)
+    return out
 ALLOWED_GENDERS = {"male", "female", "unknown"}
 ALLOWED_AGES = {"child", "teen", "young", "adult", "elderly", "unknown"}
 ALLOWED_EMOTIONS = {
@@ -7535,6 +7588,7 @@ class OllamaBookAnalyzer:
         before = [row for row in chapter_rows if int(row["seq"]) < first_seq][-PREVIOUS_TURNS:]
         if not before or any(str(row["status"]) == SegmentStatus.PENDING.value for row in before):
             return ""
+        before = _hist_diag(self.db, before, chapter_rows, chapter_id)
         if not any(str(row["kind"] or "") in {"dialogue", "thought"} for row in before):
             return ""
         lines = []
@@ -7546,6 +7600,9 @@ class OllamaBookAnalyzer:
                 speaker = str(row["speaker"] or "UNKNOWN")
                 if speaker.startswith("NPC_LOCAL::"):
                     speaker = "NPC_LOCAL:" + speaker.rsplit("::", 1)[-1]
+                if _hist_mode() == "strip":
+                    lines.append(f"- [{'thoại' if kind == 'dialogue' else 'nội tâm'}] {text}")
+                    continue
                 lines.append(f"- [{'thoại' if kind == 'dialogue' else 'nội tâm'} · {speaker}] {text}")
             else:
                 lines.append(f"- [kể] {text}")
