@@ -38,7 +38,7 @@ const ADD_TOAST = "music-add";
  *  (hook gỡ ra) mà lượt thêm vẫn chạy tiếp. */
 let adding = false;
 
-/** Danh sách phát cho cuốn `bookId` (người nghe đã chọn, hay máy chọn khi chưa chọn gì) + các lựa chọn + cách đổi. `chosen`: mã dòng được đánh dấu
+/** Danh sách phát cho cuốn `bookId` (người nghe đã chọn, hay máy theo cảnh khi chưa chọn gì) + các lựa chọn + cách đổi. `chosen`: mã dòng được đánh dấu
  *  (null = "Để máy chọn"); `label`: chữ trên nút ("Máy chọn: <tên>" khi máy đang chọn); `playing`: có nhạc cho cuốn này. `enabled` false: chưa hỏi gì (menu chưa mở).
  *  `canImport`/`addMusic`: thêm nhạc của mình ngay từ menu (máy nhập được nhạc), xong thì chọn "Nhạc của tôi" cho cuốn này. */
 export function usePlaylistChoice(bookId: string, enabled = true) {
@@ -60,7 +60,7 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
       if (notice) {
         toast[notice.kind](notice.title, { id: ADD_TOAST, description: [notice.description, "Đang dùng làm nhạc nền của cuốn này."].filter(Boolean).join("\n") });
       } else {
-        // Để máy chọn: lời đáp của server đã là màn của máy chọn - nói máy chọn danh sách nào.
+        // Để máy chọn: lời đáp của server đã là màn của máy chọn - nói máy chọn gì.
         const auto = autoPlaylistName(view, menu.data);
         toast(playlist === null ? "Nhạc nền: để máy chọn" : `Nhạc nền: ${playlistLabel(view, menu.data)}`, {
           id: "playlist-choice",
@@ -120,7 +120,7 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     chosen,
     label: playlistLabel(current.data, menu.data),
     playing: playlistPlaying(current.data),
-    /** Nhạc của cuốn đang theo cảnh (người nghe chọn "Theo cảnh" hay để máy chọn mà máy chọn "Theo cảnh"). */
+    /** Nhạc của cuốn đang theo cảnh (người nghe chọn "Theo cảnh" hay để máy chọn). */
     scene: current.data?.playlist === SCENE_PLAYLIST,
     error: menu.data?.error || current.data?.error || "",
     loading: menu.isLoading,
