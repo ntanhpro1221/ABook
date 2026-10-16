@@ -1,5 +1,5 @@
 """NN-lite: học sinh nhỏ (2 MB, chỉ chữ) cho nhạc nền THEO CẢNH của "Nghe ngay" khi máy KHÔNG có gói q06 (Corpus research/music/SPEC_nnlite_app.md;
-điện thoại có bản Kotlin `NnLite.kt` cùng đọc cùng file). Thay mục học sinh `None` của đường N0 (music_nnscene.py) bằng mục `dV / dE / dT / chapterV` tính
+điện thoại có bản Kotlin `NnLite.kt` cùng đọc cùng file). Thay mục học sinh `None` của đường N0 (music_nnscene.py) bằng mục `dV / dE / dT / chapterV / chapterP` tính
 từ chữ cảnh rồi đi đúng đường NN-V (`music_scenes.apply_student` + sàn `WEAK_MOOD` ở `music_nnscene.chapter_scenes`). Đo trên bộ vàng 18 (60 chương): sai rõ
 37,8 % (N0) -> 17,4 % (NN-lite); q06 14,7 %.
 
@@ -188,17 +188,19 @@ class Model:
 
     def chapter(self, texts: list[str]) -> list[dict[str, float]]:
         """Mục học sinh của MỘT chương theo thứ tự cảnh: dV, dE, dT căn giữa theo trọng số `weight` rồi cộng `c` (chương một cảnh: 0), và chapterV (cùng giá trị ở
-        mọi cảnh)."""
+        mọi cảnh), và chapterP = (pV, pE, pT, q) THÔ của chương (trung bình theo `weight`, chưa cộng `c_c`; LVJ, `music_scenes.apply_student`)."""
         if not texts:
             return []
         y = [self.scene(text) for text in texts]
         w = [float(weight(text)) for text in texts]
         total = sum(w)
-        level = sum(wi * yi[3] for wi, yi in zip(w, y)) / total + self.c_c
+        chapter_p = [sum(wi * yi[axis] for wi, yi in zip(w, y)) / total for axis in range(4)]
+        level = chapter_p[3] + self.c_c
         if len(texts) < 2:
-            return [{"dV": 0.0, "dE": 0.0, "dT": 0.0, "chapterV": level}]
-        mean = [sum(wi * yi[axis] for wi, yi in zip(w, y)) / total for axis in range(3)]
-        return [{"dV": yi[0] - mean[0] + self.c[0], "dE": yi[1] - mean[1] + self.c[1], "dT": yi[2] - mean[2] + self.c[2], "chapterV": level} for yi in y]
+            return [{"dV": 0.0, "dE": 0.0, "dT": 0.0, "chapterV": level, "chapterP": chapter_p}]
+        mean = chapter_p[:3]
+        return [{"dV": yi[0] - mean[0] + self.c[0], "dE": yi[1] - mean[1] + self.c[1], "dT": yi[2] - mean[2] + self.c[2], "chapterV": level,
+                 "chapterP": list(chapter_p)} for yi in y]
 
     def block_profile(self, segments: list[dict[str, Any]], spans: list[tuple[int, int]]) -> list[list[float]]:
         """Hồ sơ từng khối: (pV, pE, pT) của chữ khối chia độ lệch chuẩn đích `ysd`."""
@@ -210,7 +212,7 @@ class Model:
         return [segments[spans[cut][0]].get("id") for cut in partition(self.block_profile(segments, spans))]
 
     def chapter_items(self, script: dict[str, Any], scenes: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
-        """Mục (`chapterId`, `firstSegment`, `lastSegment`, `dV`, `dE`, `dT`, `chapterV`) của từng đoạn `scenes` (của `music_scenes.book_scenes([script], None, None, None)`)
+        """Mục (`chapterId`, `firstSegment`, `lastSegment`, `dV`, `dE`, `dT`, `chapterV`, `chapterP`) của từng đoạn `scenes` (của `music_scenes.book_scenes([script], None, None, None)`)
         của chương `script`, cùng khuôn với `ChapterStudent.chapter`. None: đoạn không khớp câu của chương."""
         texts = music_moods.scene_texts(script, scenes)
         if texts is None:

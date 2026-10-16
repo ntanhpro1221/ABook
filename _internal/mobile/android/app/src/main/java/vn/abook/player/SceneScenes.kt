@@ -55,9 +55,62 @@ object SceneScenes {
     private const val STUDENT_SHAPE = 1.0
 
     /**
+     * LVJ (Corpus research/music/SPEC_lvj_app.md; `music_scenes.LVJ_COEF`): mức chương chung V / E / T từ `chapterP` = (pV, pE, pT, q) của NN-lite, 5 hàng (pV, pE, pT, q, 1) x 3 cột (V, E, T).
+     * Học trên 614 chương dev 16-21 (LLM_Train/music/runs/lvj_frozen.json sha256 7e67114f…). Hằng ĐÓNG BĂNG, không làm tròn, không chỉnh - muốn đổi phải đo lại.
+     */
+    val LVJ_COEF: Array<DoubleArray> = arrayOf(
+        doubleArrayOf(0.6319019445430722, 0.2051738638237541, 0.9174568390927069), // pV
+        doubleArrayOf(-0.03336188688214415, 1.2192877795096715, 0.024310404064604645), // pE
+        doubleArrayOf(0.23150512513452876, -0.24328311641096767, 0.9916372911166209), // pT
+        doubleArrayOf(0.7106786064598247, -0.2348117213659031, -0.8371668420209222), // q
+        doubleArrayOf(-0.2581318606640798, -0.2223519284989122, 0.2591515637768544), // 1
+    )
+
+    /** `music_scenes.lvj_level`: (L_V, L_E, L_T) = clip(LVJ_COEF^T . [chapterP, 1]), từng trục về [-1, 1]. */
+    fun lvjLevel(chapterP: DoubleArray): DoubleArray {
+        val row = doubleArrayOf(chapterP[0], chapterP[1], chapterP[2], chapterP[3], 1.0)
+        return DoubleArray(3) { column ->
+            var sum = 0.0
+            for (index in 0 until 5) sum += row[index] * LVJ_COEF[index][column]
+            max(-1.0, minOf(1.0, sum))
+        }
+    }
+
+    /**
+     * `music_scenes._shift_to_level`: dời trung bình theo giây (`end - start`) của valence / arousal / tension về `level` (L_V, L_E, L_T) trên giá trị ĐÃ làm tròn của bước student,
+     * giữ hình trong chương: `round(clip(out - TB(out) + L), 3)`.
+     */
+    fun shiftToLevel(scenes: List<SceneScene>, level: DoubleArray): List<SceneScene> {
+        val weights = scenes.map { max(0.0, it.end - it.start) }
+        var total = 0.0
+        for (weight in weights) total += weight
+        if (total <= 0) return scenes
+
+        fun shift(values: List<Double>, target: Double): List<Double> {
+            var sum = 0.0
+            for (index in values.indices) sum += weights[index] * values[index]
+            val mean = sum / total
+            return values.map { Py.round(max(-1.0, minOf(1.0, it - mean + target)), 3) }
+        }
+
+        val valence = shift(scenes.map { it.valence }, level[0])
+        val arousal = shift(scenes.map { it.arousal }, level[1])
+        val tension = shift(scenes.map { it.tension }, level[2])
+        return scenes.mapIndexed { index, scene -> scene.copy(valence = valence[index], arousal = arousal[index], tension = tension[index]) }
+    }
+
+    /** `_chapter_p`: `chapterP` (4 số hữu hạn, cùng giá trị ở mọi đoạn) khi MỌI mục có; không thì null (LVJ không chạy: Studio, mục cũ). */
+    private fun chapterP(items: List<StudentItem>): DoubleArray? {
+        val rows = items.map { it.chapterP ?: return null }
+        if (rows.isEmpty() || rows.any { row -> row.size != 4 || row.any { !it.isFinite() } }) return null
+        return rows[0]
+    }
+
+    /**
      * `music_scenes.apply_student` cho các đoạn của MỘT chương: mức chương như CL (mức V ưu tiên `chapterV` của học sinh), HÌNH trong chương do học sinh đoán:
      * valence = clip(L_V + k (dV - TB(dV))), arousal = clip(TB(arousal) + k (dE - TB(dE))), tension = clip(L_T + k (dT - TB(dT))), k = [STUDENT_SHAPE], TB = trung bình
      * theo giây của đoạn, `round(., 3)`. Điện thoại chỉ có đoạn đường nhãn (không LLM: `moodSource` luôn "labels"), nên mức T luôn theo nhãn (`CHAPTER_LEVEL_T_LABELS`).
+     * Khi MỌI mục có `chapterP`, thêm bước LVJ ở cuối ([lvjLevel] + [shiftToLevel]): mức chương V / E / T dời về LVJ_COEF.
      * null (người gọi đi đường N0) khi không có mục cho MỌI đoạn của chương.
      */
     fun applyStudent(scenes: List<SceneScene>, items: List<StudentItem>?): List<SceneScene>? {
@@ -85,7 +138,7 @@ object SceneScenes {
         val meanDv = mean(matched.map { it.dV })
         val meanDe = mean(matched.map { it.dE })
         val meanDt = mean(matched.map { it.dT })
-        return scenes.mapIndexed { index, scene ->
+        val student = scenes.mapIndexed { index, scene ->
             val item = matched[index]
             scene.copy(
                 moodSource = "student",
@@ -94,6 +147,8 @@ object SceneScenes {
                 tension = Py.round(clip(levelT + STUDENT_SHAPE * (item.dT - meanDt)), 3),
             )
         }
+        val p = chapterP(matched) ?: return student
+        return shiftToLevel(student, lvjLevel(p)) // LVJ: bước cuối, chỉ khi MỌI mục có chapterP (`music_scenes._apply_lvj`)
     }
 
     /** `_chapter_level_v`: `chapterV` (cùng giá trị ở mọi đoạn) khi MỌI mục có và hữu hạn; không thì null (mức V về nhãn câu). */

@@ -17,6 +17,8 @@ class StudentItem(
     val dT: Double,
     /** Cùng giá trị ở mọi đoạn của chương; null = học sinh không có đầu mức chương (mức V về nhãn câu). */
     val chapterV: Double?,
+    /** (pV, pE, pT, q) THÔ của chương (trung bình theo [weight], chưa cộng `c_c`), cùng giá trị ở mọi đoạn; null = mục không có (LVJ không chạy). */
+    val chapterP: DoubleArray? = null,
 )
 
 /**
@@ -54,7 +56,10 @@ class NnLite private constructor(
         return DoubleArray(N_OUT) { z[it] * ysd[it] + ymu[it] }
     }
 
-    /** dV, dE, dT (căn giữa theo trọng số [weight] rồi cộng `c`; chương một cảnh: 0) và chapterV của MỘT chương theo thứ tự cảnh: mỗi cảnh `[dV, dE, dT, chapterV]`. */
+    /**
+     * dV, dE, dT (căn giữa theo trọng số [weight] rồi cộng `c`; chương một cảnh: 0), chapterV và chapterP (pV, pE, pT, q thô của chương, cho LVJ) của MỘT chương theo thứ tự cảnh:
+     * mỗi cảnh `[dV, dE, dT, chapterV, pV, pE, pT, q]`.
+     */
     fun chapter(texts: List<String>): List<DoubleArray> {
         if (texts.isEmpty()) return emptyList()
         val y = texts.map { scene(it) }
@@ -69,8 +74,8 @@ class NnLite private constructor(
         }
         val level = mean[3] + cC
         return y.map { row ->
-            if (y.size < 2) doubleArrayOf(0.0, 0.0, 0.0, level)
-            else doubleArrayOf(row[0] - mean[0] + c[0], row[1] - mean[1] + c[1], row[2] - mean[2] + c[2], level)
+            if (y.size < 2) doubleArrayOf(0.0, 0.0, 0.0, level, mean[0], mean[1], mean[2], mean[3])
+            else doubleArrayOf(row[0] - mean[0] + c[0], row[1] - mean[1] + c[1], row[2] - mean[2] + c[2], level, mean[0], mean[1], mean[2], mean[3])
         }
     }
 
@@ -89,7 +94,7 @@ class NnLite private constructor(
             texts.add(sceneText(segments, first, last))
         }
         return chapter(texts).mapIndexed { index, item ->
-            StudentItem(chapterId, scenes[index].firstSegment, scenes[index].lastSegment, item[0], item[1], item[2], item[3])
+            StudentItem(chapterId, scenes[index].firstSegment, scenes[index].lastSegment, item[0], item[1], item[2], item[3], doubleArrayOf(item[4], item[5], item[6], item[7]))
         }
     }
 

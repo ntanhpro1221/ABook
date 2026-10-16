@@ -333,6 +333,9 @@ class SceneMusicTest {
                 assertEquals("$label dE", want.getDouble("dE"), got.dE, 1e-8)
                 assertEquals("$label dT", want.getDouble("dT"), got.dT, 1e-8)
                 assertEquals("$label chapterV", want.getDouble("chapterV"), got.chapterV!!, 1e-8)
+                val wantP = want.getJSONArray("chapterP")
+                assertEquals("$label chapterP", 4, got.chapterP!!.size)
+                for (axis in 0 until 4) assertEquals("$label chapterP $axis", wantP.getDouble(axis), got.chapterP!![axis], 1e-8)
             }
             val moods = student.getJSONArray("moods")
             val scenes = scenesOf(case, chapters)

@@ -242,8 +242,8 @@ def scene_dir_name(book_id: str) -> str:
 
 
 def student_tag(package_sha: str | None, lite_sha: str | None = None) -> str:
-    """Phần khoá đệm nói học sinh nào đã dựng plan: mã gói q06; không có gói mà có NN-lite (music_nnlite.py) thì "nnlite-lb1-<mã model>" (lb1: ranh cảnh LB, `music_nnlite.scene_bounds`; plan dựng trước LB không dùng lại); hay "none" khi không dùng học sinh."""
-    return package_sha or (f"nnlite-lb1-{lite_sha}" if lite_sha else "none")
+    """Phần khoá đệm nói học sinh nào đã dựng plan: mã gói q06; không có gói mà có NN-lite (music_nnlite.py) thì "nnlite-lvj1-<mã model>" (lvj1: ranh cảnh LB `music_nnlite.scene_bounds` + mức chương LVJ; plan dựng trước LVJ không dùng lại); hay "none" khi không dùng học sinh."""
+    return package_sha or (f"nnlite-lvj1-{lite_sha}" if lite_sha else "none")
 
 
 class Builder:

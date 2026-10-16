@@ -81,6 +81,16 @@ CHAPTER_LEVEL_SHAPE = 0.5
 CHAPTER_LEVEL_T_LABELS = (4.022, -0.056)
 # Hệ số hình của học sinh trong chương (đo ở M3: k = 1; CL của P0 giữ 0.5).
 STUDENT_SHAPE = 1.0
+# LVJ (Corpus/research/music/SPEC_lvj_app.md; PLAN_lbl §9-12; LLM_Train/music/runs/lvj_frozen.json sha256 7e67114f…, học trên 614 chương dev 16-21):
+# mức chương chung V / E / T từ trung bình (pV, pE, pT, q) của NN-lite (`chapterP` của mục): 5 hàng (pV, pE, pT, q, 1) x 3 cột (V, E, T).
+# Hằng ĐÓNG BĂNG, không làm tròn, không chỉnh - muốn đổi phải đo lại. Chỉ chạy khi MỌI mục có `chapterP` (Studio / gói cũ thì không).
+LVJ_COEF = (
+    (0.6319019445430722, 0.2051738638237541, 0.9174568390927069),  # pV
+    (-0.03336188688214415, 1.2192877795096715, 0.024310404064604645),  # pE
+    (0.23150512513452876, -0.24328311641096767, 0.9916372911166209),  # pT
+    (0.7106786064598247, -0.2348117213659031, -0.8371668420209222),  # q
+    (-0.2581318606640798, -0.2223519284989122, 0.2591515637768544),  # 1
+)
 
 SEPARATOR = re.compile(r"^\s*(?:[*~#=_\-·•oO0]\s*){3,}\s*$")
 TIME_JUMP = re.compile(
@@ -448,6 +458,7 @@ def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | No
                                                              hình E từ học sinh (Q06-E 10-10, Corpus PLAN_q06_e.md: r E trong
                                                              chương bộ 7 .391 so với .141 của nhãn câu)
 
+    Khi MỌI mục có `chapterP` (4 số, NN-lite) thì thêm bước LVJ ở cuối (`_apply_lvj`): mức chương V / E / T dời về LVJ_COEF, `levelSource` = lvj cả ba.
     Chương một đoạn: độ lệch 0 nên đoạn = mức chương. sd, emotions, confidence giữ nguyên.
     Đoạn mang `moodSource` = "student", `studentValence` / `studentArousal` / `studentTension` = dV / dE / dT thô, `levelSource` = {"V": "student" |
     "labels", "T": "p0" | "labels"} (mức V / T của chương lấy từ đâu, cho giao diện / ghi chép), và `llmValence` / `llmTension` khi chính đoạn ấy đã có P0.
@@ -492,7 +503,43 @@ def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | No
         if scene.get("moodSource") == "llm":
             fields.update(llmValence=round(float(scene["valence"]), 3), llmTension=round(float(scene["tension"]), 3))
         out.append(dict(scene, **fields))
-    return out
+    return _apply_lvj(out, matched, weights, total)
+
+
+def _chapter_p(items: list[dict[str, Any]]) -> list[float] | None:
+    """`chapterP` (pV, pE, pT, q thô của chương, cùng giá trị ở mọi đoạn) của các mục; None nếu mục nào thiếu hay hỏng (Studio, gói cũ)."""
+    try:
+        rows = [[float(value) for value in item["chapterP"]] for item in items]
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not rows or any(len(row) != 4 or not all(math.isfinite(value) for value in row) for row in rows):
+        return None
+    return rows[0]
+
+
+def _apply_lvj(scenes: list[dict[str, Any]], items: list[dict[str, Any]], weights: list[float], total: float) -> list[dict[str, Any]]:
+    """LVJ (SPEC_lvj_app.md mục 3b): sau bước student, dời mức V / E / T của chương về L = clip(LVJ_COEF^T . [chapterP, 1]) mà giữ hình trong chương:
+    out' = round(clip(out - TB(out) + L), 3) với TB theo w = end - start, trên giá trị ĐÃ làm tròn của bước student. Mục nào thiếu `chapterP` thì trả đoạn như cũ."""
+    p = _chapter_p(items)
+    if p is None:
+        return scenes
+    return _shift_to_level(scenes, weights, total, lvj_level(p))
+
+
+def lvj_level(chapter_p: list[float]) -> list[float]:
+    """(L_V, L_E, L_T) = clip(LVJ_COEF^T . [chapterP, 1]), từng trục về [-1, 1]."""
+    row = [*chapter_p, 1.0]
+    return [max(-1.0, min(1.0, sum(row[index] * LVJ_COEF[index][column] for index in range(5)))) for column in range(3)]
+
+
+def _shift_to_level(scenes: list[dict[str, Any]], weights: list[float], total: float, level: list[float]) -> list[dict[str, Any]]:
+    """Dời trung bình theo `weights` của valence / arousal / tension về `level` (L_V, L_E, L_T), giữ hình trong chương; `levelSource` = lvj cả ba."""
+    shifted = [dict(scene, levelSource={"V": "lvj", "E": "lvj", "T": "lvj"}) for scene in scenes]
+    for axis, target in zip(("valence", "arousal", "tension"), level):
+        mean = sum(w * float(scene[axis]) for w, scene in zip(weights, scenes)) / total
+        for scene in shifted:
+            scene[axis] = round(max(-1.0, min(1.0, float(scene[axis]) - mean + target)), 3)
+    return shifted
 
 
 def _chapter_level_v(items: list[dict[str, Any]]) -> float | None:

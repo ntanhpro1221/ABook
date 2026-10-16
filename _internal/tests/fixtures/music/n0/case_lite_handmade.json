@@ -17,7 +17,7 @@
     "key": "11:0",
     "pinned": false,
     "link": "https://example.invalid/n0/t035.mp3",
-    "distance": 0.571,
+    "distance": 0.494,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -36,7 +36,7 @@
     "key": "11:2",
     "pinned": false,
     "link": "https://example.invalid/n0/t084.mp3",
-    "distance": 0.609,
+    "distance": 0.656,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -55,7 +55,7 @@
     "key": "11:7",
     "pinned": false,
     "link": "https://example.invalid/n0/t076.mp3",
-    "distance": 0.805,
+    "distance": 0.739,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -73,8 +73,8 @@
     "lines": 3,
     "key": "12:0",
     "pinned": false,
-    "link": "https://example.invalid/n0/t081.mp3",
-    "distance": 0.802,
+    "link": "https://example.invalid/n0/t218.mp3",
+    "distance": 0.833,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -92,7 +92,7 @@
     "lines": 2,
     "key": "12:3",
     "pinned": false,
-    "link": "https://example.invalid/n0/t081.mp3",
+    "link": "https://example.invalid/n0/t218.mp3",
     "distance": null,
     "continued": true,
     "silenced": false,
@@ -111,8 +111,8 @@
     "lines": 3,
     "key": "12:5",
     "pinned": false,
-    "link": "https://example.invalid/n0/t218.mp3",
-    "distance": 0.945,
+    "link": "https://example.invalid/n0/t081.mp3",
+    "distance": 0.882,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -130,7 +130,7 @@
     "lines": 5,
     "key": "12:8",
     "pinned": false,
-    "link": "https://example.invalid/n0/t218.mp3",
+    "link": "https://example.invalid/n0/t081.mp3",
     "distance": null,
     "continued": true,
     "silenced": false,
@@ -149,8 +149,8 @@
     "lines": 1,
     "key": "13:0",
     "pinned": false,
-    "link": "https://example.invalid/n0/t123.mp3",
-    "distance": 0.258,
+    "link": "https://example.invalid/n0/t059.mp3",
+    "distance": 0.617,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -169,7 +169,7 @@
     "key": "14:0",
     "pinned": false,
     "link": "https://example.invalid/n0/t057.mp3",
-    "distance": 1.095,
+    "distance": 1.164,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -206,14 +206,19 @@
     "lines": 1,
     "key": "15:0",
     "pinned": false,
-    "link": "https://example.invalid/n0/edge.mp3",
-    "distance": 1.578,
+    "link": "https://example.invalid/n0/t075.mp3",
+    "distance": 0.806,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
     "stepDb": null,
     "stopAt": null,
-    "siblings": []
+    "siblings": [
+     {
+      "at": 140.0,
+      "link": "https://example.invalid/n0/t126.mp3"
+     }
+    ]
    },
    {
     "chapterId": 15,
@@ -225,14 +230,23 @@
     "lines": 1,
     "key": "15:1",
     "pinned": false,
-    "link": "https://example.invalid/n0/edge.mp3",
+    "link": "https://example.invalid/n0/t126.mp3",
     "distance": null,
     "continued": true,
     "silenced": false,
     "pinUnavailable": false,
     "stepDb": 0.0,
     "stopAt": null,
-    "siblings": []
+    "siblings": [
+     {
+      "at": 201.0,
+      "link": "https://example.invalid/n0/t123.mp3"
+     },
+     {
+      "at": 262.0,
+      "link": "https://example.invalid/n0/t124.mp3"
+     }
+    ]
    },
    {
     "chapterId": 15,
@@ -244,14 +258,23 @@
     "lines": 1,
     "key": "15:2",
     "pinned": false,
-    "link": "https://example.invalid/n0/edge.mp3",
+    "link": "https://example.invalid/n0/t124.mp3",
     "distance": null,
     "continued": true,
     "silenced": false,
     "pinUnavailable": false,
     "stepDb": 0.0,
     "stopAt": null,
-    "siblings": []
+    "siblings": [
+     {
+      "at": 402.0,
+      "link": "https://example.invalid/n0/t078.mp3"
+     },
+     {
+      "at": 542.0,
+      "link": "https://example.invalid/n0/t217.mp3"
+     }
+    ]
    },
    {
     "chapterId": 15,
@@ -263,14 +286,19 @@
     "lines": 1,
     "key": "15:3",
     "pinned": false,
-    "link": "https://example.invalid/n0/edge.mp3",
+    "link": "https://example.invalid/n0/t217.mp3",
     "distance": null,
     "continued": true,
     "silenced": false,
     "pinUnavailable": false,
     "stepDb": 0.0,
     "stopAt": null,
-    "siblings": []
+    "siblings": [
+     {
+      "at": 603.0,
+      "link": "https://example.invalid/n0/t220.mp3"
+     }
+    ]
    },
    {
     "chapterId": 15,
@@ -282,7 +310,7 @@
     "lines": 1,
     "key": "15:4",
     "pinned": false,
-    "link": "https://example.invalid/n0/edge.mp3",
+    "link": "https://example.invalid/n0/t220.mp3",
     "distance": null,
     "continued": true,
     "silenced": false,
@@ -301,7 +329,7 @@
     "lines": 1,
     "key": "15:5",
     "pinned": false,
-    "link": "https://example.invalid/n0/edge.mp3",
+    "link": "https://example.invalid/n0/t220.mp3",
     "distance": null,
     "continued": true,
     "silenced": false,
@@ -336,7 +364,7 @@
     {
      "start": 0.0,
      "end": 195.975,
-     "link": "https://example.invalid/n0/t081.mp3",
+     "link": "https://example.invalid/n0/t218.mp3",
      "key": "12:0",
      "steps": [
       {
@@ -348,7 +376,7 @@
     {
      "start": 195.975,
      "end": 513.665,
-     "link": "https://example.invalid/n0/t218.mp3",
+     "link": "https://example.invalid/n0/t081.mp3",
      "key": "12:5",
      "steps": [
       {
@@ -376,9 +404,57 @@
    "15": [
     {
      "start": 0.0,
+     "end": 140.0,
+     "link": "https://example.invalid/n0/t075.mp3",
+     "key": "15:0",
+     "tail": true
+    },
+    {
+     "start": 140.0,
+     "end": 201.0,
+     "link": "https://example.invalid/n0/t126.mp3",
+     "key": "15:0",
+     "sibling": true,
+     "tail": true
+    },
+    {
+     "start": 201.0,
+     "end": 262.0,
+     "link": "https://example.invalid/n0/t123.mp3",
+     "key": "15:1",
+     "sibling": true,
+     "tail": true
+    },
+    {
+     "start": 262.0,
+     "end": 402.0,
+     "link": "https://example.invalid/n0/t124.mp3",
+     "key": "15:1",
+     "sibling": true,
+     "tail": true
+    },
+    {
+     "start": 402.0,
+     "end": 542.0,
+     "link": "https://example.invalid/n0/t078.mp3",
+     "key": "15:2",
+     "sibling": true,
+     "tail": true
+    },
+    {
+     "start": 542.0,
+     "end": 603.0,
+     "link": "https://example.invalid/n0/t217.mp3",
+     "key": "15:2",
+     "sibling": true,
+     "tail": true
+    },
+    {
+     "start": 603.0,
      "end": 1089.5,
-     "link": "https://example.invalid/n0/edge.mp3",
-     "key": "15:0"
+     "link": "https://example.invalid/n0/t220.mp3",
+     "key": "15:3",
+     "sibling": true
     }
    ]
   },
@@ -407,7 +483,7 @@
     {
      "start": 0.0,
      "end": 195.975,
-     "link": "https://example.invalid/n0/t081.mp3",
+     "link": "https://example.invalid/n0/t218.mp3",
      "key": "12:0",
      "steps": [
       {
@@ -419,7 +495,7 @@
     {
      "start": 195.975,
      "end": 516.165,
-     "link": "https://example.invalid/n0/t218.mp3",
+     "link": "https://example.invalid/n0/t081.mp3",
      "key": "12:5",
      "steps": [
       {
@@ -433,7 +509,7 @@
     {
      "start": 0.0,
      "end": 1.365,
-     "link": "https://example.invalid/n0/t123.mp3",
+     "link": "https://example.invalid/n0/t059.mp3",
      "key": "13:0"
     }
    ],
@@ -454,20 +530,62 @@
    "15": [
     {
      "start": 0.0,
+     "end": 140.0,
+     "link": "https://example.invalid/n0/t075.mp3",
+     "key": "15:0",
+     "tail": true
+    },
+    {
+     "start": 140.0,
+     "end": 201.0,
+     "link": "https://example.invalid/n0/t126.mp3",
+     "key": "15:0",
+     "sibling": true,
+     "tail": true
+    },
+    {
+     "start": 201.0,
+     "end": 262.0,
+     "link": "https://example.invalid/n0/t123.mp3",
+     "key": "15:1",
+     "sibling": true,
+     "tail": true
+    },
+    {
+     "start": 262.0,
+     "end": 402.0,
+     "link": "https://example.invalid/n0/t124.mp3",
+     "key": "15:1",
+     "sibling": true,
+     "tail": true
+    },
+    {
+     "start": 402.0,
+     "end": 542.0,
+     "link": "https://example.invalid/n0/t078.mp3",
+     "key": "15:2",
+     "sibling": true,
+     "tail": true
+    },
+    {
+     "start": 542.0,
+     "end": 603.0,
+     "link": "https://example.invalid/n0/t217.mp3",
+     "key": "15:2",
+     "sibling": true,
+     "tail": true
+    },
+    {
+     "start": 603.0,
      "end": 1092.0,
-     "link": "https://example.invalid/n0/edge.mp3",
-     "key": "15:0"
+     "link": "https://example.invalid/n0/t220.mp3",
+     "key": "15:3",
+     "sibling": true
     }
    ]
   },
   "firstSegments": {},
   "loops": {
-   "https://example.invalid/n0/edge.mp3": [
-    0.0,
-    1800.0,
-    1798.0,
-    true
-   ],
    "https://example.invalid/n0/t035.mp3": [
     0.0,
     260.0,
@@ -480,7 +598,25 @@
     418.0,
     true
    ],
+   "https://example.invalid/n0/t059.mp3": [
+    0.0,
+    61.0,
+    59.0,
+    true
+   ],
+   "https://example.invalid/n0/t075.mp3": [
+    0.0,
+    140.0,
+    138.0,
+    true
+   ],
    "https://example.invalid/n0/t076.mp3": [
+    0.0,
+    140.0,
+    138.0,
+    true
+   ],
+   "https://example.invalid/n0/t078.mp3": [
     0.0,
     140.0,
     138.0,
@@ -504,10 +640,34 @@
     59.0,
     true
    ],
+   "https://example.invalid/n0/t124.mp3": [
+    0.0,
+    140.0,
+    138.0,
+    true
+   ],
+   "https://example.invalid/n0/t126.mp3": [
+    0.0,
+    61.0,
+    59.0,
+    true
+   ],
+   "https://example.invalid/n0/t217.mp3": [
+    0.0,
+    61.0,
+    59.0,
+    true
+   ],
    "https://example.invalid/n0/t218.mp3": [
     0.0,
     420.0,
     418.0,
+    true
+   ],
+   "https://example.invalid/n0/t220.mp3": [
+    0.0,
+    260.0,
+    258.0,
     true
    ]
   },
@@ -520,7 +680,13 @@
      "dV": -0.005022065,
      "dE": 0.021514291,
      "dT": 0.017865485,
-     "chapterV": 0.017215424
+     "chapterV": 0.017215424,
+     "chapterP": [
+      0.111111733,
+      0.218723616,
+      -0.143254079,
+      0.286982798
+     ]
     },
     {
      "chapterId": 11,
@@ -529,7 +695,13 @@
      "dV": 0.008310604,
      "dE": -0.033559569,
      "dT": -0.045542293,
-     "chapterV": 0.017215424
+     "chapterV": 0.017215424,
+     "chapterP": [
+      0.111111733,
+      0.218723616,
+      -0.143254079,
+      0.286982798
+     ]
     },
     {
      "chapterId": 11,
@@ -538,7 +710,13 @@
      "dV": -0.000693211,
      "dE": 0.000906586,
      "dT": 0.018603973,
-     "chapterV": 0.017215424
+     "chapterV": 0.017215424,
+     "chapterP": [
+      0.111111733,
+      0.218723616,
+      -0.143254079,
+      0.286982798
+     ]
     },
     {
      "chapterId": 12,
@@ -547,7 +725,13 @@
      "dV": 0.007383185,
      "dE": -0.01323304,
      "dT": -0.023933443,
-     "chapterV": -0.023162435
+     "chapterV": -0.023162435,
+     "chapterP": [
+      0.100411464,
+      0.237936798,
+      -0.1196967,
+      0.246604939
+     ]
     },
     {
      "chapterId": 12,
@@ -556,7 +740,13 @@
      "dV": 0.004656976,
      "dE": -0.041067815,
      "dT": -0.006524444,
-     "chapterV": -0.023162435
+     "chapterV": -0.023162435,
+     "chapterP": [
+      0.100411464,
+      0.237936798,
+      -0.1196967,
+      0.246604939
+     ]
     },
     {
      "chapterId": 12,
@@ -565,7 +755,13 @@
      "dV": 0.001793333,
      "dE": 0.020804694,
      "dT": -0.006356204,
-     "chapterV": -0.023162435
+     "chapterV": -0.023162435,
+     "chapterP": [
+      0.100411464,
+      0.237936798,
+      -0.1196967,
+      0.246604939
+     ]
     },
     {
      "chapterId": 12,
@@ -574,7 +770,13 @@
      "dV": -0.010953987,
      "dE": 0.00530379,
      "dT": 0.032282709,
-     "chapterV": -0.023162435
+     "chapterV": -0.023162435,
+     "chapterP": [
+      0.100411464,
+      0.237936798,
+      -0.1196967,
+      0.246604939
+     ]
     },
     {
      "chapterId": 13,
@@ -583,7 +785,13 @@
      "dV": 0.0,
      "dE": 0.0,
      "dT": 0.0,
-     "chapterV": 0.313896273
+     "chapterV": 0.313896273,
+     "chapterP": [
+      0.068249176,
+      0.031367701,
+      -0.003684818,
+      0.583663647
+     ]
     },
     {
      "chapterId": 14,
@@ -592,7 +800,13 @@
      "dV": 0.002948017,
      "dE": -0.046351137,
      "dT": -0.059926196,
-     "chapterV": -0.008486406
+     "chapterV": -0.008486406,
+     "chapterP": [
+      0.107783074,
+      0.198938533,
+      -0.187255777,
+      0.261280968
+     ]
     },
     {
      "chapterId": 14,
@@ -601,7 +815,13 @@
      "dV": -0.003032246,
      "dE": 0.047675455,
      "dT": 0.061638373,
-     "chapterV": -0.008486406
+     "chapterV": -0.008486406,
+     "chapterP": [
+      0.107783074,
+      0.198938533,
+      -0.187255777,
+      0.261280968
+     ]
     },
     {
      "chapterId": 15,
@@ -610,7 +830,13 @@
      "dV": 0.0,
      "dE": 0.0,
      "dT": -0.0,
-     "chapterV": -0.005771364
+     "chapterV": -0.005771364,
+     "chapterP": [
+      0.101836329,
+      0.260496827,
+      -0.126115966,
+      0.263996009
+     ]
     },
     {
      "chapterId": 15,
@@ -619,7 +845,13 @@
      "dV": 0.0,
      "dE": 0.0,
      "dT": -0.0,
-     "chapterV": -0.005771364
+     "chapterV": -0.005771364,
+     "chapterP": [
+      0.101836329,
+      0.260496827,
+      -0.126115966,
+      0.263996009
+     ]
     },
     {
      "chapterId": 15,
@@ -628,7 +860,13 @@
      "dV": 0.0,
      "dE": 0.0,
      "dT": -0.0,
-     "chapterV": -0.005771364
+     "chapterV": -0.005771364,
+     "chapterP": [
+      0.101836329,
+      0.260496827,
+      -0.126115966,
+      0.263996009
+     ]
     },
     {
      "chapterId": 15,
@@ -637,7 +875,13 @@
      "dV": 0.0,
      "dE": 0.0,
      "dT": -0.0,
-     "chapterV": -0.005771364
+     "chapterV": -0.005771364,
+     "chapterP": [
+      0.101836329,
+      0.260496827,
+      -0.126115966,
+      0.263996009
+     ]
     },
     {
      "chapterId": 15,
@@ -646,7 +890,13 @@
      "dV": 0.0,
      "dE": 0.0,
      "dT": -0.0,
-     "chapterV": -0.005771364
+     "chapterV": -0.005771364,
+     "chapterP": [
+      0.101836329,
+      0.260496827,
+      -0.126115966,
+      0.263996009
+     ]
     },
     {
      "chapterId": 15,
@@ -655,151 +905,157 @@
      "dV": 0.0,
      "dE": 0.0,
      "dT": -0.0,
-     "chapterV": -0.005771364
+     "chapterV": -0.005771364,
+     "chapterP": [
+      0.101836329,
+      0.260496827,
+      -0.126115966,
+      0.263996009
+     ]
     }
    ],
    "moods": [
     {
      "chapterId": 11,
      "firstSegment": 0,
-     "valence": 0.012,
-     "arousal": 0.022,
-     "tension": -0.038,
+     "valence": -0.03,
+     "arousal": 0.057,
+     "tension": 0.002,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 11,
      "firstSegment": 2,
-     "valence": 0.026,
-     "arousal": -0.034,
-     "tension": -0.102,
+     "valence": -0.016,
+     "arousal": 0.001,
+     "tension": -0.062,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 11,
      "firstSegment": 7,
-     "valence": 0.017,
-     "arousal": 0.001,
-     "tension": -0.037,
+     "valence": -0.025,
+     "arousal": 0.036,
+     "tension": 0.003,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 12,
      "firstSegment": 0,
-     "valence": -0.016,
-     "arousal": -0.013,
-     "tension": -0.08,
+     "valence": -0.048,
+     "arousal": 0.047,
+     "tension": 0.008,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 12,
      "firstSegment": 3,
-     "valence": -0.019,
-     "arousal": -0.041,
-     "tension": -0.063,
+     "valence": -0.051,
+     "arousal": 0.019,
+     "tension": 0.025,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 12,
      "firstSegment": 5,
-     "valence": -0.021,
-     "arousal": 0.021,
-     "tension": -0.062,
+     "valence": -0.053,
+     "arousal": 0.081,
+     "tension": 0.026,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 12,
      "firstSegment": 8,
-     "valence": -0.034,
-     "arousal": 0.005,
-     "tension": -0.024,
+     "valence": -0.066,
+     "arousal": 0.065,
+     "tension": 0.064,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 13,
      "firstSegment": 0,
-     "valence": 0.314,
-     "arousal": 0.0,
-     "tension": -0.056,
+     "valence": 0.198,
+     "arousal": -0.306,
+     "tension": -0.17,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 14,
      "firstSegment": 0,
-     "valence": -0.006,
-     "arousal": -0.046,
-     "tension": -0.116,
+     "valence": -0.051,
+     "arousal": -0.02,
+     "tension": -0.102,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 14,
      "firstSegment": 7,
-     "valence": -0.012,
-     "arousal": 0.048,
-     "tension": 0.006,
+     "valence": -0.057,
+     "arousal": 0.074,
+     "tension": 0.02,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 15,
      "firstSegment": 0,
-     "valence": -0.006,
-     "arousal": 0.0,
-     "tension": -0.056,
+     "valence": -0.044,
+     "arousal": 0.085,
+     "tension": 0.013,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 15,
      "firstSegment": 1,
-     "valence": -0.006,
-     "arousal": 0.0,
-     "tension": -0.056,
+     "valence": -0.044,
+     "arousal": 0.085,
+     "tension": 0.013,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 15,
      "firstSegment": 2,
-     "valence": -0.006,
-     "arousal": 0.0,
-     "tension": -0.056,
+     "valence": -0.044,
+     "arousal": 0.085,
+     "tension": 0.013,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 15,
      "firstSegment": 3,
-     "valence": -0.006,
-     "arousal": 0.0,
-     "tension": -0.056,
+     "valence": -0.044,
+     "arousal": 0.085,
+     "tension": 0.013,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 15,
      "firstSegment": 4,
-     "valence": -0.006,
-     "arousal": 0.0,
-     "tension": -0.056,
+     "valence": -0.044,
+     "arousal": 0.085,
+     "tension": 0.013,
      "confidence": 0.2,
      "moodSource": "student"
     },
     {
      "chapterId": 15,
      "firstSegment": 5,
-     "valence": -0.006,
-     "arousal": 0.0,
-     "tension": -0.056,
+     "valence": -0.044,
+     "arousal": 0.085,
+     "tension": 0.013,
      "confidence": 0.2,
      "moodSource": "student"
     }
