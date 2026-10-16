@@ -29,7 +29,7 @@ và độ dài, không ký tự điều khiển - và file sai thì bị từ ch
                "playlist": "fantasy_calm" | "mine" | "off"},            (nhạc nền của sách KHÔNG có nhạc của người làm sách -
                                                                  sách chỉ có chữ nghe bằng "Nghe ngay": một danh sách phát
                                                                  của danh mục, "mine" = "Nhạc của tôi" của máy đang phát,
-                                                                 "off" = tắt; không có khoá = máy tự chọn - music_playlist.py)
+                                                                 "off" = tắt, "scene" = theo cảnh (mặc định khi không có khoá) - music_playlist.py)
                                                                 (thông tin các bài được ghim, đúng những sha1 mà `pins` nhắc tới;
                                                                  file nằm ở music/<sha1>.<đuôi> như bài của người làm sách)
      "wishes": {...}}                                           (ý muốn chờ Studio - book_wishes.py: cách đọc tên, người nói,

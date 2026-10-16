@@ -26,13 +26,8 @@ class PlaylistsTest {
         "https://x/sad.mp3" to JSONObject().put("duration", 240),
     )
 
-    /** Luật chọn của mục lục thử: mặc định "calm", không từ khoá nào - cuốn thử nào cũng được chọn "calm". */
-    private val picker = JSONObject("""{"version":1,"cap":5,"title_weight":12.0,"min_score":4.0,"default":"calm","order":["calm","battle"],
-        "playlists":{"calm":{"title":[],"text":{}},"battle":{"title":[],"text":{"trận chiến":1}}}}""")
-
-    private fun manifest(withPicker: Boolean = false): JSONObject = JSONObject().put("format", "abook-music-catalog").put("version", 1).put("revision", "r1")
+    private fun manifest(): JSONObject = JSONObject().put("format", "abook-music-catalog").put("version", 1).put("revision", "r1")
         .put("shards", JSONArray(tracks.keys.map { MusicCatalog.shardOf(it) }.distinct()))
-        .apply { if (withPicker) put("playlistPicker", picker) }
         .put("playlists", JSONArray()
             .put(JSONObject().put("id", "off").put("name", "tắt không phải mã danh sách").put("tracks", JSONArray(calm)))
             .put(JSONObject().put("id", "scene").put("name", "theo cảnh không phải mã danh sách").put("tracks", JSONArray(calm)))
@@ -45,7 +40,7 @@ class PlaylistsTest {
             .put("không phải đối tượng"))
 
     /** Danh mục giả trên đĩa: mục lục + mảnh dữ liệu + một file bài (đúng hình như trên mây). */
-    private fun cloud(withPicker: Boolean = false): File {
+    private fun cloud(): File {
         val cloud = File(root, "cloud").apply { mkdirs() }
         for ((shard, links) in tracks.keys.groupBy { MusicCatalog.shardOf(it) }) {
             val data = JSONObject()
@@ -53,7 +48,7 @@ class PlaylistsTest {
             File(cloud, "tracks").mkdirs()
             File(cloud, "tracks/$shard.json").writeText(data.toString())
         }
-        CatalogSigning.writeManifest(cloud, manifest(withPicker)) // mục lục ký bằng khoá TEST, `files` = sha256 các mảnh vừa ghi
+        CatalogSigning.writeManifest(cloud, manifest()) // mục lục ký bằng khoá TEST, `files` = sha256 các mảnh vừa ghi
         return cloud
     }
 
@@ -66,7 +61,6 @@ class PlaylistsTest {
     fun tearDown() {
         LocalStudio.catalog = null
         LocalStudio.musicStore = null
-        LocalStudio.bundledPicker = null
     }
 
     @Test
@@ -243,7 +237,7 @@ class PlaylistsTest {
         BookEditsFixtures.useStoreRoot(root)
         val id = "f-0123456789abcdef01234567"
         textBook(id)
-        val cloud = cloud(withPicker = true)
+        val cloud = cloud()
         var now = 1_000_000L
         val catalog = MusicCatalog(File(root, "cache"), cloud.path, open = { url ->
             if (url.startsWith("https://x/")) throw java.net.UnknownHostException("x") else MusicCatalog.openUrl(url)
@@ -267,7 +261,7 @@ class PlaylistsTest {
         BookEditsFixtures.useStoreRoot(root)
         val id = "f-0123456789abcdef01234567"
         textBook(id)
-        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud(withPicker = true).path, publicKey = CatalogSigning.publicKey)
+        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud().path, publicKey = CatalogSigning.publicKey)
         val auto = musicView(id)
         assertEquals("scene", auto.getString("playlist")) // mặc định như máy tính 0.4.71: nhạc đổi theo cảnh, máy tự dựng từ chữ
         assertTrue(auto.getBoolean("playlistAuto"))
@@ -297,7 +291,7 @@ class PlaylistsTest {
         BookEditsFixtures.useStoreRoot(root)
         val id = "f-0123456789abcdef01234567"
         textBook(id)
-        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud(withPicker = true).path, publicKey = CatalogSigning.publicKey)
+        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud().path, publicKey = CatalogSigning.publicKey)
         Playlists.autoEnabled = false
         try {
             val off = musicView(id)
@@ -313,7 +307,7 @@ class PlaylistsTest {
     @Test
     fun the_menu_offers_the_scenes_on_the_phone_too() {
         BookEditsFixtures.useStoreRoot(root)
-        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud(withPicker = true).path, publicKey = CatalogSigning.publicKey)
+        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud().path, publicKey = CatalogSigning.publicKey)
         val menu = LocalStudio.handle("GET", "/api/music/playlists", null).second as JSONObject
         assertTrue(!menu.getJSONObject("scene").getBoolean("student"))
         assertEquals(listOf("calm", "battle"), (0 until menu.getJSONArray("playlists").length()).map { menu.getJSONArray("playlists").getJSONObject(it).getString("id") })

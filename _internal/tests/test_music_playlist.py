@@ -1,7 +1,6 @@
 """Nhạc nền cho sách nghe bằng "Nghe ngay" (webui/music_playlist.py, docs/LISTEN_ANYTHING.md mục 4): người nghe chọn một danh sách
 phát của danh mục hay "Nhạc của tôi" cho cả cuốn; lựa chọn nằm ở lớp sửa (`music.playlist`), trình phát nhận hàng bài theo đúng
-thứ tự trộn sẵn, mỗi bài một độ khuếch đại theo công thức Pha 4. Chưa chọn gì thì máy tự chọn danh sách hợp với cuốn bằng luật từ khoá
-(`pick`), trùng khớp với bản Kotlin trên bộ ví dụ dùng chung tests/fixtures/playlist_picker/cases.json."""
+thứ tự trộn sẵn, mỗi bài một độ khuếch đại theo công thức Pha 4. Chưa chọn gì thì sách chữ theo cảnh (music_nnscene.py)."""
 from __future__ import annotations
 
 import json
@@ -22,10 +21,6 @@ from tests.test_project_file import _app
 from tests.test_webui_listen_and_sync import _request
 
 TOKEN = {"X-Ebook-Token": "t"}
-PICKER_CASES = json.loads((Path(__file__).parent / "fixtures" / "playlist_picker" / "cases.json").read_text(encoding="utf-8"))
-# Luật chọn của mục lục thử: mặc định "calm", không từ khoá nào - cuốn thử nào cũng được chọn "calm" (hàng bài thật của danh mục thử).
-CATALOGUE_PICKER = {"version": 1, "cap": 5, "title_weight": 12.0, "min_score": 4.0, "default": "calm", "order": ["calm", "battle"],
-                    "playlists": {"calm": {"title": [], "text": {}}, "battle": {"title": [], "text": {"trận chiến": 1}}}}
 CALM = ["https://x/calm2.mp3", "https://x/calm.mp3", "https://x/sad.mp3"]  # thứ tự trộn sẵn, không theo chữ cái
 PLAYLISTS = [
     {"id": "calm", "name": "Êm  đềm", "description": "Cho truyện chậm.", "minutes": 10, "tracks": CALM},
@@ -38,8 +33,8 @@ PLAYLISTS = [
 ]
 
 
-def _cloud(root: Path, picker: dict | None = None) -> Path:
-    return _catalog_dir(root, playlists=PLAYLISTS, **({"playlistPicker": picker} if picker is not None else {}))
+def _cloud(root: Path) -> Path:
+    return _catalog_dir(root, playlists=PLAYLISTS)
 
 
 # ---- danh mục ----------------------------------------------------------------------------------------------------------
@@ -69,46 +64,6 @@ def test_looking_up_a_whole_playlist_fetches_every_shard_it_touches(tmp_path: Pa
     assert set(catalog.lookup(list(TRACKS))) == set(TRACKS)
 
 
-# ---- máy tự chọn danh sách ---------------------------------------------------------------------------------------------------
-
-
-def test_the_bundled_picker_is_the_reference_lexicon() -> None:
-    assert music_playlist.bundled_picker() == PICKER_CASES["picker"]
-    assert music_playlist.valid_picker(PICKER_CASES["picker"])
-
-
-@pytest.mark.parametrize("case", PICKER_CASES["cases"], ids=lambda case: case["name"])
-def test_pick_matches_the_shared_fixture(case: dict) -> None:
-    picker = case["picker"] if "picker" in case else PICKER_CASES["picker"]
-    assert music_playlist.pick(picker, case["title"], iter(case["chapters"])) == case["expect"]
-    scores = music_playlist.pick_scores(picker, case["title"], case["chapters"])
-    if case["scores"] is None:
-        assert scores is None
-    else:
-        assert scores is not None and scores.keys() == case["scores"].keys()
-        assert all(scores[code] == pytest.approx(value, abs=1e-9) for code, value in case["scores"].items())
-
-
-@pytest.mark.parametrize("case", PICKER_CASES["selection"], ids=lambda case: case["name"])
-def test_the_manifest_picker_is_used_only_when_valid_else_the_bundled_one(case: dict) -> None:
-    picker, source = music_playlist.usable_picker(case["manifest"])
-    assert source == case["source"]
-    assert picker == (case["manifest"]["playlistPicker"] if source == "manifest" else music_playlist.bundled_picker())
-    assert music_playlist.pick(picker, case["title"], case["chapters"]) == case["expect"]
-
-
-def test_the_picker_reads_chapters_lazily_and_stops_once_it_has_enough_text() -> None:
-    read: list[int] = []
-
-    def chapters():
-        for number in range(10):
-            read.append(number)
-            yield "Một câu tự đặt, chẳng có từ khoá nào cả. " * 60
-
-    music_playlist.pick(music_playlist.bundled_picker(), "Sách thử", chapters())
-    assert len(read) < 10
-
-
 # ---- lớp sửa -------------------------------------------------------------------------------------------------------------
 
 
@@ -130,9 +85,9 @@ def test_the_choice_is_a_listener_edit_that_counts_dumps_and_merges() -> None:
 # ---- máy chủ -------------------------------------------------------------------------------------------------------------
 
 
-def _text_book_server(tmp_path: Path, picker: dict | None = CATALOGUE_PICKER):
+def _text_book_server(tmp_path: Path):
     app = _app(tmp_path / "studio", tmp_path / "thu_vien")
-    app._music_catalog = MusicCatalog(tmp_path / "music_cache", str(_cloud(tmp_path / "cloud", picker)), public_key=TEST_PUBLIC_KEY)
+    app._music_catalog = MusicCatalog(tmp_path / "music_cache", str(_cloud(tmp_path / "cloud")), public_key=TEST_PUBLIC_KEY)
     added = app.add_text_book(str(IMPORTS / "epub3.epub"))
     return app, added["id"], Server(app, port=0).start()
 

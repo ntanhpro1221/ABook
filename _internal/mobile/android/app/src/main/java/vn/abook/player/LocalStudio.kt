@@ -38,10 +38,6 @@ object LocalStudio {
     @Volatile
     var catalog: MusicCatalog? = null
 
-    /** Luật chọn danh sách phát đóng kèm app ([DeviceMusic.bundledPicker]): dùng khi chưa có danh mục hay danh mục mang luật hỏng. LibraryPlugin đặt; test JVM đặt từ file asset. */
-    @Volatile
-    var bundledPicker: JSONObject? = null
-
     /** Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime; điện thoại tải khi người dùng bấm - MusicStudentSetup). Null: không có việc tải (test JVM); view không kèm `module`. */
     @Volatile
     var student: MusicStudentSetup? = null
@@ -312,8 +308,8 @@ object LocalStudio {
         return withAutoPlaylist(dir, BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } }))
     }
 
-    /** `_with_auto_playlist` của server.py: màn "Nhạc nền" + danh sách máy chọn - sách chưa có lựa chọn nào (`playlist` không có khoá) và không có
-     *  nhạc của người làm sách thì `playlist` là mã máy chọn, kèm `playlistAuto` true. Đã chọn (kể cả "off") thì giữ nguyên. */
+    /** `_with_auto_playlist` của server.py: màn "Nhạc nền" + nhạc theo cảnh mặc định - sách chưa có lựa chọn nào (`playlist` không có khoá) và không có
+     *  nhạc của người làm sách thì `playlist` là "scene", kèm `playlistAuto` true. Đã chọn (kể cả "off") thì giữ nguyên. */
     private fun withAutoPlaylist(dir: java.io.File, view: JSONObject): JSONObject = withOfflineNotice(dir, withAutoChoice(dir, view))
 
     /** `error` của màn "Nhạc nền" như `_music_payload` của server.py: danh sách phát đang dùng mà có bài bị giữ lại vì mất mạng ([MusicCatalog.degraded])
