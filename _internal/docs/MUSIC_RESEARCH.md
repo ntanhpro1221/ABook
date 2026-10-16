@@ -5931,6 +5931,7 @@ Phán quyết đo ở Corpus `research/music/PLAN_scenegap_confirm.md` mục 11 
 
 ### 17-10 - LVJ: mức chương chung V/E/T cho Nghe ngay ĐẠT bộ phán 22; mảng mức chương tạm gác (Corpus `research/music/PLAN_lbl.md` §7-12, `PLAN_lvb.md`)
 
+- **Nền: LB** (0.4.79, Corpus `SPEC_lb_app.md`): ranh cảnh cho Nghe ngay cắt từ hồ sơ khối 150 chữ của NN-lite bằng quy hoạch động. Trên bộ phán 20, sai rõ 16,7 → 11,1 % (Δ −5,60, KTC [−9,19; −1,88]). LB là đối chứng của mọi số dưới.
 - **Phân rã (D-L1, dev 16-21, 456 chương):** sai rõ còn lại của Nghe ngay (ranh LB + NN-lite) nằm ở MỨC chương, không ở hình trong chương.
   - Thay mức app bằng mức vàng cả ba trục: sai rõ 9,98 → 4,92 %, trúng rõ 32,7 → 59,4 %; tức 107 % lợi của vàng đầy đủ.
   - Thay hình: chỉ 7 % lợi.
