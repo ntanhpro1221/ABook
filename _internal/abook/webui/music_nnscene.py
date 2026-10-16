@@ -36,7 +36,7 @@ from . import humanize, music_plan, music_playlist, music_scenes, music_select
 
 SCENE = music_playlist.SCENE  # `music.playlist` của lớp sửa: người nghe chọn "Theo cảnh (máy tự dựng)"
 SEGMENTER_VERSION = 1  # đổi khi cách tách câu / ánh xạ sang đoạn đổi: plan đã dựng không dùng lại
-FORMAT_VERSION = 1
+FORMAT_VERSION = 2  # 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/ của danh mục, ô cells/ không có)
 
 # Chỗ cắm học sinh (không bắt buộc): hàm (kịch bản, đoạn nền) -> các mục `dV/dE/dT/chapterV` cho `music_scenes.book_scenes(student=...)`, hay None.
 StudentItems = Callable[[dict[str, Any], list[dict[str, Any]]], "list[dict[str, Any]] | None"]
@@ -133,6 +133,11 @@ class SceneBook:
     def write(self, record: dict[str, Any]) -> None:
         self.directory.mkdir(parents=True, exist_ok=True)
         atomic_write_json(self._file(record["chapterId"]), record)
+
+    def discard(self, chapter_id: int) -> None:
+        """Bỏ bản ghi của chương (dựng lại lần hỏi kế)."""
+        with self.lock:
+            self._file(chapter_id).unlink(missing_ok=True)
 
     def history(self, order: list[int], chapter_id: int, sha_of: Callable[[int], str | None]) -> list[dict[str, Any]]:
         """Các chương liền trước `chapter_id` đã dựng (liền một mạch, theo thứ tự sách), vừa đủ cho cửa sổ "bài vừa dùng" của `music_select.choose`

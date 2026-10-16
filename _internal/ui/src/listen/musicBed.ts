@@ -44,6 +44,8 @@ export interface MusicCues {
   scene?: boolean;
   estSeconds?: number;
   pending?: boolean;
+  /** Vì sao chưa có nhạc theo cảnh (danh mục chưa tải được...), bằng lời cho người nghe; vắng khi không có chuyện gì. */
+  unavailable?: string;
 }
 
 export interface MusicStep {
@@ -63,6 +65,8 @@ export interface MusicCredit {
 
 /** MusicTab phát khi người dùng sửa / chọn lại nhạc của một cuốn (detail = mã sách): trình phát đang mở nạp lại mốc nhạc. */
 export const MUSIC_CHANGED_EVENT = "abook:music-changed";
+/** `detail` của [MUSIC_CHANGED_EVENT] khi đổi cài đặt chung cho mọi cuốn ("Tự chọn nhạc nền"): cuốn nào đang nghe cũng nạp lại mốc nhạc. */
+export const MUSIC_CHANGED_ALL = "*";
 
 type BedAudio = Pick<HTMLAudioElement, "play" | "pause" | "paused" | "volume" | "loop" | "currentTime" | "duration"> & {
   /** `error`: bài không tải được (mất mạng, máy chủ không phát được). */

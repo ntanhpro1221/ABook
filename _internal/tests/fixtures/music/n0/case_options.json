@@ -6,12 +6,12 @@
   "family": "piano",
   "genre": "gen_a",
   "banned": [
-   "https://example.invalid/n0/t136.mp3",
-   "https://example.invalid/n0/t127.mp3"
+   "https://example.invalid/n0/edge.mp3",
+   "https://example.invalid/n0/t129.mp3"
   ],
   "pins": {
    "1:13": "https://example.invalid/n0/t064.mp3",
-   "2:19": "https://example.invalid/n0/t135.mp3",
+   "2:19": "https://example.invalid/n0/t139.mp3",
    "2:57": "https://example.invalid/n0/t999.mp3"
   },
   "silenced": [
@@ -19,9 +19,9 @@
    "2:46"
   ],
   "unavailable": [
-   "https://example.invalid/n0/t134.mp3",
-   "https://example.invalid/n0/t135.mp3",
-   "https://example.invalid/n0/t129.mp3"
+   "https://example.invalid/n0/t128.mp3",
+   "https://example.invalid/n0/t139.mp3",
+   "https://example.invalid/n0/small.mp3"
   ]
  },
  "expected": {
@@ -36,8 +36,8 @@
     "lines": 13,
     "key": "1:0",
     "pinned": false,
-    "link": "https://example.invalid/n0/t128.mp3",
-    "distance": 1.11,
+    "link": "https://example.invalid/n0/t007.mp3",
+    "distance": 1.245,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -112,8 +112,8 @@
     "lines": 13,
     "key": "1:42",
     "pinned": false,
-    "link": "https://example.invalid/n0/t007.mp3",
-    "distance": 1.245,
+    "link": "https://example.invalid/n0/t075.mp3",
+    "distance": 1.467,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -169,8 +169,8 @@
     "lines": 12,
     "key": "2:34",
     "pinned": false,
-    "link": "https://example.invalid/n0/t075.mp3",
-    "distance": 1.467,
+    "link": "https://example.invalid/n0/t140.mp3",
+    "distance": 2.125,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -264,8 +264,8 @@
     "lines": 12,
     "key": "4:0",
     "pinned": false,
-    "link": "https://example.invalid/n0/t128.mp3",
-    "distance": 2.104,
+    "link": "https://example.invalid/n0/t127.mp3",
+    "distance": 2.154,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -283,8 +283,8 @@
     "lines": 15,
     "key": "4:12",
     "pinned": false,
-    "link": "https://example.invalid/n0/t057.mp3",
-    "distance": 2.397,
+    "link": "https://example.invalid/n0/t007.mp3",
+    "distance": 2.229,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -302,7 +302,7 @@
     "lines": 16,
     "key": "4:27",
     "pinned": false,
-    "link": "https://example.invalid/n0/t057.mp3",
+    "link": "https://example.invalid/n0/t007.mp3",
     "distance": null,
     "continued": true,
     "silenced": false,
@@ -321,13 +321,13 @@
     "lines": 13,
     "key": "4:43",
     "pinned": false,
-    "link": "https://example.invalid/n0/t065.mp3",
-    "distance": 2.412,
+    "link": "https://example.invalid/n0/t134.mp3",
+    "distance": 2.156,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
     "stepDb": null,
-    "stopAt": null,
+    "stopAt": 494.13,
     "siblings": []
    },
    {
@@ -340,8 +340,8 @@
     "lines": 13,
     "key": "5:0",
     "pinned": false,
-    "link": "https://example.invalid/n0/t007.mp3",
-    "distance": 2.437,
+    "link": "https://example.invalid/n0/t057.mp3",
+    "distance": 2.397,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -378,8 +378,8 @@
     "lines": 13,
     "key": "5:22",
     "pinned": false,
-    "link": "https://example.invalid/n0/t130.mp3",
-    "distance": 2.46,
+    "link": "https://example.invalid/n0/t065.mp3",
+    "distance": 2.412,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -416,13 +416,13 @@
     "lines": 13,
     "key": "5:42",
     "pinned": false,
-    "link": "https://example.invalid/n0/t050.mp3",
-    "distance": 2.328,
+    "link": "https://example.invalid/n0/t130.mp3",
+    "distance": 2.46,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
     "stepDb": null,
-    "stopAt": 464.27,
+    "stopAt": null,
     "siblings": []
    }
   ],
@@ -431,7 +431,7 @@
     {
      "start": 0.0,
      "end": 115.7,
-     "link": "https://example.invalid/n0/t128.mp3",
+     "link": "https://example.invalid/n0/t007.mp3",
      "key": "1:0"
     },
     {
@@ -450,7 +450,7 @@
     {
      "start": 374.465,
      "end": 476.875,
-     "link": "https://example.invalid/n0/t007.mp3",
+     "link": "https://example.invalid/n0/t075.mp3",
      "key": "1:42"
     }
    ],
@@ -464,7 +464,7 @@
     {
      "start": 296.92,
      "end": 407.94,
-     "link": "https://example.invalid/n0/t075.mp3",
+     "link": "https://example.invalid/n0/t140.mp3",
      "key": "2:34"
     },
     {
@@ -493,27 +493,28 @@
     {
      "start": 0.0,
      "end": 119.015,
-     "link": "https://example.invalid/n0/t128.mp3",
+     "link": "https://example.invalid/n0/t127.mp3",
      "key": "4:0"
     },
     {
      "start": 119.015,
      "end": 374.53,
-     "link": "https://example.invalid/n0/t057.mp3",
+     "link": "https://example.invalid/n0/t007.mp3",
      "key": "4:12"
     },
     {
      "start": 374.53,
-     "end": 498.39,
-     "link": "https://example.invalid/n0/t065.mp3",
-     "key": "4:43"
+     "end": 494.13,
+     "link": "https://example.invalid/n0/t134.mp3",
+     "key": "4:43",
+     "tail": true
     }
    ],
    "5": [
     {
      "start": 0.0,
      "end": 115.505,
-     "link": "https://example.invalid/n0/t007.mp3",
+     "link": "https://example.invalid/n0/t057.mp3",
      "key": "5:0"
     },
     {
@@ -526,7 +527,7 @@
     {
      "start": 187.915,
      "end": 308.685,
-     "link": "https://example.invalid/n0/t130.mp3",
+     "link": "https://example.invalid/n0/t065.mp3",
      "key": "5:22"
     },
     {
@@ -538,10 +539,9 @@
     },
     {
      "start": 374.27,
-     "end": 464.27,
-     "link": "https://example.invalid/n0/t050.mp3",
-     "key": "5:42",
-     "tail": true
+     "end": 476.68,
+     "link": "https://example.invalid/n0/t130.mp3",
+     "key": "5:42"
     }
    ]
   },
@@ -550,7 +550,7 @@
     {
      "start": 0.0,
      "end": 115.7,
-     "link": "https://example.invalid/n0/t128.mp3",
+     "link": "https://example.invalid/n0/t007.mp3",
      "key": "1:0"
     },
     {
@@ -569,7 +569,7 @@
     {
      "start": 374.465,
      "end": 479.375,
-     "link": "https://example.invalid/n0/t007.mp3",
+     "link": "https://example.invalid/n0/t075.mp3",
      "key": "1:42"
     }
    ],
@@ -583,7 +583,7 @@
     {
      "start": 296.92,
      "end": 407.94,
-     "link": "https://example.invalid/n0/t075.mp3",
+     "link": "https://example.invalid/n0/t140.mp3",
      "key": "2:34"
     },
     {
@@ -612,27 +612,28 @@
     {
      "start": 0.0,
      "end": 119.015,
-     "link": "https://example.invalid/n0/t128.mp3",
+     "link": "https://example.invalid/n0/t127.mp3",
      "key": "4:0"
     },
     {
      "start": 119.015,
      "end": 374.53,
-     "link": "https://example.invalid/n0/t057.mp3",
+     "link": "https://example.invalid/n0/t007.mp3",
      "key": "4:12"
     },
     {
      "start": 374.53,
-     "end": 500.89,
-     "link": "https://example.invalid/n0/t065.mp3",
-     "key": "4:43"
+     "end": 494.13,
+     "link": "https://example.invalid/n0/t134.mp3",
+     "key": "4:43",
+     "tail": true
     }
    ],
    "5": [
     {
      "start": 0.0,
      "end": 115.505,
-     "link": "https://example.invalid/n0/t007.mp3",
+     "link": "https://example.invalid/n0/t057.mp3",
      "key": "5:0"
     },
     {
@@ -645,7 +646,7 @@
     {
      "start": 187.915,
      "end": 308.685,
-     "link": "https://example.invalid/n0/t130.mp3",
+     "link": "https://example.invalid/n0/t065.mp3",
      "key": "5:22"
     },
     {
@@ -657,10 +658,9 @@
     },
     {
      "start": 374.27,
-     "end": 464.27,
-     "link": "https://example.invalid/n0/t050.mp3",
-     "key": "5:42",
-     "tail": true
+     "end": 479.18,
+     "link": "https://example.invalid/n0/t130.mp3",
+     "key": "5:42"
     }
    ]
   },
@@ -712,12 +712,6 @@
     59.0,
     true
    ],
-   "https://example.invalid/n0/t050.mp3": [
-    0.0,
-    90.0,
-    88.0,
-    true
-   ],
    "https://example.invalid/n0/t057.mp3": [
     0.0,
     420.0,
@@ -760,7 +754,7 @@
     73.0,
     true
    ],
-   "https://example.invalid/n0/t128.mp3": [
+   "https://example.invalid/n0/t127.mp3": [
     0.0,
     150.0,
     148.0,
@@ -770,6 +764,18 @@
     0.0,
     1800.0,
     1798.0,
+    true
+   ],
+   "https://example.invalid/n0/t134.mp3": [
+    0.0,
+    119.6,
+    117.6,
+    true
+   ],
+   "https://example.invalid/n0/t140.mp3": [
+    0.0,
+    240.0,
+    238.0,
     true
    ],
    "https://example.invalid/n0/t999.mp3": [

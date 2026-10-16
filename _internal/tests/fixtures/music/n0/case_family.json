@@ -37,8 +37,8 @@
     "lines": 9,
     "key": "1:13",
     "pinned": false,
-    "link": "https://example.invalid/n0/t130.mp3",
-    "distance": 1.416,
+    "link": "https://example.invalid/n0/edge.mp3",
+    "distance": 1.044,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -56,8 +56,8 @@
     "lines": 13,
     "key": "1:22",
     "pinned": false,
-    "link": "https://example.invalid/n0/t064.mp3",
-    "distance": 1.621,
+    "link": "https://example.invalid/n0/t130.mp3",
+    "distance": 1.416,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -95,7 +95,7 @@
     "key": "1:42",
     "pinned": false,
     "link": "https://example.invalid/n0/t064.mp3",
-    "distance": 1.844,
+    "distance": 1.397,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -379,8 +379,8 @@
     "lines": 7,
     "key": "5:35",
     "pinned": false,
-    "link": "https://example.invalid/n0/t128.mp3",
-    "distance": 2.154,
+    "link": "https://example.invalid/n0/edge.mp3",
+    "distance": 2.05,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -419,13 +419,13 @@
     {
      "start": 115.7,
      "end": 188.11,
-     "link": "https://example.invalid/n0/t130.mp3",
+     "link": "https://example.invalid/n0/edge.mp3",
      "key": "1:13"
     },
     {
      "start": 188.11,
      "end": 308.88,
-     "link": "https://example.invalid/n0/t064.mp3",
+     "link": "https://example.invalid/n0/t130.mp3",
      "key": "1:22"
     },
     {
@@ -518,7 +518,7 @@
     {
      "start": 308.685,
      "end": 374.27,
-     "link": "https://example.invalid/n0/t128.mp3",
+     "link": "https://example.invalid/n0/edge.mp3",
      "key": "5:35"
     },
     {
@@ -540,13 +540,13 @@
     {
      "start": 115.7,
      "end": 188.11,
-     "link": "https://example.invalid/n0/t130.mp3",
+     "link": "https://example.invalid/n0/edge.mp3",
      "key": "1:13"
     },
     {
      "start": 188.11,
      "end": 308.88,
-     "link": "https://example.invalid/n0/t064.mp3",
+     "link": "https://example.invalid/n0/t130.mp3",
      "key": "1:22"
     },
     {
@@ -640,7 +640,7 @@
     {
      "start": 308.685,
      "end": 374.27,
-     "link": "https://example.invalid/n0/t128.mp3",
+     "link": "https://example.invalid/n0/edge.mp3",
      "key": "5:35"
     },
     {
@@ -682,6 +682,12 @@
    ]
   },
   "loops": {
+   "https://example.invalid/n0/edge.mp3": [
+    0.0,
+    1800.0,
+    1798.0,
+    true
+   ],
    "https://example.invalid/n0/t054.mp3": [
     0.0,
     330.0,
@@ -734,12 +740,6 @@
     0.0,
     61.0,
     59.0,
-    true
-   ],
-   "https://example.invalid/n0/t128.mp3": [
-    0.0,
-    150.0,
-    148.0,
     true
    ],
    "https://example.invalid/n0/t130.mp3": [

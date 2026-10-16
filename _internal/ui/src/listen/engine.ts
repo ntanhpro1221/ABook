@@ -93,6 +93,8 @@ export interface NativeEngine extends AudioEngine {
   readonly musicBroken: boolean;
   /** Lời báo "mất mạng" khi nhạc nền đang bị giữ lại vì mạng (MusicBed.kt offlineNotice); rỗng khi ổn. */
   readonly musicOffline: string;
+  /** Nhạc nền đang đổi theo cảnh của truyện (MusicBed.kt sceneMode), không phải danh sách phát người nghe chọn: để nhắc người nghe một lần (musicHint.ts). */
+  readonly musicScene: boolean;
 }
 
 export function isNative(engine: AudioEngine): engine is NativeEngine {
