@@ -7,14 +7,44 @@ package vn.abook.player.readaloud
  *  - lượt đọc kế của đúng đoạn ấy là lần hỏi MỚI ([takeFresh] -> `ClipReader.read(fresh = true)`: quên lệnh nghỉ của giọng, quỹ thử lại tính lại);
  *  - trong lúc người nghe còn âm thanh để nghe, cứ [REASK_MS] mới hỏi lại một lần ([cooldownMs]) - mất mạng dài không thành bão lượt gọi;
  *  - hàng đợi cạn (người nghe tới nơi) thì hỏi ngay, không chờ nhịp ([ReadAloud.pump]); lần hỏi mới ấy hỏng nữa mới dừng và báo.
+ * Lần hỏi theo nhịp lúc người nghe còn âm thanh là "hỏi thăm" ([isProbe]): MỘT lượt gọi, không thử lại, không giữ khoá CPU / Wi-Fi - như `probe` ở máy tính (đã hỏng thì hỏi tiếp cũng chỉ
+ * để biết dịch vụ sống lại chưa; thử lại ba lần giữ khoá cả phút trong lúc chẳng ai chờ). Đoạn CHƯA TỚI hỏng vì BẤT KỲ lỗi giọng nào cũng không dừng nghe khi còn âm thanh ([verdict]); máy tính cũng im
+ * lặng với mọi lỗi của đoạn chưa tới (listen/readAloud.ts, `index !== this.target.index`).
  */
 class StalledClips(private val clock: () -> Long = System::nanoTime) {
+    /** Việc phải làm khi một đoạn hết cách đọc: [FAIL] dừng và báo lỗi; [DEFER] chưa ai chờ đoạn ấy - nhớ lại, [ReadAloud.pump] hỏi lại sau; [QUIET] người nghe đã tạm dừng - bấm phát thì xin lại. */
+    enum class Verdict { FAIL, DEFER, QUIET }
+
     companion object {
         /** Hỏi lại một đoạn đã hết lần thử cách nhau ít nhất chừng này (ms) khi người nghe còn âm thanh. */
         const val REASK_MS = 10_000L
 
         /** Lỗi thuộc loại "dịch vụ trục trặc" (không tính mất mạng / bị từ chối / khoá hỏng: hỏi lại cũng vô ích hay đã có đường riêng). */
         fun isServiceTrouble(error: Throwable?): Boolean = error is VoiceException && error.reason in VoiceException.TRANSIENT_REASONS
+
+        /** Không thử lại lần nào: dùng cho lần hỏi thăm ([isProbe]). */
+        val NO_RETRY = LongArray(0)
+
+        /** Lần hỏi này là hỏi thăm ngầm? Đoạn vừa hỏng (`fresh`: [takeFresh]) mà người nghe còn âm thanh - chưa ai chờ đoạn ấy. Người nghe tới nơi (hàng đợi cạn) thì là hỏi thật, có thử lại. */
+        fun isProbe(fresh: Boolean, listenerHasAudio: Boolean): Boolean = fresh && listenerHasAudio
+
+        /** Nghỉ giữa các lần thử lại của lượt đọc này: hỏi thăm thì không có lần nào. */
+        fun delaysFor(probe: Boolean, normal: LongArray): LongArray = if (probe) NO_RETRY else normal
+
+        /** Giữ khoá CPU / Wi-Fi ([FetchWake]) cho lượt đọc này? Chỉ khi người nghe ĐANG CHỜ qua mạng: hỏi thăm lúc người nghe còn âm thanh thì không (ExoPlayer đang giữ khoá của nó). */
+        fun holdsWake(online: Boolean, listenerWants: Boolean, probe: Boolean): Boolean = online && listenerWants && !probe
+
+        /**
+         * `error`: lỗi cuối của đoạn; `wantsPlay`: người nghe đang muốn nghe; `listenerHasAudio`: còn âm thanh để nghe (đoạn này chưa phải của họ); `probe`: lượt này là hỏi thăm.
+         * Lỗi dịch vụ trục trặc: im lặng nếu đã tạm dừng, hoãn nếu còn âm thanh, dừng nếu hàng đợi cạn. Lỗi giọng KHÁC (mất mạng, bị từ chối, khoá...): vẫn hoãn khi người nghe đang nghe và còn
+         * âm thanh (a50: trước đây dừng ngay dù còn cả hàng đoạn đã đọc sẵn; máy tính im lặng với mọi lỗi của đoạn chưa tới), còn lại dừng như trước. Hỏi thăm hỏng thì không bao giờ dừng:
+         * người nghe tới nơi thì [ReadAloud.pump] hỏi thật, có thử lại.
+         */
+        fun verdict(error: Throwable?, wantsPlay: Boolean, listenerHasAudio: Boolean, probe: Boolean): Verdict = when {
+            probe || isServiceTrouble(error) -> if (!wantsPlay) Verdict.QUIET else if (probe || listenerHasAudio) Verdict.DEFER else Verdict.FAIL
+            error is VoiceException && wantsPlay && listenerHasAudio -> Verdict.DEFER
+            else -> Verdict.FAIL
+        }
     }
 
     private var chapter = -1
@@ -45,5 +75,32 @@ class StalledClips(private val clock: () -> Long = System::nanoTime) {
     fun clear() {
         chapter = -1
         segment = -1
+    }
+}
+
+/**
+ * Một hẹn giờ trên luồng chính (`postDelayed` / `removeCallbacks` do người gọi đưa vào, để kiểm thử không cần Looper): một hẹn một lúc, gỡ được. [ReadAloud.remind] hẹn [ReadAloud.pump] sau
+ * nhịp nghỉ của [StalledClips]; mỗi lần nhảy (tua, đổi chương, đổi giọng) hẹn cũ phải bỏ ([cancel]) - nếu để lại, cờ "đang hẹn" của nó chặn hẹn mới của đoạn sau khi tua tới khi hẹn cũ nổ (a50 mục 7).
+ */
+class Reminder(private val postDelayed: (Runnable, Long) -> Unit, private val removeCallbacks: (Runnable) -> Unit) {
+    private var pending: Runnable? = null
+
+    /** Hẹn `action` sau `ms`; đã có hẹn thì bỏ qua (một hẹn một lúc). */
+    fun schedule(ms: Long, action: () -> Unit) {
+        if (pending != null) return
+        val task = object : Runnable {
+            override fun run() {
+                if (pending === this) pending = null
+                action()
+            }
+        }
+        pending = task
+        postDelayed(task, ms)
+    }
+
+    /** Bỏ hẹn đang chờ (nếu có): hẹn mới đặt được ngay. */
+    fun cancel() {
+        pending?.let(removeCallbacks)
+        pending = null
     }
 }

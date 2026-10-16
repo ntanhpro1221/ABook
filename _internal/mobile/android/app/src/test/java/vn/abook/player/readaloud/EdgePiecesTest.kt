@@ -11,6 +11,10 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
+import java.util.concurrent.CancellationException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -26,6 +30,8 @@ class EdgePiecesTest {
     @After
     fun cleanUp() {
         EdgeTts.connections = Semaphore(EdgePieces.EDGE_CONNECTIONS)
+        EdgeTts.clockSkewSeconds = 0.0
+        EdgeTts.totalMs = EdgeTts.TOTAL_MS
         dir.deleteRecursively()
     }
 
@@ -203,5 +209,108 @@ class EdgePiecesTest {
             assertTrue(error.offline)
             assertEquals("Không có mạng để dùng giọng Edge", error.message)
         }
+    }
+
+    // ---- huỷ, hạn chung, độ lệch đồng hồ (a50) ---------------------------------------------------------------------------------
+
+    /** Chờ tới khi `condition` đúng (tối đa 5 giây) - bài thử đa luồng không đoán giờ. */
+    private fun waitUntil(what: String, condition: () -> Boolean) {
+        val end = System.nanoTime() + 5_000_000_000L
+        while (!condition()) {
+            assertTrue("hết 5 giây mà chưa $what", System.nanoTime() < end)
+            Thread.sleep(10)
+        }
+    }
+
+    private val threePieces = (1..9).joinToString(" ") { "Câu số $it kể về một chuyện nhỏ trong ngôi làng ven sông." }
+
+    private fun httpDate(seconds: Double): String =
+        java.text.SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.format(java.util.Date((seconds * 1000).toLong()))
+
+    @Test
+    fun piecesRefusedTogetherLearnTheClockSkewOnceAndNoneIsRejected() {
+        // Cả ba mảnh cùng bị 403 vì đồng hồ máy chậm 1 giờ: độ lệch GÁN (server - bây giờ) nên mảnh nào cũng nối được ở lần thử lại; bản cộng dồn (+=) nhân nó lên 2-3 lần.
+        assertEquals(3, EdgePieces.split(threePieces).size)
+        val ahead = 3600.0
+        val everyoneRefused = CountDownLatch(3)
+        val accepted = AtomicInteger(0)
+        val refusals = AtomicInteger(0)
+        val connector = EdgeTts.Connector { url, _ ->
+            val server = System.currentTimeMillis() / 1000.0 + ahead
+            val onServerTime = listOf(-300.0, 0.0, 300.0).any { url.contains("Sec-MS-GEC=" + EdgeProtocol.secMsGec(server + it)) }
+            if (!onServerTime) {
+                everyoneRefused.countDown()
+                everyoneRefused.await(5, TimeUnit.SECONDS) // cả ba cùng tính giờ bằng độ lệch cũ rồi mới nhận 403...
+                if (refusals.incrementAndGet() > 1) Thread.sleep(300) // ...mảnh đầu học độ lệch và nối lại xong TRƯỚC khi hai mảnh kia nhận 403 (cộng dồn thì chúng cộng chồng lên)
+                throw HandshakeException(403, mapOf("date" to httpDate(server)))
+            }
+            accepted.incrementAndGet()
+            val sent = ByteArrayOutputStream()
+            WebSocket({ }, Reply(sent) { audio(600, 1) + text("turn.end") }, sent)
+        }
+        val clip = EdgeTts("v", connector) { }.synthesize(threePieces, File(dir, "skew.mp3"))
+        assertEquals(3, accepted.get())
+        assertEquals(3 * 600 * 1000L / 6000, clip.durationMs)
+        assertEquals(ahead, EdgeTts.clockSkewSeconds, 5.0)
+    }
+
+    @Test
+    fun cancellingAClipClosesTheSocketsOfItsRunningPiecesAndDoesNotRetry() {
+        val expected = EdgePieces.split(sentences).size
+        assertTrue(expected >= 2)
+        val opened = AtomicInteger(0)
+        val closed = AtomicInteger(0)
+        val connector = EdgeTts.Connector { _, _ ->
+            opened.incrementAndGet()
+            val gate = CountDownLatch(1)
+            val silent = object : InputStream() { // không bao giờ trả lời: đọc chờ tới khi ổ cắm bị đóng, rồi văng lỗi như ổ cắm thật
+                override fun read(): Int {
+                    gate.await(10, TimeUnit.SECONDS)
+                    throw java.net.SocketException("Socket closed")
+                }
+            }
+            WebSocket({ closed.incrementAndGet(); gate.countDown() }, silent, ByteArrayOutputStream())
+        }
+        val cancel = ClipCancel()
+        val result = AtomicReference<Result<Clip>>()
+        val reader = Thread { result.set(ClipRetry.run(true, longArrayOf(1_000L), { true }, cancel = cancel) { EdgeTts("v", connector) { }.synthesize(sentences, File(dir, "x.mp3")) }) }
+        reader.start()
+        waitUntil("mọi mảnh đã nối") { opened.get() == expected }
+        assertEquals("đang chờ trả lời nên chưa ổ cắm nào đóng", 0, closed.get())
+        cancel.cancel()
+        reader.join(5_000)
+        assertFalse("luồng đọc phải thoát ngay khi huỷ", reader.isAlive)
+        assertTrue(result.get().exceptionOrNull() is CancellationException)
+        waitUntil("mọi ổ cắm đã đóng") { closed.get() == expected }
+        assertEquals("huỷ thì không thử lại, không nối thêm", expected, opened.get())
+        waitUntil("chỗ kết nối nhả hết") { EdgeTts.connections.availablePermits() == EdgePieces.EDGE_CONNECTIONS }
+    }
+
+    @Test
+    fun aFailingPieceFailsTheClipAtOnceAndClosesTheSocketsOfTheOthers() {
+        // Mảnh đầu (đứng trước) im lìm; mảnh khác nhận tin hỏng ngay: cả clip hỏng ngay (không đợi mảnh đầu), và ổ cắm mảnh đầu đóng - không giữ chỗ tới hết lượt.
+        val total = EdgePieces.split(sentences).size
+        val closed = AtomicInteger(0)
+        val connector = EdgeTts.Connector { _, _ ->
+            val sent = ByteArrayOutputStream()
+            val gate = CountDownLatch(1)
+            WebSocket({ closed.incrementAndGet(); gate.countDown() }, Reply(sent) { bytes ->
+                if (spokenIn(bytes).startsWith("Trời")) {
+                    gate.await(10, TimeUnit.SECONDS)
+                    throw java.net.SocketException("Socket closed")
+                }
+                frame(WebSocket.OP_BINARY, byteArrayOf(0, 99, 1)) // độ dài header vượt tin: hỏng
+            }, sent)
+        }
+        val began = System.nanoTime()
+        try {
+            EdgeTts("v", connector) { }.synthesize(sentences, File(dir, "ff.mp3"))
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertTrue(error.message, error.message!!.contains("tin hỏng"))
+        }
+        assertTrue("không được đợi mảnh đứng trước", (System.nanoTime() - began) < 5_000_000_000L)
+        waitUntil("mọi ổ cắm đã đóng") { closed.get() == total }
+        waitUntil("chỗ kết nối nhả hết") { EdgeTts.connections.availablePermits() == EdgePieces.EDGE_CONNECTIONS }
     }
 }

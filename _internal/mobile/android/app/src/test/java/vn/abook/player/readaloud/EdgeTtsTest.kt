@@ -14,6 +14,8 @@ import java.io.File
 import java.io.InputStream
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 
 /** Giao thức Edge (token Sec-MS-GEC, tin, mốc chữ) và giọng Edge chạy trên một máy chủ giả: khung dựng sẵn, không mạng. */
 class EdgeTtsTest {
@@ -22,6 +24,8 @@ class EdgeTtsTest {
     @After
     fun cleanUp() {
         EdgeTts.clockSkewSeconds = 0.0
+        EdgeTts.totalMs = EdgeTts.TOTAL_MS
+        EdgeTts.connections = java.util.concurrent.Semaphore(EdgePieces.EDGE_CONNECTIONS)
         dir.deleteRecursively()
     }
 
@@ -138,15 +142,17 @@ class EdgeTtsTest {
     private fun metadata(offset: Long, duration: Long, word: String) =
         text("audio.metadata", """{"Metadata":[{"Type":"WordBoundary","Data":{"Offset":$offset,"Duration":$duration,"text":{"Text":"$word","Length":${word.length},"BoundaryType":"WordBoundary"}}}]}""")
 
+    /** Máy chủ giả; đoạn dài mở nhiều kết nối từ nhiều luồng cùng lúc nên mọi thứ ở đây an toàn đa luồng (a50: bản cũ dùng list/biến thường - thử 1/6 lần hỏng). */
     private class Fake(val replies: List<ByteArray>) {
-        val urls = mutableListOf<String>()
-        val headers = mutableListOf<Map<String, String>>()
-        val sent = ByteArrayOutputStream()
-        var calls = 0
+        val urls = CopyOnWriteArrayList<String>()
+        val headers = CopyOnWriteArrayList<Map<String, String>>()
+        val sent = ByteArrayOutputStream() // write() của ByteArrayOutputStream đã synchronized
+        private val count = AtomicInteger(0)
+        val calls: Int get() = count.get()
         fun connector() = EdgeTts.Connector { url, header ->
             urls += url
             headers += header
-            WebSocket({ }, ByteArrayInputStream(replies[minOf(calls++, replies.size - 1)]), sent)
+            WebSocket({ }, ByteArrayInputStream(replies[minOf(count.getAndIncrement(), replies.size - 1)]), sent)
         }
     }
 
@@ -363,5 +369,43 @@ class EdgeTtsTest {
             assertFalse(error.offline)
             assertEquals(2, calls[0])
         }
+    }
+
+    @Test
+    fun waitingForASlotAndReadingShareOneClipDeadline() {
+        // Chờ chỗ kết nối (400 ms) rồi chờ tin (500 ms) cộng lại vượt hạn 700 ms của CẢ clip: lỗi "quá chậm". Bản cũ cho mỗi chặng đủ hạn riêng nên cứ thế đọc xong.
+        fun slowConnector() = EdgeTts.Connector { _, _ ->
+            val data = ByteArrayInputStream(session(audio(6000), text("turn.end")))
+            var waited = false
+            val slow = object : InputStream() {
+                private fun pause() {
+                    if (!waited) {
+                        waited = true
+                        Thread.sleep(500)
+                    }
+                }
+                override fun read(): Int { pause(); return data.read() }
+                override fun read(b: ByteArray, off: Int, len: Int): Int { pause(); return data.read(b, off, len) }
+            }
+            WebSocket({ }, slow, ByteArrayOutputStream())
+        }
+        fun slotBusyFor400Ms(): java.util.concurrent.Semaphore {
+            val slots = java.util.concurrent.Semaphore(1)
+            slots.acquire()
+            Thread { Thread.sleep(400); slots.release() }.also { it.isDaemon = true }.start()
+            return slots
+        }
+        EdgeTts.totalMs = 700
+        EdgeTts.connections = slotBusyFor400Ms()
+        try {
+            EdgeTts("v", slowConnector()) { }.synthesize("Xin", File(dir, "deadline.mp3"))
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertEquals("timeout", error.reason)
+            assertTrue(error.message!!.contains("quá chậm"))
+        }
+        EdgeTts.totalMs = 5_000 // cùng cảnh mà hạn đủ rộng thì đọc xong: bài thử không hỏng vì lý do khác
+        EdgeTts.connections = slotBusyFor400Ms()
+        assertEquals(1000, EdgeTts("v", slowConnector()) { }.synthesize("Xin", File(dir, "deadline2.mp3")).durationMs)
     }
 }
