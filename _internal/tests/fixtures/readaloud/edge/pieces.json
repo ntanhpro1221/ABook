@@ -1,0 +1,77 @@
+{
+ "note": "Cắt mảnh đọc song song của Edge (edge.py speech_pieces / EdgeTts.kt speechPieces): chữ vào -> các mảnh ra. Chữ bịa.",
+ "cases": [
+  {
+   "note": "đoạn ngắn hơn 100 ký tự giữ một mảnh",
+   "text": "Trời mưa suốt đêm. Sáng ra, sân đầy lá ướt.",
+   "pieces": [
+    "Trời mưa suốt đêm. Sáng ra, sân đầy lá ướt."
+   ]
+  },
+  {
+   "note": "hai câu đủ dài thành hai mảnh",
+   "text": "Chiếc thuyền nhỏ rời bến lúc tảng sáng, mang theo ba người lạ mặt. Gió từ sông thổi lên lạnh buốt, và không ai nói thêm lời nào.",
+   "pieces": [
+    "Chiếc thuyền nhỏ rời bến lúc tảng sáng, mang theo ba người lạ mặt.",
+    "Gió từ sông thổi lên lạnh buốt, và không ai nói thêm lời nào."
+   ]
+  },
+  {
+   "note": "tên viết tắt một chữ cái không phải hết câu",
+   "text": "Hôm qua ông B. Lê Văn Tám ghé qua nhà tôi, mang theo một giỏ cam từ vườn nhà ông ấy. Chúng tôi ngồi uống trà đến khuya, nói chuyện về mùa màng năm nay.",
+   "pieces": [
+    "Hôm qua ông B. Lê Văn Tám ghé qua nhà tôi, mang theo một giỏ cam từ vườn nhà ông ấy.",
+    "Chúng tôi ngồi uống trà đến khuya, nói chuyện về mùa màng năm nay."
+   ]
+  },
+  {
+   "note": "sau dấu hỏi trong nháy là chữ thường thì không cắt",
+   "text": "\"Anh đã thấy cái gì ở ngoài đó?\" cô hỏi khẽ, mắt không rời khỏi ngọn đèn. \"Không có gì cả\", anh đáp, rồi quay mặt đi chỗ khác.",
+   "pieces": [
+    "\"Anh đã thấy cái gì ở ngoài đó?\" cô hỏi khẽ, mắt không rời khỏi ngọn đèn.",
+    "\"Không có gì cả\", anh đáp, rồi quay mặt đi chỗ khác."
+   ]
+  },
+  {
+   "note": "nhiều câu ngắn gộp thành hai mảnh cân bằng",
+   "text": "Mưa rơi. Gió thổi. Cây nghiêng. Lá bay. Nước dâng. Đường vắng. Nhà đóng cửa. Chó sủa xa. Đèn tắt hết. Đêm im lặng. Không ai ra. Trời sắp sáng.",
+   "pieces": [
+    "Mưa rơi. Gió thổi. Cây nghiêng. Lá bay. Nước dâng. Đường vắng. Nhà đóng cửa.",
+    "Chó sủa xa. Đèn tắt hết. Đêm im lặng. Không ai ra. Trời sắp sáng."
+   ]
+  },
+  {
+   "note": "một câu dài hơn 200 ký tự được cắt ở dấu phẩy và chấm phẩy",
+   "text": "Khi đoàn người đi qua cánh đồng, người dẫn đường dừng lại ở bờ ruộng thứ ba, chỉ tay về phía dãy núi xa tít nơi mây còn đọng; ông bảo rằng muốn tới đó thì phải đi hết ngày hôm nay, ngủ qua đêm ở chân đèo, rồi sáng mai mới leo lên được.",
+   "pieces": [
+    "Khi đoàn người đi qua cánh đồng, người dẫn đường dừng lại ở bờ ruộng thứ ba,",
+    "chỉ tay về phía dãy núi xa tít nơi mây còn đọng; ông bảo rằng muốn tới đó thì phải đi hết ngày hôm nay,",
+    "ngủ qua đêm ở chân đèo, rồi sáng mai mới leo lên được."
+   ]
+  },
+  {
+   "note": "số thập phân không bị cắt ở dấu phẩy (câu dài, cắt ở các dấu phẩy có khoảng trắng)",
+   "text": "Chiều cao của cột mốc là 3,5 mét và nặng gần hai tấn, nên phải mất bốn người khỏe mạnh mới dựng nổi nó lên, trong khi cả làng đứng xem và vỗ tay reo mừng, còn lũ trẻ thì chạy quanh gốc cây đa đầu làng, hò hét suốt cả buổi chiều hôm ấy.",
+   "pieces": [
+    "Chiều cao của cột mốc là 3,5 mét và nặng gần hai tấn,",
+    "nên phải mất bốn người khỏe mạnh mới dựng nổi nó lên, trong khi cả làng đứng xem và vỗ tay reo mừng,",
+    "còn lũ trẻ thì chạy quanh gốc cây đa đầu làng, hò hét suốt cả buổi chiều hôm ấy."
+   ]
+  },
+  {
+   "note": "năm câu: chia ba thì mảnh giữa ngắn hơn 50 ký tự nên gộp, còn hai mảnh",
+   "text": "Người lái đò cập thuyền vào bến sau cơn mưa lớn. Hành khách lần lượt bước lên bờ, tay xách nách mang đủ thứ. Một bà cụ dừng lại hỏi đường về xóm Đông. Chẳng ai trả lời được vì trời đã tối hẳn. Cuối cùng cậu bé bán báo dẫn bà đi, tay cầm chiếc đèn pin nhỏ.",
+   "pieces": [
+    "Người lái đò cập thuyền vào bến sau cơn mưa lớn. Hành khách lần lượt bước lên bờ, tay xách nách mang đủ thứ.",
+    "Một bà cụ dừng lại hỏi đường về xóm Đông. Chẳng ai trả lời được vì trời đã tối hẳn. Cuối cùng cậu bé bán báo dẫn bà đi, tay cầm chiếc đèn pin nhỏ."
+   ]
+  },
+  {
+   "note": "một câu dài không có dấu cắt giữ nguyên một mảnh",
+   "text": "Anh ấy đi rất chậm trên con đường làng quen thuộc dẫn từ nhà ra tới tận ngoài cánh đồng lúa mênh mông đã chín vàng rực dưới ánh nắng chiều muộn của cuối mùa thu năm ấy",
+   "pieces": [
+    "Anh ấy đi rất chậm trên con đường làng quen thuộc dẫn từ nhà ra tới tận ngoài cánh đồng lúa mênh mông đã chín vàng rực dưới ánh nắng chiều muộn của cuối mùa thu năm ấy"
+   ]
+  }
+ ]
+}

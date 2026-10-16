@@ -14,9 +14,11 @@ import re
 import secrets
 import socket
 import ssl
+import threading
 import time
 import uuid
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from email.utils import parsedate_to_datetime
 from urllib.parse import quote
 from xml.sax.saxutils import escape, unescape
@@ -38,6 +40,14 @@ CONNECT_TIMEOUT = 10.0
 READ_TIMEOUT = 25.0
 TOTAL_TIMEOUT = 90.0
 RETRIES = 2  # lượt bị cắt giữa chừng thử lại tối đa chừng này lần (kết nối mới)
+# Đọc song song các câu của MỘT đoạn (soát a49: chữ Edge chưa từng đọc ra audio chỉ nhanh cỡ 1x thời gian thật, đoạn 15 giây mất 13-27 giây; các yêu cầu song song không làm
+# nhau chậm đi - 5 đoạn mới cùng lúc 13-19 giây thay vì 49 giây nối tiếp). Điện thoại (EdgeTts.kt) dùng đúng các hằng số và luật cắt này, bộ ví dụ chung
+# tests/fixtures/readaloud/edge/pieces.json: đổi một bên thì đổi cả hai bên và bộ ví dụ.
+PIECE_PARALLEL = 3  # tối đa chừng này mảnh một đoạn (và chừng này kết nối cùng lúc cho một clip)
+EDGE_CONNECTIONS = 8  # trần kết nối Edge đang mở của cả tiến trình: đọc trước (tới 8 đoạn) x mảnh không mở hàng chục ổ cắm cùng lúc
+WHOLE_CHARS = 100  # đoạn ngắn hơn chừng này ký tự giữ một yêu cầu: câu đơn 90-100 ký tự đo 5,8-13,9 giây, cắt đôi không nhanh hơn mà tốn thêm một lần nối (~0,45 giây)
+MIN_PIECE_CHARS = 50  # mảnh không nhỏ hơn chừng này (gộp câu ngắn): mảnh quá ngắn thêm chỗ nối mà không rút ngắn thời gian chờ
+LONG_SENTENCE_CHARS = 200  # câu dài hơn chừng này được cắt tiếp ở ; : , (sau dấu có khoảng trắng - không bao giờ giữa chữ hay số như "3,5")
 
 DEFAULT_VOICE = "vi-VN-HoaiMyNeural"
 VOICES = [("vi-VN-HoaiMyNeural", "Hoài My", "female"), ("vi-VN-NamMinhNeural", "Nam Minh", "male")]
@@ -110,6 +120,93 @@ def split_text(text: str, limit: int = MAX_CHUNK_BYTES, measure: Callable[[str],
         pieces.append(text[:cut].strip())
         text = text[cut:].strip()
     return [piece for piece in pieces if piece]
+
+
+_SENTENCE_END = ".!?…"
+_SENTENCE_CLOSERS = "\"'”’)]»"
+_CLAUSE_MARKS = ";:,"
+
+
+def split_sentences(text: str) -> list[str]:
+    """Cắt ở hết câu: dấu . ! ? … (và dấu đóng ngoặc / nháy đi liền), rồi khoảng trắng, rồi chữ KHÔNG viết thường. Giữ nguyên câu như
+    "Anh A. Nguyễn" (chữ đơn trước dấu chấm = tên viết tắt) và `"Thật à?" anh hỏi` (sau dấu hỏi là chữ thường). Điện thoại cài lại đúng luật này."""
+    out: list[str] = []
+    start = 0
+    i = 0
+    n = len(text)
+    while i < n:
+        if text[i] not in _SENTENCE_END:
+            i += 1
+            continue
+        end = i + 1
+        while end < n and text[end] in _SENTENCE_END:
+            end += 1
+        close = end
+        while close < n and text[close] in _SENTENCE_CLOSERS:
+            close += 1
+        after = close
+        while after < n and text[after].isspace():
+            after += 1
+        initial = text[i] == "." and end == i + 1 and i >= 1 and text[i - 1].isalpha() and (i == 1 or not text[i - 2].isalnum())
+        if after > close and after < n and not text[after].islower() and not initial:
+            out.append(text[start:close].strip())
+            start = after
+            i = after
+        else:
+            i = end
+    out.append(text[start:].strip())
+    return [piece for piece in out if piece]
+
+
+def split_clauses(sentence: str) -> list[str]:
+    """Một câu dài thành các vế: cắt sau ; : , khi sau dấu có khoảng trắng."""
+    out: list[str] = []
+    start = 0
+    for i in range(len(sentence) - 1):
+        if sentence[i] in _CLAUSE_MARKS and sentence[i + 1].isspace():
+            out.append(sentence[start:i + 1].strip())
+            start = i + 1
+    out.append(sentence[start:].strip())
+    return [piece for piece in out if piece]
+
+
+def _group_units(units: list[str]) -> list[str]:
+    """Gộp các câu / vế liền nhau thành tối đa PIECE_PARALLEL mảnh cân bằng độ dài (mỗi mảnh >= MIN_PIECE_CHARS). Nhiều mảnh hơn số kết nối cùng lúc chỉ xếp hàng
+    thêm một vòng chờ ~5-10 giây của Edge, nên 8 câu 60 ký tự thành 3 mảnh chứ không phải 8."""
+    total = sum(len(unit) for unit in units)
+    count = min(PIECE_PARALLEL, len(units), max(1, total // MIN_PIECE_CHARS))
+    prefix = [0]
+    for unit in units:
+        prefix.append(prefix[-1] + len(unit))
+    cuts = [0]
+    for j in range(1, count):
+        # Chỗ cắt thứ j: số câu ở j mảnh đầu sao cho độ dài dồn gần nhất total*j/count (hoà thì lấy sớm hơn); còn chỗ cho các mảnh sau.
+        best = min(range(cuts[-1] + 1, len(units) - (count - j) + 1), key=lambda at: (abs(prefix[at] * count - total * j), at))
+        cuts.append(best)
+    cuts.append(len(units))
+    groups = [units[cuts[g]:cuts[g + 1]] for g in range(count)]
+    lengths = [prefix[cuts[g + 1]] - prefix[cuts[g]] for g in range(count)]
+    while len(groups) > 1 and min(lengths) < MIN_PIECE_CHARS:
+        small = lengths.index(min(lengths))
+        neighbours = [x for x in (small - 1, small + 1) if 0 <= x < len(groups)]
+        other = min(neighbours, key=lambda x: (lengths[x], x))
+        first, second = sorted((small, other))
+        groups[first:second + 1] = [groups[first] + groups[second]]
+        lengths[first:second + 1] = [lengths[first] + lengths[second]]
+    return [" ".join(group) for group in groups]
+
+
+def speech_pieces(text: str) -> list[str]:
+    """Các mảnh gửi Edge song song cho MỘT đoạn: đoạn ngắn (< WHOLE_CHARS) một mảnh; còn lại cắt ở hết câu (câu dài hơn LONG_SENTENCE_CHARS cắt tiếp ở ; : ,),
+    gộp thành tối đa PIECE_PARALLEL mảnh cân bằng; mảnh quá giới hạn byte của dịch vụ cắt tiếp bằng `split_text`. Ghép các mảnh theo thứ tự cho đúng chữ gốc."""
+    text = text.strip()
+    if len(text) >= WHOLE_CHARS:
+        units: list[str] = []
+        for sentence in split_sentences(text):
+            units += split_clauses(sentence) if len(sentence) > LONG_SENTENCE_CHARS else [sentence]
+        if len(units) > 1:
+            return [part for piece in _group_units(units) for part in split_text(piece)]
+    return split_text(text)
 
 
 def build_ssml(voice: str, text: str) -> str:
@@ -198,6 +295,9 @@ def read_turn(connection: websocket.Connection, compensation_ticks: int, deadlin
                 audio += data
 
 
+_connections = threading.BoundedSemaphore(EDGE_CONNECTIONS)  # mọi EdgeClient trong tiến trình dùng chung
+
+
 class EdgeClient:
     """`host` / `port` / `secure` đổi được để bài thử nói chuyện với máy chủ giả trên máy này."""
 
@@ -260,36 +360,56 @@ class EdgeClient:
             raise EdgeOffline("Không có mạng để dùng giọng trực tuyến.") from error
 
     def _speak_one(self, voice: str, text: str, compensation_ticks: int, deadline: float) -> tuple[bytes, list[Boundary]]:
-        connection = self._connect()
+        # Giữ một chỗ trong EDGE_CONNECTIONS suốt đời kết nối (không giữ khi nghỉ chờ thử lại, nên không có chuyện giữ chỗ mà đợi chỗ).
+        slots = _connections
+        if not slots.acquire(timeout=max(0.0, deadline - time.monotonic())):
+            raise EdgeTimeout("Dịch vụ đọc to đang quá tải ở máy này (quá nhiều đoạn đọc cùng lúc).")
         try:
+            connection = self._connect()
             try:
-                connection.send_text(config_message())
-                connection.send_text(ssml_message(uuid.uuid4().hex, build_ssml(voice, text)))
-            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as error:
-                raise EdgeDropped("Dịch vụ đọc to cắt kết nối lúc nhận chữ.") from error
-            return read_turn(connection, compensation_ticks, deadline)
+                try:
+                    connection.send_text(config_message())
+                    connection.send_text(ssml_message(uuid.uuid4().hex, build_ssml(voice, text)))
+                except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as error:
+                    raise EdgeDropped("Dịch vụ đọc to cắt kết nối lúc nhận chữ.") from error
+                return read_turn(connection, compensation_ticks, deadline)
+            finally:
+                connection.close()
         finally:
-            connection.close()
+            slots.release()
+
+    def _speak_piece(self, voice: str, piece: str, deadline: float) -> tuple[bytes, list[Boundary]]:
+        """Một mảnh, thử lại khi dịch vụ cắt lượt; mốc tính từ đầu mảnh (người gọi cộng độ dài audio các mảnh trước)."""
+        for attempt in range(RETRIES + 1):
+            try:
+                return self._speak_one(voice, piece, 0, deadline)
+            except EdgeDropped:
+                if attempt == RETRIES:
+                    raise
+                time.sleep(0.3 * (attempt + 1))
+        raise AssertionError("unreachable")
 
     def synthesize(self, text: str, voice: str = DEFAULT_VOICE) -> Synthesis:
-        """Đọc `text` bằng `voice` (mã đầy đủ, vd "vi-VN-HoaiMyNeural"): MP3 + các WordBoundary (ms từ đầu clip) + độ dài."""
+        """Đọc `text` bằng `voice` (mã đầy đủ, vd "vi-VN-HoaiMyNeural"): MP3 + các WordBoundary (ms từ đầu clip) + độ dài.
+        Đoạn dài đọc theo `speech_pieces`, các mảnh song song (tối đa PIECE_PARALLEL); một mảnh hỏng thì cả clip hỏng, cùng loại lỗi như khi đọc từng mảnh nối tiếp."""
         deadline = time.monotonic() + TOTAL_TIMEOUT
+        pieces = speech_pieces(clean(text))
+        if len(pieces) <= 1:
+            results = [self._speak_piece(voice, piece, deadline) for piece in pieces]
+        else:
+            pool = ThreadPoolExecutor(max_workers=min(PIECE_PARALLEL, len(pieces)), thread_name_prefix="edge-piece")
+            try:
+                futures = [pool.submit(self._speak_piece, voice, piece, deadline) for piece in pieces]
+                results = [future.result() for future in futures]  # theo thứ tự mảnh: lỗi đầu tiên theo thứ tự đọc, như khi nối tiếp
+            finally:
+                pool.shutdown(wait=False, cancel_futures=True)  # mảnh đang chạy tự dừng ở hạn chung; mảnh chưa chạy bỏ
         audio = bytearray()
         boundaries: list[Boundary] = []
-        pieces = split_text(clean(text))
-        for piece in pieces:
-            # Mốc của mỗi đoạn tính từ đầu đoạn ấy: bù bằng độ dài audio các đoạn trước (CBR nên chính xác).
-            compensation = len(audio) * 8 * 10_000_000 // BITRATE_BPS
-            for attempt in range(RETRIES + 1):
-                try:
-                    data, found = self._speak_one(voice, piece, compensation, deadline)
-                    break
-                except EdgeDropped:
-                    if attempt == RETRIES:
-                        raise
-                    time.sleep(0.3 * (attempt + 1))
+        for data, found in results:
+            # Mốc của mỗi mảnh tính từ đầu mảnh ấy: bù bằng độ dài audio các mảnh trước (CBR nên chính xác).
+            shift_ms = len(audio) * 8 * 1000 // BITRATE_BPS
+            boundaries += [Boundary(b.text, b.start_ms + shift_ms, b.end_ms + shift_ms, b.char) for b in found] if shift_ms else found
             audio += data
-            boundaries += found
         if not audio:
             raise EdgeError("Dịch vụ đọc to không trả về âm thanh (chữ này có thể không đọc được).")
         duration = len(audio) * 8 * 1000 // BITRATE_BPS
