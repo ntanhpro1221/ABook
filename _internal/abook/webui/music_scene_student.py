@@ -388,12 +388,9 @@ class ChapterStudent:
                 pause_requested: Callable[[], bool] = lambda: False) -> list[dict[str, Any]] | None:
         """Các mục (`dV`, `dE`, `dT`, `chapterV`) của từng đoạn `scenes` của chương `script`. None: chương không dùng được (đoạn không khớp câu)
         hay bị dừng (`stopped`); phần đã nhúng vẫn nằm trong bộ nhớ đệm."""
-        segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
-        position = {segment.get("id"): index for index, segment in enumerate(segments)}
-        spans = [(position.get(scene["firstSegment"]), position.get(scene["lastSegment"])) for scene in scenes]
-        if not scenes or any(first is None or last is None for first, last in spans):
+        texts = music_moods.scene_texts(script, scenes)
+        if texts is None:
             return None
-        texts = [music_moods.scene_text(segments, first, last) for first, last in spans]
         keys = [hashlib.sha256(text.encode("utf-8")).hexdigest() + self.package for text in texts]
         self.used.update(keys)
         for text, key in zip(texts, keys):

@@ -10,12 +10,21 @@ from typing import Any
 import pytest
 
 from abook.readaloud import paragraphs
-from abook.webui import book_edits, music_nnscene, music_plan, music_scenes, music_select
+from abook.webui import book_edits, music_nnlite, music_nnscene, music_plan, music_scenes, music_select
 from abook.webui.music_catalog import MusicCatalog
 from abook.webui.server import App, Server
 from tests.catalog_signing import TEST_PUBLIC_KEY
 from tests.test_music_catalog_and_select import _catalog_dir
 from tests.test_music_playlist import _call, _text_book_server
+
+
+
+@pytest.fixture(autouse=True)
+def n0_path(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Các ca ở đây kiểm bộ dựng + đường máy chủ trên đường N0 (danh mục thử chỉ có vài bài quanh đích êm): không model NN-lite. NN-lite có ca riêng ở test_music_nnlite.py."""
+    monkeypatch.setattr(music_nnlite, "MODEL_FILE", tmp_path_factory.getbasetemp() / "khong_co_nnlite.bin")
+    monkeypatch.setattr(music_nnlite, "_loaded", None)
+
 
 # ---- sách bịa ---------------------------------------------------------------------------------------------------------------
 

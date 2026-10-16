@@ -40,7 +40,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
-               listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnscene, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
+               listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
@@ -1998,7 +1998,8 @@ class App:
     def _scene_book(self, value: str, path: Path, manifest: dict[str, Any]) -> music_nnscene.SceneBook:
         """Plan nhạc theo cảnh của cuốn: thư mục đệm theo mã sách, khoá = bản chữ của sách + bản danh mục nhạc + học sinh nào dựng (gói q06 hay
         "none"): cài gói sau thì các chương chưa nghe dựng lại có học sinh."""
-        tag = music_nnscene.student_tag(music_scene_student.package_sha() if self._scene_student_mode() != "none" else None)
+        has_q06 = self._scene_student_mode() != "none"
+        tag = music_nnscene.student_tag(music_scene_student.package_sha() if has_q06 else None, None if has_q06 else music_nnlite.sha())
         key = (str(packages.manifest(path).get("version") or ""), str(manifest.get("revision") or ""), tag)
         cached = self._scene_books.get(value)
         if cached is None or cached[0] != key:
@@ -2009,7 +2010,7 @@ class App:
 
     def _scene_student_mode(self) -> str:
         """Học sinh q06 của nhạc theo cảnh chạy ở đâu: "local" (tiến trình này có torch + gói: máy dev), "studio" (bản cài: gói có mà torch ở Python của
-        Studio, tiến trình con `StudioChapterStudent`), hay "none" (đường N0)."""
+        Studio, tiến trình con `StudioChapterStudent`), hay "none" (không gói q06: học sinh NN-lite `music_nnlite` nếu model nạp được, không thì đường N0)."""
         if music_scene_student.available():
             return "local"
         if music_scene_student.present() and self.studio is not None and self.studio.installed():
@@ -2041,8 +2042,10 @@ class App:
 
     def _scene_job(self, value: str, path: Path, chapter_id: int, order: list[int], chapters: dict[int, dict[str, Any]],
                    scene_book: music_nnscene.SceneBook, manifest: dict[str, Any]) -> Callable[[Callable[[], bool]], None]:
-        """Việc dựng plan của MỘT chương cho `music_nnscene.Builder` (có học sinh q06 khi máy có gói và torch ở đâu đó - tiến trình này hay Studio -, không thì đường N0)."""
-        use_student = self._scene_student_mode() != "none"  # NN-V (sàn confidence, music_nnscene.chapter_scenes) chỉ có khi có học sinh
+        """Việc dựng plan của MỘT chương cho `music_nnscene.Builder` (có học sinh q06 khi máy có gói và torch ở đâu đó - tiến trình này hay Studio -, không thì NN-lite
+        đóng sẵn trong app, và chỉ khi model ấy hỏng thì đường N0)."""
+        use_student = self._scene_student_mode() != "none"  # NN-V (sàn confidence, music_nnscene.chapter_scenes) có khi có học sinh, q06 hay NN-lite
+        lite = None if use_student or music_nnlite.model() is None else music_nnlite.student_items
 
         def sha_of(cid: int) -> str:
             return music_nnscene.text_sha(packages.chapter_text(path, cid) or "", chapters[cid].get("skip"))
@@ -2071,7 +2074,7 @@ class App:
                 sha_of=sha_of, near=self._music_candidates, lookup=lambda links: self._music_lookup(links),
                 catalog_revision=str(manifest.get("revision") or ""), taxonomy=manifest.get("taxonomy"), book_key=value,
                 available=functools.partial(self.music_track_available, sizes=False), verify=self.music_verify_sizes,
-                student=student(stop) if use_student else None)
+                student=student(stop) if use_student else lite)
 
         return job
 

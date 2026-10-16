@@ -76,10 +76,11 @@ class SceneChoice(
 )
 
 /**
- * Chọn bài cho các đoạn - bản Kotlin của `music_select.choose` / `rank` / `score` / `z_distance` ĐƯỜNG N0 (N0_CALLGRAPH.md mục 3), main a41b70bc.
+ * Chọn bài cho các đoạn - bản Kotlin của `music_select.choose` / `rank` / `score` / `z_distance` (N0_CALLGRAPH.md mục 3), main a41b70bc, mở rộng cho đoạn của học sinh NN-lite.
  *
- * Ở N0 mọi câu trung tính nên MỌI đoạn có cùng đích `(.15, -.55, tension 0)` (`CALM_TARGET` vì confidence 0 < `WEAK_MOOD`) và `scene_sigma` .35 ở cả ba
- * trục: cổng viết tắt bằng hằng ([TARGET], [SIGMA]) mà vẫn giữ nguyên MỌI cách hoà - thứ tự ô của `near` rồi thứ tự bài trong ô, sắp ổn định,
+ * Ở N0 mọi câu trung tính nên MỌI đoạn có cùng đích `(.15, -.55, tension 0)` (`CALM_TARGET` vì confidence 0 < `WEAK_MOOD`) và `scene_sigma` .35 ở cả ba trục
+ * ([TARGET], [SIGMA]). Đoạn của học sinh ([SceneScenes.applyStudent], confidence = sàn `WEAK_MOOD`) có đích riêng V / E / T: [targetOf] / [sceneSigma] tính từ chính đoạn
+ * (`target_of` / `scene_sigma`), `candidatesNear(v, a)` hỏi bài quanh đích ấy. Giữ nguyên MỌI cách hoà - thứ tự ô của `near` rồi thứ tự bài trong ô, sắp ổn định,
  * `min` lấy bài đứng trước, `_tiebreak` theo mã sách, phạt bài vừa dùng / bài ngắn / bài anh em, ghim, bỏ, im lặng, họ nhạc, thể loại.
  * Không có `keep` / `kept_siblings` (đó là cơ chế sửa MỘT đoạn của Studio): lượt chọn chạy liền từ đầu cuốn, hay từ chương bất kỳ với `recent` cho trước.
  * Số học làm đúng thứ tự phép tính của Python; `x ** 2` viết `x * x` (khác 1 ulp ở ~0,05% giá trị trên Windows nhờ pow của MSVC - vô hình sau `round(., 3)`).
@@ -91,6 +92,9 @@ class SceneChooser(
     private val known = HashMap<String, SceneTrack?>()
     private val askedAvailable = HashMap<String, Boolean>()
 
+    /** Bài đã gặp trong lượt chọn này (xếp hạng hay thông tin ghim) - độ dài / đoạn nghe được của nó cho vòng lặp; null = chưa biết. */
+    fun trackOf(link: String): SceneTrack? = known[link]
+
     private fun usable(link: String?): Boolean {
         if (link == null || choice.available == null) return true
         return askedAvailable.getOrPut(link) { choice.available.invoke(link) }
@@ -101,7 +105,6 @@ class SceneChooser(
         return known[link]
     }
 
-    /** Đích và độ không chắc của đoạn N0 (confidence 0, không lệch chuẩn) - cùng biểu thức với `target_of` / `scene_sigma`. */
     private fun ranked(
         scene: SceneScene, recent: List<String>, limit: Int, exclude: Set<String> = emptySet(),
     ): List<Pair<SceneTrack, Double>> {
@@ -116,13 +119,16 @@ class SceneChooser(
         val ceiling = MAX_Z + (if (choice.family != null && choice.family.isNotEmpty()) FAMILY_PENALTY else 0.0)
         val ordered = ArrayList<Pair<Double, SceneTrack>>()
         val seen = HashSet<String>()
-        for (track in candidatesNear(TARGET[0], TARGET[1])) {
+        val (valence, arousal) = targetOf(scene)
+        val target = doubleArrayOf(valence, arousal, scene.tension)
+        val sigma = sceneSigma(scene)
+        for (track in candidatesNear(target[0], target[1])) {
             val link = track.link
             if (link.isEmpty() || link in seen || link in choice.banned || link in exclude) continue
             if (choice.available != null && !usable(link)) continue
             seen.add(link)
             if ((track.duration ?: 0.0).toLong() < MIN_TRACK_SECONDS || styleFit(track) <= 0.0) continue
-            var value = score(track)
+            var value = score(track, target, sigma)
             value += tiebreak(choice.bookKey, link)
             if (value <= ceiling) { // ngưỡng im lặng chỉ tính khoảng cách + phạt; "vừa dùng" chỉ xếp hạng
                 value += recentPenalty(link, window)
@@ -140,8 +146,8 @@ class SceneChooser(
         return if (!style.isNullOrEmpty()) (styles[style] ?: 0.0) else 0.5
     }
 
-    private fun score(track: SceneTrack): Double {
-        val distance = zDistance(track, TARGET, SIGMA)
+    private fun score(track: SceneTrack, target: DoubleArray, sigma: DoubleArray): Double {
+        val distance = zDistance(track, target, sigma)
         var penalty = 0.0
         if (styleFit(track) < 1.0) penalty += STYLE_HALF_PENALTY
         val family = choice.family
@@ -214,12 +220,12 @@ class SceneChooser(
             val link = result.link
             val carried = link != null && link == playing
             if (result.continued) {
-                // Ở N0 tension của mọi đoạn là 0 nên bước âm lượng luôn 0.
-                result.stepDb = max(-STEP_MAX_DB, min(STEP_MAX_DB, STEP_DB_PER_TENSION * (0.0 - headTension)))
+                // Ở N0 tension của mọi đoạn là 0 nên bước âm lượng luôn 0; đoạn của học sinh nhích theo tension của nó so với đầu cảnh.
+                result.stepDb = max(-STEP_MAX_DB, min(STEP_MAX_DB, STEP_DB_PER_TENSION * (scene.tension - headTension)))
             } else {
                 if (link != playing) { playing = link; position = 0.0 }
                 ended = null
-                headTension = 0.0
+                headTension = scene.tension
             }
             // Bài chạy qua mảnh này theo đồng hồ chương: hết một vòng thì nối bài anh em, không có thì lặp.
             val start = scene.start
@@ -305,18 +311,26 @@ class SceneChooser(
         private const val CALM_VALENCE = 0.15
         private const val CALM_AROUSAL = -0.55
 
-        /** `(*target_of(scene), tension)` của đoạn N0: `weight = 0 / WEAK_MOOD`, `weight * 0 + (1 - weight) * CALM`. */
-        val TARGET: DoubleArray = run {
-            val weight = 0.0 / WEAK_MOOD
-            doubleArrayOf(weight * 0.0 + (1 - weight) * CALM_VALENCE, weight * 0.0 + (1 - weight) * CALM_AROUSAL, 0.0)
+        /** `target_of`: điểm (valence, arousal) cần tìm nhạc; đoạn không có không khí rõ (confidence < `WEAK_MOOD`) thì kéo về nền êm nhẹ. */
+        fun targetOf(scene: SceneScene): Pair<Double, Double> {
+            if (scene.confidence >= WEAK_MOOD) return scene.valence to scene.arousal
+            val weight = scene.confidence / WEAK_MOOD
+            return (weight * scene.valence + (1 - weight) * CALM_VALENCE) to (weight * scene.arousal + (1 - weight) * CALM_AROUSAL)
         }
 
-        /** `scene_sigma` của đoạn N0: `hypot(sd = 0, UNCERTAIN_SD * (1 - 0))`. */
-        val SIGMA: DoubleArray = run {
-            val extra = UNCERTAIN_SD * (1.0 - 0.0)
-            val sigma = Math.hypot(0.0, extra)
-            doubleArrayOf(sigma, sigma, sigma) // valence, arousal, tension
+        /** `scene_sigma`: độ không chắc của đoạn trên (valence, arousal, tension) = `hypot(sd trục, UNCERTAIN_SD * (1 - confidence))`. */
+        fun sceneSigma(scene: SceneScene): DoubleArray {
+            val extra = UNCERTAIN_SD * (1.0 - max(0.0, min(1.0, scene.confidence)))
+            return doubleArrayOf(Math.hypot(scene.sdValence, extra), Math.hypot(scene.sdArousal, extra), Math.hypot(scene.sdTension, extra))
         }
+
+        private val CALM_SCENE = SceneScene(0, 0, 0, 0.0, 0.0, "", 0)
+
+        /** `(*target_of(scene), tension)` của đoạn N0 (confidence 0, tension 0). */
+        val TARGET: DoubleArray = targetOf(CALM_SCENE).let { doubleArrayOf(it.first, it.second, 0.0) }
+
+        /** `scene_sigma` của đoạn N0: `hypot(sd = 0, UNCERTAIN_SD * (1 - 0))`. */
+        val SIGMA: DoubleArray = sceneSigma(CALM_SCENE)
 
         /** `z_distance`: khoảng cách đoạn - bài trên ba trục chia độ không chắc; cộng theo thứ tự valence, arousal, tension. */
         fun zDistance(track: SceneTrack, target: DoubleArray, sigma: DoubleArray? = null): Double {

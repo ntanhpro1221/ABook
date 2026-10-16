@@ -3,8 +3,11 @@ package vn.abook.player
 import kotlin.math.ceil
 import kotlin.math.max
 
-/** Một đoạn nhạc của chương (music_scenes `_view` ở đường N0: không cảm xúc nên valence / arousal / tension / sd / confidence đều 0). */
-class SceneScene(
+/**
+ * Một đoạn nhạc của chương (music_scenes `_view`). Ở đường N0 không cảm xúc nên valence / arousal / tension / sd / confidence đều 0 và `moodSource` = "labels";
+ * học sinh NN-lite ([SceneScenes.applyStudent]) đổi valence / arousal / tension và `moodSource` = "student" (confidence được nâng lên sàn `WEAK_MOOD` ở [SceneBook.chapterScenes]).
+ */
+data class SceneScene(
     val chapterId: Int,
     val firstSegment: Int,
     val lastSegment: Int,
@@ -14,6 +17,18 @@ class SceneScene(
     /** "chapter_start", "heading", "separator", "time_jump", loại dấu hiệu ("subhead") hay "length". */
     val reason: String,
     val lines: Int,
+    val valence: Double = 0.0,
+    val arousal: Double = 0.0,
+    val tension: Double = 0.0,
+    /** Độ lệch chuẩn các câu trong đoạn theo trục V / E / T (`sd`); N0 và học sinh đều 0. */
+    val sdValence: Double = 0.0,
+    val sdArousal: Double = 0.0,
+    val sdTension: Double = 0.0,
+    val confidence: Double = 0.0,
+    val moodSource: String = "labels",
+    /** Nền của mức chương khi học sinh không có đầu mức chương / khi chương chưa đủ P0 (đường nhãn câu): 0 ở N0. */
+    val labelValence: Double = 0.0,
+    val labelTension: Double = 0.0,
 )
 
 /**
@@ -31,6 +46,61 @@ object SceneScenes {
     /** `_durations` không giờ: `max(0.3, len(text) * 0.065)`, `len` đếm code point (không phải UTF-16). */
     fun durations(segments: List<SceneSegment>): List<Double> =
         segments.map { max(0.3, Py.len(it.text) * UNTIMED_SECONDS_PER_CHAR) }
+
+    // Hằng số của `apply_student` (music_scenes.py): mức V của chương khi học sinh không có đầu mức chương; mức T khi chương không đủ P0 (đường nhãn câu); hệ số hình của học sinh.
+    private const val CHAPTER_LEVEL_V_SLOPE = 1.876
+    private const val CHAPTER_LEVEL_V_SHIFT = 0.068
+    private const val CHAPTER_LEVEL_T_LABELS_SLOPE = 4.022
+    private const val CHAPTER_LEVEL_T_LABELS_SHIFT = -0.056
+    private const val STUDENT_SHAPE = 1.0
+
+    /**
+     * `music_scenes.apply_student` cho các đoạn của MỘT chương: mức chương như CL (mức V ưu tiên `chapterV` của học sinh), HÌNH trong chương do học sinh đoán:
+     * valence = clip(L_V + k (dV - TB(dV))), arousal = clip(TB(arousal) + k (dE - TB(dE))), tension = clip(L_T + k (dT - TB(dT))), k = [STUDENT_SHAPE], TB = trung bình
+     * theo giây của đoạn, `round(., 3)`. Điện thoại chỉ có đoạn đường nhãn (không LLM: `moodSource` luôn "labels"), nên mức T luôn theo nhãn (`CHAPTER_LEVEL_T_LABELS`).
+     * null (người gọi đi đường N0) khi không có mục cho MỌI đoạn của chương.
+     */
+    fun applyStudent(scenes: List<SceneScene>, items: List<StudentItem>?): List<SceneScene>? {
+        if (scenes.isEmpty() || items.isNullOrEmpty()) return null
+        val weights = scenes.map { max(0.0, it.end - it.start) }
+        var total = 0.0
+        for (weight in weights) total += weight
+        if (total <= 0) return null
+        val byKey = HashMap<Triple<Int, Int, Int>, StudentItem>()
+        for (item in items) byKey[Triple(item.chapterId, item.firstSegment, item.lastSegment)] = item // trùng khoá: mục sau thắng (dict của Python)
+        val matched = scenes.map { byKey[Triple(it.chapterId, it.firstSegment, it.lastSegment)] ?: return null }
+        val chapterV = chapterLevelV(matched)
+
+        fun mean(values: List<Double>): Double {
+            var sum = 0.0
+            for (index in values.indices) sum += weights[index] * values[index]
+            return sum / total
+        }
+
+        fun clip(value: Double): Double = max(-1.0, minOf(1.0, value))
+
+        val levelV = if (chapterV != null) clip(chapterV) else clip(CHAPTER_LEVEL_V_SLOPE * mean(scenes.map { it.labelValence }) + CHAPTER_LEVEL_V_SHIFT)
+        val levelT = clip(CHAPTER_LEVEL_T_LABELS_SLOPE * mean(scenes.map { it.labelTension }) + CHAPTER_LEVEL_T_LABELS_SHIFT)
+        val levelE = mean(scenes.map { it.arousal })
+        val meanDv = mean(matched.map { it.dV })
+        val meanDe = mean(matched.map { it.dE })
+        val meanDt = mean(matched.map { it.dT })
+        return scenes.mapIndexed { index, scene ->
+            val item = matched[index]
+            scene.copy(
+                moodSource = "student",
+                valence = Py.round(clip(levelV + STUDENT_SHAPE * (item.dV - meanDv)), 3),
+                arousal = Py.round(clip(levelE + STUDENT_SHAPE * (item.dE - meanDe)), 3),
+                tension = Py.round(clip(levelT + STUDENT_SHAPE * (item.dT - meanDt)), 3),
+            )
+        }
+    }
+
+    /** `_chapter_level_v`: `chapterV` (cùng giá trị ở mọi đoạn) khi MỌI mục có và hữu hạn; không thì null (mức V về nhãn câu). */
+    private fun chapterLevelV(items: List<StudentItem>): Double? {
+        val levels = items.map { it.chapterV ?: return null }
+        return levels.firstOrNull()?.takeIf { levels.all { level -> level.isFinite() } }
+    }
 
     private class Draft(var first: Int, var last: Int, val reason: String, var seconds: Double)
 

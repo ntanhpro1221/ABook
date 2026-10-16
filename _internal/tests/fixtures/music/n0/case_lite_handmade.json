@@ -1,0 +1,809 @@
+{
+ "name": "lite_handmade",
+ "bookKey": "book-hand",
+ "chaptersFile": "chapters_handmade.json",
+ "options": {},
+ "student": true,
+ "expected": {
+  "scenes": [
+   {
+    "chapterId": 11,
+    "firstSegment": 0,
+    "lastSegment": 1,
+    "start": 0.0,
+    "end": 119.6,
+    "reason": "chapter_start",
+    "lines": 2,
+    "key": "11:0",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t035.mp3",
+    "distance": 0.571,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 11,
+    "firstSegment": 2,
+    "lastSegment": 6,
+    "start": 119.6,
+    "end": 198.55,
+    "reason": "heading",
+    "lines": 5,
+    "key": "11:2",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t084.mp3",
+    "distance": 0.609,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 11,
+    "firstSegment": 7,
+    "lastSegment": 10,
+    "start": 198.55,
+    "end": 276.55,
+    "reason": "separator",
+    "lines": 4,
+    "key": "11:7",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t076.mp3",
+    "distance": 0.805,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 12,
+    "firstSegment": 0,
+    "lastSegment": 2,
+    "start": 0.0,
+    "end": 130.39,
+    "reason": "chapter_start",
+    "lines": 3,
+    "key": "12:0",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t081.mp3",
+    "distance": 0.802,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 12,
+    "firstSegment": 3,
+    "lastSegment": 4,
+    "start": 130.39,
+    "end": 195.975,
+    "reason": "length",
+    "lines": 2,
+    "key": "12:3",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t081.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.1,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 12,
+    "firstSegment": 5,
+    "lastSegment": 7,
+    "start": 195.975,
+    "end": 371.475,
+    "reason": "separator",
+    "lines": 3,
+    "key": "12:5",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t218.mp3",
+    "distance": 0.945,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 12,
+    "firstSegment": 8,
+    "lastSegment": 12,
+    "start": 371.475,
+    "end": 516.165,
+    "reason": "length",
+    "lines": 5,
+    "key": "12:8",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t218.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.23,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 13,
+    "firstSegment": 0,
+    "lastSegment": 0,
+    "start": 0.0,
+    "end": 1.365,
+    "reason": "chapter_start",
+    "lines": 1,
+    "key": "13:0",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t123.mp3",
+    "distance": 0.258,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 14,
+    "firstSegment": 0,
+    "lastSegment": 6,
+    "start": 0.0,
+    "end": 140.465,
+    "reason": "chapter_start",
+    "lines": 7,
+    "key": "14:0",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t057.mp3",
+    "distance": 1.095,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 14,
+    "firstSegment": 7,
+    "lastSegment": 9,
+    "start": 140.465,
+    "end": 276.965,
+    "reason": "length",
+    "lines": 3,
+    "key": "14:7",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t057.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.73,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 15,
+    "firstSegment": 0,
+    "lastSegment": 0,
+    "start": 0.0,
+    "end": 182.0,
+    "reason": "chapter_start",
+    "lines": 1,
+    "key": "15:0",
+    "pinned": false,
+    "link": "https://example.invalid/n0/edge.mp3",
+    "distance": 1.578,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 15,
+    "firstSegment": 1,
+    "lastSegment": 1,
+    "start": 182.0,
+    "end": 364.0,
+    "reason": "length",
+    "lines": 1,
+    "key": "15:1",
+    "pinned": false,
+    "link": "https://example.invalid/n0/edge.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.0,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 15,
+    "firstSegment": 2,
+    "lastSegment": 2,
+    "start": 364.0,
+    "end": 546.0,
+    "reason": "length",
+    "lines": 1,
+    "key": "15:2",
+    "pinned": false,
+    "link": "https://example.invalid/n0/edge.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.0,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 15,
+    "firstSegment": 3,
+    "lastSegment": 3,
+    "start": 546.0,
+    "end": 728.0,
+    "reason": "length",
+    "lines": 1,
+    "key": "15:3",
+    "pinned": false,
+    "link": "https://example.invalid/n0/edge.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.0,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 15,
+    "firstSegment": 4,
+    "lastSegment": 4,
+    "start": 728.0,
+    "end": 910.0,
+    "reason": "length",
+    "lines": 1,
+    "key": "15:4",
+    "pinned": false,
+    "link": "https://example.invalid/n0/edge.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.0,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 15,
+    "firstSegment": 5,
+    "lastSegment": 5,
+    "start": 910.0,
+    "end": 1092.0,
+    "reason": "length",
+    "lines": 1,
+    "key": "15:5",
+    "pinned": false,
+    "link": "https://example.invalid/n0/edge.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.0,
+    "stopAt": null,
+    "siblings": []
+   }
+  ],
+  "cues": {
+   "11": [
+    {
+     "start": 0.0,
+     "end": 119.6,
+     "link": "https://example.invalid/n0/t035.mp3",
+     "key": "11:0"
+    },
+    {
+     "start": 119.6,
+     "end": 198.55,
+     "link": "https://example.invalid/n0/t084.mp3",
+     "key": "11:2"
+    },
+    {
+     "start": 198.55,
+     "end": 274.05,
+     "link": "https://example.invalid/n0/t076.mp3",
+     "key": "11:7"
+    }
+   ],
+   "12": [
+    {
+     "start": 0.0,
+     "end": 195.975,
+     "link": "https://example.invalid/n0/t081.mp3",
+     "key": "12:0",
+     "steps": [
+      {
+       "at": 130.39,
+       "db": 0.1
+      }
+     ]
+    },
+    {
+     "start": 195.975,
+     "end": 513.665,
+     "link": "https://example.invalid/n0/t218.mp3",
+     "key": "12:5",
+     "steps": [
+      {
+       "at": 371.475,
+       "db": 0.23
+      }
+     ]
+    }
+   ],
+   "13": [],
+   "14": [
+    {
+     "start": 0.0,
+     "end": 274.465,
+     "link": "https://example.invalid/n0/t057.mp3",
+     "key": "14:0",
+     "steps": [
+      {
+       "at": 140.465,
+       "db": 0.73
+      }
+     ]
+    }
+   ],
+   "15": [
+    {
+     "start": 0.0,
+     "end": 1089.5,
+     "link": "https://example.invalid/n0/edge.mp3",
+     "key": "15:0"
+    }
+   ]
+  },
+  "cuesUnclamped": {
+   "11": [
+    {
+     "start": 0.0,
+     "end": 119.6,
+     "link": "https://example.invalid/n0/t035.mp3",
+     "key": "11:0"
+    },
+    {
+     "start": 119.6,
+     "end": 198.55,
+     "link": "https://example.invalid/n0/t084.mp3",
+     "key": "11:2"
+    },
+    {
+     "start": 198.55,
+     "end": 276.55,
+     "link": "https://example.invalid/n0/t076.mp3",
+     "key": "11:7"
+    }
+   ],
+   "12": [
+    {
+     "start": 0.0,
+     "end": 195.975,
+     "link": "https://example.invalid/n0/t081.mp3",
+     "key": "12:0",
+     "steps": [
+      {
+       "at": 130.39,
+       "db": 0.1
+      }
+     ]
+    },
+    {
+     "start": 195.975,
+     "end": 516.165,
+     "link": "https://example.invalid/n0/t218.mp3",
+     "key": "12:5",
+     "steps": [
+      {
+       "at": 371.475,
+       "db": 0.23
+      }
+     ]
+    }
+   ],
+   "13": [
+    {
+     "start": 0.0,
+     "end": 1.365,
+     "link": "https://example.invalid/n0/t123.mp3",
+     "key": "13:0"
+    }
+   ],
+   "14": [
+    {
+     "start": 0.0,
+     "end": 276.965,
+     "link": "https://example.invalid/n0/t057.mp3",
+     "key": "14:0",
+     "steps": [
+      {
+       "at": 140.465,
+       "db": 0.73
+      }
+     ]
+    }
+   ],
+   "15": [
+    {
+     "start": 0.0,
+     "end": 1092.0,
+     "link": "https://example.invalid/n0/edge.mp3",
+     "key": "15:0"
+    }
+   ]
+  },
+  "firstSegments": {},
+  "loops": {
+   "https://example.invalid/n0/edge.mp3": [
+    0.0,
+    1800.0,
+    1798.0,
+    true
+   ],
+   "https://example.invalid/n0/t035.mp3": [
+    0.0,
+    260.0,
+    258.0,
+    true
+   ],
+   "https://example.invalid/n0/t057.mp3": [
+    0.0,
+    420.0,
+    418.0,
+    true
+   ],
+   "https://example.invalid/n0/t076.mp3": [
+    0.0,
+    140.0,
+    138.0,
+    true
+   ],
+   "https://example.invalid/n0/t081.mp3": [
+    0.0,
+    420.0,
+    418.0,
+    true
+   ],
+   "https://example.invalid/n0/t084.mp3": [
+    0.0,
+    420.0,
+    418.0,
+    true
+   ],
+   "https://example.invalid/n0/t123.mp3": [
+    0.0,
+    61.0,
+    59.0,
+    true
+   ],
+   "https://example.invalid/n0/t218.mp3": [
+    0.0,
+    420.0,
+    418.0,
+    true
+   ]
+  },
+  "student": {
+   "items": [
+    {
+     "chapterId": 11,
+     "firstSegment": 0,
+     "lastSegment": 1,
+     "dV": -0.005022065,
+     "dE": 0.021514291,
+     "dT": 0.017865485,
+     "chapterV": 0.017215424
+    },
+    {
+     "chapterId": 11,
+     "firstSegment": 2,
+     "lastSegment": 6,
+     "dV": 0.008310604,
+     "dE": -0.033559569,
+     "dT": -0.045542293,
+     "chapterV": 0.017215424
+    },
+    {
+     "chapterId": 11,
+     "firstSegment": 7,
+     "lastSegment": 10,
+     "dV": -0.000693211,
+     "dE": 0.000906586,
+     "dT": 0.018603973,
+     "chapterV": 0.017215424
+    },
+    {
+     "chapterId": 12,
+     "firstSegment": 0,
+     "lastSegment": 2,
+     "dV": 0.007383185,
+     "dE": -0.01323304,
+     "dT": -0.023933443,
+     "chapterV": -0.023162435
+    },
+    {
+     "chapterId": 12,
+     "firstSegment": 3,
+     "lastSegment": 4,
+     "dV": 0.004656976,
+     "dE": -0.041067815,
+     "dT": -0.006524444,
+     "chapterV": -0.023162435
+    },
+    {
+     "chapterId": 12,
+     "firstSegment": 5,
+     "lastSegment": 7,
+     "dV": 0.001793333,
+     "dE": 0.020804694,
+     "dT": -0.006356204,
+     "chapterV": -0.023162435
+    },
+    {
+     "chapterId": 12,
+     "firstSegment": 8,
+     "lastSegment": 12,
+     "dV": -0.010953987,
+     "dE": 0.00530379,
+     "dT": 0.032282709,
+     "chapterV": -0.023162435
+    },
+    {
+     "chapterId": 13,
+     "firstSegment": 0,
+     "lastSegment": 0,
+     "dV": 0.0,
+     "dE": 0.0,
+     "dT": 0.0,
+     "chapterV": 0.313896273
+    },
+    {
+     "chapterId": 14,
+     "firstSegment": 0,
+     "lastSegment": 6,
+     "dV": 0.002948017,
+     "dE": -0.046351137,
+     "dT": -0.059926196,
+     "chapterV": -0.008486406
+    },
+    {
+     "chapterId": 14,
+     "firstSegment": 7,
+     "lastSegment": 9,
+     "dV": -0.003032246,
+     "dE": 0.047675455,
+     "dT": 0.061638373,
+     "chapterV": -0.008486406
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 0,
+     "lastSegment": 0,
+     "dV": 0.0,
+     "dE": -0.0,
+     "dT": 0.0,
+     "chapterV": -0.005771364
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 1,
+     "lastSegment": 1,
+     "dV": 0.0,
+     "dE": -0.0,
+     "dT": 0.0,
+     "chapterV": -0.005771364
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 2,
+     "lastSegment": 2,
+     "dV": 0.0,
+     "dE": -0.0,
+     "dT": 0.0,
+     "chapterV": -0.005771364
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 3,
+     "lastSegment": 3,
+     "dV": 0.0,
+     "dE": -0.0,
+     "dT": 0.0,
+     "chapterV": -0.005771364
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 4,
+     "lastSegment": 4,
+     "dV": 0.0,
+     "dE": -0.0,
+     "dT": 0.0,
+     "chapterV": -0.005771364
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 5,
+     "lastSegment": 5,
+     "dV": 0.0,
+     "dE": -0.0,
+     "dT": 0.0,
+     "chapterV": -0.005771364
+    }
+   ],
+   "moods": [
+    {
+     "chapterId": 11,
+     "firstSegment": 0,
+     "valence": 0.012,
+     "arousal": 0.022,
+     "tension": -0.038,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 11,
+     "firstSegment": 2,
+     "valence": 0.026,
+     "arousal": -0.034,
+     "tension": -0.102,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 11,
+     "firstSegment": 7,
+     "valence": 0.017,
+     "arousal": 0.001,
+     "tension": -0.037,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 12,
+     "firstSegment": 0,
+     "valence": -0.016,
+     "arousal": -0.013,
+     "tension": -0.08,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 12,
+     "firstSegment": 3,
+     "valence": -0.019,
+     "arousal": -0.041,
+     "tension": -0.063,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 12,
+     "firstSegment": 5,
+     "valence": -0.021,
+     "arousal": 0.021,
+     "tension": -0.062,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 12,
+     "firstSegment": 8,
+     "valence": -0.034,
+     "arousal": 0.005,
+     "tension": -0.024,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 13,
+     "firstSegment": 0,
+     "valence": 0.314,
+     "arousal": 0.0,
+     "tension": -0.056,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 14,
+     "firstSegment": 0,
+     "valence": -0.006,
+     "arousal": -0.046,
+     "tension": -0.116,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 14,
+     "firstSegment": 7,
+     "valence": -0.012,
+     "arousal": 0.048,
+     "tension": 0.006,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 0,
+     "valence": -0.006,
+     "arousal": 0.0,
+     "tension": -0.056,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 1,
+     "valence": -0.006,
+     "arousal": 0.0,
+     "tension": -0.056,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 2,
+     "valence": -0.006,
+     "arousal": 0.0,
+     "tension": -0.056,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 3,
+     "valence": -0.006,
+     "arousal": 0.0,
+     "tension": -0.056,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 4,
+     "valence": -0.006,
+     "arousal": 0.0,
+     "tension": -0.056,
+     "confidence": 0.2,
+     "moodSource": "student"
+    },
+    {
+     "chapterId": 15,
+     "firstSegment": 5,
+     "valence": -0.006,
+     "arousal": 0.0,
+     "tension": -0.056,
+     "confidence": 0.2,
+     "moodSource": "student"
+    }
+   ]
+  }
+ }
+}
