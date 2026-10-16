@@ -311,10 +311,10 @@
     "tension": 0.031
    },
    {
-    "link": "https://example.invalid/n0/t135.mp3",
+    "link": "https://example.invalid/n0/t139.mp3",
     "valence": 0.1,
     "arousal": -0.5,
-    "style": "style_b",
+    "style": "style_a",
     "family": "piano",
     "background": 0.8,
     "duration": 240,
@@ -322,14 +322,14 @@
     "tension": -0.1
    },
    {
-    "link": "https://example.invalid/n0/t136.mp3",
+    "link": "https://example.invalid/n0/t140.mp3",
     "valence": 0.1,
     "arousal": -0.5,
-    "style": "style_a",
+    "style": "style_b",
     "family": "eastern",
     "background": null,
     "duration": 240,
-    "source": "incompetech",
+    "source": "jamendo",
     "tension": -0.05
    }
   ],
@@ -883,6 +883,50 @@
     "duration": 119.6,
     "source": "freepd",
     "tension": -0.1
+   },
+   {
+    "link": "https://example.invalid/n0/big1.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": "style_b",
+    "family": "acoustic",
+    "background": 0.8,
+    "duration": 1800,
+    "source": "freepd",
+    "tension": 0.0
+   },
+   {
+    "link": "https://example.invalid/n0/big2.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": "style_a",
+    "family": "eastern",
+    "background": 1.0,
+    "duration": 1800,
+    "source": "incompetech",
+    "tension": 0.0
+   },
+   {
+    "link": "https://example.invalid/n0/edge.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": "style_c",
+    "family": "piano",
+    "background": null,
+    "duration": 1800,
+    "source": "jamendo",
+    "tension": 0.0
+   },
+   {
+    "link": "https://example.invalid/n0/small.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": "style_b",
+    "family": "eastern",
+    "background": 0.8,
+    "duration": 1800,
+    "source": "incompetech",
+    "tension": 0.0
    }
   ],
   "2_2": [
@@ -1561,8 +1605,8 @@
   "https://example.invalid/n0/t026.mp3",
   "https://example.invalid/n0/t027.mp3",
   "https://example.invalid/n0/t028.mp3",
-  "https://example.invalid/n0/t135.mp3",
-  "https://example.invalid/n0/t136.mp3",
+  "https://example.invalid/n0/t139.mp3",
+  "https://example.invalid/n0/t140.mp3",
   "https://example.invalid/n0/t029.mp3",
   "https://example.invalid/n0/t030.mp3",
   "https://example.invalid/n0/t031.mp3",
@@ -1613,6 +1657,10 @@
   "https://example.invalid/n0/t132.mp3",
   "https://example.invalid/n0/t133.mp3",
   "https://example.invalid/n0/t134.mp3",
+  "https://example.invalid/n0/big1.mp3",
+  "https://example.invalid/n0/big2.mp3",
+  "https://example.invalid/n0/edge.mp3",
+  "https://example.invalid/n0/small.mp3",
   "https://example.invalid/n0/t071.mp3",
   "https://example.invalid/n0/t072.mp3",
   "https://example.invalid/n0/t073.mp3",
@@ -1858,16 +1906,16 @@
    "tiebreak": 0.0005026779269107334
   },
   {
-   "link": "https://example.invalid/n0/t135.mp3",
+   "link": "https://example.invalid/n0/t139.mp3",
    "z": 0.2637521893583149,
    "score": 0.41282338785830086,
-   "tiebreak": 0.0003495053079327348
+   "tiebreak": 0.00023170131846137843
   },
   {
-   "link": "https://example.invalid/n0/t136.mp3",
+   "link": "https://example.invalid/n0/t140.mp3",
    "z": 0.18650096164806282,
    "score": 0.18650096164806282,
-   "tiebreak": 0.0009758945619631313
+   "tiebreak": 0.0006868190331586682
   },
   {
    "link": "https://example.invalid/n0/t029.mp3",
@@ -1930,6 +1978,13 @@
    "tiebreak": 5.542380270907278e-05
   }
  ],
+ "trackBytes": {
+  "https://example.invalid/n0/big1.mp3": 41943041,
+  "https://example.invalid/n0/big2.mp3": 125829120,
+  "https://example.invalid/n0/edge.mp3": 41943040,
+  "https://example.invalid/n0/small.mp3": 5000000
+ },
+ "maxBytes": 41943040,
  "mix": {
   "tailMinSeconds": 20.0,
   "cueMergeGapSeconds": 5.0,

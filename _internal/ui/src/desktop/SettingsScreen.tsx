@@ -18,6 +18,7 @@ import { SupertonicModuleCard, VieneuModuleCard } from "@/listen/VieneuModuleCar
 import { EXTEND_GESTURE } from "@/listen/extendGesture";
 import { LETTER_SHORTCUTS_HINT, ShortcutList } from "@/listen/Shortcuts";
 import { MyMusicSection } from "@/listen/MyMusic";
+import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
 import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { scrollMotion } from "@/shared/motion";
@@ -428,6 +429,7 @@ export function SettingsScreen() {
                   {
                     onSuccess: () => {
                       void client.invalidateQueries({ queryKey: ["listen"] });
+                      window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: MUSIC_CHANGED_ALL })); // cuốn đang nghe đổi nhạc ngay, không đợi chương sau
                       toast.success(value ? "Đã bật tự chọn nhạc nền" : "Đã tắt tự chọn nhạc nền", {
                         description: value ? "Sách chỉ có chữ chưa chọn nhạc sẽ có nhạc nhè nhẹ." : "Sách chưa chọn nhạc sẽ im lặng; cuốn đã chọn nhạc vẫn giữ.",
                       });

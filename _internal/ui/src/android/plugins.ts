@@ -43,6 +43,8 @@ export interface NativeState {
   musicBroken?: boolean;
   /** Lời báo "mất mạng" khi nhạc nền đang bị giữ lại vì mạng (MusicBed.offlineNotice); rỗng khi ổn. */
   musicOffline?: string;
+  /** Nhạc nền đang đổi theo cảnh (MusicBed.sceneActive). */
+  musicScene?: boolean;
 }
 
 // Nhật ký đêm của lõi native - cùng hình dạng với listen/model.ts (NightSession).

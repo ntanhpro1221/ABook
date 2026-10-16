@@ -70,6 +70,9 @@ export interface SpeechTrack {
   /** Giọng đang chọn chạy trên máy này (hỏi lại trước mỗi lượt): nó dùng hết CPU cho MỘT đoạn, xin 4 đoạn cùng lúc thì đoạn người nghe đang chờ chỉ nhận một phần
    *  tư máy (nhảy tới câu xa: 3-5 s thay vì ~1,3 s) - nên xin lần lượt, đoạn gần chỗ nghe nhất trước. Vắng / false (giọng trực tuyến): cả cửa sổ đọc trước chạy song song. */
   serial?(): boolean;
+  /** Chữ các đoạn của chương kế nếu nó là chương chỉ-có-chữ cùng cuốn, rỗng khi không có. Khi chương này sắp hết, bộ máy xin trước vài clip đầu của chương ấy
+   *  (tiêu đề + đoạn đầu) để chương kế mở ra có tiếng ngay - giọng trực tuyến làm một đoạn hai câu chậm cỡ thời gian nghe (soát a44: im lặng 9-20 giây sau mỗi tiêu đề). */
+  after?(): Promise<string[]>;
   /** Kịch bản có mốc thời gian mới (mỗi khi clip về) - trình phát ghi vào bộ nhớ của react-query để màn đọc sáng đúng đoạn / chữ. */
   onScript(script: Script): void;
 }
@@ -107,6 +110,8 @@ export interface ReadingsChanged {
 }
 // Máy tính: đọc trước 3 đoạn (rẻ - clip chỉ vài chục KB; đoạn ngắn liên tiếp không còn bắt người nghe chờ). Điện thoại tự đọc trước (ReadAloud.AHEAD).
 const READ_AHEAD = 3;
+/** Chương kế: xin trước chừng này clip đầu (tiêu đề + đoạn đầu) khi chương này sắp hết ([SpeechTrack.after]). */
+export const NEXT_CHAPTER_AHEAD = 2;
 const RESTORE_LIMIT = 400;
 /** Nhịp đồng hồ của quãng lặng ở dòng ngăn cảnh (ms). */
 const SILENCE_TICK_MS = 100;
@@ -236,6 +241,8 @@ export class ReadAloudEngine implements AudioEngine {
   private lastClipMs = 0;
   private sentAt = 0;
   private holdTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Đã xin trước clip đầu của chương kế (một lần cho mỗi lần nạp chương). */
+  private warmedNext = false;
   private rate = 1;
   private volume = 1;
   private loadingTime = 0;
@@ -267,6 +274,7 @@ export class ReadAloudEngine implements AudioEngine {
     this.ready = false;
     this.lastError = "";
     this.loadingTime = Math.max(0, startAt);
+    this.warmedNext = false;
     if (typeof window !== "undefined") {
       window.addEventListener(VOICE_CHANGED_EVENT, this.onVoice);
       window.addEventListener(READINGS_CHANGED_EVENT, this.onReadings);
@@ -631,6 +639,28 @@ export class ReadAloudEngine implements AudioEngine {
   /** Lấy clip cho đoạn `index` và vài đoạn kế (đọc trước). */
   private prefetch(index: number): void {
     for (let i = index; i <= index + this.readAhead && i < this.slots.length; i += 1) this.request(i);
+    this.warmNext();
+  }
+
+  /** Cửa sổ đọc trước đã chạm cuối chương và mọi clip của chương này đã xin xong: xin trước vài clip đầu của chương kế ([SpeechTrack.after]). Máy chủ nhớ clip theo
+   *  (giọng, chữ) nên bộ máy của chương kế nạp lên là có sẵn - tiêu đề và đoạn đầu không còn bắt người nghe chờ. Giọng chạy trên máy cũng lần lượt, không giành
+   *  CPU với clip của chương đang nghe (đã xong hết lúc này). Lỗi thì bỏ qua: chương kế sẽ tự xin lại khi nạp. */
+  private warmNext(): void {
+    const speech = this.speech;
+    if (this.warmedNext || !speech?.after || !this.ready || !this.wanted) return;
+    if (this.target.index + this.readAhead < this.slots.length - 1 || this.inflight > 0 || this.queued.length > 0) return;
+    this.warmedNext = true;
+    const id = this.loadId;
+    void speech
+      .after()
+      .then(async (texts) => {
+        if (id !== this.loadId) return;
+        const wanted = texts.filter(isSpeakable).slice(0, NEXT_CHAPTER_AHEAD);
+        const voice = speech.voice();
+        if (speech.serial?.()) for (const text of wanted) await speech.fetchClip(voice, text);
+        else await Promise.all(wanted.map((text) => speech.fetchClip(voice, text)));
+      })
+      .catch(() => undefined);
   }
 
   private request(index: number): void {
@@ -738,6 +768,7 @@ export class ReadAloudEngine implements AudioEngine {
         if (id !== this.loadId) return;
         this.inflight -= 1;
         this.pump();
+        this.warmNext();
       });
   }
 

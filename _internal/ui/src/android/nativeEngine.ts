@@ -70,6 +70,11 @@ export class NativeAudioEngine implements NativeEngine {
     return this.current?.musicOffline ?? "";
   }
 
+  /** Nhạc nền đang đổi theo cảnh của truyện (MusicBed.sceneActive). */
+  get musicScene(): boolean {
+    return this.current?.musicScene ?? false;
+  }
+
   loadQueue(queue: NativeQueue): void {
     const files = chapterFiles.get(queue.bookId);
     void EbookPlayer.load({

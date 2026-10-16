@@ -177,8 +177,16 @@ class SceneMusicTest {
         val blocked = strings(options.optJSONArray("unavailable")).toSet()
         return SceneChoice(
             case.getString("bookKey"), options.optString("family", "").takeIf { it.isNotEmpty() }, styles, pins, strings(options.optJSONArray("banned")).toSet(),
-            strings(options.optJSONArray("silenced")).toSet(), if (blocked.isEmpty()) null else { link -> link !in blocked },
+            strings(options.optJSONArray("silenced")).toSet(), { link -> link !in blocked && sizeUsable(link) },
         )
+    }
+
+    /** Cỡ (`bytes`) theo mảnh `tracks/` của danh mục tự dựng (ô `cells/` không có) - hàm THẬT của điện thoại ([MusicCatalog.usable], như `DeviceScenes`). */
+    private val sizeCatalog by lazy { MusicCatalog(Files.createTempDirectory("n0-size").toFile(), "https://unused.invalid/") }
+
+    private fun sizeUsable(link: String): Boolean {
+        val bytes = catalog.getJSONObject("trackBytes")
+        return sizeCatalog.usable(link, if (bytes.has(link)) JSONObject().put("bytes", bytes.getLong(link)) else null)
     }
 
     private fun assertScene(label: String, want: JSONObject, got: ChosenScene) {
@@ -218,6 +226,24 @@ class SceneMusicTest {
             assertEquals("$label mốc $index steps", (0 until steps.length()).map { steps.getJSONObject(it).getDouble("at") to steps.getJSONObject(it).getDouble("db") },
                 actual.steps.map { it.at to it.db })
         }
+    }
+
+    /** Bài quá MUSIC_TRACK_MAX_MB (40 MB) nằm ngay đích nên thắng nếu không lọc cỡ: lọc rồi thì không đoạn nào dùng nó - như `server._music_oversize` của máy tính. */
+    @Test
+    fun a_track_over_the_size_cap_is_never_chosen_and_one_exactly_at_the_cap_still_is() {
+        assertEquals("trần của hai bên bằng nhau", catalog.getLong("maxBytes"), MusicCatalog.TRACK_MAX_BYTES)
+        val bytes = catalog.getJSONObject("trackBytes")
+        val over = bytes.keys().asSequence().filter { bytes.getLong(it) > MusicCatalog.TRACK_MAX_BYTES }.toSet()
+        assertEquals(2, over.size)
+        val case = json("case_alpha.json")
+        val chapters = json(case.getString("chaptersFile")).getJSONArray("chapters")
+        val scenes = (0 until chapters.length()).flatMap { SceneScenes.chapterScenes(chapters.getJSONObject(it).getInt("chapterId"), segmentsOf(chapters.getJSONObject(it))) }
+        val tracks = near()
+        val unfiltered = SceneChooser(SceneChoice(case.getString("bookKey"))) { _, _ -> tracks }.choose(scenes).mapNotNull { it.link }
+        assertTrue("không lọc cỡ thì bài quá cỡ thắng (ví dụ có tác dụng)", unfiltered.any { it in over })
+        val filtered = SceneChooser(choiceOf(case)) { _, _ -> tracks }.choose(scenes).mapNotNull { it.link }
+        assertTrue(filtered.isNotEmpty() && filtered.none { it in over })
+        assertTrue("bài đúng bằng trần vẫn dùng được", filtered.contains("https://example.invalid/n0/edge.mp3"))
     }
 
     @Test

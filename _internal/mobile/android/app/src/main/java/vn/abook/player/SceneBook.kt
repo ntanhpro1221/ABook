@@ -44,6 +44,24 @@ class SceneBook(
         return record.takeIf { it.optString("textSha") == sha && it.optInt("version") == FORMAT_VERSION }
     }
 
+    /** Bỏ bản ghi của chương (dựng lại lần hỏi kế): bài đã chọn mà máy này hoá ra không dùng được (quá cỡ khi tải) - `music_nnscene.SceneBook.discard`. */
+    fun discard(chapterId: Int) {
+        synchronized(lock) { file(chapterId).delete() }
+    }
+
+    /** Các bài (chính + bài anh em) mà một bản ghi dùng. */
+    fun links(record: JSONObject): Set<String> {
+        val found = LinkedHashSet<String>()
+        val list = record.optJSONArray("scenes") ?: return found
+        for (index in 0 until list.length()) {
+            val scene = list.optJSONObject(index) ?: continue
+            scene.optString("link", "").takeIf { it.isNotEmpty() && it != "null" }?.let { found.add(it) }
+            val siblings = scene.optJSONArray("siblings") ?: continue
+            for (at in 0 until siblings.length()) siblings.optJSONObject(at)?.optString("link", "")?.takeIf { it.isNotEmpty() }?.let { found.add(it) }
+        }
+        return found
+    }
+
     /** Dựng (hay lấy lại) bản ghi của chương; null khi chương không có chữ. Danh mục không tải được thì ném lỗi (người gọi thử lại sau). */
     fun build(chapterId: Int): JSONObject? = synchronized(lock) {
         val text = body(chapterId) ?: return null
@@ -175,7 +193,7 @@ class SceneBook(
 
     companion object {
         /** Đổi khi cách tách câu / dựng đoạn / chọn bài / ánh xạ sang đoạn màn đọc đổi: bản ghi đã dựng không dùng lại. */
-        const val ENGINE_VERSION = 1
+        const val ENGINE_VERSION = 2 // 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/, ô cells/ không có)
         const val FORMAT_VERSION = 1
 
         fun sha1(bytes: ByteArray): String = MessageDigest.getInstance("SHA-1").digest(bytes).joinToString("") { "%02x".format(it) }

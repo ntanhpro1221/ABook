@@ -3,6 +3,7 @@ import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
 import type { Script } from "./model";
 import {
   CLIP_RETRIES,
+  NEXT_CHAPTER_AHEAD,
   ReadAloudEngine,
   RoutedEngine,
   estimateSeconds,
@@ -269,6 +270,77 @@ describe("phát, đọc trước và sửa thời gian", () => {
     await flush();
     await s.arrive(TEXTS[0]);
     expect(audioOf(s, TEXTS[0])!.muted).toBe(true);
+  });
+});
+
+describe("chương kế: xin trước tiêu đề + đoạn đầu khi chương này sắp hết", () => {
+  const NEXT = ["Chương hai.", "Đoạn đầu của chương hai.", "Đoạn thứ hai của chương hai.", "Đoạn ba."];
+
+  function withNext(options: Parameters<typeof setup>[0] = {}, serial = false) {
+    const s = setup(options);
+    const asked: string[] = [];
+    s.track.after = async () => {
+      asked.push("after");
+      return NEXT;
+    };
+    if (serial) s.track.serial = () => true;
+    return { s, asked };
+  }
+  const nextRequests = (s: Setup) => s.requests.filter((r) => NEXT.includes(r.text)).map((r) => r.text);
+
+  it("cửa sổ đọc trước chạm cuối chương và mọi clip đã về: xin tiêu đề + đoạn đầu của chương kế, không xin xa hơn", async () => {
+    const { s, asked } = withNext();
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    expect(nextRequests(s)).toEqual([]); // clip của chương này còn đang làm: chưa xin chương kế
+    for (const text of TEXTS) await s.arrive(text);
+    await flush();
+    expect(asked).toEqual(["after"]);
+    expect(nextRequests(s)).toEqual(NEXT.slice(0, NEXT_CHAPTER_AHEAD));
+    await s.arrive(NEXT[0]);
+    await s.arrive(NEXT[1]);
+    expect(nextRequests(s)).toHaveLength(NEXT_CHAPTER_AHEAD); // chỉ một lần cho mỗi lần nạp chương
+  });
+
+  it("chương còn dài: chưa xin chương kế khi cửa sổ đọc trước chưa tới cuối", async () => {
+    const long = Array.from({ length: 8 }, (_, i) => `Đoạn số ${i + 1}.`).join("\n\n");
+    const { s, asked } = withNext({ chapter: long });
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    await s.arrive("Đoạn số 1.");
+    await s.arrive("Đoạn số 2.");
+    await s.arrive("Đoạn số 3.");
+    await s.arrive("Đoạn số 4.");
+    expect(asked).toEqual([]);
+    expect(nextRequests(s)).toEqual([]);
+  });
+
+  it("tạm dừng thì không gửi chữ chương kế đi; giọng chạy trên máy xin lần lượt từng clip", async () => {
+    const paused = withNext();
+    paused.s.engine.load(paused.s.trackInfo, 0, false);
+    await flush();
+    expect(paused.asked).toEqual([]);
+    const { s } = withNext({}, true);
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    for (const text of TEXTS) await s.arrive(text);
+    await flush();
+    expect(nextRequests(s)).toEqual([NEXT[0]]);
+    await s.arrive(NEXT[0]);
+    expect(nextRequests(s)).toEqual([NEXT[0], NEXT[1]]);
+  });
+
+  it("chương kế lỗi hay không có thì bỏ qua, chương này vẫn phát bình thường", async () => {
+    const { s } = withNext();
+    s.track.after = async () => {
+      throw new Error("không có chữ");
+    };
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    for (const text of TEXTS) await s.arrive(text);
+    await flush();
+    expect(nextRequests(s)).toEqual([]);
+    expect(audioOf(s, TEXTS[0])!.plays).toBe(1);
   });
 });
 

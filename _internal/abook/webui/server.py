@@ -331,6 +331,7 @@ class App:
         self._music_clock: Callable[[], float] = time.time
         self._music_unavailable = self._read_unavailable()
         self._music_too_big = self._read_unavailable("too_big.json")  # {link: số byte}: bài quá MUSIC_TRACK_MAX_MB, không tải
+        self._music_sized: set[str] = set()  # bài đã tra cỡ trong danh mục (`music_track_available`) và không quá trần: khỏi tra lại
         # Nguồn nhạc (host) nào vừa hỏng / vừa tải được: {host: (hỏng?, giờ)}. Một nguồn chết không chặn nguồn khác.
         self._music_hosts: dict[str, tuple[bool, float]] = {}
         if not read_only:
@@ -2072,7 +2073,8 @@ class App:
 
     def _scene_cues(self, value: str, path: Path, chapter_id: int) -> dict[str, Any]:
         """Mốc nhạc theo cảnh của một chương chữ. Plan dựng NỀN (`music_nnscene.Builder`): chương đang nghe trước, rồi vài chương kế. Chương chưa
-        dựng xong thì `pending` true và chưa có mốc (giọng không chờ nhạc - trình phát hỏi lại). Danh mục chưa tải được / chương không có chữ: không nhạc."""
+        dựng xong thì `pending` true và chưa có mốc (giọng không chờ nhạc - trình phát hỏi lại). Danh mục chưa tải được: không nhạc kèm `unavailable` (lý do);
+        chương không có chữ: không nhạc."""
         empty: dict[str, Any] = {"cues": [], "levelDb": music_plan.DEFAULT_LEVEL_DB, "credits": {}}
         book = packages.edited_manifest(path)
         chapters = {chapter["id"]: chapter for chapter in book.get("chapters") or [] if isinstance(chapter, dict) and isinstance(chapter.get("id"), int)}
@@ -2081,13 +2083,17 @@ class App:
         order = list(chapters)
         try:
             manifest = self.music_catalog().manifest()
-        except music_catalog.CatalogError:
-            return empty
+        except music_catalog.CatalogError as error:
+            return {**empty, "unavailable": str(error)}  # lý do bằng lời (mất mạng lần đầu...): trình phát nói thay vì im lặng
         scene_book = self._scene_book(value, path, manifest)
 
         def ready(cid: int) -> dict[str, Any] | None:
             text = packages.chapter_text(path, cid)
-            return None if text is None else scene_book.read(cid, music_nnscene.text_sha(text, chapters[cid].get("skip")))
+            record = None if text is None else scene_book.read(cid, music_nnscene.text_sha(text, chapters[cid].get("skip")))
+            if record is not None and any(self.music_track_too_big(cue["link"]) for cue in music_nnscene.chapter_cues(record)):
+                scene_book.discard(cid)  # chương đã dựng với bài mà máy này không dùng (quá cỡ): bỏ bản ghi, dựng lại chọn bài khác
+                return None
+            return record
 
         self._scene_builder.cancel_others(value)  # đang nghe cuốn này: việc nền của cuốn khác không còn ai chờ
         record, waiting = ready(chapter_id), None
@@ -2317,7 +2323,33 @@ class App:
             if network and (self._music_offline(now) or self._music_host_down(link, now)):
                 return False
             failed_at = self._music_unavailable.get(link)
-            return failed_at is None or now - failed_at >= MUSIC_UNAVAILABLE_SECONDS
+            if failed_at is not None and now - failed_at < MUSIC_UNAVAILABLE_SECONDS:
+                return False
+        return not self._music_oversize(link)
+
+    def _music_oversize(self, link: str) -> bool:
+        """Bài quá MUSIC_TRACK_MAX_MB theo `bytes` của danh mục. Ô `cells/` (cái `near` trả về) KHÔNG có cỡ, chỉ mảnh `tracks/` có
+        - nên tra theo bài mà bộ chọn hỏi (`music_track_available`), không tra cả ô; quá trần thì ghi sổ (`_music_mark_too_big`) để
+        lần sau khỏi tra. Danh mục chưa đọc được / bài không ghi cỡ: chưa biết, coi là vừa (Content-Length bù khi tải)."""
+        with self._music_lock:
+            if link in self._music_sized:
+                return False
+        try:
+            info = self.music_catalog().lookup([link]).get(link)
+        except (music_catalog.CatalogError, OSError, ValueError):
+            return False
+        if music_catalog.over_size_cap(info, MUSIC_TRACK_MAX_BYTES):
+            self._music_mark_too_big(link, int(info["bytes"]))  # type: ignore[index]
+            return True
+        if isinstance(info, dict):
+            with self._music_lock:
+                self._music_sized.add(link)
+        return False
+
+    def music_track_too_big(self, link: str) -> bool:
+        """Bài này đã biết là quá MUSIC_TRACK_MAX_MB (lần tra danh mục hay lần tải trước): vĩnh viễn trên máy này, khác chuyện mạng."""
+        with self._music_lock:
+            return self._music_too_big.get(link, 0) > MUSIC_TRACK_MAX_BYTES
 
     # Cờ mạng theo NGUỒN (host): một nguồn chết (hay bị chặn) chỉ khoá bài của nguồn ấy; cả máy chỉ coi là offline khi từ
     # MUSIC_OFFLINE_HOSTS nguồn cùng hỏng vì mạng mà chưa nguồn nào vừa tải được. Gọi khi đang giữ `_music_lock` (trừ `_music_note`).

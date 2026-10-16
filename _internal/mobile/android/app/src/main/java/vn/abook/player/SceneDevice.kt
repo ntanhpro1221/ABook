@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
  * ([Store], dòng `skip` của lớp sửa), danh mục bài ([DeviceMusic.catalog]: 9 ô quanh đích êm, tải khi cần như mảnh `tracks/`), thư mục đệm theo cuốn và luồng dựng nền.
  *
  * Dựng nền, MỘT luồng, chương người nghe đang ở trước rồi [AHEAD_CHAPTERS] chương kế: hỏi mốc của chương chưa dựng xong thì chờ tối đa [BUILD_WAIT_MS], quá thì trả
- * `pending` (giọng không chờ nhạc - giao diện hỏi lại sau). Danh mục chưa tải được (mất mạng lần đầu): không nhạc, `pending` false.
+ * `pending` (giọng không chờ nhạc - giao diện hỏi lại sau). Danh mục chưa tải được (mất mạng lần đầu): không nhạc, `pending` false, `unavailable` = lý do bằng lời.
  */
 object DeviceScenes {
     const val AHEAD_CHAPTERS = 3
@@ -53,18 +53,27 @@ object DeviceScenes {
         val catalog = DeviceMusic.catalog(context)
         val revision = try {
             catalog.manifest().optString("revision")
-        } catch (_: Exception) {
-            return empty // chưa có danh mục (mất mạng lần đầu): chưa có nhạc, hỏi lại khi có mạng
+        } catch (error: Exception) {
+            return empty.put("unavailable", error.message.orEmpty()) // chưa có danh mục (mất mạng lần đầu): chưa có nhạc, nói lý do, hỏi lại khi có mạng
         }
         val book = bookFor(context, bookId, manifest.optString("version"), revision, order, entries, catalog)
-        book.read(chapterId)?.let { return book.response(it) }
+        // Chương đã dựng với bài mà máy này hoá ra không dùng được (tải báo quá cỡ): bỏ bản ghi, dựng lại chọn bài khác (`server._scene_cues`).
+        fun ready(id: Int): JSONObject? {
+            val record = book.read(id) ?: return null
+            if (book.links(record).any { !catalog.usable(it, null) }) {
+                book.discard(id)
+                return null
+            }
+            return record
+        }
+        ready(chapterId)?.let { return book.response(it) }
 
         val wanted = order.subList(order.indexOf(chapterId), order.size).take(AHEAD_CHAPTERS + 1)
         val prefix = "$bookId/"
         for ((key, job) in queued) if (key.startsWith(prefix) && key.substring(prefix.length).toIntOrNull() !in wanted) job.cancel(false) // đổi chỗ nghe: bỏ việc chưa chạy
         var waiting: Future<*>? = null
         for (id in wanted) {
-            if (id != chapterId && book.read(id) != null) continue
+            if (id != chapterId && ready(id) != null) continue
             val key = "$bookId/$id"
             val job = queued.compute(key) { _, running ->
                 if (running != null && !running.isDone) running else builder.submit(Runnable {
@@ -87,7 +96,7 @@ object DeviceScenes {
         } catch (_: java.util.concurrent.CancellationException) {
             failed = true
         }
-        val record = book.read(chapterId) ?: return empty.put("pending", !failed && waiting != null)
+        val record = ready(chapterId) ?: return empty.put("pending", !failed && waiting != null)
         return book.response(record)
     }
 
@@ -105,7 +114,7 @@ object DeviceScenes {
             }
         }
         val near = Near(catalog)
-        val choice = SceneChoice(bookId, available = { link -> catalog.usable(link, near.infoOf(link)) })
+        val choice = SceneChoice(bookId, available = { link -> catalog.usable(link, near.sizedInfoOf(link)) })
         val book = SceneBook(File(root, key), order, { id -> body(bookId, id, entries[id]) }, choice) { near.tracks() }
         books[bookId] = key to book
         return book
@@ -124,6 +133,7 @@ object DeviceScenes {
     private class Near(private val catalog: MusicCatalog) {
         private var tracks: List<SceneTrack>? = null
         private val infos = HashMap<String, JSONObject>()
+        private val sized = HashMap<String, JSONObject>()
 
         @Synchronized
         fun tracks(): List<SceneTrack> {
@@ -136,5 +146,17 @@ object DeviceScenes {
 
         @Synchronized
         fun infoOf(link: String): JSONObject? = infos[link]
+
+        /**
+         * Thông tin của bài kèm cỡ (`bytes`): ô `cells/` mà [tracks] đọc KHÔNG có cỡ, chỉ mảnh `tracks/` có - nên tra mảnh của đúng bài mà bộ chọn hỏi
+         * (`server._music_oversize`), nhớ lại để khỏi tra lần nữa. Danh mục chưa tra được: dùng thông tin ô (chưa biết cỡ thì cứ coi là dùng được).
+         */
+        @Synchronized
+        fun sizedInfoOf(link: String): JSONObject? {
+            sized[link]?.let { return it }
+            val found = runCatching { catalog.lookup(listOf(link))[link] }.getOrNull() ?: return infos[link]
+            sized[link] = found
+            return found
+        }
     }
 }

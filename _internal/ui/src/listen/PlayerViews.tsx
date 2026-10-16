@@ -257,6 +257,7 @@ function Transport({ large = false }: { large?: boolean }) {
 function MenuShell({
   trigger,
   label,
+  tooltip,
   children,
   active,
   width = "w-56",
@@ -267,6 +268,8 @@ function MenuShell({
 }: {
   trigger: ReactNode;
   label: string;
+  /** Chú thích khi rê chuột / tiêu điểm vào nút, nếu muốn nói nhiều hơn tên nút (mặc định = tên nút). */
+  tooltip?: string;
   children: ReactNode;
   active?: boolean;
   width?: string;
@@ -280,7 +283,7 @@ function MenuShell({
 }) {
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
-      <Tooltip label={label}>
+      <Tooltip label={tooltip ?? label}>
         <Popover.Trigger asChild>
           <button
             type="button"
@@ -428,13 +431,15 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
 }
 
 function MusicMenuFor({ bookId }: { bookId: string }) {
-  const { options, chosen, label, playing, scene, error, loading, choose, levelDb, setLevel, levelBusy, canImport, addMusic } = usePlaylistChoice(bookId);
-  const { musicOffline, musicBroken } = usePlayer();
+  const { options, chosen, label, playing, scene, error, loading, choose, busy, levelDb, setLevel, levelBusy, canImport, addMusic } = usePlaylistChoice(bookId);
+  const { musicOffline, musicBroken, musicLoading } = usePlayer();
+  const waiting = busy || musicLoading;
   return (
     <MenuShell
       label="Nhạc nền"
-      active={playing}
-      trigger={<><Music2 className="size-4" /><span className="max-w-40 truncate max-sm:hidden @max-[1330px]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
+      tooltip={waiting ? "Đang chuẩn bị nhạc nền…" : playing ? `Nhạc nền: ${shortPlaylistLabel(label)} - bấm để chọn nhạc khác` : "Nhạc nền - bấm để chọn nhạc"}
+      active={playing || waiting}
+      trigger={<>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Music2 className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[1330px]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
     >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>

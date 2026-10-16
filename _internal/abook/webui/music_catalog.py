@@ -55,6 +55,13 @@ def cell_of(valence: float, arousal: float, grid: int = 5) -> tuple[int, int]:
     return index(valence), index(arousal)
 
 
+def over_size_cap(info: dict[str, Any] | None, cap_bytes: int) -> bool:
+    """Bài có `bytes` (chỉ mảnh `tracks/` ghi, ô `cells/` không) lớn hơn trần của máy. Không ghi cỡ: chưa biết, không quá. Bản Kotlin:
+    `MusicCatalog.usable` (SceneMusicTest dùng chung ví dụ với bộ sinh scripts/music_n0_fixtures.py)."""
+    size = (info or {}).get("bytes")
+    return isinstance(size, (int, float)) and not isinstance(size, bool) and size > cap_bytes
+
+
 class MusicCatalog:
     def __init__(self, cache_dir: Path, source: str | None = None, *, public_key: bytes = PUBLIC_KEY) -> None:
         self.cache_dir = Path(cache_dir)

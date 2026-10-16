@@ -125,6 +125,8 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     error: menu.data?.error || current.data?.error || "",
     loading: menu.isLoading,
     choose: (id: string | null) => choose.mutate({ playlist: id }),
+    /** Đang lưu lựa chọn; nút "Nhạc nền" của trình phát còn quay vòng chờ cả lúc máy xếp hàng bài ([usePlayer].musicLoading). */
+    busy: choose.isPending,
     levelDb: current.data?.levelDb ?? DEFAULT_LEVEL_DB,
     setLevel: (levelDb: number) => setLevel.mutate(levelDb),
     levelBusy: setLevel.isPending,
@@ -149,12 +151,11 @@ export function PlaylistOptionLabel({ option, chosen }: { option: PlaylistOption
   );
 }
 
-/** Chữ nhỏ dưới các lựa chọn: điều người nghe cần biết (mất mạng lần đầu thì lý do). `scene`: nhạc đang đổi theo cảnh, không chạy một mạch qua các chương. */
+/** Chữ nhỏ dưới các lựa chọn: điều người nghe cần biết (mất mạng lần đầu thì lý do - chỉ nói khi đúng là đang xảy ra, không nhắc suông). `scene`: nhạc đang đổi
+ *  theo cảnh, không chạy một mạch qua các chương. */
 export function playlistNote(error: string, scene = false): string {
   if (error) return error;
-  return scene
-    ? "Nhạc nằm dưới giọng đọc và đổi theo từng cảnh của truyện. Lần đầu cần mạng để tải bài."
-    : "Nhạc nằm dưới giọng đọc và nghe tiếp qua các chương. Lần đầu cần mạng để tải bài.";
+  return scene ? "Nhạc nằm dưới giọng đọc và đổi theo từng cảnh của truyện." : "Nhạc nằm dưới giọng đọc và nghe tiếp qua các chương.";
 }
 
 /** Mục "Nhạc nền" trong menu của sách chỉ có chữ: menu con với các lựa chọn. */

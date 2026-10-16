@@ -95,6 +95,7 @@ object MusicBed {
     private var sceneMode = false // cuốn này theo cảnh: mốc của chương nằm ở `scene`, bài lấy từ danh mục
     private val scene = SceneBed { sceneTiming() }
     private var sceneRetry: Runnable? = null
+    private var sceneNotice = "" // lý do chưa có nhạc theo cảnh (danh mục chưa tải được) - lời `unavailable` của DeviceScenes; rỗng khi ổn
 
     // ---- danh sách phát ("Nghe ngay") ----
     private var playlist: String? = null // danh sách đang dùng cho cuốn này; null = nhạc theo mốc của sách (hay không nhạc)
@@ -263,6 +264,7 @@ object MusicBed {
         sceneRetry?.let(main::removeCallbacks)
         sceneRetry = null
         sceneMode = false
+        sceneNotice = ""
         scene.reset()
         advanceClock()
         saveClock()
@@ -367,9 +369,13 @@ object MusicBed {
         main.postDelayed(job, MusicFailures.RETRY_MS)
     }
 
+    /** Nhạc đang đổi theo cảnh của truyện (không phải danh sách phát người nghe chọn): giao diện nhắc người nghe một lần ở bài đầu tiên kêu. */
+    fun sceneActive(): Boolean = sceneMode
+
     /** Lời báo "mất mạng" khi có bài của danh sách phát đang bị giữ lại vì mạng (một nguồn nhạc nghỉ vì mạng) - giao diện nói ra thay vì để nhạc
      *  im lặng không lời; rỗng khi ổn. */
-    fun offlineNotice(): String = if (playlist != null || sceneMode) context?.let { DeviceMusic.catalog(it).offlineNotice() }.orEmpty() else ""
+    fun offlineNotice(): String =
+        if (playlist != null || sceneMode) sceneNotice.ifEmpty { context?.let { DeviceMusic.catalog(it).offlineNotice() }.orEmpty() } else ""
 
     /** File của một bài để phát; bài danh mục chưa tải thì tải ở luồng nền (lần `sync` sau mới phát) và trả null. */
     private fun uriOf(appContext: Context, link: String): Uri? {
@@ -512,9 +518,11 @@ object MusicBed {
         val bookId = book
         DeviceScenes.request(appContext, bookId, chapterId) { result, _ ->
             val pending = result?.optBoolean("pending", false) == true
+            val notice = result?.optString("unavailable", "").orEmpty()
             val arrival = if (result == null || pending) null else runCatching { arrivalOf(appContext, bookId, result) }.getOrNull()
             main.post {
                 if (ticket != generation || chapter != chapterId) return@post
+                sceneNotice = notice
                 if (pending && attempt < SCENE_POLLS) {
                     val job = Runnable {
                         sceneRetry = null
