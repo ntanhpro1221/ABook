@@ -81,6 +81,15 @@ object ReadAloud {
 
     private val chaps = HashMap<Int, Chap>()
     @Volatile private var generation = 0 // luồng nền đọc để biết việc của mình đã cũ chưa
+    /** Các lượt đọc đang chạy ở luồng nền: nhảy sang chỗ khác ([bumpGeneration]) thì huỷ hết - ổ cắm của chúng đóng ngay, không giữ chỗ kết nối Edge tới hết lượt ([ClipCancel]). */
+    private val jobs = java.util.concurrent.CopyOnWriteArraySet<ClipCancel>()
+
+    /** Việc đang làm thành cũ (tua, đổi chương, đổi giọng, dừng): kết quả tới muộn bị bỏ, lượt đọc đang chạy bị huỷ, hẹn hỏi lại cũng bỏ. Người nghe TẠM DỪNG thì không gọi: clip đang về dùng được khi bấm phát. */
+    private fun bumpGeneration() {
+        generation += 1
+        reminder.cancel()
+        for (job in jobs) job.cancel()
+    }
     private var inFlight = false
     private var feedChapter = 0
     private var feedSegment = 0
@@ -318,7 +327,7 @@ object ReadAloud {
 
     /** Bỏ hàng đợi sau đoạn đang phát và nạp lại từ đoạn kế (đổi giọng, đổi cách đọc). */
     private fun requeueAhead(exo: Player, slot: Slot) {
-        generation += 1
+        bumpGeneration()
         inFlight = false
         failure = null
         val index = exo.currentMediaItemIndex
@@ -406,7 +415,7 @@ object ReadAloud {
     private fun reset() {
         active = false
         FetchWake.releaseAll()
-        generation += 1
+        bumpGeneration()
         inFlight = false
         waiting = null
         failure = null
@@ -447,7 +456,7 @@ object ReadAloud {
     fun startAt(index: Int, offsetMs: Long, play: Boolean, segment: Int = -1, word: Int = -1, within: Long = 0, hold: Boolean = false) {
         val exo = Playback.player ?: return
         val chapter = chapters().getOrNull(index) ?: return
-        generation += 1
+        bumpGeneration()
         inFlight = false
         failure = null
         held = hold
@@ -565,17 +574,12 @@ object ReadAloud {
     /** Người nghe còn âm thanh để nghe (không phải đang chờ đoạn đầu, hàng đợi chưa cạn). */
     private fun listenerHasAudio(exo: Player): Boolean = waiting == null && exo.currentMediaItem != null && exo.playbackState != Player.STATE_ENDED
 
-    private var reminding = false
+    private val reminder by lazy { Reminder({ task, ms -> main.postDelayed(task, ms) }, { task -> main.removeCallbacks(task) }) }
 
-    /** Hẹn [pump] sau `ms` (hết nhịp nghỉ của [stalled]); một hẹn một lúc. */
+    /** Hẹn [pump] sau `ms` (hết nhịp nghỉ của [stalled]); một hẹn một lúc, [bumpGeneration] bỏ hẹn cũ. */
     private fun remind(ms: Long) {
-        if (reminding) return
-        reminding = true
         val token = generation
-        main.postDelayed({
-            reminding = false
-            if (token == generation) pump()
-        }, ms + 50)
+        reminder.schedule(ms + 50) { if (token == generation) pump() }
     }
 
     /** Hàng đợi còn thiếu đoạn đọc sẵn? Tối thiểu [AHEAD] đoạn; giọng trực tuyến mà clip gần đây về chậm thì tới khi đủ số giây âm thanh [ReadAheadPolicy] đòi (tối đa [ReadAheadPolicy.MAX_AHEAD] đoạn). */
@@ -671,9 +675,12 @@ object ReadAloud {
         // Edge đang chậm: đọc song song đoạn kế (luồng thứ hai) để nó có sẵn trong bộ đệm khi tới lượt - hai lượt gọi cùng lúc, không hơn (Edge hạn chế khi dồn nhiều kết nối).
         // Việc nạp vào ExoPlayer vẫn lần lượt và đúng thứ tự: đoạn kế đọc xong sớm thì tới lượt nó chỉ lấy từ bộ đệm.
         val warm = if (online && policy.slow()) nextSpeakable(chap, segment)?.let { chap.paragraphs[it] } else null
-        // Người nghe đang chờ clip này qua mạng: giữ CPU + Wi-Fi tới khi xong (hàng đợi ExoPlayer đã cạn thì nó không giữ gì - [FetchWake]); đọc sẵn khi chưa ai chờ thì không.
-        val ticket = if (online && listenerWants) FetchWake.hold() else null
         val fresh = stalled.takeFresh(chap.index, segment)
+        // Đoạn vừa hỏng, tới nhịp hỏi lại mà người nghe còn âm thanh: hỏi thăm (một lượt, không thử lại, không giữ khoá) - xem [StalledClips].
+        val probe = StalledClips.isProbe(fresh, Playback.player?.let(::listenerHasAudio) == true)
+        // Người nghe đang chờ clip này qua mạng: giữ CPU + Wi-Fi tới khi xong (hàng đợi ExoPlayer đã cạn thì nó không giữ gì - [FetchWake]); đọc sẵn khi chưa ai chờ thì không.
+        val ticket = if (StalledClips.holdsWake(online, listenerWants, probe)) FetchWake.hold() else null
+        val cancel = ClipCancel().also { jobs.add(it) }
         worker.execute {
             val began = System.nanoTime()
             val origin = originOf(bookId)
@@ -685,10 +692,11 @@ object ReadAloud {
             }
             val result = try {
                 val key = shareKey(voice, text, origin, readings)
-                val (first, mine) = shared(key) { readWithRetry(token, text, voice, origin, readings, online, fresh) }
+                val (first, mine) = shared(key) { readWithRetry(token, text, voice, origin, readings, online, fresh, probe, cancel) }
                 // Đoạn này đang được đọc song song mà lượt ấy hỏng (không thử lại): đọc lại cho đàng hoàng, có thử lại - và hỏi mới, lượt hỏng vừa rồi có thể đã làm giọng nghỉ.
-                if (!mine && first.isFailure && token == generation) readWithRetry(token, text, voice, origin, readings, online, fresh = true) else first
+                if (!mine && first.isFailure && token == generation) readWithRetry(token, text, voice, origin, readings, online, fresh = true, probe = probe, cancel = cancel) else first
             } finally {
+                jobs.remove(cancel)
                 ticket?.let(FetchWake::release)
                 live.decrementAndGet()
             }
@@ -698,7 +706,7 @@ object ReadAloud {
                 val seconds = (System.nanoTime() - began) / 1e9
                 if (clip.voice == voice && seconds * 1000 > PrepareRunner.CACHED_MS) runCatching { speeds().record(voice, text.length, seconds) }
             }
-            Playback.onMain { onClipReady(token, chap, segment, result) }
+            Playback.onMain { onClipReady(token, chap, segment, result, probe) }
         }
     }
 
@@ -729,8 +737,10 @@ object ReadAloud {
     }
 
     /** Đọc một đoạn, thử lại lỗi thoáng qua của giọng trực tuyến ở nền ([ClipRetry]); việc đã cũ (tua, đổi chương, đổi giọng) thì thôi. */
-    private fun readWithRetry(token: Int, text: String, voice: String, origin: String?, readings: Map<String, String>?, online: Boolean, fresh: Boolean = false): Result<Clip> =
-        ClipRetry.run(online, RETRY_DELAYS_MS, sleep = { sleepWhileCurrent(token, it) }, record = policy::record) { willRetry ->
+    private fun readWithRetry(
+        token: Int, text: String, voice: String, origin: String?, readings: Map<String, String>?, online: Boolean, fresh: Boolean = false, probe: Boolean = false, cancel: ClipCancel? = null,
+    ): Result<Clip> =
+        ClipRetry.run(online, StalledClips.delaysFor(probe, RETRY_DELAYS_MS), sleep = { sleepWhileCurrent(token, it) }, record = policy::record, cancel = cancel) { willRetry ->
             reader().read(text, voice, origin, readings, willRetry, fresh)
         }
 
@@ -754,22 +764,23 @@ object ReadAloud {
         if (!listenerWants) FetchWake.releaseAll() // chẳng ai chờ clip nữa: nhả khoá CPU / Wi-Fi ngay, không đợi lượt gọi Edge đang chạy dở xong
     }
 
-    private fun onClipReady(token: Int, chap: Chap, segment: Int, result: Result<Clip>) {
+    private fun onClipReady(token: Int, chap: Chap, segment: Int, result: Result<Clip>, probe: Boolean = false) {
         if (token != generation || !active) return
         inFlight = false
         val clip = result.getOrElse { error ->
-            // Dịch vụ trục trặc (kể cả lời cuối của [ClipReader]) sau khi hết lần thử: nhớ đoạn này - lượt đọc kế của nó là lần hỏi mới ([StalledClips]), dù do nhịp hỏi lại, do người nghe tới nơi
-            // hay do "Thử lại". Người nghe đã tạm dừng (kể cả lần thử lại bị bỏ vì thế): bấm phát thì [onPlay] xin lại đoạn này. Người nghe còn âm thanh để nghe: chưa ai chờ đoạn này - không
-            // dừng, không báo lỗi, [pump] hỏi lại sau nhịp nghỉ hay ngay khi hàng đợi cạn (a46: trước đây hết lần thử là dừng hẳn dù còn cả hàng đoạn đã đọc sẵn, và người nghe tới nơi cũng không ai hỏi lại).
-            if (StalledClips.isServiceTrouble(error)) {
-                stalled.failed(chap.index, segment)
-                if (!wantsPlay()) return
-                if (Playback.player?.let(::listenerHasAudio) == true) {
+            // Đoạn hết cách đọc: dịch vụ trục trặc (kể cả lời cuối của [ClipReader]) hay lỗi giọng khác - nhớ đoạn này, lượt đọc kế của nó là lần hỏi mới ([StalledClips]), dù do nhịp hỏi lại,
+            // do người nghe tới nơi hay do "Thử lại". Người nghe đã tạm dừng (kể cả lần thử lại bị bỏ vì thế): bấm phát thì [onPlay] xin lại đoạn này. Người nghe còn âm thanh để nghe: chưa ai chờ
+            // đoạn này - không dừng, không báo lỗi, [pump] hỏi lại sau nhịp nghỉ hay ngay khi hàng đợi cạn (a46; a50: cả lỗi không phải dịch vụ, như máy tính). Lần hỏi thăm hỏng không bao giờ dừng.
+            val listening = Playback.player?.let(::listenerHasAudio) == true
+            val verdict = StalledClips.verdict(error, wantsPlay(), listening, probe)
+            if (verdict != StalledClips.Verdict.FAIL || StalledClips.isServiceTrouble(error)) stalled.failed(chap.index, segment)
+            when (verdict) {
+                StalledClips.Verdict.QUIET -> return
+                StalledClips.Verdict.DEFER -> {
                     pump()
                     return
                 }
-            } else if ((error as? VoiceException)?.transient == true && !wantsPlay()) {
-                return
+                StalledClips.Verdict.FAIL -> Unit
             }
             fail((error as? VoiceException)?.message ?: "Không đọc được đoạn này (${error.message})")
             return
@@ -861,7 +872,7 @@ object ReadAloud {
         }
         if (first >= 0) exo.removeMediaItems(first, exo.mediaItemCount)
         if (first >= 0 || feedChapter != slot.chapterIndex) {
-            generation += 1
+            bumpGeneration()
             inFlight = false
             val last = (exo.getMediaItemAt(exo.mediaItemCount - 1).localConfiguration?.tag as? Slot)?.takeIf { it.chapterIndex == slot.chapterIndex }
             feedChapter = slot.chapterIndex
