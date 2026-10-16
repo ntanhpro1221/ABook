@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Mạng hay dịch vụ giọng đứt cả chục giây rồi có lại, giọng đọc không còn kẹt mãi ở một đoạn đã bỏ cuộc: tới đoạn ấy máy hỏi lại một lần mới, và trong lúc bạn còn nghe các đoạn trước, cứ khoảng 10 giây máy thử lại đoạn đang thiếu một lần (máy tính và điện thoại).
+- Đầu chương kế được đọc sẵn nhiều hay ít theo độ nhanh của giọng, như các đoạn trong chương: giọng chậm thì chương sau bắt đầu sớm hơn (máy tính).
+- Nhạc nền đã tải về máy có trần dung lượng: quá trần thì máy xoá bài lâu không nghe nhất; nhạc bạn nhập, nhạc đi kèm sách, bài đã ghim và bài của chương đang nghe thì luôn được giữ (máy tính).
+
 ## [0.4.75] - 2026-10-16
 
 ### Nghe ngay
