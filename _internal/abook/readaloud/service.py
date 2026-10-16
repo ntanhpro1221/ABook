@@ -6,6 +6,7 @@ thành chương và chỉnh tốc độ bằng playbackRate nên bộ đệm dù
 from __future__ import annotations
 
 import threading
+import time
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol
 
@@ -13,7 +14,7 @@ from . import azure, edge, fpt, google, loudness, names, readings as book_readin
 from .byok import KeyedProvider
 from .cache import ClipBooks, ClipCache, clip_key
 from .keys import KeyStore
-from .mapping import fold, map_boundaries
+from .mapping import Boundary, fold, map_boundaries
 from .model import Synthesis, Voice, VoiceError
 from .prepare import SHARE as PREPARE_SHARE
 from .prepare import Prepare
@@ -30,6 +31,77 @@ class Provider(Protocol):
     def synthesize(self, text: str, native_voice: str) -> Synthesis: ...
 
 
+class StreamListener(Protocol):
+    """Người nghe một clip đang được đọc (máy chủ giao diện: phát luồng về trình phát). Gọi từ các luồng đọc, tuần tự."""
+
+    def started(self) -> None:
+        """Đúng lúc byte tiếng ĐẦU TIÊN về (trước đó lỗi thì `clip` ném `VoiceError` như thường, chưa gọi gì)."""
+
+    def audio(self, data: bytes) -> None: ...
+
+    def words(self, words: list[list[int]], duration_ms: int) -> None:
+        """Mốc từng chữ hiện tạm tính trên phần đã phát (chữ chưa tới đứng cuối phần ấy); `duration_ms` = độ dài phần đã phát; cái sau thay cái trước."""
+
+
+def _shown_words(words: list[list[int]], spans: list[tuple[int, int] | None] | None, slots: list[int | None] | None) -> list[list[int]]:
+    """Mốc từng chữ ĐỌC -> mốc từng chữ HIỆN (chữ hiện thành nhiều chữ đọc, hay không còn chữ nào): `spoken.expand_words` / `readings.expand_words`."""
+    if spans is not None:
+        return spoken.expand_words(words, spans)
+    if slots is not None:
+        return book_readings.expand_words(words, slots)
+    return words
+
+
+class _Live:
+    """Nối [edge.StreamSink] (tiếng + mốc Edge, theo thứ tự clip cuối) với [StreamListener]: `started()` ở byte đầu, tiếng chuyển thẳng, mốc chữ tạm tính qua đúng đường tính cuối
+    (`map_boundaries` + `_shown_words`) trên phần ĐÃ phát - không dày hơn một lần mỗi WORDS_EVERY giây, và luôn một lần khi một mảnh phát hết."""
+
+    WORDS_EVERY = 0.5
+
+    def __init__(self, listener: StreamListener, said: str, spans: list[tuple[int, int] | None] | None, slots: list[int | None] | None,
+                 clock: Callable[[], float] = time.monotonic) -> None:
+        self.listener = listener
+        self.said = said
+        self.spans = spans
+        self.slots = slots
+        self.clock = clock
+        self.started = False
+        self.found: list[Boundary] = []
+        self.sent_ms = 0
+        self._bytes = 0
+        self._told: float | None = None  # lúc gửi mốc chữ gần nhất
+        self._pending = False  # có mốc mới chưa gửi
+
+    def audio(self, data: bytes) -> None:
+        if not self.started:
+            self.started = True
+            self.listener.started()
+        self.listener.audio(data)
+        self._bytes += len(data)
+        self.sent_ms = self._bytes * 8 * 1000 // edge.BITRATE_BPS
+        if self._pending:
+            self._tell(force=False)
+
+    def boundaries(self, found: list[Boundary]) -> None:
+        self.found += found
+        self._pending = True
+        if self.started:
+            self._tell(force=False)
+
+    def piece_done(self) -> None:
+        if self.started and self._pending:
+            self._tell(force=True)
+
+    def _tell(self, *, force: bool) -> None:
+        now = self.clock()
+        if not force and self._told is not None and now - self._told < self.WORDS_EVERY:
+            return
+        self._told = now
+        self._pending = False
+        duration = max(self.sent_ms, self.found[-1].end_ms if self.found else 0)
+        self.listener.words(_shown_words(map_boundaries(self.said, self.found, duration), self.spans, self.slots), duration)
+
+
 class EdgeProvider:
     id = "edge"
     speaks_english = True  # đo 04-10: Edge đọc "Rose", "Mike", "laptop" để nguyên ra tiếng Anh nhận được
@@ -42,8 +114,8 @@ class EdgeProvider:
     def voices(self) -> list[Voice]:
         return [Voice(f"edge:{code}", name, "edge", True, code == edge.DEFAULT_VOICE, gender=gender) for code, name, gender in edge.VOICES]
 
-    def synthesize(self, text: str, native_voice: str, *, rank: int = edge.RANK_BACKGROUND) -> Synthesis:
-        return self.client.synthesize(text, native_voice, rank=rank)
+    def synthesize(self, text: str, native_voice: str, *, rank: int = edge.RANK_BACKGROUND, sink: edge.StreamSink | None = None) -> Synthesis:
+        return self.client.synthesize(text, native_voice, rank=rank, sink=sink)
 
 
 class DeviceProvider:
@@ -171,7 +243,8 @@ class ReadAloud:
         return {**provider.check(), "provider": provider.describe()}
 
     def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False, origin: str | None = None,
-             readings: Mapping[str, str] | None = None, book: str | None = None, rank: int = edge.RANK_BACKGROUND) -> dict[str, Any]:
+             readings: Mapping[str, str] | None = None, book: str | None = None, rank: int = edge.RANK_BACKGROUND,
+             stream: StreamListener | None = None) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
         `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ. `origin`: gốc của cuốn ("ja" / "ko", `names.BookOrigins`) - giọng đọc
         trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); Edge (`normalises_text`) nhận
@@ -180,7 +253,9 @@ class ReadAloud:
         đem đọc đã thay (cùng số chữ, nên mốc từng chữ vẫn khớp chữ hiện); khoá bộ đệm có dấu của những cách đọc có trong đoạn.
         `book`: mã cuốn đang nghe - clip được ghi vào sổ của cuốn để biết "bản đọc đã làm" của cuốn nặng bao nhiêu và xoá được ([cache_usage], [clear_book]).
         `rank`: số đoạn người nghe phải nghe trước đoạn này (trình phát: 0 = đang đứng chờ đúng nó - nhảy tới, mở chương; 1 = đoạn kế...) - giọng có `ranks_requests` (Edge) cho đoạn gần người nghe hơn
-        đi trước khi hết chỗ kết nối; không nói thì đứng sau mọi đoạn có rank."""
+        đi trước khi hết chỗ kết nối; không nói thì đứng sau mọi đoạn có rank.
+        `stream`: người nghe clip đang đọc (uxfix56) - CHỈ khi chưa có trong bộ đệm, không `cached_only` / `background`, giọng có `ranks_requests` và `rank` == 0 (đoạn người nghe đang đứng chờ):
+        tiếng + mốc chữ tạm chảy tới đó ngay khi về (`StreamListener`); xong vẫn vào bộ đệm đúng như không phát luồng và trả dict như thường (người gọi gửi bản cuối). Ngoài ra `stream` bị bỏ qua."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
@@ -212,16 +287,17 @@ class ReadAloud:
                         else:
                             said, slots = (text, None) if reads_names else book_readings.spoken_layout(text, readings)
                         if not reads_names:
-                            made = provider.synthesize(said, native, rank=rank) if getattr(provider, "ranks_requests", False) else provider.synthesize(said, native)
+                            ranked = getattr(provider, "ranks_requests", False)
+                            if ranked and stream is not None and rank == 0 and not background:
+                                made = provider.synthesize(said, native, rank=rank, sink=_Live(stream, said, spans, slots))
+                            else:
+                                made = provider.synthesize(said, native, rank=rank) if ranked else provider.synthesize(said, native)
                         elif tags[1]:
                             made = provider.synthesize(text, native, origin, readings)
                         else:
                             made = provider.synthesize(text, native, origin)
                         words = made.words if made.words is not None else map_boundaries(said, made.boundaries, made.duration_ms)
-                        if spans is not None:  # chữ hiện thành nhiều chữ đọc, hay không còn chữ nào: mốc về đủ chữ hiện
-                            words = spoken.expand_words(words, spans)
-                        elif slots is not None:  # cụm đọc ngắn hơn số chữ hiện: chữ đã mất khỏi chuỗi nhận mốc rỗng
-                            words = book_readings.expand_words(words, slots)
+                        words = _shown_words(words, spans, slots)  # chữ hiện thành nhiều chữ đọc / cụm đọc ngắn hơn số chữ hiện: mốc về đủ chữ hiện
                         hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
             finally:
                 with self._locks_guard:

@@ -3148,6 +3148,63 @@ def _serialized_per_book(method: Callable[..., None]) -> Callable[..., None]:
     return wrapper
 
 
+CLIP_STREAM_TYPE = "application/vnd.abook.clipstream"
+
+
+class ClipStream:
+    """Phát một clip đang được đọc về trình phát (`POST /api/readaloud/clip` có `stream: true`, [readaloud.StreamListener]): lời đáp 200 `chunked` chỉ mở khi byte tiếng đầu tiên về
+    (trước đó lỗi vẫn là JSON như thường). Mỗi bản ghi = 1 byte loại + 4 byte độ dài (big-endian) + nội dung, một khúc chunked một bản ghi, đẩy đi ngay:
+    `A` byte MP3 (nối thẳng vào phần trước), `W` JSON `{"words", "duration_ms"}` (mốc tạm, thay bản trước), `E` JSON `{"url", "duration_ms", "words"}` (cuối) rồi hết,
+    `X` JSON `{"message", "reason"}` (lỗi sau khi đã phát) rồi hết. Người nghe đóng kết nối giữa chừng: thôi ghi, việc đọc vẫn làm xong (clip vào bộ đệm, đoạn ấy nghe lại được)."""
+
+    def __init__(self, handler: Handler) -> None:
+        self.handler = handler
+        self.sent = False  # đã mở lời đáp 200 (từ đó chỉ còn bản ghi, không còn JSON thường)
+        self._broken = False
+
+    def started(self) -> None:
+        self.sent = True
+        h = self.handler
+        try:
+            h.send_response(HTTPStatus.OK)
+            h.send_header("Content-Type", CLIP_STREAM_TYPE)
+            h.send_header("Transfer-Encoding", "chunked")
+            h.send_header("Cache-Control", "no-store")
+            h.end_headers()
+        except OSError:
+            self._lost()
+
+    def audio(self, data: bytes) -> None:
+        self._record(b"A", data)
+
+    def words(self, words: list[list[int]], duration_ms: int) -> None:
+        self._record(b"W", json.dumps({"words": words, "duration_ms": duration_ms}, separators=(",", ":")).encode("utf-8"))
+
+    def finish(self, payload: dict[str, Any]) -> None:
+        self._record(b"E", json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+        self._chunk(b"")
+
+    def fail(self, message: str, reason: str) -> None:
+        self._record(b"X", json.dumps({"message": message, "reason": reason}, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+        self._chunk(b"")
+
+    def _record(self, kind: bytes, payload: bytes) -> None:
+        self._chunk(kind + len(payload).to_bytes(4, "big") + payload)
+
+    def _chunk(self, data: bytes) -> None:
+        if self._broken:
+            return
+        try:
+            self.handler.wfile.write(f"{len(data):x}\r\n".encode("ascii") + data + b"\r\n")  # data rỗng = khúc cuối (0\r\n\r\n)
+            self.handler.wfile.flush()
+        except OSError:
+            self._lost()
+
+    def _lost(self) -> None:
+        self._broken = True
+        self.handler.close_connection = True
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "ABook"
     protocol_version = "HTTP/1.1"
@@ -5269,10 +5326,18 @@ class Handler(BaseHTTPRequestHandler):
         text, voice = body.get("text"), body.get("voice")
         if not isinstance(text, str) or not isinstance(voice, str):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hay chữ")
+        rank = self._clip_rank(body)
+        # `stream: true` (trình phát gửi cho đoạn nó đang đứng chờ): clip chưa có trong bộ đệm thì phát luồng, còn lại JSON như thường (ReadAloud.clip tự bỏ qua `stream` khi không phát luồng được).
+        stream = ClipStream(self) if body.get("stream") is True and rank == 0 and not body.get("cachedOnly") else None
         try:
             clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")), origin=self._reading_origin(body),
-                                           readings=self._book_readings(body), book=self._clip_book(body), rank=self._clip_rank(body))
-        except VoiceError as error:
+                                           readings=self._book_readings(body), book=self._clip_book(body), rank=rank, stream=stream)
+        except Exception as error:  # đã phát thì chỉ còn nói lỗi bằng bản ghi X; lỗi bất kỳ không được rơi xuống JSON giữa lời đáp chunked
+            if stream is not None and stream.sent:
+                stream.fail(str(error), error.reason if isinstance(error, VoiceError) else "service")
+                return
+            if not isinstance(error, VoiceError):
+                raise
             if error.reason == "uncached":
                 # Chỉ tra bộ đệm mà chưa có là câu trả lời bình thường (trình phát hỏi hàng loạt lúc nạp chương), không phải lỗi: 200 để
                 # console của trình duyệt không đầy dòng 404 đỏ.
@@ -5281,7 +5346,11 @@ class Handler(BaseHTTPRequestHandler):
             status = {"offline": HTTPStatus.SERVICE_UNAVAILABLE, "timeout": HTTPStatus.GATEWAY_TIMEOUT, "voice": HTTPStatus.BAD_REQUEST,
                       "empty": HTTPStatus.UNPROCESSABLE_ENTITY}.get(error.reason, HTTPStatus.BAD_GATEWAY)
             raise ApiError(status, str(error), reason=error.reason) from error
-        self._send_json(HTTPStatus.OK, {"url": f"/media/readaloud/{clip['file']}", "duration_ms": clip["duration_ms"], "words": clip["words"]})
+        done = {"url": f"/media/readaloud/{clip['file']}", "duration_ms": clip["duration_ms"], "words": clip["words"]}
+        if stream is not None and stream.sent:
+            stream.finish(without_local_paths(done) if self._remote() else done)
+            return
+        self._send_json(HTTPStatus.OK, done)
 
     def get_readaloud_vieneu(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, vieneu_module.status())

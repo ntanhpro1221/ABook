@@ -17,6 +17,22 @@ export function countTokens(text: string): number {
   return (text.match(TOKEN) ?? []).length;
 }
 
+/** Phần câu từ chữ thứ `word` (0-based, đếm theo `\S+` như [countTokens]) tới hết; null khi không có chữ ấy. Clip đuôi ([ReadAloudClip.fromWord]) đọc đúng phần này. */
+export function tailFromWord(text: string, word: number): string | null {
+  if (!Number.isInteger(word) || word < 0) return null;
+  let seen = 0;
+  for (const match of text.matchAll(TOKEN)) {
+    if (seen === word) return text.slice(match.index ?? 0);
+    seen += 1;
+  }
+  return null;
+}
+
+/** Mốc chữ của cả đoạn từ mốc của clip đuôi: chữ trước `from` chưa đọc nên mốc [0, 0], chữ `from` trở đi theo clip. Chưa có mốc nào thì để rỗng. */
+export function absoluteWords(from: number, words: WordSpan[]): WordSpan[] {
+  return from > 0 && words.length > 0 ? [...Array.from({ length: from }, (): WordSpan => [0, 0]), ...words] : words;
+}
+
 /** Tách câu thành chữ và khoảng trắng, giữ nguyên từng ký tự - render lại không đổi cách câu xuống dòng. */
 export function splitPieces(text: string): Piece[] {
   const pieces: Piece[] = [];
