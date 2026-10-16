@@ -158,6 +158,15 @@ class Connection:
         except OSError:
             pass
 
+    def abort(self) -> None:
+        """Gọi từ luồng KHÁC: cắt ngang ổ cắm để `recv` đang chờ ở luồng sở hữu thoát ngay bằng lỗi (luồng ấy vẫn tự `close()` như thường, lỗi đóng lần hai
+        bị nuốt). Trên Windows chỉ `shutdown` KHÔNG đánh thức `recv` đang chờ (thử 16-10: luồng đọc treo tới hết hạn), `close` thì có (10053 / 10038 ngay)."""
+        for step in (lambda: self._sock.shutdown(socket.SHUT_RDWR), self._sock.close):
+            try:
+                step()
+            except OSError:
+                pass
+
 
 def accept_key(key: str) -> str:
     return base64.b64encode(hashlib.sha1((key + GUID).encode("ascii")).digest()).decode("ascii")
@@ -224,6 +233,9 @@ class _Buffered:
 
     def settimeout(self, value: float | None) -> None:
         self._sock.settimeout(value)
+
+    def shutdown(self, how: int) -> None:
+        self._sock.shutdown(how)
 
     def close(self) -> None:
         self._sock.close()

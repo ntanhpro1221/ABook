@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import socket
 import threading
 import time
 from pathlib import Path
@@ -95,7 +96,7 @@ class _SlowFake(edge.EdgeClient):
     def _connect(self):  # noqa: ANN202
         raise AssertionError("không nối mạng thật")
 
-    def _speak_one(self, voice, text, compensation_ticks, deadline):  # noqa: ANN001, ANN202
+    def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None):  # noqa: ANN001, ANN202
         order = edge.speech_pieces(SENTENCES).index(text)
         with self.lock:
             self.live += 1
@@ -130,10 +131,91 @@ def test_a_failing_piece_fails_the_clip_with_the_same_exception() -> None:
     client = _SlowFake(delays={0: 0.1}, fail={1: edge.EdgeRejected("từ chối")})
     with pytest.raises(edge.EdgeRejected):
         client.synthesize(SENTENCES, edge.DEFAULT_VOICE)
-    # Hai mảnh hỏng: lỗi của mảnh đứng TRƯỚC (như khi đọc nối tiếp).
-    client = _SlowFake(fail={0: edge.EdgeOffline("mất mạng"), 1: edge.EdgeRejected("từ chối")})
-    with pytest.raises(edge.EdgeOffline):
+    # Mảnh hỏng TRƯỚC theo thời gian quyết, không đợi mảnh đứng trước nó trong câu chữ đọc xong.
+    client = _SlowFake(delays={0: 1.0}, fail={0: edge.EdgeOffline("mất mạng"), 1: edge.EdgeRejected("từ chối")})
+    started = time.monotonic()
+    with pytest.raises(edge.EdgeRejected):
         client.synthesize(SENTENCES, edge.DEFAULT_VOICE)
+    assert time.monotonic() - started < 0.8
+
+
+def test_a_failing_piece_cuts_the_sockets_of_the_pieces_still_reading(monkeypatch) -> None:
+    """Mảnh 2 bị từ chối ngay: clip hỏng liền, ổ cắm của mảnh 1 / 3 (đang chờ Edge) bị cắt, chỗ kết nối trả ngay, không mảnh nào thử lại."""
+    monkeypatch.setattr(edge, "_connections", threading.BoundedSemaphore(edge.EDGE_CONNECTIONS))
+    pieces = edge.speech_pieces(SENTENCES)
+    connects: list[str] = []
+    aborted: list[str] = []
+    lock = threading.Lock()
+
+    class _Connection:
+        def __init__(self) -> None:
+            self.text = ""
+            self.cut = threading.Event()
+
+        def send_text(self, text: str) -> None:
+            if "<speak" in text:
+                self.text = next(piece for piece in pieces if edge.escape(piece) in text)
+
+        def abort(self) -> None:
+            with lock:
+                aborted.append(self.text)
+            self.cut.set()
+
+        def close(self) -> None:
+            pass
+
+    class _Client(edge.EdgeClient):
+        def _connect(self):  # noqa: ANN202
+            connection = _Connection()
+            with lock:
+                connects.append("x")
+            return connection
+
+    def fake_turn(connection, _compensation, deadline, **_options):  # noqa: ANN001, ANN202
+        if connection.text == pieces[1]:
+            time.sleep(0.2)  # để mọi mảnh kịp mở kết nối
+            raise edge.EdgeRejected("từ chối")
+        if not connection.cut.wait(max(0.0, deadline - time.monotonic())):
+            return b"x" * 6000, []
+        raise edge.EdgeDropped("bị cắt")  # như recv khi ổ cắm bị shutdown
+
+    monkeypatch.setattr(edge, "read_turn", fake_turn)
+    started = time.monotonic()
+    with pytest.raises(edge.EdgeRejected):
+        _Client().synthesize(SENTENCES, edge.DEFAULT_VOICE)
+    assert time.monotonic() - started < 2.0
+    for _ in range(40):  # luồng mảnh thoát sau khi bị cắt
+        if edge._connections._value == edge.EDGE_CONNECTIONS:  # noqa: SLF001
+            break
+        time.sleep(0.05)
+    assert edge._connections._value == edge.EDGE_CONNECTIONS  # noqa: SLF001 - mọi chỗ đã trả
+    assert sorted(aborted) == sorted(piece for n, piece in enumerate(pieces) if n != 1)
+    assert len(connects) == len(pieces)  # mảnh bị cắt không thử lại
+
+
+def test_websocket_abort_wakes_a_reader_blocked_in_another_thread() -> None:
+    from abook.readaloud import websocket
+    left, right = socket.socketpair()
+    left.settimeout(5.0)  # như kết nối thật (read_timeout): recv đi qua select
+    try:
+        connection = websocket.Connection(websocket._Buffered(left, b""))  # noqa: SLF001
+        errors: list[BaseException] = []
+
+        def reader() -> None:
+            try:
+                connection.recv()
+            except BaseException as error:  # noqa: BLE001
+                errors.append(error)
+
+        thread = threading.Thread(target=reader)
+        thread.start()
+        time.sleep(0.1)
+        connection.abort()
+        thread.join(2)
+        assert not thread.is_alive() and errors and isinstance(errors[0], websocket.WebSocketError)
+        connection.close()
+    finally:
+        right.close()
 
 
 def test_a_dropped_piece_is_retried_alone_and_ends_as_dropped_when_it_keeps_failing(fake_edge, monkeypatch) -> None:
