@@ -42,3 +42,8 @@ Thêm ca mới: viết file `*.json` với `words` tính tay (đừng chép kế
 `spoken/layout.json` (`[{id, origin, readings?, text, spoken, spans}]`: `spoken` = chuỗi gửi Edge, `spans[i]` = [chữ đọc đầu, chữ đọc cuối] của chữ hiện `i`, null khi chữ ấy không còn chữ đọc nào)
 và `spoken/words.json` (mốc Edge báo trên chuỗi đọc -> `words` của từng chữ hiện, tính tay). Python `abook/readaloud/spoken.py` (`tests/test_readaloud_spoken.py`) và Kotlin `SpokenText.kt`
 (`SpokenTextTest`) đọc cùng hai file này. 21 ca layout là ca đo a39 (Whisper: âm tiết sai 29% chữ thô -> 12% chữ chuẩn hoá).
+
+## `edge/pieces.json` - cắt mảnh đọc song song của Edge
+
+`{cases: [{note, text, pieces}]}`: chữ vào (bịa) -> các mảnh gửi Edge cùng lúc cho một đoạn. Python `abook/readaloud/edge.py` `speech_pieces` (`tests/test_readaloud_edge_pieces.py`) và Kotlin `EdgePieces.split`
+(`EdgePiecesTest`) đọc cùng file này; hằng số (`PIECE_PARALLEL`, `WHOLE_CHARS`, `MIN_PIECE_CHARS`, `LONG_SENTENCE_CHARS`) ở cả hai bên phải bằng nhau. Chỉ chữ trong BMP (Python đếm code point, Kotlin đếm UTF-16).
