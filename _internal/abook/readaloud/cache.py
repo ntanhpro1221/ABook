@@ -17,6 +17,7 @@ from . import names
 
 LIMIT_BYTES = 500 * 1024 * 1024
 NAME = re.compile(r"[0-9a-f]{64}\.(mp3|wav)")
+CLIP_FILE = re.compile(r"[0-9a-f]{64}\.(json|mp3|wav)")
 TYPES = {"mp3": "audio/mpeg", "wav": "audio/wav"}
 
 
@@ -113,6 +114,11 @@ class ClipCache:
             if self._size is not None:
                 self._size = max(0, self._size - freed)
         return freed
+
+    def clear(self) -> int:
+        """Xoá mọi clip khỏi bộ đệm ("Dọn bản đọc đã làm" ở Cài đặt); trả số byte giải phóng. Chỉ file đúng dạng clip - không đụng thứ khác nằm cạnh."""
+        keys = {entry.name.split(".", 1)[0] for entry in self._entries() if CLIP_FILE.fullmatch(entry.name)}
+        return self.remove(keys)
 
     @staticmethod
     def _size_of(path: Path) -> int:
@@ -211,6 +217,15 @@ class ClipBooks:
     def keys(self, book: str) -> set[str]:
         with self._lock:
             return set(self._load().get(book, ()))
+
+    def forget_all(self) -> None:
+        """Bỏ cả sổ (bộ đệm vừa được dọn sạch)."""
+        with self._lock:
+            self._books = {}
+            try:
+                self.path.write_bytes(b"")
+            except OSError:
+                pass
 
     def forget(self, book: str, keys: "set[str] | frozenset[str]") -> None:
         """Bỏ `keys` khỏi sổ của `book` (đã xoá khỏi bộ đệm, hay đã bị dọn) và ghi lại file gọn."""

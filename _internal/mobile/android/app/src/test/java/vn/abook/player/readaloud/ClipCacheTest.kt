@@ -106,6 +106,28 @@ class ClipCacheTest {
     }
 
     @Test
+    fun clearRemovesEveryClipAndPinButKeepsAFileBeingWritten() {
+        val pins = File(dir.parentFile, "${dir.name}-pins-clear.txt")
+        try {
+            val cache = ClipCache(dir, 1_000_000, pins) { now }
+            cache.pin("edge:v", "a")
+            put(cache, "edge:v", "a", 1000)
+            put(cache, "edge:v", "b", 2000)
+            val writing = cache.temp("mp3").apply { writeBytes(ByteArray(7)) }
+            assertTrue(cache.sizeBytes() > 3000)
+            val freed = cache.clear()
+            assertTrue(freed > 3000)
+            assertFalse(cache.contains("edge:v", "a"))
+            assertFalse(cache.contains("edge:v", "b"))
+            assertFalse(cache.isPinned("edge:v", "a"))
+            assertEquals(7L, cache.sizeBytes())
+            assertTrue("file đang ghi dở ở lại", writing.exists())
+        } finally {
+            pins.delete()
+        }
+    }
+
+    @Test
     fun pinnedClipsOutliveNewerUnpinnedOnesUntilTheListenerReachesThem() {
         val pins = File(dir.parentFile, "${dir.name}-pins.txt")
         try {

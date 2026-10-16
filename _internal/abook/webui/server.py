@@ -5228,9 +5228,12 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.app.readaloud.cache_usage((query.get("bookId") or [""])[0] or None))
 
     def delete_readaloud_cache(self, query: dict[str, list[str]]) -> None:
-        # "Xoá bản đọc đã làm" của cuốn `bookId` (nghe tới đâu đọc lại tới đó).
+        # "Xoá bản đọc đã làm" của cuốn `bookId` (nghe tới đâu đọc lại tới đó); `all=1`: "Dọn bản đọc đã làm" của cả máy (Cài đặt > Giọng đọc).
         self.app._mutating()
         book = (query.get("bookId") or [""])[0]
+        if not book and (query.get("all") or [""])[0] == "1":
+            self._send_json(HTTPStatus.OK, self.app.readaloud.clear_all())
+            return
         if not book:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu cuốn")
         self._send_json(HTTPStatus.OK, self.app.readaloud.clear_book(book))

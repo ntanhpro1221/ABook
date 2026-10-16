@@ -615,6 +615,39 @@ def test_prepare_tags_its_clips_with_the_book(tmp_path: Path) -> None:
     assert service.prepare.status()["state"] == "done" and service.cache_usage("a")["book"] > 0
 
 
+def test_the_prepare_status_belongs_to_its_book_and_goes_when_that_books_clips_are_cleared(tmp_path: Path) -> None:
+    service = ReadAloud(tmp_path / "cache", [FakeProvider()])
+    service.prepare.start("fake:ngoc", ["Một hai ba.", "Bốn năm sáu."], "Chương 2", None, None, "a")
+    service.prepare.join(10)
+    status = service.prepare.status()
+    assert status["state"] == "done" and status["bookId"] == "a", "giao diện so mã cuốn: dòng 'Đã làm trước' không hiện ở cuốn khác"
+    service.clear_book("b")
+    assert service.prepare.status()["state"] == "done", "xoá bản đọc của cuốn khác không đụng việc của cuốn a"
+    service.clear_book("a")
+    assert service.prepare.status() == {"state": "idle"}, "xoá bản đọc của cuốn a thì dòng 'Đã làm trước Chương 2' mất theo"
+    service.clip("fake:ngoc", "Bảy tám chín.", book="a")
+    assert service.cache_usage("a")["book"] > 0
+
+
+def test_clearing_everything_empties_the_cache_the_books_and_the_prepare_line(tmp_path: Path) -> None:
+    service = ReadAloud(tmp_path / "cache", [FakeProvider()])
+    service.clip("fake:ngoc", "Một hai ba.", book="a")
+    service.clip("fake:ngoc", "Không thuộc cuốn nào.")
+    service.prepare.start("fake:ngoc", ["Bốn năm sáu."], "Chương 3", None, None, "b")
+    service.prepare.join(10)
+    (tmp_path / "cache" / "ghi-chu-khac.txt").write_text("không phải clip", encoding="utf-8")
+    assert service.cache_usage("a")["book"] > 0
+    after = service.clear_all()
+    assert after["book"] == 0 and after["total"] <= len("không phải clip".encode("utf-8"))
+    assert [path.name for path in (tmp_path / "cache").iterdir() if path.is_file()] == ["ghi-chu-khac.txt"], "chỉ clip bị dọn, file lạ cạnh đó ở lại"
+    assert service.cache_usage("a")["book"] == 0 and service.cache_usage("b")["book"] == 0
+    assert service.prepare.status() == {"state": "idle"}
+    for text in ("Một hai ba.", "Không thuộc cuốn nào."):
+        with pytest.raises(VoiceError):
+            service.clip("fake:ngoc", text, cached_only=True)
+    assert ReadAloud(tmp_path / "cache", [FakeProvider()]).cache_usage("a")["book"] == 0, "sổ cuốn cũng sạch sau lần mở app sau"
+
+
 def test_the_prepare_estimate_matches_what_the_phone_shows() -> None:
     from abook.readaloud import prepare
 
@@ -646,10 +679,17 @@ def test_the_cache_and_estimate_endpoints(tmp_path: Path) -> None:
         assert _request(server.port, "POST", "/api/readaloud/prepare/plan", headers=headers, body={"voice": "fake:ngoc", "chars": ["x"]})[0] == 400
         assert _request(server.port, "POST", "/api/readaloud/prepare/plan", headers=headers, body={"voice": "ghost:x", "chars": [1]})[0] == 400
         assert _request(server.port, "DELETE", "/api/readaloud/cache", headers=headers)[0] == 400
+        assert _request(server.port, "DELETE", "/api/readaloud/cache?all=0", headers=headers)[0] == 400, "chỉ all=1 mới dọn cả máy"
         status, data, _ = _request(server.port, "DELETE", "/api/readaloud/cache?bookId=s%C3%A1ch-a", headers=headers)
         assert status == 200 and json.loads(data)["book"] == 0
         status, data, _ = _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body={**body, "cachedOnly": True})
         assert json.loads(data) == {"cached": False, "reason": "uncached"}
+        # Cài đặt > Giọng đọc: cả máy
+        assert _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body=body)[0] == 200
+        status, data, _ = _request(server.port, "GET", "/api/readaloud/cache", headers=headers)
+        assert json.loads(data)["total"] > 0
+        status, data, _ = _request(server.port, "DELETE", "/api/readaloud/cache?all=1", headers=headers)
+        assert status == 200 and json.loads(data) == {"book": 0, "total": 0}
     finally:
         server.stop()
 

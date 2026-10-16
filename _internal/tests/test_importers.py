@@ -44,6 +44,19 @@ def test_real_world_book_shapes_give_the_expected_book(name: str) -> None:
         assert importers.import_text(FIXTURES / name, split_chapters=True).to_dict() == expected(name[:-4] + ".split")
 
 
+def test_a_tac_gia_line_under_the_title_fills_the_author_field_but_stays_in_the_text() -> None:
+    for split in (False, True):
+        book = importers.import_text(FIXTURES / "author_line.txt", split_chapters=split)
+        assert (book.title, book.author) == ("Rừng Tre Xanh", "Hồ Quang Minh")
+        assert any("Tác giả: Hồ Quang Minh" in chapter.text for chapter in book.chapters), "chữ của sách không bị sửa: dòng ấy chỉ là gợi ý cho ô tác giả"
+    assert importers.import_text(FIXTURES / "whole.txt").author is None, "không có dòng 'Tác giả' thì không đoán"
+    assert importers.import_text(FIXTURES / "gutenberg.txt").author == "Lê Thử Nghiệm", "phần đầu Project Gutenberg vẫn là nguồn chắc nhất"
+    cases = expected("author_line.cases")
+    assert len(cases) >= 8
+    for case in cases:
+        assert importers.author_line(case["text"]) == case["author"], case["text"]
+
+
 def test_a_txt_table_of_contents_is_not_empty_chapters_and_never_names_the_book() -> None:
     book = importers.import_text(FIXTURES / "toc_txt.txt", split_chapters=True)
     assert titles(book) == [importers.PREAMBLE, "Chương 1: Bến đò", "Chương 2: Mưa", "Chương 3: Nước lên"]

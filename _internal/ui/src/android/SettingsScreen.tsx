@@ -137,6 +137,7 @@ export function SettingsScreen() {
           </p>
           <VoiceSettings
             api={phoneVoices}
+            storage={{ usage: () => ReadAloud.cacheUsage(), clear: () => ReadAloud.cacheClear() }}
             deviceHint="Máy chưa có giọng tiếng Việt. Cài trong Cài đặt của điện thoại → Chuyển văn bản thành giọng nói → tải dữ liệu giọng Tiếng Việt."
             modules={(reload) => (
               <>

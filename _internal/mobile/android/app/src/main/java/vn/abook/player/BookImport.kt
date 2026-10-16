@@ -411,7 +411,8 @@ object BookImport {
         if (fromText.isNotEmpty()) book.title = fromText
         val (title, author) = gutenbergHeader(chapter.text)
         if (title.isNotEmpty()) book.title = title
-        book.author = author.ifEmpty { null }
+        // Tác giả: phần đầu của Project Gutenberg, không thì dòng "Tác giả: X" ngay dưới tên truyện (importers._txt_file); chỉ điền ô tác giả, dòng ấy vẫn ở trong chữ.
+        book.author = author.ifEmpty { authorLine(chapter.text) }.ifEmpty { null }
         if (split && parts.isNotEmpty()) {
             book.chapters.clear()
             book.chapters.addAll(parts)
@@ -429,6 +430,29 @@ object BookImport {
             if (pyStrip(line).isNotEmpty()) {
                 val alone = index + 1 < lines.size && pyStrip(lines[index + 1]).isEmpty() && !pyRstrip(line).lastOrNull().let { it != null && it.isDigit() }
                 return if (alone) titleFromLine(line) else ""
+            }
+        }
+        return ""
+    }
+
+    private val AUTHOR_KEYS = listOf("tác giả", "author")
+    private val AUTHOR_SEPARATOR = Regex("[ \t]*(?::|：|[-–—])[ \t]*(.+)")
+    private const val AUTHOR_HEAD_LINES = 4
+    private const val AUTHOR_MAX_CHARS = 60
+
+    /** `importers.author_line`: tên tác giả từ dòng "Tác giả: X" / "Tác giả - X" / "Author: X" ngay dưới tên truyện (trong 4 dòng có chữ đầu file); không có thì "". */
+    internal fun authorLine(text: String): String {
+        var seen = 0
+        for (raw in text.split("\n", limit = 41).take(40)) {
+            val line = nfc(pyStrip(raw))
+            if (line.isEmpty()) continue
+            seen += 1
+            if (seen > AUTHOR_HEAD_LINES) break
+            for (key in AUTHOR_KEYS) {
+                if (line.length < key.length || casefold(line.substring(0, key.length)) != key) continue
+                val match = AUTHOR_SEPARATOR.matchEntire(line.substring(key.length)) ?: continue
+                val name = words(match.groupValues[1]).trimEnd(' ', '.', ',', ';')
+                if (name.isNotEmpty() && name.codePointCount(0, name.length) <= AUTHOR_MAX_CHARS) return name
             }
         }
         return ""

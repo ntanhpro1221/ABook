@@ -182,4 +182,16 @@ class ClipCache(
     }
 
     fun sizeBytes(): Long = dir.listFiles()?.filter { it.isFile }?.sumOf { it.length() } ?: 0L
+
+    /** "Dọn bản đọc đã làm" (Cài đặt > Giọng đọc): xoá mọi đoạn đã đọc và bỏ mọi ghim; file tạm của đoạn đang được ghi ở lại (giọng đang đọc dở không mất file). Trả số byte giải phóng. */
+    @Synchronized
+    fun clear(): Long {
+        var freed = 0L
+        dir.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") }?.forEach {
+            val size = it.length()
+            if (it.delete()) freed += size
+        }
+        clearPins()
+        return freed
+    }
 }

@@ -60,7 +60,7 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
       {
         onSuccess: () => {
           toast.success(spoken ? `“${surface}” sẽ đọc là “${cleanSpoken(spoken)}”` : `“${surface}” đọc lại như chữ trong sách`, {
-            description: "Áp cho cả cuốn; đoạn đã đọc sẵn đổi từ lần nghe sau.",
+            description: "Đã đổi cách đọc - áp dụng ngay, cho cả cuốn.",
           });
           onDone();
         },
@@ -114,7 +114,10 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
   const aloud = useReadAloudTry(bookId);
   const tokens = useMemo(() => (sentence ? sentenceTokens(sentence) : []), [sentence]);
   const [picked, setPicked] = useState<PhraseSelection | null>(null);
+  // "Nối thành cụm": chữ bấm kế tiếp mở rộng cụm tới chữ ấy (không thì bấm chữ nào cũng chỉ chọn riêng chữ đó - bấm nhầm không làm thành cụm, bố cục không nhảy).
+  const [joining, setJoining] = useState(false);
   useEffect(() => {
+    setJoining(false);
     const held = word ? wordCore(word) : "";
     const at = wordIndex !== undefined && tokens[wordIndex]?.core === held ? wordIndex : tokens.findIndex((token) => token.core === held);
     setPicked(held && at >= 0 ? { from: at, to: at } : null);
@@ -149,7 +152,10 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
                   key={at}
                   type="button"
                   aria-pressed={Boolean(picked && at >= picked.from && at <= picked.to)}
-                  onClick={() => setPicked(pickWord(tokens, picked, at))}
+                  onClick={() => {
+                    setPicked(pickWord(tokens, picked, at, joining));
+                    setJoining(false);
+                  }}
                   className={cn(
                     "inline-flex h-8 items-center rounded-full border px-2.5 text-sm pointer-coarse:h-10",
                     picked && at >= picked.from && at <= picked.to ? "border-accent bg-accent-soft text-accent-text" : "border-line hover:bg-hover",
@@ -160,13 +166,26 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
               ) : null,
             )}
           </div>
-          <p className="mt-1.5 text-xs text-fg-2 text-pretty">
-            {single
-              ? `Tên có nhiều chữ (vd “Hạ Vy”)? Bấm thêm chữ cuối của cụm - tối đa ${MAX_PHRASE_WORDS} chữ liền nhau, không có dấu câu ở giữa.`
-              : picked
-                ? "Bấm một chữ trong cụm để chọn lại từ đầu."
-                : "Bấm một chữ để chọn."}
-          </p>
+          {/* Hàng này luôn cao một dòng (nút hay chữ): chọn chữ khác không làm các chip phía trên xê dịch. */}
+          <div className="mt-1.5 flex min-h-8 flex-wrap items-center gap-x-2 text-xs text-fg-2">
+            {single && !joining ? (
+              <>
+                <span>Tên có nhiều chữ (vd “Hạ Vy”)?</span>
+                <Button size="sm" variant="ghost" type="button" onClick={() => setJoining(true)}>
+                  Nối thành cụm
+                </Button>
+              </>
+            ) : joining ? (
+              <>
+                <span className="text-pretty">Bấm chữ cuối của cụm - tối đa {MAX_PHRASE_WORDS} chữ liền nhau, không có dấu câu ở giữa.</span>
+                <Button size="sm" variant="ghost" type="button" onClick={() => setJoining(false)}>
+                  Thôi
+                </Button>
+              </>
+            ) : (
+              <span>{picked ? "Bấm một chữ để chọn lại từ đầu." : "Bấm một chữ để chọn."}</span>
+            )}
+          </div>
         </div>
       )}
       {surface && <ReadingForm key={surface} bookId={bookId} surface={surface} current={readingFor(readings.data, surface)} aloud={aloud} onDone={onClose} />}
