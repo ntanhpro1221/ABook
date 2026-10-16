@@ -101,6 +101,66 @@ def test_a_long_sentence_without_marks_is_not_cut_below_the_service_limit() -> N
     assert edge.speech_pieces(sentence) == [sentence]
 
 
+# uxfix55: đoạn người nghe đứng chờ bị cắt cân bằng - câu dài (kể cả dưới 200 ký tự) cắt ở vế khi nó dài hơn 1,3 x tổng / số mảnh, để mảnh dài nhất không quyết định lúc có tiếng.
+_S = ("Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ, và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ.")
+_M = ("Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi.")
+_Q = "Mưa bắt đầu rơi lúc nào không ai hay biết."
+_LONG = ("Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng, qua những con suối nhỏ trong veo chảy róc rách bên đường, qua cả những xóm làng xơ xác sau mùa lũ lớn, "
+         "mà vẫn không tìm thấy bóng dáng của người dẫn đường, và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống, cho tới lúc trời tối hẳn.")
+BALANCED = {
+    "ba câu ~160 + câu ngắn": " ".join([_S, _M, _S, _Q]),
+    "câu rất dài ở cuối": " ".join([_Q, _M, _LONG]),
+    "câu rất dài ở đầu": " ".join([_LONG, _Q, _M]),
+    "câu rất dài ở giữa": " ".join([_M, _LONG, _Q, _Q]),
+    "hai câu ~160 + câu 320 (kiểu a57)": " ".join([_S, _LONG, _M, _Q]),
+    "năm câu ~160": " ".join([_S, _M, _S, _M, _S]),
+}
+
+
+@pytest.mark.parametrize("name", list(BALANCED))
+@pytest.mark.parametrize("rank", [0, edge.RANK_BACKGROUND])
+def test_the_longest_piece_stays_near_the_balanced_size(name, rank) -> None:
+    text = BALANCED[name]
+    limit = edge.piece_limit(rank)
+    pieces = edge.speech_pieces(text, rank)
+    assert 1 < len(pieces) <= limit
+    assert " ".join(pieces).split() == text.split()
+    assert all(len(piece) >= edge.MIN_PIECE_CHARS for piece in pieces)
+    assert max(map(len, pieces)) <= 1.4 * len(text) / limit, [len(piece) for piece in pieces]
+
+
+def test_a_sentence_under_two_hundred_chars_is_cut_when_it_is_longer_than_a_balanced_piece() -> None:
+    text = " ".join([_S, _M, _S, _M])  # 4 câu ~160, rank 0: 6 mảnh ~105
+    assert max(len(sentence) for sentence in edge.split_sentences(text)) <= edge.LONG_SENTENCE_CHARS
+    assert edge.clause_threshold(len(text), edge.TARGET_PIECES) < edge.LONG_SENTENCE_CHARS
+    pieces = edge.speech_pieces(text, 0)
+    assert len(pieces) == edge.TARGET_PIECES
+    assert max(map(len, pieces)) < 125  # trước uxfix55: 4 mảnh ~155
+    # Rank khác: ngưỡng tối đa vẫn LONG_SENTENCE_CHARS, câu 160 không bị cắt.
+    assert edge.clause_threshold(len(text), edge.PIECE_PARALLEL) == edge.LONG_SENTENCE_CHARS
+
+
+def test_the_clause_threshold_is_bounded_by_the_old_limit_and_the_minimum_piece() -> None:
+    assert edge.clause_threshold(10_000, 3) == edge.LONG_SENTENCE_CHARS
+    assert edge.clause_threshold(100, 6) == edge.MIN_PIECE_CHARS
+    assert edge.clause_threshold(600, 6) == 130
+    assert edge.clause_threshold(313, 3) == 136
+
+
+def test_a_clause_cut_keeps_the_short_join_tail() -> None:
+    pieces = edge.speech_pieces(_LONG, 0)
+    assert len(pieces) > 1
+    assert edge.join_tail_ms(pieces[0]) == edge.JOIN_TAIL_OTHER_MS  # cắt ở vế: kết thúc bằng dấu phẩy, không phải hết câu
+    assert edge.join_tail_ms(pieces[-1]) == edge.JOIN_TAIL_SENTENCE_MS
+
+
+def test_short_clauses_do_not_merge_a_paragraph_into_one_piece() -> None:
+    # Hai câu 74 + 82 ký tự: vế 31 + 42 + 45 + 36, mỗi mảnh 3 -> chia ba cho mảnh 31 và 36, gộp dây chuyền thành 1; phải còn 2 mảnh.
+    text = ("Con thuyền cập bến lúc nửa đêm, trên boong chỉ còn mình người lái đò thức. "
+            "Ông ngồi hút thuốc lào và nhìn dòng sông đen, chờ trời sáng để đón khách đầu tiên.")
+    assert len(edge.speech_pieces(text)) == 2
+
+
 def test_pieces_respect_the_service_byte_limit() -> None:
     text = " ".join(["Câu số một hai ba."] * 600)
     pieces = edge.speech_pieces(text)
