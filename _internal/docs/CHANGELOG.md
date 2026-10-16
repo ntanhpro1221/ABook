@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.78] - 2026-10-16
+
 ### Nghe ngay
 
 - Trên điện thoại, đoạn phía sau lỡ không đọc được bằng giọng trực tuyến (mạng chập chờn, dịch vụ trục trặc) không còn làm giọng dừng giữa chừng khi bạn vẫn còn đoạn đã đọc sẵn để nghe: máy hỏi lại ngầm, chỉ báo lỗi nếu bạn nghe tới đoạn ấy mà vẫn chưa có. Những lần hỏi lại ngầm nhẹ hơn trước (một lượt, không giữ máy thức).
