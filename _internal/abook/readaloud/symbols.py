@@ -13,6 +13,8 @@ from __future__ import annotations
 import re
 import unicodedata
 
+from .abbreviations import LETTERS
+
 OPEN = "\"'“‘([【「『《〈«{〔"
 CLOSE = "\"'”’)]】」』》〉»}〕"
 PUNCT_MARKS = ".,;:!?…"
@@ -22,8 +24,8 @@ FRACTION_WORDS = frozenset("phần chia nửa hết chiếm tổng mất sức".
 SCORE_WORDS = frozenset("điểm sao đánh câu hỏi đúng sai".split())  # "Đánh giá 4/5", "đúng 7/10 câu": điểm, đọc "trên"
 STAT_WORDS = frozenset("hp mp sp exp xp lv lvl level cấp hạng rank điểm giá str agi vit int dex luk atk def máu mana tiền vàng tuổi sức mạnh nhanh nhẹn phòng thủ thể lực ma lực thiện cảm kinh nghiệm chỉ số tốc độ quyến "
                        "rũ cảm tính may mắn".split())
-MASK_PLACES = frozenset("năm tầng lầu phòng khu lớp tập chương".split())  # đứng trước số bị che ("tầng 8x", "năm 200x")
-VALUE_WORDS = frozenset("là tới xuống đến mức khoảng dưới ở tầng thành hoặc đa âm bằng sang lên vì năm".split())  # chữ đứng ngay trước "-3" mà "-" chỉ có thể là dấu âm
+MASK_PLACES = frozenset("năm tầng lầu phòng khu lớp tập chương thứ tuổi đời".split())  # đứng trước số bị che ("tầng 8x", "năm 200x")
+VALUE_WORDS = frozenset("là tới xuống đến mức khoảng dưới ở tầng thành hoặc đa âm bằng sang lên vì năm toán tổng đạt còn".split())  # chữ đứng ngay trước "-3" mà "-" chỉ có thể là dấu âm
 PENALTY_WORDS = frozenset("mất thêm giảm phạt thất bại hao tổn thương".split())  # lượng bị trừ: "Mất thêm -15%", "Thất bại: -90%"
 DATE_WORDS = frozenset("ngày mùng mồng hôm nhật lịch hạn sáng trưa chiều tối lễ tết niệm".split())  # chữ chỉ ngày trong ±3 chữ: "d/m" mới là ngày tháng
 DATE_PREFIX = frozenset("ngày mùng mồng hôm".split())  # đã có chữ này ngay trước số thì không thêm "ngày"
@@ -39,10 +41,14 @@ RATIO_WORDS = frozenset("tỉ tỷ lệ chia cược kèo".split())  # "tỉ l�
 DUEL_WORDS = frozenset("đấu đối trận đơn song solo đánh".split())  # "đấu 1:1": một chọi một
 RATIO_SLASH = frozenset("tỉ tỷ lệ xác suất chia".split())  # "tỉ lệ 1/100": một phần trăm
 DIRECTION_WORDS = frozenset("tăng giảm lên xuống cao thấp up down".split())
+DASHES = "—–―"
 KEY_WORDS = frozenset("ctrl alt shift tab esc enter".split())
 NUMBER_WORDS = frozenset("không một hai ba bốn năm sáu bảy tám chín mười".split())
 KEYS = {"↑": "lên", "↓": "xuống", "←": "trái", "→": "phải", "↖": "lên trái", "↗": "lên phải", "↘": "xuống phải", "↙": "xuống trái"}
-KEY_RUN = re.compile("[" + "".join(KEYS) + "]{2,}")  # "↑↑↓↓←→←→": phím bấm, mỗi mũi tên một hướng
+KEY_RUN = re.compile("[" + "".join(KEYS) + r"]{2,}(?:[A-Za-z]{1,4}(?![^\W\d_]))?")  # "↑↑↓↓←→←→BA": phím bấm (mỗi mũi tên một hướng, chữ dính sau đọc từng chữ cái); cùng một hướng "→→→→" chỉ là trang trí
+QUANTITY_WORDS = STAT_WORDS | frozenset("sát thương damage dmg exp strength intelligence agility vitality dexterity luck attack defense speed power ngắm zoom phóng".split())  # danh từ mà "Nx" nhân lên: "10x Sức mạnh", "(2x Intelligence)", "kính ngắm 8x"
+PHRASE_BREAK = re.compile(r"[:;.!?…,()\[\]【】「」『』“”\"]")  # ranh giới cụm khi đếm chữ hai bên "×"
+MASK_MARKS = "〇○◯□■▽●△▲★☆%￥#@＃＠$"  # ký hiệu che chữ: "×" lẫn trong dãy này là một phần của chỗ che
 KAOMOJI = "´゜∀◕◡‿≧≦╯╰╭ω∇ಠ益ﾉﾟдДᴗヮ꒳˶˘ʕʔᴥ◠ヽ٩۶ᕕᕗ꒪ↀ͜͡ʖ￣ェ⑉﹏"  # chỉ gặp trong mặt cười kiểu Nhật
 KAOMOJI_SPAN = re.compile(r"[^\s\w?!.,…\"“”]*[" + KAOMOJI + r"][^\s\w?!.,…\"“”]*")
 FACE_UNDERSCORE = re.compile(r"\([\^=;°]_+[\^=;°]\)")  # "(^_^)", "(=_=)": mặt cười có gạch dưới
@@ -148,6 +154,7 @@ class Spot:
 KEEP = (None, False)
 SILENT = ("", False)
 PAUSE = ("", True)
+OVER = ("trên", False)  # a/b giữa hai số: sea-g2p đọc "trên" (sai khi b trông như năm: "5/1000" thành "tháng năm một nghìn"); nói ra luôn để giọng Edge nhận cùng chữ
 
 
 def unit_slash(left: str, right: str) -> bool:
@@ -177,11 +184,11 @@ def _slash(c: Spot) -> tuple:
         if not (c.glued_l and c.glued_r):
             if valid and a > b and not scored and not c.left3 & (STAT_WORDS - {"chỉ", "số"}):
                 return ("tháng", False)  # "8 / 3" cách khoảng: a > b thì không phải phân số / điểm, là ngày tháng
-            return KEEP  # "5813 / 5813": thanh chỉ số, sea-g2p đọc "trên"
+            return OVER  # "5813 / 5813": thanh chỉ số, "trên" (nói ra luôn để Edge đọc đúng như sea-g2p)
         if c.left3 & (STAT_WORDS - {"chỉ", "số"}) and not (a < b <= 100 and c.left3 & FRACTION_HINTS):
-            return KEEP  # "HP: 120/300"; "lượng HP bằng 1/3" là phân số; "chỉ", "số" (nửa của "chỉ số") không đủ làm nhãn
+            return OVER  # "HP: 120/300"; "lượng HP bằng 1/3" là phân số; "chỉ", "số" (nửa của "chỉ số") không đủ làm nhãn
         if c.left3 & RATIO_SLASH:
-            return ("phần", False) if a < b else KEEP  # "tỉ lệ 1/100"
+            return ("phần", False) if a < b else OVER  # "tỉ lệ 1/100"
         signal = (words & DATE_WORDS) - ({"tối"} if words & {"đa", "thiểu", "ưu", "cao"} else set())  # "tối đa 3/5" không phải buổi tối
         if valid and (signal or WEEKDAY.search((c.left[-30:] + " " + c.right[:30]).lower())):
             if c.l2.lower() in DATE_PREFIX:
@@ -190,18 +197,20 @@ def _slash(c: Spot) -> tuple:
         if scored:
             return ("trên", False)  # điểm / sao / câu đúng / "nhãn: 3/4": x trên y
         if (a, b) == (24, 7) or (a == b == 1) or (a == b and re.match(r"\d+\s?[)\]]", c.right)):
-            return KEEP  # "24/7", "(1/1)": đếm số
+            return OVER  # "24/7", "(1/1)": đếm số
         if a < b <= 100 and (a == 1 or words & FRACTION_WORDS or re.search(r"[=+×]", c.left[-4:] + c.right[:6])):
             return ("phần", False)  # "1/10 thu nhập", "hết 2/10 máu", "3/4+1/6=...": phân số (một phần mười)
         if b in (10, 100) and a <= b:
-            return KEEP  # "8/10": đếm số
+            return OVER  # "8/10": đếm số
         if (a == 1 and b > 1) or (a < b <= 9):
             return ("phần", False)  # "1/3", "3/5": phân số bé
         if valid and a > b:
             return ("tháng", False)  # "8/3", "30/4": không có điểm / phân số thì là ngày tháng
-        return KEEP  # "15/8", "180/300": không có chữ chỉ ngày thì là chỉ số / tỉ lệ, để sea-g2p
+        return OVER  # "15/8", "180/300": không có chữ chỉ ngày thì là chỉ số / tỉ lệ
     if c.lch == "?" and k:
         return ("trên", False)
+    if k and not c.glued_l and not c.glued_r and c.l1[:1].isalpha() and c.l1.islower():
+        return ("chia", False)  # "sức khỏe / 2": chia cho hai
     word = re.match(r"[^\W\d_]+", c.right)
     right_word = word.group().lower() if word else ""
     digit_near = c.ltype == "digit" or bool(re.search(r"\d\s?[^\W\d_]{1,4}$", c.left[-8:]))
@@ -365,7 +374,7 @@ def _minus(c: Spot) -> tuple:
             return ("trừ", False) if _has(c.lch, "[【〔") else ("âm", False)  # "[-100 điểm]" mất điểm; "-14 điểm." đầu dòng
         if re.fullmatch(r"\d[\d.,]*[\s)\]】』」”’\"'.!?…]*", after):
             return ("âm", False)  # "-0!": cả dòng chỉ là một giá trị
-        return SILENT  # "-7. Quả nhiên": gạch đầu dòng
+        return ("âm", False)  # "-2 =))", "-517, -499", "\"-192√3": dính số là dấu âm dù đầu dòng (gạch đầu dòng thì có khoảng trắng: "- 7")
     follow = after[:14].lower()
     if re.search(r"(→|⇒|➜|➡|-+>|=+>)\s?$", c.left[-6:]) or re.search(r"[▲▼△▽↑↓]\($", c.left[-3:]):
         return ("âm", False)  # "100 → -50", "▼(-1.44)": giá trị mới
@@ -376,9 +385,11 @@ def _minus(c: Spot) -> tuple:
     if c.ltype == "space" and _has(c.left.rstrip()[-1:], "”’\""):
         return SILENT
     if re.match(r"\d+\s?[:：]", after):
-        return SILENT  # "Chương 07 -2: Tên"
+        return ("trừ", False) if c.ltype == "space" and c.l1[:1].isalpha() else SILENT  # "tuyệt mệnh -10:" hậu tố của tên kỹ năng; "Chương 07 -2: Tên" im
     stat = bool(c.left3 & (STAT_WORDS - {"chỉ", "số"})) or (c.l1.isupper() and 2 <= len(c.l1) <= 4) or re.search(r"(?:máu|sinh lực)(?:\s+[^\W\d]+){0,3}\s$", c.left.lower()) is not None  # "HP -1", "MGC -8", "Thanh máu của Shido -1"
     previous = re.search(r"(\d+)(?:st|nd|rd|th)?\s$", c.left[-6:]) if c.ltype == "space" and not stat else None
+    if previous and re.search(r"\d-\d+\s$", c.left[-10:]):
+        return ("trừ", False)  # "1-2-3 -25 điểm": sau một dãy số
     if previous:
         number = re.match(r"\d+", after).group()
         return SILENT if number == previous.group(1) else ("đến", False)  # "1 -2 năm", "chap 104 -105", "80 -90%"; "50 -50" (hoà): im
@@ -426,44 +437,51 @@ def _times_pre(c: Spot, sym: str) -> tuple:
 
 
 def _times_post(c: Spot, sym: str) -> tuple:
-    """"3x", "100x", "0,5x", "1x Cuộn phép", "194X" - sym ngay sau số. Trả (lời, ngắt, số chữ số đứng trước được gộp vào lời)."""
+    """"3x", "100x", "0,5x", "1x Cuộn phép", "194X" - sym ngay sau số. Trả (lời, ngắt, số chữ số đứng trước được gộp vào lời).
+    Số + x là con số bị che ("9x", "thứ 9x", "3x tuổi", "10x xem") thì "ích", là hệ số nhân của một đại lượng ("10x Sức mạnh", "kính ngắm 8x", "3x.") thì "N lần"."""
     number = re.search(r"\d+(?:[.,]\d+)?$", c.left).group()
     start = c.left[: len(c.left) - len(number)]
-    place = c.l2.lower() in MASK_PLACES  # "tầng 8x", "năm 200x": số bị che
+    place = c.l2.lower() in MASK_PLACES  # "tầng 8x", "năm 200x", "chương thứ 9x": số bị che
     if sym == "X" or place or (re.search(r"\d{3}$", number) and not re.match(r"\s?[a-zà-ỹ]|\s+[A-ZĐ]", c.right)):
         return ("ích", False, 0)  # "194X"
-    if (c.l2.lower() in ("đến", "tới") and re.search(r"\btừ\s", c.left[-40:].lower())) or (c.l2.lower() == "từ" and c.r1 in ("đến", "tới")):
+    if (c.l2.lower() in ("đến", "tới") and re.search(r"từ\s", c.left[-40:].lower())) or (c.l2.lower() == "từ" and c.r1 in ("đến", "tới")):
         return (number.replace(".", ",") + " lần", False, len(number))  # "từ 0x đến 1x": mức gấp, đọc "không lần"
+    if c.left3 & {"tuổi", "thế", "hệ", "gen", "đời", "sinh"} or c.right3 & {"km", "km/h", "m"} or c.rw1 in ("tuổi", "đời"):
+        return ("ích", False, 0)  # "tuổi 9x", "16x km/h", "3x tuổi"
+    if re.search(r"(?:sin|cos|tan|cot|log|ln)[\s(]*[\d/.,]*$", start.lower()):
+        return ("ích", False, 0)  # "cos2/3x": biến của hàm số
+    times = (number.replace(".", ",") + " lần", False, len(number))
+    if c.rw1 in QUANTITY_WORDS or c.l2.lower() in QUANTITY_WORDS:
+        return times  # "10x Sức mạnh", "(2x Intelligence)", "kính ngắm 8x"
     if re.search(r"[A-Za-z]$", start) or re.search(r"[+=(]", c.left[-4:] + c.right[:3]):
         return ("ích", False, 0)  # "Maxmalefic9x", "2x+3": biến
-    if c.left3 & {"tuổi", "thế", "hệ", "gen", "đời", "sinh"} or c.right3 & {"km", "km/h", "m"}:
-        return ("ích", False, 0)  # "tuổi 9x", "16x km/h"
     if c.rch == "[" or (re.search(r"(?:^|[\s\[(–—-])$", start) and re.match(r"\s+[A-ZĐ]", c.right)):
         return ("", False, 0)  # "32x[1]", "– 1x Cuộn phép": một cuộn phép
+    if not c.right.strip() or c.right[0] in CLOSE + PUNCT_MARKS:
+        return times  # "3x.", "3x,": hệ số nhân đứng một mình
     if "." in number or "," in number:
-        return (number.replace(".", ",") + " lần", False, len(number))  # "0.5x": không phẩy năm lần
-    if len(number) >= 2:
-        return ("gấp " + number + " lần", False, len(number))  # "100x cấp độ": gấp một trăm lần
+        return times  # "0.5x": không phẩy năm lần
     if re.match(r"\s[a-zà-ỹ]", c.right):
-        return ("gấp " + number + " lần", False, len(number))  # "3x tốc độ": gấp ba lần tốc độ
+        return ("ích", False, 0)  # "9x của", "2x mà", "10x xem": số bị che, không có đại lượng nào theo sau
     return ("gấp " + number, False, len(number))  # "3x": gấp ba
 
 
 def _times_sign(c: Spot) -> tuple:
-    """"×" ngoài số: cặp đôi giữa hai tên ("và"), tiêu đề giữa hai cụm (ngắt), ô trống "Ngày × tháng", trang trí; có số hay chữ thường kề thì sea-g2p đọc "nhân"."""
-    if c.sym == "××":
-        return ("ích ích", False) if c.ltype != "digit" else SILENT
+    """"×" ngoài số: cặp đôi giữa hai tên ("và"), tiêu đề giữa hai cụm nhiều chữ (ngắt), ô trống "Ngày × tháng", dấu sai / che chữ (im), "×Course" (ích); có số hay chữ thường kề thì sea-g2p đọc "nhân"."""
     if len(c.sym) >= 2:
-        return SILENT
-    around = c.left3 | c.right3
-    if around & {"ngày", "tháng", "năm"} or _has(c.lch, "○◯□■+=") or _has(c.rch, "○◯□■+=×:"):
-        return SILENT
-    if _has(c.lch, "“\"") and _has(c.rch, "”\""):
-        return ("ích", False)  # dấu “×”
+        return SILENT  # "××": tên / số bị che
+    if (c.left3 | c.right3) & {"ngày", "tháng", "năm"}:
+        return SILENT  # ô trống "Ngày × tháng"
     if _numberish(c.l1) and (_numberish(c.r1) or re.match(r"\s?\d", c.right)):
         return ("nhân", False)  # "2 × 3"
+    if _has(c.lch, MASK_MARKS + "+=") or _has(c.rch, MASK_MARKS + "+=×:"):
+        return SILENT  # lẫn trong dãy ký hiệu che chữ "〇×▽", "×%￥#@"
+    if _has(c.lch, "“\"") and _has(c.rch, "”\""):
+        return ("ích", False)  # dấu “×”
     if (c.ltype == "digit" or c.rtype == "digit" or re.match(r"\s?\d", c.right)) or _numberish(c.l1) or _numberish(c.r1):
         return KEEP
+    if c.glued_r and not c.glued_l and c.rtype in ("lower", "upper") and c.ltype in ("space", "open", "edge") and len(re.match(r"[^\W\d_]+", c.right).group()) >= 3:
+        return ("ích", False)  # "×Course": chữ x
     if c.glued_l and c.glued_r and c.ltype in ("lower", "upper") and c.rtype in ("lower", "upper"):
         return SILENT  # "Fe×rari", "Hunter×Hunter"
     if c.l1[:1].isupper() and c.r1[:1].isupper():
@@ -472,6 +490,17 @@ def _times_sign(c: Spot) -> tuple:
         if not phrase and not c.left.rstrip().endswith(CLOSE) and c.lch != ")":
             return ("và", False)  # cặp đôi "Tadaoki × Christina"
         return PAUSE  # tiêu đề "Nhiệm Vụ × Nhiệm Vụ Phụ"
+    spaced = not c.glued_l and not c.glued_r
+    if re.match(r"\s?[(（\[【]", c.right):
+        return KEEP  # "(Phòng ngủ) × (Thời gian)": tích hai tập
+    if re.search(r"tính|bằng|=|công thức", re.split(r"[.!?…]\s", c.left)[-1][-30:].lower()) or re.match(r"\s?\S+(?:\s\S+){0,2}\s?[=＝<>＜＞≥≤]", c.right[:40]):
+        return KEEP  # "tính bằng 'Sức mạnh × Cấp độ'", "A × B > C": công thức
+    phrase_l, phrase_r = re.split(PHRASE_BREAK, c.left)[-1].split(), re.split(PHRASE_BREAK, c.right)[0].split()
+    bracketed = c.ltype in ("sym", "close", "space", "punct") and c.rtype in ("sym", "open", "space", "punct")  # "≪A B≫×≪C D≫": dính ngoặc, không dính chữ
+    if bracketed and len(phrase_l) >= 2 and len(phrase_r) >= 2:
+        return PAUSE  # "Đảo hoang × Bạn thơ ấu": hai cụm nhiều chữ (không số) - một nhịp ngắn
+    if not c.right.strip() or re.match(r"\s?[?!.,;:…)\]}/]", c.right) or (spaced and c.l1[:1].islower() and c.r1[:1].islower() and c.lw1 != "dấu"):
+        return PAUSE  # dấu sai / dấu đánh dấu: "Cơ hội ×", "(×)", "Yan × /", "bị × luôn"
     return KEEP
 
 
@@ -508,9 +537,11 @@ def _gender(c: Spot) -> tuple:
 
 def _updown(c: Spot, word: str) -> tuple:
     """"↑" "▲" "△" (tăng) / "↓" "▼" "▽" (giảm): kề chỉ số ("(↑1)", "45 → 49 ↑", "▲(0.15)") có lời; đã có chữ chỉ hướng cạnh bên, hay chỉ là dấu đầu dòng thì im."""
-    if (c.left3 | c.right3) & DIRECTION_WORDS or c.line_start:
-        return SILENT
-    after_number = (_numberish(c.l1) and not (c.glued_l and c.l2[:1].isalpha() and c.l2.lower() not in STAT_WORDS)) or re.search(r"(→|⇒|-+>)\s?\S*\s?$", c.left[-14:]) is not None  # "Đông 4↓" là nhãn chỉ chỗ: im
+    if c.sym in "↑↓" and c.line_start and re.match(r"\s?[=:：]", c.right):
+        return ("lên" if c.sym == "↑" else "xuống", False)  # "↓ = Có": phím / hướng ở đầu dòng trước dấu bằng
+    if (c.left3 | c.right3) & DIRECTION_WORDS or c.line_start or _has(c.lch, DASHES + "-"):
+        return SILENT  # "—↓]": mũi tên dính gạch là trang trí
+    after_number = (_numberish(c.l1) and not (c.glued_l and c.l2[:1].isalpha() and c.l2.lower() not in STAT_WORDS)) or re.search(r"\(\d+(?:[.,]\d+)?$", c.left[-12:]) is not None or re.search(r"(→|⇒|-+>)\s?\S*\s?$", c.left[-14:]) is not None  # "Đông 4↓" là nhãn chỉ chỗ: im; "(9↓)": số sát trước
     before_number = bool(re.match(r"\(?\d", c.right))
     in_frame = c.sym in "↑↓" and c.l1[:1].isalpha() and _has(c.right.lstrip()[:1], "}])】")  # "{Khả năng phản bội ↓ }"
     labelled = (c.glued_l and c.lw1 in STAT_WORDS) or (c.l1[:1].isalpha() and re.search(r"[:：]\s?$", c.left) is not None)  # "HP↑", "DEF↓", "Lượt đọc: ↓"
@@ -548,9 +579,10 @@ def _replace(token: str, pattern: re.Pattern, said, keep_tail: str = "") -> str:
 
 def _keys(match: re.Match) -> str:
     run = match.group()
-    if len(run) < 3 and len(set(run)) < 2:
-        return run  # "↑↑" lẻ: nhấn mạnh, không phải phím
-    return " ".join(KEYS[char] for char in run)
+    arrows = "".join(char for char in run if char in KEYS)
+    if len(set(arrows)) < 2:
+        return ""  # "→→→→", "↑↑": cùng một hướng là trang trí / nhấn mạnh, không phải phím
+    return " ".join([KEYS[char] for char in arrows] + [LETTERS[char.lower()] for char in run[len(arrows):]])  # "←→BA": chữ dính sau đọc từng chữ cái
 
 
 def prepare(out: list[str]) -> None:
@@ -666,8 +698,8 @@ def _dispatch(token: str, pos: int, spot) -> tuple | None:
     if char in "xX" and token == char:
         around = spot(pos + 1)
         return pos + 1, ("nhân", False) if _numberish(around.l1) and _numberish(around.r1) else KEEP  # "60 x 60"
-    if char in "xX×" and before.isdigit() and after_char.isdigit():
-        return pos + 1, ("nhân", False)  # "4x3", "2×5": giữa hai số
+    if char in "xX×" and before.isdigit() and (after_char.isdigit() or (char == "×" and after_char in "⋯…")):
+        return pos + 1, ("nhân", False)  # "4x3", "2×5": giữa hai số; "98×⋯×3": dãy tích
     if char in "xX×":
         if char == "×" and not before.isdigit() and not after_char.isdigit():
             end = _run(token, pos, "×")

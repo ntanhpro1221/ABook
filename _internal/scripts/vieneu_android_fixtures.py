@@ -301,6 +301,18 @@ PARAGRAPHS = [
     "Cho y=ax² và x >= 3, a <= 5. ８－２＝６ ＡＢＣ １２ ＋ xong.",
     "Trans+Edit và 2+3=5, A + B. Tầng 8x và năm 200x, 19××, từ 0x đến 1x. Tăng 3x tốc độ, 5x damage.",
     "Hình hent*i và E**alibur, *boing**boing* rồi “*Khụ*Khụ*” xong.",
+    # tn11 (16-10): ký hiệu vòng 3 (khoảng giờ, chuỗi phím, ↓ ↑, ×, x sau số, dấu trừ, chia, trên).
+    "Họp 8:00 → 10:00 sáng. Lv3 → Lv4, đỏ → xanh.",
+    "Nhấn ↑↑↓↓←→←→BABA nhé, bay →→→→ đi.",
+    "Sức mạnh 9↓, DEF↓ và (9↓) nữa.",
+    "↓ = Có",
+    "Cậu nhớ [—↓] nhé.",
+    "Đáp án của em là ×. Tên 〇〇 ×× và ○×△ xong. Fit Course × Pro Master. Gói ×Course. Tính 3×4 và 100×99×98×⋯×3.",
+    "Năm 9x, thứ 9x, chương 9x, 3x tuổi. Tính sin 2x + 1 = 3x.",
+    "Nhận 10x Sức mạnh, (2x Intelligence), kính ngắm 8x, 1x Cuộn phép, mã 202X.",
+    "-25 máu. “-1600” vàng. Kết toán -1600 vàng, đòn -25 máu.",
+    "Tuyệt mệnh -10: giảm máu. 1-2-3 -25 xong.",
+    "Sức khỏe / 2. HP 100/250 và 8/3, tỉ lệ 3/4 và 5 / 1000.",
 ]
 
 # Paragraphs read with a book origin (abook/readaloud/names.py): Japanese / Korean names read by the romanization rules, English names and Vietnamese

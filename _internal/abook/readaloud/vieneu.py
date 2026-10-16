@@ -227,7 +227,7 @@ def _arrow_says(plain: list[str], index: int, token: str, match: re.Match) -> st
     if any(stat(word) for word in labels) or stat(left) or stat(right) or scale(left_at) or scale(right_at):
         return "thành"
     numeric = lambda word: any(char.isdigit() for char in word)
-    if (numeric(left) or numeric(right)) and any(":" in word for word in plain[max(0, index - 6):index]):
+    if (numeric(left) or numeric(right)) and not (ARROW_TIME.fullmatch(left) and ARROW_TIME.fullmatch(right)) and any(":" in word for word in plain[max(0, index - 6):index]):  # "8:00 -> 10:00" là hai giờ, không phải bảng chỉ số
         return "thành"  # "Thể lực : 120 ⇒ 240 ⇒ 480": bảng chỉ số đang đổi
     if left_at >= 2 and plain[left_at - 2:left_at] == plain[right_at:right_at + 2] and all(_core(word).isalpha() for word in plain[left_at - 2:left_at]):
         return "thành"  # "Vương quốc A -> Vương quốc B": cùng một danh xưng hai bên là đổi tên / trạng thái

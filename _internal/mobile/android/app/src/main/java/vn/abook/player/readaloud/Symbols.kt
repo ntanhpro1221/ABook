@@ -22,8 +22,8 @@ object Symbols {
     private val SCORE_WORDS = "điểm sao đánh câu hỏi đúng sai".split(" ").toSet() // "Đánh giá 4/5", "đúng 7/10 câu": điểm, đọc "trên"
     val STAT_WORDS = ("hp mp sp exp xp lv lvl level cấp hạng rank điểm giá str agi vit int dex luk atk def máu mana tiền vàng tuổi sức mạnh nhanh nhẹn phòng thủ thể lực ma lực thiện cảm kinh nghiệm chỉ số tốc độ quyến " +
         "rũ cảm tính may mắn").split(" ").toSet()
-    private val MASK_PLACES = "năm tầng lầu phòng khu lớp tập chương".split(" ").toSet() // đứng trước số bị che ("tầng 8x", "năm 200x")
-    private val VALUE_WORDS = "là tới xuống đến mức khoảng dưới ở tầng thành hoặc đa âm bằng sang lên vì năm".split(" ").toSet() // chữ đứng ngay trước "-3" mà "-" chỉ có thể là dấu âm
+    private val MASK_PLACES = "năm tầng lầu phòng khu lớp tập chương thứ tuổi đời".split(" ").toSet() // đứng trước số bị che ("tầng 8x", "năm 200x")
+    private val VALUE_WORDS = "là tới xuống đến mức khoảng dưới ở tầng thành hoặc đa âm bằng sang lên vì năm toán tổng đạt còn".split(" ").toSet() // chữ đứng ngay trước "-3" mà "-" chỉ có thể là dấu âm
     private val PENALTY_WORDS = "mất thêm giảm phạt thất bại hao tổn thương".split(" ").toSet() // lượng bị trừ: "Mất thêm -15%", "Thất bại: -90%"
     private val STAT_NO_HALF = STAT_WORDS - setOf("chỉ", "số") // "chỉ", "số" (nửa của "chỉ số") không đủ làm nhãn
     private val DATE_WORDS = "ngày mùng mồng hôm nhật lịch hạn sáng trưa chiều tối lễ tết niệm".split(" ").toSet()
@@ -39,10 +39,15 @@ object Symbols {
     val DUEL_WORDS = "đấu đối trận đơn song solo đánh".split(" ").toSet()
     private val RATIO_SLASH = "tỉ tỷ lệ xác suất chia".split(" ").toSet()
     private val DIRECTION_WORDS = "tăng giảm lên xuống cao thấp up down".split(" ").toSet()
+    private const val DASHES = "—–―"
     private val KEY_WORDS = "ctrl alt shift tab esc enter".split(" ").toSet()
     private val NUMBER_WORDS = "không một hai ba bốn năm sáu bảy tám chín mười".split(" ").toSet()
     private val KEYS = mapOf('↑' to "lên", '↓' to "xuống", '←' to "trái", '→' to "phải", '↖' to "lên trái", '↗' to "lên phải", '↘' to "xuống phải", '↙' to "xuống trái")
-    private val KEY_RUN = Regex("[" + KEYS.keys.joinToString("") + "]{2,}")
+    private val KEY_RUN = Regex("[" + KEYS.keys.joinToString("") + """]{2,}(?:[A-Za-z]{1,4}(?!\p{L}))?""") // "↑↑↓↓←→←→BA": phím bấm (chữ dính sau đọc từng chữ cái); cùng một hướng "→→→→" chỉ là trang trí
+    private val QUANTITY_WORDS = STAT_WORDS + "sát thương damage dmg exp strength intelligence agility vitality dexterity luck attack defense speed power ngắm zoom phóng".split(" ").toSet() // danh từ mà "Nx" nhân lên: "10x Sức mạnh", "(2x Intelligence)", "kính ngắm 8x"
+    private val PHRASE_BREAK = Regex("""[:;.!?…,()\[\]【】「」『』“”"]""") // ranh giới cụm khi đếm chữ hai bên "×"
+    private val SENTENCE_BREAK = Regex("""[.!?…]\s""")
+    private const val MASK_MARKS = "〇○◯□■▽●△▲★☆%￥#@＃＠\$" // ký hiệu che chữ: "×" lẫn trong dãy này là một phần của chỗ che
     private const val KAOMOJI = "´゜∀◕◡‿≧≦╯╰╭ω∇ಠ益ﾉﾟдДᴗヮ꒳˶˘ʕʔᴥ◠ヽ٩۶ᕕᕗ꒪ↀ͜͡ʖ￣ェ⑉﹏"
     private val KAOMOJI_SPAN = Regex("""[^\s$W?!.,…"“”]*[$KAOMOJI][^\s$W?!.,…"“”]*""")
     private val FACE_UNDERSCORE = Regex("""\([\^=;°]_+[\^=;°]\)""")
@@ -82,6 +87,7 @@ object Symbols {
     private fun Char.alnum() = isLetter() || Character.getType(this).let { it == Character.DECIMAL_DIGIT_NUMBER.toInt() || it == Character.LETTER_NUMBER.toInt() || it == Character.OTHER_NUMBER.toInt() }
     private fun String.letter0() = firstOrNull()?.isLetter() == true
     private fun String.upper0() = firstOrNull()?.isUpperCase() == true
+    private fun String.lower0() = firstOrNull()?.isLowerCase() == true
     private fun String.isUpperStr() = any { it.isUpperCase() } && none { it.isLowerCase() }
     private fun String.nfc() = Normalizer.normalize(this, Normalizer.Form.NFC)
     private fun words(text: String) = text.split(Regex("\\s+")).filter { it.isNotEmpty() }
@@ -161,6 +167,7 @@ object Symbols {
     private val KEEP = Said(null)
     private val SILENT = Said("")
     private val PAUSE = Said("", true)
+    private val OVER = Said("trên") // a/b giữa hai số: sea-g2p đọc "trên" (sai khi b trông như năm); nói ra luôn để giọng Edge nhận cùng chữ
     private fun say(text: String) = Said(text)
 
     // ---- one symbol: said / silent / keep, with a pause or not --------------------------------------------------------------------------------
@@ -184,24 +191,25 @@ object Symbols {
             val scored = (words hit SCORE_WORDS) || (a <= b && b <= 100 && search("""(?:mức|lượng|độ)[^:：]{0,30}[:：]\s?\d+\s?$""", c.left.lowercase()) != null) // "Đánh giá 4/5", "Mức độ quan trọng: 4/5": x trên y
             if (!(c.gluedL && c.gluedR)) {
                 if (valid && a > b && !scored && !(c.left3 hit STAT_NO_HALF)) return say("tháng") // "8 / 3" cách khoảng: a > b thì không phải phân số / điểm, là ngày tháng
-                return KEEP
+                return OVER
             }
-            if ((c.left3 hit STAT_NO_HALF) && !(a < b && b <= 100 && (c.left3 hit FRACTION_HINTS))) return KEEP
-            if (c.left3 hit RATIO_SLASH) return if (a < b) say("phần") else KEEP
+            if ((c.left3 hit STAT_NO_HALF) && !(a < b && b <= 100 && (c.left3 hit FRACTION_HINTS))) return OVER
+            if (c.left3 hit RATIO_SLASH) return if (a < b) say("phần") else OVER
             val signal = (words intersect DATE_WORDS) - (if (words hit setOf("đa", "thiểu", "ưu", "cao")) setOf("tối") else emptySet()) // "tối đa 3/5" không phải buổi tối
             if (valid && (signal.isNotEmpty() || WEEKDAY.containsMatchIn((c.left.takeLast(30) + " " + c.right.take(30)).lowercase()))) {
                 if (c.l2.lowercase() in DATE_PREFIX) return say("tháng") // "ngày 5/3": đã có "ngày"
                 return Said("ngày ${m.groupValues[1]} tháng", false, m.groupValues[1].length) // "sinh nhật 5/3"
             }
             if (scored) return say("trên") // điểm / sao / câu đúng / "nhãn: 3/4": x trên y
-            if ((a == 24L && b == 7L) || (a == 1L && b == 1L) || (a == b && match("""\d+\s?[)\]]""", c.right) != null)) return KEEP
+            if ((a == 24L && b == 7L) || (a == 1L && b == 1L) || (a == b && match("""\d+\s?[)\]]""", c.right) != null)) return OVER
             if (a < b && b <= 100 && (a == 1L || (words hit FRACTION_WORDS) || search("""[=+×]""", c.left.takeLast(4) + c.right.take(6)) != null)) return say("phần") // "1/10 thu nhập", "hết 2/10 máu", "3/4+1/6=...": phân số
-            if (b in listOf(10L, 100L) && a <= b) return KEEP // "8/10": đếm số
+            if (b in listOf(10L, 100L) && a <= b) return OVER // "8/10": đếm số
             if ((a == 1L && b > 1) || (a < b && b <= 9)) return say("phần")
             if (valid && a > b) return say("tháng") // "8/3", "30/4": không có điểm / phân số thì là ngày tháng
-            return KEEP
+            return OVER
         }
         if (c.lch == '?' && k != null) return say("trên")
+        if (k != null && !c.gluedL && !c.gluedR && c.l1.lower0()) return say("chia") // "sức khỏe / 2": chia cho hai
         val rightWord = match("""\p{L}+""", c.right)?.value?.lowercase() ?: ""
         val digitNear = c.ltype == "digit" || search("""\d\s?\p{L}{1,4}$""", c.left.takeLast(8)) != null
         if (digitNear && c.rtype in listOf("lower", "upper", "digit")) return if (rightWord in PER_PHYSICAL) say("trên") else say("mỗi")
@@ -311,16 +319,17 @@ object Symbols {
             if (match("""\d{1,3}(?:,\d{3})+|\d{4,}(?![$W])""", after) != null) return say("âm") // "〔-29,900 / Mã 1〕"
             if (match("""\d[\d.,]*\s+(điểm|hp|mp)(?![$W])""", after.lowercase()) != null) return if (has(c.lch, "[【〔")) say("trừ") else say("âm") // "[-100 điểm]" mất điểm; "-14 điểm." đầu dòng
             if (rx("""\d[\d.,]*[\s)\]】』」”’"'.!?…]*""").matches(after)) return say("âm") // "-0!": cả dòng chỉ là một giá trị
-            return SILENT
+            return say("âm") // "-2 =))", "-517": dính số là dấu âm dù đầu dòng (gạch đầu dòng thì có khoảng trắng)
         }
         val follow = after.take(14).lowercase()
         if (search("""(→|⇒|➜|➡|-+>|=+>)\s?$""", c.left.takeLast(6)) != null || search("""[▲▼△▽↑↓]\($""", c.left.takeLast(3)) != null) return say("âm")
         if ((c.right3 hit TEMP_WORDS) || '°' in follow.take(8) || match("""\d[\d.,]*\s?(độ|mét|oc|of)""", follow) != null) return say("âm")
         if (c.lch == ')' && c.gluedL) return SILENT
         if (c.ltype == "space" && has(c.left.trimEnd().lastOrNull(), "”’\"")) return SILENT
-        if (match("""\d+\s?[:：]""", after) != null) return SILENT
+        if (match("""\d+\s?[:：]""", after) != null) return if (c.ltype == "space" && c.l1.letter0()) say("trừ") else SILENT // "tuyệt mệnh -10:" hậu tố của tên kỹ năng
         val stat = (c.left3 hit STAT_NO_HALF) || (c.l1.isUpperStr() && c.l1.length in 2..4) || search("""(?:máu|sinh lực)(?:\s+\p{L}+){0,3}\s$""", c.left.lowercase()) != null // "HP -1", "MGC -8", "Thanh máu của Shido -1"
         val previous = if (c.ltype == "space" && !stat) search("""(\d+)(?:st|nd|rd|th)?\s$""", c.left.takeLast(6)) else null
+        if (previous != null && search("""\d-\d+\s$""", c.left.takeLast(10)) != null) return say("trừ") // "1-2-3 -25 điểm": sau một dãy số
         if (previous != null) {
             val number = match("""\d+""", after)!!.value
             return if (number == previous.groupValues[1]) SILENT else say("đến")
@@ -357,27 +366,30 @@ object Symbols {
     private fun timesPost(c: Spot, sym: Char): Pair<Said, Int> {
         val number = search("""\d+(?:[.,]\d+)?$""", c.left)!!.value
         val start = c.left.substring(0, c.left.length - number.length)
-        val place = c.l2.lowercase() in MASK_PLACES // "tầng 8x", "năm 200x": số bị che
+        val place = c.l2.lowercase() in MASK_PLACES // "tầng 8x", "năm 200x", "chương thứ 9x": số bị che
         if (sym == 'X' || place || (search("""\d{3}$""", number) != null && match("""\s?[a-zà-ỹ]|\s+[A-ZĐ]""", c.right) == null)) return say("ích") to 0
-        if ((c.l2.lowercase() in setOf("đến", "tới") && search("""(?<![$W])từ\s""", c.left.takeLast(40).lowercase()) != null) || (c.l2.lowercase() == "từ" && c.r1 in setOf("đến", "tới"))) return say(number.replace(".", ",") + " lần") to number.length // "từ 0x đến 1x": mức gấp
+        if ((c.l2.lowercase() in setOf("đến", "tới") && search("""từ\s""", c.left.takeLast(40).lowercase()) != null) || (c.l2.lowercase() == "từ" && c.r1 in setOf("đến", "tới"))) return say(number.replace(".", ",") + " lần") to number.length // "từ 0x đến 1x": mức gấp
+        if ((c.left3 hit setOf("tuổi", "thế", "hệ", "gen", "đời", "sinh")) || (c.right3 hit setOf("km", "km/h", "m")) || c.rw1 in setOf("tuổi", "đời")) return say("ích") to 0 // "tuổi 9x", "16x km/h", "3x tuổi"
+        if (search("""(?:sin|cos|tan|cot|log|ln)[\s(]*[\d/.,]*$""", start.lowercase()) != null) return say("ích") to 0 // "cos2/3x": biến của hàm số
+        val times = say(number.replace(".", ",") + " lần") to number.length
+        if (c.rw1 in QUANTITY_WORDS || c.l2.lowercase() in QUANTITY_WORDS) return times // "10x Sức mạnh", "(2x Intelligence)", "kính ngắm 8x"
         if (search("""[A-Za-z]$""", start) != null || search("""[+=(]""", c.left.takeLast(4) + c.right.take(3)) != null) return say("ích") to 0
-        if ((c.left3 hit setOf("tuổi", "thế", "hệ", "gen", "đời", "sinh")) || (c.right3 hit setOf("km", "km/h", "m"))) return say("ích") to 0
         if (c.rch == '[' || (search("""(?:^|[\s\[(–—-])$""", start) != null && match("""\s+[A-ZĐ]""", c.right) != null)) return say("") to 0
-        if ('.' in number || ',' in number) return say(number.replace(".", ",") + " lần") to number.length
-        if (number.length >= 2) return say("gấp $number lần") to number.length
-        if (match("""\s[a-zà-ỹ]""", c.right) != null) return say("gấp $number lần") to number.length // "3x tốc độ": gấp ba lần tốc độ
+        if (c.right.isBlank() || c.right[0] in CLOSE + PUNCT_MARKS) return times // "3x.", "3x,": hệ số nhân đứng một mình
+        if ('.' in number || ',' in number) return times
+        if (match("""\s[a-zà-ỹ]""", c.right) != null) return say("ích") to 0 // "9x của", "10x xem": số bị che, không có đại lượng nào theo sau
         return say("gấp $number") to number.length
     }
 
     /** "×" outside a number: a couple between two names ("và"), a title between two phrases (pause), a blank "Ngày × tháng", decoration - `_times_sign`. */
     private fun timesSign(c: Spot): Said {
-        if (c.sym == "××") return if (c.ltype != "digit") say("ích ích") else SILENT
-        if (c.sym.length >= 2) return SILENT
-        val around = c.left3 + c.right3
-        if ((around hit setOf("ngày", "tháng", "năm")) || has(c.lch, "○◯□■+=") || has(c.rch, "○◯□■+=×:")) return SILENT
-        if (has(c.lch, "“\"") && has(c.rch, "”\"")) return say("ích")
+        if (c.sym.length >= 2) return SILENT // "××": tên / số bị che
+        if ((c.left3 + c.right3) hit setOf("ngày", "tháng", "năm")) return SILENT // ô trống "Ngày × tháng"
         if (numberish(c.l1) && (numberish(c.r1) || match("""\s?\d""", c.right) != null)) return say("nhân")
+        if (has(c.lch, "$MASK_MARKS+=") || has(c.rch, "$MASK_MARKS+=×:")) return SILENT // lẫn trong dãy ký hiệu che chữ "〇×▽", "×%￥#@"
+        if (has(c.lch, "“\"") && has(c.rch, "”\"")) return say("ích")
         if (c.ltype == "digit" || c.rtype == "digit" || match("""\s?\d""", c.right) != null || numberish(c.l1) || numberish(c.r1)) return KEEP
+        if (c.gluedR && !c.gluedL && c.rtype in listOf("lower", "upper") && c.ltype in listOf("space", "open", "edge") && match("""\p{L}+""", c.right)!!.value.length >= 3) return say("ích") // "×Course": chữ x
         if (c.gluedL && c.gluedR && c.ltype in listOf("lower", "upper") && c.rtype in listOf("lower", "upper")) return SILENT
         if (c.l1.upper0() && c.r1.upper0()) {
             val names = words(c.left).takeLast(2) + words(c.right).take(2)
@@ -385,6 +397,14 @@ object Symbols {
             if (!phrase && !c.left.trimEnd().endsWith(CLOSE) && c.lch != ')') return say("và")
             return PAUSE
         }
+        val spaced = !c.gluedL && !c.gluedR
+        if (match("""\s?[(（\[【]""", c.right) != null) return KEEP // "(Phòng ngủ) × (Thời gian)": tích hai tập
+        if (search("""tính|bằng|=|công thức""", c.left.split(SENTENCE_BREAK).last().takeLast(30).lowercase()) != null || match("""\s?\S+(?:\s\S+){0,2}\s?[=＝<>＜＞≥≤]""", c.right.take(40)) != null) return KEEP // công thức
+        val phraseL = words(c.left.split(PHRASE_BREAK).last())
+        val phraseR = words(c.right.split(PHRASE_BREAK).first())
+        val bracketed = c.ltype in listOf("sym", "close", "space", "punct") && c.rtype in listOf("sym", "open", "space", "punct") // "≪A B≫×≪C D≫": dính ngoặc, không dính chữ
+        if (bracketed && phraseL.size >= 2 && phraseR.size >= 2) return PAUSE // "Đảo hoang × Bạn thơ ấu": hai cụm nhiều chữ (không số) - một nhịp ngắn
+        if (c.right.isBlank() || match("""\s?[?!.,;:…)\]}/]""", c.right) != null || (spaced && c.l1.lower0() && c.r1.lower0() && c.lw1 != "dấu")) return PAUSE // dấu sai / dấu đánh dấu: "Cơ hội ×", "(×)", "bị × luôn"
         return KEEP
     }
 
@@ -413,8 +433,9 @@ object Symbols {
     }
 
     private fun updown(c: Spot, word: String): Said {
-        if (((c.left3 + c.right3) hit DIRECTION_WORDS) || c.lineStart) return SILENT
-        val afterNumber = (numberish(c.l1) && !(c.gluedL && c.l2.letter0() && c.l2.lowercase() !in STAT_WORDS)) || search("""(→|⇒|-+>)\s?\S*\s?$""", c.left.takeLast(14)) != null // "Đông 4↓" là nhãn chỉ chỗ: im
+        if ((c.sym == "↑" || c.sym == "↓") && c.lineStart && match("""\s?[=:：]""", c.right) != null) return say(if (c.sym == "↑") "lên" else "xuống") // "↓ = Có": phím / hướng ở đầu dòng trước dấu bằng
+        if (((c.left3 + c.right3) hit DIRECTION_WORDS) || c.lineStart || has(c.lch, "$DASHES-")) return SILENT // "—↓]": mũi tên dính gạch là trang trí
+        val afterNumber = (numberish(c.l1) && !(c.gluedL && c.l2.letter0() && c.l2.lowercase() !in STAT_WORDS)) || search("""\(\d+(?:[.,]\d+)?$""", c.left.takeLast(12)) != null || search("""(→|⇒|-+>)\s?\S*\s?$""", c.left.takeLast(14)) != null // "Đông 4↓" là nhãn chỉ chỗ: im
         val beforeNumber = match("""\(?\d""", c.right) != null
         val inFrame = c.sym in listOf("↑", "↓") && c.l1.letter0() && has(c.right.trimStart().firstOrNull(), "}])】")
         val labelled = (c.gluedL && c.lw1 in STAT_WORDS) || (c.l1.letter0() && search("""[:：]\s?$""", c.left) != null) // "HP↑", "DEF↓", "Lượt đọc: ↓"
@@ -448,8 +469,9 @@ object Symbols {
 
     private fun keys(match: MatchResult): String {
         val run = match.value
-        if (run.length < 3 && run.toSet().size < 2) return run
-        return run.map { KEYS.getValue(it) }.joinToString(" ")
+        val arrows = run.filter { it in KEYS }
+        if (arrows.toSet().size < 2) return "" // "→→→→", "↑↑": cùng một hướng là trang trí / nhấn mạnh, không phải phím
+        return (arrows.map { KEYS.getValue(it) } + run.drop(arrows.length).map { Abbreviations.LETTERS.getValue(it.lowercaseChar()) }).joinToString(" ") // "←→BA": chữ dính sau đọc từng chữ cái
     }
 
     /** First step of `readingMarks`: HTML entities, "P/s", URLs, masked cursing "!@#$%", Japanese smileys and runs of arrow keys - need no context - `prepare`. */
@@ -558,7 +580,7 @@ object Symbols {
             val around = spot(pos + 1)
             return Found(pos + 1, if (numberish(around.l1) && numberish(around.r1)) say("nhân") else KEEP)
         }
-        if (char in "xX×" && before?.isDigit() == true && afterChar?.isDigit() == true) return Found(pos + 1, say("nhân"))
+        if (char in "xX×" && before?.isDigit() == true && (afterChar?.isDigit() == true || (char == '×' && afterChar != null && afterChar in "⋯…"))) return Found(pos + 1, say("nhân")) // "98×⋯×3": dãy tích
         if (char in "xX×") {
             if (char == '×' && before?.isDigit() != true && afterChar?.isDigit() != true) {
                 val end = run(token, pos, "×")

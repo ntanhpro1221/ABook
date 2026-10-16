@@ -133,7 +133,7 @@ def test_a_tilde_is_dropped_or_read_as_range(text: str, said: str) -> None:
 
 
 @pytest.mark.parametrize("text, said", [
-    ("Có 500,000 đồng, 100,000 yen và 1,419 / 3,419.", "Có 500000 đồng, 100000 yên và 1419 / 3419."),
+    ("Có 500,000 đồng, 100,000 yen và 1,419 / 3,419.", "Có 500000 đồng, 100000 yên và 1419 trên 3419."),
     ("Trả 2,000,000, xong.", "Trả 2000000, xong."),
     # "1,500" (đúng 3 chữ số sau phẩy) được coi là nghìn: truyện dịch dùng kiểu Anh, thập phân Việt có 1-2 chữ số
     ("Giá 1,500 và 1,5 và 3,25 và 12,3456.", "Giá 1500 và 1,5 và 3,25 và 12,3456."),
@@ -152,7 +152,7 @@ def test_english_thousands_lose_their_commas(text: str, said: str) -> None:
     ("< Thật Tuyệt vời>, xong.", "Thật Tuyệt vời, xong."),
     ("Rồi 〈Wish Upon〉[Cầu ước] nữa.", "Rồi, Wish Upon,[Cầu ước], nữa."),  # dấu phẩy ngay sau ngoặc đóng, không dồn xuống cuối chữ dính liền
     # không phải ngoặc: so sánh, trái tim, mặt cười, không có ngoặc đóng
-    ("3 < 5 và 8 > 2, <3 và >:) và <50/50>.", "3 < 5 và 8 > 2, và và 50/50."),  # <3 và >:) là mặt cười: bỏ; <50/50> có ngoặc đóng ngay trong chữ: bỏ ngoặc
+    ("3 < 5 và 8 > 2, <3 và >:) và <50/50>.", "3 < 5 và 8 > 2, và và 50 trên 50."),  # <3 và >:) là mặt cười: bỏ; <50/50> có ngoặc đóng ngay trong chữ: bỏ ngoặc
     ("a <b c d e f g h i j k l m n o p", "a b c d e f g h i j k l m n o p"),  # ngoặc mở không có ngoặc đóng chỉ là trang trí
 ])
 def test_angle_brackets_around_words_are_not_comparisons(text: str, said: str) -> None:
@@ -162,7 +162,7 @@ def test_angle_brackets_around_words_are_not_comparisons(text: str, said: str) -
 @pytest.mark.parametrize("text, said", [
     ("Bị 【Đóng băng / yếu】 rồi.", "Bị, 【Đóng băng, yếu】, rồi."),
     ("Chạy / bay.", "Chạy, bay."),
-    ("HP: 5813 / 5813 và 3/5, 15/8, 3 / 5.", "hát pê: 5813 / 5813 và 3 phần 5, 15 tháng 8, 3 / 5."),  # cách nhau hai bên: sea-g2p đọc "trên"; dính liền: phân số bé; a > b mà b là tháng hợp lệ: ngày tháng
+    ("HP: 5813 / 5813 và 3/5, 15/8, 3 / 5.", "hát pê: 5813 trên 5813 và 3 phần 5, 15 tháng 8, 3 trên 5."),  # cách nhau hai bên: "trên" (nói ra luôn để Edge đọc đúng như sea-g2p); dính liền: phân số bé; a > b mà b là tháng hợp lệ: ngày tháng
     ("Mở/đóng và km/h.", "Mở, đóng và km/h."),  # hai chữ dính liền bằng gạch chéo: ngắt; đơn vị (km/h) giữ nguyên
 ])
 def test_a_slash_between_two_words_is_a_pause(text: str, said: str) -> None:
@@ -629,7 +629,7 @@ def test_the_server_starts_and_stops_preparing(studio) -> None:  # noqa: F811
 
 # ---- TN "Nghe ngay" lượt 3: số, mặt cười, dấu *, gạch ngang dính chữ, khung hệ thống, dấu câu CJK (vieneu.reading_marks) -------------------------------------
 @pytest.mark.parametrize("text, said", [
-    ("Chia 3/5 chai, 1/2 và 180/300, 5/3 và 15/8.", "Chia 3 phần 5 chai, 1 phần 2 và 180/300, 5 tháng 3 và 15 tháng 8."),  # phân số bé: phần; tỉ lệ / thanh chỉ số để sea-g2p; "5/3", "15/8" không có điểm hay phân số thì là ngày tháng
+    ("Chia 3/5 chai, 1/2 và 180/300, 5/3 và 15/8.", "Chia 3 phần 5 chai, 1 phần 2 và 180 trên 300, 5 tháng 3 và 15 tháng 8."),  # phân số bé: phần; tỉ lệ / thanh chỉ số: trên; "5/3", "15/8" không có điểm hay phân số thì là ngày tháng
     ("Lớp 1-1, được 1-3-1, dài 3-4000 từ, 3-5 người.", "Lớp 1 1, được 1 3 1, dài 3 đến 4000 từ, 3 đến 5 người."),
     ("Ngày 01-10-2026, số 090-123-4567, tỉ số 3-1, giờ 9-5.", "Ngày 01-10-2026, số 090-123-4567, tỉ số 3 1, giờ 9 5."),
     ("Sự kiện x2 và ×3, ($1 USD) và $5.", "Sự kiện nhân 2 và nhân 3, (1 đô la u ét đê) và 5 đô la."),
@@ -692,4 +692,4 @@ def test_a_system_frame_glued_to_words_gets_a_pause_at_both_ends(text: str, said
 def test_long_or_numeric_or_unclosed_angle_brackets() -> None:
     long_thought = "<mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ> hết"
     assert _said(long_thought) == "mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ, hết"
-    assert _said("Tên <game> <50/50>. < Thật Tuyệt vời. Còn x < y.") == "Tên game 50/50. Thật Tuyệt vời. Còn x < y."
+    assert _said("Tên <game> <50/50>. < Thật Tuyệt vời. Còn x < y.") == "Tên game 50 trên 50. Thật Tuyệt vời. Còn x < y."
