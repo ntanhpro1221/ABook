@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Giọng trực tuyến trên điện thoại cũng vậy (như trên máy tính): bấm một câu hay mở chương là nghe ngay khi âm thanh đầu tiên về, khoảng 2 giây, không đợi đọc xong cả đoạn. Bấm giữa một đoạn chưa đọc thì chỉ đọc từ chữ bạn bấm tới hết đoạn.
+
 ## [0.4.86] - 2026-10-17
 
 ### Nghe ngay
