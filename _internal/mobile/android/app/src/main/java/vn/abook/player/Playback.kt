@@ -464,7 +464,7 @@ object Playback {
         SleepTimer.onPlaying(playing)
         Motion.refresh()
         Remote.onPlaying(playing)
-        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, playing)
+        syncMusic(playing)
         if (!playing) {
             pausedAtMs = System.currentTimeMillis()
             saveNow()
@@ -477,6 +477,17 @@ object Playback {
             SleepTimer.maybeSchedule()
         }
         emit(if (playing) "play" else "pause")
+    }
+
+    /** Báo nhạc nền giọng đang chạy hay không. Đọc to mà hàng đợi cạn (Edge chậm, đang chờ đoạn kế - [ReadAloud.starved]) thì người nghe vẫn đang nghe: nhạc theo cảnh không ngắt rồi phải
+     *  vào lại ở từng khe im (trước đây `isPlaying` rơi về false ngay khi ExoPlayer ENDED nên nhạc dừng cùng giọng). Người nghe bấm dừng thì `starved` tắt ngay. */
+    private fun syncMusic(playing: Boolean) {
+        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, playing || ReadAloud.starved())
+    }
+
+    /** Người nghe đổi ý phát / dừng mà `isPlaying` không đổi (đang chờ đoạn kế của đọc to): nhạc cũng theo. */
+    fun onWantsChanged() {
+        if (ReadAloud.active && !isPlaying) syncMusic(false)
     }
 
     fun onChapterChanged() {
@@ -523,7 +534,8 @@ object Playback {
             var beats = 0
             override fun run() {
                 val exo = player
-                if (exo == null || !exo.isPlaying) {
+                // Đọc to chờ đoạn kế (hàng đợi cạn vì Edge chậm) vẫn là "đang nghe": nhịp nhạc nền không đứt (starved).
+                if (exo == null || !(exo.isPlaying || ReadAloud.starved())) {
                     ticking = false
                     return
                 }
@@ -534,7 +546,7 @@ object Playback {
                 }
                 if (beats % 60 == 0) SleepTimer.maybeSafetyStop(lastInteractionMs)
                 Bedtime.checkpoint()
-                MusicBed.sync(bookId, currentChapter?.id, positionSeconds, true)
+                syncMusic(true)
                 emit("tick")
                 main.postDelayed(this, 500)
             }

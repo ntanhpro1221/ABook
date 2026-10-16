@@ -33,8 +33,9 @@ object ReadAloud {
     const val DEFAULT_VOICE = "edge:vi-VN-HoaiMyNeural"
     /** Đoạn đọc trước: đang nghe + chừng này đoạn sau (tối thiểu; giọng trực tuyến chậm thì dài ra - [policy]). */
     const val AHEAD = 2
-    /** Nghỉ trước mỗi lần thử lại một đoạn hỏng vì lỗi thoáng qua của giọng trực tuyến (ms), ở luồng nền - đoạn đã nạp vẫn phát. [EdgeTts] đã tự thử lại lượt bị cắt 3 lần (6 giây) bên
-     *  trong mỗi lần, nên chỉ thêm hai lần ngoài này (~7 giây): tổng ~13 giây trước khi dừng và hiện "Thử lại". Máy tính nghỉ 1 + 2,5 + 4,5 + 7 giây (listen/readAloud.ts). */
+    /** Nghỉ trước mỗi lần thử lại một đoạn hỏng vì lỗi thoáng qua của giọng trực tuyến (ms), ở luồng nền - đoạn đã nạp vẫn phát. [EdgeTts] đã tự thử lại lượt bị cắt 3 lần (nghỉ 6 giây) bên
+     *  trong mỗi lần, nên chỉ thêm hai lần ngoài này (nghỉ 7 giây). Số lần chỉ là trần: các lần nghỉ cộng thời gian chờ thật của mỗi lần còn bị chặn bởi quỹ [ClipBudget.BUDGET_MS] (20 giây
+     *  kể từ lần đọc đầu, cho cả hai tầng) - mạng còn nối mà im lìm thì rơi sang giọng của máy sau ~15-20 giây, không phải cả phút. Máy tính nghỉ 1 + 2,5 + 4,5 + 7 giây, cùng quỹ (listen/readAloud.ts). */
     val RETRY_DELAYS_MS = longArrayOf(2_000L, 5_000L)
 
     /** Gắn vào MediaItem của một đoạn: chương (vị trí trong danh sách chương), đoạn, độ to của giọng đã đọc. `segment` -1 = không dùng. */
@@ -91,6 +92,7 @@ object ReadAloud {
     fun init(appContext: Context) {
         if (context != null) return
         context = appContext.applicationContext
+        FetchWake.init(appContext)
         choices = VoiceChoices(File(appContext.applicationContext.filesDir, "readaloud-voices.json"))
     }
 
@@ -400,6 +402,7 @@ object ReadAloud {
 
     private fun reset() {
         active = false
+        FetchWake.releaseAll()
         generation += 1
         inFlight = false
         waiting = null
@@ -464,6 +467,7 @@ object ReadAloud {
         exo.pauseAtEndOfMediaItems = false
         exo.clearMediaItems()
         exo.playWhenReady = play
+        syncWants()
         Playback.emit("state")
         pump()
     }
@@ -631,6 +635,7 @@ object ReadAloud {
         val voice = voiceId
         inFlight = true
         live.incrementAndGet()
+        syncWants()
         val bookId = Playback.bookId
         val online = PreparePlan.online(voice)
         if (policyVoice != voice) {
@@ -640,17 +645,24 @@ object ReadAloud {
         // Edge đang chậm: đọc song song đoạn kế (luồng thứ hai) để nó có sẵn trong bộ đệm khi tới lượt - hai lượt gọi cùng lúc, không hơn (Edge hạn chế khi dồn nhiều kết nối).
         // Việc nạp vào ExoPlayer vẫn lần lượt và đúng thứ tự: đoạn kế đọc xong sớm thì tới lượt nó chỉ lấy từ bộ đệm.
         val warm = if (online && policy.slow()) nextSpeakable(chap, segment)?.let { chap.paragraphs[it] } else null
+        // Người nghe đang chờ clip này qua mạng: giữ CPU + Wi-Fi tới khi xong (hàng đợi ExoPlayer đã cạn thì nó không giữ gì - [FetchWake]); đọc sẵn khi chưa ai chờ thì không.
+        val ticket = if (online && listenerWants) FetchWake.hold() else null
         worker.execute {
             val began = System.nanoTime()
             val origin = originOf(bookId)
             val readings = readingsOf(bookId)
-            warm?.let { next -> worker.execute { warm(next, voice, origin, readings) } }
+            // Lượt song song cũng là một kết nối tới Edge: tính vào `live` để "Làm trước" không mở thêm kết nối thứ ba (đọc thật + song song + làm trước).
+            warm?.let { next ->
+                live.incrementAndGet()
+                worker.execute { try { warm(next, voice, origin, readings) } finally { live.decrementAndGet() } }
+            }
             val result = try {
                 val key = shareKey(voice, text, origin, readings)
                 val (first, mine) = shared(key) { readWithRetry(token, text, voice, origin, readings, online) }
                 // Đoạn này đang được đọc song song mà lượt ấy hỏng (không thử lại): đọc lại cho đàng hoàng, có thử lại.
                 if (!mine && first.isFailure && token == generation) readWithRetry(token, text, voice, origin, readings, online) else first
             } finally {
+                ticket?.let(FetchWake::release)
                 live.decrementAndGet()
             }
             result.getOrNull()?.let { clip ->
@@ -683,9 +695,10 @@ object ReadAloud {
         }
     }
 
-    /** Đọc sẵn một đoạn vào bộ đệm (kết quả bỏ): lần nạp thật của đoạn ấy sẽ lấy từ đó. Không thử lại - hỏng thì lần nạp thật tự lo. */
+    /** Đọc sẵn một đoạn vào bộ đệm (kết quả bỏ): lần nạp thật của đoạn ấy sẽ lấy từ đó. Không thử lại - hỏng thì lần nạp thật tự lo. Thời gian đọc thật ghi vào [policy]
+     *  (lượt nạp thật của đoạn này chỉ lấy từ bộ đệm / chờ lượt này nên không ghi gì - không thì Edge nhanh lại mà số đo đứng yên, "Edge chậm" dính mãi). */
     private fun warm(text: String, voice: String, origin: String?, readings: Map<String, String>?) {
-        shared(shareKey(voice, text, origin, readings)) { runCatching { reader().read(text, voice, origin, readings, willRetry = true) } }
+        shared(shareKey(voice, text, origin, readings)) { policy.measure { runCatching { reader().read(text, voice, origin, readings, willRetry = true) } } }
     }
 
     /** Đọc một đoạn, thử lại lỗi thoáng qua của giọng trực tuyến ở nền ([ClipRetry]); việc đã cũ (tua, đổi chương, đổi giọng) thì thôi. */
@@ -694,20 +707,32 @@ object ReadAloud {
             reader().read(text, voice, origin, readings, willRetry)
         }
 
-    /** Nghỉ `ms` mili-giây; false nếu trong lúc ấy việc đã cũ (người nghe tua / đổi chương / đổi giọng - `generation` đổi) hay đã tắt. */
+    /** Nghỉ `ms` mili-giây; false nếu trong lúc ấy việc đã cũ (người nghe tua / đổi chương / đổi giọng - `generation` đổi), đã tắt, hay người nghe đã tạm dừng: lần thử lại không đáng gọi
+     *  Edge khi chẳng ai chờ (máy tính cũng bỏ - listen/readAloud.ts retryLater); bấm phát lần sau thì [onPlay] xin lại đoạn. */
     private fun sleepWhileCurrent(token: Int, ms: Long): Boolean {
         val end = System.nanoTime() + ms * 1_000_000
         while (System.nanoTime() < end) {
-            if (token != generation || !active) return false
+            if (token != generation || !active || !listenerWants) return false
             Thread.sleep(50)
         }
-        return token == generation && active
+        return token == generation && active && listenerWants
+    }
+
+    /** [wantsPlay] cho luồng nền (ExoPlayer chỉ hỏi được ở luồng chính): cập nhật ở mọi chỗ người nghe đổi ý hay chỗ chờ đổi ([syncWants]). */
+    @Volatile private var listenerWants = false
+
+    /** Gọi ở luồng chính mỗi khi `waiting` hay `playWhenReady` đổi. */
+    fun syncWants() {
+        listenerWants = active && wantsPlay()
+        if (!listenerWants) FetchWake.releaseAll() // chẳng ai chờ clip nữa: nhả khoá CPU / Wi-Fi ngay, không đợi lượt gọi Edge đang chạy dở xong
     }
 
     private fun onClipReady(token: Int, chap: Chap, segment: Int, result: Result<Clip>) {
         if (token != generation || !active) return
         inFlight = false
         val clip = result.getOrElse { error ->
+            // Lần thử lại bị bỏ vì người nghe đã tạm dừng: không phải lỗi để báo - bấm phát thì [onPlay] xin lại đoạn này.
+            if ((error as? VoiceException)?.transient == true && !wantsPlay()) return
             fail((error as? VoiceException)?.message ?: "Không đọc được đoạn này (${error.message})")
             return
         }
@@ -817,10 +842,8 @@ object ReadAloud {
         if (!active) return false
         if (retryAfterFailure()) return true
         waiting?.play = true
-        if (held) {
-            held = false
-            pump()
-        }
+        syncWants()
+        if (held) held = false
         val exo = Playback.player ?: return false
         if (waiting == null && !inFlight && exo.playbackState == Player.STATE_ENDED && inText()) {
             val index = chapterIndexNow() ?: return false
@@ -831,12 +854,15 @@ object ReadAloud {
             Playback.emit("chapter")
             return true
         }
+        // Đoạn đang đọc dở bị bỏ khi người nghe tạm dừng (lần thử lại - [sleepWhileCurrent]) và hàng đợi còn chưa cạn: nạp tiếp từ đây (không việc gì chạy thì pump không làm gì).
+        pump()
         return false
     }
 
     /** Người nghe bấm dừng lúc đang chờ đọc đoạn đầu: khi đoạn tới thì đừng tự phát. */
     fun onPause() {
         waiting?.play = false
+        syncWants()
     }
 
     private var recoveries = ArrayDeque<Long>()

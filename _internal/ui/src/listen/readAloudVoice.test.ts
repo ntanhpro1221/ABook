@@ -132,6 +132,18 @@ describe("giọng dự phòng của Nghe ngay", () => {
     expect(notify).toHaveBeenCalledTimes(1);
   });
 
+  it("quỹ thời gian thử lại (retryBefore): quá mốc ấy thì willRetry coi như tắt - rơi sang giọng của máy ngay trong lần hỏng này", async () => {
+    const { module } = await fresh();
+    const fail: Record<string, string> = { "edge:vi-VN-HoaiMyNeural": "timeout" };
+    const { value } = source(fail);
+    const fetch = module.speechFetcher(value, "b1", vi.fn());
+    // còn quỹ: ném lỗi gốc lên cho bộ máy thử lại
+    const open = await fetch("edge:vi-VN-HoaiMyNeural", "Một.", { willRetry: true, retryBefore: Date.now() + 60_000 }).catch((caught: unknown) => caught);
+    expect(open).toMatchObject({ reason: "timeout" });
+    // hết quỹ (mốc đã qua): không còn lần thử nào nữa nên đọc tạm bằng giọng của máy, không bắt người nghe chờ thêm
+    expect((await fetch("edge:vi-VN-HoaiMyNeural", "Hai.", { willRetry: true, retryBefore: Date.now() - 1 })).url).toBe("/clip/device:an");
+  });
+
   it("willRetry chỉ áp cho lỗi thoáng qua: bị từ chối / mất mạng vẫn xử lý ngay; không có giọng của máy thì lời cuối đánh dấu final (bộ máy không thử lại nữa)", async () => {
     const { module } = await fresh();
     const online = VOICES.filter((voice) => voice.online);

@@ -121,4 +121,12 @@ object Playlists {
         if (BookEdits.truthy(book.opt("music")) || !isTextBook(book)) return false
         return if (choice.isNotEmpty()) choice == SCENE else auto
     }
+
+    /** Nhạc theo cảnh do MÁY tự chọn: người nghe chưa chọn gì (`choice` rỗng) mà "Tự chọn nhạc nền" bật (`sceneMode` đã tính cả hai). */
+    fun isAutomatic(sceneMode: Boolean, choice: String): Boolean = sceneMode && choice.isEmpty()
+
+    /**
+     * Dữ liệu di động (mạng tính phí) chỉ chặn nhạc MÁY TỰ CHỌN ([isAutomatic]): người nghe đã chọn một danh sách / "Theo cảnh" / "Nhạc của tôi" ở nút "Nhạc nền" thì muốn nghe ngay, tải như thường.
+     */
+    fun holdsDownloadOnMetered(metered: Boolean, automatic: Boolean): Boolean = metered && automatic
 }

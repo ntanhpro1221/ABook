@@ -198,6 +198,33 @@ class ClipReaderTest {
     }
 
     @Test
+    fun whenTheRetryBudgetIsSpentATransientErrorFallsBackAtOnceInsteadOfWaitingForARetryThatWillNotCome() {
+        // Quỹ thời gian thử lại ([ClipBudget]) đã hết: người gọi sẽ không thử lại nữa, nên lần hỏng này phải rơi sang giọng kế ngay (không thì thành "Thử lại" sau cả phút chờ).
+        var spent = 0L
+        val scope = ClipBudget.Scope(0L, ClipBudget.BUDGET_MS) { spent }
+        scope.nextDelayMs = 2_000L
+        val edge = FakeVoice("edge:v", VoiceException("Giọng Edge trả lời quá chậm", reason = "timeout"))
+        val device = FakeVoice("device:vi")
+        val before = ClipBudget.enter(scope)
+        try {
+            spent = 15_000_000_000L // 15 s đã qua: còn 5 s, mà nghỉ 2 s + lần thử tối thiểu 4 s thì không đủ
+            assertEquals("device:vi", reader(edge, device).read("Xin hết quỹ", "edge:v", willRetry = true).voice)
+            assertEquals(1, device.calls)
+            // Còn quỹ: ném lỗi gốc lên như cũ.
+            spent = 1_000_000_000L
+            val flaky = FakeVoice("edge:v", VoiceException("hỏng", reason = "timeout"))
+            try {
+                reader(flaky, FakeVoice("device:vi")).read("Xin còn quỹ", "edge:v", willRetry = true)
+                fail("đáng ra lỗi gốc")
+            } catch (error: VoiceException) {
+                assertTrue(error.transient)
+            }
+        } finally {
+            ClipBudget.leave(before)
+        }
+    }
+
+    @Test
     fun willRetryDoesNotApplyToErrorsThatRetryingCannotFix() {
         for (error in listOf(
             VoiceException("Không có mạng", offline = true),

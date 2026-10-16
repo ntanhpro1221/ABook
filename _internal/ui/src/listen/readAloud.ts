@@ -46,6 +46,8 @@ export interface ClipOptions {
   readings?: Record<string, string>;
   /** Bộ máy sẽ tự thử lại nếu lần này hỏng vì lỗi thoáng qua ([isTransientClipError]): bộ lấy clip đừng vội bỏ giọng ấy / rơi sang giọng khác, cứ ném lỗi gốc lên. */
   willRetry?: boolean;
+  /** Quỹ thời gian thử lại ([CLIP_RETRY_BUDGET_MS]): từ mốc này (Date.now) lần thử lại sẽ không còn kịp - `willRetry` coi như tắt, bộ lấy clip rơi sang giọng kế ngay trong lần hỏng này. */
+  retryBefore?: number;
 }
 
 export type ClipFetcher = (voice: string, text: string, options?: ClipOptions) => Promise<ReadAloudClip>;
@@ -122,6 +124,14 @@ export function isTransientClipError(error: unknown): boolean {
 export const CLIP_RETRY_DELAYS_MS = [1000, 2500, 4500, 7000];
 /** Số lần thử lại một clip hỏng vì lỗi thoáng qua trước khi dừng (nếu người nghe đã tới đoạn ấy). */
 export const CLIP_RETRIES = CLIP_RETRY_DELAYS_MS.length;
+/** Trần tổng thời gian thử lại một clip, tính từ lần lấy đầu (mạng còn nối mà máy chủ Edge im lìm: mỗi lần chờ tin 25 giây - 5 lần thì cả phút; bản trước quỹ này là ~140 giây). Một lần thử lại chỉ bắt đầu
+ *  nếu sau quãng nghỉ của nó còn ít nhất `CLIP_MIN_ATTEMPT_MS`; hết quỹ thì rơi sang giọng kế / báo lỗi ngay. Lần lấy đầu không bị cắt. Cùng quỹ với điện thoại (ClipBudget ở ClipRetry.kt). */
+export const CLIP_RETRY_BUDGET_MS = 20_000;
+export const CLIP_MIN_ATTEMPT_MS = 4_000;
+/** Mốc (Date.now) sau đó lần thử lại thứ `failed + 1` không còn kịp, cho clip bắt đầu lấy lúc `began`. */
+export function clipRetryBefore(began: number, failed: number): number {
+  return began + CLIP_RETRY_BUDGET_MS - CLIP_MIN_ATTEMPT_MS - CLIP_RETRY_DELAYS_MS[Math.min(failed, CLIP_RETRY_DELAYS_MS.length - 1)];
+}
 // Máy tính: đọc trước tối thiểu 3 đoạn (rẻ - clip chỉ vài chục KB; đoạn ngắn liên tiếp không còn bắt người nghe chờ). Điện thoại tự đọc trước (ReadAloud.kt).
 const READ_AHEAD = 3;
 /** Giọng trực tuyến chậm từng lúc (soát a45: Edge có lúc 9-24 s một đoạn, giọng im 9 giây giữa chương): chỉ đọc sẵn 3 đoạn thì đoạn ngắn (đối thoại) chỉ đủ vài giây. Nên đọc sẵn đủ SỐ GIÂY
@@ -227,6 +237,8 @@ interface Slot {
   fetching: boolean;
   /** Số lần lấy clip đã hỏng liên tiếp (Edge thỉnh thoảng trả 502 thoáng qua). */
   failures: number;
+  /** Lúc (Date.now) bắt đầu lần lấy đầu của chuỗi lần hỏng hiện tại: gốc của quỹ [CLIP_RETRY_BUDGET_MS]. */
+  began: number;
   /** Tăng mỗi khi clip của đoạn bị bỏ vì cách đọc đổi: clip về từ lượt hỏi cũ (epoch cũ) thì không dùng. */
   epoch: number;
   /** Cách đọc có chữ trong đoạn này vừa đổi mà đoạn đang nói (không cắt ngang): lần phát lại kế tiếp lấy clip mới. */
@@ -492,6 +504,7 @@ export class ReadAloudEngine implements AudioEngine {
       started: false,
       fetching: false,
       failures: 0,
+      began: 0,
       epoch: 0,
       stale: false,
     };
@@ -812,8 +825,9 @@ export class ReadAloudEngine implements AudioEngine {
     this.sentAt = sentAt;
     this.pending.set(index, sentAt);
     this.watching();
+    if (slot.failures === 0) slot.began = sentAt;
     speech
-      .fetchClip(speech.voice(), slot.text, { willRetry: slot.failures < CLIP_RETRIES })
+      .fetchClip(speech.voice(), slot.text, { willRetry: slot.failures < CLIP_RETRIES, retryBefore: clipRetryBefore(slot.began, slot.failures) })
       .then((clip) => {
         this.lastClipMs = Date.now() - sentAt;
         if (id !== this.loadId) return;
@@ -832,7 +846,7 @@ export class ReadAloudEngine implements AudioEngine {
         slot.failures += 1;
         // Lỗi thoáng qua (Edge cắt lượt / bận / chậm): thử lại sau một quãng nghỉ lùi dần, ở nền - các clip đã đọc sẵn vẫn phát, người nghe chỉ phải dừng nếu tới đoạn này mà
         // hết lần thử. Lỗi khác (mất mạng, bị từ chối, giọng / khoá hỏng...) thử lại cũng vô ích: đoạn người nghe đang chờ thì dừng ngay và báo.
-        if (isTransientClipError(error) && slot.failures <= CLIP_RETRIES) {
+        if (isTransientClipError(error) && slot.failures <= CLIP_RETRIES && Date.now() < clipRetryBefore(slot.began, slot.failures - 1)) {
           this.retryLater(index, epoch, id);
           return;
         }

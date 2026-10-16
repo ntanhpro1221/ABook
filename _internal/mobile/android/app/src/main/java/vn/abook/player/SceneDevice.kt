@@ -5,7 +5,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.readaloud.Paragraphs
 import java.io.File
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -22,10 +21,9 @@ object DeviceScenes {
     const val AHEAD_CHAPTERS = 3
     const val BUILD_WAIT_MS = 2000L
 
-    private val builder: ExecutorService = Executors.newSingleThreadExecutor { Thread(it, "scene-music").apply { isDaemon = true; priority = Thread.MIN_PRIORITY } }
+    private val builder = SceneQueue()
     private val waiters: ExecutorService = Executors.newCachedThreadPool { Thread(it, "scene-music-wait").apply { isDaemon = true } }
     private val books = HashMap<String, Pair<String, SceneBook>>() // mã sách -> (khoá, cuốn)
-    private val queued = ConcurrentHashMap<String, Future<*>>()    // "mã sách/chương" -> việc đang chờ / đang dựng
 
     /** Chạy [cues] ở luồng riêng (lời gọi plugin không được chiếm luồng `io` chung khi chờ dựng) và trả kết quả / lỗi qua `done`. */
     fun request(context: Context, bookId: String, chapterId: Int, done: (JSONObject?, Exception?) -> Unit) {
@@ -69,21 +67,14 @@ object DeviceScenes {
         ready(chapterId)?.let { return book.response(it) }
 
         val wanted = order.subList(order.indexOf(chapterId), order.size).take(AHEAD_CHAPTERS + 1)
-        val prefix = "$bookId/"
-        for ((key, job) in queued) if (key.startsWith(prefix) && key.substring(prefix.length).toIntOrNull() !in wanted) job.cancel(false) // đổi chỗ nghe: bỏ việc chưa chạy
+        // Đang nghe cuốn này: việc nền của cuốn khác không còn ai chờ, chương ngoài tầm nghe cũng thôi (`Builder.cancel_others` của máy tính).
+        builder.cancelOthers(bookId)
+        builder.cancelOutside(bookId, wanted)
         var waiting: Future<*>? = null
-        for (id in wanted) {
+        // Ưu tiên theo khoảng cách tới chương đang nghe (0, 1, 2, ...): nhảy về chương trước thì nó được dựng TRƯỚC mấy chương kế đã xếp hàng.
+        for ((distance, id) in wanted.withIndex()) {
             if (id != chapterId && ready(id) != null) continue
-            val key = "$bookId/$id"
-            val job = queued.compute(key) { _, running ->
-                if (running != null && !running.isDone) running else builder.submit(Runnable {
-                    try {
-                        book.build(id)
-                    } finally {
-                        queued.remove(key)
-                    }
-                })
-            }
+            val job = builder.submit(bookId, id, distance) { book.build(id) }
             if (id == chapterId) waiting = job
         }
         var failed = false
@@ -118,7 +109,8 @@ object DeviceScenes {
         val near = Near(catalog)
         // Bộ chọn chỉ hỏi thứ ĐÃ BIẾT (sổ bài quá cỡ): xếp hạng hàng trăm bài mà tra cỡ từng bài là hàng trăm mảnh danh mục. Cỡ của bài ĐÃ CHỌN tra một lượt sau mỗi lần chọn
         // (`catalog.verifySizes`) và chương chọn lại nếu có bài quá cỡ - `server.music_verify_sizes` của máy tính.
-        val choice = SceneChoice(bookId, available = { link -> catalog.usable(link, null) })
+        // Hỏi cả chuyện MẠNG như máy tính (`music_track_available(sizes=False)`): nguồn bài vừa hỏng / máy mất mạng thì chọn trong số bài đã tải, không chọn bài sẽ im lặng.
+        val choice = SceneChoice(bookId, available = catalog::available)
         val book = SceneBook(File(root, key), order, { id -> body(bookId, id, entries[id]) }, choice, catalog::verifySizes) { near.tracks() }
         books[bookId] = key to book
         return book
