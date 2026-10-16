@@ -4,9 +4,16 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.security.MessageDigest
+import kotlin.math.max
 
 /**
- * Plan nhạc theo cảnh của MỘT cuốn chỉ có chữ, đường N0 - bản Kotlin của `music_nnscene.SceneBook` + `build_chapter` + `chapter_cues`: dựng TỪNG chương khi cần
+ * Chỗ cắm học sinh của nhạc theo cảnh (`music_nnscene.StudentItems`): mục `dV / dE / dT / chapterV` của từng đoạn nền `scenes` của chương, hay null khi chương không dùng được
+ * (chương ấy đi đường N0). Điện thoại cắm [NnLite.chapterItems].
+ */
+typealias SceneStudent = (chapterId: Int, segments: List<SceneSegment>, scenes: List<SceneScene>) -> List<StudentItem>?
+
+/**
+ * Plan nhạc theo cảnh của MỘT cuốn chỉ có chữ, đường N0 hay NN-lite (`student`) - bản Kotlin của `music_nnscene.SceneBook` + `build_chapter` + `chapter_cues`: dựng TỪNG chương khi cần
  * (câu của chương -> đoạn nhạc -> bài), nhớ bản ghi mỗi chương một file trong `directory` (tên thư mục mang khoá: đổi khoá là dựng lại từ đầu).
  *
  * Chương dựng sau các chương liền trước ĐÃ dựng thì tiếp "bài vừa dùng" của chúng (`recent`, cửa sổ [SceneChooser.RECENT_SCENES]), nên dựng lần lượt từ chương
@@ -27,8 +34,10 @@ class SceneBook(
      * trăm bài xếp hạng, tra cỡ từng bài là tải hàng trăm mảnh danh mục.
      */
     private val verify: (List<String>) -> Boolean = { false },
-    /** Bài quanh đích êm, đúng thứ tự `near` của danh mục (ô rồi bài trong ô). */
-    private val candidates: () -> List<SceneTrack>,
+    /** Học sinh NN-lite (null = đường N0): chỉnh V / E / T của đoạn quanh mức chương, đúng đường NN-V của máy tính ([chapterScenes]). */
+    private val student: SceneStudent? = null,
+    /** Bài quanh đích (valence, arousal), đúng thứ tự `near` của danh mục (ô rồi bài trong ô). */
+    private val candidates: (Double, Double) -> List<SceneTrack>,
 ) {
     private val lock = Any()
 
@@ -84,21 +93,25 @@ class SceneBook(
         val sha = sha1(text.toByteArray(Charsets.UTF_8))
         read(chapterId, sha)?.let { return it }
         val segments = SceneSegmenter.script(text)
-        val scenes = SceneScenes.chapterScenes(chapterId, segments)
+        val scenes = chapterScenes(chapterId, segments, student)
         val paragraphs = SceneSegmenter.paragraphIds(segments.map { it.text }, text)
         val paragraphOf = HashMap<Int, Int>()
         for ((index, segment) in segments.withIndex()) paragraphOf[segment.id] = paragraphs[index] // trùng id: câu sau thắng (dict của Python)
-        val tracks = candidates()
-        var chosen = SceneChooser(choice) { _, _ -> tracks }.choose(scenes, recentBefore(chapterId))
+        var chooser = SceneChooser(choice, candidates)
+        var chosen = chooser.choose(scenes, recentBefore(chapterId))
         for (round in 1..VERIFY_ROUNDS) { // như vòng `for _ in range(VERIFY_ROUNDS)` của Python: mỗi vòng chọn rồi tra cỡ
             if (!verify(chosenLinks(chosen))) break
-            if (round < VERIFY_ROUNDS) chosen = SceneChooser(choice) { _, _ -> tracks }.choose(scenes, recentBefore(chapterId))
+            if (round < VERIFY_ROUNDS) {
+                chooser = SceneChooser(choice, candidates)
+                chosen = chooser.choose(scenes, recentBefore(chapterId))
+            }
         }
         var seconds = 0.0
         for (length in SceneScenes.durations(segments)) seconds += length // sum() của Python 3.11: cộng lần lượt
         val record = JSONObject().put("version", FORMAT_VERSION).put("chapterId", chapterId).put("textSha", sha).put("segments", segments.size)
             .put("seconds", Py.round(seconds, 3))
             .put("scenes", JSONArray(chosen.map { sceneJson(it, paragraphOf[it.scene.firstSegment] ?: 0) }))
+            .put("loops", loopsJson(chosenLinks(chosen), chooser))
         directory.mkdirs()
         Store.writeAtomic(file(chapterId), record.toString().toByteArray(Charsets.UTF_8))
         record
@@ -133,6 +146,20 @@ class SceneBook(
             }
         }
         return runs
+    }
+
+    /**
+     * Độ dài / đoạn nghe được của các bài đã chọn (cho vòng lặp ở [response]). Đích của đoạn học sinh khác nhau nên các bài nằm ở nhiều ô danh mục: ghi lại ở bản ghi chương
+     * thay vì hỏi lại danh mục ([SceneChooser.trackOf]: bài chưa biết thì không có mục, vòng lặp vô cực).
+     */
+    private fun loopsJson(links: List<String>, chooser: SceneChooser): JSONObject {
+        val out = JSONObject()
+        for (link in links) {
+            val track = chooser.trackOf(link) ?: continue
+            out.put(link, JSONObject().put("length", track.seconds?.takeIf { it != 0.0 } ?: track.duration ?: JSONObject.NULL)
+                .put("audibleStart", track.audibleStart ?: JSONObject.NULL).put("audibleEnd", track.audibleEnd ?: JSONObject.NULL))
+        }
+        return out
     }
 
     private fun sceneJson(chosen: ChosenScene, paragraph: Int): JSONObject {
@@ -190,34 +217,44 @@ class SceneBook(
             if (!cue.sibling) heads[cue.key]?.let { item.put("firstSegment", it) }
             cues.put(item)
         }
-        val byLink = HashMap<String, SceneTrack>()
-        for (track in candidates()) byLink.putIfAbsent(track.link, track)
+        val loops = record.optJSONObject("loops") ?: JSONObject()
         val scenes = JSONArray()
         for (index in 0 until list.length()) {
             val json = list.getJSONObject(index)
             val item = JSONObject().put("key", json.getString("key")).put("firstSegment", json.getInt("firstSegment"))
                 .put("lastSegment", json.getInt("lastSegment")).put("paragraph", json.optInt("paragraph")).put("reason", json.getString("reason"))
                 .put("start", json.getDouble("start")).put("end", json.getDouble("end")).put("link", json.opt("link") ?: JSONObject.NULL)
-            chosen[index].link?.let { link -> item.put("loop", loopJson(byLink[link])) }
+            chosen[index].link?.let { link -> item.put("loop", loopJson(loops.optJSONObject(link))) }
             scenes.put(item)
         }
         return JSONObject().put("cues", cues).put("scene", true).put("estSeconds", seconds).put("scenes", scenes)
     }
 
-    /** Vòng lặp của bài ([MusicCues.loopBounds], cùng hàm với trình phát); vô cực (chưa biết độ dài) ghi null. */
-    private fun loopJson(track: SceneTrack?): JSONObject {
-        val bounds = MusicTimeline.loopBounds(MusicTimeline.TrackInfo(track?.seconds?.takeIf { it != 0.0 } ?: track?.duration, track?.audibleStart, track?.audibleEnd))
+    /** Vòng lặp của bài ([MusicCues.loopBounds], cùng hàm với trình phát); vô cực (chưa biết độ dài) ghi null. `loop`: mục của [loopsJson] (null = bài chưa biết). */
+    private fun loopJson(loop: JSONObject?): JSONObject {
+        fun number(key: String): Double? = if (loop == null || loop.isNull(key)) null else loop.getDouble(key)
+        val bounds = MusicTimeline.loopBounds(MusicTimeline.TrackInfo(number("length"), number("audibleStart"), number("audibleEnd")))
         fun finite(value: Double): Any = if (value.isInfinite() || value.isNaN()) JSONObject.NULL else value
         return JSONObject().put("start", finite(bounds.start)).put("end", finite(bounds.end)).put("period", finite(bounds.period)).put("crossfade", bounds.crossfade)
     }
 
     companion object {
         /** Đổi khi cách tách câu / dựng đoạn / chọn bài / ánh xạ sang đoạn màn đọc đổi: bản ghi đã dựng không dùng lại. */
-        const val ENGINE_VERSION = 2 // 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/, ô cells/ không có)
+        const val ENGINE_VERSION = 3 // 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/, ô cells/ không có); 3: bản ghi mang `loops`, đoạn có thể là của học sinh NN-lite
         const val FORMAT_VERSION = 1
 
         /** Trần số lần chọn lại một chương vì bài quá cỡ (`music_nnscene.VERIFY_ROUNDS`). */
         const val VERIFY_ROUNDS = 12
+
+        /**
+         * `music_nnscene.chapter_scenes`: đoạn nhạc của chương. MỘT chỗ dựng đoạn: có `student` thì chỉnh V / E / T quanh mức chương ([SceneScenes.applyStudent]) và nâng confidence của đoạn
+         * học sinh lên sàn `WEAK_MOOD` (NN-V: V / E của học sinh tới bộ chọn bài); không có, hay học sinh trả null (chương không dùng được), thì đoạn N0 nguyên.
+         */
+        fun chapterScenes(chapterId: Int, segments: List<SceneSegment>, student: SceneStudent?): List<SceneScene> {
+            val base = SceneScenes.chapterScenes(chapterId, segments)
+            val applied = if (student == null) null else SceneScenes.applyStudent(base, student(chapterId, segments, base))
+            return applied?.map { it.copy(confidence = max(it.confidence, SceneChooser.WEAK_MOOD)) } ?: base
+        }
 
         fun sha1(bytes: ByteArray): String = MessageDigest.getInstance("SHA-1").digest(bytes).joinToString("") { "%02x".format(it) }
     }

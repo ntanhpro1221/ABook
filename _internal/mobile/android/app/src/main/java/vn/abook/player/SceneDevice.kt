@@ -1,6 +1,7 @@
 package vn.abook.player
 
 import android.content.Context
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.readaloud.Paragraphs
@@ -11,8 +12,9 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 /**
- * Nhạc nền THEO CẢNH của sách chỉ có chữ trên điện thoại, đường N0 (không model; `music_nnscene.py` bên máy tính): phần máy thật giữa app và [SceneBook] - chữ chương
- * ([Store], dòng `skip` của lớp sửa), danh mục bài ([DeviceMusic.catalog]: 9 ô quanh đích êm, tải khi cần như mảnh `tracks/`), thư mục đệm theo cuốn và luồng dựng nền.
+ * Nhạc nền THEO CẢNH của sách chỉ có chữ trên điện thoại (`music_nnscene.py` bên máy tính): học sinh NN-lite ([NnLite], 2 MB đóng sẵn trong app) chỉnh V / E / T của đoạn; model
+ * không nạp được thì đường N0 (một dòng log). Phần máy thật giữa app và [SceneBook]: chữ chương ([Store], dòng `skip` của lớp sửa), danh mục bài ([DeviceMusic.catalog]:
+ * các ô quanh đích của từng đoạn, tải khi cần như mảnh `tracks/`), thư mục đệm theo cuốn và luồng dựng nền.
  *
  * Dựng nền, MỘT luồng, chương người nghe đang ở trước rồi [AHEAD_CHAPTERS] chương kế: hỏi mốc của chương chưa dựng xong thì chờ tối đa [BUILD_WAIT_MS], quá thì trả
  * `pending` (giọng không chờ nhạc - giao diện hỏi lại sau). Danh mục chưa tải được (mất mạng lần đầu): không nhạc, `pending` false, `unavailable` = lý do bằng lời.
@@ -24,6 +26,27 @@ object DeviceScenes {
     private val builder = SceneQueue()
     private val waiters: ExecutorService = Executors.newCachedThreadPool { Thread(it, "scene-music-wait").apply { isDaemon = true } }
     private val books = HashMap<String, Pair<String, SceneBook>>() // mã sách -> (khoá, cuốn)
+
+    /** File model NN-lite trong assets của app (`abook/webui/assets/nnlite.bin`, cùng file với máy tính). */
+    const val NNLITE_ASSET = "nnlite.bin"
+    private var lite: Pair<NnLite, String>? = null // (model, mã băm file) - null: không nạp được
+    private var liteTried = false
+
+    /** Model NN-lite đã nạp một lần cho cả tiến trình; hỏng / thiếu thì null và đúng MỘT dòng log (nhạc đi đường N0). */
+    @Synchronized
+    private fun lite(context: Context): Pair<NnLite, String>? {
+        if (!liteTried) {
+            liteTried = true
+            lite = try {
+                val raw = context.applicationContext.assets.open(NNLITE_ASSET).use { it.readBytes() }
+                NnLite.parse(raw) to SceneBook.sha1(raw).take(12)
+            } catch (error: Exception) {
+                Log.w("SceneMusic", "NN-lite không nạp được (${error.message}): nhạc theo cảnh chạy đường N0")
+                null
+            }
+        }
+        return lite
+    }
 
     /** Chạy [cues] ở luồng riêng (lời gọi plugin không được chiếm luồng `io` chung khi chờ dựng) và trả kết quả / lỗi qua `done`. */
     fun request(context: Context, bookId: String, chapterId: Int, done: (JSONObject?, Exception?) -> Unit) {
@@ -97,7 +120,9 @@ object DeviceScenes {
     private fun bookFor(
         context: Context, bookId: String, version: String, revision: String, order: List<Int>, entries: Map<Int, JSONObject>, catalog: MusicCatalog,
     ): SceneBook {
-        val key = SceneBook.sha1("$version|$revision|${SceneBook.ENGINE_VERSION}|${SceneBook.FORMAT_VERSION}".toByteArray(Charsets.UTF_8)).take(12)
+        val model = lite(context)
+        // Khoá mang học sinh nào dựng plan ("n0" hay mã model): model hỏng / đổi thì dựng lại (`student_tag` của máy tính).
+        val key = SceneBook.sha1("$version|$revision|${SceneBook.ENGINE_VERSION}|${SceneBook.FORMAT_VERSION}|${model?.second ?: "n0"}".toByteArray(Charsets.UTF_8)).take(12)
         books[bookId]?.takeIf { it.first == key }?.let { return it.second }
         val root = File(context.applicationContext.filesDir, "music/scene/${SceneBook.sha1(bookId.toByteArray(Charsets.UTF_8)).take(16)}")
         root.listFiles()?.forEach { old -> // khoá cũ (sách đổi chữ, danh mục mới): bỏ bản ghi cũ
@@ -111,7 +136,8 @@ object DeviceScenes {
         // (`catalog.verifySizes`) và chương chọn lại nếu có bài quá cỡ - `server.music_verify_sizes` của máy tính.
         // Hỏi cả chuyện MẠNG như máy tính (`music_track_available(sizes=False)`): nguồn bài vừa hỏng / máy mất mạng thì chọn trong số bài đã tải, không chọn bài sẽ im lặng.
         val choice = SceneChoice(bookId, available = catalog::available)
-        val book = SceneBook(File(root, key), order, { id -> body(bookId, id, entries[id]) }, choice, catalog::verifySizes) { near.tracks() }
+        val student: SceneStudent? = model?.first?.let { it::chapterItems }
+        val book = SceneBook(File(root, key), order, { id -> body(bookId, id, entries[id]) }, choice, catalog::verifySizes, student) { valence, arousal -> near.tracks(valence, arousal) }
         books[bookId] = key to book
         return book
     }
@@ -125,17 +151,18 @@ object DeviceScenes {
         return Paragraphs.withoutLines(file.readText(Charsets.UTF_8), skip)
     }
 
-    /** Bài quanh đích êm của danh mục: tải 9 ô lần đầu (cất theo `revision`), sau đó dùng lại trong bộ nhớ. */
+    /** Bài quanh một đích (valence, arousal) của danh mục: các ô kề đích (`MusicCatalog.near`, bán kính 1), mỗi ô đổi sang [SceneTrack] một lần rồi dùng lại trong bộ nhớ. */
     private class Near(private val catalog: MusicCatalog) {
-        private var tracks: List<SceneTrack>? = null
+        private val cells = HashMap<Pair<Int, Int>, List<SceneTrack>>()
 
         @Synchronized
-        fun tracks(): List<SceneTrack> {
-            tracks?.let { return it }
-            val items = catalog.near(SceneChooser.TARGET[0], SceneChooser.TARGET[1], 1)
-            val found = items.mapNotNull { json -> SceneTrack.of(json) }
-            tracks = found
-            return found
+        fun tracks(valence: Double, arousal: Double): List<SceneTrack> {
+            val grid = catalog.manifest().optInt("grid", 5).takeIf { it != 0 } ?: 5
+            val wanted = ArrayList<Pair<Int, Int>>()
+            SceneMusic.near<SceneTrack>(grid, valence, arousal, 1) { v, a -> wanted.add(v to a); emptyList() }
+            // Lần đầu nhiều ô chưa cất: để `catalog.near` tải song song (nhanh hơn nối nhau), rồi đọc từng ô như cũ - ô đã tải nằm trong bộ nhớ của danh mục.
+            if (wanted.count { it !in cells } > 1) runCatching { catalog.near(valence, arousal, 1) }
+            return SceneMusic.near(grid, valence, arousal, 1) { v, a -> cells.getOrPut(v to a) { catalog.cell(v, a).mapNotNull { json -> SceneTrack.of(json) } } }
         }
     }
 }
