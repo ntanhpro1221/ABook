@@ -18,7 +18,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import FIRST_EXCEPTION, ThreadPoolExecutor, wait
 from email.utils import parsedate_to_datetime
 from urllib.parse import quote
 from xml.sax.saxutils import escape, unescape
@@ -296,6 +296,38 @@ def read_turn(connection: websocket.Connection, compensation_ticks: int, deadlin
 
 
 _connections = threading.BoundedSemaphore(EDGE_CONNECTIONS)  # mọi EdgeClient trong tiến trình dùng chung
+SLOT_POLL = 0.25  # mảnh chờ chỗ kết nối xem lại clip đã bỏ chưa sau chừng này giây
+
+
+class _Clip:
+    """Các mảnh của MỘT clip đang đọc song song. Một mảnh hỏng -> `abort()`: cắt ổ cắm các mảnh còn đang đọc (trả chỗ EDGE_CONNECTIONS ngay, không giữ
+    tới hạn chung) và không mảnh nào mở kết nối / thử lại nữa. Điện thoại: ClipCancel trong EdgeTts.kt."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._open: set[websocket.Connection] = set()
+        self.aborted = False
+
+    def opened(self, connection: websocket.Connection) -> bool:
+        with self._lock:
+            if not self.aborted:
+                self._open.add(connection)
+            return not self.aborted
+
+    def closed(self, connection: websocket.Connection) -> None:
+        with self._lock:
+            self._open.discard(connection)
+
+    def abort(self) -> None:
+        with self._lock:
+            self.aborted = True
+            live = list(self._open)
+        for connection in live:
+            connection.abort()
+
+
+class _ClipAborted(EdgeError):
+    """Mảnh dừng vì mảnh khác của clip đã hỏng; không bao giờ tới người gọi (synthesize ném lỗi của mảnh hỏng)."""
 
 
 class EdgeClient:
@@ -359,14 +391,21 @@ class EdgeClient:
             # ENETUNREACH / EHOSTUNREACH / "network is down"...: cũng là không có mạng.
             raise EdgeOffline("Không có mạng để dùng giọng trực tuyến.") from error
 
-    def _speak_one(self, voice: str, text: str, compensation_ticks: int, deadline: float) -> tuple[bytes, list[Boundary]]:
+    def _speak_one(self, voice: str, text: str, compensation_ticks: int, deadline: float, *, clip: _Clip | None = None) -> tuple[bytes, list[Boundary]]:
         # Giữ một chỗ trong EDGE_CONNECTIONS suốt đời kết nối (không giữ khi nghỉ chờ thử lại, nên không có chuyện giữ chỗ mà đợi chỗ).
         slots = _connections
-        if not slots.acquire(timeout=max(0.0, deadline - time.monotonic())):
-            raise EdgeTimeout("Dịch vụ đọc to đang quá tải ở máy này (quá nhiều đoạn đọc cùng lúc).")
+        while not slots.acquire(timeout=max(0.0, min(SLOT_POLL, deadline - time.monotonic()))):
+            if clip is not None and clip.aborted:
+                raise _ClipAborted("Clip đã bỏ.")
+            if time.monotonic() >= deadline:
+                raise EdgeTimeout("Dịch vụ đọc to đang quá tải ở máy này (quá nhiều đoạn đọc cùng lúc).")
         try:
+            if clip is not None and clip.aborted:
+                raise _ClipAborted("Clip đã bỏ.")
             connection = self._connect()
             try:
+                if clip is not None and not clip.opened(connection):
+                    raise _ClipAborted("Clip đã bỏ.")
                 try:
                     connection.send_text(config_message())
                     connection.send_text(ssml_message(uuid.uuid4().hex, build_ssml(voice, text)))
@@ -374,35 +413,47 @@ class EdgeClient:
                     raise EdgeDropped("Dịch vụ đọc to cắt kết nối lúc nhận chữ.") from error
                 return read_turn(connection, compensation_ticks, deadline)
             finally:
+                if clip is not None:
+                    clip.closed(connection)
                 connection.close()
         finally:
             slots.release()
 
-    def _speak_piece(self, voice: str, piece: str, deadline: float) -> tuple[bytes, list[Boundary]]:
-        """Một mảnh, thử lại khi dịch vụ cắt lượt; mốc tính từ đầu mảnh (người gọi cộng độ dài audio các mảnh trước)."""
+    def _speak_piece(self, voice: str, piece: str, deadline: float, clip: _Clip | None = None) -> tuple[bytes, list[Boundary]]:
+        """Một mảnh, thử lại khi dịch vụ cắt lượt; mốc tính từ đầu mảnh (người gọi cộng độ dài audio các mảnh trước). Clip đã bỏ thì thôi, không thử lại."""
         for attempt in range(RETRIES + 1):
             try:
-                return self._speak_one(voice, piece, 0, deadline)
+                return self._speak_one(voice, piece, 0, deadline, clip=clip)
             except EdgeDropped:
-                if attempt == RETRIES:
+                if attempt == RETRIES or (clip is not None and clip.aborted):
                     raise
                 time.sleep(0.3 * (attempt + 1))
         raise AssertionError("unreachable")
 
     def synthesize(self, text: str, voice: str = DEFAULT_VOICE) -> Synthesis:
         """Đọc `text` bằng `voice` (mã đầy đủ, vd "vi-VN-HoaiMyNeural"): MP3 + các WordBoundary (ms từ đầu clip) + độ dài.
-        Đoạn dài đọc theo `speech_pieces`, các mảnh song song (tối đa PIECE_PARALLEL); một mảnh hỏng thì cả clip hỏng, cùng loại lỗi như khi đọc từng mảnh nối tiếp."""
+        Đoạn dài đọc theo `speech_pieces`, các mảnh song song (tối đa PIECE_PARALLEL); mảnh ĐẦU TIÊN hỏng (theo thời gian, không đợi các mảnh trước nó)
+        làm cả clip hỏng ngay với chính lỗi ấy - cùng các loại lỗi như khi đọc nối tiếp - và các mảnh còn lại bị cắt (điện thoại: EdgeTts.kt cùng luật)."""
         deadline = time.monotonic() + TOTAL_TIMEOUT
         pieces = speech_pieces(clean(text))
         if len(pieces) <= 1:
             results = [self._speak_piece(voice, piece, deadline) for piece in pieces]
         else:
+            clip = _Clip()
             pool = ThreadPoolExecutor(max_workers=min(PIECE_PARALLEL, len(pieces)), thread_name_prefix="edge-piece")
             try:
-                futures = [pool.submit(self._speak_piece, voice, piece, deadline) for piece in pieces]
-                results = [future.result() for future in futures]  # theo thứ tự mảnh: lỗi đầu tiên theo thứ tự đọc, như khi nối tiếp
+                futures = [pool.submit(self._speak_piece, voice, piece, deadline, clip) for piece in pieces]
+                # Mảnh tự dừng ở hạn chung (read_turn / chờ chỗ); +1 giây chỉ để chắc không treo nếu một mảnh không tôn trọng hạn.
+                done, _ = wait(futures, timeout=max(0.0, deadline - time.monotonic()) + 1.0, return_when=FIRST_EXCEPTION)
+                failed = [future for future in futures if future in done and future.exception() is not None]
+                if failed:
+                    raise failed[0].exception()  # nhiều mảnh hỏng cùng lúc: lấy mảnh đứng trước cho ổn định
+                if len(done) < len(futures):
+                    raise EdgeTimeout("Dịch vụ đọc to quá lâu không trả lời.")
+                results = [future.result() for future in futures]
             finally:
-                pool.shutdown(wait=False, cancel_futures=True)  # mảnh đang chạy tự dừng ở hạn chung; mảnh chưa chạy bỏ
+                clip.abort()  # thành công thì không còn kết nối nào mở - vô hại
+                pool.shutdown(wait=False, cancel_futures=True)
         audio = bytearray()
         boundaries: list[Boundary] = []
         for data, found in results:

@@ -217,7 +217,7 @@ class FakeEdge:
                               f"Sec-WebSocket-Accept: {ws.accept_key(key)}\r\n\r\n").encode())
                 try:
                     self._talk(conn)
-                except (OSError, ws.WebSocketError):
+                except (OSError, ws.WebSocketError, UnicodeDecodeError):  # UnicodeDecodeError: khách cắt ngang giữa khung (mảnh bị huỷ)
                     pass
 
     def _talk(self, conn: socket.socket) -> None:
