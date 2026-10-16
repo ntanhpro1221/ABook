@@ -192,8 +192,10 @@ class FakeEdge:
         for conn in self.hung:
             conn.close()
 
+    threaded = False  # True: mỗi kết nối một luồng (các mảnh song song của một clip không xếp hàng ở máy chủ giả)
+    _rejected = False
+
     def _serve(self) -> None:
-        rejected = False
         while True:
             try:
                 conn, _ = self.listener.accept()
@@ -203,30 +205,36 @@ class FakeEdge:
                 self.hang -= 1
                 self.hung.append(conn)  # giữ mở, không đọc, không trả lời
                 continue
-            with conn:
-                raw = b""
-                while b"\r\n\r\n" not in raw:
-                    chunk = conn.recv(4096)
-                    if not chunk:
-                        break
-                    raw += chunk
-                text = raw.decode("latin-1")
-                self.requests.append(text)
-                if self.busy > 0:
-                    self.busy -= 1
-                    conn.sendall(b"HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\n\r\n")
-                    continue
-                if self.reject_first and not rejected:
-                    rejected = True
-                    conn.sendall(b"HTTP/1.1 403 Forbidden\r\nDate: Fri, 03 Oct 2026 10:00:00 GMT\r\nContent-Length: 0\r\n\r\n")
-                    continue
-                key = next(line.split(":", 1)[1].strip() for line in text.split("\r\n") if line.lower().startswith("sec-websocket-key"))
-                conn.sendall(("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
-                              f"Sec-WebSocket-Accept: {ws.accept_key(key)}\r\n\r\n").encode())
-                try:
-                    self._talk(conn)
-                except (OSError, ws.WebSocketError, UnicodeDecodeError):  # UnicodeDecodeError: khách cắt ngang giữa khung (mảnh bị huỷ)
-                    pass
+            if self.threaded:
+                threading.Thread(target=self._handle, args=(conn,), daemon=True).start()
+            else:
+                self._handle(conn)
+
+    def _handle(self, conn: socket.socket) -> None:
+        with conn:
+            raw = b""
+            while b"\r\n\r\n" not in raw:
+                chunk = conn.recv(4096)
+                if not chunk:
+                    break
+                raw += chunk
+            text = raw.decode("latin-1")
+            self.requests.append(text)
+            if self.busy > 0:
+                self.busy -= 1
+                conn.sendall(b"HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\n\r\n")
+                return
+            if self.reject_first and not self._rejected:
+                self._rejected = True
+                conn.sendall(b"HTTP/1.1 403 Forbidden\r\nDate: Fri, 03 Oct 2026 10:00:00 GMT\r\nContent-Length: 0\r\n\r\n")
+                return
+            key = next(line.split(":", 1)[1].strip() for line in text.split("\r\n") if line.lower().startswith("sec-websocket-key"))
+            conn.sendall(("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+                          f"Sec-WebSocket-Accept: {ws.accept_key(key)}\r\n\r\n").encode())
+            try:
+                self._talk(conn)
+            except (OSError, ws.WebSocketError, UnicodeDecodeError):  # UnicodeDecodeError: khách cắt ngang giữa khung (mảnh bị huỷ)
+                pass
 
     def _talk(self, conn: socket.socket) -> None:
         def receive(count: int) -> bytes:
@@ -252,6 +260,9 @@ class FakeEdge:
             time.sleep(1.5)
             return
         spoken = ssml.split("<prosody pitch='+0Hz' rate='+0%' volume='+0%'>")[1].split("</prosody>")[0]
+        self._reply(conn, spoken)
+
+    def _reply(self, conn: socket.socket, spoken: str) -> None:
         conn.sendall(_server_frame(ws.TEXT, b"X-RequestId:1\r\nPath:turn.start\r\n\r\n{}"))
         offset = 0
         step = 3_000_000 if len(spoken.split()) <= 6 else 20_000_000 // len(spoken.split())  # chữ dài thì dồn vào 2 giây audio

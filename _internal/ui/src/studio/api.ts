@@ -395,9 +395,8 @@ export function hasLocalTransport(): boolean {
   return transport !== null;
 }
 
-export async function api<T>(path: string, init?: ApiInit): Promise<T> {
-  if (transport) return (await transport(path, init)) as T;
-  const response = await fetch(throughPeer(path, peer), {
+function send(path: string, init?: ApiInit): Promise<Response> {
+  return fetch(throughPeer(path, peer), {
     method: init?.method ?? "GET",
     headers: {
       "X-Ebook-Token": token,
@@ -405,6 +404,26 @@ export async function api<T>(path: string, init?: ApiInit): Promise<T> {
     },
     body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
   });
+}
+
+export async function api<T>(path: string, init?: ApiInit): Promise<T> {
+  if (transport) return (await transport(path, init)) as T;
+  return settle<T>(await send(path, init));
+}
+
+/** Trang này nhận được lời đáp phát luồng từ máy chủ cục bộ (clip đang đọc, listen/liveClip.ts)? Không khi có đường truyền native (điện thoại) hay đang mở Studio của máy khác (cầu nối gom cả lời đáp). */
+export function canStream(): boolean {
+  return transport === null && !peer;
+}
+
+/** Như [api], nhưng lời đáp có `Content-Type` bắt đầu bằng `streamType` thì giao cho `onStream` (đọc dần) thay vì đọc hết thành JSON; các lời đáp khác (JSON, lỗi) y như `api`. Chỉ gọi khi [canStream]. */
+export async function apiOrStream<T, S>(path: string, init: ApiInit, streamType: string, onStream: (response: Response) => Promise<S>): Promise<T | S> {
+  const response = await send(path, init);
+  if (response.ok && (response.headers.get("Content-Type") ?? "").startsWith(streamType)) return onStream(response);
+  return settle<T>(response);
+}
+
+async function settle<T>(response: Response): Promise<T> {
   const text = await response.text();
   const data = text ? JSON.parse(text) : null;
   if (!response.ok) {

@@ -6,7 +6,9 @@ import type { EditsSyncState } from "@/shared/editsSync";
 import { itemFromPath } from "@/listen/importQueue";
 import type { AddedBook, ImportPreview, PickedItem, TextImport } from "@/listen/textImport";
 import { ReadAloudError, fetchClipBytes, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
-import { ApiError, api, mediaUrl } from "@/studio/api";
+import { CLIP_STREAM_TYPE, clipFromStream, liveClipsSupported } from "@/listen/liveClip";
+import { tailFromWord } from "@/listen/words";
+import { ApiError, api, apiOrStream, canStream, mediaUrl } from "@/studio/api";
 import { pickFiles, pickFolder } from "@/studio/data";
 import { batchName, pickedFromDrop, planUpload, sendPlan, UPLOAD_LIMIT, type Picked } from "@/studio/upload";
 import { toast } from "sonner";
@@ -124,22 +126,46 @@ export function desktopTextImport(dialogs: boolean): TextImport {
   };
 }
 
-/** Hỏi máy chủ một clip (chưa tải file audio): ném `ReadAloudError` với đúng lý do máy chủ nêu. */
+/** Xin clip phát luồng ([clipFromStream]): đoạn người nghe đang đứng chờ (rank 0), hỏi thật (không chỉ tra bộ đệm), chỗ chờ đã biết giây (không `whole`), trình duyệt phát được MP3 qua MediaSource. */
+export function wantsLiveClip(options?: ClipOptions): boolean {
+  return options?.rank === 0 && !options.cachedOnly && !options.whole && canStream() && liveClipsSupported();
+}
+
+/** Hỏi máy chủ một clip (chưa tải file audio): ném `ReadAloudError` với đúng lý do máy chủ nêu. Đoạn người nghe đang chờ được phát dần ([wantsLiveClip]): trả clip ngay khi byte đầu về, trong đó
+ *  `live` là phần còn lại đang về; máy chủ có clip trong bộ đệm / không phát luồng được thì vẫn trả JSON như thường. */
 async function requestClip(voice: string, text: string, options?: ClipOptions): Promise<ReadAloudClip> {
-  let clip: { url: string; duration_ms: number; words: [number, number][] } | { cached: false; reason: string };
+  type Reply = { url: string; duration_ms: number; words: [number, number][] } | { cached: false; reason: string };
+  // Bấm giữa đoạn ([ClipOptions.tailFrom]): chỉ đọc phần đuôi từ chữ ấy (phát luồng, nghe sau ~2 giây) - trừ khi đã có cả đoạn trong bộ đệm của máy chủ (nghe ngay, mốc đủ) hay không phát luồng được.
+  const from = options?.tailFrom ?? 0;
+  const tail = from > 0 ? tailFromWord(text, from) : null;
+  const stream = wantsLiveClip(options) && (from <= 0 || tail !== null);
+  if (stream && tail !== null) {
+    try {
+      return await requestClip(voice, text, { ...options, cachedOnly: true, tailFrom: undefined });
+    } catch (error) {
+      if (!(error instanceof ReadAloudError) || error.reason !== "uncached") throw error;
+    }
+  }
+  const init = {
+    method: "POST",
+    body: { voice, text: stream && tail !== null ? tail : text, cachedOnly: options?.cachedOnly, bookId: options?.bookId, readings: options?.readings, rank: options?.rank, ...(stream ? { stream: true } : {}) },
+  };
+  let clip: Reply | ReadAloudClip;
   try {
-    clip = await api<typeof clip>("/api/readaloud/clip", {
-      method: "POST",
-      body: { voice, text, cachedOnly: options?.cachedOnly, bookId: options?.bookId, readings: options?.readings, rank: options?.rank },
-    });
+    clip = stream
+      ? await apiOrStream<Reply, ReadAloudClip>("/api/readaloud/clip", init, CLIP_STREAM_TYPE, (response) => clipFromStream(response.body, mediaUrl))
+      : await api<Reply>("/api/readaloud/clip", init);
   } catch (error) {
     // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
+    if (error instanceof ReadAloudError) throw error;
     if (error instanceof ApiError) throw new ReadAloudError(error.message, String(error.detail.reason ?? "service"));
     throw new ReadAloudError("Không gọi được giọng đọc.", "service");
   }
+  const tailed = stream && tail !== null ? { fromWord: from } : {};
+  if ("durationMs" in clip) return { ...clip, ...tailed }; // clip phát luồng đã dựng sẵn
   // Chỉ tra bộ đệm mà chưa có: máy chủ trả 200 (không phải lỗi mạng), bộ máy đọc vẫn cần biết là "uncached".
   if ("cached" in clip) throw new ReadAloudError("Chưa đọc đoạn này.", clip.reason || "uncached");
-  return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words };
+  return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words, ...tailed };
 }
 
 /** Phía Nghe trên máy tính: đọc từ server cục bộ (abook/webui). */
@@ -163,6 +189,7 @@ export const httpSource: ListenSource = {
   },
   readAloudClip: async (voice, text, options) => {
     const clip = await requestClip(voice, text, options);
+    if (clip.live) return clip; // đang về: chính luồng ấy là file (live.final.bytes khi xong), không tải lại
     // Tải luôn file audio bằng fetch ngay trong lượt xin clip: clip chỉ "về" khi đã đủ byte, lỗi tải = clip hỏng (cùng đường thử lại). Phần tử <audio> tự tải thì bị xếp sau các POST clip còn treo (a55).
     return { ...clip, bytes: await fetchClipBytes(clip.url) };
   },

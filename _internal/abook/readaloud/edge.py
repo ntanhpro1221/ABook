@@ -20,6 +20,7 @@ import uuid
 from collections.abc import Callable
 from concurrent.futures import FIRST_EXCEPTION, ThreadPoolExecutor, wait
 from email.utils import parsedate_to_datetime
+from typing import Protocol
 from urllib.parse import quote
 from xml.sax.saxutils import escape, unescape
 
@@ -300,10 +301,12 @@ def parse_metadata(body: str, compensation_ticks: int) -> list[Boundary]:
 
 
 def read_turn(connection: websocket.Connection, compensation_ticks: int, deadline: float, *, label: str = "Dịch vụ đọc to",
-              strict: bool = True, on_close: Callable[[websocket.Closed], VoiceError | None] | None = None) -> tuple[bytes, list[Boundary]]:
+              strict: bool = True, on_close: Callable[[websocket.Closed], VoiceError | None] | None = None,
+              on_audio: Callable[[bytes], None] | None = None, on_boundaries: Callable[[list[Boundary]], None] | None = None) -> tuple[bytes, list[Boundary]]:
     """Nhận một lượt đọc tới `turn.end`: MP3 (khung nhị phân `Path:audio`) + WordBoundary của `audio.metadata` (cộng mốc bù). Dùng chung cho Edge
     và Azure Speech (cùng giao thức tin, azure.py). `label`: tên dịch vụ trong câu báo lỗi; `strict`: tin lạ là lỗi (Edge) hay bỏ qua (Azure gửi
-    thêm tin khác); `on_close`: đổi khung CLOSE của máy chủ thành lỗi riêng (Azure báo hết hạn mức bằng lý do đóng) - None thì như bị cắt."""
+    thêm tin khác); `on_close`: đổi khung CLOSE của máy chủ thành lỗi riêng (Azure báo hết hạn mức bằng lý do đóng) - None thì như bị cắt.
+    `on_audio` / `on_boundaries`: gọi ngay khi nhận một khung tiếng / một tin mốc (phát luồng, `EdgeClient.synthesize(sink=...)`); kết quả trả về vẫn đủ như cũ."""
     audio = bytearray()
     boundaries: list[Boundary] = []
     while True:
@@ -325,7 +328,10 @@ def read_turn(connection: websocket.Connection, compensation_ticks: int, deadlin
             raw, _, body = payload.partition(b"\r\n\r\n")
             path = parse_headers(raw).get("Path", "")
             if path == "audio.metadata":
-                boundaries += parse_metadata(body.decode("utf-8"), compensation_ticks)
+                found = parse_metadata(body.decode("utf-8"), compensation_ticks)
+                boundaries += found
+                if found and on_boundaries is not None:
+                    on_boundaries(found)
             elif path == "turn.end":
                 return bytes(audio), boundaries
             elif strict and path not in ("turn.start", "response"):
@@ -338,6 +344,8 @@ def read_turn(connection: websocket.Connection, compensation_ticks: int, deadlin
             data = payload[2 + header_length:]
             if headers.get("Path") == "audio" and data:
                 audio += data
+                if on_audio is not None:
+                    on_audio(data)
 
 
 class ConnectionSlots:
@@ -420,6 +428,120 @@ class _ClipAborted(EdgeError):
     """Mảnh dừng vì mảnh khác của clip đã hỏng; không bao giờ tới người gọi (synthesize ném lỗi của mảnh hỏng)."""
 
 
+class StreamSink(Protocol):
+    """Nơi nhận clip đang đọc, theo ĐÚNG thứ tự của clip cuối: mọi byte đã `audio` nối lại == `Synthesis.audio`, mọi mốc đã `boundaries` nối lại == `Synthesis.boundaries`.
+    Gọi từ các luồng đọc (một lần một luồng, có khoá). Sink có thêm `piece_done()` (tuỳ chọn) thì được gọi mỗi khi một mảnh đã phát hết."""
+
+    def audio(self, data: bytes) -> None: ...
+
+    def boundaries(self, found: list[Boundary]) -> None: ...
+
+
+class _Part:
+    """Một mảnh trong [_Relay]: đệm của lượt đọc hiện tại + phần đã đưa sink. Lượt đọc lại (thử lại sau khi bị cắt) phải cho ra đúng phần đã phát - không thì clip hỏng."""
+
+    def __init__(self, relay: _Relay, index: int) -> None:
+        self.relay = relay
+        self.index = index
+        self.buffer = bytearray()
+        self.found: list[Boundary] = []
+        self.max_end = 0  # mốc hết chữ lớn nhất của lượt hiện tại
+        self.sent = bytearray()  # đã đưa sink (của mảnh này)
+        self.sent_found: list[Boundary] = []
+        self.final: bytes | None = None  # audio sau khi cắt đuôi, khi mảnh đã xong
+
+    def begin(self) -> None:
+        """Bắt đầu một lượt đọc (lượt đầu hay lượt thử lại)."""
+        with self.relay.lock:
+            self.buffer = bytearray()
+            self.found = []
+            self.max_end = 0
+
+    def audio(self, data: bytes) -> None:
+        with self.relay.lock:
+            if self.relay.stopped:
+                return
+            at = len(self.buffer)
+            self.buffer += data
+            overlap = min(len(self.buffer), len(self.sent))
+            if overlap > at and self.buffer[at:overlap] != self.sent[at:overlap]:
+                raise EdgeError("Lượt đọc lại của mảnh khác với phần đã phát.")
+            self.relay.pump()
+
+    def boundaries(self, found: list[Boundary]) -> None:
+        with self.relay.lock:
+            if self.relay.stopped:
+                return
+            for boundary in found:
+                at = len(self.found)
+                if at < len(self.sent_found) and boundary != self.sent_found[at]:
+                    raise EdgeError("Lượt đọc lại của mảnh khác với phần đã phát.")
+                self.found.append(boundary)
+                self.max_end = max(self.max_end, boundary.end_ms)
+            self.relay.pump()
+
+    def finish(self, data: bytes, found: list[Boundary]) -> None:
+        """Mảnh đã đọc xong (`data`, `found` của lượt cuối): cắt đuôi như bản không phát luồng, rồi phát nốt."""
+        with self.relay.lock:
+            if self.relay.stopped:
+                return
+            if len(data) < len(self.sent) or found[:len(self.sent_found)] != self.sent_found:
+                raise EdgeError("Lượt đọc lại của mảnh ngắn hơn phần đã phát.")
+            final = data if self.index == self.relay.count - 1 else trim_join_tail(data, self.relay.pieces[self.index], found)
+            self.final = final if len(final) >= len(self.sent) else data[:len(self.sent)]  # (mốc không tăng dần: phần đã phát không bao giờ rút lại)
+            self.found = list(found)
+            self.relay.pump()
+
+
+class _Relay:
+    """Phát một clip nhiều mảnh ra [StreamSink] theo thứ tự trong khi các mảnh còn đang đọc song song. Mảnh đứng đầu (mảnh sớm nhất chưa phát hết) phát byte ngay khi về;
+    mảnh sau nó giữ trong bộ nhớ tới lượt. Mảnh không phải mảnh cuối chỉ phát tới khung MP3 mà `trim_join_tail` chắc chắn giữ lại (khung thứ floor(mốc hết chữ lớn nhất / MP3_FRAME_MS):
+    trim giữ tới mốc hết chữ cuối + đuôi nối, làm tròn lên) cho tới khi mảnh xong và phát nốt phần còn lại. Mốc của mảnh i cộng số ms của mọi byte đã phát trước mảnh i (CBR)."""
+
+    def __init__(self, sink: StreamSink, pieces: list[str]) -> None:
+        self.sink = sink
+        self.pieces = pieces
+        self.count = len(pieces)
+        self.lock = threading.Lock()
+        self.stopped = False
+        self.parts = [_Part(self, index) for index in range(len(pieces))]
+        self._head = 0
+        self._base = 0  # byte của các mảnh trước mảnh đứng đầu (đã phát hết)
+
+    def stop(self) -> None:
+        """Clip hỏng / xong: sink không nhận thêm gì."""
+        with self.lock:
+            self.stopped = True
+
+    def pump(self) -> None:
+        """Đưa sink mọi thứ đã chắc chắn của mảnh đứng đầu; mảnh đứng đầu xong và phát hết thì mảnh kế lên. Gọi khi đang giữ `lock`."""
+        while not self.stopped and self._head < self.count:
+            part = self.parts[self._head]
+            news = part.found[len(part.sent_found):]
+            if news:
+                shift_ms = self._base * 8 * 1000 // BITRATE_BPS
+                self.sink.boundaries([Boundary(b.text, b.start_ms + shift_ms, b.end_ms + shift_ms, b.char) for b in news] if shift_ms else list(news))
+                part.sent_found += news
+            if part.final is not None:
+                source, limit = part.final, len(part.final)
+            elif self._head == self.count - 1:
+                source, limit = part.buffer, len(part.buffer)
+            else:
+                source, limit = part.buffer, min(len(part.buffer), part.max_end // MP3_FRAME_MS * MP3_FRAME_BYTES)
+            if limit > len(part.sent):
+                chunk = bytes(source[len(part.sent):limit])
+                self.sink.audio(chunk)
+                part.sent += chunk
+            if part.final is not None and len(part.sent) == len(part.final):
+                self._base += len(part.final)
+                self._head += 1
+                done = getattr(self.sink, "piece_done", None)  # tuỳ chọn: người nghe cập nhật mốc chữ mỗi khi một mảnh phát hết
+                if done is not None:
+                    done()
+                continue
+            return
+
+
 class EdgeClient:
     """`host` / `port` / `secure` đổi được để bài thử nói chuyện với máy chủ giả trên máy này."""
 
@@ -481,7 +603,8 @@ class EdgeClient:
             # ENETUNREACH / EHOSTUNREACH / "network is down"...: cũng là không có mạng.
             raise EdgeOffline("Không có mạng để dùng giọng trực tuyến.") from error
 
-    def _speak_one(self, voice: str, text: str, compensation_ticks: int, deadline: float, *, clip: _Clip | None = None, rank: int = RANK_BACKGROUND) -> tuple[bytes, list[Boundary]]:
+    def _speak_one(self, voice: str, text: str, compensation_ticks: int, deadline: float, *, clip: _Clip | None = None, rank: int = RANK_BACKGROUND,
+                   part: _Part | None = None) -> tuple[bytes, list[Boundary]]:
         # Giữ một chỗ trong EDGE_CONNECTIONS suốt đời kết nối (không giữ khi nghỉ chờ thử lại, nên không có chuyện giữ chỗ mà đợi chỗ). `rank`: số đoạn người nghe phải nghe trước đoạn này (0 = đang
         # đứng chờ đúng nó) - hết chỗ thì mảnh gần người nghe hơn đi trước ([ConnectionSlots]).
         slots = _connections
@@ -501,7 +624,9 @@ class EdgeClient:
                     connection.send_text(ssml_message(uuid.uuid4().hex, build_ssml(voice, text)))
                 except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as error:
                     raise EdgeDropped("Dịch vụ đọc to cắt kết nối lúc nhận chữ.") from error
-                return read_turn(connection, compensation_ticks, deadline)
+                if part is None:
+                    return read_turn(connection, compensation_ticks, deadline)
+                return read_turn(connection, compensation_ticks, deadline, on_audio=part.audio, on_boundaries=part.boundaries)
             finally:
                 if clip is not None:
                     clip.closed(connection)
@@ -509,11 +634,16 @@ class EdgeClient:
         finally:
             slots.release()
 
-    def _speak_piece(self, voice: str, piece: str, deadline: float, clip: _Clip | None = None, rank: int = RANK_BACKGROUND) -> tuple[bytes, list[Boundary]]:
-        """Một mảnh, thử lại khi dịch vụ cắt lượt; mốc tính từ đầu mảnh (người gọi cộng độ dài audio các mảnh trước). Clip đã bỏ thì thôi, không thử lại."""
+    def _speak_piece(self, voice: str, piece: str, deadline: float, clip: _Clip | None = None, rank: int = RANK_BACKGROUND,
+                     part: _Part | None = None) -> tuple[bytes, list[Boundary]]:
+        """Một mảnh, thử lại khi dịch vụ cắt lượt; mốc tính từ đầu mảnh (người gọi cộng độ dài audio các mảnh trước). Clip đã bỏ thì thôi, không thử lại.
+        `part`: phát luồng - mỗi lượt đọc (kể cả lượt thử lại, đọc lại từ đầu) báo vào đó."""
         for attempt in range(RETRIES + 1):
             try:
-                return self._speak_one(voice, piece, 0, deadline, clip=clip, rank=rank)
+                if part is None:
+                    return self._speak_one(voice, piece, 0, deadline, clip=clip, rank=rank)
+                part.begin()
+                return self._speak_one(voice, piece, 0, deadline, clip=clip, rank=rank, part=part)
             except EdgeDropped as error:
                 if attempt == RETRIES or (clip is not None and clip.aborted):
                     if attempt == RETRIES and isinstance(error, EdgeConnectTimeout):
@@ -523,20 +653,34 @@ class EdgeClient:
                     time.sleep(0.3 * (attempt + 1))
         raise AssertionError("unreachable")
 
-    def synthesize(self, text: str, voice: str = DEFAULT_VOICE, *, rank: int = RANK_BACKGROUND) -> Synthesis:
+    def _speak_streamed(self, relay: _Relay, index: int, voice: str, piece: str, deadline: float, clip: _Clip | None, rank: int) -> tuple[bytes, list[Boundary]]:
+        part = relay.parts[index]
+        data, found = self._speak_piece(voice, piece, deadline, clip, rank, part=part)
+        part.finish(data, found)
+        return part.final, part.found  # type: ignore[return-value]  # finish() vừa đặt (đã cắt đuôi như bản không phát luồng)
+
+    def synthesize(self, text: str, voice: str = DEFAULT_VOICE, *, rank: int = RANK_BACKGROUND, sink: StreamSink | None = None) -> Synthesis:
         """Đọc `text` bằng `voice` (mã đầy đủ, vd "vi-VN-HoaiMyNeural"): MP3 + các WordBoundary (ms từ đầu clip) + độ dài.
         Đoạn dài đọc theo `speech_pieces`, các mảnh song song (tối đa PIECE_PARALLEL, đoạn rank 0 tối đa TARGET_PIECES); mảnh ĐẦU TIÊN hỏng (theo thời gian, không đợi các mảnh trước nó)
         làm cả clip hỏng ngay với chính lỗi ấy - cùng các loại lỗi như khi đọc nối tiếp - và các mảnh còn lại bị cắt (điện thoại: EdgeTts.kt cùng luật).
-        `rank`: số đoạn người nghe phải nghe trước clip này (0 = đang đứng chờ đúng nó: nhảy tới, đầu chương) - hết chỗ kết nối thì mảnh của clip gần người nghe hơn đi trước ([ConnectionSlots])."""
+        `rank`: số đoạn người nghe phải nghe trước clip này (0 = đang đứng chờ đúng nó: nhảy tới, đầu chương) - hết chỗ kết nối thì mảnh của clip gần người nghe hơn đi trước ([ConnectionSlots]).
+        `sink`: phát luồng - tiếng và mốc đưa vào đó ngay khi chắc chắn, theo đúng thứ tự (xem [_Relay]); trả về vẫn đủ clip, y hệt bản không `sink`. Lỗi thì ném như cũ và sink không nhận gì thêm."""
         deadline = time.monotonic() + TOTAL_TIMEOUT
         pieces = speech_pieces(clean(text), rank)
+        relay = _Relay(sink, pieces) if sink is not None else None
         if len(pieces) <= 1:
-            results = [self._speak_piece(voice, piece, deadline, rank=rank) for piece in pieces]
+            if relay is not None:
+                results = [self._speak_streamed(relay, index, voice, piece, deadline, None, rank) for index, piece in enumerate(pieces)]
+            else:
+                results = [self._speak_piece(voice, piece, deadline, rank=rank) for piece in pieces]
         else:
             clip = _Clip()
             pool = ThreadPoolExecutor(max_workers=min(piece_limit(rank), len(pieces)), thread_name_prefix="edge-piece")
             try:
-                futures = [pool.submit(self._speak_piece, voice, piece, deadline, clip, rank) for piece in pieces]
+                if relay is None:
+                    futures = [pool.submit(self._speak_piece, voice, piece, deadline, clip, rank) for piece in pieces]
+                else:
+                    futures = [pool.submit(self._speak_streamed, relay, index, voice, piece, deadline, clip, rank) for index, piece in enumerate(pieces)]
                 # Mảnh tự dừng ở hạn chung (read_turn / chờ chỗ); +1 giây chỉ để chắc không treo nếu một mảnh không tôn trọng hạn.
                 done, _ = wait(futures, timeout=max(0.0, deadline - time.monotonic()) + 1.0, return_when=FIRST_EXCEPTION)
                 failed = [future for future in futures if future in done and future.exception() is not None]
@@ -546,13 +690,15 @@ class EdgeClient:
                     raise EdgeTimeout("Dịch vụ đọc to quá lâu không trả lời.")
                 results = [future.result() for future in futures]
             finally:
+                if relay is not None:
+                    relay.stop()
                 clip.abort()  # thành công thì không còn kết nối nào mở - vô hại
                 pool.shutdown(wait=False, cancel_futures=True)
         audio = bytearray()
         boundaries: list[Boundary] = []
         for index, (data, found) in enumerate(results):
-            if index < len(results) - 1:
-                data = trim_join_tail(data, pieces[index], found)  # cắt lặng đuôi trước khi bù mốc cho mảnh sau
+            if relay is None and index < len(results) - 1:
+                data = trim_join_tail(data, pieces[index], found)  # cắt lặng đuôi trước khi bù mốc cho mảnh sau (phát luồng: mảnh đã cắt khi xong)
             # Mốc của mỗi mảnh tính từ đầu mảnh ấy: bù bằng độ dài audio các mảnh trước (CBR nên chính xác).
             shift_ms = len(audio) * 8 * 1000 // BITRATE_BPS
             boundaries += [Boundary(b.text, b.start_ms + shift_ms, b.end_ms + shift_ms, b.char) for b in found] if shift_ms else found
