@@ -10,14 +10,16 @@ object ClipRetry {
      * `attempt(willRetry)`: một lần đọc; `willRetry` bật ở mọi lần trừ lần cuối - [ClipReader.read] khi ấy ném lỗi thoáng qua lên nguyên vẹn thay vì cho giọng nghỉ / rơi sang giọng khác (trừ
      * khi hết quỹ thời gian [ClipBudget]: lúc đó nó rơi sang giọng kế ngay, vì sẽ không có lần thử nào nữa). `sleep(ms)`: nghỉ, trả false nếu việc đã cũ (tua, đổi chương, đổi giọng) hay
      * người nghe đã tạm dừng - dừng ngay. `record(ms)`: số đo thời gian lấy clip cho [ReadAheadPolicy] (lượt thành công, và lượt hỏng mà đã chờ từ [ReadAheadPolicy.SLOW_MS]).
-     * `budgetMs`: trần tổng thời gian từ lần đọc đầu tới lúc bắt đầu một lần thử lại ([ClipBudget.BUDGET_MS]).
+     * `budgetMs`: trần tổng thời gian từ lần đọc đầu tới lúc bắt đầu một lần thử lại ([ClipBudget.BUDGET_MS]). `cancel`: để người gọi huỷ lượt đọc đang chạy (tua / đổi chương / dừng) - giọng
+     * mạng đăng ký thứ cần đóng ngay (ổ cắm, [EdgeTts]) vào đó qua [ClipBudget.cancel].
      */
     fun run(
         online: Boolean, delaysMs: LongArray, sleep: (Long) -> Boolean, record: (Long) -> Unit = {}, clock: () -> Long = System::nanoTime,
-        budgetMs: Long = ClipBudget.BUDGET_MS, attempt: (Boolean) -> Clip,
+        budgetMs: Long = ClipBudget.BUDGET_MS, cancel: ClipCancel? = null, attempt: (Boolean) -> Clip,
     ): Result<Clip> {
         var tries = 0
         val scope = ClipBudget.Scope(clock(), budgetMs, clock)
+        scope.cancel = cancel
         val before = ClipBudget.enter(scope)
         try {
             while (true) {
@@ -52,6 +54,8 @@ object ClipBudget {
     class Scope(val began: Long, val budgetMs: Long, val clock: () -> Long) {
         var retrying = false
         var nextDelayMs: Long? = null
+        /** Huỷ của người gọi [ClipRetry.run] (null = không ai huỷ được). */
+        var cancel: ClipCancel? = null
 
         fun remainingMs(): Long = budgetMs - (clock() - began) / 1_000_000
 
@@ -63,6 +67,9 @@ object ClipBudget {
 
     /** Quỹ của luồng này (null ngoài [ClipRetry.run]): để luồng phụ đọc song song các mảnh của một đoạn ([EdgeTts]) chạy trong cùng quỹ qua [inherit]. */
     fun current(): Scope? = current.get()
+
+    /** Chỗ huỷ của lượt đọc đang chạy ở luồng này (null ngoài [ClipRetry.run] hay khi người gọi không đưa). */
+    fun cancel(): ClipCancel? = current.get()?.cancel
 
     /** Chạy `block` ở luồng này trong quỹ `scope` (của luồng gọi - [current]); xong trả quỹ cũ. */
     fun <T> inherit(scope: Scope?, block: () -> T): T {
@@ -94,5 +101,30 @@ object ClipBudget {
         val scope = current.get() ?: return full
         if (!retry && !scope.retrying) return full
         return minOf(full, maxOf(MIN_ATTEMPT_MS, scope.remainingMs()))
+    }
+}
+
+/**
+ * Huỷ MỘT lượt đọc clip đang chạy ở luồng nền (người nghe tua / đổi chương / đổi giọng / dừng: kết quả sẽ bị bỏ): thứ nó đang giữ - ổ cắm SSL của các mảnh Edge, mỗi cái giữ một chỗ trong
+ * [EdgeTts.connections] tới 15-45 giây - đóng NGAY thay vì chạy nốt lượt. Giọng đăng ký thứ cần đóng bằng [register] (đã huỷ rồi thì đóng liền) và gỡ bằng [unregister] khi xong.
+ * Luồng đọc nhận [CancellationException] (không phải [VoiceException]): không thử lại, không rơi sang giọng kế.
+ */
+class ClipCancel {
+    @Volatile var cancelled = false
+        private set
+    private val closers = java.util.concurrent.CopyOnWriteArraySet<AutoCloseable>() // duyệt trên bản chụp: đăng ký / gỡ từ luồng khác lúc huỷ không làm hỏng vòng lặp
+
+    fun register(closer: AutoCloseable) {
+        closers.add(closer)
+        if (cancelled && closers.remove(closer)) runCatching { closer.close() }
+    }
+
+    fun unregister(closer: AutoCloseable) {
+        closers.remove(closer)
+    }
+
+    fun cancel() {
+        cancelled = true
+        for (closer in closers) if (closers.remove(closer)) runCatching { closer.close() }
     }
 }

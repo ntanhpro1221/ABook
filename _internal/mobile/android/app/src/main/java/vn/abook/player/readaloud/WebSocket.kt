@@ -187,7 +187,7 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
         }
     }
 
-    private var closed = false
+    @Volatile private var closed = false
 
     @Synchronized
     private fun send(opcode: Int, payload: ByteArray) {
@@ -230,11 +230,24 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
         }
     }
 
+    private val socketClosed = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    /** Đóng ổ cắm đúng một lần (huỷ từ luồng khác rồi luồng đọc đóng nốt không đóng hai lần). */
+    private fun closeSocket() {
+        if (socketClosed.compareAndSet(false, true)) runCatching { socket.close() }
+    }
+
+    /** Đóng NGAY từ luồng khác (huỷ lượt đọc): không gửi khung CLOSE (ghi có thể kẹt), chỉ đóng ổ cắm - luồng đang chờ đọc văng ra với lỗi ổ cắm đã đóng. */
+    fun abort() {
+        closed = true
+        closeSocket()
+    }
+
     override fun close() {
         if (!closed) {
             closed = true
             runCatching { send(OP_CLOSE, byteArrayOf(0x03, 0xE8.toByte())) }
         }
-        runCatching { socket.close() }
+        closeSocket()
     }
 }

@@ -72,6 +72,38 @@
    "pieces": [
     "Anh ấy đi rất chậm trên con đường làng quen thuộc dẫn từ nhà ra tới tận ngoài cánh đồng lúa mênh mông đã chín vàng rực dưới ánh nắng chiều muộn của cuối mùa thu năm ấy"
    ]
+  },
+  {
+   "note": "U+0085 (NEL) giữa hai câu là khoảng trắng của Python (isspace) nên vẫn cắt",
+   "text": "Con thuyền cập bến lúc nửa đêm, trên boong chỉ còn mình người lái đò thức.Ông ngồi hút thuốc lào và nhìn dòng sông đen, chờ trời sáng để đón khách đầu tiên.",
+   "pieces": [
+    "Con thuyền cập bến lúc nửa đêm, trên boong chỉ còn mình người lái đò thức.",
+    "Ông ngồi hút thuốc lào và nhìn dòng sông đen, chờ trời sáng để đón khách đầu tiên."
+   ]
+  },
+  {
+   "note": "số ² đứng trước chữ đơn thì chữ đó không phải tên viết tắt (isalnum tính cả số mũ), nên hết câu",
+   "text": "Căn phòng nhỏ cuối hành lang mà chị Lan thuê là phòng số 2²B. Mai đã dọn hết đồ đạc cũ ra khỏi đó từ sáng sớm, chỉ để lại chiếc giường.",
+   "pieces": [
+    "Căn phòng nhỏ cuối hành lang mà chị Lan thuê là phòng số 2²B.",
+    "Mai đã dọn hết đồ đạc cũ ra khỏi đó từ sáng sớm, chỉ để lại chiếc giường."
+   ]
+  },
+  {
+   "note": "phân số ½ đứng trước chữ đơn cũng vậy",
+   "text": "Hộp bánh cuối cùng còn lại trên cái kệ gỗ cũ nặng đúng 1½B. Người bán hàng gói nó lại bằng giấy báo cũ rồi đưa cho vị khách đứng chờ ngoài cửa.",
+   "pieces": [
+    "Hộp bánh cuối cùng còn lại trên cái kệ gỗ cũ nặng đúng 1½B.",
+    "Người bán hàng gói nó lại bằng giấy báo cũ rồi đưa cho vị khách đứng chờ ngoài cửa."
+   ]
+  },
+  {
+   "note": "U+0085 ở đầu và cuối đoạn bị bỏ như khoảng trắng",
+   "text": "Trời đã tối hẳn khi chiếc xe cuối cùng rời khỏi chợ huyện. Những người bán rau còn ở lại dọn dẹp, quét sạch lá héo trên nền gạch.",
+   "pieces": [
+    "Trời đã tối hẳn khi chiếc xe cuối cùng rời khỏi chợ huyện.",
+    "Những người bán rau còn ở lại dọn dẹp, quét sạch lá héo trên nền gạch."
+   ]
   }
  ]
 }

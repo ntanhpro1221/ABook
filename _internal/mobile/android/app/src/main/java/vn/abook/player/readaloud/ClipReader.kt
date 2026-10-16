@@ -146,6 +146,9 @@ class ClipReader(
         } catch (error: VoiceException) {
             tmp.delete()
             throw error
+        } catch (error: java.util.concurrent.CancellationException) {
+            tmp.delete() // lượt đọc bị huỷ ([ClipCancel]): không phải lỗi của giọng, đừng bọc thành VoiceException (sẽ rơi sang giọng kế)
+            throw error
         } catch (error: Exception) {
             tmp.delete()
             throw VoiceException("Không đọc được đoạn này (${error.message})", cause = error)
