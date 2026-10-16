@@ -229,9 +229,10 @@ export class MusicBed {
     this.retarget(seeked);
     this.finishTail(seconds);
     this.crossLoop(seconds);
+    // Chỉ bài đang kêu được chơi lại; bài đang mờ đi (đổi cuốn / chương lúc đã tạm dừng) thì chỉ dừng cùng giọng - chơi lại nó là mở một bài đã bỏ (soát a45).
     for (const audio of [this.current?.audio, ...this.fading]) {
       if (!audio) continue;
-      if (playing && audio.paused && !audio.ended) void audio.play().catch(() => undefined);
+      if (playing && audio.paused && !audio.ended && audio === this.current?.audio) void audio.play().catch(() => undefined);
       if (!playing && !audio.paused) audio.pause();
     }
   }

@@ -21,6 +21,12 @@ class SceneBook(
     /** Chữ chương đã bỏ các dòng người nghe chọn bỏ ([vn.abook.player.readaloud.Paragraphs.withoutLines]); null = chương chưa có chữ ở máy này. */
     private val body: (Int) -> String?,
     private val choice: SceneChoice,
+    /**
+     * Sau mỗi lần chọn: tra cỡ các bài ĐÃ CHỌN (đầu cảnh + bài anh em) trong MỘT lượt; true khi vừa phát hiện bài nào máy này không dùng (quá cỡ) - [SceneChoice.available]
+     * từ đó loại nó và chương chọn lại, tới khi không còn bài nào bị loại (`music_nnscene.build_chapter(verify=...)`). `available` chỉ được dùng thứ ĐÃ BIẾT: bộ chọn hỏi hàng
+     * trăm bài xếp hạng, tra cỡ từng bài là tải hàng trăm mảnh danh mục.
+     */
+    private val verify: (List<String>) -> Boolean = { false },
     /** Bài quanh đích êm, đúng thứ tự `near` của danh mục (ô rồi bài trong ô). */
     private val candidates: () -> List<SceneTrack>,
 ) {
@@ -49,6 +55,16 @@ class SceneBook(
         synchronized(lock) { file(chapterId).delete() }
     }
 
+    /** Các bài một lần chọn dùng: đầu cảnh + bài anh em (không trùng, theo thứ tự gặp - `music_nnscene.chosen_links`). */
+    private fun chosenLinks(chosen: List<ChosenScene>): List<String> {
+        val found = LinkedHashSet<String>()
+        for (scene in chosen) {
+            scene.link?.let { found.add(it) }
+            for (sibling in scene.siblings) found.add(sibling.link)
+        }
+        return found.toList()
+    }
+
     /** Các bài (chính + bài anh em) mà một bản ghi dùng. */
     fun links(record: JSONObject): Set<String> {
         val found = LinkedHashSet<String>()
@@ -73,7 +89,11 @@ class SceneBook(
         val paragraphOf = HashMap<Int, Int>()
         for ((index, segment) in segments.withIndex()) paragraphOf[segment.id] = paragraphs[index] // trùng id: câu sau thắng (dict của Python)
         val tracks = candidates()
-        val chosen = SceneChooser(choice) { _, _ -> tracks }.choose(scenes, recentBefore(chapterId))
+        var chosen = SceneChooser(choice) { _, _ -> tracks }.choose(scenes, recentBefore(chapterId))
+        for (round in 1..VERIFY_ROUNDS) { // như vòng `for _ in range(VERIFY_ROUNDS)` của Python: mỗi vòng chọn rồi tra cỡ
+            if (!verify(chosenLinks(chosen))) break
+            if (round < VERIFY_ROUNDS) chosen = SceneChooser(choice) { _, _ -> tracks }.choose(scenes, recentBefore(chapterId))
+        }
         var seconds = 0.0
         for (length in SceneScenes.durations(segments)) seconds += length // sum() của Python 3.11: cộng lần lượt
         val record = JSONObject().put("version", FORMAT_VERSION).put("chapterId", chapterId).put("textSha", sha).put("segments", segments.size)
@@ -195,6 +215,9 @@ class SceneBook(
         /** Đổi khi cách tách câu / dựng đoạn / chọn bài / ánh xạ sang đoạn màn đọc đổi: bản ghi đã dựng không dùng lại. */
         const val ENGINE_VERSION = 2 // 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/, ô cells/ không có)
         const val FORMAT_VERSION = 1
+
+        /** Trần số lần chọn lại một chương vì bài quá cỡ (`music_nnscene.VERIFY_ROUNDS`). */
+        const val VERIFY_ROUNDS = 12
 
         fun sha1(bytes: ByteArray): String = MessageDigest.getInstance("SHA-1").digest(bytes).joinToString("") { "%02x".format(it) }
     }

@@ -49,6 +49,26 @@ describe("nhạc nền theo mốc của chương", () => {
     expect(bed.activeLink).toBeNull();
   });
 
+  it("đổi cuốn lúc tạm dừng: bài của cuốn cũ (đang mờ đi) không bị chơi lại khi giọng mới chạy", () => {
+    const plays: string[] = [];
+    const bed = new MusicBed((src) => {
+      const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration: 200 };
+      return Object.assign(fake, {
+        play: () => { plays.push(src); fake.paused = false; return Promise.resolve(); },
+        pause: () => { fake.paused = true; },
+        addEventListener: () => undefined,
+      });
+    });
+    bed.setCues(cues, -20);
+    bed.sync(10, true);
+    bed.sync(10, false); // người nghe tạm dừng
+    plays.length = 0;
+    bed.setCues([], -20); // chọn cuốn khác: bài cũ chuyển sang mờ đi
+    bed.sync(0, true); // giọng của cuốn mới chạy
+    expect(plays).toEqual([]);
+    bed.stop();
+  });
+
   it("báo khi bài đang phát đổi (cho dòng ghi công), không báo lặp khi cùng bài", () => {
     const bed = new MusicBed(() => {
       const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration: 200 };

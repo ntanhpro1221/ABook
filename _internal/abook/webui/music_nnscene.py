@@ -42,6 +42,7 @@ FORMAT_VERSION = 2  # 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ c�
 StudentItems = Callable[[dict[str, Any], list[dict[str, Any]]], "list[dict[str, Any]] | None"]
 AHEAD_CHAPTERS = 3  # chương dựng trước chỗ đang nghe
 BUILD_WAIT_SECONDS = 2.0  # hỏi cue chương chưa dựng: chờ chừng này (chương nhẹ dựng kịp), rồi trả "chưa có"
+VERIFY_ROUNDS = 12  # trần số lần chọn lại một chương vì bài quá cỡ (mỗi vòng loại thêm ít nhất một bài; hết vòng thì giữ lần chọn cuối - tải sẽ bị chặn và chọn lại)
 BUILD_THREADS = 2  # luồng CPU của học sinh lúc nhúng nền
 
 
@@ -163,8 +164,11 @@ def build_chapter(book: SceneBook, order: list[int], chapter_id: int, title: str
                   sha_of: Callable[[int], str], near: Callable[[float, float], Iterable[dict[str, Any]]],
                   lookup: Callable[[list[str]], dict[str, dict[str, Any]]], catalog_revision: str | None, taxonomy: dict[str, Any] | None,
                   book_key: str, available: Callable[[str], bool] | None = None,
-                  student: StudentItems | None = None) -> dict[str, Any]:
-    """Dựng (hay lấy lại) plan của một chương. Chữ đã tách nằm trong bản ghi (chữ không đổi thì khỏi tách lại)."""
+                  verify: Callable[[list[str]], bool] | None = None, student: StudentItems | None = None) -> dict[str, Any]:
+    """Dựng (hay lấy lại) plan của một chương. Chữ đã tách nằm trong bản ghi (chữ không đổi thì khỏi tách lại).
+    `available` chỉ được dùng thứ ĐÃ BIẾT (bộ chọn hỏi hàng trăm bài xếp hạng - tra cỡ từng bài là tải hàng trăm mảnh danh mục). `verify(links)`: sau mỗi lần
+    chọn, tra cỡ các bài ĐÃ CHỌN (đầu cảnh + bài anh em) trong MỘT lượt; True khi vừa phát hiện bài nào máy này không dùng (quá cỡ) - `available` từ đó loại nó,
+    chọn lại chương cho tới khi không còn bài nào bị loại (mỗi vòng thêm ít nhất một bài vào sổ nên dừng)."""
     sha = sha_of(chapter_id)
     with book.lock:
         record = book.read(chapter_id, sha)
@@ -175,12 +179,15 @@ def build_chapter(book: SceneBook, order: list[int], chapter_id: int, title: str
         previous = book.history(order, chapter_id, sha_of)
         before = [scene for part in previous for scene in part["scenes"]]
         history = {"scenes": before} if before else None
-        plan = music_plan.build(
-            book.directory, near, lookup, catalog_revision=catalog_revision, book_key=book_key, taxonomy=taxonomy,
-            scenes=(music_plan.scenes_of(history) or []) + scenes,
-            keep=music_plan.kept_tracks(history) if history else None, kept_siblings=music_plan.kept_siblings(history) if history else None,
-            available=available, persist=False)
-        chosen = [scene for scene in plan["scenes"] if scene.get("chapterId") == chapter_id]
+        for _ in range(VERIFY_ROUNDS):
+            plan = music_plan.build(
+                book.directory, near, lookup, catalog_revision=catalog_revision, book_key=book_key, taxonomy=taxonomy,
+                scenes=(music_plan.scenes_of(history) or []) + scenes,
+                keep=music_plan.kept_tracks(history) if history else None, kept_siblings=music_plan.kept_siblings(history) if history else None,
+                available=available, persist=False)
+            chosen = [scene for scene in plan["scenes"] if scene.get("chapterId") == chapter_id]
+            if verify is None or not verify(chosen_links(chosen)):
+                break
         by_sentence = {segment["id"]: paragraph[index] for index, segment in enumerate(script["segments"])}
         for scene in chosen:
             scene["paragraph"] = by_sentence.get(scene.get("firstSegment"), 0)
@@ -190,6 +197,16 @@ def build_chapter(book: SceneBook, order: list[int], chapter_id: int, title: str
                       scene.get("link") == link or any(s["link"] == link for s in scene.get("siblings") or []) for scene in chosen)}}
         book.write(record)
         return record
+
+
+def chosen_links(scenes: Iterable[dict[str, Any]]) -> list[str]:
+    """Các bài một chương đã chọn dùng: đầu cảnh + bài anh em (không trùng, theo thứ tự gặp)."""
+    found: dict[str, None] = {}
+    for scene in scenes:
+        for link in [scene.get("link")] + [sibling["link"] for sibling in scene.get("siblings") or []]:
+            if link:
+                found[link] = None
+    return list(found)
 
 
 def chapter_cues(record: dict[str, Any]) -> list[dict[str, Any]]:

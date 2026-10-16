@@ -228,7 +228,7 @@ class SceneMusicTest {
         }
     }
 
-    /** Bài quá MUSIC_TRACK_MAX_MB (40 MB) nằm ngay đích nên thắng nếu không lọc cỡ: lọc rồi thì không đoạn nào dùng nó - như `server._music_oversize` của máy tính. */
+    /** Bài quá MUSIC_TRACK_MAX_MB (40 MB) nằm ngay đích nên thắng nếu không lọc cỡ: lọc rồi thì không đoạn nào dùng nó - như `server.music_track_available` của máy tính (cỡ đã biết). */
     @Test
     fun a_track_over_the_size_cap_is_never_chosen_and_one_exactly_at_the_cap_still_is() {
         assertEquals("trần của hai bên bằng nhau", catalog.getLong("maxBytes"), MusicCatalog.TRACK_MAX_BYTES)
@@ -339,6 +339,45 @@ class SceneMusicTest {
             assertNull(changed.read(order.first()))
         } finally {
             root.deleteRecursively()
+        }
+    }
+
+    /** Bài ĐÃ CHỌN mà tra cỡ thấy quá cỡ thì bị loại và chương chọn lại, mỗi vòng một lượt tra (`music_nnscene.build_chapter(verify=...)`); bộ chọn không bao giờ tra cỡ từng ứng viên. */
+    @Test
+    fun a_chosen_track_found_over_the_cap_is_dropped_and_the_chapter_is_chosen_again() {
+        val case = json("case_alpha.json")
+        val chapters = json(case.getString("chaptersFile")).getJSONArray("chapters")
+        val order = (0 until chapters.length()).map { chapters.getJSONObject(it).getInt("chapterId") }
+        val texts = (0 until chapters.length()).associate { chapters.getJSONObject(it).getInt("chapterId") to chapters.getJSONObject(it).getString("text") }
+        val tracks = near()
+        val first = order.first()
+        val plain = Files.createTempDirectory("n0-verify-a").toFile()
+        val capped = Files.createTempDirectory("n0-verify-b").toFile()
+        try {
+            val firstLinks = SceneBook(plain, order, { texts[it] }, SceneChoice(case.getString("bookKey"))) { tracks }.let { it.links(it.build(first)!!) }.toList()
+            assertTrue(firstLinks.size >= 2)
+            val victims = firstLinks.sorted().take(2)
+            val banned = HashSet<String>()
+            val asked = ArrayList<List<String>>()
+            val book = SceneBook(
+                capped, order, { texts[it] }, SceneChoice(case.getString("bookKey"), available = { it !in banned }),
+                { links ->
+                    asked.add(links)
+                    val fresh = victims.filter { it in links && it !in banned }
+                    banned.addAll(fresh.take(1)) // mỗi vòng chỉ phát hiện MỘT bài quá cỡ
+                    fresh.isNotEmpty()
+                },
+            ) { tracks }
+            val record = book.build(first)!!
+            val links = book.links(record)
+            assertEquals(victims.toSet(), banned)
+            assertTrue("bài quá cỡ không còn trong plan", links.none { it in banned })
+            assertEquals(3, asked.size)
+            assertEquals("vòng cuối xác nhận đúng các bài đã chọn", links.toList(), asked.last())
+            assertTrue("mỗi vòng một lượt, không trùng", asked.all { it.size == it.toSet().size })
+        } finally {
+            plain.deleteRecursively()
+            capped.deleteRecursively()
         }
     }
 }
