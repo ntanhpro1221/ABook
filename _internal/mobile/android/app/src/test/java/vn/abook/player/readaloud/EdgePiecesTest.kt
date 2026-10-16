@@ -44,7 +44,7 @@ class EdgePiecesTest {
         val file = File("../../../tests/fixtures/readaloud/edge/pieces.json")
         assertTrue("Không thấy ${file.absoluteFile}", file.isFile)
         val cases = JSONObject(file.readText(Charsets.UTF_8)).getJSONArray("cases")
-        assertTrue(cases.length() >= 8)
+        assertTrue(cases.length() >= 20)
         for (i in 0 until cases.length()) {
             val case = cases.getJSONObject(i)
             val expected = case.getJSONArray("pieces").let { array -> List(array.length()) { array.getString(it) } }
@@ -110,6 +110,58 @@ class EdgePiecesTest {
         assertEquals(text.split(" "), pieces.joinToString(" ").split(" "))
         assertTrue(pieces.all { it.length >= EdgePieces.MIN_PIECE_CHARS })
         assertTrue(pieces.all { it.endsWith(".") })
+    }
+
+    // uxfix55: đoạn người nghe đứng chờ cắt cân bằng (máy tính: test_readaloud_edge_pieces.py, cùng chữ).
+    private val balS = "Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ, và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ."
+    private val balM = "Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi."
+    private val balQ = "Mưa bắt đầu rơi lúc nào không ai hay biết."
+    private val balLong = "Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng, qua những con suối nhỏ trong veo chảy róc rách bên đường, qua cả những xóm làng xơ xác sau mùa lũ lớn, " +
+        "mà vẫn không tìm thấy bóng dáng của người dẫn đường, và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống, cho tới lúc trời tối hẳn."
+
+    @Test
+    fun theLongestPieceStaysNearTheBalancedSize() {
+        val texts = listOf(
+            listOf(balS, balM, balS, balQ), listOf(balQ, balM, balLong), listOf(balLong, balQ, balM), listOf(balM, balLong, balQ, balQ),
+            listOf(balS, balLong, balM, balQ), listOf(balS, balM, balS, balM, balS),
+        ).map { it.joinToString(" ") }
+        for (text in texts) for (rank in listOf(0, EdgePieces.RANK_BACKGROUND)) {
+            val limit = EdgePieces.pieceLimit(rank)
+            val pieces = EdgePieces.speechPieces(text, rank)
+            assertTrue(pieces.size in 2..limit)
+            assertEquals(text.split(" "), pieces.joinToString(" ").split(" "))
+            assertTrue(pieces.all { it.length >= EdgePieces.MIN_PIECE_CHARS })
+            assertTrue("${pieces.map { it.length }}", pieces.maxOf { it.length } <= 1.4 * text.length / limit)
+        }
+    }
+
+    @Test
+    fun aSentenceUnderTwoHundredCharsIsCutWhenLongerThanABalancedPiece() {
+        val text = listOf(balS, balM, balS, balM).joinToString(" ")
+        assertTrue(EdgePieces.splitSentences(text).all { it.length <= EdgePieces.LONG_SENTENCE_CHARS })
+        assertTrue(EdgePieces.clauseThreshold(text.length, EdgePieces.TARGET_PIECES) < EdgePieces.LONG_SENTENCE_CHARS)
+        val pieces = EdgePieces.speechPieces(text, 0)
+        assertEquals(EdgePieces.TARGET_PIECES, pieces.size)
+        assertTrue(pieces.maxOf { it.length } < 125)
+        assertEquals(EdgePieces.LONG_SENTENCE_CHARS, EdgePieces.clauseThreshold(text.length, EdgePieces.PIECE_PARALLEL))
+    }
+
+    @Test
+    fun theClauseThresholdIsBoundedByTheOldLimitAndTheMinimumPiece() {
+        assertEquals(EdgePieces.LONG_SENTENCE_CHARS, EdgePieces.clauseThreshold(10_000, 3))
+        assertEquals(EdgePieces.MIN_PIECE_CHARS, EdgePieces.clauseThreshold(100, 6))
+        assertEquals(130, EdgePieces.clauseThreshold(600, 6))
+        assertEquals(136, EdgePieces.clauseThreshold(313, 3))
+    }
+
+    @Test
+    fun aClauseCutKeepsTheShortJoinTailAndShortClausesDoNotMergeIntoOnePiece() {
+        val pieces = EdgePieces.speechPieces(balLong, 0)
+        assertTrue(pieces.size > 1)
+        assertEquals(EdgeJoin.TAIL_OTHER_MS, EdgeJoin.tailMs(pieces.first()))
+        assertEquals(EdgeJoin.TAIL_SENTENCE_MS, EdgeJoin.tailMs(pieces.last()))
+        val text = "Con thuyền cập bến lúc nửa đêm, trên boong chỉ còn mình người lái đò thức. Ông ngồi hút thuốc lào và nhìn dòng sông đen, chờ trời sáng để đón khách đầu tiên."
+        assertEquals(2, EdgePieces.speechPieces(text).size)
     }
 
     @Test
