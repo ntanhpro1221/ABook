@@ -392,6 +392,7 @@ export function SettingsScreen() {
           >
             <VoiceSettings
               api={desktopVoices}
+              storage={{ usage: () => httpSource.readAloudCacheTotal!(), clear: () => httpSource.readAloudCacheClearAll!() }}
               deviceHint="Máy này chưa có giọng tiếng Việt. Cài trong Windows: Cài đặt → Thời gian và ngôn ngữ → Giọng nói → Thêm giọng nói → Tiếng Việt."
               modules={(reload) => (
                 <>

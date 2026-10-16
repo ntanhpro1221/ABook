@@ -52,7 +52,7 @@ class BookImportTest {
     /** Hình dạng của sách thật (soát a22, tests/import_fixtures.py): mỗi file một lỗi đã gặp - hai bên cùng ra một cuốn. */
     @Test
     fun real_world_book_shapes_give_exactly_what_python_gives() {
-        for (file in listOf("nav_pages.epub", "toc_broken.epub", "toc_missing.epub", "nfd_names.epub", "calibre_split.epub", "hoi.txt", "toc_txt.txt", "gutenberg.txt", "hidden.epub", "dropcap.epub", "glued.epub",
+        for (file in listOf("nav_pages.epub", "toc_broken.epub", "toc_missing.epub", "nfd_names.epub", "calibre_split.epub", "hoi.txt", "author_line.txt", "toc_txt.txt", "gutenberg.txt", "hidden.epub", "dropcap.epub", "glued.epub",
             "pt_cp1252.txt", "zh_gbk.txt", "bom_join.txt", "declared.epub", "title_h1.docx", "scenes.docx", "roman.docx",
             "nested.epub", "index_split_003.txt", "tail_credits.txt", "tail_credits_epub.epub",
         )) {
@@ -223,6 +223,17 @@ class BookImportTest {
             assertEquals(source, (0 until tail.length()).map { tail.getString(it) }, BookImport.tailCreditSuggestions(source))
             val all = case.getJSONArray("all")
             assertEquals(source, (0 until all.length()).map { all.getJSONArray(it).getString(0) to all.getJSONArray(it).getBoolean(1) }, BookImport.chapterCreditSuggestions(source))
+        }
+    }
+
+    /** Dòng "Tác giả: X" ngay dưới tên truyện -> gợi ý ô tác giả, các ca ở tests/import_fixtures.py AUTHOR_LINE_CASES; dòng ấy vẫn ở trong chữ (author_line.txt). */
+    @Test
+    fun an_author_line_under_the_title_suggests_the_author_exactly_like_python() {
+        val cases = StrictJson.parse(expectedText("author_line.cases")) as JSONArray
+        assertTrue(cases.length() >= 8)
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            assertEquals(case.toString(), case.getString("author"), BookImport.authorLine(case.getString("text")))
         }
     }
 

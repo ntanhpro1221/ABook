@@ -175,6 +175,9 @@ export const httpSource: ListenSource = {
   },
   readAloudCache: (bookId) => api<ReadAloudCacheUsage>(`/api/readaloud/cache?bookId=${encodeURIComponent(bookId)}`),
   readAloudCacheClear: (bookId) => api<ReadAloudCacheUsage>(`/api/readaloud/cache?bookId=${encodeURIComponent(bookId)}`, { method: "DELETE" }),
+  // Cài đặt > Giọng đọc: cả máy, không riêng cuốn nào.
+  readAloudCacheTotal: () => api<ReadAloudCacheUsage>("/api/readaloud/cache"),
+  readAloudCacheClearAll: () => api<ReadAloudCacheUsage>("/api/readaloud/cache?all=1", { method: "DELETE" }),
   // Máy tính xách tay cũng mất mạng (tàu, máy bay): giọng trực tuyến làm trước vào bộ đệm clip như VieNeu (readaloud/prepare.py chung mọi giọng).
   readAloudPrepareOnline: true,
   readAloudPrepareCancel: () => api<PrepareStatus>("/api/readaloud/prepare", { method: "DELETE" }),

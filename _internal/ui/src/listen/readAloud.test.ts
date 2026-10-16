@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
 import type { Script } from "./model";
 import {
@@ -564,6 +564,8 @@ describe("nhảy tới câu xa: lượt xin cũ không chặn câu vừa nhảy 
   });
 
   it("nhảy: các lượt chưa gửi của cửa sổ cũ bị bỏ, câu vừa nhảy tới đi ngay sau lượt đang chạy", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] }); // chỉ đồng hồ Date: để dời giờ giữa hai lần nhảy mà vẫn dùng flush()
+    onTestFinished(() => void vi.useRealTimers());
     const s = setup({ chapter });
     s.track.serial = () => true;
     s.engine.load(s.trackInfo, 0, true);
@@ -576,10 +578,73 @@ describe("nhảy tới câu xa: lượt xin cũ không chặn câu vừa nhảy 
     expect(asked(s)).toEqual([LONG[0], LONG[9]]); // không phải đoạn 1 của cửa sổ cũ
     await s.arrive(LONG[9]);
     expect(asked(s)).toEqual([LONG[0], LONG[9], LONG[10]]);
-    // nhảy về chỗ cũ: đoạn 0 đã có clip, đoạn 1 (đã bỏ khỏi hàng) được xin lại như mới
+    // nhảy về chỗ cũ (sau một quãng, không phải nhảy dồn): đoạn 0 đã có clip, đoạn 1 (đã bỏ khỏi hàng) được xin lại như mới
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    vi.setSystemTime(Date.now() + 5000);
     s.engine.seekWord(0, 0);
     await s.arrive(LONG[10]);
     expect(asked(s)).toContain(LONG[1]);
+  });
+
+  it("nhảy dồn (giọng trên máy): chỉ lượt đầu đi ngay, các lần nhảy sau chờ người nghe ngừng nhảy rồi mới xin đích cuối", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = setup({ chapter });
+      s.track.serial = () => true;
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(asked(s)).toEqual([LONG[0]]);
+      s.engine.seekWord(3, 0); // lần nhảy đầu: đi ngay (lượt đang chạy là đoạn 0)
+      await vi.advanceTimersByTimeAsync(700);
+      s.engine.seekWord(6, 0); // nhảy dồn
+      await vi.advanceTimersByTimeAsync(700);
+      s.engine.seekWord(9, 0);
+      s.requests[0].resolve(); // đoạn 0 xong trong lúc còn đang nhảy: không được gửi đoạn của lần nhảy trước
+      await vi.advanceTimersByTimeAsync(300);
+      expect(asked(s)).toEqual([LONG[0]]);
+      await vi.advanceTimersByTimeAsync(600); // ngừng nhảy đủ lâu
+      expect(asked(s)).toEqual([LONG[0], LONG[9]]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("nhảy dồn nhưng giọng trên máy làm clip nhanh (dưới 1 giây): không giữ lượt xin, đích cuối đi ngay khi có chỗ", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = setup({ chapter });
+      s.track.serial = () => true;
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(300);
+      s.requests[0].resolve(); // clip đầu xong sau 0,3 giây: giọng nhanh
+      await vi.advanceTimersByTimeAsync(0);
+      s.engine.seekWord(5, 0);
+      await vi.advanceTimersByTimeAsync(400);
+      s.engine.seekWord(8, 0); // nhảy dồn
+      s.requests[1].resolve(); // lượt đang chạy xong (mới 0,4 giây)
+      await vi.advanceTimersByTimeAsync(50);
+      expect(asked(s)).toContain(LONG[8]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("giọng trực tuyến: nhảy dồn không bị giữ lại", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = setup({ chapter });
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      s.requests.forEach((r) => r.resolve()); // chỗ trống cho lượt mới
+      await vi.advanceTimersByTimeAsync(0);
+      s.engine.seekWord(8, 0);
+      await vi.advanceTimersByTimeAsync(50);
+      s.engine.seekWord(11, 0);
+      await vi.advanceTimersByTimeAsync(50);
+      expect(asked(s)).toContain(LONG[11]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("nhảy sang đoạn kế (còn trong cửa sổ): lượt đã xếp hàng được giữ", async () => {

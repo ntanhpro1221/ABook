@@ -71,9 +71,10 @@ export interface PhraseSelection {
   to: number;
 }
 
-/** Bấm chữ `at`: đang chọn đúng MỘT chữ khác thì mở rộng thành cụm tới chữ ấy (bấm chữ đầu rồi chữ cuối) nếu cụm hợp lệ; còn lại thì chọn riêng chữ ấy. */
-export function pickWord(tokens: readonly SentenceToken[], current: PhraseSelection | null, at: number): PhraseSelection {
-  if (current && current.from === current.to && current.from !== at) {
+/** Bấm chữ `at`: chọn riêng chữ ấy - bấm nhầm một chữ chỉ đổi chữ được chọn, không bao giờ tự thành cụm. Chỉ khi người nghe đã bấm "Nối thành cụm" (`join`)
+ *  và đang chọn đúng MỘT chữ khác thì mở rộng thành cụm tới chữ ấy (chữ đầu rồi chữ cuối) nếu cụm hợp lệ. */
+export function pickWord(tokens: readonly SentenceToken[], current: PhraseSelection | null, at: number, join = false): PhraseSelection {
+  if (join && current && current.from === current.to && current.from !== at) {
     const from = Math.min(current.from, at);
     const to = Math.max(current.from, at);
     if (phraseKey(tokens, from, to) !== null) return { from, to };

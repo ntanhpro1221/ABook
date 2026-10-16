@@ -240,7 +240,15 @@ class ReadAloud:
 
     def clear_book(self, book: str) -> dict[str, int]:
         """Xoá bản đọc đã làm của cuốn `book` (chỉ clip nó đã làm ra / đã nghe; cuốn khác không bị đụng, trừ đoạn trùng chữ y hệt); trả [cache_usage] sau đó."""
+        self.prepare.forget(book)  # trước khi xoá: việc làm trước đang chạy sẽ ghi clip mới vào sổ của cuốn
         keys = self.books.keys(book)
         self.cache.remove(keys)
         self.books.forget(book, keys)
         return self.cache_usage(book)
+
+    def clear_all(self) -> dict[str, int]:
+        """Dọn mọi bản đọc đã làm của cả máy ("Dọn bản đọc đã làm" ở Cài đặt > Giọng đọc); trả [cache_usage] sau đó."""
+        self.prepare.forget(None)
+        self.cache.clear()
+        self.books.forget_all()
+        return self.cache_usage(None)

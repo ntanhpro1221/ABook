@@ -81,14 +81,21 @@ describe("cụm chữ liền nhau trong một câu (chọn nhiều chữ để s
     expect(phraseKey(long, 0, 6)).toBeNull();
   });
 
-  it("bấm chữ đầu rồi chữ cuối: thành cụm; bấm lại trong cụm hay cụm không hợp lệ thì chọn riêng chữ vừa bấm", () => {
+  it("bấm nhầm một chữ chỉ đổi chữ được chọn, không tự thành cụm", () => {
     const first = pickWord(tokens, null, 0);
     expect(first).toEqual({ from: 0, to: 0 });
-    expect(pickWord(tokens, first, 1)).toEqual({ from: 0, to: 1 });
-    expect(pickWord(tokens, first, 0)).toEqual({ from: 0, to: 0 });
+    expect(pickWord(tokens, first, 1)).toEqual({ from: 1, to: 1 });
+    expect(pickWord(tokens, { from: 7, to: 7 }, 6)).toEqual({ from: 6, to: 6 });
     expect(pickWord(tokens, { from: 0, to: 1 }, 1)).toEqual({ from: 1, to: 1 });
-    expect(pickWord(tokens, { from: 2, to: 2 }, 3)).toEqual({ from: 3, to: 3 });
-    expect(pickWord(tokens, { from: 7, to: 7 }, 6)).toEqual({ from: 6, to: 7 });
+  });
+
+  it("sau \"Nối thành cụm\": bấm chữ đầu rồi chữ cuối thành cụm; bấm lại chính chữ đó hay cụm không hợp lệ thì chọn riêng chữ vừa bấm", () => {
+    const first = pickWord(tokens, null, 0);
+    expect(pickWord(tokens, first, 1, true)).toEqual({ from: 0, to: 1 });
+    expect(pickWord(tokens, first, 0, true)).toEqual({ from: 0, to: 0 });
+    expect(pickWord(tokens, { from: 0, to: 1 }, 1, true)).toEqual({ from: 1, to: 1 });
+    expect(pickWord(tokens, { from: 2, to: 2 }, 3, true)).toEqual({ from: 3, to: 3 });
+    expect(pickWord(tokens, { from: 7, to: 7 }, 6, true)).toEqual({ from: 6, to: 7 });
   });
 
   it("câu không có chữ nào: không có chữ để chọn", () => {

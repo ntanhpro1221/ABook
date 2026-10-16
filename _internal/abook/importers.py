@@ -457,7 +457,9 @@ def _txt_file(path: Path, split: bool = False) -> ImportedBook:
         from_text = standalone_title(chapter.text)  # file một chương mà mở bằng một dòng tên riêng ("Chuyện dài một chương"): tên ấy, không phải tên file
     book.title = from_text or book.title
     title, author = gutenberg_header(chapter.text)
-    book.title, book.author = title or book.title, author or None
+    # Tác giả: phần đầu của Project Gutenberg, không thì dòng "Tác giả: X" ngay dưới tên truyện. Chỉ điền ô tác giả (siêu dữ liệu) - dòng ấy vẫn nằm trong chữ,
+    # chỉ bỏ khỏi phần đọc khi người nghe nhận gợi ý bỏ dòng ghi công.
+    book.title, book.author = title or book.title, author or author_line(chapter.text) or None
     if split and parts:
         book.chapters = parts
     elif from_text and not title:
@@ -477,6 +479,31 @@ def standalone_title(text: str) -> str:
         if line.strip():
             alone = index + 1 < len(lines) and not lines[index + 1].strip() and not line.rstrip()[-1:].isdigit()
             return title_from_line(line) if alone else ""
+    return ""
+
+
+_AUTHOR_KEYS = ("tác giả", "author")  # so với chữ đã gộp NFC và casefold: "TÁC GIẢ" cũng khớp
+_AUTHOR_SEPARATOR = re.compile(r"[ \t]*(?::|：|[-–—])[ \t]*(.+)")
+AUTHOR_HEAD_LINES = 4  # số dòng có chữ đầu file xét "Tác giả: X" (dòng đầu là tên truyện, tác giả đứng ngay dưới)
+AUTHOR_MAX_CHARS = 60  # dài hơn không còn là tên người
+
+
+def author_line(text: str) -> str:
+    """Tên tác giả từ dòng "Tác giả: X" / "Tác giả - X" / "Author: X" ngay dưới tên truyện (trong `AUTHOR_HEAD_LINES` dòng có chữ đầu file); không có thì "".
+    Chỉ là GỢI Ý cho ô tác giả: dòng ấy không bị lấy khỏi chữ. Kotlin: BookImport.authorLine."""
+    seen = 0
+    for line in text.split("\n", 40)[:40]:
+        line = _nfc(line.strip())
+        if not line:
+            continue
+        seen += 1
+        if seen > AUTHOR_HEAD_LINES:
+            break
+        for key in _AUTHOR_KEYS:
+            match = _AUTHOR_SEPARATOR.fullmatch(line[len(key):]) if line[:len(key)].casefold() == key else None
+            name = _words(match.group(1)).rstrip(" .,;") if match else ""
+            if name and len(name) <= AUTHOR_MAX_CHARS:
+                return name
     return ""
 
 

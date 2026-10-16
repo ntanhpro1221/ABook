@@ -577,6 +577,9 @@ export interface ReadAloudPlugin {
   prepareStatus(): Promise<PrepareStatus>;
   prepareCancel(): Promise<PrepareStatus>;
   prepareOptions(options: { chargingOnly: boolean }): Promise<PrepareStatus>;
+  /** Bản đọc đã làm (bộ đệm clip, kể cả phần "Làm trước") chiếm bao nhiêu byte và dọn hết (Cài đặt > Giọng đọc); `book` luôn 0 - điện thoại chỉ báo cả máy. */
+  cacheUsage(): Promise<{ book: number; total: number }>;
+  cacheClear(): Promise<{ book: number; total: number }>;
   /** Tiến độ làm trước (sau mỗi đoạn, mỗi lần đổi). */
   addListener(event: "readAloudPrepare", handler: (status: PrepareStatus) => void): Promise<PluginListenerHandle>;
 }

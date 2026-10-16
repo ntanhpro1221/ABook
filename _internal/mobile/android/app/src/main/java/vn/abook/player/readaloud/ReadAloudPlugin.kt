@@ -128,6 +128,20 @@ class ReadAloudPlugin : Plugin() {
         call.resolve(JSObject.fromJSONObject(PrepareAhead.cancel(context)))
     }
 
+    /** Bản đọc đã làm của cả máy (bộ đệm clip, kể cả đoạn "Làm trước"): `book` luôn 0 - điện thoại không ghi đoạn nào của cuốn nào. */
+    @PluginMethod
+    fun cacheUsage(call: PluginCall) {
+        call.resolve(JSObject().put("book", 0).put("total", ReadAloud.cache().sizeBytes()))
+    }
+
+    /** "Dọn bản đọc đã làm": việc "Làm trước" đang chạy dừng trước (không thì nó ghi lại đúng những đoạn vừa dọn), rồi xoá hết. */
+    @PluginMethod
+    fun cacheClear(call: PluginCall) {
+        PrepareAhead.cancel(context)
+        ReadAloud.cache().clear()
+        call.resolve(JSObject().put("book", 0).put("total", ReadAloud.cache().sizeBytes()))
+    }
+
     @PluginMethod
     fun prepareOptions(call: PluginCall) {
         val on = call.getBoolean("chargingOnly") ?: return call.reject("thiếu chargingOnly")

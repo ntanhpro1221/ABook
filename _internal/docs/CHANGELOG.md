@@ -7,6 +7,19 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Dòng "Đã làm trước Chương 2…" ở menu "Giọng đọc" giờ chỉ hiện ở đúng cuốn đã làm trước (không còn lẫn sang cuốn khác) và mất đi khi bạn bấm "Xoá bản đọc đã làm".
+- Nhảy liên tiếp bằng giọng chạy trên máy (kéo thanh tua, bấm hết câu này tới câu kia): khi máy đọc chậm (mỗi câu hơn một giây), máy chờ bạn ngừng nhảy một chút rồi mới đọc câu cuối, không còn đọc uổng các câu bạn đã bỏ qua nên tiếng đến sớm hơn; máy đọc nhanh thì không đổi.
+- Khi giọng đang chọn không dùng được, lời báo có thêm nút "Chọn giọng khác" mở thẳng danh sách giọng; chọn xong giọng khác thì lời báo của giọng cũ tự mất và câu đang dừng được đọc lại bằng giọng mới.
+- Ở chương cuối, menu "Giọng đọc" không còn nhắc "Làm trước các chương tới" khi không còn chương nào để làm.
+- "Đọc từ này là…": bấm nhầm một chữ chỉ đổi chữ đang chọn, không tự gộp thành cụm làm các chữ xê dịch; muốn đọc cả cụm ("Hạ Vy") thì bấm "Nối thành cụm". Thông báo sau khi lưu nói rõ cách đọc mới áp dụng ngay.
+- Cài đặt > Giọng đọc cho biết bản đọc đã làm chiếm bao nhiêu chỗ trên máy và có nút "Dọn bản đọc đã làm" (máy tính và điện thoại).
+
+### Thêm sách từ file
+
+- File TXT có dòng "Tác giả: …" (hay "Tác giả - …", "Author: …") ngay dưới tên truyện: ô tác giả được điền sẵn; dòng ấy vẫn nằm nguyên trong chữ của truyện, không bị tự bỏ.
+
 ## [0.4.69] - 2026-10-16
 
 ### Nghe ngay

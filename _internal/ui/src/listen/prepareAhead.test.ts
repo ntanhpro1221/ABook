@@ -5,6 +5,7 @@ import {
   cacheLabel,
   canPrepare,
   clearCacheQuestion,
+  clearStorageQuestion,
   paragraphsFor,
   planLabel,
   prepareIntro,
@@ -12,6 +13,7 @@ import {
   prepareSeconds,
   readyChapterIds,
   spokenDuration,
+  storageLabel,
   upcomingTextChapters,
 } from "./prepareAhead";
 
@@ -60,6 +62,29 @@ describe("máy tính: ước trước khi làm trước và bản đọc đã l�
     expect(calls).toEqual([
       ["/api/readaloud/cache?bookId=s%C3%A1ch%20a", undefined],
       ["/api/readaloud/cache?bookId=s%C3%A1ch%20a", { method: "DELETE" }],
+    ]);
+  });
+});
+
+describe("Cài đặt > Giọng đọc: bản đọc đã làm của cả máy", () => {
+  it("nói bản đọc chiếm bao nhiêu và hỏi lại trước khi dọn", () => {
+    expect(storageLabel({ total: 0 })).toBe("Chưa có bản đọc nào được lưu trên máy này.");
+    expect(storageLabel({ total: 12 * 1024 * 1024 })).toMatch(/^Bản đọc đã làm chiếm .*MB.* trên máy này\.$/);
+    expect(clearStorageQuestion({ total: 12 * 1024 * 1024 })).toMatch(/^Dọn .*MB.* bản đọc đã làm của mọi cuốn\?/);
+  });
+
+  it("máy tính hỏi cả máy (không bookId) và dọn bằng all=1", async () => {
+    const calls: [string, ApiInit | undefined][] = [];
+    setApiTransport(async (path, init) => {
+      calls.push([path, init]);
+      return { book: 0, total: 0 };
+    });
+    const { httpSource } = await import("@/desktop/httpSource");
+    await httpSource.readAloudCacheTotal!();
+    await httpSource.readAloudCacheClearAll!();
+    expect(calls).toEqual([
+      ["/api/readaloud/cache", undefined],
+      ["/api/readaloud/cache?all=1", { method: "DELETE" }],
     ]);
   });
 });
