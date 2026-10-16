@@ -10,6 +10,7 @@ import json
 import math
 import os
 import shutil
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -295,7 +296,10 @@ def test_stopping_keeps_the_embeddings_and_the_next_run_continues(package: Path,
 def test_pausing_waits_between_scenes_without_embedding(package: Path, book: list[dict], tmp_path: Path,
                                                         monkeypatch: pytest.MonkeyPatch) -> None:
     spy, sleeps = Spy(monkeypatch), []
-    monkeypatch.setattr(student.time, "sleep", sleeps.append)
+    real_sleep = student.time.sleep
+    # `student.time` là module `time` dùng chung: luồng nền của test khác cũng gọi sleep - chỉ đếm lượt của luồng đang chạy test
+    monkeypatch.setattr(student.time, "sleep", lambda seconds: sleeps.append(seconds) if threading.current_thread() is threading.main_thread()
+                        else real_sleep(seconds))
     paused = lambda: bool(spy.embeds) and len(sleeps) < 3  # noqa: E731
     assert _compute(tmp_path / "project", pause_requested=paused) == 6 and len(sleeps) == 3
 
