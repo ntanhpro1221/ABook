@@ -263,13 +263,13 @@ class PlaylistsTest {
     }
 
     @Test
-    fun a_text_book_with_no_choice_shows_the_machines_pick_until_the_listener_chooses_or_turns_it_off() {
+    fun a_text_book_with_no_choice_follows_the_scenes_until_the_listener_chooses_or_turns_it_off() {
         BookEditsFixtures.useStoreRoot(root)
         val id = "f-0123456789abcdef01234567"
         textBook(id)
         LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud(withPicker = true).path, publicKey = CatalogSigning.publicKey)
         val auto = musicView(id)
-        assertEquals("calm", auto.getString("playlist"))
+        assertEquals("scene", auto.getString("playlist")) // mặc định như máy tính 0.4.71: nhạc đổi theo cảnh, máy tự dựng từ chữ
         assertTrue(auto.getBoolean("playlistAuto"))
         // "Tắt" là một lựa chọn: lưu "off", không phải mã danh sách, và không còn máy chọn
         val (_, off) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "off"))
@@ -284,24 +284,50 @@ class PlaylistsTest {
         assertTrue(!BookEdits.load(Store.bookDir(id)).has("music"))
         val (_, chosen) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "battle"))
         assertTrue(!(chosen as JSONObject).has("playlistAuto"))
-        // "scene" là lựa chọn "Theo cảnh" của máy tính (đi theo sách qua lớp sửa): điện thoại chưa có nhạc theo cảnh nên coi như chưa chọn gì - máy tự chọn danh sách
+        // "Theo cảnh" người nghe chọn tay: lưu "scene", không còn là máy chọn
         val (_, scene) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "scene"))
         scene as JSONObject
-        assertEquals("calm", scene.getString("playlist"))
-        assertTrue(scene.getBoolean("playlistAuto"))
+        assertEquals("scene", scene.getString("playlist"))
+        assertTrue(!scene.has("playlistAuto"))
+        assertEquals("""{"playlist":"scene"}""", BookEdits.load(Store.bookDir(id)).getJSONObject("music").toString())
     }
 
     @Test
-    fun without_a_downloaded_catalogue_the_machine_picks_with_the_bundled_rules() {
+    fun turning_off_the_auto_music_setting_leaves_an_unchosen_text_book_without_music_but_keeps_a_chosen_one() {
+        BookEditsFixtures.useStoreRoot(root)
+        val id = "f-0123456789abcdef01234567"
+        textBook(id)
+        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud(withPicker = true).path, publicKey = CatalogSigning.publicKey)
+        Playlists.autoEnabled = false
+        try {
+            val off = musicView(id)
+            assertTrue(!off.has("playlist"))
+            assertTrue(off.getBoolean("autoOff"))
+            val (_, chosen) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "scene"))
+            assertEquals("scene", (chosen as JSONObject).getString("playlist"))
+        } finally {
+            Playlists.autoEnabled = true
+        }
+    }
+
+    @Test
+    fun the_menu_offers_the_scenes_on_the_phone_too() {
+        BookEditsFixtures.useStoreRoot(root)
+        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud(withPicker = true).path, publicKey = CatalogSigning.publicKey)
+        val menu = LocalStudio.handle("GET", "/api/music/playlists", null).second as JSONObject
+        assertTrue(!menu.getJSONObject("scene").getBoolean("student"))
+        assertEquals(listOf("calm", "battle"), (0 until menu.getJSONArray("playlists").length()).map { menu.getJSONArray("playlists").getJSONObject(it).getString("id") })
+    }
+
+    @Test
+    fun without_a_downloaded_catalogue_a_text_book_still_defaults_to_the_scenes() {
         BookEditsFixtures.useStoreRoot(root)
         val id = "f-0123456789abcdef01234567"
         textBook(id)
         LocalStudio.catalog = MusicCatalog(File(root, "trong"), File(root, "khong_co").path)
-        LocalStudio.bundledPicker = null
-        assertTrue(!musicView(id).has("playlist"))
-        LocalStudio.bundledPicker = JSONObject(File("../../../abook/webui/assets/playlist_picker.json").readText(Charsets.UTF_8))
+        // Chọn "Theo cảnh" không cần danh mục để nói tên (bài tải sau, khi có mạng), khác danh sách phát cần mục lục để biết bài.
         val view = musicView(id)
-        assertEquals("fantasy_adventure", view.getString("playlist"))
+        assertEquals("scene", view.getString("playlist"))
         assertTrue(view.getBoolean("playlistAuto"))
     }
 }

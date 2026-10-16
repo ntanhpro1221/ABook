@@ -16,6 +16,7 @@ import {
   autoPlaylistName,
   chosenId,
   MINE_PLAYLIST,
+  SCENE_PLAYLIST,
   playlistLabel,
   shortPlaylistLabel,
   playlistOptions,
@@ -119,6 +120,8 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     chosen,
     label: playlistLabel(current.data, menu.data),
     playing: playlistPlaying(current.data),
+    /** Nhạc của cuốn đang theo cảnh (người nghe chọn "Theo cảnh" hay để máy chọn mà máy chọn "Theo cảnh"). */
+    scene: current.data?.playlist === SCENE_PLAYLIST,
     error: menu.data?.error || current.data?.error || "",
     loading: menu.isLoading,
     choose: (id: string | null) => choose.mutate({ playlist: id }),
@@ -146,14 +149,17 @@ export function PlaylistOptionLabel({ option, chosen }: { option: PlaylistOption
   );
 }
 
-/** Chữ nhỏ dưới các lựa chọn: điều người nghe cần biết (mất mạng lần đầu thì lý do). */
-export function playlistNote(error: string): string {
-  return error || "Nhạc nằm dưới giọng đọc và nghe tiếp qua các chương. Lần đầu cần mạng để tải bài.";
+/** Chữ nhỏ dưới các lựa chọn: điều người nghe cần biết (mất mạng lần đầu thì lý do). `scene`: nhạc đang đổi theo cảnh, không chạy một mạch qua các chương. */
+export function playlistNote(error: string, scene = false): string {
+  if (error) return error;
+  return scene
+    ? "Nhạc nằm dưới giọng đọc và đổi theo từng cảnh của truyện. Lần đầu cần mạng để tải bài."
+    : "Nhạc nằm dưới giọng đọc và nghe tiếp qua các chương. Lần đầu cần mạng để tải bài.";
 }
 
 /** Mục "Nhạc nền" trong menu của sách chỉ có chữ: menu con với các lựa chọn. */
 export function PlaylistSubmenu({ bookId }: { bookId: string }) {
-  const { options, chosen, label, error, loading, choose, canImport, addMusic } = usePlaylistChoice(bookId);
+  const { options, chosen, label, scene, error, loading, choose, canImport, addMusic } = usePlaylistChoice(bookId);
   return (
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger className={MENU_ITEM}>
@@ -181,7 +187,7 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
             </DropdownMenu.Item>
           )}
           {loading && <p className="px-2 py-1.5 text-xs text-fg-2">Đang tải các danh sách nhạc…</p>}
-          <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error)}</p>
+          <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error, scene)}</p>
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
     </DropdownMenu.Sub>

@@ -31,6 +31,11 @@ import kotlin.math.pow
  * (SharedPreferences "music_bed"), mở lại sách là nghe tiếp đúng bài. Giọng ngừng giây lát giữa hai đoạn / hai chương thì nhạc
  * không ngắt ([PAUSE_GRACE_MS]).
  *
+ * Sách chỉ có chữ chưa chọn gì (mặc định khi "Tự chọn nhạc nền" còn bật) hay đã chọn "Theo cảnh" ([Playlists.sceneMode]) thì nhạc đổi theo CẢNH của truyện, máy tự dựng
+ * từ chữ ([DeviceScenes], đường N0, không model): mốc từng chương theo giây ước được đặt lại theo đồng hồ đọc của chương ([SceneAnchor], [SceneBed]) để bài đổi đúng
+ * lúc đoạn đầu cảnh bắt đầu phát, rồi chạy qua cùng bộ máy mốc như nhạc của người làm sách (mờ chéo, lặp, bước âm lượng, bài anh em). Bài lấy từ danh mục ([uriOf]):
+ * chưa tải thì tải nền, đoạn ấy im tới khi xong. Chương chưa dựng xong thì chưa có nhạc, vào ở đầu câu kế khi xong - giọng không chờ nhạc.
+ *
  * Một ExoPlayer riêng cho mỗi bài đang kêu (hai khi đang chuyển mờ), KHÔNG giành audio focus: trình phát giọng
  * đọc giữ focus, nhạc chỉ chạy khi giọng đang chạy (`sync` từ Playback mỗi nhịp 0,5 giây và mỗi lần phát / dừng / tua).
  * Mọi thao tác ở luồng chính, như Playback; danh mục / tải bài ở một luồng nền riêng.
@@ -45,6 +50,8 @@ object MusicBed {
     private const val MAX_STEP_SECONDS = 3.0 // đồng hồ nhạc không nhảy xa khi máy ngủ giữa hai nhịp
     private const val SAVE_EVERY_MS = 5000L
     private const val PREFS = "music_bed"
+    private const val SCENE_POLL_MS = 1500L // nhạc theo cảnh dựng nền: chương chưa xong thì hỏi lại mỗi chừng này, tối đa SCENE_POLLS lần (ui/src/listen/player.tsx)
+    private const val SCENE_POLLS = 80
     private val CREDIT_KEYS = listOf("title", "creator", "attribution", "landing", "license", "licenseUrl")
 
     /** Một bài đang kêu. `goal` = âm lượng đang hướng tới, `perTick` = mỗi nhịp STEP_MS nhích bao nhiêu; `entering` = đang mờ vào
@@ -83,6 +90,11 @@ object MusicBed {
     private var fadingTicker = false
     // Bài không phát được -> lúc được thử lại: tải hỏng (mất mạng) thì sau RETRY_MS, file hỏng thì không bao giờ trong phiên.
     private val failed = MusicFailures { SystemClock.elapsedRealtime() }
+
+    // ---- nhạc theo cảnh (sách chỉ có chữ, "Theo cảnh") ----
+    private var sceneMode = false // cuốn này theo cảnh: mốc của chương nằm ở `scene`, bài lấy từ danh mục
+    private val scene = SceneBed { sceneTiming() }
+    private var sceneRetry: Runnable? = null
 
     // ---- danh sách phát ("Nghe ngay") ----
     private var playlist: String? = null // danh sách đang dùng cho cuốn này; null = nhạc theo mốc của sách (hay không nhạc)
@@ -140,13 +152,23 @@ object MusicBed {
             return
         }
         val newChapter = (chapterId ?: Int.MIN_VALUE) != chapter
-        if (newChapter) {
-            chapter = chapterId ?: Int.MIN_VALUE
-            cues = MusicCues.of(music, chapterId)
-        }
         val seeked = abs(seconds - lastSeconds) > SEEK_JUMP_SECONDS
         lastSeconds = seconds
         playing = isPlaying
+        if (newChapter) {
+            chapter = chapterId ?: Int.MIN_VALUE
+            if (sceneMode) {
+                // Chương khác: bỏ mốc cũ ngay, rồi hỏi mốc chương mới (chương mới đã phát từ giây 0 thì không được chơi tiếp bài cuối của chương cũ).
+                scene.reset()
+                cues = emptyList()
+                if (chapterId != null) askScene(appContext, chapterId, 0)
+            } else {
+                cues = MusicCues.of(music, chapterId)
+            }
+        } else if (sceneMode && scene.tick(seconds, seeked)) {
+            cues = scene.cues // clip về hay người nghe nhảy: mốc đặt lại theo đồng hồ đọc
+        }
+        if (sceneMode) prefetchNext(appContext, seconds)
         var cue = MusicCues.at(cues, seconds, failed)
         current?.takeIf { it.early }?.let { bed ->
             // Bài vào sớm giữ chỗ tới đầu mốc của nó; tua thì theo mốc tại chỗ tua như thường.
@@ -154,8 +176,10 @@ object MusicBed {
             if (!seeked && mine != null && seconds < mine.start) cue = mine else bed.early = false
         }
         if (!MusicCues.continues(current?.track, cue, newChapter) && (cue != null || current != null)) {
-            switchTo(cue?.let { (it.track to Streaming.chapterUri(appContext, book, it.track)) },
-                cue?.let { MusicCues.targetGain(it, seconds, gain) } ?: gain, seconds - (cue?.start ?: 0.0), cue)
+            // Bài của mốc chưa có file (danh mục đang tải): bài trước mờ đi, bài này vào ngay khi có file - lần `sync` sau.
+            val uri = cue?.let { uriFor(appContext, it.track) }
+            if (cue != null && uri != null) switchTo(cue.track to uri, MusicCues.targetGain(cue, seconds, gain), seconds - cue.start, cue)
+            else switchTo(null, gain, 0.0)
         } else if (cue != null) {
             current?.cue = cue // cùng bài sang mốc kề: chơi tiếp, bước âm lượng theo mốc mới
             // Vừa tua trong cùng bài: dời nhạc theo chỗ mới, không chơi tiếp từ chỗ cũ (soát a26 L8).
@@ -188,7 +212,8 @@ object MusicBed {
         val done = if (bed.final) MusicCues.finished(bounds, position, ended) else ended
         if (!done || seconds >= cue.end) return
         val next = MusicCues.nextAfter(cues, cue)?.takeUnless { it.track == cue.track || isFailed(it.track) } ?: return
-        switchTo(next.track to Streaming.chapterUri(appContext, book, next.track), MusicCues.targetGain(next, seconds, gain), 0.0, next)
+        val uri = uriFor(appContext, next.track) ?: return
+        switchTo(next.track to uri, MusicCues.targetGain(next, seconds, gain), 0.0, next)
         current?.early = true
     }
 
@@ -202,10 +227,11 @@ object MusicBed {
         val bounds = boundsOf(cue, player)
         if (!MusicCues.loopDue(bounds, player.currentPosition / 1000.0)) return
         val appContext = context ?: return
+        val uri = uriFor(appContext, bed.track) ?: return
         val fadeMs = Math.round(MusicCues.mix.loopCrossfadeSeconds * 1000)
         bed.fadeStep = maxOf(player.volume, 0.01f) * STEP_MS / fadeMs
         fading += bed
-        current = open(appContext, bed.track to Streaming.chapterUri(appContext, book, bed.track), bed.goal, 0.0, cue, fadeMs, bounds.start)
+        current = open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, bounds.start)
             .also { it.early = bed.early }
         startFade()
     }
@@ -234,6 +260,10 @@ object MusicBed {
         main.removeCallbacks(grace)
         catalogRetry?.let(main::removeCallbacks)
         catalogRetry = null
+        sceneRetry?.let(main::removeCallbacks)
+        sceneRetry = null
+        sceneMode = false
+        scene.reset()
         advanceClock()
         saveClock()
         for (bed in listOfNotNull(current) + fading) bed.player.release()
@@ -261,42 +291,33 @@ object MusicBed {
 
     private fun clockKey() = "playlist:$book:$playlist"
 
-    /** Cuốn không có nhạc của người làm sách: nạp hàng bài của danh sách phát ở luồng nền - người nghe đã chọn, hay (chưa chọn gì) máy tự chọn
-     *  ([Playlists.autoPlaylist]); "off" là tắt. Máy chọn thì chỉ biết mã sau khi đọc chữ sách, nên danh sách vào việc ở lần nạp xong. */
+    /** Cuốn không có nhạc của người làm sách: nhạc theo cảnh ([Playlists.sceneMode]: người nghe chọn "Theo cảnh", hay chưa chọn gì mà "Tự chọn nhạc nền" còn bật - mặc định) hay nạp
+     *  hàng bài của danh sách phát người nghe đã chọn ở luồng nền; "off" (hay chưa chọn mà máy không tự chọn) là không nhạc. */
     private fun openPlaylist(appContext: Context, bookId: String) {
         val dir = Store.bookDir(bookId)
         val changes = BookEdits.load(dir).optJSONObject("music") ?: JSONObject()
-        val stored = changes.optString("playlist").takeIf { it != Playlists.SCENE }.orEmpty() // "scene" là của máy tính: ở đây như chưa chọn gì
-        if (stored == Playlists.OFF) return
-        val levelDb = changes.optDouble("levelDb", -20.0).takeIf { it.isFinite() } ?: -20.0
-        if (stored.isNotEmpty()) {
-            playlist = stored
-            clockSeconds = prefs(appContext).getFloat(clockKey(), 0f).toDouble()
+        val choice = changes.optString("playlist")
+        if (Playlists.sceneMode(BookEdits.rawBookOrNull(dir) ?: JSONObject(), choice, Playlists.autoEnabled)) {
+            sceneMode = true // mốc từng chương được hỏi ở lần `sync` kế (chương mới)
+            return
         }
+        val stored = choice.takeIf { it != Playlists.SCENE }.orEmpty() // "scene" mà không phải sách chữ / sách có nhạc của người làm sách: như chưa chọn gì
+        if (stored.isEmpty() || stored == Playlists.OFF) return
+        val levelDb = changes.optDouble("levelDb", -20.0).takeIf { it.isFinite() } ?: -20.0
+        playlist = stored
+        clockSeconds = prefs(appContext).getFloat(clockKey(), 0f).toDouble()
         val ticket = generation
         worker.execute {
-            val choice = stored.ifEmpty { runCatching { autoChoice(appContext, dir) }.getOrNull() }
-            val resolved = choice?.let { runCatching { resolve(appContext, it, levelDb) }.getOrNull() }
+            val resolved = runCatching { resolve(appContext, stored, levelDb) }.getOrNull()
             main.post {
                 if (ticket != generation) return@post
-                if (stored.isEmpty()) {
-                    if (choice == null) return@post // máy không chọn được: không nhạc
-                    playlist = choice
-                    clockSeconds = prefs(appContext).getFloat(clockKey(), 0f).toDouble()
-                }
                 infos = resolved?.infos ?: emptyMap()
                 queue.load(resolved?.tracks ?: emptyList())
                 syncPlaylist(playing)
                 // Danh mục chưa đủ (mất mạng lần đầu, một mảnh lỗi): chơi các bài đã có, tải lại phần thiếu - không để danh sách im lặng tới khi mở lại cuốn.
-                if (choice != null && (resolved == null || resolved.incomplete)) retryCatalogLater(appContext, choice, levelDb, ticket)
+                if (resolved == null || resolved.incomplete) retryCatalogLater(appContext, stored, levelDb, ticket)
             }
         }
-    }
-
-    /** Danh sách máy chọn cho cuốn ở `dir` (luồng nền): luật của mục lục danh mục, chưa tải được danh mục thì luật đóng kèm app. */
-    private fun autoChoice(appContext: Context, dir: java.io.File): String? {
-        val manifest = runCatching { DeviceMusic.catalog(appContext).manifest() }.getOrNull()
-        return Playlists.autoPlaylist(dir, manifest, DeviceMusic.bundledPicker(appContext))
     }
 
     /** Hàng bài của lựa chọn `choice` (luồng nền: danh mục cần mạng lần đầu): bài + thông tin bài (để tải / bản sao). */
@@ -348,7 +369,7 @@ object MusicBed {
 
     /** Lời báo "mất mạng" khi có bài của danh sách phát đang bị giữ lại vì mạng (một nguồn nhạc nghỉ vì mạng) - giao diện nói ra thay vì để nhạc
      *  im lặng không lời; rỗng khi ổn. */
-    fun offlineNotice(): String = if (playlist != null) context?.let { DeviceMusic.catalog(it).offlineNotice() }.orEmpty() else ""
+    fun offlineNotice(): String = if (playlist != null || sceneMode) context?.let { DeviceMusic.catalog(it).offlineNotice() }.orEmpty() else ""
 
     /** File của một bài để phát; bài danh mục chưa tải thì tải ở luồng nền (lần `sync` sau mới phát) và trả null. */
     private fun uriOf(appContext: Context, link: String): Uri? {
@@ -464,6 +485,59 @@ object MusicBed {
         }
         applyPlaying()
         if (SystemClock.elapsedRealtime() - savedAt > SAVE_EVERY_MS) saveClock()
+    }
+
+    // ---- nhạc theo cảnh -------------------------------------------------------------------------------------------
+
+    /** Đồng hồ đọc của chương đang nghe (giây bắt đầu từng đoạn + tổng độ dài), null khi chưa có. */
+    private fun sceneTiming(): SceneAnchor.Timing? {
+        if (chapter == Int.MIN_VALUE) return null
+        return vn.abook.player.readaloud.ReadAloud.segmentTiming(book, chapter)?.let { (starts, total) -> SceneAnchor.Timing(starts, total) }
+    }
+
+    /** File của bài `track` của mốc: bài theo cảnh lấy từ danh mục (chưa tải: tải nền, null), bài của người làm sách qua đường audio chương. */
+    private fun uriFor(appContext: Context, track: String): Uri? =
+        if (sceneMode) uriOf(appContext, track) else Streaming.chapterUri(appContext, book, track)
+
+    /** Bài của mốc kế tiếp (khác bài đang kêu) tải sẵn trong lúc bài này chơi: sang mốc không phải chờ mạng. */
+    private fun prefetchNext(appContext: Context, seconds: Double) {
+        val sounding = MusicCues.at(cues, seconds, failed)?.track
+        cues.firstOrNull { it.start > seconds && it.track != sounding }?.let { uriOf(appContext, it.track) }
+    }
+
+    /** Hỏi mốc nhạc theo cảnh của chương `chapterId` (luồng nền: dựng nền có thể tới vài giây, danh mục cần mạng lần đầu). Chương chưa dựng xong ([DeviceScenes] trả `pending`)
+     *  thì hỏi lại sau [SCENE_POLL_MS], tối đa [SCENE_POLLS] lần; về rồi thì nhạc vào ở đầu câu kế ([SceneAnchor.Feed.arrive]). Đổi cuốn / chương thì lần hỏi cũ bị bỏ. */
+    private fun askScene(appContext: Context, chapterId: Int, attempt: Int) {
+        val ticket = generation
+        val bookId = book
+        DeviceScenes.request(appContext, bookId, chapterId) { result, _ ->
+            val pending = result?.optBoolean("pending", false) == true
+            val arrival = if (result == null || pending) null else runCatching { arrivalOf(appContext, bookId, result) }.getOrNull()
+            main.post {
+                if (ticket != generation || chapter != chapterId) return@post
+                if (pending && attempt < SCENE_POLLS) {
+                    val job = Runnable {
+                        sceneRetry = null
+                        if (ticket == generation && chapter == chapterId) askScene(appContext, chapterId, attempt + 1)
+                    }
+                    sceneRetry = job
+                    main.postDelayed(job, SCENE_POLL_MS)
+                    return@post
+                }
+                infos = infos + (arrival?.infos ?: emptyMap())
+                if (arrival != null && scene.arrive(arrival, lastSeconds)) cues = scene.cues
+            }
+        }
+    }
+
+    /** Mốc thô + số đo bài của danh mục (độ khuếch đại, đoạn nghe được, ghi công) cho [SceneBed]; danh mục chưa trả lời thì chỉ mốc (mức mặc định). Luồng nền. */
+    private fun arrivalOf(appContext: Context, bookId: String, result: JSONObject): SceneBed.Arrival {
+        val cues = SceneAnchor.cuesOf(result)
+        val level = (BookEdits.load(Store.bookDir(bookId)).optJSONObject("music")?.optDouble("levelDb", SceneBed.DEFAULT_LEVEL_DB) ?: SceneBed.DEFAULT_LEVEL_DB)
+            .takeIf { it.isFinite() } ?: SceneBed.DEFAULT_LEVEL_DB
+        val links = cues.map { it.link }.distinct()
+        val found = if (links.isEmpty()) emptyMap() else runCatching { DeviceMusic.catalog(appContext).lookupPartial(links).found }.getOrDefault(emptyMap())
+        return SceneBed.Arrival(cues, result.optDouble("estSeconds", 0.0), level, found)
     }
 
     // ---- nhạc theo mốc của sách --------------------------------------------------------------------------------
