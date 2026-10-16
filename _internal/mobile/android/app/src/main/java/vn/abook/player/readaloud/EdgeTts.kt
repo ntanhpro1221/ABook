@@ -117,7 +117,8 @@ object EdgeProtocol {
     /**
      * Nhận một lượt đọc tới `turn.end`: ghi mp3 (tin nhị phân `Path:audio`) vào `sink`, thêm mốc của `audio.metadata` (cộng `shiftMs`), trả số byte âm thanh. Dùng
      * chung cho Edge và Azure Speech (cùng khung tin - AzureTts.kt). `label`: tên giọng trong câu báo lỗi; `onClose`: đổi khung CLOSE của máy chủ thành lỗi riêng
-     * (Azure báo hết hạn mức bằng lý do đóng) - null thì là "đóng trước khi đọc xong". Quá `totalMs` hay mất kết nối: [VoiceException] (offline).
+     * (Azure báo hết hạn mức bằng lý do đóng) - null thì là "đóng trước khi đọc xong". Quá `totalMs` hay một lần chờ tin quá lâu: [VoiceException] reason "timeout" (có mạng mà dịch vụ chậm -
+     * lỗi thoáng qua, không phải mất mạng); mất kết nối giữa chừng: `onDrop`.
      */
     fun readTurn(
         socket: WebSocket, sink: OutputStream, shiftMs: Long, boundaries: MutableList<Boundary>, label: String, totalMs: Long,
@@ -128,11 +129,11 @@ object EdgeProtocol {
         val deadline = System.nanoTime() + totalMs * 1_000_000
         var audio = 0L
         while (true) {
-            if (System.nanoTime() > deadline) throw VoiceException("$label trả lời quá chậm", offline = true)
+            if (System.nanoTime() > deadline) throw VoiceException("$label trả lời quá chậm", reason = "timeout")
             val message = try {
                 socket.receive()
             } catch (error: java.net.SocketTimeoutException) {
-                throw VoiceException("$label trả lời quá chậm", offline = true, cause = error)
+                throw VoiceException("$label trả lời quá chậm", cause = error, reason = "timeout")
             } catch (error: java.io.IOException) {
                 throw onDrop("Mất kết nối với ${label.replaceFirstChar { it.lowercase() }} giữa chừng", error)
             }
@@ -227,7 +228,7 @@ class EdgeTts(
                     } catch (error: VoiceException) {
                         // Mất mạng GIỮA CHỪNG (đã cắt lượt trước đó, hay mảnh trước vừa đọc xong): kết nối mới cũng báo "không có mạng" - vẫn thử lại, mạng
                         // hay chập chờn vài giây. Ngay lần đầu mà đã không có mạng thì thôi, rơi sang giọng kế liền như trước.
-                        if (!error.offline || (attempt == 0 && bytes == 0L)) throw error
+                        if (!(error.offline || error.reason == "timeout") || (attempt == 0 && bytes == 0L)) throw error
                         error
                     }
                     if (attempt == RETRIES) {

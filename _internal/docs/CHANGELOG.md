@@ -12,6 +12,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Lần đầu mở một cuốn sách chữ trên máy mới, nhạc nền của chương đầu có sau chừng 10 giây thay vì vài phút (máy tính và điện thoại): máy không còn tải từng bài ứng viên một để xem bài nặng hay nhẹ, mà chỉ kiểm bài đã chọn; bài nào nặng quá thì chọn lại bài khác.
 - Mất mạng sau khi đã từng mở app, nhạc nền theo cảnh không còn im lặng khó hiểu: hộp "Nhạc nền" nói rõ chưa tải được danh mục nhạc, có mạng thì dòng ấy biến mất (máy tính và điện thoại).
 - Chuyển sang cuốn khác lúc đang tạm dừng, nhạc của cuốn cũ không còn được mở lại thoáng qua (máy tính và điện thoại).
+- Giọng trực tuyến (Edge) có lúc chậm, giọng đọc không còn im giữa chương: máy đọc sẵn nhiều đoạn hơn (đủ khoảng 20 giây trở lên, nhiều hơn nếu giọng đang chậm) khi mạng hay dịch vụ giọng chậm; mạng nhanh hay giọng chạy trên máy thì như cũ (máy tính và điện thoại).
+- Một đoạn bị lỗi thoáng qua (dịch vụ giọng bận, đứt kết nối giữa chừng) được máy tự thử lại trong khoảng 10-15 giây ở nền; bạn chỉ thấy giọng dừng và nút "Thử lại" khi tới đoạn ấy mà vẫn chưa có (máy tính và điện thoại).
 
 ## [0.4.74] - 2026-10-16
 

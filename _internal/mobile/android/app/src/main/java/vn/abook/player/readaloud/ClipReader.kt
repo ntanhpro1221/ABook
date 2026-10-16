@@ -60,7 +60,11 @@ class ClipReader(
         if (told.add("${provider(failed)}:$kind")) runCatching { notice(noticeFor(failed, problem, next)) }
     }
 
-    fun read(text: String, voiceId: String, origin: String? = null, readings: Map<String, String>? = null): Clip {
+    /**
+     * `willRetry`: người gọi sẽ tự thử lại nếu lần này hỏng vì lỗi thoáng qua ([VoiceException.transient]) - ném lỗi gốc lên ngay, chưa cho giọng nghỉ ([EDGE_BREAK_MS]...) hay rơi
+     * sang giọng khác (một lần Edge cắt lượt không được làm cả chương đọc bằng giọng máy, hay hiện "đang không dùng được" khi thử lại là xong). Lần thử cuối: `willRetry` tắt.
+     */
+    fun read(text: String, voiceId: String, origin: String? = null, readings: Map<String, String>? = null, willRetry: Boolean = false): Clip {
         val primary = voiceFor(voiceId)
         cache.get(primary.id, text, origin, readings)?.let { return it }
         val chain = ArrayList<Voice>().apply {
@@ -75,8 +79,8 @@ class ClipReader(
         val noOfflineVoice = chain.all { online(it) }
         fun offlineHelp(error: VoiceException?) = when {
             !noOfflineVoice || error == null -> null
-            error.offline -> VoiceException(NO_OFFLINE_VOICE, offline = true, cause = error, reason = error.reason)
-            error.reason in TROUBLE_REASONS -> VoiceException(NO_USABLE_VOICE, cause = error, reason = error.reason)
+            error.offline -> VoiceException(NO_OFFLINE_VOICE, offline = true, cause = error, reason = error.reason, final = true)
+            error.reason in TROUBLE_REASONS -> VoiceException(NO_USABLE_VOICE, cause = error, reason = error.reason, final = true)
             else -> null
         }
         var first: VoiceException? = null // lỗi của giọng đã chọn: câu chính khi mọi giọng đều hỏng
@@ -100,11 +104,12 @@ class ClipReader(
             try {
                 return synthesize(voice, text, origin, readings)
             } catch (error: VoiceException) {
+                if (willRetry && online(voice) && error.transient) throw error
                 val earlier = first
                 if (!(online(voice) || local(voice)) || index == chain.lastIndex) {
                     offlineHelp(earlier ?: error)?.let { throw it }
                     if (earlier == null) throw error
-                    throw VoiceException("${earlier.message}; ${error.message}", earlier.offline, error, earlier.reason)
+                    throw VoiceException("${earlier.message}; ${error.message}", earlier.offline, error, earlier.reason, final = true)
                 }
                 downUntil[provider(voice)] = clock() + when {
                     error.reason == "auth" || error.reason == "quota" -> KEY_BREAK_MS

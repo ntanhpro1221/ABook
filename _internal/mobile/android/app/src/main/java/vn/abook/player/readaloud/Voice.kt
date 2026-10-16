@@ -10,10 +10,19 @@ class Clip(val file: File, val durationMs: Long, val words: List<Span>, val voic
 
 /**
  * Giọng đọc không dùng được lúc này (hết mạng, thiếu giọng tiếng Việt, quá hạn...). `message` là câu nói thẳng cho người nghe. `reason` như bên máy tính
- * (abook/readaloud/model.py): "offline", "auth" (khoá của người dùng sai / bị khoá), "quota" (hết hạn mức), "service"... - [ClipReader] dựa vào đó để chọn giọng đỡ.
+ * (abook/readaloud/model.py): "offline", "auth" (khoá của người dùng sai / bị khoá), "quota" (hết hạn mức), "service", "timeout"... - [ClipReader] dựa vào đó để chọn giọng đỡ.
+ * `final`: lời cuối của [ClipReader] (đã thử hết giọng, hay giọng đang nghỉ) - người gọi không thử lại thêm.
  */
-class VoiceException(message: String, val offline: Boolean = false, cause: Throwable? = null, val reason: String = if (offline) "offline" else "service") :
-    Exception(message, cause)
+class VoiceException(
+    message: String, val offline: Boolean = false, cause: Throwable? = null, val reason: String = if (offline) "offline" else "service", val final: Boolean = false,
+) : Exception(message, cause) {
+    /** Lỗi thoáng qua (Edge cắt lượt / bận / chậm - "service", "timeout"): thử lại là xong. Mất mạng, bị từ chối, khoá / giọng hỏng thì không. */
+    val transient: Boolean get() = !final && !offline && reason in TRANSIENT_REASONS
+
+    companion object {
+        val TRANSIENT_REASONS = setOf("service", "timeout")
+    }
+}
 
 /** Một giọng: đổi MỘT đoạn chữ thành file âm thanh (chặn tới khi xong hay hỏng; chạy ở luồng nền). */
 interface Voice {
