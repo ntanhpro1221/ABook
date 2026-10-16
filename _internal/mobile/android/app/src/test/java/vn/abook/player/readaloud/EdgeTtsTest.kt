@@ -230,7 +230,10 @@ class EdgeTtsTest {
             EdgeTts("v", connector).synthesize("Xin", File(dir, "f.mp3"))
             fail("đáng ra lỗi")
         } catch (error: VoiceException) {
-            assertTrue(error.offline)
+            // Có mạng mà dịch vụ không trả lời kịp: lỗi thoáng qua "timeout", không phải mất mạng (trình phát thử lại thay vì báo "không có mạng").
+            assertFalse(error.offline)
+            assertEquals("timeout", error.reason)
+            assertTrue(error.transient)
             assertTrue(error.message!!.contains("quá chậm"))
         }
     }

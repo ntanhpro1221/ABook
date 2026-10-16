@@ -113,6 +113,38 @@ describe("giọng dự phòng của Nghe ngay", () => {
     expect((await fetch("edge:vi-VN-HoaiMyNeural", "Ba.")).url).toBe("/clip/edge:vi-VN-HoaiMyNeural");
   });
 
+  it("bộ máy sẽ tự thử lại (willRetry): lỗi thoáng qua của Edge ném nguyên lên, không cho giọng nghỉ 5 phút, không rơi sang giọng của máy; lần thử cuối mới xử lý", async () => {
+    const { module } = await fresh();
+    const fail: Record<string, string> = { "edge:vi-VN-HoaiMyNeural": "service" };
+    const { value, calls } = source(fail);
+    const notify = vi.fn();
+    const fetch = module.speechFetcher(value, "b1", notify);
+    const first = await fetch("edge:vi-VN-HoaiMyNeural", "Một.", { willRetry: true }).catch((caught: unknown) => caught);
+    expect(first).toMatchObject({ reason: "service" });
+    expect((first as { final?: boolean }).final).toBeUndefined(); // lỗi gốc: bộ máy còn thử lại được
+    expect(notify).not.toHaveBeenCalled();
+    delete fail["edge:vi-VN-HoaiMyNeural"]; // Edge sống lại ở lần thử kế: không bị nghỉ oan
+    expect((await fetch("edge:vi-VN-HoaiMyNeural", "Một.", { willRetry: true })).url).toBe("/clip/edge:vi-VN-HoaiMyNeural");
+    expect(calls).toEqual(["edge:vi-VN-HoaiMyNeural", "edge:vi-VN-HoaiMyNeural"]);
+    // Hết lần thử (willRetry tắt): xử lý như trước - rơi sang giọng của máy.
+    fail["edge:vi-VN-HoaiMyNeural"] = "service";
+    expect((await fetch("edge:vi-VN-HoaiMyNeural", "Hai.")).url).toBe("/clip/device:an");
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it("willRetry chỉ áp cho lỗi thoáng qua: bị từ chối / mất mạng vẫn xử lý ngay; không có giọng của máy thì lời cuối đánh dấu final (bộ máy không thử lại nữa)", async () => {
+    const { module } = await fresh();
+    const online = VOICES.filter((voice) => voice.online);
+    const { value } = source({ "edge:vi-VN-HoaiMyNeural": "rejected" }, online);
+    const fetch = module.speechFetcher(value, "b1", vi.fn());
+    const rejected = await fetch("edge:vi-VN-HoaiMyNeural", "Một.", { willRetry: true }).catch((caught: unknown) => caught);
+    expect(rejected).toMatchObject({ message: "Giọng Hoài My đang không dùng được.", final: true });
+    const { module: other } = await fresh();
+    const down = source({ "edge:vi-VN-HoaiMyNeural": "service" }, online);
+    const last = await other.speechFetcher(down.value, "b1", vi.fn())("edge:vi-VN-HoaiMyNeural", "Một.").catch((caught: unknown) => caught);
+    expect(last).toMatchObject({ message: "Giọng Hoài My đang không dùng được.", reason: "service", final: true });
+  });
+
   it("Edge bị từ chối mà máy có giọng của máy: các đoạn sau đi thẳng sang giọng của máy, không gọi lại Edge", async () => {
     const { module } = await fresh();
     const { value, calls } = source({ "edge:vi-VN-HoaiMyNeural": "rejected" });

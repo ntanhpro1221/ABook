@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { VOICE_CHANGED_EVENT, type ClipFetcher, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
+import { VOICE_CHANGED_EVENT, isTransientClipError, type ClipFetcher, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
 import type { ListenSource } from "./source";
 
 // Giọng đọc của "Nghe ngay": nhớ lựa chọn theo từng cuốn (+ một lựa chọn chung cho cuốn mới), chọn giọng mặc định, và bọc việc lấy clip với hai
@@ -268,19 +268,22 @@ export function speechFetcher(source: ListenSource, bookId: string, notify: (mes
       const shortName = voice.name.replace(/\s*\([^)]*\)\s*$/, "").trim() || voice.name;
       // Giọng này vừa hỏng và không còn giọng nào đọc không cần mạng: nói ngay, không gọi lại dịch vụ ở mỗi đoạn.
       if (last && troubleNow && !options?.cachedOnly && chain.every((item) => item.online)) {
-        throw Object.assign(new Error(unusableVoiceMessage(shortName)), { reason: troubleNow });
+        throw Object.assign(new Error(unusableVoiceMessage(shortName)), { reason: troubleNow, final: true });
       }
       if (failed) tell(failed.voice, failed.reason, candidate);
       try {
         return await fetchWith(candidate, text, options);
       } catch (error) {
+        // Bộ máy sẽ tự thử lại lỗi thoáng qua này (Edge cắt lượt / bận / chậm): chưa vội coi giọng là hỏng, cho nghỉ 5 phút hay rơi sang giọng khác - ném lỗi gốc lên, lần thử cuối
+        // (`willRetry` tắt) mới xử lý như dưới đây.
+        if (options?.willRetry && candidate.online && !options.cachedOnly && isTransientClipError(error)) throw error;
         const why = (error as { reason?: string }).reason ?? "";
         if (candidate.online && TROUBLE_REASONS.has(why) && !KEYED_PROVIDERS[candidate.provider] && !options?.cachedOnly) {
           troubled.set(candidate.provider, { reason: why, until: Date.now() + TROUBLE_MS });
         }
         if (last && !options?.cachedOnly && chain.every((item) => item.online)) {
-          if (why === "offline") throw Object.assign(new Error(noOfflineMessage(shortName)), { reason: "offline" });
-          if (TROUBLE_REASONS.has(why)) throw Object.assign(new Error(unusableVoiceMessage(shortName)), { reason: why });
+          if (why === "offline") throw Object.assign(new Error(noOfflineMessage(shortName)), { reason: "offline", final: true });
+          if (TROUBLE_REASONS.has(why)) throw Object.assign(new Error(unusableVoiceMessage(shortName)), { reason: why, final: true });
         }
         if (!candidate.online || !FALLBACK_REASONS.has(why) || last) throw error;
         if (KEYED_PROVIDERS[candidate.provider] && (why === "auth" || why === "quota")) {

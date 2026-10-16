@@ -170,10 +170,11 @@ def test_the_accept_key_matches_the_rfc_example() -> None:
 class FakeEdge:
     """Máy chủ WebSocket giả nói đúng giao thức Edge, trên cổng tự chọn của máy này (không TLS)."""
 
-    def __init__(self, *, reject_first: bool = False, silent: bool = False, drop: int = 0, busy: int = 0) -> None:
+    def __init__(self, *, reject_first: bool = False, silent: bool = False, drop: int = 0, busy: int = 0, reset: int = 0) -> None:
         self.reject_first = reject_first
         self.busy = busy  # số lần bắt tay đầu bị trả 503 (dịch vụ bận)
         self.drop = drop  # số lượt đầu bị cắt giữa chừng (như dịch vụ thật thỉnh thoảng làm)
+        self.reset = reset  # số lượt đầu bị RST giữa chừng (kết nối bị reset, không phải đóng êm)
         self.silent = silent
         self.requests: list[str] = []
         self.messages: list[str] = []
@@ -234,6 +235,10 @@ class FakeEdge:
         self.messages += [config, ssml]
         if self.drop > 0:
             self.drop -= 1
+            return
+        if self.reset > 0:
+            self.reset -= 1
+            conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))  # đóng bằng RST
             return
         if self.silent:
             time.sleep(1.5)
@@ -311,6 +316,18 @@ def test_a_connection_dropped_mid_turn_is_retried(fake_edge, monkeypatch) -> Non
     with pytest.raises(edge.EdgeError) as caught:
         client.synthesize("Xin chào", edge.DEFAULT_VOICE)
     assert isinstance(caught.value, edge.EdgeDropped) and len(server.requests) == 3
+
+
+def test_a_connection_reset_mid_turn_is_a_dropped_turn_not_offline(fake_edge, monkeypatch) -> None:
+    # Soát a45: reset giữa lượt từng được báo "offline" (trình phát coi như mất mạng, dừng ngay); đó là lỗi thoáng qua - thử lại, và nếu hết lần thì reason "service".
+    monkeypatch.setattr(edge.time, "sleep", lambda _seconds: None)
+    server, client = fake_edge(reset=2)
+    result = client.synthesize("Xin chào", edge.DEFAULT_VOICE)
+    assert result.audio == b"A" * 12000 and len(server.requests) == 3
+    server, client = fake_edge(reset=3)
+    with pytest.raises(edge.EdgeError) as caught:
+        client.synthesize("Xin chào", edge.DEFAULT_VOICE)
+    assert isinstance(caught.value, edge.EdgeDropped) and caught.value.reason == "service" and len(server.requests) == 3
 
 
 def test_a_busy_handshake_is_retried_like_a_dropped_turn(fake_edge, monkeypatch) -> None:

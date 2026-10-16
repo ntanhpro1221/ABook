@@ -3,12 +3,15 @@ import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
 import type { Script } from "./model";
 import {
   CLIP_RETRIES,
+  CLIP_RETRY_DELAYS_MS,
   NEXT_CHAPTER_AHEAD,
   ReadAloudEngine,
   RoutedEngine,
   estimateSeconds,
   estimatedStarts,
   isSpeakable,
+  isTransientClipError,
+  readAheadCount,
   type AudioLike,
   type ReadAloudClip,
   type SpeechTrack,
@@ -69,7 +72,7 @@ interface Setup {
   engine: ReadAloudEngine;
   audios: FakeAudio[];
   published: Script[];
-  requests: { text: string; cachedOnly: boolean; resolve: (clip?: ReadAloudClip) => void; reject: (error: Error) => void }[];
+  requests: { text: string; cachedOnly: boolean; willRetry?: boolean; resolve: (clip?: ReadAloudClip) => void; reject: (error: Error) => void }[];
   events: string[];
   /** Cho clip của đoạn có chữ `text` về. */
   arrive: (text: string) => Promise<void>;
@@ -97,7 +100,7 @@ function setup(options: { chapter?: string; cached?: Record<string, ReadAloudCli
           else reject(Object.assign(new Error("uncached"), { reason: "uncached" }));
           return;
         }
-        requests.push({ text, cachedOnly: false, resolve: (clip) => resolve(clip ?? clipOf(text)), reject });
+        requests.push({ text, cachedOnly: false, willRetry: o?.willRetry, resolve: (clip) => resolve(clip ?? clipOf(text)), reject });
       }),
     onScript: (script) => published.push(script),
   };
@@ -463,37 +466,111 @@ describe("nghe dở và lỗi", () => {
     expect(audioOf(s, "Ba bốn.")!.plays).toBe(1);
   });
 
-  it("lỗi thoáng qua ở đoạn đang chờ: tự thử lại, không dừng; hỏng quá số lần thử thì mới dừng", async () => {
+  it("lỗi thoáng qua ở đoạn đang chờ: tự thử lại sau quãng nghỉ lùi dần, không dừng; hỏng quá số lần thử thì mới dừng", async () => {
     vi.useFakeTimers();
     try {
       const s = setup();
       s.engine.load(s.trackInfo, 0, true);
       await vi.advanceTimersByTimeAsync(0);
       const first = () => s.requests.filter((r) => r.text === TEXTS[0]);
-      first()[0].reject(Object.assign(new Error("Bad Gateway"), { reason: "upstream" }));
-      await vi.advanceTimersByTimeAsync(0);
-      expect(s.events).not.toContain("error");
-      await vi.advanceTimersByTimeAsync(1000);
+      // hỏng hai lần liên tiếp (Edge 502, rồi chậm quá), lần thứ ba về: người nghe không bị dừng, chỉ chờ
+      first()[0].reject(Object.assign(new Error("Bad Gateway"), { reason: "service" }));
+      await vi.advanceTimersByTimeAsync(CLIP_RETRY_DELAYS_MS[0] - 1);
+      expect(first()).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(1);
       expect(first()).toHaveLength(2);
-      first()[1].resolve();
+      first()[1].reject(Object.assign(new Error("Chậm quá"), { reason: "timeout" }));
+      await vi.advanceTimersByTimeAsync(CLIP_RETRY_DELAYS_MS[1]);
+      expect(first()).toHaveLength(3);
+      expect(s.events).not.toContain("error");
+      expect(s.engine.paused).toBe(false);
+      first()[2].resolve();
       await vi.advanceTimersByTimeAsync(0);
       expect(audioOf(s, TEXTS[0])!.plays).toBe(1);
       expect(s.engine.error).toBe("");
 
+      // hết lần thử: dừng, báo lỗi; bộ lấy clip được báo "còn thử lại" ở mọi lần trừ lần cuối
       const t = setup();
       t.engine.load(t.trackInfo, 0, true);
       await vi.advanceTimersByTimeAsync(0);
       const firstT = () => t.requests.filter((r) => r.text === TEXTS[0]);
       for (let attempt = 0; attempt <= CLIP_RETRIES; attempt += 1) {
-        firstT()[attempt].reject(Object.assign(new Error("Bad Gateway"), { reason: "upstream" }));
-        await vi.advanceTimersByTimeAsync(1000 * (attempt + 1));
+        expect(t.events).not.toContain("error");
+        firstT()[attempt].reject(Object.assign(new Error("Bad Gateway"), { reason: "service" }));
+        await vi.advanceTimersByTimeAsync(attempt < CLIP_RETRIES ? CLIP_RETRY_DELAYS_MS[attempt] : 0);
       }
       expect(firstT()).toHaveLength(CLIP_RETRIES + 1);
+      expect(firstT().map((r) => r.willRetry)).toEqual([...Array(CLIP_RETRIES).fill(true), false]);
       expect(t.events).toContain("error");
       expect(t.engine.paused).toBe(true);
+      // bấm "Thử lại": được thử lại từ đầu
+      t.engine.play();
+      expect(firstT()).toHaveLength(CLIP_RETRIES + 2);
+      expect(firstT().at(-1)!.willRetry).toBe(true);
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("đoạn đọc sẵn hỏng thoáng qua lúc đang nghe đoạn trước: thử lại ở nền, âm thanh không ngắt, không dừng", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = setup();
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      s.requests.filter((r) => r.text === TEXTS[0]).forEach((r) => r.resolve());
+      await vi.advanceTimersByTimeAsync(0);
+      const second = () => s.requests.filter((r) => r.text === TEXTS[1]);
+      second()[0].reject(Object.assign(new Error("Bad Gateway"), { reason: "service" }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.events).not.toContain("error");
+      expect(audioOf(s, TEXTS[0])!.paused).toBe(false); // đoạn đầu vẫn đang nói
+      await vi.advanceTimersByTimeAsync(CLIP_RETRY_DELAYS_MS[0]);
+      expect(second()).toHaveLength(2);
+      second()[1].resolve();
+      await vi.advanceTimersByTimeAsync(0);
+      audioOf(s, TEXTS[0])!.finish();
+      expect(audioOf(s, TEXTS[1])!.plays).toBe(1);
+      expect(s.events).not.toContain("error");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("lỗi không thoáng qua (mất mạng, bị từ chối, giọng hỏng, không rõ lý do): dừng ngay ở đoạn đang chờ, không thử lại", async () => {
+    vi.useFakeTimers();
+    try {
+      for (const reason of ["offline", "rejected", "voice", "auth", "quota", "empty", undefined]) {
+        const s = setup();
+        s.engine.load(s.trackInfo, 0, true);
+        await vi.advanceTimersByTimeAsync(0);
+        s.requests[0].reject(Object.assign(new Error("hỏng"), { reason }));
+        await vi.advanceTimersByTimeAsync(0);
+        expect(s.events, String(reason)).toContain("error");
+        expect(s.engine.paused).toBe(true);
+        await vi.advanceTimersByTimeAsync(20_000);
+        expect(s.requests.filter((r) => r.text === TEXTS[0]), String(reason)).toHaveLength(1);
+      }
+      // lời cuối của bộ lấy clip (đã thử hết giọng) cũng không bị thử lại thêm
+      const t = setup();
+      t.engine.load(t.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      t.requests[0].reject(Object.assign(new Error("Giọng Hoài My đang không dùng được."), { reason: "service", final: true }));
+      await vi.advanceTimersByTimeAsync(20_000);
+      expect(t.events).toContain("error");
+      expect(t.requests.filter((r) => r.text === TEXTS[0])).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("phân loại lỗi thoáng qua theo lý do máy chủ thật sự trả (abook/readaloud/edge.py: cắt lượt / 429 / 5xx -> service, chậm -> timeout)", () => {
+    expect(isTransientClipError({ reason: "service" })).toBe(true);
+    expect(isTransientClipError({ reason: "timeout" })).toBe(true);
+    for (const reason of ["offline", "rejected", "voice", "empty", "auth", "quota", "uncached", ""]) expect(isTransientClipError({ reason })).toBe(false);
+    expect(isTransientClipError(new Error("không lý do"))).toBe(false);
+    expect(isTransientClipError({ reason: "service", final: true })).toBe(false);
+    expect(isTransientClipError(null)).toBe(false);
   });
 
   it("lấy clip lỗi: dừng, báo error với lý do; bấm phát lại thì thử lại", async () => {
@@ -526,6 +603,129 @@ describe("nghe dở và lỗi", () => {
     expect(audioOf(s, TEXTS[1])!.released).toBe(true);
     expect(s.requests.length).toBe(requested + 2); // đoạn 2 và 3 được xin lại (đoạn 4 chưa từng xin)
     expect(s.published.at(-1)!.segments[1].words).toBeUndefined();
+  });
+});
+
+describe("độ sâu đọc trước theo tốc độ giọng trực tuyến", () => {
+  it("chưa đủ số đo hay clip về nhanh: đúng số đoạn tối thiểu; clip về chậm hơn thời gian nghe: dài ra tới trần; nhanh lại: co về", () => {
+    const shortClips = Array(10).fill(1.5); // đoạn đối thoại ngắn: 1,5 giây mỗi đoạn
+    expect(readAheadCount(3, [], shortClips)).toBe(3);
+    expect(readAheadCount(3, [20], shortClips)).toBe(3); // một số đo chưa đủ
+    expect(readAheadCount(3, [0.8, 1.1, 0.9, 1.2], shortClips)).toBe(8); // Edge nhanh nhưng đoạn ngắn: 20 s đệm tối thiểu cần hơn 8 đoạn -> trần
+    expect(readAheadCount(3, [0.8, 1.1, 0.9, 1.2], Array(10).fill(12))).toBe(3); // đoạn dài: 2 đoạn đã đủ 20 s, giữ tối thiểu 3
+    expect(readAheadCount(3, [20, 22, 9, 1, 1, 1, 1, 1], shortClips)).toBe(8); // p80 = 20 s -> cần 40 s đệm, đoạn ngắn nên chạm trần 8
+    const longClips = Array(10).fill(12); // đoạn văn xuôi: 12 giây mỗi đoạn
+    expect(readAheadCount(3, [9, 10, 11, 9, 10], longClips)).toBe(3); // cần 22 s, 3 đoạn đã có 36 s
+    expect(readAheadCount(3, [20, 24, 18, 22, 19], longClips)).toBe(4); // cần 48 s: 4 đoạn
+    // trần thời gian đệm: không đòi hơn 60 giây âm thanh dù Edge chậm tới đâu
+    expect(readAheadCount(3, [100, 100, 100], Array(10).fill(10))).toBe(6);
+    // hết chương: không đòi đoạn không có
+    expect(readAheadCount(3, [20, 20], [1, 1])).toBe(3);
+    // số đo chậm cũ trôi khỏi cửa sổ khi clip về nhanh trở lại: độ sâu co về tối thiểu
+    expect(readAheadCount(3, [20, 22, 24, 21, 23, 22, 20, 21], shortClips)).toBe(8);
+    expect(readAheadCount(3, [1, 1, 1, 1, 1, 1, 1, 1], Array(10).fill(12))).toBe(3);
+  });
+
+  it("bộ máy: clip về chậm thì đọc trước nhiều đoạn hơn (số lượt gọi cùng lúc vẫn như cũ), về nhanh lại thì co", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] }); // chỉ đồng hồ Date: để dời giờ giữa lúc gửi và lúc về mà vẫn dùng flush()
+    try {
+      // văn xuôi: 24 chữ mỗi đoạn = 12 s âm thanh khi clip về
+      const chapter = Array.from({ length: 24 }, (_, i) => `Đoạn ${i + 1} ${Array(22).fill("từ").join(" ")}.`).join("\n\n");
+      const s = setup({ chapter });
+      const t0 = Date.now();
+      s.engine.load(s.trackInfo, 0, true);
+      await flush();
+      expect(s.requests).toHaveLength(4); // đoạn đang nghe + 3 đoạn sau
+      expect(s.engine.lookahead).toBe(3);
+      // bốn clip đầu mỗi cái mất 20 giây
+      vi.setSystemTime(t0 + 20_000);
+      for (const request of s.requests.slice()) request.resolve();
+      await flush();
+      expect(s.engine.lookahead).toBe(4); // cần 40 s đệm (2 x 20 s): 3 đoạn = 36 s chưa đủ
+      // cửa sổ dài ra: đoạn xa hơn đã được xin; số lượt đang chạy cùng lúc không quá 4 (như trước)
+      const done = new Set(s.requests.slice(0, 4));
+      const pending = () => s.requests.filter((r) => !done.has(r));
+      expect(pending().length).toBeGreaterThan(0);
+      expect(pending().length).toBeLessThanOrEqual(4);
+      // các clip sau về nhanh (1 giây mỗi cái) và người nghe đi tiếp: số đo chậm trôi khỏi cửa sổ 8 mẫu
+      for (let round = 0; round < 14; round += 1) {
+        vi.setSystemTime(Date.now() + 1000);
+        for (const request of pending()) {
+          request.resolve();
+          done.add(request);
+        }
+        await flush();
+        expect(pending().length).toBeLessThanOrEqual(4);
+        s.audios.find((audio) => !audio.paused)?.finish();
+        await flush();
+      }
+      expect(s.engine.lookahead).toBe(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("đoạn ngắn (đối thoại): giọng trực tuyến đọc sẵn đủ ~20 giây âm thanh chứ không chỉ 3 đoạn; bộ đệm (clip về tức thì) thì không đổi", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const chapter = Array.from({ length: 24 }, (_, i) => `Câu số ${i + 1} đây.`).join("\n\n");
+      const cached = setup({ chapter });
+      cached.engine.load(cached.trackInfo, 0, true);
+      await flush();
+      for (const request of cached.requests.slice()) request.resolve(); // 0 ms: lấy từ bộ đệm của máy chủ
+      await flush();
+      expect(cached.engine.lookahead).toBe(3);
+      const t0 = Date.now();
+      const s = setup({ chapter });
+      s.engine.load(s.trackInfo, 0, true);
+      await flush();
+      vi.setSystemTime(t0 + 1000); // Edge nhanh nhưng thật: 1 giây mỗi clip
+      for (const request of s.requests.slice()) request.resolve();
+      await flush();
+      expect(s.engine.lookahead).toBe(8); // 1,5 s mỗi đoạn: 20 s cần hơn 8 đoạn -> chạm trần
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("lượt gọi chờ lâu chưa về cũng là số đo: cửa sổ dài ra ngay khi quãng chậm bắt đầu, không đợi clip chậm về xong", async () => {
+    vi.useFakeTimers();
+    try {
+      const chapter = Array.from({ length: 24 }, (_, i) => `Đoạn ${i + 1} ${Array(22).fill("từ").join(" ")}.`).join("\n\n");
+      const s = setup({ chapter });
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.engine.lookahead).toBe(3);
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(s.engine.lookahead).toBe(3); // mới chờ 2 giây: chưa nói lên gì
+      await vi.advanceTimersByTimeAsync(10_000); // bốn lượt gọi đã chờ 12 s mà chưa clip nào về: cần 24 s đệm = 3 đoạn ước (10 s) -> 3; đoạn dài hơn thì nhiều hơn
+      expect(s.engine.lookahead).toBeGreaterThanOrEqual(3);
+      await vi.advanceTimersByTimeAsync(20_000); // đã chờ 32 s: cần 60 s đệm (trần)
+      expect(s.engine.lookahead).toBeGreaterThanOrEqual(6);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("giọng chạy trên máy (serial): không đổi, dù đo được chậm", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const chapter = Array.from({ length: 12 }, (_, i) => `Câu số ${i + 1} đây.`).join("\n\n");
+      const s = setup({ chapter });
+      (s.track as { serial?: () => boolean }).serial = () => true;
+      const t0 = Date.now();
+      s.engine.load(s.trackInfo, 0, true);
+      await flush();
+      vi.setSystemTime(t0 + 30_000);
+      s.requests[0].resolve();
+      await flush();
+      vi.setSystemTime(t0 + 60_000);
+      s.requests[1]?.resolve();
+      await flush();
+      expect(s.engine.lookahead).toBe(3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
