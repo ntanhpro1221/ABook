@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.ResolvingDataSource
@@ -13,6 +14,11 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.Extractor
+import androidx.media3.extractor.ExtractorsFactory
+import androidx.media3.extractor.mp3.Mp3Extractor
+import vn.abook.player.readaloud.LiveClips
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -52,7 +58,25 @@ object Streaming {
             .setCache(cache(context))
             .setUpstreamDataSourceFactory(authorized)
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-        return DefaultMediaSourceFactory(DefaultDataSource.Factory(context, cached))
+        val normal = DefaultDataSource.Factory(context, cached)
+        // Clip Edge đang đọc dở của Nghe ngay (abooklive://, uxfix57) đi qua nguồn riêng; mọi thứ khác như cũ.
+        val routed = DataSource.Factory { LiveRoutingDataSource(LiveClipDataSource(), normal.createDataSource()) }
+        return DefaultMediaSourceFactory(routed, liveAwareExtractors())
+    }
+
+    /**
+     * Bộ tách cho clip Edge đang lớn: chỉ mp3, tua theo tốc độ bit không đổi dù chưa biết độ dài file (Edge 48 kbps CBR; clip chưa xong thì không có tiêu đề Xing / độ dài). Chỉ dùng cho `abooklive://`:
+     * mp3 khác (sách audio) giữ cách tách mặc định. Kiểm bằng bài thử rằng phát được và tua được trong phần đã ghi (LiveClipsTest).
+     */
+    fun liveExtractors(): Array<Extractor> = arrayOf(Mp3Extractor(Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING or Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING_ALWAYS))
+
+    private fun liveAwareExtractors(): ExtractorsFactory {
+        val normal = DefaultExtractorsFactory()
+        return object : ExtractorsFactory {
+            override fun createExtractors(): Array<Extractor> = normal.createExtractors()
+            override fun createExtractors(uri: Uri, responseHeaders: MutableMap<String, MutableList<String>>): Array<Extractor> =
+                if (uri.scheme == LiveClips.SCHEME) liveExtractors() else normal.createExtractors(uri, responseHeaders)
+        }
     }
 
     /** Có file trên máy thì file; không thì đường tới máy tính. */
