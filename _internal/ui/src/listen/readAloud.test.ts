@@ -27,8 +27,10 @@ import {
   type ReadAloudClip,
   type SpeechTrack,
 } from "./readAloud";
+import { LiveClip } from "./liveClip";
+import { FakeSource } from "./liveTestKit";
 import { textScript } from "./textScript";
-import { usableWords } from "./words";
+import { tailFromWord, usableWords } from "./words";
 
 class FakeAudio implements AudioLike {
   paused = true;
@@ -82,8 +84,9 @@ function clipOf(text: string, gainDb?: number): ReadAloudClip {
 interface Setup {
   engine: ReadAloudEngine;
   audios: FakeAudio[];
+  sources: FakeSource[];
   published: Script[];
-  requests: { text: string; cachedOnly: boolean; willRetry?: boolean; retryBefore?: number; fresh?: boolean; rank?: number; resolve: (clip?: ReadAloudClip) => void; reject: (error: Error) => void }[];
+  requests: { text: string; cachedOnly: boolean; willRetry?: boolean; retryBefore?: number; fresh?: boolean; rank?: number; whole?: boolean; tailFrom?: number; resolve: (clip?: ReadAloudClip) => void; reject: (error: Error) => void }[];
   events: string[];
   /** Cho clip của đoạn có chữ `text` về. */
   arrive: (text: string) => Promise<void>;
@@ -97,6 +100,7 @@ const TEXTS = ["Một hai.", "Ba bốn năm sáu.", "Bảy tám chín.", "Mườ
 
 function setup(options: { chapter?: string; cached?: Record<string, ReadAloudClip>; script?: Script; muted?: boolean } = {}): Setup {
   const audios: FakeAudio[] = [];
+  const sources: FakeSource[] = [];
   const published: Script[] = [];
   const requests: Setup["requests"] = [];
   const events: string[] = [];
@@ -111,7 +115,7 @@ function setup(options: { chapter?: string; cached?: Record<string, ReadAloudCli
           else reject(Object.assign(new Error("uncached"), { reason: "uncached" }));
           return;
         }
-        requests.push({ text, cachedOnly: false, willRetry: o?.willRetry, retryBefore: o?.retryBefore, fresh: o?.fresh, rank: o?.rank, resolve: (clip) => resolve(clip ?? clipOf(text)), reject });
+        requests.push({ text, cachedOnly: false, willRetry: o?.willRetry, retryBefore: o?.retryBefore, fresh: o?.fresh, rank: o?.rank, whole: o?.whole, tailFrom: o?.tailFrom, resolve: (clip) => resolve(clip ?? clipOf(text)), reject });
       }),
     onScript: (script) => published.push(script),
   };
@@ -121,6 +125,11 @@ function setup(options: { chapter?: string; cached?: Record<string, ReadAloudCli
       audios.push(audio);
       return audio;
     },
+    createSource: () => {
+      const source = new FakeSource();
+      sources.push(source);
+      return source;
+    },
     muted: options.muted ?? false,
   });
   for (const name of ["time", "duration", "play", "pause", "ended", "error", "recovered", "waiting", "playing"] as EngineEvent[]) {
@@ -129,6 +138,7 @@ function setup(options: { chapter?: string; cached?: Record<string, ReadAloudCli
   return {
     engine,
     audios,
+    sources,
     published,
     requests,
     events,
@@ -1824,5 +1834,383 @@ describe("fetchClipBytes: tải file audio của clip", () => {
     expect(s.audios).toHaveLength(1);
     expect(s.audios[0].plays).toBe(1);
     expect(s.engine.error).toBe("");
+  });
+});
+
+/** Clip đang về (phát dần): chưa có url / độ dài / mốc - chỉ khúc đầu. */
+function liveClipOf(first = [1, 2, 3]): { clip: ReadAloudClip; live: LiveClip } {
+  const live = new LiveClip();
+  live.push(new Uint8Array(first));
+  return { clip: { url: "", durationMs: 0, words: [], live }, live };
+}
+
+const liveFinal = (text: string, bytes = "mp3") => {
+  const done = clipOf(text);
+  return { url: done.url, durationMs: done.durationMs, words: done.words, bytes: new Blob([bytes], { type: "audio/mpeg" }) };
+};
+
+describe("clip phát dần: nghe từ byte đầu, đồng hồ ảo không nhảy (uxfix56)", () => {
+  const start = async () => {
+    const urls = blobUrls();
+    const s = setup();
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    return { s, urls };
+  };
+
+  it("clip về với byte đầu: phần tử audio phát từ MediaSource (blob: URL), mốc rỗng, độ dài vẫn là độ dài ước", async () => {
+    const { s, urls } = await start();
+    const estimated = s.engine.duration;
+    const { clip, live } = liveClipOf();
+    s.requests[0].resolve(clip);
+    await flush();
+    expect(s.sources).toHaveLength(1);
+    expect(s.audios[0].src).toBe(urls.made[0]);
+    expect(s.audios[0].plays).toBe(1);
+    expect(s.engine.duration).toBeCloseTo(estimated, 6);
+    expect(s.published.at(-1)!.segments[0].words).toEqual([]);
+    s.sources[0].open();
+    expect(s.sources[0].buffer.appended).toEqual([[1, 2, 3]]);
+    live.push(new Uint8Array([4]));
+    s.sources[0].buffer.finish();
+    expect(s.sources[0].buffer.appended).toEqual([[1, 2, 3], [4]]);
+    expect(s.sources[0].ended).toBe(false);
+  });
+
+  it("mốc tạm (W) cập nhật mốc chữ của đoạn; xong (E) thì đổi độ dài ước thành độ dài thật, dựng lại đồng hồ, giữ nguyên phần tử audio đang phát", async () => {
+    const { s } = await start();
+    const { clip, live } = liveClipOf();
+    s.requests[0].resolve(clip);
+    await flush();
+    live.setWords([[0, 400], [400, 800]]);
+    expect(s.published.at(-1)!.segments[0].words).toEqual([[0, 400], [400, 800]]);
+    const durations: number[] = [];
+    s.engine.on("duration", () => durations.push(s.engine.duration));
+    live.finish(liveFinal(TEXTS[0]));
+    expect(s.published.at(-1)!.segments[0].words).toEqual(clipOf(TEXTS[0]).words);
+    const segments = s.published.at(-1)!.segments;
+    expect(segments[0].end! - segments[0].start!).toBeCloseTo(1, 6); // 2 chữ x 0,5 s
+    expect(segments[1].start).toBeCloseTo(1, 6); // đoạn sau dịch theo độ dài thật
+    expect(durations).toHaveLength(1);
+    expect(s.audios).toHaveLength(1); // không dựng lại phần tử audio giữa chừng
+    expect(s.audios[0].released).toBe(false);
+    s.sources[0].open();
+    s.sources[0].buffer.finish();
+    expect(s.sources[0].ended).toBe(true);
+    s.audios[0].finish();
+    await flush();
+    expect(s.engine.time).toBeCloseTo(1, 6);
+  });
+
+  it("clip đã về đủ ngay lúc bộ máy nhận (A và E cùng khúc mạng): phát từ file như clip thường, không MediaSource", async () => {
+    const { s, urls } = await start();
+    const { clip, live } = liveClipOf();
+    live.finish(liveFinal(TEXTS[0], "full"));
+    s.requests[0].resolve(clip);
+    await flush();
+    expect(s.sources).toHaveLength(0);
+    expect(urls.made).toHaveLength(1);
+    expect(s.audios[0].plays).toBe(1);
+    expect(s.published.at(-1)!.segments[0].words).toEqual(clipOf(TEXTS[0]).words);
+  });
+
+  it("hỏng giữa chừng (lỗi thoáng qua): bỏ phần tử MediaSource, báo đang chờ, thử lại sau quãng nghỉ rồi phát tiếp từ chỗ đã nghe", async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => void vi.useRealTimers());
+    const urls = blobUrls();
+    const s = setup();
+    s.engine.load(s.trackInfo, 0, true);
+    await vi.advanceTimersByTimeAsync(0);
+    const { clip, live } = liveClipOf();
+    s.requests[0].resolve(clip);
+    await vi.advanceTimersByTimeAsync(0);
+    s.audios[0].currentTime = 1.5;
+    const before = s.events.length;
+    live.fail(new ReadAloudError("Mất kết nối giữa chừng", "service"));
+    expect(s.audios[0].released).toBe(true);
+    expect(urls.revoked).toContain(urls.made[0]);
+    expect(s.events.slice(before)).toContain("waiting");
+    expect(s.engine.error).toBe("");
+    const asked = s.requests.filter((r) => r.text === TEXTS[0]).length;
+    await vi.advanceTimersByTimeAsync(CLIP_RETRY_DELAYS_MS[0] + 10);
+    const again = s.requests.filter((r) => r.text === TEXTS[0]);
+    expect(again).toHaveLength(asked + 1);
+    expect(again.at(-1)!.whole).toBe(true); // có chỗ nghe dở: lần này lấy trọn vẹn
+    again.at(-1)!.resolve(withBytes(TEXTS[0]));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(s.engine.error).toBe("");
+    const resumed = s.audios.at(-1)!;
+    expect(resumed).not.toBe(s.audios[0]);
+    expect(resumed.currentTime).toBeCloseTo(1.5, 6);
+    expect(resumed.plays).toBe(1);
+  });
+
+  it("hỏng giữa chừng vì lỗi không thử lại được (bị từ chối): dừng và báo như clip hỏng", async () => {
+    const { s } = await start();
+    const { clip, live } = liveClipOf();
+    s.requests[0].resolve(clip);
+    await flush();
+    live.fail(new ReadAloudError("Dịch vụ từ chối", "rejected"));
+    await flush();
+    expect(s.engine.error).toBe("Dịch vụ từ chối");
+    expect(s.engine.paused).toBe(true);
+    expect(s.events).toContain("error");
+    expect(s.audios[0].released).toBe(true);
+  });
+
+  it("MediaSource không nhận khúc MP3 khi clip còn đang về: coi như clip hỏng (đi đường thử lại)", async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => void vi.useRealTimers());
+    blobUrls();
+    const s = setup();
+    s.engine.load(s.trackInfo, 0, true);
+    await vi.advanceTimersByTimeAsync(0);
+    const { clip } = liveClipOf();
+    s.requests[0].resolve(clip);
+    await vi.advanceTimersByTimeAsync(0);
+    s.sources[0].buffer.fail = true;
+    s.sources[0].open();
+    expect(s.audios[0].released).toBe(true);
+    await vi.advanceTimersByTimeAsync(CLIP_RETRY_DELAYS_MS[0] + 10);
+    expect(s.requests.filter((r) => r.text === TEXTS[0])).toHaveLength(2);
+  });
+
+  it("MediaSource không nhận khúc khi clip đã về đủ: phát tiếp từ file (blob) ở chỗ đang nghe", async () => {
+    const { s, urls } = await start();
+    const { clip, live } = liveClipOf();
+    s.requests[0].resolve(clip);
+    await flush();
+    s.audios[0].currentTime = 0.7;
+    live.finish(liveFinal(TEXTS[0], "bytes"));
+    s.sources[0].buffer.fail = true;
+    s.sources[0].open();
+    await flush();
+    expect(s.audios[0].released).toBe(true);
+    expect(s.audios).toHaveLength(2);
+    expect(s.audios[1].src).toBe(urls.made[1]);
+    expect(s.audios[1].currentTime).toBeCloseTo(0.7, 6);
+    expect(s.audios[1].plays).toBe(1);
+    expect(s.engine.error).toBe("");
+  });
+
+  it("bỏ clip (nạp chương khác) thu hồi blob: URL của MediaSource và thôi theo dõi clip", async () => {
+    const { s, urls } = await start();
+    const { clip, live } = liveClipOf();
+    s.requests[0].resolve(clip);
+    await flush();
+    s.engine.stop();
+    expect(urls.revoked).toEqual([urls.made[0]]);
+    const published = s.published.length;
+    live.setWords([[0, 1]]);
+    live.finish(liveFinal(TEXTS[0]));
+    expect(s.published).toHaveLength(published);
+  });
+
+  it("khoảng thời gian lấy clip tính tới lúc về đủ, không phải tới byte đầu", async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => void vi.useRealTimers());
+    blobUrls();
+    const s = setup();
+    s.engine.load(s.trackInfo, 0, true);
+    await vi.advanceTimersByTimeAsync(0);
+    const { clip, live } = liveClipOf();
+    await vi.advanceTimersByTimeAsync(300);
+    s.requests[0].resolve(clip);
+    await vi.advanceTimersByTimeAsync(0);
+    const seconds = () => (s.engine as unknown as { fetchSeconds: number[] }).fetchSeconds;
+    expect(seconds()).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(2000);
+    live.finish(liveFinal(TEXTS[0]));
+    expect(seconds()).toHaveLength(1);
+    expect(seconds()[0]).toBeGreaterThan(2);
+  });
+});
+
+describe("chỗ chờ giữa đoạn không phát dần (whole) (uxfix56)", () => {
+  const second = (s: Setup) => s.requests.find((r) => r.text === TEXTS[1])!;
+
+  it("nghe từ đầu đoạn: không đặt gì; bấm chữ giữa đoạn: tailFrom (clip đuôi); theo tỉ lệ (thanh tua): whole", async () => {
+    const plain = setup();
+    plain.engine.load(plain.trackInfo, 0, true);
+    await flush();
+    expect(plain.requests[0].rank).toBe(0);
+    expect(plain.requests[0].whole).toBeUndefined();
+
+    const word = setup();
+    word.engine.load(word.trackInfo, 0, false);
+    await flush();
+    word.engine.seekWord(1, 2);
+    word.engine.play();
+    await flush();
+    expect(second(word).whole).toBeUndefined();
+    expect(second(word).tailFrom).toBe(2);
+
+    const fraction = setup();
+    fraction.engine.load(fraction.trackInfo, 0, false);
+    await flush();
+    fraction.engine.seek(fraction.engine.duration * 0.6);
+    fraction.engine.play();
+    await flush();
+    expect(fraction.requests.filter((r) => !r.cachedOnly).some((r) => r.whole === true)).toBe(true);
+
+    const startOfWord = setup();
+    startOfWord.engine.load(startOfWord.trackInfo, 0, false);
+    await flush();
+    startOfWord.engine.seekWord(1, 0);
+    startOfWord.engine.play();
+    await flush();
+    expect(second(startOfWord).whole).toBeUndefined();
+    expect(second(startOfWord).tailFrom).toBeUndefined();
+  });
+});
+
+describe("clip đuôi: bấm chữ giữa đoạn chưa đọc (uxfix56)", () => {
+  const TEXT = TEXTS[1]; // "Ba bốn năm sáu."
+  /** Clip đuôi như httpSource trả: chỉ đọc từ chữ `from`; mỗi chữ 500 ms. */
+  const tailClip = (from: number): ReadAloudClip => ({ ...clipOf(tailFromWord(TEXT, from)!), fromWord: from });
+  const asked = (s: Setup) => s.requests.filter((r) => r.text === TEXT);
+  const click = async (word: number) => {
+    const s = setup();
+    s.engine.load(s.trackInfo, 0, false);
+    await flush();
+    s.engine.seekWord(1, word);
+    s.engine.play();
+    await flush();
+    return s;
+  };
+  const shifted = (s: Setup, words: [number, number][]) => {
+    const origin = s.published.at(-1)!.segments[1].start! * 1000;
+    return words.map(([a, b]) => [Math.round(origin + a), Math.round(origin + b)]);
+  };
+
+  it("xin clip đuôi từ chữ vừa bấm; clip về thì nghe từ đầu clip, mốc theo chữ của đoạn (chữ trước đó [0,0]) và đoạn dài bằng clip đuôi", async () => {
+    const s = await click(2);
+    expect(asked(s)).toHaveLength(1);
+    expect(asked(s)[0].tailFrom).toBe(2);
+    expect(asked(s)[0].whole).toBeUndefined();
+    asked(s)[0].resolve(tailClip(2));
+    await flush();
+    const audio = s.audios[0];
+    expect(audio.currentTime).toBeCloseTo(0, 6);
+    expect(audio.plays).toBe(1);
+    const segment = s.published.at(-1)!.segments[1];
+    expect(segment.end! - segment.start!).toBeCloseTo(1, 6); // 2 chữ x 0,5 s
+    expect(segment.words).toEqual(shifted(s, [[0, 0], [0, 0], [0, 450], [500, 950]]));
+  });
+
+  it("bấm chữ tiếp theo trong clip đuôi nhảy trong clip; bấm chữ đứng trước nó bỏ clip đuôi và xin clip khác từ chữ ấy", async () => {
+    const s = await click(2);
+    asked(s)[0].resolve(tailClip(2));
+    await flush();
+    s.engine.seekWord(1, 3);
+    expect(s.audios[0].currentTime).toBeCloseTo(0.5, 6);
+    expect(asked(s)).toHaveLength(1); // không xin lại
+    s.engine.seekWord(1, 2); // chữ đầu của clip đuôi vẫn nằm trong nó
+    expect(s.audios[0].released).toBe(false);
+    expect(asked(s)).toHaveLength(1);
+    s.engine.seekWord(1, 1);
+    await flush();
+    expect(s.audios[0].released).toBe(true);
+    expect(asked(s)).toHaveLength(2);
+    expect(asked(s)[1].tailFrom).toBe(1);
+    asked(s)[1].resolve(tailClip(1));
+    await flush();
+    expect(s.audios.at(-1)!.currentTime).toBeCloseTo(0, 6);
+    expect(s.published.at(-1)!.segments[1].words).toHaveLength(4);
+    // chữ đầu đoạn = nghe từ đầu đoạn: clip đủ cả đoạn, không whole, không tailFrom
+    s.engine.seekWord(1, 0);
+    await flush();
+    expect(asked(s)).toHaveLength(3);
+    expect(asked(s)[2].tailFrom).toBeUndefined();
+    expect(asked(s)[2].whole).toBeUndefined();
+    asked(s)[2].resolve();
+    await flush();
+    expect(s.published.at(-1)!.segments[1].words).toEqual(shifted(s, clipOf(TEXT).words as [number, number][]));
+  });
+
+  it("clip đuôi về khi người nghe đã chuyển sang chữ đứng trước nó: không dùng, xin lại từ chữ mới", async () => {
+    const s = await click(3);
+    expect(asked(s)[0].tailFrom).toBe(3);
+    s.engine.seekWord(1, 1); // đang chờ: lượt cũ còn bay
+    await flush();
+    expect(asked(s)).toHaveLength(1);
+    asked(s)[0].resolve(tailClip(3));
+    await flush();
+    expect(s.audios).toHaveLength(0);
+    expect(asked(s)).toHaveLength(2);
+    expect(asked(s)[1].tailFrom).toBe(1);
+  });
+
+  it("từ đoạn trước sang đoạn có clip đuôi (nghe liền): bỏ clip đuôi, xin clip đầy đủ", async () => {
+    const s = await click(2);
+    asked(s)[0].resolve(tailClip(2));
+    await flush();
+    s.engine.seekWord(0, 0);
+    await flush();
+    await s.arrive(TEXTS[0]);
+    audioOf(s, TEXTS[0])!.finish();
+    await flush();
+    expect(asked(s)).toHaveLength(2);
+    expect(asked(s)[1].tailFrom).toBeUndefined();
+    expect(asked(s)[1].whole).toBeUndefined();
+  });
+
+  it("tua thanh thời gian về đầu đoạn có clip đuôi bỏ clip đuôi; tua vào giữa clip thì giữ", async () => {
+    const s = await click(2);
+    asked(s)[0].resolve(tailClip(2));
+    await flush();
+    const start = s.published.at(-1)!.segments[1].start!;
+    s.engine.seek(start + 0.5);
+    expect(s.audios[0].currentTime).toBeCloseTo(0.5, 6);
+    expect(asked(s)).toHaveLength(1);
+    s.engine.seek(start);
+    await flush();
+    expect(asked(s)).toHaveLength(2);
+    expect(asked(s)[1].tailFrom).toBeUndefined();
+  });
+
+  it("clip đuôi đang về đứt giữa chừng: lần lấy lại là clip đuôi từ chữ đang đọc", async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => void vi.useRealTimers());
+    blobUrls();
+    const s = setup();
+    s.engine.load(s.trackInfo, 0, false);
+    await vi.advanceTimersByTimeAsync(0);
+    s.engine.seekWord(1, 1);
+    s.engine.play();
+    await vi.advanceTimersByTimeAsync(0);
+    const live = new LiveClip();
+    live.push(new Uint8Array([1]));
+    live.setWords([[0, 400], [400, 800]]); // chữ 1 và 2 của đoạn
+    asked(s)[0].resolve({ url: "", durationMs: 0, words: [], live, fromWord: 1 });
+    await vi.advanceTimersByTimeAsync(0);
+    s.audios[0].currentTime = 0.5; // đang ở chữ thứ hai của clip đuôi
+    live.fail(new ReadAloudError("Mất kết nối giữa chừng", "service"));
+    await vi.advanceTimersByTimeAsync(CLIP_RETRY_DELAYS_MS[0] + 10);
+    expect(asked(s)).toHaveLength(2);
+    expect(asked(s)[1].tailFrom).toBe(2);
+    expect(asked(s)[1].whole).toBeUndefined();
+  });
+
+  it("clip đủ cả đoạn đang về mà chữ vừa bấm chưa có mốc: xong thì nhảy tới chữ ấy", async () => {
+    blobUrls();
+    const s = setup();
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    const { clip, live } = liveClipOf();
+    s.requests[0].resolve(clip);
+    await flush();
+    s.engine.seekWord(0, 1);
+    expect(s.audios[0].currentTime).toBeCloseTo(0, 6);
+    live.finish(liveFinal(TEXTS[0]));
+    expect(s.audios[0].currentTime).toBeCloseTo(0.5, 6);
+  });
+
+  it("nguồn không có clip đuôi (trả cả đoạn): chữ đổi thành giây bằng mốc của clip như trước", async () => {
+    const s = await click(2);
+    asked(s)[0].resolve(); // clip đủ cả đoạn, không fromWord
+    await flush();
+    expect(s.audios[0].currentTime).toBeCloseTo(1, 6);
+    expect(s.published.at(-1)!.segments[1].words).toHaveLength(4);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countTokens, LAST_WORD_HOLD_MS, splitPieces, usableWords, WORD_LEAD_MS, wordIndexAt, type WordSpan } from "./words";
+import { absoluteWords, countTokens, LAST_WORD_HOLD_MS, splitPieces, tailFromWord, usableWords, WORD_LEAD_MS, wordIndexAt, type WordSpan } from "./words";
 
 const TEXT = "Trời vừa hửng sáng, sương mù.";
 const WORDS: WordSpan[] = [
@@ -75,5 +75,23 @@ describe("chữ đang đọc theo đồng hồ phát", () => {
       previous = index;
     }
     expect(previous).toBe(399);
+  });
+});
+
+describe("clip đuôi: phần câu từ một chữ (uxfix56)", () => {
+  it("lấy từ đầu chữ thứ n tới hết, đếm theo khoảng trắng như countTokens", () => {
+    expect(tailFromWord("  Ba bốn,  năm sáu.", 0)).toBe("Ba bốn,  năm sáu.");
+    expect(tailFromWord("  Ba bốn,  năm sáu.", 2)).toBe("năm sáu.");
+    expect(tailFromWord("Ba bốn năm sáu.", 3)).toBe("sáu.");
+    expect(countTokens(tailFromWord("Ba bốn năm sáu.", 1)!)).toBe(3);
+    expect(tailFromWord("Ba bốn", 2)).toBeNull();
+    expect(tailFromWord("Ba bốn", -1)).toBeNull();
+    expect(tailFromWord("", 0)).toBeNull();
+  });
+
+  it("mốc của cả đoạn từ mốc clip đuôi: chữ trước đó [0,0]; chưa có mốc nào thì rỗng", () => {
+    expect(absoluteWords(2, [[0, 400], [500, 900]])).toEqual([[0, 0], [0, 0], [0, 400], [500, 900]]);
+    expect(absoluteWords(0, [[0, 400]])).toEqual([[0, 400]]);
+    expect(absoluteWords(3, [])).toEqual([]);
   });
 });
