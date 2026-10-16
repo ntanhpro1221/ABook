@@ -204,7 +204,7 @@ object VieneuUnits {
         if (arrowHeading(plain, index, token, match, ::stat)) return "" // "Biến hóa → Honnoshi mở miệng nói.": a short heading then a whole sentence - only a pause
         if (labels.any { stat(it) } || stat(left) || stat(right) || scale(leftAt) || scale(rightAt)) return "thành"
         fun numeric(word: String) = word.any { it.isDigit() }
-        if ((numeric(left) || numeric(right)) && plain.subList(maxOf(0, index - 6), index).any { ':' in it }) return "thành" // "Thể lực : 120 ⇒ 240 ⇒ 480": a stat table changing
+        if ((numeric(left) || numeric(right)) && !(ARROW_TIME.matches(left) && ARROW_TIME.matches(right)) && plain.subList(maxOf(0, index - 6), index).any { ':' in it }) return "thành" // "8:00 -> 10:00" is two times, not a stat table // "Thể lực : 120 ⇒ 240 ⇒ 480": a stat table changing
         if (leftAt >= 2 && plain.subList(leftAt - 2, leftAt) == plain.subList(minOf(rightAt, plain.size), minOf(rightAt + 2, plain.size)) && plain.subList(leftAt - 2, leftAt).all { w -> core(w).let { c -> c.isNotEmpty() && c.all { ch -> ch.isLetter() } } }) return "thành" // "Vương quốc A -> Vương quốc B": the same title on both sides
         fun time(word: String) = ARROW_TIME.matches(word) || word.lowercase() in ARROW_TIME_WORDS
         if (labels.any { it in ARROW_COUNTED && (it != "từ" || numeric(left) || numeric(right) || named(left)) } || time(left) || time(right)) return "đến"

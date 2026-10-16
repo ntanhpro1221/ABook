@@ -7,7 +7,7 @@ package vn.abook.player.readaloud
  * viết hoa cả. Ngoại lệ đọc như từ (chủ sách): VIP "víp", ID "ai-đi", OK "ô kê", TV "ti vi".
  */
 object Abbreviations {
-    private val LETTERS = mapOf(
+    val LETTERS = mapOf(
         'a' to "a", 'b' to "bê", 'c' to "xê", 'd' to "đê", 'e' to "e", 'f' to "ép", 'g' to "giê", 'h' to "hát", 'i' to "i", 'j' to "gi", 'k' to "ca", 'l' to "e-lờ",
         'm' to "em", 'n' to "en", 'o' to "ô", 'p' to "pê", 'q' to "quy", 'r' to "e-rờ", 's' to "ét", 't' to "tê", 'u' to "u", 'v' to "vê", 'w' to "vê-kép", 'x' to "ích",
         'y' to "i-dài", 'z' to "dét",
