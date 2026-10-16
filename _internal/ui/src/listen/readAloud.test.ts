@@ -15,7 +15,9 @@ import {
   estimatedStarts,
   isSpeakable,
   isTransientClipError,
+  MAX_WARM_RANK,
   readAheadCount,
+  warmRankOf,
   type AudioLike,
   type ReadAloudClip,
   type SpeechTrack,
@@ -307,6 +309,42 @@ describe("chương kế: xin trước tiêu đề + đoạn đầu khi chương 
     await s.arrive(NEXT[0]);
     await s.arrive(NEXT[1]);
     expect(nextRequests(s)).toHaveLength(NEXT_CHAPTER_AHEAD); // chỉ một lần cho mỗi lần nạp chương
+  });
+
+  it("mỗi clip xin trước của chương kế mang rank = số đoạn người nghe còn phải nghe trước nó: sau mọi đoạn của chương này, trước việc nền (không rank)", async () => {
+    const { s } = withNext();
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    // đoạn của chính chương đang nghe: rank là khoảng cách tới chỗ nghe (0 = đang chờ)
+    expect(s.requests.map((r) => [r.text, r.rank])).toEqual(TEXTS.map((text, i) => [text, i]));
+    for (const text of TEXTS) await s.arrive(text);
+    await flush();
+    const warm = s.requests.filter((r) => NEXT.includes(r.text));
+    expect(warm.map((r) => r.text)).toEqual(NEXT.slice(0, NEXT_CHAPTER_AHEAD));
+    // người nghe ở đoạn 0 của 4 đoạn: tiêu đề chương kế đứng sau 4 đoạn, đoạn đầu sau 5...
+    expect(warm.map((r) => r.rank)).toEqual(NEXT.slice(0, NEXT_CHAPTER_AHEAD).map((_, k) => TEXTS.length + k));
+    expect(Math.max(...TEXTS.map((_, i) => i))).toBeLessThan(Math.min(...warm.map((r) => r.rank!)));
+    expect(warm.every((r) => r.rank! >= 1 && r.rank! <= MAX_WARM_RANK)).toBe(true);
+  });
+
+  it("giọng chạy trên máy cũng gửi rank cho từng clip xin lần lượt của chương kế", async () => {
+    const { s } = withNext({}, true);
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    for (const text of TEXTS) await s.arrive(text);
+    await flush();
+    expect(s.requests.filter((r) => NEXT.includes(r.text)).map((r) => r.rank)).toEqual([TEXTS.length]);
+    await s.arrive(NEXT[0]);
+    expect(s.requests.filter((r) => NEXT.includes(r.text)).map((r) => r.rank)).toEqual([TEXTS.length, TEXTS.length + 1]);
+  });
+
+  it("rank xin trước chương kế: tối thiểu 1, tối đa MAX_WARM_RANK (98, thấp hơn rank việc nền 99 của máy chủ)", () => {
+    expect(MAX_WARM_RANK).toBe(98);
+    expect(warmRankOf(4, 0)).toBe(4);
+    expect(warmRankOf(1, 0)).toBe(1);
+    expect(warmRankOf(0, 0)).toBe(1);
+    expect(warmRankOf(90, 20)).toBe(98);
+    expect(warmRankOf(10_000, 3)).toBe(98);
   });
 
   it("giọng chậm: xin trước chương kế đủ số giây âm thanh như đọc trước giữa chương (không chỉ 2 clip), tối đa 4 lượt cùng lúc; giọng nhanh vẫn 2", async () => {

@@ -233,10 +233,14 @@ class ConnectionSlots(val size: Int) {
 object EdgePieces {
     /** Tối đa chừng này mảnh một đoạn (và chừng này kết nối cùng lúc cho một clip). */
     const val PIECE_PARALLEL = 3
+    /** Riêng đoạn người nghe đang đứng chờ (rank 0): cắt tới chừng này mảnh. Soát a54 (4 đoạn, mạng thật): 3 -> 6 mảnh rút thời gian chờ trung vị 6,96 -> 5,36 giây, chỗ nối vẫn 855-889 ms. */
+    const val TARGET_PIECES = 6
     /** Trần kết nối Edge đang mở của cả tiến trình: đọc trước nhiều đoạn x mảnh không mở hàng chục ổ cắm cùng lúc. */
     const val EDGE_CONNECTIONS = 8
     /** [ConnectionSlots] rank của việc không có người nghe đứng chờ ngay (Làm trước, lượt gọi không nói rõ): đứng sau mọi đoạn người nghe sắp nghe. */
     const val RANK_BACKGROUND = 99
+    /** Rank lớn nhất còn xếp trước việc nền (máy chủ máy tính nhận 0-98). */
+    const val MAX_RANK = RANK_BACKGROUND - 1
     /** Đoạn ngắn hơn chừng này ký tự giữ một yêu cầu: câu đơn 90-100 ký tự đo 5,8-13,9 giây, cắt đôi không nhanh hơn mà tốn thêm một lần nối (~0,45 giây). */
     const val WHOLE_CHARS = 100
     /** Mảnh không nhỏ hơn chừng này (gộp câu ngắn): mảnh quá ngắn thêm chỗ nối mà không rút ngắn thời gian chờ. */
@@ -247,16 +251,19 @@ object EdgePieces {
     private const val CLOSERS = "\"'”’)]»"
     private const val CLAUSE_MARKS = ";:,"
 
-    /** Các mảnh gửi Edge cho `text`, mảnh nào cũng vừa [EdgeProtocol.MAX_TEXT_BYTES]; ghép theo thứ tự cho đúng chữ gốc. */
-    fun split(text: String): List<String> =
-        speechPieces(text).flatMap { piece -> TextChunks.split(piece, EdgeProtocol.MAX_TEXT_BYTES, EdgeProtocol::escapedBytes).map { Py.strip(it.second) } }.filter { it.isNotEmpty() }
+    /** Số mảnh tối đa của một đoạn theo rank: đoạn người nghe đang đứng chờ (0) [TARGET_PIECES], mọi đoạn khác [PIECE_PARALLEL] (máy tính: `piece_limit`). */
+    fun pieceLimit(rank: Int): Int = if (rank == 0) TARGET_PIECES else PIECE_PARALLEL
 
-    /** Chưa tính giới hạn byte: đoạn ngắn (< [WHOLE_CHARS]) một mảnh; còn lại cắt ở hết câu, câu dài cắt tiếp ở vế, gộp thành tối đa [PIECE_PARALLEL] mảnh cân bằng. */
-    fun speechPieces(text: String): List<String> {
+    /** Các mảnh gửi Edge cho `text`, mảnh nào cũng vừa [EdgeProtocol.MAX_TEXT_BYTES]; ghép theo thứ tự cho đúng chữ gốc. */
+    fun split(text: String, rank: Int = RANK_BACKGROUND): List<String> =
+        speechPieces(text, rank).flatMap { piece -> TextChunks.split(piece, EdgeProtocol.MAX_TEXT_BYTES, EdgeProtocol::escapedBytes).map { Py.strip(it.second) } }.filter { it.isNotEmpty() }
+
+    /** Chưa tính giới hạn byte: đoạn ngắn (< [WHOLE_CHARS]) một mảnh; còn lại cắt ở hết câu, câu dài cắt tiếp ở vế, gộp thành tối đa [pieceLimit] mảnh cân bằng. */
+    fun speechPieces(text: String, rank: Int = RANK_BACKGROUND): List<String> {
         val body = Py.strip(text)
         if (body.length >= WHOLE_CHARS) {
             val units = splitSentences(body).flatMap { if (it.length > LONG_SENTENCE_CHARS) splitClauses(it) else listOf(it) }
-            if (units.size > 1) return groupUnits(units)
+            if (units.size > 1) return groupUnits(units, pieceLimit(rank))
         }
         return if (body.isEmpty()) emptyList() else listOf(body)
     }
@@ -311,12 +318,12 @@ object EdgePieces {
     }
 
     /**
-     * Gộp các câu / vế liền nhau thành tối đa [PIECE_PARALLEL] mảnh cân bằng độ dài (mỗi mảnh >= [MIN_PIECE_CHARS]). Nhiều mảnh hơn số kết nối cùng lúc chỉ xếp hàng thêm một
+     * Gộp các câu / vế liền nhau thành tối đa `limit` mảnh cân bằng độ dài (mỗi mảnh >= [MIN_PIECE_CHARS]). Nhiều mảnh hơn số kết nối cùng lúc chỉ xếp hàng thêm một
      * vòng chờ ~5-10 giây của Edge, nên 8 câu 60 ký tự thành 3 mảnh chứ không phải 8.
      */
-    private fun groupUnits(units: List<String>): List<String> {
+    private fun groupUnits(units: List<String>, limit: Int): List<String> {
         val total = units.sumOf { it.length }
-        val count = minOf(PIECE_PARALLEL, units.size, maxOf(1, total / MIN_PIECE_CHARS))
+        val count = minOf(limit, units.size, maxOf(1, total / MIN_PIECE_CHARS))
         val prefix = IntArray(units.size + 1)
         for (k in units.indices) prefix[k + 1] = prefix[k] + units[k].length
         val cuts = arrayListOf(0)
@@ -447,7 +454,7 @@ class EdgeTts(
     }
 
     override fun synthesize(text: String, out: File): Clip {
-        val pieces = EdgePieces.split(text)
+        val pieces = EdgePieces.split(text, ClipBudget.rank())
         val received = AtomicLong(0)
         val run = ClipRun(System.nanoTime() + totalMs * 1_000_000)
         // Người gọi huỷ lượt đọc (tua / đổi chương / dừng): đóng ổ cắm của mọi mảnh đang chạy ngay thay vì để chúng giữ chỗ kết nối tới hết lượt.
@@ -494,13 +501,13 @@ class EdgeTts(
     }
 
     /**
-     * Các mảnh của một đoạn đọc cùng lúc (tối đa [EdgePieces.PIECE_PARALLEL]), trả theo thứ tự đọc. Chờ theo thứ tự HOÀN THÀNH: mảnh nào hỏng trước thì cả đoạn hỏng ngay với đúng lỗi ấy
+     * Các mảnh của một đoạn đọc cùng lúc (tối đa [EdgePieces.PIECE_PARALLEL], đoạn rank 0 tối đa [EdgePieces.TARGET_PIECES]), trả theo thứ tự đọc. Chờ theo thứ tự HOÀN THÀNH: mảnh nào hỏng trước thì cả đoạn hỏng ngay với đúng lỗi ấy
      * (không đợi mảnh đứng trước), và quá hạn chung của clip là [VoiceException] "timeout". Mảnh còn lại bị huỷ, ổ cắm của chúng đóng ([synthesize]).
      */
     private fun speakInParallel(pieces: List<String>, received: AtomicLong, run: ClipRun): List<Pair<ByteArray, List<Boundary>>> {
         val budget = ClipBudget.current() // luồng phụ cùng quỹ thời gian thử lại của đoạn
         val rank = ClipBudget.rank() // và cùng rank xếp hàng chờ chỗ kết nối
-        val pool = Executors.newFixedThreadPool(minOf(EdgePieces.PIECE_PARALLEL, pieces.size)) { Thread(it, "edge-piece").apply { isDaemon = true } }
+        val pool = Executors.newFixedThreadPool(minOf(EdgePieces.pieceLimit(rank), pieces.size)) { Thread(it, "edge-piece").apply { isDaemon = true } }
         val completion = ExecutorCompletionService<Pair<Int, Pair<ByteArray, List<Boundary>>>>(pool)
         val futures = pieces.mapIndexed { index, piece -> completion.submit {
             val rankBefore = ClipBudget.enterRank(rank)
