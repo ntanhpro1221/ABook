@@ -400,6 +400,65 @@ class EdgePiecesTest {
     }
 
     @Test
+    fun theProductionSlotsLetOnlyRankZeroPastTheEightConnectionCap() {
+        assertEquals(EdgePieces.EDGE_CONNECTIONS, EdgeTts.productionSlots().size)
+        assertEquals(EdgePieces.TARGET_PIECES, EdgeTts.productionSlots().extra)
+    }
+
+    @Test
+    fun rankZeroTakesASlotAtOnceWhenEightAreHeldByRankThreeAndTheCeilingHolds() {
+        val slots = ConnectionSlots(EdgePieces.EDGE_CONNECTIONS, EdgePieces.TARGET_PIECES)
+        repeat(EdgePieces.EDGE_CONNECTIONS) { assertTrue(slots.tryAcquire(100, 3)) }
+        assertFalse(slots.tryAcquire(50, 1)) // rank >= 1 không được vượt trần
+        assertFalse(slots.tryAcquire(50))
+        repeat(EdgePieces.TARGET_PIECES) {
+            val began = System.nanoTime()
+            assertTrue(slots.tryAcquire(5_000, 0))
+            assertTrue("rank 0 không được đợi", (System.nanoTime() - began) < 200_000_000L)
+        }
+        assertEquals(-EdgePieces.TARGET_PIECES, slots.availablePermits())
+        val began = System.nanoTime()
+        assertFalse(slots.tryAcquire(100, 0)) // trần cứng size + TARGET_PIECES
+        assertTrue((System.nanoTime() - began) >= 90_000_000L)
+        assertEquals(0, slots.waiting())
+    }
+
+    @Test
+    fun overCapReleasesNeverLetFreeExceedSizeAndTheWaitersKeepTheirOrder() {
+        val slots = ConnectionSlots(2, 2)
+        assertTrue(slots.tryAcquire(100, 3))
+        assertTrue(slots.tryAcquire(100, 3))
+        assertTrue(slots.tryAcquire(100, 0))
+        assertTrue(slots.tryAcquire(100, 0)) // hai chỗ vượt trần
+        val granted = java.util.Collections.synchronizedList(ArrayList<String>())
+        val threads = ArrayList<Thread>()
+        for ((name, rank) in listOf("bg" to EdgePieces.RANK_BACKGROUND, "ahead2" to 2, "ahead1" to 1)) {
+            val before = slots.waiting()
+            threads += Thread { if (slots.tryAcquire(5_000, rank)) granted.add(name) }.also { it.start() }
+            waitUntil("$name đã xếp hàng") { slots.waiting() == before + 1 }
+        }
+        slots.release() // đang giữ 3 / size 2: chưa ai trong hàng được chỗ
+        slots.release() // đang giữ 2: vẫn chưa (free == 0)
+        Thread.sleep(100)
+        assertTrue(granted.isEmpty())
+        assertEquals(0, slots.availablePermits())
+        repeat(3) { n ->
+            slots.release()
+            waitUntil("chỗ thứ $n đã trao") { granted.size == n + 1 }
+            assertTrue(slots.availablePermits() <= slots.size)
+        }
+        threads.forEach { it.join(2_000) }
+        assertEquals(listOf("ahead1", "ahead2", "bg"), granted.toList())
+        while (slots.availablePermits() < slots.size) slots.release()
+        assertEquals(slots.size, slots.availablePermits())
+        try {
+            slots.release()
+            fail("trả quá số đã giữ phải lỗi")
+        } catch (expected: IllegalStateException) {
+        }
+    }
+
+    @Test
     fun theClipTheListenerWaitsForAskedAfterReadAheadClipsWaitGetsTheNextFreeSlot() {
         // Một chỗ duy nhất đang bận; hai clip đọc trước (rank 2, 1) xếp hàng trước, clip người nghe chờ (rank 0) xin SAU CÙNG - chỗ nhả ra là của nó.
         val slots = ConnectionSlots(1)

@@ -34,6 +34,19 @@ export interface ReadAloudClip {
   words: WordSpan[];
   /** Giọng đã đọc clip này (có thể khác giọng đã chọn nếu rơi về giọng máy) - cho độ to. */
   gainDb?: number;
+  /** Chính file audio, đã tải xong ([fetchClipBytes]): phần tử audio phát từ blob: URL của nó, không tự đi tải `url` (trình duyệt xếp yêu cầu <audio> sau các lượt POST clip còn treo - soát a55: 4-5 giây trễ). */
+  bytes?: Blob;
+}
+
+/** Tải file audio của clip bằng fetch (không đi qua phần tử <audio>); lỗi nào cũng là clip hỏng (`service`, đi đường thử lại như lúc máy chủ trả lỗi). */
+export async function fetchClipBytes(url: string, get: (url: string) => Promise<Response> = (target) => fetch(target)): Promise<Blob> {
+  try {
+    const response = await get(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.blob();
+  } catch {
+    throw new ReadAloudError("Không tải được đoạn giọng đọc.", "service");
+  }
 }
 
 export interface ClipOptions {
@@ -252,6 +265,8 @@ interface Slot {
   /** Mốc từng chữ tương đối đầu đoạn (ms): từ clip, hay từ kịch bản của lần nghe trước. */
   words: WordSpan[] | null;
   audio: AudioLike | null;
+  /** blob: URL đang đặt cho `audio` (từ `clip.bytes`): thu hồi khi thả audio. */
+  objectUrl: string | null;
   detach: (() => void) | null;
   /** Đã đặt currentTime / phát: `time` đọc từ phần tử audio thay vì `offset`. */
   started: boolean;
@@ -534,6 +549,7 @@ export class ReadAloudEngine implements AudioEngine {
       clip: null,
       words,
       audio: null,
+      objectUrl: null,
       detach: null,
       started: false,
       fetching: false,
@@ -1078,7 +1094,9 @@ export class ReadAloudEngine implements AudioEngine {
     const slot = this.slots[index];
     if (!slot?.clip) return null;
     if (slot.audio) return slot.audio;
-    const audio = this.createAudio(slot.clip.url);
+    // Có sẵn file (đã tải bằng fetch) thì phát từ blob: URL: phần tử <audio> không còn tự đi tải mạng.
+    slot.objectUrl = slot.clip.bytes && typeof URL.createObjectURL === "function" ? URL.createObjectURL(slot.clip.bytes) : null;
+    const audio = this.createAudio(slot.objectUrl ?? slot.clip.url);
     audio.preload = "auto";
     audio.muted = this.muted;
     audio.playbackRate = this.rate;
@@ -1150,6 +1168,8 @@ export class ReadAloudEngine implements AudioEngine {
     this.slots.forEach((slot, i) => {
       if (i >= low && i <= high) return;
       this.releaseSlot(slot);
+      // Ngoài cửa sổ không giữ cả file trong bộ nhớ (cả chương có thể hàng trăm clip): quay lại thì phát từ `url` như thường.
+      if (slot.clip?.bytes) slot.clip = { ...slot.clip, bytes: undefined };
     });
   }
 
@@ -1160,6 +1180,8 @@ export class ReadAloudEngine implements AudioEngine {
     slot.audio.removeAttribute("src");
     slot.audio.load();
     slot.audio = null;
+    if (slot.objectUrl) URL.revokeObjectURL(slot.objectUrl);
+    slot.objectUrl = null;
     slot.detach = null;
     slot.started = false;
   }

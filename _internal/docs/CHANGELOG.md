@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Mở một chương bằng giọng trực tuyến trên máy tính: tên chương không còn thỉnh thoảng bị trễ thêm vài giây dù đã đọc xong. Bạn nghe tiếng ngay khi đoạn đọc xong, không chờ các đoạn đọc trước phía sau.
+- Nhảy tới câu xa bằng giọng trực tuyến: đoạn bạn đang chờ nghe không còn bị các đoạn đọc trước đến sau chiếm hết đường truyền, nên không còn có lần phải chờ lâu hơn hẳn các lần khác (máy tính và điện thoại).
+
 ## [0.4.82] - 2026-10-17
 
 ### Nghe ngay
