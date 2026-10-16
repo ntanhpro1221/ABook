@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.74] - 2026-10-16
+
 ### Nghe ngay
 
 - Nhạc nền theo cảnh không còn bỏ trống cả một cảnh vì bài quá nặng: bài nhạc nặng hơn 40 MB không bao giờ được chọn nữa (máy tính và điện thoại), và cuốn đã nghe từ trước được chọn lại bài cho đúng.
