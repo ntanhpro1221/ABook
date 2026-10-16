@@ -43,6 +43,7 @@ import importlib.util
 import io
 import json
 import os
+import queue
 import subprocess
 import sys
 import threading
@@ -435,6 +436,146 @@ class ChapterStudent:
             self.embedder = None
 
 
+class StudioChapterStudent:
+    """`ChapterStudent` cho tiến trình KHÔNG có torch (server của bản cài): cùng bề mặt server dùng (`chapter`, `stopped`, `save`, `close`) nhưng
+    việc nhúng chạy ở MỘT tiến trình con bằng Python của Studio (`serve`: `python -m abook.webui.music_scene_student --serve ...`), sinh ở chương đầu
+    tiên và giữ model giữa các chương. Giao thức: mỗi dòng stdin một chương `{"script", "scenes"}`, mỗi dòng stdout một câu trả lời `{"items": [...] | null}`
+    (thêm `"error"` khi chương lỗi); tiến trình con tự ghi bộ nhớ đệm nhúng sau mỗi chương nên `save` ở đây không làm gì. Mọi sự cố (chết, dòng rác,
+    báo lỗi) thành None: chương ấy dựng đường N0 như nhánh `except` của `_scene_job`. Chết giữa chừng thì chương kế sinh lại; tiến trình con báo
+    lỗi ngay khi khởi động (thiếu torch / gói: `{"error"}` không kèm `items`) thì `broken` và không sinh lại nữa."""
+
+    POLL_SECONDS = 0.2
+    KILL_AFTER_SECONDS = 5.0
+    CLOSE_WAIT_SECONDS = 10.0
+
+    def __init__(self, python: Path | str, code_root: Path | str, environment: dict[str, str], directory: Path, cache_path: Path | None, *,
+                 threads: int = CPU_THREADS) -> None:
+        self.python, self.code_root, self.environment, self.directory, self.cache_path, self.threads = python, code_root, environment, directory, cache_path, threads
+        self.stopped = False
+        self.broken = False
+        self._process: subprocess.Popen[bytes] | None = None
+        self._lines: queue.Queue[bytes | None] = queue.Queue()
+
+    def _command(self) -> list[str]:
+        command = [str(self.python), "-m", "abook.webui.music_scene_student", "--serve", "--package", str(self.directory), "--threads", str(self.threads)]
+        return command + (["--cache", str(self.cache_path)] if self.cache_path is not None else [])
+
+    def _spawn(self) -> None:
+        process = subprocess.Popen(
+            self._command(), cwd=str(self.code_root), env={**os.environ, **self.environment, "PYTHONIOENCODING": "utf-8"}, stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0)
+        lines: queue.Queue[bytes | None] = queue.Queue()  # hàng riêng mỗi tiến trình: dòng muộn của tiến trình đã giết không lẫn sang tiến trình sau
+
+        def read() -> None:
+            try:
+                for line in process.stdout or ():
+                    lines.put(line)
+            except (OSError, ValueError):
+                pass
+            lines.put(None)
+
+        threading.Thread(target=read, name="music-scene-student-reader", daemon=True).start()
+        self._process, self._lines = process, lines
+
+    def _kill(self) -> None:
+        process, self._process = self._process, None
+        if process is None:
+            return
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(self.KILL_AFTER_SECONDS)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+        try:
+            if process.stdin is not None:
+                process.stdin.close()
+        except OSError:
+            pass
+
+    def chapter(self, script: dict[str, Any], scenes: list[dict[str, Any]], *, stop_requested: Callable[[], bool] = lambda: False,
+                pause_requested: Callable[[], bool] = lambda: False) -> list[dict[str, Any]] | None:
+        """Như `ChapterStudent.chapter`: các mục của từng đoạn, hay None (chương không dùng được, sự cố, hay bị dừng - `stopped` true)."""
+        if self.broken or not scenes:
+            return None
+        if stop_requested():
+            self.stopped = True
+            return None
+        try:
+            if self._process is None or self._process.poll() is not None:
+                self._kill()
+                self._spawn()
+            process = self._process
+            payload = json.dumps({"script": script, "scenes": scenes}).encode("ascii") + b"\n"
+
+            def send() -> None:  # luồng riêng: yêu cầu lớn mà tiến trình con còn đang nạp torch thì pipe đầy, không được treo việc dừng
+                try:
+                    process.stdin.write(payload)  # type: ignore[union-attr]
+                    process.stdin.flush()  # type: ignore[union-attr]
+                except (OSError, ValueError):
+                    pass  # tiến trình con chết: hàng đọc báo EOF
+
+            threading.Thread(target=send, name="music-scene-student-writer", daemon=True).start()
+            while True:
+                while pause_requested() and not stop_requested():
+                    time.sleep(1.0)
+                if stop_requested():
+                    self.stopped = True
+                    self._kill()
+                    return None
+                try:
+                    line = self._lines.get(timeout=self.POLL_SECONDS)
+                except queue.Empty:
+                    continue
+                if line is None:  # tiến trình con chết (hay đóng stdout)
+                    self._kill()
+                    return None
+                reply = _parse_reply(line)
+                if reply is None:
+                    self._kill()  # dòng rác: giao thức lệch, không tin tiến trình này nữa
+                    return None
+                if "items" not in reply:  # lỗi lúc khởi động
+                    self.broken = True
+                    self._kill()
+                    return None
+                items = reply["items"]
+                if reply.get("error") or not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
+                    return None
+                return items
+        except Exception:  # noqa: BLE001 - không sinh được tiến trình / pipe hỏng: chương này dựng không có học sinh
+            self._kill()
+            return None
+
+    def save(self, *, prune: bool = False) -> None:
+        """Tiến trình con ghi bộ nhớ đệm sau mỗi chương - ở đây không còn gì để ghi."""
+
+    def close(self) -> None:
+        """Đóng stdin để tiến trình con ghi đệm rồi thoát (chờ tối đa `CLOSE_WAIT_SECONDS`), quá hạn thì giết."""
+        process, self._process = self._process, None
+        if process is None:
+            return
+        try:
+            if process.stdin is not None:
+                process.stdin.close()
+        except OSError:
+            pass
+        try:
+            process.wait(self.CLOSE_WAIT_SECONDS)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+
+
+def _parse_reply(line: bytes) -> dict[str, Any] | None:
+    """Một dòng stdout của `serve` thành dict; không phải JSON object -> None."""
+    try:
+        value = json.loads(line.decode("utf-8"))
+    except ValueError:
+        return None
+    return value if isinstance(value, dict) else None
+
+
 def compute(project_root: Path, *, stop_requested: Callable[[], bool] = lambda: False, log: Callable[[str], None] = print,
             pause_requested: Callable[[], bool] = lambda: False, directory: Path | None = None) -> int:
     """Nhúng chữ từng đoạn (ranh giới của app) chưa có trong bộ nhớ đệm, tính độ lệch cả chương và ghi `music_scene_student.json` sau
@@ -501,14 +642,65 @@ def run_in_studio(project_root: Path, python: Path | str, code_root: Path | str,
         return False
 
 
+def serve(package: Path, cache: Path | None, threads: int = CPU_THREADS, *, stdin: Any = None, stdout: Any = None) -> int:
+    """Chế độ phục vụ của `StudioChapterStudent`: mỗi dòng stdin `{"script", "scenes"}` -> `ChapterStudent.chapter` -> MỘT dòng stdout `{"items": [...]}`
+    (hay `{"items": null}`; chương lỗi thêm `"error"`) rồi ghi bộ nhớ đệm, nên bị giết thì mất nhiều nhất một chương. EOF ở stdin: ghi đệm, đóng, thoát 0.
+    Thiếu gói / torch: dòng đầu `{"error": ...}` (không có `items`) và thoát 2. stdout CHỈ mang dòng giao thức (mọi `print` lạc đi sang stderr)."""
+    out = stdout or sys.stdout
+    source = stdin or sys.stdin
+    for stream in (out, source):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout = sys.stderr  # thư viện in gì cũng không lẫn vào giao thức
+
+    def reply(value: dict[str, Any]) -> None:
+        out.write(json.dumps(value) + "\n")
+        out.flush()
+
+    configure(package)
+    try:
+        if not available():
+            reply({"error": "thiếu torch / transformers hoặc thiếu file gói"})
+            return 2
+        student = ChapterStudent(package, cache, log=lambda line: print(line, file=sys.stderr), threads=threads)
+    except Exception as error:  # noqa: BLE001
+        reply({"error": f"{type(error).__name__}: {error}"})
+        return 2
+    try:
+        for line in source:
+            if not line.strip():
+                continue
+            try:
+                request = json.loads(line)
+                items = student.chapter(request["script"], request["scenes"])
+                student.save()
+                reply({"items": items})
+            except Exception as error:  # noqa: BLE001 - một chương lỗi không dừng việc phục vụ
+                reply({"items": None, "error": f"{type(error).__name__}: {error}"})
+        return 0
+    finally:
+        student.save()
+        student.close()
+
+
 def main(argv: list[str] | None = None) -> int:
-    """`python -m abook.webui.music_scene_student <thư mục dự án> [--package <thư mục gói>]`: tính cả cuốn, in log ra stdout. 0 = xong."""
+    """`python -m abook.webui.music_scene_student <thư mục dự án> [--package <thư mục gói>]`: tính cả cuốn, in log ra stdout. 0 = xong.
+    `--serve --package <gói> [--cache <npz>] [--threads n]`: phục vụ từng chương qua stdin / stdout (`serve`)."""
     import argparse
 
     parser = argparse.ArgumentParser(prog="music_scene_student")
-    parser.add_argument("project")
+    parser.add_argument("project", nargs="?")
     parser.add_argument("--package")
+    parser.add_argument("--serve", action="store_true", help="phục vụ từng chương qua stdin / stdout (StudioChapterStudent)")
+    parser.add_argument("--cache")
+    parser.add_argument("--threads", type=int, default=CPU_THREADS)
     arguments = parser.parse_args(argv)
+    if arguments.serve:
+        if not arguments.package:
+            parser.error("--serve cần --package")
+        return serve(Path(arguments.package), Path(arguments.cache) if arguments.cache else None, arguments.threads)
+    if not arguments.project:
+        parser.error("thiếu thư mục dự án")
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if arguments.package:
