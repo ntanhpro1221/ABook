@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.84] - 2026-10-17
+
 ### Nghe ngay
 
 - Mở một chương bằng giọng trực tuyến: tên chương ngắn không còn làm đoạn đầu phải chờ thêm vài giây sau khi tên chương đọc xong. Chỉ những đoạn dài mới tính là "phải nghe trước", nên đoạn dài đầu tiên cũng được ưu tiên và chia nhỏ như đoạn bạn đang chờ (máy tính và điện thoại).
