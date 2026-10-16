@@ -8,8 +8,9 @@ import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
 import { MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit } from "./musicBed";
+import { SceneCues, isSceneCues } from "./sceneCues";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
-import { canPlay, newerElsewhere, resumePoint, startingRate, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
+import { canPlay, newerElsewhere, resumePoint, startingRate, type Bookmark, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
 import { NightRecorder } from "./night";
 import { leftWithPeer, watchUntilBack } from "./peerBack";
 import {
@@ -202,6 +203,9 @@ const NOTICE_MS = 12_000;
 /** Nhảy xa hơn chừng này (tua, chương, dấu trang) thì mời "quay lại chỗ vừa nghe". */
 const JUMP_SECONDS = 30;
 const HISTORY = 5;
+/** Nhạc theo cảnh dựng nền (music_nnscene.py): hỏi lại mốc của chương chưa dựng xong mỗi chừng này, tối đa chừng ấy lần (~2 phút). */
+const SCENE_POLL_MS = 1500;
+const SCENE_POLLS = 80;
 /** Sự kiện mở ô ghi chú cho một dấu trang (từ toast "Thêm dấu trang"). */
 export const EDIT_BOOKMARK_EVENT = "abook:edit-bookmark";
 
@@ -453,6 +457,17 @@ export function PlayerProvider({
   // nguồn trả không mốc nào - trình phát chạy như cũ.
   const bed = useMemo(() => (native || !source.musicCues ? null : new MusicBed()), [native, source]);
   const bedChapter = track ? `${track.bookId}:${track.chapterId}` : "";
+  // Nhạc nền THEO CẢNH của sách chỉ có chữ (sceneCues.ts): mốc của máy chủ đặt lại theo đồng hồ đọc, bài đổi khi đoạn đầu cảnh bắt đầu phát.
+  const scene = useMemo(
+    () =>
+      bed
+        ? new SceneCues(bed, () => {
+            const current = refs.current.track;
+            return current ? client.getQueryData<Script>(["listen", "script", current.bookId, current.chapterId, "text"]) : undefined;
+          })
+        : null,
+    [bed, client],
+  );
   // Dòng ghi công (CC BY): bài đang nghe được -> thông tin tác giả của chương này, theo `link` của mốc.
   const bedCredits = useRef<Record<string, MusicCredit>>({});
   // Studio vừa sửa nhạc của cuốn đang nghe (cùng phiên): nạp lại mốc của chương này, bài đổi ngay không cần tải lại trang.
@@ -528,14 +543,22 @@ export function PlayerProvider({
     // đầu hay chơi tiếp bài cuối của chương cũ trong lúc chờ (MIX_QA 3.3). Danh sách phát chạy theo đồng hồ của cuốn: không đụng.
     if (cuesChapter.current !== bedChapter) {
       cuesChapter.current = bedChapter;
+      scene?.reset();
       if (!playlistBed) bed.setCues([], undefined, 0);
     }
-    const chapterCues = () =>
+    // Nhạc theo cảnh dựng nền: chương chưa xong thì máy chủ trả `pending` (giọng không chờ nhạc) - hỏi lại, xong thì nhạc vào ở đầu câu kế.
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const chapterCues = (attempt = 0): Promise<void> =>
       source.musicCues!(book, track.chapterId)
         .then((result) => {
           if (cancelled) return;
           bedCredits.current = result.credits ?? {};
-          bed.setCues(result.cues, result.levelDb);
+          if (result.pending && attempt < SCENE_POLLS) {
+            retry = setTimeout(() => void chapterCues(attempt + 1), SCENE_POLL_MS);
+            return;
+          }
+          if (scene && isSceneCues(result.cues)) scene.arrive(result.cues, result.estSeconds ?? 0, result.levelDb, engine.time);
+          else bed.setCues(result.cues, result.levelDb);
           setMusicBroken(bed.failing);
         })
         .catch(() => {
@@ -569,6 +592,7 @@ export function PlayerProvider({
     }
     return () => {
       cancelled = true;
+      clearTimeout(retry);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bed, source, bedChapter, bedVersion]);
@@ -590,15 +614,18 @@ export function PlayerProvider({
     let last = engine.time;
     const sync = () => {
       const now = engine.time;
-      bed.sync(now, !engine.paused, Math.abs(now - last) > 3);
+      const seeked = Math.abs(now - last) > 3;
+      if (seeked) scene?.seeked(now);
+      bed.sync(now, !engine.paused, seeked);
       last = now;
     };
-    const offs = [engine.on("time", sync), engine.on("play", sync), engine.on("pause", sync), engine.on("ended", sync)];
+    // Clip về (giây thật của đoạn thay giây ước): mốc nhạc theo cảnh đặt lại cho khớp.
+    const offs = [engine.on("time", sync), engine.on("play", sync), engine.on("pause", sync), engine.on("ended", sync), engine.on("duration", () => scene?.refresh(engine.time))];
     return () => {
       offs.forEach((off) => off());
       bed.stop();
     };
-  }, [bed, engine, playlistBed]);
+  }, [bed, engine, playlistBed, scene]);
   useEffect(() => bed?.setVolume(volume), [bed, volume]);
 
   const applyRate = useCallback((value: number) => {

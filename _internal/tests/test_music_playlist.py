@@ -168,25 +168,19 @@ def test_a_text_book_plays_the_chosen_playlist_in_order_under_the_voice(tmp_path
         server.stop()
 
 
-def test_a_text_book_with_no_choice_gets_the_machines_pick_until_the_listener_chooses_or_turns_it_off(tmp_path: Path) -> None:
+def test_a_text_book_with_no_choice_plays_the_scene_music_until_the_listener_chooses_or_turns_it_off(tmp_path: Path) -> None:
     app, book, server = _text_book_server(tmp_path)
     try:
-        # chưa chọn gì: máy chọn (luật của mục lục thử có mặc định "calm"), hàng bài và màn nhạc nói rõ là máy chọn
+        # chưa chọn gì: máy dựng nhạc theo cảnh (mặc định), không có hàng bài - mốc nằm ở music_cues; màn nhạc nói rõ là máy chọn
         status, queue = _call(server, "GET", f"/api/books/{book}/music/playlist")
-        assert status == 200 and queue["playlist"] == "calm" and queue["playlistAuto"] is True
-        assert [track["link"] for track in queue["tracks"]] == CALM
+        assert status == 200 and queue["playlist"] == "scene" and queue["playlistAuto"] is True and queue["tracks"] == []
         _status, view = _call(server, "GET", f"/api/books/{book}/music")
-        assert view["playlist"] == "calm" and view["playlistAuto"] is True
-        # kết quả đệm theo (mã sách, nguồn luật, version): lần sau không chọn lại
-        calls: list[str] = []
-        real = music_playlist.pick
-        music_playlist.pick = lambda *args: calls.append("pick") or real(*args)  # type: ignore[assignment]
-        try:
-            _call(server, "GET", f"/api/books/{book}/music/playlist")
-            _call(server, "GET", f"/api/books/{book}/music")
-        finally:
-            music_playlist.pick = real  # type: ignore[assignment]
-        assert calls == []
+        assert view["playlist"] == "scene" and view["playlistAuto"] is True
+        # người nghe chọn "Theo cảnh" rõ ràng: lưu ở lớp sửa, không còn là "máy chọn"
+        status, view = _call(server, "PUT", f"/api/books/{book}/music", {"playlist": "scene"})
+        assert status == 200 and view["playlist"] == "scene" and "playlistAuto" not in view
+        assert book_edits.load(app._listenable(book))["music"] == {"playlist": "scene"}
+        assert "playlistAuto" not in _call(server, "GET", f"/api/books/{book}/music/playlist")[1]
         # "Tắt" (off) là một lựa chọn, không phải mã danh sách: không nhạc, không máy chọn
         status, view = _call(server, "PUT", f"/api/books/{book}/music", {"playlist": "off"})
         assert status == 200 and view["playlist"] == "off" and "playlistAuto" not in view
@@ -195,43 +189,33 @@ def test_a_text_book_with_no_choice_gets_the_machines_pick_until_the_listener_ch
         assert queue["playlist"] is None and queue["tracks"] == [] and "playlistAuto" not in queue
         _status, view = _call(server, "GET", f"/api/books/{book}/music")
         assert view["playlist"] == "off" and "playlistAuto" not in view
+        assert _call(server, "GET", f"/api/books/{book}/music/chapters/1")[1]["cues"] == [], "tắt thì cũng không mốc theo cảnh"
         # null xoá khoá: máy chọn lại
         _status, view = _call(server, "PUT", f"/api/books/{book}/music", {"playlist": None})
         assert "playlist" not in (book_edits.load(app._listenable(book)).get("music") or {})
-        assert view["playlist"] == "calm" and view["playlistAuto"] is True, "lời đáp của lần bỏ lựa chọn đã là màn của máy chọn"
+        assert view["playlist"] == "scene" and view["playlistAuto"] is True, "lời đáp của lần bỏ lựa chọn đã là màn của máy chọn"
         assert _call(server, "GET", f"/api/books/{book}/music/playlist")[1]["playlistAuto"] is True
     finally:
         server.stop()
 
 
-def test_without_a_downloaded_catalogue_the_machine_picks_with_the_bundled_rules(tmp_path: Path) -> None:
+def test_the_scene_choice_is_not_a_catalogue_playlist_and_the_menu_says_whether_the_student_is_there(tmp_path: Path) -> None:
+    assert music_playlist.catalogue_playlists({"playlists": [{"id": "scene", "name": "Giả", "tracks": CALM}]}) == []
+    app, book, server = _text_book_server(tmp_path)
+    try:
+        _status, menu = _call(server, "GET", "/api/music/playlists")
+        assert menu["scene"] == {"student": False} and "scene" not in [item["id"] for item in menu["playlists"]]
+    finally:
+        server.stop()
+
+
+def test_without_a_downloaded_catalogue_the_scene_music_has_no_cues_and_no_error(tmp_path: Path) -> None:
     app = _app(tmp_path / "studio", tmp_path / "thu_vien")
     app._music_catalog = MusicCatalog(tmp_path / "music_cache", str(tmp_path / "chua_co_danh_muc"))  # máy mới, chưa có mạng
     added = app.add_text_book(str(IMPORTS / "epub3.epub"))
-    view = app.music_view(added["id"])
-    assert view["playlistAuto"] is True and view["playlist"] in music_playlist.bundled_picker()["order"]
-    queue = app.music_playlist_queue(added["id"])
-    assert queue["playlist"] == view["playlist"] and queue["tracks"] == [] and queue["error"] != "", "tên danh sách có, bài chưa tải được"
-
-
-def test_a_picker_the_catalogue_ships_broken_falls_back_to_the_bundled_one(tmp_path: Path) -> None:
-    app, book, server = _text_book_server(tmp_path, {**CATALOGUE_PICKER, "default": "khong_co_trong_danh_muc"})
-    try:
-        _status, view = _call(server, "GET", f"/api/books/{book}/music")
-        assert view["playlistAuto"] is True and view["playlist"] in music_playlist.bundled_picker()["order"]
-    finally:
-        server.stop()
-
-
-def test_a_book_without_a_usable_picker_plays_nothing_until_chosen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(music_playlist, "bundled_picker", lambda: None)
-    app, book, server = _text_book_server(tmp_path, None)
-    try:
-        _status, queue = _call(server, "GET", f"/api/books/{book}/music/playlist")
-        assert queue["playlist"] is None and queue["tracks"] == [] and "playlistAuto" not in queue
-        assert "playlist" not in _call(server, "GET", f"/api/books/{book}/music")[1]
-    finally:
-        server.stop()
+    assert app.music_view(added["id"])["playlist"] == "scene"
+    assert app.music_playlist_queue(added["id"])["playlist"] == "scene"
+    assert app.music_cues(added["id"], 1)["cues"] == []
 
 
 def test_a_playlist_the_catalogue_no_longer_has_plays_nothing(tmp_path: Path) -> None:
