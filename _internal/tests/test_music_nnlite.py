@@ -1,5 +1,5 @@
 """NN-lite (webui/music_nnlite.py, Corpus research/music/SPEC_nnlite_app.md): học sinh 2 MB chỉ chữ cho nhạc theo cảnh khi máy không có gói q06.
-Hai bộ ví dụ DÙNG CHUNG với điện thoại (NnLiteTest.kt / SceneMusicTest.kt) nằm ở tests/fixtures/music/nnlite/: chữ -> token -> băm -> đặc trưng, và 4 số + mục chương; `lb_fixture.json`: khối, hồ sơ khối và ranh cảnh LB (SPEC_lb_app).
+Hai bộ ví dụ DÙNG CHUNG với điện thoại (NnLiteTest.kt / SceneMusicTest.kt) nằm ở tests/fixtures/music/nnlite/: chữ -> token -> băm -> đặc trưng, và 4 số + mục chương; `lb_fixture.json`: khối, hồ sơ khối và ranh cảnh LB (SPEC_lb_app); `lvj_fixture.json`: chapterP, mức chương và dời mức LVJ (SPEC_lvj_app).
 Chữ trong đó đều dựng sẵn (kho công khai)."""
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ FIXTURES = Path(__file__).resolve().parent / "fixtures" / "music" / "nnlite"
 TEXT = json.loads((FIXTURES / "nnlite_text_fixture.json").read_text(encoding="utf-8"))
 OUT = json.loads((FIXTURES / "nnlite_out_fixture.json").read_text(encoding="utf-8"))
 LB = json.loads((FIXTURES / "lb_fixture.json").read_text(encoding="utf-8"))
+LVJ = json.loads((FIXTURES / "lvj_fixture.json").read_text(encoding="utf-8"))
 
 
 def _number(text: str) -> float:
@@ -97,8 +98,9 @@ def test_the_four_numbers_and_the_chapter_items_match_the_shared_fixture() -> No
         items = model.chapter([OUT["scenes"][index]["text"] for index in chapter["scenes"]])
         assert len(items) == len(chapter["items"])
         for got, want in zip(items, chapter["items"]):
-            assert set(got) == set(want) == {"dV", "dE", "dT", "chapterV"}
+            assert set(got) == {"dV", "dE", "dT", "chapterV", "chapterP"} and set(want) == {"dV", "dE", "dT", "chapterV"}
             assert all(abs(got[key] - _number(want[key])) < OUT["tolerance"] for key in want)
+            assert len(got["chapterP"]) == 4 and abs(got["chapterP"][3] + model.c_c - got["chapterV"]) < 1e-12
     single = model.chapter([OUT["scenes"][27]["text"]])
     assert [(item["dV"], item["dE"], item["dT"]) for item in single] == [(0.0, 0.0, 0.0)], "chương một cảnh: độ lệch 0"
     assert model.chapter([]) == []
@@ -206,7 +208,7 @@ def test_the_plan_cache_key_tells_nn_lite_from_n0_and_from_q06(tmp_path: Path, m
         monkeypatch.undo()
         monkeypatch.setattr(music_nnlite, "_loaded", None)
         assert app._scene_book(book, path, manifest).directory == lite
-        assert music_nnscene.student_tag(None, "abc") == "nnlite-lb1-abc" and music_nnscene.student_tag(None, "") == "none"
+        assert music_nnscene.student_tag(None, "abc") == "nnlite-lvj1-abc" and music_nnscene.student_tag(None, "") == "none"
         assert music_nnscene.student_tag("q06sha", "abc") == "q06sha", "có gói q06 thì q06"
     finally:
         server.stop()
@@ -347,7 +349,7 @@ def test_lb_a_cue_wins_a_spot_the_lite_bound_also_claims() -> None:
 
 
 def test_lb_changes_the_plan_cache_key_and_the_server_hands_the_hook_only_to_the_lite_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    assert music_nnscene.student_tag(None, "abc") == "nnlite-lb1-abc" != "nnlite-abc"
+    assert music_nnscene.student_tag(None, "abc") == "nnlite-lvj1-abc" != "nnlite-abc"
     app, book, server = _scene_server(tmp_path)
     try:
         path, manifest = app._listenable(book), app.music_catalog().manifest()
@@ -380,3 +382,74 @@ def test_lb_bounds_need_no_numpy_on_the_player_only_install(tmp_path: Path) -> N
                          cwd=Path(music_nnlite.__file__).parents[2])
     assert run.returncode == 0, run.stderr
     assert json.loads(run.stdout) == LB["chapters"][1]["bounds"]
+
+
+# ---- mức chương chung LVJ (SPEC_lvj_app) ------------------------------------------------------------------------------------------------
+
+
+def test_lvj_constants_are_the_frozen_ones_of_the_shared_fixture() -> None:
+    assert [list(row) for row in music_scenes.LVJ_COEF] == LVJ["coef_rows_pV_pE_pT_q_1__cols_V_E_T"], "hằng ĐÓNG BĂNG, giống từng chữ số"
+    assert len(music_nnlite.MODEL_FILE.read_bytes()) == LVJ["model_bytes"]
+
+
+@pytest.mark.parametrize("chapter", LVJ["chapters"], ids=[chapter["name"] for chapter in LVJ["chapters"]])
+def test_lvj_chapter_p_and_the_level_match_the_shared_fixture(chapter: dict[str, Any]) -> None:
+    model = music_nnlite.model()
+    assert model is not None
+    items = model.chapter(chapter["texts"])
+    assert len(items) == len(chapter["texts"])
+    assert [music_nnlite.weight(text) for text in chapter["texts"]] == chapter["weights"]
+    for item in items:
+        assert item["chapterP"] == items[0]["chapterP"], "chapterP cùng giá trị ở mọi cảnh"
+        assert len(item["chapterP"]) == 4
+        assert all(abs(a - b) < LVJ["tolerance_chapter"] for a, b in zip(item["chapterP"], chapter["chapterP"]))
+    assert all(abs(a - b) < LVJ["tolerance_chapter"] for a, b in zip(music_scenes.lvj_level(items[0]["chapterP"]), chapter["level"]))
+
+
+@pytest.mark.parametrize("case", LVJ["shifts"], ids=[f"{len(case['scenes'])}-scenes-{index}" for index, case in enumerate(LVJ["shifts"])])
+def test_lvj_shift_equals_the_shared_fixture_exactly(case: dict[str, Any]) -> None:
+    scenes = case["scenes"]
+    weights = [max(0.0, scene["end"] - scene["start"]) for scene in scenes]
+    shifted = music_scenes._shift_to_level(scenes, weights, sum(weights), case["level"])
+    assert len(shifted) == len(case["out"])
+    for got, want in zip(shifted, case["out"]):
+        assert all(abs(got[axis] - want[axis]) <= LVJ["tolerance_shift"] for axis in ("valence", "arousal", "tension"))
+
+
+def _plain(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{key: value for key, value in item.items() if key != "chapterP"} for item in items]
+
+
+def test_lvj_an_item_without_chapter_p_gives_apply_student_exactly_what_it_gave_before() -> None:
+    script, _ = music_nnscene.chapter_script(1, "T", chapter_text(0, 1))
+    base = music_scenes.book_scenes([script], None, None, None)
+    items = music_nnlite.student_items(script, base)
+    assert items and len(base) > 1 and all(len(item["chapterP"]) == 4 for item in items)
+    plain = music_scenes.apply_student(base, _plain(items))
+    assert plain and all(scene["levelSource"] == {"V": "student", "T": "labels"} for scene in plain), "đường hôm nay"
+    assert music_scenes.apply_student(base, [dict(item, chapterP=None) for item in _plain(items)]) == plain
+    assert music_scenes.apply_student(base, [dict(item, chapterP=[0.0, 0.0, 0.0, float("nan")]) for item in items]) == plain
+    assert music_scenes.apply_student(base, [dict(item, chapterP=[1.0, 2.0]) for item in items]) == plain
+    mixed = [dict(items[0])] + _plain(items)[1:]
+    assert music_scenes.apply_student(base, mixed) == plain, "một mục thiếu chapterP thì cả chương đi đường cũ"
+
+
+def test_lvj_moves_only_the_level_of_the_chapter_and_keeps_its_shape() -> None:
+    script, _ = music_nnscene.chapter_script(1, "T", chapter_text(0, 1))
+    base = music_scenes.book_scenes([script], None, None, None)
+    items = music_nnlite.student_items(script, base)
+    assert items
+    plain = music_scenes.apply_student(base, _plain(items))
+    lvj = music_scenes.apply_student(base, items)
+    assert plain and lvj and len(lvj) == len(plain)
+    assert all(scene["levelSource"] == {"V": "lvj", "E": "lvj", "T": "lvj"} for scene in lvj)
+    axes = ("valence", "arousal", "tension")
+    for before, after in zip(plain, lvj):
+        assert {k: v for k, v in before.items() if k not in axes + ("levelSource",)} == {k: v for k, v in after.items() if k not in axes + ("levelSource",)}
+    weights = [scene["end"] - scene["start"] for scene in lvj]
+    target = music_scenes.lvj_level(items[0]["chapterP"])
+    for axis, level in zip(axes, target):
+        if all(abs(scene[axis]) < 0.999 and abs(scene[axis]) > 0.0 for scene in lvj):  # không clip: TB = L, hiệu giữa các đoạn như cũ
+            assert abs(sum(w * scene[axis] for w, scene in zip(weights, lvj)) / sum(weights) - level) < 0.002
+            for one, other in zip(zip(plain, lvj), zip(plain[1:], lvj[1:])):
+                assert abs((one[1][axis] - other[1][axis]) - (one[0][axis] - other[0][axis])) < 0.0021

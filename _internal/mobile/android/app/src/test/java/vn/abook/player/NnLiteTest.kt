@@ -16,7 +16,7 @@ import java.nio.ByteOrder
 /**
  * NN-lite trên điện thoại (NnLite.kt) phải ra GIỐNG HỆT bản Python (music_nnlite.py) trên hai bộ ví dụ dùng chung `tests/fixtures/music/nnlite/` (chữ dựng sẵn):
  * chữ -> token -> ô băm tuyệt đối -> đặc trưng (sai < 1e-12) -> 4 số và mục chương (sai < 1e-3), cùng file `nnlite.bin` đóng trong app; thêm `lb_fixture.json`: khối (tuyệt đối),
- * hồ sơ khối (sai < 1e-3) và ranh cảnh LB (tuyệt đối).
+ * hồ sơ khối (sai < 1e-3) và ranh cảnh LB (tuyệt đối); `lvj_fixture.json`: chapterP và mức chương (sai < 1e-3), dời mức LVJ (sai <= 1e-9).
  */
 class NnLiteTest {
     companion object {
@@ -25,6 +25,7 @@ class NnLiteTest {
         private lateinit var text: JSONObject
         private lateinit var out: JSONObject
         private lateinit var lb: JSONObject
+        private lateinit var lvj: JSONObject
         private lateinit var model: NnLite
 
         @JvmStatic
@@ -33,6 +34,7 @@ class NnLiteTest {
             text = JSONObject(File(folder, "nnlite_text_fixture.json").readText(Charsets.UTF_8))
             out = JSONObject(File(folder, "nnlite_out_fixture.json").readText(Charsets.UTF_8))
             lb = JSONObject(File(folder, "lb_fixture.json").readText(Charsets.UTF_8))
+            lvj = JSONObject(File(folder, "lvj_fixture.json").readText(Charsets.UTF_8))
             model = NnLite.parse(modelFile.readBytes())
         }
 
@@ -298,6 +300,83 @@ class NnLiteTest {
         val n0 = SceneBook.chapterScenes(7, segments, null)
         assertEquals(n0, SceneBook.chapterScenes(7, segments, null, model::sceneBounds))
         assertEquals(n0, SceneBook.chapterScenes(7, segments, { _, _, _ -> null }, model::sceneBounds))
-        assertTrue("khoá đệm plan đổi để plan cũ không dùng lại", SceneBook.ENGINE_VERSION >= 4)
+        assertTrue("khoá đệm plan đổi để plan cũ không dùng lại", SceneBook.ENGINE_VERSION >= 5)
+    }
+
+    // ---- mức chương chung LVJ (SPEC_lvj_app) --------------------------------------------------------------------------------------------------
+    private fun doubles(array: JSONArray): List<Double> = (0 until array.length()).map { array.getDouble(it) }
+
+    @Test
+    fun the_lvj_constants_are_the_frozen_ones_of_the_shared_fixture() {
+        val rows = lvj.getJSONArray("coef_rows_pV_pE_pT_q_1__cols_V_E_T")
+        assertEquals(5, rows.length())
+        for (row in 0 until 5) assertEquals("hàng $row", doubles(rows.getJSONArray(row)), SceneScenes.LVJ_COEF[row].toList())
+        assertEquals(lvj.getInt("model_bytes"), modelFile.length().toInt())
+    }
+
+    @Test
+    fun the_lvj_chapter_p_and_level_equal_the_shared_fixture() {
+        val tolerance = lvj.getDouble("tolerance_chapter")
+        val chapters = lvj.getJSONArray("chapters")
+        for (index in 0 until chapters.length()) {
+            val chapter = chapters.getJSONObject(index)
+            val texts = strings(chapter.getJSONArray("texts"))
+            assertEquals(ints(chapter.getJSONArray("weights")), texts.map { NnLite.weight(it) })
+            val rows = model.chapter(texts)
+            assertEquals(texts.size, rows.size)
+            val wantP = doubles(chapter.getJSONArray("chapterP"))
+            for (row in rows) {
+                for (axis in 0 until 4) assertEquals("${chapter.getString("name")} chapterP $axis", wantP[axis], row[4 + axis], tolerance)
+                assertEquals(rows[0].toList().subList(4, 8), row.toList().subList(4, 8))
+            }
+            val level = SceneScenes.lvjLevel(doubleArrayOf(rows[0][4], rows[0][5], rows[0][6], rows[0][7]))
+            val wantLevel = doubles(chapter.getJSONArray("level"))
+            for (axis in 0 until 3) assertEquals("${chapter.getString("name")} mức $axis", wantLevel[axis], level[axis], tolerance)
+        }
+    }
+
+    @Test
+    fun the_lvj_shift_equals_the_shared_fixture_exactly() {
+        val tolerance = lvj.getDouble("tolerance_shift")
+        val cases = lvj.getJSONArray("shifts")
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val raw = case.getJSONArray("scenes")
+            val scenes = (0 until raw.length()).map {
+                val scene = raw.getJSONObject(it)
+                SceneScene(1, it, it, scene.getDouble("start"), scene.getDouble("end"), "length", 1,
+                    valence = scene.getDouble("valence"), arousal = scene.getDouble("arousal"), tension = scene.getDouble("tension"))
+            }
+            val shifted = SceneScenes.shiftToLevel(scenes, doubles(case.getJSONArray("level")).toDoubleArray())
+            val want = case.getJSONArray("out")
+            assertEquals("ca $index - số đoạn", want.length(), shifted.size)
+            for (at in shifted.indices) {
+                assertEquals("ca $index đoạn $at valence", want.getJSONObject(at).getDouble("valence"), shifted[at].valence, tolerance)
+                assertEquals("ca $index đoạn $at arousal", want.getJSONObject(at).getDouble("arousal"), shifted[at].arousal, tolerance)
+                assertEquals("ca $index đoạn $at tension", want.getJSONObject(at).getDouble("tension"), shifted[at].tension, tolerance)
+            }
+        }
+    }
+
+    private fun StudentItem.withP(p: DoubleArray?) = StudentItem(chapterId, firstSegment, lastSegment, dV, dE, dT, chapterV, p)
+
+    @Test
+    fun an_item_without_chapter_p_gives_apply_student_exactly_what_it_gave_before() {
+        val segments = (0 until 6).map { SceneSegment(it, out.getJSONArray("scenes").getJSONObject(it).getString("text")) }
+        val base = listOf(
+            SceneScene(1, 0, 2, 0.0, 70.0, "chapter_start", 3),
+            SceneScene(1, 3, 5, 70.0, 150.0, "subhead", 3),
+        )
+        val items = model.chapterItems(1, segments, base)!!
+        assertTrue(items.all { it.chapterP != null && it.chapterP!!.size == 4 })
+        val plain = SceneScenes.applyStudent(base, items.map { it.withP(null) })!!
+        val withLvj = SceneScenes.applyStudent(base, items)!!
+        // Đường cũ = bước student thuần; LVJ chỉ dời mức và đúng bằng bước dời trên đoạn student.
+        assertEquals(withLvj, SceneScenes.shiftToLevel(plain, SceneScenes.lvjLevel(items[0].chapterP!!)))
+        assertTrue(plain.zip(withLvj).any { (before, after) -> before.valence != after.valence || before.arousal != after.arousal || before.tension != after.tension })
+        // Thiếu / hỏng chapterP ở BẤT KỲ mục nào: cả chương như cũ.
+        assertEquals(plain, SceneScenes.applyStudent(base, listOf(items[0], items[1].withP(null))))
+        assertEquals(plain, SceneScenes.applyStudent(base, items.map { it.withP(doubleArrayOf(0.0, 0.0, 0.0, Double.NaN)) }))
+        assertEquals(plain, SceneScenes.applyStudent(base, items.map { it.withP(doubleArrayOf(1.0, 2.0)) }))
     }
 }

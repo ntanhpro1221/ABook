@@ -247,7 +247,7 @@ class SceneBook(
 
     companion object {
         /** Đổi khi cách tách câu / dựng đoạn / chọn bài / ánh xạ sang đoạn màn đọc đổi: bản ghi đã dựng không dùng lại. */
-        const val ENGINE_VERSION = 4 // 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/, ô cells/ không có); 3: bản ghi mang `loops`, đoạn có thể là của học sinh NN-lite; 4: ranh cảnh LB của NN-lite
+        const val ENGINE_VERSION = 5 // 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/, ô cells/ không có); 3: bản ghi mang `loops`, đoạn có thể là của học sinh NN-lite; 4: ranh cảnh LB của NN-lite; 5: mức chương LVJ
         const val FORMAT_VERSION = 1
 
         /** Trần số lần chọn lại một chương vì bài quá cỡ (`music_nnscene.VERIFY_ROUNDS`). */
