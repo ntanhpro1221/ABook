@@ -41,6 +41,9 @@ FORMAT_VERSION = 2  # 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ c�
 
 # Chỗ cắm học sinh (không bắt buộc): hàm (kịch bản, đoạn nền) -> các mục `dV/dE/dT/chapterV` cho `music_scenes.book_scenes(student=...)`, hay None.
 StudentItems = Callable[[dict[str, Any], list[dict[str, Any]]], "list[dict[str, Any]] | None"]
+# Nguồn ranh cảnh "lite" (không bắt buộc, chỉ đường NN-lite): hàm kịch bản -> {id câu mở cảnh mới: lý do}, `music_nnlite.scene_bounds` (LB, SPEC_lb_app).
+SceneBounds = Callable[[dict[str, Any]], "dict[Any, str]"]
+LITE_SOURCE = "lite"
 AHEAD_CHAPTERS = 3  # chương dựng trước chỗ đang nghe
 BUILD_WAIT_SECONDS = 2.0  # hỏi cue chương chưa dựng: chờ chừng này (chương nhẹ dựng kịp), rồi trả "chưa có"
 VERIFY_ROUNDS = 12  # trần số lần chọn lại một chương vì bài quá cỡ (mỗi vòng loại thêm ít nhất một bài; hết vòng thì giữ lần chọn cuối - tải sẽ bị chặn và chọn lại)
@@ -89,13 +92,19 @@ def paragraph_ids(sentences: list[str], body: str) -> list[int]:
 
 
 # ---- một chương ----------------------------------------------------------------------------------------------------------------
-def chapter_scenes(script: dict[str, Any], student: StudentItems | None = None) -> list[dict[str, Any]]:
+def chapter_scenes(script: dict[str, Any], student: StudentItems | None = None, bounds: SceneBounds | None = None) -> list[dict[str, Any]]:
     """Các đoạn nhạc của chương (ranh giới của app trên kịch bản trần). MỘT chỗ gọi `music_scenes.book_scenes`: có `student` thì chỉnh V/E/T
     quanh mức chương đúng như Studio, không thì không (hay `student` trả None: chương không dùng được).
     Sách chữ không có nhãn câu nên đoạn của học sinh có `confidence` thấp và bộ chọn kéo hết về đích êm; sàn `WEAK_MOOD` (NN-V, SPEC_nnv_app) cho
-    V / E của học sinh tới bộ chọn bài. CHỈ ở đường này: Studio (sách có nhãn câu) và N0 (không đoạn `moodSource` = "student") giữ nguyên."""
-    items = student(script, music_scenes.book_scenes([script])) if student is not None else None
-    scenes = music_scenes.book_scenes([script], None, None, items)
+    V / E của học sinh tới bộ chọn bài. CHỈ ở đường này: Studio (sách có nhãn câu) và N0 (không đoạn `moodSource` = "student") giữ nguyên.
+    `bounds` (chỉ đường NN-lite, LB): thêm nguồn ranh "lite" ({id: "mood_shift"}) vào đoạn nền TRƯỚC khi học sinh chạy, nên học sinh đoán trên các đoạn mới; "cue" thắng khi trùng chỗ.
+    Học sinh không dùng được chương (None) thì chương đi đường N0 nguyên, không ranh LB."""
+    lite = {LITE_SOURCE: bounds(script)} if student is not None and bounds is not None else None
+    boundaries = {script.get("chapterId"): lite} if lite else None
+    items = student(script, music_scenes.book_scenes([script], None, boundaries, None)) if student is not None else None
+    if items is None:
+        boundaries = None
+    scenes = music_scenes.book_scenes([script], None, boundaries, items)
     return [dict(s, confidence=max(float(s.get("confidence") or 0.0), music_select.WEAK_MOOD)) if s.get("moodSource") == "student" else s
             for s in scenes]
 
@@ -165,7 +174,8 @@ def build_chapter(book: SceneBook, order: list[int], chapter_id: int, title: str
                   sha_of: Callable[[int], str], near: Callable[[float, float], Iterable[dict[str, Any]]],
                   lookup: Callable[[list[str]], dict[str, dict[str, Any]]], catalog_revision: str | None, taxonomy: dict[str, Any] | None,
                   book_key: str, available: Callable[[str], bool] | None = None,
-                  verify: Callable[[list[str]], bool] | None = None, student: StudentItems | None = None) -> dict[str, Any]:
+                  verify: Callable[[list[str]], bool] | None = None, student: StudentItems | None = None,
+                  bounds: SceneBounds | None = None) -> dict[str, Any]:
     """Dựng (hay lấy lại) plan của một chương. Chữ đã tách nằm trong bản ghi (chữ không đổi thì khỏi tách lại).
     `available` chỉ được dùng thứ ĐÃ BIẾT (bộ chọn hỏi hàng trăm bài xếp hạng - tra cỡ từng bài là tải hàng trăm mảnh danh mục). `verify(links)`: sau mỗi lần
     chọn, tra cỡ các bài ĐÃ CHỌN (đầu cảnh + bài anh em) trong MỘT lượt; True khi vừa phát hiện bài nào máy này không dùng (quá cỡ) - `available` từ đó loại nó,
@@ -176,7 +186,7 @@ def build_chapter(book: SceneBook, order: list[int], chapter_id: int, title: str
         if record is not None:
             return record
         script, paragraph = chapter_script(chapter_id, title, text, skip)
-        scenes = chapter_scenes(script, student)
+        scenes = chapter_scenes(script, student, bounds)
         previous = book.history(order, chapter_id, sha_of)
         before = [scene for part in previous for scene in part["scenes"]]
         history = {"scenes": before} if before else None
@@ -232,8 +242,8 @@ def scene_dir_name(book_id: str) -> str:
 
 
 def student_tag(package_sha: str | None, lite_sha: str | None = None) -> str:
-    """Phần khoá đệm nói học sinh nào đã dựng plan: mã gói q06; không có gói mà có NN-lite (music_nnlite.py) thì "nnlite-<mã model>"; hay "none" khi không dùng học sinh."""
-    return package_sha or (f"nnlite-{lite_sha}" if lite_sha else "none")
+    """Phần khoá đệm nói học sinh nào đã dựng plan: mã gói q06; không có gói mà có NN-lite (music_nnlite.py) thì "nnlite-lb1-<mã model>" (lb1: ranh cảnh LB, `music_nnlite.scene_bounds`; plan dựng trước LB không dùng lại); hay "none" khi không dùng học sinh."""
+    return package_sha or (f"nnlite-lb1-{lite_sha}" if lite_sha else "none")
 
 
 class Builder:

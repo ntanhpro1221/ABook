@@ -1,5 +1,5 @@
 """NN-lite (webui/music_nnlite.py, Corpus research/music/SPEC_nnlite_app.md): học sinh 2 MB chỉ chữ cho nhạc theo cảnh khi máy không có gói q06.
-Hai bộ ví dụ DÙNG CHUNG với điện thoại (NnLiteTest.kt / SceneMusicTest.kt) nằm ở tests/fixtures/music/nnlite/: chữ -> token -> băm -> đặc trưng, và 4 số + mục chương.
+Hai bộ ví dụ DÙNG CHUNG với điện thoại (NnLiteTest.kt / SceneMusicTest.kt) nằm ở tests/fixtures/music/nnlite/: chữ -> token -> băm -> đặc trưng, và 4 số + mục chương; `lb_fixture.json`: khối, hồ sơ khối và ranh cảnh LB (SPEC_lb_app).
 Chữ trong đó đều dựng sẵn (kho công khai)."""
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import json
 import logging
 import re
 import struct
+import subprocess
 import sys
 import unicodedata
 from pathlib import Path
@@ -20,6 +21,7 @@ from tests.test_music_nnscene import _scene_server, chapter_text
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "music" / "nnlite"
 TEXT = json.loads((FIXTURES / "nnlite_text_fixture.json").read_text(encoding="utf-8"))
 OUT = json.loads((FIXTURES / "nnlite_out_fixture.json").read_text(encoding="utf-8"))
+LB = json.loads((FIXTURES / "lb_fixture.json").read_text(encoding="utf-8"))
 
 
 def _number(text: str) -> float:
@@ -204,7 +206,7 @@ def test_the_plan_cache_key_tells_nn_lite_from_n0_and_from_q06(tmp_path: Path, m
         monkeypatch.undo()
         monkeypatch.setattr(music_nnlite, "_loaded", None)
         assert app._scene_book(book, path, manifest).directory == lite
-        assert music_nnscene.student_tag(None, "abc") == "nnlite-abc" and music_nnscene.student_tag(None, "") == "none"
+        assert music_nnscene.student_tag(None, "abc") == "nnlite-lb1-abc" and music_nnscene.student_tag(None, "") == "none"
         assert music_nnscene.student_tag("q06sha", "abc") == "q06sha", "có gói q06 thì q06"
     finally:
         server.stop()
@@ -224,3 +226,157 @@ def test_with_q06_the_server_keeps_the_q06_student_and_never_reads_the_lite_mode
         assert len(seen) == 1 and callable(seen[0]), "học sinh q06 (hàm bọc `ChapterStudent`)"
     finally:
         server.stop()
+
+
+# ---- ranh cảnh LB (SPEC_lb_app) ----------------------------------------------------------------------------------------------------------
+
+
+def _sentences(*word_counts: int) -> list[dict[str, Any]]:
+    return [{"id": index + 1, "text": " ".join(["chữ"] * count)} for index, count in enumerate(word_counts)]
+
+
+@pytest.mark.parametrize("chapter", LB["chapters"], ids=lambda chapter: chapter["name"])
+def test_lb_blocks_profiles_and_bounds_match_the_shared_fixture(chapter: dict[str, Any]) -> None:
+    model = music_nnlite.model()
+    assert model is not None
+    assert (LB["lambda"], LB["block_words"], LB["min_blocks"]) == (music_nnlite.LB_LAMBDA, music_nnlite.LB_BLOCK_WORDS, music_nnlite.LB_MIN_BLOCKS)
+    assert LB["model_bytes"] == len(music_nnlite.MODEL_FILE.read_bytes()), "bộ ví dụ sinh từ đúng model đóng sẵn"
+    segments = chapter["segments"]
+    spans = music_nnlite.blocks(segments)
+    assert [list(span) for span in spans] == chapter["blocks"], "khối trùng tuyệt đối"
+    profile = model.block_profile(segments, spans)
+    assert len(profile) == len(chapter["profile"])
+    assert all(abs(got - _number(want)) < LB["tolerance_profile"] for row, wants in zip(profile, chapter["profile"]) for got, want in zip(row, wants))
+    assert model.scene_bounds(segments) == chapter["bounds"], "ranh trùng tuyệt đối"
+
+
+def test_lb_blocks_close_at_150_words_and_a_short_tail_joins_the_last_block() -> None:
+    assert music_nnlite.blocks(_sentences(100, 60, 40)) == [(0, 2)], "dư 40 < 75: gộp vào khối trước"
+    assert music_nnlite.blocks(_sentences(100, 60, 80)) == [(0, 1), (2, 2)], "dư 80 >= 75: khối riêng"
+    assert music_nnlite.blocks(_sentences(100, 60, 74)) == [(0, 2)] and music_nnlite.blocks(_sentences(100, 60, 75)) == [(0, 1), (2, 2)], "ngưỡng đúng 75"
+    assert music_nnlite.blocks(_sentences(149, 1, 150)) == [(0, 1), (2, 2)], "đủ 150 thì đóng ở chính câu đó"
+    assert music_nnlite.blocks(_sentences(20, 30)) == [(0, 1)], "chương ngắn: một khối dù dưới 75 (chưa có khối nào để gộp vào)"
+    assert music_nnlite.blocks([]) == []
+    assert music_nnlite.blocks([{"id": 1, "text": ""}, {"id": 2, "text": "   "}, {"id": 3}] + _sentences(200)) == [(0, 3)], "câu rỗng / thiếu chữ tính 0 chữ"
+
+
+def test_lb_counts_words_like_python_split_for_unicode_spaces() -> None:
+    odd = {"id": 1, "text": "a b　c d e"}  # 5 mẩu: NBSP, ideographic space, em space đều là khoảng trắng của str.split
+    assert len(odd["text"].split()) == 5
+    assert music_nnlite.blocks([odd] * 30) == [(0, 29)], "30 x 5 = 150 chữ: đóng đúng ở câu cuối"
+    assert music_nnlite.blocks([odd] * 29 + [{"id": 2, "text": "x"}, {"id": 3, "text": "y"}]) == [(0, 30)], "145 + 2 = 147 chữ: chưa đủ 150"
+
+
+def test_lb_fewer_than_four_blocks_never_cut_and_a_step_in_the_profile_is_found() -> None:
+    wild = [[0.0, 0.0, 0.0], [9.0, 9.0, 9.0], [-9.0, 5.0, 0.0]]
+    assert music_nnlite.partition(wild) == [] and music_nnlite.partition(wild[:2]) == [] and music_nnlite.partition([]) == []
+    step = [[0.0, 0.0, 0.0]] * 3 + [[2.0, 2.0, 2.0]] * 3
+    assert music_nnlite.partition(step) == [3]
+    assert music_nnlite.partition(step[2:5]) == [], "3 khối: không ranh dù hồ sơ khác nhau"
+    assert music_nnlite.partition([[0.0, 0.0, 0.0], [3.0, 0.0, 0.0]] * 2) == [], "bốn khối xen kẽ: mỗi đoạn >= 2 khối, và ranh không đáng"
+    assert music_nnlite.partition([[0.0] * 3] * 6) == [], "đều một màu: không ranh"
+    assert music_nnlite.partition([[0.0, 0.0, 0.0]] * 4 + [[0.5, 0.0, 0.0]] * 4) == [], "bước nhỏ hơn phí ranh thì không đáng một ranh"
+    assert music_nnlite.partition([[0.0, 0.0, 0.0]] * 4 + [[1.2, 0.0, 0.0]] * 4) == [4], "bước đủ lớn thì cắt đúng chỗ"
+
+
+def test_lb_a_uniform_chapter_has_no_bounds_and_the_script_hook_hands_back_ids_with_the_reason() -> None:
+    uniform = [{"id": 10 * n + 1, "text": OUT["scenes"][0]["text"]} for n in range(60)]
+    model = music_nnlite.model()
+    assert model is not None and model.scene_bounds(uniform) == [] and music_nnlite.scene_bounds({"chapterId": 1, "segments": uniform}) == {}
+    chapter = next(chapter for chapter in LB["chapters"] if chapter["bounds"])
+    want = {bound: "mood_shift" for bound in chapter["bounds"]}
+    assert music_nnlite.scene_bounds({"chapterId": 1, "segments": chapter["segments"]}) == want
+    assert music_nnlite.scene_bounds({"chapterId": 1, "segments": ["bẩn", *chapter["segments"]]}) == want, "bỏ qua mục không phải câu"
+    assert music_nnlite.scene_bounds({"chapterId": 1}) == {}
+
+
+def test_lb_no_model_means_no_bounds(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(music_nnlite, "MODEL_FILE", tmp_path / "khong_co.bin")
+    assert music_nnlite.scene_bounds({"chapterId": 1, "segments": LB["chapters"][0]["segments"]}) == {}
+
+
+def _unique(chapter: dict[str, Any]) -> tuple[dict[str, Any], list[int]]:
+    """Kịch bản trần của một chương bộ ví dụ với `id` duy nhất (bộ ví dụ lặp id trong một pha) + id câu mở mỗi đoạn LB."""
+    model = music_nnlite.model()
+    assert model is not None
+    segments = [{"id": index + 1, "text": s["text"], "kind": "narration"} for index, s in enumerate(chapter["segments"])]
+    spans = music_nnlite.blocks(segments)
+    cuts = music_nnlite.partition(model.block_profile(segments, spans))
+    return {"chapterId": 7, "title": "T", "segments": segments}, [segments[spans[cut][0]]["id"] for cut in cuts]
+
+
+def test_lb_bounds_split_the_lite_scenes_and_the_student_guesses_on_the_new_scenes() -> None:
+    chapter = next(chapter for chapter in LB["chapters"] if len(chapter["bounds"]) >= 2)
+    script, cuts = _unique(chapter)
+    assert len(cuts) == len(chapter["bounds"]) >= 2
+    seen: list[list[dict[str, Any]]] = []
+
+    def student(chapter_script: dict[str, Any], base: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
+        seen.append(base)
+        return music_nnlite.student_items(chapter_script, base)
+
+    plain = music_nnscene.chapter_scenes(script, student)
+    seen.clear()
+    lb = music_nnscene.chapter_scenes(script, student, music_nnlite.scene_bounds)
+    assert len(seen) == 1, "học sinh chạy MỘT lần, trên đoạn đã có ranh LB"
+    shifts = [scene["firstSegment"] for scene in seen[0] if scene["reason"] == "mood_shift"]
+    assert shifts and set(shifts) <= set(cuts), "đoạn nền đã mang ranh LB (lý do mood_shift) trước khi học sinh chạy"
+    assert [scene["firstSegment"] for scene in lb] != [scene["firstSegment"] for scene in plain], "ranh LB đổi đoạn"
+    assert [scene["firstSegment"] for scene in lb] == [scene["firstSegment"] for scene in seen[0]], "đoạn cuối = đoạn học sinh đã đoán"
+    assert all(scene["moodSource"] == "student" and scene["confidence"] >= music_select.WEAK_MOOD for scene in lb), "sàn WEAK_MOOD vẫn áp"
+
+
+def test_lb_leaves_n0_and_a_student_that_gives_up_exactly_as_before() -> None:
+    chapter = next(chapter for chapter in LB["chapters"] if chapter["bounds"])
+    script, _cuts = _unique(chapter)
+    n0 = music_nnscene.chapter_scenes(script)
+    assert music_nnscene.chapter_scenes(script, None, music_nnlite.scene_bounds) == n0, "không học sinh (N0): ranh LB không vào"
+    assert music_nnscene.chapter_scenes(script, lambda *_: None, music_nnlite.scene_bounds) == n0, "học sinh bỏ chương: đường N0 nguyên, không ranh LB"
+    calls: list[Any] = []
+    music_nnscene.chapter_scenes(script, lambda s, base: calls.append(base) or music_nnlite.student_items(s, base))
+    assert len(calls) == 1 and not any(scene["reason"] == "mood_shift" for scene in calls[0]), "không truyền bounds (q06): giữ nguyên"
+
+
+def test_lb_a_cue_wins_a_spot_the_lite_bound_also_claims() -> None:
+    segments = [{"id": 1, "text": "Mở đầu."}, {"id": 2, "text": "Câu hai."}, {"id": 3, "text": "Tiêu đề.", "kind": "heading"}, {"id": 4, "text": "Câu bốn."}]
+    assert music_scenes.cue_bounds(segments) == {3: "heading"}
+    out = music_scenes.with_scene_breaks(segments, {music_nnscene.LITE_SOURCE: {3: "mood_shift", 4: "mood_shift"}})
+    assert (out[1]["sceneSource"], out[1]["sceneCue"]) == ("cue", "heading"), "trùng chỗ: cue thắng"
+    assert (out[2]["sceneSource"], out[2]["sceneCue"]) == ("lite", "mood_shift") and "sceneBreak" not in out[0]
+    assert music_scenes.hard_break(segments[3], out[2]) == "mood_shift", "lý do của đoạn mới"
+
+
+def test_lb_changes_the_plan_cache_key_and_the_server_hands_the_hook_only_to_the_lite_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    assert music_nnscene.student_tag(None, "abc") == "nnlite-lb1-abc" != "nnlite-abc"
+    app, book, server = _scene_server(tmp_path)
+    try:
+        path, manifest = app._listenable(book), app.music_catalog().manifest()
+        chapters = {chapter["id"]: chapter for chapter in packages.edited_manifest(path)["chapters"]}
+        order = list(chapters)
+        seen: list[Any] = []
+        monkeypatch.setattr(music_nnscene, "build_chapter", lambda *args, **kwargs: seen.append(kwargs.get("bounds")))
+        app._scene_job(book, path, order[0], order, chapters, app._scene_book(book, path, manifest), manifest)(lambda: False)
+        assert seen == [music_nnlite.scene_bounds]
+        monkeypatch.setattr(music_nnlite, "MODEL_FILE", tmp_path / "khong_co.bin")
+        app._scene_job(book, path, order[0], order, chapters, app._scene_book(book, path, manifest), manifest)(lambda: False)
+        assert seen[-1] is None, "model hỏng: đường N0, không ranh"
+    finally:
+        server.stop()
+
+
+def test_lb_bounds_need_no_numpy_on_the_player_only_install(tmp_path: Path) -> None:
+    script = (
+        "import json, sys\n"
+        "class Block:\n"
+        "    def find_spec(self, name, path=None, target=None):\n"
+        "        if name.split('.')[0] == 'numpy': raise ImportError('numpy bị chặn')\n"
+        "sys.meta_path.insert(0, Block())\n"
+        "from abook.webui import music_nnlite, music_nnscene\n"
+        "chapter = json.loads(open(sys.argv[1], encoding='utf-8').read())['chapters'][1]\n"
+        "script = {'chapterId': 1, 'segments': chapter['segments']}\n"
+        "music_nnscene.chapter_scenes(script, music_nnlite.student_items, music_nnlite.scene_bounds)\n"
+        "print(json.dumps(music_nnlite.model().scene_bounds(chapter['segments'])))\n")
+    run = subprocess.run([sys.executable, "-c", script, str(FIXTURES / "lb_fixture.json")], capture_output=True, encoding="utf-8", check=False,
+                         cwd=Path(music_nnlite.__file__).parents[2])
+    assert run.returncode == 0, run.stderr
+    assert json.loads(run.stdout) == LB["chapters"][1]["bounds"]
