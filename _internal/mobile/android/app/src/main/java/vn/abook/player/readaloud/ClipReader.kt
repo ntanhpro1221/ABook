@@ -104,7 +104,8 @@ class ClipReader(
             try {
                 return synthesize(voice, text, origin, readings)
             } catch (error: VoiceException) {
-                if (willRetry && online(voice) && error.transient) throw error
+                // Chỉ nhường cho người gọi khi người ấy THẬT SỰ thử lại (còn quỹ thời gian - [ClipBudget]); hết quỹ thì rơi sang giọng kế ngay, không bắt người nghe chờ thêm.
+                if (willRetry && online(voice) && error.transient && ClipBudget.retryFollows()) throw error
                 val earlier = first
                 if (!(online(voice) || local(voice)) || index == chain.lastIndex) {
                     offlineHelp(earlier ?: error)?.let { throw it }

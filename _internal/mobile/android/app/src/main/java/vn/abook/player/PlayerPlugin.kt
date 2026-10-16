@@ -191,6 +191,7 @@ class PlayerPlugin : Plugin() {
             // Sách chữ đang nghe mà chưa chọn nhạc: bật / tắt "Tự chọn nhạc nền" đổi nhạc theo cảnh ngay, không đợi mở lại sách.
             if (it != Playlists.autoEnabled) MusicBed.invalidate(Playback.bookId)
             Playlists.autoEnabled = it
+            MusicBed.rememberAuto(it)
         }
         Playback.configure(call.getDouble("rewindAfterMinutes") ?: 5.0, call.getDouble("rewindSeconds") ?: 5.0)
     }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MusicBed, type MusicCue } from "./musicBed";
 import type { Script, ScriptSegment } from "./model";
-import { SceneCues, anchorSceneCues, fromSegment, isSceneCues, nextSegment, segmentStarts, warpOf } from "./sceneCues";
+import { SCENE_RETRY_MS, SceneCues, anchorSceneCues, fromSegment, isSceneCues, nextSegment, sceneRetryDelay, segmentStarts, warpOf } from "./sceneCues";
 
 function segment(id: number, start: number | null, end: number | null, text = "Một đoạn chữ vừa đủ dài để đọc."): ScriptSegment {
   return { id, paragraph: id, text, kind: "narration", speaker: "NARRATOR", start, end, status: "pending" };
@@ -146,5 +146,15 @@ describe("nhạc theo cảnh: mốc theo đồng hồ đọc", () => {
     bed.sync(1, true);
     expect(bed.activeLink).toBe("a");
     bed.stop();
+  });
+});
+
+describe("hỏi lại mốc nhạc theo cảnh khi chương trả 'chưa có' (soát a47 mục 7)", () => {
+  it("lùi dần, có hạn: không dồn lượt hỏi và không hỏi mãi", () => {
+    expect(sceneRetryDelay(0)).toBe(SCENE_RETRY_MS[0]);
+    const delays = SCENE_RETRY_MS;
+    for (let i = 1; i < delays.length; i += 1) expect(delays[i]).toBeGreaterThan(delays[i - 1]);
+    expect(delays[0]).toBeGreaterThanOrEqual(10_000);
+    expect(sceneRetryDelay(delays.length)).toBeNull();
   });
 });

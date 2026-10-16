@@ -217,7 +217,7 @@ class EdgeTts(
                 var attempt = 0
                 while (true) {
                     val failure: Exception = try {
-                        val (audio, found) = readPart(part, shift)
+                        val (audio, found) = readPart(part, shift, attempt > 0)
                         sink.write(audio)
                         boundaries.addAll(found)
                         bytes += audio.size
@@ -231,7 +231,8 @@ class EdgeTts(
                         if (!(error.offline || error.reason == "timeout") || (attempt == 0 && bytes == 0L)) throw error
                         error
                     }
-                    if (attempt == RETRIES) {
+                    // Hết quỹ thời gian thử lại của đoạn ([ClipBudget]): thôi ngay - lần thử nữa sẽ không kịp, người gọi rơi sang giọng kế.
+                    if (attempt == RETRIES || !ClipBudget.fits(BACKOFF_MS[attempt])) {
                         val offline = (failure as? VoiceException)?.offline == true
                         throw VoiceException(if (offline) LOST_NETWORK else NOT_ANSWERING, offline = offline, cause = failure)
                     }
@@ -252,7 +253,7 @@ class EdgeTts(
     private class Dropped(message: String, cause: Throwable? = null) : Exception(message, cause)
 
     /** Một mảnh chữ: (mp3, mốc đã cộng `shiftMs`). Chỉ trả khi đọc trọn lượt, nên lượt hỏng thử lại không để sót mảnh âm thanh dở. */
-    private fun readPart(part: String, shiftMs: Long): Pair<ByteArray, List<Boundary>> {
+    private fun readPart(part: String, shiftMs: Long, retry: Boolean): Pair<ByteArray, List<Boundary>> {
         val socket = open()
         try {
             val stamp = EdgeProtocol.dateString(System.currentTimeMillis())
@@ -260,7 +261,7 @@ class EdgeTts(
             socket.sendText(EdgeProtocol.ssml(voiceName, EdgeProtocol.escape(part), EdgeProtocol.connectionId(random), stamp))
             val audio = java.io.ByteArrayOutputStream()
             val boundaries = ArrayList<Boundary>()
-            EdgeProtocol.readTurn(socket, audio, shiftMs, boundaries, "Giọng Edge", TOTAL_MS, onDrop = { message, cause -> Dropped(message, cause) })
+            EdgeProtocol.readTurn(socket, audio, shiftMs, boundaries, "Giọng Edge", ClipBudget.attemptMs(TOTAL_MS, retry), onDrop = { message, cause -> Dropped(message, cause) })
             return audio.toByteArray() to boundaries
         } finally {
             socket.close()

@@ -85,6 +85,12 @@ class PlaybackService : MediaLibraryService() {
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = Playback.onMediaTransition(mediaItem)
 
+            // Người nghe bấm phát / dừng bằng đường nào cũng được (thông báo, tai nghe, xe hơi): đọc to cần biết ở luồng nền để bỏ lần thử lại khi chẳng ai nghe.
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                ReadAloud.syncWants()
+                Playback.onWantsChanged()
+            }
+
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) Playback.onEnded()
                 Playback.emit("state")

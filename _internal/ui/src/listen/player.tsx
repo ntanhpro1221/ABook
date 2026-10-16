@@ -9,7 +9,7 @@ import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
 import { tellSceneMusic } from "./musicHint";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit } from "./musicBed";
-import { SceneCues, isSceneCues } from "./sceneCues";
+import { SceneCues, isSceneCues, sceneRetryDelay } from "./sceneCues";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
 import { canPlay, newerElsewhere, resumePoint, startingRate, type Bookmark, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
 import { NightRecorder } from "./night";
@@ -569,16 +569,22 @@ export function PlayerProvider({
     }
     // Nhạc theo cảnh dựng nền: chương chưa xong thì máy chủ trả `pending` (giọng không chờ nhạc) - hỏi lại, xong thì nhạc vào ở đầu câu kế.
     let retry: ReturnType<typeof setTimeout> | undefined;
-    const chapterCues = (attempt = 0): Promise<void> =>
+    // `misses`: số lần hỏi đã trả "chưa có" (unavailable / hỏng) - hỏi lại sau quãng lùi dần ([sceneRetryDelay]), không đợi tới chương sau.
+    const askAgain = (misses: number) => {
+      const delay = sceneRetryDelay(misses);
+      if (delay !== null) retry = setTimeout(() => void chapterCues(0, misses + 1), delay);
+    };
+    const chapterCues = (attempt = 0, misses = 0): Promise<void> =>
       source.musicCues!(book, track.chapterId)
         .then((result) => {
           if (cancelled) return;
           bedCredits.current = result.credits ?? {};
           setMusicOffline(result.unavailable ?? ""); // danh mục chưa tải được: hộp "Nhạc nền" nói lý do (rỗng thì thôi)
           if (result.pending && attempt < SCENE_POLLS) {
-            retry = setTimeout(() => void chapterCues(attempt + 1), SCENE_POLL_MS);
+            retry = setTimeout(() => void chapterCues(attempt + 1, misses), SCENE_POLL_MS);
             return;
           }
+          if (result.unavailable) askAgain(misses);
           if (scene && isSceneCues(result.cues)) {
             sceneHeard.current = true;
             scene.arrive(result.cues, result.estSeconds ?? 0, result.levelDb, engine.time);
@@ -592,6 +598,7 @@ export function PlayerProvider({
           if (cancelled) return;
           bedCredits.current = {};
           bed.setCues([], -20);
+          askAgain(misses);
         });
     const queue = playlistAsked.current.queue;
     if (!queue) {

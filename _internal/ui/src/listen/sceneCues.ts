@@ -7,6 +7,13 @@ import { estimatedStarts, estimateSeconds } from "./readAloud";
 // (ước, rồi thật khi clip về). Ở đây mốc được đặt lại để bài đổi đúng lúc ĐOẠN ĐẦU CẢNH BẮT ĐẦU PHÁT - không giữa câu, không cần ước giây chính xác -
 // còn mốc nối bài anh em và bước âm lượng trong cảnh co giãn theo các mốc đoạn ấy. Phần còn lại (mờ chéo, lặp, nhảy) là của MusicBed như sách Studio.
 
+/** Mốc nhạc theo cảnh của chương trả `unavailable` (danh mục chưa tải được) hay hỏi hỏng: hỏi lại sau chừng này (ms) - lùi dần để không dồn lượt hỏi, có hạn; mạng về giữa chương thì nhạc vào ở đầu câu kế
+ *  (trước đây chỉ hỏi lại khi sang chương, nên mất mạng lúc mở chương là im nhạc cả chương và lời báo nằm đó). Bản điện thoại: MusicBed.kt `SCENE_RETRY_MS`. */
+export const SCENE_RETRY_MS = [15_000, 30_000, 60_000, 120_000, 300_000];
+export function sceneRetryDelay(misses: number): number | null {
+  return SCENE_RETRY_MS[misses] ?? null;
+}
+
 /** Giây bắt đầu từng đoạn của kịch bản (đồng hồ của bộ máy đọc) và tổng độ dài. Kịch bản đã có mốc thì dùng mốc; chưa thì ước như bộ máy sẽ ước. */
 export function segmentStarts(script: Script): { starts: number[]; total: number } {
   const segments = script.segments;
