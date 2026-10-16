@@ -1,0 +1,616 @@
+{
+ "name": "arrives_mid_chapter",
+ "description": "Mốc về khi giọng đã đọc dở (fromSegment / nextSegment): nhạc vào ở đầu câu kế; sau đó tua về trước chỗ ấy thì nhạc theo cảnh chứa chỗ mới.",
+ "segments": [
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+   "real": [
+    0,
+    5
+   ]
+  },
+  {
+   "text": "Một đoạn chữ vừa phải để đọc.",
+   "real": [
+    5,
+    8
+   ]
+  },
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+   "real": [
+    8,
+    14
+   ]
+  },
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+   "real": [
+    14,
+    20
+   ]
+  },
+  {
+   "text": "Một đoạn chữ vừa phải để đọc.",
+   "real": [
+    20,
+    23
+   ]
+  },
+  {
+   "text": "Ừ.",
+   "real": [
+    23,
+    24
+   ]
+  },
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+   "real": [
+    24,
+    30
+   ]
+  }
+ ],
+ "timed": true,
+ "cues": [
+  {
+   "start": 0,
+   "end": 60,
+   "link": "https://x/a.mp3",
+   "key": "1:0",
+   "firstSegment": 0
+  },
+  {
+   "start": 60,
+   "end": 130,
+   "link": "https://x/b.mp3",
+   "key": "1:1",
+   "firstSegment": 2,
+   "steps": [
+    {
+     "at": 100,
+     "db": -2
+    }
+   ]
+  },
+  {
+   "start": 130,
+   "end": 160,
+   "link": "https://x/c.mp3",
+   "key": "1:1",
+   "sibling": true
+  },
+  {
+   "start": 160,
+   "end": 220,
+   "link": "https://x/d.mp3",
+   "key": "1:2",
+   "firstSegment": 5,
+   "tail": true
+  }
+ ],
+ "estSeconds": 220,
+ "from": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7
+ ],
+ "next": [
+  0,
+  4.9999999,
+  5,
+  5.0000001,
+  16,
+  29.9,
+  30
+ ],
+ "events": [
+  {
+   "op": "arrive",
+   "time": 16.5
+  },
+  {
+   "op": "seeked",
+   "time": 30
+  },
+  {
+   "op": "seeked",
+   "time": 6
+  },
+  {
+   "op": "seeked",
+   "time": 2
+  },
+  {
+   "op": "refresh"
+  }
+ ],
+ "script": {
+  "chapterId": 1,
+  "title": "T",
+  "timed": true,
+  "duration": 30,
+  "segments": [
+   {
+    "id": 0,
+    "paragraph": 0,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 0,
+    "end": 5,
+    "status": "pending"
+   },
+   {
+    "id": 1,
+    "paragraph": 1,
+    "text": "Một đoạn chữ vừa phải để đọc.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 5,
+    "end": 8,
+    "status": "pending"
+   },
+   {
+    "id": 2,
+    "paragraph": 2,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 8,
+    "end": 14,
+    "status": "pending"
+   },
+   {
+    "id": 3,
+    "paragraph": 3,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 14,
+    "end": 20,
+    "status": "pending"
+   },
+   {
+    "id": 4,
+    "paragraph": 4,
+    "text": "Một đoạn chữ vừa phải để đọc.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 20,
+    "end": 23,
+    "status": "pending"
+   },
+   {
+    "id": 5,
+    "paragraph": 5,
+    "text": "Ừ.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 23,
+    "end": 24,
+    "status": "pending"
+   },
+   {
+    "id": 6,
+    "paragraph": 6,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 24,
+    "end": 30,
+    "status": "pending"
+   }
+  ]
+ },
+ "expected": {
+  "timing": {
+   "starts": [
+    0,
+    5,
+    8,
+    14,
+    20,
+    23,
+    24
+   ],
+   "total": 30
+  },
+  "anchored": [
+   {
+    "start": 0,
+    "end": 8,
+    "link": "https://x/a.mp3",
+    "key": "1:0",
+    "firstSegment": 0
+   },
+   {
+    "start": 8,
+    "end": 18.5,
+    "link": "https://x/b.mp3",
+    "key": "1:1",
+    "firstSegment": 2,
+    "steps": [
+     {
+      "at": 14,
+      "db": -2
+     }
+    ]
+   },
+   {
+    "start": 18.5,
+    "end": 23,
+    "link": "https://x/c.mp3",
+    "key": "1:1",
+    "sibling": true
+   },
+   {
+    "start": 23,
+    "end": 30,
+    "link": "https://x/d.mp3",
+    "key": "1:2",
+    "firstSegment": 5,
+    "tail": true
+   }
+  ],
+  "from": {
+   "0": [
+    {
+     "start": 0,
+     "end": 8,
+     "link": "https://x/a.mp3",
+     "key": "1:0",
+     "firstSegment": 0
+    },
+    {
+     "start": 8,
+     "end": 18.5,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 2,
+     "steps": [
+      {
+       "at": 14,
+       "db": -2
+      }
+     ]
+    },
+    {
+     "start": 18.5,
+     "end": 23,
+     "link": "https://x/c.mp3",
+     "key": "1:1",
+     "sibling": true
+    },
+    {
+     "start": 23,
+     "end": 30,
+     "link": "https://x/d.mp3",
+     "key": "1:2",
+     "firstSegment": 5,
+     "tail": true
+    }
+   ],
+   "1": [
+    {
+     "start": 5,
+     "end": 8,
+     "link": "https://x/a.mp3",
+     "key": "1:0",
+     "firstSegment": 0
+    },
+    {
+     "start": 8,
+     "end": 18.5,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 2,
+     "steps": [
+      {
+       "at": 14,
+       "db": -2
+      }
+     ]
+    },
+    {
+     "start": 18.5,
+     "end": 23,
+     "link": "https://x/c.mp3",
+     "key": "1:1",
+     "sibling": true
+    },
+    {
+     "start": 23,
+     "end": 30,
+     "link": "https://x/d.mp3",
+     "key": "1:2",
+     "firstSegment": 5,
+     "tail": true
+    }
+   ],
+   "2": [
+    {
+     "start": 8,
+     "end": 18.5,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 2,
+     "steps": [
+      {
+       "at": 14,
+       "db": -2
+      }
+     ]
+    },
+    {
+     "start": 18.5,
+     "end": 23,
+     "link": "https://x/c.mp3",
+     "key": "1:1",
+     "sibling": true
+    },
+    {
+     "start": 23,
+     "end": 30,
+     "link": "https://x/d.mp3",
+     "key": "1:2",
+     "firstSegment": 5,
+     "tail": true
+    }
+   ],
+   "3": [
+    {
+     "start": 14,
+     "end": 18.5,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 2,
+     "steps": [
+      {
+       "at": 14,
+       "db": -2
+      }
+     ]
+    },
+    {
+     "start": 18.5,
+     "end": 23,
+     "link": "https://x/c.mp3",
+     "key": "1:1",
+     "sibling": true
+    },
+    {
+     "start": 23,
+     "end": 30,
+     "link": "https://x/d.mp3",
+     "key": "1:2",
+     "firstSegment": 5,
+     "tail": true
+    }
+   ],
+   "4": [
+    {
+     "start": 20,
+     "end": 23,
+     "link": "https://x/c.mp3",
+     "key": "1:1",
+     "sibling": true
+    },
+    {
+     "start": 23,
+     "end": 30,
+     "link": "https://x/d.mp3",
+     "key": "1:2",
+     "firstSegment": 5,
+     "tail": true
+    }
+   ],
+   "5": [
+    {
+     "start": 23,
+     "end": 30,
+     "link": "https://x/d.mp3",
+     "key": "1:2",
+     "firstSegment": 5,
+     "tail": true
+    }
+   ],
+   "6": [
+    {
+     "start": 24,
+     "end": 30,
+     "link": "https://x/d.mp3",
+     "key": "1:2",
+     "firstSegment": 5,
+     "tail": true
+    }
+   ],
+   "7": []
+  },
+  "next": {
+   "0": 1,
+   "5": 2,
+   "16": 4,
+   "30": 7,
+   "4.9999999": 2,
+   "5.0000001": 2,
+   "29.9": 7
+  },
+  "events": [
+   {
+    "op": "arrive",
+    "timing": {
+     "starts": [
+      0,
+      5,
+      8,
+      14,
+      20,
+      23,
+      24
+     ],
+     "total": 30
+    },
+    "set": [
+     {
+      "start": 20,
+      "end": 23,
+      "link": "https://x/c.mp3",
+      "key": "1:1",
+      "sibling": true
+     },
+     {
+      "start": 23,
+      "end": 30,
+      "link": "https://x/d.mp3",
+      "key": "1:2",
+      "firstSegment": 5,
+      "tail": true
+     }
+    ]
+   },
+   {
+    "op": "seeked",
+    "timing": {
+     "starts": [
+      0,
+      5,
+      8,
+      14,
+      20,
+      23,
+      24
+     ],
+     "total": 30
+    },
+    "set": null
+   },
+   {
+    "op": "seeked",
+    "timing": {
+     "starts": [
+      0,
+      5,
+      8,
+      14,
+      20,
+      23,
+      24
+     ],
+     "total": 30
+    },
+    "set": [
+     {
+      "start": 0,
+      "end": 8,
+      "link": "https://x/a.mp3",
+      "key": "1:0",
+      "firstSegment": 0
+     },
+     {
+      "start": 8,
+      "end": 18.5,
+      "link": "https://x/b.mp3",
+      "key": "1:1",
+      "firstSegment": 2,
+      "steps": [
+       {
+        "at": 14,
+        "db": -2
+       }
+      ]
+     },
+     {
+      "start": 18.5,
+      "end": 23,
+      "link": "https://x/c.mp3",
+      "key": "1:1",
+      "sibling": true
+     },
+     {
+      "start": 23,
+      "end": 30,
+      "link": "https://x/d.mp3",
+      "key": "1:2",
+      "firstSegment": 5,
+      "tail": true
+     }
+    ]
+   },
+   {
+    "op": "seeked",
+    "timing": {
+     "starts": [
+      0,
+      5,
+      8,
+      14,
+      20,
+      23,
+      24
+     ],
+     "total": 30
+    },
+    "set": null
+   },
+   {
+    "op": "refresh",
+    "timing": {
+     "starts": [
+      0,
+      5,
+      8,
+      14,
+      20,
+      23,
+      24
+     ],
+     "total": 30
+    },
+    "set": [
+     {
+      "start": 0,
+      "end": 8,
+      "link": "https://x/a.mp3",
+      "key": "1:0",
+      "firstSegment": 0
+     },
+     {
+      "start": 8,
+      "end": 18.5,
+      "link": "https://x/b.mp3",
+      "key": "1:1",
+      "firstSegment": 2,
+      "steps": [
+       {
+        "at": 14,
+        "db": -2
+       }
+      ]
+     },
+     {
+      "start": 18.5,
+      "end": 23,
+      "link": "https://x/c.mp3",
+      "key": "1:1",
+      "sibling": true
+     },
+     {
+      "start": 23,
+      "end": 30,
+      "link": "https://x/d.mp3",
+      "key": "1:2",
+      "firstSegment": 5,
+      "tail": true
+     }
+    ]
+   }
+  ]
+ }
+}

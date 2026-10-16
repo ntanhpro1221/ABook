@@ -187,7 +187,11 @@ class PlayerPlugin : Plugin() {
             val planned = schedule?.getInteger("minutes")
             SleepTimer.schedule = if (from != null && to != null && planned != null) Triple(from, to, planned) else null
         }
-        call.getBoolean("autoMusic")?.let { Playlists.autoEnabled = it }
+        call.getBoolean("autoMusic")?.let {
+            // Sách chữ đang nghe mà chưa chọn nhạc: bật / tắt "Tự chọn nhạc nền" đổi nhạc theo cảnh ngay, không đợi mở lại sách.
+            if (it != Playlists.autoEnabled) MusicBed.invalidate(Playback.bookId)
+            Playlists.autoEnabled = it
+        }
         Playback.configure(call.getDouble("rewindAfterMinutes") ?: 5.0, call.getDouble("rewindSeconds") ?: 5.0)
     }
 

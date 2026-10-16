@@ -89,7 +89,9 @@ object LocalStudio {
             error = problem.message.orEmpty()
             JSONArray()
         }
+        // `scene`: máy dựng được nhạc theo cảnh (menu hiện dòng "Theo cảnh"); điện thoại dựng bằng đường N0, không cần học sinh nên `student` luôn false.
         return JSONObject().put("playlists", playlists).put("mine", musicStore?.entries()?.size ?: 0).put("error", error)
+            .put("scene", JSONObject().put("student", false))
     }
 
     /** Lời đáp của một lượt nhập (`my_music_import` của server.py): bài mới, bài đã có, file lỗi kèm lý do, cộng danh sách mới. */
@@ -324,14 +326,11 @@ object LocalStudio {
     }
 
     private fun withAutoChoice(dir: java.io.File, view: JSONObject): JSONObject {
-        // "scene" (nhạc theo cảnh của máy tính) đi theo sách qua lớp sửa nhưng điện thoại chưa có: coi như chưa chọn gì, máy tự chọn danh sách.
-        if (view.optString("playlist") == Playlists.SCENE) view.remove("playlist")
-        if (view.has("playlist") || BookEdits.truthy(BookEdits.rawBook(dir).opt("music"))) return view
-        // Mục lục danh mục chưa tải được (máy mới, chưa có mạng) thì dùng luật đóng kèm: chọn được tên danh sách ngay, bài tải sau.
-        val manifest = runCatching { catalog?.manifest() }.getOrNull()
-        val auto = Playlists.autoPlaylist(dir, manifest, bundledPicker)
-            ?: return if (!Playlists.autoEnabled && Playlists.isTextBook(BookEdits.rawBook(dir))) view.put("autoOff", true) else view
-        return view.put("playlist", auto).put("playlistAuto", true)
+        val book = BookEdits.rawBook(dir)
+        if (view.has("playlist") || BookEdits.truthy(book.opt("music"))) return view
+        // Chưa chọn gì ("Để máy chọn") và "Tự chọn nhạc nền" còn bật: máy dựng nhạc theo cảnh từ chữ (DeviceScenes) - `_with_auto_playlist` của server.py.
+        if (Playlists.sceneMode(book, "", Playlists.autoEnabled)) return view.put("playlist", Playlists.SCENE).put("playlistAuto", true)
+        return if (!Playlists.autoEnabled && Playlists.isTextBook(book)) view.put("autoOff", true) else view
     }
 
     /**

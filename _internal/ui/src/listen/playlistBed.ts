@@ -14,8 +14,8 @@ import { RETRY_MS, type MusicBed, type MusicCredit, type MusicCue } from "./musi
 export const MINE_PLAYLIST = "mine";
 /** `music.playlist` = "off": người nghe tắt nhạc nền (khác với không có khoá = để máy chọn). */
 export const OFF_PLAYLIST = "off";
-/** `music.playlist` = "scene": nhạc đổi theo cảnh, máy tự dựng từ chữ (music_nnscene.py, sceneCues.ts). Máy tính; là mặc định khi chưa chọn gì. Điện thoại chưa có
- *  (máy tính không báo `scene` trong menu của nó thì dòng này không hiện), gặp mã lạ thì coi như để máy chọn. */
+/** `music.playlist` = "scene": nhạc đổi theo cảnh, máy tự dựng từ chữ, không cần model (máy tính: music_nnscene.py + sceneCues.ts; điện thoại: lõi native, SceneDevice.kt +
+ *  SceneAnchor.kt). Là mặc định khi chưa chọn gì. Máy không báo `scene` trong menu của nó thì dòng này không hiện. */
 export const SCENE_PLAYLIST = "scene";
 export const SCENE_LABEL = "Theo cảnh (máy tự dựng)";
 /** Bài không biết độ dài: khoảng mặc định trên đồng hồ (bài ngắn hơn thì lặp liền như mọi bài nhạc nền). */
@@ -74,7 +74,7 @@ export interface PlaylistMenu {
   /** Số bài trong "Nhạc của tôi" của máy này. */
   mine: number;
   error: string;
-  /** Máy này dựng được nhạc theo cảnh (máy tính). `student`: server dùng học sinh q06 trong tiến trình (chỉ để chẩn đoán, không hiện cho người nghe). Vắng = máy không có (điện thoại). */
+  /** Máy này dựng được nhạc theo cảnh (máy tính và điện thoại). `student`: máy tính dùng học sinh q06 trong tiến trình (chỉ để chẩn đoán, không hiện cho người nghe); điện thoại luôn false. Vắng = máy không có. */
   scene?: { student: boolean };
 }
 
@@ -397,7 +397,7 @@ export function shortPlaylistLabel(label: string): string {
 /** Công tắc "Tự chọn nhạc nền" ở Cài đặt > Nhạc nền (máy tính và điện thoại dùng chung lời). */
 export const AUTO_MUSIC_LABEL = "Tự chọn nhạc nền cho sách chỉ có chữ";
 export const AUTO_MUSIC_HINT =
-  "Máy chọn một bộ nhạc hợp với truyện (kỳ ảo, học đường, kiếm hiệp…) rồi phát nhè nhẹ dưới giọng đọc. Tắt thì sách chưa chọn nhạc sẽ im lặng; cuốn nào bạn đã chọn nhạc ở menu “Nhạc nền” của sách vẫn có nhạc.";
+  "Máy đọc truyện rồi cho nhạc đổi theo từng cảnh, phát nhè nhẹ dưới giọng đọc. Tắt thì sách chưa chọn nhạc sẽ im lặng; cuốn nào bạn đã chọn nhạc ở menu “Nhạc nền” của sách vẫn có nhạc.";
 
 /** Nhạc đang chạy cho cuốn này hay không (máy chọn được, hay người nghe chọn một danh sách) - để nút "Nhạc nền" sáng lên. */
 export function playlistPlaying(view: PlaylistView | undefined): boolean {

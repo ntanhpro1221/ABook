@@ -1,0 +1,83 @@
+{
+ "name": "no_segments",
+ "description": "Màn đọc chưa có đoạn nào: không neo được gì, SceneCues không đặt mốc.",
+ "segments": [],
+ "timed": false,
+ "cues": [
+  {
+   "start": 0,
+   "end": 60,
+   "link": "https://x/a.mp3",
+   "key": "1:0",
+   "firstSegment": 0
+  }
+ ],
+ "estSeconds": 60,
+ "from": [
+  0,
+  1
+ ],
+ "next": [
+  0
+ ],
+ "events": [
+  {
+   "op": "arrive",
+   "time": 0
+  },
+  {
+   "op": "refresh"
+  },
+  {
+   "op": "seeked",
+   "time": 3
+  }
+ ],
+ "script": {
+  "chapterId": 1,
+  "title": "T",
+  "timed": false,
+  "duration": 0,
+  "segments": []
+ },
+ "expected": {
+  "timing": {
+   "starts": [],
+   "total": 0
+  },
+  "anchored": [],
+  "from": {
+   "0": [],
+   "1": []
+  },
+  "next": {
+   "0": 0
+  },
+  "events": [
+   {
+    "op": "arrive",
+    "timing": {
+     "starts": [],
+     "total": 0
+    },
+    "set": null
+   },
+   {
+    "op": "refresh",
+    "timing": {
+     "starts": [],
+     "total": 0
+    },
+    "set": null
+   },
+   {
+    "op": "seeked",
+    "timing": {
+     "starts": [],
+     "total": 0
+    },
+    "set": null
+   }
+  ]
+ }
+}

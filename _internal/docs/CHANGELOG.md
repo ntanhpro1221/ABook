@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại
+
+- Sách chữ trên điện thoại giờ cũng có nhạc nền theo cảnh (máy tự dựng từ chữ, không cần model), và đó là mặc định như trên máy tính: bài nhạc đổi đúng đầu đoạn mà cảnh mới bắt đầu đọc, không đổi giữa câu; chương chưa dựng xong thì nhạc vào ở câu kế tiếp, giọng đọc không phải chờ. Menu "Nhạc nền" có thêm "Theo cảnh (máy tự dựng)"; bạn vẫn chọn được danh sách khác, "Nhạc của tôi" hay tắt.
+
 ## [0.4.72] - 2026-10-16
 
 ### Nghe ngay

@@ -1,0 +1,475 @@
+{
+ "name": "partial_real",
+ "description": "Bốn đoạn đầu đã đọc (giây thật, lệch ước), bốn đoạn sau còn ước nối tiếp - đồng hồ ảo của lõi native lúc đang nghe. Clip về thêm thì refresh đặt lại.",
+ "segments": [
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+   "real": [
+    0,
+    4.1
+   ]
+  },
+  {
+   "text": "Một đoạn chữ vừa phải để đọc.",
+   "real": [
+    4.1,
+    6.9
+   ]
+  },
+  {
+   "text": "Ừ.",
+   "real": [
+    6.9,
+    7.5
+   ]
+  },
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+   "real": [
+    7.5,
+    13.2
+   ]
+  },
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa."
+  },
+  {
+   "text": "Một đoạn chữ vừa phải để đọc."
+  },
+  {
+   "text": "Ừ."
+  },
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa."
+  }
+ ],
+ "timed": true,
+ "cues": [
+  {
+   "start": 0,
+   "end": 90,
+   "link": "https://x/a.mp3",
+   "key": "1:0",
+   "firstSegment": 0
+  },
+  {
+   "start": 90,
+   "end": 200,
+   "link": "https://x/b.mp3",
+   "key": "1:1",
+   "firstSegment": 3,
+   "steps": [
+    {
+     "at": 120,
+     "db": -4.5
+    }
+   ]
+  },
+  {
+   "start": 200,
+   "end": 330,
+   "link": "https://x/c.mp3",
+   "key": "1:2",
+   "firstSegment": 5
+  }
+ ],
+ "estSeconds": 330,
+ "from": [
+  0,
+  3,
+  4,
+  5,
+  7
+ ],
+ "next": [
+  0,
+  6.9,
+  7.5,
+  13.2,
+  14
+ ],
+ "events": [
+  {
+   "op": "arrive",
+   "time": 3.3
+  },
+  {
+   "op": "refresh",
+   "segments": [
+    {
+     "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+     "real": [
+      0,
+      4.1
+     ]
+    },
+    {
+     "text": "Một đoạn chữ vừa phải để đọc.",
+     "real": [
+      4.1,
+      6.9
+     ]
+    },
+    {
+     "text": "Ừ.",
+     "real": [
+      6.9,
+      7.5
+     ]
+    },
+    {
+     "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+     "real": [
+      7.5,
+      13.2
+     ]
+    },
+    {
+     "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+     "real": [
+      13.2,
+      20.45
+     ]
+    },
+    {
+     "text": "Một đoạn chữ vừa phải để đọc.",
+     "real": [
+      20.45,
+      23.3
+     ]
+    },
+    {
+     "text": "Ừ."
+    },
+    {
+     "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa."
+    }
+   ],
+   "timed": true
+  }
+ ],
+ "script": {
+  "chapterId": 1,
+  "title": "T",
+  "timed": true,
+  "duration": 29.01428571428572,
+  "segments": [
+   {
+    "id": 0,
+    "paragraph": 0,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 0,
+    "end": 4.1,
+    "status": "pending"
+   },
+   {
+    "id": 1,
+    "paragraph": 1,
+    "text": "Một đoạn chữ vừa phải để đọc.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 4.1,
+    "end": 6.9,
+    "status": "pending"
+   },
+   {
+    "id": 2,
+    "paragraph": 2,
+    "text": "Ừ.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 6.9,
+    "end": 7.5,
+    "status": "pending"
+   },
+   {
+    "id": 3,
+    "paragraph": 3,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 7.5,
+    "end": 13.2,
+    "status": "pending"
+   },
+   {
+    "id": 4,
+    "paragraph": 4,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 13.2,
+    "end": 19.771428571428572,
+    "status": "pending"
+   },
+   {
+    "id": 5,
+    "paragraph": 5,
+    "text": "Một đoạn chữ vừa phải để đọc.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 19.771428571428572,
+    "end": 21.842857142857145,
+    "status": "pending"
+   },
+   {
+    "id": 6,
+    "paragraph": 6,
+    "text": "Ừ.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 21.842857142857145,
+    "end": 22.442857142857147,
+    "status": "pending"
+   },
+   {
+    "id": 7,
+    "paragraph": 7,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": 22.442857142857147,
+    "end": 29.01428571428572,
+    "status": "pending"
+   }
+  ]
+ },
+ "expected": {
+  "timing": {
+   "starts": [
+    0,
+    4.1,
+    6.9,
+    7.5,
+    13.2,
+    19.771428571428572,
+    21.842857142857145,
+    22.442857142857147
+   ],
+   "total": 29.01428571428572
+  },
+  "anchored": [
+   {
+    "start": 0,
+    "end": 7.5,
+    "link": "https://x/a.mp3",
+    "key": "1:0",
+    "firstSegment": 0
+   },
+   {
+    "start": 7.5,
+    "end": 19.771428571428572,
+    "link": "https://x/b.mp3",
+    "key": "1:1",
+    "firstSegment": 3,
+    "steps": [
+     {
+      "at": 10.846753246753247,
+      "db": -4.5
+     }
+    ]
+   },
+   {
+    "start": 19.771428571428572,
+    "end": 29.01428571428572,
+    "link": "https://x/c.mp3",
+    "key": "1:2",
+    "firstSegment": 5
+   }
+  ],
+  "from": {
+   "0": [
+    {
+     "start": 0,
+     "end": 7.5,
+     "link": "https://x/a.mp3",
+     "key": "1:0",
+     "firstSegment": 0
+    },
+    {
+     "start": 7.5,
+     "end": 19.771428571428572,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 3,
+     "steps": [
+      {
+       "at": 10.846753246753247,
+       "db": -4.5
+      }
+     ]
+    },
+    {
+     "start": 19.771428571428572,
+     "end": 29.01428571428572,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 5
+    }
+   ],
+   "3": [
+    {
+     "start": 7.5,
+     "end": 19.771428571428572,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 3,
+     "steps": [
+      {
+       "at": 10.846753246753247,
+       "db": -4.5
+      }
+     ]
+    },
+    {
+     "start": 19.771428571428572,
+     "end": 29.01428571428572,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 5
+    }
+   ],
+   "4": [
+    {
+     "start": 13.2,
+     "end": 19.771428571428572,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 3,
+     "steps": [
+      {
+       "at": 10.846753246753247,
+       "db": -4.5
+      }
+     ]
+    },
+    {
+     "start": 19.771428571428572,
+     "end": 29.01428571428572,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 5
+    }
+   ],
+   "5": [
+    {
+     "start": 19.771428571428572,
+     "end": 29.01428571428572,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 5
+    }
+   ],
+   "7": [
+    {
+     "start": 22.442857142857147,
+     "end": 29.01428571428572,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 5
+    }
+   ]
+  },
+  "next": {
+   "0": 1,
+   "14": 5,
+   "6.9": 3,
+   "7.5": 4,
+   "13.2": 5
+  },
+  "events": [
+   {
+    "op": "arrive",
+    "timing": {
+     "starts": [
+      0,
+      4.1,
+      6.9,
+      7.5,
+      13.2,
+      19.771428571428572,
+      21.842857142857145,
+      22.442857142857147
+     ],
+     "total": 29.01428571428572
+    },
+    "set": [
+     {
+      "start": 4.1,
+      "end": 7.5,
+      "link": "https://x/a.mp3",
+      "key": "1:0",
+      "firstSegment": 0
+     },
+     {
+      "start": 7.5,
+      "end": 19.771428571428572,
+      "link": "https://x/b.mp3",
+      "key": "1:1",
+      "firstSegment": 3,
+      "steps": [
+       {
+        "at": 10.846753246753247,
+        "db": -4.5
+       }
+      ]
+     },
+     {
+      "start": 19.771428571428572,
+      "end": 29.01428571428572,
+      "link": "https://x/c.mp3",
+      "key": "1:2",
+      "firstSegment": 5
+     }
+    ]
+   },
+   {
+    "op": "refresh",
+    "timing": {
+     "starts": [
+      0,
+      4.1,
+      6.9,
+      7.5,
+      13.2,
+      20.45,
+      23.3,
+      23.900000000000002
+     ],
+     "total": 30.471428571428575
+    },
+    "set": [
+     {
+      "start": 4.1,
+      "end": 7.5,
+      "link": "https://x/a.mp3",
+      "key": "1:0",
+      "firstSegment": 0
+     },
+     {
+      "start": 7.5,
+      "end": 20.45,
+      "link": "https://x/b.mp3",
+      "key": "1:1",
+      "firstSegment": 3,
+      "steps": [
+       {
+        "at": 11.031818181818181,
+        "db": -4.5
+       }
+      ]
+     },
+     {
+      "start": 20.45,
+      "end": 30.471428571428575,
+      "link": "https://x/c.mp3",
+      "key": "1:2",
+      "firstSegment": 5
+     }
+    ]
+   }
+  ]
+ }
+}

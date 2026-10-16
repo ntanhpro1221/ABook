@@ -1,0 +1,499 @@
+{
+ "name": "breaks_and_headings",
+ "description": "Chương có tiêu đề và dòng ngăn cảnh (đoạn lặng cố định): cảnh bắt đầu ở đúng đoạn tiêu đề / ngăn cảnh; giây của các đoạn lặng nằm trong đồng hồ.",
+ "segments": [
+  {
+   "text": "Chương một",
+   "kind": "heading"
+  },
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa."
+  },
+  {
+   "text": "Một đoạn chữ vừa phải để đọc."
+  },
+  {
+   "text": "***",
+   "sceneBreak": true
+  },
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa."
+  },
+  {
+   "text": "***",
+   "sceneBreak": true
+  },
+  {
+   "text": "Hai ngày sau",
+   "kind": "heading"
+  },
+  {
+   "text": "Một đoạn chữ vừa phải để đọc."
+  },
+  {
+   "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa."
+  }
+ ],
+ "timed": false,
+ "cues": [
+  {
+   "start": 0,
+   "end": 70,
+   "link": "https://x/a.mp3",
+   "key": "1:0",
+   "firstSegment": 0
+  },
+  {
+   "start": 70,
+   "end": 100,
+   "link": "https://x/b.mp3",
+   "key": "1:1",
+   "firstSegment": 3
+  },
+  {
+   "start": 100,
+   "end": 190,
+   "link": "https://x/c.mp3",
+   "key": "1:2",
+   "firstSegment": 6,
+   "steps": [
+    {
+     "at": 140,
+     "db": -6
+    }
+   ]
+  }
+ ],
+ "estSeconds": 190,
+ "from": [
+  0,
+  3,
+  4,
+  5,
+  6,
+  8
+ ],
+ "next": [
+  0,
+  1,
+  2.5,
+  100
+ ],
+ "events": [
+  {
+   "op": "arrive",
+   "time": 9.5
+  },
+  {
+   "op": "refresh"
+  },
+  {
+   "op": "seeked",
+   "time": 1
+  }
+ ],
+ "script": {
+  "chapterId": 1,
+  "title": "T",
+  "timed": false,
+  "duration": 0,
+  "segments": [
+   {
+    "id": 0,
+    "paragraph": 0,
+    "text": "Chương một",
+    "kind": "heading",
+    "speaker": "NARRATOR",
+    "start": null,
+    "end": null,
+    "status": "pending"
+   },
+   {
+    "id": 1,
+    "paragraph": 1,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": null,
+    "end": null,
+    "status": "pending"
+   },
+   {
+    "id": 2,
+    "paragraph": 2,
+    "text": "Một đoạn chữ vừa phải để đọc.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": null,
+    "end": null,
+    "status": "pending"
+   },
+   {
+    "id": 3,
+    "paragraph": 3,
+    "text": "***",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": null,
+    "end": null,
+    "status": "pending",
+    "sceneBreak": true
+   },
+   {
+    "id": 4,
+    "paragraph": 4,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": null,
+    "end": null,
+    "status": "pending"
+   },
+   {
+    "id": 5,
+    "paragraph": 5,
+    "text": "***",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": null,
+    "end": null,
+    "status": "pending",
+    "sceneBreak": true
+   },
+   {
+    "id": 6,
+    "paragraph": 6,
+    "text": "Hai ngày sau",
+    "kind": "heading",
+    "speaker": "NARRATOR",
+    "start": null,
+    "end": null,
+    "status": "pending"
+   },
+   {
+    "id": 7,
+    "paragraph": 7,
+    "text": "Một đoạn chữ vừa phải để đọc.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": null,
+    "end": null,
+    "status": "pending"
+   },
+   {
+    "id": 8,
+    "paragraph": 8,
+    "text": "Một đoạn chữ khá dài để người đọc phải mất vài giây mới đọc xong, câu này dài thêm chút nữa.",
+    "kind": "narration",
+    "speaker": "NARRATOR",
+    "start": null,
+    "end": null,
+    "status": "pending"
+   }
+  ]
+ },
+ "expected": {
+  "timing": {
+   "starts": [
+    0,
+    0.7142857142857143,
+    7.285714285714286,
+    9.357142857142858,
+    10.857142857142858,
+    17.42857142857143,
+    18.92857142857143,
+    19.78571428571429,
+    21.85714285714286
+   ],
+   "total": 28.42857142857143
+  },
+  "anchored": [
+   {
+    "start": 0,
+    "end": 9.357142857142858,
+    "link": "https://x/a.mp3",
+    "key": "1:0",
+    "firstSegment": 0
+   },
+   {
+    "start": 9.357142857142858,
+    "end": 18.92857142857143,
+    "link": "https://x/b.mp3",
+    "key": "1:1",
+    "firstSegment": 3
+   },
+   {
+    "start": 18.92857142857143,
+    "end": 28.42857142857143,
+    "link": "https://x/c.mp3",
+    "key": "1:2",
+    "firstSegment": 6,
+    "steps": [
+     {
+      "at": 23.150793650793652,
+      "db": -6
+     }
+    ]
+   }
+  ],
+  "from": {
+   "0": [
+    {
+     "start": 0,
+     "end": 9.357142857142858,
+     "link": "https://x/a.mp3",
+     "key": "1:0",
+     "firstSegment": 0
+    },
+    {
+     "start": 9.357142857142858,
+     "end": 18.92857142857143,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 3
+    },
+    {
+     "start": 18.92857142857143,
+     "end": 28.42857142857143,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 6,
+     "steps": [
+      {
+       "at": 23.150793650793652,
+       "db": -6
+      }
+     ]
+    }
+   ],
+   "3": [
+    {
+     "start": 9.357142857142858,
+     "end": 18.92857142857143,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 3
+    },
+    {
+     "start": 18.92857142857143,
+     "end": 28.42857142857143,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 6,
+     "steps": [
+      {
+       "at": 23.150793650793652,
+       "db": -6
+      }
+     ]
+    }
+   ],
+   "4": [
+    {
+     "start": 10.857142857142858,
+     "end": 18.92857142857143,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 3
+    },
+    {
+     "start": 18.92857142857143,
+     "end": 28.42857142857143,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 6,
+     "steps": [
+      {
+       "at": 23.150793650793652,
+       "db": -6
+      }
+     ]
+    }
+   ],
+   "5": [
+    {
+     "start": 17.42857142857143,
+     "end": 18.92857142857143,
+     "link": "https://x/b.mp3",
+     "key": "1:1",
+     "firstSegment": 3
+    },
+    {
+     "start": 18.92857142857143,
+     "end": 28.42857142857143,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 6,
+     "steps": [
+      {
+       "at": 23.150793650793652,
+       "db": -6
+      }
+     ]
+    }
+   ],
+   "6": [
+    {
+     "start": 18.92857142857143,
+     "end": 28.42857142857143,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 6,
+     "steps": [
+      {
+       "at": 23.150793650793652,
+       "db": -6
+      }
+     ]
+    }
+   ],
+   "8": [
+    {
+     "start": 21.85714285714286,
+     "end": 28.42857142857143,
+     "link": "https://x/c.mp3",
+     "key": "1:2",
+     "firstSegment": 6,
+     "steps": [
+      {
+       "at": 23.150793650793652,
+       "db": -6
+      }
+     ]
+    }
+   ]
+  },
+  "next": {
+   "0": 1,
+   "1": 2,
+   "100": 9,
+   "2.5": 2
+  },
+  "events": [
+   {
+    "op": "arrive",
+    "timing": {
+     "starts": [
+      0,
+      0.7142857142857143,
+      7.285714285714286,
+      9.357142857142858,
+      10.857142857142858,
+      17.42857142857143,
+      18.92857142857143,
+      19.78571428571429,
+      21.85714285714286
+     ],
+     "total": 28.42857142857143
+    },
+    "set": [
+     {
+      "start": 10.857142857142858,
+      "end": 18.92857142857143,
+      "link": "https://x/b.mp3",
+      "key": "1:1",
+      "firstSegment": 3
+     },
+     {
+      "start": 18.92857142857143,
+      "end": 28.42857142857143,
+      "link": "https://x/c.mp3",
+      "key": "1:2",
+      "firstSegment": 6,
+      "steps": [
+       {
+        "at": 23.150793650793652,
+        "db": -6
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "op": "refresh",
+    "timing": {
+     "starts": [
+      0,
+      0.7142857142857143,
+      7.285714285714286,
+      9.357142857142858,
+      10.857142857142858,
+      17.42857142857143,
+      18.92857142857143,
+      19.78571428571429,
+      21.85714285714286
+     ],
+     "total": 28.42857142857143
+    },
+    "set": [
+     {
+      "start": 10.857142857142858,
+      "end": 18.92857142857143,
+      "link": "https://x/b.mp3",
+      "key": "1:1",
+      "firstSegment": 3
+     },
+     {
+      "start": 18.92857142857143,
+      "end": 28.42857142857143,
+      "link": "https://x/c.mp3",
+      "key": "1:2",
+      "firstSegment": 6,
+      "steps": [
+       {
+        "at": 23.150793650793652,
+        "db": -6
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "op": "seeked",
+    "timing": {
+     "starts": [
+      0,
+      0.7142857142857143,
+      7.285714285714286,
+      9.357142857142858,
+      10.857142857142858,
+      17.42857142857143,
+      18.92857142857143,
+      19.78571428571429,
+      21.85714285714286
+     ],
+     "total": 28.42857142857143
+    },
+    "set": [
+     {
+      "start": 0,
+      "end": 9.357142857142858,
+      "link": "https://x/a.mp3",
+      "key": "1:0",
+      "firstSegment": 0
+     },
+     {
+      "start": 9.357142857142858,
+      "end": 18.92857142857143,
+      "link": "https://x/b.mp3",
+      "key": "1:1",
+      "firstSegment": 3
+     },
+     {
+      "start": 18.92857142857143,
+      "end": 28.42857142857143,
+      "link": "https://x/c.mp3",
+      "key": "1:2",
+      "firstSegment": 6,
+      "steps": [
+       {
+        "at": 23.150793650793652,
+        "db": -6
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}
