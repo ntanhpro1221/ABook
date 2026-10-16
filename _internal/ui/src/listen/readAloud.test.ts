@@ -15,11 +15,14 @@ import {
   estimateSeconds,
   fetchClipBytes,
   estimatedStarts,
+  isLongParagraph,
   isSpeakable,
+  KEEP_BEHIND,
   isTransientClipError,
   MAX_WARM_RANK,
   readAheadCount,
   warmRankOf,
+  WHOLE_CHARS,
   type AudioLike,
   type ReadAloudClip,
   type SpeechTrack,
@@ -313,31 +316,54 @@ describe("chương kế: xin trước tiêu đề + đoạn đầu khi chương 
     expect(nextRequests(s)).toHaveLength(NEXT_CHAPTER_AHEAD); // chỉ một lần cho mỗi lần nạp chương
   });
 
-  it("mỗi clip xin trước của chương kế mang rank = số đoạn người nghe còn phải nghe trước nó: sau mọi đoạn của chương này, trước việc nền (không rank)", async () => {
-    const { s } = withNext();
+  // Đoạn dài (>= WHOLE_CHARS ký tự) mới tính vào rank của đoạn sau nó.
+  const wide = (name: string) => `${name} ${"nói mãi không dứt ".repeat(8)}`.trim();
+  const WIDE = [wide("Một"), wide("Hai"), wide("Ba"), wide("Bốn")];
+  const WIDE_NEXT = ["Chương hai.", wide("Đoạn đầu của chương hai"), wide("Đoạn thứ hai của chương hai")];
+
+  function withWideNext(serial = false) {
+    const s = setup({ chapter: WIDE.join("\n\n") });
+    s.track.after = async () => WIDE_NEXT;
+    if (serial) s.track.serial = () => true;
+    return s;
+  }
+
+  it("mỗi clip xin trước của chương kế mang rank = số đoạn DÀI người nghe còn phải nghe trước nó: sau mọi đoạn dài của chương này, trước việc nền (không rank)", async () => {
+    const s = withWideNext();
     s.engine.load(s.trackInfo, 0, true);
     await flush();
-    // đoạn của chính chương đang nghe: rank là khoảng cách tới chỗ nghe (0 = đang chờ)
-    expect(s.requests.map((r) => [r.text, r.rank])).toEqual(TEXTS.map((text, i) => [text, i]));
-    for (const text of TEXTS) await s.arrive(text);
+    // đoạn của chính chương đang nghe: rank là số đoạn dài từ chỗ nghe tới nó (0 = đang chờ)
+    expect(s.requests.map((r) => [r.text, r.rank])).toEqual(WIDE.map((text, i) => [text, i]));
+    for (const text of WIDE) await s.arrive(text);
     await flush();
-    const warm = s.requests.filter((r) => NEXT.includes(r.text));
-    expect(warm.map((r) => r.text)).toEqual(NEXT.slice(0, NEXT_CHAPTER_AHEAD));
-    // người nghe ở đoạn 0 của 4 đoạn: tiêu đề chương kế đứng sau 4 đoạn, đoạn đầu sau 5...
-    expect(warm.map((r) => r.rank)).toEqual(NEXT.slice(0, NEXT_CHAPTER_AHEAD).map((_, k) => TEXTS.length + k));
-    expect(Math.max(...TEXTS.map((_, i) => i))).toBeLessThan(Math.min(...warm.map((r) => r.rank!)));
+    const warm = s.requests.filter((r) => WIDE_NEXT.includes(r.text));
+    expect(warm.map((r) => r.text)).toEqual(WIDE_NEXT.slice(0, NEXT_CHAPTER_AHEAD));
+    // người nghe ở đoạn 0 của 4 đoạn dài: tiêu đề (ngắn) chương kế đứng sau 4 đoạn; đoạn đầu cũng sau 4 - tiêu đề ngắn đứng trước nó không tính
+    expect(warm.map((r) => r.rank)).toEqual([WIDE.length, WIDE.length]);
     expect(warm.every((r) => r.rank! >= 1 && r.rank! <= MAX_WARM_RANK)).toBe(true);
   });
 
   it("giọng chạy trên máy cũng gửi rank cho từng clip xin lần lượt của chương kế", async () => {
-    const { s } = withNext({}, true);
+    const s = withWideNext(true);
     s.engine.load(s.trackInfo, 0, true);
     await flush();
-    for (const text of TEXTS) await s.arrive(text);
+    for (const text of WIDE) await s.arrive(text);
     await flush();
-    expect(s.requests.filter((r) => NEXT.includes(r.text)).map((r) => r.rank)).toEqual([TEXTS.length]);
-    await s.arrive(NEXT[0]);
-    expect(s.requests.filter((r) => NEXT.includes(r.text)).map((r) => r.rank)).toEqual([TEXTS.length, TEXTS.length + 1]);
+    expect(s.requests.filter((r) => WIDE_NEXT.includes(r.text)).map((r) => r.rank)).toEqual([WIDE.length]);
+    await s.arrive(WIDE_NEXT[0]);
+    expect(s.requests.filter((r) => WIDE_NEXT.includes(r.text)).map((r) => r.rank)).toEqual([WIDE.length, WIDE.length]);
+  });
+
+  it("đoạn ngắn đứng trước không tính vào rank của đoạn kế (a56): cuối chương toàn đoạn ngắn thì đoạn dài của chương kế vẫn rank 1", async () => {
+    const tail = ["Ừ.", "Vâng ạ.", "Thôi được."];
+    const s = setup({ chapter: [WIDE[0], ...tail].join("\n\n") });
+    s.track.after = async () => WIDE_NEXT;
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    for (const text of [WIDE[0], ...tail]) await s.arrive(text);
+    await flush();
+    const warm = s.requests.filter((r) => WIDE_NEXT.includes(r.text));
+    expect(warm.map((r) => r.rank)).toEqual([1, 1]); // chỉ đoạn dài đầu còn tính (người nghe ở đoạn 0); 3 đoạn ngắn không
   });
 
   it("rank xin trước chương kế: tối thiểu 1, tối đa MAX_WARM_RANK (98, thấp hơn rank việc nền 99 của máy chủ)", () => {
@@ -1248,10 +1274,10 @@ describe("cách đọc riêng vừa đổi ('Đọc từ này là…')", () => {
 });
 
 describe("clip người nghe đang chờ đi trước clip đọc trước (uxfix51)", () => {
-  const LONG = Array.from({ length: 14 }, (_, n) => `Đoạn số ${n} nói.`);
+  const LONG = Array.from({ length: 14 }, (_, n) => `Đoạn số ${n} ${"nói mãi không dứt ".repeat(8)}`.trim()); // >= WHOLE_CHARS: đoạn dài
   const chapter = LONG.join("\n\n");
 
-  it("mỗi lượt xin mang rank = số đoạn người nghe phải nghe trước nó: đoạn đang chờ 0, đoạn kế 1, 2, 3", async () => {
+  it("mỗi lượt xin mang rank = số đoạn dài người nghe phải nghe trước nó: đoạn đang chờ 0, đoạn kế 1, 2, 3", async () => {
     const s = setup({ chapter });
     s.engine.load(s.trackInfo, 0, true);
     await flush();
@@ -1268,6 +1294,27 @@ describe("clip người nghe đang chờ đi trước clip đọc trước (uxfi
     expect(jumped).toHaveLength(1);
     expect(jumped[0].rank).toBe(0);
     expect(s.requests.filter((r) => r.rank === 0).map((r) => r.text)).toEqual([LONG[0], LONG[9]]);
+  });
+
+  it("tiêu đề ngắn đứng trước không tính (a56): tiêu đề và đoạn dài đầu cùng rank 0, các đoạn sau 1, 2", async () => {
+    const heading = "Chương 8.";
+    const s = setup({ chapter: [heading, ...LONG.slice(0, 5)].join("\n\n") });
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    expect(s.requests.map((r) => [r.text, r.rank])).toEqual([[heading, 0], [LONG[0], 0], [LONG[1], 1], [LONG[2], 2]]);
+  });
+
+  it("đoạn ngắn xen giữa không tính, đoạn dài vẫn tính: dài, ngắn, dài, ngắn -> 0, 1, 1, 2", async () => {
+    const parts = [LONG[0], "Ừ.", LONG[1], "Vâng ạ.", LONG[2]];
+    const s = setup({ chapter: parts.join("\n\n") });
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    expect(s.requests.map((r) => r.rank)).toEqual([0, 1, 1, 2]);
+  });
+
+  it("ranking đoạn dài: đúng ngưỡng WHOLE_CHARS", () => {
+    expect(isLongParagraph("a".repeat(WHOLE_CHARS - 1))).toBe(false);
+    expect(isLongParagraph("a".repeat(WHOLE_CHARS))).toBe(true);
   });
 });
 
@@ -1673,6 +1720,67 @@ describe("file audio của clip tải bằng fetch rồi phát từ blob: URL (u
     await flush();
     expect(urls.made).toHaveLength(urlsBefore); // file đã bỏ khỏi bộ nhớ: không cấp blob: URL mới
     expect(s.audios.filter((audio) => audio.src === `/clip/${encodeURIComponent("Đoạn số 1.")}`)).toHaveLength(1);
+  });
+});
+
+describe("giữ file của vài đoạn vừa nghe để nghe lại (uxfix54)", () => {
+  const PARAS = Array.from({ length: 12 }, (_, i) => `Đoạn số ${i + 1} của chương.`);
+
+  it("KEEP_BEHIND đoạn vừa nghe còn file: bấm lùi phát từ blob: URL mới, không đi tải lại đường dẫn; xa hơn thì phát từ đường dẫn", async () => {
+    const urls = blobUrls();
+    const s = setup({ chapter: PARAS.join("\n\n") });
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    const resolveAll = async () => {
+      s.requests.filter((r) => PARAS.includes(r.text)).forEach((r) => r.resolve(withBytes(r.text)));
+      await flush();
+    };
+    // nghe liền tới đoạn 5 (chỉ số 4): mỗi đoạn xong thì đoạn kế bắt đầu
+    for (let k = 0; k < 4; k += 1) {
+      await resolveAll();
+      const playing = s.audios.filter((audio) => !audio.paused && !audio.released);
+      expect(playing).toHaveLength(1);
+      playing[0].finish();
+      await flush();
+    }
+    await resolveAll();
+    const made = urls.made.length;
+    // lùi 1 đoạn (chỉ số 3) và 2 đoạn (chỉ số 2): file còn, blob: URL mới cấp (chưa có audio nào dùng đường dẫn máy chủ)
+    s.engine.seekWord(3, 0);
+    await flush();
+    expect(urls.made.length).toBeGreaterThanOrEqual(made); // đoạn 3 còn audio (hoặc cấp mới)
+    s.engine.seekWord(2, 0);
+    await flush();
+    expect(s.audios.some((audio) => audio.src.startsWith("/clip/") && audio.src.includes(encodeURIComponent(PARAS[2])))).toBe(false);
+    expect(s.audios.some((audio) => audio.src.startsWith("blob:") && !audio.released && audio.plays > 0)).toBe(true);
+    // xa hơn KEEP_BEHIND (đoạn đầu, file đã bỏ): phát từ đường dẫn như thường
+    s.engine.seekWord(0, 0);
+    await flush();
+    expect(s.audios.some((audio) => audio.src === `/clip/${encodeURIComponent(PARAS[0])}`)).toBe(true);
+  });
+
+  it("file ngoài KEEP_BEHIND đoạn vừa nghe bị bỏ, blob: URL thu hồi: bộ nhớ không lớn theo số đoạn đã nghe", async () => {
+    const urls = blobUrls();
+    const s = setup({ chapter: PARAS.join("\n\n") });
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    const held = () => (s.engine as unknown as { slots: { clip: { bytes?: Blob } | null }[] }).slots.filter((slot) => slot.clip?.bytes).length;
+    let peak = 0;
+    for (let k = 0; k < 10; k += 1) {
+      s.requests.filter((r) => PARAS.includes(r.text)).forEach((r) => r.resolve(withBytes(r.text)));
+      await flush();
+      const playing = s.audios.filter((audio) => !audio.paused && !audio.released);
+      playing[0]?.finish();
+      await flush();
+      peak = Math.max(peak, held());
+    }
+    // cửa sổ: KEEP_BEHIND đoạn sau lưng + đoạn đang nghe + tối đa MAX_READ_AHEAD đoạn đọc trước
+    expect(peak).toBeLessThanOrEqual(KEEP_BEHIND + 1 + 8);
+    const slots = (s.engine as unknown as { slots: { clip: { bytes?: Blob } | null }[] }).slots;
+    expect(slots.slice(0, 6).filter((slot) => slot.clip?.bytes)).toHaveLength(0);
+    // mọi blob: URL đã cấp mà không còn audio giữ thì đã thu hồi: số còn sống <= số audio còn gắn
+    const alive = urls.made.filter((url) => !urls.revoked.includes(url)).length;
+    expect(alive).toBeLessThanOrEqual(s.audios.filter((audio) => !audio.released).length);
   });
 });
 

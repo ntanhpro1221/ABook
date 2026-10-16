@@ -29,12 +29,19 @@ class StalledClips(private val clock: () -> Long = System::nanoTime) {
         fun isProbe(fresh: Boolean, listenerHasAudio: Boolean): Boolean = fresh && listenerHasAudio
 
         /**
-         * Rank xếp hàng chờ chỗ kết nối Edge của đoạn sắp nạp ([ClipBudget.rank]): số đoạn người nghe còn phải nghe trước nó. Hàng đợi ExoPlayer cạn (nhảy tới, đầu chương) = đoạn họ đang đứng chờ, 0;
-         * không thì `queuedAhead` đoạn đã nạp sau đoạn đang phát rồi tới nó (kể cả khi đoạn ấy là tiêu đề / đoạn đầu của chương kế), tối đa [EdgePieces.MAX_RANK] - cùng luật với trình phát máy tính
-         * (readAloud.ts `warmRank`): đứng sau mọi đoạn của chương đang nghe, trước việc nền (Làm trước, xuất sách nói).
+         * Rank xếp hàng chờ chỗ kết nối Edge của đoạn sắp nạp ([ClipBudget.rank]): số đoạn DÀI người nghe còn phải nghe trước nó. Hàng đợi ExoPlayer cạn (nhảy tới, đầu chương) = đoạn họ đang đứng chờ, 0;
+         * không thì `longAhead` = số đoạn dài từ đoạn đang phát tới hết hàng đợi (kể cả khi đoạn sắp nạp là tiêu đề / đoạn đầu của chương kế), tối đa [EdgePieces.MAX_RANK] - cùng luật với trình phát
+         * máy tính (readAloud.ts `longAhead` / `warmRankOf`): đứng sau mọi đoạn dài của chương đang nghe, trước việc nền (Làm trước, xuất sách nói). Đoạn ngắn (tiêu đề chương, một dòng đối thoại) đứng
+         * trước không tính: đoạn dài kế nó vẫn rank 0, cắt tới [EdgePieces.TARGET_PIECES] mảnh (a56: tiêu đề 2 giây rồi đoạn 1 mất thêm ~4 giây vì chỉ cắt 3 mảnh).
          */
-        fun listenerRank(listenerHasAudio: Boolean, queuedAhead: Int): Int =
-            if (!listenerHasAudio) 0 else (queuedAhead.coerceAtLeast(0) + 1).coerceAtMost(EdgePieces.MAX_RANK)
+        fun listenerRank(listenerHasAudio: Boolean, longAhead: Int): Int =
+            if (!listenerHasAudio) 0 else longAhead.coerceIn(0, EdgePieces.MAX_RANK)
+
+        /** Đoạn dài? ([EdgePieces.WHOLE_CHARS]: từ chừng này ký tự máy chủ mới cắt đoạn; cũng là ngưỡng của máy tính, readAloud.ts `isLongParagraph`). */
+        fun isLong(text: String): Boolean = text.length >= EdgePieces.WHOLE_CHARS
+
+        /** Rank của đoạn kế đọc song song ngay sau đoạn `text` (rank `rank`): thêm 1 nếu `text` dài, không thì cùng rank. */
+        fun rankAfter(rank: Int, text: String): Int = (rank + if (isLong(text)) 1 else 0).coerceAtMost(EdgePieces.MAX_RANK)
 
         /** Nghỉ giữa các lần thử lại của lượt đọc này: hỏi thăm thì không có lần nào. */
         fun delaysFor(probe: Boolean, normal: LongArray): LongArray = if (probe) NO_RETRY else normal
