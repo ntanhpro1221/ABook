@@ -14,6 +14,7 @@ import {
   resolveVoice,
 } from "./readAloudVoice";
 import { genderLabel, VOICE_GROUPS, voiceSections } from "./voiceGroups";
+import { ReadAloudStorage, type ReadAloudStorageApi } from "./ReadAloudStorage";
 
 // Cài đặt → "Giọng đọc" (máy tính và điện thoại dùng chung): giọng mặc định của "Nghe ngay", nghe thử từng giọng, gợi ý giọng nam / nữ, câu nói
 // rõ chữ của sách đi đâu với từng nhóm giọng trực tuyến, và mục "Giọng trực tuyến dùng khóa của bạn" (nhập khóa, Kiểm tra, Xóa). Mỗi nền tảng
@@ -225,7 +226,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
 /** Mục "Giọng đọc" của Cài đặt. `deviceHint`: câu cho khi máy chưa có giọng tiếng Việt (mỗi nền tảng cài theo cách riêng). */
 /** `modules`: phần tải thêm giọng của nền tảng (máy tính: thẻ "Giọng VieNeu" và "Giọng Supertonic" - VieneuModuleCard), nhận `reload` để danh sách giọng hỏi lại khi
  *  giọng mới vừa tải xong. */
-export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettingsApi; deviceHint: string; modules?: (reload: () => void) => ReactNode }) {
+export function VoiceSettings({ api, deviceHint, modules, storage }: { api: VoiceSettingsApi; deviceHint: string; modules?: (reload: () => void) => ReactNode; storage?: ReadAloudStorageApi }) {
   const client = useQueryClient();
   const [voices, setVoices] = useState<ReadAloudVoice[] | null>(null);
   const [providers, setProviders] = useState<OnlineProviderInfo[]>([]);
@@ -331,6 +332,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
           );
         })}
       {modules?.(() => void load())}
+      {storage && <ReadAloudStorage api={storage} />}
       {providers.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold">Giọng trực tuyến dùng khóa của bạn</h3>

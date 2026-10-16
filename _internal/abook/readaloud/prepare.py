@@ -76,7 +76,7 @@ class Prepare:
         self.cancel()
         with self._lock:
             self._stop = threading.Event()
-            self._job = {"state": "running" if taken else "done", "voice": voice, "label": label, "total": len(taken), "offered": len(texts),
+            self._job = {"state": "running" if taken else "done", "voice": voice, "label": label, "bookId": book or "", "total": len(taken), "offered": len(texts),
                          "done": 0, "failed": 0, "chars": sum(len(text) for text in taken), "charsDone": 0, "charsTimed": 0, "seconds": 0.0,
                          "audioSeconds": round(sum(len(text) for text in taken) / CHARS_PER_SECOND), "error": "", "started": time.time()}
             if taken:
@@ -96,6 +96,16 @@ class Prepare:
         with self._lock:
             if self._job.get("state") == "running":
                 self._job["state"] = "cancelled"
+
+    def forget(self, book: str | None = None) -> None:
+        """Bản đọc đã làm của cuốn `book` (hay của mọi cuốn: `None`) vừa bị xoá: việc làm trước của cuốn ấy dừng và dòng trạng thái của nó mất theo -
+        không thì cuốn khác (hay chính cuốn ấy sau khi xoá) vẫn thấy "Đã làm trước ..." về những clip không còn."""
+        job = self.status()
+        if job.get("state") == "idle" or (book is not None and job.get("bookId") != book):
+            return
+        self.cancel()
+        with self._lock:
+            self._job = {"state": "idle"}
 
     def join(self, timeout: float | None = None) -> None:
         thread = self._thread

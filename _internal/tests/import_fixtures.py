@@ -322,6 +322,12 @@ def build_hoi_txt() -> bytes:
             "Hồi nhất định phải kể cho hết, ông lái nói thế.\n\nHồi thứ ba\nĐò cập bến bên kia.\n").encode()
 
 
+def build_author_txt() -> bytes:
+    """TXT cả truyện mở bằng tên truyện rồi dòng "Tác giả: …" (đề xuất ô tác giả; dòng ấy ở lại trong chữ): tên sách = dòng đầu, tác giả = "Hồ Quang Minh"."""
+    return ("Rừng Tre Xanh\nTác giả: Hồ Quang Minh\n\nLời nói đầu\n\n"
+            f"Chương 1: Bến đò\n\n{LINE}\n\nChương 2: Mưa\n\n{LINE}\n").encode()
+
+
 def build_toc_txt() -> bytes:
     """TXT cả truyện mở bằng MỤC LỤC: các dòng "Chương N" liền nhau không có chữ là mục lục, không thành chương rỗng; tên sách không
     phải "MỤC LỤC" (BUG5). Phần mục lục ở lại trong "Mở đầu" (không bỏ chữ), có cờ "Mục lục" (BUG6)."""
@@ -336,6 +342,21 @@ def build_gutenberg_txt() -> bytes:
             "Title: Bến đò ngang\r\n\r\nAuthor: Lê Thử Nghiệm\r\n\r\n*** START OF THE PROJECT GUTENBERG EBOOK BẾN ĐÒ NGANG ***\r\n\r\n"
             "Contents\r\n\r\n CHAPTER I.   Bến\r\n CHAPTER II.  Mưa\r\n\r\n\r\n"
             f"CHAPTER I.\r\nBến\r\n\r\n{LINE}\r\n\r\nCHAPTER II.\r\nMưa\r\n\r\n{LINE}\r\n").encode()
+
+
+# Dòng "Tác giả: X" ngay dưới tên truyện (`importers.author_line`, Kotlin BookImport.authorLine): các kiểu dấu ngăn, chữ hoa, ca không phải tác giả.
+AUTHOR_LINE_CASES = [
+    "Rừng Tre Xanh\nTác giả: Hồ Quang Minh\n\nLời nói đầu",
+    "Truyện ngắn\n\nTÁC GIẢ - Lê Văn A\nChương 1",
+    "Tên truyện\nAuthor: Jane Doe",
+    "Tên truyện\nTác giả – Nguyễn Du.",
+    "Tên truyện\nTác giả： Trần Bình",
+    "Tên truyện\nTác giả của truyện này là một người rất kín tiếng",
+    "Tên truyện\nTác giả:",
+    "Một\nHai\nBa\nBốn\nTác giả: Muộn",
+    "Tác giả: Đứng đầu file",
+    "Tên truyện\nTác giả: " + "A" * 70,
+]
 
 
 # Dòng xin ủng hộ / quảng cáo / nguồn ở CUỐI chương (BUG11 của a22; `importers.tail_credit_suggestions`, Kotlin BookImport.tailCreditSuggestions): gợi ý, mặc định
@@ -852,7 +873,7 @@ SOURCES = {
 REAL_WORLD = {
     "nav_pages.epub": build_nav_pages, "toc_broken.epub": build_toc_broken, "toc_missing.epub": build_toc_missing,
     "nfd_names.epub": build_nfd_names, "calibre_split.epub": build_calibre_split,
-    "hoi.txt": build_hoi_txt, "toc_txt.txt": build_toc_txt, "gutenberg.txt": build_gutenberg_txt,
+    "hoi.txt": build_hoi_txt, "author_line.txt": build_author_txt, "toc_txt.txt": build_toc_txt, "gutenberg.txt": build_gutenberg_txt,
     "hidden.epub": build_hidden, "dropcap.epub": build_dropcap, "glued.epub": build_glued,
     "pt_cp1252.txt": build_pt_cp1252, "zh_gbk.txt": build_zh_gbk, "bom_join.txt": build_bom_join, "declared.epub": build_declared,
     "title_h1.docx": build_docx_title_h1, "scenes.docx": build_docx_scenes, "roman.docx": build_docx_roman,
@@ -933,6 +954,7 @@ def expected_files(root: Path) -> dict[str, bytes]:
         kept[name] = {"chapters": [{"title": chapter.title, "short": chapter.short, "text": chapter.text} for chapter in book.chapters],
                       "defaults": [number for number, _name in importers.default_picks(book)], "notes": book.notes}
     out["expected/keep_short.json"] = dumps(kept)
+    out["expected/author_line.cases.json"] = dumps([{"text": text, "author": importers.author_line(text)} for text in AUTHOR_LINE_CASES])
     out["expected/clip_title.json"] = dumps([{"text": text, "limit": limit, "clipped": importers.clip_title(text, limit)}
                                              for text, limit in CLIP_TITLE_CASES])
     out["expected/name_title.json"] = dumps([{"stem": stem, "title": importers.title_from_filename(stem)} for stem in NAME_TITLE_CASES])

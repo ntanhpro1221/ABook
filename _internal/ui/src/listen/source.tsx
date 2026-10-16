@@ -58,6 +58,9 @@ export interface ListenSource {
   /** Máy tính: bản đọc đã làm (bộ đệm clip) của cuốn và của cả máy, và xoá phần của cuốn ("Xoá bản đọc đã làm" ở menu Giọng đọc). */
   readAloudCache?(bookId: string): Promise<ReadAloudCacheUsage>;
   readAloudCacheClear?(bookId: string): Promise<ReadAloudCacheUsage>;
+  /** Cài đặt > Giọng đọc: bản đọc đã làm của cả máy (`book` luôn 0) và dọn hết. */
+  readAloudCacheTotal?(): Promise<ReadAloudCacheUsage>;
+  readAloudCacheClearAll?(): Promise<ReadAloudCacheUsage>;
   /** Làm trước được cả giọng trực tuyến - để nghe khi không có mạng (điện thoại, và máy tính xách tay lúc đi tàu / máy bay). */
   readAloudPrepareOnline?: boolean;
   /** Nơi tự đọc chương (lõi native Android) cho biết mốc thời gian câu / chữ đã có của một chương chỉ-có-chữ; chưa có gì thì null. */

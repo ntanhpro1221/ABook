@@ -262,6 +262,8 @@ function MenuShell({
   width = "w-56",
   focusSelector,
   dialogLabel,
+  open,
+  onOpenChange,
 }: {
   trigger: ReactNode;
   label: string;
@@ -272,9 +274,12 @@ function MenuShell({
   focusSelector?: string;
   /** Tên của hộp khi mở (trình đọc màn hình đọc khi tiêu điểm vào hộp); mặc định theo nút. Nút đổi chữ theo trạng thái ("Tắt sau 4 phút") thì hộp giữ tên cố định. */
   dialogLabel?: string;
+  /** Hộp do bên ngoài mở được (nút "Chọn giọng khác" ở lời báo lỗi giọng); bỏ trống thì hộp tự quản. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   return (
-    <Popover.Root>
+    <Popover.Root open={open} onOpenChange={onOpenChange}>
       <Tooltip label={label}>
         <Popover.Trigger asChild>
           <button
@@ -512,7 +517,25 @@ function ScrollHint({ className, children }: { className: string; children: Reac
   );
 }
 
-export function VoiceMenu() {
+/** Nút "Chọn giọng khác" ở lời báo lỗi giọng mở menu Giọng đọc của cùng chỗ: `scope` = thanh phát hay màn "Đang nghe" (cả hai cùng nằm trong cây khi màn mở). */
+const OPEN_VOICE_MENU_EVENT = "abook:open-voice-menu";
+type VoiceMenuScope = "bar" | "screen";
+/** Thanh gọn không có menu giọng: bấm nút ở đó mở màn "Đang nghe" rồi menu của màn ấy mở ngay khi dựng xong. */
+let voiceMenuWaiting: VoiceMenuScope | null = null;
+
+export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    if (voiceMenuWaiting === scope) {
+      voiceMenuWaiting = null;
+      setMenuOpen(true);
+    }
+    const open = (event: Event) => {
+      if ((event as CustomEvent<VoiceMenuScope>).detail === scope) setMenuOpen(true);
+    };
+    window.addEventListener(OPEN_VOICE_MENU_EVENT, open);
+    return () => window.removeEventListener(OPEN_VOICE_MENU_EVENT, open);
+  }, [scope]);
   const { track, queue } = usePlayer();
   const source = useSource();
   const { data: voices } = useReadAloudVoices();
@@ -525,6 +548,8 @@ export function VoiceMenu() {
   return (
     <MenuShell
       label="Giọng đọc"
+      open={menuOpen}
+      onOpenChange={setMenuOpen}
       // Tên giọng hiện cả trên điện thoại: người nghe thấy ngay giọng nào đang đọc, không chỉ một biểu tượng.
       trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[1200px]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
       width="w-80 max-w-[calc(100vw-1.5rem)]"
@@ -649,6 +674,8 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
     }
   };
   const label = mine && status ? prepareLabel(status) : running ? "Đang làm trước cho một cuốn hay giọng khác - làm ở đây thì việc ấy dừng." : "";
+  // Chương cuối: không còn chương nào để làm trước thì không mời (câu mời không có nút nào theo sau chỉ làm người nghe tìm nút).
+  if (!label && upcoming.length === 0) return null;
   return (
     <div className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
       <p className="text-pretty">{label || prepareIntro(voice)}</p>
@@ -695,6 +722,7 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
     setBusy(true);
     try {
       client.setQueryData(key, await source.readAloudCacheClear!(bookId));
+      void client.invalidateQueries({ queryKey: PREPARE_STATUS_KEY }); // máy chủ đã bỏ dòng "Đã làm trước ..." của cuốn này cùng bản đọc
       window.dispatchEvent(new CustomEvent<ReadingsChanged>(READINGS_CHANGED_EVENT, { detail: { bookId, surfaces: [], all: true } }));
     } catch (error) {
       toast.error("Chưa xoá được bản đọc", { description: (error as Error).message });
@@ -1185,8 +1213,9 @@ function TrackSubtitle() {
  *  Mất mạng mà máy không có giọng đọc không cần mạng: một câu ngắn nói tên giọng, nút chính theo tình huống - đã có giọng chạy trên máy (VieNeu…) thì
  *  "Đọc bằng …" (đổi giọng cuốn này rồi phát tiếp), chưa thì "Tải giọng VieNeu" (tới thẻ tải giọng trong Cài đặt). Mạng về thì khối tự ẩn.
  *  `overlay`: trong màn "Đang nghe"; ở thanh phát thì không đè lên màn Cài đặt (nơi người nghe đang đi tải giọng). */
-function PlayerAlert({ className, overlay = false }: { className?: string; overlay?: boolean }) {
+function PlayerAlert({ className, overlay = false, compact = false }: { className?: string; overlay?: boolean; compact?: boolean }) {
   const { error, notice, resume, retry, dismissError, track } = usePlayer();
+  const { setExpanded } = useNowPlaying();
   const openVoiceSettings = useOpenVoiceSettings();
   const { pathname } = useLocation();
   const voices = useReadAloudVoices().data;
@@ -1227,6 +1256,23 @@ function PlayerAlert({ className, overlay = false }: { className?: string; overl
           <button type="button" onClick={retry} {...keepFocus} className={button}>
             Thử lại
           </button>
+          {stuck && Boolean(voices?.length) && (
+            <button
+              type="button"
+              onClick={() => {
+                if (compact) {
+                  voiceMenuWaiting = "screen";
+                  setExpanded(true);
+                } else {
+                  window.dispatchEvent(new CustomEvent<VoiceMenuScope>(OPEN_VOICE_MENU_EVENT, { detail: overlay ? "screen" : "bar" }));
+                }
+              }}
+              {...keepFocus}
+              className={button}
+            >
+              Chọn giọng khác
+            </button>
+          )}
           {stuck && !local && <VieneuDownload button="Tải giọng VieNeu" onOpenSettings={() => openVoiceSettings("vieneu-module")} />}
         </div>
         {/* Gạt đi tới lần lỗi mới: khối này nằm trên mọi màn, người đang làm việc khác (Cài đặt, Thư viện) không bị nó đè mãi. */}
@@ -1349,7 +1395,7 @@ export function PlayerBar({
           </>
         )}
         <FadingNotice className="mx-3 mt-2" />
-        <PlayerAlert className="mx-3 mt-2" />
+        <PlayerAlert className="mx-3 mt-2" compact />
         <div className="flex h-16 items-center gap-3 px-3">
           {/* title: tên chương / sách bị cắt "Chương 3 · Đ…" khi phóng chữ hay cửa sổ hẹp - rê chuột đọc được đủ (soát a31 Z1). */}
           <button
@@ -2072,7 +2118,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
         <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
           <div className="flex items-center justify-center gap-1">
             <MusicMenu />
-            <VoiceMenu />
+            <VoiceMenu scope="screen" />
             <SpeedMenu />
             <SleepMenu />
           </div>

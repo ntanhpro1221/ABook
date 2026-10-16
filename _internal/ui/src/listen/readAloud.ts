@@ -102,7 +102,7 @@ export const READINGS_CHANGED_EVENT = "abook:readaloud-readings";
 export interface ReadingsChanged {
   bookId: string;
   surfaces: string[];
-  /** Mọi đoạn của cuốn đều phải lấy lại (người nghe vừa xoá bản đọc đã làm của cuốn: file clip không còn nữa). */
+  /** Mọi đoạn của cuốn đều phải lấy lại (người nghe vừa xoá bản đọc đã làm của cuốn: file clip không còn nữa); `bookId` rỗng = của mọi cuốn (dọn cả máy). */
   all?: boolean;
 }
 // Máy tính: đọc trước 3 đoạn (rẻ - clip chỉ vài chục KB; đoạn ngắn liên tiếp không còn bắt người nghe chờ). Điện thoại tự đọc trước (ReadAloud.AHEAD).
@@ -110,6 +110,14 @@ const READ_AHEAD = 3;
 const RESTORE_LIMIT = 400;
 /** Nhịp đồng hồ của quãng lặng ở dòng ngăn cảnh (ms). */
 const SILENCE_TICK_MS = 100;
+/** Nhảy liên tiếp (kéo thanh tua, bấm hết câu này tới câu kia): giọng chạy trên máy làm một clip một lúc và không dừng giữa chừng được, nên mỗi lượt xin gửi
+ *  sớm cho một đích sắp bị bỏ là cả một clip làm uổng mà đích cuối phải chờ sau. Nhảy tiếp trong vòng `JUMP_BURST_MS` sau lần nhảy trước thì lượt xin mới chỉ
+ *  được gửi khi người nghe ngừng nhảy `JUMP_SETTLE_MS` (lần nhảy đầu vẫn gửi ngay; và chỉ khi giọng chậm - [SLOW_CLIP_MS]). */
+const JUMP_BURST_MS = 1500;
+const JUMP_SETTLE_MS = 800;
+/** Chỉ giữ lượt xin khi giọng làm một clip lâu (clip vừa xong, hay lượt đang chạy, từ ngần này ms): máy nhanh thì clip cũ xong ngay trong lúc người nghe còn nhảy,
+ *  giữ chỉ thêm chờ; máy chậm thì mỗi clip uổng là cả giây người nghe phải chờ thêm. */
+const SLOW_CLIP_MS = 1000;
 
 /** Ước thời gian đọc một đoạn khi chưa có clip. Đoạn không có chữ nào đọc được ("* * *") không tốn thời gian (quãng lặng của dòng ngăn cảnh
  *  tính riêng - [sceneBreakGaps]). */
@@ -223,6 +231,11 @@ export class ReadAloudEngine implements AudioEngine {
   /** Lượt xin clip đang chờ tới lượt gửi (đoạn gần chỗ nghe nhất đi trước) và số lượt đang chạy ([pump]). */
   private queued: { index: number; epoch: number }[] = [];
   private inflight = 0;
+  private lastJumpAt = 0;
+  private holdUntil = 0;
+  private lastClipMs = 0;
+  private sentAt = 0;
+  private holdTimer: ReturnType<typeof setTimeout> | null = null;
   private rate = 1;
   private volume = 1;
   private loadingTime = 0;
@@ -511,6 +524,10 @@ export class ReadAloudEngine implements AudioEngine {
 
   private moveTo(target: Target): void {
     this.stopSilence();
+    const now = Date.now();
+    const slow = Math.max(this.lastClipMs, this.inflight > 0 ? now - this.sentAt : 0) >= SLOW_CLIP_MS;
+    this.holdUntil = slow && this.speech?.serial?.() && now - this.lastJumpAt < JUMP_BURST_MS ? now + JUMP_SETTLE_MS : 0;
+    this.lastJumpAt = now;
     const current = this.slots[this.target.index];
     current?.audio?.pause();
     this.finished = false;
@@ -635,6 +652,14 @@ export class ReadAloudEngine implements AudioEngine {
     const speech = this.speech;
     if (!speech) return;
     const limit = speech.serial?.() ? 1 : this.readAhead + 1;
+    const hold = this.holdUntil - Date.now();
+    if (hold > 0 && this.inflight < limit) {
+      this.holdTimer ??= setTimeout(() => {
+        this.holdTimer = null;
+        this.pump();
+      }, hold);
+      return;
+    }
     while (this.inflight < limit) {
       const next = this.takeQueued();
       if (next === null) return;
@@ -680,9 +705,12 @@ export class ReadAloudEngine implements AudioEngine {
     const id = this.loadId;
     const epoch = slot.epoch;
     this.inflight += 1;
+    const sentAt = Date.now();
+    this.sentAt = sentAt;
     speech
       .fetchClip(speech.voice(), slot.text)
       .then((clip) => {
+        this.lastClipMs = Date.now() - sentAt;
         if (id !== this.loadId) return;
         // Cách đọc đổi trong lúc đoạn này đang được đọc: clip này theo cách đọc cũ - bỏ (lượt hỏi mới đã được xếp bởi [readingsChanged]).
         if (epoch !== slot.epoch) return;
@@ -842,7 +870,8 @@ export class ReadAloudEngine implements AudioEngine {
   /** Cách đọc riêng của cuốn vừa đổi: mọi đoạn có từ ấy mà đã đọc sẵn bỏ clip để lần phát sau hỏi máy chủ lại (khoá bộ đệm của máy chủ đã gồm cách đọc). Đoạn đang
    *  nói nói nốt; nghe lại đoạn ấy thì lấy clip mới ([playCurrent]). */
   private readingsChanged(detail: ReadingsChanged | undefined): void {
-    if (!this.ready || !this.speech || !detail || !detail.bookId || this.speech.bookId !== detail.bookId) return;
+    // `bookId` rỗng + `all`: bản đọc của cả máy vừa được dọn - cuốn nào đang mở cũng phải lấy lại clip.
+    if (!this.ready || !this.speech || !detail || (detail.bookId ? this.speech.bookId !== detail.bookId : !detail.all)) return;
     const surfaces = detail.surfaces.map((surface) => surface.normalize("NFC")).filter(Boolean);
     let changed = false;
     this.slots.forEach((slot, i) => {
@@ -864,8 +893,11 @@ export class ReadAloudEngine implements AudioEngine {
 
   private voiceChanged(): void {
     if (!this.ready) return;
-    // Đoạn đang đọc nói nốt bằng giọng cũ; từ đoạn sau lấy lại clip bằng giọng mới (độ dài về ước tính cho tới khi clip mới về).
-    for (let i = this.target.index + 1; i < this.slots.length; i += 1) {
+    // Đoạn đang đọc nói nốt bằng giọng cũ; từ đoạn sau lấy lại clip bằng giọng mới (độ dài về ước tính cho tới khi clip mới về). Đoạn hiện tại chưa có clip
+    // (giọng cũ hỏng, đang dừng chờ "Thử lại") cũng lấy lại bằng giọng mới - không thì "Thử lại" lại hỏi giọng cũ và báo lỗi cũ.
+    const current = this.slots[this.target.index];
+    const start = current && !current.clip ? this.target.index : this.target.index + 1;
+    for (let i = start; i < this.slots.length; i += 1) {
       const slot = this.slots[i];
       this.releaseSlot(slot);
       slot.clip = null;
@@ -896,6 +928,10 @@ export class ReadAloudEngine implements AudioEngine {
     this.loadId += 1;
     this.queued = [];
     this.inflight = 0;
+    if (this.holdTimer !== null) clearTimeout(this.holdTimer);
+    this.holdTimer = null;
+    this.holdUntil = 0;
+    this.lastClipMs = 0;
     if (typeof window !== "undefined") {
       window.removeEventListener(VOICE_CHANGED_EVENT, this.onVoice);
       window.removeEventListener(READINGS_CHANGED_EVENT, this.onReadings);

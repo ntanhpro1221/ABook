@@ -25,7 +25,7 @@ import {
   type SleepMode,
   type SleepRequest,
 } from "./sleep";
-import type { ReadAloudVoice, SpeechTrack } from "./readAloud";
+import { VOICE_CHANGED_EVENT, type ReadAloudVoice, type SpeechTrack } from "./readAloud";
 import { chooseVoice, chosenVoice, forgetVoiceTrouble, ONLINE_NOTICE, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
 import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
@@ -767,6 +767,15 @@ export function PlayerProvider({
   const dismissError = useCallback(() => {
     stopPeerWatch.current();
     setError("");
+  }, []);
+  // Người nghe đổi giọng (của cuốn đang nghe, hay của mọi cuốn): lời báo lỗi của giọng cũ không còn đúng nữa.
+  useEffect(() => {
+    const onVoice = (event: Event) => {
+      const bookId = (event as CustomEvent<string>).detail;
+      if (!bookId || bookId === refs.current.track?.bookId) setError("");
+    };
+    window.addEventListener(VOICE_CHANGED_EVENT, onVoice);
+    return () => window.removeEventListener(VOICE_CHANGED_EVENT, onVoice);
   }, []);
 
   const pause = useCallback(() => {

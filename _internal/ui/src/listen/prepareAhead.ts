@@ -78,6 +78,16 @@ export function clearCacheQuestion(usage: ReadAloudCacheUsage): string {
   return `Xoá ${formatSize(usage.book)} bản đọc đã làm của cuốn này? Nghe tới đâu máy đọc lại tới đó (giọng trực tuyến cần có mạng).`;
 }
 
+/** Cài đặt > Giọng đọc: bản đọc đã làm của cả máy nặng bao nhiêu ("Bản đọc đã làm chiếm 148 MB trên máy này."). */
+export function storageLabel(usage: Pick<ReadAloudCacheUsage, "total">): string {
+  return usage.total > 0 ? `Bản đọc đã làm chiếm ${formatSize(usage.total)} trên máy này.` : "Chưa có bản đọc nào được lưu trên máy này.";
+}
+
+/** Câu hỏi lại trước khi dọn bản đọc của cả máy. */
+export function clearStorageQuestion(usage: Pick<ReadAloudCacheUsage, "total">): string {
+  return `Dọn ${formatSize(usage.total)} bản đọc đã làm của mọi cuốn? Nghe tới đâu máy đọc lại tới đó (giọng trực tuyến cần có mạng); chương đã "Làm trước" cũng phải làm lại. Sách và chỗ đang nghe không đổi.`;
+}
+
 /** Các chương chỉ-có-chữ ngay sau chương đang nghe (tối đa `limit`). */
 export function upcomingTextChapters(queue: ListenChapter[], currentId: number, limit = 5): ListenChapter[] {
   const index = queue.findIndex((chapter) => chapter.id === currentId);
