@@ -1288,6 +1288,7 @@ export function PlayerProvider({
         if (caughtUp) caughtUpToast(caughtUpDetail());
         else if (refs.current.continues !== current.bookId) finishedToast();
       }),
+      engine.on("recovered", () => setError("")),
       engine.on("error", () => {
         // Lõi Android nói đúng lý do (nghe thẳng mà mất kết nối với máy tính khác hẳn file hỏng).
         const fallback = native?.error || engine.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";

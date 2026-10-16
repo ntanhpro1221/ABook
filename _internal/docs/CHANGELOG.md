@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Giọng trực tuyến đọc nối các câu liền hơn: chỗ giữa hai phần của một đoạn dài không còn thừa quãng lặng (sau dấu chấm vẫn nghỉ như người đọc, sau dấu phẩy chỉ nghỉ ngắn). Đoạn đã nghe trước đây sẽ được đọc lại một lần theo cách nối mới.
+- Kết nối tới giọng trực tuyến bị treo giữa chừng không còn khiến chương dừng với dòng "Không có mạng": giọng tự nối lại, chỉ khi mạng thật sự mất mới báo.
+- Dòng báo giọng "đang không dùng được" tự biến mất khi giọng đọc được trở lại, bạn không phải bấm gì thêm.
+
 ## [0.4.79] - 2026-10-16
 
 ### Nghe ngay

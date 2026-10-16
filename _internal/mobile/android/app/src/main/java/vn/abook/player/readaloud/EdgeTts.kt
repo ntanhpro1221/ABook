@@ -297,8 +297,46 @@ object EdgePieces {
 }
 
 /**
+ * Chỗ nối giữa hai mảnh của một đoạn (uxfix50; máy tính: `edge.py` `trim_join_tail`, cùng hằng số, cùng bộ ví dụ `tests/fixtures/readaloud/edge/join_tail.json` - đổi một bên thì đổi cả hai bên
+ * và bộ ví dụ). Mỗi lượt của Edge kết thúc bằng ~0,85 giây lặng đuôi + ~0,13 giây lặng đầu của mảnh kế (soát a51: chỗ nối lặng 0,95-0,99 giây), trong khi Edge tự nghỉ giữa hai câu TRONG một lượt
+ * chỉ 0,86 giây (đo a52: khoảng cách mốc 862-875 ms; sau dấu phẩy 137-263 ms). Nên mảnh không phải mảnh cuối bị cắt đuôi, ở ranh giới khung MP3 (24 kHz, 48 kbps CBR, không đệm: 144 byte = 24 ms),
+ * giữ lại [TAIL_SENTENCE_MS] sau mốc hết chữ cuối nếu mảnh kết thúc ở dấu hết câu, [TAIL_OTHER_MS] nếu không (dấu phẩy, cắt giữa câu): chỗ nối nghỉ đúng cỡ Edge nghỉ ở dấu ấy. Chữ cuối kết thúc trong
+ * khoảng -27..+15 ms quanh mốc hết chữ (đo 30 mảnh) nên 100 ms còn dư cho bộ giải mã; phần cắt đo được là lặng (RMS < 0,1% giọng nói). Khung nào không đúng dạng ấy thì giữ nguyên cả mảnh.
+ */
+object EdgeJoin {
+    const val TAIL_SENTENCE_MS = 730
+    const val TAIL_OTHER_MS = 100
+    const val FRAME_BYTES = 144
+    const val FRAME_MS = 24
+    private const val SENTENCE_END = ".!?…"
+    private const val CLOSERS = "\"'”’)]»"
+
+    /** Giữ bao lâu sau mốc hết chữ cuối của `piece` (xem mô tả trên). */
+    fun tailMs(piece: String): Int {
+        val body = piece.trimEnd().trimEnd { it in CLOSERS }
+        return if (body.isNotEmpty() && body.last() in SENTENCE_END) TAIL_SENTENCE_MS else TAIL_OTHER_MS
+    }
+
+    /**
+     * `lastEndMs`: mốc hết chữ cuối của mảnh theo dịch vụ (CHƯA cộng [EdgeProtocol.BOUNDARY_SHIFT_MS]); null = không có mốc thì không cắt. Trả nguyên `audio` khi không có gì để cắt hay khung nào không đúng dạng.
+     */
+    fun trim(audio: ByteArray, piece: String, lastEndMs: Long?): ByteArray {
+        if (lastEndMs == null || audio.isEmpty() || audio.size % FRAME_BYTES != 0) return audio
+        val keep = (lastEndMs + tailMs(piece) + FRAME_MS - 1) / FRAME_MS // làm tròn LÊN: không cắt sớm hơn
+        if (keep * FRAME_BYTES >= audio.size) return audio
+        val expected = Triple(FRAME_BYTES, 576, 24_000)
+        var at = 0
+        while (at < audio.size) {
+            if (Mp3.frameAt(audio, at) != expected) return audio
+            at += FRAME_BYTES
+        }
+        return audio.copyOf((keep * FRAME_BYTES).toInt())
+    }
+}
+
+/**
  * Giọng Microsoft qua dịch vụ đọc to của Edge (`vi-VN-HoaiMyNeural`, `vi-VN-NamMinhNeural`): không khoá, cần mạng. Mỗi mảnh một kết nối WebSocket ([WebSocket]);
- * đoạn từ [EdgePieces.WHOLE_CHARS] ký tự cắt ở hết câu thành tối đa [EdgePieces.PIECE_PARALLEL] mảnh đọc SONG SONG (mảnh quá 4000 byte cắt tiếp ở dấu cách), mốc ghép lại theo số byte mp3 đã nhận. Mọi chặn đều có hạn: nối 8 giây, mỗi lần chờ tin 15
+ * đoạn từ [EdgePieces.WHOLE_CHARS] ký tự cắt ở hết câu thành tối đa [EdgePieces.PIECE_PARALLEL] mảnh đọc SONG SONG (mảnh quá 4000 byte cắt tiếp ở dấu cách), mốc ghép lại theo số byte mp3 đã nhận. Mọi chặn đều có hạn: nối 5 giây, mỗi lần chờ tin 15
  * giây, cả đoạn 45 giây (MỘT hạn chung cho cả clip: chờ chỗ kết nối, nối, nhận tin và các mảnh đều tính vào đó) - quá hạn hay không có mạng là [VoiceException] (người gọi rơi về giọng
  * của máy), không bao giờ chờ mãi. Clip bị huỷ ([ClipCancel]: tua, đổi chương, dừng) hay hỏng một mảnh thì ổ cắm của các mảnh còn lại đóng ngay, không để chúng giữ chỗ kết nối tới hết lượt.
  */
@@ -320,7 +358,9 @@ class EdgeTts(
     }
 
     companion object {
-        const val CONNECT_MS = 8_000
+        /** Nối + bắt tay TLS + nâng cấp WebSocket. Bắt tay thật xong trong 0,4-1,2 giây (p50 0,5, p99 1,2 giây: 222 lượt đo máy tính a48-a51); thỉnh thoảng một lần treo ~10 giây (a51: 8 trong 95 mảnh, khi nhiều kết nối mở cùng lúc) -
+         *  nên hết giờ sớm rồi thử lại ([ConnectTimedOut]) thay vì đợi. Điện thoại có thể đi sóng yếu (mỗi vòng ~0,3 giây x 4 vòng) nên 5 giây, máy tính (edge.py CONNECT_TIMEOUT) 4 giây. */
+        const val CONNECT_MS = 5_000
         const val READ_MS = 15_000
         const val TOTAL_MS = 45_000L
         /** Hạn chung của một clip ([TOTAL_MS]); bài thử đặt ngắn hơn để kiểm hạn mà không chờ 45 giây. */
@@ -328,7 +368,7 @@ class EdgeTts(
         /** Lỗi thoáng qua ([Dropped]) thử lại tối đa chừng này lần, mỗi lần một kết nối mới, nghỉ lùi dần theo [BACKOFF_MS]: đủ cho một đoạn mạng chập
          *  chờn (qua vùng sóng yếu, wifi đổi sóng) mà chưa bắt người nghe chờ quá lâu (soát UX a9; trước 2 lần × 0,3 s - mạng mất 2 giây là dừng). */
         const val RETRIES = 3
-        val BACKOFF_MS = longArrayOf(500L, 1_500L, 4_000L)
+        val BACKOFF_MS = longArrayOf(0L, 1_500L, 4_000L) // lần thử lại đầu nối lại ngay (kết nối mới); chỉ lần sau mới nghỉ
         /** Hết cách thử lại vì MẤT MẠNG thật: câu nói thẳng cho người nghe (thay cho "Mất kết nối với giọng Edge giữa chừng"). */
         const val LOST_NETWORK = "Mất mạng - giọng trực tuyến tạm dừng. Bấm phát để thử lại, hoặc chọn giọng trên máy."
         /** Hết cách thử lại mà mạng vẫn còn (dịch vụ cắt lượt / bận): không nói "mất mạng". */
@@ -368,7 +408,10 @@ class EdgeTts(
         val boundaries = ArrayList<Boundary>()
         var bytes = 0L
         out.outputStream().use { sink ->
-            for ((audio, found) in parts) {
+            for ((index, part) in parts.withIndex()) {
+                val found = part.second
+                // Mảnh không phải mảnh cuối bị cắt lặng đuôi trước khi bù mốc cho mảnh sau ([EdgeJoin]); mốc ở đây đã cộng BOUNDARY_SHIFT_MS nên trừ lại.
+                val audio = if (index < parts.size - 1) EdgeJoin.trim(part.first, pieces[index], found.lastOrNull()?.let { it.endMs - EdgeProtocol.BOUNDARY_SHIFT_MS }) else part.first
                 // Mốc của mỗi mảnh tính từ đầu mảnh ấy: bù bằng độ dài mp3 các mảnh trước (48 kbps không đổi nên chính xác).
                 val shift = EdgeProtocol.durationMs(bytes)
                 sink.write(audio)
@@ -449,10 +492,10 @@ class EdgeTts(
             }
             // Hết quỹ thời gian thử lại của đoạn ([ClipBudget]) hay hạn chung của clip: thôi ngay - lần thử nữa sẽ không kịp, người gọi rơi sang giọng kế.
             if (attempt == RETRIES || !ClipBudget.fits(BACKOFF_MS[attempt]) || run.remainingMs() <= BACKOFF_MS[attempt]) {
-                val offline = (failure as? VoiceException)?.offline == true
+                val offline = (failure as? VoiceException)?.offline == true || failure is ConnectTimedOut
                 throw VoiceException(if (offline) LOST_NETWORK else NOT_ANSWERING, offline = offline, cause = failure)
             }
-            pause(BACKOFF_MS[attempt])
+            if (BACKOFF_MS[attempt] > 0) pause(BACKOFF_MS[attempt])
             attempt += 1
         }
     }
@@ -461,7 +504,10 @@ class EdgeTts(
      * Lỗi thoáng qua của MỘT lượt (thử lại được): dịch vụ cắt kết nối giữa lượt, hay lúc bắt tay trả HTTP 429 / 5xx hoặc reset kết nối. Khác "không có mạng"
      * (không tìm thấy máy chủ, bị từ chối nối) và khác "bị từ chối / đổi giao thức" - hai thứ ấy ném [VoiceException] ngay.
      */
-    private class Dropped(message: String, cause: Throwable? = null) : Exception(message, cause)
+    private open class Dropped(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+    /** Bắt tay quá [CONNECT_MS]: thử lại được như [Dropped]; hết lần thử mà lần nào cũng treo thì là mất mạng thật (sóng bị chặn, máy chủ không tới được) - báo "mất mạng" như trước. */
+    private class ConnectTimedOut(message: String, cause: Throwable? = null) : Dropped(message, cause)
 
     /** Một mảnh chữ: (mp3, mốc tính từ đầu mảnh, đã cộng [EdgeProtocol.BOUNDARY_SHIFT_MS]). Chỉ trả khi đọc trọn lượt, nên lượt hỏng thử lại không để sót mảnh âm thanh dở. */
     private fun readPart(part: String, retry: Boolean, run: ClipRun): Pair<ByteArray, List<Boundary>> {
@@ -521,7 +567,8 @@ class EdgeTts(
             } catch (error: ConnectException) {
                 throw offline(error)
             } catch (error: SocketTimeoutException) {
-                throw offline(error)
+                // Máy chủ đã tìm thấy (DNS xong) mà bắt tay treo: thử lại như một lượt bị cắt, không báo mất mạng ngay (a51: một lần treo làm cả chương dừng "Không có mạng").
+                throw ConnectTimedOut("Giọng Edge không bắt tay kịp (quá giờ)", error)
             } catch (error: IOException) {
                 if (isReset(error)) throw Dropped("Giọng Edge cắt kết nối lúc bắt tay", error)
                 throw offline(error)

@@ -272,3 +272,165 @@ def test_waiting_for_a_connection_slot_past_the_deadline_is_a_timeout(monkeypatc
     monkeypatch.setattr(edge, "_connections", taken)
     with pytest.raises(edge.EdgeTimeout):
         edge.EdgeClient()._speak_one(edge.DEFAULT_VOICE, "Xin chào", 0, time.monotonic() + 0.05)
+
+
+# ---- chỗ nối giữa các mảnh (uxfix50) ---------------------------------------------------------------------------------------------
+
+JOIN_CASES = json.loads((Path(__file__).parent / "fixtures" / "readaloud" / "edge" / "join_tail.json").read_text(encoding="utf-8"))["cases"]
+_HEADER = bytes([0xFF, 0xF3, 0x64, 0xC0])  # MPEG-2 lớp III, 48 kbps, 24 kHz, đơn kênh, không đệm: khung 144 byte
+
+
+def _mp3_frames(count: int) -> bytes:
+    """`count` khung hợp lệ, mỗi khung ghi số thứ tự của nó vào byte 4 và 5 để biết khung nào còn lại."""
+    return b"".join(_HEADER + (index >> 8).to_bytes(1, "big") + (index & 0xFF).to_bytes(1, "big") + b"\0" * (edge.MP3_FRAME_BYTES - 6) for index in range(count))
+
+
+@pytest.mark.parametrize("case", JOIN_CASES, ids=[case["note"][:40] for case in JOIN_CASES])
+def test_the_join_tail_cut_follows_the_shared_cases(case) -> None:
+    audio = _mp3_frames(case["frames"])
+    trimmed = edge.trim_join_tail(audio, case["piece"], [Boundary("x", 0, case["last_end_ms"])])
+    assert len(trimmed) == case["kept_frames"] * edge.MP3_FRAME_BYTES
+    assert trimmed == audio[: len(trimmed)]  # chỉ cắt đuôi, giữ nguyên từng byte phía trước
+
+
+def test_the_join_tail_is_left_alone_when_the_frames_are_not_what_edge_sends() -> None:
+    audio = _mp3_frames(300)
+    boundaries = [Boundary("x", 0, 2000)]
+    assert len(edge.trim_join_tail(audio, "Xong rồi.", boundaries)) < len(audio)  # đối chứng: dữ liệu tốt thì cắt
+    assert edge.trim_join_tail(audio, "Xong rồi.", []) == audio  # không có mốc
+    assert edge.trim_join_tail(b"", "Xong rồi.", boundaries) == b""
+    assert edge.trim_join_tail(audio + b"\0", "Xong rồi.", boundaries) == audio + b"\0"  # độ dài không chia hết cho khung
+    padded = bytearray(audio)
+    padded[144 * 200 + 2] |= 0x02  # một khung có bit đệm (145 byte): không còn là CBR 144 byte
+    assert edge.trim_join_tail(bytes(padded), "Xong rồi.", boundaries) == bytes(padded)
+    other_rate = bytearray(audio)
+    other_rate[144 * 10 + 2] = 0x68  # 24 kHz -> 22,05 kHz ... một tần số khác
+    assert edge.trim_join_tail(bytes(other_rate), "Xong rồi.", boundaries) == bytes(other_rate)
+    noise = bytes(range(256)) * 36 + bytes(144 * 3)  # không phải MP3
+    assert edge.trim_join_tail(noise, "Xong rồi.", boundaries) == noise
+
+
+def test_a_sentence_end_keeps_the_pause_edge_makes_between_sentences_and_other_cuts_keep_less() -> None:
+    assert edge.join_tail_ms("Hết câu.") == edge.JOIN_TAIL_SENTENCE_MS
+    assert edge.join_tail_ms("Hết câu?”") == edge.JOIN_TAIL_SENTENCE_MS
+    assert edge.join_tail_ms("Hết câu…") == edge.JOIN_TAIL_SENTENCE_MS
+    assert edge.join_tail_ms("Còn tiếp,") == edge.JOIN_TAIL_OTHER_MS
+    assert edge.join_tail_ms("“Còn tiếp,”") == edge.JOIN_TAIL_OTHER_MS
+    assert edge.join_tail_ms("một hai ba") == edge.JOIN_TAIL_OTHER_MS
+    assert edge.JOIN_TAIL_OTHER_MS < edge.JOIN_TAIL_SENTENCE_MS
+
+
+class _FrameFake(edge.EdgeClient):
+    """Mỗi mảnh trả `frames` khung hợp lệ (2,4 giây... 12 giây) với các chữ trải đều, hết chữ cuối ở `end_ms`."""
+
+    def __init__(self, frames: list[int], ends: list[int]) -> None:
+        super().__init__()
+        self.frames = frames
+        self.ends = ends
+
+    def _connect(self):  # noqa: ANN202
+        raise AssertionError("không nối mạng thật")
+
+    def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None):  # noqa: ANN001, ANN202
+        order = edge.speech_pieces(SENTENCES).index(text)
+        words = text.split()
+        end = self.ends[order]
+        step = (end - 125) // len(words)
+        return _mp3_frames(self.frames[order]), [Boundary(word, 125 + i * step, 125 + (i + 1) * step if i < len(words) - 1 else end) for i, word in enumerate(words)]
+
+
+def test_synthesize_trims_every_piece_but_the_last_and_shifts_the_later_boundaries_by_the_trimmed_length() -> None:
+    pieces = edge.speech_pieces(SENTENCES)
+    count = len(pieces)
+    assert count >= 3
+    frames = [300 + 7 * n for n in range(count)]
+    ends = [int(f * 24 - 850) for f in frames]  # đuôi 850 ms như Edge thật
+    result = _FrameFake(frames, ends).synthesize(SENTENCES, edge.DEFAULT_VOICE)
+    kept = []
+    for n in range(count - 1):
+        tail = edge.join_tail_ms(pieces[n])
+        kept.append(-(-(ends[n] + tail) // 24))
+        assert kept[-1] < frames[n]  # có cắt
+    kept.append(frames[-1])  # mảnh cuối giữ nguyên
+    assert len(result.audio) == sum(kept) * 144
+    assert result.duration_ms == sum(kept) * 24
+    first = 0
+    before = 0
+    for n, piece in enumerate(pieces):  # chữ đầu của mảnh n bắt đầu sau toàn bộ audio ĐÃ CẮT của các mảnh trước
+        assert result.boundaries[first].start_ms == 125 + before * 24
+        before += kept[n]
+        first += len(piece.split())
+    # Chỗ nối (hết chữ cuối mảnh n -> chữ đầu mảnh n+1) đúng bằng phần giữ + lặng đầu mảnh sau, không còn ~0,85 giây đuôi.
+    first = 0
+    for n, piece in enumerate(pieces[:-1]):
+        last = first + len(piece.split()) - 1
+        gap = result.boundaries[last + 1].start_ms - result.boundaries[last].end_ms
+        assert gap < edge.join_tail_ms(piece) + 24 + 125 + 1
+        first = last + 1
+    assert [b.text for b in result.boundaries] == SENTENCES.split()
+
+
+def test_a_single_piece_clip_is_never_trimmed() -> None:
+    audio = _mp3_frames(200)
+
+    class _One(edge.EdgeClient):
+        def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None):  # noqa: ANN001, ANN202
+            return audio, [Boundary("Xin", 125, 600), Boundary("chào.", 600, 1400)]
+
+    result = _One().synthesize("Xin chào.", edge.DEFAULT_VOICE)
+    assert result.audio == audio and result.duration_ms == 200 * 24
+
+
+# ---- bắt tay treo (uxfix50) ------------------------------------------------------------------------------------------------------
+
+
+def _client(server, connect_timeout: float = 0.3) -> edge.EdgeClient:
+    return edge.EdgeClient(host="127.0.0.1", port=server.port, secure=False, connect_timeout=connect_timeout, read_timeout=2)
+
+
+def test_a_handshake_that_hangs_once_is_retried_and_the_clip_succeeds(fake_edge, monkeypatch) -> None:
+    """a51: 8 / 95 mảnh treo ~10 s lúc bắt tay, bị coi là "không có mạng" (EdgeOffline, không thử lại) - cả chương dừng. Giờ: hết giờ rồi thử lại."""
+    monkeypatch.setattr(edge.time, "sleep", lambda _seconds: None)  # nghỉ chờ giữa các lần thử không cần thật
+    server, _ = fake_edge(hang=1)
+    started = time.monotonic()
+    result = _client(server).synthesize("Xin chào", edge.DEFAULT_VOICE)
+    assert result.audio == b"A" * 12000
+    assert len(server.requests) == 1  # kết nối treo không bao giờ gửi yêu cầu tới máy chủ giả
+    assert time.monotonic() - started < 3.0  # hết giờ ở 0,3 s, không phải 10 s
+
+
+def test_a_hanging_handshake_in_one_piece_does_not_fail_the_whole_clip(fake_edge, monkeypatch) -> None:
+    monkeypatch.setattr(edge.time, "sleep", lambda _seconds: None)  # nghỉ chờ giữa các lần thử không cần thật
+    server, _ = fake_edge(hang=2)
+    pieces = edge.speech_pieces(SENTENCES)
+    result = _client(server).synthesize(SENTENCES, edge.DEFAULT_VOICE)
+    assert len(result.audio) == 12000 * len(pieces)
+    assert [b.text for b in result.boundaries] == SENTENCES.split()
+
+
+def test_a_handshake_that_always_hangs_ends_as_offline_after_the_retries(fake_edge, monkeypatch) -> None:
+    monkeypatch.setattr(edge.time, "sleep", lambda _seconds: None)  # nghỉ chờ giữa các lần thử không cần thật
+    server, _ = fake_edge(hang=100)
+    started = time.monotonic()
+    with pytest.raises(edge.EdgeOffline) as caught:
+        _client(server).synthesize("Xin chào", edge.DEFAULT_VOICE)
+    assert caught.value.reason == "offline"
+    assert len(server.hung) == edge.RETRIES + 1  # đã thử đủ lần, mỗi lần một kết nối mới
+    assert time.monotonic() - started < 6.0
+
+
+def test_a_dns_failure_or_a_refused_connection_stays_offline_at_once(monkeypatch) -> None:
+    attempts: list[int] = []
+    monkeypatch.setattr(edge.time, "sleep", lambda _seconds: attempts.append(1))
+    for error in (socket.gaierror(11001, "không tìm thấy máy chủ"), ConnectionRefusedError(10061, "bị từ chối"), OSError(10051, "mạng không tới được")):
+        def failing(*_args, _error=error, **_kwargs):  # noqa: ANN002, ANN003, ANN202
+            raise _error
+
+        monkeypatch.setattr(socket, "create_connection", failing)
+        with pytest.raises(edge.EdgeOffline):
+            edge.EdgeClient(connect_timeout=1).synthesize("Xin chào", edge.DEFAULT_VOICE)
+    assert attempts == []  # không nghỉ chờ thử lại: mất mạng thật báo ngay như trước
+
+
+def test_the_connect_timeout_is_a_few_times_the_measured_handshake_not_ten_seconds() -> None:
+    assert 3.0 <= edge.CONNECT_TIMEOUT <= 5.0

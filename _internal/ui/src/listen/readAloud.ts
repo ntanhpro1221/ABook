@@ -885,7 +885,14 @@ export class ReadAloudEngine implements AudioEngine {
         slot.gaveUp = false;
         this.onClip(index, clip);
         // Một lượt gọi THẬT (không phải clip lấy từ bộ đệm của máy chủ, nó về được cả khi Edge đang chết) vừa xong: dịch vụ khoẻ lại, các đoạn đã bỏ cuộc trong lúc mất mạng được hỏi lại ngay.
-        if (ask || this.lastClipMs / 1000 >= REAL_FETCH_SECONDS) this.reviveGaveUp();
+        if (ask || this.lastClipMs / 1000 >= REAL_FETCH_SECONDS) {
+          this.reviveGaveUp();
+          // Lỗi cũ ("đang không dùng được"...) còn treo trên màn mà dịch vụ đã trả lời lại: bỏ lỗi, trình phát gỡ thông báo (không chờ người nghe bấm phát).
+          if (this.lastError) {
+            this.lastError = "";
+            this.fire("recovered");
+          }
+        }
       })
       .catch((error) => {
         if (id !== this.loadId || epoch !== slot.epoch) return;
@@ -1206,7 +1213,7 @@ export class ReadAloudEngine implements AudioEngine {
 
 // ---- bộ chuyển giữa audio thường và đọc to ----------------------------------------------------------------------------
 
-const EVENTS: EngineEvent[] = ["time", "duration", "play", "pause", "ended", "error", "waiting", "playing"];
+const EVENTS: EngineEvent[] = ["time", "duration", "play", "pause", "ended", "error", "recovered", "waiting", "playing"];
 
 /** Bộ máy của trình phát trên máy tính: chương có audio đi qua `web` (WebAudioEngine), chương chỉ-có-chữ (`TrackInfo.speech`) đi qua một
  *  ReadAloudEngine mới cho mỗi lần nạp. Sự kiện chỉ lấy từ bộ máy đang chạy - bộ cũ dừng im lặng, trình phát không thấy "pause" giả. */
