@@ -5,7 +5,7 @@ import type { ListenSource, SearchText } from "@/listen/source";
 import type { EditsSyncState } from "@/shared/editsSync";
 import { itemFromPath } from "@/listen/importQueue";
 import type { AddedBook, ImportPreview, PickedItem, TextImport } from "@/listen/textImport";
-import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
+import { ReadAloudError, fetchClipBytes, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
 import { ApiError, api, mediaUrl } from "@/studio/api";
 import { pickFiles, pickFolder } from "@/studio/data";
 import { batchName, pickedFromDrop, planUpload, sendPlan, UPLOAD_LIMIT, type Picked } from "@/studio/upload";
@@ -124,6 +124,24 @@ export function desktopTextImport(dialogs: boolean): TextImport {
   };
 }
 
+/** Hỏi máy chủ một clip (chưa tải file audio): ném `ReadAloudError` với đúng lý do máy chủ nêu. */
+async function requestClip(voice: string, text: string, options?: ClipOptions): Promise<ReadAloudClip> {
+  let clip: { url: string; duration_ms: number; words: [number, number][] } | { cached: false; reason: string };
+  try {
+    clip = await api<typeof clip>("/api/readaloud/clip", {
+      method: "POST",
+      body: { voice, text, cachedOnly: options?.cachedOnly, bookId: options?.bookId, readings: options?.readings, rank: options?.rank },
+    });
+  } catch (error) {
+    // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
+    if (error instanceof ApiError) throw new ReadAloudError(error.message, String(error.detail.reason ?? "service"));
+    throw new ReadAloudError("Không gọi được giọng đọc.", "service");
+  }
+  // Chỉ tra bộ đệm mà chưa có: máy chủ trả 200 (không phải lỗi mạng), bộ máy đọc vẫn cần biết là "uncached".
+  if ("cached" in clip) throw new ReadAloudError("Chưa đọc đoạn này.", clip.reason || "uncached");
+  return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words };
+}
+
 /** Phía Nghe trên máy tính: đọc từ server cục bộ (abook/webui). */
 export const httpSource: ListenSource = {
   kind: "desktop",
@@ -144,22 +162,11 @@ export const httpSource: ListenSource = {
     return voices.map(({ gain_db, ...voice }) => ({ ...voice, gainDb: gain_db ?? 0 }));
   },
   readAloudClip: async (voice, text, options) => {
-    let clip: { url: string; duration_ms: number; words: [number, number][] } | { cached: false; reason: string };
-    try {
-      clip = await api<typeof clip>("/api/readaloud/clip", {
-        method: "POST",
-        body: { voice, text, cachedOnly: options?.cachedOnly, bookId: options?.bookId, readings: options?.readings, rank: options?.rank },
-      });
-    } catch (error) {
-      // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
-      if (error instanceof ApiError) throw new ReadAloudError(error.message, String(error.detail.reason ?? "service"));
-      throw new ReadAloudError("Không gọi được giọng đọc.", "service");
-    }
-    // Chỉ tra bộ đệm mà chưa có: máy chủ trả 200 (không phải lỗi mạng), bộ máy đọc vẫn cần biết là "uncached".
-    if ("cached" in clip) throw new ReadAloudError("Chưa đọc đoạn này.", clip.reason || "uncached");
-    return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words } satisfies ReadAloudClip;
+    const clip = await requestClip(voice, text, options);
+    // Tải luôn file audio bằng fetch ngay trong lượt xin clip: clip chỉ "về" khi đã đủ byte, lỗi tải = clip hỏng (cùng đường thử lại). Phần tử <audio> tự tải thì bị xếp sau các POST clip còn treo (a55).
+    return { ...clip, bytes: await fetchClipBytes(clip.url) };
   },
-  readAloudSample: async (voice, text, options) => (await httpSource.readAloudClip!(voice, text, options)).url,
+  readAloudSample: async (voice, text, options) => (await requestClip(voice, text, options)).url,
   // Máy chủ nhận chữ từng đoạn, chia đúng như trình phát (cùng khoá bộ đệm với lúc nghe).
   readAloudPrepare: async ({ voice, bookId, chapters, label }) => {
     const texts = await paragraphsFor(chapters, (id) => httpSource.chapterText(bookId, id));

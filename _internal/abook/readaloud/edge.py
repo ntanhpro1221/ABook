@@ -340,13 +340,16 @@ def read_turn(connection: websocket.Connection, compensation_ticks: int, deadlin
 class ConnectionSlots:
     """Chỗ kết nối Edge của cả tiến trình (EDGE_CONNECTIONS chỗ). Hết chỗ thì người chờ xếp hàng theo `rank` (số đoạn người nghe phải nghe trước đoạn này: 0 = đoạn họ đang đứng chờ, 1 = đoạn kế...;
     mặc định [RANK_BACKGROUND]: việc nền, đọc trước không rõ ai chờ), cùng rank thì ai đến trước được trước. Mảnh đang giữ chỗ không bị đuổi; chỉ chỗ vừa nhả được trao theo hàng.
+    Riêng rank 0 không chờ trần `size`: được lấy thêm tới `extra` chỗ vượt trần (a55: đoạn người nghe đứng chờ đến sau ba clip đọc trước chỉ vài ms đã phải đợi 4-11 giây vì chúng chiếm hết
+    chỗ - hàng chờ chỉ xếp thứ tự người CHỜ, không đòi lại được chỗ đang giữ). Quá size + extra thì rank 0 cũng chờ; rank >= 1 chỉ được chỗ khi số chỗ giữ xuống dưới `size`.
     Điện thoại: ConnectionSlots trong EdgeTts.kt."""
 
     POLL = 0.25  # người chờ xem lại `abandoned` sau chừng này giây (bỏ cuộc không đánh thức hàng)
 
-    def __init__(self, size: int) -> None:
+    def __init__(self, size: int, extra: int = 0) -> None:
         self.size = size
-        self.free = size
+        self.extra = extra
+        self.free = size  # size - số chỗ đang giữ; âm khi rank 0 đang giữ chỗ vượt trần
         self._turns = 0
         self._queue: list[tuple[int, int]] = []  # (rank, số thứ tự đến); đầu hàng = người được trao chỗ kế
         self._ready = threading.Condition()
@@ -354,13 +357,14 @@ class ConnectionSlots:
     def acquire(self, timeout: float | None = None, rank: int = RANK_BACKGROUND, abandoned: Callable[[], bool] | None = None) -> bool:
         """Lấy một chỗ; False khi quá `timeout` (giây) hay `abandoned()` đúng (clip đã bỏ) - vị trí trong hàng giữ nguyên suốt lúc chờ."""
         deadline = None if timeout is None else time.monotonic() + timeout
+        allowance = self.extra if rank == 0 else 0  # chỗ vượt trần được phép với rank này
         with self._ready:
             self._turns += 1
             ticket = (rank, self._turns)
             self._queue.append(ticket)
             self._queue.sort()
             try:
-                while not (self.free > 0 and self._queue[0] == ticket):
+                while not (self.free + allowance > 0 and self._queue[0] == ticket):
                     left = self.POLL if deadline is None else min(self.POLL, deadline - time.monotonic())
                     if left <= 0 or (abandoned is not None and abandoned()):
                         return False
@@ -379,7 +383,7 @@ class ConnectionSlots:
             self._ready.notify_all()
 
 
-_connections = ConnectionSlots(EDGE_CONNECTIONS)  # mọi EdgeClient trong tiến trình dùng chung
+_connections = ConnectionSlots(EDGE_CONNECTIONS, TARGET_PIECES)  # mọi EdgeClient trong tiến trình dùng chung; trần cứng EDGE_CONNECTIONS + TARGET_PIECES (chỉ đoạn rank 0 vượt EDGE_CONNECTIONS)
 
 
 class _Clip:
