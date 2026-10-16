@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nghe ngay
 
 - Trên máy tính, nhạc nền của sách chỉ có chữ giờ đổi theo cảnh, và đó là mặc định: nhạc êm, đổi bài đúng lúc đoạn đầu cảnh mới bắt đầu đọc (không đổi giữa câu), thay cho một danh sách nhạc chạy suốt cả cuốn. Chương đang nghe được dựng trước, vài chương sau dựng ngầm; chương nào chưa xong thì nhạc vào ở câu kế tiếp, giọng đọc không phải chờ. Menu "Nhạc nền" có thêm "Theo cảnh (máy tự dựng)"; bạn vẫn chọn được danh sách khác, "Nhạc của tôi" hay tắt. Điện thoại chưa đổi.
+- Ký hiệu trong truyện lại được đọc sát ý hơn (máy tính và điện thoại): "8:00 → 10:00" đọc "đến"; "9x", "thứ 9x", "3x tuổi" đọc "ích" cho số bị che, "10x Sức mạnh", "kính ngắm 8x" là "10 lần", "8 lần"; dấu "×" đánh dấu sai, dấu "××" che chữ hay "Tên 〇〇 ×" không còn đọc thành "nhân"; "↑↑↓↓←→←→BABA" đọc từng phím và từng chữ, còn "→→→→" chỉ là trang trí; "-1600" đầu câu là "âm 1600", "sức khỏe / 2" là "chia 2", và "100/250" luôn đọc "100 trên 250" kể cả với giọng Edge.
 
 ## [0.4.70] - 2026-10-16
 

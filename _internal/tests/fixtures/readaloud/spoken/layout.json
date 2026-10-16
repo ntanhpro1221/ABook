@@ -616,5 +616,269 @@
     2
    ]
   ]
+ },
+ {
+  "id": "tn11-slash",
+  "note": "tn11 symbols round 3: Edge text carries the same readings",
+  "origin": null,
+  "text": "HP 100/250, điểm 8/10, Sức khỏe / 2, ngày 8/3, tỉ lệ 3/4, 5 / 1000.",
+  "spoken": "hát pê 100 trên 250, điểm 8 trên 10, Sức khỏe chia 2, ngày 8 tháng 3, tỉ lệ 3 phần tư, 5 trên 1000.",
+  "spans": [
+   [
+    0,
+    1
+   ],
+   [
+    2,
+    4
+   ],
+   [
+    5,
+    5
+   ],
+   [
+    6,
+    8
+   ],
+   [
+    9,
+    9
+   ],
+   [
+    10,
+    10
+   ],
+   [
+    11,
+    11
+   ],
+   [
+    12,
+    12
+   ],
+   [
+    13,
+    13
+   ],
+   [
+    14,
+    16
+   ],
+   [
+    17,
+    17
+   ],
+   [
+    18,
+    18
+   ],
+   [
+    19,
+    21
+   ],
+   [
+    22,
+    22
+   ],
+   [
+    23,
+    23
+   ],
+   [
+    24,
+    24
+   ]
+  ]
+ },
+ {
+  "id": "tn11-arrow",
+  "note": "tn11 symbols round 3: Edge text carries the same readings",
+  "origin": null,
+  "text": "Họp 8:00 → 10:00. Lv3 → Lv4.",
+  "spoken": "Họp 8:00 đến 10:00. level 3 thành level 4.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    4,
+    5
+   ],
+   [
+    6,
+    6
+   ],
+   [
+    7,
+    8
+   ]
+  ]
+ },
+ {
+  "id": "tn11-x",
+  "note": "tn11 symbols round 3: Edge text carries the same readings",
+  "origin": null,
+  "text": "Năm 9x, 3x tuổi, sin 2x + 1, 10x Sức mạnh, kính ngắm 8x, Tính 3×4. Đáp án ×. Gói ×Course.",
+  "spoken": "Năm 9 ích, 3 ích tuổi, sin 2 ích + 1, 10 lần Sức mạnh, kính ngắm 8 lần, Tính 3 nhân 4. Đáp án . Gói ích Course.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    2
+   ],
+   [
+    3,
+    4
+   ],
+   [
+    5,
+    5
+   ],
+   [
+    6,
+    6
+   ],
+   [
+    7,
+    8
+   ],
+   [
+    9,
+    9
+   ],
+   [
+    10,
+    10
+   ],
+   [
+    11,
+    12
+   ],
+   [
+    13,
+    13
+   ],
+   [
+    14,
+    14
+   ],
+   [
+    15,
+    15
+   ],
+   [
+    16,
+    16
+   ],
+   [
+    17,
+    18
+   ],
+   [
+    19,
+    19
+   ],
+   [
+    20,
+    22
+   ],
+   [
+    23,
+    23
+   ],
+   [
+    24,
+    24
+   ],
+   [
+    25,
+    25
+   ],
+   [
+    26,
+    26
+   ],
+   [
+    27,
+    28
+   ]
+  ]
+ },
+ {
+  "id": "tn11-keys",
+  "note": "tn11 symbols round 3: Edge text carries the same readings",
+  "origin": null,
+  "text": "Nhấn ↑↑↓↓←→←→BABA nhé, Sức mạnh 9↓, kết toán -1600 vàng, đòn -25 máu.",
+  "spoken": "Nhấn lên lên xuống xuống trái phải trái phải bê a bê a nhé, Sức mạnh 9 giảm, kết toán âm 1600 vàng, đòn trừ 25 máu.",
+  "spans": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    12
+   ],
+   [
+    13,
+    13
+   ],
+   [
+    14,
+    14
+   ],
+   [
+    15,
+    15
+   ],
+   [
+    16,
+    17
+   ],
+   [
+    18,
+    18
+   ],
+   [
+    19,
+    19
+   ],
+   [
+    20,
+    21
+   ],
+   [
+    22,
+    22
+   ],
+   [
+    23,
+    23
+   ],
+   [
+    24,
+    25
+   ],
+   [
+    26,
+    26
+   ]
+  ]
  }
 ]
