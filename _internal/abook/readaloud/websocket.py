@@ -180,6 +180,7 @@ def connect(host: str, port: int, path: str, headers: dict[str, str], *, secure:
     sock = socket.create_connection((host, port), timeout=timeout)
     try:
         if secure:
+            sock.settimeout(max(0.1, deadline - time.monotonic()))  # cả TCP + TLS + nâng cấp chung MỘT hạn `timeout`, không phải mỗi bước một hạn
             sock = (context or ssl.create_default_context()).wrap_socket(sock, server_hostname=host)
         sock.settimeout(max(0.1, deadline - time.monotonic()))
         key = base64.b64encode(os.urandom(16)).decode("ascii")
