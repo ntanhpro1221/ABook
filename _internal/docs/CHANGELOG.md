@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.80] - 2026-10-16
+
 ### Nghe ngay
 
 - Giọng trực tuyến đọc nối các câu liền hơn: chỗ giữa hai phần của một đoạn dài không còn thừa quãng lặng (sau dấu chấm vẫn nghỉ như người đọc, sau dấu phẩy chỉ nghỉ ngắn). Đoạn đã nghe trước đây sẽ được đọc lại một lần theo cách nối mới.
