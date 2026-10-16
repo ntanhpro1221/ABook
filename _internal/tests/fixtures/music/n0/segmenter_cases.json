@@ -1,0 +1,1078 @@
+{
+ "cases": [
+  {
+   "text": "Lan bước vào quán. Bà chủ nhìn cô.\n\nLan hỏi: “Có phòng trống không?” Bà chủ gật đầu.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bước vào quán. Bà chủ nhìn cô.",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Lan hỏi:",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "“Có phòng trống không?”",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "Bà chủ gật đầu.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "“Anh đi đâu đấy?” Minh hỏi. “Tôi đi chợ,” Lan đáp. “Về sớm nhé.”",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Anh đi đâu đấy?”",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Minh hỏi.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "“Tôi đi chợ,”",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "Lan đáp.",
+     "sceneBreak": false
+    },
+    {
+     "id": 4,
+     "text": "“Về sớm nhé.”",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "“Hôm nay trời đẹp quá!” Cô nhìn ra cửa sổ, “mà lòng vẫn nặng.”",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Hôm nay trời đẹp quá!”",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Cô nhìn ra cửa sổ,",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "“mà lòng vẫn nặng.”",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "— Anh đi đâu đấy?\n— Tôi đi chợ.\n- Về sớm nhé.\n–Ừ.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "— Anh đi đâu đấy?",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "— Tôi đi chợ.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "- Về sớm nhé.",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "–Ừ.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Hắn bước vào. Hắn nhìn quanh.\n\n- Có ai không?\n\nKhông ai đáp.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Hắn bước vào. Hắn nhìn quanh.",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "- Có ai không?",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Không ai đáp.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "‘Mình phải đi thôi,’ Lan nghĩ thầm. Rồi cô đứng dậy.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "‘Mình phải đi thôi,’",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Lan nghĩ thầm. Rồi cô đứng dậy.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "'Chà, chắc mình phải chăm chỉ thêm thôi.'\n\nMinh gõ cửa.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "'Chà, chắc mình phải chăm chỉ thêm thôi.'",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Minh gõ cửa.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Lan nói với Ma'at rằng I'm fine, rồi đi.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan nói với Ma'at rằng I'm fine, rồi đi.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "「Ừ. Hiểu rồi.」 Minh gật đầu. 「Mai gặp lại.」",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Ừ. Hiểu rồi.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Minh gật đầu.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "“Mai gặp lại.”",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "『Hệ thống đã khởi động』\n\nLan mở mắt.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "『Hệ thống đã khởi động』",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Lan mở mắt.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "[Bạn đã lên cấp.]\n\n【Nhiệm vụ mới】\n\nLan đọc bảng thông báo.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "[Bạn đã lên cấp.]",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "【Nhiệm vụ mới】",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Lan đọc bảng thông báo.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "[Note: Mình dịch chương này hơi vội]\n\nLan tới nơi.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "[Note: Mình dịch chương này hơi vội]",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Lan tới nơi.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "[Tên Dài Của Bảng]\n\n[Lớp A]\n\n[Hmm]\n\n[Kkkkk]\n\n[Ôi!!]",
+   "segments": [
+    {
+     "id": 0,
+     "text": "[Tên Dài Của Bảng]",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "[Lớp A]",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "[Hmm]",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "[Kkkkk]",
+     "sceneBreak": false
+    },
+    {
+     "id": 4,
+     "text": "[Ôi!!]",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Gió thổi.\n\n***\n\nTrời tối.\n\n◆\n\nSáng hôm sau.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Gió thổi.",
+     "sceneBreak": true
+    },
+    {
+     "id": 1,
+     "text": "Trời tối.",
+     "sceneBreak": true
+    },
+    {
+     "id": 2,
+     "text": "Sáng hôm sau.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Gió thổi.\n***\nTrời tối.\n* * *\nTrời sáng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Gió thổi.",
+     "sceneBreak": true
+    },
+    {
+     "id": 1,
+     "text": "Trời tối.",
+     "sceneBreak": true
+    },
+    {
+     "id": 2,
+     "text": "Trời sáng.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "***\n\nGió thổi.\n\n***",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Gió thổi.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Gió thổi.\n\n*\n\nTrời tối.\n\n-\n\nTrời sáng.\n\n--\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Gió thổi.",
+     "sceneBreak": true
+    },
+    {
+     "id": 1,
+     "text": "Trời tối.",
+     "sceneBreak": true
+    },
+    {
+     "id": 2,
+     "text": "Trời sáng.",
+     "sceneBreak": true
+    },
+    {
+     "id": 3,
+     "text": "Hết.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Gió thổi.\n\n...\n\n“...”\n\nTrời tối.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Gió thổi.",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Trời tối.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Cô nói “thợ săn” rồi cười. Họ gọi tôi là “đội trưởng,” đơn giản vì thế.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Cô nói",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "“thợ săn”",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "rồi cười. Họ gọi tôi là",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "“đội trưởng,”",
+     "sceneBreak": false
+    },
+    {
+     "id": 4,
+     "text": "đơn giản vì thế.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Cô đọc “Cơ hội hoàn hảo”? Rồi lắc đầu.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Cô đọc “Cơ hội hoàn hảo”? Rồi lắc đầu.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "“Haha! “Cậu sẽ bị phạt” chứ gì? Cứ làm đi!” Cô cười.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Haha! “Cậu sẽ bị phạt” chứ gì? Cứ làm đi!”",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Cô cười.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "“Một câu nói chưa đóng ngoặc.\n\nLan tiếp tục đi.\n\nMinh quay lại.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Một câu nói chưa đóng ngoặc.",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Lan tiếp tục đi.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Minh quay lại.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "“Một câu nói dài\n\n“Tiếp theo đây” Lan đáp.\n\nCô đi.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Một câu nói dài",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "“Tiếp theo đây”",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Lan đáp.",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "Cô đi.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Lan nói: “Đừng lo.\" rồi đi.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan nói:",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "“Đừng lo.\" rồi đi.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "\"Anh ơi\" cô gọi. \"Đợi em với\" cô nói thêm.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "\"Anh ơi\"",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "cô gọi.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "\"Đợi em với\"",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "cô nói thêm.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Một dòng có dấu \" lẻ loi.\n\nDòng tiếp theo.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Một dòng có dấu",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "\" lẻ loi.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Dòng tiếp theo.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. ",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất.",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất.",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt kết thúc.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt kết thúc.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Lan  nói    nhiều   khoảng trắng.\n\n\n\nVà   nhiều dòng trống.\n \n \nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan nói nhiều khoảng trắng.",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Và nhiều dòng trống.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Hết.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Đây là dòng một\nđây là dòng hai bị bẻ\ndòng ba.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Đây là dòng một",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "đây là dòng hai bị bẻ",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "dòng ba.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Dòng [note123] có chú thích [Note54360] và [note].\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Dòng có chú thích và [note].",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Hết.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Zero​width‍text‌ với﻿ ký tự ẩn.\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Zerowidthtext với ký tự ẩn.",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Hết.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "NBSP giữa  chữ.\n\nDòng\r\nCRLF.\r\rHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "NBSP giữa chữ.",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Dòng",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "CRLF.",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "Hết.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Dòng có ngắt dòng Unicode vànữa.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Dòng có",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "ngắt dòng Unicode",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "và",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "nữa.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "“Ừ.” “Cô chắc chứ?” “Chắc.”",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Ừ.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "“Cô chắc chứ?”",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "“Chắc.”",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "“a”, “b”, “c” là ba chữ.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“a”, “b”, “c” là ba chữ.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Anh đọc “Lan”.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Anh đọc “Lan”.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "“Lan”. Rồi anh đi.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Lan”. Rồi anh đi.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Chương này có cả chữ Hán 北京 và emoji 🌸 trong câu 𠀋.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Chương này có cả chữ Hán 北京 và emoji 🌸 trong câu 𠀋.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "(Mình không nên nói ra.)\n\n(Hừm) Lan nghĩ.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "(Mình không nên nói ra.)",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "(Hừm) Lan nghĩ.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Lan đến.\n\n— Chào.\n\nHắn đã nhảy tránh được.\n\n-bởi vì hắn đã thấy trước.\n\n“Ừ.”",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan đến.",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "— Chào.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Hắn đã nhảy tránh được.",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "-bởi vì hắn đã thấy trước.",
+     "sceneBreak": false
+    },
+    {
+     "id": 4,
+     "text": "“Ừ.”",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "“Một.”\n“Hai.”\n“Ba.”\n“Bốn.”\n“Năm.”\n“Sáu.”\n“Bảy.”\n“Tám.”\n“Chín.”\n“Mười.”\n-Hoặc không, vì hắn đã nhảy tránh được.\n- Hắn đã chạy vội về phía cổng.\nCô lùi lại.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Một.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "“Hai.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "“Ba.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "“Bốn.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 4,
+     "text": "“Năm.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 5,
+     "text": "“Sáu.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 6,
+     "text": "“Bảy.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 7,
+     "text": "“Tám.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 8,
+     "text": "“Chín.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 9,
+     "text": "“Mười.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 10,
+     "text": "-Hoặc không, vì hắn đã nhảy tránh được.",
+     "sceneBreak": false
+    },
+    {
+     "id": 11,
+     "text": "- Hắn đã chạy vội về phía cổng.",
+     "sceneBreak": false
+    },
+    {
+     "id": 12,
+     "text": "Cô lùi lại.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Hắn nói “không\n\nLan đáp “có” và “nữa\n\nHết rồi.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Hắn nói",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "“không",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Lan đáp",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "“có”",
+     "sceneBreak": false
+    },
+    {
+     "id": 4,
+     "text": "và",
+     "sceneBreak": false
+    },
+    {
+     "id": 5,
+     "text": "“nữa",
+     "sceneBreak": false
+    },
+    {
+     "id": 6,
+     "text": "Hết rồi.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Không ngoặc đóng: “mở rồi quên.\n\nĐoạn hai.\n\nĐoạn ba.\n\n“Đoạn bốn mở lại.” Xong.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Không ngoặc đóng:",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "“mở rồi quên.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Đoạn hai.",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "Đoạn ba.",
+     "sceneBreak": false
+    },
+    {
+     "id": 4,
+     "text": "“Đoạn bốn mở lại.”",
+     "sceneBreak": false
+    },
+    {
+     "id": 5,
+     "text": "Xong.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Dòng cuối là ***\n\n***",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Dòng cuối là ***",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Lan thì thầm ‘đừng đi’ rồi ‘ở lại’ và khóc.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan thì thầm",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "‘đừng đi’",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "rồi",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "‘ở lại’",
+     "sceneBreak": false
+    },
+    {
+     "id": 4,
+     "text": "và khóc.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Gió “thổi” ‘mạnh’ và \"rất\" mạnh.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Gió “thổi”",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "‘mạnh’",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "và \"rất\" mạnh.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Hết chương. Ủng hộ mình tại momo 0123456789.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Hết chương. Ủng hộ mình tại momo 0123456789.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Dịch: NicK\n\nLan bước đi.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Dịch: NicK",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Lan bước đi.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Câu 1: abc, câu 2: def; câu 3! Câu 4? Câu 5… Câu 6.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Câu 1: abc, câu 2: def; câu 3! Câu 4? Câu 5… Câu 6.",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "error": "Segmentation changed the spoken token sequence"
+  },
+  {
+   "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ",
+   "segments": [
+    {
+     "id": 0,
+     "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "sceneBreak": false
+    }
+   ]
+  },
+  {
+   "text": "Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. \n\nLời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. \n\nLời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. \n\n",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời.",
+     "sceneBreak": false
+    },
+    {
+     "id": 1,
+     "text": "Lời. Lời.",
+     "sceneBreak": false
+    },
+    {
+     "id": 2,
+     "text": "Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời.",
+     "sceneBreak": false
+    },
+    {
+     "id": 3,
+     "text": "Lời. Lời.",
+     "sceneBreak": false
+    },
+    {
+     "id": 4,
+     "text": "Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời.",
+     "sceneBreak": false
+    },
+    {
+     "id": 5,
+     "text": "Lời. Lời.",
+     "sceneBreak": false
+    }
+   ]
+  }
+ ]
+}

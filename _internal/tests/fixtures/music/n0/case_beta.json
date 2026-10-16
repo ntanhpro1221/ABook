@@ -1,0 +1,836 @@
+{
+ "name": "beta",
+ "bookKey": "book-beta",
+ "chaptersFile": "chapters_main.json",
+ "options": {},
+ "expected": {
+  "scenes": [
+   {
+    "chapterId": 1,
+    "firstSegment": 0,
+    "lastSegment": 12,
+    "start": 0.0,
+    "end": 115.7,
+    "reason": "chapter_start",
+    "lines": 13,
+    "key": "1:0",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t136.mp3",
+    "distance": 0.187,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 1,
+    "firstSegment": 13,
+    "lastSegment": 21,
+    "start": 115.7,
+    "end": 188.11,
+    "reason": "subhead",
+    "lines": 9,
+    "key": "1:13",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t128.mp3",
+    "distance": 0.216,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 1,
+    "firstSegment": 22,
+    "lastSegment": 34,
+    "start": 188.11,
+    "end": 308.88,
+    "reason": "subhead",
+    "lines": 13,
+    "key": "1:22",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t127.mp3",
+    "distance": 0.216,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 1,
+    "firstSegment": 35,
+    "lastSegment": 41,
+    "start": 308.88,
+    "end": 374.465,
+    "reason": "separator",
+    "lines": 7,
+    "key": "1:35",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t129.mp3",
+    "distance": 0.216,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 1,
+    "firstSegment": 42,
+    "lastSegment": 54,
+    "start": 374.465,
+    "end": 479.375,
+    "reason": "subhead",
+    "lines": 13,
+    "key": "1:42",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t134.mp3",
+    "distance": 0.218,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 2,
+    "firstSegment": 0,
+    "lastSegment": 18,
+    "start": 0.0,
+    "end": 152.035,
+    "reason": "chapter_start",
+    "lines": 19,
+    "key": "2:0",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t064.mp3",
+    "distance": 0.279,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 2,
+    "firstSegment": 19,
+    "lastSegment": 33,
+    "start": 152.035,
+    "end": 296.92,
+    "reason": "length",
+    "lines": 15,
+    "key": "2:19",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t064.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.0,
+    "stopAt": null,
+    "siblings": [
+     {
+      "at": 260.0,
+      "link": "https://example.invalid/n0/t093.mp3"
+     }
+    ]
+   },
+   {
+    "chapterId": 2,
+    "firstSegment": 34,
+    "lastSegment": 45,
+    "start": 296.92,
+    "end": 407.94,
+    "reason": "time_jump",
+    "lines": 12,
+    "key": "2:34",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t135.mp3",
+    "distance": 0.413,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 2,
+    "firstSegment": 46,
+    "lastSegment": 56,
+    "start": 407.94,
+    "end": 498.615,
+    "reason": "length",
+    "lines": 11,
+    "key": "2:46",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t135.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.0,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 2,
+    "firstSegment": 57,
+    "lastSegment": 71,
+    "start": 498.615,
+    "end": 628.615,
+    "reason": "time_jump",
+    "lines": 15,
+    "key": "2:57",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t057.mp3",
+    "distance": 0.459,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 2,
+    "firstSegment": 72,
+    "lastSegment": 82,
+    "start": 628.615,
+    "end": 718.315,
+    "reason": "subhead",
+    "lines": 11,
+    "key": "2:72",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t130.mp3",
+    "distance": 0.522,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 3,
+    "firstSegment": 0,
+    "lastSegment": 9,
+    "start": 0.0,
+    "end": 63.44,
+    "reason": "chapter_start",
+    "lines": 10,
+    "key": "3:0",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t093.mp3",
+    "distance": 0.308,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": 61.0,
+    "siblings": []
+   },
+   {
+    "chapterId": 4,
+    "firstSegment": 0,
+    "lastSegment": 11,
+    "start": 0.0,
+    "end": 119.015,
+    "reason": "chapter_start",
+    "lines": 12,
+    "key": "4:0",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t107.mp3",
+    "distance": 0.805,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 4,
+    "firstSegment": 12,
+    "lastSegment": 26,
+    "start": 119.015,
+    "end": 247.195,
+    "reason": "separator",
+    "lines": 15,
+    "key": "4:12",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t103.mp3",
+    "distance": 0.831,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 4,
+    "firstSegment": 27,
+    "lastSegment": 42,
+    "start": 247.195,
+    "end": 374.53,
+    "reason": "length",
+    "lines": 16,
+    "key": "4:27",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t103.mp3",
+    "distance": null,
+    "continued": true,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": 0.0,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 4,
+    "firstSegment": 43,
+    "lastSegment": 55,
+    "start": 374.53,
+    "end": 500.89,
+    "reason": "separator",
+    "lines": 13,
+    "key": "4:43",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t054.mp3",
+    "distance": 0.864,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 5,
+    "firstSegment": 0,
+    "lastSegment": 12,
+    "start": 0.0,
+    "end": 115.505,
+    "reason": "chapter_start",
+    "lines": 13,
+    "key": "5:0",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t131.mp3",
+    "distance": 0.522,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": [
+     {
+      "at": 80.0,
+      "link": "https://example.invalid/n0/t059.mp3"
+     }
+    ]
+   },
+   {
+    "chapterId": 5,
+    "firstSegment": 13,
+    "lastSegment": 21,
+    "start": 115.505,
+    "end": 187.915,
+    "reason": "subhead",
+    "lines": 9,
+    "key": "5:13",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t104.mp3",
+    "distance": 0.636,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 5,
+    "firstSegment": 22,
+    "lastSegment": 34,
+    "start": 187.915,
+    "end": 308.685,
+    "reason": "subhead",
+    "lines": 13,
+    "key": "5:22",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t022.mp3",
+    "distance": 0.87,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   },
+   {
+    "chapterId": 5,
+    "firstSegment": 35,
+    "lastSegment": 41,
+    "start": 308.685,
+    "end": 374.27,
+    "reason": "separator",
+    "lines": 7,
+    "key": "5:35",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t059.mp3",
+    "distance": 0.548,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": 369.685,
+    "siblings": []
+   },
+   {
+    "chapterId": 5,
+    "firstSegment": 42,
+    "lastSegment": 54,
+    "start": 374.27,
+    "end": 479.18,
+    "reason": "subhead",
+    "lines": 13,
+    "key": "5:42",
+    "pinned": false,
+    "link": "https://example.invalid/n0/t101.mp3",
+    "distance": 0.895,
+    "continued": false,
+    "silenced": false,
+    "pinUnavailable": false,
+    "stepDb": null,
+    "stopAt": null,
+    "siblings": []
+   }
+  ],
+  "cues": {
+   "1": [
+    {
+     "start": 0.0,
+     "end": 115.7,
+     "link": "https://example.invalid/n0/t136.mp3",
+     "key": "1:0"
+    },
+    {
+     "start": 115.7,
+     "end": 188.11,
+     "link": "https://example.invalid/n0/t128.mp3",
+     "key": "1:13"
+    },
+    {
+     "start": 188.11,
+     "end": 308.88,
+     "link": "https://example.invalid/n0/t127.mp3",
+     "key": "1:22"
+    },
+    {
+     "start": 308.88,
+     "end": 374.465,
+     "link": "https://example.invalid/n0/t129.mp3",
+     "key": "1:35"
+    },
+    {
+     "start": 374.465,
+     "end": 476.875,
+     "link": "https://example.invalid/n0/t134.mp3",
+     "key": "1:42"
+    }
+   ],
+   "2": [
+    {
+     "start": 0.0,
+     "end": 260.0,
+     "link": "https://example.invalid/n0/t064.mp3",
+     "key": "2:0",
+     "tail": true
+    },
+    {
+     "start": 260.0,
+     "end": 296.92,
+     "link": "https://example.invalid/n0/t093.mp3",
+     "key": "2:19",
+     "sibling": true
+    },
+    {
+     "start": 296.92,
+     "end": 498.615,
+     "link": "https://example.invalid/n0/t135.mp3",
+     "key": "2:34"
+    },
+    {
+     "start": 498.615,
+     "end": 628.615,
+     "link": "https://example.invalid/n0/t057.mp3",
+     "key": "2:57"
+    },
+    {
+     "start": 628.615,
+     "end": 715.815,
+     "link": "https://example.invalid/n0/t130.mp3",
+     "key": "2:72"
+    }
+   ],
+   "3": [
+    {
+     "start": 0.0,
+     "end": 60.94,
+     "link": "https://example.invalid/n0/t093.mp3",
+     "key": "3:0"
+    }
+   ],
+   "4": [
+    {
+     "start": 0.0,
+     "end": 119.015,
+     "link": "https://example.invalid/n0/t107.mp3",
+     "key": "4:0"
+    },
+    {
+     "start": 119.015,
+     "end": 374.53,
+     "link": "https://example.invalid/n0/t103.mp3",
+     "key": "4:12"
+    },
+    {
+     "start": 374.53,
+     "end": 498.39,
+     "link": "https://example.invalid/n0/t054.mp3",
+     "key": "4:43"
+    }
+   ],
+   "5": [
+    {
+     "start": 0.0,
+     "end": 80.0,
+     "link": "https://example.invalid/n0/t131.mp3",
+     "key": "5:0",
+     "tail": true
+    },
+    {
+     "start": 80.0,
+     "end": 115.505,
+     "link": "https://example.invalid/n0/t059.mp3",
+     "key": "5:0",
+     "sibling": true
+    },
+    {
+     "start": 115.505,
+     "end": 187.915,
+     "link": "https://example.invalid/n0/t104.mp3",
+     "key": "5:13"
+    },
+    {
+     "start": 187.915,
+     "end": 308.685,
+     "link": "https://example.invalid/n0/t022.mp3",
+     "key": "5:22"
+    },
+    {
+     "start": 308.685,
+     "end": 369.685,
+     "link": "https://example.invalid/n0/t059.mp3",
+     "key": "5:35",
+     "tail": true
+    },
+    {
+     "start": 374.27,
+     "end": 476.68,
+     "link": "https://example.invalid/n0/t101.mp3",
+     "key": "5:42"
+    }
+   ]
+  },
+  "cuesUnclamped": {
+   "1": [
+    {
+     "start": 0.0,
+     "end": 115.7,
+     "link": "https://example.invalid/n0/t136.mp3",
+     "key": "1:0"
+    },
+    {
+     "start": 115.7,
+     "end": 188.11,
+     "link": "https://example.invalid/n0/t128.mp3",
+     "key": "1:13"
+    },
+    {
+     "start": 188.11,
+     "end": 308.88,
+     "link": "https://example.invalid/n0/t127.mp3",
+     "key": "1:22"
+    },
+    {
+     "start": 308.88,
+     "end": 374.465,
+     "link": "https://example.invalid/n0/t129.mp3",
+     "key": "1:35"
+    },
+    {
+     "start": 374.465,
+     "end": 479.375,
+     "link": "https://example.invalid/n0/t134.mp3",
+     "key": "1:42"
+    }
+   ],
+   "2": [
+    {
+     "start": 0.0,
+     "end": 260.0,
+     "link": "https://example.invalid/n0/t064.mp3",
+     "key": "2:0",
+     "tail": true
+    },
+    {
+     "start": 260.0,
+     "end": 296.92,
+     "link": "https://example.invalid/n0/t093.mp3",
+     "key": "2:19",
+     "sibling": true
+    },
+    {
+     "start": 296.92,
+     "end": 498.615,
+     "link": "https://example.invalid/n0/t135.mp3",
+     "key": "2:34"
+    },
+    {
+     "start": 498.615,
+     "end": 628.615,
+     "link": "https://example.invalid/n0/t057.mp3",
+     "key": "2:57"
+    },
+    {
+     "start": 628.615,
+     "end": 718.315,
+     "link": "https://example.invalid/n0/t130.mp3",
+     "key": "2:72"
+    }
+   ],
+   "3": [
+    {
+     "start": 0.0,
+     "end": 61.0,
+     "link": "https://example.invalid/n0/t093.mp3",
+     "key": "3:0",
+     "tail": true
+    }
+   ],
+   "4": [
+    {
+     "start": 0.0,
+     "end": 119.015,
+     "link": "https://example.invalid/n0/t107.mp3",
+     "key": "4:0"
+    },
+    {
+     "start": 119.015,
+     "end": 374.53,
+     "link": "https://example.invalid/n0/t103.mp3",
+     "key": "4:12"
+    },
+    {
+     "start": 374.53,
+     "end": 500.89,
+     "link": "https://example.invalid/n0/t054.mp3",
+     "key": "4:43"
+    }
+   ],
+   "5": [
+    {
+     "start": 0.0,
+     "end": 80.0,
+     "link": "https://example.invalid/n0/t131.mp3",
+     "key": "5:0",
+     "tail": true
+    },
+    {
+     "start": 80.0,
+     "end": 115.505,
+     "link": "https://example.invalid/n0/t059.mp3",
+     "key": "5:0",
+     "sibling": true
+    },
+    {
+     "start": 115.505,
+     "end": 187.915,
+     "link": "https://example.invalid/n0/t104.mp3",
+     "key": "5:13"
+    },
+    {
+     "start": 187.915,
+     "end": 308.685,
+     "link": "https://example.invalid/n0/t022.mp3",
+     "key": "5:22"
+    },
+    {
+     "start": 308.685,
+     "end": 369.685,
+     "link": "https://example.invalid/n0/t059.mp3",
+     "key": "5:35",
+     "tail": true
+    },
+    {
+     "start": 374.27,
+     "end": 479.18,
+     "link": "https://example.invalid/n0/t101.mp3",
+     "key": "5:42"
+    }
+   ]
+  },
+  "firstSegments": {
+   "1": [
+    0,
+    15,
+    24,
+    39,
+    46
+   ],
+   "2": [
+    0,
+    null,
+    34,
+    57,
+    73
+   ],
+   "3": [
+    0
+   ],
+   "4": [
+    0,
+    12,
+    44
+   ],
+   "5": [
+    0,
+    null,
+    15,
+    24,
+    39,
+    46
+   ]
+  },
+  "loops": {
+   "https://example.invalid/n0/t022.mp3": [
+    0.0,
+    330.0,
+    328.0,
+    true
+   ],
+   "https://example.invalid/n0/t054.mp3": [
+    0.0,
+    330.0,
+    328.0,
+    true
+   ],
+   "https://example.invalid/n0/t057.mp3": [
+    0.0,
+    420.0,
+    418.0,
+    true
+   ],
+   "https://example.invalid/n0/t059.mp3": [
+    0.0,
+    61.0,
+    59.0,
+    true
+   ],
+   "https://example.invalid/n0/t064.mp3": [
+    0.0,
+    260.0,
+    258.0,
+    true
+   ],
+   "https://example.invalid/n0/t093.mp3": [
+    0.0,
+    61.0,
+    59.0,
+    true
+   ],
+   "https://example.invalid/n0/t101.mp3": [
+    0.0,
+    420.0,
+    418.0,
+    true
+   ],
+   "https://example.invalid/n0/t103.mp3": [
+    0.0,
+    260.0,
+    258.0,
+    true
+   ],
+   "https://example.invalid/n0/t104.mp3": [
+    0.0,
+    75.0,
+    73.0,
+    true
+   ],
+   "https://example.invalid/n0/t107.mp3": [
+    0.0,
+    170.0,
+    168.0,
+    true
+   ],
+   "https://example.invalid/n0/t127.mp3": [
+    0.0,
+    150.0,
+    148.0,
+    true
+   ],
+   "https://example.invalid/n0/t128.mp3": [
+    0.0,
+    150.0,
+    148.0,
+    true
+   ],
+   "https://example.invalid/n0/t129.mp3": [
+    0.0,
+    95.0,
+    93.0,
+    true
+   ],
+   "https://example.invalid/n0/t130.mp3": [
+    0.0,
+    1800.0,
+    1798.0,
+    true
+   ],
+   "https://example.invalid/n0/t131.mp3": [
+    0.0,
+    80.0,
+    78.0,
+    true
+   ],
+   "https://example.invalid/n0/t134.mp3": [
+    0.0,
+    119.6,
+    117.6,
+    true
+   ],
+   "https://example.invalid/n0/t135.mp3": [
+    0.0,
+    240.0,
+    238.0,
+    true
+   ],
+   "https://example.invalid/n0/t136.mp3": [
+    0.0,
+    240.0,
+    238.0,
+    true
+   ]
+  }
+ }
+}

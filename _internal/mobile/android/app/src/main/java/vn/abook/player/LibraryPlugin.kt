@@ -1425,6 +1425,20 @@ class LibraryPlugin : Plugin() {
         call.resolve(JSObject().put("text", if (file.isFile) Store.overlaidText(id, path) ?: file.readText() else ""))
     }
 
+    /**
+     * Mốc nhạc nền THEO CẢNH của một chương sách chỉ có chữ (đường N0, [DeviceScenes]): `{cues: [{start, end, link, key, sibling?, tail?, steps?, firstSegment?}], scene,
+     * estSeconds, scenes: [...], pending?}` - cùng hình với tuyến `music/cues` của máy tính khi sách đang "Theo cảnh". Dựng ở luồng nền riêng (lời gọi chờ tối đa 2 giây,
+     * quá thì `pending` true: hỏi lại sau); không chiếm luồng `io` chung.
+     */
+    @PluginMethod
+    fun musicSceneCues(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        val chapterId = call.getInt("chapterId") ?: return call.reject("thiếu chapterId")
+        DeviceScenes.request(context, id, chapterId) { result, error ->
+            if (result != null) call.resolve(JSObject.fromJSONObject(result)) else fail(call, error ?: IllegalStateException("không dựng được nhạc nền"))
+        }
+    }
+
     @PluginMethod
     fun path(call: PluginCall) {
         val file = Store.file(call.getString("id") ?: "", call.getString("path") ?: "")

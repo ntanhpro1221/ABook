@@ -20,6 +20,10 @@ class MusicMix(json: JSONObject) {
     val stepRampSeconds = json.getDouble("stepRampSeconds")
     /** Mốc cuối kết muộn nhất ở (độ dài chương - số này) để nhạc mờ xong trước khi giọng hết (music_plan.clamp_to_chapter). */
     val chapterEndFadeSeconds = json.getDouble("chapterEndFadeSeconds")
+    /** Bài hết mà còn ít hơn chừng này tới chỗ nhạc đổi thì không nối bài anh em (`music_select.TAIL_MIN_SECONDS`) - lượt chọn nhạc theo cảnh ([SceneChooser]). */
+    val tailMinSeconds = json.getDouble("tailMinSeconds")
+    /** Hai mảnh liền nhau cùng bài hở nhau ít hơn chừng này thì chung một mốc nhạc (`music_select.CUE_MERGE_GAP_SECONDS`). */
+    val cueMergeGapSeconds = json.getDouble("cueMergeGapSeconds")
 
     companion object {
         const val FILE = "music_mix.json"

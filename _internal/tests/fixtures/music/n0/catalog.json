@@ -1,0 +1,1938 @@
+{
+ "cells": {
+  "1_0": [
+   {
+    "link": "https://example.invalid/n0/t001.mp3",
+    "valence": -0.309,
+    "arousal": -0.794,
+    "style": null,
+    "family": "orchestral",
+    "background": null,
+    "duration": 110,
+    "source": "freepd",
+    "tension": 0.096
+   },
+   {
+    "link": "https://example.invalid/n0/t002.mp3",
+    "valence": -0.492,
+    "arousal": -0.933,
+    "style": "style_a",
+    "family": "electronic",
+    "background": null,
+    "duration": 420,
+    "source": "other",
+    "tension": 0.975
+   },
+   {
+    "link": "https://example.invalid/n0/t003.mp3",
+    "valence": -0.375,
+    "arousal": -0.735,
+    "style": null,
+    "family": "ambient",
+    "background": null,
+    "duration": 200,
+    "source": "other",
+    "tension": -0.281
+   },
+   {
+    "link": "https://example.invalid/n0/t004.mp3",
+    "valence": -0.432,
+    "arousal": -0.975,
+    "style": "style_a",
+    "family": "ambient",
+    "background": 0.0,
+    "duration": 60,
+    "source": "jamendo",
+    "tension": 0.322
+   },
+   {
+    "link": "https://example.invalid/n0/t005.mp3",
+    "valence": -0.295,
+    "arousal": -0.899,
+    "style": "style_a",
+    "family": "other",
+    "background": 0.55,
+    "duration": 110,
+    "source": "other",
+    "tension": 0.079
+   },
+   {
+    "link": "https://example.invalid/n0/t006.mp3",
+    "valence": -0.568,
+    "arousal": -0.622,
+    "style": "style_c",
+    "family": "electronic",
+    "background": 0.3,
+    "duration": 330,
+    "source": "incompetech",
+    "tension": -0.682
+   },
+   {
+    "link": "https://example.invalid/n0/t007.mp3",
+    "valence": -0.461,
+    "arousal": -0.758,
+    "style": "style_a",
+    "family": "piano",
+    "background": null,
+    "duration": 330,
+    "source": "jamendo"
+   },
+   {
+    "link": "https://example.invalid/n0/t008.mp3",
+    "valence": -0.38,
+    "arousal": -0.657,
+    "style": "style_a",
+    "family": "other",
+    "background": 0.0,
+    "duration": 90,
+    "source": "other",
+    "tension": 0.375
+   },
+   {
+    "link": "https://example.invalid/n0/t009.mp3",
+    "valence": -0.553,
+    "arousal": -0.925,
+    "style": null,
+    "family": "eastern",
+    "background": 0.0,
+    "duration": 420,
+    "source": "other",
+    "tension": -0.366
+   },
+   {
+    "link": "https://example.invalid/n0/t010.mp3",
+    "valence": -0.468,
+    "arousal": -0.673,
+    "style": null,
+    "family": "ambient",
+    "background": null,
+    "duration": 61,
+    "source": "other",
+    "tension": 0.797
+   },
+   {
+    "link": "https://example.invalid/n0/t011.mp3",
+    "valence": -0.583,
+    "arousal": -0.639,
+    "style": null,
+    "family": "eastern",
+    "background": 0.55,
+    "duration": 260,
+    "source": "other",
+    "tension": -0.381
+   },
+   {
+    "link": "https://example.invalid/n0/t012.mp3",
+    "valence": -0.212,
+    "arousal": -0.742,
+    "style": "style_a",
+    "family": "orchestral",
+    "background": 0.0,
+    "duration": 260,
+    "source": "jamendo",
+    "tension": 0.494
+   },
+   {
+    "link": "https://example.invalid/n0/t013.mp3",
+    "valence": -0.598,
+    "arousal": -0.836,
+    "style": "style_b",
+    "family": "acoustic",
+    "background": null,
+    "duration": 200,
+    "source": "freepd",
+    "tension": -0.574
+   },
+   {
+    "link": "https://example.invalid/n0/t014.mp3",
+    "valence": -0.526,
+    "arousal": -0.735,
+    "style": "style_a",
+    "family": "electronic",
+    "background": 1.0,
+    "duration": 420,
+    "source": "freepd",
+    "tension": -0.601
+   }
+  ],
+  "1_1": [
+   {
+    "link": "https://example.invalid/n0/t015.mp3",
+    "valence": -0.593,
+    "arousal": -0.496,
+    "style": null,
+    "family": "eastern",
+    "background": 0.8,
+    "duration": 90,
+    "source": "incompetech",
+    "tension": 0.404
+   },
+   {
+    "link": "https://example.invalid/n0/t016.mp3",
+    "valence": -0.302,
+    "arousal": -0.213,
+    "style": "style_c",
+    "family": "orchestral",
+    "background": 0.8,
+    "duration": 110,
+    "source": "incompetech",
+    "tension": 0.751
+   },
+   {
+    "link": "https://example.invalid/n0/t017.mp3",
+    "valence": -0.379,
+    "arousal": -0.307,
+    "style": "style_b",
+    "family": "other",
+    "background": 1.0,
+    "duration": 260,
+    "source": "incompetech",
+    "tension": 0.344
+   },
+   {
+    "link": "https://example.invalid/n0/t018.mp3",
+    "valence": -0.232,
+    "arousal": -0.598,
+    "style": "style_c",
+    "family": "ambient",
+    "background": 0.3,
+    "duration": 60,
+    "source": "jamendo",
+    "tension": 0.595
+   },
+   {
+    "link": "https://example.invalid/n0/t019.mp3",
+    "valence": -0.346,
+    "arousal": -0.373,
+    "style": null,
+    "family": "acoustic",
+    "background": 0.8,
+    "duration": 330,
+    "source": "jamendo",
+    "tension": -0.379
+   },
+   {
+    "link": "https://example.invalid/n0/t020.mp3",
+    "valence": -0.345,
+    "arousal": -0.234,
+    "style": "style_a",
+    "family": "ambient",
+    "background": 0.8,
+    "duration": 260,
+    "source": "jamendo",
+    "tension": -0.708
+   },
+   {
+    "link": "https://example.invalid/n0/t021.mp3",
+    "valence": -0.495,
+    "arousal": -0.323,
+    "style": null,
+    "family": "ambient",
+    "background": null,
+    "duration": 330,
+    "source": "jamendo",
+    "tension": 0.958
+   },
+   {
+    "link": "https://example.invalid/n0/t022.mp3",
+    "valence": -0.238,
+    "arousal": -0.584,
+    "style": "style_a",
+    "family": "acoustic",
+    "background": 1.0,
+    "duration": 330,
+    "source": "incompetech",
+    "tension": -0.221
+   },
+   {
+    "link": "https://example.invalid/n0/t023.mp3",
+    "valence": -0.587,
+    "arousal": -0.339,
+    "style": null,
+    "family": "eastern",
+    "background": 0.0,
+    "duration": 90,
+    "source": "incompetech",
+    "tension": -0.427
+   },
+   {
+    "link": "https://example.invalid/n0/t024.mp3",
+    "valence": -0.498,
+    "arousal": -0.46,
+    "style": null,
+    "family": "eastern",
+    "background": 0.3,
+    "duration": 260,
+    "source": "jamendo",
+    "tension": -0.284
+   },
+   {
+    "link": "https://example.invalid/n0/t025.mp3",
+    "valence": -0.387,
+    "arousal": -0.369,
+    "style": null,
+    "family": "eastern",
+    "background": 0.55,
+    "duration": 90,
+    "source": "other",
+    "tension": -0.918
+   },
+   {
+    "link": "https://example.invalid/n0/t026.mp3",
+    "valence": -0.373,
+    "arousal": -0.29,
+    "style": "style_c",
+    "family": "eastern",
+    "background": 0.55,
+    "duration": 140,
+    "source": "other",
+    "tension": 0.859
+   },
+   {
+    "link": "https://example.invalid/n0/t027.mp3",
+    "valence": -0.489,
+    "arousal": -0.229,
+    "style": "style_c",
+    "family": "eastern",
+    "background": 0.0,
+    "duration": 110,
+    "source": "other",
+    "tension": -0.379
+   },
+   {
+    "link": "https://example.invalid/n0/t028.mp3",
+    "valence": -0.494,
+    "arousal": -0.293,
+    "style": "style_c",
+    "family": "acoustic",
+    "background": 0.8,
+    "duration": 260,
+    "source": "freepd",
+    "tension": 0.031
+   },
+   {
+    "link": "https://example.invalid/n0/t135.mp3",
+    "valence": 0.1,
+    "arousal": -0.5,
+    "style": "style_b",
+    "family": "piano",
+    "background": 0.8,
+    "duration": 240,
+    "source": "freepd",
+    "tension": -0.1
+   },
+   {
+    "link": "https://example.invalid/n0/t136.mp3",
+    "valence": 0.1,
+    "arousal": -0.5,
+    "style": "style_a",
+    "family": "eastern",
+    "background": null,
+    "duration": 240,
+    "source": "incompetech",
+    "tension": -0.05
+   }
+  ],
+  "1_2": [
+   {
+    "link": "https://example.invalid/n0/t029.mp3",
+    "valence": -0.361,
+    "arousal": 0.025,
+    "style": "style_a",
+    "family": "orchestral",
+    "background": 1.0,
+    "duration": 420,
+    "source": "other",
+    "tension": 0.489
+   },
+   {
+    "link": "https://example.invalid/n0/t030.mp3",
+    "valence": -0.449,
+    "arousal": 0.009,
+    "style": "style_c",
+    "family": "piano",
+    "background": 0.55,
+    "duration": 61,
+    "source": "jamendo",
+    "tension": 0.674
+   },
+   {
+    "link": "https://example.invalid/n0/t031.mp3",
+    "valence": -0.281,
+    "arousal": -0.055,
+    "style": "style_c",
+    "family": "piano",
+    "background": null,
+    "duration": 110,
+    "source": "other",
+    "tension": -0.903
+   },
+   {
+    "link": "https://example.invalid/n0/t032.mp3",
+    "valence": -0.416,
+    "arousal": -0.177,
+    "style": "style_a",
+    "family": "ambient",
+    "background": 0.0,
+    "duration": 60,
+    "source": "incompetech",
+    "tension": -0.892
+   },
+   {
+    "link": "https://example.invalid/n0/t033.mp3",
+    "valence": -0.409,
+    "arousal": -0.187,
+    "style": "style_b",
+    "family": "electronic",
+    "background": 0.3,
+    "duration": 260,
+    "source": "jamendo",
+    "tension": 0.357
+   },
+   {
+    "link": "https://example.invalid/n0/t034.mp3",
+    "valence": -0.514,
+    "arousal": -0.058,
+    "style": null,
+    "family": "orchestral",
+    "background": null,
+    "duration": 110,
+    "source": "other",
+    "tension": 0.843
+   },
+   {
+    "link": "https://example.invalid/n0/t035.mp3",
+    "valence": -0.212,
+    "arousal": -0.033,
+    "style": "style_c",
+    "family": "ambient",
+    "background": 1.0,
+    "duration": 260,
+    "source": "other",
+    "tension": 0.066
+   },
+   {
+    "link": "https://example.invalid/n0/t036.mp3",
+    "valence": -0.532,
+    "arousal": -0.032,
+    "style": "style_b",
+    "family": "ambient",
+    "background": 0.0,
+    "duration": 170,
+    "source": "freepd",
+    "tension": -0.587
+   },
+   {
+    "link": "https://example.invalid/n0/t037.mp3",
+    "valence": -0.499,
+    "arousal": 0.159,
+    "style": "style_b",
+    "family": "eastern",
+    "background": 0.55,
+    "duration": 60,
+    "source": "other",
+    "tension": 0.567
+   },
+   {
+    "link": "https://example.invalid/n0/t038.mp3",
+    "valence": -0.501,
+    "arousal": -0.085,
+    "style": "style_c",
+    "family": "electronic",
+    "background": 0.55,
+    "duration": 60,
+    "source": "jamendo",
+    "tension": -0.892
+   },
+   {
+    "link": "https://example.invalid/n0/t039.mp3",
+    "valence": -0.517,
+    "arousal": -0.011,
+    "style": "style_b",
+    "family": "piano",
+    "background": 0.0,
+    "duration": 75,
+    "source": "jamendo",
+    "tension": -0.487
+   },
+   {
+    "link": "https://example.invalid/n0/t040.mp3",
+    "valence": -0.418,
+    "arousal": 0.098,
+    "style": "style_a",
+    "family": "eastern",
+    "background": 0.3,
+    "duration": 61,
+    "source": "incompetech",
+    "tension": -0.877
+   },
+   {
+    "link": "https://example.invalid/n0/t041.mp3",
+    "valence": -0.366,
+    "arousal": -0.014,
+    "style": null,
+    "family": "piano",
+    "background": 1.0,
+    "duration": 60,
+    "source": "freepd",
+    "tension": 0.004
+   },
+   {
+    "link": "https://example.invalid/n0/t042.mp3",
+    "valence": -0.35,
+    "arousal": 0.142,
+    "style": "style_a",
+    "family": "eastern",
+    "background": 0.3,
+    "duration": 200,
+    "source": "incompetech",
+    "tension": 0.749
+   }
+  ],
+  "2_0": [
+   {
+    "link": "https://example.invalid/n0/t043.mp3",
+    "valence": 0.12,
+    "arousal": -0.972,
+    "style": "style_c",
+    "family": "other",
+    "background": 0.55,
+    "duration": 140,
+    "source": "incompetech",
+    "tension": 0.398
+   },
+   {
+    "link": "https://example.invalid/n0/t044.mp3",
+    "valence": -0.076,
+    "arousal": -0.901,
+    "style": "style_c",
+    "family": "orchestral",
+    "background": 0.3,
+    "duration": 60,
+    "source": "jamendo",
+    "tension": 0.689
+   },
+   {
+    "link": "https://example.invalid/n0/t045.mp3",
+    "valence": 0.05,
+    "arousal": -0.745,
+    "style": "style_a",
+    "family": "piano",
+    "background": 1.0,
+    "duration": 61,
+    "source": "freepd",
+    "tension": -0.415
+   },
+   {
+    "link": "https://example.invalid/n0/t046.mp3",
+    "valence": 0.127,
+    "arousal": -0.643,
+    "style": "style_c",
+    "family": "electronic",
+    "background": 1.0,
+    "duration": 75,
+    "source": "freepd",
+    "tension": 0.908
+   },
+   {
+    "link": "https://example.invalid/n0/t047.mp3",
+    "valence": -0.101,
+    "arousal": -0.748,
+    "style": "style_b",
+    "family": "other",
+    "background": 0.55,
+    "duration": 110,
+    "source": "jamendo"
+   },
+   {
+    "link": "https://example.invalid/n0/t048.mp3",
+    "valence": 0.081,
+    "arousal": -0.759,
+    "style": "style_b",
+    "family": "electronic",
+    "background": 0.55,
+    "duration": 260,
+    "source": "incompetech",
+    "tension": -0.656
+   },
+   {
+    "link": "https://example.invalid/n0/t049.mp3",
+    "valence": -0.085,
+    "arousal": -0.751,
+    "style": "style_c",
+    "family": "ambient",
+    "background": null,
+    "duration": 200,
+    "source": "jamendo",
+    "tension": -0.967
+   },
+   {
+    "link": "https://example.invalid/n0/t050.mp3",
+    "valence": 0.125,
+    "arousal": -0.959,
+    "style": "style_a",
+    "family": "orchestral",
+    "background": 1.0,
+    "duration": 90,
+    "source": "incompetech",
+    "tension": 0.382
+   },
+   {
+    "link": "https://example.invalid/n0/t051.mp3",
+    "valence": -0.172,
+    "arousal": -0.761,
+    "style": "style_b",
+    "family": "acoustic",
+    "background": 0.8,
+    "duration": 110,
+    "source": "jamendo",
+    "tension": 0.617
+   },
+   {
+    "link": "https://example.invalid/n0/t052.mp3",
+    "valence": -0.194,
+    "arousal": -0.653,
+    "style": null,
+    "family": "electronic",
+    "background": 0.0,
+    "duration": 420,
+    "source": "freepd",
+    "tension": -0.482
+   },
+   {
+    "link": "https://example.invalid/n0/t053.mp3",
+    "valence": 0.168,
+    "arousal": -0.976,
+    "style": "style_c",
+    "family": "electronic",
+    "background": 0.8,
+    "duration": 170,
+    "source": "freepd",
+    "tension": -0.195
+   },
+   {
+    "link": "https://example.invalid/n0/t054.mp3",
+    "valence": -0.022,
+    "arousal": -0.868,
+    "style": "style_c",
+    "family": "orchestral",
+    "background": null,
+    "duration": 330,
+    "source": "incompetech",
+    "tension": -0.11
+   },
+   {
+    "link": "https://example.invalid/n0/t055.mp3",
+    "valence": -0.018,
+    "arousal": -0.799,
+    "style": "style_c",
+    "family": "other",
+    "background": 1.0,
+    "duration": 170,
+    "source": "jamendo",
+    "tension": -0.302
+   },
+   {
+    "link": "https://example.invalid/n0/t056.mp3",
+    "valence": -0.104,
+    "arousal": -0.856,
+    "style": "style_c",
+    "family": "ambient",
+    "background": 0.8,
+    "duration": 200,
+    "source": "jamendo",
+    "tension": 0.373
+   }
+  ],
+  "2_1": [
+   {
+    "link": "https://example.invalid/n0/t057.mp3",
+    "valence": -0.048,
+    "arousal": -0.437,
+    "style": "style_b",
+    "family": "acoustic",
+    "background": 1.0,
+    "duration": 420,
+    "source": "jamendo"
+   },
+   {
+    "link": "https://example.invalid/n0/t058.mp3",
+    "valence": 0.153,
+    "arousal": -0.502,
+    "style": "style_c",
+    "family": "ambient",
+    "background": 0.55,
+    "duration": 90,
+    "source": "freepd",
+    "tension": 0.483
+   },
+   {
+    "link": "https://example.invalid/n0/t059.mp3",
+    "valence": 0.11,
+    "arousal": -0.332,
+    "style": "style_b",
+    "family": "other",
+    "background": 1.0,
+    "duration": 61,
+    "source": "freepd",
+    "tension": 0.063
+   },
+   {
+    "link": "https://example.invalid/n0/t060.mp3",
+    "valence": -0.185,
+    "arousal": -0.355,
+    "style": "style_b",
+    "family": "piano",
+    "background": 0.8,
+    "duration": 420,
+    "source": "other",
+    "tension": -0.804
+   },
+   {
+    "link": "https://example.invalid/n0/t061.mp3",
+    "valence": 0.04,
+    "arousal": -0.478,
+    "style": "style_a",
+    "family": "acoustic",
+    "background": 1.0,
+    "duration": 330,
+    "source": "freepd",
+    "tension": -0.877
+   },
+   {
+    "link": "https://example.invalid/n0/t062.mp3",
+    "valence": -0.181,
+    "arousal": -0.584,
+    "style": null,
+    "family": "piano",
+    "background": 0.0,
+    "duration": 110,
+    "source": "freepd",
+    "tension": 0.304
+   },
+   {
+    "link": "https://example.invalid/n0/t063.mp3",
+    "valence": 0.012,
+    "arousal": -0.508,
+    "style": "style_b",
+    "family": "orchestral",
+    "background": 0.0,
+    "duration": 90,
+    "source": "incompetech",
+    "tension": -0.378
+   },
+   {
+    "link": "https://example.invalid/n0/t064.mp3",
+    "valence": 0.192,
+    "arousal": -0.516,
+    "style": "style_c",
+    "family": "eastern",
+    "background": null,
+    "duration": 260,
+    "source": "incompetech",
+    "tension": 0.118
+   },
+   {
+    "link": "https://example.invalid/n0/t065.mp3",
+    "valence": 0.069,
+    "arousal": -0.591,
+    "style": "style_a",
+    "family": "other",
+    "background": 0.3,
+    "duration": 330,
+    "source": "freepd",
+    "tension": 0.384
+   },
+   {
+    "link": "https://example.invalid/n0/t066.mp3",
+    "valence": -0.124,
+    "arousal": -0.373,
+    "style": null,
+    "family": "ambient",
+    "background": 0.8,
+    "duration": 75,
+    "source": "freepd"
+   },
+   {
+    "link": "https://example.invalid/n0/t067.mp3",
+    "valence": -0.023,
+    "arousal": -0.56,
+    "style": "style_a",
+    "family": "other",
+    "background": 1.0,
+    "duration": 260,
+    "source": "other",
+    "tension": 0.857
+   },
+   {
+    "link": "https://example.invalid/n0/t068.mp3",
+    "valence": -0.01,
+    "arousal": -0.294,
+    "style": "style_c",
+    "family": "electronic",
+    "background": 0.3,
+    "duration": 330,
+    "source": "freepd"
+   },
+   {
+    "link": "https://example.invalid/n0/t069.mp3",
+    "valence": -0.079,
+    "arousal": -0.23,
+    "style": "style_c",
+    "family": "acoustic",
+    "background": null,
+    "duration": 61,
+    "source": "other",
+    "tension": 0.619
+   },
+   {
+    "link": "https://example.invalid/n0/t070.mp3",
+    "valence": -0.136,
+    "arousal": -0.286,
+    "style": "style_b",
+    "family": "acoustic",
+    "background": 0.55,
+    "duration": 90,
+    "source": "incompetech",
+    "tension": 0.18
+   },
+   {
+    "link": "https://example.invalid/n0/t127.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": "style_b",
+    "family": "other",
+    "background": 1.0,
+    "duration": 150,
+    "source": "incompetech",
+    "tension": -0.1
+   },
+   {
+    "link": "https://example.invalid/n0/t128.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": null,
+    "family": "piano",
+    "background": null,
+    "duration": 150,
+    "source": "incompetech",
+    "tension": -0.1
+   },
+   {
+    "link": "https://example.invalid/n0/t129.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": null,
+    "family": "acoustic",
+    "background": 1.0,
+    "duration": 95,
+    "source": "freepd",
+    "tension": -0.1
+   },
+   {
+    "link": "https://example.invalid/n0/t130.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": null,
+    "family": "eastern",
+    "background": 0.3,
+    "duration": 1800,
+    "source": "jamendo",
+    "tension": 0.0
+   },
+   {
+    "link": "https://example.invalid/n0/t131.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": null,
+    "family": "acoustic",
+    "background": 0.3,
+    "duration": 80,
+    "source": "jamendo",
+    "tension": 0.0
+   },
+   {
+    "link": "https://example.invalid/n0/t132.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": "style_c",
+    "family": "acoustic",
+    "background": null,
+    "duration": 59,
+    "source": "freepd",
+    "tension": -0.1
+   },
+   {
+    "link": "https://example.invalid/n0/t133.mp3",
+    "valence": 0.15,
+    "arousal": -0.55,
+    "style": "style_a",
+    "family": "ambient",
+    "background": 0.0,
+    "duration": 0,
+    "source": "freepd",
+    "tension": -0.1
+   },
+   {
+    "link": "https://example.invalid/n0/t134.mp3",
+    "valence": 0.16,
+    "arousal": -0.54,
+    "style": "style_b",
+    "family": "other",
+    "background": 1.0,
+    "duration": 119.6,
+    "source": "freepd",
+    "tension": -0.1
+   }
+  ],
+  "2_2": [
+   {
+    "link": "https://example.invalid/n0/t071.mp3",
+    "valence": 0.047,
+    "arousal": 0.168,
+    "style": "style_c",
+    "family": "electronic",
+    "background": null,
+    "duration": 60,
+    "source": "jamendo",
+    "tension": 0.66
+   },
+   {
+    "link": "https://example.invalid/n0/t072.mp3",
+    "valence": 0.101,
+    "arousal": 0.169,
+    "style": null,
+    "family": "ambient",
+    "background": 0.3,
+    "duration": 60,
+    "source": "jamendo",
+    "tension": 0.347
+   },
+   {
+    "link": "https://example.invalid/n0/t073.mp3",
+    "valence": -0.071,
+    "arousal": -0.114,
+    "style": "style_b",
+    "family": "orchestral",
+    "background": 0.3,
+    "duration": 330,
+    "source": "jamendo",
+    "tension": 0.14
+   },
+   {
+    "link": "https://example.invalid/n0/t074.mp3",
+    "valence": 0.024,
+    "arousal": 0.142,
+    "style": null,
+    "family": "ambient",
+    "background": 0.0,
+    "duration": 420,
+    "source": "freepd",
+    "tension": 0.24
+   },
+   {
+    "link": "https://example.invalid/n0/t075.mp3",
+    "valence": 0.133,
+    "arousal": 0.004,
+    "style": "style_a",
+    "family": "piano",
+    "background": null,
+    "duration": 140,
+    "source": "other",
+    "tension": 0.282
+   },
+   {
+    "link": "https://example.invalid/n0/t076.mp3",
+    "valence": 0.028,
+    "arousal": 0.102,
+    "style": "style_b",
+    "family": "orchestral",
+    "background": 0.3,
+    "duration": 140,
+    "source": "other"
+   },
+   {
+    "link": "https://example.invalid/n0/t077.mp3",
+    "valence": 0.127,
+    "arousal": -0.132,
+    "style": "style_c",
+    "family": "other",
+    "background": null,
+    "duration": 330,
+    "source": "other",
+    "tension": -0.963
+   },
+   {
+    "link": "https://example.invalid/n0/t078.mp3",
+    "valence": 0.058,
+    "arousal": 0.179,
+    "style": null,
+    "family": "electronic",
+    "background": 0.0,
+    "duration": 140,
+    "source": "other"
+   },
+   {
+    "link": "https://example.invalid/n0/t079.mp3",
+    "valence": 0.194,
+    "arousal": 0.055,
+    "style": null,
+    "family": "orchestral",
+    "background": 0.8,
+    "duration": 61,
+    "source": "freepd",
+    "tension": -0.341
+   },
+   {
+    "link": "https://example.invalid/n0/t080.mp3",
+    "valence": 0.079,
+    "arousal": 0.127,
+    "style": "style_c",
+    "family": "orchestral",
+    "background": null,
+    "duration": 75,
+    "source": "incompetech",
+    "tension": -0.817
+   },
+   {
+    "link": "https://example.invalid/n0/t081.mp3",
+    "valence": -0.155,
+    "arousal": 0.083,
+    "style": "style_a",
+    "family": "acoustic",
+    "background": 0.55,
+    "duration": 420,
+    "source": "jamendo",
+    "tension": -0.174
+   },
+   {
+    "link": "https://example.invalid/n0/t082.mp3",
+    "valence": 0.005,
+    "arousal": -0.012,
+    "style": "style_c",
+    "family": "eastern",
+    "background": 0.0,
+    "duration": 200,
+    "source": "incompetech",
+    "tension": -0.889
+   },
+   {
+    "link": "https://example.invalid/n0/t083.mp3",
+    "valence": 0.038,
+    "arousal": -0.151,
+    "style": "style_b",
+    "family": "orchestral",
+    "background": null,
+    "duration": 75,
+    "source": "other",
+    "tension": -0.349
+   },
+   {
+    "link": "https://example.invalid/n0/t084.mp3",
+    "valence": 0.13,
+    "arousal": 0.016,
+    "style": null,
+    "family": "piano",
+    "background": 0.55,
+    "duration": 420,
+    "source": "freepd",
+    "tension": -0.076
+   }
+  ],
+  "3_0": [
+   {
+    "link": "https://example.invalid/n0/t085.mp3",
+    "valence": 0.296,
+    "arousal": -0.914,
+    "style": "style_b",
+    "family": "acoustic",
+    "background": 1.0,
+    "duration": 200,
+    "source": "freepd",
+    "tension": -0.775
+   },
+   {
+    "link": "https://example.invalid/n0/t086.mp3",
+    "valence": 0.476,
+    "arousal": -0.747,
+    "style": "style_a",
+    "family": "ambient",
+    "background": 0.8,
+    "duration": 90,
+    "source": "incompetech",
+    "tension": 0.646
+   },
+   {
+    "link": "https://example.invalid/n0/t087.mp3",
+    "valence": 0.444,
+    "arousal": -0.705,
+    "style": null,
+    "family": "eastern",
+    "background": null,
+    "duration": 90,
+    "source": "other",
+    "tension": -0.848
+   },
+   {
+    "link": "https://example.invalid/n0/t088.mp3",
+    "valence": 0.39,
+    "arousal": -0.75,
+    "style": "style_c",
+    "family": "acoustic",
+    "background": 0.0,
+    "duration": 61,
+    "source": "jamendo",
+    "tension": -0.866
+   },
+   {
+    "link": "https://example.invalid/n0/t089.mp3",
+    "valence": 0.37,
+    "arousal": -0.625,
+    "style": "style_c",
+    "family": "orchestral",
+    "background": null,
+    "duration": 330,
+    "source": "jamendo",
+    "tension": 0.367
+   },
+   {
+    "link": "https://example.invalid/n0/t090.mp3",
+    "valence": 0.434,
+    "arousal": -0.694,
+    "style": "style_b",
+    "family": "acoustic",
+    "background": 1.0,
+    "duration": 61,
+    "source": "freepd",
+    "tension": -0.825
+   },
+   {
+    "link": "https://example.invalid/n0/t091.mp3",
+    "valence": 0.382,
+    "arousal": -0.765,
+    "style": "style_b",
+    "family": "acoustic",
+    "background": 1.0,
+    "duration": 170,
+    "source": "incompetech",
+    "tension": -0.693
+   },
+   {
+    "link": "https://example.invalid/n0/t092.mp3",
+    "valence": 0.539,
+    "arousal": -0.833,
+    "style": "style_b",
+    "family": "acoustic",
+    "background": 0.3,
+    "duration": 330,
+    "source": "incompetech",
+    "tension": 0.272
+   },
+   {
+    "link": "https://example.invalid/n0/t093.mp3",
+    "valence": 0.296,
+    "arousal": -0.61,
+    "style": null,
+    "family": "electronic",
+    "background": 1.0,
+    "duration": 61,
+    "source": "other"
+   },
+   {
+    "link": "https://example.invalid/n0/t094.mp3",
+    "valence": 0.421,
+    "arousal": -0.875,
+    "style": "style_b",
+    "family": "acoustic",
+    "background": 1.0,
+    "duration": 330,
+    "source": "jamendo",
+    "tension": 0.225
+   },
+   {
+    "link": "https://example.invalid/n0/t095.mp3",
+    "valence": 0.239,
+    "arousal": -0.93,
+    "style": null,
+    "family": "other",
+    "background": 0.8,
+    "duration": 110,
+    "source": "freepd",
+    "tension": 0.548
+   },
+   {
+    "link": "https://example.invalid/n0/t096.mp3",
+    "valence": 0.513,
+    "arousal": -0.742,
+    "style": "style_a",
+    "family": "piano",
+    "background": 0.8,
+    "duration": 61,
+    "source": "incompetech",
+    "tension": 0.954
+   },
+   {
+    "link": "https://example.invalid/n0/t097.mp3",
+    "valence": 0.319,
+    "arousal": -0.86,
+    "style": "style_c",
+    "family": "eastern",
+    "background": 0.0,
+    "duration": 170,
+    "source": "other",
+    "tension": 0.614
+   },
+   {
+    "link": "https://example.invalid/n0/t098.mp3",
+    "valence": 0.506,
+    "arousal": -0.918,
+    "style": "style_c",
+    "family": "eastern",
+    "background": 0.8,
+    "duration": 61,
+    "source": "other",
+    "tension": 0.495
+   }
+  ],
+  "3_1": [
+   {
+    "link": "https://example.invalid/n0/t099.mp3",
+    "valence": 0.459,
+    "arousal": -0.461,
+    "style": "style_c",
+    "family": "eastern",
+    "background": 0.0,
+    "duration": 200,
+    "source": "other",
+    "tension": -0.662
+   },
+   {
+    "link": "https://example.invalid/n0/t100.mp3",
+    "valence": 0.474,
+    "arousal": -0.551,
+    "style": "style_a",
+    "family": "piano",
+    "background": 1.0,
+    "duration": 75,
+    "source": "jamendo",
+    "tension": 0.828
+   },
+   {
+    "link": "https://example.invalid/n0/t101.mp3",
+    "valence": 0.439,
+    "arousal": -0.594,
+    "style": "style_c",
+    "family": "other",
+    "background": 0.3,
+    "duration": 420,
+    "source": "incompetech",
+    "tension": 0.328
+   },
+   {
+    "link": "https://example.invalid/n0/t102.mp3",
+    "valence": 0.47,
+    "arousal": -0.402,
+    "style": "style_c",
+    "family": "orchestral",
+    "background": 0.55,
+    "duration": 170,
+    "source": "freepd",
+    "tension": 0.86
+   },
+   {
+    "link": "https://example.invalid/n0/t103.mp3",
+    "valence": 0.414,
+    "arousal": -0.53,
+    "style": null,
+    "family": "acoustic",
+    "background": 0.55,
+    "duration": 260,
+    "source": "freepd",
+    "tension": -0.016
+   },
+   {
+    "link": "https://example.invalid/n0/t104.mp3",
+    "valence": 0.477,
+    "arousal": -0.497,
+    "style": "style_b",
+    "family": "electronic",
+    "background": null,
+    "duration": 75,
+    "source": "freepd",
+    "tension": 0.056
+   },
+   {
+    "link": "https://example.invalid/n0/t105.mp3",
+    "valence": 0.511,
+    "arousal": -0.517,
+    "style": "style_c",
+    "family": "orchestral",
+    "background": 0.3,
+    "duration": 170,
+    "source": "jamendo"
+   },
+   {
+    "link": "https://example.invalid/n0/t106.mp3",
+    "valence": 0.505,
+    "arousal": -0.498,
+    "style": "style_b",
+    "family": "piano",
+    "background": null,
+    "duration": 260,
+    "source": "other",
+    "tension": -0.889
+   },
+   {
+    "link": "https://example.invalid/n0/t107.mp3",
+    "valence": 0.285,
+    "arousal": -0.348,
+    "style": "style_c",
+    "family": "piano",
+    "background": null,
+    "duration": 170,
+    "source": "jamendo",
+    "tension": 0.274
+   },
+   {
+    "link": "https://example.invalid/n0/t108.mp3",
+    "valence": 0.379,
+    "arousal": -0.458,
+    "style": "style_c",
+    "family": "eastern",
+    "background": 0.0,
+    "duration": 60,
+    "source": "jamendo",
+    "tension": 0.091
+   },
+   {
+    "link": "https://example.invalid/n0/t109.mp3",
+    "valence": 0.211,
+    "arousal": -0.207,
+    "style": null,
+    "family": "electronic",
+    "background": 1.0,
+    "duration": 200,
+    "source": "incompetech",
+    "tension": 0.985
+   },
+   {
+    "link": "https://example.invalid/n0/t110.mp3",
+    "valence": 0.332,
+    "arousal": -0.247,
+    "style": "style_a",
+    "family": "acoustic",
+    "background": 0.55,
+    "duration": 260,
+    "source": "freepd",
+    "tension": 0.623
+   },
+   {
+    "link": "https://example.invalid/n0/t111.mp3",
+    "valence": 0.543,
+    "arousal": -0.383,
+    "style": "style_a",
+    "family": "eastern",
+    "background": 0.0,
+    "duration": 90,
+    "source": "incompetech",
+    "tension": -0.673
+   },
+   {
+    "link": "https://example.invalid/n0/t112.mp3",
+    "valence": 0.283,
+    "arousal": -0.275,
+    "style": "style_c",
+    "family": "eastern",
+    "background": 0.55,
+    "duration": 75,
+    "source": "jamendo",
+    "tension": -0.985
+   }
+  ],
+  "3_2": [
+   {
+    "link": "https://example.invalid/n0/t113.mp3",
+    "valence": 0.317,
+    "arousal": 0.142,
+    "style": null,
+    "family": "ambient",
+    "background": 1.0,
+    "duration": 60,
+    "source": "incompetech",
+    "tension": 0.586
+   },
+   {
+    "link": "https://example.invalid/n0/t114.mp3",
+    "valence": 0.457,
+    "arousal": -0.076,
+    "style": "style_a",
+    "family": "ambient",
+    "background": 0.0,
+    "duration": 110,
+    "source": "other",
+    "tension": 0.478
+   },
+   {
+    "link": "https://example.invalid/n0/t115.mp3",
+    "valence": 0.545,
+    "arousal": 0.195,
+    "style": "style_c",
+    "family": "acoustic",
+    "background": 1.0,
+    "duration": 110,
+    "source": "other",
+    "tension": -0.426
+   },
+   {
+    "link": "https://example.invalid/n0/t116.mp3",
+    "valence": 0.541,
+    "arousal": 0.061,
+    "style": null,
+    "family": "piano",
+    "background": 0.8,
+    "duration": 420,
+    "source": "incompetech",
+    "tension": -0.018
+   },
+   {
+    "link": "https://example.invalid/n0/t117.mp3",
+    "valence": 0.401,
+    "arousal": -0.015,
+    "style": null,
+    "family": "ambient",
+    "background": 0.55,
+    "duration": 140,
+    "source": "incompetech",
+    "tension": 0.638
+   },
+   {
+    "link": "https://example.invalid/n0/t118.mp3",
+    "valence": 0.543,
+    "arousal": -0.089,
+    "style": "style_c",
+    "family": "acoustic",
+    "background": 0.3,
+    "duration": 61,
+    "source": "other",
+    "tension": 0.125
+   },
+   {
+    "link": "https://example.invalid/n0/t119.mp3",
+    "valence": 0.308,
+    "arousal": 0.194,
+    "style": "style_c",
+    "family": "other",
+    "background": 1.0,
+    "duration": 140,
+    "source": "freepd",
+    "tension": 0.593
+   },
+   {
+    "link": "https://example.invalid/n0/t120.mp3",
+    "valence": 0.446,
+    "arousal": -0.119,
+    "style": "style_a",
+    "family": "piano",
+    "background": 0.3,
+    "duration": 75,
+    "source": "other",
+    "tension": -0.142
+   },
+   {
+    "link": "https://example.invalid/n0/t121.mp3",
+    "valence": 0.321,
+    "arousal": 0.071,
+    "style": "style_c",
+    "family": "piano",
+    "background": 1.0,
+    "duration": 90,
+    "source": "freepd",
+    "tension": 0.889
+   },
+   {
+    "link": "https://example.invalid/n0/t122.mp3",
+    "valence": 0.515,
+    "arousal": 0.16,
+    "style": "style_c",
+    "family": "acoustic",
+    "background": 0.0,
+    "duration": 170,
+    "source": "incompetech",
+    "tension": 0.286
+   },
+   {
+    "link": "https://example.invalid/n0/t123.mp3",
+    "valence": 0.287,
+    "arousal": 0.087,
+    "style": "style_c",
+    "family": "eastern",
+    "background": 1.0,
+    "duration": 61,
+    "source": "incompetech",
+    "tension": -0.081
+   },
+   {
+    "link": "https://example.invalid/n0/t124.mp3",
+    "valence": 0.352,
+    "arousal": 0.044,
+    "style": null,
+    "family": "other",
+    "background": 1.0,
+    "duration": 140,
+    "source": "incompetech",
+    "tension": -0.183
+   },
+   {
+    "link": "https://example.invalid/n0/t125.mp3",
+    "valence": 0.395,
+    "arousal": -0.172,
+    "style": "style_b",
+    "family": "other",
+    "background": 0.55,
+    "duration": 140,
+    "source": "incompetech",
+    "tension": 0.642
+   },
+   {
+    "link": "https://example.invalid/n0/t126.mp3",
+    "valence": 0.288,
+    "arousal": -0.06,
+    "style": "style_b",
+    "family": "electronic",
+    "background": 1.0,
+    "duration": 61,
+    "source": "freepd",
+    "tension": 0.169
+   },
+   {
+    "link": "https://example.invalid/n0/t134.mp3",
+    "valence": 0.16,
+    "arousal": -0.54,
+    "style": "style_b",
+    "family": "other",
+    "background": 1.0,
+    "duration": 119.6,
+    "source": "freepd",
+    "tension": -0.1
+   }
+  ]
+ },
+ "taxonomy": {
+  "genres": {
+   "gen_a": {
+    "styles": {
+     "style_a": 1.0,
+     "style_b": 0.5
+    }
+   },
+   "gen_b": {
+    "styles": {
+     "style_c": 1.0
+    }
+   }
+  }
+ },
+ "nearOrder": [
+  "https://example.invalid/n0/t001.mp3",
+  "https://example.invalid/n0/t002.mp3",
+  "https://example.invalid/n0/t003.mp3",
+  "https://example.invalid/n0/t004.mp3",
+  "https://example.invalid/n0/t005.mp3",
+  "https://example.invalid/n0/t006.mp3",
+  "https://example.invalid/n0/t007.mp3",
+  "https://example.invalid/n0/t008.mp3",
+  "https://example.invalid/n0/t009.mp3",
+  "https://example.invalid/n0/t010.mp3",
+  "https://example.invalid/n0/t011.mp3",
+  "https://example.invalid/n0/t012.mp3",
+  "https://example.invalid/n0/t013.mp3",
+  "https://example.invalid/n0/t014.mp3",
+  "https://example.invalid/n0/t015.mp3",
+  "https://example.invalid/n0/t016.mp3",
+  "https://example.invalid/n0/t017.mp3",
+  "https://example.invalid/n0/t018.mp3",
+  "https://example.invalid/n0/t019.mp3",
+  "https://example.invalid/n0/t020.mp3",
+  "https://example.invalid/n0/t021.mp3",
+  "https://example.invalid/n0/t022.mp3",
+  "https://example.invalid/n0/t023.mp3",
+  "https://example.invalid/n0/t024.mp3",
+  "https://example.invalid/n0/t025.mp3",
+  "https://example.invalid/n0/t026.mp3",
+  "https://example.invalid/n0/t027.mp3",
+  "https://example.invalid/n0/t028.mp3",
+  "https://example.invalid/n0/t135.mp3",
+  "https://example.invalid/n0/t136.mp3",
+  "https://example.invalid/n0/t029.mp3",
+  "https://example.invalid/n0/t030.mp3",
+  "https://example.invalid/n0/t031.mp3",
+  "https://example.invalid/n0/t032.mp3",
+  "https://example.invalid/n0/t033.mp3",
+  "https://example.invalid/n0/t034.mp3",
+  "https://example.invalid/n0/t035.mp3",
+  "https://example.invalid/n0/t036.mp3",
+  "https://example.invalid/n0/t037.mp3",
+  "https://example.invalid/n0/t038.mp3",
+  "https://example.invalid/n0/t039.mp3",
+  "https://example.invalid/n0/t040.mp3",
+  "https://example.invalid/n0/t041.mp3",
+  "https://example.invalid/n0/t042.mp3",
+  "https://example.invalid/n0/t043.mp3",
+  "https://example.invalid/n0/t044.mp3",
+  "https://example.invalid/n0/t045.mp3",
+  "https://example.invalid/n0/t046.mp3",
+  "https://example.invalid/n0/t047.mp3",
+  "https://example.invalid/n0/t048.mp3",
+  "https://example.invalid/n0/t049.mp3",
+  "https://example.invalid/n0/t050.mp3",
+  "https://example.invalid/n0/t051.mp3",
+  "https://example.invalid/n0/t052.mp3",
+  "https://example.invalid/n0/t053.mp3",
+  "https://example.invalid/n0/t054.mp3",
+  "https://example.invalid/n0/t055.mp3",
+  "https://example.invalid/n0/t056.mp3",
+  "https://example.invalid/n0/t057.mp3",
+  "https://example.invalid/n0/t058.mp3",
+  "https://example.invalid/n0/t059.mp3",
+  "https://example.invalid/n0/t060.mp3",
+  "https://example.invalid/n0/t061.mp3",
+  "https://example.invalid/n0/t062.mp3",
+  "https://example.invalid/n0/t063.mp3",
+  "https://example.invalid/n0/t064.mp3",
+  "https://example.invalid/n0/t065.mp3",
+  "https://example.invalid/n0/t066.mp3",
+  "https://example.invalid/n0/t067.mp3",
+  "https://example.invalid/n0/t068.mp3",
+  "https://example.invalid/n0/t069.mp3",
+  "https://example.invalid/n0/t070.mp3",
+  "https://example.invalid/n0/t127.mp3",
+  "https://example.invalid/n0/t128.mp3",
+  "https://example.invalid/n0/t129.mp3",
+  "https://example.invalid/n0/t130.mp3",
+  "https://example.invalid/n0/t131.mp3",
+  "https://example.invalid/n0/t132.mp3",
+  "https://example.invalid/n0/t133.mp3",
+  "https://example.invalid/n0/t134.mp3",
+  "https://example.invalid/n0/t071.mp3",
+  "https://example.invalid/n0/t072.mp3",
+  "https://example.invalid/n0/t073.mp3",
+  "https://example.invalid/n0/t074.mp3",
+  "https://example.invalid/n0/t075.mp3",
+  "https://example.invalid/n0/t076.mp3",
+  "https://example.invalid/n0/t077.mp3",
+  "https://example.invalid/n0/t078.mp3",
+  "https://example.invalid/n0/t079.mp3",
+  "https://example.invalid/n0/t080.mp3",
+  "https://example.invalid/n0/t081.mp3",
+  "https://example.invalid/n0/t082.mp3",
+  "https://example.invalid/n0/t083.mp3",
+  "https://example.invalid/n0/t084.mp3",
+  "https://example.invalid/n0/t085.mp3",
+  "https://example.invalid/n0/t086.mp3",
+  "https://example.invalid/n0/t087.mp3",
+  "https://example.invalid/n0/t088.mp3",
+  "https://example.invalid/n0/t089.mp3",
+  "https://example.invalid/n0/t090.mp3",
+  "https://example.invalid/n0/t091.mp3",
+  "https://example.invalid/n0/t092.mp3",
+  "https://example.invalid/n0/t093.mp3",
+  "https://example.invalid/n0/t094.mp3",
+  "https://example.invalid/n0/t095.mp3",
+  "https://example.invalid/n0/t096.mp3",
+  "https://example.invalid/n0/t097.mp3",
+  "https://example.invalid/n0/t098.mp3",
+  "https://example.invalid/n0/t099.mp3",
+  "https://example.invalid/n0/t100.mp3",
+  "https://example.invalid/n0/t101.mp3",
+  "https://example.invalid/n0/t102.mp3",
+  "https://example.invalid/n0/t103.mp3",
+  "https://example.invalid/n0/t104.mp3",
+  "https://example.invalid/n0/t105.mp3",
+  "https://example.invalid/n0/t106.mp3",
+  "https://example.invalid/n0/t107.mp3",
+  "https://example.invalid/n0/t108.mp3",
+  "https://example.invalid/n0/t109.mp3",
+  "https://example.invalid/n0/t110.mp3",
+  "https://example.invalid/n0/t111.mp3",
+  "https://example.invalid/n0/t112.mp3",
+  "https://example.invalid/n0/t113.mp3",
+  "https://example.invalid/n0/t114.mp3",
+  "https://example.invalid/n0/t115.mp3",
+  "https://example.invalid/n0/t116.mp3",
+  "https://example.invalid/n0/t117.mp3",
+  "https://example.invalid/n0/t118.mp3",
+  "https://example.invalid/n0/t119.mp3",
+  "https://example.invalid/n0/t120.mp3",
+  "https://example.invalid/n0/t121.mp3",
+  "https://example.invalid/n0/t122.mp3",
+  "https://example.invalid/n0/t123.mp3",
+  "https://example.invalid/n0/t124.mp3",
+  "https://example.invalid/n0/t125.mp3",
+  "https://example.invalid/n0/t126.mp3",
+  "https://example.invalid/n0/t134.mp3"
+ ],
+ "constants": {
+  "target": [
+   0.15,
+   -0.55,
+   0.0
+  ],
+  "sigma": [
+   0.35,
+   0.35,
+   0.35
+  ],
+  "penaltyUnit": 0.33541019662496846,
+  "styleHalfPenalty": 0.8944271909999159,
+  "familyPenalty": 1.0434983894999017,
+  "foregroundPenalty": 0.7453559924999299,
+  "recentPenalty": 0.8944271909999159
+ },
+ "samples": [
+  {
+   "link": "https://example.invalid/n0/t001.mp3",
+   "z": 1.0586220192826827,
+   "score": 1.0586220192826827,
+   "tiebreak": 0.0007139866004497713
+  },
+  {
+   "link": "https://example.invalid/n0/t002.mp3",
+   "z": 2.5870215653740005,
+   "score": 2.5870215653740005,
+   "tiebreak": 0.0003023023033287149
+  },
+  {
+   "link": "https://example.invalid/n0/t003.mp3",
+   "z": 1.2342193448914773,
+   "score": 1.2342193448914773,
+   "tiebreak": 0.0007658674541781347
+  },
+  {
+   "link": "https://example.invalid/n0/t004.mp3",
+   "z": 1.6450304609311357,
+   "score": 2.3903864534310655,
+   "tiebreak": 0.0004197854456537835
+  },
+  {
+   "link": "https://example.invalid/n0/t005.mp3",
+   "z": 1.1932389242874968,
+   "score": 1.528649120912465,
+   "tiebreak": 0.0006399675713945104
+  },
+  {
+   "link": "https://example.invalid/n0/t006.mp3",
+   "z": 1.995062891747773,
+   "score": 1.995062891747773,
+   "tiebreak": 0.0009157563762077494
+  },
+  {
+   "link": "https://example.invalid/n0/t007.mp3",
+   "z": 1.244714273714416,
+   "score": 1.244714273714416,
+   "tiebreak": 4.090812011643037e-05
+  },
+  {
+   "link": "https://example.invalid/n0/t008.mp3",
+   "z": 1.302147612906118,
+   "score": 2.047503605406048,
+   "tiebreak": 0.00032147355617989637
+  },
+  {
+   "link": "https://example.invalid/n0/t009.mp3",
+   "z": 1.7763587573411541,
+   "score": 2.521714749841084,
+   "tiebreak": 0.0008986446060935604
+  },
+  {
+   "link": "https://example.invalid/n0/t010.mp3",
+   "z": 2.088547931881889,
+   "score": 2.088547931881889,
+   "tiebreak": 0.0007434729469808454
+  },
+  {
+   "link": "https://example.invalid/n0/t011.mp3",
+   "z": 1.6087139521089961,
+   "score": 1.9441241487339647,
+   "tiebreak": 0.0005680068506784754
+  },
+  {
+   "link": "https://example.invalid/n0/t012.mp3",
+   "z": 1.342114274060775,
+   "score": 2.087470266560705,
+   "tiebreak": 0.0003584733103305272
+  },
+  {
+   "link": "https://example.invalid/n0/t013.mp3",
+   "z": 1.9870292442214594,
+   "score": 1.9870292442214594,
+   "tiebreak": 0.0007408393904894682
+  },
+  {
+   "link": "https://example.invalid/n0/t014.mp3",
+   "z": 1.8609198286588418,
+   "score": 1.8609198286588418,
+   "tiebreak": 0.00010909307657487064
+  },
+  {
+   "link": "https://example.invalid/n0/t015.mp3",
+   "z": 1.6413465663060431,
+   "score": 1.6413465663060431,
+   "tiebreak": 0.0007786713316521308
+  },
+  {
+   "link": "https://example.invalid/n0/t016.mp3",
+   "z": 1.9961589202221874,
+   "score": 1.9961589202221874,
+   "tiebreak": 0.0009841212867722198
+  },
+  {
+   "link": "https://example.invalid/n0/t017.mp3",
+   "z": 1.3654587804688285,
+   "score": 1.3654587804688285,
+   "tiebreak": 0.00017435390552840056
+  },
+  {
+   "link": "https://example.invalid/n0/t018.mp3",
+   "z": 1.4706370501702088,
+   "score": 1.9923862449201597,
+   "tiebreak": 0.0009459900888488605
+  },
+  {
+   "link": "https://example.invalid/n0/t019.mp3",
+   "z": 1.3051767607537281,
+   "score": 1.454247959253714,
+   "tiebreak": 0.0006236188450417525
+  },
+  {
+   "link": "https://example.invalid/n0/t020.mp3",
+   "z": 1.937998668879757,
+   "score": 2.0870698673797428,
+   "tiebreak": 0.0007421112590800298
+  },
+  {
+   "link": "https://example.invalid/n0/t021.mp3",
+   "z": 2.4499100249671995,
+   "score": 2.4499100249671995,
+   "tiebreak": 0.0007698676937189577
+  },
+  {
+   "link": "https://example.invalid/n0/t022.mp3",
+   "z": 0.8699665160972776,
+   "score": 0.8699665160972776,
+   "tiebreak": 0.0005400724349403922
+  },
+  {
+   "link": "https://example.invalid/n0/t023.mp3",
+   "z": 1.7300173409535524,
+   "score": 1.7300173409535524,
+   "tiebreak": 0.0004453089340695434
+  },
+  {
+   "link": "https://example.invalid/n0/t024.mp3",
+   "z": 1.3716956606723105,
+   "score": 1.8934448554222614,
+   "tiebreak": 0.00059952274840314
+  },
+  {
+   "link": "https://example.invalid/n0/t025.mp3",
+   "z": 2.2585895303632904,
+   "score": 2.5939997269882586,
+   "tiebreak": 0.0006964823884648462
+  },
+  {
+   "link": "https://example.invalid/n0/t026.mp3",
+   "z": 2.182967266579259,
+   "score": 2.5183774632042275,
+   "tiebreak": 0.00044954819056427765
+  },
+  {
+   "link": "https://example.invalid/n0/t027.mp3",
+   "z": 1.6382146521066192,
+   "score": 2.383570644606549,
+   "tiebreak": 0.00011731193776179849
+  },
+  {
+   "link": "https://example.invalid/n0/t028.mp3",
+   "z": 1.3527414997764324,
+   "score": 1.5018126982764184,
+   "tiebreak": 0.0005026779269107334
+  },
+  {
+   "link": "https://example.invalid/n0/t135.mp3",
+   "z": 0.2637521893583149,
+   "score": 0.41282338785830086,
+   "tiebreak": 0.0003495053079327348
+  },
+  {
+   "link": "https://example.invalid/n0/t136.mp3",
+   "z": 0.18650096164806282,
+   "score": 0.18650096164806282,
+   "tiebreak": 0.0009758945619631313
+  },
+  {
+   "link": "https://example.invalid/n0/t029.mp3",
+   "z": 1.9834012654302067,
+   "score": 1.9834012654302067,
+   "tiebreak": 0.0003070312944024409
+  },
+  {
+   "link": "https://example.invalid/n0/t030.mp3",
+   "z": 2.2729440781965353,
+   "score": 2.6083542748215036,
+   "tiebreak": 0.0002170063297303874
+  },
+  {
+   "link": "https://example.invalid/n0/t031.mp3",
+   "z": 2.418298359698766,
+   "score": 2.418298359698766,
+   "tiebreak": 0.0008927192394371888
+  },
+  {
+   "link": "https://example.invalid/n0/t032.mp3",
+   "z": 2.3687259463043953,
+   "score": 2.3687259463043953,
+   "tiebreak": 0.0001799420537846028
+  },
+  {
+   "link": "https://example.invalid/n0/t033.mp3",
+   "z": 1.5626376808905929,
+   "score": 2.0843868756405435,
+   "tiebreak": 0.0002697520661795866
+  },
+  {
+   "link": "https://example.invalid/n0/t034.mp3",
+   "z": 2.496514439739151,
+   "score": 2.496514439739151,
+   "tiebreak": 0.00020737750553697756
+  },
+  {
+   "link": "https://example.invalid/n0/t035.mp3",
+   "z": 1.4232035714531852,
+   "score": 1.4232035714531852,
+   "tiebreak": 0.00047875029721268226
+  },
+  {
+   "link": "https://example.invalid/n0/t036.mp3",
+   "z": 2.1843363333954104,
+   "score": 2.9296923258953402,
+   "tiebreak": 0.000928211271280472
+  },
+  {
+   "link": "https://example.invalid/n0/t037.mp3",
+   "z": 2.422829583030098,
+   "score": 2.7582397796550664,
+   "tiebreak": 0.0004551661704795356
+  },
+  {
+   "link": "https://example.invalid/n0/t038.mp3",
+   "z": 2.5332991607153623,
+   "score": 2.8687093573403306,
+   "tiebreak": 5.542380270907278e-05
+  }
+ ],
+ "mix": {
+  "tailMinSeconds": 20.0,
+  "cueMergeGapSeconds": 5.0,
+  "loopCrossfadeSeconds": 2.0
+ }
+}
