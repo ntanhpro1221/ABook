@@ -1,7 +1,9 @@
 package vn.abook.player
 
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.json.JSONTokener
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FilterInputStream
@@ -71,7 +73,8 @@ class MusicCatalog(
     private val remote get() = source.startsWith("http://") || source.startsWith("https://")
     private val lock = Any()
     private var manifest: JSONObject? = null
-    private val parts = HashMap<String, JSONObject>()
+    /** Mảnh đã đọc: `tracks/` là JSONObject, `cells/` là JSONArray. */
+    private val parts = HashMap<String, Any>()
 
     private fun fetch(relative: String): ByteArray {
         val url = source + relative
@@ -177,7 +180,7 @@ class MusicCatalog(
      * Một mảnh của danh mục. Phải khớp sha256 trong `files` của mục lục đã ký - không có trong `files` hay lệch thì null (coi như mảnh vắng,
      * các bài trong đó như không có), có ghi nhật ký. Mảnh đã cất cũng kiểm; lệch thì tải lại.
      */
-    private fun part(relative: String): JSONObject? {
+    private fun part(relative: String): Any? {
         val manifest = manifest()
         val revision = manifest.getString("revision")
         val key = "$revision/$relative"
@@ -204,8 +207,12 @@ class MusicCatalog(
             raw = fetched
         }
         val value = try {
-            JSONObject(String(raw, Charsets.UTF_8))
+            JSONTokener(String(raw, Charsets.UTF_8)).nextValue()
         } catch (_: JSONException) {
+            log("danh mục nhạc: mảnh $relative không phải JSON - bỏ")
+            return null
+        }
+        if (value !is JSONObject && value !is JSONArray) {
             log("danh mục nhạc: mảnh $relative không phải JSON - bỏ")
             return null
         }
@@ -226,7 +233,7 @@ class MusicCatalog(
         val loaded = HashMap<String, JSONObject?>()
         val missing = LinkedHashSet<String>()
         try {
-            val jobs = wanted.keys.map { shard -> shard to pool.submit<JSONObject?> { part("tracks/$shard.json") } }
+            val jobs = wanted.keys.map { shard -> shard to pool.submit<JSONObject?> { part("tracks/$shard.json") as? JSONObject } }
             for ((shard, job) in jobs) {
                 try {
                     loaded[shard] = job.get()
@@ -241,6 +248,31 @@ class MusicCatalog(
         val found = LinkedHashMap<String, JSONObject>()
         for ((shard, items) in wanted) for (link in items) loaded[shard]?.optJSONObject(link)?.let { found[link] = it }
         return Lookup(found, missing)
+    }
+
+    /**
+     * `MusicCatalog.cell`: bài của ô cảm xúc (`valenceIndex`, `arousalIndex`) - mảnh `cells/<v>_<a>.json` (mảng các mục như `tracks/`, thêm `valence` /
+     * `arousal` / `tension`...). Mục lục không kê ô ấy (hay ô rỗng) thì rỗng, không tải gì. Cùng luật chữ ký / sha256 như mọi mảnh; mất mạng thì [CatalogError].
+     */
+    fun cell(valenceIndex: Int, arousalIndex: Int): List<JSONObject> {
+        val name = "${valenceIndex}_$arousalIndex"
+        val listed = when (val count = manifest().optJSONObject("cells")?.opt(name)) {
+            null, JSONObject.NULL, false -> false
+            is Number -> count.toDouble() != 0.0
+            is String -> count.isNotEmpty()
+            is JSONObject -> count.length() > 0
+            is JSONArray -> count.length() > 0
+            else -> true
+        }
+        if (!listed) return emptyList()
+        val items = part("cells/$name.json") as? JSONArray ?: return emptyList()
+        return (0 until items.length()).mapNotNull { items.optJSONObject(it) }
+    }
+
+    /** `MusicCatalog.near`: bài trong ô của (valence, arousal) và các ô kề trong bán kính `radius`, theo thứ tự của Python ([SceneMusic.near]). */
+    fun near(valence: Double, arousal: Double, radius: Int = 1): List<JSONObject> {
+        val grid = manifest().optInt("grid", 5).takeIf { it != 0 } ?: 5
+        return SceneMusic.near(grid, valence, arousal, radius, ::cell)
     }
 
     /** File bài đã tải về máy (không tải); chưa có thì null. */
