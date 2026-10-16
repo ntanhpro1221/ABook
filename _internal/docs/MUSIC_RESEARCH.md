@@ -5928,3 +5928,31 @@ Phán quyết đo ở Corpus `research/music/PLAN_scenegap_confirm.md` mục 11 
 - Số câu model nhìn là `seq` của câu trong chương (như phép đo), không phải `id` DB; `store.chapter_script` giờ trả thêm `seq`.
 - Chỉ ĐẾM, không đổi hành vi (SCENEY_SPEC 5b): mỗi chương một dòng nhật ký đoạn/giờ; chương > 36 đoạn/giờ vào `dense` của `music_bounds.json` và phát `music_bounds_dense`. Trần 22 là ĐỔI BÀI/giờ của cả cuốn (Y ~31 đoạn/giờ nhưng 21,4 đổi bài/giờ): `music_plan.build` ghi nó mỗi lần dựng và phát `music_switches_high` khi vượt. Cổng mật độ (gộp 90 s) đóng.
 - Chi phí đo trên card 8 GB: 14,8 s/chương, khoảng 2,6 % thời gian pha phân tích. Temperature 0, không seed, nên cùng digest và cùng chữ ra cùng ranh.
+
+### 17-10 - LVJ: mức chương chung V/E/T cho Nghe ngay ĐẠT bộ phán 22; mảng mức chương tạm gác (Corpus `research/music/PLAN_lbl.md` §7-12, `PLAN_lvb.md`)
+
+- **Phân rã (D-L1, dev 16-21, 456 chương):** sai rõ còn lại của Nghe ngay (ranh LB + NN-lite) nằm ở MỨC chương, không ở hình trong chương.
+  - Thay mức app bằng mức vàng cả ba trục: sai rõ 9,98 → 4,92 %, trúng rõ 32,7 → 59,4 %; tức 107 % lợi của vàng đầy đủ.
+  - Thay hình: chỉ 7 % lợi.
+  - Từng trục riêng: 32-40 %. Phải sửa CHUNG cả ba trục.
+- **LVJ:** mức chương = clip(A · TB_w(pV, pE, pT, q) + b), tức 15 hằng số học WLS trên 614 chương vàng từ 4 số NN-lite vốn đã tính. Dời mức sau `apply_student`, giữ hình.
+  - Dev bỏ-một-bộ: 6/6 bộ, sai rõ 9,98 → 7,68, trúng rõ 32,7 → 45,9.
+  - **Bộ phán 22** (174 chương JP, 68 giờ, chấm mù A / B, dùng một lần): sai rõ 11,40 → **7,66** (Δ −3,74, KTC 90 % [−5,37; −2,18]), trúng rõ 35,6 → **47,4**. Đủ 5 luật.
+  - Lợi lớn nhất ở T (6,00 → 3,08), vì Nghe ngay trước đó dùng một T hằng.
+  - Đặc tả `SPEC_lvj_app.md` + fixture chung Python / Kotlin; Lead làm vào app (máy tính + điện thoại).
+- **Thử rồi đóng:**
+  - PH ghép LVJ: thua LVJ đơn ở cả sai rõ và trúng rõ.
+  - LVB, thêm 4 số lite TB của K chương lân cận cùng truyện: MAE mức chỉ −1-3 %, luật cần −10 %.
+  - Học mức thẳng từ chữ băm (D-L2): +1-8 %, gấp đôi dữ liệu vẫn < 10 %.
+- **Trần (D-B2, S-L), mức chương thang nửa:**
+
+  | trục | LVJ ↔ vàng | hai người chấm lệch nhau | Sonnet đọc cả chương, chỉ cho một mức (40 ch) |
+  |---|---|---|---|
+  | V | 0,166 | 0,075 | 0,079 (r 0,96) |
+  | E | 0,100 | 0,066 | 0,118 (r 0,90) |
+  | T | 0,169 | 0,109 | 0,151 (r 0,86) |
+
+  - Người đọc cả chương đoán mức tốt hơn LVJ 2-4 lần.
+  - Lời đọc rẻ của Sonnet xếp thứ tự chương tốt hơn hẳn: r 0,86-0,96 so với 0,75-0,79 của LVJ. Đã hiệu chỉnh thì MAE còn 0,088 / 0,091 / 0,133.
+  - Muốn đưa phần này vào app cần một học sinh chữ mạnh hơn lite, học từ nhãn bạc. Nhãn bạc tốn ~0,023 % hạn mức tuần mỗi chương, và phải thêm một kiến trúc mới cho cả máy tính lẫn điện thoại.
+  - Lợi trần ước sai rõ 7,7 → ~6,5-7. **Tạm gác** tới khi luồng Model có học sinh chữ vài MB mạnh hơn băm.
