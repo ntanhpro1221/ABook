@@ -11,16 +11,18 @@ object ClipRetry {
      * khi hết quỹ thời gian [ClipBudget]: lúc đó nó rơi sang giọng kế ngay, vì sẽ không có lần thử nào nữa). `sleep(ms)`: nghỉ, trả false nếu việc đã cũ (tua, đổi chương, đổi giọng) hay
      * người nghe đã tạm dừng - dừng ngay. `record(ms)`: số đo thời gian lấy clip cho [ReadAheadPolicy] (lượt thành công, và lượt hỏng mà đã chờ từ [ReadAheadPolicy.SLOW_MS]).
      * `budgetMs`: trần tổng thời gian từ lần đọc đầu tới lúc bắt đầu một lần thử lại ([ClipBudget.BUDGET_MS]). `cancel`: để người gọi huỷ lượt đọc đang chạy (tua / đổi chương / dừng) - giọng
-     * mạng đăng ký thứ cần đóng ngay (ổ cắm, [EdgeTts]) vào đó qua [ClipBudget.cancel].
+     * mạng đăng ký thứ cần đóng ngay (ổ cắm, [EdgeTts]) vào đó qua [ClipBudget.cancel]. `rank`: số đoạn người nghe phải nghe trước đoạn này (0 = đang đứng chờ đúng nó) - hết chỗ kết nối Edge thì các mảnh của đoạn gần
+     * người nghe hơn đứng trước ([ConnectionSlots], [ClipBudget.rank]).
      */
     fun run(
         online: Boolean, delaysMs: LongArray, sleep: (Long) -> Boolean, record: (Long) -> Unit = {}, clock: () -> Long = System::nanoTime,
-        budgetMs: Long = ClipBudget.BUDGET_MS, cancel: ClipCancel? = null, attempt: (Boolean) -> Clip,
+        budgetMs: Long = ClipBudget.BUDGET_MS, cancel: ClipCancel? = null, rank: Int = EdgePieces.RANK_BACKGROUND, attempt: (Boolean) -> Clip,
     ): Result<Clip> {
         var tries = 0
         val scope = ClipBudget.Scope(clock(), budgetMs, clock)
         scope.cancel = cancel
         val before = ClipBudget.enter(scope)
+        val rankBefore = ClipBudget.enterRank(rank)
         try {
             while (true) {
                 val began = clock()
@@ -35,6 +37,7 @@ object ClipRetry {
                 tries += 1
             }
         } finally {
+            ClipBudget.leaveRank(rankBefore)
             ClipBudget.leave(before)
         }
     }
@@ -67,6 +70,16 @@ object ClipBudget {
 
     /** Quỹ của luồng này (null ngoài [ClipRetry.run]): để luồng phụ đọc song song các mảnh của một đoạn ([EdgeTts]) chạy trong cùng quỹ qua [inherit]. */
     fun current(): Scope? = current.get()
+
+    private val rankHere = ThreadLocal<Int?>()
+
+    /** [ConnectionSlots] rank của lượt đọc đang chạy ở luồng này (số đoạn người nghe phải nghe trước đoạn này; [EdgePieces.RANK_BACKGROUND] khi không ai nói). Luồng phụ của các mảnh nhận lại qua [enterRank]. */
+    fun rank(): Int = rankHere.get() ?: EdgePieces.RANK_BACKGROUND
+
+    /** Đặt rank của luồng này; trả rank cũ để [leaveRank]. */
+    fun enterRank(rank: Int): Int? = rankHere.get().also { rankHere.set(rank) }
+
+    fun leaveRank(before: Int?) = rankHere.set(before)
 
     /** Chỗ huỷ của lượt đọc đang chạy ở luồng này (null ngoài [ClipRetry.run] hay khi người gọi không đưa). */
     fun cancel(): ClipCancel? = current.get()?.cancel

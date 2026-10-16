@@ -96,7 +96,7 @@ class _SlowFake(edge.EdgeClient):
     def _connect(self):  # noqa: ANN202
         raise AssertionError("không nối mạng thật")
 
-    def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None):  # noqa: ANN001, ANN202
+    def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None, rank=edge.RANK_BACKGROUND):  # noqa: ANN001, ANN202
         order = edge.speech_pieces(SENTENCES).index(text)
         with self.lock:
             self.live += 1
@@ -141,7 +141,7 @@ def test_a_failing_piece_fails_the_clip_with_the_same_exception() -> None:
 
 def test_a_failing_piece_cuts_the_sockets_of_the_pieces_still_reading(monkeypatch) -> None:
     """Mảnh 2 bị từ chối ngay: clip hỏng liền, ổ cắm của mảnh 1 / 3 (đang chờ Edge) bị cắt, chỗ kết nối trả ngay, không mảnh nào thử lại."""
-    monkeypatch.setattr(edge, "_connections", threading.BoundedSemaphore(edge.EDGE_CONNECTIONS))
+    monkeypatch.setattr(edge, "_connections", edge.ConnectionSlots(edge.EDGE_CONNECTIONS))
     pieces = edge.speech_pieces(SENTENCES)
     connects: list[str] = []
     aborted: list[str] = []
@@ -185,10 +185,10 @@ def test_a_failing_piece_cuts_the_sockets_of_the_pieces_still_reading(monkeypatc
         _Client().synthesize(SENTENCES, edge.DEFAULT_VOICE)
     assert time.monotonic() - started < 2.0
     for _ in range(40):  # luồng mảnh thoát sau khi bị cắt
-        if edge._connections._value == edge.EDGE_CONNECTIONS:  # noqa: SLF001
+        if edge._connections.free == edge.EDGE_CONNECTIONS:  # noqa: SLF001
             break
         time.sleep(0.05)
-    assert edge._connections._value == edge.EDGE_CONNECTIONS  # noqa: SLF001 - mọi chỗ đã trả
+    assert edge._connections.free == edge.EDGE_CONNECTIONS  # noqa: SLF001 - mọi chỗ đã trả
     assert sorted(aborted) == sorted(piece for n, piece in enumerate(pieces) if n != 1)
     assert len(connects) == len(pieces)  # mảnh bị cắt không thử lại
 
@@ -231,7 +231,7 @@ def test_a_dropped_piece_is_retried_alone_and_ends_as_dropped_when_it_keeps_fail
 
 def test_the_process_wide_cap_limits_open_connections(monkeypatch) -> None:
     """Hai clip cùng đọc (6 mảnh) mà trần là 2 kết nối: không bao giờ quá 2 kết nối đang mở."""
-    monkeypatch.setattr(edge, "_connections", threading.BoundedSemaphore(2))
+    monkeypatch.setattr(edge, "_connections", edge.ConnectionSlots(2))
     live = [0]
     peak = [0]
     lock = threading.Lock()
@@ -267,11 +267,146 @@ def test_the_process_wide_cap_limits_open_connections(monkeypatch) -> None:
 
 
 def test_waiting_for_a_connection_slot_past_the_deadline_is_a_timeout(monkeypatch) -> None:
-    taken = threading.BoundedSemaphore(1)
+    taken = edge.ConnectionSlots(1)
     taken.acquire()
     monkeypatch.setattr(edge, "_connections", taken)
     with pytest.raises(edge.EdgeTimeout):
         edge.EdgeClient()._speak_one(edge.DEFAULT_VOICE, "Xin chào", 0, time.monotonic() + 0.05)
+
+
+# ---- chỗ kết nối: clip người nghe đang chờ đi trước clip đọc trước (uxfix51) ---------------------------------------------------------
+
+
+def _wait_for(condition, seconds: float = 2.0) -> bool:
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        if condition():
+            return True
+        time.sleep(0.005)
+    return condition()
+
+
+def _queue_waiters(slots: edge.ConnectionSlots, specs: list[tuple[str, int]]) -> list[str]:
+    """Hết chỗ; mỗi (tên, rank) xin một chỗ theo thứ tự đã cho; trả thứ tự được trao chỗ khi nhả lần lượt từng chỗ."""
+    for _ in range(slots.size):
+        assert slots.acquire(0.1)
+    granted: list[str] = []
+    lock = threading.Lock()
+
+    def wait(name: str, rank: int) -> None:
+        if slots.acquire(5.0, rank):
+            with lock:
+                granted.append(name)
+
+    threads = []
+    for index, (name, rank) in enumerate(specs):
+        thread = threading.Thread(target=wait, args=(name, rank))
+        thread.start()
+        threads.append(thread)
+        assert _wait_for(lambda: len(slots._queue) == index + 1)  # noqa: SLF001 - đúng thứ tự đến
+    for expected in range(len(specs)):
+        slots.release()
+        assert _wait_for(lambda: len(granted) == expected + 1)
+        time.sleep(0.02)
+    for thread in threads:
+        thread.join(2)
+    return granted
+
+
+def test_connection_slots_grant_the_nearest_to_the_listener_first() -> None:
+    granted = _queue_waiters(edge.ConnectionSlots(2), [("bg", edge.RANK_BACKGROUND), ("ahead3", 3), ("ahead1", 1), ("target", 0), ("ahead2", 2), ("ahead1b", 1)])
+    assert granted == ["target", "ahead1", "ahead1b", "ahead2", "ahead3", "bg"]  # gần người nghe trước; cùng rank thì ai đến trước được trước
+
+
+def test_connection_slots_keep_arrival_order_among_equals() -> None:
+    assert _queue_waiters(edge.ConnectionSlots(1), [("a", 1), ("b", 1), ("c", 1)]) == ["a", "b", "c"]
+
+
+def test_connection_slots_timeout_and_abandon_leave_the_queue_and_free_the_way() -> None:
+    slots = edge.ConnectionSlots(1)
+    assert slots.acquire(0.1)
+    assert not slots.acquire(0.05)  # quá hạn: False, không để lại vé trong hàng
+    gone = threading.Event()
+    result: list[bool] = []
+    first = threading.Thread(target=lambda: result.append(slots.acquire(5.0, False, gone.is_set)))
+    first.start()
+    assert _wait_for(lambda: len(slots._queue) == 1)  # noqa: SLF001
+    second_got = threading.Event()
+    second = threading.Thread(target=lambda: (slots.acquire(5.0) and second_got.set()))
+    second.start()
+    assert _wait_for(lambda: len(slots._queue) == 2)  # noqa: SLF001
+    gone.set()  # clip của người đứng đầu hàng đã bỏ: người sau không bị chặn lại bởi vé của nó
+    first.join(2)
+    assert result == [False] and slots._queue and len(slots._queue) == 1  # noqa: SLF001
+    slots.release()
+    assert second_got.wait(2)
+    second.join(2)
+    assert slots.free == 0
+    slots.release()
+    with pytest.raises(ValueError):
+        slots.release()
+
+
+def test_the_clip_the_listener_waits_for_asked_after_eight_read_ahead_pieces_wait_gets_the_next_free_slot(monkeypatch) -> None:
+    """8 chỗ đều bận, 8 mảnh đọc trước đang chờ; clip người nghe chờ (rank 0) xin SAU cùng - chỗ nhả ra đầu tiên là của nó, các mảnh đọc trước theo sau."""
+    monkeypatch.setattr(edge, "_connections", edge.ConnectionSlots(edge.EDGE_CONNECTIONS))
+    opened: list[str] = []
+    lock = threading.Lock()
+    gate = threading.Event()
+
+    class _Connection:
+        def __init__(self) -> None:
+            self.text = ""
+
+        def send_text(self, text: str) -> None:
+            if "<speak" in text:
+                self.text = text
+
+        def close(self) -> None:
+            pass
+
+    class _Client(edge.EdgeClient):
+        def _connect(self):  # noqa: ANN202
+            return _Connection()
+
+    def fake_turn(connection, _compensation, _deadline, **_options):  # noqa: ANN001, ANN202
+        with lock:
+            opened.append("target" if "TARGET" in connection.text else "ahead" if "AHEAD" in connection.text else "holder")
+        gate.wait(5)
+        return b"x" * 6000, []
+
+    monkeypatch.setattr(edge, "read_turn", fake_turn)
+    client = _Client()
+    holders = [threading.Thread(target=client.synthesize, args=("HOLDER %d." % n, edge.DEFAULT_VOICE)) for n in range(edge.EDGE_CONNECTIONS)]
+    for thread in holders:
+        thread.start()
+    assert _wait_for(lambda: len(opened) == edge.EDGE_CONNECTIONS)  # mọi chỗ đã có người giữ
+    ahead = [threading.Thread(target=client.synthesize, args=("AHEAD %d." % n, edge.DEFAULT_VOICE), kwargs={"rank": 1 + n % 3}) for n in range(edge.EDGE_CONNECTIONS)]
+    for thread in ahead:
+        thread.start()
+    assert _wait_for(lambda: len(edge._connections._queue) == edge.EDGE_CONNECTIONS)  # noqa: SLF001 - 8 mảnh đọc trước đã chờ
+    target = threading.Thread(target=client.synthesize, args=("TARGET.", edge.DEFAULT_VOICE), kwargs={"rank": 0})
+    target.start()
+    assert _wait_for(lambda: len(edge._connections._queue) == edge.EDGE_CONNECTIONS + 1)  # noqa: SLF001
+    gate.set()
+    for thread in [*holders, *ahead, target]:
+        thread.join(10)
+    assert opened[edge.EDGE_CONNECTIONS] == "target"  # chỗ trống đầu tiên sau 8 chỗ giữ
+    assert sorted(opened[edge.EDGE_CONNECTIONS + 1:]) == ["ahead"] * edge.EDGE_CONNECTIONS
+
+
+def test_the_rank_reaches_every_piece_of_a_long_clip() -> None:
+    seen: list[int] = []
+
+    class _Client(edge.EdgeClient):
+        def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None, rank=edge.RANK_BACKGROUND):  # noqa: ANN001, ANN202
+            seen.append(rank)
+            return b"x" * 6000, []
+
+    _Client().synthesize(SENTENCES, edge.DEFAULT_VOICE, rank=2)
+    _Client().synthesize(SENTENCES, edge.DEFAULT_VOICE)
+    half = len(seen) // 2
+    assert half >= 2 and set(seen[:half]) == {2} and set(seen[half:]) == {edge.RANK_BACKGROUND}
 
 
 # ---- chỗ nối giữa các mảnh (uxfix50) ---------------------------------------------------------------------------------------------
@@ -331,7 +466,7 @@ class _FrameFake(edge.EdgeClient):
     def _connect(self):  # noqa: ANN202
         raise AssertionError("không nối mạng thật")
 
-    def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None):  # noqa: ANN001, ANN202
+    def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None, rank=edge.RANK_BACKGROUND):  # noqa: ANN001, ANN202
         order = edge.speech_pieces(SENTENCES).index(text)
         words = text.split()
         end = self.ends[order]
@@ -374,7 +509,7 @@ def test_a_single_piece_clip_is_never_trimmed() -> None:
     audio = _mp3_frames(200)
 
     class _One(edge.EdgeClient):
-        def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None):  # noqa: ANN001, ANN202
+        def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None, rank=edge.RANK_BACKGROUND):  # noqa: ANN001, ANN202
             return audio, [Boundary("Xin", 125, 600), Boundary("chào.", 600, 1400)]
 
     result = _One().synthesize("Xin chào.", edge.DEFAULT_VOICE)

@@ -176,3 +176,37 @@ class StalledClipsTest {
         looper.reminder.cancel() // không có hẹn: không làm gì
     }
 }
+
+/** Dừng VÌ LỖI hay do người nghe tự dừng (uxfix51): lỗi gỡ đi vì dịch vụ trả lời lại thì chỉ tự nghe tiếp ở trường hợp đầu. */
+class ErrorPauseTest {
+    private val pause = ErrorPause()
+
+    @Test
+    fun anErrorWhileListeningResumesWhenTheServiceAnswersAgainOnce() {
+        pause.failed(listenerWanted = true)
+        assertEquals(ErrorPause.Recovery.RESUME, pause.recovered())
+        assertEquals("chỉ một lần", ErrorPause.Recovery.CLEAR, pause.recovered())
+    }
+
+    @Test
+    fun aListenerWhoPausedOrMovedOnStaysPausedAndOnlyTheNoticeClears() {
+        pause.failed(listenerWanted = true)
+        pause.listenerActed() // bấm dừng / phát / tua / nhảy
+        assertEquals(ErrorPause.Recovery.CLEAR, pause.recovered())
+    }
+
+    @Test
+    fun anErrorWhenTheListenerDidNotWantToHearNeverResumes() {
+        pause.failed(listenerWanted = false)
+        assertEquals(ErrorPause.Recovery.CLEAR, pause.recovered())
+    }
+
+    @Test
+    fun aSecondFailureAfterAResumeIsAnErrorPauseAgain() {
+        pause.failed(true)
+        assertEquals(ErrorPause.Recovery.RESUME, pause.recovered())
+        pause.failed(true)
+        assertEquals(ErrorPause.Recovery.RESUME, pause.recovered())
+    }
+}
+

@@ -5257,6 +5257,12 @@ class Handler(BaseHTTPRequestHandler):
         book = body.get("bookId")
         return book if isinstance(book, str) and book else None
 
+    @staticmethod
+    def _clip_rank(body: dict[str, Any]) -> int:
+        """`rank` của yêu cầu (số đoạn người nghe phải nghe trước đoạn này, trình phát gửi); không có / không hợp lệ = việc nền."""
+        rank = body.get("rank")
+        return rank if isinstance(rank, int) and not isinstance(rank, bool) and 0 <= rank < readaloud.edge.RANK_BACKGROUND else readaloud.edge.RANK_BACKGROUND
+
     def post_readaloud_clip(self, _query: dict[str, list[str]]) -> None:
         # Một đoạn chữ -> một clip (audio tốc độ 1,0 + mốc từng chữ). Lỗi nói đúng lý do (`reason`) để trình phát đổi sang giọng máy hay báo người nghe.
         body = self._body()
@@ -5265,7 +5271,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hay chữ")
         try:
             clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")), origin=self._reading_origin(body),
-                                           readings=self._book_readings(body), book=self._clip_book(body))
+                                           readings=self._book_readings(body), book=self._clip_book(body), rank=self._clip_rank(body))
         except VoiceError as error:
             if error.reason == "uncached":
                 # Chỉ tra bộ đệm mà chưa có là câu trả lời bình thường (trình phát hỏi hàng loạt lúc nạp chương), không phải lỗi: 200 để

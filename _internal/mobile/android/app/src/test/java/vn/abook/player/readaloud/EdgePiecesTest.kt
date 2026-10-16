@@ -15,7 +15,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -29,7 +28,7 @@ class EdgePiecesTest {
 
     @After
     fun cleanUp() {
-        EdgeTts.connections = Semaphore(EdgePieces.EDGE_CONNECTIONS)
+        EdgeTts.connections = ConnectionSlots(EdgePieces.EDGE_CONNECTIONS)
         EdgeTts.clockSkewSeconds = 0.0
         EdgeTts.totalMs = EdgeTts.TOTAL_MS
         dir.deleteRecursively()
@@ -185,7 +184,7 @@ class EdgePiecesTest {
 
     @Test
     fun theProcessWideCapLimitsOpenConnections() {
-        EdgeTts.connections = Semaphore(2)
+        EdgeTts.connections = ConnectionSlots(2)
         val live = AtomicInteger(0)
         val peak = AtomicInteger(0)
         val voices = List(2) { EdgeTts("v", connectorBySpokenWords(live, peak)) }
@@ -312,6 +311,87 @@ class EdgePiecesTest {
         assertTrue("không được đợi mảnh đứng trước", (System.nanoTime() - began) < 5_000_000_000L)
         waitUntil("mọi ổ cắm đã đóng") { closed.get() == total }
         waitUntil("chỗ kết nối nhả hết") { EdgeTts.connections.availablePermits() == EdgePieces.EDGE_CONNECTIONS }
+    }
+
+    // ---- đoạn gần người nghe hơn đi trước khi hết chỗ kết nối (uxfix51) -------------------------------------------------------------
+
+    @Test
+    fun connectionSlotsGrantTheNearestToTheListenerFirstAndKeepArrivalOrderAmongEquals() {
+        val slots = ConnectionSlots(1)
+        slots.acquire()
+        val granted = java.util.Collections.synchronizedList(ArrayList<String>())
+        val threads = ArrayList<Thread>()
+        val specs = listOf("bg" to EdgePieces.RANK_BACKGROUND, "ahead3" to 3, "ahead1" to 1, "target" to 0, "ahead2" to 2, "ahead1b" to 1)
+        for ((name, rank) in specs) {
+            val before = slots.waiting()
+            threads += Thread { if (slots.tryAcquire(5_000, rank)) granted.add(name) }.also { it.start() }
+            waitUntil("$name đã xếp hàng") { slots.waiting() == before + 1 }
+        }
+        repeat(specs.size) { n ->
+            slots.release()
+            waitUntil("chỗ thứ $n đã trao") { granted.size == n + 1 }
+        }
+        threads.forEach { it.join(2_000) }
+        assertEquals(listOf("target", "ahead1", "ahead1b", "ahead2", "ahead3", "bg"), granted)
+    }
+
+    @Test
+    fun aWaiterThatTimesOutLeavesTheQueueAndTheWayFree() {
+        val slots = ConnectionSlots(1)
+        slots.acquire()
+        assertFalse(slots.tryAcquire(50))
+        assertEquals(0, slots.waiting())
+        slots.release()
+        assertEquals(1, slots.availablePermits())
+        try {
+            slots.release()
+            fail("trả quá số đã giữ phải lỗi")
+        } catch (expected: IllegalStateException) {
+        }
+    }
+
+    @Test
+    fun theClipTheListenerWaitsForAskedAfterReadAheadClipsWaitGetsTheNextFreeSlot() {
+        // Một chỗ duy nhất đang bận; hai clip đọc trước (rank 2, 1) xếp hàng trước, clip người nghe chờ (rank 0) xin SAU CÙNG - chỗ nhả ra là của nó.
+        val slots = ConnectionSlots(1)
+        EdgeTts.connections = slots
+        slots.acquire()
+        val order = java.util.Collections.synchronizedList(ArrayList<String>())
+        val connector = EdgeTts.Connector { _, _ ->
+            val sent = ByteArrayOutputStream()
+            WebSocket({ }, Reply(sent) { bytes ->
+                order.add(spokenIn(bytes))
+                audio(600, 1) + text("turn.end")
+            }, sent)
+        }
+        val threads = ArrayList<Thread>()
+        for ((text, rank) in listOf("Đọc trước hai." to 2, "Đọc trước một." to 1, "Người nghe chờ." to 0)) {
+            val before = slots.waiting()
+            threads += Thread { ClipRetry.run(true, longArrayOf(), { true }, rank = rank) { EdgeTts("v", connector) { }.synthesize(text, File(dir, "u$rank.mp3")) } }.also { it.start() }
+            waitUntil("$text đã xếp hàng") { slots.waiting() == before + 1 }
+        }
+        slots.release()
+        threads.forEach { it.join(10_000) }
+        assertEquals(listOf("Người nghe chờ.", "Đọc trước một.", "Đọc trước hai."), order.toList())
+    }
+
+    @Test
+    fun theRankReachesEveryPieceThreadOfAClipButOnlyInsideTheRun() {
+        assertEquals(EdgePieces.RANK_BACKGROUND, ClipBudget.rank())
+        val seen = java.util.Collections.synchronizedList(ArrayList<Int>())
+        val connector = EdgeTts.Connector { _, _ ->
+            seen.add(ClipBudget.rank()) // chạy ở luồng của mảnh
+            val sent = ByteArrayOutputStream()
+            WebSocket({ }, Reply(sent) { audio(600, 1) + text("turn.end") }, sent)
+        }
+        ClipRetry.run(true, longArrayOf(), { true }, rank = 2) {
+            assertEquals(2, ClipBudget.rank())
+            EdgeTts("v", connector) { }.synthesize(sentences, File(dir, "r.mp3"))
+        }
+        assertEquals(EdgePieces.RANK_BACKGROUND, ClipBudget.rank())
+        assertTrue("nhiều mảnh", seen.size >= 2)
+        assertTrue("mọi mảnh nhận rank của clip: $seen", seen.all { it == 2 })
+        ClipRetry.run(true, longArrayOf(), { true }) { assertEquals(EdgePieces.RANK_BACKGROUND, ClipBudget.rank()); Clip(File("x"), 1, emptyList(), "v") }
     }
 
     // ---- chỗ nối giữa các mảnh (uxfix50) -----------------------------------------------------------------------------------------

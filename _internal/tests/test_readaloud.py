@@ -497,6 +497,49 @@ def test_the_service_makes_a_clip_once_and_then_serves_the_cache(tmp_path: Path)
     assert service.clip("fake:ngoc", "Câu khác.")["words"] and len(provider.calls) == 2
 
 
+class _RankedProvider(FakeProvider):
+    """Giọng có `ranks_requests` (như Edge): nhận thêm `rank` - số đoạn người nghe phải nghe trước đoạn này."""
+
+    id = "ranked"
+    ranks_requests = True
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.ranks: list[int] = []
+
+    def voices(self) -> list[Voice]:
+        return [Voice("ranked:ngoc", "Ngọc", "ranked", False, True)]
+
+    def synthesize(self, text: str, native_voice: str, *, rank: int = 99) -> Synthesis:
+        self.ranks.append(rank)
+        return super().synthesize(text, native_voice)
+
+
+def test_the_service_tells_only_ranking_voices_how_near_the_listener_is(tmp_path: Path) -> None:
+    ranked, plain = _RankedProvider(), FakeProvider()
+    service = ReadAloud(tmp_path, [ranked, plain])
+    service.clip("ranked:ngoc", "Đoạn người nghe chờ.", rank=0)
+    service.clip("ranked:ngoc", "Đoạn đọc trước.", rank=2)
+    service.clip("ranked:ngoc", "Đoạn việc nền.")
+    assert ranked.ranks == [0, 2, 99]
+    service.clip("fake:ngoc", "Giọng không xếp hàng.", rank=0)  # giọng khác không biết `rank`: vẫn đọc được
+    assert len(plain.calls) == 1
+
+
+def test_the_clip_endpoint_passes_the_rank_to_the_service(tmp_path: Path) -> None:
+    from tests.test_webui_listen_and_sync import _request
+
+    provider = _RankedProvider()
+    server = _server(tmp_path, provider)
+    headers = {"X-Ebook-Token": "t"}
+    try:
+        for text, extra in (("Một.", {"rank": 0}), ("Hai.", {"rank": 3}), ("Ba.", {}), ("Bốn.", {"rank": "0"}), ("Năm.", {"rank": -1}), ("Sáu.", {"rank": True})):
+            assert _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body={"voice": "ranked:ngoc", "text": text, **extra})[0] == 200
+        assert provider.ranks == [0, 3, 99, 99, 99, 99]  # rank không phải số nguyên không âm thì là việc nền
+    finally:
+        server.stop()
+
+
 def test_the_service_refuses_unknown_voices_empty_text_and_uncached_lookups(tmp_path: Path) -> None:
     service = ReadAloud(tmp_path, [FakeProvider()])
     for voice, text, reason in (("fake:khac", "Xin chào", "voice"), ("khong:co", "Xin chào", "voice"), ("fake:ngoc", " — … ", "empty"),
