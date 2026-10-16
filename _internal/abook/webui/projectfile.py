@@ -626,14 +626,17 @@ class ProjectFile:
             raise
         return target
 
+    def music_names(self) -> list[str]:
+        """Tên file (không kể thư mục `music/`) của các bài nhạc nền mang theo trong gói."""
+        return [name.split("/", 1)[1] for name in self.manifest["files"] if name.startswith("music/")]
+
     def copy_music(self, into: Path) -> int:
         """Chép các bài nhạc nền của gói vào bộ đệm nhạc của máy (`into/<sha1>.mp3`, bài đã có thì giữ): dự án mở ra phát
         lại nhạc ngay cả khi máy này không có mạng. Gọi sau `open_into` (đã kiểm mã băm). Trả số bài vừa chép."""
         copied = 0
-        for name in self.manifest["files"]:
-            if not name.startswith("music/"):
-                continue
-            target = Path(into) / name.split("/", 1)[1]
+        for member in self.music_names():
+            name = f"music/{member}"
+            target = Path(into) / member
             if target.is_file():
                 continue
             self.copy_member(name, target)

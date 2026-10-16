@@ -349,4 +349,40 @@ class ClipReaderTest {
         }
         assertEquals(0, dir.listFiles()!!.count { it.name.endsWith(".part") })
     }
+
+    @Test
+    fun aFreshReadForgetsTheBreakAfterAServiceFailure() {
+        // Edge trục trặc, giọng của máy cũng không đọc được: Edge bị cho nghỉ; Edge khoẻ lại mà lần đọc thường vẫn bị chặn (không một lượt gọi nào đi ra), lần hỏi MỚI thì gọi thật.
+        var edgeFailure: VoiceException? = VoiceException("Dịch vụ đọc to đang bận (HTTP 503)")
+        var edgeCalls = 0
+        val edge = object : Voice {
+            override val id = "edge:v"
+            override val extension = "mp3"
+            override fun synthesize(text: String, out: File): Clip {
+                edgeCalls++
+                edgeFailure?.let { throw it }
+                out.writeBytes(ByteArray(50) { 3 })
+                return Clip(out, 700, listOf(Span(0, 700)), id)
+            }
+        }
+        val device = FakeVoice("device:vi", VoiceException("Máy chưa có giọng tiếng Việt"))
+        val reader = ClipReader(ClipCache(dir), { if (it.startsWith("edge:")) edge else device }, { device }, { now })
+        try {
+            reader.read("Xin", "edge:v")
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertEquals("service", error.reason)
+        }
+        assertEquals(1, edgeCalls)
+        edgeFailure = null // Edge khoẻ lại
+        try {
+            reader.read("Xin", "edge:v")
+            fail("Edge còn đang nghỉ")
+        } catch (error: VoiceException) {
+            assertEquals(1, edgeCalls)
+        }
+        assertEquals("edge:v", reader.read("Xin", "edge:v", fresh = true).voice)
+        assertEquals(2, edgeCalls)
+        assertEquals("edge:v", reader.read("Hai", "edge:v").voice) // hết nghỉ luôn
+    }
 }

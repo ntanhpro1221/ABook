@@ -48,6 +48,9 @@ export interface ClipOptions {
   willRetry?: boolean;
   /** Quỹ thời gian thử lại ([CLIP_RETRY_BUDGET_MS]): từ mốc này (Date.now) lần thử lại sẽ không còn kịp - `willRetry` coi như tắt, bộ lấy clip rơi sang giọng kế ngay trong lần hỏng này. */
   retryBefore?: number;
+  /** Lần hỏi MỚI cho đoạn mà các lần thử lại trước đã hết ([PROBE_MS], hay người nghe vừa tới đoạn ấy): bộ lấy clip quên lệnh "giọng vừa hỏng, nghỉ 5 phút" của giọng này và gọi dịch vụ thật - nếu không thì
+   *  dịch vụ đã khoẻ lại mà lần hỏi mới vẫn bị chặn ngay, không một lượt gọi nào đi ra. */
+  fresh?: boolean;
 }
 
 export type ClipFetcher = (voice: string, text: string, options?: ClipOptions) => Promise<ReadAloudClip>;
@@ -116,6 +119,10 @@ export interface ReadingsChanged {
  *  bị từ chối ("rejected"), giọng / khoá hỏng, chữ không đọc được... thì không - dừng ngay như cũ. Lỗi do bộ lấy clip đã tự quyết xong (`final`: đã thử hết
  *  giọng, hay giọng đang nghỉ) cũng không thử lại thêm. */
 const TRANSIENT_REASONS = new Set(["service", "timeout"]);
+/** Lỗi thuộc loại "dịch vụ đang trục trặc" (kể cả lời cuối `final` của bộ lấy clip sau khi hết lần thử): đoạn hỏng vì thế được hỏi lại ([PROBE_MS], và khi người nghe tới đoạn ấy). */
+function isServiceTrouble(error: unknown): boolean {
+  return TRANSIENT_REASONS.has((error as { reason?: string } | null)?.reason ?? "");
+}
 export function isTransientClipError(error: unknown): boolean {
   const found = error as { reason?: string; final?: boolean } | null;
   return !found?.final && TRANSIENT_REASONS.has(found?.reason ?? "");
@@ -128,6 +135,9 @@ export const CLIP_RETRIES = CLIP_RETRY_DELAYS_MS.length;
  *  nếu sau quãng nghỉ của nó còn ít nhất `CLIP_MIN_ATTEMPT_MS`; hết quỹ thì rơi sang giọng kế / báo lỗi ngay. Lần lấy đầu không bị cắt. Cùng quỹ với điện thoại (ClipBudget ở ClipRetry.kt). */
 export const CLIP_RETRY_BUDGET_MS = 20_000;
 export const CLIP_MIN_ATTEMPT_MS = 4_000;
+/** Đoạn đã hết lần thử lại vì dịch vụ trục trặc mà vẫn nằm trong cửa sổ đọc trước: cứ chừng này ms hỏi lại MỘT lần (một lượt gọi, không thử lại, đoạn gần người nghe nhất) cho tới khi được -
+ *  mạng khoẻ lại thì đoạn đã sẵn sàng trước khi người nghe tới, mà cả lúc mất mạng dài cũng chỉ ~6 lượt gọi mỗi phút (a46: 74 giây mất mạng = 13 lượt gọi trước khi bỏ cuộc; sau đó thêm tối đa 1 lượt mỗi 10 giây). */
+export const PROBE_MS = 10_000;
 /** Mốc (Date.now) sau đó lần thử lại thứ `failed + 1` không còn kịp, cho clip bắt đầu lấy lúc `began`. */
 export function clipRetryBefore(began: number, failed: number): number {
   return began + CLIP_RETRY_BUDGET_MS - CLIP_MIN_ATTEMPT_MS - CLIP_RETRY_DELAYS_MS[Math.min(failed, CLIP_RETRY_DELAYS_MS.length - 1)];
@@ -243,6 +253,10 @@ interface Slot {
   epoch: number;
   /** Cách đọc có chữ trong đoạn này vừa đổi mà đoạn đang nói (không cắt ngang): lần phát lại kế tiếp lấy clip mới. */
   stale: boolean;
+  /** Hết lần thử lại vì dịch vụ trục trặc (đoạn chưa phải của người nghe nên chưa báo lỗi): chờ [ReadAloudEngine.probe] hay người nghe tới đoạn ấy. */
+  gaveUp: boolean;
+  /** Lượt xin kế tiếp là lần hỏi MỚI ([ClipOptions.fresh]): "fresh" - người nghe vừa tới đoạn, quỹ thử lại tính lại từ đầu; "probe" - hỏi thăm ngầm một lần, không thử lại. */
+  ask: "fresh" | "probe" | null;
 }
 
 interface Target {
@@ -303,6 +317,7 @@ export class ReadAloudEngine implements AudioEngine {
   /** Lượt gọi đang chạy -> lúc gửi (ms): tuổi của chúng là số đo chặn dưới ([depth]). */
   private pending = new Map<number, number>();
   private watch: ReturnType<typeof setInterval> | null = null;
+  private probeTimer: ReturnType<typeof setTimeout> | null = null;
   private holdTimer: ReturnType<typeof setTimeout> | null = null;
   /** Đã xin trước clip đầu của chương kế (một lần cho mỗi lần nạp chương). */
   private warmedNext = false;
@@ -507,6 +522,8 @@ export class ReadAloudEngine implements AudioEngine {
       began: 0,
       epoch: 0,
       stale: false,
+      gaveUp: false,
+      ask: null,
     };
   }
 
@@ -717,9 +734,14 @@ export class ReadAloudEngine implements AudioEngine {
 
   private depth(index: number): number {
     if (this.speech?.serial?.()) return this.readAhead;
+    return readAheadCount(this.readAhead, this.fetchMeasures(), this.slots.slice(index + 1, index + 1 + MAX_READ_AHEAD).map((slot) => slot.duration));
+  }
+
+  /** Số đo tốc độ giọng cho [readAheadCount]: giây lấy clip thật của vài clip gần nhất + tuổi của các lượt gọi đang chờ quá [STALL_SECONDS]. */
+  private fetchMeasures(): number[] {
     const now = Date.now();
     const stalled = [...this.pending.values()].map((at) => (now - at) / 1000).filter((age) => age >= STALL_SECONDS);
-    return readAheadCount(this.readAhead, [...this.fetchSeconds, ...stalled], this.slots.slice(index + 1, index + 1 + MAX_READ_AHEAD).map((slot) => slot.duration));
+    return [...this.fetchSeconds, ...stalled];
   }
 
   private noteFetch(milliseconds: number): void {
@@ -741,10 +763,22 @@ export class ReadAloudEngine implements AudioEngine {
       .after()
       .then(async (texts) => {
         if (id !== this.loadId) return;
-        const wanted = texts.filter(isSpeakable).slice(0, NEXT_CHAPTER_AHEAD);
+        const speakable = texts.filter(isSpeakable);
+        const serial = Boolean(speech.serial?.());
+        // Cùng luật với đọc trước giữa chương ([readAheadCount]): giọng nhanh thì NEXT_CHAPTER_AHEAD clip, giọng chậm thì đủ số giây âm thanh (đoạn kế của chương sau không còn về trễ ~5 giây - soát a46).
+        const count = serial ? NEXT_CHAPTER_AHEAD : readAheadCount(NEXT_CHAPTER_AHEAD, this.fetchMeasures(), speakable.slice(0, MAX_READ_AHEAD).map(estimateSeconds));
+        const wanted = speakable.slice(0, count);
         const voice = speech.voice();
-        if (speech.serial?.()) for (const text of wanted) await speech.fetchClip(voice, text);
-        else await Promise.all(wanted.map((text) => speech.fetchClip(voice, text)));
+        if (serial) {
+          for (const text of wanted) await speech.fetchClip(voice, text);
+          return;
+        }
+        // Không quá `readAhead + 1` lượt cùng lúc (như [pump]): Edge hạn chế khi dồn nhiều kết nối.
+        let next = 0;
+        const lane = async () => {
+          while (next < wanted.length) await speech.fetchClip(voice, wanted[next++]).catch(() => undefined);
+        };
+        await Promise.all(Array.from({ length: Math.min(this.readAhead + 1, wanted.length) }, lane));
       })
       .catch(() => undefined);
   }
@@ -758,6 +792,9 @@ export class ReadAloudEngine implements AudioEngine {
       return;
     }
     if (slot.fetching) return;
+    // Người nghe tới một đoạn đã hỏng từ trước (hết lần thử lại lúc nó còn ở xa, hay dịch vụ vừa khoẻ lại): hỏi MỚI một lần trước khi báo lỗi - dịch vụ có thể đã dậy từ lâu (a46: Edge về sau 28 giây,
+    // người nghe tới đoạn ấy lúc 39,5 giây mà bị dừng với "Thử lại", bấm là xong ngay).
+    if (slot.failures > 0 && slot.ask === null && index === this.target.index) slot.ask = "fresh";
     slot.fetching = true;
     this.queued.push({ index, epoch: slot.epoch });
     this.pump();
@@ -825,9 +862,18 @@ export class ReadAloudEngine implements AudioEngine {
     this.sentAt = sentAt;
     this.pending.set(index, sentAt);
     this.watching();
+    const ask = slot.ask;
+    slot.ask = null;
+    if (ask === "fresh") {
+      // Quỹ thử lại tính lại từ đầu cho lần hỏi này.
+      slot.failures = 0;
+      slot.gaveUp = false;
+    }
     if (slot.failures === 0) slot.began = sentAt;
+    const options: ClipOptions = { willRetry: ask !== "probe" && slot.failures < CLIP_RETRIES, retryBefore: clipRetryBefore(slot.began, slot.failures) };
+    if (ask) options.fresh = true;
     speech
-      .fetchClip(speech.voice(), slot.text, { willRetry: slot.failures < CLIP_RETRIES, retryBefore: clipRetryBefore(slot.began, slot.failures) })
+      .fetchClip(speech.voice(), slot.text, options)
       .then((clip) => {
         this.lastClipMs = Date.now() - sentAt;
         if (id !== this.loadId) return;
@@ -836,7 +882,10 @@ export class ReadAloudEngine implements AudioEngine {
         if (epoch !== slot.epoch) return;
         slot.fetching = false;
         slot.failures = 0;
+        slot.gaveUp = false;
         this.onClip(index, clip);
+        // Một lượt gọi THẬT (không phải clip lấy từ bộ đệm của máy chủ, nó về được cả khi Edge đang chết) vừa xong: dịch vụ khoẻ lại, các đoạn đã bỏ cuộc trong lúc mất mạng được hỏi lại ngay.
+        if (ask || this.lastClipMs / 1000 >= REAL_FETCH_SECONDS) this.reviveGaveUp();
       })
       .catch((error) => {
         if (id !== this.loadId || epoch !== slot.epoch) return;
@@ -846,10 +895,12 @@ export class ReadAloudEngine implements AudioEngine {
         slot.failures += 1;
         // Lỗi thoáng qua (Edge cắt lượt / bận / chậm): thử lại sau một quãng nghỉ lùi dần, ở nền - các clip đã đọc sẵn vẫn phát, người nghe chỉ phải dừng nếu tới đoạn này mà
         // hết lần thử. Lỗi khác (mất mạng, bị từ chối, giọng / khoá hỏng...) thử lại cũng vô ích: đoạn người nghe đang chờ thì dừng ngay và báo.
-        if (isTransientClipError(error) && slot.failures <= CLIP_RETRIES && Date.now() < clipRetryBefore(slot.began, slot.failures - 1)) {
+        if (ask !== "probe" && isTransientClipError(error) && slot.failures <= CLIP_RETRIES && Date.now() < clipRetryBefore(slot.began, slot.failures - 1)) {
           this.retryLater(index, epoch, id);
           return;
         }
+        // Hết lần thử vì dịch vụ trục trặc: đoạn chưa phải của người nghe thì để đó, [probe] hỏi thăm dần và người nghe tới nơi thì hỏi mới ([request]).
+        slot.gaveUp = isServiceTrouble(error);
         if (index !== this.target.index || !this.wanted) return;
         this.fail(error);
       })
@@ -861,7 +912,46 @@ export class ReadAloudEngine implements AudioEngine {
         // Số đo mới có thể làm cửa sổ đọc trước dài ra (hay co lại); cũng là chỗ xin trước chương kế khi cửa sổ chạm cuối chương.
         if (this.ready && this.wanted) this.prefetch(this.target.index, true);
         else this.warmNext();
+        this.scheduleProbe();
       });
+  }
+
+  /** Đoạn gần người nghe nhất trong cửa sổ đọc trước đã bỏ cuộc vì dịch vụ trục trặc (không tính đoạn đang nghe: người nghe tới đoạn ấy là hỏi mới rồi - [request]). */
+  private gaveUpSlot(): number | null {
+    const target = this.target.index;
+    const last = target + this.depth(target);
+    for (let i = target + 1; i <= last && i < this.slots.length; i += 1) {
+      const slot = this.slots[i];
+      if (slot.gaveUp && !slot.fetching && !slot.clip && slot.speakable) return i;
+    }
+    return null;
+  }
+
+  /** Còn đoạn bỏ cuộc trong cửa sổ thì hẹn [probe] sau [PROBE_MS] (mỗi lượt gọi xong lại hẹn tiếp: hỏi thăm lần lượt, không bao giờ hai lượt cùng lúc). */
+  private scheduleProbe(): void {
+    if (this.probeTimer !== null || !this.ready || !this.wanted || this.gaveUpSlot() === null) return;
+    const id = this.loadId;
+    this.probeTimer = setTimeout(() => {
+      this.probeTimer = null;
+      if (id === this.loadId) this.probe();
+    }, PROBE_MS);
+  }
+
+  private probe(): void {
+    if (!this.ready || !this.wanted) return;
+    const index = this.gaveUpSlot();
+    if (index === null) return;
+    this.slots[index].ask = "probe";
+    this.request(index); // xong (được hay hỏng) thì [send] hẹn lượt hỏi thăm kế
+  }
+
+  /** Dịch vụ vừa trả lời thật: các đoạn đã bỏ cuộc (không phải đoạn đang chờ) được hỏi lại như mới, với quỹ thử lại đủ. */
+  private reviveGaveUp(): void {
+    for (const slot of this.slots) {
+      if (!slot.gaveUp || slot.fetching || slot.clip) continue;
+      slot.gaveUp = false;
+      slot.failures = 0;
+    }
   }
 
   /** Trong lúc còn lượt gọi chưa về, mỗi [WATCH_MS] xét lại cửa sổ đọc trước: tuổi của lượt gọi đang chờ có thể làm nó dài ra trước khi clip chậm về. */
@@ -1071,7 +1161,10 @@ export class ReadAloudEngine implements AudioEngine {
     const slot = this.slots[this.target.index];
     this.stopSilence();
     // Người nghe bấm phát lại thì được thử lại từ đầu.
-    if (slot) slot.failures = 0;
+    if (slot) {
+      slot.failures = 0;
+      slot.gaveUp = false;
+    }
     slot?.audio?.pause();
     if (was) this.fire("pause");
     this.fire("error");
@@ -1090,6 +1183,8 @@ export class ReadAloudEngine implements AudioEngine {
     this.pending.clear();
     if (this.watch !== null) clearInterval(this.watch);
     this.watch = null;
+    if (this.probeTimer !== null) clearTimeout(this.probeTimer);
+    this.probeTimer = null;
     if (typeof window !== "undefined") {
       window.removeEventListener(VOICE_CHANGED_EVENT, this.onVoice);
       window.removeEventListener(READINGS_CHANGED_EVENT, this.onReadings);

@@ -68,6 +68,19 @@ class MusicCachePruneTest {
     }
 
     @Test
+    fun onlyDownloadedCatalogTracksAreEverPrunedNotImportedMusicNorTheBooksOwn() {
+        // Cùng luật với máy tính (music_cache.py): nhạc người dùng nhập (MusicStore, thư mục riêng) và nhạc sách mang theo (music/ trong thư mục sách) nằm NGOÀI thư mục bài tải của danh mục.
+        val catalog = catalog()
+        val old = track(catalog, "https://a/old.mp3", 400, ago = 5_000_000)
+        val imported = File(root, "mine/files/${"0".repeat(40)}.mp3").apply { parentFile!!.mkdirs(); writeBytes(ByteArray(400)); setLastModified(now - 99_000_000) }
+        val ofBook = File(root, "books/b1/music/${"1".repeat(40)}.mp3").apply { parentFile!!.mkdirs(); writeBytes(ByteArray(400)); setLastModified(now - 99_000_000) }
+        catalog.prune(capBytes = 100)
+        assertFalse(old.exists())
+        assertTrue(imported.exists())
+        assertTrue(ofBook.exists())
+    }
+
+    @Test
     fun usingATrackRefreshesItsAgeOnlyOnceAnHour() {
         val catalog = catalog()
         val file = track(catalog, "https://a/used.mp3", 10, ago = 7_200_000)
