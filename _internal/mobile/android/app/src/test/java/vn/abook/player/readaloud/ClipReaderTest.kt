@@ -159,6 +159,78 @@ class ClipReaderTest {
     }
 
     @Test
+    fun whenTheCallerWillRetryATransientEdgeErrorGoesUpUntouchedWithoutBenchingEdgeOrFallingBack() {
+        // Một lần Edge cắt lượt / chậm không được làm Edge "nghỉ" 30 giây (cả chương đọc bằng giọng máy, hay hiện "đang không dùng được") khi thử lại là xong.
+        val edge = FakeVoice("edge:v", VoiceException("Giọng Edge đang không trả lời", reason = "service"))
+        val device = FakeVoice("device:vi")
+        val reader = reader(edge, device)
+        for (reason in listOf("service", "timeout")) {
+            val flaky = FakeVoice("edge:v", VoiceException("hỏng", reason = reason))
+            try {
+                reader(flaky, device).read("Xin $reason", "edge:v", willRetry = true)
+                fail("đáng ra lỗi gốc")
+            } catch (error: VoiceException) {
+                assertEquals(reason, error.reason)
+                assertFalse(error.final)
+                assertTrue(error.transient)
+            }
+        }
+        assertEquals("không rơi sang giọng máy", 0, device.calls)
+        // Edge sống lại ở lần thử kế: đọc bằng chính Edge (không bị nghỉ).
+        val sequence = ArrayDeque(listOf<VoiceException?>(VoiceException("cắt lượt", reason = "service"), null))
+        val recovering = object : Voice {
+            override val id = "edge:v"
+            override val extension = "mp3"
+            override fun synthesize(text: String, out: File): Clip {
+                sequence.removeFirst()?.let { throw it }
+                out.writeBytes(ByteArray(50) { 3 })
+                return Clip(out, 700, listOf(Span(0, 700)), id)
+            }
+        }
+        val retry = ClipReader(ClipCache(dir), { recovering }, { device }, { now })
+        try { retry.read("Xin", "edge:v", willRetry = true); fail("lần đầu hỏng") } catch (error: VoiceException) { assertTrue(error.transient) }
+        assertEquals("edge:v", retry.read("Xin", "edge:v", willRetry = true).voice)
+        assertEquals(0, device.calls)
+        // Lần thử cuối (willRetry tắt): xử lý như trước - rơi sang giọng máy, Edge nghỉ.
+        assertEquals("device:vi", reader.read("Xin cuối", "edge:v").voice)
+        reader.read("Xin nữa", "edge:v")
+        assertEquals("Edge nghỉ sau lần cuối", 1, edge.calls)
+    }
+
+    @Test
+    fun willRetryDoesNotApplyToErrorsThatRetryingCannotFix() {
+        for (error in listOf(
+            VoiceException("Không có mạng", offline = true),
+            VoiceException("Dịch vụ từ chối", reason = "rejected"),
+            VoiceException("Khóa sai", reason = "auth"),
+            VoiceException("Hết hạn mức", reason = "quota"),
+        )) {
+            val edge = FakeVoice("edge:v", error)
+            val device = FakeVoice("device:vi")
+            assertEquals(error.reason, "device:vi", reader(edge, device).read("Xin ${error.reason}", "edge:v", willRetry = true).voice)
+            assertEquals(1, device.calls)
+        }
+        // Giọng chạy trên máy: willRetry không đổi gì.
+        val vieneu = FakeVoice("vieneu:nano/Adam", VoiceException("chưa tải", reason = "service"))
+        val device = FakeVoice("device:vi")
+        val reader = ClipReader(ClipCache(dir), { vieneu }, { device }, { now })
+        assertEquals("device:vi", reader.read("Xin", "vieneu:nano/Adam", willRetry = true).voice)
+    }
+
+    @Test
+    fun theLastWordOfTheReaderIsFinalSoNobodyRetriesItAgain() {
+        val edge = FakeVoice("edge:v", VoiceException("Edge bận", reason = "service"))
+        val error = try { reader(edge, null).read("Xin", "edge:v"); null } catch (caught: VoiceException) { caught }
+        assertEquals(ClipReader.NO_USABLE_VOICE, error!!.message)
+        assertTrue(error.final)
+        assertFalse(error.transient)
+        // Lời cuối ghép từ hai giọng hỏng cũng là lời cuối.
+        val both = try { reader(FakeVoice("edge:v", VoiceException("Edge bận", reason = "service")), FakeVoice("device:vi", VoiceException("Máy hỏng"))).read("Hai", "edge:v"); null } catch (caught: VoiceException) { caught }
+        assertTrue(both!!.final)
+        assertFalse(both.transient)
+    }
+
+    @Test
     fun aDeviceVoiceThatFailsIsNotRetriedWithItself() {
         val device = FakeVoice("device:vi", VoiceException("Giọng của máy báo lỗi"))
         try {

@@ -22,7 +22,7 @@ import java.util.concurrent.Executors
  * tắt màn hình thì WebView bị treo - sang đoạn kế, sang chương kế, hẹn giờ ngủ, nút tai nghe, lưu vị trí đều phải chạy không cần JavaScript.
  *
  * Cách làm: chương chia thành các đoạn ([Paragraphs.of], đúng như màn đọc), mỗi đoạn một đoạn âm thanh ([Clip]) do [ClipReader] đọc ở luồng nền. Chỉ đọc đoạn đang
- * nghe + [AHEAD] đoạn sau; đoạn nào xong thì nối thêm vào hàng đợi của ExoPlayer (một MediaItem mỗi đoạn, `mediaId` = mã chương, `tag` = [Slot]) nên chuyển đoạn
+ * nghe + [AHEAD] đoạn sau (giọng trực tuyến mà clip về chậm thì nhiều hơn - [ReadAheadPolicy]); đoạn nào xong thì nối thêm vào hàng đợi của ExoPlayer (một MediaItem mỗi đoạn, `mediaId` = mã chương, `tag` = [Slot]) nên chuyển đoạn
  * liền mạch, và sang chương kế cũng chỉ là nối tiếp đoạn. Chương audio xen giữa (sách nửa chữ nửa tiếng) nối vào cùng hàng đợi. Giao diện thấy MỘT đồng hồ
  * chương ([VirtualTimeline]): vị trí = mốc đầu đoạn + vị trí trong đoạn.
  *
@@ -31,8 +31,11 @@ import java.util.concurrent.Executors
  */
 object ReadAloud {
     const val DEFAULT_VOICE = "edge:vi-VN-HoaiMyNeural"
-    /** Đoạn đọc trước: đang nghe + chừng này đoạn sau. */
+    /** Đoạn đọc trước: đang nghe + chừng này đoạn sau (tối thiểu; giọng trực tuyến chậm thì dài ra - [policy]). */
     const val AHEAD = 2
+    /** Nghỉ trước mỗi lần thử lại một đoạn hỏng vì lỗi thoáng qua của giọng trực tuyến (ms), ở luồng nền - đoạn đã nạp vẫn phát. [EdgeTts] đã tự thử lại lượt bị cắt 3 lần (6 giây) bên
+     *  trong mỗi lần, nên chỉ thêm hai lần ngoài này (~7 giây): tổng ~13 giây trước khi dừng và hiện "Thử lại". Máy tính nghỉ 1 + 2,5 + 4,5 + 7 giây (listen/readAloud.ts). */
+    val RETRY_DELAYS_MS = longArrayOf(2_000L, 5_000L)
 
     /** Gắn vào MediaItem của một đoạn: chương (vị trí trong danh sách chương), đoạn, độ to của giọng đã đọc. `segment` -1 = không dùng. */
     class Slot(val chapterIndex: Int, val segment: Int, val gainDb: Double)
@@ -55,18 +58,25 @@ object ReadAloud {
     private var context: Context? = null
     private var reader: ClipReader? = null
     // Hai luồng: lần tua mới không phải đợi việc cũ (Edge có thể treo tới hạn 45 giây); giọng của máy tự xếp hàng riêng (DeviceEngine).
-    private val worker = Executors.newFixedThreadPool(2) { Thread(it, "read-aloud").apply { isDaemon = true } }
+    // Bốn cái: một đoạn đang đọc + một đoạn đọc song song khi Edge chậm ([warm]) + chỗ cho lần tua sau (việc cũ chạy nốt, không huỷ giữa chừng được).
+    private val worker = Executors.newFixedThreadPool(4) { Thread(it, "read-aloud").apply { isDaemon = true } }
+    /** Thời gian lấy clip thật của giọng trực tuyến đang chọn: quyết định phải đọc sẵn bao nhiêu đoạn ([needMore]) và có đọc song song đoạn kế không. */
+    private val policy = ReadAheadPolicy(AHEAD)
+    private var policyVoice = ""
+    /** Việc đọc đang chạy theo (giọng, chữ): đoạn kế đọc song song ([warm]) và lượt nạp thật của nó dùng chung một lượt gọi Edge, không gọi hai lần. */
+    private val sharing = ConcurrentHashMap<String, java.util.concurrent.FutureTask<Result<Clip>>>()
 
     /** Giọng đang chọn ("edge:..." / "device:..."); đổi bằng [setVoice]. */
     var voiceId: String = DEFAULT_VOICE
         private set
 
     /** Cuốn đang nạp có chương chữ: hàng đợi do lõi này quản (không phải bản ExoPlayer tự chạy hết danh sách chương). */
+    @Volatile
     var active = false
         private set
 
     private val chaps = HashMap<Int, Chap>()
-    private var generation = 0
+    @Volatile private var generation = 0 // luồng nền đọc để biết việc của mình đã cũ chưa
     private var inFlight = false
     private var feedChapter = 0
     private var feedSegment = 0
@@ -501,8 +511,7 @@ object ReadAloud {
         val all = chapters()
         var guard = 0
         while (guard++ < 8) {
-            val ahead = if (waiting != null) 0 else (exo.mediaItemCount - 1 - exo.currentMediaItemIndex).coerceAtLeast(0)
-            if (ahead >= AHEAD) return
+            if (!needMore(exo)) return
             if (feedChapter >= all.size) return
             val chapter = all[feedChapter]
             if (!chapter.isText) {
@@ -537,6 +546,19 @@ object ReadAloud {
             startJob(chap, feedSegment)
             return
         }
+    }
+
+    /** Hàng đợi còn thiếu đoạn đọc sẵn? Tối thiểu [AHEAD] đoạn; giọng trực tuyến mà clip gần đây về chậm thì tới khi đủ số giây âm thanh [ReadAheadPolicy] đòi (tối đa [ReadAheadPolicy.MAX_AHEAD] đoạn). */
+    private fun needMore(exo: Player): Boolean {
+        if (waiting != null) return true
+        val ahead = ((exo.currentMediaItemIndex + 1) until exo.mediaItemCount).map { aheadMs(exo.getMediaItemAt(it)) }
+        return if (PreparePlan.online(voiceId)) policy.needMore(ahead) else ahead.size < AHEAD
+    }
+
+    /** Độ dài (ms) của một mục đã nạp phía trước; mục không phải đoạn đọc to (chương audio) tính là dài - đã đủ đệm. */
+    private fun aheadMs(item: MediaItem): Long {
+        val slot = item.localConfiguration?.tag as? Slot
+        return slot?.takeIf { it.segment >= 0 }?.let { chaps[it.chapterIndex]?.clips?.getOrNull(it.segment)?.durationMs } ?: ReadAheadPolicy.MAX_BUFFER_MS
     }
 
     /**
@@ -610,12 +632,24 @@ object ReadAloud {
         inFlight = true
         live.incrementAndGet()
         val bookId = Playback.bookId
+        val online = PreparePlan.online(voice)
+        if (policyVoice != voice) {
+            policy.reset() // số đo là của giọng cũ
+            policyVoice = voice
+        }
+        // Edge đang chậm: đọc song song đoạn kế (luồng thứ hai) để nó có sẵn trong bộ đệm khi tới lượt - hai lượt gọi cùng lúc, không hơn (Edge hạn chế khi dồn nhiều kết nối).
+        // Việc nạp vào ExoPlayer vẫn lần lượt và đúng thứ tự: đoạn kế đọc xong sớm thì tới lượt nó chỉ lấy từ bộ đệm.
+        val warm = if (online && policy.slow()) nextSpeakable(chap, segment)?.let { chap.paragraphs[it] } else null
         worker.execute {
             val began = System.nanoTime()
             val origin = originOf(bookId)
             val readings = readingsOf(bookId)
+            warm?.let { next -> worker.execute { warm(next, voice, origin, readings) } }
             val result = try {
-                runCatching { reader().read(text, voice, origin, readings) }
+                val key = shareKey(voice, text, origin, readings)
+                val (first, mine) = shared(key) { readWithRetry(token, text, voice, origin, readings, online) }
+                // Đoạn này đang được đọc song song mà lượt ấy hỏng (không thử lại): đọc lại cho đàng hoàng, có thử lại.
+                if (!mine && first.isFailure && token == generation) readWithRetry(token, text, voice, origin, readings, online) else first
             } finally {
                 live.decrementAndGet()
             }
@@ -627,6 +661,47 @@ object ReadAloud {
             }
             Playback.onMain { onClipReady(token, chap, segment, result) }
         }
+    }
+
+    /** Đoạn đọc được kế tiếp trong chương (bỏ dòng ngăn cảnh), null nếu hết chương. */
+    private fun nextSpeakable(chap: Chap, segment: Int): Int? =
+        ((segment + 1) until chap.paragraphs.size).firstOrNull { !chap.isBreak(it) }
+
+    private fun shareKey(voice: String, text: String, origin: String?, readings: Map<String, String>?) =
+        "$voice\u0000$origin\u0000${readings?.entries?.sortedBy { it.key }}\u0000$text"
+
+    /** Chạy `work` một lần cho mỗi `key` đang chạy: lượt đến sau chờ kết quả của lượt đến trước. Trả (kết quả, có phải lượt của mình không). */
+    private fun shared(key: String, work: () -> Result<Clip>): Pair<Result<Clip>, Boolean> {
+        val mine = java.util.concurrent.FutureTask(java.util.concurrent.Callable { work() })
+        val other = sharing.putIfAbsent(key, mine)
+        if (other != null) return runCatching { other.get() }.getOrElse { Result.failure(it) } to false
+        try {
+            mine.run()
+            return mine.get() to true
+        } finally {
+            sharing.remove(key, mine)
+        }
+    }
+
+    /** Đọc sẵn một đoạn vào bộ đệm (kết quả bỏ): lần nạp thật của đoạn ấy sẽ lấy từ đó. Không thử lại - hỏng thì lần nạp thật tự lo. */
+    private fun warm(text: String, voice: String, origin: String?, readings: Map<String, String>?) {
+        shared(shareKey(voice, text, origin, readings)) { runCatching { reader().read(text, voice, origin, readings, willRetry = true) } }
+    }
+
+    /** Đọc một đoạn, thử lại lỗi thoáng qua của giọng trực tuyến ở nền ([ClipRetry]); việc đã cũ (tua, đổi chương, đổi giọng) thì thôi. */
+    private fun readWithRetry(token: Int, text: String, voice: String, origin: String?, readings: Map<String, String>?, online: Boolean): Result<Clip> =
+        ClipRetry.run(online, RETRY_DELAYS_MS, sleep = { sleepWhileCurrent(token, it) }, record = policy::record) { willRetry ->
+            reader().read(text, voice, origin, readings, willRetry)
+        }
+
+    /** Nghỉ `ms` mili-giây; false nếu trong lúc ấy việc đã cũ (người nghe tua / đổi chương / đổi giọng - `generation` đổi) hay đã tắt. */
+    private fun sleepWhileCurrent(token: Int, ms: Long): Boolean {
+        val end = System.nanoTime() + ms * 1_000_000
+        while (System.nanoTime() < end) {
+            if (token != generation || !active) return false
+            Thread.sleep(50)
+        }
+        return token == generation && active
     }
 
     private fun onClipReady(token: Int, chap: Chap, segment: Int, result: Result<Clip>) {

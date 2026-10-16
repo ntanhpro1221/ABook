@@ -177,7 +177,8 @@ def read_turn(connection: websocket.Connection, compensation_ticks: int, deadlin
                 raise mapped from error
             raise EdgeDropped(f"{label} đóng kết nối sớm ({error.code}).") from error
         except websocket.WebSocketError as error:
-            raise EdgeOffline(f"Mất kết nối giữa chừng: {error}") from error
+            # Kết nối bị reset / khung hỏng GIỮA lượt: dịch vụ cắt ngang (thử lại là xong), không phải "không có mạng" - mạng thật sự mất thì lần nối mới báo EdgeOffline.
+            raise EdgeDropped(f"Mất kết nối giữa chừng: {error}") from error
         if kind == websocket.TEXT:
             raw, _, body = payload.partition(b"\r\n\r\n")
             path = parse_headers(raw).get("Path", "")
@@ -261,8 +262,11 @@ class EdgeClient:
     def _speak_one(self, voice: str, text: str, compensation_ticks: int, deadline: float) -> tuple[bytes, list[Boundary]]:
         connection = self._connect()
         try:
-            connection.send_text(config_message())
-            connection.send_text(ssml_message(uuid.uuid4().hex, build_ssml(voice, text)))
+            try:
+                connection.send_text(config_message())
+                connection.send_text(ssml_message(uuid.uuid4().hex, build_ssml(voice, text)))
+            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as error:
+                raise EdgeDropped("Dịch vụ đọc to cắt kết nối lúc nhận chữ.") from error
             return read_turn(connection, compensation_ticks, deadline)
         finally:
             connection.close()
