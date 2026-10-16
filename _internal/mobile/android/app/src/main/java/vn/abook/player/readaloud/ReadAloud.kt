@@ -834,6 +834,16 @@ object ReadAloud {
     }
 
     /**
+     * Giây bắt đầu từng đoạn của chương `chapterId` (cuốn đang nạp) trên đồng hồ ảo và tổng độ dài chương (giây) - đúng các con số `script` đưa cho màn đọc, không dựng
+     * JSON: nhạc nền theo cảnh ([vn.abook.player.SceneAnchor]) hỏi mỗi nhịp để biết có clip mới về chưa. null: cuốn khác / chương không phải chữ / chưa nạp. Luồng chính.
+     */
+    fun segmentTiming(bookId: String, chapterId: Int): Pair<DoubleArray, Double>? {
+        if (bookId != Playback.bookId || !active) return null
+        val chap = chapters().indexOfFirst { it.id == chapterId }.takeIf { it >= 0 }?.let(::chapFor) ?: return null
+        return DoubleArray(chap.paragraphs.size) { chap.timeline.startOf(it) / 1000.0 } to chap.timeline.totalMs() / 1000.0
+    }
+
+    /**
      * Đoạn nào đã đọc bằng giọng đang chọn (còn trong bộ nhớ đệm) thì đồng hồ ảo dùng độ dài thật ngay từ lúc nạp chương: nghe tiếp từ giây đã lưu (widget, xe
      * hơi, mở lại app) rơi đúng đoạn đã nghe, không lệch theo ước lượng 14 ký tự/giây.
      */
