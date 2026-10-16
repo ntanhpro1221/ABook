@@ -393,6 +393,65 @@ def test_connection_slots_timeout_and_abandon_leave_the_queue_and_free_the_way()
         slots.release()
 
 
+def test_the_production_slots_let_only_rank_zero_past_the_eight_connection_cap() -> None:
+    assert edge._connections.size == edge.EDGE_CONNECTIONS and edge._connections.extra == edge.TARGET_PIECES  # noqa: SLF001
+
+
+def test_rank_zero_takes_a_slot_at_once_when_eight_are_held_by_rank_three_and_the_ceiling_holds() -> None:
+    """a55: 8 chỗ đều do clip rank 3 giữ, đoạn người nghe chờ (rank 0) đến sau vài ms - không đợi; tới size + extra thì cũng chờ; rank >= 1 vẫn dừng ở size."""
+    slots = edge.ConnectionSlots(edge.EDGE_CONNECTIONS, edge.TARGET_PIECES)
+    for _ in range(edge.EDGE_CONNECTIONS):
+        assert slots.acquire(0.1, 3)
+    assert not slots.acquire(0.05, 1)  # rank >= 1 không được vượt trần
+    assert not slots.acquire(0.05)  # nền cũng không
+    for _ in range(edge.TARGET_PIECES):
+        began = time.monotonic()
+        assert slots.acquire(5.0, 0)
+        assert time.monotonic() - began < 0.2
+    assert slots.free == -edge.TARGET_PIECES
+    began = time.monotonic()
+    assert not slots.acquire(0.1, 0)  # trần cứng size + TARGET_PIECES: rank 0 cũng phải chờ
+    assert time.monotonic() - began >= 0.09
+    assert not slots._queue  # noqa: SLF001
+
+
+def test_over_cap_releases_never_let_free_exceed_size_and_the_waiters_keep_their_order() -> None:
+    slots = edge.ConnectionSlots(2, 2)
+    assert slots.acquire(0.1, 3) and slots.acquire(0.1, 3)
+    assert slots.acquire(0.1, 0) and slots.acquire(0.1, 0)  # hai chỗ vượt trần
+    granted: list[str] = []
+    lock = threading.Lock()
+
+    def wait(name: str, rank: int) -> None:
+        if slots.acquire(5.0, rank):
+            with lock:
+                granted.append(name)
+
+    threads = []
+    for index, (name, rank) in enumerate([("bg", edge.RANK_BACKGROUND), ("ahead2", 2), ("ahead1", 1)]):
+        thread = threading.Thread(target=wait, args=(name, rank))
+        thread.start()
+        threads.append(thread)
+        assert _wait_for(lambda: len(slots._queue) == index + 1)  # noqa: SLF001
+    slots.release()  # đang giữ 3 / size 2: chưa dưới trần -> chưa ai trong hàng được chỗ
+    slots.release()  # đang giữ 2 -> vẫn chưa (free == 0)
+    time.sleep(0.1)
+    assert granted == [] and slots.free == 0
+    for expected in range(3):
+        slots.release()  # xuống dưới trần -> chỗ trao cho người đứng đầu hàng (ahead1, ahead2, bg)
+        assert _wait_for(lambda: len(granted) == expected + 1)
+        assert slots.free <= slots.size
+    for thread in threads:
+        thread.join(2)
+    assert granted == ["ahead1", "ahead2", "bg"]
+    # còn 2 chỗ đang giữ -> nhả hết, free về đúng size
+    while slots.free < slots.size:
+        slots.release()
+    assert slots.free == slots.size
+    with pytest.raises(ValueError):
+        slots.release()
+
+
 def test_the_clip_the_listener_waits_for_asked_after_eight_read_ahead_pieces_wait_gets_the_next_free_slot(monkeypatch) -> None:
     """8 chỗ đều bận, 8 mảnh đọc trước đang chờ; clip người nghe chờ (rank 0) xin SAU cùng - chỗ nhả ra đầu tiên là của nó, các mảnh đọc trước theo sau."""
     monkeypatch.setattr(edge, "_connections", edge.ConnectionSlots(edge.EDGE_CONNECTIONS))

@@ -10,8 +10,10 @@ import {
   NEXT_CHAPTER_AHEAD,
   PROBE_MS,
   ReadAloudEngine,
+  ReadAloudError,
   RoutedEngine,
   estimateSeconds,
+  fetchClipBytes,
   estimatedStarts,
   isSpeakable,
   isTransientClipError,
@@ -1572,5 +1574,147 @@ describe("RoutedEngine", () => {
     router.load({ url: "/b.mp3", title: "", album: "", artist: "" }, 0, true);
     expect(web.loads).toEqual(["/a.mp3", "/b.mp3"]);
     expect(router.speaking).toBe(false);
+  });
+});
+
+/** jsdom không có URL.createObjectURL: đồ giả đếm blob: URL đã cấp / đã thu hồi. */
+function blobUrls() {
+  const made: string[] = [];
+  const revoked: string[] = [];
+  const original = { create: URL.createObjectURL, revoke: URL.revokeObjectURL };
+  URL.createObjectURL = () => {
+    made.push(`blob:abook/${made.length + 1}`);
+    return made.at(-1)!;
+  };
+  URL.revokeObjectURL = (url: string) => void revoked.push(url);
+  onTestFinished(() => {
+    URL.createObjectURL = original.create;
+    URL.revokeObjectURL = original.revoke;
+  });
+  return { made, revoked };
+}
+
+const withBytes = (text: string): ReadAloudClip => ({ ...clipOf(text), bytes: new Blob(["mp3"], { type: "audio/mpeg" }) });
+
+describe("file audio của clip tải bằng fetch rồi phát từ blob: URL (uxfix53)", () => {
+  const arriveWithBytes = async (s: Setup, text: string) => {
+    s.requests.filter((r) => r.text === text).forEach((r) => r.resolve(withBytes(text)));
+    await flush();
+  };
+  const readingsChanged = (s: Setup) =>
+    (s.engine as unknown as { readingsChanged(detail: { bookId: string; surfaces: string[]; all?: boolean }): void }).readingsChanged({ bookId: "b1", surfaces: [], all: true });
+
+  it("clip có file: phần tử audio nhận blob: URL, không nhận đường dẫn máy chủ; clip không có file vẫn dùng đường dẫn", async () => {
+    const urls = blobUrls();
+    const s = setup();
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    await arriveWithBytes(s, TEXTS[0]);
+    await s.arrive(TEXTS[1]);
+    expect(urls.made).toEqual(["blob:abook/1"]);
+    expect(s.audios[0].src).toBe("blob:abook/1");
+    expect(audioOf(s, TEXTS[1])).toBeDefined(); // không có file -> đường dẫn như cũ
+    expect(s.audios[0].plays).toBe(1);
+  });
+
+  it("thu hồi blob: URL khi bộ máy bị bỏ (stop / nạp chương khác), không thu hồi trước đó", async () => {
+    const urls = blobUrls();
+    const s = setup();
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    for (const text of TEXTS.slice(0, 3)) await arriveWithBytes(s, text);
+    expect(urls.made).toHaveLength(3);
+    expect(urls.revoked).toEqual([]);
+    s.engine.stop();
+    expect(urls.revoked.sort()).toEqual([...urls.made].sort());
+    // nạp lại chương: cái mới cấp, cái cũ không bị thu hồi lần hai
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    await arriveWithBytes(s, TEXTS[0]);
+    expect(urls.made).toHaveLength(4);
+    s.engine.load(s.trackInfo, 0, true); // nạp đè: bộ máy cũ bị bỏ
+    expect(urls.revoked).toHaveLength(4);
+    expect(new Set(urls.revoked).size).toBe(4);
+  });
+
+  it("clip bị bỏ (đổi cách đọc) thì audio và blob: URL của nó cùng thả; clip mới về lại cấp blob: URL mới", async () => {
+    const urls = blobUrls();
+    const s = setup();
+    s.track.bookId = "b1";
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    for (const text of TEXTS.slice(0, 3)) await arriveWithBytes(s, text);
+    expect(urls.made).toHaveLength(3);
+    readingsChanged(s);
+    await flush();
+    // đoạn đang nói (0) nói nốt; hai đoạn đọc sẵn bị thả
+    expect(urls.revoked).toHaveLength(2);
+    expect(urls.revoked).not.toContain(s.audios[0].src);
+    expect(s.audios[1].released).toBe(true);
+    await arriveWithBytes(s, TEXTS[1]);
+    expect(urls.made).toHaveLength(4);
+    expect(s.audios.at(-1)!.src).toBe("blob:abook/4");
+  });
+
+  it("nhảy xa: audio ngoài cửa sổ thả blob: URL và không giữ file trong bộ nhớ; quay lại thì phát từ đường dẫn", async () => {
+    const urls = blobUrls();
+    const chapter = Array.from({ length: 12 }, (_, i) => `Đoạn số ${i + 1}.`).join("\n\n");
+    const s = setup({ chapter });
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    const first = s.requests.slice(0, 3).map((r) => r.text);
+    for (const text of first) await arriveWithBytes(s, text);
+    expect(urls.made).toHaveLength(3);
+    s.engine.seekWord(10, 0);
+    await flush();
+    expect(urls.revoked.sort()).toEqual([...urls.made].sort());
+    const urlsBefore = urls.made.length;
+    s.engine.seekWord(0, 0);
+    await flush();
+    expect(urls.made).toHaveLength(urlsBefore); // file đã bỏ khỏi bộ nhớ: không cấp blob: URL mới
+    expect(s.audios.filter((audio) => audio.src === `/clip/${encodeURIComponent("Đoạn số 1.")}`)).toHaveLength(1);
+  });
+});
+
+describe("fetchClipBytes: tải file audio của clip", () => {
+  it("lấy bằng fetch rồi trả blob", async () => {
+    const seen: string[] = [];
+    const blob = await fetchClipBytes("/media/clip.mp3?t=k", async (url) => {
+      seen.push(url);
+      return new Response(new Blob(["abc"], { type: "audio/mpeg" }), { status: 200 });
+    });
+    expect(seen).toEqual(["/media/clip.mp3?t=k"]);
+    expect(await blob.text()).toBe("abc");
+    expect(blob.type).toBe("audio/mpeg");
+  });
+
+  it("không tải được (HTTP 404/502 hay mất kết nối) = clip hỏng lỗi thoáng qua, đi đường thử lại như lúc máy chủ trả lỗi", async () => {
+    for (const get of [async () => new Response("", { status: 404 }), async () => new Response("", { status: 502 }), async (): Promise<Response> => Promise.reject(new TypeError("Failed to fetch"))]) {
+      const error = await fetchClipBytes("/media/clip.mp3", get).catch((e) => e);
+      expect(error).toBeInstanceOf(ReadAloudError);
+      expect(isTransientClipError(error)).toBe(true);
+    }
+  });
+
+  it("clip hỏng vì file không tải được: bộ máy thử lại (cùng đường với lỗi máy chủ) rồi phát khi lần sau tải được", async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => void vi.useRealTimers());
+    blobUrls();
+    let tries = 0;
+    const s = setup({ chapter: "Một hai." });
+    s.track.fetchClip = async (_voice, text) => {
+      tries += 1;
+      if (tries === 1) await fetchClipBytes("/media/x.mp3", async () => new Response("", { status: 502 }));
+      return withBytes(text);
+    };
+    s.engine.load(s.trackInfo, 0, true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(s.audios).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(CLIP_RETRY_DELAYS_MS[0] + 10);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(tries).toBe(2);
+    expect(s.audios).toHaveLength(1);
+    expect(s.audios[0].plays).toBe(1);
+    expect(s.engine.error).toBe("");
   });
 });

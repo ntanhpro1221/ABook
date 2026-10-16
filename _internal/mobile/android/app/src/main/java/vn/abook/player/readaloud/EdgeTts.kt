@@ -173,14 +173,15 @@ object EdgeProtocol {
 /**
  * Chỗ kết nối Edge của cả tiến trình ([EdgePieces.EDGE_CONNECTIONS] chỗ; máy tính: `ConnectionSlots` trong edge.py, cùng luật). Hết chỗ thì người chờ xếp hàng theo `rank` (số đoạn người nghe phải nghe
  * trước đoạn này: 0 = đoạn họ đang đứng chờ, 1 = đoạn kế...; mặc định [EdgePieces.RANK_BACKGROUND]: việc nền), cùng rank thì ai đến trước được trước. Mảnh đang giữ chỗ không bị đuổi; chỉ chỗ vừa nhả
- * được trao theo hàng.
+ * được trao theo hàng. Riêng rank 0 không chờ trần [size]: được lấy thêm tới [extra] chỗ vượt trần (a55: đoạn người nghe đứng chờ đến sau ba clip đọc trước chỉ vài ms đã phải đợi 4-11 giây vì chúng
+ * chiếm hết chỗ - hàng chờ chỉ xếp thứ tự người CHỜ, không đòi lại được chỗ đang giữ). Quá size + extra thì rank 0 cũng chờ; rank >= 1 chỉ được chỗ khi số chỗ giữ xuống dưới [size].
  */
-class ConnectionSlots(val size: Int) {
+class ConnectionSlots(val size: Int, val extra: Int = 0) {
     private class Ticket(val rank: Int, val turn: Long)
 
     private val lock = ReentrantLock()
     private val changed = lock.newCondition()
-    private var free = size
+    private var free = size // size - số chỗ đang giữ; âm khi rank 0 đang giữ chỗ vượt trần
     private var turns = 0L
     private val queue = java.util.PriorityQueue<Ticket>(compareBy<Ticket>({ it.rank }, { it.turn }))
 
@@ -193,12 +194,13 @@ class ConnectionSlots(val size: Int) {
     /** Lấy một chỗ; false khi quá `timeoutMs`. Vé không bao giờ ở lại hàng sau khi bỏ cuộc (quá hạn, luồng bị ngắt). */
     fun tryAcquire(timeoutMs: Long, rank: Int = EdgePieces.RANK_BACKGROUND): Boolean {
         var left = TimeUnit.MILLISECONDS.toNanos(timeoutMs.coerceAtLeast(0))
+        val allowance = if (rank == 0) extra else 0 // chỗ vượt trần được phép với rank này
         lock.lock()
         try {
             val ticket = Ticket(rank, turns++)
             queue.add(ticket)
             try {
-                while (!(free > 0 && queue.peek() === ticket)) {
+                while (!(free + allowance > 0 && queue.peek() === ticket)) {
                     if (left <= 0) return false
                     left = changed.awaitNanos(left)
                 }
@@ -441,7 +443,9 @@ class EdgeTts(
         /** Lệch giữa đồng hồ máy và máy chủ (giây), học từ header `Date` của lần bị từ chối 403; dùng chung cho mọi lần gọi. */
         @Volatile var clockSkewSeconds = 0.0
         /** Kết nối Edge đang mở của cả tiến trình (mọi đoạn đọc trước x mảnh); bài thử thay bằng cái nhỏ hơn để kiểm trần. */
-        @Volatile internal var connections = ConnectionSlots(EdgePieces.EDGE_CONNECTIONS)
+        @Volatile internal var connections = productionSlots()
+        /** Trần cứng EDGE_CONNECTIONS + TARGET_PIECES: chỉ đoạn rank 0 vượt EDGE_CONNECTIONS (máy tính: `_connections` trong edge.py). */
+        internal fun productionSlots() = ConnectionSlots(EdgePieces.EDGE_CONNECTIONS, EdgePieces.TARGET_PIECES)
         private val random = SecureRandom()
 
         /** Đọc `Date: Sat, 03 Oct 2026 12:00:00 GMT` của máy chủ thành giây Unix; null nếu không đọc được. */
