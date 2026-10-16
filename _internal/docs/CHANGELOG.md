@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.76] - 2026-10-16
+
 ### Nghe ngay
 
 - Mạng hay dịch vụ giọng đứt cả chục giây rồi có lại, giọng đọc không còn kẹt mãi ở một đoạn đã bỏ cuộc: tới đoạn ấy máy hỏi lại một lần mới, và trong lúc bạn còn nghe các đoạn trước, cứ khoảng 10 giây máy thử lại đoạn đang thiếu một lần (máy tính và điện thoại).
