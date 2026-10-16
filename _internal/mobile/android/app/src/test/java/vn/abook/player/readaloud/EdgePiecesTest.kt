@@ -424,6 +424,36 @@ class EdgePiecesTest {
     }
 
     @Test
+    fun twoRankZeroClipsShareTheCeilingAndThePiecesPastItWaitInArrivalOrder() {
+        // uxfix54: đoạn ngắn đứng trước không tính vào rank -> tiêu đề + đoạn 1 cùng rank 0, nay có thể cùng lúc 6 + 6 mảnh. Trần cứng vẫn size + extra.
+        val slots = ConnectionSlots(EdgePieces.EDGE_CONNECTIONS, EdgePieces.TARGET_PIECES)
+        repeat(EdgePieces.EDGE_CONNECTIONS) { assertTrue(slots.tryAcquire(100, 3)) }
+        repeat(EdgePieces.TARGET_PIECES) { assertTrue(slots.tryAcquire(5_000, 0)) } // clip rank 0 thứ nhất: 6 mảnh, vượt trần 8
+        assertEquals(-EdgePieces.TARGET_PIECES, slots.availablePermits())
+        val granted = java.util.Collections.synchronizedList(ArrayList<String>())
+        val threads = ArrayList<Thread>()
+        for ((name, rank) in listOf("b1" to 0, "b2" to 0, "b3" to 0, "sibling" to 1)) { // clip rank 0 thứ hai (mảnh 1-3 của 6) + một clip rank 1
+            val before = slots.waiting()
+            threads += Thread { if (slots.tryAcquire(5_000, rank)) granted.add(name) }.also { it.start() }
+            waitUntil("$name đã xếp hàng") { slots.waiting() == before + 1 }
+        }
+        repeat(3) { n -> // mỗi chỗ nhả ra, mảnh rank 0 kế trong hàng lấy ngay (vẫn ở trần size + extra), theo thứ tự đến
+            slots.release()
+            waitUntil("chỗ thứ $n đã trao") { granted.size == n + 1 }
+        }
+        assertEquals(listOf("b1", "b2", "b3"), granted.toList())
+        assertEquals(-EdgePieces.TARGET_PIECES, slots.availablePermits())
+        repeat(EdgePieces.TARGET_PIECES) { slots.release() } // giữ lại 8: clip rank 1 vẫn chưa được chỗ (cần xuống dưới size)
+        Thread.sleep(100)
+        assertEquals(listOf("b1", "b2", "b3"), granted.toList())
+        assertEquals(0, slots.availablePermits())
+        slots.release()
+        waitUntil("clip rank 1 đã được chỗ") { granted.size == 4 }
+        threads.forEach { it.join(2_000) }
+        assertEquals(listOf("b1", "b2", "b3", "sibling"), granted.toList()) // rank 0 trước theo thứ tự đến, rồi rank 1
+    }
+
+    @Test
     fun overCapReleasesNeverLetFreeExceedSizeAndTheWaitersKeepTheirOrder() {
         val slots = ConnectionSlots(2, 2)
         assertTrue(slots.tryAcquire(100, 3))

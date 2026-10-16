@@ -415,6 +415,43 @@ def test_rank_zero_takes_a_slot_at_once_when_eight_are_held_by_rank_three_and_th
     assert not slots._queue  # noqa: SLF001
 
 
+def test_two_rank_zero_clips_share_the_ceiling_and_the_pieces_past_it_wait_in_arrival_order() -> None:
+    """uxfix54: đoạn ngắn đứng trước không tính vào rank -> tiêu đề và đoạn 1 cùng rank 0, nay có thể cùng lúc 6 + 6 mảnh. Trần cứng vẫn size + extra."""
+    slots = edge.ConnectionSlots(edge.EDGE_CONNECTIONS, edge.TARGET_PIECES)
+    for _ in range(edge.EDGE_CONNECTIONS):
+        assert slots.acquire(0.1, 3)
+    for _ in range(edge.TARGET_PIECES):  # clip rank 0 thứ nhất: 6 mảnh, vượt trần 8
+        assert slots.acquire(5.0, 0)
+    assert slots.free == -edge.TARGET_PIECES
+    granted: list[str] = []
+    lock = threading.Lock()
+
+    def wait(name: str, rank: int) -> None:
+        if slots.acquire(5.0, rank):
+            with lock:
+                granted.append(name)
+
+    threads = []
+    for index, (name, rank) in enumerate([("b1", 0), ("b2", 0), ("b3", 0), ("sibling", 1)]):  # clip rank 0 thứ hai + một clip rank 1
+        thread = threading.Thread(target=wait, args=(name, rank))
+        thread.start()
+        threads.append(thread)
+        assert _wait_for(lambda: len(slots._queue) == index + 1)  # noqa: SLF001
+    for expected in range(3):  # mỗi chỗ nhả ra, mảnh rank 0 kế trong hàng lấy ngay (vẫn ở trần 14), theo thứ tự đến
+        slots.release()
+        assert _wait_for(lambda: len(granted) == expected + 1)
+    assert granted == ["b1", "b2", "b3"] and slots.free == -edge.TARGET_PIECES  # không bao giờ quá size + extra
+    for _ in range(edge.TARGET_PIECES):  # giữ lại 8: clip rank 1 vẫn chưa được chỗ (cần xuống dưới size)
+        slots.release()
+    time.sleep(0.1)
+    assert granted == ["b1", "b2", "b3"] and slots.free == 0
+    slots.release()
+    assert _wait_for(lambda: len(granted) == 4)
+    for thread in threads:
+        thread.join(2)
+    assert granted == ["b1", "b2", "b3", "sibling"]
+
+
 def test_over_cap_releases_never_let_free_exceed_size_and_the_waiters_keep_their_order() -> None:
     slots = edge.ConnectionSlots(2, 2)
     assert slots.acquire(0.1, 3) and slots.acquire(0.1, 3)

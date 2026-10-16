@@ -106,14 +106,24 @@ class StalledClipsTest {
     // ---- a50: hỏi thăm = một lượt, không thử lại, không giữ khoá --------------------------------------------------------------
 
     @Test
-    fun theSegmentBeingFedRanksByHowManyAreQueuedBeforeIt() {
-        assertEquals("hàng đợi cạn: đoạn họ đang chờ", 0, StalledClips.listenerRank(listenerHasAudio = false, queuedAhead = 0))
-        assertEquals(0, StalledClips.listenerRank(listenerHasAudio = false, queuedAhead = 3))
-        assertEquals("đoạn kế sau đoạn đang phát", 1, StalledClips.listenerRank(listenerHasAudio = true, queuedAhead = 0))
-        assertEquals(4, StalledClips.listenerRank(listenerHasAudio = true, queuedAhead = 3))
-        assertEquals(1, StalledClips.listenerRank(listenerHasAudio = true, queuedAhead = -1))
-        assertEquals("không bao giờ thành việc nền", EdgePieces.MAX_RANK, StalledClips.listenerRank(listenerHasAudio = true, queuedAhead = 500))
+    fun theSegmentBeingFedRanksByHowManyLongOnesAreQueuedBeforeIt() {
+        assertEquals("hàng đợi cạn: đoạn họ đang chờ", 0, StalledClips.listenerRank(listenerHasAudio = false, longAhead = 0))
+        assertEquals(0, StalledClips.listenerRank(listenerHasAudio = false, longAhead = 3))
+        assertEquals("đang phát đoạn dài: đoạn kế sau nó", 1, StalledClips.listenerRank(listenerHasAudio = true, longAhead = 1))
+        assertEquals(4, StalledClips.listenerRank(listenerHasAudio = true, longAhead = 4))
+        assertEquals("đang phát tiêu đề ngắn (a56): đoạn dài kế nó vẫn rank 0", 0, StalledClips.listenerRank(listenerHasAudio = true, longAhead = 0))
+        assertEquals(0, StalledClips.listenerRank(listenerHasAudio = true, longAhead = -1))
+        assertEquals("không bao giờ thành việc nền", EdgePieces.MAX_RANK, StalledClips.listenerRank(listenerHasAudio = true, longAhead = 500))
         assertTrue(EdgePieces.MAX_RANK < EdgePieces.RANK_BACKGROUND)
+    }
+
+    @Test
+    fun onlyParagraphsFromWholeCharsCountAsLongAndTheParallelNextOneFollowsIt() {
+        assertFalse(StalledClips.isLong("a".repeat(EdgePieces.WHOLE_CHARS - 1)))
+        assertTrue(StalledClips.isLong("a".repeat(EdgePieces.WHOLE_CHARS)))
+        assertEquals("sau đoạn dài: rank + 1", 3, StalledClips.rankAfter(2, "a".repeat(200)))
+        assertEquals("sau đoạn ngắn: cùng rank (tiêu đề rank 0 -> đoạn 1 rank 0)", 0, StalledClips.rankAfter(0, "Chương 8."))
+        assertEquals(EdgePieces.MAX_RANK, StalledClips.rankAfter(EdgePieces.MAX_RANK, "a".repeat(200)))
     }
 
     @Test

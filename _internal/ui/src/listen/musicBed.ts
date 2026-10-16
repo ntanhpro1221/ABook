@@ -73,6 +73,9 @@ type BedAudio = Pick<HTMLAudioElement, "play" | "pause" | "paused" | "volume" | 
   addEventListener(type: "loadedmetadata" | "error", listener: () => void, options?: { once?: boolean }): void;
   /** Bài không lặp (bài cũ khi nối bài anh em) đã chơi hết: không phát lại. */
   readonly ended?: boolean;
+  /** [release]: bỏ nguồn rồi nạp lại để trình duyệt đóng kết nối tải bài. */
+  removeAttribute?(name: string): void;
+  load?(): void;
 };
 
 /** <audio> thật; ?mute=1: kiểm thử tự động không được phát tiếng ra loa của người dùng (như engine.ts, clip.tsx). */
@@ -188,6 +191,8 @@ export class MusicBed {
   private fading: BedAudio[] = [];
   // âm lượng bớt mỗi nhịp khi mờ đi: bài to và bài nhỏ cùng tắt trong FADE_SECONDS (SIBLING_FADE_SECONDS khi nối bài anh em)
   private fadeStep = new WeakMap<BedAudio, number>();
+  // Phần tử đã [release]: lỗi muộn của nó không được tính là "bài hỏng".
+  private released = new WeakSet<BedAudio>();
   private timer: ReturnType<typeof setInterval> | null = null;
   private lastTime = 0;
   private listeners = new Set<(link: string | null) => void>();
@@ -262,7 +267,7 @@ export class MusicBed {
   }
 
   stop(): void {
-    for (const audio of [this.current?.audio, ...this.fading]) audio?.pause();
+    for (const audio of [this.current?.audio, ...this.fading]) if (audio) this.release(audio);
     this.current = null;
     this.fading = [];
     this.cues = [];
@@ -283,14 +288,25 @@ export class MusicBed {
 
   /** Bài `audio` của mốc `cue` không tải được: đoạn của nó im lặng, RETRY_MS sau mới thử lại. */
   private drop(cue: MusicCue, audio: BedAudio): void {
+    if (this.released.has(audio)) return;
     this.failed.set(cue.link, Date.now() + RETRY_MS);
-    audio.pause();
+    this.release(audio);
     this.fading = this.fading.filter((other) => other !== audio);
     if (this.current?.audio === audio) {
       this.current = null;
       this.emitActive();
     }
     for (const listener of [...this.loadListeners]) listener(cue.link, false);
+  }
+
+  /** Phần tử <audio> đã hết dùng (mờ xong, bài hỏng, dừng): dừng RỒI bỏ nguồn và nạp lại. Chỉ `pause()` thì trình duyệt vẫn giữ kết nối tải bài của phần tử (đọc dở hay dừng giữa chừng),
+   *  và nó tính vào 6 kết nối mỗi máy chủ: a56, bấm sang chương mới trong lúc hai bài của chương trước còn đang tải (25-46 giây mỗi bài lần đầu), bốn lượt xin clip + hai bài cũ + bài mới
+   *  chiếm hết chỗ - clip tiêu đề đã có mà fetch() lấy file âm thanh phải chờ 2,6 giây trong trình duyệt. */
+  private release(audio: BedAudio): void {
+    audio.pause();
+    this.released.add(audio);
+    audio.removeAttribute?.("src");
+    audio.load?.();
   }
 
   private emitActive(): void {
@@ -435,7 +451,7 @@ export class MusicBed {
       this.fading = this.fading.filter((audio) => {
         audio.volume = Math.max(0, audio.volume - (this.fadeStep.get(audio) ?? (0.1 * STEP_MS) / 1000 / FADE_SECONDS));
         if (audio.volume <= 0.001) {
-          audio.pause();
+          this.release(audio);
           return false;
         }
         busy = true;

@@ -92,6 +92,73 @@ describe("nhạc nền theo mốc của chương", () => {
   });
 });
 
+describe("phần tử <audio> hết dùng thì nhả kết nối tải bài (uxfix54)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  /** Mỗi phần tử ghi lại `removeAttribute` / `load` và các hàm nghe lỗi, như một <audio> thật còn đang tải. */
+  function released() {
+    const made: Record<string, { paused: boolean; removed: string[]; loads: number; onError: (() => void)[] }> = {};
+    const bed = new MusicBed((src) => {
+      const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration: 200, removed: [] as string[], loads: 0, onError: [] as (() => void)[] };
+      made[src] = fake;
+      return Object.assign(fake, {
+        play: () => { fake.paused = false; return Promise.resolve(); },
+        pause: () => { fake.paused = true; },
+        removeAttribute: (name: string) => { fake.removed.push(name); },
+        load: () => { fake.loads += 1; },
+        addEventListener: (type: string, listener: () => void) => { if (type === "error") fake.onError.push(listener); },
+      });
+    });
+    return { bed, made };
+  }
+
+  it("bài mờ hết (đổi bài / sang chương khác) thì bỏ nguồn và nạp lại - không chỉ tạm dừng", () => {
+    vi.useFakeTimers();
+    const { bed, made } = released();
+    bed.setCues(cues, -20);
+    bed.sync(10, true);
+    expect(made["/a"].removed).toEqual([]); // đang kêu: còn dùng
+    bed.sync(150, true); // khoảng không nhạc: bài a chuyển sang mờ đi
+    expect(made["/a"].removed).toEqual([]);
+    vi.advanceTimersByTime(FADE_SECONDS * 1000 + 2000);
+    expect(made["/a"].paused).toBe(true);
+    expect(made["/a"].removed).toEqual(["src"]);
+    expect(made["/a"].loads).toBe(1);
+    bed.stop();
+  });
+
+  it("dừng nhạc (rời chương, đổi cuốn): bài đang kêu lẫn bài đang mờ đều nhả kết nối", () => {
+    vi.useFakeTimers();
+    const { bed, made } = released();
+    bed.setCues(cues, -20);
+    bed.sync(10, true);
+    bed.sync(150, true);
+    bed.sync(200, true); // b đang kêu, a còn đang mờ
+    vi.advanceTimersByTime(300);
+    bed.stop();
+    expect(made["/a"].removed).toEqual(["src"]);
+    expect(made["/b"].removed).toEqual(["src"]);
+    expect(made["/a"].loads).toBe(1);
+    expect(made["/b"].loads).toBe(1);
+  });
+
+  it("bài tải hỏng: nhả kết nối, đoạn của nó im lặng chờ thử lại; lỗi muộn của phần tử đã nhả không tính là bài hỏng", () => {
+    vi.useFakeTimers();
+    const { bed, made } = released();
+    bed.setCues(cues, -20);
+    bed.sync(10, true);
+    made["/a"].onError.forEach((listener) => listener());
+    expect(made["/a"].removed).toEqual(["src"]);
+    expect(bed.failing).toBe(true);
+    // chương khác: bài b nhả bằng stop() rồi trình duyệt báo lỗi muộn - không được ghi bài b vào danh sách hỏng
+    bed.sync(200, true);
+    bed.stop();
+    made["/b"].onError.forEach((listener) => listener());
+    bed.setCues([cues[1]], -20);
+    expect(bed.failing).toBe(false);
+  });
+});
+
 describe("âm lượng nhạc theo gainDb của mốc", () => {
   afterEach(() => vi.useRealTimers());
 

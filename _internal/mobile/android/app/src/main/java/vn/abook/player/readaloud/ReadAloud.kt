@@ -38,8 +38,9 @@ object ReadAloud {
      *  kể từ lần đọc đầu, cho cả hai tầng) - mạng còn nối mà im lìm thì rơi sang giọng của máy sau ~15-20 giây, không phải cả phút. Máy tính nghỉ 1 + 2,5 + 4,5 + 7 giây, cùng quỹ (listen/readAloud.ts). */
     val RETRY_DELAYS_MS = longArrayOf(2_000L, 5_000L)
 
-    /** Gắn vào MediaItem của một đoạn: chương (vị trí trong danh sách chương), đoạn, độ to của giọng đã đọc. `segment` -1 = không dùng. */
-    class Slot(val chapterIndex: Int, val segment: Int, val gainDb: Double)
+    /** Gắn vào MediaItem của một đoạn: chương (vị trí trong danh sách chương), đoạn, độ to của giọng đã đọc, và đoạn ấy có DÀI không (từ [EdgePieces.WHOLE_CHARS] ký tự - chỉ đoạn dài tính vào rank
+     *  của đoạn sau nó, [StalledClips.listenerRank]). `segment` -1 = không dùng. */
+    class Slot(val chapterIndex: Int, val segment: Int, val gainDb: Double, val long: Boolean = false)
 
     private class Chap(val index: Int, val parsed: List<Paragraphs.Paragraph>) {
         val paragraphs: List<String> = parsed.map { it.text }
@@ -576,6 +577,10 @@ object ReadAloud {
     }
 
     /** Người nghe còn âm thanh để nghe (không phải đang chờ đoạn đầu, hàng đợi chưa cạn). */
+    /** Số đoạn dài ([Slot.long]) từ đoạn đang phát tới hết hàng đợi: những gì người nghe còn phải nghe trước đoạn sắp nạp. */
+    private fun longQueued(exo: Player): Int =
+        (exo.currentMediaItemIndex until exo.mediaItemCount).count { (exo.getMediaItemAt(it).localConfiguration?.tag as? Slot)?.long == true }
+
     private fun listenerHasAudio(exo: Player): Boolean = waiting == null && exo.currentMediaItem != null && exo.playbackState != Player.STATE_ENDED
 
     private val reminder by lazy { Reminder({ task, ms -> main.postDelayed(task, ms) }, { task -> main.removeCallbacks(task) }) }
@@ -684,9 +689,10 @@ object ReadAloud {
         val probe = StalledClips.isProbe(fresh, Playback.player?.let(::listenerHasAudio) == true)
         // Người nghe không còn âm thanh nào để nghe (nhảy tới, đầu chương, hàng đợi cạn): đoạn này là đoạn họ đang đứng chờ (rank 0), đoạn đọc song song ([warm]) kế nó - hết chỗ kết nối Edge thì đoạn gần
         // người nghe hơn đi trước, và việc nền (không rank) đứng sau cả hai (uxfix51). Đoạn nạp khi người nghe còn âm thanh: rank = số đoạn đã nạp sau đoạn đang phát + 1 (uxfix52; cũng là
-        // tiêu đề / đoạn đầu của chương kế khi hàng đợi chạm cuối chương).
+        // tiêu đề / đoạn đầu của chương kế khi hàng đợi chạm cuối chương). Chỉ đoạn DÀI người nghe còn phải nghe (đang phát + đã nạp sau nó) mới tính (uxfix54: tiêu đề chương 2 giây đứng trước
+        // đoạn 1 không đẩy đoạn 1 xuống rank 1 - cắt 3 mảnh thay vì 6, người nghe chờ thêm ~4 giây).
         val rank = Playback.player.let { exo ->
-            StalledClips.listenerRank(exo?.let(::listenerHasAudio) == true, if (exo == null) 0 else exo.mediaItemCount - exo.currentMediaItemIndex - 1)
+            StalledClips.listenerRank(exo?.let(::listenerHasAudio) == true, if (exo == null) 0 else longQueued(exo))
         }
         // Người nghe đang chờ clip này qua mạng: giữ CPU + Wi-Fi tới khi xong (hàng đợi ExoPlayer đã cạn thì nó không giữ gì - [FetchWake]); đọc sẵn khi chưa ai chờ thì không.
         val ticket = if (StalledClips.holdsWake(online, listenerWants, probe)) FetchWake.hold() else null
@@ -698,7 +704,7 @@ object ReadAloud {
             // Lượt song song cũng là một kết nối tới Edge: tính vào `live` để "Làm trước" không mở thêm kết nối thứ ba (đọc thật + song song + làm trước).
             warm?.let { next ->
                 live.incrementAndGet()
-                worker.execute { try { warm(next, voice, origin, readings, token, rank + 1) } finally { live.decrementAndGet() } }
+                worker.execute { try { warm(next, voice, origin, readings, token, StalledClips.rankAfter(rank, text)) } finally { live.decrementAndGet() } }
             }
             val result = try {
                 val key = shareKey(voice, text, origin, readings)
@@ -830,7 +836,7 @@ object ReadAloud {
         return MediaItem.Builder()
             .setMediaId(chapter.id.toString())
             .setUri(Uri.fromFile(clip.file))
-            .setTag(Slot(chap.index, segment, VoiceGain.db(clip.voice)))
+            .setTag(Slot(chap.index, segment, VoiceGain.db(clip.voice), StalledClips.isLong(chap.paragraphs[segment])))
             .setMediaMetadata(metadata.build())
             .build()
     }
