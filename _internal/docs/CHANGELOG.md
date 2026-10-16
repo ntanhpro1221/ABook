@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.82] - 2026-10-17
+
 ### Nghe ngay
 
 - Nhảy tới câu xa hay mở một chương bằng giọng trực tuyến: đoạn bạn đang chờ nghe được chia nhỏ hơn để đọc cùng lúc (tới 6 phần thay vì 3), nên giọng cất lên sớm hơn khoảng 1,5 giây. Các đoạn khác vẫn chia như cũ, chỗ nối giữa các phần nghe không đổi (máy tính và điện thoại).
