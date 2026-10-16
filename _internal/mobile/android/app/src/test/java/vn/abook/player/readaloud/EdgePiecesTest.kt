@@ -313,4 +313,151 @@ class EdgePiecesTest {
         waitUntil("mọi ổ cắm đã đóng") { closed.get() == total }
         waitUntil("chỗ kết nối nhả hết") { EdgeTts.connections.availablePermits() == EdgePieces.EDGE_CONNECTIONS }
     }
+
+    // ---- chỗ nối giữa các mảnh (uxfix50) -----------------------------------------------------------------------------------------
+
+    /** `count` khung mp3 hợp lệ (MPEG-2 lớp III, 48 kbps, 24 kHz, đơn kênh, 144 byte); byte 4-5 ghi số thứ tự khung. */
+    private fun mp3Frames(count: Int): ByteArray {
+        val out = ByteArrayOutputStream()
+        for (index in 0 until count) {
+            val frame = ByteArray(EdgeJoin.FRAME_BYTES)
+            frame[0] = 0xFF.toByte(); frame[1] = 0xF3.toByte(); frame[2] = 0x64; frame[3] = 0xC0.toByte()
+            frame[4] = (index ushr 8).toByte(); frame[5] = index.toByte()
+            out.write(frame)
+        }
+        return out.toByteArray()
+    }
+
+    private fun audioOf(data: ByteArray): ByteArray {
+        val header = "X-RequestId:r\r\nContent-Type:audio/mpeg\r\nPath:audio\r\n".toByteArray()
+        return frame(WebSocket.OP_BINARY, byteArrayOf((header.size ushr 8).toByte(), header.size.toByte()) + header + data)
+    }
+
+    @Test
+    fun theJoinTailCutFollowsTheSharedCases() {
+        val file = File("../../../tests/fixtures/readaloud/edge/join_tail.json")
+        assertTrue("Không thấy ${file.absoluteFile}", file.isFile)
+        val cases = JSONObject(file.readText(Charsets.UTF_8)).getJSONArray("cases")
+        assertTrue(cases.length() >= 6)
+        for (i in 0 until cases.length()) {
+            val case = cases.getJSONObject(i)
+            val audio = mp3Frames(case.getInt("frames"))
+            val trimmed = EdgeJoin.trim(audio, case.getString("piece"), case.getLong("last_end_ms"))
+            assertEquals(case.getString("note"), case.getInt("kept_frames") * EdgeJoin.FRAME_BYTES, trimmed.size)
+            assertTrue(case.getString("note"), trimmed.contentEquals(audio.copyOf(trimmed.size))) // chỉ cắt đuôi
+        }
+    }
+
+    @Test
+    fun theJoinTailIsLeftAloneWhenTheFramesAreNotWhatEdgeSends() {
+        val audio = mp3Frames(300)
+        assertTrue(EdgeJoin.trim(audio, "Xong rồi.", 2000).size < audio.size) // đối chứng: dữ liệu tốt thì cắt
+        assertTrue(EdgeJoin.trim(audio, "Xong rồi.", null).contentEquals(audio)) // không có mốc
+        assertEquals(0, EdgeJoin.trim(ByteArray(0), "Xong rồi.", 2000).size)
+        val odd = audio + byteArrayOf(0)
+        assertTrue(EdgeJoin.trim(odd, "Xong rồi.", 2000).contentEquals(odd)) // không chia hết cho khung
+        val padded = audio.copyOf().also { it[144 * 200 + 2] = (it[144 * 200 + 2].toInt() or 0x02).toByte() } // khung có bit đệm
+        assertTrue(EdgeJoin.trim(padded, "Xong rồi.", 2000).contentEquals(padded))
+        val otherRate = audio.copyOf().also { it[144 * 10 + 2] = 0x68 }
+        assertTrue(EdgeJoin.trim(otherRate, "Xong rồi.", 2000).contentEquals(otherRate))
+        val noise = ByteArray(144 * 20) { (it % 251).toByte() }
+        assertTrue(EdgeJoin.trim(noise, "Xong rồi.", 2000).contentEquals(noise))
+    }
+
+    @Test
+    fun aSentenceEndKeepsEdgesOwnSentencePauseAndOtherCutsKeepLess() {
+        assertEquals(EdgeJoin.TAIL_SENTENCE_MS, EdgeJoin.tailMs("Hết câu."))
+        assertEquals(EdgeJoin.TAIL_SENTENCE_MS, EdgeJoin.tailMs("Hết câu?”"))
+        assertEquals(EdgeJoin.TAIL_SENTENCE_MS, EdgeJoin.tailMs("Hết câu…"))
+        assertEquals(EdgeJoin.TAIL_OTHER_MS, EdgeJoin.tailMs("Còn tiếp,"))
+        assertEquals(EdgeJoin.TAIL_OTHER_MS, EdgeJoin.tailMs("“Còn tiếp,”"))
+        assertEquals(EdgeJoin.TAIL_OTHER_MS, EdgeJoin.tailMs("một hai ba"))
+    }
+
+    @Test
+    fun synthesizeTrimsEveryPieceButTheLastAndShiftsLaterWordsByTheTrimmedLength() {
+        val pieces = EdgePieces.split(sentences)
+        assertTrue(pieces.size >= 3)
+        // Mảnh có `w` chữ: mốc chữ cuối kết thúc ở (w - 1) x 100 + 80 ms theo dịch vụ, audio dài 200 khung (4,8 giây) như Edge thật (dư đuôi lặng).
+        val frames = 200
+        val connector = EdgeTts.Connector { _, _ ->
+            val sent = ByteArrayOutputStream()
+            WebSocket({ }, Reply(sent) { bytes ->
+                val words = spokenIn(bytes).split(" ")
+                var reply = ByteArray(0)
+                words.forEachIndexed { i, word -> reply += metadata(i * 1_000_000L, 800_000, word) }
+                reply + audioOf(mp3Frames(frames)) + text("turn.end")
+            }, sent)
+        }
+        val out = File(dir, "join.mp3")
+        val clip = EdgeTts("v", connector).synthesize(sentences, out)
+        val kept = pieces.mapIndexed { n, piece ->
+            if (n == pieces.size - 1) frames
+            else ((piece.split(" ").size - 1) * 100L + 80 + EdgeJoin.tailMs(piece) + EdgeJoin.FRAME_MS - 1).div(EdgeJoin.FRAME_MS).toInt()
+        }
+        pieces.dropLast(1).forEachIndexed { n, _ -> assertTrue("mảnh $n phải bị cắt", kept[n] < frames) }
+        assertEquals(kept.sum() * EdgeJoin.FRAME_BYTES, out.length().toInt())
+        assertEquals(kept.sum() * EdgeJoin.FRAME_MS.toLong(), clip.durationMs)
+        var firstWord = 0
+        var before = 0L
+        pieces.forEachIndexed { n, piece ->
+            assertEquals(before + EdgeProtocol.BOUNDARY_SHIFT_MS, clip.words[firstWord].start)
+            before += kept[n] * EdgeJoin.FRAME_MS.toLong()
+            firstWord += piece.split(" ").size
+        }
+    }
+
+    // ---- bắt tay treo (uxfix50) ------------------------------------------------------------------------------------------------
+
+    private fun okSession(): WebSocket {
+        val sent = ByteArrayOutputStream()
+        return WebSocket({ }, Reply(sent) { audio(600, 1) + text("turn.end") }, sent)
+    }
+
+    @Test
+    fun aHandshakeThatTimesOutOnceIsRetriedAndTheClipSucceeds() {
+        val calls = AtomicInteger(0)
+        val connector = EdgeTts.Connector { _, _ ->
+            if (calls.incrementAndGet() == 1) throw java.net.SocketTimeoutException("connect timed out")
+            okSession()
+        }
+        val clip = EdgeTts("v", connector) { }.synthesize("Xin chào", File(dir, "t1.mp3"))
+        assertEquals(2, calls.get())
+        assertEquals(100L, clip.durationMs)
+    }
+
+    @Test
+    fun oneHangingPieceDoesNotFailTheClip() {
+        val calls = AtomicInteger(0)
+        val pieces = EdgePieces.split(sentences)
+        val connector = EdgeTts.Connector { _, _ ->
+            if (calls.incrementAndGet() == 2) throw java.net.SocketTimeoutException("connect timed out")
+            okSession()
+        }
+        val clip = EdgeTts("v", connector) { }.synthesize(sentences, File(dir, "t2.mp3"))
+        assertEquals(pieces.size + 1, calls.get())
+        assertEquals(pieces.size * 100L, clip.durationMs)
+    }
+
+    @Test
+    fun aHandshakeThatAlwaysTimesOutEndsAsLostNetworkAfterTheRetries() {
+        val calls = AtomicInteger(0)
+        val connector = EdgeTts.Connector { _, _ ->
+            calls.incrementAndGet()
+            throw java.net.SocketTimeoutException("connect timed out")
+        }
+        try {
+            EdgeTts("v", connector) { }.synthesize("Xin chào", File(dir, "t3.mp3"))
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertTrue(error.offline)
+            assertEquals(EdgeTts.LOST_NETWORK, error.message)
+            assertEquals(EdgeTts.RETRIES + 1, calls.get())
+        }
+    }
+
+    @Test
+    fun theConnectTimeoutIsAFewTimesTheMeasuredHandshakeNotEightSeconds() {
+        assertTrue(EdgeTts.CONNECT_MS in 3_000..6_000)
+    }
 }

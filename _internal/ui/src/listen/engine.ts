@@ -28,6 +28,8 @@ export type EngineEvent =
   | "pause"
   | "ended"
   | "error"
+  /** bộ máy đọc to: dịch vụ đã trả lời lại sau lỗi - thông báo lỗi cũ không còn đúng. */
+  | "recovered"
   | "waiting"
   | "playing"
   /** chỉ bộ máy native: chương/cuốn đang phát đổi (tự sang chương, nút trên thông báo...). */

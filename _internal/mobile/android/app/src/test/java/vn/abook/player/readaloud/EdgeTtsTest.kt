@@ -269,7 +269,7 @@ class EdgeTtsTest {
         val clip = EdgeTts("v", connector) { waits += it }.synthesize("Xin", File(dir, "busy.mp3"))
         assertEquals(3, calls[0])
         assertEquals(1000, clip.durationMs)
-        assertEquals(listOf(500L, 1_500L), waits)
+        assertEquals(listOf(1_500L), waits) // lần thử lại đầu nối ngay, không nghỉ
         assertEquals(6000, File(dir, "busy.mp3").length())
 
         calls[0] = -2 // bận cả bốn lần (1 + RETRIES): câu thân thiện, không phải mất mạng - không nghỉ giọng Edge 2 phút
@@ -282,7 +282,7 @@ class EdgeTtsTest {
             assertEquals(EdgeTts.NOT_ANSWERING, error.message) // dịch vụ bận, mạng vẫn có: không nói "mất mạng"
             assertFalse(error.message!!.contains("Mất mạng"))
             assertEquals(2, calls[0])
-            assertEquals(listOf(500L, 1_500L, 4_000L), gaps)
+            assertEquals(listOf(1_500L, 4_000L), gaps)
         }
     }
 
@@ -302,7 +302,7 @@ class EdgeTtsTest {
             assertTrue(error.offline) // mạng thật sự mất: ClipReader vẫn nghỉ giọng Edge và rơi sang giọng của máy
             assertEquals(EdgeTts.LOST_NETWORK, error.message)
             assertEquals(4, calls[0])
-            assertEquals(listOf(500L, 1_500L, 4_000L), waits)
+            assertEquals(listOf(1_500L, 4_000L), waits)
             assertFalse(error.message!!.contains("Edge"))
         }
     }

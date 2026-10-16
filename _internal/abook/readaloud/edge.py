@@ -23,7 +23,7 @@ from email.utils import parsedate_to_datetime
 from urllib.parse import quote
 from xml.sax.saxutils import escape, unescape
 
-from . import websocket
+from . import mp3, websocket
 from .edge_token import TRUSTED_CLIENT_TOKEN, generate_sec_ms_gec_v2
 from .mapping import Boundary
 from .model import Synthesis, VoiceError
@@ -36,7 +36,7 @@ OUTPUT_FORMAT = "audio-24khz-48kbitrate-mono-mp3"
 BITRATE_BPS = 48_000  # CBR: byte -> thời gian chính xác, dùng để cộng dồn mốc giữa các đoạn và đo độ dài clip
 TICKS_PER_MS = 10_000
 MAX_CHUNK_BYTES = 4000  # dịch vụ nhận <= 4096 byte chữ đã escape mỗi SSML
-CONNECT_TIMEOUT = 10.0
+CONNECT_TIMEOUT = 4.0  # nối + bắt tay TLS + nâng cấp WebSocket. Bắt tay thật: p50 0,49 s, p95 0,71 s, p99 1,15 s (222 lượt đo a48-a51); thỉnh thoảng một lần treo ~10 s (a51: 8 / 95 mảnh khi nhiều kết nối mở cùng lúc): hết giờ sớm rồi thử lại (EdgeConnectTimeout)
 READ_TIMEOUT = 25.0
 TOTAL_TIMEOUT = 90.0
 RETRIES = 2  # lượt bị cắt giữa chừng thử lại tối đa chừng này lần (kết nối mới)
@@ -48,6 +48,16 @@ EDGE_CONNECTIONS = 8  # trần kết nối Edge đang mở của cả tiến tr�
 WHOLE_CHARS = 100  # đoạn ngắn hơn chừng này ký tự giữ một yêu cầu: câu đơn 90-100 ký tự đo 5,8-13,9 giây, cắt đôi không nhanh hơn mà tốn thêm một lần nối (~0,45 giây)
 MIN_PIECE_CHARS = 50  # mảnh không nhỏ hơn chừng này (gộp câu ngắn): mảnh quá ngắn thêm chỗ nối mà không rút ngắn thời gian chờ
 LONG_SENTENCE_CHARS = 200  # câu dài hơn chừng này được cắt tiếp ở ; : , (sau dấu có khoảng trắng - không bao giờ giữa chữ hay số như "3,5")
+
+# Chỗ nối giữa hai mảnh (soát a51: 26 chỗ nối đo 0,95-0,99 giây lặng). Mỗi lượt của Edge kết thúc bằng ~0,85 giây lặng đuôi + ~0,13 giây lặng đầu của mảnh kế, trong khi Edge tự nghỉ
+# giữa hai câu TRONG một lượt chỉ 0,86 giây (đo a52, 6 chỗ: khoảng cách mốc 862-875 ms; sau dấu phẩy 137-263 ms). Nên cắt đuôi mảnh không phải mảnh cuối, giữ lại JOIN_TAIL_*_MS sau
+# mốc hết chữ cuối (dấu câu quyết định nghỉ bao lâu) cho chỗ nối nghỉ đúng cỡ Edge nghỉ ở dấu ấy: hết câu 730 ms (+ ~130 ms đầu mảnh kế = 0,86 giây), dấu phẩy / chỗ cắt khác 100 ms (= ~0,23 giây).
+# Cắt theo KHUNG MP3 (24 kHz, 48 kbps CBR, không đệm: 144 byte = 24 ms mỗi khung): khung nào không đúng dạng ấy thì giữ nguyên cả mảnh. Chữ cuối kết thúc trong khoảng -27..+15 ms quanh mốc
+# hết chữ (đo 30 mảnh) nên 100 ms còn dư cho bộ giải mã. Điện thoại (EdgeTts.kt `EdgeJoin`) dùng đúng các hằng số này và bộ ví dụ tests/fixtures/readaloud/edge/join_tail.json.
+JOIN_TAIL_SENTENCE_MS = 730
+JOIN_TAIL_OTHER_MS = 100
+MP3_FRAME_BYTES = 144
+MP3_FRAME_MS = 24
 
 DEFAULT_VOICE = "vi-VN-HoaiMyNeural"
 VOICES = [("vi-VN-HoaiMyNeural", "Hoài My", "female"), ("vi-VN-NamMinhNeural", "Nam Minh", "male")]
@@ -73,6 +83,11 @@ class EdgeDropped(EdgeError):
     """Dịch vụ cắt kết nối giữa lượt (đo 03-10: thỉnh thoảng, vài phần trăm lượt, với đúng cùng chữ vừa đọc được) - thử lại là xong.
     Cũng dùng cho lỗi thoáng qua lúc bắt tay: HTTP 429 / 5xx, kết nối bị reset (soát 03-10: một lần reset từng làm đoạn ấy rơi về giọng
     máy như mất mạng)."""
+
+
+class EdgeConnectTimeout(EdgeDropped):
+    """Nối được tới máy chủ (DNS xong) mà bắt tay không xong trong CONNECT_TIMEOUT. Là một EdgeDropped (thử lại được; a51: một lần treo từng báo "không có mạng" làm cả chương dừng);
+    hết lần thử mà lần nào cũng treo thì `_speak_piece` đổi nó thành EdgeOffline (mạng bị chặn thật)."""
 
 
 _clock_skew = 0.0  # giây: lệch giữa đồng hồ máy và đồng hồ máy chủ, học từ header Date của lần bị từ chối (403)
@@ -207,6 +222,26 @@ def speech_pieces(text: str) -> list[str]:
         if len(units) > 1:
             return [part for piece in _group_units(units) for part in split_text(piece)]
     return split_text(text)
+
+
+def join_tail_ms(piece: str) -> int:
+    """Bao lâu sau mốc hết chữ cuối của `piece` còn giữ audio khi mảnh ấy đứng trước một mảnh khác: hết câu (dấu . ! ? … , có thể kèm dấu đóng nháy / ngoặc) nghỉ như Edge nghỉ giữa hai câu, còn lại ngắn."""
+    body = piece.rstrip().rstrip(_SENTENCE_CLOSERS)
+    return JOIN_TAIL_SENTENCE_MS if body and body[-1] in _SENTENCE_END else JOIN_TAIL_OTHER_MS
+
+
+def trim_join_tail(audio: bytes, piece: str, boundaries: list[Boundary]) -> bytes:
+    """Cắt phần lặng đuôi của một mảnh không phải mảnh cuối, ở ranh giới khung MP3, giữ tới mốc hết chữ cuối + [join_tail_ms]. Không có mốc, hay khung nào không đúng dạng
+    24 kHz / 48 kbps / 144 byte (thẻ ID3, khung đệm, rác...) thì trả nguyên; không bao giờ cắt vào chữ."""
+    if not boundaries or not audio or len(audio) % MP3_FRAME_BYTES:
+        return audio
+    keep = -(-(boundaries[-1].end_ms + join_tail_ms(piece)) // MP3_FRAME_MS)  # làm tròn LÊN: không cắt sớm hơn
+    if keep * MP3_FRAME_BYTES >= len(audio):
+        return audio
+    for at in range(0, len(audio), MP3_FRAME_BYTES):
+        if mp3.frame_at(audio, at) != (MP3_FRAME_BYTES, 576, 24_000):
+            return audio
+    return audio[:keep * MP3_FRAME_BYTES]
 
 
 def build_ssml(voice: str, text: str) -> str:
@@ -382,7 +417,7 @@ class EdgeClient:
         except (socket.gaierror, ConnectionRefusedError) as error:
             raise EdgeOffline("Không có mạng để dùng giọng trực tuyến.") from error
         except TimeoutError as error:
-            raise EdgeOffline("Không kết nối được tới dịch vụ đọc to (quá giờ).") from error
+            raise EdgeConnectTimeout("Không bắt tay kịp với dịch vụ đọc to (quá giờ).") from error
         except ssl.SSLError as error:
             raise EdgeError(f"Không bắt tay TLS được với dịch vụ đọc to: {error}") from error
         except websocket.WebSocketError as error:
@@ -424,10 +459,13 @@ class EdgeClient:
         for attempt in range(RETRIES + 1):
             try:
                 return self._speak_one(voice, piece, 0, deadline, clip=clip)
-            except EdgeDropped:
+            except EdgeDropped as error:
                 if attempt == RETRIES or (clip is not None and clip.aborted):
+                    if attempt == RETRIES and isinstance(error, EdgeConnectTimeout):
+                        raise EdgeOffline("Không kết nối được tới dịch vụ đọc to (quá giờ).") from error  # lần nào cũng treo: mạng bị chặn thật
                     raise
-                time.sleep(0.3 * (attempt + 1))
+                if attempt:  # lần thử lại đầu nối lại NGAY (kết nối mới): chỉ lần sau mới nghỉ, để mạng chập chờn có thời gian hồi
+                    time.sleep(0.3 * (attempt + 1))
         raise AssertionError("unreachable")
 
     def synthesize(self, text: str, voice: str = DEFAULT_VOICE) -> Synthesis:
@@ -456,7 +494,9 @@ class EdgeClient:
                 pool.shutdown(wait=False, cancel_futures=True)
         audio = bytearray()
         boundaries: list[Boundary] = []
-        for data, found in results:
+        for index, (data, found) in enumerate(results):
+            if index < len(results) - 1:
+                data = trim_join_tail(data, pieces[index], found)  # cắt lặng đuôi trước khi bù mốc cho mảnh sau
             # Mốc của mỗi mảnh tính từ đầu mảnh ấy: bù bằng độ dài audio các mảnh trước (CBR nên chính xác).
             shift_ms = len(audio) * 8 * 1000 // BITRATE_BPS
             boundaries += [Boundary(b.text, b.start_ms + shift_ms, b.end_ms + shift_ms, b.char) for b in found] if shift_ms else found

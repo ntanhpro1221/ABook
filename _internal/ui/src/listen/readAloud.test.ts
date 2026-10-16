@@ -116,7 +116,7 @@ function setup(options: { chapter?: string; cached?: Record<string, ReadAloudCli
     },
     muted: options.muted ?? false,
   });
-  for (const name of ["time", "duration", "play", "pause", "ended", "error", "waiting", "playing"] as EngineEvent[]) {
+  for (const name of ["time", "duration", "play", "pause", "ended", "error", "recovered", "waiting", "playing"] as EngineEvent[]) {
     engine.on(name, () => events.push(name));
   }
   return {
@@ -769,6 +769,31 @@ describe("nghe dở và lỗi", () => {
       await vi.advanceTimersByTimeAsync(20_000);
       expect(t.events).toContain("error");
       expect(t.requests.filter((r) => r.text === TEXTS[0])).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("lỗi đã báo mà dịch vụ trả lời lại (clip thật về): bỏ lỗi và báo \"recovered\" để trình phát gỡ thông báo; clip từ bộ đệm (về tức thì) thì không", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = setup();
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      s.requests[0].reject(Object.assign(new Error("Giọng Hoài My đang không dùng được."), { reason: "service", final: true }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.engine.error).toBe("Giọng Hoài My đang không dùng được.");
+      // clip về tức thì (bộ đệm của máy chủ - về được cả khi Edge đang chết): lỗi còn nguyên
+      s.requests.filter((r) => r.text === TEXTS[1]).forEach((r) => r.resolve());
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.engine.error).not.toBe("");
+      expect(s.events).not.toContain("recovered");
+      // clip qua dịch vụ thật (mất vài trăm ms) về: dịch vụ khoẻ lại
+      await vi.advanceTimersByTimeAsync(500);
+      s.requests.filter((r) => r.text === TEXTS[2]).forEach((r) => r.resolve());
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.events).toContain("recovered");
+      expect(s.engine.error).toBe("");
     } finally {
       vi.useRealTimers();
     }

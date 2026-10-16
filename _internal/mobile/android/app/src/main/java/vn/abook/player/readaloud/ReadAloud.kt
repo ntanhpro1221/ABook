@@ -787,6 +787,8 @@ object ReadAloud {
         }
         chap.clips[segment] = clip
         chap.timeline.setDuration(segment, clip.durationMs)
+        // Đọc được đoạn mới: lỗi cũ còn treo trên màn (vd người nghe nhảy sang chỗ khác sau khi dừng vì lỗi) không còn đúng.
+        if (failure == null) Playback.clearError()
         val item = clipItem(chap, segment, clip)
         val target = waiting
         // Dời chỗ nạp TRƯỚC khi đặt vào ExoPlayer: setMediaItems báo đổi mục ngay trong lúc gọi (onMediaTransition -> onClipChanged -> pump), và pump lúc ấy

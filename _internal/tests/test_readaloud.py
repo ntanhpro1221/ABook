@@ -170,12 +170,14 @@ def test_the_accept_key_matches_the_rfc_example() -> None:
 class FakeEdge:
     """Máy chủ WebSocket giả nói đúng giao thức Edge, trên cổng tự chọn của máy này (không TLS)."""
 
-    def __init__(self, *, reject_first: bool = False, silent: bool = False, drop: int = 0, busy: int = 0, reset: int = 0) -> None:
+    def __init__(self, *, reject_first: bool = False, silent: bool = False, drop: int = 0, busy: int = 0, reset: int = 0, hang: int = 0) -> None:
         self.reject_first = reject_first
         self.busy = busy  # số lần bắt tay đầu bị trả 503 (dịch vụ bận)
         self.drop = drop  # số lượt đầu bị cắt giữa chừng (như dịch vụ thật thỉnh thoảng làm)
         self.reset = reset  # số lượt đầu bị RST giữa chừng (kết nối bị reset, không phải đóng êm)
         self.silent = silent
+        self.hang = hang  # số kết nối đầu bị treo lúc bắt tay: nhận kết nối rồi không bao giờ trả lời (như a51: bắt tay treo ~10 giây)
+        self.hung: list[socket.socket] = []
         self.requests: list[str] = []
         self.messages: list[str] = []
         self.listener = socket.socket()
@@ -187,6 +189,8 @@ class FakeEdge:
 
     def close(self) -> None:
         self.listener.close()
+        for conn in self.hung:
+            conn.close()
 
     def _serve(self) -> None:
         rejected = False
@@ -195,6 +199,10 @@ class FakeEdge:
                 conn, _ = self.listener.accept()
             except OSError:
                 return
+            if self.hang > 0:
+                self.hang -= 1
+                self.hung.append(conn)  # giữ mở, không đọc, không trả lời
+                continue
             with conn:
                 raw = b""
                 while b"\r\n\r\n" not in raw:
