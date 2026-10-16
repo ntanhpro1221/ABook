@@ -19,6 +19,7 @@ import {
   shortPlaylistLabel,
   playlistOptions,
   playlistPlaying,
+  SCENE_PLAYLIST,
   savePlaylistChoice,
   wrapSeconds,
   type PlaylistTrack,
@@ -301,6 +302,24 @@ describe("lựa chọn nhạc nền", () => {
     expect(playlistOptions({ playlists: [], mine: 0, error: "" }, true)[2].description).toBeUndefined();
     expect(playlistOptions({ playlists: [], mine: 3, error: "" })[2]).toMatchObject({ id: MINE_PLAYLIST, hint: "3 bài", disabled: false });
     expect(playlistOptions(undefined).map((option) => option.id)).toEqual([null, OFF_PLAYLIST, MINE_PLAYLIST]);
+  });
+
+  it("máy tính báo dựng được nhạc theo cảnh thì menu có dòng ấy (sau Tắt), điện thoại không báo thì không", () => {
+    const base = { playlists: [{ id: "calm", name: "Kỳ ảo êm đềm", description: "", minutes: 60, count: 9 }], mine: 0, error: "" };
+    expect(playlistOptions(base).map((option) => option.id)).toEqual([null, OFF_PLAYLIST, "calm", MINE_PLAYLIST]);
+    const without = playlistOptions({ ...base, scene: { student: false } });
+    expect(without.map((option) => option.id)).toEqual([null, OFF_PLAYLIST, SCENE_PLAYLIST, "calm", MINE_PLAYLIST]);
+    expect(without[2]).toMatchObject({ label: "Theo cảnh (máy tự dựng)" });
+    expect(without[2].description).not.toContain("Phân tích nhạc");
+    expect(playlistOptions({ ...base, scene: { student: true } })[2]).toEqual(without[2]); // học sinh có hay không, người nghe thấy cùng một dòng
+    // mặc định: máy chọn theo cảnh; chọn rõ thì dòng ấy được đánh dấu
+    const auto = { playlist: SCENE_PLAYLIST, playlistAuto: true };
+    expect(chosenId(auto)).toBeNull();
+    expect(playlistLabel(auto, base)).toBe("Máy chọn: Theo cảnh");
+    expect(shortPlaylistLabel(playlistLabel(auto, base))).toBe("Theo cảnh");
+    expect(chosenId({ playlist: SCENE_PLAYLIST })).toBe(SCENE_PLAYLIST);
+    expect(playlistLabel({ playlist: SCENE_PLAYLIST }, base)).toBe("Theo cảnh");
+    expect(playlistPlaying(auto)).toBe(true);
   });
 
   const menu = { playlists: [{ id: "calm", name: "Kỳ ảo êm đềm", description: "", minutes: 60, count: 9 }], mine: 0, error: "" };

@@ -20,6 +20,9 @@ object Playlists {
     const val MINE = "mine"
     /** Khớp [ID] nhưng không phải mã danh sách: `music.playlist` = "off" là tắt nhạc nền. */
     const val OFF = "off"
+    /** `music.playlist` = "scene": lựa chọn "Theo cảnh (máy tự dựng)" của MÁY TÍNH (music_nnscene.py) đi theo sách qua lớp sửa. Điện thoại chưa dựng được nhạc theo cảnh, nên coi như
+     *  chưa chọn gì (máy tự chọn danh sách) và không coi là mã danh sách của danh mục. */
+    const val SCENE = "scene"
     /** Bài không biết độ dài (thông tin danh mục thiếu): khoảng mặc định trên đồng hồ - bài vẫn lặp liền nếu ngắn hơn. */
     const val FALLBACK_SECONDS = 180.0
     /** Bằng thời gian chuyển mờ của [MusicBed]: bài sau vào lúc bài trước bắt đầu mờ đi, bài trước tắt hẳn đúng lúc nó hết. */
@@ -39,7 +42,7 @@ object Playlists {
         for (index in 0 until items.length()) {
             val item = items.opt(index) as? JSONObject ?: continue
             val id = item.opt("id") as? String ?: continue
-            if (!ID.matches(id) || id == MINE || id == OFF || id in seen) continue
+            if (!ID.matches(id) || id == MINE || id == OFF || id == SCENE || id in seen) continue
             val raw = item.optJSONArray("tracks") ?: continue
             val links = LinkedHashSet<String>()
             for (at in 0 until raw.length()) (raw.opt(at) as? String)?.takeIf { it.startsWith("https://") }?.let { links.add(it) }

@@ -324,6 +324,8 @@ object LocalStudio {
     }
 
     private fun withAutoChoice(dir: java.io.File, view: JSONObject): JSONObject {
+        // "scene" (nhạc theo cảnh của máy tính) đi theo sách qua lớp sửa nhưng điện thoại chưa có: coi như chưa chọn gì, máy tự chọn danh sách.
+        if (view.optString("playlist") == Playlists.SCENE) view.remove("playlist")
         if (view.has("playlist") || BookEdits.truthy(BookEdits.rawBook(dir).opt("music"))) return view
         // Mục lục danh mục chưa tải được (máy mới, chưa có mạng) thì dùng luật đóng kèm: chọn được tên danh sách ngay, bài tải sau.
         val manifest = runCatching { catalog?.manifest() }.getOrNull()

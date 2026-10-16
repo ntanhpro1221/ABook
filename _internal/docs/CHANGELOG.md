@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Trên máy tính, nhạc nền của sách chỉ có chữ giờ đổi theo cảnh, và đó là mặc định: nhạc êm, đổi bài đúng lúc đoạn đầu cảnh mới bắt đầu đọc (không đổi giữa câu), thay cho một danh sách nhạc chạy suốt cả cuốn. Chương đang nghe được dựng trước, vài chương sau dựng ngầm; chương nào chưa xong thì nhạc vào ở câu kế tiếp, giọng đọc không phải chờ. Menu "Nhạc nền" có thêm "Theo cảnh (máy tự dựng)"; bạn vẫn chọn được danh sách khác, "Nhạc của tôi" hay tắt. Điện thoại chưa đổi.
+
 ## [0.4.70] - 2026-10-16
 
 ### Nghe ngay
