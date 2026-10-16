@@ -306,7 +306,7 @@ def test_a_failing_job_is_recorded_and_the_next_job_still_runs() -> None:
 def _scene_server(tmp_path: Path):
     app, book, server = _text_book_server(tmp_path)
     app._music_catalog = MusicCatalog(tmp_path / "music_cache2", str(_catalog_dir(tmp_path / "cloud2")), public_key=TEST_PUBLIC_KEY)
-    app.music_track_available = lambda link: True  # type: ignore[method-assign]
+    app.music_track_available = lambda link, **_kwargs: True  # type: ignore[method-assign]
     return app, book, server
 
 
@@ -462,5 +462,92 @@ def test_a_catalog_that_cannot_be_read_says_why_there_is_no_scene_music(tmp_path
         assert reply["unavailable"] == "Chưa tải được danh mục nhạc nền - cần mạng ở lần đầu."
         monkeypatch.undo()
         assert "unavailable" not in _cues_when_ready(server, book), "có danh mục lại thì không còn lời báo"
+    finally:
+        server.stop()
+
+
+# ---- tra cỡ chỉ cho bài ĐÃ CHỌN (soát a45: tra từng ứng viên là ~250 mảnh tracks/ tải lần lượt, 308 giây trước nhạc đầu tiên) --------------------
+
+
+def _wide_catalog(root: Path) -> tuple[Path, dict[str, dict[str, Any]]]:
+    """Danh mục 90 bài quanh đích êm (nhiều mảnh `tracks/` khác nhau): ứng viên nhiều hơn xa số bài một chương chọn."""
+    from tests.catalog_signing import write_catalog
+
+    tracks = {f"https://x/w{n:03d}.mp3": {"valence": round(0.02 + 0.004 * n, 3), "arousal": round(-0.72 + 0.006 * (n % 17), 3),
+                                          "family": FAMILIES[n % len(FAMILIES)], "duration": 150 + 3 * (n % 23), "source": "incompetech"}
+              for n in range(90)}
+    return write_catalog(root, tracks), tracks
+
+
+class _CountingCatalog(MusicCatalog):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.shards: list[str] = []
+
+    def _fetch(self, relative: str) -> bytes:
+        if relative.startswith("tracks/"):
+            self.shards.append(relative.split("?")[0])
+        return super()._fetch(relative)
+
+
+def test_the_first_plan_fetches_only_the_track_shards_of_the_links_it_chose(tmp_path: Path) -> None:
+    from abook.webui.music_catalog import shard_of
+
+    app, book, server = _scene_server(tmp_path)
+    cloud, tracks = _wide_catalog(tmp_path / "wide")
+    catalog = _CountingCatalog(tmp_path / "wide_cache", str(cloud), public_key=TEST_PUBLIC_KEY)
+    app._music_catalog = catalog
+    _real_availability(app)
+    try:
+        cues = [cue for chapter in range(1, 6) for cue in _cues_when_ready(server, book, chapter)["cues"]]  # chương đang nghe + các chương dựng trước
+        chosen_shards = {f"tracks/{shard_of(cue['link'])}.json" for cue in cues}
+        every_shard = {f"tracks/{shard_of(link)}.json" for link in tracks}
+        assert cues and len(chosen_shards) < len(every_shard) / 2, "thử nghiệm phải có nhiều ứng viên hơn bài được chọn"
+        assert catalog.shards and set(catalog.shards) <= chosen_shards, f"mảnh tracks/ ngoài bài đã chọn bị tải: {sorted(set(catalog.shards) - chosen_shards)}"
+        assert len(catalog.shards) == len(set(catalog.shards)), "mỗi mảnh tải một lần"
+    finally:
+        server.stop()
+
+
+def test_a_chosen_track_found_over_size_is_dropped_and_the_chapter_is_chosen_again(tmp_path: Path) -> None:
+    book = Book(tmp_path, 7, chapters=2)
+    banned: set[str] = set()
+    asked: list[list[str]] = []
+    first_choice = {link for scene in book.build(1)["scenes"] for link in music_nnscene.chosen_links([scene])}  # mọi bài lần chọn đầu
+    assert len(first_choice) >= 2
+    book2 = Book(tmp_path / "again", 7, chapters=2)
+    victims = sorted(first_choice)[:2]
+
+    def verify(links: list[str]) -> bool:
+        asked.append(links)
+        fresh = [link for link in victims if link in links and link not in banned]
+        banned.update(fresh[:1])  # mỗi vòng chỉ phát hiện MỘT bài quá cỡ: phải lặp tới khi hết
+        return bool(fresh)
+
+    record = book2.build(1, available=lambda link: link not in banned, verify=verify)
+    links = set(music_nnscene.chosen_links(record["scenes"]))
+    assert banned == set(victims) and not links & banned, "bài quá cỡ không còn trong plan"
+    assert len(asked) == 3 and asked[-1] == music_nnscene.chosen_links(record["scenes"]), "vòng cuối xác nhận đúng các bài đã chọn"
+    assert all(len(batch) == len(set(batch)) and set(batch) <= set(TRACKS) for batch in asked), "mỗi vòng một lượt, không trùng"
+    assert all(scene["link"] or scene.get("silenced") or scene.get("continued") for scene in record["scenes"]), "cảnh nào cũng còn nhạc"
+
+
+def test_a_cached_manifest_whose_shards_cannot_be_fetched_still_says_why_there_is_no_scene_music(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui.music_catalog import CatalogError
+
+    app, book, server = _scene_server(tmp_path)
+    try:
+        catalog = app.music_catalog()
+        catalog.manifest()  # mục lục đã có (lần đầu có mạng)
+
+        def offline(*_args: Any, **_kwargs: Any) -> list[dict[str, Any]]:
+            raise CatalogError("Không tải được danh mục nhạc nền - kiểm tra mạng.")
+
+        monkeypatch.setattr(catalog, "near", offline)  # mảnh `cells/` chưa cất và hết mạng
+        reply = _cues_when_ready(server, book)
+        assert reply["cues"] == [] and not reply.get("pending")
+        assert reply["unavailable"] == "Không tải được danh mục nhạc nền - kiểm tra mạng."
+        monkeypatch.undo()
+        assert "unavailable" not in _cues_when_ready(server, book), "có mạng lại thì không còn lời báo"
     finally:
         server.stop()

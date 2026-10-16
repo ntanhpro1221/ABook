@@ -415,3 +415,20 @@ def test_a_looping_track_comes_round_every_period_of_its_audible_part_less_the_c
               _flat_scene(firstSegment=20, start=100.0, end=390.0, reason="length")]
     chosen = choose(scenes, lambda v, a: tracks, book_key="b", track_info={t["link"]: t for t in tracks}.get)
     assert "siblings" not in chosen[1] and chosen[1]["stopAt"] == 374.0
+
+
+def test_near_loads_the_cells_in_parallel_but_keeps_the_sequential_order(tmp_path: Path) -> None:
+    from abook.webui.music_catalog import cell_of
+
+    cloud = _catalog_dir(tmp_path / "cloud")
+    catalog = MusicCatalog(tmp_path / "cache", str(cloud), public_key=TEST_PUBLIC_KEY)
+    grid = 5
+    vi, ai = cell_of(0.2, -0.5, grid)
+    sequential = [item for v in range(max(0, vi - 1), min(grid, vi + 2)) for a in range(max(0, ai - 1), min(grid, ai + 2)) for item in catalog.cell(v, a)]
+    fresh = MusicCatalog(tmp_path / "cache2", str(cloud), public_key=TEST_PUBLIC_KEY)
+    assert sequential and [item["link"] for item in fresh.near(0.2, -0.5)] == [item["link"] for item in sequential], "thứ tự là thứ tự hoà của xếp hạng"
+    offline = MusicCatalog(tmp_path / "cache3", str(cloud), public_key=TEST_PUBLIC_KEY)
+    offline.manifest()
+    shutil.rmtree(cloud / "cells")  # mục lục có mà ô không tải được: vẫn báo lỗi như cũ
+    with pytest.raises(CatalogError):
+        offline.near(0.2, -0.5)
