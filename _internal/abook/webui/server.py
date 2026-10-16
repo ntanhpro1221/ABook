@@ -2074,7 +2074,8 @@ class App:
                 sha_of=sha_of, near=self._music_candidates, lookup=lambda links: self._music_lookup(links),
                 catalog_revision=str(manifest.get("revision") or ""), taxonomy=manifest.get("taxonomy"), book_key=value,
                 available=functools.partial(self.music_track_available, sizes=False), verify=self.music_verify_sizes,
-                student=student(stop) if use_student else lite)
+                student=student(stop) if use_student else lite,
+                bounds=None if lite is None else music_nnlite.scene_bounds)  # LB: ranh cảnh chỉ ở đường NN-lite
 
         return job
 

@@ -1,0 +1,2377 @@
+{
+ "version": 1,
+ "model_bytes": 2097328,
+ "lambda": 2.0,
+ "block_words": 150,
+ "min_blocks": 2,
+ "tolerance_profile": 0.001,
+ "chapters": [
+  {
+   "name": "êm rồi buồn",
+   "segments": [
+    {
+     "id": 1,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 1,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 1,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 1,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 1,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 1,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 7,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 7,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 7,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 7,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 7,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 7,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 13,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 13,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 13,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 13,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 13,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 13,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 19,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 19,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 19,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 19,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 19,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 19,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 25,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 25,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 25,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 25,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 25,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 25,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 31,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 31,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 31,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 31,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 31,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 31,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 37,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 37,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 37,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 37,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 37,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 37,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 43,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 43,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 43,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 43,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 43,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 43,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 49,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 49,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 49,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 49,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 49,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 54,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 54,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 54,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 54,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 54,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 59,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 59,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 59,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 59,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 59,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 64,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 64,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 64,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 64,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 64,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 69,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 69,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 69,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 69,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 69,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 74,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 74,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 74,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 74,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 74,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 79,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 79,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 79,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 79,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 79,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 84,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 84,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 84,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 84,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 84,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    }
+   ],
+   "blocks": [
+    [
+     0,
+     6
+    ],
+    [
+     7,
+     13
+    ],
+    [
+     14,
+     20
+    ],
+    [
+     21,
+     28
+    ],
+    [
+     29,
+     35
+    ],
+    [
+     36,
+     42
+    ],
+    [
+     43,
+     49
+    ],
+    [
+     50,
+     56
+    ],
+    [
+     57,
+     63
+    ],
+    [
+     64,
+     70
+    ],
+    [
+     71,
+     77
+    ],
+    [
+     78,
+     87
+    ]
+   ],
+   "profile": [
+    [
+     "0.8327781188950206",
+     "0.421448428256191",
+     "-1.3948414772937012"
+    ],
+    [
+     "0.715887176134907",
+     "0.17262426760925612",
+     "-1.3817286166857676"
+    ],
+    [
+     "0.6768179718827944",
+     "0.13581950873140272",
+     "-1.4139554254408742"
+    ],
+    [
+     "0.6791083814228641",
+     "0.2735268184919575",
+     "-1.3352613514541423"
+    ],
+    [
+     "0.9220967358954492",
+     "0.30147697772295023",
+     "-1.464942157183554"
+    ],
+    [
+     "0.8327781188950206",
+     "0.421448428256191",
+     "-1.3948414772937012"
+    ],
+    [
+     "0.02752555662960456",
+     "0.12322008605797488",
+     "-0.938659368480435"
+    ],
+    [
+     "-0.9012433145923826",
+     "1.0846462725964237",
+     "0.3905577366902874"
+    ],
+    [
+     "-0.9926057323300486",
+     "1.0382504079578052",
+     "0.3678878803242243"
+    ],
+    [
+     "-0.5426651565353824",
+     "1.3136115505315276",
+     "0.2786873610439686"
+    ],
+    [
+     "-1.1692722577059091",
+     "1.2334192096340568",
+     "0.6649154815891629"
+    ],
+    [
+     "-0.935012731341056",
+     "1.257105992256894",
+     "0.42322792028157574"
+    ]
+   ],
+   "bounds": [
+    49
+   ]
+  },
+  {
+   "name": "êm - đánh - buồn",
+   "segments": [
+    {
+     "id": 1,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 1,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 1,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 1,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 1,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 1,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 7,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 7,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 7,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 7,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 7,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 7,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 13,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 13,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 13,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 13,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 13,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 13,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 19,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 19,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 19,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 19,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 19,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 19,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 25,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 25,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 25,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 25,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 25,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 25,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 31,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 31,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 31,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 31,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 31,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 31,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 37,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 37,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 37,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 37,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 37,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 37,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 43,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 43,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 43,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 43,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 43,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 43,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 49,
+     "text": "Thanh kiếm chém xuống! Máu bắn tung toé. Hắn gầm lên, lao tới lần nữa – nhanh hơn, tàn bạo hơn!"
+    },
+    {
+     "id": 49,
+     "text": "Con rồng mở mắt. Cả ngọn núi rung chuyển. Đội quân phía dưới hoảng loạn bỏ chạy tán loạn."
+    },
+    {
+     "id": 49,
+     "text": "Cuộc thi bắt đầu! Ba, hai, một – xuất phát! Đám đông reo hò như sấm dậy khi các tay đua lao đi."
+    },
+    {
+     "id": 49,
+     "text": "Tiếng bước chân vang lên trong hành lang tối. Từng bước. Từng bước. Rồi im bặt. Có ai đó đang đứng ngay sau cánh cửa."
+    },
+    {
+     "id": 49,
+     "text": "Hắn mỉm cười. Một nụ cười lạnh lẽo đến rợn người. “Ngươi nghĩ mình có thể trốn thoát sao?”"
+    },
+    {
+     "id": 54,
+     "text": "Thanh kiếm chém xuống! Máu bắn tung toé. Hắn gầm lên, lao tới lần nữa – nhanh hơn, tàn bạo hơn!"
+    },
+    {
+     "id": 54,
+     "text": "Con rồng mở mắt. Cả ngọn núi rung chuyển. Đội quân phía dưới hoảng loạn bỏ chạy tán loạn."
+    },
+    {
+     "id": 54,
+     "text": "Cuộc thi bắt đầu! Ba, hai, một – xuất phát! Đám đông reo hò như sấm dậy khi các tay đua lao đi."
+    },
+    {
+     "id": 54,
+     "text": "Tiếng bước chân vang lên trong hành lang tối. Từng bước. Từng bước. Rồi im bặt. Có ai đó đang đứng ngay sau cánh cửa."
+    },
+    {
+     "id": 54,
+     "text": "Hắn mỉm cười. Một nụ cười lạnh lẽo đến rợn người. “Ngươi nghĩ mình có thể trốn thoát sao?”"
+    },
+    {
+     "id": 59,
+     "text": "Thanh kiếm chém xuống! Máu bắn tung toé. Hắn gầm lên, lao tới lần nữa – nhanh hơn, tàn bạo hơn!"
+    },
+    {
+     "id": 59,
+     "text": "Con rồng mở mắt. Cả ngọn núi rung chuyển. Đội quân phía dưới hoảng loạn bỏ chạy tán loạn."
+    },
+    {
+     "id": 59,
+     "text": "Cuộc thi bắt đầu! Ba, hai, một – xuất phát! Đám đông reo hò như sấm dậy khi các tay đua lao đi."
+    },
+    {
+     "id": 59,
+     "text": "Tiếng bước chân vang lên trong hành lang tối. Từng bước. Từng bước. Rồi im bặt. Có ai đó đang đứng ngay sau cánh cửa."
+    },
+    {
+     "id": 59,
+     "text": "Hắn mỉm cười. Một nụ cười lạnh lẽo đến rợn người. “Ngươi nghĩ mình có thể trốn thoát sao?”"
+    },
+    {
+     "id": 64,
+     "text": "Thanh kiếm chém xuống! Máu bắn tung toé. Hắn gầm lên, lao tới lần nữa – nhanh hơn, tàn bạo hơn!"
+    },
+    {
+     "id": 64,
+     "text": "Con rồng mở mắt. Cả ngọn núi rung chuyển. Đội quân phía dưới hoảng loạn bỏ chạy tán loạn."
+    },
+    {
+     "id": 64,
+     "text": "Cuộc thi bắt đầu! Ba, hai, một – xuất phát! Đám đông reo hò như sấm dậy khi các tay đua lao đi."
+    },
+    {
+     "id": 64,
+     "text": "Tiếng bước chân vang lên trong hành lang tối. Từng bước. Từng bước. Rồi im bặt. Có ai đó đang đứng ngay sau cánh cửa."
+    },
+    {
+     "id": 64,
+     "text": "Hắn mỉm cười. Một nụ cười lạnh lẽo đến rợn người. “Ngươi nghĩ mình có thể trốn thoát sao?”"
+    },
+    {
+     "id": 69,
+     "text": "Thanh kiếm chém xuống! Máu bắn tung toé. Hắn gầm lên, lao tới lần nữa – nhanh hơn, tàn bạo hơn!"
+    },
+    {
+     "id": 69,
+     "text": "Con rồng mở mắt. Cả ngọn núi rung chuyển. Đội quân phía dưới hoảng loạn bỏ chạy tán loạn."
+    },
+    {
+     "id": 69,
+     "text": "Cuộc thi bắt đầu! Ba, hai, một – xuất phát! Đám đông reo hò như sấm dậy khi các tay đua lao đi."
+    },
+    {
+     "id": 69,
+     "text": "Tiếng bước chân vang lên trong hành lang tối. Từng bước. Từng bước. Rồi im bặt. Có ai đó đang đứng ngay sau cánh cửa."
+    },
+    {
+     "id": 69,
+     "text": "Hắn mỉm cười. Một nụ cười lạnh lẽo đến rợn người. “Ngươi nghĩ mình có thể trốn thoát sao?”"
+    },
+    {
+     "id": 74,
+     "text": "Thanh kiếm chém xuống! Máu bắn tung toé. Hắn gầm lên, lao tới lần nữa – nhanh hơn, tàn bạo hơn!"
+    },
+    {
+     "id": 74,
+     "text": "Con rồng mở mắt. Cả ngọn núi rung chuyển. Đội quân phía dưới hoảng loạn bỏ chạy tán loạn."
+    },
+    {
+     "id": 74,
+     "text": "Cuộc thi bắt đầu! Ba, hai, một – xuất phát! Đám đông reo hò như sấm dậy khi các tay đua lao đi."
+    },
+    {
+     "id": 74,
+     "text": "Tiếng bước chân vang lên trong hành lang tối. Từng bước. Từng bước. Rồi im bặt. Có ai đó đang đứng ngay sau cánh cửa."
+    },
+    {
+     "id": 74,
+     "text": "Hắn mỉm cười. Một nụ cười lạnh lẽo đến rợn người. “Ngươi nghĩ mình có thể trốn thoát sao?”"
+    },
+    {
+     "id": 79,
+     "text": "Thanh kiếm chém xuống! Máu bắn tung toé. Hắn gầm lên, lao tới lần nữa – nhanh hơn, tàn bạo hơn!"
+    },
+    {
+     "id": 79,
+     "text": "Con rồng mở mắt. Cả ngọn núi rung chuyển. Đội quân phía dưới hoảng loạn bỏ chạy tán loạn."
+    },
+    {
+     "id": 79,
+     "text": "Cuộc thi bắt đầu! Ba, hai, một – xuất phát! Đám đông reo hò như sấm dậy khi các tay đua lao đi."
+    },
+    {
+     "id": 79,
+     "text": "Tiếng bước chân vang lên trong hành lang tối. Từng bước. Từng bước. Rồi im bặt. Có ai đó đang đứng ngay sau cánh cửa."
+    },
+    {
+     "id": 79,
+     "text": "Hắn mỉm cười. Một nụ cười lạnh lẽo đến rợn người. “Ngươi nghĩ mình có thể trốn thoát sao?”"
+    },
+    {
+     "id": 84,
+     "text": "Thanh kiếm chém xuống! Máu bắn tung toé. Hắn gầm lên, lao tới lần nữa – nhanh hơn, tàn bạo hơn!"
+    },
+    {
+     "id": 84,
+     "text": "Con rồng mở mắt. Cả ngọn núi rung chuyển. Đội quân phía dưới hoảng loạn bỏ chạy tán loạn."
+    },
+    {
+     "id": 84,
+     "text": "Cuộc thi bắt đầu! Ba, hai, một – xuất phát! Đám đông reo hò như sấm dậy khi các tay đua lao đi."
+    },
+    {
+     "id": 84,
+     "text": "Tiếng bước chân vang lên trong hành lang tối. Từng bước. Từng bước. Rồi im bặt. Có ai đó đang đứng ngay sau cánh cửa."
+    },
+    {
+     "id": 84,
+     "text": "Hắn mỉm cười. Một nụ cười lạnh lẽo đến rợn người. “Ngươi nghĩ mình có thể trốn thoát sao?”"
+    },
+    {
+     "id": 89,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 89,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 89,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 89,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 89,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 94,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 94,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 94,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 94,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 94,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 99,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 99,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 99,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 99,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 99,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 104,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 104,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 104,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 104,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 104,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 109,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 109,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 109,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 109,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 109,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 114,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 114,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 114,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 114,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 114,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 119,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 119,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 119,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 119,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 119,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 124,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 124,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 124,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 124,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 124,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    }
+   ],
+   "blocks": [
+    [
+     0,
+     6
+    ],
+    [
+     7,
+     13
+    ],
+    [
+     14,
+     20
+    ],
+    [
+     21,
+     28
+    ],
+    [
+     29,
+     35
+    ],
+    [
+     36,
+     42
+    ],
+    [
+     43,
+     50
+    ],
+    [
+     51,
+     57
+    ],
+    [
+     58,
+     65
+    ],
+    [
+     66,
+     72
+    ],
+    [
+     73,
+     80
+    ],
+    [
+     81,
+     87
+    ],
+    [
+     88,
+     94
+    ],
+    [
+     95,
+     101
+    ],
+    [
+     102,
+     108
+    ],
+    [
+     109,
+     115
+    ],
+    [
+     116,
+     122
+    ],
+    [
+     123,
+     127
+    ]
+   ],
+   "profile": [
+    [
+     "0.8327781188950206",
+     "0.421448428256191",
+     "-1.3948414772937012"
+    ],
+    [
+     "0.715887176134907",
+     "0.17262426760925612",
+     "-1.3817286166857676"
+    ],
+    [
+     "0.6768179718827944",
+     "0.13581950873140272",
+     "-1.4139554254408742"
+    ],
+    [
+     "0.6791083814228641",
+     "0.2735268184919575",
+     "-1.3352613514541423"
+    ],
+    [
+     "0.9220967358954492",
+     "0.30147697772295023",
+     "-1.464942157183554"
+    ],
+    [
+     "0.8327781188950206",
+     "0.421448428256191",
+     "-1.3948414772937012"
+    ],
+    [
+     "0.1776149890967795",
+     "2.3135167999864037",
+     "-0.0032192101385597706"
+    ],
+    [
+     "-0.8972846497762555",
+     "3.458080046266947",
+     "2.231579530101136"
+    ],
+    [
+     "-0.6605577190350771",
+     "4.321950759294481",
+     "2.0975968436819956"
+    ],
+    [
+     "-0.8972846497762555",
+     "3.458080046266947",
+     "2.231579530101136"
+    ],
+    [
+     "-0.6605577190350771",
+     "4.321950759294481",
+     "2.0975968436819956"
+    ],
+    [
+     "-0.8972846497762555",
+     "3.458080046266947",
+     "2.231579530101136"
+    ],
+    [
+     "-0.8600346487265201",
+     "1.1877988671627753",
+     "0.3449331392663262"
+    ],
+    [
+     "-0.9012433145923826",
+     "1.0846462725964237",
+     "0.3905577366902874"
+    ],
+    [
+     "-0.9926057323300486",
+     "1.0382504079578052",
+     "0.3678878803242243"
+    ],
+    [
+     "-0.5426651565353824",
+     "1.3136115505315276",
+     "0.2786873610439686"
+    ],
+    [
+     "-1.1692722577059091",
+     "1.2334192096340568",
+     "0.6649154815891629"
+    ],
+    [
+     "-0.9139703202566148",
+     "1.0907764071079027",
+     "0.43853131449473753"
+    ]
+   ],
+   "bounds": [
+    37,
+    49,
+    89
+   ]
+  },
+  {
+   "name": "đều một màu",
+   "segments": [
+    {
+     "id": 1,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 1,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 1,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 1,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 1,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 1,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 7,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 7,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 7,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 7,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 7,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 7,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 13,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 13,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 13,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 13,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 13,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 13,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 19,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 19,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 19,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 19,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 19,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 19,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 25,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 25,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 25,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 25,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 25,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 25,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 31,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 31,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 31,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 31,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 31,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 31,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 37,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 37,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 37,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 37,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 37,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 37,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 43,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 43,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 43,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 43,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 43,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 43,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 49,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 49,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 49,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 49,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 49,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 49,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 55,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 55,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 55,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 55,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 55,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 55,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 61,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 61,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 61,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 61,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 61,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 61,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 67,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 67,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 67,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 67,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 67,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 67,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 73,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 73,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 73,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 73,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 73,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 73,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 79,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 79,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 79,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 79,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 79,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 79,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 85,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 85,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 85,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 85,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 85,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 85,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 91,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 91,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 91,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 91,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 91,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 91,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    }
+   ],
+   "blocks": [
+    [
+     0,
+     6
+    ],
+    [
+     7,
+     13
+    ],
+    [
+     14,
+     20
+    ],
+    [
+     21,
+     28
+    ],
+    [
+     29,
+     35
+    ],
+    [
+     36,
+     42
+    ],
+    [
+     43,
+     49
+    ],
+    [
+     50,
+     56
+    ],
+    [
+     57,
+     64
+    ],
+    [
+     65,
+     71
+    ],
+    [
+     72,
+     78
+    ],
+    [
+     79,
+     85
+    ],
+    [
+     86,
+     95
+    ]
+   ],
+   "profile": [
+    [
+     "0.8327781188950206",
+     "0.421448428256191",
+     "-1.3948414772937012"
+    ],
+    [
+     "0.715887176134907",
+     "0.17262426760925612",
+     "-1.3817286166857676"
+    ],
+    [
+     "0.6768179718827944",
+     "0.13581950873140272",
+     "-1.4139554254408742"
+    ],
+    [
+     "0.6791083814228641",
+     "0.2735268184919575",
+     "-1.3352613514541423"
+    ],
+    [
+     "0.9220967358954492",
+     "0.30147697772295023",
+     "-1.464942157183554"
+    ],
+    [
+     "0.8327781188950206",
+     "0.421448428256191",
+     "-1.3948414772937012"
+    ],
+    [
+     "0.715887176134907",
+     "0.17262426760925612",
+     "-1.3817286166857676"
+    ],
+    [
+     "0.6768179718827944",
+     "0.13581950873140272",
+     "-1.4139554254408742"
+    ],
+    [
+     "0.6791083814228641",
+     "0.2735268184919575",
+     "-1.3352613514541423"
+    ],
+    [
+     "0.9220967358954492",
+     "0.30147697772295023",
+     "-1.464942157183554"
+    ],
+    [
+     "0.8327781188950206",
+     "0.421448428256191",
+     "-1.3948414772937012"
+    ],
+    [
+     "0.715887176134907",
+     "0.17262426760925612",
+     "-1.3817286166857676"
+    ],
+    [
+     "0.7397983897738127",
+     "0.27850240797501274",
+     "-1.4084257543643164"
+    ]
+   ],
+   "bounds": []
+  },
+  {
+   "name": "ngắn (< 4 khối)",
+   "segments": [
+    {
+     "id": 1,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 1,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 1,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 4,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 4,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 4,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 7,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 7,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 7,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    }
+   ],
+   "blocks": [
+    [
+     0,
+     8
+    ]
+   ],
+   "profile": [
+    [
+     "0.41247886374032366",
+     "0.3729942512938757",
+     "-1.1386367357838232"
+    ]
+   ],
+   "bounds": []
+  },
+  {
+   "name": "lẫn câu rỗng, ký hiệu, tiêu đề",
+   "segments": [
+    {
+     "id": 1,
+     "text": "ĐẠI CHIẾN BẮT ĐẦU — CHƯƠNG 47: KẺ THÙ CŨ"
+    },
+    {
+     "id": 1,
+     "text": ""
+    },
+    {
+     "id": 1,
+     "text": "!!! ??? … — – ~"
+    },
+    {
+     "id": 1,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 1,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 1,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 1,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 1,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 1,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 10,
+     "text": "ĐẠI CHIẾN BẮT ĐẦU — CHƯƠNG 47: KẺ THÙ CŨ"
+    },
+    {
+     "id": 10,
+     "text": ""
+    },
+    {
+     "id": 10,
+     "text": "!!! ??? … — – ~"
+    },
+    {
+     "id": 10,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 10,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 10,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 10,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 10,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 10,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 19,
+     "text": "ĐẠI CHIẾN BẮT ĐẦU — CHƯƠNG 47: KẺ THÙ CŨ"
+    },
+    {
+     "id": 19,
+     "text": ""
+    },
+    {
+     "id": 19,
+     "text": "!!! ??? … — – ~"
+    },
+    {
+     "id": 19,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 19,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 19,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 19,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 19,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 19,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 28,
+     "text": "ĐẠI CHIẾN BẮT ĐẦU — CHƯƠNG 47: KẺ THÙ CŨ"
+    },
+    {
+     "id": 28,
+     "text": ""
+    },
+    {
+     "id": 28,
+     "text": "!!! ??? … — – ~"
+    },
+    {
+     "id": 28,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 28,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 28,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 28,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 28,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 28,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 37,
+     "text": "ĐẠI CHIẾN BẮT ĐẦU — CHƯƠNG 47: KẺ THÙ CŨ"
+    },
+    {
+     "id": 37,
+     "text": ""
+    },
+    {
+     "id": 37,
+     "text": "!!! ??? … — – ~"
+    },
+    {
+     "id": 37,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 37,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 37,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 37,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 37,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 37,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 46,
+     "text": "ĐẠI CHIẾN BẮT ĐẦU — CHƯƠNG 47: KẺ THÙ CŨ"
+    },
+    {
+     "id": 46,
+     "text": ""
+    },
+    {
+     "id": 46,
+     "text": "!!! ??? … — – ~"
+    },
+    {
+     "id": 46,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 46,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 46,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 46,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 46,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 46,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 55,
+     "text": "ĐẠI CHIẾN BẮT ĐẦU — CHƯƠNG 47: KẺ THÙ CŨ"
+    },
+    {
+     "id": 55,
+     "text": ""
+    },
+    {
+     "id": 55,
+     "text": "!!! ??? … — – ~"
+    },
+    {
+     "id": 55,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 55,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 55,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 55,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 55,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 55,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 64,
+     "text": "ĐẠI CHIẾN BẮT ĐẦU — CHƯƠNG 47: KẺ THÙ CŨ"
+    },
+    {
+     "id": 64,
+     "text": ""
+    },
+    {
+     "id": 64,
+     "text": "!!! ??? … — – ~"
+    },
+    {
+     "id": 64,
+     "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm."
+    },
+    {
+     "id": 64,
+     "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau."
+    },
+    {
+     "id": 64,
+     "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê."
+    },
+    {
+     "id": 64,
+     "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả."
+    },
+    {
+     "id": 64,
+     "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo."
+    },
+    {
+     "id": 64,
+     "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+    },
+    {
+     "id": 73,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 73,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 73,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 73,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 73,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 73,
+     "text": ""
+    },
+    {
+     "id": 73,
+     "text": "Một chữ."
+    },
+    {
+     "id": 80,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 80,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 80,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 80,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 80,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 80,
+     "text": ""
+    },
+    {
+     "id": 80,
+     "text": "Một chữ."
+    },
+    {
+     "id": 87,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 87,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 87,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 87,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 87,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 87,
+     "text": ""
+    },
+    {
+     "id": 87,
+     "text": "Một chữ."
+    },
+    {
+     "id": 94,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 94,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 94,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 94,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 94,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 94,
+     "text": ""
+    },
+    {
+     "id": 94,
+     "text": "Một chữ."
+    },
+    {
+     "id": 101,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 101,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 101,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 101,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 101,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 101,
+     "text": ""
+    },
+    {
+     "id": 101,
+     "text": "Một chữ."
+    },
+    {
+     "id": 108,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 108,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 108,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 108,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 108,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 108,
+     "text": ""
+    },
+    {
+     "id": 108,
+     "text": "Một chữ."
+    },
+    {
+     "id": 115,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 115,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 115,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 115,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 115,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 115,
+     "text": ""
+    },
+    {
+     "id": 115,
+     "text": "Một chữ."
+    },
+    {
+     "id": 122,
+     "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+    },
+    {
+     "id": 122,
+     "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…"
+    },
+    {
+     "id": 122,
+     "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực."
+    },
+    {
+     "id": 122,
+     "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa."
+    },
+    {
+     "id": 122,
+     "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc."
+    },
+    {
+     "id": 122,
+     "text": ""
+    },
+    {
+     "id": 122,
+     "text": "Một chữ."
+    }
+   ],
+   "blocks": [
+    [
+     0,
+     9
+    ],
+    [
+     10,
+     20
+    ],
+    [
+     21,
+     30
+    ],
+    [
+     31,
+     40
+    ],
+    [
+     41,
+     50
+    ],
+    [
+     51,
+     60
+    ],
+    [
+     61,
+     70
+    ],
+    [
+     71,
+     79
+    ],
+    [
+     80,
+     88
+    ],
+    [
+     89,
+     97
+    ],
+    [
+     98,
+     108
+    ],
+    [
+     109,
+     117
+    ],
+    [
+     118,
+     127
+    ]
+   ],
+   "profile": [
+    [
+     "0.7507973690398635",
+     "0.9749922675031663",
+     "-1.0109807162018034"
+    ],
+    [
+     "1.121700198377945",
+     "1.4425528876869362",
+     "-1.0236735658527967"
+    ],
+    [
+     "0.9399003630413694",
+     "1.0825980000072906",
+     "-1.1202116596755574"
+    ],
+    [
+     "0.8310329102944141",
+     "0.8553480330230256",
+     "-1.1050386216579287"
+    ],
+    [
+     "0.794289744511185",
+     "0.8206409189815508",
+     "-1.1354078832336072"
+    ],
+    [
+     "0.9161485883803898",
+     "0.8995975272367307",
+     "-1.2263081490036263"
+    ],
+    [
+     "0.7628336797489117",
+     "0.9634936404882032",
+     "-0.9518303880652363"
+    ],
+    [
+     "-0.6476399624520384",
+     "0.8551660665844693",
+     "0.009333154689017764"
+    ],
+    [
+     "-0.5864294845778893",
+     "1.2849489997766632",
+     "0.3202769816368697"
+    ],
+    [
+     "-1.2098665542306801",
+     "1.2093104315689338",
+     "0.7070468037961338"
+    ],
+    [
+     "-0.9207853012676307",
+     "1.1422844687442468",
+     "0.4037011339594821"
+    ],
+    [
+     "-0.9427714110888875",
+     "1.0616406809123133",
+     "0.43356136650566435"
+    ],
+    [
+     "-0.9746891152373026",
+     "1.1768960634298338",
+     "0.5773586793134327"
+    ]
+   ],
+   "bounds": [
+    64
+   ]
+  }
+ ]
+}

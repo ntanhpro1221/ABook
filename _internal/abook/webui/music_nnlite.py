@@ -15,7 +15,11 @@ Chữ cảnh -> đặc trưng định nghĩa theo ĐIỂM MÃ (code point), khô
 3. `features`: mục băm "1|" + t (unigram) và "2|" + t[i] + " " + t[i+1] (bigram) trên CẢ dãy token; FNV-1a 32 bit trên byte UTF-8; ô = băm % B; đếm theo ô (va chạm
    thì cộng), giá trị = log1p(đếm) rồi chia chuẩn L2; ô tăng dần.
 4. `dense` (chữ đã NFC, chưa hạ chữ): tỉ lệ dòng mở bằng DIALOG, "!" và "?" trên số token WORD, log1p(số token WORD) / 10.
-5. `weight` = max(1, số mẩu `split()`) - y hệt trọng số của `ChapterStudent` (khoảng trắng = `str.isspace`: cũng là thứ `str.strip` / `str.split` dùng)."""
+5. `weight` = max(1, số mẩu `split()`) - y hệt trọng số của `ChapterStudent` (khoảng trắng = `str.isspace`: cũng là thứ `str.strip` / `str.split` dùng).
+
+Ranh cảnh LB (Corpus research/music/SPEC_lb_app.md; sai rõ bộ 20: 16,7 -> 11,1 %): cũng từ model này, thuần Python (không numpy) - chia chương thành khối >= 150 chữ, mỗi khối một hồ sơ
+(pV, pE, pT)/ysd, quy hoạch động tìm chỗ hồ sơ đổi (`Model.scene_bounds`). `scene_bounds(script)` là nguồn ranh "lite" của `music_nnscene.chapter_scenes`; bản Kotlin
+(`NnLite.sceneBounds`) ra y hệt trên bộ ví dụ tests/fixtures/music/nnlite/lb_fixture.json."""
 from __future__ import annotations
 
 import hashlib
@@ -39,6 +43,8 @@ WORD_CATEGORIES = frozenset({"Lu", "Ll", "Lt", "Lm", "Lo", "Mn", "Mc", "Nd", "Nl
 PUNCT = frozenset("!?…\"“”«»—–-~")
 DIALOG = frozenset("\"“«-–—")
 FNV_OFFSET, FNV_PRIME = 2166136261, 16777619
+LB_LAMBDA, LB_BLOCK_WORDS, LB_MIN_BLOCKS = 2.0, 150, 2  # phạt mỗi ranh, chữ tối thiểu một khối, khối tối thiểu một đoạn (SPEC_lb_app mục 2)
+LB_SOURCE, LB_REASON = "lite", "mood_shift"  # tên nguồn ranh trong `music_scenes.with_scene_breaks` và lý do của đoạn mới
 
 
 # ---- chữ -> đặc trưng ---------------------------------------------------------------------------------------------------------------
@@ -97,6 +103,53 @@ def weight(text: str) -> int:
     return max(1, len(text.split()))
 
 
+# ---- ranh cảnh LB ------------------------------------------------------------------------------------------------------------------
+def blocks(segments: list[dict[str, Any]], block_words: int = LB_BLOCK_WORDS) -> list[tuple[int, int]]:
+    """Khối (vị trí câu đầu, câu cuối) của chương: cộng số chữ `split()` theo câu, đủ `block_words` thì đóng khối ở câu ấy; phần dư cuối < một nửa và đã có khối thì gộp vào khối trước."""
+    out: list[tuple[int, int]] = []
+    start = count = 0
+    for index, segment in enumerate(segments):
+        count += len(str(segment.get("text") or "").split())
+        if count >= block_words:
+            out.append((start, index))
+            start, count = index + 1, 0
+    if start < len(segments):
+        if out and count < block_words / 2:
+            out[-1] = (out[-1][0], len(segments) - 1)
+        else:
+            out.append((start, len(segments) - 1))
+    return out
+
+
+def partition(profile: list[list[float]], lam: float = LB_LAMBDA, min_blocks: int = LB_MIN_BLOCKS) -> list[int]:
+    """Chỉ số khối MỞ mỗi đoạn (trừ đoạn đầu): cực tiểu Σ SSE(đoạn) + lam·(số đoạn − 1), mỗi đoạn >= `min_blocks` khối; dưới 2·`min_blocks` khối thì không ranh.
+    SSE qua tổng tiền tố; duyệt j tăng rồi i tăng, chỉ thay khi nhỏ hơn hẳn (hoà giữ i nhỏ)."""
+    n = len(profile)
+    if n < 2 * min_blocks:
+        return []
+    prefix, prefix2 = [[0.0, 0.0, 0.0]], [0.0]
+    for row in profile:
+        prefix.append([prefix[-1][axis] + row[axis] for axis in range(3)])
+        prefix2.append(prefix2[-1] + sum(value * value for value in row))
+    inf = float("inf")
+    best, back = [inf] * (n + 1), [0] * (n + 1)
+    best[0] = -lam
+    for j in range(min_blocks, n + 1):
+        for i in range(0, j - min_blocks + 1):
+            if best[i] < inf:
+                s = [prefix[j][axis] - prefix[i][axis] for axis in range(3)]
+                value = best[i] + lam + (prefix2[j] - prefix2[i] - (s[0] * s[0] + s[1] * s[1] + s[2] * s[2]) / (j - i))
+                if value < best[j]:
+                    best[j], back[j] = value, i
+    cuts: list[int] = []
+    j = n
+    while j > 0:
+        j = back[j]
+        if j > 0:
+            cuts.append(j)
+    return sorted(cuts)
+
+
 # ---- model --------------------------------------------------------------------------------------------------------------------------
 class Model:
     """Trọng số NN-lite đọc từ `nnlite.bin`; ném `ValueError` khi file sai (dùng `model()` để có None + log thay vì lỗi)."""
@@ -147,6 +200,15 @@ class Model:
         mean = [sum(wi * yi[axis] for wi, yi in zip(w, y)) / total for axis in range(3)]
         return [{"dV": yi[0] - mean[0] + self.c[0], "dE": yi[1] - mean[1] + self.c[1], "dT": yi[2] - mean[2] + self.c[2], "chapterV": level} for yi in y]
 
+    def block_profile(self, segments: list[dict[str, Any]], spans: list[tuple[int, int]]) -> list[list[float]]:
+        """Hồ sơ từng khối: (pV, pE, pT) của chữ khối chia độ lệch chuẩn đích `ysd`."""
+        return [[value / sd for value, sd in zip(self.scene(music_moods.scene_text(segments, first, last))[:3], self.ysd[:3])] for first, last in spans]
+
+    def scene_bounds(self, segments: list[dict[str, Any]]) -> list[Any]:
+        """`id` của câu đầu mỗi khối mở đoạn mới (trừ đoạn đầu): chỗ hồ sơ V / E / T của chương đổi (LB)."""
+        spans = blocks(segments)
+        return [segments[spans[cut][0]].get("id") for cut in partition(self.block_profile(segments, spans))]
+
     def chapter_items(self, script: dict[str, Any], scenes: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
         """Mục (`chapterId`, `firstSegment`, `lastSegment`, `dV`, `dE`, `dT`, `chapterV`) của từng đoạn `scenes` (của `music_scenes.book_scenes([script], None, None, None)`)
         của chương `script`, cùng khuôn với `ChapterStudent.chapter`. None: đoạn không khớp câu của chương."""
@@ -193,3 +255,12 @@ def student_items(script: dict[str, Any], scenes: list[dict[str, Any]]) -> list[
     """Chỗ cắm `music_nnscene.StudentItems`: mục NN-lite của chương, None khi không có model hay chương không dùng được."""
     loaded = model()
     return None if loaded is None else loaded.chapter_items(script, scenes)
+
+
+def scene_bounds(script: dict[str, Any]) -> dict[Any, str]:
+    """Chỗ cắm `music_nnscene.SceneBounds`: {id câu mở cảnh mới: "mood_shift"} của chương theo LB; rỗng khi không có model hay chương ngắn (dưới 4 khối)."""
+    loaded = model()
+    if loaded is None:
+        return {}
+    segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
+    return {sid: LB_REASON for sid in loaded.scene_bounds(segments)}

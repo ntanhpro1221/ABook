@@ -15,7 +15,8 @@ import java.nio.ByteOrder
 
 /**
  * NN-lite trên điện thoại (NnLite.kt) phải ra GIỐNG HỆT bản Python (music_nnlite.py) trên hai bộ ví dụ dùng chung `tests/fixtures/music/nnlite/` (chữ dựng sẵn):
- * chữ -> token -> ô băm tuyệt đối -> đặc trưng (sai < 1e-12) -> 4 số và mục chương (sai < 1e-3), cùng file `nnlite.bin` đóng trong app.
+ * chữ -> token -> ô băm tuyệt đối -> đặc trưng (sai < 1e-12) -> 4 số và mục chương (sai < 1e-3), cùng file `nnlite.bin` đóng trong app; thêm `lb_fixture.json`: khối (tuyệt đối),
+ * hồ sơ khối (sai < 1e-3) và ranh cảnh LB (tuyệt đối).
  */
 class NnLiteTest {
     companion object {
@@ -23,6 +24,7 @@ class NnLiteTest {
         private val modelFile = File("../../../abook/webui/assets/nnlite.bin")
         private lateinit var text: JSONObject
         private lateinit var out: JSONObject
+        private lateinit var lb: JSONObject
         private lateinit var model: NnLite
 
         @JvmStatic
@@ -30,6 +32,7 @@ class NnLiteTest {
         fun load() {
             text = JSONObject(File(folder, "nnlite_text_fixture.json").readText(Charsets.UTF_8))
             out = JSONObject(File(folder, "nnlite_out_fixture.json").readText(Charsets.UTF_8))
+            lb = JSONObject(File(folder, "lb_fixture.json").readText(Charsets.UTF_8))
             model = NnLite.parse(modelFile.readBytes())
         }
 
@@ -188,5 +191,113 @@ class NnLiteTest {
         assertEquals(direct[1][2], items[1].dT, 0.0)
         assertNull(model.chapterItems(1, segments, listOf(base[0], base[1].copy(lastSegment = 99))))
         assertNull(model.chapterItems(1, segments, emptyList()))
+    }
+
+    // ---- ranh cảnh LB (SPEC_lb_app) -----------------------------------------------------------------------------------------------------------
+    private fun segmentsOf(chapter: JSONObject, unique: Boolean = false): List<SceneSegment> {
+        val rows = chapter.getJSONArray("segments")
+        return (0 until rows.length()).map { SceneSegment(if (unique) it + 1 else rows.getJSONObject(it).getInt("id"), rows.getJSONObject(it).getString("text")) }
+    }
+
+    private fun sized(vararg words: Int): List<SceneSegment> = words.mapIndexed { index, count -> SceneSegment(index + 1, List(count) { "chữ" }.joinToString(" ")) }
+
+    @Test
+    fun lb_blocks_profiles_and_bounds_match_python_on_the_shared_fixture() {
+        assertEquals(NnLite.LB_LAMBDA, lb.getDouble("lambda"), 0.0)
+        assertEquals(NnLite.LB_BLOCK_WORDS, lb.getInt("block_words"))
+        assertEquals(NnLite.LB_MIN_BLOCKS, lb.getInt("min_blocks"))
+        assertEquals(modelFile.length(), lb.getLong("model_bytes"))
+        val tolerance = lb.getDouble("tolerance_profile")
+        val chapters = lb.getJSONArray("chapters")
+        assertTrue(chapters.length() >= 5)
+        for (index in 0 until chapters.length()) {
+            val chapter = chapters.getJSONObject(index)
+            val name = chapter.getString("name")
+            val segments = segmentsOf(chapter)
+            val spans = NnLite.blocks(segments)
+            val wantBlocks = chapter.getJSONArray("blocks")
+            assertEquals("$name: số khối", wantBlocks.length(), spans.size)
+            for ((at, span) in spans.withIndex()) assertEquals("$name: khối $at", ints(wantBlocks.getJSONArray(at)), listOf(span.first, span.second))
+            val profile = model.blockProfile(segments, spans)
+            val wantProfile = chapter.getJSONArray("profile")
+            for ((at, row) in profile.withIndex()) {
+                for (axis in 0 until 3) assertEquals("$name: hồ sơ khối $at trục $axis", number(wantProfile.getJSONArray(at).getString(axis)), row[axis], tolerance)
+            }
+            assertEquals("$name: ranh", ints(chapter.getJSONArray("bounds")), model.boundIds(segments))
+        }
+    }
+
+    @Test
+    fun lb_blocks_close_at_150_words_and_a_short_tail_joins_the_last_block() {
+        assertEquals(listOf(0 to 2), NnLite.blocks(sized(100, 60, 40)))
+        assertEquals(listOf(0 to 1, 2 to 2), NnLite.blocks(sized(100, 60, 80)))
+        assertEquals(listOf(0 to 2), NnLite.blocks(sized(100, 60, 74)))
+        assertEquals(listOf(0 to 1, 2 to 2), NnLite.blocks(sized(100, 60, 75)))
+        assertEquals(listOf(0 to 1, 2 to 2), NnLite.blocks(sized(149, 1, 150)))
+        assertEquals(listOf(0 to 1), NnLite.blocks(sized(20, 30)))
+        assertTrue(NnLite.blocks(emptyList()).isEmpty())
+        assertEquals(listOf(0 to 3), NnLite.blocks(listOf(SceneSegment(1, ""), SceneSegment(2, "   "), SceneSegment(3, "\u00a0\u3000")) + sized(200)))
+        // Khoảng trắng của Python (NBSP, ideographic space, em space) cũng ngăn chữ.
+        val odd = SceneSegment(1, "a\u00a0b\u3000c\u2003d e")
+        assertEquals(listOf(0 to 29), NnLite.blocks(List(30) { odd }))
+        assertEquals(listOf(0 to 30), NnLite.blocks(List(29) { odd } + listOf(SceneSegment(2, "x"), SceneSegment(3, "y"))))
+    }
+
+    @Test
+    fun lb_fewer_than_four_blocks_never_cut_and_a_step_in_the_profile_is_found() {
+        fun rows(vararg x: Double) = x.map { doubleArrayOf(it, it, it) }
+        val wild = listOf(doubleArrayOf(0.0, 0.0, 0.0), doubleArrayOf(9.0, 9.0, 9.0), doubleArrayOf(-9.0, 5.0, 0.0))
+        assertTrue(NnLite.partition(wild).isEmpty() && NnLite.partition(wild.take(2)).isEmpty() && NnLite.partition(emptyList()).isEmpty())
+        assertEquals(listOf(3), NnLite.partition(rows(0.0, 0.0, 0.0, 2.0, 2.0, 2.0)))
+        assertTrue("3 khối: không ranh", NnLite.partition(rows(0.0, 2.0, 2.0)).isEmpty())
+        assertTrue("bốn khối xen kẽ", NnLite.partition(rows(0.0, 3.0, 0.0, 3.0)).isEmpty())
+        assertTrue("đều một màu", NnLite.partition(rows(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)).isEmpty())
+        assertTrue("bước nhỏ hơn phí ranh", NnLite.partition(rows(0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5)).isEmpty())
+        assertEquals(listOf(4), NnLite.partition(rows(0.0, 0.0, 0.0, 0.0, 1.2, 1.2, 1.2, 1.2)))
+    }
+
+    @Test
+    fun lb_a_uniform_chapter_has_no_bounds() {
+        val text = out.getJSONArray("scenes").getJSONObject(0).getString("text")
+        val segments = List(60) { SceneSegment(10 * it + 1, text) }
+        assertTrue(model.boundIds(segments).isEmpty() && model.sceneBounds(segments).isEmpty())
+    }
+
+    @Test
+    fun lb_a_cue_wins_a_spot_the_lite_bound_also_claims() {
+        val segments = listOf(SceneSegment(1, "Mở đầu."), SceneSegment(2, "Câu hai."), SceneSegment(3, "Tiêu đề.", "heading"), SceneSegment(4, "Câu bốn."))
+        val lite = mapOf(NnLite.LB_SOURCE to mapOf(3 to NnLite.LB_REASON, 4 to NnLite.LB_REASON))
+        val withBreaks = SceneCues.withSceneBreaks(segments, lite)
+        assertEquals("cue" to "heading", withBreaks[1].sceneSource to withBreaks[1].sceneCue)
+        assertEquals("lite" to "mood_shift", withBreaks[2].sceneSource to withBreaks[2].sceneCue)
+        assertTrue(!withBreaks[0].sceneBreak)
+        assertEquals("mood_shift", SceneCues.hardBreak(segments[3], withBreaks[2]))
+        assertEquals("không nguồn ngoài: như trước", SceneCues.withSceneBreaks(segments).map { it.sceneSource }, listOf(null, "cue", null, null))
+    }
+
+    @Test
+    fun lb_bounds_split_the_lite_scenes_the_student_guesses_on_the_new_scenes_and_n0_is_untouched() {
+        val chapters = lb.getJSONArray("chapters")
+        val chapter = (0 until chapters.length()).map { chapters.getJSONObject(it) }.first { it.getJSONArray("bounds").length() >= 2 }
+        val segments = segmentsOf(chapter, unique = true)
+        val spans = NnLite.blocks(segments)
+        val cuts = NnLite.partition(model.blockProfile(segments, spans)).map { segments[spans[it].first].id }
+        assertTrue(cuts.size >= 2)
+        val seen = ArrayList<List<SceneScene>>()
+        val student: SceneStudent = { id, segs, base -> seen.add(base); model.chapterItems(id, segs, base) }
+        val plain = SceneBook.chapterScenes(7, segments, student)
+        seen.clear()
+        val lite = SceneBook.chapterScenes(7, segments, student, model::sceneBounds)
+        assertEquals("học sinh chạy MỘT lần", 1, seen.size)
+        val shifts = seen[0].filter { it.reason == "mood_shift" }.map { it.firstSegment }
+        assertTrue(shifts.isNotEmpty() && cuts.containsAll(shifts))
+        assertTrue(plain.map { it.firstSegment } != lite.map { it.firstSegment })
+        assertEquals(seen[0].map { it.firstSegment }, lite.map { it.firstSegment })
+        assertTrue(lite.all { it.moodSource == "student" && it.confidence >= SceneChooser.WEAK_MOOD })
+        // N0 (không học sinh) và học sinh bỏ chương: không ranh LB.
+        val n0 = SceneBook.chapterScenes(7, segments, null)
+        assertEquals(n0, SceneBook.chapterScenes(7, segments, null, model::sceneBounds))
+        assertEquals(n0, SceneBook.chapterScenes(7, segments, { _, _, _ -> null }, model::sceneBounds))
+        assertTrue("khoá đệm plan đổi để plan cũ không dùng lại", SceneBook.ENGINE_VERSION >= 4)
     }
 }

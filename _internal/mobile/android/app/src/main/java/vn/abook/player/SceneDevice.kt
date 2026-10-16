@@ -137,7 +137,8 @@ object DeviceScenes {
         // Hỏi cả chuyện MẠNG như máy tính (`music_track_available(sizes=False)`): nguồn bài vừa hỏng / máy mất mạng thì chọn trong số bài đã tải, không chọn bài sẽ im lặng.
         val choice = SceneChoice(bookId, available = catalog::available)
         val student: SceneStudent? = model?.first?.let { it::chapterItems }
-        val book = SceneBook(File(root, key), order, { id -> body(bookId, id, entries[id]) }, choice, catalog::verifySizes, student) { valence, arousal -> near.tracks(valence, arousal) }
+        val bounds: SceneBounds? = model?.first?.let { it::sceneBounds } // LB: ranh cảnh cùng model, chỉ ở đường NN-lite
+        val book = SceneBook(File(root, key), order, { id -> body(bookId, id, entries[id]) }, choice, catalog::verifySizes, student, bounds) { valence, arousal -> near.tracks(valence, arousal) }
         books[bookId] = key to book
         return book
     }

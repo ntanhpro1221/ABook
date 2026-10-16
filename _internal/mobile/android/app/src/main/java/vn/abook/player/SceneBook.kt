@@ -13,6 +13,11 @@ import kotlin.math.max
 typealias SceneStudent = (chapterId: Int, segments: List<SceneSegment>, scenes: List<SceneScene>) -> List<StudentItem>?
 
 /**
+ * Nguồn ranh cảnh "lite" (LB, `music_nnscene.SceneBounds`): {id câu mở cảnh mới: lý do} của chương, hay rỗng. Điện thoại cắm [NnLite.sceneBounds].
+ */
+typealias SceneBounds = (segments: List<SceneSegment>) -> Map<Int, String>
+
+/**
  * Plan nhạc theo cảnh của MỘT cuốn chỉ có chữ, đường N0 hay NN-lite (`student`) - bản Kotlin của `music_nnscene.SceneBook` + `build_chapter` + `chapter_cues`: dựng TỪNG chương khi cần
  * (câu của chương -> đoạn nhạc -> bài), nhớ bản ghi mỗi chương một file trong `directory` (tên thư mục mang khoá: đổi khoá là dựng lại từ đầu).
  *
@@ -36,6 +41,8 @@ class SceneBook(
     private val verify: (List<String>) -> Boolean = { false },
     /** Học sinh NN-lite (null = đường N0): chỉnh V / E / T của đoạn quanh mức chương, đúng đường NN-V của máy tính ([chapterScenes]). */
     private val student: SceneStudent? = null,
+    /** Ranh cảnh LB của NN-lite (null = không ranh; chỉ dùng cùng `student`): vào đoạn nền TRƯỚC khi học sinh chạy ([chapterScenes]). */
+    private val bounds: SceneBounds? = null,
     /** Bài quanh đích (valence, arousal), đúng thứ tự `near` của danh mục (ô rồi bài trong ô). */
     private val candidates: (Double, Double) -> List<SceneTrack>,
 ) {
@@ -93,7 +100,7 @@ class SceneBook(
         val sha = sha1(text.toByteArray(Charsets.UTF_8))
         read(chapterId, sha)?.let { return it }
         val segments = SceneSegmenter.script(text)
-        val scenes = chapterScenes(chapterId, segments, student)
+        val scenes = chapterScenes(chapterId, segments, student, bounds)
         val paragraphs = SceneSegmenter.paragraphIds(segments.map { it.text }, text)
         val paragraphOf = HashMap<Int, Int>()
         for ((index, segment) in segments.withIndex()) paragraphOf[segment.id] = paragraphs[index] // trùng id: câu sau thắng (dict của Python)
@@ -240,7 +247,7 @@ class SceneBook(
 
     companion object {
         /** Đổi khi cách tách câu / dựng đoạn / chọn bài / ánh xạ sang đoạn màn đọc đổi: bản ghi đã dựng không dùng lại. */
-        const val ENGINE_VERSION = 3 // 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/, ô cells/ không có); 3: bản ghi mang `loops`, đoạn có thể là của học sinh NN-lite
+        const val ENGINE_VERSION = 4 // 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/, ô cells/ không có); 3: bản ghi mang `loops`, đoạn có thể là của học sinh NN-lite; 4: ranh cảnh LB của NN-lite
         const val FORMAT_VERSION = 1
 
         /** Trần số lần chọn lại một chương vì bài quá cỡ (`music_nnscene.VERIFY_ROUNDS`). */
@@ -249,11 +256,14 @@ class SceneBook(
         /**
          * `music_nnscene.chapter_scenes`: đoạn nhạc của chương. MỘT chỗ dựng đoạn: có `student` thì chỉnh V / E / T quanh mức chương ([SceneScenes.applyStudent]) và nâng confidence của đoạn
          * học sinh lên sàn `WEAK_MOOD` (NN-V: V / E của học sinh tới bộ chọn bài); không có, hay học sinh trả null (chương không dùng được), thì đoạn N0 nguyên.
+         * `bounds` (chỉ cùng `student`, LB): ranh "lite" vào đoạn nền TRƯỚC khi học sinh chạy nên học sinh đoán trên các đoạn mới; học sinh bỏ chương thì không ranh LB.
          */
-        fun chapterScenes(chapterId: Int, segments: List<SceneSegment>, student: SceneStudent?): List<SceneScene> {
-            val base = SceneScenes.chapterScenes(chapterId, segments)
+        fun chapterScenes(chapterId: Int, segments: List<SceneSegment>, student: SceneStudent?, bounds: SceneBounds? = null): List<SceneScene> {
+            val lite = if (student != null && bounds != null) bounds(segments) else emptyMap()
+            val boundaries = if (lite.isEmpty()) emptyMap() else mapOf(NnLite.LB_SOURCE to lite)
+            val base = SceneScenes.chapterScenes(chapterId, segments, boundaries)
             val applied = if (student == null) null else SceneScenes.applyStudent(base, student(chapterId, segments, base))
-            return applied?.map { it.copy(confidence = max(it.confidence, SceneChooser.WEAK_MOOD)) } ?: base
+            return applied?.map { it.copy(confidence = max(it.confidence, SceneChooser.WEAK_MOOD)) } ?: if (boundaries.isEmpty()) base else SceneScenes.chapterScenes(chapterId, segments)
         }
 
         fun sha1(bytes: ByteArray): String = MessageDigest.getInstance("SHA-1").digest(bytes).joinToString("") { "%02x".format(it) }

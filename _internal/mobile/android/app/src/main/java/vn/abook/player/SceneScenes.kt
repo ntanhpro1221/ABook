@@ -104,9 +104,10 @@ object SceneScenes {
 
     private class Draft(var first: Int, var last: Int, val reason: String, var seconds: Double)
 
-    fun chapterScenes(chapterId: Int, input: List<SceneSegment>): List<SceneScene> {
+    /** `boundaries`: ranh giới tính sẵn ngoài chương theo nguồn ({"lite": {id: "mood_shift"}} của LB, [NnLite.sceneBounds]); xem [SceneCues.withSceneBreaks]. */
+    fun chapterScenes(chapterId: Int, input: List<SceneSegment>, boundaries: Map<String, Map<Int, String>> = emptyMap()): List<SceneScene> {
         if (input.isEmpty()) return emptyList()
-        val segments = SceneCues.withSceneBreaks(input)
+        val segments = SceneCues.withSceneBreaks(input, boundaries)
         val seconds = durations(segments)
         val timeline = ArrayList<Double>(segments.size)
         var clock = 0.0

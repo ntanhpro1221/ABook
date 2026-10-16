@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nghe ngay
 
 - Trên máy tính, khi một phần của đoạn không đọc được bằng giọng trực tuyến, đoạn ấy báo lỗi ngay thay vì đợi các phần khác đọc xong. Kết nối của các phần còn lại cũng được trả ngay nên đoạn bạn sắp nghe không phải xếp hàng sau chúng (giống điện thoại từ 0.4.78).
+- Nhạc nền theo cảnh đổi bài đúng chỗ hơn khi máy không cài gói phân tích nhạc (máy tính và điện thoại): máy tự nhận ra chỗ không khí của chương đổi từ êm sang buồn hay sang gay cấn, thay vì chỉ chia theo độ dài. Trên 108 chương thử, nhạc lệch rõ so với cảnh giảm từ 16,7 % xuống 11,1 %, và cảnh buồn bị phát nhạc vui giảm từ 18,3 % xuống 12,2 % số giây, đổi lại nhạc đổi bài thường hơn một chút (12,9 → 15,5 lần mỗi giờ nghe); chương nào bạn đã nghe dở thì nhạc được dựng lại theo cách mới khi bạn nghe tiếp.
 
 ## [0.4.78] - 2026-10-16
 

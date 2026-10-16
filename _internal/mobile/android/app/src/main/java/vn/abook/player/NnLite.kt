@@ -93,9 +93,35 @@ class NnLite private constructor(
         }
     }
 
+    /** Hồ sơ từng khối (`music_nnlite.Model.block_profile`): (pV, pE, pT) của chữ khối chia độ lệch chuẩn đích `ysd`. */
+    fun blockProfile(segments: List<SceneSegment>, spans: List<Pair<Int, Int>>): List<DoubleArray> =
+        spans.map { (first, last) ->
+            val y = scene(sceneText(segments, first, last))
+            DoubleArray(3) { y[it] / ysd[it] }
+        }
+
+    /** `id` câu đầu mỗi khối mở đoạn mới, trừ đoạn đầu (LB, `music_nnlite.Model.scene_bounds`), theo thứ tự chương. */
+    fun boundIds(segments: List<SceneSegment>): List<Int> {
+        val spans = blocks(segments)
+        return partition(blockProfile(segments, spans)).map { segments[spans[it].first].id }
+    }
+
+    /** Nguồn ranh "lite" của [SceneBook.chapterScenes] (`music_nnlite.scene_bounds`): {id câu mở cảnh mới: "mood_shift"}. */
+    fun sceneBounds(segments: List<SceneSegment>): Map<Int, String> {
+        val out = LinkedHashMap<Int, String>()
+        for (id in boundIds(segments)) out[id] = LB_REASON
+        return out
+    }
+
     companion object {
         const val N_OUT = 4
         const val N_DENSE = 4
+        /** LB (SPEC_lb_app mục 2): phạt mỗi ranh, chữ tối thiểu một khối, khối tối thiểu một đoạn; tên nguồn ranh và lý do của đoạn mới. */
+        const val LB_LAMBDA = 2.0
+        const val LB_BLOCK_WORDS = 150
+        const val LB_MIN_BLOCKS = 2
+        const val LB_SOURCE = "lite"
+        const val LB_REASON = "mood_shift"
         private val MAGIC = byteArrayOf('N'.code.toByte(), 'N'.code.toByte(), 'L'.code.toByte(), '1'.code.toByte())
         private const val FNV_OFFSET = 2166136261L
         private const val FNV_PRIME = 16777619L
@@ -211,6 +237,68 @@ class NnLite private constructor(
 
         /** Trọng số cảnh: số mẩu `str.split()` (khoảng trắng của Python, [Py.split]), ít nhất 1. */
         fun weight(text: String): Int = maxOf(1, Py.split(text).size)
+
+        /**
+         * `music_nnlite.blocks`: khối (vị trí câu đầu, câu cuối): cộng số chữ `split()` theo câu ([Py.split]), đủ [blockWords] thì đóng khối ở câu ấy; phần dư cuối
+         * < một nửa và đã có khối thì gộp vào khối trước.
+         */
+        fun blocks(segments: List<SceneSegment>, blockWords: Int = LB_BLOCK_WORDS): List<Pair<Int, Int>> {
+            val out = ArrayList<Pair<Int, Int>>()
+            var start = 0
+            var count = 0
+            for ((index, segment) in segments.withIndex()) {
+                count += Py.split(segment.text).size
+                if (count >= blockWords) {
+                    out.add(start to index)
+                    start = index + 1
+                    count = 0
+                }
+            }
+            if (start < segments.size) {
+                if (out.isNotEmpty() && count < blockWords / 2.0) out[out.size - 1] = out.last().first to segments.size - 1
+                else out.add(start to segments.size - 1)
+            }
+            return out
+        }
+
+        /**
+         * `music_nnlite.partition`: chỉ số khối MỞ mỗi đoạn (trừ đoạn đầu), cực tiểu Σ SSE(đoạn) + lam·(số đoạn − 1), mỗi đoạn >= [minBlocks] khối; dưới 2·[minBlocks] khối: không ranh.
+         * SSE qua tổng tiền tố (Double, cùng thứ tự phép tính với Python); duyệt j tăng rồi i tăng, chỉ thay khi nhỏ hơn hẳn.
+         */
+        fun partition(profile: List<DoubleArray>, lam: Double = LB_LAMBDA, minBlocks: Int = LB_MIN_BLOCKS): List<Int> {
+            val n = profile.size
+            if (n < 2 * minBlocks) return emptyList()
+            val prefix = Array(n + 1) { DoubleArray(3) }
+            val prefix2 = DoubleArray(n + 1)
+            for ((index, row) in profile.withIndex()) {
+                for (axis in 0 until 3) prefix[index + 1][axis] = prefix[index][axis] + row[axis]
+                prefix2[index + 1] = prefix2[index] + (row[0] * row[0] + row[1] * row[1] + row[2] * row[2])
+            }
+            val best = DoubleArray(n + 1) { Double.POSITIVE_INFINITY }
+            val back = IntArray(n + 1)
+            best[0] = -lam
+            for (j in minBlocks..n) {
+                for (i in 0..j - minBlocks) {
+                    if (best[i] < Double.POSITIVE_INFINITY) {
+                        val s0 = prefix[j][0] - prefix[i][0]
+                        val s1 = prefix[j][1] - prefix[i][1]
+                        val s2 = prefix[j][2] - prefix[i][2]
+                        val value = best[i] + lam + (prefix2[j] - prefix2[i] - (s0 * s0 + s1 * s1 + s2 * s2) / (j - i))
+                        if (value < best[j]) {
+                            best[j] = value
+                            back[j] = i
+                        }
+                    }
+                }
+            }
+            val cuts = ArrayList<Int>()
+            var j = n
+            while (j > 0) {
+                j = back[j]
+                if (j > 0) cuts.add(j)
+            }
+            return cuts.sorted()
+        }
 
         /** `music_moods.scene_text`: chữ các câu từ vị trí `first` tới `last` (gồm cả hai), mỗi câu một dòng, khoảng trắng gộp một dấu cách. */
         fun sceneText(segments: List<SceneSegment>, first: Int, last: Int): String =
