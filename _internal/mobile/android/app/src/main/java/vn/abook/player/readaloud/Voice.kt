@@ -4,9 +4,10 @@ import java.io.File
 
 /**
  * Một đoạn âm thanh đọc to: MỘT đoạn chữ thành một file ở tốc độ 1.0, kèm mốc từng chữ (`words`: một [bắt đầu, kết thúc] ms cho mỗi chữ `\S+`, từ đầu đoạn) và
- * độ dài. Đổi tốc độ nghe bằng tốc độ phát của trình phát, không bao giờ đọc lại.
+ * độ dài. Đổi tốc độ nghe bằng tốc độ phát của trình phát, không bao giờ đọc lại. `fromWord` > 0: CLIP ĐUÔI (uxfix57) - người nghe bấm giữa đoạn chưa đọc nên chỉ đọc từ chữ thứ `fromWord` tới hết đoạn;
+ * `words` vẫn đủ chữ của đoạn (chữ trước `fromWord` mốc [0, 0]) và âm thanh bắt đầu từ chữ `fromWord`: chỉ dùng khi chỗ nghe nằm trong nó ([SeekPlan]).
  */
-class Clip(val file: File, val durationMs: Long, val words: List<Span>, val voice: String)
+class Clip(val file: File, val durationMs: Long, val words: List<Span>, val voice: String, val fromWord: Int = 0)
 
 /**
  * Giọng đọc không dùng được lúc này (hết mạng, thiếu giọng tiếng Việt, quá hạn...). `message` là câu nói thẳng cho người nghe. `reason` như bên máy tính
@@ -42,7 +43,8 @@ interface Voice {
     fun synthesize(text: String, out: File, origin: String?, readings: Map<String, String>?): Clip {
         if (SpokenText.normalises(id)) { // Edge: đúng chữ giọng trên máy nhận (tên, tiếng kêu, số, ký hiệu, viết tắt + cách đọc riêng), mốc về đủ chữ hiện
             val (said, spans) = SpokenText.layout(text, origin, readings)
-            val clip = synthesize(said, out)
+            // Clip phát luồng ([LiveClips]): mốc chữ tạm cũng về đủ chữ hiện như mốc cuối.
+            val clip = LiveClips.expanding({ SpokenText.expandWords(it, spans) }) { synthesize(said, out) }
             return Clip(clip.file, clip.durationMs, SpokenText.expandWords(clip.words, spans), clip.voice)
         }
         if (readings.isNullOrEmpty()) return synthesize(text, out, origin)

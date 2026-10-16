@@ -9,7 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Nghe ngay
 
-- Giọng trực tuyến trên máy tính: bấm một câu hay mở một chương là nghe sau chừng 1-2 giây, không chờ đọc xong cả đoạn; bấm vào giữa một đoạn chưa đọc thì nghe ngay từ chữ bạn bấm. Máy đọc tiếp phần còn lại trong lúc bạn nghe, và thanh thời gian chỉ nhích nhẹ khi đoạn đọc xong. Điện thoại làm sau.
+- Giọng trực tuyến (máy tính và điện thoại): bấm một câu hay mở một chương là nghe sau chừng 2 giây, ngay khi âm thanh đầu tiên về, không chờ đọc xong cả đoạn; bấm vào giữa một đoạn chưa đọc thì nghe ngay từ chữ bạn bấm. Máy đọc tiếp phần còn lại trong lúc bạn nghe, và thanh thời gian chỉ nhích nhẹ khi đoạn đọc xong.
 
 ## [0.4.86] - 2026-10-17
 
