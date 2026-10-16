@@ -27,8 +27,6 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 from . import music_moods
 
 log = logging.getLogger(__name__)
@@ -113,33 +111,41 @@ class Model:
         tail = N_DENSE * N_OUT + 5 * N_OUT + 3 + 1
         if self.buckets <= 0 or offset + tail * 4 != len(raw):
             raise ValueError("cỡ file sai")
-        self.wh = np.frombuffer(raw, "<f2", self.buckets * N_OUT, 16).reshape(self.buckets, N_OUT).astype(np.float64)
-        rest = np.frombuffer(raw, "<f4", tail, offset).astype(np.float64)
-        self.wd = rest[:N_DENSE * N_OUT].reshape(N_DENSE, N_OUT)
+        self._raw = raw  # hàng k của Wh (4 fp16) đọc khi cần: không numpy, bản cài chỉ-nghe không có nó
+        rest = [float(x) for x in struct.unpack_from(f"<{tail}f", raw, offset)]
+        self.wd = [rest[row * N_OUT:(row + 1) * N_OUT] for row in range(N_DENSE)]
         rest = rest[N_DENSE * N_OUT:]
         self.b, self.dmu, self.dsd, self.ymu, self.ysd = (rest[index * 4:(index + 1) * 4] for index in range(5))
-        self.c, self.c_c = rest[20:23], float(rest[23])
+        self.c, self.c_c = rest[20:23], rest[23]
+
+    def _row(self, bucket: int) -> tuple[float, ...]:
+        return struct.unpack_from(f"<{N_OUT}e", self._raw, 16 + bucket * N_OUT * 2)
 
     def scene(self, text: str) -> list[float]:
         """(pV, pE, pT, q) thang thầy của chữ một cảnh."""
-        z = self.b.copy()
-        found = features(text, self.buckets)
-        if found:
-            z += np.fromiter(found.values(), np.float64, len(found)) @ self.wh[np.fromiter(found, np.int64, len(found))]
-        z += ((np.asarray(dense(text)) - self.dmu) / self.dsd) @ self.wd
-        return [float(x) for x in z * self.ysd + self.ymu]
+        z = list(self.b)
+        for bucket, value in features(text, self.buckets).items():
+            for out, weight_ in enumerate(self._row(bucket)):
+                z[out] += value * weight_
+        for row, value in enumerate(dense(text)):
+            scaled = (value - self.dmu[row]) / self.dsd[row]
+            for out in range(N_OUT):
+                z[out] += scaled * self.wd[row][out]
+        return [z[out] * self.ysd[out] + self.ymu[out] for out in range(N_OUT)]
 
     def chapter(self, texts: list[str]) -> list[dict[str, float]]:
         """Mục học sinh của MỘT chương theo thứ tự cảnh: dV, dE, dT căn giữa theo trọng số `weight` rồi cộng `c` (chương một cảnh: 0), và chapterV (cùng giá trị ở
         mọi cảnh)."""
         if not texts:
             return []
-        y = np.array([self.scene(text) for text in texts])
-        w = np.array([weight(text) for text in texts], dtype=np.float64)
-        p = y[:, :3]
-        deviation = np.zeros((len(texts), 3)) if len(texts) < 2 else p - (w @ p) / w.sum() + self.c
-        level = float((w @ y[:, 3]) / w.sum() + self.c_c)
-        return [{"dV": float(row[0]), "dE": float(row[1]), "dT": float(row[2]), "chapterV": level} for row in deviation]
+        y = [self.scene(text) for text in texts]
+        w = [float(weight(text)) for text in texts]
+        total = sum(w)
+        level = sum(wi * yi[3] for wi, yi in zip(w, y)) / total + self.c_c
+        if len(texts) < 2:
+            return [{"dV": 0.0, "dE": 0.0, "dT": 0.0, "chapterV": level}]
+        mean = [sum(wi * yi[axis] for wi, yi in zip(w, y)) / total for axis in range(3)]
+        return [{"dV": yi[0] - mean[0] + self.c[0], "dE": yi[1] - mean[1] + self.c[1], "dT": yi[2] - mean[2] + self.c[2], "chapterV": level} for yi in y]
 
     def chapter_items(self, script: dict[str, Any], scenes: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
         """Mục (`chapterId`, `firstSegment`, `lastSegment`, `dV`, `dE`, `dT`, `chapterV`) của từng đoạn `scenes` (của `music_scenes.book_scenes([script], None, None, None)`)
