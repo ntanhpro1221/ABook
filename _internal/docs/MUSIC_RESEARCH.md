@@ -47,6 +47,21 @@ Chủ sách không nghe thử. Nên sự thật phải đến từ dữ liệu c
 Mốc tham khảo: tổng hợp các nghiên cứu 2014-2024 cho thấy model tốt nhất đoán vui/buồn tương quan r ~ 0,67 và dồn dập
 r ~ 0,81 với người - vui/buồn khó hơn hẳn. Kỳ vọng đặt theo đó.
 
+### Luật chung khi phán ứng viên nhạc: vùng nhiễu chọn bài (16-10, Lead chốt)
+
+Thước "sai rõ" (giây mà bài ngược dấu với đáp án cảnh rõ) đi qua bộ chọn bài trên một danh mục RỜI RẠC. Đích đoạn dịch đi
+một chút là đổi bài, nên thước này nhảy dù đích gần như không đổi.
+
+Đo trên dev 16-21 (Corpus `research/music/PLAN_sel.md` §5, `sel_diag.py`): cộng nhiễu Gauss trung bình 0 lên V/E/T đoạn.
+- σ = 0,03: sai rõ mỗi bộ dịch từ −2,4 đến +2,1 điểm.
+- σ = 0,06: tới +5,3 điểm.
+
+Hệ quả cho MỌI ứng viên sau:
+- **Δ ±2 điểm trên MỘT bộ là vùng nhiễu**, không phải bằng chứng. Ba hiệu chỉnh nhỏ lên đầu ra học sinh (LT, SK, GH, 16-10) đều nằm trong vùng này.
+- Dev phải **cùng chiều ở ≥ 5/6 bộ** (bỏ-một-bộ, tham số chọn lồng bên trong). Phán trên bộ mới một lần, luật ghi trước, cần Δ ≤ −1,5 VÀ cận trên KTC 90 % < 0.
+- Ranh cảnh LB (sai rõ −5,6 so với đối chứng, lặp trên ba bộ ngoài mẫu) vượt xa vùng này.
+- Cũng đo ở đó: bộ chọn gần như không tự gây sai. Chỉ 1 % giây sai có đích đúng dấu mà bài ngược. Phần còn lại là đích yếu (52 %) và đích sai dấu (46 %).
+
 ## Pha 1 - model cảm xúc nhạc (bake-off)
 
 Ứng viên (GIẤY PHÉP là cổng đầu tiên - danh mục nhạc được phát hành công khai cùng app):
