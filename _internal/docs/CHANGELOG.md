@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Mở một chương bằng giọng trực tuyến: tên chương ngắn không còn làm đoạn đầu phải chờ thêm vài giây sau khi tên chương đọc xong. Chỉ những đoạn dài mới tính là "phải nghe trước", nên đoạn dài đầu tiên cũng được ưu tiên và chia nhỏ như đoạn bạn đang chờ (máy tính và điện thoại).
+- Bấm sang chương khác khi nhạc nền của chương trước còn đang tải: nhạc cũ được nhả hẳn, không còn giữ đường truyền làm tên chương của chương mới đến chậm thêm vài giây (máy tính).
+- Bấm "đoạn trước" khi nghe: hai đoạn bạn vừa nghe được giữ sẵn, nghe lại ngay không phải chờ (máy tính).
+
 ## [0.4.83] - 2026-10-17
 
 ### Nghe ngay

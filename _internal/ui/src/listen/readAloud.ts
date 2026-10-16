@@ -160,6 +160,8 @@ export function clipRetryBefore(began: number, failed: number): number {
 }
 // Máy tính: đọc trước tối thiểu 3 đoạn (rẻ - clip chỉ vài chục KB; đoạn ngắn liên tiếp không còn bắt người nghe chờ). Điện thoại tự đọc trước (ReadAloud.kt).
 const READ_AHEAD = 3;
+/** Số đoạn vừa nghe còn giữ file (bytes) trong bộ nhớ để nghe lại ngay ([ReadAloudEngine.releaseOutside]): nhỏ, vì mỗi clip vài trăm KB. */
+export const KEEP_BEHIND = 2;
 /** Giọng trực tuyến chậm từng lúc (soát a45: Edge có lúc 9-24 s một đoạn, giọng im 9 giây giữa chương): chỉ đọc sẵn 3 đoạn thì đoạn ngắn (đối thoại) chỉ đủ vài giây. Nên đọc sẵn đủ SỐ GIÂY
  *  ÂM THANH: tối thiểu `MIN_BUFFER_SECONDS`, và khi mấy clip gần đây về chậm thì `BUFFER_FACTOR` lần thời gian lấy clip ở phân vị 80 - để một quãng chậm không tới tai người nghe. Mô phỏng
  *  (Edge nhanh 1-3 s xen quãng chậm 9-24 s, 12 lượt x 10 phút): số lần im > 2 giây từ 17 xuống 0. Trần: `MAX_READ_AHEAD` đoạn (mỗi đoạn là một lượt gọi Edge, đoạn nào người nghe bỏ đi là uổng) và
@@ -169,8 +171,16 @@ const MAX_READ_AHEAD = 8;
 /** Rank lớn nhất của việc xin trước chương kế: máy chủ nhận 0-98 (99 trở lên là việc nền), nên đoạn xa mấy cũng vẫn đứng trước "Làm trước" / xuất sách nói. */
 export const MAX_WARM_RANK = 98;
 
-/** Rank của đoạn thứ `position` (0 = tiêu đề) của chương kế: `behind` = số đoạn của chương này từ chỗ người nghe tới hết chương (đoạn họ đang nghe tính là 1), rồi tới vị trí của nó, tối đa
- *  [MAX_WARM_RANK]. Điện thoại cùng luật (StalledClips.listenerRank: số đoạn đã nạp sau đoạn đang phát + 1). */
+/** Đoạn từ chừng này ký tự mới là đoạn "dài": đủ lâu để người nghe kịp chờ clip kế trong lúc nghe nó (máy chủ cũng chỉ cắt đoạn từ chừng này, edge.py WHOLE_CHARS; điện thoại EdgePieces.WHOLE_CHARS).
+ *  Đoạn ngắn đứng trước (tiêu đề chương, một dòng đối thoại) không tính vào rank của đoạn sau nó (a56: đoạn 1 sau tiêu đề 2 giây phải chờ ~4 giây nữa vì rank 1 chỉ cắt 3 mảnh). */
+export const WHOLE_CHARS = 100;
+
+export function isLongParagraph(text: string): boolean {
+  return text.length >= WHOLE_CHARS;
+}
+
+/** Rank của đoạn thứ `position` (0 = tiêu đề) của chương kế: `behind` = số đoạn DÀI của chương này từ chỗ người nghe tới hết chương (đoạn họ đang nghe tính nếu dài), rồi số đoạn dài của chương kế đứng
+ *  trước nó, tối đa [MAX_WARM_RANK]; tối thiểu 1 (rank 0 là đoạn người nghe đang đứng chờ). Điện thoại cùng luật (StalledClips.listenerRank: số đoạn dài từ đoạn đang phát). */
 export function warmRankOf(behind: number, position: number): number {
   return Math.min(MAX_WARM_RANK, Math.max(1, behind + position));
 }
@@ -808,7 +818,7 @@ export class ReadAloudEngine implements AudioEngine {
         const voice = speech.voice();
         // Mỗi clip kèm `rank` = số đoạn người nghe còn phải nghe trước nó (phần còn lại của chương này + vị trí trong chương kế, tối đa [MAX_WARM_RANK]): đứng sau mọi đoạn của chương
         // đang nghe nhưng trước việc nền (Làm trước, xuất sách nói) khi hết chỗ kết nối Edge ([ClipOptions.rank]). Tính lúc gửi - người nghe đã đi tiếp thì rank nhỏ lại.
-        const options = (position: number): ClipOptions => ({ rank: this.warmRank(position) });
+        const options = (position: number): ClipOptions => ({ rank: this.warmRank(wanted, position) });
         if (serial) {
           for (const [position, text] of wanted.entries()) await speech.fetchClip(voice, text, options(position));
           return;
@@ -826,9 +836,19 @@ export class ReadAloudEngine implements AudioEngine {
       .catch(() => undefined);
   }
 
-  /** Rank của đoạn thứ `position` của chương kế lúc này ([warmRankOf]). */
-  private warmRank(position: number): number {
-    return warmRankOf(this.slots.length - this.target.index, position);
+  /** Rank của đoạn thứ `position` trong `wanted` (các đoạn đọc được của chương kế) lúc này ([warmRankOf]): chỉ đoạn DÀI đứng trước nó mới tính ([isLongParagraph]). */
+  private warmRank(wanted: string[], position: number): number {
+    return warmRankOf(this.longAhead(this.slots.length), wanted.slice(0, position).filter(isLongParagraph).length);
+  }
+
+  /** Số đoạn dài đọc được từ chỗ người nghe (kể cả đoạn họ đang nghe) tới trước đoạn `end`. */
+  private longAhead(end: number): number {
+    let count = 0;
+    for (let i = this.target.index; i < end; i += 1) {
+      const slot = this.slots[i];
+      if (slot?.speakable && isLongParagraph(slot.text)) count += 1;
+    }
+    return count;
   }
 
   private request(index: number): void {
@@ -928,7 +948,8 @@ export class ReadAloudEngine implements AudioEngine {
     if (slot.failures === 0) slot.began = sentAt;
     const options: ClipOptions = { willRetry: ask !== "probe" && slot.failures < CLIP_RETRIES, retryBefore: clipRetryBefore(slot.began, slot.failures) };
     if (ask) options.fresh = true;
-    if (index >= this.target.index) options.rank = index - this.target.index;
+    // Rank = số đoạn DÀI người nghe phải nghe trước đoạn này ([isLongParagraph]): tiêu đề chương hay một dòng đối thoại đứng trước không đẩy đoạn dài kế nó xuống rank 1 (cắt 3 mảnh thay vì 6).
+    if (index >= this.target.index) options.rank = this.longAhead(index);
     speech
       .fetchClip(speech.voice(), slot.text, options)
       .then((clip) => {
@@ -1161,15 +1182,16 @@ export class ReadAloudEngine implements AudioEngine {
     this.playCurrent();
   }
 
-  /** Giữ phần tử audio của đoạn trước, hiện tại và vài đoạn sau; thả phần còn lại (tránh giữ hàng trăm file đã nạp). */
+  /** Giữ phần tử audio của đoạn trước, hiện tại và vài đoạn sau, và FILE (blob) của [KEEP_BEHIND] đoạn vừa nghe; thả phần còn lại (tránh giữ hàng trăm file đã nạp). */
   private releaseOutside(): void {
     const low = this.target.index - 1;
+    const keepBytesFrom = this.target.index - KEEP_BEHIND;
     const high = this.target.index + this.depth(this.target.index);
     this.slots.forEach((slot, i) => {
-      if (i >= low && i <= high) return;
-      this.releaseSlot(slot);
-      // Ngoài cửa sổ không giữ cả file trong bộ nhớ (cả chương có thể hàng trăm clip): quay lại thì phát từ `url` như thường.
-      if (slot.clip?.bytes) slot.clip = { ...slot.clip, bytes: undefined };
+      if (i < low || i > high) this.releaseSlot(slot);
+      // Ngoài cửa sổ không giữ cả file trong bộ nhớ (cả chương có thể hàng trăm clip), trừ vài đoạn vừa nghe: bấm "đoạn trước" thì phát lại từ file đã có (blob: URL mới), không đi tải
+      // lại `url` - phần tử <audio> tự tải bị xếp sau các lượt POST clip còn treo (a55, a56). Đoạn xa hơn thì phát từ `url` như thường.
+      if ((i < keepBytesFrom || i > high) && slot.clip?.bytes) slot.clip = { ...slot.clip, bytes: undefined };
     });
   }
 
