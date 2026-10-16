@@ -321,7 +321,7 @@ class App:
         # Plan nhạc theo cảnh của sách chỉ có chữ (music_nnscene.py), đệm theo cuốn: {mã sách: (khoá, SceneBook)}.
         self._scene_books: dict[str, tuple[tuple[str, str, str], music_nnscene.SceneBook]] = {}
         self._scene_student_lock = threading.RLock()
-        self._scene_student: tuple[str, music_scene_student.ChapterStudent] | None = None  # học sinh đang giữ model trong RAM, nhả khi hàng dựng cạn
+        self._scene_student: tuple[str, music_scene_student.ChapterStudent | music_scene_student.StudioChapterStudent] | None = None  # học sinh đang giữ model trong RAM, nhả khi hàng dựng cạn
         self._scene_builder = music_nnscene.Builder(on_idle=self._close_scene_student)
         # "Tính lại cảm xúc nhạc" (music_moods.py): việc nền theo từng cuốn {đường dẫn: {running, error}}.
         self._moods_jobs: dict[str, dict[str, Any]] = {}
@@ -1929,7 +1929,7 @@ class App:
             playlists = music_playlist.summaries(self.music_catalog().playlists())
         except music_catalog.CatalogError as exc:
             playlists, error = [], str(exc)
-        return {"playlists": playlists, "mine": len(self.my_music.entries()), "error": error, "scene": {"student": music_scene_student.available()}}
+        return {"playlists": playlists, "mine": len(self.my_music.entries()), "error": error, "scene": {"student": self._scene_student_mode() != "none"}}
 
     def music_playlist_queue(self, value: str) -> dict[str, Any]:
         """Hàng bài của danh sách phát người nghe đã chọn (`music.playlist` của lớp sửa): [{link, src, duration, gainDb}] theo thứ tự phát,
@@ -1994,7 +1994,7 @@ class App:
     def _scene_book(self, value: str, path: Path, manifest: dict[str, Any]) -> music_nnscene.SceneBook:
         """Plan nhạc theo cảnh của cuốn: thư mục đệm theo mã sách, khoá = bản chữ của sách + bản danh mục nhạc + học sinh nào dựng (gói q06 hay
         "none"): cài gói sau thì các chương chưa nghe dựng lại có học sinh."""
-        tag = music_nnscene.student_tag(music_scene_student.package_sha() if music_scene_student.available() else None)
+        tag = music_nnscene.student_tag(music_scene_student.package_sha() if self._scene_student_mode() != "none" else None)
         key = (str(packages.manifest(path).get("version") or ""), str(manifest.get("revision") or ""), tag)
         cached = self._scene_books.get(value)
         if cached is None or cached[0] != key:
@@ -2003,13 +2003,28 @@ class App:
             cached = self._scene_books[value] = (key, book)
         return cached[1]
 
-    def _scene_student_for(self, value: str, book: music_nnscene.SceneBook) -> music_scene_student.ChapterStudent:
+    def _scene_student_mode(self) -> str:
+        """Học sinh q06 của nhạc theo cảnh chạy ở đâu: "local" (tiến trình này có torch + gói: máy dev), "studio" (bản cài: gói có mà torch ở Python của
+        Studio, tiến trình con `StudioChapterStudent`), hay "none" (đường N0)."""
+        if music_scene_student.available():
+            return "local"
+        if music_scene_student.present() and self.studio is not None and self.studio.installed():
+            return "studio"
+        return "none"
+
+    def _scene_student_for(self, value: str, book: music_nnscene.SceneBook) -> music_scene_student.ChapterStudent | music_scene_student.StudioChapterStudent:
         """Học sinh đang giữ model cho cuốn `value` (gọi trong `_scene_student_lock`): nhúng ở `BUILD_THREADS` luồng CPU, đệm nhúng cạnh plan của cuốn."""
         if self._scene_student is None or self._scene_student[0] != value:
             self._close_scene_student()
-            directory = music_scene_student.package_dir()
-            self._scene_student = (value, music_scene_student.ChapterStudent(
-                directory, book.root / "embeddings.npz", log=lambda _line: None, threads=music_nnscene.BUILD_THREADS))
+            directory, cache = music_scene_student.package_dir(), book.root / "embeddings.npz"
+            if self._scene_student_mode() == "studio":
+                assert self.studio is not None and directory is not None
+                # Sách chữ không có dự án Studio để ghim mã (`code_for`): chạy mã của chính app.
+                self._scene_student = (value, music_scene_student.StudioChapterStudent(
+                    self.studio.python, self.studio.app_root, self.studio.environment(), directory, cache, threads=music_nnscene.BUILD_THREADS))
+            else:
+                self._scene_student = (value, music_scene_student.ChapterStudent(
+                    directory, cache, log=lambda _line: None, threads=music_nnscene.BUILD_THREADS))
         return self._scene_student[1]
 
     def _close_scene_student(self) -> None:
@@ -2022,8 +2037,8 @@ class App:
 
     def _scene_job(self, value: str, path: Path, chapter_id: int, order: list[int], chapters: dict[int, dict[str, Any]],
                    scene_book: music_nnscene.SceneBook, manifest: dict[str, Any]) -> Callable[[Callable[[], bool]], None]:
-        """Việc dựng plan của MỘT chương cho `music_nnscene.Builder` (có học sinh q06 khi máy có gói + torch, không thì đường N0)."""
-        use_student = music_scene_student.available()  # học sinh q06 chỉ chạy khi tiến trình này có torch + gói (runtime dev); app đã cài thường không có nên dựng N0; NN-V (sàn confidence, music_nnscene.chapter_scenes) cần học sinh nên app đã cài chưa chạy được - Lead sẽ đặc tả đường tiến trình con của Studio
+        """Việc dựng plan của MỘT chương cho `music_nnscene.Builder` (có học sinh q06 khi máy có gói và torch ở đâu đó - tiến trình này hay Studio -, không thì đường N0)."""
+        use_student = self._scene_student_mode() != "none"  # NN-V (sàn confidence, music_nnscene.chapter_scenes) chỉ có khi có học sinh
 
         def sha_of(cid: int) -> str:
             return music_nnscene.text_sha(packages.chapter_text(path, cid) or "", chapters[cid].get("skip"))
