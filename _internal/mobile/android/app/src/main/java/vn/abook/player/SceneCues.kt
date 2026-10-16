@@ -8,7 +8,7 @@ class SceneSegment(
     val kind: String = "narration",
     /** Dòng ngăn cảnh ("***", "◆") đứng ngay SAU câu này (text_processing.segment_chapter_text) - hay dấu hiệu đổi cảnh ([SceneCues.withSceneBreaks]). */
     val sceneBreak: Boolean = false,
-    /** Nguồn của cờ `sceneBreak` thêm sau ("cue"); null = cờ có sẵn từ dòng ngăn cảnh của sách. */
+    /** Nguồn của cờ `sceneBreak` thêm sau ("cue", "lite"); null = cờ có sẵn từ dòng ngăn cảnh của sách. */
     val sceneSource: String? = null,
     val sceneCue: String? = null,
 )
@@ -109,17 +109,21 @@ object SceneCues {
     }
 
     /**
-     * `with_scene_breaks` (nguồn duy nhất "cue"): câu đứng ngay trước ranh giới mang cờ `sceneBreak` kèm `sceneSource` = "cue" và `sceneCue` = loại.
+     * `with_scene_breaks`: câu đứng ngay trước ranh giới mang cờ `sceneBreak` kèm `sceneSource` (nguồn) và `sceneCue` = loại. Nguồn: "cue" ([cueBounds]) rồi `boundaries`
+     * ({nguồn: {id câu bắt đầu cảnh: loại}}, theo thứ tự của map - hiện chỉ "lite" của LB, [NnLite.sceneBounds]); hai nguồn cùng chỗ thì nguồn trước thắng.
      * Câu đã có cờ từ dòng ngăn cảnh của sách giữ nguyên (không thêm nguồn). Câu gốc không bị sửa.
      */
-    fun withSceneBreaks(segments: List<SceneSegment>): List<SceneSegment> {
-        val starts = cueBounds(segments)
+    fun withSceneBreaks(segments: List<SceneSegment>, boundaries: Map<String, Map<Int, String>> = emptyMap()): List<SceneSegment> {
+        val sources = ArrayList<Pair<String, Map<Int, String>>>()
+        sources.add("cue" to cueBounds(segments))
+        for ((name, starts) in boundaries) sources.add(name to starts)
         val out = ArrayList(segments)
         for (index in 0 until segments.size - 1) {
-            val kind = starts[segments[index + 1].id] ?: continue
+            val following = segments[index + 1].id
+            val found = sources.firstOrNull { following in it.second } ?: continue
             val segment = segments[index]
             if (!segment.sceneBreak) {
-                out[index] = SceneSegment(segment.id, segment.text, segment.kind, true, "cue", kind)
+                out[index] = SceneSegment(segment.id, segment.text, segment.kind, true, found.first, found.second.getValue(following).ifEmpty { found.first })
             }
         }
         return out
