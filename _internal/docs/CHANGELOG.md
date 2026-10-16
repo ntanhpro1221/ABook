@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.70] - 2026-10-16
+
 ### Nghe ngay
 
 - Dòng "Đã làm trước Chương 2…" ở menu "Giọng đọc" giờ chỉ hiện ở đúng cuốn đã làm trước (không còn lẫn sang cuốn khác) và mất đi khi bạn bấm "Xoá bản đọc đã làm".
