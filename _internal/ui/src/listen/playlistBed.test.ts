@@ -324,17 +324,15 @@ describe("lựa chọn nhạc nền", () => {
 
   const menu = { playlists: [{ id: "calm", name: "Kỳ ảo êm đềm", description: "", minutes: 60, count: 9 }], mine: 0, error: "" };
 
-  it("đang để máy chọn: nút nói 'Máy chọn: <tên>', dòng 'Để máy chọn' được đánh dấu và nói máy chọn gì", () => {
-    const view = { playlist: "calm", playlistAuto: true };
+  it("đang để máy chọn: nút nói 'Máy chọn: Theo cảnh', dòng 'Để máy chọn' được đánh dấu và nói máy chọn gì", () => {
+    const view = { playlist: SCENE_PLAYLIST, playlistAuto: true };
     expect(chosenId(view)).toBeNull();
-    expect(playlistLabel(view, menu)).toBe("Máy chọn: Kỳ ảo êm đềm");
-    expect(autoPlaylistName(view, menu)).toBe("Kỳ ảo êm đềm");
-    expect(playlistOptions(menu, false, view)[0]).toMatchObject({ id: null, hint: "Kỳ ảo êm đềm" });
+    expect(playlistLabel(view, menu)).toBe("Máy chọn: Theo cảnh");
+    expect(autoPlaylistName(view, menu)).toBe("Theo cảnh");
+    expect(playlistOptions(menu, false, view)[0]).toMatchObject({ id: null, hint: "Theo cảnh" });
     expect(playlistPlaying(view)).toBe(true);
-    // menu chưa tải: không nói mã trần cho người nghe
-    expect(playlistLabel(view, undefined)).toBe("Máy chọn");
-    // chỗ hẹp bỏ tiền tố để đủ tên tâm trạng, không cắt giữa chữ
-    expect(shortPlaylistLabel("Máy chọn: Kỳ ảo êm đềm")).toBe("Kỳ ảo êm đềm");
+    // chỗ hẹp bỏ tiền tố để đủ tên, không cắt giữa chữ
+    expect(shortPlaylistLabel("Máy chọn: Theo cảnh")).toBe("Theo cảnh");
     expect(shortPlaylistLabel("Máy chọn")).toBe("Máy chọn");
     expect(shortPlaylistLabel("Nhạc của tôi")).toBe("Nhạc của tôi");
   });
@@ -347,7 +345,7 @@ describe("lựa chọn nhạc nền", () => {
     expect(playlistLabel({ playlist: OFF_PLAYLIST }, menu)).toBe("Tắt");
     expect(playlistPlaying({ playlist: OFF_PLAYLIST })).toBe(false);
     expect(autoPlaylistName({ playlist: "calm" }, menu)).toBe("");
-    // chưa chọn gì mà máy cũng chưa chọn được: vẫn là "Để máy chọn", không có nhạc
+    // chưa chọn gì mà chưa có gì chạy: vẫn là "Để máy chọn", không có nhạc
     expect(chosenId({})).toBeNull();
     expect(playlistPlaying({})).toBe(false);
     expect(playlistPlaying(undefined)).toBe(false);

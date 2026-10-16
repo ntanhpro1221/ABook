@@ -1,7 +1,7 @@
 // Nhạc nền cho sách nghe bằng "Nghe ngay" (docs/LISTEN_ANYTHING.md mục 4; máy chủ: webui/music_playlist.py; Android: Playlists.kt +
 // MusicBed.kt). Sách chỉ có chữ không có không khí từng cảnh, nên người nghe chọn một DANH SÁCH PHÁT cho cả cuốn: một danh sách
-// của danh mục, "Nhạc của tôi", tắt ("off"), hay - khi chưa chọn gì (mặc định) - để MÁY CHỌN danh sách hợp với cuốn (webui/music_playlist.py
-// `pick`, Playlists.pick). Lựa chọn nằm ở lớp sửa của sách (`music.playlist`), đi theo sách; không có khoá = máy chọn.
+// của danh mục, "Nhạc của tôi", tắt ("off"), hay - khi chưa chọn gì (mặc định) - "Theo cảnh": nhạc đổi theo từng cảnh, máy tự dựng từ chữ.
+// Lựa chọn nằm ở lớp sửa của sách (`music.playlist`), đi theo sách; không có khoá = theo cảnh (nếu "Tự chọn nhạc nền" còn bật).
 //
 // Các bài nối nhau theo thứ tự trộn sẵn trên MỘT đồng hồ nhạc riêng của cuốn - đếm giây nghe thật, không theo giây của chương
 // - nên sang chương mới nhạc chơi tiếp, không bắt đầu lại; chỗ đang tới nhớ trong máy theo cuốn + danh sách. Phần phát (mờ dần,
@@ -12,7 +12,7 @@ import type { ImportResult } from "@/studio/musicLocal";
 import { RETRY_MS, type MusicBed, type MusicCredit, type MusicCue } from "./musicBed";
 
 export const MINE_PLAYLIST = "mine";
-/** `music.playlist` = "off": người nghe tắt nhạc nền (khác với không có khoá = để máy chọn). */
+/** `music.playlist` = "off": người nghe tắt nhạc nền (khác với không có khoá = để máy chọn, tức theo cảnh). */
 export const OFF_PLAYLIST = "off";
 /** `music.playlist` = "scene": nhạc đổi theo cảnh, máy tự dựng từ chữ, không cần model (máy tính: music_nnscene.py + sceneCues.ts; điện thoại: lõi native, SceneDevice.kt +
  *  SceneAnchor.kt). Là mặc định khi chưa chọn gì. Máy không báo `scene` trong menu của nó thì dòng này không hiện. */
@@ -39,7 +39,7 @@ export interface PlaylistTrack {
 /** GET /api/books/<mã>/music/playlist: hàng bài theo thứ tự phát (rỗng = tắt, hay sách có nhạc của người làm sách). */
 export interface PlaylistQueue {
   playlist: string | null;
-  /** true khi `playlist` do máy chọn (người nghe chưa chọn gì). */
+  /** true khi `playlist` do máy chọn (người nghe chưa chọn gì): luôn là SCENE_PLAYLIST. */
   playlistAuto?: boolean;
   tracks: PlaylistTrack[];
   levelDb: number;
@@ -48,7 +48,7 @@ export interface PlaylistQueue {
 }
 
 /** Phần của màn "Nhạc nền" của cuốn (GET /api/books/<mã>/music) nói về danh sách phát: mã người nghe đã chọn ("mine", "off", mã danh sách), hay -
- *  khi chưa chọn gì và máy chọn được - mã máy chọn kèm `playlistAuto` true. */
+ *  khi chưa chọn gì và "Tự chọn nhạc nền" còn bật - SCENE_PLAYLIST kèm `playlistAuto` true. */
 export interface PlaylistView {
   playlist?: string;
   playlistAuto?: boolean;
@@ -373,7 +373,7 @@ function nameOf(menu: PlaylistMenu | undefined, code: string): string {
   return menu?.playlists.find((item) => item.id === code)?.name ?? "";
 }
 
-/** Tên danh sách máy đang chọn cho cuốn; "" khi người nghe đã chọn (hay máy chưa chọn được gì, hay menu chưa tải). */
+/** Tên mục máy đang chọn cho cuốn ("Theo cảnh"); "" khi người nghe đã chọn (hay "Tự chọn nhạc nền" đang tắt). */
 export function autoPlaylistName(view: PlaylistView | undefined, menu: PlaylistMenu | undefined): string {
   return view?.playlistAuto ? nameOf(menu, view.playlist ?? "") : "";
 }
@@ -399,13 +399,13 @@ export const AUTO_MUSIC_LABEL = "Tự chọn nhạc nền cho sách chỉ có ch
 export const AUTO_MUSIC_HINT =
   "Máy đọc truyện rồi cho nhạc đổi theo từng cảnh, phát nhè nhẹ dưới giọng đọc. Tắt thì sách chưa chọn nhạc sẽ im lặng; cuốn nào bạn đã chọn nhạc ở menu “Nhạc nền” của sách vẫn có nhạc.";
 
-/** Nhạc đang chạy cho cuốn này hay không (máy chọn được, hay người nghe chọn một danh sách) - để nút "Nhạc nền" sáng lên. */
+/** Nhạc đang chạy cho cuốn này hay không (máy theo cảnh, hay người nghe chọn một danh sách) - để nút "Nhạc nền" sáng lên. */
 export function playlistPlaying(view: PlaylistView | undefined): boolean {
   return Boolean(view?.playlist) && view?.playlist !== OFF_PLAYLIST;
 }
 
-/** Các lựa chọn của menu "Nhạc nền", theo thứ tự hiện: Để máy chọn, Tắt, các danh sách của danh mục, Nhạc của tôi. `canImport`: máy nhập được
- *  nhạc. `view`: lựa chọn hiện tại - khi máy đang chọn, dòng "Để máy chọn" nói máy chọn danh sách nào. */
+/** Các lựa chọn của menu "Nhạc nền", theo thứ tự hiện: Để máy chọn, Tắt, Theo cảnh, các danh sách của danh mục, Nhạc của tôi. `canImport`: máy nhập
+ *  được nhạc. `view`: lựa chọn hiện tại - khi máy đang chọn, dòng "Để máy chọn" nói máy chọn gì. */
 export function playlistOptions(menu: PlaylistMenu | undefined, canImport = false, view?: PlaylistView): PlaylistOption[] {
   return [
     { id: null, label: AUTO_LABEL, hint: view?.autoOff ? "đang tắt trong Cài đặt" : autoPlaylistName(view, menu) },

@@ -2206,6 +2206,9 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
 
 ## "Nghe ngay": máy tự chọn danh sách phát (04-10 12:5x, Lead duyệt)
 
+> **ĐÃ GỠ khỏi app (dev/autopick-cleanup):** từ 0.4.71 (máy tính) / 0.4.73 (điện thoại) sách chữ chưa chọn nhạc phát "Theo cảnh", nên bộ chọn từ khoá
+> (`music_playlist.pick`, `Playlists.pick`, `playlist_picker.json`, bộ ví dụ `tests/fixtures/playlist_picker`) không còn đường nào gọi tới và đã xoá. Phép đo dưới đây giữ làm lịch sử.
+
 **GHI TRƯỚC (trước mọi lượt chấm / đo):**
 - **Vấn đề:** sách chỉ có chữ để nhạc nền TẮT, người nghe phải tự chọn 1 trong 12 danh sách (`music_playlist.py`).
   Điều này trái luật chủ sách 01-10 "mặc định bật, máy tự làm".
