@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.85] - 2026-10-17
+
 ### Nghe ngay
 
 - Nhạc nền theo cảnh hợp màu cả chương hơn khi máy không cài gói phân tích nhạc (máy tính và điện thoại): máy đọc không khí chung của cả chương từ chữ rồi mới chia cho từng cảnh, nên nhạc buồn hay vui, êm hay gay cấn theo đúng chương hơn. Trên bộ chương thử, nhạc sai màu rõ giảm từ 11,4 % xuống 7,7 %, nhạc đúng màu rõ tăng từ 35,6 % lên 47,4 %; số lần đổi bài và quãng lặng gần như không đổi. Nhạc của chương đã nghe sẽ được dựng lại một lần.
