@@ -249,6 +249,8 @@ object EdgePieces {
     const val MIN_PIECE_CHARS = 50
     /** Câu dài hơn chừng này được cắt tiếp ở ; : , (sau dấu có khoảng trắng - không bao giờ giữa chữ hay số như "3,5"). */
     const val LONG_SENTENCE_CHARS = 200
+    /** uxfix55: câu dài hơn 130% x (tổng / số mảnh) cũng được cắt ở vế, để một câu dài không làm một mảnh dài gấp đôi các mảnh kia (a57: mảnh 209 ký tự Edge mất 7,9 giây, các mảnh khác 3,5-5,5). */
+    const val PIECE_SLACK_PERCENT = 130
     private const val SENTENCE_END = ".!?…"
     private const val CLOSERS = "\"'”’)]»"
     private const val CLAUSE_MARKS = ";:,"
@@ -256,16 +258,22 @@ object EdgePieces {
     /** Số mảnh tối đa của một đoạn theo rank: đoạn người nghe đang đứng chờ (0) [TARGET_PIECES], mọi đoạn khác [PIECE_PARALLEL] (máy tính: `piece_limit`). */
     fun pieceLimit(rank: Int): Int = if (rank == 0) TARGET_PIECES else PIECE_PARALLEL
 
+    /** Câu dài hơn chừng này ký tự được cắt tiếp ở vế (máy tính: `clause_threshold`): [LONG_SENTENCE_CHARS], hay thấp hơn khi một mảnh cân bằng (total / limit) ngắn hơn thế nhiều, nhưng không bao giờ dưới [MIN_PIECE_CHARS]. */
+    fun clauseThreshold(total: Int, limit: Int): Int =
+        minOf(LONG_SENTENCE_CHARS, maxOf(MIN_PIECE_CHARS, (PIECE_SLACK_PERCENT * total + 100 * limit - 1) / (100 * limit)))
+
     /** Các mảnh gửi Edge cho `text`, mảnh nào cũng vừa [EdgeProtocol.MAX_TEXT_BYTES]; ghép theo thứ tự cho đúng chữ gốc. */
     fun split(text: String, rank: Int = RANK_BACKGROUND): List<String> =
         speechPieces(text, rank).flatMap { piece -> TextChunks.split(piece, EdgeProtocol.MAX_TEXT_BYTES, EdgeProtocol::escapedBytes).map { Py.strip(it.second) } }.filter { it.isNotEmpty() }
 
-    /** Chưa tính giới hạn byte: đoạn ngắn (< [WHOLE_CHARS]) một mảnh; còn lại cắt ở hết câu, câu dài cắt tiếp ở vế, gộp thành tối đa [pieceLimit] mảnh cân bằng. */
+    /** Chưa tính giới hạn byte: đoạn ngắn (< [WHOLE_CHARS]) một mảnh; còn lại cắt ở hết câu, câu dài hơn [clauseThreshold] cắt tiếp ở vế, gộp thành tối đa [pieceLimit] mảnh cân bằng. */
     fun speechPieces(text: String, rank: Int = RANK_BACKGROUND): List<String> {
         val body = Py.strip(text)
         if (body.length >= WHOLE_CHARS) {
-            val units = splitSentences(body).flatMap { if (it.length > LONG_SENTENCE_CHARS) splitClauses(it) else listOf(it) }
-            if (units.size > 1) return groupUnits(units, pieceLimit(rank))
+            val limit = pieceLimit(rank)
+            val threshold = clauseThreshold(body.length, limit)
+            val units = splitSentences(body).flatMap { if (it.length > threshold) splitClauses(it) else listOf(it) }
+            if (units.size > 1) return groupUnits(units, limit)
         }
         return if (body.isEmpty()) emptyList() else listOf(body)
     }
@@ -321,45 +329,35 @@ object EdgePieces {
 
     /**
      * Gộp các câu / vế liền nhau thành tối đa `limit` mảnh cân bằng độ dài (mỗi mảnh >= [MIN_PIECE_CHARS]). Nhiều mảnh hơn số kết nối cùng lúc chỉ xếp hàng thêm một
-     * vòng chờ ~5-10 giây của Edge, nên 8 câu 60 ký tự thành 3 mảnh chứ không phải 8.
+     * vòng chờ ~5-10 giây của Edge, nên 8 câu 60 ký tự thành 3 mảnh chứ không phải 8. Cắt cân bằng với số mảnh nhiều nhất còn giữ mọi mảnh >= [MIN_PIECE_CHARS]
+     * (uxfix55: bớt dần số mảnh rồi cắt lại, không gộp mảnh nhỏ vào hàng xóm - vế ngắn làm gộp dây chuyền thành một mảnh duy nhất).
      */
     private fun groupUnits(units: List<String>, limit: Int): List<String> {
         val total = units.sumOf { it.length }
-        val count = minOf(limit, units.size, maxOf(1, total / MIN_PIECE_CHARS))
         val prefix = IntArray(units.size + 1)
         for (k in units.indices) prefix[k + 1] = prefix[k] + units[k].length
-        val cuts = arrayListOf(0)
-        for (j in 1 until count) {
-            // Chỗ cắt thứ j: số câu ở j mảnh đầu sao cho độ dài dồn gần nhất total*j/count (hoà thì lấy sớm hơn); còn chỗ cho các mảnh sau.
-            var best = cuts.last() + 1
-            var bestScore = Int.MAX_VALUE
-            for (at in cuts.last() + 1..units.size - (count - j)) {
-                val score = Math.abs(prefix[at] * count - total * j)
-                if (score < bestScore) {
-                    best = at
-                    bestScore = score
+        var count = minOf(limit, units.size, maxOf(1, total / MIN_PIECE_CHARS))
+        while (true) {
+            val cuts = arrayListOf(0)
+            for (j in 1 until count) {
+                // Chỗ cắt thứ j: số câu ở j mảnh đầu sao cho độ dài dồn gần nhất total*j/count (hoà thì lấy sớm hơn); còn chỗ cho các mảnh sau.
+                var best = cuts.last() + 1
+                var bestScore = Int.MAX_VALUE
+                for (at in cuts.last() + 1..units.size - (count - j)) {
+                    val score = Math.abs(prefix[at] * count - total * j)
+                    if (score < bestScore) {
+                        best = at
+                        bestScore = score
+                    }
                 }
+                cuts.add(best)
             }
-            cuts.add(best)
+            cuts.add(units.size)
+            if (count == 1 || (0 until count).all { prefix[cuts[it + 1]] - prefix[cuts[it]] >= MIN_PIECE_CHARS }) {
+                return (0 until count).map { units.subList(cuts[it], cuts[it + 1]).joinToString(" ") }
+            }
+            count -= 1
         }
-        cuts.add(units.size)
-        val groups = ArrayList<List<String>>()
-        val lengths = ArrayList<Int>()
-        for (g in 0 until count) {
-            groups.add(units.subList(cuts[g], cuts[g + 1]))
-            lengths.add(prefix[cuts[g + 1]] - prefix[cuts[g]])
-        }
-        while (groups.size > 1 && lengths.min() < MIN_PIECE_CHARS) {
-            val small = lengths.indexOf(lengths.min())
-            val other = listOf(small - 1, small + 1).filter { it in groups.indices }.minWith(compareBy({ lengths[it] }, { it }))
-            val first = minOf(small, other)
-            val second = maxOf(small, other)
-            groups[first] = groups[first] + groups[second]
-            lengths[first] = lengths[first] + lengths[second]
-            groups.removeAt(second)
-            lengths.removeAt(second)
-        }
-        return groups.map { it.joinToString(" ") }
     }
 }
 

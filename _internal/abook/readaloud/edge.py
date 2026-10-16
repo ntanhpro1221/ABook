@@ -50,6 +50,7 @@ EDGE_CONNECTIONS = 8  # trần kết nối Edge đang mở của cả tiến tr�
 WHOLE_CHARS = 100  # đoạn ngắn hơn chừng này ký tự giữ một yêu cầu: câu đơn 90-100 ký tự đo 5,8-13,9 giây, cắt đôi không nhanh hơn mà tốn thêm một lần nối (~0,45 giây)
 MIN_PIECE_CHARS = 50  # mảnh không nhỏ hơn chừng này (gộp câu ngắn): mảnh quá ngắn thêm chỗ nối mà không rút ngắn thời gian chờ
 LONG_SENTENCE_CHARS = 200  # câu dài hơn chừng này được cắt tiếp ở ; : , (sau dấu có khoảng trắng - không bao giờ giữa chữ hay số như "3,5")
+PIECE_SLACK_PERCENT = 130  # uxfix55: câu dài hơn 130% x (tổng / số mảnh) cũng được cắt ở vế, để một câu dài không làm một mảnh dài gấp đôi các mảnh kia (a57: mảnh 209 ký tự Edge mất 7,9 giây, các mảnh khác 3,5-5,5)
 
 # Chỗ nối giữa hai mảnh (soát a51: 26 chỗ nối đo 0,95-0,99 giây lặng). Mỗi lượt của Edge kết thúc bằng ~0,85 giây lặng đuôi + ~0,13 giây lặng đầu của mảnh kế, trong khi Edge tự nghỉ
 # giữa hai câu TRONG một lượt chỉ 0,86 giây (đo a52, 6 chỗ: khoảng cách mốc 862-875 ms; sau dấu phẩy 137-263 ms). Nên cắt đuôi mảnh không phải mảnh cuối, giữ lại JOIN_TAIL_*_MS sau
@@ -192,42 +193,44 @@ def piece_limit(rank: int) -> int:
     return TARGET_PIECES if rank == 0 else PIECE_PARALLEL
 
 
+def clause_threshold(total: int, limit: int) -> int:
+    """Câu dài hơn chừng này ký tự được cắt tiếp ở vế (điện thoại: EdgePieces.clauseThreshold): LONG_SENTENCE_CHARS, hay thấp hơn khi một mảnh cân bằng (total / limit) mà ngắn hơn thế nhiều,
+    nhưng không bao giờ dưới MIN_PIECE_CHARS."""
+    return min(LONG_SENTENCE_CHARS, max(MIN_PIECE_CHARS, -(-PIECE_SLACK_PERCENT * total // (100 * limit))))
+
+
 def _group_units(units: list[str], limit: int = PIECE_PARALLEL) -> list[str]:
     """Gộp các câu / vế liền nhau thành tối đa `limit` mảnh cân bằng độ dài (mỗi mảnh >= MIN_PIECE_CHARS). Nhiều mảnh hơn số kết nối cùng lúc chỉ xếp hàng
-    thêm một vòng chờ ~5-10 giây của Edge, nên 8 câu 60 ký tự thành 3 mảnh chứ không phải 8."""
+    thêm một vòng chờ ~5-10 giây của Edge, nên 8 câu 60 ký tự thành 3 mảnh chứ không phải 8. Cắt cân bằng với số mảnh nhiều nhất còn giữ mọi mảnh >= MIN_PIECE_CHARS
+    (uxfix55: bớt dần số mảnh rồi cắt lại, không gộp mảnh nhỏ vào hàng xóm - vế ngắn làm gộp dây chuyền thành một mảnh duy nhất)."""
     total = sum(len(unit) for unit in units)
-    count = min(limit, len(units), max(1, total // MIN_PIECE_CHARS))
     prefix = [0]
     for unit in units:
         prefix.append(prefix[-1] + len(unit))
-    cuts = [0]
-    for j in range(1, count):
-        # Chỗ cắt thứ j: số câu ở j mảnh đầu sao cho độ dài dồn gần nhất total*j/count (hoà thì lấy sớm hơn); còn chỗ cho các mảnh sau.
-        best = min(range(cuts[-1] + 1, len(units) - (count - j) + 1), key=lambda at: (abs(prefix[at] * count - total * j), at))
-        cuts.append(best)
-    cuts.append(len(units))
-    groups = [units[cuts[g]:cuts[g + 1]] for g in range(count)]
-    lengths = [prefix[cuts[g + 1]] - prefix[cuts[g]] for g in range(count)]
-    while len(groups) > 1 and min(lengths) < MIN_PIECE_CHARS:
-        small = lengths.index(min(lengths))
-        neighbours = [x for x in (small - 1, small + 1) if 0 <= x < len(groups)]
-        other = min(neighbours, key=lambda x: (lengths[x], x))
-        first, second = sorted((small, other))
-        groups[first:second + 1] = [groups[first] + groups[second]]
-        lengths[first:second + 1] = [lengths[first] + lengths[second]]
-    return [" ".join(group) for group in groups]
+    count = min(limit, len(units), max(1, total // MIN_PIECE_CHARS))
+    while True:
+        cuts = [0]
+        for j in range(1, count):
+            # Chỗ cắt thứ j: số câu ở j mảnh đầu sao cho độ dài dồn gần nhất total*j/count (hoà thì lấy sớm hơn); còn chỗ cho các mảnh sau.
+            cuts.append(min(range(cuts[-1] + 1, len(units) - (count - j) + 1), key=lambda at: (abs(prefix[at] * count - total * j), at)))
+        cuts.append(len(units))
+        if count == 1 or all(prefix[cuts[g + 1]] - prefix[cuts[g]] >= MIN_PIECE_CHARS for g in range(count)):
+            return [" ".join(units[cuts[g]:cuts[g + 1]]) for g in range(count)]
+        count -= 1
 
 
 def speech_pieces(text: str, rank: int = RANK_BACKGROUND) -> list[str]:
-    """Các mảnh gửi Edge song song cho MỘT đoạn: đoạn ngắn (< WHOLE_CHARS) một mảnh; còn lại cắt ở hết câu (câu dài hơn LONG_SENTENCE_CHARS cắt tiếp ở ; : ,),
+    """Các mảnh gửi Edge song song cho MỘT đoạn: đoạn ngắn (< WHOLE_CHARS) một mảnh; còn lại cắt ở hết câu (câu dài hơn `clause_threshold` cắt tiếp ở ; : ,),
     gộp thành tối đa `piece_limit(rank)` mảnh cân bằng (đoạn rank 0 nhiều hơn các đoạn khác); mảnh quá giới hạn byte của dịch vụ cắt tiếp bằng `split_text`. Ghép các mảnh theo thứ tự cho đúng chữ gốc."""
     text = text.strip()
     if len(text) >= WHOLE_CHARS:
+        limit = piece_limit(rank)
+        threshold = clause_threshold(len(text), limit)
         units: list[str] = []
         for sentence in split_sentences(text):
-            units += split_clauses(sentence) if len(sentence) > LONG_SENTENCE_CHARS else [sentence]
+            units += split_clauses(sentence) if len(sentence) > threshold else [sentence]
         if len(units) > 1:
-            return [part for piece in _group_units(units, piece_limit(rank)) for part in split_text(piece)]
+            return [part for piece in _group_units(units, limit) for part in split_text(piece)]
     return split_text(text)
 
 

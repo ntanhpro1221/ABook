@@ -138,14 +138,15 @@
    ]
   },
   {
-   "note": "rank 0: câu dài cắt ở vế, gộp thành 5 mảnh",
+   "note": "rank 0: câu dài cắt ở vế, gộp thành 6 mảnh",
    "rank": 0,
    "text": "Khi đoàn người đi qua cánh đồng, người dẫn đường dừng lại ở bờ ruộng thứ ba, chỉ tay về phía dãy núi xa tít nơi mây còn đọng; ông bảo rằng muốn tới đó thì phải đi hết ngày hôm nay, ngủ qua đêm ở chân đèo, rồi sáng mai mới leo lên được. Cô gái trẻ nhìn theo hướng tay ông, lặng im một lúc lâu; anh trai cô thì cúi xuống buộc lại dây giày, không nói một lời, như thể đã biết trước quãng đường này sẽ dài đến thế nào. Họ lại lên đường khi nắng vừa lên, bóng người đổ dài trên mặt ruộng khô nứt nẻ.",
    "pieces": [
     "Khi đoàn người đi qua cánh đồng, người dẫn đường dừng lại ở bờ ruộng thứ ba,",
     "chỉ tay về phía dãy núi xa tít nơi mây còn đọng; ông bảo rằng muốn tới đó thì phải đi hết ngày hôm nay,",
     "ngủ qua đêm ở chân đèo, rồi sáng mai mới leo lên được.",
-    "Cô gái trẻ nhìn theo hướng tay ông, lặng im một lúc lâu; anh trai cô thì cúi xuống buộc lại dây giày, không nói một lời, như thể đã biết trước quãng đường này sẽ dài đến thế nào.",
+    "Cô gái trẻ nhìn theo hướng tay ông, lặng im một lúc lâu; anh trai cô thì cúi xuống buộc lại dây giày,",
+    "không nói một lời, như thể đã biết trước quãng đường này sẽ dài đến thế nào.",
     "Họ lại lên đường khi nắng vừa lên, bóng người đổ dài trên mặt ruộng khô nứt nẻ."
    ]
   },
@@ -156,6 +157,88 @@
    "pieces": [
     "Mưa rơi. Gió thổi. Cây nghiêng. Lá bay. Nước dâng. Đường vắng. Nhà đóng cửa.",
     "Chó sủa xa. Đèn tắt hết. Đêm im lặng. Không ai ra. Trời sắp sáng."
+   ]
+  },
+  {
+   "note": "rank 0: ba câu ~160 ký tự đều được cắt ở vế (mỗi câu dài hơn 1,3 x tổng / 6), 6 mảnh gần bằng nhau thay vì 3 mảnh có mảnh 202",
+   "rank": 0,
+   "text": "Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ, và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ. Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi. Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ, và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ. Mưa bắt đầu rơi lúc nào không ai hay biết.",
+   "pieces": [
+    "Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết,",
+    "nhìn dòng sông đen chảy qua bến cũ, và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ.",
+    "Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng,",
+    "nơi ánh trăng đã tắt từ lâu lắm rồi. Ông lái đò ngồi bên bếp lửa nhỏ,",
+    "hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ,",
+    "và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ. Mưa bắt đầu rơi lúc nào không ai hay biết."
+   ]
+  },
+  {
+   "note": "rank 0: câu rất dài ở cuối đoạn - các vế của nó chia đều với phần còn lại",
+   "rank": 0,
+   "text": "Mưa bắt đầu rơi lúc nào không ai hay biết. Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi. Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng, qua những con suối nhỏ trong veo chảy róc rách bên đường, qua cả những xóm làng xơ xác sau mùa lũ lớn, mà vẫn không tìm thấy bóng dáng của người dẫn đường, và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống, cho tới lúc trời tối hẳn.",
+   "pieces": [
+    "Mưa bắt đầu rơi lúc nào không ai hay biết. Người gác cổng đứng chờ sẵn trước hiên,",
+    "tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng,",
+    "nơi ánh trăng đã tắt từ lâu lắm rồi. Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng,",
+    "qua những con suối nhỏ trong veo chảy róc rách bên đường, qua cả những xóm làng xơ xác sau mùa lũ lớn,",
+    "mà vẫn không tìm thấy bóng dáng của người dẫn đường, và càng đi họ càng thấy đường dài thêm ra,",
+    "núi cao thêm lên, sương dày thêm xuống, cho tới lúc trời tối hẳn."
+   ]
+  },
+  {
+   "note": "rank 0: câu rất dài ở đầu đoạn",
+   "rank": 0,
+   "text": "Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng, qua những con suối nhỏ trong veo chảy róc rách bên đường, qua cả những xóm làng xơ xác sau mùa lũ lớn, mà vẫn không tìm thấy bóng dáng của người dẫn đường, và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống, cho tới lúc trời tối hẳn. Mưa bắt đầu rơi lúc nào không ai hay biết. Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi.",
+   "pieces": [
+    "Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng, qua những con suối nhỏ trong veo chảy róc rách bên đường,",
+    "qua cả những xóm làng xơ xác sau mùa lũ lớn, mà vẫn không tìm thấy bóng dáng của người dẫn đường,",
+    "và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống, cho tới lúc trời tối hẳn.",
+    "Mưa bắt đầu rơi lúc nào không ai hay biết. Người gác cổng đứng chờ sẵn trước hiên,",
+    "tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi."
+   ]
+  },
+  {
+   "note": "rank 0: câu rất dài ở giữa đoạn",
+   "rank": 0,
+   "text": "Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi. Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng, qua những con suối nhỏ trong veo chảy róc rách bên đường, qua cả những xóm làng xơ xác sau mùa lũ lớn, mà vẫn không tìm thấy bóng dáng của người dẫn đường, và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống, cho tới lúc trời tối hẳn. Mưa bắt đầu rơi lúc nào không ai hay biết. Mưa bắt đầu rơi lúc nào không ai hay biết.",
+   "pieces": [
+    "Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng,",
+    "nơi ánh trăng đã tắt từ lâu lắm rồi. Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng,",
+    "qua những con suối nhỏ trong veo chảy róc rách bên đường,",
+    "qua cả những xóm làng xơ xác sau mùa lũ lớn, mà vẫn không tìm thấy bóng dáng của người dẫn đường,",
+    "và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống, cho tới lúc trời tối hẳn.",
+    "Mưa bắt đầu rơi lúc nào không ai hay biết. Mưa bắt đầu rơi lúc nào không ai hay biết."
+   ]
+  },
+  {
+   "note": "rank 0: mảnh dài nhất không quá ~1,4 lần tổng / 6 (hai câu ~160 + một câu 320)",
+   "rank": 0,
+   "text": "Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ, và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ. Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng, qua những con suối nhỏ trong veo chảy róc rách bên đường, qua cả những xóm làng xơ xác sau mùa lũ lớn, mà vẫn không tìm thấy bóng dáng của người dẫn đường, và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống, cho tới lúc trời tối hẳn. Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi. Mưa bắt đầu rơi lúc nào không ai hay biết.",
+   "pieces": [
+    "Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ,",
+    "và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ. Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng,",
+    "qua những con suối nhỏ trong veo chảy róc rách bên đường, qua cả những xóm làng xơ xác sau mùa lũ lớn,",
+    "mà vẫn không tìm thấy bóng dáng của người dẫn đường, và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống,",
+    "cho tới lúc trời tối hẳn. Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ,",
+    "mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi. Mưa bắt đầu rơi lúc nào không ai hay biết."
+   ]
+  },
+  {
+   "note": "rank 99: cùng đoạn ấy vẫn 3 mảnh, câu 320 vẫn cắt ở vế (ngưỡng 200)",
+   "text": "Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ, và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ. Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng, qua những con suối nhỏ trong veo chảy róc rách bên đường, qua cả những xóm làng xơ xác sau mùa lũ lớn, mà vẫn không tìm thấy bóng dáng của người dẫn đường, và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống, cho tới lúc trời tối hẳn. Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi. Mưa bắt đầu rơi lúc nào không ai hay biết.",
+   "pieces": [
+    "Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ, và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ. Họ đi mãi, đi mãi qua những cánh đồng lúa chín vàng,",
+    "qua những con suối nhỏ trong veo chảy róc rách bên đường, qua cả những xóm làng xơ xác sau mùa lũ lớn, mà vẫn không tìm thấy bóng dáng của người dẫn đường, và càng đi họ càng thấy đường dài thêm ra, núi cao thêm lên, sương dày thêm xuống,",
+    "cho tới lúc trời tối hẳn. Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi. Mưa bắt đầu rơi lúc nào không ai hay biết."
+   ]
+  },
+  {
+   "note": "rank 99: hai câu ~160 ký tự cắt ở vế thành 3 mảnh (ngưỡng = 1,3 x tổng / 3 = 136) thay vì 2 mảnh",
+   "text": "Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ, và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ. Người gác cổng đứng chờ sẵn trước hiên, tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi.",
+   "pieces": [
+    "Ông lái đò ngồi bên bếp lửa nhỏ, hút điếu thuốc lào đã cháy gần hết, nhìn dòng sông đen chảy qua bến cũ,",
+    "và nghĩ về những chuyến đò đêm đã qua mà chẳng ai nhớ. Người gác cổng đứng chờ sẵn trước hiên,",
+    "tay cầm chiếc đèn dầu cũ, mắt nhìn xa xăm về phía con đường mòn dẫn ra đồng, nơi ánh trăng đã tắt từ lâu lắm rồi."
    ]
   }
  ]
