@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.86] - 2026-10-17
+
 ### Nghe ngay
 
 - Mở một đoạn dài bằng giọng trực tuyến (máy tính và điện thoại): đoạn bạn đang chờ nghe được chia đều hơn, nên không còn có một mảnh dài gấp rưỡi các mảnh khác kéo lùi lúc có tiếng; câu vừa dài vừa nhiều vế cũng được chia ở dấu phẩy, dấu chấm phẩy, dấu hai chấm như trước nhưng sớm hơn.
