@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.83] - 2026-10-17
+
 ### Nghe ngay
 
 - Mở một chương bằng giọng trực tuyến trên máy tính: tên chương không còn thỉnh thoảng bị trễ thêm vài giây dù đã đọc xong. Bạn nghe tiếng ngay khi đoạn đọc xong, không chờ các đoạn đọc trước phía sau.
