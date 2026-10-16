@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.72] - 2026-10-16
+
 ### Nghe ngay
 
 - Máy tính đã cài Studio và gói "Phân tích nhạc": nhạc theo cảnh của sách chữ giờ dùng cả học sinh nhận ra không khí từng cảnh, nên bài nhạc sát hơn với cảnh đang đọc. Việc này chạy ngầm bằng Python của Studio, bạn không phải làm gì thêm.
