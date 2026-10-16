@@ -51,6 +51,9 @@ export interface ClipOptions {
   /** Lần hỏi MỚI cho đoạn mà các lần thử lại trước đã hết ([PROBE_MS], hay người nghe vừa tới đoạn ấy): bộ lấy clip quên lệnh "giọng vừa hỏng, nghỉ 5 phút" của giọng này và gọi dịch vụ thật - nếu không thì
    *  dịch vụ đã khoẻ lại mà lần hỏi mới vẫn bị chặn ngay, không một lượt gọi nào đi ra. */
   fresh?: boolean;
+  /** Số đoạn người nghe phải nghe trước đoạn này: 0 = đang đứng chờ đúng nó (vừa nhảy tới / đầu chương), 1 = đoạn kế... Hết chỗ kết nối tới Edge thì máy chủ cho đoạn gần người nghe hơn đi trước
+   *  (abook/readaloud/edge.py ConnectionSlots); vắng = việc nền. */
+  rank?: number;
 }
 
 export type ClipFetcher = (voice: string, text: string, options?: ClipOptions) => Promise<ReadAloudClip>;
@@ -325,6 +328,10 @@ export class ReadAloudEngine implements AudioEngine {
   private volume = 1;
   private loadingTime = 0;
   private lastError = "";
+  /** Đang dừng VÌ LỖI (đoạn người nghe chờ hỏng lúc họ đang nghe - [fail]), không phải do họ bấm dừng: lỗi cũ gỡ đi vì dịch vụ trả lời lại thì tự phát tiếp ([resumeAfterError]). */
+  private errorPause = false;
+  /** Lỗi vừa gỡ, đã xin lại đoạn đang chờ: clip của nó về là tự phát tiếp ([onClip]). Người nghe bấm gì (phát, dừng, tua) thì bỏ. */
+  private resuming = false;
   private readonly createAudio: (url: string) => AudioLike;
   private readonly muted: boolean;
   private readonly readAhead: number;
@@ -375,6 +382,8 @@ export class ReadAloudEngine implements AudioEngine {
     if (this.finished || (!this.ready && this.wanted)) return;
     const was = this.wanted;
     this.wanted = true;
+    this.errorPause = false;
+    this.resuming = false;
     this.lastError = "";
     if (!was) this.fire("play");
     if (!this.ready) {
@@ -385,6 +394,8 @@ export class ReadAloudEngine implements AudioEngine {
   }
 
   pause(): void {
+    this.errorPause = false;
+    this.resuming = false;
     if (!this.wanted) return;
     this.wanted = false;
     this.stopSilence();
@@ -617,6 +628,8 @@ export class ReadAloudEngine implements AudioEngine {
     const slow = Math.max(this.lastClipMs, this.inflight > 0 ? now - this.sentAt : 0) >= SLOW_CLIP_MS;
     this.holdUntil = slow && this.speech?.serial?.() && now - this.lastJumpAt < JUMP_BURST_MS ? now + JUMP_SETTLE_MS : 0;
     this.lastJumpAt = now;
+    this.errorPause = false;
+    this.resuming = false;
     const current = this.slots[this.target.index];
     current?.audio?.pause();
     this.finished = false;
@@ -813,6 +826,12 @@ export class ReadAloudEngine implements AudioEngine {
       }, hold);
       return;
     }
+    // Giọng trực tuyến: đoạn người nghe đang chờ đi NGAY, không đợi chỗ trong [limit] - bốn lượt đọc trước của cửa sổ cũ đang chạy (nhảy xa) có thể mất 5-12 giây mới có chỗ trống. Máy chủ cho
+    // lượt này đi trước mọi lượt đọc trước khi hết chỗ kết nối Edge ([ClipOptions.rank]). Giọng chạy trên máy (serial) xin lần lượt như cũ: một lượt dùng hết CPU.
+    if (!speech.serial?.()) {
+      const waiting = this.takeQueued(this.target.index);
+      if (waiting !== null) this.send(waiting);
+    }
     while (this.inflight < limit) {
       const next = this.takeQueued();
       if (next === null) return;
@@ -820,7 +839,8 @@ export class ReadAloudEngine implements AudioEngine {
     }
   }
 
-  private takeQueued(): number | null {
+  /** Lượt xin kế tiếp: đoạn gần chỗ đang nghe nhất. `only`: chỉ lấy lượt của đoạn ấy (null nếu nó không đang xếp hàng). */
+  private takeQueued(only?: number): number | null {
     const target = this.target.index;
     const rank = (index: number) => (index >= target ? index - target : this.slots.length + target - index);
     let best = -1;
@@ -832,6 +852,7 @@ export class ReadAloudEngine implements AudioEngine {
         if (best > i) best -= 1;
         continue;
       }
+      if (only !== undefined && index !== only) continue;
       if (best < 0 || rank(index) < rank(this.queued[best].index)) best = i;
     }
     return best < 0 ? null : this.queued.splice(best, 1)[0].index;
@@ -872,6 +893,7 @@ export class ReadAloudEngine implements AudioEngine {
     if (slot.failures === 0) slot.began = sentAt;
     const options: ClipOptions = { willRetry: ask !== "probe" && slot.failures < CLIP_RETRIES, retryBefore: clipRetryBefore(slot.began, slot.failures) };
     if (ask) options.fresh = true;
+    if (index >= this.target.index) options.rank = index - this.target.index;
     speech
       .fetchClip(speech.voice(), slot.text, options)
       .then((clip) => {
@@ -891,6 +913,7 @@ export class ReadAloudEngine implements AudioEngine {
           if (this.lastError) {
             this.lastError = "";
             this.fire("recovered");
+            this.resumeAfterError();
           }
         }
       })
@@ -908,7 +931,7 @@ export class ReadAloudEngine implements AudioEngine {
         }
         // Hết lần thử vì dịch vụ trục trặc: đoạn chưa phải của người nghe thì để đó, [probe] hỏi thăm dần và người nghe tới nơi thì hỏi mới ([request]).
         slot.gaveUp = isServiceTrouble(error);
-        if (index !== this.target.index || !this.wanted) return;
+        if (index !== this.target.index || !(this.wanted || this.resuming)) return;
         this.fail(error);
       })
       .finally(() => {
@@ -983,7 +1006,7 @@ export class ReadAloudEngine implements AudioEngine {
     setTimeout(() => {
       if (id !== this.loadId || slot.epoch !== epoch || slot.clip) return;
       const target = this.target.index;
-      if (!this.wanted || index < target || index > target + this.depth(target)) {
+      if (!(this.wanted || (this.resuming && index === target)) || index < target || index > target + this.depth(target)) {
         slot.fetching = false;
         return;
       }
@@ -1001,8 +1024,22 @@ export class ReadAloudEngine implements AudioEngine {
     if (index >= this.target.index - 1 && index <= this.target.index + this.depth(this.target.index)) this.audioFor(index);
     this.publish();
     if (Math.abs(was - this.slots[index].duration) > 1e-6) this.fire("duration");
-    if (waiting && this.wanted) this.playCurrent();
+    if (waiting && this.resuming && !this.wanted) this.play(); // lỗi đã gỡ và người nghe không đụng gì: đoạn họ đang chờ đã sẵn sàng, phát tiếp
+    else if (waiting && this.wanted) this.playCurrent();
     else if (waiting) this.fire("time");
+  }
+
+  /** Lỗi vừa gỡ vì dịch vụ trả lời lại ("recovered") mà trình phát đang dừng VÌ lỗi ấy (không phải người nghe bấm dừng): xin lại đoạn đang chờ, clip về thì tự phát tiếp
+   *  ([onClip]). Người nghe tự dừng thì ở yên dừng - [pause] / [moveTo] / [play] gỡ cờ. */
+  private resumeAfterError(): void {
+    if (!this.errorPause || this.wanted || !this.ready) return;
+    const slot = this.slots[this.target.index];
+    if (!slot || slot.clip || !slot.speakable) {
+      this.play(); // đã có clip (hay đoạn lặng): phát luôn
+      return;
+    }
+    this.resuming = true;
+    this.request(this.target.index);
   }
 
   /** Clip của đoạn đang chờ vừa về: đổi chỗ chờ (tỉ lệ / chữ) thành giây thật trong clip. */
@@ -1164,6 +1201,8 @@ export class ReadAloudEngine implements AudioEngine {
   private fail(error: unknown): void {
     this.lastError = error instanceof Error && error.message ? error.message : "Giọng đọc không phản hồi.";
     const was = this.wanted;
+    this.errorPause = was || this.resuming; // dừng vì lỗi (lần xin lại sau khi gỡ lỗi mà hỏng nữa cũng vậy), khác người nghe bấm dừng
+    this.resuming = false;
     this.wanted = false;
     const slot = this.slots[this.target.index];
     this.stopSilence();
@@ -1182,6 +1221,8 @@ export class ReadAloudEngine implements AudioEngine {
     this.loadId += 1;
     this.queued = [];
     this.inflight = 0;
+    this.errorPause = false;
+    this.resuming = false;
     if (this.holdTimer !== null) clearTimeout(this.holdTimer);
     this.holdTimer = null;
     this.holdUntil = 0;

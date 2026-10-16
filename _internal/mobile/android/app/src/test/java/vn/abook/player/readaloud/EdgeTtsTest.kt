@@ -25,7 +25,7 @@ class EdgeTtsTest {
     fun cleanUp() {
         EdgeTts.clockSkewSeconds = 0.0
         EdgeTts.totalMs = EdgeTts.TOTAL_MS
-        EdgeTts.connections = java.util.concurrent.Semaphore(EdgePieces.EDGE_CONNECTIONS)
+        EdgeTts.connections = ConnectionSlots(EdgePieces.EDGE_CONNECTIONS)
         dir.deleteRecursively()
     }
 
@@ -389,8 +389,8 @@ class EdgeTtsTest {
             }
             WebSocket({ }, slow, ByteArrayOutputStream())
         }
-        fun slotBusyFor400Ms(): java.util.concurrent.Semaphore {
-            val slots = java.util.concurrent.Semaphore(1)
+        fun slotBusyFor400Ms(): ConnectionSlots {
+            val slots = ConnectionSlots(1)
             slots.acquire()
             Thread { Thread.sleep(400); slots.release() }.also { it.isDaemon = true }.start()
             return slots

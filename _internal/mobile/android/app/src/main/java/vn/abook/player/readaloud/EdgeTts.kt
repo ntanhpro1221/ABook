@@ -14,9 +14,10 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorCompletionService
 import java.util.concurrent.Executors
-import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * Phần giao thức của dịch vụ đọc to của Edge (không đụng mạng, kiểm thử được): theo dự án mã mở edge-tts (rany2/edge-tts, `constants.py`, `drm.py`,
@@ -170,6 +171,61 @@ object EdgeProtocol {
 }
 
 /**
+ * Chỗ kết nối Edge của cả tiến trình ([EdgePieces.EDGE_CONNECTIONS] chỗ; máy tính: `ConnectionSlots` trong edge.py, cùng luật). Hết chỗ thì người chờ xếp hàng theo `rank` (số đoạn người nghe phải nghe
+ * trước đoạn này: 0 = đoạn họ đang đứng chờ, 1 = đoạn kế...; mặc định [EdgePieces.RANK_BACKGROUND]: việc nền), cùng rank thì ai đến trước được trước. Mảnh đang giữ chỗ không bị đuổi; chỉ chỗ vừa nhả
+ * được trao theo hàng.
+ */
+class ConnectionSlots(val size: Int) {
+    private class Ticket(val rank: Int, val turn: Long)
+
+    private val lock = ReentrantLock()
+    private val changed = lock.newCondition()
+    private var free = size
+    private var turns = 0L
+    private val queue = java.util.PriorityQueue<Ticket>(compareBy<Ticket>({ it.rank }, { it.turn }))
+
+    /** Số chỗ đang trống (bài thử kiểm chỗ đã nhả hết). */
+    fun availablePermits(): Int = lock.withLock { free }
+
+    /** Số người đang xếp hàng chờ chỗ (bài thử). */
+    internal fun waiting(): Int = lock.withLock { queue.size }
+
+    /** Lấy một chỗ; false khi quá `timeoutMs`. Vé không bao giờ ở lại hàng sau khi bỏ cuộc (quá hạn, luồng bị ngắt). */
+    fun tryAcquire(timeoutMs: Long, rank: Int = EdgePieces.RANK_BACKGROUND): Boolean {
+        var left = TimeUnit.MILLISECONDS.toNanos(timeoutMs.coerceAtLeast(0))
+        lock.lock()
+        try {
+            val ticket = Ticket(rank, turns++)
+            queue.add(ticket)
+            try {
+                while (!(free > 0 && queue.peek() === ticket)) {
+                    if (left <= 0) return false
+                    left = changed.awaitNanos(left)
+                }
+                free -= 1
+                return true
+            } finally {
+                queue.remove(ticket)
+                changed.signalAll() // người kế trong hàng có thể đã tới lượt (còn chỗ), hay người này bỏ cuộc
+            }
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    /** Giữ một chỗ không hạn (bài thử). */
+    fun acquire() {
+        tryAcquire(Long.MAX_VALUE / 4_000_000)
+    }
+
+    fun release() = lock.withLock {
+        check(free < size) { "Trả chỗ kết nối quá số đã giữ" }
+        free += 1
+        changed.signalAll()
+    }
+}
+
+/**
  * Đọc SONG SONG các câu của MỘT đoạn (uxfix47; máy tính: `edge.py` `speech_pieces`, cùng hằng số, cùng bộ ví dụ `tests/fixtures/readaloud/edge/pieces.json` - đổi một bên thì đổi
  * cả hai bên và bộ ví dụ). Soát a49: chữ Edge chưa từng đọc ra audio chỉ nhanh cỡ 1x thời gian thật (đoạn 15 giây mất 13-27 giây) mà các yêu cầu song song không làm nhau chậm đi.
  * Độ dài tính bằng ký tự UTF-16 (Python: code point) - bộ ví dụ chỉ có chữ trong BMP.
@@ -179,6 +235,8 @@ object EdgePieces {
     const val PIECE_PARALLEL = 3
     /** Trần kết nối Edge đang mở của cả tiến trình: đọc trước nhiều đoạn x mảnh không mở hàng chục ổ cắm cùng lúc. */
     const val EDGE_CONNECTIONS = 8
+    /** [ConnectionSlots] rank của việc không có người nghe đứng chờ ngay (Làm trước, lượt gọi không nói rõ): đứng sau mọi đoạn người nghe sắp nghe. */
+    const val RANK_BACKGROUND = 99
     /** Đoạn ngắn hơn chừng này ký tự giữ một yêu cầu: câu đơn 90-100 ký tự đo 5,8-13,9 giây, cắt đôi không nhanh hơn mà tốn thêm một lần nối (~0,45 giây). */
     const val WHOLE_CHARS = 100
     /** Mảnh không nhỏ hơn chừng này (gộp câu ngắn): mảnh quá ngắn thêm chỗ nối mà không rút ngắn thời gian chờ. */
@@ -376,7 +434,7 @@ class EdgeTts(
         /** Lệch giữa đồng hồ máy và máy chủ (giây), học từ header `Date` của lần bị từ chối 403; dùng chung cho mọi lần gọi. */
         @Volatile var clockSkewSeconds = 0.0
         /** Kết nối Edge đang mở của cả tiến trình (mọi đoạn đọc trước x mảnh); bài thử thay bằng cái nhỏ hơn để kiểm trần. */
-        @Volatile internal var connections = Semaphore(EdgePieces.EDGE_CONNECTIONS)
+        @Volatile internal var connections = ConnectionSlots(EdgePieces.EDGE_CONNECTIONS)
         private val random = SecureRandom()
 
         /** Đọc `Date: Sat, 03 Oct 2026 12:00:00 GMT` của máy chủ thành giây Unix; null nếu không đọc được. */
@@ -441,9 +499,17 @@ class EdgeTts(
      */
     private fun speakInParallel(pieces: List<String>, received: AtomicLong, run: ClipRun): List<Pair<ByteArray, List<Boundary>>> {
         val budget = ClipBudget.current() // luồng phụ cùng quỹ thời gian thử lại của đoạn
+        val rank = ClipBudget.rank() // và cùng rank xếp hàng chờ chỗ kết nối
         val pool = Executors.newFixedThreadPool(minOf(EdgePieces.PIECE_PARALLEL, pieces.size)) { Thread(it, "edge-piece").apply { isDaemon = true } }
         val completion = ExecutorCompletionService<Pair<Int, Pair<ByteArray, List<Boundary>>>>(pool)
-        val futures = pieces.mapIndexed { index, piece -> completion.submit { ClipBudget.inherit(budget) { index to speakPiece(piece, received, run) } } }
+        val futures = pieces.mapIndexed { index, piece -> completion.submit {
+            val rankBefore = ClipBudget.enterRank(rank)
+            try {
+                ClipBudget.inherit(budget) { index to speakPiece(piece, received, run) }
+            } finally {
+                ClipBudget.leaveRank(rankBefore)
+            }
+        } }
         try {
             val results = arrayOfNulls<Pair<ByteArray, List<Boundary>>>(pieces.size)
             repeat(pieces.size) {
@@ -513,8 +579,9 @@ class EdgeTts(
     private fun readPart(part: String, retry: Boolean, run: ClipRun): Pair<ByteArray, List<Boundary>> {
         // Giữ một chỗ trong [connections] suốt đời kết nối (không giữ khi nghỉ chờ thử lại, nên không có chuyện giữ chỗ mà đợi chỗ).
         // Chờ chỗ, nối và nhận tin cùng ăn vào MỘT hạn của clip ([ClipRun.attemptMs]).
+        // Hết chỗ thì đoạn gần người nghe hơn ([ClipBudget.rank]) đứng trước.
         val slots = connections
-        if (!slots.tryAcquire(run.attemptMs(retry), TimeUnit.MILLISECONDS)) throw VoiceException("Giọng Edge trả lời quá chậm", reason = "timeout")
+        if (!slots.tryAcquire(run.attemptMs(retry), ClipBudget.rank())) throw VoiceException("Giọng Edge trả lời quá chậm", reason = "timeout")
         try {
             run.checkNotCancelled()
             val socket = open()

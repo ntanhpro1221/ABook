@@ -76,7 +76,7 @@ interface Setup {
   engine: ReadAloudEngine;
   audios: FakeAudio[];
   published: Script[];
-  requests: { text: string; cachedOnly: boolean; willRetry?: boolean; retryBefore?: number; fresh?: boolean; resolve: (clip?: ReadAloudClip) => void; reject: (error: Error) => void }[];
+  requests: { text: string; cachedOnly: boolean; willRetry?: boolean; retryBefore?: number; fresh?: boolean; rank?: number; resolve: (clip?: ReadAloudClip) => void; reject: (error: Error) => void }[];
   events: string[];
   /** Cho clip của đoạn có chữ `text` về. */
   arrive: (text: string) => Promise<void>;
@@ -104,7 +104,7 @@ function setup(options: { chapter?: string; cached?: Record<string, ReadAloudCli
           else reject(Object.assign(new Error("uncached"), { reason: "uncached" }));
           return;
         }
-        requests.push({ text, cachedOnly: false, willRetry: o?.willRetry, retryBefore: o?.retryBefore, fresh: o?.fresh, resolve: (clip) => resolve(clip ?? clipOf(text)), reject });
+        requests.push({ text, cachedOnly: false, willRetry: o?.willRetry, retryBefore: o?.retryBefore, fresh: o?.fresh, rank: o?.rank, resolve: (clip) => resolve(clip ?? clipOf(text)), reject });
       }),
     onScript: (script) => published.push(script),
   };
@@ -799,6 +799,88 @@ describe("nghe dở và lỗi", () => {
     }
   });
 
+  describe("tự phát tiếp khi lỗi gỡ đi (uxfix51)", () => {
+    const stopped = async () => {
+      vi.useFakeTimers();
+      onTestFinished(() => void vi.useRealTimers());
+      const s = setup();
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      s.requests[0].reject(Object.assign(new Error("Giọng Hoài My đang không dùng được."), { reason: "service", final: true }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.engine.error).not.toBe("");
+      expect(s.engine.paused).toBe(true);
+      return s;
+    };
+    /** Một clip THẬT (qua dịch vụ, mất vài trăm ms) của đoạn đọc trước về. */
+    const serviceAnswers = async (s: Setup) => {
+      await vi.advanceTimersByTimeAsync(500);
+      s.requests.filter((r) => r.text === TEXTS[1]).forEach((r) => r.resolve());
+      await vi.advanceTimersByTimeAsync(0);
+    };
+
+    it("dừng VÌ lỗi: lỗi gỡ đi thì xin lại đoạn đang chờ và, clip về, tự phát tiếp - không chờ bấm phát", async () => {
+      const s = await stopped();
+      const before = s.requests.filter((r) => r.text === TEXTS[0]).length;
+      await serviceAnswers(s);
+      expect(s.events).toContain("recovered");
+      expect(s.engine.error).toBe("");
+      expect(s.engine.paused).toBe(true); // clip chưa về: chưa phát
+      const again = s.requests.filter((r) => r.text === TEXTS[0]);
+      expect(again).toHaveLength(before + 1);
+      expect(again.at(-1)!.rank).toBe(0);
+      again.at(-1)!.resolve();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.engine.paused).toBe(false);
+      expect(s.events.slice(-1)[0]).not.toBe("error");
+      expect(s.events.filter((e) => e === "play")).toHaveLength(2); // lần bấm đầu + lần tự phát tiếp
+      expect(audioOf(s, TEXTS[0])!.plays).toBe(1);
+    });
+
+    it("đoạn đang chờ đã có clip lúc lỗi gỡ (clip về trước cả lượt gỡ lỗi): phát luôn", async () => {
+      const s = await stopped();
+      // người nghe KHÔNG bấm gì; clip của đoạn đầu về qua một lượt xin khác (vd đổi giọng rồi đổi lại) - mô phỏng bằng cách để lượt xin lại về trước
+      await serviceAnswers(s);
+      s.requests.filter((r) => r.text === TEXTS[0]).at(-1)!.resolve();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.engine.paused).toBe(false);
+    });
+
+    it("người nghe tự dừng thì ở yên dừng: bấm dừng hay tua sau lỗi đều gỡ ý định tự phát, lỗi gỡ đi cũng không xin lại đoạn", async () => {
+      for (const act of [(s: Setup) => s.engine.pause(), (s: Setup) => s.engine.seek(2.5)]) {
+        const s = await stopped();
+        act(s);
+        const asked = s.requests.filter((r) => r.text === TEXTS[0]).length;
+        await serviceAnswers(s);
+        expect(s.events).toContain("recovered");
+        expect(s.requests.filter((r) => r.text === TEXTS[0])).toHaveLength(asked);
+        expect(s.engine.paused).toBe(true);
+        vi.useRealTimers();
+      }
+    });
+
+    it("đoạn xin lại sau khi gỡ lỗi mà hỏng nữa: báo lỗi lại (không để lỗi gỡ mất mà vẫn dừng không dấu hiệu), clip thật về sau lại thử tiếp", async () => {
+      const s = await stopped();
+      await serviceAnswers(s);
+      s.requests.filter((r) => r.text === TEXTS[0]).at(-1)!.reject(Object.assign(new Error("Đoạn này không đọc được."), { reason: "empty" }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.engine.error).toBe("Đoạn này không đọc được.");
+      expect(s.engine.paused).toBe(true);
+      expect(s.events.slice(-1)[0]).toBe("error");
+    });
+
+    it("bấm phát sau lỗi vẫn thử lại như cũ và gỡ ý định tự phát (không phát đôi)", async () => {
+      const s = await stopped();
+      s.engine.play();
+      await vi.advanceTimersByTimeAsync(0);
+      s.requests.filter((r) => r.text === TEXTS[0]).at(-1)!.resolve();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(audioOf(s, TEXTS[0])!.plays).toBe(1);
+      await serviceAnswers(s);
+      expect(audioOf(s, TEXTS[0])!.plays).toBe(1);
+    });
+  });
+
   it("phân loại lỗi thoáng qua theo lý do máy chủ thật sự trả (abook/readaloud/edge.py: cắt lượt / 429 / 5xx -> service, chậm -> timeout)", () => {
     expect(isTransientClipError({ reason: "service" })).toBe(true);
     expect(isTransientClipError({ reason: "timeout" })).toBe(true);
@@ -1122,6 +1204,30 @@ describe("cách đọc riêng vừa đổi ('Đọc từ này là…')", () => {
     await flush();
     expect(s.requests.length).toBe(requested);
     expect(audioOf(s, TEXTS[1])!.released).toBe(false);
+  });
+});
+
+describe("clip người nghe đang chờ đi trước clip đọc trước (uxfix51)", () => {
+  const LONG = Array.from({ length: 14 }, (_, n) => `Đoạn số ${n} nói.`);
+  const chapter = LONG.join("\n\n");
+
+  it("mỗi lượt xin mang rank = số đoạn người nghe phải nghe trước nó: đoạn đang chờ 0, đoạn kế 1, 2, 3", async () => {
+    const s = setup({ chapter });
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    expect(s.requests.map((r) => [r.text, r.rank])).toEqual([[LONG[0], 0], [LONG[1], 1], [LONG[2], 2], [LONG[3], 3]]);
+  });
+
+  it("nhảy tới đoạn xa: đoạn vừa nhảy tới mang rank 0 và đi ngay, kể cả khi cửa sổ cũ còn đủ lượt đang chạy", async () => {
+    const s = setup({ chapter });
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    s.engine.seekWord(9, 0);
+    await flush();
+    const jumped = s.requests.filter((r) => r.text === LONG[9]);
+    expect(jumped).toHaveLength(1);
+    expect(jumped[0].rank).toBe(0);
+    expect(s.requests.filter((r) => r.rank === 0).map((r) => r.text)).toEqual([LONG[0], LONG[9]]);
   });
 });
 
