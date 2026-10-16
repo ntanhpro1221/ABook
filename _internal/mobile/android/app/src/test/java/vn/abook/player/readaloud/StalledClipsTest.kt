@@ -106,6 +106,17 @@ class StalledClipsTest {
     // ---- a50: hỏi thăm = một lượt, không thử lại, không giữ khoá --------------------------------------------------------------
 
     @Test
+    fun theSegmentBeingFedRanksByHowManyAreQueuedBeforeIt() {
+        assertEquals("hàng đợi cạn: đoạn họ đang chờ", 0, StalledClips.listenerRank(listenerHasAudio = false, queuedAhead = 0))
+        assertEquals(0, StalledClips.listenerRank(listenerHasAudio = false, queuedAhead = 3))
+        assertEquals("đoạn kế sau đoạn đang phát", 1, StalledClips.listenerRank(listenerHasAudio = true, queuedAhead = 0))
+        assertEquals(4, StalledClips.listenerRank(listenerHasAudio = true, queuedAhead = 3))
+        assertEquals(1, StalledClips.listenerRank(listenerHasAudio = true, queuedAhead = -1))
+        assertEquals("không bao giờ thành việc nền", EdgePieces.MAX_RANK, StalledClips.listenerRank(listenerHasAudio = true, queuedAhead = 500))
+        assertTrue(EdgePieces.MAX_RANK < EdgePieces.RANK_BACKGROUND)
+    }
+
+    @Test
     fun onlyAFreshAskWhileTheListenerHasAudioIsAProbe() {
         assertTrue(StalledClips.isProbe(fresh = true, listenerHasAudio = true))
         assertFalse("người nghe tới nơi: hỏi thật", StalledClips.isProbe(fresh = true, listenerHasAudio = false))

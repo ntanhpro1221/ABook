@@ -104,6 +104,59 @@
     "Trời đã tối hẳn khi chiếc xe cuối cùng rời khỏi chợ huyện.",
     "Những người bán rau còn ở lại dọn dẹp, quét sạch lá héo trên nền gạch."
    ]
+  },
+  {
+   "note": "rank 0 (đoạn người nghe đang chờ) cắt tới 6 mảnh cân bằng",
+   "rank": 0,
+   "text": "Con đường mòn dẫn xuống thung lũng phủ đầy sương sớm. Mấy chú bò già chậm rãi nhai cỏ ven bờ suối. Bà lão gánh hai thúng khoai đi ngang qua cầu tre. Đứa bé chạy theo sau, tay cầm cành hoa dại vừa hái. Tiếng chuông chùa vọng lại từ phía bên kia ngọn đồi. Khói bếp bắt đầu bay lên từ những mái nhà thấp. Người thợ rèn mở cửa lò, ngọn lửa hắt sáng cả con ngõ. Lũ gà con chíp chíp quanh chiếc sọt đan dở. Ông trưởng thôn ngồi hút thuốc lào trước hiên nhà. Một cơn gió nhẹ thổi qua, cuốn theo mùi rơm mới phơi. Cả làng chầm chậm thức dậy sau một đêm dài yên ắng. Ngày mới bắt đầu như bao ngày khác.",
+   "pieces": [
+    "Con đường mòn dẫn xuống thung lũng phủ đầy sương sớm. Mấy chú bò già chậm rãi nhai cỏ ven bờ suối.",
+    "Bà lão gánh hai thúng khoai đi ngang qua cầu tre. Đứa bé chạy theo sau, tay cầm cành hoa dại vừa hái.",
+    "Tiếng chuông chùa vọng lại từ phía bên kia ngọn đồi. Khói bếp bắt đầu bay lên từ những mái nhà thấp.",
+    "Người thợ rèn mở cửa lò, ngọn lửa hắt sáng cả con ngõ. Lũ gà con chíp chíp quanh chiếc sọt đan dở.",
+    "Ông trưởng thôn ngồi hút thuốc lào trước hiên nhà. Một cơn gió nhẹ thổi qua, cuốn theo mùi rơm mới phơi.",
+    "Cả làng chầm chậm thức dậy sau một đêm dài yên ắng. Ngày mới bắt đầu như bao ngày khác."
+   ]
+  },
+  {
+   "note": "cùng đoạn ấy ở rank 1 vẫn 3 mảnh",
+   "rank": 1,
+   "text": "Con đường mòn dẫn xuống thung lũng phủ đầy sương sớm. Mấy chú bò già chậm rãi nhai cỏ ven bờ suối. Bà lão gánh hai thúng khoai đi ngang qua cầu tre. Đứa bé chạy theo sau, tay cầm cành hoa dại vừa hái. Tiếng chuông chùa vọng lại từ phía bên kia ngọn đồi. Khói bếp bắt đầu bay lên từ những mái nhà thấp. Người thợ rèn mở cửa lò, ngọn lửa hắt sáng cả con ngõ. Lũ gà con chíp chíp quanh chiếc sọt đan dở. Ông trưởng thôn ngồi hút thuốc lào trước hiên nhà. Một cơn gió nhẹ thổi qua, cuốn theo mùi rơm mới phơi. Cả làng chầm chậm thức dậy sau một đêm dài yên ắng. Ngày mới bắt đầu như bao ngày khác.",
+   "pieces": [
+    "Con đường mòn dẫn xuống thung lũng phủ đầy sương sớm. Mấy chú bò già chậm rãi nhai cỏ ven bờ suối. Bà lão gánh hai thúng khoai đi ngang qua cầu tre. Đứa bé chạy theo sau, tay cầm cành hoa dại vừa hái.",
+    "Tiếng chuông chùa vọng lại từ phía bên kia ngọn đồi. Khói bếp bắt đầu bay lên từ những mái nhà thấp. Người thợ rèn mở cửa lò, ngọn lửa hắt sáng cả con ngõ. Lũ gà con chíp chíp quanh chiếc sọt đan dở.",
+    "Ông trưởng thôn ngồi hút thuốc lào trước hiên nhà. Một cơn gió nhẹ thổi qua, cuốn theo mùi rơm mới phơi. Cả làng chầm chậm thức dậy sau một đêm dài yên ắng. Ngày mới bắt đầu như bao ngày khác."
+   ]
+  },
+  {
+   "note": "cùng đoạn ấy không rank (việc nền) vẫn 3 mảnh",
+   "text": "Con đường mòn dẫn xuống thung lũng phủ đầy sương sớm. Mấy chú bò già chậm rãi nhai cỏ ven bờ suối. Bà lão gánh hai thúng khoai đi ngang qua cầu tre. Đứa bé chạy theo sau, tay cầm cành hoa dại vừa hái. Tiếng chuông chùa vọng lại từ phía bên kia ngọn đồi. Khói bếp bắt đầu bay lên từ những mái nhà thấp. Người thợ rèn mở cửa lò, ngọn lửa hắt sáng cả con ngõ. Lũ gà con chíp chíp quanh chiếc sọt đan dở. Ông trưởng thôn ngồi hút thuốc lào trước hiên nhà. Một cơn gió nhẹ thổi qua, cuốn theo mùi rơm mới phơi. Cả làng chầm chậm thức dậy sau một đêm dài yên ắng. Ngày mới bắt đầu như bao ngày khác.",
+   "pieces": [
+    "Con đường mòn dẫn xuống thung lũng phủ đầy sương sớm. Mấy chú bò già chậm rãi nhai cỏ ven bờ suối. Bà lão gánh hai thúng khoai đi ngang qua cầu tre. Đứa bé chạy theo sau, tay cầm cành hoa dại vừa hái.",
+    "Tiếng chuông chùa vọng lại từ phía bên kia ngọn đồi. Khói bếp bắt đầu bay lên từ những mái nhà thấp. Người thợ rèn mở cửa lò, ngọn lửa hắt sáng cả con ngõ. Lũ gà con chíp chíp quanh chiếc sọt đan dở.",
+    "Ông trưởng thôn ngồi hút thuốc lào trước hiên nhà. Một cơn gió nhẹ thổi qua, cuốn theo mùi rơm mới phơi. Cả làng chầm chậm thức dậy sau một đêm dài yên ắng. Ngày mới bắt đầu như bao ngày khác."
+   ]
+  },
+  {
+   "note": "rank 0: câu dài cắt ở vế, gộp thành 5 mảnh",
+   "rank": 0,
+   "text": "Khi đoàn người đi qua cánh đồng, người dẫn đường dừng lại ở bờ ruộng thứ ba, chỉ tay về phía dãy núi xa tít nơi mây còn đọng; ông bảo rằng muốn tới đó thì phải đi hết ngày hôm nay, ngủ qua đêm ở chân đèo, rồi sáng mai mới leo lên được. Cô gái trẻ nhìn theo hướng tay ông, lặng im một lúc lâu; anh trai cô thì cúi xuống buộc lại dây giày, không nói một lời, như thể đã biết trước quãng đường này sẽ dài đến thế nào. Họ lại lên đường khi nắng vừa lên, bóng người đổ dài trên mặt ruộng khô nứt nẻ.",
+   "pieces": [
+    "Khi đoàn người đi qua cánh đồng, người dẫn đường dừng lại ở bờ ruộng thứ ba,",
+    "chỉ tay về phía dãy núi xa tít nơi mây còn đọng; ông bảo rằng muốn tới đó thì phải đi hết ngày hôm nay,",
+    "ngủ qua đêm ở chân đèo, rồi sáng mai mới leo lên được.",
+    "Cô gái trẻ nhìn theo hướng tay ông, lặng im một lúc lâu; anh trai cô thì cúi xuống buộc lại dây giày, không nói một lời, như thể đã biết trước quãng đường này sẽ dài đến thế nào.",
+    "Họ lại lên đường khi nắng vừa lên, bóng người đổ dài trên mặt ruộng khô nứt nẻ."
+   ]
+  },
+  {
+   "note": "rank 0: ít chữ thì không nhiều mảnh hơn rank khác (mỗi mảnh >= 50 ký tự)",
+   "rank": 0,
+   "text": "Mưa rơi. Gió thổi. Cây nghiêng. Lá bay. Nước dâng. Đường vắng. Nhà đóng cửa. Chó sủa xa. Đèn tắt hết. Đêm im lặng. Không ai ra. Trời sắp sáng.",
+   "pieces": [
+    "Mưa rơi. Gió thổi. Cây nghiêng. Lá bay. Nước dâng. Đường vắng. Nhà đóng cửa.",
+    "Chó sủa xa. Đèn tắt hết. Đêm im lặng. Không ai ra. Trời sắp sáng."
+   ]
   }
  ]
 }

@@ -44,6 +44,7 @@ RETRIES = 2  # lượt bị cắt giữa chừng thử lại tối đa chừng n
 # nhau chậm đi - 5 đoạn mới cùng lúc 13-19 giây thay vì 49 giây nối tiếp). Điện thoại (EdgeTts.kt) dùng đúng các hằng số và luật cắt này, bộ ví dụ chung
 # tests/fixtures/readaloud/edge/pieces.json: đổi một bên thì đổi cả hai bên và bộ ví dụ.
 PIECE_PARALLEL = 3  # tối đa chừng này mảnh một đoạn (và chừng này kết nối cùng lúc cho một clip)
+TARGET_PIECES = 6  # riêng đoạn người nghe đang đứng chờ (rank 0): cắt tới chừng này mảnh. Soát a54 (4 đoạn, mạng thật): 3 -> 6 mảnh rút thời gian chờ trung vị 6,96 -> 5,36 giây, chỗ nối vẫn 855-889 ms
 RANK_BACKGROUND = 99  # [ConnectionSlots] rank của việc không có người nghe đứng chờ ngay (Làm trước, xuất sách nói, lượt gọi không nói rõ): đứng sau mọi đoạn người nghe sắp nghe
 EDGE_CONNECTIONS = 8  # trần kết nối Edge đang mở của cả tiến trình: đọc trước (tới 8 đoạn) x mảnh không mở hàng chục ổ cắm cùng lúc
 WHOLE_CHARS = 100  # đoạn ngắn hơn chừng này ký tự giữ một yêu cầu: câu đơn 90-100 ký tự đo 5,8-13,9 giây, cắt đôi không nhanh hơn mà tốn thêm một lần nối (~0,45 giây)
@@ -186,11 +187,16 @@ def split_clauses(sentence: str) -> list[str]:
     return [piece for piece in out if piece]
 
 
-def _group_units(units: list[str]) -> list[str]:
-    """Gộp các câu / vế liền nhau thành tối đa PIECE_PARALLEL mảnh cân bằng độ dài (mỗi mảnh >= MIN_PIECE_CHARS). Nhiều mảnh hơn số kết nối cùng lúc chỉ xếp hàng
+def piece_limit(rank: int) -> int:
+    """Số mảnh tối đa của một đoạn theo rank: đoạn người nghe đang đứng chờ (0) TARGET_PIECES, mọi đoạn khác PIECE_PARALLEL (điện thoại: EdgePieces.pieceLimit)."""
+    return TARGET_PIECES if rank == 0 else PIECE_PARALLEL
+
+
+def _group_units(units: list[str], limit: int = PIECE_PARALLEL) -> list[str]:
+    """Gộp các câu / vế liền nhau thành tối đa `limit` mảnh cân bằng độ dài (mỗi mảnh >= MIN_PIECE_CHARS). Nhiều mảnh hơn số kết nối cùng lúc chỉ xếp hàng
     thêm một vòng chờ ~5-10 giây của Edge, nên 8 câu 60 ký tự thành 3 mảnh chứ không phải 8."""
     total = sum(len(unit) for unit in units)
-    count = min(PIECE_PARALLEL, len(units), max(1, total // MIN_PIECE_CHARS))
+    count = min(limit, len(units), max(1, total // MIN_PIECE_CHARS))
     prefix = [0]
     for unit in units:
         prefix.append(prefix[-1] + len(unit))
@@ -212,16 +218,16 @@ def _group_units(units: list[str]) -> list[str]:
     return [" ".join(group) for group in groups]
 
 
-def speech_pieces(text: str) -> list[str]:
+def speech_pieces(text: str, rank: int = RANK_BACKGROUND) -> list[str]:
     """Các mảnh gửi Edge song song cho MỘT đoạn: đoạn ngắn (< WHOLE_CHARS) một mảnh; còn lại cắt ở hết câu (câu dài hơn LONG_SENTENCE_CHARS cắt tiếp ở ; : ,),
-    gộp thành tối đa PIECE_PARALLEL mảnh cân bằng; mảnh quá giới hạn byte của dịch vụ cắt tiếp bằng `split_text`. Ghép các mảnh theo thứ tự cho đúng chữ gốc."""
+    gộp thành tối đa `piece_limit(rank)` mảnh cân bằng (đoạn rank 0 nhiều hơn các đoạn khác); mảnh quá giới hạn byte của dịch vụ cắt tiếp bằng `split_text`. Ghép các mảnh theo thứ tự cho đúng chữ gốc."""
     text = text.strip()
     if len(text) >= WHOLE_CHARS:
         units: list[str] = []
         for sentence in split_sentences(text):
             units += split_clauses(sentence) if len(sentence) > LONG_SENTENCE_CHARS else [sentence]
         if len(units) > 1:
-            return [part for piece in _group_units(units) for part in split_text(piece)]
+            return [part for piece in _group_units(units, piece_limit(rank)) for part in split_text(piece)]
     return split_text(text)
 
 
@@ -512,16 +518,16 @@ class EdgeClient:
 
     def synthesize(self, text: str, voice: str = DEFAULT_VOICE, *, rank: int = RANK_BACKGROUND) -> Synthesis:
         """Đọc `text` bằng `voice` (mã đầy đủ, vd "vi-VN-HoaiMyNeural"): MP3 + các WordBoundary (ms từ đầu clip) + độ dài.
-        Đoạn dài đọc theo `speech_pieces`, các mảnh song song (tối đa PIECE_PARALLEL); mảnh ĐẦU TIÊN hỏng (theo thời gian, không đợi các mảnh trước nó)
+        Đoạn dài đọc theo `speech_pieces`, các mảnh song song (tối đa PIECE_PARALLEL, đoạn rank 0 tối đa TARGET_PIECES); mảnh ĐẦU TIÊN hỏng (theo thời gian, không đợi các mảnh trước nó)
         làm cả clip hỏng ngay với chính lỗi ấy - cùng các loại lỗi như khi đọc nối tiếp - và các mảnh còn lại bị cắt (điện thoại: EdgeTts.kt cùng luật).
         `rank`: số đoạn người nghe phải nghe trước clip này (0 = đang đứng chờ đúng nó: nhảy tới, đầu chương) - hết chỗ kết nối thì mảnh của clip gần người nghe hơn đi trước ([ConnectionSlots])."""
         deadline = time.monotonic() + TOTAL_TIMEOUT
-        pieces = speech_pieces(clean(text))
+        pieces = speech_pieces(clean(text), rank)
         if len(pieces) <= 1:
             results = [self._speak_piece(voice, piece, deadline, rank=rank) for piece in pieces]
         else:
             clip = _Clip()
-            pool = ThreadPoolExecutor(max_workers=min(PIECE_PARALLEL, len(pieces)), thread_name_prefix="edge-piece")
+            pool = ThreadPoolExecutor(max_workers=min(piece_limit(rank), len(pieces)), thread_name_prefix="edge-piece")
             try:
                 futures = [pool.submit(self._speak_piece, voice, piece, deadline, clip, rank) for piece in pieces]
                 # Mảnh tự dừng ở hạn chung (read_turn / chờ chỗ); +1 giây chỉ để chắc không treo nếu một mảnh không tôn trọng hạn.

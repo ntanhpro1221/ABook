@@ -45,5 +45,5 @@ và `spoken/words.json` (mốc Edge báo trên chuỗi đọc -> `words` của t
 
 ## `edge/pieces.json` - cắt mảnh đọc song song của Edge
 
-`{cases: [{note, text, pieces}]}`: chữ vào (bịa) -> các mảnh gửi Edge cùng lúc cho một đoạn. Python `abook/readaloud/edge.py` `speech_pieces` (`tests/test_readaloud_edge_pieces.py`) và Kotlin `EdgePieces.split`
-(`EdgePiecesTest`) đọc cùng file này; hằng số (`PIECE_PARALLEL`, `WHOLE_CHARS`, `MIN_PIECE_CHARS`, `LONG_SENTENCE_CHARS`) ở cả hai bên phải bằng nhau. Chỉ chữ trong BMP (Python đếm code point, Kotlin đếm UTF-16).
+`{cases: [{note, rank?, text, pieces}]}`: chữ vào (bịa) -> các mảnh gửi Edge cùng lúc cho một đoạn. `rank` (vắng = việc nền): 0 là đoạn người nghe đang đứng chờ, cắt tới `TARGET_PIECES` (6) mảnh; mọi rank khác tối đa `PIECE_PARALLEL` (3). Python `abook/readaloud/edge.py` `speech_pieces` (`tests/test_readaloud_edge_pieces.py`) và Kotlin `EdgePieces.split`
+(`EdgePiecesTest`) đọc cùng file này; hằng số (`PIECE_PARALLEL`, `TARGET_PIECES`, `WHOLE_CHARS`, `MIN_PIECE_CHARS`, `LONG_SENTENCE_CHARS`) ở cả hai bên phải bằng nhau. Chỉ chữ trong BMP (Python đếm code point, Kotlin đếm UTF-16).

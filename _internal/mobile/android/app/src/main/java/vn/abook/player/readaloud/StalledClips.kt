@@ -28,6 +28,14 @@ class StalledClips(private val clock: () -> Long = System::nanoTime) {
         /** Lần hỏi này là hỏi thăm ngầm? Đoạn vừa hỏng (`fresh`: [takeFresh]) mà người nghe còn âm thanh - chưa ai chờ đoạn ấy. Người nghe tới nơi (hàng đợi cạn) thì là hỏi thật, có thử lại. */
         fun isProbe(fresh: Boolean, listenerHasAudio: Boolean): Boolean = fresh && listenerHasAudio
 
+        /**
+         * Rank xếp hàng chờ chỗ kết nối Edge của đoạn sắp nạp ([ClipBudget.rank]): số đoạn người nghe còn phải nghe trước nó. Hàng đợi ExoPlayer cạn (nhảy tới, đầu chương) = đoạn họ đang đứng chờ, 0;
+         * không thì `queuedAhead` đoạn đã nạp sau đoạn đang phát rồi tới nó (kể cả khi đoạn ấy là tiêu đề / đoạn đầu của chương kế), tối đa [EdgePieces.MAX_RANK] - cùng luật với trình phát máy tính
+         * (readAloud.ts `warmRank`): đứng sau mọi đoạn của chương đang nghe, trước việc nền (Làm trước, xuất sách nói).
+         */
+        fun listenerRank(listenerHasAudio: Boolean, queuedAhead: Int): Int =
+            if (!listenerHasAudio) 0 else (queuedAhead.coerceAtLeast(0) + 1).coerceAtMost(EdgePieces.MAX_RANK)
+
         /** Nghỉ giữa các lần thử lại của lượt đọc này: hỏi thăm thì không có lần nào. */
         fun delaysFor(probe: Boolean, normal: LongArray): LongArray = if (probe) NO_RETRY else normal
 

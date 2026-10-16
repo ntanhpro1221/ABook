@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Nhảy tới câu xa hay mở một chương bằng giọng trực tuyến: đoạn bạn đang chờ nghe được chia nhỏ hơn để đọc cùng lúc (tới 6 phần thay vì 3), nên giọng cất lên sớm hơn khoảng 1,5 giây. Các đoạn khác vẫn chia như cũ, chỗ nối giữa các phần nghe không đổi (máy tính và điện thoại).
+- Khi chương sắp hết, phần mở đầu của chương kế được chuẩn bị trước nhưng không chen vào các đoạn của chương bạn đang nghe, và vẫn đi trước việc "Làm trước" hay xuất sách nói (máy tính và điện thoại).
+
 ## [0.4.81] - 2026-10-17
 
 ### Nghe ngay
