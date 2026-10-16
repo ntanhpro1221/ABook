@@ -40,10 +40,19 @@ class SceneMusicTest {
         return all.keys().asSequence().associateWith { name -> (0 until all.getJSONArray(name).length()).map { all.getJSONArray(name).getJSONObject(it) } }
     }
 
-    private fun near(): List<SceneTrack> {
+    /** `catalog.near(v, a, radius=1)` của Python trên danh mục tự dựng: bài ở ô (v, a) và 8 ô quanh, theo thứ tự `SceneMusic.near`. */
+    private fun nearAt(valence: Double, arousal: Double): List<SceneTrack> {
         val cells = cells()
-        return SceneMusic.near(5, SceneChooser.TARGET[0], SceneChooser.TARGET[1], 1) { v, a -> cells["${v}_$a"] ?: emptyList() }.mapNotNull { SceneTrack.of(it) }
+        return SceneMusic.near(5, valence, arousal, 1) { v, a -> cells["${v}_$a"] ?: emptyList() }.mapNotNull { SceneTrack.of(it) }
     }
+
+    private fun near(): List<SceneTrack> = nearAt(SceneChooser.TARGET[0], SceneChooser.TARGET[1])
+
+    /** Mọi bài của mọi ô (cho tra vòng lặp theo link). */
+    private fun allTracks(): List<SceneTrack> = cells().values.flatten().mapNotNull { SceneTrack.of(it) }
+
+    /** NN-lite thật của app: cùng `nnlite.bin` với máy tính. */
+    private val lite by lazy { NnLite.parse(File("../../../abook/webui/assets/nnlite.bin").readBytes()) }
 
     @Test
     fun constants_equal_the_python_ones() {
@@ -90,9 +99,9 @@ class SceneMusicTest {
             CatalogSigning.writeManifest(cloud, JSONObject().put("format", MusicCatalog.FORMAT).put("version", 1).put("revision", "n0").put("grid", 5).put("cells", manifestCells))
             val phone = MusicCatalog(File(root, "cache"), cloud.absolutePath, publicKey = CatalogSigning.publicKey)
             assertEquals(strings(catalog.getJSONArray("nearOrder")), phone.near(SceneChooser.TARGET[0], SceneChooser.TARGET[1], 1).map { it.getString("link") })
-            assertTrue(phone.cell(0, 0).isEmpty())
+            assertEquals(cells().getValue("0_0").size, phone.cell(0, 0).size)
             assertEquals(cells().getValue("2_1").size, phone.cell(2, 1).size)
-            assertEquals(9, manifestCells.length())
+            assertEquals(25, manifestCells.length())
         } finally {
             root.deleteRecursively()
         }
@@ -246,48 +255,114 @@ class SceneMusicTest {
         assertTrue("bài đúng bằng trần vẫn dùng được", filtered.contains("https://example.invalid/n0/edge.mp3"))
     }
 
+    /** Đoạn của một ca như đường thật: N0 (`SceneScenes.chapterScenes`) hay NN-lite (mục học sinh -> `applyStudent` -> sàn WEAK_MOOD, như `SceneBook`). */
+    private fun scenesOf(case: JSONObject, chapters: JSONArray): List<SceneScene> {
+        val student: SceneStudent? = if (case.optBoolean("student")) lite::chapterItems else null
+        return (0 until chapters.length()).flatMap {
+            val chapter = chapters.getJSONObject(it)
+            SceneBook.chapterScenes(chapter.getInt("chapterId"), segmentsOf(chapter), student)
+        }
+    }
+
+    private fun checkCase(name: String, seen: MutableSet<String>) {
+        val case = json("case_$name.json")
+        val chapters = json(case.getString("chaptersFile")).getJSONArray("chapters")
+        val scenes = scenesOf(case, chapters)
+        val seconds = HashMap<Int, Double>()
+        for (index in 0 until chapters.length()) seconds[chapters.getJSONObject(index).getInt("chapterId")] = chapters.getJSONObject(index).getDouble("seconds")
+        val chosen = SceneChooser(choiceOf(case)) { v, a -> nearAt(v, a) }.choose(scenes)
+        val expected = case.getJSONObject("expected")
+        val want = expected.getJSONArray("scenes")
+        assertEquals("$name - số đoạn", want.length(), chosen.size)
+        for (index in 0 until want.length()) {
+            assertScene("$name đoạn $index", want.getJSONObject(index), chosen[index])
+            seen.add(chosen[index].scene.reason)
+        }
+        for ((chapterId, total) in seconds) {
+            assertCues("$name chương $chapterId (kẹp)", expected.getJSONObject("cues").getJSONArray(chapterId.toString()), SceneMusic.chapterCues(chosen, chapterId, total))
+            assertCues("$name chương $chapterId (không kẹp)", expected.getJSONObject("cuesUnclamped").getJSONArray(chapterId.toString()), SceneMusic.chapterCues(chosen, chapterId, null))
+        }
+        // Vòng lặp của từng bài đã chọn (cùng hàm với trình phát).
+        val byLink = HashMap<String, SceneTrack>()
+        for (track in allTracks()) byLink.putIfAbsent(track.link, track)
+        val loops = expected.getJSONObject("loops")
+        for (link in loops.keys()) {
+            val track = byLink[link]
+            val bounds = MusicTimeline.loopBounds(MusicTimeline.TrackInfo(track?.seconds?.takeIf { it != 0.0 } ?: track?.duration, track?.audibleStart, track?.audibleEnd))
+            val got = listOf(bounds.start, bounds.end, bounds.period).map { if (it.isInfinite()) null else it }
+            val expectedLoop = loops.getJSONArray(link)
+            assertEquals("$name vòng lặp $link", (0 until 3).map { if (expectedLoop.isNull(it)) null else expectedLoop.getDouble(it) }, got)
+            assertEquals("$name vòng lặp $link (mờ chéo)", expectedLoop.getBoolean(3), bounds.crossfade)
+        }
+    }
+
     @Test
     fun every_case_gives_the_same_scenes_tracks_cues_and_loops_as_python() {
-        val names = listOf("alpha", "beta", "options", "family", "handmade")
         val seen = HashSet<String>()
-        for (name in names) {
-            val case = json("case_$name.json")
-            val chapters = json(case.getString("chaptersFile")).getJSONArray("chapters")
-            val scenes = ArrayList<SceneScene>()
-            val seconds = HashMap<Int, Double>()
-            for (index in 0 until chapters.length()) {
-                val chapter = chapters.getJSONObject(index)
-                scenes.addAll(SceneScenes.chapterScenes(chapter.getInt("chapterId"), segmentsOf(chapter)))
-                seconds[chapter.getInt("chapterId")] = chapter.getDouble("seconds")
-            }
-            val tracks = near()
-            val chosen = SceneChooser(choiceOf(case)) { _, _ -> tracks }.choose(scenes)
-            val expected = case.getJSONObject("expected")
-            val want = expected.getJSONArray("scenes")
-            assertEquals("$name - số đoạn", want.length(), chosen.size)
-            for (index in 0 until want.length()) {
-                assertScene("$name đoạn $index", want.getJSONObject(index), chosen[index])
-                seen.add(chosen[index].scene.reason)
-            }
-            for ((chapterId, total) in seconds) {
-                assertCues("$name chương $chapterId (kẹp)", expected.getJSONObject("cues").getJSONArray(chapterId.toString()), SceneMusic.chapterCues(chosen, chapterId, total))
-                assertCues("$name chương $chapterId (không kẹp)", expected.getJSONObject("cuesUnclamped").getJSONArray(chapterId.toString()), SceneMusic.chapterCues(chosen, chapterId, null))
-            }
-            // Vòng lặp của từng bài đã chọn (cùng hàm với trình phát).
-            val byLink = HashMap<String, SceneTrack>()
-            for (track in tracks) byLink.putIfAbsent(track.link, track)
-            val loops = expected.getJSONObject("loops")
-            for (link in loops.keys()) {
-                val track = byLink[link]
-                val bounds = MusicTimeline.loopBounds(MusicTimeline.TrackInfo(track?.seconds?.takeIf { it != 0.0 } ?: track?.duration, track?.audibleStart, track?.audibleEnd))
-                val got = listOf(bounds.start, bounds.end, bounds.period).map { if (it.isInfinite()) null else it }
-                val expectedLoop = loops.getJSONArray(link)
-                assertEquals("$name vòng lặp $link", (0 until 3).map { if (expectedLoop.isNull(it)) null else expectedLoop.getDouble(it) }, got)
-                assertEquals("$name vòng lặp $link (mờ chéo)", expectedLoop.getBoolean(3), bounds.crossfade)
-            }
-        }
+        for (name in listOf("alpha", "beta", "options", "family", "handmade")) checkCase(name, seen)
         // Bộ ví dụ phải chạm đủ các lý do cắt đoạn đã nêu trong đặc tả.
         assertTrue(seen.toString(), seen.containsAll(listOf("chapter_start", "heading", "separator", "subhead", "time_jump", "length")))
+    }
+
+    // ---- NN-lite: chữ -> 4 số -> mục chương -> đoạn học sinh -> bài, so một lần với Python --------------------------------------------------------------
+    @Test
+    fun the_nn_lite_items_and_scene_moods_equal_the_python_ones() {
+        for (name in listOf("lite_alpha", "lite_family", "lite_handmade", "lite_mood")) {
+            val case = json("case_$name.json")
+            assertTrue(case.getBoolean("student"))
+            val chapters = json(case.getString("chaptersFile")).getJSONArray("chapters")
+            val student = case.getJSONObject("expected").getJSONObject("student")
+            val wantItems = student.getJSONArray("items")
+            val items = ArrayList<StudentItem>()
+            for (index in 0 until chapters.length()) {
+                val chapter = chapters.getJSONObject(index)
+                val segments = segmentsOf(chapter)
+                val base = SceneScenes.chapterScenes(chapter.getInt("chapterId"), segments)
+                items.addAll(lite.chapterItems(chapter.getInt("chapterId"), segments, base)!!)
+            }
+            assertEquals("$name - số mục", wantItems.length(), items.size)
+            for (index in items.indices) {
+                val want = wantItems.getJSONObject(index)
+                val got = items[index]
+                val label = "$name mục $index"
+                assertEquals("$label chapterId", want.getInt("chapterId"), got.chapterId)
+                assertEquals("$label firstSegment", want.getInt("firstSegment"), got.firstSegment)
+                assertEquals("$label lastSegment", want.getInt("lastSegment"), got.lastSegment)
+                // Fixture làm tròn 9 số lẻ.
+                assertEquals("$label dV", want.getDouble("dV"), got.dV, 1e-8)
+                assertEquals("$label dE", want.getDouble("dE"), got.dE, 1e-8)
+                assertEquals("$label dT", want.getDouble("dT"), got.dT, 1e-8)
+                assertEquals("$label chapterV", want.getDouble("chapterV"), got.chapterV!!, 1e-8)
+            }
+            val moods = student.getJSONArray("moods")
+            val scenes = scenesOf(case, chapters)
+            assertEquals("$name - số đoạn", moods.length(), scenes.size)
+            for (index in scenes.indices) {
+                val want = moods.getJSONObject(index)
+                val got = scenes[index]
+                val label = "$name đoạn $index"
+                assertEquals("$label chapterId", want.getInt("chapterId"), got.chapterId)
+                assertEquals("$label firstSegment", want.getInt("firstSegment"), got.firstSegment)
+                assertEquals("$label valence", want.getDouble("valence"), got.valence, 0.0)
+                assertEquals("$label arousal", want.getDouble("arousal"), got.arousal, 0.0)
+                assertEquals("$label tension", want.getDouble("tension"), got.tension, 0.0)
+                assertEquals("$label confidence", want.getDouble("confidence"), got.confidence, 0.0)
+                assertEquals("$label moodSource", want.getString("moodSource"), got.moodSource)
+            }
+        }
+    }
+
+    @Test
+    fun the_nn_lite_cases_choose_the_same_tracks_cues_and_loops_as_python() {
+        val seen = HashSet<String>()
+        for (name in listOf("lite_alpha", "lite_family", "lite_handmade", "lite_mood")) checkCase(name, seen)
+        assertTrue(seen.toString(), seen.containsAll(listOf("chapter_start", "separator", "subhead", "length")))
+        // Đích V / E riêng của từng đoạn: bộ chọn phải đã hỏi nhiều ô danh mục và dùng bước âm lượng.
+        val expected = json("case_lite_mood.json").getJSONObject("expected")
+        val moods = expected.getJSONObject("student").getJSONArray("moods")
+        assertTrue((0 until moods.length()).map { moods.getJSONObject(it).getDouble("valence") }.toSet().size > 3)
+        val scenes = expected.getJSONArray("scenes")
+        assertTrue("có bước âm lượng", (0 until scenes.length()).any { !scenes.getJSONObject(it).isNull("stepDb") })
     }
 
     @Test
@@ -300,15 +375,20 @@ class SceneMusicTest {
 
     // ---- cả cuốn: chữ -> mốc, dựng từng chương --------------------------------------------------------------------------------------------------
     @Test
-    fun a_book_built_chapter_by_chapter_from_text_gives_the_python_cues_with_reading_screen_segments() {
-        val case = json("case_alpha.json")
+    fun a_book_built_chapter_by_chapter_from_text_gives_the_python_cues_with_reading_screen_segments() = buildBookFromText("alpha")
+
+    @Test
+    fun an_nn_lite_book_built_chapter_by_chapter_from_text_gives_the_python_cues() = buildBookFromText("lite_alpha")
+
+    private fun buildBookFromText(name: String) {
+        val case = json("case_$name.json")
+        val student: SceneStudent? = if (case.optBoolean("student")) lite::chapterItems else null
         val chapters = json(case.getString("chaptersFile")).getJSONArray("chapters")
         val order = (0 until chapters.length()).map { chapters.getJSONObject(it).getInt("chapterId") }
         val texts = (0 until chapters.length()).associate { chapters.getJSONObject(it).getInt("chapterId") to chapters.getJSONObject(it).getString("text") }
-        val tracks = near()
         val root = Files.createTempDirectory("n0-book").toFile()
         try {
-            val book = SceneBook(root, order, { texts[it] }, choiceOf(case)) { tracks }
+            val book = SceneBook(root, order, { texts[it] }, choiceOf(case), student = student) { v, a -> nearAt(v, a) }
             val expected = case.getJSONObject("expected")
             for (chapterId in order) {
                 assertNull(book.read(chapterId))
@@ -335,7 +415,7 @@ class SceneMusicTest {
                 assertTrue(book.read(chapterId) != null) // đã nhớ trên đĩa, chữ không đổi thì dùng lại
             }
             // Chữ đổi thì bản ghi chương ấy hết hiệu lực.
-            val changed = SceneBook(root, order, { id -> texts[id] + "\n\nThêm một dòng.\n" }, choiceOf(case)) { tracks }
+            val changed = SceneBook(root, order, { id -> texts[id] + "\n\nThêm một dòng.\n" }, choiceOf(case), student = student) { v, a -> nearAt(v, a) }
             assertNull(changed.read(order.first()))
         } finally {
             root.deleteRecursively()
@@ -354,7 +434,7 @@ class SceneMusicTest {
         val plain = Files.createTempDirectory("n0-verify-a").toFile()
         val capped = Files.createTempDirectory("n0-verify-b").toFile()
         try {
-            val firstLinks = SceneBook(plain, order, { texts[it] }, SceneChoice(case.getString("bookKey"))) { tracks }.let { it.links(it.build(first)!!) }.toList()
+            val firstLinks = SceneBook(plain, order, { texts[it] }, SceneChoice(case.getString("bookKey"))) { _, _ -> tracks }.let { it.links(it.build(first)!!) }.toList()
             assertTrue(firstLinks.size >= 2)
             val victims = firstLinks.sorted().take(2)
             val banned = HashSet<String>()
@@ -367,7 +447,7 @@ class SceneMusicTest {
                     banned.addAll(fresh.take(1)) // mỗi vòng chỉ phát hiện MỘT bài quá cỡ
                     fresh.isNotEmpty()
                 },
-            ) { tracks }
+            ) { _, _ -> tracks }
             val record = book.build(first)!!
             val links = book.links(record)
             assertEquals(victims.toSet(), banned)

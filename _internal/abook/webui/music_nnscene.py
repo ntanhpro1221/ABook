@@ -14,7 +14,8 @@ Cue mang `firstSegment` = mã ĐOẠN của màn đọc (`ui/src/listen/textScri
 plan (`music_scenes._durations`), trình phát co giãn theo các mốc `firstSegment`.
 
 Học sinh q06 (`music_scene_student`, gói "Phân tích nhạc") là phần THÊM: máy có gói và torch thì mỗi chương được chỉnh V/E/T quanh mức chương đúng
-đường Studio (SPEC mục 1); không có thì cùng bộ dựng, bỏ bước ấy (đường "N0": `book_scenes(scripts, None, None, None)` -> `music_plan.build`).
+đường Studio (SPEC mục 1); không có thì cùng bộ dựng với học sinh NN-lite (`music_nnlite`, 2 MB đóng sẵn trong app, SPEC_nnlite_app), và nếu cả model ấy không nạp
+được thì bỏ bước ấy (đường "N0": `book_scenes(scripts, None, None, None)` -> `music_plan.build`).
 Khoá đệm ghi học sinh nào đã dùng (`student_tag`), nên cài gói sau thì các chương chưa nghe dựng lại có học sinh.
 
 Dựng nền: `Builder` chạy MỘT luồng (học sinh nhúng ở 2 luồng CPU), chương đang nghe trước rồi vài chương kế; hỏi cue của chương chưa dựng xong thì
@@ -230,9 +231,9 @@ def scene_dir_name(book_id: str) -> str:
     return hashlib.sha1(book_id.encode("utf-8")).hexdigest()[:16]
 
 
-def student_tag(package_sha: str | None) -> str:
-    """Phần khoá đệm nói học sinh nào đã dựng plan: mã gói q06, hay "none" khi không dùng học sinh."""
-    return package_sha or "none"
+def student_tag(package_sha: str | None, lite_sha: str | None = None) -> str:
+    """Phần khoá đệm nói học sinh nào đã dựng plan: mã gói q06; không có gói mà có NN-lite (music_nnlite.py) thì "nnlite-<mã model>"; hay "none" khi không dùng học sinh."""
+    return package_sha or (f"nnlite-{lite_sha}" if lite_sha else "none")
 
 
 class Builder:

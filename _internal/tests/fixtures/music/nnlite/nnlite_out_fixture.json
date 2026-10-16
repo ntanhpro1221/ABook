@@ -1,0 +1,384 @@
+{
+ "version": 1,
+ "model_bytes": 2097328,
+ "buckets": 262144,
+ "tolerance": 0.001,
+ "scenes": [
+  {
+   "text": "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm.",
+   "out": [
+    "np.float64(0.2357862560130828)",
+    "np.float64(0.2277114728202786)",
+    "np.float64(-0.2407404584735587)",
+    "np.float64(0.6948546804148115)"
+   ],
+   "weight": 24
+  },
+  {
+   "text": "“Cậu đến muộn rồi đấy!” – Lan bĩu môi. – “Xin lỗi, xin lỗi mà!” Minh gãi đầu, mặt đỏ bừng.",
+   "out": [
+    "np.float64(0.4199655260204775)",
+    "np.float64(0.6569034925142435)",
+    "np.float64(-0.09717497931643461)",
+    "np.float64(0.8338460245541224)"
+   ],
+   "weight": 21
+  },
+  {
+   "text": "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào.",
+   "out": [
+    "np.float64(-0.1246183379420604)",
+    "np.float64(-0.07147213469918429)",
+    "np.float64(-0.1798608627451016)",
+    "np.float64(0.09464717455801414)"
+   ],
+   "weight": 22
+  },
+  {
+   "text": "Thanh kiếm chém xuống! Máu bắn tung toé. Hắn gầm lên, lao tới lần nữa – nhanh hơn, tàn bạo hơn!",
+   "out": [
+    "np.float64(-0.00464792833527139)",
+    "np.float64(0.956140260657246)",
+    "np.float64(0.3932429431628441)",
+    "np.float64(0.4326405683268242)"
+   ],
+   "weight": 21
+  },
+  {
+   "text": "Tiếng bước chân vang lên trong hành lang tối. Từng bước. Từng bước. Rồi im bặt. Có ai đó đang đứng ngay sau cánh cửa.",
+   "out": [
+    "np.float64(-0.12303839554584006)",
+    "np.float64(0.23259039567668074)",
+    "np.float64(0.32652660429730923)",
+    "np.float64(-0.17663163721580577)"
+   ],
+   "weight": 25
+  },
+  {
+   "text": "Cả lớp cười ồ lên khi thầy giáo trượt chân ngã vào thùng rác. “Không ai thấy gì hết, rõ chưa?”",
+   "out": [
+    "np.float64(0.18332688836746774)",
+    "np.float64(0.33145198807215936)",
+    "np.float64(-0.07054183655413865)",
+    "np.float64(0.5114972151283129)"
+   ],
+   "weight": 21
+  },
+  {
+   "text": "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau.",
+   "out": [
+    "np.float64(0.10405444160534466)",
+    "np.float64(-0.04443355499106044)",
+    "np.float64(-0.24407244744341963)",
+    "np.float64(0.45449852070906904)"
+   ],
+   "weight": 22
+  },
+  {
+   "text": "Con rồng mở mắt. Cả ngọn núi rung chuyển. Đội quân phía dưới hoảng loạn bỏ chạy tán loạn.",
+   "out": [
+    "np.float64(0.006035147360761883)",
+    "np.float64(0.3684238061387064)",
+    "np.float64(0.13763939613577453)",
+    "np.float64(0.11707989523260315)"
+   ],
+   "weight": 19
+  },
+  {
+   "text": "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi.",
+   "out": [
+    "np.float64(0.35826828853960835)",
+    "np.float64(0.11249281305012013)",
+    "np.float64(-0.3453390801565738)",
+    "np.float64(0.7413485626620007)"
+   ],
+   "weight": 23
+  },
+  {
+   "text": "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…",
+   "out": [
+    "np.float64(0.10924352899244812)",
+    "np.float64(0.4341776833705925)",
+    "np.float64(0.07138809876803133)",
+    "np.float64(0.5185349341277932)"
+   ],
+   "weight": 26
+  },
+  {
+   "text": "Báo cáo tài chính quý ba cho thấy doanh thu tăng nhẹ. Hội đồng quản trị sẽ họp vào thứ Hai tuần sau.",
+   "out": [
+    "np.float64(0.1153268408022423)",
+    "np.float64(0.11730413305325836)",
+    "np.float64(-0.06446896724710283)",
+    "np.float64(0.4462323101572945)"
+   ],
+   "weight": 23
+  },
+  {
+   "text": "Hệ thống: Bạn đã nhận được 300 điểm kinh nghiệm. Cấp độ tăng lên 12. Kỹ năng mới đã được mở khoá.",
+   "out": [
+    "np.float64(0.32610937271536383)",
+    "np.float64(0.2011505589836033)",
+    "np.float64(-0.16589539641602535)",
+    "np.float64(0.6966271614075616)"
+   ],
+   "weight": 22
+  },
+  {
+   "text": "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê.",
+   "out": [
+    "np.float64(0.02297376418661662)",
+    "np.float64(-0.07541998908345887)",
+    "np.float64(-0.2403105304072574)",
+    "np.float64(0.3913366098686184)"
+   ],
+   "weight": 22
+  },
+  {
+   "text": "Hắn mỉm cười. Một nụ cười lạnh lẽo đến rợn người. “Ngươi nghĩ mình có thể trốn thoát sao?”",
+   "out": [
+    "np.float64(-0.05599419380704082)",
+    "np.float64(0.1630791769119712)",
+    "np.float64(0.19222374491043184)",
+    "np.float64(0.40351592445087137)"
+   ],
+   "weight": 19
+  },
+  {
+   "text": "Cuộc thi bắt đầu! Ba, hai, một – xuất phát! Đám đông reo hò như sấm dậy khi các tay đua lao đi.",
+   "out": [
+    "np.float64(0.22270434278864912)",
+    "np.float64(0.6988964080186513)",
+    "np.float64(0.06496264714201953)",
+    "np.float64(0.7544049264258863)"
+   ],
+   "weight": 23
+  },
+  {
+   "text": "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực.",
+   "out": [
+    "np.float64(0.25057912022965756)",
+    "np.float64(0.0642797554938131)",
+    "np.float64(-0.2657548329168617)",
+    "np.float64(0.729749555612064)"
+   ],
+   "weight": 22
+  },
+  {
+   "text": "Ơ? Cái gì thế này? Sao bánh lại cháy đen thế kia?! Cả căn bếp ngập trong khói, chuông báo cháy reo inh ỏi.",
+   "out": [
+    "np.float64(0.31481167440606533)",
+    "np.float64(0.5679231984061965)",
+    "np.float64(-0.030978312521761663)",
+    "np.float64(0.6379342491994678)"
+   ],
+   "weight": 24
+  },
+  {
+   "text": "Cô công chúa bước vào phòng khiêu vũ. Mọi ánh mắt đều đổ dồn về phía nàng, lộng lẫy trong chiếc váy xanh.",
+   "out": [
+    "np.float64(0.16616668451568048)",
+    "np.float64(0.2640355434341207)",
+    "np.float64(0.025972422574364162)",
+    "np.float64(0.5955526234306745)"
+   ],
+   "weight": 23
+  },
+  {
+   "text": "Dưới hầm ngục, tiếng xích sắt va vào nhau lách cách. Không khí ẩm mốc, mùi máu tanh nồng nặc.",
+   "out": [
+    "np.float64(-0.026496700222546965)",
+    "np.float64(0.25953622072742205)",
+    "np.float64(0.1027853512373853)",
+    "np.float64(0.1988598749883732)"
+   ],
+   "weight": 20
+  },
+  {
+   "text": "Chúng tôi cùng nhau chụp một tấm ảnh kỷ niệm trước cổng trường. Ngày mai, mỗi người một ngả.",
+   "out": [
+    "np.float64(0.18853648559330355)",
+    "np.float64(0.0023033270631280522)",
+    "np.float64(-0.3879007552395019)",
+    "np.float64(0.7753453095652305)"
+   ],
+   "weight": 19
+  },
+  {
+   "text": "日本語の文章もたまに混ざる。「ありがとう」と彼女は言った。",
+   "out": [
+    "np.float64(0.14329386446062373)",
+    "np.float64(0.04441751789725401)",
+    "np.float64(-0.1526443632022667)",
+    "np.float64(0.4883895980228747)"
+   ],
+   "weight": 1
+  },
+  {
+   "text": "한국어 문장도 섞여 있습니다. 정말 고마워요!",
+   "out": [
+    "np.float64(0.34653438713119333)",
+    "np.float64(0.5986897184085442)",
+    "np.float64(-0.02083222197902407)",
+    "np.float64(0.6784967700229072)"
+   ],
+   "weight": 6
+  },
+  {
+   "text": "!!! ??? … — – ~",
+   "out": [
+    "np.float64(3.672282424320333)",
+    "np.float64(8.655910589734459)",
+    "np.float64(0.5077550842649696)",
+    "np.float64(4.886820600507512)"
+   ],
+   "weight": 6
+  },
+  {
+   "text": "ĐẠI CHIẾN BẮT ĐẦU — CHƯƠNG 47: KẺ THÙ CŨ",
+   "out": [
+    "np.float64(-0.09670093902350047)",
+    "np.float64(0.08100003612894396)",
+    "np.float64(0.005476469948484303)",
+    "np.float64(0.14584423988977346)"
+   ],
+   "weight": 10
+  },
+  {
+   "text": "Ha ha ha 😂 thật không thể tin được 🤣🤣",
+   "out": [
+    "np.float64(0.20964331849554652)",
+    "np.float64(0.21021569265374226)",
+    "np.float64(-0.127674074868874)",
+    "np.float64(0.41594588388916426)"
+   ],
+   "weight": 10
+  },
+  {
+   "text": "Một chữ.",
+   "out": [
+    "np.float64(0.01666853866793433)",
+    "np.float64(-0.016604692011180422)",
+    "np.float64(0.01793558593963404)",
+    "np.float64(0.501188735246065)"
+   ],
+   "weight": 2
+  },
+  {
+   "text": "",
+   "out": [
+    "np.float64(0.1548444621748054)",
+    "np.float64(-0.018361401559450097)",
+    "np.float64(-0.1293780094697357)",
+    "np.float64(0.49003619354816796)"
+   ],
+   "weight": 1
+  },
+  {
+   "text": "Trận chiến kết thúc. Xác chết nằm la liệt khắp nơi. Người sống sót lặng lẽ chôn cất đồng đội trong mưa.",
+   "out": [
+    "np.float64(-0.34970934102876905)",
+    "np.float64(0.1192128968757878)",
+    "np.float64(0.21216733648603897)",
+    "np.float64(0.01497280768878051)"
+   ],
+   "weight": 22
+  },
+  {
+   "text": "Lễ hội mùa hè! Pháo hoa rực rỡ, quầy hàng đông nghịt, tiếng cười nói khắp nơi. Cô ấy mặc yukata trông thật dễ thương.",
+   "out": [
+    "np.float64(0.44290298809562223)",
+    "np.float64(0.32109503995129235)",
+    "np.float64(-0.3743590480467798)",
+    "np.float64(0.9932057135192845)"
+   ],
+   "weight": 25
+  },
+  {
+   "text": "Ông lão kể chuyện bên bếp lửa. Lũ trẻ ngồi quanh, mắt tròn xoe, nín thở chờ đoạn tiếp theo.",
+   "out": [
+    "np.float64(0.00529928378041189)",
+    "np.float64(0.07764963949055947)",
+    "np.float64(0.002926440902664404)",
+    "np.float64(0.2916446654981192)"
+   ],
+   "weight": 20
+  }
+ ],
+ "chapters": [
+  {
+   "scenes": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "items": [
+    {
+     "dV": "0.10352561668378751",
+     "dE": "-0.20145451809910675",
+     "dT": "-0.2007713363942059",
+     "chapterV": "0.24562999688985476"
+    },
+    {
+     "dV": "0.2877048866911822",
+     "dE": "0.22773750159485817",
+     "dT": "-0.05720585723708182",
+     "chapterV": "0.24562999688985476"
+    },
+    {
+     "dV": "-0.25687897727135567",
+     "dE": "-0.5006381256185697",
+     "dT": "-0.1398917406657488",
+     "chapterV": "0.24562999688985476"
+    },
+    {
+     "dV": "-0.1369085676645667",
+     "dE": "0.5269742697378607",
+     "dT": "0.43321206524219685",
+     "chapterV": "0.24562999688985476"
+    }
+   ]
+  },
+  {
+   "scenes": [
+    4,
+    13,
+    18
+   ],
+   "items": [
+    {
+     "dV": "-0.05007302717973512",
+     "dE": "0.01221557274241647",
+     "dT": "0.10979030296170544",
+     "chapterV": "-0.15682660608248278"
+    },
+    {
+     "dV": "0.01697117455906412",
+     "dE": "-0.05729564602229306",
+     "dT": "-0.024512556425171944",
+     "chapterV": "-0.15682660608248278"
+    },
+    {
+     "dV": "0.046468668143557976",
+     "dE": "0.039161397793157776",
+     "dT": "-0.11395095009821848",
+     "chapterV": "-0.15682660608248278"
+    }
+   ]
+  },
+  {
+   "scenes": [
+    27
+   ],
+   "items": [
+    {
+     "dV": "0.0",
+     "dE": "0.0",
+     "dT": "0.0",
+     "chapterV": "-0.2547945661114972"
+    }
+   ]
+  }
+ ]
+}

@@ -1,4 +1,5 @@
-"""Sinh bộ ví dụ DÙNG CHUNG cho đường N0 của nhạc nền theo cảnh (không học sinh): `tests/fixtures/music/n0/`.
+"""Sinh bộ ví dụ DÙNG CHUNG cho đường N0 của nhạc nền theo cảnh (không học sinh): `tests/fixtures/music/n0/`; thêm các ca `case_lite_*.json` cho đường NN-lite (học sinh
+2 MB `music_nnlite`, SPEC_nnlite_app: mục học sinh -> `apply_student` -> sàn WEAK_MOOD -> chọn bài), nơi cả đường chữ -> 4 số -> đoạn -> bài được so một lần.
 
 Bản Python (`abook/webui/music_scenes.py` + `music_select.py` + `music_plan.chapter_cues`, `text_processing.segment_chapter_text`) và
 bản Kotlin của điện thoại (`SceneCues`, `SceneScenes`, `SceneChoose`, `SceneSegmenter`, `SceneMusic`) cùng đọc các file này
@@ -7,6 +8,7 @@ bản Kotlin của điện thoại (`SceneCues`, `SceneScenes`, `SceneChoose`, `
 
     catalog.json         ô danh mục TỰ DỰNG quanh đích êm (9 ô v 1-3 x a 0-2), thứ tự `near`, hằng số, mẫu khoảng cách / hoà điểm
     case_*.json          mỗi file một "cuốn": chương (chữ + câu), lựa chọn (họ nhạc, thể loại, ghim, bỏ, im lặng, bài không dùng được) và kết quả Python
+                         (`case_lite_*`: `student` true - kèm mục học sinh và V / E / T / confidence của từng đoạn)
     regex_cases.json     mỗi regex của cue_kind / hard_break / bracket_is_subhead / subhead_words / is_heading: ca khớp + không khớp, có chữ Việt có dấu
     segmenter_cases.json chữ -> câu của segment_chapter_text (ngoặc kép, nội tâm, gạch thoại, dòng ngăn cảnh, ...)
 
@@ -31,10 +33,11 @@ sys.path.insert(0, str(ROOT))
 
 from abook import text_processing  # noqa: E402
 from abook.readaloud import paragraphs as reading_paragraphs  # noqa: E402
-from abook.webui import humanize, music_catalog, music_mix, music_plan, music_scenes, music_select  # noqa: E402
+from abook.webui import humanize, music_catalog, music_mix, music_nnlite, music_nnscene, music_plan, music_scenes, music_select  # noqa: E402
 from abook.webui.server import MUSIC_TRACK_MAX_BYTES  # noqa: E402
 
 OUT = ROOT / "tests" / "fixtures" / "music" / "n0"
+NNLITE_FIXTURE = ROOT / "tests" / "fixtures" / "music" / "nnlite" / "nnlite_out_fixture.json"  # cảnh chữ dựng sẵn dùng chung với bài thử NN-lite
 TARGET = (0.15, -0.55)
 # Cỡ (byte) theo MẢNH `tracks/` của danh mục - ô `cells/` không có `bytes`. Bài trùng toạ độ với bài tốt nhất của ô giữa, nên nếu không lọc cỡ thì chúng thắng:
 # nhờ vậy bộ ví dụ thật sự kiểm "bài quá MUSIC_TRACK_MAX_MB không bao giờ được chọn" (server.music_verify_sizes + music_track_available, Kotlin MusicCatalog.verifySizes + usable).
@@ -93,6 +96,16 @@ def make_catalog() -> dict[str, list[dict[str, Any]]]:
     # Họ nhạc: vài bài sát đích mang họ "piano" và "eastern" (cho lựa chọn family).
     for family, tension in (("piano", -0.1), ("eastern", -0.05)):
         cells["1_1"].append(entry(0.1, -0.5, tension, duration=240, family=family))
+    # Các ô còn lại của lưới 5 x 5, thêm SAU CÙNG (bộ sinh số không đổi với 9 ô trên): đoạn của học sinh NN-lite có đích V / E riêng nên hỏi `near` ở ô khác; đường N0 chỉ đọc
+    # 9 ô quanh đích êm nên kết quả N0 không đổi.
+    for vi in range(5):
+        for ai in range(5):
+            if f"{vi}_{ai}" in cells:
+                continue
+            v_low, v_high = -1.0 + vi * 0.4, -1.0 + (vi + 1) * 0.4
+            a_low, a_high = -1.0 + ai * 0.4, -1.0 + (ai + 1) * 0.4
+            cells[f"{vi}_{ai}"] = [entry(round(rng.uniform(v_low + 0.001, v_high - 0.001), 3), round(rng.uniform(a_low + 0.001, a_high - 0.001), 3),
+                                         round(rng.uniform(-1.0, 1.0), 3), duration=rng.choice([75, 110, 170, 260, 420, 61])) for _ in range(10)]
     return cells
 
 
@@ -222,9 +235,15 @@ def seg(sid: int, text: str, kind: str = "narration", scene_break: bool = False)
 def n0_plan(scripts: list[dict[str, Any]], cells: dict[str, list[dict[str, Any]]], *, book_key: str, family: str | None = None,
             genre: str | None = None, pins: dict[str, str] | None = None, banned: list[str] | None = None,
             silenced: list[str] | None = None, unavailable: list[str] | None = None,
-            size_cap: bool = True) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    scenes = music_scenes.book_scenes(scripts, None, None, None)
-    for scene in scenes:  # đường N0 = mọi số cảm xúc là hằng; Kotlin viết tắt bằng hằng nên mất hằng thì fixture phải báo
+            size_cap: bool = True, student: bool = False) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """`student`: đường NN-lite - đoạn từng chương dựng như máy chủ (`music_nnscene.chapter_scenes` với học sinh `music_nnlite.student_items`: mục học sinh ->
+    `apply_student` -> sàn WEAK_MOOD) thay cho đường N0."""
+    if student:
+        scenes = [scene for script in scripts for scene in music_nnscene.chapter_scenes(script, music_nnlite.student_items)]
+        assert scenes and all(scene["moodSource"] == "student" and scene["confidence"] == music_select.WEAK_MOOD for scene in scenes), "model NN-lite phải nạp được"
+    else:
+        scenes = music_scenes.book_scenes(scripts, None, None, None)
+    for scene in [] if student else scenes:  # đường N0 = mọi số cảm xúc là hằng; Kotlin viết tắt bằng hằng nên mất hằng thì fixture phải báo
         assert (scene["valence"], scene["arousal"], scene["tension"], scene["confidence"], scene["sd"]) == (
             0.0, 0.0, 0.0, 0.0, {"valence": 0.0, "arousal": 0.0, "tension": 0.0}), scene
         assert scene["moodSource"] == "labels", scene
@@ -265,9 +284,21 @@ def loops_of(chosen: list[dict[str, Any]], cells: dict[str, list[dict[str, Any]]
     return out
 
 
+def student_file(scripts: list[dict[str, Any]], scenes: list[dict[str, Any]]) -> dict[str, Any]:
+    """Phần học sinh của ca NN-lite: mục học sinh (làm tròn 9 số lẻ: máy khác nhau lệch ở số lẻ thứ 15) và V / E / T / confidence của từng đoạn sau `apply_student` + sàn."""
+    items = []
+    for script in scripts:
+        for item in music_nnlite.student_items(script, music_scenes.book_scenes([script], None, None, None)) or []:
+            items.append({key: round(value, 9) if isinstance(value, float) else value for key, value in item.items()})
+    moods = [{"chapterId": scene["chapterId"], "firstSegment": scene["firstSegment"], "valence": scene["valence"], "arousal": scene["arousal"], "tension": scene["tension"],
+              "confidence": scene["confidence"], "moodSource": scene["moodSource"]} for scene in scenes]
+    return {"items": items, "moods": moods}
+
+
 def case_file(name: str, chapters_file: str, chapters: list[dict[str, Any]], cells: dict[str, list[dict[str, Any]]], **options: Any) -> dict[str, Any]:
     scripts = [{"chapterId": ch["chapterId"], "segments": ch["segments"]} for ch in chapters]
     book_key = options["book_key"]
+    student = bool(options.get("student"))
     scenes, chosen = n0_plan(scripts, cells, **options)
     plan = {"enabled": True, "scenes": chosen}
     cues, unclamped, heads = {}, {}, {}
@@ -280,9 +311,10 @@ def case_file(name: str, chapters_file: str, chapters: list[dict[str, Any]], cel
             heads[str(ch["chapterId"])] = first_segments(ch, chosen, cues[str(ch["chapterId"])])
     return {
         "name": name, "bookKey": book_key, "chaptersFile": chapters_file,
-        "options": {key: value for key, value in options.items() if key != "book_key" and value},
+        "options": {key: value for key, value in options.items() if key not in ("book_key", "student") and value},
+        **({"student": True} if student else {}),
         "expected": {"scenes": [scene_json(scene) for scene in chosen], "cues": cues, "cuesUnclamped": unclamped, "firstSegments": heads,
-                     "loops": loops_of(chosen, cells)},
+                     "loops": loops_of(chosen, cells), **({"student": student_file(scripts, scenes)} if student else {})},
     }
 
 
@@ -325,7 +357,13 @@ def build_cases(cells: dict[str, list[dict[str, Any]]]) -> tuple[dict[str, dict[
     cases["family"] = case_file("family", "chapters_main.json", chapters, cells, book_key="book-gamma", family="eastern", genre="gen_b")
     hand = handmade_chapters()
     cases["handmade"] = case_file("handmade", "chapters_handmade.json", hand, cells, book_key="book-hand")
-    return cases, {"chapters_main.json": chapters, "chapters_handmade.json": hand}
+    # Đường NN-lite trên cùng chữ: chữ -> 4 số -> mục chương -> đoạn học sinh -> bài (đích V / E riêng nên hỏi nhiều ô danh mục). `lite_handmade` có chương một cảnh (độ lệch 0).
+    cases["lite_alpha"] = case_file("lite_alpha", "chapters_main.json", chapters, cells, book_key="book-alpha", student=True)
+    cases["lite_family"] = case_file("lite_family", "chapters_main.json", chapters, cells, book_key="book-gamma", family="eastern", genre="gen_b", student=True)
+    cases["lite_handmade"] = case_file("lite_handmade", "chapters_handmade.json", hand, cells, book_key="book-hand", student=True)
+    mood = mood_chapters()
+    cases["lite_mood"] = case_file("lite_mood", "chapters_mood.json", mood, cells, book_key="book-mood", student=True)
+    return cases, {"chapters_main.json": chapters, "chapters_handmade.json": hand, "chapters_mood.json": mood}
 
 
 def handmade_chapters() -> list[dict[str, Any]]:
@@ -342,6 +380,25 @@ def handmade_chapters() -> list[dict[str, Any]]:
     return [{"chapterId": 11, "title": "t11", "segments": chapter1}, {"chapterId": 12, "title": "t12", "segments": chapter2},
             {"chapterId": 13, "title": "t13", "segments": chapter3}, {"chapterId": 14, "title": "t14", "segments": chapter4},
             {"chapterId": 15, "title": "t15", "segments": chapter5}]
+
+
+def mood_chapters() -> list[dict[str, Any]]:
+    """Chương dựng từ các cảnh chữ đa dạng (vui, buồn, đánh nhau, rùng rợn, thường ngày...) của bộ ví dụ NN-lite: mỗi cảnh lặp ~1000 ký tự (> 60 giây, khỏi bị gộp), câu cuối
+    mang cờ ngăn cảnh. Học sinh NN-lite cho mỗi cảnh một đích V / E / T khác nhau, nên bộ chọn hỏi nhiều ô danh mục và bước âm lượng khác 0."""
+    texts = [scene["text"] for scene in json.loads(NNLITE_FIXTURE.read_text(encoding="utf-8"))["scenes"]]
+    # Mỗi cảnh là một dãy chỉ số chữ (nối liền, không ngăn cảnh giữa chừng): cảnh nhiều chữ dài > 180 giây bị chia mảnh "length" mà nội dung mỗi mảnh khác nhau, nên có bước âm lượng.
+    groups = [[[0, 2], [3], [4, 7], [20, 1]], [[1, 5], [6], [9, 10, 11]], [[12], [15, 17], [18, 19]], [[8], [13, 14, 16], [21]], [[22, 23], [24], [25, 26], [27, 28, 29]]]
+    chapters = []
+    for number, group in enumerate(groups):
+        segments, sid = [], 0
+        for scene in group:
+            repeats = max(2, 1000 // max(1, sum(len(texts[index]) for index in scene)) + 1)
+            for index in scene:
+                for repeat in range(repeats * (3 if len(scene) > 1 else 1)):
+                    segments.append(seg(sid, texts[index], scene_break=index == scene[-1] and repeat == repeats * (3 if len(scene) > 1 else 1) - 1))
+                    sid += 1
+        chapters.append({"chapterId": 21 + number, "title": f"t{21 + number}", "segments": segments})
+    return chapters
 
 
 # ---- ca regex -----------------------------------------------------------------------------------------------------------------------

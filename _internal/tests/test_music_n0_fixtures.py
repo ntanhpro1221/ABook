@@ -42,7 +42,10 @@ def test_the_fixtures_are_lf_utf8_and_cover_every_branch(generator):
         assert coverage[branch] > 0, f"bộ ví dụ không chạm nhánh {branch}"
 
 
-def test_the_invented_catalog_is_nine_cells_around_the_calm_target(generator):
-    cells = json.loads((FIXTURES / "catalog.json").read_text(encoding="utf-8"))["cells"]
-    assert sorted(cells) == sorted(f"{v}_{a}" for v in (1, 2, 3) for a in (0, 1, 2))
+def test_the_invented_catalog_is_the_whole_grid_and_n0_reads_the_nine_cells_around_the_calm_target(generator):
+    catalog = json.loads((FIXTURES / "catalog.json").read_text(encoding="utf-8"))
+    cells = catalog["cells"]
+    assert sorted(cells) == sorted(f"{v}_{a}" for v in range(5) for a in range(5)), "đường NN-lite hỏi cả các ô khác (đích V / E riêng của từng đoạn)"
+    nine = {f"{v}_{a}" for v in (1, 2, 3) for a in (0, 1, 2)}
+    assert {link for name in nine for link in (item["link"] for item in cells[name])} >= set(catalog["nearOrder"]), "đường N0 chỉ đọc 9 ô quanh đích êm"
     assert all(item["link"].startswith("https://example.invalid/") for items in cells.values() for item in items)

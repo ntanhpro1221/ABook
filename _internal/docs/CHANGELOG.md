@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Nhạc nền theo cảnh bám cảm xúc của chữ hơn, kể cả khi máy không cài gói phân tích nhạc (máy tính và điện thoại): trên 60 chương thử, nhạc lệch rõ so với cảnh giảm từ 37,8 % xuống 17,4 %; cảnh buồn bị phát nhạc vui chỉ nhích 15,7 → 16,5 % và nhạc đổi bài 11,7 → 11,5 lần mỗi giờ nghe, nên bạn nghe nhạc hợp cảnh hơn mà không thấy nhạc đổi dồn dập.
+
 ## [0.4.76] - 2026-10-16
 
 ### Nghe ngay
