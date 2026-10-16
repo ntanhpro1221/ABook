@@ -104,3 +104,31 @@ class Reminder(private val postDelayed: (Runnable, Long) -> Unit, private val re
         pending = null
     }
 }
+
+/**
+ * Dừng VÌ LỖI hay do người nghe tự dừng (uxfix51; máy tính: `errorPause` trong listen/readAloud.ts)? Đoạn người nghe chờ hỏng lúc họ đang nghe -> [failed] ghi nhớ. Sau đó dịch vụ trả lời lại
+ * ([recovered]): nếu họ không đụng gì ([listenerActed]: bấm dừng / phát, tua, nhảy) thì thông báo lỗi cũ gỡ đi và nghe tự tiếp tục khi đoạn ấy sẵn sàng ([Recovery.RESUME]); nếu họ đã tự dừng thì chỉ
+ * gỡ thông báo, ở yên dừng ([Recovery.CLEAR]).
+ */
+class ErrorPause {
+    enum class Recovery { RESUME, CLEAR }
+
+    private var byError = false
+
+    /** Đoạn người nghe chờ hỏng; `listenerWanted`: lúc ấy họ đang muốn nghe. */
+    fun failed(listenerWanted: Boolean) {
+        byError = listenerWanted
+    }
+
+    /** Người nghe làm gì đó (dừng, phát, tua, nhảy sang chỗ khác): từ giờ không tự phát tiếp thay họ. */
+    fun listenerActed() {
+        byError = false
+    }
+
+    /** Dịch vụ trả lời lại thật: làm gì với lỗi đang treo. */
+    fun recovered(): Recovery {
+        val resume = byError
+        byError = false
+        return if (resume) Recovery.RESUME else Recovery.CLEAR
+    }
+}

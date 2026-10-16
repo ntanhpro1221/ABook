@@ -44,6 +44,7 @@ RETRIES = 2  # lượt bị cắt giữa chừng thử lại tối đa chừng n
 # nhau chậm đi - 5 đoạn mới cùng lúc 13-19 giây thay vì 49 giây nối tiếp). Điện thoại (EdgeTts.kt) dùng đúng các hằng số và luật cắt này, bộ ví dụ chung
 # tests/fixtures/readaloud/edge/pieces.json: đổi một bên thì đổi cả hai bên và bộ ví dụ.
 PIECE_PARALLEL = 3  # tối đa chừng này mảnh một đoạn (và chừng này kết nối cùng lúc cho một clip)
+RANK_BACKGROUND = 99  # [ConnectionSlots] rank của việc không có người nghe đứng chờ ngay (Làm trước, xuất sách nói, lượt gọi không nói rõ): đứng sau mọi đoạn người nghe sắp nghe
 EDGE_CONNECTIONS = 8  # trần kết nối Edge đang mở của cả tiến trình: đọc trước (tới 8 đoạn) x mảnh không mở hàng chục ổ cắm cùng lúc
 WHOLE_CHARS = 100  # đoạn ngắn hơn chừng này ký tự giữ một yêu cầu: câu đơn 90-100 ký tự đo 5,8-13,9 giây, cắt đôi không nhanh hơn mà tốn thêm một lần nối (~0,45 giây)
 MIN_PIECE_CHARS = 50  # mảnh không nhỏ hơn chừng này (gộp câu ngắn): mảnh quá ngắn thêm chỗ nối mà không rút ngắn thời gian chờ
@@ -330,8 +331,49 @@ def read_turn(connection: websocket.Connection, compensation_ticks: int, deadlin
                 audio += data
 
 
-_connections = threading.BoundedSemaphore(EDGE_CONNECTIONS)  # mọi EdgeClient trong tiến trình dùng chung
-SLOT_POLL = 0.25  # mảnh chờ chỗ kết nối xem lại clip đã bỏ chưa sau chừng này giây
+class ConnectionSlots:
+    """Chỗ kết nối Edge của cả tiến trình (EDGE_CONNECTIONS chỗ). Hết chỗ thì người chờ xếp hàng theo `rank` (số đoạn người nghe phải nghe trước đoạn này: 0 = đoạn họ đang đứng chờ, 1 = đoạn kế...;
+    mặc định [RANK_BACKGROUND]: việc nền, đọc trước không rõ ai chờ), cùng rank thì ai đến trước được trước. Mảnh đang giữ chỗ không bị đuổi; chỉ chỗ vừa nhả được trao theo hàng.
+    Điện thoại: ConnectionSlots trong EdgeTts.kt."""
+
+    POLL = 0.25  # người chờ xem lại `abandoned` sau chừng này giây (bỏ cuộc không đánh thức hàng)
+
+    def __init__(self, size: int) -> None:
+        self.size = size
+        self.free = size
+        self._turns = 0
+        self._queue: list[tuple[int, int]] = []  # (rank, số thứ tự đến); đầu hàng = người được trao chỗ kế
+        self._ready = threading.Condition()
+
+    def acquire(self, timeout: float | None = None, rank: int = RANK_BACKGROUND, abandoned: Callable[[], bool] | None = None) -> bool:
+        """Lấy một chỗ; False khi quá `timeout` (giây) hay `abandoned()` đúng (clip đã bỏ) - vị trí trong hàng giữ nguyên suốt lúc chờ."""
+        deadline = None if timeout is None else time.monotonic() + timeout
+        with self._ready:
+            self._turns += 1
+            ticket = (rank, self._turns)
+            self._queue.append(ticket)
+            self._queue.sort()
+            try:
+                while not (self.free > 0 and self._queue[0] == ticket):
+                    left = self.POLL if deadline is None else min(self.POLL, deadline - time.monotonic())
+                    if left <= 0 or (abandoned is not None and abandoned()):
+                        return False
+                    self._ready.wait(left)
+                self.free -= 1
+                return True
+            finally:
+                self._queue.remove(ticket)
+                self._ready.notify_all()  # người kế trong hàng có thể đã tới lượt (còn chỗ), hay người này bỏ cuộc
+
+    def release(self) -> None:
+        with self._ready:
+            if self.free >= self.size:
+                raise ValueError("Trả chỗ kết nối quá số đã giữ")
+            self.free += 1
+            self._ready.notify_all()
+
+
+_connections = ConnectionSlots(EDGE_CONNECTIONS)  # mọi EdgeClient trong tiến trình dùng chung
 
 
 class _Clip:
@@ -426,14 +468,14 @@ class EdgeClient:
             # ENETUNREACH / EHOSTUNREACH / "network is down"...: cũng là không có mạng.
             raise EdgeOffline("Không có mạng để dùng giọng trực tuyến.") from error
 
-    def _speak_one(self, voice: str, text: str, compensation_ticks: int, deadline: float, *, clip: _Clip | None = None) -> tuple[bytes, list[Boundary]]:
-        # Giữ một chỗ trong EDGE_CONNECTIONS suốt đời kết nối (không giữ khi nghỉ chờ thử lại, nên không có chuyện giữ chỗ mà đợi chỗ).
+    def _speak_one(self, voice: str, text: str, compensation_ticks: int, deadline: float, *, clip: _Clip | None = None, rank: int = RANK_BACKGROUND) -> tuple[bytes, list[Boundary]]:
+        # Giữ một chỗ trong EDGE_CONNECTIONS suốt đời kết nối (không giữ khi nghỉ chờ thử lại, nên không có chuyện giữ chỗ mà đợi chỗ). `rank`: số đoạn người nghe phải nghe trước đoạn này (0 = đang
+        # đứng chờ đúng nó) - hết chỗ thì mảnh gần người nghe hơn đi trước ([ConnectionSlots]).
         slots = _connections
-        while not slots.acquire(timeout=max(0.0, min(SLOT_POLL, deadline - time.monotonic()))):
+        if not slots.acquire(max(0.0, deadline - time.monotonic()), rank, lambda: clip is not None and clip.aborted):
             if clip is not None and clip.aborted:
                 raise _ClipAborted("Clip đã bỏ.")
-            if time.monotonic() >= deadline:
-                raise EdgeTimeout("Dịch vụ đọc to đang quá tải ở máy này (quá nhiều đoạn đọc cùng lúc).")
+            raise EdgeTimeout("Dịch vụ đọc to đang quá tải ở máy này (quá nhiều đoạn đọc cùng lúc).")
         try:
             if clip is not None and clip.aborted:
                 raise _ClipAborted("Clip đã bỏ.")
@@ -454,11 +496,11 @@ class EdgeClient:
         finally:
             slots.release()
 
-    def _speak_piece(self, voice: str, piece: str, deadline: float, clip: _Clip | None = None) -> tuple[bytes, list[Boundary]]:
+    def _speak_piece(self, voice: str, piece: str, deadline: float, clip: _Clip | None = None, rank: int = RANK_BACKGROUND) -> tuple[bytes, list[Boundary]]:
         """Một mảnh, thử lại khi dịch vụ cắt lượt; mốc tính từ đầu mảnh (người gọi cộng độ dài audio các mảnh trước). Clip đã bỏ thì thôi, không thử lại."""
         for attempt in range(RETRIES + 1):
             try:
-                return self._speak_one(voice, piece, 0, deadline, clip=clip)
+                return self._speak_one(voice, piece, 0, deadline, clip=clip, rank=rank)
             except EdgeDropped as error:
                 if attempt == RETRIES or (clip is not None and clip.aborted):
                     if attempt == RETRIES and isinstance(error, EdgeConnectTimeout):
@@ -468,19 +510,20 @@ class EdgeClient:
                     time.sleep(0.3 * (attempt + 1))
         raise AssertionError("unreachable")
 
-    def synthesize(self, text: str, voice: str = DEFAULT_VOICE) -> Synthesis:
+    def synthesize(self, text: str, voice: str = DEFAULT_VOICE, *, rank: int = RANK_BACKGROUND) -> Synthesis:
         """Đọc `text` bằng `voice` (mã đầy đủ, vd "vi-VN-HoaiMyNeural"): MP3 + các WordBoundary (ms từ đầu clip) + độ dài.
         Đoạn dài đọc theo `speech_pieces`, các mảnh song song (tối đa PIECE_PARALLEL); mảnh ĐẦU TIÊN hỏng (theo thời gian, không đợi các mảnh trước nó)
-        làm cả clip hỏng ngay với chính lỗi ấy - cùng các loại lỗi như khi đọc nối tiếp - và các mảnh còn lại bị cắt (điện thoại: EdgeTts.kt cùng luật)."""
+        làm cả clip hỏng ngay với chính lỗi ấy - cùng các loại lỗi như khi đọc nối tiếp - và các mảnh còn lại bị cắt (điện thoại: EdgeTts.kt cùng luật).
+        `rank`: số đoạn người nghe phải nghe trước clip này (0 = đang đứng chờ đúng nó: nhảy tới, đầu chương) - hết chỗ kết nối thì mảnh của clip gần người nghe hơn đi trước ([ConnectionSlots])."""
         deadline = time.monotonic() + TOTAL_TIMEOUT
         pieces = speech_pieces(clean(text))
         if len(pieces) <= 1:
-            results = [self._speak_piece(voice, piece, deadline) for piece in pieces]
+            results = [self._speak_piece(voice, piece, deadline, rank=rank) for piece in pieces]
         else:
             clip = _Clip()
             pool = ThreadPoolExecutor(max_workers=min(PIECE_PARALLEL, len(pieces)), thread_name_prefix="edge-piece")
             try:
-                futures = [pool.submit(self._speak_piece, voice, piece, deadline, clip) for piece in pieces]
+                futures = [pool.submit(self._speak_piece, voice, piece, deadline, clip, rank) for piece in pieces]
                 # Mảnh tự dừng ở hạn chung (read_turn / chờ chỗ); +1 giây chỉ để chắc không treo nếu một mảnh không tôn trọng hạn.
                 done, _ = wait(futures, timeout=max(0.0, deadline - time.monotonic()) + 1.0, return_when=FIRST_EXCEPTION)
                 failed = [future for future in futures if future in done and future.exception() is not None]

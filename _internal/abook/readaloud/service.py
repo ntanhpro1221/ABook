@@ -34,6 +34,7 @@ class EdgeProvider:
     id = "edge"
     speaks_english = True  # đo 04-10: Edge đọc "Rose", "Mike", "laptop" để nguyên ra tiếng Anh nhận được
     normalises_text = True  # nhận chữ đã chuẩn hoá như giọng trên máy (spoken.py; đo a39: âm tiết sai 29% -> 12%); giọng khác không có cờ này nhận chữ thô
+    ranks_requests = True  # `synthesize(rank=...)`: hết chỗ kết nối thì clip gần người nghe hơn đứng trước (edge.ConnectionSlots)
 
     def __init__(self, client: edge.EdgeClient | None = None) -> None:
         self.client = client or edge.EdgeClient()
@@ -41,8 +42,8 @@ class EdgeProvider:
     def voices(self) -> list[Voice]:
         return [Voice(f"edge:{code}", name, "edge", True, code == edge.DEFAULT_VOICE, gender=gender) for code, name, gender in edge.VOICES]
 
-    def synthesize(self, text: str, native_voice: str) -> Synthesis:
-        return self.client.synthesize(text, native_voice)
+    def synthesize(self, text: str, native_voice: str, *, rank: int = edge.RANK_BACKGROUND) -> Synthesis:
+        return self.client.synthesize(text, native_voice, rank=rank)
 
 
 class DeviceProvider:
@@ -170,14 +171,16 @@ class ReadAloud:
         return {**provider.check(), "provider": provider.describe()}
 
     def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False, origin: str | None = None,
-             readings: Mapping[str, str] | None = None, book: str | None = None) -> dict[str, Any]:
+             readings: Mapping[str, str] | None = None, book: str | None = None, rank: int = edge.RANK_BACKGROUND) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
         `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ. `origin`: gốc của cuốn ("ja" / "ko", `names.BookOrigins`) - giọng đọc
         trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); Edge (`normalises_text`) nhận
         đúng chữ mà giọng trên máy nhận (`spoken.layout`: tên, tiếng kêu, số, ký hiệu, viết tắt), mốc từng chữ về đủ chữ hiện; giọng dùng khoá bỏ qua.
         `readings`: cách đọc riêng của cuốn ({chữ hiện: chữ đọc}, readings.py) - MỌI giọng: giọng trên máy áp sau bước đọc tên, giọng khác nhận chữ
         đem đọc đã thay (cùng số chữ, nên mốc từng chữ vẫn khớp chữ hiện); khoá bộ đệm có dấu của những cách đọc có trong đoạn.
-        `book`: mã cuốn đang nghe - clip được ghi vào sổ của cuốn để biết "bản đọc đã làm" của cuốn nặng bao nhiêu và xoá được ([cache_usage], [clear_book])."""
+        `book`: mã cuốn đang nghe - clip được ghi vào sổ của cuốn để biết "bản đọc đã làm" của cuốn nặng bao nhiêu và xoá được ([cache_usage], [clear_book]).
+        `rank`: số đoạn người nghe phải nghe trước đoạn này (trình phát: 0 = đang đứng chờ đúng nó - nhảy tới, mở chương; 1 = đoạn kế...) - giọng có `ranks_requests` (Edge) cho đoạn gần người nghe hơn
+        đi trước khi hết chỗ kết nối; không nói thì đứng sau mọi đoạn có rank."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
@@ -209,7 +212,7 @@ class ReadAloud:
                         else:
                             said, slots = (text, None) if reads_names else book_readings.spoken_layout(text, readings)
                         if not reads_names:
-                            made = provider.synthesize(said, native)
+                            made = provider.synthesize(said, native, rank=rank) if getattr(provider, "ranks_requests", False) else provider.synthesize(said, native)
                         elif tags[1]:
                             made = provider.synthesize(text, native, origin, readings)
                         else:

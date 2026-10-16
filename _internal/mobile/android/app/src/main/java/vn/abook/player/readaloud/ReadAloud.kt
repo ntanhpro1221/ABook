@@ -63,6 +63,8 @@ object ReadAloud {
     private val worker = Executors.newFixedThreadPool(4) { Thread(it, "read-aloud").apply { isDaemon = true } }
     /** Thời gian lấy clip thật của giọng trực tuyến đang chọn: quyết định phải đọc sẵn bao nhiêu đoạn ([needMore]) và có đọc song song đoạn kế không. */
     private val policy = ReadAheadPolicy(AHEAD)
+    /** Dừng vì lỗi hay do người nghe tự dừng: dịch vụ trả lời lại thì tự nghe tiếp chỉ khi là lỗi dừng ([serviceAnswered]). */
+    private val errorPause = ErrorPause()
     /** Đoạn hỏng vì dịch vụ trục trặc mà người nghe chưa tới: lượt đọc kế của nó là lần hỏi mới, cách [StalledClips.REASK_MS] khi còn âm thanh để nghe. */
     private val stalled = StalledClips()
     private val main by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
@@ -419,6 +421,7 @@ object ReadAloud {
         inFlight = false
         waiting = null
         failure = null
+        errorPause.listenerActed()
         held = false
         stalled.clear()
         chaps.clear()
@@ -459,6 +462,7 @@ object ReadAloud {
         bumpGeneration()
         inFlight = false
         failure = null
+        errorPause.listenerActed()
         held = hold
         feedChapter = index
         feedSegment = 0
@@ -678,6 +682,9 @@ object ReadAloud {
         val fresh = stalled.takeFresh(chap.index, segment)
         // Đoạn vừa hỏng, tới nhịp hỏi lại mà người nghe còn âm thanh: hỏi thăm (một lượt, không thử lại, không giữ khoá) - xem [StalledClips].
         val probe = StalledClips.isProbe(fresh, Playback.player?.let(::listenerHasAudio) == true)
+        // Người nghe không còn âm thanh nào để nghe (nhảy tới, đầu chương, hàng đợi cạn): đoạn này là đoạn họ đang đứng chờ (rank 0), đoạn đọc song song ([warm]) kế nó - hết chỗ kết nối Edge thì đoạn gần
+        // người nghe hơn đi trước, và việc nền (không rank) đứng sau cả hai (uxfix51).
+        val rank = if (Playback.player?.let(::listenerHasAudio) != true) 0 else 1
         // Người nghe đang chờ clip này qua mạng: giữ CPU + Wi-Fi tới khi xong (hàng đợi ExoPlayer đã cạn thì nó không giữ gì - [FetchWake]); đọc sẵn khi chưa ai chờ thì không.
         val ticket = if (StalledClips.holdsWake(online, listenerWants, probe)) FetchWake.hold() else null
         val cancel = ClipCancel().also { jobs.add(it) }
@@ -688,13 +695,13 @@ object ReadAloud {
             // Lượt song song cũng là một kết nối tới Edge: tính vào `live` để "Làm trước" không mở thêm kết nối thứ ba (đọc thật + song song + làm trước).
             warm?.let { next ->
                 live.incrementAndGet()
-                worker.execute { try { warm(next, voice, origin, readings) } finally { live.decrementAndGet() } }
+                worker.execute { try { warm(next, voice, origin, readings, token, rank + 1) } finally { live.decrementAndGet() } }
             }
             val result = try {
                 val key = shareKey(voice, text, origin, readings)
-                val (first, mine) = shared(key) { readWithRetry(token, text, voice, origin, readings, online, fresh, probe, cancel) }
+                val (first, mine) = shared(key) { readWithRetry(token, text, voice, origin, readings, online, fresh, probe, cancel, rank) }
                 // Đoạn này đang được đọc song song mà lượt ấy hỏng (không thử lại): đọc lại cho đàng hoàng, có thử lại - và hỏi mới, lượt hỏng vừa rồi có thể đã làm giọng nghỉ.
-                if (!mine && first.isFailure && token == generation) readWithRetry(token, text, voice, origin, readings, online, fresh = true, probe = probe, cancel = cancel) else first
+                if (!mine && first.isFailure && token == generation) readWithRetry(token, text, voice, origin, readings, online, fresh = true, probe = probe, cancel = cancel, rank = rank) else first
             } finally {
                 jobs.remove(cancel)
                 ticket?.let(FetchWake::release)
@@ -732,15 +739,25 @@ object ReadAloud {
 
     /** Đọc sẵn một đoạn vào bộ đệm (kết quả bỏ): lần nạp thật của đoạn ấy sẽ lấy từ đó. Không thử lại - hỏng thì lần nạp thật tự lo. Thời gian đọc thật ghi vào [policy]
      *  (lượt nạp thật của đoạn này chỉ lấy từ bộ đệm / chờ lượt này nên không ghi gì - không thì Edge nhanh lại mà số đo đứng yên, "Edge chậm" dính mãi). */
-    private fun warm(text: String, voice: String, origin: String?, readings: Map<String, String>?) {
-        shared(shareKey(voice, text, origin, readings)) { policy.measure { runCatching { reader().read(text, voice, origin, readings, willRetry = true) } } }
+    private fun warm(text: String, voice: String, origin: String?, readings: Map<String, String>?, token: Int = generation, rank: Int = EdgePieces.RANK_BACKGROUND) {
+        val began = System.nanoTime()
+        val (result, mine) = shared(shareKey(voice, text, origin, readings)) {
+            val before = ClipBudget.enterRank(rank)
+            try {
+                policy.measure { runCatching { reader().read(text, voice, origin, readings, willRetry = true) } }
+            } finally {
+                ClipBudget.leaveRank(before)
+            }
+        }
+        // Lượt thật (không phải bộ đệm) xong khi đang treo lỗi đọc: dịch vụ đã khoẻ lại ([serviceAnswered]).
+        if (mine && result.isSuccess && (System.nanoTime() - began) / 1_000_000 > PrepareRunner.CACHED_MS) Playback.onMain { if (token == generation) serviceAnswered() }
     }
 
     /** Đọc một đoạn, thử lại lỗi thoáng qua của giọng trực tuyến ở nền ([ClipRetry]); việc đã cũ (tua, đổi chương, đổi giọng) thì thôi. */
     private fun readWithRetry(
-        token: Int, text: String, voice: String, origin: String?, readings: Map<String, String>?, online: Boolean, fresh: Boolean = false, probe: Boolean = false, cancel: ClipCancel? = null,
+        token: Int, text: String, voice: String, origin: String?, readings: Map<String, String>?, online: Boolean, fresh: Boolean = false, probe: Boolean = false, cancel: ClipCancel? = null, rank: Int = EdgePieces.RANK_BACKGROUND,
     ): Result<Clip> =
-        ClipRetry.run(online, StalledClips.delaysFor(probe, RETRY_DELAYS_MS), sleep = { sleepWhileCurrent(token, it) }, record = policy::record, cancel = cancel) { willRetry ->
+        ClipRetry.run(online, StalledClips.delaysFor(probe, RETRY_DELAYS_MS), sleep = { sleepWhileCurrent(token, it) }, record = policy::record, cancel = cancel, rank = rank) { willRetry ->
             reader().read(text, voice, origin, readings, willRetry, fresh)
         }
 
@@ -912,6 +929,7 @@ object ReadAloud {
 
     /** Người nghe bấm dừng lúc đang chờ đọc đoạn đầu: khi đoạn tới thì đừng tự phát. */
     fun onPause() {
+        errorPause.listenerActed()
         waiting?.play = false
         syncWants()
     }
@@ -950,7 +968,20 @@ object ReadAloud {
     private fun fail(message: String) {
         failure = message
         inFlight = false
+        errorPause.failed(wantsPlay())
         Playback.fail(message)
+    }
+
+    /**
+     * Một lượt đọc THẬT (qua mạng, không phải lấy từ bộ đệm) vừa xong trong lúc đang treo lỗi đọc: dịch vụ khoẻ lại, lỗi cũ không còn đúng. Dừng vì lỗi (người nghe đang nghe thì đoạn họ chờ hỏng) -> thử lại
+     * đúng đoạn hỏng và tự nghe tiếp khi nó sẵn sàng; người nghe đã tự dừng -> chỉ gỡ thông báo, bấm phát vẫn thử lại như cũ ([retryAfterFailure]). Máy tính: "recovered" trong listen/readAloud.ts.
+     */
+    private fun serviceAnswered() {
+        if (!active || failure == null) return
+        when (errorPause.recovered()) {
+            ErrorPause.Recovery.RESUME -> retryAfterFailure()
+            ErrorPause.Recovery.CLEAR -> Playback.clearError()
+        }
     }
 
     // ---- kịch bản (mốc thời gian) cho màn đọc -----------------------------------------------------------------

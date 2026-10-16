@@ -148,7 +148,7 @@ export const httpSource: ListenSource = {
     try {
       clip = await api<typeof clip>("/api/readaloud/clip", {
         method: "POST",
-        body: { voice, text, cachedOnly: options?.cachedOnly, bookId: options?.bookId, readings: options?.readings },
+        body: { voice, text, cachedOnly: options?.cachedOnly, bookId: options?.bookId, readings: options?.readings, rank: options?.rank },
       });
     } catch (error) {
       // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
