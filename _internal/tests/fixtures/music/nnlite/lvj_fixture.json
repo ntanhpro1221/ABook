@@ -1,0 +1,450 @@
+{
+ "version": 1,
+ "model_bytes": 2097328,
+ "coef_rows_pV_pE_pT_q_1__cols_V_E_T": [
+  [
+   0.6319019445430722,
+   0.2051738638237541,
+   0.9174568390927069
+  ],
+  [
+   -0.03336188688214415,
+   1.2192877795096715,
+   0.024310404064604645
+  ],
+  [
+   0.23150512513452876,
+   -0.24328311641096767,
+   0.9916372911166209
+  ],
+  [
+   0.7106786064598247,
+   -0.2348117213659031,
+   -0.8371668420209222
+  ],
+  [
+   -0.2581318606640798,
+   -0.2223519284989122,
+   0.2591515637768544
+  ]
+ ],
+ "tolerance_chapter": 0.001,
+ "tolerance_shift": 1e-09,
+ "chapters": [
+  {
+   "name": "ba cảnh",
+   "texts": [
+    "Buổi sáng hôm ấy trời trong vắt. Cô bé chạy ra vườn, cười khúc khích khi thấy chú mèo đang đuổi theo con bướm.",
+    "“Cậu đến muộn rồi đấy!” – Lan bĩu môi. – “Xin lỗi, xin lỗi mà!” Minh gãi đầu, mặt đỏ bừng.",
+    "Mẹ mất vào mùa đông năm ấy. Tôi đứng lặng trước mộ, nước mắt cứ thế rơi, không nói được lời nào."
+   ],
+   "weights": [
+    24,
+    21,
+    22
+   ],
+   "chapterP": [
+    0.17517227994057738,
+    0.2639949511508022,
+    -0.17575200820004136,
+    0.5413360699383337
+   ],
+   "level": [
+    0.18778094712188215,
+    0.051120104652457116,
+    -0.20118845950079622
+   ]
+  },
+  {
+   "name": "một cảnh",
+   "texts": [
+    "Thanh kiếm chém xuống! Máu bắn tung toé. Hắn gầm lên, lao tới lần nữa – nhanh hơn, tàn bạo hơn!"
+   ],
+   "weights": [
+    21
+   ],
+   "chapterP": [
+    -0.00464792833527139,
+    0.9561402606572459,
+    0.3932429431628441,
+    0.4326405683268242
+   ],
+   "level": [
+    0.1055386141249331,
+    0.7452461281015141,
+    0.30589347480948653
+   ]
+  },
+  {
+   "name": "năm cảnh",
+   "texts": [
+    "Tiếng bước chân vang lên trong hành lang tối. Từng bước. Từng bước. Rồi im bặt. Có ai đó đang đứng ngay sau cánh cửa.",
+    "Cả lớp cười ồ lên khi thầy giáo trượt chân ngã vào thùng rác. “Không ai thấy gì hết, rõ chưa?”",
+    "Hai người ngồi bên nhau dưới bầu trời đầy sao. Không ai nói gì, nhưng bàn tay họ khẽ chạm vào nhau.",
+    "Con rồng mở mắt. Cả ngọn núi rung chuyển. Đội quân phía dưới hoảng loạn bỏ chạy tán loạn.",
+    "Tôi mở hộp cơm trưa ra: trứng cuộn, xúc xích hình bạch tuộc, cơm nắm. Hôm nay em gái lại nấu cho tôi."
+   ],
+   "weights": [
+    25,
+    21,
+    22,
+    19,
+    23
+   ],
+   "chapterP": [
+    0.10379946289685339,
+    0.19441000407652018,
+    -0.036504160190735394,
+    0.3236377544867675
+   ],
+   "level": [
+    0.02252486540176607,
+    -0.031126341825474052,
+    0.051971593250566106
+   ]
+  },
+  {
+   "name": "tám cảnh",
+   "texts": [
+    "– Tại sao? Tại sao lại là anh?! – Cô gào lên, nắm chặt vạt áo hắn. – Anh đã hứa sẽ quay về cơ mà…",
+    "Báo cáo tài chính quý ba cho thấy doanh thu tăng nhẹ. Hội đồng quản trị sẽ họp vào thứ Hai tuần sau.",
+    "Hệ thống: Bạn đã nhận được 300 điểm kinh nghiệm. Cấp độ tăng lên 12. Kỹ năng mới đã được mở khoá.",
+    "Gió thổi qua cánh đồng lúa chín vàng. Xa xa, tiếng sáo diều vi vu. Một ngày bình yên ở làng quê.",
+    "Hắn mỉm cười. Một nụ cười lạnh lẽo đến rợn người. “Ngươi nghĩ mình có thể trốn thoát sao?”",
+    "Cuộc thi bắt đầu! Ba, hai, một – xuất phát! Đám đông reo hò như sấm dậy khi các tay đua lao đi.",
+    "Lá thư cuối cùng của ông viết: “Hãy sống thật tốt, con nhé.” Tôi gấp lá thư lại, ôm nó vào ngực.",
+    "Ơ? Cái gì thế này? Sao bánh lại cháy đen thế kia?! Cả căn bếp ngập trong khói, chuông báo cháy reo inh ỏi."
+   ],
+   "weights": [
+    26,
+    23,
+    22,
+    22,
+    19,
+    23,
+    22,
+    24
+   ],
+   "chapterP": [
+    0.16739894550664078,
+    0.2816028756576385,
+    -0.0552868500329025,
+    0.5749363672134306
+   ],
+   "level": [
+    0.23404884235180357,
+    0.03379746402615322,
+    -0.1165634142222261
+   ]
+  }
+ ],
+ "shifts": [
+  {
+   "level": [
+    0.18778094712188215,
+    0.051120104652457116,
+    -0.20118845950079622
+   ],
+   "scenes": [
+    {
+     "start": 0.0,
+     "end": 172.41,
+     "valence": 0.015,
+     "arousal": 0.915,
+     "tension": 0.539
+    },
+    {
+     "start": 172.41,
+     "end": 299.979,
+     "valence": 0.354,
+     "arousal": -0.273,
+     "tension": -0.228
+    },
+    {
+     "start": 299.979,
+     "end": 383.381,
+     "valence": 0.008,
+     "arousal": -0.443,
+     "tension": 0.127
+    }
+   ],
+   "out": [
+    {
+     "valence": 0.077,
+     "arousal": 0.742,
+     "tension": 0.144
+    },
+    {
+     "valence": 0.416,
+     "arousal": -0.446,
+     "tension": -0.623
+    },
+    {
+     "valence": 0.07,
+     "arousal": -0.616,
+     "tension": -0.268
+    }
+   ]
+  },
+  {
+   "level": [
+    0.1055386141249331,
+    0.7452461281015141,
+    0.30589347480948653
+   ],
+   "scenes": [
+    {
+     "start": 0.0,
+     "end": 178.421,
+     "valence": 0.422,
+     "arousal": -0.879,
+     "tension": 0.02
+    }
+   ],
+   "out": [
+    {
+     "valence": 0.106,
+     "arousal": 0.745,
+     "tension": 0.306
+    }
+   ]
+  },
+  {
+   "level": [
+    0.02252486540176607,
+    -0.031126341825474052,
+    0.051971593250566106
+   ],
+   "scenes": [
+    {
+     "start": 0.0,
+     "end": 190.178,
+     "valence": -0.732,
+     "arousal": 0.66,
+     "tension": -0.308
+    },
+    {
+     "start": 190.178,
+     "end": 190.178,
+     "valence": 0.289,
+     "arousal": -0.494,
+     "tension": 0.946
+    },
+    {
+     "start": 190.178,
+     "end": 260.488,
+     "valence": -0.195,
+     "arousal": 0.398,
+     "tension": -0.518
+    },
+    {
+     "start": 260.488,
+     "end": 310.409,
+     "valence": -0.667,
+     "arousal": -0.697,
+     "tension": -0.287
+    },
+    {
+     "start": 310.409,
+     "end": 464.122,
+     "valence": 0.28,
+     "arousal": -0.379,
+     "tension": 0.134
+    }
+   ],
+   "out": [
+    {
+     "valence": -0.401,
+     "arousal": 0.499,
+     "tension": -0.065
+    },
+    {
+     "valence": 0.62,
+     "arousal": -0.655,
+     "tension": 1.0
+    },
+    {
+     "valence": 0.136,
+     "arousal": 0.237,
+     "tension": -0.275
+    },
+    {
+     "valence": -0.336,
+     "arousal": -0.858,
+     "tension": -0.044
+    },
+    {
+     "valence": 0.611,
+     "arousal": -0.54,
+     "tension": 0.377
+    }
+   ]
+  },
+  {
+   "level": [
+    0.23404884235180357,
+    0.03379746402615322,
+    -0.1165634142222261
+   ],
+   "scenes": [
+    {
+     "start": 0.0,
+     "end": 96.246,
+     "valence": 0.114,
+     "arousal": -0.247,
+     "tension": -0.824
+    },
+    {
+     "start": 96.246,
+     "end": 163.099,
+     "valence": -0.978,
+     "arousal": 0.795,
+     "tension": 0.896
+    },
+    {
+     "start": 163.099,
+     "end": 341.017,
+     "valence": -0.458,
+     "arousal": -0.757,
+     "tension": -0.478
+    },
+    {
+     "start": 341.017,
+     "end": 482.178,
+     "valence": 0.133,
+     "arousal": -0.601,
+     "tension": 0.658
+    },
+    {
+     "start": 482.178,
+     "end": 642.989,
+     "valence": 0.917,
+     "arousal": -0.159,
+     "tension": 0.363
+    },
+    {
+     "start": 642.989,
+     "end": 708.901,
+     "valence": -0.976,
+     "arousal": -0.203,
+     "tension": 0.287
+    },
+    {
+     "start": 708.901,
+     "end": 906.125,
+     "valence": 0.202,
+     "arousal": -0.385,
+     "tension": 0.614
+    },
+    {
+     "start": 906.125,
+     "end": 1013.552,
+     "valence": 0.501,
+     "arousal": 0.331,
+     "tension": 0.353
+    }
+   ],
+   "out": [
+    {
+     "valence": 0.289,
+     "arousal": 0.053,
+     "tension": -1.0
+    },
+    {
+     "valence": -0.803,
+     "arousal": 1.0,
+     "tension": 0.558
+    },
+    {
+     "valence": -0.283,
+     "arousal": -0.457,
+     "tension": -0.816
+    },
+    {
+     "valence": 0.308,
+     "arousal": -0.301,
+     "tension": 0.32
+    },
+    {
+     "valence": 1.0,
+     "arousal": 0.141,
+     "tension": 0.025
+    },
+    {
+     "valence": -0.801,
+     "arousal": 0.097,
+     "tension": -0.051
+    },
+    {
+     "valence": 0.377,
+     "arousal": -0.085,
+     "tension": 0.276
+    },
+    {
+     "valence": 0.676,
+     "arousal": 0.631,
+     "tension": 0.015
+    }
+   ]
+  },
+  {
+   "level": [
+    0.95,
+    -0.9,
+    0.8
+   ],
+   "scenes": [
+    {
+     "start": 0.0,
+     "end": 100.641,
+     "valence": 0.755,
+     "arousal": -0.853,
+     "tension": 0.731
+    },
+    {
+     "start": 100.641,
+     "end": 264.611,
+     "valence": 0.823,
+     "arousal": -0.988,
+     "tension": 0.552
+    },
+    {
+     "start": 264.611,
+     "end": 399.846,
+     "valence": 0.836,
+     "arousal": -0.822,
+     "tension": 0.818
+    },
+    {
+     "start": 399.846,
+     "end": 466.565,
+     "valence": 0.938,
+     "arousal": -0.797,
+     "tension": 0.508
+    }
+   ],
+   "out": [
+    {
+     "valence": 0.876,
+     "arousal": -0.87,
+     "tension": 0.87
+    },
+    {
+     "valence": 0.944,
+     "arousal": -1.0,
+     "tension": 0.691
+    },
+    {
+     "valence": 0.957,
+     "arousal": -0.839,
+     "tension": 0.957
+    },
+    {
+     "valence": 1.0,
+     "arousal": -0.814,
+     "tension": 0.647
+    }
+   ]
+  }
+ ]
+}

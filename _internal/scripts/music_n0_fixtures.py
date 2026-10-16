@@ -289,7 +289,7 @@ def student_file(scripts: list[dict[str, Any]], scenes: list[dict[str, Any]]) ->
     items = []
     for script in scripts:
         for item in music_nnlite.student_items(script, music_scenes.book_scenes([script], None, None, None)) or []:
-            items.append({key: round(value, 9) if isinstance(value, float) else value for key, value in item.items()})
+            items.append({key: [round(x, 9) for x in value] if key == "chapterP" else round(value, 9) if isinstance(value, float) else value for key, value in item.items()})
     moods = [{"chapterId": scene["chapterId"], "firstSegment": scene["firstSegment"], "valence": scene["valence"], "arousal": scene["arousal"], "tension": scene["tension"],
               "confidence": scene["confidence"], "moodSource": scene["moodSource"]} for scene in scenes]
     return {"items": items, "moods": moods}
