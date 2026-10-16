@@ -9,6 +9,11 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.security.SecureRandom
 import java.util.Locale
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
+import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Phần giao thức của dịch vụ đọc to của Edge (không đụng mạng, kiểm thử được): theo dự án mã mở edge-tts (rany2/edge-tts, `constants.py`, `drm.py`,
@@ -162,8 +167,133 @@ object EdgeProtocol {
 }
 
 /**
- * Giọng Microsoft qua dịch vụ đọc to của Edge (`vi-VN-HoaiMyNeural`, `vi-VN-NamMinhNeural`): không khoá, cần mạng. Mỗi đoạn một kết nối WebSocket ([WebSocket]);
- * đoạn dài hơn 4000 byte cắt ở dấu cách, mỗi mảnh một kết nối, mốc ghép lại theo số byte mp3 đã nhận. Mọi chặn đều có hạn: nối 8 giây, mỗi lần chờ tin 15
+ * Đọc SONG SONG các câu của MỘT đoạn (uxfix47; máy tính: `edge.py` `speech_pieces`, cùng hằng số, cùng bộ ví dụ `tests/fixtures/readaloud/edge/pieces.json` - đổi một bên thì đổi
+ * cả hai bên và bộ ví dụ). Soát a49: chữ Edge chưa từng đọc ra audio chỉ nhanh cỡ 1x thời gian thật (đoạn 15 giây mất 13-27 giây) mà các yêu cầu song song không làm nhau chậm đi.
+ * Độ dài tính bằng ký tự UTF-16 (Python: code point) - bộ ví dụ chỉ có chữ trong BMP.
+ */
+object EdgePieces {
+    /** Tối đa chừng này mảnh một đoạn (và chừng này kết nối cùng lúc cho một clip). */
+    const val PIECE_PARALLEL = 3
+    /** Trần kết nối Edge đang mở của cả tiến trình: đọc trước nhiều đoạn x mảnh không mở hàng chục ổ cắm cùng lúc. */
+    const val EDGE_CONNECTIONS = 8
+    /** Đoạn ngắn hơn chừng này ký tự giữ một yêu cầu: câu đơn 90-100 ký tự đo 5,8-13,9 giây, cắt đôi không nhanh hơn mà tốn thêm một lần nối (~0,45 giây). */
+    const val WHOLE_CHARS = 100
+    /** Mảnh không nhỏ hơn chừng này (gộp câu ngắn): mảnh quá ngắn thêm chỗ nối mà không rút ngắn thời gian chờ. */
+    const val MIN_PIECE_CHARS = 50
+    /** Câu dài hơn chừng này được cắt tiếp ở ; : , (sau dấu có khoảng trắng - không bao giờ giữa chữ hay số như "3,5"). */
+    const val LONG_SENTENCE_CHARS = 200
+    private const val SENTENCE_END = ".!?…"
+    private const val CLOSERS = "\"'”’)]»"
+    private const val CLAUSE_MARKS = ";:,"
+
+    /** Các mảnh gửi Edge cho `text`, mảnh nào cũng vừa [EdgeProtocol.MAX_TEXT_BYTES]; ghép theo thứ tự cho đúng chữ gốc. */
+    fun split(text: String): List<String> =
+        speechPieces(text).flatMap { piece -> TextChunks.split(piece, EdgeProtocol.MAX_TEXT_BYTES, EdgeProtocol::escapedBytes).map { it.second.trim() } }.filter { it.isNotEmpty() }
+
+    /** Chưa tính giới hạn byte: đoạn ngắn (< [WHOLE_CHARS]) một mảnh; còn lại cắt ở hết câu, câu dài cắt tiếp ở vế, gộp thành tối đa [PIECE_PARALLEL] mảnh cân bằng. */
+    fun speechPieces(text: String): List<String> {
+        val body = text.trim()
+        if (body.length >= WHOLE_CHARS) {
+            val units = splitSentences(body).flatMap { if (it.length > LONG_SENTENCE_CHARS) splitClauses(it) else listOf(it) }
+            if (units.size > 1) return groupUnits(units)
+        }
+        return if (body.isEmpty()) emptyList() else listOf(body)
+    }
+
+    /**
+     * Cắt ở hết câu: dấu . ! ? … (và dấu đóng ngoặc / nháy đi liền), rồi khoảng trắng, rồi chữ KHÔNG viết thường. Giữ nguyên "Anh A. Nguyễn" (chữ đơn trước dấu chấm =
+     * tên viết tắt) và `"Thật à?" anh hỏi` (sau dấu hỏi là chữ thường).
+     */
+    fun splitSentences(text: String): List<String> {
+        val out = ArrayList<String>()
+        var start = 0
+        var i = 0
+        val n = text.length
+        while (i < n) {
+            if (text[i] !in SENTENCE_END) {
+                i += 1
+                continue
+            }
+            var end = i + 1
+            while (end < n && text[end] in SENTENCE_END) end += 1
+            var close = end
+            while (close < n && text[close] in CLOSERS) close += 1
+            var after = close
+            while (after < n && text[after].isWhitespace()) after += 1
+            val initial = text[i] == '.' && end == i + 1 && i >= 1 && text[i - 1].isLetter() && (i == 1 || !text[i - 2].isLetterOrDigit())
+            if (after > close && after < n && !text[after].isLowerCase() && !initial) {
+                out.add(text.substring(start, close).trim())
+                start = after
+                i = after
+            } else {
+                i = end
+            }
+        }
+        out.add(text.substring(start).trim())
+        return out.filter { it.isNotEmpty() }
+    }
+
+    /** Một câu dài thành các vế: cắt sau ; : , khi sau dấu có khoảng trắng. */
+    fun splitClauses(sentence: String): List<String> {
+        val out = ArrayList<String>()
+        var start = 0
+        for (i in 0 until sentence.length - 1) {
+            if (sentence[i] in CLAUSE_MARKS && sentence[i + 1].isWhitespace()) {
+                out.add(sentence.substring(start, i + 1).trim())
+                start = i + 1
+            }
+        }
+        out.add(sentence.substring(start).trim())
+        return out.filter { it.isNotEmpty() }
+    }
+
+    /**
+     * Gộp các câu / vế liền nhau thành tối đa [PIECE_PARALLEL] mảnh cân bằng độ dài (mỗi mảnh >= [MIN_PIECE_CHARS]). Nhiều mảnh hơn số kết nối cùng lúc chỉ xếp hàng thêm một
+     * vòng chờ ~5-10 giây của Edge, nên 8 câu 60 ký tự thành 3 mảnh chứ không phải 8.
+     */
+    private fun groupUnits(units: List<String>): List<String> {
+        val total = units.sumOf { it.length }
+        val count = minOf(PIECE_PARALLEL, units.size, maxOf(1, total / MIN_PIECE_CHARS))
+        val prefix = IntArray(units.size + 1)
+        for (k in units.indices) prefix[k + 1] = prefix[k] + units[k].length
+        val cuts = arrayListOf(0)
+        for (j in 1 until count) {
+            // Chỗ cắt thứ j: số câu ở j mảnh đầu sao cho độ dài dồn gần nhất total*j/count (hoà thì lấy sớm hơn); còn chỗ cho các mảnh sau.
+            var best = cuts.last() + 1
+            var bestScore = Int.MAX_VALUE
+            for (at in cuts.last() + 1..units.size - (count - j)) {
+                val score = Math.abs(prefix[at] * count - total * j)
+                if (score < bestScore) {
+                    best = at
+                    bestScore = score
+                }
+            }
+            cuts.add(best)
+        }
+        cuts.add(units.size)
+        val groups = ArrayList<List<String>>()
+        val lengths = ArrayList<Int>()
+        for (g in 0 until count) {
+            groups.add(units.subList(cuts[g], cuts[g + 1]))
+            lengths.add(prefix[cuts[g + 1]] - prefix[cuts[g]])
+        }
+        while (groups.size > 1 && lengths.min() < MIN_PIECE_CHARS) {
+            val small = lengths.indexOf(lengths.min())
+            val other = listOf(small - 1, small + 1).filter { it in groups.indices }.minWith(compareBy({ lengths[it] }, { it }))
+            val first = minOf(small, other)
+            val second = maxOf(small, other)
+            groups[first] = groups[first] + groups[second]
+            lengths[first] = lengths[first] + lengths[second]
+            groups.removeAt(second)
+            lengths.removeAt(second)
+        }
+        return groups.map { it.joinToString(" ") }
+    }
+}
+
+/**
+ * Giọng Microsoft qua dịch vụ đọc to của Edge (`vi-VN-HoaiMyNeural`, `vi-VN-NamMinhNeural`): không khoá, cần mạng. Mỗi mảnh một kết nối WebSocket ([WebSocket]);
+ * đoạn từ [EdgePieces.WHOLE_CHARS] ký tự cắt ở hết câu thành tối đa [EdgePieces.PIECE_PARALLEL] mảnh đọc SONG SONG (mảnh quá 4000 byte cắt tiếp ở dấu cách), mốc ghép lại theo số byte mp3 đã nhận. Mọi chặn đều có hạn: nối 8 giây, mỗi lần chờ tin 15
  * giây, cả đoạn 45 giây - quá hạn hay không có mạng là [VoiceException] (người gọi rơi về giọng của máy), không bao giờ chờ mãi.
  */
 class EdgeTts(
@@ -197,6 +327,8 @@ class EdgeTts(
         const val NOT_ANSWERING = "Giọng Edge đang không trả lời - bấm phát để thử lại, hoặc chọn giọng trên máy."
         /** Lệch giữa đồng hồ máy và máy chủ (giây), học từ header `Date` của lần bị từ chối 403; dùng chung cho mọi lần gọi. */
         @Volatile var clockSkewSeconds = 0.0
+        /** Kết nối Edge đang mở của cả tiến trình (mọi đoạn đọc trước x mảnh); bài thử thay bằng cái nhỏ hơn để kiểm trần. */
+        @Volatile internal var connections = Semaphore(EdgePieces.EDGE_CONNECTIONS)
         private val random = SecureRandom()
 
         /** Đọc `Date: Sat, 03 Oct 2026 12:00:00 GMT` của máy chủ thành giây Unix; null nếu không đọc được. */
@@ -209,41 +341,72 @@ class EdgeTts(
     }
 
     override fun synthesize(text: String, out: File): Clip {
+        val pieces = EdgePieces.split(text)
+        val received = AtomicLong(0)
+        val parts = if (pieces.size <= 1) pieces.map { speakPiece(it, received) } else speakInParallel(pieces, received)
         val boundaries = ArrayList<Boundary>()
         var bytes = 0L
         out.outputStream().use { sink ->
-            for ((_, part) in TextChunks.split(text, EdgeProtocol.MAX_TEXT_BYTES, EdgeProtocol::escapedBytes)) {
-                val shift = EdgeProtocol.durationMs(bytes) + EdgeProtocol.BOUNDARY_SHIFT_MS
-                var attempt = 0
-                while (true) {
-                    val failure: Exception = try {
-                        val (audio, found) = readPart(part, shift, attempt > 0)
-                        sink.write(audio)
-                        boundaries.addAll(found)
-                        bytes += audio.size
-                        break
-                    } catch (error: Dropped) {
-                        // Dịch vụ cắt lượt giữa chừng hay bận lúc bắt tay: thử lại mảnh ấy bằng kết nối mới, không rơi ngay về giọng của máy.
-                        error
-                    } catch (error: VoiceException) {
-                        // Mất mạng GIỮA CHỪNG (đã cắt lượt trước đó, hay mảnh trước vừa đọc xong): kết nối mới cũng báo "không có mạng" - vẫn thử lại, mạng
-                        // hay chập chờn vài giây. Ngay lần đầu mà đã không có mạng thì thôi, rơi sang giọng kế liền như trước.
-                        if (!(error.offline || error.reason == "timeout") || (attempt == 0 && bytes == 0L)) throw error
-                        error
-                    }
-                    // Hết quỹ thời gian thử lại của đoạn ([ClipBudget]): thôi ngay - lần thử nữa sẽ không kịp, người gọi rơi sang giọng kế.
-                    if (attempt == RETRIES || !ClipBudget.fits(BACKOFF_MS[attempt])) {
-                        val offline = (failure as? VoiceException)?.offline == true
-                        throw VoiceException(if (offline) LOST_NETWORK else NOT_ANSWERING, offline = offline, cause = failure)
-                    }
-                    pause(BACKOFF_MS[attempt])
-                    attempt += 1
-                }
+            for ((audio, found) in parts) {
+                // Mốc của mỗi mảnh tính từ đầu mảnh ấy: bù bằng độ dài mp3 các mảnh trước (48 kbps không đổi nên chính xác).
+                val shift = EdgeProtocol.durationMs(bytes)
+                sink.write(audio)
+                for (boundary in found) boundaries.add(if (shift == 0L) boundary else boundary.copy(startMs = boundary.startMs + shift, endMs = boundary.endMs + shift))
+                bytes += audio.size
             }
         }
         if (bytes == 0L) throw VoiceException("Giọng Edge không trả về âm thanh")
         val duration = EdgeProtocol.durationMs(bytes)
         return Clip(out, duration, WordTokens.map(text, boundaries, duration), id)
+    }
+
+    /** Các mảnh của một đoạn đọc cùng lúc (tối đa [EdgePieces.PIECE_PARALLEL]), trả theo thứ tự đọc. Mảnh nào hỏng thì cả đoạn hỏng với đúng lỗi ấy (mảnh đứng trước thắng); mảnh còn lại bị huỷ. */
+    private fun speakInParallel(pieces: List<String>, received: AtomicLong): List<Pair<ByteArray, List<Boundary>>> {
+        val budget = ClipBudget.current() // luồng phụ cùng quỹ thời gian thử lại của đoạn
+        val pool = Executors.newFixedThreadPool(minOf(EdgePieces.PIECE_PARALLEL, pieces.size)) { Thread(it, "edge-piece").apply { isDaemon = true } }
+        val futures = pieces.map { piece -> pool.submit<Pair<ByteArray, List<Boundary>>> { ClipBudget.inherit(budget) { speakPiece(piece, received) } } }
+        try {
+            return futures.map { future ->
+                try {
+                    future.get()
+                } catch (error: ExecutionException) {
+                    throw error.cause ?: error
+                }
+            }
+        } finally {
+            futures.forEach { it.cancel(true) }
+            pool.shutdownNow()
+        }
+    }
+
+    /**
+     * Một mảnh, thử lại khi dịch vụ cắt lượt / mạng chập chờn. `received`: số byte mp3 các mảnh của đoạn đã nhận xong - còn 0 mà lần đầu đã không có mạng thì thôi ngay
+     * (rơi sang giọng kế), như đoạn một mảnh.
+     */
+    private fun speakPiece(part: String, received: AtomicLong): Pair<ByteArray, List<Boundary>> {
+        var attempt = 0
+        while (true) {
+            val failure: Exception = try {
+                val result = readPart(part, attempt > 0)
+                received.addAndGet(result.first.size.toLong())
+                return result
+            } catch (error: Dropped) {
+                // Dịch vụ cắt lượt giữa chừng hay bận lúc bắt tay: thử lại mảnh ấy bằng kết nối mới, không rơi ngay về giọng của máy.
+                error
+            } catch (error: VoiceException) {
+                // Mất mạng GIỮA CHỪNG (đã cắt lượt trước đó, hay mảnh khác vừa đọc xong): kết nối mới cũng báo "không có mạng" - vẫn thử lại, mạng
+                // hay chập chờn vài giây. Ngay lần đầu mà đã không có mạng thì thôi, rơi sang giọng kế liền như trước.
+                if (!(error.offline || error.reason == "timeout") || (attempt == 0 && received.get() == 0L)) throw error
+                error
+            }
+            // Hết quỹ thời gian thử lại của đoạn ([ClipBudget]): thôi ngay - lần thử nữa sẽ không kịp, người gọi rơi sang giọng kế.
+            if (attempt == RETRIES || !ClipBudget.fits(BACKOFF_MS[attempt])) {
+                val offline = (failure as? VoiceException)?.offline == true
+                throw VoiceException(if (offline) LOST_NETWORK else NOT_ANSWERING, offline = offline, cause = failure)
+            }
+            pause(BACKOFF_MS[attempt])
+            attempt += 1
+        }
     }
 
     /**
@@ -252,19 +415,26 @@ class EdgeTts(
      */
     private class Dropped(message: String, cause: Throwable? = null) : Exception(message, cause)
 
-    /** Một mảnh chữ: (mp3, mốc đã cộng `shiftMs`). Chỉ trả khi đọc trọn lượt, nên lượt hỏng thử lại không để sót mảnh âm thanh dở. */
-    private fun readPart(part: String, shiftMs: Long, retry: Boolean): Pair<ByteArray, List<Boundary>> {
-        val socket = open()
+    /** Một mảnh chữ: (mp3, mốc tính từ đầu mảnh, đã cộng [EdgeProtocol.BOUNDARY_SHIFT_MS]). Chỉ trả khi đọc trọn lượt, nên lượt hỏng thử lại không để sót mảnh âm thanh dở. */
+    private fun readPart(part: String, retry: Boolean): Pair<ByteArray, List<Boundary>> {
+        // Giữ một chỗ trong [connections] suốt đời kết nối (không giữ khi nghỉ chờ thử lại, nên không có chuyện giữ chỗ mà đợi chỗ).
+        val slots = connections
+        if (!slots.tryAcquire(ClipBudget.attemptMs(TOTAL_MS, retry), TimeUnit.MILLISECONDS)) throw VoiceException("Giọng Edge trả lời quá chậm", reason = "timeout")
         try {
-            val stamp = EdgeProtocol.dateString(System.currentTimeMillis())
-            socket.sendText(EdgeProtocol.speechConfig(stamp))
-            socket.sendText(EdgeProtocol.ssml(voiceName, EdgeProtocol.escape(part), EdgeProtocol.connectionId(random), stamp))
-            val audio = java.io.ByteArrayOutputStream()
-            val boundaries = ArrayList<Boundary>()
-            EdgeProtocol.readTurn(socket, audio, shiftMs, boundaries, "Giọng Edge", ClipBudget.attemptMs(TOTAL_MS, retry), onDrop = { message, cause -> Dropped(message, cause) })
-            return audio.toByteArray() to boundaries
+            val socket = open()
+            try {
+                val stamp = EdgeProtocol.dateString(System.currentTimeMillis())
+                socket.sendText(EdgeProtocol.speechConfig(stamp))
+                socket.sendText(EdgeProtocol.ssml(voiceName, EdgeProtocol.escape(part), EdgeProtocol.connectionId(random), stamp))
+                val audio = java.io.ByteArrayOutputStream()
+                val boundaries = ArrayList<Boundary>()
+                EdgeProtocol.readTurn(socket, audio, EdgeProtocol.BOUNDARY_SHIFT_MS, boundaries, "Giọng Edge", ClipBudget.attemptMs(TOTAL_MS, retry), onDrop = { message, cause -> Dropped(message, cause) })
+                return audio.toByteArray() to boundaries
+            } finally {
+                socket.close()
+            }
         } finally {
-            socket.close()
+            slots.release()
         }
     }
 

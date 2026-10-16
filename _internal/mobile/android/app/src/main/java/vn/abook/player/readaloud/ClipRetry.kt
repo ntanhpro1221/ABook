@@ -61,6 +61,20 @@ object ClipBudget {
 
     private val current = ThreadLocal<Scope?>()
 
+    /** Quỹ của luồng này (null ngoài [ClipRetry.run]): để luồng phụ đọc song song các mảnh của một đoạn ([EdgeTts]) chạy trong cùng quỹ qua [inherit]. */
+    fun current(): Scope? = current.get()
+
+    /** Chạy `block` ở luồng này trong quỹ `scope` (của luồng gọi - [current]); xong trả quỹ cũ. */
+    fun <T> inherit(scope: Scope?, block: () -> T): T {
+        val before = current.get()
+        current.set(scope)
+        try {
+            return block()
+        } finally {
+            current.set(before)
+        }
+    }
+
     /** Vào quỹ `scope` ở luồng này; trả quỹ ngoài (nếu có) để [leave]. */
     fun enter(scope: Scope): Scope? = current.get().also { current.set(scope) }
 

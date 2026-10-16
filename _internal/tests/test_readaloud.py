@@ -294,7 +294,7 @@ def test_the_edge_client_speaks_the_protocol(fake_edge) -> None:
 def test_long_text_goes_in_chunks_with_offsets_compensated_by_audio_bytes(fake_edge) -> None:
     server, client = fake_edge()
     text = " ".join(["Câu số một hai ba."] * 600)  # > 4000 byte -> nhiều lượt
-    chunks = edge.split_text(text)
+    chunks = edge.speech_pieces(text)  # từ uxfix47: mảnh đọc song song (tests/test_readaloud_edge_pieces.py)
     assert len(chunks) > 1 and all(len(edge.escape(chunk).encode()) <= edge.MAX_CHUNK_BYTES for chunk in chunks)
     assert " ".join(chunks).split() == text.split()
     result = client.synthesize(text, edge.DEFAULT_VOICE)

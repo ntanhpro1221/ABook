@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nghe ngay
 
 - Nhạc nền theo cảnh bám cảm xúc của chữ hơn, kể cả khi máy không cài gói phân tích nhạc (máy tính và điện thoại): trên 60 chương thử, nhạc lệch rõ so với cảnh giảm từ 37,8 % xuống 17,4 %; cảnh buồn bị phát nhạc vui chỉ nhích 15,7 → 16,5 % và nhạc đổi bài 11,7 → 11,5 lần mỗi giờ nghe, nên bạn nghe nhạc hợp cảnh hơn mà không thấy nhạc đổi dồn dập.
+- Giọng trực tuyến bắt đầu đọc nhanh hơn: ở đầu chương, sau khi bạn nhảy tới chỗ khác hay bấm "Thử lại", đoạn văn dài được đọc theo từng cụm câu cùng lúc nên chờ chừng một nửa thời gian trước (máy tính và điện thoại).
 
 ## [0.4.76] - 2026-10-16
 
