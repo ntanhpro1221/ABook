@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.75] - 2026-10-16
+
 ### Nghe ngay
 
 - Lần đầu mở một cuốn sách chữ trên máy mới, nhạc nền của chương đầu có sau chừng 10 giây thay vì vài phút (máy tính và điện thoại): máy không còn tải từng bài ứng viên một để xem bài nặng hay nhẹ, mà chỉ kiểm bài đã chọn; bài nào nặng quá thì chọn lại bài khác.
