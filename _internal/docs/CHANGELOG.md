@@ -13,7 +13,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Mất mạng sau khi đã từng mở app, nhạc nền theo cảnh không còn im lặng khó hiểu: hộp "Nhạc nền" nói rõ chưa tải được danh mục nhạc, có mạng thì dòng ấy biến mất (máy tính và điện thoại).
 - Chuyển sang cuốn khác lúc đang tạm dừng, nhạc của cuốn cũ không còn được mở lại thoáng qua (máy tính và điện thoại).
 - Giọng trực tuyến (Edge) có lúc chậm, giọng đọc không còn im giữa chương: máy đọc sẵn nhiều đoạn hơn (đủ khoảng 20 giây trở lên, nhiều hơn nếu giọng đang chậm) khi mạng hay dịch vụ giọng chậm; mạng nhanh hay giọng chạy trên máy thì như cũ (máy tính và điện thoại).
-- Một đoạn bị lỗi thoáng qua (dịch vụ giọng bận, đứt kết nối giữa chừng) được máy tự thử lại trong khoảng 10-15 giây ở nền; bạn chỉ thấy giọng dừng và nút "Thử lại" khi tới đoạn ấy mà vẫn chưa có (máy tính và điện thoại).
+- Một đoạn bị lỗi thoáng qua (dịch vụ giọng bận, đứt kết nối giữa chừng) được máy tự thử lại ở nền, tổng cộng không quá khoảng 20 giây cho một đoạn; bạn chỉ thấy giọng dừng và nút "Thử lại" khi tới đoạn ấy mà vẫn chưa có (máy tính và điện thoại).
+- Giọng đọc cạn hàng đợi thì nhạc nền theo cảnh vẫn tiếp tục thay vì tắt đột ngột; bạn tạm dừng thì máy ngừng thử lại và nhả khoá Wi-Fi (điện thoại).
+- Điện thoại giữ máy thức trong lúc đang lấy đoạn bạn đang chờ, tắt màn hình giọng đọc cũng không đứng giữa chừng.
+- "Tự chọn nhạc nền" trên điện thoại nhớ lựa chọn của bạn cả khi app được mở lại từ tai nghe hay màn hình khoá.
+- Điện thoại đang dùng dữ liệu di động tính cước thì nhạc nền máy tự chọn chờ có Wi-Fi mới tải (hộp "Nhạc nền" nói rõ, và bạn chọn nhạc ở nút "Nhạc nền" thì nghe ngay, tải bằng dữ liệu di động như bạn muốn); thư mục nhạc đã tải có giới hạn dung lượng, bài lâu không nghe được dọn trước, các bản danh mục cũ cũng được dọn.
+- Nhạc theo cảnh tự hỏi lại sau khi gặp lỗi hay chưa có bài, thưa dần chứ không dồn dập (máy tính và điện thoại); chương đang nghe được dựng nhạc trước các chương kế, và đổi sang cuốn khác thì việc dựng cuốn cũ bị bỏ (điện thoại).
 
 ## [0.4.74] - 2026-10-16
 

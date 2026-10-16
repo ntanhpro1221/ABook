@@ -109,6 +109,21 @@ class MusicCatalog(
         hosts.values.any { (failed, at) -> failed && now - at < HOST_REST_MS }
     }
 
+    /** Cả máy coi như mất mạng (`_music_offline`): từ [OFFLINE_HOSTS] nguồn cùng hỏng vì mạng trong [HOST_REST_MS] gần đây mà không nguồn nào vừa trả lời được. */
+    fun offline(): Boolean = synchronized(hostLock) {
+        val now = clock()
+        val recent = hosts.values.filter { (_, at) -> now - at < HOST_REST_MS }
+        recent.size >= OFFLINE_HOSTS && recent.all { (failed, _) -> failed }
+    }
+
+    // Bài tải hỏng thật (nguồn gỡ bài, 404, bản sao sai): nghỉ [UNAVAILABLE_MS] rồi thử lại (`_music_unavailable` của server.py; ở đây chỉ trong tiến trình, máy tính ghi ra đĩa).
+    private val brokenAt = HashMap<String, Long>()
+
+    /** Tải bài `link` hỏng thật: bộ chọn nhạc theo cảnh tránh nó trong [UNAVAILABLE_MS]. */
+    fun markUnavailable(link: String) {
+        synchronized(hostLock) { brokenAt[link] = clock() }
+    }
+
     /** Lời báo "mất mạng" cho giao diện (cùng chữ `MUSIC_OFFLINE_MESSAGE` của server.py) khi có bài đang bị giữ vì mạng, không thì rỗng. */
     fun offlineNotice(): String = if (degraded()) OFFLINE_MESSAGE else ""
 
@@ -136,42 +151,70 @@ class MusicCatalog(
         if (data.getInt("version") > FORMAT_VERSION) throw CatalogError("Danh mục nhạc nền mới hơn app - hãy cập nhật app.")
     }
 
-    /** Mục lục danh mục (cất ở `dir/manifest.json` + `.sig`, làm mới sau [MANIFEST_MAX_AGE_MS]); mất mạng hay bản tải về bị bỏ thì bản đã cất. */
-    fun manifest(): JSONObject = synchronized(lock) {
+    /** Mục lục còn mới (đã đọc, cất trên đĩa chưa quá [MANIFEST_MAX_AGE_MS]) hay null. Gọi khi giữ [lock]. */
+    private fun freshManifest(): JSONObject? {
         val path = File(dir, "manifest.json")
         val fresh = path.isFile && clock() - path.lastModified() < MANIFEST_MAX_AGE_MS
-        manifest?.takeIf { fresh }?.let { return it }
-        var current = manifest ?: cached() // bản đang giữ: mốc `issued` để không quay về bản cũ
-        var rejected = false
-        if (!fresh || current == null) {
-            val fetched = try {
-                fetch("manifest.json") to fetch("manifest.json.sig")
-            } catch (_: Exception) {
-                null // mất mạng: dùng bản đã cất nếu có
+        return manifest?.takeIf { fresh }
+    }
+
+    /** Lần làm mới mục lục gần nhất không thành (mất mạng, sai chữ ký, cũ hơn bản đang giữ): trong [MANIFEST_RETRY_MS] sau đó dùng bản đã cất, không gọi mạng lại. */
+    private var refreshFailedAt = -MANIFEST_RETRY_MS
+    /** Mỗi lúc chỉ một luồng làm mới mục lục; các luồng khác chờ ở đây - KHÔNG giữ [lock] trong lúc gọi mạng (hỏi bài / cỡ bài ở luồng khác vẫn chạy). */
+    private val refresh = Any()
+
+    /** Mục lục danh mục (cất ở `dir/manifest.json` + `.sig`, làm mới sau [MANIFEST_MAX_AGE_MS]); mất mạng hay bản tải về bị bỏ thì bản đã cất. */
+    fun manifest(): JSONObject {
+        synchronized(lock) { freshManifest()?.let { return it } }
+        synchronized(refresh) {
+            var current: JSONObject?
+            val needFetch: Boolean
+            synchronized(lock) {
+                freshManifest()?.let { return it } // luồng khác vừa làm mới xong
+                current = manifest ?: cached() // bản đang giữ: mốc `issued` để không quay về bản cũ
+                needFetch = current == null || clock() - refreshFailedAt >= MANIFEST_RETRY_MS
             }
-            if (fetched != null) {
-                val (raw, signature) = fetched
-                val data = accept(raw, signature)
-                if (data == null) {
-                    log("danh mục nhạc: mục lục tải về sai chữ ký hay sai định dạng - giữ bản đã cất")
-                } else if (current != null && data.getString("issued") < current.getString("issued")) {
-                    log("danh mục nhạc: mục lục tải về cũ hơn bản đang giữ (${data.getString("issued")} < ${current.getString("issued")}) - bỏ")
-                } else {
-                    checkVersion(data)
-                    Store.writeAtomic(path, raw)
-                    Store.writeAtomic(File(dir, "manifest.json.sig"), signature)
-                    current = data
+            var rejected = false
+            if (needFetch) {
+                val fetched = try {
+                    fetch("manifest.json") to fetch("manifest.json.sig") // ngoài [lock]: mạng chậm không chặn các luồng hỏi bài
+                } catch (_: Exception) {
+                    null // mất mạng: dùng bản đã cất nếu có
                 }
-                rejected = current == null
+                var accepted = false
+                if (fetched != null) {
+                    val (raw, signature) = fetched
+                    val data = accept(raw, signature)
+                    val held = current
+                    if (data == null) {
+                        log("danh mục nhạc: mục lục tải về sai chữ ký hay sai định dạng - giữ bản đã cất")
+                    } else if (held != null && data.getString("issued") < held.getString("issued")) {
+                        log("danh mục nhạc: mục lục tải về cũ hơn bản đang giữ (${data.getString("issued")} < ${held.getString("issued")}) - bỏ")
+                    } else {
+                        checkVersion(data)
+                        Store.writeAtomic(File(dir, "manifest.json"), raw)
+                        Store.writeAtomic(File(dir, "manifest.json.sig"), signature)
+                        current = data
+                        accepted = true
+                    }
+                    rejected = current == null
+                }
+                synchronized(lock) { refreshFailedAt = if (accepted) -MANIFEST_RETRY_MS else clock() }
+            }
+            synchronized(lock) {
+                val result = current
+                if (result == null) {
+                    throw CatalogError(if (rejected) "Danh mục nhạc nền tải về không có chữ ký hợp lệ - app không dùng." else "Chưa tải được danh mục nhạc nền - cần mạng ở lần đầu.")
+                }
+                checkVersion(result)
+                if (manifest?.optString("revision") != result.optString("revision")) {
+                    parts.clear()
+                    pruneRevisions(result.optString("revision"))
+                }
+                manifest = result
+                return result
             }
         }
-        if (current == null) {
-            throw CatalogError(if (rejected) "Danh mục nhạc nền tải về không có chữ ký hợp lệ - app không dùng." else "Chưa tải được danh mục nhạc nền - cần mạng ở lần đầu.")
-        }
-        checkVersion(current)
-        if (manifest?.optString("revision") != current.optString("revision")) parts.clear()
-        manifest = current
-        current
     }
 
     fun playlists(): List<JSONObject> = Playlists.catalogue(manifest())
@@ -289,6 +332,38 @@ class MusicCatalog(
     /** File bài đã tải về máy (không tải); chưa có thì null. */
     fun cached(link: String): File? = fileOf(link).takeIf { it.isFile }
 
+    /** Như [cached] nhưng ghi nhận bài vừa được dùng (giờ sửa file = lần dùng gần nhất, để [prune] xoá bài lâu không nghe trước); chỉ ghi lại khi đã quá [TOUCH_MS]. */
+    fun use(link: String): File? = cached(link)?.also { file ->
+        val now = clock()
+        if (now - file.lastModified() > TOUCH_MS) file.setLastModified(now)
+    }
+
+    /**
+     * Giữ thư mục bài tải về không phình mãi: quá `capBytes` ([FILES_CAP_BYTES]) thì xoá bài lâu không dùng nhất ([use]) cho tới khi vừa, trừ các bài trong `keep` (đang kêu / vừa tải); file
+     * `.part` bỏ dở quá [PART_STALE_MS] cũng xoá. Bài bị xoá tải lại được lúc cần (cũng qua [download]). Luồng nền.
+     */
+    fun prune(keep: Collection<String> = emptyList(), capBytes: Long = FILES_CAP_BYTES) {
+        val all = File(dir, "files").listFiles() ?: return
+        val now = clock()
+        all.filter { it.name.endsWith(".part") && now - it.lastModified() > PART_STALE_MS }.forEach { it.delete() }
+        val tracks = all.filter { it.name.endsWith(".mp3") }
+        var total = tracks.sumOf { it.length() }
+        if (total <= capBytes) return
+        val protected = keep.map { fileOf(it).name }.toSet()
+        for (file in tracks.sortedBy { it.lastModified() }) {
+            if (total <= capBytes) break
+            if (file.name in protected) continue
+            val size = file.length()
+            if (file.delete()) total -= size
+        }
+    }
+
+    /** Mảnh danh mục của các phiên bản (`revision`) cũ không bao giờ được đọc lại: xoá mọi thư mục trừ `files/` và phiên bản đang dùng (mỗi lần danh mục đổi phiên bản thì cả bộ mảnh mới nằm ở thư mục mới). */
+    fun pruneRevisions(revision: String) {
+        val folders = dir.listFiles { file -> file.isDirectory && file.name != "files" && file.name != revision } ?: return
+        for (folder in folders) runCatching { folder.deleteRecursively() }
+    }
+
     /** Các bài đã biết là quá [TRACK_MAX_MB] (`dir/too_big.json`: {link: số byte}) - không hết hạn: cỡ bài không đổi. */
     private val tooBig by lazy {
         val found = HashMap<String, Long>()
@@ -315,6 +390,20 @@ class MusicCatalog(
         val size = (info?.opt("bytes") as? Number)?.toLong()
         if (size != null && size > TRACK_MAX_BYTES) return false
         return synchronized(lock) { (tooBig[link] ?: 0L) <= TRACK_MAX_BYTES }
+    }
+
+    /**
+     * Bài `link` dùng được TRÊN MÁY NÀY lúc này không - bộ chọn nhạc theo cảnh hỏi (`server.music_track_available(sizes=False)`, cùng đầu vào thì cùng lựa chọn): đã tải thì được (kể cả khi
+     * không có mạng); chưa tải thì không nếu bài đã biết là quá [TRACK_MAX_MB], nguồn của nó vừa hỏng vì mạng ([hostDown]) hay cả máy đang mất mạng ([offline]), hay bài vừa tải hỏng
+     * thật ([markUnavailable], chưa quá [UNAVAILABLE_MS]). Chưa biết thì coi là được. Khác [usable] (chỉ cỡ): [usable] hỏi chuyện BÀI, hàm này hỏi cả chuyện MẠNG.
+     */
+    fun available(link: String): Boolean {
+        if (cached(link) != null) return true
+        if (link.startsWith(MusicStore.LOCAL_PREFIX)) return false // nhạc người dùng nhập không tải từ đâu được: không có file là không dùng được
+        if (!usable(link, null)) return false
+        if (offline() || hostDown(link)) return false
+        val failedAt = synchronized(hostLock) { brokenAt[link] }
+        return failedAt == null || clock() - failedAt >= UNAVAILABLE_MS
     }
 
     /** Bài đã tra cỡ trong danh mục ([verifySizes]) và không quá [TRACK_MAX_BYTES]: khỏi tra lại. */
@@ -420,12 +509,23 @@ class MusicCatalog(
         const val FORMAT = "abook-music-catalog"
         const val FORMAT_VERSION = 1
         const val MANIFEST_MAX_AGE_MS = 24L * 3600 * 1000
+        /** Làm mới mục lục không thành thì chừng này mới thử lại (trong lúc ấy dùng bản đã cất): hỏi bài / ô dồn dập không kéo theo dồn dập lượt gọi mạng chờ hết giờ. */
+        const val MANIFEST_RETRY_MS = 60_000L
         /** Bài nhạc nền lớn hơn thế (bản dài 30-50 phút, có bài 110 MB) máy này không dùng - cùng `MUSIC_TRACK_MAX_MB` của server.py. */
         const val TRACK_MAX_MB = 40
         const val TRACK_MAX_BYTES = TRACK_MAX_MB * 1024L * 1024
+        /** Trần thư mục bài đã tải: bằng bộ đệm đọc to (ClipCache, 300 MB) - chừng 40 bài cỡ thường (vài MB tới chục MB) đủ cho cả những cuốn nghe gần đây, nhạc theo cảnh lặp lại bài nhiều;
+         *  hai bộ đệm cộng lại vẫn dưới nửa GB của `cacheDir`. */
+        const val FILES_CAP_BYTES = 300L * 1024 * 1024
+        private const val TOUCH_MS = 3_600_000L
+        private const val PART_STALE_MS = 600_000L
         private const val SHARD_WORKERS = 8
         /** Nguồn tải hỏng vì mạng nghỉ chừng này (`MUSIC_OFFLINE_SECONDS`): bài của nó chờ, bài của nguồn khác vẫn chạy. */
         const val HOST_REST_MS = 300_000L
+        /** Bấy nhiêu nguồn cùng hỏng vì mạng (và không nguồn nào vừa trả lời) = máy mất mạng (`MUSIC_OFFLINE_HOSTS`). */
+        const val OFFLINE_HOSTS = 2
+        /** Bài tải hỏng thật nghỉ chừng này rồi thử lại (`MUSIC_UNAVAILABLE_SECONDS`, 24 giờ). */
+        const val UNAVAILABLE_MS = 24L * 3600 * 1000
         /** Chữ báo khi bài nhạc bị giữ lại vì mạng - đúng chữ `MUSIC_OFFLINE_MESSAGE` của webui/server.py. */
         const val OFFLINE_MESSAGE = "Không tải được nhạc vì mất mạng - giữ nguyên nhạc hiện tại, bạn thử lại sau nhé"
         private const val USER_AGENT = "ABook (+https://github.com/ntanhpro1221/ABook)"

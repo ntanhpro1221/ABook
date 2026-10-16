@@ -146,7 +146,7 @@ class ReadAheadTest {
         var now = 0L
         val clock = { now }
         var step = 0
-        ClipRetry.run(true, delays, sleep = { true }, record = { recorded += it }, clock = clock) { _ ->
+        ClipRetry.run(true, delays, sleep = { true }, record = { recorded += it }, clock = clock, budgetMs = 600_000L) { _ ->
             step += 1
             when (step) {
                 1 -> { now += 300_000_000L; throw VoiceException("502 tức thì", reason = "service") } // 0,3 s: không nói gì về tốc độ
@@ -158,6 +158,105 @@ class ReadAheadTest {
         val local = ArrayList<Long>()
         ClipRetry.run(false, delays, sleep = { true }, record = { local += it }) { _ -> clip() }
         assertTrue("giọng trên máy không ghi số đo trực tuyến", local.isEmpty())
+    }
+
+    // ---- "Edge chậm" không dính mãi (soát a47 mục 2) ----------------------------------------------------------
+
+    @Test
+    fun fastParallelReadsTurnSlowModeOffAgain() {
+        val policy = ReadAheadPolicy(2)
+        repeat(ReadAheadPolicy.SAMPLES) { policy.record(12_000) }
+        assertTrue(policy.slow())
+        // Edge nhanh lại: đoạn kế chỉ được đọc song song (warm), lượt chính lấy từ bộ đệm - chỉ lượt song song có số đo. Nó phải đủ làm p80 tụt.
+        var now = 0L
+        repeat(ReadAheadPolicy.SAMPLES) {
+            val result = policy.measure({ now }) { now += 1_200_000_000L; Result.success(clip()) }
+            assertTrue(result.isSuccess)
+        }
+        assertFalse("8 lượt nhanh liền: không còn chậm", policy.slow())
+        assertEquals(ReadAheadPolicy.MIN_BUFFER_MS, policy.wantedMs())
+    }
+
+    @Test
+    fun measureRecordsSlowFailuresButNotInstantOnes() {
+        val policy = ReadAheadPolicy(2)
+        var now = 0L
+        repeat(2) { policy.measure({ now }) { now += 300_000_000L; Result.failure<Clip>(VoiceException("tức thì", reason = "service")) } }
+        assertEquals("lượt hỏng tức thì không nói gì về tốc độ", 0L, policy.wantedMs())
+        repeat(2) { policy.measure({ now }) { now += 9_000_000_000L; Result.failure<Clip>(VoiceException("chờ rồi hỏng", reason = "timeout")) } }
+        assertTrue(policy.slow())
+    }
+
+    // ---- quỹ thời gian thử lại (soát a47 mục 4) -----------------------------------------------------------------
+
+    @Test
+    fun aStalledNetworkFallsBackAfterOneAttemptNotAfterAMinute() {
+        // Mạng còn nối mà Edge im: mỗi lần chờ tin 15 giây rồi "timeout". Trước quỹ: 3 lần ngoài (và 4 lần Edge tự thử trong mỗi lần) = tới cả phút+; giờ lần hỏng đầu đã quá quỹ.
+        var now = 0L
+        var calls = 0
+        val slept = ArrayList<Long>()
+        ClipRetry.run(true, delays, sleep = { slept += it; now += it * 1_000_000; true }, clock = { now }) { retry ->
+            calls += 1
+            now += 15_000_000_000L
+            // Như ClipReader: ném lỗi thoáng qua lên chỉ khi người gọi sẽ thử lại (còn quỹ); không thì rơi sang giọng kế (ở đây: lời cuối).
+            if (retry && !ClipBudget.retryFollows()) throw VoiceException("rơi sang giọng máy", reason = "service", final = true)
+            throw VoiceException("Giọng Edge trả lời quá chậm", reason = "timeout")
+        }
+        assertEquals(1, calls)
+        assertTrue("không nghỉ chờ thêm", slept.isEmpty())
+    }
+
+    @Test
+    fun quickFailuresStillGetTheirRetriesInsideTheBudget() {
+        var now = 0L
+        var calls = 0
+        val result = ClipRetry.run(true, delays, sleep = { now += it * 1_000_000; true }, clock = { now }) { retry ->
+            calls += 1
+            now += 500_000_000L
+            if (calls <= 2) {
+                assertTrue(retry)
+                assertTrue("còn quỹ: ClipReader ném lỗi lên cho vòng ngoài", ClipBudget.retryFollows())
+                throw VoiceException("Giọng Edge đang không trả lời", reason = "service")
+            }
+            clip()
+        }
+        assertTrue(result.isSuccess)
+        assertEquals(3, calls)
+    }
+
+    @Test
+    fun theBudgetCapsTheTotalWaitAcrossAllAttempts() {
+        // Lần hỏng nào cũng mất 6 giây: quỹ 20 s đủ cho lần thứ hai (6 + 2 + 4 <= 20), không đủ cho lần ba (6 + 2 + 6 + 5 + 4 > 20).
+        var now = 0L
+        var calls = 0
+        ClipRetry.run(true, delays, sleep = { now += it * 1_000_000; true }, clock = { now }) { _ ->
+            calls += 1
+            now += 6_000_000_000L
+            throw VoiceException("Giọng Edge đang không trả lời", reason = "service")
+        }
+        assertEquals(2, calls)
+        assertTrue("tổng chờ không quá quỹ", now <= ClipBudget.BUDGET_MS * 1_000_000)
+    }
+
+    @Test
+    fun retriesAreGivenOnlyWhatIsLeftOfTheBudgetButTheFirstAttemptIsNeverCut() {
+        var now = 0L
+        val limits = ArrayList<Long>()
+        ClipRetry.run(true, delays, sleep = { now += it * 1_000_000; true }, clock = { now }) { _ ->
+            limits += ClipBudget.attemptMs(EdgeTts.TOTAL_MS, false) // lần đọc đầu của EdgeTts trong lần này
+            limits += ClipBudget.attemptMs(EdgeTts.TOTAL_MS, true) // lần EdgeTts tự thử lại
+            now += 3_000_000_000L
+            throw VoiceException("cắt lượt", reason = "service")
+        }
+        // Lần 1: đọc đầu = đủ 45 s (Edge chậm thật 9-24 s vẫn xong); lần Edge tự thử lại = phần quỹ còn lại (20 s).
+        assertEquals(EdgeTts.TOTAL_MS, limits[0])
+        assertEquals(ClipBudget.BUDGET_MS, limits[1])
+        // Lần 2 (thử lại của vòng ngoài): cả hai chỉ được phần còn lại: 20 - 3 - 2 = 15 s.
+        assertEquals(15_000L, limits[2])
+        assertEquals(15_000L, limits[3])
+        // Ngoài quỹ (đọc song song): không giới hạn.
+        assertEquals(EdgeTts.TOTAL_MS, ClipBudget.attemptMs(EdgeTts.TOTAL_MS, true))
+        assertTrue(ClipBudget.retryFollows())
     }
 
     @Test

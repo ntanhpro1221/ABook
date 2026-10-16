@@ -50,8 +50,14 @@ object MusicBed {
     private const val MAX_STEP_SECONDS = 3.0 // đồng hồ nhạc không nhảy xa khi máy ngủ giữa hai nhịp
     private const val SAVE_EVERY_MS = 5000L
     private const val PREFS = "music_bed"
+    /** Giọng của người nghe, không phải lỗi: nhạc nền chờ Wi-Fi (không tự tải bài nhạc lớn bằng dữ liệu di động). */
+    private const val METERED_NOTICE = "Đang dùng dữ liệu di động nên nhạc nền tự chọn chờ có Wi-Fi mới tải. Muốn nghe ngay, bạn chọn nhạc ở nút Nhạc nền."
+    private const val AUTO_KEY = "auto-scene-music"
     private const val SCENE_POLL_MS = 1500L // nhạc theo cảnh dựng nền: chương chưa xong thì hỏi lại mỗi chừng này, tối đa SCENE_POLLS lần (ui/src/listen/player.tsx)
     private const val SCENE_POLLS = 80
+    /** Mốc cảnh của chương trả `unavailable` (danh mục chưa tải được) hay hỏi hỏng: hỏi lại sau chừng này, lùi dần, có hạn - như `sceneRetryDelay` của ui/src/listen/sceneCues.ts. */
+    private val SCENE_RETRY_MS = longArrayOf(15_000, 30_000, 60_000, 120_000, 300_000)
+    private const val METERED_CHECK_MS = 5000L
     private val CREDIT_KEYS = listOf("title", "creator", "attribution", "landing", "license", "licenseUrl")
 
     /** Một bài đang kêu. `goal` = âm lượng đang hướng tới, `perTick` = mỗi nhịp STEP_MS nhích bao nhiêu; `entering` = đang mờ vào
@@ -92,6 +98,7 @@ object MusicBed {
     private val failed = MusicFailures { SystemClock.elapsedRealtime() }
 
     // ---- nhạc theo cảnh (sách chỉ có chữ, "Theo cảnh") ----
+    private var autoPicked = false // nhạc theo cảnh là do máy tự chọn (người nghe chưa chọn gì): dữ liệu di động chặn tải ([meteredNow])
     private var sceneMode = false // cuốn này theo cảnh: mốc của chương nằm ở `scene`, bài lấy từ danh mục
     private val scene = SceneBed { sceneTiming() }
     private var sceneRetry: Runnable? = null
@@ -111,6 +118,14 @@ object MusicBed {
     fun init(appContext: Context) {
         context = appContext.applicationContext
         MusicCues.mix = MusicMix.load(appContext)
+        // "Tự chọn nhạc nền" do giao diện gửi mỗi lần mở app: tiến trình khởi động lại từ widget / tai nghe / Android Auto (không có WebView) phải theo lựa chọn đã lưu, không về mặc định "bật".
+        Playlists.autoEnabled = prefs(appContext).getBoolean(AUTO_KEY, true)
+    }
+
+    /** Nhớ lựa chọn "Tự chọn nhạc nền" ([Playlists.autoEnabled]) qua lần khởi động tiến trình. */
+    fun rememberAuto(value: Boolean) {
+        val appContext = context ?: return
+        prefs(appContext).edit().putBoolean(AUTO_KEY, value).apply()
     }
 
     /** Lớp sửa của cuốn `bookId` vừa đổi (nhạc bật/tắt, mức, im lặng một đoạn, danh sách phát): lần `sync` kế đọc lại. */
@@ -264,7 +279,9 @@ object MusicBed {
         sceneRetry?.let(main::removeCallbacks)
         sceneRetry = null
         sceneMode = false
+        autoPicked = false
         sceneNotice = ""
+        meteredHeld = false
         scene.reset()
         advanceClock()
         saveClock()
@@ -302,6 +319,7 @@ object MusicBed {
         val choice = changes.optString("playlist")
         if (Playlists.sceneMode(BookEdits.rawBookOrNull(dir) ?: JSONObject(), choice, Playlists.autoEnabled)) {
             sceneMode = true // mốc từng chương được hỏi ở lần `sync` kế (chương mới)
+            autoPicked = Playlists.isAutomatic(true, choice)
             return
         }
         val stored = choice.takeIf { it != Playlists.SCENE }.orEmpty() // "scene" mà không phải sách chữ / sách có nhạc của người làm sách: như chưa chọn gì
@@ -376,26 +394,52 @@ object MusicBed {
     /** Lời báo "mất mạng" khi có bài của danh sách phát đang bị giữ lại vì mạng (một nguồn nhạc nghỉ vì mạng) - giao diện nói ra thay vì để nhạc
      *  im lặng không lời; rỗng khi ổn. */
     fun offlineNotice(): String =
-        if (playlist != null || sceneMode) sceneNotice.ifEmpty { context?.let { DeviceMusic.catalog(it).offlineNotice() }.orEmpty() } else ""
+        if (playlist != null || sceneMode) sceneNotice.ifEmpty { context?.let { DeviceMusic.catalog(it).offlineNotice() }.orEmpty() }.ifEmpty { if (meteredHeld) METERED_NOTICE else "" } else ""
 
     /** File của một bài để phát; bài danh mục chưa tải thì tải ở luồng nền (lần `sync` sau mới phát) và trả null. */
     private fun uriOf(appContext: Context, link: String): Uri? {
         if (isFailed(link)) return null
         if (link.startsWith(MusicStore.LOCAL_PREFIX)) return DeviceMusic.store(appContext).file(link)?.let { Uri.fromFile(it) }
         val catalog = DeviceMusic.catalog(appContext)
-        catalog.cached(link)?.let { return Uri.fromFile(it) }
+        catalog.use(link)?.let { return Uri.fromFile(it) }
         fetch(appContext, link)
         return null
     }
 
+    /** Dữ liệu di động (mạng tính phí): cùng luật với "Làm trước" ([vn.abook.player.readaloud.PrepareAhead] chỉ chạy khi Wi-Fi không tính tiền) - bài danh mục (tới 40 MB mỗi bài) không tự tải, NHƯNG chỉ với
+     *  nhạc máy tự chọn ([Playlists.holdsDownloadOnMetered]); người nghe đã chọn nhạc ở nút "Nhạc nền" thì tải như thường. Bài đã
+     *  tải thì vẫn phát. Hỏi mỗi vài giây thôi ([fetch] được gọi theo nhịp 0,5 giây); mạng đổi sang Wi-Fi thì lần gọi kế tải, nhạc vào ở đầu cảnh/bài kế. */
+    private fun meteredNow(appContext: Context): Boolean {
+        val now = SystemClock.elapsedRealtime()
+        if (now - meteredAt > METERED_CHECK_MS) {
+            meteredAt = now
+            meteredValue = runCatching { AndroidMusicStudent.metered(appContext) }.getOrDefault(false)
+            if (!meteredValue) meteredHeld = false
+        }
+        return meteredValue
+    }
+
+    private var meteredAt = -METERED_CHECK_MS - 1
+    private var meteredValue = false
+    /** Có bài đang chờ vì dữ liệu di động (hộp "Nhạc nền" nói lý do thay vì để nhạc im lặng không lời - [offlineNotice]). */
+    private var meteredHeld = false
+
     private fun fetch(appContext: Context, link: String) {
         if (isFailed(link) || link.startsWith(MusicStore.LOCAL_PREFIX) || !downloading.add(link)) return
+        if (Playlists.holdsDownloadOnMetered(meteredNow(appContext), autoPicked)) {
+            downloading.remove(link)
+            meteredHeld = true
+            return
+        }
+        meteredHeld = false
         val info = infos[link]
+        // Bài đang kêu / sắp tới / vừa tải không bị dọn khi thư mục bài vượt trần ([MusicCatalog.prune]); luồng chính biết bài nào.
+        val keep = listOfNotNull(current?.track) + fading.map { it.track } + cues.map { it.track } + queue.spans.map { it.track.link } + link
         worker.execute {
             var tooBig = false
             var offline = false
             val file = try {
-                DeviceMusic.catalog(appContext).download(link, info)
+                DeviceMusic.catalog(appContext).download(link, info).also { if (it != null) runCatching { DeviceMusic.catalog(appContext).prune(keep) } }
             } catch (_: MusicCatalog.TrackTooBig) {
                 tooBig = true
                 null
@@ -416,6 +460,7 @@ object MusicBed {
                     }
                     else -> { // nguồn gỡ bài, bản sao sai...: bỏ qua bài này một lúc, lùi dần, có hạn
                         failed.dropDownload(link)
+                        DeviceMusic.catalog(appContext).markUnavailable(link) // bộ chọn nhạc theo cảnh cũng tránh nó (như máy tính)
                         replan(link)
                     }
                 }
@@ -514,7 +559,7 @@ object MusicBed {
 
     /** Hỏi mốc nhạc theo cảnh của chương `chapterId` (luồng nền: dựng nền có thể tới vài giây, danh mục cần mạng lần đầu). Chương chưa dựng xong ([DeviceScenes] trả `pending`)
      *  thì hỏi lại sau [SCENE_POLL_MS], tối đa [SCENE_POLLS] lần; về rồi thì nhạc vào ở đầu câu kế ([SceneAnchor.Feed.arrive]). Đổi cuốn / chương thì lần hỏi cũ bị bỏ. */
-    private fun askScene(appContext: Context, chapterId: Int, attempt: Int) {
+    private fun askScene(appContext: Context, chapterId: Int, attempt: Int, misses: Int = 0) {
         val ticket = generation
         val bookId = book
         DeviceScenes.request(appContext, bookId, chapterId) { result, _ ->
@@ -527,11 +572,20 @@ object MusicBed {
                 if (pending && attempt < SCENE_POLLS) {
                     val job = Runnable {
                         sceneRetry = null
-                        if (ticket == generation && chapter == chapterId) askScene(appContext, chapterId, attempt + 1)
+                        if (ticket == generation && chapter == chapterId) askScene(appContext, chapterId, attempt + 1, misses)
                     }
                     sceneRetry = job
                     main.postDelayed(job, SCENE_POLL_MS)
                     return@post
+                }
+                // Chưa có mốc vì danh mục chưa tải được / dựng hỏng: hỏi lại sau một quãng (mạng về giữa chương thì nhạc vào ở đầu câu kế), không đợi tới chương sau.
+                if ((result == null || notice.isNotEmpty()) && misses < SCENE_RETRY_MS.size) {
+                    val job = Runnable {
+                        sceneRetry = null
+                        if (ticket == generation && chapter == chapterId) askScene(appContext, chapterId, 0, misses + 1)
+                    }
+                    sceneRetry = job
+                    main.postDelayed(job, SCENE_RETRY_MS[misses])
                 }
                 infos = infos + (arrival?.infos ?: emptyMap())
                 if (arrival != null && scene.arrive(arrival, lastSeconds)) cues = scene.cues

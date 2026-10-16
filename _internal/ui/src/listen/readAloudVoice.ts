@@ -276,7 +276,7 @@ export function speechFetcher(source: ListenSource, bookId: string, notify: (mes
       } catch (error) {
         // Bộ máy sẽ tự thử lại lỗi thoáng qua này (Edge cắt lượt / bận / chậm): chưa vội coi giọng là hỏng, cho nghỉ 5 phút hay rơi sang giọng khác - ném lỗi gốc lên, lần thử cuối
         // (`willRetry` tắt) mới xử lý như dưới đây.
-        if (options?.willRetry && candidate.online && !options.cachedOnly && isTransientClipError(error)) throw error;
+        if (options?.willRetry && !(options.retryBefore !== undefined && Date.now() >= options.retryBefore) && candidate.online && !options.cachedOnly && isTransientClipError(error)) throw error;
         const why = (error as { reason?: string }).reason ?? "";
         if (candidate.online && TROUBLE_REASONS.has(why) && !KEYED_PROVIDERS[candidate.provider] && !options?.cachedOnly) {
           troubled.set(candidate.provider, { reason: why, until: Date.now() + TROUBLE_MS });

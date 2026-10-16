@@ -3,6 +3,9 @@ import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
 import type { Script } from "./model";
 import {
   CLIP_RETRIES,
+  clipRetryBefore,
+  CLIP_MIN_ATTEMPT_MS,
+  CLIP_RETRY_BUDGET_MS,
   CLIP_RETRY_DELAYS_MS,
   NEXT_CHAPTER_AHEAD,
   ReadAloudEngine,
@@ -72,7 +75,7 @@ interface Setup {
   engine: ReadAloudEngine;
   audios: FakeAudio[];
   published: Script[];
-  requests: { text: string; cachedOnly: boolean; willRetry?: boolean; resolve: (clip?: ReadAloudClip) => void; reject: (error: Error) => void }[];
+  requests: { text: string; cachedOnly: boolean; willRetry?: boolean; retryBefore?: number; resolve: (clip?: ReadAloudClip) => void; reject: (error: Error) => void }[];
   events: string[];
   /** Cho clip của đoạn có chữ `text` về. */
   arrive: (text: string) => Promise<void>;
@@ -100,7 +103,7 @@ function setup(options: { chapter?: string; cached?: Record<string, ReadAloudCli
           else reject(Object.assign(new Error("uncached"), { reason: "uncached" }));
           return;
         }
-        requests.push({ text, cachedOnly: false, willRetry: o?.willRetry, resolve: (clip) => resolve(clip ?? clipOf(text)), reject });
+        requests.push({ text, cachedOnly: false, willRetry: o?.willRetry, retryBefore: o?.retryBefore, resolve: (clip) => resolve(clip ?? clipOf(text)), reject });
       }),
     onScript: (script) => published.push(script),
   };
@@ -507,6 +510,36 @@ describe("nghe dở và lỗi", () => {
       t.engine.play();
       expect(firstT()).toHaveLength(CLIP_RETRIES + 2);
       expect(firstT().at(-1)!.willRetry).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("quỹ thời gian thử lại: lần hỏng đầu đã mất 16 giây (mạng còn nối mà im) thì không thử lại nữa - dừng ngay thay vì chờ cả phút", async () => {
+    vi.useFakeTimers();
+    try {
+      const began = Date.now();
+      const s = setup();
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      const first = () => s.requests.filter((r) => r.text === TEXTS[0]);
+      // mốc truyền cho bộ lấy clip: sau mốc ấy lần thử lại không còn kịp (quỹ 20 giây - 5 giây - quãng nghỉ)
+      expect(first()[0].retryBefore).toBe(clipRetryBefore(began, 0));
+      expect(first()[0].retryBefore! - began).toBe(CLIP_RETRY_BUDGET_MS - CLIP_MIN_ATTEMPT_MS - CLIP_RETRY_DELAYS_MS[0]);
+      await vi.advanceTimersByTimeAsync(16_000);
+      first()[0].reject(Object.assign(new Error("Chậm quá"), { reason: "timeout" }));
+      await vi.advanceTimersByTimeAsync(CLIP_RETRY_DELAYS_MS[0]);
+      expect(first()).toHaveLength(1);
+      expect(s.events).toContain("error");
+      // lần hỏng nhanh thì vẫn được thử lại như trước
+      const quick = setup();
+      quick.engine.load(quick.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      const again = () => quick.requests.filter((r) => r.text === TEXTS[0]);
+      again()[0].reject(Object.assign(new Error("Bad Gateway"), { reason: "service" }));
+      await vi.advanceTimersByTimeAsync(CLIP_RETRY_DELAYS_MS[0]);
+      expect(again()).toHaveLength(2);
+      expect(quick.events).not.toContain("error");
     } finally {
       vi.useRealTimers();
     }
