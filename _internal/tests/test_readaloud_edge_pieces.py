@@ -20,7 +20,53 @@ SENTENCES = ("Trời đã sẩm tối khi đoàn người tới được cổng 
 
 @pytest.mark.parametrize("case", CASES, ids=[case["note"][:40] for case in CASES])
 def test_the_shared_cases_cut_the_same_way_on_both_platforms(case) -> None:
-    assert edge.speech_pieces(case["text"]) == case["pieces"]
+    assert edge.speech_pieces(case["text"], case.get("rank", edge.RANK_BACKGROUND)) == case["pieces"]
+
+
+def test_only_the_paragraph_being_waited_for_is_cut_into_up_to_six_pieces() -> None:
+    assert (edge.PIECE_PARALLEL, edge.TARGET_PIECES) == (3, 6)
+    assert [edge.piece_limit(rank) for rank in (0, 1, 2, 98, edge.RANK_BACKGROUND)] == [6, 3, 3, 3, 3]
+    text = next(case["text"] for case in CASES if case.get("rank") == 0 and len(case["pieces"]) == 6)
+    assert len(edge.speech_pieces(text, 0)) == 6
+    for rank in (1, 5, 98, edge.RANK_BACKGROUND):
+        assert len(edge.speech_pieces(text, rank)) == 3
+    assert edge.speech_pieces(text) == edge.speech_pieces(text, edge.RANK_BACKGROUND)
+    # Mảnh nào cũng giữ đủ dài và ghép lại đúng chữ gốc ở cả hai cách cắt.
+    for rank in (0, 1):
+        pieces = edge.speech_pieces(text, rank)
+        assert " ".join(pieces).split() == text.split()
+        assert all(len(piece) >= edge.MIN_PIECE_CHARS for piece in pieces)
+
+
+class _PeakFake(edge.EdgeClient):
+    """Ghi lại số mảnh chạy cùng lúc (mỗi mảnh giữ chỗ 0,2 giây) và số mảnh đã gửi."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.live = 0
+        self.peak = 0
+        self.sent = 0
+        self.lock = threading.Lock()
+
+    def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None, rank=edge.RANK_BACKGROUND):  # noqa: ANN001, ANN202
+        with self.lock:
+            self.live += 1
+            self.sent += 1
+            self.peak = max(self.peak, self.live)
+        try:
+            time.sleep(0.2)
+            return b"x" * 6000, [Boundary(word, 100 * i, 100 * i + 50) for i, word in enumerate(text.split())]
+        finally:
+            with self.lock:
+                self.live -= 1
+
+
+def test_a_rank_zero_clip_runs_six_pieces_at_once_and_other_ranks_three() -> None:
+    text = next(case["text"] for case in CASES if case.get("rank") == 0 and len(case["pieces"]) == 6)
+    for rank, expected in ((0, 6), (1, 3), (edge.RANK_BACKGROUND, 3)):
+        client = _PeakFake()
+        client.synthesize(text, edge.DEFAULT_VOICE, rank=rank)
+        assert (client.sent, client.peak) == (expected, expected), rank
 
 
 def test_a_short_paragraph_stays_one_request() -> None:

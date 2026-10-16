@@ -26,6 +26,11 @@ class EdgePiecesTest {
     private val sentences = "Trời đã sẩm tối khi đoàn người tới được cổng làng. Người gác cổng đứng chờ sẵn, tay cầm chiếc đèn dầu cũ. " +
         "Họ im lặng bước vào sân, nơi mấy con chó nằm ngủ dưới hiên. Mưa bắt đầu rơi lúc nào không ai hay."
 
+    private val twelveSentences = "Con đường mòn dẫn xuống thung lũng phủ đầy sương sớm. Mấy chú bò già chậm rãi nhai cỏ ven bờ suối. Bà lão gánh hai thúng khoai đi ngang qua cầu tre. " +
+        "Đứa bé chạy theo sau, tay cầm cành hoa dại vừa hái. Tiếng chuông chùa vọng lại từ phía bên kia ngọn đồi. Khói bếp bắt đầu bay lên từ những mái nhà thấp. " +
+        "Người thợ rèn mở cửa lò, ngọn lửa hắt sáng cả con ngõ. Lũ gà con chíp chíp quanh chiếc sọt đan dở. Ông trưởng thôn ngồi hút thuốc lào trước hiên nhà. " +
+        "Một cơn gió nhẹ thổi qua, cuốn theo mùi rơm mới phơi. Cả làng chầm chậm thức dậy sau một đêm dài yên ắng. Ngày mới bắt đầu như bao ngày khác."
+
     @After
     fun cleanUp() {
         EdgeTts.connections = ConnectionSlots(EdgePieces.EDGE_CONNECTIONS)
@@ -43,7 +48,51 @@ class EdgePiecesTest {
         for (i in 0 until cases.length()) {
             val case = cases.getJSONObject(i)
             val expected = case.getJSONArray("pieces").let { array -> List(array.length()) { array.getString(it) } }
-            assertEquals(case.getString("note"), expected, EdgePieces.split(case.getString("text")))
+            assertEquals(case.getString("note"), expected, EdgePieces.split(case.getString("text"), case.optInt("rank", EdgePieces.RANK_BACKGROUND)))
+        }
+    }
+
+    @Test
+    fun onlyTheParagraphBeingWaitedForIsCutIntoUpToSixPieces() {
+        assertEquals(3, EdgePieces.PIECE_PARALLEL)
+        assertEquals(6, EdgePieces.TARGET_PIECES)
+        assertEquals(listOf(6, 3, 3, 3, 3), listOf(0, 1, 2, 98, EdgePieces.RANK_BACKGROUND).map { EdgePieces.pieceLimit(it) })
+        val text = twelveSentences
+        assertEquals(6, EdgePieces.split(text, 0).size)
+        for (rank in listOf(1, 5, 98, EdgePieces.RANK_BACKGROUND)) assertEquals(3, EdgePieces.split(text, rank).size)
+        assertEquals(EdgePieces.split(text, EdgePieces.RANK_BACKGROUND), EdgePieces.split(text))
+        for (rank in listOf(0, 1)) {
+            val pieces = EdgePieces.split(text, rank)
+            assertEquals(text.split(" "), pieces.joinToString(" ").split(" "))
+            assertTrue(pieces.all { it.length >= EdgePieces.MIN_PIECE_CHARS })
+        }
+    }
+
+    @Test
+    fun aRankZeroClipRunsSixPiecesAtOnceAndOtherRanksThree() {
+        for ((rank, expected) in listOf(0 to 6, 1 to 3, EdgePieces.RANK_BACKGROUND to 3)) {
+            val live = AtomicInteger(0)
+            val peak = AtomicInteger(0)
+            val sent = AtomicInteger(0)
+            val connector = EdgeTts.Connector { _, _ ->
+                val out = ByteArrayOutputStream()
+                sent.incrementAndGet()
+                peak.accumulateAndGet(live.incrementAndGet(), { a, b -> maxOf(a, b) })
+                WebSocket({ live.decrementAndGet() }, Reply(out) { bytes ->
+                    Thread.sleep(250) // mỗi mảnh giữ chỗ đủ lâu để các mảnh khác kịp mở cùng lúc
+                    val words = spokenIn(bytes).split(" ")
+                    var reply = ByteArray(0)
+                    words.forEachIndexed { i, word -> reply += metadata(i * 1_000_000L, 800_000, word) }
+                    reply + audio(words.size * 600, 1) + text("turn.end")
+                }, out)
+            }
+            val before = ClipBudget.enterRank(rank)
+            try {
+                EdgeTts("v", connector).synthesize(twelveSentences, File(dir, "rank$rank.mp3"))
+            } finally {
+                ClipBudget.leaveRank(before)
+            }
+            assertEquals("rank $rank", expected to expected, sent.get() to peak.get())
         }
     }
 

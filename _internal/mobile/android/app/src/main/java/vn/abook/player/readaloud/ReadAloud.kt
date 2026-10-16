@@ -683,8 +683,11 @@ object ReadAloud {
         // Đoạn vừa hỏng, tới nhịp hỏi lại mà người nghe còn âm thanh: hỏi thăm (một lượt, không thử lại, không giữ khoá) - xem [StalledClips].
         val probe = StalledClips.isProbe(fresh, Playback.player?.let(::listenerHasAudio) == true)
         // Người nghe không còn âm thanh nào để nghe (nhảy tới, đầu chương, hàng đợi cạn): đoạn này là đoạn họ đang đứng chờ (rank 0), đoạn đọc song song ([warm]) kế nó - hết chỗ kết nối Edge thì đoạn gần
-        // người nghe hơn đi trước, và việc nền (không rank) đứng sau cả hai (uxfix51).
-        val rank = if (Playback.player?.let(::listenerHasAudio) != true) 0 else 1
+        // người nghe hơn đi trước, và việc nền (không rank) đứng sau cả hai (uxfix51). Đoạn nạp khi người nghe còn âm thanh: rank = số đoạn đã nạp sau đoạn đang phát + 1 (uxfix52; cũng là
+        // tiêu đề / đoạn đầu của chương kế khi hàng đợi chạm cuối chương).
+        val rank = Playback.player.let { exo ->
+            StalledClips.listenerRank(exo?.let(::listenerHasAudio) == true, if (exo == null) 0 else exo.mediaItemCount - exo.currentMediaItemIndex - 1)
+        }
         // Người nghe đang chờ clip này qua mạng: giữ CPU + Wi-Fi tới khi xong (hàng đợi ExoPlayer đã cạn thì nó không giữ gì - [FetchWake]); đọc sẵn khi chưa ai chờ thì không.
         val ticket = if (StalledClips.holdsWake(online, listenerWants, probe)) FetchWake.hold() else null
         val cancel = ClipCancel().also { jobs.add(it) }

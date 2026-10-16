@@ -153,6 +153,14 @@ const READ_AHEAD = 3;
  *  `MAX_BUFFER_SECONDS`. Số lượt gọi CÙNG LÚC không tăng theo (vẫn đọc trước + 1 như trước đây: Edge hạn chế khi dồn nhiều kết nối) - chỉ hàng đợi dài ra. Chương đã nằm trong bộ đệm (lấy về
  *  trong vài chục ms, không tính là số đo) và giọng chạy trên máy ([SpeechTrack.serial]) không đổi gì. */
 const MAX_READ_AHEAD = 8;
+/** Rank lớn nhất của việc xin trước chương kế: máy chủ nhận 0-98 (99 trở lên là việc nền), nên đoạn xa mấy cũng vẫn đứng trước "Làm trước" / xuất sách nói. */
+export const MAX_WARM_RANK = 98;
+
+/** Rank của đoạn thứ `position` (0 = tiêu đề) của chương kế: `behind` = số đoạn của chương này từ chỗ người nghe tới hết chương (đoạn họ đang nghe tính là 1), rồi tới vị trí của nó, tối đa
+ *  [MAX_WARM_RANK]. Điện thoại cùng luật (StalledClips.listenerRank: số đoạn đã nạp sau đoạn đang phát + 1). */
+export function warmRankOf(behind: number, position: number): number {
+  return Math.min(MAX_WARM_RANK, Math.max(1, behind + position));
+}
 const BUFFER_FACTOR = 2;
 const MIN_BUFFER_SECONDS = 20;
 const MAX_BUFFER_SECONDS = 60;
@@ -782,18 +790,29 @@ export class ReadAloudEngine implements AudioEngine {
         const count = serial ? NEXT_CHAPTER_AHEAD : readAheadCount(NEXT_CHAPTER_AHEAD, this.fetchMeasures(), speakable.slice(0, MAX_READ_AHEAD).map(estimateSeconds));
         const wanted = speakable.slice(0, count);
         const voice = speech.voice();
+        // Mỗi clip kèm `rank` = số đoạn người nghe còn phải nghe trước nó (phần còn lại của chương này + vị trí trong chương kế, tối đa [MAX_WARM_RANK]): đứng sau mọi đoạn của chương
+        // đang nghe nhưng trước việc nền (Làm trước, xuất sách nói) khi hết chỗ kết nối Edge ([ClipOptions.rank]). Tính lúc gửi - người nghe đã đi tiếp thì rank nhỏ lại.
+        const options = (position: number): ClipOptions => ({ rank: this.warmRank(position) });
         if (serial) {
-          for (const text of wanted) await speech.fetchClip(voice, text);
+          for (const [position, text] of wanted.entries()) await speech.fetchClip(voice, text, options(position));
           return;
         }
         // Không quá `readAhead + 1` lượt cùng lúc (như [pump]): Edge hạn chế khi dồn nhiều kết nối.
         let next = 0;
         const lane = async () => {
-          while (next < wanted.length) await speech.fetchClip(voice, wanted[next++]).catch(() => undefined);
+          while (next < wanted.length) {
+            const position = next++;
+            await speech.fetchClip(voice, wanted[position], options(position)).catch(() => undefined);
+          }
         };
         await Promise.all(Array.from({ length: Math.min(this.readAhead + 1, wanted.length) }, lane));
       })
       .catch(() => undefined);
+  }
+
+  /** Rank của đoạn thứ `position` của chương kế lúc này ([warmRankOf]). */
+  private warmRank(position: number): number {
+    return warmRankOf(this.slots.length - this.target.index, position);
   }
 
   private request(index: number): void {
