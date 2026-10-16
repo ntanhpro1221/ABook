@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.79] - 2026-10-16
+
 ### Nghe ngay
 
 - Trên máy tính, khi một phần của đoạn không đọc được bằng giọng trực tuyến, đoạn ấy báo lỗi ngay thay vì đợi các phần khác đọc xong. Kết nối của các phần còn lại cũng được trả ngay nên đoạn bạn sắp nghe không phải xếp hàng sau chúng (giống điện thoại từ 0.4.78).
