@@ -258,14 +258,14 @@ def remember_cpu_dtype(directory: Path, name: str, torch_version: str) -> None:
 class _Embedder:
     """Qwen3-0.6B đã cắt `layer` lớp + token hoá; `embed` ra vector nhúng float32 của một đoạn chữ."""
 
-    def __init__(self, directory: Path, head: Head, sample_text: str) -> None:
+    def __init__(self, directory: Path, head: Head, sample_text: str, threads: int = CPU_THREADS) -> None:
         import torch
         from transformers import AutoModel, AutoTokenizer
 
         self.torch, self.head = torch, head
         self.threads = torch.get_num_threads()
         self.tokenizer = AutoTokenizer.from_pretrained(str(directory))
-        torch.set_num_threads(CPU_THREADS)
+        torch.set_num_threads(threads)
         remembered = read_cpu_dtype(directory, torch.__version__)
         dtype = torch.float32 if remembered == "fp32" else torch.bfloat16
         model = AutoModel.from_pretrained(str(directory), dtype=dtype)
@@ -366,6 +366,75 @@ def _save_cache(path: Path, cache: dict[str, Any]) -> None:
     atomic_write_bytes(path, buffer.getvalue())
 
 
+class ChapterStudent:
+    """Đoán hình không khí trong chương, từng chương một: nhúng chữ đoạn (có bộ nhớ đệm), độ lệch cả chương và mức V chương. Một đối tượng cho cả
+    lượt tính (`compute` cho dự án; nhạc theo cảnh của "Nghe ngay", music_nnscene.py, cho sách chữ) - model chỉ nạp khi có đoạn cần nhúng.
+    `threads`: số luồng CPU của torch lúc nhúng. `stopped` true sau khi `stop_requested` dừng giữa chừng."""
+
+    def __init__(self, directory: Path, cache_path: Path | None, *, log: Callable[[str], None] = print, threads: int = CPU_THREADS) -> None:
+        self.directory, self.cache_path, self.log, self.threads = directory, cache_path, log, threads
+        self.head = Head(directory / HEAD_FILE)
+        self.chapter_head = load_chapter_head(directory, log)
+        self.package = package_sha(directory)
+        self.cache = {} if cache_path is None else _load_cache(cache_path)
+        self.used: set[str] = set()
+        self.embedder: _Embedder | None = None
+        self.embedded = 0
+        self.dirty = False
+        self.stopped = False
+
+    def chapter(self, script: dict[str, Any], scenes: list[dict[str, Any]], *, stop_requested: Callable[[], bool] = lambda: False,
+                pause_requested: Callable[[], bool] = lambda: False) -> list[dict[str, Any]] | None:
+        """Các mục (`dV`, `dE`, `dT`, `chapterV`) của từng đoạn `scenes` của chương `script`. None: chương không dùng được (đoạn không khớp câu)
+        hay bị dừng (`stopped`); phần đã nhúng vẫn nằm trong bộ nhớ đệm."""
+        segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
+        position = {segment.get("id"): index for index, segment in enumerate(segments)}
+        spans = [(position.get(scene["firstSegment"]), position.get(scene["lastSegment"])) for scene in scenes]
+        if not scenes or any(first is None or last is None for first, last in spans):
+            return None
+        texts = [music_moods.scene_text(segments, first, last) for first, last in spans]
+        keys = [hashlib.sha256(text.encode("utf-8")).hexdigest() + self.package for text in texts]
+        self.used.update(keys)
+        for text, key in zip(texts, keys):
+            if key in self.cache:
+                continue
+            while pause_requested() and not stop_requested():
+                time.sleep(1.0)
+            if stop_requested():
+                self.stopped = True
+                return None
+            if self.embedder is None:
+                self.embedder = _Embedder(self.directory, self.head, text, *(() if self.threads == CPU_THREADS else (self.threads,)))
+            self.cache[key] = self.embedder.embed(text)
+            self.embedded += 1
+            self.dirty = True
+        vectors, weights = [self.cache[key] for key in keys], [max(1, len(text.split())) for text in texts]
+        deviations = self.head.deviations(vectors, weights)
+        # Mức V của cả chương (cùng giá trị ở mọi đoạn của chương; thiếu đầu mức chương thì không ghi): đo từ nhúng đã có, không chạy model thêm.
+        level = {} if self.chapter_head is None else {"chapterV": round(float(self.chapter_head.level(vectors, weights)[0]), 4)}
+        return [{"chapterId": scene["chapterId"], "firstSegment": scene["firstSegment"], "lastSegment": scene["lastSegment"],
+                 "dV": round(float(dev[0]), 4), "dE": round(float(dev[1]), 4), "dT": round(float(dev[2]), 4), **level}
+                for scene, dev in zip(scenes, deviations)]
+
+    def save(self, *, prune: bool = False) -> None:
+        """Ghi bộ nhớ đệm nhúng nếu có gì mới. `prune`: bỏ nhúng của đoạn / gói không còn dùng (làm trọn cuốn)."""
+        if self.cache_path is None:
+            return
+        if prune and (self.dirty or any(key not in self.used for key in self.cache)):
+            _save_cache(self.cache_path, {key: vector for key, vector in self.cache.items() if key in self.used})
+        elif self.dirty:
+            _save_cache(self.cache_path, self.cache)
+        else:
+            return
+        self.dirty = False
+
+    def close(self) -> None:
+        """Trả RAM và số luồng torch."""
+        if self.embedder is not None:
+            self.embedder.close()
+            self.embedder = None
+
+
 def compute(project_root: Path, *, stop_requested: Callable[[], bool] = lambda: False, log: Callable[[str], None] = print,
             pause_requested: Callable[[], bool] = lambda: False, directory: Path | None = None) -> int:
     """Nhúng chữ từng đoạn (ranh giới của app) chưa có trong bộ nhớ đệm, tính độ lệch cả chương và ghi `music_scene_student.json` sau
@@ -377,64 +446,29 @@ def compute(project_root: Path, *, stop_requested: Callable[[], bool] = lambda: 
     directory = directory or package_dir()
     if not _complete(directory):
         raise FileNotFoundError("chưa có gói model")
-    head = Head(directory / HEAD_FILE)
-    chapter_head = load_chapter_head(directory, log)
-    package = package_sha(directory)
-    cache_path = project_root / CACHE_FILE
-    cache = _load_cache(cache_path)
-    used: set[str] = set()
-    embedder: _Embedder | None = None
+    student = ChapterStudent(directory, project_root / CACHE_FILE, log=log)
     items: list[dict[str, Any]] = []
-    embedded = 0
-    dirty = finished = False
+    finished = False
 
     bounds = music_bounds.load(project_root) or {}  # ranh LLM chia cảnh: cùng đoạn với music_plan.build
     try:
         for script in music_plan.book_scripts(project_root):
-            segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
-            position = {segment.get("id"): index for index, segment in enumerate(segments)}
             scenes = music_scenes.chapter_scenes(script, boundaries=bounds.get(script.get("chapterId")))
-            spans = [(position.get(scene["firstSegment"]), position.get(scene["lastSegment"])) for scene in scenes]
-            if not scenes or any(first is None or last is None for first, last in spans):
+            chapter = student.chapter(script, scenes, stop_requested=stop_requested, pause_requested=pause_requested)
+            if student.stopped:
+                return student.embedded
+            if chapter is None:
                 continue
-            texts = [music_moods.scene_text(segments, first, last) for first, last in spans]
-            keys = [hashlib.sha256(text.encode("utf-8")).hexdigest() + package for text in texts]
-            used.update(keys)
-            for text, key in zip(texts, keys):
-                if key in cache:
-                    continue
-                while pause_requested() and not stop_requested():
-                    time.sleep(1.0)
-                if stop_requested():
-                    return embedded
-                if embedder is None:
-                    embedder = _Embedder(directory, head, text)
-                cache[key] = embedder.embed(text)
-                embedded += 1
-                dirty = True
-            vectors, weights = [cache[key] for key in keys], [max(1, len(text.split())) for text in texts]
-            deviations = head.deviations(vectors, weights)
-            # Mức V của cả chương (cùng giá trị ở mọi đoạn của chương; thiếu đầu mức chương thì không ghi): đo từ nhúng đã có, không chạy model thêm.
-            level = {} if chapter_head is None else {"chapterV": round(float(chapter_head.level(vectors, weights)[0]), 4)}
-            items += [{"chapterId": scene["chapterId"], "firstSegment": scene["firstSegment"], "lastSegment": scene["lastSegment"],
-                       "dV": round(float(dev[0]), 4), "dE": round(float(dev[1]), 4), "dT": round(float(dev[2]), 4), **level}
-                      for scene, dev in zip(scenes, deviations)]
-            atomic_write_json(project_root / FILE, {"version": VERSION, "package": package, "built": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+            items += chapter
+            atomic_write_json(project_root / FILE, {"version": VERSION, "package": student.package, "built": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
                                                     "scenes": items})
             log(f"Hình không khí trong chương: xong chương {script.get('chapterId')} ({len(items)} đoạn)")
-            if dirty:
-                _save_cache(cache_path, cache)
-                dirty = False
+            student.save()
         finished = True
-        return embedded
+        return student.embedded
     finally:
-        if finished:  # làm trọn cuốn: bỏ nhúng của đoạn / gói không còn dùng
-            if dirty or any(key not in used for key in cache):
-                _save_cache(cache_path, {key: vector for key, vector in cache.items() if key in used})
-        elif dirty:  # dừng giữa chương / lỗi: phần đã nhúng vẫn ghi
-            _save_cache(cache_path, cache)
-        if embedder is not None:
-            embedder.close()
+        student.save(prune=finished)  # làm trọn cuốn: bỏ nhúng của đoạn / gói không còn dùng; dừng giữa chương / lỗi: phần đã nhúng vẫn ghi
+        student.close()
 
 
 def run_in_studio(project_root: Path, python: Path | str, code_root: Path | str, environment: dict[str, str], log: Callable[[str], None],

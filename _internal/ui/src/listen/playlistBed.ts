@@ -14,6 +14,10 @@ import { RETRY_MS, type MusicBed, type MusicCredit, type MusicCue } from "./musi
 export const MINE_PLAYLIST = "mine";
 /** `music.playlist` = "off": người nghe tắt nhạc nền (khác với không có khoá = để máy chọn). */
 export const OFF_PLAYLIST = "off";
+/** `music.playlist` = "scene": nhạc đổi theo cảnh, máy tự dựng từ chữ (music_nnscene.py, sceneCues.ts). Máy tính; là mặc định khi chưa chọn gì. Điện thoại chưa có
+ *  (máy tính không báo `scene` trong menu của nó thì dòng này không hiện), gặp mã lạ thì coi như để máy chọn. */
+export const SCENE_PLAYLIST = "scene";
+export const SCENE_LABEL = "Theo cảnh (máy tự dựng)";
 /** Bài không biết độ dài: khoảng mặc định trên đồng hồ (bài ngắn hơn thì lặp liền như mọi bài nhạc nền). */
 export const FALLBACK_SECONDS = 180;
 /** Bằng thời gian chuyển mờ của MusicBed: bài sau vào lúc bài trước bắt đầu mờ, bài trước tắt hẳn đúng lúc nó hết. */
@@ -70,6 +74,8 @@ export interface PlaylistMenu {
   /** Số bài trong "Nhạc của tôi" của máy này. */
   mine: number;
   error: string;
+  /** Máy này dựng được nhạc theo cảnh (máy tính). `student`: server dùng học sinh q06 trong tiến trình (chỉ để chẩn đoán, không hiện cho người nghe). Vắng = máy không có (điện thoại). */
+  scene?: { student: boolean };
 }
 
 /** Mỗi bài một mốc trên đồng hồ nhạc: dài (độ dài - OVERLAP_SECONDS), ít nhất 1 giây. Khoá theo thứ tự, nên một bài có mặt hai lần
@@ -363,6 +369,7 @@ export function chosenId(view: PlaylistView | undefined): string | null {
 
 /** Tên danh sách `code` trong menu; menu chưa tải thì "" (không nói mã trần cho người nghe). */
 function nameOf(menu: PlaylistMenu | undefined, code: string): string {
+  if (code === SCENE_PLAYLIST) return "Theo cảnh";
   return menu?.playlists.find((item) => item.id === code)?.name ?? "";
 }
 
@@ -403,6 +410,16 @@ export function playlistOptions(menu: PlaylistMenu | undefined, canImport = fals
   return [
     { id: null, label: AUTO_LABEL, hint: view?.autoOff ? "đang tắt trong Cài đặt" : autoPlaylistName(view, menu) },
     { id: OFF_PLAYLIST, label: OFF_LABEL, hint: "" },
+    ...(menu?.scene
+      ? [
+          {
+            id: SCENE_PLAYLIST,
+            label: SCENE_LABEL,
+            hint: "",
+            description: "Nhạc đổi theo từng cảnh của truyện.",
+          },
+        ]
+      : []),
     ...(menu?.playlists ?? []).map((item) => ({ id: item.id, label: item.name, hint: hours(item.minutes), description: item.description || undefined })),
     {
       id: MINE_PLAYLIST,

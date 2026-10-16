@@ -35,6 +35,7 @@ class PlaylistsTest {
         .apply { if (withPicker) put("playlistPicker", picker) }
         .put("playlists", JSONArray()
             .put(JSONObject().put("id", "off").put("name", "tắt không phải mã danh sách").put("tracks", JSONArray(calm)))
+            .put(JSONObject().put("id", "scene").put("name", "theo cảnh không phải mã danh sách").put("tracks", JSONArray(calm)))
             .put(JSONObject().put("id", "calm").put("name", "Êm  đềm").put("description", "Cho truyện chậm.").put("minutes", 10).put("tracks", JSONArray(calm)))
             .put(JSONObject().put("id", "battle").put("name", "Hành động").put("description", "").put("minutes", 3).put("tracks", JSONArray(listOf("https://x/battle.mp3"))))
             .put(JSONObject().put("id", "Bad Id").put("name", "x").put("tracks", JSONArray(calm)))
@@ -283,6 +284,11 @@ class PlaylistsTest {
         assertTrue(!BookEdits.load(Store.bookDir(id)).has("music"))
         val (_, chosen) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "battle"))
         assertTrue(!(chosen as JSONObject).has("playlistAuto"))
+        // "scene" là lựa chọn "Theo cảnh" của máy tính (đi theo sách qua lớp sửa): điện thoại chưa có nhạc theo cảnh nên coi như chưa chọn gì - máy tự chọn danh sách
+        val (_, scene) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "scene"))
+        scene as JSONObject
+        assertEquals("calm", scene.getString("playlist"))
+        assertTrue(scene.getBoolean("playlistAuto"))
     }
 
     @Test

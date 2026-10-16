@@ -30,6 +30,20 @@ export interface MusicCue {
    *  `audibleStart`. Thiếu (sách đóng gói cũ, bài chưa đo) thì 0 và độ dài thật. */
   audibleStart?: number;
   audibleEnd?: number;
+  /** Nhạc theo cảnh của sách chỉ có chữ (music_nnscene.py, sceneCues.ts): mốc MỞ một cảnh mang mã đoạn của màn đọc nơi cảnh bắt đầu - bài đổi đúng lúc
+   *  đoạn ấy bắt đầu phát; giây `start` / `end` của máy chủ chỉ là giây ước, trình phát đặt lại theo đồng hồ đọc. */
+  firstSegment?: number;
+}
+
+/** Lời đáp của máy chủ cho mốc nhạc một chương (GET /api/books/<id>/music/chapters/<n>). Nhạc theo cảnh (`scene`): `estSeconds` là độ dài chương theo giây ƯỚC của
+ *  mốc; `pending` = chương chưa dựng xong (chưa có mốc, hỏi lại sau - giọng không chờ nhạc). */
+export interface MusicCues {
+  cues: MusicCue[];
+  levelDb: number;
+  credits?: Record<string, MusicCredit>;
+  scene?: boolean;
+  estSeconds?: number;
+  pending?: boolean;
 }
 
 export interface MusicStep {

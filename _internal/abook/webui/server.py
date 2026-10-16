@@ -40,7 +40,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
-               listen_export, music_bounds, music_catalog, music_export, music_local, music_module, music_moods, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
+               listen_export, music_bounds, music_catalog, music_export, music_local, music_module, music_moods, music_nnscene, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
@@ -318,8 +318,11 @@ class App:
         music_valence.kick()
         self._music_catalog: music_catalog.MusicCatalog | None = None
         self._music_lock = threading.Lock()
-        # Danh sách phát máy tự chọn cho sách chỉ có chữ, đệm theo (mã sách, nguồn luật, version của luật) - music_playlist.pick.
-        self._playlist_auto: dict[tuple[str, str, int], str | None] = {}
+        # Plan nhạc theo cảnh của sách chỉ có chữ (music_nnscene.py), đệm theo cuốn: {mã sách: (khoá, SceneBook)}.
+        self._scene_books: dict[str, tuple[tuple[str, str, str], music_nnscene.SceneBook]] = {}
+        self._scene_student_lock = threading.RLock()
+        self._scene_student: tuple[str, music_scene_student.ChapterStudent] | None = None  # học sinh đang giữ model trong RAM, nhả khi hàng dựng cạn
+        self._scene_builder = music_nnscene.Builder(on_idle=self._close_scene_student)
         # "Tính lại cảm xúc nhạc" (music_moods.py): việc nền theo từng cuốn {đường dẫn: {running, error}}.
         self._moods_jobs: dict[str, dict[str, Any]] = {}
         self._moods_lock = threading.Lock()
@@ -1904,6 +1907,8 @@ class App:
             music = packages.edited_manifest(path).get("music")  # đã qua lớp sửa: tắt, mức mới, đoạn im lặng
             cues, level, by_link = music_plan.packaged_playable(music, chapter_id)
             cues = [dict(cue, src=f"/api/books/{quote(value, safe='')}/music/files/{cue['track'].split('/')[1]}") for cue in cues]
+            if not cues and self._scene_mode(value, path):
+                return self._scene_cues(value, path, chapter_id)
             return {"cues": cues, "levelDb": level, "credits": self._music_credits(cues, by_link)}
         plan = music_plan.read_plan(path)
         if plan is None:
@@ -1924,26 +1929,26 @@ class App:
             playlists = music_playlist.summaries(self.music_catalog().playlists())
         except music_catalog.CatalogError as exc:
             playlists, error = [], str(exc)
-        return {"playlists": playlists, "mine": len(self.my_music.entries()), "error": error}
+        return {"playlists": playlists, "mine": len(self.my_music.entries()), "error": error, "scene": {"student": music_scene_student.available()}}
 
     def music_playlist_queue(self, value: str) -> dict[str, Any]:
-        """Hàng bài của danh sách phát cho cuốn này: người nghe đã chọn (`music.playlist` của lớp sửa) hay, khi chưa chọn gì, máy
-        tự chọn (`playlistAuto` true - `_auto_playlist`): [{link, src, duration, gainDb}] theo thứ tự phát, kèm ghi công. Cuốn có
-        nhạc của người làm sách (nhạc theo cảnh thắng), đã tắt ("off"), máy không chọn được, hay danh mục không còn danh sách ấy:
-        không bài nào. Bài máy này không dùng được (offline chưa có trong bộ đệm, nguồn hỏng) bị bỏ."""
+        """Hàng bài của danh sách phát người nghe đã chọn (`music.playlist` của lớp sửa): [{link, src, duration, gainDb}] theo thứ tự phát,
+        kèm ghi công. Chưa chọn gì thì máy theo cảnh (`playlist` "scene", `playlistAuto` true, không bài: mốc nằm ở `music_cues`). Cuốn có
+        nhạc của người làm sách (nhạc theo cảnh thắng), đã tắt ("off") hay danh mục không còn danh sách ấy: không bài nào. Bài máy này
+        không dùng được (offline chưa có trong bộ đệm, nguồn hỏng) bị bỏ."""
         path = self._listenable(value)
         result: dict[str, Any] = {"playlist": None, "tracks": [], "levelDb": music_plan.DEFAULT_LEVEL_DB, "credits": {}, "error": ""}
         if not packages.is_package(path) or packages.manifest(path).get("music"):
             return result
         changes = book_edits.load(path).get("music") or {}
         choice = changes.get("playlist")
-        auto = not choice
-        if auto:  # chưa chọn gì: máy chọn danh sách hợp với cuốn (không chọn được thì không nhạc)
-            choice = self._auto_playlist(value, path)
-        if not choice or choice == music_playlist.OFF:
+        if self._scene_mode(value, path):  # nhạc theo cảnh: không có hàng bài, trình phát lấy mốc từng chương (`music_cues`)
+            return {**result, "playlist": music_playlist.SCENE, "levelDb": float(changes.get("levelDb", music_plan.DEFAULT_LEVEL_DB)),
+                    **({"playlistAuto": True} if not choice else {})}
+        if not choice or choice == music_playlist.OFF:  # chưa chọn gì mà không theo cảnh = "Tự chọn nhạc nền" đã tắt: không nhạc
             return result
         level = float(changes.get("levelDb", music_plan.DEFAULT_LEVEL_DB))
-        result.update(playlist=choice, levelDb=level, **({"playlistAuto": True} if auto else {}))
+        result.update(playlist=choice, levelDb=level)
         if choice == music_playlist.MINE:
             info = {entry["link"]: entry for entry in reversed(self.my_music.entries())}  # cũ trước: bài mới nhập nối vào cuối
             links = list(info)
@@ -1966,45 +1971,127 @@ class App:
         """Màn "Nhạc nền" của sách đóng gói + danh sách máy chọn: sách chưa có lựa chọn nào (`playlist` không có khoá) và không có nhạc của
         người làm sách thì `playlist` là mã máy chọn, kèm `playlistAuto` true. Đã chọn (kể cả "off") thì giữ nguyên."""
         if "playlist" not in view and not packages.manifest(path).get("music"):
-            auto = self._auto_playlist(value, path)
-            if auto is not None:
-                view.update(playlist=auto, playlistAuto=True)
+            if self._scene_mode(value, path):
+                view.update(playlist=music_playlist.SCENE, playlistAuto=True)
             elif not self.preferences.get().get("autoMusic", True) and packages.text_book(packages.manifest(path)):
                 view["autoOff"] = True  # cuốn chưa chọn nhạc và người dùng đã tắt "máy tự chọn" trong Cài đặt: nút nói đúng là chưa có nhạc
         return view
 
-    def _auto_playlist(self, value: str, path: Path) -> str | None:
-        """Danh sách phát máy chọn cho sách CHỈ CÓ CHỮ chưa được người nghe chọn gì (`music.playlist` không có khoá): luật của mục lục
-        danh mục nếu hợp lệ, không thì bản đóng kèm (chưa tải được danh mục cũng chọn được); đầu vào là tên sách + chữ các chương.
-        Đệm theo (mã sách, nguồn luật, version luật). Không chọn được (không phải sách chữ, luật hỏng) thì None."""
+    def _scene_mode(self, value: str, path: Path) -> bool:
+        """Sách CHỈ CÓ CHỮ không mang nhạc của người làm sách đang theo "Theo cảnh (máy tự dựng)" (music_nnscene.py): người nghe đã chọn nó
+        (`music.playlist` = "scene"), hay chưa chọn gì ("Để máy chọn") và "Tự chọn nhạc nền" trong Cài đặt còn bật - đó là mặc định.
+        Đã chọn danh sách khác, "Nhạc của tôi" hay tắt thì không (luật cũ giữ nguyên)."""
+        if not packages.is_package(path):
+            return False
         book = packages.manifest(path)
-        if not packages.text_book(book) or not self.preferences.get().get("autoMusic", True):
-            return None
+        if book.get("music") or not packages.text_book(book):
+            return False
+        choice = (book_edits.load(path).get("music") or {}).get("playlist")
+        if choice:
+            return choice == music_playlist.SCENE
+        return bool(self.preferences.get().get("autoMusic", True))
+
+    def _scene_book(self, value: str, path: Path, manifest: dict[str, Any]) -> music_nnscene.SceneBook:
+        """Plan nhạc theo cảnh của cuốn: thư mục đệm theo mã sách, khoá = bản chữ của sách + bản danh mục nhạc + học sinh nào dựng (gói q06 hay
+        "none"): cài gói sau thì các chương chưa nghe dựng lại có học sinh."""
+        tag = music_nnscene.student_tag(music_scene_student.package_sha() if music_scene_student.available() else None)
+        key = (str(packages.manifest(path).get("version") or ""), str(manifest.get("revision") or ""), tag)
+        cached = self._scene_books.get(value)
+        if cached is None or cached[0] != key:
+            book = music_nnscene.SceneBook(self.music_dir / "scene" / music_nnscene.scene_dir_name(value),
+                                           {"book": key[0], "catalog": key[1], "student": key[2]})
+            cached = self._scene_books[value] = (key, book)
+        return cached[1]
+
+    def _scene_student_for(self, value: str, book: music_nnscene.SceneBook) -> music_scene_student.ChapterStudent:
+        """Học sinh đang giữ model cho cuốn `value` (gọi trong `_scene_student_lock`): nhúng ở `BUILD_THREADS` luồng CPU, đệm nhúng cạnh plan của cuốn."""
+        if self._scene_student is None or self._scene_student[0] != value:
+            self._close_scene_student()
+            directory = music_scene_student.package_dir()
+            self._scene_student = (value, music_scene_student.ChapterStudent(
+                directory, book.root / "embeddings.npz", log=lambda _line: None, threads=music_nnscene.BUILD_THREADS))
+        return self._scene_student[1]
+
+    def _close_scene_student(self) -> None:
+        """Hàng dựng nền cạn (hay đổi cuốn): ghi đệm nhúng, trả RAM của model."""
+        with self._scene_student_lock:
+            if self._scene_student is not None:
+                self._scene_student[1].save()
+                self._scene_student[1].close()
+                self._scene_student = None
+
+    def _scene_job(self, value: str, path: Path, chapter_id: int, order: list[int], chapters: dict[int, dict[str, Any]],
+                   scene_book: music_nnscene.SceneBook, manifest: dict[str, Any]) -> Callable[[Callable[[], bool]], None]:
+        """Việc dựng plan của MỘT chương cho `music_nnscene.Builder` (có học sinh q06 khi máy có gói + torch, không thì đường N0)."""
+        use_student = music_scene_student.available()  # học sinh q06 chỉ chạy khi tiến trình này có torch + gói (runtime dev); app đã cài thường không có nên dựng N0; NN-V (sàn confidence, music_nnscene.chapter_scenes) cần học sinh nên app đã cài chưa chạy được - Lead sẽ đặc tả đường tiến trình con của Studio
+
+        def sha_of(cid: int) -> str:
+            return music_nnscene.text_sha(packages.chapter_text(path, cid) or "", chapters[cid].get("skip"))
+
+        def student(stop: Callable[[], bool]) -> music_nnscene.StudentItems:
+            def items(script: dict[str, Any], base: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
+                with self._scene_student_lock:
+                    worker = self._scene_student_for(value, scene_book)
+                    try:
+                        result = worker.chapter(script, base, stop_requested=stop)
+                    except Exception:  # noqa: BLE001 - học sinh hỏng (torch, gói): chương này dựng không có học sinh (đường N0), không mất nhạc
+                        return None
+                    if worker.stopped:
+                        worker.stopped = False
+                        raise music_nnscene.Cancelled()
+                    worker.save()
+                    return result
+            return items
+
+        def job(stop: Callable[[], bool]) -> None:
+            text = packages.chapter_text(path, chapter_id)
+            if text is None:
+                return
+            music_nnscene.build_chapter(
+                scene_book, order, chapter_id, str(chapters[chapter_id].get("title") or ""), text, chapters[chapter_id].get("skip"),
+                sha_of=sha_of, near=self._music_candidates, lookup=lambda links: self._music_lookup(links),
+                catalog_revision=str(manifest.get("revision") or ""), taxonomy=manifest.get("taxonomy"), book_key=value,
+                available=self.music_track_available, student=student(stop) if use_student else None)
+
+        return job
+
+    def _scene_cues(self, value: str, path: Path, chapter_id: int) -> dict[str, Any]:
+        """Mốc nhạc theo cảnh của một chương chữ. Plan dựng NỀN (`music_nnscene.Builder`): chương đang nghe trước, rồi vài chương kế. Chương chưa
+        dựng xong thì `pending` true và chưa có mốc (giọng không chờ nhạc - trình phát hỏi lại). Danh mục chưa tải được / chương không có chữ: không nhạc."""
+        empty: dict[str, Any] = {"cues": [], "levelDb": music_plan.DEFAULT_LEVEL_DB, "credits": {}}
+        book = packages.edited_manifest(path)
+        chapters = {chapter["id"]: chapter for chapter in book.get("chapters") or [] if isinstance(chapter, dict) and isinstance(chapter.get("id"), int)}
+        if chapter_id not in chapters:
+            return empty
+        order = list(chapters)
         try:
             manifest = self.music_catalog().manifest()
         except music_catalog.CatalogError:
-            manifest = None
-        picker, source = music_playlist.usable_picker(manifest)
-        if picker is None:
-            return None
-        key = (value, source, picker["version"])
-        if key in self._playlist_auto:
-            return self._playlist_auto[key]
-        unread = False
+            return empty
+        scene_book = self._scene_book(value, path, manifest)
 
-        def chapters() -> Iterable[str]:
-            nonlocal unread
-            for chapter in book.get("chapters") or []:
-                text = packages.chapter_text(path, chapter["id"]) if isinstance(chapter, dict) and isinstance(chapter.get("id"), int) else None
-                if text is None:
-                    unread = True  # chữ chưa có ở máy này (sách của máy khác chưa tải): lần sau thử lại, đừng đệm
-                else:
-                    yield text
+        def ready(cid: int) -> dict[str, Any] | None:
+            text = packages.chapter_text(path, cid)
+            return None if text is None else scene_book.read(cid, music_nnscene.text_sha(text, chapters[cid].get("skip")))
 
-        code = music_playlist.pick(picker, str(book.get("title") or ""), chapters())
-        if not unread:
-            self._playlist_auto[key] = code
-        return code
+        self._scene_builder.cancel_others(value)  # đang nghe cuốn này: việc nền của cuốn khác không còn ai chờ
+        record, waiting = ready(chapter_id), None
+        for distance, cid in enumerate(order[order.index(chapter_id):][:music_nnscene.AHEAD_CHAPTERS + 1]):
+            if (record if distance == 0 else ready(cid)) is not None:
+                continue
+            task = self._scene_builder.submit(value, cid, distance, self._scene_job(value, path, cid, order, chapters, scene_book, manifest))
+            waiting = task if distance == 0 else waiting
+        if record is None and waiting is not None:
+            waiting.done.wait(music_nnscene.BUILD_WAIT_SECONDS)
+            record = ready(chapter_id)
+        if record is None:
+            return {**empty, "pending": waiting is not None and waiting.error is None, "scene": True}
+        tracks = dict(record.get("tracks") or {})
+        cues = [cue for cue in music_nnscene.chapter_cues(record) if self.music_track_available(cue["link"])]
+        cues = [dict(cue, src=self._music_src(value, cue["link"])) for cue in cues]
+        level = float((book_edits.load(path).get("music") or {}).get("levelDb", music_plan.DEFAULT_LEVEL_DB))
+        music_plan.apply_gain(cues, level, tracks, self.music_track_cached)
+        return {"cues": cues, "levelDb": level, "credits": self._music_credits(cues, tracks), "scene": True, "estSeconds": record["seconds"]}
 
     def _music_src(self, value: str, link: str) -> str:
         """Đường lấy file bài qua máy này. Bài danh mục: `/api/music/track?link=` (máy chủ chỉ tải bài CÓ trong danh mục); bài

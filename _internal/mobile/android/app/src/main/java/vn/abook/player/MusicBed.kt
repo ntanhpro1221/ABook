@@ -266,7 +266,7 @@ object MusicBed {
     private fun openPlaylist(appContext: Context, bookId: String) {
         val dir = Store.bookDir(bookId)
         val changes = BookEdits.load(dir).optJSONObject("music") ?: JSONObject()
-        val stored = changes.optString("playlist")
+        val stored = changes.optString("playlist").takeIf { it != Playlists.SCENE }.orEmpty() // "scene" là của máy tính: ở đây như chưa chọn gì
         if (stored == Playlists.OFF) return
         val levelDb = changes.optDouble("levelDb", -20.0).takeIf { it.isFinite() } ?: -20.0
         if (stored.isNotEmpty()) {

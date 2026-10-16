@@ -25,6 +25,7 @@ from typing import Any, Callable, Iterable
 
 MINE = "mine"
 OFF = "off"  # khớp _ID nhưng không phải mã danh sách: `music.playlist` = "off" là tắt
+SCENE = "scene"  # cũng không phải mã danh sách: "Theo cảnh (máy tự dựng)" - nhạc dựng theo cảnh của chữ (music_nnscene.py), không phải hàng bài
 _ID = re.compile(r"[a-z0-9_]{1,40}")
 TEXT_MAX = 200
 BUNDLED_PICKER = Path(__file__).resolve().parent / "assets" / "playlist_picker.json"  # bản chép nguyên của genre_lexicon.json
@@ -48,7 +49,7 @@ def catalogue_playlists(manifest: dict[str, Any]) -> list[dict[str, Any]]:
         if not isinstance(item, dict):
             continue
         playlist_id = item.get("id")
-        if not isinstance(playlist_id, str) or not _ID.fullmatch(playlist_id) or playlist_id in (MINE, OFF) or playlist_id in seen:
+        if not isinstance(playlist_id, str) or not _ID.fullmatch(playlist_id) or playlist_id in (MINE, OFF, SCENE) or playlist_id in seen:
             continue
         links = [link for link in item.get("tracks") or [] if isinstance(link, str) and link.startswith("https://")]
         if not links:

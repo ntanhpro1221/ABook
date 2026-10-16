@@ -61,7 +61,7 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     # "Đo cảm xúc nhạc chính xác hơn" (music_valence.py): tháp MuQ 1,27 GB chỉ tải khi người dùng bật; mặc định tắt. Đổi qua /api/music/local/precise.
     "preciseMusicMood": False,
     # Nhạc nền MÁY TỰ CHỌN cho sách chỉ có chữ chưa được chọn nhạc (Cài đặt > Nhạc nền; mặc định bật): tắt thì sách chưa chọn gì không có nhạc, cuốn
-    # nào người nghe đã chọn nhạc (menu "Nhạc nền" của sách) vẫn phát. Đọc ở server._auto_playlist.
+    # nào người nghe đã chọn nhạc (menu "Nhạc nền" của sách) vẫn phát. Đọc ở server._scene_mode.
     "autoMusic": True,
     # Phím tắt MỘT CHỮ CÁI của máy tính (B, M, [ ], ?, J/K/1-9 ở Việc cần duyệt, O/R ở Cần nghe lại; Cài đặt > Phím tắt; mặc định bật):
     # tắt cho người dùng phần mềm nhập bằng giọng nói / phím dính (WCAG 2.1.4). Space, mũi tên, Esc và phím có Ctrl/Alt vẫn chạy.

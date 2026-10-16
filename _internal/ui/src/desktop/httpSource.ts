@@ -1,4 +1,4 @@
-import type { MusicCredit, MusicCue } from "@/listen/musicBed";
+import type { MusicCues } from "@/listen/musicBed";
 import type { PlaylistQueue } from "@/listen/playlistBed";
 import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
 import type { ListenSource, SearchText } from "@/listen/source";
@@ -182,7 +182,7 @@ export const httpSource: ListenSource = {
   readAloudPrepareOnline: true,
   readAloudPrepareCancel: () => api<PrepareStatus>("/api/readaloud/prepare", { method: "DELETE" }),
   musicCues: async (bookId, chapterId) => {
-    const result = await api<{ cues: MusicCue[]; levelDb: number; credits?: Record<string, MusicCredit> }>(`/api/books/${bookId}/music/chapters/${chapterId}`);
+    const result = await api<MusicCues>(`/api/books/${bookId}/music/chapters/${chapterId}`);
     return { ...result, cues: result.cues.map((cue) => ({ ...cue, src: mediaUrl(cue.src) })) };
   },
   musicPlaylist: async (bookId) => {
