@@ -32,9 +32,14 @@ sys.path.insert(0, str(ROOT))
 from abook import text_processing  # noqa: E402
 from abook.readaloud import paragraphs as reading_paragraphs  # noqa: E402
 from abook.webui import humanize, music_catalog, music_mix, music_plan, music_scenes, music_select  # noqa: E402
+from abook.webui.server import MUSIC_TRACK_MAX_BYTES  # noqa: E402
 
 OUT = ROOT / "tests" / "fixtures" / "music" / "n0"
 TARGET = (0.15, -0.55)
+# Cỡ (byte) theo MẢNH `tracks/` của danh mục - ô `cells/` không có `bytes`. Bài trùng toạ độ với bài tốt nhất của ô giữa, nên nếu không lọc cỡ thì chúng thắng:
+# nhờ vậy bộ ví dụ thật sự kiểm "bài quá MUSIC_TRACK_MAX_MB không bao giờ được chọn" (server._music_oversize, Kotlin MusicCatalog.usable).
+TRACK_BYTES = {"https://example.invalid/n0/big1.mp3": MUSIC_TRACK_MAX_BYTES + 1, "https://example.invalid/n0/big2.mp3": MUSIC_TRACK_MAX_BYTES * 3,
+               "https://example.invalid/n0/edge.mp3": MUSIC_TRACK_MAX_BYTES, "https://example.invalid/n0/small.mp3": 5_000_000}
 TAXONOMY = {"genres": {"gen_a": {"styles": {"style_a": 1.0, "style_b": 0.5}}, "gen_b": {"styles": {"style_c": 1.0}}}}
 
 
@@ -82,6 +87,9 @@ def make_catalog() -> dict[str, list[dict[str, Any]]]:
     centre.append(entry(0.16, -0.54, -0.1, duration=119.6))
     # Một bài nằm ở HAI ô (link trùng: `seen` giữ lần gặp đầu).
     cells["3_2"].append(dict(centre[-1]))
+    # Bài quá cỡ (và bài đúng bằng trần - còn dùng được) ngay tại đích, cùng tension với bài tốt nhất.
+    for link in TRACK_BYTES:
+        centre.append(entry(0.15, -0.55, 0.0, duration=1800, link=link))
     # Họ nhạc: vài bài sát đích mang họ "piano" và "eastern" (cho lựa chọn family).
     for family, tension in (("piano", -0.1), ("eastern", -0.05)):
         cells["1_1"].append(entry(0.1, -0.5, tension, duration=240, family=family))
@@ -122,7 +130,7 @@ def catalog_file(cells: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
             "familyPenalty": music_select.FAMILY_PENALTY, "foregroundPenalty": music_select.FOREGROUND_PENALTY,
             "recentPenalty": music_select.RECENT_PENALTY,
         },
-        "samples": samples,
+        "samples": samples, "trackBytes": TRACK_BYTES, "maxBytes": MUSIC_TRACK_MAX_BYTES,
         "mix": {"tailMinSeconds": music_select.TAIL_MIN_SECONDS, "cueMergeGapSeconds": music_select.CUE_MERGE_GAP_SECONDS,
                 "loopCrossfadeSeconds": music_mix.LOOP_CROSSFADE_SECONDS},
     }
@@ -213,7 +221,8 @@ def seg(sid: int, text: str, kind: str = "narration", scene_break: bool = False)
 # ---- chạy đường N0 trên Python ---------------------------------------------------------------------------------------------------------
 def n0_plan(scripts: list[dict[str, Any]], cells: dict[str, list[dict[str, Any]]], *, book_key: str, family: str | None = None,
             genre: str | None = None, pins: dict[str, str] | None = None, banned: list[str] | None = None,
-            silenced: list[str] | None = None, unavailable: list[str] | None = None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+            silenced: list[str] | None = None, unavailable: list[str] | None = None,
+            size_cap: bool = True) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     scenes = music_scenes.book_scenes(scripts, None, None, None)
     for scene in scenes:  # đường N0 = mọi số cảm xúc là hằng; Kotlin viết tắt bằng hằng nên mất hằng thì fixture phải báo
         assert (scene["valence"], scene["arousal"], scene["tension"], scene["confidence"], scene["sd"]) == (
@@ -222,9 +231,13 @@ def n0_plan(scripts: list[dict[str, Any]], cells: dict[str, list[dict[str, Any]]
     catalog = near_of(cells)
     styles = (TAXONOMY["genres"].get(genre) or {}).get("styles") if genre else None
     blocked = set(unavailable or [])
+
+    def available(link: str) -> bool:  # như server.music_track_available: bài đã chặn hay quá cỡ theo mảnh `tracks/` thì không
+        return link not in blocked and not (size_cap and music_catalog.over_size_cap({"bytes": TRACK_BYTES.get(link)}, MUSIC_TRACK_MAX_BYTES))
+
     chosen = music_select.choose(scenes, lambda v, a: catalog.near(v, a, radius=1), book_key=book_key, family=family, pins=pins,
                                  banned=banned or (), genre_styles=styles, silenced=silenced or (),
-                                 available=(lambda link: link not in blocked) if blocked else None)
+                                 available=available)
     return scenes, chosen
 
 
@@ -296,6 +309,9 @@ def build_cases(cells: dict[str, list[dict[str, Any]]]) -> tuple[dict[str, dict[
         chapters.append({"chapterId": chapter_id, "title": script["title"], "text": texts[chapter_id], "segments": script["segments"],
                          "paragraphIds": paragraph_ids([segment["text"] for segment in script["segments"]], texts[chapter_id])})
 
+    # Không lọc cỡ thì bài quá cỡ thắng ít nhất một đoạn (ví dụ có tác dụng); lọc rồi thì không đoạn nào dùng bài quá cỡ.
+    unfiltered = n0_plan([{"chapterId": ch["chapterId"], "segments": ch["segments"]} for ch in chapters], cells, book_key="book-alpha", size_cap=False)[1]
+    assert any(TRACK_BYTES.get(scene["link"], 0) > MUSIC_TRACK_MAX_BYTES for scene in unfiltered), "bài quá cỡ không bao giờ thắng: ví dụ vô nghĩa"
     cases = {"alpha": case_file("alpha", "chapters_main.json", chapters, cells, book_key="book-alpha"),
              "beta": case_file("beta", "chapters_main.json", chapters, cells, book_key="book-beta")}
     base = cases["alpha"]["expected"]["scenes"]

@@ -12,7 +12,7 @@ import pytest
 from abook.readaloud import paragraphs
 from abook.webui import book_edits, music_nnscene, music_plan, music_scenes, music_select
 from abook.webui.music_catalog import MusicCatalog
-from abook.webui.server import Server
+from abook.webui.server import App, Server
 from tests.catalog_signing import TEST_PUBLIC_KEY
 from tests.test_music_catalog_and_select import _catalog_dir
 from tests.test_music_playlist import _call, _text_book_server
@@ -397,5 +397,70 @@ def test_a_book_with_its_makers_music_never_gets_scene_cues(tmp_path: Path) -> N
         _status, reply = _call(server, "GET", f"/api/books/{book}/music/chapters/1")
         assert reply["cues"] == [] and "pending" not in reply and "scene" not in reply
         assert _call(server, "GET", f"/api/books/{book}/music/playlist")[1]["playlist"] is None
+    finally:
+        server.stop()
+
+
+# ---- bài quá cỡ (soát a44): ô danh mục không có `bytes`, chỉ mảnh `tracks/` có ---------------------------------------------------------
+
+
+def _real_availability(app: App) -> None:
+    del app.music_track_available  # bỏ lambda của `_scene_server`: dùng hàm thật (cỡ theo danh mục, sổ bài quá cỡ)
+
+
+def test_scene_music_never_picks_a_track_the_catalog_says_is_over_the_size_cap(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui.server import MUSIC_TRACK_MAX_BYTES
+
+    app, book, server = _scene_server(tmp_path / "plain")
+    try:
+        wanted = {cue["link"] for cue in _cues_when_ready(server, book)["cues"]}  # những bài máy chọn khi chưa có trần
+    finally:
+        server.stop()
+    assert wanted
+    app, book, server = _scene_server(tmp_path / "capped")
+    _real_availability(app)
+    try:
+        catalog = app.music_catalog()
+        real_lookup = catalog.lookup
+        monkeypatch.setattr(catalog, "lookup", lambda links: {link: dict(info, bytes=MUSIC_TRACK_MAX_BYTES + (1 if link in wanted else 0))
+                                                              for link, info in real_lookup(links).items()})
+        links = {cue["link"] for cue in _cues_when_ready(server, book)["cues"]}
+        assert links and not links & wanted, "bài quá cỡ lọt vào rãnh nhạc theo cảnh"
+    finally:
+        server.stop()
+
+
+def test_a_saved_chapter_whose_track_turned_out_too_big_is_rebuilt_with_another_track(tmp_path: Path) -> None:
+    from abook.webui.server import MUSIC_TRACK_MAX_BYTES
+
+    app, book, server = _scene_server(tmp_path)
+    _real_availability(app)
+    try:
+        before = _cues_when_ready(server, book)
+        heads = [cue["key"] for cue in before["cues"] if not cue.get("sibling")]
+        big = before["cues"][0]["link"]
+        app._music_mark_too_big(big, MUSIC_TRACK_MAX_BYTES + 1)  # tải thật báo 413: từ giờ máy này không dùng bài ấy
+        assert app.music_track_available(big) is False
+        after = _cues_when_ready(server, book)
+        assert big not in {cue["link"] for cue in after["cues"]}
+        assert [cue["key"] for cue in after["cues"] if not cue.get("sibling")] == heads, "cảnh nào cũng còn nhạc (không im lặng)"
+    finally:
+        server.stop()
+
+
+def test_a_catalog_that_cannot_be_read_says_why_there_is_no_scene_music(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui.music_catalog import CatalogError
+
+    app, book, server = _scene_server(tmp_path)
+    try:
+        def broken(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+            raise CatalogError("Chưa tải được danh mục nhạc nền - cần mạng ở lần đầu.")
+
+        monkeypatch.setattr(app.music_catalog(), "manifest", broken)
+        _status, reply = _call(server, "GET", f"/api/books/{book}/music/chapters/1")
+        assert reply["cues"] == [] and "pending" not in reply
+        assert reply["unavailable"] == "Chưa tải được danh mục nhạc nền - cần mạng ở lần đầu."
+        monkeypatch.undo()
+        assert "unavailable" not in _cues_when_ready(server, book), "có danh mục lại thì không còn lời báo"
     finally:
         server.stop()

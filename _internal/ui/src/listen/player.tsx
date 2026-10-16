@@ -7,7 +7,8 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
-import { MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit } from "./musicBed";
+import { tellSceneMusic } from "./musicHint";
+import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit } from "./musicBed";
 import { SceneCues, isSceneCues } from "./sceneCues";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
 import { canPlay, newerElsewhere, resumePoint, startingRate, type Bookmark, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
@@ -131,6 +132,8 @@ interface PlayerState {
   musicBroken: boolean;
   /** Lời báo "mất mạng" khi nhạc nền đang bị giữ lại vì mạng (điện thoại, MusicBed.kt): bài còn lại tải khi có mạng - hộp "Nhạc nền" nói ra; rỗng khi ổn. */
   musicOffline: string;
+  /** Máy đang xếp hàng bài của danh sách nhạc vừa chọn (150 bài mất vài giây): nút "Nhạc nền" quay vòng chờ tới khi nhạc sẵn sàng. */
+  musicLoading: boolean;
   canGoBack: boolean;
   error: string;
   /** Lời nhắn không phải lỗi, vẫn đang phát (giọng trực tuyến hỏng - tạm đọc bằng giọng của máy); tự ẩn. */
@@ -274,6 +277,7 @@ export function PlayerProvider({
   const [musicCredit, setMusicCredit] = useState<MusicCredit | null>(null);
   const [musicBroken, setMusicBroken] = useState(false);
   const [musicOffline, setMusicOffline] = useState("");
+  const [musicLoading, setMusicLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState("");
   /** Dừng việc chờ máy kia trả lời lại (peerBack.ts) - đổi chương, gạt lời báo, thử lại. */
@@ -374,6 +378,12 @@ export function PlayerProvider({
       serial: () => runsOnThisMachine(voicesRef.current ? resolveVoice(voicesRef.current, chosenVoice(bookId)) : undefined),
       bookId,
       fetchClip: speechFetcher(source, bookId, (message) => message !== ONLINE_NOTICE && showNotice(message)),
+      // Chương kế chỉ-có-chữ: chữ của nó để bộ máy xin trước tiêu đề + đoạn đầu khi chương này sắp hết (chữ lấy bằng đúng khoá kịch bản của lần nạp sau).
+      after: async () => {
+        const next = availableAfter(refs.current.queue, chapter.id, 1);
+        if (!next || next.state !== "text") return [];
+        return (await client.fetchQuery(chapterScriptQuery(source, bookId, next))).segments.map((segment) => segment.text);
+      },
       onScript: (script) => client.setQueryData(query.queryKey, script),
     };
   }, [client, showNotice, source]);
@@ -475,7 +485,8 @@ export function PlayerProvider({
   const bedBook = track?.bookId;
   useEffect(() => {
     const onChanged = (event: Event) => {
-      if ((event as CustomEvent<string>).detail === bedBook) setBedVersion((version) => version + 1);
+      const detail = (event as CustomEvent<string>).detail;
+      if (detail === bedBook || detail === MUSIC_CHANGED_ALL) setBedVersion((version) => version + 1);
     };
     window.addEventListener(MUSIC_CHANGED_EVENT, onChanged);
     return () => window.removeEventListener(MUSIC_CHANGED_EVENT, onChanged);
@@ -495,6 +506,7 @@ export function PlayerProvider({
           setMusicOffline(offline);
         }
         const credit = native.musicCredit;
+        if (credit && native.musicScene) tellSceneMusic();
         const key = JSON.stringify(credit);
         if (key === last) return;
         last = key;
@@ -515,6 +527,7 @@ export function PlayerProvider({
       return;
     }
     const off = bed.onActiveChange((link) => {
+      if (link && sceneHeard.current) tellSceneMusic();
       setMusicCredit(link ? bedCredits.current[link] ?? null : null);
       setMusicBroken(bed.failing);
     });
@@ -531,8 +544,15 @@ export function PlayerProvider({
   const [playlistBed, setPlaylistBed] = useState<PlaylistBedState | null>(null);
   const playlistAsked = useRef<{ key: string; queue: ReturnType<NonNullable<typeof source.musicPlaylist>> | null } | null>(null);
   const cuesChapter = useRef("");
+  /** Chương mà mốc đang nằm trong `bed` thuộc về: sang chương khác thì engine.load chạy trước lúc hiệu ứng bỏ mốc cũ, nhịp "time" đầu tiên không được mở bài đầu của chương CŨ. */
+  const bedCuesFor = useRef("");
+  /** Đã có nhạc theo cảnh cho cuốn này (nhắc người nghe một lần ở bài đầu tiên kêu, musicHint.ts). */
+  const sceneHeard = useRef(false);
   useEffect(() => {
-    if (!bed || !track || !source.musicCues) return;
+    if (!bed || !track || !source.musicCues) {
+      setMusicLoading(false);
+      return;
+    }
     let cancelled = false;
     const book = track.bookId;
     const asked = `${book}#${bedVersion}`;
@@ -543,6 +563,7 @@ export function PlayerProvider({
     // đầu hay chơi tiếp bài cuối của chương cũ trong lúc chờ (MIX_QA 3.3). Danh sách phát chạy theo đồng hồ của cuốn: không đụng.
     if (cuesChapter.current !== bedChapter) {
       cuesChapter.current = bedChapter;
+      bedCuesFor.current = bedChapter;
       scene?.reset();
       if (!playlistBed) bed.setCues([], undefined, 0);
     }
@@ -553,12 +574,18 @@ export function PlayerProvider({
         .then((result) => {
           if (cancelled) return;
           bedCredits.current = result.credits ?? {};
+          setMusicOffline(result.unavailable ?? ""); // danh mục chưa tải được: hộp "Nhạc nền" nói lý do (rỗng thì thôi)
           if (result.pending && attempt < SCENE_POLLS) {
             retry = setTimeout(() => void chapterCues(attempt + 1), SCENE_POLL_MS);
             return;
           }
-          if (scene && isSceneCues(result.cues)) scene.arrive(result.cues, result.estSeconds ?? 0, result.levelDb, engine.time);
-          else bed.setCues(result.cues, result.levelDb);
+          if (scene && isSceneCues(result.cues)) {
+            sceneHeard.current = true;
+            scene.arrive(result.cues, result.estSeconds ?? 0, result.levelDb, engine.time);
+          } else {
+            scene?.reset(); // nhạc theo cảnh vừa tắt ("Tự chọn nhạc nền"): mốc thô cũ không được đặt lại khi clip về
+            bed.setCues(result.cues, result.levelDb);
+          }
           setMusicBroken(bed.failing);
         })
         .catch(() => {
@@ -568,12 +595,15 @@ export function PlayerProvider({
         });
     const queue = playlistAsked.current.queue;
     if (!queue) {
+      setMusicLoading(false);
       setPlaylistBed(null);
       void chapterCues();
     } else {
+      setMusicLoading(true);
       void queue.then(
         (result) => {
           if (cancelled) return;
+          setMusicLoading(false);
           if (!result.playlist || !result.tracks.length) {
             setPlaylistBed(null);
             void chapterCues();
@@ -585,6 +615,7 @@ export function PlayerProvider({
         },
         () => {
           if (cancelled) return;
+          setMusicLoading(false);
           setPlaylistBed(null);
           void chapterCues();
         },
@@ -613,6 +644,8 @@ export function PlayerProvider({
     }
     let last = engine.time;
     const sync = () => {
+      const current = refs.current.track;
+      if (current && bedCuesFor.current !== `${current.bookId}:${current.chapterId}`) return; // mốc trong bed còn của chương cũ
       const now = engine.time;
       const seeked = Math.abs(now - last) > 3;
       if (seeked) scene?.seeked(now);
@@ -1573,11 +1606,11 @@ export function PlayerProvider({
 
   const value = useMemo<PlayerValue>(() => ({
     track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline,
+    canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline, musicLoading,
     play, prepare, toggle, resume, retry, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
     extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues,
   }), [track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline, play, prepare, toggle, resume, retry, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart,
+    canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues]);
 
   // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ

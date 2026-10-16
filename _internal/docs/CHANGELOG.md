@@ -7,6 +7,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Nhạc nền theo cảnh không còn bỏ trống cả một cảnh vì bài quá nặng: bài nhạc nặng hơn 40 MB không bao giờ được chọn nữa (máy tính và điện thoại), và cuốn đã nghe từ trước được chọn lại bài cho đúng.
+- Sang chương mới, giọng đọc không còn lặng 10-20 giây sau tiêu đề chương: máy đọc sẵn tiêu đề và đoạn đầu của chương kế khi bạn sắp nghe hết chương này (giọng trực tuyến, máy tính).
+- Chọn một danh sách nhạc dài, nút "Nhạc nền" quay vòng chờ cho tới khi nhạc sẵn sàng; rê chuột vào nút cho biết bài đang chọn và bấm để đổi.
+- Lần đầu nhạc nền tự kêu, máy nhắc một lần: nhạc đổi theo cảnh và bạn chọn nhạc khác ở nút "Nhạc nền".
+- Chưa tải được danh mục nhạc (lần đầu mở mà không có mạng), hộp "Nhạc nền" nói rõ lý do thay vì luôn ghi "lần đầu cần mạng"; có mạng thì dòng ấy biến mất.
+- Bật / tắt "Tự chọn nhạc nền" trong Cài đặt khi đang nghe có hiệu lực ngay trên máy tính, không phải đợi sang chương sau; sang chương mới cũng không còn nháy bài đầu của chương cũ.
+
 ## [0.4.73] - 2026-10-16
 
 ### Điện thoại
