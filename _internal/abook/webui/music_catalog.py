@@ -231,8 +231,16 @@ class MusicCatalog:
         """Bài trong ô của (valence, arousal) và các ô kề trong bán kính `radius`."""
         grid = int(self.manifest().get("grid") or 5)
         vi, ai = cell_of(valence, arousal, grid)
+        cells = [(v, a) for v in range(max(0, vi - radius), min(grid, vi + radius + 1)) for a in range(max(0, ai - radius), min(grid, ai + radius + 1))]
+        if len(cells) > 1:
+            def warm(cell: tuple[int, int]) -> None:
+                with contextlib.suppress(CatalogError):
+                    self.cell(*cell)  # lỗi mạng sẽ ném lại ở lượt đọc tuần tự bên dưới, đúng ô và đúng thứ tự
+
+            # Lần đầu 9 ô là 9 lượt tải nối nhau (~1 giây mỗi lượt trên CDN): tải song song, rồi đọc theo thứ tự cũ (thứ tự là thứ tự hoà của xếp hạng).
+            with concurrent.futures.ThreadPoolExecutor(max_workers=SHARD_WORKERS) as pool:
+                list(pool.map(warm, cells))
         items: list[dict[str, Any]] = []
-        for v in range(max(0, vi - radius), min(grid, vi + radius + 1)):
-            for a in range(max(0, ai - radius), min(grid, ai + radius + 1)):
-                items.extend(self.cell(v, a))
+        for cell in cells:
+            items.extend(self.cell(*cell))
         return items

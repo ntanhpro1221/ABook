@@ -281,8 +281,9 @@ object MusicBed {
     }
 
     private fun applyPlaying() {
+        // Chỉ bài đang kêu được chơi lại; bài đang mờ đi thì chỉ dừng cùng giọng (như `MusicBed.sync` của trình phát web).
         for (bed in listOfNotNull(current) + fading) {
-            if (playing && !bed.player.isPlaying) bed.player.play()
+            if (playing && !bed.player.isPlaying && bed === current) bed.player.play()
             if (!playing && bed.player.isPlaying) bed.player.pause()
         }
     }

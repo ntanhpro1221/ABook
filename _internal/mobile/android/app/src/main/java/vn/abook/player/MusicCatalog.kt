@@ -272,6 +272,17 @@ class MusicCatalog(
     /** `MusicCatalog.near`: bài trong ô của (valence, arousal) và các ô kề trong bán kính `radius`, theo thứ tự của Python ([SceneMusic.near]). */
     fun near(valence: Double, arousal: Double, radius: Int = 1): List<JSONObject> {
         val grid = manifest().optInt("grid", 5).takeIf { it != 0 } ?: 5
+        // Lần đầu 9 ô là 9 lượt tải nối nhau (~1 giây mỗi lượt): tải song song trước, rồi đọc theo thứ tự cũ (thứ tự là thứ tự hoà của xếp hạng, `SceneMusic.near`).
+        val wanted = ArrayList<Pair<Int, Int>>()
+        SceneMusic.near<JSONObject>(grid, valence, arousal, radius) { v, a -> wanted.add(v to a); emptyList() }
+        if (wanted.size > 1) {
+            val pool = Executors.newFixedThreadPool(SHARD_WORKERS)
+            try {
+                wanted.map { (v, a) -> pool.submit { runCatching { cell(v, a) } } }.forEach { runCatching { it.get() } } // lỗi mạng ném lại ở lượt đọc tuần tự bên dưới
+            } finally {
+                pool.shutdown()
+            }
+        }
         return SceneMusic.near(grid, valence, arousal, radius, ::cell)
     }
 
@@ -304,6 +315,36 @@ class MusicCatalog(
         val size = (info?.opt("bytes") as? Number)?.toLong()
         if (size != null && size > TRACK_MAX_BYTES) return false
         return synchronized(lock) { (tooBig[link] ?: 0L) <= TRACK_MAX_BYTES }
+    }
+
+    /** Bài đã tra cỡ trong danh mục ([verifySizes]) và không quá [TRACK_MAX_BYTES]: khỏi tra lại. */
+    private val sized = HashSet<String>()
+
+    /**
+     * Tra cỡ (`bytes` của mảnh `tracks/`; ô `cells/` không có) của các bài trong MỘT lượt (mảnh tải song song, [lookup]) và ghi sổ `too_big` bài nào quá [TRACK_MAX_MB]
+     * (`server.music_verify_sizes`). True khi VỪA phát hiện bài quá cỡ - người gọi chọn lại, [usable] từ đó loại nó. Bài đã tra / đã tải về khỏi tra lại; danh mục chưa đọc
+     * được hay bài không ghi cỡ: chưa biết, coi là vừa (Content-Length bù khi tải).
+     */
+    fun verifySizes(links: Collection<String>): Boolean {
+        val unknown = synchronized(lock) { links.filter { it !in sized && (tooBig[it] ?: 0L) <= TRACK_MAX_BYTES } }.distinct().sorted().filter { cached(it) == null }
+        if (unknown.isEmpty()) return false
+        val found = try {
+            lookup(unknown)
+        } catch (_: Exception) {
+            return false
+        }
+        var oversize = false
+        for (link in unknown) {
+            val info = found[link] ?: continue
+            val size = (info.opt("bytes") as? Number)?.toLong()
+            if (size != null && size > TRACK_MAX_BYTES) {
+                markTooBig(link, size)
+                oversize = true
+            } else {
+                synchronized(lock) { sized.add(link) }
+            }
+        }
+        return oversize
     }
 
     /** Chép bài đang tải, dừng ([TrackTooBig]) khi quá [TRACK_MAX_BYTES]: Content-Length báo trước, hay đếm thật khi nguồn không báo. */

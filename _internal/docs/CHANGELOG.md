@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Lần đầu mở một cuốn sách chữ trên máy mới, nhạc nền của chương đầu có sau chừng 10 giây thay vì vài phút (máy tính và điện thoại): máy không còn tải từng bài ứng viên một để xem bài nặng hay nhẹ, mà chỉ kiểm bài đã chọn; bài nào nặng quá thì chọn lại bài khác.
+- Mất mạng sau khi đã từng mở app, nhạc nền theo cảnh không còn im lặng khó hiểu: hộp "Nhạc nền" nói rõ chưa tải được danh mục nhạc, có mạng thì dòng ấy biến mất (máy tính và điện thoại).
+- Chuyển sang cuốn khác lúc đang tạm dừng, nhạc của cuốn cũ không còn được mở lại thoáng qua (máy tính và điện thoại).
+
 ## [0.4.74] - 2026-10-16
 
 ### Nghe ngay

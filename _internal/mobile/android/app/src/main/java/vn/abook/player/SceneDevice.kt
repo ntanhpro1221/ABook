@@ -87,16 +87,18 @@ object DeviceScenes {
             if (id == chapterId) waiting = job
         }
         var failed = false
+        var reason: String? = null
         try {
             waiting?.get(BUILD_WAIT_MS, TimeUnit.MILLISECONDS)
         } catch (_: java.util.concurrent.TimeoutException) {
             // chương nặng dựng chưa xong: trả `pending`
         } catch (error: java.util.concurrent.ExecutionException) {
             failed = true // danh mục không tải được, chữ không đọc được: hỏi lại sau
+            reason = (error.cause as? MusicCatalog.CatalogError)?.message // mục lục đã cất mà mảnh ô / tracks/ không tải được (mất mạng sau lần đầu): nói lý do, như lúc chưa có mục lục
         } catch (_: java.util.concurrent.CancellationException) {
             failed = true
         }
-        val record = ready(chapterId) ?: return empty.put("pending", !failed && waiting != null)
+        val record = ready(chapterId) ?: return empty.put("pending", !failed && waiting != null).also { answer -> reason?.let { answer.put("unavailable", it) } }
         return book.response(record)
     }
 
@@ -114,8 +116,10 @@ object DeviceScenes {
             }
         }
         val near = Near(catalog)
-        val choice = SceneChoice(bookId, available = { link -> catalog.usable(link, near.sizedInfoOf(link)) })
-        val book = SceneBook(File(root, key), order, { id -> body(bookId, id, entries[id]) }, choice) { near.tracks() }
+        // Bộ chọn chỉ hỏi thứ ĐÃ BIẾT (sổ bài quá cỡ): xếp hạng hàng trăm bài mà tra cỡ từng bài là hàng trăm mảnh danh mục. Cỡ của bài ĐÃ CHỌN tra một lượt sau mỗi lần chọn
+        // (`catalog.verifySizes`) và chương chọn lại nếu có bài quá cỡ - `server.music_verify_sizes` của máy tính.
+        val choice = SceneChoice(bookId, available = { link -> catalog.usable(link, null) })
+        val book = SceneBook(File(root, key), order, { id -> body(bookId, id, entries[id]) }, choice, catalog::verifySizes) { near.tracks() }
         books[bookId] = key to book
         return book
     }
@@ -132,30 +136,13 @@ object DeviceScenes {
     /** Bài quanh đích êm của danh mục: tải 9 ô lần đầu (cất theo `revision`), sau đó dùng lại trong bộ nhớ. */
     private class Near(private val catalog: MusicCatalog) {
         private var tracks: List<SceneTrack>? = null
-        private val infos = HashMap<String, JSONObject>()
-        private val sized = HashMap<String, JSONObject>()
 
         @Synchronized
         fun tracks(): List<SceneTrack> {
             tracks?.let { return it }
             val items = catalog.near(SceneChooser.TARGET[0], SceneChooser.TARGET[1], 1)
-            val found = items.mapNotNull { json -> SceneTrack.of(json)?.also { infos.putIfAbsent(it.link, json) } }
+            val found = items.mapNotNull { json -> SceneTrack.of(json) }
             tracks = found
-            return found
-        }
-
-        @Synchronized
-        fun infoOf(link: String): JSONObject? = infos[link]
-
-        /**
-         * Thông tin của bài kèm cỡ (`bytes`): ô `cells/` mà [tracks] đọc KHÔNG có cỡ, chỉ mảnh `tracks/` có - nên tra mảnh của đúng bài mà bộ chọn hỏi
-         * (`server._music_oversize`), nhớ lại để khỏi tra lần nữa. Danh mục chưa tra được: dùng thông tin ô (chưa biết cỡ thì cứ coi là dùng được).
-         */
-        @Synchronized
-        fun sizedInfoOf(link: String): JSONObject? {
-            sized[link]?.let { return it }
-            val found = runCatching { catalog.lookup(listOf(link))[link] }.getOrNull() ?: return infos[link]
-            sized[link] = found
             return found
         }
     }

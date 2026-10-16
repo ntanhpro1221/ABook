@@ -116,6 +116,20 @@ class PlaylistsTest {
     }
 
     @Test
+    fun the_sizes_of_chosen_tracks_are_looked_up_in_one_batch_and_an_oversize_one_is_dropped_from_then_on() {
+        tracks.getValue("https://x/sad.mp3").put("bytes", MusicCatalog.TRACK_MAX_BYTES + 1)
+        tracks.getValue("https://x/calm.mp3").put("bytes", MusicCatalog.TRACK_MAX_BYTES)
+        val catalog = MusicCatalog(File(root, "cache"), cloud().path, publicKey = CatalogSigning.publicKey)
+        assertTrue("trước khi tra: chưa biết cỡ thì dùng được", catalog.usable("https://x/sad.mp3", null))
+        assertTrue("có bài quá cỡ", catalog.verifySizes(calm))
+        assertFalse(catalog.usable("https://x/sad.mp3", null))
+        assertTrue("đúng bằng trần vẫn dùng được", catalog.usable("https://x/calm.mp3", null))
+        assertTrue(catalog.usable("https://x/calm2.mp3", null))
+        assertFalse("đã ghi sổ: không còn gì mới", catalog.verifySizes(calm))
+        assertFalse("bài ngoài danh mục: chưa biết, coi là vừa", catalog.verifySizes(listOf("https://khong/co.mp3")))
+    }
+
+    @Test
     fun a_track_is_downloaded_once_and_a_mirror_is_used_only_when_it_matches_the_original() {
         val bytes = "ID3 bài thật".toByteArray()
         val sha = MessageDigest.getInstance("SHA-1").digest(bytes).joinToString("") { "%02x".format(it) }

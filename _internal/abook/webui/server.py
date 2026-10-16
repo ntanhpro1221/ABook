@@ -2067,7 +2067,8 @@ class App:
                 scene_book, order, chapter_id, str(chapters[chapter_id].get("title") or ""), text, chapters[chapter_id].get("skip"),
                 sha_of=sha_of, near=self._music_candidates, lookup=lambda links: self._music_lookup(links),
                 catalog_revision=str(manifest.get("revision") or ""), taxonomy=manifest.get("taxonomy"), book_key=value,
-                available=self.music_track_available, student=student(stop) if use_student else None)
+                available=functools.partial(self.music_track_available, sizes=False), verify=self.music_verify_sizes,
+                student=student(stop) if use_student else None)
 
         return job
 
@@ -2106,7 +2107,9 @@ class App:
             waiting.done.wait(music_nnscene.BUILD_WAIT_SECONDS)
             record = ready(chapter_id)
         if record is None:
-            return {**empty, "pending": waiting is not None and waiting.error is None, "scene": True}
+            reason = {"unavailable": str(waiting.error)} if waiting is not None and isinstance(waiting.error, music_catalog.CatalogError) else {}
+            # mục lục đã cất mà mảnh `ô` / `tracks/` không tải được (mất mạng sau lần đầu): cũng nói lý do, không im lặng
+            return {**empty, "pending": waiting is not None and waiting.error is None, "scene": True, **reason}
         tracks = dict(record.get("tracks") or {})
         cues = [cue for cue in music_nnscene.chapter_cues(record) if self.music_track_available(cue["link"])]
         cues = [dict(cue, src=self._music_src(value, cue["link"])) for cue in cues]
@@ -2308,10 +2311,12 @@ class App:
             with contextlib.suppress(OSError):
                 atomic_write_json(self.music_dir / "too_big.json", self._music_too_big)
 
-    def music_track_available(self, link: str, *, network: bool = True) -> bool:
+    def music_track_available(self, link: str, *, network: bool = True, sizes: bool = True) -> bool:
         """Bài này dùng được TRÊN MÁY NÀY không: có trong bộ đệm thì được (kể cả offline); nguồn của bài vừa hỏng vì mạng (5 phút
         qua) hay cả máy mất mạng (`_music_offline`), bài đã bị đánh dấu hỏng (chưa quá 24 giờ) hay quá MUSIC_TRACK_MAX_MB thì
-        không; chưa biết thì cứ coi là được. `network` False: bỏ qua chuyện mạng (bài sẽ dùng được khi có mạng lại)."""
+        không; chưa biết thì cứ coi là được. `network` False: bỏ qua chuyện mạng (bài sẽ dùng được khi có mạng lại). `sizes` False:
+        chỉ dùng cỡ ĐÃ BIẾT (sổ `too_big`), không tra mảnh `tracks/` - bộ chọn xếp hạng hỏi hàng trăm bài, mỗi bài một mảnh là hàng trăm lượt
+        tải (`music_nnscene.build_chapter` tra cỡ riêng các bài đã chọn, một lượt - `music_verify_sizes`)."""
         if self.music_track_cached(link) is not None:
             return True
         if music_plan.is_local(link):
@@ -2325,26 +2330,33 @@ class App:
             failed_at = self._music_unavailable.get(link)
             if failed_at is not None and now - failed_at < MUSIC_UNAVAILABLE_SECONDS:
                 return False
-        return not self._music_oversize(link)
+        return not sizes or not self.music_verify_sizes([link])
 
-    def _music_oversize(self, link: str) -> bool:
-        """Bài quá MUSIC_TRACK_MAX_MB theo `bytes` của danh mục. Ô `cells/` (cái `near` trả về) KHÔNG có cỡ, chỉ mảnh `tracks/` có
-        - nên tra theo bài mà bộ chọn hỏi (`music_track_available`), không tra cả ô; quá trần thì ghi sổ (`_music_mark_too_big`) để
-        lần sau khỏi tra. Danh mục chưa đọc được / bài không ghi cỡ: chưa biết, coi là vừa (Content-Length bù khi tải)."""
+    def music_verify_sizes(self, links: Iterable[str]) -> bool:
+        """Tra cỡ (`bytes` của danh mục) của các bài trong MỘT lượt (mảnh `tracks/` tải song song) và ghi sổ `too_big` bài nào quá
+        MUSIC_TRACK_MAX_MB. True khi VỪA phát hiện bài quá cỡ (người gọi chọn lại: `music_track_available` từ đó loại nó). Ô `cells/` (cái
+        `near` trả về) KHÔNG có cỡ, chỉ mảnh `tracks/` có. Bài đã tra (không quá) khỏi tra lại; danh mục chưa đọc được / bài không ghi cỡ:
+        chưa biết, coi là vừa (Content-Length bù khi tải)."""
         with self._music_lock:
-            if link in self._music_sized:
-                return False
+            unknown = sorted({link for link in links if link not in self._music_sized and not music_plan.is_local(link)
+                              and self._music_too_big.get(link, 0) <= MUSIC_TRACK_MAX_BYTES})
+        unknown = [link for link in unknown if self.music_track_cached(link) is None]
+        if not unknown:
+            return False
         try:
-            info = self.music_catalog().lookup([link]).get(link)
+            found = self.music_catalog().lookup(unknown)
         except (music_catalog.CatalogError, OSError, ValueError):
             return False
-        if music_catalog.over_size_cap(info, MUSIC_TRACK_MAX_BYTES):
-            self._music_mark_too_big(link, int(info["bytes"]))  # type: ignore[index]
-            return True
-        if isinstance(info, dict):
-            with self._music_lock:
-                self._music_sized.add(link)
-        return False
+        oversize = False
+        for link in unknown:
+            info = found.get(link)
+            if music_catalog.over_size_cap(info, MUSIC_TRACK_MAX_BYTES):
+                self._music_mark_too_big(link, int(info["bytes"]))  # type: ignore[index]
+                oversize = True
+            elif isinstance(info, dict):
+                with self._music_lock:
+                    self._music_sized.add(link)
+        return oversize
 
     def music_track_too_big(self, link: str) -> bool:
         """Bài này đã biết là quá MUSIC_TRACK_MAX_MB (lần tra danh mục hay lần tải trước): vĩnh viễn trên máy này, khác chuyện mạng."""

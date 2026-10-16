@@ -37,7 +37,7 @@ from abook.webui.server import MUSIC_TRACK_MAX_BYTES  # noqa: E402
 OUT = ROOT / "tests" / "fixtures" / "music" / "n0"
 TARGET = (0.15, -0.55)
 # Cỡ (byte) theo MẢNH `tracks/` của danh mục - ô `cells/` không có `bytes`. Bài trùng toạ độ với bài tốt nhất của ô giữa, nên nếu không lọc cỡ thì chúng thắng:
-# nhờ vậy bộ ví dụ thật sự kiểm "bài quá MUSIC_TRACK_MAX_MB không bao giờ được chọn" (server._music_oversize, Kotlin MusicCatalog.usable).
+# nhờ vậy bộ ví dụ thật sự kiểm "bài quá MUSIC_TRACK_MAX_MB không bao giờ được chọn" (server.music_verify_sizes + music_track_available, Kotlin MusicCatalog.verifySizes + usable).
 TRACK_BYTES = {"https://example.invalid/n0/big1.mp3": MUSIC_TRACK_MAX_BYTES + 1, "https://example.invalid/n0/big2.mp3": MUSIC_TRACK_MAX_BYTES * 3,
                "https://example.invalid/n0/edge.mp3": MUSIC_TRACK_MAX_BYTES, "https://example.invalid/n0/small.mp3": 5_000_000}
 TAXONOMY = {"genres": {"gen_a": {"styles": {"style_a": 1.0, "style_b": 0.5}}, "gen_b": {"styles": {"style_c": 1.0}}}}
