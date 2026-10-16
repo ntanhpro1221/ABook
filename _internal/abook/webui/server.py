@@ -40,7 +40,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
-               listen_export, music_bounds, music_catalog, music_export, music_local, music_module, music_moods, music_nnscene, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
+               listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnscene, music_plan, music_playlist, music_scene_student, music_select, music_student, music_valence, notices, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
@@ -304,6 +304,8 @@ class App:
         self.music_dir = preferences.path.with_name("music")
         # "Nhạc của tôi" (music_local.py): nhạc người dùng tự nhập, của riêng máy này; file bài sách mang theo nằm trong files/.
         self.my_music = music_local.LocalMusic(self.music_dir / "mine", self.music_dir / "files")
+        # Bộ đệm bài nhạc (music_dir/files) có trần: bài sách mang theo ghi vào sổ riêng, không bao giờ bị dọn (music_cache.py).
+        self.music_cache = music_cache.MusicCache(self.music_dir / "files", self.music_dir / "files_owned.json")
         # Mô-đun "Phân tích nhạc" (music_module.py): ffmpeg + thư viện + model, người dùng bấm mới tải (không bao giờ tự tải). Thư viện đã tải
         # lần trước vào sys.path TRƯỚC khi cắm bộ phân tích; không thì bài nhập ở "chưa phân tích" và nhập vẫn chạy (thẻ đọc bằng tinytag).
         ffmpeg_setup.configure(self.music_dir.parent / ffmpeg_setup.FOLDER)
@@ -702,6 +704,7 @@ class App:
         target, report = opened.open_into(self.library.root)
         missing = len(opened.missing_sources)
         opened.copy_music(self.music_dir / "files")  # nhạc nền đi cùng gói: không phải tải lại
+        self.music_cache.own(opened.music_names())  # ... và không bao giờ bị dọn khi bộ đệm quá trần
         if edits:
             book_edits.stash_incoming(target, opened.edits, opened.edits_cover(), opened.copy_member)
         self.library.preferences.add_recent(target)
@@ -2122,6 +2125,8 @@ class App:
         "Nhạc của tôi": đường THEO SÁCH như file trong gói - chỉ cuốn có đoạn dùng bài ấy mới lấy được."""
         path = self.music_track_cached(link) if music_plan.is_local(link) else None
         if path is None:
+            if link.startswith("https://"):
+                self.music_cache.touch(self._music_file(link))  # bài của chương đang nghe: không bị dọn trước các bài lâu không dùng
             return "/api/music/track?link=" + quote(link, safe="")
         return f"/api/books/{quote(value, safe='')}/music/files/{music_plan.track_name(link, path).split('/')[1]}"
 
@@ -2161,8 +2166,25 @@ class App:
         """Bài đã có trong bộ đệm của máy (không tải): cho gói điện thoại hỏi thường xuyên. Bài "Nhạc của tôi": file trong kho."""
         if music_plan.is_local(link):
             return self.my_music.file(link)
-        target = self.music_dir / "files" / (hashlib.sha1(link.encode("utf-8")).hexdigest() + ".mp3")
+        target = self._music_file(link)
         return target if target.is_file() else None
+
+    def _music_file(self, link: str) -> Path:
+        """Chỗ của bài danh mục `link` trong bộ đệm nhạc (đã tải hay chưa)."""
+        return self.music_dir / "files" / (hashlib.sha1(link.encode("utf-8")).hexdigest() + ".mp3")
+
+    def _music_pinned_names(self) -> set[str]:
+        """Tên file trong bộ đệm của các bài người nghe ghim vào đoạn của cuốn nào đó (music_overrides.json): bộ đệm quá trần cũng không dọn chúng."""
+        names: set[str] = set()
+        for project in self.library.projects():
+            for link in music_plan.read_overrides(project)["pins"].values():
+                if link.startswith("https://"):
+                    names.add(self._music_file(link).name)
+        return names
+
+    def _music_prune(self, keep: Path | None = None) -> None:
+        """Bộ đệm nhạc quá trần (music_cache.CAP_BYTES) thì dọn bài lâu không nghe; bài vừa tải (`keep`) và các bài được bảo vệ ở music_cache.py ở lại."""
+        self.music_cache.prune(self._music_pinned_names, [keep] if keep is not None else [])
 
     def _warm_music(self, plan: dict[str, Any] | None, value: str | None = None, scenes: set[str] | None = None) -> None:
         """Tải sẵn các bài của rãnh nhạc vừa dựng (luồng nền): điện thoại và file sách lấy được nhạc ngay. Nhạc tắt thì không
@@ -2445,8 +2467,9 @@ class App:
         `_music_mark_too_big`: rãnh nhạc chọn bài khác)."""
         if not link.startswith("https://"):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Link nhạc không hợp lệ")
-        target = self.music_dir / "files" / (hashlib.sha1(link.encode("utf-8")).hexdigest() + ".mp3")
+        target = self._music_file(link)
         if target.is_file():
+            self.music_cache.touch(target)  # đang nghe: lần dùng gần nhất, để dọn bộ đệm xoá bài khác trước
             return target
         try:
             known = self.music_catalog().lookup([link])
@@ -2486,6 +2509,7 @@ class App:
                     os.replace(part, target)
                     self._music_note(url, failed=False)  # tải được = nguồn ấy có mạng
                     self._music_mark(link, failed=False)
+                    self._music_prune(target)
                     return target
                 except TrackTooBig as exc:  # bản sao cùng cỡ: khỏi thử
                     self._music_note(url, failed=False)
@@ -4181,6 +4205,7 @@ class Handler(BaseHTTPRequestHandler):
                   else music_plan.track_file_named(path, f"music/{name}", self.app.music_sync_source()))
         if target is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có bài nhạc này trong sách")
+        self.app.music_cache.touch(target)
         self._send_file(target, cache=True)
 
     def get_my_music(self, _query: dict[str, list[str]]) -> None:

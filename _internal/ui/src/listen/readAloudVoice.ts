@@ -259,6 +259,8 @@ export function speechFetcher(source: ListenSource, bookId: string, notify: (mes
     let failed: { voice: ReadAloudVoice; reason: string } | null = null;
     for (const [index, candidate] of chain.entries()) {
       const last = index === chain.length - 1;
+      // Lần hỏi mới (đoạn đã hết lần thử lại, hay người nghe vừa tới đoạn ấy): quên lệnh nghỉ của giọng này, gọi dịch vụ thật - nó có thể đã khoẻ lại từ lâu.
+      if (options?.fresh && !KEYED_PROVIDERS[candidate.provider]) troubled.delete(candidate.provider);
       const troubleNow = troubleOf(candidate.provider);
       const benchedFor = benched.get(candidate.provider) ?? troubleNow;
       if (benchedFor && !last) {

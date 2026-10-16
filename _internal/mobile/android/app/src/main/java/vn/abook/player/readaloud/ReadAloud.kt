@@ -63,6 +63,9 @@ object ReadAloud {
     private val worker = Executors.newFixedThreadPool(4) { Thread(it, "read-aloud").apply { isDaemon = true } }
     /** Thời gian lấy clip thật của giọng trực tuyến đang chọn: quyết định phải đọc sẵn bao nhiêu đoạn ([needMore]) và có đọc song song đoạn kế không. */
     private val policy = ReadAheadPolicy(AHEAD)
+    /** Đoạn hỏng vì dịch vụ trục trặc mà người nghe chưa tới: lượt đọc kế của nó là lần hỏi mới, cách [StalledClips.REASK_MS] khi còn âm thanh để nghe. */
+    private val stalled = StalledClips()
+    private val main by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
     private var policyVoice = ""
     /** Việc đọc đang chạy theo (giọng, chữ): đoạn kế đọc song song ([warm]) và lượt nạp thật của nó dùng chung một lượt gọi Edge, không gọi hai lần. */
     private val sharing = ConcurrentHashMap<String, java.util.concurrent.FutureTask<Result<Clip>>>()
@@ -408,6 +411,7 @@ object ReadAloud {
         waiting = null
         failure = null
         held = false
+        stalled.clear()
         chaps.clear()
         feedChapter = 0
         feedSegment = 0
@@ -547,9 +551,31 @@ object ReadAloud {
                 feedBreak(chap, feedSegment)
                 continue
             }
+            // Đoạn này vừa hỏng vì dịch vụ trục trặc và người nghe còn âm thanh để nghe: hỏi lại sau nhịp nghỉ (mất mạng dài không thành bão lượt gọi); hàng đợi cạn thì hỏi ngay.
+            val wait = stalled.cooldownMs(feedChapter, feedSegment)
+            if (wait > 0 && listenerHasAudio(exo)) {
+                remind(wait)
+                return
+            }
             startJob(chap, feedSegment)
             return
         }
+    }
+
+    /** Người nghe còn âm thanh để nghe (không phải đang chờ đoạn đầu, hàng đợi chưa cạn). */
+    private fun listenerHasAudio(exo: Player): Boolean = waiting == null && exo.currentMediaItem != null && exo.playbackState != Player.STATE_ENDED
+
+    private var reminding = false
+
+    /** Hẹn [pump] sau `ms` (hết nhịp nghỉ của [stalled]); một hẹn một lúc. */
+    private fun remind(ms: Long) {
+        if (reminding) return
+        reminding = true
+        val token = generation
+        main.postDelayed({
+            reminding = false
+            if (token == generation) pump()
+        }, ms + 50)
     }
 
     /** Hàng đợi còn thiếu đoạn đọc sẵn? Tối thiểu [AHEAD] đoạn; giọng trực tuyến mà clip gần đây về chậm thì tới khi đủ số giây âm thanh [ReadAheadPolicy] đòi (tối đa [ReadAheadPolicy.MAX_AHEAD] đoạn). */
@@ -647,6 +673,7 @@ object ReadAloud {
         val warm = if (online && policy.slow()) nextSpeakable(chap, segment)?.let { chap.paragraphs[it] } else null
         // Người nghe đang chờ clip này qua mạng: giữ CPU + Wi-Fi tới khi xong (hàng đợi ExoPlayer đã cạn thì nó không giữ gì - [FetchWake]); đọc sẵn khi chưa ai chờ thì không.
         val ticket = if (online && listenerWants) FetchWake.hold() else null
+        val fresh = stalled.takeFresh(chap.index, segment)
         worker.execute {
             val began = System.nanoTime()
             val origin = originOf(bookId)
@@ -658,9 +685,9 @@ object ReadAloud {
             }
             val result = try {
                 val key = shareKey(voice, text, origin, readings)
-                val (first, mine) = shared(key) { readWithRetry(token, text, voice, origin, readings, online) }
-                // Đoạn này đang được đọc song song mà lượt ấy hỏng (không thử lại): đọc lại cho đàng hoàng, có thử lại.
-                if (!mine && first.isFailure && token == generation) readWithRetry(token, text, voice, origin, readings, online) else first
+                val (first, mine) = shared(key) { readWithRetry(token, text, voice, origin, readings, online, fresh) }
+                // Đoạn này đang được đọc song song mà lượt ấy hỏng (không thử lại): đọc lại cho đàng hoàng, có thử lại - và hỏi mới, lượt hỏng vừa rồi có thể đã làm giọng nghỉ.
+                if (!mine && first.isFailure && token == generation) readWithRetry(token, text, voice, origin, readings, online, fresh = true) else first
             } finally {
                 ticket?.let(FetchWake::release)
                 live.decrementAndGet()
@@ -702,9 +729,9 @@ object ReadAloud {
     }
 
     /** Đọc một đoạn, thử lại lỗi thoáng qua của giọng trực tuyến ở nền ([ClipRetry]); việc đã cũ (tua, đổi chương, đổi giọng) thì thôi. */
-    private fun readWithRetry(token: Int, text: String, voice: String, origin: String?, readings: Map<String, String>?, online: Boolean): Result<Clip> =
+    private fun readWithRetry(token: Int, text: String, voice: String, origin: String?, readings: Map<String, String>?, online: Boolean, fresh: Boolean = false): Result<Clip> =
         ClipRetry.run(online, RETRY_DELAYS_MS, sleep = { sleepWhileCurrent(token, it) }, record = policy::record) { willRetry ->
-            reader().read(text, voice, origin, readings, willRetry)
+            reader().read(text, voice, origin, readings, willRetry, fresh)
         }
 
     /** Nghỉ `ms` mili-giây; false nếu trong lúc ấy việc đã cũ (người nghe tua / đổi chương / đổi giọng - `generation` đổi), đã tắt, hay người nghe đã tạm dừng: lần thử lại không đáng gọi
@@ -731,8 +758,19 @@ object ReadAloud {
         if (token != generation || !active) return
         inFlight = false
         val clip = result.getOrElse { error ->
-            // Lần thử lại bị bỏ vì người nghe đã tạm dừng: không phải lỗi để báo - bấm phát thì [onPlay] xin lại đoạn này.
-            if ((error as? VoiceException)?.transient == true && !wantsPlay()) return
+            // Dịch vụ trục trặc (kể cả lời cuối của [ClipReader]) sau khi hết lần thử: nhớ đoạn này - lượt đọc kế của nó là lần hỏi mới ([StalledClips]), dù do nhịp hỏi lại, do người nghe tới nơi
+            // hay do "Thử lại". Người nghe đã tạm dừng (kể cả lần thử lại bị bỏ vì thế): bấm phát thì [onPlay] xin lại đoạn này. Người nghe còn âm thanh để nghe: chưa ai chờ đoạn này - không
+            // dừng, không báo lỗi, [pump] hỏi lại sau nhịp nghỉ hay ngay khi hàng đợi cạn (a46: trước đây hết lần thử là dừng hẳn dù còn cả hàng đoạn đã đọc sẵn, và người nghe tới nơi cũng không ai hỏi lại).
+            if (StalledClips.isServiceTrouble(error)) {
+                stalled.failed(chap.index, segment)
+                if (!wantsPlay()) return
+                if (Playback.player?.let(::listenerHasAudio) == true) {
+                    pump()
+                    return
+                }
+            } else if ((error as? VoiceException)?.transient == true && !wantsPlay()) {
+                return
+            }
             fail((error as? VoiceException)?.message ?: "Không đọc được đoạn này (${error.message})")
             return
         }

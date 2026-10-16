@@ -63,10 +63,16 @@ class ClipReader(
     /**
      * `willRetry`: người gọi sẽ tự thử lại nếu lần này hỏng vì lỗi thoáng qua ([VoiceException.transient]) - ném lỗi gốc lên ngay, chưa cho giọng nghỉ ([EDGE_BREAK_MS]...) hay rơi
      * sang giọng khác (một lần Edge cắt lượt không được làm cả chương đọc bằng giọng máy, hay hiện "đang không dùng được" khi thử lại là xong). Lần thử cuối: `willRetry` tắt.
+     * `fresh`: lần hỏi MỚI cho đoạn vừa hỏng vì dịch vụ trục trặc ([StalledClips]) - quên lệnh nghỉ của giọng đã chọn ([EDGE_BREAK_MS]...) rồi gọi dịch vụ thật, nếu không thì dịch vụ đã
+     * khoẻ lại mà lần hỏi này vẫn bị chặn ngay, không một lượt gọi nào đi ra.
      */
-    fun read(text: String, voiceId: String, origin: String? = null, readings: Map<String, String>? = null, willRetry: Boolean = false): Clip {
+    fun read(text: String, voiceId: String, origin: String? = null, readings: Map<String, String>? = null, willRetry: Boolean = false, fresh: Boolean = false): Clip {
         val primary = voiceFor(voiceId)
         cache.get(primary.id, text, origin, readings)?.let { return it }
+        if (fresh) {
+            downUntil.remove(provider(primary))
+            downBecause.remove(provider(primary))
+        }
         val chain = ArrayList<Voice>().apply {
             add(primary)
             if (online(primary)) {

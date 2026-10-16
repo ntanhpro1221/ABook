@@ -8,6 +8,7 @@ import {
   CLIP_RETRY_BUDGET_MS,
   CLIP_RETRY_DELAYS_MS,
   NEXT_CHAPTER_AHEAD,
+  PROBE_MS,
   ReadAloudEngine,
   RoutedEngine,
   estimateSeconds,
@@ -75,7 +76,7 @@ interface Setup {
   engine: ReadAloudEngine;
   audios: FakeAudio[];
   published: Script[];
-  requests: { text: string; cachedOnly: boolean; willRetry?: boolean; retryBefore?: number; resolve: (clip?: ReadAloudClip) => void; reject: (error: Error) => void }[];
+  requests: { text: string; cachedOnly: boolean; willRetry?: boolean; retryBefore?: number; fresh?: boolean; resolve: (clip?: ReadAloudClip) => void; reject: (error: Error) => void }[];
   events: string[];
   /** Cho clip của đoạn có chữ `text` về. */
   arrive: (text: string) => Promise<void>;
@@ -103,7 +104,7 @@ function setup(options: { chapter?: string; cached?: Record<string, ReadAloudCli
           else reject(Object.assign(new Error("uncached"), { reason: "uncached" }));
           return;
         }
-        requests.push({ text, cachedOnly: false, willRetry: o?.willRetry, retryBefore: o?.retryBefore, resolve: (clip) => resolve(clip ?? clipOf(text)), reject });
+        requests.push({ text, cachedOnly: false, willRetry: o?.willRetry, retryBefore: o?.retryBefore, fresh: o?.fresh, resolve: (clip) => resolve(clip ?? clipOf(text)), reject });
       }),
     onScript: (script) => published.push(script),
   };
@@ -306,6 +307,43 @@ describe("chương kế: xin trước tiêu đề + đoạn đầu khi chương 
     await s.arrive(NEXT[0]);
     await s.arrive(NEXT[1]);
     expect(nextRequests(s)).toHaveLength(NEXT_CHAPTER_AHEAD); // chỉ một lần cho mỗi lần nạp chương
+  });
+
+  it("giọng chậm: xin trước chương kế đủ số giây âm thanh như đọc trước giữa chương (không chỉ 2 clip), tối đa 4 lượt cùng lúc; giọng nhanh vẫn 2", async () => {
+    const more = Array.from({ length: 10 }, (_, i) => `Câu số ${i + 1} của chương hai.`);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const { s, asked } = withNext();
+      s.track.after = async () => {
+        asked.push("after");
+        return more;
+      };
+      const t0 = Date.now();
+      s.engine.load(s.trackInfo, 0, true);
+      await flush();
+      // bốn clip của chương này mỗi cái mất 20 giây: đo được giọng chậm
+      vi.setSystemTime(t0 + 20_000);
+      for (const text of TEXTS) await s.arrive(text);
+      await flush();
+      expect(asked).toEqual(["after"]);
+      const warm = () => s.requests.filter((r) => more.includes(r.text));
+      // cần 40 s đệm (2 x 20 s), mỗi câu ước ~2 s -> cửa sổ tới trần 8 câu, nhưng chỉ 4 lượt đi cùng lúc (như đọc trước giữa chương)
+      expect(warm().map((r) => r.text)).toEqual(more.slice(0, 4));
+      await s.arrive(more[0]);
+      expect(warm()).toHaveLength(5);
+      for (const text of more.slice(1, 8)) await s.arrive(text);
+      expect(warm().map((r) => r.text)).toEqual(more.slice(0, 8));
+    } finally {
+      vi.useRealTimers();
+    }
+    // đối chứng: clip về nhanh thì vẫn chỉ NEXT_CHAPTER_AHEAD
+    const fast = withNext();
+    fast.s.track.after = async () => more;
+    fast.s.engine.load(fast.s.trackInfo, 0, true);
+    await flush();
+    for (const text of TEXTS) await fast.s.arrive(text);
+    await flush();
+    expect(fast.s.requests.filter((r) => more.includes(r.text))).toHaveLength(NEXT_CHAPTER_AHEAD);
   });
 
   it("chương còn dài: chưa xin chương kế khi cửa sổ đọc trước chưa tới cuối", async () => {
@@ -570,6 +608,145 @@ describe("nghe dở và lỗi", () => {
     }
   });
 
+  /** Hỏng `CLIP_RETRIES + 1` lần liền (dịch vụ trục trặc) cho tới khi đoạn `text` hết lần thử lại. */
+  async function exhaust(s: Setup, text: string) {
+    const of = () => s.requests.filter((r) => r.text === text);
+    for (let attempt = 0; attempt <= CLIP_RETRIES; attempt += 1) {
+      of()[attempt].reject(Object.assign(new Error("Bad Gateway"), { reason: "service" }));
+      await vi.advanceTimersByTimeAsync(attempt < CLIP_RETRIES ? CLIP_RETRY_DELAYS_MS[attempt] : 0);
+    }
+  }
+
+  it("đoạn đọc sẵn hết lần thử lúc người nghe còn ở xa: không dừng; cứ ~10 giây hỏi thăm MỘT lượt (hỏi mới, không thử lại), được thì dùng luôn - người nghe tới nơi không bị dừng (a46)", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = setup();
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      s.requests.filter((r) => r.text === TEXTS[0]).forEach((r) => r.resolve());
+      await vi.advanceTimersByTimeAsync(0);
+      const second = () => s.requests.filter((r) => r.text === TEXTS[1]);
+      await exhaust(s, TEXTS[1]);
+      expect(second()).toHaveLength(CLIP_RETRIES + 1);
+      expect(s.events).not.toContain("error"); // người nghe còn đang nói đoạn đầu
+      expect(audioOf(s, TEXTS[0])!.paused).toBe(false);
+      // mất mạng kéo dài: mỗi PROBE_MS đúng một lượt hỏi thăm cho đoạn gần nhất, lần hỏng nào cũng không thử lại
+      for (let round = 1; round <= 3; round += 1) {
+        await vi.advanceTimersByTimeAsync(PROBE_MS - 1);
+        expect(second()).toHaveLength(CLIP_RETRIES + round);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(second()).toHaveLength(CLIP_RETRIES + round + 1);
+        const probe = second().at(-1)!;
+        expect(probe.fresh).toBe(true);
+        expect(probe.willRetry).toBe(false);
+        probe.reject(Object.assign(new Error("Bad Gateway"), { reason: "service" }));
+        await vi.advanceTimersByTimeAsync(0);
+        expect(second()).toHaveLength(CLIP_RETRIES + round + 1); // hỏng thì chờ nhịp sau, không thử lại ngay
+      }
+      expect(s.events).not.toContain("error");
+      // dịch vụ khoẻ lại: lượt hỏi thăm kế được, đoạn sẵn sàng trước khi người nghe tới
+      await vi.advanceTimersByTimeAsync(PROBE_MS);
+      second().at(-1)!.resolve();
+      await vi.advanceTimersByTimeAsync(0);
+      audioOf(s, TEXTS[0])!.finish();
+      expect(audioOf(s, TEXTS[1])!.plays).toBe(1);
+      expect(s.events).not.toContain("error");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("người nghe tới đoạn đã hết lần thử: hỏi MỚI một lần (quỹ thử lại tính lại, bộ lấy clip quên lệnh nghỉ) trước khi báo lỗi; được thì phát, hỏng hết quỹ mới dừng", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = setup();
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      s.requests.filter((r) => r.text === TEXTS[0]).forEach((r) => r.resolve());
+      await vi.advanceTimersByTimeAsync(0);
+      const second = () => s.requests.filter((r) => r.text === TEXTS[1]);
+      await exhaust(s, TEXTS[1]);
+      const asked = second().length;
+      // đoạn đầu hết đúng lúc dịch vụ vừa khoẻ lại (trước nhịp hỏi thăm): lượt hỏi mới đi ngay khi người nghe tới
+      audioOf(s, TEXTS[0])!.finish();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(second()).toHaveLength(asked + 1);
+      expect(second().at(-1)!.fresh).toBe(true);
+      expect(second().at(-1)!.willRetry).toBe(true); // quỹ mới: lần này còn thử lại được
+      expect(s.events).not.toContain("error");
+      second().at(-1)!.resolve();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(audioOf(s, TEXTS[1])!.plays).toBe(1);
+      expect(s.engine.error).toBe("");
+
+      // dịch vụ vẫn chết: lượt hỏi mới cũng hết quỹ thì mới dừng + báo
+      const t = setup();
+      t.engine.load(t.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      t.requests.filter((r) => r.text === TEXTS[0]).forEach((r) => r.resolve());
+      await vi.advanceTimersByTimeAsync(0);
+      await exhaust(t, TEXTS[1]);
+      audioOf(t, TEXTS[0])!.finish();
+      await vi.advanceTimersByTimeAsync(0);
+      const again = () => t.requests.filter((r) => r.text === TEXTS[1]);
+      expect(again().at(-1)!.fresh).toBe(true);
+      for (let attempt = 0; attempt <= CLIP_RETRIES; attempt += 1) {
+        expect(t.events).not.toContain("error");
+        again().at(-1)!.reject(Object.assign(new Error("Bad Gateway"), { reason: "service" }));
+        await vi.advanceTimersByTimeAsync(attempt < CLIP_RETRIES ? CLIP_RETRY_DELAYS_MS[attempt] : 0);
+      }
+      expect(t.events).toContain("error");
+      expect(t.engine.paused).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("lỗi không phải của dịch vụ (mất mạng, từ chối) ở đoạn đọc sẵn: không hỏi thăm ngầm", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = setup();
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      s.requests.filter((r) => r.text === TEXTS[0]).forEach((r) => r.resolve());
+      await vi.advanceTimersByTimeAsync(0);
+      const second = () => s.requests.filter((r) => r.text === TEXTS[1]);
+      second()[0].reject(Object.assign(new Error("Không có mạng"), { reason: "offline" }));
+      await vi.advanceTimersByTimeAsync(PROBE_MS * 3);
+      expect(second()).toHaveLength(1);
+      expect(s.events).not.toContain("error");
+      // người nghe tới đoạn ấy: vẫn được hỏi mới một lần trước khi báo (mạng có thể đã về)
+      audioOf(s, TEXTS[0])!.finish();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(second()).toHaveLength(2);
+      expect(second()[1].fresh).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("một lượt clip THẬT (chậm hơn bộ đệm) thành công: đoạn đã bỏ cuộc được hỏi lại ngay, không đợi nhịp hỏi thăm", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = setup();
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      s.requests.filter((r) => r.text === TEXTS[0]).forEach((r) => r.resolve());
+      await vi.advanceTimersByTimeAsync(0);
+      const second = () => s.requests.filter((r) => r.text === TEXTS[1]);
+      await exhaust(s, TEXTS[1]);
+      const asked = second().length;
+      // đoạn 3 về sau ~15 giây chờ (lượt gọi thật): dịch vụ khoẻ
+      s.requests.filter((r) => r.text === TEXTS[2]).forEach((r) => r.resolve());
+      await vi.advanceTimersByTimeAsync(0);
+      expect(second()).toHaveLength(asked + 1);
+      expect(second().at(-1)!.fresh).toBeUndefined(); // lượt thường, không phải hỏi thăm
+      expect(second().at(-1)!.willRetry).toBe(true); // quỹ thử lại đầy
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("lỗi không thoáng qua (mất mạng, bị từ chối, giọng hỏng, không rõ lý do): dừng ngay ở đoạn đang chờ, không thử lại", async () => {
     vi.useFakeTimers();
     try {
@@ -636,6 +813,81 @@ describe("nghe dở và lỗi", () => {
     expect(audioOf(s, TEXTS[1])!.released).toBe(true);
     expect(s.requests.length).toBe(requested + 2); // đoạn 2 và 3 được xin lại (đoạn 4 chưa từng xin)
     expect(s.published.at(-1)!.segments[1].words).toBeUndefined();
+  });
+});
+
+describe("mất mạng giữa chừng với bộ lấy clip thật (soát a46)", () => {
+  /** Chương 8 đoạn, mỗi đoạn người nghe nghe 12 giây (hết đoạn k ở giây 12 x (k + 1)). Edge chết từ giây 1 tới `recoverAt` (không bao giờ nếu null); chạy tới giây `until`. */
+  async function outage(recoverAt: number | null, until: number) {
+    vi.useFakeTimers();
+    const paragraphs = Array.from({ length: 8 }, (_, i) => `Đoạn ${i + 1} ${Array(22).fill("từ").join(" ")}.`);
+    const store = new Map<string, string>();
+    const globals = globalThis as unknown as { window?: EventTarget; localStorage?: Storage };
+    const saved = { window: globals.window, localStorage: globals.localStorage };
+    globals.window = new EventTarget();
+    globals.localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) } as Storage;
+    onTestFinished(() => {
+      vi.useRealTimers();
+      globals.window = saved.window;
+      globals.localStorage = saved.localStorage;
+    });
+    vi.resetModules();
+    const voice = await import("./readAloudVoice");
+    const { ReadAloudError } = await import("./readAloud");
+    const t0 = Date.now();
+    const elapsed = () => (Date.now() - t0) / 1000;
+    const asked: { text: string; at: number; ok: boolean }[] = [];
+    const source = {
+      readAloudVoices: async () => [{ id: "edge:vi-VN-HoaiMyNeural", name: "Hoài My", provider: "edge", online: true, default: true }],
+      readAloudClip: async (_voice: string, text: string) => {
+        const dead = elapsed() >= 1 && (recoverAt === null || elapsed() < recoverAt);
+        asked.push({ text, at: elapsed(), ok: !dead });
+        if (dead) throw new ReadAloudError("Dịch vụ bận", "service");
+        return clipOf(text);
+      },
+    };
+    const s = setup({ chapter: paragraphs.join("\n\n") });
+    s.track.fetchClip = voice.speechFetcher(source as never, "b1", vi.fn());
+    s.engine.load(s.trackInfo, 0, true);
+    const at = (seconds: number) => vi.advanceTimersByTimeAsync(Math.max(0, seconds * 1000 - (Date.now() - t0)));
+    for (let end = 12, k = 0; end <= until; end += 12, k += 1) {
+      await at(end);
+      audioOf(s, paragraphs[k])?.finish();
+      await at(end + 0.001);
+    }
+    await at(until);
+    return { s, asked, paragraphs, forText: (text: string) => asked.filter((entry) => entry.text === text) };
+  }
+
+  it("Edge chết 28 giây (đoạn xa hết lần thử lúc ~27 giây) rồi sống lại: lượt hỏi thăm lấy đoạn trước khi người nghe tới (giây 48), không dừng", async () => {
+    const { s, paragraphs, forText, asked } = await outage(28, 48.5);
+    expect(s.events).not.toContain("error");
+    expect(s.engine.paused).toBe(false);
+    expect(audioOf(s, paragraphs[4])!.plays).toBe(1); // đoạn 5 đang phát lúc 48 giây
+    const fifth = forText(paragraphs[4]);
+    expect(fifth.some((entry) => entry.at >= 28 && entry.ok)).toBe(true);
+    expect(fifth.find((entry) => entry.at >= 28)!.at).toBeLessThan(40); // nhịp hỏi thăm ~10 giây sau khi hết lần thử, không đợi tới lúc người nghe tới
+    // số lượt gọi trong cả 48 giây có mất mạng 27 giây: thấp (a46 đo 13 lượt cho 74 giây không hỏi thăm)
+    expect(asked.filter((entry) => !entry.ok).length).toBeLessThanOrEqual(12);
+  });
+
+  it("Edge sống lại sau nhịp hỏi thăm cuối nhưng trước lúc người nghe tới: người nghe tới nơi thì hỏi mới ngay, không dừng", async () => {
+    const { s, paragraphs, forText } = await outage(47.5, 48.5);
+    expect(s.events).not.toContain("error");
+    expect(s.engine.paused).toBe(false);
+    expect(audioOf(s, paragraphs[4])!.plays).toBe(1);
+    const fifth = forText(paragraphs[4]);
+    expect(fifth.at(-1)).toMatchObject({ ok: true });
+    expect(fifth.at(-1)!.at).toBeGreaterThanOrEqual(47.5);
+    expect(fifth.at(-1)!.at).toBeLessThan(49);
+  });
+
+  it("Edge chết suốt: tới nơi hỏi mới một lượt với quỹ thử lại đầy rồi mới dừng + báo; số lượt gọi vẫn thấp", async () => {
+    const { s, asked } = await outage(null, 70);
+    expect(s.events).toContain("error");
+    expect(s.engine.paused).toBe(true);
+    // 70 giây mất mạng liên tục, 4 đoạn trong cửa sổ: trần 40 lượt (không bão); ghi số thật ở báo cáo
+    expect(asked.length).toBeLessThanOrEqual(40);
   });
 });
 
