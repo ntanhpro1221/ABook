@@ -5,6 +5,8 @@ import {
   FADE_SECONDS,
   LOOP_CROSSFADE_SECONDS,
   MusicBed,
+  NEXT_CHAPTER_WARM_SECONDS,
+  NextChapterWarm,
   RETRY_MS,
   SIBLING_FADE_SECONDS,
   STEP_RAMP_SECONDS,
@@ -16,6 +18,7 @@ import {
   siblingFadeSeconds,
   stepDbAt,
   type MusicCue,
+  type MusicCues,
 } from "./musicBed";
 
 const cues: MusicCue[] = [
@@ -759,4 +762,262 @@ describe("dòng thời gian chung với máy chủ và Android (tests/fixtures/m
       });
     });
   }
+});
+
+/** PLAN_lx F1 (musicwarm): tải sẵn bài kế + bài mới chỉ mờ vào từ lúc CÓ TIẾNG. <audio> giả có trễ tải như đĩa thật: `loadedmetadata` + `playing` chỉ tới sau
+ *  `delayOf(src)` giây (cỡ bài / 0,64 MB mỗi giây); bài đã được warm xong trước thì tới gần như ngay (bộ đệm máy chủ). */
+describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, PLAN_lx F1)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  const MB_PER_SECOND = 0.64;
+  const TRACK_MB = 7.4; // trung vị danh mục
+  const LOAD_SECONDS = TRACK_MB / MB_PER_SECOND; // ~11,6 giây
+  const TICK = 0.5;
+  const GOAL = Math.pow(10, -20 / 20); // mốc không có gainDb: mức chung -20 dB, âm lượng người nghe 1
+  const slow: MusicCue[] = [
+    { start: 0, end: 100, link: "https://x/a.mp3", key: "1:1", src: "/a" },
+    { start: 100, end: 200, link: "https://x/b.mp3", key: "1:2", src: "/b" },
+    { start: 200, end: 300, link: "https://x/c.mp3", key: "1:3", src: "/c" },
+  ];
+
+  type FakeAudio = { paused: boolean; volume: number; loop: boolean; currentTime: number; duration: number; readyState?: number; sounded?: boolean };
+  interface Slow {
+    bed: MusicBed;
+    warmed: string[];
+    made: { src: string; audio: FakeAudio }[];
+  }
+
+  /** `withWarm` false: không có hàng tải sẵn (0.4.89). `withState` false: bản giả không khai báo readyState / playing (hành vi cũ). */
+  function slowBed(delayOf: (src: string) => number, options: { withWarm?: boolean; withState?: boolean } = {}): Slow {
+    const withWarm = options.withWarm ?? true;
+    const withState = options.withState ?? true;
+    const ready = new Set<string>(); // bài đã nằm trong bộ đệm máy chủ
+    const warmed: string[] = [];
+    const made: Slow["made"] = [];
+    const srcOf = (link: string) => "/" + link.split("/").pop()!.replace(".mp3", "");
+    const warm = (link: string) => {
+      warmed.push(link);
+      setTimeout(() => ready.add(srcOf(link)), LOAD_SECONDS * 1000);
+    };
+    const bed = new MusicBed((src) => {
+      const listeners: Record<string, (() => void)[]> = {};
+      const fire = (type: string) => (listeners[type] ?? []).splice(0).forEach((listener) => listener());
+      const fake: FakeAudio = { paused: true, volume: 0, loop: false, currentTime: 0, duration: 200 };
+      if (withState) fake.readyState = 0;
+      let loaded = false;
+      setTimeout(() => {
+        loaded = true;
+        if (withState) fake.readyState = 4;
+        fire("loadedmetadata");
+        if (!fake.paused) {
+          fake.sounded = true; // từ đây bài thật sự kêu
+          fire("playing");
+        }
+      }, (ready.has(src) ? 0.1 : delayOf(src)) * 1000);
+      made.push({ src, audio: fake });
+      return Object.assign(fake, {
+        play: () => {
+          const wasPaused = fake.paused;
+          fake.paused = false;
+          if (loaded && wasPaused) {
+            fake.sounded = true;
+            fire("playing");
+          }
+          return Promise.resolve();
+        },
+        pause: () => { fake.paused = true; },
+        removeAttribute: () => undefined,
+        load: () => undefined,
+        addEventListener: (type: string, listener: () => void) => { (listeners[type] ??= []).push(listener); },
+      });
+    }, withWarm ? warm : undefined);
+    return { bed, warmed, made };
+  }
+
+  /** Nghe tuần tự `seconds` giây của chương, mỗi TICK giây một nhịp `sync`, đồng hồ nhạc chạy từng 50 ms.
+   *  silent = giây im hẳn (không phần tử nào có âm lượng) trong các mốc sau mốc đầu; abrupt = số phần tử mà ở nhịp 50 ms ĐẦU TIÊN sau khi thật sự kêu đã quá nửa mức đích (vào đột ngột, J). */
+  function listen(sim: Slow, seconds: number): { silent: number; abrupt: number } {
+    let silent = 0;
+    let abrupt = 0;
+    const seen = new Set<FakeAudio>();
+    for (let t = 0; t < seconds; t += TICK) {
+      sim.bed.sync(t, true);
+      for (let step = 0; step < TICK * 20; step += 1) {
+        vi.advanceTimersByTime(50);
+        const live = sim.made.filter((item) => item.audio.volume > 0.001);
+        if (live.length === 0 && t >= slow[0].end && t < slow[2].end) silent += 0.05;
+        for (const item of sim.made) {
+          if (!item.audio.sounded || seen.has(item.audio)) continue;
+          seen.add(item.audio);
+          if (item.audio.volume > 0.5 * GOAL) abrupt += 1;
+        }
+      }
+    }
+    return { silent, abrupt };
+  }
+
+  it("mốc i mở thì bài của mốc kế (khác bài đang kêu) được xin tải sẵn, mỗi bài một lần", () => {
+    vi.useFakeTimers();
+    const sim = slowBed(() => 0);
+    sim.bed.setCues([
+      { ...slow[0] },
+      { ...slow[0], start: 50, end: 100, key: "1:1b" }, // cùng bài: không phải bài kế
+      { ...slow[1], start: 100, end: 200 },
+      { ...slow[2], start: 200, end: 300 },
+    ], -20);
+    sim.bed.sync(1, true);
+    expect(sim.warmed).toEqual(["https://x/b.mp3"]);
+    sim.bed.sync(2, true);
+    sim.bed.sync(60, true); // sang mốc cùng bài
+    expect(sim.warmed).toEqual(["https://x/b.mp3"]);
+    sim.bed.sync(120, true);
+    expect(sim.warmed).toEqual(["https://x/b.mp3", "https://x/c.mp3"]);
+    sim.bed.sync(20, true, true); // tua về: b đã xin rồi, không xin lại
+    expect(sim.warmed).toEqual(["https://x/b.mp3", "https://x/c.mp3"]);
+    sim.bed.stop();
+  });
+
+  it("chỉ bài danh mục (https) mới được xin tải sẵn; không có hàng tải sẵn thì thôi", () => {
+    vi.useFakeTimers();
+    const sim = slowBed(() => 0);
+    sim.bed.setCues([{ ...slow[0] }, { start: 100, end: 200, link: "local:abc", key: "1:2", src: "/l" }], -20);
+    sim.bed.sync(1, true);
+    expect(sim.warmed).toEqual([]);
+    sim.bed.stop();
+    const none = slowBed(() => 0, { withWarm: false });
+    none.bed.setCues(slow, -20);
+    expect(() => none.bed.sync(1, true)).not.toThrow();
+    none.bed.stop();
+  });
+
+  it("bài mới chưa có tiếng thì âm lượng giữ 0 (bài cũ mờ như cũ); có tiếng rồi mới mờ vào trong FADE_SECONDS", () => {
+    vi.useFakeTimers();
+    const sim = slowBed((src) => (src === "/a" ? 0 : 16));
+    sim.bed.setCues(slow, -20);
+    sim.bed.sync(0, true);
+    vi.advanceTimersByTime(3_000); // a có tiếng ngay và mờ vào xong
+    const a = sim.made[0].audio;
+    expect(a.volume).toBeCloseTo(GOAL, 3);
+    sim.bed.sync(100, true); // sang b: tải 16 giây
+    const b = sim.made[1].audio;
+    vi.advanceTimersByTime(15_000);
+    expect(b.volume).toBe(0);
+    expect(a.volume).toBe(0); // bài cũ mờ hết trong 2 giây: im lặng bằng thời gian tải, nhưng bài mới KHÔNG vào đột ngột
+    vi.advanceTimersByTime(1_100); // b có tiếng
+    expect(b.readyState).toBe(4);
+    vi.advanceTimersByTime(FADE_SECONDS * 500);
+    expect(b.volume).toBeGreaterThan(0.3 * GOAL);
+    expect(b.volume).toBeLessThan(0.7 * GOAL); // đang ở giữa dốc, chưa tới mức đích
+    vi.advanceTimersByTime(FADE_SECONDS * 600);
+    expect(b.volume).toBeCloseTo(GOAL, 3);
+    sim.bed.stop();
+  });
+
+  it("trễ tải 16 giây: không lần vào nào đột ngột (J = 0); bản giả không khai báo trạng thái (hành vi cũ) thì có - bài thử đủ chặt", () => {
+    vi.useFakeTimers();
+    const gated = slowBed(() => 16, { withWarm: false });
+    gated.bed.setCues(slow, -20);
+    expect(listen(gated, 330).abrupt).toBe(0);
+    gated.bed.stop();
+    vi.useRealTimers();
+    vi.useFakeTimers();
+    const old = slowBed(() => 16, { withWarm: false, withState: false });
+    old.bed.setCues(slow, -20);
+    expect(listen(old, 330).abrupt).toBeGreaterThan(0);
+    old.bed.stop();
+  });
+
+  it("G: im lặng vì chờ tải còn <= 10% khi có tải sẵn (bài đã warm xong thì tới gần như ngay)", () => {
+    vi.useFakeTimers();
+    const without = slowBed(() => LOAD_SECONDS, { withWarm: false });
+    without.bed.setCues(slow, -20);
+    const base = listen(without, 330);
+    without.bed.stop();
+    vi.useRealTimers();
+    vi.useFakeTimers();
+    const withWarm = slowBed(() => LOAD_SECONDS);
+    withWarm.bed.setCues(slow, -20);
+    const warmed = listen(withWarm, 330);
+    expect(withWarm.warmed).toEqual(["https://x/b.mp3", "https://x/c.mp3"]);
+    withWarm.bed.stop();
+    expect(base.silent).toBeGreaterThan(15); // hai lần đổi bài, mỗi lần ~10 giây im sau khi bài cũ mờ hết
+    expect(warmed.silent).toBeLessThanOrEqual(0.1 * base.silent);
+    expect(warmed.abrupt).toBe(0);
+  });
+
+  it("đổi âm lượng lúc bài mới còn chờ tải thì vẫn giữ 0", () => {
+    vi.useFakeTimers();
+    const sim = slowBed(() => 16, { withWarm: false });
+    sim.bed.setCues(slow, -20);
+    sim.bed.sync(0, true);
+    sim.bed.setVolume(0.8);
+    vi.advanceTimersByTime(10_000);
+    expect(sim.made[0].audio.volume).toBe(0);
+    vi.advanceTimersByTime(8_000);
+    expect(sim.made[0].audio.volume).toBeCloseTo(0.8 * GOAL, 3);
+    sim.bed.stop();
+  });
+});
+
+describe("tải sẵn bài đầu chương kế khi chương còn <= 120 giây (NextChapterWarm)", () => {
+  const next = (link: string): MusicCues => ({
+    cues: [{ start: 0, end: 50, link, key: "1:1", src: "/n" }, { start: 50, end: 90, link: "https://x/z.mp3", key: "1:2", src: "/z" }],
+    levelDb: -20,
+  });
+  const settle = async () => {
+    for (let i = 0; i < 4; i += 1) await Promise.resolve();
+  };
+
+  it("còn > 120 giây hay chưa biết độ dài thì chưa hỏi; tới ngưỡng thì xin bài MỐC ĐẦU của chương kế, một lần", async () => {
+    const asked: number[] = [];
+    const warmed: string[] = [];
+    const watch = new NextChapterWarm(async (id) => { asked.push(id); return next("https://x/n.mp3"); }, (link) => warmed.push(link));
+    watch.update("1:1", 2, NEXT_CHAPTER_WARM_SECONDS + 1);
+    watch.update("1:1", 2, 0);
+    watch.update("1:1", 2, -5);
+    watch.update("1:1", null, 30);
+    expect(asked).toEqual([]);
+    watch.update("1:1", 2, NEXT_CHAPTER_WARM_SECONDS);
+    await settle();
+    expect(asked).toEqual([2]);
+    expect(warmed).toEqual(["https://x/n.mp3"]);
+    watch.update("1:1", 2, 100);
+    await settle();
+    expect(asked).toEqual([2]);
+  });
+
+  it("chương kế chưa dựng xong (pending) hay hỏi hỏng thì bỏ qua, hỏi lại sau 15 giây; không nhạc thì thôi hẳn", async () => {
+    let clock = 1_000;
+    const answers: (MusicCues | Error)[] = [{ cues: [], levelDb: -20, pending: true }, new Error("mạng"), next("https://x/n.mp3")];
+    const warmed: string[] = [];
+    let asks = 0;
+    const watch = new NextChapterWarm(async () => {
+      const answer = answers[asks++];
+      if (answer instanceof Error) throw answer;
+      return answer;
+    }, (link) => warmed.push(link), () => clock);
+    watch.update("1:1", 2, 100);
+    await settle();
+    expect(asks).toBe(1);
+    watch.update("1:1", 2, 99);
+    await settle();
+    expect(asks).toBe(1); // chưa tới hạn hỏi lại
+    clock += 15_000;
+    watch.update("1:1", 2, 80);
+    await settle();
+    expect(asks).toBe(2);
+    clock += 15_000;
+    watch.update("1:1", 2, 60);
+    await settle();
+    expect(asks).toBe(3);
+    expect(warmed).toEqual(["https://x/n.mp3"]);
+    let silentAsks = 0;
+    const silent = new NextChapterWarm(async () => { silentAsks += 1; return { cues: [], levelDb: -20 }; }, (link) => warmed.push(link), () => clock);
+    silent.update("1:1", 3, 60);
+    await settle();
+    silent.update("1:1", 3, 59);
+    await settle();
+    expect(silentAsks).toBe(1);
+    expect(warmed).toEqual(["https://x/n.mp3"]);
+  });
 });

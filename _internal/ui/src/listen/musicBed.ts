@@ -69,8 +69,10 @@ export const MUSIC_CHANGED_EVENT = "abook:music-changed";
 export const MUSIC_CHANGED_ALL = "*";
 
 type BedAudio = Pick<HTMLAudioElement, "play" | "pause" | "paused" | "volume" | "loop" | "currentTime" | "duration"> & {
-  /** `error`: bài không tải được (mất mạng, máy chủ không phát được). */
-  addEventListener(type: "loadedmetadata" | "error", listener: () => void, options?: { once?: boolean }): void;
+  /** `error`: bài không tải được (mất mạng, máy chủ không phát được). `playing`: bài THẬT SỰ đang kêu (đã có dữ liệu để phát, không còn chờ tải). */
+  addEventListener(type: "loadedmetadata" | "error" | "playing", listener: () => void, options?: { once?: boolean }): void;
+  /** HAVE_FUTURE_DATA (3) trở lên = phát được. Phần tử không khai báo (bản giả) thì không chờ tiếng: mờ vào như cũ. */
+  readonly readyState?: number;
   /** Bài không lặp (bài cũ khi nối bài anh em) đã chơi hết: không phát lại. */
   readonly ended?: boolean;
   /** [release]: bỏ nguồn rồi nạp lại để trình duyệt đóng kết nối tải bài. */
@@ -93,6 +95,10 @@ export const LOOP_CROSSFADE_SECONDS = mix.loopCrossfadeSeconds;
 const STEP_MS = 50;
 /** Bài tải hỏng (mất mạng): đoạn của nó im lặng, chừng ấy sau mới thử lại - như MusicFailures.RETRY_MS của Android. */
 export const RETRY_MS = 5 * 60_000;
+/** Chương còn chừng này giây (theo độ dài đang biết) thì xin máy chủ tải sẵn bài mốc đầu của chương kế ([NextChapterWarm]). */
+export const NEXT_CHAPTER_WARM_SECONDS = 120;
+/** Mốc đầu chương kế chưa dựng xong (`pending`) hay hỏi hỏng: chừng ấy ms sau mới hỏi lại. */
+const NEXT_CHAPTER_RETRY_MS = 15_000;
 
 function cueAt(cues: MusicCue[], seconds: number): MusicCue | null {
   return cues.find((cue) => seconds >= cue.start && seconds < cue.end) ?? null;
@@ -180,8 +186,48 @@ interface Playing {
   final?: boolean;
 }
 
+/** Hỏi mốc chương kế rồi xin tải sẵn bài mốc ĐẦU của nó khi chương này còn <= [NEXT_CHAPTER_WARM_SECONDS]: chương mới mở bằng bài đã nằm trong bộ đệm của
+ *  máy chủ, không im lặng chờ tải (đo 15,5 giây trung vị, PLAN_lx §2). Chương kế chưa dựng xong / hỏi hỏng thì bỏ qua và hỏi lại sau [NEXT_CHAPTER_RETRY_MS]. */
+export class NextChapterWarm {
+  private done = new Set<string>();
+  private asking: string | null = null;
+  private retryAt = new Map<string, number>();
+
+  constructor(
+    private readonly ask: (chapterId: number) => Promise<MusicCues>,
+    private readonly warm: (link: string) => void,
+    private readonly now: () => number = Date.now,
+  ) {}
+
+  /** Gọi mỗi nhịp thời gian. `key`: chương đang nghe (cuốn:chương); `next`: mã chương kế (null = hết cuốn); `remaining`: giây còn lại của chương, <= 0 khi chưa biết. */
+  update(key: string, next: number | null, remaining: number): void {
+    if (next === null || !(remaining > 0) || remaining > NEXT_CHAPTER_WARM_SECONDS) return;
+    const ticket = `${key}>${next}`;
+    if (this.done.has(ticket) || this.asking !== null || (this.retryAt.get(ticket) ?? 0) > this.now()) return;
+    this.asking = ticket;
+    const later = () => this.retryAt.set(ticket, this.now() + NEXT_CHAPTER_RETRY_MS);
+    this.ask(next).then(
+      (result) => {
+        const first = result.pending ? undefined : result.cues[0];
+        if (first) {
+          this.done.add(ticket);
+          this.warm(first.link);
+        } else if (result.pending || result.unavailable) {
+          later();
+        } else {
+          this.done.add(ticket); // chương kế không có nhạc
+        }
+      },
+      later,
+    ).finally(() => {
+      if (this.asking === ticket) this.asking = null;
+    });
+  }
+}
+
 export class MusicBed {
-  constructor(private readonly createAudio: (src: string) => BedAudio = browserAudio) {}
+  /** `warm`: xin máy chủ tải sẵn một bài ([ListenSource.musicWarm]); không có thì không tải sẵn. */
+  constructor(private readonly createAudio: (src: string) => BedAudio = browserAudio, private readonly warm?: (link: string) => void) {}
 
   private cues: MusicCue[] = [];
   private gain = 0.1;
@@ -200,6 +246,23 @@ export class MusicBed {
   private announced: string | null = null;
   // Bài không phát được (`link` của mốc) -> lúc được thử lại (Date.now()); tải được thì xoá.
   private failed = new Map<string, number>();
+  // Phần tử đã phát ra tiếng thật (sự kiện `playing`): trước đó bài mới giữ âm lượng 0, bài cũ mờ như thường (PLAN_lx F1b).
+  private sounded = new WeakSet<BedAudio>();
+  // Bài đã xin tải sẵn trong phiên này (mỗi bài một lần; mốc tới nơi mà chưa có thì chính phần tử <audio> của nó tải và tự thử lại).
+  private warmed = new Set<string>();
+
+  /** Xin máy chủ tải sẵn bài `link` (một lần mỗi phiên). Chỉ bài danh mục (https): bài của người dùng không tải ở đâu cả. */
+  warmLink(link: string): void {
+    if (!this.warm || !link.startsWith("https://") || this.warmed.has(link)) return;
+    this.warmed.add(link);
+    this.warm(link);
+  }
+
+  /** Bài của mốc kế tiếp (khác bài đang kêu) tải sẵn trong lúc bài này chơi: sang mốc không phải chờ mạng (Android: MusicBed.kt prefetchNext). */
+  private warmNext(sounding: MusicCue | null, seconds: number): void {
+    const next = this.cues.find((cue) => cue.start > seconds && cue.link !== sounding?.link);
+    if (next) this.warmLink(next.link);
+  }
 
   /** Mốc mới (`levelDb` bỏ trống = giữ mức chung cũ). `seconds`: chỗ đang tới theo mốc mới - danh sách phát dựng lại hàng bài thì đồng
    *  hồ nhạc rơi vào chỗ khác của hàng mới. */
@@ -212,7 +275,19 @@ export class MusicBed {
 
   setVolume(volume: number): void {
     this.userVolume = Math.max(0, Math.min(1, volume));
-    if (this.current) this.current.audio.volume = this.current.goal = this.target();
+    const playing = this.current;
+    if (!playing) return;
+    playing.goal = this.target();
+    if (this.awaitingSound(playing)) playing.perTick = (playing.goal * STEP_MS) / 1000 / playing.fadeSeconds; // chưa có tiếng: giữ 0
+    else playing.audio.volume = playing.goal;
+  }
+
+  /** Bài mới còn đang chờ tải (chưa có sự kiện `playing`, hay `readyState` < 3): chưa được nhích âm lượng lên - bài cũ mờ đi, im lặng bằng thời gian tải
+   *  thay vì bài mới "vào đột ngột" ở đủ mức ngay khi tải xong. */
+  private awaitingSound(playing: Playing): boolean {
+    const { audio } = playing;
+    if (!playing.entering || typeof audio.readyState !== "number") return false;
+    return !(this.sounded.has(audio) && audio.readyState >= 3);
   }
 
   /** Gọi mỗi khi thời gian giọng đọc đổi (`seeked` = người nghe vừa tua). */
@@ -401,12 +476,17 @@ export class MusicBed {
       for (const listener of [...this.loadListeners]) listener(cue.link, true);
     }, { once: true });
     audio.addEventListener("error", () => this.drop(cue, audio), { once: true });
+    audio.addEventListener("playing", () => {
+      this.sounded.add(audio);
+      if (this.current?.audio === audio) this.startFade(); // phần tử đã chờ tiếng: bây giờ mới mờ vào
+    }, { once: true });
     const goal = this.target(cue);
     if (this.playing) void audio.play().catch(() => undefined);
     return { cue, audio, goal, perTick: (goal * STEP_MS) / 1000 / fadeSeconds, entering: true, fadeSeconds };
   }
 
   private switchTo(cue: MusicCue | null, seconds: number, seeked = false): void {
+    this.warmNext(cue, seconds);
     if (this.current && cue && this.current.cue.link === cue.link) {
       // Cùng bài (đoạn kề): chơi tiếp, không bắt đầu lại. Vừa tua (hay vừa nạp chương ở giữa): dời nhạc theo chỗ mới.
       this.current.cue = cue;
@@ -443,10 +523,15 @@ export class MusicBed {
       if (playing) {
         const { audio, goal } = playing;
         const move = Math.max(playing.perTick, 1e-5);
-        if (audio.volume < goal) audio.volume = Math.min(goal, audio.volume + move);
-        else if (audio.volume > goal) audio.volume = Math.max(goal, audio.volume - move);
-        if (Math.abs(audio.volume - goal) < 1e-4) playing.entering = false;
-        else busy = true;
+        if (audio.volume < goal && this.awaitingSound(playing)) {
+          // Bài chưa có tiếng: giữ 0. Đang chạy mà chưa đủ dữ liệu thì canh tiếp; còn tạm dừng thì chờ `playing` gọi lại (khỏi giữ đồng hồ chạy không).
+          if (!audio.paused) busy = true;
+        } else {
+          if (audio.volume < goal) audio.volume = Math.min(goal, audio.volume + move);
+          else if (audio.volume > goal) audio.volume = Math.max(goal, audio.volume - move);
+          if (Math.abs(audio.volume - goal) < 1e-4) playing.entering = false;
+          else busy = true;
+        }
       }
       this.fading = this.fading.filter((audio) => {
         audio.volume = Math.max(0, audio.volume - (this.fadeStep.get(audio) ?? (0.1 * STEP_MS) / 1000 / FADE_SECONDS));
