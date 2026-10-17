@@ -800,9 +800,11 @@ object BookEdits {
                 cue.put("track", name)
                 val info = tracks.opt(name)
                 cue.put("gainDb", MusicGain.cueGainDb(level, trackNumber(info, "lufs"), trackNumber(info, "speechBand"), trackNumber(info, "s95")))
-                // Đoạn nghe được của bài cũ: bài ghim dùng 0 và độ dài thật.
+                // Đoạn nghe được, điểm vòng của bài cũ: bài ghim dùng 0 và độ dài thật.
                 cue.remove("audibleStart")
                 cue.remove("audibleEnd")
+                cue.remove("loopStart")
+                cue.remove("loopEnd")
             }
         }
         if (changes.has("levelDb")) {

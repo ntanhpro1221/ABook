@@ -15,6 +15,8 @@ import {
   finished,
   loopBounds,
   loopDue,
+  loopPosition,
+  loopSchedule,
   siblingFadeSeconds,
   stepDbAt,
   type MusicCue,
@@ -692,11 +694,11 @@ describe("lặp mờ chéo trong đoạn nghe được (lô 2 mix-loop, MIX_QA 3
 });
 
 describe("dòng thời gian chung với máy chủ và Android (tests/fixtures/music_timeline)", () => {
-  type Track = { seconds: number; audibleStart?: number; audibleEnd?: number };
+  type Track = { seconds: number; audibleStart?: number; audibleEnd?: number; loopStart?: number; loopEnd?: number };
   type Cue = { start: number; end: number; track: string; gainDb: number; sibling?: boolean; tail?: boolean };
   type Element = { track: string; cue: number; enter: "start" | "loop" | "early"; from: number; to: number; position: number; loop?: boolean };
   type Case = { chapterSeconds: number; tracks: Record<string, Track>; cues: Cue[]; timeline: Element[] };
-  const NAMES = ["loop_crossfade", "sibling_tail", "stop_at", "chapter_end", "short_track"];
+  const NAMES = ["loop_crossfade", "sibling_tail", "stop_at", "chapter_end", "short_track", "loop_points"];
 
   function load(name: string): Case {
     return JSON.parse(readFileSync(new URL(`../../../tests/fixtures/music_timeline/${name}.json`, import.meta.url)).toString("utf8")) as Case;
@@ -709,7 +711,8 @@ describe("dòng thời gian chung với máy chủ và Android (tests/fixtures/m
       .map((cue) => ({ ...cue, end: Math.min(cue.end, limit), tail: cue.end > limit ? undefined : cue.tail }))
       .filter((cue) => cue.end > cue.start)
       .map((cue) => ({ ...cue, link: cue.track, key: cue.track, src: `/${cue.track}`,
-        audibleStart: data.tracks[cue.track].audibleStart, audibleEnd: data.tracks[cue.track].audibleEnd }));
+        audibleStart: data.tracks[cue.track].audibleStart, audibleEnd: data.tracks[cue.track].audibleEnd,
+        loopStart: data.tracks[cue.track].loopStart, loopEnd: data.tracks[cue.track].loopEnd }));
   }
 
   for (const name of NAMES) {
@@ -727,10 +730,10 @@ describe("dòng thời gian chung với máy chủ và Android (tests/fixtures/m
         const before = data.timeline[index - 1];
         if (element.enter === "loop") {
           const position = at(before, element.from);
-          expect(loopDue(bounds, position), `${name} #${index}: mở phần tử lặp ở E - X`).toBe(true);
+          expect(loopDue(bounds, position), `${name} #${index}: mở phần tử lặp ở loopEnd - X`).toBe(true);
           expect(loopDue(bounds, position - 0.05)).toBe(false);
           expect(finalLoop(cue, element.from, position, bounds), `${name} #${index}: chưa phải vòng cuối`).toBe(false);
-          expect(element.position).toBe(bounds.start);
+          expect(element.position).toBe(bounds.loopStart);
         }
         if (element.enter === "early") {
           const previous = loopBounds(cues[before.cue], data.tracks[before.track].seconds);
@@ -742,7 +745,7 @@ describe("dòng thời gian chung với máy chủ và Android (tests/fixtures/m
         }
         const looped = data.timeline.slice(index + 1).some((other) => other.cue === element.cue && other.enter === "loop");
         if (cue.tail && bounds.crossfade) {
-          const position = bounds.end - LOOP_CROSSFADE_SECONDS;
+          const position = bounds.loopEnd - LOOP_CROSSFADE_SECONDS;
           const seconds = element.from + position - element.position;
           expect(finalLoop(cue, seconds, position, bounds), `${name} #${index}: vòng cuối = không có phần tử lặp sau`).toBe(!looped);
         }
@@ -762,6 +765,131 @@ describe("dòng thời gian chung với máy chủ và Android (tests/fixtures/m
       });
     });
   }
+});
+
+describe("điểm vòng của bài có đoạn kết (PLAN_loop §10, tests/fixtures/music_loop)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  type Track = { seconds: number; audibleStart?: number; audibleEnd?: number; loopStart?: number; loopEnd?: number };
+  type Schedule = { opens: number[]; tail: { opens: number[]; seconds: number } };
+  type Case = {
+    track: Track;
+    bounds: { start: number; end: number; period: number; crossfade: boolean; loopStart: number; loopEnd: number };
+    invalidVariants?: Partial<Track>[];
+    ts: number[];
+    positions: number[];
+    cues: (Schedule & { seconds: number })[];
+    legacy?: { positions: number[]; cues: (Schedule & { seconds: number })[] };
+  };
+  const MS = 3; // lệch <= 1 ms: toBeCloseTo(x, 3) = |lệch| < 0,5 ms
+
+  function load(name: string): Case {
+    return JSON.parse(readFileSync(new URL(`../../../tests/fixtures/music_loop/${name}.json`, import.meta.url)).toString("utf8")) as Case;
+  }
+
+  function same(got: number[], want: number[], label: string) {
+    expect(got.length, label).toBe(want.length);
+    got.forEach((value, index) => expect(value, `${label} #${index}`).toBeCloseTo(want[index], MS));
+  }
+
+  for (const name of ["with_points", "without_points", "invalid_points"]) {
+    it(`${name}: cùng vị trí, lịch mở phần tử và chỗ hết vòng cuối với máy chủ`, () => {
+      const data = load(name);
+      const bounds = loopBounds(data.track, data.track.seconds);
+      expect(bounds).toEqual(data.bounds);
+      for (const variant of data.invalidVariants ?? []) {
+        const { loopStart: _start, loopEnd: _end, ...plain } = data.track;
+        expect(loopBounds({ ...plain, ...variant }, data.track.seconds), JSON.stringify(variant)).toEqual(loopBounds(plain, data.track.seconds));
+      }
+      same(data.ts.map((t) => loopPosition(bounds, t)), data.positions, `${name}: vị trí`);
+      for (const cue of data.cues) {
+        same(loopSchedule(bounds, cue.seconds).opens, cue.opens, `${name} ${cue.seconds}: mở phần tử`);
+        const tail = loopSchedule(bounds, cue.seconds, true);
+        same(tail.opens, cue.tail.opens, `${name} ${cue.seconds} tail: mở phần tử`);
+        expect(tail.end, `${name} ${cue.seconds}: hết vòng cuối`).toBeCloseTo(cue.tail.seconds, MS);
+      }
+      if (data.legacy) {
+        // Không có điểm vòng (hay không hợp lệ): trùng từng số với 0.4.89.
+        expect(data.ts.map((t) => loopPosition(bounds, t))).toEqual(data.legacy.positions);
+        data.legacy.cues.forEach((old) => {
+          same(loopSchedule(bounds, old.seconds).opens, old.opens, `${name} ${old.seconds}: như 0.4.89`);
+          same(loopSchedule(bounds, old.seconds, true).opens, old.tail.opens, `${name} ${old.seconds} tail: như 0.4.89`);
+          expect(loopSchedule(bounds, old.seconds, true).end).toBeCloseTo(old.tail.seconds, MS);
+        });
+      }
+    });
+  }
+
+  type Fake = { volume: number; loop: boolean; paused: boolean; currentTime: number; duration: number; ended: boolean };
+  function bed() {
+    const made: Fake[] = [];
+    const music = new MusicBed(() => {
+      const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration: 200, ended: false };
+      made.push(fake);
+      return Object.assign(fake, {
+        play: () => { fake.paused = false; return Promise.resolve(); },
+        pause: () => { fake.paused = true; },
+        addEventListener: () => undefined,
+      });
+    });
+    return { bed: music, made };
+  }
+  // Bài 200 s: A 1,5, E 190,25, điểm vòng 12,5 / 160,75 -> phần tử lặp mở ở 158,75 (giây 157,25 của mốc), P = 146,25.
+  const track = load("with_points").track;
+  const looped: MusicCue = { start: 0, end: 600, link: "a", key: "1:1", src: "/a", gainDb: -10, audibleStart: track.audibleStart,
+    audibleEnd: track.audibleEnd, loopStart: track.loopStart, loopEnd: track.loopEnd };
+
+  it("phần tử mới mở ở loopEnd - X và phát từ loopStart, không về A", () => {
+    vi.useFakeTimers();
+    const { bed: music, made } = bed();
+    music.setCues([looped], -20, 0);
+    music.sync(10, true);
+    made[0].currentTime = 158.7;
+    music.sync(157.2, true);
+    expect(made, "chưa tới loopEnd - X").toHaveLength(1);
+    made[0].currentTime = 160.75 - LOOP_CROSSFADE_SECONDS;
+    music.sync(157.25, true);
+    expect(made).toHaveLength(2);
+    expect(made[1].currentTime, "vào từ loopStart").toBe(12.5);
+    made[1].currentTime = 158.75;
+    music.sync(303.5, true);
+    expect(made, "vòng sau: cũng ở loopEnd - X").toHaveLength(3);
+    expect(made[2].currentTime).toBe(12.5);
+  });
+
+  it("vòng cuối của mốc tail chơi qua loopEnd tới E (đoạn kết soạn sẵn), mốc anh em vào lúc bài hết", () => {
+    vi.useFakeTimers();
+    const { bed: music, made } = bed();
+    music.setCues([
+      { ...looped, end: 335, tail: true },
+      { start: 335, end: 600, link: "c", key: "1:2", src: "/c", gainDb: -10, sibling: true },
+    ], -20, 0);
+    music.sync(1, true);
+    made[0].currentTime = 158.75;
+    music.sync(157.25, true);
+    expect(made, "vòng đầu: còn 178 s mốc, mở phần tử lặp").toHaveLength(2);
+    const last = made[1];
+    last.currentTime = 158.75; // loopEnd - X của vòng cuối
+    music.sync(303.5, true);
+    expect(made, "vòng cuối: không mở phần tử mới ở loopEnd - X").toHaveLength(2);
+    last.currentTime = 175;
+    music.sync(319.75, true);
+    expect(music.activeLink, "qua loopEnd vẫn là bài này").toBe("a");
+    last.currentTime = 190.25;
+    music.sync(334.9, true);
+    expect(music.activeLink, "tới E: bài anh em vào").toBe("c");
+  });
+
+  it("tua: vòng đầu A + t, sau đó loopStart + ((t - (loopStart - A)) mod P)", () => {
+    const { bed: music, made } = bed();
+    music.setCues([looped], -20, 0);
+    music.sync(0, true);
+    music.sync(100, true, true);
+    expect(made[0].currentTime).toBe(1.5 + 100);
+    music.sync(200, true, true);
+    expect(made).toHaveLength(1);
+    expect(made[0].currentTime).toBeCloseTo(12.5 + ((200 - 11) % 146.25), 9);
+  });
 });
 
 /** PLAN_lx F1 (musicwarm): tải sẵn bài kế + bài mới chỉ mờ vào từ lúc CÓ TIẾNG. <audio> giả có trễ tải như đĩa thật: `loadedmetadata` + `playing` chỉ tới sau

@@ -1,0 +1,103 @@
+{
+  "description": "Bài có đoạn kết, điểm vòng hợp lệ: vòng đầu từ A; phần tử lặp mở ở loopEnd - X, phát từ loopStart; vòng cuối của mốc tail chơi qua loopEnd tới E.",
+  "track": {
+    "seconds": 200,
+    "audibleStart": 1.5,
+    "audibleEnd": 190.25,
+    "loopStart": 12.5,
+    "loopEnd": 160.75
+  },
+  "bounds": {
+    "start": 1.5,
+    "end": 190.25,
+    "period": 146.25,
+    "crossfade": true,
+    "loopStart": 12.5,
+    "loopEnd": 160.75
+  },
+  "ts": [
+    0,
+    10.25,
+    100,
+    157.249,
+    157.25,
+    157.251,
+    200,
+    303.5,
+    303.51,
+    450.125,
+    1000.3,
+    3600.7
+  ],
+  "positions": [
+    1.5,
+    11.75,
+    101.5,
+    158.749,
+    12.5,
+    12.501000000000005,
+    55.25,
+    12.5,
+    12.509999999999991,
+    12.875,
+    124.29999999999995,
+    92.19999999999982
+  ],
+  "cues": [
+    {
+      "seconds": 188.75,
+      "opens": [
+        157.25
+      ],
+      "tail": {
+        "opens": [],
+        "seconds": 188.75
+      }
+    },
+    {
+      "seconds": 340,
+      "opens": [
+        157.25,
+        303.5
+      ],
+      "tail": {
+        "opens": [
+          157.25
+        ],
+        "seconds": 335.0
+      }
+    },
+    {
+      "seconds": 540,
+      "opens": [
+        157.25,
+        303.5,
+        449.75
+      ],
+      "tail": {
+        "opens": [
+          157.25,
+          303.5
+        ],
+        "seconds": 481.25
+      }
+    },
+    {
+      "seconds": 700,
+      "opens": [
+        157.25,
+        303.5,
+        449.75,
+        596.0
+      ],
+      "tail": {
+        "opens": [
+          157.25,
+          303.5,
+          449.75
+        ],
+        "seconds": 627.5
+      }
+    }
+  ]
+}

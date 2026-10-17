@@ -1,0 +1,246 @@
+{
+  "description": "Bài a có điểm vòng: mốc tail chơi qua loopEnd tới E của vòng 2 (335 s) rồi b vào; a mở lại ở 520, ba phần tử lặp từ loopStart, mờ ra ở 1000.",
+  "chapterSeconds": 1200,
+  "tracks": {
+    "a": {
+      "seconds": 200,
+      "audibleStart": 1.5,
+      "audibleEnd": 190.25,
+      "loopStart": 12.5,
+      "loopEnd": 160.75
+    },
+    "b": {
+      "seconds": 120,
+      "audibleStart": 0,
+      "audibleEnd": 115
+    }
+  },
+  "cues": [
+    {
+      "start": 0,
+      "end": 335,
+      "track": "a",
+      "gainDb": -12,
+      "tail": true
+    },
+    {
+      "start": 335,
+      "end": 520,
+      "track": "b",
+      "gainDb": -14,
+      "sibling": true
+    },
+    {
+      "start": 520,
+      "end": 1000,
+      "track": "a",
+      "gainDb": -10
+    }
+  ],
+  "timeline": [
+    {
+      "track": "a",
+      "cue": 0,
+      "enter": "start",
+      "from": 0.0,
+      "to": 159.25,
+      "position": 1.5,
+      "gain": [
+        [
+          0.0,
+          null
+        ],
+        [
+          2.0,
+          -12.0
+        ],
+        [
+          157.25,
+          -12.0
+        ],
+        [
+          159.25,
+          null
+        ]
+      ]
+    },
+    {
+      "track": "a",
+      "cue": 0,
+      "enter": "loop",
+      "from": 157.25,
+      "to": 335.0,
+      "position": 12.5,
+      "gain": [
+        [
+          157.25,
+          null
+        ],
+        [
+          159.25,
+          -12.0
+        ],
+        [
+          335.0,
+          -12.0
+        ]
+      ]
+    },
+    {
+      "track": "b",
+      "cue": 1,
+      "enter": "start",
+      "from": 335.0,
+      "to": 450.0,
+      "position": 0.0,
+      "gain": [
+        [
+          335.0,
+          null
+        ],
+        [
+          341.0,
+          -14.0
+        ],
+        [
+          448.0,
+          -14.0
+        ],
+        [
+          450.0,
+          null
+        ]
+      ]
+    },
+    {
+      "track": "b",
+      "cue": 1,
+      "enter": "loop",
+      "from": 448.0,
+      "to": 522.0,
+      "position": 0.0,
+      "gain": [
+        [
+          448.0,
+          null
+        ],
+        [
+          450.0,
+          -14.0
+        ],
+        [
+          520.0,
+          -14.0
+        ],
+        [
+          522.0,
+          null
+        ]
+      ]
+    },
+    {
+      "track": "a",
+      "cue": 2,
+      "enter": "start",
+      "from": 520.0,
+      "to": 679.25,
+      "position": 1.5,
+      "gain": [
+        [
+          520.0,
+          null
+        ],
+        [
+          522.0,
+          -10.0
+        ],
+        [
+          677.25,
+          -10.0
+        ],
+        [
+          679.25,
+          null
+        ]
+      ]
+    },
+    {
+      "track": "a",
+      "cue": 2,
+      "enter": "loop",
+      "from": 677.25,
+      "to": 825.5,
+      "position": 12.5,
+      "gain": [
+        [
+          677.25,
+          null
+        ],
+        [
+          679.25,
+          -10.0
+        ],
+        [
+          823.5,
+          -10.0
+        ],
+        [
+          825.5,
+          null
+        ]
+      ]
+    },
+    {
+      "track": "a",
+      "cue": 2,
+      "enter": "loop",
+      "from": 823.5,
+      "to": 971.75,
+      "position": 12.5,
+      "gain": [
+        [
+          823.5,
+          null
+        ],
+        [
+          825.5,
+          -10.0
+        ],
+        [
+          969.75,
+          -10.0
+        ],
+        [
+          971.75,
+          null
+        ]
+      ]
+    },
+    {
+      "track": "a",
+      "cue": 2,
+      "enter": "loop",
+      "from": 969.75,
+      "to": 1002.0,
+      "position": 12.5,
+      "gain": [
+        [
+          969.75,
+          null
+        ],
+        [
+          971.75,
+          -10.0
+        ],
+        [
+          1000.0,
+          -10.0
+        ],
+        [
+          1002.0,
+          null
+        ]
+      ]
+    }
+  ]
+}

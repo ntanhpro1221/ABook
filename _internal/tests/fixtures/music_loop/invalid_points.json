@@ -1,0 +1,197 @@
+{
+  "description": "Điểm vòng không hợp lệ (loopEnd - X vượt E, chu kỳ dưới loopMinPeriodSeconds, loopStart trước A, ngược, thiếu một trường): như không có điểm vòng; legacy = số của mã 0.4.89.",
+  "track": {
+    "seconds": 200,
+    "audibleStart": 1.5,
+    "audibleEnd": 190.25,
+    "loopStart": 12.5,
+    "loopEnd": 195
+  },
+  "bounds": {
+    "start": 1.5,
+    "end": 190.25,
+    "period": 186.75,
+    "crossfade": true,
+    "loopStart": 1.5,
+    "loopEnd": 190.25
+  },
+  "invalidVariants": [
+    {
+      "loopStart": 12.5,
+      "loopEnd": 195
+    },
+    {
+      "loopStart": 100,
+      "loopEnd": 111
+    },
+    {
+      "loopStart": 1.0,
+      "loopEnd": 160.75
+    },
+    {
+      "loopStart": 160,
+      "loopEnd": 150
+    },
+    {
+      "loopStart": 12.5
+    }
+  ],
+  "ts": [
+    0,
+    10.25,
+    100,
+    157.249,
+    157.25,
+    157.251,
+    200,
+    303.5,
+    303.51,
+    450.125,
+    1000.3,
+    3600.7
+  ],
+  "positions": [
+    1.5,
+    11.75,
+    101.5,
+    158.749,
+    158.75,
+    158.751,
+    14.75,
+    118.25,
+    118.25999999999999,
+    78.125,
+    68.04999999999995,
+    53.94999999999982
+  ],
+  "cues": [
+    {
+      "seconds": 188.75,
+      "opens": [
+        186.75
+      ],
+      "tail": {
+        "opens": [],
+        "seconds": 188.75
+      }
+    },
+    {
+      "seconds": 400,
+      "opens": [
+        186.75,
+        373.5
+      ],
+      "tail": {
+        "opens": [
+          186.75
+        ],
+        "seconds": 375.5
+      }
+    },
+    {
+      "seconds": 600,
+      "opens": [
+        186.75,
+        373.5,
+        560.25
+      ],
+      "tail": {
+        "opens": [
+          186.75,
+          373.5
+        ],
+        "seconds": 562.25
+      }
+    },
+    {
+      "seconds": 800,
+      "opens": [
+        186.75,
+        373.5,
+        560.25,
+        747.0
+      ],
+      "tail": {
+        "opens": [
+          186.75,
+          373.5,
+          560.25
+        ],
+        "seconds": 749.0
+      }
+    }
+  ],
+  "legacy": {
+    "positions": [
+      1.5,
+      11.75,
+      101.5,
+      158.749,
+      158.75,
+      158.751,
+      14.75,
+      118.25,
+      118.25999999999999,
+      78.125,
+      68.04999999999995,
+      53.94999999999982
+    ],
+    "cues": [
+      {
+        "seconds": 188.75,
+        "opens": [
+          186.75
+        ],
+        "tail": {
+          "opens": [],
+          "seconds": 188.75
+        }
+      },
+      {
+        "seconds": 400,
+        "opens": [
+          186.75,
+          373.5
+        ],
+        "tail": {
+          "opens": [
+            186.75
+          ],
+          "seconds": 375.5
+        }
+      },
+      {
+        "seconds": 600,
+        "opens": [
+          186.75,
+          373.5,
+          560.25
+        ],
+        "tail": {
+          "opens": [
+            186.75,
+            373.5
+          ],
+          "seconds": 562.25
+        }
+      },
+      {
+        "seconds": 800,
+        "opens": [
+          186.75,
+          373.5,
+          560.25,
+          747.0
+        ],
+        "tail": {
+          "opens": [
+            186.75,
+            373.5,
+            560.25
+          ],
+          "seconds": 749.0
+        }
+      }
+    ]
+  }
+}

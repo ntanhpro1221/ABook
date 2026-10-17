@@ -323,9 +323,11 @@ class Mixer:
         assert self.tracks is not None
         pcm = {name: self.tracks.get(path, rate, channels) for name, path in music.files.items()}
         info: dict[str, dict[str, Any]] = {name: {"seconds": len(data) / rate} for name, data in pcm.items() if data is not None}
-        for cue in music.cues:  # đoạn nghe được của bài (A, E) đi theo mốc trong gói
+        for cue in music.cues:  # đoạn nghe được của bài (A, E) và điểm vòng đi theo mốc trong gói
             if cue["track"] in info and "audibleEnd" in cue:
                 info[cue["track"]].update(audibleStart=cue.get("audibleStart"), audibleEnd=cue["audibleEnd"])
+            if cue["track"] in info:
+                info[cue["track"]].update(music_plan.loop_points(cue))
         timeline = music_mix.music_timeline(music.cues, seconds, info)
         self.lost[int(chapter_id)] = len({element["cue"] for element in timeline if pcm.get(element["track"]) is None}) + music.dropped
         if channels == 1:  # bài hai kênh gộp làm một: bù phần độ to mất khi gộp, đo trên đúng đoạn chương này phát

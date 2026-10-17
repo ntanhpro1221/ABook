@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nghe ngay
 
 - Máy tính: nhạc nền không còn im bặt chờ tải rồi vào đột ngột khi sang cảnh mới - bài của cảnh kế và bài đầu chương kế được tải sẵn trong lúc bạn nghe, bài mới chỉ mờ vào từ lúc có tiếng. Mô phỏng một giờ nghe với mạng 0,64 MB/giây: chờ nhạc gần như hết (259 giây còn khoảng 11 giây), không còn lần nhạc vào đột ngột (17,8 lần/giờ), đầu chương có nhạc ngay (trung vị 15,5 giây còn 0).
+- Máy tính và điện thoại: bài nhạc nền có đoạn kết, khi phải lặp lại, nối vòng ở giữa bài thay vì nhảy từ đoạn kết về đầu bài; lần chơi cuối của bài trước khi sang bài khác vẫn kết bằng chính đoạn kết ấy. Trên 60 bài thử, chỗ nối kiểu cũ nghe gãy hơn chỗ nối mới ở 91 % số cặp so sánh (AUC 0,91). Có hiệu lực khi danh mục nhạc có điểm vòng cho từng bài (bản danh mục kế tiếp); bài chưa có thì lặp như cũ.
 
 ## [0.4.89] - 2026-10-17
 
