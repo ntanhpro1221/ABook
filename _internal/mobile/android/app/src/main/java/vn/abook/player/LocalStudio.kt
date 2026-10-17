@@ -85,9 +85,9 @@ object LocalStudio {
             error = problem.message.orEmpty()
             JSONArray()
         }
-        // `scene`: máy dựng được nhạc theo cảnh (menu hiện dòng "Theo cảnh"); điện thoại dựng bằng đường N0, không cần học sinh nên `student` luôn false.
+        // `scene`: máy dựng được nhạc theo cảnh (menu hiện dòng "Theo cảnh"), như máy tính.
         return JSONObject().put("playlists", playlists).put("mine", musicStore?.entries()?.size ?: 0).put("error", error)
-            .put("scene", JSONObject().put("student", false))
+            .put("scene", JSONObject())
     }
 
     /** Lời đáp của một lượt nhập (`my_music_import` của server.py): bài mới, bài đã có, file lỗi kèm lý do, cộng danh sách mới. */
