@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại
+
+- Máy OPPO, Xiaomi, Samsung... hay cho app "ngủ" khi ở nền: khi bạn xuất sách nói, M4B hay MP3 mà ABook chưa được phép chạy nền, màn xuất có một ghi chú nhỏ nói xuất sách dài lúc tắt màn hình có thể bị máy tạm dừng, kèm nút mở thẳng trang cài đặt và lời chỉ đường theo hãng máy. Bật xong quay lại thì ghi chú tự ẩn; máy đã cho phép thì không hiện gì.
+
 ## [0.4.91] - 2026-10-18
 
 ### Nghe ngay

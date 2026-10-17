@@ -12,7 +12,8 @@ import { chosenVoice, resolveVoice, voiceCaption } from "@/listen/readAloudVoice
 import { useReadAloudVoices } from "@/listen/source";
 import { coverArtwork } from "@/shared/cover";
 import { formatSize } from "@/shared/format";
-import { Button, Dialog, LiveText } from "@/shared/ui";
+import { Button, Dialog } from "@/shared/ui";
+import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
 import { EbookLibrary, type AudiobookExportEvent, type AudiobookPhonePlan } from "./plugins";
 
 // "Xuất sách nói" của sách Nghe ngay (chỉ có chữ) trên điện thoại: cùng việc với máy tính (desktop/AudiobookDialog.tsx) - điện thoại đọc cả cuốn bằng giọng đã chọn cho cuốn
@@ -80,7 +81,7 @@ function showProgress(event: ProgressFields & Pick<AudiobookExportEvent, "bookId
   toast.loading(AUDIOBOOK_COPY.busy, {
     id: toastId(event.bookId),
     // Thông báo nằm trong vùng aria-live: trình đọc màn hình chỉ đọc pha / mốc 25 %, không đọc lại mỗi lần số đổi (soát a31 A6).
-    description: <LiveText shown={view.description} spoken={view.spoken ?? ""} />,
+    description: <ExportProgressText shown={view.description} spoken={view.spoken ?? ""} />,
     duration: Infinity,
     action: { label: "Dừng", onClick: () => cancel(event.bookId) },
   });
@@ -188,6 +189,7 @@ export function AudiobookPhoneForm({ voice, plan, planError, music = false, onMu
       <p className="text-xs text-fg-3">
         Việc chạy nền, bạn cứ dùng điện thoại như thường - lúc bạn đang nghe sách, việc xuất nhường chỗ. Dừng bất cứ lúc nào: phần đã làm được giữ, xuất lại là làm tiếp.
       </p>
+      <BackgroundNote />
     </div>
   );
 }

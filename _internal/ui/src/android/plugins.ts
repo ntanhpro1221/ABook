@@ -373,6 +373,8 @@ export interface ShareStatus {
   bluetooth?: { status: string; connections: number };
   /** Hãng máy (Build.MANUFACTURER) - chọn lời hướng dẫn cho ABook chạy nền (backgroundHelp.ts). */
   manufacturer?: string;
+  /** ABook đã được miễn tối ưu pin (người dùng bật "Cho phép hoạt động dưới nền") - máy không đông ABook khi ở nền. */
+  backgroundAllowed?: boolean;
 }
 
 export interface EbookLibraryPlugin {
@@ -385,6 +387,8 @@ export interface EbookLibraryPlugin {
   shareRevoke(options: { id: string }): Promise<ShareStatus>;
   /** Trang thông tin ứng dụng của ABook trong Cài đặt Android (cho ABook chạy nền). */
   openAppSettings(): Promise<void>;
+  /** Hãng máy + ABook đã được chạy nền chưa (PowerManager.isIgnoringBatteryOptimizations) - màn xuất nhắc khi chưa (BackgroundNote.tsx). */
+  backgroundStatus(): Promise<{ manufacturer: string; backgroundAllowed: boolean }>;
   pair(options: { host: string; port: number; code: string; device?: string }): Promise<{ name: string }>;
   /** Máy đã ghép Bluetooth với điện thoại (BluetoothLink.kt); Android 12+ xin quyền "Thiết bị ở gần" lần đầu. */
   bluetoothDevices(): Promise<{ devices: { address: string; name: string; kind: "computer" | "phone"; abook: boolean }[] }>;

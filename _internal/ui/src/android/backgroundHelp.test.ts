@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { backgroundHelp } from "./backgroundHelp";
 
 describe("chỉ đường cho ABook chạy nền theo hãng máy", () => {
-  it("OPPO, realme, OnePlus: hoạt động nền và tự khởi chạy", () => {
+  it("OPPO, realme, OnePlus: hoạt động dưới nền và tự động khởi chạy", () => {
     for (const maker of ["OPPO", "realme", "OnePlus"]) {
-      expect(backgroundHelp(maker)).toBe("Trong trang mở ra: Pin → bật “Cho phép hoạt động nền” và “Tự khởi chạy”.");
+      expect(backgroundHelp(maker)).toBe("Trong trang mở ra: Pin → bật “Cho phép hoạt động dưới nền” và “Cho phép tự động khởi chạy”.");
     }
   });
 

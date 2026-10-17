@@ -8,7 +8,8 @@ import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { Button, Dialog, LiveText } from "@/shared/ui";
+import { Button, Dialog } from "@/shared/ui";
+import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
 import { chargerHint } from "./ExportAudiobook";
 import { EbookLibrary, type M4bExportEvent } from "./plugins";
 
@@ -55,7 +56,7 @@ export function finishedView(event: Pick<M4bExportEvent, "name" | "size" | "chap
 function showProgress(book: ListenBook, progress: string, fraction?: number) {
   toast.loading(M4B_COPY.busy, {
     id: toastId(book.id),
-    description: <LiveText shown={progress} spoken={spokenProgress(M4B_COPY.busy, fraction)} />,
+    description: <ExportProgressText shown={progress} spoken={spokenProgress(M4B_COPY.busy, fraction)} />,
     duration: Infinity,
     action: { label: "Dừng", onClick: () => void EbookLibrary.cancelM4bExport({ bookId: book.id }) },
   });
@@ -123,6 +124,7 @@ export function M4bMusicForm({ music, onMusic, chapters }: { music: boolean; onM
       <p className="text-sm text-fg-2">Một file có mục lục chương: app nghe sách nói nào cũng mở được, nhớ chỗ nghe dở.</p>
       <MusicMixOption checked={music} onChange={onMusic} />
       {hint && <p className="text-xs text-fg-3">{hint}</p>}
+      <BackgroundNote />
     </div>
   );
 }
