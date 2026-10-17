@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ReadAloudError } from "./readAloud";
-import { LiveClip, RecordReader, clipFromStream } from "./liveClip";
+import { LiveClip, RecordReader, UNHEARD_MS, clipFromStream } from "./liveClip";
 import { LiveFeed } from "./liveFeed";
 import { FakeSource } from "./liveTestKit";
 
@@ -240,6 +240,18 @@ describe("LiveClip: phần đã về (uxfix58)", () => {
     stream.send(record("W", { words: [[0, 800], [800, 1400]], duration_ms: 1400 })); // máy chủ cũ: không có heard_ms
     await flush();
     expect(live.heardMs).toBeNull();
+  });
+});
+
+describe("LiveClip.shownWords: mốc chữ để tô sáng (uxfix61)", () => {
+  it("chữ chưa tới (bắt đầu từ heardMs trở đi) bị đẩy ra xa; chữ đã có tiếng và máy chủ cũ (không heardMs) giữ nguyên", () => {
+    const live = new LiveClip();
+    const stacked: [number, number][] = [[0, 250], [250, 500], [500, 500], [500, 500]];
+    live.setWords(stacked);
+    expect(live.shownWords).toEqual(stacked);
+    live.setWords(stacked, 500);
+    expect(live.shownWords).toEqual([[0, 250], [250, 500], [UNHEARD_MS, UNHEARD_MS], [UNHEARD_MS, UNHEARD_MS]]);
+    expect(live.words).toEqual(stacked); // mốc gốc không đổi (xin tiếp clip đuôi dựa vào nó)
   });
 });
 
