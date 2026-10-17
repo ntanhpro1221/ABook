@@ -252,7 +252,7 @@ def report_switches(plan: dict[str, Any], log: Callable[[str], None] | None = No
 
 # Thông tin bài ghi vào plan["tracks"] (ghi công, độ to) - bài thay thế tạm lúc phát cũng mang đúng bộ này.
 TRACK_INFO_KEYS = ("title", "creator", "license", "licenseUrl", "attribution", "duration", "source", "landing", "lufs",
-                   "speechBand", "s95", "audibleStart", "audibleEnd")
+                   "speechBand", "s95", "audibleStart", "audibleEnd", *music_mix.LOOP_KEYS)
 # phần `choose` / `build` gắn thêm cho từng đoạn
 CHOICE_FIELDS = ("key", "link", "distance", "pinned", "silenced", "pinUnavailable", "continued", "stepDb", "siblings",
                  "stopAt")
@@ -549,6 +549,15 @@ def apply_gain(cues: list[dict[str, Any]], level_db: float, tracks: dict[str, An
             cue["gainDb"] = cue_gain_db(level_db, measured.get("lufs"), _number(info.get("speechBand")), measured.get("s95"))
         if "audibleStart" in measured and "audibleEnd" in measured and _number(cue.get("audibleEnd")) is None:
             cue["audibleStart"], cue["audibleEnd"] = measured["audibleStart"], measured["audibleEnd"]
+        if _number(cue.get("loopEnd")) is None:
+            cue.update(loop_points(info))
+
+
+def loop_points(info: dict[str, Any] | None) -> dict[str, float]:
+    """Điểm vòng của bài trong danh mục (`loopStart` / `loopEnd`, music_mix): cả hai hay không gì. Chỉ danh mục có (Nhạc tính từ
+    file gốc), file trên máy không đo lại; trình phát kiểm hợp lệ với đoạn nghe được (`music_mix.loop_bounds`)."""
+    values = [_number((info or {}).get(key)) for key in music_mix.LOOP_KEYS]
+    return dict(zip(music_mix.LOOP_KEYS, values, strict=True)) if None not in values else {}
 
 
 # Bài của danh mục luôn là .mp3; bài người dùng tự nhập ("Nhạc của tôi", music_local.py) giữ nguyên định dạng của file.
@@ -592,13 +601,13 @@ class TrackSource:
         return self.file(link)
 
 
-SUBSTITUTE_DROPS = ("tail", "gainDb", "audibleStart", "audibleEnd")
+SUBSTITUTE_DROPS = ("tail", "gainDb", "audibleStart", "audibleEnd", *music_mix.LOOP_KEYS)
 
 
 def substituted(cue: dict[str, Any], link: str) -> dict[str, Any]:
     """Mốc `cue` chuyển sang bài thay `link` (bài đã chọn không lấy được): bỏ những gì chỉ đúng cho bài đã lập lịch - cờ `tail`
-    (bài kết đúng ở cuối mốc; bài thay dài ngắn khác) và độ khuếch đại / đoạn nghe được (tính lại theo bài thay). Một chỗ cho trình
-    phát máy tính (`server._music_playable`) lẫn gói sách (`package`)."""
+    (bài kết đúng ở cuối mốc; bài thay dài ngắn khác) và độ khuếch đại / đoạn nghe được / điểm vòng (tính lại theo bài thay).
+    Một chỗ cho trình phát máy tính (`server._music_playable`) lẫn gói sách (`package`)."""
     return {**{key: value for key, value in cue.items() if key not in SUBSTITUTE_DROPS}, "link": link}
 
 
@@ -662,13 +671,14 @@ def package(project_root: Path, chapter_ids: Iterable[int],
                                 **{key: info.get(key) for key in ("title", "creator", "license", "licenseUrl",
                                                                   "attribution", "landing") if info.get(key)}}
                 # Độ to, p95 ngắn hạn + độ lấn dải tiếng nói đi theo bài (sách đọc lại / đổi mức / cập nhật mà không cần
-                # danh mục); số đo từ chính file đang đóng gói thắng số danh mục. Đoạn nghe được đi theo từng mốc.
+                # danh mục); số đo từ chính file đang đóng gói thắng số danh mục. Đoạn nghe được + điểm vòng đi theo từng mốc.
                 measured = track_measure(info, path)
                 for key, value in (("lufs", measured.get("lufs")), ("speechBand", _number(info.get("speechBand"))),
                                    ("s95", measured.get("s95"))):
                     if value is not None:
                         tracks[name][key] = round(value, 2)
-                audible[name] = {key: measured[key] for key in ("audibleStart", "audibleEnd") if key in measured}
+                audible[name] = {**{key: measured[key] for key in ("audibleStart", "audibleEnd") if key in measured},
+                                 **loop_points(info)}
             kept.append({"start": round(cue["start"], 3), "end": round(cue["end"], 3), "track": name,
                          "gainDb": cue_gain_db(level_db, _number(tracks[name].get("lufs")),
                                                _number(tracks[name].get("speechBand")), _number(tracks[name].get("s95"))),
@@ -759,8 +769,9 @@ def packaged_playable(music: dict[str, Any] | None, chapter_id: int) -> tuple[li
 def _cue_shape(cue: dict[str, Any]) -> dict[str, Any]:
     """Phần hình dạng của một mốc ngoài bài và độ to: `sibling` (nối bài anh em trong cảnh), `tail` (mốc kết đúng ở điểm kết
     bài - `chapter_cues`), `steps` (bước âm lượng [{at, db}], `at` tăng dần) và đoạn nghe được của bài (`audibleStart` /
-    `audibleEnd`, giây trong bài - trình phát lặp mờ chéo trong đó; sách cũ không có thì trình phát dùng 0 và độ dài thật) - chỉ
-    khoá nào có, bước hỏng bị bỏ. Một chỗ cho gói sách (`package`) lẫn sách đã đóng gói (`packaged_cues`)."""
+    `audibleEnd`, giây trong bài - trình phát lặp mờ chéo trong đó; sách cũ không có thì trình phát dùng 0 và độ dài thật), điểm
+    vòng (`loopStart` / `loopEnd`, music_mix - trình phát tự kiểm hợp lệ) - chỉ khoá nào có, bước hỏng bị bỏ. Một chỗ cho gói
+    sách (`package`) lẫn sách đã đóng gói (`packaged_cues`)."""
     out: dict[str, Any] = {}
     for flag in ("sibling", "tail"):
         if cue.get(flag) is True:
@@ -768,6 +779,9 @@ def _cue_shape(cue: dict[str, Any]) -> dict[str, Any]:
     start, end = _number(cue.get("audibleStart")), _number(cue.get("audibleEnd"))
     if start is not None and end is not None and 0 <= start < end:
         out["audibleStart"], out["audibleEnd"] = round(start, 3), round(end, 3)
+    restart, loop_end = _number(cue.get("loopStart")), _number(cue.get("loopEnd"))
+    if restart is not None and loop_end is not None and 0 <= restart < loop_end:
+        out["loopStart"], out["loopEnd"] = round(restart, 3), round(loop_end, 3)
     raw = cue.get("steps") if isinstance(cue.get("steps"), list) else []
     steps = [{"at": round(float(step["at"]), 3), "db": round(float(step["db"]), 2)} for step in raw
              if isinstance(step, dict) and _number(step.get("at")) is not None and _number(step.get("db")) is not None]

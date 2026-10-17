@@ -40,8 +40,9 @@ import kotlin.math.pow
  * đọc giữ focus, nhạc chỉ chạy khi giọng đang chạy (`sync` từ Playback mỗi nhịp 0,5 giây và mỗi lần phát / dừng / tua).
  * Mọi thao tác ở luồng chính, như Playback; danh mục / tải bài ở một luồng nền riêng.
  *
- * Nhạc của sách lặp bằng mờ chéo trong đoạn nghe được (lô 2 mix-loop, [MusicCues.loopBounds]): tới E - X một ExoPlayer MỚI của chính
- * bài vào từ A, cái cũ mờ đi trong X giây ([crossLoop]); bài quá ngắn và danh sách phát thì vẫn REPEAT_MODE_ONE.
+ * Nhạc của sách lặp bằng mờ chéo trong đoạn nghe được (lô 2 mix-loop, [MusicCues.loopBounds]): tới loopEnd - X một ExoPlayer MỚI của
+ * chính bài vào từ loopStart (không có điểm vòng: E - X và A), cái cũ mờ đi trong X giây ([crossLoop]); bài quá ngắn và danh sách
+ * phát thì vẫn REPEAT_MODE_ONE.
  */
 object MusicBed {
     private const val STEP_MS = MusicCues.TICK_MS
@@ -233,7 +234,7 @@ object MusicBed {
         current?.early = true
     }
 
-    /** Lặp mờ chéo: bài đang kêu tới E - X ([MusicCues.loopDue]) thì một ExoPlayer MỚI của chính bài vào từ A, mờ chéo X giây; cái
+    /** Lặp mờ chéo: bài đang kêu tới loopEnd - X ([MusicCues.loopDue]) thì một ExoPlayer MỚI của chính bài vào từ loopStart, mờ chéo X giây; cái
      *  cũ mờ đi rồi nhả. Vòng cuối của mốc `tail` ([finishTail]), bài quá ngắn (lặp thường) và danh sách phát thì không. */
     private fun crossLoop(seconds: Double) {
         val bed = current ?: return
@@ -247,7 +248,7 @@ object MusicBed {
         val fadeMs = Math.round(MusicCues.mix.loopCrossfadeSeconds * 1000)
         bed.fadeStep = maxOf(player.volume, 0.01f) * STEP_MS / fadeMs
         fading += bed
-        current = open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, bounds.start)
+        current = open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, bounds.loopStart)
             .also { it.early = bed.early }
         startFade()
     }

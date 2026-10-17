@@ -164,7 +164,8 @@ class SceneBook(
         for (link in links) {
             val track = chooser.trackOf(link) ?: continue
             out.put(link, JSONObject().put("length", track.seconds?.takeIf { it != 0.0 } ?: track.duration ?: JSONObject.NULL)
-                .put("audibleStart", track.audibleStart ?: JSONObject.NULL).put("audibleEnd", track.audibleEnd ?: JSONObject.NULL))
+                .put("audibleStart", track.audibleStart ?: JSONObject.NULL).put("audibleEnd", track.audibleEnd ?: JSONObject.NULL)
+                .put("loopStart", track.loopStart ?: JSONObject.NULL).put("loopEnd", track.loopEnd ?: JSONObject.NULL))
         }
         return out
     }
@@ -240,14 +241,15 @@ class SceneBook(
     /** Vòng lặp của bài ([MusicCues.loopBounds], cùng hàm với trình phát); vô cực (chưa biết độ dài) ghi null. `loop`: mục của [loopsJson] (null = bài chưa biết). */
     private fun loopJson(loop: JSONObject?): JSONObject {
         fun number(key: String): Double? = if (loop == null || loop.isNull(key)) null else loop.getDouble(key)
-        val bounds = MusicTimeline.loopBounds(MusicTimeline.TrackInfo(number("length"), number("audibleStart"), number("audibleEnd")))
+        val bounds = MusicTimeline.loopBounds(MusicTimeline.TrackInfo(number("length"), number("audibleStart"), number("audibleEnd"),
+            number("loopStart"), number("loopEnd")))
         fun finite(value: Double): Any = if (value.isInfinite() || value.isNaN()) JSONObject.NULL else value
         return JSONObject().put("start", finite(bounds.start)).put("end", finite(bounds.end)).put("period", finite(bounds.period)).put("crossfade", bounds.crossfade)
     }
 
     companion object {
         /** Đổi khi cách tách câu / dựng đoạn / chọn bài / ánh xạ sang đoạn màn đọc đổi: bản ghi đã dựng không dùng lại. */
-        const val ENGINE_VERSION = 5 // 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/, ô cells/ không có); 3: bản ghi mang `loops`, đoạn có thể là của học sinh NN-lite; 4: ranh cảnh LB của NN-lite; 5: mức chương LVJ
+        const val ENGINE_VERSION = 6 // 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/, ô cells/ không có); 3: bản ghi mang `loops`, đoạn có thể là của học sinh NN-lite; 4: ranh cảnh LB của NN-lite; 5: mức chương LVJ; 6: `loops` mang điểm vòng loopStart / loopEnd (chu kỳ mới)
         const val FORMAT_VERSION = 1
 
         /** Trần số lần chọn lại một chương vì bài quá cỡ (`music_nnscene.VERIFY_ROUNDS`). */
