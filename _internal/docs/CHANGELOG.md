@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nghe ngay
 
 - Máy tính: nhạc nền không còn im bặt chờ tải rồi vào đột ngột khi sang cảnh mới - bài của cảnh kế và bài đầu chương kế được tải sẵn trong lúc bạn nghe, bài mới chỉ mờ vào từ lúc có tiếng. Mô phỏng một giờ nghe với mạng 0,64 MB/giây: chờ nhạc gần như hết (259 giây còn khoảng 11 giây), không còn lần nhạc vào đột ngột (17,8 lần/giờ), đầu chương có nhạc ngay (trung vị 15,5 giây còn 0).
+- Máy tính và điện thoại, giọng trực tuyến: khi một khúc ở giữa đoạn không tải được trong lúc bạn đang nghe, app xin ngay phần tiếp từ đúng chữ ấy và vẫn đọc hết những gì đã về trước nó, nên chỗ nối không còn khoảng lặng (đo khi mạng chậm: 2,5 giây trước đây, nay 0 giây, không lặp hay bỏ chữ nào).
 
 ## [0.4.89] - 2026-10-17
 

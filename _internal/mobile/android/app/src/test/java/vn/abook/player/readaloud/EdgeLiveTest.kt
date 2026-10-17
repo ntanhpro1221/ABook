@@ -45,6 +45,9 @@ class EdgeLiveTest {
         val boundaries = CopyOnWriteArrayList<Boundary>()
         @Volatile var done: Clip? = null
         @Volatile var failure: Exception? = null
+        val cuts = CopyOnWriteArrayList<Int>()
+        /** Số byte đã ghi lúc nhận [cut]. */
+        @Volatile var bytesAtCut = -1L
 
         override fun grew(file: File, totalBytes: Long) {
             totals += totalBytes
@@ -62,6 +65,11 @@ class EdgeLiveTest {
 
         override fun failed(error: Exception) {
             failure = error
+        }
+
+        override fun cut(words: Int) {
+            bytesAtCut = totals.lastOrNull() ?: 0L
+            cuts += words
         }
     }
 
@@ -183,6 +191,78 @@ class EdgeLiveTest {
         }
         assertTrue(recorder.failure is VoiceException)
         assertNull(recorder.done)
+    }
+
+    @Test
+    fun aLaterPieceThatFailsIsToldAtOnceAndThePiecesBeforeItStillReachTheFile() {
+        // uxfix63 (máy tính: edge.py `_gather`, a59d e1): mảnh 3 hỏng hẳn khi mảnh 1 còn đang về. Trước: cả clip hỏng ngay, mảnh 1-2 bị huỷ, người nghe chỉ còn phần đã ghi. Giờ: chỗ nhận
+        // biết NGAY tiếng dừng ở chữ đầu mảnh 3 (xin phần nối sớm), mảnh 1-2 vẫn về và ghi hết, phần dở của mảnh 3 không bao giờ vào file, rồi mới báo lỗi.
+        val pieces = EdgePieces.split(sentences)
+        assertTrue(pieces.size >= 3)
+        val gate = CountDownLatch(1)
+        val build = { spoken: String -> answer(spoken, true, gate = if (spoken == pieces[0]) gate else null, cut = spoken == pieces[2]) }
+        val recorder = Recorder()
+        val error = AtomicReference<Exception>()
+        val worker = Thread {
+            try {
+                EdgeTts("v", connector(true, build)) { }.synthesize(sentences, File(dir, "cut.mp3"), recorder)
+            } catch (failure: Exception) {
+                error.set(failure)
+            }
+        }.also { it.start() }
+        val before = pieces[0].split(" ").size + pieces[1].split(" ").size
+        try {
+            val deadline = System.nanoTime() + 5_000_000_000L
+            while (recorder.cuts.isEmpty() && System.nanoTime() < deadline) Thread.sleep(10)
+            assertEquals(listOf(before), recorder.cuts.toList()) // báo khi mảnh 1 còn đứng ở cổng
+            assertTrue(worker.isAlive)
+            assertNull(recorder.failure)
+        } finally {
+            gate.countDown()
+            worker.join(10_000)
+        }
+        assertTrue(error.get() is VoiceException)
+        assertTrue(recorder.failure is VoiceException)
+        assertNull(recorder.done)
+        assertEquals(before, recorder.boundaries.size) // mảnh 1-2 đủ mốc, không mốc nào của mảnh hỏng
+        val normal = File(dir, "normal.mp3").also { EdgeTts("v", connector(true)).synthesize(sentences, it) }.readBytes()
+        val streamed = File(dir, "cut.mp3").readBytes()
+        assertTrue(streamed.size > recorder.bytesAtCut)
+        assertTrue("phần đã ghi là phần đầu đúng của clip", streamed.contentEquals(normal.copyOf(streamed.size)))
+        assertEquals(recorder.totals.last(), streamed.size.toLong())
+        val heard = WordTokens.map(sentences, recorder.boundaries, EdgeProtocol.durationMs(streamed.size.toLong()))
+        assertTrue(heard[before - 1].end <= EdgeProtocol.durationMs(streamed.size.toLong()))
+    }
+
+    @Test
+    fun aFirstPieceThatFailsStillFailsTheClipAtOnceWithoutACut() {
+        val pieces = EdgePieces.split(sentences)
+        val build = { spoken: String -> answer(spoken, true, cut = spoken == pieces[0]) }
+        val recorder = Recorder()
+        try {
+            EdgeTts("v", connector(true, build)) { }.synthesize(sentences, File(dir, "first.mp3"), recorder)
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertTrue(recorder.cuts.isEmpty())
+        }
+    }
+
+    @Test
+    fun aCutNamesTheFirstShownWordWithoutSound() {
+        // "năm 1900 anh đi." đọc thành "năm một nghìn chín trăm anh đi.": cắt trước chữ đọc thứ 5 ("anh") = chữ hiện thứ 2; cắt giữa "1900" thì đọc lại cả chữ ấy.
+        val spans = listOf(SpokenText.Range(0, 0), SpokenText.Range(1, 4), SpokenText.Range(5, 5), SpokenText.Range(6, 6))
+        val got = CopyOnWriteArrayList<Int>()
+        val target = object : LiveClips.Target {
+            override fun accepting() = true
+            override fun grew(file: File, total: Long) {}
+            override fun words(words: List<Span>, durationMs: Long, heardMs: Long) {}
+            override fun done(total: Long) {}
+            override fun failed(error: Exception) {}
+            override fun cut(word: Int) { got += word }
+        }
+        val words = LiveWords("năm một nghìn chín trăm anh đi.", { SpokenText.expandWords(it, spans) }, target)
+        for (said in listOf(5, 3, 1, 0, 7)) words.cut(said)
+        assertEquals(listOf(2, 1, 1, 0, 4), got.toList())
     }
 
     @Test
