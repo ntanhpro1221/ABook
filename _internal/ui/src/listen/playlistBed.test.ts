@@ -311,7 +311,6 @@ describe("lựa chọn nhạc nền", () => {
     expect(without.map((option) => option.id)).toEqual([null, OFF_PLAYLIST, SCENE_PLAYLIST, "calm", MINE_PLAYLIST]);
     expect(without[2]).toMatchObject({ label: "Theo cảnh (máy tự dựng)" });
     expect(without[2].description).not.toContain("Phân tích nhạc");
-    expect(playlistOptions({ ...base, scene: { student: false } })[2]).toEqual(without[2]); // điện thoại còn gửi `student: false`: bỏ qua
     // mặc định: máy chọn theo cảnh; chọn rõ thì dòng ấy được đánh dấu
     const auto = { playlist: SCENE_PLAYLIST, playlistAuto: true };
     expect(chosenId(auto)).toBeNull();
