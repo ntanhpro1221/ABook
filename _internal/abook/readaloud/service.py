@@ -14,7 +14,7 @@ from . import azure, edge, fpt, google, loudness, names, readings as book_readin
 from .byok import KeyedProvider
 from .cache import ClipBooks, ClipCache, clip_key
 from .keys import KeyStore
-from .mapping import Boundary, fold, map_boundaries
+from .mapping import Boundary, fold, map_boundaries, tokens
 from .model import Synthesis, Voice, VoiceError
 from .prepare import SHARE as PREPARE_SHARE
 from .prepare import Prepare
@@ -43,6 +43,10 @@ class StreamListener(Protocol):
         """Mốc từng chữ hiện tạm tính trên phần đã phát (chữ chưa tới đứng cuối phần ấy); `duration_ms` = độ dài phần đã phát; cái sau thay cái trước. `heard_ms` = mốc kết thúc của chữ
         THẬT cuối cùng Edge đã báo: chữ có mốc bắt đầu từ đó trở đi là chữ chưa tới (bị dồn về cuối phần đã phát), chữ trước đó thì đã có tiếng - luồng đứt giữa chừng thì phần tiếp
         bắt đầu từ chữ đầu tiên chưa có tiếng (trình phát, uxfix58)."""
+
+    def cut(self, word: int) -> None:
+        """Một mảnh giữa clip hỏng hẳn (uxfix63, [edge.StreamSink]): tiếng sẽ dừng trước chữ HIỆN `word` (0-based) - phần trước nó vẫn về hết rồi luồng mới báo lỗi. Người nghe xin phần tiếp từ
+        chữ ấy ngay, không đợi lỗi. Gọi sau `started()`, nhiều nhất một lần."""
 
 
 def _shown_words(words: list[list[int]], spans: list[tuple[int, int] | None] | None, slots: list[int | None] | None) -> list[list[int]]:
@@ -73,6 +77,7 @@ class _Live:
         self._bytes = 0
         self._told: float | None = None  # lúc gửi mốc chữ gần nhất
         self._pending = False  # có mốc mới chưa gửi
+        self._cut: int | None = None  # chỗ tiếng dừng ([cut]) báo trước byte đầu: gửi ngay sau nó
 
     def audio(self, data: bytes) -> None:
         if not self.started:
@@ -81,8 +86,22 @@ class _Live:
         self.listener.audio(data)
         self._bytes += len(data)
         self.sent_ms = self._bytes * 8 * 1000 // edge.BITRATE_BPS
+        if self._cut is not None:
+            self.listener.cut(self._cut)
+            self._cut = None
         if self._pending:
             self._tell(force=False)
+
+    def cut(self, words: int) -> None:
+        """[edge.StreamSink.cut]: `words` chữ ĐỌC đầu có tiếng -> chữ HIỆN đầu tiên còn chữ đọc nào từ đó trở đi (chữ hiện thành nhiều chữ đọc mà bị cắt giữa: đọc lại cả chữ ấy), qua đúng đường
+        đổi mốc của `_tell` (mốc giả: mỗi chữ đọc mang số thứ tự của nó)."""
+        marks = [[index, index] for index in range(len(tokens(self.said)))]
+        shown = _shown_words(marks, self.spans, self.slots)
+        word = next((index for index, (_, last) in enumerate(shown) if last >= words), len(shown))
+        if self.started:
+            self.listener.cut(word)
+        else:
+            self._cut = word
 
     def boundaries(self, found: list[Boundary]) -> None:
         self.found += found

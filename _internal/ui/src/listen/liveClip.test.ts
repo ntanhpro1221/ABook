@@ -241,6 +241,22 @@ describe("LiveClip: phần đã về (uxfix58)", () => {
     await flush();
     expect(live.heardMs).toBeNull();
   });
+
+  it("bản ghi C (một mảnh giữa clip hỏng, uxfix63): cutAt = chữ tiếng sẽ dừng, báo 'cut' - clip vẫn đang về, khúc sau vẫn nhận", async () => {
+    const stream = wire();
+    const pending = clipFromStream(stream.body, toUrl);
+    stream.send(record("A", new Uint8Array(600)));
+    const live = (await pending).live!;
+    const seen: string[] = [];
+    live.on((event) => seen.push(event));
+    expect(live.cutAt).toBeNull();
+    stream.send(concat(record("C", { word: 7 }), record("A", new Uint8Array(600))));
+    await flush();
+    expect(live.cutAt).toBe(7);
+    expect(seen).toEqual(["cut", "audio"]);
+    expect(live.state).toBe("open");
+    expect(live.receivedMs).toBe(200);
+  });
 });
 
 describe("LiveClip.shownWords: mốc chữ để tô sáng (uxfix61)", () => {
