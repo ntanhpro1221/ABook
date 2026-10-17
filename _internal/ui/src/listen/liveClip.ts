@@ -5,10 +5,11 @@ import type { WordSpan } from "./words";
 // thay vì chờ đọc xong cả đoạn. Lời đáp là chuỗi bản ghi: 1 byte loại + 4 byte độ dài (big-endian) + nội dung.
 //   A: byte MP3 (nối thẳng vào phần trước)   W: JSON {words, duration_ms, heard_ms} - mốc chữ tạm, thay bản trước
 //   E: JSON {url, duration_ms, words} - xong (giống JSON thường)   X: JSON {message, reason} - lỗi sau khi đã phát
+//   C: JSON {word} - một mảnh giữa clip hỏng (uxfix63): tiếng sẽ dừng trước chữ `word` của clip, phần trước vẫn về hết rồi mới tới X
 
 export const CLIP_STREAM_TYPE = "application/vnd.abook.clipstream";
 
-export type LiveEvent = "audio" | "words" | "done" | "failed";
+export type LiveEvent = "audio" | "words" | "cut" | "done" | "failed";
 
 /** Edge trả MP3 CBR 48 kbps (abook/readaloud/edge.py BITRATE_BPS): 6 byte mỗi ms - đổi số byte đã về ra thời lượng tiếng đã có. */
 export const MP3_BYTES_PER_MS = 6;
@@ -32,6 +33,8 @@ export class LiveClip {
   words: WordSpan[] = [];
   /** Mốc kết thúc (ms) của chữ THẬT cuối cùng Edge đã báo, theo bản W mới nhất (máy chủ cũ / chưa có W: null): chữ có mốc bắt đầu từ đây trở đi là chữ chưa tới, bị dồn về cuối phần đã phát. */
   heardMs: number | null = null;
+  /** Chữ (đếm trong clip) tiếng sẽ dừng trước nó - bản ghi C, một mảnh giữa clip đã hỏng hẳn trong lúc các mảnh trước còn đang về; null khi chưa có. Bộ máy xin phần tiếp từ chữ ấy NGAY. */
+  cutAt: number | null = null;
   state: "open" | "done" | "failed" = "open";
   final: LiveFinal | null = null;
   error: ReadAloudError | null = null;
@@ -67,6 +70,12 @@ export class LiveClip {
     this.words = words;
     this.heardMs = heardMs;
     this.fire("words");
+  }
+
+  cut(word: number): void {
+    if (this.state !== "open" || this.cutAt !== null) return;
+    this.cutAt = word;
+    this.fire("cut");
   }
 
   finish(final: LiveFinal): void {
@@ -154,6 +163,8 @@ export function clipFromStream(body: ReadableStream<Uint8Array> | null, toUrl: (
         const done = json(record.body);
         live.finish({ url: toUrl(String(done.url)), durationMs: Number(done.duration_ms), words: spans(done.words), bytes: new Blob(live.chunks as BlobPart[], { type: "audio/mpeg" }) });
         open();
+      } else if (record.kind === "C") {
+        live.cut(Number(json(record.body).word));
       } else if (record.kind === "X") {
         const failure = json(record.body);
         throw new ReadAloudError(String(failure.message || "Giọng đọc không phản hồi."), String(failure.reason || "service"));
