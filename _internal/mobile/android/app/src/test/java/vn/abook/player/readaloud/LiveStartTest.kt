@@ -52,11 +52,20 @@ class LiveStartTest {
 
     @Test
     fun tailWordsKeepEveryWordOfTheParagraphAndZeroTheOnesBeforeTheTap() {
-        val tail = listOf(Span(100, 500), Span(550, 900))
+        val tail = listOf(Span(0, 500), Span(550, 900))
         val words = SeekPlan.tailWords(3, tail)
         assertEquals(5, words.size)
         assertEquals(listOf(Span(0, 0), Span(0, 0), Span(0, 0)), words.take(3))
         assertEquals(tail, words.drop(3))
+    }
+
+    @Test
+    fun theTappedWordStartsRightAtTheHeadOfTheTailEvenWhenTheClipOpensWithSilence() {
+        // Clip đuôi mở đầu bằng ~0,14 giây lặng: nếu chữ bấm bắt đầu ở 140 ms thì trong quãng ấy chữ "đã bắt đầu" cuối cùng là chữ liền trước (mốc [0, 0]) và nó sáng lóe (a58).
+        val words = SeekPlan.tailWords(2, listOf(Span(140, 500), Span(550, 900)))
+        assertEquals(listOf(Span(0, 0), Span(0, 0), Span(0, 500), Span(550, 900)), words)
+        assertEquals(listOf(Span(0, 0), Span(0, 0)), SeekPlan.tailWords(2, emptyList()).take(2))
+        assertEquals("mốc đã bắt đầu từ 0 thì giữ nguyên", listOf(Span(0, 0), Span(0, 400), Span(450, 800)), SeekPlan.tailWords(1, listOf(Span(0, 400), Span(450, 800))))
     }
 
     @Test

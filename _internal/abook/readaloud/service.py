@@ -39,8 +39,10 @@ class StreamListener(Protocol):
 
     def audio(self, data: bytes) -> None: ...
 
-    def words(self, words: list[list[int]], duration_ms: int) -> None:
-        """Mốc từng chữ hiện tạm tính trên phần đã phát (chữ chưa tới đứng cuối phần ấy); `duration_ms` = độ dài phần đã phát; cái sau thay cái trước."""
+    def words(self, words: list[list[int]], duration_ms: int, heard_ms: int = 0) -> None:
+        """Mốc từng chữ hiện tạm tính trên phần đã phát (chữ chưa tới đứng cuối phần ấy); `duration_ms` = độ dài phần đã phát; cái sau thay cái trước. `heard_ms` = mốc kết thúc của chữ
+        THẬT cuối cùng Edge đã báo: chữ có mốc bắt đầu từ đó trở đi là chữ chưa tới (bị dồn về cuối phần đã phát), chữ trước đó thì đã có tiếng - luồng đứt giữa chừng thì phần tiếp
+        bắt đầu từ chữ đầu tiên chưa có tiếng (trình phát, uxfix58)."""
 
 
 def _shown_words(words: list[list[int]], spans: list[tuple[int, int] | None] | None, slots: list[int | None] | None) -> list[list[int]]:
@@ -98,8 +100,9 @@ class _Live:
             return
         self._told = now
         self._pending = False
-        duration = max(self.sent_ms, self.found[-1].end_ms if self.found else 0)
-        self.listener.words(_shown_words(map_boundaries(self.said, self.found, duration), self.spans, self.slots), duration)
+        heard = self.found[-1].end_ms if self.found else 0
+        duration = max(self.sent_ms, heard)
+        self.listener.words(_shown_words(map_boundaries(self.said, self.found, duration), self.spans, self.slots), duration, heard)
 
 
 class EdgeProvider:
