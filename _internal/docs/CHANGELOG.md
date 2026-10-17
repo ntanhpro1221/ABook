@@ -11,6 +11,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Máy tính: nhạc theo cảnh luôn dùng học sinh nhẹ có sẵn (ranh cảnh + mức chương), kể cả khi bạn đã tải gói "Học sinh không khí cảnh". Trước đây có gói thì nhạc sai màu rõ nhiều hơn (bộ thử 19: 19,1 % so với 10,2 %). Gói ấy giờ chỉ dùng cho sách làm bằng Studio, và thẻ tải nói rõ như vậy.
 - Máy tính: khi giọng trực tuyến vừa đọc vừa tải mà giọng chững lại giữa đoạn, chữ đang tô không còn nháy sang chữ cuối đoạn rồi quay lại; và khi lỗi giọng đã báo rồi app tự thử lại mà vẫn hỏng, bạn chỉ thấy đúng một lời báo (được cập nhật tại chỗ) thay vì báo, mất, rồi báo lại.
+- Điện thoại, giọng trực tuyến: đổi giọng hay sửa cách đọc lúc một đoạn đang về thì đoạn ấy đọc nốt bằng giọng cũ, không im bặt giữa chừng; kéo thanh thời gian, lùi/tới 15 giây hay bấm một chữ đã đọc trong đoạn đang về thì nhảy tới ngay, không phải chờ đọc lại; thông báo, màn khoá và xe hơi giữ được thanh tua khi đoạn đang về; nghe sớm hơn một chút sau khi bấm.
+- Điện thoại: đoạn đứt kết nối mà phần nối cũng trục trặc thì lần hỏi lại và nút "Thử lại" vẫn đọc tiếp từ chữ bạn chưa nghe, không về đầu đoạn, và chỉ báo lỗi một lần; chữ đang sáng không còn nhảy vụt sang cuối đoạn khi âm thanh về chậm.
 
 ## [0.4.88] - 2026-10-17
 
