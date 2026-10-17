@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Mất mạng giữa lúc nghe bằng giọng cần mạng: mạng về thì app tự đọc tiếp sau chừng 1,5 giây, không còn đứng yên chờ bạn bấm Phát (máy tính và điện thoại). Mạng vẫn chưa dùng được thì lời báo hiện lại với nút "Thử lại".
+
 ### Điện thoại
 
 - Xuất sách nói kèm nhạc nền đã được đo trên máy thật (bộ mã hoá AAC phần mềm của Android): một chương 13 phút mã hoá trong 49 giây; đỉnh âm sau mã hoá −1,8 dBTP, dưới mức an toàn −1 dBTP nên không phải mã hoá lại; chỗ nối giữa hai chương không thêm khoảng lặng nghe được (dưới 0,2 ms). Máy dùng bộ mã hoá AAC của hãng chip có thể phải mã hoá lại một lần nên lâu hơn. Nên bật "Cho phép hoạt động dưới nền" cho ABook để máy không tạm dừng việc xuất.
