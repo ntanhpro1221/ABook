@@ -700,7 +700,7 @@ export class ReadAloudEngine implements AudioEngine {
       } else {
         // Còn đang về: giữ độ dài ước của đoạn (đồng hồ ảo không nhảy) tới khi xong ([liveDone]).
         slot.clip = clip;
-        slot.words = absoluteWords(clip.fromWord ?? 0, live.words);
+        slot.words = absoluteWords(clip.fromWord ?? 0, live.shownWords);
         return;
       }
     }
@@ -1065,10 +1065,10 @@ export class ReadAloudEngine implements AudioEngine {
         if (ask || this.lastClipMs / 1000 >= REAL_FETCH_SECONDS) {
           this.reviveGaveUp();
           // Lỗi cũ ("đang không dùng được"...) còn treo trên màn mà dịch vụ đã trả lời lại: bỏ lỗi, trình phát gỡ thông báo (không chờ người nghe bấm phát).
-          if (this.lastError) {
+          // Đang dừng VÌ lỗi và sắp tự xin lại đoạn đang chờ: lời báo đứng nguyên tới khi lượt ấy phát được ([play] gỡ) hay hỏng nữa ([fail] cập nhật đúng lời báo đó) - gỡ rồi dựng lại là hai lời báo cho một chỗ hỏng (a59d).
+          if (this.lastError && !this.resumeAfterError()) {
             this.lastError = "";
             this.fire("recovered");
-            this.resumeAfterError();
           }
         }
       })
@@ -1133,7 +1133,7 @@ export class ReadAloudEngine implements AudioEngine {
     slot.unlive = live.on((event) => {
       if (this.slots[index] !== slot || slot.clip?.live !== live || ctx.id !== this.loadId) return;
       if (event === "words") {
-        slot.words = absoluteWords(slot.clip?.fromWord ?? 0, live.words);
+        slot.words = absoluteWords(slot.clip?.fromWord ?? 0, live.shownWords);
         this.publish();
       } else if (event === "done") {
         this.liveDone(index, slot, live);
@@ -1174,7 +1174,7 @@ export class ReadAloudEngine implements AudioEngine {
       if (from > 0) {
         // Clip đuôi: giây của nó không phải giây của đoạn - nhớ chữ đang đọc (theo mốc tạm), lần lấy lại là clip đuôi mới từ chữ ấy.
         this.target.offset = 0;
-        this.target.word = from + Math.max(0, wordIndexAt(live.words, slot.audio.currentTime * 1000));
+        this.target.word = from + Math.max(0, wordIndexAt(live.shownWords, slot.audio.currentTime * 1000));
       } else this.target.offset = Math.max(0, slot.audio.currentTime);
     }
     this.dropClip(slot, false);
@@ -1531,17 +1531,18 @@ export class ReadAloudEngine implements AudioEngine {
     else if (waiting) this.fire("time");
   }
 
-  /** Lỗi vừa gỡ vì dịch vụ trả lời lại ("recovered") mà trình phát đang dừng VÌ lỗi ấy (không phải người nghe bấm dừng): xin lại đoạn đang chờ, clip về thì tự phát tiếp
-   *  ([onClip]). Người nghe tự dừng thì ở yên dừng - [pause] / [moveTo] / [play] gỡ cờ. */
-  private resumeAfterError(): void {
-    if (!this.errorPause || this.wanted || !this.ready) return;
+  /** Dịch vụ vừa trả lời lại mà trình phát đang dừng VÌ lỗi ấy (không phải người nghe bấm dừng): xin lại đoạn đang chờ, clip về thì tự phát tiếp
+   *  ([onClip]). Người nghe tự dừng thì ở yên dừng - [pause] / [moveTo] / [play] gỡ cờ. Trả true khi đã bắt đầu xin lại / phát (lời báo lỗi ở yên tới khi có kết quả), false khi để yên dừng. */
+  private resumeAfterError(): boolean {
+    if (!this.errorPause || this.wanted || !this.ready) return false;
     const slot = this.slots[this.target.index];
     if (!slot || slot.clip || !slot.speakable) {
       this.play(); // đã có clip (hay đoạn lặng): phát luôn
-      return;
+      return true;
     }
     this.resuming = true;
     this.request(this.target.index);
+    return true;
   }
 
   /** Clip của đoạn đang chờ vừa về: đổi chỗ chờ (tỉ lệ / chữ) thành giây thật trong clip. */
