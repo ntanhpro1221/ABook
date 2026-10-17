@@ -850,7 +850,7 @@ describe("nghe dở và lỗi", () => {
     }
   });
 
-  it("lỗi đã báo mà dịch vụ trả lời lại (clip thật về): bỏ lỗi và báo \"recovered\" để trình phát gỡ thông báo; clip từ bộ đệm (về tức thì) thì không", async () => {
+  it("lỗi đã báo mà dịch vụ trả lời lại (clip thật về): người nghe đã tự dừng (không còn gì để tự xin lại) thì bỏ lỗi và báo \"recovered\" để trình phát gỡ thông báo; clip từ bộ đệm (về tức thì) thì không", async () => {
     vi.useFakeTimers();
     try {
       const s = setup();
@@ -865,6 +865,7 @@ describe("nghe dở và lỗi", () => {
       expect(s.engine.error).not.toBe("");
       expect(s.events).not.toContain("recovered");
       // clip qua dịch vụ thật (mất vài trăm ms) về: dịch vụ khoẻ lại
+      s.engine.pause(); // người nghe tự dừng: lỗi gỡ đi thì ở yên dừng, không tự xin lại - lời báo gỡ ngay
       await vi.advanceTimersByTimeAsync(500);
       s.requests.filter((r) => r.text === TEXTS[2]).forEach((r) => r.resolve());
       await vi.advanceTimersByTimeAsync(0);
@@ -899,8 +900,9 @@ describe("nghe dở và lỗi", () => {
       const s = await stopped();
       const before = s.requests.filter((r) => r.text === TEXTS[0]).length;
       await serviceAnswers(s);
-      expect(s.events).toContain("recovered");
-      expect(s.engine.error).toBe("");
+      // sắp tự xin lại: lời báo đứng nguyên (không gỡ rồi dựng lại - a59d), gỡ khi lượt xin lại phát được
+      expect(s.events).not.toContain("recovered");
+      expect(s.engine.error).not.toBe("");
       expect(s.engine.paused).toBe(true); // clip chưa về: chưa phát
       const again = s.requests.filter((r) => r.text === TEXTS[0]);
       expect(again).toHaveLength(before + 1);
@@ -908,6 +910,7 @@ describe("nghe dở và lỗi", () => {
       again.at(-1)!.resolve();
       await vi.advanceTimersByTimeAsync(0);
       expect(s.engine.paused).toBe(false);
+      expect(s.engine.error).toBe("");
       expect(s.events.slice(-1)[0]).not.toBe("error");
       expect(s.events.filter((e) => e === "play")).toHaveLength(2); // lần bấm đầu + lần tự phát tiếp
       expect(audioOf(s, TEXTS[0])!.plays).toBe(1);
@@ -943,6 +946,30 @@ describe("nghe dở và lỗi", () => {
       expect(s.engine.error).toBe("Đoạn này không đọc được.");
       expect(s.engine.paused).toBe(true);
       expect(s.events.slice(-1)[0]).toBe("error");
+    });
+
+    it("hỏng kép cùng một chỗ (a59d): lượt tự xin lại hỏng nữa thì lời báo đang có được cập nhật - đúng MỘT lời báo, không gỡ rồi dựng lại", async () => {
+      const s = await stopped();
+      const shown: string[] = []; // chuỗi lời báo như trình phát thấy (setError ở mỗi sự kiện)
+      let alerts = 0; // số lần lời báo hiện lên từ trống
+      const sync = () => {
+        const now = s.engine.error;
+        if (now && !shown.at(-1)) alerts += 1;
+        shown.push(now);
+      };
+      s.engine.on("error", sync);
+      s.engine.on("recovered", () => shown.push(""));
+      s.engine.on("play", () => shown.push(s.engine.error));
+      shown.push(s.engine.error);
+      alerts = 1; // lời báo đầu (từ lúc dừng)
+      await serviceAnswers(s); // lookahead thật về: dịch vụ "khoẻ lại" -> tự xin lại đoạn đang chờ
+      s.requests.filter((r) => r.text === TEXTS[0]).at(-1)!.reject(Object.assign(new Error("Giọng Hoài My đang không dùng được."), { reason: "service", final: true }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.engine.error).toBe("Giọng Hoài My đang không dùng được.");
+      expect(s.engine.paused).toBe(true);
+      expect(alerts).toBe(1);
+      expect(shown.every(Boolean)).toBe(true); // không có lúc nào lời báo bị gỡ giữa hai lần hỏng
+      expect(s.events).not.toContain("recovered");
     });
 
     it("bấm phát sau lỗi vẫn thử lại như cũ và gỡ ý định tự phát (không phát đôi)", async () => {
@@ -2378,6 +2405,24 @@ describe("clip phát dần đứt giữa chừng: phần đã về phát hết, 
     const origin = segment.start! * 1000;
     expect(segment.words!.slice(0, 4)).toEqual([[0, 250], [250, 500], [500, 750], [750, 1000]].map(([a, b]) => [origin + a, origin + b]));
     expect(wordIndexAt(segment.words!, origin + 990)).toBeLessThanOrEqual(3);
+  });
+
+  it("lóe chữ cuối đoạn (a59d): âm thanh chạm hết phần có mốc tạm mà bản W kế chưa tới - tô đứng yên ở chữ cuối ĐÃ CÓ TIẾNG, không nhảy sang chữ cuối đoạn", async () => {
+    const { s } = await streaming();
+    const segment = s.published.at(-1)!.segments[0];
+    const origin = segment.start! * 1000;
+    for (const ms of [0, 500, 960, 1000, 1030, 1400, 2500]) {
+      const word = wordIndexAt(segment.words!, origin + ms);
+      expect(word).toBeLessThanOrEqual(3);
+      if (ms >= 960) expect(word).toBe(3);
+    }
+    expect(segment.words).toHaveLength(8);
+  });
+
+  it("lóe chữ cuối đoạn: máy chủ cũ không gửi heard_ms thì mốc tạm giữ nguyên như trước", async () => {
+    const { s } = await streaming(FOUR_HEARD, null);
+    const segment = s.published.at(-1)!.segments[0];
+    expect(segment.words!.slice(4)).toEqual([1, 2, 3, 4].map(() => [segment.start! * 1000 + 1000, segment.start! * 1000 + 1000]));
   });
 
   it("phần tiếp (live) nối thẳng sau khúc cuối của phần đứt trong CÙNG phần tử audio; mốc chữ ghép; xong thì độ dài = phần đầu + phần tiếp, hết thì không lỗi", async () => {

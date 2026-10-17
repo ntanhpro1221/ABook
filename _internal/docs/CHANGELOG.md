@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nghe ngay
 
 - Máy tính: nhạc theo cảnh luôn dùng học sinh nhẹ có sẵn (ranh cảnh + mức chương), kể cả khi bạn đã tải gói "Học sinh không khí cảnh". Trước đây có gói thì nhạc sai màu rõ nhiều hơn (bộ thử 19: 19,1 % so với 10,2 %). Gói ấy giờ chỉ dùng cho sách làm bằng Studio, và thẻ tải nói rõ như vậy.
+- Máy tính: khi giọng trực tuyến vừa đọc vừa tải mà giọng chững lại giữa đoạn, chữ đang tô không còn nháy sang chữ cuối đoạn rồi quay lại; và khi lỗi giọng đã báo rồi app tự thử lại mà vẫn hỏng, bạn chỉ thấy đúng một lời báo (được cập nhật tại chỗ) thay vì báo, mất, rồi báo lại.
 
 ## [0.4.88] - 2026-10-17
 
