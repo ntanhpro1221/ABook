@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.89] - 2026-10-17
+
 ### Nghe ngay
 
 - Máy tính: nhạc theo cảnh luôn dùng học sinh nhẹ có sẵn (ranh cảnh + mức chương), kể cả khi bạn đã tải gói "Học sinh không khí cảnh". Trước đây có gói thì nhạc sai màu rõ nhiều hơn (bộ thử 19: 19,1 % so với 10,2 %). Gói ấy giờ chỉ dùng cho sách làm bằng Studio, và thẻ tải nói rõ như vậy.
