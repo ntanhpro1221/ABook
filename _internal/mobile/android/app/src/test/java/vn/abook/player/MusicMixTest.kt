@@ -32,6 +32,7 @@ class MusicMixTest {
         assertEquals(file.getDouble("siblingFadeSeconds") * 1000, mix.siblingFadeMs.toDouble(), 0.0)
         assertEquals(file.getDouble("stepRampSeconds") * 1000, mix.stepRampMs.toDouble(), 0.0)
         assertEquals(file.getDouble("loopCrossfadeSeconds"), mix.loopCrossfadeSeconds, 0.0)
+        assertEquals(file.getDouble("loopMinPeriodSeconds"), mix.loopMinPeriodSeconds, 0.0)
         // Công thức gain (MusicGain, dùng cả khi chưa có Context: sửa sách, hàng danh sách phát) giữ số chép tay - phải trùng file.
         assertEquals(file.getDouble("voicePlayedLufs"), MusicGain.VOICE_PLAYED_LUFS, 1e-12)
         assertEquals(file.getDouble("shortTermFloorLu"), MusicGain.SHORT_TERM_FLOOR_LU, 0.0)
@@ -166,6 +167,8 @@ class MusicMixTest {
                 tail = cue.optBoolean("tail", false) && cue.getDouble("end") <= limit,
                 audibleStart = info.optDouble("audibleStart").takeIf { it.isFinite() },
                 audibleEnd = info.optDouble("audibleEnd").takeIf { it.isFinite() },
+                loopStart = info.optDouble("loopStart").takeIf { it.isFinite() },
+                loopEnd = info.optDouble("loopEnd").takeIf { it.isFinite() },
             ).takeIf { it.end > it.start }
         }
     }
@@ -175,7 +178,7 @@ class MusicMixTest {
         val mix = JSONObject(mixFile.readText())
         val x = MusicCues.mix.loopCrossfadeSeconds
         val names = fixtures.listFiles { file -> file.extension == "json" }!!.map { it.nameWithoutExtension }.sorted()
-        assertTrue(names.containsAll(listOf("loop_crossfade", "sibling_tail", "stop_at", "chapter_end", "short_track")))
+        assertTrue(names.containsAll(listOf("loop_crossfade", "sibling_tail", "stop_at", "chapter_end", "short_track", "loop_points")))
         for (name in names) {
             val case = JSONObject(File(fixtures, "$name.json").readText())
             val cues = playerCues(case, mix)
@@ -192,10 +195,10 @@ class MusicMixTest {
                 val before = timeline.getOrNull(index - 1)
                 if (element.enter == "loop") {
                     val position = before!!.at(element.from)
-                    assertTrue("$label: mở phần tử lặp ở E - X", MusicCues.loopDue(bounds, position))
+                    assertTrue("$label: mở phần tử lặp ở loopEnd - X", MusicCues.loopDue(bounds, position))
                     assertFalse(MusicCues.loopDue(bounds, position - 0.05))
                     assertFalse("$label: chưa phải vòng cuối", MusicCues.finalLoop(cue, element.from, position, bounds))
-                    assertEquals(bounds.start, element.position, 0.0)
+                    assertEquals(bounds.loopStart, element.position, 0.0)
                 }
                 if (element.enter == "early") {
                     val previous = MusicCues.loopBounds(cues[before!!.cue], tracks.getJSONObject(before.track).getDouble("seconds"))
@@ -207,7 +210,7 @@ class MusicMixTest {
                 }
                 val looped = timeline.drop(index + 1).any { it.cue == element.cue && it.enter == "loop" }
                 if (cue.tail && bounds.crossfade) {
-                    val position = bounds.end - x
+                    val position = bounds.loopEnd - x
                     val seconds = element.from + position - element.position
                     assertEquals("$label: vòng cuối = không có phần tử lặp sau", !looped, MusicCues.finalLoop(cue, seconds, position, bounds))
                 }

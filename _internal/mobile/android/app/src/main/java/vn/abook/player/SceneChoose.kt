@@ -22,6 +22,9 @@ class SceneTrack(
     val seconds: Double? = null,
     val audibleStart: Double? = null,
     val audibleEnd: Double? = null,
+    /** Điểm vòng của bài có đoạn kết (danh mục, `music_mix.loop_bounds`). */
+    val loopStart: Double? = null,
+    val loopEnd: Double? = null,
 ) {
     companion object {
         private fun number(json: JSONObject, key: String): Double? =
@@ -36,7 +39,8 @@ class SceneTrack(
             return SceneTrack(
                 link, number(json, "valence") ?: return null, number(json, "arousal") ?: return null, number(json, "tension"),
                 text(json, "style"), text(json, "family"), number(json, "background"), text(json, "source"), number(json, "duration"),
-                number(json, "seconds"), number(json, "audibleStart"), number(json, "audibleEnd"),
+                number(json, "seconds"), number(json, "audibleStart"), number(json, "audibleEnd"), number(json, "loopStart"),
+                number(json, "loopEnd"),
             )
         }
     }
@@ -269,11 +273,12 @@ class SceneChooser(
         return chosen
     }
 
-    /** (giây từ A tới E, chu kỳ lặp) của bài theo đoạn nghe được (`music_mix.loop_bounds`); chưa biết độ dài thì bài không bao giờ hết. */
+    /** (giây từ A tới E, chu kỳ lặp) của bài theo đoạn nghe được và điểm vòng (`music_mix.loop_bounds`); chưa biết độ dài thì bài không bao giờ hết. */
     private fun loop(link: String): Pair<Double, Double> {
         val track = info(link)
         val bounds = MusicTimeline.loopBounds(
-            MusicTimeline.TrackInfo(track?.seconds?.takeIf { it != 0.0 } ?: track?.duration, track?.audibleStart, track?.audibleEnd),
+            MusicTimeline.TrackInfo(track?.seconds?.takeIf { it != 0.0 } ?: track?.duration, track?.audibleStart, track?.audibleEnd,
+                track?.loopStart, track?.loopEnd),
         )
         return (bounds.end - bounds.start) to bounds.period
     }

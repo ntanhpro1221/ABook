@@ -100,6 +100,20 @@ def test_after_a_tail_cue_the_track_ends_at_its_end_and_never_comes_back_to_its_
     assert _amp(looping, 4000, 29.5, 30.5) > 0.1, "không có tail thì lặp mờ chéo về A như trình phát"
 
 
+def test_a_track_with_loop_points_loops_inside_them_and_its_tail_plays_the_composed_ending(tmp_path: Path) -> None:
+    # PLAN_loop §10: dạo đầu 4 kHz (0-3 s), thân 1 kHz (3-25 s), đoạn kết soạn sẵn 2,5 kHz (25-30 s); điểm vòng 3 / 25 -> phần tử lặp
+    # mở ở 23 từ 3, P = 20. Mốc thường không bao giờ nghe lại dạo đầu hay đoạn kết; mốc tail dài 50 = E của vòng thứ hai kết bằng đoạn kết.
+    track = np.concatenate([_tone(3, 4000, 0.5), _tone(22, 1000, 0.5), _tone(5, 2500, 0.5)])
+    cue = {"start": 0.0, "end": 60.0, "track": "t", "gainDb": -6.0, "audibleStart": 0.0, "audibleEnd": 30.0,
+           "loopStart": 3.0, "loopEnd": 25.0}
+    looping, _ = _mix(tmp_path, np.zeros(65 * RATE), [cue], {"t": track})
+    with_tail, _ = _mix(tmp_path, np.zeros(65 * RATE), [{**cue, "end": 50.0, "tail": True}], {"t": track})
+    assert _amp(looping, 1000, 30, 58) > 0.1, "lặp trong thân bài"
+    assert _amp(looping, 4000, 4, 62) < 1e-3 and _amp(looping, 2500, 0, 62) < 1e-3, "không quay về dạo đầu, không nghe đoạn kết"
+    assert _amp(with_tail, 2500, 46, 49.5) > 0.1, "vòng cuối chơi qua loopEnd tới E: đoạn kết là cái kết"
+    assert _amp(with_tail, 4000, 4, 55) < 1e-3 and _amp(with_tail, 2500, 51, 55) < 1e-3
+
+
 def test_where_no_cue_plays_the_voice_comes_out_sample_for_sample(tmp_path: Path) -> None:
     voice = _tone(12, 220, 0.3)
     out, _ = _mix(tmp_path, voice, [{"start": 4.0, "end": 8.0, "track": "a", "gainDb": -12.0}], {"a": _tone(20, 1000, 0.5)})
