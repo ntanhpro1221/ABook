@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import androidx.annotation.OptIn
 import androidx.core.content.FileProvider
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -13,7 +14,10 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.LoadControl
 import androidx.media3.session.CommandButton
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
@@ -43,6 +47,20 @@ class PlaybackService : MediaLibraryService() {
     private var session: MediaLibrarySession? = null
 
     companion object {
+        /**
+         * Âm thanh phải có sẵn (ms) trước khi ExoPlayer bắt đầu phát một nguồn KHÔNG nằm trên máy - đoạn Edge đang phát luồng (`abooklive://`), chương phát từ máy tính - và sau khi
+         * cạn giữa chừng. media3 1.11.1 mặc định 1000 / 2000; đoạn luồng nhận tiếng nhanh hơn nghe nên chờ ít hơn là người nghe nghe sớm hơn chừng ấy (soát a59p). File trên máy giữ mặc định
+         * của nó. Đo lại bằng LiveStreamOnDeviceTest (readyMs - firstByteMs) trước khi đổi.
+         */
+        const val STREAM_START_BUFFER_MS = 750
+        const val STREAM_REBUFFER_MS = 1500
+
+        /** Mức đệm của ExoPlayer phát sách (cả LiveStreamOnDeviceTest dùng, để số đo là của đúng cấu hình này). */
+        @OptIn(UnstableApi::class)
+        fun loadControl(): LoadControl = DefaultLoadControl.Builder().setBufferDurationsMsForStreaming(
+            DefaultLoadControl.DEFAULT_MIN_BUFFER_MS, DefaultLoadControl.DEFAULT_MAX_BUFFER_MS, STREAM_START_BUFFER_MS, STREAM_REBUFFER_MS,
+        ).build()
+
         val BOOKMARK = SessionCommand("vn.abook.BOOKMARK", Bundle.EMPTY)
         val SLEEP_PLUS = SessionCommand("vn.abook.SLEEP_PLUS", Bundle.EMPTY)
         var instance: PlaybackService? = null
@@ -57,6 +75,7 @@ class PlaybackService : MediaLibraryService() {
             Futures.immediateFuture(MediaSession.MediaItemsWithStartPosition(listOf(READ_ALOUD), 0, 0))
     }
 
+    @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -70,6 +89,7 @@ class PlaybackService : MediaLibraryService() {
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .setSeekBackIncrementMs(15_000)
             .setSeekForwardIncrementMs(15_000)
+            .setLoadControl(loadControl())
             // Chương chưa tải thì phát thẳng từ máy tính (Streaming), có bộ đệm đĩa.
             .setMediaSourceFactory(Streaming.mediaSourceFactory(this))
             .build()
@@ -138,14 +158,17 @@ class PlaybackService : MediaLibraryService() {
      * Lệnh "trước/sau" từ tai nghe Bluetooth, đồng hồ, xe hơi, màn hình khoá đều đi qua phiên media, tức qua lớp này.
      * Bật "Nút tai nghe lùi/tới" thì chúng thành lùi/tới 15 giây (sách nói hiếm khi cần nhảy cả chương - Smart
      * AudioBook Player có tuỳ chọn này). Nút trong app gọi thẳng player gốc nên vẫn nhảy chương như cũ.
+     * `inText` = [ReadAloud.inText] (test JVM thay nó - lõi phát cần Looper của Android).
      */
-    private class HeadsetSkips(player: Player) : ForwardingPlayer(player) {
+    internal class HeadsetSkips(player: Player, private val inText: () -> Boolean = ReadAloud::inText) : ForwardingPlayer(player) {
         // Ở chương cuối không có "bài sau" nên Media3 coi lệnh ấy không khả dụng và bỏ phím trước khi tới đây (thấy
-        // 27-09 trên máy ảo: "Trước" lùi 15 giây, "Sau" im). Bật tuỳ chọn thì hai lệnh luôn khả dụng.
-        private val skips = Player.Commands.Builder().addAll(
-            Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
-            Player.COMMAND_SEEK_TO_PREVIOUS, Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
-        ).build()
+        // 27-09 trên máy ảo: "Trước" lùi 15 giây, "Sau" im). Bật tuỳ chọn thì hai lệnh luôn khả dụng. Dựng khi cần (Commands cần Android - test JVM dựng lớp này được).
+        private val skips by lazy {
+            Player.Commands.Builder().addAll(
+                Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
+                Player.COMMAND_SEEK_TO_PREVIOUS, Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
+            ).build()
+        }
 
         override fun getAvailableCommands(): Player.Commands {
             val base = super.getAvailableCommands()
@@ -163,11 +186,15 @@ class PlaybackService : MediaLibraryService() {
         override fun seekToNextMediaItem() = if (Playback.headsetSkips) seekForward() else if (ReadAloud.active) Playback.next() else super.seekToNextMediaItem()
         override fun seekToPrevious() = if (Playback.headsetSkips) seekBack() else if (ReadAloud.active) Playback.previous() else super.seekToPrevious()
         override fun seekToPreviousMediaItem() = if (Playback.headsetSkips) seekBack() else if (ReadAloud.active) Playback.previous() else super.seekToPreviousMediaItem()
-        override fun seekForward() = if (ReadAloud.inText()) Playback.skip(15.0) else super.seekForward()
-        override fun seekBack() = if (ReadAloud.inText()) Playback.skip(-15.0) else super.seekBack()
+        override fun seekForward() = if (inText()) Playback.skip(15.0) else super.seekForward()
+        override fun seekBack() = if (inText()) Playback.skip(-15.0) else super.seekBack()
 
         // Đọc to: thanh tiến độ ở thông báo / màn hình khoá / xe hơi và lệnh tua của chúng đi theo đồng hồ ảo của CẢ chương (ReadAloud), không theo đoạn âm
         // thanh đang phát (mỗi đoạn chỉ vài giây). Chương audio: như ExoPlayer.
+        // Đoạn đang phát luồng (`abooklive`, độ dài chưa biết) làm ExoPlayer coi mục là phát TRỰC TIẾP suốt đời mục: phiên media bỏ lệnh tua, báo tốc độ 0 - thông báo / màn khoá / xe mất thanh
+        // tua, đồng hồ đứng (soát a59p). Ở chương chữ đồng hồ là của cả chương (ReadAloud), không bao giờ là trực tiếp.
+        override fun isCurrentMediaItemLive(): Boolean = !inText() && super.isCurrentMediaItemLive()
+        override fun isCurrentMediaItemDynamic(): Boolean = !inText() && super.isCurrentMediaItemDynamic()
         override fun getCurrentPosition(): Long = ReadAloud.positionMs() ?: super.getCurrentPosition()
         // Chờ đoạn đọc to kế (ReadAloud.starved): "đang tải", không phải "đã dừng" - thông báo giữ nút Tạm dừng và thanh tiến độ.
         override fun getPlaybackState(): Int = if (ReadAloud.starved()) Player.STATE_BUFFERING else super.getPlaybackState()
@@ -177,9 +204,9 @@ class PlaybackService : MediaLibraryService() {
         override fun getContentDuration(): Long = ReadAloud.durationMs() ?: super.getContentDuration()
         override fun getBufferedPosition(): Long = ReadAloud.chapterMs(super.getBufferedPosition()) ?: super.getBufferedPosition()
         override fun getContentBufferedPosition(): Long = ReadAloud.chapterMs(super.getContentBufferedPosition()) ?: super.getContentBufferedPosition()
-        override fun seekTo(positionMs: Long) = if (ReadAloud.inText()) Playback.seekTo(positionMs / 1000.0) else super.seekTo(positionMs)
+        override fun seekTo(positionMs: Long) = if (inText()) Playback.seekTo(positionMs / 1000.0) else super.seekTo(positionMs)
         override fun seekTo(mediaItemIndex: Int, positionMs: Long) =
-            if (ReadAloud.inText() && mediaItemIndex == currentMediaItemIndex) Playback.seekTo(positionMs / 1000.0) else super.seekTo(mediaItemIndex, positionMs)
+            if (inText() && mediaItemIndex == currentMediaItemIndex) Playback.seekTo(positionMs / 1000.0) else super.seekTo(mediaItemIndex, positionMs)
 
         // Phát/dừng từ thông báo, màn hình khoá, tai nghe khi đang đọc to đi qua lõi (ReadAloud.onPlay/onPause): lúc chờ đọc đoạn đầu hàng đợi còn rỗng,
         // sau lỗi đọc thì bấm phát là thử lại đúng đoạn hỏng.

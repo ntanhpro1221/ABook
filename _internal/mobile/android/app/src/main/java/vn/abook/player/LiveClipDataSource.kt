@@ -30,7 +30,7 @@ class LiveClipDataSource : BaseDataSource(false) {
         reader = entry.reader(dataSpec.position)
         opened = true
         transferStarted(dataSpec)
-        val known = if (entry.done) entry.written() - dataSpec.position else C.LENGTH_UNSET.toLong()
+        val known = entry.remainingFrom(dataSpec.position) ?: C.LENGTH_UNSET.toLong()
         return when {
             dataSpec.length != C.LENGTH_UNSET.toLong() -> if (known >= 0) minOf(known, dataSpec.length) else dataSpec.length
             else -> known
