@@ -13,6 +13,9 @@ export type LiveEvent = "audio" | "words" | "done" | "failed";
 /** Edge trả MP3 CBR 48 kbps (abook/readaloud/edge.py BITRATE_BPS): 6 byte mỗi ms - đổi số byte đã về ra thời lượng tiếng đã có. */
 export const MP3_BYTES_PER_MS = 6;
 
+/** Mốc (ms) đặt cho chữ chưa có tiếng khi tô sáng ([LiveClip.shownWords]): xa hơn mọi đoạn có thể dài, vẫn hữu hạn. */
+export const UNHEARD_MS = 1e9;
+
 /** Kết quả cuối của clip phát luồng (bản ghi E): file đã nằm trong bộ đệm của máy chủ, `bytes` = mọi khúc đã nhận nối lại. */
 export interface LiveFinal {
   url: string;
@@ -50,6 +53,14 @@ export class LiveClip {
     this.chunks.push(chunk);
     this.bytes += chunk.length;
     this.fire("audio");
+  }
+
+  /** Mốc chữ để TÔ SÁNG: như [words], nhưng chữ chưa tới (bắt đầu từ [heardMs] trở đi - máy chủ dồn chúng về cuối phần đã có) bị đẩy ra xa mọi chỗ tiếng có thể tới. Không thì khi tiếng chạm hết phần đã có mà bản W kế chưa về,
+   *  "chữ cuối đã bắt đầu" là chữ cuối đoạn và nó sáng lóe rồi quay lại (a59d); đẩy đi thì tô đứng yên ở chữ cuối đã có tiếng. Chưa có `heardMs` (máy chủ cũ): giữ nguyên. */
+  get shownWords(): WordSpan[] {
+    const heard = this.heardMs;
+    if (heard === null) return this.words;
+    return this.words.map((span): WordSpan => (span[0] >= heard ? [UNHEARD_MS, UNHEARD_MS] : span));
   }
 
   setWords(words: WordSpan[], heardMs: number | null = null): void {
