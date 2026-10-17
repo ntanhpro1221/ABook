@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.88] - 2026-10-17
+
 ### Nghe ngay
 
 - Giọng trực tuyến (máy tính và điện thoại): đoạn đang nghe mà đứt kết nối giữa chừng thì phần đã về vẫn được đọc hết, phần còn lại được xin ngay từ chữ bạn chưa nghe (có thể nghe lặp lại vài chữ) và nối liền sau đó; chỉ khi phần nối cũng hỏng mới báo lỗi, đúng một lần.
