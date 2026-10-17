@@ -14,12 +14,27 @@ class MainActivity : BridgeActivity() {
         registerPlugin(LibraryPlugin::class.java)
         registerPlugin(ReadAloudPlugin::class.java)
         super.onCreate(savedInstanceState)
+        testOverLock(intent)
         if (savedInstanceState == null) open(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        testOverLock(intent)
         open(intent)
+    }
+
+    // Chỉ bản debug, chỉ khi bài thử xin - để chạy kiểm giao diện trên máy khoá có mã mà không cần mở khoá.
+    private fun testOverLock(intent: Intent?) {
+        if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) == 0 || intent?.getBooleanExtra("abook.test.overLock", false) != true) return
+        if (Build.VERSION.SDK_INT >= 27) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
+        }
     }
 
     /** "Mở bằng ABook" / chia sẻ một file tới app: file sách nhập vào thư viện, EPUB / DOCX / PDF / TXT mở bước xem trước của
