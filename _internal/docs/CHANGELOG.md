@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nghe ngay
 
 - Giọng VieNeu (máy tính và điện thoại): câu thoại ngắn như "Ừ.", "Hừ." không còn nhỏ hơn hẳn câu thường, cả 36 giọng. Trên 720 câu thoại ngắn thử riêng, số câu nhỏ hơn mức giọng quá 3 LU giảm từ 39 (5,4 %) về 0; câu nhỏ nhất từ -7,1 LU lên -2,4 LU, còn câu thường (1080 câu) không đổi chút nào. Các đoạn VieNeu đã nghe hay đã làm trước sẽ được đọc lại một lần.
+- Máy tính và điện thoại: bài nhạc nền có đoạn kết, khi phải lặp lại, nối vòng ở giữa bài thay vì nhảy từ đoạn kết về đầu bài; lần chơi cuối của bài trước khi sang bài khác vẫn kết bằng chính đoạn kết ấy. Trên 60 bài thử, chỗ nối kiểu cũ nghe gãy hơn chỗ nối mới ở 91 % số cặp so sánh (AUC 0,91). Có hiệu lực khi danh mục nhạc có điểm vòng cho từng bài (bản danh mục kế tiếp); bài chưa có thì lặp như cũ.
 
 ## [0.4.90] - 2026-10-18
 

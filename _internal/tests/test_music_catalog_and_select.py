@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from abook.webui import music_mix, music_plan
 from abook.webui.music_catalog import CatalogError, MusicCatalog, cell_of, shard_of
 from abook.webui.music_select import choose, scene_key
 from tests.catalog_signing import TEST_PUBLIC_KEY, write_catalog, write_signed_manifest
@@ -415,6 +416,21 @@ def test_a_looping_track_comes_round_every_period_of_its_audible_part_less_the_c
               _flat_scene(firstSegment=20, start=100.0, end=390.0, reason="length")]
     chosen = choose(scenes, lambda v, a: tracks, book_key="b", track_info={t["link"]: t for t in tracks}.get)
     assert "siblings" not in chosen[1] and chosen[1]["stopAt"] == 374.0
+
+
+def test_a_track_with_loop_points_comes_round_every_loop_period_and_its_tail_ends_at_e() -> None:
+    # PLAN_loop §10: điểm vòng 30 / 150 -> phần tử lặp mở ở 148 từ 30, P = 150 - 30 - 2 = 118. Vòng đầu hết ở 188 (tới E), vòng
+    # cuối chơi qua loopEnd tới E: 188 + 118 = 306 - còn 14 s < TAIL_MIN_SECONDS tới hết cảnh (320) nên bài kết ở đó, mốc `tail`
+    # của chương kết đúng ở 306.
+    tracks = [{**track, "loopStart": 30.0, "loopEnd": 150.0} for track in _audible_tracks("a")]
+    scenes = [_flat_scene(firstSegment=1, start=0.0, end=100.0, reason="chapter_start"),
+              _flat_scene(firstSegment=20, start=100.0, end=320.0, reason="length")]
+    chosen = choose(scenes, lambda v, a: tracks, book_key="b", track_info={t["link"]: t for t in tracks}.get)
+    assert "siblings" not in chosen[1] and chosen[1]["stopAt"] == 306.0
+    [cue] = music_plan.chapter_cues({"enabled": True, "scenes": chosen}, chosen[0]["chapterId"])
+    assert cue["tail"] is True and cue["end"] == 306.0
+    bounds = music_mix.track_loop_bounds(tracks[0], tracks[0]["seconds"])
+    assert music_mix.loop_schedule(bounds, 320.0, tail=True) == ([146.0], 306.0), "vòng cuối dài E - loopStart = 160"
 
 
 def test_near_loads_the_cells_in_parallel_but_keeps_the_sequential_order(tmp_path: Path) -> None:

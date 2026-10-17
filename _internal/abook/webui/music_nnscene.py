@@ -37,7 +37,7 @@ from . import humanize, music_plan, music_playlist, music_scenes, music_select
 
 SCENE = music_playlist.SCENE  # `music.playlist` của lớp sửa: người nghe chọn "Theo cảnh (máy tự dựng)"
 SEGMENTER_VERSION = 1  # đổi khi cách tách câu / ánh xạ sang đoạn đổi: plan đã dựng không dùng lại
-FORMAT_VERSION = 2  # 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/ của danh mục, ô cells/ không có)
+FORMAT_VERSION = 3  # 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/ của danh mục, ô cells/ không có); 3: `tracks` mang điểm vòng loopStart / loopEnd
 
 # Chỗ cắm học sinh (không bắt buộc): hàm (kịch bản, đoạn nền) -> các mục `dV/dE/dT/chapterV` cho `music_scenes.book_scenes(student=...)`, hay None.
 StudentItems = Callable[[dict[str, Any], list[dict[str, Any]]], "list[dict[str, Any]] | None"]

@@ -41,6 +41,8 @@ object MusicExport {
             put("tail", cue.tail)
             put("audibleStart", cue.audibleStart ?: JSONObject.NULL)
             put("audibleEnd", cue.audibleEnd ?: JSONObject.NULL)
+            put("loopStart", cue.loopStart ?: JSONObject.NULL)
+            put("loopEnd", cue.loopEnd ?: JSONObject.NULL)
         }
     }
 
@@ -133,9 +135,11 @@ object MusicExport {
             val pcm = chapter.files.mapValues { (_, file) -> cache.get(file.absolutePath, rate, channels) }
             val info = HashMap<String, MusicTimeline.TrackInfo>()
             for ((name, data) in pcm) if (data != null) info[name] = MusicTimeline.TrackInfo(data.frames.toDouble() / rate)
-            for (cue in chapter.cues) { // đoạn nghe được của bài (A, E) đi theo mốc trong gói
+            for (cue in chapter.cues) { // đoạn nghe được của bài (A, E) và điểm vòng đi theo mốc trong gói
                 val known = info[cue.track] ?: continue
-                if (cue.audibleEnd != null) info[cue.track] = MusicTimeline.TrackInfo(known.seconds, cue.audibleStart, cue.audibleEnd)
+                val audible = cue.audibleEnd != null
+                info[cue.track] = MusicTimeline.TrackInfo(known.seconds, if (audible) cue.audibleStart else known.audibleStart,
+                    if (audible) cue.audibleEnd else known.audibleEnd, cue.loopStart ?: known.loopStart, cue.loopEnd ?: known.loopEnd)
             }
             val timeline = MusicTimeline.build(chapter.cues, seconds, info)
             lost[id] = timeline.filter { pcm[it.element.track] == null }.map { it.cue }.toSet().size + chapter.dropped
