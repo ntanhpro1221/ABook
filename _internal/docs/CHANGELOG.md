@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Máy tính và điện thoại, giọng trực tuyến: khi một khúc ở giữa đoạn không tải được trong lúc bạn đang nghe, app xin ngay phần tiếp từ đúng chữ ấy và vẫn đọc hết những gì đã về trước nó, nên chỗ nối không còn khoảng lặng (đo khi mạng chậm: 2,5 giây trước đây, nay 0 giây, không lặp hay bỏ chữ nào).
+
 ## [0.4.89] - 2026-10-17
 
 ### Nghe ngay
