@@ -9,6 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Điện thoại
 
+- Xuất sách nói kèm nhạc nền đã được đo trên máy thật (bộ mã hoá AAC phần mềm của Android): một chương 13 phút mã hoá trong 49 giây; đỉnh âm sau mã hoá −1,8 dBTP, dưới mức an toàn −1 dBTP nên không phải mã hoá lại; chỗ nối giữa hai chương không thêm khoảng lặng nghe được (dưới 0,2 ms). Máy dùng bộ mã hoá AAC của hãng chip có thể phải mã hoá lại một lần nên lâu hơn. Nên bật "Cho phép hoạt động dưới nền" cho ABook để máy không tạm dừng việc xuất.
 - Máy OPPO, Xiaomi, Samsung... hay cho app "ngủ" khi ở nền: khi bạn xuất sách nói, M4B hay MP3 mà ABook chưa được phép chạy nền, màn xuất có một ghi chú nhỏ nói xuất sách dài lúc tắt màn hình có thể bị máy tạm dừng, kèm nút mở thẳng trang cài đặt và lời chỉ đường theo hãng máy. Bật xong quay lại thì ghi chú tự ẩn; máy đã cho phép thì không hiện gì.
 
 ## [0.4.91] - 2026-10-18
