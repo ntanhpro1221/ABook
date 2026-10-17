@@ -51,6 +51,7 @@ class ClipCache(
                     else -> ""
                 },
                 Readings.tag(text, readings),
+                if (ClipLift.lifts(voiceId)) ClipLift.TAG else "", // giọng VieNeu: câu ngắn nhỏ được nâng trong clip (cache.py/service.clip: loudness.LIFT_TAG)
             ).filter { it.isNotEmpty() }.joinToString("+")
 
         /** "edge:vi-VN-X" -> ("edge", "vi-VN-X"). */

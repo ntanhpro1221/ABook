@@ -4,9 +4,11 @@ import android.app.ActivityManager
 import android.content.Context
 import org.json.JSONObject
 import vn.abook.player.AndroidMusicStudent
+import vn.abook.player.MusicRender
 import vn.abook.player.OrtRuntime
 import vn.abook.player.SharedRuntime
 import vn.abook.player.readaloud.Clip
+import vn.abook.player.readaloud.ClipLift
 import vn.abook.player.readaloud.Voice
 import vn.abook.player.readaloud.VoiceException
 import vn.abook.player.readaloud.VoiceInfo
@@ -27,6 +29,7 @@ object VieneuVoices {
     private var module: VieneuModule? = null
     private var presetsOf: Pair<String, Map<String, List<VieneuPreset>>>? = null
     private var engine: Pair<String, VieneuTier>? = null
+    private var liftGuard: MusicRender.Params? = null
 
     @Synchronized
     fun module(appContext: Context): VieneuModule = module ?: run {
@@ -123,9 +126,13 @@ object VieneuVoices {
             throw VoiceException("Điện thoại không đủ bộ nhớ cho giọng VieNeu lúc này.", cause = failure, reason = "voice")
         }
         if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
-        VieneuAudio.writeWav(spoken.samples, spoken.rate, out)
+        VieneuAudio.writeWav(ClipLift.lifted(id, spoken.samples, spoken.rate, liftParams()), spoken.rate, out) // câu ngắn nhỏ nâng lên mức giọng (như service.clip)
         return Clip(out, spoken.durationMs, spoken.words, id)
     }
+
+    /** Bảng FIR đo đỉnh thật (asset music_mix.json) cho [ClipLift]; nạp một lần, không nạp được thì không bù (null). */
+    @Synchronized
+    private fun liftParams(): MusicRender.Params? = liftGuard ?: context?.let { ctx -> runCatching { MusicRender.Params.load(ctx) }.getOrNull() }?.also { liftGuard = it }
 
     /**
      * Self-benchmark after a download (desktop `VieneuProvider.benchmark`): load the engine, read "Xin chào." once (ONNX Runtime's first run is

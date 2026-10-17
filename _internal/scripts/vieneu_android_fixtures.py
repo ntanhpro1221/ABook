@@ -519,6 +519,48 @@ def audio_fixture() -> dict:
     return {"rate": rate, "signals": cases, "joins": joins, "babble": babble, "gaps": ve.GAP_SECONDS}
 
 
+def lift_fixture() -> dict:
+    """Per-clip loudness lift (loudness.lift_db / lift_wav) on small synthetic clips: the meter reading, the true peak, the dB lifted and the lifted samples."""
+    from abook.readaloud import loudness
+
+    rng = np.random.default_rng(11)
+    rate = 8_000  # small files; the meter's filters depend on the rate, so this is tested too
+
+    def tone(seconds: float, level: float, spike: float = 0.0) -> np.ndarray:
+        n = int(seconds * rate)
+        x = np.sin(2 * np.pi * 220 * np.arange(n) / rate) * level + rng.standard_normal(n) * level * 0.1
+        x[n // 2] += spike
+        return x
+
+    signals = {
+        "very_quiet": (tone(0.6, 0.02), "vieneu:nano/Minh Quân"),
+        "quiet": (tone(1.0, 0.0707), "vieneu:turbo/Đức Trí"),
+        "quiet_nano": (tone(0.8, 0.06), "vieneu:nano/Đức Trí"),
+        "peaky": (tone(0.8, 0.05, spike=0.657), "vieneu:turbo/Đức Trí"),
+        "near_voice": (tone(1.2, 0.2), "vieneu:turbo/Đức Trí"),
+        "loud": (tone(1.0, 0.8), "vieneu:turbo/Ngọc Huyền"),
+        "silent": (rng.standard_normal(int(0.5 * rate)) * 0.0002, "vieneu:turbo/Đức Trí"),
+        "tiny": (tone(0.1, 0.05), "vieneu:turbo/Đức Trí"),
+        "other_provider": (tone(0.8, 0.05), "edge:vi-VN-HoaiMyNeural"),
+    }
+    cases = {}
+    for name, (signal, voice) in signals.items():
+        pcm = np.clip(np.round(signal * 32767), -32767, 32767).astype(np.int16)
+        samples = pcm.astype(np.float64) / 32767.0
+        level = loudness.clip_lufs(samples, rate)
+        gain = loudness.lift_db(voice, samples, rate)
+        out = vieneu.wav_bytes(samples, rate)
+        lifted = loudness.lift_wav(voice, out)
+        import io
+        import wave
+
+        with wave.open(io.BytesIO(lifted), "rb") as handle:
+            result = np.frombuffer(handle.readframes(handle.getnframes()), dtype="<i2")
+        cases[name] = {"voice": voice, "pcm": _b64_i16(pcm), "lufs": None if level is None else round(level, 4), "truePeak": round(loudness.true_peak_dbtp(samples), 4),
+                       "liftDb": gain, "lifted": _b64_i16(result) if gain > 0 else None}
+    return {"rate": rate, "cases": cases}
+
+
 def clip_fixture() -> dict:
     """The desktop's clip of CLIP_TEXT for one voice of each tier (vieneu.VieneuProvider, default sampling)."""
     import vieneu as package
@@ -552,6 +594,7 @@ def main() -> int:
     _write("tokens.json", tokenizer_fixture(text))
     _write("rng.json", rng_fixture())
     _write("audio.json", audio_fixture())
+    _write("lift.json", lift_fixture())
     small = OUT / "small.npz"  # np.savez stamps the zip with the time: written once, so the fixture does not change on every run
     if not small.exists():
         np.savez(small, table=np.arange(12, dtype=np.float32).reshape(3, 4) / np.float32(8), eps=np.float32(1e-5),

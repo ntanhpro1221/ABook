@@ -74,9 +74,18 @@ def test_the_jni_library_is_pinned_for_every_abi_the_build_script_makes():
 
 def test_the_phone_plays_each_voice_at_the_computers_loudness():
     source = _kotlin("readaloud/VoiceGain.kt")
-    table = {voice: float(gain) for voice, gain in re.findall(r'"([^"]+)" to (-?[\d.]+),', source)}
-    wanted = {voice: loudness.gain_db(voice) for voice in loudness.MEASURED_LUFS if loudness.gain_db(voice) != 0.0}
-    assert table == wanted
+    table = {voice: float(level) for voice, level in re.findall(r'"([^"]+)" to (-?[\d.]+),', source)}
+    assert table == loudness.MEASURED_LUFS
+    assert f"const val TARGET_LUFS = {loudness.TARGET_LUFS}" in source
+
+
+def test_the_phone_lifts_quiet_clips_with_the_computers_constants():
+    source = _kotlin("readaloud/ClipLift.kt")
+    for name, value in (("DEADBAND_DB", loudness.LIFT_DEADBAND_DB), ("MAX_DB", loudness.LIFT_MAX_DB), ("CEILING_DBTP", loudness.LIFT_CEILING_DBTP),
+                        ("SAFETY_DB", loudness.LIFT_SAFETY_DB), ("PAD_SECONDS", loudness.LIFT_PAD_SECONDS), ("MIN_SECONDS", loudness.LIFT_MIN_SECONDS),
+                        ("MIN_LUFS", loudness.LIFT_MIN_LUFS)):
+        assert re.search(rf"const val {name} = {re.escape(str(value))}$", source, re.M), name
+    assert f'const val TAG = "{loudness.LIFT_TAG}"' in source and f'const val PREFIX = "{loudness.LIFT_PREFIX}"' in source
 
 
 def test_the_phone_cuts_and_measures_like_the_computer():
