@@ -6,7 +6,7 @@
 export function backgroundHelp(manufacturer: string | undefined): string {
   const maker = (manufacturer ?? "").trim().toLowerCase();
   if (["oppo", "realme", "oneplus"].includes(maker)) {
-    return "Trong trang mở ra: Pin → bật “Cho phép hoạt động nền” và “Tự khởi chạy”.";
+    return "Trong trang mở ra: Pin → bật “Cho phép hoạt động dưới nền” và “Cho phép tự động khởi chạy”.";
   }
   if (["xiaomi", "redmi", "poco"].includes(maker)) {
     return "Trong trang mở ra: Tiết kiệm pin → chọn “Không hạn chế”.";

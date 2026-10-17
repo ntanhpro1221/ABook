@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { LiveText } from "@/shared/ui";
+import { ExportProgressText } from "./BackgroundNote";
 import { EbookLibrary, type Mp3ExportEvent } from "./plugins";
 
 // "Xuất MP3 để nghe ở app khác" trên điện thoại: cùng chữ, cùng bản xuất với máy tính (desktop/App.tsx ExportMenuItem). Việc chạy nền
@@ -19,7 +19,7 @@ const toastId = (bookId: string) => `mp3-export-${bookId}`;
 function showProgress(book: ListenBook, folder: string, progress: string, fraction?: number) {
   toast.loading("Đang xuất sách…", {
     id: toastId(book.id),
-    description: <LiveText shown={`${progress} · vào ${folder}`} spoken={`${spokenProgress("Đang xuất sách", fraction)} vào ${folder}`} />,
+    description: <ExportProgressText shown={`${progress} · vào ${folder}`} spoken={`${spokenProgress("Đang xuất sách", fraction)} vào ${folder}`} />,
     action: { label: "Đổi thư mục", onClick: () => void exportMp3(book, true) },
   });
 }

@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import androidx.activity.result.ActivityResult
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
@@ -449,11 +450,23 @@ class LibraryPlugin : Plugin() {
             .put("blocked", LibraryServer.blocked).put("devices", devices).put("error", LibraryServer.lastError)
             .put("fingerprint", if (LibraryServer.fingerprint.isEmpty()) "" else Pin.display(LibraryServer.fingerprint))
             .put("bluetooth", JSObject().put("status", BluetoothShare.status).put("connections", BluetoothShare.connections()))
-            .put("manufacturer", Build.MANUFACTURER.orEmpty()) // hướng dẫn cho chạy nền theo hãng (OPPO, Xiaomi, Samsung...)
+            .also { backgroundView(it) }
     }
+
+    /**
+     * Hãng máy (chọn lời chỉ đường cho chạy nền: OPPO, Xiaomi, Samsung...) và ABook đã được miễn tối ưu pin chưa. Máy hãng cho app "ngủ"
+     * khi ở nền; bật "Cho phép hoạt động dưới nền" thì ABook vào danh sách miễn và cờ này thành true. Chỉ đọc - app không tự xin miễn.
+     */
+    private fun backgroundView(into: JSObject = JSObject()): JSObject =
+        into.put("manufacturer", Build.MANUFACTURER.orEmpty())
+            .put("backgroundAllowed", context.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(context.packageName) ?: false)
 
     @PluginMethod
     fun shareStatus(call: PluginCall) = background(call) { call.resolve(shareView()) }
+
+    /** Màn xuất hỏi riêng (không dựng cả trạng thái chia sẻ): có nhắc người dùng cho ABook chạy nền hay không. */
+    @PluginMethod
+    fun backgroundStatus(call: PluginCall) = call.resolve(backgroundView())
 
     /**
      * Trang thông tin ứng dụng của ABook trong Cài đặt Android - nơi người dùng cho ABook chạy nền (máy hãng cho app "ngủ" khi
