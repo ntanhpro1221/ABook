@@ -3,12 +3,15 @@ import type { WordSpan } from "./words";
 
 // Clip Edge đang được đọc, nhận DẦN từ máy chủ (abook/webui/server.py `ClipStream`, `POST /api/readaloud/clip` có `stream: true`): người nghe nghe được sau khoảng 2 giây
 // thay vì chờ đọc xong cả đoạn. Lời đáp là chuỗi bản ghi: 1 byte loại + 4 byte độ dài (big-endian) + nội dung.
-//   A: byte MP3 (nối thẳng vào phần trước)   W: JSON {words, duration_ms} - mốc chữ tạm, thay bản trước
+//   A: byte MP3 (nối thẳng vào phần trước)   W: JSON {words, duration_ms, heard_ms} - mốc chữ tạm, thay bản trước
 //   E: JSON {url, duration_ms, words} - xong (giống JSON thường)   X: JSON {message, reason} - lỗi sau khi đã phát
 
 export const CLIP_STREAM_TYPE = "application/vnd.abook.clipstream";
 
 export type LiveEvent = "audio" | "words" | "done" | "failed";
+
+/** Edge trả MP3 CBR 48 kbps (abook/readaloud/edge.py BITRATE_BPS): 6 byte mỗi ms - đổi số byte đã về ra thời lượng tiếng đã có. */
+export const MP3_BYTES_PER_MS = 6;
 
 /** Kết quả cuối của clip phát luồng (bản ghi E): file đã nằm trong bộ đệm của máy chủ, `bytes` = mọi khúc đã nhận nối lại. */
 export interface LiveFinal {
@@ -24,6 +27,8 @@ export class LiveClip {
   readonly chunks: Uint8Array[] = [];
   /** Mốc chữ tạm tính trên phần đã phát (chữ chưa tới đứng cuối phần ấy); `[]` tới bản ghi W đầu. */
   words: WordSpan[] = [];
+  /** Mốc kết thúc (ms) của chữ THẬT cuối cùng Edge đã báo, theo bản W mới nhất (máy chủ cũ / chưa có W: null): chữ có mốc bắt đầu từ đây trở đi là chữ chưa tới, bị dồn về cuối phần đã phát. */
+  heardMs: number | null = null;
   state: "open" | "done" | "failed" = "open";
   final: LiveFinal | null = null;
   error: ReadAloudError | null = null;
@@ -34,13 +39,22 @@ export class LiveClip {
     return () => void this.listeners.delete(listener);
   }
 
+  private bytes = 0;
+
+  /** Thời lượng tiếng (ms) của các byte đã về ([MP3_BYTES_PER_MS]). */
+  get receivedMs(): number {
+    return this.bytes / MP3_BYTES_PER_MS;
+  }
+
   push(chunk: Uint8Array): void {
     this.chunks.push(chunk);
+    this.bytes += chunk.length;
     this.fire("audio");
   }
 
-  setWords(words: WordSpan[]): void {
+  setWords(words: WordSpan[], heardMs: number | null = null): void {
     this.words = words;
+    this.heardMs = heardMs;
     this.fire("words");
   }
 
@@ -123,7 +137,8 @@ export function clipFromStream(body: ReadableStream<Uint8Array> | null, toUrl: (
         live.push(record.body);
         open();
       } else if (record.kind === "W") {
-        live.setWords(spans(json(record.body).words));
+        const tentative = json(record.body);
+        live.setWords(spans(tentative.words), typeof tentative.heard_ms === "number" ? tentative.heard_ms : null);
       } else if (record.kind === "E") {
         const done = json(record.body);
         live.finish({ url: toUrl(String(done.url)), durationMs: Number(done.duration_ms), words: spans(done.words), bytes: new Blob(live.chunks as BlobPart[], { type: "audio/mpeg" }) });

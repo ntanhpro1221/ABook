@@ -6,8 +6,10 @@ import java.io.File
  * Một đoạn âm thanh đọc to: MỘT đoạn chữ thành một file ở tốc độ 1.0, kèm mốc từng chữ (`words`: một [bắt đầu, kết thúc] ms cho mỗi chữ `\S+`, từ đầu đoạn) và
  * độ dài. Đổi tốc độ nghe bằng tốc độ phát của trình phát, không bao giờ đọc lại. `fromWord` > 0: CLIP ĐUÔI (uxfix57) - người nghe bấm giữa đoạn chưa đọc nên chỉ đọc từ chữ thứ `fromWord` tới hết đoạn;
  * `words` vẫn đủ chữ của đoạn (chữ trước `fromWord` mốc [0, 0]) và âm thanh bắt đầu từ chữ `fromWord`: chỉ dùng khi chỗ nghe nằm trong nó ([SeekPlan]).
+ * `baseMs` > 0 (uxfix58): clip đuôi NỐI sau phần đã phát của một clip phát luồng đứt giữa chừng - file này bắt đầu ở `baseMs` của đoạn (phần đã về đã phát xong ở mục ExoPlayer trước nó),
+ * `durationMs` và `words` tính trên đồng hồ cả đoạn (gồm phần đã về); chỗ nghe trước `baseMs` không do nó phục vụ.
  */
-class Clip(val file: File, val durationMs: Long, val words: List<Span>, val voice: String, val fromWord: Int = 0)
+class Clip(val file: File, val durationMs: Long, val words: List<Span>, val voice: String, val fromWord: Int = 0, val baseMs: Long = 0)
 
 /**
  * Giọng đọc không dùng được lúc này (hết mạng, thiếu giọng tiếng Việt, quá hạn...). `message` là câu nói thẳng cho người nghe. `reason` như bên máy tính

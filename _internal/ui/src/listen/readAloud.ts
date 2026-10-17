@@ -1,9 +1,9 @@
 import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
 import type { Script, ScriptSegment } from "./model";
-import type { LiveClip } from "./liveClip";
+import { LiveClip } from "./liveClip";
 import { LiveFeed, type MediaSourceLike } from "./liveFeed";
 import { isSpeakable, sceneBreakGaps } from "./textScript";
-import { absoluteWords, usableWords, wordIndexAt, type WordSpan } from "./words";
+import { absoluteWords, countTokens, usableWords, WORD_LEAD_MS, wordIndexAt, type WordSpan } from "./words";
 
 export { isSpeakable };
 
@@ -41,8 +41,10 @@ export interface ReadAloudClip {
   /** Clip Edge đang được đọc, nhận dần từ máy chủ ([clipFromStream]): `url` / `durationMs` / `words` / `bytes` còn chưa có (độ dài 0, mốc rỗng) tới khi `live` báo xong - phần tử audio phát từ MediaSource
    *  nối các khúc đã về ([LiveFeed]); bộ máy giữ độ dài ước của đoạn tới khi xong. */
   live?: LiveClip;
-  /** Clip ĐUÔI (bấm giữa đoạn, [ClipOptions.tailFrom]): chỉ đọc từ chữ này (0-based, đếm `\S+`) tới hết đoạn; `words` / `durationMs` tính trên phần đuôi (chữ 0 của clip = chữ `fromWord` của đoạn). Vắng = clip đủ cả đoạn. */
+  /** Clip đuôi (bấm giữa đoạn, [ClipOptions.tailFrom]): chỉ đọc từ chữ này (0-based, đếm `\S+`) tới hết đoạn; `words` / `durationMs` tính trên phần đuôi (chữ 0 của clip = chữ `fromWord` của đoạn). Vắng = clip đủ cả đoạn. */
   fromWord?: number;
+  /** Clip do bộ máy tự ghép từ hai phần (clip đứt giữa chừng + clip đuôi xin tiếp, [ReadAloudEngine.salvage]): chỉ có trong `bytes`, không có `url` riêng - bỏ file thì bỏ cả clip. */
+  joined?: boolean;
 }
 
 /** Tải file audio của clip bằng fetch (không đi qua phần tử <audio>); lỗi nào cũng là clip hỏng (`service`, đi đường thử lại như lúc máy chủ trả lỗi). */
@@ -312,6 +314,27 @@ interface Slot {
   gaveUp: boolean;
   /** Lượt xin kế tiếp là lần hỏi MỚI ([ClipOptions.fresh]): "fresh" - người nghe vừa tới đoạn, quỹ thử lại tính lại từ đầu; "probe" - hỏi thăm ngầm một lần, không thử lại. */
   ask: "fresh" | "probe" | null;
+  /** Clip phát dần của đoạn đứt giữa chừng mà phần đã về vẫn đang phát, phần tiếp đang được xin / nối vào cùng phần tử audio ([ReadAloudEngine.salvage]). */
+  rest: Rest | null;
+}
+
+/** Phần tiếp của một clip đứt giữa chừng (uxfix58, a58 e: 17,9 giây tiếng đã về mà người nghe chỉ nghe 3,45 giây rồi báo lỗi). Phần đã về phát hết trong phần tử audio hiện có; phần tiếp là clip ĐUÔI của CÙNG đoạn từ
+ *  chữ đầu tiên chưa có tiếng, được nối vào sau khúc cuối của phần đã về (cùng MediaSource - [LiveFeed.chain]) nên nghe liền, có thể lặp vài chữ ở chỗ nối. Đồng hồ của đoạn: phần tiếp bắt đầu sau `base` giây. */
+interface Rest {
+  /** Chữ (của đoạn, 0-based) phần tiếp bắt đầu đọc: chữ đầu tiên chưa có tiếng. */
+  from: number;
+  /** Giây tiếng đã có của phần đầu. */
+  base: number;
+  /** Phần đầu (clip đứt): các khúc tiếng đã về, để ghép file khi cả hai phần xong. */
+  head: LiveClip;
+  /** Mốc của các chữ trước `from` (theo chữ của đoạn, ms từ đầu phần tử audio; chữ trước clip đuôi [0, 0]). */
+  words: WordSpan[];
+  /** Phần tiếp đã về (đang về hoặc xong). */
+  tail: LiveClip | null;
+  /** Gỡ theo dõi `tail`. */
+  unlive: (() => void) | null;
+  /** Lượt xin phần tiếp hỏng hẳn: phần đã có phát hết thì báo lỗi này (một lần), không sang đoạn kế. */
+  error: unknown;
 }
 
 /** Bối cảnh của một lượt lấy clip ([ReadAloudEngine.send]): để lỗi giữa chừng của clip đang về đi đúng đường lỗi của lượt ấy. */
@@ -605,6 +628,7 @@ export class ReadAloudEngine implements AudioEngine {
       stale: false,
       gaveUp: false,
       ask: null,
+      rest: null,
     };
   }
 
@@ -713,6 +737,8 @@ export class ReadAloudEngine implements AudioEngine {
     this.resuming = false;
     const current = this.slots[this.target.index];
     current?.audio?.pause();
+    // Ô bị rời không giữ vị trí cũ: lần vào kế (nhất là advance() từ đoạn trước) phải đặt lại currentTime ([playCurrent]).
+    if (current) current.started = false;
     this.finished = false;
     this.dropTailIfOutside(target.index, target);
     this.target = target;
@@ -903,7 +929,12 @@ export class ReadAloudEngine implements AudioEngine {
     const speech = this.speech;
     const slot = this.slots[index];
     if (!speech || !slot || !slot.speakable) return;
+    // Đoạn nằm SAU chỗ nghe mà còn giữ clip đuôi (người nghe bấm giữa đoạn ấy rồi bỏ đi chỗ khác): người nghe sẽ vào nó từ đầu nên clip đuôi vô dụng - thay ngay bằng clip đủ cả đoạn ngay trong lúc nghe
+    // đoạn trước, không đợi tới lúc vào ([advance] mới bỏ thì phải đọc nguội: a58 b2, lặng 2,2 giây).
+    if (slot.clip && index > this.target.index) this.dropTailIfOutside(index, { index, offset: 0 });
     if (slot.clip) {
+      // Phần tiếp của clip đứt giữa chừng chưa được xin (lượt xin bị bỏ lúc tạm dừng...): xin lại.
+      if (slot.rest && !slot.rest.tail && !slot.rest.error && !slot.fetching) this.requestRest(index);
       this.audioFor(index);
       return;
     }
@@ -950,7 +981,7 @@ export class ReadAloudEngine implements AudioEngine {
     for (let i = this.queued.length - 1; i >= 0; i -= 1) {
       const { index, epoch } = this.queued[i];
       const slot = this.slots[index];
-      if (!slot || !slot.fetching || slot.clip || slot.epoch !== epoch) {
+      if (!slot || !slot.fetching || (slot.clip && !slot.rest) || slot.epoch !== epoch) {
         this.queued.splice(i, 1); // đã có clip, hay cách đọc / giọng đổi sau khi xếp hàng
         if (best > i) best -= 1;
         continue;
@@ -1003,6 +1034,12 @@ export class ReadAloudEngine implements AudioEngine {
     if (index === this.target.index) {
       if (this.target.fraction !== undefined || this.target.offset > 0) options.whole = true;
       else if ((this.target.word ?? 0) > 0) options.tailFrom = this.target.word;
+    }
+    // Phần tiếp của clip đứt giữa chừng: clip đuôi từ chữ đầu tiên chưa có tiếng, phát luồng như thường ([salvage]).
+    if (slot.rest) {
+      delete options.whole;
+      if (slot.rest.from > 0) options.tailFrom = slot.rest.from;
+      else delete options.tailFrom;
     }
     speech
       .fetchClip(speech.voice(), slot.text, options)
@@ -1068,6 +1105,11 @@ export class ReadAloudEngine implements AudioEngine {
       this.retryLater(index, epoch, id);
       return;
     }
+    // Lượt xin phần tiếp của clip đứt giữa chừng cũng hỏng hẳn: phần đã về phát hết rồi mới báo ([restGaveUp]).
+    if (slot.rest) {
+      this.restGaveUp(index, slot, error);
+      return;
+    }
     // Hết lần thử vì dịch vụ trục trặc: đoạn chưa phải của người nghe thì để đó, [probe] hỏi thăm dần và người nghe tới nơi thì hỏi mới ([request]).
     slot.gaveUp = isServiceTrouble(error);
     if (index !== this.target.index || !(this.wanted || this.resuming)) return;
@@ -1122,9 +1164,10 @@ export class ReadAloudEngine implements AudioEngine {
   }
 
   /** Clip đang về đứt giữa chừng: bỏ phần tử audio (MediaSource) và clip, rồi đi đường lỗi + thử lại như mọi clip hỏng. */
-  private liveFailed(index: number, live: LiveClip, ctx: FetchContext): void {
+  private liveFailed(index: number, live: LiveClip, ctx: FetchContext, salvageable = true): void {
     const slot = this.slots[index];
     if (!slot || slot.clip?.live !== live) return;
+    if (salvageable && this.salvage(index, slot, live)) return;
     // Nghe dở thì nhớ chỗ đã nghe: clip lấy lại (thử lại) đón người nghe ở đó ([send]: đích có `offset` thì không phát dần).
     if (index === this.target.index && slot.started && slot.audio) {
       const from = slot.clip?.fromWord ?? 0;
@@ -1143,12 +1186,243 @@ export class ReadAloudEngine implements AudioEngine {
     this.afterFetch();
   }
 
+  // ---- clip đứt giữa chừng: phần đã về vẫn phát hết, xin tiếp phần còn lại (uxfix58) ----------------------------------
+
+  /** Chữ (đếm trong clip, 0-based) đầu tiên CHƯA có tiếng đầy đủ trong phần đã về của clip `live`: chữ có mốc kết thúc sau chỗ tiếng đã tới, hay bắt đầu từ chỗ ấy trở đi (chữ chưa tới bị máy chủ dồn về cuối phần đã
+   *  có, nên chỉ nhìn mốc kết thúc thì bỏ sót cả loạt chữ). Chỗ tiếng đã tới = ngắn hơn trong hai số: mốc hết chữ thật cuối cùng Edge đã báo (`heardMs`) và số byte đã về. Chưa có mốc nào (hay máy chủ cũ không gửi
+   *  `heardMs`) thì 0 - xin lại từ đầu clip; trả `live.words.length` khi mọi chữ đã có tiếng. */
+  private firstUnheard(live: LiveClip): number {
+    if (!live.words.length || live.heardMs === null) return 0;
+    const cut = Math.min(live.heardMs, live.receivedMs);
+    for (let i = 0; i < live.words.length; i += 1) {
+      const [start, end] = live.words[i];
+      if (end > cut || start >= cut) return i;
+    }
+    return live.words.length;
+  }
+
+  /** Clip phát dần của `slot` đứt giữa chừng (lỗi giữa luồng / đứt sau byte đầu): phần đã về VẪN phát hết - phần tử audio và MediaSource giữ nguyên, không báo lỗi - và NGAY xin tiếp phần còn lại bằng clip đuôi của cùng đoạn từ chữ
+   *  đầu tiên chưa có tiếng ([firstUnheard]; người nghe có thể nghe lặp vài chữ), phát luồng như thường; clip tiếp về thì nối vào sau khúc cuối của phần đã về trong cùng phần tử audio ([joinRest]). Chỉ khi lượt xin tiếp ấy cũng
+   *  hỏng hẳn mới đi đường lỗi ([restGaveUp]: phát hết phần đã có rồi báo MỘT lời). Trả false khi không giữ được (không có phần tử audio đang nối): đi đường bỏ clip như cũ. */
+  private salvage(index: number, slot: Slot, live: LiveClip): boolean {
+    const clip = slot.clip;
+    if (!clip || !slot.audio || !slot.feed || slot.rest) return false;
+    const from = clip.fromWord ?? 0;
+    const total = countTokens(slot.text);
+    const heard = this.firstUnheard(live);
+    const resume = from + heard;
+    if (resume >= total) {
+      // Mọi chữ đã có tiếng (đứt đúng ở cuối): coi như clip xong ở byte cuối.
+      const words = absoluteWords(from, live.words);
+      slot.clip = { ...clip, url: "", durationMs: live.receivedMs, words: live.words, bytes: new Blob(live.chunks as BlobPart[], { type: "audio/mpeg" }), live: undefined, joined: true };
+      slot.words = words;
+      slot.unlive?.();
+      slot.unlive = null;
+      slot.duration = live.receivedMs / 1000;
+      slot.feed.finish();
+      this.layout();
+      this.publish();
+      this.fire("duration");
+      if (index === this.target.index) this.fire("time");
+      return true;
+    }
+    const head = heard > 0 ? absoluteWords(from, live.words.slice(0, heard)) : Array.from({ length: from }, (): WordSpan => [0, 0]);
+    slot.unlive?.();
+    slot.unlive = null;
+    slot.rest = { from: resume, base: live.receivedMs / 1000, head: live, words: head, tail: null, unlive: null, error: null };
+    slot.failures = 0;
+    slot.gaveUp = false;
+    slot.began = Date.now();
+    slot.words = this.restWords(slot);
+    this.publish();
+    this.requestRest(index);
+    return true;
+  }
+
+  /** Mốc chữ của cả đoạn khi đang ghép: chữ đã có tiếng (phần đầu) rồi chữ của phần tiếp dời `base` giây (chữ đầu của phần tiếp coi như bắt đầu ngay chỗ nối - không thì quãng lặng đầu clip làm chữ liền trước sáng lóe, như
+   *  [absoluteWords]); chữ chưa có mốc đứng cuối. Chữ chưa tới không bao giờ sáng trong lúc phát phần đầu. */
+  private restWords(slot: Slot): WordSpan[] {
+    const rest = slot.rest;
+    if (!rest) return slot.words ?? [];
+    const total = countTokens(slot.text);
+    const baseMs = rest.base * 1000;
+    const tail = (rest.tail?.words ?? []).slice(0, Math.max(0, total - rest.words.length));
+    const shifted = tail.map(([a, b], i): WordSpan => [baseMs + (i === 0 ? 0 : a), baseMs + b]);
+    // Chữ chưa có mốc đứng sau chỗ nối đủ xa để không sáng trong lúc phát phần đầu ([wordIndexAt] sáng sớm [WORD_LEAD_MS]).
+    const end = shifted.length ? shifted[shifted.length - 1][1] : baseMs + WORD_LEAD_MS + 1;
+    const pad = Array.from({ length: Math.max(0, total - rest.words.length - shifted.length) }, (): WordSpan => [end, end]);
+    return [...rest.words, ...shifted, ...pad];
+  }
+
+  /** Xếp lượt xin phần tiếp của `slot` (như một lượt xin clip, đi cùng đường [pump] / [send] / thử lại). */
+  private requestRest(index: number): void {
+    const slot = this.slots[index];
+    if (!slot?.rest) return;
+    slot.fetching = true;
+    this.queued.push({ index, epoch: slot.epoch });
+    this.pump();
+  }
+
+  /** Clip xin tiếp về: nối vào cùng MediaSource sau phần đã về. Nguồn không đưa được clip đuôi từ đúng chữ ấy (trả cả đoạn từ bộ đệm...) thì không nối được: bỏ phần đã có, nghe từ chữ đang nghe trong clip đó. */
+  private joinRest(index: number, clip: ReadAloudClip): void {
+    const slot = this.slots[index];
+    const rest = slot?.rest;
+    if (!slot || !rest) return;
+    if ((clip.fromWord ?? 0) !== rest.from) {
+      this.replaceByWhole(index, slot, clip);
+      return;
+    }
+    const id = this.loadId;
+    const epoch = slot.epoch;
+    const attach = (tail: LiveClip): void => {
+      if (id !== this.loadId || this.slots[index] !== slot || slot.rest !== rest || slot.epoch !== epoch) return;
+      rest.tail = tail;
+      slot.feed?.chain(tail);
+      rest.unlive = tail.on((event) => {
+        if (id !== this.loadId || slot.rest !== rest) return;
+        if (event === "words") {
+          slot.words = this.restWords(slot);
+          this.publish();
+        } else if (event === "done") this.finishRest(index, slot);
+        else if (event === "failed") this.restGaveUp(index, slot, tail.error);
+      });
+      slot.words = this.restWords(slot);
+      this.publish();
+      if (tail.state === "done") this.finishRest(index, slot);
+      else if (tail.state === "failed") this.restGaveUp(index, slot, tail.error);
+    };
+    if (clip.live) {
+      attach(clip.live);
+      return;
+    }
+    // Clip đã về trọn (không phát luồng): đổi thành một clip "đã xong" để nối chung đường.
+    void (async () => {
+      const bytes = clip.bytes ?? (await fetchClipBytes(clip.url));
+      const done = new LiveClip();
+      done.push(new Uint8Array(await bytes.arrayBuffer()));
+      done.finish({ url: clip.url, durationMs: clip.durationMs, words: clip.words, bytes });
+      return done;
+    })().then(attach, (error) => {
+      if (id === this.loadId && slot.rest === rest && slot.epoch === epoch) this.restGaveUp(index, slot, error);
+    });
+  }
+
+  /** Phần tiếp về đủ: ghép hai phần thành một clip (file = phần đầu + phần tiếp), độ dài thật = phần đầu + phần tiếp, đồng hồ dựng lại. */
+  private finishRest(index: number, slot: Slot): void {
+    const rest = slot.rest;
+    const clip = slot.clip;
+    const tail = rest?.tail;
+    const final = tail?.final;
+    if (!rest || !clip || !tail || !final) return;
+    rest.unlive?.();
+    const from = clip.fromWord ?? 0;
+    const words = this.restWords(slot);
+    const durationMs = rest.base * 1000 + final.durationMs;
+    slot.rest = null;
+    slot.clip = { ...clip, url: "", durationMs, words: words.slice(from), bytes: new Blob([...rest.head.chunks, ...tail.chunks] as BlobPart[], { type: "audio/mpeg" }), live: undefined, joined: true };
+    slot.words = words;
+    const was = slot.duration;
+    slot.duration = durationMs / 1000;
+    if (index === this.target.index && this.target.word !== undefined && this.target.word >= from) {
+      this.resolveTarget(slot.clip);
+      if (slot.audio && slot.started) slot.audio.currentTime = this.target.offset;
+    }
+    this.layout();
+    this.publish();
+    if (Math.abs(was - slot.duration) > 1e-6) this.fire("duration");
+    if (index === this.target.index) this.fire("time");
+  }
+
+  /** Lượt xin phần tiếp hỏng hẳn. Đoạn người nghe đang nghe: MediaSource đóng ở cuối phần đã về để nó phát HẾT, rồi [audioEnded] báo lỗi (một lời, không sang đoạn kế). Đoạn khác: bỏ clip, đoạn sẽ được xin lại nguyên vẹn. */
+  private restGaveUp(index: number, slot: Slot, error: unknown): void {
+    const rest = slot.rest;
+    if (!rest) return;
+    rest.unlive?.();
+    rest.unlive = null;
+    slot.fetching = false;
+    if (index !== this.target.index) {
+      this.dropClip(slot);
+      this.layout();
+      this.publish();
+      this.fire("duration");
+      return;
+    }
+    rest.error = error ?? new ReadAloudError("Mất kết nối với giọng đọc giữa chừng.", "service");
+    slot.feed?.finish();
+  }
+
+  /** Phần đã về phát hết mà phần tiếp không xin được: báo lỗi MỘT lần; "Thử lại" xin lại từ chữ chưa nghe. */
+  private failRest(slot: Slot): void {
+    const rest = slot.rest;
+    if (!rest) return;
+    const error = rest.error;
+    this.target.offset = 0;
+    this.target.fraction = undefined;
+    this.target.word = rest.from > 0 ? rest.from : undefined;
+    this.dropClip(slot);
+    slot.fetching = false;
+    this.layout();
+    this.publish();
+    this.fire("duration");
+    this.fail(error);
+  }
+
+  /** Chữ (của đoạn) đang nghe trong phần tử audio của `slot`; chưa nghe thì chữ đầu clip. */
+  private positionWord(slot: Slot): number {
+    const from = slot.clip?.fromWord ?? 0;
+    if (!slot.started || !slot.audio || !slot.words) return from;
+    return Math.max(from, wordIndexAt(slot.words, slot.audio.currentTime * 1000));
+  }
+
+  /** Clip trả về cho lượt xin phần tiếp không phải clip đuôi từ đúng chữ: bỏ phần đã có, nghe tiếp từ chữ đang nghe trong clip này. */
+  private replaceByWhole(index: number, slot: Slot, clip: ReadAloudClip): void {
+    const word = this.positionWord(slot);
+    this.dropClip(slot, false);
+    slot.fetching = false;
+    if (index === this.target.index) {
+      this.target.offset = 0;
+      this.target.fraction = undefined;
+      this.target.word = word > 0 ? word : undefined;
+    }
+    this.onClip(index, clip);
+  }
+
+  /** Ghép hai phần không nối được (MediaSource không nhận khúc): bỏ clip, xin lại từ chữ đang nghe. */
+  private abandonRest(index: number, slot: Slot): void {
+    const word = this.positionWord(slot);
+    const wasTarget = index === this.target.index;
+    this.dropClip(slot);
+    slot.fetching = false;
+    if (wasTarget) {
+      this.target.offset = 0;
+      this.target.fraction = undefined;
+      this.target.word = word > 0 ? word : undefined;
+    }
+    this.layout();
+    this.publish();
+    this.fire("duration");
+    if (wasTarget && this.wanted) {
+      this.fire("waiting");
+      this.playCurrent();
+    }
+  }
+
+  private clearRest(slot: Slot): void {
+    slot.rest?.unlive?.();
+    slot.rest = null;
+  }
+
   /** MediaSource không nhận khúc MP3 (nối lỗi): clip đang về thì coi như hỏng; đã về đủ thì phát tiếp từ file (blob) ở chỗ đang nghe. */
   private feedBroken(index: number, slot: Slot): void {
     const live = slot.clip?.live;
-    if (this.slots[index] !== slot || !live) return;
+    if (this.slots[index] !== slot || !slot.clip) return;
+    if (slot.rest) {
+      this.abandonRest(index, slot); // phần đầu + phần tiếp chưa ghép xong mà MediaSource không nhận: bỏ, xin lại từ chữ đang nghe
+      return;
+    }
+    if (!live) return;
     if (live.state === "open" && slot.liveCtx) {
-      this.liveFailed(index, live, slot.liveCtx);
+      this.liveFailed(index, live, slot.liveCtx, false); // MediaSource đã hỏng: không còn chỗ nối phần tiếp
       return;
     }
     const at = slot.audio?.currentTime ?? 0;
@@ -1217,7 +1491,7 @@ export class ReadAloudEngine implements AudioEngine {
     const slot = this.slots[index];
     slot.fetching = true;
     setTimeout(() => {
-      if (id !== this.loadId || slot.epoch !== epoch || slot.clip) return;
+      if (id !== this.loadId || slot.epoch !== epoch || (slot.clip && !slot.rest)) return;
       const target = this.target.index;
       if (!(this.wanted || (this.resuming && index === target)) || index < target || index > target + this.depth(target)) {
         slot.fetching = false;
@@ -1229,11 +1503,21 @@ export class ReadAloudEngine implements AudioEngine {
   }
 
   private onClip(index: number, clip: ReadAloudClip): void {
+    const waitingRest = this.slots[index].rest;
+    if (waitingRest && !waitingRest.tail) {
+      this.joinRest(index, clip);
+      return;
+    }
     const was = this.slots[index].duration;
     this.adopt(index, clip);
     // Clip đuôi về mà người nghe đã đổi chỗ sang trước chữ đầu của nó trong lúc chờ: không dùng, xin lại ([dropTailIfOutside]).
     if (index === this.target.index && this.dropTailIfOutside(index, this.target)) {
       if (this.wanted) this.playCurrent();
+      return;
+    }
+    // Clip đuôi về cho đoạn mà người nghe đã lùi ra TRƯỚC nó trong lúc chờ: người nghe sẽ vào đoạn ấy từ đầu - bỏ, xin clip đủ cả đoạn ([request]).
+    if (index > this.target.index && this.dropTailIfOutside(index, { index, offset: 0 })) {
+      if (this.ready && this.wanted) this.request(index);
       return;
     }
     this.layout();
@@ -1330,6 +1614,11 @@ export class ReadAloudEngine implements AudioEngine {
 
   private audioEnded(index: number): void {
     if (index !== this.target.index || !this.wanted) return;
+    const rest = this.slots[index]?.rest;
+    if (rest?.error !== undefined && rest.error !== null) {
+      this.failRest(this.slots[index]);
+      return;
+    }
     this.advance();
   }
 
@@ -1347,6 +1636,9 @@ export class ReadAloudEngine implements AudioEngine {
       return;
     }
     this.target = { index: next, offset: 0 };
+    // Đoạn kế có thể đã phát dở từ trước (người nghe bấm đi chỗ khác rồi quay lại từ đoạn trước): vào nó là từ đầu, không ở chỗ cũ ([playCurrent]).
+    const entering = this.slots[next];
+    if (entering) entering.started = false;
     this.dropTailIfOutside(next, this.target);
     this.releaseOutside();
     this.dropQueuedOutside();
@@ -1376,6 +1668,17 @@ export class ReadAloudEngine implements AudioEngine {
     const keepBytesFrom = this.target.index - KEEP_BEHIND;
     const high = this.target.index + this.depth(this.target.index);
     this.slots.forEach((slot, i) => {
+      // Ra khỏi cửa sổ giữa lúc đang ghép hai phần, hay clip đã ghép (không có file riêng) mà file bị thả: bỏ cả clip, đoạn sẽ được xin lại nguyên vẹn khi tới gần.
+      if ((i < low || i > high) && slot.rest) {
+        this.dropClip(slot);
+        slot.fetching = false;
+        return;
+      }
+      if ((i < keepBytesFrom || i > high) && slot.clip?.joined) {
+        this.dropClip(slot);
+        slot.fetching = false;
+        return;
+      }
       if (i < low || i > high) this.releaseSlot(slot);
       // Ngoài cửa sổ không giữ cả file trong bộ nhớ (cả chương có thể hàng trăm clip), trừ vài đoạn vừa nghe: bấm "đoạn trước" thì phát lại từ file đã có (blob: URL mới), không đi tải
       // lại `url` - phần tử <audio> tự tải bị xếp sau các lượt POST clip còn treo (a55, a56). Đoạn xa hơn thì phát từ `url` như thường.
@@ -1403,6 +1706,7 @@ export class ReadAloudEngine implements AudioEngine {
     this.releaseSlot(slot);
     slot.unlive?.();
     slot.unlive = null;
+    this.clearRest(slot);
     slot.clip = null;
     slot.words = null;
     slot.duration = slot.estimate;
@@ -1445,6 +1749,7 @@ export class ReadAloudEngine implements AudioEngine {
       this.releaseSlot(slot);
       slot.unlive?.();
       slot.unlive = null;
+      this.clearRest(slot);
       slot.clip = null;
       slot.words = null;
       slot.duration = slot.estimate;
@@ -1494,7 +1799,10 @@ export class ReadAloudEngine implements AudioEngine {
       window.removeEventListener(VOICE_CHANGED_EVENT, this.onVoice);
       window.removeEventListener(READINGS_CHANGED_EVENT, this.onReadings);
     }
-    for (const slot of this.slots) this.releaseSlot(slot);
+    for (const slot of this.slots) {
+      this.clearRest(slot);
+      this.releaseSlot(slot);
+    }
     this.slots = [];
     this.base = null;
     this.speech = null;

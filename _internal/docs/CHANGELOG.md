@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Giọng trực tuyến (máy tính và điện thoại): đoạn đang nghe mà đứt kết nối giữa chừng thì phần đã về vẫn được đọc hết, phần còn lại được xin ngay từ chữ bạn chưa nghe (có thể nghe lặp lại vài chữ) và nối liền sau đó; chỉ khi phần nối cũng hỏng mới báo lỗi, đúng một lần.
+- Bấm vào chữ cuối của một từ (nửa bên phải) không còn nhảy sang từ kế; vào lại một đoạn từng nghe dở thì đọc từ đầu chỗ bạn chọn, không tiếp ở chỗ cũ; sau khi bấm giữa đoạn, từ liền trước không còn sáng lóe lên một thoáng.
+- Máy tính: nghe lùi rồi tiến qua một đoạn từng bấm vào giữa không còn khựng chừng 2 giây giữa hai đoạn.
+
 ## [0.4.87] - 2026-10-17
 
 ### Nghe ngay

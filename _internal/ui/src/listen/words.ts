@@ -28,9 +28,13 @@ export function tailFromWord(text: string, word: number): string | null {
   return null;
 }
 
-/** Mốc chữ của cả đoạn từ mốc của clip đuôi: chữ trước `from` chưa đọc nên mốc [0, 0], chữ `from` trở đi theo clip. Chưa có mốc nào thì để rỗng. */
+/** Mốc chữ của cả đoạn từ mốc của clip đuôi: chữ trước `from` chưa đọc nên mốc [0, 0], chữ `from` trở đi theo clip. Chưa có mốc nào thì để rỗng.
+ *  Chữ `from` (chữ người nghe bấm) coi như bắt đầu ngay đầu clip dù clip mở đầu bằng quãng lặng (~0,14 giây): không thì trong quãng ấy "chữ cuối cùng đã bắt đầu" là chữ liền trước
+ *  (mốc [0, 0]) và nó sáng lóe lên (a58). Cùng luật với điện thoại (SeekPlan.tailWords). */
 export function absoluteWords(from: number, words: WordSpan[]): WordSpan[] {
-  return from > 0 && words.length > 0 ? [...Array.from({ length: from }, (): WordSpan => [0, 0]), ...words] : words;
+  if (from <= 0 || words.length === 0) return words;
+  const [start, end] = words[0];
+  return [...Array.from({ length: from }, (): WordSpan => [0, 0]), start > 0 ? [0, end] : words[0], ...words.slice(1)];
 }
 
 /** Tách câu thành chữ và khoảng trắng, giữ nguyên từng ký tự - render lại không đổi cách câu xuống dòng. */

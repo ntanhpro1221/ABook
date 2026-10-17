@@ -13,10 +13,20 @@ describe("wordAtOffset", () => {
   });
 
   it("chạm vào khoảng trắng thì chữ liền sau; quá cuối thì chữ cuối", () => {
-    expect(wordAtOffset(TEXT, 4)).toBe(1);
-    expect(wordAtOffset(TEXT, 8)).toBe(2); // hai dấu cách
-    expect(wordAtOffset(TEXT, 9)).toBe(2);
+    expect(wordAtOffset(TEXT, 9)).toBe(2); // giữa hai dấu cách
     expect(wordAtOffset(TEXT, 99)).toBe(3);
+    expect(wordAtOffset("Một  hai", 4)).toBe(1); // giữa hai dấu cách: đã qua cuối chữ trước
+  });
+
+  it("con trỏ đúng cuối một chữ (bấm nửa phải chữ cái cuối) vẫn là chữ ấy, không nhảy sang chữ kế (a58)", () => {
+    expect(wordAtOffset(TEXT, 4)).toBe(0); // "Trời|"
+    expect(wordAtOffset(TEXT, 8)).toBe(1); // "vừa|" (trước hai dấu cách)
+    expect(wordAtOffset(TEXT, 14)).toBe(2); // "hửng|"
+    expect(wordAtOffset(TEXT, 19)).toBe(3); // "sáng.|" - cuối câu
+    expect(wordAtOffset(TEXT, 20)).toBe(3);
+    // đầu chữ kế vẫn là chữ kế
+    expect(wordAtOffset("Sau khi", 4)).toBe(1);
+    expect(wordAtOffset("Sau khi", 3)).toBe(0);
   });
 
   it("câu không có chữ", () => {
