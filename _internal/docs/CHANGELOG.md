@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.92] - 2026-10-18
+
 ### Nghe ngay
 
 - Mất mạng giữa lúc nghe bằng giọng cần mạng: mạng về thì app tự đọc tiếp sau chừng 1,5 giây, không còn đứng yên chờ bạn bấm Phát (máy tính và điện thoại). Mạng vẫn chưa dùng được thì lời báo hiện lại với nút "Thử lại".
