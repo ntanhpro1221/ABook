@@ -69,6 +69,9 @@ export interface ListenSource {
   /** Nhạc nền của một chương (rãnh nhạc của cuốn - webui/music_plan.py): mốc thời gian + đường lấy file. Nguồn nào
    *  chưa có thì trình phát không chơi nhạc nền. */
   musicCues?(bookId: string, chapterId: number): Promise<MusicCues>;
+  /** Xin máy chủ tải sẵn bài nhạc `link` (bài của mốc kế, bài đầu chương kế - POST /api/music/warm): trả ngay, tải ở nền; hỏng thì im lặng
+   *  (mốc ấy tới thì tự tải như cũ). Nguồn nào không có thì bài chỉ tải khi mốc của nó tới. */
+  musicWarm?(link: string): void;
   /** Danh sách phát người nghe đã chọn cho cả cuốn (sách chỉ có chữ - playlistBed.ts): hàng bài theo thứ tự phát; không bài nào
    *  thì trình phát dùng mốc nhạc của chương như thường. Android: lõi native tự phát (MusicBed.kt). */
   musicPlaylist?(bookId: string): Promise<PlaylistQueue>;
