@@ -8,7 +8,7 @@ import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
 import { tellSceneMusic } from "./musicHint";
-import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit } from "./musicBed";
+import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit } from "./musicBed";
 import { SceneCues, isSceneCues, sceneRetryDelay } from "./sceneCues";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
 import { canPlay, newerElsewhere, resumePoint, startingRate, type Bookmark, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
@@ -465,7 +465,18 @@ export function PlayerProvider({
 
   // Nhạc nền (musicBed.ts): chỉ bộ máy phát web (máy tính); lõi native Android chưa có. Rãnh nhạc tắt / chưa dựng thì
   // nguồn trả không mốc nào - trình phát chạy như cũ.
-  const bed = useMemo(() => (native || !source.musicCues ? null : new MusicBed()), [native, source]);
+  const bed = useMemo(() => (native || !source.musicCues ? null : new MusicBed(undefined, source.musicWarm && ((link) => source.musicWarm?.(link)))), [native, source]);
+  // Tải sẵn bài mốc đầu của chương kế khi chương này còn <= 120 giây (musicBed.ts NextChapterWarm): chương mới mở bằng bài đã có trong bộ đệm máy chủ.
+  const nextWarm = useMemo(
+    () =>
+      bed && source.musicCues
+        ? new NextChapterWarm(
+            (chapterId) => source.musicCues!(refs.current.track?.bookId ?? "", chapterId),
+            (link) => bed.warmLink(link),
+          )
+        : null,
+    [bed, source],
+  );
   const bedChapter = track ? `${track.bookId}:${track.chapterId}` : "";
   // Nhạc nền THEO CẢNH của sách chỉ có chữ (sceneCues.ts): mốc của máy chủ đặt lại theo đồng hồ đọc, bài đổi khi đoạn đầu cảnh bắt đầu phát.
   const scene = useMemo(
@@ -657,6 +668,7 @@ export function PlayerProvider({
       const seeked = Math.abs(now - last) > 3;
       if (seeked) scene?.seeked(now);
       bed.sync(now, !engine.paused, seeked);
+      if (current && nextWarm) nextWarm.update(`${current.bookId}:${current.chapterId}`, availableAfter(refs.current.queue, current.chapterId, 1)?.id ?? null, engine.duration - now);
       last = now;
     };
     // Clip về (giây thật của đoạn thay giây ước): mốc nhạc theo cảnh đặt lại cho khớp.
@@ -665,7 +677,7 @@ export function PlayerProvider({
       offs.forEach((off) => off());
       bed.stop();
     };
-  }, [bed, engine, playlistBed, scene]);
+  }, [bed, engine, nextWarm, playlistBed, scene]);
   useEffect(() => bed?.setVolume(volume), [bed, volume]);
 
   const applyRate = useCallback((value: number) => {

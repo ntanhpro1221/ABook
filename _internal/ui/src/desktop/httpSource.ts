@@ -219,6 +219,9 @@ export const httpSource: ListenSource = {
     const result = await api<MusicCues>(`/api/books/${bookId}/music/chapters/${chapterId}`);
     return { ...result, cues: result.cues.map((cue) => ({ ...cue, src: mediaUrl(cue.src) })) };
   },
+  musicWarm: (link) => {
+    void api(`/api/music/warm?link=${encodeURIComponent(link)}`, { method: "POST" }).catch(() => undefined);
+  },
   musicPlaylist: async (bookId) => {
     const result = await api<PlaylistQueue>(`/api/books/${bookId}/music/playlist`);
     return { ...result, tracks: result.tracks.map((track) => ({ ...track, src: mediaUrl(track.src) })) };

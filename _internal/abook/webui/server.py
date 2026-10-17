@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import collections
 import contextlib
 import functools
 import hashlib
@@ -74,6 +75,7 @@ MUSIC_UNAVAILABLE_SECONDS = 24 * 3600  # bài tải hỏng (nguồn gỡ, 404...
 MUSIC_OFFLINE_SECONDS = 300            # tải hỏng vì mạng: nguồn (host) ấy nghỉ 5 phút; từ 2 nguồn hỏng mà chưa nguồn nào tải được thì cả máy offline
 MUSIC_OFFLINE_HOSTS = 2                # bấy nhiêu nguồn cùng hỏng vì mạng (và không nguồn nào vừa tải được) = máy mất mạng
 MY_MUSIC_IMPORT_LIMIT = 500             # số file tối đa trong một lượt nhập "Nhạc của tôi"
+MUSIC_WARM_QUEUE = 4                   # hàng tải sẵn bài kế (`music_warm`): đầy thì bài chờ lâu nhất bị bỏ - người nghe đã đi xa hơn
 MUSIC_WARM_ROUNDS = 3                  # tải sẵn rồi chọn lại bài thay cho bài hỏng: tối đa 3 vòng
 # Bài nhạc nền lớn hơn thế (bản dài 30-50 phút, có bài 110 MB) máy này coi như không dùng được: rãnh nhạc chọn bài khác, không
 # tải (soát UX a23: tải trước cả cuốn mất 190 MB). Cỡ lấy từ danh mục (`bytes`), không có thì Content-Length / số byte đếm được.
@@ -327,6 +329,11 @@ class App:
         self._moods_jobs: dict[str, dict[str, Any]] = {}
         self._moods_lock = threading.Lock()
         self._music_fetching: dict[str, threading.Lock] = {}  # mỗi bài một khoá: luồng tải sẵn và trình phát không ghi đè nhau
+        # Hàng tải sẵn bài kế của trình phát máy tính (`music_warm`): MỘT luồng nền, FIFO, bỏ trùng.
+        self._music_warm_lock = threading.Lock()
+        self._music_warm_queue: collections.deque[str] = collections.deque()
+        self._music_warm_thread: threading.Thread | None = None
+        self._music_warm_active: str | None = None
         # Bài nào dùng được là chuyện của TỪNG MÁY (bộ đệm + mạng của máy này): sổ bài tải hỏng và cửa sổ "đang offline".
         self._music_clock: Callable[[], float] = time.time
         self._music_unavailable = self._read_unavailable()
@@ -2412,6 +2419,40 @@ class App:
             if progress is not None:
                 progress(copied, length)
 
+    def music_warm(self, link: str) -> bool:
+        """Xin tải sẵn bài `link` của danh mục (trình phát máy tính: bài của mốc kế, bài đầu chương kế) - trả ngay, tải ở MỘT luồng nền,
+        lần lượt, bỏ trùng; bài đã có trong bộ đệm thì bỏ qua. Hỏng (mất mạng, nguồn hỏng, quá cỡ, ổ đầy) thì im lặng: mốc ấy tới thì
+        tự tải và tự thử lại như cũ. True = đã xếp hàng."""
+        if not link.startswith("https://"):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Link nhạc không hợp lệ")
+        if self.music_track_cached(link) is not None:
+            return False
+        with self._music_warm_lock:
+            if link in self._music_warm_queue or link == self._music_warm_active:
+                return False
+            self._music_warm_queue.append(link)
+            while len(self._music_warm_queue) > MUSIC_WARM_QUEUE:
+                self._music_warm_queue.popleft()
+            if self._music_warm_thread is None:
+                self._music_warm_thread = threading.Thread(target=self._music_warm_worker, name="music-warm-next", daemon=True)
+                self._music_warm_thread.start()
+        return True
+
+    def _music_warm_worker(self) -> None:
+        while True:
+            with self._music_warm_lock:
+                self._music_warm_active = None
+                if not self._music_warm_queue:
+                    # Gỡ luồng TRONG cùng khoá với lần thấy hàng rỗng: `music_warm` xếp bài sau đó sẽ mở luồng mới, không kẹt.
+                    self._music_warm_thread = None
+                    return
+                link = self._music_warm_active = self._music_warm_queue.popleft()
+            try:
+                if self.music_track_available(link, sizes=False):  # đang offline / bài đã hỏng thì khỏi chờ mạng
+                    self.music_track_file(link)
+            except Exception:  # noqa: BLE001 - luồng nền không được chết giữa hàng; bài ấy sẽ được tải (và báo lỗi) đúng lúc mốc của nó tới
+                pass
+
     def music_track_file(self, link: str, *, progress: Callable[[int, int | None], None] | None = None,
                          cancel: threading.Event | None = None) -> Path:
         """File nhạc của một bài trong danh mục: tải một lần từ nguồn gốc vào bộ nhớ đệm, lần sau dùng lại. Chỉ bài CÓ
@@ -4263,6 +4304,9 @@ class Handler(BaseHTTPRequestHandler):
     def get_my_music_file(self, _query: dict[str, list[str]], digest: str) -> None:
         self._send_file(self.app.my_music_file(digest), cache=True)
 
+    def post_music_warm(self, query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, {"queued": self.app.music_warm((query.get("link") or [""])[0])})
+
     def get_music_track(self, query: dict[str, list[str]]) -> None:
         self._send_file(self.app.music_track_file((query.get("link") or [""])[0]), cache=True)
 
@@ -5721,6 +5765,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/music/playlists"), Handler.get_music_playlists),
     ("GET", re.compile(BOOK + r"/music/files/(" + music_plan.TRACK_NAME + ")"), Handler.get_music_packaged),
     ("GET", re.compile(r"/api/music/track"), Handler.get_music_track),
+    ("POST", re.compile(r"/api/music/warm"), Handler.post_music_warm),
     # "Nhạc của tôi": chỉ trên máy này (Studio từ xa không có các đường này - nhạc của người dùng không ra khỏi máy trừ qua sách).
     ("GET", re.compile(r"/api/music/local"), Handler.get_my_music),
     ("POST", re.compile(r"/api/music/local/import"), Handler.post_my_music_import),
