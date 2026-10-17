@@ -43,6 +43,32 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
    một: chấm B9 trên cây mới bằng gold cũ ra villain −46,6 chặt, demonking −18,6 - toàn là thước. Trước khi so hai lượt khác
    cây mã: so chữ đoạn của hai project (một lệnh), lệch thì khoá lại gold theo chữ (`LLM_Train/spkconf/gold_remap.py`).
 
+## 17-18/10 - Lỗi của B9 là gán nhầm giữa người có mặt; danh tính và xưng hô đóng; MTP nhanh 1,8x trên 4B (Model)
+
+Chi tiết + luật ghi trước: `LLM_Train/errtax_next/PLAN.md` (17-10 18:12 trở đi), `r1id_report.md`, `r1id_mech.md`, `cue_diag.md`,
+`address_oracle.md`, `hdiag_diag_a.md`; MTP: `LLM_Train/mtp/`.
+
+- **DIAG A (lịch sử gold):** cổng rộng 73,66 -> 81,07 (+7,41, CI truyện +5,15..+10,14). Đây là trần oracle của việc lan nhãn qua
+  lịch sử, không phải điểm đạt được; nó giữ B37/B38 làm hướng chính.
+- **R1 ĐÓNG:** gieo sổ nhân vật bằng đúng người nói của chính chương: cổng 19 77,55 -> 78,35 (Δ +0,80, CI −2,08..+6,28). rk (n 512,
+  truyện lớn nhất) −3,5 kéo xuống; truyện nhỏ lên (meke +22) - không đọc thành "danh tính giúp truyện nhỏ".
+- **Lỗi của mốc là gì:** 310 câu sai trên cổng 19 = 73 % gán cho NGƯỜI KHÁC ĐANG CÓ MẶT, 22 % tên ngoài chương, 5 % NARR/UNK.
+  Danh tính đúng chỉ sửa ròng +18 câu tên ngoài; phần còn lại là xáo trộn. Trần của mọi hướng "danh tính" ~ 1/5 số lỗi.
+- **Căn cứ dựng bằng mã** (nhãn cho R2): đúng mốc -> đúng khi có lịch sử gold: thẻ sau 92->94, thẻ trước 86->88, nói tiếp 80->87,
+  luân phiên 77->84, không căn cứ cảnh 2 người 72->84, **không căn cứ cảnh >=3 người 60->65**. Lớp >=3 người (49/247 lỗi) là lớp khó
+  riêng: lan nhãn không đủ, cần hướng khác (đề xuất sau B38).
+- **Xưng hô cấp cuốn GÁC:** oracle hồ sơ xưng hô từng người trên lớp >=3 người chỉ khớp đúng một người đúng 17,2 % (gần thật 9,8 %,
+  phủ 1/49 lỗi); 40 % dòng không có từ xưng hô nào.
+- **B38 học trên Kaggle T4 fp16:** cả ba nhánh (khối / khối-S / từng câu) của một hạt cùng học trên một máy, nên phép so cặp vẫn công
+  bằng; bản thắng (nếu có) học lại ở nhà bf16 trước khi đổi mặc định. Bài học: tham số LoRA mang dtype bf16 của config nền làm
+  GradScaler fp16 lỗi - phải ép fp32 (bản vá B18 từng chỉ vá tay vào dataset nên SMOKE B38 hỏng lại y hệt). Luật tràn số: miễn 5
+  bước đầu (hiệu chỉnh scale từ 65536), sau đó bỏ > max(1, 1 %) bước là trượt; KA 4/4 đạt.
+- **MTP (Ollama 0.33.2, Mac M4, greedy, đề phân tích thật):** Ollama chạy MTP bằng blob DRAFT riêng + `draft_num_predict 2`; bản gộp
+  LoRA Qwen3.5 của ta giữ lớp MTP dạng `blk.N.nextn` nhưng Ollama KHÔNG dùng. Gắn DRAFT chính thức vào LoRA của ta bằng
+  `/api/create` + `draft_files`: Qwen3.5-4B LoRA v8 q8 19,5 -> 35,7 tok/s giải mã (1,83x), 9B-v8 q4 17,1 -> 20,7 (1,21x), đầu ra
+  giống hệt từng byte. B9 (gốc Qwen3-4B-2507) không có MTP. Lead 18-10: ứng viên gốc Qwen3.5-4B (công thức B9 + draft) xếp SAU B38,
+  so với B9 theo luật cặp >= 3 hạt; app chỉ tải draft khi một ứng viên Qwen3.5 thắng B9.
+
 ## 12-10 trưa - Đoạn LẬT giữa hai lượt chạy: lật theo lô, cơ chế đều đã có ứng viên; B35 ghép pha + vô danh (Model; Lead FLIPCAUSE, ĐX-2)
 
 Câu hỏi: khi hai lượt chạy (hai hạt học, hai lần suy luận, hai công thức) gán khác người cho cả một chuỗi câu, đó là cơ chế gì,
