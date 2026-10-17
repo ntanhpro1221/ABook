@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Máy tính: khi giọng trực tuyến vừa đọc vừa tải mà giọng chững lại giữa đoạn, chữ đang tô không còn nháy sang chữ cuối đoạn rồi quay lại; và khi lỗi giọng đã báo rồi app tự thử lại mà vẫn hỏng, bạn chỉ thấy đúng một lời báo (được cập nhật tại chỗ) thay vì báo, mất, rồi báo lại.
+
 ## [0.4.88] - 2026-10-17
 
 ### Nghe ngay
