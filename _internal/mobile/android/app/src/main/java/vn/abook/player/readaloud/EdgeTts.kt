@@ -445,6 +445,8 @@ internal class PieceAssembler(private val pieces: List<String>, private val out:
     private val lock = Any()
     private val state = Array(pieces.size) { Piece() }
     private var head = 0
+    /** Chỉ ghi các mảnh trước chỗ này ([cut]). */
+    private var end = pieces.size
 
     /** Byte đã ghi vào `out`. */
     var bytes = 0L
@@ -503,8 +505,14 @@ internal class PieceAssembler(private val pieces: List<String>, private val out:
         advance()
     }
 
+    /** Mảnh `index` hỏng hẳn (uxfix63): chỉ ghi nốt các mảnh trước nó - phần dở của mảnh hỏng không bao giờ vào file - và báo `live` số chữ còn có tiếng ([LiveSink.cut]). */
+    fun cut(index: Int) = synchronized(lock) {
+        end = index
+        live?.cut(pieces.take(index).sumOf { WordTokens.count(it) })
+    }
+
     private fun advance() {
-        while (head < pieces.size) {
+        while (head < end) {
             val piece = state[head]
             // Mốc của mỗi mảnh tính từ đầu mảnh ấy: bù bằng độ dài mp3 các mảnh trước (48 kbps không đổi nên chính xác).
             if (piece.shift < 0) piece.shift = EdgeProtocol.durationMs(bytes)
@@ -626,7 +634,7 @@ class EdgeTts(
         val clip = try {
             try {
                 if (pieces.size <= 1) pieces.forEachIndexed { index, piece -> assembler.finish(index, speakPiece(piece, received, run, assembler.tap(index))) }
-                else speakInParallel(pieces, received, run, assembler)
+                else speakInParallel(pieces, received, run, assembler, live != null)
             } catch (error: Exception) {
                 if (run.cancel.cancelled && error !is CancellationException) throw CancellationException("Lượt đọc đã bị huỷ").apply { initCause(error) }
                 throw error
@@ -651,6 +659,8 @@ class EdgeTts(
     /** Một clip đang đọc: hạn chung ([totalMs], tính từ lúc bắt đầu) và nơi giữ ổ cắm của các mảnh để huỷ cùng lúc. */
     private class ClipRun(val deadlineNanos: Long) {
         val cancel = ClipCancel()
+        /** Lượt của MỘT mảnh: cùng hạn, huỷ riêng được (mảnh sau mảnh hỏng - [speakInParallel]), huỷ cả clip thì nó cũng bị huỷ. */
+        fun piece(): ClipRun = ClipRun(deadlineNanos).also { own -> cancel.register(AutoCloseable { own.cancel.cancel() }) }
         fun remainingMs(): Long = maxOf(0L, (deadlineNanos - System.nanoTime()) / 1_000_000)
         /** Hạn cho một lượt chờ / nhận tin: phần còn lại của clip; lần thử lại còn bị quỹ [ClipBudget] cắt ngắn thêm. */
         fun attemptMs(retry: Boolean): Long = ClipBudget.attemptMs(remainingMs(), retry)
@@ -662,30 +672,52 @@ class EdgeTts(
     /**
      * Các mảnh của một đoạn đọc cùng lúc (tối đa [EdgePieces.PIECE_PARALLEL], đoạn rank 0 tối đa [EdgePieces.TARGET_PIECES]), trả theo thứ tự đọc. Chờ theo thứ tự HOÀN THÀNH: mảnh nào hỏng trước thì cả đoạn hỏng ngay với đúng lỗi ấy
      * (không đợi mảnh đứng trước), và quá hạn chung của clip là [VoiceException] "timeout". Mảnh còn lại bị huỷ, ổ cắm của chúng đóng ([synthesize]).
+     * Phát luồng mà mảnh hỏng không phải mảnh đầu (uxfix63; máy tính: edge.py `_gather`): chỉ huỷ các mảnh SAU nó, báo chỗ tiếng dừng ngay ([PieceAssembler.cut]) để người nghe xin phần nối từ đầu mảnh hỏng
+     * trong lúc các mảnh trước vẫn về và ghi hết, rồi mới ném lỗi ấy (mảnh trước hỏng nữa: lỗi của mảnh trước).
      */
-    private fun speakInParallel(pieces: List<String>, received: AtomicLong, run: ClipRun, assembler: PieceAssembler) {
+    private fun speakInParallel(pieces: List<String>, received: AtomicLong, run: ClipRun, assembler: PieceAssembler, live: Boolean) {
         val budget = ClipBudget.current() // luồng phụ cùng quỹ thời gian thử lại của đoạn
         val rank = ClipBudget.rank() // và cùng rank xếp hàng chờ chỗ kết nối
+        val runs = pieces.map { run.piece() }
         val pool = Executors.newFixedThreadPool(minOf(EdgePieces.pieceLimit(rank), pieces.size)) { Thread(it, "edge-piece").apply { isDaemon = true } }
-        val completion = ExecutorCompletionService<Pair<Int, Pair<ByteArray, List<Boundary>>>>(pool)
+        val completion = ExecutorCompletionService<Pair<Int, Result<Pair<ByteArray, List<Boundary>>>>>(pool)
         val futures = pieces.mapIndexed { index, piece -> completion.submit {
             val rankBefore = ClipBudget.enterRank(rank)
             try {
-                ClipBudget.inherit(budget) { index to speakPiece(piece, received, run, assembler.tap(index)) }
+                index to try {
+                    Result.success(ClipBudget.inherit(budget) { speakPiece(piece, received, runs[index], assembler.tap(index)) })
+                } catch (error: Exception) {
+                    Result.failure(error)
+                }
             } finally {
                 ClipBudget.leaveRank(rankBefore)
             }
         } }
         try {
-            repeat(pieces.size) {
+            var broken = pieces.size // mảnh hỏng đã báo ([PieceAssembler.cut]): chỉ còn chờ các mảnh trước nó
+            var failure: Throwable? = null
+            val waiting = (pieces.indices).toMutableSet()
+            while (waiting.any { it < broken }) {
                 val done = completion.poll(run.remainingMs(), TimeUnit.MILLISECONDS) ?: throw VoiceException("Giọng Edge trả lời quá chậm", reason = "timeout")
                 val (index, result) = try {
                     done.get()
                 } catch (error: ExecutionException) {
                     throw error.cause ?: error
                 }
-                assembler.finish(index, result)
+                waiting.remove(index)
+                if (index > broken) continue // đã huỷ
+                val error = result.exceptionOrNull()
+                if (error == null) {
+                    assembler.finish(index, result.getOrThrow())
+                    continue
+                }
+                if (!live || index == 0 || broken < pieces.size || error is CancellationException || run.cancel.cancelled) throw error
+                broken = index
+                failure = error
+                for (later in index + 1 until pieces.size) runs[later].cancel.cancel()
+                assembler.cut(index)
             }
+            failure?.let { throw it }
         } finally {
             futures.forEach { it.cancel(true) }
             pool.shutdownNow()

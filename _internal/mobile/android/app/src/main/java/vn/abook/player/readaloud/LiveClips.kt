@@ -182,6 +182,12 @@ object LiveClips {
         fun done(total: Long)
 
         fun failed(error: Exception)
+
+        /**
+         * Một mảnh giữa clip hỏng hẳn trong lúc các mảnh trước nó còn đang về (uxfix63; máy tính: bản ghi C của `ClipStream`): tiếng sẽ dừng trước chữ HIỆN `word` (đếm trong clip) - các mảnh trước vẫn ghi hết rồi
+         * mới tới [failed]. Người nghe xin phần nối từ chữ ấy NGAY. Nhiều nhất một lần, có thể trước byte đầu.
+         */
+        fun cut(word: Int) {}
     }
 
     /** Chỗ nhận + cách đổi mốc chữ giọng nhận về chữ hiện ([Voice.synthesize] đổi chữ thô thành chữ chuẩn hoá thì đặt `expand`). */
@@ -221,6 +227,8 @@ interface LiveSink {
     fun boundaries(found: List<Boundary>)
     fun done(clip: Clip)
     fun failed(error: Exception)
+    /** Mảnh giữa clip hỏng hẳn: `words` chữ đầu (đếm trên chữ gửi giọng đọc) là tất cả những gì còn có tiếng ([LiveClips.Target.cut]). */
+    fun cut(words: Int) {}
 }
 
 /**
@@ -273,6 +281,13 @@ class LiveWords(
     override fun failed(error: Exception) {
         if (pending) push(clock())
         target.failed(error)
+    }
+
+    /** `words` chữ ĐỌC đầu có tiếng -> chữ HIỆN đầu tiên còn chữ đọc nào từ đó trở đi (chữ hiện thành nhiều chữ đọc mà bị cắt giữa: đọc lại cả chữ ấy), qua đúng phép đổi `expand` của mốc (mốc giả: mỗi chữ đọc mang số thứ tự của nó; máy tính `_Live.cut`). */
+    override fun cut(words: Int) {
+        val shown = expand(List(WordTokens.count(text)) { Span(it.toLong(), it.toLong()) })
+        val word = shown.indexOfFirst { it.end >= words }
+        target.cut(if (word < 0) shown.size else word)
     }
 }
 

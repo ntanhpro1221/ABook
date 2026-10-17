@@ -2554,6 +2554,117 @@ describe("clip phát dần đứt giữa chừng: phần đã về phát hết, 
     expect(s.published.at(-1)!.segments[0].words).toHaveLength(8);
   });
 
+  describe("mảnh giữa hỏng: xin phần nối NGAY khi biết, không đợi luồng đóng (uxfix63, a59d e1 lặng 2,11 s)", () => {
+    it("bản ghi C lúc mảnh trước còn đang về: lượt xin phần nối gửi TRƯỚC khi luồng đóng, từ đúng chữ đầu mảnh hỏng; phần nối về sớm thì chờ, luồng đóng mới nối - không xin lại", async () => {
+      const { s, live } = await streaming([[0, 250], [250, 500], [500, 500], [500, 500], [500, 500], [500, 500], [500, 500], [500, 500]], 500);
+      live.cut(4); // mảnh 3 (chữ 4-7) hỏng khi mảnh 2 (chữ 2-3) còn đang về
+      await flush();
+      expect(live.state).toBe("open");
+      expect(asked(s)).toHaveLength(2);
+      expect(asked(s)[1].tailFrom).toBe(4);
+      expect(asked(s)[1].rank).toBe(0);
+      expect(asked(s)[1].whole).toBeUndefined();
+      expect(s.audios[0].released).toBe(false);
+      expect(s.events).not.toContain("error");
+      // mảnh 2 về tiếp trong lúc chờ phần nối
+      live.push(new Uint8Array(6000));
+      live.setWords(FOUR_HEARD.map(([a, b]) => [a * 2, b * 2]), 2000);
+      drain(s);
+      const next = new LiveClip();
+      next.push(new Uint8Array([9, 9, 9]));
+      asked(s)[1].resolve({ url: "", durationMs: 0, words: [], live: next, fromWord: 4 });
+      await flush();
+      drain(s);
+      expect(s.sources[0].buffer.appended.map((chunk) => chunk.length)).toEqual([6000, 6000]); // phần đầu chưa xong: chưa nối phần nối
+      live.fail(BROKEN()); // mảnh trước phát hết, máy chủ báo lỗi của mảnh hỏng
+      await flush();
+      drain(s);
+      expect(asked(s)).toHaveLength(2);
+      expect(s.sources[0].buffer.appended.map((chunk) => chunk.length)).toEqual([6000, 6000, 3]);
+      next.setWords([[0, 200], [200, 450], [450, 700], [700, 900]], 900);
+      const origin = () => s.published.at(-1)!.segments[0].start! * 1000;
+      expect(s.published.at(-1)!.segments[0].words!.slice(3)).toEqual([[1500, 2000], [2000, 2200], [2200, 2450], [2450, 2700], [2700, 2900]].map(([a, b]) => [origin() + a, origin() + b]));
+      next.finish({ url: "/media/x.mp3", durationMs: 900, words: [[0, 200], [200, 450], [450, 700], [700, 900]], bytes: new Blob([new Uint8Array([9, 9, 9])], { type: "audio/mpeg" }) });
+      drain(s);
+      expect(s.sources[0].ended).toBe(true);
+      const segment = s.published.at(-1)!.segments[0];
+      expect(segment.end! - segment.start!).toBeCloseTo(2.9, 6);
+      s.audios[0].finish();
+      await flush();
+      expect(s.events).not.toContain("error");
+      expect(s.engine.ended).toBe(true);
+    });
+
+    it("phần nối về sau khi luồng đóng: nối như thường (không xin lại)", async () => {
+      const { s, live } = await streaming();
+      live.cut(4);
+      await flush();
+      live.fail(BROKEN());
+      await flush();
+      expect(asked(s)).toHaveLength(2);
+      const next = new LiveClip();
+      next.push(new Uint8Array([9, 9, 9]));
+      asked(s)[1].resolve({ url: "", durationMs: 0, words: [], live: next, fromWord: 4 });
+      await flush();
+      drain(s);
+      expect(s.sources[0].buffer.appended.map((chunk) => chunk.length)).toEqual([6000, 3]);
+      expect(asked(s)).toHaveLength(2);
+    });
+
+    it("luồng đóng mà tiếng dừng SỚM hơn chữ đã báo (mảnh trước cũng hỏng): phần nối sớm bị bỏ, xin lại từ chữ đầu tiên chưa có tiếng - không bỏ sót chữ", async () => {
+      for (const early of [true, false]) {
+        const { s, live } = await streaming(); // chữ 0-3 có tiếng
+        live.cut(6);
+        await flush();
+        expect(asked(s)[1].tailFrom).toBe(6);
+        const next = new LiveClip();
+        next.push(new Uint8Array([7, 7]));
+        if (early) {
+          asked(s)[1].resolve({ url: "", durationMs: 0, words: [], live: next, fromWord: 6 });
+          await flush();
+        }
+        live.fail(BROKEN());
+        await flush();
+        if (!early) {
+          asked(s)[1].resolve({ url: "", durationMs: 0, words: [], live: next, fromWord: 6 });
+          await flush();
+        }
+        expect(asked(s)).toHaveLength(3);
+        expect(asked(s)[2].tailFrom).toBe(4);
+        drain(s);
+        expect(s.sources[0].buffer.appended.map((chunk) => chunk.length)).toEqual([6000]);
+        const right = new LiveClip();
+        right.push(new Uint8Array([5, 5, 5, 5]));
+        asked(s)[2].resolve({ url: "", durationMs: 0, words: [], live: right, fromWord: 4 });
+        await flush();
+        drain(s);
+        expect(s.sources[0].buffer.appended.map((chunk) => chunk.length)).toEqual([6000, 4]);
+        expect(s.events).not.toContain("error");
+      }
+    });
+
+    it("lượt xin phần nối sớm hỏng hẳn: phần đầu vẫn về và phát HẾT rồi mới báo MỘT lời; Thử lại xin từ chữ chưa nghe", async () => {
+      const { s, live } = await streaming();
+      live.cut(4);
+      await flush();
+      asked(s)[1].reject(new ReadAloudError("Mất mạng", "offline"));
+      await flush();
+      expect(s.sources[0].ended).toBe(false); // phần đầu còn đang về
+      expect(s.events).not.toContain("error");
+      live.fail(BROKEN());
+      await flush();
+      drain(s);
+      expect(s.sources[0].ended).toBe(true);
+      expect(s.events).not.toContain("error");
+      s.audios[0].finish();
+      await flush();
+      expect(s.events.filter((e) => e === "error")).toHaveLength(1);
+      s.engine.play();
+      await flush();
+      expect(asked(s).at(-1)!.tailFrom).toBe(4);
+    });
+  });
+
   it("đoạn không phải đoạn đang nghe: đứt giữa chừng không báo lỗi", async () => {
     blobUrls();
     const s = setup();

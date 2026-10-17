@@ -26,7 +26,7 @@ from xml.sax.saxutils import escape, unescape
 
 from . import mp3, websocket
 from .edge_token import TRUSTED_CLIENT_TOKEN, generate_sec_ms_gec_v2
-from .mapping import Boundary
+from .mapping import Boundary, tokens
 from .model import Synthesis, VoiceError
 
 HOST = "speech.platform.bing.com"
@@ -430,7 +430,8 @@ class _ClipAborted(EdgeError):
 
 class StreamSink(Protocol):
     """Nơi nhận clip đang đọc, theo ĐÚNG thứ tự của clip cuối: mọi byte đã `audio` nối lại == `Synthesis.audio`, mọi mốc đã `boundaries` nối lại == `Synthesis.boundaries`.
-    Gọi từ các luồng đọc (một lần một luồng, có khoá). Sink có thêm `piece_done()` (tuỳ chọn) thì được gọi mỗi khi một mảnh đã phát hết."""
+    Gọi từ các luồng đọc (một lần một luồng, có khoá). Sink có thêm `piece_done()` (tuỳ chọn) thì được gọi mỗi khi một mảnh đã phát hết; có `cut(words)` (tuỳ chọn) thì được báo NGAY khi một
+    mảnh không phải mảnh đầu hỏng hẳn: `words` = số chữ (`\\S+` của chữ đem đọc) đứng trước mảnh ấy - tiếng sẽ dừng đúng ở đó (các mảnh trước vẫn phát hết rồi mới ném lỗi), uxfix63."""
 
     def audio(self, data: bytes) -> None: ...
 
@@ -507,15 +508,26 @@ class _Relay:
         self.parts = [_Part(self, index) for index in range(len(pieces))]
         self._head = 0
         self._base = 0  # byte của các mảnh trước mảnh đứng đầu (đã phát hết)
+        self._end = self.count  # chỉ phát các mảnh trước chỗ này ([cut])
 
     def stop(self) -> None:
         """Clip hỏng / xong: sink không nhận thêm gì."""
         with self.lock:
             self.stopped = True
 
+    def cut(self, index: int) -> None:
+        """Mảnh `index` hỏng hẳn: chỉ phát nốt các mảnh trước nó (phần dở của mảnh hỏng không bao giờ ra sink) và báo sink chữ tiếng sẽ dừng ([StreamSink])."""
+        with self.lock:
+            if self.stopped:
+                return
+            self._end = index
+            told = getattr(self.sink, "cut", None)
+            if told is not None:
+                told(sum(len(tokens(piece)) for piece in self.pieces[:index]))
+
     def pump(self) -> None:
         """Đưa sink mọi thứ đã chắc chắn của mảnh đứng đầu; mảnh đứng đầu xong và phát hết thì mảnh kế lên. Gọi khi đang giữ `lock`."""
-        while not self.stopped and self._head < self.count:
+        while not self.stopped and self._head < self._end:
             part = self.parts[self._head]
             news = part.found[len(part.sent_found):]
             if news:
@@ -659,12 +671,40 @@ class EdgeClient:
         part.finish(data, found)
         return part.final, part.found  # type: ignore[return-value]  # finish() vừa đặt (đã cắt đuôi như bản không phát luồng)
 
+    @staticmethod
+    def _gather(futures: list, deadline: float, relay: _Relay | None, clips: list[_Clip]) -> list[tuple[bytes, list[Boundary]]]:
+        """Kết quả các mảnh theo thứ tự đọc; mảnh ĐẦU TIÊN hỏng (theo thời gian) thì ném lỗi của nó ngay. Phát luồng mà mảnh hỏng không phải mảnh đầu (uxfix63, a59d e1: các mảnh trước nó
+        còn đang về bị cắt, người nghe chỉ còn 2,8 giây tiếng mà phần nối phải đọc lại cả chúng): chỉ cắt các mảnh SAU nó, báo sink chỗ tiếng dừng ngay ([_Relay.cut]) để người nghe xin phần nối
+        từ đầu mảnh hỏng trong lúc các mảnh trước vẫn về và phát hết, rồi mới ném lỗi ấy (mảnh trước hỏng nữa: lỗi của mảnh trước)."""
+        def remaining() -> float:  # mảnh tự dừng ở hạn chung (read_turn / chờ chỗ); +1 giây chỉ để chắc không treo nếu một mảnh không tôn trọng hạn
+            return max(0.0, deadline - time.monotonic()) + 1.0
+
+        done, _ = wait(futures, timeout=remaining(), return_when=FIRST_EXCEPTION)
+        failed = [index for index, future in enumerate(futures) if future in done and future.exception() is not None]
+        if failed:
+            broken = failed[0]  # nhiều mảnh hỏng cùng lúc: lấy mảnh đứng trước cho ổn định
+            if relay is not None and broken > 0:
+                for clip in clips[broken + 1:]:
+                    clip.abort()
+                relay.cut(broken)
+                before, _ = wait(futures[:broken], timeout=remaining(), return_when=FIRST_EXCEPTION)
+                earlier = [future for future in futures[:broken] if future in before and future.exception() is not None]
+                if earlier:
+                    raise earlier[0].exception()
+                if len(before) < broken:
+                    raise EdgeTimeout("Dịch vụ đọc to quá lâu không trả lời.")
+            raise futures[broken].exception()
+        if len(done) < len(futures):
+            raise EdgeTimeout("Dịch vụ đọc to quá lâu không trả lời.")
+        return [future.result() for future in futures]
+
     def synthesize(self, text: str, voice: str = DEFAULT_VOICE, *, rank: int = RANK_BACKGROUND, sink: StreamSink | None = None) -> Synthesis:
         """Đọc `text` bằng `voice` (mã đầy đủ, vd "vi-VN-HoaiMyNeural"): MP3 + các WordBoundary (ms từ đầu clip) + độ dài.
         Đoạn dài đọc theo `speech_pieces`, các mảnh song song (tối đa PIECE_PARALLEL, đoạn rank 0 tối đa TARGET_PIECES); mảnh ĐẦU TIÊN hỏng (theo thời gian, không đợi các mảnh trước nó)
         làm cả clip hỏng ngay với chính lỗi ấy - cùng các loại lỗi như khi đọc nối tiếp - và các mảnh còn lại bị cắt (điện thoại: EdgeTts.kt cùng luật).
         `rank`: số đoạn người nghe phải nghe trước clip này (0 = đang đứng chờ đúng nó: nhảy tới, đầu chương) - hết chỗ kết nối thì mảnh của clip gần người nghe hơn đi trước ([ConnectionSlots]).
-        `sink`: phát luồng - tiếng và mốc đưa vào đó ngay khi chắc chắn, theo đúng thứ tự (xem [_Relay]); trả về vẫn đủ clip, y hệt bản không `sink`. Lỗi thì ném như cũ và sink không nhận gì thêm."""
+        `sink`: phát luồng - tiếng và mốc đưa vào đó ngay khi chắc chắn, theo đúng thứ tự (xem [_Relay]); trả về vẫn đủ clip, y hệt bản không `sink`. Lỗi thì ném như cũ và sink không nhận gì thêm;
+        riêng mảnh hỏng không phải mảnh đầu thì các mảnh trước nó phát hết trước khi ném ([_gather])."""
         deadline = time.monotonic() + TOTAL_TIMEOUT
         pieces = speech_pieces(clean(text), rank)
         relay = _Relay(sink, pieces) if sink is not None else None
@@ -674,25 +714,19 @@ class EdgeClient:
             else:
                 results = [self._speak_piece(voice, piece, deadline, rank=rank) for piece in pieces]
         else:
-            clip = _Clip()
+            clips = [_Clip() for _ in pieces]  # mỗi mảnh một chỗ cắt: phát luồng mà một mảnh hỏng thì chỉ cắt các mảnh sau nó
             pool = ThreadPoolExecutor(max_workers=min(piece_limit(rank), len(pieces)), thread_name_prefix="edge-piece")
             try:
                 if relay is None:
-                    futures = [pool.submit(self._speak_piece, voice, piece, deadline, clip, rank) for piece in pieces]
+                    futures = [pool.submit(self._speak_piece, voice, piece, deadline, clips[index], rank) for index, piece in enumerate(pieces)]
                 else:
-                    futures = [pool.submit(self._speak_streamed, relay, index, voice, piece, deadline, clip, rank) for index, piece in enumerate(pieces)]
-                # Mảnh tự dừng ở hạn chung (read_turn / chờ chỗ); +1 giây chỉ để chắc không treo nếu một mảnh không tôn trọng hạn.
-                done, _ = wait(futures, timeout=max(0.0, deadline - time.monotonic()) + 1.0, return_when=FIRST_EXCEPTION)
-                failed = [future for future in futures if future in done and future.exception() is not None]
-                if failed:
-                    raise failed[0].exception()  # nhiều mảnh hỏng cùng lúc: lấy mảnh đứng trước cho ổn định
-                if len(done) < len(futures):
-                    raise EdgeTimeout("Dịch vụ đọc to quá lâu không trả lời.")
-                results = [future.result() for future in futures]
+                    futures = [pool.submit(self._speak_streamed, relay, index, voice, piece, deadline, clips[index], rank) for index, piece in enumerate(pieces)]
+                results = self._gather(futures, deadline, relay, clips)
             finally:
                 if relay is not None:
                     relay.stop()
-                clip.abort()  # thành công thì không còn kết nối nào mở - vô hại
+                for clip in clips:
+                    clip.abort()  # thành công thì không còn kết nối nào mở - vô hại
                 pool.shutdown(wait=False, cancel_futures=True)
         audio = bytearray()
         boundaries: list[Boundary] = []
