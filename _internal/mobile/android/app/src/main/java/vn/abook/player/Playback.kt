@@ -16,6 +16,12 @@ import vn.abook.player.readaloud.ReadAloud
 import java.io.File
 
 /**
+ * Giây (giao diện, vị trí đã lưu) -> ms: LÀM TRÒN, không cắt - 1,001 giây nhân 1000 ra 1000,999… và cắt thành 1000, rơi về ms cuối đoạn TRƯỚC khi mốc đầu câu đúng
+ * là 1001 (soát a59p: 0,66 % mốc đầu câu). Âm thành 0.
+ */
+internal fun msOf(seconds: Double): Long = Math.round(seconds * 1000).coerceAtLeast(0)
+
+/**
  * Lõi phát - sống trong tiến trình app, dùng chung giữa PlaybackService (thông báo, màn hình khoá, nút tai nghe)
  * và PlayerPlugin (giao diện). Mọi thao tác trên ExoPlayer chạy ở luồng chính.
  *
@@ -213,12 +219,15 @@ object Playback {
         emit("error")
     }
 
-    /** Giọng đọc không đọc nổi một đoạn (cả giọng mạng lẫn giọng máy): dừng, nói thẳng lý do cho người nghe; bấm phát thử lại (ReadAloud.retryAfterFailure). */
-    fun fail(message: String) {
+    /**
+     * Giọng đọc không đọc nổi một đoạn (cả giọng mạng lẫn giọng máy): dừng, nói thẳng lý do cho người nghe; bấm phát thử lại (ReadAloud.retryAfterFailure). `notify` false: chỗ này đã báo rồi
+     * (máy tự hỏi lại mà hỏng nữa - ReadAloud, [vn.abook.player.readaloud.FailureNotice]) - chỉ cập nhật lời báo đang có, không báo lần nữa.
+     */
+    fun fail(message: String, notify: Boolean = true) {
         lastError = message
         player?.pause()
         saveNow()
-        emit("error")
+        emit(if (notify) "error" else "state")
     }
 
     fun clearError() {
@@ -282,9 +291,9 @@ object Playback {
         if (items.any { it.isText }) {
             // Sách có chương chỉ-có-chữ: ReadAloud đọc đoạn nào đặt đoạn ấy vào hàng đợi (giọng Edge cần mạng, nên giữ Wi-Fi thức khi tắt màn hình).
             exo.setWakeMode(C.WAKE_MODE_NETWORK)
-            savedPlace = items.getOrNull(index)?.let { it.id to (startSeconds * 1000).toLong() }
+            savedPlace = items.getOrNull(index)?.let { it.id to msOf(startSeconds) }
             exo.playbackParameters = PlaybackParameters(rate.toFloat())
-            ReadAloud.begin(index, (startSeconds * 1000).toLong(), autoplay)
+            ReadAloud.begin(index, msOf(startSeconds), autoplay)
             if (autoplay) startTicking()
             emit("load")
             return
@@ -294,8 +303,8 @@ object Playback {
         val media = mediaItems(id, title, narratorName, items)
         // Có chương phát qua mạng thì giữ Wi-Fi thức khi tắt màn hình; sách đã tải hết thì không tốn pin cho việc ấy.
         exo.setWakeMode(if (media.any { it.localConfiguration?.uri?.scheme == "https" }) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
-        exo.setMediaItems(media, index, (startSeconds * 1000).toLong())
-        savedPlace = items.getOrNull(index)?.let { it.id to (startSeconds * 1000).toLong() }
+        exo.setMediaItems(media, index, msOf(startSeconds))
+        savedPlace = items.getOrNull(index)?.let { it.id to msOf(startSeconds) }
         exo.playbackParameters = PlaybackParameters(rate.toFloat())
         exo.prepare()
         // Mở lại app: nạp sẵn đúng chỗ đang nghe dở ở trạng thái dừng, người nghe bấm phát khi sẵn sàng.
@@ -317,7 +326,7 @@ object Playback {
         closeSession()
         ReadAloud.stop()
         bookId = ""
-        pending = Pending(id, title, narratorName, items, startChapterId to (startSeconds * 1000).toLong(), rate)
+        pending = Pending(id, title, narratorName, items, startChapterId to msOf(startSeconds), rate)
     }
 
     /** ExoPlayer vừa nhận một hàng đợi mới (onTimelineChanged, PLAYLIST_CHANGED): là cuốn `adopt` đang chờ thì nhận
@@ -380,7 +389,7 @@ object Playback {
      */
     fun seekTo(seconds: Double, segment: Int = -1, word: Int = -1) {
         touched()
-        seekToMs((seconds * 1000).toLong().coerceAtLeast(0), segment, word)
+        seekToMs(msOf(seconds), segment, word)
         Bedtime.interaction("seek")
         emit("seek")
     }
@@ -394,9 +403,9 @@ object Playback {
         if (index < 0) return
         saveNow()
         if (ReadAloud.active) {
-            ReadAloud.jump(index, (seconds * 1000).toLong().coerceAtLeast(0), segment, word)
+            ReadAloud.jump(index, msOf(seconds), segment, word)
         } else {
-            exo.seekTo(index, (seconds * 1000).toLong())
+            exo.seekTo(index, msOf(seconds))
             exo.play()
         }
         Bedtime.interaction("chapter")

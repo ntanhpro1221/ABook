@@ -57,6 +57,9 @@ object LiveClips {
             changed.signalAll()
         }
 
+        /** Số byte còn lại từ `position` khi clip đã xong (không bao giờ âm: tua quá cuối clip đã xong là hết dữ liệu); null khi clip còn đang lớn (độ dài chưa biết). */
+        fun remainingFrom(position: Long): Long? = lock.withLock { if (finished) (written - position).coerceAtLeast(0) else null }
+
         /** Clip đã vào bộ đệm: file đổi chỗ (lần mở sau của ExoPlayer - tua - phải mở file mới). */
         fun relocate(moved: File) = lock.withLock { file = moved }
 
@@ -220,7 +223,10 @@ interface LiveSink {
     fun failed(error: Exception)
 }
 
-/** [LiveSink] của giọng Edge nối với [LiveClips.Target]: gom mốc, đổi thành mốc từng chữ của `text` (và `expand` về chữ hiện) không dày hơn [EVERY_MS] một lần. */
+/**
+ * [LiveSink] của giọng Edge nối với [LiveClips.Target]: gom mốc, đổi thành mốc từng chữ của `text` (và `expand` về chữ hiện) không dày hơn [EVERY_MS] một lần. Mốc còn nằm chờ thì đẩy cả khi
+ * tiếng về thêm (như `_Live.audio` của máy tính) và luôn đẩy nốt trước khi báo xong / hỏng (uxfix60): clip đứt thì chỗ "đã nghe tới" ([SeekPlan.resumeWord]) là mốc mới nhất, không cũ tới 0,5 giây.
+ */
 class LiveWords(
     private val text: String, private val expand: (List<Span>) -> List<Span>, private val target: LiveClips.Target,
     private val clock: () -> Long = System::nanoTime,
@@ -237,12 +243,17 @@ class LiveWords(
     override fun grew(file: File, totalBytes: Long) {
         bytes = totalBytes
         target.grew(file, totalBytes)
+        if (pending) pushIfDue()
     }
 
     override fun boundaries(found: List<Boundary>) {
         if (found.isEmpty()) return
         all.addAll(found)
         pending = true
+        pushIfDue()
+    }
+
+    private fun pushIfDue() {
         val now = clock()
         if (lastPush == Long.MIN_VALUE || (now - lastPush) / 1_000_000 >= EVERY_MS) push(now)
     }
@@ -259,7 +270,10 @@ class LiveWords(
         target.done(clip.file.length())
     }
 
-    override fun failed(error: Exception) = target.failed(error)
+    override fun failed(error: Exception) {
+        if (pending) push(clock())
+        target.failed(error)
+    }
 }
 
 /** Quyết định phát luồng cho một lượt đọc đoạn (thuần tính toán, LiveClipsTest). */
