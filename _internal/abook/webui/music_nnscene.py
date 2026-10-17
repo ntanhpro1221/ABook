@@ -13,12 +13,12 @@ Cue mang `firstSegment` = mã ĐOẠN của màn đọc (`ui/src/listen/textScri
 đoạn ấy bắt đầu phát, không theo giây ước (xem `ui/src/listen/sceneCues.ts`). Mốc giây còn lại trong cue (bài anh em, bước âm lượng) là giây ƯỚC của
 plan (`music_scenes._durations`), trình phát co giãn theo các mốc `firstSegment`.
 
-Học sinh q06 (`music_scene_student`, gói "Phân tích nhạc") là phần THÊM: máy có gói và torch thì mỗi chương được chỉnh V/E/T quanh mức chương đúng
-đường Studio (SPEC mục 1); không có thì cùng bộ dựng với học sinh NN-lite (`music_nnlite`, 2 MB đóng sẵn trong app, SPEC_nnlite_app), và nếu cả model ấy không nạp
-được thì bỏ bước ấy (đường "N0": `book_scenes(scripts, None, None, None)` -> `music_plan.build`).
-Khoá đệm ghi học sinh nào đã dùng (`student_tag`), nên cài gói sau thì các chương chưa nghe dựng lại có học sinh.
+Học sinh là NN-lite (`music_nnlite`, 2 MB đóng sẵn trong app, SPEC_nnlite_app): ranh cảnh LB + chỉnh V/E/T quanh mức chương LVJ; nếu model ấy không nạp
+được thì bỏ bước ấy (đường "N0": `book_scenes(scripts, None, None, None)` -> `music_plan.build`). Đường này KHÔNG bao giờ dùng học sinh q06 (`music_scene_student`,
+gói "Học sinh không khí cảnh" chỉ dành cho sách làm bằng Studio): q06 không có ranh LB lẫn LVJ nên nhạc sai màu rõ hơn (SPEC_nnscene_route.md).
+Khoá đệm ghi học sinh nào đã dùng (`student_tag`), nên model đổi thì các chương chưa nghe dựng lại.
 
-Dựng nền: `Builder` chạy MỘT luồng (học sinh nhúng ở 2 luồng CPU), chương đang nghe trước rồi vài chương kế; hỏi cue của chương chưa dựng xong thì
+Dựng nền: `Builder` chạy MỘT luồng, chương đang nghe trước rồi vài chương kế; hỏi cue của chương chưa dựng xong thì
 trình phát chưa có nhạc cho chương ấy (giọng không chờ) và hỏi lại sau."""
 from __future__ import annotations
 
@@ -47,11 +47,6 @@ LITE_SOURCE = "lite"
 AHEAD_CHAPTERS = 3  # chương dựng trước chỗ đang nghe
 BUILD_WAIT_SECONDS = 2.0  # hỏi cue chương chưa dựng: chờ chừng này (chương nhẹ dựng kịp), rồi trả "chưa có"
 VERIFY_ROUNDS = 12  # trần số lần chọn lại một chương vì bài quá cỡ (mỗi vòng loại thêm ít nhất một bài; hết vòng thì giữ lần chọn cuối - tải sẽ bị chặn và chọn lại)
-BUILD_THREADS = 2  # luồng CPU của học sinh lúc nhúng nền
-
-
-class Cancelled(Exception):
-    """Việc dựng bị huỷ giữa chừng (đóng cuốn, đổi cuốn): chương ấy chưa có bản ghi."""
 
 
 # ---- câu của chương + đoạn của màn đọc ------------------------------------------------------------------------------------------
@@ -241,14 +236,14 @@ def scene_dir_name(book_id: str) -> str:
     return hashlib.sha1(book_id.encode("utf-8")).hexdigest()[:16]
 
 
-def student_tag(package_sha: str | None, lite_sha: str | None = None) -> str:
-    """Phần khoá đệm nói học sinh nào đã dựng plan: mã gói q06; không có gói mà có NN-lite (music_nnlite.py) thì "nnlite-lvj1-<mã model>" (lvj1: ranh cảnh LB `music_nnlite.scene_bounds` + mức chương LVJ; plan dựng trước LVJ không dùng lại); hay "none" khi không dùng học sinh."""
-    return package_sha or (f"nnlite-lvj1-{lite_sha}" if lite_sha else "none")
+def student_tag(lite_sha: str | None) -> str:
+    """Phần khoá đệm nói học sinh nào đã dựng plan: "nnlite-lvj1-<mã model>" (NN-lite, music_nnlite.py; lvj1: ranh cảnh LB `music_nnlite.scene_bounds` + mức chương LVJ; plan dựng trước LVJ hay bằng q06 không dùng lại), hay "none" khi model không nạp được (đường N0)."""
+    return f"nnlite-lvj1-{lite_sha}" if lite_sha else "none"
 
 
 class Builder:
     """Hàng đợi dựng nền, MỘT luồng: việc nhỏ số ưu tiên đi trước (chương đang nghe 0, các chương kế 1, 2, ...). Việc cùng (cuốn, chương) chỉ chạy một
-    lần. `cancel(book)` bỏ việc chưa chạy của cuốn (đóng cuốn, đổi cuốn) và báo `stop` cho việc đang chạy. `on_idle` chạy khi hàng cạn (trả RAM của học sinh)."""
+    lần. `cancel(book)` bỏ việc chưa chạy của cuốn (đóng cuốn, đổi cuốn) và báo `stop` cho việc đang chạy."""
 
     class Task:
         def __init__(self, book: str, chapter: int, priority: int, job: Callable[[Callable[[], bool]], None]) -> None:
@@ -257,12 +252,11 @@ class Builder:
             self.cancelled = False
             self.error: BaseException | None = None
 
-    def __init__(self, on_idle: Callable[[], None] | None = None) -> None:
+    def __init__(self) -> None:
         self._lock = threading.Lock()
         self._tasks: list[Builder.Task] = []
         self._running: Builder.Task | None = None
         self._thread: threading.Thread | None = None
-        self._on_idle = on_idle
 
     def submit(self, book: str, chapter: int, priority: int, job: Callable[[Callable[[], bool]], None]) -> "Builder.Task":
         with self._lock:
@@ -316,8 +310,3 @@ class Builder:
                 with self._lock:
                     self._running = None
                 task.done.set()
-        if self._on_idle is not None:
-            try:
-                self._on_idle()
-            except Exception:  # noqa: BLE001
-                pass

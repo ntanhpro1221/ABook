@@ -307,11 +307,11 @@ describe("lựa chọn nhạc nền", () => {
   it("máy tính báo dựng được nhạc theo cảnh thì menu có dòng ấy (sau Tắt), điện thoại không báo thì không", () => {
     const base = { playlists: [{ id: "calm", name: "Kỳ ảo êm đềm", description: "", minutes: 60, count: 9 }], mine: 0, error: "" };
     expect(playlistOptions(base).map((option) => option.id)).toEqual([null, OFF_PLAYLIST, "calm", MINE_PLAYLIST]);
-    const without = playlistOptions({ ...base, scene: { student: false } });
+    const without = playlistOptions({ ...base, scene: {} });
     expect(without.map((option) => option.id)).toEqual([null, OFF_PLAYLIST, SCENE_PLAYLIST, "calm", MINE_PLAYLIST]);
     expect(without[2]).toMatchObject({ label: "Theo cảnh (máy tự dựng)" });
     expect(without[2].description).not.toContain("Phân tích nhạc");
-    expect(playlistOptions({ ...base, scene: { student: true } })[2]).toEqual(without[2]); // học sinh có hay không, người nghe thấy cùng một dòng
+    expect(playlistOptions({ ...base, scene: { student: false } })[2]).toEqual(without[2]); // điện thoại còn gửi `student: false`: bỏ qua
     // mặc định: máy chọn theo cảnh; chọn rõ thì dòng ấy được đánh dấu
     const auto = { playlist: SCENE_PLAYLIST, playlistAuto: true };
     expect(chosenId(auto)).toBeNull();

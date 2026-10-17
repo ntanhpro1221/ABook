@@ -154,12 +154,12 @@ def test_a_text_book_with_no_choice_plays_the_scene_music_until_the_listener_cho
         server.stop()
 
 
-def test_the_scene_choice_is_not_a_catalogue_playlist_and_the_menu_says_whether_the_student_is_there(tmp_path: Path) -> None:
+def test_the_scene_choice_is_not_a_catalogue_playlist_and_the_menu_offers_it_whatever_packages_the_machine_has(tmp_path: Path) -> None:
     assert music_playlist.catalogue_playlists({"playlists": [{"id": "scene", "name": "Giả", "tracks": CALM}]}) == []
     app, book, server = _text_book_server(tmp_path)
     try:
         _status, menu = _call(server, "GET", "/api/music/playlists")
-        assert menu["scene"] == {"student": False} and "scene" not in [item["id"] for item in menu["playlists"]]
+        assert menu["scene"] == {} and "scene" not in [item["id"] for item in menu["playlists"]]
     finally:
         server.stop()
 

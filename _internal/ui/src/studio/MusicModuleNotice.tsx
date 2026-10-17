@@ -93,7 +93,7 @@ export function MusicModuleNotice({ view, queryKey, onlyScene = false }: { view:
       {scene && (
         <div className="space-y-1.5">
           <p className="font-medium text-fg">Nhạc theo sát từng đoạn trong chương</p>
-          <p>Một model nhỏ đọc chữ từng đoạn rồi đoán đoạn nào vui hơn, căng hơn mức chung của chương, để nhạc đổi theo đúng chỗ truyện lúc căng lúc dịu. Chạy trên máy này, không cần mạng sau khi tải; chưa tải thì nhạc chọn như trước.</p>
+          <p>Một model nhỏ đọc chữ từng đoạn rồi đoán đoạn nào vui hơn, căng hơn mức chung của chương, để nhạc đổi theo đúng chỗ truyện lúc căng lúc dịu. Chạy trên máy này, không cần mạng sau khi tải; chưa tải thì nhạc chọn như trước. Gói này chỉ dùng cho sách bạn làm bằng Studio; sách nghe ngay đã có nhạc theo cảnh sẵn, không cần tải.</p>
           {onlyScene && module.cancelled && !downloadingModule && !scene.unavailable && <p>{CANCELLED_NOTE}</p>}
           {scene.unavailable ? (
             <p>{scene.unavailable}.</p>

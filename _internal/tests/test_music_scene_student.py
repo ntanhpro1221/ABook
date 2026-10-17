@@ -879,6 +879,9 @@ def test_the_module_entry_point_reports_through_the_exit_code(tmp_path: Path, mo
     assert student.main([str(tmp_path)]) == 1 and "MemoryError" in capsys.readouterr().out
     monkeypatch.setattr(student, "available", lambda: False)
     assert student.main([str(tmp_path)]) == 2
+    with pytest.raises(SystemExit) as missing:
+        student.main([])  # thiếu thư mục dự án
+    assert missing.value.code == 2
 
 
 def test_the_server_runs_the_student_in_process_with_torch_and_in_the_studio_child_without(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

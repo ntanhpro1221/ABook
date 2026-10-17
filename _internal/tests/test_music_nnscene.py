@@ -194,7 +194,7 @@ def test_the_plan_of_a_chapter_is_cached_until_its_text_or_key_changes(tmp_path:
     other = music_nnscene.SceneBook(tmp_path / "scene0", {"book": "1", "catalog": "r1", "student": music_nnscene.student_tag("abc123")})
     assert other.directory != book.scenes.directory and other.read(1) is None
     assert not book.scenes.directory.exists() or not list(book.scenes.directory.glob("*.json"))
-    assert music_nnscene.student_tag(None) == "none" and music_nnscene.student_tag("abc123") == "abc123"
+    assert music_nnscene.student_tag(None) == "none" and music_nnscene.student_tag("abc123") == "nnlite-lvj1-abc123"
 
 
 # ---- học sinh là phần thêm: bỏ nó vẫn là cùng bộ dựng (đường N0) ---------------------------------------------------------------
@@ -258,8 +258,8 @@ def test_the_floor_never_touches_studios_path_or_the_n0_path() -> None:
 def test_the_builder_runs_one_job_at_a_time_lowest_priority_number_first_and_never_twice() -> None:
     import threading
 
-    gate, ran, idle = threading.Event(), [], threading.Event()
-    builder = music_nnscene.Builder(on_idle=idle.set)
+    gate, ran = threading.Event(), []
+    builder = music_nnscene.Builder()
 
     def job(name: str):
         def run(_stop) -> None:
@@ -273,7 +273,10 @@ def test_the_builder_runs_one_job_at_a_time_lowest_priority_number_first_and_nev
     far, near_one, again = builder.submit("b", 4, 3, job("far")), builder.submit("b", 2, 1, job("near")), builder.submit("b", 4, 0, job("far2"))
     assert again is far and far.priority == 0, "cùng (cuốn, chương): một việc, nhận ưu tiên cao nhất"
     gate.set()
-    assert first.done.wait(5) and far.done.wait(5) and near_one.done.wait(5) and idle.wait(5)
+    assert first.done.wait(5) and far.done.wait(5) and near_one.done.wait(5)
+    deadline = time.time() + 5
+    while not builder.idle() and time.time() < deadline:
+        time.sleep(0.01)
     assert ran == ["first", "far", "near"] and builder.idle()
 
 

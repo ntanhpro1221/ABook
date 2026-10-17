@@ -1,4 +1,4 @@
-"""NN-lite: học sinh nhỏ (2 MB, chỉ chữ) cho nhạc nền THEO CẢNH của "Nghe ngay" khi máy KHÔNG có gói q06 (Corpus research/music/SPEC_nnlite_app.md;
+"""NN-lite: học sinh nhỏ (2 MB, chỉ chữ) cho nhạc nền THEO CẢNH của "Nghe ngay", luôn dùng, kể cả khi máy đã tải gói q06 (Corpus research/music/SPEC_nnlite_app.md;
 điện thoại có bản Kotlin `NnLite.kt` cùng đọc cùng file). Thay mục học sinh `None` của đường N0 (music_nnscene.py) bằng mục `dV / dE / dT / chapterV / chapterP` tính
 từ chữ cảnh rồi đi đúng đường NN-V (`music_scenes.apply_student` + sàn `WEAK_MOOD` ở `music_nnscene.chapter_scenes`). Đo trên bộ vàng 18 (60 chương): sai rõ
 37,8 % (N0) -> 17,4 % (NN-lite); q06 14,7 %.

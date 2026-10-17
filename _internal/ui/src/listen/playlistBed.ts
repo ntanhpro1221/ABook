@@ -74,8 +74,8 @@ export interface PlaylistMenu {
   /** Số bài trong "Nhạc của tôi" của máy này. */
   mine: number;
   error: string;
-  /** Máy này dựng được nhạc theo cảnh (máy tính và điện thoại). `student`: máy tính dùng học sinh q06 trong tiến trình (chỉ để chẩn đoán, không hiện cho người nghe); điện thoại luôn false. Vắng = máy không có. */
-  scene?: { student: boolean };
+  /** Máy này dựng được nhạc theo cảnh (máy tính và điện thoại): có mặt là có, nội dung không ai đọc (điện thoại còn gửi `student: false`, bỏ qua). Vắng = máy không có. */
+  scene?: Record<string, unknown>;
 }
 
 /** Mỗi bài một mốc trên đồng hồ nhạc: dài (độ dài - OVERLAP_SECONDS), ít nhất 1 giây. Khoá theo thứ tự, nên một bài có mặt hai lần
