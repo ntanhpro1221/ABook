@@ -61,8 +61,9 @@ object LiveClips {
         fun relocate(moved: File) = lock.withLock { file = moved }
 
         /**
-         * Chờ tới khi có byte ở `position`: trả số byte đã có từ đó (> 0), 0 khi clip xong và hết byte, ném [IOException] khi clip hỏng hay quá `stallMs` không có gì mới.
-         * Luồng nạp bị ngắt (ExoPlayer huỷ lần nạp) thì thoát ngay bằng [InterruptedIOException].
+         * Chờ tới khi có byte ở `position`: trả số byte đã có từ đó (> 0), 0 khi clip xong và hết byte, ném [IOException] khi quá `stallMs` không có gì mới.
+         * Clip hỏng giữa chừng (uxfix58): byte đã ghi vẫn được trao hết, rồi byte cuối cùng đã ghi là HẾT DỮ LIỆU (0) - phần đã về phát tới cùng, phần tiếp do [ReadAloud] nối sau; trước đây ném
+         * lỗi ngay và mất cả phần đã về. Chưa có byte nào mà hỏng thì vẫn ném [IOException]. Luồng nạp bị ngắt (ExoPlayer huỷ lần nạp) thì thoát ngay bằng [InterruptedIOException].
          */
         fun awaitBytes(position: Long, stallMs: Long = STALL_MS): Long {
             lock.lock()
@@ -70,8 +71,8 @@ object LiveClips {
                 var left = java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(stallMs)
                 var seen = written
                 while (true) {
-                    error?.let { throw IOException(it.message ?: "Clip đọc hỏng", it) }
                     if (position < written) return written - position
+                    error?.let { if (written > 0) return 0 else throw IOException(it.message ?: "Clip đọc hỏng", it) }
                     if (finished) return 0
                     if (written != seen) {
                         seen = written
@@ -168,8 +169,11 @@ object LiveClips {
         /** `total` byte đầu của `file` đã ghi (lần đầu = byte tiếng đầu tiên về). */
         fun grew(file: File, total: Long)
 
-        /** Mốc chữ tạm, tính từ đầu clip tới giờ (`durationMs` = phần đã có), không dày hơn [LiveWords.EVERY_MS]. */
-        fun words(words: List<Span>, durationMs: Long)
+        /**
+         * Mốc chữ tạm, tính từ đầu clip tới giờ (`durationMs` = phần đã có), không dày hơn [LiveWords.EVERY_MS]. `heardMs` (uxfix58): hết mốc THẬT cuối cùng giọng đã báo - chữ chưa tới bị dồn vào
+         * [heardMs, durationMs] nên chỉ có chỗ này nói được chữ nào đã nghe tới (clip đứt giữa chừng nối lại từ chữ đầu tiên chưa nghe - [SeekPlan.resumeWord]).
+         */
+        fun words(words: List<Span>, durationMs: Long, heardMs: Long)
 
         /** File đã ghi đủ `total` byte. */
         fun done(total: Long)
@@ -247,7 +251,7 @@ class LiveWords(
         lastPush = now
         pending = false
         val duration = maxOf(EdgeProtocol.durationMs(bytes), all.last().endMs)
-        target.words(expand(WordTokens.map(text, all, duration)), duration)
+        target.words(expand(WordTokens.map(text, all, duration)), duration, all.last().endMs)
     }
 
     override fun done(clip: Clip) {

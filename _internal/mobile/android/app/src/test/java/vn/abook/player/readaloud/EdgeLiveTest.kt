@@ -220,7 +220,7 @@ class EdgeLiveTest {
         val target = object : LiveClips.Target {
             override fun accepting() = true
             override fun grew(file: File, total: Long) {}
-            override fun words(words: List<Span>, durationMs: Long) { received += words }
+            override fun words(words: List<Span>, durationMs: Long, heardMs: Long) { received += words }
             override fun done(total: Long) {}
             override fun failed(error: Exception) {}
         }
@@ -239,7 +239,7 @@ class EdgeLiveTest {
             var claimed = false
             override fun accepting() = !claimed
             override fun grew(file: File, total: Long) { claimed = true; grew.incrementAndGet() }
-            override fun words(words: List<Span>, durationMs: Long) { received += words to durationMs }
+            override fun words(words: List<Span>, durationMs: Long, heardMs: Long) { received += words to durationMs }
             override fun done(total: Long) {}
             override fun failed(error: Exception) {}
         }

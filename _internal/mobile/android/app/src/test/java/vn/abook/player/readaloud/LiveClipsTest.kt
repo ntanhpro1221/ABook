@@ -88,9 +88,25 @@ class LiveClipsTest {
     }
 
     @Test
-    fun aFailedClipThrowsEvenWhenBytesAreLeft() {
+    fun aFailedClipHandsOverTheBytesItAlreadyHasAndThenEndsAtTheLastOneInsteadOfThrowing() {
+        // uxfix58: phần đã về phát hết tới byte cuối rồi mới hết dữ liệu (phần tiếp do ReadAloud nối sau); trước đây ném lỗi và mất cả phần đã về.
         val entry = LiveClips.create()
-        entry.grew(write("d.mp3", ByteArray(10)), 10)
+        entry.grew(write("d.mp3", ByteArray(10) { it.toByte() }), 10)
+        entry.fail(VoiceException("Mất mạng", offline = true))
+        val reader = entry.reader(0)
+        val buffer = ByteArray(10)
+        assertEquals(6, reader.read(buffer, 0, 6))
+        assertEquals(4, reader.read(buffer, 6, 100))
+        assertEquals(listOf<Byte>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9), buffer.toList())
+        assertEquals(-1, reader.read(buffer, 0, 10)) // hết byte đã ghi: hết dữ liệu, không lỗi
+        entry.finish(10) // hỏng rồi thì xong muộn không cứu được
+        assertFalse(entry.done)
+        assertEquals(-1, entry.reader(10).read(buffer, 0, 10)) // mở lại (tua) ở cuối phần đã về cũng vậy
+    }
+
+    @Test
+    fun aClipThatFailedBeforeAnyByteStillThrows() {
+        val entry = LiveClips.create()
         entry.fail(VoiceException("Mất mạng", offline = true))
         try {
             entry.reader(0).read(ByteArray(10), 0, 10)
@@ -98,8 +114,6 @@ class LiveClipsTest {
         } catch (error: IOException) {
             assertTrue(error.message!!.contains("Mất mạng"))
         }
-        entry.finish(10) // hỏng rồi thì xong muộn không cứu được
-        assertFalse(entry.done)
     }
 
     @Test

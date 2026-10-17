@@ -224,3 +224,93 @@ describe("LiveFeed: nối khúc vào MediaSource", () => {
     expect(source.buffer.appended).toEqual([]);
   });
 });
+
+describe("LiveClip: phần đã về (uxfix58)", () => {
+  it("receivedMs: số byte đã về đổi ra ms theo 48 kbps CBR của Edge (6 byte mỗi ms); heardMs từ bản ghi W (chưa có W thì null)", async () => {
+    const stream = wire();
+    const pending = clipFromStream(stream.body, toUrl);
+    stream.send(record("A", new Uint8Array(6000)));
+    const live = (await pending).live!;
+    expect(live.receivedMs).toBe(1000);
+    expect(live.heardMs).toBeNull();
+    stream.send(concat(record("A", new Uint8Array(3000)), record("W", { words: [[0, 800], [800, 1400]], duration_ms: 1400, heard_ms: 800 })));
+    await flush();
+    expect(live.receivedMs).toBe(1500);
+    expect(live.heardMs).toBe(800);
+    stream.send(record("W", { words: [[0, 800], [800, 1400]], duration_ms: 1400 })); // máy chủ cũ: không có heard_ms
+    await flush();
+    expect(live.heardMs).toBeNull();
+  });
+});
+
+describe("LiveFeed: nối phần tiếp sau một clip đứt giữa chừng (uxfix58)", () => {
+  const broke = () => {
+    const live = new LiveClip();
+    const source = new FakeSource();
+    let broken = 0;
+    const feed = new LiveFeed(source, live, () => (broken += 1));
+    source.open();
+    live.push(bytes(1));
+    source.buffer.finish();
+    live.push(bytes(2));
+    source.buffer.finish();
+    live.fail(new ReadAloudError("đứt", "service"));
+    return { live, source, feed, broken: () => broken };
+  };
+
+  it("clip hỏng: không endOfStream ngay - phần đã nối vẫn phát và phần tử audio chờ phần tiếp", () => {
+    const { source } = broke();
+    expect(source.buffer.appended).toEqual([[1], [2]]);
+    expect(source.ended).toBe(false);
+  });
+
+  it("chain: khúc của phần tiếp nối thẳng sau khúc cuối của phần hỏng (cùng MediaSource), endOfStream khi phần tiếp xong", () => {
+    const { source, feed } = broke();
+    const next = new LiveClip();
+    next.push(bytes(7));
+    feed.chain(next);
+    expect(source.buffer.appended).toEqual([[1], [2], [7]]);
+    source.buffer.finish();
+    next.push(bytes(8));
+    source.buffer.finish();
+    expect(source.buffer.appended).toEqual([[1], [2], [7], [8]]);
+    expect(source.ended).toBe(false);
+    next.finish(final);
+    expect(source.ended).toBe(true);
+  });
+
+  it("phần tiếp cũng hỏng rồi finish(): nối nốt phần đã về của nó rồi endOfStream, không chờ nữa", () => {
+    const { source, feed } = broke();
+    const next = new LiveClip();
+    next.push(bytes(7));
+    feed.chain(next);
+    source.buffer.finish();
+    next.fail(new ReadAloudError("đứt nữa", "service"));
+    expect(source.ended).toBe(false);
+    feed.finish();
+    expect(source.ended).toBe(true);
+  });
+
+  it("finish() khi không có phần tiếp: chờ nối hết khúc đã về rồi endOfStream", () => {
+    const { source, feed } = broke();
+    feed.finish();
+    expect(source.ended).toBe(true);
+    expect(source.buffer.appended).toEqual([[1], [2]]);
+  });
+
+  it("finish() lúc còn khúc chưa nối: nối hết đã", () => {
+    const live = new LiveClip();
+    const source = new FakeSource();
+    const feed = new LiveFeed(source, live, () => undefined);
+    source.open();
+    live.push(bytes(1));
+    live.push(bytes(2));
+    live.fail(new ReadAloudError("đứt", "service"));
+    feed.finish();
+    expect(source.ended).toBe(false);
+    source.buffer.finish();
+    source.buffer.finish();
+    expect(source.buffer.appended).toEqual([[1], [2]]);
+    expect(source.ended).toBe(true);
+  });
+});

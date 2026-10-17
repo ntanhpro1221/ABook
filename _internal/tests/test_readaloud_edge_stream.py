@@ -277,6 +277,7 @@ class Listener:
         self.events: list[str] = []
         self.chunks: list[bytes] = []
         self.words_calls: list[tuple[list[list[int]], int]] = []
+        self.heard: list[int] = []
         self.on_started = on_started
 
     def started(self) -> None:
@@ -288,9 +289,10 @@ class Listener:
         self.events.append("audio")
         self.chunks.append(data)
 
-    def words(self, words: list[list[int]], duration_ms: int) -> None:
+    def words(self, words: list[list[int]], duration_ms: int, heard_ms: int = 0) -> None:
         self.events.append("words")
         self.words_calls.append((words, duration_ms))
+        self.heard.append(heard_ms)
 
 
 def make_service(tmp_path, client: edge.EdgeClient):
@@ -315,6 +317,11 @@ def test_a_streamed_clip_starts_at_the_first_byte_and_ends_in_the_cache_exactly_
     for words, duration in listener.words_calls:
         assert len(words) == len(SENTENCES.split()) and duration <= clip["duration_ms"]
         assert all(a[0] <= b[0] for a, b in itertools.pairwise(words)) and all(end <= duration for _, end in words)
+    # `heard_ms` (uxfix58): mốc hết chữ thật cuối cùng - không vượt độ dài phần đã phát, không giảm; chữ bắt đầu từ đó trở đi là chữ chưa tới, chữ trước đó đã kết thúc không sau nó.
+    assert len(listener.heard) == len(listener.words_calls) and listener.heard[-1] > 0
+    assert all(a <= b for a, b in itertools.pairwise(listener.heard))
+    for (words, duration), heard in zip(listener.words_calls, listener.heard):
+        assert heard <= duration and all(end <= heard for start, end in words if start < heard)
     # Cùng clip với bản không phát luồng (máy chủ giả khác, cùng nội dung).
     _, client2 = streaming()
     plain = make_service(tmp_path / "plain", client2).clip(VOICE, SENTENCES, rank=0)
@@ -465,6 +472,7 @@ def test_a_streamed_clip_comes_back_as_records_ending_with_the_normal_json(strea
             if kind == "W":
                 tentative = json_module.loads(body)
                 assert len(tentative["words"]) == len(SENTENCES.split()) and tentative["duration_ms"] <= final["duration_ms"]
+                assert 0 < tentative["heard_ms"] <= tentative["duration_ms"]
         # Cùng đoạn hỏi lại: trúng bộ đệm -> JSON y hệt hôm nay (kể cả có `stream`), cùng kết nối giữ sống.
         connection.request("POST", "/api/readaloud/clip", body=json_module.dumps({"voice": VOICE, "text": SENTENCES, "rank": 0, "stream": True}).encode(),
                            headers={**HEADERS, "Content-Type": "application/json"})

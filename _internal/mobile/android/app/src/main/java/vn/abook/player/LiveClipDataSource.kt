@@ -13,7 +13,8 @@ import java.io.IOException
 
 /**
  * Nguồn dữ liệu của ExoPlayer cho clip Edge ĐANG ĐƯỢC GHI (`abooklive://<id>`, [LiveClips]): đọc đúng file đang lớn, hết byte mà clip chưa xong thì chờ (có hạn, ngắt được), xong và hết byte
- * thì [C.RESULT_END_OF_INPUT], clip hỏng thì [IOException]. Không mạng. Độ dài chưa biết ([C.LENGTH_UNSET]) cho tới khi clip xong - cần bộ tách mp3 tua theo tốc độ bit không đổi
+ * thì [C.RESULT_END_OF_INPUT]; clip hỏng giữa chừng (uxfix58) thì byte cuối cùng đã ghi là hết dữ liệu (phần đã về phát tới cùng, phần tiếp do ReadAloud nối sau),
+ * chưa có byte nào mà hỏng thì [IOException]. Không mạng. Độ dài chưa biết ([C.LENGTH_UNSET]) cho tới khi clip xong - cần bộ tách mp3 tua theo tốc độ bit không đổi
  * ([Streaming.liveExtractors]).
  */
 @OptIn(UnstableApi::class)

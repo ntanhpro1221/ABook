@@ -94,4 +94,16 @@ describe("clip đuôi: phần câu từ một chữ (uxfix56)", () => {
     expect(absoluteWords(0, [[0, 400]])).toEqual([[0, 400]]);
     expect(absoluteWords(3, [])).toEqual([]);
   });
+
+  it("chữ trước chữ bấm không bao giờ sáng khi nghe clip đuôi, dù clip mở đầu bằng quãng lặng (a58: chữ trước sáng lóe 0,11-0,15 s)", () => {
+    // chữ bấm (chữ 2) bắt đầu sau 137 ms lặng đầu clip: trước đó chữ 1 [0,0] là "chữ cuối cùng đã bắt đầu" nếu không kẹp
+    const words = absoluteWords(2, [[137, 400], [500, 900]]);
+    expect(words).toEqual([[0, 0], [0, 0], [0, 400], [500, 900]]);
+    expect(usableWords("a b c d", words)).not.toBeNull();
+    for (let ms = 0; ms <= 600; ms += 10) expect(wordIndexAt(words, ms)).toBeGreaterThanOrEqual(2);
+    expect(wordIndexAt(words, 0)).toBe(2);
+    expect(wordIndexAt(words, 520)).toBe(3);
+    // đã bắt đầu từ 0 thì giữ nguyên
+    expect(absoluteWords(1, [[0, 400]])).toEqual([[0, 0], [0, 400]]);
+  });
 });

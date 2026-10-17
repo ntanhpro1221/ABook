@@ -30,14 +30,19 @@ object SeekPlan {
 
     /**
      * Clip đuôi (`fromWord` > 0) có phục vụ được chỗ nghe này không? Bấm chữ: chỉ chữ từ `fromWord` trở đi. Tua theo thời gian trong đoạn: mọi chỗ sau đầu đoạn (clip đuôi bắt đầu ở chữ `fromWord`,
-     * mốc 0 của đoạn đã là chỗ ấy); đúng đầu đoạn (`withinMs` = 0) là "về đầu đoạn" nên bỏ clip đuôi. Clip đầy đủ phục vụ mọi chỗ.
+     * mốc 0 của đoạn đã là chỗ ấy); đúng đầu đoạn (`withinMs` = 0) là "về đầu đoạn" nên bỏ clip đuôi. Clip đầy đủ phục vụ mọi chỗ. Clip nối sau phần đã về ([Clip.baseMs] > 0) chỉ phục vụ chỗ từ `baseMs`
+     * trở đi: phần trước đó đã phát xong ở mục ExoPlayer khác (và không còn file nào giữ nó).
      */
-    fun serves(clip: Clip, word: Int, withinMs: Long): Boolean = clip.fromWord == 0 || (if (word >= 0) word >= clip.fromWord else withinMs > 0)
+    fun serves(clip: Clip, word: Int, withinMs: Long): Boolean {
+        val tailOk = clip.fromWord == 0 || (if (word >= 0) word >= clip.fromWord else withinMs > 0)
+        val baseOk = clip.baseMs == 0L || (if (word >= 0) (clip.words.getOrNull(word)?.start ?: 0L) else withinMs) >= clip.baseMs
+        return tailOk && baseOk
+    }
 
-    /** Chỗ bắt đầu phát trong `clip`: đầu chữ `word` nếu có, không thì `offsetMs`; kẹp vào trong đoạn. */
+    /** Chỗ bắt đầu phát trong file của `clip`: đầu chữ `word` nếu có, không thì `offsetMs`; tính từ đầu file ([Clip.baseMs] trừ đi) và kẹp vào trong file. */
     fun offsetIn(clip: Clip, word: Int, offsetMs: Long): Long {
         val raw = if (word >= 0) clip.words.getOrNull(word)?.start ?: 0L else offsetMs
-        return raw.coerceIn(0L, (clip.durationMs - 1).coerceAtLeast(0))
+        return (raw - clip.baseMs).coerceIn(0L, (clip.durationMs - clip.baseMs - 1).coerceAtLeast(0))
     }
 
     /**
@@ -49,6 +54,25 @@ object SeekPlan {
     /** Chuỗi từ chữ thứ `from` tới hết `text` (đúng chữ gửi đi đọc cho clip đuôi; khoá bộ đệm của clip đuôi theo chính chuỗi này). */
     fun tailText(text: String, from: Int): String = text.substring(WordTokens.tokens(text)[from].first)
 
-    /** `words` của đoạn cho clip đuôi: chữ trước `from` mốc [0, 0], rồi mốc của clip đuôi (`tail`: mốc từng chữ của chuỗi [tailText], từ đầu clip đuôi). */
-    fun tailWords(from: Int, tail: List<Span>): List<Span> = List(from) { Span(0, 0) } + tail
+    /**
+     * `words` của đoạn cho clip đuôi: chữ trước `from` mốc [0, 0], rồi mốc của clip đuôi (`tail`: mốc từng chữ của chuỗi [tailText], từ đầu clip đuôi).
+     * Chữ `from` (chữ người nghe bấm) coi như bắt đầu ngay đầu clip dù clip mở đầu bằng quãng lặng (~0,14 giây): không thì trong quãng ấy chữ liền trước (mốc [0, 0]) là "chữ đã bắt đầu cuối cùng" và sáng lóe (a58).
+     */
+    fun tailWords(from: Int, tail: List<Span>, baseMs: Long = 0L, prefix: List<Span> = emptyList()): List<Span> {
+        val shifted = tail.mapIndexed { i, span -> Span(baseMs + if (i == 0) 0L else span.start, baseMs + span.end) }
+        // `prefix` (uxfix58): mốc các chữ đã nghe của phần đã về, trên cùng đồng hồ; thiếu thì [0, 0]. Clip nối bắt đầu ở `baseMs` của đoạn.
+        val head = prefix.take(from) + List((from - prefix.size).coerceAtLeast(0)) { Span(0, 0) }
+        return head + shifted
+    }
+
+    /**
+     * Clip phát luồng đứt giữa chừng (uxfix58; máy tính: listen/readAloud.ts `firstUnheard`): chữ đầu tiên từ `first` trở đi mà người nghe CHƯA nghe hết - chữ kết thúc sau chỗ đã nghe tới (`heardMs`: hết mốc thật
+     * cuối cùng, và không quá phần âm thanh đã về), hay bắt đầu từ đó (chữ chưa tới bị dồn vào cuối âm thanh đã có nên có thể rộng 0 - [WordTokens.map]). Chưa có mốc nào: chữ `first` (đầu clip); nghe hết rồi mà
+     * clip vẫn đứt: nhắc lại chữ cuối, không bỏ trống. Chữ trước `first` (mốc [0, 0] của clip đuôi) không bao giờ được chọn.
+     */
+    fun resumeWord(words: List<Span>, heardMs: Long, first: Int): Int {
+        if (words.size <= first) return first
+        for (i in first until words.size) if (words[i].end > heardMs || words[i].start >= heardMs) return i
+        return words.size - 1
+    }
 }

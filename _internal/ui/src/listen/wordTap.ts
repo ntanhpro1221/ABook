@@ -2,7 +2,8 @@ import { splitPieces } from "./words";
 
 // Bấm vào một chữ ở màn đọc (như Đọc to của Edge): từ chỗ chạm biết chữ thứ mấy của câu để nghe từ đúng chữ ấy.
 
-/** Chữ (đơn vị `\S+`, như words.ts) chứa ký tự thứ `offset` của câu; rơi vào khoảng trắng thì chữ liền sau (chữ cuối nếu không còn); câu không có chữ: -1. */
+/** Chữ (đơn vị `\S+`, như words.ts) chứa vị trí con trỏ `offset` của câu; con trỏ đúng CUỐI một chữ (bấm nửa phải chữ cái cuối - trình duyệt đặt con trỏ sau chữ cái ấy) vẫn là chữ ấy;
+ *  rơi vào khoảng trắng (đã qua cuối chữ trước) thì chữ liền sau (chữ cuối nếu không còn); câu không có chữ: -1. */
 export function wordAtOffset(text: string, offset: number): number {
   let position = 0;
   let last = -1;
@@ -10,7 +11,7 @@ export function wordAtOffset(text: string, offset: number): number {
     const end = position + piece.text.length;
     if (piece.word >= 0) {
       last = piece.word;
-      if (offset < end) return piece.word;
+      if (offset <= end) return piece.word;
     }
     position = end;
   }

@@ -39,8 +39,9 @@ object ReadAloud {
     val RETRY_DELAYS_MS = longArrayOf(2_000L, 5_000L)
 
     /** Gắn vào MediaItem của một đoạn: chương (vị trí trong danh sách chương), đoạn, độ to của giọng đã đọc, và đoạn ấy có DÀI không (từ [EdgePieces.WHOLE_CHARS] ký tự - chỉ đoạn dài tính vào rank
-     *  của đoạn sau nó, [StalledClips.listenerRank]). `segment` -1 = không dùng. */
-    class Slot(val chapterIndex: Int, val segment: Int, val gainDb: Double, val long: Boolean = false)
+     *  của đoạn sau nó, [StalledClips.listenerRank]). `segment` -1 = không dùng. `baseMs` > 0 (uxfix58): mục này là phần nối sau phần đã về của một clip phát luồng đứt giữa chừng, nằm ở mục ExoPlayer
+     *  trước nó - vị trí trong mục này cộng `baseMs` mới là chỗ trong đoạn ([Clip.baseMs]). */
+    class Slot(val chapterIndex: Int, val segment: Int, val gainDb: Double, val long: Boolean = false, val baseMs: Long = 0)
 
     private class Chap(val index: Int, val parsed: List<Paragraphs.Paragraph>) {
         val paragraphs: List<String> = parsed.map { it.text }
@@ -61,11 +62,17 @@ object ReadAloud {
      * chạy ở luồng đọc, việc chạm trạng thái chuyển sang luồng chính. `tail` > 0: clip đuôi từ chữ ấy ([SeekPlan.tailFrom]). Chỉ phát luồng MỘT lần ([accepting]): lần thử lại sau khi đã phát (hay giọng
      * đỡ) đi đường thường và kết quả vào [onClipReady] như mọi đoạn.
      */
-    private class LiveJob(val token: Int, val chap: Chap, val segment: Int, val voice: String) : LiveClips.Target {
+    private class LiveJob(val token: Int, val chap: Chap, val segment: Int, val voice: String, val resume: Resume? = null) : LiveClips.Target {
         val entry = LiveClips.create()
         @Volatile var started = false
             private set
         @Volatile var tail = 0
+        /** Chỗ giọng đã báo mốc thật tới (luồng chính; [LiveClips.Target.words]). */
+        var heardMs = 0L
+        /** Đã đứt giữa chừng và [onLiveBroke] đã lo (nối tiếp hay báo lỗi): kết quả muộn của lượt đọc này bị bỏ. Luồng chính. */
+        var broke = false
+        /** Huỷ của lượt đọc (luồng đọc): đứt giữa chừng thì không thử lại nữa - phần tiếp đã thay nó. */
+        @Volatile var cancel: ClipCancel? = null
 
         override fun accepting() = !started
 
@@ -77,11 +84,17 @@ object ReadAloud {
             }
         }
 
-        override fun words(words: List<Span>, durationMs: Long) = Playback.onMain { onLiveWords(this, words) }
+        override fun words(words: List<Span>, durationMs: Long, heardMs: Long) = Playback.onMain {
+            this.heardMs = heardMs
+            onLiveWords(this, words)
+        }
 
         override fun done(total: Long) = entry.finish(total)
 
-        override fun failed(error: Exception) = entry.fail(error)
+        override fun failed(error: Exception) {
+            entry.fail(error)
+            if (started) Playback.onMain { onLiveBroke(this, error) } // đã phát rồi mới hỏng: phần đã về phát hết, phần còn lại xin ngay
+        }
 
         /** Lượt đọc đã ra kết quả (luồng đọc): clip vào bộ đệm thì đổi chỗ file cho các lần mở sau; không thì clip đang phát dở hỏng, ExoPlayer thôi chờ. */
         fun finish(result: Result<Clip>) {
@@ -94,6 +107,12 @@ object ReadAloud {
             }
         }
     }
+
+    /**
+     * Phần còn lại của một đoạn phát luồng đứt giữa chừng (uxfix58): đọc tiếp TỪ chữ `from` (clip đuôi, phát luồng như thường), file bắt đầu ở `baseMs` của đoạn (độ dài phần đã về, đã phát ở mục
+     * ExoPlayer trước), `prefix` = mốc cả đoạn đã có của phần đã về ([SeekPlan.tailWords]).
+     */
+    private class Resume(val chap: Chap, val segment: Int, val from: Int, val baseMs: Long, val prefix: List<Span>)
 
     /** Chỗ cần phát mà chưa có đoạn âm thanh để đặt vào ExoPlayer: đang chờ đọc. `word` >= 0 thắng `offsetMs` (bắt đầu đúng chữ ấy). */
     private class Target(val chapterIndex: Int, val segment: Int, val offsetMs: Long, val word: Int, var play: Boolean)
@@ -131,9 +150,12 @@ object ReadAloud {
     /** Việc đang làm thành cũ (tua, đổi chương, đổi giọng, dừng): kết quả tới muộn bị bỏ, lượt đọc đang chạy bị huỷ, hẹn hỏi lại cũng bỏ. Người nghe TẠM DỪNG thì không gọi: clip đang về dùng được khi bấm phát. */
     private fun bumpGeneration() {
         generation += 1
+        resume = null
         reminder.cancel()
         for (job in jobs) job.cancel()
     }
+    /** Phần còn lại đang chờ đọc của đoạn phát luồng vừa đứt giữa chừng ([onLiveBroke]); [startJob] lấy nó khi tới đúng đoạn ấy. */
+    private var resume: Resume? = null
     private var inFlight = false
     private var feedChapter = 0
     private var feedSegment = 0
@@ -422,7 +444,7 @@ object ReadAloud {
         if (slot != null && slot.segment >= 0) {
             val chap = chaps[slot.chapterIndex] ?: return null
             val clip = chap.clips[slot.segment]
-            val inClip = clipMs.coerceIn(0L, clip?.durationMs ?: Long.MAX_VALUE)
+            val inClip = (slot.baseMs + clipMs).coerceIn(0L, clip?.durationMs ?: Long.MAX_VALUE) // phần nối: vị trí trong mục cộng độ dài phần đã về
             return chap.timeline.startOf(slot.segment) + inClip
         }
         val target = waiting ?: return null
@@ -548,7 +570,8 @@ object ReadAloud {
         )
         when (plan) {
             is SeekPlan.Plan.InClip -> {
-                val at = (0 until exo.mediaItemCount).first { i -> (exo.getMediaItemAt(i).localConfiguration?.tag as? Slot)?.let { it.chapterIndex == index && it.segment == plan.segment } == true }
+                // Đoạn đứt giữa chừng có hai mục cùng đoạn (phần đã về, phần nối): chỗ nào [SeekPlan.serves] nhận thì nằm ở mục sau.
+                val at = (0 until exo.mediaItemCount).last { i -> (exo.getMediaItemAt(i).localConfiguration?.tag as? Slot)?.let { it.chapterIndex == index && it.segment == plan.segment } == true }
                 exo.seekTo(at, plan.positionMs)
             }
             is SeekPlan.Plan.Synthesize -> startAt(index, 0, wantsPlay(), plan.segment, plan.word, plan.offsetMs)
@@ -728,12 +751,14 @@ object ReadAloud {
         val warm = if (online && policy.slow()) nextSpeakable(chap, segment)?.let { chap.paragraphs[it] } else null
         val fresh = stalled.takeFresh(chap.index, segment)
         // Đoạn vừa hỏng, tới nhịp hỏi lại mà người nghe còn âm thanh: hỏi thăm (một lượt, không thử lại, không giữ khoá) - xem [StalledClips].
-        val probe = StalledClips.isProbe(fresh, Playback.player?.let(::listenerHasAudio) == true)
+        // Phần còn lại của đoạn phát luồng vừa đứt giữa chừng (uxfix58): người nghe còn đang nghe phần đã về, nhưng đoạn này là thứ họ sắp phải chờ - hỏi ngay, như đoạn họ đứng chờ (rank 0, phát luồng).
+        val continuing = resume?.takeIf { it.chap === chap && it.segment == segment }?.also { resume = null }
+        val probe = continuing == null && StalledClips.isProbe(fresh, Playback.player?.let(::listenerHasAudio) == true)
         // Người nghe không còn âm thanh nào để nghe (nhảy tới, đầu chương, hàng đợi cạn): đoạn này là đoạn họ đang đứng chờ (rank 0), đoạn đọc song song ([warm]) kế nó - hết chỗ kết nối Edge thì đoạn gần
         // người nghe hơn đi trước, và việc nền (không rank) đứng sau cả hai (uxfix51). Đoạn nạp khi người nghe còn âm thanh: rank = số đoạn đã nạp sau đoạn đang phát + 1 (uxfix52; cũng là
         // tiêu đề / đoạn đầu của chương kế khi hàng đợi chạm cuối chương). Chỉ đoạn DÀI người nghe còn phải nghe (đang phát + đã nạp sau nó) mới tính (uxfix54: tiêu đề chương 2 giây đứng trước
         // đoạn 1 không đẩy đoạn 1 xuống rank 1 - cắt 3 mảnh thay vì 6, người nghe chờ thêm ~4 giây).
-        val rank = Playback.player.let { exo ->
+        val rank = if (continuing != null) 0 else Playback.player.let { exo ->
             StalledClips.listenerRank(exo?.let(::listenerHasAudio) == true, if (exo == null) 0 else longQueued(exo))
         }
         // Người nghe đang chờ clip này qua mạng: giữ CPU + Wi-Fi tới khi xong (hàng đợi ExoPlayer đã cạn thì nó không giữ gì - [FetchWake]); đọc sẵn khi chưa ai chờ thì không.
@@ -741,8 +766,9 @@ object ReadAloud {
         val cancel = ClipCancel().also { jobs.add(it) }
         // Đoạn người nghe đứng chờ (rank 0) bằng giọng Edge: ExoPlayer nhận clip ngay khi byte đầu về (uxfix57, [LiveClips]); bấm giữa đoạn thì chỉ đọc từ chữ ấy ([SeekPlan.tailFrom]).
         val aim = waiting?.takeIf { it.chapterIndex == chap.index && it.segment == segment }
-        val liveJob = if (LivePolicy.streams(voice, online, rank, probe, aim?.offsetMs, aim?.word ?: -1)) LiveJob(token, chap, segment, voice) else null
-        val clickedWord = aim?.word ?: -1
+        val liveJob = if (LivePolicy.streams(voice, online, rank, probe, aim?.offsetMs, aim?.word ?: -1)) LiveJob(token, chap, segment, voice, continuing) else null
+        liveJob?.cancel = cancel
+        val clickedWord = continuing?.from ?: aim?.word ?: -1
         worker.execute {
             val began = System.nanoTime()
             val origin = originOf(bookId)
@@ -852,21 +878,55 @@ object ReadAloud {
         liveNow = job
         // Dời chỗ nạp TRƯỚC khi đặt vào ExoPlayer (như [onClipReady]): setMediaItems báo đổi mục ngay trong lúc gọi.
         feedSegment = job.segment + 1
-        deliver(listOf(itemFor(job.chap, job.segment, Uri.parse(LiveClips.uri(job.entry.id)), VoiceGain.db(job.voice))), 0L)
+        deliver(listOf(itemFor(job.chap, job.segment, Uri.parse(LiveClips.uri(job.entry.id)), VoiceGain.db(job.voice), job.resume?.baseMs ?: 0L)), 0L)
         Playback.emit("state")
     }
 
     /** Mốc chữ tạm của đoạn đang phát luồng (luồng chính): màn đọc tô chữ theo đó tới khi clip xong. Clip đuôi: chữ trước chữ bấm mốc [0, 0]. */
     private fun onLiveWords(job: LiveJob, words: List<Span>) {
         if (job.token != generation || !active || job.chap.clips[job.segment] != null) return
-        job.chap.liveWords[job.segment] = if (job.tail > 0) SeekPlan.tailWords(job.tail, words) else words
+        job.chap.liveWords[job.segment] = when {
+            job.resume != null -> SeekPlan.tailWords(job.tail, words, job.resume.baseMs, job.resume.prefix)
+            job.tail > 0 -> SeekPlan.tailWords(job.tail, words)
+            else -> words
+        }
         notifyScript(job.chap)
     }
 
-    /** Vị trí (chỉ số hàng đợi) của đoạn phát luồng trong ExoPlayer, -1 nếu không còn. */
-    private fun liveIndex(exo: Player, job: LiveJob): Int = (0 until exo.mediaItemCount).firstOrNull { i ->
-        (exo.getMediaItemAt(i).localConfiguration?.tag as? Slot)?.let { it.chapterIndex == job.chap.index && it.segment == job.segment } == true
-    } ?: -1
+    /** Vị trí (chỉ số hàng đợi) của mục phát luồng của `job` trong ExoPlayer, -1 nếu không còn. Tìm theo địa chỉ clip: một đoạn đứt giữa chừng có hai mục (phần đã về, phần nối) cùng [Slot]. */
+    private fun liveIndex(exo: Player, job: LiveJob): Int {
+        val uri = LiveClips.uri(job.entry.id)
+        return (0 until exo.mediaItemCount).firstOrNull { exo.getMediaItemAt(it).localConfiguration?.uri?.toString() == uri } ?: -1
+    }
+
+    /**
+     * Đoạn đang phát luồng đứt giữa chừng (luồng chính; uxfix58, máy tính: listen/readAloud.ts `salvage`). Phần đã về ở nguyên trong ExoPlayer và phát tới byte cuối ([LiveClips.Entry.awaitBytes]); phần còn lại
+     * được xin NGAY, đồng thời với lúc nghe: clip đuôi từ chữ đầu tiên chưa nghe hết ([SeekPlan.resumeWord]; chưa có mốc nào thì từ đầu đoạn / đầu clip đuôi - đọc lặp vài chữ chấp nhận được), phát luồng như thường
+     * và nối vào hàng đợi sau phần đã về (mục thứ hai cùng đoạn, [Slot.baseMs] giữ đồng hồ liền mạch). Lượt đọc cũ không thử lại nữa ([LiveJob.cancel]). Chính phần nối mà cũng đứt / hỏng thì đi đường lỗi quen
+     * của [onClipReady] (người nghe còn âm thanh để nghe thì không dừng; hết rồi mới báo MỘT lần), không thử nối lần nữa.
+     */
+    private fun onLiveBroke(job: LiveJob, error: Exception) {
+        if (job.token != generation || !active || job.broke) return
+        val exo = Playback.player ?: return
+        if (liveIndex(exo, job) < 0) return
+        job.broke = true
+        job.cancel?.cancel()
+        if (liveNow === job) liveNow = null
+        val chap = job.chap
+        val segment = job.segment
+        feedChapter = chap.index
+        feedSegment = segment
+        if (job.resume != null) {
+            onClipReady(job.token, chap, segment, Result.failure(error), false, job.tail, null)
+            return
+        }
+        val received = EdgeProtocol.durationMs(job.entry.written())
+        val words = chap.liveWords[segment].orEmpty()
+        val from = SeekPlan.tailFrom(SeekPlan.resumeWord(words, minOf(job.heardMs, received), job.tail), chap.paragraphs[segment], true)
+        resume = Resume(chap, segment, from, received, words)
+        inFlight = false
+        pump()
+    }
 
     /**
      * Đoạn đã phát luồng mà hỏng giữa chừng và không còn cách đọc: bỏ nó (và các đoạn nạp sau nó) khỏi ExoPlayer, trở lại đúng trạng thái "đang chờ đọc đoạn ấy" như clip hỏng hôm nay - bấm phát thì thử lại
@@ -902,6 +962,7 @@ object ReadAloud {
 
     private fun onClipReady(token: Int, chap: Chap, segment: Int, result: Result<Clip>, probe: Boolean = false, tail: Int = 0, live: LiveJob? = null) {
         if (token != generation || !active) return
+        if (live?.broke == true) return // đã đứt giữa chừng và [onLiveBroke] lo xong: lượt đọc này chỉ chạy nốt (đã bị huỷ), kết quả của nó không còn là của ai
         inFlight = false
         val streaming = live?.takeIf { it.started }
         if (liveNow === live) liveNow = null
@@ -925,7 +986,13 @@ object ReadAloud {
             return
         }
         // Clip đuôi: `words` đủ chữ của đoạn (chữ trước chữ bấm mốc [0, 0]), âm thanh bắt đầu từ chữ ấy ([SeekPlan.tailWords]).
-        val whole = if (tail > 0) Clip(clip.file, clip.durationMs, SeekPlan.tailWords(tail, clip.words), clip.voice, tail) else clip
+        // Phần nối sau phần đã về (uxfix58): file bắt đầu ở `baseMs` của đoạn; độ dài và mốc chữ trên đồng hồ cả đoạn, chữ đã nghe giữ mốc của phần đã về.
+        val joined = live?.resume
+        val whole = when {
+            joined != null -> Clip(clip.file, joined.baseMs + clip.durationMs, SeekPlan.tailWords(tail, clip.words, joined.baseMs, joined.prefix), clip.voice, tail, joined.baseMs)
+            tail > 0 -> Clip(clip.file, clip.durationMs, SeekPlan.tailWords(tail, clip.words), clip.voice, tail)
+            else -> clip
+        }
         chap.clips[segment] = whole
         chap.liveWords[segment] = null
         chap.timeline.setDuration(segment, whole.durationMs)
@@ -944,9 +1011,9 @@ object ReadAloud {
         Playback.emit("state")
     }
 
-    private fun clipItem(chap: Chap, segment: Int, clip: Clip): MediaItem = itemFor(chap, segment, Uri.fromFile(clip.file), VoiceGain.db(clip.voice))
+    private fun clipItem(chap: Chap, segment: Int, clip: Clip): MediaItem = itemFor(chap, segment, Uri.fromFile(clip.file), VoiceGain.db(clip.voice), clip.baseMs)
 
-    private fun itemFor(chap: Chap, segment: Int, uri: Uri, gainDb: Double): MediaItem {
+    private fun itemFor(chap: Chap, segment: Int, uri: Uri, gainDb: Double, baseMs: Long = 0L): MediaItem {
         val chapter = chapters()[chap.index]
         val metadata = MediaMetadata.Builder()
             .setTitle(chapter.title).setArtist(Playback.narrator.ifBlank { null }).setAlbumTitle(Playback.bookTitle)
@@ -955,7 +1022,7 @@ object ReadAloud {
         return MediaItem.Builder()
             .setMediaId(chapter.id.toString())
             .setUri(uri)
-            .setTag(Slot(chap.index, segment, gainDb, StalledClips.isLong(chap.paragraphs[segment])))
+            .setTag(Slot(chap.index, segment, gainDb, StalledClips.isLong(chap.paragraphs[segment]), baseMs))
             .setMediaMetadata(metadata.build())
             .build()
     }

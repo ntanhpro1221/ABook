@@ -3154,7 +3154,7 @@ CLIP_STREAM_TYPE = "application/vnd.abook.clipstream"
 class ClipStream:
     """Phát một clip đang được đọc về trình phát (`POST /api/readaloud/clip` có `stream: true`, [readaloud.StreamListener]): lời đáp 200 `chunked` chỉ mở khi byte tiếng đầu tiên về
     (trước đó lỗi vẫn là JSON như thường). Mỗi bản ghi = 1 byte loại + 4 byte độ dài (big-endian) + nội dung, một khúc chunked một bản ghi, đẩy đi ngay:
-    `A` byte MP3 (nối thẳng vào phần trước), `W` JSON `{"words", "duration_ms"}` (mốc tạm, thay bản trước), `E` JSON `{"url", "duration_ms", "words"}` (cuối) rồi hết,
+    `A` byte MP3 (nối thẳng vào phần trước), `W` JSON `{"words", "duration_ms", "heard_ms"}` (mốc tạm, thay bản trước; `heard_ms` = mốc hết chữ thật cuối cùng - chữ bắt đầu từ đó trở đi là chữ chưa tới), `E` JSON `{"url", "duration_ms", "words"}` (cuối) rồi hết,
     `X` JSON `{"message", "reason"}` (lỗi sau khi đã phát) rồi hết. Người nghe đóng kết nối giữa chừng: thôi ghi, việc đọc vẫn làm xong (clip vào bộ đệm, đoạn ấy nghe lại được)."""
 
     def __init__(self, handler: Handler) -> None:
@@ -3177,8 +3177,8 @@ class ClipStream:
     def audio(self, data: bytes) -> None:
         self._record(b"A", data)
 
-    def words(self, words: list[list[int]], duration_ms: int) -> None:
-        self._record(b"W", json.dumps({"words": words, "duration_ms": duration_ms}, separators=(",", ":")).encode("utf-8"))
+    def words(self, words: list[list[int]], duration_ms: int, heard_ms: int = 0) -> None:
+        self._record(b"W", json.dumps({"words": words, "duration_ms": duration_ms, "heard_ms": heard_ms}, separators=(",", ":")).encode("utf-8"))
 
     def finish(self, payload: dict[str, Any]) -> None:
         self._record(b"E", json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
