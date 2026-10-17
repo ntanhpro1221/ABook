@@ -22,6 +22,7 @@ TAIL_FRAMES = 60  # lặng đuôi 1,44 s: `trim_join_tail` luôn cắt được
 SENTENCES = ("Trời đã sẩm tối khi đoàn người tới được cổng làng. Người gác cổng đứng chờ sẵn, tay cầm chiếc đèn dầu cũ. "
              "Họ im lặng bước vào sân, nơi mấy con chó nằm ngủ dưới hiên. Mưa bắt đầu rơi lúc nào không ai hay.")
 LONG = f"{SENTENCES} {SENTENCES}"
+UNIQUE = SENTENCES + " " + SENTENCES.replace("người", "kẻ")  # như LONG mà mọi mảnh khác chữ nhau (máy chủ giả nhận mảnh theo chữ; LONG có mảnh 4 trùng mảnh 1)
 
 
 def mp3_frame(seed: int, index: int) -> bytes:
@@ -90,6 +91,11 @@ class Recorder:
         self.calls = 0
         self.on_first_audio: Callable[[], None] | None = None
         self.heard_first_audio_while_the_clip_was_unfinished = False
+        self.cuts: list[int] = []
+
+    def cut(self, words: int) -> None:
+        self.cuts.append(words)
+        self.events.append((time.monotonic(), "cut"))
 
     def audio(self, data: bytes) -> None:
         if not self.audio_chunks and self.on_first_audio is not None:
@@ -234,6 +240,39 @@ def test_a_failed_piece_fails_the_clip_and_the_sink_gets_nothing_after(streaming
     assert reference.audio.startswith(sink.audio_all) and reference.boundaries[:len(sink.bounds_all)] == sink.bounds_all
 
 
+def test_a_failed_later_piece_is_told_at_once_and_the_pieces_before_it_still_play_to_the_end(streaming, monkeypatch) -> None:
+    # uxfix63 (a59d e1): mảnh 3 hỏng khi mảnh 1-2 còn đang về. Trước: cả clip hỏng ngay, mảnh 1-2 bị cắt, người nghe chỉ còn phần đã phát. Giờ: sink biết NGAY tiếng dừng ở chữ đầu mảnh 3,
+    # mảnh 1-2 vẫn về và phát hết, phần dở của mảnh 3 không bao giờ ra sink, rồi mới ném lỗi.
+    monkeypatch.setattr(edge, "RETRIES", 0)
+    pieces = edge.speech_pieces(UNIQUE, 0)
+    spoken = [" ".join(piece.split()) for piece in pieces]
+    before = len(spoken[0].split()) + len(spoken[1].split())
+    _, client = streaming(cut=lambda text: 30 if text == spoken[2] else None, pace=lambda text: 0.08 if text in spoken[:2] else 0.002)
+    sink = Recorder()
+    with pytest.raises(edge.EdgeError):
+        client.synthesize(UNIQUE, edge.DEFAULT_VOICE, rank=0, sink=sink)
+    assert sink.cuts == [before], "báo một lần, đúng số chữ đứng trước mảnh hỏng"
+    told = next(at for at, kind in sink.events if kind == "cut")
+    assert any(kind == "audio" and at > told for at, kind in sink.events), "báo lúc các mảnh trước còn đang về"
+    reference = streaming(pace=lambda _: 0.0)[1].synthesize(UNIQUE, edge.DEFAULT_VOICE, rank=0)
+    assert sink.bounds_all == reference.boundaries[:before], "mảnh 1-2 phát đủ, không chữ nào của mảnh hỏng"
+    assert reference.audio.startswith(sink.audio_all) and len(sink.audio_all) * 8000 // edge.BITRATE_BPS >= sink.bounds_all[-1].end_ms
+    calls = sink.calls
+    time.sleep(0.2)
+    assert sink.calls == calls
+
+
+def test_a_failed_first_piece_still_fails_at_once(streaming) -> None:
+    text = UNIQUE
+    pieces = edge.speech_pieces(text, 0)
+    dead = " ".join(pieces[0].split())
+    _, client = streaming(dead=lambda spoken: spoken == dead, pace=lambda _: 0.05)
+    sink = Recorder()
+    with pytest.raises(edge.EdgeError):
+        client.synthesize(text, edge.DEFAULT_VOICE, rank=0, sink=sink)
+    assert sink.cuts == [] and sink.calls == 0, "mảnh đầu hỏng: không có gì để phát nốt, hỏng ngay như cũ"
+
+
 def test_an_error_before_any_byte_leaves_the_sink_empty(streaming) -> None:
     _, client = streaming(dead=lambda spoken: True)
     sink = Recorder()
@@ -293,6 +332,9 @@ class Listener:
         self.events.append("words")
         self.words_calls.append((words, duration_ms))
         self.heard.append(heard_ms)
+
+    def cut(self, word: int) -> None:
+        self.events.append(f"cut {word}")
 
 
 def make_service(tmp_path, client: edge.EdgeClient):
@@ -419,6 +461,31 @@ def test_the_words_are_told_at_most_twice_a_second_and_once_more_whenever_a_piec
     assert listener.events.count("words") == 3, "không có gì mới thì không gửi lại"
 
 
+def test_a_cut_names_the_first_shown_word_without_sound_and_waits_for_the_first_byte() -> None:
+    from abook.readaloud.service import _Live
+
+    # Chữ hiện "1900" đọc thành bốn chữ: "Năm" "1900" "anh" "đi." <- "năm một nghìn chín trăm anh đi."
+    said = "năm một nghìn chín trăm anh đi."
+    spans = [(0, 0), (1, 4), (5, 5), (6, 6)]
+    listener = Listener()
+    live = _Live(listener, said, spans, None)
+    live.cut(5)
+    assert listener.events == [], "chưa có byte tiếng nào: chưa mở lời đáp"
+    live.audio(b"x" * 144)
+    assert listener.events[:3] == ["started", "audio", "cut 2"], "chữ hiện đầu tiên không có tiếng: 'anh'"
+    for words, shown in ((3, 1), (1, 1), (0, 0), (7, 4)):  # cắt giữa chữ hiện thành nhiều chữ đọc: đọc lại cả chữ ấy
+        other = Listener()
+        cut = _Live(other, said, spans, None)
+        cut.audio(b"x" * 144)
+        cut.cut(words)
+        assert other.events[-1] == f"cut {shown}"
+    plain = Listener()
+    cut = _Live(plain, "một hai ba bốn", None, None)
+    cut.audio(b"x" * 144)
+    cut.cut(2)
+    assert plain.events[-1] == "cut 2"
+
+
 # ---- POST /api/readaloud/clip với stream: true ---------------------------------------------------------------------------------------
 
 HEADERS = {"X-Ebook-Token": "t"}
@@ -526,17 +593,21 @@ def test_an_error_before_the_first_byte_is_still_a_json_error(streaming, tmp_pat
 def test_an_error_after_the_first_byte_comes_as_an_x_record(streaming, tmp_path) -> None:
     import json as json_module
 
-    pieces = edge.speech_pieces(LONG, 0)
+    pieces = edge.speech_pieces(UNIQUE, 0)
     dead = " ".join(pieces[2].split())
     _, client = streaming(dead=lambda spoken: spoken == dead, pace=lambda _: 0.002)
     server, _ = clip_server(tmp_path, client)
     try:
-        _, response, data = post_clip(server.port, {"voice": VOICE, "text": LONG, "rank": 0, "stream": True})
+        _, response, data = post_clip(server.port, {"voice": VOICE, "text": UNIQUE, "rank": 0, "stream": True})
         assert response.status == 200
         found = records(data)
         assert found[0][0] == "A" and found[-1][0] == "X" and [kind for kind, _ in found].count("X") == 1 and "E" not in [kind for kind, _ in found]
         failure = json_module.loads(found[-1][1])
         assert failure["reason"] == "service" and failure["message"]
+        # uxfix63: mảnh 3 hỏng -> một bản ghi C (chữ hiện đầu tiên của mảnh hỏng), rồi X.
+        kinds = [kind for kind, _ in found]
+        assert kinds.count("C") == 1 and kinds.index("C") < kinds.index("X")
+        assert json_module.loads(found[kinds.index("C")][1]) == {"word": len(pieces[0].split()) + len(pieces[1].split())}
     finally:
         server.stop()
 
