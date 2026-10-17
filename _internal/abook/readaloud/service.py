@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import threading
 import time
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol
 
@@ -270,7 +271,8 @@ class ReadAloud:
             name_tag = provider.reading_tag(text, origin)
         else:
             name_tag = spoken.tag(text, origin, provider.speaks_english) if normalised else ""
-        tags = (name_tag, book_readings.tag(text, readings))
+        lifted = loudness.lifts(voice_id)  # câu ngắn nhỏ của giọng VieNeu được nâng ngay trong clip (loudness.lift_wav): dấu riêng trong khoá
+        tags = (name_tag, book_readings.tag(text, readings), loudness.LIFT_TAG if lifted else "")
         key = clip_key(provider.id, native, text, "+".join(tag for tag in tags if tag))
         hit = self.cache.get(key)
         if hit is None:
@@ -299,6 +301,8 @@ class ReadAloud:
                             made = provider.synthesize(text, native, origin, readings)
                         else:
                             made = provider.synthesize(text, native, origin)
+                        if lifted and made.ext == "wav":
+                            made = replace(made, audio=loudness.lift_wav(voice_id, made.audio))
                         words = made.words if made.words is not None else map_boundaries(said, made.boundaries, made.duration_ms)
                         words = _shown_words(words, spans, slots)  # chữ hiện thành nhiều chữ đọc / cụm đọc ngắn hơn số chữ hiện: mốc về đủ chữ hiện
                         hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
