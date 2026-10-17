@@ -29,6 +29,7 @@ class MusicTimelineTest {
             json.getDouble("start"), json.getDouble("end"), json.getString("track"), number(json, "gainDb"),
             List(steps.length()) { steps.getJSONObject(it).let { s -> MusicCues.Step(s.getDouble("at"), s.getDouble("db")) } },
             json.optBoolean("sibling", false), json.optBoolean("tail", false), number(json, "audibleStart"), number(json, "audibleEnd"),
+            number(json, "loopStart"), number(json, "loopEnd"),
         )
     }
 
@@ -54,7 +55,10 @@ class MusicTimelineTest {
             val cues = case.getJSONArray("cues").let { a -> List(a.length()) { cue(a.getJSONObject(it)) } }
             val tracks = case.getJSONObject("tracks").let { t ->
                 t.keys().asSequence().toList().associateWith { name ->
-                    t.getJSONObject(name).let { MusicTimeline.TrackInfo(number(it, "seconds"), number(it, "audibleStart"), number(it, "audibleEnd")) }
+                    t.getJSONObject(name).let {
+                        MusicTimeline.TrackInfo(number(it, "seconds"), number(it, "audibleStart"), number(it, "audibleEnd"),
+                            number(it, "loopStart"), number(it, "loopEnd"))
+                    }
                 }
             }
             val got = MusicTimeline.build(cues, number(case, "chapterSeconds"), tracks).map(::shown)

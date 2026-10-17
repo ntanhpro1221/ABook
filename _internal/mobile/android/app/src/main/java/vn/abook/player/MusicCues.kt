@@ -7,14 +7,15 @@ import kotlin.math.pow
  * Mốc nhạc của một chương trong mục `music` của book.json (music_plan.package) - phần thuần dữ liệu của [MusicBed], tách riêng để
  * test JVM chạy được (cùng quy tắc với ui/src/listen/musicBed.ts: `stepDbAt`, mục tiêu âm lượng).
  *
- * Mốc: `{start, end, track, gainDb, steps?, sibling?, tail?, audibleStart?, audibleEnd?}`. `steps` = bước âm lượng trong cảnh
+ * Mốc: `{start, end, track, gainDb, steps?, sibling?, tail?, audibleStart?, audibleEnd?, loopStart?, loopEnd?}`. `steps` = bước âm lượng trong cảnh
  * `[{at, db}]` (`at` = giây của chương, mức là `gainDb + db`); `sibling` = mốc nối bài anh em ở điểm kết bài trong cùng cảnh (mờ chéo dài hơn); `tail` = mốc kết
  * đúng ở điểm kết bài (bài anh em vào ngay sau, hay bài kết sớm): vòng cuối thôi lặp ([finalLoop]). Máy chủ tính hết, điện thoại
  * chỉ cộng.
  *
  * Lặp (mô hình chung với webui/music_mix.py, lô 2 mix-loop): `audibleStart` A / `audibleEnd` E = đoạn nghe được của bài (thiếu: 0
- * và độ dài thật). E - A >= 3X thì tới E - X một phần tử MỚI của bài vào từ A, mờ chéo X giây - chu kỳ P = E - A - X; bài ngắn hơn
- * lặp thường cả file ([loopBounds]).
+ * và độ dài thật). E - A >= 3X thì tới loopEnd - X một phần tử MỚI của bài vào từ loopStart, mờ chéo X giây - chu kỳ
+ * P = loopEnd - loopStart - X; bài ngắn hơn lặp thường cả file ([loopBounds]). `loopStart` / `loopEnd` = điểm vòng của bài có đoạn kết
+ * (danh mục, Corpus/research/music/PLAN_loop.md §10; thiếu hay không hợp lệ thì A / E): vòng cuối của mốc `tail` chơi qua loopEnd tới E.
  */
 object MusicCues {
     /** Nhịp trượt âm lượng của [MusicBed]. */
@@ -40,11 +41,21 @@ object MusicCues {
         val tail: Boolean = false,
         val audibleStart: Double? = null,
         val audibleEnd: Double? = null,
+        val loopStart: Double? = null,
+        val loopEnd: Double? = null,
     )
 
     /** Vòng lặp của một bài (giây trong bài): phát trong [start, end), chu kỳ `period`; `crossfade` = lặp mờ chéo (không thì lặp thường
-     *  cả file). Chưa biết độ dài lẫn E: end = period = vô cùng (bài coi như không bao giờ hết). */
-    data class Loop(val start: Double, val end: Double, val period: Double, val crossfade: Boolean)
+     *  cả file); phần tử lặp mở ở `loopEnd` - X và phát từ `loopStart` (không có điểm vòng: A và E). Chưa biết độ dài lẫn E: end =
+     *  period = vô cùng (bài coi như không bao giờ hết). */
+    data class Loop(
+        val start: Double,
+        val end: Double,
+        val period: Double,
+        val crossfade: Boolean,
+        val loopStart: Double = start,
+        val loopEnd: Double = end,
+    )
 
     /** Các mốc của chương `chapterId` trong `music`; mốc hỏng (bài không có trong `tracks`, tên sai) bị bỏ, bước hỏng bị bỏ. */
     fun of(music: JSONObject?, chapterId: Int?): List<Cue> {
@@ -63,6 +74,8 @@ object MusicCues {
                 cue.optBoolean("tail", false),
                 finite(cue, "audibleStart"),
                 finite(cue, "audibleEnd"),
+                finite(cue, "loopStart"),
+                finite(cue, "loopEnd"),
             )
         }
     }
@@ -113,26 +126,61 @@ object MusicCues {
             val whole = total ?: end
             return Loop(0.0, whole, whole, false)
         }
+        val restart = cue.loopStart?.takeIf { it.isFinite() }
+        val out = cue.loopEnd?.takeIf { it.isFinite() }
+        if (restart != null && out != null && start <= restart && restart < out - x && out - x <= end && out - restart - x >= mix.loopMinPeriodSeconds) {
+            return Loop(start, end, out - restart - x, true, restart, out)
+        }
         return Loop(start, end, end - start - x, true)
     }
 
-    /** Chỗ trong bài (giây) ứng với giây `seconds` của chương: A + ((giây - đầu mốc) mod P) - vào giữa chương hay tua thì nhạc cũng
-     *  ở giữa bài (ui/src/listen/musicBed.ts `alignedPosition`, soát a26 L8). */
-    fun alignedPosition(cue: Cue, seconds: Double, bounds: Loop): Double {
-        val offset = (seconds - cue.start).coerceAtLeast(0.0)
-        return bounds.start + if (bounds.period.isFinite()) offset % bounds.period else offset
+    /** Chỗ trong bài (giây) sau `t` >= 0 giây kể từ lúc bài vào từ A (`music_mix.loop_position`): vòng đầu A + t, sau đó
+     *  loopStart + ((t - (loopStart - A)) mod P) - không có điểm vòng thì đúng A + (t mod P) như trước. */
+    fun loopPosition(bounds: Loop, t: Double): Double {
+        if (!bounds.period.isFinite()) return bounds.start + t
+        if (bounds.crossfade && t < bounds.loopEnd - mix.loopCrossfadeSeconds - bounds.start) return bounds.start + t
+        return bounds.loopStart + (t - (bounds.loopStart - bounds.start)) % bounds.period
     }
+
+    /** Lúc mở các phần tử lặp và lúc nhạc hết của một mốc dài `length` giây mà bài vào từ A ở giây 0. */
+    class Schedule(val opens: List<Double>, val end: Double)
+
+    /** [Schedule] của mốc dài `length` (`music_mix.loop_schedule`): lượt j hết tự nhiên (tới E) ở (E - A) + j·P, phần tử kế mở trước đó
+     *  E - loopEnd + X giây. Mốc `tail`: thôi ở lượt đầu tiên mà phần còn lại của mốc hơn chỗ bài hết chưa tới nửa chu kỳ (như
+     *  [finalLoop]), nhạc hết ở E của vòng ấy. Lặp thường cả file không mở phần tử nào. */
+    fun loopSchedule(bounds: Loop, length: Double, tail: Boolean = false): Schedule {
+        var natural = bounds.end - bounds.start
+        val lead = bounds.end - bounds.loopEnd + mix.loopCrossfadeSeconds
+        val opens = ArrayList<Double>()
+        if (tail) {
+            while (natural.isFinite() && length - natural >= bounds.period / 2) {
+                if (bounds.crossfade) opens.add(natural - lead)
+                natural += bounds.period
+            }
+            return Schedule(opens, natural)
+        }
+        while (bounds.crossfade && natural - lead < length) {
+            opens.add(natural - lead)
+            natural += bounds.period
+        }
+        return Schedule(opens, length)
+    }
+
+    /** Chỗ trong bài (giây) ứng với giây `seconds` của chương ([loopPosition] từ đầu mốc) - vào giữa chương hay tua thì nhạc cũng ở
+     *  giữa bài (ui/src/listen/musicBed.ts `alignedPosition`, soát a26 L8). */
+    fun alignedPosition(cue: Cue, seconds: Double, bounds: Loop): Double =
+        loopPosition(bounds, (seconds - cue.start).coerceAtLeast(0.0))
 
     /** [alignedPosition] tính bằng ms cho ExoPlayer (`durationMs` <= 0: chưa biết độ dài, null). */
     fun offsetMs(cue: Cue, seconds: Double, durationMs: Long): Long? =
         if (durationMs > 0) (alignedPosition(cue, seconds, loopBounds(cue, durationMs / 1000.0)) * 1000).toLong() else null
 
-    /** Phần tử đang kêu ở `currentTime` (giây trong bài) đã tới E - X: lúc mở phần tử lặp mới từ A. */
+    /** Phần tử đang kêu ở `currentTime` (giây trong bài) đã tới loopEnd - X: lúc mở phần tử lặp mới từ loopStart. */
     fun loopDue(bounds: Loop, currentTime: Double): Boolean =
-        bounds.crossfade && currentTime >= bounds.end - mix.loopCrossfadeSeconds
+        bounds.crossfade && currentTime >= bounds.loopEnd - mix.loopCrossfadeSeconds
 
     /** Mốc `tail` đang ở vòng cuối (ui/src/listen/musicBed.ts `finalLoop`): phần còn lại của mốc hơn phần còn lại của bài (tới E)
-     *  chưa tới nửa chu kỳ - không mở phần tử lặp nữa, bài chơi tới E là hết. Chưa biết độ dài bài: chưa phải. */
+     *  chưa tới nửa chu kỳ - không mở phần tử lặp nữa, bài chơi (qua loopEnd) tới E là hết. Chưa biết độ dài bài: chưa phải. */
     fun finalLoop(cue: Cue, seconds: Double, currentTime: Double, bounds: Loop): Boolean =
         cue.tail && bounds.end.isFinite() && cue.end - seconds - (bounds.end - currentTime) < bounds.period / 2
 

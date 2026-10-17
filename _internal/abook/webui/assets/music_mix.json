@@ -6,6 +6,7 @@
   "cueMergeGapSeconds": 5,
   "tailMinSeconds": 20,
   "loopCrossfadeSeconds": 2,
+  "loopMinPeriodSeconds": 10,
   "audibleThresholdDbfs": -60,
   "voicePlayedLufs": -16.989700043360187,
   "shortTermFloorLu": 10,

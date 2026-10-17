@@ -279,8 +279,8 @@ def loops_of(chosen: list[dict[str, Any]], cells: dict[str, list[dict[str, Any]]
     out = {}
     for link in links:
         track = by_link.get(link) or {}  # bài ghim ngoài danh mục: không biết độ dài
-        first, last, period, crossfade = music_mix.loop_bounds(track.get("seconds") or track.get("duration"), track.get("audibleStart"), track.get("audibleEnd"))
-        out[link] = [None if math.isinf(x) else x for x in (first, last, period)] + [crossfade]
+        bounds = music_mix.track_loop_bounds(track, track.get("seconds") or track.get("duration"))
+        out[link] = [None if math.isinf(x) else x for x in (bounds.start, bounds.end, bounds.period)] + [bounds.crossfade]
     return out
 
 
