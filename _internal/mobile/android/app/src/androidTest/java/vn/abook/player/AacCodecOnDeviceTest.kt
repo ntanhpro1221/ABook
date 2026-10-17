@@ -83,14 +83,19 @@ class AacCodecOnDeviceTest {
                         }
                     }
                 }
-                val out = codec.dequeueOutputBuffer(info, 10_000)
-                if (out >= 0) {
+                // Xả HẾT khung đang có mỗi vòng (như M4bAudio.drain): 4096 mẫu vào ra 4 khung, xả một khung một vòng thì
+                // mỗi vòng chờ 10 ms - chương 13 phút chạy chậm hơn thời gian thực (máy chủ sách 18-10).
+                var ended = false
+                while (true) {
+                    val out = codec.dequeueOutputBuffer(info, if (inputDone) 10_000 else 0)
+                    if (out < 0) break
                     val bytes = ByteArray(info.size)
                     codec.getOutputBuffer(out)!!.apply { position(info.offset); get(bytes) }
                     if (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) csd = bytes else if (bytes.isNotEmpty()) units.add(bytes)
                     codec.releaseOutputBuffer(out, false)
-                    if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) break
+                    if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) { ended = true; break }
                 }
+                if (ended) break
             }
         } finally {
             codec.stop()
@@ -106,7 +111,8 @@ class AacCodecOnDeviceTest {
         val codec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
         codec.configure(format, null, null, 0)
         codec.start()
-        val out = ArrayList<Short>()
+        var out = ShortArray(units.size * 1024 + 4096) // ArrayList<Short> của chương 13 phút = ~600 MB đối tượng
+        var size = 0
         val info = MediaCodec.BufferInfo()
         var next = 0
         var inputDone = false
@@ -127,20 +133,26 @@ class AacCodecOnDeviceTest {
                         }
                     }
                 }
-                val slot = codec.dequeueOutputBuffer(info, 10_000)
-                if (slot >= 0) {
+                var ended = false
+                while (true) {
+                    val slot = codec.dequeueOutputBuffer(info, if (inputDone) 10_000 else 0)
+                    if (slot < 0) break
                     val shorts = codec.getOutputBuffer(slot)!!.apply { position(info.offset); limit(info.offset + info.size) }
                         .order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
-                    while (shorts.hasRemaining()) out.add(shorts.get())
+                    if (size + shorts.remaining() > out.size) out = out.copyOf(maxOf(out.size * 2, size + shorts.remaining()))
+                    val n = shorts.remaining()
+                    shorts.get(out, size, n)
+                    size += n
                     codec.releaseOutputBuffer(slot, false)
-                    if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) break
+                    if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) { ended = true; break }
                 }
+                if (ended) break
             }
         } finally {
             codec.stop()
             codec.release()
         }
-        return out.toShortArray()
+        return out.copyOf(size)
     }
 
     private fun peak(pcm: ShortArray): Double = TruePeak(params, 1).apply { feed(pcm) }.finish().single()
@@ -201,12 +213,15 @@ class AacCodecOnDeviceTest {
                 sources["file"] = ShortArray(bytes.size / 2) { ((bytes[2 * it + 1].toInt() shl 8) or (bytes[2 * it].toInt() and 0xff)).toShort() }
             }
             for ((name, pcm) in sources) {
+                val t0 = SystemClock.elapsedRealtime()
                 val encoded = encode(pcm, rate)
+                val encodeMs = SystemClock.elapsedRealtime() - t0
                 val out = decode(encoded.units, encoded.csd, rate)
                 val before = peak(pcm)
                 val after = peak(out)
                 log(JSONObject().put("kind", "peak").put("codec", encoded.codec).put("rate", rate).put("signal", name).put("delay", delay)
-                    .put("inDbtp", round2(before)).put("outDbtp", round2(after)).put("over", after > -1.0))
+                    .put("inDbtp", round2(before)).put("outDbtp", round2(after)).put("over", after > -1.0)
+                    .put("seconds", round2(pcm.size.toDouble() / rate)).put("encodeMs", encodeMs))
                 assertTrue("giải mã ra đủ dài", out.size >= pcm.size)
             }
             join(sources.getValue("speechlike"), rate, delay)
