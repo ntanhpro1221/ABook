@@ -223,12 +223,12 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
 
     def loop(link: str) -> tuple[float, float]:
         """(giây từ A tới E, chu kỳ lặp) của bài theo đoạn nghe được (music_mix.loop_bounds): bài chơi tới E là hết - bài anh em
-        vào lúc ấy; không có anh em thì phần tử lặp đã vào từ A ở E - X, nên vòng sau hết sau một chu kỳ P = E - A - X. Độ dài
-        thật lấy `seconds` (danh mục đo), không thì `duration`; chưa biết thì bài không bao giờ hết."""
+        vào lúc ấy; không có anh em thì phần tử lặp đã vào (từ loopStart ở loopEnd - X), nên vòng sau hết sau một chu kỳ P
+        (`music_mix.loop_schedule`). Độ dài thật lấy `seconds` (danh mục đo), không thì `duration`; chưa biết thì bài không bao
+        giờ hết."""
         track = info(link) or {}
-        first, last, period, _ = music_mix.loop_bounds(track.get("seconds") or track.get("duration"),
-                                                       track.get("audibleStart"), track.get("audibleEnd"))
-        return last - first, period
+        bounds = music_mix.track_loop_bounds(track, track.get("seconds") or track.get("duration"))
+        return bounds.end - bounds.start, bounds.period
 
     heads = scene_heads(scenes)
     lengths: dict[int, float] = {}

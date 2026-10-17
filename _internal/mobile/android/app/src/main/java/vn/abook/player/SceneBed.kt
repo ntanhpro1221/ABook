@@ -71,7 +71,8 @@ class SceneBed(private val timingOf: () -> SceneAnchor.Timing?) {
     private fun musicCue(cue: SceneAnchor.Cue): MusicCues.Cue {
         val info = infos[cue.link]
         val gain = MusicGain.cueGainDb(levelDb, number(info, "lufs"), number(info, "speechBand"), number(info, "s95"))
-        return MusicCues.Cue(cue.start, cue.end, cue.link, gain, cue.steps, cue.sibling, cue.tail, number(info, "audibleStart"), number(info, "audibleEnd"))
+        return MusicCues.Cue(cue.start, cue.end, cue.link, gain, cue.steps, cue.sibling, cue.tail, number(info, "audibleStart"), number(info, "audibleEnd"),
+            number(info, "loopStart"), number(info, "loopEnd"))
     }
 
     private fun number(info: JSONObject?, key: String): Double? = (info?.opt(key) as? Number)?.toDouble()?.takeIf { it.isFinite() }

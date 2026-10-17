@@ -3,6 +3,7 @@ mỗi bài (độ to ngắn hạn p95, đoạn nghe được), chặn gain theo 
 `music_timeline` chạy cùng các fixture với trình phát web (musicBed.test.ts) và Android (MusicCuesTest.kt)."""
 from __future__ import annotations
 
+import importlib.util
 import json
 import math
 from pathlib import Path
@@ -106,19 +107,23 @@ def test_cues_for_the_player_carry_the_audible_bounds_and_the_held_gain(tmp_path
         {"lufs": -20.0, "s95": -12.0, "seconds": 200.0, "audibleStart": 1.5, "audibleEnd": 190.25}), encoding="utf-8")
     cues = [{"link": "https://x/a.mp3", "key": "a"}, {"link": "https://x/b.mp3", "key": "b"},
             {"link": "https://x/c.mp3", "key": "c"}]
-    tracks = {"https://x/a.mp3": {"lufs": -20.0, "speechBand": 0.3, "s95": -12.0, "audibleStart": 0.2, "audibleEnd": 99.0},
+    tracks = {"https://x/a.mp3": {"lufs": -20.0, "speechBand": 0.3, "s95": -12.0, "audibleStart": 0.2, "audibleEnd": 99.0,
+                                  "loopStart": 10.0, "loopEnd": 80.0},
               "https://x/b.mp3": {"lufs": -26.0, "audibleStart": 0.0, "audibleEnd": 150.0}, "https://x/c.mp3": {}}
     music_plan.apply_gain(cues, -14.0, tracks, lambda link: cached if link.endswith("b.mp3") else None)
     assert cues[0]["gainDb"] == -14.99 and (cues[0]["audibleStart"], cues[0]["audibleEnd"]) == (0.2, 99.0), "số danh mục"
     assert cues[1]["gainDb"] == -14.99 and (cues[1]["audibleStart"], cues[1]["audibleEnd"]) == (1.5, 190.25), "số đo từ file thắng"
     assert "audibleStart" not in cues[2] and "audibleEnd" not in cues[2], "không biết: trình phát dùng 0 và độ dài thật"
+    assert (cues[0]["loopStart"], cues[0]["loopEnd"]) == (10.0, 80.0), "điểm vòng của danh mục đi theo mốc"
+    assert "loopStart" not in cues[1] and "loopStart" not in cues[2], "không có điểm vòng: lặp như cũ"
+    assert not set(music_mix.LOOP_KEYS) & set(music_plan.substituted(cues[0], "https://x/c.mp3")), "bài thay: điểm vòng của nó"
 
 
 def test_the_book_package_carries_the_audible_bounds_and_the_loud_part_of_each_track(tmp_path: Path) -> None:
     project = make_project(tmp_path)
     plan = {"version": music_plan.PLAN_VERSION, "enabled": True, "levelDb": -14.0,
-            "tracks": {"https://x/a.mp3": {"lufs": -20.0, "speechBand": 0.3}}, "scenes": [
-                {"chapterId": 1, "key": "1:1", "start": 0.0, "end": 300.0, "link": "https://x/a.mp3"}]}
+            "tracks": {"https://x/a.mp3": {"lufs": -20.0, "speechBand": 0.3, "loopStart": 12.5, "loopEnd": 160.75}},
+            "scenes": [{"chapterId": 1, "key": "1:1", "start": 0.0, "end": 300.0, "link": "https://x/a.mp3"}]}
     (project / music_plan.PLAN_FILE).write_bytes(json.dumps(plan).encode("utf-8"))
     folder = tmp_path / "cache"
     folder.mkdir()
@@ -137,6 +142,7 @@ def test_the_book_package_carries_the_audible_bounds_and_the_loud_part_of_each_t
     assert track["s95"] == -12.0, "đổi mức trên máy nghe tính lại gain cũng chặn theo p95"
     [back] = music_plan.packaged_cues(json.loads(json.dumps(music)), 1)
     assert (back["audibleStart"], back["audibleEnd"]) == (1.5, 190.25)
+    assert (cue["loopStart"], cue["loopEnd"]) == (back["loopStart"], back["loopEnd"]) == (12.5, 160.75), "điểm vòng theo mốc"
     louder = book_edits.apply_music(music, {"music": {"levelDb": -10.0}})
     assert louder["chapters"]["1"][0]["gainDb"] == -14.99, "sách đóng gói: đổi mức vẫn chặn theo p95"
     old = {**music, "chapters": {"1": [{k: v for k, v in cue.items() if not k.startswith("audible")}]}}
@@ -144,11 +150,81 @@ def test_the_book_package_carries_the_audible_bounds_and_the_loud_part_of_each_t
 
 
 def test_the_loop_bounds_follow_the_audible_part_and_fall_back_to_the_whole_file() -> None:
-    assert music_mix.loop_bounds(200.0, 1.5, 190.0) == (1.5, 190.0, 186.5, True)
-    assert music_mix.loop_bounds(200.0) == (0.0, 200.0, 198.0, True), "thiếu A/E: 0 và độ dài thật"
-    assert music_mix.loop_bounds(200.0, 1.5, 250.0) == (1.5, 200.0, 196.5, True), "E không vượt độ dài thật"
-    assert music_mix.loop_bounds(10.0, 2.0, 7.0) == (0.0, 10.0, 10.0, False), "quá ngắn (E - A < 3X): lặp thường cả file"
-    assert music_mix.loop_bounds(None) == (0.0, math.inf, math.inf, False)
+    assert music_mix.loop_bounds(200.0, 1.5, 190.0) == (1.5, 190.0, 186.5, True, 1.5, 190.0)
+    assert music_mix.loop_bounds(200.0) == (0.0, 200.0, 198.0, True, 0.0, 200.0), "thiếu A/E: 0 và độ dài thật"
+    assert music_mix.loop_bounds(200.0, 1.5, 250.0) == (1.5, 200.0, 196.5, True, 1.5, 200.0), "E không vượt độ dài thật"
+    assert music_mix.loop_bounds(10.0, 2.0, 7.0) == (0.0, 10.0, 10.0, False, 0.0, 10.0), "quá ngắn (E - A < 3X): lặp thường cả file"
+    assert music_mix.loop_bounds(None) == (0.0, math.inf, math.inf, False, 0.0, math.inf)
+
+
+def test_loop_points_are_used_only_when_they_fit_the_audible_part() -> None:
+    # PLAN_loop §10: phần tử lặp mở ở loopEnd - X, phát từ loopStart; chu kỳ loopEnd - loopStart - X.
+    assert music_mix.loop_bounds(200.0, 1.5, 190.25, 12.5, 160.75) == (1.5, 190.25, 146.25, True, 12.5, 160.75)
+    assert music_mix.loop_bounds(200.0, 1.5, 190.25, 1.5, 160.75).period == 157.25, "loopStart đúng ở A (lưới phách từ A)"
+    assert music_mix.loop_bounds(200.0, 1.5, 190.25, 12.5, 192.25).loop_end == 192.25, "loopEnd - X đúng ở E"
+    plain = music_mix.loop_bounds(200.0, 1.5, 190.25)
+    for start, end in ((12.5, 195.0), (100.0, 111.0), (1.0, 160.75), (160.0, 150.0), (12.5, None), (None, 160.75)):
+        assert music_mix.loop_bounds(200.0, 1.5, 190.25, start, end) == plain, (start, end)
+    assert music_mix.loop_bounds(10.0, 2.0, 7.0, 3.0, 6.0) == music_mix.loop_bounds(10.0, 2.0, 7.0), "lặp thường: bỏ điểm vòng"
+    assert music_mix.track_loop_bounds({"audibleStart": 1.5, "audibleEnd": 190.25, "loopStart": 12.5, "loopEnd": 160.75},
+                                       200.0).loop_start == 12.5
+
+
+LOOP_FIXTURES = Path(__file__).resolve().parent / "fixtures" / "music_loop"
+
+
+def _loop_generator():
+    spec = importlib.util.spec_from_file_location("music_loop_fixtures",
+                                                  Path(__file__).resolve().parents[1] / "scripts" / "music_loop_fixtures.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_shared_loop_fixtures_are_what_the_python_model_gives_now() -> None:
+    generator = _loop_generator()
+    assert {path.stem for path in LOOP_FIXTURES.glob("*.json")} == set(generator.CASES)
+    for path in [*LOOP_FIXTURES.glob("*.json"), generator.TIMELINE]:
+        assert b"\r\n" not in path.read_bytes(), path
+    for name, spec in generator.CASES.items():
+        data = json.loads((LOOP_FIXTURES / f"{name}.json").read_bytes())
+        assert data == json.loads(json.dumps(generator.loop_case(spec, data.get("legacy")))), name
+    assert json.loads(generator.TIMELINE.read_bytes()) == json.loads(json.dumps(generator.timeline_case()))
+
+
+@pytest.mark.parametrize("name", ["with_points", "without_points", "invalid_points"])
+def test_the_loop_schedule_is_what_the_timeline_plays(name: str) -> None:
+    # Lịch mở phần tử / chỗ hết vòng cuối (`loop_schedule`) đúng như dòng thời gian của bản xuất (`music_timeline`), lệch <= 1 ms.
+    data = json.loads((LOOP_FIXTURES / f"{name}.json").read_bytes())
+    for cue in data["cues"]:
+        for tail in (False, True):
+            shaped = {"start": 0, "end": cue["seconds"], "track": "t", "gainDb": -10.0, **({"tail": True} if tail else {})}
+            timeline = music_mix.music_timeline([shaped], None, {"t": data["track"]})
+            opens = [element["from"] for element in timeline if element["enter"] == "loop"]
+            want = cue["tail"] if tail else cue
+            assert opens == pytest.approx(want["opens"], abs=1e-3), (cue["seconds"], tail)
+            assert all(element["position"] == pytest.approx(data["bounds"]["loopStart"]) for element in timeline[1:])
+            if tail:
+                assert timeline[-1]["to"] == pytest.approx(want["seconds"], abs=1e-3), "vòng cuối chơi tới E"
+                assert timeline[-1]["to"] - (timeline[-1]["from"] if opens else 0) == pytest.approx(
+                    data["bounds"]["end"] - (data["bounds"]["loopStart"] if opens else data["bounds"]["start"]), abs=1e-3)
+
+
+@pytest.mark.parametrize("name", ["without_points", "invalid_points"])
+def test_a_track_without_valid_loop_points_loops_exactly_as_0_4_89(name: str) -> None:
+    data = json.loads((LOOP_FIXTURES / f"{name}.json").read_bytes())
+    assert data["positions"] == data["legacy"]["positions"], "vị trí tua trùng từng số"
+    bounds = music_mix.track_loop_bounds(data["track"], data["track"]["seconds"])
+    for cue, old in zip(data["cues"], data["legacy"]["cues"], strict=True):
+        assert [round(x, 3) for x in cue["opens"]] == old["opens"]
+        assert [round(x, 3) for x in cue["tail"]["opens"]] == old["tail"]["opens"]
+        assert round(cue["tail"]["seconds"], 3) == old["tail"]["seconds"]
+        for tail in (False, True):
+            shaped = {"start": 0, "end": cue["seconds"], "track": "t", "gainDb": -10.0, **({"tail": True} if tail else {})}
+            timeline = music_mix.music_timeline([shaped], None, {"t": data["track"]})
+            assert [element["from"] for element in timeline if element["enter"] == "loop"] == (
+                old["tail"]["opens"] if tail else old["opens"])
+    assert bounds.loop_start == bounds.start and bounds.loop_end == bounds.end
 
 
 @pytest.mark.parametrize("path", sorted(FIXTURES.glob("*.json")), ids=lambda path: path.stem)
@@ -159,7 +235,7 @@ def test_the_timeline_of_each_fixture(path: Path) -> None:
 
 def test_the_fixtures_cover_every_case_the_three_sides_check() -> None:
     names = {path.stem for path in FIXTURES.glob("*.json")}
-    assert {"loop_crossfade", "sibling_tail", "stop_at", "chapter_end", "short_track"} <= names
+    assert {"loop_crossfade", "sibling_tail", "stop_at", "chapter_end", "short_track", "loop_points"} <= names
 
 
 ORIGINAL, SUBSTITUTE = "https://x/original.mp3", "https://x/substitute.mp3"

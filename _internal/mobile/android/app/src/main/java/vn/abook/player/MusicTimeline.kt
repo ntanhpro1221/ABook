@@ -16,8 +16,14 @@ import kotlin.math.pow
 object MusicTimeline {
     private const val EPS = 1e-6
 
-    /** Bài của một mốc: độ dài thật (giây; null = chưa biết) và đoạn nghe được [A, E) (null = 0 / độ dài). */
-    class TrackInfo(val seconds: Double?, val audibleStart: Double? = null, val audibleEnd: Double? = null)
+    /** Bài của một mốc: độ dài thật (giây; null = chưa biết), đoạn nghe được [A, E) (null = 0 / độ dài) và điểm vòng (null = không có). */
+    class TrackInfo(
+        val seconds: Double?,
+        val audibleStart: Double? = null,
+        val audibleEnd: Double? = null,
+        val loopStart: Double? = null,
+        val loopEnd: Double? = null,
+    )
 
     /** Một phần tử của dòng thời gian: mốc sinh ra nó (`cue`, chỉ số sau khi xếp), cách vào ("start", "loop", "early") và phần dựng. */
     class Shaped(val cue: Int, val enter: String, val element: MusicRender.Element)
@@ -31,8 +37,11 @@ object MusicTimeline {
 
     /** (A, E, P, lặp mờ chéo?) của bài dài `seconds` - `music_mix.loop_bounds`, cùng hàm với trình phát ([MusicCues.loopBounds]). */
     fun loopBounds(info: TrackInfo?): MusicCues.Loop =
-        MusicCues.loopBounds(MusicCues.Cue(0.0, 0.0, "", null, audibleStart = info?.audibleStart, audibleEnd = info?.audibleEnd),
-            info?.seconds ?: Double.NaN)
+        MusicCues.loopBounds(
+            MusicCues.Cue(0.0, 0.0, "", null, audibleStart = info?.audibleStart, audibleEnd = info?.audibleEnd,
+                loopStart = info?.loopStart, loopEnd = info?.loopEnd),
+            info?.seconds ?: Double.NaN,
+        )
 
     private fun stepDb(cue: MusicCues.Cue, seconds: Double): Double {
         var db = 0.0
@@ -142,7 +151,7 @@ object MusicTimeline {
                     lastPass = cue.tail
                     natural = if (lastPass) finalPass(element, period, end) else Double.POSITIVE_INFINITY
                 }
-                val spawn = if (crossfading && !lastPass) element.begin + (last - crossfade - element.position) else Double.POSITIVE_INFINITY
+                val spawn = if (crossfading && !lastPass) element.begin + (bounds.loopEnd - crossfade - element.position) else Double.POSITIVE_INFINITY
                 val stop = minOf(spawn, if (lastPass) natural else Double.POSITIVE_INFINITY, end)
                 while (steps.isNotEmpty() && steps[0] < stop) {
                     val at = steps.removeAt(0)
@@ -151,7 +160,7 @@ object MusicTimeline {
                 if (spawn < end && spawn <= stop) {
                     element.ramp(spawn, 0.0, crossfade)
                     element.to = spawn + crossfade
-                    element = Element(cue.track, index, "loop", spawn, first, bounds)
+                    element = Element(cue.track, index, "loop", spawn, bounds.loopStart, bounds)
                     element.points = listOf(Point(spawn, 0.0), Point(spawn + crossfade, level(cue, spawn)))
                     out.add(element)
                     continue
