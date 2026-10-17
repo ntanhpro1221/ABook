@@ -147,3 +147,32 @@ class ErrorPause {
         return if (resume) Recovery.RESUME else Recovery.CLEAR
     }
 }
+
+/**
+ * Một chỗ hỏng = MỘT lời báo (uxfix60; máy tính `failRest`): đoạn hỏng đã báo, rồi máy TỰ hỏi lại ([ReadAloud] khi dịch vụ trả lời lại - [ErrorPause.Recovery.RESUME]) mà đúng chỗ ấy hỏng nữa thì chỉ
+ * cập nhật lời báo đang có, không báo lần nữa. Người nghe tự làm gì (bấm "Thử lại", tua, nhảy) thì lần hỏng sau là chuyện mới, báo như thường. Chỗ = (chương, đoạn).
+ */
+class FailureNotice {
+    private var spot: Pair<Int, Int>? = null
+    private var autoRetry = false
+
+    /** Máy sắp tự hỏi lại chỗ vừa báo (gọi SAU mọi việc dựng lại hàng đợi của lần hỏi lại). */
+    fun retryingByItself() {
+        autoRetry = spot != null
+    }
+
+    /** Người nghe tự làm gì đó, hay chỗ hỏng đã đọc được: quên chỗ đã báo. */
+    fun forget() {
+        spot = null
+        autoRetry = false
+    }
+
+    /** Chỗ (`chapter`, `segment`) vừa hỏng: true = báo người nghe; false = chỉ cập nhật lời báo đang có (máy tự hỏi lại đúng chỗ vừa báo). */
+    fun shouldNotify(chapter: Int, segment: Int): Boolean {
+        val here = chapter to segment
+        val repeat = autoRetry && spot == here
+        spot = here
+        autoRetry = false
+        return !repeat
+    }
+}

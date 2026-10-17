@@ -19,12 +19,29 @@ object SeekPlan {
         class Synthesize(val segment: Int, val offsetMs: Long, val word: Int) : Plan()
     }
 
-    fun plan(timeline: VirtualTimeline, clip: (Int) -> Clip?, queued: (Int) -> Boolean, ms: Long, segment: Int, word: Int): Plan {
+    /**
+     * Đoạn đang phát luồng (uxfix60): `clip` của nó là clip TẠM - mốc chữ tạm, độ dài = phần đã về (`receivedMs`). `heardMs`: hết mốc thật cuối cùng giọng đã báo. Cả hai trên đồng hồ của đoạn
+     * (phần nối: cộng [Clip.baseMs]).
+     */
+    class Growing(val heardMs: Long, val receivedMs: Long)
+
+    /**
+     * `growing(seg)` khác null: đoạn ấy đang phát luồng và `clip(seg)` là clip tạm của nó, đã nằm trong hàng đợi (máy tính: seek / seekWord dùng clip đang về + mốc tạm). Tua trong đoạn ấy thì nhảy
+     * NGAY trong mục đang về, không bỏ phần đã về đọc lại: kéo thanh / lùi-tới -> kẹp vào phần đã về (chỗ xa hơn chưa có tiếng: đứng ở cuối phần đã về, tiếng về tới đâu nghe tới đó); bấm chữ đã có tiếng
+     * -> đúng chữ ấy; bấm chữ CHƯA có tiếng (mốc tạm của nó chỉ là chỗ dồn ở cuối) -> clip đuôi từ chữ ấy như bấm chữ của đoạn chưa đọc.
+     */
+    fun plan(
+        timeline: VirtualTimeline, clip: (Int) -> Clip?, queued: (Int) -> Boolean, ms: Long, segment: Int, word: Int, growing: (Int) -> Growing? = { null },
+    ): Plan {
         val last = (timeline.size - 1).coerceAtLeast(0)
         val seg = if (segment >= 0) segment.coerceIn(0, last) else timeline.segmentAt(ms)
         val within = if (segment >= 0) 0L else (ms - timeline.startOf(seg)).coerceAtLeast(0)
         val known = clip(seg)?.takeIf { serves(it, word, within) }
-        if (known != null && queued(seg)) return Plan.InClip(seg, offsetIn(known, word, within))
+        if (known != null && queued(seg)) {
+            val live = growing(seg)
+            if (live != null && word >= 0 && word != known.fromWord && (known.words.getOrNull(word)?.start ?: Long.MAX_VALUE) >= live.heardMs) return Plan.Synthesize(seg, within, word)
+            return Plan.InClip(seg, offsetIn(known, word, within))
+        }
         return Plan.Synthesize(seg, within, word)
     }
 
@@ -74,5 +91,24 @@ object SeekPlan {
         if (words.size <= first) return first
         for (i in first until words.size) if (words[i].end > heardMs || words[i].start >= heardMs) return i
         return words.size - 1
+    }
+
+    /**
+     * Clip đứt mà mọi chữ từ `first` đã có tiếng trọn (chữ cuối có mốc thật, kết thúc trước `heardMs`): coi như clip xong ở byte cuối, không xin phần nối đọc lại chữ cuối (uxfix60; máy tính `salvage`:
+     * `resume >= total`).
+     */
+    fun allHeard(words: List<Span>, heardMs: Long, first: Int): Boolean {
+        val lastWord = words.lastOrNull() ?: return false
+        return words.size > first && lastWord.start < heardMs && lastWord.end <= heardMs
+    }
+
+    /**
+     * Mốc chữ tạm cho màn đọc khi đang phát luồng (uxfix60): chữ CHƯA có tiếng bị dồn vào cuối phần đã về ([WordTokens.map]) nên khi tiếng chạy qua mốc thật cuối cùng mà mốc kế chưa tới, bộ tô
+     * (chữ cuối có đầu <= vị trí) nhảy sang chữ cuối đoạn rồi quay về. Chữ sau chữ đầu clip (`first`) mà bắt đầu từ `heardMs` trở đi đứng ở `parkMs` - chỗ đồng hồ đoạn không chạm tới trong lúc
+     * đang luồng (`limitMs` + 1, [ReadAloud] kẹp đồng hồ ở `limitMs`) - nên chữ sáng đứng yên ở chữ cuối đã có tiếng. Chữ đầu clip giữ mốc (nó có tiếng ngay từ đầu clip - [tailWords]).
+     */
+    fun shownLiveWords(words: List<Span>, first: Int, heardMs: Long, limitMs: Long): List<Span> {
+        val park = maxOf(limitMs + 1, heardMs)
+        return words.mapIndexed { i, span -> if (i > first && span.start >= heardMs) Span(park, park) else span }
     }
 }

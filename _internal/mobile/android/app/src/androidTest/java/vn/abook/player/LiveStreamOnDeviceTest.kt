@@ -47,7 +47,8 @@ import java.util.concurrent.atomic.AtomicReference
  * [Streaming.liveExtractors]) chạy trên máy thật - test JVM không chạy được ExoPlayer. KHÔNG mở Activity, không cần màn hình bật, không giành AudioFocus, âm lượng 0:
  * ExoPlayer dựng trên HandlerThread riêng (không phải luồng chính), phát `abooklive://<id>` qua [Streaming.mediaSourceFactory] như PlaybackService.
  *  1. Edge THẬT (mạng) đọc một đoạn tự viết ~400 ký tự, [LiveSink] ghi vào [LiveClips]: đo ms tới byte đầu / READY / hết, phát tới ENDED, vị trí cuối ~ độ dài clip thật, số lần
- *     BUFFERING sau READY. Không có mạng thì bỏ qua.
+ *     BUFFERING sau READY. Không có mạng thì bỏ qua. uxfix60: ExoPlayer dùng đúng mức đệm của PlaybackService ([PlaybackService.loadControl]); ghi `readyAfterFirstByteMs` (đổi
+ *     STREAM_START_BUFFER_MS thì đo lại ở đây) và, lúc đang luồng, ExoPlayer có coi mục là trực tiếp không / độ dài nó báo / phiên media ([PlaybackService.HeadsetSkips]) thấy gì.
  *  2. Tua trong phần đã ghi khi clip CHƯA xong (feeder giả: mp3 tổng hợp ghi dần nhanh hơn thời gian thực): sau khi có >= 3 giây tiếng, tua về 1 giây rồi tới 2,5 giây -> phát tiếp, không lỗi.
  *  3. Đứt giữa luồng giả lập ([LiveClips.Entry.fail] sau 4,8 giây tiếng, không mạng): phát tới byte cuối đã ghi rồi ENDED, không ném lỗi (uxfix58 e); [LiveWords] + [SeekPlan.resumeWord]
  *     cho ra chữ tiếp đúng (chữ đầu tiên chưa nghe).
@@ -95,6 +96,7 @@ class LiveStreamOnDeviceTest {
                 ExoPlayer.Builder(context)
                     .setLooper(thread.looper)
                     .setMediaSourceFactory(Streaming.mediaSourceFactory(context))
+                    .setLoadControl(PlaybackService.loadControl())
                     .build()
                     .also {
                         it.setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_SPEECH).build(), false) // không giành AudioFocus
@@ -132,6 +134,19 @@ class LiveStreamOnDeviceTest {
         fun duration(): Long = onPlayer { player.duration }
         fun state(): Int = onPlayer { player.playbackState }
         fun seekTo(ms: Long) = onPlayer { player.seekTo(ms) }
+
+        /** Lúc đang phát: ExoPlayer coi mục là trực tiếp / động không, độ dài nó báo, và lớp phiên media ở chương chữ (thông báo, màn khoá, xe) thấy gì. */
+        fun liveFlags(): JSONObject = onPlayer {
+            val session = PlaybackService.HeadsetSkips(player) { true }
+            JSONObject().put("live", player.isCurrentMediaItemLive).put("dynamic", player.isCurrentMediaItemDynamic).put("durationMs", player.duration)
+                .put("positionMs", player.currentPosition).put("sessionLive", session.isCurrentMediaItemLive).put("sessionDynamic", session.isCurrentMediaItemDynamic)
+        }
+
+        fun awaitReady(timeoutMs: Long): Boolean {
+            val end = SystemClock.elapsedRealtime() + timeoutMs
+            while (readyAt < 0 && error == null && SystemClock.elapsedRealtime() < end) Thread.sleep(10)
+            return readyAt >= 0
+        }
 
         /** Chờ ENDED (hay lỗi) tối đa `ms`. */
         fun awaitEnd(ms: Long): Boolean = ended.await(ms, TimeUnit.MILLISECONDS)
@@ -244,6 +259,8 @@ class LiveStreamOnDeviceTest {
             throw AssertionError("Edge hỏng trước byte đầu: $error")
         }
         harness.play(LiveClips.uri(entry.id)) // như onLiveStarted: phát ngay khi byte đầu về, clip chưa xong
+        // Ngay sau READY (clip thường chưa xong): mục phát luồng trông thế nào với ExoPlayer và với phiên media.
+        val streaming = if (harness.awaitReady(30_000)) harness.liveFlags().put("clipDone", entry.done) else JSONObject()
         assertTrue("clip phát luồng hết trong 90 giây", harness.awaitEnd(90_000))
         assertTrue("Edge chưa trả hết", finished.await(10, TimeUnit.SECONDS))
         val clip = result.get().getOrThrow()
@@ -255,9 +272,11 @@ class LiveStreamOnDeviceTest {
             .put("chars", text.length)
             .put("clipBytes", clip.file.length()).put("clipMs", clip.durationMs)
             .put("firstByteMs", sink.firstByteMs.get()).put("readyMs", harness.readyAt).put("endedMs", harness.endedAt)
-            .put("rebuffersAfterReady", harness.rebuffers)
+            .put("rebuffersAfterReady", harness.rebuffers).put("readyAfterFirstByteMs", harness.readyAt - sink.firstByteMs.get())
+            .put("startBufferMs", PlaybackService.STREAM_START_BUFFER_MS).put("whileStreaming", streaming)
             .put("finalPositionMs", position).put("playerDurationMs", duration))
         assertTrue("READY phải tới sau byte đầu", harness.readyAt >= sink.firstByteMs.get())
+        assertFalse("phiên media không được coi đoạn phát luồng là trực tiếp", streaming.optBoolean("sessionLive", false))
         assertTrue("vị trí cuối $position lệch độ dài clip ${clip.durationMs}", kotlin.math.abs(position - clip.durationMs) <= 300)
     }
 

@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Điện thoại, giọng trực tuyến: đổi giọng hay sửa cách đọc lúc một đoạn đang về thì đoạn ấy đọc nốt bằng giọng cũ, không im bặt giữa chừng; kéo thanh thời gian, lùi/tới 15 giây hay bấm một chữ đã đọc trong đoạn đang về thì nhảy tới ngay, không phải chờ đọc lại; thông báo, màn khoá và xe hơi giữ được thanh tua khi đoạn đang về; nghe sớm hơn một chút sau khi bấm.
+- Điện thoại: đoạn đứt kết nối mà phần nối cũng trục trặc thì lần hỏi lại và nút "Thử lại" vẫn đọc tiếp từ chữ bạn chưa nghe, không về đầu đoạn, và chỉ báo lỗi một lần; chữ đang sáng không còn nhảy vụt sang cuối đoạn khi âm thanh về chậm.
+
 ## [0.4.88] - 2026-10-17
 
 ### Nghe ngay
