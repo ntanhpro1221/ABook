@@ -323,7 +323,7 @@ class PlaylistsTest {
         BookEditsFixtures.useStoreRoot(root)
         LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud().path, publicKey = CatalogSigning.publicKey)
         val menu = LocalStudio.handle("GET", "/api/music/playlists", null).second as JSONObject
-        assertTrue(!menu.getJSONObject("scene").getBoolean("student"))
+        assertEquals(0, menu.getJSONObject("scene").length()) // như máy tính: có `scene` là có dòng "Theo cảnh", không cờ nào
         assertEquals(listOf("calm", "battle"), (0 until menu.getJSONArray("playlists").length()).map { menu.getJSONArray("playlists").getJSONObject(it).getString("id") })
     }
 
