@@ -3,6 +3,8 @@ package vn.abook.player
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.os.PowerManager
+import android.os.SystemClock
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -63,7 +65,9 @@ class AacCodecOnDeviceTest {
         var at = 0
         var inputDone = false
         try {
+            val deadline = SystemClock.elapsedRealtime() + CODEC_LIMIT_MS
             while (true) {
+                check(SystemClock.elapsedRealtime() < deadline) { "codec " + codec.name + " không xong sau " + CODEC_LIMIT_MS + " ms" }
                 if (!inputDone) {
                     val slot = codec.dequeueInputBuffer(10_000)
                     if (slot >= 0) {
@@ -107,7 +111,9 @@ class AacCodecOnDeviceTest {
         var next = 0
         var inputDone = false
         try {
+            val deadline = SystemClock.elapsedRealtime() + CODEC_LIMIT_MS
             while (true) {
+                check(SystemClock.elapsedRealtime() < deadline) { "codec " + codec.name + " không xong sau " + CODEC_LIMIT_MS + " ms" }
                 if (!inputDone) {
                     val slot = codec.dequeueInputBuffer(10_000)
                     if (slot >= 0) {
@@ -173,7 +179,19 @@ class AacCodecOnDeviceTest {
 
     @Test
     fun the_devices_aac_encoder_overshoot_delay_and_chapter_joins() {
+        // Chạy khi màn tắt (điện thoại để qua đêm): không giữ máy thức thì CPU ngủ giữa chừng - 17-10 treo 18 phút không một dòng log.
+        val wake = (context.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "abook:aac-test")
+        wake.acquire(30 * 60_000L)
+        try {
+            measure()
+        } finally {
+            wake.release()
+        }
+    }
+
+    private fun measure() {
         for (rate in intArrayOf(24000, 48000)) {
+            Log.i(TAG, "bắt đầu rate=" + rate)
             val delay = delayOf(rate)
             val sources = signals(rate).toMutableMap()
             val pcmPath = InstrumentationRegistry.getArguments().getString("pcm")
@@ -250,6 +268,8 @@ class AacCodecOnDeviceTest {
 
     private companion object {
         const val TAG = "ABOOK_K2"
+        /** Một lần mã hoá / giải mã vài giây tín hiệu: quá mức này là codec treo - báo lỗi thay vì chờ mãi. */
+        const val CODEC_LIMIT_MS = 120_000L
         const val CEILING = -1.75
     }
 }
