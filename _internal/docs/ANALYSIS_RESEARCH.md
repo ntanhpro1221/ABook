@@ -43,6 +43,26 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
    một: chấm B9 trên cây mới bằng gold cũ ra villain −46,6 chặt, demonking −18,6 - toàn là thước. Trước khi so hai lượt khác
    cây mã: so chữ đoạn của hai project (một lệnh), lệch thì khoá lại gold theo chữ (`LLM_Train/spkconf/gold_remap.py`).
 
+## 18-19/10 - DAgger B37 thua; "chương sập" không chạm mặc định; dấu hàng GPU bị ghi đè (Model)
+
+1. **B37 (DAgger vòng 1) thua theo luật đặt trước.** Học tiếp B9 trên 50/50 đề sạch/rollout: cổng 19 Δ -2,75 (CI95 -9,93..+4,43;
+   s1234 -0,04, s1 -5,47), nên không chạy vòng 2. Hạt s1 sập gần trọn ở MỘT chương (100 -> 26/114 câu đúng, 72 câu mang cùng
+   một nhãn tên không có trong chữ). Bỏ chương đó thì gần hoà. Rollout hai hạt lệch đích ngang nhau (33,4 / 34,2 %), nên
+   không phải dữ liệu học xấu.
+2. **"Chương sập tên bịa" chỉ gặp ở ứng viên thử, mặc định chưa sập lần nào.** Quét 35 tag cổng 19 (`errtax_next/collapse_scan.py`):
+   có 3 ứng viên thử, B9 mặc định 0. Có 14 tag cùng sập ở một chương khó chung (nhãn sai có trong chữ), khoảng 0,7 điểm, không
+   đổi chênh giữa các tag. Ràng buộc enum cho trường speaker (lược đồ JSON gửi Ollama đã khoá id/kind/emotion, speaker còn
+   tự do) chặn đúng kiểu tên bịa. Gộp vào lần đổi model mặc định kế tiếp làm chốt an toàn, không phải để tăng điểm.
+3. **Dấu trong log hàng GPU có thể biến mất.** Việc con python chạy dài, chuyển hướng `>>` từ bash msys, ghi qua handle kế
+   thừa ở vị trí file của nó, nên đè lên dòng mà chuỗi khác thêm vào giữa chừng. Dấu "HẾT B37 R2" mất theo cách này, nên
+   B38 suýt chờ mãi. Từ B38/B39: dấu đi qua `LLM_Train/tools/qmark.py` (file dấu riêng, mở 'a' mỗi lần), việc con ghi log riêng.
+4. **B39 (task phụ người nghe + bằng chứng cho câu đầu chuỗi) sẵn sàng.** Có 2.502 câu đầu chuỗi trong data_b9 (45 truyện).
+   Hai agent gán độc lập 60 câu, đồng thuận người nghe 90 %. Đã gán 500 câu. Luật nấc thử so cặp cùng hạt: chính mốc đã chênh
+   2,8 điểm giữa hai hạt ở lớp đầu chuỗi, nên ngoài ngưỡng +2,0 còn phải có CI ghép cặp > 0.
+5. **Qwen3.5-4B chưa có đường học sau khi cấm Modal.** Bản v8 cũ học 16-bit trên Modal. Card nhà 8 GB chỉ còn QLoRA 4-bit
+   (lần thử 01-10 hỏng). T4 không có bf16. Mac MLX chạy được nhưng chậm, và khác bộ học của mốc. Thử khói nhà và đo MLX
+   50 bước đã xếp hàng.
+
 ## 17-18/10 - Lỗi của B9 là gán nhầm giữa người có mặt; danh tính và xưng hô đóng; MTP nhanh 1,8x trên 4B (Model)
 
 Chi tiết + luật ghi trước: `LLM_Train/errtax_next/PLAN.md` (17-10 18:12 trở đi), `r1id_report.md`, `r1id_mech.md`, `cue_diag.md`,
