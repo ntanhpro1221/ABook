@@ -5957,3 +5957,54 @@ Phán quyết đo ở Corpus `research/music/PLAN_scenegap_confirm.md` mục 11 
   - Lời đọc rẻ của Sonnet xếp thứ tự chương tốt hơn hẳn: r 0,86-0,96 so với 0,75-0,79 của LVJ. Đã hiệu chỉnh thì MAE còn 0,088 / 0,091 / 0,133.
   - Muốn đưa phần này vào app cần một học sinh chữ mạnh hơn lite, học từ nhãn bạc. Nhãn bạc tốn ~0,023 % hạn mức tuần mỗi chương, và phải thêm một kiến trúc mới cho cả máy tính lẫn điện thoại.
   - Lợi trần ước sai rõ 7,7 → ~6,5-7. **Tạm gác** tới khi luồng Model có học sinh chữ vài MB mạnh hơn băm.
+
+### 17-19-10 - Sau LVJ: đường đi của Nghe ngay và Studio, nối vòng bài, lỗi còn lại nằm ở đâu (Corpus `research/music/PLAN_bs.md`, `PLAN_q06lvj.md`, `PLAN_lx.md`, `PLAN_loop.md`, `PLAN_studio_lb.md`, `PLAN_tone.md`)
+
+**Lỗi còn lại sau LVJ ở đâu** (PLAN_bs, dev 16-21). Lấy Nghe ngay 0.4.85 làm gốc, sai rõ 8,01 %:
+
+| thay bằng vàng | sai rõ % |
+|---|---|
+| mức chương (giữ ranh LB, hình NN-lite) | 5,64 |
+| ranh cảnh (giữ NN-lite + LVJ) | 5,55 |
+| ranh + không khí (trần chọn bài) | 0,43 |
+
+- Mức chương và ranh là hai đòn bẩy cỡ nhau (−2,4 / −2,5). Chọn bài và danh mục không phải nút thắt.
+- BS, ranh học từ chữ băm trên 630 chương: F1 0,356 so với 0,284 nhưng nhạc KHÔNG lợi -> dừng. λ của LB = 2 vẫn tốt nhất.
+- Mức chương từ encoder đông cứng (PLAN_enc): MiniLM-L12 M 0,1546, e5-small 0,1533, đều tệ hơn băm (0,1398) ~11 % ở mọi n -> đóng
+  tới khi luồng Model có học sinh chữ tinh chỉnh.
+- Nhãn bạc Sonnet (PLAN_silver, 57 chương bộ 22) khớp vàng gấp 2-3 lần LVJ: |C − vàng| 0,059 / 0,066 / 0,091 so với 0,198 / 0,109 /
+  0,202. Giá 27k token / chương. Chỉ làm lô lớn khi học sinh của Model cần.
+
+**Nghe ngay luôn đi NN-lite, kể cả khi có gói q06** (SPEC_nnscene_route, 0.4.89). Đường q06 không có LB / LVJ tệ hơn rõ: bộ 19 +8,88
+[3,26; 14,12], bộ 20 +4,39 [0,68; 7,92]. Ghép q06 + LB + LVJ cũng không có giá: gộp bộ 19-22 Δ +0,21 [−0,59; +1,05].
+
+**Studio bỏ gói q06** (PLAN_q06lvj §5.1 / §7, bộ 15). Studio cũ (q06) 13,91 -> NN-lite + sàn + LVJ 6,46, Δ −7,45 [−11,85; −3,24].
+Đã kiểm dây sau khi vào app (be76b141): 6,457, khớp tới 0,02.
+
+**LB cho Studio** (PLAN_studio_lb). Cổng thông tin trên bộ 15 qua: thêm `scene_bounds` thì 6,46 -> 3,33, Δ −3,13 [−5,28; −1,42],
+đổi bài 11,8 -> 14,3 / giờ. Bộ phán 23 (56 chương, vàng hai người chấm + phân xử, khoá trước; V r 0,915, E r 0,865) chờ phân tích
+9B-v8; luật 6 vế ghi trước ở §5.
+
+**Soát trải nghiệm nghe 0.4.89** (PLAN_lx):
+- Lặp, nhịp đổi bài, cân âm đều ổn: nhạc −19,7 LU dưới giọng.
+- Lỗi chính trên máy tính: tải trọn file trước khi phát, không tải sẵn, dốc 2 s chạy khi chưa có tiếng. Kết quả là im ~16 s rồi vào
+  đột ngột. SPEC F1 (hàng tải sẵn, dốc từ lúc 'playing') mô phỏng: im 259 -> 11 s / giờ (0.4.90 musicwarm).
+- Giọng Edge và VieNeu không cần hạ nhạc khi có thoại: biên ≥ 9 LU, chỗ vượt chỉ là thoại ngắn quá nhỏ của một giọng (lỗi phía giọng).
+- Cắt bài giữa cảnh ("hướng 2") đóng sau bậc 3 trên ranh cảnh thật: f_H 14,8 % < 20 %.
+
+**Nối vòng bài** (PLAN_loop):
+- Thước "liền" tuyệt đối không hợp lệ ở v1 / v2. v3 đổi sang câu hỏi "không tệ hơn ghép, hơn hẳn hiện tại".
+- Điểm vòng S1 (lưới phách, chroma) cho bài có đoạn kết ĐẠT: v3 0,477 / 0,906; v4 bài lớn 0,552 / 0,905.
+- S2 cửa rộng cho bài dài: v5 trượt, v6 trên bài mới ĐẠT 0,486 / 0,910.
+- Danh mục 13a85fdf05e0: 1237 bài có `loopStart` / `loopEnd`. App máy tính và điện thoại dùng chung `loop_bounds`; Python / Kotlin / TS
+  lệch 0 trên 270 ca.
+- v7, bài KHÔNG đoạn kết (gần nửa danh mục), không đạt vì (b) 0,749 < 0,85. Hậu kiểm lại cho thấy chỗ nối cuối -> đầu hiện nay thường
+  kém cả mối ghép ngẫu nhiên (AUC 0,72), và S1 hơn nó ở 85 % bài -> v8 xác nhận trên 60 bài mới (luật §20).
+
+**Lỗi còn lại theo nội dung** (PLAN_tone, hậu kiểm bộ 19-22, 124,6 giờ, sai rõ 7,98 %):
+- Lỗi KHÔNG dồn ở cảnh hài: tone = hai ×0,66.
+- Thể loại phẳng: ×0,89-1,19.
+- Nhóm duy nhất qua luật ứng viên là đoạn vàng < 2 phút: ×1,50, chiếm 25,8 % số giây sai.
+- Hai hướng sai chính là "căng mà bài êm" và "buồn mà bài vui", mỗi hướng 29 %.
+- Trần biết đúng: cắt mọi khúc ngắn thì −2,62 nhưng đổi bài 24 / giờ, vượt trần 22. Chỉ cắt khúc ngược màu thì −1,37 [−1,98; −0,82],
+  18 / giờ. Kết luận GIỮA, đóng: một bộ dò từ chữ chỉ lấy được một phần của trần ấy.
