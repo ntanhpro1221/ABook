@@ -43,6 +43,26 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
    một: chấm B9 trên cây mới bằng gold cũ ra villain −46,6 chặt, demonking −18,6 - toàn là thước. Trước khi so hai lượt khác
    cây mã: so chữ đoạn của hai project (một lệnh), lệch thì khoá lại gold theo chữ (`LLM_Train/spkconf/gold_remap.py`).
 
+## 19/10 rạng sáng - Lớp "cảnh >= 3 người": không lối tắt luật, ép theo cảnh làm hỏng; kernel Qwen3.5 chạy trên Windows (Model)
+
+Chi tiết + luật ghi trước: `LLM_Train/errtax_next/PLAN.md` (19-10 03:1x trở đi), `multi3_diag.md`, `scene_ceiling.md`, `constraint_sim.md`; B40: `LLM_Train/b40/`.
+
+1. **Lớp cảnh >= 3 người là chỗ B9 yếu nhất và không có luật gần đây nào cứu.** Độ đúng 59,8 % (cổng 19, n 122), 57,6 % (cổng
+   rộng, n 781). Người nói đúng là người nói "cách một lượt" ở 41-47 % câu, cách hai lượt 30-34 %, nên luật đơn giản nào cũng thua model.
+2. **Trần của hướng "người tham gia cảnh".** Truyện gần như không có đoạn ngăn cảnh (0 và 2 đoạn), nên "cảnh" thực tế là phần chương
+   trước câu. Với câu sai mà nhãn không có mặt trong dãy thoại: người đúng nằm trong tập người đã nói của cảnh 78-83 %, nhưng nhãn sai
+   cũng nằm trong tập ấy 36-46 %. Chỉ tính phần model thật sự thấy (9 lượt trước + cửa sổ) thì "chọn trong tập" sửa được tối đa 23 %
+   số sai lớp này ở cổng rộng (35 % ở cổng 19), tức trần +9,7 điểm trên lớp.
+3. **Ép người nói phải thuộc tập cảnh lúc giải mã làm HỎNG.** Mô phỏng ngoại tuyến trên logprob token đã ghi, không học lại. Kể cả
+   khi dựng tập từ gold: lớp >= 3 người 57,6 -> 49,6 % (sửa 21, hỏng 84), mọi câu 73,7 -> 70,4 %. Nhãn ngoài tập phần lớn ĐÚNG,
+   vì người mới bước vào cảnh nói câu đầu. Bỏ hướng logit-mask theo cảnh; chỉ còn tín hiệu mềm.
+4. **B40 (task phụ "người tham gia cảnh") soạn sẵn, chỉ chạy nếu B39 đạt.** Nhãn sinh hoàn toàn bằng mã từ data_b9 (1.884 câu /
+   951 cửa sổ), đáp không kèm người nói. Đo ở cổng rộng vì cổng 19 chỉ có 122 câu lớp này. Ba hạt mốc B9 đã chênh nhau tới 3,8 điểm
+   ở lớp này (53,8-57,6 %), nên luật bắt buộc ghép cặp cùng hạt và CI > 0.
+5. **Kernel Gated DeltaNet của Qwen3.5 chạy được trên card nhà (Windows).** Không cần WSL: venv phủ riêng `LLM_Train/q35/.venv_k`
+   chỉ thêm triton-windows 3.7.1 + flash-linear-attention 0.5.2, venv học chung không đổi. Kernel biên dịch 25 s lần đầu, sau
+   đó vài ms. Thử khói học nay có ba nhánh: Qwen3.5 có kernel, Qwen3.5 torch thuần, và Qwen3-4B làm mốc.
+
 ## 18-19/10 - DAgger B37 thua; "chương sập" không chạm mặc định; dấu hàng GPU bị ghi đè (Model)
 
 1. **B37 (DAgger vòng 1) thua theo luật đặt trước.** Học tiếp B9 trên 50/50 đề sạch/rollout: cổng 19 Δ -2,75 (CI95 -9,93..+4,43;
