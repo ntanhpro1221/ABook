@@ -1614,9 +1614,15 @@ class App:
         def linked(plan: dict[str, Any]) -> int:
             return sum(1 for scene in plan.get("scenes") or [] if scene.get("link"))
 
-        plan = build(self.music_track_available)
+        def sized(**network: bool) -> dict[str, Any]:
+            # Cỡ ĐÃ BIẾT khi xếp hạng, rồi tra cỡ các bài đã chọn một lượt (như plan theo cảnh): danh mục lạnh, tra từng ứng viên mất cả phút (soát UX a60).
+            available = functools.partial(self.music_track_available, sizes=False, **network)
+            return music_nnscene.sized_plan(lambda: build(available), lambda plan: music_nnscene.chosen_links(plan.get("scenes") or []),
+                                            self.music_verify_sizes)
+
+        plan = sized()
         if guard and self._music_degraded():
-            wanted = build(functools.partial(self.music_track_available, network=False))
+            wanted = sized(network=False)
             if linked(wanted) > linked(plan):
                 raise MusicOffline(MUSIC_OFFLINE_MESSAGE)
         music_plan.save_plan(path, plan)
@@ -2161,8 +2167,10 @@ class App:
     def _warm_rounds(self, plan: dict[str, Any] | None, value: str | None, scenes: set[str] | None,
                      state: dict[str, Any], key: str | None = None) -> None:
         for _ in range(MUSIC_WARM_ROUNDS):
-            links = sorted({scene["link"] for scene in (plan or {}).get("scenes") or []
-                            if scene.get("link") and (scenes is None or scene.get("key") in scenes)})
+            # Theo thứ tự nghe (đoạn của plan xếp theo chương): bài đầu chương 1, 2... có trước - tải theo bảng chữ cái thì bài đầu chương kế
+            # có thể nằm cuối hàng 100+ bài, người nghe gặp nhạc vào trễ 5-9 giây (soát UX a60).
+            links = list(dict.fromkeys(scene["link"] for scene in (plan or {}).get("scenes") or []
+                                       if scene.get("link") and (scenes is None or scene.get("key") in scenes)))
             sizes = self._music_sizes([link for link in links if self.music_track_cached(link) is None])
             with self._music_exports_lock:
                 for link, size in sizes.items():

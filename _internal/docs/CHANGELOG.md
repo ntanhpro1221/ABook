@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- Lần đầu mở tab "Nhạc nền" của một cuốn trên máy chưa từng tải danh mục nhạc: nhạc của các đoạn hiện ra sau chừng 9 giây thay vì gần một phút (cuốn 44 chương thử: 59 giây còn 8,6 giây). Bài nhạc vẫn tải sau ở nền, và tải theo thứ tự bạn sẽ nghe, nên đầu chương 1 có nhạc ngay (trước đây chờ 9 giây).
+- Nhãn không khí của từng đoạn ở tab "Nhạc nền" khớp với bài đã chọn hơn: đoạn không có cảm xúc nào rõ thì gọi tên theo đúng độ căng và vui/buồn mà máy dùng để chọn bài ("căng thẳng", "buồn", "tươi vui"), thay vì luôn ghi "êm". Trên cuốn thử, 22 đoạn trước ghi "êm" nay ghi "căng thẳng".
+
 ## [0.4.93] - 2026-10-18
 
 ### Studio

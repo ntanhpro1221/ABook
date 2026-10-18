@@ -12,7 +12,7 @@ import { Button, IconButton, LiveText, Progress } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
 import { importMusic } from "./musicImport";
-import { CONTINUED_NOTE, downloadShare, downloadText, isContinuation, swapButton, type MusicDownload } from "./musicScenes";
+import { CONTINUED_NOTE, downloadShare, downloadText, isContinuation, moodOf, swapButton, type MusicDownload } from "./musicScenes";
 import {
   analysisLabel,
   importSummary,
@@ -178,26 +178,6 @@ function usePreview() {
   );
   useEffect(() => stop, [stop]); // rời tab thì dừng
   return { playing, toggle, stop };
-}
-
-// Danh mục cũ chưa gửi tên: dùng bảng có sẵn (cùng bộ với build_catalog.EMOTION_VI).
-const EMOTION_VI: Record<string, string> = {
-  peacefulness: "bình yên", tenderness: "dịu dàng", nostalgia: "hoài niệm", sadness: "buồn", joy: "vui tươi",
-  playful: "tinh nghịch", power: "hào hùng", wonder: "kỳ vĩ", tension: "căng thẳng", fear: "rùng rợn",
-  anger: "giận dữ", mystery: "bí ẩn", moved: "xúc động",
-};
-const MOOD_SHOWN = 0.5; // cường độ từ mức này mới gọi tên
-const MOOD_MAX = 2;      // tối đa hai cảm xúc mạnh nhất - pha trộn thì hiện cả hai ("buồn · dịu dàng")
-
-/** Không khí đọc được của đoạn: các cảm xúc mạnh nhất (cường độ độc lập, nên có thể hai cảm xúc cùng cao); không cảm xúc
- * nào đủ mạnh thì "êm" - đoạn kể bình thường, nhạc nền nhẹ. */
-function moodOf(scene: Scene, names: Record<string, string> | undefined): string {
-  const strong = Object.entries(scene.emotions ?? {})
-    .filter(([, value]) => value >= MOOD_SHOWN)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, MOOD_MAX)
-    .map(([key]) => names?.[key] ?? EMOTION_VI[key] ?? key);
-  return strong.length ? strong.join(" · ") : scene.emotions ? "êm" : "";
 }
 
 /** Một dòng bài trong "Đổi bài": tên · tác giả · độ dài, "Nghe thử" và "Chọn" (= ghim bài ấy cho đoạn này). */
@@ -598,7 +578,9 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
     );
   };
 
-  if (isLoading || !data) return <p className="mt-6 text-sm text-fg-2">Đang dựng nhạc nền…</p>;
+  // Lần đầu (danh mục chưa có trên máy) mất cỡ 10 giây - bài nhạc tải sau ở nền, không chờ ở đây (soát UX a60: từng mất 2,7 phút).
+  if (isLoading || !data)
+    return <p className="mt-6 text-sm text-fg-2">Đang chọn nhạc nền cho các đoạn… Lần đầu cần tải danh mục nhạc, thường chừng mười giây.</p>;
   const { plan, overrides, taxonomy } = data;
   const genres = Object.entries(taxonomy.genres ?? {});
   // Màn hẹp: ô chọn không đủ rộng cho tên thể loại dài ("Dị giới / kỳ ảo phương Tây (…)") nên chữ bị cắt - ghi đủ tên bên dưới.
