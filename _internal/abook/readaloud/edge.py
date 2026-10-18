@@ -47,6 +47,7 @@ RETRIES = 2  # lượt bị cắt giữa chừng thử lại tối đa chừng n
 PIECE_PARALLEL = 3  # tối đa chừng này mảnh một đoạn (và chừng này kết nối cùng lúc cho một clip)
 TARGET_PIECES = 6  # riêng đoạn người nghe đang đứng chờ (rank 0): cắt tới chừng này mảnh. Soát a54 (4 đoạn, mạng thật): 3 -> 6 mảnh rút thời gian chờ trung vị 6,96 -> 5,36 giây, chỗ nối vẫn 855-889 ms
 RANK_BACKGROUND = 99  # [ConnectionSlots] rank của việc không có người nghe đứng chờ ngay (Làm trước, xuất sách nói, lượt gọi không nói rõ): đứng sau mọi đoạn người nghe sắp nghe
+CANCEL_POLL = 0.2  # giây: clip người gọi bỏ được (`synthesize(cancelled=)`) hỏi lại chừng này một lần - Huỷ xuất sách nói dừng trong <= 1,5 giây (soát a62: chờ hết đoạn mất 7 giây)
 EDGE_CONNECTIONS = 8  # trần kết nối Edge đang mở của cả tiến trình: đọc trước (tới 8 đoạn) x mảnh không mở hàng chục ổ cắm cùng lúc
 WHOLE_CHARS = 100  # đoạn ngắn hơn chừng này ký tự giữ một yêu cầu: câu đơn 90-100 ký tự đo 5,8-13,9 giây, cắt đôi không nhanh hơn mà tốn thêm một lần nối (~0,45 giây)
 MIN_PIECE_CHARS = 50  # mảnh không nhỏ hơn chừng này (gộp câu ngắn): mảnh quá ngắn thêm chỗ nối mà không rút ngắn thời gian chờ
@@ -87,6 +88,12 @@ class EdgeDropped(EdgeError):
     """Dịch vụ cắt kết nối giữa lượt (đo 03-10: thỉnh thoảng, vài phần trăm lượt, với đúng cùng chữ vừa đọc được) - thử lại là xong.
     Cũng dùng cho lỗi thoáng qua lúc bắt tay: HTTP 429 / 5xx, kết nối bị reset (soát 03-10: một lần reset từng làm đoạn ấy rơi về giọng
     máy như mất mạng)."""
+
+
+class EdgeCancelled(EdgeError):
+    """Người gọi bỏ clip giữa lượt (`synthesize(cancelled=)`: Huỷ xuất sách nói): ổ cắm các mảnh đã cắt, không có gì vào bộ đệm."""
+
+    reason = "cancelled"
 
 
 class EdgeConnectTimeout(EdgeDropped):
@@ -672,22 +679,36 @@ class EdgeClient:
         return part.final, part.found  # type: ignore[return-value]  # finish() vừa đặt (đã cắt đuôi như bản không phát luồng)
 
     @staticmethod
-    def _gather(futures: list, deadline: float, relay: _Relay | None, clips: list[_Clip]) -> list[tuple[bytes, list[Boundary]]]:
+    def _wait(futures: list, timeout: float, cancelled: Callable[[], bool] | None) -> set:
+        """`concurrent.futures.wait(FIRST_EXCEPTION)` hỏi `cancelled()` mỗi CANCEL_POLL giây: người gọi bỏ clip thì cắt mọi mảnh ngay ([EdgeCancelled])."""
+        if cancelled is None:
+            return wait(futures, timeout=timeout, return_when=FIRST_EXCEPTION)[0]
+        end = time.monotonic() + timeout
+        while True:
+            if cancelled():
+                raise EdgeCancelled("Đã bỏ lượt đọc này.")
+            done, pending = wait(futures, timeout=max(0.0, min(CANCEL_POLL, end - time.monotonic())), return_when=FIRST_EXCEPTION)
+            if not pending or any(future.exception() is not None for future in done) or time.monotonic() >= end:
+                return done
+
+    @classmethod
+    def _gather(cls, futures: list, deadline: float, relay: _Relay | None, clips: list[_Clip],
+                cancelled: Callable[[], bool] | None = None) -> list[tuple[bytes, list[Boundary]]]:
         """Kết quả các mảnh theo thứ tự đọc; mảnh ĐẦU TIÊN hỏng (theo thời gian) thì ném lỗi của nó ngay. Phát luồng mà mảnh hỏng không phải mảnh đầu (uxfix63, a59d e1: các mảnh trước nó
         còn đang về bị cắt, người nghe chỉ còn 2,8 giây tiếng mà phần nối phải đọc lại cả chúng): chỉ cắt các mảnh SAU nó, báo sink chỗ tiếng dừng ngay ([_Relay.cut]) để người nghe xin phần nối
         từ đầu mảnh hỏng trong lúc các mảnh trước vẫn về và phát hết, rồi mới ném lỗi ấy (mảnh trước hỏng nữa: lỗi của mảnh trước)."""
         def remaining() -> float:  # mảnh tự dừng ở hạn chung (read_turn / chờ chỗ); +1 giây chỉ để chắc không treo nếu một mảnh không tôn trọng hạn
             return max(0.0, deadline - time.monotonic()) + 1.0
 
-        done, _ = wait(futures, timeout=remaining(), return_when=FIRST_EXCEPTION)
-        failed = [index for index, future in enumerate(futures) if future in done and future.exception() is not None]
+        done = cls._wait(futures, remaining(), cancelled)
+        failed =[index for index, future in enumerate(futures) if future in done and future.exception() is not None]
         if failed:
             broken = failed[0]  # nhiều mảnh hỏng cùng lúc: lấy mảnh đứng trước cho ổn định
             if relay is not None and broken > 0:
                 for clip in clips[broken + 1:]:
                     clip.abort()
                 relay.cut(broken)
-                before, _ = wait(futures[:broken], timeout=remaining(), return_when=FIRST_EXCEPTION)
+                before = cls._wait(futures[:broken], remaining(), cancelled)
                 earlier = [future for future in futures[:broken] if future in before and future.exception() is not None]
                 if earlier:
                     raise earlier[0].exception()
@@ -698,17 +719,20 @@ class EdgeClient:
             raise EdgeTimeout("Dịch vụ đọc to quá lâu không trả lời.")
         return [future.result() for future in futures]
 
-    def synthesize(self, text: str, voice: str = DEFAULT_VOICE, *, rank: int = RANK_BACKGROUND, sink: StreamSink | None = None) -> Synthesis:
+    def synthesize(self, text: str, voice: str = DEFAULT_VOICE, *, rank: int = RANK_BACKGROUND, sink: StreamSink | None = None,
+                   cancelled: Callable[[], bool] | None = None) -> Synthesis:
         """Đọc `text` bằng `voice` (mã đầy đủ, vd "vi-VN-HoaiMyNeural"): MP3 + các WordBoundary (ms từ đầu clip) + độ dài.
         Đoạn dài đọc theo `speech_pieces`, các mảnh song song (tối đa PIECE_PARALLEL, đoạn rank 0 tối đa TARGET_PIECES); mảnh ĐẦU TIÊN hỏng (theo thời gian, không đợi các mảnh trước nó)
         làm cả clip hỏng ngay với chính lỗi ấy - cùng các loại lỗi như khi đọc nối tiếp - và các mảnh còn lại bị cắt (điện thoại: EdgeTts.kt cùng luật).
         `rank`: số đoạn người nghe phải nghe trước clip này (0 = đang đứng chờ đúng nó: nhảy tới, đầu chương) - hết chỗ kết nối thì mảnh của clip gần người nghe hơn đi trước ([ConnectionSlots]).
         `sink`: phát luồng - tiếng và mốc đưa vào đó ngay khi chắc chắn, theo đúng thứ tự (xem [_Relay]); trả về vẫn đủ clip, y hệt bản không `sink`. Lỗi thì ném như cũ và sink không nhận gì thêm;
-        riêng mảnh hỏng không phải mảnh đầu thì các mảnh trước nó phát hết trước khi ném ([_gather])."""
+        riêng mảnh hỏng không phải mảnh đầu thì các mảnh trước nó phát hết trước khi ném ([_gather]).
+        `cancelled`: người gọi bỏ clip được giữa lượt (Huỷ xuất sách nói) - hỏi mỗi CANCEL_POLL giây, đúng thì cắt ổ cắm mọi mảnh (như một mảnh hỏng, [_Clip.abort]) và ném
+        [EdgeCancelled]; clip một mảnh cũng đọc ở luồng phụ để cắt được."""
         deadline = time.monotonic() + TOTAL_TIMEOUT
         pieces = speech_pieces(clean(text), rank)
         relay = _Relay(sink, pieces) if sink is not None else None
-        if len(pieces) <= 1:
+        if not pieces or (len(pieces) <= 1 and cancelled is None):
             if relay is not None:
                 results = [self._speak_streamed(relay, index, voice, piece, deadline, None, rank) for index, piece in enumerate(pieces)]
             else:
@@ -721,7 +745,7 @@ class EdgeClient:
                     futures = [pool.submit(self._speak_piece, voice, piece, deadline, clips[index], rank) for index, piece in enumerate(pieces)]
                 else:
                     futures = [pool.submit(self._speak_streamed, relay, index, voice, piece, deadline, clips[index], rank) for index, piece in enumerate(pieces)]
-                results = self._gather(futures, deadline, relay, clips)
+                results = self._gather(futures, deadline, relay, clips, cancelled)
             finally:
                 if relay is not None:
                     relay.stop()

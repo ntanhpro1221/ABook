@@ -137,8 +137,9 @@ class EdgeProvider:
     def voices(self) -> list[Voice]:
         return [Voice(f"edge:{code}", name, "edge", True, code == edge.DEFAULT_VOICE, gender=gender) for code, name, gender in edge.VOICES]
 
-    def synthesize(self, text: str, native_voice: str, *, rank: int = edge.RANK_BACKGROUND, sink: edge.StreamSink | None = None) -> Synthesis:
-        return self.client.synthesize(text, native_voice, rank=rank, sink=sink)
+    def synthesize(self, text: str, native_voice: str, *, rank: int = edge.RANK_BACKGROUND, sink: edge.StreamSink | None = None,
+                   cancelled: Callable[[], bool] | None = None) -> Synthesis:
+        return self.client.synthesize(text, native_voice, rank=rank, sink=sink, cancelled=cancelled)
 
 
 class DeviceProvider:
@@ -155,6 +156,16 @@ class DeviceProvider:
 
     def synthesize(self, text: str, native_voice: str) -> Synthesis:
         return windows.synthesize(self.folder, native_voice, text)
+
+
+def _take(lock: threading.Lock, cancelled: Callable[[], bool] | None) -> None:
+    """Giữ `lock` (lượt đọc cùng đoạn của người khác đang chạy thì chờ nó); `cancelled()` đúng trong lúc chờ thì thôi - VoiceError "cancelled"."""
+    if cancelled is None:
+        lock.acquire()
+        return
+    while not lock.acquire(timeout=edge.CANCEL_POLL):
+        if cancelled():
+            raise VoiceError("Đã bỏ lượt đọc này.", "cancelled")
 
 
 def keyed_providers(keys: KeyStore) -> list[KeyedProvider]:
@@ -267,7 +278,7 @@ class ReadAloud:
 
     def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False, origin: str | None = None,
              readings: Mapping[str, str] | None = None, book: str | None = None, rank: int = edge.RANK_BACKGROUND,
-             stream: StreamListener | None = None) -> dict[str, Any]:
+             stream: StreamListener | None = None, cancelled: Callable[[], bool] | None = None) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
         `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ. `origin`: gốc của cuốn ("ja" / "ko", `names.BookOrigins`) - giọng đọc
         trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); Edge (`normalises_text`) nhận
@@ -278,7 +289,9 @@ class ReadAloud:
         `rank`: số đoạn người nghe phải nghe trước đoạn này (trình phát: 0 = đang đứng chờ đúng nó - nhảy tới, mở chương; 1 = đoạn kế...) - giọng có `ranks_requests` (Edge) cho đoạn gần người nghe hơn
         đi trước khi hết chỗ kết nối; không nói thì đứng sau mọi đoạn có rank.
         `stream`: người nghe clip đang đọc (uxfix56) - CHỈ khi chưa có trong bộ đệm, không `cached_only` / `background`, giọng có `ranks_requests` và `rank` == 0 (đoạn người nghe đang đứng chờ):
-        tiếng + mốc chữ tạm chảy tới đó ngay khi về (`StreamListener`); xong vẫn vào bộ đệm đúng như không phát luồng và trả dict như thường (người gọi gửi bản cuối). Ngoài ra `stream` bị bỏ qua."""
+        tiếng + mốc chữ tạm chảy tới đó ngay khi về (`StreamListener`); xong vẫn vào bộ đệm đúng như không phát luồng và trả dict như thường (người gọi gửi bản cuối). Ngoài ra `stream` bị bỏ qua.
+        `cancelled`: người gọi bỏ clip được giữa chừng (Huỷ xuất sách nói, soát a62): đang chờ lượt đọc cùng đoạn hay đang đọc bằng giọng có `ranks_requests` (Edge, ổ cắm bị cắt)
+        thì dừng trong vòng một phần giây với `VoiceError` lý do "cancelled" và không có gì vào bộ đệm. Giọng khác đọc nốt đoạn đang đọc."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
@@ -301,7 +314,8 @@ class ReadAloud:
                 lock = self._locks.setdefault(key, threading.Lock())
                 self._live += 0 if background else 1
             try:
-                with lock:  # hai yêu cầu cùng đoạn (đọc trước + bấm nghe) chỉ đọc một lần
+                _take(lock, cancelled)
+                try:  # hai yêu cầu cùng đoạn (đọc trước + bấm nghe) chỉ đọc một lần
                     hit = self.cache.get(key)
                     if hit is None:
                         spans = None
@@ -314,6 +328,8 @@ class ReadAloud:
                             ranked = getattr(provider, "ranks_requests", False)
                             if ranked and stream is not None and rank == 0 and not background:
                                 made = provider.synthesize(said, native, rank=rank, sink=_Live(stream, said, spans, slots))
+                            elif ranked and cancelled is not None:
+                                made = provider.synthesize(said, native, rank=rank, cancelled=cancelled)
                             else:
                                 made = provider.synthesize(said, native, rank=rank) if ranked else provider.synthesize(said, native)
                         elif tags[1]:
@@ -325,6 +341,8 @@ class ReadAloud:
                         words = made.words if made.words is not None else map_boundaries(said, made.boundaries, made.duration_ms)
                         words = _shown_words(words, spans, slots)  # chữ hiện thành nhiều chữ đọc / cụm đọc ngắn hơn số chữ hiện: mốc về đủ chữ hiện
                         hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
+                finally:
+                    lock.release()
             finally:
                 with self._locks_guard:
                     self._locks.pop(key, None)

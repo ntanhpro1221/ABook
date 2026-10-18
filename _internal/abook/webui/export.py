@@ -217,7 +217,7 @@ def _mixed_mp3(ffmpeg: str, mixer: Any, listed: list[tuple[int, str, Path]], scr
         rate, channels, kbps = audio_format(ffmpeg, source)
         temp = scratch / f"{chapter_id}.mp3"
         encode_stream(ffmpeg, rate, channels, ["-c:a", "libmp3lame", "-b:a", f"{kbps or 128}k", "-f", "mp3"], temp,
-                      lambda sink, c=chapter_id, s=source, r=rate, n=channels: pump_mixed(ffmpeg, mixer, c, s, r, n, _watched(sink, cancelled)) // (2 * n),
+                      lambda sink, c=chapter_id, s=source, r=rate, n=channels: pump_mixed(ffmpeg, mixer, c, s, r, n, watched(sink, cancelled)) // (2 * n),
                       "MP3")
         yield full_title, temp
         temp.unlink(missing_ok=True)
@@ -250,7 +250,8 @@ class _Watched:
         return self.sink.write(data)
 
 
-def _watched(sink: Any, cancelled: Callable[[], bool] | None) -> Any:
+def watched(sink: Any, cancelled: Callable[[], bool] | None) -> Any:
+    """`sink` hỏi Huỷ trước mỗi khúc PCM (ném `Cancelled`); không có `cancelled` thì chính `sink`. Chung cho M4B, MP3 kèm nhạc và xuất sách nói (listen_export.py)."""
     return sink if cancelled is None else _Watched(sink, cancelled)
 
 
@@ -423,7 +424,7 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
         lowered: dict[int, float] = {}  # chương (từ 0) -> dB hạ đầu vào ở lần mã hoá lại
 
         def feed(sink: Any) -> int:
-            sink = _watched(sink, cancelled)
+            sink = watched(sink, cancelled)
             frame = 2 * channels
             position = 0
             marks.clear()

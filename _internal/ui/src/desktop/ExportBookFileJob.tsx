@@ -152,7 +152,7 @@ export function ProgressNote({ text, spoken, fraction }: { text: string; spoken:
   );
 }
 
-const STOPPING = { title: "Đang dừng…", note: "Dừng sau đoạn đang đọc - phần đã làm được giữ." };
+const STOPPING = { title: "Đang dừng…", note: "Phần đã làm được giữ." };
 /** Lời "Đang dừng…" của kiểu xuất này (M4B: không giữ gì - `ExportCopy.stopping`). */
 const stoppingNote = (copy: ExportCopy) => copy.stopping ?? STOPPING.note;
 
