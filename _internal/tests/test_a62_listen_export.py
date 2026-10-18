@@ -8,6 +8,7 @@ Giọng giả và sách thử dùng chung với test_listen_export.py."""
 from __future__ import annotations
 
 import os
+import shutil
 import threading
 import time
 from pathlib import Path
@@ -325,7 +326,18 @@ def test_sweep_removes_old_and_orphaned_work_but_never_a_running_one(tmp_path: P
     assert listen_export.sweep_work(tmp_path / "khong_co", None) == []
 
 
-def test_the_app_sweeps_work_at_start_and_when_a_book_is_removed(tmp_path: Path) -> None:
+def _no_real_recycle_bin(monkeypatch: pytest.MonkeyPatch) -> list[Path]:
+    from abook.webui import actions
+
+    recycled: list[Path] = []
+    monkeypatch.setattr(actions, "move_to_recycle_bin", lambda target: (recycled.append(target), shutil.rmtree(target))[0])
+    monkeypatch.setattr(actions, "recycle_bin_available", lambda _path: None)
+    monkeypatch.setattr(actions, "recycle_bin_accepts", lambda _path: True)
+    return recycled
+
+
+def test_the_app_sweeps_work_at_start_and_when_a_book_is_removed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    recycled = _no_real_recycle_bin(monkeypatch)
     app, book_id, path, _fake = _library(tmp_path)
     root = app.export_work_dir
     mine = _work_with_file(root, book_id)
@@ -347,8 +359,17 @@ def test_the_app_sweeps_work_at_start_and_when_a_book_is_removed(tmp_path: Path)
     deadline = time.time() + 10
     while app.listen_exports.running() and time.time() < deadline:
         time.sleep(0.02)
+    mine = _work_with_file(root, book_id)  # vừa ghép lại (ở trên đã lùi 30 ngày để thử luật lượt đang chạy)
+    token = app.remove_imported(book_id, undo=True)["undo"]
+    assert mine.exists(), "còn Hoàn tác được: giữ chương đã ghép (hoàn tác xong xuất tiếp không đọc lại)"
+    app.sweep_trash()
+    assert mine.exists(), "lượt dọn trước hạn: sách còn nằm chờ thì vẫn giữ"
+    app.undo_trash(token)
+    app.sweep_trash(everything=True)
+    assert mine.exists() and recycled == [], "hoàn tác: sách và chương đã ghép còn nguyên"
     app.remove_imported(book_id, undo=True)
-    assert not mine.exists(), "xoá sách: thư mục làm việc của nó đi theo"
+    app.sweep_trash(everything=True)
+    assert recycled and not mine.exists(), "hết hạn hoàn tác, sách vào Thùng rác: thư mục làm việc của nó đi theo"
 
 
 def test_removing_a_book_while_it_exports_keeps_its_work(tmp_path: Path) -> None:
