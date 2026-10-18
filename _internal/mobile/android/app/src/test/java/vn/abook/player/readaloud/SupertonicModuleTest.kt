@@ -63,9 +63,9 @@ class SupertonicModuleTest {
     fun theModelIsPinnedLikeTheDesktopAndNothingIsHereBeforeATap() {
         assertEquals(18, SupertonicModule.FILES.size)
         assertTrue(SupertonicModule.FILES.all { it.name.startsWith("model/") })
-        // the vector estimator is the app's int8 one (VoiceModule.APP_MODELS), every other file upstream's
+        // the vector estimator and the vocoder are the app's int8 ones (VoiceModule.APP_MODELS), every other file upstream's
         val (app, upstream) = SupertonicModule.FILES.partition { it.remote.startsWith(VoiceModule.APP_MODELS) }
-        assertEquals(listOf("model/onnx/vector_estimator.onnx"), app.map { it.name })
+        assertEquals(listOf("model/onnx/vector_estimator.onnx", "model/onnx/vocoder.onnx"), app.map { it.name })
         assertTrue(upstream.all { it.remote.startsWith("https://huggingface.co/Supertone/supertonic-3/resolve/") })
         assertEquals(listOf(SupertonicText.FAST_ESTIMATOR), SupertonicModule.FAST_FILES.map { it.name })
         val status = module().status()

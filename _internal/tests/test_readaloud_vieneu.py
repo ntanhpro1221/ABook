@@ -574,8 +574,35 @@ def test_parity_turbo_and_nano_waveforms(monkeypatch: pytest.MonkeyPatch) -> Non
     for index, sentence in enumerate(SENTENCES[:2]):
         phonemes = vieneu_engine.phonemize([sentence])
         expected = reference.infer(phonemes, speaker, style, seed=7 + index)
-        got = mine.infer(phonemes, speaker, style, seed=7 + index, steps=16)  # gói vieneu mặc định 16 bước; app đọc NANO_STEPS
+        got = mine.infer(phonemes, speaker, style, seed=7 + index, steps=16, cfg_ends=True)  # gói vieneu: 16 bước, CFG mọi bước; app khác
         assert got.shape == expected.shape and float(np.abs(got - expected).max()) <= TOLERANCE, sentence
+
+
+@pytest.mark.parametrize("ends, unconditional", [(False, 6), (True, 8)])
+def test_nano_guides_only_the_inner_steps(ends: bool, unconditional: int) -> None:
+    import threading
+
+    class Graph:
+        def __init__(self, out):
+            self.out, self.feeds = out, []
+
+        def run(self, _names, feeds):
+            self.feeds.append(feeds)
+            return [self.out(feeds)]
+
+    engine = object.__new__(vieneu_engine.NanoEngine)
+    engine._lock, engine.emotion_map, engine.vocab = threading.Lock(), {}, {"a": 5}
+    engine.bos, engine.eos, engine.pad, engine.fps = 1, 2, 0, 10.0
+    engine.null_ctx, engine.null_mask = np.zeros((1, 2, 4), np.float32), np.ones((1, 2), bool)
+    engine.null_spk, engine.null_style = np.zeros((1, 3), np.float32), np.zeros((1, 2, 3), np.float32)
+    engine.text = Graph(lambda feeds: np.ones((1, feeds["ids"].shape[1], 4), np.float32))
+    engine.dur = Graph(lambda feeds: np.zeros((1,), np.float32))
+    engine.ve = Graph(lambda feeds: np.zeros_like(feeds["x"]))
+    engine.dec = Graph(lambda feeds: np.zeros((1, 1, 2400), np.float32))
+    engine.infer("aaa", np.zeros(3, np.float32), np.zeros((2, 3), np.float32), seed=1, cfg_ends=ends)
+    nulls = [feeds["ctx"] is engine.null_ctx for feeds in engine.ve.feeds]
+    assert len(nulls) == vieneu_engine.NANO_STEPS + unconditional and sum(nulls) == unconditional
+    assert vieneu_engine.NANO_CFG_ENDS is False  # 8 bước: 14 lần gọi bộ khử nhiễu
 
 
 def test_the_shipped_code_does_not_import_vieneu() -> None:

@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from abook.readaloud import loudness, vieneu, vieneu_engine
-from abook.webui import vieneu_module
+from abook.webui import vieneu_module, voice_module
 
 ROOT = Path(__file__).resolve().parents[1]
 ANDROID = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player"
@@ -33,6 +33,8 @@ def _script(name: str):
 def test_the_phone_downloads_the_same_pinned_model_files_as_the_computer():
     source = _kotlin("vieneu/VieneuModule.kt")
     bases = dict(re.findall(r'private const val (\w+_BASE) = "([^"]+)"', source))
+    assert 'private const val NANO_INT8_BASE = VoiceModule.APP_MODELS + "vieneu-nano-int8/"' in source
+    bases["NANO_INT8_BASE"] = voice_module.APP_MODELS + "vieneu-nano-int8/"
     # Nano has one tier on both platforms: no fast estimator, files, choice or speed family on the phone
     assert not hasattr(vieneu_module, "NANO_FAST") and not hasattr(vieneu_module, "FAST_CHOICE")
     for fast_name in ("NANO_FAST", "FAST_CHOICE", "nano_fast", "VoiceSpeed.Family"):
@@ -104,6 +106,7 @@ def test_the_phone_cuts_and_measures_like_the_computer():
     assert f"const val SLOW_RTF = {vieneu_module.SLOW_RTF}" in _kotlin("vieneu/VoiceModule.kt")
     assert f"MAX_NEW_FRAMES = {vieneu_engine.MAX_NEW_FRAMES}" in speaker
     assert f"const val STEPS = {vieneu_engine.NANO_STEPS}" in _kotlin("vieneu/VieneuNano.kt")
+    assert f"const val CFG_ENDS = {str(vieneu_engine.NANO_CFG_ENDS).lower()}" in _kotlin("vieneu/VieneuNano.kt")
 
 
 def test_the_shared_fixtures_are_what_the_current_desktop_code_gives():
