@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.95] - 2026-10-18
+
 ### Máy tính
 
 - Xuất M4B giờ có nút "Huỷ" trong thông báo tiến độ ở mọi bước: lúc tải nhạc nền, lúc trộn nhạc từng chương, lúc ghép file. Bấm Huỷ là dừng trong chừng 1 giây (thử trên cuốn 3 chương: 1,05 giây khi đang tải bài, 0,5 giây khi đang trộn chương 2), không để lại file M4B hay thư mục tạm nào. Trước đây không có cách nào dừng, phải chờ hết cả lượt.
