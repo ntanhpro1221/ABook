@@ -1,4 +1,4 @@
-"""NN-lite (webui/music_nnlite.py, Corpus research/music/SPEC_nnlite_app.md): học sinh 2 MB chỉ chữ cho nhạc theo cảnh khi máy không có gói q06.
+"""NN-lite (webui/music_nnlite.py, Corpus research/music/SPEC_nnlite_app.md): học sinh 2 MB chỉ chữ cho nhạc theo cảnh (Nghe ngay và Studio).
 Hai bộ ví dụ DÙNG CHUNG với điện thoại (NnLiteTest.kt / SceneMusicTest.kt) nằm ở tests/fixtures/music/nnlite/: chữ -> token -> băm -> đặc trưng, và 4 số + mục chương; `lb_fixture.json`: khối, hồ sơ khối và ranh cảnh LB (SPEC_lb_app); `lvj_fixture.json`: chapterP, mức chương và dời mức LVJ (SPEC_lvj_app).
 Chữ trong đó đều dựng sẵn (kho công khai)."""
 from __future__ import annotations
@@ -172,7 +172,7 @@ def test_items_over_a_whole_book_equal_items_chapter_by_chapter() -> None:
     assert whole == per_chapter and len(whole) == len(base)
 
 
-# ---- máy chủ: NN-lite luôn, có gói q06 hay không ------------------------------------------------------------------------------------
+# ---- máy chủ: NN-lite luôn ------------------------------------------------------------------------------------
 
 
 def _student_of_the_job(app: Any, book: str, monkeypatch: pytest.MonkeyPatch, field: str = "student") -> list[Any]:
@@ -191,7 +191,7 @@ def _bounds_of_the_job(app: Any, book: str, monkeypatch: pytest.MonkeyPatch) -> 
     return _student_of_the_job(app, book, monkeypatch, "bounds")
 
 
-def test_without_q06_the_server_builds_scene_music_with_the_bundled_nn_lite(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_server_builds_scene_music_with_the_bundled_nn_lite(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     app, book, server = _scene_server(tmp_path)
     try:
         assert _student_of_the_job(app, book, monkeypatch) == [music_nnlite.student_items]
@@ -201,7 +201,7 @@ def test_without_q06_the_server_builds_scene_music_with_the_bundled_nn_lite(tmp_
         server.stop()
 
 
-def test_the_plan_cache_key_tells_nn_lite_from_n0_and_from_q06(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_plan_cache_key_tells_nn_lite_from_n0(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     app, book, server = _scene_server(tmp_path)
     try:
         path, manifest = app._listenable(book), app.music_catalog().manifest()
@@ -217,24 +217,14 @@ def test_the_plan_cache_key_tells_nn_lite_from_n0_and_from_q06(tmp_path: Path, m
         server.stop()
 
 
-def test_with_the_q06_package_the_server_still_builds_scene_music_with_nn_lite_and_its_bounds(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Máy đã tải gói q06 (SPEC_nnscene_route): Nghe ngay vẫn đi NN-lite + ranh LB + LVJ, cùng khoá đệm - q06 chỉ dành cho Studio."""
-    from abook.webui import music_scene_student
-
+def test_the_server_builds_scene_music_with_nn_lite_and_its_bounds_and_falls_back_to_n0_without_the_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     app, book, server = _scene_server(tmp_path)
     try:
-        path, manifest = app._listenable(book), app.music_catalog().manifest()
-        without_package = app._scene_book(book, path, manifest).directory
-        monkeypatch.setattr(music_scene_student, "available", lambda: True)
-        monkeypatch.setattr(music_scene_student, "present", lambda: True)
-        monkeypatch.setattr(music_scene_student, "package_sha", lambda *_: pytest.fail("Nghe ngay không đọc gói q06"))
-        monkeypatch.setattr(music_scene_student, "ChapterStudent", lambda *_a, **_k: pytest.fail("Nghe ngay không dựng học sinh q06"))
-        assert app._scene_book(book, path, manifest).directory == without_package, "có gói hay không: cùng khoá đệm, plan NN-lite dùng lại"
         assert _student_of_the_job(app, book, monkeypatch) == [music_nnlite.student_items]
         assert _bounds_of_the_job(app, book, monkeypatch) == [music_nnlite.scene_bounds]
         assert music_nnscene.student_tag(music_nnlite.sha()).startswith("nnlite-lvj1-")
         monkeypatch.setattr(music_nnlite, "MODEL_FILE", tmp_path / "khong_co.bin")
-        assert _student_of_the_job(app, book, monkeypatch) == [None], "model NN-lite hỏng: N0, không quay về q06"
+        assert _student_of_the_job(app, book, monkeypatch) == [None], "model NN-lite hỏng: N0"
         assert _bounds_of_the_job(app, book, monkeypatch) == [None]
         assert music_nnscene.student_tag(music_nnlite.sha()) == "none"
     finally:
@@ -347,7 +337,7 @@ def test_lb_leaves_n0_and_a_student_that_gives_up_exactly_as_before() -> None:
     assert music_nnscene.chapter_scenes(script, lambda *_: None, music_nnlite.scene_bounds) == n0, "học sinh bỏ chương: đường N0 nguyên, không ranh LB"
     calls: list[Any] = []
     music_nnscene.chapter_scenes(script, lambda s, base: calls.append(base) or music_nnlite.student_items(s, base))
-    assert len(calls) == 1 and not any(scene["reason"] == "mood_shift" for scene in calls[0]), "không truyền bounds (q06): giữ nguyên"
+    assert len(calls) == 1 and not any(scene["reason"] == "mood_shift" for scene in calls[0]), "không truyền bounds (Studio): giữ nguyên"
 
 
 def test_lb_a_cue_wins_a_spot_the_lite_bound_also_claims() -> None:

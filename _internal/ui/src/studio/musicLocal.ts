@@ -66,22 +66,6 @@ export interface MusicModuleStatus {
   cancellable?: boolean;
   /** Chỉ máy tính. */
   precise?: PreciseMood;
-  /** Chỉ máy tính: phần tuỳ chọn "Học sinh không khí cảnh". */
-  scene?: SceneStudent;
-}
-
-/** Phần tuỳ chọn của "Phân tích nhạc" (webui/music_scene_student.py): model nhỏ đoán đoạn nào trong chương vui / căng hơn đoạn khác, tải khi người dùng bấm.
- *  `blocked` khác rỗng = máy này chưa tải được (lý do tiếng Việt). */
-export interface SceneStudent {
-  state: "current" | "outdated" | "missing";
-  bytes: number;
-  /** Cỡ lần tải khi bấm: gồm cả những phần của Phân tích nhạc máy còn thiếu (bằng `bytes` khi Phân tích nhạc đã đủ). */
-  total?: number;
-  blocked: string;
-  external: boolean;
-  /** Máy này dùng được phần này (có Studio để chạy nó); không thì `reason` nói vì sao và giao diện ẩn nút tải. */
-  offered: boolean;
-  reason: string;
 }
 
 /** "Đo cảm xúc nhạc chính xác hơn" (chỉ máy tính, webui/music_valence.py): tuỳ chọn tải thêm một model lớn, người dùng bật mới tải. `unavailable` = máy
@@ -148,21 +132,6 @@ export function moduleLabel(module: MusicModuleStatus): string {
 /** Có mời người dùng bật "Đo cảm xúc nhạc chính xác hơn" không: máy đủ sức, và đã có bộ phân tích nhạc (nó dùng lại phần nghe của bộ ấy). */
 export function preciseOffered(module: MusicModuleStatus | undefined): module is MusicModuleStatus & { precise: PreciseMood } {
   return Boolean(module?.precise && module.precise.state !== "unavailable" && module.ready);
-}
-
-/** Thẻ “Nhạc theo sát từng đoạn trong chương” (Học sinh không khí cảnh): hiện khi phần này chưa có trên máy - không đợi người dùng nhập bài hay tải Phân tích nhạc
- *  trước (tải model này kéo theo các phần còn thiếu, cỡ ghi ở `total`). `unavailable`: máy chưa dùng được thì thẻ nói lý do (không ẩn); rỗng = bấm tải được. */
-export function sceneCard(module: MusicModuleStatus | undefined): { scene: SceneStudent; unavailable: string } | null {
-  const scene = module?.scene;
-  if (!scene || scene.state !== "missing") return null;
-  const reason = scene.blocked || (scene.offered ? "" : scene.reason);
-  return { scene, unavailable: reason ? reason[0].toUpperCase() + reason.slice(1) : "" };
-}
-
-/** Chữ trên nút tải của thẻ ấy: nói tải cái gì và cỡ thật; Phân tích nhạc còn thiếu thì nói tải cả nó. */
-export function sceneButton(scene: SceneStudent): string {
-  const total = scene.total ?? scene.bytes;
-  return total > scene.bytes ? `Tải model nhạc theo đoạn cùng Phân tích nhạc (${formatSize(total)})` : `Tải model nhạc theo đoạn (${formatSize(scene.bytes)})`;
 }
 
 /** Đang tải hay đang nghe kỹ lại: giao diện hỏi lại view mỗi giây. */

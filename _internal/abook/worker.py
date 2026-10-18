@@ -216,22 +216,17 @@ def apply_teller_voice(root: Path, db: Any, settings: dict[str, Any], log: Any) 
 
 def run_music_after_analysis(root: Path, base_url: str, stop_requested: Any, log: Any, emit: Any, *, pause_requested: Any) -> None:
     """Sau pha phân tích, nhạc nền tính ranh giới cảnh và không khí của đoạn (import muộn: worker không nạp webui khi không cần): LLM nhỏ
-    chia cảnh (music_bounds), rồi cùng model ấy đọc cả đoạn (music_moods) nếu người dùng đã tải, rồi - khi Ollama đã dỡ model - học sinh
-    đoán hình không khí trong chương nếu máy có gói. Các việc độc lập: lỗi của việc trước không chặn việc sau (và không nuốt: ném lại
-    sau cùng, việc lỗi đầu tiên, để dây chuyền ghi `music_moods_skipped`); học sinh không bao giờ ném."""
-    from .webui import music_bounds, music_moods, music_scene_student
+    chia cảnh (music_bounds), rồi cùng model ấy đọc cả đoạn (music_moods) nếu người dùng đã tải. Hai việc độc lập: lỗi của việc trước không chặn
+    việc sau (và không nuốt: ném lại sau cùng, việc lỗi đầu tiên, để dây chuyền ghi `music_moods_skipped`). Học sinh NN-lite đóng sẵn trong app
+    nên không có bước nào cho nó: `music_plan.build` chạy nó khi dựng plan."""
+    from .webui import music_bounds, music_moods
 
     failure: Exception | None = None
-    for step in (music_bounds, music_moods):  # chia cảnh TRƯỚC: không khí và học sinh đọc đúng các đoạn đã chia
+    for step in (music_bounds, music_moods):  # chia cảnh TRƯỚC: không khí đọc đúng các đoạn đã chia
         try:
             step.run_after_analysis(root, base_url, stop_requested, log, emit, pause_requested=pause_requested)
-        except Exception as exc:  # noqa: BLE001 - hoãn tới sau học sinh
+        except Exception as exc:  # noqa: BLE001 - hoãn tới sau việc kế
             failure = failure or exc
-    if music_scene_student.package_dir() is None:  # worker là tiến trình riêng: không có cấu hình của server
-        from .webui.library import preferences_path
-
-        music_scene_student.configure(preferences_path().with_name("music") / music_scene_student.PACKAGE_FOLDER)
-    music_scene_student.run_after_analysis(root, stop_requested, log, emit, pause_requested=pause_requested)
     if failure is not None:
         raise failure
 

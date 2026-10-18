@@ -4,8 +4,8 @@
 đưa vào `music_scenes` thắng bản gộp +6,5 điểm giây nhạc sai rõ (Holm p 0,013). Mã đo: LLM_Train/music/seg_scenes.py.
 
 Chạy SAU pha phân tích (worker.run_music_after_analysis, TRƯỚC `music_moods`: cùng model, đã nạp) hay khi người dùng bấm "Tính lại" ở
-tab Nhạc. Kết quả nằm trong `music_bounds.json` của dự án; `music_plan.build`, `music_moods.compute` và `music_scene_student.compute`
-đều đọc nó (`load`) và đưa vào `music_scenes.chapter_scenes(boundaries=...)` - nên ba bên luôn chia đoạn GIỐNG NHAU. Chương nào chưa có
+tab Nhạc. Kết quả nằm trong `music_bounds.json` của dự án; `music_plan.build` và `music_moods.compute`
+đều đọc nó (`load`) và đưa vào `music_scenes.chapter_scenes(boundaries=...)` - nên hai bên luôn chia đoạn GIỐNG NHAU. Chương nào chưa có
 ranh LLM (không model, Nghe ngay, điện thoại, chưa tính tới) thì chạy luật dấu hiệu như trước: một chương hoặc có đủ ranh Y, hoặc dùng A.
 
 Chỉ nói chuyện với Ollama qua HTTP (không gọi CLI `ollama`). Temperature 0, không seed: cùng digest model và cùng chữ thì ra cùng ranh;
