@@ -9,8 +9,8 @@ import java.io.File
 
 /**
  * "Tốc độ giọng trên máy" on the phone, the desktop's `abook/webui/voice_speed.py` (same rules, same status shape, ui/src/listen/voiceSpeed.ts): the
- * Supertonic voices and VieNeu Nano have two tiers for "Nghe ngay" - "Chất lượng cao nhất" and "Nhanh hơn" (the app's smaller int8 vector estimator,
- * fewer steps: [SupertonicText.FAST_ESTIMATOR], [vn.abook.player.vieneu.VieneuModule.NANO_FAST]). One choice per phone: [AUTO] (default) follows the
+ * Supertonic voices have two tiers for "Nghe ngay" - "Chất lượng cao nhất" and "Nhanh hơn" (the app's smaller int8 vector estimator, fewer steps:
+ * [SupertonicText.FAST_ESTIMATOR]); VieNeu (Turbo, Nano) has one - Nano's int8 measured only 5-8 % faster and sounded worse. One choice per phone: [AUTO] (default) follows the
  * self-benchmark of the quality tier ([VoiceModule.SLOW_RTF]); an explicit choice is always kept; "Tự động" only moves between the two tiers of the
  * same voice, never to another voice.
  *
@@ -31,13 +31,13 @@ object VoiceSpeed {
     /** How long a live tier decision is kept (the cache asks it for every paragraph of a chapter). */
     private const val MEMO_MS = 3_000L
 
-    /** A voice with two tiers, as its module knows it (SupertonicModule: the ten Supertonic voices, VieneuModule: Nano). */
+    /** A voice with two tiers, as its module knows it (SupertonicModule: the ten Supertonic voices). */
     interface Family {
-        /** "supertonic" / "nano". */
+        /** "supertonic". */
         val speedId: String
-        /** "Giọng Supertonic" / "Giọng VieNeu Nano". */
+        /** "Giọng Supertonic". */
         val speedName: String
-        /** Module key for the card that downloads the fast file: "supertonic" / "vieneu". */
+        /** Module key for the card that downloads the fast file: "supertonic". */
         val speedModule: String
         /** That card's choice for the fast file. */
         val fastChoice: String
@@ -56,7 +56,7 @@ object VoiceSpeed {
     private var families: () -> List<Family> = { emptyList() }
     private val memo = HashMap<String, Pair<String, Long>>()
 
-    /** Where the choice is kept and the families of this phone (ReadAloud: the two modules). */
+    /** Where the choice is kept and the families of this phone (ReadAloud: the Supertonic module). */
     @Synchronized
     fun configure(file: File?, families: () -> List<Family> = this.families) {
         this.file = file
@@ -64,11 +64,11 @@ object VoiceSpeed {
         memo.clear()
     }
 
-    /** This app's setup (the module factories and [ReadAloud] call it; the first one wins): the choice next to the app's files, the two modules. */
+    /** This app's setup (the module factory and [ReadAloud] call it; the first one wins): the choice next to the app's files, the Supertonic module. */
     fun setup(ctx: Context) {
         if (file != null) return
         val app = ctx.applicationContext
-        configure(File(app.filesDir, FILE)) { listOf(SupertonicVoices.module(app), vn.abook.player.vieneu.VieneuVoices.module(app)) }
+        configure(File(app.filesDir, FILE)) { listOf(SupertonicVoices.module(app)) }
     }
 
     /** A module changed its files or its measurement: decide again. */
@@ -96,17 +96,13 @@ object VoiceSpeed {
         else -> if (rtf != null && rtf >= VoiceModule.SLOW_RTF) FAST else QUALITY
     }
 
-    /** "supertonic" / "nano" for a voice with two tiers, "" for any other. */
-    fun family(voiceId: String): String = when {
-        voiceId.startsWith("${SupertonicVoices.PREFIX}:") -> "supertonic"
-        voiceId.startsWith("vieneu:nano/") -> "nano"
-        else -> ""
-    }
+    /** "supertonic" for a voice with two tiers, "" for any other (VieNeu Nano included). */
+    fun family(voiceId: String): String = if (voiceId.startsWith("${SupertonicVoices.PREFIX}:")) "supertonic" else ""
 
     /** (voice id, tier tag) of a possibly tiered id; ids of other voices are never split. */
     fun split(voiceId: String): Pair<String, String> {
         val at = voiceId.lastIndexOf(SEPARATOR)
-        if (at < 0 || (!voiceId.startsWith("${SupertonicVoices.PREFIX}:") && !voiceId.startsWith("vieneu:"))) return voiceId to ""
+        if (at < 0 || !voiceId.startsWith("${SupertonicVoices.PREFIX}:")) return voiceId to ""
         return voiceId.substring(0, at) to voiceId.substring(at + 1)
     }
 

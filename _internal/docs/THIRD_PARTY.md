@@ -135,10 +135,6 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
   `LICENSE-audio.cpp.txt` và `third_party/` (ggml MIT, cJSON MIT, cpp-httplib MIT, libyaml MIT, sentencepiece Apache-2.0; `external/llama_tokenizer` dẫn xuất từ
   llama.cpp, MIT); gói zip ghim SHA-256 trên Hugging Face `NGDtuanh/abook-music-student`. Trọng số: `vieneu-v3-turbo-q8_0.gguf` của pnnbao-ump/VieNeu-TTS-v3-Turbo
   (Apache-2.0, ghim commit + SHA-256), cùng model với bản ONNX ở trên.
-  "Bản nhanh hơn của Giọng VieNeu Nano" (bậc "Nhanh hơn" của "Tốc độ giọng trên máy", chỉ tải khi bậc ấy được chọn; máy tính `webui/vieneu_module.py`,
-  điện thoại `vieneu/VieneuModule.kt`): `vieneu-nano-int8/vector_estimator.onnx` trên Hugging Face `NGDtuanh/abook-music-student` (ghim commit + SHA-256) -
-  model dẫn xuất do ABook làm từ `vector_estimator.onnx` của VieNeu-TTS v3 Nano (lượng tử hoá int8 các lớp MatMul, phần còn lại giữ nguyên), vẫn theo
-  giấy phép **Apache-2.0** của bản gốc; file `LICENSE` (Apache-2.0) tải kèm, đặt cạnh model.
 - Giọng Supertonic 3 (mô-đun tải khi người dùng bấm, `webui/supertonic_module.py`; không nằm trong bộ cài): model Supertonic 3 (Supertone Inc.,
   99 triệu tham số, ONNX) giấy phép **BigScience OpenRAIL-M** - trọng số và mười file giọng tải thẳng từ Hugging Face `Supertone/supertonic-3`
   (ghim commit + SHA-256 từng file; hãng đã giải thể, repo lưu trữ 09-09-2026 nên đây là bản cuối), kèm file LICENSE của hãng đặt cạnh model.

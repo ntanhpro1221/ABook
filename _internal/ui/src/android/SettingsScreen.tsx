@@ -153,7 +153,7 @@ export function SettingsScreen() {
                   <VieneuModuleCard backend={phoneVieneu} onChanged={reload} />
                 </div>
                 <VieneuModuleCard backend={phoneSupertonic} copy={SUPERTONIC_COPY} onChanged={reload} />
-                <VoiceSpeedSetting backend={phoneVoiceSpeed} supertonic={phoneSupertonic} vieneu={phoneVieneu} />
+                <VoiceSpeedSetting backend={phoneVoiceSpeed} supertonic={phoneSupertonic} />
               </>
             )}
           />

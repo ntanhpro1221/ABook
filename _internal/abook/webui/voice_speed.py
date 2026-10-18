@@ -1,7 +1,7 @@
-"""Cài đặt "Tốc độ giọng trên máy" (một cho cả máy): giọng Supertonic và VieNeu Nano có hai bậc khi nghe trực tiếp - "Chất lượng cao nhất" và "Nhanh
-hơn" (bộ khử nhiễu int8 nhỏ hơn, ít bước hơn: readaloud/supertonic.FAST, vieneu_module.NANO_FAST). `auto` (mặc định): máy tự chọn theo lần tự đo sau
-khi tải - lần đo ấy đo bậc chất lượng; RTF dưới SLOW_RTF thì giữ chất lượng, không thì "Nhanh hơn". Người dùng chọn hẳn một bậc thì luôn theo đó;
-"Tự động" chỉ đổi giữa hai bậc của cùng một giọng, không bao giờ đổi sang giọng khác.
+"""Cài đặt "Tốc độ giọng trên máy" (một cho cả máy): giọng Supertonic có hai bậc khi nghe trực tiếp - "Chất lượng cao nhất" và "Nhanh hơn" (bộ khử
+nhiễu int8 nhỏ hơn, ít bước hơn: readaloud/supertonic.FAST). Giọng VieNeu (Turbo, Nano) chỉ có một bậc: bản int8 của Nano đo trên điện thoại chỉ nhanh hơn
+5-8 % mà tiếng kém hơn, nên bỏ. `auto` (mặc định): máy tự chọn theo lần tự đo sau khi tải - lần đo ấy đo bậc chất lượng; RTF dưới SLOW_RTF thì giữ chất
+lượng, không thì "Nhanh hơn". Người dùng chọn hẳn một bậc thì luôn theo đó; "Tự động" chỉ đổi giữa hai bậc của cùng một giọng, không bao giờ đổi sang giọng khác.
 
 Bậc chỉ áp cho Nghe ngay. Studio và mọi bản xuất (sách nói, MP3 / M4B) luôn đọc bậc chất lượng (`ReadAloud.clip(quality=True)`); clip bậc nhanh có dấu
 riêng trong khoá bộ đệm (`live_tag`) nên không bao giờ đứng thay clip chất lượng. File bậc nhanh chỉ tải khi bậc ấy được chọn (thẻ mô-đun hiện lựa
@@ -19,7 +19,7 @@ from .. import io_utils
 FILE = "voice-speed.json"
 AUTO, QUALITY, FAST = "auto", "quality", "fast"
 CHOICES = (AUTO, QUALITY, FAST)
-FAMILIES = ("supertonic", "nano")  # giọng có hai bậc: mười giọng Supertonic, các giọng VieNeu Nano
+FAMILIES = ("supertonic",)  # giọng có hai bậc: mười giọng Supertonic
 
 _lock = threading.Lock()
 _path: Path | None = None
@@ -63,16 +63,14 @@ def decide(chosen: str, rtf: float | None) -> str:
 
 
 def family(voice_id: str) -> str:
-    """"supertonic" / "nano" cho giọng có hai bậc, "" cho giọng khác."""
-    if voice_id.startswith("supertonic:"):
-        return "supertonic"
-    return "nano" if voice_id.startswith("vieneu:nano/") else ""
+    """"supertonic" cho giọng có hai bậc, "" cho giọng khác (kể cả VieNeu Nano)."""
+    return "supertonic" if voice_id.startswith("supertonic:") else ""
 
 
 def _module(name: str) -> Any:
-    from . import supertonic_module, vieneu_module
+    from . import supertonic_module
 
-    return supertonic_module if name == "supertonic" else vieneu_module
+    return supertonic_module
 
 
 def wants_fast(name: str) -> bool:

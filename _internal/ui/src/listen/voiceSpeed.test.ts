@@ -21,7 +21,10 @@ describe("tốc độ giọng trên máy", () => {
   it("Tự động nói máy tự chọn thế nào, và sách xuất ra luôn dùng chất lượng cao nhất", () => {
     const text = voiceSpeedDescription("auto");
     expect(text).toContain("Máy tự chọn: đủ nhanh để vừa đọc vừa nghe thì giữ chất lượng cao nhất.");
-    expect(text).toContain("sách bạn xuất ra luôn dùng chất lượng cao nhất");
+    expect(text).toContain("Sách bạn xuất ra luôn dùng chất lượng cao nhất");
+    for (const choice of ["auto", "quality", "fast"] as const) {
+      expect(voiceSpeedDescription(choice)).toContain("Áp cho giọng Supertonic khi bạn nghe trực tiếp. Giọng VieNeu chỉ có một mức.");
+    }
   });
 
   it("nói đang dùng bậc nào và vì sao", () => {
@@ -34,8 +37,8 @@ describe("tốc độ giọng trên máy", () => {
   });
 
   it("muốn bản nhanh hơn mà chưa tải: nói cỡ và mời tải; đã có thì thôi", () => {
-    const lacking = voice({ name: "Giọng VieNeu Nano", id: "nano", module: "vieneu", fastChoice: "nano_fast", tier: "fast", fastBytes: 48_735_475 });
-    expect(voiceSpeedLine(lacking, "fast")).toBe("Giọng VieNeu Nano - Đang dùng: Chất lượng cao nhất. Bản nhanh hơn cần tải thêm 49 MB.");
+    const lacking = voice({ tier: "fast", fastBytes: 81_526_521 });
+    expect(voiceSpeedLine(lacking, "fast")).toBe("Giọng Supertonic - Đang dùng: Chất lượng cao nhất. Bản nhanh hơn cần tải thêm 82 MB.");
     expect(needsFastDownload(lacking)).toBe(true);
     expect(needsFastDownload({ ...lacking, using: "fast", fastBytes: 0 })).toBe(false);
     expect(needsFastDownload(voice())).toBe(false);

@@ -210,7 +210,7 @@ class VieneuBench(private val args: Map<String, String>, private val pack: File,
         val headThreads = args["headThreads"]?.toInt() ?: threads
         val codecThreads = args["codecThreads"]?.toInt()?.let(::resolveThreads) ?: threads
         private val spinning = arg("spin", "0") == "1"
-        /** Nano flow steps (`steps=10` measures the fast tier); the app default otherwise. */
+        /** Nano flow steps (`steps=` times other step counts); the app default otherwise. */
         private val nanoSteps = arg("steps", VieneuNano.STEPS.toString()).toInt()
         private val sentences = manifest.getJSONArray("sentences")
         private val nanoSentences = manifest.optJSONArray("nano_sentences")

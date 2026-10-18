@@ -5,7 +5,7 @@
 
 import { CANCELLED_NOTE, formatSize } from "@/studio/musicLocal";
 
-export type VieneuChoiceId = "turbo" | "nano" | "aligner" | "supertonic" | "fast" | "supertonic_fast" | "nano_fast";
+export type VieneuChoiceId = "turbo" | "nano" | "aligner" | "supertonic" | "fast" | "supertonic_fast";
 /** Giọng có kết quả tự đo riêng (mỗi tầng một lần đo). */
 export type ModuleTier = "turbo" | "nano" | "supertonic";
 

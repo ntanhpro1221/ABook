@@ -4,7 +4,6 @@ import org.json.JSONObject
 import vn.abook.player.PinnedFiles.Packed
 import vn.abook.player.PinnedFiles.Part
 import vn.abook.player.SharedRuntime
-import vn.abook.player.readaloud.VoiceSpeed
 import java.io.File
 
 /**
@@ -19,8 +18,7 @@ import java.io.File
  * ([VoiceModule.Benchmark]); a voice slower than [VoiceModule.SLOW_RTF] is offered "Làm trước" (prepare ahead) or a switch - never switched
  * silently. Sizes shown are what THIS phone still lacks. Each choice can be removed again. Download, measuring and removal: [VoiceModule].
  *
- * "Bản nhanh hơn của Giọng VieNeu Nano" ([FAST_CHOICE], files in `nano_fast/`): the app's int8 vector estimator of Nano, the fast tier of "Tốc độ giọng
- * trên máy" ([VoiceSpeed]) - offered only when that setting wants it (or already here), never measured, removed with Nano.
+ * Nano has one tier ("Tốc độ giọng trên máy" is Supertonic only): its int8 estimator measured only 5-8 % faster at 10 steps and sounded worse.
  */
 class VieneuModule(
     dir: File,
@@ -36,19 +34,13 @@ class VieneuModule(
     groups: Map<String, List<Part>>? = null,
     /** Why this phone cannot have the module ("" = it can); null = decided from the ABI and the pins. */
     blocked: String? = null,
-) : VoiceModule(dir, runtime, groups ?: defaultGroups(abi), facts, benchmark, forget, metered), VoiceSpeed.Family {
+) : VoiceModule(dir, runtime, groups ?: defaultGroups(abi), facts, benchmark, forget, metered) {
     private val g2pLib = abi?.let { G2P_LIBRARIES[it] }
     override val name = "giọng VieNeu"
     override val key = "vieneu"
-    /** "Bản nhanh hơn" only where its part is pinned (tests give their own parts). */
-    override val choices = if (FAST_CHOICE in this.groups) CHOICES + FAST_CHOICE else CHOICES
+    override val choices = CHOICES
     override val tiers = TIERS
     override fun needs(choice: String) = NEEDS.getValue(choice)
-    override fun offered(choice: String, installed: List<String>) =
-        choice != FAST_CHOICE || choice in installed || ("nano" in installed && VoiceSpeed.wantsFast(speedRtf()))
-    override fun requires(choice: String) = if (choice == FAST_CHOICE) listOf("nano") else emptyList()
-    /** "Bản nhanh hơn" is ticked like the voice it speeds up (desktop: recommended + default). */
-    override fun marks(choice: String, best: String): Pair<Boolean, Boolean> = if (choice == FAST_CHOICE) true to true else super.marks(choice, best)
     override fun partLabel(id: String) = PART_LABEL.getValue(id)
     override val unsupported: String = blocked ?: when {
         abi == null || g2pLib == null || this.groups["ort"].isNullOrEmpty() -> "điện thoại này chưa chạy được giọng VieNeu (kiến trúc máy chưa hỗ trợ)"
@@ -86,21 +78,6 @@ class VieneuModule(
         return tierRtf(voiceId.removePrefix("vieneu:").substringBefore('/'))
     }
 
-    /** Nano's fast-tier vector estimator ([NANO_FAST]); null while it is not downloaded (or Nano itself is not here). */
-    fun nanoFastEstimator(): File? =
-        if (FAST_CHOICE in choices && installed()?.nano != null && states()[FAST_CHOICE] != "missing") File(dir, NANO_FAST.first) else null
-
-    // ---- "Tốc độ giọng trên máy" ([VoiceSpeed]): the two-tier voice of this module is Nano ---------------------------------------------------
-    override val speedId = "nano"
-    override val speedName = "Giọng VieNeu Nano"
-    override val speedModule = key
-    override val fastChoice = FAST_CHOICE
-    override val fastSteps = NANO_FAST.second
-    override fun speedInstalled() = installed()?.nano != null
-    override fun speedRtf() = tierRtf("nano")
-    override fun speedFastReady() = nanoFastEstimator() != null
-    override fun speedFastBytes() = groups[FAST_CHOICE].orEmpty().sumOf { it.wireSize }
-
     /** Before any measurement Nano; Turbo once a measurement says this phone keeps up with it (or Nano runs well under the limit) - and only with
      *  enough memory for it ([TURBO_MIN_RAM_GB]). */
     override fun recommended(bench: JSONObject): String {
@@ -128,7 +105,6 @@ class VieneuModule(
             "voices" to listOf(VOICES),
             "turbo" to TURBO_FILES,
             "nano" to NANO_FILES,
-            FAST_CHOICE to NANO_FAST_FILES,
         )
 
         /** Its own folder in the app's files. */
@@ -141,21 +117,13 @@ class VieneuModule(
         const val TURBO_MIN_RAM_GB = 5.5
         val TIERS = listOf("turbo", "nano")
         val CHOICES = listOf("nano", "turbo")
-        /** "Bản nhanh hơn" of Nano (desktop vieneu_module.FAST_CHOICE). */
-        const val FAST_CHOICE = "nano_fast"
-        /** Nano's fast tier (desktop vieneu_module.NANO_FAST): (vector estimator inside the module folder, Euler steps) - change the tier here, one line
-         *  (and on the desktop). The quality tier is upstream's estimator at [VieneuNano.STEPS]. */
-        val NANO_FAST = "nano_fast/vector_estimator.onnx" to 10
-        val NEEDS = mapOf("turbo" to listOf("ort", "g2p", "voices", "turbo"), "nano" to listOf("ort", "g2p", "voices", "nano"),
-            FAST_CHOICE to listOf("ort", "g2p", "voices", "nano", FAST_CHOICE))
-        private const val FAST_LABEL = "Bản nhanh hơn của Giọng VieNeu Nano"
+        val NEEDS = mapOf("turbo" to listOf("ort", "g2p", "voices", "turbo"), "nano" to listOf("ort", "g2p", "voices", "nano"))
         val CHOICE_TEXT = mapOf(
             "nano" to ("Giọng VieNeu Nano" to "11 giọng, âm thanh 24 kHz - lúc đọc tốn ít bộ nhớ hơn, hợp điện thoại yếu; file tải nặng hơn Giọng VieNeu"),
             "turbo" to ("Giọng VieNeu" to "25 giọng, âm thanh 48 kHz - hay nhất, cần điện thoại mạnh"),
-            FAST_CHOICE to (FAST_LABEL to "Giọng VieNeu Nano đọc nhanh hơn khi bạn nghe trực tiếp, tiếng kém hơn một chút. Sách bạn xuất ra vẫn dùng bản chất lượng cao nhất"),
         )
         val PART_LABEL = mapOf("ort" to "Thư viện chạy model", "g2p" to "Bộ đọc chữ tiếng Việt", "voices" to "Danh sách giọng",
-            "turbo" to "Giọng VieNeu", "nano" to "Giọng VieNeu Nano", FAST_CHOICE to FAST_LABEL)
+            "turbo" to "Giọng VieNeu", "nano" to "Giọng VieNeu Nano")
 
         // Pins: the same upstream files as abook/webui/vieneu_module.py (tests/test_vieneu_android.py compares the two tables).
         private const val TURBO_BASE = "https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo/resolve/61b85e3d937fbbacb387714180e8182823512523/onnx_int8/"
@@ -208,13 +176,6 @@ class VieneuModule(
             file("nano", NANO_BASE, "duration_predictor.onnx", "20fd7fa60006d0a48ee82e0451b3f920d2052588c083c756cce669f3947c0a68", 727_809, "Giọng VieNeu Nano"),
             file("nano", NANO_BASE, "vector_estimator.onnx", "c6c1d4398ca35d3ad1bd3f0459413d1b975d09e7f2f3a2b4493a7b92bbf6ce93", 155_132_418, "Giọng VieNeu Nano"),
             file("nano", NANO_BASE, "codec_decoder.onnx", "b0ab15e7828a39d53679e25b1ba4ba415a61311307202a6323130b9e1cc3029d", 99_319_941, "Giọng VieNeu Nano"),
-        )
-        /** The app's int8 estimator of Nano + its licence (Apache-2.0), in their own top folder so removing them never touches Nano. */
-        val NANO_FAST_FILES = listOf(
-            Part(NANO_FAST.first, "0e59f820634632d6a6c0390a107e2a06dc7c49044aab2a49c5d7682860e4f593", 48_724_117,
-                VoiceModule.APP_MODELS + "vieneu-nano-int8/vector_estimator.onnx", label = FAST_LABEL),
-            Part(NANO_FAST.first.substringBefore('/') + "/LICENSE", "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30", 11_358,
-                VoiceModule.APP_MODELS + "vieneu-nano-int8/LICENSE", label = FAST_LABEL),
         )
     }
 }

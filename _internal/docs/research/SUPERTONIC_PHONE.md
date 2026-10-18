@@ -162,7 +162,7 @@ Hence the tiers (same on the desktop and the phone, one constant pair each to ch
 | voice | "Chất lượng cao nhất" | "Nhanh hơn" (live listening only) |
 |---|---|---|
 | Supertonic | top30 int8, 8 steps (replaces fp32; upstream's fp32 file is no longer downloaded) | fast int8, 5 steps (`supertonic.FAST`, `SupertonicText.FAST_ESTIMATOR` / `FAST_STEPS`) |
-| VieNeu Nano | upstream fp32, 8 steps (`NANO_STEPS` 16 -> 8) | int8, 10 steps (`vieneu_module.NANO_FAST`, `VieneuModule.NANO_FAST`) |
+| VieNeu Nano | upstream fp32, 8 steps (`NANO_STEPS` 16 -> 8) | none since 19-10 (int8 at 10 steps shipped in 0.4.98, then dropped: see below) |
 
 Nano's fast tier was tested once on the 144 test clips under the fast-tier rule (mean dCER <= +2.0 pp, CI90 upper <= +3.0; dUTMOS >= -0.10,
 CI lower >= -0.20; <= 2/24 paragraphs worse by 5 pp on both seeds): int8 at 8 steps FAILED (dCER +0.16 pp, dUTMOS -0.112), int8 at 10 steps
@@ -173,3 +173,19 @@ nhất / Nhanh hơn, one choice per device. Tự động reads the quality tier 
 SLOW_RTF 0.8, else the fast tier; it never moves to another voice, and an explicit choice is never overridden. The fast file is
 downloaded only when the fast tier is wanted (the module card offers it with its size). A fast clip carries the tier tag "fast<steps>"
 after the reading tags of its cache key, so an export never reuses one.
+
+## 19-10: the 0.4.98 tiers timed on the A93
+
+Paired in one session, 4 threads, warm, `app_process` in the foreground, screen off (night) - the phone was busier and hotter than on 18-10
+(load average ~23, little cores down to 774 MHz), so compare the tiers with each other, not with the 18-10 table.
+
+| voice | quality tier | fast tier | fast / quality |
+|---|---|---|---|
+| Supertonic (median of 3 paragraphs) | top30 int8, 8 steps: 1.48 | fast int8, 5 steps: 0.87 | 0.59 |
+| VieNeu Nano (longest of 5 sentences, 7 s audio) | fp32, 8 steps: 1.22 | int8, 10 steps: 1.15 | 0.94 |
+
+Supertonic's fast tier scaled to the 18-10 quality number (1.21) gives about 0.71: live listening keeps up on this phone.
+Nano's int8 estimator costs about 0.74x fp32 per step (6.25 s / 10 steps vs 6.77 s / 8 steps on the long sentence), so 10 int8 steps are
+about 7.4 fp32 steps, and the decoder (fp32, ~1.5 s = 19 %) does not change: the fast tier was 6 % faster, sounded worse and downloaded
+48 MB more. Nano therefore has one tier, like Turbo. A Nano fast tier would need int8 at 8 steps or fewer, which failed the fast-tier rule.
+Reproduce: `S/fastvoice/phone_fast.sh` (bench args `estimator=`, `steps=` in `SupertonicBench` / `VieneuBench`).
