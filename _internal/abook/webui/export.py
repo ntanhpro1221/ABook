@@ -24,7 +24,9 @@ from typing import Any
 
 from .. import continuation
 from ..io_utils import ffmpeg_available, ffmpeg_executable, run_hidden
+from ..readaloud import mp3
 from . import covers, listen_view, music_plan, store
+from .export_jobs import Cancelled
 from .music_mix import MIX
 
 log = logging.getLogger(__name__)
@@ -145,26 +147,29 @@ def playlist_text(title: str, entries: list[tuple[float, str, str]]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def write_mp3_folder(ffmpeg: str, folder: Path, chapters: Iterable[tuple[str, Path, float]], *, title: str, narrator: str,
+def write_mp3_folder(ffmpeg: str, folder: Path, chapters: Iterable[tuple[str, Path]], *, title: str, narrator: str,
                      cover_path: Path | None, total: int) -> int:
-    """Mỗi chương một MP3 trong `folder` (tag + bìa, `write_chapter`) kèm `.m3u8`; trả số file. `chapters`: (tên chương, file MP3 nguồn, thời lượng giây) - có thể là
+    """Mỗi chương một MP3 trong `folder` (tag + bìa, `write_chapter`) kèm `.m3u8`; trả số file. `chapters`: (tên chương, file MP3 nguồn) - có thể là
     bộ sinh làm ra file nguồn từng chương một (sách Nghe ngay mã hoá từ bản tạm: file nguồn dùng xong, bộ sinh mới được chạy tiếp và dọn nó). `total`: số chương sẽ có.
+    Thời lượng trong `.m3u8` đếm từ khung MP3 của chính file đã ghi (readaloud/mp3.py) - không lấy độ dài ước của sổ (soát a61: lệch 4-9 giây).
     Chung cho xuất MP3 của Studio (`export_book`) và của sách Nghe ngay (listen_export.py)."""
     entries: list[tuple[float, str, str]] = []
-    for number, (full_title, source, duration) in enumerate(chapters, start=1):
+    for number, (full_title, source) in enumerate(chapters, start=1):
         name = chapter_file_name(number, total, full_title)
         write_chapter(ffmpeg, source, folder / name, cover_path, title=full_title, album=title,
                       narrator=narrator, number=number, total=total)
-        entries.append((duration, full_title, name))
+        entries.append((mp3.duration_ms((folder / name).read_bytes()) / 1000, full_title, name))
     (folder / f"{safe_name(title)}.m3u8").write_text(playlist_text(title, entries), encoding="utf-8")
     return len(entries)
 
 
 def export_book(project_root: Path, target_root: Path, *, cover: str | None = None,
-                folder_name: str | None = None, music: Callable[[str], Path | None] | None = None) -> dict[str, Any]:
+                folder_name: str | None = None, music: Callable[[str], Path | None] | None = None,
+                cancelled: Callable[[], bool] | None = None) -> dict[str, Any]:
     """`folder_name`: tên thư mục thay cho tên sách - bản xuất cả bộ đặt mỗi phần vào "Phần N - ...".
     `music`: nguồn file bài nhạc (như gói `.abook`, music_plan.TrackSource) = "Kèm nhạc nền": chương có nhạc được giải mã, trộn
-    (music_export.py) rồi mã hoá lại MP3 cùng bitrate; không có thì chép nguyên luồng như cũ."""
+    (music_export.py) rồi mã hoá lại MP3 cùng bitrate; không có thì chép nguyên luồng như cũ.
+    `cancelled()` True (người dùng bấm Huỷ): dừng trước chương kế / giữa lúc trộn, xoá thư mục bản xuất dở và ném `export_jobs.Cancelled`."""
     summary = store.summarize(project_root)
     title = summary["title"] or project_root.name
     narrator = summary["settings"]["narrator"] or ""
@@ -177,38 +182,76 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     cover_path = copy_real_cover(real, folder) or drawn_cover(folder, cover)
     ffmpeg = ffmpeg_executable()
     audio = store.chapter_audio_paths(project_root)
-    listed = [(chapter["id"], chapter["fullTitle"], path, chapter["duration"]) for chapter in chapters
-              if (path := audio.get(chapter["id"])) is not None]
-    sources = [(full_title, path, duration) for _id, full_title, path, duration in listed]
+    listed = [(chapter["id"], chapter["fullTitle"], path) for chapter in chapters if (path := audio.get(chapter["id"])) is not None]
+    sources = [(full_title, path) for _id, full_title, path in listed]
     noted: dict[str, Any] = {}
-    if music is None:
-        files = write_mp3_folder(ffmpeg, folder, sources, title=title, narrator=narrator, cover_path=cover_path, total=len(sources))
-    else:
-        from .music_export import Mixer, studio_music  # nhập muộn: music_export dùng pump_pcm của module này
+    try:
+        if music is None:
+            files = write_mp3_folder(ffmpeg, folder, _checked(sources, cancelled), title=title, narrator=narrator, cover_path=cover_path,
+                                     total=len(sources))
+        else:
+            from .music_export import Mixer, studio_music  # nhập muộn: music_export dùng pump_pcm của module này
 
-        mixer = Mixer(ffmpeg, studio_music(project_root, [item[0] for item in listed], music))
-        with tempfile.TemporaryDirectory(prefix=".music-", dir=target_root) as scratch:
-            files = write_mp3_folder(ffmpeg, folder, _mixed_mp3(ffmpeg, mixer, listed, Path(scratch)), title=title, narrator=narrator,
-                                     cover_path=cover_path, total=len(sources))
-        noted = mixer.note(item[0] for item in listed)
+            mixer = Mixer(ffmpeg, studio_music(project_root, [item[0] for item in listed], music))
+            with tempfile.TemporaryDirectory(prefix=".music-", dir=target_root) as scratch:
+                files = write_mp3_folder(ffmpeg, folder, _mixed_mp3(ffmpeg, mixer, listed, Path(scratch), cancelled), title=title,
+                                         narrator=narrator, cover_path=cover_path, total=len(sources))
+            noted = mixer.note(item[0] for item in listed)
+    except Cancelled:
+        shutil.rmtree(folder, ignore_errors=True)  # thư mục mới của chính lượt này (free_path): bản xuất dở không được nằm lại như một bản xuất
+        raise
     # Ảnh bìa hỏng: bản xuất mang bìa vẽ từ tên - giao diện nói một câu (coverBroken).
     return {"folder": str(folder), "files": files, "chaptersTotal": summary["chapters"]["total"], **noted,
             **({"coverBroken": True} if real is not None and usable_cover(real) is None else {})}
 
 
-def _mixed_mp3(ffmpeg: str, mixer: Any, listed: list[tuple[int, str, Path, float]], scratch: Path) -> Iterator[tuple[str, Path, float]]:
+def _mixed_mp3(ffmpeg: str, mixer: Any, listed: list[tuple[int, str, Path]], scratch: Path,
+               cancelled: Callable[[], bool] | None = None) -> Iterator[tuple[str, Path]]:
     """Nguồn MP3 từng chương cho `write_mp3_folder` khi kèm nhạc: chương có nhạc trộn rồi mã hoá lại (LAME, cùng bitrate với MP3 của
-    chương) vào `scratch` - file dùng xong mới làm chương kế; chương không có nhạc dùng nguyên file."""
-    for chapter_id, full_title, source, duration in listed:
+    chương) vào `scratch` - file dùng xong mới làm chương kế; chương không có nhạc dùng nguyên file. Huỷ (`cancelled`) dừng ngay giữa chương."""
+    for chapter_id, full_title, source in listed:
+        _stop_if(cancelled)
         if not mixer.has(chapter_id):
-            yield full_title, source, duration
+            yield full_title, source
             continue
         rate, channels, kbps = audio_format(ffmpeg, source)
         temp = scratch / f"{chapter_id}.mp3"
         encode_stream(ffmpeg, rate, channels, ["-c:a", "libmp3lame", "-b:a", f"{kbps or 128}k", "-f", "mp3"], temp,
-                      lambda sink, c=chapter_id, s=source, r=rate, n=channels: pump_mixed(ffmpeg, mixer, c, s, r, n, sink) // (2 * n), "MP3")
-        yield full_title, temp, duration
+                      lambda sink, c=chapter_id, s=source, r=rate, n=channels: pump_mixed(ffmpeg, mixer, c, s, r, n, _watched(sink, cancelled)) // (2 * n),
+                      "MP3")
+        yield full_title, temp
         temp.unlink(missing_ok=True)
+
+
+# ---- Huỷ giữa lượt xuất (MP3 / M4B của Studio) ---------------------------------------------------------------------------
+# Người dùng bấm Huỷ: lượt dừng ở khúc PCM kế (vài phần trăm giây), không chờ hết chương. `export_jobs.Cancelled` đi lên qua `encode_stream`
+# (giết bộ mã hoá) và các `TemporaryDirectory` (xoá file tạm); chỗ gọi đổi nó thành trạng thái "Đã huỷ".
+
+def _stop_if(cancelled: Callable[[], bool] | None) -> None:
+    if cancelled is not None and cancelled():
+        raise Cancelled()
+
+
+def _checked(items: Iterable[Any], cancelled: Callable[[], bool] | None) -> Iterator[Any]:
+    """`items` từng cái một, hỏi huỷ trước mỗi cái (mỗi chương của bản xuất)."""
+    for item in items:
+        _stop_if(cancelled)
+        yield item
+
+
+class _Watched:
+    """Ống PCM tới `sink` hỏi huỷ trước mỗi khúc."""
+
+    def __init__(self, sink: Any, cancelled: Callable[[], bool]) -> None:
+        self.sink, self.cancelled = sink, cancelled
+
+    def write(self, data: bytes) -> int:
+        _stop_if(self.cancelled)
+        return self.sink.write(data)
+
+
+def _watched(sink: Any, cancelled: Callable[[], bool] | None) -> Any:
+    return sink if cancelled is None else _Watched(sink, cancelled)
 
 
 # ---- M4B: cả cuốn trong một file, có mục lục chương ------------------------------------------------------------------
@@ -360,13 +403,14 @@ class _Lowered:
 def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: Path, *, title: str, narrator: str,
                    cover_for: Callable[[Path], Path | None], on_chapter: Callable[[int], None] | None = None,
                    decode: Callable[[int, Path, int, int, Any], int] | None = None,
-                   on_peaks: Callable[[int, int], None] | None = None) -> tuple[Path, int]:
+                   on_peaks: Callable[[int, int], None] | None = None, cancelled: Callable[[], bool] | None = None) -> tuple[Path, int]:
     """Cả cuốn thành `<tên sách>.m4b` trong `target_root` từ các file chương `chapters` (tên chương, file âm thanh bất kỳ ffmpeg đọc được): AAC, mỗi chương một mục,
     bìa và tag. `cover_for(thư mục làm việc)` trả file bìa (hay None). `on_chapter(i)` gọi trước khi chương thứ i (từ 0) được ghép - chỗ báo tiến độ / dừng (ném
     lỗi để dừng). `decode(i, file, tần số, kênh, sink)` thay `pump_pcm` cho chương thứ i nếu có (kèm nhạc nền: `pump_mixed`), trả số byte
     đã đổ. Chương có đỉnh thật AAC vượt trần thì cả luồng được mã hoá lại với chương ấy hạ mức (`_PEAK_RETRIES`; `on_chapter` /
     `decode` được gọi lại từ đầu). `on_peaks(lượt, số chương vượt)` báo bước ấy: (k, 0) = đang đo đỉnh (sau lần mã hoá thứ k+1),
-    (k, N) = đang mã hoá lại lượt k vì N chương vượt. Trả (file, số chương)."""
+    (k, N) = đang mã hoá lại lượt k vì N chương vượt. `cancelled()` True: dừng ở khúc PCM kế / trước chương kế được đo đỉnh / trước lượt
+    ghép cuối, ném `export_jobs.Cancelled` - thư mục tạm bị xoá, không ghi file đích. Trả (file, số chương)."""
     # Định dạng chung theo chương đầu; chương khác tần số / số kênh được ffmpeg đổi theo lúc giải mã - mốc vẫn đúng.
     rate, channels = audio_layout(ffmpeg, chapters[0][1])
     target_root.mkdir(parents=True, exist_ok=True)
@@ -379,6 +423,7 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
         lowered: dict[int, float] = {}  # chương (từ 0) -> dB hạ đầu vào ở lần mã hoá lại
 
         def feed(sink: Any) -> int:
+            sink = _watched(sink, cancelled)
             frame = 2 * channels
             position = 0
             marks.clear()
@@ -401,7 +446,11 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
         ceiling = MIX["exportCeilingDbtp"]
         report = on_peaks or (lambda _round, _over: None)
         report(0, 0)
-        peaks = [true_peak_dbtp(ffmpeg, audio, start / rate, (end - start) / rate) for _name, start, end in marks]
+
+        def measure() -> list[float]:
+            return [true_peak_dbtp(ffmpeg, audio, start / rate, (end - start) / rate) for _name, start, end in _checked(marks, cancelled)]
+
+        peaks = measure()
         for attempt in range(1, _PEAK_RETRIES + 1):
             over = {index: peak for index, peak in enumerate(peaks) if peak > ceiling}
             if not over:
@@ -411,11 +460,12 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
             report(attempt, len(over))
             encode_stream(ffmpeg, rate, channels, codec, audio, feed, "AAC")
             report(attempt, 0)
-            peaks = [true_peak_dbtp(ffmpeg, audio, start / rate, (end - start) / rate) for _name, start, end in marks]
+            peaks = measure()
             log.info("M4B: đỉnh AAC vượt %.1f dBTP ở %d chương, lần mã hoá lại %d (hạ %s) -> đỉnh %s", ceiling, len(over), attempt,
                      {index + 1: round(db, 2) for index, db in lowered.items()}, {index + 1: round(peaks[index], 2) for index in lowered})
         if left := {index + 1: round(peak, 2) for index, peak in enumerate(peaks) if peak > ceiling}:
             log.warning("M4B: sau %d lần mã hoá lại vẫn còn đỉnh AAC vượt %.1f dBTP: %s", _PEAK_RETRIES, ceiling, left)
+        _stop_if(cancelled)
         meta = work / "chapters.txt"
         meta.write_bytes(_chapter_marks(marks, rate).encode("utf-8"))
         cover_path = cover_for(work)
@@ -447,11 +497,13 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
 
 
 def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = None, music: Callable[[str], Path | None] | None = None,
-               progress: Callable[[int, int], None] | None = None, peaks: Callable[[int, int], None] | None = None) -> dict[str, Any]:
+               progress: Callable[[int, int], None] | None = None, peaks: Callable[[int, int], None] | None = None,
+               cancelled: Callable[[], bool] | None = None) -> dict[str, Any]:
     """Cả cuốn thành một file `<tên sách>.m4b` trong `target_root`: AAC, mỗi chương một mục (tên chương thật), bìa và tag như
     bản xuất MP3. Chỉ chương đã nghe được, như mọi kiểu xuất; `chaptersTotal` để giao diện nói chương nào chưa có.
     `music`: nguồn file bài nhạc = "Kèm nhạc nền" (như `export_book`): nhạc trộn vào PCM trước bộ mã hoá AAC; `progress(i, N)` báo đang
-    trộn nhạc chương thứ i (từ 1) trong N; `peaks(lượt, số chương vượt)`: bước kiểm đỉnh AAC (`m4b_from_files` on_peaks)."""
+    trộn nhạc chương thứ i (từ 1) trong N; `peaks(lượt, số chương vượt)`: bước kiểm đỉnh AAC (`m4b_from_files` on_peaks). `cancelled()`: Huỷ
+    (`m4b_from_files`) - bài nhạc còn phải tải thì do nguồn `music` tự dừng (server.music_exporting)."""
     summary = store.summarize(project_root)
     title = summary["title"] or project_root.name
     narrator = summary["settings"]["narrator"] or ""
@@ -480,7 +532,7 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
 
     final, count = m4b_from_files(ffmpeg, chapters, target_root, title=title, narrator=narrator,
                                   cover_for=lambda work: usable_cover(covers.cover_file(project_root)) or drawn_cover(work, cover),
-                                  decode=decode if mixer is not None else None, on_peaks=peaks)
+                                  decode=decode if mixer is not None else None, on_peaks=peaks, cancelled=cancelled)
     real = covers.cover_file(project_root)
     return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size,
             "chapters": count, "chaptersTotal": summary["chapters"]["total"], **(mixer.note(ids) if mixer is not None else {}),
@@ -539,9 +591,13 @@ def export_series(parts: list[Path], target_root: Path,
     được kể tên - người dùng thấy bộ thiếu phần nào thay vì nghĩ là xuất sót."""
     listed, skipped = series_split(parts)
     folder = free_path(target_root / safe_name(continuation.base_title(_title_of(parts[0]))))
-    done = [{"part": number, "title": _title_of(project),
-             **export_part(project, folder, f"Phần {number} - {continuation.base_title(_title_of(project))}")}
-            for number, project in listed]
+    try:
+        done = [{"part": number, "title": _title_of(project),
+                 **export_part(project, folder, f"Phần {number} - {continuation.base_title(_title_of(project))}")}
+                for number, project in listed]
+    except Cancelled:
+        shutil.rmtree(folder, ignore_errors=True)  # huỷ giữa bộ: các phần đã xong của lượt này cũng đi theo - không để lại nửa bộ
+        raise
     return {"folder": str(folder), "parts": done, "skipped": skipped, "partsTotal": len(parts)}
 
 

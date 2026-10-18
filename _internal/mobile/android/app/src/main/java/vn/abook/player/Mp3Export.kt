@@ -182,7 +182,9 @@ object Mp3Export {
             val name = chapterFileName(chapter.number, plan.numbered, chapter.fullTitle)
             val fields = Id3Tag.Fields(chapter.fullTitle, plan.title, plan.narrator, chapter.number, plan.numbered, plan.cover)
             folder.write(name) { out -> Id3Tag.write(chapter.file, out, fields, stopped) }
-            entries += Triple(chapter.duration, chapter.fullTitle, name)
+            // Độ dài thật của file vừa ghi (đếm khung MP3, như máy tính `write_mp3_folder`): độ dài trong sổ lệch 4-9 s/chương (soát a61).
+            val seconds = runCatching { vn.abook.player.readaloud.Mp3.durationMs(chapter.file.readBytes()) / 1000.0 }.getOrNull()?.takeIf { it > 0 } ?: chapter.duration
+            entries += Triple(seconds, chapter.fullTitle, name)
             progress(entries.size, listed)
         }
         folder.write(playlistName(plan.title)) { it.write(playlist(plan.title, entries).toByteArray(Charsets.UTF_8)) }

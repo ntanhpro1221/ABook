@@ -143,6 +143,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("GET", _BOOK + r"/bookfile-job"),
     ("POST", _BOOK + r"/m4b-job"),  # xuất M4B chạy nền như file sách; nơi ghi vẫn là "Đã xuất" trong thư viện (_target)
     ("GET", _BOOK + r"/m4b-job"),
+    ("POST", _BOOK + r"/m4b-job/cancel"),  # "Huỷ" trong thông báo tiến độ M4B
     # Hộp Xuất: tiến độ tải nhạc nền để đóng kèm, "Huỷ", và việc xuất còn chạy sau khi tải lại trang (export_jobs.py). Lời đáp không mang đường
     # dẫn nào: server.without_local_paths chỉ để lại TÊN file.
     ("GET", _BOOK + r"/music-export"),

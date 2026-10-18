@@ -7,6 +7,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Máy tính
+
+- Xuất M4B giờ có nút "Huỷ" trong thông báo tiến độ ở mọi bước: lúc tải nhạc nền, lúc trộn nhạc từng chương, lúc ghép file. Bấm Huỷ là dừng trong chừng 1 giây (thử trên cuốn 3 chương: 1,05 giây khi đang tải bài, 0,5 giây khi đang trộn chương 2), không để lại file M4B hay thư mục tạm nào. Trước đây không có cách nào dừng, phải chờ hết cả lượt.
+- Xuất M4B kèm nhạc nền báo "Đang tải nhạc nền 2/5 bài" trong lúc tải bài chưa có trên máy, thay vì đứng im gần một phút chỉ báo thời gian đã trôi.
+- Xuất thư mục MP3 trong Studio cũng có nút "Huỷ xuất": các chương đã ghi dở được xoá, thư mục bạn chọn không còn bản xuất nửa chừng. Huỷ khi đang tải nhạc cho file sách hay dự án cũng dừng ngay bài đang tải, không chờ hết bài (trước đây có lúc phải chờ 20 giây).
+- Tắt app giữa lúc xuất vào một thư mục bạn tự chọn: lần mở app sau dọn file tạm còn sót ở đó (sau 1 giờ), như vẫn làm với thư mục "Đã xuất". Trước đây file tạm cỡ vài chục MB nằm lại mãi.
+- Danh sách phát `.m3u8` của bản xuất MP3 ghi đúng độ dài từng chương (903 / 989 / 859 giây, khớp file), không còn lệch 2-9 giây. Điện thoại ghi danh sách phát của bản xuất MP3 cũng theo độ dài thật của file như vậy.
+- Mở file `.abook` có nhạc nền trên máy khác: app dùng luôn bài nhạc nằm trong file, không tải lại danh mục nhạc và bài từ mạng (trước đây mỗi lần mở tải thừa khoảng 6,5 MB).
+
 ## [0.4.94] - 2026-10-18
 
 ### Studio

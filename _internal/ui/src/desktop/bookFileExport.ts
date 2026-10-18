@@ -15,6 +15,8 @@ export interface ExportCopy {
   /** Việc có nút Huỷ: lời khi người dùng đã dừng nó ("Đã dừng xuất…") và điều còn lại ("Phần đã làm được giữ…"). */
   stopped?: string;
   stoppedNote?: string;
+  /** Lời dưới "Đang dừng…" khi khác lời chung (sách nói: "phần đã làm được giữ"). */
+  stopping?: string;
   /** Việc báo tiến độ theo pha (gói dự án): dòng tiêu đề + thanh 0-1 (null: chưa có mẫu số) thay cho "đã mm:ss". */
   progress?: (job: ExportJob) => { title: string; fraction: number | null };
   /** Lỗi thô của máy chủ -> câu cho người nghe (gói dự án: ổ đầy, thư mục bị khoá...). */
@@ -30,7 +32,15 @@ export const BOOK_FILE_COPY: ExportCopy = {
   stoppedNote: "Chưa có file sách nào được ghi.",
   progress: (job) => packView(job as unknown as PackJob, BOOK_FILE_SPAN),
 };
-export const M4B_COPY: ExportCopy = { busy: "Đang làm file M4B…", done: "Đã xuất M4B", failed: "Không xuất được M4B" };
+/** M4B: việc nền có Huỷ ở mọi pha (tải nhạc nền, trộn, ghép - webui/server.py `post_m4b_job_cancel`); huỷ thì không còn gì trên đĩa. */
+export const M4B_COPY: ExportCopy = {
+  busy: "Đang làm file M4B…",
+  done: "Đã xuất M4B",
+  failed: "Không xuất được M4B",
+  stopped: "Đã huỷ xuất",
+  stoppedNote: "Chưa có file M4B nào được ghi.",
+  stopping: "Dừng ngay sau bước đang làm - không ghi file M4B nào.",
+};
 /** Gói cả dự án (.abookproj): việc nền ở máy chủ, có pha + đã/tổng và Huỷ (webui/server.py `post_projectfile_job`). */
 export const PROJECT_FILE_COPY: ExportCopy = {
   busy: "Đang đóng gói dự án…",
@@ -90,9 +100,9 @@ export interface ExportJob {
   state: "idle" | "running" | "done" | "error" | "cancelled";
   id?: string;
   /** Xuất sách nói (listen_export.py) báo tiến độ: pha ("voice" đọc / "music" trộn nhạc nền / "encode" ghép file), chương i/N, % theo số chữ, ước còn lại (giây),
-   *  đang nhường người nghe. Xuất M4B kèm nhạc nền chỉ báo pha "music" + chương i/N. Mọi M4B: "peaks" đang kiểm đỉnh âm sau mã hoá, "reencode"
+   *  đang nhường người nghe. Xuất M4B kèm nhạc nền báo "music-fetch" (dưới đây) rồi pha "music" + chương i/N. Mọi M4B: "peaks" đang kiểm đỉnh âm sau mã hoá, "reencode"
    *  mã hoá lại lượt `peakRound` vì `peakOver` chương vượt đỉnh (export.m4b_from_files). Gói dự án báo pha riêng (`PackPhase`) cùng `done`/`total`.
-   *  Điện thoại còn "music-fetch": đang tải bài nhạc thiếu thứ `done` + 1 trong `total` trước khi trộn (ExportMusic.kt). */
+   *  "music-fetch": đang tải bài nhạc thiếu thứ `done` + 1 trong `total` trước khi trộn (điện thoại: ExportMusic.kt; máy tính: M4B kèm nhạc nền). */
   phase?: "voice" | "music" | "music-fetch" | "encode" | "peaks" | "reencode" | PackPhase;
   peakRound?: number;
   peakOver?: number;
