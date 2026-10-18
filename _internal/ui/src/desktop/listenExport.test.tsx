@@ -119,8 +119,16 @@ describe("jobView for the audiobook", () => {
   });
 
   it("says nothing about a stopped run for an export that cannot be stopped", () => {
-    // M4B không có nút Huỷ (file sách thì có từ uxfix30 - BOOK_FILE_COPY.stopped).
-    expect(jobView({ state: "cancelled" }, 0, false, M4B_COPY).kind).toBe("none");
+    expect(jobView({ state: "cancelled" }, 0, false, { busy: "Đang làm…", done: "Xong", failed: "Hỏng" }).kind).toBe("none");
+  });
+
+  it("an M4B stopped with Huỷ says nothing was written (soát a61: trước đây M4B không huỷ được)", () => {
+    expect(jobView({ state: "cancelled" }, 0, false, M4B_COPY)).toEqual({ kind: "info", title: "Đã huỷ xuất", description: "Chưa có file M4B nào được ghi." });
+  });
+
+  it("an M4B downloading its background music says which track (k/n)", () => {
+    const view = jobView({ state: "running", phase: "music-fetch", done: 1, total: 3, elapsed: 5 }, 0, false, M4B_COPY);
+    expect(view.kind === "loading" && view.description).toBe("Đang tải nhạc nền 2/3 bài");
   });
 
   it("hints at the last file after a finished run", () => {

@@ -231,6 +231,12 @@ interface Playing {
   final?: boolean;
 }
 
+/** Bài nằm sẵn trong sách: cuốn mở từ file `.abook` mang bài trong gói, máy chủ đưa qua `/music/files/` (server.py music_cues) - không có gì để xin
+ *  máy chủ tải sẵn (soát a61: mở `.abook` ở máy mới vẫn tải danh mục + bài 6,4 MB mà gói đã có). */
+export function carriedByBook(cue: Pick<MusicCue, "src">): boolean {
+  return cue.src.includes("/music/files/");
+}
+
 /** Hỏi mốc chương kế rồi xin tải sẵn bài mốc ĐẦU của nó khi chương này còn <= [NEXT_CHAPTER_WARM_SECONDS]: chương mới mở bằng bài đã nằm trong bộ đệm của
  *  máy chủ, không im lặng chờ tải (đo 15,5 giây trung vị, PLAN_lx §2). Chương kế chưa dựng xong / hỏi hỏng thì bỏ qua và hỏi lại sau [NEXT_CHAPTER_RETRY_MS]. */
 export class NextChapterWarm {
@@ -256,7 +262,7 @@ export class NextChapterWarm {
         const first = result.pending ? undefined : result.cues[0];
         if (first) {
           this.done.add(ticket);
-          this.warm(first.link);
+          if (!carriedByBook(first)) this.warm(first.link);
         } else if (result.pending || result.unavailable) {
           later();
         } else {
@@ -306,7 +312,7 @@ export class MusicBed {
   /** Bài của mốc kế tiếp (khác bài đang kêu) tải sẵn trong lúc bài này chơi: sang mốc không phải chờ mạng (Android: MusicBed.kt prefetchNext). */
   private warmNext(sounding: MusicCue | null, seconds: number): void {
     const next = this.cues.find((cue) => cue.start > seconds && cue.link !== sounding?.link);
-    if (next) this.warmLink(next.link);
+    if (next && !carriedByBook(next)) this.warmLink(next.link);
   }
 
   /** Mốc mới (`levelDb` bỏ trống = giữ mức chung cũ). `seconds`: chỗ đang tới theo mốc mới - danh sách phát dựng lại hàng bài thì đồng

@@ -1018,6 +1018,18 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     none.bed.stop();
   });
 
+  it("bài nằm sẵn trong file .abook (máy chủ đưa qua /music/files/) không được xin tải lại (soát a61)", () => {
+    vi.useFakeTimers();
+    const sim = slowBed(() => 0);
+    const packaged = (cue: MusicCue) => ({ ...cue, src: `http://127.0.0.1:8870/api/books/b1/music/files/${cue.key}.mp3` });
+    sim.bed.setCues([packaged(slow[0]), packaged(slow[1]), slow[2]], -20);
+    sim.bed.sync(1, true);
+    expect(sim.warmed).toEqual([]);
+    sim.bed.sync(120, true);
+    expect(sim.warmed).toEqual(["https://x/c.mp3"]); // bài thiếu thật (đường tải của máy chủ) vẫn được tải sẵn
+    sim.bed.stop();
+  });
+
   it("bài mới chưa có tiếng thì âm lượng giữ 0 (bài cũ mờ như cũ); có tiếng rồi mới mờ vào trong FADE_SECONDS", () => {
     vi.useFakeTimers();
     const sim = slowBed((src) => (src === "/a" ? 0 : 16));
@@ -1095,6 +1107,18 @@ describe("tải sẵn bài đầu chương kế khi chương còn <= 120 giây (
   const settle = async () => {
     for (let i = 0; i < 4; i += 1) await Promise.resolve();
   };
+
+  it("chương kế của file .abook mang bài trong gói: không xin máy chủ tải gì (soát a61)", async () => {
+    const warmed: string[] = [];
+    const packaged = next("https://x/n.mp3");
+    packaged.cues = packaged.cues.map((cue) => ({ ...cue, src: `/api/books/b1/music/files/${cue.key}.mp3` }));
+    const watch = new NextChapterWarm(async () => packaged, (link) => warmed.push(link));
+    watch.update("1:1", 2, 60);
+    await settle();
+    watch.update("1:1", 2, 30);
+    await settle();
+    expect(warmed).toEqual([]);
+  });
 
   it("còn > 120 giây hay chưa biết độ dài thì chưa hỏi; tới ngưỡng thì xin bài MỐC ĐẦU của chương kế, một lần", async () => {
     const asked: number[] = [];

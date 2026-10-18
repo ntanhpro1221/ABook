@@ -26,7 +26,8 @@ KEEP = 20
 
 
 class ExportFolders:
-    """Các thư mục người dùng đã chọn để xuất `.abookproj`, nhớ qua các lần mở app (mới nhất trước, tối đa `KEEP`)."""
+    """Các thư mục mọi lượt xuất đã ghi vào (MP3, M4B, `.abook`, `.abookproj` - server `_export_root`), nhớ qua các lần mở app (mới nhất trước,
+    tối đa `KEEP`)."""
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -101,6 +102,7 @@ def sweep(folders: Iterable[Path], scratch_root: Path | None, *, now: float | No
 CRASH_AGE = 3600.0
 BOOKFILE_PART = re.compile(r"^\..+\.abook\.[0-9a-f]{8}\.part$")  # bookfile.pack: f".{out.name}.{secrets.token_hex(4)}.part"
 M4B_SCRATCH = re.compile(r"^\.m4b-[a-z0-9_]{8}$")  # export.m4b_from_files: TemporaryDirectory(prefix=".m4b-", dir=nơi lưu)
+MUSIC_SCRATCH = re.compile(r"^\.music-[a-z0-9_]{8}$")  # export.export_book kèm nhạc: TemporaryDirectory(prefix=".music-", dir=nơi lưu)
 STAGING = re.compile(r"^\..+\.[0-9a-f]{8}\.part$")  # bookfile / projectfile extract, open_into: thư mục tạm trong thư viện
 RETIRED = re.compile(r"^\.(?P<name>.+)\.[0-9a-f]{8}\.old$")  # bookfile / projectfile extract: bản cũ chờ xoá sau khi thay
 TEMP_SCRATCH = re.compile(r"^abook-(?:text|wishes)-[a-z0-9_]{8}$")  # textbook / book_wishes: TemporaryDirectory trong %TEMP%
@@ -134,7 +136,7 @@ def sweep_crashed(export_folders: Iterable[Path], library_folders: Iterable[Path
     found: list[Path] = []
     restored: list[Path] = []
     for folder in dict.fromkeys(export_folders):
-        found += _entries(folder, BOOKFILE_PART) + _entries(folder, M4B_SCRATCH)
+        found += _entries(folder, BOOKFILE_PART) + _entries(folder, M4B_SCRATCH) + _entries(folder, MUSIC_SCRATCH)
     for folder in dict.fromkeys(library_folders):
         found += _entries(folder, STAGING)
         for retired in _entries(folder, RETIRED):
