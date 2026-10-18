@@ -29,7 +29,7 @@ TURBO_RATE = 48_000
 NANO_RATE = 24_000
 DEFAULT_SAMPLING = {"temperature": 0.8, "top_k": 25, "top_p": 0.95, "repetition_penalty": 1.2, "repetition_window": 64}
 MAX_NEW_FRAMES = 300
-# 8 bước (gói vieneu: 16): đạt phép thử "thay được" trên 144 clip (18-10), nhanh gấp đôi. Bậc "Nhanh hơn" của Nano: vieneu_module.NANO_FAST.
+# 8 bước (gói vieneu: 16): đạt phép thử "thay được" trên 144 clip (18-10), nhanh gấp đôi. Nano chỉ có một bậc (bản int8 ở 10 bước chỉ nhanh hơn 5-8 %).
 NANO_STEPS, NANO_CFG = 8, 3.0
 NANO_MAX_SECONDS = 15.0
 NANO_MIN_FRAMES = 2
@@ -569,15 +569,12 @@ class TurboEngine:
 
 # ---- Nano ----------------------------------------------------------------------------------------------------------------------
 class NanoEngine:
-    """VieNeu-TTS v3 Nano (flow matching, 24 kHz). `model_dir`: các file của repo VieNeu-TTS-v3-Nano. `estimator`: file bộ khử nhiễu khác (bậc
-    "Nhanh hơn": bản int8, vieneu_module.NANO_FAST; None = vector_estimator.onnx của repo); `steps`: số bước mặc định của engine."""
+    """VieNeu-TTS v3 Nano (flow matching, 24 kHz). `model_dir`: các file của repo VieNeu-TTS-v3-Nano."""
 
     SAMPLE_RATE = NANO_RATE
 
-    def __init__(self, model_dir: Path | str, *, threads: int = 0, device: str = "cpu", sessions: dict[str, Any] | None = None,
-                 estimator: Path | str | None = None, steps: int = NANO_STEPS) -> None:
+    def __init__(self, model_dir: Path | str, *, threads: int = 0, device: str = "cpu", sessions: dict[str, Any] | None = None) -> None:
         model_dir = Path(model_dir)
-        self.steps = steps
         self.cfg = json.loads((model_dir / "config.json").read_bytes().decode("utf-8"))
         constants = np.load(model_dir / "constants.npz")
         self.null_spk = constants["null_spk"].astype(np.float32)[None]
@@ -594,7 +591,7 @@ class NanoEngine:
             options = _session_options(threads, device)
             self.text = _session(model_dir / "text_encoder.onnx", options, device)
             self.dur = _session(model_dir / "duration_predictor.onnx", options, device)
-            self.ve = _session(Path(estimator) if estimator is not None else model_dir / "vector_estimator.onnx", options, device)
+            self.ve = _session(model_dir / "vector_estimator.onnx", options, device)
             self.dec = _session(model_dir / "codec_decoder.onnx", options, device)
         null_ids = np.array([[self.bos, self.eos]], dtype=np.int64)
         self.null_ctx = self.text.run(None, {"ids": null_ids, "style": self.null_style})[0]
@@ -608,9 +605,8 @@ class NanoEngine:
         return np.array([ids], dtype=np.int64)
 
     def infer(self, phonemes: str, speaker_emb: np.ndarray, style: np.ndarray, *, seed: int | None,
-              steps: int | None = None, cfg: float = NANO_CFG) -> np.ndarray:
-        """Một khúc phoneme -> sóng âm 24 kHz (OnnxV3NanoEngine.infer, sway 0, tốc độ 1); `steps` None = của engine."""
-        steps = self.steps if steps is None else steps
+              steps: int = NANO_STEPS, cfg: float = NANO_CFG) -> np.ndarray:
+        """Một khúc phoneme -> sóng âm 24 kHz (OnnxV3NanoEngine.infer, sway 0, tốc độ 1)."""
         with self._lock:
             spk = np.asarray(speaker_emb, dtype=np.float32).reshape(1, -1)
             style = np.asarray(style, dtype=np.float32)

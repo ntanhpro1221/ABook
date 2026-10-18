@@ -179,9 +179,9 @@ class ReadAloud:
     `vieneu_engines`: bộ dựng engine VieNeu theo tầng (webui/vieneu_module.make_engine: Turbo dùng bản tăng tốc khi có); bỏ trống = engine ONNX;
     `supertonic_locate`: như vậy cho mô-đun "Giọng Supertonic" (webui/supertonic_module.installed);
     `rtf`: tốc độ tự đo của giọng (để "Làm trước" ước thời gian).
-    Bậc "Nhanh hơn" của "Tốc độ giọng trên máy" (webui/voice_speed.py, chỉ Nghe ngay): `speed(giọng)` = dấu bậc đang dùng ("fast<số bước>", "" = bậc chất
-    lượng); khi khác rỗng, clip đọc bằng nhà cung cấp thứ hai của giọng ấy - `supertonic_fast_locate` (supertonic_module.installed_fast), `vieneu_fast_engines`
-    (vieneu_module.make_fast_engine) - và dấu ấy vào khoá bộ đệm."""
+    Bậc "Nhanh hơn" của "Tốc độ giọng trên máy" (webui/voice_speed.py, chỉ Nghe ngay, chỉ giọng Supertonic): `speed(giọng)` = dấu bậc đang dùng ("fast<số bước>",
+    "" = bậc chất lượng); khi khác rỗng, clip đọc bằng nhà cung cấp thứ hai của giọng ấy - `supertonic_fast_locate` (supertonic_module.installed_fast) - và dấu
+    ấy vào khoá bộ đệm."""
 
     def __init__(self, folder: Path | str, providers: list[Provider] | None = None, *, limit: int | None = None,
                  keys: KeyStore | None = None, vieneu_locate: Callable[[], vieneu.Installed | None] | None = None,
@@ -189,8 +189,7 @@ class ReadAloud:
                  vieneu_engines: Callable[[str, vieneu.Installed], Any] | None = None,
                  rtf: Callable[[str], float | None] = lambda _voice: None,
                  speed: Callable[[str], str] = lambda _voice: "",
-                 supertonic_fast_locate: Callable[[], supertonic.Installed | None] | None = None,
-                 vieneu_fast_engines: Callable[[str, vieneu.Installed], Any] | None = None) -> None:
+                 supertonic_fast_locate: Callable[[], supertonic.Installed | None] | None = None) -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
         self.cache = ClipCache(self.folder, **kwargs)
@@ -205,8 +204,6 @@ class ReadAloud:
             self.providers[self.supertonic.id] = self.supertonic
         # Bậc "Nhanh hơn": nhà cung cấp thứ hai của cùng giọng (engine riêng, nên Nghe ngay và việc xuất không tranh nhau một engine).
         self.fast: dict[str, Provider] = {}
-        if vieneu_locate is not None and vieneu_fast_engines is not None:
-            self.fast[vieneu.PREFIX] = vieneu.VieneuProvider(vieneu_locate, engines=vieneu_fast_engines)
         if supertonic_fast_locate is not None:
             self.fast[supertonic.PREFIX] = supertonic.SupertonicProvider(supertonic_fast_locate)
         self._speed = speed

@@ -401,9 +401,8 @@ class App:
                                              keys=readaloud_keys.KeyStore(preferences.path.with_name(readaloud_keys.FILE_NAME)),
                                              vieneu_locate=vieneu_module.installed, supertonic_locate=supertonic_module.installed, vieneu_engines=vieneu_module.make_engine,
                                              rtf=lambda voice: supertonic_module.rtf(voice) or vieneu_module.rtf(voice),
-                                             # "Tốc độ giọng trên máy" (voice_speed.py): bậc "Nhanh hơn" của Supertonic / VieNeu Nano khi nghe trực tiếp
-                                             speed=voice_speed.live_tag, supertonic_fast_locate=supertonic_module.installed_fast,
-                                             vieneu_fast_engines=vieneu_module.make_fast_engine)
+                                             # "Tốc độ giọng trên máy" (voice_speed.py): bậc "Nhanh hơn" của Supertonic khi nghe trực tiếp
+                                             speed=voice_speed.live_tag, supertonic_fast_locate=supertonic_module.installed_fast)
         voice_speed.configure(preferences.path.with_name(voice_speed.FILE))
         vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=self.readaloud.vieneu.benchmark,
                                 after_install=lambda: self.readaloud.forget("vieneu"))

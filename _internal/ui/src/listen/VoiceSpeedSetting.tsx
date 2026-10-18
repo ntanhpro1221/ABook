@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { Button, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { formatSize } from "@/studio/musicLocal";
-import { desktopSupertonic, desktopVieneu, useModuleStatus, type VieneuBackend } from "./VieneuModuleCard";
-import { SUPERTONIC_COPY, VIENEU_COPY } from "./vieneuModule";
+import { desktopSupertonic, useModuleStatus, type VieneuBackend } from "./VieneuModuleCard";
+import { SUPERTONIC_COPY } from "./vieneuModule";
 import {
   needsFastDownload,
   VOICE_SPEED_OPTIONS,
@@ -31,32 +31,31 @@ export const desktopVoiceSpeed: VoiceSpeedBackend = {
 const KEY = ["readaloud", "voice-speed"];
 
 /** "Tốc độ giọng trên máy": Tự động / Chất lượng cao nhất / Nhanh hơn, một lựa chọn cho cả máy; dưới đó mỗi giọng đã tải nói đang dùng bậc nào và vì sao.
- *  Muốn bậc nhanh mà chưa có bản nhanh hơn: nút tải kèm cỡ (tải qua thẻ của mô-đun ấy, nên tiến độ hiện ở thẻ). Chỉ hiện khi máy có giọng hai bậc. */
+ *  Muốn bậc nhanh mà chưa có bản nhanh hơn: nút tải kèm cỡ (tải qua thẻ của mô-đun ấy, nên tiến độ hiện ở thẻ). Chỉ giọng Supertonic có hai bậc;
+ *  chưa tải Supertonic thì cài đặt vẫn hiện, chỉ không có dòng giọng nào. */
 export function VoiceSpeedSetting({
   backend = desktopVoiceSpeed,
   supertonic = desktopSupertonic,
-  vieneu = desktopVieneu,
-}: { backend?: VoiceSpeedBackend; supertonic?: VieneuBackend; vieneu?: VieneuBackend } = {}) {
+}: { backend?: VoiceSpeedBackend; supertonic?: VieneuBackend } = {}) {
   const client = useQueryClient();
   const id = useId();
   const [busy, setBusy] = useState(false);
   const { data: status } = useQuery({ queryKey: KEY, queryFn: () => backend.status() });
   // Thẻ mô-đun tải / đo xong (cùng khoá truy vấn với thẻ): số đo hay bản nhanh hơn vừa đổi - hỏi lại dòng này.
-  const modules = { supertonic: useModuleStatus(supertonic, SUPERTONIC_COPY), vieneu: useModuleStatus(vieneu, VIENEU_COPY) };
-  const working = modules.supertonic.working || modules.vieneu.working;
+  const supertonicCard = useModuleStatus(supertonic, SUPERTONIC_COPY);
+  const working = supertonicCard.working;
   const wasWorking = useRef(false);
   useEffect(() => {
     if (wasWorking.current && !working) void client.invalidateQueries({ queryKey: KEY });
     wasWorking.current = working;
   }, [working, client]);
-  if (!status || status.voices.length === 0) return null;
+  if (!status) return null;
   const choose = async (choice: VoiceSpeedChoice) => {
     setBusy(true);
     try {
       client.setQueryData(KEY, await backend.set(choice));
       // Thẻ mô-đun mời / thôi mời tải bản nhanh hơn theo lựa chọn mới.
       void client.invalidateQueries({ queryKey: ["readaloud", SUPERTONIC_COPY.key] });
-      void client.invalidateQueries({ queryKey: ["readaloud", VIENEU_COPY.key] });
     } catch (error) {
       toast.error("Chưa đổi được tốc độ giọng", { description: (error as Error).message });
     } finally {
@@ -64,10 +63,8 @@ export function VoiceSpeedSetting({
     }
   };
   const download = async (voice: VoiceSpeedVoice) => {
-    const module = voice.module === "supertonic" ? supertonic : vieneu;
-    const key = voice.module === "supertonic" ? SUPERTONIC_COPY.key : VIENEU_COPY.key;
     try {
-      client.setQueryData(["readaloud", key], await module.start([voice.fastChoice]));
+      client.setQueryData(["readaloud", SUPERTONIC_COPY.key], await supertonic.start([voice.fastChoice]));
     } catch (error) {
       toast.error("Chưa tải được bản nhanh hơn", { description: (error as Error).message });
     }
@@ -85,7 +82,7 @@ export function VoiceSpeedSetting({
       <p className="text-[0.8125rem] text-fg-2 text-pretty">{voiceSpeedDescription(status.choice)}</p>
       <ul className="space-y-1.5">
         {status.voices.map((voice) => {
-          const downloading = modules[voice.module].status?.state === "downloading";
+          const downloading = supertonicCard.status?.state === "downloading";
           return (
             <li key={voice.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-pretty">
               <span className="min-w-0 flex-1">{voiceSpeedLine(voice, status.choice)}</span>
