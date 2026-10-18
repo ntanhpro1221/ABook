@@ -49,6 +49,9 @@ class ListenExportTest {
 
     private val reading = ListenExport.Reading("edge:vi-VN-HoaiMyNeural", null, emptyMap())
 
+    /** Đồng hồ giả (ms) của [run]: chỉ chạy khi lượt xuất nghỉ (`sleep`) hay giọng giả đẩy nó. */
+    private var now = 0L
+
     /** Mỗi chữ của đoạn là 100 mẫu PCM ở 24 kHz: độ dài chương tính được từ chữ. */
     private fun samplesOf(text: String) = text.length * 100
 
@@ -99,9 +102,10 @@ class ListenExportTest {
         stopped: () -> Boolean = { false },
         live: () -> Boolean = { false },
         sleeps: MutableList<Long> = ArrayList(),
+        cached: (String) -> Boolean = { false },
     ) = ListenExport.Run(
         chapters, reading, work, voice.synth, voice.decoder, { file, rate -> Sink(file, rate).also { sinks += it } }, { events += it }, stopped, live,
-        sleep = { sleeps += it },
+        sleep = { sleeps += it; now += it }, clock = { now }, cached = cached,
     )
 
     // ---- chương của cuốn ---------------------------------------------------------------------------------------------
@@ -286,15 +290,99 @@ class ListenExportTest {
     }
 
     @Test
-    fun aPassingOnlineFailureIsRetriedThenTheParagraphIsRead() {
+    fun aShortOutageWaitsForTheNetworkThenTheParagraphIsRead() {
         val voice = Voice()
-        voice.failure = { _, attempt -> if (attempt <= 2) VoiceException("mất mạng", offline = true) else null }
+        voice.failure = { _, attempt -> if (attempt <= 4) VoiceException("mất mạng", offline = true) else null }
+        val events = ArrayList<ListenExport.Progress>()
         val sleeps = ArrayList<Long>()
-        run(listOf(chapter(1, "Một.")), voice, sleeps = sleeps).build()
-        assertEquals(listOf(1000L, 2000L), sleeps)
-        assertEquals(3, voice.asked.size)
+        run(listOf(chapter(1, "Một.")), voice, events = events, sleeps = sleeps).build()
+        assertEquals("nghỉ 1, 2, 4, 8 giây (từng khúc 200 ms để nghe Dừng)", 15_000L, sleeps.sum())
+        assertTrue(sleeps.all { it <= ListenExport.CANCEL_POLL_MS })
+        assertEquals(4, events.count { it.waiting == "network" })
+        assertNull("hết chờ mạng thì báo lại bình thường", events.last().waiting)
+        assertEquals(5, voice.asked.size)
         assertNotNull(ListenExport.ready(work, chapter(1, "Một."), reading))
     }
+
+    @Test
+    fun anOutageLongerThanThirtySecondsStopsWithWords() {
+        val voice = Voice()
+        voice.failure = { _, _ -> VoiceException("Không có mạng để dùng giọng Edge", offline = true) }
+        val sleeps = ArrayList<Long>()
+        try {
+            run(listOf(chapter(1, "Một.")), voice, sleeps = sleeps).build()
+            fail("phải dừng")
+        } catch (refused: Mp3Export.Refused) {
+            assertTrue(refused.message!!.contains("Không có mạng"))
+        }
+        assertEquals(1000L + 2000 + 4000 + 8000 + 15000 + 15000, sleeps.sum())
+        assertEquals(7, voice.asked.size)
+    }
+
+    @Test
+    fun aTimeoutIsNetworkButARefusalKeepsTheOldTwoRetries() {
+        val slow = Voice()
+        slow.failure = { _, attempt -> if (attempt <= 3) VoiceException("Giọng Edge trả lời quá chậm", reason = "timeout") else null }
+        val sleeps = ArrayList<Long>()
+        run(listOf(chapter(1, "Một.")), slow, sleeps = sleeps).build()
+        assertEquals(7000L, sleeps.sum())
+        val refused = Voice()
+        refused.failure = { _, _ -> VoiceException("HTTP 403", reason = "rejected") }
+        val again = ArrayList<Long>()
+        try {
+            run(listOf(chapter(2, "Hai.")), refused, sleeps = again).build()
+            fail("phải dừng")
+        } catch (error: Mp3Export.Refused) {
+            assertEquals(1 + ListenExport.RETRIES, refused.asked.size)
+            assertEquals(3000L, again.sum())
+        }
+    }
+
+    @Test
+    fun stopWhileWaitingForTheNetworkStopsAtOnce() {
+        val voice = Voice()
+        voice.failure = { _, _ -> VoiceException("mất mạng", offline = true) }
+        try {
+            run(listOf(chapter(1, "Một.")), voice, stopped = { now >= 2500 }).build()
+            fail("phải dừng")
+        } catch (stopped: Mp3Export.Stopped) {
+            assertTrue(now <= 2500 + ListenExport.CANCEL_POLL_MS)
+        }
+    }
+
+    @Test
+    fun aReadCutByStopIsAStopNotAnErrorAndLeavesNoHalfChapter() {
+        var stop = false
+        val voice = Voice()
+        voice.failure = { text, _ ->
+            if (text == "Hai.") {
+                stop = true
+                throw java.util.concurrent.CancellationException("Lượt đọc đã bị huỷ")
+            }
+            null
+        }
+        try {
+            run(listOf(chapter(1, "Một.", "Hai.")), voice, stopped = { stop }).build()
+            fail("phải dừng")
+        } catch (stopped: Mp3Export.Stopped) {
+            assertFalse(File(work, "1.m4a.part").exists())
+            assertNull(ListenExport.ready(work, chapter(1, "Một.", "Hai."), reading))
+        }
+    }
+
+    // ---- "còn khoảng ...": chỉ khi đo đủ, theo phần chưa có clip --------------------------------------------------------
+
+    @Test
+    fun theTimeLeftWaitsForThreeNewReadsAndTwentySecondsAndCountsOnlyUncachedParagraphs() {
+        val voice = Voice()
+        voice.failure = { _, _ -> now += 10_000; null } // mỗi đoạn đọc mới mất 10 giây
+        val events = ArrayList<ListenExport.Progress>()
+        run(listOf(chapter(1, "Aaaa.", "Bbbb.", "Cccc.", "Dddd.", "Xxxx.")), voice, events = events, cached = { it == "Xxxx." }).build()
+        val left = events.filter { it.phase == "voice" }.map { it.secondsLeft }
+        // báo đầu chương, sau A, sau B: chưa đủ 3 đoạn mới -> chưa ước; sau C (30 giây, 3 đoạn): còn D (5 chữ) x 2 giây mỗi chữ; X đã có trong bộ đệm: không tính
+        assertEquals(listOf(null, null, null, 10, 0, 0), left)
+    }
+
 
     @Test
     fun aRealFailureStopsWithWordsKeepsTheChaptersDoneAndNamesTheChapter() {
@@ -376,6 +464,48 @@ class ListenExportTest {
         assertTrue(resumed.bytes < fresh.bytes)
         assertEquals(JSONObject.NULL, ListenExport.plan(chapters, reading, work, null).toJson().get("secondsEstimate"))
         assertEquals(1, resumed.toJson().getInt("readyChapters"))
+    }
+
+    @Test
+    fun thePlanTakesTheLengthOfClipsAlreadyHeardAndCountsThemAsReady() {
+        val chapters = listOf(chapter(1, "a".repeat(140)), chapter(2, "b".repeat(280)))
+        // chương 1 đã nghe: clip thật 7 giây (20 chữ mỗi giây, chậm hơn ước 14)
+        val plan = ListenExport.plan(chapters, reading, work, 0.05, cachedMs = { if (it.startsWith("a")) 7000L else null })
+        assertEquals(1, plan.readyChapters)
+        assertEquals(7L, plan.readySeconds)
+        assertEquals(7L + 14L, plan.audioSeconds) // 280 chữ còn lại / 20 chữ mỗi giây đo được
+        assertEquals(14L, plan.secondsEstimate) // máy chỉ đọc 280 chữ chưa có
+        assertEquals(7L, plan.toJson().getLong("readySeconds"))
+        assertEquals(30L, ListenExport.plan(chapters, reading, work, null, cachedMs = { null }).audioSeconds) // chưa có clip nào: 14 chữ mỗi giây
+    }
+
+    // ---- dọn thư mục làm việc -----------------------------------------------------------------------------------------
+
+    @Test
+    fun theSweepRemovesOldAndOrphanedWorkButNeverARunningOne() {
+        val root = Files.createTempDirectory("abook-sweep").toFile()
+        try {
+            val day = 86_400_000L
+            val nowMs = System.currentTimeMillis()
+            fun folder(name: String, ageDays: Int): File = File(root, name).apply {
+                mkdirs()
+                File(this, "1.m4a").apply { writeBytes(ByteArray(3)) }.setLastModified(nowMs - ageDays * day)
+                setLastModified(nowMs - ageDays * day)
+            }
+            val old = folder("cu", 8)
+            val fresh = folder("moi", 1)
+            val orphan = folder("da_xoa", 0)
+            val busy = folder("dang_xuat", 30)
+            val busyOrphan = folder("dang_xuat_mat", 0)
+            val removed = ListenExport.sweepFolders(root, { it in setOf("cu", "moi", "dang_xuat") }, setOf("dang_xuat", "dang_xuat_mat"), nowMs)
+            assertEquals(setOf(old, orphan), removed.toSet())
+            assertFalse(old.exists())
+            assertFalse(orphan.exists())
+            assertTrue(fresh.exists() && busy.exists() && busyOrphan.exists())
+            assertTrue(ListenExport.sweepFolders(File(root, "khong_co"), { true }, emptySet()).isEmpty())
+        } finally {
+            root.deleteRecursively()
+        }
     }
 
     @Test

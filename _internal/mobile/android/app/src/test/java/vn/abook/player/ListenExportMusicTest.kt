@@ -234,20 +234,20 @@ class ListenExportMusicTest {
         val same = mapOf(1 to music)
         val louder = mapOf(1 to chapterMusic(-3.0))
         assertNotEquals(ListenExport.fingerprint(chapters[0], reading, music), ListenExport.fingerprint(chapters[0], reading, louder[1]))
-        val uncached: (String) -> Boolean = { false }
-        val kept = ListenExport.plan(chapters, reading, work, null, music = { MusicExport.audible(same, it) }, cached = uncached)
+        val uncached: (String) -> Long? = { null }
+        val kept = ListenExport.plan(chapters, reading, work, null, music = { MusicExport.audible(same, it) }, cachedMs = uncached)
         assertEquals(2, kept.readyChapters)
         assertEquals(0, kept.rereads)
-        val changed = ListenExport.plan(chapters, reading, work, null, music = { MusicExport.audible(louder, it) }, cached = uncached)
+        val changed = ListenExport.plan(chapters, reading, work, null, music = { MusicExport.audible(louder, it) }, cachedMs = uncached)
         assertEquals(1, changed.readyChapters)
         assertEquals("cả hai đoạn của chương 1 đã bị đẩy khỏi bộ đệm", 2, changed.rereads)
-        assertEquals(0, ListenExport.plan(chapters, reading, work, null, music = { MusicExport.audible(louder, it) }, cached = { true }).rereads)
+        assertEquals(0, ListenExport.plan(chapters, reading, work, null, music = { MusicExport.audible(louder, it) }, cachedMs = { 1000L }).rereads)
         // tắt nhạc: chương 1 chưa từng có bản không nhạc - giọng đã đọc, phải ghép lại
-        val off = ListenExport.plan(chapters, reading, work, null, cached = uncached)
+        val off = ListenExport.plan(chapters, reading, work, null, cachedMs = uncached)
         assertEquals(1, off.readyChapters)
         assertEquals(2, off.rereads)
         // chương chưa từng làm không tính là đọc lại (đó là việc đọc thường)
-        assertEquals(0, ListenExport.plan(listOf(chapter(3)), reading, work, null, cached = uncached).rereads)
+        assertEquals(0, ListenExport.plan(listOf(chapter(3)), reading, work, null, cachedMs = uncached).rereads)
         assertEquals(2, changed.toJson().getInt("rereads"))
         // chương làm lại theo nhạc mới: chỉ chương 1, lần này mức -3 dB
         val sinks = ArrayList<Sink>()

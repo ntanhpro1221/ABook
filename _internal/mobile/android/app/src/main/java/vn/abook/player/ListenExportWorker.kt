@@ -14,6 +14,8 @@ import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.json.JSONObject
+import vn.abook.player.readaloud.ClipCancel
+import vn.abook.player.readaloud.ClipRetry
 import vn.abook.player.readaloud.ReadAloud
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -24,7 +26,8 @@ import java.util.concurrent.ConcurrentHashMap
  * Chỗ lưu như xuất M4B: MỘT file `<tên sách>.m4b`, tên và nơi lưu do người dùng đặt bằng hộp thoại "tạo file" của hệ thống ([M4bExports.createIntent]). Việc chạy bằng
  * WorkManager ở dịch vụ nền như xuất M4B (tắt màn hình vẫn chạy); thông báo có tiến độ và nút "Dừng". Phần đã làm (file AAC từng chương) nằm trong `filesDir/export_work/<mã sách>/`
  * - KHÔNG phải cacheDir, Android dọn cache khi máy đầy mà đọc cả cuốn có thể mất hàng giờ: dừng, lỗi hay app bị giết rồi xuất lại thì làm tiếp từ chương đã xong; xuất xong cả cuốn thì
- * thư mục tạm bị xoá. App bị giết giữa chừng thì WorkManager tự chạy lại việc (quyền ghi file đã chọn được giữ cho tới khi xong).
+ * thư mục tạm bị xoá; lượt bỏ dở thì thư mục của nó được dọn khi sách bị xoá hay sau [ListenExport.STALE_DAYS] ngày không ai đụng tới ([sweep]). App bị giết giữa chừng thì
+ * WorkManager tự chạy lại việc (quyền ghi file đã chọn được giữ cho tới khi xong).
  */
 object ListenExports {
     private const val TAG = "audiobook-export"
@@ -40,6 +43,9 @@ object ListenExports {
 
     /** Tin cuối của mỗi lượt đang chạy (theo cuốn): tải lại giao diện vẫn thấy tiến độ ([running]). */
     private val live = ConcurrentHashMap<String, JSONObject>()
+
+    /** Cuốn đang có lượt chạy (kể cả lượt WorkManager vừa chạy lại, chưa báo tin nào): thư mục làm việc của chúng không bị dọn. */
+    internal val active: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     fun workRoot(context: Context) = File(context.filesDir, WORK_FOLDER)
 
@@ -57,12 +63,12 @@ object ListenExports {
         runCatching { events?.invoke(event) }
     }
 
-    /** Thư mục tạm của các cuốn không còn trên máy (xoá sách rồi mà chương tạm còn lại) dọn đi. */
+    /**
+     * Thư mục tạm của các cuốn không còn trên máy (xoá sách rồi mà chương tạm còn lại) và của lượt bỏ dở quá [ListenExport.STALE_DAYS] ngày dọn đi (soát a62: máy tính chưa
+     * bao giờ dọn). Lúc mở app và sau khi một cuốn bị xoá hẳn; cuốn đang xuất không bị đụng.
+     */
     fun sweep(context: Context) {
-        val root = workRoot(context)
-        for (folder in root.listFiles().orEmpty()) {
-            if (folder.isDirectory && Store.rawManifest(folder.name) == null) folder.deleteRecursively()
-        }
+        ListenExport.sweepFolders(workRoot(context), { Store.rawManifest(it) != null }, active.toSet() + live.keys)
     }
 
     /**
@@ -108,6 +114,13 @@ object ListenExports {
 class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     @Volatile private var title = ""
 
+    /** Lượt đọc đang bay của việc này: "Dừng" cắt ổ cắm Edge ngay ([onStopped]) thay vì chờ hết đoạn (soát a62 trên máy tính: 7 giây). */
+    private val reading = ClipCancel()
+
+    override fun onStopped() {
+        reading.cancel()
+    }
+
     override fun getForegroundInfo(): ForegroundInfo =
         ListenExports.foreground(applicationContext, id, ListenExports.inputs(inputData).bookId.orEmpty(), title, 0, 0, null)
 
@@ -127,6 +140,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
         var done = 0
         var retrying = false
         var music: ExportMusic? = null
+        ListenExports.active += bookId
         try {
             val book = Store.manifest(bookId) ?: throw Mp3Export.Refused("Không tìm thấy sách này trên điện thoại")
             title = book.optString("title").ifEmpty { bookId }
@@ -160,13 +174,20 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             }
             val origin = reading.origin
             val readings = reading.readings
+            val cache = ReadAloud.cache()
             val runner = ListenExport.Run(
                 chapters, reading, work,
-                synth = { text -> ReadAloud.readExactly(voice, text, origin, readings).file },
+                // Một lần đọc trong ClipRetry chỉ để mang [ClipCancel] tới giọng (Edge đăng ký ổ cắm vào đó); thử lại là việc của [ListenExport.Run].
+                synth = { text ->
+                    ClipRetry.run(online = false, delaysMs = LongArray(0), sleep = { false }, budgetMs = Long.MAX_VALUE / 4, cancel = this.reading) {
+                        ReadAloud.readExactly(voice, text, origin, readings)
+                    }.getOrThrow().file
+                },
                 decoder = Clips, outputs = ListenAudio.outputs, progress = ::show, stopped = { isStopped },
                 live = { ReadAloud.liveJobs() > 0 },
                 timed = { chars, seconds -> runCatching { ReadAloud.speeds().record(voice, chars, seconds) } },
                 music = runMusic,
+                cached = { text -> cache.contains(voice, text, origin, readings) },
             )
             val stamps = runner.build()
 
@@ -211,6 +232,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             ListenExports.emit(event().put("error", message))
             return Result.failure()
         } finally {
+            ListenExports.active -= bookId
             music?.close()
             if (!retrying) {
                 input.cover?.delete()

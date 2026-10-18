@@ -26,14 +26,16 @@ export const FORMAT_CHOICES: { id: AudiobookFormat; label: string; hint: string 
 export interface AudiobookPlan {
   chapters: number;
   chars: number;
-  /** Thời gian nghe ước (giây): số chữ / 14 chữ mỗi giây. */
+  /** Thời gian nghe (giây): độ dài thật của phần đã có (clip trong bộ đệm Nghe ngay, chương đã ghép) + phần chưa có ước theo tốc độ đo trên chính các clip ấy. */
   audioSeconds: number;
   /** Tốc độ đo của giọng (giây máy làm cho mỗi giây nghe); null khi chưa đo. */
   rtf: number | null;
-  /** Máy làm cả cuốn mất chừng này giây (chỉ khi đã đo tốc độ giọng); null: không ước. */
+  /** Máy đọc phần chưa có mất chừng này giây (chỉ khi đã đo tốc độ giọng); null: không ước. */
   secondsEstimate: number | null;
-  /** Chương đã ghép sẵn từ một lần xuất bị dừng (cùng giọng, cùng chữ): lần này làm tiếp. */
+  /** Chương có đủ (đã ghép từ lần xuất trước, hay mọi đoạn đã có trong bộ đệm Nghe ngay): xuất ngay, không đọc lại. */
   readyChapters: number;
+  /** Giây nghe đã có sẵn (clip trong bộ đệm + chương đã ghép); thiếu ở máy cũ. */
+  readySeconds?: number;
   ffmpeg: FfmpegStatus;
   /** Ô "Kèm nhạc nền" (webui/music_export.py `packaged_state`): cuốn có nhạc gắn sẵn theo chương không, công tắc Nhạc nền của cuốn đang bật không. */
   music?: MusicExportState;
@@ -86,11 +88,12 @@ export function planText(plan: Pick<AudiobookPlan, "chapters" | "audioSeconds" |
   return `${plan.chapters} chương · ${spokenDuration(plan.audioSeconds)} nghe${machine}.`;
 }
 
-/** Nói điều gì sẽ xảy ra với phần đã làm: "Đã có sẵn 3/12 chương từ lần trước - làm tiếp từ đó." */
-export function resumeText(plan: Pick<AudiobookPlan, "chapters" | "readyChapters">): string {
-  if (!plan.readyChapters) return "";
-  if (plan.readyChapters >= plan.chapters) return "Mọi chương đã ghép sẵn từ lần trước - chỉ còn ghép thành file.";
-  return `Đã có sẵn ${plan.readyChapters}/${plan.chapters} chương từ lần trước - làm tiếp từ đó.`;
+/** Nói phần nào đã có sẵn (đã nghe, đã Làm trước, lần xuất trước): "Đã đọc sẵn 1/4 chương - phần này xuất ngay, không đọc lại." */
+export function resumeText(plan: Pick<AudiobookPlan, "chapters" | "readyChapters" | "readySeconds">): string {
+  if (plan.chapters && plan.readyChapters >= plan.chapters) return "Đã đọc sẵn cả cuốn - chỉ còn ghép thành file, không đọc lại.";
+  if (plan.readyChapters) return `Đã đọc sẵn ${plan.readyChapters}/${plan.chapters} chương - phần này xuất ngay, không đọc lại.`;
+  if (plan.readySeconds && plan.readySeconds >= 60) return `Đã đọc sẵn ${spokenDuration(plan.readySeconds)} nghe - phần này xuất ngay, không đọc lại.`;
+  return "";
 }
 
 /** Phần trăm tải ffmpeg (0-100). */

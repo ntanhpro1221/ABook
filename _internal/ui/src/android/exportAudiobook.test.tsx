@@ -62,6 +62,12 @@ describe("thông báo xuất sách nói", () => {
     });
   });
 
+  it("mất mạng: nói đang chờ mạng thay cho thời gian còn lại", () => {
+    expect(progressView({ phase: "voice", chapter: 3, chapters: 12, percent: 27, secondsLeft: 5400, waiting: "network" })).toMatchObject({
+      description: "Chương 3/12 · 27% · Đang chờ mạng…",
+    });
+  });
+
   it("ghép file: nói đang ghép", () => {
     expect(progressView({ phase: "encode", chapter: 12, chapters: 12, percent: 99 })).toMatchObject({ description: "Đang ghép file âm thanh · Chương 12/12" });
   });
@@ -100,8 +106,10 @@ describe("hộp xuất sách nói trên điện thoại", () => {
     expect(text(renderToString(<AudiobookPhoneForm voice={edge} plan={plan()} planError="" />))).toContain("Chữ của cả cuốn được gửi tới máy chủ Microsoft để đọc.");
   });
 
-  it("chương đã làm sẵn từ lần trước: nói làm tiếp từ đó", () => {
-    expect(text(renderToString(<AudiobookPhoneForm voice={local} plan={plan({ readyChapters: 3 })} planError="" />))).toContain("Đã có sẵn 3/12 chương từ lần trước - làm tiếp từ đó.");
+  it("chương đã đọc sẵn (đã nghe, lần xuất trước): nói phần ấy xuất ngay", () => {
+    expect(text(renderToString(<AudiobookPhoneForm voice={local} plan={plan({ readyChapters: 3 })} planError="" />))).toContain(
+      "Đã đọc sẵn 3/12 chương - phần này xuất ngay, không đọc lại.",
+    );
   });
 
   it("chưa có giọng: bảo đi tải giọng; chưa tính xong: Đang tính; bị từ chối: nói lý do", () => {

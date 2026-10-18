@@ -359,9 +359,9 @@ class App:
         self.projectfile_jobs = export_jobs.BookFileJobs()
         # Đóng app lúc đang gói dự án quá vài giây (hay máy tắt đột ngột) để lại file `.part` / thư mục tạm: nhớ nơi đã xuất, lần mở sau dọn.
         self.export_folders = export_leftovers.ExportFolders(preferences.path.with_name("export-folders.json"))
+        self.export_work_dir = preferences.path.with_name(listen_export.WORK_FOLDER)
         if not read_only:
             self._sweep_export_leftovers_at_start()
-        self.export_work_dir = preferences.path.with_name(listen_export.WORK_FOLDER)
         # Hàng đợi sản xuất: hai cuốn chạy cùng lúc tranh nhau GPU (phân tích cần ~6,2 GB trên card 8 GB), nên cuốn
         # thứ hai xếp hàng và tự bắt đầu khi cuốn đang chạy xong. Hàng đợi sống cùng app (đóng app là bỏ hàng).
         self.queue: list[str] = []
@@ -1103,8 +1103,11 @@ class App:
 
     def sweep_export_leftovers(self) -> list[Path]:
         root = Path(self.preferences.get()["libraryRoot"])
+        # Chương đã ghép của "Xuất sách nói" bỏ dở (soát a62: chưa bao giờ được dọn): sách đã xoá, hay quá STALE_DAYS ngày không ai đụng tới.
+        books = [book_id(path) for path in [*self.library.projects(), *self.library.packages()]]
+        removed = listen_export.sweep_work(self.export_work_dir, books, self._listen_exporting())
         folders = [*self.export_folders.recent(), root / "Đã xuất"]
-        removed = export_leftovers.sweep(folders, Path(tempfile.gettempdir()))
+        removed += export_leftovers.sweep(folders, Path(tempfile.gettempdir()))
         # Nhập / mở / xuất sách, tải nhạc bị tắt ngang (soát a28 lỗi 12): tên tạm trong thư viện, "Sách đã nhập", %TEMP%, bộ đệm nhạc.
         return removed + export_leftovers.sweep_crashed(folders, [root, root / packages.IMPORTED_FOLDER], Path(tempfile.gettempdir()),
                                                         self.music_dir / "files")
@@ -1144,9 +1147,16 @@ class App:
                            "Sách này nằm trên máy tính khác - muốn thôi hiện thì gỡ máy ấy ở Cài đặt → Máy tính khác")
         if path.parent != (root / packages.IMPORTED_FOLDER).resolve() or not packages.is_package(path):
             raise ApiError(HTTPStatus.CONFLICT, "Cuốn này không phải sách đã nhập từ file")
+        gone = book_id(path)
         token = self._discard(path, "imported", undo=undo, queued=False,
                               failure="Không chuyển được vào Thùng rác - có thể một chương đang mở (đang nghe cuốn này). Thử lại. ({error})")
+        if gone not in self._listen_exporting():
+            listen_export.remove_work(self.export_work_dir, gone)  # chương đã ghép của lượt xuất sách nói bỏ dở đi theo sách
         return {"ok": True, **({"undo": token} if token else {})}
+
+    def _listen_exporting(self) -> set[str]:
+        """Mã các sách đang có lượt "Xuất sách nói" chạy: thư mục làm việc của chúng không bị dọn."""
+        return {book_id(Path(key)) for key, _state in self.listen_exports.running()}
 
     def _ollama_base(self) -> str:
         """Địa chỉ Ollama mà dây chuyền gọi: Ollama riêng của Studio (app đóng gói) hay Ollama của máy (chạy từ mã nguồn)."""
@@ -4039,11 +4049,13 @@ class Handler(BaseHTTPRequestHandler):
         return path, reading, listen_export.load_chapters(path)
 
     def get_audiobook_plan(self, query: dict[str, list[str]], value: str) -> None:
-        # Cho hộp "Xuất sách nói": số chương / chữ / giờ nghe, ước thời gian máy làm (giọng đã đo tốc độ), chương đã làm sẵn từ lần trước, và ffmpeg đã có chưa.
+        # Cho hộp "Xuất sách nói": số chương / chữ / giờ nghe, ước thời gian máy làm (giọng đã đo tốc độ), phần đã có sẵn (chương đã ghép + clip trong bộ đệm Nghe ngay), và ffmpeg đã có chưa.
         voice = (query.get("voice") or [""])[0]
-        _path, reading, chapters = self._audiobook_inputs(value, voice)
-        info = listen_export.plan(chapters, reading, listen_export.work_folder(self.app.export_work_dir, value), self.app.readaloud.speed(voice))
-        self._send_json(HTTPStatus.OK, {**info, "ffmpeg": ffmpeg_setup.status(), "music": music_export.packaged_state(_path)})
+        path, reading, chapters = self._audiobook_inputs(value, voice)
+        book = book_id(path)
+        info = listen_export.plan(chapters, reading, listen_export.work_folder(self.app.export_work_dir, book), self.app.readaloud.speed(voice),
+                                  listen_export.cached_lookup(self.app.readaloud, reading, book))
+        self._send_json(HTTPStatus.OK, {**info, "ffmpeg": ffmpeg_setup.status(), "music": music_export.packaged_state(path)})
 
     def post_audiobook_job(self, _query: dict[str, list[str]], value: str) -> None:
         # Việc nền như "Xuất M4B", có tiến độ (chương i/N, %, ước còn lại) và Huỷ; tải lại trang vẫn hỏi lại được. Đang có lượt cho cuốn này thì trả lượt ấy.
@@ -4066,7 +4078,7 @@ class Handler(BaseHTTPRequestHandler):
 
         def run() -> dict[str, Any]:
             result = listen_export.export_audiobook(
-                app.readaloud, path, root, app.export_work_dir, fmt=fmt, reading=reading, book_id=value, cover_drawn=cover,
+                app.readaloud, path, root, app.export_work_dir, fmt=fmt, reading=reading, book_id=book_id(path), cover_drawn=cover,
                 progress=lambda **fields: jobs.update(key, **fields), cancelled=lambda: jobs.cancelled(key), music=music)
             app.exports.add(result["folder"])
             return result
@@ -4077,7 +4089,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.app.listen_exports.status(str(self.app._listenable(value))))
 
     def post_audiobook_cancel(self, _query: dict[str, list[str]], value: str) -> None:
-        # "Huỷ": việc dừng ở chỗ an toàn kế (giữa hai đoạn); chương đã ghép được giữ cho lần xuất sau.
+        # "Huỷ": việc dừng trong vòng một giây ở mọi pha (đoạn Edge đang đọc bị cắt, clip dở bỏ đi); clip và chương đã xong được giữ cho lần xuất sau.
         self.app._mutating()
         jobs = self.app.listen_exports
         key = str(self.app._listenable(value))

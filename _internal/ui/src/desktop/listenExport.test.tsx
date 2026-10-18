@@ -61,10 +61,13 @@ describe("planText / resumeText", () => {
     expect(planText(plan({ rtf: 0.5, secondsEstimate: 18000 }))).toMatch(/nghe · máy cần .+\.$/);
   });
 
-  it("tells what happens to the chapters kept from an earlier run", () => {
+  it("tells what is already read (heard, prepared, an earlier export) and exports at once", () => {
     expect(resumeText(plan())).toBe("");
-    expect(resumeText(plan({ readyChapters: 3 }))).toBe("Đã có sẵn 3/12 chương từ lần trước - làm tiếp từ đó.");
-    expect(resumeText(plan({ readyChapters: 12 }))).toMatch(/chỉ còn ghép thành file/);
+    expect(resumeText(plan({ readyChapters: 3 }))).toBe("Đã đọc sẵn 3/12 chương - phần này xuất ngay, không đọc lại.");
+    expect(resumeText(plan({ readyChapters: 12 }))).toBe("Đã đọc sẵn cả cuốn - chỉ còn ghép thành file, không đọc lại.");
+    // vài đoạn đã nghe nhưng chưa đủ một chương: nói độ dài (dưới một phút thì thôi)
+    expect(resumeText(plan({ readySeconds: 400 }))).toBe("Đã đọc sẵn khoảng 7 phút nghe - phần này xuất ngay, không đọc lại.");
+    expect(resumeText(plan({ readySeconds: 40 }))).toBe("");
   });
 });
 
@@ -100,6 +103,17 @@ describe("jobView for the audiobook", () => {
   it("says it is making room for the chapter being listened to", () => {
     const view = jobView(running({ phase: "voice", chapter: 3, chapters: 12, percent: 25, waiting: "listening" }), 12, false, AUDIOBOOK_COPY);
     expect(view.kind === "loading" && view.description).toMatch(/nhường cho chương đang nghe/);
+  });
+
+  it("says it is waiting for the network instead of a time left", () => {
+    const view = jobView(running({ phase: "voice", chapter: 3, chapters: 12, percent: 25, secondsLeft: 600, waiting: "network" }), 12, false, AUDIOBOOK_COPY);
+    expect(view.kind === "loading" && view.description).toBe("Chương 3/12 · 25% · Đang chờ mạng…");
+    expect(view.kind === "loading" && view.spoken).toMatch(/chờ mạng/);
+  });
+
+  it("shows no time left until the server has measured enough", () => {
+    const view = jobView(running({ phase: "voice", chapter: 1, chapters: 12, percent: 6, secondsLeft: null }), 12, false, AUDIOBOOK_COPY);
+    expect(view.kind === "loading" && view.description).toBe("Chương 1/12 · 6%");
   });
 
   it("says it is joining the files at the end", () => {

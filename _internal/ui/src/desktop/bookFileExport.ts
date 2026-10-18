@@ -100,7 +100,7 @@ export interface ExportJob {
   state: "idle" | "running" | "done" | "error" | "cancelled";
   id?: string;
   /** Xuất sách nói (listen_export.py) báo tiến độ: pha ("voice" đọc / "music" trộn nhạc nền / "encode" ghép file), chương i/N, % theo số chữ, ước còn lại (giây),
-   *  đang nhường người nghe. Xuất M4B kèm nhạc nền báo "music-fetch" (dưới đây) rồi pha "music" + chương i/N. Mọi M4B: "peaks" đang kiểm đỉnh âm sau mã hoá, "reencode"
+   *  đang nhường người nghe (`waiting` "listening") hay đang chờ mạng về ("network"). Xuất M4B kèm nhạc nền báo "music-fetch" (dưới đây) rồi pha "music" + chương i/N. Mọi M4B: "peaks" đang kiểm đỉnh âm sau mã hoá, "reencode"
    *  mã hoá lại lượt `peakRound` vì `peakOver` chương vượt đỉnh (export.m4b_from_files). Gói dự án báo pha riêng (`PackPhase`) cùng `done`/`total`.
    *  "music-fetch": đang tải bài nhạc thiếu thứ `done` + 1 trong `total` trước khi trộn (điện thoại: ExportMusic.kt; máy tính: M4B kèm nhạc nền). */
   phase?: "voice" | "music" | "music-fetch" | "encode" | "peaks" | "reencode" | PackPhase;
@@ -112,7 +112,7 @@ export interface ExportJob {
   chapters?: number;
   percent?: number;
   secondsLeft?: number | null;
-  waiting?: "listening" | null;
+  waiting?: "listening" | "network" | null;
   /** Giây đã đóng gói (đang chạy). */
   elapsed?: number;
   /** Giây kể từ lúc xong / hỏng. */
@@ -161,9 +161,15 @@ function reportedProgress(job: ExportJob): { fraction: number; text: string; spo
   }
   const parts = [where, `${job.percent ?? 0}%`];
   if (job.waiting === "listening") parts.push("nhường cho chương đang nghe");
+  else if (job.waiting === "network") parts.push("Đang chờ mạng…");
   else if (job.secondsLeft != null) parts.push(`còn ${spokenDuration(job.secondsLeft)}`);
   const fraction = (job.percent ?? 0) / 100;
-  const spoken = job.waiting === "listening" ? "Tạm nhường cho chương đang nghe" : spokenProgress(`Đang xuất ${job.chapters} chương`, fraction);
+  const spoken =
+    job.waiting === "listening"
+      ? "Tạm nhường cho chương đang nghe"
+      : job.waiting === "network"
+        ? "Mất mạng - đang chờ mạng về để làm tiếp"
+        : spokenProgress(`Đang xuất ${job.chapters} chương`, fraction);
   return { fraction, text: parts.join(" · "), spoken };
 }
 

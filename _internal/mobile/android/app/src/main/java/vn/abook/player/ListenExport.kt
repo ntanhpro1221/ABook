@@ -27,9 +27,27 @@ import java.security.MessageDigest
  * Phần này không biết gì về Android ngoài [Store]: giọng, bộ giải mã clip và nơi ghi từng chương là giao diện ([Synth], [Decoder], [Outputs]) để thử trên JVM.
  */
 object ListenExport {
-    /** Số lần thử lại một đoạn khi giọng trực tuyến lỗi thoáng qua (như trình phát và máy tính), rồi mới dừng. */
+    /** Số lần thử lại một đoạn khi giọng trực tuyến lỗi thoáng qua khác (dịch vụ bận, bị từ chối - như máy tính), rồi mới dừng. */
     const val RETRIES = 2
-    private val TRANSIENT = setOf("offline", "timeout", "service", "rejected")
+    private val TRANSIENT = setOf("service", "rejected")
+
+    /**
+     * Lỗi MẠNG (mất mạng, quá giờ): lượt xuất đứng chờ mạng ("Đang chờ mạng…", `waiting` "network") thay vì dừng - nghỉ [NETWORK_WAITS_MS] (hết dãy thì giữ số cuối) tới
+     * khi mất liên tục quá [OUTAGE_MS]; như `listen_export.py` máy tính (soát a62: mất mạng 3 giây là dừng cả lượt).
+     */
+    private val NETWORK = setOf("offline", "timeout")
+    val NETWORK_WAITS_MS = longArrayOf(1000, 2000, 4000, 8000, 15000)
+    const val OUTAGE_MS = 30_000L
+
+    /** Lúc nghỉ chờ mạng vẫn hỏi "Dừng" chừng này ms một lần. */
+    const val CANCEL_POLL_MS = 200L
+
+    /** "còn khoảng ..." chỉ hiện khi đã đo đủ: chừng này đoạn đọc MỚI và chừng này ms chạy (như máy tính; soát a62: một đoạn đầu cho "còn 4 phút" khi thật còn 51 giây). */
+    const val ETA_READS = 3
+    const val ETA_MS = 20_000L
+
+    /** Thư mục làm việc không ai đụng tới quá chừng này ngày bị dọn lúc mở app ([sweepFolders]). */
+    const val STALE_DAYS = 7
 
     /** Clip trả nhanh hơn thế là từ bộ đệm: không nói gì về tốc độ giọng (như `CACHED_SECONDS` của máy tính). */
     const val CACHED_MS = 50L
@@ -128,6 +146,20 @@ object ListenExport {
 
     fun workFolder(root: File, bookId: String): File = File(root, bookId.replace(Regex("[^A-Za-z0-9_-]"), "_"))
 
+    /** Lần cuối có gì trong `folder` được ghi: mtime mới nhất của chính nó và mọi file trong đó. */
+    private fun touched(folder: File): Long = folder.walkTopDown().maxOfOrNull { it.lastModified() } ?: folder.lastModified()
+
+    /**
+     * Dọn thư mục làm việc của các lượt xuất bỏ dở (như `sweep_work` máy tính): của sách không còn trên máy (`exists(tên thư mục)` false) hay không ai đụng tới quá
+     * `maxAgeMs`. Sách đang xuất (`busy`: mã sách) không bao giờ bị đụng. Trả các thư mục đã xoá.
+     */
+    fun sweepFolders(root: File, exists: (String) -> Boolean, busy: Set<String>, now: Long = System.currentTimeMillis(), maxAgeMs: Long = STALE_DAYS * 86_400_000L): List<File> {
+        val keep = busy.map { workFolder(root, it).name }.toSet()
+        return root.listFiles().orEmpty().filter { folder ->
+            folder.isDirectory && folder.name !in keep && (!exists(folder.name) || now - touched(folder) > maxAgeMs) && folder.deleteRecursively()
+        }
+    }
+
     /** File AAC tạm của chương: `<mã>.m4a`, bản kèm nhạc `<mã>.music.m4a`. */
     fun audioFile(work: File, chapter: Chapter, mixed: Boolean = false) = File(work, "${chapter.id}${if (mixed) ".music" else ""}.m4a")
 
@@ -189,12 +221,15 @@ object ListenExport {
     // ---- ước trước khi bấm ------------------------------------------------------------------------------------------
 
     /**
-     * Cho hộp Xuất: số chương, số chữ, thời gian nghe, ước thời gian máy làm (chỉ khi giọng đã đo tốc độ), số chương đã làm sẵn từ lần trước, chỗ trống cần ở máy,
-     * và số đoạn phải đọc lại (`rereads`: chương đã có giọng nhưng phải ghép lại vì đổi nhạc, mà clip đoạn ấy đã bị đẩy khỏi bộ đệm).
+     * Cho hộp Xuất: số chương, số chữ, thời gian nghe, ước thời gian máy làm (chỉ khi giọng đã đo tốc độ), phần đã có sẵn (`readyChapters` chương có đủ - đã ghép hay mọi đoạn
+     * có clip trong bộ đệm; `readySeconds` giây nghe đã có), chỗ trống cần ở máy, và số đoạn phải đọc lại (`rereads`: chương đã có giọng nhưng phải ghép lại vì đổi nhạc, mà
+     * clip đoạn ấy đã bị đẩy khỏi bộ đệm).
      */
-    class Plan(val chapters: Int, val chars: Long, val audioSeconds: Long, val secondsEstimate: Long?, val readyChapters: Int, val bytes: Long, val rereads: Int = 0) {
+    class Plan(val chapters: Int, val chars: Long, val audioSeconds: Long, val secondsEstimate: Long?, val readyChapters: Int, val bytes: Long, val rereads: Int = 0,
+               val readySeconds: Long = 0) {
         fun toJson(): JSONObject = JSONObject().put("chapters", chapters).put("chars", chars).put("audioSeconds", audioSeconds)
             .put("secondsEstimate", secondsEstimate ?: JSONObject.NULL).put("readyChapters", readyChapters).put("bytes", bytes).put("rereads", rereads)
+            .put("readySeconds", readySeconds)
     }
 
     /** AAC mono 64 kb/s = 8000 byte mỗi giây, dư 25% (thời lượng chỉ là ước). */
@@ -216,25 +251,56 @@ object ListenExport {
         ((chapters.maxOfOrNull { it.chars } ?: 0) / PreparePlan.CHARS_PER_SECOND * VOICE_PCM_PER_SECOND * 1.25).toLong()
 
     /**
-     * Ước cho hộp Xuất. `music(id)`: nhạc của chương nếu xuất "Kèm nhạc nền" ([MusicExport.audible]); `cached(chữ)`: clip đoạn ấy còn trong bộ đệm (null = không
-     * đếm `rereads`); `extra`: chỗ trống thêm của bản kèm nhạc.
+     * Ước cho hộp Xuất. `music(id)`: nhạc của chương nếu xuất "Kèm nhạc nền" ([MusicExport.audible]); `cachedMs(chữ)`: độ dài (ms) clip của đoạn ấy còn trong bộ đệm,
+     * null nếu chưa có (`cachedMs` null = không tra: không đếm `rereads`, không tính phần có sẵn); `extra`: chỗ trống thêm của bản kèm nhạc.
+     * Thời gian nghe = độ dài thật của phần đã có (chương đã ghép + clip trong bộ đệm + quãng lặng) + phần chưa có ước theo số chữ với tốc độ ĐO trên chính các clip ấy
+     * (chưa có clip nào: [PreparePlan.CHARS_PER_SECOND]) - như máy tính (soát a62: "khoảng 10 phút" cho cuốn thật 8:44). Máy chỉ phải đọc phần chưa có (`secondsEstimate`).
      */
     fun plan(chapters: List<Chapter>, reading: Reading, work: File, secondsPerChar: Double?, music: (Int) -> MusicExport.ChapterMusic? = { null },
-             cached: ((String) -> Boolean)? = null, extra: Long = 0): Plan {
+             cachedMs: ((String) -> Long?)? = null, extra: Long = 0): Plan {
         val stamps = readyStamps(work, chapters, reading, music)
         val chars = chapters.sumOf { it.chars.toLong() }
         val remaining = chapters.filterIndexed { index, _ -> stamps[index] == null }.sumOf { it.chars.toLong() }
-        val rereads = if (cached == null) 0 else chapters.filterIndexed { index, chapter -> stamps[index] == null && voiced(work, chapter, reading) }
-            .sumOf { chapter -> chapter.speakable.count { !cached(it.text) } }
-        return Plan(chapters.size, chars, Math.round(chars / PreparePlan.CHARS_PER_SECOND), secondsPerChar?.let { Math.round(remaining * it) },
-            stamps.count { it != null }, bytesNeeded(remaining, chars, extra), rereads)
+        val rereads = if (cachedMs == null) 0 else chapters.filterIndexed { index, chapter -> stamps[index] == null && voiced(work, chapter, reading) }
+            .sumOf { chapter -> chapter.speakable.count { cachedMs(it.text) == null } }
+        var heardChars = 0L
+        var heardSeconds = 0.0
+        var gaps = 0.0
+        var open = 0L
+        var ready = 0
+        chapters.forEachIndexed { index, chapter ->
+            val silence = chapter.gaps.sum() / 1000.0
+            gaps += silence
+            val stamp = stamps[index]
+            if (stamp != null) {
+                heardChars += chapter.chars
+                heardSeconds += maxOf(0.0, stamp.seconds - silence)
+                ready += 1
+                return@forEachIndexed
+            }
+            var missing = 0L
+            for (paragraph in chapter.speakable) {
+                val ms = cachedMs?.invoke(paragraph.text)
+                if (ms == null) {
+                    missing += paragraph.text.length
+                } else {
+                    heardChars += paragraph.text.length
+                    heardSeconds += ms / 1000.0
+                }
+            }
+            open += missing
+            if (missing == 0L) ready += 1
+        }
+        val rate = if (heardChars > 0 && heardSeconds > 0) heardChars / heardSeconds else PreparePlan.CHARS_PER_SECOND
+        return Plan(chapters.size, chars, Math.round(heardSeconds + gaps + open / rate), secondsPerChar?.let { Math.round(open * it) },
+            ready, bytesNeeded(remaining, chars, extra), rereads, Math.round(heardSeconds))
     }
 
     // ---- làm từng chương --------------------------------------------------------------------------------------------
 
     /**
      * Tiến độ: `phase` "voice" (đọc, ghép chương), "music" (trộn nhạc chương), "peaks" (kiểm đỉnh âm), "reencode" (mã hoá lại lượt `peakRound` vì `peakOver` chương
-     * vượt đỉnh) hay "encode" (nối các chương thành file); `waiting` "listening" khi nhường người đang nghe.
+     * vượt đỉnh) hay "encode" (nối các chương thành file); `waiting` "listening" khi nhường người đang nghe, "network" khi đang chờ mạng về.
      */
     class Progress(val phase: String, val chapter: Int, val chapters: Int, val title: String, val waiting: String?, val percent: Int, val secondsLeft: Int?,
                    val peakRound: Int? = null, val peakOver: Int? = null) {
@@ -249,8 +315,9 @@ object ListenExport {
     class Music(val mixer: MusicExport.Mixer, val guard: MusicRender.Params, val peak: (File) -> Double)
 
     /**
-     * Một lượt làm các chương. `stopped` đúng thì dừng ở chỗ an toàn kế ([Mp3Export.Stopped]; phần đã làm giữ trong `work`); `live` đúng thì người đang nghe - nhường.
-     * `timed(số chữ, giây)` nhận các lần đọc mới (đo tốc độ giọng cho lần ước sau). `music`: "Kèm nhạc nền" (null = như cũ).
+     * Một lượt làm các chương. `stopped` đúng thì dừng ở chỗ an toàn kế ([Mp3Export.Stopped]; phần đã làm giữ trong `work`) - lượt đọc đang bay bị người gọi huỷ ([Synth]
+     * ném CancellationException) cũng thành [Mp3Export.Stopped]; `live` đúng thì người đang nghe - nhường. `timed(số chữ, giây)` nhận các lần đọc mới (đo tốc độ giọng cho
+     * lần ước sau). `music`: "Kèm nhạc nền" (null = như cũ). `cached(chữ)`: đoạn đã có clip trong bộ đệm - thời gian còn lại chỉ tính phần chưa có.
      */
     class Run(
         private val chapters: List<Chapter>,
@@ -266,28 +333,53 @@ object ListenExport {
         private val sleep: (Long) -> Unit = { Thread.sleep(it) },
         private val clock: () -> Long = { System.nanoTime() / 1_000_000 },
         private val music: Music? = null,
+        private val cached: (String) -> Boolean = { false },
     ) {
         private val chars = chapters.sumOf { it.chars.toLong() }
         private var doneChars = 0L
         private var timedChars = 0L
         private var timedSeconds = 0.0
+        private var reads = 0 // đoạn đọc MỚI (không từ bộ đệm): đủ [ETA_READS] mới ước thời gian còn lại
+        private val began = clock()
+        private val open = HashSet<Pair<Int, Int>>() // (chương, số thứ tự đoạn) chưa có clip lúc bắt đầu: phần máy còn phải đọc
+        private var openChars = 0L
 
         private fun check() {
             if (stopped()) throw Mp3Export.Stopped()
         }
 
+        /** Ước giây còn lại: số chữ CHƯA CÓ clip còn lại / tốc độ đo trên các đoạn đọc mới; null khi chưa đo đủ ([ETA_READS] đoạn mới và [ETA_MS]). */
+        internal fun secondsLeft(): Int? {
+            if (reads < ETA_READS || clock() - began < ETA_MS || timedChars <= 0 || timedSeconds <= 0) return null
+            return Math.round(timedSeconds / timedChars * openChars).toInt()
+        }
+
         private fun report(index: Int, phase: String, waiting: String? = null, round: Int? = null, over: Int? = null) {
-            val left = if (timedChars > 0 && timedSeconds > 0) Math.round(timedSeconds / timedChars * (chars - doneChars)).toInt() else null
             val percent = if (chars > 0) minOf(100L, 100 * doneChars / chars).toInt() else 100
-            progress(Progress(phase, index + 1, chapters.size, chapters[index].title, waiting, percent, left, round, over))
+            progress(Progress(phase, index + 1, chapters.size, chapters[index].title, waiting, percent, secondsLeft(), round, over))
+        }
+
+        /** Nghỉ `ms` mà vẫn nghe "Dừng" (hỏi mỗi [CANCEL_POLL_MS]). */
+        private fun pause(ms: Long) {
+            val end = clock() + ms
+            while (true) {
+                check()
+                val left = end - clock()
+                if (left <= 0) return
+                sleep(minOf(CANCEL_POLL_MS, left))
+            }
         }
 
         /** Nhạc của chương nếu lượt này kèm nhạc và chương có mốc. */
         private fun variant(id: Int): MusicExport.ChapterMusic? = music?.mixer?.chapter(id)
 
-        /** Clip của một đoạn (nhường người nghe, thử lại lỗi thoáng qua); null khi đoạn không có gì đọc được. Lỗi thật dừng cả lượt với lời nói rõ. */
+        /**
+         * Clip của một đoạn (nhường người nghe; mất mạng thì chờ mạng tới khi mất liên tục quá [OUTAGE_MS]; lỗi thoáng qua khác thử lại [RETRIES] lần); null khi đoạn không có
+         * gì đọc được. Lỗi thật dừng cả lượt với lời nói rõ.
+         */
         private fun clip(index: Int, text: String): File? {
             var failures = 0
+            var outage: Long? = null // lúc lần lỗi mạng đầu của chuỗi lỗi liền nhau
             while (true) {
                 var waiting = false
                 while (live()) {
@@ -299,7 +391,7 @@ object ListenExport {
                     sleep(LIVE_POLL_MS)
                 }
                 check()
-                if (waiting) report(index, "voice")
+                if (waiting || outage != null) report(index, "voice")
                 val began = clock()
                 try {
                     val file = synth.clip(text)
@@ -307,14 +399,27 @@ object ListenExport {
                     if (spent > CACHED_MS) {
                         timedChars += text.length
                         timedSeconds += spent / 1000.0
+                        reads += 1
                         timed(text.length, spent / 1000.0)
                     }
                     return file
+                } catch (cancelled: java.util.concurrent.CancellationException) {
+                    check() // người dùng bấm "Dừng": lượt đọc đang bay đã bị cắt ([ClipCancel])
+                    throw cancelled
                 } catch (error: VoiceException) {
                     if (error.reason == "empty") return null
-                    if (error.reason in TRANSIENT && failures < RETRIES) {
+                    if (error.offline || error.reason in NETWORK) {
+                        val now = clock()
+                        val since = outage ?: now.also { outage = it }
+                        if (now - since <= OUTAGE_MS) {
+                            report(index, "voice", "network")
+                            pause(NETWORK_WAITS_MS[minOf(failures, NETWORK_WAITS_MS.size - 1)])
+                            failures += 1
+                            continue
+                        }
+                    } else if (error.reason in TRANSIENT && failures < RETRIES) {
                         failures += 1
-                        sleep(failures * 1000L)
+                        pause(failures * 1000L)
                         continue
                     }
                     throw Mp3Export.Refused("Giọng đọc không đọc được một đoạn ở “${chapters[index].title}”: ${error.message} Phần đã làm được giữ - bấm xuất lại để làm tiếp.")
@@ -325,6 +430,15 @@ object ListenExport {
         /** Làm các chương chưa có dấu đúng; trả dấu của mọi chương theo thứ tự. */
         fun build(): List<Stamp> {
             val found = readyStamps(work, chapters, reading, ::variant)
+            chapters.forEachIndexed { index, chapter ->
+                if (found[index] != null) return@forEachIndexed
+                chapter.paragraphs.forEachIndexed { at, paragraph ->
+                    if (Paragraphs.isSpeakable(paragraph.text) && !cached(paragraph.text)) {
+                        open += chapter.id to at
+                        openChars += paragraph.text.length
+                    }
+                }
+            }
             var rate = found.firstOrNull { it != null }?.rate
             val stamps = ArrayList<Stamp>()
             chapters.forEachIndexed { index, chapter ->
@@ -372,6 +486,7 @@ object ListenExport {
                         decoder.decode(file, rate, stopped) { pcm, count -> output.write(pcm, count) }
                     }
                     doneChars += paragraph.text.length
+                    if (open.remove(chapter.id to at)) openChars -= paragraph.text.length
                     report(index, "voice")
                 } else if (chapter.gaps[at] > 0) {
                     silence(output, rate, chapter.gaps[at])

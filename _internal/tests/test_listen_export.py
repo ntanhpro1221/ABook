@@ -174,8 +174,8 @@ def test_cancelling_keeps_the_finished_chapters_and_the_next_export_continues_fr
     real = export.pump_pcm
     monkeypatch.setattr(export, "pump_pcm", lambda ffmpeg, source, rate, channels, sink: (pumped.append(source.name), real(ffmpeg, source, rate, channels, sink))[1])
     _run(app, book_id, path, tmp_path / "xuat", "mp3")
-    # chương 1 không ghép lại: chỉ 2 đoạn của chương 2 qua ống PCM (cộng 0 đoạn của chương 1)
-    assert len(pumped) == 2
+    # chương 1 không ghép lại: chỉ 2 đoạn của chương 2 qua ống PCM (cộng 0 đoạn của chương 1); bước mã hoá MP3 đọc hai chương đã ghép qua ống
+    assert len([name for name in pumped if not name.endswith(".flac")]) == 2 and sorted(name for name in pumped if name.endswith(".flac")) == ["1.flac", "2.flac"]
     assert sorted(file.name for file in (tmp_path / "xuat" / "Truyện thử").glob("*.mp3")) == ["01 - Chương một.mp3", "02 - Chương hai.mp3"]
     assert not work.exists()
 
@@ -215,13 +215,17 @@ def test_a_voice_that_fails_stops_the_export_in_words_and_keeps_the_work(tmp_pat
     app.readaloud = ReadAloud(tmp_path / "cache2", [FakeVoice(fail=VoiceError("Khoá Azure không dùng được", "auth"))])
     with pytest.raises(listen_export.ExportError, match="Chương một.*Khoá Azure không dùng được.*xuất lại"):
         _run(app, book_id, path, tmp_path / "xuat", "mp3")
-    # lỗi thoáng qua được thử lại rồi mới dừng
-    sleeps: list[float] = []
-    flaky = FakeVoice(fail=VoiceError("mất mạng", "offline"))
+    # lỗi thoáng qua (không phải mạng) được thử lại RETRIES lần, nghỉ 1 rồi 2 giây, rồi mới dừng; mất mạng: test_a62_listen_export.py
+    clock = [0.0]
+
+    def sleep(seconds: float) -> None:
+        clock[0] += seconds
+
+    flaky = FakeVoice(fail=VoiceError("dịch vụ trả lỗi 502", "service"))
     app.readaloud = ReadAloud(tmp_path / "cache3", [flaky])
-    with pytest.raises(listen_export.ExportError, match="mất mạng"):
-        _run(app, book_id, path, tmp_path / "xuat", "mp3", sleep=sleeps.append)
-    assert len(flaky.calls) == 1 + listen_export.RETRIES and sleeps == [1.0, 2.0]
+    with pytest.raises(listen_export.ExportError, match="502"):
+        _run(app, book_id, path, tmp_path / "xuat", "mp3", sleep=sleep, clock=lambda: clock[0])
+    assert len(flaky.calls) == 1 + listen_export.RETRIES and clock[0] == pytest.approx(1.0 + 2.0)
 
 
 def test_a_paragraph_the_voice_cannot_read_is_skipped_like_prepare_does(tmp_path: Path) -> None:
@@ -245,7 +249,9 @@ def test_the_plan_counts_the_book_and_knows_what_is_ready(tmp_path: Path) -> Non
     reading = listen_export.Reading(VOICE, None, {})
     plan = listen_export.plan(chapters, reading, work, None)
     chars = sum(chapter.chars for chapter in chapters)
-    assert plan == {"chapters": 2, "chars": chars, "audioSeconds": round(chars / 14), "rtf": None, "secondsEstimate": None, "readyChapters": 0}
+    gaps = sum(sum(chapter.gaps) for chapter in chapters) / 1000
+    assert plan == {"chapters": 2, "chars": chars, "audioSeconds": round(chars / 14 + gaps), "rtf": None, "secondsEstimate": None, "readyChapters": 0,
+                    "readySeconds": 0}
     assert listen_export.plan(chapters, reading, work, 0.5)["secondsEstimate"] == round(chars / 14 * 0.5)
 
 

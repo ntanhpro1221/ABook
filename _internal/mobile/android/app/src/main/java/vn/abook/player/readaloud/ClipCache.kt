@@ -116,6 +116,12 @@ class ClipCache(
         return File(dir, "$key.json").isFile && EXTENSIONS.any { File(dir, "$key.$it").length() > 0L }
     }
 
+    /** Độ dài (ms) clip của đoạn nếu đã có trong bộ đệm, null nếu chưa ("Xuất sách nói" ước độ dài cuốn từ clip thật); như [contains], không tính là một lần dùng. */
+    fun durationMs(voiceId: String, text: String, origin: String? = null, readings: Map<String, String>? = null): Long? {
+        if (!contains(voiceId, text, origin, readings)) return null
+        return runCatching { JSONObject(File(dir, "${keyOf(voiceId, text, origin, readings)}.json").readText()).getLong("duration") }.getOrNull()
+    }
+
     /** File tạm cho giọng ghi vào (cùng thư mục để đổi tên không phải chép). Không tính vào bộ nhớ đệm tới khi [put]. */
     fun temp(extension: String): File = File(dir, "tmp-${java.util.UUID.randomUUID()}.$extension.part")
 
