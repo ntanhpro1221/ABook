@@ -432,3 +432,18 @@ README, ONNX int8 xuất lại (16-09) và `gguf/` cho audio.cpp (23-09). Giữ 
 
 Đáng để ý cho sau: bản GGUF q8_0/bf16 + audio.cpp là đường chạy VieNeu không cần PyTorch - có thể là lối cho máy không có
 card NVIDIA, hay đọc ngay trên điện thoại. Chưa đo.
+
+## Kiểm 2026-10-18 07:xx — ba chốt mới, không vá bảo mật nào chạm app
+
+12 gói sau bản ghim. Không CVE/GHSA mới nào chạm đường app dùng. Nâng gói nào cũng đổi hash chất lượng
+(`pyproject.toml`, `uv.lock` khoá) và phải khớp `shell/python/studio-requirements.txt`, nên chỉ gộp một đợt.
+
+| Gói | Điều mới | Quyết |
+|---|---|---|
+| `torch` 2.14.1 / `torchvision` 0.29.1 | từ 2.12 chỉ có cu130 (index cu128 dừng 2.11.0). torch cu130 mang `cublas64_13`, KHÔNG còn `cublas64_12.dll` mà `ctranslate2` 4.8.x (CUDA 12) mượn qua "import torch trước" (`asr.py`). Nâng torch nhiều khả năng làm faster-whisper GPU không nạp được (suy luận, chưa thử). `torchaudio` dừng 2.11 trên mọi index | **không nâng**; thử thì venv riêng + `nvidia-cublas-cu12`, hay chờ ctranslate2 CUDA 13 |
+| `huggingface-hub` 2.2.0 | `transformers` 5.20 đã cho hub < 3; nay bị `gradio` 6.16 / `gradio-client` / `tokenizers` 0.23.2 (< 2.0, do vieneu/voxcpm kéo vào) chặn | không nâng - không lợi gì |
+| `ctranslate2` 4.8.3 | sửa kernel CUDA TopK (đường beam Whisper fp16) + treo/rò Ruy trên Windows; vẫn CUDA 12 | **đo trước**: transcript 4.8.2 vs 4.8.3 từng byte trên bộ WAV đã khoá, giống thì gộp đợt hash tới |
+| `PySide6` 6.12.0 | WebEngine thành wheel riêng (`PySide6_WebEngine`, PySide6 vẫn tự kéo), Chromium 140 với vá backport mới hơn | chờ 6.12.1, gộp cùng ctranslate2 |
+| `transformers` 5.20.1, `gradio` 6.30, `setuptools` 84 (torch 2.11 chặn < 82), `filelock` 4, `platformdirs` 4.13 | không chạm app | bỏ qua |
+| `ruff` 0.17, `cryptography` 50.0.2 | dev/test | theo đợt |
+| Ollama 0.40.6 | 0.40.2 tự nâng model tải bằng bản cũ ở nền (digest có thể đổi) | giữ 0.33.2 |
