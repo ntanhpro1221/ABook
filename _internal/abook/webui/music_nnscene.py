@@ -171,15 +171,19 @@ def build_chapter(book: SceneBook, order: list[int], chapter_id: int, title: str
         previous = book.history(order, chapter_id, sha_of)
         before = [scene for part in previous for scene in part["scenes"]]
         history = {"scenes": before} if before else None
-        for _ in range(VERIFY_ROUNDS):
-            plan = music_plan.build(
+
+        def build() -> dict[str, Any]:
+            return music_plan.build(
                 book.directory, near, lookup, catalog_revision=catalog_revision, book_key=book_key, taxonomy=taxonomy,
                 scenes=(music_plan.scenes_of(history) or []) + scenes,
                 keep=music_plan.kept_tracks(history) if history else None, kept_siblings=music_plan.kept_siblings(history) if history else None,
                 available=available, persist=False)
-            chosen = [scene for scene in plan["scenes"] if scene.get("chapterId") == chapter_id]
-            if verify is None or not verify(chosen_links(chosen)):
-                break
+
+        def of_chapter(plan: dict[str, Any]) -> list[dict[str, Any]]:
+            return [scene for scene in plan["scenes"] if scene.get("chapterId") == chapter_id]
+
+        plan = sized_plan(build, lambda plan: chosen_links(of_chapter(plan)), verify)
+        chosen = of_chapter(plan)
         by_sentence = {segment["id"]: paragraph[index] for index, segment in enumerate(script["segments"])}
         for scene in chosen:
             scene["paragraph"] = by_sentence.get(scene.get("firstSegment"), 0)
@@ -189,6 +193,18 @@ def build_chapter(book: SceneBook, order: list[int], chapter_id: int, title: str
                       scene.get("link") == link or any(s["link"] == link for s in scene.get("siblings") or []) for scene in chosen)}}
         book.write(record)
         return record
+
+
+def sized_plan(build: Callable[[], dict[str, Any]], links: Callable[[dict[str, Any]], list[str]],
+               verify: Callable[[list[str]], bool] | None) -> dict[str, Any]:
+    """Chọn bài chỉ bằng cỡ ĐÃ BIẾT rồi tra cỡ các bài đã chọn (`links(plan)`) trong MỘT lượt `verify`; vừa phát hiện bài quá cỡ thì chọn lại
+    (`available` của `build` từ đó loại nó), tối đa VERIFY_ROUNDS lần. Dùng chung cho plan một chương (`build_chapter`) và plan cả cuốn của
+    Studio (`App._music_build`): tra cỡ từng ứng viên là một mảnh `tracks/` mỗi bài - danh mục lạnh mất cả phút."""
+    for _ in range(VERIFY_ROUNDS):
+        plan = build()
+        if verify is None or not verify(links(plan)):
+            break
+    return plan
 
 
 def chosen_links(scenes: Iterable[dict[str, Any]]) -> list[str]:

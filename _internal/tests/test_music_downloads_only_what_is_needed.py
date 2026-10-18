@@ -138,3 +138,49 @@ def test_the_music_tab_shows_download_progress_and_can_cancel_it(studio, tmp_pat
     _status, view = _call(server, "GET", f"/api/books/{book}/music")
     assert view["download"]["active"] is False
     assert [scene["link"] for scene in view["plan"]["scenes"]] == [CALM, CALM2], "huỷ tải không phải bài hỏng: giữ rãnh nhạc"
+
+
+def test_the_first_music_view_downloads_no_track_and_still_avoids_a_track_too_big(studio, tmp_path: Path,  # noqa: F811
+                                                                               monkeypatch) -> None:
+    """Soát UX a60: lần mở tab Nhạc đầu tiên chờ 2,7 phút. Lời đáp GET không chờ tải bài nào (tải sẵn chạy nền), cỡ bài chỉ tra cho các
+    bài ĐÃ CHỌN trong một lượt (không một mảnh `tracks/` cho mỗi ứng viên), và bài quá cỡ vẫn không bao giờ vào rãnh nhạc."""
+    from abook.webui import music_nnscene
+    from abook.webui.server import MUSIC_TRACK_MAX_MB, App
+
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    monkeypatch.setattr(App, "_warm_music", lambda self, *args, **kwargs: None)
+    _status, first = _call(server, "GET", f"/api/books/{book}/music")
+    used = [link for scene in first["plan"]["scenes"] for link in music_nnscene.chosen_links([scene])]
+    big = max(set(used), key=used.count)  # bài máy vừa chọn nhiều nhất: giờ danh mục nói nó quá cỡ
+    (paths.root / "music_plan.json").unlink()
+    app._music_sized.clear()
+    catalog = app.music_catalog()
+    real_lookup = catalog.lookup
+    asked: list[list[str]] = []
+
+    def lookup(links):
+        links = list(links)
+        asked.append(links)
+        return {link: dict(info, bytes=(MUSIC_TRACK_MAX_MB + 1) * MB) if link == big else info for link, info in real_lookup(links).items()}
+
+    monkeypatch.setattr(catalog, "lookup", lookup)
+    downloads: list[str] = []
+    monkeypatch.setattr(App, "music_track_file", lambda self, link, **kwargs: downloads.append(link))
+    per_candidate: list[str] = []
+    real_available = App.music_track_available
+
+    def available(self, link, **kwargs):
+        if kwargs.get("sizes", True):
+            per_candidate.append(link)
+        return real_available(self, link, **kwargs)
+
+    monkeypatch.setattr(App, "music_track_available", available)
+    status, view = _call(server, "GET", f"/api/books/{book}/music")
+    links = [link for scene in view["plan"]["scenes"] for link in music_nnscene.chosen_links([scene])]
+    assert status == 200 and big not in links, "bài quá cỡ vẫn được chọn (không còn bài nào hợp thì đoạn im lặng)"
+    assert app.music_track_too_big(big), "lượt tra cỡ các bài đã chọn phải ghi sổ bài quá cỡ"
+    assert downloads == [], "lời đáp GET chờ tải bài"
+    assert per_candidate == [], "xếp hạng tra cỡ từng ứng viên (mỗi bài một mảnh tracks/)"
+    assert [big] in asked or any(big in links for links in asked), "bài đã chọn phải được tra cỡ"
