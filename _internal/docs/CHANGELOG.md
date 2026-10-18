@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.99] - 2026-10-19
+
 ### Nghe ngay
 
 - Máy tính và điện thoại: Giọng VieNeu Nano không còn mức "Nhanh hơn" nữa, vì trên điện thoại nó chỉ nhanh hơn chừng 5-8 % mà tiếng lại kém hơn và phải tải thêm 48 MB; Nano vẫn đọc 8 bước như bản 0.4.98. "Tốc độ giọng trên máy" nay chỉ áp cho giọng Supertonic (Cài đặt ghi rõ, và giọng VieNeu chỉ có một mức).
