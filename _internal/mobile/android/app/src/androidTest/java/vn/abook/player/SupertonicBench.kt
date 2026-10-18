@@ -101,7 +101,11 @@ class SupertonicBench(private val args: Map<String, String>, private val pack: F
         log(JSONObject().put("bench", "start").put("device", device()).toString())
         for (threads in (args["threads"] ?: "1,2,4").split(',').map { it.trim().toInt() }) {
             val began = System.nanoTime()
-            val engine = SupertonicEngine(File(pack, "model"), if (threads <= 0) Runtime.getRuntime().availableProcessors() else threads)
+            // `estimator=<file under the pack>` + `steps=5` measure the fast tier; the quality tier otherwise
+            val model = File(pack, "model")
+            val estimator = args["estimator"]?.let { File(pack, it) } ?: File(model, "onnx/vector_estimator.onnx")
+            val steps = (args["steps"] ?: SupertonicText.STEPS.toString()).toInt()
+            val engine = SupertonicEngine(model, if (threads <= 0) Runtime.getRuntime().availableProcessors() else threads, estimator, steps)
             engine.style(voice)
             val loadMs = (System.nanoTime() - began) / 1_000_000
             val rtf = Array(passes + 1) { DoubleArray(paragraphs.size) }
@@ -122,7 +126,7 @@ class SupertonicBench(private val args: Map<String, String>, private val pack: F
                 }
             }
             val warm = DoubleArray(paragraphs.size) { index -> (1..passes).map { rtf[it][index] }.sorted().let { it[it.size / 2] } }
-            log(JSONObject().put("bench", "speed").put("threads", threads).put("loadMs", loadMs)
+            log(JSONObject().put("bench", "speed").put("threads", threads).put("steps", steps).put("estimator", args["estimator"] ?: "quality").put("loadMs", loadMs)
                 .put("audioSeconds", JSONArray(seconds.map { round(it) })).put("coldRtf", JSONArray(rtf[0].map { round(it) }))
                 .put("warmRtf", JSONArray(warm.map { round(it) })).put("warmRtfMedian", round(warm.sorted()[warm.size / 2]))
                 .put("lastPassStageMs", stages).put("peakRssMB", kb("VmHWM") / 1024).toString())
