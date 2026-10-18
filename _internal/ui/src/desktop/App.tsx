@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { Clapperboard, Compass, FileAudio, FolderDown, Headphones, Laptop, Trash2 } from "lucide-react";
+import { Clapperboard, Compass, FileAudio, Headphones, Laptop, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { HashRouter, Route, Routes, useNavigate } from "react-router";
 import { Toaster, toast } from "sonner";
@@ -18,8 +18,6 @@ import { SourceProvider, useSource } from "@/listen/source";
 import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
-import { coverArtwork } from "@/shared/cover";
-import { fileName } from "@/shared/format";
 import { brokenMusicNote, keptEditsTitle, workshopMergeNote } from "@/shared/editsKept";
 import { MissingLibrary } from "@/shared/MissingLibrary";
 import { setLetterShortcuts } from "@/shared/letterShortcuts";
@@ -34,8 +32,7 @@ import { ProjectScreen } from "@/studio/ProjectScreen";
 import { ProjectsScreen } from "@/studio/ProjectsScreen";
 import { desktopTextImport, httpSource } from "./httpSource";
 import { AudiobookDialogHost } from "./AudiobookDialog";
-import { AudiobookMenuItem, BookFileMenuItem, ExportJobHost, M4bMenuItem } from "./ExportBookFileJob";
-import { exportedOnComputer } from "./bookFileExport";
+import { AudiobookMenuItem, BookFileMenuItem, ExportJobHost, M4bMenuItem, Mp3MenuItem } from "./ExportBookFileJob";
 import { RemoteDownloadMenuItem, RemoteDownloadStatus } from "./RemoteDownload";
 import { SettingsScreen } from "./SettingsScreen";
 import { Shell } from "./Shell";
@@ -111,52 +108,6 @@ function StudioMenuItem({ id }: { id: string }) {
       className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
     >
       <Clapperboard className="size-4" /> Mở trong Studio
-    </DropdownMenu.Item>
-  );
-}
-
-/** Xuất thư mục MP3 có tên sách, tên chương, bìa - nghe được bằng mọi trình phát khác. */
-function ExportMenuItem({ book }: { book: ListenBook }) {
-  const { data: info } = useAppInfo();
-  const run = async () => {
-    let target = "";
-    if (info?.dialogs) {
-      const picked = await pickFolder("Chọn nơi lưu bản xuất", "").catch(() => null);
-      if (!picked) return;
-      target = picked;
-    }
-    const pending = toast.loading("Đang xuất sách…", { description: `${book.chaptersAvailable} chương` });
-    try {
-      const result = await api<{ folder?: string; files: number; chaptersTotal: number }>(`/api/books/${book.id}/export`, {
-        method: "POST",
-        body: { target, cover: coverArtwork(book.title) },
-      });
-      toast.success(`Đã xuất ${result.files} chương`, {
-        id: pending,
-        description:
-          result.files < result.chaptersTotal
-            ? "Các chương chưa làm xong sẽ không có trong bản xuất."
-            : info?.remote
-              ? exportedOnComputer(listenOnlyOwner(info), result.folder ? fileName(result.folder) : "")
-              : result.folder,
-        // Studio từ xa: thư mục nằm trên máy tính, không mở được từ máy đang xem.
-        action: info?.remote ? undefined : {
-          label: "Mở thư mục",
-          onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder: result.folder } }),
-        },
-      });
-    } catch (error) {
-      toast.error("Không xuất được", { id: pending, description: (error as Error).message });
-    }
-  };
-  return (
-    <DropdownMenu.Item
-      // Chưa có chương nào nghe được thì không có gì để xuất (soát UX 29-09: bấm được rồi nhận lỗi 409).
-      disabled={!book.chaptersAvailable}
-      onSelect={() => void run()}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
-    >
-      <FolderDown className="size-4" /> Xuất MP3 để nghe ở app khác
     </DropdownMenu.Item>
   );
 }
@@ -582,6 +533,7 @@ export function App() {
               {!info.remote && <RemoveImportedHost />}
               <ExportJobHost kind="bookfile" />
               <ExportJobHost kind="m4b" />
+              <ExportJobHost kind="mp3" />
               {!info.remote && <ExportJobHost kind="audiobook" />}
               {!info.remote && <ExportJobHost kind="projectfile" />}
               {!info.remote && <AudiobookDialogHost />}
@@ -609,7 +561,7 @@ export function App() {
                             info.listenOnly ? null : (
                               <>
                                 <BookFileMenuItem book={book} />
-                                <ExportMenuItem book={book} />
+                                <Mp3MenuItem book={book} />
                                 <M4bMenuItem book={book} />
                                 <StudioMenuItem id={book.id} />
                               </>

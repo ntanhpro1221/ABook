@@ -4,7 +4,7 @@ import { spokenProgress } from "@/shared/progressSpeech";
 import { api } from "@/studio/api";
 import { BOOK_FILE_SPAN, packError, packView, type PackJob, type PackPhase } from "@/studio/projectPacking";
 
-// "Xuất file sách" và "Xuất M4B" (menu "…" của trang sách): nói trước file sẽ nằm đâu, và trong lúc làm nói điều đổi theo thời gian.
+// "Xuất file sách", "Xuất M4B" và "Xuất MP3" (menu "…" của trang sách): nói trước file sẽ nằm đâu, và trong lúc làm nói điều đổi theo thời gian.
 // Việc có báo tiến độ (file sách, gói dự án) nói pha + đã/tổng; việc không báo (M4B) nói thời gian đã trôi - thứ thật duy nhất để nói.
 
 /** Chữ riêng của từng kiểu xuất chạy nền; phần còn lại (hỏi trạng thái, thông báo, nhắc lại khi mở trang) dùng chung. */
@@ -40,6 +40,15 @@ export const M4B_COPY: ExportCopy = {
   stopped: "Đã huỷ xuất",
   stoppedNote: "Chưa có file M4B nào được ghi.",
   stopping: "Dừng ngay sau bước đang làm - không ghi file M4B nào.",
+};
+/** Thư mục MP3 (Studio, menu Thư viện): việc nền có "chương i/N" và Huỷ ở mọi pha (webui/server.py `post_mp3_job`); huỷ thì thư mục dở bị xoá. */
+export const MP3_COPY: ExportCopy = {
+  busy: "Đang xuất MP3…",
+  done: "Đã xuất MP3",
+  failed: "Không xuất được MP3",
+  stopped: "Đã huỷ xuất",
+  stoppedNote: "Các chương đã ghi dở được xoá.",
+  stopping: "Dừng ngay sau bước đang làm - thư mục MP3 dở được xoá.",
 };
 /** Gói cả dự án (.abookproj): việc nền ở máy chủ, có pha + đã/tổng và Huỷ (webui/server.py `post_projectfile_job`). */
 export const PROJECT_FILE_COPY: ExportCopy = {
@@ -94,6 +103,8 @@ export interface ExportResult {
   coverBroken?: boolean;
   /** Xuất "Kèm nhạc nền": số đoạn không có nhạc vì bài không tải / không đọc được (webui/music_export.py). */
   musicMissing?: number;
+  /** Xuất cả bộ: các phần chưa có chương nào nên bị bỏ qua (export.export_series). */
+  skipped?: { part: number }[];
 }
 
 export interface ExportJob {
@@ -102,8 +113,9 @@ export interface ExportJob {
   /** Xuất sách nói (listen_export.py) báo tiến độ: pha ("voice" đọc / "music" trộn nhạc nền / "encode" ghép file), chương i/N, % theo số chữ, ước còn lại (giây),
    *  đang nhường người nghe (`waiting` "listening") hay đang chờ mạng về ("network"). Xuất M4B kèm nhạc nền báo "music-fetch" (dưới đây) rồi pha "music" + chương i/N. Mọi M4B: "peaks" đang kiểm đỉnh âm sau mã hoá, "reencode"
    *  mã hoá lại lượt `peakRound` vì `peakOver` chương vượt đỉnh (export.m4b_from_files). Gói dự án báo pha riêng (`PackPhase`) cùng `done`/`total`.
+   *  "chapters": xuất MP3 đang ghi chương `chapter`/`chapters` (cả bộ: đếm lại ở mỗi phần).
    *  "music-fetch": đang tải bài nhạc thiếu thứ `done` + 1 trong `total` trước khi trộn (điện thoại: ExportMusic.kt; máy tính: M4B kèm nhạc nền). */
-  phase?: "voice" | "music" | "music-fetch" | "encode" | "peaks" | "reencode" | PackPhase;
+  phase?: "voice" | "music" | "music-fetch" | "encode" | "peaks" | "reencode" | "chapters" | PackPhase;
   peakRound?: number;
   peakOver?: number;
   done?: number;
@@ -154,6 +166,10 @@ function reportedProgress(job: ExportJob): { fraction: number; text: string; spo
   if (job.phase === "encode") {
     return { fraction: 1, text: again ? `${again} · ${where}` : `Đang ghép file âm thanh · ${where}`, spoken: again || "Đang ghép file âm thanh" };
   }
+  if (job.phase === "chapters") {
+    const fraction = (job.chapter - 1) / job.chapters;
+    return { fraction, text: `Đang ghi chương ${job.chapter}/${job.chapters}`, spoken: spokenProgress("Đang xuất MP3", fraction) };
+  }
   if (job.phase === "music") {
     const text = `Đang trộn nhạc chương ${job.chapter}/${job.chapters}`;
     const fraction = job.percent !== undefined ? job.percent / 100 : (job.chapter - 1) / job.chapters;
@@ -190,6 +206,11 @@ export function musicMissingNote(result: ExportResult): string {
   return result.musicMissing ? `${result.musicMissing} đoạn thiếu nhạc vì chưa tải được bài` : "";
 }
 
+/** "chưa có chương nào nên bỏ qua: Phần 2" khi xuất cả bộ bỏ qua phần nào; rỗng khi không. */
+export function skippedPartsNote(result: ExportResult): string {
+  return result.skipped?.length ? `chưa có chương nào nên bỏ qua: ${result.skipped.map((part) => `Phần ${part.part}`).join(", ")}` : "";
+}
+
 /** "3 file nguồn chương đã bị dời hay xoá nên không có trong gói" khi gói dự án thiếu file nguồn; rỗng khi đủ. */
 export function missingSourcesNote(result: ExportResult): string {
   const lost = result.missingSources?.length ?? 0;
@@ -221,7 +242,8 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
     // Thông báo chỉ nói TÊN (file, hay thư mục khi mỗi phần một file + số file); đường đầy đủ ở gợi ý khi rê chuột và nút "Mở thư mục".
     const { file, folder } = job.result;
     const count = job.result.files ?? job.result.parts?.length;
-    const details = [!file && count ? `${count} file` : "", job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result), missingSourcesNote(job.result), musicMissingNote(job.result),
+    const partsNote = !file && job.result.files !== undefined && job.result.parts ? `${job.result.parts.length} phần` : ""; // MP3 cả bộ: file đếm theo chương, phần đếm riêng
+    const details = [partsNote, !file && count ? `${count} file` : "", skippedPartsNote(job.result), job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result), missingSourcesNote(job.result), musicMissingNote(job.result),
       job.result.coverBroken ? "ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên" : ""].filter(Boolean);
     const place = file ?? folder ?? "";
     return { kind: "success", title: copy.done, description: [fileName(place), ...details].filter(Boolean).join(" · "), ...(fileName(place) !== place ? { place } : {}) };
@@ -281,7 +303,7 @@ export function lastExportPlace(job: ExportJob | undefined): string | undefined 
 
 /** Mã các cuốn đang có lượt xuất `kind` chạy ở máy chủ (GET /api/export-jobs). Mở (hay tải lại) app ở trang khác trang sách: đây là cách duy nhất
  *  biết có việc để hiện lại tiến độ. Hỏi hụt thì coi như không có (nhịp sau, hay trang sách, sẽ hỏi lại). */
-export async function runningExports(kind: "bookfile" | "m4b" | "audiobook" | "projectfile"): Promise<string[]> {
+export async function runningExports(kind: "bookfile" | "m4b" | "mp3" | "audiobook" | "projectfile"): Promise<string[]> {
   try {
     const all = await allExportJobs();
     return (all[kind] ?? []).filter((job) => job.state === "running").map((job) => job.bookId);

@@ -15,7 +15,7 @@ from abook.io_utils import ffmpeg_available
 from abook.readaloud import mp3
 from abook.webui import export, export_jobs
 from tests.test_export_music import LINK_A, LINK_B, _studio_book
-from tests.test_export_series import _get, _post, _studio
+from tests.test_export_series import _get, _mp3_job, _post, _studio
 
 pytestmark = pytest.mark.skipif(not ffmpeg_available(), reason="cần ffmpeg")
 
@@ -145,35 +145,38 @@ def test_cancelling_an_mp3_export_removes_the_half_written_folder(tmp_path: Path
     assert _leftovers(target) == [], "chương 1 đã ghi, thư mục bản xuất và thư mục tạm .music-* đều bị xoá"
 
 
-def test_the_mp3_export_reports_its_downloads_and_cancel_answers_cancelled(tmp_path: Path) -> None:
+def test_the_mp3_job_reports_its_downloads_and_cancel_ends_it_cancelled_with_nothing_left(tmp_path: Path) -> None:
     project, tracks = _studio_book(tmp_path)
     app, server = _studio(tmp_path, project.parent)
     gate = threading.Event()
-    _downloading_app(app, tracks, gate)
+    fetched = _downloading_app(app, tracks, gate)
     target = tmp_path / "xuat"
-    answer: list[tuple[int, dict]] = []
-    worker = threading.Thread(target=lambda: answer.append(_post(server, project, "export", {"target": str(target), "music": True})))
     try:
-        worker.start()
-        assert _wait(lambda: _get(server, project, "music-export?kind=mp3")[1] == {"active": True, "done": 0, "total": 2})
-        assert _post(server, project, "music-export/cancel?kind=mp3", {}) == (200, {"cancelling": True})
-        gate.set()
-        worker.join(20)
+        assert _post(server, project, "mp3-job", {"target": str(target), "music": True})[0] == 202
+        assert _wait(lambda: _get(server, project, "mp3-job")[1].get("phase") == "music-fetch")
+        job = _get(server, project, "mp3-job")[1]
+        assert (job["state"], job["done"], job["total"]) == ("running", 0, 2), "bài 1/2 đang tải"
+        status, cancelling = _post(server, project, "mp3-job/cancel", {})
+        assert status == 200 and cancelling["state"] == "running"
+        asked = time.monotonic()
+        gate.set()  # bài đang tải xong; bài kế không được tải nữa
+        assert _wait(lambda: _get(server, project, "mp3-job")[1]["state"] == "cancelled")
+        assert time.monotonic() - asked < 2.0
     finally:
         gate.set()
         server.stop()
-    status, body = answer[0]
-    assert status == 409 and body.get("reason") == "cancelled"
+    assert fetched == [LINK_A], "dừng trước bài kế"
     assert _leftovers(target) == []
     assert str(target) in [str(item) for item in app.export_folders.recent()]
 
 
-def test_an_mp3_export_without_music_says_nothing_about_downloads(tmp_path: Path) -> None:
+def test_an_mp3_job_without_music_does_not_claim_to_download(tmp_path: Path) -> None:
     project, _tracks = _studio_book(tmp_path)
     app, server = _studio(tmp_path, project.parent)
     try:
         with app.music_exporting(app.music_key(project, "mp3"), []):
-            assert _get(server, project, "music-export?kind=mp3")[1] == {"active": True, "done": 0, "total": 0}
+            assert _get(server, project, "music-export")[1] == {"active": False, "done": 0, "total": 0}, "music-export chỉ nói về .abook / .abookproj"
+        assert _mp3_job(server, project, {"target": str(tmp_path / "xuat")})["state"] == "done"
     finally:
         server.stop()
 
@@ -185,7 +188,7 @@ def test_scratch_of_an_export_killed_in_a_chosen_folder_is_swept_once_old(tmp_pa
     app, server = _studio(tmp_path, project.parent)
     chosen = tmp_path / "o_rieng"
     try:
-        assert _post(server, project, "export", {"target": str(chosen)})[0] == 200  # MP3 ghi nhớ thư mục như .abookproj
+        assert _mp3_job(server, project, {"target": str(chosen)})["state"] == "done"  # MP3 ghi nhớ thư mục như .abookproj
     finally:
         server.stop()
     assert str(chosen) in [str(item) for item in app.export_folders.recent()]
