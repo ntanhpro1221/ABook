@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.100] - 2026-10-19
+
 ### Nghe ngay
 
 - Máy tính và điện thoại: Giọng Supertonic đọc nhanh hơn ở cả hai mức (trên OPPO A93: nhanh hơn khoảng 8 % ở "Chất lượng cao nhất", 13 % ở "Nhanh hơn") mà nghe như cũ, và tải nhẹ hơn 56 MB. Giọng VieNeu Nano nhanh hơn khoảng 16 % mà nghe như cũ, tải nhẹ hơn 57 MB. Nếu bạn đã tải giọng, thẻ giọng sẽ báo có bản cập nhật.
