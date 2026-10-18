@@ -25,7 +25,7 @@ from abook.io_utils import ffmpeg_available, ffmpeg_executable
 from abook.webui import export, export_jobs, listen_export, music_export, music_plan, music_render
 from abook.webui.music_export import ChapterMusic, Mixer
 from abook.webui.music_mix import MIX
-from tests.test_export_series import _get, _part, _post, _studio
+from tests.test_export_series import _get, _mp3_job, _part, _post, _studio
 
 pytestmark = pytest.mark.skipif(not ffmpeg_available(), reason="cần ffmpeg")
 RATE = 48000
@@ -418,11 +418,12 @@ def test_the_server_says_whether_the_book_has_music_and_exports_with_it_when_ask
         shutil.copyfile(file, cache / (hashlib.sha1(link.encode("utf-8")).hexdigest() + ".mp3"))
     try:
         state = _get(server, project, "export-music")
-        status, result = _post(server, project, "export", {"target": str(tmp_path / "xuat"), "music": True})
+        job = _mp3_job(server, project, {"target": str(tmp_path / "xuat"), "music": True})
     finally:
         server.stop()
+    result = job["result"]
     assert state == (200, {"available": True, "enabled": False})
-    assert status == 200 and "musicMissing" not in result
+    assert job["state"] == "done" and "musicMissing" not in result
     out = _decode(min(Path(result["folder"]).glob("*.mp3")))
     assert _amp(out, 1000, 4, 7.5) > 3e-3
     (project / music_plan.PLAN_FILE).unlink()

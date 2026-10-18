@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookAudio, FileAudio, Headphones, type LucideIcon } from "lucide-react";
+import { BookAudio, FileAudio, FolderDown, Headphones, type LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import { useMatch } from "react-router";
 import { toast } from "sonner";
@@ -10,18 +10,20 @@ import { LiveText, Progress } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
 import { listenOnlyOwner } from "@/shared/peerStudio";
-import { BOOK_FILE_COPY, exportedOnComputer, exportWhereHint, jobView, lastExportHint, lastExportPlace, M4B_COPY, PROJECT_FILE_COPY, runningExports, type ExportCopy, type ExportJob } from "./bookFileExport";
+import { BOOK_FILE_COPY, exportedOnComputer, exportWhereHint, jobView, lastExportHint, lastExportPlace, M4B_COPY, MP3_COPY, PROJECT_FILE_COPY, runningExports, type ExportCopy, type ExportJob } from "./bookFileExport";
 import { AUDIOBOOK_COPY } from "./listenExport";
 
-// "Xuất file sách", "Xuất M4B" và "Xuất sách nói" (sách Nghe ngay) chạy nền ở máy chủ (webui/export_jobs.py): menu (hay hộp Xuất sách nói) chỉ chọn
+// "Xuất file sách", "Xuất M4B", "Xuất MP3" và "Xuất sách nói" (sách Nghe ngay) chạy nền ở máy chủ (webui/export_jobs.py): menu (hay hộp Xuất sách nói) chỉ chọn
 // nơi lưu rồi báo cho ExportJobHost cùng kiểu; host (sống suốt phiên, ngoài menu) bắt đầu việc, hỏi trạng thái và giữ thông báo - tải lại trang
-// thì mở trang sách là thấy lại tiến độ / kết quả. Mỗi kiểu có bản ghi riêng ở máy chủ, chạy cùng lúc được. Sách nói, M4B và gói dự án báo thêm tiến độ và có Huỷ.
+// thì mở trang sách là thấy lại tiến độ / kết quả. Mỗi kiểu có bản ghi riêng ở máy chủ, chạy cùng lúc được. Sách nói, M4B, MP3 và gói dự án báo thêm tiến độ và có Huỷ.
 
-export type ExportKind = "bookfile" | "m4b" | "audiobook" | "projectfile";
+export type ExportKind = "bookfile" | "m4b" | "mp3" | "audiobook" | "projectfile";
 
 const KINDS: Record<ExportKind, { copy: ExportCopy; pick: string; url: (id: string) => string; cancel?: (id: string) => string }> = {
   bookfile: { copy: BOOK_FILE_COPY, pick: "Chọn nơi lưu file sách", url: (id) => `/api/books/${id}/bookfile-job` },
   m4b: { copy: M4B_COPY, pick: "Chọn nơi lưu file M4B", url: (id) => `/api/books/${id}/m4b-job`, cancel: (id) => `/api/books/${id}/m4b-job/cancel` },
+  // Thư mục MP3 của Studio (hộp Xuất) và của menu Thư viện: cùng việc nền, cả bộ thì thêm `extra.series`.
+  mp3: { copy: MP3_COPY, pick: "Chọn nơi lưu bản xuất", url: (id) => `/api/books/${id}/mp3-job`, cancel: (id) => `/api/books/${id}/mp3-job/cancel` },
   audiobook: {
     copy: AUDIOBOOK_COPY,
     pick: "Chọn nơi lưu sách nói",
@@ -82,7 +84,7 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
       if (!picked) return;
       target = picked;
     }
-    const cover = kind === "m4b" ? coverArtwork(book.title) : undefined;
+    const cover = kind === "m4b" || kind === "mp3" ? coverArtwork(book.title) : undefined;
     startExport(kind, { id: book.id, chapters: book.chaptersAvailable, target, cover });
   };
   return (
@@ -110,6 +112,11 @@ export function BookFileMenuItem({ book }: { book: ListenBook }) {
 /** Cả cuốn trong một file `.m4b` có mục lục chương - app sách nói (Apple Books, Smart AudioBook Player...) mở là thấy đủ chương. */
 export function M4bMenuItem({ book }: { book: ListenBook }) {
   return <ExportJobMenuItem book={book} kind="m4b" icon={BookAudio} label="Xuất M4B cho app sách nói" />;
+}
+
+/** Thư mục MP3 có tên sách, tên chương, bìa - nghe được bằng mọi trình phát khác. */
+export function Mp3MenuItem({ book }: { book: ListenBook }) {
+  return <ExportJobMenuItem book={book} kind="mp3" icon={FolderDown} label="Xuất MP3 để nghe ở app khác" />;
 }
 
 /** Mở hộp Xuất sách nói (AudiobookDialogHost) cho cuốn này. */

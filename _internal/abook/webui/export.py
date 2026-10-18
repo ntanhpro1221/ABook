@@ -165,8 +165,9 @@ def write_mp3_folder(ffmpeg: str, folder: Path, chapters: Iterable[tuple[str, Pa
 
 def export_book(project_root: Path, target_root: Path, *, cover: str | None = None,
                 folder_name: str | None = None, music: Callable[[str], Path | None] | None = None,
-                cancelled: Callable[[], bool] | None = None) -> dict[str, Any]:
+                cancelled: Callable[[], bool] | None = None, progress: Callable[[int, int], None] | None = None) -> dict[str, Any]:
     """`folder_name`: tên thư mục thay cho tên sách - bản xuất cả bộ đặt mỗi phần vào "Phần N - ...".
+    `progress(i, N)`: sắp làm chương thứ i (từ 1) trong N chương của cuốn này.
     `music`: nguồn file bài nhạc (như gói `.abook`, music_plan.TrackSource) = "Kèm nhạc nền": chương có nhạc được giải mã, trộn
     (music_export.py) rồi mã hoá lại MP3 cùng bitrate; không có thì chép nguyên luồng như cũ.
     `cancelled()` True (người dùng bấm Huỷ): dừng trước chương kế / giữa lúc trộn, xoá thư mục bản xuất dở và ném `export_jobs.Cancelled`."""
@@ -187,15 +188,15 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     noted: dict[str, Any] = {}
     try:
         if music is None:
-            files = write_mp3_folder(ffmpeg, folder, _checked(sources, cancelled), title=title, narrator=narrator, cover_path=cover_path,
-                                     total=len(sources))
+            files = write_mp3_folder(ffmpeg, folder, _counted(_checked(sources, cancelled), len(sources), progress), title=title,
+                                     narrator=narrator, cover_path=cover_path, total=len(sources))
         else:
             from .music_export import Mixer, studio_music  # nhập muộn: music_export dùng pump_pcm của module này
 
             mixer = Mixer(ffmpeg, studio_music(project_root, [item[0] for item in listed], music))
             with tempfile.TemporaryDirectory(prefix=".music-", dir=target_root) as scratch:
-                files = write_mp3_folder(ffmpeg, folder, _mixed_mp3(ffmpeg, mixer, listed, Path(scratch), cancelled), title=title,
-                                         narrator=narrator, cover_path=cover_path, total=len(sources))
+                files = write_mp3_folder(ffmpeg, folder, _mixed_mp3(ffmpeg, mixer, _counted(listed, len(listed), progress), Path(scratch), cancelled),
+                                         title=title, narrator=narrator, cover_path=cover_path, total=len(sources))
             noted = mixer.note(item[0] for item in listed)
     except Cancelled:
         shutil.rmtree(folder, ignore_errors=True)  # thư mục mới của chính lượt này (free_path): bản xuất dở không được nằm lại như một bản xuất
@@ -205,7 +206,15 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
             **({"coverBroken": True} if real is not None and usable_cover(real) is None else {})}
 
 
-def _mixed_mp3(ffmpeg: str, mixer: Any, listed: list[tuple[int, str, Path]], scratch: Path,
+def _counted(items: Iterable[Any], total: int, progress: Callable[[int, int], None] | None) -> Iterator[Any]:
+    """`items` từng cái một, báo `progress(i, total)` trước khi giao cái thứ i (từ 1) - tiến độ "chương i/N" của bản xuất MP3."""
+    for index, item in enumerate(items, 1):
+        if progress is not None:
+            progress(index, total)
+        yield item
+
+
+def _mixed_mp3(ffmpeg: str, mixer: Any, listed: Iterable[tuple[int, str, Path]], scratch: Path,
                cancelled: Callable[[], bool] | None = None) -> Iterator[tuple[str, Path]]:
     """Nguồn MP3 từng chương cho `write_mp3_folder` khi kèm nhạc: chương có nhạc trộn rồi mã hoá lại (LAME, cùng bitrate với MP3 của
     chương) vào `scratch` - file dùng xong mới làm chương kế; chương không có nhạc dùng nguyên file. Huỷ (`cancelled`) dừng ngay giữa chương."""

@@ -137,7 +137,9 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     # "Người kể xưng “tôi” tự kể chuyện" (teller_mode.py): xem cái giá và bật/tắt.
     ("GET", _BOOK + r"/narrator-mode"),
     ("PUT", _BOOK + r"/narrator-mode"),
-    ("POST", _BOOK + r"/export"),
+    ("POST", _BOOK + r"/mp3-job"),  # xuất thư mục MP3 chạy nền như M4B (cùng _target, "Đã xuất" trong thư viện)
+    ("GET", _BOOK + r"/mp3-job"),
+    ("POST", _BOOK + r"/mp3-job/cancel"),
     ("POST", _BOOK + r"/bookfile"),
     ("POST", _BOOK + r"/bookfile-job"),  # xuất file sách chạy nền (export_jobs.py): bắt đầu + hỏi trạng thái
     ("GET", _BOOK + r"/bookfile-job"),
