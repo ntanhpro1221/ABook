@@ -11,6 +11,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Máy tính: xoá một cuốn đang xuất sách nói dở rồi bấm "Hoàn tác" thì phần đã xuất vẫn còn, xuất lại làm tiếp không phải đọc lại (trước đây phần ấy bị xoá ngay lúc bấm Xoá). Hết hạn hoàn tác thì phần ấy đi theo sách vào Thùng rác như điện thoại vốn đã làm.
 
+### Studio
+
+- Máy tính: "Xuất MP3" (Studio và menu Thư viện) chạy nền như "Xuất M4B": bạn đóng hộp Xuất rồi đi làm việc khác vẫn thấy "Đang ghi chương 3/12" (hay "Đang tải nhạc nền 2/5 bài") ở thông báo góc màn hình và vẫn bấm được "Huỷ" - huỷ là dừng trong chừng 1 giây và thư mục MP3 ghi dở bị xoá. Mở lại app giữa lúc đang xuất cũng thấy lại thông báo; tắt app thì việc xuất dừng gọn.
+
 ## [0.4.96] - 2026-10-18
 
 ### Nghe ngay

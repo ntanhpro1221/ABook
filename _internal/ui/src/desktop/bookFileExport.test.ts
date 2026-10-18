@@ -9,6 +9,7 @@ import {
   lastExportPlace,
   M4B_COPY,
   missingChaptersNote,
+  MP3_COPY,
   packingText,
   PROJECT_FILE_COPY,
   RECENT_SECONDS,
@@ -174,8 +175,8 @@ describe("runningExports", () => {
       calls += 1;
       return { bookfile: [{ bookId: "x", state: "running" }], m4b: [] };
     });
-    const answers = await Promise.all((["bookfile", "m4b", "audiobook", "projectfile"] as const).map((kind) => runningExports(kind)));
-    expect(answers).toEqual([["x"], [], [], []]);
+    const answers = await Promise.all((["bookfile", "m4b", "mp3", "audiobook", "projectfile"] as const).map((kind) => runningExports(kind)));
+    expect(answers).toEqual([["x"], [], [], [], []]);
     expect(calls).toBe(1);
     await runningExports("bookfile");
     expect(calls).toBe(2);
@@ -211,6 +212,36 @@ describe("M4B export", () => {
     });
     expect(missingChaptersNote({ folder: "D:/x", chapters: 6, chaptersTotal: 6 })).toBe("");
     expect(missingChaptersNote({ folder: "D:/x", file: "D:/x/a.abook" })).toBe("");
+  });
+});
+
+describe("MP3 export", () => {
+  it("shows chapter progress with a bar, and the music download before it", () => {
+    const view = jobView({ state: "running", elapsed: 5, phase: "chapters", chapter: 3, chapters: 12 }, 0, false, MP3_COPY);
+    expect(view).toMatchObject({ kind: "loading", title: "Đang xuất MP3…", description: "Đang ghi chương 3/12" });
+    expect((view as { progress?: number }).progress).toBeCloseTo(2 / 12);
+    expect(jobView({ state: "running", elapsed: 2, phase: "music-fetch", done: 0, total: 2 }, 0, false, MP3_COPY)).toMatchObject({ description: "Đang tải nhạc nền 1/2 bài" });
+  });
+
+  it("names the folder, counts files, and tells what was left out", () => {
+    const one: ExportJob = { state: "done", id: "a", result: { folder: "D:/x/Truyện X", files: 12, coverBroken: true, musicMissing: 3 } };
+    expect(jobView(one, 0, false, MP3_COPY)).toEqual({
+      kind: "success",
+      title: "Đã xuất MP3",
+      description: "Truyện X · 12 file · 3 đoạn thiếu nhạc vì chưa tải được bài · ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên",
+      place: "D:/x/Truyện X",
+    });
+    const series: ExportJob = { state: "done", id: "b", result: { folder: "D:/x/Bộ", files: 5, parts: [{}, {}], skipped: [{ part: 2 }] } };
+    expect(jobView(series, 0, false, MP3_COPY)).toMatchObject({ description: "Bộ · 2 phần · 5 file · chưa có chương nào nên bỏ qua: Phần 2" });
+  });
+
+  it("says a cancelled export left nothing behind, and speaks its own failure", () => {
+    expect(jobView({ state: "cancelled", finishedAgo: 1 }, 0, false, MP3_COPY)).toEqual({ kind: "info", title: "Đã huỷ xuất", description: "Các chương đã ghi dở được xoá." });
+    expect(jobView({ state: "error", error: "Sách chưa có chương nào nghe được để xuất" }, 0, false, MP3_COPY)).toMatchObject({
+      title: "Không xuất được MP3",
+      description: "Sách chưa có chương nào nghe được để xuất",
+    });
+    expect(lastExportHint({ state: "running" }, MP3_COPY)).toBe("Đang xuất MP3 - xem thông báo ở góc màn hình");
   });
 });
 

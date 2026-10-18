@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import time
 from pathlib import Path
 
 import pytest
@@ -110,17 +111,31 @@ def _post(server, project: Path, route: str, body: dict) -> tuple[int, dict]:
     return status, json.loads(data)
 
 
+def _mp3_job(server, project: Path, body: dict, seconds: float = 30.0) -> dict:
+    """"Xuất MP3" của Studio là việc nền (POST mp3-job -> 202, GET mp3-job): bắt đầu rồi chờ xong, trả trạng thái cuối (state, result / error)."""
+    status, started = _post(server, project, "mp3-job", body)
+    assert status == 202 and started["state"] in ("running", "done"), started
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        job = _get(server, project, "mp3-job")[1]
+        if job["state"] != "running":
+            return job
+        time.sleep(0.02)
+    raise AssertionError("việc xuất MP3 không kết thúc")
+
+
 def test_studio_exports_the_whole_series_as_mp3(series: tuple[Path, list[Path]], tmp_path: Path, fake_ffmpeg: None) -> None:
     library, parts = series
     app, server = _studio(tmp_path, library)
     try:
-        status, result = _post(server, parts[1], "export", {"target": str(tmp_path / "xuat"), "series": True})
-        alone_status, alone = _post(server, parts[1], "export", {"target": str(tmp_path / "xuat2")})
+        series_job = _mp3_job(server, parts[1], {"target": str(tmp_path / "xuat"), "series": True})
+        alone_job = _mp3_job(server, parts[1], {"target": str(tmp_path / "xuat2")})
     finally:
         server.stop()
-    assert status == 200 and result["files"] == 3 and len(result["parts"]) == 3
+    result, alone = series_job["result"], alone_job["result"]
+    assert series_job["state"] == "done" and result["files"] == 3 and len(result["parts"]) == 3
     assert (tmp_path / "xuat" / "Truyện X" / "Phần 2 - Truyện X").is_dir()
-    assert alone_status == 200 and alone["files"] == 1 and (tmp_path / "xuat2" / "Truyện X · Phần 2").is_dir(), \
+    assert alone_job["state"] == "done" and alone["files"] == 1 and (tmp_path / "xuat2" / "Truyện X · Phần 2").is_dir(), \
         "không có `series` thì xuất riêng phần này như trước"
     assert result["folder"] in app.exports, "nút Mở thư mục mở được thư mục bộ"
 

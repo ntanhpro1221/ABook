@@ -11,7 +11,7 @@ import { spokenProgress } from "@/shared/progressSpeech";
 import { Button, Dialog, LiveText, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { FfmpegNeeded } from "@/desktop/AudiobookDialog";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
-import { exportedOnComputer, musicMissingNote } from "@/desktop/bookFileExport";
+import { exportedOnComputer } from "@/desktop/bookFileExport";
 import { startExport, trackExport } from "@/desktop/ExportBookFileJob";
 import { ffmpegCancel, ffmpegStart, ffmpegStatus, type MusicExportState } from "@/desktop/listenExport";
 import { api, ApiError, type BookSummary } from "./api";
@@ -38,7 +38,6 @@ type SeriesResult = {
   parts: PartResult[];
   skipped: PartResult[];
   partsTotal: number;
-  files?: number;
   size?: number;
   /** Chỉ có khi cả bộ nằm trong MỘT file. */
   file?: string;
@@ -64,14 +63,14 @@ const KINDS: { value: Kind; title: string; detail: string; icon: typeof FolderDo
 ];
 
 const SAVING: Record<Kind, [string, string, string]> = {
-  mp3: ["Chọn nơi lưu bản xuất", "Đang xuất sách…", "Không xuất được"],
+  mp3: ["Chọn nơi lưu bản xuất", "Đang xuất MP3…", "Không xuất được MP3"],
   abook: ["Chọn nơi lưu file sách", "Đang đóng gói sách…", "Không xuất được"],
   m4b: ["Chọn nơi lưu file M4B", "Đang làm file M4B…", "Không xuất được M4B"],
   abookproj: ["Chọn nơi lưu file dự án", "Đang đóng gói dự án…", "Không gói được dự án"],
 };
 
-/** Truy vấn chọn trạng thái tải nhạc / Huỷ của đúng kiểu xuất ở máy chủ (server.py `_music_key`); `.abook` không cần. */
-const musicKind = (kind: Kind) => (kind === "abookproj" ? "?kind=projectfile" : kind === "mp3" ? "?kind=mp3" : "");
+/** Truy vấn chọn trạng thái tải nhạc / Huỷ của đúng kiểu xuất ở máy chủ (server.py `_music_key`); `.abook` không cần. MP3 / M4B là việc nền riêng (ExportJobHost). */
+const musicKind = (kind: Kind) => (kind === "abookproj" ? "?kind=projectfile" : "");
 
 /** Bản xuất đã xong, hiện ngay trong hộp: nói đã lưu ở đâu và cho mở thư mục (trước đây chỉ có một thông báo thoáng qua). */
 type Finished = { title: string; detail: string; folder: string };
@@ -101,8 +100,8 @@ export function ExportDialog({
   openRef.current = open;
   const loadingToast = useRef<string | number | null>(null);
   const parts = useParts(book.id).data?.parts ?? [];
-  // Giữa lúc đóng gói .abook / .abookproj hay xuất MP3 kèm nhạc, máy có thể đang TẢI nhạc nền (vài phút): hỏi để nói bài thứ mấy và cho Huỷ.
-  const packing = busy && (kind === "abook" || kind === "abookproj" || kind === "mp3");
+  // Giữa lúc đóng gói .abook / .abookproj, máy có thể đang TẢI nhạc nền (vài phút): hỏi để nói bài thứ mấy và cho Huỷ.
+  const packing = busy && (kind === "abook" || kind === "abookproj");
   // Gói cả dự án (.abookproj) và file sách (.abook) một cuốn là việc nền ở máy chủ (mất cả phút với sách dài): hỏi pha + đã/tổng ("chương X/N")
   // để hiện thanh tiến độ; đóng hộp hay chuyển trang thì việc vẫn chạy.
   const [packJob, setPackJob] = useState<PackJob | null>(null);
@@ -124,7 +123,7 @@ export function ExportDialog({
   const musicTransfer = useQuery({
     queryKey: ["music-export", book.id, kind],
     enabled: packing,
-    // `.abook`, `.abookproj` và MP3 có trạng thái nhạc riêng ở máy chủ (khoá theo kiểu xuất): hỏi đúng cái của kiểu đang gói.
+    // `.abook` và `.abookproj` có trạng thái nhạc riêng ở máy chủ (khoá theo kiểu xuất): hỏi đúng cái của kiểu đang gói.
     queryFn: () => api<{ active: boolean; done: number; total: number }>(`/api/books/${book.id}/music-export${musicKind(kind)}`),
     refetchInterval: 1000,
     retry: false,
@@ -137,7 +136,6 @@ export function ExportDialog({
   }, [busy]);
   const cancelPacking = () => {
     setCancelling(true);
-    // MP3: cùng đường huỷ với tải nhạc của `.abook` - máy chủ dừng ở bài nhạc / khúc kế và xoá bản xuất dở (server.py post_export).
     const url = kind === "abookproj" ? `/api/books/${book.id}/projectfile-job/cancel` : `/api/books/${book.id}/music-export/cancel${musicKind(kind)}`;
     void api(url, { method: "POST", body: {} }).catch(() => setCancelling(false));
   };
@@ -213,9 +211,10 @@ export function ExportDialog({
       if (!picked) return;
       target = picked;
     }
-    if (kind === "m4b") {
-      // Việc nền do ExportJobHost (desktop/App.tsx) giữ: tiến độ và kết quả hiện ở thông báo nổi, nên đóng hộp ngay.
-      startExport("m4b", { id: book.id, chapters: ready, target, cover: coverArtwork(book.title), ...(mixes ? { extra: { music: true } } : {}) });
+    if (kind === "m4b" || kind === "mp3") {
+      // Việc nền do ExportJobHost (desktop/App.tsx) giữ: tiến độ, Huỷ và kết quả hiện ở thông báo nổi, nên đóng hộp ngay.
+      const extra = { ...(mixes ? { music: true } : {}), ...(kind === "mp3" && wholeSeries ? { series: true } : {}) };
+      startExport(kind, { id: book.id, chapters: wholeSeries ? 0 : ready, target, cover: coverArtwork(book.title), ...(Object.keys(extra).length ? { extra } : {}) });
       onOpenChange(false);
       return;
     }
@@ -232,11 +231,6 @@ export function ExportDialog({
             )
           : bookJob.current
           ? await api(`/api/books/${book.id}/bookfile-job`, { method: "POST", body: { target } }).then(() => followPacking("bookfile") as Promise<Packed>)
-          : kind === "mp3"
-          ? await api<{ folder: string; files: number; coverBroken?: boolean; musicMissing?: number } & Partial<SeriesResult>>(`/api/books/${book.id}/export`, {
-              method: "POST",
-              body: { target, cover: coverArtwork(book.title), series: wholeSeries, ...(mixes ? { music: true } : {}) },
-            })
           : await api<{ folder: string; file: string; size: number; missingSources?: string[] } & Partial<SeriesResult>>(
               `/api/books/${book.id}/bookfile`,
               { method: "POST", body: { target, series: wholeSeries, ...(wholeSeries ? { single: layout === "single" } : {}) } },
@@ -247,16 +241,12 @@ export function ExportDialog({
       const single = "file" in result && typeof result.file === "string";
       const filePath = single ? String((result as { file?: string }).file) : "";
       const title = result.parts
-        ? kind === "mp3"
-          ? `Đã xuất ${result.files ?? 0} chương của ${result.parts.length} phần`
-          : single
-            ? `Đã xuất cả bộ ${result.parts.length} phần trong một file sách`
-            : `Đã xuất ${result.parts.length} file sách`
-        : kind === "mp3"
-          ? `Đã xuất ${"files" in result ? result.files : ready} chương`
-          : kind === "abook"
-            ? "Đã xuất file sách"
-            : "Đã gói dự án";
+        ? single
+          ? `Đã xuất cả bộ ${result.parts.length} phần trong một file sách`
+          : `Đã xuất ${result.parts.length} file sách`
+        : kind === "abook"
+          ? "Đã xuất file sách"
+          : "Đã gói dự án";
       // Studio từ xa: máy chủ chỉ trả TÊN file / thư mục (hay không trả thư mục) - nói file nằm ở máy tính nào.
       const perPart = Boolean(result.parts && kind === "abook" && !single);
       const placeText = perPart ? `${result.folder} · mỗi phần một file .abook riêng` : single ? `${result.file} · ${formatSize(result.size ?? 0)}` : result.folder;
@@ -265,10 +255,7 @@ export function ExportDialog({
           ? exportedOnComputer(computer, perPart ? "" : single ? fileName(result.file as string) : fileName(result.folder ?? ""), [perPart ? "mỗi phần một file .abook riêng" : "", single ? formatSize(result.size ?? 0) : ""].filter(Boolean).join(" · "))
           : placeText) +
         skipped +
-        (lost ? ` · ${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "") +
-        // Ảnh bìa hỏng (soát a28 lỗi 8): bản xuất mang bìa vẽ từ tên sách thay vì hỏng cả lượt.
-        ("coverBroken" in result && result.coverBroken ? " · ảnh bìa của sách bị hỏng nên bản xuất dùng bìa vẽ từ tên - đặt lại bìa nếu muốn" : "") +
-        ("musicMissing" in result && result.musicMissing ? ` · ${musicMissingNote(result)}` : "");
+        (lost ? ` · ${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "");
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (openRef.current) {
@@ -286,7 +273,7 @@ export function ExportDialog({
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (error instanceof PackCancelled || (error instanceof ApiError && error.detail.reason === "cancelled")) {
-        const left = kind === "mp3" ? "Các chương đã ghi dở được xoá." : `Chưa có file ${kind === "abookproj" ? "dự án" : "sách"} nào được ghi.`;
+        const left = `Chưa có file ${kind === "abookproj" ? "dự án" : "sách"} nào được ghi.`;
         toast.info("Đã huỷ xuất", { id: pending ?? undefined, description: left, duration: 6000 });
       } else if (kind === "abookproj") {
         const shown = packError((error as Error).message);
@@ -377,7 +364,7 @@ export function ExportDialog({
             Sách dài thì có thể mất vài phút. Đóng hộp này cũng được - việc vẫn chạy và báo khi xong.
           </p>
           <div className="mt-5 flex justify-end gap-2">
-            {(downloading || cancelling || kind === "abookproj" || kind === "mp3") && (
+            {(downloading || cancelling || kind === "abookproj") && (
               <Button variant="secondary" disabled={cancelling} onClick={cancelPacking}>
                 Huỷ xuất
               </Button>

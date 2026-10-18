@@ -379,7 +379,7 @@ def test_remote_paths_stay_inside_the_upload_folder(studio, tmp_path: Path) -> N
         status, _data, _ = _sync_request(port, "POST", "/api/books", headers=cookie, body={"paths": [path], "title": "x"})
         assert status == 403, path
     identifier = book_id(project)
-    status, data, _ = _sync_request(port, "POST", f"/api/books/{identifier}/export", headers=cookie,
+    status, data, _ = _sync_request(port, "POST", f"/api/books/{identifier}/mp3-job", headers=cookie,
                                body={"target": str(tmp_path / "ngoai")})
     assert not (tmp_path / "ngoai").exists(), "từ xa không chọn được nơi ghi trên máy tính"
     # Cùng lời gọi từ cửa sổ app (không qua cổng từ xa) vẫn chọn được thư mục như trước.
