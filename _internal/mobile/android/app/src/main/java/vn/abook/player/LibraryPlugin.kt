@@ -19,6 +19,7 @@ import com.getcapacitor.annotation.CapacitorPlugin
 import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.readaloud.ReadAloud
+import vn.abook.player.readaloud.VoiceSpeed
 import java.io.File
 import java.net.DatagramPacket
 import java.net.DatagramSocket
@@ -1249,7 +1250,7 @@ class LibraryPlugin : Plugin() {
             val reading = readingOf(id, voice)
             val cache = ReadAloud.cache()
             val plan = ListenExport.plan(chapters, reading, ListenExport.workFolder(ListenExports.workRoot(context), id), speed,
-                music = { MusicExport.audible(music, it) }, cachedMs = { text -> cache.durationMs(voice, text, reading.origin, reading.readings) }, extra = extra)
+                music = { MusicExport.audible(music, it) }, cachedMs = { text -> cache.durationMs(VoiceSpeed.quality(voice), text, reading.origin, reading.readings) }, extra = extra)
             call.resolve(JSObject.fromJSONObject(plan.toJson().put("music", JSONObject().put("available", available).put("enabled", enabled))))
         }
     }

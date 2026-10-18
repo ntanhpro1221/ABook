@@ -135,6 +135,10 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
   `LICENSE-audio.cpp.txt` và `third_party/` (ggml MIT, cJSON MIT, cpp-httplib MIT, libyaml MIT, sentencepiece Apache-2.0; `external/llama_tokenizer` dẫn xuất từ
   llama.cpp, MIT); gói zip ghim SHA-256 trên Hugging Face `NGDtuanh/abook-music-student`. Trọng số: `vieneu-v3-turbo-q8_0.gguf` của pnnbao-ump/VieNeu-TTS-v3-Turbo
   (Apache-2.0, ghim commit + SHA-256), cùng model với bản ONNX ở trên.
+  "Bản nhanh hơn của Giọng VieNeu Nano" (bậc "Nhanh hơn" của "Tốc độ giọng trên máy", chỉ tải khi bậc ấy được chọn; máy tính `webui/vieneu_module.py`,
+  điện thoại `vieneu/VieneuModule.kt`): `vieneu-nano-int8/vector_estimator.onnx` trên Hugging Face `NGDtuanh/abook-music-student` (ghim commit + SHA-256) -
+  model dẫn xuất do ABook làm từ `vector_estimator.onnx` của VieNeu-TTS v3 Nano (lượng tử hoá int8 các lớp MatMul, phần còn lại giữ nguyên), vẫn theo
+  giấy phép **Apache-2.0** của bản gốc; file `LICENSE` (Apache-2.0) tải kèm, đặt cạnh model.
 - Giọng Supertonic 3 (mô-đun tải khi người dùng bấm, `webui/supertonic_module.py`; không nằm trong bộ cài): model Supertonic 3 (Supertone Inc.,
   99 triệu tham số, ONNX) giấy phép **BigScience OpenRAIL-M** - trọng số và mười file giọng tải thẳng từ Hugging Face `Supertone/supertonic-3`
   (ghim commit + SHA-256 từng file; hãng đã giải thể, repo lưu trữ 09-09-2026 nên đây là bản cuối), kèm file LICENSE của hãng đặt cạnh model.
@@ -145,6 +149,11 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
   mã mẫu chính thức của hãng (gói pip `supertonic` 1.3.1, giấy phép **MIT**, Copyright (c) 2025 Supertone Inc.) - ghi nguồn ở đầu file; không
   cài gói đó. Chữ -> chữ đã đọc số: `sea-g2p` dùng chung với mô-đun VieNeu (mục trên). Studio dùng lại đúng bản tải này cho giọng
   Supertonic người nghe chọn trong "Đổi giọng" (`tts.SupertonicEngine`); các hạn chế dùng ở trên áp như nhau.
+  Bộ khử nhiễu (`vector_estimator.onnx`) là hai model dẫn xuất do ABook làm từ bản fp32 của hãng (lượng tử hoá int8 một phần các lớp nặng, phần còn
+  lại giữ nguyên), đăng ở Hugging Face `NGDtuanh/abook-music-student` (ghim commit + SHA-256): `supertonic3-int8/top30` thay bản fp32 (bản fp32 không tải
+  nữa) và `supertonic3-int8/fast` cho bậc "Nhanh hơn" của "Tốc độ giọng trên máy" (chỉ tải khi bậc ấy được chọn). Cả hai vẫn theo **OpenRAIL-M** của bản
+  gốc, kể cả các hạn chế dùng ở trên; repo kèm đúng file LICENSE của hãng (`supertonic3-int8/LICENSE`, cùng byte). Điện thoại tải cùng các file
+  (`readaloud/SupertonicModule.kt`).
 - Giọng ZeroTTS cho Studio (mô-đun tải khi người dùng bấm ở "Đổi giọng", `webui/zerotts_module.py`; không nằm trong bộ cài): gói pip `zerotts`
   0.1.5 (ZeroWeight AI, thuần Python, giấy phép **MIT**) - wheel ghim SHA-256, giải vào thư mục của mô-đun; trọng số `zeroweight-ai/ZeroTTS` trên
   Hugging Face (giấy phép **MIT** theo thẻ model, ghim commit `c2bfbd67` + SHA-256 từng file, chỉ năm giọng chủ sách chọn). Bộ giải mã âm thanh đi

@@ -6,7 +6,10 @@ Các phần (`NEEDS`):
 - `libs` numpy + onnxruntime: CHÍNH phần của mô-đun nhạc (music_module.libs_part).
 - `g2p` sea-g2p: CHÍNH phần của mô-đun VieNeu (vieneu_module.g2p_part) - chỉ để đổi số / ngày / giờ thành chữ trước khi đọc, vì Supertonic đọc số
   kém nhất. Máy không tải được (không phải Windows 64-bit) thì bỏ phần này, giọng vẫn đọc nguyên chữ.
-- `supertonic` file model + mười file giọng trên Hugging Face, ghim commit + SHA-256 từng file (`SOURCE`, `FILES`).
+- `supertonic` file model + mười file giọng trên Hugging Face, ghim commit + SHA-256 từng file (`SOURCE`, `FILES`). Bộ khử nhiễu là bản int8 "top30"
+  app làm từ bản fp32 của hãng (thay được trên 144 clip thử, 18-10; repo của app, voice_module.APP_MODELS) - bản fp32 không tải nữa.
+- `supertonic_fast` ("Bản nhanh hơn", `FAST_FILES`): bộ khử nhiễu int8 "fast" cho bậc "Nhanh hơn" của "Tốc độ giọng trên máy" (voice_speed.py). Chỉ tải
+  khi bậc ấy được chọn: lựa chọn này chỉ hiện trên thẻ khi đó (hay khi đã tải).
 
 Hãng Supertone đã giải thể (repo lưu trữ 09-09-2026) nên trọng số là bản CUỐI: ghim đúng commit; `SOURCE` là MỘT chỗ để đổi sang bản sao của app.
 Giấy phép trọng số OpenRAIL-M, mã mẫu MIT - xem THIRD_PARTY.md. Thiết bị luôn CPU (đo: RTF 0,19 ở 8 luồng, RAM ~0,53 GiB).
@@ -19,8 +22,8 @@ import sys
 from pathlib import Path
 from typing import Any, Callable
 
-from ..readaloud.supertonic import PREFIX, TIER, Installed
-from . import music_module, vieneu_module, voice_module, word_timing
+from ..readaloud.supertonic import FAST, PREFIX, QUALITY, TIER, Installed
+from . import music_module, vieneu_module, voice_module, voice_speed, word_timing
 from .music_module import Component
 from .studio_setup import Download
 from .voice_module import ModuleCore
@@ -43,7 +46,8 @@ def _file(name: str, sha256: str, size: int) -> Download:
 FILES = (
     _file("onnx/duration_predictor.onnx", "c3eb91414d5ff8a7a239b7fe9e34e7e2bf8a8140d8375ffb14718b1c639325db", 3_700_147),
     _file("onnx/text_encoder.onnx", "c7befd5ea8c3119769e8a6c1486c4edc6a3bc8365c67621c881bbb774b9902ff", 36_416_150),
-    _file("onnx/vector_estimator.onnx", "883ac868ea0275ef0e991524dc64f16b3c0376efd7c320af6b53f5b780d7c61c", 256_534_781),
+    Download("onnx/vector_estimator.onnx", voice_module.APP_MODELS + "supertonic3-int8/top30/vector_estimator.onnx",
+             "30ca11e17f99f2ccb33b7d8ec7cc51df9c86c7f2df3ede6a2107b5f505d526f0", 115_904_311),
     _file("onnx/vocoder.onnx", "085de76dd8e8d5836d6ca66826601f615939218f90e519f70ee8a36ed2a4c4ba", 101_424_195),
     _file("onnx/tts.json", "42078d3aef1cd43ab43021f3c54f47d2d75ceb4e75f627f118890128b06a0d09", 8_253),
     _file("onnx/unicode_indexer.json", "9bf7346e43883a81f8645c81224f786d43c5b57f3641f6e7671a7d6c493cb24f", 277_676),
@@ -61,11 +65,21 @@ FILES = (
     _file("voice_styles/M5.json", "dd22b92740314321f8ae11c5e87f8dd60d060f15dd3a632b5adf77f471f77af2", 291_469),
 )
 
+# Bậc "Nhanh hơn" (readaloud/supertonic.FAST): một file, đặt ở FAST[0] tính từ thư mục mô-đun.
+FAST_FILES = (Download(Path(FAST[0]).name, voice_module.APP_MODELS + "supertonic3-int8/fast/vector_estimator.onnx",
+                       "e30ab5a4457219a8e402b52ad0ba28fab2fa658ed0027b78c298cfed25c08272", 81_526_521),)
+FAST_STEPS = FAST[1]
+
 CHOICE = "supertonic"
-CHOICES = (CHOICE,)
-NEEDS = {CHOICE: ("libs", "g2p", "supertonic")}
-CHOICE_TEXT = {CHOICE: ("Giọng Supertonic", "10 giọng nam nữ, âm thanh 44 kHz - nhẹ máy, đọc nhanh hơn tốc độ nghe; số và ngày giờ được đổi thành chữ trước khi đọc")}
-PART_LABEL = {"supertonic": "Giọng Supertonic", "g2p": "Bộ đọc chữ tiếng Việt"}
+FAST_CHOICE = "supertonic_fast"
+CHOICES = (CHOICE, FAST_CHOICE)
+NEEDS = {CHOICE: ("libs", "g2p", "supertonic"), FAST_CHOICE: ("libs", "g2p", "supertonic", FAST_CHOICE)}
+CHOICE_TEXT = {CHOICE: ("Giọng Supertonic", "10 giọng nam nữ, âm thanh 44 kHz - nhẹ máy, đọc nhanh hơn tốc độ nghe; số và ngày giờ được đổi thành chữ trước khi đọc"),
+               FAST_CHOICE: ("Bản nhanh hơn", "Giọng Supertonic đọc nhanh hơn khi bạn nghe trực tiếp, tiếng kém hơn một chút. Sách bạn xuất ra vẫn dùng bản chất lượng cao nhất")}
+PART_LABEL = {"supertonic": "Giọng Supertonic", "g2p": "Bộ đọc chữ tiếng Việt", FAST_CHOICE: "Bản nhanh hơn"}
+# Cho "Tốc độ giọng trên máy" (voice_speed.status).
+SPEED_NAME = "Giọng Supertonic"
+SPEED_MODULE = "supertonic"
 
 _core = ModuleCore("giọng Supertonic", "supertonic-module", frozenset({"libs", "g2p"}), lambda: installed() is not None)
 _lock = _core.lock
@@ -81,11 +95,15 @@ def configure(folder: Path | str | None, *, benchmark: Callable[[str], dict[str,
 
 # ---- các phần ---------------------------------------------------------------------------------------------------------------------
 def _model_dir() -> Path | None:
-    return None if _core.folder is None else _core.folder / "model"
+    return None if _core.folder is None else _core.folder / Path(QUALITY[0]).parts[0]
 
 
-def _complete(folder: Path | None) -> bool:
-    return folder is not None and all((folder / item.name).is_file() for item in FILES)
+def _fast_dir() -> Path | None:
+    return None if _core.folder is None else _core.folder / Path(FAST[0]).parent
+
+
+def _complete(folder: Path | None, files: tuple[Download, ...] | None = None) -> bool:
+    return folder is not None and all((folder / item.name).is_file() for item in (FILES if files is None else files))
 
 
 def _download_off() -> str:
@@ -101,12 +119,14 @@ def _parts() -> list[Component]:
         out.append(g2p)
     out.append(Component(CHOICE, PART_LABEL[CHOICE], pin(FILES), sum(item.size for item in FILES), _complete(_model_dir()), blocked=off,
                          downloads=list(FILES)))
+    out.append(Component(FAST_CHOICE, PART_LABEL[FAST_CHOICE], pin(FAST_FILES), sum(item.size for item in FAST_FILES),
+                         _complete(_fast_dir(), FAST_FILES), blocked=off, downloads=list(FAST_FILES)))
     return out
 
 
 def _judged(parts: list[Component]) -> dict[str, str]:
     """Thư viện theo dấu của mô-đun nhạc, bộ đọc chữ theo dấu của mô-đun VieNeu (nơi chúng sống), phần của mô-đun này theo dấu của nó."""
-    judged = music_module.judge_parts([part for part in parts if part.id == CHOICE], _core.pins())
+    judged = music_module.judge_parts([part for part in parts if part.id in CHOICES], _core.pins())
     for part in parts:
         if part.id == "libs":
             judged["libs"] = "current" if part.external else music_module.libs_state()
@@ -115,8 +135,10 @@ def _judged(parts: list[Component]) -> dict[str, str]:
     return judged
 
 
-def _lacking(parts: list[Component], judged: dict[str, str]) -> list[Component]:
-    return [part for part in parts if judged[part.id] != "current"]
+def _lacking(parts: list[Component], judged: dict[str, str], choices: tuple[str, ...] | list[str] = (CHOICE,)) -> list[Component]:
+    """Các phần (không trùng) mà những lựa chọn này còn thiếu hay đã cũ."""
+    wanted = {part for choice in choices for part in NEEDS[choice]}
+    return [part for part in parts if part.id in wanted and judged[part.id] != "current"]
 
 
 def installed() -> Installed | None:
@@ -133,6 +155,34 @@ def locate() -> Installed | None:
     """Cho Studio (tiến trình dây chuyền không gọi `configure`): mô-đun ở chỗ mặc định cạnh preferences.json, như server đặt."""
     _core.ensure_folder(FOLDER)
     return installed()
+
+
+def installed_fast() -> Installed | None:
+    """Như `installed` nhưng đọc bằng bậc "Nhanh hơn" (bộ khử nhiễu + số bước của supertonic.FAST); None khi file bậc ấy chưa tải."""
+    found = installed()
+    fast = _fast_dir()
+    if found is None or fast is None or not _complete(fast, FAST_FILES):
+        return None
+    return Installed(found.folder, found.aligner, estimator=fast / FAST_FILES[0].name, steps=FAST_STEPS)
+
+
+# ---- cho "Tốc độ giọng trên máy" (voice_speed.py) -------------------------------------------------------------------------------------
+def speed_installed() -> bool:
+    return installed() is not None
+
+
+def speed_rtf() -> float | None:
+    """Tốc độ tự đo của bậc chất lượng (lần đo sau khi tải luôn đo bậc này)."""
+    value = (_core.benchmarks().get(TIER) or {}).get("rtf")
+    return float(value) if isinstance(value, (int, float)) else None
+
+
+def speed_fast_ready() -> bool:
+    return installed_fast() is not None
+
+
+def speed_fast_bytes() -> int:
+    return sum(item.size for item in FAST_FILES)
 
 
 def rtf(voice: str) -> float | None:
@@ -156,8 +206,9 @@ def status() -> dict[str, Any]:
         parts = _parts()
         by_id = {part.id: part for part in parts}
         judged = _judged(parts)
-        have = judged[CHOICE] != "missing" and all(judged[part.id] != "missing" for part in parts)
-        behind = [part for part in _lacking(parts, judged) if judged[part.id] == "outdated"] if have else []
+        have = all(judged[part] != "missing" for part in NEEDS[CHOICE] if part in judged)
+        fast_here = have and judged[FAST_CHOICE] != "missing"
+        behind = [part for part in _lacking(parts, judged, CHOICES if fast_here else (CHOICE,)) if judged[part.id] == "outdated"] if have else []
         facts = vieneu_module.device_facts()
         blocked = next((by_id[part].blocked for part in ("libs", "g2p") if part in by_id and judged[part] != "current" and by_id[part].blocked), "")
         if _core.state["downloading"]:
@@ -170,14 +221,23 @@ def status() -> dict[str, Any]:
             state = "unsupported" if blocked else "missing"
         tiers = [TIER] if have else []
         bench = _core.benchmarks()
-        label, detail = CHOICE_TEXT[CHOICE]
+        shown = [CHOICE]
+        if fast_here or (have and voice_speed.wants_fast("supertonic")):
+            shown.append(FAST_CHOICE)  # chỉ khi "Tốc độ giọng trên máy" muốn bậc nhanh (hay đã tải): không ai phải tải thứ không dùng
+        choices = []
+        for choice in shown:
+            label, detail = CHOICE_TEXT[choice]
+            lacking = _lacking(parts, judged, (choice,))
+            if choice == FAST_CHOICE:
+                lacking = [part for part in lacking if part.id == FAST_CHOICE]  # cỡ riêng của nó; Giọng Supertonic có dòng của mình
+            choices.append({"id": choice, "label": label, "detail": detail, "needs": [part.id for part in parts if part.id in NEEDS[choice]],
+                            "bytes": sum(part.size for part in lacking), "installed": fast_here if choice == FAST_CHOICE else have,
+                            "recommended": False, "default": True, "removable": True, **({"requires": [CHOICE]} if choice == FAST_CHOICE else {})})
         return {
             "state": state, "done": _core.state["done"] if state == "downloading" else 0,
             "total": _core.state["total"] if state == "downloading" else 0, "error": _core.state["error"],
             "supported": not blocked, "reason": blocked,
-            "choices": [{"id": CHOICE, "label": label, "detail": detail, "needs": [part.id for part in parts],
-                         "bytes": sum(part.size for part in _lacking(parts, judged)), "installed": have, "recommended": False, "default": True,
-                         "removable": True}],
+            "choices": choices,
             "parts": [{"id": part.id, "label": part.label, "bytes": part.size, "state": judged[part.id], "external": part.external}
                       for part in parts],
             "outdatedParts": [part.label for part in behind], "outdatedBytes": sum(part.size for part in behind),
@@ -195,7 +255,7 @@ def _install(part: Component, progress: Callable[[int], None]) -> None:
     elif part.id == "g2p":
         vieneu_module.install_g2p_part(progress, _core.cancelled)
     else:
-        target = _model_dir()
+        target = _fast_dir() if part.id == FAST_CHOICE else _model_dir()
         assert target is not None
         voice_module.download_files(part, target, progress, _core.cancelled)
 
@@ -212,13 +272,14 @@ def start(choices: list[str] | None = None) -> None:
             return
         parts = _parts()
         judged = _judged(parts)
-        update_only = choices is None
-        needed = _lacking(parts, judged)
-        if update_only and judged[CHOICE] == "missing":
-            needed = []  # chưa tải gì thì "cập nhật" không có gì để làm
-        elif update_only:
-            needed = [part for part in needed if judged[part.id] == "outdated"]
-        _core.begin(needed, _install, vieneu_module._activate, lambda _changed: [TIER])
+        if choices is None:
+            # "Cập nhật": phần đã cũ của những gì đã tải (chưa tải gì thì không có gì để làm)
+            have = [choice for choice in CHOICES if judged[CHOICE] != "missing" and judged[choice] != "missing"]
+            needed = [part for part in _lacking(parts, judged, have) if judged[part.id] == "outdated"]
+        else:
+            needed = _lacking(parts, judged, choices)
+        # Lần tự đo chỉ đo bậc chất lượng (voice_speed: "Tự động" chọn theo nó): tải riêng bản nhanh hơn thì không đo lại.
+        _core.begin(needed, _install, vieneu_module._activate, lambda changed: [TIER] if changed & set(NEEDS[CHOICE]) else [])
 
 
 def join(timeout: float | None = None) -> None:
@@ -231,12 +292,15 @@ def cancel() -> None:
 
 
 def remove(choice: str = CHOICE) -> None:
-    """Gỡ giọng Supertonic khỏi máy (file model + giọng). Thư viện chạy model và bộ đọc chữ dùng chung với mô-đun khác nên ở lại."""
+    """Gỡ giọng Supertonic khỏi máy (file model + giọng, và bản nhanh hơn đi theo), hay chỉ bản nhanh hơn (`FAST_CHOICE`). Thư viện chạy model và bộ đọc
+    chữ dùng chung với mô-đun khác nên ở lại."""
     if choice not in CHOICES:
         raise ValueError(f"Không có lựa chọn {choice!r}")
-    model = _model_dir()
-    if model is not None:
+    model, fast = _model_dir(), _fast_dir()
+    if model is not None and choice == CHOICE:
         _core.remove(model, CHOICE, TIER)
+    if fast is not None and (choice == FAST_CHOICE or fast.exists() or FAST_CHOICE in _core.pins()):
+        _core.remove(fast, FAST_CHOICE, "")
 
 
 def measure_again() -> None:

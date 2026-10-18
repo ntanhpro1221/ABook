@@ -42,7 +42,7 @@ from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
                listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, packages, project_views,
-               projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, volumes, word_timing, workshop, zerotts_module)
+               projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
 from .listening import HEAVY_KEYS, RECORD_ID, Listening
@@ -400,12 +400,16 @@ class App:
         self.readaloud = readaloud.ReadAloud(preferences.path.with_name("readaloud-cache"),
                                              keys=readaloud_keys.KeyStore(preferences.path.with_name(readaloud_keys.FILE_NAME)),
                                              vieneu_locate=vieneu_module.installed, supertonic_locate=supertonic_module.installed, vieneu_engines=vieneu_module.make_engine,
-                                             rtf=lambda voice: supertonic_module.rtf(voice) or vieneu_module.rtf(voice))
+                                             rtf=lambda voice: supertonic_module.rtf(voice) or vieneu_module.rtf(voice),
+                                             # "Tốc độ giọng trên máy" (voice_speed.py): bậc "Nhanh hơn" của Supertonic / VieNeu Nano khi nghe trực tiếp
+                                             speed=voice_speed.live_tag, supertonic_fast_locate=supertonic_module.installed_fast,
+                                             vieneu_fast_engines=vieneu_module.make_fast_engine)
+        voice_speed.configure(preferences.path.with_name(voice_speed.FILE))
         vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=self.readaloud.vieneu.benchmark,
-                                after_install=self.readaloud.vieneu.forget)
+                                after_install=lambda: self.readaloud.forget("vieneu"))
         # Giọng Supertonic (supertonic_module.py): cùng khung với VieNeu, mười giọng nam nữ, gỡ được.
         supertonic_module.configure(preferences.path.with_name(supertonic_module.FOLDER), benchmark=self.readaloud.supertonic.benchmark,
-                                    after_install=self.readaloud.supertonic.forget)
+                                    after_install=lambda: self.readaloud.forget("supertonic"))
         # Giọng ZeroTTS (zerotts_module.py): máy đọc khác cho Studio, người nghe chọn tay ở "Đổi giọng"; tải khi bấm.
         zerotts_module.configure(preferences.path.with_name(zerotts_module.FOLDER))
         if not (isinstance(runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"):
@@ -5442,6 +5446,19 @@ class Handler(BaseHTTPRequestHandler):
     def post_readaloud_supertonic(self, _query: dict[str, list[str]]) -> None:
         self._start_voice_module(supertonic_module)
 
+    def get_readaloud_voice_speed(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, voice_speed.status())
+
+    def post_readaloud_voice_speed(self, _query: dict[str, list[str]]) -> None:
+        # "Tốc độ giọng trên máy" (voice_speed.py): Tự động / Chất lượng cao nhất / Nhanh hơn - áp từ đoạn đọc kế của Nghe ngay.
+        self.app._mutating()
+        choice = self._body().get("choice")
+        try:
+            voice_speed.set_choice(choice if isinstance(choice, str) else "")
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self._send_json(HTTPStatus.OK, voice_speed.status())
+
     def post_readaloud_vieneu_accelerate(self, _query: dict[str, list[str]]) -> None:
         # Công tắc "Dùng bản tăng tốc" (vieneu_module.set_accelerate): tắt/bật cách đọc của giọng VieNeu Turbo; tự đo lại tốc độ sau đó.
         self.app._mutating()
@@ -5761,6 +5778,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/readaloud/vieneu/cancel"), Handler.post_readaloud_vieneu_cancel),
     ("POST", re.compile(r"/api/readaloud/vieneu/accelerate"), Handler.post_readaloud_vieneu_accelerate),
     ("GET", re.compile(r"/api/readaloud/supertonic"), Handler.get_readaloud_supertonic),
+    ("GET", re.compile(r"/api/readaloud/voice-speed"), Handler.get_readaloud_voice_speed),
+    ("POST", re.compile(r"/api/readaloud/voice-speed"), Handler.post_readaloud_voice_speed),
     ("POST", re.compile(r"/api/readaloud/supertonic"), Handler.post_readaloud_supertonic),
     ("POST", re.compile(r"/api/readaloud/supertonic/measure"), Handler.post_readaloud_supertonic_measure),
     ("POST", re.compile(r"/api/readaloud/supertonic/cancel"), Handler.post_readaloud_supertonic_cancel),

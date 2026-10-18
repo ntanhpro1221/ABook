@@ -178,13 +178,19 @@ class ReadAloud:
     `vieneu_locate`: nơi mô-đun "Giọng VieNeu" đặt các phần (webui/vieneu_module.installed) - có thì thêm giọng VieNeu vào danh sách;
     `vieneu_engines`: bộ dựng engine VieNeu theo tầng (webui/vieneu_module.make_engine: Turbo dùng bản tăng tốc khi có); bỏ trống = engine ONNX;
     `supertonic_locate`: như vậy cho mô-đun "Giọng Supertonic" (webui/supertonic_module.installed);
-    `rtf`: tốc độ tự đo của giọng (để "Làm trước" ước thời gian)."""
+    `rtf`: tốc độ tự đo của giọng (để "Làm trước" ước thời gian).
+    Bậc "Nhanh hơn" của "Tốc độ giọng trên máy" (webui/voice_speed.py, chỉ Nghe ngay): `speed(giọng)` = dấu bậc đang dùng ("fast<số bước>", "" = bậc chất
+    lượng); khi khác rỗng, clip đọc bằng nhà cung cấp thứ hai của giọng ấy - `supertonic_fast_locate` (supertonic_module.installed_fast), `vieneu_fast_engines`
+    (vieneu_module.make_fast_engine) - và dấu ấy vào khoá bộ đệm."""
 
     def __init__(self, folder: Path | str, providers: list[Provider] | None = None, *, limit: int | None = None,
                  keys: KeyStore | None = None, vieneu_locate: Callable[[], vieneu.Installed | None] | None = None,
                  supertonic_locate: Callable[[], supertonic.Installed | None] | None = None,
                  vieneu_engines: Callable[[str, vieneu.Installed], Any] | None = None,
-                 rtf: Callable[[str], float | None] = lambda _voice: None) -> None:
+                 rtf: Callable[[str], float | None] = lambda _voice: None,
+                 speed: Callable[[str], str] = lambda _voice: "",
+                 supertonic_fast_locate: Callable[[], supertonic.Installed | None] | None = None,
+                 vieneu_fast_engines: Callable[[str, vieneu.Installed], Any] | None = None) -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
         self.cache = ClipCache(self.folder, **kwargs)
@@ -197,6 +203,13 @@ class ReadAloud:
         self.supertonic = supertonic.SupertonicProvider(supertonic_locate) if supertonic_locate is not None else None
         if self.supertonic is not None:
             self.providers[self.supertonic.id] = self.supertonic
+        # Bậc "Nhanh hơn": nhà cung cấp thứ hai của cùng giọng (engine riêng, nên Nghe ngay và việc xuất không tranh nhau một engine).
+        self.fast: dict[str, Provider] = {}
+        if vieneu_locate is not None and vieneu_fast_engines is not None:
+            self.fast[vieneu.PREFIX] = vieneu.VieneuProvider(vieneu_locate, engines=vieneu_fast_engines)
+        if supertonic_fast_locate is not None:
+            self.fast[supertonic.PREFIX] = supertonic.SupertonicProvider(supertonic_fast_locate)
+        self._speed = speed
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
         self._live = 0  # clip của người đang nghe đang được đọc: "Làm trước" nhường
@@ -227,6 +240,12 @@ class ReadAloud:
                     pass
 
         threading.Thread(target=run, name="readaloud-warm", daemon=True).start()
+
+    def forget(self, provider_id: str) -> None:
+        """Mô-đun giọng `provider_id` vừa cập nhật / gỡ: nạp lại engine của cả hai bậc ở lần dùng sau."""
+        for provider in (self.providers.get(provider_id), self.fast.get(provider_id)):
+            if provider is not None and hasattr(provider, "forget"):
+                provider.forget()
 
     def voices(self) -> list[dict[str, Any]]:
         listed = []
@@ -278,7 +297,7 @@ class ReadAloud:
 
     def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False, origin: str | None = None,
              readings: Mapping[str, str] | None = None, book: str | None = None, rank: int = edge.RANK_BACKGROUND,
-             stream: StreamListener | None = None, cancelled: Callable[[], bool] | None = None) -> dict[str, Any]:
+             stream: StreamListener | None = None, cancelled: Callable[[], bool] | None = None, quality: bool = False) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
         `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ. `origin`: gốc của cuốn ("ja" / "ko", `names.BookOrigins`) - giọng đọc
         trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); Edge (`normalises_text`) nhận
@@ -291,12 +310,19 @@ class ReadAloud:
         `stream`: người nghe clip đang đọc (uxfix56) - CHỈ khi chưa có trong bộ đệm, không `cached_only` / `background`, giọng có `ranks_requests` và `rank` == 0 (đoạn người nghe đang đứng chờ):
         tiếng + mốc chữ tạm chảy tới đó ngay khi về (`StreamListener`); xong vẫn vào bộ đệm đúng như không phát luồng và trả dict như thường (người gọi gửi bản cuối). Ngoài ra `stream` bị bỏ qua.
         `cancelled`: người gọi bỏ clip được giữa chừng (Huỷ xuất sách nói, soát a62): đang chờ lượt đọc cùng đoạn hay đang đọc bằng giọng có `ranks_requests` (Edge, ổ cắm bị cắt)
-        thì dừng trong vòng một phần giây với `VoiceError` lý do "cancelled" và không có gì vào bộ đệm. Giọng khác đọc nốt đoạn đang đọc."""
+        thì dừng trong vòng một phần giây với `VoiceError` lý do "cancelled" và không có gì vào bộ đệm. Giọng khác đọc nốt đoạn đang đọc.
+        `quality`: luôn bậc chất lượng của giọng (xuất sách nói, MP3 / M4B) - không thì giọng có hai bậc đọc bậc mà "Tốc độ giọng trên máy" đang dùng (`speed`);
+        clip bậc nhanh có dấu bậc trong khoá nên không bao giờ đứng thay clip chất lượng."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
             raise ValueError("Đoạn chữ quá dài để đọc một lượt")
         provider, native = self._resolve(voice_id)
+        tier = "" if quality else self._speed(voice_id)
+        if tier and provider.id in self.fast:
+            provider = self.fast[provider.id]
+        else:
+            tier = ""
         reads_names = hasattr(provider, "reading_tag")
         normalised = getattr(provider, "normalises_text", False)
         if reads_names:
@@ -304,7 +330,7 @@ class ReadAloud:
         else:
             name_tag = spoken.tag(text, origin, provider.speaks_english) if normalised else ""
         lifted = loudness.lifts(voice_id)  # câu ngắn nhỏ của giọng VieNeu được nâng ngay trong clip (loudness.lift_wav): dấu riêng trong khoá
-        tags = (name_tag, book_readings.tag(text, readings), loudness.LIFT_TAG if lifted else "")
+        tags = (name_tag, book_readings.tag(text, readings), loudness.LIFT_TAG if lifted else "", tier)
         key = clip_key(provider.id, native, text, "+".join(tag for tag in tags if tag))
         hit = self.cache.get(key)
         if hit is None:

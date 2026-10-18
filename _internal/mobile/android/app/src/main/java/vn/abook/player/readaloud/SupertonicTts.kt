@@ -30,6 +30,10 @@ object SupertonicText {
     const val LANGUAGE = "vi"
     /** Denoising steps (desktop STEPS) and the speed of a long chunk (SPEED); a chunk of at most [SHORT_SYLLABLES] syllables is read at [SHORT_SPEED]. */
     const val STEPS = 8
+    /** "Nhanh hơn" of "Tốc độ giọng trên máy" ([VoiceSpeed], desktop supertonic.FAST): the app's "fast" int8 vector estimator (inside the module folder)
+     *  read in fewer steps. The quality tier is the "top30" int8 estimator at [STEPS] (onnx/vector_estimator.onnx, [SupertonicModule.FILES]). */
+    const val FAST_ESTIMATOR = "fast/vector_estimator.onnx"
+    const val FAST_STEPS = 5
     const val SPEED = 1.54
     const val SHORT_SPEED = 1.05
     const val SHORT_SYLLABLES = 3
@@ -113,10 +117,15 @@ interface SupertonicSynth {
 
 /**
  * Supertonic 3 (Supertone, 99M parameters, OpenRAIL-M) on ONNX Runtime CPU, a port of the desktop's `SupertonicEngine`: duration predictor ->
- * text encoder -> [SupertonicText.STEPS] denoising steps of the vector estimator from legacy-numpy noise -> vocoder, 44.1 kHz. [folder] holds the
- * pinned repo files (onnx/, voice_styles/) exactly as the desktop module downloads them.
+ * text encoder -> [steps] denoising steps of the vector estimator from legacy-numpy noise -> vocoder, 44.1 kHz. [folder] holds the
+ * pinned repo files (onnx/, voice_styles/) exactly as the desktop module downloads them; [estimator] another vector estimator (the fast tier's).
  */
-class SupertonicEngine(private val folder: File, threads: Int) : SupertonicSynth, AutoCloseable {
+class SupertonicEngine(
+    private val folder: File,
+    threads: Int,
+    estimator: File = File(folder, "onnx/vector_estimator.onnx"),
+    private val steps: Int = SupertonicText.STEPS,
+) : SupertonicSynth, AutoCloseable {
     class Style(val ttl: FloatArray, val ttlShape: LongArray, val dp: FloatArray, val dpShape: LongArray)
 
     /** Wall time of the last [infer] per stage (ns): duration + text encoder, vector estimator, vocoder. */
@@ -129,7 +138,9 @@ class SupertonicEngine(private val folder: File, threads: Int) : SupertonicSynth
     private val latentDim = config.getJSONObject("ttl").getInt("latent_dim") * config.getJSONObject("ttl").getInt("chunk_compress_factor")
     val indexer: IntArray = JSONArray(File(folder, INDEXER_FILE).readText(Charsets.UTF_8)).let { array -> IntArray(array.length()) { array.getInt(it) } }
     private val options = sessionOptions(threads)
-    private val sessions: Map<String, OrtSession> = ONNX.associateWith { env.createSession(File(folder, "onnx/$it.onnx").absolutePath, options) }
+    private val sessions: Map<String, OrtSession> = ONNX.associateWith {
+        env.createSession((if (it == "vector_estimator") estimator else File(folder, "onnx/$it.onnx")).absolutePath, options)
+    }
     private val styles = HashMap<String, Style>()
 
     /** (style_ttl, style_dp) of voice [name], read once. */
@@ -138,7 +149,6 @@ class SupertonicEngine(private val folder: File, threads: Int) : SupertonicSynth
 
     /** One chunk -> mono float audio at [sampleRate] (edges trimmed and faded); [random] draws the start noise like the desktop's RandomState. */
     override fun infer(text: String, name: String, random: NumpyRandomState, speed: Double): FloatArray {
-        val steps = SupertonicText.STEPS
         clock.fill(0)
         val cleaned = SupertonicText.clean(text)
         val ids = SupertonicText.ids(cleaned, indexer)
@@ -257,12 +267,14 @@ object SupertonicVoices {
 
     private var context: Context? = null
     private var module: SupertonicModule? = null
-    private var engine: SupertonicEngine? = null
+    /** The loaded engine and whether it reads the fast tier (one at a time: each holds a few hundred MB). */
+    private var engine: Pair<Boolean, SupertonicEngine>? = null
 
     @Synchronized
     fun module(appContext: Context): SupertonicModule = module ?: run {
         val ctx = appContext.applicationContext
         context = ctx
+        VoiceSpeed.setup(ctx) // the card offers "Bản nhanh hơn" from that setting
         SupertonicModule(File(ctx.filesDir, SupertonicModule.FOLDER), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), VieneuVoices.facts(ctx),
             benchmark = { benchmark() }, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) }).also { module = it }
     }
@@ -270,8 +282,9 @@ object SupertonicVoices {
     /** Drop the loaded engine (the module is about to replace or remove files). */
     @Synchronized
     fun forget() {
-        engine?.let { runCatching { it.close() } }
+        engine?.second?.let { runCatching { it.close() } }
         engine = null
+        VoiceSpeed.changed()
     }
 
     fun gender(name: String) = if (name.startsWith("F")) "female" else if (name.startsWith("M")) "male" else ""
@@ -287,14 +300,22 @@ object SupertonicVoices {
         return SupertonicVoice(id)
     }
 
+    /** The engine of the quality tier, or of the fast one when [fast] and its file is here (else the quality tier: never no voice). */
     @Synchronized
-    private fun ready(): Pair<SupertonicEngine, SupertonicSpeaker> {
+    private fun ready(fast: Boolean = false): Pair<SupertonicEngine, SupertonicSpeaker> {
         val ctx = context ?: throw VoiceException("Chưa khởi động", reason = "voice")
-        val installed = module(ctx).installed() ?: throw VoiceException("Giọng Supertonic chưa tải trên điện thoại này - tải trong Cài đặt → Giọng đọc.", reason = "voice")
+        val owner = module(ctx)
+        val installed = owner.installed() ?: throw VoiceException("Giọng Supertonic chưa tải trên điện thoại này - tải trong Cài đặt → Giọng đọc.", reason = "voice")
         try {
             OrtRuntime.load(installed.ortFolder)
             val reader = installed.g2p?.let { (library, dictionary) -> SeaG2p.shared(library, dictionary) }
-            val loaded = engine ?: SupertonicEngine(installed.model, minOf(Runtime.getRuntime().availableProcessors(), MAX_THREADS)).also { engine = it }
+            val estimator = if (fast) owner.fastEstimator() else null
+            val loaded = engine?.takeIf { it.first == (estimator != null) }?.second ?: run {
+                forget()
+                val threads = minOf(Runtime.getRuntime().availableProcessors(), MAX_THREADS)
+                (if (estimator != null) SupertonicEngine(installed.model, threads, estimator, SupertonicText.FAST_STEPS) else SupertonicEngine(installed.model, threads))
+                    .also { engine = (estimator != null) to it }
+            }
             val normalize: (List<String>) -> String = if (reader != null) reader::normalizeUnit else { pieces -> pieces.joinToString(" ") }
             return loaded to SupertonicSpeaker(normalize)
         } catch (failure: Throwable) {
@@ -304,12 +325,13 @@ object SupertonicVoices {
         }
     }
 
-    /** One paragraph -> [out] (16-bit WAV at 44.1 kHz) + words. */
+    /** One paragraph -> [out] (16-bit WAV at 44.1 kHz) + words. [id] may carry its tier ([VoiceSpeed]: `supertonic:F1#fast5`). */
     @Synchronized
     fun synthesize(id: String, text: String, out: File, origin: String? = null, readings: Map<String, String>? = null): Clip {
-        val name = id.removePrefix("$PREFIX:")
+        val (voice, tag) = VoiceSpeed.split(id)
+        val name = voice.removePrefix("$PREFIX:")
         if (name !in NAMES) throw VoiceException("Không có giọng Supertonic này.", reason = "voice")
-        val (loaded, speaker) = ready()
+        val (loaded, speaker) = ready(VoiceSpeed.isFast(tag))
         val spoken = try {
             speaker.speak(loaded, name, text, origin, readings)
         } catch (failure: OutOfMemoryError) {
@@ -318,10 +340,10 @@ object SupertonicVoices {
         }
         if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
         VieneuAudio.writeWav(spoken.samples, spoken.rate, out)
-        return Clip(out, spoken.durationMs, spoken.words, id)
+        return Clip(out, spoken.durationMs, spoken.words, voice)
     }
 
-    /** Self-benchmark after a download (desktop `SupertonicProvider.benchmark`): load the engine, read "Xin chào." once (not counted: ONNX
+    /** Self-benchmark (of the quality tier: "Tự động" of [VoiceSpeed] decides from it) after a download (desktop `SupertonicProvider.benchmark`): load the engine, read "Xin chào." once (not counted: ONNX
      *  Runtime's first run is slower), then [BENCH_TEXT] with the first voice. */
     fun benchmark(): VoiceModule.Benchmark = synchronized(this) {
         val began = System.nanoTime()

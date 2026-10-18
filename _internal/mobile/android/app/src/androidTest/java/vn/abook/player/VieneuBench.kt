@@ -181,7 +181,8 @@ class VieneuBench(private val args: Map<String, String>, private val pack: File,
                 check(wantIds.length() == ids.size) { "nano ids of sentence $i" }
                 for (k in ids.indices) check(wantIds.getLong(k) == ids[k]) { "nano id $k of sentence $i" }
                 val want = RawFiles.floats(bundle("nano_audio_$i.f32"))
-                val result = engine.synthesize(meta.getString("ph"), speaker, style, RawFiles.floats(bundle("nano_noise_$i.f32")), 0)
+                // the desktop recorded these at 16 steps (vieneu_engine.NANO_STEPS before 18-10)
+                val result = engine.synthesize(meta.getString("ph"), speaker, style, RawFiles.floats(bundle("nano_noise_$i.f32")), 0, steps = 16)
                 saveAudio("nano_$i", result.audio)
                 val corr = envelopeCorrelation(result.audio, want, VieneuNano.SAMPLE_RATE)
                 var maxDiff = 0f

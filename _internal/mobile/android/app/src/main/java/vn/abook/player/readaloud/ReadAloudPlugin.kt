@@ -28,6 +28,7 @@ import vn.abook.player.vieneu.VieneuVoices
  *   `vieneuCancel()` (Huỷ khi đang tải: dừng ở nhịp đọc kế, `.part` giữ để lần sau tải tiếp; trạng thái kèm `cancelled`, `cancellable`) - đều trả trạng thái mới.
  * - Mô-đun "Giọng Supertonic" (readaloud/SupertonicModule.kt, cùng hình): `supertonicStatus()`, `supertonicStart({choices?})`, `supertonicMeasure()`,
  *   `supertonicRemove({choice})`, `supertonicCancel()`.
+ * - "Tốc độ giọng trên máy" (VoiceSpeed.kt, cùng hình với máy tính `/api/readaloud/voice-speed`): `voiceSpeed()`, `setVoiceSpeed({choice})` -> trạng thái.
  * - "Làm trước" (PrepareAhead.kt): `preparePlan({bookId, voice, chapterIds})` -> `{chapters, offered, audioSeconds, secondsEstimate}` (ước trước khi bấm);
  *   `prepareStart({bookId, voice, chapterIds, label, chargingOnly})`, `prepareStatus()`, `prepareCancel()`, `prepareOptions({chargingOnly})` -> trạng thái
  *   (`PrepareStatus` của ui/src/listen/prepareAhead.ts). Sự kiện `readAloudPrepare` (trạng thái) sau mỗi đoạn và mỗi lần đổi.
@@ -254,6 +255,26 @@ class ReadAloudPlugin : Plugin() {
             SupertonicVoices.module(context).remove(choice)
             Playback.onMain { ReadAloud.voicesChanged() }
             resolveSupertonic(call)
+        } catch (error: IllegalArgumentException) {
+            call.reject(error.message ?: "Lựa chọn lạ")
+        }
+    }
+
+    private fun resolveVoiceSpeed(call: PluginCall) {
+        VoiceSpeed.setup(context)
+        call.resolve(JSObject.fromJSONObject(VoiceSpeed.status()))
+    }
+
+    @PluginMethod
+    fun voiceSpeed(call: PluginCall) = resolveVoiceSpeed(call)
+
+    @PluginMethod
+    fun setVoiceSpeed(call: PluginCall) {
+        val choice = call.getString("choice") ?: return call.reject("thiếu choice")
+        try {
+            VoiceSpeed.setup(context)
+            VoiceSpeed.setChoice(choice)
+            resolveVoiceSpeed(call)
         } catch (error: IllegalArgumentException) {
             call.reject(error.message ?: "Lựa chọn lạ")
         }

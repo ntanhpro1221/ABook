@@ -14,6 +14,8 @@ Studio, gói cài sẵn trên máy dev) không tính: dung lượng hiện là c
 - `gguf` ("Bản tăng tốc", lựa chọn `fast`): cùng model Turbo chạy bằng audio.cpp (readaloud/vieneu_gguf.py) - server bản AVX2 ghim + GGUF q8_0, ~200 MB, nhanh
   ~2 lần và ít RAM hơn. Chỉ có cho Windows x64 có AVX2; cần cả `turbo` (đường lui khi server không chạy, và giọng ONNX vẫn là nền). Người dùng có công tắc
   "Dùng bản tăng tốc" (`set_accelerate`); tải xong, lần tự đo của Turbo chạy bằng bản này - hỏng thì ghi "máy này không chạy được" (`broken`) và đọc bằng ONNX.
+- `nano_fast` ("Bản nhanh hơn" của Nano, `NANO_FAST`): bộ khử nhiễu int8 app làm từ bản của Nano, cho bậc "Nhanh hơn" của "Tốc độ giọng trên máy"
+  (voice_speed.py) - chỉ Nghe ngay. Chỉ tải khi bậc ấy được chọn: lựa chọn này chỉ hiện trên thẻ khi đó (hay khi đã tải).
 
 Thiết bị: luôn CPU. Đo 03-10 trên máy dev (Ryzen 9 8945HX, RTX 5060 Laptop đang bận việc khác ~80%): DirectML chậm hơn CPU nhiều (Turbo RTF 2,83
 so với 0,31; Nano 0,77 so với 0,30) - Turbo gọi hàng trăm đồ thị nhỏ mỗi giây, card không gánh được phần chi phí mỗi lần gọi. Torch của Studio là
@@ -35,7 +37,7 @@ from typing import Any, Callable
 
 from ..readaloud import vieneu_gguf
 from ..readaloud.vieneu import Installed
-from . import music_module, studio_setup, voice_module, word_timing
+from . import music_module, studio_setup, voice_module, voice_speed, word_timing
 from .music_module import Component
 from .studio_setup import Download
 from .voice_module import ModuleCore
@@ -94,20 +96,34 @@ SERVER_ZIP = Download("audiocpp-server.zip", "https://huggingface.co/NGDtuanh/ab
 GGUF_MODEL = Download(vieneu_gguf.MODEL_FILE, _TURBO.replace("onnx_int8/", "gguf/") + vieneu_gguf.MODEL_FILE,
                       "a60569e5d7dd6f24cbb7bb2e7c472bb988ad19563a4e78f0cc67cc53fd189bb4", 187_917_664)
 GGUF_FILES = (SERVER_ZIP, GGUF_MODEL)
-FILES = {"g2p": (G2P,), "voices": (VOICES,), "turbo": TURBO_FILES, "nano": NANO_FILES, "aligner": studio_setup.WORD_ALIGN_FILES, "gguf": GGUF_FILES}
+# Bậc "Nhanh hơn" của Nano (voice_speed.py): (file bộ khử nhiễu tính từ thư mục mô-đun, số bước) - đổi bậc này là đổi đúng một dòng (và VieneuModule.kt).
+NANO_FAST = ("nano_fast/vector_estimator.onnx", 10)
+NANO_FAST_FILES = (
+    Download(Path(NANO_FAST[0]).name, voice_module.APP_MODELS + "vieneu-nano-int8/vector_estimator.onnx",
+             "0e59f820634632d6a6c0390a107e2a06dc7c49044aab2a49c5d7682860e4f593", 48_724_117),
+    Download("LICENSE", voice_module.APP_MODELS + "vieneu-nano-int8/LICENSE", "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30", 11_358),
+)
+FILES = {"g2p": (G2P,), "voices": (VOICES,), "turbo": TURBO_FILES, "nano": NANO_FILES, "aligner": studio_setup.WORD_ALIGN_FILES, "gguf": GGUF_FILES,
+         "nano_fast": NANO_FAST_FILES}
 
 CHOICES = ("turbo", "nano", "aligner")
 FAST = "fast"  # "Bản tăng tốc": chỉ hiện trên máy chạy được (`fast_supported`)
+FAST_CHOICE = "nano_fast"  # "Bản nhanh hơn" của Nano (voice_speed.py) - khác `FAST` (bản tăng tốc của Turbo)
+FAST_STEPS = NANO_FAST[1]
 NEEDS = {"turbo": ("libs", "g2p", "voices", "turbo"), "nano": ("libs", "g2p", "voices", "nano"), "aligner": ("libs", "aligner"),
-         FAST: ("libs", "g2p", "voices", "turbo", "gguf")}
+         FAST: ("libs", "g2p", "voices", "turbo", "gguf"), FAST_CHOICE: ("libs", "g2p", "voices", "nano", FAST_CHOICE)}
 CHOICE_TEXT = {
     "turbo": ("Giọng VieNeu", "25 giọng, âm thanh 48 kHz - hay nhất"),
     "nano": ("Giọng VieNeu Nano", "11 giọng, âm thanh 24 kHz - lúc đọc tốn ít bộ nhớ và hợp máy ít lõi hơn Giọng VieNeu; file tải nặng hơn"),
     "aligner": ("Tô đúng từng chữ đang đọc", "Biết chính xác chữ nào đang được đọc. Không tải thì máy ước theo âm tiết, đôi khi lệch một nhịp"),
     FAST: ("Bản tăng tốc", "Giọng VieNeu đọc nhanh gấp hai lần trở lên và tốn ít bộ nhớ hơn - giọng vẫn như cũ. Dùng kèm Giọng VieNeu; cần Windows 64-bit, CPU có AVX2 (hầu hết máy từ 2015)"),
+    FAST_CHOICE: ("Bản nhanh hơn của Giọng VieNeu Nano", "Giọng VieNeu Nano đọc nhanh hơn khi bạn nghe trực tiếp, tiếng kém hơn một chút. Sách bạn xuất ra vẫn dùng bản chất lượng cao nhất"),
 }
 PART_LABEL = {"g2p": "Bộ đọc chữ tiếng Việt", "voices": "Danh sách giọng", "turbo": "Giọng VieNeu", "nano": "Giọng VieNeu Nano",
-              "aligner": "Bộ căn chữ", "gguf": "Bản tăng tốc"}
+              "aligner": "Bộ căn chữ", "gguf": "Bản tăng tốc", FAST_CHOICE: "Bản nhanh hơn của Giọng VieNeu Nano"}
+# Cho "Tốc độ giọng trên máy" (voice_speed.status): giọng có hai bậc của mô-đun này là Nano.
+SPEED_NAME = "Giọng VieNeu Nano"
+SPEED_MODULE = "vieneu"
 GGUF_FOLDER = "gguf"
 SERVER_FOLDER = "server"  # giải gói server vào đây (đổi cả thư mục một lần, file chạy không bao giờ nằm dở)
 
@@ -227,7 +243,7 @@ def _complete(folder: Path | None, files: tuple[Download, ...]) -> bool:
 def _dir(part: str) -> Path | None:
     if _core.folder is None:
         return None
-    return _core.folder / {"g2p": LIB_FOLDER, "voices": VOICES_FOLDER, "aligner": ALIGNER_FOLDER}.get(part, part)
+    return _core.folder / {"g2p": LIB_FOLDER, "voices": VOICES_FOLDER, "aligner": ALIGNER_FOLDER, FAST_CHOICE: str(Path(NANO_FAST[0]).parent)}.get(part, part)
 
 
 def _download_off() -> str:
@@ -260,7 +276,7 @@ def fast_supported() -> bool:
 
 
 def _choices() -> tuple[str, ...]:
-    return CHOICES + (FAST,) if fast_supported() else CHOICES
+    return CHOICES + ((FAST,) if fast_supported() else ()) + (FAST_CHOICE,)
 
 
 def _gguf_present() -> bool:
@@ -278,7 +294,7 @@ def _parts() -> list[Component]:
            Component("voices", PART_LABEL["voices"], pin(FILES["voices"]), VOICES.size,
                      voices_dir is not None and all((voices_dir / name).is_file() for name in VOICE_MEMBERS.values()),
                      blocked=off, downloads=[VOICES])]
-    for part in ("turbo", "nano", "aligner"):
+    for part in ("turbo", "nano", "aligner", FAST_CHOICE):
         files = FILES[part]
         out.append(Component(part, PART_LABEL[part], pin(files), sum(item.size for item in files), _complete(_dir(part), files),
                              external=part == "aligner" and _aligner_external(), blocked=off, downloads=list(files)))
@@ -328,6 +344,35 @@ def make_engine(tier: str, found: Installed) -> Any:
     if tier == "turbo" and fast_supported():
         return vieneu_gguf.AcceleratedEngine(lambda: vieneu._real_engine(tier, found), gguf_files)  # noqa: SLF001 - cùng gói, cùng bộ dựng với đường ONNX
     return vieneu._real_engine(tier, found)  # noqa: SLF001
+
+
+def make_fast_engine(tier: str, found: Installed) -> Any:
+    """Bộ dựng engine cho bậc "Nhanh hơn" (VieneuProvider thứ hai của ReadAloud, chỉ Nghe ngay): Nano đọc bằng bộ khử nhiễu + số bước của `NANO_FAST`;
+    Turbo không có bậc này (như `make_engine`)."""
+    from ..readaloud import vieneu_engine as ve
+
+    if tier != "nano" or found.nano is None or _core.folder is None:
+        return make_engine(tier, found)
+    return ve.NanoEngine(found.nano, estimator=_core.folder / NANO_FAST[0], steps=NANO_FAST[1])
+
+
+# ---- cho "Tốc độ giọng trên máy" (voice_speed.py): giọng có hai bậc của mô-đun này là Nano ------------------------------------------------
+def speed_installed() -> bool:
+    found = installed()
+    return found is not None and found.nano is not None
+
+
+def speed_rtf() -> float | None:
+    """Tốc độ tự đo của Nano ở bậc chất lượng (lần đo sau khi tải luôn đo bậc này)."""
+    return rtf("vieneu:nano/")
+
+
+def speed_fast_ready() -> bool:
+    return speed_installed() and _complete(_dir(FAST_CHOICE), NANO_FAST_FILES)
+
+
+def speed_fast_bytes() -> int:
+    return sum(item.size for item in NANO_FAST_FILES)
 
 
 def rtf(voice: str) -> float | None:
@@ -384,13 +429,18 @@ def status() -> dict[str, Any]:
         choices = []
         picks = {best, "aligner"} | ({FAST} if best == "turbo" else set())  # bản tăng tốc đi kèm Turbo: máy hợp Turbo thì khuyên cả hai
         for choice in _choices():
+            if choice == FAST_CHOICE and choice not in have and not ("nano" in tiers and voice_speed.wants_fast("nano")):
+                continue  # bản nhanh hơn của Nano: chỉ khi "Tốc độ giọng trên máy" muốn bậc nhanh (hay đã tải)
             label, detail = CHOICE_TEXT[choice]
             lacking = _lacking([choice], by_id, judged)
-            if choice == FAST:
-                lacking = [part for part in lacking if part.id == "gguf"]  # cỡ riêng của nó; phần Giọng VieNeu nó cần đã có dòng của mình
+            if choice in (FAST, FAST_CHOICE):
+                # cỡ riêng của nó; phần giọng nó cần đã có dòng của mình
+                lacking = [part for part in lacking if part.id == ("gguf" if choice == FAST else FAST_CHOICE)]
+            requires = {FAST: ["turbo"], FAST_CHOICE: ["nano"]}.get(choice)
             choices.append({"id": choice, "label": label, "detail": detail, "needs": list(NEEDS[choice]),
                             "bytes": sum(part.size for part in lacking), "installed": choice in have,
-                            "recommended": choice in picks, "default": choice in picks, **({"requires": ["turbo"]} if choice == FAST else {})})
+                            "recommended": choice in picks or choice == FAST_CHOICE, "default": choice in picks or choice == FAST_CHOICE,
+                            **({"requires": requires} if requires else {})})
         return {
             "state": state, "done": _state["done"] if state == "downloading" else 0,
             "total": _state["total"] if state == "downloading" else 0, "error": _state["error"],

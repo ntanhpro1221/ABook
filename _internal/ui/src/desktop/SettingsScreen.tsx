@@ -15,6 +15,7 @@ import { PROFILE_LABEL } from "@/studio/bookTemplates";
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
 import { BookTemplates } from "./BookTemplates";
 import { SupertonicModuleCard, VieneuModuleCard } from "@/listen/VieneuModuleCard";
+import { VoiceSpeedSetting } from "@/listen/VoiceSpeedSetting";
 import { EXTEND_GESTURE } from "@/listen/extendGesture";
 import { LETTER_SHORTCUTS_HINT, ShortcutList } from "@/listen/Shortcuts";
 import { MyMusicSection } from "@/listen/MyMusic";
@@ -402,6 +403,7 @@ export function SettingsScreen() {
                     <VieneuModuleCard onChanged={reload} />
                   </div>
                   <SupertonicModuleCard onChanged={reload} />
+                  <VoiceSpeedSetting />
                 </>
               )}
             />

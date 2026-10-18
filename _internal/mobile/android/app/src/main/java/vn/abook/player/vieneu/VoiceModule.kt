@@ -63,6 +63,10 @@ abstract class VoiceModule(
     protected abstract fun suggestion(bench: JSONObject, tiers: List<String>): JSONObject?
     /** (recommended, ticked at first) of a choice. */
     protected open fun marks(choice: String, best: String): Pair<Boolean, Boolean> = (choice == best) to (choice == best)
+    /** Whether the card shows [choice] now ([installed]: the choices on this phone) - "Bản nhanh hơn" only when "Tốc độ giọng trên máy" wants it. */
+    protected open fun offered(choice: String, installed: List<String>): Boolean = true
+    /** Choices [choice] is an add-on of (the card ticks them with it, removing them takes it too). */
+    protected open fun requires(choice: String): List<String> = emptyList()
     /** Whether part [id] is one of the runtime parts kept in [runtime] for every module. */
     private fun common(id: String) = id in SharedRuntime.PARTS
 
@@ -150,11 +154,16 @@ abstract class VoiceModule(
         }
         val shown = JSONArray()
         for (choice in choices) {
+            if (!offered(choice, installedTiers)) continue
             val (label, detail) = choiceText(choice)
             val (recommended, ticked) = marks(choice, best)
-            shown.put(JSONObject().put("id", choice).put("label", label).put("detail", detail).put("needs", JSONArray(needs(choice)))
-                .put("bytes", lacking(listOf(choice), states).sumOf { bytes(it, states) }).put("installed", choice in installedTiers)
-                .put("recommended", recommended).put("default", ticked).put("removable", choice in installedTiers))
+            // an add-on counts only its own parts: what it requires has its own line
+            val base = requires(choice).flatMap { needs(it) }.toSet()
+            val row = JSONObject().put("id", choice).put("label", label).put("detail", detail).put("needs", JSONArray(needs(choice)))
+                .put("bytes", lacking(listOf(choice), states).filter { it !in base }.sumOf { bytes(it, states) }).put("installed", choice in installedTiers)
+                .put("recommended", recommended).put("default", ticked).put("removable", choice in installedTiers)
+            if (requires(choice).isNotEmpty()) row.put("requires", JSONArray(requires(choice)))
+            shown.put(row)
         }
         val parts = JSONArray()
         for (id in groups.keys) {
@@ -303,16 +312,17 @@ abstract class VoiceModule(
         synchronized(lock) {
             if (downloading || benchmarking) return
             forget()
-            val others = have(states()).filter { it != choice }
+            val going = listOf(choice) + choices.filter { choice in requires(it) } // an add-on goes with what it requires
+            val others = have(states()).filter { it !in going }
             val keep = others.flatMap { needs(it) }.toSet()
-            val (common, own) = needs(choice).filter { it !in keep }.partition(::common)
+            val (common, own) = going.flatMap { needs(it) }.distinct().filter { it !in keep }.partition(::common)
             if (others.isEmpty()) {
                 dir.deleteRecursively()
             } else {
                 val files = own.flatMap { groups.getValue(it) }
                 pinned.remove(files)
                 files.map { it.name.substringBefore('/') }.distinct().forEach { File(dir, it).deleteRecursively() }
-                val bench = readBench().apply { remove(choice) }
+                val bench = readBench().apply { going.forEach { remove(it) } }
                 if (bench.length() == 0) benchFile.delete() else Store.writeAtomic(benchFile, bench.toString())
             }
             runtime.release(common.associateWith { groups.getValue(it) })
@@ -330,5 +340,7 @@ abstract class VoiceModule(
         private const val BENCH = "benchmark.json"
         /** At or above this a voice cannot be listened to live (desktop vieneu_module.SLOW_RTF). */
         const val SLOW_RTF = 0.8
+        /** The app's own model files on Hugging Face at one commit (desktop voice_module.APP_MODELS): int8 vector estimators of Supertonic and Nano. */
+        const val APP_MODELS = "https://huggingface.co/NGDtuanh/abook-music-student/resolve/f42d118d77ea3d9391b59071b6a455ecfe420fa3/"
     }
 }

@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Máy tính: Giọng Supertonic và Giọng VieNeu Nano đọc nhanh hơn mà nghe như cũ (Supertonic dùng bản thu gọn của app, tải nhẹ hơn 140 MB; Nano đọc 8 bước thay vì 16), và Cài đặt có thêm "Tốc độ giọng trên máy": Tự động / Chất lượng cao nhất / Nhanh hơn. Để Tự động thì máy tự chọn: đủ nhanh để vừa đọc vừa nghe thì giữ chất lượng cao nhất, không thì dùng bản nhanh hơn (tiếng kém hơn một chút; bản này chỉ tải thêm khi bạn bấm, nút tải có ghi cỡ). Lựa chọn này chỉ áp khi bạn nghe trực tiếp - sách bạn xuất ra luôn dùng chất lượng cao nhất.
+- Điện thoại: cùng thay đổi và cùng cài đặt "Tốc độ giọng trên máy" trong Cài đặt → Giọng đọc. Trên điện thoại tầm trung (thử trên OPPO A93), bản nhanh hơn của Supertonic ước đọc nhanh gấp khoảng ba lần trước đây, nên bạn chờ giữa các đoạn ít hơn hẳn.
+
 ## [0.4.97] - 2026-10-18
 
 ### Nghe ngay

@@ -94,3 +94,82 @@ bash scripts/supertonic_phone_bench.sh <serial> clean
 On ColorOS (the A93), whose app freezer stalls an instrumented app that is not in front, use `app threads=1,2,4,8` then
 `wait-app` / `app-results` instead of `install` + `speed`: it runs the same code through `app_process` as the shell user and
 installs nothing at all.
+
+## 18-10: int8 + fewer steps
+
+The A93 (OPPO A93, Helio P95) read Supertonic fp32 at RTF ~2 - more than twice slower than listening - and VieNeu Nano likewise. The
+vector estimator is ~90% of the work for both, so the app now ships its own int8 copies of that one graph (static QDQ quantisation of
+the heavy layers only; every other graph and every voice file unchanged) and reads in fewer steps. Files: Hugging Face
+`NGDtuanh/abook-music-student` at commit `f42d118d`, `supertonic3-int8/{top30,fast}/vector_estimator.onnx` and
+`vieneu-nano-int8/vector_estimator.onnx` (SHA-256 + size pinned in the modules; licences in THIRD_PARTY.md).
+
+### A93, warm RTF (median, CPU)
+
+| voice | configuration | threads | RTF |
+|---|---|---|---|
+| Supertonic | fp32, 8 steps (before) | 2 / 4 | 1.99 / 2.13 |
+| Supertonic | top30 int8, 8 steps (quality tier) | 4 | 1.21 |
+| Supertonic | fast int8, 8 steps | 4 | 1.01 |
+| Supertonic | fast int8, 5 steps (fast tier) | 4 | ~0.70 (estimated from the 8-step run) |
+| Nano | fp32, 16 steps (before; the phone was throttled) | 4 | 2.16 |
+| Nano | int8 | 4 | 1.67 |
+| Nano | int8, 8 steps (fast tier) | 4 | ~0.95 (estimated) |
+
+So no tier keeps up live on the A93 yet; the fast tier halves the wait. What a given phone does is decided by its own self-benchmark
+(below), never by these numbers.
+
+### Desktop listening test, Supertonic (144 clips per configuration)
+
+24 paragraphs x voices F1 / M4 / F2 x 2 seeds; ASR faster-whisper large-v3-turbo (CER per clip capped at 100%), UTMOS; paired bootstrap
+over paragraphs (2000 samples, CI90 = 5th-95th percentile). Rules fixed before generating: replacing fp32 at 8 steps (H1) dCER <= +0.5
+(upper CI90 <= +1.0), dUTMOS >= -0.05 (lower CI90 >= -0.10), at most 1/24 paragraphs worse than fp32 by > 5 pp on both seeds; a fast
+tier (H2) dCER <= +2.0 (<= +3.0), dUTMOS >= -0.10 (>= -0.20), at most 2/24. RTF = desktop, 4 threads, shared machine (relative only).
+
+| configuration | RTF | CER % | dCER (CI90) | UTMOS | dUTMOS (CI90) | worse paragraphs | rule |
+|---|---|---|---|---|---|---|---|
+| fp32, 8 steps (reference) | 0.178 | 1.36 | - | 3.149 | - | - | - |
+| **top30 int8, 8 steps (quality tier)** | 0.146 | 1.51 | +0.15 (+0.02..+0.29) | 3.123 | -0.026 (-0.045..-0.005) | 0/24 | H1 PASS |
+| top30 int8, 6 steps | 0.116 | 1.63 | +0.26 (+0.10..+0.43) | 3.153 | +0.004 (-0.024..+0.034) | 0/24 | H2 PASS |
+| top20 int8, 5 steps | 0.085 | 1.91 | +0.55 (+0.34..+0.75) | 3.083 | -0.066 (-0.096..-0.034) | 0/24 | H2 PASS |
+| **fast int8, 5 steps (fast tier)** | 0.074 | 2.06 | +0.70 (+0.46..+0.93) | 3.062 | -0.087 (-0.119..-0.055) | 0/24 | H2 PASS |
+| fp32, 4 steps (reference) | 0.098 | 2.70 | +1.34 (+1.02..+1.68) | 3.102 | -0.047 (-0.087..-0.006) | 0/24 | H2 PASS |
+
+dCER by voice (pp): quality tier F1 -0.03, M4 +0.19, F2 +0.28; fast tier F1 +0.62, M4 +0.48, F2 +0.99. No clip above 50% CER.
+
+### Desktop listening test, VieNeu Nano
+
+Voices Adam, Ái Hân, Mỹ Duyên through the app's own text path. Speed on the desktop (Ryzen 9 8945HX, median of 3 interleaved runs):
+the vector estimator is 91% of Nano's time.
+
+| configuration | RTF 1 / 2 / 4 threads | estimator size | DEV CER % (d) | DEV UTMOS (d) | DEV rule |
+|---|---|---|---|---|---|
+| fp32, 16 steps (before) | 0.589 / 0.375 / 0.271 | 155 MB | 2.67 | 2.431 | reference |
+| fp32, 12 steps | 0.446 / 0.295 / 0.211 | 155 MB | 2.82 (+0.15) | 2.492 (+0.061) | pass |
+| fp32, 8 steps | 0.329 / 0.214 / 0.148 | 155 MB | 2.89 (+0.21) | 2.415 (-0.016) | pass |
+| fp32, 6 steps | 0.256 / 0.170 / 0.118 | 155 MB | 3.69 (+1.02) | 2.359 (-0.072) | fail |
+| int8 (MatMul only), 16 steps | 0.318 / 0.228 / 0.184 | 46 MB | 2.70 (+0.02) | 2.390 (-0.041) | pass |
+| int8 (MatMul only), 8 steps | 0.189 / 0.135 / 0.102 | 46 MB | 3.02 (+0.35) | 2.352 (-0.079) | fail (UTMOS, by 0.03; seed noise 0.07) |
+
+TEST (24 paragraphs x 3 voices x 2 seeds = 144 clips, used once; reference fp32 16 steps CER 1.65%, UTMOS 2.460):
+
+| configuration | RTF (4 threads) | dCER (CI90) | dUTMOS (CI90) | worse paragraphs | result |
+|---|---|---|---|---|---|
+| fp32, 8 steps (quality tier) | 0.135 (16 steps: 0.248) | +0.14 (+0.05..+0.22) | -0.043 (-0.071..-0.015) | 0/24 | PASS |
+| int8, 16 steps | 0.155 | +0.11 (+0.02..+0.20) | -0.046 (-0.078..-0.011) | 0/24 | PASS |
+
+Hence the tiers (same on the desktop and the phone, one constant pair each to change):
+
+| voice | "Chất lượng cao nhất" | "Nhanh hơn" (live listening only) |
+|---|---|---|
+| Supertonic | top30 int8, 8 steps (replaces fp32; upstream's fp32 file is no longer downloaded) | fast int8, 5 steps (`supertonic.FAST`, `SupertonicText.FAST_ESTIMATOR` / `FAST_STEPS`) |
+| VieNeu Nano | upstream fp32, 8 steps (`NANO_STEPS` 16 -> 8) | int8, 10 steps (`vieneu_module.NANO_FAST`, `VieneuModule.NANO_FAST`) |
+
+Nano's fast tier was tested once on the 144 test clips under the fast-tier rule (mean dCER <= +2.0 pp, CI90 upper <= +3.0; dUTMOS >= -0.10,
+CI lower >= -0.20; <= 2/24 paragraphs worse by 5 pp on both seeds): int8 at 8 steps FAILED (dCER +0.16 pp, dUTMOS -0.112), int8 at 10 steps
+PASSED at the edge (dCER +0.14 pp [+0.03, +0.26], dUTMOS -0.092 [-0.122, -0.061]); about 2.7x the fp32 16-step speed on the desktop. Studio and every export always read the quality tier.
+
+"Tốc độ giọng trên máy" (Settings, desktop `webui/voice_speed.py`, phone `readaloud/VoiceSpeed.kt`): Tự động (default) / Chất lượng cao
+nhất / Nhanh hơn, one choice per device. Tự động reads the quality tier when that tier's self-benchmark (run after each download) is under
+SLOW_RTF 0.8, else the fast tier; it never moves to another voice, and an explicit choice is never overridden. The fast file is
+downloaded only when the fast tier is wanted (the module card offers it with its size). A fast clip carries the tier tag "fast<steps>"
+after the reading tags of its cache key, so an export never reuses one.

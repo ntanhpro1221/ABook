@@ -219,7 +219,9 @@ object ReadAloud {
     @Synchronized
     internal fun cache(): ClipCache = cache ?: run {
         val ctx = context ?: throw VoiceException("Chưa khởi động")
-        ClipCache(File(ctx.cacheDir, "readaloud"), pinFile = File(ctx.filesDir, "readaloud-pins.txt")).also { cache = it }
+        VoiceSpeed.setup(ctx)
+        // giọng hai bậc ([VoiceSpeed]): mã giọng trần = bậc nghe trực tiếp lúc này; bản xuất hỏi [VoiceSpeed.quality]
+        ClipCache(File(ctx.cacheDir, "readaloud"), pinFile = File(ctx.filesDir, "readaloud-pins.txt"), tierOf = VoiceSpeed::liveTag).also { cache = it }
     }
 
     private var speeds: VoiceSpeeds? = null

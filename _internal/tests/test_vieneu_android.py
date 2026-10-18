@@ -33,6 +33,13 @@ def _script(name: str):
 def test_the_phone_downloads_the_same_pinned_model_files_as_the_computer():
     source = _kotlin("vieneu/VieneuModule.kt")
     bases = dict(re.findall(r'private const val (\w+_BASE) = "([^"]+)"', source))
+    # Nano's fast tier: the same pair (estimator file, steps) and the same pinned files as the desktop
+    pair = re.search(r'val NANO_FAST = "([^"]+)" to (\d+)', source)
+    assert (pair.group(1), int(pair.group(2))) == vieneu_module.NANO_FAST
+    assert f'const val FAST_CHOICE = "{vieneu_module.FAST_CHOICE}"' in source
+    fast = re.findall(r'Part\((NANO_FAST\.first(?:\.substringBefore\(\'/\'\) \+ "/LICENSE")?), "([0-9a-f]{64})", ([\d_]+),\s*VoiceModule\.APP_MODELS \+ "([^"]+)"', source)
+    assert {(vieneu_module.voice_module.APP_MODELS + remote, sha256, int(size.replace("_", ""))) for _, sha256, size, remote in fast} == \
+        {(item.url, item.sha256, item.size) for item in vieneu_module.NANO_FAST_FILES}
     for tier, files in (("turbo", vieneu_module.TURBO_FILES), ("nano", vieneu_module.NANO_FILES)):
         rows = re.findall(rf'file\("{tier}", (\w+), "([^"]+)", "([0-9a-f]{{64}})", ([\d_]+), ', source)
         assert {name for _, name, *_ in rows} == {item.name for item in files}, tier
@@ -99,6 +106,7 @@ def test_the_phone_cuts_and_measures_like_the_computer():
     assert f'const val BENCH_TEXT = "{vieneu.BENCH_TEXT}"' in voices
     assert f"const val SLOW_RTF = {vieneu_module.SLOW_RTF}" in _kotlin("vieneu/VoiceModule.kt")
     assert f"MAX_NEW_FRAMES = {vieneu_engine.MAX_NEW_FRAMES}" in speaker
+    assert f"const val STEPS = {vieneu_engine.NANO_STEPS}" in _kotlin("vieneu/VieneuNano.kt")
 
 
 def test_the_shared_fixtures_are_what_the_current_desktop_code_gives():

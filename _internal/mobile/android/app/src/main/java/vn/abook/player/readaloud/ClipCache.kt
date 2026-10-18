@@ -16,11 +16,16 @@ import vn.abook.player.vieneu.VieneuUnits
  * Đoạn "Làm trước" ([PrepareAhead]) được GHIM (danh sách khoá trong `pinFile`, ngoài thư mục đệm): khi dọn, đoạn không ghim đi trước hết, đoạn ghim chỉ đi khi
  * chỉ còn chúng - nghe trực tiếp không đẩy được đoạn đã làm trước ra trước khi người nghe tới. Nghe tới đoạn nào thì bỏ ghim đoạn ấy ([unpin]); phần dành cho đoạn
  * ghim có trần ([PreparePlan.SHARE]) nên chúng không chiếm hết chỗ.
+ *
+ * Giọng có hai bậc ([VoiceSpeed]: Supertonic, VieNeu Nano): dấu bậc đứng cuối dấu cách đọc ("fast5"; bậc chất lượng không có dấu - khoá như máy tính). Mã giọng trần
+ * là "bậc nghe trực tiếp lúc này" ([tierOf]), `<mã>#q` là bậc chất lượng (mọi bản xuất), `<mã>#fast<n>` là bậc nhanh; đoạn trả về luôn mang mã giọng trần.
  */
 class ClipCache(
     private val dir: File,
     private val capBytes: Long = CAP_BYTES,
     private val pinFile: File? = null,
+    /** Dấu bậc nghe trực tiếp của một giọng ([VoiceSpeed.liveTag]); "" = bậc chất lượng. */
+    private val tierOf: (String) -> String = { "" },
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     companion object {
@@ -66,8 +71,24 @@ class ClipCache(
         ?.let { file -> runCatching { file.readLines().map { it.trim() }.filter { it.isNotEmpty() } }.getOrNull() }
         ?.toMutableSet() ?: mutableSetOf()
 
-    private fun keyOf(voiceId: String, text: String, origin: String?, readings: Map<String, String>?): String =
-        split(voiceId).let { (provider, voice) -> key(provider, voice, text, reading(voiceId, text, origin, readings)) }
+    /** (mã giọng trần, dấu bậc) của [voiceId]: dấu ghi sẵn trong mã, không có thì bậc nghe trực tiếp lúc này. */
+    private fun tier(voiceId: String): Pair<String, String> = VoiceSpeed.split(voiceId).let { (base, tag) ->
+        base to when {
+            tag == VoiceSpeed.QUALITY_TAG -> ""
+            tag.isNotEmpty() -> tag
+            VoiceSpeed.family(base).isEmpty() -> ""
+            else -> tierOf(base)
+        }
+    }
+
+    /** Mã giọng đọc đúng bậc của khoá ([ClipReader] đưa cho giọng): giọng có hai bậc luôn mang dấu bậc, giọng khác giữ nguyên. */
+    fun resolve(voiceId: String): String = tier(voiceId).let { (base, tag) -> VoiceSpeed.explicit(base, tag) }
+
+    private fun keyOf(voiceId: String, text: String, origin: String?, readings: Map<String, String>?): String {
+        val (base, tag) = tier(voiceId)
+        val marks = listOf(reading(base, text, origin, readings), tag).filter { it.isNotEmpty() }.joinToString("+")
+        return split(base).let { (provider, voice) -> key(provider, voice, text, marks) }
+    }
 
     private fun savePins() {
         val file = pinFile ?: return
@@ -138,7 +159,7 @@ class ClipCache(
             val now = clock()
             audio.setLastModified(now)
             meta.setLastModified(now)
-            Clip(audio, json.getLong("duration"), words, voiceId)
+            Clip(audio, json.getLong("duration"), words, VoiceSpeed.split(voiceId).first)
         } catch (error: Exception) {
             null // json hỏng / thiếu file: coi như chưa có, đọc lại sẽ ghi đè
         }
@@ -151,6 +172,7 @@ class ClipCache(
     ): Clip {
         require(extension in EXTENSIONS) { "đuôi file lạ: $extension" }
         val key = keyOf(voiceId, text, origin, readings)
+        val voice = VoiceSpeed.split(voiceId).first
         val audio = File(dir, "$key.$extension")
         audio.delete()
         if (!tmp.renameTo(audio)) {
@@ -161,14 +183,14 @@ class ClipCache(
         words.forEach { array.put(JSONArray().put(it.start).put(it.end)) }
         val meta = File(dir, "$key.json")
         val part = File(dir, "$key.json.part")
-        part.writeBytes(JSONObject().put("ext", extension).put("duration", durationMs).put("words", array).put("voice", voiceId).toString().toByteArray(Charsets.UTF_8))
+        part.writeBytes(JSONObject().put("ext", extension).put("duration", durationMs).put("words", array).put("voice", voice).toString().toByteArray(Charsets.UTF_8))
         meta.delete()
         part.renameTo(meta)
         val now = clock()
         audio.setLastModified(now)
         meta.setLastModified(now)
         trim()
-        return Clip(audio, durationMs, words, voiceId)
+        return Clip(audio, durationMs, words, voice)
     }
 
     /** Dọn tới khi còn trong hạn mức: xoá cả cặp (âm thanh + json) của đoạn dùng lâu nhất - đoạn không ghim trước; file mồ côi và file tạm cũ xoá luôn. */

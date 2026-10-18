@@ -17,6 +17,7 @@ import org.json.JSONObject
 import vn.abook.player.readaloud.ClipCancel
 import vn.abook.player.readaloud.ClipRetry
 import vn.abook.player.readaloud.ReadAloud
+import vn.abook.player.readaloud.VoiceSpeed
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -180,14 +181,14 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
                 // Một lần đọc trong ClipRetry chỉ để mang [ClipCancel] tới giọng (Edge đăng ký ổ cắm vào đó); thử lại là việc của [ListenExport.Run].
                 synth = { text ->
                     ClipRetry.run(online = false, delaysMs = LongArray(0), sleep = { false }, budgetMs = Long.MAX_VALUE / 4, cancel = this.reading) {
-                        ReadAloud.readExactly(voice, text, origin, readings)
+                        ReadAloud.readExactly(VoiceSpeed.quality(voice), text, origin, readings) // bản xuất luôn bậc chất lượng (giọng hai bậc, VoiceSpeed)
                     }.getOrThrow().file
                 },
                 decoder = Clips, outputs = ListenAudio.outputs, progress = ::show, stopped = { isStopped },
                 live = { ReadAloud.liveJobs() > 0 },
                 timed = { chars, seconds -> runCatching { ReadAloud.speeds().record(voice, chars, seconds) } },
                 music = runMusic,
-                cached = { text -> cache.contains(voice, text, origin, readings) },
+                cached = { text -> cache.contains(VoiceSpeed.quality(voice), text, origin, readings) },
             )
             val stamps = runner.build()
 

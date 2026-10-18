@@ -7,6 +7,7 @@ import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { MyMusicSection } from "@/listen/MyMusic";
 import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
 import { VieneuModuleCard, type VieneuBackend } from "@/listen/VieneuModuleCard";
+import { VoiceSpeedSetting, type VoiceSpeedBackend } from "@/listen/VoiceSpeedSetting";
 import { SUPERTONIC_COPY } from "@/listen/vieneuModule";
 import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { androidSource, phoneVieneu } from "./androidSource";
@@ -43,6 +44,12 @@ const phoneSupertonic: VieneuBackend = {
   remove: (choice) => ReadAloud.supertonicRemove({ choice }),
   cancel: () => ReadAloud.supertonicCancel(),
   voices: phoneVieneu.voices,
+};
+
+/** "Tốc độ giọng trên máy" trên điện thoại (readaloud/VoiceSpeed.kt). */
+const phoneVoiceSpeed: VoiceSpeedBackend = {
+  status: () => ReadAloud.voiceSpeed(),
+  set: (choice) => ReadAloud.setVoiceSpeed({ choice }),
 };
 
 function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
@@ -146,6 +153,7 @@ export function SettingsScreen() {
                   <VieneuModuleCard backend={phoneVieneu} onChanged={reload} />
                 </div>
                 <VieneuModuleCard backend={phoneSupertonic} copy={SUPERTONIC_COPY} onChanged={reload} />
+                <VoiceSpeedSetting backend={phoneVoiceSpeed} supertonic={phoneSupertonic} vieneu={phoneVieneu} />
               </>
             )}
           />

@@ -12,6 +12,7 @@ import vn.abook.player.readaloud.ClipLift
 import vn.abook.player.readaloud.Voice
 import vn.abook.player.readaloud.VoiceException
 import vn.abook.player.readaloud.VoiceInfo
+import vn.abook.player.readaloud.VoiceSpeed
 import java.io.File
 import java.util.zip.ZipFile
 
@@ -35,6 +36,7 @@ object VieneuVoices {
     fun module(appContext: Context): VieneuModule = module ?: run {
         val ctx = appContext.applicationContext
         context = ctx
+        VoiceSpeed.setup(ctx) // the card offers "Bản nhanh hơn" of Nano from that setting
         VieneuModule(File(ctx.filesDir, VieneuModule.FOLDER), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), facts(ctx),
             benchmark = ::benchmark, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) }).also { module = it }
     }
@@ -51,6 +53,7 @@ object VieneuVoices {
         engine?.second?.let { runCatching { it.close() } }
         engine = null
         presetsOf = null
+        VoiceSpeed.changed()
     }
 
     @Synchronized
@@ -84,8 +87,9 @@ object VieneuVoices {
 
     private class Ready(val tier: String, val engine: VieneuTier, val g2p: SeaG2p, val preset: VieneuPreset)
 
+    /** [fast]: Nano's fast tier ([VoiceSpeed], [VieneuModule.NANO_FAST]) when its file is here (else the quality tier: never no voice). */
     @Synchronized
-    private fun ready(tier: String, name: String?): Ready {
+    private fun ready(tier: String, name: String?, fast: Boolean = false): Ready {
         val ctx = context ?: throw VoiceException("Chưa khởi động", reason = "voice")
         val owner = module(ctx)
         val installed = owner.installed() ?: throw VoiceException("Giọng VieNeu chưa tải trên điện thoại này - tải trong Cài đặt → Giọng đọc.", reason = "voice")
@@ -94,7 +98,9 @@ object VieneuVoices {
         try {
             OrtRuntime.load(owner.ortFolder())
             val reader = SeaG2p.shared(installed.g2pLibrary, installed.dictionary)
-            val loaded = engine?.takeIf { it.first == tier }?.second ?: run {
+            val estimator = if (fast && tier == "nano") owner.nanoFastEstimator() else null
+            val key = if (estimator != null) "$tier#fast" else tier
+            val loaded = engine?.takeIf { it.first == key }?.second ?: run {
                 forget()
                 val cores = Runtime.getRuntime().availableProcessors()
                 // measured 03-10 on a Helio P95: Turbo's per-frame graphs are fastest on 2 threads (the big cores), its codec on all; Nano on 4
@@ -102,9 +108,10 @@ object VieneuVoices {
                     val dir = installed.turbo!!.first
                     TurboTier(VieneuTurbo(dir, installed.turbo.second, 2, 2, minOf(cores, 8)), ByteBpe(File(dir, "tokenizer.json")))
                 } else {
-                    NanoTier(VieneuNano(installed.nano!!, minOf(cores, 4)))
+                    if (estimator != null) NanoTier(VieneuNano(installed.nano!!, minOf(cores, 4), estimator = estimator), VieneuModule.NANO_FAST.second)
+                    else NanoTier(VieneuNano(installed.nano!!, minOf(cores, 4)))
                 }
-                engine = tier to made
+                engine = key to made
                 made
             }
             return Ready(tier, loaded, reader, preset)
@@ -114,11 +121,12 @@ object VieneuVoices {
         }
     }
 
-    /** One paragraph -> [out] (16-bit WAV at the tier's rate) + words. */
+    /** One paragraph -> [out] (16-bit WAV at the tier's rate) + words. [id] may carry its speed tier ([VoiceSpeed]: `vieneu:nano/Adam#fast10`). */
     @Synchronized
     fun synthesize(id: String, text: String, out: File, origin: String? = null, readings: Map<String, String>? = null): Clip {
-        val (tier, name) = id.removePrefix("$PREFIX:").let { it.substringBefore('/') to it.substringAfter('/', "") }
-        val ready = ready(tier, name)
+        val (voice, speed) = VoiceSpeed.split(id)
+        val (tier, name) = voice.removePrefix("$PREFIX:").let { it.substringBefore('/') to it.substringAfter('/', "") }
+        val ready = ready(tier, name, VoiceSpeed.isFast(speed))
         val spoken = try {
             VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin, readings)
         } catch (failure: OutOfMemoryError) {
@@ -126,8 +134,8 @@ object VieneuVoices {
             throw VoiceException("Điện thoại không đủ bộ nhớ cho giọng VieNeu lúc này.", cause = failure, reason = "voice")
         }
         if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
-        VieneuAudio.writeWav(ClipLift.lifted(id, spoken.samples, spoken.rate, liftParams()), spoken.rate, out) // câu ngắn nhỏ nâng lên mức giọng (như service.clip)
-        return Clip(out, spoken.durationMs, spoken.words, id)
+        VieneuAudio.writeWav(ClipLift.lifted(voice, spoken.samples, spoken.rate, liftParams()), spoken.rate, out) // câu ngắn nhỏ nâng lên mức giọng (như service.clip)
+        return Clip(out, spoken.durationMs, spoken.words, voice)
     }
 
     /** Bảng FIR đo đỉnh thật (asset music_mix.json) cho [ClipLift]; nạp một lần, không nạp được thì không bù (null). */
