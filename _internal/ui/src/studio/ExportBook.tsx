@@ -70,6 +70,9 @@ const SAVING: Record<Kind, [string, string, string]> = {
   abookproj: ["Chọn nơi lưu file dự án", "Đang đóng gói dự án…", "Không gói được dự án"],
 };
 
+/** Truy vấn chọn trạng thái tải nhạc / Huỷ của đúng kiểu xuất ở máy chủ (server.py `_music_key`); `.abook` không cần. */
+const musicKind = (kind: Kind) => (kind === "abookproj" ? "?kind=projectfile" : kind === "mp3" ? "?kind=mp3" : "");
+
 /** Bản xuất đã xong, hiện ngay trong hộp: nói đã lưu ở đâu và cho mở thư mục (trước đây chỉ có một thông báo thoáng qua). */
 type Finished = { title: string; detail: string; folder: string };
 
@@ -98,8 +101,8 @@ export function ExportDialog({
   openRef.current = open;
   const loadingToast = useRef<string | number | null>(null);
   const parts = useParts(book.id).data?.parts ?? [];
-  // Giữa lúc đóng gói .abook / .abookproj, máy có thể đang TẢI nhạc nền để đóng kèm (vài phút): hỏi để nói bài thứ mấy và cho Huỷ.
-  const packing = busy && (kind === "abook" || kind === "abookproj");
+  // Giữa lúc đóng gói .abook / .abookproj hay xuất MP3 kèm nhạc, máy có thể đang TẢI nhạc nền (vài phút): hỏi để nói bài thứ mấy và cho Huỷ.
+  const packing = busy && (kind === "abook" || kind === "abookproj" || kind === "mp3");
   // Gói cả dự án (.abookproj) và file sách (.abook) một cuốn là việc nền ở máy chủ (mất cả phút với sách dài): hỏi pha + đã/tổng ("chương X/N")
   // để hiện thanh tiến độ; đóng hộp hay chuyển trang thì việc vẫn chạy.
   const [packJob, setPackJob] = useState<PackJob | null>(null);
@@ -121,8 +124,8 @@ export function ExportDialog({
   const musicTransfer = useQuery({
     queryKey: ["music-export", book.id, kind],
     enabled: packing,
-    // `.abook` và `.abookproj` có trạng thái nhạc riêng ở máy chủ (khoá theo kiểu xuất): hỏi đúng cái của kiểu đang gói.
-    queryFn: () => api<{ active: boolean; done: number; total: number }>(`/api/books/${book.id}/music-export${kind === "abookproj" ? "?kind=projectfile" : ""}`),
+    // `.abook`, `.abookproj` và MP3 có trạng thái nhạc riêng ở máy chủ (khoá theo kiểu xuất): hỏi đúng cái của kiểu đang gói.
+    queryFn: () => api<{ active: boolean; done: number; total: number }>(`/api/books/${book.id}/music-export${musicKind(kind)}`),
     refetchInterval: 1000,
     retry: false,
     gcTime: 0,
@@ -134,7 +137,8 @@ export function ExportDialog({
   }, [busy]);
   const cancelPacking = () => {
     setCancelling(true);
-    const url = kind === "abookproj" ? `/api/books/${book.id}/projectfile-job/cancel` : `/api/books/${book.id}/music-export/cancel`;
+    // MP3: cùng đường huỷ với tải nhạc của `.abook` - máy chủ dừng ở bài nhạc / khúc kế và xoá bản xuất dở (server.py post_export).
+    const url = kind === "abookproj" ? `/api/books/${book.id}/projectfile-job/cancel` : `/api/books/${book.id}/music-export/cancel${musicKind(kind)}`;
     void api(url, { method: "POST", body: {} }).catch(() => setCancelling(false));
   };
   /** Theo việc gói dự án của cuốn này tới khi xong; trả kết quả, hay ném `PackCancelled` / `PackDetached` (màn hình đã gỡ) / lỗi của máy chủ. */
@@ -282,7 +286,8 @@ export function ExportDialog({
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (error instanceof PackCancelled || (error instanceof ApiError && error.detail.reason === "cancelled")) {
-        toast.info("Đã huỷ xuất", { id: pending ?? undefined, description: `Chưa có file ${kind === "abookproj" ? "dự án" : "sách"} nào được ghi.`, duration: 6000 });
+        const left = kind === "mp3" ? "Các chương đã ghi dở được xoá." : `Chưa có file ${kind === "abookproj" ? "dự án" : "sách"} nào được ghi.`;
+        toast.info("Đã huỷ xuất", { id: pending ?? undefined, description: left, duration: 6000 });
       } else if (kind === "abookproj") {
         const shown = packError((error as Error).message);
         toast.error(SAVING[kind][2], {
@@ -372,7 +377,7 @@ export function ExportDialog({
             Sách dài thì có thể mất vài phút. Đóng hộp này cũng được - việc vẫn chạy và báo khi xong.
           </p>
           <div className="mt-5 flex justify-end gap-2">
-            {(downloading || cancelling || kind === "abookproj") && (
+            {(downloading || cancelling || kind === "abookproj" || kind === "mp3") && (
               <Button variant="secondary" disabled={cancelling} onClick={cancelPacking}>
                 Huỷ xuất
               </Button>

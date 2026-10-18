@@ -107,8 +107,10 @@ class Mp3ExportTest {
         assertArrayEquals(tag, second.copyOfRange(0, tag.size))
         assertArrayEquals(Id3Tag.v1(fields), second.copyOfRange(second.size - 128, second.size))
         assertArrayEquals(File(Id3TagTest.dir, "cover.jpg").readBytes(), File(folder, "cover.jpg").readBytes())
-        assertEquals("#EXTM3U\n#PLAYLIST:Sách thử: Tập 1\n#EXTINF:12,Chương 1 · Mở đầu\n01 - Chương 1 · Mở đầu.mp3\n" +
-            "#EXTINF:14,Chương 2: Đi/về\n02 - Chương 2 Đi về.mp3\n", File(folder, "Sách thử Tập 1.m3u8").readText())
+        // EXTINF là độ dài thật của MP3 đã ghi (đếm khung), không phải độ dài trong sổ (12,5 / 13,5 s) - như máy tính (soát a61).
+        val real = Math.rint(vn.abook.player.readaloud.Mp3.durationMs(File(Id3TagTest.dir, "source.mp3").readBytes()) / 1000.0).toLong()
+        assertEquals("#EXTM3U\n#PLAYLIST:Sách thử: Tập 1\n#EXTINF:$real,Chương 1 · Mở đầu\n01 - Chương 1 · Mở đầu.mp3\n" +
+            "#EXTINF:$real,Chương 2: Đi/về\n02 - Chương 2 Đi về.mp3\n", File(folder, "Sách thử Tập 1.m3u8").readText())
     }
 
     @Test

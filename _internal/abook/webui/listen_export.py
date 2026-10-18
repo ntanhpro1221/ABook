@@ -278,7 +278,6 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
     work.mkdir(parents=True, exist_ok=True)
     run = _Run(reader, ffmpeg, chapters, reading, work, progress, cancelled, sleep)
     mixer = Mixer(ffmpeg, music) if music is not None else None
-    stamps: list[dict[str, Any]] = []
     sources: list[Path] = []
     for index, chapter in enumerate(chapters):
         run.check()
@@ -294,12 +293,11 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
             if mixed is None:
                 stamp = run.mix_chapter(index, chapter, stamp, mixer)
             mixer.lost[chapter.id] = int(stamp.get("musicMissing") or 0)
-        stamps.append(stamp)
         sources.append(_flac_path(work, chapter, chapter_music))
     cover_source = book_edits.cover_file(path)
     try:
         if fmt == "mp3":
-            result = _write_mp3(run, chapters, stamps, sources, target_root, title, author, cover_source, cover_drawn)
+            result = _write_mp3(run, chapters, sources, target_root, title, author, cover_source, cover_drawn)
         else:
             result = _write_m4b(run, chapters, sources, target_root, title, author, cover_source, cover_drawn)
     except subprocess.CalledProcessError as error:
@@ -309,19 +307,19 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
             **(mixer.note(chapter.id for chapter in chapters) if mixer is not None else {})}
 
 
-def _write_mp3(run: _Run, chapters: list[Chapter], stamps: list[dict[str, Any]], sources: list[Path], target_root: Path, title: str, author: str,
+def _write_mp3(run: _Run, chapters: list[Chapter], sources: list[Path], target_root: Path, title: str, author: str,
                cover_source: Path | None, cover_drawn: str | None) -> dict[str, Any]:
     folder = target_root / export.safe_name(title)
     folder.mkdir(parents=True, exist_ok=True)
     cover_path = export.copy_real_cover(cover_source, folder) or export.drawn_cover(folder, cover_drawn)
 
     def items() -> Any:
-        for index, (chapter, stamp, source) in enumerate(zip(chapters, stamps, sources)):
+        for index, (chapter, source) in enumerate(zip(chapters, sources)):
             run.check()
             run.report(index, chapter, "encode")
             temp = run.work / f"{chapter.id}.mp3"
             run_hidden([run.ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(source), *MP3_ARGS, str(temp)], timeout=3600)
-            yield chapter.title, temp, stamp["seconds"]
+            yield chapter.title, temp
             temp.unlink(missing_ok=True)
 
     files = export.write_mp3_folder(run.ffmpeg, folder, items(), title=title, narrator=author, cover_path=cover_path, total=len(chapters))

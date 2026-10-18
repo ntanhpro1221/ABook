@@ -15,13 +15,13 @@ import { AUDIOBOOK_COPY } from "./listenExport";
 
 // "Xuất file sách", "Xuất M4B" và "Xuất sách nói" (sách Nghe ngay) chạy nền ở máy chủ (webui/export_jobs.py): menu (hay hộp Xuất sách nói) chỉ chọn
 // nơi lưu rồi báo cho ExportJobHost cùng kiểu; host (sống suốt phiên, ngoài menu) bắt đầu việc, hỏi trạng thái và giữ thông báo - tải lại trang
-// thì mở trang sách là thấy lại tiến độ / kết quả. Mỗi kiểu có bản ghi riêng ở máy chủ, chạy cùng lúc được. Sách nói báo thêm tiến độ và có Huỷ.
+// thì mở trang sách là thấy lại tiến độ / kết quả. Mỗi kiểu có bản ghi riêng ở máy chủ, chạy cùng lúc được. Sách nói, M4B và gói dự án báo thêm tiến độ và có Huỷ.
 
 export type ExportKind = "bookfile" | "m4b" | "audiobook" | "projectfile";
 
 const KINDS: Record<ExportKind, { copy: ExportCopy; pick: string; url: (id: string) => string; cancel?: (id: string) => string }> = {
   bookfile: { copy: BOOK_FILE_COPY, pick: "Chọn nơi lưu file sách", url: (id) => `/api/books/${id}/bookfile-job` },
-  m4b: { copy: M4B_COPY, pick: "Chọn nơi lưu file M4B", url: (id) => `/api/books/${id}/m4b-job` },
+  m4b: { copy: M4B_COPY, pick: "Chọn nơi lưu file M4B", url: (id) => `/api/books/${id}/m4b-job`, cancel: (id) => `/api/books/${id}/m4b-job/cancel` },
   audiobook: {
     copy: AUDIOBOOK_COPY,
     pick: "Chọn nơi lưu sách nói",
@@ -153,6 +153,8 @@ export function ProgressNote({ text, spoken, fraction }: { text: string; spoken:
 }
 
 const STOPPING = { title: "Đang dừng…", note: "Dừng sau đoạn đang đọc - phần đã làm được giữ." };
+/** Lời "Đang dừng…" của kiểu xuất này (M4B: không giữ gì - `ExportCopy.stopping`). */
+const stoppingNote = (copy: ExportCopy) => copy.stopping ?? STOPPING.note;
 
 /** Thông báo cùng mã thay nhau (đang làm -> đang dừng -> đã dừng / xong / lỗi): sonner giữ nút của lần trước nếu lần sau không nói rõ `action`,
  *  nên mọi lần cập nhật không có nút phải ghi `action: undefined` (soát 10-10: "Đã dừng xuất sách nói" còn nút Huỷ cũ). */
@@ -178,7 +180,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
       if (view.kind === "none") return job.state === "running";
       if (view.kind === "loading") {
         if (stopping.current.has(id)) {
-          toast.loading(STOPPING.title, { id: toastId(kind, id), description: STOPPING.note, duration: Infinity, ...NO_ACTION });
+          toast.loading(STOPPING.title, { id: toastId(kind, id), description: stoppingNote(copy), duration: Infinity, ...NO_ACTION });
           return true;
         }
         toast.loading(view.title, {
@@ -190,7 +192,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
                 label: "Huỷ",
                 onClick: () => {
                   stopping.current.add(id);
-                  toast.loading(STOPPING.title, { id: toastId(kind, id), description: STOPPING.note, duration: Infinity, ...NO_ACTION });
+                  toast.loading(STOPPING.title, { id: toastId(kind, id), description: stoppingNote(copy), duration: Infinity, ...NO_ACTION });
                   void api(cancel(id), { method: "POST", body: {} }).catch(() => stopping.current.delete(id));
                 },
               }

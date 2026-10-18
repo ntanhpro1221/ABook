@@ -32,7 +32,7 @@ def _tracks(tmp_path: Path, *, missing: tuple[str, ...] = ()):
     folder = tmp_path / "cache"
     folder.mkdir(exist_ok=True)
 
-    def track(link: str) -> Path | None:
+    def track(link: str, **_fetch) -> Path | None:  # cũng thay `music_track_for_export` (nhận `cancel`)
         if link in missing:
             return None
         path = folder / music_plan.track_name(link).split("/")[1]

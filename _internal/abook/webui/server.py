@@ -1828,11 +1828,13 @@ class App:
             root, key, exclude, available=self.music_track_available))
 
     @contextlib.contextmanager
-    def music_exporting(self, key: str, projects: list[Path]) -> Iterator[music_plan.TrackSource]:
+    def music_exporting(self, key: str, projects: list[Path],
+                        fetching: Callable[[int, int], None] | None = None) -> Iterator[music_plan.TrackSource]:
         """Nguồn nhạc cho MỘT lượt xuất của cuốn `key` (đường dẫn dự án), kèm tiến độ tải ("Đang tải nhạc nền (k/n)…" trong hộp
-        Xuất: `music_export_status`) và huỷ (`cancel_music_export`). Huỷ có hiệu lực trước bài kế phải tải; mọi file sách chỉ
-        được ghi SAU khi nhạc đã gom xong (bookfile.listening_layer) nên huỷ ở đây không để lại file dở - việc ném
-        `export_jobs.Cancelled` để chỗ gọi đổi thành lời báo."""
+        Xuất: `music_export_status`; `fetching(đã tải, tổng)` gọi trước mỗi bài phải tải - việc nền M4B ghi vào bản ghi của nó) và huỷ
+        (`cancel_music_export`, `music_export_cancelled`). Huỷ dừng ngay cả bài đang tải (ở khúc kế, `music_track_file`, file `.part` bị xoá); mọi
+        file sách chỉ được ghi SAU khi nhạc đã gom xong (bookfile.listening_layer) nên huỷ ở đây không để lại file dở - việc ném
+        `export_jobs.Cancelled` để chỗ gọi đổi thành lời báo. Xuất MP3 / M4B cũng hỏi `music_export_cancelled` giữa các bước trộn / ghép."""
         from .export import audio_bytes
 
         _size, pending = audio_bytes(projects, self.music_track_cached)
@@ -1843,7 +1845,9 @@ class App:
             if state["cancel"].is_set():
                 raise export_jobs.Cancelled()
             fresh = self.music_track_cached(link) is None and link not in state["seen"]
-            path = base.file(link)
+            if fresh and fetching is not None:
+                fetching(state["done"], max(state["total"], state["done"] + 1))
+            path = self.music_track_for_export(link, cancel=state["cancel"])  # = base.file, huỷ được giữa bài (như `_warm_run`)
             if fresh:
                 state["seen"].add(link)
                 state["done"] += 1
@@ -1882,6 +1886,12 @@ class App:
         if state is not None:
             state["cancel"].set()
         return state is not None
+
+    def music_export_cancelled(self, key: str) -> bool:
+        """Lượt xuất `key` đã được bảo huỷ (`cancel_music_export`)? Lượt đã xong / không có thì không."""
+        with self._music_exports_lock:
+            state = self._music_exports.get(key)
+        return state is not None and state["cancel"].is_set()
 
     def music_sync_source(self) -> music_plan.TrackSource:
         """Nguồn file nhạc cho điện thoại nghe / đồng bộ (webui/sync.py): chỉ bài ĐÃ có trong bộ đệm (không tải trong lượt
@@ -3362,12 +3372,16 @@ class Handler(BaseHTTPRequestHandler):
         return "" if self._remote() else str(body.get("target") or "").strip()
 
     def _export_root(self, body: dict[str, Any]) -> Path:
-        """Thư mục mọi kiểu xuất ghi vào: nơi người dùng chọn (`target`), không thì "Đã xuất" trong thư viện."""
+        """Thư mục mọi kiểu xuất ghi vào: nơi người dùng chọn (`target`), không thì "Đã xuất" trong thư viện. Ghi nhớ TRƯỚC khi ghi gì
+        (`export_folders`): app tắt ngang giữa lượt xuất thì lần mở sau còn biết chỗ dọn file tạm (`sweep_export_leftovers`)."""
         target = self._target(body)
         if target:
-            return Path(target)
-        self.app.require_library_root()
-        return Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+            root = Path(target)
+        else:
+            self.app.require_library_root()
+            root = Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        self.app.export_folders.remember(root)
+        return root
 
     def _static(self, path_text: str) -> None:
         root = self.app.static_dir
@@ -3857,18 +3871,29 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         root = self._export_root(body)
         parts = self._series_parts(value, body)
-        # "Kèm nhạc nền": bài chưa có trên máy được tải như khi gói `.abook` (music_export.py).
-        music = self.app.music_export_source() if body.get("music") is True else None
+        app = self.app
+        # "Kèm nhạc nền": bài chưa có trên máy được tải như khi gói `.abook` (music_export.py) - hộp Xuất hỏi "đang tải bài k/n" và Huỷ qua
+        # `music-export?kind=mp3`. Không kèm nhạc thì không có bài nào để đếm, nhưng Huỷ vẫn dừng ở chương kế (bản xuất dở bị xoá).
+        key = app.music_key(project, "mp3")
+        wanted = body.get("music") is True
+
+        def cancelled() -> bool:
+            return app.music_export_cancelled(key)
+
         try:
-            if parts is None:
-                result = export_book(project, root, cover=body.get("cover"), music=music)
-            else:
-                result = export_series(parts, root, lambda part, folder, label: export_book(
-                    part, folder, cover=body.get("cover"), folder_name=label, music=music))
-                result["files"] = sum(part["files"] for part in result["parts"])
+            with app.music_exporting(key, (parts or [project]) if wanted else []) as source:
+                music = source if wanted else None
+                if parts is None:
+                    result = export_book(project, root, cover=body.get("cover"), music=music, cancelled=cancelled)
+                else:
+                    result = export_series(parts, root, lambda part, folder, label: export_book(
+                        part, folder, cover=body.get("cover"), folder_name=label, music=music, cancelled=cancelled))
+                    result["files"] = sum(part["files"] for part in result["parts"])
+        except export_jobs.Cancelled as error:
+            raise ApiError(HTTPStatus.CONFLICT, "Đã huỷ xuất.", reason="cancelled") from error
         except ValueError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
-        self.app.exports.add(result["folder"])
+        app.exports.add(result["folder"])
         self._send_json(HTTPStatus.OK, result)
 
     def _bookfile_packer(self, value: str, progress: Callable[[str, int, int], None] | None = None) -> Callable[[], dict[str, Any]]:
@@ -3951,23 +3976,43 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         root = self._export_root(body)
         app = self.app
-        music = app.music_export_source() if body.get("music") is True else None
+        key = str(project)
+        wanted = body.get("music") is True
+
+        def cancelled() -> bool:
+            return app.m4b_jobs.cancelled(key)
+
+        def fetching(done: int, total: int) -> None:  # "Đang tải nhạc nền k/n bài": bài chưa có trên máy, tải trước khi trộn
+            if cancelled():
+                raise export_jobs.Cancelled()
+            app.m4b_jobs.update(key, phase="music-fetch", done=done, total=total)
 
         def mixing(chapter: int, chapters: int) -> None:  # tiến độ "Đang trộn nhạc chương X/N"
-            app.m4b_jobs.update(str(project), phase="music", chapter=chapter, chapters=chapters)
+            app.m4b_jobs.update(key, phase="music", chapter=chapter, chapters=chapters)
 
         def peaks(round_: int, over: int) -> None:  # "Đang kiểm đỉnh âm…" / "Mã hoá lại vì N chương vượt đỉnh (lượt k)"
-            app.m4b_jobs.update(str(project), phase="reencode" if over else "peaks", peakRound=round_, peakOver=over)
+            app.m4b_jobs.update(key, phase="reencode" if over else "peaks", peakRound=round_, peakOver=over)
 
         def run() -> dict[str, Any]:
-            result = export_m4b(project, root, cover=body.get("cover"), music=music, progress=mixing, peaks=peaks)
+            # Huỷ (`post_m4b_job_cancel`) có hiệu lực ở mọi pha: trước bài nhạc kế phải tải, giữa lúc trộn / ghép, trước mỗi chương đo đỉnh.
+            with app.music_exporting(app.music_key(project, "m4b"), [project] if wanted else [], fetching) as source:
+                result = export_m4b(project, root, cover=body.get("cover"), music=source if wanted else None, progress=mixing, peaks=peaks,
+                                    cancelled=cancelled)
             app.exports.add(result["folder"])
             return result
 
-        self._send_json(HTTPStatus.ACCEPTED, self.app.m4b_jobs.start(str(project), run))
+        self._send_json(HTTPStatus.ACCEPTED, self.app.m4b_jobs.start(key, run))
 
     def get_m4b_job(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.export_job_status(self.app.m4b_jobs, value))
+
+    def post_m4b_job_cancel(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Huỷ" như gói dự án: dừng sau bước đang làm (bài nhạc đang tải, khúc đang ghép), thư mục tạm `.m4b-*` bị xoá, không ghi file M4B nào.
+        self.app._mutating()
+        key = str(self.app._book(value))
+        self.app.m4b_jobs.cancel(key)
+        self.app.cancel_music_export(self.app.music_key(Path(key), "m4b"))
+        self._send_json(HTTPStatus.OK, self.app.m4b_jobs.status(key))
 
     def get_export_music(self, _query: dict[str, list[str]], value: str) -> None:
         # Ô "Kèm nhạc nền" của hộp Xuất (MP3 / M4B): hiện khi cuốn có kế hoạch nhạc, mặc định theo công tắc Nhạc nền của cuốn.
@@ -4075,9 +4120,9 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.ACCEPTED, self.app.word_jobs.start(project, repack))
 
     def _music_key(self, query: dict[str, list[str]], value: str) -> str:
-        """Khoá nhạc của lượt xuất đang hỏi: `?kind=projectfile` là `.abookproj`, không có là `.abook`."""
-        kind = "projectfile" if (query.get("kind") or [""])[0] == "projectfile" else "bookfile"
-        return self.app.music_key(self.app._book(value), kind)
+        """Khoá nhạc của lượt xuất đang hỏi: `?kind=projectfile` là `.abookproj`, `?kind=mp3` là thư mục MP3, không có là `.abook`."""
+        kind = (query.get("kind") or [""])[0]
+        return self.app.music_key(self.app._book(value), kind if kind in ("projectfile", "mp3") else "bookfile")
 
     def get_music_export(self, query: dict[str, list[str]], value: str) -> None:
         # Hộp Xuất hỏi giữa lúc đóng gói: đang tải nhạc nền bài thứ mấy / tổng số.
@@ -4109,7 +4154,6 @@ class Handler(BaseHTTPRequestHandler):
         title = store.summarize(project)["title"] or project.name
         app = self.app
         key = str(project)
-        app.export_folders.remember(root)
         music_key = app.music_key(project, "projectfile")
 
         def progress(phase: str, done: int, total: int) -> None:
@@ -5788,6 +5832,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/bookfile-job"), Handler.get_bookfile_job),
     ("POST", re.compile(BOOK + r"/m4b-job"), Handler.post_m4b_job),
     ("GET", re.compile(BOOK + r"/m4b-job"), Handler.get_m4b_job),
+    ("POST", re.compile(BOOK + r"/m4b-job/cancel"), Handler.post_m4b_job_cancel),
     ("GET", re.compile(BOOK + r"/export-music"), Handler.get_export_music),
     ("GET", re.compile(BOOK + r"/export-size"), Handler.get_export_size),
     ("GET", re.compile(BOOK + r"/music-export"), Handler.get_music_export),

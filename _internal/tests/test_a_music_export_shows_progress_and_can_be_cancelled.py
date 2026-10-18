@@ -24,7 +24,7 @@ def _slow_app(app, tmp_path: Path, gate: threading.Event | None = None):
     def cached(link: str) -> Path | None:
         return cache.get(link)
 
-    def fetch(link: str) -> Path | None:
+    def fetch(link: str, **_fetch) -> Path | None:  # `cancel` của music_exporting: bài giả tải tức thì
         if link in cache:
             return cache[link]
         if gate is not None:
