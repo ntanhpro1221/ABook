@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.94] - 2026-10-18
+
 ### Studio
 
 - Lần đầu mở tab "Nhạc nền" của một cuốn trên máy chưa từng tải danh mục nhạc: nhạc của các đoạn hiện ra sau chừng 9 giây thay vì gần một phút (cuốn 44 chương thử: 59 giây còn 8,6 giây). Bài nhạc vẫn tải sau ở nền, và tải theo thứ tự bạn sẽ nghe, nên đầu chương 1 có nhạc ngay (trước đây chờ 9 giây).
