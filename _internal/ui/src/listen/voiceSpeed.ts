@@ -1,5 +1,5 @@
-// "Tốc độ giọng trên máy" (máy tính: abook/webui/voice_speed.py, điện thoại: readaloud/VoiceSpeed.kt - cùng hình trạng thái): giọng Supertonic và
-// VieNeu Nano có hai bậc khi nghe trực tiếp. Một lựa chọn cho cả máy. Phần thuần (không React) để thử riêng; dòng cài đặt ở VoiceSpeedSetting.tsx.
+// "Tốc độ giọng trên máy" (máy tính: abook/webui/voice_speed.py, điện thoại: readaloud/VoiceSpeed.kt - cùng hình trạng thái): giọng Supertonic
+// có hai bậc khi nghe trực tiếp (giọng VieNeu chỉ có một). Một lựa chọn cho cả máy. Phần thuần (không React) để thử riêng; dòng cài đặt ở VoiceSpeedSetting.tsx.
 
 import { formatSize } from "@/studio/musicLocal";
 import type { VieneuChoiceId } from "./vieneuModule";
@@ -9,11 +9,11 @@ export type VoiceSpeedTier = "quality" | "fast";
 
 /** Một giọng có hai bậc đã tải trên máy. */
 export interface VoiceSpeedVoice {
-  id: "supertonic" | "nano";
-  /** "Giọng Supertonic", "Giọng VieNeu Nano". */
+  id: "supertonic";
+  /** "Giọng Supertonic". */
   name: string;
-  /** Mô-đun chứa nó (để tải bản nhanh hơn): "supertonic" hay "vieneu". */
-  module: "supertonic" | "vieneu";
+  /** Mô-đun chứa nó (để tải bản nhanh hơn). */
+  module: "supertonic";
   /** Lựa chọn của thẻ mô-đun ứng với bản nhanh hơn. */
   fastChoice: VieneuChoiceId;
   /** Tốc độ tự đo của bậc chất lượng (giây máy làm cho mỗi giây nghe); null = chưa đo. */
@@ -47,7 +47,7 @@ const DESCRIPTION: Record<VoiceSpeedChoice, string> = {
 
 /** Câu dưới các nút chọn: lựa chọn ấy làm gì, và rằng sách bạn xuất ra luôn dùng bản hay nhất. */
 export function voiceSpeedDescription(choice: VoiceSpeedChoice): string {
-  return `${DESCRIPTION[choice]} Áp cho Giọng Supertonic và Giọng VieNeu Nano khi bạn nghe trực tiếp; sách bạn xuất ra luôn dùng chất lượng cao nhất.`;
+  return `${DESCRIPTION[choice]} Áp cho giọng Supertonic khi bạn nghe trực tiếp. Giọng VieNeu chỉ có một mức. Sách bạn xuất ra luôn dùng chất lượng cao nhất.`;
 }
 
 const TIER_LABEL: Record<VoiceSpeedTier, string> = { quality: "Chất lượng cao nhất", fast: "Nhanh hơn" };

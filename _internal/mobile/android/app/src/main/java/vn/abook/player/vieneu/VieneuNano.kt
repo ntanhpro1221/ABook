@@ -10,11 +10,9 @@ import kotlin.math.exp
  * VieNeu-TTS v3 Nano on ONNX Runtime, a port of `vieneu/v3nano.py` (`OnnxV3NanoEngine`): a 48M-parameter flow-matching model.
  * Text encoder + duration predictor give the length, then [steps] Euler steps of the vector estimator (two passes each with
  * classifier-free guidance [cfg]) turn noise into a 144-channel latent that the codec decoder turns into 24 kHz audio. Not
- * autoregressive, so the whole chunk is ready at once. [dir] holds the repo's files as pinned (four graphs, `config.json`, `constants.npz`);
- * [estimator] another vector estimator of the same graph (the app's int8 one for "Nhanh hơn", [VieneuModule.NANO_FAST]).
+ * autoregressive, so the whole chunk is ready at once. [dir] holds the repo's files as pinned (four graphs, `config.json`, `constants.npz`).
  */
-class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false,
-                 estimator: File = File(dir, "vector_estimator.onnx")) : AutoCloseable {
+class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false) : AutoCloseable {
     class Timings {
         var textAndDuration = 0L
         var vectorEstimator = 0L
@@ -45,7 +43,7 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
     private val options = sessionOptions(threads, backend, spinning)
     private val textEncoder = env.createSession(File(dir, "text_encoder.onnx").absolutePath, options)
     private val duration = env.createSession(File(dir, "duration_predictor.onnx").absolutePath, options)
-    private val estimator = env.createSession(estimator.absolutePath, options)
+    private val estimator = env.createSession(File(dir, "vector_estimator.onnx").absolutePath, options)
     private val decoder = env.createSession(File(dir, "codec_decoder.onnx").absolutePath, options)
 
     /** Phone string (may hold `<|emotion_k|>`) -> ids with begin/end markers; characters outside the vocabulary are dropped. */

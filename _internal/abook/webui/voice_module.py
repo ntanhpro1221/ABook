@@ -16,7 +16,7 @@ from .music_module import Component
 
 STAMP_FILE = "module.json"
 DOWNLOADS = "dl"
-# Model do app tự làm từ model của hãng (bộ khử nhiễu int8 của Supertonic và VieNeu Nano, THIRD_PARTY.md): repo Hugging Face của app, ghim commit.
+# Model do app tự làm từ model của hãng (bộ khử nhiễu int8 của Supertonic, THIRD_PARTY.md): repo Hugging Face của app, ghim commit.
 APP_MODELS = "https://huggingface.co/NGDtuanh/abook-music-student/resolve/f42d118d77ea3d9391b59071b6a455ecfe420fa3/"
 
 

@@ -18,7 +18,7 @@ class VoiceSpeedTest {
     /** A two-tier voice with a measurement and a fast file that may or may not be here. */
     private class Fake(override val speedId: String, var rtf: Double?, var ready: Boolean, override val fastSteps: Int) : VoiceSpeed.Family {
         override val speedName = "Giọng $speedId"
-        override val speedModule = if (speedId == "nano") "vieneu" else "supertonic"
+        override val speedModule = speedId
         override val fastChoice = "${speedId}_fast"
         override fun speedInstalled() = true
         override fun speedRtf() = rtf
@@ -27,9 +27,8 @@ class VoiceSpeedTest {
     }
 
     private val supertonic = Fake("supertonic", 1.21, true, 5)
-    private val nano = Fake("nano", 0.5, true, 8)
 
-    private fun configure() = VoiceSpeed.configure(File(root, VoiceSpeed.FILE)) { listOf(supertonic, nano) }
+    private fun configure() = VoiceSpeed.configure(File(root, VoiceSpeed.FILE)) { listOf(supertonic) }
 
     @After
     fun tearDown() {
@@ -52,7 +51,7 @@ class VoiceSpeedTest {
         assertEquals(VoiceSpeed.AUTO, VoiceSpeed.choice())
         VoiceSpeed.setChoice(VoiceSpeed.FAST)
         assertEquals(VoiceSpeed.FAST, VoiceSpeed.choice())
-        VoiceSpeed.configure(File(root, VoiceSpeed.FILE)) { listOf(supertonic, nano) } // the app again
+        VoiceSpeed.configure(File(root, VoiceSpeed.FILE)) { listOf(supertonic) } // the app again
         assertEquals(VoiceSpeed.FAST, VoiceSpeed.choice())
         assertTrue(runCatching { VoiceSpeed.setChoice("turbo") }.isFailure)
         File(root, VoiceSpeed.FILE).writeBytes("{".toByteArray())
@@ -63,18 +62,20 @@ class VoiceSpeedTest {
     fun liveListeningReadsTheTierTheChoiceWantsOnlyWhenItsFileIsHere() {
         configure()
         assertEquals("1.21 >= 0.8: auto goes fast", "fast5", VoiceSpeed.liveTag("supertonic:F1"))
-        assertEquals("0.5: keeps up, best tier", "", VoiceSpeed.liveTag("vieneu:nano/Adam"))
+        assertEquals("VieNeu Nano has one tier, however slow", "", VoiceSpeed.liveTag("vieneu:nano/Adam"))
         assertEquals("Turbo has one tier", "", VoiceSpeed.liveTag("vieneu:turbo/Adam"))
         assertEquals("", VoiceSpeed.liveTag("edge:vi-VN-HoaiMyNeural"))
         VoiceSpeed.setChoice(VoiceSpeed.FAST)
-        assertEquals("fast8", VoiceSpeed.liveTag("vieneu:nano/Adam"))
-        nano.ready = false
+        assertEquals("fast5", VoiceSpeed.liveTag("supertonic:F1"))
+        assertEquals("an explicit \"Nhanh hơn\" still leaves Nano alone", "", VoiceSpeed.liveTag("vieneu:nano/Adam"))
+        supertonic.ready = false
         VoiceSpeed.changed()
-        assertEquals("not downloaded: still the best tier", "", VoiceSpeed.liveTag("vieneu:nano/Adam"))
+        assertEquals("not downloaded: still the best tier", "", VoiceSpeed.liveTag("supertonic:F1"))
         val status = VoiceSpeed.status()
         assertEquals(VoiceSpeed.FAST, status.getString("choice"))
-        val row = status.getJSONArray("voices").getJSONObject(1)
-        assertEquals("nano", row.getString("id"))
+        assertEquals("only Supertonic has a row", 1, status.getJSONArray("voices").length())
+        val row = status.getJSONArray("voices").getJSONObject(0)
+        assertEquals("supertonic", row.getString("id"))
         assertEquals(VoiceSpeed.FAST, row.getString("tier"))
         assertEquals(VoiceSpeed.QUALITY, row.getString("using"))
         assertEquals(81_526_521L, row.getLong("fastBytes"))
@@ -85,7 +86,9 @@ class VoiceSpeedTest {
     @Test
     fun aTierIdSplitsOnlyForTwoTierVoices() {
         assertEquals("supertonic:F1" to "fast5", VoiceSpeed.split("supertonic:F1#fast5"))
-        assertEquals("vieneu:nano/Adam" to "q", VoiceSpeed.split(VoiceSpeed.quality("vieneu:nano/Adam")))
+        assertEquals("VieNeu ids are never split or tagged", "vieneu:nano/Adam", VoiceSpeed.quality("vieneu:nano/Adam"))
+        assertEquals("vieneu:nano/Adam#x" to "", VoiceSpeed.split("vieneu:nano/Adam#x"))
+        assertEquals("", VoiceSpeed.family("vieneu:nano/Adam"))
         assertEquals("edge:vi-VN-X", VoiceSpeed.quality("edge:vi-VN-X"))
         assertEquals("device:a#b" to "", VoiceSpeed.split("device:a#b"))
     }
@@ -112,10 +115,10 @@ class VoiceSpeedTest {
         assertNotEquals(live.file, best.file)
         VoiceSpeed.setChoice(VoiceSpeed.QUALITY)
         assertEquals("choosing the best tier: live listening finds the best clip", best.file, cache.get("supertonic:F1", text)!!.file)
-        // Nano: the reading marks of a VieNeu clip (its lift mark), then the tier
+        // Nano: the reading marks of a VieNeu clip (its lift mark) and no tier tag, whatever the choice
         VoiceSpeed.setChoice(VoiceSpeed.FAST)
         val nanoClip = put(cache.resolve("vieneu:nano/Adam"))
-        val marks = listOf(ClipCache.reading("vieneu:nano/Adam", text, null), "fast8").filter { it.isNotEmpty() }.joinToString("+")
+        val marks = ClipCache.reading("vieneu:nano/Adam", text, null)
         assertEquals("${ClipCache.key("vieneu", "nano/Adam", text, marks)}.wav", nanoClip.file.name)
     }
 }

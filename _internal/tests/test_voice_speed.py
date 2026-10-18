@@ -54,11 +54,11 @@ def test_the_choice_is_one_per_machine_and_kept(tmp_path: Path) -> None:
         voice_speed.configure(None)
 
 
-def test_only_supertonic_and_nano_have_two_tiers() -> None:
-    assert voice_speed.family("supertonic:F1") == "supertonic" and voice_speed.family("vieneu:nano/Nhẹ") == "nano"
+def test_only_supertonic_has_two_tiers() -> None:
+    assert voice_speed.family("supertonic:F1") == "supertonic" and voice_speed.family("vieneu:nano/Nhẹ") == ""
     assert voice_speed.family("vieneu:turbo/A") == "" and voice_speed.family("edge:vi-VN-HoaiMyNeural") == ""
-    assert vieneu_engine.NANO_STEPS == 8, "bậc chất lượng của Nano: 8 bước"
-    assert vieneu_module.NANO_FAST == ("nano_fast/vector_estimator.onnx", 10) and supertonic.FAST == ("fast/vector_estimator.onnx", 5)
+    assert vieneu_engine.NANO_STEPS == 8, "Nano chỉ có một bậc: 8 bước"
+    assert supertonic.FAST == ("fast/vector_estimator.onnx", 5)
 
 
 # ---- mô-đun: file bậc nhanh chỉ tải khi cần ----------------------------------------------------------------------------------------------
@@ -180,32 +180,18 @@ def test_the_fast_file_must_match_its_pinned_hash(env, monkeypatch: pytest.Monke
     assert voice_speed.live_tag("supertonic:F1") == ""
 
 
-def test_the_nano_fast_part_and_its_engine(env, monkeypatch: pytest.MonkeyPatch) -> None:
-    network, measured, _rates, root = env
+def test_nano_has_no_fast_tier(env) -> None:
+    network, _measured, rates, _root = env
+    rates["nano"] = 2.4  # chậm hơn tốc độ nghe nhiều
     vieneu_module.start(["nano"])
     vieneu_module.join(10)
-    assert "nano_fast" not in _ids(vieneu_module.status()) and voice_speed.live_tag("vieneu:nano/A") == ""
-    voice_speed.set_choice(voice_speed.FAST)
-    choice = {item["id"]: item for item in vieneu_module.status()["choices"]}["nano_fast"]
-    assert choice["bytes"] == sum(item.size for item in vieneu_module.NANO_FAST_FILES) and choice["requires"] == ["nano"]
-    network.calls.clear()
-    measured.clear()
-    vieneu_module.start(["nano_fast"])
-    vieneu_module.join(10)
-    assert sorted(network.calls) == ["LICENSE", "vector_estimator.onnx"] and measured == [], "chỉ file bậc nhanh (+ giấy phép); không đo lại"
-    assert (root / "vieneu" / "nano_fast" / "vector_estimator.onnx").is_file()
-    assert voice_speed.live_tag("vieneu:nano/A") == f"fast{vieneu_module.NANO_FAST[1]}" and voice_speed.live_tag("vieneu:turbo/A") == ""
-    line = {item["id"]: item for item in voice_speed.status()["voices"]}["nano"]
-    assert line["name"] == "Giọng VieNeu Nano" and line["using"] == "fast" and line["module"] == "vieneu" and line["fastChoice"] == "nano_fast"
-
-    made: list[dict[str, Any]] = []
-    monkeypatch.setattr(vieneu_engine, "NanoEngine", lambda folder, **options: made.append({"folder": folder, **options}) or "nano-engine")
-    monkeypatch.setattr(vieneu_module, "make_engine", lambda tier, _found: f"{tier}-engine")
-    found = vieneu_module.installed()
-    assert found is not None
-    assert vieneu_module.make_fast_engine("nano", found) == "nano-engine"
-    assert made == [{"folder": root / "vieneu" / "nano", "estimator": root / "vieneu" / "nano_fast" / "vector_estimator.onnx", "steps": vieneu_module.NANO_FAST[1]}]
-    assert vieneu_module.make_fast_engine("turbo", found) == "turbo-engine", "Turbo không có bậc nhanh"
+    for chosen in voice_speed.CHOICES:
+        voice_speed.set_choice(chosen)
+        assert voice_speed.live_tag("vieneu:nano/A") == "", chosen
+        assert voice_speed.live_tag("vieneu:turbo/A") == "", chosen
+    assert [item["id"] for item in vieneu_module.status()["choices"]] == ["turbo", "nano", "aligner"], "không mời tải bản nhanh hơn của Nano"
+    assert voice_speed.status()["voices"] == [], "Nano không có dòng trong cài đặt tốc độ"
+    assert not hasattr(vieneu_module, "NANO_FAST") and not any("nano_fast" in call for call in network.calls)
 
 
 # ---- engine: file bộ khử nhiễu + số bước theo bậc ---------------------------------------------------------------------------------------

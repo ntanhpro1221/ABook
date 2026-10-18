@@ -33,13 +33,10 @@ def _script(name: str):
 def test_the_phone_downloads_the_same_pinned_model_files_as_the_computer():
     source = _kotlin("vieneu/VieneuModule.kt")
     bases = dict(re.findall(r'private const val (\w+_BASE) = "([^"]+)"', source))
-    # Nano's fast tier: the same pair (estimator file, steps) and the same pinned files as the desktop
-    pair = re.search(r'val NANO_FAST = "([^"]+)" to (\d+)', source)
-    assert (pair.group(1), int(pair.group(2))) == vieneu_module.NANO_FAST
-    assert f'const val FAST_CHOICE = "{vieneu_module.FAST_CHOICE}"' in source
-    fast = re.findall(r'Part\((NANO_FAST\.first(?:\.substringBefore\(\'/\'\) \+ "/LICENSE")?), "([0-9a-f]{64})", ([\d_]+),\s*VoiceModule\.APP_MODELS \+ "([^"]+)"', source)
-    assert {(vieneu_module.voice_module.APP_MODELS + remote, sha256, int(size.replace("_", ""))) for _, sha256, size, remote in fast} == \
-        {(item.url, item.sha256, item.size) for item in vieneu_module.NANO_FAST_FILES}
+    # Nano has one tier on both platforms: no fast estimator, files, choice or speed family on the phone
+    assert not hasattr(vieneu_module, "NANO_FAST") and not hasattr(vieneu_module, "FAST_CHOICE")
+    for fast_name in ("NANO_FAST", "FAST_CHOICE", "nano_fast", "VoiceSpeed.Family"):
+        assert fast_name not in source, fast_name
     for tier, files in (("turbo", vieneu_module.TURBO_FILES), ("nano", vieneu_module.NANO_FILES)):
         rows = re.findall(rf'file\("{tier}", (\w+), "([^"]+)", "([0-9a-f]{{64}})", ([\d_]+), ', source)
         assert {name for _, name, *_ in rows} == {item.name for item in files}, tier
