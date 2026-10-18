@@ -160,6 +160,20 @@ def test_a_clip_already_in_the_cache_is_not_read_again(tmp_path: Path) -> None:
     assert fake.calls == [], "lần xuất thứ hai chỉ dùng clip trong bộ đệm"
 
 
+def test_an_export_reads_the_quality_tier_and_never_reuses_a_faster_clip(tmp_path: Path) -> None:
+    # "Tốc độ giọng trên máy" = Nhanh hơn (voice_speed.py): Nghe ngay đọc bằng nhà cung cấp bậc nhanh, clip mang dấu "fast5"; sách xuất ra luôn bậc chất lượng.
+    app, book_id, path, quality = _library(tmp_path)
+    fast = FakeVoice()
+    app.readaloud = ReadAloud(tmp_path / "studio" / "prefs" / "cache", [quality], speed=lambda _voice: "fast5")
+    app.readaloud.fast["fake"] = fast
+    app.readaloud.clip(VOICE, "Một hai ba.")  # người nghe đã nghe đoạn này - bằng bậc nhanh
+    assert fast.calls == ["Một hai ba."] and quality.calls == []
+    reading = listen_export.Reading(VOICE, None, {})
+    assert listen_export.cached_lookup(app.readaloud, reading, book_id)("Một hai ba.") is None, "clip bậc nhanh không tính là đã có"
+    _run(app, book_id, path, tmp_path / "xuat", "mp3")
+    assert "Một hai ba." in quality.calls and len(quality.calls) == 5 and fast.calls == ["Một hai ba."], "xuất: mọi đoạn đọc bằng bậc chất lượng"
+
+
 def test_cancelling_keeps_the_finished_chapters_and_the_next_export_continues_from_them(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     app, book_id, path, _fake = _library(tmp_path)
     stop = threading.Event()

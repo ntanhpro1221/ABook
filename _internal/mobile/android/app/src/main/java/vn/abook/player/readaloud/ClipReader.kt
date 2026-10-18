@@ -67,7 +67,7 @@ class ClipReader(
      * khoẻ lại mà lần hỏi này vẫn bị chặn ngay, không một lượt gọi nào đi ra.
      */
     fun read(text: String, voiceId: String, origin: String? = null, readings: Map<String, String>? = null, willRetry: Boolean = false, fresh: Boolean = false): Clip {
-        val primary = voiceFor(voiceId)
+        val primary = voiceFor(cache.resolve(voiceId)) // giọng có hai bậc ([VoiceSpeed]): đọc đúng bậc của khoá
         cache.get(primary.id, text, origin, readings)?.let { return it }
         if (fresh) {
             downUntil.remove(provider(primary))
@@ -132,9 +132,10 @@ class ClipReader(
         throw offlineHelp(first ?: problem) ?: first ?: problem ?: VoiceException("Không có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy")
     }
 
-    /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng" trong Cài đặt: người nghe muốn nghe chính giọng ấy, hỏng thì phải thấy lỗi). */
+    /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng" trong Cài đặt: người nghe muốn nghe chính giọng ấy, hỏng thì phải thấy lỗi). Bản xuất đưa
+     *  [VoiceSpeed.quality] của giọng: luôn bậc chất lượng. */
     fun readExactly(text: String, voiceId: String, origin: String? = null, readings: Map<String, String>? = null): Clip {
-        val voice = voiceFor(voiceId)
+        val voice = voiceFor(cache.resolve(voiceId))
         return cache.get(voice.id, text, origin, readings) ?: synthesize(voice, text, origin, readings)
     }
 

@@ -53,12 +53,12 @@ interface VieneuTier : AutoCloseable {
 }
 
 /** Nano: one pass, then edges trimmed + faded like the desktop. Bit-identical to the desktop on the same phonemes and seed. */
-class NanoTier(private val engine: VieneuNano) : VieneuTier {
+class NanoTier(private val engine: VieneuNano, private val steps: Int = VieneuNano.STEPS) : VieneuTier {
     override val rate = VieneuNano.SAMPLE_RATE
 
     override fun infer(phonemes: String, preset: VieneuPreset, seed: Long): FloatArray {
         val style = preset.style ?: throw IllegalArgumentException("giọng Nano thiếu style")
-        val audio = engine.synthesize(phonemes, preset.speaker, style, null, seed).audio
+        val audio = engine.synthesize(phonemes, preset.speaker, style, null, seed, steps = steps).audio
         return VieneuAudio.trimAndFade(audio, rate)
     }
 

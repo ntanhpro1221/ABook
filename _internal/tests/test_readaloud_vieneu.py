@@ -574,7 +574,7 @@ def test_parity_turbo_and_nano_waveforms(monkeypatch: pytest.MonkeyPatch) -> Non
     for index, sentence in enumerate(SENTENCES[:2]):
         phonemes = vieneu_engine.phonemize([sentence])
         expected = reference.infer(phonemes, speaker, style, seed=7 + index)
-        got = mine.infer(phonemes, speaker, style, seed=7 + index)
+        got = mine.infer(phonemes, speaker, style, seed=7 + index, steps=16)  # gói vieneu mặc định 16 bước; app đọc NANO_STEPS
         assert got.shape == expected.shape and float(np.abs(got - expected).max()) <= TOLERANCE, sentence
 
 

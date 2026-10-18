@@ -17,6 +17,7 @@ import vn.abook.player.PinnedFiles.Packed
 import vn.abook.player.PinnedFiles.Part
 import vn.abook.player.SharedRuntime
 import vn.abook.player.readaloud.SupertonicModule
+import vn.abook.player.readaloud.VoiceSpeed
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.net.InetAddress
@@ -75,10 +76,11 @@ class VieneuModuleTest {
     private var nano = ByteArray(70_000) { (it % 241).toByte() }
     private val supertonic = ByteArray(50_000) { (it % 233).toByte() }
     private val clap = ByteArray(60_000) { (it % 227).toByte() }
+    private val nanoFast = ByteArray(20_000) { (it % 229).toByte() }
 
     private val files get() = mapOf(
         "ort.gz" to ortGz, "g2p.gz" to g2pGz, "sea.whl" to wheel, "vieneu.whl" to voices, "turbo.bin" to turbo, "nano.bin" to nano,
-        "supertonic.bin" to supertonic, "clap.bin" to clap,
+        "supertonic.bin" to supertonic, "clap.bin" to clap, "nanofast.bin" to nanoFast, "broken.bin" to ByteArray(20_000),
     )
 
     private val base get() = "http://127.0.0.1:${server.localPort}/"
@@ -144,6 +146,7 @@ class VieneuModuleTest {
 
     @After
     fun tearDown() {
+        VoiceSpeed.configure(null) { emptyList() }
         stall?.let { it.gate.countDown(); it.end.countDown() }
         server.close()
         root.deleteRecursively()
@@ -467,5 +470,73 @@ class VieneuModuleTest {
         assertEquals(nano.toList(), File(folder, "nano/nano.bin").readBytes().toList())
         assertFalse(partial.exists())
         assertFalse(module.status().getBoolean("cancelled"))
+    }
+
+    // ---- "Tốc độ giọng trên máy": Nano's fast tier ([VoiceSpeed]) -----------------------------------------------------------------------
+    /** The module's parts plus Nano's fast estimator, served from [remote] (a wrong file on the server: "broken.bin"). */
+    private fun fastGroups(remote: String = "nanofast.bin") = LinkedHashMap(groups).apply {
+        put(VieneuModule.FAST_CHOICE, listOf(Part(VieneuModule.NANO_FAST.first, digest(nanoFast), nanoFast.size.toLong(), base + remote)))
+    }
+
+    private fun shown(status: JSONObject) = (0 until status.getJSONArray("choices").length()).map { status.getJSONArray("choices").getJSONObject(it).getString("id") }
+
+    @Test
+    fun theFasterNanoIsOfferedOnlyWhenWantedAndIsDownloadedAloneWithoutMeasuring() {
+        val module = module(parts = fastGroups())
+        VoiceSpeed.configure(File(root, VoiceSpeed.FILE)) { listOf(module) }
+        assertFalse("nothing to speed up before Nano is here", VieneuModule.FAST_CHOICE in shown(module.status()))
+        module.start(listOf("nano"))
+        module.join()
+        assertFalse("the fast file is never fetched with the voice", "nanofast.bin" in requests)
+        VoiceSpeed.setChoice(VoiceSpeed.QUALITY)
+        assertFalse("the best tier chosen: not offered", VieneuModule.FAST_CHOICE in shown(module.status()))
+        VoiceSpeed.setChoice(VoiceSpeed.AUTO) // Nano measured 1.84 here: slower than listening
+        val offered = choice(module.status(), VieneuModule.FAST_CHOICE)
+        assertEquals("only its own size", nanoFast.size.toLong(), offered.getLong("bytes"))
+        assertEquals("nano", offered.getJSONArray("requires").getString(0))
+        assertEquals(nanoFast.size.toLong(), VoiceSpeed.status().getJSONArray("voices").getJSONObject(0).getLong("fastBytes"))
+        assertEquals("not downloaded: live listening stays on the best tier", "", VoiceSpeed.liveTag("vieneu:nano/Adam"))
+        benched.clear()
+        module.start(listOf(VieneuModule.FAST_CHOICE))
+        module.join()
+        assertTrue("nanofast.bin" in requests)
+        assertTrue("the measurement is of the best tier: not again", benched.isEmpty())
+        assertEquals(File(root, "vieneu/${VieneuModule.NANO_FAST.first}"), module.nanoFastEstimator())
+        VoiceSpeed.changed()
+        assertEquals("fast${VieneuModule.NANO_FAST.second}", VoiceSpeed.liveTag("vieneu:nano/Adam"))
+        assertEquals("Turbo has one tier", "", VoiceSpeed.liveTag("vieneu:turbo/Adam"))
+        VoiceSpeed.setChoice(VoiceSpeed.QUALITY)
+        assertEquals("", VoiceSpeed.liveTag("vieneu:nano/Adam"))
+        assertTrue("downloaded: still on the card, removable", choice(module.status(), VieneuModule.FAST_CHOICE).getBoolean("removable"))
+        module.remove(VieneuModule.FAST_CHOICE)
+        assertNull(module.nanoFastEstimator())
+        assertNotNull("Nano stays", module.installed()?.nano)
+        assertFalse(File(root, "vieneu/nano_fast").exists())
+    }
+
+    @Test
+    fun aFasterNanoThatDoesNotMatchItsChecksumIsNeverUsed() {
+        val module = module(parts = fastGroups("broken.bin"))
+        VoiceSpeed.configure(File(root, VoiceSpeed.FILE)) { listOf(module) }
+        VoiceSpeed.setChoice(VoiceSpeed.FAST)
+        module.start(listOf("nano", VieneuModule.FAST_CHOICE))
+        module.join()
+        assertEquals("error", module.status().getString("state"))
+        assertNull(module.nanoFastEstimator())
+        VoiceSpeed.changed()
+        assertEquals("", VoiceSpeed.liveTag("vieneu:nano/Adam"))
+    }
+
+    @Test
+    fun removingNanoTakesItsFasterFileToo() {
+        val module = module(parts = fastGroups())
+        VoiceSpeed.configure(File(root, VoiceSpeed.FILE)) { listOf(module) }
+        module.start(listOf("nano", "turbo", VieneuModule.FAST_CHOICE))
+        module.join()
+        assertNotNull(module.nanoFastEstimator())
+        module.remove("nano")
+        assertNull(module.nanoFastEstimator())
+        assertFalse(File(root, "vieneu/nano_fast").exists())
+        assertNotNull("Turbo stays", module.installed()?.turbo)
     }
 }

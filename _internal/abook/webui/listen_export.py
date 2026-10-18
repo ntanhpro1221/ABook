@@ -158,14 +158,15 @@ def remove_work(root: Path, book_id: str) -> None:
 
 
 def cached_lookup(reader: ReadAloud, reading: Reading, book_id: str) -> Callable[[str], int | None]:
-    """Tra đoạn nào đã có clip trong bộ đệm Nghe ngay (đã nghe, Làm trước, xuất trước) - không đọc gì mới: hàm trả độ dài clip (ms) hay None. Cuốn chưa có clip nào
-    trong sổ của nó (`ReadAloud.books`) thì khỏi tính khoá từng đoạn (bước chuẩn hoá chữ mất ~1 ms mỗi đoạn - cuốn dài vài giây)."""
+    """Tra đoạn nào đã có clip bậc chất lượng trong bộ đệm Nghe ngay (đã nghe, Làm trước, xuất trước; clip bậc "Nhanh hơn" không tính - voice_speed.py) - không
+    đọc gì mới: hàm trả độ dài clip (ms) hay None. Cuốn chưa có clip nào trong sổ của nó (`ReadAloud.books`) thì khỏi tính khoá từng đoạn (bước chuẩn hoá
+    chữ mất ~1 ms mỗi đoạn - cuốn dài vài giây)."""
     if not reader.books.keys(book_id):
         return lambda _text: None
 
     def lookup(text: str) -> int | None:
         try:
-            clip = reader.clip(reading.voice, text, cached_only=True, origin=reading.origin, readings=reading.readings)
+            clip = reader.clip(reading.voice, text, cached_only=True, origin=reading.origin, readings=reading.readings, quality=True)
         except (VoiceError, ValueError):
             return None
         return int(clip["duration_ms"])
@@ -302,7 +303,7 @@ class _Run:
             began = time.perf_counter()
             try:
                 clip = self.reader.clip(self.reading.voice, text, background=True, origin=self.reading.origin, readings=self.reading.readings,
-                                        book=self.book_id, cancelled=self.cancelled)
+                                        book=self.book_id, cancelled=self.cancelled, quality=True)  # sách xuất ra luôn bậc chất lượng
             except VoiceError as error:
                 if error.reason == "empty":
                     return None

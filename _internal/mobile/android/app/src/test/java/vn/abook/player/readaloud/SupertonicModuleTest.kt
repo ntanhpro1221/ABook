@@ -55,13 +55,19 @@ class SupertonicModuleTest {
 
     @After
     fun tearDown() {
+        VoiceSpeed.configure(null) { emptyList() }
         root.deleteRecursively()
     }
 
     @Test
     fun theModelIsPinnedLikeTheDesktopAndNothingIsHereBeforeATap() {
         assertEquals(18, SupertonicModule.FILES.size)
-        assertTrue(SupertonicModule.FILES.all { it.remote.startsWith("https://huggingface.co/Supertone/supertonic-3/resolve/") && it.name.startsWith("model/") })
+        assertTrue(SupertonicModule.FILES.all { it.name.startsWith("model/") })
+        // the vector estimator is the app's int8 one (VoiceModule.APP_MODELS), every other file upstream's
+        val (app, upstream) = SupertonicModule.FILES.partition { it.remote.startsWith(VoiceModule.APP_MODELS) }
+        assertEquals(listOf("model/onnx/vector_estimator.onnx"), app.map { it.name })
+        assertTrue(upstream.all { it.remote.startsWith("https://huggingface.co/Supertone/supertonic-3/resolve/") })
+        assertEquals(listOf(SupertonicText.FAST_ESTIMATOR), SupertonicModule.FAST_FILES.map { it.name })
         val status = module().status()
         assertEquals("missing", status.getString("state"))
         assertEquals("supertonic", status.getString("recommended"))
@@ -156,5 +162,33 @@ class SupertonicModuleTest {
         val vieneu = VieneuModule(File(root, VieneuModule.FOLDER), runtime, "arm64-v8a", VoiceModule.Facts(8, 7.6))
         assertEquals(4, pins(supertonic.parts(listOf("supertonic"))).size)
         assertEquals(pins(vieneu.parts(listOf("nano"))), pins(supertonic.parts(listOf("supertonic"))))
+    }
+
+    @Test
+    fun theFasterFileIsOfferedOnlyWhenWantedAndGoesWithTheVoice() {
+        val fast = part(SupertonicText.FAST_ESTIMATOR, 800)
+        val withFast = files + (SupertonicModule.FAST_CHOICE to listOf(fast))
+        val module = SupertonicModule(File(root, SupertonicModule.FOLDER), runtime, "arm64-v8a", VoiceModule.Facts(8, 7.6),
+            groups = withFast.mapValues { (_, list) -> list.map { it.first } })
+        VoiceSpeed.configure(File(root, VoiceSpeed.FILE)) { listOf(module) }
+        place(shared, "ort")
+        place(shared, "g2p")
+        place(File(root, SupertonicModule.FOLDER), "supertonic")
+        File(root, "supertonic/benchmark.json").writeText(JSONObject().put("supertonic", JSONObject().put("rtf", 0.5)).toString())
+        fun ids() = (0 until module.status().getJSONArray("choices").length()).map { module.status().getJSONArray("choices").getJSONObject(it).getString("id") }
+        assertEquals("keeps up: the best tier, nothing more to download", listOf("supertonic"), ids())
+        VoiceSpeed.setChoice(VoiceSpeed.FAST)
+        assertEquals(listOf("supertonic", SupertonicModule.FAST_CHOICE), ids())
+        assertEquals(800L, module.status().getJSONArray("choices").getJSONObject(1).getLong("bytes"))
+        assertNull(module.fastEstimator())
+        // as a download would leave it
+        File(root, "supertonic/${SupertonicText.FAST_ESTIMATOR}").apply { parentFile.mkdirs() }.writeBytes(fast.second)
+        val pinned = PinnedFiles(File(root, SupertonicModule.FOLDER), "", VoiceModule.STAMP)
+        pinned.writeStamp(pinned.readStamp() + (fast.first.name to fast.first.sha256))
+        assertEquals(File(root, "supertonic/fast/vector_estimator.onnx"), module.fastEstimator())
+        assertEquals("fast${SupertonicText.FAST_STEPS}", VoiceSpeed.liveTag("supertonic:F1"))
+        module.remove(SupertonicModule.CHOICE)
+        assertNull(module.installed())
+        assertFalse("the faster file went with the voice", File(root, "supertonic/fast").exists())
     }
 }
