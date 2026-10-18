@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.96] - 2026-10-18
+
 ### Nghe ngay
 
 - "Xuất sách nói" (máy tính và điện thoại): bấm "Huỷ" giữa lúc đang đọc là dừng ngay, kể cả khi giọng Edge đang đọc dở một đoạn - thử trên máy tính: "Đã dừng" hiện chừng 1 giây sau khi bấm (trước đây 7,1 giây, chờ đọc xong đoạn). Đoạn đọc dở không bị giữ lại nửa chừng; các chương đã xong vẫn được giữ để bạn xuất lại làm tiếp. Huỷ lúc kiểm âm lượng cuối của M4B nay cũng dừng thật, không còn ghi file.
