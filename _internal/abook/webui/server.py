@@ -1086,6 +1086,14 @@ class App:
                 self.trash.sweep(each, everything=everything, ask=ask)
             except Exception:  # noqa: BLE001 - dọn nền; hỏng thì để lần sau
                 pass
+        self._sweep_listen_work()  # sách vừa vào Thùng rác: chương đã ghép của lượt xuất bỏ dở đi theo
+
+    def _sweep_listen_work(self) -> list[Path]:
+        """Dọn `export_work` của sách không còn (đã vào Thùng rác) hay quá hạn; sách còn nằm chờ "Hoàn tác" và sách đang xuất thì giữ."""
+        roots = list(dict.fromkeys([self.library.root.resolve(), *self.trash.roots()]))
+        held = [path for each in roots for path in self.trash.held(each)]
+        books = [book_id(path) for path in [*self.library.projects(), *self.library.packages(), *held]]
+        return listen_export.sweep_work(self.export_work_dir, books, self._listen_exporting())
 
     def _sweep_trash_at_start(self) -> None:
         """Lúc mở app: cuốn còn nằm chờ từ phiên trước (app chết giữa hạn) vào Thùng rác. Luồng nền - cuốn lớn vào Thùng rác
@@ -1104,8 +1112,7 @@ class App:
     def sweep_export_leftovers(self) -> list[Path]:
         root = Path(self.preferences.get()["libraryRoot"])
         # Chương đã ghép của "Xuất sách nói" bỏ dở (soát a62: chưa bao giờ được dọn): sách đã xoá, hay quá STALE_DAYS ngày không ai đụng tới.
-        books = [book_id(path) for path in [*self.library.projects(), *self.library.packages()]]
-        removed = listen_export.sweep_work(self.export_work_dir, books, self._listen_exporting())
+        removed = self._sweep_listen_work()
         folders = [*self.export_folders.recent(), root / "Đã xuất"]
         removed += export_leftovers.sweep(folders, Path(tempfile.gettempdir()))
         # Nhập / mở / xuất sách, tải nhạc bị tắt ngang (soát a28 lỗi 12): tên tạm trong thư viện, "Sách đã nhập", %TEMP%, bộ đệm nhạc.
@@ -1150,8 +1157,10 @@ class App:
         gone = book_id(path)
         token = self._discard(path, "imported", undo=undo, queued=False,
                               failure="Không chuyển được vào Thùng rác - có thể một chương đang mở (đang nghe cuốn này). Thử lại. ({error})")
-        if gone not in self._listen_exporting():
-            listen_export.remove_work(self.export_work_dir, gone)  # chương đã ghép của lượt xuất sách nói bỏ dở đi theo sách
+        # Chương đã ghép của lượt xuất sách nói bỏ dở đi theo sách - nhưng chỉ khi sách đã vào Thùng rác: còn "Hoàn tác" thì giữ (hoàn tác xong
+        # xuất tiếp không phải đọc lại); hết hạn mà không hoàn tác thì lượt dọn lúc mở app (`sweep_work`, sách không còn) xoá.
+        if token is None and gone not in self._listen_exporting():
+            listen_export.remove_work(self.export_work_dir, gone)
         return {"ok": True, **({"undo": token} if token else {})}
 
     def _listen_exporting(self) -> set[str]:
