@@ -1,7 +1,7 @@
-"""NN-lite: học sinh nhỏ (2 MB, chỉ chữ) cho nhạc nền THEO CẢNH của "Nghe ngay", luôn dùng, kể cả khi máy đã tải gói q06 (Corpus research/music/SPEC_nnlite_app.md;
+"""NN-lite: học sinh nhỏ (2 MB, chỉ chữ) cho nhạc nền THEO CẢNH của "Nghe ngay", luôn dùng (Corpus research/music/SPEC_nnlite_app.md;
 điện thoại có bản Kotlin `NnLite.kt` cùng đọc cùng file). Thay mục học sinh `None` của đường N0 (music_nnscene.py) bằng mục `dV / dE / dT / chapterV / chapterP` tính
-từ chữ cảnh rồi đi đúng đường NN-V (`music_scenes.apply_student` + sàn `WEAK_MOOD` ở `music_nnscene.chapter_scenes`). Đo trên bộ vàng 18 (60 chương): sai rõ
-37,8 % (N0) -> 17,4 % (NN-lite); q06 14,7 %.
+từ chữ cảnh rồi đi đúng đường NN-V (`music_scenes.apply_student` + sàn `WEAK_MOOD` ở `chapter_scenes` dưới đây). Đo trên bộ vàng 18 (60 chương): sai rõ
+37,8 % (N0) -> 17,4 % (NN-lite). Studio (sách có nhãn câu) cũng dùng đúng hàm ấy: bộ 15 (60 chương) sai rõ 13,9 % -> 6,5 %.
 
 File `assets/nnlite.bin` (little-endian; tạo bằng LLM_Train/music/nnlite_ref.py export) - chỉ trọng số trên ô băm, không chữ, không danh sách từ:
   magic "NNL1" | u32 B (ô băm) | u32 n_out (= 4) | u32 n_dense (= 4)
@@ -18,7 +18,7 @@ Chữ cảnh -> đặc trưng định nghĩa theo ĐIỂM MÃ (code point), khô
 5. `weight` = max(1, số mẩu `split()`) - y hệt trọng số của `ChapterStudent` (khoảng trắng = `str.isspace`: cũng là thứ `str.strip` / `str.split` dùng).
 
 Ranh cảnh LB (Corpus research/music/SPEC_lb_app.md; sai rõ bộ 20: 16,7 -> 11,1 %): cũng từ model này, thuần Python (không numpy) - chia chương thành khối >= 150 chữ, mỗi khối một hồ sơ
-(pV, pE, pT)/ysd, quy hoạch động tìm chỗ hồ sơ đổi (`Model.scene_bounds`). `scene_bounds(script)` là nguồn ranh "lite" của `music_nnscene.chapter_scenes`; bản Kotlin
+(pV, pE, pT)/ysd, quy hoạch động tìm chỗ hồ sơ đổi (`Model.scene_bounds`). `scene_bounds(script)` là nguồn ranh "lite" của `chapter_scenes` (chỉ Nghe ngay); bản Kotlin
 (`NnLite.sceneBounds`) ra y hệt trên bộ ví dụ tests/fixtures/music/nnlite/lb_fixture.json."""
 from __future__ import annotations
 
@@ -29,9 +29,9 @@ import struct
 import threading
 import unicodedata
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
-from . import music_moods
+from . import music_moods, music_scenes, music_select
 
 log = logging.getLogger(__name__)
 
@@ -45,6 +45,10 @@ DIALOG = frozenset("\"“«-–—")
 FNV_OFFSET, FNV_PRIME = 2166136261, 16777619
 LB_LAMBDA, LB_BLOCK_WORDS, LB_MIN_BLOCKS = 2.0, 150, 2  # phạt mỗi ranh, chữ tối thiểu một khối, khối tối thiểu một đoạn (SPEC_lb_app mục 2)
 LB_SOURCE, LB_REASON = "lite", "mood_shift"  # tên nguồn ranh trong `music_scenes.with_scene_breaks` và lý do của đoạn mới
+# Chỗ cắm học sinh (không bắt buộc): hàm (kịch bản, đoạn nền) -> các mục `dV/dE/dT/chapterV/chapterP` cho `music_scenes.book_scenes(student=...)`, hay None.
+StudentItems = Callable[[dict[str, Any], list[dict[str, Any]]], "list[dict[str, Any]] | None"]
+# Nguồn ranh cảnh "lite" (không bắt buộc, chỉ Nghe ngay): hàm kịch bản -> {id câu mở cảnh mới: lý do}, `scene_bounds` (LB, SPEC_lb_app).
+SceneBounds = Callable[[dict[str, Any]], "dict[Any, str]"]
 
 
 # ---- chữ -> đặc trưng ---------------------------------------------------------------------------------------------------------------
@@ -266,3 +270,26 @@ def scene_bounds(script: dict[str, Any]) -> dict[Any, str]:
         return {}
     segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
     return {sid: LB_REASON for sid in loaded.scene_bounds(segments)}
+
+
+def chapter_scenes(script: dict[str, Any], student: StudentItems | None = None, bounds: SceneBounds | None = None, *,
+                   moods: list[dict[str, Any]] | None = None,
+                   boundaries: dict[str, dict[Any, str]] | None = None) -> list[dict[str, Any]]:
+    """Các đoạn nhạc của MỘT chương: MỘT chỗ gọi `music_scenes.book_scenes` cho cả hai đường - Nghe ngay (`music_nnscene.chapter_scenes`, kịch bản trần) và Studio
+    (`music_plan.build`, kịch bản có nhãn câu). Có `student` thì chỉnh V / E / T quanh mức chương (đoạn nền dựng KHÔNG học sinh -> `student(script, đoạn nền)` ->
+    dựng lại với các mục ấy; mục có `chapterP` thì `apply_student` chạy tiếp LVJ), không thì không (hay `student` trả None: chương không dùng được -> đường cũ
+    `apply_chapter_level`). Đoạn của học sinh có `confidence` thấp nên bộ chọn kéo hết về đích êm: sàn `WEAK_MOOD` (NN-V, SPEC_nnv_app) cho V / E tới bộ chọn bài.
+    `moods` / `boundaries` ({nguồn: {id câu mở cảnh: lý do}} của chương này, vd "llm"): của Studio, vào CẢ đoạn nền lẫn đoạn cuối; Nghe ngay không có.
+    `bounds` (chỉ Nghe ngay, LB): thêm nguồn ranh "lite" vào đoạn nền TRƯỚC khi học sinh chạy, nên học sinh đoán trên các đoạn mới; "cue" thắng khi trùng chỗ.
+    Học sinh không dùng được chương (None) thì chương đi đường cũ nguyên, không ranh LB. Đổi bước nào ở đây cũng làm số đo của hai đường hết giá trị."""
+    fixed = dict(boundaries or {})
+    chapter = script.get("chapterId")
+
+    def build(sources: dict[str, dict[Any, str]], items: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+        return music_scenes.book_scenes([script], moods, {chapter: sources} if sources else None, items)
+
+    lite = {LB_SOURCE: bounds(script)} if student is not None and bounds is not None else {}
+    items = student(script, build({**fixed, **lite}, None)) if student is not None else None
+    scenes = build({**fixed, **lite} if items is not None else fixed, items)
+    return [dict(s, confidence=max(float(s.get("confidence") or 0.0), music_select.WEAK_MOOD)) if s.get("moodSource") == "student" else s
+            for s in scenes]

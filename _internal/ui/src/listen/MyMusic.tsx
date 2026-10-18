@@ -134,7 +134,7 @@ export function MyMusicSection() {
           </Button>
         )}
       </div>
-      <MusicModuleNotice view={data} queryKey={MY_MUSIC_KEY} onlyScene={!tracks.length} />
+      {!!tracks.length && <MusicModuleNotice view={data} queryKey={MY_MUSIC_KEY} />}
       <p className="text-xs text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
       {!canImport && <p className="text-xs text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách.</p>}
       {canImport && !tracks.length && <p className="text-xs text-fg-2">Chưa có bài nào.</p>}

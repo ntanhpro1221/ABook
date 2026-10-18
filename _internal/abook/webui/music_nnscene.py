@@ -14,8 +14,8 @@ Cue mang `firstSegment` = mã ĐOẠN của màn đọc (`ui/src/listen/textScri
 plan (`music_scenes._durations`), trình phát co giãn theo các mốc `firstSegment`.
 
 Học sinh là NN-lite (`music_nnlite`, 2 MB đóng sẵn trong app, SPEC_nnlite_app): ranh cảnh LB + chỉnh V/E/T quanh mức chương LVJ; nếu model ấy không nạp
-được thì bỏ bước ấy (đường "N0": `book_scenes(scripts, None, None, None)` -> `music_plan.build`). Đường này KHÔNG bao giờ dùng học sinh q06 (`music_scene_student`,
-gói "Học sinh không khí cảnh" chỉ dành cho sách làm bằng Studio): q06 không có ranh LB lẫn LVJ nên nhạc sai màu rõ hơn (SPEC_nnscene_route.md).
+được thì bỏ bước ấy (đường "N0": `book_scenes(scripts, None, None, None)` -> `music_plan.build`). Studio (`music_plan.build`) cũng dùng NN-lite qua cùng hàm
+`music_nnlite.chapter_scenes`, chỉ khác là không có ranh LB.
 Khoá đệm ghi học sinh nào đã dùng (`student_tag`), nên model đổi thì các chương chưa nghe dựng lại.
 
 Dựng nền: `Builder` chạy MỘT luồng, chương đang nghe trước rồi vài chương kế; hỏi cue của chương chưa dựng xong thì
@@ -33,17 +33,13 @@ from typing import Any, Callable, Iterable
 from .. import text_processing
 from ..io_utils import atomic_write_json
 from ..readaloud import paragraphs
-from . import humanize, music_plan, music_playlist, music_scenes, music_select
+from . import humanize, music_nnlite, music_plan, music_playlist, music_scenes, music_select
 
 SCENE = music_playlist.SCENE  # `music.playlist` của lớp sửa: người nghe chọn "Theo cảnh (máy tự dựng)"
 SEGMENTER_VERSION = 1  # đổi khi cách tách câu / ánh xạ sang đoạn đổi: plan đã dựng không dùng lại
 FORMAT_VERSION = 3  # 2: plan cũ có thể chọn bài quá cỡ (cỡ chỉ có ở mảnh tracks/ của danh mục, ô cells/ không có); 3: `tracks` mang điểm vòng loopStart / loopEnd
 
-# Chỗ cắm học sinh (không bắt buộc): hàm (kịch bản, đoạn nền) -> các mục `dV/dE/dT/chapterV` cho `music_scenes.book_scenes(student=...)`, hay None.
-StudentItems = Callable[[dict[str, Any], list[dict[str, Any]]], "list[dict[str, Any]] | None"]
-# Nguồn ranh cảnh "lite" (không bắt buộc, chỉ đường NN-lite): hàm kịch bản -> {id câu mở cảnh mới: lý do}, `music_nnlite.scene_bounds` (LB, SPEC_lb_app).
-SceneBounds = Callable[[dict[str, Any]], "dict[Any, str]"]
-LITE_SOURCE = "lite"
+StudentItems, SceneBounds, LITE_SOURCE = music_nnlite.StudentItems, music_nnlite.SceneBounds, music_nnlite.LB_SOURCE  # chỗ cắm học sinh / nguồn ranh "lite": định nghĩa ở music_nnlite
 AHEAD_CHAPTERS = 3  # chương dựng trước chỗ đang nghe
 BUILD_WAIT_SECONDS = 2.0  # hỏi cue chương chưa dựng: chờ chừng này (chương nhẹ dựng kịp), rồi trả "chưa có"
 VERIFY_ROUNDS = 12  # trần số lần chọn lại một chương vì bài quá cỡ (mỗi vòng loại thêm ít nhất một bài; hết vòng thì giữ lần chọn cuối - tải sẽ bị chặn và chọn lại)
@@ -88,20 +84,10 @@ def paragraph_ids(sentences: list[str], body: str) -> list[int]:
 
 # ---- một chương ----------------------------------------------------------------------------------------------------------------
 def chapter_scenes(script: dict[str, Any], student: StudentItems | None = None, bounds: SceneBounds | None = None) -> list[dict[str, Any]]:
-    """Các đoạn nhạc của chương (ranh giới của app trên kịch bản trần). MỘT chỗ gọi `music_scenes.book_scenes`: có `student` thì chỉnh V/E/T
-    quanh mức chương đúng như Studio, không thì không (hay `student` trả None: chương không dùng được).
-    Sách chữ không có nhãn câu nên đoạn của học sinh có `confidence` thấp và bộ chọn kéo hết về đích êm; sàn `WEAK_MOOD` (NN-V, SPEC_nnv_app) cho
-    V / E của học sinh tới bộ chọn bài. CHỈ ở đường này: Studio (sách có nhãn câu) và N0 (không đoạn `moodSource` = "student") giữ nguyên.
-    `bounds` (chỉ đường NN-lite, LB): thêm nguồn ranh "lite" ({id: "mood_shift"}) vào đoạn nền TRƯỚC khi học sinh chạy, nên học sinh đoán trên các đoạn mới; "cue" thắng khi trùng chỗ.
-    Học sinh không dùng được chương (None) thì chương đi đường N0 nguyên, không ranh LB."""
-    lite = {LITE_SOURCE: bounds(script)} if student is not None and bounds is not None else None
-    boundaries = {script.get("chapterId"): lite} if lite else None
-    items = student(script, music_scenes.book_scenes([script], None, boundaries, None)) if student is not None else None
-    if items is None:
-        boundaries = None
-    scenes = music_scenes.book_scenes([script], None, boundaries, items)
-    return [dict(s, confidence=max(float(s.get("confidence") or 0.0), music_select.WEAK_MOOD)) if s.get("moodSource") == "student" else s
-            for s in scenes]
+    """Các đoạn nhạc của chương (ranh giới của app trên kịch bản trần): `music_nnlite.chapter_scenes` - MỘT chỗ gọi `music_scenes.book_scenes` chung với Studio, sàn
+    `WEAK_MOOD` cho đoạn của học sinh vì sách chữ không có nhãn câu. Không học sinh (hay học sinh trả None) thì đường N0 nguyên, không ranh LB.
+    `bounds`: LB, chỉ đường NN-lite (xem `music_nnlite.chapter_scenes`)."""
+    return music_nnlite.chapter_scenes(script, student, bounds)
 
 
 class SceneBook:
@@ -237,7 +223,7 @@ def scene_dir_name(book_id: str) -> str:
 
 
 def student_tag(lite_sha: str | None) -> str:
-    """Phần khoá đệm nói học sinh nào đã dựng plan: "nnlite-lvj1-<mã model>" (NN-lite, music_nnlite.py; lvj1: ranh cảnh LB `music_nnlite.scene_bounds` + mức chương LVJ; plan dựng trước LVJ hay bằng q06 không dùng lại), hay "none" khi model không nạp được (đường N0)."""
+    """Phần khoá đệm nói học sinh nào đã dựng plan: "nnlite-lvj1-<mã model>" (NN-lite, music_nnlite.py; lvj1: ranh cảnh LB `music_nnlite.scene_bounds` + mức chương LVJ; plan dựng trước LVJ không dùng lại), hay "none" khi model không nạp được (đường N0)."""
     return f"nnlite-lvj1-{lite_sha}" if lite_sha else "none"
 
 

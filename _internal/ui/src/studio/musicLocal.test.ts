@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  analysisLabel, formatSize, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, sceneButton, sceneCard, autoLabel, autoSwitch,
-  type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood, type SceneStudent,
+  analysisLabel, formatSize, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, autoLabel, autoSwitch,
+  type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood,
 } from "./musicLocal";
 
 const digest = "0123456789abcdef0123456789abcdef01234567";
@@ -186,30 +186,5 @@ describe("note of a track in the swap list", () => {
   it("tells one story about pinned tracks travelling with the book file", () => {
     expect(MY_MUSIC_INTRO).toContain(".abook / .abookproj");
     expect(MY_MUSIC_INTRO).not.toContain("Sửa sách");
-  });
-});
-
-describe("nhạc theo sát từng đoạn trong chương", () => {
-  const scene = (over: Partial<SceneStudent> = {}): SceneStudent => ({ state: "missing", bytes: 763_000_000, blocked: "", external: false, offered: true, reason: "", ...over });
-  const module = (over: Partial<MusicModuleStatus> = {}): MusicModuleStatus => ({
-    state: "ready", done: 0, total: 0, error: "", ready: true, analysing: false, metered: false, scene: scene(), ...over,
-  });
-  it("hiện khi phần này chưa có, kể cả khi Phân tích nhạc chưa tải (không đợi nhập bài)", () => {
-    expect(sceneCard(module())?.unavailable).toBe("");
-    expect(sceneCard(module({ state: "missing", ready: false }))?.unavailable).toBe("");
-    expect(sceneCard(module({ scene: scene({ state: "current" }) }))).toBeNull();
-    expect(sceneCard(module({ scene: undefined }))).toBeNull();
-    expect(sceneCard(undefined)).toBeNull();
-  });
-  it("máy chưa dùng được thì thẻ nói lý do thay vì ẩn", () => {
-    expect(sceneCard(module({ scene: scene({ offered: false, reason: "cần cài Studio: bộ này chạy trong Studio của máy tính" }) }))?.unavailable).toBe(
-      "Cần cài Studio: bộ này chạy trong Studio của máy tính",
-    );
-    expect(sceneCard(module({ scene: scene({ blocked: "tải đang bị tắt trên máy này" }) }))?.unavailable).toBe("Tải đang bị tắt trên máy này");
-  });
-  it("nút nói tải gì; thiếu Phân tích nhạc thì tổng gồm cả nó", () => {
-    expect(sceneButton(scene({ bytes: 728_000_000, total: 728_000_000 }))).toBe("Tải model nhạc theo đoạn (728 MB)");
-    expect(sceneButton(scene({ bytes: 728_000_000, total: 785_000_000 }))).toBe("Tải model nhạc theo đoạn cùng Phân tích nhạc (785 MB)");
-    expect(sceneButton(scene({ bytes: 728_000_000 }))).toContain("728 MB");
   });
 });
