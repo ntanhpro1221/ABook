@@ -31,6 +31,9 @@ DEFAULT_SAMPLING = {"temperature": 0.8, "top_k": 25, "top_p": 0.95, "repetition_
 MAX_NEW_FRAMES = 300
 # 8 bước (gói vieneu: 16): đạt phép thử "thay được" trên 144 clip (18-10), nhanh gấp đôi. Nano chỉ có một bậc (bản int8 ở 10 bước chỉ nhanh hơn 5-8 %).
 NANO_STEPS, NANO_CFG = 8, 3.0
+# Hướng dẫn CFG bỏ bước đầu và bước cuối (Kynkäänniemi 2024, "guidance in a limited interval"): 8 bước còn 14 lần gọi bộ khử nhiễu thay vì 16.
+# Đạt phép thử "thay được" cùng bộ giải mã int8 (19-10, docs/research/SUPERTONIC_PHONE.md "R6"); bỏ các bước cuối thì hỏng.
+NANO_CFG_ENDS = False
 NANO_MAX_SECONDS = 15.0
 NANO_MIN_FRAMES = 2
 BABBLE_RETRIES = 2
@@ -605,8 +608,9 @@ class NanoEngine:
         return np.array([ids], dtype=np.int64)
 
     def infer(self, phonemes: str, speaker_emb: np.ndarray, style: np.ndarray, *, seed: int | None,
-              steps: int = NANO_STEPS, cfg: float = NANO_CFG) -> np.ndarray:
-        """Một khúc phoneme -> sóng âm 24 kHz (OnnxV3NanoEngine.infer, sway 0, tốc độ 1)."""
+              steps: int = NANO_STEPS, cfg: float = NANO_CFG, cfg_ends: bool = NANO_CFG_ENDS) -> np.ndarray:
+        """Một khúc phoneme -> sóng âm 24 kHz (OnnxV3NanoEngine.infer, sway 0, tốc độ 1). `cfg_ends` False: bước đầu và bước cuối chỉ chạy
+        nhánh có điều kiện (trọng số hướng dẫn 1)."""
         with self._lock:
             spk = np.asarray(speaker_emb, dtype=np.float32).reshape(1, -1)
             style = np.asarray(style, dtype=np.float32)
@@ -623,7 +627,7 @@ class NanoEngine:
             for i in range(n):
                 t = np.array([grid[i]], dtype=np.float32)
                 v = self.ve.run(None, {"x": x, "t": t, "ctx": ctx, "ctx_mask": mask, "spk": spk, "style": style})[0]
-                if cfg > 0:
+                if cfg > 0 and (cfg_ends or 0 < i < n - 1):
                     vu = self.ve.run(None, {"x": x, "t": t, "ctx": self.null_ctx, "ctx_mask": self.null_mask, "spk": self.null_spk,
                                             "style": self.null_style})[0]
                     v = vu + float(cfg) * (v - vu)

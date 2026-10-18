@@ -129,6 +129,8 @@ class VieneuModule(
         private const val TURBO_BASE = "https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo/resolve/61b85e3d937fbbacb387714180e8182823512523/onnx_int8/"
         private const val CODEC_BASE = "https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX/resolve/ceff0d0749bfb3fa2d61149794ec6feef0d1e1ae/"
         private const val NANO_BASE = "https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Nano/resolve/aba295eb96a6fa6003ebe417cc1f2802a7adc1dc/"
+        /** The app's int8 Nano files ([VoiceModule.APP_MODELS]). */
+        private const val NANO_INT8_BASE = VoiceModule.APP_MODELS + "vieneu-nano-int8/"
 
         /** Commit of NGDtuanh/abook-music-student that holds `sea-g2p/0.9.1/` (scripts/prepare_sea_g2p_android.py). Empty = not uploaded yet. */
         const val G2P_REVISION = "a8446407cc4f4775b0f0029da63a24756ebc966f"
@@ -175,7 +177,8 @@ class VieneuModule(
             file("nano", NANO_BASE, "text_encoder.onnx", "204f02cccae1f16ccb2d3840f05721a37fe250b82cbd456337a0ccb49615e4bf", 26_519_943, "Giọng VieNeu Nano"),
             file("nano", NANO_BASE, "duration_predictor.onnx", "20fd7fa60006d0a48ee82e0451b3f920d2052588c083c756cce669f3947c0a68", 727_809, "Giọng VieNeu Nano"),
             file("nano", NANO_BASE, "vector_estimator.onnx", "c6c1d4398ca35d3ad1bd3f0459413d1b975d09e7f2f3a2b4493a7b92bbf6ce93", 155_132_418, "Giọng VieNeu Nano"),
-            file("nano", NANO_BASE, "codec_decoder.onnx", "b0ab15e7828a39d53679e25b1ba4ba415a61311307202a6323130b9e1cc3029d", 99_319_941, "Giọng VieNeu Nano"),
+            // the app's int8 decoder (desktop vieneu_module.NANO_FILES), read with VieneuNano.CFG_ENDS false
+            file("nano", NANO_INT8_BASE, "codec_decoder.onnx", "88a1586a4dff8cf2a5a9a359115687c48b38a29eb9d21e25add964f370a47f94", 42_609_995, "Giọng VieNeu Nano"),
         )
     }
 }

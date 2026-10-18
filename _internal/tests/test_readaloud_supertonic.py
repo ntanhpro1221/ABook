@@ -137,11 +137,12 @@ def test_every_file_the_engine_reads_is_in_the_download_list() -> None:
     needed = {f"onnx/{name}.onnx" for name in supertonic.ONNX} | {supertonic.CONFIG_FILE, supertonic.INDEXER_FILE, "LICENSE", "config.json"}
     needed |= {f"{supertonic.STYLE_DIR}/{name}.json" for name in supertonic.NAMES}
     assert needed == names
-    estimator = "onnx/vector_estimator.onnx"
+    estimator, vocoder = "onnx/vector_estimator.onnx", "onnx/vocoder.onnx"
     assert all(item.url == f"https://huggingface.co/{supertonic_module.SOURCE_REPO}/resolve/{supertonic_module.SOURCE_REVISION}/{item.name}"
-               for item in supertonic_module.FILES if item.name != estimator), "nơi tải là MỘT hằng (repo + commit)"
-    (top30,) = [item for item in supertonic_module.FILES if item.name == estimator]
-    assert top30.url == voice_module.APP_MODELS + "supertonic3-int8/top30/vector_estimator.onnx", "bộ khử nhiễu: bản int8 của app, không tải bản fp32 của hãng"
+               for item in supertonic_module.FILES if item.name not in (estimator, vocoder)), "nơi tải là MỘT hằng (repo + commit)"
+    ours = {item.name: item.url for item in supertonic_module.FILES if item.name in (estimator, vocoder)}
+    assert ours == {estimator: voice_module.APP_MODELS + "supertonic3-int8/top30/vector_estimator.onnx",
+                    vocoder: voice_module.APP_MODELS + "supertonic3-int8/vocoder/vocoder.onnx"}, "bản int8 của app, không tải bản fp32 của hãng"
     assert f"model/{estimator}" == supertonic.QUALITY[0] and supertonic.QUALITY[1] == supertonic.STEPS == 8
     (fast,) = supertonic_module.FAST_FILES
     assert fast.url == voice_module.APP_MODELS + "supertonic3-int8/fast/vector_estimator.onnx" and f"fast/{fast.name}" == supertonic.FAST[0]
@@ -189,7 +190,7 @@ def test_size_counts_only_what_this_machine_lacks(module) -> None:
     model = sum(item.size for item in supertonic_module.FILES)
     assert status["state"] == "missing" and choice["id"] == "supertonic" and choice["installed"] is False
     assert choice["bytes"] == model + vieneu_module.G2P.size, "thư viện chạy model máy đã có: không tính; bộ đọc chữ chưa có thì tính"
-    assert 240_000_000 < model < 280_000_000, "bộ khử nhiễu int8 (116 MB) thay bản fp32 (257 MB)"
+    assert 190_000_000 < model < 220_000_000, "bộ khử nhiễu int8 (116 MB) + bộ tạo sóng int8 (45 MB) thay bản fp32 (257 + 101 MB)"
     assert status["benchmark"] == {} and status["suggestion"] is None
 
 

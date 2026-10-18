@@ -9,7 +9,7 @@ import kotlin.math.exp
 /**
  * VieNeu-TTS v3 Nano on ONNX Runtime, a port of `vieneu/v3nano.py` (`OnnxV3NanoEngine`): a 48M-parameter flow-matching model.
  * Text encoder + duration predictor give the length, then [steps] Euler steps of the vector estimator (two passes each with
- * classifier-free guidance [cfg]) turn noise into a 144-channel latent that the codec decoder turns into 24 kHz audio. Not
+ * classifier-free guidance [cfg], one on the first and last step) turn noise into a 144-channel latent that the codec decoder turns into 24 kHz audio. Not
  * autoregressive, so the whole chunk is ready at once. [dir] holds the repo's files as pinned (four graphs, `config.json`, `constants.npz`).
  */
 class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false) : AutoCloseable {
@@ -64,7 +64,8 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
 
     /** One chunk of phonemes -> 24 kHz audio. [noise] is the start latent `[144][frames]` (the bench replays the desktop's); null draws it from [seed]
      *  exactly as the desktop does (`np.random.default_rng(seed).standard_normal`). */
-    fun synthesize(phones: String, speaker: FloatArray, style: FloatArray, noise: FloatArray?, seed: Long, steps: Int = STEPS, cfgScale: Float = 3f, sway: Double = 0.0, speed: Double = 1.0): Result {
+    fun synthesize(phones: String, speaker: FloatArray, style: FloatArray, noise: FloatArray?, seed: Long, steps: Int = STEPS, cfgScale: Float = 3f, sway: Double = 0.0, speed: Double = 1.0,
+                   cfgEnds: Boolean = CFG_ENDS): Result {
         val timings = Timings()
         val started = System.nanoTime()
         val ids = encodePhones(phones)
@@ -96,7 +97,7 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
                     val from = swayed(i, steps, sway)
                     val to = swayed(i + 1, steps, sway)
                     val v = estimate(x, frames, from.toFloat(), ctxTensor, maskTensor, speakerTensor, styleTensor, clock)
-                    if (cfgScale > 0f) {
+                    if (cfgScale > 0f && (cfgEnds || i in 1 until steps - 1)) {
                         val unconditional = estimate(x, frames, from.toFloat(), nullCtxTensor, nullMask, nullSpeakerTensor, nullStyleTensor, clock)
                         for (k in v.indices) v[k] = unconditional[k] + cfgScale * (v[k] - unconditional[k])
                     }
@@ -145,6 +146,9 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
         /** Euler steps (desktop vieneu_engine.NANO_STEPS): 8 since 18-10 - 16 -> 8 measured no worse on the test sets, half the time
          *  (docs/research/SUPERTONIC_PHONE.md, "18-10: int8 + fewer steps"). */
         const val STEPS = 8
+        /** Guidance on the first and last step too (desktop vieneu_engine.NANO_CFG_ENDS): false since 19-10 - the two ends run the conditional pass
+         *  only (guidance in a limited interval), 14 estimator calls instead of 16 at the same quality (SUPERTONIC_PHONE.md, "R6"). */
+        const val CFG_ENDS = false
         private const val MAX_CHUNK_SECONDS = 15.0
         private const val MIN_FRAMES = 2
     }
