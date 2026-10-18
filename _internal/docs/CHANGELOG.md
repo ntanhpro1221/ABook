@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.97] - 2026-10-18
+
 ### Nghe ngay
 
 - Máy tính: xoá một cuốn đang xuất sách nói dở rồi bấm "Hoàn tác" thì phần đã xuất vẫn còn, xuất lại làm tiếp không phải đọc lại (trước đây phần ấy bị xoá ngay lúc bấm Xoá). Hết hạn hoàn tác thì phần ấy đi theo sách vào Thùng rác như điện thoại vốn đã làm.
