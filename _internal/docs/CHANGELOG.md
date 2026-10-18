@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- Máy tính và Studio từ xa: nhạc theo cảnh của sách làm bằng Studio chọn đúng không khí hơn. Trên 60 chương thử, nhạc sai rõ không khí giảm từ 13,9 % xuống 6,5 %. Studio nay dùng học sinh nhẹ có sẵn trong app, cùng loại với Nghe ngay, thay cho gói "Học sinh không khí cảnh", nên bạn không còn phải tải thêm 0,71 GB (nút tải và thẻ "Nhạc theo sát từng đoạn trong chương" đã bỏ). Sách đã dựng nhạc bằng gói cũ sẽ dựng lại khi bạn bấm "Chọn lại nhạc". Số đo này chỉ cho sách mới phân tích câu; khi có thêm chia cảnh bằng LLM hay cảm xúc cả đoạn thì chưa có số.
+
 ## [0.4.92] - 2026-10-18
 
 ### Nghe ngay

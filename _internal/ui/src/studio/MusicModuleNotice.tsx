@@ -3,18 +3,17 @@ import { useEffect, useState } from "react";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { Button, LiveText, Progress } from "@/shared/ui";
 import { api } from "./api";
-import { CANCELLED_NOTE, formatSize, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, sceneButton, sceneCard, type LocalMusicView } from "./musicLocal";
+import { formatSize, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, type LocalMusicView } from "./musicLocal";
 
-/** Nút dài ("Tải model nhạc theo đoạn cùng Phân tích nhạc (820 MB)") xuống dòng thay vì tràn ra ngoài ở màn 375 px (Button mặc định không ngắt dòng, cao 32 px). */
+/** Nút dài ("Cập nhật Phân tích nhạc (820 MB)") xuống dòng thay vì tràn ra ngoài ở màn 375 px (Button mặc định không ngắt dòng, cao 32 px). */
 const WRAP = "h-auto min-h-8 whitespace-normal py-1.5 text-left";
 
 /** Thẻ duy nhất của mô-đun "Phân tích nhạc" (máy tính và điện thoại): nhập nhạc chạy không cần nó, nó chỉ cho máy NGHE nhạc để hiểu không khí
  *  của từng bài. Người dùng thấy tổng dung lượng và bấm mới tải (không bao giờ tự tải, nhất là khi đang dùng dữ liệu di động); có bản mới thì
  *  nói "có bản mới - N MB" và một lần bấm chỉ tải phần đổi; cập nhật xong KHÔNG tự phân tích lại bài cũ - hiện nút "Phân tích lại N bài".
- *  Máy tính đủ RAM còn có tuỳ chọn "Đo cảm xúc nhạc chính xác hơn" (tải thêm một model lớn, mặc định tắt) khi mô-đun đã sẵn sàng, và
- *  "Nhạc theo sát từng đoạn trong chương" (model nhỏ, tải khi bấm; máy chưa dùng được thì thẻ nói lý do). Máy tính có nút Huỷ khi đang tải (phần đã tải giữ để lần sau làm tiếp).
- *  `onlyScene`: chưa nhập bài nào - chỉ thẻ “theo sát từng đoạn” (và tiến độ khi nó đang tải) có nghĩa, các thẻ còn lại đợi có bài. */
-export function MusicModuleNotice({ view, queryKey, onlyScene = false }: { view: LocalMusicView | undefined; queryKey: readonly unknown[]; onlyScene?: boolean }) {
+ *  Máy tính đủ RAM còn có tuỳ chọn "Đo cảm xúc nhạc chính xác hơn" (tải thêm một model lớn, mặc định tắt) khi mô-đun đã sẵn sàng.
+ *  Máy tính có nút Huỷ khi đang tải (phần đã tải giữ để lần sau làm tiếp). */
+export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | undefined; queryKey: readonly unknown[] }) {
   const client = useQueryClient();
   const module = view?.module;
   const [starting, setStarting] = useState(false);
@@ -28,12 +27,11 @@ export function MusicModuleNotice({ view, queryKey, onlyScene = false }: { view:
   }, [busy, client, queryKey]);
   if (!module) return null;
   const stale = module.stale ?? 0;
-  const precise = !onlyScene && preciseOffered(module) ? module.precise : null;
-  const scene = sceneCard(module);
+  const precise = preciseOffered(module) ? module.precise : null;
   const calm = module.state === "ready" && !module.analysing && !module.restart && stale === 0;
   const downloadingModule = module.state === "downloading";
-  const showModule = !calm && (!onlyScene || downloadingModule);
-  if (!showModule && !precise && !scene) return null;
+  const showModule = !calm;
+  if (!showModule && !precise) return null;
   const post = async (path: string, body?: Record<string, unknown>) => {
     setStarting(true);
     try {
@@ -87,22 +85,6 @@ export function MusicModuleNotice({ view, queryKey, onlyScene = false }: { view:
                 <span className="text-warning">Bạn đang dùng dữ liệu di động - nên đợi khi có Wi-Fi.</span>
               )}
             </div>
-          )}
-        </div>
-      )}
-      {scene && (
-        <div className="space-y-1.5">
-          <p className="font-medium text-fg">Nhạc theo sát từng đoạn trong chương</p>
-          <p>Một model nhỏ đọc chữ từng đoạn rồi đoán đoạn nào vui hơn, căng hơn mức chung của chương, để nhạc đổi theo đúng chỗ truyện lúc căng lúc dịu. Chạy trên máy này, không cần mạng sau khi tải; chưa tải thì nhạc chọn như trước. Gói này chỉ dùng cho sách bạn làm bằng Studio; sách nghe ngay đã có nhạc theo cảnh sẵn, không cần tải.</p>
-          {onlyScene && module.cancelled && !downloadingModule && !scene.unavailable && <p>{CANCELLED_NOTE}</p>}
-          {scene.unavailable ? (
-            <p>{scene.unavailable}.</p>
-          ) : (
-            !downloadingModule && (
-              <Button size="sm" variant="secondary" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/module", { scene: true })}>
-                {sceneButton(scene.scene)}
-              </Button>
-            )
           )}
         </div>
       )}

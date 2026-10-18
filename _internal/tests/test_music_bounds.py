@@ -11,7 +11,7 @@ from typing import Any
 import pytest
 
 from abook import worker
-from abook.webui import music_bounds, music_moods, music_plan, music_scene_student, music_scenes, store
+from abook.webui import music_bounds, music_moods, music_nnlite, music_plan, music_scenes, store
 from tests.test_webui_listen_and_sync import make_project
 
 # Băm SHA-256 (UTF-8) của SEG_PROMPT trong LLM_Train/music/seg_scenes.py lúc viết: lời gọi đã được đo bằng đúng chuỗi này.
@@ -170,6 +170,7 @@ def book(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
     scripts = [_chapter(1, 100), _chapter(2, 420, first_id=5000, wide=True), _chapter(3, 28, first_id=9000)]
     monkeypatch.setattr(music_plan, "book_scripts", lambda _root: iter(scripts))
     monkeypatch.setattr(music_moods, "model_digest", lambda _base: "digest-1")
+    monkeypatch.setattr(music_nnlite, "model", lambda: None)  # đây là bài thử RANH GIỚI: không học sinh NN-lite (đường dựng có nó: test_music_studio_nnlite.py)
     monkeypatch.setattr(music_bounds.time, "strftime", lambda *_args: "2026-10-15T00:00:00+0700")  # "built" cố định cho phép so từng byte
     return scripts
 
@@ -409,14 +410,12 @@ def test_run_after_analysis_skips_without_the_model_or_when_music_is_off_and_nev
 
 def test_the_worker_hook_runs_the_scene_split_before_the_moods_and_defers_its_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[str] = []
-    monkeypatch.setattr(music_scene_student, "package_dir", lambda: tmp_path)
-    monkeypatch.setattr(music_scene_student, "run_after_analysis", lambda *_a, **_k: calls.append("student"))
     monkeypatch.setattr(music_moods, "run_after_analysis", lambda *_a, **_k: calls.append("moods"))
     monkeypatch.setattr(music_bounds, "run_after_analysis", lambda *_a, **_k: calls.append("bounds"))
     run = lambda: worker.run_music_after_analysis(tmp_path, "http://x", lambda: False, lambda _line: None,  # noqa: E731
                                                   lambda *_args: None, pause_requested=lambda: False)
     run()
-    assert calls == ["bounds", "moods", "student"]
+    assert calls == ["bounds", "moods"]
 
     def broken(*_args: Any, **_kwargs: Any) -> None:
         calls.append("bounds")
@@ -426,7 +425,7 @@ def test_the_worker_hook_runs_the_scene_split_before_the_moods_and_defers_its_fa
     monkeypatch.setattr(music_bounds, "run_after_analysis", broken)
     with pytest.raises(ConnectionError):  # lỗi tới dây chuyền (music_moods_skipped) sau khi các việc sau đã chạy
         run()
-    assert calls == ["bounds", "moods", "student"]
+    assert calls == ["bounds", "moods"]
 
 
 # ---- đổi bài mỗi giờ của cả cuốn (music_plan.build, SCENEY_SPEC 5b) ---------------------------------------------------------------

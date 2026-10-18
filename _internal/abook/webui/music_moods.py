@@ -51,7 +51,7 @@ def scene_text(segments: list[dict[str, Any]], first_index: int, last_index: int
 
 def scene_texts(script: dict[str, Any], scenes: list[dict[str, Any]]) -> list[str] | None:
     """`scene_text` của từng đoạn `scenes` của chương `script` (đoạn khớp câu theo id câu đầu / cuối); None khi không có đoạn nào hay có đoạn không khớp
-    câu của chương. Chữ này là thứ đưa vào học sinh q06 và NN-lite."""
+    câu của chương. Chữ này là thứ đưa vào NN-lite."""
     segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
     position = {segment.get("id"): index for index, segment in enumerate(segments)}
     spans = [(position.get(scene["firstSegment"]), position.get(scene["lastSegment"])) for scene in scenes]

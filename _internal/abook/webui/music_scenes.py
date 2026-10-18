@@ -83,7 +83,7 @@ CHAPTER_LEVEL_T_LABELS = (4.022, -0.056)
 STUDENT_SHAPE = 1.0
 # LVJ (Corpus/research/music/SPEC_lvj_app.md; PLAN_lbl §9-12; LLM_Train/music/runs/lvj_frozen.json sha256 7e67114f…, học trên 614 chương dev 16-21):
 # mức chương chung V / E / T từ trung bình (pV, pE, pT, q) của NN-lite (`chapterP` của mục): 5 hàng (pV, pE, pT, q, 1) x 3 cột (V, E, T).
-# Hằng ĐÓNG BĂNG, không làm tròn, không chỉnh - muốn đổi phải đo lại. Chỉ chạy khi MỌI mục có `chapterP` (Studio / gói cũ thì không).
+# Hằng ĐÓNG BĂNG, không làm tròn, không chỉnh - muốn đổi phải đo lại. Chỉ chạy khi MỌI mục có `chapterP` (mục của NN-lite có; Nghe ngay và Studio cùng dùng).
 LVJ_COEF = (
     (0.6319019445430722, 0.2051738638237541, 0.9174568390927069),  # pV
     (-0.03336188688214415, 1.2192877795096715, 0.024310404064604645),  # pE
@@ -341,7 +341,7 @@ def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = 
     đoạn (`music_moods.load()["scenes"]`) - chỉ đổi valence / tension của đoạn, KHÔNG bao giờ đổi ranh giới đoạn.
     `boundaries`: ranh giới có lý do tính sẵn của chương này theo nguồn, {"llm": {id câu bắt đầu cảnh: loại}} - vào thành cờ
     `sceneBreak` như dấu hiệu đổi cảnh (`with_scene_breaks`). `student`: hình dạng không khí trong chương do học sinh đoán
-    (`music_scene_student.load()["scenes"]`) - đoạn lấy hình từ đó (`apply_student`), cũng không đổi ranh giới."""
+    (mục NN-lite, `music_nnlite.student_items`) - đoạn lấy hình từ đó (`apply_student`), cũng không đổi ranh giới."""
     segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
     if not segments:
         return []
@@ -444,7 +444,7 @@ def apply_chapter_level(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | None) -> list[dict[str, Any]] | None:
-    """Đường "student" (music_scene_student.py; SPEC_app_q06.md mục 1 + PLAN_m3_q06_level.md + PLAN_lv_q06.md): mức chương như CL (mức V thì ưu tiên
+    """Đường "student" (NN-lite, music_nnlite.py; SPEC_app_q06.md mục 1 + PLAN_m3_q06_level.md + PLAN_lv_q06.md): mức chương như CL (mức V thì ưu tiên
     đầu mức chương của học sinh), HÌNH trong chương do học sinh đoán. `scenes`: các đoạn của MỘT chương ngay từ `_view` (chưa qua
     `apply_chapter_level`); `items`: độ lệch thô của học sinh, mỗi đoạn một mục khớp chapterId + id câu đầu / cuối (dV, dE, dT; và `chapterV`
     khi gói có đầu mức chương). Với w = end - start, TB(x) = trung bình theo w:
@@ -507,7 +507,7 @@ def apply_student(scenes: list[dict[str, Any]], items: list[dict[str, Any]] | No
 
 
 def _chapter_p(items: list[dict[str, Any]]) -> list[float] | None:
-    """`chapterP` (pV, pE, pT, q thô của chương, cùng giá trị ở mọi đoạn) của các mục; None nếu mục nào thiếu hay hỏng (Studio, gói cũ)."""
+    """`chapterP` (pV, pE, pT, q thô của chương, cùng giá trị ở mọi đoạn) của các mục; None nếu mục nào thiếu hay hỏng."""
     try:
         rows = [[float(value) for value in item["chapterP"]] for item in items]
     except (KeyError, TypeError, ValueError):

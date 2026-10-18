@@ -26,7 +26,7 @@ from typing import Any, Callable, Iterable
 
 from ..config import DEFAULT_SETTINGS
 from ..io_utils import atomic_write_json, ffmpeg_available, ffmpeg_executable, run_hidden
-from . import music_bounds, music_mix, music_moods, music_scene_student, music_scenes, music_select, store
+from . import music_bounds, music_mix, music_moods, music_nnlite, music_select, store
 
 PLAN_FILE = "music_plan.json"
 OVERRIDES_FILE = "music_overrides.json"
@@ -134,14 +134,15 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
     project_root = Path(project_root)
     overrides = read_overrides(project_root)
     if scenes is None:
-        # Có kết quả LLM đọc cả đoạn (music_moods.py) thì valence / tension của đoạn lấy từ đó; không có thì đường nhãn câu. Có học
-        # sinh đoán hình không khí trong chương (music_scene_student.py) thì nó chỉnh tiếp V / E / T quanh mức chương.
+        # Có kết quả LLM đọc cả đoạn (music_moods.py) thì valence / tension của đoạn lấy từ đó; không có thì đường nhãn câu. Học sinh NN-lite đóng sẵn trong app
+        # (music_nnlite.py) chỉnh tiếp V / E / T quanh mức chương LVJ - cùng hàm với "Nghe ngay" nhưng KHÔNG có ranh LB; model không nạp được thì đường cũ không học sinh.
         moods = music_moods.load(project_root)
-        student = music_scene_student.load(project_root)
-        # Ranh giới cảnh do LLM chia (music_bounds.py) nếu có - moods và học sinh dùng cùng ranh, nên khoá đoạn của chúng khớp đoạn ở đây.
-        scenes = music_scenes.book_scenes(book_scripts(project_root), moods["scenes"] if moods else None,
-                                          boundaries=music_bounds.load(project_root),
-                                          student=student["scenes"] if student else None)
+        student = music_nnlite.student_items if music_nnlite.model() is not None else None
+        # Ranh giới cảnh do LLM chia (music_bounds.py) nếu có - moods dùng cùng ranh, nên khoá đoạn của nó khớp đoạn ở đây.
+        boundaries = music_bounds.load(project_root) or {}
+        scenes = [scene for script in book_scripts(project_root)
+                  for scene in music_nnlite.chapter_scenes(script, student, moods=moods["scenes"] if moods else None,
+                                                           boundaries=boundaries.get(script.get("chapterId")))]
     genres = (taxonomy or {}).get("genres") or {}
     genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
     known: dict[str, dict[str, Any]] = {}

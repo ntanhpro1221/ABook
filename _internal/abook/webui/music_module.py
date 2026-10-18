@@ -8,14 +8,9 @@ tuỳ máy (`_components`):
             vào sys.path trước khi import. Máy đã import được (Studio, máy dev) thì không tải.
 - `model`   (music_student.py, ~59 MB onnx / ~55 MB torch): gói model trên Hugging Face, ghim commit + SHA-256. Máy Studio (đã có torch + ffmpeg)
             chỉ cần phần này.
-Cộng một phần TUỲ CHỌN `scene_q06` (music_scene_student.py, 0,71 GiB, "Học sinh không khí cảnh"): chỉ nằm trong danh sách khi người dùng bấm tải nó
-hoặc nó đã nằm trên máy (khi đó cập nhật như mọi phần); thiếu nó mô-đun vẫn "ready".
 Mỗi phần có "mã ghim" (`pin`). Lúc tải ghi dấu `module.json` (phần -> ghim đã tải); `status()` so dấu với ghim bản app này mang, KHÔNG băm lại
 59 MB mỗi lần mở. App lên bản mới đổi ghim của phần nào thì phần ấy là "cũ" (state `outdated`, kèm danh sách phần và số byte phải tải); một
 lần bấm chỉ tải các phần đổi, phần còn lại giữ nguyên - như Studio (`StudioSetup._pins/outdated`). Bản cũ vẫn chạy cho tới lúc cập nhật xong.
-Cỡ "cần tải" của phần có thư mục đích riêng (`scene_q06`) chỉ tính các file còn thiếu hay sai SHA-256 (`Component.need`): cập nhật mà gói chỉ thêm một file
-18 KB thì báo 18 KB, không phải 0,71 GiB, và thanh tiến độ cũng chạy trên chừng ấy. Kết quả băm nhớ theo (đường dẫn, cỡ, giờ sửa) - không băm lại 0,7 GB mỗi lần
-giao diện hỏi `status()`.
 Cập nhật KHÔNG tự phân tích lại các bài đã có: `stale` đếm bài phân tích bằng bản cũ, người dùng bấm "Phân tích lại" (`reanalyse`).
 
 Thư viện (numpy/onnxruntime) đã nạp vào tiến trình thì không thay tại chỗ được: bản mới giải vào `lib.next`, đổi chỗ ở lần mở app sau
@@ -29,11 +24,9 @@ import importlib
 import importlib.util
 import json
 import os
-import queue
 import shutil
 import sys
 import threading
-import time
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -74,85 +67,9 @@ _lock = threading.RLock()
 _folder: Path | None = None  # <dữ liệu app>/music
 _thread: threading.Thread | None = None
 _after: Callable[[], None] | None = None
-_studio_installed: Callable[[], bool] | None = None
 _job = ""  # việc nền đang chạy sau khi tải: "" | "analysing"
 _state: dict[str, Any] = {"downloading": False, "done": 0, "total": 0, "error": "", "cancelled": False}
 _cancel = threading.Event()  # người dùng bấm Huỷ khi đang tải (cancel())
-_verified: dict[tuple[str, int, int, str], bool] = {}  # (đường dẫn, cỡ, giờ sửa, SHA-256 ghim) -> file đúng bản ghim
-
-
-_checks: queue.Queue[tuple[tuple[str, int, int, str], Path, str]] = queue.Queue()  # việc băm chờ luồng nền
-_checking: set[tuple[str, int, int, str]] = set()  # khoá đã xếp, chưa băm xong
-_checker: threading.Thread | None = None
-
-
-def _check_loop() -> None:
-    """Luồng nền duy nhất băm các file `file_state` xếp vào: đường hỏi của giao diện không bao giờ băm (0,71 GiB là 0,5 s máy nhanh, ~7 s ổ
-    quay). Băm KHÔNG giữ `_lock`; chỉ lấy khoá để ghi kết quả."""
-    while True:
-        key, path, sha256 = _checks.get()
-        try:
-            ok = studio_setup._sha256(path) == sha256
-        except OSError:
-            ok = False
-        with _lock:
-            _verified[key] = ok
-            _checking.discard(key)
-
-
-def file_state(item: Any, path: Path, wait: bool = False) -> bool | None:
-    """File `path` đã nằm đúng bản `item` ghim chưa (cỡ + SHA-256), nhớ theo (đường dẫn, cỡ, giờ sửa); thiếu / sai cỡ thì False, khỏi băm.
-    Chưa biết: `wait` thì băm ngay ở luồng gọi (luồng tải nền), không thì xếp việc cho luồng băm nền (mỗi khoá một lần) và trả None."""
-    global _checker
-    try:
-        stat = path.stat()
-    except OSError:
-        return False
-    if stat.st_size != item.size:
-        return False
-    key = (str(path), stat.st_size, stat.st_mtime_ns, item.sha256)
-    with _lock:
-        if key in _verified:
-            return _verified[key]
-        if not wait:
-            if key not in _checking:
-                _checking.add(key)
-                _checks.put((key, path, item.sha256))
-                if _checker is None or not _checker.is_alive():
-                    _checker = threading.Thread(target=_check_loop, name="music-module-check", daemon=True)
-                    _checker.start()
-            return None
-    ok = studio_setup._sha256(path) == item.sha256
-    with _lock:
-        _verified[key] = ok
-    return ok
-
-
-def file_ok(item: Any, path: Path) -> bool:
-    """`file_state` chờ băm xong (chỉ gọi từ luồng nền, vd `_run`)."""
-    return bool(file_state(item, path, wait=True))
-
-
-def wait_checks(timeout: float | None = None) -> bool:
-    """Chờ luồng băm nền làm hết việc đã xếp (bài thử, `timeout` giây); True nếu đã hết."""
-    end = None if timeout is None else time.monotonic() + timeout
-    while True:
-        with _lock:
-            if not _checking:
-                return True
-        if end is not None and time.monotonic() >= end:
-            return False
-        time.sleep(0.01)
-
-
-def _remember_ok(item: Any, path: Path) -> None:
-    """Vừa tải xong và `studio_setup.download` đã kiểm SHA-256: nhớ luôn để khỏi băm lại."""
-    try:
-        stat = path.stat()
-    except OSError:
-        return
-    with _lock:
-        _verified[(str(path), stat.st_size, stat.st_mtime_ns, item.sha256)] = True
 
 
 @dataclass
@@ -165,34 +82,16 @@ class Component:
     external: bool = False  # máy đã có sẵn không do mô-đun (Studio, máy dev): không tải, không "cũ"
     blocked: str = ""  # lý do không tải được trên máy này (tiếng Việt), rỗng nếu tải được
     downloads: list[Any] = field(default_factory=list)
-    target: Path | None = None  # thư mục đặt file khi không phải thư mục gói model nhạc
-
-    def need(self, exact: bool = False) -> int:
-        """Byte còn phải tải: chỉ các file chưa nằm đúng bản ghim ở `target`. Phần không có thư mục đích riêng thì nguyên `size`. Không `exact`
-        (đường giao diện): file chưa băm xong tính là cần tải (ước lượng, xem `checking`), việc băm sang luồng nền; `exact` (luồng tải) thì
-        băm ngay."""
-        if self.target is None or not self.downloads:
-            return self.size
-        return sum(item.size for item in self.downloads if file_state(item, self.target / item.name, wait=exact) is not True)
-
-    def checking(self) -> bool:
-        """Còn file của phần này đang chờ luồng nền băm (cỡ `need()` lúc này là ước lượng)."""
-        if self.target is None or not self.downloads:
-            return False
-        return any(file_state(item, self.target / item.name) is None for item in self.downloads)
 
 
 # ---- cấu hình -----------------------------------------------------------------------------------------------------------------
-def configure(folder: Path | str | None, after_install: Callable[[], None] | None = None,
-              studio_installed: Callable[[], bool] | None = None) -> None:
+def configure(folder: Path | str | None, after_install: Callable[[], None] | None = None) -> None:
     """Thư mục nhạc của app (server.py: <dữ liệu app>/music). `after_install`: việc làm sau khi tải/cập nhật xong (phân tích nốt bài chưa
-    phân tích, đo độ to bù); chạy ở luồng tải, không bao giờ tự phân tích lại bài đã có kết quả. Đã có thư viện tải trước đó thì đăng ký ngay.
-    `studio_installed`: máy đã cài Studio chưa (phần tuỳ chọn "Học sinh không khí cảnh" chạy trong Studio, xem `scene_student_status`)."""
-    global _folder, _after, _studio_installed
+    phân tích, đo độ to bù); chạy ở luồng tải, không bao giờ tự phân tích lại bài đã có kết quả. Đã có thư viện tải trước đó thì đăng ký ngay."""
+    global _folder, _after
     with _lock:
         _folder = Path(folder) if folder is not None else None
         _after = after_install
-        _studio_installed = studio_installed
         _state.update(downloading=False, done=0, total=0, error="", cancelled=False)
         activate_libs()
 
@@ -327,45 +226,8 @@ def install_libs_part(progress: Callable[[int, int], None], cancelled: Callable[
     activate_libs()
 
 
-def scene_student_part() -> Component:
-    """Phần TUỲ CHỌN "Học sinh không khí cảnh" (music_scene_student.py, 0,71 GiB): đoán hình không khí trong chương cho nhạc nền. Chỉ vào `_components()`
-    khi người dùng bấm tải nó (`start(scene=True)`) hay nó đã nằm trên máy - thiếu nó mô-đun vẫn "ready", người dùng không bị đòi tải. Chưa có
-    REVISION hay bị tắt: `blocked` nêu lý do, `downloads` rỗng."""
-    from . import music_scene_student as scene
-
-    return Component("scene_q06", "Học sinh không khí cảnh", scene.model_pin(), scene.total_bytes(), scene.present(),
-                     external=bool(os.environ.get(scene.ENV_DIR)), blocked=scene.cannot_download(), downloads=scene.model_downloads(),
-                     target=scene.package_dir())
-
-
-def scene_student_offered() -> str:
-    """Rỗng nếu máy này dùng được phần tuỳ chọn (tiến trình này có torch, hoặc đã cài Studio để chạy nó); không thì lý do (tiếng Việt)."""
-    from . import music_scene_student as scene
-
-    if scene.dependencies_ok() or (_studio_installed is not None and _studio_installed()):
-        return ""
-    return "cần cài Studio: bộ này chạy trong Studio của máy tính"
-
-
-def scene_student_status() -> dict[str, Any]:
-    """Cho giao diện: phần tuỳ chọn đã có chưa (`state` current / outdated / missing), cỡ tải, `blocked` (rỗng nếu tải được), và `offered` (máy
-    dùng được nó; không thì `reason` nói vì sao - giao diện không hiện nút tải mà nói lý do)."""
-    part = scene_student_part()
-    reason = scene_student_offered()
-    state = judge_parts([part], _read_stamp())[part.id]
-    # `total`: cỡ lần bấm "Tải" của riêng phần này tính cả những phần khác của Phân tích nhạc còn thiếu (ffmpeg, thư viện, model nghe nhạc) -
-    # máy chưa tải Phân tích nhạc thì bấm tải model theo đoạn là tải luôn chúng (`start(scene=True)`). `checking`: còn file cũ đang được băm ở
-    # luồng nền, `bytes` / `total` lúc này là ước lượng (xem `file_state`).
-    components = _components(True)
-    needed = _needed(components, _judge(components))
-    total = sum(item.need() for item in needed)
-    return {"state": state, "bytes": part.size if state == "current" else part.need(), "total": total, "blocked": part.blocked,
-            "external": part.external, "offered": not reason, "reason": reason, "checking": any(item.checking() for item in needed)}
-
-
 # ---- các phần của máy này -----------------------------------------------------------------------------------------------------
-def _components(scene: bool = False) -> list[Component]:
-    """`scene`: có cả phần tuỳ chọn "Học sinh không khí cảnh" (người dùng vừa bấm tải nó); phần ấy đã nằm trên máy thì luôn có mặt."""
+def _components() -> list[Component]:
     backend = music_student.planned_backend()
     out: list[Component] = []
     external_ffmpeg = ffmpeg_setup.external()
@@ -379,9 +241,6 @@ def _components(scene: bool = False) -> list[Component]:
     out.append(Component("model", "Model nghe nhạc", music_student.model_pin(backend), sum(item.size for item in files),
                          music_student._complete(directory, backend), external=pinned_elsewhere,
                          blocked=music_student.cannot_download() if not pinned_elsewhere else "", downloads=files))
-    extra = scene_student_part()
-    if scene or (extra.present and not extra.external):
-        out.append(extra)
     return out
 
 
@@ -432,7 +291,7 @@ def status() -> dict[str, Any]:
             state = "unsupported"
         else:
             state = "outdated" if installed_any else "missing"
-        total = _state["total"] if state == "downloading" else sum(part.need() for part in needed)
+        total = _state["total"] if state == "downloading" else sum(part.size for part in needed)
         return {
             "state": state, "done": _state["done"] if state == "downloading" else 0, "total": total,
             "error": _state["error"], "ready": state in ("ready", "outdated") and music_local.analyzer_available(),
@@ -440,24 +299,22 @@ def status() -> dict[str, Any]:
             "parts": [{"id": part.id, "label": part.label, "bytes": part.size, "state": judged[part.id], "external": part.external}
                       for part in components],
             "outdatedParts": [part.label for part in behind] if state in ("outdated", "downloading") else [],
-            "outdatedBytes": sum(part.need() for part in behind),
+            "outdatedBytes": sum(part.size for part in behind),
             "restart": bool((pending := _lib_next()) is not None and pending.is_dir() and _lib().is_dir() and _libs_loaded()),
-            "analysing": _job == "analysing", "metered": False, "scene": scene_student_status(),
+            "analysing": _job == "analysing", "metered": False,
             "cancelled": bool(_state["cancelled"]), "cancellable": True,
-            # Cỡ total / outdatedBytes còn là ước lượng (file cũ đang được băm ở luồng nền, xem `file_state`).
-            "checking": state != "downloading" and any(part.checking() for part in needed),
         }
 
 
 # ---- tải ---------------------------------------------------------------------------------------------------------------------
-def start(scene: bool = False) -> None:
+def start() -> None:
     """Bắt đầu tải (hay cập nhật chỉ những phần có ghim đổi) ở luồng nền. Gọi nhiều lần cũng chỉ một lượt; đang lỗi thì gọi lại là thử lại; đã
-    đủ thì không làm gì. `scene`: tải cả phần tuỳ chọn "Học sinh không khí cảnh" (người dùng bấm riêng nút ấy)."""
+    đủ thì không làm gì."""
     global _thread
     with _lock:
         if _state["downloading"] and _thread is not None and _thread.is_alive():
             return
-        components = _components(scene)
+        components = _components()
         needed = _needed(components, _judge(components))
         _state.update(error="", done=0, cancelled=False)
         _cancel.clear()
@@ -467,7 +324,7 @@ def start(scene: bool = False) -> None:
         if reason:
             _state["error"] = reason[0].upper() + reason[1:] + "."
             return
-        _state.update(downloading=True, total=sum(part.need() for part in needed))
+        _state.update(downloading=True, total=sum(part.size for part in needed))
         _thread = threading.Thread(target=_run, args=(needed,), name="music-module", daemon=True)
         _thread.start()
 
@@ -503,10 +360,7 @@ def _run(needed: list[Component]) -> None:
         assert _folder is not None
         finished = 0
         stamp = _read_stamp()
-        needs = [part.need(exact=True) for part in needed]  # trước khi tải: file đã đúng bản ghim không tính, không tải lại
-        with _lock:
-            _state["total"] = sum(needs)  # `start` chỉ có ước lượng (không băm ở luồng gọi)
-        for part, need in zip(needed, needs):
+        for part in needed:
 
             def progress(done: int, _total: int = 0, base: int = finished) -> None:
                 """`done` = byte đã tải của riêng phần này; thanh tiến độ chung = các phần đã xong + phần đang tải."""
@@ -518,18 +372,14 @@ def _run(needed: list[Component]) -> None:
             elif part.id == "libs":
                 _install_libs(progress, _cancel.is_set)
             else:
-                directory = part.target if part.id == "scene_q06" else music_student.package_dir()
+                directory = music_student.package_dir()
                 assert directory is not None
                 directory.mkdir(parents=True, exist_ok=True)
                 done = 0
                 for item in part.downloads:
-                    if part.target is not None and file_ok(item, directory / item.name):
-                        continue
                     studio_setup.download(item, directory / item.name, lambda have, _t, offset=done: progress(offset + have), _cancel.is_set)
-                    if part.target is not None:
-                        _remember_ok(item, directory / item.name)
                     done += item.size
-            finished += need
+            finished += part.size
             stamp[part.id] = part.pin
             _write_stamp(stamp)
             with _lock:

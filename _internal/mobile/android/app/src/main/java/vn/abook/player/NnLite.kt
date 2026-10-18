@@ -22,7 +22,7 @@ class StudentItem(
 )
 
 /**
- * NN-lite - bản Kotlin của `music_nnlite.py` (Corpus research/music/SPEC_nnlite_app.md): học sinh nhỏ (2 MB, chỉ chữ) cho nhạc nền theo cảnh khi máy không có gói q06.
+ * NN-lite - bản Kotlin của `music_nnlite.py` (Corpus research/music/SPEC_nnlite_app.md): học sinh nhỏ (2 MB, chỉ chữ) cho nhạc nền theo cảnh.
  * Cùng file `nnlite.bin` (asset `abook/webui/assets/nnlite.bin`, dùng chung với máy tính) và PHẢI ra cùng số: bộ ví dụ `tests/fixtures/music/nnlite/` (token và ô băm
  * tuyệt đối, đặc trưng sai < 1e-12, 4 số và mục chương sai < 1e-3).
  *

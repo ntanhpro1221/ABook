@@ -11,7 +11,7 @@ from typing import Any
 import pytest
 
 import abook.pipeline as pipeline_module
-from abook.webui import music_moods, music_plan, music_scenes
+from abook.webui import music_moods, music_nnlite, music_plan, music_scenes
 from tests.test_webui_listen_and_sync import make_project
 
 # Băm SHA-256 (UTF-8) của PROMPT trong LLM_Train/music/segment_mood_llm.py lúc viết: lời gọi đã được đo bằng đúng chuỗi này.
@@ -358,7 +358,8 @@ def test_the_llm_never_changes_where_the_scenes_split() -> None:
     assert all(scene["moodSource"] == "chapter" for scene in music_scenes.chapter_scenes(script, moods))
 
 
-def test_a_built_plan_uses_the_moods_file_and_a_kept_plan_keeps_its_scenes(tmp_path: Path) -> None:
+def test_a_built_plan_uses_the_moods_file_and_a_kept_plan_keeps_its_scenes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(music_nnlite, "model", lambda: None)  # đường không học sinh (khi có NN-lite: test_music_studio_nnlite.py)
     project = make_project(tmp_path)
     near = lambda _v, _a: [{"link": "https://x/calm.mp3", "valence": 0.0, "arousal": 0.0, "family": "ambient"}]  # noqa: E731
     lookup = lambda links: {link: {"title": "t"} for link in links}  # noqa: E731
