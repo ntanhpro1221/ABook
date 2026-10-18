@@ -72,6 +72,14 @@ class TrashPending:
         with self._lock:
             return list(dict.fromkeys(self._roots.values()))
 
+    def held(self, root: Path) -> list[Path]:
+        """Đường gốc của các cuốn còn nằm chờ "Hoàn tác" trong thư viện `root` (thứ gì đi theo sách - như chương đã ghép của lượt xuất - phải giữ tới hết hạn)."""
+        try:
+            folders = [child for child in (root / FOLDER).iterdir() if child.is_dir() and _TOKEN.fullmatch(child.name)]
+        except OSError:
+            return []
+        return [Path(meta["original"]) for meta in map(self._meta, folders) if meta is not None]
+
     def fits(self, root: Path, path: Path) -> bool:
         """Đổi tên được từ `path` vào chỗ chờ của `root` không: thư viện còn đó và cùng ổ (khác ổ thì đổi tên là CHÉP - không
         tức thì, không hoàn tác gọn được) và Thùng rác của ổ nhận cuốn này mà Windows không hỏi "xoá hẳn". Không thì nơi gọi
