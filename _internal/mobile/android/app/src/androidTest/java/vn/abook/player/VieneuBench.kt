@@ -212,6 +212,8 @@ class VieneuBench(private val args: Map<String, String>, private val pack: File,
         private val spinning = arg("spin", "0") == "1"
         /** Nano flow steps (`steps=` times other step counts); the app default otherwise. */
         private val nanoSteps = arg("steps", VieneuNano.STEPS.toString()).toInt()
+        /** `cfg=all` guides every step (the schedule before 19-10); the app's default otherwise. */
+        private val nanoCfgEnds = arg("cfg", if (VieneuNano.CFG_ENDS) "all" else "interval") == "all"
         private val sentences = manifest.getJSONArray("sentences")
         private val nanoSentences = manifest.optJSONArray("nano_sentences")
         private val turboSpeaker by lazy { RawFiles.floats(bundle("turbo_speaker_emb.f32")) }
@@ -226,6 +228,7 @@ class VieneuBench(private val args: Map<String, String>, private val pack: File,
 
         fun describe(): JSONObject = JSONObject().put("model", model).put("threads", threads).put("ep", backend.name.lowercase()).put("spin", spinning)
             .put("steps", if (nano != null) nanoSteps else JSONObject.NULL)
+            .put("cfg", if (nano != null) (if (nanoCfgEnds) "all" else "interval") else JSONObject.NULL)
             .put("headThreads", if (turbo != null) headThreads else JSONObject.NULL).put("codecThreads", if (turbo != null) codecThreads else JSONObject.NULL)
 
         fun run(i: Int): JSONObject {
@@ -241,7 +244,7 @@ class VieneuBench(private val args: Map<String, String>, private val pack: File,
                     .put("headsAndSamplingS", t.headsAndSampling / 1e9).put("codecS", t.codec / 1e9).put("rms", rms(r.audio)).put("desktopAudioS", case.desktopAudio.size / VieneuTurbo.SAMPLE_RATE.toDouble())
             } else {
                 val meta = nanoSentences!!.getJSONObject(i)
-                val r = nano!!.synthesize(meta.getString("ph"), nanoSpeaker, nanoStyle, RawFiles.floats(bundle("nano_noise_$i.f32")), 0, steps = nanoSteps)
+                val r = nano!!.synthesize(meta.getString("ph"), nanoSpeaker, nanoStyle, RawFiles.floats(bundle("nano_noise_$i.f32")), 0, steps = nanoSteps, cfgEnds = nanoCfgEnds)
                 val audioS = r.audio.size / VieneuNano.SAMPLE_RATE.toDouble()
                 val t = r.timings
                 row.put("frames", r.flowFrames).put("audioS", audioS).put("computeS", t.total / 1e9).put("rtf", t.total / 1e9 / audioS).put("firstAudioS", t.total / 1e9)

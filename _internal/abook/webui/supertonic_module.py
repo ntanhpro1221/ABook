@@ -7,7 +7,8 @@ Các phần (`NEEDS`):
 - `g2p` sea-g2p: CHÍNH phần của mô-đun VieNeu (vieneu_module.g2p_part) - chỉ để đổi số / ngày / giờ thành chữ trước khi đọc, vì Supertonic đọc số
   kém nhất. Máy không tải được (không phải Windows 64-bit) thì bỏ phần này, giọng vẫn đọc nguyên chữ.
 - `supertonic` file model + mười file giọng trên Hugging Face, ghim commit + SHA-256 từng file (`SOURCE`, `FILES`). Bộ khử nhiễu là bản int8 "top30"
-  app làm từ bản fp32 của hãng (thay được trên 144 clip thử, 18-10; repo của app, voice_module.APP_MODELS) - bản fp32 không tải nữa.
+  app làm từ bản fp32 của hãng (thay được trên 144 clip thử, 18-10; repo của app, voice_module.APP_MODELS) - bản fp32 không tải nữa. Bộ tạo sóng
+  (vocoder) cũng là bản int8 của app (thay được cả hai bậc, 19-10; nhanh gấp đôi, 101 -> 45 MB).
 - `supertonic_fast` ("Bản nhanh hơn", `FAST_FILES`): bộ khử nhiễu int8 "fast" cho bậc "Nhanh hơn" của "Tốc độ giọng trên máy" (voice_speed.py). Chỉ tải
   khi bậc ấy được chọn: lựa chọn này chỉ hiện trên thẻ khi đó (hay khi đã tải).
 
@@ -48,7 +49,8 @@ FILES = (
     _file("onnx/text_encoder.onnx", "c7befd5ea8c3119769e8a6c1486c4edc6a3bc8365c67621c881bbb774b9902ff", 36_416_150),
     Download("onnx/vector_estimator.onnx", voice_module.APP_MODELS + "supertonic3-int8/top30/vector_estimator.onnx",
              "30ca11e17f99f2ccb33b7d8ec7cc51df9c86c7f2df3ede6a2107b5f505d526f0", 115_904_311),
-    _file("onnx/vocoder.onnx", "085de76dd8e8d5836d6ca66826601f615939218f90e519f70ee8a36ed2a4c4ba", 101_424_195),
+    Download("onnx/vocoder.onnx", voice_module.APP_MODELS + "supertonic3-int8/vocoder/vocoder.onnx",
+             "a81b861b87697404ae897b0824801691ecaac59f6801b70c6b55b9432aa46059", 45_162_003),
     _file("onnx/tts.json", "42078d3aef1cd43ab43021f3c54f47d2d75ceb4e75f627f118890128b06a0d09", 8_253),
     _file("onnx/unicode_indexer.json", "9bf7346e43883a81f8645c81224f786d43c5b57f3641f6e7671a7d6c493cb24f", 277_676),
     _file("config.json", "4099082b107a9d4029849ac76b89eca65e03732660969c2babe5bf308c7357f2", 174),

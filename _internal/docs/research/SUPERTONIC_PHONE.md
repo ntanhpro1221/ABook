@@ -189,3 +189,54 @@ Nano's int8 estimator costs about 0.74x fp32 per step (6.25 s / 10 steps vs 6.77
 about 7.4 fp32 steps, and the decoder (fp32, ~1.5 s = 19 %) does not change: the fast tier was 6 % faster, sounded worse and downloaded
 48 MB more. Nano therefore has one tier, like Turbo. A Nano fast tier would need int8 at 8 steps or fewer, which failed the fast-tier rule.
 Reproduce: `S/fastvoice/phone_fast.sh` (bench args `estimator=`, `steps=` in `SupertonicBench` / `VieneuBench`).
+
+## 19-10: an int8 vocoder for Supertonic, a lighter Nano (R6)
+
+The vocoder was the last fp32 graph and about 20 % of the phone time. Static QDQ int8 (weights int8 per channel, activations uint8,
+QLinearConv - the dynamic ConvInteger path is 8x slower, see 18-10), calibrated on the development clips only. Sensitivity was ranked by
+the mel distance of the output when one convolution alone is quantized (waveform SNR ranked the output convolution too low); the 10 worst
+convolutions stay fp32. 101 MB -> 45 MB.
+
+Listening test (the R2 set: 24 paragraphs, voices F1/F2/M4, 2 seeds, paired bootstrap by paragraph, CI90), against the shipped tier with
+the fp32 vocoder:
+
+| tier | dCER (pp) | dUTMOS | paragraphs worse > 5 pp | rule |
+|---|---|---|---|---|
+| quality (top30, 8 steps) | -0.01 [-0.05; +0.02] | -0.018 [-0.040; +0.004] | 0/24 | replace: PASS |
+| fast (fast, 5 steps) | -0.01 [-0.05; +0.03] | -0.021 [-0.059; +0.019] | 0/24 | replace: PASS |
+
+A93, paired in one session (4 threads, warm median of 3 paragraphs, screen off at night - the phone was slower than in the morning
+tables, so read the ratios):
+
+| tier | fp32 vocoder | int8 vocoder | ratio | vocoder ms (fp32 -> int8) | peak RSS |
+|---|---|---|---|---|---|
+| quality | 2.04 | 1.87 | 0.92 | ~3200 -> ~1500 | 569 -> 528 MB |
+| fast | 0.96 | 0.83 | 0.87 | ~2700 -> ~1570 | 530 -> 493 MB |
+
+The vocoder takes half the time with no measurable loss, so it replaces the fp32 one in both tiers and in Studio/exports.
+Reproduce: `S/fastvoice/phone_voc.sh` (pushes either vocoder as `onnx/vocoder.onnx`; no bench change needed).
+
+### Nano: guidance in a limited interval + an int8 codec decoder
+
+Nano runs the estimator twice per step (classifier-free guidance, weight 3). Guiding only part of the trajectory is training-free
+(Kynkäänniemi et al. 2024, "Applying guidance in a limited interval improves sample and distribution quality in diffusion models"). On the
+development set, at 8 steps (dCER vs the shipped schedule, pp): guidance on steps 1-6 +0.28, 2-7 +0.36, 0-5 +0.73, 0-4 +0.82, 0-3 +2.83
+(fails); reusing the previous step's (cond - uncond) on odd steps +1.07. Dropping the guidance of the last steps hurts, of the first step
+much less. The codec decoder was quantized like the Supertonic vocoder (static QDQ, QLinearConv/QLinearMatMul, 6 of 34 weighted nodes kept
+fp32 by output SNR; 99 MB -> 41 MB).
+
+Test set (24 paragraphs x Adam / Ái Hân / Mỹ Duyên x 2 seeds), guidance on steps 1-6 + int8 decoder against fp32 guided on every step:
+dCER +0.23 [-0.00; +0.48], dUTMOS +0.038, 0/24 paragraphs worse > 5 pp: passes the replace rule. (Reusing the guidance on odd steps
+passes only the fast-tier rule, UTMOS -0.064, and Nano has no fast tier.) An independent audio check (clicks by LPC residual, energy above
+8 kHz, noise in silences, loudness) found nothing new against the reference.
+
+A93, paired, 4 threads, warm, 5 sentences (screen off at night), order base / new / new / base:
+
+| | estimator calls per chunk | long sentence (7 s) RTF | estimator s | decoder s | all 5 sentences RTF | peak RSS |
+|---|---|---|---|---|---|---|
+| fp32 decoder, guided every step | 16 | 1.225 / 1.225 | 6.8 | 1.5 | 1.30 / 1.32 | 491-498 MB |
+| int8 decoder, guided on steps 1-6 | 14 | 1.023 / 1.023 | 6.0 | 0.9 | 1.10 / 1.10 | 457 MB |
+
+16 % faster at the same quality, so it replaces the shipped schedule and decoder (desktop `vieneu_engine.NANO_CFG_ENDS`, phone
+`VieneuNano.CFG_ENDS`). Nano still reads slower than real time on this phone; the remaining time is the estimator itself.
+Reproduce: `S/fastvoice/phone_nano_r6.sh` (bench arg `cfg=all` for the old schedule).

@@ -16,8 +16,8 @@ from .music_module import Component
 
 STAMP_FILE = "module.json"
 DOWNLOADS = "dl"
-# Model do app tự làm từ model của hãng (bộ khử nhiễu int8 của Supertonic, THIRD_PARTY.md): repo Hugging Face của app, ghim commit.
-APP_MODELS = "https://huggingface.co/NGDtuanh/abook-music-student/resolve/f42d118d77ea3d9391b59071b6a455ecfe420fa3/"
+# Model do app tự làm từ model của hãng (bộ khử nhiễu + bộ tạo sóng int8 của Supertonic, bộ giải mã int8 của Nano; THIRD_PARTY.md): repo Hugging Face của app, ghim commit.
+APP_MODELS = "https://huggingface.co/NGDtuanh/abook-music-student/resolve/b784077fa29764e6eff0b093721627e1f53add93/"
 
 
 def pin(files: tuple[studio_setup.Download, ...]) -> str:

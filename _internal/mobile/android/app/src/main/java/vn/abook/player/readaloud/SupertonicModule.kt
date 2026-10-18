@@ -19,7 +19,7 @@ class SupertonicInstalled(val model: File, val ortFolder: File, val g2p: Pair<Fi
  * itself. After a download the phone measures itself for a few seconds; slower than listening -> the card points to "Làm trước" or an online
  * voice (never a silent switch). Removing it takes its model, and the shared runtime only when no installed module needs it.
  *
- * The vector estimator is the app's int8 "top30" one (replaces upstream fp32, desktop the same). "Bản nhanh hơn" ([FAST_CHOICE]: the "fast" int8
+ * The vector estimator is the app's int8 "top30" one and the vocoder the app's int8 one (both replace upstream fp32, desktop the same). "Bản nhanh hơn" ([FAST_CHOICE]: the "fast" int8
  * estimator in `fast/`) is the fast tier of "Tốc độ giọng trên máy" ([VoiceSpeed]): offered only when that setting wants it (or already here), never
  * measured (the measurement is of the quality tier), removed with the voice.
  */
@@ -127,7 +127,7 @@ class SupertonicModule(
             file("onnx/duration_predictor.onnx", "c3eb91414d5ff8a7a239b7fe9e34e7e2bf8a8140d8375ffb14718b1c639325db", 3_700_147),
             file("onnx/text_encoder.onnx", "c7befd5ea8c3119769e8a6c1486c4edc6a3bc8365c67621c881bbb774b9902ff", 36_416_150),
             appFile("$MODEL/onnx/vector_estimator.onnx", "supertonic3-int8/top30/vector_estimator.onnx", "30ca11e17f99f2ccb33b7d8ec7cc51df9c86c7f2df3ede6a2107b5f505d526f0", 115_904_311, "Giọng Supertonic"),
-            file("onnx/vocoder.onnx", "085de76dd8e8d5836d6ca66826601f615939218f90e519f70ee8a36ed2a4c4ba", 101_424_195),
+            appFile("$MODEL/onnx/vocoder.onnx", "supertonic3-int8/vocoder/vocoder.onnx", "a81b861b87697404ae897b0824801691ecaac59f6801b70c6b55b9432aa46059", 45_162_003, "Giọng Supertonic"),
             file("onnx/tts.json", "42078d3aef1cd43ab43021f3c54f47d2d75ceb4e75f627f118890128b06a0d09", 8_253),
             file("onnx/unicode_indexer.json", "9bf7346e43883a81f8645c81224f786d43c5b57f3641f6e7671a7d6c493cb24f", 277_676),
             file("config.json", "4099082b107a9d4029849ac76b89eca65e03732660969c2babe5bf308c7357f2", 174),

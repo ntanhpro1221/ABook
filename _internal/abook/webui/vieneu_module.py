@@ -84,7 +84,9 @@ NANO_FILES = (
              "20fd7fa60006d0a48ee82e0451b3f920d2052588c083c756cce669f3947c0a68", 727_809),
     Download("vector_estimator.onnx", _NANO + "vector_estimator.onnx",
              "c6c1d4398ca35d3ad1bd3f0459413d1b975d09e7f2f3a2b4493a7b92bbf6ce93", 155_132_418),
-    Download("codec_decoder.onnx", _NANO + "codec_decoder.onnx", "b0ab15e7828a39d53679e25b1ba4ba415a61311307202a6323130b9e1cc3029d", 99_319_941),
+    # Bộ giải mã int8 của app (giữ 6 nút nhạy ở fp32), đạt phép thử "thay được" cùng lịch CFG bỏ hai đầu (vieneu_engine.NANO_CFG_ENDS).
+    Download("codec_decoder.onnx", voice_module.APP_MODELS + "vieneu-nano-int8/codec_decoder.onnx",
+             "88a1586a4dff8cf2a5a9a359115687c48b38a29eb9d21e25add964f370a47f94", 42_609_995),
 )
 # Bản tăng tốc (readaloud/vieneu_gguf.py): server audio.cpp v0.9.1 tự build nhắm AVX2 (MSVC, không AVX-512: trên Zen4 nhanh hơn bản AVX-512 ~1,25 lần và chạy được
 # trên mọi máy có AVX2; đổi binary là đổi audio nên ghim cả sha256) + GGUF q8_0 của VieNeu Turbo. Nâng: build lại, đăng lên nơi chứa, đổi URL + băm + cỡ, đo lại.

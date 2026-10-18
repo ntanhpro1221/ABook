@@ -340,7 +340,7 @@ abstract class VoiceModule(
         private const val BENCH = "benchmark.json"
         /** At or above this a voice cannot be listened to live (desktop vieneu_module.SLOW_RTF). */
         const val SLOW_RTF = 0.8
-        /** The app's own model files on Hugging Face at one commit (desktop voice_module.APP_MODELS): int8 vector estimators of Supertonic and Nano. */
-        const val APP_MODELS = "https://huggingface.co/NGDtuanh/abook-music-student/resolve/f42d118d77ea3d9391b59071b6a455ecfe420fa3/"
+        /** The app's own model files on Hugging Face at one commit (desktop voice_module.APP_MODELS): Supertonic's int8 vector estimators and vocoder, Nano's int8 codec decoder. */
+        const val APP_MODELS = "https://huggingface.co/NGDtuanh/abook-music-student/resolve/b784077fa29764e6eff0b093721627e1f53add93/"
     }
 }
