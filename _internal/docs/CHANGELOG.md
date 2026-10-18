@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- "Xuất sách nói" (máy tính và điện thoại): bấm "Huỷ" giữa lúc đang đọc là dừng ngay, kể cả khi giọng Edge đang đọc dở một đoạn - thử trên máy tính: "Đã dừng" hiện chừng 1 giây sau khi bấm (trước đây 7,1 giây, chờ đọc xong đoạn). Đoạn đọc dở không bị giữ lại nửa chừng; các chương đã xong vẫn được giữ để bạn xuất lại làm tiếp. Huỷ lúc kiểm âm lượng cuối của M4B nay cũng dừng thật, không còn ghi file.
+- Mất mạng giữa lúc xuất: app báo "Đang chờ mạng…" và tự làm tiếp khi mạng về, chỉ dừng khi mất mạng liền hơn 30 giây. Thử tắt mạng 10 giây: bản xuất chạy tiếp tới xong (trước đây mất mạng chừng 3 giây là dừng cả lượt).
+- "còn khoảng …" chỉ hiện sau khi máy đã đọc vài đoạn mới (ít nhất 3 đoạn và 20 giây) và chỉ tính phần chưa đọc sẵn: thử lại, lần ước đầu là 5 giây khi thật còn 4 giây (trước đây "còn khoảng 4 phút" khi thật còn 51 giây).
+- Hộp "Xuất sách nói" tính thời gian nghe theo độ dài thật của các đoạn bạn đã nghe hay đã đọc sẵn: cuốn thử báo "khoảng 9 phút" cho file dài 8 phút 43 giây (trước đây "khoảng 10 phút"), và nói rõ phần đã có, như "Đã đọc sẵn 1/4 chương - phần này xuất ngay, không đọc lại."
+- Lượt xuất bỏ dở không còn chiếm chỗ mãi: chương tạm của nó được dọn khi bạn xoá cuốn sách, hay khi mở app sau 7 ngày không ai đụng tới (lượt đang chạy không bao giờ bị dọn). Trước đây mỗi giờ nghe bỏ dở để lại chừng 80 MB.
+
 ## [0.4.95] - 2026-10-18
 
 ### Máy tính

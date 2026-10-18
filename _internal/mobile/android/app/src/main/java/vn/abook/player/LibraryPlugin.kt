@@ -85,7 +85,7 @@ class LibraryPlugin : Plugin() {
         TextImports.sweep() // thư mục tạm của lần "Thêm sách từ file…" bị bỏ dở lần trước
         io.execute { BookShare.sweep(context.cacheDir) } // file đã gửi qua "Chia sẻ…" lần trước: app nhận đã đọc xong từ lâu
         io.execute { runCatching { Store.sweepTrash(everything = true) } } // cuốn "Xoá khỏi điện thoại" còn nằm chờ Hoàn tác từ lần trước: nút ấy đã mất, xoá hẳn
-        io.execute { runCatching { ListenExports.sweep(context) } } // chương tạm của "Xuất sách nói" cho cuốn đã xoá
+        io.execute { runCatching { ListenExports.sweep(context) } } // chương tạm của "Xuất sách nói" cho cuốn đã xoá, hay bỏ dở quá 7 ngày
         // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
         if (prefs.getBoolean(SHARE_KEY, false)) io.execute { runCatching { ShareService.enable(context) } }
     }
@@ -1232,7 +1232,8 @@ class LibraryPlugin : Plugin() {
     private fun readingOf(id: String, voice: String) = ListenExport.Reading(voice, ReadAloud.originNow(id), ReadAloud.readingsOf(id))
 
     /**
-     * Cho hộp "Xuất sách nói": số chương, số chữ, giờ nghe, ước thời gian máy làm (giọng đã đo tốc độ), số chương đã làm sẵn từ lần trước và chỗ trống cần. Đọc chữ nên chạy ở luồng nền.
+     * Cho hộp "Xuất sách nói": số chương, số chữ, giờ nghe (từ clip đã có + phần chưa có ước theo tốc độ đo), ước thời gian máy làm (giọng đã đo tốc độ), phần đã có sẵn
+     * (chương đã ghép + clip trong bộ đệm) và chỗ trống cần. Đọc chữ nên chạy ở luồng nền.
      * `music`: ô "Kèm nhạc nền" (thiếu = mặc định theo cuốn); kết quả thêm `music` {available, enabled} và `rereads` (đoạn phải đọc lại vì đổi nhạc).
      */
     @PluginMethod
@@ -1248,7 +1249,7 @@ class LibraryPlugin : Plugin() {
             val reading = readingOf(id, voice)
             val cache = ReadAloud.cache()
             val plan = ListenExport.plan(chapters, reading, ListenExport.workFolder(ListenExports.workRoot(context), id), speed,
-                music = { MusicExport.audible(music, it) }, cached = { text -> cache.contains(voice, text, reading.origin, reading.readings) }, extra = extra)
+                music = { MusicExport.audible(music, it) }, cachedMs = { text -> cache.durationMs(voice, text, reading.origin, reading.readings) }, extra = extra)
             call.resolve(JSObject.fromJSONObject(plan.toJson().put("music", JSONObject().put("available", available).put("enabled", enabled))))
         }
     }
@@ -1462,10 +1463,13 @@ class LibraryPlugin : Plugin() {
         // Thiếu mã thì từ chối (Store.deletableBookDir) - trước đây `?: ""` biến thành xoá CẢ thư mục sách.
         // Cuốn nằm chờ UNDO_SECONDS giây (TrashPending) rồi mới xoá hẳn; `undo` là mã để "Hoàn tác" (không có khi xoá thẳng).
         val undo = Store.holdBook(call.getString("id").orEmpty())
+        // Chương tạm của "Xuất sách nói" bỏ dở đi theo sách khi sách bị xoá hẳn (ListenExports.sweep - cuốn đang xuất không bị đụng).
         if (undo != null) {
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
-                { io.execute { runCatching { Store.sweepTrash() } } }, (TrashPending.UNDO_SECONDS + 1) * 1000L,
+                { io.execute { runCatching { Store.sweepTrash() }; runCatching { ListenExports.sweep(context) } } }, (TrashPending.UNDO_SECONDS + 1) * 1000L,
             )
+        } else {
+            io.execute { runCatching { ListenExports.sweep(context) } }
         }
         call.resolve(JSObject().put("undo", undo ?: JSONObject.NULL))
     }

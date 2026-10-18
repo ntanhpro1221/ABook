@@ -314,8 +314,10 @@ export interface AudiobookPhonePlan {
   audioSeconds: number;
   /** Máy làm phần còn lại mất chừng này giây (giọng đã đo tốc độ); null: chưa đo. */
   secondsEstimate: number | null;
-  /** Chương đã ghép sẵn từ một lần xuất bị dừng (cùng giọng, cùng chữ): lần này làm tiếp. */
+  /** Chương có đủ (đã ghép từ lần xuất trước, hay mọi đoạn đã có trong bộ đệm Nghe ngay): xuất ngay, không đọc lại. */
   readyChapters: number;
+  /** Giây nghe đã có sẵn (clip trong bộ đệm + chương đã ghép). */
+  readySeconds?: number;
   /** Chỗ trống cần ở bộ nhớ máy trong lúc làm (byte); xoá khi xong. */
   bytes: number;
   /** Đoạn phải đọc lại: chương đã có giọng nhưng phải ghép lại vì đổi (bật / tắt) nhạc nền, mà clip đoạn ấy không còn trong bộ đệm. */
@@ -344,7 +346,7 @@ export interface AudiobookExportEvent {
   overCeiling?: { chapter: number; dbtp: number }[];
   percent?: number;
   secondsLeft?: number | null;
-  waiting?: "listening" | null;
+  waiting?: "listening" | "network" | null;
   finished?: boolean;
   name?: string;
   size?: number;
