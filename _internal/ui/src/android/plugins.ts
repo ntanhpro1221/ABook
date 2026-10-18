@@ -11,6 +11,7 @@ import type { AddedBook, ImportPreview } from "@/listen/textImport";
 import type { MusicExportState } from "@/desktop/listenExport";
 import type { ImportResult } from "@/studio/musicLocal";
 import type { VieneuChoiceId, VieneuStatus } from "@/listen/vieneuModule";
+import type { VoiceSpeedChoice, VoiceSpeedStatus } from "@/listen/voiceSpeed";
 
 // Hai plugin native của app Android (mobile/android/app/src/main/java/vn/abook/player):
 //  EbookPlayer  - lõi phát Media3: hàng đợi chương, hẹn giờ ngủ, lắc để nghe thêm, nhật ký đêm.
@@ -579,6 +580,9 @@ export interface ReadAloudPlugin {
   supertonicMeasure(): Promise<VieneuStatus>;
   supertonicRemove(options: { choice: VieneuChoiceId }): Promise<VieneuStatus>;
   supertonicCancel(): Promise<VieneuStatus>;
+  /** "Tốc độ giọng trên máy" (readaloud/VoiceSpeed.kt): cùng hình trạng thái với máy tính (/api/readaloud/voice-speed). */
+  voiceSpeed(): Promise<VoiceSpeedStatus>;
+  setVoiceSpeed(options: { choice: VoiceSpeedChoice }): Promise<VoiceSpeedStatus>;
   /** "Làm trước" (PrepareAhead.kt): việc nền của WorkManager đọc sẵn các chương này bằng đúng giọng ấy vào bộ đệm - chạy cả khi app đã đóng. */
   preparePlan(options: { bookId: string; voice: string; chapterIds: number[] }): Promise<PreparePlan>;
   prepareStart(options: { bookId: string; voice: string; chapterIds: number[]; label: string; chargingOnly?: boolean }): Promise<PrepareStatus>;

@@ -10,9 +10,11 @@ import kotlin.math.exp
  * VieNeu-TTS v3 Nano on ONNX Runtime, a port of `vieneu/v3nano.py` (`OnnxV3NanoEngine`): a 48M-parameter flow-matching model.
  * Text encoder + duration predictor give the length, then [steps] Euler steps of the vector estimator (two passes each with
  * classifier-free guidance [cfg]) turn noise into a 144-channel latent that the codec decoder turns into 24 kHz audio. Not
- * autoregressive, so the whole chunk is ready at once. [dir] holds the repo's files as pinned (four graphs, `config.json`, `constants.npz`).
+ * autoregressive, so the whole chunk is ready at once. [dir] holds the repo's files as pinned (four graphs, `config.json`, `constants.npz`);
+ * [estimator] another vector estimator of the same graph (the app's int8 one for "Nhanh hơn", [VieneuModule.NANO_FAST]).
  */
-class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false) : AutoCloseable {
+class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false,
+                 estimator: File = File(dir, "vector_estimator.onnx")) : AutoCloseable {
     class Timings {
         var textAndDuration = 0L
         var vectorEstimator = 0L
@@ -43,7 +45,7 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
     private val options = sessionOptions(threads, backend, spinning)
     private val textEncoder = env.createSession(File(dir, "text_encoder.onnx").absolutePath, options)
     private val duration = env.createSession(File(dir, "duration_predictor.onnx").absolutePath, options)
-    private val estimator = env.createSession(File(dir, "vector_estimator.onnx").absolutePath, options)
+    private val estimator = env.createSession(estimator.absolutePath, options)
     private val decoder = env.createSession(File(dir, "codec_decoder.onnx").absolutePath, options)
 
     /** Phone string (may hold `<|emotion_k|>`) -> ids with begin/end markers; characters outside the vocabulary are dropped. */
@@ -64,7 +66,7 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
 
     /** One chunk of phonemes -> 24 kHz audio. [noise] is the start latent `[144][frames]` (the bench replays the desktop's); null draws it from [seed]
      *  exactly as the desktop does (`np.random.default_rng(seed).standard_normal`). */
-    fun synthesize(phones: String, speaker: FloatArray, style: FloatArray, noise: FloatArray?, seed: Long, steps: Int = 16, cfgScale: Float = 3f, sway: Double = 0.0, speed: Double = 1.0): Result {
+    fun synthesize(phones: String, speaker: FloatArray, style: FloatArray, noise: FloatArray?, seed: Long, steps: Int = STEPS, cfgScale: Float = 3f, sway: Double = 0.0, speed: Double = 1.0): Result {
         val timings = Timings()
         val started = System.nanoTime()
         val ids = encodePhones(phones)
@@ -142,6 +144,9 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
 
     companion object {
         const val SAMPLE_RATE = 24_000
+        /** Euler steps (desktop vieneu_engine.NANO_STEPS): 8 since 18-10 - 16 -> 8 measured no worse on the test sets, half the time
+         *  (docs/research/SUPERTONIC_PHONE.md, "18-10: int8 + fewer steps"). */
+        const val STEPS = 8
         private const val MAX_CHUNK_SECONDS = 15.0
         private const val MIN_FRAMES = 2
     }

@@ -29,7 +29,12 @@ PREFIX = "supertonic"
 TIER = "supertonic"  # khoá của kết quả tự đo (cùng hình với các tầng VieNeu)
 SAMPLE_RATE = 44_100  # onnx/tts.json (ae.sample_rate); SupertonicEngine đọc lại từ file khi nạp
 LANGUAGE = "vi"
-STEPS = 8  # số bước khử nhiễu (bản đo: 8; mặc định của hãng 5)
+# "Tốc độ giọng trên máy" (webui/voice_speed.py): hai bậc, mỗi bậc = (file bộ khử nhiễu, tính từ thư mục mô-đun; số bước khử nhiễu). Chất lượng cao
+# nhất = bộ khử nhiễu int8 "top30" 8 bước (thay bản fp32 của hãng: đạt phép thử "thay được" trên 144 clip, 18-10); Nhanh hơn = bộ khử nhiễu int8 "fast"
+# 5 bước, chỉ cho Nghe ngay. Studio và mọi bản xuất luôn đọc bậc chất lượng. Đổi bậc nào thì đổi đúng một dòng ở đây (và SupertonicText của điện thoại).
+QUALITY = ("model/onnx/vector_estimator.onnx", 8)
+FAST = ("fast/vector_estimator.onnx", 5)
+STEPS = QUALITY[1]  # số bước khử nhiễu mặc định (mặc định của hãng 5)
 SPEED = 1.54  # hãng cho 0,7 - 2,0 (mặc định 1,05); 1,54 khớp tốc độ nói của VieNeu - tốc độ nghe của người dùng vẫn do trình phát chỉnh
 # Câu ngắn ở 1,54 bị nuốt gần hết ("Về rồi?", "Sao cô biết?" còn 0-0,2 s có tiếng; đo trên 40 câu thoại thật, luồng Model 03-10), ở 1,05 thì đủ:
 # tốc độ tăng dần theo số tiếng của khúc - <= SHORT_SYLLABLES tiếng đọc ở SHORT_SPEED, >= LONG_SYLLABLES tiếng đọc ở SPEED.
@@ -108,9 +113,10 @@ def normalize_pieces(pieces: list[str]) -> str:
 
 # ---- engine ---------------------------------------------------------------------------------------------------------------------
 class SupertonicEngine:
-    """Bốn đồ thị onnxruntime của Supertonic 3 trên CPU. `folder`: thư mục mô-đun (có onnx/, voice_styles/)."""
+    """Bốn đồ thị onnxruntime của Supertonic 3 trên CPU. `folder`: thư mục model (có onnx/, voice_styles/). `estimator`: file bộ khử nhiễu của bậc
+    "Nhanh hơn" (None = onnx/vector_estimator.onnx trong `folder`, bậc chất lượng); `steps`: số bước khử nhiễu mặc định của engine."""
 
-    def __init__(self, folder: Path, threads: int | None = None) -> None:
+    def __init__(self, folder: Path, threads: int | None = None, *, estimator: Path | None = None, steps: int = STEPS) -> None:
         import numpy as np
 
         from . import vieneu_engine as ve
@@ -122,7 +128,9 @@ class SupertonicEngine:
         self.folder = folder
         self.indexer = np.asarray(json.loads((folder / INDEXER_FILE).read_bytes().decode("utf-8")), dtype=np.int64)
         options = ve._session_options(threads or ve.default_threads(), "cpu")
-        self.sessions = {name: ve._session(folder / "onnx" / f"{name}.onnx", options, "cpu") for name in ONNX}
+        self.steps = steps
+        self.sessions = {name: ve._session(estimator if name == "vector_estimator" and estimator is not None else folder / "onnx" / f"{name}.onnx",
+                                           options, "cpu") for name in ONNX}
         self._styles: dict[str, tuple[Any, Any]] = {}
         self._lock = threading.Lock()
 
@@ -147,12 +155,13 @@ class SupertonicEngine:
         mapped = self.indexer[coded]
         return mapped[mapped >= 0]
 
-    def infer(self, text: str, name: str, rng: Any, speed: float = SPEED, steps: int = STEPS) -> Any:
-        """Một khúc chữ -> sóng âm đơn kênh float32 ở `sample_rate`. `rng`: np.random.RandomState (nhiễu khởi đầu)."""
+    def infer(self, text: str, name: str, rng: Any, speed: float = SPEED, steps: int | None = None) -> Any:
+        """Một khúc chữ -> sóng âm đơn kênh float32 ở `sample_rate`. `rng`: np.random.RandomState (nhiễu khởi đầu); `steps` None = của engine."""
         import numpy as np
 
         from . import vieneu_engine as ve
 
+        steps = self.steps if steps is None else steps
         text = clean(text)
         ids = self.ids(text)
         if not text or not ids.size:
@@ -178,10 +187,13 @@ class SupertonicEngine:
 # ---- nhà cung cấp ---------------------------------------------------------------------------------------------------------------
 @dataclass(frozen=True)
 class Installed:
-    """Nơi mô-đun đặt model (supertonic_module.installed) và có dùng bộ căn chữ không."""
+    """Nơi mô-đun đặt model (supertonic_module.installed) và có dùng bộ căn chữ không. `estimator`, `steps`: bộ khử nhiễu + số bước của bậc
+    "Nhanh hơn" (supertonic_module.installed_fast); mặc định là bậc chất lượng."""
 
     folder: Path
     aligner: bool = False
+    estimator: Path | None = None
+    steps: int = STEPS
 
 
 def gender_of(name: str) -> str:
@@ -198,11 +210,11 @@ class SupertonicProvider:
     def __init__(self, locate: Callable[[], Installed | None], *, engines: Callable[[Installed], Any] | None = None,
                  aligner: Callable[[], Any] | None = None, normalize: Callable[[list[str]], str] | None = None) -> None:
         self.locate = locate
-        self._make = engines or (lambda found: SupertonicEngine(found.folder))
+        self._make = engines or (lambda found: SupertonicEngine(found.folder, estimator=found.estimator, steps=found.steps))
         self._aligner = aligner or _real_aligner
         self._normalize = normalize or normalize_pieces
         self._engine_lock = threading.Lock()  # nạp engine mất vài giây: danh sách giọng không phải chờ
-        self._engine: tuple[Path, Any] | None = None
+        self._engine: tuple[tuple[Path, Path | None], Any] | None = None
 
     def voices(self) -> list[Voice]:
         if self.locate() is None:
@@ -211,9 +223,10 @@ class SupertonicProvider:
 
     def engine(self, installed: Installed) -> Any:
         with self._engine_lock:
-            if self._engine is None or self._engine[0] != installed.folder:
+            where = (installed.folder, installed.estimator)
+            if self._engine is None or self._engine[0] != where:
                 try:
-                    self._engine = (installed.folder, self._make(installed))
+                    self._engine = (where, self._make(installed))
                 except (OSError, ValueError, KeyError, ImportError) as error:
                     raise VoiceError(f"Giọng Supertonic chưa sẵn sàng ({error}) - hãy tải lại Giọng Supertonic trong Cài đặt.", "voice") from error
             return self._engine[1]
