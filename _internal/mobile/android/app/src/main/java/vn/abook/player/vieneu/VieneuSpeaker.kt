@@ -2,6 +2,7 @@ package vn.abook.player.vieneu
 
 import org.json.JSONArray
 import org.json.JSONObject
+import vn.abook.player.readaloud.ClipBudget
 import vn.abook.player.readaloud.Span
 import vn.abook.player.readaloud.SyllableSpread
 import vn.abook.player.readaloud.WordTokens
@@ -118,6 +119,7 @@ class VieneuSpeaker(
         val waves = ArrayList<FloatArray>()
         val pauses = ArrayList<Double>()
         for (unit in units) {
+            ClipBudget.stopIfCancelled() // a cancelled read stops between chunks (the engines also check between their steps)
             val phonemes = phonemize(unit.pieces)
             val audio = if (phonemes.isEmpty()) FloatArray(0) else tierEngine.infer(phonemes, preset, seedOf(tier, name, unit.pieces.joinToString(" ")))
             waves.add(audio)

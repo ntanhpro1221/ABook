@@ -1,7 +1,10 @@
 """Kiểu dùng chung của các nhà cung cấp giọng đọc."""
 from __future__ import annotations
 
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
+from typing import Callable, Iterator
 
 from .mapping import Boundary
 
@@ -43,3 +46,26 @@ class VoiceError(Exception):
         super().__init__(message)
         if reason is not None:
             self.reason = reason
+
+
+# Lượt đọc trên máy đang chạy mà không ai cần nữa (người nghe nhảy đi chỗ khác, Huỷ xuất sách nói): `ReadAloud.clip` đặt cờ của lượt ấy ở đây quanh lời
+# gọi giọng, engine (vieneu_engine, supertonic) hỏi `stop_if_cancelled()` giữa các khúc và giữa các bước - không phải truyền qua readaloud/vieneu.py
+# (file khoá). Mỗi luồng một giá trị (ContextVar), nên lượt đọc của luồng khác không bị ảnh hưởng.
+_cancelled: ContextVar[Callable[[], bool] | None] = ContextVar("readaloud_cancelled", default=None)
+
+
+@contextmanager
+def cancellable(cancelled: Callable[[], bool] | None) -> Iterator[None]:
+    """Trong khối này, `stop_if_cancelled()` ném VoiceError "cancelled" khi `cancelled()` đúng (None = không bao giờ)."""
+    token = _cancelled.set(cancelled)
+    try:
+        yield
+    finally:
+        _cancelled.reset(token)
+
+
+def stop_if_cancelled() -> None:
+    """Engine gọi giữa các khúc / bước: lượt đọc này đã bị bỏ thì dừng ngay, không gì vào bộ đệm."""
+    check = _cancelled.get()
+    if check is not None and check():
+        raise VoiceError("Đã bỏ lượt đọc này.", "cancelled")

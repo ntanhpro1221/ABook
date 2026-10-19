@@ -74,6 +74,20 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
 
     fun isCurrent(part: Part, stamp: Map<String, String> = readStamp()) = stamp[part.name] == part.sha256 && present(part)
 
+    /** Bytes of [part] still to cross the network: 0 when current, else its wire size less what a cut download left in `.part` (resumed with
+     *  Range) - the size on "Tải" / "Cập nhật" / resume after Huỷ. */
+    fun left(part: Part, stamp: Map<String, String> = readStamp()): Long {
+        if (isCurrent(part, stamp)) return 0L
+        val have = File(wireFile(part).path + ".part").length()
+        return if (have > part.wireSize) part.wireSize else part.wireSize - have
+    }
+
+    /** Where [part]'s wire form is fetched to: the file itself, or its gzip / zip next to it. */
+    private fun wireFile(part: Part): File {
+        val packed = part.packed ?: return file(part)
+        return File(file(part).path + if (packed.member != null) ".zip" else ".gz")
+    }
+
     /** Of [parts], those this app pins differently from what was downloaded (none when nothing was ever downloaded: "missing", not "old"). */
     fun outdated(parts: List<Part>): List<Part> {
         val stamp = readStamp()
@@ -118,7 +132,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     private fun fetch(part: Part, progress: Progress) {
         val target = file(part).also { it.parentFile?.mkdirs() }
         val packed = part.packed
-        val wire = if (packed == null) target else File(target.path + if (packed.member != null) ".zip" else ".gz")
+        val wire = wireFile(part)
         val partial = File(wire.path + ".part")
         var attempts = 0
         while (true) {

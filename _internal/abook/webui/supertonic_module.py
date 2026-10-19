@@ -119,10 +119,12 @@ def _parts() -> list[Component]:
     if g2p.present or g2p.external or sys.platform == "win32":  # nơi sea-g2p không có sẵn bản tải thì bỏ qua: đọc nguyên chữ
         g2p.blocked = off or g2p.blocked
         out.append(g2p)
-    out.append(Component(CHOICE, PART_LABEL[CHOICE], pin(FILES), sum(item.size for item in FILES), _complete(_model_dir()), blocked=off,
-                         downloads=list(FILES)))
+    model, fast = _model_dir(), _fast_dir()
+    out.append(Component(CHOICE, PART_LABEL[CHOICE], pin(FILES), sum(item.size for item in FILES), _complete(model), blocked=off,
+                         downloads=list(FILES), targets=[model / item.name for item in FILES] if model is not None else []))
     out.append(Component(FAST_CHOICE, PART_LABEL[FAST_CHOICE], pin(FAST_FILES), sum(item.size for item in FAST_FILES),
-                         _complete(_fast_dir(), FAST_FILES), blocked=off, downloads=list(FAST_FILES)))
+                         _complete(fast, FAST_FILES), blocked=off, downloads=list(FAST_FILES),
+                         targets=[fast / item.name for item in FAST_FILES] if fast is not None else []))
     return out
 
 
@@ -184,7 +186,8 @@ def speed_fast_ready() -> bool:
 
 
 def speed_fast_bytes() -> int:
-    return sum(item.size for item in FAST_FILES)
+    """Byte "Bản nhanh hơn" còn phải tải (phần dở sau Huỷ không tính lại)."""
+    return next(part for part in _parts() if part.id == FAST_CHOICE).left()
 
 
 def rtf(voice: str) -> float | None:
@@ -193,6 +196,16 @@ def rtf(voice: str) -> float | None:
         return None
     value = (_core.benchmarks().get(TIER) or {}).get("rtf")
     return float(value) if isinstance(value, (int, float)) else None
+
+
+def model_mark(voice: str, tier: str) -> str:
+    """Dấu model của clip giọng Supertonic `voice` ở bậc `tier` (dấu bậc của ReadAloud: "" = chất lượng, "fast<n>" = nhanh) cho khoá bộ đệm: ghim phần model
+    (bậc nhanh: cả phần "Bản nhanh hơn" - nó dùng chung các file còn lại) + bậc + số bước. "" cho giọng khác."""
+    if not voice.startswith(PREFIX + ":"):
+        return ""
+    if tier:
+        return _core.mark((CHOICE, FAST_CHOICE), f"fast:{FAST[1]}")
+    return _core.mark((CHOICE,), f"quality:{QUALITY[1]}")
 
 
 def suggestion(bench: dict[str, Any], tiers: list[str]) -> dict[str, Any] | None:
@@ -223,6 +236,8 @@ def status() -> dict[str, Any]:
             state = "unsupported" if blocked else "missing"
         tiers = [TIER] if have else []
         bench = _core.benchmarks()
+        # cỡ trên nút tải / cập nhật = phần CÒN phải tải (file đúng đã có, phần dở sau Huỷ không tính lại); phần đủ rồi thì cỡ cả phần
+        left = {part.id: part.size if judged[part.id] == "current" else part.left() for part in parts}
         shown = [CHOICE]
         if fast_here or (have and voice_speed.wants_fast("supertonic")):
             shown.append(FAST_CHOICE)  # chỉ khi "Tốc độ giọng trên máy" muốn bậc nhanh (hay đã tải): không ai phải tải thứ không dùng
@@ -233,16 +248,16 @@ def status() -> dict[str, Any]:
             if choice == FAST_CHOICE:
                 lacking = [part for part in lacking if part.id == FAST_CHOICE]  # cỡ riêng của nó; Giọng Supertonic có dòng của mình
             choices.append({"id": choice, "label": label, "detail": detail, "needs": [part.id for part in parts if part.id in NEEDS[choice]],
-                            "bytes": sum(part.size for part in lacking), "installed": fast_here if choice == FAST_CHOICE else have,
+                            "bytes": sum(left[part.id] for part in lacking), "installed": fast_here if choice == FAST_CHOICE else have,
                             "recommended": False, "default": True, "removable": True, **({"requires": [CHOICE]} if choice == FAST_CHOICE else {})})
         return {
             "state": state, "done": _core.state["done"] if state == "downloading" else 0,
             "total": _core.state["total"] if state == "downloading" else 0, "error": _core.state["error"],
             "supported": not blocked, "reason": blocked,
             "choices": choices,
-            "parts": [{"id": part.id, "label": part.label, "bytes": part.size, "state": judged[part.id], "external": part.external}
+            "parts": [{"id": part.id, "label": part.label, "bytes": left[part.id], "state": judged[part.id], "external": part.external}
                       for part in parts],
-            "outdatedParts": [part.label for part in behind], "outdatedBytes": sum(part.size for part in behind),
+            "outdatedParts": [part.label for part in behind], "outdatedBytes": sum(left[part.id] for part in behind),
             "benchmark": {TIER: bench[TIER]} if tiers and isinstance(bench.get(TIER), dict) else {},
             "benchmarking": _core.state["benchmarking"],
             "suggestion": suggestion(bench, tiers) if not _core.state["benchmarking"] else None,

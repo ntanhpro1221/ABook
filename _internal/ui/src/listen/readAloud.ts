@@ -82,6 +82,9 @@ export interface ClipOptions {
   /** Người nghe vừa bấm vào chữ này (> 0) của đoạn chưa có clip: nguồn phát luồng được thì chỉ đọc từ chữ ấy tới hết đoạn và trả clip có `fromWord` (nghe sau ~2 giây thay vì chờ đọc cả đoạn). Nguồn không làm được
    *  (không phát luồng, bộ đệm đã có cả đoạn...) thì trả clip đủ cả đoạn như thường - bộ máy đổi chữ thành giây bằng mốc của clip. */
   tailFrom?: number;
+  /** Bộ máy bỏ lượt xin này (người nghe nhảy đi nơi khác, đổi giọng, đổi chương): nguồn huỷ yêu cầu và đóng kết nối - máy chủ dừng lượt đọc của giọng trên máy giữa các khúc,
+   *  CPU rảnh cho đoạn người nghe đang chờ (uxfix70). Lượt bị bỏ hỏng với `reason` "cancelled". Chỉ dùng cho giọng chạy trên máy ([SpeechTrack.serial]). */
+  signal?: AbortSignal;
 }
 
 export type ClipFetcher = (voice: string, text: string, options?: ClipOptions) => Promise<ReadAloudClip>;
@@ -410,6 +413,8 @@ export class ReadAloudEngine implements AudioEngine {
   private fetchSeconds: number[] = [];
   /** Lượt gọi đang chạy -> lúc gửi (ms): tuổi của chúng là số đo chặn dưới ([depth]). */
   private pending = new Map<number, number>();
+  /** Lượt xin của giọng chạy trên máy đang chạy, theo đoạn: bỏ được khi không ai cần nữa ([abortUnneeded]) - máy chủ dừng đọc, CPU về đoạn người nghe đang chờ. */
+  private aborts = new Map<number, { controller: AbortController; id: number; epoch: number; voice: string }>();
   private watch: ReturnType<typeof setInterval> | null = null;
   private probeTimer: ReturnType<typeof setTimeout> | null = null;
   private holdTimer: ReturnType<typeof setTimeout> | null = null;
@@ -998,8 +1003,8 @@ export class ReadAloudEngine implements AudioEngine {
     return best < 0 ? null : this.queued.splice(best, 1)[0].index;
   }
 
-  /** Nhảy tới chỗ khác: lượt xin chưa gửi của các đoạn ngoài cửa sổ mới bỏ (đoạn đã gửi thì máy chủ làm nốt, clip về vẫn dùng được); lượt của đoạn
-   *  vừa nhảy tới nhờ vậy được gửi trước, không chờ cả cửa sổ cũ. */
+  /** Nhảy tới chỗ khác: lượt xin chưa gửi của các đoạn ngoài cửa sổ mới bỏ (giọng trực tuyến: đoạn đã gửi thì máy chủ làm nốt, clip về vẫn dùng được; giọng trên máy: lượt
+   *  đang chạy cũng bỏ - [abortUnneeded]); lượt của đoạn vừa nhảy tới nhờ vậy được gửi trước, không chờ cả cửa sổ cũ. */
   private dropQueuedOutside(): void {
     const low = this.target.index;
     const high = this.target.index + this.depth(this.target.index);
@@ -1010,6 +1015,25 @@ export class ReadAloudEngine implements AudioEngine {
       if (slot.epoch === epoch) slot.fetching = false;
       return false;
     });
+    this.abortUnneeded();
+  }
+
+  /** Bỏ lượt đọc của giọng trên máy đang chạy mà không ai cần nữa: đoạn ngoài cửa sổ đọc trước (người nghe vừa nhảy), giọng đã đổi, cách đọc đổi (epoch), chương khác.
+   *  Giọng trên máy đọc từng đoạn một và dùng hết CPU: đọc nốt đoạn bị bỏ làm đoạn người nghe đang chờ đợi thêm ~1 giây (a63: nhảy hai lần liền, đoạn sau có tiếng sau 2,97 s).
+   *  `all`: bỏ hết (nạp chương khác). */
+  private abortUnneeded(all = false): void {
+    if (!this.aborts.size) return;
+    const low = this.target.index;
+    const high = low + this.depth(low);
+    const voice = this.speech?.voice() ?? "";
+    for (const [index, entry] of this.aborts) {
+      const slot = this.slots[index];
+      const current = !all && entry.id === this.loadId && slot !== undefined && slot.epoch === entry.epoch;
+      if (current && entry.voice === voice && index >= low && index <= high) continue;
+      entry.controller.abort();
+      this.aborts.delete(index);
+      if (current) slot.fetching = false; // lần phát sau xin lại (bằng giọng đang chọn)
+    }
   }
 
   private send(index: number): void {
@@ -1033,6 +1057,13 @@ export class ReadAloudEngine implements AudioEngine {
     if (slot.failures === 0) slot.began = sentAt;
     const options: ClipOptions = { willRetry: ask !== "probe" && slot.failures < CLIP_RETRIES, retryBefore: clipRetryBefore(slot.began, slot.failures) };
     if (ask) options.fresh = true;
+    const voice = speech.voice();
+    // Giọng trên máy: lượt này bỏ được khi không ai cần nữa ([abortUnneeded]).
+    const controller = speech.serial?.() ? new AbortController() : null;
+    if (controller) {
+      options.signal = controller.signal;
+      this.aborts.set(index, { controller, id, epoch, voice });
+    }
     // Rank = số đoạn DÀI người nghe phải nghe trước đoạn này ([isLongParagraph]): tiêu đề chương hay một dòng đối thoại đứng trước không đẩy đoạn dài kế nó xuống rank 1 (cắt 3 mảnh thay vì 6).
     if (index >= this.target.index) options.rank = this.longAhead(index);
     // Chỗ chờ theo tỉ lệ / theo giây giữa đoạn chỉ đổi được thành giây thật khi đã biết độ dài và mốc của clip: không phát dần ([ClipOptions.whole]). Bấm vào một chữ giữa đoạn thì xin clip đuôi
@@ -1049,8 +1080,10 @@ export class ReadAloudEngine implements AudioEngine {
       slot.rest.asked = slot.rest.from;
     }
     speech
-      .fetchClip(speech.voice(), slot.text, options)
+      .fetchClip(voice, slot.text, options)
       .then((clip) => {
+        // Bỏ rồi mà clip vẫn kịp về (đã xong trước khi kết nối đóng): vẫn là clip đúng của đoạn - trừ khi giọng đã đổi.
+        if (controller?.signal.aborted && voice !== this.speech?.voice()) return;
         this.lastClipMs = Date.now() - sentAt;
         if (id !== this.loadId) return;
         // Clip đang về (phát dần): thời gian lấy clip thật là tới lúc về đủ, không phải tới byte đầu.
@@ -1079,8 +1112,11 @@ export class ReadAloudEngine implements AudioEngine {
           }
         }
       })
-      .catch((error) => this.clipFailed(index, error, { epoch, id, ask, sentAt }))
+      .catch((error) => {
+        if (!controller?.signal.aborted) this.clipFailed(index, error, { epoch, id, ask, sentAt });
+      })
       .finally(() => {
+        if (this.aborts.get(index)?.controller === controller) this.aborts.delete(index);
         if (id !== this.loadId) return;
         if (this.pending.get(index) === sentAt) this.pending.delete(index);
         this.inflight -= 1;
@@ -1817,6 +1853,7 @@ export class ReadAloudEngine implements AudioEngine {
       slot.words = null;
       slot.duration = slot.estimate;
     }
+    this.abortUnneeded(); // giọng cũ đang đọc trên máy cho đoạn sau: thôi
     this.layout();
     this.publish();
     this.fire("duration");
@@ -1843,6 +1880,7 @@ export class ReadAloudEngine implements AudioEngine {
 
   private dispose(): void {
     this.stopSilence(false);
+    this.abortUnneeded(true);
     this.loadId += 1;
     this.queued = [];
     this.inflight = 0;
