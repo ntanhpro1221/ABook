@@ -63,7 +63,7 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
         return ids.toLongArray()
     }
 
-    /** One chunk of phonemes -> 24 kHz audio. [noise] is the start latent `[144][frames]` (the bench replays the desktop's); null draws it from [seed]
+    /** One chunk of phonemes -> 24 kHz audio, as the decoder gives it (past ±1 at times: [NanoTier] brings it under the true-peak ceiling). [noise] is the start latent `[144][frames]` (the bench replays the desktop's); null draws it from [seed]
      *  exactly as the desktop does (`np.random.default_rng(seed).standard_normal`). */
     fun synthesize(phones: String, speaker: FloatArray, style: FloatArray, noise: FloatArray?, seed: Long, steps: Int = STEPS, cfgScale: Float = CFG, sway: Double = 0.0, speed: Double = 1.0,
                    cfgLast: Boolean = CFG_LAST): Result {
@@ -110,7 +110,6 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
                 val audio = Tensors.floats(env, x, 1, latentChannels.toLong(), frames.toLong()).use { latent ->
                     timed(clock, 2) { decoder.run(mapOf("x" to latent)) }.use { Tensors.floatData(it.get(0) as OnnxTensor) }
                 }
-                for (i in audio.indices) audio[i] = audio[i].coerceIn(-1f, 1f)
                 timings.textAndDuration = clock[0]
                 timings.vectorEstimator = clock[1]
                 timings.decoder = clock[2]

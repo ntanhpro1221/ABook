@@ -61,7 +61,7 @@ class ClipCache(
                     else -> ""
                 },
                 Readings.tag(text, readings),
-                if (ClipLift.lifts(voiceId)) ClipLift.TAG else "", // giọng VieNeu: câu ngắn nhỏ được nâng trong clip (cache.py/service.clip: loudness.LIFT_TAG)
+                ClipLift.tag(voiceId), // giọng VieNeu / Supertonic: khúc dưới trần đỉnh thật, câu ngắn nhỏ được nâng trong clip (service.clip: loudness.clip_tag)
             ).filter { it.isNotEmpty() }.joinToString("+")
 
         /** Giọng chạy trên máy (VieNeu, Supertonic): đọc tên theo gốc cuốn, khoá có dấu model. */
