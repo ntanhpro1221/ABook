@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.104] - 2026-10-19
+
 ### Máy tính
 
 - Màn Studio và Cài đặt cho bạn biết ngay, trước khi bấm Cài, card đồ hoạ của máy có đủ để làm sách nói không (từ 8 GB là đủ, 6-8 GB có thể chạy nhưng chưa thử), cần tải bao nhiêu và mỗi chương mất chừng bao lâu. Máy không đủ thì trình tạo sách nói nói thẳng "Máy này không làm sách nói được" thay vì hứa chờ cài xong, và mời bạn tạo trên máy tính đã ghép có Studio. Bấm "Cài Studio" ở Cài đặt là cài luôn.
