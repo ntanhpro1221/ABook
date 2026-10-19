@@ -19,6 +19,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import vn.abook.player.Streaming
+import vn.abook.player.pretendMedia3IsUnderTest
 import java.io.File
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -196,19 +197,9 @@ class LiveClipsTest {
         position, C.LENGTH_UNSET.toLong(),
     )
 
-    /** Media3 (ParsableByteArray) tự hỏi "đang chạy bài thử?" qua `Build.FINGERPRINT`, mà vỏ android.jar của bài thử JVM để null: đặt như Robolectric. */
-    private fun pretendToBeUnderTest() {
-        val unsafeClass = Class.forName("sun.misc.Unsafe")
-        val unsafe = unsafeClass.getDeclaredField("theUnsafe").also { it.isAccessible = true }.get(null)
-        val field = android.os.Build::class.java.getField("FINGERPRINT")
-        val base = unsafeClass.getMethod("staticFieldBase", java.lang.reflect.Field::class.java).invoke(unsafe, field)
-        val offset = unsafeClass.getMethod("staticFieldOffset", java.lang.reflect.Field::class.java).invoke(unsafe, field) as Long
-        unsafeClass.getMethod("putObject", Any::class.java, Long::class.javaPrimitiveType, Any::class.java).invoke(unsafe, base, offset, "robolectric")
-    }
-
     @Test
     fun theMp3ExtractorPlaysAndSeeksInsideWhatIsWrittenWithoutKnowingTheLength() {
-        pretendToBeUnderTest()
+        pretendMedia3IsUnderTest()
         val frames = 200
         val entry = LiveClips.create()
         entry.grew(write("h.mp3", EdgeFake.mp3Frames(frames)), frames * 144L)

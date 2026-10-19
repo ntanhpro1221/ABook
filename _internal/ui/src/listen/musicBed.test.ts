@@ -11,6 +11,7 @@ import {
   SIBLING_FADE_SECONDS,
   STEP_RAMP_SECONDS,
   alignedPosition,
+  browserAudio,
   finalLoop,
   finished,
   loopBounds,
@@ -1171,5 +1172,135 @@ describe("tải sẵn bài đầu chương kế khi chương còn <= 120 giây (
     await settle();
     expect(silentAsks).toBe(1);
     expect(warmed).toEqual(["https://x/n.mp3"]);
+  });
+});
+
+describe("bài mp3 phát qua MediaSource (loopfix)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** <audio> giả đủ cho browserAudio: sự kiện thật (EventTarget), `src` ghi lại, play/pause đếm. */
+  class FakeAudio extends EventTarget {
+    src = "";
+    muted = false;
+    preload = "";
+    paused = true;
+    volume = 0;
+    loop = false;
+    currentTime = 0;
+    duration = Number.NaN;
+    plays = 0;
+    play() { this.plays += 1; this.paused = false; return Promise.resolve(); }
+    pause() { this.paused = true; }
+    removeAttribute(name: string) { if (name === "src") this.src = ""; }
+    load() {}
+  }
+
+  class FakeSourceBuffer extends EventTarget {
+    appended: ArrayBuffer[] = [];
+    constructor(private readonly quota: boolean) { super(); }
+    appendBuffer(data: ArrayBuffer) {
+      if (this.quota) throw new DOMException("full", "QuotaExceededError");
+      this.appended.push(data);
+      queueMicrotask(() => this.dispatchEvent(new Event("updateend")));
+    }
+  }
+
+  function stubBrowser(options: { supported?: boolean; type?: string; quota?: boolean } = {}) {
+    const { supported = true, type = "audio/mpeg", quota = false } = options;
+    const made: { sources: FakeMediaSource[]; revoked: string[]; fetched: string[] } = { sources: [], revoked: [], fetched: [] };
+    class FakeMediaSource extends EventTarget {
+      static isTypeSupported(mime: string) { return supported && mime === "audio/mpeg"; }
+      buffers: FakeSourceBuffer[] = [];
+      ended = false;
+      constructor() { super(); made.sources.push(this); }
+      addSourceBuffer(mime: string) {
+        expect(mime).toBe("audio/mpeg");
+        const buffer = new FakeSourceBuffer(quota);
+        this.buffers.push(buffer);
+        return buffer;
+      }
+      endOfStream() { this.ended = true; }
+    }
+    let objects = 0;
+    vi.stubGlobal("window", { location: { search: "?mute=1" } });
+    vi.stubGlobal("Audio", FakeAudio);
+    vi.stubGlobal("MediaSource", FakeMediaSource);
+    vi.stubGlobal("URL", class extends URL {
+      static createObjectURL(source: Blob | MediaSource) {
+        queueMicrotask(() => (source as MediaSource).dispatchEvent(new Event("sourceopen")));
+        return `blob:ms/${++objects}`;
+      }
+      static revokeObjectURL(url: string) { made.revoked.push(url); }
+    });
+    vi.stubGlobal("fetch", async (url: string) => {
+      made.fetched.push(url);
+      return new Response(new Uint8Array(64), { headers: { "Content-Type": type } });
+    });
+    return made;
+  }
+
+  const flush = async () => {
+    for (let step = 0; step < 10; step += 1) await new Promise((resolve) => setTimeout(resolve, 0));
+  };
+
+  it("mp3: nạp cả file vào MediaSource, endOfStream; loadedmetadata và play() đợi tới khi xong", async () => {
+    const made = stubBrowser();
+    const audio = browserAudio("/api/music/track?link=x") as unknown as FakeAudio & { dispose(): void };
+    const seen: string[] = [];
+    audio.addEventListener("loadedmetadata", () => seen.push("meta"));
+    audio.dispatchEvent(new Event("loadedmetadata")); // phần tử báo sớm lúc đang nạp (độ dài vô hạn): MusicBed không thấy
+    void audio.play();
+    expect(audio.plays).toBe(0);
+    expect(seen).toEqual([]);
+    await flush();
+    expect(audio.muted).toBe(true);
+    expect(made.fetched).toEqual(["/api/music/track?link=x"]);
+    expect(audio.src).toBe("blob:ms/1");
+    expect(made.sources[0].buffers[0].appended).toHaveLength(1);
+    expect(made.sources[0].ended).toBe(true);
+    expect(seen).toEqual(["meta"]);
+    expect(audio.plays).toBe(1);
+    audio.dispose();
+    expect(made.revoked).toEqual(["blob:ms/1"]);
+  });
+
+  it("máy chủ trả không phải mp3 (ogg): <audio src> như cũ, không MediaSource", async () => {
+    const made = stubBrowser({ type: "audio/ogg" });
+    const audio = browserAudio("/api/music/track?link=y") as unknown as FakeAudio;
+    void audio.play();
+    await flush();
+    expect(made.sources).toHaveLength(0);
+    expect(audio.src).toBe("/api/music/track?link=y");
+    expect(audio.plays).toBe(1);
+  });
+
+  it("trình duyệt không có MediaSource cho mp3: <audio src> ngay, không tải trước", () => {
+    const made = stubBrowser({ supported: false });
+    const audio = browserAudio("/a.mp3") as unknown as FakeAudio;
+    expect(audio.src).toBe("/a.mp3");
+    expect(made.fetched).toEqual([]);
+  });
+
+  it("hết chỗ đệm (QuotaExceededError): nhả URL, lùi về <audio src>; lỗi của lúc nạp không tới MusicBed", async () => {
+    const made = stubBrowser({ quota: true });
+    const audio = browserAudio("/b.mp3") as unknown as FakeAudio;
+    const errors: number[] = [];
+    audio.addEventListener("error", () => errors.push(1));
+    await flush();
+    expect(audio.src).toBe("/b.mp3");
+    expect(made.revoked).toEqual(["blob:ms/1"]);
+    expect(errors).toEqual([]);
+    audio.dispatchEvent(new Event("error")); // lỗi của đường cũ thì MusicBed nhận như trước
+    expect(errors).toEqual([1]);
+  });
+
+  it("MusicBed nhả bài (dừng) thì nhả luôn URL của MediaSource", async () => {
+    const made = stubBrowser();
+    const bed = new MusicBed(browserAudio);
+    bed.setCues(cues, -20);
+    bed.sync(10, true);
+    await flush();
+    bed.stop();
+    expect(made.revoked).toEqual(["blob:ms/1"]);
   });
 });
