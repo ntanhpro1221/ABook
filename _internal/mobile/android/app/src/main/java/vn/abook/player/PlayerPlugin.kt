@@ -194,7 +194,7 @@ class PlayerPlugin : Plugin() {
             Playlists.autoEnabled = it
             MusicBed.rememberAuto(it)
         }
-        Playback.configure(call.getDouble("rewindAfterMinutes") ?: 5.0, call.getDouble("rewindSeconds") ?: 5.0)
+        Playback.configure(call.getBoolean("autoRewind") ?: true)
     }
 
     @PluginMethod

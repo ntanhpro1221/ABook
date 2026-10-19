@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -13,6 +14,7 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import org.json.JSONObject
 import java.util.concurrent.Executors
@@ -67,6 +69,7 @@ object MusicBed {
     /** Một bài đang kêu. `goal` = âm lượng đang hướng tới, `perTick` = mỗi nhịp STEP_MS nhích bao nhiêu; `entering` = đang mờ vào
      *  (tua lúc này không nhảy thẳng tới mức) trong `fadeMs`; `cue` = mốc đang phát (bước âm lượng), null với danh sách phát. */
     private class Bed(val track: String, val player: ExoPlayer, var goal: Float, var perTick: Float, var cue: MusicCues.Cue?, val fadeMs: Long) {
+        val listeners = mutableListOf<Player.Listener>() // gỡ trước khi nhả: không còn gì gọi về sau release
         var entering = true
         var fadeStep = 0.001f // âm lượng bớt mỗi nhịp khi mờ đi: bài to và bài nhỏ cùng tắt trong cùng thời gian
         var early = false // vào sớm: bài trước kết tự nhiên trước đầu mốc này; tới `cue.start` giọng vẫn ở mốc cũ - không chuyển ngược
@@ -86,6 +89,27 @@ object MusicBed {
     }
 
     private val main = Handler(Looper.getMainLooper())
+    private const val TAG = "ABookMusic"
+    /** Một bước tạo / nhả trình phát nhạc lâu hơn ngần này thì ghi logcat (soát a69: giọng đứng 19,2 s đúng lúc lặp mờ chéo tạo trình phát mới - lần soát sau
+     *  thấy ngay bước nào chậm). */
+    private const val SLOW_STEP_MS = 500L
+
+    private inline fun <T> timed(step: String, block: () -> T): T {
+        val began = SystemClock.elapsedRealtime()
+        try {
+            return block()
+        } finally {
+            val spent = SystemClock.elapsedRealtime() - began
+            if (spent > SLOW_STEP_MS) Log.i(TAG, "$step chậm: $spent ms")
+        }
+    }
+
+    /** Nhả trình phát của [bed] trên luồng chính (luồng tạo ra nó), gỡ listener trước. */
+    private fun release(bed: Bed) = timed("nhả trình phát nhạc") {
+        bed.listeners.forEach(bed.player::removeListener)
+        bed.listeners.clear()
+        bed.player.release()
+    }
     private val worker = Executors.newSingleThreadExecutor()
     private var context: Context? = null
     private var book = ""
@@ -256,7 +280,7 @@ object MusicBed {
         val format = player.audioFormat
         val startAt = if (format?.sampleMimeType == MimeTypes.AUDIO_MPEG) ExactSeekMp3Extractor.frameBoundarySeconds(bounds.loopStart, format.sampleRate)
         else bounds.loopStart
-        current = open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, startAt)
+        current = timed("lặp mờ chéo: mở trình phát mới") { open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, startAt) }
             .also { it.early = bed.early }
         startFade()
     }
@@ -294,7 +318,7 @@ object MusicBed {
         scene.reset()
         advanceClock()
         saveClock()
-        for (bed in listOfNotNull(current) + fading) bed.player.release()
+        for (bed in listOfNotNull(current) + fading) release(bed)
         current = null
         fading.clear()
         cues = emptyList()
@@ -640,10 +664,14 @@ object MusicBed {
 
     /** Một ExoPlayer mới cho bài `next`, mờ vào tới `targetGain` trong `fadeMs`. `startAt` (phần tử lặp, giây trong bài): vào đúng
      *  chỗ ấy (A), không căn theo giây chương - đồng hồ bài lệch giọng vài phần giây thì căn lại có khi rơi về cuối vòng. */
+    @OptIn(UnstableApi::class)
     private fun open(appContext: Context, next: Pair<String, Uri>, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue?,
                      fadeMs: Long, startAt: Double? = null): Bed {
         val (track, uri) = next
-        val player = ExoPlayer.Builder(appContext)
+        // Bộ giải mã đồng bộ: chế độ hàng đợi bất đồng bộ (mặc định Android 12+) tắt luồng gọi lại của MediaCodec trước khi nhả codec - mỗi lần nhả một bài
+        // (lặp mờ chéo ~40 lần / 5 phút) codec còn gửi sự kiện tới luồng đã chết ("sending message to a Handler on a dead thread", soát a69: 360 lần / 40 phút).
+        val renderers = DefaultRenderersFactory(appContext).forceDisableMediaCodecAsynchronousQueueing()
+        val player = ExoPlayer.Builder(appContext, renderers)
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
                 false,
@@ -654,10 +682,15 @@ object MusicBed {
         player.volume = 0f
         val offsetMs = (offsetSeconds.coerceAtLeast(0.0) * 1000).toLong()
         val bed = Bed(track, player, targetGain, targetGain * STEP_MS / fadeMs, cue, fadeMs)
-        player.addListener(object : Player.Listener {
+        fun listen(listener: Player.Listener) {
+            bed.listeners += listener
+            player.addListener(listener)
+        }
+        listen(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_READY) {
                     player.removeListener(this)
+                    bed.listeners.remove(this)
                     failed.forget(track)
                     val duration = player.duration
                     player.repeatMode = repeatFor(bed.cue, player, bed.final)
@@ -669,13 +702,13 @@ object MusicBed {
                 }
             }
         })
-        player.addListener(object : Player.Listener {
+        listen(object : Player.Listener {
             // Nhạc của sách hỏng (file thiếu trong gói, mạng tới máy tính rớt khi nghe thẳng): đoạn này im lặng, RETRY_MS sau thử
             // lại như máy tính. Bài của danh sách phát phát hỏng (file hỏng) thì bỏ cả phiên - tải hỏng đã có fetch lo.
             override fun onPlayerError(error: PlaybackException) {
                 main.post {
                     drop(track, retry = playlist == null)
-                    player.release()
+                    release(bed)
                     if (current?.player === player) {
                         current = null
                         queue.currentSpan = -1
@@ -707,7 +740,7 @@ object MusicBed {
                     val bed = iterator.next()
                     bed.player.volume = maxOf(0f, bed.player.volume - bed.fadeStep)
                     if (bed.player.volume <= 0.001f) {
-                        bed.player.release()
+                        release(bed)
                         iterator.remove()
                     } else {
                         busy = true

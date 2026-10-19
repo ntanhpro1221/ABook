@@ -16,6 +16,7 @@ import androidx.work.WorkerParameters
 import org.json.JSONObject
 import vn.abook.player.readaloud.ClipCancel
 import vn.abook.player.readaloud.ClipRetry
+import vn.abook.player.readaloud.IdleEngine
 import vn.abook.player.readaloud.ReadAloud
 import vn.abook.player.readaloud.VoiceSpeed
 import java.io.File
@@ -190,7 +191,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
                 music = runMusic,
                 cached = { text -> cache.contains(VoiceSpeed.quality(voice), text, origin, readings) },
             )
-            val stamps = runner.build()
+            val stamps = IdleEngine.holding { runner.build() } // giọng trên máy giữ model trong lúc xuất, kể cả lúc đứng chờ người nghe
 
             val (cover, coverName) = Mp3Export.coverOf(bookId, input.cover?.takeIf { it.isFile }?.readBytes())
             val exportPlan = ListenExport.exportPlan(book, bookId, chapters, stamps, work, cover, coverName)
