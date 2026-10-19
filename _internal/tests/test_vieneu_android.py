@@ -91,7 +91,7 @@ def test_the_phone_lifts_quiet_clips_with_the_computers_constants():
                         ("SAFETY_DB", loudness.LIFT_SAFETY_DB), ("PAD_SECONDS", loudness.LIFT_PAD_SECONDS), ("MIN_SECONDS", loudness.LIFT_MIN_SECONDS),
                         ("MIN_LUFS", loudness.LIFT_MIN_LUFS)):
         assert re.search(rf"const val {name} = {re.escape(str(value))}$", source, re.M), name
-    assert f'const val TAG = "{loudness.LIFT_TAG}"' in source and f'const val PREFIX = "{loudness.LIFT_PREFIX}"' in source
+    assert f'const val TAG = "{loudness.LIFT_TAG}"' in source and "val PREFIXES = listOf(" + ", ".join(f'"{prefix}"' for prefix in loudness.LIFT_PREFIXES) + ")" in source
 
 
 def test_the_phone_cuts_and_measures_like_the_computer():

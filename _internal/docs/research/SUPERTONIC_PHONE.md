@@ -240,3 +240,7 @@ A93, paired, 4 threads, warm, 5 sentences (screen off at night), order base / ne
 16 % faster at the same quality, so it replaces the shipped schedule and decoder (desktop `vieneu_engine.NANO_CFG_ENDS`, phone
 `VieneuNano.CFG_ENDS`). Nano still reads slower than real time on this phone; the remaining time is the estimator itself.
 Reproduce: `S/fastvoice/phone_nano_r6.sh` (bench arg `cfg=all` for the old schedule).
+
+The XNNPACK execution provider is no way out on this phone: same shipped Nano, paired cpu / xnnpack / xnnpack / cpu, the long sentence
+reads at RTF 2.12 against 1.00-1.03 on the plain CPU provider (estimator 12.1 s against 5.9-6.1 s, decoder 2.3 s against 0.9 s), every
+sentence about 2x slower. Reproduce: `S/fastvoice/phone_nano_ep.sh`.

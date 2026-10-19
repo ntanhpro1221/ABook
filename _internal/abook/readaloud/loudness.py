@@ -1,5 +1,5 @@
 """Độ to của từng giọng đọc: chỉnh lúc PHÁT (âm lượng của phần tử audio), không mã hoá lại clip (bộ nhớ đệm dùng chung mọi mức) - trừ phần bù theo clip
-của giọng VieNeu ở cuối file (câu ngắn nhỏ hơn mức giọng được nâng lên ngay lúc làm clip).
+của giọng VieNeu và Supertonic ở cuối file (câu ngắn nhỏ hơn mức giọng được nâng lên ngay lúc làm clip).
 
 Đo bằng BS.1770 (LUFS tích hợp) trên 60 câu, phiên Nhạc (docs/MUSIC_RESEARCH.md): giọng Studio nằm quanh -20,3 LUFS, đích -20 LUFS.
 `gain_db` = đích - đo, luôn <= 0 (phần tử audio chỉ giảm được, không khuếch đại). Giọng chưa đo: 0 dB.
@@ -43,15 +43,26 @@ MEASURED_LUFS = {
     "vieneu:turbo/Quốc Tuấn": -19.8,
     "vieneu:nano/Adam": -19.5,
     "vieneu:nano/Ái Hân": -18.2,
-    "vieneu:nano/Mỹ Duyên": -17.7,
+    "vieneu:nano/Mỹ Duyên": -18.4,
     "vieneu:nano/Đức Trí": -18.6,
     "vieneu:nano/Hữu Quân": -17.8,
     "vieneu:nano/Xuân Tiên": -18.5,
     "vieneu:nano/Mai Anh": -18.5,
     "vieneu:nano/Trúc Ly": -18.1,
     "vieneu:nano/Anh Khôi": -18.4,
-    "vieneu:nano/Minh Quân": -17.1,
+    "vieneu:nano/Minh Quân": -17.7,
     "vieneu:nano/Mạnh Dũng": -17.9,
+    # Giọng Supertonic (bậc chất lượng, cùng cách đo với VieNeu; dùng cho CẢ HAI bậc - Corpus research/music/PLAN_lx.md §15): mọi mức <= -20 nên gain_db = 0, chỉ bù theo clip có tác dụng.
+    "supertonic:F1": -20.8,
+    "supertonic:F2": -20.8,
+    "supertonic:F3": -21.7,
+    "supertonic:F4": -20.2,
+    "supertonic:F5": -20.7,
+    "supertonic:M1": -21.2,
+    "supertonic:M2": -20.0,
+    "supertonic:M3": -20.1,
+    "supertonic:M4": -20.8,
+    "supertonic:M5": -21.1,
 }
 
 
@@ -60,12 +71,12 @@ def gain_db(voice_id: str) -> float:
     return 0.0 if measured is None else round(min(0.0, TARGET_LUFS - measured), 1)
 
 
-# ---- bù theo clip cho giọng VieNeu (vnloud) -----------------------------------------------------------------------------------------------
+# ---- bù theo clip cho giọng VieNeu (vnloud) và Supertonic (stlift) -----------------------------------------------------------------------------------------------
 # Giọng VieNeu đọc câu thường đúng mức đo ở trên, nhưng thoại ngắn ("Ừ.", "Hừ.") ra nhỏ hơn 3-10 LU (Đức Trí turbo: -6,2; nano: -7,3 - phiên Nhạc,
 # PLAN_lx §9). `volume` của phần tử audio chỉ giảm được, nên câu nhỏ được nâng NGAY TRONG clip lúc làm ra (service.clip), trước khi vào bộ đệm;
-# mức giọng ở trên vẫn chỉnh lúc phát như cũ. Bản Kotlin: readaloud/ClipLift.kt (cùng hằng số, cùng fixture: tests/fixtures/vieneu/android/lift.json).
-LIFT_PREFIX = "vieneu:"
-LIFT_TAG = "ld1"          # dấu trong khoá bộ đệm: clip VieNeu làm trước khi có bù không trúng đệm nữa (chỉ VieNeu, Edge giữ nguyên)
+# mức giọng ở trên vẫn chỉnh lúc phát như cũ. Supertonic cùng cách (câu ngắn "Hả?", "Chờ đã!" nhỏ hơn mức giọng > 3 LU), cùng một bảng mức cho cả hai bậc tốc độ. Bản Kotlin: readaloud/ClipLift.kt (cùng hằng số, cùng fixture: tests/fixtures/vieneu/android/lift.json).
+LIFT_PREFIXES = ("vieneu:", "supertonic:")
+LIFT_TAG = "ld1"          # dấu trong khoá bộ đệm: clip VieNeu / Supertonic làm trước khi có bù không trúng đệm nữa (Edge giữ nguyên)
 LIFT_DEADBAND_DB = 2.0    # chỉ bù phần thiếu quá 2 LU: câu thường lệch tới -2 quanh mức giọng vẫn nguyên (đo 1080 câu thường: 99,8 % trong 2 LU)
 LIFT_MAX_DB = 8.0
 LIFT_CEILING_DBTP = -1.0  # đỉnh thật sau khi bù (bảng FIR của music_mix.json, như bản xuất kèm nhạc)
@@ -76,8 +87,8 @@ LIFT_MIN_LUFS = -45.0     # nhỏ hơn: hơi thở / nhiễu, không phải lờ
 
 
 def lifts(voice_id: str) -> bool:
-    """Giọng này được bù theo clip: giọng VieNeu đã có mức đo."""
-    return voice_id.startswith(LIFT_PREFIX) and voice_id in MEASURED_LUFS
+    """Giọng này được bù theo clip: giọng VieNeu / Supertonic đã có mức đo (mã giọng trần, không kèm bậc tốc độ)."""
+    return voice_id.startswith(LIFT_PREFIXES) and voice_id in MEASURED_LUFS
 
 
 def clip_lufs(samples: Any, rate: int) -> float | None:

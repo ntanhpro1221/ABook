@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 from abook import english_vi
-from abook.readaloud import cache, prepare, readings, supertonic
+from abook.readaloud import cache, loudness, prepare, readings, supertonic
 from abook.readaloud.service import ReadAloud
 from abook.readaloud.supertonic import Installed, SupertonicEngine, SupertonicProvider
 from abook.webui import music_module, studio_setup, supertonic_module, vieneu_module, voice_module, voice_speed, word_timing
@@ -417,6 +417,6 @@ def test_the_books_own_readings_come_after_the_names(fake_voices, tmp_path: Path
     clip = service.clip("supertonic:F1", text, origin="ja", readings=table)
     assert engine.calls[-1] == ("F1", "ha-ru-to gặp ki-âu-cô."), "cách đọc của người nghe thắng luật phiên âm, tên khác vẫn theo gốc cuốn"
     assert len(clip["words"]) == len(text.split())
-    tag = f"{provider.reading_tag(text, 'ja')}+{readings.tag(text, table)}"
+    tag = f"{provider.reading_tag(text, 'ja')}+{readings.tag(text, table)}+{loudness.LIFT_TAG}"
     assert tag.startswith("ja+r") and clip["file"].startswith(cache.clip_key("supertonic", "F1", text, tag))
     assert service.clip("supertonic:F1", text, origin="ja")["file"] != clip["file"], "bỏ cách đọc: clip khác"

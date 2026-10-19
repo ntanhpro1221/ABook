@@ -542,6 +542,8 @@ def lift_fixture() -> dict:
         "silent": (rng.standard_normal(int(0.5 * rate)) * 0.0002, "vieneu:turbo/Đức Trí"),
         "tiny": (tone(0.1, 0.05), "vieneu:turbo/Đức Trí"),
         "other_provider": (tone(0.8, 0.05), "edge:vi-VN-HoaiMyNeural"),
+        "quiet_supertonic": (tone(0.7, 0.095), "supertonic:F3"),
+        "peaky_supertonic": (tone(0.8, 0.05, spike=0.657), "supertonic:M2"),
     }
     cases = {}
     for name, (signal, voice) in signals.items():
