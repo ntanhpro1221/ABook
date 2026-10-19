@@ -48,6 +48,9 @@ class ModuleCore:
         self._thread: threading.Thread | None = None
         self._bench: Callable[[str], dict[str, Any]] | None = None
         self._after: Callable[[], None] | None = None
+        # Dấu model đã tính (`mark`): tính lại chỉ khi dấu của mô-đun đổi (tải / cập nhật / gỡ) - không đọc module.json mỗi clip.
+        self._marks: dict[tuple[tuple[str, ...], str], str] = {}
+        self._marks_lock = threading.Lock()
 
     # ---- cấu hình, dấu ------------------------------------------------------------------------------------------------------------
     def configure(self, folder: Path | str | None, benchmark: Callable[[str], dict[str, Any]] | None,
@@ -57,6 +60,8 @@ class ModuleCore:
             self.folder = Path(folder) if folder is not None else None
             self._bench, self._after = benchmark, after_install
             self.state.update(downloading=False, benchmarking=False, done=0, total=0, error="", cancelled=False)
+        with self._marks_lock:
+            self._marks.clear()
 
     def ensure_folder(self, name: str) -> None:
         """Cho Studio (tiến trình dây chuyền không gọi `configure`): chưa ai cấu hình thì dùng chỗ server đặt mô-đun - cạnh
@@ -80,7 +85,21 @@ class ModuleCore:
 
     def write_stamp(self, data: dict[str, Any]) -> None:
         if self.folder is not None:
-            io_utils.atomic_write_json(self.folder / STAMP_FILE, {"version": 1, **{k: v for k, v in data.items() if k != "version"}})
+            with self._marks_lock:
+                io_utils.atomic_write_json(self.folder / STAMP_FILE, {"version": 1, **{k: v for k, v in data.items() if k != "version"}})
+                self._marks.clear()
+
+    def mark(self, parts: tuple[str, ...], schedule: str = "") -> str:
+        """Dấu model của một giọng trên máy cho khoá bộ đệm clip (ReadAloud `model_mark`): 8 hex băm từ ghim ĐÃ TẢI của các phần `parts` (module.json) và lịch
+        đọc `schedule` (số bước...). Cập nhật model hay đổi lịch thì dấu đổi: clip cũ không trúng nữa, đoạn được đọc lại một lần. Tính một lần cho mỗi lần dấu
+        của mô-đun đổi."""
+        with self._marks_lock:
+            hit = self._marks.get((parts, schedule))
+            if hit is None:
+                pins = self.pins()
+                hit = hashlib.sha256("|".join([*(f"{part}={pins.get(part, '')}" for part in parts), schedule]).encode("utf-8")).hexdigest()[:8]
+                self._marks[(parts, schedule)] = hit
+            return hit
 
     def pins(self) -> dict[str, str]:
         pins = self.read_stamp().get("pins")

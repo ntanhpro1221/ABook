@@ -18,7 +18,10 @@ import vn.abook.player.vieneu.VieneuUnits
  * ghim có trần ([PreparePlan.SHARE]) nên chúng không chiếm hết chỗ.
  *
  * Giọng có hai bậc ([VoiceSpeed]: Supertonic, VieNeu Nano): dấu bậc đứng cuối dấu cách đọc ("fast5"; bậc chất lượng không có dấu - khoá như máy tính). Mã giọng trần
- * là "bậc nghe trực tiếp lúc này" ([tierOf]), `<mã>#q` là bậc chất lượng (mọi bản xuất), `<mã>#fast<n>` là bậc nhanh; đoạn trả về luôn mang mã giọng trần.
+ * là "bậc nghe trực tiếp lúc này" ([tierOf]), `<mã>#q` là bậc chất lượng (mọi bản xuất), `<mã>#fast<n>` là bậc nhanh; đoạn trả về luôn mang mã giọng trần. Nghe ở bậc nhanh nhận
+ * cả clip bậc chất lượng (ưu tiên nó: tiếng tốt hơn) - đổi "Tốc độ giọng trên máy" giữa chương không bắt đọc lại đoạn đã có; bậc chất lượng / bản xuất chỉ nhận bậc chất lượng.
+ *
+ * Giọng chạy trên máy (VieNeu, Supertonic) có thêm dấu model ([markOf]) cuối khoá: cập nhật model hay đổi lịch đọc (số bước...) thì clip cũ không trúng nữa, đoạn được đọc lại.
  */
 class ClipCache(
     private val dir: File,
@@ -26,6 +29,8 @@ class ClipCache(
     private val pinFile: File? = null,
     /** Dấu bậc nghe trực tiếp của một giọng ([VoiceSpeed.liveTag]); "" = bậc chất lượng. */
     private val tierOf: (String) -> String = { "" },
+    /** Dấu model của (mã giọng trần, dấu bậc) ([vn.abook.player.vieneu.VoiceModule.mark]; "" = giọng không có model trên máy). Tính sẵn trong mô-đun, không đọc file mỗi clip. */
+    private val markOf: (String, String) -> String = { _, _ -> "" },
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     companion object {
@@ -52,12 +57,15 @@ class ClipCache(
             listOf(
                 when {
                     SpokenText.normalises(voiceId) -> SpokenText.tag(text, origin)
-                    origin != null && (voiceId.startsWith("vieneu:") || voiceId.startsWith("supertonic:")) -> VieneuUnits.readingTag(text, origin)
+                    origin != null && local(voiceId) -> VieneuUnits.readingTag(text, origin)
                     else -> ""
                 },
                 Readings.tag(text, readings),
                 if (ClipLift.lifts(voiceId)) ClipLift.TAG else "", // giọng VieNeu: câu ngắn nhỏ được nâng trong clip (cache.py/service.clip: loudness.LIFT_TAG)
             ).filter { it.isNotEmpty() }.joinToString("+")
+
+        /** Giọng chạy trên máy (VieNeu, Supertonic): đọc tên theo gốc cuốn, khoá có dấu model. */
+        private fun local(voiceId: String) = voiceId.startsWith("vieneu:") || voiceId.startsWith("supertonic:")
 
         /** "edge:vi-VN-X" -> ("edge", "vi-VN-X"). */
         fun split(voiceId: String): Pair<String, String> = voiceId.substringBefore(':') to voiceId.substringAfter(':', "")
@@ -84,11 +92,24 @@ class ClipCache(
     /** Mã giọng đọc đúng bậc của khoá ([ClipReader] đưa cho giọng): giọng có hai bậc luôn mang dấu bậc, giọng khác giữ nguyên. */
     fun resolve(voiceId: String): String = tier(voiceId).let { (base, tag) -> VoiceSpeed.explicit(base, tag) }
 
-    private fun keyOf(voiceId: String, text: String, origin: String?, readings: Map<String, String>?): String {
-        val (base, tag) = tier(voiceId)
-        val marks = listOf(reading(base, text, origin, readings), tag).filter { it.isNotEmpty() }.joinToString("+")
+    private fun keyOf(voiceId: String, text: String, origin: String?, readings: Map<String, String>?): String =
+        tier(voiceId).let { (base, tag) -> keyAt(base, tag, text, origin, readings) }
+
+    /** Khoá của đoạn đọc bằng giọng [base] ở bậc [tag]: dấu cách đọc, dấu bậc, dấu model (như `service.clip` của máy tính). */
+    private fun keyAt(base: String, tag: String, text: String, origin: String?, readings: Map<String, String>?): String {
+        val mark = if (local(base)) markOf(base, tag) else ""
+        val marks = listOf(reading(base, text, origin, readings), tag, mark).filter { it.isNotEmpty() }.joinToString("+")
         return split(base).let { (provider, voice) -> key(provider, voice, text, marks) }
     }
+
+    /** Các khoá có thể chứa clip dùng được cho [voiceId], theo thứ tự ưu tiên: bậc nhanh tìm bậc chất lượng trước rồi mới tới chính nó; bậc khác chỉ chính nó. */
+    private fun lookupKeys(voiceId: String, text: String, origin: String?, readings: Map<String, String>?): List<String> {
+        val (base, tag) = tier(voiceId)
+        val own = keyAt(base, tag, text, origin, readings)
+        return if (VoiceSpeed.isFast(tag)) listOf(keyAt(base, "", text, origin, readings), own) else listOf(own)
+    }
+
+    private fun present(key: String): Boolean = File(dir, "$key.json").isFile && EXTENSIONS.any { File(dir, "$key.$it").length() > 0L }
 
     private fun savePins() {
         val file = pinFile ?: return
@@ -132,22 +153,22 @@ class ClipCache(
     }
 
     /** Đoạn đã có trong bộ đệm (không tính là một lần dùng - không đổi thứ tự dọn). */
-    fun contains(voiceId: String, text: String, origin: String? = null, readings: Map<String, String>? = null): Boolean {
-        val key = keyOf(voiceId, text, origin, readings)
-        return File(dir, "$key.json").isFile && EXTENSIONS.any { File(dir, "$key.$it").length() > 0L }
-    }
+    fun contains(voiceId: String, text: String, origin: String? = null, readings: Map<String, String>? = null): Boolean =
+        lookupKeys(voiceId, text, origin, readings).any(::present)
 
     /** Độ dài (ms) clip của đoạn nếu đã có trong bộ đệm, null nếu chưa ("Xuất sách nói" ước độ dài cuốn từ clip thật); như [contains], không tính là một lần dùng. */
     fun durationMs(voiceId: String, text: String, origin: String? = null, readings: Map<String, String>? = null): Long? {
-        if (!contains(voiceId, text, origin, readings)) return null
-        return runCatching { JSONObject(File(dir, "${keyOf(voiceId, text, origin, readings)}.json").readText()).getLong("duration") }.getOrNull()
+        val key = lookupKeys(voiceId, text, origin, readings).firstOrNull(::present) ?: return null
+        return runCatching { JSONObject(File(dir, "$key.json").readText()).getLong("duration") }.getOrNull()
     }
 
     /** File tạm cho giọng ghi vào (cùng thư mục để đổi tên không phải chép). Không tính vào bộ nhớ đệm tới khi [put]. */
     fun temp(extension: String): File = File(dir, "tmp-${java.util.UUID.randomUUID()}.$extension.part")
 
-    fun get(voiceId: String, text: String, origin: String? = null, readings: Map<String, String>? = null): Clip? {
-        val key = keyOf(voiceId, text, origin, readings)
+    fun get(voiceId: String, text: String, origin: String? = null, readings: Map<String, String>? = null): Clip? =
+        lookupKeys(voiceId, text, origin, readings).firstNotNullOfOrNull { load(it, voiceId) }
+
+    private fun load(key: String, voiceId: String): Clip? {
         val meta = File(dir, "$key.json")
         if (!meta.isFile) return null
         return try {

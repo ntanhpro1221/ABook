@@ -149,6 +149,7 @@ async function requestClip(voice: string, text: string, options?: ClipOptions): 
   const init = {
     method: "POST",
     body: { voice, text: stream && tail !== null ? tail : text, cachedOnly: options?.cachedOnly, bookId: options?.bookId, readings: options?.readings, rank: options?.rank, ...(stream ? { stream: true } : {}) },
+    signal: options?.signal, // bộ máy bỏ lượt này: kết nối đóng, máy chủ thôi đọc (server.py _peer_gone)
   };
   let clip: Reply | ReadAloudClip;
   try {
@@ -156,6 +157,7 @@ async function requestClip(voice: string, text: string, options?: ClipOptions): 
       ? await apiOrStream<Reply, ReadAloudClip>("/api/readaloud/clip", init, CLIP_STREAM_TYPE, (response) => clipFromStream(response.body, mediaUrl))
       : await api<Reply>("/api/readaloud/clip", init);
   } catch (error) {
+    if (options?.signal?.aborted) throw new ReadAloudError("Đã bỏ đoạn này.", "cancelled");
     // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
     if (error instanceof ReadAloudError) throw error;
     if (error instanceof ApiError) throw new ReadAloudError(error.message, String(error.detail.reason ?? "service"));
