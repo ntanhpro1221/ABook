@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.101] - 2026-10-19
+
 ### Nghe ngay
 
 - Máy tính và điện thoại: những câu ngắn của Giọng Supertonic như "Hả?" hay "Chờ đã!" không còn nghe nhỏ hơn phần còn lại, ở cả hai mức tốc độ; các đoạn đã đọc sẵn sẽ được đọc lại một lần.
