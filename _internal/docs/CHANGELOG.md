@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.105] - 2026-10-19
+
 ### Điện thoại
 
 - Xuất sách nói cho cuốn chưa có ảnh bìa thật không còn làm app tắt ngang khi hộp chọn nơi lưu mở ra; bìa vẽ sẵn vẫn được gắn vào file.
