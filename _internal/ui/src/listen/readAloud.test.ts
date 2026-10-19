@@ -28,7 +28,7 @@ import {
   type ReadAloudClip,
   type SpeechTrack,
 } from "./readAloud";
-import { LiveClip } from "./liveClip";
+import { LiveClip, LOCAL_MIME } from "./liveClip";
 import { FakeSource } from "./liveTestKit";
 import { textScript } from "./textScript";
 import { tailFromWord, usableWords, wordIndexAt } from "./words";
@@ -2752,6 +2752,83 @@ describe("clip phát dần đứt giữa chừng: phần đã về phát hết, 
     await flush();
     live.fail(BROKEN());
     await flush();
+    expect(s.events).not.toContain("error");
+  });
+});
+
+describe("giọng trên máy phát luồng: FLAC từng khúc (local_stream)", () => {
+  const P = "Một hai ba bốn năm sáu bảy tám.";
+  const OTHERS = Array.from({ length: 12 }, (_, i) => `Đoạn số ${i + 2} có vài chữ để nghe.`);
+  const asked = (s: Setup) => s.requests.filter((r) => r.text === P);
+  const EIGHT: [number, number][] = [[0, 250], [250, 500], [500, 750], [750, 1000], [1000, 1000], [1000, 1000], [1000, 1000], [1000, 1000]];
+  /** Đang nghe đoạn đầu bằng clip giọng trên máy đang về: một khúc (1 giây) đã về. `signals`: tín hiệu bỏ lượt của từng lượt xin. */
+  const streaming = async () => {
+    blobUrls();
+    const s = setup({ chapter: [P, ...OTHERS].join("\n\n") });
+    s.track.serial = () => true;
+    const signals: (AbortSignal | undefined)[] = [];
+    const inner = s.track.fetchClip;
+    s.track.fetchClip = (voice, text, o) => {
+      if (!o?.cachedOnly) signals.push(o?.signal);
+      return inner(voice, text, o);
+    };
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    const live = new LiveClip();
+    live.mime = LOCAL_MIME;
+    live.push(new Uint8Array(100));
+    live.setWords(EIGHT, 1000, 1000);
+    asked(s)[0].resolve({ url: "", durationMs: 0, words: [], live });
+    await flush();
+    s.sources[0].open();
+    return { s, live, signals };
+  };
+  const finalOf = (exact?: boolean) => ({ url: "/media/readaloud/x.wav", durationMs: 2000, words: EIGHT.map((_, i): [number, number] => [i * 250, i * 250 + 250]), ...(exact === false ? { exact } : {}) });
+
+  it("MediaSource mở đúng kiểu FLAC; độ dài phần đã có theo bản W, không theo số byte", async () => {
+    const { s, live } = await streaming();
+    expect(s.sources[0].types).toEqual([LOCAL_MIME]);
+    expect(live.receivedMs).toBe(1000);
+  });
+
+  it("tiếng luồng đúng như file cuối: phát tiếp từ MediaSource, không dựng lại phần tử audio", async () => {
+    const { s, live } = await streaming();
+    live.finish(finalOf());
+    await flush();
+    expect(s.audios).toHaveLength(1);
+    expect(s.audios[0].released).toBe(false);
+  });
+
+  it("tiếng luồng khác file cuối (exact false - bù độ to cả clip): chuyển sang file cuối ngay chỗ đang nghe", async () => {
+    const { s, live } = await streaming();
+    s.audios[0].currentTime = 0.6;
+    live.finish(finalOf(false));
+    await flush();
+    expect(s.audios[0].released).toBe(true);
+    const next = s.audios.at(-1)!;
+    expect(next).not.toBe(s.audios[0]);
+    expect(next.src).toBe("/media/readaloud/x.wav");
+    expect(next.currentTime).toBeCloseTo(0.6);
+  });
+
+  it("hỏng giữa chừng: không xin clip đuôi (chỉ cho MP3 của Edge), đi đường bỏ clip như mọi clip hỏng", async () => {
+    const { s, live } = await streaming();
+    s.audios[0].currentTime = 0.4;
+    live.fail(new ReadAloudError("Giọng trên máy hỏng.", "service"));
+    await flush();
+    expect(s.audios[0].released).toBe(true);
+    expect(asked(s).every((r) => r.tailFrom === undefined)).toBe(true);
+  });
+
+  it("lượt bị bỏ trong lúc đang về (nhảy xa): kết nối đóng, clip bỏ lặng lẽ - không báo lỗi", async () => {
+    const { s, live, signals } = await streaming();
+    expect(signals[0]?.aborted).toBe(false);
+    s.engine.seekWord(12, 0);
+    await flush();
+    expect(signals[0]?.aborted).toBe(true);
+    live.fail(new ReadAloudError("Đã bỏ đoạn này.", "cancelled"));
+    await flush();
+    expect(s.engine.error).toBe("");
     expect(s.events).not.toContain("error");
   });
 });

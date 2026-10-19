@@ -12,7 +12,6 @@ import org.junit.runner.RunWith
 import vn.abook.player.vieneu.SeaG2p
 import vn.abook.player.vieneu.VieneuModule
 import vn.abook.player.vieneu.VieneuVoices
-import vn.abook.player.vieneu.VoiceModule
 import java.io.File
 import java.io.RandomAccessFile
 import java.security.MessageDigest
@@ -52,26 +51,8 @@ class VieneuOnDeviceTest {
         assumeTrue("chưa đẩy mô-đun vào ${staged.path} (scripts/vieneu_phone_module_stage.py)", File(staged, "g2p/libabook_sea_g2p.so").isFile)
         val tiers = VieneuModule.TIERS.filter { File(staged, "$it/config.json").isFile }
         assumeTrue("mô-đun đẩy lên chưa có giọng nào", tiers.isNotEmpty())
-        val dir = File(context.filesDir, "vieneu")
-        val runtime = SharedRuntime.of(context)
-        // the runtime parts (ort/, g2p/) live in the folder every voice shares, the rest in VieNeu's own
-        fun home(path: String) = if (path.substringBefore('/') in SharedRuntime.PARTS) runtime.dir else dir
-        staged.walkTopDown().filter { it.isFile }.forEach { source ->
-            val path = source.relativeTo(staged).invariantSeparatorsPath
-            val target = File(home(path), path)
-            if (target.length() != source.length()) {
-                target.parentFile!!.mkdirs()
-                target.delete()
-                source.copyTo(target, overwrite = true)
-            }
-            if (target.name.endsWith(".so")) target.setReadOnly()
-        }
         val module = VieneuVoices.module(context)
-        // Same check as a real download: every file hashed against this app's pins (nothing fetched: they are all here already).
-        for ((folder, parts) in module.parts(tiers).groupBy { home(it.name) }) PinnedFiles(folder, "", VoiceModule.STAMP).download(parts, object : PinnedFiles.Progress {
-            override fun current(bytes: Long) = Unit
-            override fun done(part: PinnedFiles.Part) = Unit
-        })
+        StagedModule.install(staged, module, tiers)
         val installed = module.installed()
         assertNotNull("the staged module is not usable: ${module.status()}", installed)
         val report = StringBuilder("abi=${OrtRuntime.deviceAbi()} cores=${Runtime.getRuntime().availableProcessors()}\n")

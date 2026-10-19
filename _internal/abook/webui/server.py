@@ -3184,11 +3184,17 @@ class ClipStream:
     (trước đó lỗi vẫn là JSON như thường). Mỗi bản ghi = 1 byte loại + 4 byte độ dài (big-endian) + nội dung, một khúc chunked một bản ghi, đẩy đi ngay:
     `A` byte MP3 (nối thẳng vào phần trước), `W` JSON `{"words", "duration_ms", "heard_ms"}` (mốc tạm, thay bản trước; `heard_ms` = mốc hết chữ thật cuối cùng - chữ bắt đầu từ đó trở đi là chữ chưa tới), `E` JSON `{"url", "duration_ms", "words"}` (cuối) rồi hết,
     `X` JSON `{"message", "reason"}` (lỗi sau khi đã phát) rồi hết, `C` JSON `{"word"}` (một mảnh giữa clip hỏng: tiếng sẽ dừng trước chữ hiện `word` của clip, phần trước vẫn về hết rồi mới tới X - uxfix63).
+    Giọng trên máy (readaloud/local_stream.py, chỉ khi trình phát nói nhận được - `local`): `M` JSON `{"mime"}` trước `A` đầu = kiểu tiếng (không có = MP3 như Edge; giọng trên máy:
+    FLAC trong MP4 phân mảnh), `E` có thêm `"exact": false` khi tiếng đã phát luồng khác clip cuối (bù độ to cả clip) - trình phát chuyển sang file cuối tại chỗ đang nghe.
+    `speed`: tốc độ phát của người nghe (giọng trên máy chờ đủ tiếng để không đứt giữa chừng).
     Người nghe đóng kết nối giữa chừng: thôi ghi, việc đọc vẫn làm xong (clip vào bộ đệm, đoạn ấy nghe lại được)."""
 
-    def __init__(self, handler: Handler) -> None:
+    def __init__(self, handler: Handler, *, local: bool = False, speed: float = 1.0) -> None:
         self.handler = handler
+        self.local = local
+        self.speed = speed
         self.sent = False  # đã mở lời đáp 200 (từ đó chỉ còn bản ghi, không còn JSON thường)
+        self.exact = True
         self._broken = False
 
     def started(self) -> None:
@@ -3212,7 +3218,14 @@ class ClipStream:
     def cut(self, word: int) -> None:
         self._record(b"C", json.dumps({"word": word}).encode("utf-8"))
 
+    def format(self, mime: str) -> None:
+        self._record(b"M", json.dumps({"mime": mime}).encode("utf-8"))
+
+    def replaced(self) -> None:
+        self.exact = False
+
     def finish(self, payload: dict[str, Any]) -> None:
+        payload = payload if self.exact else {**payload, "exact": False}
         self._record(b"E", json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
         self._chunk(b"")
 
@@ -5479,7 +5492,11 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hay chữ")
         rank = self._clip_rank(body)
         # `stream: true` (trình phát gửi cho đoạn nó đang đứng chờ): clip chưa có trong bộ đệm thì phát luồng, còn lại JSON như thường (ReadAloud.clip tự bỏ qua `stream` khi không phát luồng được).
-        stream = ClipStream(self) if body.get("stream") is True and rank == 0 and not body.get("cachedOnly") else None
+        # `localStream: true`: trình phát nhận được tiếng giọng trên máy phát luồng (FLAC, ClipStream), `rate`: tốc độ nó đang phát.
+        speed = body.get("rate")
+        speed = float(speed) if isinstance(speed, (int, float)) and not isinstance(speed, bool) and 0.25 <= speed <= 4 else 1.0
+        stream = (ClipStream(self, local=body.get("localStream") is True, speed=speed)
+                  if body.get("stream") is True and rank == 0 and not body.get("cachedOnly") else None)
         try:
             # `cancelled`: trình phát đóng kết nối (bỏ đoạn này) thì lượt đọc dừng - mọi giọng, giọng trên máy dừng giữa các khúc / bước (uxfix70).
             clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")), origin=self._reading_origin(body),

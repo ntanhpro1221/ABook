@@ -22,8 +22,12 @@ class LiveStartTest {
         assertFalse("hỏi thăm ngầm", LivePolicy.streams("edge:v", true, 0, true, null, -1))
         assertFalse("giọng khác", LivePolicy.streams("azure:v", true, 0, false, null, -1))
         assertFalse("giọng khác", LivePolicy.streams("device:vi", true, 0, false, null, -1))
-        assertFalse("giọng khác", LivePolicy.streams("vieneu:turbo/x", true, 0, false, null, -1))
         assertFalse("không trực tuyến", LivePolicy.streams("edge:v", false, 0, false, null, -1))
+        // giọng trên máy (LocalLive): phát luồng từng khúc, không cần mạng
+        assertTrue(LivePolicy.streams("vieneu:turbo/x", true, 0, false, null, -1))
+        assertTrue(LivePolicy.streams("vieneu:nano/x", false, 0, false, null, -1))
+        assertTrue(LivePolicy.streams("supertonic:F1#fast5", false, 0, false, null, -1))
+        assertFalse("rank >= 1 (đọc trước) không phát luồng", LivePolicy.streams("supertonic:F1", false, 1, false, null, -1))
     }
 
     @Test

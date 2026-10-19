@@ -5,6 +5,7 @@ import org.json.JSONObject
 import vn.abook.player.MusicRender
 import vn.abook.player.readaloud.ClipBudget
 import vn.abook.player.readaloud.ClipLift
+import vn.abook.player.readaloud.LocalLive
 import vn.abook.player.readaloud.Span
 import vn.abook.player.readaloud.SyllableSpread
 import vn.abook.player.readaloud.WordTokens
@@ -117,8 +118,9 @@ class VieneuSpeaker(
 ) {
     class Spoken(val samples: FloatArray, val rate: Int, val durationMs: Long, val words: List<Span>, val spans: List<IntArray>)
 
+    /** [live]: the paragraph the listener is waiting for streams - each unit goes to it as soon as it is read ([LocalLive]). */
     fun speak(tier: String, tierEngine: VieneuTier, name: String, preset: VieneuPreset, text: String, origin: String? = null,
-              readings: Map<String, String>? = null): Spoken {
+              readings: Map<String, String>? = null, live: LocalLive? = null): Spoken {
         val (tokens, units) = VieneuUnits.units(text, MAX_CHARS.getValue(tier), origin, readings)
         val waves = ArrayList<FloatArray>()
         val pauses = ArrayList<Double>()
@@ -127,8 +129,8 @@ class VieneuSpeaker(
             val phonemes = phonemize(unit.pieces)
             val audio = if (phonemes.isEmpty()) FloatArray(0) else tierEngine.infer(phonemes, preset, seedOf(tier, name, unit.pieces.joinToString(" ")))
             waves.add(audio)
-            val last = phonemes.trimEnd().lastOrNull()
-            pauses.add(VieneuAudio.GAP_SECONDS.getValue(if (last == null || last in ".!?") "sentence" else "minor"))
+            pauses.add(VieneuAudio.gapAfter(phonemes))
+            live?.unit(audio, tierEngine.rate, phonemes)
         }
         val (joined, spans) = VieneuAudio.join(waves, tierEngine.rate, pauses.dropLast(1))
         return timed(tokens, units, joined, spans, tierEngine.rate)
@@ -141,8 +143,12 @@ class VieneuSpeaker(
          * The joined clip of a paragraph with its word timings (`vieneu.timed_synthesis` without the aligner): the model gives none, so each unit's
          * words are spread over ITS exact span of the clip by syllables. Shared by every voice that reads by [VieneuUnits] (VieNeu, Supertonic).
          */
-        fun timed(tokens: List<String>, units: List<VieneuUnits.Unit>, joined: FloatArray, spans: List<IntArray>, rate: Int): Spoken {
-            val duration = joined.size * 1000L / rate
+        fun timed(tokens: List<String>, units: List<VieneuUnits.Unit>, joined: FloatArray, spans: List<IntArray>, rate: Int): Spoken =
+            Spoken(joined, rate, joined.size * 1000L / rate, timedWords(tokens, units, spans, rate, joined.size), spans)
+
+        /** The word timings of [timed] for a clip of [total] samples whose [units] sit at [spans] ([LocalLive]: one unit at a time, at its place in the clip). */
+        fun timedWords(tokens: List<String>, units: List<VieneuUnits.Unit>, spans: List<IntArray>, rate: Int, total: Int): List<Span> {
+            val duration = total * 1000L / rate
             val words = ArrayList<Span>()
             for ((unit, span) in units.zip(spans)) {
                 val count = unit.last - unit.first + 1
@@ -156,12 +162,11 @@ class VieneuSpeaker(
                 WordTokens.map(unitText, SyllableSpread.boundaries(unitText, unitMs), unitMs).forEach { words.add(Span(it.start + startMs, it.end + startMs)) }
             }
             var previous = 0L
-            val clamped = words.map { pair -> // never backwards, never past the clip
+            return words.map { pair -> // never backwards, never past the clip
                 val start = minOf(maxOf(pair.start, previous), duration)
                 previous = start
                 Span(start, minOf(maxOf(pair.end, start), duration))
             }
-            return Spoken(joined, rate, duration, clamped, spans)
         }
 
         /** `vieneu.seed_of`: the first 8 hex digits of SHA-256 of the parts joined by "|". */

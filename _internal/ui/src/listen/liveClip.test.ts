@@ -93,7 +93,7 @@ describe("clipFromStream: lời đáp phát luồng của máy chủ", () => {
     expect(live.state).toBe("done");
     expect(seen).toEqual(["words", "audio", "done"]);
     expect(live.final).toMatchObject({ url: "/media/readaloud/x.mp3?t=k", durationMs: 1500, words: [[0, 700], [700, 1500]] });
-    expect([...new Uint8Array(await live.final!.bytes.arrayBuffer())]).toEqual([1, 2, 3]);
+    expect([...new Uint8Array(await live.final!.bytes!.arrayBuffer())]).toEqual([1, 2, 3]);
     expect(live.words).toEqual([[0, 700], [700, 1500]]);
   });
 
