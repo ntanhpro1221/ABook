@@ -290,9 +290,9 @@ export function SettingsScreen() {
 
       <Group title="Nghe">
         <NotificationRow />
-        <Row label="Nút tai nghe lùi/tới" hint="Nút Trước/Sau trên tai nghe Bluetooth, đồng hồ, xe hơi: lùi/tới 15 giây thay vì nhảy cả chương.">
+        <Row label="Nút tai nghe lùi/tới" hint="Nút Trước/Sau trên tai nghe Bluetooth, đồng hồ, xe hơi lùi/tới 15 giây, bấm nhầm không mất cả chương. Tắt thì chúng chuyển chương.">
           <Switch.Root
-            checked={settings.headsetSkips ?? false}
+            checked={settings.headsetSkips !== false}
             onCheckedChange={(value) => change({ headsetSkips: value })}
             aria-label="Nút tai nghe lùi/tới"
             className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
@@ -300,17 +300,15 @@ export function SettingsScreen() {
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
         </Row>
-        <Row label="Tự lùi khi nghe lại" hint={`Tạm dừng quá ${settings.rewindAfterMinutes} phút rồi nghe tiếp thì lùi lại một chút để bắt mạch truyện.`}>
-          <Segmented
-            label="Tự lùi"
-            value={String(settings.rewindSeconds)}
-            onChange={(value) => change({ rewindSeconds: Number(value) })}
-            options={[
-              { value: "0", label: "Tắt" },
-              { value: "5", label: "5s" },
-              { value: "15", label: "15s" },
-            ]}
-          />
+        <Row label="Tự lùi khi nghe lại" hint="Tạm dừng quá nửa phút rồi nghe tiếp thì lùi 5 giây (quá 10 phút: lùi 10 giây) để bạn bắt lại mạch truyện.">
+          <Switch.Root
+            checked={settings.autoRewind !== false}
+            onCheckedChange={(value) => change({ autoRewind: value })}
+            aria-label="Tự lùi khi nghe lại"
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
+          >
+            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+          </Switch.Root>
         </Row>
       </Group>
 

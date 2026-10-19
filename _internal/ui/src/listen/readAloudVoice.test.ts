@@ -332,3 +332,40 @@ describe("giọng riêng của cuốn đi theo hồ sơ nghe (soát a68 lỗi 8)
     expect(module.adoptSyncedVoice("b1", { voice: "edge:vi-VN-NamMinhNeural", voiceAt: mine + 60 }, VOICES)).toBe(false);
   });
 });
+
+describe("tải xong giọng trên máy khi đã rời Cài đặt (soát a69)", () => {
+  it("vòng hỏi sống cả phiên: tải xong thì danh sách giọng hỏi lại, không cần thẻ Cài đặt còn trên màn", async () => {
+    vi.useFakeTimers();
+    try {
+      const { module } = await fresh();
+      let installed = false;
+      const asked: number[] = [];
+      const value = {
+        readAloudVoices: async () => {
+          asked.push(1);
+          return installed ? [...VOICES, { id: "supertonic:F1", name: "Supertonic F1", provider: "supertonic", online: false }] : VOICES;
+        },
+      } as unknown as ListenSource;
+      expect((await module.voicesOf(value)).some((v) => v.id === "supertonic:F1")).toBe(false);
+      // Thẻ bấm tải rồi người dùng rời Cài đặt: chỉ còn vòng hỏi; lần hỏi thứ ba thấy đã xong.
+      let polls = 0;
+      const done = vi.fn();
+      const poll = async () => {
+        polls += 1;
+        if (polls < 3) return true;
+        installed = true;
+        return false;
+      };
+      module.watchVoiceModule("supertonic", poll, done);
+      module.watchVoiceModule("supertonic", poll, done); // thẻ mở lại giữa chừng: không thêm vòng hỏi thứ hai
+      expect((await module.voicesOf(value)).length).toBe(VOICES.length);
+      await vi.advanceTimersByTimeAsync(3500);
+      expect(polls).toBe(3);
+      expect(done).toHaveBeenCalledTimes(1);
+      expect((await module.voicesOf(value)).some((v) => v.id === "supertonic:F1")).toBe(true);
+      expect(asked.length).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

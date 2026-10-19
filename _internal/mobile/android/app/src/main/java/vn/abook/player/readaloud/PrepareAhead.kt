@@ -227,7 +227,7 @@ object PrepareAhead {
         working = true
         emit(context)
         val outcome = try {
-            runner.run(mine)
+            IdleEngine.holding { runner.run(mine) } // giọng trên máy giữ model trong lúc làm trước, kể cả lúc đứng chờ người nghe
         } finally {
             working = false
         }
