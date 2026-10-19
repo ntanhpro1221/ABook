@@ -65,7 +65,7 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
     /** One chunk of phonemes -> 24 kHz audio. [noise] is the start latent `[144][frames]` (the bench replays the desktop's); null draws it from [seed]
      *  exactly as the desktop does (`np.random.default_rng(seed).standard_normal`). */
     fun synthesize(phones: String, speaker: FloatArray, style: FloatArray, noise: FloatArray?, seed: Long, steps: Int = STEPS, cfgScale: Float = 3f, sway: Double = 0.0, speed: Double = 1.0,
-                   cfgEnds: Boolean = CFG_ENDS): Result {
+                   cfgLast: Boolean = CFG_LAST): Result {
         val timings = Timings()
         val started = System.nanoTime()
         val ids = encodePhones(phones)
@@ -97,7 +97,7 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
                     val from = swayed(i, steps, sway)
                     val to = swayed(i + 1, steps, sway)
                     val v = estimate(x, frames, from.toFloat(), ctxTensor, maskTensor, speakerTensor, styleTensor, clock)
-                    if (cfgScale > 0f && (cfgEnds || i in 1 until steps - 1)) {
+                    if (cfgScale > 0f && (cfgLast || i < steps - 1)) {
                         val unconditional = estimate(x, frames, from.toFloat(), nullCtxTensor, nullMask, nullSpeakerTensor, nullStyleTensor, clock)
                         for (k in v.indices) v[k] = unconditional[k] + cfgScale * (v[k] - unconditional[k])
                     }
@@ -143,12 +143,12 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
 
     companion object {
         const val SAMPLE_RATE = 24_000
-        /** Euler steps (desktop vieneu_engine.NANO_STEPS): 8 since 18-10 - 16 -> 8 measured no worse on the test sets, half the time
-         *  (docs/research/SUPERTONIC_PHONE.md, "18-10: int8 + fewer steps"). */
-        const val STEPS = 8
-        /** Guidance on the first and last step too (desktop vieneu_engine.NANO_CFG_ENDS): false since 19-10 - the two ends run the conditional pass
-         *  only (guidance in a limited interval), 14 estimator calls instead of 16 at the same quality (SUPERTONIC_PHONE.md, "R6"). */
-        const val CFG_ENDS = false
+        /** Euler steps (desktop vieneu_engine.NANO_STEPS): 6 since 19-10 - measured no worse on the test set than 8 steps guided on every step
+         *  (docs/research/SUPERTONIC_PHONE.md, "R7"). */
+        const val STEPS = 6
+        /** Guidance on the last step too (desktop vieneu_engine.NANO_CFG_LAST): false since 19-10 - the last step runs the conditional pass only
+         *  (guidance in a limited interval), 11 estimator calls instead of 12 (SUPERTONIC_PHONE.md, "R7"). */
+        const val CFG_LAST = false
         private const val MAX_CHUNK_SECONDS = 15.0
         private const val MIN_FRAMES = 2
     }

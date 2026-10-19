@@ -106,7 +106,7 @@ def test_the_phone_cuts_and_measures_like_the_computer():
     assert f"const val SLOW_RTF = {vieneu_module.SLOW_RTF}" in _kotlin("vieneu/VoiceModule.kt")
     assert f"MAX_NEW_FRAMES = {vieneu_engine.MAX_NEW_FRAMES}" in speaker
     assert f"const val STEPS = {vieneu_engine.NANO_STEPS}" in _kotlin("vieneu/VieneuNano.kt")
-    assert f"const val CFG_ENDS = {str(vieneu_engine.NANO_CFG_ENDS).lower()}" in _kotlin("vieneu/VieneuNano.kt")
+    assert f"const val CFG_LAST = {str(vieneu_engine.NANO_CFG_LAST).lower()}" in _kotlin("vieneu/VieneuNano.kt")
 
 
 def test_the_shared_fixtures_are_what_the_current_desktop_code_gives():
