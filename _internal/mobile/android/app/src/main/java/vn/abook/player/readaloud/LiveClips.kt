@@ -11,6 +11,7 @@ import kotlin.concurrent.withLock
  * Nghe ngay phát LUỒNG clip Edge (uxfix57; máy tính: `edge.py` `StreamSink` + MediaSource, uxfix56): đoạn người nghe đang đứng chờ (rank 0) đi vào ExoPlayer ngay khi byte tiếng đầu tiên về
  * thay vì đợi [EdgeTts.synthesize] đọc xong mọi mảnh (a57: nhảy tới câu chờ trung vị 6,6 giây, byte đầu tới sau ~2 giây). File mp3 đang được ghi lớn dần; ExoPlayer đọc nó qua
  * `abooklive://<id>` ([SCHEME], LiveClipDataSource) và chờ khi hết byte mà clip chưa xong.
+ * Giọng trên máy (VieNeu, Supertonic) cũng vậy: file WAV lớn dần theo từng khúc vừa đọc xong ([LocalLive]).
  */
 object LiveClips {
     const val SCHEME = "abooklive"
@@ -26,6 +27,11 @@ object LiveClips {
         private var written = 0L
         private var finished = false
         private var error: Exception? = null
+        /** Độ dài tiếng (ms) của `written` byte đầu: MP3 48 kbps của Edge; giọng trên máy đặt theo WAV của nó ([Target.format]). */
+        @Volatile var durationOf: (Long) -> Long = EdgeProtocol::durationMs
+
+        /** Độ dài tiếng (ms) của phần đã ghi. */
+        fun durationMs(): Long = durationOf(written())
 
         /** File đang ghi (đổi chỗ khi clip vào bộ đệm - [relocate]); null khi chưa có byte nào. */
         fun file(): File? = lock.withLock { file }
@@ -188,6 +194,12 @@ object LiveClips {
          * mới tới [failed]. Người nghe xin phần nối từ chữ ấy NGAY. Nhiều nhất một lần, có thể trước byte đầu.
          */
         fun cut(word: Int) {}
+
+        /** Giọng trên máy ([LocalLive]), trước [grew] đầu: độ dài tiếng (ms) của n byte đầu file ([Entry.durationOf]). */
+        fun format(durationMs: (Long) -> Long) {}
+
+        /** Tốc độ người nghe đang phát (giọng trên máy chờ đủ tiếng để không đứt ở tốc độ ấy - [LocalLive.readyToPlay]). */
+        fun speed(): Float = 1f
     }
 
     /** Chỗ nhận + cách đổi mốc chữ giọng nhận về chữ hiện ([Voice.synthesize] đổi chữ thô thành chữ chuẩn hoá thì đặt `expand`). */
@@ -293,10 +305,15 @@ class LiveWords(
 
 /** Quyết định phát luồng cho một lượt đọc đoạn (thuần tính toán, LiveClipsTest). */
 object LivePolicy {
+    /** Giọng trên máy phát luồng từng khúc ([LocalLive]); không cần mạng. */
+    val LOCAL = setOf("vieneu", "supertonic")
+
     /**
-     * Lượt đọc này có phát luồng cho ExoPlayer không? Chỉ giọng Edge (nhà cung cấp có xếp hàng theo rank), đoạn người nghe đang đứng chờ (`rank` 0), không phải lần hỏi thăm ngầm; và không phải tua theo thanh thời gian
+     * Lượt đọc này có phát luồng cho ExoPlayer không? Chỉ giọng Edge (nhà cung cấp có xếp hàng theo rank; có mạng) hay giọng trên máy ([LOCAL]), đoạn người nghe đang đứng chờ (`rank` 0), không phải lần hỏi thăm ngầm; và không phải tua theo thanh thời gian
      * tới giữa đoạn chưa đọc (`waitingOffsetMs` > 0 mà không bấm chữ - `waitingWord` < 0): chỗ ấy ở sâu trong clip, phải đợi gần hết clip mới tới nên đọc cả đoạn như cũ. `waitingOffsetMs` null = không có chỗ chờ (hàng đợi cạn).
      */
-    fun streams(voice: String, online: Boolean, rank: Int, probe: Boolean, waitingOffsetMs: Long?, waitingWord: Int): Boolean =
-        online && rank == 0 && !probe && ClipCache.split(voice).first == "edge" && (waitingOffsetMs == null || waitingOffsetMs <= 0 || waitingWord >= 0)
+    fun streams(voice: String, online: Boolean, rank: Int, probe: Boolean, waitingOffsetMs: Long?, waitingWord: Int): Boolean {
+        val provider = ClipCache.split(voice).first
+        return ((online && provider == "edge") || provider in LOCAL) && rank == 0 && !probe && (waitingOffsetMs == null || waitingOffsetMs <= 0 || waitingWord >= 0)
+    }
 }

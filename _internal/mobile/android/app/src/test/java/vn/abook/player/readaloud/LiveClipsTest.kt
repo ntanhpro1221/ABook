@@ -203,7 +203,7 @@ class LiveClipsTest {
         val frames = 200
         val entry = LiveClips.create()
         entry.grew(write("h.mp3", EdgeFake.mp3Frames(frames)), frames * 144L)
-        val extractor = Streaming.liveExtractors().single()
+        val extractor = Streaming.liveExtractors().single { it is androidx.media3.extractor.mp3.Mp3Extractor }
         val samples = Samples()
         val output = Output(samples)
         val holder = PositionHolder()
@@ -244,5 +244,18 @@ class LiveClipsTest {
         assertEquals(Extractor.RESULT_END_OF_INPUT, result)
         assertEquals(frames - 100, samples.times.size)
         assertEquals(target, samples.times.first())
+    }
+
+    @Test
+    fun aGrowingLocalVoiceWavGoesToTheWavExtractorAndEdgeMp3ToTheMp3One() {
+        // Đọc hết / chờ / tua của WavExtractor dùng android.util.Pair (không có trong bài thử JVM): kiểm trên máy ảo (phát thật). Ở đây: đúng bộ tách nhận đúng file.
+        pretendMedia3IsUnderTest()
+        val wav = File(dir, "l.wav").also { it.writeBytes(vn.abook.player.vieneu.VieneuAudio.wavHeader(24_000, null) + ByteArray(4800)) } // LocalLive: cỡ 0xFFFFFFFF
+        val mp3 = write("e.mp3", EdgeFake.mp3Frames(10))
+        val (wavExtractor, mp3Extractor) = Streaming.liveExtractors().let { it[0] to it[1] }
+        fun source(file: File) = input(LiveClips.create().also { it.finish(file.length()); it.grew(file, file.length()) }.reader(0), 0) // đã xong: dò hết byte thì thôi, không chờ
+        assertTrue(wavExtractor.sniff(source(wav)))
+        assertFalse(wavExtractor.sniff(source(mp3)))
+        assertFalse(runCatching { mp3Extractor.sniff(source(wav)) }.getOrDefault(false)) // EOF khi dò = không nhận (như BundledExtractorsAdapter)
     }
 }
