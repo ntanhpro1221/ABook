@@ -113,6 +113,7 @@ class PlaybackService : MediaLibraryService() {
 
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) Playback.onEnded()
+                if (state == Player.STATE_READY) Playback.onReady()
                 Playback.emit("state")
             }
 

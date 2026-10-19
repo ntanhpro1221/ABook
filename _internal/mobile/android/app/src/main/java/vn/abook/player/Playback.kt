@@ -169,18 +169,25 @@ object Playback {
         return true
     }
 
+    /** Cuốn của một mục audio trong hàng đợi ([mediaItems]): mục còn lại của cuốn trước không bao giờ được đọc thành chỗ nghe của cuốn đang nạp (soát a68 lỗi 2). */
+    data class BookTag(val id: String)
+
+    /** Mục ExoPlayer đang đứng là của cuốn khác cuốn đang nạp (hàng đợi chưa kịp thay). Mục không gắn cuốn (xe hơi đặt hàng đợi - [adopt]) thì coi là của cuốn này. */
+    private fun foreignItem(): Boolean = (player?.currentMediaItem?.localConfiguration?.tag as? BookTag)?.let { it.id != bookId } == true
+
     val currentChapter: Chapter?
-        get() = (player?.currentMediaItem?.mediaId?.toIntOrNull() ?: ReadAloud.waitingChapterId())?.let { id -> chapters.firstOrNull { it.id == id } }
+        get() = ((if (foreignItem()) null else player?.currentMediaItem?.mediaId?.toIntOrNull()) ?: ReadAloud.waitingChapterId())
+            ?.let { id -> chapters.firstOrNull { it.id == id } }
 
     /** Vị trí trong chương (ms). Chương đọc to: đồng hồ ảo của cả chương (mốc đầu đoạn + vị trí trong đoạn), không phải vị trí trong đoạn âm thanh. */
     val positionMs: Long
-        get() = ReadAloud.positionMs() ?: (player?.currentPosition ?: 0L)
+        get() = ReadAloud.positionMs() ?: (if (foreignItem()) 0L else player?.currentPosition ?: 0L)
 
     val positionSeconds: Double
         get() = positionMs / 1000.0
 
     /** Độ dài chương (ms) mà ExoPlayer biết; chương đọc to: độ dài ảo; 0 nếu chưa biết. */
-    private fun durationMs(): Long = ReadAloud.durationMs() ?: player?.duration?.takeIf { it > 0 } ?: 0L
+    private fun durationMs(): Long = ReadAloud.durationMs() ?: player?.duration?.takeIf { it > 0 && !foreignItem() } ?: 0L
 
     fun state(): JSONObject {
         val chapter = currentChapter
@@ -191,7 +198,8 @@ object Playback {
             .put("chapterId", chapter?.id ?: JSONObject.NULL)
             .put("chapterTitle", chapter?.title ?: "")
             .put("position", positionSeconds)
-            .put("duration", durationMs().takeIf { it > 0 }?.div(1000.0) ?: chapter?.duration ?: 0.0)
+            // Độ dài không bao giờ ngắn hơn chỗ đang nghe: ExoPlayer chưa đo xong thì là độ dài ghi trong gói, có thể hụt vài giây (soát a68 lỗi 17: "0:08 / 0:07").
+            .put("duration", maxOf(durationMs().takeIf { it > 0 }?.div(1000.0) ?: chapter?.duration ?: 0.0, positionSeconds))
             .put("playing", exo?.isPlaying == true || (ReadAloud.isWaiting && ReadAloud.wantsPlay()) || ReadAloud.starved())
             .put("buffering", exo?.playbackState == Player.STATE_BUFFERING || ReadAloud.isWaiting || ReadAloud.starved())
             .put("rate", exo?.playbackParameters?.speed?.toDouble() ?: 1.0)
@@ -212,15 +220,49 @@ object Playback {
         // Đoạn đọc to hỏng (file bị Android dọn khỏi bộ nhớ đệm...): đọc lại đúng chỗ, tối đa vài lần liền.
         if (ReadAloud.recoverFromPlayerError()) return
         val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "https"
+        val retrying = reconnectDelayMs > 0
         lastError = if (streamed && error != null && Pin.isCertificateProblem(error)) {
             Pin.CHANGED // máy tính đã đổi chứng chỉ: không phải Wi-Fi hỏng, người nghe phải ghép lại
+        } else if (streamed && error != null && NetErrors.unpaired(error)) {
+            "${SyncLink.holderName(appContext, bookId).replaceFirstChar { it.uppercase() }} đã thôi ghép với điện thoại này - ghép lại để nghe tiếp"
         } else if (streamed) {
-            "Mất kết nối với máy tính - kiểm tra Wi-Fi rồi bấm phát lại"
+            // Phần đã đệm đã phát hết: không bỏ cuộc - hỏi lại thưa dần, máy kia trả lời là phát tiếp đúng chỗ (soát a68 lỗi 3).
+            scheduleReconnect()
+            "Mất kết nối với ${SyncLink.holderName(appContext, bookId)} - đang thử lại…"
         } else {
             "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."
         }
         saveNow()
-        emit("error")
+        // Lần thử lại hỏng nữa: chỉ cập nhật lời đang hiện, không báo lần nữa.
+        emit(if (retrying && lastError.startsWith("Mất kết nối")) "state" else "error")
+    }
+
+    /** Chờ trước lần nối lại kế (0 = không đang nối lại): 3 giây rồi gấp đôi, tối đa 30 giây. */
+    private var reconnectDelayMs = 0L
+    private val reconnect = Runnable { tryReconnect() }
+
+    private fun scheduleReconnect() {
+        reconnectDelayMs = if (reconnectDelayMs == 0L) 3_000L else (reconnectDelayMs * 2).coerceAtMost(30_000L)
+        main.removeCallbacks(reconnect)
+        main.postDelayed(reconnect, reconnectDelayMs)
+    }
+
+    /** Thử nối lại chương nghe thẳng vừa hỏng. Người nghe đã bấm dừng thì thôi (bấm phát là tự chuẩn bị lại - [play]); hỏng nữa thì [onError] hẹn lần sau. */
+    private fun tryReconnect() {
+        val exo = player ?: return
+        if (exo.playbackState != Player.STATE_IDLE || exo.playerError == null || !exo.playWhenReady) {
+            reconnectDelayMs = 0L
+            return
+        }
+        exo.prepare()
+    }
+
+    /** ExoPlayer sẵn sàng phát (PlaybackService): vừa nối lại được sau khi mất kết nối thì gỡ lời báo. */
+    fun onReady() {
+        if (reconnectDelayMs == 0L) return
+        reconnectDelayMs = 0L
+        main.removeCallbacks(reconnect)
+        if (lastError.startsWith("Mất kết nối")) lastError = ""
     }
 
     /**
@@ -263,6 +305,7 @@ object Playback {
         return items.map { chapter ->
             MediaItem.Builder()
                 .setMediaId(chapter.id.toString())
+                .setTag(BookTag(id))
                 .setUri(Streaming.chapterUri(appContext, id, chapter.file))
                 .setCustomCacheKey(Streaming.cacheKey(id, chapter.file))
                 .setMediaMetadata(
@@ -285,6 +328,8 @@ object Playback {
         pending = null
         saveNow()
         lastError = ""
+        main.removeCallbacks(reconnect) // cuốn khác: thôi nối lại cuốn cũ
+        reconnectDelayMs = 0L
         // Giọng "Nghe ngay" của cuốn này, nhớ trong lõi: phát tiếp từ widget / xe hơi sau khi khởi động lại vẫn đúng giọng người nghe đã chọn.
         ReadAloud.useVoiceOf(id)
         bookId = id
@@ -368,6 +413,8 @@ object Playback {
         // Sau một lỗi (mất mạng khi nghe thẳng) ExoPlayer nằm ở IDLE: phải chuẩn bị lại thì mới phát tiếp đúng chỗ.
         if (exo.playbackState == Player.STATE_IDLE) {
             lastError = ""
+            main.removeCallbacks(reconnect)
+            reconnectDelayMs = 0L
             exo.prepare()
         }
         exo.play()
@@ -613,8 +660,10 @@ object Playback {
 
     fun saveNow() {
         val chapter = currentChapter ?: return
-        if (bookId.isEmpty() || ReadAloud.unknownPlace()) return
+        if (bookId.isEmpty() || ReadAloud.unknownPlace() || foreignItem()) return
         val duration = durationMs().takeIf { it > 0 }?.div(1000.0) ?: chapter.duration
+        // Chỗ nghe phải khớp chương: vượt quá độ dài chương là đồng hồ của thứ khác (cuốn trước) - không lưu, không đồng bộ đi (soát a68 lỗi 2).
+        if (!PlacePolicy.fits(positionSeconds, duration)) return
         Store.progress(bookId, chapter.id, positionSeconds, duration)
         savedPlace = chapter.id to positionMs
     }

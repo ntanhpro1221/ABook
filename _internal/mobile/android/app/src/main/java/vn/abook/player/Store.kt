@@ -555,7 +555,7 @@ object Store {
                 if (stamp(record) > stamp(chapters.optJSONObject(key)) || chapters.optJSONObject(key) == null) chapters.put(key, record)
             }
         }
-        for ((field, at) in listOf("rate" to "rateAt", "finished" to "finishedAt")) {
+        for ((field, at) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) {
             if (theirs.has(field) && stamp(theirs, at) > stamp(result, at)) {
                 result.put(field, theirs.get(field)).put(at, theirs.get(at))
             }
@@ -641,6 +641,14 @@ object Store {
     fun setRate(id: String, rate: Double) {
         val state = state(id)
         state.put("rate", rate).put("rateAt", now()).put("updatedAt", now())
+        save(id, state)
+    }
+
+    /** Giọng Nghe ngay riêng của cuốn (rỗng = giọng mặc định) - mang mốc giờ như tốc độ, đi theo hồ sơ nghe sang máy kia (webui/listening.py set_voice). */
+    @Synchronized
+    fun setVoice(id: String, voice: String) {
+        val state = state(id)
+        state.put("voice", voice.take(200)).put("voiceAt", now()).put("updatedAt", now())
         save(id, state)
     }
 

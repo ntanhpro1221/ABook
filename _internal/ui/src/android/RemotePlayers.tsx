@@ -1,7 +1,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cast, Laptop, Loader2, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
@@ -9,7 +9,6 @@ import { Back15, Forward15, RemoteSleepMenu } from "@/listen/PlayerViews";
 import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode } from "@/listen/sleep";
 import { useSource } from "@/listen/source";
 import { formatClock } from "@/shared/format";
-import { ShortName } from "@/shared/ShortName";
 import { IconButton } from "@/shared/ui";
 import { EbookLibrary, type RemotePlayer, type RemotePlayerCommand } from "./plugins";
 
@@ -142,7 +141,10 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
           <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
             <KindIcon kind={remote.kind} className="size-3.5 shrink-0" />
             <span className="shrink-0 whitespace-nowrap">{state.playing ? "Đang phát trên" : "Đang dừng trên"}</span>
-            <ShortName name={remote.name} short={13} className="shrink" />
+            {/* Một dòng, cắt cuối "…" (soát a68 lỗi 18: cắt giữa vỡ hai dòng "NGDtua…-" / "Lecoo"). */}
+            <span className="min-w-0 truncate" title={remote.name}>
+              {remote.name}
+            </span>
             {protocolLabel(remote) && <span className="hidden shrink-0 font-normal text-fg-3 sm:inline"> · {protocolLabel(remote)}</span>}
           </div>
           <div className="truncate text-sm">
@@ -194,8 +196,9 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
  * "Đang phát trên <máy>" ngay trên thanh phát của điện thoại. Ẩn một thanh thì nó quay lại khi máy ấy sang cuốn khác hoặc
  * phát lại sau một lần dừng - như thanh điện thoại trên máy tính (desktop/RemotePhone.tsx).
  */
-export function RemotePlayerBars() {
+export function RemotePlayerBars({ localBar }: { localBar?: ReactNode }) {
   const { data } = useRemotePlayers();
+  const player = usePlayer();
   const [dismissed, setDismissed] = useState<Record<string, { bookId: string; playing: boolean }>>({});
   const seen = useState(() => new Set<string>())[0];
   useEffect(() => {
@@ -214,10 +217,15 @@ export function RemotePlayerBars() {
     const mark = dismissed[remote.device];
     return !(mark && mark.bookId === state.bookId && (mark.playing || !state.playing));
   });
-  if (!data || !visible.length) return null;
+  // Một cuốn một thanh (soát a68 lỗi 19): máy kia đang có cuốn điện thoại cũng đang mở mà điện thoại không phát - chỉ thanh của máy kia (có
+  // "Nghe ở đây"); điện thoại đang phát chính cuốn ấy - chỉ trình phát của điện thoại.
+  const here = player.track?.bookId ?? "";
+  const shown = visible.filter((remote) => !(here && player.playing && remote.localBookId === here));
+  const hideLocal = Boolean(here && !player.playing && shown.some((remote) => remote.localBookId === here));
+  if (!data || !shown.length) return <>{localBar}</>;
   return (
     <>
-      {visible.map((remote) => (
+      {shown.map((remote) => (
         <RemotePlayerBar
           key={remote.device}
           remote={remote}
@@ -227,6 +235,7 @@ export function RemotePlayerBars() {
           }
         />
       ))}
+      {!hideLocal && localBar}
     </>
   );
 }
