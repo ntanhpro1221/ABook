@@ -306,3 +306,29 @@ describe("giọng mặc định khi chưa chọn", () => {
     expect(module.resolveVoice([...VOICES, ...nano], "vieneu:nano/gone")?.id).toBe("edge:vi-VN-HoaiMyNeural"); // đã chọn mà giọng không còn: như trước
   });
 });
+
+describe("giọng riêng của cuốn đi theo hồ sơ nghe (soát a68 lỗi 8)", () => {
+  it("chọn giọng thì báo nơi ghi hồ sơ và đóng mốc giờ", async () => {
+    const { module, store } = await fresh();
+    const sent: [string, string][] = [];
+    const off = module.onVoiceChosen((bookId, voice) => sent.push([bookId, voice]));
+    module.chooseVoice("b1", "edge:vi-VN-NamMinhNeural");
+    expect(sent).toEqual([["b1", "edge:vi-VN-NamMinhNeural"]]);
+    expect(Number(store.get("abook-readaloud-voice-at-b1"))).toBeGreaterThan(0);
+    off();
+    module.chooseVoice("b1", "edge:vi-VN-HoaiMyNeural");
+    expect(sent).toHaveLength(1);
+  });
+
+  it("nhận giọng máy kia chọn sau nếu máy này có giọng ấy; không có thì giữ giọng của mình, không báo lỗi", async () => {
+    const { module, store } = await fresh();
+    module.chooseVoice("b1", "edge:vi-VN-HoaiMyNeural");
+    const mine = Number(store.get("abook-readaloud-voice-at-b1"));
+    expect(module.adoptSyncedVoice("b1", { voice: "vieneu:nano/ai-han", voiceAt: mine + 60 }, VOICES)).toBe(false);
+    expect(module.chosenVoice("b1")).toBe("edge:vi-VN-HoaiMyNeural");
+    expect(module.adoptSyncedVoice("b1", { voice: "edge:vi-VN-NamMinhNeural", voiceAt: mine - 60 }, VOICES)).toBe(false);
+    expect(module.adoptSyncedVoice("b1", { voice: "edge:vi-VN-NamMinhNeural", voiceAt: mine + 60 }, VOICES)).toBe(true);
+    expect(module.chosenVoice("b1")).toBe("edge:vi-VN-NamMinhNeural");
+    expect(module.adoptSyncedVoice("b1", { voice: "edge:vi-VN-NamMinhNeural", voiceAt: mine + 60 }, VOICES)).toBe(false);
+  });
+});
