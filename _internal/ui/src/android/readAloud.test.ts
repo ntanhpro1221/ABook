@@ -118,12 +118,16 @@ describe("watchReadAloud", () => {
     (handlers.get("readAloudPrepare") as (event: PrepareStatus) => void)(status);
     expect(client.getQueryData(PREPARE_STATUS_KEY)).toEqual(status);
 
+    // Lần chọn đầu tiên (chưa có giọng mặc định) cũng làm giọng mặc định - lõi nhớ theo.
     chooseVoice(BOOK, "device:vi-vn-an");
     expect(configure).toHaveBeenCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: BOOK });
-    // Đổi giọng một cuốn không đổi giọng mặc định; đặt ở Cài đặt thì lõi nhớ theo.
-    expect(configure).not.toHaveBeenCalledWith({ readAloudDefault: "device:vi-vn-an" });
+    expect(configure).toHaveBeenCalledWith({ readAloudDefault: "device:vi-vn-an" });
+    // Đặt ở Cài đặt thì lõi nhớ theo; đổi giọng một cuốn sau đó không đổi giọng mặc định.
     chooseDefaultVoice("edge:vi-VN-NamMinhNeural");
     expect(configure).toHaveBeenCalledWith({ readAloudDefault: "edge:vi-VN-NamMinhNeural" });
+    chooseVoice("b2", "device:vi-vn-an");
+    expect(configure).toHaveBeenCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: "b2" });
+    expect(configure).toHaveBeenLastCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: "b2" });
     giveOnlineConsent("edge");
     expect(configure).toHaveBeenCalledWith({ readAloudOnlineOk: ["edge"] });
     stop();
@@ -132,7 +136,7 @@ describe("watchReadAloud", () => {
     target.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: BOOK }));
     target.dispatchEvent(new CustomEvent(ONLINE_CONSENT_EVENT));
     chooseDefaultVoice("");
-    expect(configure).toHaveBeenCalledTimes(5);
+    expect(configure).toHaveBeenCalledTimes(7);
   });
 });
 
