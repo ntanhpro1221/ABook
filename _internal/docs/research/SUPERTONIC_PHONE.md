@@ -244,3 +244,32 @@ Reproduce: `S/fastvoice/phone_nano_r6.sh` (bench arg `cfg=all` for the old sched
 The XNNPACK execution provider is no way out on this phone: same shipped Nano, paired cpu / xnnpack / xnnpack / cpu, the long sentence
 reads at RTF 2.12 against 1.00-1.03 on the plain CPU provider (estimator 12.1 s against 5.9-6.1 s, decoder 2.3 s against 0.9 s), every
 sentence about 2x slower. Reproduce: `S/fastvoice/phone_nano_ep.sh`.
+
+## 19-10: Nano in 6 steps (R7)
+
+On top of R6 (int8 decoder, guidance on steps 1-6 of 8), fewer flow steps. Same 3 voices, guidance weight 3, t = linspace(0, 1, n + 1);
+candidates and rules written before any audio. Development set (15 paragraphs x 3 voices, 45 clips), dCER against the fp32 decoder guided
+on every step (pp), estimator calls per chunk in brackets:
+
+| schedule | steps | guided steps | calls | desktop estimator ms / chunk | dev dCER | dev dUTMOS |
+|---|---|---|---|---|---|---|
+| 0.4.100 (R6) | 8 | 1-6 | 14 | 419 | +0.39 | +0.046 |
+| S7a | 7 | 1-5 | 12 | 362 | +2.30 | +0.028 |
+| S6a | 6 | 1-4 | 10 | 294 | +2.15 | -0.000 |
+| **S6b** | 6 | 0-4 | 11 | 323 | +0.58 | -0.025 |
+| S5a | 5 | 1-3 | 8 | 234 | +4.81 | -0.054 |
+| S6r | 6 | 1, 3 (2, 4 reuse the last difference) | 8 | 234 | +2.71 | -0.082 |
+
+At 6 steps the first step needs guidance (S6a against S6b); the last one does not. S7a/S6a fail mostly on one Whisper hallucination each
+(kept, as the rule says). S6b is the only schedule within the wider rule, so it alone went to the test set (24 paragraphs x 3 voices x 2
+seeds = 144 clips, paired bootstrap by paragraph, CI90):
+
+| against | dCER (pp) | dUTMOS | paragraphs worse > 5 pp | replace rule |
+|---|---|---|---|---|
+| fp32 decoder, 8 steps, guided every step | +0.10 [-0.02; +0.22] | -0.004 [-0.034; +0.026] | 0/24 | PASS |
+| 0.4.100 (8 steps, guided on 1-6) | -0.13 [-0.38; +0.11] | -0.041 [-0.085; +0.001] | 0/24 | PASS |
+
+So Nano reads in 6 steps guided on all but the last (desktop `vieneu_engine.NANO_STEPS`/`NANO_CFG_LAST`, phone `VieneuNano.STEPS`/
+`CFG_LAST`): 11 estimator calls per chunk instead of 14, desktop estimator time -23 %. Loudness re-measured for the new schedule (only
+Hữu Quân moved more than 0.5 LU: -17.8 -> -18.4 LUFS). Reproduce: `S/fastvoice/r7_gen.py`, `r7_quality.py`, `r7_summarize.py`
+(REPORT_r7.md); phone `S/fastvoice/phone_nano_r7.sh`.
