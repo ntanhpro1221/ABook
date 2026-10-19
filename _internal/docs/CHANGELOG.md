@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.103] - 2026-10-19
+
 ### Nghe ngay
 
 - Máy tính và điện thoại: với giọng đọc trên máy (VieNeu, Supertonic), khi bạn nhảy đi chỗ khác hay đổi giọng, máy thôi đọc ngay đoạn bạn vừa bỏ nên đoạn bạn đang chờ có tiếng sớm hơn; bấm Huỷ khi xuất sách nói cũng dừng gần như tức thì. Đổi "Tốc độ giọng trên máy" sang "Nhanh hơn" giữa chương thì các đoạn đã đọc sẵn vẫn được dùng, không phải đọc lại.
