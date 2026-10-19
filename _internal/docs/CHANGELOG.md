@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.108] - 2026-10-19
+
 ### Máy tính
 
 - Dùng bằng bàn phím và trình đọc màn hình dễ hơn: bảng Tốc độ đọc, Giọng đọc, Hẹn giờ đi được bằng phím mũi tên; nút Tốc độ / Giọng đọc đọc lên giá trị đang chọn ("Tốc độ đọc: 1,2×") và báo lại khi bạn chọn xong; tải hay huỷ tải giọng, đổi tên chương trong hộp "Thêm sách", nút đang chạy... không còn làm mất chỗ con trỏ.
