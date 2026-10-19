@@ -5,11 +5,14 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import org.json.JSONObject
 import java.util.concurrent.Executors
@@ -235,7 +238,9 @@ object MusicBed {
     }
 
     /** Lặp mờ chéo: bài đang kêu tới loopEnd - X ([MusicCues.loopDue]) thì một ExoPlayer MỚI của chính bài vào từ loopStart, mờ chéo X giây; cái
-     *  cũ mờ đi rồi nhả. Vòng cuối của mốc `tail` ([finishTail]), bài quá ngắn (lặp thường) và danh sách phát thì không. */
+     *  cũ mờ đi rồi nhả. Vòng cuối của mốc `tail` ([finishTail]), bài quá ngắn (lặp thường) và danh sách phát thì không. Bài mp3 vào
+     *  ở ranh khung gần loopStart nhất ([ExactSeekMp3Extractor.frameBoundarySeconds]). */
+    @OptIn(UnstableApi::class)
     private fun crossLoop(seconds: Double) {
         val bed = current ?: return
         val cue = bed.cue ?: return
@@ -248,7 +253,10 @@ object MusicBed {
         val fadeMs = Math.round(MusicCues.mix.loopCrossfadeSeconds * 1000)
         bed.fadeStep = maxOf(player.volume, 0.01f) * STEP_MS / fadeMs
         fading += bed
-        current = open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, bounds.loopStart)
+        val format = player.audioFormat
+        val startAt = if (format?.sampleMimeType == MimeTypes.AUDIO_MPEG) ExactSeekMp3Extractor.frameBoundarySeconds(bounds.loopStart, format.sampleRate)
+        else bounds.loopStart
+        current = open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, startAt)
             .also { it.early = bed.early }
         startFade()
     }
@@ -640,7 +648,7 @@ object MusicBed {
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
                 false,
             )
-            .setMediaSourceFactory(Streaming.mediaSourceFactory(appContext))
+            .setMediaSourceFactory(Streaming.mediaSourceFactory(appContext, exactMp3Seek = true))
             .build()
         player.repeatMode = Player.REPEAT_MODE_ONE // biết độ dài bài (STATE_READY) mới biết lặp mờ chéo hay lặp thường
         player.volume = 0f
