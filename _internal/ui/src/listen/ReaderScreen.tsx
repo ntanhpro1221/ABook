@@ -39,8 +39,8 @@ interface ReaderPrefs {
 const PREFS_KEY = "abook-reader";
 const SIZES = [16, 18, 20, 22, 24];
 const LEADINGS = [1.6, 1.8, 2];
-/** Điện thoại: nút trên thanh đầu đủ 44 px để chạm. */
-const TOUCH = "max-sm:size-[44px]";
+/** Điện thoại: nút trên thanh đầu đủ 48 px để chạm. */
+const TOUCH = "max-sm:size-[48px]";
 // Thanh nổi dưới câu đang chọn: điện thoại chỉ còn biểu tượng cho nút phụ (nhãn vẫn cho trình đọc màn hình) để cả thanh nằm MỘT hàng, không che chữ đang đọc.
 const BAR_LABEL = "max-sm:sr-only";
 /** Thanh nổi dưới đáy màn đọc: không chiếm chỗ (cao 0, nội dung neo lên từ mép dưới) - nổi trong khoảng đáy để trống của bài (pb-40)
@@ -333,7 +333,7 @@ export function ReaderScreen({
         <Popover.Root>
           <Popover.Trigger asChild>
             <button type="button" aria-label="Cỡ chữ và giãn dòng" className={cn("grid size-9 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
-              <Type className="size-[18px]" />
+              <Type className="glyph" />
             </button>
           </Popover.Trigger>
           <Popover.Portal>
@@ -346,7 +346,7 @@ export function ReaderScreen({
                     type="button"
                     aria-pressed={prefs.size === size}
                     onClick={() => setPrefs({ ...prefs, size })}
-                    className={cn("h-9 rounded-lg max-sm:h-[44px]", prefs.size === size ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
+                    className={cn("h-9 rounded-lg max-sm:h-[48px]", prefs.size === size ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
                     style={{ fontSize: Math.round(size * 0.75) }}
                   >
                     A
@@ -361,7 +361,7 @@ export function ReaderScreen({
                     type="button"
                     aria-pressed={prefs.leading === leading}
                     onClick={() => setPrefs({ ...prefs, leading })}
-                    className={cn("tabular h-9 rounded-lg text-sm max-sm:h-[44px]", prefs.leading === leading ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
+                    className={cn("tabular h-9 rounded-lg text-sm max-sm:h-[48px]", prefs.leading === leading ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
                   >
                     {leading.toLocaleString("vi-VN")}
                   </button>
@@ -428,7 +428,7 @@ export function ReaderScreen({
                     type="button"
                     onClick={() => listen(selected)}
                     onMouseDown={(event) => event.preventDefault()}
-                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-float"
+                    className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-float"
                   >
                     <Play className="size-4" fill="currentColor" strokeWidth={0} /> <span className="sm:hidden">Nghe từ đây</span>
                     <span className="max-sm:hidden">Nghe từ câu này</span>
@@ -438,7 +438,7 @@ export function ReaderScreen({
                   type="button"
                   onClick={() => bookmarkSentence(selected)}
                   onMouseDown={(event) => event.preventDefault()}
-                  className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
+                  className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
                 >
                   <BookmarkPlus className="size-4" /> <span className={BAR_LABEL}>Đặt dấu trang ở câu này</span>
                 </button>
@@ -452,7 +452,7 @@ export function ReaderScreen({
                       setReadingWord(selectedWord >= 0 ? wordOf(text, selectedWord) : "");
                     }}
                     onMouseDown={(event) => event.preventDefault()}
-                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
+                    className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
                   >
                     <Pencil className="size-4" /> <span className={BAR_LABEL}>Sửa cách đọc</span>
                   </button>
@@ -467,7 +467,7 @@ export function ReaderScreen({
                       else if (lineEdit.mode === "studio" && stableId) onOpenStudioScript?.(id, chapterId, stableId);
                     }}
                     onMouseDown={(event) => event.preventDefault()}
-                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line disabled:opacity-60"
+                    className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line disabled:opacity-60"
                   >
                     <Pencil className="size-4" /> <span className={BAR_LABEL}>{lineEdit.mode === "studio" ? "Sửa trong Studio" : "Sửa câu này"}</span>
                   </button>

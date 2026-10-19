@@ -221,7 +221,7 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
         {tab === "casting" && <CastingList data={data as CastingSnapshot | undefined} />}
         {tab === "names" && <NamesList data={data as NamesSnapshot | undefined} />}
       </div>
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 dialog-actions">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
           Đóng
         </Button>

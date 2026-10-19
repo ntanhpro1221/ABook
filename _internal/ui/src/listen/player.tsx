@@ -136,6 +136,8 @@ interface PlayerState {
   musicLoading: boolean;
   canGoBack: boolean;
   error: string;
+  /** Số lần người nghe bấm phát khi lời báo lỗi đang hiện: khối báo dựng lại để trình đọc màn hình đọc lại lời báo (soát a67: bấm Phát không gì xảy ra, không lời nào). */
+  errorRepeat: number;
   /** Lời nhắn không phải lỗi, vẫn đang phát (giọng trực tuyến hỏng - tạm đọc bằng giọng của máy); tự ẩn. */
   notice: string;
   options: PlayerOptions;
@@ -283,6 +285,7 @@ export function PlayerProvider({
   const [musicLoading, setMusicLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState("");
+  const [errorRepeat, setErrorRepeat] = useState(0);
   /** Dừng việc chờ máy kia trả lời lại (peerBack.ts) - đổi chương, gạt lời báo, thử lại. */
   const stopPeerWatch = useRef<() => void>(() => undefined);
   const errorRef = useRef(error);
@@ -687,10 +690,11 @@ export function PlayerProvider({
   }, [bed, engine, nextWarm, playlistBed, scene]);
   useEffect(() => bed?.setVolume(volume), [bed, volume]);
 
-  const applyRate = useCallback((value: number) => {
+  /** `push` tắt: chỉ đổi số trên giao diện - lõi điện thoại đã có (hay sẽ nhận cùng lệnh nạp) tốc độ ấy. */
+  const applyRate = useCallback((value: number, push = true) => {
     refs.current.rate = value;
     setRateState(value);
-    engine.setRate(value);
+    if (push) engine.setRate(value);
   }, [engine]);
 
   const adoptBook = useCallback((book: BookRef, chapters: ListenChapter[], purposeValue: Purpose, carriedRate?: number) => {
@@ -701,10 +705,11 @@ export function PlayerProvider({
     refs.current.purpose = purposeValue;
     setPurpose(purposeValue);
     const { rate: bookRate, keep } = startingRate(book.state?.rate, carriedRate, refs.current.defaultRate);
-    if (bookRate !== refs.current.rate) applyRate(bookRate);
+    // Điện thoại: tốc độ đi cùng lệnh nạp cuốn (loadQueue); đặt trước lệnh ấy thì lõi ghi nó vào cuốn ĐANG nạp - cuốn cũ mất tốc độ riêng.
+    if (bookRate !== refs.current.rate) applyRate(bookRate, !native);
     if (keep && purposeValue === "listen") void source.setRate(book.id, bookRate).catch(() => undefined);
     return bookRate;
-  }, [applyRate, source]);
+  }, [applyRate, native, source]);
 
   const playNow = useCallback((book: BookRef, chapters: ListenChapter[], chapter: ListenChapter, at: number | undefined, extra: Parameters<PlayerActions["play"]>[4]) => {
     refs.current.wantsPlay = true;
@@ -804,6 +809,7 @@ export function PlayerProvider({
     const current = refs.current.track;
     if (!current) return;
     refs.current.wantsPlay = true;
+    if (errorRef.current) setErrorRepeat((count) => count + 1);
     // Nguồn đã hỏng (máy kia tắt, mất mạng): bấm phát ở đâu cũng là nạp lại đúng chỗ - phát lại nguồn hỏng chỉ ra lỗi cũ (soát a27 lỗi 3).
     if (errorRef.current && !native) {
       retryRef.current();
@@ -1012,15 +1018,16 @@ export function PlayerProvider({
     applyRate(value);
     night.touch("rate", position());
     const current = refs.current.track;
-    if (current && !native && refs.current.purpose !== "review") {
+    if (current && refs.current.purpose !== "review") {
       // Tốc độ nhớ riêng của cuốn cũng nằm trong bộ nhớ của trang sách / thư viện (ListenBook.state.rate): đổi ngay ở đó, không thì "Nghe lại từ đầu" /
       // "Nghe tiếp" ngay sau phím [ ] nạp lại tốc độ cũ của cuốn đè lên tốc độ vừa chọn (adoptBook).
       const remember = (book: ListenBook): ListenBook => ({ ...book, state: { ...(book.state ?? { chapters: {} }), rate: value } });
       client.setQueryData<ListenBook>(["listen", "book", current.bookId], (book) => book && remember(book));
       client.setQueryData<ListenBook[]>(["listen", "library"], (books) => books?.map((book) => (book.id === current.bookId ? remember(book) : book)));
+      // Điện thoại cũng ghi (soát a67): lõi chỉ ghi khi có cuốn đang nạp, và bộ nhớ của trang sách phải theo kịp như máy tính.
       void source.setRate(current.bookId, value).catch(() => undefined);
     }
-  }, [applyRate, client, native, night, position, source]);
+  }, [applyRate, client, night, position, source]);
 
   const setVolume = useCallback((value: number) => {
     const clamped = Math.max(0, Math.min(1, value));
@@ -1243,7 +1250,9 @@ export function PlayerProvider({
   // ---- sự kiện của bộ máy phát ----------------------------------------------------------------------------
 
   useEffect(() => {
-    engine.setRate(refs.current.rate);
+    // Lõi điện thoại giữ tốc độ của cuốn đang nạp: giao diện vừa dựng lại (WebView nạp lại) không đè nó bằng tốc độ mặc định - nhận từ lõi ở
+    // sự kiện "chapter" dưới đây (soát a67: 1,2× về 1× sau khi đổi cỡ chữ hệ thống).
+    if (!native) engine.setRate(refs.current.rate);
     engine.setVolume(refs.current.volume);
     const syncClock = () => clock.set(engine.time, engine.duration);
     const offs = [
@@ -1350,6 +1359,7 @@ export function PlayerProvider({
       }),
       engine.on("chapter", () => {
         if (!native || native.chapterId === null || !native.bookId) return;
+        if (native.rate > 0 && Math.abs(native.rate - refs.current.rate) > 1e-6) applyRate(native.rate, false);
         const same = refs.current.track?.bookId === native.bookId ? refs.current.track : null;
         const next: Track = {
           bookId: native.bookId,
@@ -1390,7 +1400,7 @@ export function PlayerProvider({
       }),
     ];
     return () => offs.forEach((off) => off());
-  }, [applySleep, caughtUpToast, clock, closeSession, engine, finishedToast, load, native, openSession, refreshLists, save, source, stopBySleep, withConsent]);
+  }, [applyRate, applySleep, caughtUpToast, clock, closeSession, engine, finishedToast, load, native, openSession, refreshLists, save, source, stopBySleep, withConsent]);
 
   // Đồng hồ chạy theo khung hình khi đang phát: nhãn giây đổi đúng nhịp 1 giây thay vì theo timeupdate (~4 lần/giây,
   // lệch tới 270 ms). Chỉ component nào chọn giá trị đổi mới render lại.
@@ -1640,11 +1650,11 @@ export function PlayerProvider({
 
   const value = useMemo<PlayerValue>(() => ({
     track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline, musicLoading,
+    canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading,
     play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
     extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues,
   }), [track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart,
+    canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues]);
 
   // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ

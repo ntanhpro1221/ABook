@@ -28,6 +28,10 @@ internal fun msOf(seconds: Double): Long = Math.round(seconds * 1000).coerceAtLe
  * Vì sao hàng đợi, lưu vị trí, hẹn giờ đều ở ĐÂY chứ không ở JavaScript: tắt màn hình thì WebView bị treo, nên
  * tự sang chương kế hay tắt nhạc lúc ngủ mà nằm trong JS thì sẽ không bao giờ chạy.
  */
+/** Artist line of the media card: the narrator, or the book title when there is none ("Nghe ngay", a book without a narrator). The system
+ *  speaks the card as "<chapter> by <artist> is playing from ABook" - a null artist came out as "by null" (a67). */
+fun mediaArtist(narratorName: String, bookTitle: String): String? = narratorName.ifBlank { bookTitle }.ifBlank { null }
+
 object Playback {
     /** `text` = tên mục chữ trong gói (`texts/<n>.txt`) của chương CHỈ CÓ CHỮ (state "text"): không có file audio, giọng máy đọc to (ReadAloud). */
     data class Chapter(val id: Int, val title: String, val file: String, val duration: Double, val text: String = "") {
@@ -264,7 +268,7 @@ object Playback {
                 .setMediaMetadata(
                     MediaMetadata.Builder()
                         .setTitle(chapter.title)
-                        .setArtist(narratorName.ifBlank { null })
+                        .setArtist(mediaArtist(narratorName, title))
                         .setAlbumTitle(title)
                         .setDisplayTitle(chapter.title)
                         .setSubtitle(title)

@@ -1,5 +1,5 @@
 import { Play, Square } from "lucide-react";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "@/shared/cn";
 import { Button, Dialog } from "@/shared/ui";
 import { chooseVoiceText, onlinePromptText, pendingConsent, spokenVoiceName, subscribeConsent } from "./onlineConsent";
@@ -17,6 +17,11 @@ export function OnlineVoicePrompt() {
   const source = useSource();
   const sample = useVoiceSample((voice, text) => (source.readAloudSample ? source.readAloudSample(voice, text) : Promise.reject(new Error("Chưa nghe thử được giọng này."))));
   useEffect(() => setChoosing(false), [request]);
+  // "Chọn giọng khác": nút vừa bấm biến mất cùng phần đồng ý - tiêu điểm vào giọng đang dùng trong danh sách, không về khung hộp (soát a67).
+  const list = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (choosing) list.current?.querySelector<HTMLElement>("[aria-current]")?.focus();
+  }, [choosing]);
   if (!request) return null;
   const { voice, voices, answer } = request;
   return (
@@ -28,7 +33,7 @@ export function OnlineVoicePrompt() {
       width="max-w-md"
     >
       {choosing ? (
-        <div className="flex max-h-[50vh] flex-col gap-0.5 overflow-y-auto">
+        <div ref={list} className="flex max-h-[50vh] flex-col gap-0.5 overflow-y-auto">
           {voices.map((item) => {
             const playing = sample.playing === item.id;
             return (
@@ -36,17 +41,19 @@ export function OnlineVoicePrompt() {
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
+                    // Giọng đang dùng: không chỉ in đậm - trình đọc màn hình nghe "hiện tại" (soát a67).
+                    aria-current={item.id === voice.id ? "true" : undefined}
                     onClick={() => {
                       sample.stop();
                       answer(item.id, true);
                     }}
                     className={cn(
-                      "flex min-h-[44px] min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-3 text-left text-sm hover:bg-hover",
+                      "flex min-h-[48px] min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-3 text-left text-sm hover:bg-hover",
                       item.id === voice.id && "font-semibold",
                     )}
                   >
                     <span className="truncate">{spokenVoiceName(item.name)}</span>
-                    <span className="shrink-0 text-xs font-normal text-fg-2">{item.online ? "trực tuyến" : "của máy"}</span>
+                    <span className="shrink-0 text-xs font-normal text-fg-2">{item.online ? "trực tuyến" : "của máy"}{item.id === voice.id ? " · đang chọn" : ""}</span>
                   </button>
                   {source.readAloudSample && (
                     <Button
@@ -76,7 +83,7 @@ export function OnlineVoicePrompt() {
               window.location.hash = "#/settings";
               revealVoiceSettings("vieneu-module");
             }}
-            className="mt-1 flex min-h-[44px] flex-col items-start justify-center rounded-lg border-t border-line px-3 py-2 text-left text-sm text-accent-text hover:bg-hover"
+            className="mt-1 flex min-h-[48px] flex-col items-start justify-center rounded-lg border-t border-line px-3 py-2 text-left text-sm text-accent-text hover:bg-hover"
           >
             <span>Tải giọng chạy trên máy…</span>
             <span className="text-xs font-normal text-fg-2">VieNeu, Supertonic - đọc được cả khi không có mạng</span>

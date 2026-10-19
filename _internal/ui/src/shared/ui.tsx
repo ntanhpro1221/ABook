@@ -38,6 +38,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   ref?: Ref<HTMLButtonElement>;
 }
 
+/** Nút đang chạy việc (`loading`): KHÔNG `disabled` - nút disabled mất tiêu điểm, người đi bằng bàn phím / trình đọc màn hình rơi về đầu trang
+ *  (soát a67: Thử giọng, Tải / Huỷ giọng). Nút vẫn nhận tiêu điểm, báo `aria-disabled` + `aria-busy`, cú bấm (chuột, Enter, Space, gửi form) bị
+ *  chặn ở đây. `disabled` của chỗ gọi chỉ có hiệu lực khi không chạy việc (chỗ gọi hay truyền cả hai cùng lúc). */
+export function busyClick<E extends { preventDefault: () => void }>(loading: boolean | undefined, onClick: ((event: E) => void) | undefined) {
+  if (!loading) return onClick;
+  return (event: E) => event.preventDefault();
+}
+
 export function Button({
   variant = "secondary",
   size = "md",
@@ -46,15 +54,19 @@ export function Button({
   className,
   children,
   disabled,
+  onClick,
   type = "button",
   ...rest
 }: ButtonProps) {
   return (
     <button
       type={type}
-      disabled={disabled || loading}
+      disabled={loading ? undefined : disabled}
+      aria-disabled={loading || undefined}
+      aria-busy={loading || undefined}
+      onClick={busyClick(loading, onClick)}
       className={cn(
-        "inline-flex select-none items-center justify-center whitespace-nowrap font-medium transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45",
+        "inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:active:scale-100",
         VARIANTS[variant],
         SIZES[size],
         // Màn hẹp / cảm ứng: nút 28-38 px nới vùng chạm theo chiều dọc lên 40 px (touch-reach trong styles.css; soát UX 29-09 và a14: "Sửa",
@@ -67,11 +79,37 @@ export function Button({
       {loading ? (
         <Loader2 className="size-4 animate-spin" />
       ) : Icon ? (
-        <Icon className={size === "lg" ? "size-[18px]" : "size-4"} strokeWidth={2} />
+        <Icon className={size === "lg" ? "glyph" : "size-4"} strokeWidth={2} />
       ) : null}
       {children}
     </button>
   );
+}
+
+/** Nút thay chỗ nhau trong một khối khi việc đổi pha (Tải -> Huỷ khi bắt đầu tải, Huỷ -> Tải / Thử lại khi xong hay huỷ): nút đang giữ tiêu điểm biến
+ *  mất thì tiêu điểm rơi về đầu trang (soát a67). Khối mang `useFocusFollows(pha)`: tiêu điểm đang ở trong khối mà rơi mất thì chuyển tới nút mang
+ *  `data-focus-next` (nút vừa hiện), không có thì tới phần tử mang `data-focus-fallback` (tiêu đề khối, tabIndex -1). */
+export function focusFollowTarget(box: Element | null, active: Element | null, body: Element | null): HTMLElement | null {
+  // Tiêu điểm còn trên một phần tử thật (nút cũ vẫn còn, hay người dùng đã sang chỗ khác): để nguyên.
+  if (!box || (active && active !== body && active.isConnected)) return null;
+  return box.querySelector<HTMLElement>("[data-focus-next]") ?? box.querySelector<HTMLElement>("[data-focus-fallback]");
+}
+
+export function useFocusFollows(phase: unknown) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const inside = useRef(false);
+  useEffect(() => {
+    if (!inside.current) return;
+    focusFollowTarget(ref.current, document.activeElement, document.body)?.focus();
+  }, [phase]);
+  return {
+    ref,
+    onFocusCapture: () => void (inside.current = true),
+    // Nút đang giữ tiêu điểm bị gỡ: blur không có nơi tới (relatedTarget null) - vẫn tính là "trong khối" để chuyển tiếp.
+    onBlurCapture: (event: FocusEvent<HTMLElement>) => {
+      if (event.relatedTarget) inside.current = Boolean(ref.current?.contains(event.relatedTarget as Node));
+    },
+  };
 }
 
 export function IconButton({
@@ -88,10 +126,10 @@ export function IconButton({
   tone?: "ghost" | "solid";
 }) {
   const box = size === "sm" ? "size-8" : size === "lg" ? "size-11" : "size-9";
-  const glyph = size === "lg" ? "size-5" : "size-[18px]";
+  const glyph = size === "lg" ? "glyph-20" : "glyph";
   // Màn hẹp / cảm ứng: nút nới vùng chạm theo CHIỀU DỌC lên 40 px (touch-reach, soát UX 29-09 và a14) - không nới ngang, vì các nút trên
-  // thanh công cụ đứng sát nhau, vùng nới ngang sẽ giành chạm của nút bên cạnh.
-  const reach = "touch-reach";
+  // thanh công cụ đứng sát nhau, vùng nới ngang sẽ giành chạm của nút bên cạnh. Màn cảm ứng: rộng thật 48 dp (soát a67: 39 dp).
+  const reach = "touch-reach pointer-coarse:min-w-[48px]";
   return (
     <Tooltip label={label}>
       <button
@@ -164,6 +202,7 @@ export function Progress({
   size = "md",
   className,
   label,
+  valueText,
   indeterminate = false,
 }: {
   value: number;
@@ -173,6 +212,9 @@ export function Progress({
   className?: string;
   /** Tên thanh cho trình đọc màn hình ("Đã nghe", "Tiến độ: <tên sách>") - không có thì chỉ nghe "thanh tiến độ 47" (soát a31 A1). */
   label: string;
+  /** Lời đọc của giá trị ("đã nghe 42%"); không có thì trình đọc màn hình đọc phần trăm. Tên thanh không được mang số - số trong tên đứng yên trong
+   *  khi giá trị chạy, đọc ra hai số mâu thuẫn (soát a67: "Đang xuất 6 chương · 0%" mà giá trị 14). */
+  valueText?: string;
   /** Việc chạy mà không báo được tiến độ (đóng gói file): vạch chạy qua lại thay vì phần trăm. */
   indeterminate?: boolean;
 }) {
@@ -185,6 +227,7 @@ export function Progress({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={indeterminate ? undefined : Math.round(clamped * 100)}
+      aria-valuetext={indeterminate ? undefined : valueText}
       className={cn("relative w-full overflow-hidden rounded-full bg-line", height, className)}
     >
       {indeterminate ? (
@@ -199,8 +242,79 @@ export function Progress({
   );
 }
 
+/** Thuộc tính trợ năng của các vạch "đã nghe" nhỏ (thẻ sách ở Thư viện, dòng chương ở trang sách, thanh phát gọn): trước đây là div trơn, trình đọc
+ *  màn hình không biết có vạch ấy (soát a67). */
+type Box = { top: number; bottom: number; left: number; right: number };
+
+/** Khoảng phải cuộn (dương = cuộn xuống) để phần tử `target` không nằm dưới thông báo nào; 0 = không bị che. Thông báo ở nửa trên màn thì đẩy phần tử
+ *  xuống dưới nó, ở nửa dưới thì kéo lên trên nó. */
+export function toastClearance(target: Box, toasts: readonly Box[], viewportHeight: number, gap = 8): number {
+  for (const toast of toasts) {
+    if (target.left >= toast.right || target.right <= toast.left || target.top >= toast.bottom || target.bottom <= toast.top) continue;
+    return toast.top + toast.bottom < viewportHeight ? target.top - toast.bottom - gap : target.bottom - toast.top + gap;
+  }
+  return 0;
+}
+
+function scrollParent(element: HTMLElement): Element {
+  for (let node = element.parentElement; node; node = node.parentElement) {
+    const { overflowY } = getComputedStyle(node);
+    if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) return node;
+  }
+  return document.scrollingElement ?? document.documentElement;
+}
+
+/** Tiêu điểm không bao giờ nằm dưới thông báo (soát a67, cửa sổ 640×400: thẻ tiến độ xuất che tab "Lịch sử" và nút "…" của chương): phần tử vừa
+ *  nhận tiêu điểm mà bị một thông báo che thì cuộn khung chứa nó cho lộ ra. Gắn một lần ở gốc app (máy tính và điện thoại). */
+export function useFocusClearOfToasts() {
+  useEffect(() => {
+    const onFocus = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.getBoundingClientRect || target.closest("[data-sonner-toaster]")) return;
+      // Đợi trình duyệt tự cuộn tới phần tử (Tab tới chỗ khuất) rồi mới đo.
+      requestAnimationFrame(() => {
+        const toasts = Array.from(document.querySelectorAll('[data-sonner-toast]:not([data-visible="false"])'), (toast) => toast.getBoundingClientRect());
+        const delta = toastClearance(target.getBoundingClientRect(), toasts, window.innerHeight);
+        if (delta) scrollParent(target).scrollBy({ top: delta });
+      });
+    };
+    document.addEventListener("focusin", onFocus);
+    return () => document.removeEventListener("focusin", onFocus);
+  }, []);
+}
+
+export function heardBarProps(fraction: number) {
+  const percent = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
+  return {
+    role: "progressbar",
+    "aria-label": "Đã nghe",
+    "aria-valuemin": 0,
+    "aria-valuemax": 100,
+    "aria-valuenow": percent,
+    "aria-valuetext": `đã nghe ${percent}%`,
+  } as const;
+}
+
 /** Chữ tiến độ đổi liên tục (đồng hồ, MB, %) trong vùng aria-live / role=status: mắt thấy `shown` (trình đọc màn hình bỏ qua), trình đọc
  *  màn hình đọc `spoken` - chữ chỉ đổi khi đổi pha hay qua mốc 25 % (spokenProgress, shared/progressSpeech.ts), không phải mỗi giây (soát a31 A6). */
+let politeRegion: HTMLElement | null = null;
+
+/** Nói một lời xác nhận ngắn qua vùng aria-live polite chung của trang ("Tốc độ đọc 1,2×" sau khi chọn trong bảng Tốc độ - soát a67): vùng có sẵn,
+ *  rỗng, rồi mới điền chữ (vùng vừa chèn kèm chữ thường không được đọc); cùng một câu nói hai lần liền vẫn được đọc lại. */
+export function announce(text: string) {
+  if (typeof document === "undefined" || !document.body) return;
+  if (!politeRegion?.isConnected) {
+    politeRegion = document.createElement("div");
+    politeRegion.className = "sr-only";
+    politeRegion.setAttribute("aria-live", "polite");
+    politeRegion.setAttribute("data-announcer", "");
+    document.body.append(politeRegion);
+  }
+  const region = politeRegion;
+  region.textContent = "";
+  window.setTimeout(() => (region.textContent = text), 120);
+}
+
 export function LiveText({ shown, spoken }: { shown: ReactNode; spoken: string }) {
   return (
     <>
@@ -350,8 +464,13 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
       className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-2 text-sm sm:px-3 font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
     >
       {children}
+      {/* Số đếm dính vào tên khi đọc ("Chương6") - trình đọc màn hình nghe "Chương, 6 mục" (soát a67). */}
       {count !== undefined && (
-        <span className="tabular rounded-full bg-hover px-1.5 py-px text-[0.6875rem] font-semibold text-fg-2">{count}</span>
+        <span className="tabular rounded-full bg-hover px-1.5 py-px text-[0.6875rem] font-semibold text-fg-2">
+          <span className="sr-only">, </span>
+          {count}
+          <span className="sr-only"> mục</span>
+        </span>
       )}
     </TabsPrimitive.Trigger>
   );
@@ -364,6 +483,11 @@ function keepOpenForToasts(event: { target: EventTarget | null; preventDefault: 
 }
 
 // ---- Hộp thoại --------------------------------------------------------------------------------------------
+
+/** Nút ✕ của hộp thoại / tấm trượt: biểu tượng 20 px nhưng vùng bấm 44 x 44 px (máy tính), 48 x 48 (cảm ứng); lề âm giữ chỗ chiếm trong bố cục như
+ *  cũ (soát a67: chỉ 24 x 24 px). */
+const CLOSE_BUTTON =
+  "-m-[0.75rem] inline-flex size-[2.75rem] shrink-0 items-center justify-center rounded-lg text-fg-3 hover:bg-hover hover:text-fg pointer-coarse:-m-[0.875rem] pointer-coarse:size-[3rem]";
 
 /** Phần tử "đã mở hộp" từ chỗ con trỏ đang đứng: mục của một menu (Radix DropdownMenu) mất ngay khi menu đóng, nên đó là nút mở menu (menu mang
  *  `aria-labelledby` = mã nút ấy; menu con thì lần lên tiếp). Phần tử thường thì chính nó. */
@@ -458,7 +582,7 @@ export function Dialog({
               )}
             </div>
             <DialogPrimitive.Close asChild>
-              <button aria-label="Đóng" className="touch-hit touch-box -m-1 inline-flex items-center justify-center rounded-md p-1 text-fg-3 hover:bg-hover hover:text-fg">
+              <button aria-label="Đóng" className={CLOSE_BUTTON}>
                 <X className="size-5" />
               </button>
             </DialogPrimitive.Close>
@@ -504,7 +628,7 @@ export function Sheet({
           <div className="flex items-center justify-between gap-3 px-1.5">
             <DialogPrimitive.Title className="text-sm font-semibold">{title}</DialogPrimitive.Title>
             <DialogPrimitive.Close asChild>
-              <button aria-label="Đóng" className="-m-1 rounded-md p-1 text-fg-3 hover:bg-hover hover:text-fg">
+              <button aria-label="Đóng" className={CLOSE_BUTTON}>
                 <X className="size-5" />
               </button>
             </DialogPrimitive.Close>
@@ -609,6 +733,36 @@ export function radioTabIndex<T>(values: readonly T[], value: T, index: number) 
   return values[index] === value || (!values.includes(value) && index === 0) ? 0 : -1;
 }
 
+/** Bảng nổi có nhiều nút (Tốc độ, Giọng đọc, Hẹn giờ của trình phát): mũi tên đi từ nút này sang nút kia như menu "Tuỳ chọn khác" (Radix) - xuống /
+ *  phải là nút sau, lên / trái là nút trước, Home / End về đầu / cuối, không vòng lại. Lên / xuống bỏ qua nút phụ đứng cạnh một lựa chọn (`side`: nút
+ *  "Thử" cạnh tên giọng) để đi thẳng theo danh sách; trái / phải đi qua cả nút phụ. Trả phần tử cần tới, hay null nếu phím không phải việc của nó. */
+export function arrowTarget<T>(items: readonly T[], current: T | null, key: string, side: (item: T) => boolean = () => false): T | null {
+  const step = ({ ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 } as Record<string, number>)[key];
+  if (!step && key !== "Home" && key !== "End") return null;
+  const pool = key === "ArrowLeft" || key === "ArrowRight" ? items : items.filter((item) => !side(item) || item === current);
+  if (!pool.length) return null;
+  if (key === "Home") return pool[0];
+  if (key === "End") return pool[pool.length - 1];
+  const index = current === null ? -1 : pool.indexOf(current);
+  if (index < 0) return step > 0 ? pool[0] : pool[pool.length - 1];
+  return pool[Math.max(0, Math.min(pool.length - 1, index + step))];
+}
+
+const ARROW_ITEMS = 'button:not([disabled]), a[href], input[type="checkbox"]:not([disabled])';
+
+/** `onKeyDown` cho khung của bảng nổi: mũi tên / Home / End theo `arrowTarget`. Đang ở ô nhập, thanh trượt thì để phím cho ô ấy. */
+export function menuArrowKeys(event: React.KeyboardEvent<HTMLElement>) {
+  const target = event.target as HTMLElement;
+  if (event.altKey || event.ctrlKey || event.metaKey || target.closest?.('input:not([type="checkbox"]), textarea, select, [role="slider"], [contenteditable="true"]')) return;
+  const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(ARROW_ITEMS)).filter((item) => item.getClientRects().length > 0);
+  const current = items.find((item) => item === target || item.contains(target)) ?? null;
+  const next = arrowTarget(items, current, event.key, (item) => item.hasAttribute("data-arrow-side"));
+  if (!next) return;
+  event.preventDefault();
+  event.stopPropagation();
+  next.focus();
+}
+
 const QUARTERS = Array.from({ length: 96 }, (_, index) =>
   `${String(Math.floor(index / 4)).padStart(2, "0")}:${String((index % 4) * 15).padStart(2, "0")}`,
 );
@@ -675,7 +829,7 @@ export function Segmented<T extends string>({
           tabIndex={radioTabIndex(values, value, index)}
           onClick={() => onChange(option.value)}
           className={cn(
-            "touch-row h-7 whitespace-nowrap rounded-md px-3 text-[0.8125rem] font-medium transition-colors",
+            "touch-row h-7 whitespace-nowrap rounded-md px-3 text-[0.8125rem] font-medium transition-colors pointer-coarse:min-w-[48px]",
             value === option.value ? "bg-panel text-fg shadow-card" : "text-fg-2 hover:text-fg",
             itemClassName,
           )}

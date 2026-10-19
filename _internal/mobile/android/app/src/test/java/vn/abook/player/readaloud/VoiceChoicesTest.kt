@@ -22,13 +22,33 @@ class VoiceChoicesTest {
     }
 
     @Test
-    fun eachBookKeepsItsOwnVoiceAndTheLastChoiceIsTheDefaultForOthers() {
+    fun eachBookKeepsItsOwnVoiceAndOnlyTheSettingsDefaultIsSharedWithOthers() {
         val choices = VoiceChoices(file)
+        choices.rememberDefault("edge:vi-VN-HoaiMyNeural")
         choices.remember("sach-a", "device:vi-vn-x-gft")
         choices.remember("sach-b", "edge:vi-VN-NamMinhNeural")
         assertEquals("device:vi-vn-x-gft", choices.voiceFor("sach-a"))
         assertEquals("edge:vi-VN-NamMinhNeural", choices.voiceFor("sach-b"))
-        assertEquals("edge:vi-VN-NamMinhNeural", choices.voiceFor("sach-moi"))
+        // a67: choosing a voice for one book in the player no longer changes the default of the others.
+        assertEquals("edge:vi-VN-HoaiMyNeural", VoiceChoices(file).voiceFor("sach-moi"))
+        choices.rememberDefault("")
+        assertEquals("", VoiceChoices(file).voiceFor("sach-moi"))
+        assertEquals("device:vi-vn-x-gft", VoiceChoices(file).voiceFor("sach-a"))
+    }
+
+    @Test
+    fun theVeryFirstChoiceAlsoBecomesTheDefault() {
+        val choices = VoiceChoices(file)
+        choices.remember("sach-a", "device:vi-vn-x-gft")
+        choices.remember("sach-b", "edge:vi-VN-NamMinhNeural")
+        assertEquals("device:vi-vn-x-gft", VoiceChoices(file).voiceFor("sach-moi"))
+    }
+
+    @Test
+    fun aChoiceWithoutABookIsTheDefault() {
+        val choices = VoiceChoices(file)
+        choices.remember("", "vieneu:turbo/Mai")
+        assertEquals("vieneu:turbo/Mai", choices.voiceFor("sach-moi"))
     }
 
     @Test

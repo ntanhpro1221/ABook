@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
-import { Progress } from "@/shared/ui";
+import { busyClick, Progress, useFocusFollows } from "@/shared/ui";
 import { CANCELLED_NOTE, formatSize } from "@/studio/musicLocal";
 import { useSource } from "./source";
 import { desktopVieneu, useModuleStatus } from "./VieneuModuleCard";
@@ -18,6 +18,9 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
   const client = useQueryClient();
   const { status, working } = useModuleStatus(backend, VIENEU_COPY);
   const [busy, setBusy] = useState(false);
+  // Nút Tải và Huỷ thay chỗ nhau: tiêu điểm theo sang nút vừa hiện; nút đang chạy việc không `disabled` (mất tiêu điểm) - soát a67.
+  const follow = useFocusFollows(status?.state);
+  const waiting = { "aria-disabled": busy || undefined, "aria-busy": busy || undefined };
   if (!status) return null;
   const { light, full } = offlineChoices(status);
   const missing = light.length ? light : full;
@@ -50,17 +53,18 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
   // Chưa có gì để nói (không tải, không ghi chú): hai nút đứng cùng hàng với "Thử lại" của khối lỗi, không tốn thêm hàng ở màn hẹp.
   const idle = !downloading && !note && !metered;
   return (
-    <div className={idle ? "contents" : "flex basis-full flex-col gap-2"}>
+    <div {...follow} className={idle ? "contents" : "flex basis-full flex-col gap-2"}>
       {downloading && (
         <div className="flex items-center gap-3">
           <Progress value={vieneuPercent(status) / 100} size="sm" running label="Đang tải giọng VieNeu" className="flex-1" />
           {backend.cancel && (
             <button
               type="button"
-              disabled={busy}
-              onClick={() => void cancel()}
+              {...waiting}
+              data-focus-next
+              onClick={busyClick(busy, () => void cancel())}
               onMouseDown={(event) => event.preventDefault()}
-              className="min-h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-fg-2 underline underline-offset-2 hover:text-fg disabled:opacity-60 max-sm:min-h-[44px]"
+              className="min-h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-fg-2 underline underline-offset-2 hover:text-fg aria-disabled:opacity-60 max-sm:min-h-[48px]"
             >
               Huỷ
             </button>
@@ -74,10 +78,11 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
         {!downloading && status.state !== "unsupported" && missing.length > 0 && (
           <button
             type="button"
-            disabled={busy}
-            onClick={() => void start(missing)}
+            {...waiting}
+            data-focus-next
+            onClick={busyClick(busy, () => void start(missing))}
             onMouseDown={(event) => event.preventDefault()}
-            className="min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover disabled:opacity-60 max-sm:min-h-[44px]"
+            className="min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover aria-disabled:opacity-60 max-sm:min-h-[48px]"
           >
             {failed ? "Thử lại" : bytes > 0 ? `${button} (${formatSize(bytes)})` : button}
           </button>
@@ -85,10 +90,10 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
         {!downloading && !failed && status.state !== "unsupported" && light.length > 0 && fullBytes > bytes && (
           <button
             type="button"
-            disabled={busy}
-            onClick={() => void start(full)}
+            {...waiting}
+            onClick={busyClick(busy, () => void start(full))}
             onMouseDown={(event) => event.preventDefault()}
-            className="min-h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-fg-2 underline underline-offset-2 hover:text-fg disabled:opacity-60 max-sm:min-h-[44px]"
+            className="min-h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-fg-2 underline underline-offset-2 hover:text-fg aria-disabled:opacity-60 max-sm:min-h-[48px]"
           >
             Gói đầy đủ ({formatSize(fullBytes)})
           </button>
@@ -96,8 +101,9 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
         <button
           type="button"
           onClick={onOpenSettings}
+          data-focus-fallback
           onMouseDown={(event) => event.preventDefault()}
-          className="min-h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-fg-2 underline underline-offset-2 hover:text-fg max-sm:min-h-[44px]"
+          className="min-h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-fg-2 underline underline-offset-2 hover:text-fg max-sm:min-h-[48px]"
         >
           Xem trong Cài đặt
         </button>

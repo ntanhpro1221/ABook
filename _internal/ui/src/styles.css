@@ -62,7 +62,8 @@
   --focus: #a8650d;
   --text: #14181d;
   --text-2: #4f5965;
-  --text-3: #666f7b;
+  /* chữ phụ, cảnh báo, thông tin: >= 4,6:1 cả trên --bg-sunken / --hover / --accent-soft (soát a67: 4,1-4,5:1 trên các nền ấy) */
+  --text-3: #626b76;
   --accent: #e39a2d;
   --accent-hover: #d18a1f;
   --accent-ink: #1d1304;
@@ -72,9 +73,9 @@
   --success-soft: #dff3ea;
   --danger: #b33030; /* chữ trên --danger-soft 4,29:1 -> 5,12:1 (soát UX a17) */
   --danger-soft: #fbe4e4;
-  --warning: #9a6212;
+  --warning: #955f11;
   --warning-soft: #fcf1dc;
-  --info: #3b6fd8;
+  --info: #3666c7;
   --info-soft: #e3ebfb;
   --nav-active: #ffffff;
   --nav-active-ring: rgb(20 24 29 / 0.08);
@@ -259,7 +260,52 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
 
 /* Đích chạm >= 40 px ở màn hẹp hay màn cảm ứng (soát UX a14: nhiều nút 20-28 px): nới vùng bấm bằng ::after trong suốt, cỡ nhìn thấy và bố cục
  * giữ nguyên, màn rộng chuột không đổi gì. `touch-hit` cho nút/liên kết đứng riêng (cần phần tử đã có định vị hoặc để nó tự `relative`);
- * `touch-row` cho hàng xếp sát nhau theo chiều dọc: nâng chiều cao thật lên 40 px, để vùng nới không giành chạm của hàng bên cạnh. */
+ * `touch-row` cho hàng xếp sát nhau theo chiều dọc: nâng chiều cao thật lên 40 px, để vùng nới không giành chạm của hàng bên cạnh.
+ * Màn cảm ứng (điện thoại): 48 px = 48 dp như chuẩn Android (soát a67: 33-42 dp) - viết bằng px, không rem: cỡ ngón tay không đổi theo cỡ chữ. */
+:root {
+  --touch: 2.5rem;
+}
+@media (pointer: coarse) {
+  :root {
+    --touch: 48px;
+  }
+  /* Mục menu (Radix DropdownMenu, h-9 = 33 dp) và nút / ô đánh dấu trong bảng nổi (Tốc độ, Giọng đọc, Hẹn giờ, Nhạc nền: 32 dp) cao tối thiểu
+   * 48 dp; nút chỉ có biểu tượng (Bớt / Thêm 5 phút) rộng 48 dp. */
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="menuitemcheckbox"],
+  [data-radix-popper-content-wrapper] :is(button, label:has(> input)) {
+    min-height: var(--touch);
+  }
+  [data-radix-popper-content-wrapper] button:has(> svg:only-child) {
+    min-width: var(--touch);
+  }
+  /* Công tắc 42 x 25 dp: vùng chạm 48 dp quanh nó, cỡ nhìn thấy giữ nguyên (mọi công tắc đã `relative`). */
+  [role="switch"]::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, var(--touch));
+    height: max(100%, var(--touch));
+    transform: translate(-50%, -50%);
+  }
+}
+/* Biểu tượng to theo cỡ chữ (soát a67, điện thoại cỡ chữ 200 %): WebView Android giãn chữ bằng textZoom, mà rem / em KHÔNG giãn theo (đo trên máy ảo:
+ * 1rem vẫn 16 px), còn rlh (chiều cao dòng của gốc, html line-height 1.5) thì có. Cỡ chữ 100 % đúng như cũ (18 / 22 px); to nhất bằng ô nút chứa nó
+ * (size-9; glyph-20 trong size-11) để không tràn sang nút bên cạnh. Máy tính đổi cỡ chữ trình duyệt thì rem và rlh cùng giãn. */
+@utility glyph {
+  width: clamp(1.125rem, 0.75rlh, 1.96875rem);
+  height: clamp(1.125rem, 0.75rlh, 1.96875rem);
+}
+@utility glyph-20 {
+  width: clamp(1.25rem, 0.8333rlh, 2.40625rem);
+  height: clamp(1.25rem, 0.8333rlh, 2.40625rem);
+}
+@utility glyph-22 {
+  width: clamp(1.375rem, 0.9167rlh, 2.25rem);
+  height: clamp(1.375rem, 0.9167rlh, 2.25rem);
+}
 @utility touch-hit {
   @media (pointer: coarse), (max-width: 40rem) {
     position: relative;
@@ -268,8 +314,8 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: max(100%, 2.5rem);
-      height: max(100%, 2.5rem);
+      width: max(100%, var(--touch));
+      height: max(100%, var(--touch));
       transform: translate(-50%, -50%);
     }
   }
@@ -285,11 +331,25 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
       left: 0;
       right: 0;
       top: 50%;
-      height: max(100%, 2.5rem);
+      height: max(100%, var(--touch));
       transform: translateY(-50%);
     }
   }
 }
+/* Chữ thông báo của sonner viết bằng px (13 / 12 px): người đặt cỡ chữ trình duyệt to thì mọi chữ trong app to theo trừ thông báo (soát a67) - viết lại
+ * bằng rem, cùng cỡ ở gốc 16 px. Bề rộng giữ 356 px ở cỡ thường, to theo chữ nhưng không quá màn. */
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  font-size: 0.8125rem;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button] {
+  font-size: 0.75rem;
+  height: auto;
+  min-height: 1.5rem;
+}
+[data-sonner-toaster] {
+  --width: min(22.25rem, calc(100vw - 2rem)) !important;
+}
+
 /* Thông báo của sonner: sonner tự tắt viền tiêu điểm (outline: none, ngoài mọi layer nên thắng :focus-visible chung) - người đi bằng phím
  * (F6 / Alt+T vào vùng thông báo) không thấy mình đang ở đâu (soát a31 K6). Nút ✕ của sonner 20 px: vùng bấm nới tới 24 px trên màn rộng. */
 [data-sonner-toaster] [data-sonner-toast]:focus-visible,
@@ -311,7 +371,7 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
 @media (pointer: coarse), (max-width: 40rem) {
   [data-sonner-toast] [data-button] {
     position: relative;
-    min-height: 2.5rem; /* nút hành động ("Mở thư mục", "Hoàn tác") cao thật 40 px, không chỉ vùng nới */
+    min-height: var(--touch); /* nút hành động ("Mở thư mục", "Hoàn tác") cao thật 40 px (cảm ứng 48), không chỉ vùng nới */
   }
   [data-sonner-toast] [data-close-button]::after,
   [data-sonner-toast] [data-button]::after {
@@ -319,21 +379,32 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: max(100%, 2.5rem);
-    height: max(100%, 2.5rem);
+    width: max(100%, var(--touch));
+    height: max(100%, var(--touch));
     transform: translate(-50%, -50%);
   }
 }
 @utility touch-row {
   @media (pointer: coarse), (max-width: 40rem) {
-    min-height: 2.5rem;
+    min-height: var(--touch);
+  }
+}
+/* Hàng nút ở chân hộp thoại ("Để sau" / "Xoá khỏi điện thoại"): xuống dòng khi hộp hẹp hay chữ to - một hàng không xuống dòng từng đẩy nút an toàn
+ * ra ngoài mép (soát a67, điện thoại cỡ chữ 200 %: "Để sau" ở -64 px). Một lớp cho mọi chân hộp, thay "flex justify-end gap-2". */
+@utility dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: calc(var(--spacing) * 2);
+  & > * {
+    max-width: 100%;
   }
 }
 /* Nút chỉ có biểu tượng đứng cạnh nhau theo chiều ngang (nới bằng ::after sẽ đè lên nhau): nâng cỡ thật lên 40 x 40 px. */
 @utility touch-box {
   @media (pointer: coarse), (max-width: 40rem) {
-    min-height: 2.5rem;
-    min-width: 2.5rem;
+    min-height: var(--touch);
+    min-width: var(--touch);
     justify-content: center;
   }
 }

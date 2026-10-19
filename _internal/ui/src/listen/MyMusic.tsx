@@ -127,7 +127,7 @@ export function MyMusicSection() {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-3">
-        <h4 className="text-sm font-medium">Nhạc của tôi{tracks.length ? ` (${tracks.length})` : ""}</h4>
+        <h3 className="text-sm font-medium">Nhạc của tôi{tracks.length ? ` (${tracks.length})` : ""}</h3>
         {canImport && (
           <Button size="sm" variant="secondary" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()}>
             {progress ? `Đang nhập ${progress.done}/${progress.total}…` : "Nhập nhạc của tôi…"}

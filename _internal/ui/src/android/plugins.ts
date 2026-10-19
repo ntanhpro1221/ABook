@@ -97,6 +97,8 @@ export interface EbookPlayerPlugin {
     readAloudVoice?: string;
     /** Cuốn của `readAloudVoice`: lõi nhớ giọng ấy cho cuốn ấy (ReadAloud.chooseFor); không có thì cuốn đang nạp. */
     readAloudBook?: string;
+    /** Giọng mặc định (Cài đặt) cho cuốn chưa chọn giọng riêng; "" = chưa đặt. Không đổi giọng của chương đang đọc. */
+    readAloudDefault?: string;
     /** Nhà cung cấp giọng trực tuyến người nghe đã đồng ý gửi chữ tới (listen/onlineConsent.ts): lõi tự sang chương chữ chỉ với những giọng ấy. */
     readAloudOnlineOk?: string[];
   }): Promise<NativeState>;

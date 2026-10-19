@@ -292,9 +292,9 @@ export function PhoneHandOffButton() {
     >
       <DropdownMenu.Trigger
         aria-label="Phát trên thiết bị khác"
-        className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 active:bg-hover data-[state=open]:bg-hover data-[state=open]:text-fg"
+        className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 active:bg-hover data-[state=open]:bg-hover data-[state=open]:text-fg"
       >
-        <Cast className="size-[18px]" strokeWidth={2} />
+        <Cast className="glyph" strokeWidth={2} />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 min-w-56 max-w-[calc(100vw-24px)] rounded-xl border border-line bg-panel p-1.5 shadow-float">

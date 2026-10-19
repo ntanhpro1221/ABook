@@ -60,7 +60,7 @@ function NavItem({ to, icon: Icon, match, children }: { to: string; icon: typeof
       aria-current={active ? "page" : undefined}
       className={cn(NAV, active ? NAV_ACTIVE : NAV_IDLE)}
     >
-      <Icon className="size-[18px]" />
+      <Icon className="glyph" />
       {children}
     </NavLink>
   );

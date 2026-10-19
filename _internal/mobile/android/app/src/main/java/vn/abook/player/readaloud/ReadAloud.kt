@@ -12,6 +12,7 @@ import vn.abook.player.BookEdits
 import vn.abook.player.Playback
 import vn.abook.player.SleepTimer
 import vn.abook.player.Store
+import vn.abook.player.mediaArtist
 import vn.abook.player.vieneu.VieneuVoices
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -367,6 +368,11 @@ object ReadAloud {
     fun chooseFor(bookId: String, id: String) {
         choices?.remember(bookId, id)
         if (bookId.isEmpty() || bookId == Playback.bookId) setVoice(id)
+    }
+
+    /** Giọng mặc định (Cài đặt) cho cuốn chưa chọn giọng riêng. Không đổi giọng của chương đang đọc - như giao diện máy tính; lần nạp kế theo nó. */
+    fun chooseDefault(id: String) {
+        choices?.rememberDefault(id)
     }
 
     /** Nạp một cuốn - bằng bất cứ đường nào (giao diện, widget, xe hơi, máy tính điều khiển): đọc bằng giọng đã nhớ của cuốn ấy. Chỉ đặt giọng;
@@ -1250,7 +1256,7 @@ object ReadAloud {
     private fun itemFor(chap: Chap, segment: Int, uri: Uri, gainDb: Double, baseMs: Long = 0L): MediaItem {
         val chapter = chapters()[chap.index]
         val metadata = MediaMetadata.Builder()
-            .setTitle(chapter.title).setArtist(Playback.narrator.ifBlank { null }).setAlbumTitle(Playback.bookTitle)
+            .setTitle(chapter.title).setArtist(mediaArtist(Playback.narrator, Playback.bookTitle)).setAlbumTitle(Playback.bookTitle)
             .setDisplayTitle(chapter.title).setSubtitle(Playback.bookTitle)
         artwork?.let { metadata.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
         return MediaItem.Builder()

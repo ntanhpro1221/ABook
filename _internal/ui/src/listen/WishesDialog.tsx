@@ -65,7 +65,7 @@ export function WishesDialog({
       ) : (
         <p className="text-sm text-fg-2">Chưa có việc nào đang chờ.</p>
       )}
-      <div className="mt-5 flex justify-end">
+      <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
           Đóng
         </Button>

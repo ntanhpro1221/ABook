@@ -413,7 +413,7 @@ export function HandOffButton({ className }: { className?: string }) {
             className,
           )}
         >
-          <Cast className="size-[18px]" strokeWidth={2} />
+          <Cast className="glyph" strokeWidth={2} />
         </DropdownMenu.Trigger>
       </Tooltip>
       <DropdownMenu.Portal>

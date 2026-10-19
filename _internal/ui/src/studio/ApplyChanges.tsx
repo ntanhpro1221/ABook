@@ -161,7 +161,7 @@ export function ApplyChangesDialog({
           </p>
         </>
       )}
-      <div className="mt-5 flex justify-end gap-2">
+      <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
           Để sau
         </Button>
