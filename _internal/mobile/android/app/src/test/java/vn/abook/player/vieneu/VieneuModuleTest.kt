@@ -48,7 +48,7 @@ class VieneuModuleTest {
 
     /** A file the server stops in the middle of: sends [first] bytes, tells the test ([reached]), waits for [gate], sends 1000 more and holds the
      *  connection (until [end]) - so a cancel lands while the module is part-way through that file. */
-    private class Stall(val name: String, val first: Int) {
+    private class Stall(val name: String, val first: Int, val from: Int = 0) {
         val reached = CountDownLatch(1)
         val gate = CountDownLatch(1)
         val end = CountDownLatch(1)
@@ -128,14 +128,14 @@ class VieneuModuleTest {
         else {
             val from = range?.removePrefix("bytes=")?.removeSuffix("-")?.toIntOrNull() ?: 0
             out.write("HTTP/1.1 ${if (range != null) "206 Partial Content" else "200 OK"}\r\nContent-Length: ${body.size - from}\r\nConnection: close\r\n\r\n".toByteArray())
-            val held = stall?.takeIf { it.name == name && from == 0 }
+            val held = stall?.takeIf { it.name == name && from == it.from }
             if (held == null) out.write(body, from, body.size - from)
             else {
-                out.write(body, 0, held.first)
+                out.write(body, from, held.first)
                 out.flush()
                 held.reached.countDown()
                 held.gate.await(20, TimeUnit.SECONDS)
-                out.write(body, held.first, 1000)
+                out.write(body, from + held.first, 1000)
                 out.flush()
                 held.end.await(20, TimeUnit.SECONDS)
             }
@@ -469,6 +469,39 @@ class VieneuModuleTest {
         assertEquals(nano.toList(), File(folder, "nano/nano.bin").readBytes().toList())
         assertFalse(partial.exists())
         assertFalse(module.status().getBoolean("cancelled"))
+    }
+
+    @Test
+    fun aResumedDownloadCountsWhatIsLeftLikeTheButtonNotTheWholeFile() {
+        // a65: the button said "Tải (126 MB)" after Huỷ, the header of the resumed download "Đang tải giọng VieNeu (198 MB)" with a % of the whole
+        val first = Stall("nano.bin", 30_000).also { stall = it }
+        val module = module()
+        module.start(listOf("nano"))
+        assertTrue(first.reached.await(20, TimeUnit.SECONDS))
+        val partial = File(File(root, VieneuModule.FOLDER), "nano/nano.bin.part")
+        var until = System.currentTimeMillis() + 20_000
+        while (partial.length() < 30_000 && System.currentTimeMillis() < until) Thread.sleep(10)
+        module.cancel()
+        first.gate.countDown()
+        module.join()
+        first.end.countDown()
+        val button = choice(module.status(), "nano").getLong("bytes")
+        assertEquals(nano.size - 31_000L, button)
+        val resumed = Stall("nano.bin", 10_000, from = 31_000).also { stall = it }
+        module.start(listOf("nano"))
+        assertTrue(resumed.reached.await(20, TimeUnit.SECONDS))
+        until = System.currentTimeMillis() + 20_000
+        while (partial.length() < 41_000 && System.currentTimeMillis() < until) Thread.sleep(10)
+        Thread.sleep(50)
+        val status = module.status()
+        assertEquals(status.toString(), "downloading", status.getString("state"))
+        assertEquals("the header says what the button said", button, status.getLong("total"))
+        assertEquals("only the bytes this download added", 10_000L, status.getLong("done"))
+        resumed.gate.countDown()
+        resumed.end.countDown()
+        module.join()
+        assertEquals(module.status().toString(), "ready", module.status().getString("state"))
+        assertEquals(nano.toList(), File(File(root, VieneuModule.FOLDER), "nano/nano.bin").readBytes().toList())
     }
 
     // ---- "Tốc độ giọng trên máy" is Supertonic only: Nano has no fast tier ----------------------------------------------------------

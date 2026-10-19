@@ -105,10 +105,6 @@ abstract class VoiceModule(
         return groups.keys.associateWith { partState(it, stamps) }
     }
 
-    /** Wire bytes of part [id]'s files that are not current (the download's progress counts every one of them, a resumed `.part` included). */
-    private fun bytes(id: String, states: Map<String, String>): Long =
-        if (states[id] == "current") 0L else groups.getValue(id).filter { !store(id).isCurrent(it) }.sumOf { it.wireSize }
-
     /** Bytes part [id] still has to fetch: its files that are missing or pinned differently, less what a cut download left in `.part` - the
      *  size shown on the card's buttons, right again after Huỷ (desktop `Component.left`). */
     protected fun left(id: String, states: Map<String, String>): Long {
@@ -224,7 +220,8 @@ abstract class VoiceModule(
             downloading = true
             finished = 0
             current = 0
-            total = needed.sumOf { bytes(it, states) }
+            // what is left to fetch, the size the button showed: a download resumed after Huỷ says "126 MB", not the whole 198 MB, and its % is of that
+            total = needed.sumOf { left(it, states) }
             // claimed for the download: another module removed meanwhile must not take runtime files this one is about to use
             runtime.claim(key, (wanted ?: have(states)).flatMap { needs(it) }.filter(::common))
             worker = Thread({ run(needed) }, "abook-$key-module").apply {
@@ -245,9 +242,16 @@ abstract class VoiceModule(
         try {
             forget() // a loaded engine must not read files being replaced
             val progress = object : PinnedFiles.Progress {
-                override fun current(bytes: Long) = synchronized(lock) { current = bytes }
+                // PinnedFiles reports the bytes of the file on disk, a resumed `.part` included from its first call: count only what this download adds
+                private var had = -1L
+
+                override fun current(bytes: Long) = synchronized(lock) {
+                    if (had < 0) had = bytes
+                    current = maxOf(0L, bytes - had) // below: the server ignored Range and the file starts over
+                }
                 override fun done(part: Part) = synchronized(lock) {
-                    finished += part.wireSize
+                    finished += part.wireSize - maxOf(had, 0L)
+                    had = -1L
                     current = 0
                 }
                 override fun cancelled() = cancelRequested

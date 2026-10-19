@@ -177,6 +177,7 @@ object ReadAloud {
         kept = keep
         running = keep
         reminder.cancel()
+        opening = null
         for (job in jobs) if (job !== keep?.cancel) job.cancel()
     }
     /** Lượt phát luồng của đoạn đang nghe được giữ qua lần đổi giọng / cách đọc ([requeueAhead]): đoạn ấy nói nốt bằng giọng cũ (như máy tính). Đọc cả ở luồng đọc. */
@@ -196,6 +197,9 @@ object ReadAloud {
     private var feedChapter = 0
     private var feedSegment = 0
     private var waiting: Target? = null
+    /** Clip đầu của lần mở / nhảy bằng giọng trên máy đang được giữ chờ đoạn kế ([holdOpening]): phát khi đoạn kế đọc xong hay hết hạn ([releaseOpening]). Luồng chính. */
+    private var opening: Opening? = null
+    private class Opening(val token: Int, val item: MediaItem, val offsetMs: Long)
     private var failure: String? = null
     /** Đứng ở đầu một chương chữ mà giọng trực tuyến chưa được đồng ý (chương trước hết rồi tự sang): không đọc gì tới khi người nghe bấm phát -
      *  giao diện hỏi đồng ý trước khi gửi lệnh phát (player.tsx withConsent). */
@@ -725,11 +729,12 @@ object ReadAloud {
         reminder.schedule(ms + 50) { if (token == generation) pump() }
     }
 
-    /** Hàng đợi còn thiếu đoạn đọc sẵn? Tối thiểu [AHEAD] đoạn; giọng trực tuyến mà clip gần đây về chậm thì tới khi đủ số giây âm thanh [ReadAheadPolicy] đòi (tối đa [ReadAheadPolicy.MAX_AHEAD] đoạn). */
+    /** Hàng đợi còn thiếu đoạn đọc sẵn? Tối thiểu [AHEAD] đoạn; giọng trực tuyến mà clip gần đây về chậm thì tới khi đủ số giây âm thanh [ReadAheadPolicy] đòi (tối đa [ReadAheadPolicy.MAX_AHEAD] đoạn);
+     *  giọng trên máy tới khi đủ [ReadAheadPolicy.LOCAL_BUFFER_MS] âm thanh (tối đa [ReadAheadPolicy.LOCAL_MAX_AHEAD] đoạn). */
     private fun needMore(exo: Player): Boolean {
         if (waiting != null) return true
         val ahead = ((exo.currentMediaItemIndex + 1) until exo.mediaItemCount).map { aheadMs(exo.getMediaItemAt(it)) }
-        return if (PreparePlan.online(voiceId)) policy.needMore(ahead) else ahead.size < AHEAD
+        return if (PreparePlan.online(voiceId)) policy.needMore(ahead) else ReadAheadPolicy.localNeedsMore(ahead, AHEAD)
     }
 
     /** Độ dài (ms) của một mục đã nạp phía trước; mục không phải đoạn đọc to (chương audio) tính là dài - đã đủ đệm. */
@@ -1128,6 +1133,7 @@ object ReadAloud {
             return
         }
         inFlight = false
+        releaseOpening() // đoạn kế của clip đang được giữ đã xong (hay hỏng): clip ấy phát trước, đoạn này nối sau nó
         val streaming = live?.takeIf { it.started }
         val clip = result.getOrElse { error ->
             // Đã phát luồng mà lượt đọc hỏng không qua lời báo đứt ([LiveJob.failed]): tiếng đã về đủ thì đoạn coi như xong; chưa đủ mà mục còn trong hàng đợi thì như đứt giữa chừng.
@@ -1186,11 +1192,52 @@ object ReadAloud {
         // Dời chỗ nạp TRƯỚC khi đặt vào ExoPlayer: setMediaItems báo đổi mục ngay trong lúc gọi (onMediaTransition -> onClipChanged -> pump), và pump lúc ấy
         // mà còn thấy đoạn này là "đoạn kế" thì đọc lại nó - hàng đợi có hai lần cùng một đoạn, đồng hồ ảo lùi về đầu đoạn (thấy 03-10 trên máy thật).
         feedSegment = segment + 1
-        if (item != null) deliver(listOf(item), if (target != null) SeekPlan.offsetIn(whole, target.word, target.offsetMs) else 0L)
+        if (item != null) {
+            val offset = if (target != null) SeekPlan.offsetIn(whole, target.word, target.offsetMs) else 0L
+            if (target == null || !holdOpening(chap, segment, whole, target, item, offset)) deliver(listOf(item), offset)
+        }
         notifyScript(chap)
         prune()
         pump()
         Playback.emit("state")
+    }
+
+    /**
+     * Mở chương (hay nhảy) bằng giọng trên máy mà clip đầu ngắn (tiêu đề) sẽ hết trước khi đoạn kế đọc xong: chưa phát vội - người nghe vẫn thấy "đang chuẩn bị" thêm tối đa
+     * [ReadAheadPolicy.OPENING_HOLD_MAX_MS] (ước theo tốc độ đã đo của giọng, [ReadAheadPolicy.openingHoldMs]), đoạn kế xong sớm thì phát sớm. Khoảng chờ dời vào lúc bắt đầu thay
+     * vì thành chỗ im giữa tiêu đề và đoạn đầu (a65). [pump] vẫn đọc đoạn kế như thường vì `waiting` còn đó. True = đã giữ.
+     */
+    private fun holdOpening(chap: Chap, segment: Int, clip: Clip, target: Target, item: MediaItem, offset: Long): Boolean {
+        if (!target.play || PreparePlan.online(voiceId)) return false
+        val next = nextSpeakable(chap, segment) ?: return false
+        val text = chap.paragraphs[next]
+        val bookId = Playback.bookId
+        val cached = runCatching { cache().contains(voiceId, text, originOf(bookId), readingsOf(bookId)) }.getOrDefault(false)
+        val wait = ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, if (cached) null else text.length, runCatching { speeds().secondsPerChar(voiceId) }.getOrNull())
+        if (wait <= 0) return false
+        val token = generation
+        opening = Opening(token, item, offset)
+        main.postDelayed({
+            if (opening?.token == token) {
+                releaseOpening()
+                Playback.emit("state")
+            }
+        }, wait)
+        return true
+    }
+
+    /** Phát clip đang được giữ ([holdOpening]), nếu còn là việc hiện hành. `setMediaItems` gọi lồng [pump]: chặn nó - đoạn kế đang đọc, hay người gọi lo tiếp. */
+    private fun releaseOpening() {
+        val held = opening ?: return
+        opening = null
+        if (held.token != generation || waiting == null) return
+        val busy = inFlight
+        inFlight = true
+        try {
+            deliver(listOf(held.item), held.offsetMs)
+        } finally {
+            inFlight = busy
+        }
     }
 
     private fun clipItem(chap: Chap, segment: Int, clip: Clip): MediaItem = itemFor(chap, segment, Uri.fromFile(clip.file), VoiceGain.db(clip.voice), clip.baseMs)

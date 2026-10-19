@@ -20,6 +20,7 @@ import {
   KEEP_BEHIND,
   isTransientClipError,
   MAX_WARM_RANK,
+  localReadAheadCount,
   readAheadCount,
   warmRankOf,
   WHOLE_CHARS,
@@ -1202,25 +1203,36 @@ describe("độ sâu đọc trước theo tốc độ giọng trực tuyến", (
     }
   });
 
-  it("giọng chạy trên máy (serial): không đổi, dù đo được chậm", async () => {
+  it("giọng chạy trên máy (serial): theo số giây âm thanh phía trước (đoạn ngắn thì nhiều đoạn hơn, tới trần 6), không theo tốc độ đo", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     try {
-      const chapter = Array.from({ length: 12 }, (_, i) => `Câu số ${i + 1} đây.`).join("\n\n");
-      const s = setup({ chapter });
-      (s.track as { serial?: () => boolean }).serial = () => true;
-      const t0 = Date.now();
-      s.engine.load(s.trackInfo, 0, true);
-      await flush();
-      vi.setSystemTime(t0 + 30_000);
-      s.requests[0].resolve();
-      await flush();
-      vi.setSystemTime(t0 + 60_000);
-      s.requests[1]?.resolve();
-      await flush();
-      expect(s.engine.lookahead).toBe(3);
+      const run = async (chapter: string) => {
+        const s = setup({ chapter });
+        (s.track as { serial?: () => boolean }).serial = () => true;
+        const t0 = Date.now();
+        s.engine.load(s.trackInfo, 0, true);
+        await flush();
+        vi.setSystemTime(t0 + 30_000);
+        s.requests[0].resolve();
+        await flush();
+        vi.setSystemTime(t0 + 60_000);
+        s.requests[1]?.resolve();
+        await flush();
+        return s.engine.lookahead;
+      };
+      expect(await run(Array.from({ length: 12 }, (_, i) => `Câu số ${i + 1} đây.`).join("\n\n"))).toBe(6);
+      expect(await run(Array.from({ length: 12 }, (_, i) => `Đoạn ${i + 1} ${Array(40).fill("từ").join(" ")}.`).join("\n\n"))).toBe(3);
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("giọng chạy trên máy: đủ 20 giây âm thanh phía trước, tối thiểu 3 đoạn, tối đa 6 (điện thoại a65: hai dòng ngắn trước đoạn dài 18 s)", () => {
+    expect(localReadAheadCount(3, [1.2, 1.2, 18.3, 15, 15])).toBe(3);
+    expect(localReadAheadCount(3, [1.2, 1.2, 1.5, 18.3, 15])).toBe(4);
+    expect(localReadAheadCount(3, Array(10).fill(1))).toBe(6);
+    expect(localReadAheadCount(3, [12, 12, 12, 12])).toBe(3);
+    expect(localReadAheadCount(3, [1, 1])).toBe(3); // hết chương
   });
 });
 

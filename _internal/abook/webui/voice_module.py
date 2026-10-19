@@ -125,7 +125,8 @@ class ModuleCore:
         if reason:
             self.state["error"] = reason[0].upper() + reason[1:] + "."
             return
-        self.state.update(downloading=True, total=sum(part.size for part in needed))
+        # Tổng = phần CÒN phải tải (đúng cỡ trên nút, `Component.left`): tải tiếp sau Huỷ thì "Đang tải … (126 MB)" chứ không phải cả phần 198 MB, % tính trên số ấy.
+        self.state.update(downloading=True, total=sum(part.left() for part in needed))
         self._thread = threading.Thread(target=self._run, args=(needed, install, finish, tiers), name=self.thread_name, daemon=True)
         self._thread.start()
 
@@ -156,12 +157,14 @@ class ModuleCore:
             if self._after is not None:
                 self._after()  # bỏ engine đang nạp: file model sắp được thay
             for part in needed:
-                def progress(done: int, base: int = finished) -> None:
+                left = part.left()
+                # `install` báo byte của cả phần, tính luôn file đúng đã có và `.part` dở ngay từ đầu (studio_setup.download): trừ đi phần đã có ấy.
+                def progress(done: int, base: int = finished, had: int = part.size - left) -> None:
                     with self.lock:
-                        self.state["done"] = base + done
+                        self.state["done"] = base + max(0, done - had)
 
                 install(part, progress)
-                finished += part.size
+                finished += left
                 if part.id not in self.shared:
                     pins[part.id] = part.pin
                     stamp["pins"] = pins

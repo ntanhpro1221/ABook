@@ -7,6 +7,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại
+
+- Xuất sách nói cho cuốn chưa có ảnh bìa thật không còn làm app tắt ngang khi hộp chọn nơi lưu mở ra; bìa vẽ sẵn vẫn được gắn vào file.
+- Mở chương bằng giọng trên máy: máy chờ thêm tối đa 1,5 giây cho đoạn đầu sẵn sàng rồi mới đọc tiêu đề, nên bạn không còn nghe tiêu đề xong lặng một quãng.
+
+### Nghe ngay
+
+- Máy tính và điện thoại: với giọng trên máy, máy đọc sẵn khoảng 20 giây âm thanh phía trước (tối đa 6 đoạn) thay vì một số đoạn cố định, nên đoạn ngắn nối nhau liền hơn.
+- Máy tính và điện thoại: tải tiếp một giọng sau khi Huỷ, dòng "Đang tải" ghi đúng số còn phải tải như trên nút và phần trăm tính từ 0 trên số ấy.
+- Máy tính và điện thoại: cài hay gỡ một giọng xong thì cỡ tải của các giọng khác cập nhật ngay (vd VieNeu nhỏ lại khi Supertonic đã cài phần dùng chung), không phải rời Cài đặt rồi vào lại.
+
 ## [0.4.104] - 2026-10-19
 
 ### Máy tính

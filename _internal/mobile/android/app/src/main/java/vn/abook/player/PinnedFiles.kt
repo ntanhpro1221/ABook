@@ -187,6 +187,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
             partial.delete()
             have = 0
         }
+        progress.current(have) // what a cut download left, even when it is already whole: the first report of a file is what was there
         if (have < size) {
             val url = if (remote.startsWith("https://") || remote.startsWith("http://")) remote else base + remote
             val connection = URL(url).openConnection() as HttpURLConnection
