@@ -7,6 +7,7 @@ import ai.onnxruntime.OrtSession
 import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.AndroidMusicStudent
+import vn.abook.player.MusicRender
 import vn.abook.player.OrtRuntime
 import vn.abook.player.SharedRuntime
 import vn.abook.player.vieneu.NumpyRandomState
@@ -84,16 +85,14 @@ object SupertonicText {
     }
 
     // The ten voices come out at -24.1..-25.6 LUFS, 4-5 dB under every voice's -20 target, and the player can only turn down: +4 dB when the clip
-    // is made, never past -1 dBFS (desktop GAIN_DB, PEAK_CEILING).
+    // is made, never past -1 dBTP (desktop GAIN_DB, loudness.LIFT_CEILING_DBTP) - the TRUE peak: a -1 dBFS sample-peak ceiling let it reach -0.49 dBTP.
     const val GAIN_DB = 4.0
-    private val PEAK_CEILING = Math.pow(10.0, -1.0 / 20)
 
-    /** `supertonic.louder`: [wave] raised [GAIN_DB], less when its peak would pass -1 dBFS (in place; float32 like numpy). */
-    fun louder(wave: FloatArray): FloatArray {
-        val peak = wave.maxOfOrNull { Math.abs(it) }?.toDouble() ?: 0.0
-        var gain = Math.pow(10.0, GAIN_DB / 20)
-        if (peak > 0 && peak * gain > PEAK_CEILING) gain = maxOf(1.0, PEAK_CEILING / peak)
-        val factor = gain.toFloat()
+    /** `supertonic.louder`: one chunk [wave] raised [GAIN_DB], less (or lowered) so its true peak stays under [ClipLift.CEILING_DBTP] (in place; float32 like
+     *  numpy). [params] null (no FIR table): the sample peak stands in for the true peak ([ClipLift.peakDb]). */
+    fun louder(wave: FloatArray, params: MusicRender.Params?): FloatArray {
+        val gainDb = minOf(GAIN_DB, ClipLift.CEILING_DBTP - ClipLift.peakDb(wave, params))
+        val factor = Math.pow(10.0, gainDb / 20).toFloat()
         for (i in wave.indices) wave[i] *= factor
         return wave
     }
@@ -234,6 +233,8 @@ class SupertonicEngine(
  * by syllables ([VieneuSpeaker.timed]).
  */
 class SupertonicSpeaker(
+    /** The true-peak FIR table for [SupertonicText.louder] ([ClipLift.params]). */
+    private val params: MusicRender.Params?,
     /** Sentences of one unit -> the text to read ([SeaG2p.normalizeUnit]; the sentences joined when sea-g2p is not on the phone). */
     private val normalize: (List<String>) -> String,
 ) {
@@ -245,7 +246,7 @@ class SupertonicSpeaker(
             ClipBudget.stopIfCancelled() // a cancelled read stops between chunks
             val spoken = normalize(unit.pieces)
             val random = NumpyRandomState(VieneuSpeaker.seedOf(SupertonicVoices.PREFIX, name, unit.pieces.joinToString(" ")))
-            waves.add(SupertonicText.louder(engine.infer(spoken, name, random, SupertonicText.speedFor(spoken))))
+            waves.add(SupertonicText.louder(engine.infer(spoken, name, random, SupertonicText.speedFor(spoken)), params))
             val last = spoken.trimEnd().lastOrNull()
             pauses.add(VieneuAudio.GAP_SECONDS.getValue(if (last == null || last in ".!?") "sentence" else "minor"))
         }
@@ -319,7 +320,7 @@ object SupertonicVoices {
                     .also { engine = (estimator != null) to it }
             }
             val normalize: (List<String>) -> String = if (reader != null) reader::normalizeUnit else { pieces -> pieces.joinToString(" ") }
-            return loaded to SupertonicSpeaker(normalize)
+            return loaded to SupertonicSpeaker(ClipLift.params(ctx), normalize)
         } catch (failure: Throwable) {
             if (failure is VoiceException) throw failure
             throw VoiceException("Giọng Supertonic chưa sẵn sàng (${failure.message ?: failure.javaClass.simpleName}) - hãy tải lại Giọng Supertonic trong Cài đặt.",

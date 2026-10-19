@@ -736,7 +736,7 @@ def speech_cases() -> dict[str, Any]:
         same = local or normalised.get(provider)  # cùng `vieneu.spoken_tokens`
         tag = readings.tag(text, READINGS)
         name_tag = vieneu.reading_tag(text, origin, local.speaks_english) if local else spoken.tag(text, origin, same.speaks_english) if same else ""
-        reading = "+".join(part for part in (name_tag, tag, loudness.LIFT_TAG if loudness.lifts(voice) else "") if part)  # như service.clip: dấu bù theo clip đứng sau cách đọc
+        reading = "+".join(part for part in (name_tag, tag, loudness.clip_tag(voice)) if part)  # như service.clip: dấu bù theo clip đứng sau cách đọc
         layout = None if same else readings.spoken_layout(text, READINGS)
         cases.append({"voice": voice, "text": text, "origin": origin, "tokens": tokens(text),
                       "spokenTokens": vieneu.spoken_tokens(tokens(text), origin, same.speaks_english, READINGS) if same else None,

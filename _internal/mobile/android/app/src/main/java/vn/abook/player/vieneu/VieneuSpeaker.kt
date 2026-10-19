@@ -2,7 +2,9 @@ package vn.abook.player.vieneu
 
 import org.json.JSONArray
 import org.json.JSONObject
+import vn.abook.player.MusicRender
 import vn.abook.player.readaloud.ClipBudget
+import vn.abook.player.readaloud.ClipLift
 import vn.abook.player.readaloud.Span
 import vn.abook.player.readaloud.SyllableSpread
 import vn.abook.player.readaloud.WordTokens
@@ -53,21 +55,23 @@ interface VieneuTier : AutoCloseable {
     fun infer(phonemes: String, preset: VieneuPreset, seed: Long): FloatArray
 }
 
-/** Nano: one pass, then edges trimmed + faded like the desktop. Bit-identical to the desktop on the same phonemes and seed. */
-class NanoTier(private val engine: VieneuNano) : VieneuTier {
+/** Nano: one pass, brought under the true-peak ceiling ([ClipLift.underCeiling] with [params]; raw output reaches +0.8 dBFS), then edges trimmed + faded
+ *  like the desktop's `NanoEngine.infer`. Bit-identical to the desktop on the same phonemes and seed. */
+class NanoTier(private val engine: VieneuNano, private val params: MusicRender.Params?) : VieneuTier {
     override val rate = VieneuNano.SAMPLE_RATE
 
     override fun infer(phonemes: String, preset: VieneuPreset, seed: Long): FloatArray {
         val style = preset.style ?: throw IllegalArgumentException("giọng Nano thiếu style")
         val audio = engine.synthesize(phonemes, preset.speaker, style, null, seed).audio
-        return VieneuAudio.trimAndFade(audio, rate)
+        return VieneuAudio.trimAndFade(ClipLift.underCeiling(audio, params), rate)
     }
 
     override fun close() = engine.close()
 }
 
-/** Turbo: up to [retries] more takes when a short unit sounds like it "said more" (vieneu's babble retry), the better take kept. */
-class TurboTier(private val engine: VieneuTurbo, private val tokenizer: ByteBpe, private val retries: Int = 2) : VieneuTier {
+/** Turbo: up to [retries] more takes when a short unit sounds like it "said more" (vieneu's babble retry), the better take kept and brought under the
+ *  true-peak ceiling ([ClipLift.underCeiling] with [params]; raw output reaches +1.7 dBFS, which the WAV writer would clip). */
+class TurboTier(private val engine: VieneuTurbo, private val tokenizer: ByteBpe, private val params: MusicRender.Params?, private val retries: Int = 2) : VieneuTier {
     override val rate = VieneuTurbo.SAMPLE_RATE
 
     override fun infer(phonemes: String, preset: VieneuPreset, seed: Long): FloatArray {
@@ -91,7 +95,7 @@ class TurboTier(private val engine: VieneuTurbo, private val tokenizer: ByteBpe,
                 judged = other
             }
         }
-        return best
+        return ClipLift.underCeiling(best, params)
     }
 
     override fun close() = engine.close()

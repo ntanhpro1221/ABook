@@ -40,6 +40,16 @@ class TruePeak(params: MusicRender.Params, private val channels: Int, bounds: Lo
         }
     }
 
+    /** Thêm mẫu thực chưa lượng tử (như `loudness.true_peak_dbtp` của máy tính): mẫu vượt ±1 được đo đúng, không bị cắt trước. */
+    fun feed(samples: FloatArray) {
+        require(samples.size % channels == 0) { "khối không trọn khung" }
+        var i = 0
+        while (i < samples.size) {
+            push { c -> samples[i + c].toDouble() }
+            i += channels
+        }
+    }
+
     /** Byte PCM 16-bit little-endian, cắt ở chỗ bất kỳ (như ống `write` của máy tính): byte lẻ và khung dở được giữ sang lần sau. */
     fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset) {
         for (k in offset until offset + length) {

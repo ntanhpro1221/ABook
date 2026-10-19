@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from abook.readaloud import vieneu, vieneu_engine, vieneu_gguf
+from abook.readaloud import loudness, vieneu, vieneu_engine, vieneu_gguf
 from abook.readaloud.service import ReadAloud
 from abook.readaloud.vieneu import Installed, VieneuProvider, units
 from abook.webui import music_module, studio_setup, vieneu_module, word_timing
@@ -556,6 +556,8 @@ def test_parity_turbo_and_nano_waveforms(monkeypatch: pytest.MonkeyPatch) -> Non
     preset = voices["presets"][voices["default_voice"]]
     speaker = np.asarray(preset["speaker_emb"], np.float32)
     codes = strip_encoder_pad_frame(np.asarray(preset["codes"], np.int64))
+    # so bản port với gói vieneu: trần đỉnh thật từng khúc là của app (test_readaloud_truepeak), gói không có - tắt ở đây
+    monkeypatch.setattr(loudness, "under_ceiling", lambda wave: wave)
     monkeypatch.setattr(OnnxV3LiteEngine, "_load_denoiser", lambda self: None)  # chỉ cho nhân bản giọng; nạp nó thì vieneu tải 42 MB từ mạng
     reference = OnnxV3LiteEngine(onnx_dir=str(turbo), codec_dir=str(codec), threads=4)
     mine = vieneu_engine.TurboEngine(turbo, codec, threads=4)

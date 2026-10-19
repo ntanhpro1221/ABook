@@ -98,9 +98,9 @@ object VieneuVoices {
                 // measured 03-10 on a Helio P95: Turbo's per-frame graphs are fastest on 2 threads (the big cores), its codec on all; Nano on 4
                 val made: VieneuTier = if (tier == "turbo") {
                     val dir = installed.turbo!!.first
-                    TurboTier(VieneuTurbo(dir, installed.turbo.second, 2, 2, minOf(cores, 8)), ByteBpe(File(dir, "tokenizer.json")))
+                    TurboTier(VieneuTurbo(dir, installed.turbo.second, 2, 2, minOf(cores, 8)), ByteBpe(File(dir, "tokenizer.json")), ClipLift.params(ctx))
                 } else {
-                    NanoTier(VieneuNano(installed.nano!!, minOf(cores, 4)))
+                    NanoTier(VieneuNano(installed.nano!!, minOf(cores, 4)), ClipLift.params(ctx))
                 }
                 engine = tier to made
                 made
