@@ -237,6 +237,9 @@ export const httpSource: ListenSource = {
     api<ListeningState>(`/api/listen/books/${bookId}/chapters/${chapterId}/done`, { method: "POST", body: { done } }),
   setFinished: (bookId, finished) =>
     api<ListeningState>(`/api/listen/books/${bookId}/finished`, { method: "POST", body: { finished } }),
+  setVoice: async (bookId, voice) => {
+    await api(`/api/listen/books/${bookId}/voice`, { method: "POST", body: { voice } });
+  },
   setRate: async (bookId, rate) => {
     await api(`/api/listen/books/${bookId}/rate`, { method: "POST", body: { rate } });
   },

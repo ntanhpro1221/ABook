@@ -45,7 +45,7 @@ from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
 from ..io_utils import atomic_write_json
-from . import book_edits, covers, edits_inbox, listen_view, music_plan, notices, package_share, packages, precast, remote_studio, store, tls, word_timing
+from . import book_edits, covers, edits_inbox, export, listen_view, music_plan, notices, package_share, packages, precast, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
@@ -395,6 +395,19 @@ class Devices:
             return [{"id": key[:12], **{field: item for field, item in value.items() if field != "ident"}}
                     for key, value in self._data["devices"].items()]
 
+    def rename(self, short_id: str, name: str) -> bool:
+        """Đặt tên mới cho một thiết bị đã ghép (người dùng đổi ở máy này, hay chính thiết bị ấy báo tên mới - `/sync/v1/name`). False: tên rỗng."""
+        clean = re.sub(r"\s+", " ", str(name)).strip()[:80]
+        if not clean:
+            return False
+        with self._lock:
+            found = [value for key, value in self._data["devices"].items() if key[:12] == short_id]
+            for device in found:
+                device["name"] = clean
+            if found:
+                self._save()
+        return True
+
     def revoke(self, short_id: str) -> None:
         with self._lock:
             self._data["devices"] = {key: value for key, value in self._data["devices"].items() if key[:12] != short_id}
@@ -501,6 +514,31 @@ def manifest(project_root: Path, book: str, listening: Listening,
     }
 
 
+# Chỗ nghe vượt độ dài chương quá chừng này (giây) là đồng hồ của thứ khác - cùng số với điện thoại (StateSync.kt PlacePolicy).
+PLACE_TOLERANCE = 2.0
+
+
+def trusted_state(state: dict[str, Any], lengths: dict[int, float]) -> dict[str, Any]:
+    """Phòng thủ phía máy tính (soát a68 lỗi 2): chỗ nghe máy kia gửi mà vượt độ dài thật của chương (chương có audio - `lengths`, giây) thì bỏ,
+    cả `last` lẫn bản ghi chương ấy - vị trí của một cuốn khác không lan vào đây. Chương chỉ có chữ không có độ dài thật (đọc to dài ngắn theo
+    giọng): không xét."""
+    def fits(chapter: Any, seconds: Any) -> bool:
+        try:
+            length = lengths.get(int(chapter))
+            return not length or float(seconds) <= length + PLACE_TOLERANCE
+        except (TypeError, ValueError):
+            return True
+    out = dict(state)
+    last = out.get("last")
+    if isinstance(last, dict) and not fits(last.get("chapterId"), last.get("seconds", 0)):
+        out.pop("last")
+    chapters = out.get("chapters")
+    if isinstance(chapters, dict):
+        out["chapters"] = {key: record for key, record in chapters.items()
+                           if not isinstance(record, dict) or fits(key, record.get("heard", 0))}
+    return out
+
+
 class SyncApp:
     def __init__(self, library: Library, listening: Listening, devices: Devices, name: str,
                  remote: Remote | None = None, fingerprints: Fingerprints | None = None,
@@ -547,6 +585,12 @@ class SyncApp:
         if store.is_project(path):
             return {**manifest(path, key, self.listening, self.music_track), "studio": True}
         return package_share.manifest(path, key)
+
+    def chapter_lengths(self, path: Path) -> dict[int, float]:
+        """Độ dài (giây) các chương CÓ audio của cuốn `path` - dự án hay cuốn nhập từ file - cho `trusted_state`."""
+        chapters = listen_view.chapters(path) if store.is_project(path) else packages.listen(path, "", {}).get("chapters") or []
+        return {int(chapter["id"]): float(chapter["duration"]) for chapter in chapters
+                if isinstance(chapter, dict) and chapter.get("available") and isinstance(chapter.get("id"), int) and chapter.get("duration")}
 
     def player_view(self) -> dict[str, Any]:
         """Trình phát của máy này cho máy đã ghép: cùng hình dạng thân báo của điện thoại (`state`, `books`, `stream`,
@@ -707,7 +751,10 @@ class SyncApp:
             summary["id"] = identifier
             view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
             entry = {key: view[key] for key in ("id", "title", "narrator", "duration", "chaptersTotal",
-                                                 "chaptersAvailable", "complete", "updatedAt", "series")}
+                                                 "chaptersAvailable", "complete", "producing", "updatedAt", "series")}
+            # Cỡ khi tải về (audio chương + nhạc nền, như ước cỡ file .abook trước khi xuất) - điện thoại hiện cạnh nút Tải trước khi bấm
+            # (soát a68 lỗi 7); "producing": máy đang làm cuốn này thật (lỗi 13).
+            entry["bytes"] = export.audio_bytes([path], self.music_track)[0]
             meta = covers.cover_meta(path)
             entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
             if words := word_timing.stamp(path):  # điện thoại đã tải sách thấy chữ sáng theo giọng đọc là bản mới (cùng dấu với manifest)
@@ -979,13 +1026,25 @@ class SyncHandler(BaseHTTPRequestHandler):
                 return
             device = self._device()
             if device is None:
+                # Thân yêu cầu (chỗ nghe, báo trình phát) không đọc: đóng kết nối sau lời đáp - để lại trên kết nối giữ sống thì yêu cầu kế đọc
+                # nhầm nó làm dòng lệnh và nhận 501, điện thoại báo "máy tính đang tắt" thay vì "đã thôi ghép" (soát lại uxfix75).
+                if self.headers.get("Content-Length") not in (None, "0"):
+                    self.close_connection = True
                 self._json(HTTPStatus.UNAUTHORIZED, {"error": "Thiết bị chưa ghép nối"})
                 return
             if method == "POST" and path == "/sync/v1/unpair":
                 # Máy bên kia thôi ghép máy này: thu hồi mã của nó ở đây luôn - không để lại dòng thiết bị và mã còn dùng được (soát a27 lỗi 5).
+                self._body()  # thân (nếu có) ra khỏi kết nối giữ sống, như mọi tuyến POST khác
                 self.app.devices.revoke(device["id"])
                 self.app.remote.forget(device["id"])
                 self._json(HTTPStatus.OK, {"ok": True})
+                return
+            if method == "POST" and path == "/sync/v1/name":
+                # Thiết bị đã ghép tự đổi tên mình (điện thoại: Tải sách -> Tên điện thoại này - soát a68 lỗi 16).
+                if self.app.devices.rename(device["id"], str(self._body().get("name", ""))):
+                    self._json(HTTPStatus.OK, {"ok": True})
+                else:
+                    self._json(HTTPStatus.BAD_REQUEST, {"error": "Tên thiết bị không được để trống"})
                 return
             if method == "POST" and path == "/sync/v1/remote":
                 body = self._body()
@@ -1054,8 +1113,8 @@ class SyncHandler(BaseHTTPRequestHandler):
             match = re.fullmatch(r"/sync/v1/books/([A-Za-z0-9_-]+)/(manifest|state|edits|files/(.+))", path)
             project = self.app.book(match.group(1)) if match else None
             if not match or project is None:
-                if method == "POST" and match and match.group(2) == "edits":
-                    self.close_connection = True  # thân gói (có thể hàng chục MB) chưa đọc: đừng để nó lệch luồng keep-alive
+                if method == "POST":
+                    self.close_connection = True  # thân (gói sửa có thể hàng chục MB, chỗ nghe) chưa đọc: đừng để nó lệch luồng keep-alive
                 self._json(HTTPStatus.NOT_FOUND, {"error": "Không có sách này"})
                 return
             book = match.group(1)
@@ -1070,7 +1129,7 @@ class SyncHandler(BaseHTTPRequestHandler):
             elif method == "POST" and match.group(2) == "state":
                 body = self._body()
                 record = body.get("record")
-                state = {key: value for key, value in body.items() if key not in SYNC_KEYS}
+                state = trusted_state({key: value for key, value in body.items() if key not in SYNC_KEYS}, self.app.chapter_lengths(project))
                 if isinstance(record, str) and RECORD_ID.fullmatch(record):
                     # điện thoại biết hồ sơ: gộp đúng hồ sơ ấy (webui/listening.py merge_record)
                     deleted = body.get("deletedRecords")

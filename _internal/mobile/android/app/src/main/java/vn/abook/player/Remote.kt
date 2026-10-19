@@ -78,7 +78,9 @@ object Remote {
             try {
                 while (shouldRun()) {
                     try {
-                        execute(report(WAIT_SECONDS))
+                        val commands = report(WAIT_SECONDS)
+                        StateSync.flushPending(context) // máy tính vừa trả lời: chỗ nghe ghi lúc mất kết nối về ngay (soát a68 lỗi 9)
+                        execute(commands)
                         backoffMs = 3_000L
                     } catch (_: Exception) {
                         // Máy tính tắt, đổi mạng, tắt đồng bộ: thử lại thưa dần, không đốt pin.

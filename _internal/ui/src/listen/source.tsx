@@ -83,6 +83,8 @@ export interface ListenSource {
   setChapterDone(bookId: string, chapterId: number, done: boolean): Promise<ListeningState>;
   setFinished(bookId: string, finished: boolean): Promise<ListeningState>;
   setRate(bookId: string, rate: number): Promise<void>;
+  /** Giọng Nghe ngay riêng của cuốn vào hồ sơ nghe - đi sang máy kia như tốc độ (soát a68 lỗi 8). */
+  setVoice?(bookId: string, voice: string): Promise<void>;
   addBookmark(bookId: string, chapterId: number, seconds: number, note: string, record?: string, sentence?: BookmarkSentence): Promise<Bookmark>;
   /** Hỏi thiết bị kia bản mới nhất của hồ sơ nghe đang dùng (điện thoại hỏi máy tính đã ghép); máy tính là nơi giữ. */
   refreshListening?(bookId: string): Promise<void>;

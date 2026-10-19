@@ -129,11 +129,11 @@ def test_a_phone_that_still_knows_the_old_id_keeps_syncing(library, tmp_path: Pa
         status, data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{old}/manifest", token)
         assert status == 200 and json.loads(data)["id"] == old, "gói trả đúng mã điện thoại hỏi"
         record = default_record_id(old)
-        body = {"last": {"chapterId": 1, "seconds": 42.0, "at": time.time()}, "chapters": {}, "bookmarks": [],
+        body = {"last": {"chapterId": 1, "seconds": 4.2, "at": time.time()}, "chapters": {}, "bookmarks": [],  # chương 1 dài 9,7 giây
                 "record": record}
         status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{old}/state", token, body=body)
         assert status == 200 and json.loads(data)["book"] == old, "điện thoại cũ không tưởng hồ sơ đã sang cuốn khác"
-        assert listening.books() == [new] and listening.get(new)["last"]["seconds"] == 42.0
+        assert listening.books() == [new] and listening.get(new)["last"]["seconds"] == 4.2
 
         status, data, _ = _sync_request(server.port, "POST", "/sync/v1/match", token,
                                    body={"books": [{"key": old}, {"key": "f-cua-dien-thoai"}]})

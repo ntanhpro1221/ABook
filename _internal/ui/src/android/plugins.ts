@@ -121,6 +121,10 @@ export interface RemoteBook {
   chaptersTotal: number;
   chaptersAvailable: number;
   complete: boolean;
+  /** Máy kia đang làm cuốn này thật (Studio đang chạy) - "· đang làm" chỉ cho những cuốn này (soát a68 lỗi 13). */
+  producing?: boolean;
+  /** Cỡ audio khi tải về (byte) - hiện trước khi bấm Tải (soát a68 lỗi 7). */
+  bytes?: number;
   updatedAt: number | null;
   downloaded: boolean;
   localChapters: number;
@@ -185,6 +189,10 @@ export interface PeerLibrary {
   error?: string;
   /** Chứng chỉ của thiết bị đã khác lúc ghép: `error` là câu bảo ghép lại, đọc thẳng được. */
   pinChanged?: boolean;
+  /** Thiết bị trả 401: nó đã thôi ghép điện thoại này. */
+  unpaired?: boolean;
+  /** Chữ gốc của lỗi mạng cho mục "Chi tiết". */
+  technical?: string;
 }
 
 export interface ManifestChapter {
@@ -244,6 +252,8 @@ export interface LocalBook {
   streamed?: boolean;
   /** Nghe thẳng từ thiết bị ghép (Peers.kt): tên thiết bị ấy. */
   sourceName?: string;
+  /** Cuốn đang nghe thẳng mà máy giữ nó không trả lời (tắt, mất mạng): vẫn ở Thư viện để trình phát không đóng (soát a68 lỗi 3). */
+  offline?: boolean;
   /** Cuốn là dự án Studio ở máy tính giữ nó (sync.py book_manifest) - trang sách có "Mở Studio". */
   studio?: boolean;
   /** Hồ sơ nghe gắn với cuốn (Store.records) - chỉ có khi mở một cuốn. */
@@ -266,6 +276,10 @@ export interface DownloadEvent {
   filesTotal?: number;
   finished?: boolean;
   error?: string;
+  /** Chữ gốc của lỗi cho mục "Chi tiết". */
+  technical?: string;
+  /** Người nghe bấm Huỷ: dừng, phần đã về giữ lại để lần Tải sau tải tiếp. */
+  cancelled?: boolean;
 }
 
 /** Tin của một lượt "Xuất MP3" (Mp3ExportWorker.kt): tiến độ (`done`/`total`), xong (`finished`), dừng (`stopped`) hay lỗi (`error`). */
@@ -406,7 +420,9 @@ export interface EbookLibraryPlugin {
   /** Ghép máy tính chính qua Bluetooth - cùng mã 6 số, đi qua đường hầm; sau đó `connection().host` là "bt:<địa chỉ>". */
   pairBluetooth(options: { address: string; code: string; device?: string }): Promise<{ name: string }>;
   /** `fingerprint`: vân tay chứng chỉ TLS máy tính đã ghi lúc ghép (hex; Pin.kt) - để đối chiếu, "" nếu chưa có. */
-  connection(): Promise<{ paired: boolean; host: string; port: number; name: string; fingerprint?: string }>;
+  connection(): Promise<{ paired: boolean; host: string; port: number; name: string; fingerprint?: string; lastAddress?: string; deviceName?: string }>;
+  /** Tên điện thoại này máy khác thấy (DeviceName.kt) - báo luôn cho các máy đã ghép. */
+  setDeviceName(options: { name: string }): Promise<{ name: string }>;
   unpair(): Promise<void>;
   /** Máy tính mở Studio được (StudioLink.kt): máy tính chính (`key` "") rồi các máy tính ghép thêm. */
   studioComputers(options?: { book?: string }): Promise<{ computers: StudioComputer[] }>;
@@ -421,6 +437,8 @@ export interface EbookLibraryPlugin {
   setStudioAlerts(options: { enabled: boolean }): Promise<{ enabled: boolean; permitted: boolean }>;
   remoteLibrary(): Promise<{ name: string; books: RemoteBook[] }>;
   download(options: { bookId: string; source?: string; remoteId?: string }): Promise<{ bookId: string }>;
+  /** Huỷ lượt tải đang chạy (dừng ở khối kế, giữ phần đã về). */
+  cancelDownload(options: { bookId: string }): Promise<void>;
   /** Thiết bị ghép ngoài máy tính chính (mạng trạm bước 2 - Peers.kt). */
   peers(): Promise<{ peers: { key: string; name: string; host: string; port: number }[] }>;
   peerPair(options: { host: string; port: number; code: string }): Promise<{ key: string; name: string }>;
@@ -498,6 +516,8 @@ export interface EbookLibraryPlugin {
   setChapterDone(options: { id: string; chapterId: number; done: boolean }): Promise<ListeningState>;
   setFinished(options: { id: string; finished: boolean }): Promise<ListeningState>;
   setRate(options: { id: string; rate: number }): Promise<void>;
+  /** Giọng Nghe ngay riêng của cuốn ("" = giọng mặc định) - đi theo hồ sơ nghe sang máy kia (soát a68 lỗi 8). */
+  setVoice(options: { id: string; voice: string }): Promise<void>;
   addBookmark(options: { id: string; chapterId: number; seconds: number; note: string; index?: number; quote?: string }): Promise<Bookmark>;
   updateBookmark(options: { id: string; markId: string; note: string }): Promise<void>;
   deleteBookmark(options: { id: string; markId: string }): Promise<void>;

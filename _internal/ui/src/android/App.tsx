@@ -115,8 +115,7 @@ function MobileShell({ children }: { children: ReactNode }) {
       {/* Màn "Đang nghe" phủ kín: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}
       <main ref={main} inert={expanded} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
       <div className="contents" inert={expanded}>
-        <RemotePlayerBars />
-        <PlayerBar compact />
+        <RemotePlayerBars localBar={<PlayerBar compact />} />
       </div>
       <nav
         inert={expanded}

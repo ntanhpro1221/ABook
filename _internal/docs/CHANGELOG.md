@@ -25,6 +25,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Máy tính và điện thoại: đổi giọng ở trình phát chỉ đổi giọng của cuốn đang nghe; giọng mặc định cho các cuốn khác chỉ đổi trong Cài đặt → Giọng đọc.
 
+### Hai máy
+
+- Sách chỉ có chữ trên máy tính nghe được trên điện thoại, cả nghe thẳng lẫn tải về. Mở cuốn khác thất bại không còn ghi chỗ nghe của cuốn cũ sang cuốn mới.
+- Máy tính tắt hay rớt mạng khi bạn nghe thẳng: trình phát không đóng, phần đã tải tiếp tục phát, thanh phát báo "Mất kết nối với <máy> - đang thử lại…" rồi tự nối lại. Chỉ khi máy kia thật sự thôi ghép, ABook mới nói vậy, kèm nút "Ghép lại" (ô địa chỉ điền sẵn địa chỉ lần trước).
+- Lỗi ghép nối và tải sách nói rõ chuyện gì (không tới được máy kia, kết nối bị ngắt, lỗi bảo mật kết nối, hết giờ chờ); nguyên văn kỹ thuật nằm trong "Chi tiết".
+- Tải sách: thấy cỡ trước khi bấm Tải (gồm cả nhạc nền đi kèm, khớp với thanh tiến độ), có nút Huỷ (phần đã tải được giữ để tải tiếp), và ABook báo trước nếu điện thoại không đủ chỗ trống. "Đang làm" chỉ hiện cho sách máy tính đang làm thật.
+- Giọng Nghe ngay bạn chọn riêng cho một cuốn đi theo chỗ nghe sang máy kia; máy kia chưa có giọng ấy thì giữ giọng của nó. Chỗ nghe lúc mất kết nối được gửi về ngay khi nối lại - máy tính không kéo bạn về chỗ cũ.
+- Đổi được tên điện thoại (màn Tải sách) và tên thiết bị đã ghép (máy tính, Cài đặt → Điện thoại và thiết bị); tên mặc định dễ đọc hơn. Ngắt kết nối trên điện thoại hỏi trước, thôi ghép trên máy tính có lời xác nhận.
+- Thanh "Đang phát trên <máy>" một dòng, không chồng lên thanh phát của cùng cuốn; vị trí trên thanh điều khiển điện thoại ở máy tính không vượt độ dài chương. Hộp ghép trên máy tính chỉ cách nhập địa chỉ ở điện thoại.
+
 ## [0.4.107] - 2026-10-19
 
 ### Điện thoại

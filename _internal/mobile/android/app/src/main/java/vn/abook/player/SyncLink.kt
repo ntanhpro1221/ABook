@@ -111,6 +111,13 @@ object SyncLink {
         return Peers.Link(base(context), token(context)) to bookId
     }
 
+    /** Tên máy giữ cuốn `bookId` cho lời báo ("Mất kết nối với <tên>"): thiết bị ghép giữ nó, không thì máy tính chính; không biết tên thì "máy tính". */
+    fun holderName(context: Context, bookId: String): String {
+        val source = Store.playableManifest(bookId)?.optString("source").orEmpty()
+        val name = if (source.isNotEmpty()) Peers.all(context).optJSONObject(source)?.optString("name") else prefs(context).getString("name", "")
+        return name?.takeIf { it.isNotBlank() } ?: "máy tính"
+    }
+
     /** Một file của cuốn `remote` trên máy giữ sách `link` (chưa mở kết nối); `resumeFrom` > 0 = tải tiếp từ byte ấy. */
     fun bookFile(context: Context, link: Peers.Link, remote: String, relative: String, resumeFrom: Long = 0): HttpURLConnection {
         Pin.install(context)
@@ -265,7 +272,8 @@ object SyncLink {
         connection.disconnect()
         if (code >= 400) {
             val message = runCatching { JSONObject(text).optString("error") }.getOrNull()
-            throw IllegalStateException(message?.ifBlank { null } ?: "Máy tính trả lỗi $code")
+            // Mang mã HTTP (NetErrors.Refused): 401 = máy kia đã thôi ghép máy này, giao diện nói đúng thế thay vì "không kết nối được".
+            throw NetErrors.Refused(code, message?.ifBlank { null } ?: "Máy tính trả lỗi $code")
         }
         return text
     }

@@ -14,6 +14,7 @@ sơ gắn với đúng một sách, mỗi sách có một hồ sơ đang dùng. 
         "last": {"chapterId": 3, "seconds": 812.4, "at": 1790...},
         "chapters": {"3": {"heard": 812.4, "done": false, "at": ...}},
         "rate": 1.25,
+        "voice": "edge:vi-VN-NamMinhNeural", "voiceAt": ...,   # giọng Nghe ngay riêng của cuốn (rỗng = giọng mặc định của máy)
         "finished": false,
         "bookmarks": [{"id": "...", "chapterId": 3, "seconds": 64.0, "note": "", "at": ...,
                        "index": 12, "quote": "Trời đã sáng."}],
@@ -389,6 +390,15 @@ class Listening:
             entry["rateAt"] = entry["updatedAt"] = time.time()
             self._save()
 
+    def set_voice(self, book: str, voice: str) -> None:
+        """Giọng Nghe ngay người nghe chọn RIÊNG cho cuốn (mã giọng như "edge:..."; rỗng = theo giọng mặc định). Mang mốc giờ như tốc độ: máy nghe
+        sau thắng; máy nhận không có giọng ấy (giọng trên máy chưa tải) thì giữ giọng của nó (listen/readAloudVoice.ts `syncedVoice`)."""
+        with self._changing():
+            entry = self._book(book)
+            entry["voice"] = str(voice)[:200]
+            entry["voiceAt"] = entry["updatedAt"] = time.time()
+            self._save()
+
     def add_bookmark(self, book: str, chapter_id: int, seconds: float, note: str = "",
                      record: str | None = None, index: int | None = None, quote: str = "") -> dict[str, Any]:
         """Dấu trang mới - hoặc dấu đã có ngay chỗ ấy (±5 giây cùng chương; dấu đặt ở màn đọc: cùng câu), kèm cờ `existing`.
@@ -740,7 +750,7 @@ def merge_states(ours: dict[str, Any], theirs: dict[str, Any]) -> dict[str, Any]
         mine = result["chapters"].get(key)
         if not mine or float(record.get("at") or 0) > float(mine.get("at") or 0):
             result["chapters"][key] = record
-    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt")):
+    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
         if field in theirs and float(theirs.get(stamp) or 0) > float(result.get(stamp) or 0):
             result[field] = theirs[field]
             result[stamp] = theirs[stamp]
