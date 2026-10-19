@@ -4,6 +4,7 @@ import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import org.json.JSONObject
+import vn.abook.player.readaloud.ClipBudget
 import java.io.File
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -261,6 +262,7 @@ class VieneuTurbo(dir: File, codecDir: File, threads: Int, private val headThrea
         var firstAudioAt = 0L
         try {
             for (t in 0 until maxNewFrames) {
+                ClipBudget.stopIfCancelled() // the listener moved on: free the CPU between frames
                 val eos = acousticFrame(h, sampling, history, uniforms, codes, frames * nVq, clock)
                 frames++
                 if (frames == firstChunkFrames) firstAudioAt = System.nanoTime() - started

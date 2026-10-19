@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 from unicodedata import normalize as unicode_normalize
 
-from .model import Synthesis, Voice, VoiceError
+from .model import Synthesis, Voice, VoiceError, stop_if_cancelled
 from .vieneu import Unit, reading_tag, seed_of, timed_synthesis, units
 
 PREFIX = "supertonic"
@@ -156,9 +156,11 @@ class SupertonicEngine:
         return mapped[mapped >= 0]
 
     def infer(self, text: str, name: str, rng: Any, speed: float = SPEED, steps: int | None = None) -> Any:
-        """Một khúc chữ -> sóng âm đơn kênh float32 ở `sample_rate`. `rng`: np.random.RandomState (nhiễu khởi đầu); `steps` None = của engine."""
+        """Một khúc chữ -> sóng âm đơn kênh float32 ở `sample_rate`. `rng`: np.random.RandomState (nhiễu khởi đầu); `steps` None = của engine.
+        Lượt đọc bị bỏ giữa chừng (`model.stop_if_cancelled`, hỏi trước mỗi bước): VoiceError "cancelled"."""
         import numpy as np
 
+        stop_if_cancelled()
         from . import vieneu_engine as ve
 
         steps = self.steps if steps is None else steps
@@ -177,6 +179,7 @@ class SupertonicEngine:
         latent = rng.standard_normal((1, self.latent_dim, frames)).astype(np.float32)
         total = np.array([steps], dtype=np.float32)
         for step in range(steps):
+            stop_if_cancelled()
             latent = self.sessions["vector_estimator"].run(None, {
                 "noisy_latent": latent, "text_emb": embedding, "style_ttl": style_ttl, "text_mask": text_mask, "latent_mask": latent_mask,
                 "current_step": np.array([step], dtype=np.float32), "total_step": total})[0]

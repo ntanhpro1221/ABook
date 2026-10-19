@@ -34,6 +34,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from .model import stop_if_cancelled
+
 # KHÔNG nạp vieneu_engine (numpy) ở đầu file: mô-đun này được webui nạp lúc khởi động, mà numpy chỉ có sau khi tải thư viện chung
 # (Python nhúng của bộ cài không có - smoke_embedded_python bắt lỗi này).
 
@@ -384,6 +386,7 @@ class AcceleratedEngine:
             return self._onnx
 
     def infer(self, phonemes: str, speaker_emb: Any, ref_codes: Any, *, rng: Any, **options: Any) -> Any:
+        stop_if_cancelled()  # lượt đọc đã bị bỏ: không gửi khúc kế cho server (khúc đang đọc ở server thì đọc nốt)
         files = self._locate() if ref_codes is not None and not _failure else None  # giọng không có mã tham chiếu: audio.cpp không đọc được, ONNX đọc
         if files is not None:
             try:

@@ -84,6 +84,12 @@ object ClipBudget {
     /** Chỗ huỷ của lượt đọc đang chạy ở luồng này (null ngoài [ClipRetry.run] hay khi người gọi không đưa). */
     fun cancel(): ClipCancel? = current.get()?.cancel
 
+    /** Giọng chạy trên máy (VieNeu, Supertonic) gọi giữa các khúc và các bước của model: lượt đọc ở luồng này đã bị huỷ (người nghe nhảy đi, đổi giọng, Huỷ bản xuất) thì
+     *  thôi ngay bằng [CancellationException] - CPU về đoạn người nghe đang chờ, không clip nào được ghi (máy tính: model.stop_if_cancelled). Ngoài [ClipRetry.run]: không làm gì. */
+    fun stopIfCancelled() {
+        if (cancel()?.cancelled == true) throw java.util.concurrent.CancellationException("Lượt đọc đã bị huỷ")
+    }
+
     /** Chạy `block` ở luồng này trong quỹ `scope` (của luồng gọi - [current]); xong trả quỹ cũ. */
     fun <T> inherit(scope: Scope?, block: () -> T): T {
         val before = current.get()
