@@ -84,14 +84,96 @@ type BedAudio = Pick<HTMLAudioElement, "play" | "pause" | "paused" | "volume" | 
   /** [release]: bỏ nguồn rồi nạp lại để trình duyệt đóng kết nối tải bài. */
   removeAttribute?(name: string): void;
   load?(): void;
+  /** [release] của bài phát qua MediaSource ([mseAudio]): thôi tải cả file, nhả URL đối tượng. */
+  dispose?(): void;
 };
 
-/** <audio> thật; ?mute=1: kiểm thử tự động không được phát tiếng ra loa của người dùng (như engine.ts, clip.tsx). */
-function browserAudio(src: string): BedAudio {
-  const audio = new Audio(src);
+/** <audio> thật; ?mute=1: kiểm thử tự động không được phát tiếng ra loa của người dùng (như engine.ts, clip.tsx). Trình duyệt có
+ *  MediaSource nhận "audio/mpeg" thì bài đi qua [mseAudio] (bài mp3 tua đúng khung), không thì <audio src> như cũ. */
+export function browserAudio(src: string): BedAudio {
+  const audio = new Audio();
   audio.muted = new URLSearchParams(window.location.search).get("mute") === "1";
   audio.preload = "auto";
+  if (typeof MediaSource !== "undefined" && MediaSource.isTypeSupported("audio/mpeg")) return mseAudio(audio, src);
+  audio.src = src;
   return audio;
+}
+
+/** Bài mp3 có khung Xing kèm mục lục: <audio src> tua theo mục lục ấy, phần tử lặp vào từ loopStart lệch tới 2,2 s (loopfix). Nạp CẢ
+ *  file vào MediaSource ("audio/mpeg") rồi endOfStream thì trình duyệt tua theo dấu thời gian từng khung (lệch <= 14 ms đo trên 40
+ *  bài). Trong lúc nạp, `loadedmetadata` (độ dài lúc ấy vô hạn) và `error` của phần tử bị giữ lại, `play()` hoãn tới khi xong: MusicBed
+ *  chỉ thấy một phần tử đã đủ cả bài. Máy chủ trả không phải mp3 (ogg, wav), tải hỏng, hết chỗ đệm (QuotaExceededError) hay giải mã
+ *  hỏng: lùi về <audio src> như cũ - lỗi của đường cũ mới tới MusicBed. */
+function mseAudio(audio: HTMLAudioElement, src: string): BedAudio {
+  const abort = new AbortController();
+  let url = "";
+  let settled = false; // đã nạp xong qua MediaSource hay đã lùi về <audio src>: từ đây sự kiện đi thẳng tới MusicBed
+  let wantPlay = false;
+  const play = audio.play.bind(audio);
+  const pause = audio.pause.bind(audio);
+  const revoke = () => {
+    if (url) URL.revokeObjectURL(url);
+    url = "";
+  };
+  const settle = (plain: boolean) => {
+    if (settled) return;
+    settled = true;
+    if (plain) {
+      revoke();
+      audio.src = src;
+    } else {
+      audio.dispatchEvent(new Event("loadedmetadata"));
+    }
+    if (wantPlay) void play().catch(() => undefined);
+  };
+  // Đăng ký trước MusicBed.open nên chặn được sự kiện của lúc nạp.
+  audio.addEventListener("loadedmetadata", (event) => { if (!settled) event.stopImmediatePropagation(); });
+  audio.addEventListener("error", (event) => {
+    if (settled) return;
+    event.stopImmediatePropagation();
+    settle(true);
+  });
+  void (async () => {
+    try {
+      const response = await fetch(src, { signal: abort.signal });
+      if (!response.ok || !(response.headers.get("Content-Type") ?? "").startsWith("audio/mpeg")) {
+        abort.abort();
+        settle(true);
+        return;
+      }
+      const data = await response.arrayBuffer();
+      const source = new MediaSource();
+      url = URL.createObjectURL(source);
+      audio.src = url;
+      await new Promise<void>((resolve) => source.addEventListener("sourceopen", () => resolve(), { once: true }));
+      const buffer = source.addSourceBuffer("audio/mpeg");
+      await new Promise<void>((resolve, reject) => {
+        buffer.addEventListener("updateend", () => resolve(), { once: true });
+        buffer.addEventListener("error", () => reject(new Error("appendBuffer")), { once: true });
+        buffer.appendBuffer(data); // QuotaExceededError ném ngay ở đây
+      });
+      source.endOfStream();
+      settle(false);
+    } catch {
+      if (!abort.signal.aborted) settle(true);
+    }
+  })();
+  return Object.assign(audio, {
+    play: () => {
+      if (settled) return play();
+      wantPlay = true;
+      return Promise.resolve();
+    },
+    pause: () => {
+      wantPlay = false;
+      pause();
+    },
+    dispose: () => {
+      settled = true;
+      abort.abort();
+      revoke();
+    },
+  });
 }
 
 export const FADE_SECONDS = mix.fadeSeconds;
@@ -431,6 +513,7 @@ export class MusicBed {
   private release(audio: BedAudio): void {
     audio.pause();
     this.released.add(audio);
+    audio.dispose?.();
     audio.removeAttribute?.("src");
     audio.load?.();
   }
