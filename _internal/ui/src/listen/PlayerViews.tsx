@@ -65,7 +65,10 @@ import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
 import { ADD_MUSIC_LABEL, shortPlaylistLabel } from "./playlistBed";
 import { openExternal } from "@/shared/openExternal";
-import { JumpToPlaying, ReadAlongText, sentenceIndexAt, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
+import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
+import { SuggestionsButton } from "./ReadingSuggestions";
+import { useSentenceMenu, type SentenceEditing } from "./SentenceMenu";
+import { sentenceIndexAt } from "./words";
 import { cacheLabel, canPrepare, clearCacheQuestion, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import { READINGS_CHANGED_EVENT, type ReadAloudVoice, type ReadingsChanged } from "./readAloud";
 import { chapterScriptQuery, useBookVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource, useChosenVoice } from "./source";
@@ -1524,8 +1527,9 @@ export function PlayerBar({
 // ---- Bảng bên của màn hình đang nghe ---------------------------------------------------------------------
 
 /** Tab "Đọc theo" của trình phát: cùng văn bản với màn đọc (ReadAlongText) - câu và chữ đang đọc sáng lên, bấm một chữ là nghe từ chữ ấy, tự cuộn
- *  theo giọng; thêm nhãn người nói và câu đã nghe nhạt đi. */
-function ReadAlong() {
+ *  theo giọng; thêm nhãn người nói và câu đã nghe nhạt đi. Cùng thanh việc với màn đọc (SentenceMenu): bấm câu thì câu được chọn, giữ / bấm chuột
+ *  phải một chữ thì sửa chữ ấy - sửa câu đang phát không phải rời màn này (soát a70). */
+function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   const { track, playing, queue } = usePlayer();
   const source = useSource();
   const client = useQueryClient();
@@ -1536,6 +1540,13 @@ function ReadAlong() {
   const active = usePlayingSentence(script, true);
   const follow = useFollowVoice(container, active, { resetKey: `${track?.bookId}:${track?.chapterId}`, smooth: playing });
   const { canListen, listenFrom } = useListenFrom(track?.bookId ?? "", book, current, script);
+  const listen = (index: number, word = -1) => {
+    if (listenFrom(index, word)) follow.follow();
+  };
+  const menu = useSentenceMenu({ ...edit, bookId: track?.bookId ?? "", book, chapter: current, script, canListen, onListen: (index) => {
+    listen(index);
+    menu.select(null);
+  } });
   const nearEnd = useClock((time, duration) => duration > 0 && duration - time < 30);
 
   // Sắp hết chương: nạp sẵn văn bản chương kế để sang chương không bị chớp "đang mở".
@@ -1559,8 +1570,15 @@ function ReadAlong() {
           <ReadAlongText
             script={script}
             playingIndex={active}
-            onTap={canListen ? (index, word) => listenFrom(index, word) && follow.follow() : undefined}
+            onTap={(index, word) => {
+              if (canListen) listen(index, word);
+              // Sửa được thì câu vừa bấm còn được chọn (thanh việc), như ở màn đọc; không nghe được thì bấm là chọn / bỏ chọn.
+              if (canListen ? menu.editable : true) menu.select(!canListen && menu.selected === index ? null : index, word);
+            }}
+            onWordMenu={menu.wordMenu}
             focusIndex={Math.max(0, active)}
+            selected={menu.selected}
+            after={menu.waitingMark}
             speakers
             dimHeard
             headingClassName="pb-2 text-2xl font-bold leading-snug tracking-tight"
@@ -1568,11 +1586,16 @@ function ReadAlong() {
           />
         </div>
       </div>
-      {follow.showJump && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-5 flex justify-center">
-          <JumpToPlaying onClick={follow.jump} />
-        </div>
+      {menu.bar ? (
+        <div className="pointer-events-none absolute inset-x-0 bottom-5 flex justify-center px-3">{menu.bar}</div>
+      ) : (
+        follow.showJump && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-5 flex justify-center">
+            <JumpToPlaying onClick={follow.jump} />
+          </div>
+        )
       )}
+      {menu.dialogs}
     </div>
   );
 }
@@ -1675,7 +1698,7 @@ function BookmarkRow({
             {chapter?.subtitle ? `${chapter.title} · ` : ""}
             {/* Chương chưa có audio (sách chỉ có chữ): giờ phút vô nghĩa với người đọc - chỉ có câu chữ. */}
             {chapter?.available === false && mark.index !== undefined ? "" : `${formatClock(mark.seconds)} · `}
-            {formatWhen(mark.at)}
+            {formatWhen(mark.createdAt ?? mark.at)}
           </span>
           {quote && <span className="mt-1 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(quote)}”</span>}
         </button>
@@ -1742,7 +1765,7 @@ export function BookmarkList({
   const [localEditing, setLocalEditing] = useState<string | null>(null);
   const editing = editingId !== undefined ? editingId : localEditing;
   const setEditing = setEditingId ?? setLocalEditing;
-  const sorted = useMemo(() => [...marks].sort((a, b) => b.at - a.at), [marks]);
+  const sorted = useMemo(() => [...marks].sort((a, b) => (b.createdAt ?? b.at) - (a.createdAt ?? a.at)), [marks]);
   const chapterIds = useMemo(() => [...new Set(sorted.map((mark) => mark.chapterId))], [sorted]);
   const scripts = useQueries({
     queries: chapterIds.map((chapterId) => ({
@@ -1970,7 +1993,8 @@ function CaughtUpNotice() {
 // ---- Màn hình đang nghe ------------------------------------------------------------------------------------
 
 /** `actions`: nút riêng của từng nền ở hàng nút dưới thanh tua (điện thoại: "Phát trên <máy tính>"). */
-export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; actions?: ReactNode }) {
+/** `edit`: sửa được gì ở tab "Đọc theo" (như màn đọc của cùng thiết bị - SentenceMenu.SentenceEditing). */
+export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean; actions?: ReactNode; edit?: SentenceEditing }) {
   const { track, sleep, fading, canGoBack, goBack, playing, buffering, toggle } = usePlayer();
   const speaking = useSpeaking();
   const { expanded, setExpanded } = useNowPlaying();
@@ -2091,7 +2115,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
 
   const panelBody = (
     <div role="tabpanel" id={`now-panel-${panel}`} aria-labelledby={`now-tab-${panel}`} className="h-full">
-      {panel === "text" ? <ReadAlong /> : panel === "chapters" ? <ChapterPanel /> : <BookmarkPanel editingId={editingId} setEditingId={setEditingId} />}
+      {panel === "text" ? <ReadAlong edit={edit} /> : panel === "chapters" ? <ChapterPanel /> : <BookmarkPanel editingId={editingId} setEditingId={setEditingId} />}
     </div>
   );
 
@@ -2170,6 +2194,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
           </div>
           <div className="flex items-center justify-center gap-1">
             <BookmarkButton />
+            <SuggestionsButton bookId={track.bookId} className="max-sm:size-[48px]" />
             <VolumeControl />
             {actions}
           </div>

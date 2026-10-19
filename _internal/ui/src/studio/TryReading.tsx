@@ -74,6 +74,15 @@ export function useTryReading({
       setRefusal(why === error.message && !named ? `Chưa nghe thử được - ${why}` : why);
     },
   });
+  // Nghe thử bằng giọng đọc của máy (cuốn mở từ file): qua đúng phép kiểm của "Lưu" trước (POST …/pronunciation/check) - nghe được là lưu được (soát a70).
+  const check = useMutation({
+    mutationFn: () => api<{ spokenForm: string }>(`/api/books/${bookId}/pronunciation/check`, { method: "POST", body: { surface, spokenForm: spoken } }),
+    onSuccess: () => void aloud?.play(surface, spoken),
+    onError: (error: Error) => {
+      if (error instanceof ApiError && error.status === 400) onRejected(error.message, suggestionOf(error));
+      else void aloud?.play(surface, spoken); // không hỏi được máy chủ: vẫn cho nghe, "Lưu" sẽ kiểm
+    },
+  });
   useEffect(() => {
     setRefusal("");
     setNeedsStudio(false);
@@ -90,8 +99,8 @@ export function useTryReading({
           variant="secondary"
           type="button"
           disabled={disabled || !spoken}
-          loading={aloud.loading(surface, spoken)}
-          onClick={() => void aloud.play(surface, spoken)}
+          loading={check.isPending || aloud.loading(surface, spoken)}
+          onClick={() => (speaking ? void aloud.play(surface, spoken) : check.mutate())}
           aria-label={speaking ? "Dừng nghe thử" : `Nghe thử ${surface} đọc là ${spoken}`}
         >
           {speaking ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Volume2 className="size-4" strokeWidth={2} />}

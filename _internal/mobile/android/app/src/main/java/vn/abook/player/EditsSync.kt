@@ -63,7 +63,13 @@ object EditsSync {
         stateFile(dir).takeIf { it.isFile }?.let { runCatching { JSONObject(it.readText()) }.getOrNull() }
 
     /** `kept` của lần gửi gần nhất: [BookEdits.sentMarks] - cách đọc, danh sách phát đã tới máy tính mà vẫn nằm ở đây. Chỉ để đếm, không hiện ra. */
-    private fun marks(dir: File): JSONObject? = lastState(dir)?.optJSONObject(KEPT)
+    internal fun marks(dir: File): JSONObject? = lastState(dir)?.optJSONObject(KEPT)
+
+    /** The book's edits with what the holder set layered underneath ([BookEdits.withHolder]) - what reading aloud, the reader and the word box use. */
+    fun experienced(dir: File, edits: JSONObject = BookEdits.load(dir)): JSONObject {
+        val holder = BookEdits.holderEdits(dir) ?: return edits
+        return BookEdits.withHolder(edits, holder, marks(dir))
+    }
 
     /**
      * Số thay đổi CHƯA tới máy tính: lớp sửa hiện có trừ phần đã gửi mà vẫn giữ lại ở đây (cách đọc, nhạc đã chọn - [BookEdits.subtract]
@@ -179,7 +185,7 @@ object EditsSync {
             BookEdits.subtract(dir, snapshot.edits, snapshot.cover)
             record(dir, JSONObject().put("state", SENT).put("at", clock()).put(KEPT, kept)
                 .put("applied", reply.optInt("applied")).put("skipped", reply.optInt("skipped"))
-                .put("requests", reply.optInt("requests")).put("waiting", reply.optInt("waiting"))
+                .put("requests", reply.optInt("requests")).put("waiting", reply.optInt("waiting")).put("studio", reply.optInt("studio"))
                 .put("skippedWishes", reply.optInt("skippedWishes"))
                 .put("conflicts", labels(reply.optJSONArray("conflicts"), host)))
             attempts.remove(id)

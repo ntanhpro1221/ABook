@@ -145,7 +145,7 @@ class PlayerPlugin : Plugin() {
 
     @PluginMethod
     fun addBookmark(call: PluginCall) = withService {
-        val mark = Playback.addBookmark(call.getString("note") ?: "")
+        val mark = Playback.addBookmark(call.getString("note") ?: "", call.getInt("index"), call.getString("quote") ?: "")
         if (mark == null) call.reject("chưa phát gì") else call.resolve(JSObject.fromJSONObject(mark))
     }
 

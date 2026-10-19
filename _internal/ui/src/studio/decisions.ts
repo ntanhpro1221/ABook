@@ -45,6 +45,21 @@ export const PENDING_NOTE: Record<ApplyWhen, string> = {
  *  ranh giới chương" như dự án. */
 export const WAITING_STUDIO = "Đang chờ máy làm sách - giọng đọc chưa đổi gì. Lưu file thì thay đổi đi cùng; mở file bằng ABook Studio trên máy tính để áp.";
 
+/** Lời hứa sau khi ghi một thay đổi chờ Studio. `holder`: cuốn tải từ máy khác (điện thoại, `caps.sync`) - tên máy ấy: thay đổi tự gửi sang và áp
+ *  ngay ở đó (máy tính nhận vào chính sách ấy, không chờ ai duyệt), chỉ phần thu lại giọng chờ Studio trên máy ấy (soát a70: lời báo cũ bảo "mở
+ *  file bằng Studio" với sách đã liên kết). Không có: `WAITING_STUDIO`. */
+export function waitingStudio(holder?: string | null): string {
+  return holder
+    ? `Đã gửi sang ${holder}, áp ngay ở đó. Giọng đọc chưa đổi: Studio sẽ thu lại khi bạn mở dự án trên ${holder}.`
+    : WAITING_STUDIO;
+}
+
+/** Câu đã thu được thu lại khi nào - vế cho dòng "N câu đã thu sẽ được thu lại …" của hộp sửa cách đọc, CÙNG lời hứa với `waitingStudio` (soát
+ *  a70: hộp hứa "sẽ được thu lại" trong khi thông báo nói "giọng đọc chưa đổi gì"). */
+export function retakeWhen(holder?: string | null): string {
+  return holder ? `khi bạn mở dự án trên ${holder}` : "khi mở file bằng ABook Studio trên máy tính";
+}
+
 /** Chỉ đọc bản của trang dự án trong bộ nhớ đệm - không thêm một nhịp hỏi máy chủ. */
 export function useApplyWhen(bookId: string): ApplyWhen {
   return applyWhen(useCachedBook(bookId).data?.book);
@@ -88,7 +103,8 @@ export function refreshAfterDecision(client: QueryClient, bookId: string) {
 // Bấm nhầm ("Nữ" cạnh "Nam", nhầm người, nhầm cách đọc) sửa ngay trên thông báo: "Hoàn tác" gửi lại đúng lần bấm ấy
 // (`requestedAt` máy chủ trả) để máy chủ trả yêu cầu trước đó về chỗ. Dây chuyền đã kịp đưa quyết định vào sách (ranh
 // giới chương rơi đúng mấy giây ấy) thì máy chủ nói thật, và thông báo lỗi nói chỗ đổi lại.
-export const UNDO_MS = 8000;
+// 15 giây: đủ để đọc thông báo rồi mới nhận ra bấm nhầm (soát a70 - 8 giây thường đã tắt trước khi kịp bấm).
+export const UNDO_MS = 15_000;
 
 /** `message`: điều gì trở lại, nói cụ thể ("“Lucien” lại đọc là “Lu-si-en”") - soát UX 29-09: "Việc trở lại như trước khi
  *  bấm" quá chung. */

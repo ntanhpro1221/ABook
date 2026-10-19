@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CircleAlert, Laptop, Loader2, Send, Smartphone, X } from "lucide-react";
+import { CircleAlert, Laptop, Loader2, Send, Smartphone, Undo2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { localEditsNote } from "@/shared/capabilities";
@@ -8,8 +8,9 @@ import { cn } from "@/shared/cn";
 import { editsSyncNote, holderName, sentToast } from "@/shared/editsSync";
 import { endSentence } from "@/shared/format";
 import { Button } from "@/shared/ui";
+import { api } from "@/studio/api";
 import { refreshAfterEdit } from "./EditBook";
-import type { ListenBook } from "./model";
+import type { EditsNotice, ListenBook } from "./model";
 import { useSource } from "./source";
 
 // Cuốn tải từ máy tính (điện thoại): sửa xong thì phần sửa gửi về máy tính - tự động khi tới được máy tính, hoặc bấm "Gửi về máy
@@ -70,6 +71,43 @@ export function LocalEditsBanner({ book }: { book: ListenBook }) {
         <Smartphone className="size-3.5 shrink-0" /> {book.edits} thay đổi chỉ có trên điện thoại này
       </p>
       <p className="mt-0.5 text-pretty">{note}</p>
+    </div>
+  );
+}
+
+/** Cuốn nhập từ file ở máy này: máy đã ghép gửi bản khác thay bản của máy này (bản đến sau thắng) - từng lời báo nói đổi gì từ gì sang gì;
+ *  "Đặt lại" dùng lại bản của máy này (thành thay đổi mới nhất), "Đã hiểu" chỉ bỏ lời báo (soát a70). */
+export function EditsNoticesBanner({ book }: { book: ListenBook }) {
+  const client = useQueryClient();
+  const act = useMutation({
+    mutationFn: ({ verb, notice }: { verb: "undo" | "dismiss"; notice?: EditsNotice }) =>
+      api(`/api/books/${book.id}/edits-notices/${verb}`, { method: "POST", body: { id: notice?.id ?? "" } }),
+    onSuccess: (_reply, { verb }) => {
+      refreshAfterEdit(client, book.id);
+      if (verb === "undo") toast.success("Đã đặt lại bản của máy này", { description: "Lần sau máy kia nhận sách sẽ nhận bản này." });
+    },
+    onError: (error: Error) => toast.error("Chưa làm được", { description: error.message }),
+  });
+  const items = book.editsNotices ?? [];
+  if (!items.length) return null;
+  return (
+    <div role="status" className="mt-2 max-w-md rounded-xl bg-info-soft px-3 py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
+      <p className="inline-flex items-center gap-1.5 font-medium">
+        <Smartphone className="size-3.5 shrink-0" /> Máy đã ghép vừa đổi phần bạn đã đặt
+      </p>
+      <ul className="mt-1 space-y-1.5">
+        {items.map((notice) => (
+          <li key={notice.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="min-w-0 flex-1 text-pretty">{notice.label}</span>
+            <Button size="sm" variant="secondary" icon={Undo2} disabled={act.isPending} onClick={() => act.mutate({ verb: "undo", notice })}>
+              Đặt lại bản của máy này
+            </Button>
+          </li>
+        ))}
+      </ul>
+      <Button size="sm" variant="secondary" className="mt-2" icon={X} disabled={act.isPending} onClick={() => act.mutate({ verb: "dismiss" })}>
+        Đã hiểu
+      </Button>
     </div>
   );
 }

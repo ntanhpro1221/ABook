@@ -20,6 +20,7 @@ import {
 import { cn } from "@/shared/cn";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { useAppInfo } from "@/studio/data";
+import { UNDO_MS } from "@/studio/decisions";
 
 // "Đọc từ này là…" (giữ / bấm chuột phải vào một chữ ở màn đọc của cuốn chỉ có chữ) và danh sách "Cách đọc tên" của hộp "Sửa sách": dạy
 // giọng đọc một từ hay một cụm chữ liền nhau cho cả cuốn. Chỉ giọng đọc đổi, chữ của sách giữ nguyên (listen/readings.ts).
@@ -54,13 +55,27 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
   useEffect(() => setValue(current), [current, surface]);
   const save = useSaveReading(bookId);
   const typed = cleanSpoken(value);
+  // Đoạn đang đọc nói nốt cách cũ; từ đoạn sau (và khi nghe lại) mới là cách mới - nói đúng thế. Hoàn tác đặt lại đúng cách đọc trước đó (soát a70).
   const store = (spoken: string) =>
     save.mutate(
       { surface, spoken },
       {
         onSuccess: () => {
           toast.success(spoken ? `“${surface}” sẽ đọc là “${cleanSpoken(spoken)}”` : `“${surface}” đọc lại như chữ trong sách`, {
-            description: "Đã đổi cách đọc - áp dụng ngay, cho cả cuốn.",
+            id: "reading-saved",
+            description: "Đã đổi cách đọc cho cả cuốn - áp dụng từ đoạn sau.",
+            duration: UNDO_MS,
+            action: {
+              label: "Hoàn tác",
+              onClick: () =>
+                save.mutate(
+                  { surface, spoken: current },
+                  {
+                    onSuccess: () => toast.success("Đã hoàn tác", { id: "reading-saved", description: current ? `“${surface}” lại đọc là “${current}”` : `“${surface}” lại đọc như chữ trong sách` }),
+                    onError: (error) => toast.error("Không hoàn tác được", { description: (error as Error).message }),
+                  },
+                ),
+            },
           });
           onDone();
         },

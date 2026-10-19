@@ -6,7 +6,7 @@
 // cả cuốn trong hàng đợi và tự lo hết những việc đó ở lõi - vì tắt màn hình thì JavaScript bị treo, nên những thứ
 // phải chạy khi người nghe đã ngủ không được nằm ở JavaScript.
 
-import type { Bookmark, ListenChapter } from "./model";
+import type { Bookmark, BookmarkSentence, ListenChapter } from "./model";
 import type { SpeechTrack } from "./readAloud";
 import type { MusicCredit } from "./musicBed";
 import type { SleepMode, SleepRequest } from "./sleep";
@@ -80,7 +80,8 @@ export interface NativeEngine extends AudioEngine {
   jumpTo(chapterId: number, seconds: number, word?: { segment: number; word: number }): void;
   setSleep(request: SleepRequest): void;
   extendSleep(minutes?: number): void;
-  addBookmark(note: string): Promise<Bookmark>;
+  /** `sentence`: chương đọc to - câu đang đọc (thứ tự + câu trích), như dấu đặt ở màn đọc. */
+  addBookmark(note: string, sentence?: BookmarkSentence): Promise<Bookmark>;
   readonly sleep: SleepMode;
   readonly bookId: string;
   readonly bookTitle: string;

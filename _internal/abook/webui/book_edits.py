@@ -147,6 +147,82 @@ def count(edits: dict[str, Any]) -> int:
     return count_applied(edits) + count_wishes(edits)
 
 
+def delta(before: dict[str, Any], after: dict[str, Any], *, gone: bool = False) -> dict[str, Any]:
+    """Phần của `after` khác `before` (cùng hình dạng lớp sửa - đếm được bằng `count`): khoá mới hay đổi giá trị, dòng bỏ / đoạn nhạc im lặng /
+    bí danh mới. `gone`: chỉ những khoá của `after` mà `before` KHÔNG còn (gọi với hai bên đổi chỗ để đếm cái đã bỏ đi)."""
+
+    def differs(key: str, ours: dict[str, Any], theirs: dict[str, Any]) -> bool:
+        return key not in theirs if gone else theirs.get(key) != ours[key]
+
+    def part(ours: Any, theirs: Any) -> dict[str, Any]:
+        ours, theirs = ours or {}, theirs or {}
+        return {key: value for key, value in ours.items() if differs(key, ours, theirs)}
+
+    out = empty()
+    out.update({key: after[key] for key in ("title", "author", "cover") if key in after and differs(key, after, before)})
+    for key in ("characters", "readings"):
+        if found := part(after.get(key), before.get(key)):
+            out[key] = found
+    chapters = {key: found for key, fields in (after.get("chapters") or {}).items()
+                if (found := part(fields, (before.get("chapters") or {}).get(key)))}
+    if chapters:
+        out["chapters"] = chapters
+    skip = {key: [line for line in lines if line not in (before.get("skip") or {}).get(key, [])] for key, lines in (after.get("skip") or {}).items()}
+    if skip := {key: lines for key, lines in skip.items() if lines}:
+        out["skip"] = skip
+    music, old = after.get("music") or {}, before.get("music") or {}
+    changed = {key: music[key] for key in ("enabled", "levelDb", "playlist") if key in music and differs(key, music, old)}
+    if silenced := [key for key in music.get("silenced") or [] if key not in (old.get("silenced") or [])]:
+        changed["silenced"] = silenced
+    if pins := part(music.get("pins"), old.get("pins")):
+        changed["pins"] = pins
+    if changed:
+        out["music"] = changed
+    from . import book_wishes
+
+    wishes, previous = after.get("wishes") or {}, before.get("wishes") or {}
+    sections = {section: found for section in book_wishes.SECTIONS if (found := part(wishes.get(section), previous.get(section)))}
+    if added := [item for item in wishes.get(book_wishes.ALIASES) or []
+                 if (item["alias"] not in {other["alias"] for other in previous.get(book_wishes.ALIASES) or []} if gone
+                     else item not in (previous.get(book_wishes.ALIASES) or []))]:
+        sections[book_wishes.ALIASES] = added
+    if sections:
+        out["wishes"] = sections
+    return out
+
+
+def count_since(before: dict[str, Any], after: dict[str, Any]) -> int:
+    """Số thay đổi từ `before` tới `after`: đặt mới hay đổi, cộng cái đã bỏ đi."""
+    return count(delta(before, after)) + count(delta(after, before, gone=True))
+
+
+# ---- "Lưu (N thay đổi)": chỉ đếm cái người nghe làm SAU lần lưu / lần nhập file gần nhất -----------------------------------------
+#
+# Lớp sửa của cuốn mang cả phần sửa có sẵn trong file vừa nhập (người khác đã sửa rồi lưu): trước đây "Lưu (10 thay đổi)" đếm cả chúng (soát a70).
+# `edits_saved.json` cạnh lớp sửa chụp lớp sửa lúc nhập file / lúc lưu thành file; "chưa lưu" là phần khác bản chụp ấy.
+
+SAVED_FILE = "edits_saved.json"
+
+
+def mark_saved(folder: Path) -> None:
+    """Chụp lớp sửa hiện có làm mốc "đã lưu" (vừa nhập từ file, hay vừa lưu thành file). Không có thay đổi nào thì không cần mốc
+    (chưa có mốc = đếm mọi thay đổi, tức là không gì) - sách nhập không sửa gì không thêm file."""
+    edits = load(folder)
+    if not count(edits):
+        (Path(folder) / SAVED_FILE).unlink(missing_ok=True)
+        return
+    atomic_write_bytes(Path(folder) / SAVED_FILE, dump(edits))
+
+
+def unsaved(folder: Path, edits: dict[str, Any]) -> int:
+    """Số thay đổi của `edits` chưa nằm trong file nào (`mark_saved`); chưa có mốc: mọi thay đổi."""
+    try:
+        before = parse((Path(folder) / SAVED_FILE).read_bytes())
+    except (OSError, EditsError):
+        return count(edits)
+    return count_since(before, edits)
+
+
 def _number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and value == value and abs(value) != float("inf")
 
@@ -481,7 +557,14 @@ def merge_clashes(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict
 
     wishes, wish_conflicts = book_wishes.merge(local.get("wishes"), incoming.get("wishes"))
     conflicts += wish_conflicts
-    clashes.extend({"kind": "wish", "key": "", "kept": None, "lost": None} for _ in range(wish_conflicts))
+    if wish_conflicts:
+        # Người nói và cách đọc mang cả hai mục (kept / lost): máy bị đè được báo cụ thể và đặt lại được bản của mình (soát a70).
+        for item in book_wishes.differing(local.get("wishes"), incoming.get("wishes")):
+            kind = {"speakers": "speaker", "pronunciations": "pronunciation"}.get(item["section"])
+            if kind:
+                clash(kind, item["key"], item["ours"], item["theirs"])
+            else:
+                clash("wish", "")
     if wishes:
         out["wishes"] = wishes
     cover = None

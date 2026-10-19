@@ -60,7 +60,9 @@ object Store {
     private fun shown(id: String, raw: JSONObject, prints: JSONObject): JSONObject {
         val edits = BookEdits.load(bookDir(id))
         // `edits`: mọi thay đổi (áp ngay + ý muốn); `wishes`: trong số ấy bao nhiêu là ý muốn chờ Studio (chưa áp vào audio).
-        val out = BookEdits.applyManifest(raw, edits).put("edits", BookEdits.count(edits)).put("wishes", BookEdits.countWishes(edits))
+        // Lines the holder skipped are skipped here too (EditsSync.experienced); the change count stays this device's own.
+        val out = BookEdits.applyManifest(raw, EditsSync.experienced(bookDir(id), edits)).put("edits", BookEdits.count(edits))
+            .put("unsaved", BookEdits.unsaved(bookDir(id), edits)).put("wishes", BookEdits.countWishes(edits))
         val home = homeOf(raw, prints.optJSONObject(id))
         // Mọi cuốn sửa được ở đây, kể cả nghe thẳng chưa tải và của thiết bị ghép khác (docs/EDITING.md, P2d): phần sửa về máy giữ
         // sách (`sync`) nếu nó nhận được, không thì nằm lại trên máy này (`local`).
@@ -535,6 +537,8 @@ object Store {
     }
 
     private const val MAX_SESSIONS = 200
+    /** Two bookmarks of one chapter this close (seconds) are the same place. */
+    private const val BOOKMARK_SAME_SECONDS = 1.0
 
     private fun stamp(value: JSONObject?, key: String = "at") = value?.optDouble(key, 0.0)?.takeIf { !it.isNaN() } ?: 0.0
 
@@ -560,17 +564,22 @@ object Store {
                 result.put(field, theirs.get(field)).put(at, theirs.get(at))
             }
         }
+        // Bookmarks: newer edit wins (a tie keeps ours); a tombstone only removes a mark not changed after it - an undone delete
+        // (newer `at`) comes back on both devices. Both sides deleted: keep the later stamp.
         val deleted = JSONObject((result.optJSONObject("deleted") ?: JSONObject()).toString())
-        theirs.optJSONObject("deleted")?.let { gone -> for (key in gone.keys()) deleted.put(key, gone.get(key)) }
+        theirs.optJSONObject("deleted")?.let { gone ->
+            for (key in gone.keys()) deleted.put(key, maxOf(gone.optDouble(key, 0.0).takeIf { !it.isNaN() } ?: 0.0, stamp(deleted, key)))
+        }
         val marks = LinkedHashMap<String, JSONObject>()
         result.getJSONArray("bookmarks").let { list -> for (i in 0 until list.length()) list.optJSONObject(i)?.let { marks[it.optString("id")] = it } }
         (theirs.optJSONArray("bookmarks") ?: JSONArray()).let { list ->
             for (i in 0 until list.length()) {
                 val mark = list.optJSONObject(i) ?: continue
-                if (stamp(mark) >= stamp(marks[mark.optString("id")]) || marks[mark.optString("id")] == null) marks[mark.optString("id")] = mark
+                if (marks[mark.optString("id")] == null || stamp(mark) > stamp(marks[mark.optString("id")])) marks[mark.optString("id")] = mark
             }
         }
-        result.put("bookmarks", JSONArray(marks.values.filter { !deleted.has(it.optString("id")) }.sortedBy { stamp(it) }))
+        result.put("bookmarks", JSONArray(marks.values.filter { stamp(it) > stamp(deleted, it.optString("id")) }
+            .sortedBy { if (it.has("createdAt")) stamp(it, "createdAt") else stamp(it) }))
         result.put("deleted", deleted)
         val sessions = LinkedHashMap<String, JSONObject>()
         for (source in listOf(result, theirs)) {
@@ -675,15 +684,27 @@ object Store {
     }
 
     /** `index` + `quote`: dấu đặt ở màn đọc trỏ tới CÂU (thứ tự câu trong chương, như `?at=`) và giữ ~60 chữ đầu câu - cùng trường với
-     *  máy tính (listening.py `add_bookmark`); dấu đặt từ trình phát không có hai trường này. */
+     *  máy tính (listening.py `add_bookmark`); dấu đặt từ trình phát chỉ có hai trường này khi đang đọc to chương chữ. */
     @Synchronized
-    fun addBookmark(id: String, chapterId: Int, seconds: Double, note: String, index: Int? = null, quote: String = ""): JSONObject {
+    fun addBookmark(id: String, chapterId: Int, seconds: Double, note: String, index: Int? = null, quote: String = "", createdAt: Double? = null): JSONObject {
         val state = state(id)
+        val marks = state.getJSONArray("bookmarks")
+        // Same place twice (a double tap, or the same sentence): one bookmark, flagged `existing` like the computer's add_bookmark.
+        for (i in 0 until marks.length()) {
+            val current = marks.optJSONObject(i) ?: continue
+            if (current.optInt("chapterId", -1) != chapterId) continue
+            val same = if (index != null && index >= 0) current.has("index") && current.optInt("index") == index
+                else !current.has("index") && Math.abs(current.optDouble("seconds", 0.0) - seconds) <= BOOKMARK_SAME_SECONDS
+            if (same) return JSONObject(current.toString()).put("existing", true)
+        }
+        val at = now()
+        // `at` = last change (what a merge compares); `createdAt` = when it was set (what the list shows) - an undo keeps the original.
         val mark = JSONObject()
             .put("id", UUID.randomUUID().toString().replace("-", "").substring(0, 12))
-            .put("chapterId", chapterId).put("seconds", seconds).put("note", note.take(500)).put("at", now())
+            .put("chapterId", chapterId).put("seconds", seconds).put("note", note.take(500)).put("at", at)
+            .put("createdAt", createdAt?.takeIf { it > 0 && it <= at } ?: at)
         if (index != null && index >= 0) mark.put("index", index).put("quote", bookmarkQuote(quote))
-        state.getJSONArray("bookmarks").put(mark)
+        marks.put(mark)
         state.put("updatedAt", now())
         save(id, state)
         return mark
@@ -695,7 +716,9 @@ object Store {
         val marks = state.getJSONArray("bookmarks")
         for (index in 0 until marks.length()) {
             val mark = marks.getJSONObject(index)
-            if (mark.optString("id") == markId) mark.put("note", note.take(500)).put("at", now())
+            if (mark.optString("id") != markId) continue
+            if (!mark.has("createdAt")) mark.put("createdAt", mark.optDouble("at", now()))
+            mark.put("note", note.take(500)).put("at", now())
         }
         state.put("updatedAt", now())
         save(id, state)

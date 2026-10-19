@@ -65,3 +65,19 @@ def respelling_note(spoken_form: str, fixed: str) -> str:
     right = ", ".join(f"“{new}”" for _old, new in pairs)
     wrong = ", ".join(f"“{old}”" for old, _new in pairs)
     return f"Tiếng Việt viết {right}, không viết {wrong}."
+
+
+def _unmarked(text: str) -> str:
+    """Chữ bỏ mọi dấu (thanh, mũ, trăng, móc; đ -> d), hạ hoa thường - như phép kiểm so cách đọc với chính chữ ấy."""
+    decomposed = unicodedata.normalize("NFD", text.casefold().replace("đ", "d"))
+    return "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
+
+
+def not_vietnamese_note(surface: str, spoken_form: str) -> str:
+    """Lời từ chối một cách đọc nói đúng lý do (soát a70: "thoi" là âm tiết Việt thật mà lời báo nói "phải là âm tiết tiếng Việt"). Phép kiểm
+    không nhận cách đọc chỉ khác chữ trong sách ở dấu ("Tám" -> "Tâm", "thôi" -> "thoi"); còn lại là có âm tiết nó không nhận ra."""
+    if _unmarked(" ".join(spoken_form.split())) == _unmarked(surface):
+        return (f"ABook chưa nhận “{spoken_form}” làm cách đọc cho “{surface}”: hai chữ chỉ khác nhau ở dấu. "
+                "Thử viết khác, hay để máy đọc như chữ trong sách.")
+    return (f"ABook chưa nhận “{spoken_form}” là cách đọc tiếng Việt - thử viết khác: mỗi âm tiết viết như tiếng Việt, "
+            "nối bằng gạch nối (vd Hên-khơ).")

@@ -43,7 +43,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
-               listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, packages, project_views,
+               listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, package_share, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
@@ -3093,6 +3093,8 @@ class App:
         if packages.is_package(path):
             view = packages.listen(path, value, self.listening.get(value))
             self._built_workshop(view, path)
+            # Bản của máy này bị bản máy đã ghép gửi tới thay (người nói, cách đọc): báo cụ thể, Hoàn tác được (package_share.notices).
+            view["editsNotices"] = package_share.notices(path)
         else:
             view = listen_view.book(path, value, self.summary(path), self.listening.get(value))
         view["records"] = self.listening.records(value)  # hồ sơ nghe gắn với cuốn này (webui/listening.py)
@@ -3626,6 +3628,26 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"withdrawn": len(mine)})
 
     @_serialized_per_book
+    def post_edits_notice(self, _query: dict[str, list[str]], value: str, verb: str) -> None:
+        # Lời báo "máy kia đã đổi … từ X sang Y" của cuốn nhập từ file (package_share): "undo" đặt lại bản của máy này, "dismiss" chỉ bỏ lời báo
+        # (`id` trống: bỏ hết).
+        self.app._mutating()
+        path = self.app._editable(value)
+        if not packages.is_package(path):
+            raise ApiError(HTTPStatus.NOT_FOUND, "Cuốn này không có lời báo nào")
+        notice = str(self._body().get("id") or "")
+        if verb == "undo":
+            try:
+                package_share.undo_notice(path, notice)
+            except LookupError as error:
+                raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+            except book_edits.EditsError as error:
+                raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        else:
+            package_share.dismiss_notice(path, notice or None)
+        self._send_json(HTTPStatus.OK, {"notices": package_share.notices(path)})
+
+    @_serialized_per_book
     def post_merge_character(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab Nhân vật: "Gộp vào…" (soát UX a6 01-10: máy tách một người thành hai - "Lucien" và "Giáo sư Lucien" - mà Studio
         # chỉ sửa được từng câu). Đi đúng đường có sẵn: mọi câu nói của người này thành câu của người kia (overrides.json
@@ -3880,6 +3902,7 @@ class Handler(BaseHTTPRequestHandler):
         except (bookfile.BookFileError, projectfile.ProjectFileError) as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self.app.exports.add(str(out.parent))
+        book_edits.mark_saved(path)  # "Lưu (N thay đổi)" đếm lại từ đây
         self._send_json(HTTPStatus.OK, {"file": str(out), "folder": str(out.parent), "size": out.stat().st_size,
                                         "edits": book_edits.count(book_edits.load(path))})
 
@@ -4473,8 +4496,21 @@ class Handler(BaseHTTPRequestHandler):
                     listener_overrides.pronunciation_problem(surface, fixed) is None:
                 raise ApiError(HTTPStatus.BAD_REQUEST, f"{spelling.respelling_note(spoken, fixed)} Viết: “{fixed}”.",
                                suggestion=fixed)
+            if problem == listener_overrides.NOT_VIETNAMESE:
+                raise ApiError(HTTPStatus.BAD_REQUEST, spelling.not_vietnamese_note(surface, spoken))
             raise ApiError(HTTPStatus.BAD_REQUEST, PRONUNCIATION_PROBLEMS.get(problem, "Cách đọc này không dùng được"))
         return spoken
+
+    def post_pronunciation_check(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Nghe thử" của cuốn mở từ file (giọng đọc của máy, không qua máy chủ): qua ĐÚNG phép kiểm của "Lưu" trước khi đọc - nghe được là lưu
+        # được (soát a70: "Thoi" nghe thử được rồi Lưu mới báo lỗi). Không ghi gì.
+        path = self.app._listenable(value)
+        body = self._body()
+        surface = str(body.get("surface", "")).strip()[:80]
+        spoken = self._checked_reading(body, surface)
+        if (package_reading_reach if packages.is_package(path) else reading_reach)(path, surface)["never"]:
+            raise ApiError(HTTPStatus.BAD_REQUEST, never_text(surface))
+        self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken})
 
     def post_pronunciation_preview(self, _query: dict[str, list[str]], value: str) -> None:
         # "Nghe thử" trước khi lưu: thu thử một câu có tên ấy với cách đọc đang gõ - không ghi gì vào sách (reading_preview.py).
@@ -5855,6 +5891,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/pending-changes"), Handler.get_pending_changes),
     ("GET", re.compile(BOOK + r"/wishes"), Handler.get_wishes),
     ("POST", re.compile(BOOK + r"/pending-changes/withdraw"), Handler.post_pending_withdraw),
+    ("POST", re.compile(BOOK + r"/edits-notices/(undo|dismiss)"), Handler.post_edits_notice),
     ("POST", re.compile(BOOK + r"/chapters/(\d+)/retake"), Handler.post_chapter_retake),
     ("POST", re.compile(BOOK + r"/characters/merge"), Handler.post_merge_character),
     ("POST", re.compile(BOOK + r"/characters/rename"), Handler.post_rename_character),
@@ -5931,6 +5968,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
     ("POST", re.compile(BOOK + r"/pronunciation/preview"), Handler.post_pronunciation_preview),
+    ("POST", re.compile(BOOK + r"/pronunciation/check"), Handler.post_pronunciation_check),
     ("POST", re.compile(BOOK + r"/voice/preview"), Handler.post_voice_preview),
     ("GET", re.compile(BOOK + r"/shared-readings"), Handler.get_book_shared_readings),
     ("POST", re.compile(BOOK + r"/shared-readings"), Handler.post_book_shared_readings),

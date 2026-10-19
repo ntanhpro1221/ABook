@@ -165,6 +165,85 @@ object BookEdits {
     /** Số thay đổi người nghe đã làm (cho dòng "N thay đổi" và việc mời lưu): thay đổi áp ngay + ý muốn chờ Studio. */
     fun count(edits: JSONObject): Int = countApplied(edits) + countWishes(edits)
 
+    /**
+     * The part of `after` that differs from `before` (same shape as the edits layer, so [count] counts it): new or changed keys, newly skipped
+     * lines / silenced cues / aliases. `gone`: only keys of `after` that `before` no longer has (call with the sides swapped to count what was
+     * removed). Mirrors webui/book_edits.py `delta`.
+     */
+    fun delta(before: JSONObject, after: JSONObject, gone: Boolean = false): JSONObject {
+        fun differs(key: String, ours: JSONObject, theirs: JSONObject) =
+            if (gone) !theirs.has(key) else !theirs.has(key) || !StrictJson.equal(theirs.opt(key), ours.opt(key))
+
+        fun part(ours: JSONObject?, theirs: JSONObject?): JSONObject {
+            val out = JSONObject()
+            if (ours != null) for (key in names(ours)) if (differs(key, ours, theirs ?: JSONObject())) out.put(key, ours.opt(key))
+            return out
+        }
+
+        val out = empty()
+        for (key in listOf("title", "author", "cover")) if (after.has(key) && differs(key, after, before)) out.put(key, after.opt(key))
+        for (key in listOf("characters", "readings")) part(after.optJSONObject(key), before.optJSONObject(key)).takeIf { it.length() > 0 }?.let { out.put(key, it) }
+        val chapters = JSONObject()
+        after.optJSONObject("chapters")?.let { ours ->
+            for (key in names(ours)) part(ours.optJSONObject(key), before.optJSONObject("chapters")?.optJSONObject(key)).takeIf { it.length() > 0 }?.let { chapters.put(key, it) }
+        }
+        if (chapters.length() > 0) out.put("chapters", chapters)
+        val skip = JSONObject()
+        after.optJSONObject("skip")?.let { ours ->
+            for (key in names(ours)) {
+                val known = skipLines(before.optJSONObject("skip"), key).toSet()
+                skipLines(ours, key).filter { it !in known }.takeIf { it.isNotEmpty() }?.let { skip.put(key, JSONArray(it)) }
+            }
+        }
+        if (skip.length() > 0) out.put("skip", skip)
+        val music = after.optJSONObject("music") ?: JSONObject()
+        val old = before.optJSONObject("music") ?: JSONObject()
+        val changed = JSONObject()
+        for (key in listOf("enabled", "levelDb", "playlist")) if (music.has(key) && differs(key, music, old)) changed.put(key, music.opt(key))
+        val silenced = music.optJSONArray("silenced")?.let { list -> (0 until list.length()).map { list.get(it) } } ?: emptyList()
+        val wasSilenced = old.optJSONArray("silenced")?.let { list -> (0 until list.length()).map { list.get(it) } } ?: emptyList()
+        silenced.filter { it !in wasSilenced }.takeIf { it.isNotEmpty() }?.let { changed.put("silenced", JSONArray(it)) }
+        part(music.optJSONObject("pins"), old.optJSONObject("pins")).takeIf { it.length() > 0 }?.let { changed.put("pins", it) }
+        if (changed.length() > 0) out.put("music", changed)
+        val wishes = after.optJSONObject("wishes") ?: JSONObject()
+        val previous = before.optJSONObject("wishes") ?: JSONObject()
+        val sections = JSONObject()
+        for (section in BookWishes.SECTIONS) part(wishes.optJSONObject(section), previous.optJSONObject(section)).takeIf { it.length() > 0 }?.let { sections.put(section, it) }
+        val aliases = wishes.optJSONArray(BookWishes.ALIASES)
+        val knownAliases = previous.optJSONArray(BookWishes.ALIASES)?.let { list -> (0 until list.length()).mapNotNull { list.optJSONObject(it) } } ?: emptyList()
+        val added = JSONArray()
+        if (aliases != null) for (index in 0 until aliases.length()) {
+            val item = aliases.optJSONObject(index) ?: continue
+            val known = if (gone) knownAliases.any { it.optString("alias") == item.optString("alias") } else knownAliases.any { StrictJson.equal(it, item) }
+            if (!known) added.put(item)
+        }
+        if (added.length() > 0) sections.put(BookWishes.ALIASES, added)
+        if (sections.length() > 0) out.put("wishes", sections)
+        return out
+    }
+
+    /** Number of changes from `before` to `after`: set or changed, plus what was removed (webui/book_edits.py `count_since`). */
+    fun countSince(before: JSONObject, after: JSONObject): Int = count(delta(before, after)) + count(delta(after, before, gone = true))
+
+    /**
+     * "Save (N changes)" counts only what the listener did after the book's file was opened or last saved - edits that came inside the file
+     * are not "unsaved" (a70). [SAVED_FILE] beside the edits layer is the layer as of that moment (webui/book_edits.py `mark_saved`).
+     */
+    const val SAVED_FILE = "edits_saved.json"
+
+    fun markSaved(folder: File) {
+        val edits = load(folder)
+        val mark = File(folder, SAVED_FILE)
+        // No changes: no mark needed (no mark already counts every change, i.e. none) - a plain imported book gets no extra file.
+        if (count(edits) == 0) mark.delete() else Store.writeAtomic(mark, dump(edits))
+    }
+
+    /** Changes in `edits` not yet in any file ([markSaved]); no mark yet: every change. */
+    fun unsaved(folder: File, edits: JSONObject): Int {
+        val before = File(folder, SAVED_FILE).takeIf { it.isFile }?.let { runCatching { parse(it.readBytes()) }.getOrNull() } ?: return count(edits)
+        return countSince(before, edits)
+    }
+
     internal fun isNumber(value: Any?) = value is Number && !(value is Double && (value.isNaN() || value.isInfinite()))
 
     private fun isInteger(value: Any?) = value is Int || value is Long || value is BigInteger
@@ -1460,6 +1539,50 @@ object BookEdits {
         }
         val sentPlaylist = marks?.optJSONObject("music")?.takeIf { it.has("playlist") }
         if (sentPlaylist != null && edits.optJSONObject("music")?.has("playlist") != true) out.put("playlist", sentPlaylist.get("playlist"))
+        return out
+    }
+
+    // ---- what the holder set (webui/package_share.py `shared_edits`) -----------------------------------------------------------------
+
+    /** Readings, skipped lines and pending speakers of the book's HOLDER (the computer it came from), fetched beside the book. */
+    const val HOLDER_FILE = "listener_edits.json"
+
+    /** The holder's [HOLDER_FILE] for the book in `dir`, or null (none fetched, holder has nothing, or the file is broken). */
+    fun holderEdits(dir: File): JSONObject? =
+        File(dir, HOLDER_FILE).takeIf { it.isFile }?.let { runCatching { JSONObject(it.readText()) }.getOrNull() }
+
+    /**
+     * `edits` as the listener here experiences them once the holder's own edits (`holder`, [holderEdits]) are layered underneath: readings set on
+     * the computer apply here too, unless this device changed that word and has not sent it yet (`marks`: what earlier sends delivered); a
+     * reading sent from here and then changed on the computer follows the computer (newest wins). Skipped lines are the union, minus lines
+     * un-skipped here and not yet sent. Only `readings` and `skip` change - counts and sending keep using `edits` itself (a70).
+     */
+    fun withHolder(edits: JSONObject, holder: JSONObject?, marks: JSONObject?): JSONObject {
+        if (holder == null) return edits
+        val out = shallowCopy(edits)
+        val removed = removedMarks(edits, marks)
+        val sent = marks?.optJSONObject("readings")
+        val readings = sortedMapOf<String, String>(Comparator { a, b -> byCodePoints(a, b) })
+        holder.optJSONObject("readings")?.let { theirs -> for (word in names(theirs)) readings[word] = theirs.getString(word) }
+        removed.optJSONObject("readings")?.let { gone -> for (word in names(gone)) if (readings[word] == gone.getString(word)) readings.remove(word) }
+        edits.optJSONObject("readings")?.let { ours ->
+            for (word in names(ours)) {
+                val spoken = ours.getString(word)
+                if (sent?.optString(word, null) != spoken || word !in readings) readings[word] = spoken
+            }
+        }
+        if (readings.isEmpty()) out.remove("readings") else out.put("readings", JSONObject(readings as Map<*, *>))
+        val theirSkip = holder.optJSONObject("skip")
+        if (theirSkip != null && theirSkip.length() > 0) {
+            val ours = edits.optJSONObject("skip")
+            val unskipped = removed.optJSONObject("skip")
+            val skip = JSONObject()
+            for (key in (names(theirSkip) + (ours?.let { names(it) } ?: emptyList())).toSortedSet(compareBy<String> { it.toLong() })) {
+                val lines = (skipLines(theirSkip, key).filter { it !in skipLines(unskipped, key) } + skipLines(ours, key)).toSortedSet(Comparator { a, b -> byCodePoints(a, b) })
+                if (lines.isNotEmpty()) skip.put(key, JSONArray(lines.toList()))
+            }
+            if (skip.length() > 0) out.put("skip", skip) else out.remove("skip")
+        }
         return out
     }
 

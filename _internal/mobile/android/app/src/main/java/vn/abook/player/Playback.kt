@@ -503,11 +503,13 @@ object Playback {
         emit("rate")
     }
 
-    fun addBookmark(note: String): JSONObject? {
+    /** [index] + [quote]: the sentence being read aloud (the web layer knows it from the chapter's timings), like a mark set in the reader. */
+    fun addBookmark(note: String, index: Int? = null, quote: String = ""): JSONObject? {
         val chapter = currentChapter ?: return null
-        val mark = Store.addBookmark(bookId, chapter.id, positionSeconds, note)
+        val mark = Store.addBookmark(bookId, chapter.id, positionSeconds, note, index, quote)
         Bedtime.interaction("bookmark")
         emit("bookmark")
+        StateSync.pushSoon(appContext, bookId, force = true)
         return mark
     }
 

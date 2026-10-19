@@ -41,7 +41,7 @@
    },
    "status": 400,
    "response": {
-    "error": "Cách đọc phải là các âm tiết tiếng Việt nối bằng gạch nối, ví dụ Hên-khơ."
+    "error": "ABook chưa nhận “Xă-mon” là cách đọc tiếng Việt - thử viết khác: mỗi âm tiết viết như tiếng Việt, nối bằng gạch nối (vd Hên-khơ)."
    }
   },
   {

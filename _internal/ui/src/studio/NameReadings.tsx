@@ -353,7 +353,7 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
 /** `waiting`: cuốn không có xưởng (file .abook) - chỉ ghi ý muốn chờ Studio; giá trị là lý do chưa nghe thử / chưa dùng chung được
  *  (nút và ô vẫn hiện, mờ đi kèm lý do). */
 /** `aloud`: trang nghe, cuốn chưa có xưởng (`waiting`) - "Nghe thử" bằng giọng đọc của máy (listen/readings.ts). */
-export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach }: {
+export function EditReading({ bookId, item, onDone, fresh, waiting, waitingNote = WAITING_STUDIO, aloud, reach }: {
   bookId: string;
   item: NameReading;
   onDone: () => void;
@@ -361,6 +361,8 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
   /** Chữ vừa gõ để thêm: nó chạm tới những câu nào (đã đo lúc gõ) - thông báo sau khi lưu nói đúng số ấy. */
   reach?: Reach;
   waiting?: string;
+  /** Lời hứa sau khi ghi ở cuốn chờ Studio (decisions.waitingStudio). */
+  waitingNote?: string;
   aloud?: ReadAloudTry;
 }) {
   const client = useQueryClient();
@@ -407,7 +409,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
       if (waiting) {
         // Đúng chữ người nghe gõ - không viết hoa từng chữ như dòng cách đọc tên ("Mở Hoặc Đóng" - soát UX a24).
       toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
-          description: WAITING_STUDIO,
+          description: waitingNote,
           action: undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, keep: false }], `Đã bỏ cách đọc vừa ghi cho “${item.surface}”.`),
           duration: UNDO_MS,
         });

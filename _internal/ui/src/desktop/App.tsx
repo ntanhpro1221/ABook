@@ -13,6 +13,7 @@ import { DropToAdd } from "@/listen/DropToAdd";
 import { LibraryScreen } from "@/listen/LibraryScreen";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { ReaderScreen } from "@/listen/ReaderScreen";
+import { readerEditing } from "./readerEditing";
 import { PlayerProvider, usePlayer } from "@/listen/player";
 import { SourceProvider, useSource } from "@/listen/source";
 import { Button, Dialog, EmptyState, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
@@ -592,14 +593,7 @@ export function App() {
                   <Route
                     path="/book/:id/read/:chapterId?"
                     element={
-                      <ReaderScreen
-                        editing={!info.remote}
-                        // Thiết bị từ xa có quyền sửa dạy được giọng đọc một từ (PUT readings ở remote_studio.ALLOWED); sửa từng câu / Studio thì không.
-                        teachWords={!info.listenOnly}
-                        onOpenStudioScript={(bookId, chapterId, stableId) =>
-                          window.location.assign(`#/studio/${bookId}?tab=script&chapter=${chapterId}&line=${encodeURIComponent(stableId)}`)
-                        }
-                      />
+                      <ReaderScreen {...readerEditing(info)} />
                     }
                   />
                   <Route path="/studio" element={<StudioClosed><ProjectsScreen /></StudioClosed>} />
@@ -620,9 +614,9 @@ export function App() {
         // thanh dưới (soát UX a8 07-10: thông báo đè đầu trang). Có hộp thoại mở thì ở trên như cũ, trừ màn hẹp: hộp gần kín màn nên thông
         // báo ở trên đè tiêu đề + nút Đóng của hộp (soát UX a17, thẻ tiến độ xuất) - xuống đáy sát mép, không có thanh dưới nào che.
         position={modalOpen && !narrow ? "top-center" : narrow ? "bottom-center" : "top-right"}
-        offset={{ top: 16, right: 16, left: narrow ? 16 : 96, bottom: modalOpen && narrow ? 16 : "var(--toast-bottom, 96px)" }}
+        offset={{ top: "var(--toast-top, 16px)", right: 16, left: narrow ? 16 : 96, bottom: modalOpen && narrow ? 16 : "var(--toast-bottom, 96px)" }}
         // Dưới 600 px sonner bỏ `offset` mà dùng `mobileOffset` (mặc định 16 px) - thông báo từng đè lên thanh tab dưới ở 390 px.
-        mobileOffset={{ top: 16, right: 16, left: 16, bottom: modalOpen ? 16 : "var(--toast-bottom, 96px)" }}
+        mobileOffset={{ top: "var(--toast-top, 16px)", right: 16, left: 16, bottom: modalOpen ? 16 : "var(--toast-bottom, 96px)" }}
         visibleToasts={2}
         // Thông báo vài giây che chữ thẻ bên dưới (soát UX a13 #17): nút ✕ để đọc xong là gạt đi ngay, không phải chờ hết hạn.
         closeButton

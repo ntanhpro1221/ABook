@@ -16,8 +16,8 @@ sơ gắn với đúng một sách, mỗi sách có một hồ sơ đang dùng. 
         "rate": 1.25,
         "voice": "edge:vi-VN-NamMinhNeural", "voiceAt": ...,   # giọng Nghe ngay riêng của cuốn (rỗng = giọng mặc định của máy)
         "finished": false,
-        "bookmarks": [{"id": "...", "chapterId": 3, "seconds": 64.0, "note": "", "at": ...,
-                       "index": 12, "quote": "Trời đã sáng."}],
+        "bookmarks": [{"id": "...", "chapterId": 3, "seconds": 64.0, "note": "", "at": ..., "createdAt": ...,
+                       "index": 12, "quote": "Trời đã sáng."}],   # at = lần đổi cuối (gộp hai máy), createdAt = lúc đặt (hiện)
         "night": {"id": "...", "startedAt": ..., "endedAt": ..., "events": [...], "timeline": [...]},
         "updatedAt": ...
 
@@ -51,6 +51,11 @@ DONE_TAIL_SECONDS = 20.0
 # bấm) không được đẻ ra dấu trùng.
 BOOKMARK_MERGE_SECONDS = 5.0
 BOOKMARK_QUOTE_CHARS = 60  # ~60 chữ đầu câu của dấu trang đặt ở màn đọc
+
+
+def _stamp(value: Any) -> bool:
+    """Một mốc giờ dùng được (số dương, không phải bool)."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0
 
 
 def bookmark_quote(text: Any) -> str:
@@ -405,8 +410,9 @@ class Listening:
         Đặt từ trình phát thì vào hồ sơ đang phát (`record`, xem `_held`); hồ sơ ấy vừa bị xoá thì vào hồ sơ đang dùng - người
         nghe đã bấm. `index` + `quote`: dấu đặt ở màn đọc trỏ tới CÂU (thứ tự câu trong chương, như `?at=`) và giữ ~60 chữ đầu
         câu, để dòng dấu trang nói câu chữ ấy kể cả chương chưa có audio (`seconds` khi đó là 0)."""
+        now = time.time()
         mark = {"id": uuid.uuid4().hex[:12], "chapterId": int(chapter_id), "seconds": round(float(seconds), 1),
-                "note": note.strip()[:500], "at": time.time()}
+                "note": note.strip()[:500], "at": now, "createdAt": now}
         if index is not None and int(index) >= 0:
             mark["index"] = int(index)
             mark["quote"] = bookmark_quote(quote)
@@ -420,6 +426,7 @@ class Listening:
                 if same:
                     if mark["note"] and not current.get("note"):
                         current["note"] = mark["note"]
+                        current.setdefault("createdAt", current.get("at") or mark["at"])
                         current["at"] = entry["updatedAt"] = mark["at"]
                         self._save()
                     return {**current, "existing": True}
@@ -429,12 +436,17 @@ class Listening:
         return mark
 
     def update_bookmark(self, book: str, mark_id: str, note: str) -> None:
+        """Sửa ghi chú: `at` (mốc gộp hai máy) thành lúc sửa để bản vừa sửa thắng bản cũ của máy kia (soát a70); `createdAt` giữ lúc
+        đặt dấu - điều dòng dấu trang hiện."""
         with self._changing():
             entry = self._book(book)
+            now = time.time()
             for mark in entry["bookmarks"]:
                 if mark["id"] == mark_id:
                     mark["note"] = note.strip()[:500]
-            entry["updatedAt"] = time.time()
+                    mark.setdefault("createdAt", mark.get("at") or now)
+                    mark["at"] = now
+            entry["updatedAt"] = now
             self._save()
 
     def delete_bookmark(self, book: str, mark_id: str) -> None:
@@ -446,12 +458,15 @@ class Listening:
             self._save()
 
     def restore_bookmark(self, book: str, mark: dict[str, Any]) -> dict[str, Any]:
-        """Hoàn tác xoá: đặt lại đúng dấu cũ (cùng id) và gỡ tombstone của nó."""
+        """Hoàn tác xoá: đặt lại đúng dấu cũ (cùng id) và gỡ tombstone của nó. `at` mới hơn tombstone - lệnh xoá đã kịp sang máy kia
+        cũng không xoá lại nó khi gộp (merge_states); `createdAt` giữ lúc đặt dấu gốc, không thành "vừa xong" (soát a70)."""
         with self._changing():
             entry = self._book(book)
+            now = time.time()
+            created = mark.get("createdAt") if _stamp(mark.get("createdAt")) else mark.get("at")
             restored = {"id": str(mark["id"])[:40], "chapterId": int(mark["chapterId"]),
                         "seconds": round(float(mark["seconds"]), 1), "note": str(mark.get("note", ""))[:500],
-                        "at": time.time()}
+                        "at": now, "createdAt": float(created) if _stamp(created) and float(created) <= now else now}
             if isinstance(mark.get("index"), int) and not isinstance(mark["index"], bool) and mark["index"] >= 0:
                 restored["index"] = mark["index"]
                 restored["quote"] = bookmark_quote(mark.get("quote"))
@@ -754,15 +769,18 @@ def merge_states(ours: dict[str, Any], theirs: dict[str, Any]) -> dict[str, Any]
         if field in theirs and float(theirs.get(stamp) or 0) > float(result.get(stamp) or 0):
             result[field] = theirs[field]
             result[stamp] = theirs[stamp]
+    # Dấu trang: hợp theo id, bản sửa sau thắng (bằng nhau thì giữ bản ở đây); bia mộ chỉ xoá dấu không đổi gì sau lúc xoá - dấu được
+    # Hoàn tác (mốc mới hơn) sống lại ở cả hai máy (soát a70). Hai bên cùng xoá một dấu: giữ lúc xoá sau.
     deleted = dict(result.get("deleted") or {})
-    deleted.update(theirs.get("deleted") or {})
+    for key, stamp in (theirs.get("deleted") or {}).items():
+        deleted[key] = max(float(stamp or 0), float(deleted.get(key) or 0))
     marks = {mark["id"]: mark for mark in result["bookmarks"]}
     for mark in theirs.get("bookmarks") or []:
         current = marks.get(mark["id"])
-        if not current or float(mark.get("at") or 0) >= float(current.get("at") or 0):
+        if not current or float(mark.get("at") or 0) > float(current.get("at") or 0):
             marks[mark["id"]] = mark
-    result["bookmarks"] = sorted((mark for mark in marks.values() if mark["id"] not in deleted),
-                                 key=lambda mark: mark.get("at") or 0)
+    alive = [mark for mark in marks.values() if float(mark.get("at") or 0) > float(deleted.get(mark["id"]) or 0)]
+    result["bookmarks"] = sorted(alive, key=lambda mark: mark.get("createdAt") or mark.get("at") or 0)
     result["deleted"] = deleted
     sessions = {item["id"]: item for item in result.get("sessions") or [] if isinstance(item, dict) and item.get("id")}
     for item in theirs.get("sessions") or []:

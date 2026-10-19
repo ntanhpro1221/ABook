@@ -33,6 +33,7 @@ from typing import Any, Callable
 
 from .. import aliases as alias_book
 from .. import listener_overrides as overrides
+from ..io_utils import atomic_write_json
 from . import book_edits, humanize, store
 from .book_edits import EditsError
 
@@ -216,6 +217,22 @@ def fits(wishes: dict[str, Any]) -> bool:
     return all(len(wishes.get(name) or ()) <= cap for name, cap in MAX_ENTRIES.items())
 
 
+def differing(local: dict[str, Any] | None, incoming: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Khoá cả hai bên cùng có mà khác nhau: [{section, key, ours, theirs}] (mục của `local` / của `incoming`; bí danh: key là tên gọi khác,
+    ours None). Một phần tử là một xung đột của `merge`."""
+    local, incoming = local or {}, incoming or {}
+    out: list[dict[str, Any]] = []
+    for section in SECTIONS:
+        ours, theirs = local.get(section) or {}, incoming.get(section) or {}
+        out.extend({"section": section, "key": key, "ours": ours[key], "theirs": theirs[key]}
+                   for key in ours if key in theirs and theirs[key] != ours[key])
+    ours_aliases, theirs_aliases = local.get(ALIASES) or [], incoming.get(ALIASES) or []
+    mine = {item["alias"] for item in ours_aliases}
+    out.extend({"section": ALIASES, "key": item["alias"], "ours": None, "theirs": item}
+               for item in theirs_aliases if item["alias"] in mine and item not in ours_aliases)
+    return out
+
+
 def merge(local: dict[str, Any] | None, incoming: dict[str, Any] | None) -> tuple[dict[str, Any], int]:
     """Hợp ý muốn trên máy (`local`) với ý muốn trong file vừa mở (`incoming`): hợp theo khoá mục (mã câu, khoá từ, tên chuẩn);
     khoá cả hai cùng có mà khác nhau thì THẮNG BÊN MÁY NÀY, như phần sửa khác. Người nghe rút một ý muốn thì chỉ rút ở máy
@@ -223,16 +240,14 @@ def merge(local: dict[str, Any] | None, incoming: dict[str, Any] | None) -> tupl
     rút lần nữa. Trả (ý muốn đã hợp, số khoá hai bên khác nhau)."""
     local, incoming = local or {}, incoming or {}
     out: dict[str, Any] = {}
-    conflicts = 0
+    conflicts = len(differing(local, incoming))
     for section in SECTIONS:
         ours, theirs = local.get(section) or {}, incoming.get(section) or {}
-        conflicts += sum(1 for key in ours if key in theirs and theirs[key] != ours[key])
         merged = {**copy.deepcopy(theirs), **copy.deepcopy(ours)}
         if merged:
             out[section] = merged
     ours_aliases, theirs_aliases = local.get(ALIASES) or [], incoming.get(ALIASES) or []
     mine = {item["alias"] for item in ours_aliases}
-    conflicts += sum(1 for item in theirs_aliases if item["alias"] in mine and item not in ours_aliases)
     merged_aliases = copy.deepcopy(ours_aliases) + [copy.deepcopy(item) for item in theirs_aliases if item["alias"] not in mine]
     if merged_aliases:
         out[ALIASES] = merged_aliases
@@ -551,6 +566,9 @@ def shown_name(cast: list[dict[str, Any]], raw: Any) -> str:
     raw = str(raw or "")
     if overrides.character_key(raw) == overrides.NARRATOR:
         return "người kể"
+    # Vai phụ không tên: khoá của máy ("UNNAMED") không bao giờ lên mặt người nghe (soát a70: "Người nói: UNNAMED").
+    if raw == overrides.UNNAMED:
+        return "vai phụ không tên"
     person = _person(cast, raw)
     return str(person.get("displayName") or person["name"]) if person is not None else raw
 
@@ -565,8 +583,12 @@ def by_line(folder: Path, wishes: dict[str, Any] | None) -> dict[str, Any]:
                       for key, entry in sorted((wishes.get("pronunciations") or {}).items())]
     lines: dict[str, dict[str, Any]] = {}
     for stable_id, entry in (wishes.get("speakers") or {}).items():
-        lines.setdefault(stable_id, {})["speaker"] = {"name": entry["speaker"], "shown": shown_name(cast, entry["speaker"]),
-                                                      "requestedAt": float(entry["requested_at"])}
+        speaker = lines.setdefault(stable_id, {})["speaker"] = {"name": entry["speaker"], "shown": shown_name(cast, entry["speaker"]),
+                                                                "requestedAt": float(entry["requested_at"])}
+        # Người nghe TẠO người này: trang đọc cho chọn lại người ấy ở câu khác (cùng giới) thay vì bắt tạo lại cùng tên (soát a70).
+        gender = (entry.get("new") or {}).get("gender")
+        if gender:
+            speaker["newGender"] = gender
     for stable_id, entry in (wishes.get("lines") or {}).items():
         delivery = {"kind": entry["kind"], "emotion": entry["emotion"], "intensity": entry["intensity"],
                     "requestedAt": float(entry["requested_at"])}
@@ -578,12 +600,51 @@ def by_line(folder: Path, wishes: dict[str, Any] | None) -> dict[str, Any]:
     return {"pronunciations": pronunciations, "lines": lines}
 
 
+# ---- ý muốn đến từ máy khác: ghi nguồn -----------------------------------------------------------------------------------
+#
+# Máy đã ghép gửi phần sửa lên cuốn nhập từ file (package_share.receive_edits): ý muốn của nó vào thẳng lớp sửa của cuốn, như ý muốn chủ máy
+# ghi ở đây. Sổ nguồn cạnh lớp sửa nhớ mục nào máy nào gửi (theo đúng `requested_at`: chủ máy ghi lại khoá ấy sau đó thì không còn là của máy
+# kia) - hộp "Việc đang chờ" nói "từ <máy>" thay vì như thể chủ máy đã ghi (soát a70). Không đi theo file sách.
+
+SOURCES_FILE = "edits_from.json"
+
+
+def _sources(folder: Path) -> dict[str, Any]:
+    try:
+        data = json.loads((Path(folder) / SOURCES_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def note_sources(folder: Path, incoming: dict[str, Any] | None, name: str) -> None:
+    """Ghi `name` (tên máy đã gửi) cho mọi mục của `incoming` (ý muốn vừa nhận); mục không còn trong lớp sửa thì quên."""
+    current = book_edits.load(folder).get("wishes") or {}
+    keep = {f"{section}/{key}" for section in SECTIONS for key in current.get(section) or {}}
+    sources = {key: value for key, value in _sources(folder).items() if key in keep}
+    for section in SECTIONS:
+        for key, entry in ((incoming or {}).get(section) or {}).items():
+            sources[f"{section}/{key}"] = {"name": name, "at": float(entry.get("requested_at") or 0)}
+    if sources or (Path(folder) / SOURCES_FILE).is_file():
+        atomic_write_json(Path(folder) / SOURCES_FILE, sources)
+
+
+def source_of(sources: dict[str, Any], section: str, key: str, entry: dict[str, Any]) -> str:
+    """Tên máy đã gửi ý muốn này, hay "" (ghi ở chính máy này, hay chủ máy đã ghi lại sau đó)."""
+    found = sources.get(f"{section}/{key}")
+    if not isinstance(found, dict) or abs(float(found.get("at") or 0) - float(entry.get("requested_at") or 0)) >= 1e-6:
+        return ""
+    return str(found.get("name") or "")
+
+
 def pending_details(folder: Path, wishes: dict[str, Any] | None) -> dict[str, Any]:
     """Cùng hình dạng với `store.pending_details` của dự án ({items, lines, chapters, seconds}) - từng ý muốn nói bằng lời,
-    đủ để rút đúng nó (`section`, `key`, `requestedAt`) - nhưng không có câu nào "đã thu" để đếm: cuốn này chưa thu lại gì."""
+    đủ để rút đúng nó (`section`, `key`, `requestedAt`) - nhưng không có câu nào "đã thu" để đếm: cuốn này chưa thu lại gì.
+    Ý muốn máy đã ghép gửi tới mang `from` (tên máy ấy - `note_sources`)."""
     wishes = wishes or {}
     if not any(wishes.get(section) for section in SECTIONS):
         return {"items": [], "lines": 0, "chapters": [], "seconds": 0.0}
+    sources = _sources(folder)
     lines = Lines(folder)
     cast = people(folder)
     titles = {chapter["id"]: str(chapter.get("fullTitle") or chapter.get("title") or "") for chapter in lines.chapters}
@@ -592,7 +653,8 @@ def pending_details(folder: Path, wishes: dict[str, Any] | None) -> dict[str, An
         return shown_name(cast, raw)
 
     def handle(section: str, key: str, entry: dict[str, Any]) -> dict[str, Any]:
-        return {"section": section, "key": key, "requestedAt": float(entry.get("requested_at") or 0)}
+        sender = source_of(sources, section, key, entry)
+        return {"section": section, "key": key, "requestedAt": float(entry.get("requested_at") or 0), **({"from": sender} if sender else {})}
 
     items: list[dict[str, Any]] = []
     for key in sorted(wishes.get("pronunciations") or {}):
@@ -613,7 +675,7 @@ def pending_details(folder: Path, wishes: dict[str, Any] | None) -> dict[str, An
         places = sorted({lines.get(stable_id)[0]["id"] for stable_id in ids})  # type: ignore[index]
         items.append({"kind": "speaker", "label": store.label_speaker("", who(entry["speaker"]), len(ids)),
                       "chapter": titles.get(places[0], "") + (f" và {len(places) - 1} chương khác" if len(places) > 1 else ""),
-                      "lines": 0, "section": "speakers", "key": ids[0], "keys": ids, "requestedAt": at})
+                      "lines": 0, **handle("speakers", ids[0], entry), "keys": ids})
     for stable_id in sorted(wishes.get("lines") or {}):
         found = lines.get(stable_id)
         if found is None:
@@ -638,7 +700,7 @@ def pending_details(folder: Path, wishes: dict[str, Any] | None) -> dict[str, An
                           **handle("retakes", known[0], wishes["retakes"][known[0]])})
         else:
             items.append({"kind": "retake", "label": store.label_retake("", len(ids)), "chapter": titles.get(chapter["id"], ""),
-                          "lines": 0, "section": "retakes", "key": ids[0], "keys": ids, "requestedAt": at})
+                          "lines": 0, **handle("retakes", known[0], wishes["retakes"][known[0]]), "key": ids[0], "keys": ids})
     return {"items": items, "lines": 0, "chapters": [], "seconds": 0.0}
 
 

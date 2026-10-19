@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Lightbulb } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
+import { Button, Dialog, IconButton } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { useAppInfo } from "@/studio/data";
 import { refreshAfterEdit } from "./EditBook";
@@ -77,43 +80,70 @@ export function SuggestionChoices({ groups, isOn, onChange, disabled }: {
   );
 }
 
-/** Trang sách (cuốn chỉ-có-chữ sửa được): gợi ý còn chờ và gợi ý đã áp, chọn / bỏ chọn được bất cứ lúc nào. */
-export function BookSuggestions({ book }: { book: ListenBook }) {
+// "Bỏ qua gợi ý": người nghe đã xem và quyết giữ nguyên - thẻ ở trang sách thôi đếm "N chưa áp" và thu lại (soát a70: thẻ nằm mãi). Nhớ trên máy
+// này theo từng dòng: gợi ý MỚI (dòng chưa từng bỏ qua) vẫn hiện lại. Mặc định vẫn không áp gì.
+const DISMISSED_KEY = "abook.suggestionsDismissed.";
+
+function dismissedLines(bookId: string): string[] {
+  try {
+    const value: unknown = JSON.parse(window.localStorage.getItem(DISMISSED_KEY + bookId) ?? "[]");
+    return Array.isArray(value) ? value.filter((line): line is string => typeof line === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Gợi ý của một cuốn + đổi lựa chọn + bỏ qua (dùng chung cho thẻ ở trang sách và hộp mở từ trình phát). */
+function useBookSuggestions(bookId: string, enabled = true) {
   const client = useQueryClient();
+  const query = useQuery({
+    queryKey: ["book", bookId, "suggestions"],
+    queryFn: () => api<{ suggestions: Suggestion[] }>(`/api/books/${bookId}/suggestions`),
+    staleTime: 60_000,
+    enabled: enabled && Boolean(bookId),
+    retry: false,
+  });
+  const toggle = useMutation({
+    mutationFn: ({ group, on }: { group: SuggestionGroup; on: boolean }) => setSkipLine(bookId, group.line, group.chapters, on),
+    onSuccess: async () => {
+      void client.invalidateQueries({ queryKey: ["book", bookId, "suggestions"] });
+      // Sách (kèm `skip` của từng chương) phải mới TRƯỚC, rồi mới bỏ kịch bản đã dựng: màn đọc mở ngay sau cú tích mà còn thấy sách cũ thì dựng lại kịch
+      // bản theo `skip` cũ và giữ nó mãi (staleTime vô hạn).
+      await client.refetchQueries({ queryKey: ["listen", "book", bookId] }).catch(() => undefined);
+      // Các đoạn của chương đổi: bỏ kịch bản chữ đã dựng (khoá ["listen", "script", …]) cùng mọi thứ của trang nghe.
+      client.removeQueries({ queryKey: ["listen", "script", bookId] });
+      refreshAfterEdit(client, bookId);
+    },
+    onError: (error) => toast.error("Chưa đổi được phần đọc", { description: (error as Error).message }),
+  });
+  const [dismissed, setDismissed] = useState(() => dismissedLines(bookId));
+  const groups = groupSuggestions(query.data?.suggestions ?? []);
+  const pending = groups.filter((group) => !group.skipped && !dismissed.includes(group.line));
+  const dismiss = () => {
+    const next = [...new Set([...dismissed, ...groups.filter((group) => !group.skipped).map((group) => group.line)])];
+    setDismissed(next);
+    try {
+      window.localStorage.setItem(DISMISSED_KEY + bookId, JSON.stringify(next));
+    } catch {
+      // không nhớ được thì lần mở sau thẻ hiện lại - không sao
+    }
+  };
+  return { groups, pending: pending.length, toggle, dismiss };
+}
+
+/** Lời giải thích + các ô chọn của gợi ý (thẻ ở trang sách, hộp ở trình phát). */
+function SuggestionsBody({ bookId, suggestions }: { bookId: string; suggestions: ReturnType<typeof useBookSuggestions> }) {
   const { track } = usePlayer();
   // Thiết bị chỉ được nghe: thấy gợi ý nhưng không bỏ dòng được - việc ấy ở máy tính.
   const { data: info } = useAppInfo();
   const listenOnly = Boolean(info?.listenOnly);
-  const query = useQuery({
-    queryKey: ["book", book.id, "suggestions"],
-    queryFn: () => api<{ suggestions: Suggestion[] }>(`/api/books/${book.id}/suggestions`),
-    staleTime: 60_000,
-  });
-  const toggle = useMutation({
-    mutationFn: ({ group, on }: { group: SuggestionGroup; on: boolean }) => setSkipLine(book.id, group.line, group.chapters, on),
-    onSuccess: async () => {
-      void client.invalidateQueries({ queryKey: ["book", book.id, "suggestions"] });
-      // Sách (kèm `skip` của từng chương) phải mới TRƯỚC, rồi mới bỏ kịch bản đã dựng: màn đọc mở ngay sau cú tích mà còn thấy sách cũ thì dựng lại kịch
-      // bản theo `skip` cũ và giữ nó mãi (staleTime vô hạn).
-      await client.refetchQueries({ queryKey: ["listen", "book", book.id] }).catch(() => undefined);
-      // Các đoạn của chương đổi: bỏ kịch bản chữ đã dựng (khoá ["listen", "script", …]) cùng mọi thứ của trang nghe.
-      client.removeQueries({ queryKey: ["listen", "script", book.id] });
-      refreshAfterEdit(client, book.id);
-    },
-    onError: (error) => toast.error("Chưa đổi được phần đọc", { description: (error as Error).message }),
-  });
-  const groups = groupSuggestions(query.data?.suggestions ?? []);
-  if (!groups.length) return null;
-  const pending = groups.filter((group) => !group.skipped).length;
+  const { groups, toggle } = suggestions;
   return (
-    <section className="mt-4 max-w-xl rounded-xl border border-line bg-hover p-3 text-left">
-      <h2 className="text-sm font-medium">
-        Gợi ý cho phần đọc{pending ? ` · ${pending} chưa áp` : ""}
-      </h2>
+    <>
       <p className="mt-0.5 text-xs text-fg-2 text-pretty">
         Dòng ghi công của người dịch, lời xin ủng hộ hay nguồn truyện ở đầu hoặc cuối chương. Bỏ dòng này chỉ khiến màn đọc và giọng đọc bỏ qua nó - chữ của sách vẫn giữ
         nguyên, bỏ chọn là đọc lại.
-        {track?.bookId === book.id && " Chương đang nghe sẽ đổi từ lần nghe sau; các chương khác đổi ngay."}
+        {track?.bookId === bookId && " Chương đang nghe sẽ đổi từ lần nghe sau; các chương khác đổi ngay."}
       </p>
       <div className="mt-2">
         <SuggestionChoices
@@ -128,6 +158,69 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
           </p>
         )}
       </div>
+    </>
+  );
+}
+
+/** Trang sách (cuốn chỉ-có-chữ sửa được): gợi ý còn chờ và gợi ý đã áp, chọn / bỏ chọn được bất cứ lúc nào. Đã "Bỏ qua gợi ý" (và không còn
+ *  gợi ý mới) thì thẻ thu lại thành một dòng mở lại được. */
+export function BookSuggestions({ book }: { book: ListenBook }) {
+  const suggestions = useBookSuggestions(book.id);
+  const [open, setOpen] = useState(false);
+  const { groups, pending, dismiss } = suggestions;
+  if (!groups.length) return null;
+  const quiet = !pending && !groups.some((group) => group.skipped);
+  if (quiet && !open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="mt-3 text-left text-xs font-medium text-accent-text hover:underline">
+        Xem lại gợi ý cho phần đọc
+      </button>
+    );
+  }
+  return (
+    <section className="mt-4 max-w-xl rounded-xl border border-line bg-hover p-3 text-left">
+      <h2 className="text-sm font-medium">
+        Gợi ý cho phần đọc{pending ? ` · ${pending} chưa áp` : ""}
+      </h2>
+      <SuggestionsBody bookId={book.id} suggestions={suggestions} />
+      {pending > 0 && (
+        <Button size="sm" variant="ghost" className="mt-2" onClick={() => {
+          dismiss();
+          setOpen(false);
+        }}>
+          Bỏ qua gợi ý - giữ sách như cũ
+        </Button>
+      )}
     </section>
+  );
+}
+
+/** Nút ở trình phát (soát a70: gợi ý chỉ có ở trang sách): cuốn đang phát có gợi ý thì mở được hộp gợi ý ngay tại đây. */
+export function SuggestionsButton({ bookId, className }: { bookId: string; className?: string }) {
+  const [open, setOpen] = useState(false);
+  const suggestions = useBookSuggestions(bookId);
+  const { groups, pending, dismiss } = suggestions;
+  if (!groups.length) return null;
+  const label = pending ? `Gợi ý cho phần đọc (${pending} chưa áp)` : "Gợi ý cho phần đọc";
+  return (
+    <>
+      <IconButton label={label} icon={Lightbulb} size="sm" className={className} onClick={() => setOpen(true)} />
+      <Dialog open={open} onOpenChange={setOpen} title="Gợi ý cho phần đọc">
+        <SuggestionsBody bookId={bookId} suggestions={suggestions} />
+        <div className="mt-5 dialog-actions">
+          {pending > 0 && (
+            <Button variant="ghost" onClick={() => {
+              dismiss();
+              setOpen(false);
+            }}>
+              Bỏ qua gợi ý
+            </Button>
+          )}
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            Đóng
+          </Button>
+        </div>
+      </Dialog>
+    </>
   );
 }

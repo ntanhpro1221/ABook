@@ -252,6 +252,7 @@ object BookFileImport {
                 staging.deleteRecursively()
             }
             Store.rememberChapters(target, chapters, imported = existing == null || Store.isImported(existing))
+            if (existing == null) BookEdits.markSaved(Store.bookDir(target)) // edits that came inside the file are not "unsaved" (a70)
             return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"), keptEdits, brokenMusic.size)
         }
     }

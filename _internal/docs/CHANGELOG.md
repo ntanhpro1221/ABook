@@ -7,6 +7,31 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Sửa ngay trong trình phát: ở tab "Đọc theo", chạm một câu hay một chữ là mở cùng menu như màn Đọc (Sửa cách đọc, Ai nói câu này, Dấu trang, Chép). Nút Đọc ở trang sách mở đúng chương đang phát.
+- Đổi chương ở màn Đọc thì câu, chữ đang chọn được bỏ chọn.
+- Lưu cách đọc ở sách chữ có Hoàn tác, và cách đọc mới áp từ đoạn sau. Thông báo Hoàn tác giữ 15 giây và không che nút "Nghe từ đây". "Sửa câu này" liệt kê các cách đọc trong câu, mỗi cái bỏ được bằng một nút.
+- Nghe thử cách đọc dùng cùng phép kiểm như khi Lưu. Cách đọc bị từ chối thì ABook nói rõ lý do.
+- Người vừa tạo hiện ngay trong danh sách "Ai nói" của mọi câu. Câu bạn gán cho vai phụ không tên ghi đúng "vai phụ không tên".
+- Dấu trang đặt từ trình phát khi nghe sách chữ giữ câu đang đọc, nên danh sách dấu trang hiện câu ấy.
+- Gợi ý cho phần đọc (dòng ghi công, lời xin ủng hộ) mở được từ trình phát. Nút "Bỏ qua gợi ý" tắt thẻ "chưa áp" khi bạn muốn giữ sách như cũ. Gợi ý vẫn không tự áp.
+- Nút Lưu chỉ đếm thay đổi bạn làm từ lần mở file hay lần lưu trước.
+
+### Hai máy
+
+- Sửa gửi từ điện thoại áp ngay trên máy tính, và điện thoại nói đúng như vậy. Phần cần thu lại giọng ghi riêng: Studio sẽ thu lại khi bạn mở dự án trên máy tính.
+- Hai máy cùng đổi người nói một câu thì bản sau vẫn thắng. Máy bị đè hiện lời báo cụ thể, có nút đặt lại bản của máy ấy. "Việc đang chờ" ghi rõ việc đến từ máy nào.
+- Cách đọc, dòng bỏ khỏi phần đọc và người nói đặt trên máy tính giờ cũng có trên điện thoại.
+- Dấu trang đặt trên điện thoại sang máy tính. Hai lần chạm liền nhau không còn tạo hai dấu trang. Sửa ghi chú trên một máy không bị bản cũ của máy kia đè. Hoàn tác xoá dấu trang không bị xoá lại, và dấu trang giữ giờ đặt ban đầu.
+
+### Điện thoại
+
+- Ở tab "Đọc theo", menu sửa của ABook thay menu Chép/Chia sẻ của hệ thống, và vẫn có "Chép".
+- Đổi cách đọc thì đoạn đã đọc sẵn được đọc lại theo cách mới, kể cả khi bạn tua lùi.
+- Thông báo dấu trang đặt ở màn Đọc có nút "Ghi chú".
+- Ghép xong mà chưa sửa gì thì ABook không còn báo "8 thay đổi đã áp".
+
 ## [0.4.110] - 2026-10-20
 
 ### Nghe ngay
