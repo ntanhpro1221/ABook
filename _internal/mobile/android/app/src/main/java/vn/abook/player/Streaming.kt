@@ -46,9 +46,10 @@ object Streaming {
 
     /**
      * Nguồn media cho ExoPlayer: file:// đọc thẳng; https:// mang mã thiết bị (đọc lại mỗi lần - ghép lại thì mã đổi). Chứng
-     * chỉ máy kia được ghim ở HttpsURLConnection mặc định ([Pin.install]) - DefaultHttpDataSource đi qua đó.
+     * chỉ máy kia được ghim ở HttpsURLConnection mặc định ([Pin.install]) - DefaultHttpDataSource đi qua đó. `exactMp3Seek`: mp3 tua
+     * đúng khung ([ExactSeekMp3Extractor]) - chỉ nhạc nền bật (lặp mờ chéo vào lại đúng loopStart); audio chương giữ cách tách mặc định.
      */
-    fun mediaSourceFactory(context: Context): MediaSource.Factory {
+    fun mediaSourceFactory(context: Context, exactMp3Seek: Boolean = false): MediaSource.Factory {
         Pin.install(context)
         val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(5000).setReadTimeoutMs(20_000)
         val authorized = ResolvingDataSource.Factory(http) { spec ->
@@ -61,7 +62,7 @@ object Streaming {
         val normal = DefaultDataSource.Factory(context, cached)
         // Clip Edge đang đọc dở của Nghe ngay (abooklive://, uxfix57) đi qua nguồn riêng; mọi thứ khác như cũ.
         val routed = DataSource.Factory { LiveRoutingDataSource(LiveClipDataSource(), normal.createDataSource()) }
-        return DefaultMediaSourceFactory(routed, liveAwareExtractors())
+        return DefaultMediaSourceFactory(routed, liveAwareExtractors(exactMp3Seek))
     }
 
     /**
@@ -70,12 +71,17 @@ object Streaming {
      */
     fun liveExtractors(): Array<Extractor> = arrayOf(Mp3Extractor(Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING or Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING_ALWAYS))
 
-    private fun liveAwareExtractors(): ExtractorsFactory {
+    /** Mp3Extractor của bộ mặc định đổi thành [ExactSeekMp3Extractor]; các bộ tách khác và thứ tự giữ nguyên. */
+    internal fun withExactMp3Seek(extractors: Array<Extractor>): Array<Extractor> =
+        Array(extractors.size) { if (extractors[it].underlyingImplementation is Mp3Extractor) ExactSeekMp3Extractor() else extractors[it] }
+
+    private fun liveAwareExtractors(exactMp3Seek: Boolean): ExtractorsFactory {
         val normal = DefaultExtractorsFactory()
+        fun exact(extractors: Array<Extractor>) = if (exactMp3Seek) withExactMp3Seek(extractors) else extractors
         return object : ExtractorsFactory {
-            override fun createExtractors(): Array<Extractor> = normal.createExtractors()
+            override fun createExtractors(): Array<Extractor> = exact(normal.createExtractors())
             override fun createExtractors(uri: Uri, responseHeaders: MutableMap<String, MutableList<String>>): Array<Extractor> =
-                if (uri.scheme == LiveClips.SCHEME) liveExtractors() else normal.createExtractors(uri, responseHeaders)
+                if (uri.scheme == LiveClips.SCHEME) liveExtractors() else exact(normal.createExtractors(uri, responseHeaders))
         }
     }
 
