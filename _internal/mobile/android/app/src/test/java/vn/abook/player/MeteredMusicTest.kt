@@ -36,4 +36,13 @@ class MeteredMusicTest {
         assertFalse("Wi-Fi", holds("", metered = false))
         assertFalse("Tự chọn nhạc nền tắt, chưa chọn gì: không có nhạc", holds("", auto = false))
     }
+
+    @Test
+    fun onlyRealMobileDataCountsNotNoNetworkAtAll() {
+        // Soát a66: không có mạng nào mà thẻ tải vẫn nói "đang dùng dữ liệu di động" (isActiveNetworkMetered = true khi không có mạng).
+        assertFalse("không có mạng", AndroidMusicStudent.onMobileData(network = false, internet = false, cellular = false))
+        assertFalse("Wi-Fi", AndroidMusicStudent.onMobileData(network = true, internet = true, cellular = false))
+        assertFalse("sóng di động chưa có Internet", AndroidMusicStudent.onMobileData(network = true, internet = false, cellular = true))
+        assertTrue("dữ liệu di động", AndroidMusicStudent.onMobileData(network = true, internet = true, cellular = true))
+    }
 }

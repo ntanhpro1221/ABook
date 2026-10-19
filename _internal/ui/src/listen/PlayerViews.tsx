@@ -1221,7 +1221,7 @@ function TrackSubtitle() {
  *  "Đọc bằng …" (đổi giọng cuốn này rồi phát tiếp), chưa thì "Tải giọng VieNeu" (tới thẻ tải giọng trong Cài đặt). Mạng về thì tự "Thử lại" (onlineRetry.ts).
  *  `overlay`: trong màn "Đang nghe"; ở thanh phát thì không đè lên màn Cài đặt (nơi người nghe đang đi tải giọng). */
 function PlayerAlert({ className, overlay = false, compact = false }: { className?: string; overlay?: boolean; compact?: boolean }) {
-  const { error, notice, resume, retry, dismissError, track } = usePlayer();
+  const { error, notice, resume, retry, dismissError, wantsPlay, track } = usePlayer();
   const { setExpanded } = useNowPlaying();
   const openVoiceSettings = useOpenVoiceSettings();
   const { pathname } = useLocation();
@@ -1229,7 +1229,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
   const offline = Boolean(error) && isNoOfflineVoice(error);
   // Mất mạng, hay giọng có mạng mà hỏng (dịch vụ từ chối, lỗi, không phản hồi) và máy không có giọng nào khác: cùng một câu ngắn + cùng đường ra.
   const stuck = Boolean(error) && isVoiceStuck(error);
-  useRetryWhenOnline(offline, retry);
+  useRetryWhenOnline(offline, retry, dismissError, wantsPlay);
   if (error) {
     if (!overlay && pathname.startsWith("/settings")) return null;
     const current = voices && track ? resolveVoice(voices, chosenVoice(track.bookId)) : undefined;
@@ -1408,7 +1408,7 @@ export function PlayerBar({
             aria-label="Mở màn hình đang nghe"
             title={`${track.chapterTitle} · ${track.bookTitle}`}
           >
-            <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className={cn("size-11", !expanded && "cover-morph")} />
+            <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} className={cn("size-11", !expanded && "cover-morph")} />
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold">{track.chapterTitle}</div>
               <div className="truncate text-xs text-fg-2">
@@ -1454,7 +1454,7 @@ export function PlayerBar({
           aria-label="Mở màn hình đang nghe"
           title={`${track.chapterTitle} · ${track.bookTitle}`}
         >
-          <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className={cn("size-12", !expanded && "cover-morph")} />
+          <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} className={cn("size-12", !expanded && "cover-morph")} />
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold">{track.chapterTitle}</div>
             <div className="truncate text-xs text-fg-2">
@@ -1963,11 +1963,15 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
     };
   }, [open, titleChapter, titleBook]);
 
-  // Mở: đưa focus vào nút Phát; đóng: trả focus về chỗ đã mở.
+  // Mở: đưa focus vào nút Phát; đóng: trả focus về chỗ đã mở. Mở ra kèm một menu (nút "Chọn giọng khác" ở thanh gọn mở luôn menu Giọng đọc):
+  // focus đã vào menu ấy thì để yên - kéo focus đi là menu tự đóng (soát a66: phải bấm lần hai).
   useEffect(() => {
     if (!open) return;
     opener.current = document.activeElement as HTMLElement | null;
-    const timer = window.setTimeout(() => section.current?.querySelector<HTMLElement>("[data-player-toggle]")?.focus(), 30);
+    const timer = window.setTimeout(() => {
+      if (document.activeElement?.closest("[data-radix-popper-content-wrapper]")) return;
+      section.current?.querySelector<HTMLElement>("[data-player-toggle]")?.focus();
+    }, 30);
     return () => {
       window.clearTimeout(timer);
       opener.current?.focus?.();
