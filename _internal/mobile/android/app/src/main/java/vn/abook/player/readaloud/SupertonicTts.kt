@@ -238,7 +238,8 @@ class SupertonicSpeaker(
     /** Sentences of one unit -> the text to read ([SeaG2p.normalizeUnit]; the sentences joined when sea-g2p is not on the phone). */
     private val normalize: (List<String>) -> String,
 ) {
-    fun speak(engine: SupertonicSynth, name: String, text: String, origin: String? = null, readings: Map<String, String>? = null): VieneuSpeaker.Spoken {
+    /** [live]: the paragraph the listener is waiting for streams - each unit goes to it as soon as it is read ([LocalLive]). */
+    fun speak(engine: SupertonicSynth, name: String, text: String, origin: String? = null, readings: Map<String, String>? = null, live: LocalLive? = null): VieneuSpeaker.Spoken {
         val (tokens, units) = VieneuUnits.units(text, SupertonicText.MAX_CHARS, origin, readings)
         val waves = ArrayList<FloatArray>()
         val pauses = ArrayList<Double>()
@@ -247,8 +248,8 @@ class SupertonicSpeaker(
             val spoken = normalize(unit.pieces)
             val random = NumpyRandomState(VieneuSpeaker.seedOf(SupertonicVoices.PREFIX, name, unit.pieces.joinToString(" ")))
             waves.add(SupertonicText.louder(engine.infer(spoken, name, random, SupertonicText.speedFor(spoken)), params))
-            val last = spoken.trimEnd().lastOrNull()
-            pauses.add(VieneuAudio.GAP_SECONDS.getValue(if (last == null || last in ".!?") "sentence" else "minor"))
+            pauses.add(VieneuAudio.gapAfter(spoken))
+            live?.unit(waves.last(), engine.sampleRate, spoken)
         }
         val (joined, spans) = VieneuAudio.join(waves, engine.sampleRate, pauses.dropLast(1))
         return VieneuSpeaker.timed(tokens, units, joined, spans, engine.sampleRate)
@@ -345,16 +346,24 @@ object SupertonicVoices {
         val name = voice.removePrefix("$PREFIX:")
         if (name !in NAMES) throw VoiceException("Không có giọng Supertonic này.", reason = "voice")
         val (loaded, speaker) = ready(VoiceSpeed.isFast(tag))
+        val live = LocalLive.here(out, text, SupertonicText.MAX_CHARS, origin, readings) // the paragraph the listener waits for: unit by unit
         val spoken = try {
-            speaker.speak(loaded, name, text, origin, readings)
+            speaker.speak(loaded, name, text, origin, readings, live)
         } catch (failure: OutOfMemoryError) {
             forget()
-            throw VoiceException("Điện thoại không đủ bộ nhớ cho giọng Supertonic lúc này.", cause = failure, reason = "voice")
+            VoiceException("Điện thoại không đủ bộ nhớ cho giọng Supertonic lúc này.", cause = failure, reason = "voice").let {
+                live?.failed(it)
+                throw it
+            }
+        } catch (failure: Exception) {
+            live?.failed(failure)
+            throw failure
         } finally {
             if (engine != null) idle.used() // idle minutes count from the end of the last read
         }
         if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
-        VieneuAudio.writeWav(ClipLift.lifted(voice, spoken.samples, spoken.rate, ClipLift.params(context)), spoken.rate, out) // short quiet lines up to the voice level (as service.clip); [voice] is the bare id: both tiers share one level
+        val final = ClipLift.lifted(voice, spoken.samples, spoken.rate, ClipLift.params(context)) // short quiet lines up to the voice level (as service.clip); [voice] is the bare id: both tiers share one level
+        if (live != null) live.finish(final, spoken.rate) else VieneuAudio.writeWav(final, spoken.rate, out)
         return Clip(out, spoken.durationMs, spoken.words, voice)
     }
 

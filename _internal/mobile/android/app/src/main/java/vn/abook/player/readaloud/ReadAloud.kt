@@ -83,8 +83,16 @@ object ReadAloud {
         @Volatile var cutWord = -1
         /** [onLiveCut] đã xin phần nối sớm cho lượt này. Luồng chính. */
         var cutHandled = false
+        /** Tốc độ phát lúc xin (giọng trên máy, [LiveClips.Target.speed]). */
+        @Volatile var speed = 1f
 
         override fun accepting() = !started
+
+        override fun format(durationMs: (Long) -> Long) {
+            entry.durationOf = durationMs
+        }
+
+        override fun speed() = speed
 
         override fun grew(file: File, total: Long) {
             entry.grew(file, total)
@@ -704,7 +712,7 @@ object ReadAloud {
             chap.timeline, { seg -> chap.clips.getOrNull(seg) ?: growing?.takeIf { it.segment == seg }?.let(::growingClip) },
             { seg -> (0 until exo.mediaItemCount).any { i -> (exo.getMediaItemAt(i).localConfiguration?.tag as? Slot)?.let { it.chapterIndex == index && it.segment == seg } == true } },
             ms, segment, word,
-            growing = { seg -> growing?.takeIf { it.segment == seg }?.let { job -> (job.resume?.baseMs ?: 0L).let { base -> SeekPlan.Growing(base + job.heardMs, base + EdgeProtocol.durationMs(job.entry.written())) } } },
+            growing = { seg -> growing?.takeIf { it.segment == seg }?.let { job -> (job.resume?.baseMs ?: 0L).let { base -> SeekPlan.Growing(base + job.heardMs, base + job.entry.durationMs()) } } },
         )
         when (plan) {
             is SeekPlan.Plan.InClip -> {
@@ -720,7 +728,7 @@ object ReadAloud {
     /** Clip TẠM của đoạn đang phát luồng cho [SeekPlan.plan]: độ dài = phần đã về, mốc chữ tạm, trên đồng hồ của đoạn. */
     private fun growingClip(job: LiveJob): Clip {
         val base = job.resume?.baseMs ?: 0L
-        return Clip(job.entry.file() ?: File(""), base + EdgeProtocol.durationMs(job.entry.written()), job.chap.liveWords[job.segment].orEmpty(), job.voice, job.tail, base)
+        return Clip(job.entry.file() ?: File(""), base + job.entry.durationMs(), job.chap.liveWords[job.segment].orEmpty(), job.voice, job.tail, base)
     }
 
     /** Sang chương `index` (nút Sau/Trước, danh sách chương, giao diện nhảy thẳng tới chữ). */
@@ -916,6 +924,7 @@ object ReadAloud {
         val aim = waiting?.takeIf { it.chapterIndex == chap.index && it.segment == segment }
         val liveJob = if (LivePolicy.streams(voice, online, rank, probe, aim?.offsetMs, aim?.word ?: -1)) LiveJob(token, chap, segment, voice, continuing) else null
         liveJob?.cancel = cancel
+        liveJob?.speed = Playback.player?.playbackParameters?.speed ?: 1f
         running = liveJob
         // Lượt này còn là việc hiện hành ở luồng đọc (thử lại, đọc lại sau lượt song song hỏng): cùng thế hệ, hay là lượt phát luồng được giữ qua lần đổi giọng ([kept]).
         val alive = { token == generation || (liveJob != null && liveJob === kept) }
@@ -1094,7 +1103,7 @@ object ReadAloud {
         val chap = job.chap
         val segment = job.segment
         val base = job.resume?.baseMs ?: 0L
-        val received = base + EdgeProtocol.durationMs(job.entry.written())
+        val received = base + job.entry.durationMs()
         val words = chap.liveWords[segment].orEmpty()
         val heard = minOf(base + job.heardMs, received)
         if (early != null) {
@@ -1181,7 +1190,7 @@ object ReadAloud {
         val chap = job.chap
         val segment = job.segment
         val base = job.resume?.baseMs ?: 0L
-        val duration = base + EdgeProtocol.durationMs(job.entry.written())
+        val duration = base + job.entry.durationMs()
         val words = chap.liveWords[segment].orEmpty().map { Span(minOf(it.start, duration), minOf(it.end, duration)) }
         if (resume?.let { it.chap === chap && it.segment == segment } == true) resume = null
         chap.clips[segment] = Clip(job.entry.file() ?: File(""), duration, words, job.voice, job.tail, base)

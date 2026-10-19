@@ -18,6 +18,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.json.JSONObject
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -34,7 +35,11 @@ import vn.abook.player.readaloud.LiveSink
 import vn.abook.player.readaloud.LiveWords
 import vn.abook.player.readaloud.SeekPlan
 import vn.abook.player.readaloud.Span
+import vn.abook.player.readaloud.SupertonicModule
+import vn.abook.player.readaloud.SupertonicText
+import vn.abook.player.readaloud.SupertonicVoices
 import vn.abook.player.readaloud.VoiceException
+import vn.abook.player.vieneu.VieneuVoices
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.CountDownLatch
@@ -52,6 +57,7 @@ import java.util.concurrent.atomic.AtomicReference
  *  2. Tua trong phần đã ghi khi clip CHƯA xong (feeder giả: mp3 tổng hợp ghi dần nhanh hơn thời gian thực): sau khi có >= 3 giây tiếng, tua về 1 giây rồi tới 2,5 giây -> phát tiếp, không lỗi.
  *  3. Đứt giữa luồng giả lập ([LiveClips.Entry.fail] sau 4,8 giây tiếng, không mạng): phát tới byte cuối đã ghi rồi ENDED, không ném lỗi (uxfix58 e); [LiveWords] + [SeekPlan.resumeWord]
  *     cho ra chữ tiếp đúng (chữ đầu tiên chưa nghe).
+ *  4. Giọng trên máy đã tải ([LocalLive]): WAV lớn dần theo khúc vào ExoPlayer, tiếng đầu trước -> sau, khựng, clip cuối trùng từng byte.
  * Mp3 của mục 2-3 là khung tổng hợp (MPEG-2 lớp III 48 kbps 24 kHz đơn kênh, thân khung toàn số 0 = im lặng, hợp lệ cho bộ giải mã): đủ để kiểm đường dữ liệu / tách / tua / hết luồng.
  * Kết quả: logcat (thẻ `ABOOK_LIVE`), `INSTRUMENTATION_STATUS` của am instrument và `files/live-stream/result.json` của app để `adb pull`.
  *
@@ -382,10 +388,95 @@ class LiveStreamOnDeviceTest {
         assertEquals("chữ đầu tiên chưa nghe", 9, resume)
     }
 
+    // ---- 4. Giọng trên máy: WAV lớn dần theo khúc ---------------------------------------------------------------------------------
+
+    /**
+     * Giọng trên máy đã tải trong app hay đẩy vào /data/local/tmp/{supertonic,vieneu} như mô-đun tải về ([StagedModule]; Supertonic hai bậc, VieNeu Nano; không có thì bỏ qua)
+     * đọc ba đoạn như bài đo máy tính: lần đầu (model chưa nạp), đầu chương,
+     * đoạn dài giữa chương. Mỗi đoạn hai lần: không phát luồng (đọc xong cả đoạn rồi phát file: tiếng đầu = đọc xong + READY) và phát luồng ([LocalLive] -> [LiveClips]
+     * -> ExoPlayer; WavExtractor đọc WAV cỡ 0xFFFFFFFF tới hết byte). Clip cuối hai lần trùng từng byte; ghi tiếng đầu (READY), số lần khựng sau READY, khe lớn nhất.
+     */
+    @Test
+    fun localVoicesStreamUnitByUnitIntoExoPlayer() {
+        // VieNeu first: its staged folder carries the runtime (ort/, g2p/) Supertonic needs too
+        File("/data/local/tmp/vieneu").takeIf { File(it, "nano/config.json").isFile }?.let { StagedModule.install(it, VieneuVoices.module(context), listOf("nano")) }
+        File("/data/local/tmp/supertonic").takeIf { File(it, "model/config.json").isFile }?.let { staged ->
+            val fast = File(staged, SupertonicText.FAST_ESTIMATOR).isFile
+            StagedModule.install(staged, SupertonicVoices.module(context), listOfNotNull(SupertonicModule.CHOICE, SupertonicModule.FAST_CHOICE.takeIf { fast }))
+        }
+        val voices = buildList {
+            if (SupertonicVoices.voices(context).isNotEmpty()) {
+                add("supertonic:F1")
+                if (SupertonicVoices.module(context).fastEstimator() != null) add("supertonic:F1#fast${SupertonicText.FAST_STEPS}")
+            }
+            VieneuVoices.voices(context).firstOrNull { it.id.startsWith("vieneu:nano/") }?.let { add(it.id) }
+        }
+        assumeTrue("chưa tải giọng trên máy nào", voices.isNotEmpty())
+        val only = InstrumentationRegistry.getArguments().getString("local") // `-e local supertonic:F1/jump`: chỉ một giọng / một đoạn
+        for (voice in voices) for ((scene, text) in LOCAL_TEXTS) {
+            if (only != null && only !in setOf(voice, scene, "$voice/$scene")) continue
+            fun read(out: File): Clip {
+                if (scene == "first") { // model chưa nạp: như sang sách khác lần đầu
+                    SupertonicVoices.forget()
+                    VieneuVoices.forget()
+                }
+                return if (voice.startsWith("vieneu:")) VieneuVoices.synthesize(voice, text, out) else SupertonicVoices.synthesize(voice, text, out)
+            }
+            val plain = File(dir, "plain.wav")
+            val before = Harness()
+            before.mark()
+            val clip = read(plain)
+            val madeMs = before.now()
+            before.play(android.net.Uri.fromFile(plain).toString())
+            assertTrue(before.awaitReady(30_000))
+            before.release()
+            val entry = LiveClips.create()
+            val harness = Harness()
+            val grows = java.util.Collections.synchronizedList(ArrayList<LongArray>()) // (ms từ lúc gọi, ms tiếng đã ghi)
+            val target = object : LiveClips.Target {
+                override fun accepting() = true
+                override fun format(durationMs: (Long) -> Long) {
+                    entry.durationOf = durationMs
+                }
+                override fun grew(file: File, total: Long) {
+                    entry.grew(file, total)
+                    grows += longArrayOf(harness.now(), entry.durationMs())
+                    if (grows.size == 1) harness.play(LiveClips.uri(entry.id))
+                }
+                override fun words(words: List<Span>, durationMs: Long, heardMs: Long) {}
+                override fun done(total: Long) = entry.finish(total)
+                override fun failed(error: Exception) = entry.fail(error)
+            }
+            val live = File(dir, "live.wav")
+            harness.mark()
+            LiveClips.receiving(target) { read(live) }
+            val doneMs = harness.now()
+            if (grows.isEmpty()) harness.play(android.net.Uri.fromFile(live).toString()) // đoạn một khúc / máy chậm tới hết: phát file như trước
+            assertTrue("phát hết", harness.awaitEnd(clip.durationMs + 60_000))
+            assertNull("ExoPlayer lỗi: ${harness.error}", harness.error)
+            assertArrayEquals("clip cuối trùng từng byte", plain.readBytes(), live.readBytes())
+            // tiếng tới đầu phần ghi lần i lúc READY + phần đã ghi trước đó (tốc độ 1): ghi muộn hơn = khe
+            val gap = (1 until grows.size).maxOfOrNull { grows[it][0] - (harness.readyAt + grows[it - 1][1]) }?.coerceAtLeast(0) ?: 0
+            report("local", JSONObject().put("voice", voice).put("scene", scene).put("chars", text.length).put("clipMs", clip.durationMs)
+                .put("beforeMadeMs", madeMs).put("beforeFirstAudioMs", before.readyAt).put("afterFirstByteMs", grows.firstOrNull()?.get(0) ?: -1)
+                .put("afterFirstAudioMs", harness.readyAt).put("afterMadeMs", doneMs).put("grows", grows.size).put("rebuffersAfterReady", harness.rebuffers)
+                .put("maxGapMs", gap).put("finalPositionMs", harness.position()))
+            harness.release()
+        }
+    }
+
     private companion object {
         const val TAG = "ABOOK_LIVE"
         const val FRAME = 144
         /** 48 kbps = 6 byte mỗi mili giây. */
         const val BYTES_PER_MS = 6L
+        /** Ba đoạn của bài đo máy tính (lần đầu, đầu chương, đoạn dài giữa chương). */
+        val LOCAL_TEXTS = linkedMapOf(
+            "first" to "Khi ánh đèn trong phòng vụt tắt, cả ngôi nhà chìm vào bóng tối. Chỉ còn tiếng đồng hồ gõ nhịp đều đặn, như một nhịp tim đang chờ đợi. Cô gái ngồi yên bên cửa sổ, lặng lẽ nhìn ra con phố vắng.",
+            "open" to "Sáng hôm sau, trời trong vắt sau cơn mưa đêm. Anh bước ra sân, hít một hơi thật sâu mùi đất ẩm, rồi chậm rãi đi về phía cổng làng, nơi mấy đứa trẻ đang ríu rít chơi đùa dưới gốc đa già.",
+            "jump" to "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Ông lão chèo đò cất tiếng hát, giọng khàn khàn mà ấm. " +
+                "Hai bên bờ, những rặng tre nghiêng mình soi bóng xuống mặt nước lấp lánh. Đứa cháu ngồi ở mũi thuyền, tay vẫy vẫy đàn cò trắng bay ngang. " +
+                "Nắng chiều đổ xuống, nhuộm vàng cả một khúc sông dài. Ai cũng im lặng, như sợ làm vỡ khoảnh khắc yên bình ấy.",
+        )
     }
 }

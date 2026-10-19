@@ -12,12 +12,12 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Callable, Iterator, Mapping, Protocol
 
-from . import azure, edge, fpt, google, loudness, names, readings as book_readings, spoken, supertonic, vieneu, viettel, windows
+from . import azure, edge, fpt, google, local_stream, loudness, names, readings as book_readings, spoken, supertonic, vieneu, viettel, windows
 from .byok import KeyedProvider
 from .cache import ClipBooks, ClipCache, clip_key
 from .keys import KeyStore
 from .mapping import Boundary, fold, map_boundaries, tokens
-from .model import Synthesis, Voice, VoiceError, cancellable
+from .model import Synthesis, Voice, VoiceError, cancellable, hearing
 from .prepare import SHARE as PREPARE_SHARE
 from .prepare import Prepare
 
@@ -48,6 +48,12 @@ class StreamListener(Protocol):
         """Mốc từng chữ hiện tạm tính trên phần đã phát (chữ chưa tới đứng cuối phần ấy); `duration_ms` = độ dài phần đã phát; cái sau thay cái trước. `heard_ms` = mốc kết thúc của chữ
         THẬT cuối cùng Edge đã báo: chữ có mốc bắt đầu từ đó trở đi là chữ chưa tới (bị dồn về cuối phần đã phát), chữ trước đó thì đã có tiếng - luồng đứt giữa chừng thì phần tiếp
         bắt đầu từ chữ đầu tiên chưa có tiếng (trình phát, uxfix58)."""
+
+    def format(self, mime: str) -> None:
+        """Kiểu tiếng của luồng, trước `audio` đầu - chỉ giọng trên máy (local_stream.MIME); không gọi = MP3 (Edge)."""
+
+    def replaced(self) -> None:
+        """Giọng trên máy: tiếng đã phát luồng khác clip cuối (local_stream.LocalStream.close) - người nghe chuyển sang clip cuối."""
 
     def cut(self, word: int) -> None:
         """Một mảnh giữa clip hỏng hẳn (uxfix63, [edge.StreamSink]): tiếng sẽ dừng trước chữ HIỆN `word` (0-based) - phần trước nó vẫn về hết rồi luồng mới báo lỗi. Người nghe xin phần tiếp từ
@@ -203,16 +209,18 @@ class ReadAloud:
         if providers is None:
             providers = [EdgeProvider(), *(keyed_providers(keys) if keys is not None else []), DeviceProvider(self.folder / "tools")]
         self.providers: dict[str, Provider] = {provider.id: provider for provider in providers}
-        self.vieneu = vieneu.VieneuProvider(vieneu_locate, engines=vieneu_engines) if vieneu_locate is not None else None
+        # giọng trên máy báo từng khúc vừa đọc (phát luồng, local_stream.py); bộ căn chữ nhớ phần đã căn lúc phát luồng cho clip cuối
+        self.vieneu = (vieneu.VieneuProvider(vieneu_locate, engines=local_stream.reporting(vieneu_engines), aligner=local_stream.remembering_aligner)
+                       if vieneu_locate is not None else None)
         if self.vieneu is not None:
             self.providers[self.vieneu.id] = self.vieneu
-        self.supertonic = supertonic.SupertonicProvider(supertonic_locate) if supertonic_locate is not None else None
+        self.supertonic = supertonic.SupertonicProvider(supertonic_locate, aligner=local_stream.remembering_aligner) if supertonic_locate is not None else None
         if self.supertonic is not None:
             self.providers[self.supertonic.id] = self.supertonic
         # Bậc "Nhanh hơn": nhà cung cấp thứ hai của cùng giọng (engine riêng, nên Nghe ngay và việc xuất không tranh nhau một engine).
         self.fast: dict[str, Provider] = {}
         if supertonic_fast_locate is not None:
-            self.fast[supertonic.PREFIX] = supertonic.SupertonicProvider(supertonic_fast_locate)
+            self.fast[supertonic.PREFIX] = supertonic.SupertonicProvider(supertonic_fast_locate, aligner=local_stream.remembering_aligner)
         self._speed = speed
         self._model_mark = model_mark
         self._locks: dict[str, threading.Lock] = {}
@@ -376,6 +384,7 @@ class ReadAloud:
         đi trước khi hết chỗ kết nối; không nói thì đứng sau mọi đoạn có rank.
         `stream`: người nghe clip đang đọc (uxfix56) - CHỈ khi chưa có trong bộ đệm, không `cached_only` / `background`, giọng có `ranks_requests` và `rank` == 0 (đoạn người nghe đang đứng chờ):
         tiếng + mốc chữ tạm chảy tới đó ngay khi về (`StreamListener`); xong vẫn vào bộ đệm đúng như không phát luồng và trả dict như thường (người gọi gửi bản cuối). Ngoài ra `stream` bị bỏ qua.
+        Giọng trên máy cũng vậy khi `stream.local` (trình phát nhận được FLAC): từng khúc vừa đọc xong đi ngay (local_stream.py, chờ đủ tiếng theo `stream.speed`), clip cuối không đổi một byte.
         `cancelled`: người gọi bỏ clip được giữa chừng (Huỷ xuất sách nói soát a62; người nghe nhảy đi nơi khác - máy chủ giao diện: trình phát đóng kết nối): đang chờ lượt
         đọc cùng đoạn, đang đọc bằng giọng có `ranks_requests` (Edge, ổ cắm bị cắt) hay bằng giọng trên máy (engine hỏi `model.stop_if_cancelled` giữa các khúc và các bước,
         uxfix70) thì dừng trong vòng một phần giây với `VoiceError` lý do "cancelled" và không có gì vào bộ đệm. Giọng khác đọc nốt đoạn đang đọc.
@@ -434,6 +443,7 @@ class ReadAloud:
                             slots = None
                         else:
                             said, slots = (text, None) if reads_names else book_readings.spoken_layout(text, readings)
+                        local = None  # giọng trên máy phát luồng: người nghe từng khúc (local_stream.LocalStream)
                         if not reads_names:
                             ranked = getattr(provider, "ranks_requests", False)
                             if ranked and stream is not None and rank == 0 and not background:
@@ -443,10 +453,14 @@ class ReadAloud:
                             else:
                                 made = provider.synthesize(said, native, rank=rank) if ranked else provider.synthesize(said, native)
                         else:
-                            with cancellable(cancelled):  # engine hỏi cờ giữa các khúc / bước (model.stop_if_cancelled)
+                            if stream is not None and rank == 0 and not background and getattr(stream, "local", False):
+                                local = local_stream.for_clip(stream, provider, native, text, origin, readings if tags[1] else None, getattr(stream, "speed", 1.0))
+                            with cancellable(cancelled), hearing(local):  # engine hỏi cờ giữa các khúc / bước (model.stop_if_cancelled)
                                 made = provider.synthesize(text, native, origin, readings) if tags[1] else provider.synthesize(text, native, origin)
                         if lifted and made.ext == "wav":
                             made = replace(made, audio=loudness.lift_wav(voice_id, made.audio))
+                        if local is not None:
+                            local.close(made.audio)
                         words = made.words if made.words is not None else map_boundaries(said, made.boundaries, made.duration_ms)
                         words = _shown_words(words, spans, slots)  # chữ hiện thành nhiều chữ đọc / cụm đọc ngắn hơn số chữ hiện: mốc về đủ chữ hiện
                         hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
