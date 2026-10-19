@@ -7,6 +7,19 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Giọng trên máy (Supertonic, VieNeu) trả lại bộ nhớ sau 3 phút bạn không nghe bằng giọng ấy, ví dụ khi bạn chuyển sang giọng trên mạng. Quay lại giọng ấy thì đoạn đầu chờ thêm một chút để nạp lại giọng. Lúc đang xuất sách nói hay "Làm trước" thì giọng được giữ nguyên.
+- Tải xong giọng mới trong lúc bạn đã rời Cài đặt: trình phát thấy giọng mới ngay, không cần mở lại app.
+- Máy còn nhiều chỗ trống thì giữ được nhiều đoạn đã đọc hơn (tới 2 GB), nên chương nghe lại ít phải đọc lại. Lưu đoạn mới không còn chậm dần khi bộ nhớ đệm đầy.
+- Nghe tiếp sau khi tạm dừng: máy tính và điện thoại cùng một cách lùi. Dừng dưới 30 giây thì không lùi, tới 10 phút thì lùi 5 giây, lâu hơn thì lùi 10 giây.
+
+### Điện thoại
+
+- Nút Trước/Sau trên tai nghe Bluetooth, đồng hồ và xe giờ mặc định lùi/tới 15 giây, ở mọi chương kể cả chương cuối, nên bấm nhầm không mất cả chương. Muốn chúng chuyển chương thì tắt "Nút tai nghe lùi/tới" trong Cài đặt. Mở rộng thanh thông báo có thêm nút Chương trước / Chương sau.
+- Cài đặt "Tự lùi khi nghe tiếp" thành một công tắc, theo cách lùi ở trên.
+- Lúc tải giọng, trình đọc màn hình chỉ đọc một con số tiến độ, không đọc thêm "0%" bên cạnh số đang hiện.
+
 ## [0.4.109] - 2026-10-20
 
 ### Hai máy
