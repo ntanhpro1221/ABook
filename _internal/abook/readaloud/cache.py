@@ -1,7 +1,8 @@
 """Bộ nhớ đệm clip trên đĩa: `<khoá>.mp3|wav` + `<khoá>.json` (độ dài, mốc từng chữ), khoá = sha256(phiên bản luật đọc | nhà cung cấp | giọng | chữ).
 
 Clip ở tốc độ 1,0 (đổi tốc độ là việc của trình phát), nên mọi tốc độ dùng chung một clip. Đầy quá `limit` thì bỏ clip lâu không dùng nhất
-(LRU theo thời gian truy cập: mỗi lần trúng đệm ghi lại mtime của file JSON). Ghi qua file tạm rồi đổi tên: máy chủ đọc không bao giờ thấy file dở.
+(LRU theo thời gian truy cập: mỗi lần trúng đệm ghi lại mtime của file JSON) xuống còn TRIM_TO trần, nên các lần ghi sau không quét lại cả thư mục.
+Trần theo chỗ trống của ổ ([default_limit]). Ghi qua file tạm rồi đổi tên: máy chủ đọc không bao giờ thấy file dở.
 """
 from __future__ import annotations
 
@@ -9,13 +10,19 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import threading
 from dataclasses import dataclass
 from pathlib import Path
 
 from . import names
 
+# Trần bộ đệm = FREE_SHARE chỗ trống của ổ, trong [LIMIT_BYTES, MAX_LIMIT_BYTES] (soát a69: clip Supertonic WAV ~330 MB mỗi giờ nghe, trần cố định
+# 500 MB đầy sau ~1,5 giờ). Điện thoại cùng luật, sàn riêng (ClipCache.kt).
 LIMIT_BYTES = 500 * 1024 * 1024
+MAX_LIMIT_BYTES = 2 * 1024 * 1024 * 1024
+FREE_SHARE = 0.05
+TRIM_TO = 0.9  # vượt trần thì tỉa xuống còn chừng này phần trần
 NAME = re.compile(r"[0-9a-f]{64}\.(mp3|wav)")
 CLIP_FILE = re.compile(r"[0-9a-f]{64}\.(json|mp3|wav)")
 TYPES = {"mp3": "audio/mpeg", "wav": "audio/wav"}
@@ -36,6 +43,18 @@ def clip_key(provider: str, voice: str, text: str, reading: str = "") -> str:
     return hashlib.sha256((f"{rules_version()}|{provider}|{voice}|{text}" + (f"|{reading}" if reading else "")).encode("utf-8")).hexdigest()
 
 
+def default_limit(folder: Path | str) -> int:
+    """Trần bộ đệm theo chỗ trống của ổ chứa `folder` (thư mục chưa có thì ổ của thư mục cha gần nhất); không đọc được ổ thì LIMIT_BYTES."""
+    path = Path(folder).absolute()
+    while not path.exists() and path.parent != path:
+        path = path.parent
+    try:
+        free = shutil.disk_usage(path).free
+    except OSError:
+        return LIMIT_BYTES
+    return max(LIMIT_BYTES, min(MAX_LIMIT_BYTES, int(free * FREE_SHARE)))
+
+
 @dataclass(frozen=True)
 class Cached:
     key: str
@@ -45,9 +64,10 @@ class Cached:
 
 
 class ClipCache:
-    def __init__(self, folder: Path | str, limit: int = LIMIT_BYTES) -> None:
+    def __init__(self, folder: Path | str, limit: int | None = None) -> None:
+        """`limit`: trần byte; None = theo chỗ trống của ổ ([default_limit])."""
         self.folder = Path(folder)
-        self.limit = limit
+        self.limit = default_limit(self.folder) if limit is None else limit
         self._lock = threading.RLock()
         self._size: int | None = None
 
@@ -145,29 +165,27 @@ class ClipCache:
             return []
 
     def trim(self) -> None:
-        """Bỏ clip lâu không dùng nhất cho tới khi còn <= limit."""
+        """Quá trần: bỏ clip lâu không dùng nhất cho tới khi còn <= TRIM_TO trần. Chưa quá trần thì không đụng tới đĩa (tổng đang chạy `_size`).
+        Clip `<khoá>.json` + `<khoá>.mp3|wav`: thứ tự theo mtime của file JSON (trúng đệm ghi lại), chỉ stat - không đọc file nào."""
         with self._lock:
             if self.size() <= self.limit:
                 return
-            clips = []
-            for meta in self._entries():
-                if meta.suffix != ".json":
+            target = int(self.limit * TRIM_TO)
+            clips: dict[str, list[tuple[float, Path, int]]] = {}
+            for entry in self._entries():
+                if not CLIP_FILE.fullmatch(entry.name):
                     continue
                 try:
-                    stamp = meta.stat().st_mtime
-                    file = json.loads(meta.read_bytes().decode("utf-8"))["file"]
-                except (OSError, ValueError, KeyError):
-                    stamp, file = 0.0, ""
-                clips.append((stamp, meta, self.folder / file if NAME.fullmatch(file) else None))
-            clips.sort(key=lambda item: item[0])
-            for _, meta, audio in clips:
-                if self._size is not None and self._size <= self.limit:
+                    stat = entry.stat()
+                except OSError:
+                    continue
+                clips.setdefault(entry.name.split(".", 1)[0], []).append((stat.st_mtime if entry.suffix == ".json" else 0.0, entry, stat.st_size))
+            order = sorted(clips.values(), key=lambda files: max(stamp for stamp, _, _ in files))  # clip thiếu JSON (mtime 0) đi trước
+            for files in order:
+                if self._size is not None and self._size <= target:
                     break
-                for path in (audio, meta):
-                    if path is None:
-                        continue
+                for _, path, size in files:
                     try:
-                        size = path.stat().st_size
                         path.unlink()
                         self._size = (self._size or 0) - size
                     except OSError:

@@ -239,7 +239,7 @@ object ReadAloud {
                 else -> ""
             }
         }
-        ClipCache(File(ctx.cacheDir, "readaloud"), pinFile = File(ctx.filesDir, "readaloud-pins.txt"), tierOf = VoiceSpeed::liveTag, markOf = modelMark).also { cache = it }
+        ClipCache(File(ctx.cacheDir, "readaloud"), ClipCache.capFor(ctx.cacheDir), pinFile = File(ctx.filesDir, "readaloud-pins.txt"), tierOf = VoiceSpeed::liveTag, markOf = modelMark).also { cache = it }
     }
 
     private var speeds: VoiceSpeeds? = null

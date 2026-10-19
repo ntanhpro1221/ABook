@@ -220,6 +220,33 @@ export function forgetVoices(): void {
   troubled.clear();
 }
 
+const watching = new Set<string>();
+
+/** Mô-đun giọng trên máy `key` đang tải / tự đo: hỏi `poll()` (true = còn đang làm) mỗi `everyMs` cho tới khi xong rồi quên danh sách giọng
+ *  (`forgetVoices`) và gọi `done()` - sống cả phiên, không theo thẻ trong Cài đặt: rời Cài đặt giữa lúc tải thì trình phát vẫn thấy giọng mới
+ *  ngay khi tải xong (soát a69: chỉ còn Edge tới lúc mở lại app). Một mô-đun một vòng hỏi; hỏi hỏng thì hỏi tiếp, thưa hơn. */
+export function watchVoiceModule(key: string, poll: () => Promise<boolean>, done: () => void, everyMs = 1000): void {
+  if (watching.has(key)) return;
+  watching.add(key);
+  const tick = async () => {
+    let working: boolean;
+    try {
+      working = await poll();
+    } catch {
+      setTimeout(() => void tick(), everyMs * 5);
+      return;
+    }
+    if (working) {
+      setTimeout(() => void tick(), everyMs);
+      return;
+    }
+    watching.delete(key);
+    forgetVoices();
+    done();
+  };
+  setTimeout(() => void tick(), everyMs);
+}
+
 /** Danh sách giọng của nguồn (nhớ cho cả phiên; lần hỏi hỏng thì hỏi lại lần sau). */
 export function voicesOf(source: ListenSource): Promise<ReadAloudVoice[]> {
   if (!source.readAloudVoices) return Promise.resolve([]);

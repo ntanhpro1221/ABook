@@ -257,7 +257,8 @@ class SupertonicSpeaker(
 
 /**
  * The Supertonic voices of this phone for "Nghe ngay" (provider "supertonic", offline): the module ([SupertonicModule], `files/supertonic`) and
- * the engine, loaded on first use and kept for the process. Synthesis is serialised: one paragraph at a time, on the caller's (background) thread.
+ * the engine, loaded on first use and let go after a few idle minutes ([IdleEngine]). Synthesis is serialised: one paragraph at a time, on the
+ * caller's (background) thread.
  */
 object SupertonicVoices {
     const val PREFIX = "supertonic"
@@ -272,6 +273,7 @@ object SupertonicVoices {
     private var module: SupertonicModule? = null
     /** The loaded engine and whether it reads the fast tier (one at a time: each holds a few hundred MB). */
     private var engine: Pair<Boolean, SupertonicEngine>? = null
+    private val idle = IdleEngine(this, ::dropEngine)
 
     @Synchronized
     fun module(appContext: Context): SupertonicModule = module ?: run {
@@ -285,9 +287,16 @@ object SupertonicVoices {
     /** Drop the loaded engine (the module is about to replace or remove files). */
     @Synchronized
     fun forget() {
+        dropEngine()
+        idle.dropped()
+        VoiceSpeed.changed()
+    }
+
+    /** Close the loaded engine (both tiers share the one slot); the next read loads it again. */
+    @Synchronized
+    private fun dropEngine() {
         engine?.second?.let { runCatching { it.close() } }
         engine = null
-        VoiceSpeed.changed()
     }
 
     fun gender(name: String) = if (name.startsWith("F")) "female" else if (name.startsWith("M")) "male" else ""
@@ -319,6 +328,7 @@ object SupertonicVoices {
                 (if (estimator != null) SupertonicEngine(installed.model, threads, estimator, SupertonicText.FAST_STEPS) else SupertonicEngine(installed.model, threads))
                     .also { engine = (estimator != null) to it }
             }
+            idle.used()
             val normalize: (List<String>) -> String = if (reader != null) reader::normalizeUnit else { pieces -> pieces.joinToString(" ") }
             return loaded to SupertonicSpeaker(ClipLift.params(ctx), normalize)
         } catch (failure: Throwable) {
@@ -340,6 +350,8 @@ object SupertonicVoices {
         } catch (failure: OutOfMemoryError) {
             forget()
             throw VoiceException("Điện thoại không đủ bộ nhớ cho giọng Supertonic lúc này.", cause = failure, reason = "voice")
+        } finally {
+            if (engine != null) idle.used() // idle minutes count from the end of the last read
         }
         if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
         VieneuAudio.writeWav(ClipLift.lifted(voice, spoken.samples, spoken.rate, ClipLift.params(context)), spoken.rate, out) // short quiet lines up to the voice level (as service.clip); [voice] is the bare id: both tiers share one level

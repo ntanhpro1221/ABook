@@ -38,7 +38,7 @@ import vn.abook.player.readaloud.ReadAloud
  * Dịch vụ phát nền: giữ ExoPlayer sống khi tắt màn hình, hiện điều khiển ở thanh thông báo và màn hình khoá,
  * nhận nút tai nghe/Bluetooth, tự dừng khi rút tai nghe hoặc có cuộc gọi (audio focus).
  *
- * Thanh thông báo: lùi 15 giây · phát/dừng · tới 15 giây, cộng "dấu trang" và - khi đang hẹn giờ ngủ - "+10 phút".
+ * Thanh thông báo: lùi 15 giây · phát/dừng · tới 15 giây; mở rộng thêm chương trước / chương sau, "dấu trang" và - khi đang hẹn giờ ngủ - "+10 phút".
  *
  * Là MediaLibraryService: Android Auto và trình duyệt media của hệ thống duyệt được thư viện trên máy (LibraryTree:
  * sách -> chương) và chọn phát ngay trên màn hình xe.
@@ -63,6 +63,9 @@ class PlaybackService : MediaLibraryService() {
 
         val BOOKMARK = SessionCommand("vn.abook.BOOKMARK", Bundle.EMPTY)
         val SLEEP_PLUS = SessionCommand("vn.abook.SLEEP_PLUS", Bundle.EMPTY)
+        // Chương trước/sau là lệnh riêng của app: Trước/Sau của phiên media (tai nghe, xe, đồng hồ) là lùi/tới 15 giây (HeadsetSkips).
+        val PREVIOUS_CHAPTER = SessionCommand("vn.abook.PREVIOUS_CHAPTER", Bundle.EMPTY)
+        val NEXT_CHAPTER = SessionCommand("vn.abook.NEXT_CHAPTER", Bundle.EMPTY)
         var instance: PlaybackService? = null
             private set
 
@@ -133,20 +136,32 @@ class PlaybackService : MediaLibraryService() {
             .build()
     }
 
-    /** Nút trên thông báo; đổi theo trạng thái hẹn giờ (có "+10 phút" chỉ khi đang hẹn). */
+    /**
+     * Nút trên thông báo; đổi theo trạng thái hẹn giờ (có "+10 phút" chỉ khi đang hẹn - đứng đầu phần mở rộng để màn khoá luôn hiện).
+     * Lùi/tới 15 giây chiếm ô trước/sau (dạng thu gọn). Media3 vì thế bỏ SKIP_TO_PREVIOUS/NEXT khỏi trạng thái phát cũ (MediaSessionLegacyStub;
+     * hệ thống Android 13+ cũng chỉ vẽ biểu tượng ⏮⏭ cho hai hành động ấy) - LE Audio MediaControlProfile vẫn báo "base actions". Phím
+     * Trước/Sau của tai nghe Bluetooth (AVRCP gửi phím media) vẫn tới [HeadsetSkips] vì Media3 xét lệnh của player, không xét trạng thái cũ.
+     */
+    @OptIn(UnstableApi::class)
     fun buttons(): List<CommandButton> {
         val list = mutableListOf(
             CommandButton.Builder(CommandButton.ICON_SKIP_BACK_15)
                 .setPlayerCommand(Player.COMMAND_SEEK_BACK).setDisplayName("Lùi 15 giây").build(),
             CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD_15)
                 .setPlayerCommand(Player.COMMAND_SEEK_FORWARD).setDisplayName("Tới 15 giây").build(),
-            CommandButton.Builder(CommandButton.ICON_BOOKMARK_UNFILLED)
-                .setSessionCommand(BOOKMARK).setDisplayName("Thêm dấu trang").build(),
         )
         if (SleepTimer.mode != SleepTimer.Mode.OFF) {
             list += CommandButton.Builder(CommandButton.ICON_PLUS)
-                .setSessionCommand(SLEEP_PLUS).setDisplayName("Nghe thêm ${SleepTimer.extendMinutes} phút").build()
+                .setSessionCommand(SLEEP_PLUS).setDisplayName("Nghe thêm ${SleepTimer.extendMinutes} phút").setSlots(CommandButton.SLOT_OVERFLOW).build()
         }
+        list += listOf(
+            CommandButton.Builder(CommandButton.ICON_PREVIOUS)
+                .setSessionCommand(PREVIOUS_CHAPTER).setDisplayName("Chương trước").setSlots(CommandButton.SLOT_OVERFLOW).build(),
+            CommandButton.Builder(CommandButton.ICON_NEXT)
+                .setSessionCommand(NEXT_CHAPTER).setDisplayName("Chương sau").setSlots(CommandButton.SLOT_OVERFLOW).build(),
+            CommandButton.Builder(CommandButton.ICON_BOOKMARK_UNFILLED)
+                .setSessionCommand(BOOKMARK).setDisplayName("Thêm dấu trang").setSlots(CommandButton.SLOT_OVERFLOW).build(),
+        )
         return list
     }
 
@@ -156,13 +171,15 @@ class PlaybackService : MediaLibraryService() {
 
     /**
      * Lệnh "trước/sau" từ tai nghe Bluetooth, đồng hồ, xe hơi, màn hình khoá đều đi qua phiên media, tức qua lớp này.
-     * Bật "Nút tai nghe lùi/tới" thì chúng thành lùi/tới 15 giây (sách nói hiếm khi cần nhảy cả chương - Smart
-     * AudioBook Player có tuỳ chọn này). Nút trong app gọi thẳng player gốc nên vẫn nhảy chương như cũ.
+     * Mặc định (tuỳ chọn "Nút tai nghe lùi/tới" bật) chúng là lùi/tới 15 giây - quy ước app sách nói, bấm nhầm không nhảy cả chương (Smart
+     * AudioBook Player). Tắt thì "trước/sau" là [Playback.previous]/[Playback.next], đúng như nút chương trong app (đọc to:
+     * theo danh sách chương; chương audio: mục kế, "trước" quá 5 giây thì về đầu chương). Nút trong app gọi thẳng player gốc.
      * `inText` = [ReadAloud.inText] (test JVM thay nó - lõi phát cần Looper của Android).
      */
     internal class HeadsetSkips(player: Player, private val inText: () -> Boolean = ReadAloud::inText) : ForwardingPlayer(player) {
         // Ở chương cuối không có "bài sau" nên Media3 coi lệnh ấy không khả dụng và bỏ phím trước khi tới đây (thấy
-        // 27-09 trên máy ảo: "Trước" lùi 15 giây, "Sau" im). Bật tuỳ chọn thì hai lệnh luôn khả dụng. Dựng khi cần (Commands cần Android - test JVM dựng lớp này được).
+        // 27-09 trên máy ảo: "Trước" lùi 15 giây, "Sau" im). Hai lệnh luôn khả dụng: phiên media khai báo trước/sau cho tai nghe Bluetooth cả khi
+        // chỉ có một chương (soát a69); "sau" ở chương cuối thì [Playback.next] không làm gì. Dựng khi cần (Commands cần Android - test JVM dựng lớp này được).
         private val skips by lazy {
             Player.Commands.Builder().addAll(
                 Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
@@ -171,21 +188,19 @@ class PlaybackService : MediaLibraryService() {
         }
 
         override fun getAvailableCommands(): Player.Commands {
-            val base = super.getAvailableCommands()
-            if (!Playback.headsetSkips && !ReadAloud.active) return base
-            val builder = base.buildUpon()
+            val builder = super.getAvailableCommands().buildUpon()
             for (index in 0 until skips.size()) builder.add(skips.get(index))
             return builder.build()
         }
 
-        override fun isCommandAvailable(command: Int): Boolean =
-            ((Playback.headsetSkips || ReadAloud.active) && skips.contains(command)) || super.isCommandAvailable(command)
+        override fun isCommandAvailable(command: Int): Boolean = skips.contains(command) || super.isCommandAvailable(command)
 
-        // Đọc to: hàng đợi có một mục mỗi đoạn, nên "mục kế" của ExoPlayer là đoạn kế - Trước/Sau và lùi/tới 15 giây phải đi theo chương và đồng hồ ảo của ReadAloud.
-        override fun seekToNext() = if (Playback.headsetSkips) seekForward() else if (ReadAloud.active) Playback.next() else super.seekToNext()
-        override fun seekToNextMediaItem() = if (Playback.headsetSkips) seekForward() else if (ReadAloud.active) Playback.next() else super.seekToNextMediaItem()
-        override fun seekToPrevious() = if (Playback.headsetSkips) seekBack() else if (ReadAloud.active) Playback.previous() else super.seekToPrevious()
-        override fun seekToPreviousMediaItem() = if (Playback.headsetSkips) seekBack() else if (ReadAloud.active) Playback.previous() else super.seekToPreviousMediaItem()
+        // Đọc to: hàng đợi có một mục mỗi đoạn, nên "mục kế" của ExoPlayer là đoạn kế - Trước/Sau và lùi/tới 15 giây phải đi theo chương và đồng hồ ảo
+        // của ReadAloud ([Playback.next]/[Playback.previous] lo cả hai loại chương).
+        override fun seekToNext() = if (Playback.headsetSkips) seekForward() else Playback.next()
+        override fun seekToNextMediaItem() = seekToNext()
+        override fun seekToPrevious() = if (Playback.headsetSkips) seekBack() else Playback.previous()
+        override fun seekToPreviousMediaItem() = seekToPrevious()
         override fun seekForward() = if (inText()) Playback.skip(15.0) else super.seekForward()
         override fun seekBack() = if (inText()) Playback.skip(-15.0) else super.seekBack()
 
@@ -228,9 +243,9 @@ class PlaybackService : MediaLibraryService() {
 
     private inner class Callback : MediaLibrarySession.Callback {
         override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
-            // Lệnh thư viện (duyệt cây) cho Android Auto và trình duyệt media của hệ thống, cộng hai nút riêng của app.
+            // Lệnh thư viện (duyệt cây) cho Android Auto và trình duyệt media của hệ thống, cộng các nút riêng của app (dấu trang, +10 phút, chương trước/sau).
             val commands = MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
-                .add(BOOKMARK).add(SLEEP_PLUS).build()
+                .add(BOOKMARK).add(SLEEP_PLUS).add(PREVIOUS_CHAPTER).add(NEXT_CHAPTER).build()
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(commands)
                 .setMediaButtonPreferences(buttons())
@@ -344,6 +359,8 @@ class PlaybackService : MediaLibraryService() {
             when (customCommand.customAction) {
                 BOOKMARK.customAction -> Playback.addBookmark("")
                 SLEEP_PLUS.customAction -> SleepTimer.extend()
+                PREVIOUS_CHAPTER.customAction -> Playback.previous()
+                NEXT_CHAPTER.customAction -> Playback.next()
             }
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
         }
