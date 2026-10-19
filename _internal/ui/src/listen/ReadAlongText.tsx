@@ -10,30 +10,13 @@ import { usePlayer } from "./player";
 import { estimatedStarts } from "./readAloud";
 import { scrollMotion } from "@/shared/motion";
 import { wordAtPoint } from "./wordTap";
-import { splitPieces, usableWords, wordIndexAt, type WordSpan } from "./words";
+import { sentenceIndexAt, splitPieces, usableWords, wordIndexAt, type WordSpan } from "./words";
 
 // Văn bản chương đi cùng giọng đọc - MỘT chỗ cho màn đọc (ReaderScreen) và tab "Đọc theo" của trình phát (PlayerViews): câu đang nghe sáng lên,
 // chữ đang đọc sáng đậm hơn, bấm một chữ là nghe từ đúng chữ ấy, khung tự cuộn theo giọng (luật ở follow.ts), bàn phím đi qua các câu bằng mũi
 // tên (một điểm dừng Tab cho cả văn bản, không phải mỗi chữ một điểm) và Enter là nghe từ câu ấy. Câu là chữ thường trong đoạn <p>, không phải
 // "nút": chương 22.000 câu từng là 22.000 nút, trình đọc màn hình đọc "nút" trước mỗi câu và mất cấu trúc đoạn (soát a31 A5). Câu nhận Tab
 // mang lời chỉ cách dùng phím (aria-describedby).
-
-/** Câu đang đọc ở giây `seconds` (tìm nhị phân trên mốc bắt đầu). */
-export function sentenceIndexAt(starts: number[], seconds: number): number {
-  let low = 0;
-  let high = starts.length - 1;
-  let found = -1;
-  while (low <= high) {
-    const middle = (low + high) >> 1;
-    if (starts[middle] <= seconds + 0.05) {
-      found = middle;
-      low = middle + 1;
-    } else {
-      high = middle - 1;
-    }
-  }
-  return found;
-}
 
 /** Câu đang nghe của kịch bản này (-1: không nghe chương này, hay kịch bản chưa có mốc). Chỉ render lại khi sang câu khác. */
 export function usePlayingSentence(script: Script | undefined, listening: boolean): number {

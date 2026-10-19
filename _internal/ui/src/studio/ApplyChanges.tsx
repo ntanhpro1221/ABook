@@ -27,6 +27,8 @@ export interface PendingItem {
   requestedAt: number;
   /** Đổi giọng: đủ để nghe thử đúng giọng sẽ áp (POST …/voice/preview). */
   voice?: VoiceRequest;
+  /** Tên máy đã ghép gửi việc này tới (cuốn nhập từ file - book_wishes.note_sources); không có: ghi ở chính máy này. */
+  from?: string;
 }
 
 export interface PendingDetails {
@@ -40,7 +42,18 @@ export interface PendingDetails {
 
 export const KIND_ICON = { pronunciation: BookOpenCheck, speaker: UserRound, line: AudioLines, voice: Mic2, retake: RefreshCw } as const;
 
-/** Danh sách từng thay đổi đang chờ, mỗi dòng có nút "Bỏ thay đổi này" - dùng cho cả hộp "Áp dụng" (dự án) lẫn hộp "Việc đang chờ
+/** Nút bỏ một dòng nói rõ nó bỏ gì ("Bỏ cách đọc “Lucien”") - mọi nút cùng nhãn "Bỏ thay đổi này" thì trình đọc màn hình (và chú thích khi rê
+ *  chuột) không phân biệt được dòng nào (soát a70). */
+export function dropLabel(item: Pick<PendingItem, "kind" | "label">): string {
+  if (item.kind === "pronunciation") {
+    const surface = /^“([^”]+)”/.exec(item.label)?.[1];
+    if (surface) return `Bỏ cách đọc “${surface}”`;
+  }
+  const verb = { pronunciation: "Bỏ cách đọc", speaker: "Bỏ đổi người nói", line: "Bỏ sửa cách đọc câu", voice: "Bỏ đổi giọng", retake: "Bỏ thu lại" }[item.kind] ?? "Bỏ";
+  return `${verb}: ${item.label}`;
+}
+
+/** Danh sách từng thay đổi đang chờ, mỗi dòng có nút bỏ (`dropLabel`) - dùng cho cả hộp "Áp dụng" (dự án) lẫn hộp "Việc đang chờ
  *  Studio" của sách không có xưởng (listen/WishesDialog.tsx). `dropping` = id đang bỏ dở; `showLines`: hiện số câu thu lại;
  *  `extra`: nút thêm của một dòng (nghe thử giọng chờ áp). */
 export function PendingList({
@@ -66,6 +79,7 @@ export function PendingList({
             <span className="min-w-0 flex-1 text-pretty">
               {item.label}
               {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
+              {item.from && <span className="text-fg-3"> · từ {item.from}</span>}
             </span>
             {showLines && (
               <span className="shrink-0 pt-0.5 text-xs tabular text-fg-3">
@@ -76,7 +90,7 @@ export function PendingList({
             <IconButton
               size="sm"
               icon={X}
-              label="Bỏ thay đổi này"
+              label={dropLabel(item)}
               className="-my-1.5 -mr-1.5"
               disabled={dropping !== null}
               onClick={() => onDrop(item)}

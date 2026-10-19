@@ -31,12 +31,18 @@ describe("tình trạng gửi phần sửa về máy tính", () => {
     expect(note.tone).toBe("sent");
     expect(note.title).toMatch(/^Đã gửi về máy tính/);
     expect(note.lines).toEqual([
-      "4 thay đổi đã áp trên máy tính",
+      "4 thay đổi đã áp ngay trên máy tính",
       "1 việc đã thành yêu cầu trên máy tính, chờ áp dụng ở Studio",
       "2 việc đang chờ duyệt trên máy tính - chưa làm gì cho tới khi bạn đồng ý trên máy tính",
       "2 thay đổi không còn chỗ trong sách trên máy tính nên bị bỏ qua",
       "Tên sách: máy tính đã có bản riêng",
     ]);
+  });
+
+  it("cuốn nhập từ file: máy tính nhận thẳng, không hứa chờ đồng ý - chỉ còn Studio thu lại giọng", () => {
+    const lines = editsSyncNote(sent({ applied: 2, studio: 1 }), "Lecoo")!.lines;
+    expect(lines).toEqual(["2 thay đổi đã áp ngay trên Lecoo", "1 việc cần thu lại giọng đã ghi trên Lecoo - Studio sẽ thu lại khi bạn mở dự án trên Lecoo"]);
+    expect(lines.join(" ")).not.toMatch(/đồng ý/);
   });
 
   it("đã gửi mà không có gì để kể: chỉ nói đã gửi", () => {
@@ -52,13 +58,13 @@ describe("tình trạng gửi phần sửa về máy tính", () => {
     expect(holderName({ computer: "Lecoo" })).toBe("Lecoo");
     expect(holderName(true)).toBe("máy tính");
     expect(editsSyncNote({ pending: 2, last: null }, "Lecoo")!.title).toBe("2 thay đổi đang chờ gửi về Lecoo");
-    expect(editsSyncNote(sent({ applied: 1, conflicts: ["x"] }), "Lecoo")!.lines).toEqual(["1 thay đổi đã áp trên Lecoo", "x"]);
+    expect(editsSyncNote(sent({ applied: 1, conflicts: ["x"] }), "Lecoo")!.lines).toEqual(["1 thay đổi đã áp ngay trên Lecoo", "x"]);
   });
 
   it("thông báo sau khi gửi không lặp lời dặn của dòng tình trạng", () => {
     expect(sentToast({ pending: 0, last: { state: "sent", at: 1, applied: 2 } }, "Lecoo")).toEqual({
       title: "Đã gửi về Lecoo",
-      description: "2 thay đổi đã áp trên Lecoo",
+      description: "2 thay đổi đã áp ngay trên Lecoo",
     });
     const left = sentToast({ pending: 1, last: { state: "sent", at: 1 } }, "Lecoo");
     expect(left.description).toBe("Còn 1 thay đổi chưa gửi được - sẽ thử lại khi tới được Lecoo.");

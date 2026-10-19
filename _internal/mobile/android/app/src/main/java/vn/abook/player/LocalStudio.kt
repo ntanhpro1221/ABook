@@ -181,7 +181,7 @@ object LocalStudio {
             "GET" to "/music" -> { dir, _ -> withAutoPlaylist(dir, BookEdits.musicView(BookEdits.rawBook(dir), BookEdits.load(dir))) }
             "GET" to "/suggestions" -> { dir, _ -> suggestions(dir) }
             "PUT" to "/skip" -> { dir, body -> skipLine(dir, body) }
-            "GET" to "/readings" -> { dir, _ -> BookEdits.readingsView(BookEdits.load(dir)) }
+            "GET" to "/readings" -> { dir, _ -> BookEdits.readingsView(EditsSync.experienced(dir)) }
             "PUT" to "/readings" -> ::reading
             "PUT" to "/music" -> ::music
             "GET" to "/edits" -> { dir, _ ->
@@ -189,10 +189,11 @@ object LocalStudio {
                 JSONObject().put("applied", BookEdits.countApplied(edits)).put("waiting", 0).put("wishes", BookEdits.countWishes(edits))
             }
             "GET" to "/pending-changes" -> { dir, _ -> BookWishes.pendingDetails(dir, BookEdits.rawBook(dir), BookEdits.load(dir).optJSONObject("wishes")) }
-            "GET" to "/wishes" -> { dir, _ -> BookWishes.byLine(dir, BookEdits.rawBook(dir), BookEdits.load(dir).optJSONObject("wishes")) }
+            "GET" to "/wishes" -> { dir, _ -> withHolderSpeakers(dir, BookWishes.byLine(dir, BookEdits.rawBook(dir), BookEdits.load(dir).optJSONObject("wishes"))) }
             "POST" to "/pending-changes/withdraw" -> ::pendingWithdraw
             "POST" to "/characters/merge" -> ::mergeCharacters
             "POST" to "/pronunciation" -> ::pronunciation
+            "POST" to "/pronunciation/check" -> ::pronunciationCheck
             "GET" to "/pronunciations/reach" -> ::readingReach
             "POST" to "/speaker" -> ::speaker
             "POST" to "/line" -> ::line
@@ -266,7 +267,7 @@ object LocalStudio {
      */
     private fun suggestions(dir: java.io.File): JSONObject {
         val out = JSONArray()
-        val chapters = BookEdits.applyManifest(BookEdits.rawBook(dir), BookEdits.load(dir)).optJSONArray("chapters") ?: JSONArray()
+        val chapters = BookEdits.applyManifest(BookEdits.rawBook(dir), EditsSync.experienced(dir)).optJSONArray("chapters") ?: JSONArray()
         for (index in 0 until chapters.length()) {
             val chapter = chapters.optJSONObject(index) ?: continue
             val id = chapter.opt("id") as? Int ?: continue
@@ -287,7 +288,24 @@ object LocalStudio {
         val surface = body.opt("surface")
         val spoken = if (body.has("spoken")) body.opt("spoken") else ""
         if (surface !is String || spoken !is String) throw BookEdits.EditsError("Thiếu từ hoặc cách đọc")
-        return BookEdits.setReading(dir, surface, spoken).also { vn.abook.player.readaloud.ReadAloud.readingsChanged(dir.name) }
+        BookEdits.setReading(dir, surface, spoken)
+        vn.abook.player.readaloud.ReadAloud.readingsChanged(dir.name)
+        return BookEdits.readingsView(EditsSync.experienced(dir))
+    }
+
+    /**
+     * Speakers waiting for Studio that the holder set (or another device sent there - BookEdits.HOLDER_FILE) show on the sentence here too,
+     * under the ones this phone set and has not sent yet (review a70: set on the computer, the phone never knew).
+     */
+    private fun withHolderSpeakers(dir: java.io.File, view: JSONObject): JSONObject {
+        val theirs = BookEdits.holderEdits(dir)?.optJSONObject("speakers") ?: return view
+        val lines = view.optJSONObject("lines") ?: JSONObject().also { view.put("lines", it) }
+        for (stableId in theirs.keys()) {
+            val line = lines.optJSONObject(stableId) ?: JSONObject().also { lines.put(stableId, it) }
+            // `held`: already at the holder - changed by picking again here, not withdrawn like an unsent wish.
+            if (!line.has("speaker")) theirs.optJSONObject(stableId)?.let { line.put("speaker", JSONObject(it.toString()).put("held", true)) }
+        }
+        return view
     }
 
     /** PUT /skip {line, chapters, skip}: người nghe chấp nhận (hay bỏ chấp nhận) một gợi ý - dòng bị bỏ khỏi phần đọc của các chương ấy,
@@ -423,7 +441,28 @@ object LocalStudio {
         if (problem == VietnameseReading.NOT_VIETNAMESE && fixed != spoken && VietnameseReading.problem(surface, fixed) == null) {
             throw Api(400, "${VietnameseReading.respellingNote(spoken, fixed)} Viết: “$fixed”.", JSONObject().put("suggestion", fixed))
         }
+        if (problem == VietnameseReading.NOT_VIETNAMESE) throw Api(400, notVietnameseNote(surface, spoken))
         throw Api(400, PRONUNCIATION_PROBLEMS[problem] ?: "Cách đọc này không dùng được")
+    }
+
+    /** `spelling.not_vietnamese_note`: the refusal says why - a reading that only differs from the word by its marks ("Tám" -> "Tâm"), or a syllable
+     *  the check does not know. */
+    private fun notVietnameseNote(surface: String, spoken: String): String {
+        fun unmarked(text: String) = java.text.Normalizer.normalize(text.lowercase().replace("đ", "d"), java.text.Normalizer.Form.NFD)
+            .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
+        return if (unmarked(BookWishes.collapse(spoken)) == unmarked(surface)) {
+            "ABook chưa nhận “$spoken” làm cách đọc cho “$surface”: hai chữ chỉ khác nhau ở dấu. Thử viết khác, hay để máy đọc như chữ trong sách."
+        } else {
+            "ABook chưa nhận “$spoken” là cách đọc tiếng Việt - thử viết khác: mỗi âm tiết viết như tiếng Việt, nối bằng gạch nối (vd Hên-khơ)."
+        }
+    }
+
+    /** POST /pronunciation/check {surface, spokenForm}: "Nghe thử" by the device voice runs the same checks as saving (a70). Writes nothing. */
+    private fun pronunciationCheck(dir: java.io.File, body: JSONObject): Any? {
+        val surface = clip(field(body, "surface"), 80)
+        val spoken = checkedReading(body, surface)
+        if ((readingReach(dir, JSONObject().put("surface", surface)) as JSONObject).optBoolean("never")) throw Api(400, neverText(surface))
+        return JSONObject().put("surface", surface).put("spokenForm", spoken)
     }
 
     /** POST /pronunciation {surface, spokenForm} / {surface, withdraw, requestedAt}. */

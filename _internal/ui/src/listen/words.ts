@@ -65,6 +65,23 @@ export function usableWords(text: string, words: unknown): WordSpan[] | null {
   return words as WordSpan[];
 }
 
+/** Câu đang đọc ở giây `seconds` (tìm nhị phân trên mốc bắt đầu). */
+export function sentenceIndexAt(starts: number[], seconds: number): number {
+  let low = 0;
+  let high = starts.length - 1;
+  let found = -1;
+  while (low <= high) {
+    const middle = (low + high) >> 1;
+    if (starts[middle] <= seconds + 0.05) {
+      found = middle;
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return found;
+}
+
 /** Sáng sớm một chút (ms): mắt thấy chữ sáng trễ rõ hơn sáng sớm; cùng ý với 0,05 giây của `sentenceIndexAt`. */
 export const WORD_LEAD_MS = 40;
 /** Chữ cuối của câu tắt sau chừng này (ms) kể từ lúc nó kết thúc, nếu câu kế chưa bắt đầu. */

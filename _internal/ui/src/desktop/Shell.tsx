@@ -4,6 +4,7 @@ import { NavLink, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
 import { useNowPlaying } from "@/listen/player";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
+import { readerEditing } from "./readerEditing";
 import { ShortcutsHost } from "@/listen/Shortcuts";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
@@ -259,7 +260,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </TabItem>
         </nav>
         {/* Cùng nút "Phát trên thiết bị khác" như thanh dưới: cửa sổ hẹp dùng thanh gọn không có nó (soát UX 05-10). */}
-        <NowPlaying mobile={phoneWidth} actions={remote ? undefined : <HandOffButton className="max-sm:size-11" />} />
+        <NowPlaying mobile={phoneWidth} actions={remote ? undefined : <HandOffButton className="max-sm:size-11" />} edit={readerEditing(info)} />
       </div>
     </div>
   );

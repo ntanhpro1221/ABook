@@ -15,16 +15,19 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import secrets
 import shutil
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
-from . import book_edits, covers, edits_inbox, listen_view, music_plan, packages
+from ..io_utils import atomic_write_json
+from . import book_edits, book_wishes, covers, edits_inbox, listen_view, music_plan, packages, store
 
 
 _WHAT = {"title": "Tên sách", "author": "Tác giả", "cover": "Ảnh bìa", "character": "Tên nhân vật", "chapter": "Tên chương", "reading": "Cách đọc",
-         "music": "Nhạc nền", "wish": "Việc chờ Studio"}
+         "music": "Nhạc nền", "wish": "Việc chờ Studio", "speaker": "Người nói", "pronunciation": "Cách đọc"}
 
 
 def _cover_meta(path: Path, book: dict[str, Any]) -> dict[str, Any] | None:
@@ -48,6 +51,9 @@ def library_entry(path: Path, key: str, state: dict[str, Any]) -> dict[str, Any]
         entry["author"] = view["author"]  # tìm và sắp theo tác giả ở máy kia cần nó; dự án Studio không có tác giả nên không mang khoá
     meta = _cover_meta(path, packages.edited_manifest(path))
     entry["cover"] = {"color": meta.get("color", ""), "version": meta.get("version", 0)} if meta else None
+    shared = shared_edits(path)
+    if shared:
+        entry["listenerEdits"] = shared["stamp"]  # máy kia xin lại `listener_edits.json` khi dấu này đổi
     return entry
 
 
@@ -123,11 +129,36 @@ def _shared_cast(path: Path) -> bytes:
     return json.dumps(book_edits.shared_cast(cast) if isinstance(cast, dict) else cast, ensure_ascii=False).encode("utf-8")
 
 
+# ---- phần sửa máy này đặt, cho máy đã ghép -----------------------------------------------------------------------------------
+#
+# Cách đọc, dòng bỏ khỏi phần đọc và người nói đang chờ Studio người nghe đặt Ở ĐÂY (hay máy khác đã gửi về đây) không nằm trong sách máy kia
+# tải: trước đây đặt trên máy tính thì điện thoại không bao giờ biết (soát a70). `listener_edits.json` (ảo, như cast.json) mang chúng; dòng
+# thư viện mang `listenerEdits` (dấu của nội dung) để máy kia chỉ xin lại khi đổi. Máy kia phủ phần sửa CHƯA gửi của nó lên trên.
+
+SHARED_EDITS = "listener_edits.json"
+
+
+def shared_edits(path: Path) -> dict[str, Any] | None:
+    """{"stamp", "readings": {chữ: cách đọc}, "skip": {mã chương: [dòng]}, "speakers": {mã câu: {name, shown, requestedAt, newGender?}}} của
+    lớp sửa cuốn này; không có gì: None."""
+    edits = book_edits.load(path)
+    lines = book_wishes.by_line(path, edits.get("wishes"))["lines"] if (edits.get("wishes") or {}).get("speakers") else {}
+    body = {"readings": edits.get("readings") or {}, "skip": edits.get("skip") or {},
+            "speakers": {stable_id: line["speaker"] for stable_id, line in sorted(lines.items()) if "speaker" in line}}
+    if not any(body.values()):
+        return None
+    stamp = hashlib.sha256(json.dumps(body, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()[:16]
+    return {"stamp": stamp, **body}
+
+
 def resolve_file(path: Path, relative: str) -> Path | bytes | None:
     """File của gói mà máy đã ghép xin: chỉ tên có trong `manifest` vừa dựng (không có tên nào ngoài đó, kể cả file có trên đĩa); chữ đọc theo và
     dàn nhân vật là bản đã qua lớp sửa."""
     if relative == "cast.json":
         return _shared_cast(path)
+    if relative == SHARED_EDITS:
+        shared = shared_edits(path)
+        return json.dumps(shared, ensure_ascii=False).encode("utf-8") if shared else None
     if relative == covers.COVER_FILE:
         return book_edits.cover_file(path)
     if music_plan.TRACK_FILE.fullmatch(relative):
@@ -155,6 +186,7 @@ def receive_edits(path: Path, device: dict[str, Any], package: Path) -> dict[str
     lưu thành file. Cùng hình dạng trả lời với `edits_inbox.receive`."""
     edits, cover, tracks = edits_inbox.read_package(package)
     removed = edits_inbox.read_removed(package)
+    before = book_edits.load(path)
     # Cái người gửi đã gửi trước đó rồi bỏ đi: gỡ ở đây, chỉ khi giá trị ở đây còn đúng như họ đã gửi (không đè bản chính máy này đã đổi).
     withdrawn = book_edits.apply_removed(path, removed) if removed else 0
     scratch = Path(tempfile.mkdtemp(prefix=".edits_in_", dir=path))
@@ -166,8 +198,94 @@ def receive_edits(path: Path, device: dict[str, Any], package: Path) -> dict[str
                                   incoming_wins=True)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
-    conflicts = [edits_inbox.conflict(item["kind"], item["key"], _WHAT[item["kind"]],
-                                      f"{_WHAT[item['kind']]}: đã có bản riêng trên máy tính này, đã thay bằng bản từ {device['name']}",
-                                      item["lost"], item["kept"]) for item in report["clashes"]]
-    return {"applied": book_edits.count_applied(edits) + withdrawn, "skipped": 0, "music": False, "requests": 0,
-            "waiting": book_edits.count_wishes(edits), "skippedWishes": 0, "conflicts": conflicts}
+    conflicts = [_conflict(path, item, device["name"]) for item in report["clashes"]]
+    book_wishes.note_sources(path, edits.get("wishes"), device["name"])
+    _remember_notices(path, device["name"], report["clashes"], conflicts)
+    # Không có hộp duyệt nào ở cuốn nhập từ file: ý muốn chờ Studio vào thẳng lớp sửa của cuốn - `studio` (chờ Studio thu lại), không phải
+    # `waiting` (chờ chủ máy đồng ý) - điện thoại nói đúng điều ấy (soát a70: "chưa làm gì cho tới khi bạn đồng ý" trong khi máy tính đã nhận).
+    # Chỉ đếm cái thật sự đổi ở đây: máy kia gửi lại cái máy này đã có (cùng file sách, vừa ghép) thì không phải "N thay đổi đã áp" (soát a70).
+    change = book_edits.delta(before, book_edits.load(path))
+    return {"applied": book_edits.count_applied(change) + withdrawn, "skipped": 0, "music": False, "requests": 0,
+            "waiting": 0, "studio": book_edits.count_wishes(change), "skippedWishes": 0, "conflicts": conflicts}
+
+
+# ---- bản của máy này bị bản đến sau thay: báo cụ thể, đặt lại được ------------------------------------------------------------
+#
+# Bản đến sau thắng (người nghe ở máy kia vừa quyết), nhưng chủ máy này không được mất im lặng thứ mình đã đặt (soát a70: điện thoại đổi người
+# nói, máy tính không biết). Người nói và cách đọc: lời báo nói đổi từ gì sang gì, và Hoàn tác đặt lại bản của máy này (thành thay đổi mới
+# nhất - lần gửi sau máy kia nhận lại). Sổ `edits_notices.json` cạnh lớp sửa, không đi theo file sách.
+
+NOTICES_FILE = "edits_notices.json"
+MAX_NOTICES = 20
+
+
+def _sentence(path: Path, stable_id: str) -> str:
+    found = book_wishes.Lines(path).get(stable_id)
+    return store.quote_line(found[1]["text"]) if found else "này"
+
+
+def _conflict(path: Path, item: dict[str, Any], sender: str) -> dict[str, Any]:
+    """Một khoá hai bên đặt khác nhau (`book_edits.merge_clashes`, bản của `sender` thắng) như edits_inbox.conflict: `label` cho chủ máy này,
+    `what`/`lost`/`kept` để máy gửi tự viết câu của nó."""
+    kind, lost, kept = item["kind"], item["lost"], item["kept"]
+    if kind == "speaker":
+        cast = book_wishes.people(path)
+        line = _sentence(path, item["key"])
+        mine, theirs = book_wishes.shown_name(cast, lost["speaker"]), book_wishes.shown_name(cast, kept["speaker"])
+        return edits_inbox.conflict(kind, item["key"], f"Người nói câu {line}", f"{sender} đã đổi người nói câu {line} từ {mine} sang {theirs}",
+                                    mine, theirs)
+    if kind == "pronunciation":
+        surface = kept["surface"]
+        return edits_inbox.conflict(kind, item["key"], f"Cách đọc “{surface}”",
+                                    f"{sender} đã đổi cách đọc “{surface}” từ “{lost['spoken_form']}” sang “{kept['spoken_form']}”",
+                                    lost["spoken_form"], kept["spoken_form"])
+    if kind == "reading":
+        return edits_inbox.conflict(kind, item["key"], f"Cách đọc “{item['key']}”",
+                                    f"{sender} đã đổi cách đọc “{item['key']}” từ “{lost}” sang “{kept}”", lost, kept)
+    return edits_inbox.conflict(kind, item["key"], _WHAT[kind], f"{_WHAT[kind]}: đã có bản riêng trên máy tính này, đã thay bằng bản từ {sender}",
+                                lost, kept)
+
+
+def _read_notices(path: Path) -> list[dict[str, Any]]:
+    try:
+        data = json.loads((Path(path) / NOTICES_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return [item for item in data if isinstance(item, dict)] if isinstance(data, list) else []
+
+
+def _remember_notices(path: Path, sender: str, clashes: list[dict[str, Any]], conflicts: list[dict[str, Any]]) -> None:
+    fresh = [{"id": secrets.token_hex(6), "at": time.time(), "device": sender, "label": conflict["label"],
+              "restore": {"kind": clash["kind"], "key": clash["key"], "value": clash["lost"]}}
+             for clash, conflict in zip(clashes, conflicts) if clash["kind"] in ("speaker", "pronunciation", "reading")]
+    if fresh:
+        atomic_write_json(Path(path) / NOTICES_FILE, (fresh + _read_notices(path))[:MAX_NOTICES])
+
+
+def notices(path: Path) -> list[dict[str, Any]]:
+    """Lời báo chưa xem của cuốn: [{id, at, device, label}] mới nhất trước."""
+    return [{key: item[key] for key in ("id", "at", "device", "label") if key in item} for item in _read_notices(path)]
+
+
+def dismiss_notice(path: Path, notice: str | None = None) -> None:
+    """Bỏ một lời báo (hay tất cả khi `notice` None)."""
+    rest = [item for item in _read_notices(path) if notice is not None and item.get("id") != notice]
+    atomic_write_json(Path(path) / NOTICES_FILE, rest)
+
+
+def undo_notice(path: Path, notice: str) -> None:
+    """Hoàn tác của lời báo: đặt lại bản của máy này (bằng đúng đường người nghe đặt nó - thành thay đổi mới nhất), rồi bỏ lời báo.
+    Lời báo không còn: `LookupError`."""
+    item = next((item for item in _read_notices(path) if item.get("id") == notice), None)
+    if item is None:
+        raise LookupError("Lời báo này không còn")
+    restore = item["restore"]
+    value, now = restore["value"], time.time()
+    if restore["kind"] == "speaker":
+        book_wishes.request_speakers(path, [(restore["key"], value["text_sha256"])], value["speaker"], now=now,
+                                     new_gender=(value.get("new") or {}).get("gender", ""))
+    elif restore["kind"] == "pronunciation":
+        book_wishes.request_pronunciation(path, value["surface"], value["spoken_form"], now=now)
+    elif restore["kind"] == "reading":
+        book_edits.set_reading(path, restore["key"], value)
+    dismiss_notice(path, notice)

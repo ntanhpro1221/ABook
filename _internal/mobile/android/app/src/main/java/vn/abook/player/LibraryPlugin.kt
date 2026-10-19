@@ -852,6 +852,26 @@ class LibraryPlugin : Plugin() {
         }
         val manifest = Streaming.fetchManifest(context, id, peer, remote)
         if (manifest.optJSONObject("cover") != null) Streaming.fetchSmall(context, id, "cover.jpg")
+        fetchHolderEdits(id)
+    }
+
+    /**
+     * The readings, skipped lines and pending speakers the holder set ([BookEdits.HOLDER_FILE], webui/package_share.py `shared_edits`):
+     * fetched again when the library entry's `listenerEdits` stamp changes, dropped when the holder has none (review a70: edits made on the
+     * computer never reached the phone).
+     */
+    private fun syncHolderEdits(id: String, entry: JSONObject) {
+        val stamp = entry.optString("listenerEdits")
+        val file = File(Store.bookDir(id), BookEdits.HOLDER_FILE)
+        if (stamp.isEmpty()) {
+            if (file.isFile && file.delete()) ReadAloud.readingsChanged(id)
+            return
+        }
+        if (BookEdits.holderEdits(Store.bookDir(id))?.optString("stamp") != stamp) fetchHolderEdits(id)
+    }
+
+    private fun fetchHolderEdits(id: String) {
+        if (Streaming.fetchSmall(context, id, BookEdits.HOLDER_FILE) != null) ReadAloud.readingsChanged(id)
     }
 
     /**
@@ -965,7 +985,10 @@ class LibraryPlugin : Plugin() {
         for (index in 0 until remote.length()) {
             val entry = remote.getJSONObject(index)
             val id = entry.getString("id")
-            if (Store.rawManifest(id) != null) continue
+            if (Store.rawManifest(id) != null) {
+                runCatching { syncHolderEdits(id, entry) }
+                continue
+            }
             val cached = Store.streamManifest(id)
             val stale = cached == null ||
                 cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
@@ -976,6 +999,7 @@ class LibraryPlugin : Plugin() {
             if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
                 Streaming.fetchSmall(context, id, "cover.jpg")
             }
+            runCatching { syncHolderEdits(id, entry) }
             books.put(JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true))
         }
         // Thiết bị ghép (điện thoại khác, máy tính khác): cùng cách, gói ghi nguồn - thiết bị không trả lời thì bỏ qua (trừ cuốn đang phát, như trên).
@@ -987,7 +1011,10 @@ class LibraryPlugin : Plugin() {
             for (item in 0 until list.length()) {
                 val entry = list.getJSONObject(item)
                 val id = entry.getString("id")
-                if (Store.rawManifest(id) != null) continue
+                if (Store.rawManifest(id) != null) {
+                    runCatching { syncHolderEdits(id, entry) }
+                    continue
+                }
                 val cached = Store.streamManifest(id)
                 val stale = cached == null || cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
                     cached.optString("title") != entry.optString("title") || cached.optString("author") != entry.optString("author")
@@ -997,6 +1024,7 @@ class LibraryPlugin : Plugin() {
                 if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
                     Streaming.fetchSmall(context, id, "cover.jpg")
                 }
+                runCatching { syncHolderEdits(id, entry) }
                 books.put(JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
                     .put("sourceName", peer.optString("name")))
             }
@@ -1233,6 +1261,7 @@ class LibraryPlugin : Plugin() {
             val project = savesAsProject(call, id)
             val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn")
             val written = out.use { BookDocumentWriter.write(Store.bookDir(id), it, project) }
+            BookEdits.markSaved(Store.bookDir(id)) // "Save (N changes)" counts again from here
             if (!direct) rememberSave(id, project, uri)
             val name = runCatching {
                 context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
@@ -1704,20 +1733,24 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun addBookmark(call: PluginCall) = background(call) {
         val mark = Store.addBookmark(call.getString("id")!!, call.getInt("chapterId")!!, call.getDouble("seconds") ?: 0.0, call.getString("note") ?: "",
-            call.getInt("index"), call.getString("quote") ?: "")
+            call.getInt("index"), call.getString("quote") ?: "", call.getDouble("createdAt"))
         call.resolve(JSObject.fromJSONObject(mark))
+        // Bookmarks reach the computer like the listening position does (a70: a bookmark set in the reader never left the phone).
+        runCatching { pushState(call.getString("id")!!) }
     }
 
     @PluginMethod
     fun updateBookmark(call: PluginCall) = background(call) {
         Store.updateBookmark(call.getString("id")!!, call.getString("markId")!!, call.getString("note") ?: "")
         call.resolve()
+        runCatching { pushState(call.getString("id")!!) }
     }
 
     @PluginMethod
     fun deleteBookmark(call: PluginCall) = background(call) {
         Store.deleteBookmark(call.getString("id")!!, call.getString("markId")!!)
         call.resolve()
+        runCatching { pushState(call.getString("id")!!) }
     }
 
     /**

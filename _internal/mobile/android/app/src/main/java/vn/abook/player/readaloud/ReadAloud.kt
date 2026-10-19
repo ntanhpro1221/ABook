@@ -9,6 +9,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.Artwork
 import vn.abook.player.BookEdits
+import vn.abook.player.EditsSync
 import vn.abook.player.Playback
 import vn.abook.player.SleepTimer
 import vn.abook.player.Store
@@ -294,7 +295,7 @@ object ReadAloud {
     fun readExactly(id: String, text: String, origin: String? = null, readings: Map<String, String>? = null): Clip =
         reader().readExactly(text, id, origin, readings)
 
-    private val bookReadings = ConcurrentHashMap<String, Pair<Pair<Long, Long>, Map<String, String>>>()
+    private val bookReadings = ConcurrentHashMap<String, Pair<List<Pair<Long, Long>>, Map<String, String>>>()
 
     /**
      * Cách đọc riêng người nghe đặt cho cuốn ("Đọc từ này là…", lớp sửa `readings` - [BookEdits]). Nhớ theo giờ sửa + cỡ của `edits.json`: lưu một cách đọc
@@ -302,10 +303,14 @@ object ReadAloud {
      */
     fun readingsOf(bookId: String): Map<String, String> {
         if (bookId.isBlank()) return emptyMap()
-        val file = File(Store.bookDir(bookId), BookEdits.EDITS_FILE)
-        val stamp = if (file.isFile) file.lastModified() to file.length() else 0L to -1L
+        val dir = Store.bookDir(bookId)
+        // The holder's readings (BookEdits.HOLDER_FILE) apply here too; the sent ledger (EditsSync.STATE_FILE) decides which side is newer.
+        val stamp = listOf(BookEdits.EDITS_FILE, BookEdits.HOLDER_FILE, EditsSync.STATE_FILE).map { name ->
+            File(dir, name).let { if (it.isFile) it.lastModified() to it.length() else 0L to -1L }
+        }
         bookReadings[bookId]?.takeIf { it.first == stamp }?.let { return it.second }
-        val found = if (stamp.second < 0) emptyMap() else runCatching { BookEdits.readingsOf(BookEdits.load(Store.bookDir(bookId))) }.getOrDefault(emptyMap())
+        val found = if (stamp[0].second < 0 && stamp[1].second < 0) emptyMap()
+        else runCatching { BookEdits.readingsOf(EditsSync.experienced(dir)) }.getOrDefault(emptyMap())
         bookReadings[bookId] = stamp to found
         return found
     }
@@ -446,7 +451,8 @@ object ReadAloud {
     }
 
     /** Cách đọc riêng của cuốn vừa đổi ("Đọc từ này là…", [LocalStudio]): các đoạn đã đọc sẵn mà chưa tới bỏ đi, đoạn kế đọc lại với cách đọc mới (bộ đệm khoá theo cách đọc
-     *  nên đoạn không có chữ ấy lấy lại ngay). Đoạn đang phát nói nốt. Gọi từ luồng nào cũng được. */
+     *  nên đoạn không có chữ ấy lấy lại ngay). Đoạn đang phát nói nốt, nhưng clip của nó và của đoạn trước còn giữ để tua lùi cũng bỏ: nghe lại đoạn ấy thì đọc lại
+     *  bằng cách đọc mới, như máy tính (soát a70). Gọi từ luồng nào cũng được. */
     fun readingsChanged(bookId: String) {
         if (!active) return
         Playback.onMain {
@@ -454,8 +460,14 @@ object ReadAloud {
             val exo = Playback.player ?: return@onMain
             val slot = currentSlot()?.takeIf { it.segment >= 0 } ?: return@onMain
             requeueAhead(exo, slot)
+            val index = exo.currentMediaItemIndex
+            if (index > 0) exo.removeMediaItems(0, index)
+            staleParagraph = slot.chapterIndex to slot.segment
         }
     }
+
+    /** The paragraph playing when a reading changed: it finishes on its old clip; once playback moves on, its items leave the queue (no rewinding into the old clip). */
+    private var staleParagraph: Pair<Int, Int>? = null
 
     /**
      * Bỏ hàng đợi sau đoạn đang phát và nạp lại từ đoạn kế (đổi giọng, đổi cách đọc). Đoạn đang nghe nói NỐT bằng giọng cũ (uxfix60, như máy tính `voiceChanged`): đang phát luồng thì lượt đọc của nó
@@ -1317,11 +1329,19 @@ object ReadAloud {
             .build()
     }
 
-    /** Bỏ các đoạn đã phát xa (chỉ giữ một đoạn ngay trước đoạn đang nghe để tua lùi ngắn) cho hàng đợi không dài ra mãi. */
+    /** Bỏ các đoạn đã phát xa (chỉ giữ một đoạn ngay trước đoạn đang nghe để tua lùi ngắn) cho hàng đợi không dài ra mãi; đoạn đọc bằng cách đọc cũ
+     *  ([readingsChanged]) thì bỏ ngay khi đã qua. */
     private fun prune() {
         val exo = Playback.player ?: return
         val index = exo.currentMediaItemIndex
         if (index > 1) exo.removeMediaItems(0, index - 1)
+        val stale = staleParagraph ?: return
+        val current = currentSlot()
+        if (current != null && current.chapterIndex == stale.first && current.segment == stale.second) return
+        staleParagraph = null
+        val at = exo.currentMediaItemIndex
+        val old = (0 until at).filter { i -> (exo.getMediaItemAt(i).localConfiguration?.tag as? Slot)?.let { it.chapterIndex == stale.first && it.segment == stale.second } == true }
+        for (i in old.reversed()) exo.removeMediaItem(i)
     }
 
     /** ExoPlayer vừa sang một đoạn (hay mục) khác. */
