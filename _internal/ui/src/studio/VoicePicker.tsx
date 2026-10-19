@@ -104,7 +104,7 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
             <OnComputerOnly verb="Tải giọng" />
           ) : (
             <Button size="sm" variant="secondary" loading={start.isPending} onClick={() => start.mutate()}>
-              {current.state === "error" ? "Tải lại" : "Tải giọng"}
+              {current.state === "error" ? "Thử lại" : "Tải giọng"}
             </Button>
           ))}
       </div>

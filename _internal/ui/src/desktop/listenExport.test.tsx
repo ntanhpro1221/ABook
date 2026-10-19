@@ -63,11 +63,13 @@ describe("planText / resumeText", () => {
 
   it("tells what is already read (heard, prepared, an earlier export) and exports at once", () => {
     expect(resumeText(plan())).toBe("");
-    expect(resumeText(plan({ readyChapters: 3 }))).toBe("Đã đọc sẵn 3/12 chương - phần này xuất ngay, không đọc lại.");
     expect(resumeText(plan({ readyChapters: 12 }))).toBe("Đã đọc sẵn cả cuốn - chỉ còn ghép thành file, không đọc lại.");
-    // vài đoạn đã nghe nhưng chưa đủ một chương: nói độ dài (dưới một phút thì thôi)
-    expect(resumeText(plan({ readySeconds: 400 }))).toBe("Đã đọc sẵn khoảng 7 phút nghe - phần này xuất ngay, không đọc lại.");
+    // soát a63: huỷ khi chương 2/3 đã đọc 57% - nói phần đã đọc trên cả cuốn, không "1/3 chương"
+    expect(resumeText(plan({ chapters: 3, readyChapters: 1, readySeconds: 187, audioSeconds: 360 }))).toBe("Đã đọc sẵn khoảng 52% - phần này xuất ngay, không đọc lại.");
+    // vài đoạn đã nghe, chưa đủ chương nào: vẫn nói phần ấy; dưới một phút thì thôi; chưa đủ cả cuốn thì không nói 100%
+    expect(resumeText(plan({ readySeconds: 400 }))).toBe("Đã đọc sẵn khoảng 1% - phần này xuất ngay, không đọc lại.");
     expect(resumeText(plan({ readySeconds: 40 }))).toBe("");
+    expect(resumeText(plan({ chapters: 3, readyChapters: 2, readySeconds: 359, audioSeconds: 360 }))).toBe("Đã đọc sẵn khoảng 99% - phần này xuất ngay, không đọc lại.");
   });
 });
 

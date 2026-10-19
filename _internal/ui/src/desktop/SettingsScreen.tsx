@@ -395,7 +395,7 @@ export function SettingsScreen() {
             <VoiceSettings
               api={desktopVoices}
               storage={{ usage: () => httpSource.readAloudCacheTotal!(), clear: () => httpSource.readAloudCacheClearAll!() }}
-              deviceHint="Máy này chưa có giọng tiếng Việt. Cài trong Windows: Cài đặt → Thời gian và ngôn ngữ → Giọng nói → Thêm giọng nói → Tiếng Việt."
+              deviceHint="Giọng có sẵn của Windows: máy này chưa có giọng tiếng Việt - cài trong Cài đặt của Windows → Thời gian và ngôn ngữ → Giọng nói → Thêm giọng nói → Tiếng Việt."
               modules={(reload) => (
                 <>
                   {/* Mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ này (PlayerViews.PlayerAlert). */}
@@ -413,7 +413,12 @@ export function SettingsScreen() {
         <Section
           id="music"
           title="Nhạc nền"
-          description="Máy tự chọn nhạc nền cho sách chỉ có chữ (công tắc ngay dưới), và bạn có thể thêm nhạc của riêng mình, dùng chung cho mọi cuốn. Chọn bài cho từng đoạn ở tab “Nhạc nền” của từng dự án trong Studio."
+          description={
+            "Máy tự chọn nhạc nền cho sách chỉ có chữ (công tắc ngay dưới), và bạn có thể thêm nhạc của riêng mình, dùng chung cho mọi cuốn. Đổi nhạc của một " +
+            "cuốn khi nghe ở mục “Nhạc nền” trong menu của sách hay nút nhạc nền ở trình phát." +
+            // Người chưa cài Studio không có "dự án" nào để mở - chỉ nhắc tab của dự án khi đã có Studio (soát a64).
+            (info?.studio?.installed ? " Sách nói làm trong Studio thì chọn bài cho từng đoạn ở tab “Nhạc nền” của dự án." : "")
+          }
         >
           <div className="mb-5 flex max-w-2xl items-start justify-between gap-6">
             <label htmlFor="auto-music" className="min-w-0 cursor-pointer">
@@ -518,7 +523,8 @@ export function SettingsScreen() {
         )}
         <Section id="about" title="Giới thiệu">
           <p className="text-sm text-fg-2 text-pretty">
-            ABook {info?.version} - studio sách nói tiếng Việt chạy hoàn toàn trên máy này: phân tích truyện, phân vai, thu âm và
+            ABook {info?.version} - nghe sách tiếng Việt và làm sách nói. Nghe ngay đọc bằng giọng trực tuyến (cần mạng, chữ được gửi tới
+            Microsoft) hay giọng tải về chạy trên máy này. Studio làm sách nói chạy trên máy này: phân tích truyện, phân vai, thu âm và
             kiểm tra từng câu.
           </p>
           {/* Liên kết mở ở cửa sổ mới (target="_blank", như ghi công nhạc ở trình phát), không điều hướng chính cửa sổ app; cửa sổ app Windows nuốt target nên openExternal nhờ máy chủ mở; Android: SOURCE_URL. */}

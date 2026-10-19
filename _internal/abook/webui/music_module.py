@@ -302,6 +302,7 @@ def status() -> dict[str, Any]:
         total = _state["total"] if state == "downloading" else sum(part.size for part in needed)
         return {
             "state": state, "done": _state["done"] if state == "downloading" else 0, "total": total,
+            "retrying": state == "downloading" and studio_setup.retrying(_thread),
             "error": _state["error"], "ready": state in ("ready", "outdated") and music_local.analyzer_available(),
             "supported": not blocked, "reason": blocked,
             "parts": [{"id": part.id, "label": part.label, "bytes": part.size, "state": judged[part.id], "external": part.external}
@@ -353,10 +354,10 @@ def join(timeout: float | None = None) -> None:
 def _reason(error: BaseException) -> str:
     if isinstance(error, studio_setup.SetupError):
         if error.__cause__ is not None:  # download() bọc lỗi mạng
-            return "mạng bị ngắt - kiểm tra kết nối rồi bấm tải lại (phần đã tải được giữ)"
-        return "file tải về không đúng bản đã ghim (đã xoá) - thử lại"
+            return "mạng bị ngắt - kiểm tra kết nối rồi bấm Thử lại (phần đã tải được giữ)"
+        return "file tải về không đúng bản đã ghim (đã xoá) - bấm Thử lại"
     if isinstance(error, (zipfile.BadZipFile, KeyError)):
-        return "gói tải về hỏng - thử lại"
+        return "gói tải về hỏng - bấm Thử lại"
     if isinstance(error, OSError):
         return f"không ghi được vào ổ đĩa ({error.strerror or error})"
     return f"lỗi không ngờ ({type(error).__name__}: {error})"

@@ -3,7 +3,7 @@
 // máy tính (abook/webui/supertonic_module.py) dùng cùng khung và cùng hình trạng thái, chỉ khác lời (`ModuleCopy`). Phần thuần (không React) để
 // thử riêng; thẻ ở VieneuModuleCard.tsx.
 
-import { CANCELLED_NOTE, formatSize } from "@/studio/musicLocal";
+import { CANCELLED_NOTE, formatSize, RETRYING_NOTE } from "@/studio/musicLocal";
 
 export type VieneuChoiceId = "turbo" | "nano" | "aligner" | "supertonic" | "fast" | "supertonic_fast";
 /** Giọng có kết quả tự đo riêng (mỗi tầng một lần đo). */
@@ -82,6 +82,8 @@ export interface VieneuStatus {
   metered?: boolean;
   /** Lần tải vừa rồi bị người dùng huỷ: phần đã tải giữ, lần sau làm tiếp. */
   cancelled?: boolean;
+  /** Đang tải mà mạng vừa hỏng, đang chờ thử lại (RETRYING_NOTE). */
+  retrying?: boolean;
   /** Có khi bản tăng tốc đã tải (máy tính). */
   accelerated?: VieneuAccelerated | null;
   /** Lý do máy này không chạy được bản tăng tốc (lựa chọn ấy ẩn đi nhưng thẻ vẫn nói); rỗng/thiếu = chạy được. */
@@ -174,6 +176,16 @@ export function initialChoices(status: Pick<VieneuStatus, "choices">): VieneuCho
   return status.choices.filter((choice) => choice.installed || choice.default).map((choice) => choice.id);
 }
 
+/** Khối "Không có mạng" của trình phát mời tải NHẸ NHẤT đủ đọc: đúng một giọng VieNeu máy này được khuyên (`recommended`: Turbo hay Nano, cùng cách
+ *  thẻ trong Cài đặt đánh dấu), không kèm "Tô đúng từng chữ" hay "Bản tăng tốc" - gói đánh dấu sẵn của Cài đặt (`full`) là lựa chọn phụ (soát a64: khối
+ *  ấy từng mời 535 MB). Chỉ phần còn thiếu. */
+export function offlineChoices(status: Pick<VieneuStatus, "choices" | "recommended">): { light: VieneuChoiceId[]; full: VieneuChoiceId[] } {
+  const missing = (ids: VieneuChoiceId[]) => ids.filter((id) => !status.choices.find((choice) => choice.id === id)?.installed);
+  const tier: VieneuChoiceId = status.recommended === "nano" ? "nano" : "turbo";
+  const light = status.choices.some((choice) => choice.id === tier) ? missing([tier]) : [];
+  return { light, full: missing(initialChoices(status)) };
+}
+
 export function vieneuPercent(status: Pick<VieneuStatus, "done" | "total">): number {
   return status.total > 0 ? Math.min(100, Math.floor((status.done / status.total) * 100)) : 0;
 }
@@ -212,7 +224,7 @@ export function suggestionText(suggestion: VieneuSuggestion): { message: string;
 export function vieneuLabel(status: VieneuStatus, copy: ModuleCopy = VIENEU_COPY): string {
   const mid = lowerFirst(copy.name);
   if (status.state === "error") return status.error;
-  if (status.state === "downloading") return `Đang tải ${mid} (${formatSize(status.total)}) ${vieneuPercent(status)}%`;
+  if (status.state === "downloading") return status.retrying ? `${RETRYING_NOTE} (${mid}, ${vieneuPercent(status)}%)` : `Đang tải ${mid} (${formatSize(status.total)}) ${vieneuPercent(status)}%`;
   // Chưa có số đo nào = giọng vừa tải; đã có = bật / tắt bản tăng tốc hay “Thử lại tốc độ” (không tải gì cả).
   if (status.benchmarking) return Object.keys(status.benchmark).length === 0 ? "Đang thử giọng vừa tải trên máy này (vài giây)…" : "Đang đo lại tốc độ trên máy này (vài giây)…";
   if (status.state === "unsupported") return status.reason ? `Máy này chưa dùng được ${mid}: ${status.reason}.` : `Máy này chưa dùng được ${mid}.`;

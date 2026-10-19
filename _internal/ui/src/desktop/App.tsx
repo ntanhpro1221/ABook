@@ -93,8 +93,8 @@ function EmptyLibrary() {
         </div>
       }
     >
-      Có file EPUB, Word, PDF hay thư mục TXT thì thêm thẳng - nghe ngay bằng giọng đọc của máy; có file sách (.abook) từ máy khác thì
-      mở. Muốn truyện thành sách nói có giọng riêng cho từng nhân vật thì tạo sách nói: sách hiện ở đây ngay khi chương đầu tiên
+      Có file EPUB, Word, PDF hay thư mục TXT thì thêm thẳng - nghe ngay bằng giọng đọc trực tuyến (cần mạng, chữ được gửi tới Microsoft
+      để đọc) hay giọng tải về chạy trên máy này; có file sách (.abook) từ máy khác thì mở. Muốn truyện thành sách nói có giọng riêng cho từng nhân vật thì tạo sách nói: sách hiện ở đây ngay khi chương đầu tiên
       thu xong, không cần chờ cả cuốn.
     </EmptyState>
   );

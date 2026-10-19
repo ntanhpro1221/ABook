@@ -219,6 +219,15 @@ def nvidia_gpu() -> dict[str, Any] | None:
 _hashed: dict[tuple[str, int, int], str] = {}
 _hashed_lock = threading.Lock()
 
+# Luồng đang tải mà mạng vừa hỏng, đang chờ để thử lại (`download`): thẻ mô-đun nói "Mạng chập chờn - đang thử lại…" thay vì đứng ở
+# "Đang tải 62%" suốt ~30 giây chờ rồi mới báo lỗi (soát a64).
+_retrying: set[int] = set()
+
+
+def retrying(thread: threading.Thread | None) -> bool:
+    """Luồng tải `thread` đang chờ thử lại sau lỗi mạng."""
+    return thread is not None and thread.ident in _retrying
+
 
 def _stamp(path: Path) -> tuple[str, int, int] | None:
     try:
@@ -260,36 +269,41 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
     part = target.with_name(target.name + ".part")
     if part.is_file():
         progress(min(part.stat().st_size, item.size), item.size)  # tải tiếp sau Huỷ / mất mạng: phần .part đã có tính ngay từ đầu (trước đây thanh về 0 rồi mới nhảy)
-    for attempt in range(5):
-        if cancelled():
-            raise Cancelled()  # bấm Huỷ lúc đang chờ thử lại / chưa có byte nào về
-        have = part.stat().st_size if part.is_file() else 0
-        if have >= item.size:
-            break  # đủ cỡ (hay thừa): để băm quyết
-        request = urllib.request.Request(item.url, headers={"Range": f"bytes={have}-"} if have else {})
-        try:
-            with urllib.request.urlopen(request, timeout=60) as response:
-                if have and response.status != 206:
-                    have = 0  # máy chủ không nhận Range: tải lại từ đầu
-                with part.open("ab" if have else "wb") as handle:
-                    done = have
-                    while chunk := response.read(1 << 20):
-                        if cancelled():
-                            raise Cancelled()
-                        handle.write(chunk)
-                        done += len(chunk)
-                        progress(done, item.size)
-            if done < item.size:
-                # Kết nối đứt giữa chừng mà không báo lỗi: giữ .part, tải tiếp bằng Range ở lượt sau.
-                raise ConnectionError(f"mạng ngắt khi mới tải {done * 100 // item.size}%")
-            break
-        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError) as error:
-            if attempt == 4:
-                raise SetupError(f"Không tải được {item.name} ({error}). Kiểm tra mạng rồi bấm Cài tiếp.") from error
-            for _ in range(12 * (attempt + 1)):  # 3 * (attempt + 1) giây, nhưng nhả ra ngay khi bấm Huỷ
-                if cancelled():
-                    raise Cancelled()
-                time.sleep(0.25)
+    try:
+        for attempt in range(5):
+            if cancelled():
+                raise Cancelled()  # bấm Huỷ lúc đang chờ thử lại / chưa có byte nào về
+            have = part.stat().st_size if part.is_file() else 0
+            if have >= item.size:
+                break  # đủ cỡ (hay thừa): để băm quyết
+            request = urllib.request.Request(item.url, headers={"Range": f"bytes={have}-"} if have else {})
+            try:
+                with urllib.request.urlopen(request, timeout=60) as response:
+                    if have and response.status != 206:
+                        have = 0  # máy chủ không nhận Range: tải lại từ đầu
+                    with part.open("ab" if have else "wb") as handle:
+                        done = have
+                        while chunk := response.read(1 << 20):
+                            if cancelled():
+                                raise Cancelled()
+                            handle.write(chunk)
+                            done += len(chunk)
+                            _retrying.discard(threading.get_ident())  # byte lại về: hết "đang thử lại"
+                            progress(done, item.size)
+                if done < item.size:
+                    # Kết nối đứt giữa chừng mà không báo lỗi: giữ .part, tải tiếp bằng Range ở lượt sau.
+                    raise ConnectionError(f"mạng ngắt khi mới tải {done * 100 // item.size}%")
+                break
+            except (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError) as error:
+                if attempt == 4:
+                    raise SetupError(f"Không tải được {item.name} ({error}). Kiểm tra mạng rồi bấm Cài tiếp.") from error
+                _retrying.add(threading.get_ident())
+                for _ in range(12 * (attempt + 1)):  # 3 * (attempt + 1) giây, nhưng nhả ra ngay khi bấm Huỷ
+                    if cancelled():
+                        raise Cancelled()
+                    time.sleep(0.25)
+    finally:
+        _retrying.discard(threading.get_ident())
     actual = _sha256(part)
     if actual != item.sha256:
         part.unlink(missing_ok=True)
@@ -516,6 +530,7 @@ class StudioSetup:
         self._optional_thread: threading.Thread | None = None  # model tuỳ chọn đang tải (`pull_optional`)
         self._optional_progress: tuple[int, int] | None = None
         self._optional_error: str | None = None
+        self._probed: tuple[dict[str, Any] | None] | None = None  # card NVIDIA dò sẵn (`detected_gpu`), một lần mỗi phiên
 
     # ---- trạng thái -------------------------------------------------------------------------------------------
 
@@ -586,6 +601,13 @@ class StudioSetup:
         return [step for step, pin in self._pins().items()
                 if (step in done and pins.get(step) != pin) or (step not in done and installed) or step in damaged]
 
+    def detected_gpu(self) -> dict[str, Any] | None:
+        """Card NVIDIA của máy (tên, bộ nhớ) dò NGAY khi màn Studio / Cài đặt hỏi, cùng cách bước Kiểm tra máy dò (NVML, không tải gì):
+        người dùng biết máy có đủ để làm sách nói TRƯỚC khi bấm Cài (soát a64). Dò một lần mỗi phiên; bước Kiểm tra máy dò lại thật."""
+        if self._probed is None:
+            self._probed = (self.gpu(),)
+        return self._probed[0]
+
     def status(self) -> dict[str, Any]:
         state = self._state()
         outdated = set(self.outdated())
@@ -602,7 +624,7 @@ class StudioSetup:
             "progress": {"done": progress[0], "total": progress[1]} if progress else None,
             "detail": self._detail if running else "",
             "error": None if running else state.get("error"),
-            "gpu": state.get("gpu"),
+            "gpu": state.get("gpu") or self.detected_gpu(),
             "root": str(self.root),
         }
 
@@ -853,6 +875,7 @@ class StudioSetup:
 
     def _step_check(self) -> None:
         gpu = self.gpu()
+        self._probed = (gpu,)
         if gpu is None:
             raise SetupError("Studio cần card đồ hoạ NVIDIA (dây chuyền đọc sách chạy bằng CUDA) - máy này không có, "
                              "hay driver NVIDIA chưa cài. Phần nghe sách vẫn dùng bình thường.")

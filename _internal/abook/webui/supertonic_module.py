@@ -251,7 +251,7 @@ def status() -> dict[str, Any]:
                             "bytes": sum(left[part.id] for part in lacking), "installed": fast_here if choice == FAST_CHOICE else have,
                             "recommended": False, "default": True, "removable": True, **({"requires": [CHOICE]} if choice == FAST_CHOICE else {})})
         return {
-            "state": state, "done": _core.state["done"] if state == "downloading" else 0,
+            "state": state, "done": _core.state["done"] if state == "downloading" else 0, "retrying": _core.retrying(),
             "total": _core.state["total"] if state == "downloading" else 0, "error": _core.state["error"],
             "supported": not blocked, "reason": blocked,
             "choices": choices,
