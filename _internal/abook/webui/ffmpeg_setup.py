@@ -32,6 +32,7 @@ WHEEL = studio_setup.Download(
 )
 MEMBER = "imageio_ffmpeg/binaries/ffmpeg-win-x86_64-v7.1.exe"
 ENV_DOWNLOAD = "ABOOK_FFMPEG_DOWNLOAD"  # "0" = không bao giờ tải
+NOUN = "bộ đọc nhạc (ffmpeg)"  # trong câu báo lỗi tải
 FOLDER = Path("tools") / "ffmpeg"  # dưới thư mục dữ liệu của app (server.py)
 EXE_NAME = "ffmpeg.exe"
 
@@ -90,18 +91,6 @@ def cannot_download() -> str:
     return ""
 
 
-def reason(error: BaseException) -> str:
-    if isinstance(error, studio_setup.SetupError):
-        if error.__cause__ is not None:  # download() bọc lỗi mạng
-            return "mạng bị ngắt - kiểm tra kết nối rồi bấm Thử lại (phần đã tải được giữ)"
-        return "file tải về không đúng bản đã ghim (đã xoá) - bấm Thử lại"
-    if isinstance(error, (zipfile.BadZipFile, KeyError)):
-        return "gói tải về không có ffmpeg - bấm Thử lại"
-    if isinstance(error, OSError):
-        return f"không ghi được vào ổ đĩa ({error.strerror or error})"
-    return f"lỗi không ngờ ({type(error).__name__}: {error})"
-
-
 def install(progress: Callable[[int, int], None], cancelled: Callable[[], bool] = lambda: False) -> Path:
     """Tải bánh xe (ghim), lấy ra exe, đăng ký với io_utils. Đồng bộ - gọi ở luồng nền của mô-đun. Ném lỗi để mô-đun nói lý do (`reason`)."""
     assert _folder is not None
@@ -132,6 +121,7 @@ def status() -> dict[str, object]:
         state = dict(_state)
     ok = ready()
     return {"ready": ok, "downloading": bool(state["downloading"]), "done": state["done"], "total": state["total"], "error": state["error"],
+            "errorDetail": state.get("error_detail", "") if state["error"] else "",
             "retrying": bool(state["downloading"]) and studio_setup.retrying(_thread),
             "bytes": WHEEL.size, "blocked": "" if ok else cannot_download()}
 
@@ -171,8 +161,8 @@ def _download() -> None:
 
     try:
         install(progress, _cancel.is_set)
-        error = ""
+        error, detail = "", ""
     except Exception as failure:  # noqa: BLE001 - mọi lỗi tải phải thành lời cho người dùng, không giết luồng im lặng
-        error = "Đã dừng tải." if _cancel.is_set() else reason(failure)[0].upper() + reason(failure)[1:] + "."
+        error, detail = ("Đã dừng tải.", "") if _cancel.is_set() else studio_setup.download_failure(NOUN, failure)
     with _lock:
-        _state.update(downloading=False, error=error)
+        _state.update(downloading=False, error=error, error_detail=detail)

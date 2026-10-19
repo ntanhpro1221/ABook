@@ -31,6 +31,8 @@ import java.util.concurrent.Executors
  */
 object ReadAloud {
     const val DEFAULT_VOICE = "edge:vi-VN-HoaiMyNeural"
+    /** Giới của [DEFAULT_VOICE]: giọng VieNeu mặc định khi bản vừa tải không có giọng ưu tiên nào thì cùng giới này ([NarratorVoice]). */
+    const val DEFAULT_VOICE_GENDER = "female"
     /** Đoạn đọc trước: đang nghe + chừng này đoạn sau (tối thiểu; giọng trực tuyến chậm thì dài ra - [policy]). */
     const val AHEAD = 2
     /** Nghỉ trước mỗi lần thử lại một đoạn hỏng vì lỗi thoáng qua của giọng trực tuyến (ms), ở luồng nền - đoạn đã nạp vẫn phát. [EdgeTts] đã tự thử lại lượt bị cắt 3 lần (nghỉ 6 giây) bên
@@ -349,7 +351,7 @@ object ReadAloud {
     /** Danh sách giọng cho giao diện (chạy ở luồng nền - hỏi bộ đọc của máy có thể chờ). */
     fun voices(ctx: Context): List<JSONObject> {
         val list = ArrayList<VoiceInfo>()
-        list.add(VoiceInfo("edge:vi-VN-HoaiMyNeural", "Hoài My (Edge)", "edge", true, true, "female"))
+        list.add(VoiceInfo(DEFAULT_VOICE, "Hoài My (Edge)", "edge", true, true, DEFAULT_VOICE_GENDER))
         list.add(VoiceInfo("edge:vi-VN-NamMinhNeural", "Nam Minh (Edge)", "edge", true, false, "male"))
         list.addAll(VieneuVoices.voices(ctx)) // giọng VieNeu: chỉ khi mô-đun đã tải về điện thoại
         list.addAll(SupertonicVoices.voices(ctx)) // giọng Supertonic: như vậy
@@ -389,8 +391,11 @@ object ReadAloud {
         }
     }
 
-    /** Giọng VieNeu kể chuyện trung tính ([NarratorVoice]) nếu máy đã tải mô-đun, không thì null. Chữ của người nghe chưa chọn giọng không nên rời máy khi máy đã có giọng chạy trên máy. */
-    internal var localVoice: () -> String? = { context?.let { ctx -> NarratorVoice.pick(VieneuVoices.voices(ctx).map { it.id }) } }
+    /** Giọng VieNeu kể chuyện trung tính ([NarratorVoice]; không có giọng ưu tiên thì cùng giới với giọng mặc định) nếu máy đã tải mô-đun, không thì
+     *  null. Chữ của người nghe chưa chọn giọng không nên rời máy khi máy đã có giọng chạy trên máy. */
+    internal var localVoice: () -> String? = {
+        context?.let { ctx -> NarratorVoice.pick(VieneuVoices.voices(ctx).map { it.id to it.gender }, DEFAULT_VOICE_GENDER) }
+    }
 
     /** Giọng khi người nghe CHƯA chọn: giọng VieNeu kể chuyện trung tính nếu máy có, không thì giọng mặc định - đúng luật `resolveVoice` của giao diện
      *  (listen/readAloudVoice.ts), nên tên giọng giao diện hiện và giọng lõi đọc là một. */

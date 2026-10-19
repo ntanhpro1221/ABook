@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .. import io_utils
-from . import music_module, studio_setup
+from . import studio_setup
 from .music_module import Component
 
 STAMP_FILE = "module.json"
@@ -182,8 +182,9 @@ class ModuleCore:
             with self.lock:
                 self.state.update(downloading=False, error="", done=0, cancelled=True)
         except Exception as error:  # noqa: BLE001 - mọi lỗi thành một câu cho người dùng
+            message, detail = studio_setup.download_failure(self.noun, error)
             with self.lock:
-                self.state.update(downloading=False, error=f"Không tải được {self.noun}: {music_module._reason(error)}.")
+                self.state.update(downloading=False, error=message, error_detail=detail)
         finally:
             with self.lock:
                 self.state["downloading"] = False

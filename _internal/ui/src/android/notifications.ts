@@ -34,7 +34,7 @@ export async function notificationState(api: Pick<NotificationApi, "notification
 
 export const NOTIFICATION_WHY = "Để có nút tạm dừng và tua ở khay thông báo và màn khoá, cho phép ABook hiện thông báo.";
 
-/** Nói vì sao rồi mời xin quyền, tối đa MỘT lần (nhớ lại, kể cả khi người nghe bỏ qua câu này). `notify` hiện câu + nút "Cho phép" (gọi `allow`).
+/** Nói vì sao rồi mời xin quyền, tối đa MỘT lần (mã thông báo "notification-access" nằm trong PRIORITY_TOASTS của listen/musicHint.ts: nhắc nhạc chờ nó) (nhớ lại, kể cả khi người nghe bỏ qua câu này). `notify` hiện câu + nút "Cho phép" (gọi `allow`).
  *  Trả true nếu đã mời. */
 export async function offerNotificationAccess(
   api: NotificationApi = EbookPlayer,

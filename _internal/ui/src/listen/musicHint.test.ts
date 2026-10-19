@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { resetSceneMusicHint, SCENE_MUSIC_HINT, SCENE_MUSIC_HINT_KEY, takeSceneMusicHint } from "./musicHint";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { resetSceneMusicHint, SCENE_MUSIC_HINT, SCENE_MUSIC_HINT_KEY, takeSceneMusicHint, tellSceneMusic } from "./musicHint";
 
 function fakeStore(initial: Record<string, string> = {}) {
   const data = { ...initial };
@@ -40,5 +40,32 @@ describe("nhắc một lần khi nhạc nền theo cảnh kêu lần đầu", ()
   it("lời nhắc nói với người nghe: nhạc đổi theo cảnh và chọn nhạc khác ở đâu", () => {
     expect(SCENE_MUSIC_HINT.title).toContain("đổi theo cảnh");
     expect(SCENE_MUSIC_HINT.description).toMatch(/^Bạn .*Nhạc nền/);
+  });
+});
+
+describe("lời nhắc nhạc chờ lời mời quan trọng (soát a66)", () => {
+  beforeEach(() => {
+    resetSceneMusicHint();
+    vi.useFakeTimers();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("lời mời xin quyền thông báo đang hiện: chưa hiện nhắc nhạc, nó đi rồi mới hiện - một lần", () => {
+    let busy = true;
+    const show = vi.fn();
+    tellSceneMusic(() => busy, show);
+    vi.advanceTimersByTime(3000);
+    expect(show).not.toHaveBeenCalled();
+    busy = false;
+    vi.advanceTimersByTime(1000);
+    expect(show).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(5000);
+    expect(show).toHaveBeenCalledTimes(1);
+  });
+
+  it("không có lời mời nào: hiện ngay", () => {
+    const show = vi.fn();
+    tellSceneMusic(() => false, show);
+    expect(show).toHaveBeenCalledTimes(1);
   });
 });

@@ -38,7 +38,7 @@ export function OnlineVoicePrompt() {
                     type="button"
                     onClick={() => {
                       sample.stop();
-                      answer(item.id);
+                      answer(item.id, true);
                     }}
                     className={cn(
                       "flex min-h-[44px] min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-3 text-left text-sm hover:bg-hover",

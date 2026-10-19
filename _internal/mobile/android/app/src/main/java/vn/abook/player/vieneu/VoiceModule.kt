@@ -7,7 +7,6 @@ import vn.abook.player.PinnedFiles.Part
 import vn.abook.player.SharedRuntime
 import vn.abook.player.Store
 import java.io.File
-import java.io.IOException
 
 /**
  * The frame of a voice the listener downloads on a tap (the phone's `voice_module.ModuleCore`), shared by "Giọng VieNeu" ([VieneuModule]) and
@@ -79,6 +78,8 @@ abstract class VoiceModule(
     private var downloading = false
     private var benchmarking = false
     private var error = ""
+    /** The raw cause of [error] for the card's folded "Chi tiết" ([PinnedFiles.failure]); shown only while [error] is. */
+    private var errorDetail = ""
     /** The last download was stopped by the listener (the card says "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng"); cleared when a download starts. */
     private var cancelled = false
     @Volatile
@@ -191,7 +192,7 @@ abstract class VoiceModule(
         val shownBench = JSONObject()
         for (tier in installedTiers) bench.optJSONObject(tier)?.let { shownBench.put(tier, it) }
         JSONObject().put("state", state).put("done", if (downloading) finished + current else 0).put("total", if (downloading) total else 0)
-            .put("error", error).put("supported", unsupported.isEmpty()).put("reason", unsupported).put("choices", shown).put("parts", parts)
+            .put("error", error).put("errorDetail", if (error.isEmpty()) "" else errorDetail).put("supported", unsupported.isEmpty()).put("reason", unsupported).put("choices", shown).put("parts", parts)
             .put("outdatedParts", JSONArray(behind.map { partLabel(it) })).put("outdatedBytes", behind.sumOf { left(it, states) })
             .put("benchmark", shownBench).put("benchmarking", benchmarking)
             .put("suggestion", if (benchmarking) JSONObject.NULL else suggestion(bench, installedTiers) ?: JSONObject.NULL)
@@ -277,20 +278,15 @@ abstract class VoiceModule(
                 cancelled = true
             }
         } catch (failure: Exception) {
-            synchronized(lock) { error = describe(failure) }
+            val said = PinnedFiles.failure(name, failure)
+            synchronized(lock) {
+                error = said.message
+                errorDetail = said.detail
+            }
         } finally {
             runtime.done(key) // from here this module's own files on disk say what it needs
             modelMarks.clear() // files replaced (also by a download stopped half way: the stamp is written per file)
             synchronized(lock) { downloading = false }
-        }
-    }
-
-    private fun describe(failure: Exception): String {
-        val title = name.replaceFirstChar { it.uppercase() }
-        return when (failure) {
-            is PinnedFiles.ChecksumError -> "$title tải về bị hỏng (không khớp mã kiểm) - bấm Thử lại để tải lại."
-            is IOException -> "Không tải được $name (${failure.message ?: "mất kết nối"}). Bấm Thử lại - phần đã tải được giữ."
-            else -> "Không tải được $name (${failure.message ?: failure.javaClass.simpleName})."
         }
     }
 

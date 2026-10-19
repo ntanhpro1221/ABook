@@ -11,12 +11,23 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Xuất sách nói cho cuốn chưa có ảnh bìa thật không còn làm app tắt ngang khi hộp chọn nơi lưu mở ra; bìa vẽ sẵn vẫn được gắn vào file.
 - Mở chương bằng giọng trên máy: máy chờ thêm tối đa 1,5 giây cho đoạn đầu sẵn sàng rồi mới đọc tiêu đề, nên bạn không còn nghe tiêu đề xong lặng một quãng.
+- Màn "Tải sách" cho người chỉ có điện thoại biết máy tính thêm được gì (Studio làm sách nói nhiều giọng, gửi sang điện thoại nghe tiếp) và tải ABook cho máy tính ở đâu, trước phần ghép nối.
+- Kết nối qua Bluetooth: ABook nói vì sao cần quyền "Thiết bị ở gần" trước khi Android hỏi; đã từ chối hẳn thì có nút "Mở Cài đặt" thay vì báo lỗi lặp lại.
+- Thông báo đang phát và các nút trên đó (Tạm dừng, Lùi, Tới, Chương sau...) bằng tiếng Việt.
+- Đổi sáng/tối khi app đang mở: thanh trạng thái đổi màu biểu tượng và nền theo ngay.
+- Thanh phát thu gọn dùng bìa vẽ thay hai chữ cái đầu; bìa nhỏ ở màn ngang không còn cắt chữ. Lời nhắc bật thông báo không còn bị lời nhắc nhạc nền đẩy đi.
 
 ### Nghe ngay
 
 - Máy tính và điện thoại: với giọng trên máy, máy đọc sẵn khoảng 20 giây âm thanh phía trước (tối đa 6 đoạn) thay vì một số đoạn cố định, nên đoạn ngắn nối nhau liền hơn.
 - Máy tính và điện thoại: tải tiếp một giọng sau khi Huỷ, dòng "Đang tải" ghi đúng số còn phải tải như trên nút và phần trăm tính từ 0 trên số ấy.
 - Máy tính và điện thoại: cài hay gỡ một giọng xong thì cỡ tải của các giọng khác cập nhật ngay (vd VieNeu nhỏ lại khi Supertonic đã cài phần dùng chung), không phải rời Cài đặt rồi vào lại.
+- Máy tính và điện thoại: mất mạng lúc mở app vẫn thấy nút tải giọng trên máy và các thẻ giọng trong Cài đặt; đang tải mà rớt mạng thì báo lỗi hay "đang thử lại" thay vì đứng ở 0%.
+- Máy tính và điện thoại: tải xong một bộ giọng trên máy, giọng mặc định là giọng kể chuyện của bộ ấy (vd Ái Hân với VieNeu Nano), không còn là giọng đứng đầu danh sách. Chọn lại đúng giọng đang dùng trong hộp hỏi gửi chữ lên mạng cũng được ghi nhớ cho cuốn ấy.
+- Máy tính và điện thoại: tải giọng hay nhạc lỗi thì báo bằng câu dễ hiểu ngay trên nút "Thử lại" (mất mạng: "Không kết nối được tới máy chủ tải..."); nguyên văn kỹ thuật nằm trong "Chi tiết".
+- Máy tính và điện thoại: Cài đặt khuyên tải một bộ giọng (bộ ABook dùng làm giọng mặc định) và chỉ đánh dấu sẵn bộ ấy, không đánh dấu cả hai.
+- Máy tính và điện thoại: "Chọn giọng khác" ở thanh phát thu gọn mở thẳng danh sách giọng. Mạng về sau khi lỗi chỉ tự phát tiếp nếu bạn đang nghe; mở app lúc mất mạng thì mạng về chỉ tắt lời báo.
+- Điện thoại: chỉ coi là "đang dùng dữ liệu di động" khi thật sự đang dùng mạng di động, và đổi ngay khi mạng đổi.
 - Máy tính và điện thoại: giọng VieNeu và Supertonic không còn chỗ to bị vỡ tiếng: câu nào ra quá to thì cả câu được hạ nhẹ xuống thay vì bị xén đỉnh. Lần đầu nghe lại một đoạn đã nghe trước đây bằng các giọng này, máy đọc lại đoạn ấy một lần.
 
 ## [0.4.104] - 2026-10-19
